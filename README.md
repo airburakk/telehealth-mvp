@@ -1,5 +1,7 @@
 # AIR Telehealth — MVP
 
+**🚀 Canlı demo: https://telehealth-mvp-roan.vercel.app** · Demo girişi: `doktor@air.test` / `1234`
+
 Sağlık turizmi platformunun ilk çalışan sürümü (Faz 1). Hasta triyajından doktor
 vaka paneline ve video görüşmeye uzanan uçtan uca akışı gösterir.
 
