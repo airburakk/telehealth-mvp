@@ -4,9 +4,19 @@ Bu uygulama **Vercel** (Next.js) + **Postgres** (Neon veya Vercel Postgres) ile 
 Yerel geliştirme SQLite kullanır; **üretimde Postgres zorunludur** (Vercel'in dosya sistemi
 geçicidir, SQLite kalıcı olmaz).
 
-> Repo deploy'a hazırdır: `prisma generate` build'e eklendi, `binaryTargets`'a Linux engine
-> eklendi, `.env.example` ve `.gitignore` ayarlandı, git başlatıldı. Aşağıdaki adımlar yalnız
-> **senin hesaplarını** bağlamak içindir.
+## ✅ Tamamlanan (Adım 1-2)
+
+- Neon Postgres veritabanı bağlandı; şema `postgresql`'e geçirildi (`prisma db push`)
+- Tablolar oluşturuldu + demo veri yüklendi (4 kullanıcı, 8 doktor, vakalar, takip, şikayet)
+- `.env`: `DATABASE_URL` (pooled) + `DIRECT_URL` (direct) + `SESSION_SECRET` ayarlı (yerelde çalışıyor)
+- Repo deploy'a hazır: build'de `prisma generate`, Linux engine, git başlatıldı
+
+## ⏳ Kalan (Adım 3-4 — senin hesabın)
+
+1. **GitHub**: repo oluştur → `git push` (Adım 3)
+2. **Vercel**: import → env değişkenleri (`DATABASE_URL` + `SESSION_SECRET`) → Deploy (Adım 4)
+
+> Veritabanı zaten kurulu olduğundan üretimde ayrıca migration/seed gerekmez — aynı Neon DB'sini kullanır.
 
 ---
 

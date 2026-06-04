@@ -8,8 +8,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // havuzlanmış (pooled) — uygulama çalışma zamanı
+  directUrl = env("DIRECT_URL") // havuzsuz (direct) — migration / db push
 }
 
 /// Platform kullanıcısı (kimlik doğrulama + rol)
