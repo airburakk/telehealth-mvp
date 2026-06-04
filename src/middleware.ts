@@ -1,0 +1,40 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { SESSION_COOKIE, verifyToken } from "@/lib/session";
+
+const DOCTOR_ROLES = ["DOCTOR", "COORDINATOR", "ADMIN"];
+const ETHICS_ROLES = ["ETHICS", "ADMIN"];
+
+export async function middleware(req: NextRequest) {
+  const token = req.cookies.get(SESSION_COOKIE)?.value;
+  const user = token ? await verifyToken(token) : null;
+  const { pathname } = req.nextUrl;
+
+  if (!user) {
+    const url = new URL("/giris", req.url);
+    url.searchParams.set("next", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  if (pathname.startsWith("/etik-kurul") && !ETHICS_ROLES.includes(user.role)) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+  if ((pathname.startsWith("/doktor") || pathname.startsWith("/gorusme")) && !DOCTOR_ROLES.includes(user.role)) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    "/triyaj", "/triyaj/:path*",
+    "/hekimler", "/hekim/:path*",
+    "/doktor", "/doktor/:path*",
+    "/gorusme/:path*",
+    "/paket/:path*",
+    "/rezervasyon/:path*",
+    "/takip/:path*",
+    "/sikayet/:path*",
+    "/etik-kurul", "/etik-kurul/:path*",
+  ],
+};

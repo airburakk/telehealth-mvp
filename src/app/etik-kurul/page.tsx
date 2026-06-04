@@ -1,0 +1,82 @@
+import Link from "next/link";
+import { db } from "@/lib/db";
+import { maskCaseId, REQUEST_TYPES, COMPLAINT_STATUS } from "@/lib/ethics";
+import { formatDateTime } from "@/lib/constants";
+import { Scale, ArrowRight, Inbox, ShieldCheck } from "lucide-react";
+
+export const dynamic = "force-dynamic";
+
+export default async function EthicsBoard() {
+  const complaints = await db.complaint.findMany({
+    include: { case: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const rows = complaints.sort((a, b) => (a.status === "PENDING" ? -1 : 1) - (b.status === "PENDING" ? -1 : 1));
+  const pending = complaints.filter((c) => c.status === "PENDING").length;
+  const resolved = complaints.filter((c) => c.status === "RESOLVED").length;
+
+  return (
+    <div className="mx-auto max-w-4xl px-5 py-10">
+      <div className="flex items-center gap-3">
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0f2a4a] text-white"><Scale size={22} /></span>
+        <div>
+          <h1 className="text-2xl font-bold text-[#0f2a4a]">Tahkim & Etik Denetim Kurulu</h1>
+          <p className="text-sm text-slate-500">Bağımsız ombudsmanlık — başvurular anonimleştirilmiş olarak incelenir.</p>
+        </div>
+      </div>
+
+      <div className="mt-5 flex items-center gap-2 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-800 ring-1 ring-sky-100">
+        <ShieldCheck size={15} /> Veri maskeleme aktif: kurul hasta kimliğini değil, yalnızca vaka ve operasyon verisini görür.
+      </div>
+
+      <div className="mt-5 grid grid-cols-3 gap-3 sm:max-w-md">
+        <Stat label="Toplam başvuru" value={complaints.length} />
+        <Stat label="Beklemede" value={pending} tone="text-amber-600" />
+        <Stat label="Karara bağlandı" value={resolved} tone="text-emerald-600" />
+      </div>
+
+      <div className="mt-6 space-y-2.5">
+        {rows.length === 0 && (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white py-12 text-center text-slate-400">
+            <Inbox className="mx-auto mb-2" /> Başvuru yok.
+          </div>
+        )}
+        {rows.map((c) => {
+          const st = COMPLAINT_STATUS[c.status] ?? COMPLAINT_STATUS.PENDING;
+          return (
+            <Link
+              key={c.id}
+              href={`/etik-kurul/${c.id}`}
+              className={`group flex items-center gap-4 rounded-xl border bg-white p-4 transition hover:shadow-sm ${c.status === "PENDING" ? "border-amber-200" : "border-slate-200 hover:border-[#0f2a4a]/30"}`}
+            >
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500"><Scale size={20} /></span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-sm font-semibold text-slate-800">{maskCaseId(c.caseId)}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${st.color}`}>{st.label}</span>
+                </div>
+                <div className="mt-0.5 truncate text-sm text-slate-600">{c.subject}</div>
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-slate-400">
+                  <span className="font-medium text-[#16467a]">{REQUEST_TYPES[c.requestType]}</span>
+                  <span>· {c.case.branch}</span>
+                  <span>· {formatDateTime(c.createdAt)}</span>
+                </div>
+              </div>
+              <ArrowRight size={18} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#0f2a4a]" />
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-3.5">
+      <div className={`text-2xl font-bold ${tone ?? "text-[#0f2a4a]"}`}>{value}</div>
+      <div className="text-xs text-slate-500">{label}</div>
+    </div>
+  );
+}

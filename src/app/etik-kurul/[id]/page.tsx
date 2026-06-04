@@ -1,0 +1,108 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { db } from "@/lib/db";
+import { maskCaseId, REQUEST_TYPES, VERDICTS, ACTIONS, ESCROW_STATUS } from "@/lib/ethics";
+import { formatUSD } from "@/lib/pricing";
+import { urgencyStyle, formatDateTime } from "@/lib/constants";
+import { DecisionForm } from "@/components/DecisionForm";
+import { ArrowLeft, Scale, FileText, Sparkles, Lock, Gavel, ShieldCheck, EyeOff } from "lucide-react";
+
+export const dynamic = "force-dynamic";
+
+export default async function ComplaintDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const c = await db.complaint.findUnique({ where: { id }, include: { case: true } });
+  if (!c) notFound();
+  const booking = c.bookingId ? await db.booking.findUnique({ where: { id: c.bookingId } }) : null;
+
+  const u = urgencyStyle(c.case.urgency);
+  const resolved = c.status === "RESOLVED";
+  const esc = booking ? ESCROW_STATUS[booking.escrowStatus] ?? ESCROW_STATUS.HELD : null;
+
+  return (
+    <div className="mx-auto max-w-4xl px-5 py-8">
+      <Link href="/etik-kurul" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0f2a4a]">
+        <ArrowLeft size={16} /> Kurul başvuruları
+      </Link>
+
+      <div className="mt-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0f2a4a] text-white"><Scale size={22} /></span>
+          <div>
+            <h1 className="font-mono text-xl font-bold text-[#0f2a4a]">{maskCaseId(c.caseId)}</h1>
+            <p className="text-sm text-slate-500">{REQUEST_TYPES[c.requestType]} · {formatDateTime(c.createdAt)}</p>
+          </div>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">
+          <EyeOff size={13} /> Kimlik gizli
+        </span>
+      </div>
+
+      <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_320px]">
+        {/* Sol: başvuru + anonim vaka */}
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><FileText size={15} /> Başvuru</div>
+            <h2 className="mt-2 font-bold text-slate-800">{c.subject}</h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-700">{c.description}</p>
+            {c.evidence && <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-xs text-slate-600"><FileText size={13} /> {c.evidence}</div>}
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><ShieldCheck size={15} /> Anonim Vaka Verisi</div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="rounded-lg bg-white px-2.5 py-1 text-sm font-semibold text-[#0f2a4a] ring-1 ring-slate-200">{c.case.branch}</span>
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
+                <span className={`h-2 w-2 rounded-full ${u.dot}`} /> Aciliyet {c.case.urgency}/5
+              </span>
+            </div>
+            <div className="mt-3">
+              <div className="text-xs uppercase tracking-wide text-slate-400">Şikayet (triyaj)</div>
+              <p className="mt-1 text-sm text-slate-700">{c.case.symptoms}</p>
+            </div>
+            <div className="mt-3 rounded-lg bg-sky-50/70 p-3 ring-1 ring-sky-100">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700"><Sparkles size={13} /> AI gerekçe</div>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">{c.case.reasoning}</p>
+            </div>
+          </div>
+
+          {/* Karar (resolved) */}
+          {resolved && (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-700"><Gavel size={15} /> Kurul Kararı</div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {c.verdict && <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${VERDICTS[c.verdict].color}`}>{VERDICTS[c.verdict].label}</span>}
+                {c.action && <span className="rounded-lg bg-white px-2.5 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">{ACTIONS[c.action]}</span>}
+                {c.refundAmount ? <span className="rounded-lg bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-700">İade: {formatUSD(c.refundAmount)}</span> : null}
+              </div>
+              {c.rationale && <p className="mt-3 text-sm leading-relaxed text-slate-700">{c.rationale}</p>}
+              <div className="mt-3 text-xs text-slate-500">İmza: <strong className="text-slate-700">{c.decidedBy}</strong> · {c.decidedAt ? formatDateTime(c.decidedAt) : ""}</div>
+            </div>
+          )}
+        </div>
+
+        {/* Sağ: Escrow + karar formu */}
+        <aside className="space-y-4">
+          {booking && esc && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><Lock size={15} /> İlgili Rezervasyon</div>
+              <div className="mt-2 text-2xl font-bold text-[#0f2a4a]">{formatUSD(booking.total)}</div>
+              <div className="mt-1 text-xs text-slate-500">{booking.tier} paket</div>
+              <div className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${esc.color}`}>
+                <span className={`h-2 w-2 rounded-full ${esc.dot}`} /> {esc.label}
+              </div>
+            </div>
+          )}
+
+          {resolved ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500 shadow-sm">
+              Bu başvuru karara bağlandı. Yaptırım Escrow üzerinde uygulandı.
+            </div>
+          ) : (
+            <DecisionForm complaintId={c.id} bookingTotal={booking?.total ?? null} />
+          )}
+        </aside>
+      </div>
+    </div>
+  );
+}

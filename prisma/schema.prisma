@@ -1,0 +1,167 @@
+// Telehealth MVP — veri şeması
+// Kapsam: Triyaj + Doktor Paneli + Video görüşme iskeleti
+
+generator client {
+  provider      = "prisma-client-js"
+  // Yerel: native · Vercel/Linux üretim: rhel-openssl-3.0.x
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Platform kullanıcısı (kimlik doğrulama + rol)
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String // PATIENT, DOCTOR, COORDINATOR, ETHICS, ADMIN
+  doctorId     String? // DOCTOR rolündeki kullanıcının hekim profili
+  createdAt    DateTime @default(now())
+}
+
+/// Platformdaki uzman hekim
+model Doctor {
+  id            String         @id @default(cuid())
+  name          String
+  title         String // Prof. Dr., Doç. Dr., Op. Dr., Uzm. Dr.
+  branch        String
+  city          String
+  languages     String // CSV: "Türkçe,Rusça,İngilizce"
+  verified        Boolean        @default(true)
+  bio             String?
+  color           String         @default("#16467a")
+  rating          Float          @default(4.7)
+  successRate     Int            @default(95)
+  experienceYears Int            @default(12)
+  jci             Boolean        @default(true)
+  capacity        Int            @default(20) // aylık işlem kapasitesi
+  cases           Case[]
+  consultations   Consultation[]
+  reviews         Review[]
+  createdAt       DateTime       @default(now())
+}
+
+/// Doğrulanmış hasta yorumu (Modül 6)
+model Review {
+  id        String   @id @default(cuid())
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+  doctorId  String
+  author    String
+  country   String
+  stars     Int
+  text      String
+  createdAt DateTime @default(now())
+}
+
+/// Triyajdan geçen hasta vakası
+model Case {
+  id                  String         @id @default(cuid())
+  patientName         String
+  country             String // DZ, LY, RU, KZ, KG, TR ...
+  language            String
+  symptoms            String
+  durationText        String?
+  extra               String? // branşa özel yanıtların JSON'u
+  attachments         String? // CSV dosya adları
+  branch              String
+  urgency             Int // 1-5
+  reasoning           String
+  confidence          Int            @default(70) // 0-100
+  status              String         @default("NEW") // NEW, IN_REVIEW, IN_CONSULT, DONE
+  coordinatorApproved Boolean        @default(false)
+  doctor              Doctor?        @relation(fields: [doctorId], references: [id])
+  doctorId            String?
+  consultations       Consultation[]
+  bookings            Booking[]
+  recovery            Recovery?
+  complaints          Complaint[]
+  createdAt           DateTime       @default(now())
+}
+
+/// Hasta-doktor video görüşmesi
+model Consultation {
+  id        String    @id @default(cuid())
+  case      Case      @relation(fields: [caseId], references: [id])
+  caseId    String
+  doctor    Doctor    @relation(fields: [doctorId], references: [id])
+  doctorId  String
+  notes     String    @default("")
+  status    String    @default("ACTIVE") // ACTIVE, ENDED
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+}
+
+/// Sağlık turizmi paketi rezervasyonu (Modül 3)
+model Booking {
+  id                   String   @id @default(cuid())
+  case                 Case     @relation(fields: [caseId], references: [id])
+  caseId               String
+  branch               String
+  country              String
+  tier                 String // Ekonomik, Standart, Premium
+  hotelStars           Int
+  hospitalType         String // Özel, Üniversite
+  nights               Int
+  translator           Boolean  @default(false)
+  insuranceExtended    Boolean  @default(false)
+  insuranceMalpractice Boolean  @default(false)
+  subtotal             Int
+  platformFee          Int
+  total                Int
+  currency             String   @default("USD")
+  breakdown            String // JSON LineItem[]
+  split                String // JSON LineItem[]
+  status               String   @default("CONFIRMED") // DRAFT, CONFIRMED, CANCELLED
+  escrowStatus         String   @default("HELD") // HELD, RELEASED, REFUNDED
+  createdAt            DateTime @default(now())
+}
+
+/// Post-Op iyileşme takibi (Modül 4)
+model Recovery {
+  id        String    @id @default(cuid())
+  case      Case      @relation(fields: [caseId], references: [id])
+  caseId    String    @unique
+  branch    String
+  status    String    @default("ACTIVE") // ACTIVE, COMPLETED
+  startedAt DateTime  @default(now())
+  checkIns  CheckIn[]
+}
+
+/// Günlük iyileşme kontrolü
+model CheckIn {
+  id         String   @id @default(cuid())
+  recovery   Recovery @relation(fields: [recoveryId], references: [id])
+  recoveryId String
+  pain       Int // 0-10
+  feverC     Float
+  meds       Boolean  @default(true)
+  note       String?
+  photo      String?
+  severity   String // NONE, WATCH, RED
+  createdAt  DateTime @default(now())
+}
+
+/// Etik Kurul / Tahkim başvurusu (Modül 7)
+model Complaint {
+  id          String    @id @default(cuid())
+  case        Case      @relation(fields: [caseId], references: [id])
+  caseId      String
+  bookingId   String? // ilgili rezervasyon (iade için)
+  subject     String
+  description String
+  requestType String // REFUND, DOCTOR_CHANGE, HOSPITAL_CHANGE, OTHER
+  evidence    String?
+  status      String    @default("PENDING") // PENDING, RESOLVED
+  // Kurul kararı
+  verdict      String? // FAVOR, PARTIAL, REJECT
+  action       String? // REFUND_FULL, REFUND_PARTIAL, SUPPLIER_CHANGE, ACCREDITATION_WARN, NONE
+  refundAmount Int?
+  rationale    String?
+  decidedBy    String?
+  decidedAt    DateTime?
+  createdAt    DateTime  @default(now())
+}

@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: #eef1f5;
+  color: #1a1f29;
+  font-family: "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: #cfe0f3;
+}
+
+/* İnce kaydırma çubuğu */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #c4cedb;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
