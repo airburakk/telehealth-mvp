@@ -98,19 +98,33 @@ export function ConsultationRoom({
         setErrMsg("Bu tarayıcı kamera erişimini desteklemiyor. Linki uygulama içinde değil, Chrome veya Safari'de açın. [desteksiz]");
         setPhase("error"); return;
       }
-      let stream: MediaStream;
+      // Esnek edinim: kamera+mik → sadece mik (kamerasız cihaz) → yalnız izleme
+      let stream: MediaStream | null = null;
+      let lastErr = "";
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       } catch (e) {
-        const name = (e as DOMException)?.name || "bilinmeyen";
-        let msg = "Kamera/mikrofona erişilemedi.";
-        if (name === "NotAllowedError" || name === "SecurityError") msg = "İzin reddedildi/engellendi. Kilit simgesinden Kamera ve Mikrofon'a izin verip tekrar deneyin.";
-        else if (name === "NotFoundError" || name === "OverconstrainedError") msg = "Kamera/mikrofon bulunamadı.";
-        else if (name === "NotReadableError") msg = "Kamera başka bir uygulamada açık olabilir; kapatıp tekrar deneyin.";
-        setErrMsg(`${msg} [${name}]`); setPhase("error"); return;
+        lastErr = (e as DOMException)?.name || "";
+        if (lastErr === "NotFoundError" || lastErr === "OverconstrainedError" || lastErr === "NotReadableError") {
+          try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); lastErr = ""; }
+          catch (e2) { lastErr = (e2 as DOMException)?.name || lastErr; }
+        }
       }
+      if (!stream && (lastErr === "NotAllowedError" || lastErr === "SecurityError")) {
+        setErrMsg(`İzin reddedildi/engellendi. Kilit simgesinden Kamera ve Mikrofon'a izin verip tekrar deneyin. [${lastErr}]`);
+        setPhase("error"); return;
+      }
+      const hasVideo = !!stream && stream.getVideoTracks().length > 0;
+      const hasAudio = !!stream && stream.getAudioTracks().length > 0;
       localStreamRef.current = stream;
-      if (localVideoRef.current) { localVideoRef.current.srcObject = stream; localVideoRef.current.play().catch(() => {}); }
+      setCamOn(hasVideo);
+      setMicOn(hasAudio);
+      if (!hasVideo) {
+        setErrMsg(hasAudio
+          ? "Bu cihazda kamera yok — sesli katıldınız; karşı tarafı görebilirsiniz."
+          : `Kamera/mikrofon yok — yalnızca izleme modundasınız. [${lastErr || "cihaz yok"}]`);
+      }
+      if (stream && localVideoRef.current) { localVideoRef.current.srcObject = stream; localVideoRef.current.play().catch(() => {}); }
 
       const pc = new RTCPeerConnection({
         iceServers: [
@@ -123,7 +137,10 @@ export function ConsultationRoom({
         ],
       });
       pcRef.current = pc;
-      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+      if (stream) stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+      // Kamera/mik yoksa karşı tarafın yayınını alabilmek için alıcı kanal ekle
+      if (!hasVideo) { try { pc.addTransceiver("video", { direction: "recvonly" }); } catch {} }
+      if (!hasAudio) { try { pc.addTransceiver("audio", { direction: "recvonly" }); } catch {} }
       pc.ontrack = (e) => {
         if (remoteVideoRef.current) { remoteVideoRef.current.srcObject = e.streams[0]; remoteVideoRef.current.play().catch(() => {}); }
         setRemoteOn(true);
