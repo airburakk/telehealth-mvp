@@ -146,6 +146,18 @@ model CheckIn {
   createdAt  DateTime @default(now())
 }
 
+/// WebRTC sinyalleşme mesajı (video görüşme — polling tabanlı)
+model Signal {
+  id             Int      @id @default(autoincrement())
+  consultationId String
+  sender         String // "doctor" | "patient"
+  kind           String // "offer" | "answer" | "ice" | "bye"
+  data           String // JSON
+  createdAt      DateTime @default(now())
+
+  @@index([consultationId])
+}
+
 /// Etik Kurul / Tahkim başvurusu (Modül 7)
 model Complaint {
   id          String    @id @default(cuid())

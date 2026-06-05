@@ -18,9 +18,10 @@ export async function middleware(req: NextRequest) {
   if (pathname.startsWith("/etik-kurul") && !ETHICS_ROLES.includes(user.role)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
-  if ((pathname.startsWith("/doktor") || pathname.startsWith("/gorusme")) && !DOCTOR_ROLES.includes(user.role)) {
+  if (pathname.startsWith("/doktor") && !DOCTOR_ROLES.includes(user.role)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
+  // /gorusme: giriş yeterli (hasta + doktor görüşmeye katılabilir)
 
   return NextResponse.next();
 }

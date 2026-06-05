@@ -1,21 +1,36 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 import { ConsultationRoom } from "@/components/ConsultationRoom";
 
 export const dynamic = "force-dynamic";
 
-export default async function ConsultationPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ConsultationPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ role?: string }>;
+}) {
   const { id } = await params;
+  const sp = await searchParams;
   const consult = await db.consultation.findUnique({
     where: { id },
     include: { case: true, doctor: true },
   });
   if (!consult) notFound();
 
+  const user = await getCurrentUser();
+  const sessionRole =
+    user && ["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role) ? "doctor" : "patient";
+  const selfRole: "doctor" | "patient" =
+    sp.role === "patient" ? "patient" : sp.role === "doctor" ? "doctor" : sessionRole;
+
   const c = consult.case;
   return (
     <ConsultationRoom
       consultationId={consult.id}
+      selfRole={selfRole}
       status={consult.status}
       initialNotes={consult.notes}
       doctor={{ title: consult.doctor.title, name: consult.doctor.name, branch: consult.doctor.branch, color: consult.doctor.color }}
