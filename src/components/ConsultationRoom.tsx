@@ -94,11 +94,20 @@ export function ConsultationRoom({
     }
 
     (async () => {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setErrMsg("Bu tarayıcı kamera erişimini desteklemiyor. Linki uygulama içinde değil, Chrome veya Safari'de açın. [desteksiz]");
+        setPhase("error"); return;
+      }
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      } catch {
-        setErrMsg("Kamera/mikrofona erişilemedi — tarayıcı izni gerekli."); setPhase("error"); return;
+      } catch (e) {
+        const name = (e as DOMException)?.name || "bilinmeyen";
+        let msg = "Kamera/mikrofona erişilemedi.";
+        if (name === "NotAllowedError" || name === "SecurityError") msg = "İzin reddedildi/engellendi. Kilit simgesinden Kamera ve Mikrofon'a izin verip tekrar deneyin.";
+        else if (name === "NotFoundError" || name === "OverconstrainedError") msg = "Kamera/mikrofon bulunamadı.";
+        else if (name === "NotReadableError") msg = "Kamera başka bir uygulamada açık olabilir; kapatıp tekrar deneyin.";
+        setErrMsg(`${msg} [${name}]`); setPhase("error"); return;
       }
       localStreamRef.current = stream;
       if (localVideoRef.current) { localVideoRef.current.srcObject = stream; localVideoRef.current.play().catch(() => {}); }
