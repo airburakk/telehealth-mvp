@@ -40,6 +40,7 @@ export function ConsultationRoom({
   const [copied, setCopied] = useState(false);
   const [joined, setJoined] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [connState, setConnState] = useState("");
 
   const isDoctor = selfRole === "doctor";
   const u = urgencyStyle(caseData.urgency);
@@ -148,9 +149,11 @@ export function ConsultationRoom({
       pc.onicecandidate = (e) => { if (e.candidate) send("ice", e.candidate.toJSON()); };
       pc.onconnectionstatechange = () => {
         const s = pc.connectionState;
+        setConnState(s);
         if (s === "connected") { setPhase("connected"); setErrMsg(""); }
-        else if (s === "failed") setErrMsg("Bağlantı kurulamadı (ağ/NAT engeli). Sayfayı yenileyip tekrar deneyin.");
+        else if (s === "failed") setErrMsg("Bağlantı kurulamadı (ağ/NAT). En garantisi: iki cihazı aynı Wi-Fi'ya alın, sonra yenileyin.");
       };
+      pc.oniceconnectionstatechange = () => setConnState(pc.iceConnectionState);
 
       setPhase("waiting");
       if (selfRole === "doctor") {
@@ -211,7 +214,7 @@ export function ConsultationRoom({
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-slate-500">
           <span className={`inline-flex h-2.5 w-2.5 rounded-full ${phase === "connected" ? "bg-emerald-500" : phase === "ended" || phase === "error" ? "bg-slate-400" : "bg-amber-500 animate-pulse"}`} />
-          {statusLabel} · {isDoctor ? "Doktor görünümü" : "Hasta görünümü"}
+          {statusLabel} · {isDoctor ? "Doktor görünümü" : "Hasta görünümü"}{connState ? ` · ${connState}` : ""}
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
           {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />} Gerçek WebRTC (P2P)
