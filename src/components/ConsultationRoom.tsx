@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { urgencyStyle, countryFlag, countryName } from "@/lib/constants";
+import { urgencyStyle } from "@/lib/constants";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
   Save, Check, Pill, FlaskConical, Stethoscope, AlertTriangle, Languages, Loader2, Luggage,
@@ -38,13 +38,15 @@ export function ConsultationRoom({
   const [saving, setSaving] = useState(false);
   const [ending, setEnding] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [joined, setJoined] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   const isDoctor = selfRole === "doctor";
   const u = urgencyStyle(caseData.urgency);
   const remoteName = isDoctor ? caseData.patientName : `${doctor.title} ${doctor.name}`;
 
   useEffect(() => {
-    if (status === "ENDED") return;
+    if (status === "ENDED" || !joined) return;
     let polling = true;
     let lastId = 0;
     let remoteDescSet = false;
@@ -138,7 +140,7 @@ export function ConsultationRoom({
       pcRef.current?.close();
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, [consultationId, selfRole, status]);
+  }, [consultationId, selfRole, status, joined, retry]);
 
   function toggleCam() { const t = localStreamRef.current?.getVideoTracks()[0]; if (t) { t.enabled = !t.enabled; setCamOn(t.enabled); } }
   function toggleMic() { const t = localStreamRef.current?.getAudioTracks()[0]; if (t) { t.enabled = !t.enabled; setMicOn(t.enabled); } }
@@ -171,9 +173,12 @@ export function ConsultationRoom({
     }
   }
 
-  const statusLabel =
-    phase === "connected" ? "Bağlandı" : phase === "waiting" ? "Karşı taraf bekleniyor…" :
-    phase === "connecting" ? "Kamera açılıyor…" : phase === "ended" ? "Görüşme sona erdi" : "Hata";
+  const statusLabel = !joined
+    ? "Katılmaya hazır"
+    : phase === "connected" ? "Bağlandı"
+    : phase === "waiting" ? "Karşı taraf bekleniyor…"
+    : phase === "connecting" ? "Kamera açılıyor…"
+    : phase === "ended" ? "Görüşme sona erdi" : "Hata";
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
@@ -194,41 +199,59 @@ export function ConsultationRoom({
             {/* Uzak taraf (gerçek video) */}
             <video ref={remoteVideoRef} autoPlay playsInline className={`h-full w-full object-cover ${remoteOn ? "" : "hidden"}`} />
             {!remoteOn && (
-              <div className="absolute inset-0 grid place-items-center text-center">
-                <div>
-                  <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-white/10 text-2xl font-bold text-white">
-                    {remoteName.slice(0, 1)}
+              <div className="absolute inset-0 grid place-items-center p-4 text-center">
+                {!joined ? (
+                  <div>
+                    <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-white/10 text-white"><Camera size={28} /></span>
+                    <h3 className="mt-3 text-lg font-semibold text-white">Görüşmeye katılın</h3>
+                    <p className="mx-auto mt-1 max-w-xs text-sm text-white/60">Bağlanmak için kamera ve mikrofon izni vermeniz gerekir.</p>
+                    <button onClick={() => { setErrMsg(""); setPhase("connecting"); setJoined(true); }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
+                      <Video size={17} /> Kamera & mikrofonla katıl
+                    </button>
                   </div>
-                  <div className="mt-3 font-medium text-white/90">{remoteName}</div>
-                  <div className="text-xs text-white/50">
-                    {phase === "waiting" ? "bağlantı bekleniyor…" : phase === "connecting" ? "kamera açılıyor…" : countryName(caseData.country)}
+                ) : phase === "error" ? (
+                  <div>
+                    <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-amber-500/20 text-amber-300"><AlertTriangle size={28} /></span>
+                    <p className="mx-auto mt-3 max-w-xs text-sm text-white/85">{errMsg || "Kamera/mikrofona erişilemedi."}</p>
+                    <p className="mx-auto mt-1 max-w-xs text-xs text-white/50">Adres çubuğundaki kilit/kamera simgesine dokunup Kamera ve Mikrofon&apos;a &quot;İzin ver&quot; deyin, sonra tekrar deneyin.</p>
+                    <button onClick={() => { setErrMsg(""); setPhase("connecting"); setRetry((r) => r + 1); }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-100">
+                      Tekrar dene
+                    </button>
                   </div>
-                  <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70">
-                    <Languages size={13} /> Canlı çeviri: {caseData.language} ⇄ Türkçe (demo)
+                ) : (
+                  <div>
+                    <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-white/10 text-2xl font-bold text-white">{remoteName.slice(0, 1)}</div>
+                    <div className="mt-3 font-medium text-white/90">{remoteName}</div>
+                    <div className="text-xs text-white/50">{phase === "waiting" ? "karşı taraf bekleniyor…" : "kamera açılıyor…"}</div>
+                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70"><Languages size={13} /> Canlı çeviri: {caseData.language} ⇄ Türkçe (demo)</div>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
             {/* Yerel self-view */}
-            <div className="absolute bottom-3 right-3 h-28 w-44 overflow-hidden rounded-xl border border-white/20 bg-black/60 shadow-lg">
-              <video ref={localVideoRef} autoPlay muted playsInline className={`h-full w-full object-cover ${camOn ? "" : "hidden"}`} />
-              {!camOn && <div className="grid h-full place-items-center text-center text-[11px] text-white/50"><div><Camera size={18} className="mx-auto mb-1" /> Kamera kapalı</div></div>}
-              <span className="absolute left-1.5 top-1.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white/80">Siz</span>
-            </div>
+            {joined && (
+              <div className="absolute bottom-3 right-3 h-28 w-44 overflow-hidden rounded-xl border border-white/20 bg-black/60 shadow-lg">
+                <video ref={localVideoRef} autoPlay muted playsInline className={`h-full w-full object-cover ${camOn ? "" : "hidden"}`} />
+                {!camOn && <div className="grid h-full place-items-center text-center text-[11px] text-white/50"><div><Camera size={18} className="mx-auto mb-1" /> Kamera kapalı</div></div>}
+                <span className="absolute left-1.5 top-1.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white/80">Siz</span>
+              </div>
+            )}
 
             {/* Kontroller */}
-            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2">
-              <button onClick={toggleCam} className={`grid h-11 w-11 place-items-center rounded-full ${camOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-white text-slate-800"}`}>
-                {camOn ? <Video size={18} /> : <VideoOff size={18} />}
-              </button>
-              <button onClick={toggleMic} className={`grid h-11 w-11 place-items-center rounded-full ${micOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-white text-slate-800"}`}>
-                {micOn ? <Mic size={18} /> : <MicOff size={18} />}
-              </button>
-              <button onClick={endCall} disabled={ending} className="inline-flex h-11 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60">
-                {ending ? <Loader2 size={17} className="animate-spin" /> : <PhoneOff size={17} />} Bitir
-              </button>
-            </div>
+            {joined && (
+              <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2">
+                <button onClick={toggleCam} className={`grid h-11 w-11 place-items-center rounded-full ${camOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-white text-slate-800"}`}>
+                  {camOn ? <Video size={18} /> : <VideoOff size={18} />}
+                </button>
+                <button onClick={toggleMic} className={`grid h-11 w-11 place-items-center rounded-full ${micOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-white text-slate-800"}`}>
+                  {micOn ? <Mic size={18} /> : <MicOff size={18} />}
+                </button>
+                <button onClick={endCall} disabled={ending} className="inline-flex h-11 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60">
+                  {ending ? <Loader2 size={17} className="animate-spin" /> : <PhoneOff size={17} />} Bitir
+                </button>
+              </div>
+            )}
           </div>
 
           {errMsg && <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">{errMsg}</div>}
