@@ -102,7 +102,14 @@ export function ConsultationRoom({
       if (localVideoRef.current) { localVideoRef.current.srcObject = stream; localVideoRef.current.play().catch(() => {}); }
 
       const pc = new RTCPeerConnection({
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }],
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+          // Ücretsiz public TURN (OpenRelay) — mobil/symmetric NAT için relay
+          { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+          { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+          { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+        ],
       });
       pcRef.current = pc;
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
@@ -113,7 +120,8 @@ export function ConsultationRoom({
       pc.onicecandidate = (e) => { if (e.candidate) send("ice", e.candidate.toJSON()); };
       pc.onconnectionstatechange = () => {
         const s = pc.connectionState;
-        if (s === "connected") setPhase("connected");
+        if (s === "connected") { setPhase("connected"); setErrMsg(""); }
+        else if (s === "failed") setErrMsg("Bağlantı kurulamadı (ağ/NAT engeli). Sayfayı yenileyip tekrar deneyin.");
       };
 
       setPhase("waiting");
