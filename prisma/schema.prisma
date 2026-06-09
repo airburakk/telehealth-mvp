@@ -74,12 +74,19 @@ model Case {
   confidence          Int            @default(70) // 0-100
   status              String         @default("NEW") // NEW, IN_REVIEW, IN_CONSULT, DONE
   coordinatorApproved Boolean        @default(false)
+  // Ön-konsültasyon ücret/sigorta kapısı (Modül 1)
+  consultFee          Int? // tahsil edilen görüşme ücreti (USD)
+  payStatus           String         @default("PENDING") // PENDING, PAID, INSURED
+  payMethod           String? // PAYMENT | INSURANCE
+  policyNo            String? // sigorta poliçe no (INSURANCE ise)
+  payRef              String? // ödeme referansı (PAYMENT ise, simüle)
   doctor              Doctor?        @relation(fields: [doctorId], references: [id])
   doctorId            String?
   consultations       Consultation[]
   bookings            Booking[]
   recovery            Recovery?
   complaints          Complaint[]
+  shareLinks          ShareLink[]
   createdAt           DateTime       @default(now())
 }
 
@@ -177,4 +184,38 @@ model Complaint {
   decidedBy    String?
   decidedAt    DateTime?
   createdAt    DateTime  @default(now())
+}
+
+/// Güvenli dijital sağlık paylaşımı linki (Modül 4 — hasta kontrolünde veri paylaşımı)
+/// Hasta, kendi verisini süreli/iptal edilebilir bir token-linki ile yurt dışındaki doktoruna paylaşır.
+model ShareLink {
+  id            String        @id @default(cuid())
+  token         String        @unique // URL token — girişsiz erişim anahtarı
+  case          Case          @relation(fields: [caseId], references: [id])
+  caseId        String
+  recipientName String? // hastanın girdiği alıcı adı, ör. "Dr. Smith" (ops.)
+  scopes        String // CSV kategori: EPIKRIZ,RADYOLOJI,LAB,GORUSME_NOTU
+  expiresAt     DateTime? // null = süresiz
+  passwordHash  String? // opsiyonel erişim şifresi (bcrypt)
+  allowDownload Boolean       @default(false)
+  revokedAt     DateTime? // iptal edildiyse zaman damgası
+  accesses      ShareAccess[]
+  createdAt     DateTime      @default(now())
+
+  @@index([caseId])
+}
+
+/// Paylaşım linkine erişim kaydı — Denetim İzi (Audit Trail)
+model ShareAccess {
+  id            String    @id @default(cuid())
+  shareLink     ShareLink @relation(fields: [shareLinkId], references: [id])
+  shareLinkId   String
+  action        String // VIEW, DOWNLOAD
+  ip            String?
+  userAgent     String?
+  detail        String? // indirilen dosya adı vb.
+  seenByPatient Boolean   @default(false) // hasta erişim bildirimini gördü mü
+  createdAt     DateTime  @default(now())
+
+  @@index([shareLinkId])
 }

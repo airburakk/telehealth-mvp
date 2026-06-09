@@ -53,6 +53,11 @@ export async function POST(req: Request) {
       confidence: a.confidence,
       reasoning: a.reasoning,
       status: "NEW",
+      consultFee: typeof body.consultFee === "number" ? body.consultFee : null,
+      payStatus: ["PAID", "INSURED"].includes(String(body.payStatus)) ? String(body.payStatus) : "PENDING",
+      payMethod: body.payMethod ? String(body.payMethod) : null,
+      policyNo: body.policyNo ? String(body.policyNo).slice(0, 40) : null,
+      payRef: body.payRef ? String(body.payRef).slice(0, 40) : null,
     },
   });
 

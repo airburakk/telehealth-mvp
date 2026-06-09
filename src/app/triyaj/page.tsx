@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { COUNTRIES, urgencyStyle } from "@/lib/constants";
+import { PreConsultGate } from "@/components/PreConsultGate";
+import type { Billing } from "@/lib/billing";
 import {
   UserRound, MessageSquareText, Paperclip, ClipboardCheck,
   Sparkles, Upload, X, ShieldCheck, Loader2, ArrowRight, ArrowLeft, FileText,
@@ -24,6 +26,7 @@ const STEPS = [
 
 export default function TriyajPage() {
   const router = useRouter();
+  const [billing, setBilling] = useState<Billing | null>(null);
   const [step, setStep] = useState(0);
   const [patientName, setPatientName] = useState("");
   const [country, setCountry] = useState("DZ");
@@ -80,7 +83,11 @@ export default function TriyajPage() {
       const res = await fetch("/api/cases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patientName, country, language, symptoms, durationText, attachments: files }),
+        body: JSON.stringify({
+          patientName, country, language, symptoms, durationText, attachments: files,
+          consultFee: billing?.fee, payStatus: billing?.status, payMethod: billing?.method,
+          policyNo: billing?.policyNo, payRef: billing?.payRef,
+        }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Hata");
       const created = await res.json();
@@ -93,12 +100,31 @@ export default function TriyajPage() {
 
   const u = analysis ? urgencyStyle(analysis.urgency) : null;
 
+  // Ön-konsültasyon kapısı: ücret bilgisi + sigorta/ödeme geçilmeden triyaj başlamaz
+  if (!billing) {
+    return (
+      <div className="mx-auto max-w-2xl px-5 py-10">
+        <h1 className="text-2xl font-bold text-[#0f2a4a]">Triyaj · Ön Değerlendirme</h1>
+        <p className="mt-1 text-sm text-slate-500">Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.</p>
+        <div className="mt-7">
+          <PreConsultGate onCleared={setBilling} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-5 py-10">
       <h1 className="text-2xl font-bold text-[#0f2a4a]">Triyaj · Ön Değerlendirme</h1>
       <p className="mt-1 text-sm text-slate-500">
         Birkaç adımda şikayetinizi anlatın; sistem sizi doğru uzmana yönlendirsin.
       </p>
+      <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200">
+        <ShieldCheck size={15} />
+        {billing.status === "INSURED"
+          ? `Görüşme ${billing.insurer ?? "sigortanız"} tarafından karşılanıyor · Poliçe ${billing.policyNo}`
+          : `Görüşme ücreti alındı: $${billing.fee} · Ref ${billing.payRef}`}
+      </div>
 
       {/* Stepper */}
       <div className="mt-6 flex items-center">

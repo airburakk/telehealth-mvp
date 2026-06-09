@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { recoveryProtocol, severityMeta, type Severity } from "@/lib/postop";
 import { CheckInForm } from "@/components/CheckInForm";
 import { formatDateTime } from "@/lib/constants";
-import { ArrowLeft, HeartPulse, CalendarCheck, Pill, Video, Thermometer, Activity } from "lucide-react";
+import { ArrowLeft, HeartPulse, CalendarCheck, Pill, Video, Thermometer, Activity, ShieldCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -106,6 +106,12 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><Pill size={15} /> İlaç Hatırlatıcı</div>
             <p className="mt-1.5 text-sm text-slate-600">Günlük ilaç bildirimleri açık (demo).</p>
           </div>
+
+          <Link href="/paylasimlarim" className="block rounded-2xl border border-[#0f2a4a]/20 bg-[#0f2a4a]/[0.03] p-5 transition-colors hover:bg-[#0f2a4a]/[0.06]">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#0f2a4a]"><ShieldCheck size={15} /> Güvenli Paylaşım</div>
+            <p className="mt-1.5 text-sm text-slate-600">Bu kayıtları kendi ülkenizdeki doktorunuzla süreli ve iptal edilebilir bir bağlantıyla paylaşın.</p>
+            <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0f2a4a]">Paylaşım Kontrol Merkezi →</span>
+          </Link>
         </aside>
       </div>
     </div>
