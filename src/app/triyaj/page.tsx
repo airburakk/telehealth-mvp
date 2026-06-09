@@ -15,6 +15,7 @@ interface Analysis {
   urgency: number;
   confidence: number;
   reasoning: string;
+  engine?: "llm" | "rules";
 }
 
 const STEPS = [
@@ -328,6 +329,7 @@ function AnalysisCard({ analysis, badge, dot, label }: { analysis: Analysis; bad
     <div className="rounded-xl border border-sky-200 bg-sky-50/60 p-4">
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-sky-700">
         <Sparkles size={14} /> AI Ön Analizi
+        {analysis.engine === "llm" && <span className="rounded-full bg-sky-600 px-1.5 py-0.5 text-[9px] tracking-normal text-white">Claude</span>}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <span className="rounded-lg bg-white px-2.5 py-1 text-sm font-semibold text-[#0f2a4a] ring-1 ring-slate-200">{analysis.branch}</span>

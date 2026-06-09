@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { analyzeTriage } from "@/lib/triage";
+import { runTriage } from "@/lib/triage-llm";
 
 // GET /api/cases — vaka kuyruğu (filtrelenebilir)
 export async function GET(req: Request) {
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Hasta adı ve şikayet zorunludur." }, { status: 400 });
   }
 
-  const a = analyzeTriage({
+  const a = await runTriage({
     symptoms,
     durationText: body.durationText ? String(body.durationText) : undefined,
     answers: body.answers ?? undefined,

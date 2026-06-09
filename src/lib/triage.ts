@@ -39,6 +39,7 @@ export interface TriageOutput {
   confidence: number; // 0..100
   reasoning: string;
   matched: string[];
+  engine?: "llm" | "rules"; // hangi motorun ürettiği (şeffaflık)
 }
 
 function normalize(t: string): string {
@@ -89,5 +90,5 @@ export function analyzeTriage(input: TriageInput): TriageOutput {
   const kwText = matched.length ? `eşleşen anahtar kelimeler: ${matched.slice(0, 6).join(", ")}` : "belirgin anahtar kelime bulunamadı, varsayılan branşa yönlendirildi";
   const reasoning = `Semptom analizi → ${best.label}. (${kwText}). Aciliyet ${urgency}/5 — ${why}`;
 
-  return { branchKey: best.key, branch: best.label, urgency, confidence, reasoning, matched };
+  return { branchKey: best.key, branch: best.label, urgency, confidence, reasoning, matched, engine: "rules" };
 }
