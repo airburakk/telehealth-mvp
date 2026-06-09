@@ -73,7 +73,6 @@ model Case {
   reasoning           String
   confidence          Int            @default(70) // 0-100
   status              String         @default("NEW") // NEW, IN_REVIEW, IN_CONSULT, DONE
-  coordinatorApproved Boolean        @default(false)
   // Ön-konsültasyon ücret/sigorta kapısı (Modül 1)
   consultFee          Int? // tahsil edilen görüşme ücreti (USD)
   payStatus           String         @default("PENDING") // PENDING, PAID, INSURED
