@@ -22,6 +22,9 @@ export async function POST(req: Request) {
 
   const c = await db.case.findUnique({ where: { id: caseId } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+  if (user.role === "PATIENT" && c.userId !== user.id) {
+    return NextResponse.json({ error: "Yalnızca kendi vakanız için paylaşım oluşturabilirsiniz." }, { status: 403 });
+  }
 
   const password = b.password ? String(b.password) : "";
   const link = await db.shareLink.create({

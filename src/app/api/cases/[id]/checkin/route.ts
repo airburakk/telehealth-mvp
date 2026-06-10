@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { assessCheckIn } from "@/lib/postop";
 import { notifyRoles } from "@/lib/notify";
+import { canAccessCase } from "@/lib/ownership";
 
 // POST /api/cases/:id/checkin — günlük iyileşme kontrolü
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const c = await db.case.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+  if (!(await canAccessCase(c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
 
   const recovery = await db.recovery.upsert({
     where: { caseId: c.id },

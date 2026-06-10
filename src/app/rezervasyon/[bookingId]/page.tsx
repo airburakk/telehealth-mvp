@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { canAccessCase } from "@/lib/ownership";
 import { formatUSD, type LineItem } from "@/lib/pricing";
 import { ESCROW_STATUS } from "@/lib/ethics";
 import {
@@ -22,6 +23,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
   const { bookingId } = await params;
   const booking = await db.booking.findUnique({ where: { id: bookingId }, include: { case: true } });
   if (!booking) notFound();
+  if (!(await canAccessCase(booking.case))) notFound(); // hasta yalnız kendi rezervasyonunu görür
 
   const items: LineItem[] = JSON.parse(booking.breakdown);
   const split: LineItem[] = JSON.parse(booking.split);

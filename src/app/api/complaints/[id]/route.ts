@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { notifyRoles } from "@/lib/notify";
+import { notifyRoles, notifyUser } from "@/lib/notify";
 
 // PATCH /api/complaints/:id — Etik Kurul kararı (yaptırım + Escrow tetikleyicisi)
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -31,12 +31,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   });
 
   const verdictLabel = verdict === "FAVOR" ? "lehinize sonuçlandı" : verdict === "PARTIAL" ? "kısmen kabul edildi" : "reddedildi";
-  await notifyRoles(["PATIENT", "COORDINATOR"], {
-    type: "DECISION",
+  const decisionNotif = {
+    type: "DECISION" as const,
     title: `⚖️ Etik Kurul kararı: başvuru ${verdictLabel}`,
     body: refundAmount ? `İade: $${refundAmount.toLocaleString("en-US")} (Escrow'dan)` : rationale?.slice(0, 80) ?? undefined,
     href: `/sikayet/${complaint.caseId}`,
-  });
+  };
+  // Vaka sahibi belliyse hastaya kişisel bildirim; değilse rol yayını (eski vakalar)
+  const ownerCase = await db.case.findUnique({ where: { id: complaint.caseId }, select: { userId: true } });
+  if (ownerCase?.userId) {
+    await notifyUser(ownerCase.userId, decisionNotif);
+    await notifyRoles(["COORDINATOR"], decisionNotif);
+  } else {
+    await notifyRoles(["PATIENT", "COORDINATOR"], decisionNotif);
+  }
 
   return NextResponse.json(updated);
 }

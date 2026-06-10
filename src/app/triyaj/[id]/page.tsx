@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { canAccessCase } from "@/lib/ownership";
 import { countryFlag, countryName, urgencyStyle } from "@/lib/constants";
 import { CheckCircle2, FileText, Stethoscope, ArrowRight, Sparkles } from "lucide-react";
 
@@ -8,6 +9,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const c = await db.case.findUnique({ where: { id } });
   if (!c) notFound();
+  if (!(await canAccessCase(c))) notFound(); // hasta yalnız kendi vaka sonucunu görür
 
   const u = urgencyStyle(c.urgency);
   const files = c.attachments ? c.attachments.split(",").filter(Boolean) : [];

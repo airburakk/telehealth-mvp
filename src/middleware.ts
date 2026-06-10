@@ -43,5 +43,6 @@ export const config = {
     "/sikayet/:path*",
     "/etik-kurul", "/etik-kurul/:path*",
     "/operasyon", "/operasyon/:path*",
+    "/vakalarim",
   ],
 };

@@ -11,7 +11,10 @@ export default async function MySharesPage() {
   const user = await getCurrentUser();
   if (!user || !["PATIENT", "ADMIN"].includes(user.role)) redirect("/giris?next=/paylasimlarim");
 
+  // Hasta yalnız kendi vakalarını ve onlara ait paylaşım linklerini görür (ADMIN tümünü)
+  const own = user.role === "PATIENT" ? { userId: user.id } : {};
   const links = await db.shareLink.findMany({
+    where: user.role === "PATIENT" ? { case: { userId: user.id } } : {},
     orderBy: { createdAt: "desc" },
     include: {
       case: { select: { patientName: true, branch: true } },
@@ -19,6 +22,7 @@ export default async function MySharesPage() {
     },
   });
   const cases = await db.case.findMany({
+    where: own,
     orderBy: { createdAt: "desc" },
     select: { id: true, patientName: true, branch: true, country: true },
   });

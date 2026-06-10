@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { notifyRoles } from "@/lib/notify";
+import { canAccessCase } from "@/lib/ownership";
 
 // POST /api/cases/:id/complaint — Etik Kurul'a başvuru oluştur
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const c = await db.case.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+  if (!(await canAccessCase(c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
 
   const b = await req.json().catch(() => ({}));
   const subject = String(b.subject ?? "").trim();

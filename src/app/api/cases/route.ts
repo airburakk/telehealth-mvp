@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
 import { notifyRoles } from "@/lib/notify";
+import { getCurrentUser } from "@/lib/auth";
 
 // GET /api/cases — vaka kuyruğu (filtrelenebilir)
 export async function GET(req: Request) {
@@ -41,8 +42,11 @@ export async function POST(req: Request) {
     ? body.attachments.join(",")
     : null;
 
+  const creator = await getCurrentUser();
+
   const created = await db.case.create({
     data: {
+      userId: creator?.id ?? null, // vaka sahibi (hasta yalnız kendi vakalarını görür)
       patientName,
       country: String(body.country ?? "TR"),
       language: String(body.language ?? "Türkçe"),

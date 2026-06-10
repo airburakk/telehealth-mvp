@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { ownsCase } from "@/lib/ownership";
 import { ConsultationRoom } from "@/components/ConsultationRoom";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ export default async function ConsultationPage({
   if (!consult) notFound();
 
   const user = await getCurrentUser();
+  if (!ownsCase(user, consult.case)) notFound(); // hasta yalnız kendi görüşmesine katılır
   const sessionRole =
     user && ["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role) ? "doctor" : "patient";
   const selfRole: "doctor" | "patient" =

@@ -1,6 +1,6 @@
 import { headers, cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { notifyRoles } from "@/lib/notify";
+import { notifyRoles, notifyUser } from "@/lib/notify";
 import { shareState, buildSharedItems, scopeLabel, SHARE_UNLOCK_PREFIX, type SharedItem } from "@/lib/share";
 import { ShareUnlock } from "@/components/ShareUnlock";
 import {
@@ -102,12 +102,15 @@ export default async function ShareViewerPage({ params }: { params: Promise<{ to
     await db.shareAccess.create({
       data: { shareLinkId: link.id, action: "VIEW", ip, userAgent: h.get("user-agent")?.slice(0, 300) || null },
     });
-    await notifyRoles(["PATIENT"], {
-      type: "SHARE_ACCESS",
+    const accessNotif = {
+      type: "SHARE_ACCESS" as const,
       title: "👁 Sağlık paylaşımınız görüntülendi",
       body: `${link.recipientName ?? "Alıcı"} · ${link.case.patientName} kayıtları`,
       href: "/paylasimlarim",
-    });
+    };
+    // Vaka sahibi belliyse kişisel; değilse rol yayını (eski vakalar)
+    if (link.case.userId) await notifyUser(link.case.userId, accessNotif);
+    else await notifyRoles(["PATIENT"], accessNotif);
   }
 
   const scopes = link.scopes.split(",");

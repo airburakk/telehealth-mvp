@@ -49,5 +49,5 @@ export function roleHome(role: Role): string {
   if (role === "COORDINATOR") return "/operasyon"; // S2 operasyon paneli
   if (role === "DOCTOR") return "/doktor";
   if (role === "ETHICS") return "/etik-kurul";
-  return "/triyaj";
+  return "/vakalarim"; // hasta: kendi vakaları
 }

@@ -97,12 +97,14 @@ async function main() {
   await db.user.update({ where: { email: "doktor@air.test" }, data: { doctorId: doctors[0].id } });
 
   console.log("Demo vakalar ekleniyor...");
+  const patientUser = await db.user.findUnique({ where: { email: "hasta@air.test" } });
   const byName: Record<string, string> = {};
   for (const c of CASES) {
     const a = analyzeTriage({ symptoms: c.symptoms, durationText: c.durationText });
     const matchDoctor = doctors.find((doc) => doc.branch === a.branch);
     const created = await db.case.create({
       data: {
+        userId: patientUser?.id ?? null, // demo vakalar demo hastaya ait (hasta↔vaka sahipliği)
         patientName: c.patientName,
         country: c.country,
         language: c.language,

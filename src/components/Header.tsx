@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
-import { Activity, Stethoscope, UserRound, HeartPulse, Scale, LogOut, LogIn, Users, BadgeCheck, Share2, BarChart3 } from "lucide-react";
+import { Activity, Stethoscope, UserRound, HeartPulse, Scale, LogOut, LogIn, Users, BadgeCheck, Share2, BarChart3, FolderHeart } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
   PATIENT: "Hasta",
@@ -14,6 +14,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const NAV = [
+  { href: "/vakalarim", label: "Vakalarım", icon: FolderHeart, roles: ["PATIENT", "ADMIN"] },
   { href: "/triyaj", label: "Triyaj", icon: UserRound, roles: ["PATIENT", "ADMIN"] },
   { href: "/hekimler", label: "Hekimler", icon: Users, roles: ["PATIENT", "ADMIN"] },
   { href: "/paylasimlarim", label: "Paylaşımlarım", icon: Share2, roles: ["PATIENT", "ADMIN"] },

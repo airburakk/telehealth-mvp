@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { canAccessCase } from "@/lib/ownership";
 import { recoveryProtocol, severityMeta, type Severity } from "@/lib/postop";
 import { CheckInForm } from "@/components/CheckInForm";
 import { formatDateTime } from "@/lib/constants";
@@ -12,6 +13,7 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
   const { caseId } = await params;
   const c = await db.case.findUnique({ where: { id: caseId } });
   if (!c) notFound();
+  if (!(await canAccessCase(c))) notFound(); // hasta yalnız kendi vakasını görür
 
   const recovery = await db.recovery.upsert({
     where: { caseId: c.id },

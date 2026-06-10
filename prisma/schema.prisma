@@ -61,6 +61,7 @@ model Review {
 /// Triyajdan geçen hasta vakası
 model Case {
   id                  String         @id @default(cuid())
+  userId              String? // vaka sahibi hasta (User.id) — hasta yalnız kendi vakalarını görür
   patientName         String
   country             String // DZ, LY, RU, KZ, KG, TR ...
   language            String
@@ -91,6 +92,8 @@ model Case {
   complaints          Complaint[]
   shareLinks          ShareLink[]
   createdAt           DateTime       @default(now())
+
+  @@index([userId])
 }
 
 /// Hasta-doktor video görüşmesi
@@ -208,10 +211,11 @@ model ShareLink {
   @@index([caseId])
 }
 
-/// Uygulama içi bildirim — rol hedefli (demo hesapları rol bazlı; ileride userId ile kişiselleşir)
+/// Uygulama içi bildirim — rol hedefli (yayın) VEYA kullanıcı hedefli (kişisel)
 model Notification {
   id        String    @id @default(cuid())
-  role      String // hedef rol: PATIENT, DOCTOR, COORDINATOR, ETHICS, ADMIN
+  role      String? // hedef rol: PATIENT, DOCTOR, COORDINATOR, ETHICS, ADMIN (yayın)
+  userId    String? // hedef kullanıcı (kişisel — vaka sahibi hasta vb.)
   type      String // NEW_CASE, RED_FLAG, BOOKING, COMPLAINT, DECISION, SHARE_ACCESS
   title     String
   body      String?
@@ -220,6 +224,7 @@ model Notification {
   createdAt DateTime  @default(now())
 
   @@index([role, readAt])
+  @@index([userId, readAt])
 }
 
 /// Paylaşım linkine erişim kaydı — Denetim İzi (Audit Trail)
