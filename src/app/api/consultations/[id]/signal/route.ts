@@ -8,7 +8,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const b = await req.json().catch(() => ({}));
   const sender = b.sender === "patient" ? "patient" : "doctor";
-  const kind = ["offer", "answer", "ice", "bye"].includes(b.kind) ? b.kind : null;
+  const kind = ["offer", "answer", "ice", "bye", "transcript"].includes(b.kind) ? b.kind : null;
   if (!kind) return NextResponse.json({ error: "Geçersiz tür." }, { status: 400 });
 
   await db.signal.create({

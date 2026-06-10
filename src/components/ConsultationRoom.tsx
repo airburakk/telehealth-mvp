@@ -7,7 +7,7 @@ import { TranslateButton } from "@/components/TranslateButton";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
   Save, Check, Pill, FlaskConical, Stethoscope, AlertTriangle, Languages, Loader2, Luggage,
-  Copy, Wifi, WifiOff, UserRound,
+  Copy, Wifi, WifiOff, UserRound, MessageSquareText,
 } from "lucide-react";
 
 interface CaseData {
@@ -16,6 +16,29 @@ interface CaseData {
 }
 interface DoctorData { title: string; name: string; branch: string; color: string; }
 type Phase = "connecting" | "waiting" | "connected" | "ended" | "error";
+
+// ── Canlı transkript (Web Speech API) ──
+interface TLine { who: "doctor" | "patient"; text: string; ts: number }
+
+// Tarayıcı SpeechRecognition için minimal tip (standart DOM tiplerinde tam yok)
+type AnySpeechRecognition = {
+  lang: string; continuous: boolean; interimResults: boolean;
+  onresult: ((e: { resultIndex: number; results: { length: number; [i: number]: { isFinal: boolean; 0: { transcript: string } } } }) => void) | null;
+  onend: (() => void) | null;
+  onerror: ((e: { error?: string }) => void) | null;
+  start: () => void; stop: () => void;
+};
+function getSpeechRecognition(): (new () => AnySpeechRecognition) | null {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as Record<string, unknown>;
+  return (w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null) as (new () => AnySpeechRecognition) | null;
+}
+
+// Hasta kendi dilinde konuşur → tanıyıcıya BCP-47 kodu
+const SPEECH_LANG: Record<string, string> = {
+  "Türkçe": "tr-TR", "Rusça": "ru-RU", "Arapça": "ar-SA", "Azerice": "az-AZ",
+  "İngilizce": "en-US", "Fransızca": "fr-FR", "Kazakça": "kk-KZ", "Kırgızca": "ky-KG",
+};
 
 export function ConsultationRoom({
   consultationId, selfRole, status, initialNotes, doctor, caseData,
@@ -45,9 +68,94 @@ export function ConsultationRoom({
   const [soapBusy, setSoapBusy] = useState(false);
   const [soapErr, setSoapErr] = useState("");
 
+  // Canlı transkript + sesli not (dikte)
+  const [transcript, setTranscript] = useState<TLine[]>([]);
+  const [sttOn, setSttOn] = useState(false);
+  const [dictating, setDictating] = useState(false);
+  const [interim, setInterim] = useState("");
+  const [sttErr, setSttErr] = useState("");
+  const [sttSupported, setSttSupported] = useState(true);
+  const [txBusy, setTxBusy] = useState(false);
+  const recRef = useRef<AnySpeechRecognition | null>(null);
+  const sttOnRef = useRef(false);
+  const dictatingRef = useRef(false);
+
   const isDoctor = selfRole === "doctor";
   const u = urgencyStyle(caseData.urgency);
   const remoteName = isDoctor ? caseData.patientName : `${doctor.title} ${doctor.name}`;
+  const myLang = isDoctor ? "tr-TR" : (SPEECH_LANG[caseData.language] ?? "tr-TR");
+
+  useEffect(() => { setSttSupported(!!getSpeechRecognition()); }, []);
+
+  // Sinyal gönder (transkript relay) — effect dışından da kullanılabilir
+  async function postSignal(kind: string, data: unknown) {
+    try {
+      await fetch(`/api/consultations/${consultationId}/signal`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sender: selfRole, kind, data: JSON.stringify(data) }),
+      });
+    } catch {}
+  }
+
+  // Tanınan kesin (final) konuşmayı yönlendir: dikte açıksa nota, değilse transkripte + karşı tarafa
+  function routeFinal(text: string) {
+    const t = text.trim();
+    if (!t) return;
+    if (dictatingRef.current && isDoctor) {
+      setNotes((n) => (n ? n + "\n" : "") + "🎤 " + t);
+      setSaved(false);
+    } else {
+      const line: TLine = { who: selfRole, text: t, ts: Date.now() };
+      setTranscript((prev) => [...prev, line]);
+      postSignal("transcript", line);
+    }
+  }
+
+  // Konuşma tanıma yaşam döngüsü: transkript veya dikte açıkken çalışır; sessizlikte Chrome durdurursa yeniden başlar
+  useEffect(() => {
+    sttOnRef.current = sttOn;
+    dictatingRef.current = dictating;
+    const want = (sttOn || dictating) && joined && phase !== "ended";
+    if (want && !recRef.current) {
+      const Ctor = getSpeechRecognition();
+      if (!Ctor) { setSttSupported(false); setSttOn(false); setDictating(false); return; }
+      const rec = new Ctor();
+      rec.lang = myLang;
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.onresult = (e) => {
+        let interimTxt = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const r = e.results[i];
+          if (r.isFinal) routeFinal(r[0].transcript);
+          else interimTxt += r[0].transcript;
+        }
+        setInterim(interimTxt);
+      };
+      rec.onend = () => {
+        if ((sttOnRef.current || dictatingRef.current) && recRef.current === rec) {
+          try { rec.start(); } catch {}
+        }
+      };
+      rec.onerror = (e) => {
+        if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+          setSttErr("Mikrofon izni reddedildi — konuşma tanıma kapatıldı.");
+          setSttOn(false);
+          setDictating(false);
+        }
+      };
+      recRef.current = rec;
+      try { rec.start(); } catch {}
+    } else if (!want && recRef.current) {
+      const rec = recRef.current;
+      recRef.current = null;
+      try { rec.stop(); } catch {}
+      setInterim("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sttOn, dictating, joined, phase]);
+
+  useEffect(() => () => { try { recRef.current?.stop(); } catch {} }, []);
 
   useEffect(() => {
     if (status === "ENDED" || !joined) return;
@@ -89,6 +197,11 @@ export function ConsultationRoom({
                 if (data) { if (remoteDescSet) { try { await pc.addIceCandidate(data); } catch {} } else pendingIce.push(data); }
               } else if (m.kind === "bye") {
                 setRemoteOn(false); setPhase("ended");
+              } else if (m.kind === "transcript") {
+                if (data && typeof data.text === "string" && data.text.trim()) {
+                  const line: TLine = { who: data.who === "doctor" ? "doctor" : "patient", text: String(data.text), ts: Number(data.ts) || Date.now() };
+                  setTranscript((prev) => [...prev, line].sort((a, b) => a.ts - b.ts));
+                }
               }
             } catch {}
           }
@@ -196,6 +309,21 @@ export function ConsultationRoom({
     finally { setSoapBusy(false); }
   }
 
+  // Adım 1: görüşme transkriptinden SOAP taslağı (mevcut notlarla birleştirilir)
+  async function generateSoapFromTranscript() {
+    if (!transcript.length) return;
+    setTxBusy(true); setSoapErr("");
+    const txText = transcript.map((l) => `${l.who === "doctor" ? "Doktor" : "Hasta"}: ${l.text}`).join("\n");
+    const merged = txText + (notes.trim() ? `\n\n[Doktorun mevcut notları]\n${notes}` : "");
+    try {
+      const r = await fetch(`/api/ai/soap`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notes: merged, caseId: caseData.id, source: "transcript" }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Transkriptten SOAP oluşturulamadı.");
+      setNotes(d.soap); setSaved(false);
+    } catch (e) { setSoapErr(e instanceof Error ? e.message : "Hata."); }
+    finally { setTxBusy(false); }
+  }
+
   async function copyPatientLink() {
     const url = `${window.location.origin}/gorusme/${consultationId}?role=patient`;
     try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
@@ -299,6 +427,46 @@ export function ConsultationRoom({
 
           {errMsg && <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">{errMsg}</div>}
 
+          {/* Canlı Transkript — iki taraf da kendi konuşmasını yazıya çevirir, karşı tarafa iletilir */}
+          {(joined || transcript.length > 0) && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <MessageSquareText size={14} /> Canlı Transkript
+                  {sttOn && <span className="ml-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
+                </div>
+                {sttSupported ? (
+                  <button
+                    onClick={() => { setSttErr(""); setSttOn((v) => !v); }}
+                    className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium ${sttOn ? "border-red-300 bg-red-50 text-red-700 hover:bg-red-100" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"}`}
+                  >
+                    <Mic size={13} /> {sttOn ? "Durdur" : `Başlat (${myLang.split("-")[0].toUpperCase()})`}
+                  </button>
+                ) : (
+                  <span className="text-[11px] text-slate-400">Tarayıcı desteklemiyor — Chrome/Edge önerilir</span>
+                )}
+              </div>
+              {sttErr && <div className="mt-1 text-[11px] text-red-600">{sttErr}</div>}
+              <div className="mt-2 max-h-44 space-y-1 overflow-y-auto">
+                {transcript.length === 0 && !interim && (
+                  <p className="text-xs text-slate-400">
+                    Başlat&apos;a basın; söyledikleriniz yazıya çevrilir, karşı tarafın konuşması da otomatik gelir.
+                    {isDoctor ? " Görüşme sonunda transkriptten tek tıkla SOAP taslağı oluşturabilirsiniz." : ""}
+                  </p>
+                )}
+                {transcript.map((l, i) => (
+                  <p key={i} className="text-sm leading-snug text-slate-700">
+                    <span className={`font-semibold ${l.who === "doctor" ? "text-[#16467a]" : "text-emerald-700"}`}>
+                      {l.who === "doctor" ? "Doktor" : "Hasta"}:
+                    </span>{" "}
+                    {l.text}
+                  </p>
+                ))}
+                {interim && !dictating && <p className="text-sm italic text-slate-400">{interim}…</p>}
+              </div>
+            </div>
+          )}
+
           {/* Doktor: hasta bağlantısı paylaş */}
           {isDoctor && (
             <div className="flex items-center justify-between gap-2 rounded-xl border border-sky-200 bg-sky-50/60 p-3">
@@ -366,6 +534,32 @@ export function ConsultationRoom({
                 {saved ? <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600"><Check size={13} /> kaydedildi</span> : <span className="text-[11px] text-amber-600">kaydedilmedi</span>}
               </div>
               <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#0f2a4a]" />
+
+              {/* Akış: 1) transkriptten taslak → 2) sesli not ekle → 3) SOAP'a dönüştür (güncelle) */}
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  onClick={generateSoapFromTranscript}
+                  disabled={txBusy || !transcript.length}
+                  title={!transcript.length ? "Önce Canlı Transkript'i başlatın" : "Görüşme transkriptinden SOAP taslağı"}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-violet-300 bg-violet-50 px-2 py-2 text-[12px] font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50"
+                >
+                  {txBusy ? <Loader2 size={13} className="animate-spin" /> : <MessageSquareText size={13} />} Transkriptten taslak
+                </button>
+                <button
+                  onClick={() => { setSttErr(""); setDictating((v) => !v); }}
+                  disabled={!sttSupported}
+                  title="Konuşarak nota ekleyin"
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[12px] font-semibold disabled:opacity-50 ${dictating ? "border-red-300 bg-red-50 text-red-700 hover:bg-red-100" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"}`}
+                >
+                  <Mic size={13} /> {dictating ? "Dikteyi kapat" : "Sesli not"}
+                </button>
+              </div>
+              {dictating && (
+                <p className="mt-1 text-[11px] font-medium text-amber-600">
+                  🎤 Dikte açık — konuştuklarınız nota eklenir{interim ? `: "${interim}…"` : "."}
+                </p>
+              )}
+
               <button onClick={generateSoap} disabled={soapBusy || !notes.trim()} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50">
                 {soapBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} AI · SOAP&apos;a dönüştür
               </button>

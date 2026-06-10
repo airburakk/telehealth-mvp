@@ -46,19 +46,29 @@ const SOAP_TOOL: Anthropic.Tool = {
   },
 };
 
-export async function summarizeSOAP(notes: string, ctx: SoapContext): Promise<{ soap: string; structured: Soap }> {
+export async function summarizeSOAP(
+  notes: string,
+  ctx: SoapContext,
+  source: "notes" | "transcript" = "notes"
+): Promise<{ soap: string; structured: Soap }> {
+  const sysIntro =
+    source === "transcript"
+      ? "Sen bir klinik dokümantasyon asistanısın. Doktor–hasta görüşmesinin KONUŞMA TRANSKRİPTİNİ (ve varsa doktorun ek notlarını) vaka bağlamıyla birlikte standart SOAP formatına dönüştürürsün. Hastanın söyledikleri ağırlıkla Subjektif'e, doktorun gözlem/değerlendirme/plan ifadeleri O/A/P'ye gider. Selamlaşma, bağlantı sorunu gibi tıbbi olmayan konuşmaları ele."
+      : "Sen bir klinik dokümantasyon asistanısın. Doktorun görüşme sırasında aldığı dağınık/serbest notları, vaka bağlamıyla birlikte standart SOAP formatına dönüştürürsün.";
   const res = await client().messages.create({
     model: MODEL,
     max_tokens: 1500,
     system:
-      "Sen bir klinik dokümantasyon asistanısın. Doktorun görüşme sırasında aldığı dağınık/serbest notları, vaka bağlamıyla birlikte standart SOAP formatına dönüştürürsün. Tıbbi olarak tutarlı, özlü ve Türkçe yaz. Notta olmayan bulguyu UYDURMA; bilgi yoksa 'Belirtilmedi' yaz. Yanıtı DAİMA submit_soap aracıyla ver.",
+      sysIntro +
+      " Tıbbi olarak tutarlı, özlü ve Türkçe yaz. Girdide olmayan bulguyu UYDURMA; bilgi yoksa 'Belirtilmedi' yaz. Yanıtı DAİMA submit_soap aracıyla ver.",
     tools: [SOAP_TOOL],
     tool_choice: { type: "tool", name: "submit_soap" },
     messages: [{
       role: "user",
       content:
         `Vaka bağlamı:\nHasta: ${ctx.patientName}\nBranş: ${ctx.branch}\nİlk şikâyet: ${ctx.symptoms}\n\n` +
-        `Doktorun görüşme notları:\n${notes || "(not girilmedi)"}`,
+        (source === "transcript" ? `Görüşme transkripti (+ varsa doktor notları):\n` : `Doktorun görüşme notları:\n`) +
+        (notes || "(not girilmedi)"),
     }],
   });
 
