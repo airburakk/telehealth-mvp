@@ -184,6 +184,229 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
       { id: "dah_family", label: "Ailede önemli hastalık öyküsü", type: "text", placeholder: "Ör. diyabet, kalp, kanser / yok" },
     ],
   },
+
+  noroloji: {
+    intro: "Nörolojik değerlendirme için sinir sistemi belirtilerinizi alalım.",
+    questions: [
+      { id: "nrl_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Baş ağrısı / migren", "Baş dönmesi", "Uyuşma / karıncalanma", "Güçsüzlük", "Nöbet / havale", "Unutkanlık", "Titreme", "Denge bozukluğu"], recommended: true },
+      { id: "nrl_onset", label: "Şikâyet nasıl başladı?", type: "select", options: ["Ani (saatler içinde)", "Günler içinde", "Haftalar içinde", "Aylar / yıllar"], help: "Ani başlangıç acil değerlendirme gerektirir." },
+      { id: "nrl_stroke", label: "Konuşmada bozulma / yüzde kayma / ani güç kaybı oldu mu?", type: "bool", help: "İnme belirtisi olabilir." },
+      { id: "nrl_seizure", label: "Bilinç kaybı veya nöbet geçirdiniz mi?", type: "bool" },
+      { id: "nrl_dx", label: "Bilinen nörolojik tanı", type: "text", placeholder: "Ör. migren, MS, epilepsi / yok" },
+      { id: "nrl_img", label: "Yapılmış tetkik", type: "multi", options: ["Beyin MR", "BT", "EEG", "EMG", "Yok"] },
+      { id: "nrl_dur", label: "Şikâyet süresi", type: "select", options: ["1 haftadan az", "1-4 hafta", "1-6 ay", "6 aydan fazla"] },
+    ],
+  },
+
+  gastroenteroloji: {
+    intro: "Sindirim sistemi değerlendirmesi için şikâyetlerinizi alalım.",
+    questions: [
+      { id: "gas_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Karın ağrısı", "Reflü / mide yanması", "Şişkinlik / gaz", "İshal", "Kabızlık", "Bulantı / kusma", "Yutma güçlüğü", "Dışkıda kan"], recommended: true },
+      { id: "gas_blood", label: "Dışkıda veya kusmukta kan gördünüz mü?", type: "bool", help: "Öncelikli değerlendirme gerektirir." },
+      { id: "gas_weight", label: "İstemsiz kilo kaybı var mı?", type: "bool" },
+      { id: "gas_dx", label: "Bilinen tanı", type: "multi", options: ["Yok", "Reflü", "Gastrit / ülser", "Kolit", "Karaciğer hastalığı", "Safra kesesi"] },
+      { id: "gas_scope", label: "Endoskopi / kolonoskopi yapıldı mı?", type: "multi", options: ["Endoskopi", "Kolonoskopi", "Yok"] },
+      { id: "gas_dur", label: "Şikâyet süresi", type: "select", options: ["1 haftadan az", "1-4 hafta", "1-6 ay", "6 aydan fazla"] },
+    ],
+  },
+
+  endokrinoloji: {
+    intro: "Hormon ve metabolizma değerlendirmesi için şikâyetlerinizi alalım.",
+    questions: [
+      { id: "end_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Tiroid / guatr", "Diyabet / şeker", "Kilo değişimi", "Hormonal bozukluk", "Kemik erimesi", "Aşırı tüylenme / akne", "Boy / gelişme"], recommended: true },
+      { id: "end_dx", label: "Bilinen tanı", type: "multi", options: ["Yok", "Hipotiroidi", "Hipertiroidi", "Diyabet", "PCOS", "Osteoporoz"] },
+      { id: "end_labs", label: "Tiroid / şeker değerleri biliniyor mu?", type: "bool" },
+      { id: "end_weight", label: "Son dönemde kilo değişimi", type: "select", options: ["Yok", "Kilo aldım", "Kilo verdim"] },
+      { id: "end_dur", label: "Şikâyet süresi", type: "select", options: ["1 aydan az", "1-6 ay", "6 ay - 1 yıl", "1 yıldan fazla"] },
+    ],
+  },
+
+  nefroloji: {
+    intro: "Böbrek sağlığı değerlendirmesi için durumunuzu alalım.",
+    questions: [
+      { id: "nef_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Böbrek değer yüksekliği", "İdrarda protein / kan", "Yüksek tansiyon", "Ödem / şişlik", "Böbrek taşı", "Diyaliz"], recommended: true },
+      { id: "nef_dx", label: "Bilinen böbrek hastalığı", type: "select", options: ["Yok", "Kronik böbrek yetmezliği", "Tek böbrek", "Polikistik böbrek", "Bilmiyorum"] },
+      { id: "nef_dialysis", label: "Diyalize giriyor musunuz?", type: "bool" },
+      { id: "nef_gfr", label: "Kreatinin / GFR değeri biliniyor mu?", type: "bool" },
+      { id: "nef_bp", label: "Tansiyon kontrol altında mı?", type: "select", options: ["Evet", "Hayır", "Bilmiyorum"] },
+      { id: "nef_tx", label: "Böbrek nakli düşünülüyor mu?", type: "bool" },
+    ],
+  },
+
+  "gogus-hastaliklari": {
+    intro: "Solunum sistemi değerlendirmesi için şikâyetlerinizi alalım.",
+    questions: [
+      { id: "ghs_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Nefes darlığı", "Öksürük", "Balgam", "Hırıltılı solunum", "Kanlı balgam", "Horlama / uyku apnesi", "Göğüste sıkışma"], recommended: true },
+      { id: "ghs_blood", label: "Kanlı balgam (hemoptizi) var mı?", type: "bool", help: "Öncelikli değerlendirme gerektirir." },
+      { id: "ghs_smoke", label: "Sigara kullanımı", type: "select", options: ["Hayır", "Bıraktım", "Evet"] },
+      { id: "ghs_breath", label: "Nefes darlığı düzeyi", type: "select", options: ["Yok", "Eforla", "Az eforla", "İstirahatte"] },
+      { id: "ghs_dx", label: "Bilinen tanı", type: "multi", options: ["Yok", "Astım", "KOAH", "Uyku apnesi", "Akciğer nodülü"] },
+      { id: "ghs_tests", label: "Yapılmış tetkik", type: "multi", options: ["Akciğer röntgeni", "Akciğer BT", "Solunum fonksiyon testi", "Yok"] },
+    ],
+  },
+
+  hematoloji: {
+    intro: "Kan hastalıkları değerlendirmesi için şikâyetlerinizi alalım.",
+    questions: [
+      { id: "hem_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Kansızlık / anemi", "Halsizlik", "Kolay morarma / kanama", "Lenf bezi şişmesi", "Pıhtılaşma sorunu", "Kan değeri bozukluğu"], recommended: true },
+      { id: "hem_dx", label: "Bilinen tanı", type: "multi", options: ["Yok", "Anemi", "Lösemi", "Lenfoma", "Pıhtılaşma bozukluğu", "Kemik iliği hastalığı"] },
+      { id: "hem_labs", label: "Kan değerlerinde bozukluk biliniyor mu?", type: "bool" },
+      { id: "hem_bleed", label: "Kolay morarma / kanama oluyor mu?", type: "bool" },
+      { id: "hem_node", label: "Lenf bezi şişliği var mı?", type: "bool" },
+    ],
+  },
+
+  romatoloji: {
+    intro: "Romatolojik değerlendirme için eklem/kas şikâyetlerinizi alalım.",
+    questions: [
+      { id: "rom_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Eklem ağrısı / şişme", "Sabah tutukluğu", "Kas ağrısı", "Cilt döküntüsü", "Ağız / göz kuruluğu", "Bel tutulması"], recommended: true },
+      { id: "rom_joints", label: "Etkilenen eklemler", type: "text", placeholder: "Ör. el bilekleri, dizler" },
+      { id: "rom_stiff", label: "Sabah tutukluğu süresi", type: "select", options: ["Yok", "30 dakikadan az", "30 dakikadan fazla"] },
+      { id: "rom_dx", label: "Bilinen tanı", type: "multi", options: ["Yok", "Romatoid artrit", "Lupus", "Behçet", "Ankilozan spondilit", "Gut"] },
+      { id: "rom_labs", label: "Romatolojik kan testi yapıldı mı?", type: "bool" },
+    ],
+  },
+
+  enfeksiyon: {
+    intro: "Enfeksiyon değerlendirmesi için durumunuzu alalım.",
+    questions: [
+      { id: "enf_symp", label: "Ana şikâyet / başvuru", type: "multi", options: ["Uzun süren ateş", "Tekrarlayan enfeksiyon", "Hepatit", "HIV danışmanlığı", "Seyahat sonrası şikâyet", "Antibiyotik direnci"], recommended: true },
+      { id: "enf_fever", label: "Ateş süresi", type: "select", options: ["Yok", "1 haftadan az", "1-4 hafta", "1 aydan fazla"] },
+      { id: "enf_dx", label: "Bilinen enfeksiyon tanısı", type: "text", placeholder: "Ör. Hepatit B / yok" },
+      { id: "enf_travel", label: "Son seyahat / temas öyküsü", type: "text", placeholder: "Ör. yurtdışı, hayvan teması / yok" },
+      { id: "enf_tests", label: "İlgili test sonuçlarınız var mı?", type: "bool" },
+    ],
+  },
+
+  dermatoloji: {
+    intro: "Cilt değerlendirmesi için şikâyetlerinizi alalım.",
+    questions: [
+      { id: "der_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Sivilce / akne", "Egzama / kaşıntı", "Sedef", "Ben / leke kontrolü", "Saç / tırnak", "Mantar", "Döküntü", "İyileşmeyen yara"], recommended: true },
+      { id: "der_area", label: "Etkilenen bölge", type: "text", placeholder: "Ör. yüz, eller, sırt" },
+      { id: "der_change", label: "Büyüyen / değişen ben veya yara var mı?", type: "bool", help: "Cilt kanseri taraması açısından önemli." },
+      { id: "der_dur", label: "Ne zamandır var?", type: "select", options: ["1 aydan az", "1-6 ay", "6 ay - 1 yıl", "1 yıldan fazla"] },
+      { id: "der_prior", label: "Daha önce kullanılan cilt tedavisi / ilacı", type: "text", placeholder: "Yok / krem-ilaç adı" },
+      { id: "der_aesthetic", label: "İlgilenilen estetik dermatoloji", type: "multi", options: ["Yok", "Leke tedavisi", "Lazer", "Dolgu / botoks", "Akne izi", "Cilt gençleştirme"] },
+    ],
+  },
+
+  psikiyatri: {
+    intro: "Ruh sağlığı değerlendirmesi için durumunuzu alalım. Verdiğiniz bilgiler gizlidir.",
+    questions: [
+      { id: "psi_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Depresif duygudurum", "Kaygı / panik", "Uyku sorunu", "Dikkat / odaklanma", "Takıntı (obsesif)", "Duygudurum dalgalanması", "Bağımlılık"], recommended: true },
+      { id: "psi_dur", label: "Şikâyet süresi", type: "select", options: ["1 aydan az", "1-6 ay", "6 ay - 1 yıl", "1 yıldan fazla"] },
+      { id: "psi_impact", label: "Günlük yaşamınızı ne kadar etkiliyor?", type: "select", options: ["Hafif", "Orta", "Belirgin"] },
+      { id: "psi_prior", label: "Daha önce psikiyatrik tedavi / ilaç aldınız mı?", type: "bool" },
+      { id: "psi_risk", label: "Kendinize veya başkasına zarar verme düşünceniz var mı?", type: "select", options: ["Hayır", "Bazen aklıma geliyor", "Evet"], help: "Acil destek için önemlidir; gizli tutulur." },
+      { id: "psi_goal", label: "Tıbbi tedavi mi, danışmanlık mı arıyorsunuz?", type: "select", options: ["Tıbbi tedavi", "Danışmanlık / terapi", "Belirsiz"] },
+    ],
+  },
+
+  "fizik-tedavi": {
+    intro: "Fizik tedavi değerlendirmesi için şikâyetlerinizi alalım.",
+    questions: [
+      { id: "fzt_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Bel / boyun ağrısı", "Kas-eklem ağrısı", "Felç sonrası rehabilitasyon", "Spor yaralanması", "Hareket kısıtlılığı", "Ameliyatsız fıtık tedavisi"], recommended: true },
+      { id: "fzt_area", label: "Etkilenen bölge", type: "text", placeholder: "Ör. bel, omuz, diz" },
+      { id: "fzt_pain", label: "Ağrı şiddeti", type: "scale", help: "0 = ağrı yok, 10 = dayanılmaz" },
+      { id: "fzt_dur", label: "Şikâyet süresi", type: "select", options: ["1 haftadan az", "1-4 hafta", "1-6 ay", "6 aydan fazla"] },
+      { id: "fzt_prior", label: "Daha önce fizik tedavi aldınız mı?", type: "bool" },
+      { id: "fzt_img", label: "Yapılmış görüntüleme", type: "multi", options: ["MR", "Röntgen", "BT", "Yok"] },
+    ],
+  },
+
+  "cocuk-sagligi": {
+    intro: "Çocuk sağlığı değerlendirmesi için bilgileri alalım. (Yaş alanına çocuğun yaşını yazın.)",
+    questions: [
+      { id: "coc_symp", label: "Ana şikâyet / başvuru", type: "multi", options: ["Ateş / enfeksiyon", "Büyüme-gelişme", "Beslenme", "Aşı", "Alerji", "Solunum (öksürük vb.)", "Sindirim", "Cilt"], recommended: true },
+      { id: "coc_dur", label: "Şikâyet süresi", type: "select", options: ["1-2 gün", "Bir hafta", "Birkaç hafta", "Daha uzun"] },
+      { id: "coc_vaccine", label: "Aşıları tam mı?", type: "select", options: ["Evet", "Hayır / eksik", "Bilmiyorum"] },
+      { id: "coc_chronic", label: "Çocukta bilinen kronik hastalık", type: "text", placeholder: "Yok / hastalık adı" },
+      { id: "coc_birth", label: "Doğum öyküsü (zamanında / erken)", type: "select", options: ["Zamanında", "Erken (prematüre)", "Belirtmek istemiyorum"] },
+    ],
+  },
+
+  uroloji: {
+    intro: "Üroloji değerlendirmesi için idrar/üreme sistemi şikâyetlerinizi alalım.",
+    questions: [
+      { id: "uro_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["İdrar yaparken zorluk / yanma", "Sık idrara çıkma", "İdrarda kan", "Böbrek / yan ağrısı", "Prostat", "Cinsel işlev", "İdrar kaçırma", "Kısırlık"], recommended: true },
+      { id: "uro_blood", label: "İdrarda kan gördünüz mü?", type: "bool", help: "Öncelikli değerlendirme gerektirir." },
+      { id: "uro_dx", label: "Bilinen tanı", type: "multi", options: ["Yok", "Prostat büyümesi", "Böbrek taşı", "Mesane sorunu", "Prostat kanseri şüphesi"] },
+      { id: "uro_psa", label: "PSA değeri biliniyor mu? (erkek)", type: "select", options: ["Evet, normal", "Evet, yüksek", "Bilmiyorum / kadın"] },
+      { id: "uro_tests", label: "Yapılmış tetkik", type: "multi", options: ["Ultrason", "BT", "İdrar tahlili", "PSA", "Yok"] },
+      { id: "uro_prior", label: "Daha önce ürolojik ameliyat?", type: "bool" },
+    ],
+  },
+
+  kbb: {
+    intro: "Kulak burun boğaz değerlendirmesi için şikâyetlerinizi alalım.",
+    questions: [
+      { id: "kbb_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Burun tıkanıklığı", "Geniz akıntısı", "İşitme kaybı", "Kulak ağrısı / çınlama", "Boğaz / bademcik", "Ses kısıklığı", "Baş dönmesi", "Horlama"], recommended: true },
+      { id: "kbb_hearing", label: "İşitmede azalma var mı?", type: "select", options: ["Yok", "Tek kulakta", "Çift kulakta"] },
+      { id: "kbb_proc", label: "İlgilenilen işlem", type: "multi", options: ["Burun estetiği / septum", "Geniz eti / bademcik", "Kulak tüpü / zar", "Sinüs", "Horlama / uyku", "Belirsiz"] },
+      { id: "kbb_dur", label: "Şikâyet süresi", type: "select", options: ["1 haftadan az", "1-4 hafta", "1-6 ay", "6 aydan fazla"] },
+      { id: "kbb_tests", label: "Yapılmış tetkik", type: "multi", options: ["Odyometri (işitme testi)", "Sinüs BT", "Endoskopi", "Yok"] },
+      { id: "kbb_prior", label: "Geçirilmiş KBB ameliyatı?", type: "bool" },
+    ],
+  },
+
+  "kadin-dogum": {
+    intro: "Kadın hastalıkları ve doğum değerlendirmesi için bilgileri alalım.",
+    questions: [
+      { id: "kad_reason", label: "Başvuru nedeni", type: "multi", options: ["Gebelik takibi", "Adet düzensizliği", "Ağrı / kanama", "Miyom / kist", "Menopoz", "Kontrol / smear", "Kısırlık", "Jinekolojik ameliyat"], recommended: true },
+      { id: "kad_preg", label: "Gebelik durumu / son adet", type: "text", placeholder: "Ör. gebe 12 hafta / son adet tarihi" },
+      { id: "kad_history", label: "Doğum / düşük öyküsü", type: "text", placeholder: "Ör. 2 doğum, 1 düşük / yok" },
+      { id: "kad_bleed", label: "Anormal kanama var mı?", type: "bool" },
+      { id: "kad_dx", label: "Bilinen tanı", type: "multi", options: ["Yok", "Miyom", "Yumurtalık kisti", "Endometriozis", "PCOS", "Servikal sorun"] },
+      { id: "kad_smear", label: "Son jinekolojik muayene / smear", type: "select", options: ["1 yıldan az", "1-3 yıl", "3 yıldan fazla", "Hiç"] },
+    ],
+  },
+
+  kvc: {
+    intro: "Kalp ve damar cerrahisi değerlendirmesi için durumunuzu alalım.",
+    questions: [
+      { id: "kvc_cond", label: "İlgili durum", type: "multi", options: ["Koroner bypass", "Kalp kapağı", "Aort anevrizması", "Bacak damar tıkanıklığı", "Varis", "Doğumsal kalp"], recommended: true },
+      { id: "kvc_dx", label: "Tanı kondu mu?", type: "select", options: ["Kesin tanı var", "Şüphe, tetkik sürüyor", "Hayır"] },
+      { id: "kvc_angio", label: "Anjiyografi yapıldı mı?", type: "bool" },
+      { id: "kvc_symp", label: "Şu anki şikâyet", type: "multi", options: ["Göğüs ağrısı", "Nefes darlığı", "Bacakta ağrı / yürüme zorluğu", "Çarpıntı", "Yok"] },
+      { id: "kvc_prior", label: "Daha önce kalp / damar ameliyatı?", type: "bool" },
+      { id: "kvc_tests", label: "Mevcut tetkikler", type: "multi", options: ["Eko", "Anjiyo", "BT anjiyo", "Yok"] },
+    ],
+  },
+
+  "gogus-cerrahisi": {
+    intro: "Göğüs cerrahisi değerlendirmesi için durumunuzu alalım.",
+    questions: [
+      { id: "gcr_cond", label: "İlgili durum", type: "multi", options: ["Akciğer nodülü / kitle", "Akciğer kanseri", "Plevra sıvısı", "Pnömotoraks", "Göğüs duvarı", "Mediasten"], recommended: true },
+      { id: "gcr_dx", label: "Tanı durumu", type: "select", options: ["Kesin tanı var", "Şüphe, tetkik sürüyor", "Hayır"] },
+      { id: "gcr_biopsy", label: "Biyopsi yapıldı mı?", type: "bool" },
+      { id: "gcr_symp", label: "Şikâyet", type: "multi", options: ["Öksürük", "Nefes darlığı", "Göğüs ağrısı", "Kanlı balgam", "Yok"] },
+      { id: "gcr_img", label: "Görüntüleme", type: "multi", options: ["Akciğer BT", "PET", "Röntgen", "Yok"] },
+    ],
+  },
+
+  "organ-nakli": {
+    intro: "Organ nakli değerlendirmesi için durumunuzu alalım.",
+    questions: [
+      { id: "onk_organ", label: "Hangi organ?", type: "select", options: ["Böbrek", "Karaciğer", "Kalp", "Akciğer", "Kornea", "Kemik iliği", "Diğer"], recommended: true },
+      { id: "onk_stage", label: "Hangi aşamadasınız?", type: "select", options: ["Nakil değerlendirmesi", "Bekleme listesinde", "Vericisi hazır", "Nakil sonrası takip"], recommended: true },
+      { id: "onk_donor", label: "Verici durumu", type: "select", options: ["Canlı verici (akraba) var", "Kadavra bekliyor", "Belirsiz"] },
+      { id: "onk_func", label: "Mevcut organ fonksiyon durumu", type: "text", placeholder: "Ör. diyalizdeyim / kreatinin değeri / karaciğer değerleri" },
+      { id: "onk_blood", label: "Kan grubu biliniyor mu?", type: "text", placeholder: "Ör. A Rh+ / bilmiyorum" },
+      { id: "onk_reports", label: "Mevcut tıbbi belgeler", type: "multi", options: ["Organ fonksiyon testleri", "Görüntüleme", "Doku tiplemesi", "Yok"] },
+    ],
+  },
+
+  "radyasyon-onkolojisi": {
+    intro: "Radyoterapi (ışın tedavisi) değerlendirmesi için durumunuzu alalım.",
+    questions: [
+      { id: "rad_site", label: "Kanser tanısı / bölgesi", type: "text", placeholder: "Ör. meme, akciğer, prostat", recommended: true },
+      { id: "rad_stage", label: "Patoloji / evre biliniyor mu?", type: "select", options: ["Evet, raporu var", "Hayır", "Bilmiyorum"] },
+      { id: "rad_prior", label: "Daha önce radyoterapi aldınız mı?", type: "bool" },
+      { id: "rad_concurrent", label: "Eşzamanlı / önceki tedaviler", type: "multi", options: ["Cerrahi", "Kemoterapi", "İmmünoterapi", "Yok"] },
+      { id: "rad_reports", label: "Mevcut belgeler", type: "multi", options: ["Patoloji", "Görüntüleme (BT/MR/PET)", "Önceki RT planı", "Yok"] },
+      { id: "rad_goal", label: "Beklentiniz", type: "select", options: ["İkinci görüş", "Tedavi planı", "Tedaviye devam"] },
+    ],
+  },
 };
 
 // Branş anahtarına göre tam soru listesi (branşa özel + ortak). Bilinmeyen branşta yalnız ortak sorular.
