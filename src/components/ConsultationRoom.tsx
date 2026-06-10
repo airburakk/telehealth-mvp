@@ -76,6 +76,15 @@ export function ConsultationRoom({
   const [sttErr, setSttErr] = useState("");
   const [sttSupported, setSttSupported] = useState(true);
   const [txBusy, setTxBusy] = useState(false);
+
+  // Sağlık Turizmi Agent'ı — SOAP'tan paket teklifi
+  interface ProposalResp {
+    proposal: { tier: string; nights: number; hospitalType: string; hotelStars: number; translator: boolean; insuranceExtended: boolean; insuranceMalpractice: boolean; rationale: string };
+    quote: { total: number; currency: string };
+  }
+  const [proposal, setProposal] = useState<ProposalResp | null>(null);
+  const [propBusy, setPropBusy] = useState(false);
+  const [propErr, setPropErr] = useState("");
   const recRef = useRef<AnySpeechRecognition | null>(null);
   const sttOnRef = useRef(false);
   const dictatingRef = useRef(false);
@@ -322,6 +331,33 @@ export function ConsultationRoom({
       setNotes(d.soap); setSaved(false);
     } catch (e) { setSoapErr(e instanceof Error ? e.message : "Hata."); }
     finally { setTxBusy(false); }
+  }
+
+  // Adım 4 (Modül 2): nihai SOAP'tan sağlık turizmi teklifi — not önce kaydedilir (teklif kayıtlı SOAP'a göre)
+  async function generateProposal() {
+    setPropBusy(true); setPropErr(""); setProposal(null);
+    try {
+      if (!saved && notes.trim()) await saveNotes();
+      const r = await fetch("/api/ai/package-proposal", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caseId: caseData.id }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Teklif hazırlanamadı.");
+      setProposal(d);
+    } catch (e) { setPropErr(e instanceof Error ? e.message : "Hata."); }
+    finally { setPropBusy(false); }
+  }
+
+  function openProposalPackage() {
+    if (!proposal) return;
+    const p = proposal.proposal;
+    const q = new URLSearchParams({
+      ai: "1", tier: p.tier, nights: String(p.nights), hotel: String(p.hotelStars), htype: p.hospitalType,
+      tr: p.translator ? "1" : "0", ie: p.insuranceExtended ? "1" : "0", im: p.insuranceMalpractice ? "1" : "0",
+      why: p.rationale.slice(0, 300),
+    });
+    router.push(`/paket/${caseData.id}?${q.toString()}`);
   }
 
   async function copyPatientLink() {
@@ -577,8 +613,38 @@ export function ConsultationRoom({
           {isDoctor && (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
               <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Tedavi Kararı</div>
-              <button onClick={() => router.push(`/paket/${caseData.id}`)} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
-                <Luggage size={16} /> Sağlık Turizmi Paketi
+
+              {/* Sağlık Turizmi Agent'ı: nihai SOAP → otomatik teklif */}
+              <button
+                onClick={generateProposal}
+                disabled={propBusy || !notes.trim()}
+                title={!notes.trim() ? "Önce SOAP notunu oluşturun" : "SOAP'taki tedavi planından paket teklifi"}
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50"
+              >
+                {propBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} AI · Teklif hazırla (SOAP&apos;tan)
+              </button>
+              {propErr && <div className="mt-1.5 text-[11px] text-red-600">{propErr}</div>}
+
+              {proposal && (
+                <div className="mt-3 rounded-xl border border-violet-200 bg-white p-3.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-bold text-violet-700">{proposal.proposal.tier}</span>
+                    <span className="text-sm font-bold text-[#0f2a4a]">${proposal.quote.total.toLocaleString("en-US")}</span>
+                  </div>
+                  <div className="mt-2 text-xs leading-relaxed text-slate-600">
+                    {proposal.proposal.nights} gece · {proposal.proposal.hotelStars}★ otel · {proposal.proposal.hospitalType} hastane
+                    {proposal.proposal.translator ? " · tercüman" : ""}
+                    {proposal.proposal.insuranceMalpractice ? " · malpraktis sigortası" : ""}
+                  </div>
+                  <p className="mt-2 border-t border-slate-100 pt-2 text-[11px] leading-relaxed text-slate-500">{proposal.proposal.rationale}</p>
+                  <button onClick={openProposalPackage} className="mt-2.5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                    <Luggage size={15} /> Teklifle paketi aç
+                  </button>
+                </div>
+              )}
+
+              <button onClick={() => router.push(`/paket/${caseData.id}`)} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
+                <Luggage size={16} /> Sağlık Turizmi Paketi (manuel)
               </button>
             </div>
           )}

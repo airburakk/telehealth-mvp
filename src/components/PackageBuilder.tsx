@@ -14,17 +14,28 @@ import {
 
 const TIERS: Tier[] = ["Ekonomik", "Standart", "Premium"];
 
+export interface PackageInitial {
+  tier?: Tier;
+  hotelStars?: 4 | 5;
+  hospitalType?: HospitalType;
+  nights?: number;
+  translator?: boolean;
+  insuranceExtended?: boolean;
+  insuranceMalpractice?: boolean;
+  aiRationale?: string; // doluysa "AI teklifi" banner'ı gösterilir
+}
+
 export function PackageBuilder({
-  caseId, patientName, branch, country,
-}: { caseId: string; patientName: string; branch: string; country: string }) {
+  caseId, patientName, branch, country, initial,
+}: { caseId: string; patientName: string; branch: string; country: string; initial?: PackageInitial }) {
   const router = useRouter();
-  const [tier, setTier] = useState<Tier>("Standart");
-  const [hotelStars, setHotelStars] = useState<4 | 5>(4);
-  const [hospitalType, setHospitalType] = useState<HospitalType>("Özel");
-  const [nights, setNights] = useState(5);
-  const [translator, setTranslator] = useState(false);
-  const [insExtended, setInsExtended] = useState(true);
-  const [insMalpractice, setInsMalpractice] = useState(false);
+  const [tier, setTier] = useState<Tier>(initial?.tier ?? "Standart");
+  const [hotelStars, setHotelStars] = useState<4 | 5>(initial?.hotelStars ?? 4);
+  const [hospitalType, setHospitalType] = useState<HospitalType>(initial?.hospitalType ?? "Özel");
+  const [nights, setNights] = useState(initial?.nights ?? 5);
+  const [translator, setTranslator] = useState(initial?.translator ?? false);
+  const [insExtended, setInsExtended] = useState(initial?.insuranceExtended ?? true);
+  const [insMalpractice, setInsMalpractice] = useState(initial?.insuranceMalpractice ?? false);
   const [submitting, setSubmitting] = useState(false);
 
   function applyTier(t: Tier) {
@@ -57,6 +68,13 @@ export function PackageBuilder({
     <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
       {/* Seçimler */}
       <div className="space-y-4">
+        {initial?.aiRationale && (
+          <div className="rounded-xl border border-violet-200 bg-violet-50/70 p-3.5">
+            <div className="text-xs font-semibold uppercase tracking-wide text-violet-700">✨ Sağlık Turizmi Agent&apos;ı teklifi uygulandı</div>
+            <p className="mt-1 text-sm leading-relaxed text-slate-600">{initial.aiRationale}</p>
+            <p className="mt-1 text-[11px] text-slate-400">Tüm değerleri aşağıdan değiştirebilirsiniz; fiyat platform motorunda hesaplanır.</p>
+          </div>
+        )}
         {/* Tier */}
         <Card>
           <CardTitle>Paket Seviyesi</CardTitle>

@@ -1,15 +1,31 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { PackageBuilder } from "@/components/PackageBuilder";
+import { PackageBuilder, type PackageInitial } from "@/components/PackageBuilder";
 import { ArrowLeft, Luggage } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function PackagePage({ params }: { params: Promise<{ caseId: string }> }) {
+export default async function PackagePage({
+  params, searchParams,
+}: { params: Promise<{ caseId: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { caseId } = await params;
+  const sp = await searchParams;
   const c = await db.case.findUnique({ where: { id: caseId } });
   if (!c) notFound();
+
+  // Sağlık Turizmi Agent'ı teklifi URL ile gelir (ai=1) — doktor her değeri düzenleyebilir
+  const s = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
+  const initial: PackageInitial | undefined = s("ai") === "1" ? {
+    tier: (["Ekonomik", "Standart", "Premium"] as const).find((t) => t === s("tier")),
+    hotelStars: s("hotel") === "5" ? 5 : s("hotel") === "4" ? 4 : undefined,
+    hospitalType: s("htype") === "Üniversite" ? "Üniversite" : s("htype") === "Özel" ? "Özel" : undefined,
+    nights: s("nights") ? Math.min(21, Math.max(1, Number(s("nights")) || 5)) : undefined,
+    translator: s("tr") === "1",
+    insuranceExtended: s("ie") === "1",
+    insuranceMalpractice: s("im") === "1",
+    aiRationale: s("why") || "SOAP'taki tedavi planına göre hazırlandı.",
+  } : undefined;
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
@@ -26,7 +42,7 @@ export default async function PackagePage({ params }: { params: Promise<{ caseId
       </div>
 
       <div className="mt-7">
-        <PackageBuilder caseId={c.id} patientName={c.patientName} branch={c.branch} country={c.country} />
+        <PackageBuilder caseId={c.id} patientName={c.patientName} branch={c.branch} country={c.country} initial={initial} />
       </div>
     </div>
   );
