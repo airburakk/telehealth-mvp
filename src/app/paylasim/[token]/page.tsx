@@ -106,7 +106,7 @@ export default async function ShareViewerPage({ params }: { params: Promise<{ to
   const scopes = link.scopes.split(",");
   const items = buildSharedItems(link.case, scopes);
   const expiryLabel = link.expiresAt
-    ? new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(link.expiresAt)
+    ? new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" }).format(link.expiresAt)
     : "Süresiz";
 
   return (

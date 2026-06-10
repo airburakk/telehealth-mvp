@@ -32,7 +32,7 @@ const STATE_META: Record<ShareState, { label: string; badge: string }> = {
 
 function fmt(d: string | null): string {
   if (!d) return "—";
-  return new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(d));
+  return new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Istanbul" }).format(new Date(d));
 }
 
 function buildMessage(url: string, recipient: string, duration: string, hasPassword: boolean): string {

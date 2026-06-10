@@ -43,5 +43,6 @@ export function urgencyStyle(u: number): { label: string; badge: string; dot: st
 
 export function formatDateTime(d: Date | string): string {
   const date = typeof d === "string" ? new Date(d) : d;
-  return new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(date);
+  // timeZone sabit: sunucu (Vercel UTC) ile istemci (TR) aynı çıktıyı üretsin → hydration uyuşmazlığı (#418) olmasın
+  return new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Istanbul" }).format(date);
 }
