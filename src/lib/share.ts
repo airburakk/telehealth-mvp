@@ -79,6 +79,7 @@ export interface CaseForShare {
   reasoning: string;
   urgency: number;
   attachments: string | null;
+  dischargeReport?: string | null; // kayıtlı AI epikrizi (varsa EPIKRIZ kapsamında gerçek rapor)
   consultations?: { notes: string }[];
 }
 
@@ -87,17 +88,16 @@ export function buildSharedItems(c: CaseForShare, scopes: string[]): SharedItem[
   const files = (c.attachments ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 
   if (scopes.includes("EPIKRIZ")) {
-    items.push({
-      scope: "EPIKRIZ",
-      kind: "report",
-      title: "Epikriz / Özet Rapor",
-      body:
-        `Hasta: ${c.patientName}\n` +
+    // Doktor AI epikriz oluşturduysa gerçek raporu göster; yoksa triyaj verisinden özet türet.
+    const body = c.dischargeReport?.trim()
+      ? c.dischargeReport
+      : `Hasta: ${c.patientName}\n` +
         `Branş: ${c.branch}\n` +
         `Aciliyet: ${c.urgency}/5\n\n` +
         `Şikâyet / Semptomlar:\n${c.symptoms}\n\n` +
-        `Triyaj Değerlendirmesi:\n${c.reasoning}`,
-    });
+        `Triyaj Değerlendirmesi:\n${c.reasoning}\n\n` +
+        `(Not: Hekim henüz nihai epikriz oluşturmadı — bu, triyaj verisinden türetilmiş ön özettir.)`;
+    items.push({ scope: "EPIKRIZ", kind: "report", title: "Epikriz / Özet Rapor", body });
   }
 
   if (scopes.includes("RADYOLOJI")) {

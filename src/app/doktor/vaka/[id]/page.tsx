@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { countryFlag, countryName, urgencyStyle, CASE_STATUS, formatDateTime } from "@/lib/constants";
 import { StartConsultButton } from "@/components/StartConsultButton";
 import { TranslateButton } from "@/components/TranslateButton";
+import { DischargeReport, type Structured } from "@/components/DischargeReport";
 import { ArrowLeft, ArrowRight, FileText, Sparkles, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,9 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
   const st = CASE_STATUS[c.status] ?? CASE_STATUS.NEW;
   const files = c.attachments ? c.attachments.split(",").filter(Boolean) : [];
   const suggested = await db.doctor.findFirst({ where: { branch: c.branch } });
+
+  let dischargeStructured: Structured | null = null;
+  try { dischargeStructured = c.dischargeStructured ? (JSON.parse(c.dischargeStructured) as Structured) : null; } catch { dischargeStructured = null; }
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
@@ -77,6 +81,14 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               Not: Radyoloji/patoloji belgeleri görüşme öncesi otomatik çeviri ve özetleme için AI Orchestration katmanına gönderilecektir (yol haritası).
             </p>
           </div>
+
+          {/* AI Epikriz / Taburcu Raporu */}
+          <DischargeReport
+            caseId={c.id}
+            initialReport={c.dischargeReport}
+            initialStructured={dischargeStructured}
+            initialSavedAt={c.dischargeAt ? c.dischargeAt.toISOString() : null}
+          />
         </div>
 
         {/* Sağ: aksiyon paneli */}

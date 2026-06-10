@@ -79,6 +79,10 @@ model Case {
   payMethod           String? // PAYMENT | INSURANCE
   policyNo            String? // sigorta poliçe no (INSURANCE ise)
   payRef              String? // ödeme referansı (PAYMENT ise, simüle)
+  // AI Epikriz / Taburcu Raporu — hastanın tüm yolculuğunun klinik döküman sentezi
+  dischargeReport     String? // AI ile üretilen epikriz tam metni (başlık + bölümler)
+  dischargeStructured String? // JSON: yapılandırılmış bölümler (tanı, anamnez, ...)
+  dischargeAt         DateTime? // epikrizin oluşturulma zamanı
   doctor              Doctor?        @relation(fields: [doctorId], references: [id])
   doctorId            String?
   consultations       Consultation[]
