@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { computePackage, type PackageSelection, type Tier, type HospitalType } from "@/lib/pricing";
+import { notifyRoles } from "@/lib/notify";
 
 // POST /api/cases/:id/booking — sağlık turizmi paketi rezervasyonu oluştur (Escrow)
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -45,6 +46,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   });
 
   await db.case.update({ where: { id: c.id }, data: { status: "DONE" } });
+
+  await notifyRoles(["COORDINATOR"], {
+    type: "BOOKING",
+    title: `💼 Yeni rezervasyon: ${c.patientName}`,
+    body: `${selection.tier} · ${selection.branch} · $${quote.total.toLocaleString("en-US")} (Escrow'da)`,
+    href: `/rezervasyon/${booking.id}`,
+  });
 
   return NextResponse.json({ bookingId: booking.id }, { status: 201 });
 }

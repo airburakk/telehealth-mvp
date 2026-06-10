@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { notifyRoles } from "@/lib/notify";
 
 // POST /api/cases/:id/complaint — Etik Kurul'a başvuru oluştur
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -25,6 +26,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       requestType: ["REFUND", "DOCTOR_CHANGE", "HOSPITAL_CHANGE", "OTHER"].includes(b.requestType) ? b.requestType : "OTHER",
       evidence: b.evidence ? String(b.evidence) : null,
     },
+  });
+
+  await notifyRoles(["ETHICS"], {
+    type: "COMPLAINT",
+    title: "⚖️ Yeni şikayet başvurusu",
+    body: subject.slice(0, 80),
+    href: `/etik-kurul/${complaint.id}`,
   });
 
   return NextResponse.json({ complaintId: complaint.id }, { status: 201 });

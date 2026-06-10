@@ -1,5 +1,6 @@
 import { headers, cookies } from "next/headers";
 import { db } from "@/lib/db";
+import { notifyRoles } from "@/lib/notify";
 import { shareState, buildSharedItems, scopeLabel, SHARE_UNLOCK_PREFIX, type SharedItem } from "@/lib/share";
 import { ShareUnlock } from "@/components/ShareUnlock";
 import {
@@ -100,6 +101,12 @@ export default async function ShareViewerPage({ params }: { params: Promise<{ to
     const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || null;
     await db.shareAccess.create({
       data: { shareLinkId: link.id, action: "VIEW", ip, userAgent: h.get("user-agent")?.slice(0, 300) || null },
+    });
+    await notifyRoles(["PATIENT"], {
+      type: "SHARE_ACCESS",
+      title: "👁 Sağlık paylaşımınız görüntülendi",
+      body: `${link.recipientName ?? "Alıcı"} · ${link.case.patientName} kayıtları`,
+      href: "/paylasimlarim",
     });
   }
 

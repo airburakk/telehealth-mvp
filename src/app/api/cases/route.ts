@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
+import { notifyRoles } from "@/lib/notify";
 
 // GET /api/cases — vaka kuyruğu (filtrelenebilir)
 export async function GET(req: Request) {
@@ -60,6 +61,13 @@ export async function POST(req: Request) {
       policyNo: body.policyNo ? String(body.policyNo).slice(0, 40) : null,
       payRef: body.payRef ? String(body.payRef).slice(0, 40) : null,
     },
+  });
+
+  await notifyRoles(["DOCTOR", "COORDINATOR"], {
+    type: "NEW_CASE",
+    title: `${a.urgency >= 4 ? "🔴 " : ""}Yeni vaka: ${patientName}`,
+    body: `${a.branch} · aciliyet ${a.urgency}/5`,
+    href: `/doktor/vaka/${created.id}`,
   });
 
   return NextResponse.json(created, { status: 201 });

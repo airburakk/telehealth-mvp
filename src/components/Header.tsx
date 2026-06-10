@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { NotificationBell } from "@/components/NotificationBell";
 import { Activity, Stethoscope, UserRound, HeartPulse, Scale, LogOut, LogIn, Users, BadgeCheck, Share2, BarChart3 } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -72,6 +73,7 @@ export function Header({ user }: { user: { name: string; role: string } | null }
 
           {user ? (
             <div className="ml-1 flex items-center gap-2 border-l border-slate-200 pl-2">
+              <NotificationBell />
               <div className="hidden text-right sm:block">
                 <div className="text-sm font-medium leading-tight text-slate-700">{user.name}</div>
                 <div className="text-[11px] leading-tight text-slate-400">{ROLE_LABELS[user.role] ?? user.role}</div>

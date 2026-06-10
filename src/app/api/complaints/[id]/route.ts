@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { notifyRoles } from "@/lib/notify";
 
 // PATCH /api/complaints/:id — Etik Kurul kararı (yaptırım + Escrow tetikleyicisi)
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -27,6 +28,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const updated = await db.complaint.update({
     where: { id },
     data: { status: "RESOLVED", verdict, action, refundAmount, rationale, decidedBy, decidedAt: new Date() },
+  });
+
+  const verdictLabel = verdict === "FAVOR" ? "lehinize sonuçlandı" : verdict === "PARTIAL" ? "kısmen kabul edildi" : "reddedildi";
+  await notifyRoles(["PATIENT", "COORDINATOR"], {
+    type: "DECISION",
+    title: `⚖️ Etik Kurul kararı: başvuru ${verdictLabel}`,
+    body: refundAmount ? `İade: $${refundAmount.toLocaleString("en-US")} (Escrow'dan)` : rationale?.slice(0, 80) ?? undefined,
+    href: `/sikayet/${complaint.caseId}`,
   });
 
   return NextResponse.json(updated);

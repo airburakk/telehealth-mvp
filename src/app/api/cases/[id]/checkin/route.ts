@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { assessCheckIn } from "@/lib/postop";
+import { notifyRoles } from "@/lib/notify";
 
 // POST /api/cases/:id/checkin — günlük iyileşme kontrolü
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -26,6 +27,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const checkIn = await db.checkIn.create({
     data: { recoveryId: recovery.id, pain, feverC, meds, note, photo, severity: assessment.severity },
   });
+
+  if (assessment.severity === "RED") {
+    await notifyRoles(["DOCTOR", "COORDINATOR"], {
+      type: "RED_FLAG",
+      title: `🚨 Kırmızı bayrak: ${c.patientName}`,
+      body: `${c.branch} · ağrı ${pain}/10 · ateş ${feverC.toFixed(1)}°C${note ? ` · "${note.slice(0, 60)}"` : ""}`,
+      href: `/takip/${c.id}`,
+    });
+  }
 
   return NextResponse.json({ id: checkIn.id, severity: assessment.severity, reasons: assessment.reasons }, { status: 201 });
 }

@@ -208,6 +208,20 @@ model ShareLink {
   @@index([caseId])
 }
 
+/// Uygulama içi bildirim — rol hedefli (demo hesapları rol bazlı; ileride userId ile kişiselleşir)
+model Notification {
+  id        String    @id @default(cuid())
+  role      String // hedef rol: PATIENT, DOCTOR, COORDINATOR, ETHICS, ADMIN
+  type      String // NEW_CASE, RED_FLAG, BOOKING, COMPLAINT, DECISION, SHARE_ACCESS
+  title     String
+  body      String?
+  href      String? // tıklayınca gidilecek sayfa
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([role, readAt])
+}
+
 /// Paylaşım linkine erişim kaydı — Denetim İzi (Audit Trail)
 model ShareAccess {
   id            String    @id @default(cuid())
