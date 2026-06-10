@@ -46,7 +46,8 @@ export const ROLE_LABELS: Record<Role, string> = {
 };
 
 export function roleHome(role: Role): string {
-  if (role === "DOCTOR" || role === "COORDINATOR") return "/doktor";
+  if (role === "COORDINATOR") return "/operasyon"; // S2 operasyon paneli
+  if (role === "DOCTOR") return "/doktor";
   if (role === "ETHICS") return "/etik-kurul";
   return "/triyaj";
 }

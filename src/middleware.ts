@@ -3,6 +3,7 @@ import { SESSION_COOKIE, verifyToken } from "@/lib/session";
 
 const DOCTOR_ROLES = ["DOCTOR", "COORDINATOR", "ADMIN"];
 const ETHICS_ROLES = ["ETHICS", "ADMIN"];
+const OPS_ROLES = ["COORDINATOR", "ADMIN"]; // S2 operasyon paneli
 
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
@@ -19,6 +20,9 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/", req.url));
   }
   if (pathname.startsWith("/doktor") && !DOCTOR_ROLES.includes(user.role)) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+  if (pathname.startsWith("/operasyon") && !OPS_ROLES.includes(user.role)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
   // /gorusme: giriş yeterli (hasta + doktor görüşmeye katılabilir)
@@ -38,5 +42,6 @@ export const config = {
     "/paylasimlarim", "/paylasimlarim/:path*",
     "/sikayet/:path*",
     "/etik-kurul", "/etik-kurul/:path*",
+    "/operasyon", "/operasyon/:path*",
   ],
 };
