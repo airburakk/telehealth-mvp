@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { countryFlag, countryName, urgencyStyle, CASE_STATUS, formatDateTime } from "@/lib/constants";
 import { StartConsultButton } from "@/components/StartConsultButton";
+import { TranslateButton } from "@/components/TranslateButton";
 import { ArrowLeft, ArrowRight, FileText, Sparkles, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               <SectionTitle icon={<FileText size={15} />}>Şikayet</SectionTitle>
               <p className="mt-1.5 text-sm leading-relaxed text-slate-700">{c.symptoms}</p>
               {c.durationText && <p className="mt-1 text-xs text-slate-400">Süre: {c.durationText}</p>}
+              <TranslateButton text={c.symptoms} defaultTarget="Türkçe" />
             </div>
 
             <div className="mt-5 rounded-xl border border-sky-200 bg-sky-50/60 p-4">

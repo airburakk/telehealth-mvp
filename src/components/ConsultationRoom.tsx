@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { urgencyStyle } from "@/lib/constants";
+import { TranslateButton } from "@/components/TranslateButton";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
   Save, Check, Pill, FlaskConical, Stethoscope, AlertTriangle, Languages, Loader2, Luggage,
@@ -41,6 +42,8 @@ export function ConsultationRoom({
   const [joined, setJoined] = useState(false);
   const [retry, setRetry] = useState(0);
   const [connState, setConnState] = useState("");
+  const [soapBusy, setSoapBusy] = useState(false);
+  const [soapErr, setSoapErr] = useState("");
 
   const isDoctor = selfRole === "doctor";
   const u = urgencyStyle(caseData.urgency);
@@ -182,6 +185,17 @@ export function ConsultationRoom({
     } finally { setSaving(false); }
   }
 
+  async function generateSoap() {
+    setSoapBusy(true); setSoapErr("");
+    try {
+      const r = await fetch(`/api/ai/soap`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notes, caseId: caseData.id }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "SOAP oluşturulamadı.");
+      setNotes(d.soap); setSaved(false);
+    } catch (e) { setSoapErr(e instanceof Error ? e.message : "Hata."); }
+    finally { setSoapBusy(false); }
+  }
+
   async function copyPatientLink() {
     const url = `${window.location.origin}/gorusme/${consultationId}?role=patient`;
     try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
@@ -321,6 +335,7 @@ export function ConsultationRoom({
             <div className="mt-3">
               <div className="text-xs uppercase tracking-wide text-slate-400">Şikayet</div>
               <p className="mt-1 text-sm text-slate-700">{caseData.symptoms}</p>
+              {isDoctor && <TranslateButton text={caseData.symptoms} defaultTarget="Türkçe" />}
             </div>
             {isDoctor && (
               <div className="mt-3 rounded-lg bg-sky-50/70 p-3 ring-1 ring-sky-100">
@@ -350,7 +365,11 @@ export function ConsultationRoom({
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Görüşme Notları</div>
                 {saved ? <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600"><Check size={13} /> kaydedildi</span> : <span className="text-[11px] text-amber-600">kaydedilmedi</span>}
               </div>
-              <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={5} placeholder="SOAP notu…" className="mt-2 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#0f2a4a]" />
+              <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#0f2a4a]" />
+              <button onClick={generateSoap} disabled={soapBusy || !notes.trim()} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50">
+                {soapBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} AI · SOAP&apos;a dönüştür
+              </button>
+              {soapErr && <div className="mt-1 text-[11px] text-red-600">{soapErr}</div>}
               <button onClick={saveNotes} disabled={saving || saved} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f2a4a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#143a63] disabled:opacity-50">
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Notu kaydet
               </button>
