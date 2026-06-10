@@ -51,7 +51,10 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 export async function analyzeTriageLLM(input: TriageInput): Promise<TriageOutput> {
   const client = new Anthropic(); // ANTHROPIC_API_KEY ortam değişkeninden okunur
 
+  const forcedBranch = input.forceBranchKey ? BRANCHES.find((b) => b.key === input.forceBranchKey) : null;
+
   const userText = [
+    forcedBranch ? `Branş hasta tarafından seçildi: ${forcedBranch.label}. Branşı değiştirme; yalnızca aciliyeti ve gerekçeyi bu bağlamda belirle.` : "",
     input.symptoms ? `Şikâyet: ${input.symptoms}` : "",
     input.durationText ? `Süre: ${input.durationText}` : "",
     input.answers && Object.keys(input.answers).length ? `Ek yanıtlar: ${JSON.stringify(input.answers)}` : "",
@@ -79,7 +82,7 @@ export async function analyzeTriageLLM(input: TriageInput): Promise<TriageOutput
     missingInfo?: string;
   };
 
-  const branch = BRANCHES.find((b) => b.key === out.branchKey) ?? BRANCHES.find((b) => b.key === "dahiliye")!;
+  const branch = forcedBranch ?? BRANCHES.find((b) => b.key === out.branchKey) ?? BRANCHES.find((b) => b.key === "dahiliye")!;
   const urgency = Math.min(5, Math.max(1, Math.round(Number(out.urgency) || 3)));
   const confidence = Math.min(99, Math.max(40, Math.round(Number(out.confidence) || 70)));
   let reasoning = String(out.reasoning || `Semptom analizi → ${branch.label}.`);

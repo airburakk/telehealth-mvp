@@ -4,13 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { COUNTRIES, urgencyStyle } from "@/lib/constants";
 import { PreConsultGate } from "@/components/PreConsultGate";
+import { BRANCHES } from "@/lib/triage";
+import { DynamicTriageQuestions } from "@/components/DynamicTriageQuestions";
 import type { Billing } from "@/lib/billing";
 import {
-  UserRound, MessageSquareText, Paperclip, ClipboardCheck,
+  UserRound, MessageSquareText, Paperclip, ClipboardCheck, ListChecks, Stethoscope,
   Sparkles, Upload, X, ShieldCheck, Loader2, ArrowRight, ArrowLeft, FileText,
 } from "lucide-react";
 
 interface Analysis {
+  branchKey: string;
   branch: string;
   urgency: number;
   confidence: number;
@@ -21,6 +24,7 @@ interface Analysis {
 const STEPS = [
   { t: "Hasta", icon: UserRound },
   { t: "Şikayet", icon: MessageSquareText },
+  { t: "Branş Soruları", icon: ListChecks },
   { t: "Belgeler", icon: Paperclip },
   { t: "Özet", icon: ClipboardCheck },
 ];
@@ -35,6 +39,8 @@ export default function TriyajPage() {
   const [symptoms, setSymptoms] = useState("");
   const [durationText, setDurationText] = useState("");
   const [files, setFiles] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [branchOverride, setBranchOverride] = useState(""); // hasta branşı elle seçtiyse (branchKey)
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -49,7 +55,7 @@ export default function TriyajPage() {
       const res = await fetch("/api/triage/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symptoms, durationText }),
+        body: JSON.stringify({ symptoms, durationText, answers, forceBranchKey: branchOverride || undefined }),
       });
       setAnalysis(await res.json());
     } catch {
@@ -59,12 +65,16 @@ export default function TriyajPage() {
     }
   }
 
+  // Soruların gösterileceği branş: hasta elle seçtiyse o, değilse AI'ın belirlediği.
+  const effectiveBranch = branchOverride || analysis?.branchKey || "";
+
   function next() {
     setError("");
     if (step === 0 && !patientName.trim()) return setError("Lütfen hasta adını girin.");
     if (step === 1 && symptoms.trim().length < 8) return setError("Lütfen şikayetinizi biraz daha ayrıntılı yazın.");
-    if (step === 2 && !analysis) runAnalyze();
-    setStep((s) => Math.min(3, s + 1));
+    if (step === 1 && !analysis) runAnalyze(); // Branş Soruları'na geçerken branşı belirle
+    if (step === 3) runAnalyze(); // Özet'e geçerken yanıt + branş seçimiyle yeniden değerlendir
+    setStep((s) => Math.min(4, s + 1));
   }
   function back() {
     setError("");
@@ -86,6 +96,7 @@ export default function TriyajPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           patientName, country, language, symptoms, durationText, attachments: files,
+          answers, forceBranchKey: branchOverride || undefined,
           consultFee: billing?.fee, payStatus: billing?.status, payMethod: billing?.method,
           policyNo: billing?.policyNo, payRef: billing?.payRef,
         }),
@@ -221,8 +232,43 @@ export default function TriyajPage() {
           </div>
         )}
 
-        {/* Step 2 */}
+        {/* Step 2 — Branş Soruları */}
         {step === 2 && (
+          <div className="space-y-4">
+            {analyzing && !analysis && (
+              <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" /> AI sizi doğru branşa yönlendiriyor…</div>
+            )}
+            {effectiveBranch ? (
+              <>
+                <div className="rounded-xl border border-sky-200 bg-sky-50/60 p-3">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700"><Stethoscope size={14} /> Yönlendirilen branş</div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <select
+                      value={effectiveBranch}
+                      onChange={(e) => setBranchOverride(e.target.value)}
+                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-[#0f2a4a] outline-none focus:border-[#0f2a4a]"
+                    >
+                      {BRANCHES.map((b) => <option key={b.key} value={b.key}>{b.label}</option>)}
+                    </select>
+                    {branchOverride
+                      ? <span className="text-xs text-slate-500">elle seçildi</span>
+                      : analysis && <span className="text-xs text-slate-500">AI önerisi · doğru değilse değiştirin</span>}
+                  </div>
+                </div>
+                <DynamicTriageQuestions branchKey={effectiveBranch} value={answers} onChange={setAnswers} />
+              </>
+            ) : (
+              !analyzing && (
+                <div className="rounded-lg bg-slate-50 px-3 py-6 text-center text-sm text-slate-400">
+                  Önce şikayet adımında AI ön analizini çalıştırın; sorular branşa göre belirir.
+                </div>
+              )
+            )}
+          </div>
+        )}
+
+        {/* Step 3 — Belgeler */}
+        {step === 3 && (
           <div className="space-y-4">
             <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center hover:border-sky-400 hover:bg-sky-50/40">
               <Upload size={26} className="text-slate-400" />
@@ -249,8 +295,8 @@ export default function TriyajPage() {
           </div>
         )}
 
-        {/* Step 3 */}
-        {step === 3 && (
+        {/* Step 4 — Özet */}
+        {step === 4 && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 text-sm">
               <Summary k="Hasta" v={patientName} />
@@ -259,6 +305,19 @@ export default function TriyajPage() {
               <Summary k="Belgeler" v={files.length ? `${files.length} dosya` : "—"} />
             </div>
             <Summary k="Şikayet" v={symptoms} block />
+
+            {Object.keys(answers).length > 0 && (
+              <div className="col-span-2">
+                <div className="text-xs uppercase tracking-wide text-slate-400">
+                  Branş Soruları{effectiveBranch ? ` · ${BRANCHES.find((b) => b.key === effectiveBranch)?.label ?? ""}` : ""}
+                </div>
+                <ul className="mt-1 space-y-0.5 text-sm text-slate-700">
+                  {Object.entries(answers).map(([k, v]) => (
+                    <li key={k}><span className="text-slate-500">{k}:</span> {v}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {analyzing && <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" /> Analiz ediliyor…</div>}
             {analysis && u && <AnalysisCard analysis={analysis} badge={u.badge} dot={u.dot} label={u.label} />}
@@ -281,7 +340,7 @@ export default function TriyajPage() {
           >
             <ArrowLeft size={16} /> Geri
           </button>
-          {step < 3 ? (
+          {step < 4 ? (
             <button onClick={next} className="inline-flex items-center gap-1.5 rounded-lg bg-[#0f2a4a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#143a63]">
               Devam <ArrowRight size={16} />
             </button>

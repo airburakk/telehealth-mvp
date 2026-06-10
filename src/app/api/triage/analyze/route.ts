@@ -8,6 +8,7 @@ export async function POST(req: Request) {
     symptoms: String(body.symptoms ?? ""),
     durationText: body.durationText ? String(body.durationText) : undefined,
     answers: body.answers ?? undefined,
+    forceBranchKey: body.forceBranchKey ? String(body.forceBranchKey) : undefined,
   });
   return NextResponse.json(result);
 }

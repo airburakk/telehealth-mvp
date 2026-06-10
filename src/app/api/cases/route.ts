@@ -33,6 +33,7 @@ export async function POST(req: Request) {
     symptoms,
     durationText: body.durationText ? String(body.durationText) : undefined,
     answers: body.answers ?? undefined,
+    forceBranchKey: body.forceBranchKey ? String(body.forceBranchKey) : undefined,
   });
 
   const attachments: string | null = Array.isArray(body.attachments) && body.attachments.length

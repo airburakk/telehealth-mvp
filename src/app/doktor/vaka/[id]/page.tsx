@@ -5,7 +5,7 @@ import { countryFlag, countryName, urgencyStyle, CASE_STATUS, formatDateTime } f
 import { StartConsultButton } from "@/components/StartConsultButton";
 import { TranslateButton } from "@/components/TranslateButton";
 import { DischargeReport, type Structured } from "@/components/DischargeReport";
-import { ArrowLeft, ArrowRight, FileText, Sparkles, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Sparkles, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +21,9 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
 
   let dischargeStructured: Structured | null = null;
   try { dischargeStructured = c.dischargeStructured ? (JSON.parse(c.dischargeStructured) as Structured) : null; } catch { dischargeStructured = null; }
+
+  let triageAnswers: Record<string, string> | null = null;
+  try { triageAnswers = c.extra ? (JSON.parse(c.extra) as Record<string, string>) : null; } catch { triageAnswers = null; }
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
@@ -62,6 +65,21 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               <div className="mt-2 text-xs text-slate-400">Güven skoru: %{c.confidence}</div>
             </div>
           </div>
+
+          {/* Branş ön-değerlendirme yanıtları (dinamik triyaj soruları) */}
+          {triageAnswers && Object.keys(triageAnswers).length > 0 && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <SectionTitle icon={<ListChecks size={15} />}>Ön Değerlendirme · Branş Soruları</SectionTitle>
+              <dl className="mt-3 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+                {Object.entries(triageAnswers).map(([k, v]) => (
+                  <div key={k} className="text-sm">
+                    <dt className="text-xs text-slate-400">{k}</dt>
+                    <dd className="font-medium text-slate-700">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
 
           {/* Belgeler */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

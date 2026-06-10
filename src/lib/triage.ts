@@ -30,6 +30,7 @@ export interface TriageInput {
   symptoms: string;
   durationText?: string;
   answers?: Record<string, string>;
+  forceBranchKey?: string; // hasta branşı elle seçtiyse (branş sabitlenir, aciliyet yine hesaplanır)
 }
 
 export interface TriageOutput {
@@ -72,6 +73,10 @@ export function analyzeTriage(input: TriageInput): TriageOutput {
   }
   if (!best) best = BRANCHES.find((b) => b.key === "dahiliye")!;
 
+  // Hasta branşı elle seçtiyse onu sabitle (aciliyet yine aşağıda semptom/yanıtlardan hesaplanır)
+  const forced = input.forceBranchKey ? BRANCHES.find((b) => b.key === input.forceBranchKey) : null;
+  if (forced) best = forced;
+
   // 2) Aciliyet skoru
   let urgency = 3;
   const redHit5 = RED_FLAGS_5.find((k) => text.includes(k));
@@ -83,12 +88,14 @@ export function analyzeTriage(input: TriageInput): TriageOutput {
   else if (electiveHit && bestHits > 0) { urgency = best.key === "onkoloji" || best.key === "kardiyoloji" ? 3 : 1; why = "Elektif (seçimlik) işlem profili — düşük aciliyet."; }
   else if (best.key === "onkoloji") { urgency = 4; why = "Onkolojik şüphe — yüksek öncelik."; }
 
-  // 3) Güven skoru
-  const confidence = Math.min(95, 45 + bestHits * 18 + (redHit5 || redHit4 ? 10 : 0));
+  // 3) Güven skoru (branş elle seçildiyse yüksek)
+  const confidence = forced ? 92 : Math.min(95, 45 + bestHits * 18 + (redHit5 || redHit4 ? 10 : 0));
 
   // 4) Gerekçe metni
   const kwText = matched.length ? `eşleşen anahtar kelimeler: ${matched.slice(0, 6).join(", ")}` : "belirgin anahtar kelime bulunamadı, varsayılan branşa yönlendirildi";
-  const reasoning = `Semptom analizi → ${best.label}. (${kwText}). Aciliyet ${urgency}/5 — ${why}`;
+  const reasoning = forced
+    ? `Hasta tarafından seçilen branş → ${best.label}. Aciliyet ${urgency}/5 — ${why}`
+    : `Semptom analizi → ${best.label}. (${kwText}). Aciliyet ${urgency}/5 — ${why}`;
 
   return { branchKey: best.key, branch: best.label, urgency, confidence, reasoning, matched, engine: "rules" };
 }
