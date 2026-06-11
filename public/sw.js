@@ -1,10 +1,10 @@
-// AIR Telehealth — Service Worker (PWA faz 1)
+// AIR Telehealth — Service Worker (PWA faz 2: Web Push)
 // Strateji (bilinçli muhafazakâr — sağlık verisi tazeliği önce gelir):
 //   • /api/*           → ASLA önbellek yok, doğrudan ağ (klinik veri + kimlik)
 //   • Sayfa gezinmesi  → network-first; ağ yoksa /offline.html
 //   • /_next/static/*  → cache-first (içerik hash'li, değişmez) + ikonlar
-// Web Push faz 2'de eklenecek.
-const VERSION = "air-pwa-v1";
+//   • push             → tarayıcı kapalıyken bildirim göster; tıklayınca ilgili sayfa
+const VERSION = "air-pwa-v2";
 const PRECACHE = ["/offline.html", "/icon-192.png", "/icon-512.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -55,4 +55,38 @@ self.addEventListener("fetch", (event) => {
       )
     );
   }
+});
+
+// ── Web Push: tarayıcı kapalıyken bildirim göster ──
+self.addEventListener("push", (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch {}
+  const title = data.title || "AIR Telehealth";
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || "",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      lang: "tr",
+      data: { href: data.href || "/" },
+    })
+  );
+});
+
+// Bildirime tıklama: açık sekme varsa odaklan + yönlendir, yoksa yeni pencere
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const href = (event.notification.data && event.notification.data.href) || "/";
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((tabs) => {
+      for (const tab of tabs) {
+        if ("focus" in tab) {
+          tab.focus();
+          if ("navigate" in tab) tab.navigate(href);
+          return;
+        }
+      }
+      return clients.openWindow(href);
+    })
+  );
 });

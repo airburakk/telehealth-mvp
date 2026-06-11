@@ -2,7 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Inbox, UserRound, AlertTriangle, Luggage, Scale, Eye, Stethoscope } from "lucide-react";
+import { Bell, Inbox, UserRound, AlertTriangle, Luggage, Scale, Eye, Stethoscope, Smartphone, Loader2 } from "lucide-react";
+
+// VAPID public key → PushManager.subscribe formatı
+function urlB64ToUint8(s: string): Uint8Array {
+  const pad = "=".repeat((4 - (s.length % 4)) % 4);
+  const raw = atob((s + pad).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+}
 
 interface Notif {
   id: string;
@@ -40,6 +47,55 @@ export function NotificationBell() {
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+
+  // Web Push (cihaz bildirimleri): hidden = desteklenmiyor/anahtar yok; off/on = abonelik durumu
+  const [pushState, setPushState] = useState<"hidden" | "off" | "on" | "busy">("hidden");
+  const pushKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
+        const r = await fetch("/api/push");
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!d.enabled || !d.publicKey) return; // VAPID yok → özellik gizli
+        pushKeyRef.current = d.publicKey;
+        const reg = await navigator.serviceWorker.ready; // yalnız üretimde kayıtlı (dev'de askıda kalır)
+        const sub = await reg.pushManager.getSubscription();
+        setPushState(sub ? "on" : "off");
+      } catch {}
+    })();
+  }, []);
+
+  async function togglePush() {
+    if (pushState !== "on" && pushState !== "off") return;
+    const turnOn = pushState === "off";
+    setPushState("busy");
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      if (turnOn) {
+        const perm = await Notification.requestPermission();
+        if (perm !== "granted") { setPushState("off"); return; }
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlB64ToUint8(pushKeyRef.current!) as unknown as ArrayBuffer,
+        });
+        const r = await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(sub.toJSON()) });
+        if (!r.ok) throw new Error();
+        setPushState("on");
+      } else {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await fetch("/api/push", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) });
+          await sub.unsubscribe();
+        }
+        setPushState("off");
+      }
+    } catch {
+      setPushState(turnOn ? "off" : "on");
+    }
+  }
 
   async function refresh() {
     try {
@@ -102,6 +158,26 @@ export function NotificationBell() {
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Bildirimler</span>
             {loading && <span className="text-[10px] text-slate-400">yenileniyor…</span>}
           </div>
+          {pushState !== "hidden" && (
+            <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/60 px-4 py-2">
+              <span className="inline-flex items-center gap-1.5 text-xs text-slate-600">
+                <Smartphone size={13} /> Cihaz bildirimleri
+                <span className="text-[10px] text-slate-400">(tarayıcı kapalıyken)</span>
+              </span>
+              <button
+                onClick={togglePush}
+                disabled={pushState === "busy"}
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition ${
+                  pushState === "on"
+                    ? "bg-emerald-100 text-emerald-700 ring-emerald-200 hover:bg-emerald-200"
+                    : "bg-white text-slate-500 ring-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                {pushState === "busy" ? <Loader2 size={11} className="animate-spin" /> : null}
+                {pushState === "on" ? "Açık ✓" : pushState === "busy" ? "…" : "Kapalı — aç"}
+              </button>
+            </div>
+          )}
           <div className="max-h-96 overflow-y-auto">
             {items.length === 0 && (
               <div className="px-4 py-10 text-center text-sm text-slate-400">

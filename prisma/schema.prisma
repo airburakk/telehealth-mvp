@@ -227,6 +227,20 @@ model Notification {
   @@index([userId, readAt])
 }
 
+/// Web Push aboneliği — kullanıcının cihazı (tarayıcı kapalıyken bildirim)
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String // abone kullanıcı
+  role      String // abonelik anındaki rol (rol yayını hedeflemesi)
+  endpoint  String   @unique // push servisi adresi (FCM/APNs/Mozilla)
+  p256dh    String // istemci açık anahtarı
+  auth      String // kimlik doğrulama sırrı
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([role])
+}
+
 /// Paylaşım linkine erişim kaydı — Denetim İzi (Audit Trail)
 model ShareAccess {
   id            String    @id @default(cuid())
