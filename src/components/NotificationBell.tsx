@@ -48,14 +48,24 @@ export function NotificationBell() {
   const [loading, setLoading] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
 
-  // Web Push (cihaz bildirimleri): hidden = desteklenmiyor/anahtar yok; off/on = abonelik durumu
-  const [pushState, setPushState] = useState<"hidden" | "off" | "on" | "busy">("hidden");
+  // Web Push (cihaz bildirimleri): hidden = desteklenmiyor/anahtar yok; ios-hint = iPhone Safari
+  // (Apple, Push API'yi yalnız Ana Ekrana eklenmiş uygulamada açar); off/on = abonelik durumu
+  const [pushState, setPushState] = useState<"hidden" | "ios-hint" | "off" | "on" | "busy">("hidden");
   const pushKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
+        if (!("serviceWorker" in navigator)) return;
+        if (!("PushManager" in window) || !("Notification" in window)) {
+          // iPhone/iPad Safari sekmesi: Push API yok ama Ana Ekrana Ekle ile gelir → yol göster
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          const standalone =
+            window.matchMedia("(display-mode: standalone)").matches ||
+            (navigator as unknown as { standalone?: boolean }).standalone === true;
+          if (isIOS && !standalone) setPushState("ios-hint");
+          return;
+        }
         const r = await fetch("/api/push");
         if (!r.ok) return;
         const d = await r.json();
@@ -158,7 +168,18 @@ export function NotificationBell() {
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Bildirimler</span>
             {loading && <span className="text-[10px] text-slate-400">yenileniyor…</span>}
           </div>
-          {pushState !== "hidden" && (
+          {pushState === "ios-hint" && (
+            <div className="border-b border-slate-100 bg-sky-50/70 px-4 py-2.5">
+              <div className="flex items-start gap-2 text-xs leading-relaxed text-sky-800">
+                <Smartphone size={14} className="mt-0.5 shrink-0" />
+                <span>
+                  <strong>iPhone&apos;da cihaz bildirimi için:</strong> Safari&apos;de <strong>Paylaş (□↑) → Ana Ekrana Ekle</strong> deyin,
+                  sonra uygulamayı <strong>ana ekrandaki ikondan</strong> açın — bu anahtar orada görünür. (iOS 16.4+)
+                </span>
+              </div>
+            </div>
+          )}
+          {pushState !== "hidden" && pushState !== "ios-hint" && (
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/60 px-4 py-2">
               <span className="inline-flex items-center gap-1.5 text-xs text-slate-600">
                 <Smartphone size={13} /> Cihaz bildirimleri
