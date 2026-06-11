@@ -57,7 +57,9 @@ export function NotificationBell() {
     (async () => {
       try {
         if (!("serviceWorker" in navigator)) return;
-        if (!("PushManager" in window) || !("Notification" in window)) {
+        // "in window" daraltması TS'te window'u never'a indirger — global nesneyi kayıtla yokla
+        const g = globalThis as unknown as Record<string, unknown>;
+        if (!g.PushManager || !g.Notification) {
           // iPhone/iPad Safari sekmesi: Push API yok ama Ana Ekrana Ekle ile gelir → yol göster
           const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
           const standalone =
