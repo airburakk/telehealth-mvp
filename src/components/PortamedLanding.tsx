@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Newsreader, Hanken_Grotesk } from "next/font/google";
+import { HeroArt, PackArtHair, PackArtSmile, PackArtIvf, DoctorArt, TestimonialArt } from "@/components/PortamedArt";
 
 const serif = Newsreader({ subsets: ["latin", "latin-ext"], weight: ["400", "500"] });
 const sans = Hanken_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["300", "400", "500", "600", "700"] });
@@ -24,9 +25,6 @@ const T = {
   soft: "#3A4744",
   border: "rgba(20,33,31,.08)",
 };
-
-// Fotoğraf alanları: spec gereği çizgili placeholder
-const STRIPES = "repeating-linear-gradient(45deg, #ECE8DD 0px, #ECE8DD 12px, #F4F1E8 12px, #F4F1E8 24px)";
 
 export interface LandingDoctor { name: string; title: string; branch: string; color: string }
 
@@ -238,7 +236,9 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
           </div>
 
           <div className="relative">
-            <div className="aspect-[4/5] w-full rounded-[22px]" style={{ background: STRIPES, border: `1px solid ${T.border}` }} />
+            <div className="aspect-[4/5] w-full overflow-hidden rounded-[22px]" style={{ border: `1px solid ${T.border}` }}>
+              <HeroArt />
+            </div>
             {/* Floating: doktor kartı */}
             <div className="absolute -bottom-5 -left-3 rounded-[18px] p-4 sm:-left-6" style={{ background: T.surface, boxShadow: "0 22px 48px -22px rgba(20,33,31,.5)", border: `1px solid ${T.border}` }}>
               <div className="flex items-center gap-3">
@@ -280,9 +280,11 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
             <Link href="/triyaj" className="text-[14px] font-semibold hover:underline" style={{ color: T.tealDeep }}>{C.packages.viewAll}</Link>
           </div>
           <div className="mt-8 grid gap-[18px] sm:grid-cols-2 lg:grid-cols-4">
-            {C.packages.items.map((p) => (
+            {C.packages.items.map((p, pi) => (
               <Link key={p.t} href={planHref} className="group overflow-hidden rounded-[18px] transition hover:-translate-y-0.5" style={{ background: T.surface, border: `1px solid ${T.border}`, boxShadow: "0 10px 28px -18px rgba(20,33,31,.35)" }}>
-                <div className="aspect-[4/3]" style={{ background: STRIPES }} />
+                <div className="aspect-[4/3] overflow-hidden">
+                  {pi === 0 ? <PackArtHair /> : pi === 1 ? <PackArtSmile /> : <PackArtIvf />}
+                </div>
                 <div className="p-4">
                   <div className="text-[16.5px] font-semibold">{p.t}</div>
                   <div className="mt-0.5 text-[13px]" style={{ color: T.muted }}>{p.m}</div>
@@ -326,12 +328,10 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
               <Link href="/hekimler" className="text-[14px] font-semibold hover:underline" style={{ color: T.tealDeep }}>{C.doctors.all}</Link>
             </div>
             <div className="mt-6 grid grid-cols-3 gap-4">
-              {doctors.map((d) => (
+              {doctors.map((d, di) => (
                 <div key={d.name}>
-                  <div className="relative aspect-square overflow-hidden rounded-[14px]" style={{ background: STRIPES, border: `1px solid ${T.border}` }}>
-                    <span className="absolute bottom-2 left-2 grid h-8 w-8 place-items-center rounded-full text-[13px] font-bold text-white" style={{ background: d.color }}>
-                      {d.name.slice(0, 1)}
-                    </span>
+                  <div className="relative aspect-square overflow-hidden rounded-[14px]" style={{ border: `1px solid ${T.border}` }}>
+                    <DoctorArt i={di} />
                   </div>
                   <div className="mt-2.5 text-[14px] font-semibold leading-tight">{d.title} {d.name}</div>
                   <div className="text-[12.5px]" style={{ color: T.muted }}>{d.branch}</div>
@@ -354,7 +354,9 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
         {/* 7 · Testimonial */}
         <section className="px-6 pb-16 sm:px-12">
           <div className="grid gap-8 rounded-[20px] p-8 text-white sm:p-12 lg:grid-cols-[0.9fr_1.4fr]" style={{ background: T.emerald }}>
-            <div className="aspect-square max-h-72 rounded-[16px]" style={{ background: "repeating-linear-gradient(45deg, rgba(255,255,255,.07) 0px, rgba(255,255,255,.07) 12px, transparent 12px, transparent 24px)", border: "1px solid rgba(255,255,255,.12)" }} />
+            <div className="aspect-square max-h-72 overflow-hidden rounded-[16px]" style={{ border: "1px solid rgba(255,255,255,.12)" }}>
+              <TestimonialArt />
+            </div>
             <div className="flex flex-col justify-center">
               <div className="text-[15px] tracking-[0.2em]" style={{ color: "#C6A664" }}>★★★★★</div>
               <p className={`${serif.className} mt-4 text-[21px] font-normal leading-[1.3] sm:text-[27px]`}>{C.testimonial.quote}</p>
