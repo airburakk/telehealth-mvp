@@ -43,9 +43,9 @@ export function CheckInForm({ caseId }: { caseId: string }) {
       <div className="mt-5">
         <div className="flex items-center justify-between text-sm">
           <span className="inline-flex items-center gap-1.5 font-medium text-slate-700"><Activity size={15} /> Ağrı düzeyi</span>
-          <span className="font-semibold text-[#0f2a4a]">{pain}/10</span>
+          <span className="font-semibold text-[#0A3F39]">{pain}/10</span>
         </div>
-        <input type="range" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} className="mt-2 w-full accent-[#0f2a4a]" />
+        <input type="range" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} className="mt-2 w-full accent-[#0E9E97]" />
       </div>
 
       {/* Ateş */}
@@ -54,7 +54,7 @@ export function CheckInForm({ caseId }: { caseId: string }) {
         <input
           type="number" step="0.1" min={34} max={43} value={feverC}
           onChange={(e) => setFeverC(Number(e.target.value))}
-          className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0f2a4a]"
+          className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0E9E97]"
         />
       </div>
 
@@ -72,19 +72,19 @@ export function CheckInForm({ caseId }: { caseId: string }) {
         <textarea
           value={note} onChange={(e) => setNote(e.target.value)} rows={3}
           placeholder="Örn. Yara bölgesinde hafif kızarıklık var…"
-          className="mt-1.5 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#0f2a4a]"
+          className="mt-1.5 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#0E9E97]"
         />
       </div>
 
       {/* Foto */}
-      <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 hover:border-sky-400">
+      <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 hover:border-teal-400">
         <Camera size={16} className="text-slate-400" />
         {photo ? photo : "İyileşme fotoğrafı ekle (opsiyonel)"}
         <input type="file" accept="image/*" className="hidden" onChange={(e) => setPhoto(e.target.files?.[0]?.name ?? "")} />
         {photo && <X size={15} className="ml-auto text-slate-400" onClick={(e) => { e.preventDefault(); setPhoto(""); }} />}
       </label>
 
-      <button onClick={submit} disabled={submitting} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f2a4a] px-4 py-3 text-sm font-semibold text-white hover:bg-[#143a63] disabled:opacity-60">
+      <button onClick={submit} disabled={submitting} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-3 text-sm font-semibold text-white hover:bg-[#0A7D77] disabled:opacity-60">
         {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Kontrolü gönder
       </button>
 

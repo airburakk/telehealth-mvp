@@ -23,9 +23,9 @@ export default async function DoctorDashboard() {
   if (!doctor) {
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 text-center">
-        <h1 className="text-xl font-bold text-[#0f2a4a]">Hekim profili bağlı değil</h1>
+        <h1 className="text-xl font-bold text-[#0A3F39]">Hekim profili bağlı değil</h1>
         <p className="mt-2 text-sm text-slate-500">Bu hesap bir hekim profiline bağlı değil (ör. koordinatör). Vaka kuyruğuna gidin.</p>
-        <Link href="/doktor" className="mt-5 inline-flex rounded-lg bg-[#0f2a4a] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#143a63]">Doktor Paneli</Link>
+        <Link href="/doktor" className="mt-5 inline-flex rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77]">Doktor Paneli</Link>
       </div>
     );
   }
@@ -45,9 +45,9 @@ export default async function DoctorDashboard() {
             <div>
               <div className="flex items-center gap-1.5">
                 <h1 className="text-xl font-bold text-slate-800">{doctor.title} {doctor.name}</h1>
-                {doctor.verified && <BadgeCheck size={16} className="text-sky-600" />}
+                {doctor.verified && <BadgeCheck size={16} className="text-teal-600" />}
               </div>
-              <div className="text-sm font-medium text-[#16467a]">{doctor.branch} · {doctor.city}</div>
+              <div className="text-sm font-medium text-[#0A7D77]">{doctor.branch} · {doctor.city}</div>
               <div className="mt-1 inline-flex items-center gap-1 text-sm text-amber-600"><Star size={14} className="fill-amber-400 text-amber-400" /> {doctor.rating.toFixed(1)} <span className="text-slate-400">({doctor.reviews.length} yorum)</span></div>
             </div>
           </div>
@@ -99,11 +99,11 @@ export default async function DoctorDashboard() {
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><CalendarClock size={15} /> Aylık Kapasite</div>
             <div className="mt-3">
               <div className="flex items-end justify-between">
-                <span className="text-2xl font-bold text-[#0f2a4a]">{ended.length}<span className="text-base font-normal text-slate-400">/{doctor.capacity}</span></span>
+                <span className="text-2xl font-bold text-[#0A3F39]">{ended.length}<span className="text-base font-normal text-slate-400">/{doctor.capacity}</span></span>
                 <span className="text-xs text-slate-500">işlem</span>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-[#0f2a4a]" style={{ width: `${Math.min(100, (ended.length / doctor.capacity) * 100)}%` }} />
+                <div className="h-full rounded-full bg-[#0E9E97]" style={{ width: `${Math.min(100, (ended.length / doctor.capacity) * 100)}%` }} />
               </div>
             </div>
           </div>
@@ -117,8 +117,8 @@ export default async function DoctorDashboard() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-sky-200 bg-sky-50/60 p-5 text-sm text-slate-600">
-            <div className="font-semibold text-sky-800">Operasyonel yük sıfır</div>
+          <div className="rounded-2xl border border-teal-200 bg-teal-50/60 p-5 text-sm text-slate-600">
+            <div className="font-semibold text-teal-800">Operasyonel yük sıfır</div>
             <p className="mt-1 text-xs">Organizasyon, çeviri ve lojistik platformda. Siz yalnız tıbbi görüşe odaklanın.</p>
           </div>
         </aside>
@@ -131,7 +131,7 @@ function Metric({ icon, value, label }: { icon: React.ReactNode; value: string; 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4">
       <div className="flex items-center gap-1.5 text-slate-400">{icon}</div>
-      <div className="mt-1 text-xl font-bold text-[#0f2a4a]">{value}</div>
+      <div className="mt-1 text-xl font-bold text-[#0A3F39]">{value}</div>
       <div className="text-xs text-slate-500">{label}</div>
     </div>
   );

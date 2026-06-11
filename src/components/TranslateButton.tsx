@@ -44,8 +44,8 @@ export function TranslateButton({ text, defaultTarget = "Türkçe", compact }: {
       </div>
       {err && <div className="mt-1 text-[11px] text-red-600">{err}</div>}
       {out && (
-        <div className="mt-1.5 rounded-lg bg-sky-50 p-2 ring-1 ring-sky-100">
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-sky-600">{target} çeviri</div>
+        <div className="mt-1.5 rounded-lg bg-teal-50 p-2 ring-1 ring-teal-100">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-teal-600">{target} çeviri</div>
           <p className="mt-0.5 whitespace-pre-line text-sm text-slate-700">{out}</p>
         </div>
       )}

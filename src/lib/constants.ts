@@ -37,7 +37,7 @@ export function urgencyStyle(u: number): { label: string; badge: string; dot: st
   if (u >= 5) return { label: "Acil / Hayati", badge: "bg-red-100 text-red-700 ring-red-200", dot: "bg-red-500" };
   if (u === 4) return { label: "Yüksek", badge: "bg-orange-100 text-orange-700 ring-orange-200", dot: "bg-orange-500" };
   if (u === 3) return { label: "Orta", badge: "bg-amber-100 text-amber-800 ring-amber-200", dot: "bg-amber-500" };
-  if (u === 2) return { label: "Düşük", badge: "bg-sky-100 text-sky-700 ring-sky-200", dot: "bg-sky-500" };
+  if (u === 2) return { label: "Düşük", badge: "bg-teal-100 text-teal-700 ring-teal-200", dot: "bg-teal-500" };
   return { label: "Rutin", badge: "bg-slate-100 text-slate-600 ring-slate-200", dot: "bg-slate-400" };
 }
 

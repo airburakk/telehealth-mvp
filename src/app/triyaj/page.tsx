@@ -148,7 +148,7 @@ export default function TriyajPage() {
       <select
         value={uiLang}
         onChange={(e) => setUiLang(e.target.value)}
-        className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-[#0f2a4a]"
+        className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-[#0E9E97]"
       >
         {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
       </select>
@@ -161,7 +161,7 @@ export default function TriyajPage() {
       <div className="mx-auto max-w-2xl px-5 py-10">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-[#0f2a4a]">{t("Triyaj · Ön Değerlendirme")}</h1>
+            <h1 className="text-2xl font-bold text-[#0A3F39]">{t("Triyaj · Ön Değerlendirme")}</h1>
             <p className="mt-1 text-sm text-slate-500">{t("Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.")}</p>
           </div>
           {langSelect}
@@ -177,7 +177,7 @@ export default function TriyajPage() {
     <div className="mx-auto max-w-2xl px-5 py-10">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#0f2a4a]">{t("Triyaj · Ön Değerlendirme")}</h1>
+          <h1 className="text-2xl font-bold text-[#0A3F39]">{t("Triyaj · Ön Değerlendirme")}</h1>
           <p className="mt-1 text-sm text-slate-500">
             {t("Birkaç adımda şikayetinizi anlatın; sistem sizi doğru uzmana yönlendirsin.")}
           </p>
@@ -202,12 +202,12 @@ export default function TriyajPage() {
               <div className="flex flex-col items-center">
                 <span
                   className={`grid h-9 w-9 place-items-center rounded-full text-sm font-semibold ${
-                    active ? "bg-[#0f2a4a] text-white" : done ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"
+                    active ? "bg-[#0E9E97] text-white" : done ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"
                   }`}
                 >
                   <Icon size={17} />
                 </span>
-                <span className={`mt-1 text-[11px] ${active ? "text-[#0f2a4a] font-semibold" : "text-slate-400"}`}>{t(s.t)}</span>
+                <span className={`mt-1 text-[11px] ${active ? "text-[#0A3F39] font-semibold" : "text-slate-400"}`}>{t(s.t)}</span>
               </div>
               {i < STEPS.length - 1 && <div className={`mx-2 h-0.5 flex-1 rounded ${done ? "bg-emerald-500" : "bg-slate-200"}`} />}
             </div>
@@ -274,7 +274,7 @@ export default function TriyajPage() {
             <button
               onClick={runAnalyze}
               disabled={analyzing || symptoms.trim().length < 8}
-              className="inline-flex items-center gap-2 rounded-lg bg-sky-50 px-3.5 py-2 text-sm font-medium text-sky-700 ring-1 ring-sky-200 hover:bg-sky-100 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-teal-50 px-3.5 py-2 text-sm font-medium text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100 disabled:opacity-50"
             >
               {analyzing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
               {t("AI ön analizi yap")}
@@ -293,13 +293,13 @@ export default function TriyajPage() {
             )}
             {effectiveBranch ? (
               <>
-                <div className="rounded-xl border border-sky-200 bg-sky-50/60 p-3">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700"><Stethoscope size={14} /> {t("Yönlendirilen branş")}</div>
+                <div className="rounded-xl border border-teal-200 bg-teal-50/60 p-3">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700"><Stethoscope size={14} /> {t("Yönlendirilen branş")}</div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <select
                       value={effectiveBranch}
                       onChange={(e) => setBranchOverride(e.target.value)}
-                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-[#0f2a4a] outline-none focus:border-[#0f2a4a]"
+                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-[#0A3F39] outline-none focus:border-[#0E9E97]"
                     >
                       {BRANCHES.map((b) => <option key={b.key} value={b.key}>{t(b.label)}</option>)}
                     </select>
@@ -323,7 +323,7 @@ export default function TriyajPage() {
         {/* Step 3 — Belgeler */}
         {step === 3 && (
           <div className="space-y-4">
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center hover:border-sky-400 hover:bg-sky-50/40">
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center hover:border-teal-400 hover:bg-teal-50/40">
               <Upload size={26} className="text-slate-400" />
               <span className="text-sm font-medium text-slate-600">{t("Tıbbi belge yükleyin")}</span>
               <span className="text-xs text-slate-400">{t("PDF, JPG, DICOM · Tahlil, radyoloji, epikriz")}</span>
@@ -334,7 +334,7 @@ export default function TriyajPage() {
               <ul className="space-y-2">
                 {files.map((f, i) => (
                   <li key={i} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
-                    <span className="flex items-center gap-2 text-slate-700"><FileText size={16} className="text-sky-600" /> {f}</span>
+                    <span className="flex items-center gap-2 text-slate-700"><FileText size={16} className="text-teal-600" /> {f}</span>
                     <button onClick={() => setFiles(files.filter((_, j) => j !== i))} className="text-slate-400 hover:text-red-500"><X size={16} /></button>
                   </li>
                 ))}
@@ -375,7 +375,7 @@ export default function TriyajPage() {
             {analyzing && <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" /> {t("Analiz ediliyor…")}</div>}
             {analysis && u && <AnalysisCard analysis={analysis} badge={u.badge} dot={u.dot} label={u.label} t={t} />}
             {!analysis && !analyzing && (
-              <button onClick={runAnalyze} className="inline-flex items-center gap-2 rounded-lg bg-sky-50 px-3.5 py-2 text-sm font-medium text-sky-700 ring-1 ring-sky-200 hover:bg-sky-100">
+              <button onClick={runAnalyze} className="inline-flex items-center gap-2 rounded-lg bg-teal-50 px-3.5 py-2 text-sm font-medium text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100">
                 <Sparkles size={16} /> {t("Analizi çalıştır")}
               </button>
             )}
@@ -394,7 +394,7 @@ export default function TriyajPage() {
             <ArrowLeft size={16} /> {t("Geri")}
           </button>
           {step < 4 ? (
-            <button onClick={next} className="inline-flex items-center gap-1.5 rounded-lg bg-[#0f2a4a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#143a63]">
+            <button onClick={next} className="inline-flex items-center gap-1.5 rounded-lg bg-[#0E9E97] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0A7D77]">
               {t("Devam")} <ArrowRight size={16} />
             </button>
           ) : (
@@ -412,7 +412,7 @@ export default function TriyajPage() {
 
       <style>{`
         .inp { width:100%; border:1px solid #cbd5e1; border-radius:0.6rem; padding:0.55rem 0.75rem; font-size:0.9rem; outline:none; background:#fff; }
-        .inp:focus { border-color:#0f2a4a; box-shadow:0 0 0 3px rgba(15,42,74,0.12); }
+        .inp:focus { border-color:#0E9E97; box-shadow:0 0 0 3px rgba(14,158,151,0.15); }
       `}</style>
     </div>
   );
@@ -438,13 +438,13 @@ function Summary({ k, v, block }: { k: string; v: string; block?: boolean }) {
 
 function AnalysisCard({ analysis, badge, dot, label, t = (s) => s }: { analysis: Analysis; badge: string; dot: string; label: string; t?: (s: string) => string }) {
   return (
-    <div className="rounded-xl border border-sky-200 bg-sky-50/60 p-4">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-sky-700">
+    <div className="rounded-xl border border-teal-200 bg-teal-50/60 p-4">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-teal-700">
         <Sparkles size={14} /> {t("AI Ön Analizi")}
-        {analysis.engine === "llm" && <span className="rounded-full bg-sky-600 px-1.5 py-0.5 text-[9px] tracking-normal text-white">Claude</span>}
+        {analysis.engine === "llm" && <span className="rounded-full bg-teal-600 px-1.5 py-0.5 text-[9px] tracking-normal text-white">Claude</span>}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <span className="rounded-lg bg-white px-2.5 py-1 text-sm font-semibold text-[#0f2a4a] ring-1 ring-slate-200">{t(analysis.branch)}</span>
+        <span className="rounded-lg bg-white px-2.5 py-1 text-sm font-semibold text-[#0A3F39] ring-1 ring-slate-200">{t(analysis.branch)}</span>
         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${badge}`}>
           <span className={`h-2 w-2 rounded-full ${dot}`} /> {t("Aciliyet")} {analysis.urgency}/5 · {t(label)}
         </span>

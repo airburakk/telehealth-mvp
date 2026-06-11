@@ -87,9 +87,9 @@ export default async function OperationsDashboard() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-8">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0f2a4a] text-white"><BarChart3 size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0E9E97] text-white"><BarChart3 size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0f2a4a]">Operasyon Paneli</h1>
+          <h1 className="text-2xl font-bold text-[#0A3F39]">Operasyon Paneli</h1>
           <p className="text-sm text-slate-500">S2 Operasyon Şirketi · canlı platform metrikleri</p>
         </div>
       </div>
@@ -118,7 +118,7 @@ export default async function OperationsDashboard() {
                     <span className="font-semibold text-slate-800">{f.count}{conv != null && <span className="ml-1.5 text-xs font-normal text-slate-400">↓ %{conv}</span>}</span>
                   </div>
                   <div className="mt-1 h-2.5 rounded-full bg-slate-100">
-                    <div className="h-2.5 rounded-full bg-[#16467a]" style={{ width: `${Math.max(3, pct)}%` }} />
+                    <div className="h-2.5 rounded-full bg-[#0A7D77]" style={{ width: `${Math.max(3, pct)}%` }} />
                   </div>
                 </div>
               );
@@ -156,7 +156,7 @@ export default async function OperationsDashboard() {
                   <span className="ml-2 shrink-0 font-semibold text-slate-800">{n}</span>
                 </div>
                 <div className="mt-0.5 h-2 rounded-full bg-slate-100">
-                  <div className="h-2 rounded-full bg-sky-600" style={{ width: `${Math.max(4, Math.round((n / branchMax) * 100))}%` }} />
+                  <div className="h-2 rounded-full bg-teal-600" style={{ width: `${Math.max(4, Math.round((n / branchMax) * 100))}%` }} />
                 </div>
               </div>
             ))}
@@ -179,7 +179,7 @@ export default async function OperationsDashboard() {
               {days.map((d) => (
                 <div key={d.key} className="group relative flex-1">
                   <div
-                    className={`w-full rounded-t ${d.count ? "bg-[#16467a]" : "bg-slate-100"}`}
+                    className={`w-full rounded-t ${d.count ? "bg-[#0A7D77]" : "bg-slate-100"}`}
                     style={{ height: `${d.count ? Math.max(12, Math.round((d.count / trendMax) * 96)) : 4}px` }}
                     title={`${d.label}: ${d.count} vaka`}
                   />
@@ -229,7 +229,7 @@ function Kpi({ icon, label, value, sub, tone }: { icon: React.ReactNode; label: 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm">
       <div className="flex items-center gap-1.5 text-xs text-slate-400">{icon} {label}</div>
-      <div className={`mt-1 text-xl font-bold ${tone ?? "text-[#0f2a4a]"}`}>{value}</div>
+      <div className={`mt-1 text-xl font-bold ${tone ?? "text-[#0A3F39]"}`}>{value}</div>
       {sub && <div className="text-[11px] text-slate-400">{sub}</div>}
     </div>
   );

@@ -19,14 +19,14 @@ export default async function EthicsBoard() {
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0f2a4a] text-white"><Scale size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0E9E97] text-white"><Scale size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0f2a4a]">Tahkim & Etik Denetim Kurulu</h1>
+          <h1 className="text-2xl font-bold text-[#0A3F39]">Tahkim & Etik Denetim Kurulu</h1>
           <p className="text-sm text-slate-500">Bağımsız ombudsmanlık — başvurular anonimleştirilmiş olarak incelenir.</p>
         </div>
       </div>
 
-      <div className="mt-5 flex items-center gap-2 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-800 ring-1 ring-sky-100">
+      <div className="mt-5 flex items-center gap-2 rounded-lg bg-teal-50 px-3 py-2 text-xs text-teal-800 ring-1 ring-teal-100">
         <ShieldCheck size={15} /> Veri maskeleme aktif: kurul hasta kimliğini değil, yalnızca vaka ve operasyon verisini görür.
       </div>
 
@@ -48,7 +48,7 @@ export default async function EthicsBoard() {
             <Link
               key={c.id}
               href={`/etik-kurul/${c.id}`}
-              className={`group flex items-center gap-4 rounded-xl border bg-white p-4 transition hover:shadow-sm ${c.status === "PENDING" ? "border-amber-200" : "border-slate-200 hover:border-[#0f2a4a]/30"}`}
+              className={`group flex items-center gap-4 rounded-xl border bg-white p-4 transition hover:shadow-sm ${c.status === "PENDING" ? "border-amber-200" : "border-slate-200 hover:border-[#0E9E97]/30"}`}
             >
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500"><Scale size={20} /></span>
               <div className="min-w-0 flex-1">
@@ -58,12 +58,12 @@ export default async function EthicsBoard() {
                 </div>
                 <div className="mt-0.5 truncate text-sm text-slate-600">{c.subject}</div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-slate-400">
-                  <span className="font-medium text-[#16467a]">{REQUEST_TYPES[c.requestType]}</span>
+                  <span className="font-medium text-[#0A7D77]">{REQUEST_TYPES[c.requestType]}</span>
                   <span>· {c.case.branch}</span>
                   <span>· {formatDateTime(c.createdAt)}</span>
                 </div>
               </div>
-              <ArrowRight size={18} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#0f2a4a]" />
+              <ArrowRight size={18} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#0A7D77]" />
             </Link>
           );
         })}
@@ -75,7 +75,7 @@ export default async function EthicsBoard() {
 function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3.5">
-      <div className={`text-2xl font-bold ${tone ?? "text-[#0f2a4a]"}`}>{value}</div>
+      <div className={`text-2xl font-bold ${tone ?? "text-[#0A3F39]"}`}>{value}</div>
       <div className="text-xs text-slate-500">{label}</div>
     </div>
   );

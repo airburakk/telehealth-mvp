@@ -27,7 +27,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0f2a4a]">
+      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0A7D77]">
         <ArrowLeft size={16} /> Vaka kuyruğu
       </Link>
 
@@ -44,7 +44,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
                 <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
                   <span className="inline-flex items-center gap-1"><Languages size={14} /> {c.language}</span>
                   <span className="inline-flex items-center gap-1"><Clock size={14} /> {formatDateTime(c.createdAt)}</span>
-                  <span className="inline-flex items-center gap-1"><Stethoscope size={14} /> <span className="font-medium text-[#16467a]">{c.branch}</span></span>
+                  <span className="inline-flex items-center gap-1"><Stethoscope size={14} /> <span className="font-medium text-[#0A7D77]">{c.branch}</span></span>
                 </div>
               </div>
               <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
@@ -59,8 +59,8 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               <TranslateButton text={c.symptoms} defaultTarget="Türkçe" />
             </div>
 
-            <div className="mt-5 rounded-xl border border-sky-200 bg-sky-50/60 p-4">
-              <SectionTitle icon={<Sparkles size={15} />} tone="text-sky-700">AI Triyaj Gerekçesi</SectionTitle>
+            <div className="mt-5 rounded-xl border border-teal-200 bg-teal-50/60 p-4">
+              <SectionTitle icon={<Sparkles size={15} />} tone="text-teal-700">AI Triyaj Gerekçesi</SectionTitle>
               <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{c.reasoning}</p>
               <div className="mt-2 text-xs text-slate-400">Güven skoru: %{c.confidence}</div>
             </div>
@@ -88,7 +88,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                 {files.map((f) => (
                   <li key={f} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                    <FileText size={16} className="text-sky-600" /> {f}
+                    <FileText size={16} className="text-teal-600" /> {f}
                   </li>
                 ))}
               </ul>
@@ -119,7 +119,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
 
             <div className="text-xs uppercase tracking-wide text-slate-400">Atanan / Önerilen Hekim</div>
             <div className="mt-2 flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-white" style={{ background: (c.doctor ?? suggested)?.color ?? "#16467a" }}>
+              <span className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-white" style={{ background: (c.doctor ?? suggested)?.color ?? "#0A7D77" }}>
                 {((c.doctor ?? suggested)?.name ?? "?").slice(0, 1)}
               </span>
               <div className="text-sm">
@@ -135,7 +135,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               </div>
             )}
             {(c.doctor ?? suggested) && (
-              <Link href={`/hekim/${(c.doctor ?? suggested)!.id}`} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-sky-700 hover:underline">
+              <Link href={`/hekim/${(c.doctor ?? suggested)!.id}`} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-700 hover:underline">
                 Hekim profilini gör <ArrowRight size={13} />
               </Link>
             )}
@@ -160,7 +160,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               </Link>
               <Link
                 href={`/takip/${c.id}`}
-                className="flex items-center justify-between rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 font-medium text-sky-700 hover:bg-sky-100"
+                className="flex items-center justify-between rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 font-medium text-teal-700 hover:bg-teal-100"
               >
                 <span className="inline-flex items-center gap-1.5"><HeartPulse size={14} /> Post-Op takip</span>
                 <ArrowRight size={14} />

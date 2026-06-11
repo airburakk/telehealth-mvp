@@ -36,7 +36,7 @@ export function ShareUnlock({ id, recipient }: { id: string; recipient: string |
           <Lock size={22} />
         </span>
         <div>
-          <h1 className="text-lg font-bold text-[#0f2a4a]">Şifre korumalı paylaşım</h1>
+          <h1 className="text-lg font-bold text-[#0A3F39]">Şifre korumalı paylaşım</h1>
           <p className="text-sm text-slate-500">
             {recipient ? `Sayın ${recipient}, ` : ""}bu sağlık kaydını görüntülemek için hastanın size ayrıca ilettiği erişim şifresini girin.
           </p>
@@ -62,7 +62,7 @@ export function ShareUnlock({ id, recipient }: { id: string; recipient: string |
       <button
         type="submit"
         disabled={busy}
-        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f2a4a] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#143a63] disabled:opacity-50"
+        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77] disabled:opacity-50"
       >
         <ShieldCheck size={16} /> {busy ? "Doğrulanıyor…" : "Görüntüle"}
       </button>

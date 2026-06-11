@@ -45,8 +45,8 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm">
       <div className="mb-6 flex flex-col items-center text-center">
-        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#0f2a4a] text-white shadow"><Activity size={24} /></span>
-        <h1 className="mt-3 text-xl font-bold text-[#0f2a4a]">AIR Telehealth&apos;e giriş</h1>
+        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#0E9E97] text-white shadow"><Activity size={24} /></span>
+        <h1 className="mt-3 text-xl font-bold text-[#0A3F39]">portamed&apos;e giriş</h1>
         <p className="text-sm text-slate-500">Rolünüzle devam edin</p>
       </div>
 
@@ -54,14 +54,14 @@ export function LoginForm() {
         <form onSubmit={(e) => { e.preventDefault(); login(); }} className="space-y-3">
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-slate-700">E-posta</span>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ornek@air.test" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0f2a4a]" />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ornek@air.test" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0E9E97]" />
           </label>
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-slate-700">Parola</span>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0f2a4a]" />
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0E9E97]" />
           </label>
           {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">{error}</div>}
-          <button type="submit" disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f2a4a] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#143a63] disabled:opacity-60">
+          <button type="submit" disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77] disabled:opacity-60">
             {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />} Giriş yap
           </button>
         </form>
@@ -74,7 +74,7 @@ export function LoginForm() {
           {QUICK.map((q) => {
             const Icon = q.icon;
             return (
-              <button key={q.email} onClick={() => login(q.email, "1234")} disabled={loading} className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:border-[#0f2a4a]/40 hover:bg-slate-50 disabled:opacity-60">
+              <button key={q.email} onClick={() => login(q.email, "1234")} disabled={loading} className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:border-[#0E9E97]/40 hover:bg-slate-50 disabled:opacity-60">
                 <Icon size={15} /> {q.label}
               </button>
             );

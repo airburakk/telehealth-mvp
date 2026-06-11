@@ -1,6 +1,6 @@
 {
-  "name": "AIR Telehealth — Sağlık Turizmi Platformu",
-  "short_name": "AIR Telehealth",
+  "name": "portamed — Sağlık Turizmi & Teletıp",
+  "short_name": "portamed",
   "description": "Triyaj, uzman görüşü ve sağlık turizmi paketlerini birleştiren uçtan uca dijital sağlık platformu.",
   "id": "/",
   "start_url": "/",
@@ -8,7 +8,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
-  "theme_color": "#0f2a4a",
+  "theme_color": "#0A3F39",
   "lang": "tr",
   "categories": ["health", "medical"],
   "icons": [

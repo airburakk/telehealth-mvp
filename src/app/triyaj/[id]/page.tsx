@@ -63,8 +63,8 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
           <p className="mt-1 text-sm text-slate-700">{c.symptoms}</p>
         </div>
 
-        <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50/60 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-sky-700">
+        <div className="mt-4 rounded-xl border border-teal-200 bg-teal-50/60 p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-teal-700">
             <Sparkles size={14} /> {t("Triyaj Gerekçesi")}
           </div>
           <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{c.reasoning}</p>
@@ -76,7 +76,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
             <ul className="mt-1.5 flex flex-wrap gap-2">
               {files.map((f) => (
                 <li key={f} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
-                  <FileText size={14} className="text-sky-600" /> {f}
+                  <FileText size={14} className="text-teal-600" /> {f}
                 </li>
               ))}
             </ul>
@@ -85,7 +85,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <Link href="/doktor" className="inline-flex items-center gap-2 rounded-lg bg-[#0f2a4a] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#143a63]">
+        <Link href="/doktor" className="inline-flex items-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77]">
           <Stethoscope size={16} /> {t("Doktor panelinde gör")}
         </Link>
         <Link href="/triyaj" className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50">
@@ -100,7 +100,7 @@ function Info({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
   return (
     <div>
       <div className="text-xs uppercase tracking-wide text-slate-400">{k}</div>
-      <div className={`mt-0.5 ${accent ? "font-semibold text-[#0f2a4a]" : "text-slate-800"}`}>{v}</div>
+      <div className={`mt-0.5 ${accent ? "font-semibold text-[#0A3F39]" : "text-slate-800"}`}>{v}</div>
     </div>
   );
 }

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
-import { Activity, Stethoscope, UserRound, HeartPulse, Scale, LogOut, LogIn, Users, BadgeCheck, Share2, BarChart3, FolderHeart } from "lucide-react";
+import { PortamedLogo } from "@/components/PortamedLogo";
+import { Stethoscope, UserRound, HeartPulse, Scale, LogOut, LogIn, Users, BadgeCheck, Share2, BarChart3, FolderHeart } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
   PATIENT: "Hasta",
@@ -46,14 +47,9 @@ export function Header({ user }: { user: { name: string; role: string } | null }
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="mx-auto max-w-6xl px-5 h-16 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#0f2a4a] text-white shadow-sm">
-            <Activity size={20} strokeWidth={2.4} />
-          </span>
-          <span className="leading-tight">
-            <span className="block font-bold text-[#0f2a4a] tracking-tight">AIR Telehealth</span>
-            <span className="block text-[11px] text-slate-500 -mt-0.5">Sağlık Turizmi Platformu</span>
-          </span>
+        <Link href="/" className="flex items-end gap-2">
+          <PortamedLogo size={23} />
+          <span className="hidden pb-[1px] text-[11px] text-slate-400 sm:block">Sağlık Turizmi & Teletıp</span>
         </Link>
 
         <div className="flex items-center gap-1.5">
@@ -65,7 +61,7 @@ export function Header({ user }: { user: { name: string; role: string } | null }
                   key={href}
                   href={href}
                   className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    active ? "bg-[#0f2a4a] text-white" : "text-slate-600 hover:bg-slate-100 hover:text-[#0f2a4a]"
+                    active ? "bg-[#0E9E97] text-white" : "text-slate-600 hover:bg-slate-100 hover:text-[#0A7D77]"
                   }`}
                 >
                   <Icon size={16} />
@@ -87,7 +83,7 @@ export function Header({ user }: { user: { name: string; role: string } | null }
               </button>
             </div>
           ) : (
-            <Link href="/giris" className="ml-1 inline-flex items-center gap-1.5 rounded-lg bg-[#0f2a4a] px-3.5 py-2 text-sm font-semibold text-white hover:bg-[#143a63]">
+            <Link href="/giris" className="ml-1 inline-flex items-center gap-1.5 rounded-lg bg-[#0E9E97] px-3.5 py-2 text-sm font-semibold text-white hover:bg-[#0A7D77]">
               <LogIn size={16} /> Giriş yap
             </Link>
           )}

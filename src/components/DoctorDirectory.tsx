@@ -32,9 +32,9 @@ export function DoctorDirectory({ doctors }: { doctors: DoctorRow[] }) {
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Hekim ara…" className="rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-[#0f2a4a]" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Hekim ara…" className="rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-[#0E9E97]" />
         </div>
-        <select value={branch} onChange={(e) => setBranch(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0f2a4a]">
+        <select value={branch} onChange={(e) => setBranch(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0E9E97]">
           <option value="all">Tüm branşlar</option>
           {branches.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
@@ -47,18 +47,18 @@ export function DoctorDirectory({ doctors }: { doctors: DoctorRow[] }) {
           </div>
         )}
         {filtered.map((d) => (
-          <Link key={d.id} href={`/hekim/${d.id}`} className="group rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-[#0f2a4a]/30 hover:shadow-sm">
+          <Link key={d.id} href={`/hekim/${d.id}`} className="group rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-[#0E9E97]/30 hover:shadow-sm">
             <div className="flex items-start gap-3">
               <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-lg font-bold text-white" style={{ background: d.color }}>{d.name.slice(0, 1)}</span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <span className="font-semibold text-slate-800">{d.title} {d.name}</span>
-                  {d.verified && <BadgeCheck size={16} className="text-sky-600" />}
+                  {d.verified && <BadgeCheck size={16} className="text-teal-600" />}
                 </div>
-                <div className="text-sm font-medium text-[#16467a]">{d.branch}</div>
+                <div className="text-sm font-medium text-[#0A7D77]">{d.branch}</div>
                 <div className="mt-0.5 text-xs text-slate-500">{d.city}</div>
               </div>
-              <ArrowRight size={18} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#0f2a4a]" />
+              <ArrowRight size={18} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#0A7D77]" />
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
               <span className="inline-flex items-center gap-1 font-semibold text-amber-600"><Star size={13} className="fill-amber-400 text-amber-400" /> {d.rating.toFixed(1)}</span>

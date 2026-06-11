@@ -492,7 +492,7 @@ export function ConsultationRoom({
                 )}
                 {transcript.map((l, i) => (
                   <p key={i} className="text-sm leading-snug text-slate-700">
-                    <span className={`font-semibold ${l.who === "doctor" ? "text-[#16467a]" : "text-emerald-700"}`}>
+                    <span className={`font-semibold ${l.who === "doctor" ? "text-[#0A7D77]" : "text-emerald-700"}`}>
                       {l.who === "doctor" ? "Doktor" : "Hasta"}:
                     </span>{" "}
                     {l.text}
@@ -505,11 +505,11 @@ export function ConsultationRoom({
 
           {/* Doktor: hasta bağlantısı paylaş */}
           {isDoctor && (
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-sky-200 bg-sky-50/60 p-3">
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-teal-200 bg-teal-50/60 p-3">
               <div className="text-sm text-slate-600">
-                <span className="font-semibold text-sky-800">Hastayı davet et:</span> bu görüşme bağlantısını hastayla paylaş.
+                <span className="font-semibold text-teal-800">Hastayı davet et:</span> bu görüşme bağlantısını hastayla paylaş.
               </div>
-              <button onClick={copyPatientLink} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-sky-700 ring-1 ring-sky-200 hover:bg-sky-100">
+              <button onClick={copyPatientLink} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100">
                 {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Kopyalandı" : "Hasta linkini kopyala"}
               </button>
             </div>
@@ -533,8 +533,8 @@ export function ConsultationRoom({
               </span>
             </div>
             <div className="mt-1 flex items-center gap-2 text-sm">
-              <Stethoscope size={14} className="text-[#16467a]" />
-              <span className="font-medium text-[#16467a]">{caseData.branch}</span>
+              <Stethoscope size={14} className="text-[#0A7D77]" />
+              <span className="font-medium text-[#0A7D77]">{caseData.branch}</span>
             </div>
             <div className="mt-3">
               <div className="text-xs uppercase tracking-wide text-slate-400">Şikayet</div>
@@ -542,8 +542,8 @@ export function ConsultationRoom({
               {isDoctor && <TranslateButton text={caseData.symptoms} defaultTarget="Türkçe" />}
             </div>
             {isDoctor && (
-              <div className="mt-3 rounded-lg bg-sky-50/70 p-3 ring-1 ring-sky-100">
-                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700"><Sparkles size={13} /> AI özeti</div>
+              <div className="mt-3 rounded-lg bg-teal-50/70 p-3 ring-1 ring-teal-100">
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700"><Sparkles size={13} /> AI özeti</div>
                 <p className="mt-1 text-xs leading-relaxed text-slate-600">{caseData.reasoning}</p>
               </div>
             )}
@@ -556,7 +556,7 @@ export function ConsultationRoom({
               <div className="mt-3">
                 <div className="text-xs uppercase tracking-wide text-slate-400">Belgeler</div>
                 <ul className="mt-1.5 space-y-1">
-                  {caseData.files.map((f) => <li key={f} className="flex items-center gap-1.5 text-xs text-slate-600"><FileText size={13} className="text-sky-600" /> {f}</li>)}
+                  {caseData.files.map((f) => <li key={f} className="flex items-center gap-1.5 text-xs text-slate-600"><FileText size={13} className="text-teal-600" /> {f}</li>)}
                 </ul>
               </div>
             )}
@@ -569,7 +569,7 @@ export function ConsultationRoom({
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Görüşme Notları</div>
                 {saved ? <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600"><Check size={13} /> kaydedildi</span> : <span className="text-[11px] text-amber-600">kaydedilmedi</span>}
               </div>
-              <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#0f2a4a]" />
+              <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#0E9E97]" />
 
               {/* Akış: 1) transkriptten taslak → 2) sesli not ekle → 3) SOAP'a dönüştür (güncelle) */}
               <div className="mt-2 grid grid-cols-2 gap-2">
@@ -596,11 +596,11 @@ export function ConsultationRoom({
                 </p>
               )}
 
-              <button onClick={generateSoap} disabled={soapBusy || !notes.trim()} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50">
+              <button onClick={generateSoap} disabled={soapBusy || !notes.trim()} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-100 disabled:opacity-50">
                 {soapBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} AI · SOAP&apos;a dönüştür
               </button>
               {soapErr && <div className="mt-1 text-[11px] text-red-600">{soapErr}</div>}
-              <button onClick={saveNotes} disabled={saving || saved} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f2a4a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#143a63] disabled:opacity-50">
+              <button onClick={saveNotes} disabled={saving || saved} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-3 py-2 text-sm font-semibold text-white hover:bg-[#0A7D77] disabled:opacity-50">
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Notu kaydet
               </button>
               <div className="mt-3 grid grid-cols-2 gap-2">
@@ -629,7 +629,7 @@ export function ConsultationRoom({
                 <div className="mt-3 rounded-xl border border-violet-200 bg-white p-3.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-bold text-violet-700">{proposal.proposal.tier}</span>
-                    <span className="text-sm font-bold text-[#0f2a4a]">${proposal.quote.total.toLocaleString("en-US")}</span>
+                    <span className="text-sm font-bold text-[#0A3F39]">${proposal.quote.total.toLocaleString("en-US")}</span>
                   </div>
                   <div className="mt-2 text-xs leading-relaxed text-slate-600">
                     {proposal.proposal.nights} gece · {proposal.proposal.hotelStars}★ otel · {proposal.proposal.hospitalType} hastane

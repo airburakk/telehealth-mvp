@@ -31,7 +31,7 @@ export function DecisionForm({ complaintId, bookingTotal }: { complaintId: strin
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex items-center gap-2">
-        <Gavel size={18} className="text-[#0f2a4a]" />
+        <Gavel size={18} className="text-[#0A3F39]" />
         <h2 className="font-bold text-slate-800">Kurul Kararı</h2>
       </div>
 
@@ -40,7 +40,7 @@ export function DecisionForm({ complaintId, bookingTotal }: { complaintId: strin
           <span className="mb-1.5 block text-sm font-medium text-slate-700">Karar</span>
           <div className="grid grid-cols-3 gap-2">
             {Object.entries(VERDICTS).map(([k, v]) => (
-              <button key={k} onClick={() => setVerdict(k)} className={`rounded-lg border px-2 py-2 text-sm font-medium transition ${verdict === k ? "border-[#0f2a4a] bg-[#0f2a4a] text-white" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>
+              <button key={k} onClick={() => setVerdict(k)} className={`rounded-lg border px-2 py-2 text-sm font-medium transition ${verdict === k ? "border-[#0E9E97] bg-[#0E9E97] text-white" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>
                 {v.label}
               </button>
             ))}
@@ -49,7 +49,7 @@ export function DecisionForm({ complaintId, bookingTotal }: { complaintId: strin
 
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium text-slate-700">Yaptırım</span>
-          <select value={action} onChange={(e) => setAction(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0f2a4a]">
+          <select value={action} onChange={(e) => setAction(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0E9E97]">
             {Object.entries(ACTIONS).map(([k, v]) => <option key={k} value={k} disabled={(k === "REFUND_FULL" || k === "REFUND_PARTIAL") && !bookingTotal}>{v}</option>)}
           </select>
         </label>
@@ -57,23 +57,23 @@ export function DecisionForm({ complaintId, bookingTotal }: { complaintId: strin
         {action === "REFUND_PARTIAL" && bookingTotal && (
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-slate-700">İade tutarı (max {formatUSD(bookingTotal)})</span>
-            <input type="number" value={refundAmount} min={0} max={bookingTotal} onChange={(e) => setRefundAmount(Number(e.target.value))} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0f2a4a]" />
+            <input type="number" value={refundAmount} min={0} max={bookingTotal} onChange={(e) => setRefundAmount(Number(e.target.value))} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0E9E97]" />
           </label>
         )}
 
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium text-slate-700">Gerekçe</span>
-          <textarea value={rationale} onChange={(e) => setRationale(e.target.value)} rows={3} placeholder="Kurul kararının gerekçesi…" className="w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#0f2a4a]" />
+          <textarea value={rationale} onChange={(e) => setRationale(e.target.value)} rows={3} placeholder="Kurul kararının gerekçesi…" className="w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#0E9E97]" />
         </label>
 
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium text-slate-700">İmzalayan kurul üyesi</span>
-          <select value={decidedBy} onChange={(e) => setDecidedBy(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0f2a4a]">
+          <select value={decidedBy} onChange={(e) => setDecidedBy(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0E9E97]">
             {BOARD.map((m) => <option key={m.name} value={m.name}>{m.name} · {m.role}</option>)}
           </select>
         </label>
 
-        <button onClick={submit} disabled={submitting} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f2a4a] px-4 py-3 text-sm font-semibold text-white hover:bg-[#143a63] disabled:opacity-60">
+        <button onClick={submit} disabled={submitting} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-3 text-sm font-semibold text-white hover:bg-[#0A7D77] disabled:opacity-60">
           {submitting ? <Loader2 size={16} className="animate-spin" /> : <PenLine size={16} />} Kararı dijital imzayla onayla
         </button>
       </div>

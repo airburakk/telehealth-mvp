@@ -6,16 +6,16 @@ import { PwaRegister } from "@/components/PwaRegister";
 import { getCurrentUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "AIR Telehealth — Sağlık Turizmi Platformu",
+  title: "portamed — Sağlık Turizmi & Teletıp",
   description:
     "Triyaj, uzman görüşü ve sağlık turizmi paketlerini birleştiren uçtan uca dijital sağlık platformu (MVP).",
   manifest: "/manifest.webmanifest",
   icons: { apple: "/apple-touch-icon.png" },
-  appleWebApp: { capable: true, title: "AIR Telehealth", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "portamed", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f2a4a",
+  themeColor: "#0A3F39",
 };
 
 export default async function RootLayout({

@@ -53,31 +53,39 @@ function segDist(px, py, ax, ay, bx, by) {
   return Math.hypot(px - cx, py - cy);
 }
 
-// Nabız çizgisi kontrol noktaları (512 uzayında)
-const PULSE = [
-  [88, 256], [186, 256], [224, 170], [268, 342], [306, 210], [330, 256], [424, 256],
-];
-const BG = [15, 42, 74]; // #0f2a4a
-const FG = [255, 255, 255];
+// PortaMed portal halkası (logo spec: ellipse -18°, round cap) — zümrüt zemin + parlak teal halka
+const BG = [10, 63, 57]; // #0A3F39 emerald
+const FG = [95, 208, 199]; // #5FD0C7 teal-bright
 
 function renderIcon(size) {
   const s = size / 512;
-  const stroke = 30 * s; // çizgi kalınlığı
-  const pts = PULSE.map(([x, y]) => [x * s, y * s]);
+  // Halka: 512 uzayında merkez (256,256), rx=118 ry=196, -18°, kalınlık ~56
+  const rx = 118 * s, ry = 196 * s, cx = size / 2, cy = size / 2;
+  const rot = (-18 * Math.PI) / 180;
+  const stroke = 56 * s;
+  // Elipsi parametrik örnekle → nokta bulutuna uzaklıkla kalın halka çiz
+  const pts = [];
+  for (let i = 0; i < 1440; i++) {
+    const a = (i / 1440) * Math.PI * 2;
+    const ex = rx * Math.cos(a), ey = ry * Math.sin(a);
+    pts.push([cx + ex * Math.cos(rot) - ey * Math.sin(rot), cy + ex * Math.sin(rot) + ey * Math.cos(rot)]);
+  }
   const rgba = Buffer.alloc(size * size * 4);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       let d = Infinity;
-      for (let i = 0; i < pts.length - 1; i++) {
-        d = Math.min(d, segDist(x + 0.5, y + 0.5, pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]));
+      const px = x + 0.5, py = y + 0.5;
+      for (const [ex, ey] of pts) {
+        const dd = (px - ex) * (px - ex) + (py - ey) * (py - ey);
+        if (dd < d) d = dd;
       }
-      // 1px yumuşatma (antialias) ile beyaz çizgi ↔ lacivert zemin karışımı
+      d = Math.sqrt(d);
       const t = Math.max(0, Math.min(1, stroke / 2 + 0.5 - d));
       const o = (y * size + x) * 4;
       rgba[o] = Math.round(BG[0] + (FG[0] - BG[0]) * t);
       rgba[o + 1] = Math.round(BG[1] + (FG[1] - BG[1]) * t);
       rgba[o + 2] = Math.round(BG[2] + (FG[2] - BG[2]) * t);
-      rgba[o + 3] = 255; // tam dolu (maskable uyumlu — OS köşeleri kendisi maskeler)
+      rgba[o + 3] = 255; // tam dolu (maskable uyumlu)
     }
   }
   return encodePNG(size, size, rgba);

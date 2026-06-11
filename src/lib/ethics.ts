@@ -35,7 +35,7 @@ export const COMPLAINT_STATUS: Record<string, { label: string; color: string }> 
 export const ESCROW_STATUS: Record<string, { label: string; color: string; dot: string }> = {
   HELD: { label: "Emanette tutuluyor", color: "bg-amber-100 text-amber-700 ring-amber-200", dot: "bg-amber-500" },
   RELEASED: { label: "Taraflara aktarıldı", color: "bg-emerald-100 text-emerald-700 ring-emerald-200", dot: "bg-emerald-500" },
-  REFUNDED: { label: "Hastaya iade edildi", color: "bg-sky-100 text-sky-700 ring-sky-200", dot: "bg-sky-500" },
+  REFUNDED: { label: "Hastaya iade edildi", color: "bg-teal-100 text-teal-700 ring-teal-200", dot: "bg-teal-500" },
 };
 
 /// Anonimleştirme (data masking): kurul kimliği değil, vakayı görür

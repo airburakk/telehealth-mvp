@@ -24,7 +24,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href="/hekimler" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0f2a4a]">
+      <Link href="/hekimler" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0A7D77]">
         <ArrowLeft size={16} /> Hekimler
       </Link>
 
@@ -35,10 +35,10 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold text-slate-800">{d.title} {d.name}</h1>
-              {d.verified && <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-700"><BadgeCheck size={14} /> Doğrulanmış</span>}
+              {d.verified && <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2.5 py-1 text-xs font-semibold text-teal-700"><BadgeCheck size={14} /> Doğrulanmış</span>}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
-              <span className="inline-flex items-center gap-1 font-medium text-[#16467a]"><Stethoscope size={14} /> {d.branch}</span>
+              <span className="inline-flex items-center gap-1 font-medium text-[#0A7D77]"><Stethoscope size={14} /> {d.branch}</span>
               <span className="inline-flex items-center gap-1"><MapPin size={14} /> {d.city}</span>
               <span className="inline-flex items-center gap-1"><Globe size={14} /> {d.languages.split(",").join(" · ")}</span>
             </div>
@@ -104,7 +104,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
             <p className="text-sm text-slate-600">Tıp fakültesi mezunu, uluslararası kongre ve yayın deneyimi.</p>
           </Card>
 
-          <Link href="/triyaj" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f2a4a] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#143a63]">
+          <Link href="/triyaj" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77]">
             <Stethoscope size={16} /> Bu branşta görüşme planla
           </Link>
         </aside>
@@ -124,7 +124,7 @@ function Card({ title, icon, children }: { title: string; icon?: React.ReactNode
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="rounded-xl bg-slate-50 p-3 text-center">
-      <div className="text-xl font-bold text-[#0f2a4a]">{value}</div>
+      <div className="text-xl font-bold text-[#0A3F39]">{value}</div>
       <div className="text-xs text-slate-500">{label}</div>
     </div>
   );

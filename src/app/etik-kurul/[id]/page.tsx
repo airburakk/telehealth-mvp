@@ -21,15 +21,15 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href="/etik-kurul" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0f2a4a]">
+      <Link href="/etik-kurul" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0A7D77]">
         <ArrowLeft size={16} /> Kurul başvuruları
       </Link>
 
       <div className="mt-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0f2a4a] text-white"><Scale size={22} /></span>
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0E9E97] text-white"><Scale size={22} /></span>
           <div>
-            <h1 className="font-mono text-xl font-bold text-[#0f2a4a]">{maskCaseId(c.caseId)}</h1>
+            <h1 className="font-mono text-xl font-bold text-[#0A3F39]">{maskCaseId(c.caseId)}</h1>
             <p className="text-sm text-slate-500">{REQUEST_TYPES[c.requestType]} · {formatDateTime(c.createdAt)}</p>
           </div>
         </div>
@@ -51,7 +51,7 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><ShieldCheck size={15} /> Anonim Vaka Verisi</div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="rounded-lg bg-white px-2.5 py-1 text-sm font-semibold text-[#0f2a4a] ring-1 ring-slate-200">{c.case.branch}</span>
+              <span className="rounded-lg bg-white px-2.5 py-1 text-sm font-semibold text-[#0A3F39] ring-1 ring-slate-200">{c.case.branch}</span>
               <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
                 <span className={`h-2 w-2 rounded-full ${u.dot}`} /> Aciliyet {c.case.urgency}/5
               </span>
@@ -60,8 +60,8 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
               <div className="text-xs uppercase tracking-wide text-slate-400">Şikayet (triyaj)</div>
               <p className="mt-1 text-sm text-slate-700">{c.case.symptoms}</p>
             </div>
-            <div className="mt-3 rounded-lg bg-sky-50/70 p-3 ring-1 ring-sky-100">
-              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700"><Sparkles size={13} /> AI gerekçe</div>
+            <div className="mt-3 rounded-lg bg-teal-50/70 p-3 ring-1 ring-teal-100">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700"><Sparkles size={13} /> AI gerekçe</div>
               <p className="mt-1 text-xs leading-relaxed text-slate-600">{c.case.reasoning}</p>
             </div>
           </div>
@@ -73,7 +73,7 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {c.verdict && <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${VERDICTS[c.verdict].color}`}>{VERDICTS[c.verdict].label}</span>}
                 {c.action && <span className="rounded-lg bg-white px-2.5 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">{ACTIONS[c.action]}</span>}
-                {c.refundAmount ? <span className="rounded-lg bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-700">İade: {formatUSD(c.refundAmount)}</span> : null}
+                {c.refundAmount ? <span className="rounded-lg bg-teal-100 px-2.5 py-1 text-xs font-semibold text-teal-700">İade: {formatUSD(c.refundAmount)}</span> : null}
               </div>
               {c.rationale && <p className="mt-3 text-sm leading-relaxed text-slate-700">{c.rationale}</p>}
               <div className="mt-3 text-xs text-slate-500">İmza: <strong className="text-slate-700">{c.decidedBy}</strong> · {c.decidedAt ? formatDateTime(c.decidedAt) : ""}</div>
@@ -86,7 +86,7 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
           {booking && esc && (
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><Lock size={15} /> İlgili Rezervasyon</div>
-              <div className="mt-2 text-2xl font-bold text-[#0f2a4a]">{formatUSD(booking.total)}</div>
+              <div className="mt-2 text-2xl font-bold text-[#0A3F39]">{formatUSD(booking.total)}</div>
               <div className="mt-1 text-xs text-slate-500">{booking.tier} paket</div>
               <div className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${esc.color}`}>
                 <span className={`h-2 w-2 rounded-full ${esc.dot}`} /> {esc.label}

@@ -51,7 +51,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
                 <div className="text-xs uppercase tracking-wide text-slate-400">Rezervasyon No</div>
                 <div className="font-mono text-sm text-slate-700">{booking.id.slice(0, 8).toUpperCase()}</div>
               </div>
-              <span className="rounded-full bg-[#0f2a4a] px-3 py-1 text-xs font-semibold text-white">{booking.tier} Paket</span>
+              <span className="rounded-full bg-[#0E9E97] px-3 py-1 text-xs font-semibold text-white">{booking.tier} Paket</span>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -71,7 +71,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
             </ul>
             <div className="mt-3 flex items-end justify-between border-t border-slate-200 pt-3">
               <span className="text-sm font-semibold text-slate-700">Toplam (Escrow)</span>
-              <span className="text-2xl font-bold text-[#0f2a4a]">{formatUSD(booking.total)}</span>
+              <span className="text-2xl font-bold text-[#0A3F39]">{formatUSD(booking.total)}</span>
             </div>
           </div>
 
@@ -84,7 +84,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
                 return (
                   <li key={i} className="flex gap-3">
                     <div className="flex flex-col items-center">
-                      <span className="grid h-9 w-9 place-items-center rounded-full bg-sky-100 text-sky-700"><Icon size={16} /></span>
+                      <span className="grid h-9 w-9 place-items-center rounded-full bg-teal-100 text-teal-700"><Icon size={16} /></span>
                       {i < JOURNEY.length - 1 && <span className="my-1 h-6 w-0.5 bg-slate-200" />}
                     </div>
                     <div className="pb-2">
@@ -100,8 +100,8 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
 
         {/* Sağ: Escrow + split */}
         <aside className="space-y-4">
-          <div className="rounded-2xl border border-sky-200 bg-sky-50/60 p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-sky-800"><Lock size={16} /> Escrow Durumu</div>
+          <div className="rounded-2xl border border-teal-200 bg-teal-50/60 p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-teal-800"><Lock size={16} /> Escrow Durumu</div>
             <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold ring-1 ${esc.color}`}>
               <span className={`h-2 w-2 rounded-full ${esc.dot}`} /> {esc.label}
             </div>
@@ -131,7 +131,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
           <Link href={`/sikayet/${c.id}`} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
             <Scale size={15} /> Şikayet / itiraz (Etik Kurul)
           </Link>
-          <Link href="/doktor" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f2a4a] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#143a63]">
+          <Link href="/doktor" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77]">
             <Stethoscope size={16} /> Doktor paneline dön
           </Link>
         </aside>

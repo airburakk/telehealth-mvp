@@ -29,14 +29,14 @@ export default async function PackagePage({
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href={`/doktor/vaka/${c.id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0f2a4a]">
+      <Link href={`/doktor/vaka/${c.id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0A7D77]">
         <ArrowLeft size={16} /> Vaka detayı
       </Link>
 
       <div className="mt-4 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0f2a4a] text-white"><Luggage size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0E9E97] text-white"><Luggage size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0f2a4a]">Sağlık Turizmi Paketi</h1>
+          <h1 className="text-2xl font-bold text-[#0A3F39]">Sağlık Turizmi Paketi</h1>
           <p className="text-sm text-slate-500">{c.patientName} · {c.branch} tedavisi için uçtan uca paket oluşturun.</p>
         </div>
       </div>

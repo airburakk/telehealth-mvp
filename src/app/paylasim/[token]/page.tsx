@@ -23,11 +23,11 @@ function Shell({ children }: { children: React.ReactNode }) {
 function Brand() {
   return (
     <div className="flex items-center gap-2.5">
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#0f2a4a] text-white">
+      <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#0E9E97] text-white">
         <Activity size={20} strokeWidth={2.4} />
       </span>
       <span className="leading-tight">
-        <span className="block font-bold text-[#0f2a4a]">AIR Telehealth</span>
+        <span className="block font-bold text-[#0A3F39]">portamed</span>
         <span className="block text-[11px] text-slate-500 -mt-0.5">Güvenli Sağlık Paylaşımı</span>
       </span>
     </div>
@@ -130,9 +130,9 @@ export default async function ShareViewerPage({ params }: { params: Promise<{ to
 
       <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-start gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#0f2a4a] text-white"><ShieldCheck size={22} /></span>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#0E9E97] text-white"><ShieldCheck size={22} /></span>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-[#0f2a4a]">{link.case.patientName} — sağlık kayıtları</h1>
+            <h1 className="text-xl font-bold text-[#0A3F39]">{link.case.patientName} — sağlık kayıtları</h1>
             <p className="text-sm text-slate-500">
               {link.recipientName ? `${link.recipientName} ile paylaşıldı` : "Sizinle paylaşıldı"} · Branş: {link.case.branch}
             </p>
@@ -155,11 +155,11 @@ export default async function ShareViewerPage({ params }: { params: Promise<{ to
             <div key={i} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-5 py-3">
                 <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-800">
-                  <Icon size={16} className="text-[#0f2a4a]" /> {it.title}
+                  <Icon size={16} className="text-[#0A3F39]" /> {it.title}
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-normal text-slate-500">{scopeLabel(it.scope)}</span>
                 </div>
                 {dl && (
-                  <a download={dl.name} href={dl.href} className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#0f2a4a] hover:underline">
+                  <a download={dl.name} href={dl.href} className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#0A3F39] hover:underline">
                     <Download size={13} /> İndir
                   </a>
                 )}
@@ -208,7 +208,7 @@ export default async function ShareViewerPage({ params }: { params: Promise<{ to
         <AlertTriangle size={14} className="mt-0.5 shrink-0 text-slate-400" />
         <p>
           Bu içerik hastanın açık izniyle, sınırlı süreyle ve yalnızca görüntüleme amacıyla paylaşılmıştır.
-          Hasta erişimi istediği an iptal edebilir; her görüntüleme denetim kaydına (audit trail) işlenir. · AIR Telehealth (MVP)
+          Hasta erişimi istediği an iptal edebilir; her görüntüleme denetim kaydına (audit trail) işlenir. · portamed (MVP)
         </p>
       </div>
     </Shell>

@@ -62,7 +62,7 @@ function ShareActions({ url, recipient, duration, hasPassword, compact }: {
   const btn = "inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50";
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button onClick={nativeShare} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#0f2a4a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#143a63]">
+      <button onClick={nativeShare} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#0E9E97] px-3 py-2 text-sm font-semibold text-white hover:bg-[#0A7D77]">
         <Share2 size={15} /> Paylaş
       </button>
       {!compact && (
@@ -159,10 +159,10 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
             const on = scopes.includes(s.key);
             return (
               <button type="button" key={s.key} onClick={() => toggleScope(s.key)}
-                className={`flex items-start gap-2.5 rounded-xl border p-3 text-left transition-colors ${on ? "border-[#0f2a4a] bg-[#0f2a4a]/5 ring-1 ring-[#0f2a4a]/20" : "border-slate-200 hover:bg-slate-50"}`}>
-                <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-[#0f2a4a] text-white" : "bg-slate-100 text-slate-500"}`}><Icon size={16} /></span>
+                className={`flex items-start gap-2.5 rounded-xl border p-3 text-left transition-colors ${on ? "border-[#0E9E97] bg-[#0E9E97]/5 ring-1 ring-[#0E9E97]/20" : "border-slate-200 hover:bg-slate-50"}`}>
+                <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-[#0E9E97] text-white" : "bg-slate-100 text-slate-500"}`}><Icon size={16} /></span>
                 <span className="min-w-0">
-                  <span className="flex items-center gap-1.5 text-sm font-medium text-slate-800">{s.label} {on && <Check size={14} className="text-[#0f2a4a]" />}</span>
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-slate-800">{s.label} {on && <Check size={14} className="text-[#0A3F39]" />}</span>
                   <span className="block text-xs text-slate-500">{s.desc}</span>
                 </span>
               </button>
@@ -174,7 +174,7 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
         <div className="mt-1.5 flex flex-wrap gap-2">
           {DURATIONS.map((d) => (
             <button type="button" key={d.key} onClick={() => setDurationKey(d.key)}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${durationKey === d.key ? "border-[#0f2a4a] bg-[#0f2a4a] text-white" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}>
+              className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${durationKey === d.key ? "border-[#0E9E97] bg-[#0E9E97] text-white" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}>
               {d.label}
             </button>
           ))}
@@ -196,7 +196,7 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
 
         {error && <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"><AlertCircle size={15} /> {error}</div>}
 
-        <button onClick={create} disabled={busy} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f2a4a] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#143a63] disabled:opacity-50">
+        <button onClick={create} disabled={busy} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77] disabled:opacity-50">
           <ShieldCheck size={16} /> {busy ? "Oluşturuluyor…" : "Güvenli link oluştur"}
         </button>
 

@@ -27,14 +27,14 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href={`/doktor/vaka/${c.id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0f2a4a]">
+      <Link href={`/doktor/vaka/${c.id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0A7D77]">
         <ArrowLeft size={16} /> Vaka detayı
       </Link>
 
       <div className="mt-4 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0f2a4a] text-white"><HeartPulse size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0E9E97] text-white"><HeartPulse size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0f2a4a]">Post-Op Takip</h1>
+          <h1 className="text-2xl font-bold text-[#0A3F39]">Post-Op Takip</h1>
           <p className="text-sm text-slate-500">{c.patientName} · {c.branch} · Tedavi sonrası <strong className="text-slate-700">{day}. gün</strong></p>
         </div>
       </div>
@@ -84,11 +84,11 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
               {protocol.map((mst, i) => (
                 <li key={i} className="flex gap-3">
                   <div className="flex flex-col items-center">
-                    <span className="grid h-7 w-7 place-items-center rounded-full bg-sky-100 text-[11px] font-bold text-sky-700">{i + 1}</span>
+                    <span className="grid h-7 w-7 place-items-center rounded-full bg-teal-100 text-[11px] font-bold text-teal-700">{i + 1}</span>
                     {i < protocol.length - 1 && <span className="my-1 h-5 w-0.5 bg-slate-200" />}
                   </div>
                   <div className="pb-1.5">
-                    <div className="text-sm font-medium text-slate-800">{mst.title} <span className="text-xs font-normal text-sky-600">· {mst.day}</span></div>
+                    <div className="text-sm font-medium text-slate-800">{mst.title} <span className="text-xs font-normal text-teal-600">· {mst.day}</span></div>
                     <div className="text-xs text-slate-400">{mst.desc}</div>
                   </div>
                 </li>
@@ -96,8 +96,8 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
             </ol>
           </div>
 
-          <div className="rounded-2xl border border-sky-200 bg-sky-50/60 p-5">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700"><Video size={15} /> Tele-Kontrol</div>
+          <div className="rounded-2xl border border-teal-200 bg-teal-50/60 p-5">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700"><Video size={15} /> Tele-Kontrol</div>
             <p className="mt-1.5 text-sm text-slate-600">Kritik dönüm noktalarında doktorunuzla kısa görüşme planlanır.</p>
             <button className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
               Randevu iste
@@ -109,10 +109,10 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
             <p className="mt-1.5 text-sm text-slate-600">Günlük ilaç bildirimleri açık (demo).</p>
           </div>
 
-          <Link href="/paylasimlarim" className="block rounded-2xl border border-[#0f2a4a]/20 bg-[#0f2a4a]/[0.03] p-5 transition-colors hover:bg-[#0f2a4a]/[0.06]">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#0f2a4a]"><ShieldCheck size={15} /> Güvenli Paylaşım</div>
+          <Link href="/paylasimlarim" className="block rounded-2xl border border-[#0E9E97]/20 bg-[#0E9E97]/[0.03] p-5 transition-colors hover:bg-[#0E9E97]/[0.06]">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#0A3F39]"><ShieldCheck size={15} /> Güvenli Paylaşım</div>
             <p className="mt-1.5 text-sm text-slate-600">Bu kayıtları kendi ülkenizdeki doktorunuzla süreli ve iptal edilebilir bir bağlantıyla paylaşın.</p>
-            <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0f2a4a]">Paylaşım Kontrol Merkezi →</span>
+            <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0A3F39]">Paylaşım Kontrol Merkezi →</span>
           </Link>
         </aside>
       </div>
