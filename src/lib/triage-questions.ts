@@ -417,3 +417,19 @@ export function questionsForBranch(branchKey: string): { intro: string; question
     questions: [...(set?.questions ?? []), ...COMMON_QUESTIONS],
   };
 }
+
+// Bir branşın çevrilecek tüm arayüz metinleri (intro + etiket/yardım/placeholder/birim/seçenekler).
+// Hasta arayüzü çok dilli: bu liste /api/i18n'e gönderilir; yanıtlar TR kanonik saklandığı için
+// çeviri yalnız GÖRÜNTÜYÜ etkiler.
+export function questionTexts(branchKey: string): string[] {
+  const { intro, questions } = questionsForBranch(branchKey);
+  const out: string[] = [intro, "Evet", "Hayır", "önerilen"];
+  for (const q of questions) {
+    out.push(q.label);
+    if (q.help) out.push(q.help);
+    if (q.placeholder) out.push(q.placeholder);
+    if (q.unit) out.push(q.unit);
+    for (const o of q.options ?? []) out.push(o);
+  }
+  return out;
+}

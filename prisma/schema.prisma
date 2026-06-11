@@ -227,6 +227,18 @@ model Notification {
   @@index([userId, readAt])
 }
 
+/// Arayüz çeviri önbelleği — TR kaynak metin → hedef dil (Claude ile bir kez çevrilir, sonsuza dek cache)
+model Translation {
+  id         String   @id @default(cuid())
+  lang       String // hedef dil (Türkçe adıyla: "Rusça", "Arapça", ...)
+  sourceHash String // sha1(kaynak) — uzun metinler için anahtar
+  source     String // Türkçe kaynak metin
+  translated String // çeviri
+  createdAt  DateTime @default(now())
+
+  @@unique([lang, sourceHash])
+}
+
 /// Web Push aboneliği — kullanıcının cihazı (tarayıcı kapalıyken bildirim)
 model PushSubscription {
   id        String   @id @default(cuid())

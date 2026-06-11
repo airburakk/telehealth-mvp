@@ -5,12 +5,14 @@ import { questionsForBranch, type TQuestion } from "@/lib/triage-questions";
 const EXCLUSIVE = /^(yok|hiçbiri)/i; // "Yok" / "Hiçbiri" seçilince diğerlerini temizle
 
 // Branşa özel dinamik triyaj soruları — yanıtları soru etiketiyle (label) Record<string,string> olarak toplar.
+// t: arayüz çeviri fonksiyonu (yalnız GÖRÜNTÜ; yanıtlar TR kanonik saklanır → doktor/AI etkilenmez).
 export function DynamicTriageQuestions({
-  branchKey, value, onChange,
+  branchKey, value, onChange, t = (s) => s,
 }: {
   branchKey: string;
   value: Record<string, string>;
   onChange: (next: Record<string, string>) => void;
+  t?: (s: string) => string;
 }) {
   const { intro, questions } = questionsForBranch(branchKey);
 
@@ -32,7 +34,7 @@ export function DynamicTriageQuestions({
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-slate-500">{intro}</p>
+      <p className="text-sm text-slate-500">{t(intro)}</p>
 
       {questions.map((q) => {
         const val = value[q.label] ?? "";
@@ -40,31 +42,31 @@ export function DynamicTriageQuestions({
         return (
           <div key={q.id}>
             <div className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700">
-              {q.label}
-              {q.recommended && <span className="text-[10px] font-semibold uppercase tracking-wide text-sky-600">önerilen</span>}
+              {t(q.label)}
+              {q.recommended && <span className="text-[10px] font-semibold uppercase tracking-wide text-sky-600">{t("önerilen")}</span>}
             </div>
-            {q.help && <p className="-mt-1 mb-1.5 text-xs text-slate-400">{q.help}</p>}
+            {q.help && <p className="-mt-1 mb-1.5 text-xs text-slate-400">{t(q.help)}</p>}
 
             {/* text */}
             {q.type === "text" && (
-              <input value={val} onChange={(e) => set(q.label, e.target.value)} placeholder={q.placeholder}
+              <input value={val} onChange={(e) => set(q.label, e.target.value)} placeholder={q.placeholder ? t(q.placeholder) : undefined}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0f2a4a]" />
             )}
 
             {/* number */}
             {q.type === "number" && (
               <div className="flex items-center gap-2">
-                <input type="number" inputMode="numeric" value={val} onChange={(e) => set(q.label, e.target.value)} placeholder={q.placeholder}
+                <input type="number" inputMode="numeric" value={val} onChange={(e) => set(q.label, e.target.value)} placeholder={q.placeholder ? t(q.placeholder) : undefined}
                   className="w-32 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0f2a4a]" />
-                {q.unit && <span className="text-sm text-slate-400">{q.unit}</span>}
+                {q.unit && <span className="text-sm text-slate-400">{t(q.unit)}</span>}
               </div>
             )}
 
-            {/* select (tekli chip) */}
+            {/* select (tekli chip) — görüntü çevrilir, değer TR kanonik saklanır */}
             {q.type === "select" && (
               <div className="flex flex-wrap gap-1.5">
                 {q.options?.map((o) => (
-                  <Chip key={o} active={val === o} onClick={() => set(q.label, val === o ? "" : o)}>{o}</Chip>
+                  <Chip key={o} active={val === o} onClick={() => set(q.label, val === o ? "" : o)}>{t(o)}</Chip>
                 ))}
               </div>
             )}
@@ -73,7 +75,7 @@ export function DynamicTriageQuestions({
             {q.type === "multi" && (
               <div className="flex flex-wrap gap-1.5">
                 {q.options?.map((o) => (
-                  <Chip key={o} active={multiSel.includes(o)} onClick={() => toggleMulti(q, o)}>{o}</Chip>
+                  <Chip key={o} active={multiSel.includes(o)} onClick={() => toggleMulti(q, o)}>{t(o)}</Chip>
                 ))}
               </div>
             )}
@@ -82,7 +84,7 @@ export function DynamicTriageQuestions({
             {q.type === "bool" && (
               <div className="flex gap-1.5">
                 {["Evet", "Hayır"].map((o) => (
-                  <Chip key={o} active={val === o} onClick={() => set(q.label, val === o ? "" : o)}>{o}</Chip>
+                  <Chip key={o} active={val === o} onClick={() => set(q.label, val === o ? "" : o)}>{t(o)}</Chip>
                 ))}
               </div>
             )}

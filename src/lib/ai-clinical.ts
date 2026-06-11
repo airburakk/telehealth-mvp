@@ -101,6 +101,40 @@ export async function translateText(text: string, target: string): Promise<strin
   return out && out.type === "text" ? out.text.trim() : "";
 }
 
+// Toplu arayüz çevirisi — TR kaynak dizisi → hedef dil, sıra ve sayı birebir korunur.
+// (Hasta arayüzü çok dilli: triyaj sihirbazı + branş soruları. Sonuçlar Translation tablosunda cache'lenir.)
+const TRANSLATE_TOOL: Anthropic.Tool = {
+  name: "submit_translations",
+  description: "Verilen metinlerin çevirilerini girdiyle AYNI sıra ve sayıda döndürür.",
+  input_schema: {
+    type: "object",
+    properties: {
+      translations: { type: "array", items: { type: "string" }, description: "Girdiyle aynı sıra ve sayıda çeviri" },
+    },
+    required: ["translations"],
+  },
+};
+
+export async function translateBatch(texts: string[], target: string): Promise<string[]> {
+  const res = await client().messages.create({
+    model: MODEL,
+    max_tokens: 8000,
+    system:
+      `Sen bir sağlık platformu arayüz çevirmenisin. Verilen Türkçe arayüz metinlerini ${target} diline çevir. ` +
+      "Tıbbi terminolojiyi doğru, arayüz dilini kısa ve doğal kullan. Sayıları, birimleri ve teknik adları (FUE, DHT, PET-BT, IVF, MR, BT vb.) koru. " +
+      "Her öğeye birebir karşılık ver; sırayı ve öğe sayısını DEĞİŞTİRME. Yanıtı DAİMA submit_translations aracıyla ver.",
+    tools: [TRANSLATE_TOOL],
+    tool_choice: { type: "tool", name: "submit_translations" },
+    messages: [{ role: "user", content: JSON.stringify(texts) }],
+  });
+  const block = res.content.find((b) => b.type === "tool_use");
+  if (!block || block.type !== "tool_use") throw new Error("Çeviri aracı yanıtı alınamadı.");
+  const out = (block.input as { translations?: unknown }).translations;
+  if (!Array.isArray(out)) throw new Error("Çeviri biçimi geçersiz.");
+  // Sayı uyuşmazlığında eksikler kaynak metinle doldurulur (asla kırılmaz)
+  return texts.map((s, i) => (typeof out[i] === "string" && out[i].trim() ? String(out[i]) : s));
+}
+
 // ── AI Epikriz / Taburcu Raporu ──
 // Hastanın tüm yolculuğunu (triyaj + SOAP notu + tedavi paketi + post-op iyileşme)
 // standart bir epikrize sentezler. Zorlanmış tool_use; verilmeyen veriyi uydurmaz.
