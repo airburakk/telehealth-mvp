@@ -6,7 +6,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Newsreader, Hanken_Grotesk } from "next/font/google";
-import { HeroArt, PackArtHair, PackArtSmile, PackArtIvf, DoctorArt, TestimonialArt } from "@/components/PortamedArt";
+import { PackArtHair, PackArtSmile, PackArtIvf, DoctorArt, TestimonialArt } from "@/components/PortamedArt";
 
 const serif = Newsreader({ subsets: ["latin", "latin-ext"], weight: ["400", "500"] });
 const sans = Hanken_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["300", "400", "500", "600", "700"] });
@@ -236,8 +236,19 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
           </div>
 
           <div className="relative">
-            <div className="aspect-[4/5] w-full overflow-hidden rounded-[22px]" style={{ border: `1px solid ${T.border}` }}>
-              <HeroArt />
+            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[22px]" style={{ border: `1px solid ${T.border}` }}>
+              {/* Gerçek İstanbul: Boğaz + Levent gökdelenleri + köprü (Çamlıca açısı).
+                  Foto: Mehmet Bozgedik · Unsplash (4JilsL1_rrA) — Unsplash License (ticari kullanım serbest). */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/hero-istanbul.jpg"
+                alt="İstanbul — Boğaz, köprü ve Levent gökdelenleri"
+                className="h-full w-full object-cover"
+                style={{ objectPosition: "50% 38%", filter: "saturate(1.08) contrast(1.02)" }}
+              />
+              {/* Marka uyumu: denizi/teal tonları zenginleştiren yumuşak katman */}
+              <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(14,158,151,.10) 0%, rgba(95,208,199,.16) 55%, rgba(10,63,57,.26) 100%)", mixBlendMode: "soft-light" }} />
+              <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(244,241,232,0) 70%, rgba(10,63,57,.18) 100%)" }} />
             </div>
             {/* Floating: doktor kartı */}
             <div className="absolute -bottom-5 -left-3 rounded-[18px] p-4 sm:-left-6" style={{ background: T.surface, boxShadow: "0 22px 48px -22px rgba(20,33,31,.5)", border: `1px solid ${T.border}` }}>
