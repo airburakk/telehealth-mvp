@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Header } from "@/components/Header";
+import { SiteFooter } from "@/components/SiteFooter";
 import { PwaRegister } from "@/components/PwaRegister";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -27,12 +28,7 @@ export default async function RootLayout({
         <PwaRegister />
         <Header user={user ? { name: user.name, role: user.role } : null} />
         <main className="flex-1">{children}</main>
-        <footer className="border-t border-slate-200 bg-white">
-          <div className="mx-auto max-w-6xl px-5 py-5 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-2">
-            <span>AIR Telehealth · MVP v0.1 · Demo amaçlıdır</span>
-            <span>S1 Yazılım · S2 Operasyon · S3 Acenta</span>
-          </div>
-        </footer>
+        <SiteFooter />
       </body>
     </html>
   );

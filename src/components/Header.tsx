@@ -29,6 +29,9 @@ export function Header({ user }: { user: { name: string; role: string } | null }
   const pathname = usePathname();
   const router = useRouter();
 
+  // Ana sayfa PortaMed landing'i kendi nav/footer'ını taşır — global krom gizlenir
+  if (pathname === "/") return null;
+
   const items = NAV.filter((n) => user && n.roles.includes(user.role));
   const activeHref = items
     .filter((n) => pathname === n.href || pathname.startsWith(n.href + "/"))
