@@ -31,7 +31,8 @@ export async function POST() {
 
   try {
     const { GoogleGenAI, Modality } = await import("@google/genai");
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    // Ephemeral token (authTokens.create) yalnız v1alpha'da; varsayılan v1beta'da uç yok → 404
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY!, httpOptions: { apiVersion: "v1alpha" } });
 
     // Token'ı tek oturumla ve bu modelle sınırla; 30 dk geçerli, yeni oturum 2 dk içinde başlamalı.
     const token = await ai.authTokens.create({
