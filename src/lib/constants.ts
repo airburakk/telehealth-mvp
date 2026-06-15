@@ -14,10 +14,13 @@ export const COUNTRIES: CountryDef[] = [
   { code: "AZ", name: "Azerbaycan", flag: "🇦🇿", langs: ["Azerice", "Rusça"] },
   { code: "KZ", name: "Kazakistan", flag: "🇰🇿", langs: ["Kazakça", "Rusça"] },
   { code: "KG", name: "Kırgızistan", flag: "🇰🇬", langs: ["Kırgızca", "Rusça"] },
+  { code: "DE", name: "Almanya", flag: "🇩🇪", langs: ["Almanca", "Türkçe"] },
+  { code: "GB", name: "Birleşik Krallık", flag: "🇬🇧", langs: ["İngilizce"] },
+  { code: "FR", name: "Fransa", flag: "🇫🇷", langs: ["Fransızca"] },
   { code: "TR", name: "Türkiye", flag: "🇹🇷", langs: ["Türkçe"] },
 ];
 
-export const LANGUAGES = ["Türkçe", "Rusça", "Azerice", "Arapça", "Fransızca", "İngilizce", "Kazakça", "Kırgızca"];
+export const LANGUAGES = ["Türkçe", "Rusça", "Azerice", "Arapça", "Fransızca", "İngilizce", "Almanca", "Kazakça", "Kırgızca"];
 
 export function countryName(code: string): string {
   return COUNTRIES.find((c) => c.code === code)?.name ?? code;

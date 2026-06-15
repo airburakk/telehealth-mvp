@@ -98,7 +98,12 @@ export function LiveInterpreter({
     nextPlayRef.current = playCtx.currentTime;
 
     try {
-      const tr = await fetch("/api/realtime/token", { method: "POST" });
+      // Hedef dili token'a gönder → sunucu çeviri hedefini token'a kilitler (yoksa model "en"e düşer)
+      const tr = await fetch("/api/realtime/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetLang }),
+      });
       const td = await tr.json();
       if (!tr.ok || !td.token) throw new Error(td.error?.message || td.error || "Token alınamadı.");
 

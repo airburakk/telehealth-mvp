@@ -38,7 +38,7 @@ function getSpeechRecognition(): (new () => AnySpeechRecognition) | null {
 // Hasta kendi dilinde konuşur → tanıyıcıya BCP-47 kodu
 const SPEECH_LANG: Record<string, string> = {
   "Türkçe": "tr-TR", "Rusça": "ru-RU", "Arapça": "ar-SA", "Azerice": "az-AZ",
-  "İngilizce": "en-US", "Fransızca": "fr-FR", "Kazakça": "kk-KZ", "Kırgızca": "ky-KG",
+  "İngilizce": "en-US", "Fransızca": "fr-FR", "Almanca": "de-DE", "Kazakça": "kk-KZ", "Kırgızca": "ky-KG",
 };
 
 export function ConsultationRoom({
