@@ -7,11 +7,12 @@ import { PreConsultGate } from "@/components/PreConsultGate";
 import { BRANCHES } from "@/lib/triage";
 import { DynamicTriageQuestions } from "@/components/DynamicTriageQuestions";
 import { questionTexts } from "@/lib/triage-questions";
+import { requiredDocs } from "@/lib/required-docs";
 import { useT } from "@/components/useT";
 import type { Billing } from "@/lib/billing";
 import {
   UserRound, MessageSquareText, Paperclip, ClipboardCheck, ListChecks, Stethoscope,
-  Sparkles, Upload, X, ShieldCheck, Loader2, ArrowRight, ArrowLeft, FileText, Globe,
+  Sparkles, Upload, X, ShieldCheck, Loader2, ArrowRight, ArrowLeft, FileText, Globe, AlertTriangle,
 } from "lucide-react";
 
 // Hasta arayüzü çok dilli: sihirbazın tüm statik metinleri (çeviri /api/i18n cache'inden gelir)
@@ -31,6 +32,9 @@ const STATIC_UI = [
   "Lütfen hasta adını girin.", "Lütfen şikayetinizi biraz daha ayrıntılı yazın.",
   "Görüşme ücreti alındı:", "Görüşme sigortanız tarafından karşılanıyor", "Poliçe",
   "Acil / Hayati", "Yüksek", "Orta", "Düşük", "Rutin / Elektif",
+  "Bu branş için gerekli belgeler", "opsiyonel",
+  "Zorunlu (*) belgeler işaretlenmedi — yükleyip işaretleyin veya Özet adımında eksik göndereceğinizi onaylayın.",
+  "Eksik zorunlu belge", "Bu belgeleri görüşmeden önce ileteceğimi onaylıyorum.",
 ];
 
 interface Analysis {
@@ -66,6 +70,8 @@ export default function TriyajPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [providedDocs, setProvidedDocs] = useState<Record<string, boolean>>({}); // hasta beyanı: hangi gerekli belge sağlandı
+  const [docAck, setDocAck] = useState(false); // eksik zorunlu belgeleri görüşmeden önce iletme onayı
 
   const selectedCountry = COUNTRIES.find((c) => c.code === country);
 
@@ -88,11 +94,14 @@ export default function TriyajPage() {
 
   // Soruların gösterileceği branş: hasta elle seçtiyse o, değilse AI'ın belirlediği.
   const effectiveBranch = branchOverride || analysis?.branchKey || "";
+  // Branşa özel gerekli belgeler + işaretlenmemiş zorunlular (eksik belge botu)
+  const branchDocs = effectiveBranch ? requiredDocs(effectiveBranch) : [];
+  const missingRequired = branchDocs.filter((d) => d.required && !providedDocs[d.key]);
 
   // Arayüz dili — hasta dil seçince otomatik eşitlenir; üstteki seçiciden de değiştirilebilir.
   const [uiLang, setUiLang] = useState("Türkçe");
   const tTexts = useMemo(
-    () => [...STATIC_UI, ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? questionTexts(effectiveBranch) : [])],
+    () => [...STATIC_UI, ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : [])],
     [effectiveBranch]
   );
   const { t } = useT(uiLang, tTexts);
@@ -120,12 +129,20 @@ export default function TriyajPage() {
     setSubmitting(true);
     setError("");
     try {
+      // Gerekli belge durumu: kokpitte "Ön Değerlendirme"de görünür + eksikler koordinatöre bildirilir
+      const providedLabels = branchDocs.filter((d) => providedDocs[d.key]).map((d) => d.label);
+      const missingLabels = missingRequired.map((d) => d.label);
+      const docSummary = branchDocs.length
+        ? `${providedLabels.length ? "Sağlanan: " + providedLabels.join(", ") : "Sağlanan belge yok"}${missingLabels.length ? " · Eksik (zorunlu): " + missingLabels.join(", ") : ""}`
+        : null;
+      const outAnswers = docSummary ? { ...answers, "Gerekli Belgeler": docSummary } : answers;
       const res = await fetch("/api/cases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           patientName, country, language, symptoms, durationText, attachments: files,
-          answers, forceBranchKey: branchOverride || undefined,
+          answers: outAnswers, forceBranchKey: branchOverride || undefined,
+          missingDocs: missingLabels,
           consultFee: billing?.fee, payStatus: billing?.status, payMethod: billing?.method,
           policyNo: billing?.policyNo, payRef: billing?.payRef,
         }),
@@ -324,6 +341,39 @@ export default function TriyajPage() {
         {/* Step 3 — Belgeler */}
         {step === 3 && (
           <div className="space-y-4">
+            {branchDocs.length > 0 && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  <ListChecks size={14} /> {t("Bu branş için gerekli belgeler")}
+                </div>
+                <ul className="mt-2.5 space-y-2">
+                  {branchDocs.map((d) => (
+                    <li key={d.key}>
+                      <label className="flex items-start gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={!!providedDocs[d.key]}
+                          onChange={(e) => setProvidedDocs((p) => ({ ...p, [d.key]: e.target.checked }))}
+                          className="mt-0.5 accent-[#0E9E97]"
+                        />
+                        <span className={d.required ? "text-slate-700" : "text-slate-500"}>
+                          {t(d.label)}{" "}
+                          {d.required
+                            ? <span className="font-semibold text-red-500">*</span>
+                            : <span className="text-[11px] text-slate-400">({t("opsiyonel")})</span>}
+                        </span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+                {missingRequired.length > 0 && (
+                  <p className="mt-2 flex items-start gap-1 text-[11px] text-amber-700">
+                    <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                    {t("Zorunlu (*) belgeler işaretlenmedi — yükleyip işaretleyin veya Özet adımında eksik göndereceğinizi onaylayın.")}
+                  </p>
+                )}
+              </div>
+            )}
             <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center hover:border-teal-400 hover:bg-teal-50/40">
               <Upload size={26} className="text-slate-400" />
               <span className="text-sm font-medium text-slate-600">{t("Tıbbi belge yükleyin")}</span>
@@ -373,6 +423,18 @@ export default function TriyajPage() {
               </div>
             )}
 
+            {missingRequired.length > 0 && (
+              <div className="rounded-lg bg-amber-50 px-3 py-2.5 text-sm text-amber-800 ring-1 ring-amber-200">
+                <div className="flex items-center gap-1.5 font-semibold"><AlertTriangle size={15} /> {t("Eksik zorunlu belge")}</div>
+                <ul className="mt-1 list-disc pl-5 text-[13px]">
+                  {missingRequired.map((d) => <li key={d.key}>{t(d.label)}</li>)}
+                </ul>
+                <label className="mt-2 flex items-start gap-2 text-[13px] font-medium">
+                  <input type="checkbox" checked={docAck} onChange={(e) => setDocAck(e.target.checked)} className="mt-0.5 accent-amber-600" />
+                  <span>{t("Bu belgeleri görüşmeden önce ileteceğimi onaylıyorum.")}</span>
+                </label>
+              </div>
+            )}
             {analyzing && <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" /> {t("Analiz ediliyor…")}</div>}
             {analysis && u && <AnalysisCard analysis={analysis} badge={u.badge} dot={u.dot} label={u.label} t={t} />}
             {!analysis && !analyzing && (
@@ -401,7 +463,7 @@ export default function TriyajPage() {
           ) : (
             <button
               onClick={submit}
-              disabled={submitting}
+              disabled={submitting || (missingRequired.length > 0 && !docAck)}
               className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
             >
               {submitting ? <Loader2 size={16} className="animate-spin" /> : <ClipboardCheck size={16} />}

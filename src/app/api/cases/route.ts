@@ -74,5 +74,18 @@ export async function POST(req: Request) {
     href: `/doktor/vaka/${created.id}`,
   });
 
+  // Eksik belge bildirim botu: branşa özel zorunlu belge eksikse koordinatöre bildir (operasyon takibi)
+  const missingDocs: string[] = Array.isArray(body.missingDocs)
+    ? body.missingDocs.filter((d: unknown) => typeof d === "string").map((d: string) => d.slice(0, 80)).slice(0, 12)
+    : [];
+  if (missingDocs.length) {
+    await notifyRoles(["COORDINATOR"], {
+      type: "MISSING_DOCS",
+      title: `📄 Eksik belge: ${patientName}`,
+      body: `${a.branch} · eksik: ${missingDocs.join(", ")}`,
+      href: `/doktor/vaka/${created.id}`,
+    });
+  }
+
   return NextResponse.json(created, { status: 201 });
 }

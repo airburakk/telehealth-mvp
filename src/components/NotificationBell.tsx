@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Inbox, UserRound, AlertTriangle, Luggage, Scale, Eye, Stethoscope, Smartphone, Loader2 } from "lucide-react";
+import { Bell, Inbox, UserRound, AlertTriangle, Luggage, Scale, Eye, Stethoscope, Smartphone, Loader2, FileText } from "lucide-react";
 
 // VAPID public key → PushManager.subscribe formatı
 function urlB64ToUint8(s: string): Uint8Array {
@@ -28,6 +28,7 @@ const TYPE_META: Record<string, { icon: React.ReactNode; cls: string }> = {
   COMPLAINT: { icon: <Scale size={14} />, cls: "bg-amber-100 text-amber-700" },
   DECISION: { icon: <Scale size={14} />, cls: "bg-violet-100 text-violet-700" },
   SHARE_ACCESS: { icon: <Eye size={14} />, cls: "bg-slate-100 text-slate-600" },
+  MISSING_DOCS: { icon: <FileText size={14} />, cls: "bg-amber-100 text-amber-700" },
 };
 
 function timeAgo(iso: string): string {
