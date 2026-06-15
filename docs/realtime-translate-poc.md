@@ -28,11 +28,15 @@ Vercel serverless kalıcı WebSocket tutamaz → **client-to-server + ephemeral 
 - Ephemeral token: `ai.authTokens.create({ config: { uses, expireTime, newSessionExpireTime, liveConnectConstraints } })`
 
 ## Durum
-- ✅ **İskelet (bu commit):** `/api/realtime/token` (GET durum + POST mint; anahtarsız dormant) ·
-  `LiveInterpreter` bileşeni görüşme odasında (durum + bağlantı testi) · `@google/genai` kuruldu · `.env.example`
-- ⏳ **Sonraki adım (kullanıcı onayında):** gerçek ses akışı — mic yakalama (AudioWorklet, 16kHz),
-  `ai.live.connect`, 24kHz çıkış oynatma + altyazı; tek yön → sonra çift yön
-- 🔑 **Aktivasyon (kullanıcı):** Google AI Studio anahtarı → Vercel `GEMINI_API_KEY` (+ yerel `.env`) → redeploy
+- ✅ **İskelet + token yolu:** `/api/realtime/token` (GET durum + POST mint, `apiVersion: v1alpha`). **Canlıda token mint doğrulandı** (anahtar geçerli).
+- ✅ **Aktivasyon tamam:** `GEMINI_API_KEY` Vercel'de (Production), `enabled:true`.
+- ✅ **İki yönlü gerçek ses (commit `e63e994`):** `LiveInterpreter` — `ai.live.connect`, `translationConfig{targetLanguageCode, echoTargetLanguage:false}`, input/output transkript. Her taraf karşı tarafın gelen sesini kendi diline çevirip yerel oynatır (ScriptProcessor 16kHz giriş → 24kHz kuyruklu çıkış); orijinal yabancı ses kısılır.
+- ⏳ **GERÇEK SES TESTİ kullanıcıda:** mic + iki taraf + **kulaklık** (hoparlörde yankı). Sandbox'ta ses yok → uçtan uca yalnız kullanıcı doğrulayabilir.
+
+## Bilinen sınırlar (canlı testte izlenecek)
+- **Yankı:** hoparlörde mic, çeviri sesini geri alır → kulaklık şart. (İleride VAD/echo bastırma.)
+- **Gecikme + kalite:** preview model; gerçek anahtarla ölçülecek.
+- `translationConfig` SDK tipinde yoksa `any` ile geçildi; mesaj şekli (`serverContent.modelTurn.parts.inlineData` / `outputTranscription`) canlı testte teyit edilecek.
 
 ## Açık konular
 - KVKK/GDPR: C'de hastanın **ham sesi** Google'a akar → DPA + aydınlatma metni (üretim öncesi)
