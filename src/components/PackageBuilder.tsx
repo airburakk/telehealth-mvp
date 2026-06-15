@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   computePackage, formatUSD, TIER_PRESETS,
-  type Tier, type HospitalType, type PackageSelection,
+  type Tier, type HospitalType, type PackageSelection, type RecommendedTreatment,
 } from "@/lib/pricing";
 import { countryFlag, countryName } from "@/lib/constants";
 import {
@@ -26,8 +26,8 @@ export interface PackageInitial {
 }
 
 export function PackageBuilder({
-  caseId, patientName, branch, country, initial,
-}: { caseId: string; patientName: string; branch: string; country: string; initial?: PackageInitial }) {
+  caseId, patientName, branch, country, initial, treatments,
+}: { caseId: string; patientName: string; branch: string; country: string; initial?: PackageInitial; treatments?: RecommendedTreatment[] }) {
   const router = useRouter();
   const [tier, setTier] = useState<Tier>(initial?.tier ?? "Standart");
   const [hotelStars, setHotelStars] = useState<4 | 5>(initial?.hotelStars ?? 4);
@@ -49,7 +49,8 @@ export function PackageBuilder({
   }
 
   const selection: PackageSelection = { branch, country, tier, hotelStars, hospitalType, nights, translator, insuranceExtended: insExtended, insuranceMalpractice: insMalpractice };
-  const quote = useMemo(() => computePackage(selection), [tier, hotelStars, hospitalType, nights, translator, insExtended, insMalpractice]);
+  const hasTx = !!treatments && treatments.length > 0;
+  const quote = useMemo(() => computePackage(selection, treatments), [tier, hotelStars, hospitalType, nights, translator, insExtended, insMalpractice, treatments]);
 
   async function confirm() {
     setSubmitting(true);
@@ -73,6 +74,15 @@ export function PackageBuilder({
             <div className="text-xs font-semibold uppercase tracking-wide text-violet-700">✨ Sağlık Turizmi Agent&apos;ı teklifi uygulandı</div>
             <p className="mt-1 text-sm leading-relaxed text-slate-600">{initial.aiRationale}</p>
             <p className="mt-1 text-[11px] text-slate-400">Tüm değerleri aşağıdan değiştirebilirsiniz; fiyat platform motorunda hesaplanır.</p>
+          </div>
+        )}
+        {hasTx && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5">
+            <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">🩺 Doktorun tavsiye ettiği tedaviler uygulandı</div>
+            <p className="mt-1 text-sm leading-relaxed text-slate-600">
+              Tedavi kalemleri ve fiyatları, görüşmeyi yapan doktorun seçtiği işlemlerden (₺) gelir; pakette güncel kurla $ olarak gösterilir.
+            </p>
+            <p className="mt-1 text-[11px] text-slate-400">{treatments!.length} tedavi · özet kartında kalem kalem listelenir.</p>
           </div>
         )}
         {/* Tier */}

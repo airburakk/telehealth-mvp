@@ -3,6 +3,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatUSD } from "@/lib/pricing";
 import { formatDateTime } from "@/lib/constants";
+import { branchKeyFromLabel, branchLabel, getBranchProcedures, getByCodes } from "@/lib/procedures";
+import ProcedureSelector from "@/components/ProcedureSelector";
 import { Star, BadgeCheck, Wallet, CalendarClock, TrendingUp, ExternalLink, Award, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +37,18 @@ export default async function DoctorDashboard() {
   const earnings = ended.map((c) => ({ id: c.id, patient: c.case.patientName, date: c.endedAt ?? c.startedAt, net }));
   const totalNet = earnings.reduce((a, b) => a + b.net, 0);
 
+  // M5 — Yaptığım İşlemler & Fiyatlandırma (branşa göre tarife + taban/tavan fiyat)
+  const branchKey = branchKeyFromLabel(doctor.branch);
+  const branchItems = branchKey ? getBranchProcedures(branchKey) : [];
+  let initialSel: Record<string, number> = {};
+  try {
+    initialSel = doctor.procedures ? (JSON.parse(doctor.procedures) as Record<string, number>) : {};
+  } catch {
+    initialSel = {};
+  }
+  const branchCodes = new Set(branchItems.map((p) => p.code));
+  const extraItems = getByCodes(Object.keys(initialSel).filter((c) => !branchCodes.has(c)));
+
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
       {/* Hero */}
@@ -64,6 +78,19 @@ export default async function DoctorDashboard() {
         <Metric icon={<Users size={16} />} value={`${ended.length}`} label="Tamamlanan görüşme" />
         <Metric icon={<Award size={16} />} value={`${doctor.experienceYears} yıl`} label="Deneyim" />
       </div>
+
+      {/* M5 — Yaptığım İşlemler & Fiyatlandırma */}
+      {branchKey && (
+        <div className="mt-5">
+          <ProcedureSelector
+            branchKey={branchKey}
+            branchLabel={branchLabel(branchKey)}
+            branchItems={branchItems}
+            initial={initialSel}
+            extraItems={extraItems}
+          />
+        </div>
+      )}
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_300px]">
         {/* Hakediş */}

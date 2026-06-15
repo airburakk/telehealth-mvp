@@ -40,6 +40,7 @@ model Doctor {
   experienceYears Int            @default(12)
   jci             Boolean        @default(true)
   capacity        Int            @default(20) // aylık işlem kapasitesi
+  procedures      String? // M5: doktorun yaptığı işlemler + kendi fiyatı — JSON {"<kod>": <fiyat₺>}
   cases           Case[]
   consultations   Consultation[]
   reviews         Review[]
@@ -84,6 +85,8 @@ model Case {
   dischargeReport     String? // AI ile üretilen epikriz tam metni (başlık + bölümler)
   dischargeStructured String? // JSON: yapılandırılmış bölümler (tanı, anamnez, ...)
   dischargeAt         DateTime? // epikrizin oluşturulma zamanı
+  // M2→M3: doktorun görüşmede tavsiye ettiği tedaviler (KSHFT kodları + doktorun ₺ fiyatı)
+  recommendedProcedures String? // JSON [{code,name,priceTRY}]
   doctor              Doctor?        @relation(fields: [doctorId], references: [id])
   doctorId            String?
   consultations       Consultation[]

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { computePackage, type PackageSelection, type Tier, type HospitalType } from "@/lib/pricing";
+import { computePackage, type PackageSelection, type Tier, type HospitalType, type RecommendedTreatment } from "@/lib/pricing";
 import { notifyRoles } from "@/lib/notify";
 
 // POST /api/cases/:id/booking — sağlık turizmi paketi rezervasyonu oluştur (Escrow)
@@ -22,7 +22,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     insuranceMalpractice: !!b.insuranceMalpractice,
   };
 
-  const quote = computePackage(selection);
+  // Doktorun M2'de tavsiye ettiği tedaviler (varsa) → fiyat doktorun ₺ değerlerinden ($'a çevrilir)
+  let treatments: RecommendedTreatment[] = [];
+  try { treatments = c.recommendedProcedures ? (JSON.parse(c.recommendedProcedures) as RecommendedTreatment[]) : []; } catch { treatments = []; }
+
+  const quote = computePackage(selection, treatments);
 
   const booking = await db.booking.create({
     data: {

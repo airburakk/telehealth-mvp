@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { ownsCase } from "@/lib/ownership";
 import { ConsultationRoom } from "@/components/ConsultationRoom";
+import { branchKeyFromLabel, branchLabel as branchLabelOf, getBranchProcedures } from "@/lib/procedures";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,30 @@ export default async function ConsultationPage({
     sp.role === "patient" ? "patient" : sp.role === "doctor" ? "doctor" : sessionRole;
 
   const c = consult.case;
+
+  // M2→M3 tavsiye edilen tedaviler — yalnız doktor görünümü için derle
+  let recommend:
+    | {
+        branchLabel: string;
+        branchProcedures: { code: string; name: string; price: number | null; branch: string; group: string }[];
+        doctorPrices: Record<string, number>;
+        initial: { code: string; name: string; priceTRY: number }[];
+      }
+    | undefined;
+  if (selfRole === "doctor") {
+    const branchKey = branchKeyFromLabel(consult.doctor.branch);
+    let doctorPrices: Record<string, number> = {};
+    try { doctorPrices = consult.doctor.procedures ? JSON.parse(consult.doctor.procedures) : {}; } catch { doctorPrices = {}; }
+    let initial: { code: string; name: string; priceTRY: number }[] = [];
+    try { initial = c.recommendedProcedures ? JSON.parse(c.recommendedProcedures) : []; } catch { initial = []; }
+    recommend = {
+      branchLabel: branchKey ? branchLabelOf(branchKey) : consult.doctor.branch,
+      branchProcedures: branchKey ? getBranchProcedures(branchKey) : [],
+      doctorPrices,
+      initial,
+    };
+  }
+
   return (
     <ConsultationRoom
       consultationId={consult.id}
@@ -36,6 +61,7 @@ export default async function ConsultationPage({
       status={consult.status}
       initialNotes={consult.notes}
       doctor={{ title: consult.doctor.title, name: consult.doctor.name, branch: consult.doctor.branch, color: consult.doctor.color }}
+      recommend={recommend}
       caseData={{
         id: c.id,
         patientName: c.patientName,

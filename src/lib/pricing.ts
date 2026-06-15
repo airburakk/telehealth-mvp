@@ -41,6 +41,16 @@ const INSURANCE_EXTENDED = 320;
 const INSURANCE_MALPRACTICE = 480;
 const PLATFORM_FEE_RATE = 0.15;
 
+// ₺ (KSHFT tarifesi / doktorun M5 fiyatı) → $ dönüşümü. Güncel kura göre ayarlayın (ileride env/API).
+export const TRY_PER_USD = 40;
+export function tryToUsd(tl: number): number { return Math.round(tl / TRY_PER_USD); }
+export function formatTRY(n: number): string {
+  return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(n);
+}
+
+// Doktorun M2 görüşmesinde tavsiye ettiği tedavi (KSHFT) — fiyat ₺ (doktorun M5 fiyatı)
+export interface RecommendedTreatment { code: string; name: string; priceTRY: number; }
+
 export const TIER_PRESETS: Record<Tier, Partial<PackageSelection>> = {
   Ekonomik: { hotelStars: 4, hospitalType: "Özel", translator: false, insuranceExtended: false, insuranceMalpractice: false },
   Standart: { hotelStars: 4, hospitalType: "Özel", translator: false, insuranceExtended: true, insuranceMalpractice: false },
@@ -62,8 +72,14 @@ export interface PackageQuote {
   split: LineItem[];
 }
 
-export function computePackage(s: PackageSelection): PackageQuote {
-  const treatment = Math.round(treatmentBase(s.branch) * (HOSPITAL_MULT[s.hospitalType] ?? 1));
+export function computePackage(s: PackageSelection, treatments?: RecommendedTreatment[]): PackageQuote {
+  const hasTx = !!treatments && treatments.length > 0;
+  // Tedavi kalemleri: doktorun M2'de tavsiye ettiği işlemler (₺→$, doktorun fiyatıyla) varsa onlar; yoksa branş taban fiyatı
+  const treatmentItems: LineItem[] = hasTx
+    ? treatments!.map((t) => ({ key: `tx-${t.code}`, label: `Tedavi · ${t.name}`, amount: tryToUsd(t.priceTRY), note: `Doktor fiyatı ${formatTRY(t.priceTRY)}` }))
+    : [{ key: "treatment", label: `Tedavi · ${s.branch}`, amount: Math.round(treatmentBase(s.branch) * (HOSPITAL_MULT[s.hospitalType] ?? 1)), note: `${s.hospitalType} hastane` }];
+  const treatment = treatmentItems.reduce((a, b) => a + b.amount, 0);
+
   const hotel = (HOTEL_PER_NIGHT[s.hotelStars] ?? 80) * s.nights;
   const flight = FLIGHT_BY_COUNTRY[s.country] ?? 400;
   const transfer = TRANSFER_BY_TIER[s.tier] ?? 0;
@@ -71,7 +87,7 @@ export function computePackage(s: PackageSelection): PackageQuote {
   const insurance = INSURANCE_BASE + (s.insuranceExtended ? INSURANCE_EXTENDED : 0) + (s.insuranceMalpractice ? INSURANCE_MALPRACTICE : 0);
 
   const items: LineItem[] = [
-    { key: "treatment", label: `Tedavi · ${s.branch}`, amount: treatment, note: `${s.hospitalType} hastane` },
+    ...treatmentItems,
     { key: "hotel", label: `Konaklama · ${s.hotelStars}★ otel`, amount: hotel, note: `${s.nights} gece` },
     { key: "flight", label: "Uçak bileti (gidiş-dönüş)", amount: flight },
     { key: "transfer", label: "Şehir içi transfer", amount: transfer, note: s.tier },

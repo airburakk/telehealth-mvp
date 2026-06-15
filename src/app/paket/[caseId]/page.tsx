@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { PackageBuilder, type PackageInitial } from "@/components/PackageBuilder";
+import { type RecommendedTreatment } from "@/lib/pricing";
 import { ArrowLeft, Luggage } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,10 @@ export default async function PackagePage({
   const sp = await searchParams;
   const c = await db.case.findUnique({ where: { id: caseId } });
   if (!c) notFound();
+
+  // Doktorun M2'de tavsiye ettiği tedaviler (varsa) — paket fiyatı bunlardan (doktorun ₺ fiyatı → $)
+  let treatments: RecommendedTreatment[] = [];
+  try { treatments = c.recommendedProcedures ? (JSON.parse(c.recommendedProcedures) as RecommendedTreatment[]) : []; } catch { treatments = []; }
 
   // Sağlık Turizmi Agent'ı teklifi URL ile gelir (ai=1) — doktor her değeri düzenleyebilir
   const s = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
@@ -42,7 +47,7 @@ export default async function PackagePage({
       </div>
 
       <div className="mt-7">
-        <PackageBuilder caseId={c.id} patientName={c.patientName} branch={c.branch} country={c.country} initial={initial} />
+        <PackageBuilder caseId={c.id} patientName={c.patientName} branch={c.branch} country={c.country} initial={initial} treatments={treatments} />
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { urgencyStyle } from "@/lib/constants";
 import { TranslateButton } from "@/components/TranslateButton";
 import { LiveInterpreter } from "@/components/LiveInterpreter";
+import RecommendedTreatments from "@/components/RecommendedTreatments";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
   Save, Check, Pill, FlaskConical, Stethoscope, AlertTriangle, Languages, Loader2, Luggage,
@@ -17,6 +18,15 @@ interface CaseData {
 }
 interface DoctorData { title: string; name: string; branch: string; color: string; }
 type Phase = "connecting" | "waiting" | "connected" | "ended" | "error";
+
+// M2→M3 tavsiye edilen tedaviler için doktorun branş listesi + M5 fiyatları
+interface RecProc { code: string; name: string; price: number | null; branch: string; group: string }
+interface RecommendData {
+  branchLabel: string;
+  branchProcedures: RecProc[];
+  doctorPrices: Record<string, number>;
+  initial: { code: string; name: string; priceTRY: number }[];
+}
 
 // ── Canlı transkript (Web Speech API) ──
 interface TLine { who: "doctor" | "patient"; text: string; ts: number }
@@ -42,10 +52,10 @@ const SPEECH_LANG: Record<string, string> = {
 };
 
 export function ConsultationRoom({
-  consultationId, selfRole, status, initialNotes, doctor, caseData,
+  consultationId, selfRole, status, initialNotes, doctor, caseData, recommend,
 }: {
   consultationId: string; selfRole: "doctor" | "patient"; status: string;
-  initialNotes: string; doctor: DoctorData; caseData: CaseData;
+  initialNotes: string; doctor: DoctorData; caseData: CaseData; recommend?: RecommendData;
 }) {
   const router = useRouter();
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -625,6 +635,19 @@ export function ConsultationRoom({
           {isDoctor && (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
               <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Tedavi Kararı</div>
+
+              {/* M2→M3: doktorun tavsiye ettiği tedaviler (KSHFT listesi + kendi fiyatı) → pakete yansır */}
+              {recommend && (
+                <RecommendedTreatments
+                  caseId={caseData.id}
+                  branchLabel={recommend.branchLabel}
+                  branchProcedures={recommend.branchProcedures}
+                  doctorPrices={recommend.doctorPrices}
+                  initial={recommend.initial}
+                />
+              )}
+
+              <div className="mt-3 border-t border-emerald-100 pt-3 text-[11px] font-medium uppercase tracking-wide text-slate-400">veya AI ile otomatik teklif</div>
 
               {/* Sağlık Turizmi Agent'ı: nihai SOAP → otomatik teklif */}
               <button
