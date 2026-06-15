@@ -464,8 +464,16 @@ export function ConsultationRoom({
 
           {errMsg && <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">{errMsg}</div>}
 
-          {/* AI Canlı Tercüman (Gemini) — iskelet; ses akışı sonraki adımda */}
-          {isDoctor && <LiveInterpreter patientLang={caseData.language} />}
+          {/* AI Canlı Tercüman (Gemini) — iki yön: her taraf karşı tarafın sesini kendi dilinde duyar */}
+          {joined && (
+            <LiveInterpreter
+              targetLang={isDoctor ? "tr" : (SPEECH_LANG[caseData.language]?.split("-")[0] ?? "en")}
+              targetLabel={isDoctor ? "Türkçe" : caseData.language}
+              otherLabel={isDoctor ? caseData.language : "Türkçe"}
+              getRemoteStream={() => (remoteVideoRef.current?.srcObject as MediaStream | null) ?? null}
+              onMuteRemote={(m) => { if (remoteVideoRef.current) remoteVideoRef.current.muted = m; }}
+            />
+          )}
 
           {/* Canlı Transkript — iki taraf da kendi konuşmasını yazıya çevirir, karşı tarafa iletilir */}
           {(joined || transcript.length > 0) && (
