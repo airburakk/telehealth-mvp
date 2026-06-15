@@ -245,8 +245,9 @@ export default function TriyajPage() {
                 </select>
               </Field>
               <Field label={t("Dil")}>
+                {/* Hasta sistemdeki TÜM dilleri seçebilir (ülkeden bağımsız); ülke yalnız makul varsayılanı belirler */}
                 <select value={language} onChange={(e) => { setLanguage(e.target.value); setUiLang(e.target.value); }} className="inp">
-                  {(selectedCountry?.langs ?? ["Türkçe"]).map((l) => (
+                  {LANGUAGES.map((l) => (
                     <option key={l} value={l}>{l}</option>
                   ))}
                 </select>
