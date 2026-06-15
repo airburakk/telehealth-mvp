@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { urgencyStyle } from "@/lib/constants";
 import { TranslateButton } from "@/components/TranslateButton";
+import { LiveInterpreter } from "@/components/LiveInterpreter";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
   Save, Check, Pill, FlaskConical, Stethoscope, AlertTriangle, Languages, Loader2, Luggage,
@@ -462,6 +463,9 @@ export function ConsultationRoom({
           </div>
 
           {errMsg && <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">{errMsg}</div>}
+
+          {/* AI Canlı Tercüman (Gemini) — iskelet; ses akışı sonraki adımda */}
+          {isDoctor && <LiveInterpreter patientLang={caseData.language} />}
 
           {/* Canlı Transkript — iki taraf da kendi konuşmasını yazıya çevirir, karşı tarafa iletilir */}
           {(joined || transcript.length > 0) && (
