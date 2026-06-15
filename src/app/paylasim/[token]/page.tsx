@@ -3,12 +3,16 @@ import { db } from "@/lib/db";
 import { notifyRoles, notifyUser } from "@/lib/notify";
 import { shareState, buildSharedItems, scopeLabel, SHARE_UNLOCK_PREFIX, type SharedItem } from "@/lib/share";
 import { ShareUnlock } from "@/components/ShareUnlock";
+import { ShareLangSelect } from "@/components/ShareLangSelect";
+import { getTranslations } from "@/lib/i18n";
+import { LANGUAGES } from "@/lib/constants";
 import {
   Activity, FileText, ScanLine, FlaskConical, Stethoscope,
   ShieldCheck, Clock, Lock, Download, Ban, AlertTriangle, Eye,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60; // alıcının dilinde ilk (cache'siz) çeviri ~10s sürebilir — serverless timeout payı
 
 const KIND_ICON = { report: FileText, image: ScanLine, lab: FlaskConical, note: Stethoscope } as const;
 
@@ -20,7 +24,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Brand() {
+function Brand({ subtitle = "Güvenli Sağlık Paylaşımı" }: { subtitle?: string }) {
   return (
     <div className="flex items-center gap-2.5">
       <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#0E9E97] text-white">
@@ -28,7 +32,7 @@ function Brand() {
       </span>
       <span className="leading-tight">
         <span className="block font-bold text-[#0A3F39]">portamed</span>
-        <span className="block text-[11px] text-slate-500 -mt-0.5">Güvenli Sağlık Paylaşımı</span>
+        <span className="block text-[11px] text-slate-500 -mt-0.5">{subtitle}</span>
       </span>
     </div>
   );
@@ -58,7 +62,13 @@ function itemDownload(it: SharedItem): { href: string; name: string } | null {
   return null;
 }
 
-export default async function ShareViewerPage({ params }: { params: Promise<{ token: string }> }) {
+export default async function ShareViewerPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ lang?: string }>;
+}) {
   const { token } = await params;
 
   const link = await db.shareLink.findUnique({
@@ -115,35 +125,63 @@ export default async function ShareViewerPage({ params }: { params: Promise<{ to
 
   const scopes = link.scopes.split(",");
   const items = buildSharedItems(link.case, scopes);
-  const expiryLabel = link.expiresAt
+
+  // Alıcının dili (?lang) — çeviri SUNUCUDA (girişsiz görüntüleyici, /api/i18n auth gerektirir).
+  // TR'de kimlik döner (anında, maliyetsiz); diğer dillerde tek Claude çağrısı → Translation tablosunda cache'lenir.
+  const sp = await searchParams;
+  const lang = LANGUAGES.includes(String(sp?.lang)) ? String(sp.lang) : "Türkçe";
+
+  const UI = [
+    "Güvenli Sağlık Paylaşımı", "Yalnız görüntüleme", "sağlık kayıtları", "Sizinle paylaşıldı",
+    "Branş", "Erişim", "Süresiz", "İndirme açık", "İndirme kapalı",
+    "Erişiminiz kayıt altına alınır", "İndir", "DICOM görüntüleyici", "Görüntü önizleme (demo)",
+    "Gerçek DICOM render + güvenli dosya depolama üretim sürümünde eklenecek.",
+    "Bu içerik hastanın açık izniyle, sınırlı süreyle ve yalnızca görüntüleme amacıyla paylaşılmıştır. Hasta erişimi istediği an iptal edebilir; her görüntüleme denetim kaydına (audit trail) işlenir. · portamed (MVP)",
+  ];
+  const splitParas = (s: string) => s.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+
+  const content: string[] = [link.case.branch];
+  for (const it of items) {
+    content.push(it.title, scopeLabel(it.scope));
+    if (it.body) content.push(...splitParas(it.body)); // uzun klinik metni paragraf paragraf çevir → getTranslations paralelleştirir + cache granülaritesi
+    if (it.rows) for (const r of it.rows) content.push(r.k, r.v);
+  }
+  const tmap = await getTranslations(lang, [...UI, ...content]);
+  const t = (s: string) => (s ? tmap[s.trim()] ?? s : s);
+  const tBody = (s: string) => splitParas(s).map((p) => t(p)).join("\n\n");
+
+  const expiryDate = link.expiresAt
     ? new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" }).format(link.expiresAt)
-    : "Süresiz";
+    : null;
 
   return (
     <Shell>
       <div className="flex items-center justify-between gap-3">
-        <Brand />
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
-          <Eye size={12} /> Yalnız görüntüleme
-        </span>
+        <Brand subtitle={t("Güvenli Sağlık Paylaşımı")} />
+        <div className="flex items-center gap-2">
+          <ShareLangSelect current={lang} />
+          <span className="hidden items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200 sm:inline-flex">
+            <Eye size={12} /> {t("Yalnız görüntüleme")}
+          </span>
+        </div>
       </div>
 
       <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-start gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#0E9E97] text-white"><ShieldCheck size={22} /></span>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-[#0A3F39]">{link.case.patientName} — sağlık kayıtları</h1>
+            <h1 className="text-xl font-bold text-[#0A3F39]">{link.case.patientName} — {t("sağlık kayıtları")}</h1>
             <p className="text-sm text-slate-500">
-              {link.recipientName ? `${link.recipientName} ile paylaşıldı` : "Sizinle paylaşıldı"} · Branş: {link.case.branch}
+              {link.recipientName ?? t("Sizinle paylaşıldı")} · {t("Branş")}: {t(link.case.branch)}
             </p>
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-t border-slate-100 pt-3 text-xs text-slate-500">
-          <span className="inline-flex items-center gap-1"><Clock size={13} /> Erişim: {expiryLabel}</span>
+          <span className="inline-flex items-center gap-1"><Clock size={13} /> {t("Erişim")}: {expiryDate ?? t("Süresiz")}</span>
           <span className="inline-flex items-center gap-1">
-            {link.allowDownload ? <><Download size={13} /> İndirme açık</> : <><Lock size={13} /> İndirme kapalı</>}
+            {link.allowDownload ? <><Download size={13} /> {t("İndirme açık")}</> : <><Lock size={13} /> {t("İndirme kapalı")}</>}
           </span>
-          <span className="inline-flex items-center gap-1"><ShieldCheck size={13} /> Erişiminiz kayıt altına alınır</span>
+          <span className="inline-flex items-center gap-1"><ShieldCheck size={13} /> {t("Erişiminiz kayıt altına alınır")}</span>
         </div>
       </div>
 
@@ -155,19 +193,19 @@ export default async function ShareViewerPage({ params }: { params: Promise<{ to
             <div key={i} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-5 py-3">
                 <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-800">
-                  <Icon size={16} className="text-[#0A3F39]" /> {it.title}
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-normal text-slate-500">{scopeLabel(it.scope)}</span>
+                  <Icon size={16} className="text-[#0A3F39]" /> {t(it.title)}
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-normal text-slate-500">{t(scopeLabel(it.scope))}</span>
                 </div>
                 {dl && (
                   <a download={dl.name} href={dl.href} className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#0A3F39] hover:underline">
-                    <Download size={13} /> İndir
+                    <Download size={13} /> {t("İndir")}
                   </a>
                 )}
               </div>
 
               <div className="p-5">
                 {(it.kind === "report" || it.kind === "note") && (
-                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">{it.body}</pre>
+                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">{tBody(it.body || "")}</pre>
                 )}
 
                 {it.kind === "lab" && it.rows && (
@@ -175,8 +213,8 @@ export default async function ShareViewerPage({ params }: { params: Promise<{ to
                     <tbody>
                       {it.rows.map((r, j) => (
                         <tr key={j} className="border-b border-slate-100 last:border-0">
-                          <td className="py-2 pr-4 text-slate-600">{r.k}</td>
-                          <td className="py-2 text-right font-medium text-slate-800">{r.v}</td>
+                          <td className="py-2 pr-4 text-slate-600">{t(r.k)}</td>
+                          <td className="py-2 text-right font-medium text-slate-800">{t(r.v)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -187,15 +225,15 @@ export default async function ShareViewerPage({ params }: { params: Promise<{ to
                   <div className="rounded-xl bg-slate-900 p-3">
                     <div className="flex items-center justify-between text-[11px] text-slate-400">
                       <span className="inline-flex items-center gap-1"><ScanLine size={12} /> {it.fileName}</span>
-                      <span>DICOM görüntüleyici</span>
+                      <span>{t("DICOM görüntüleyici")}</span>
                     </div>
                     <div className="mt-2 grid aspect-video place-items-center rounded-lg bg-gradient-to-br from-slate-800 to-black">
                       <div className="text-center">
                         <ScanLine size={40} className="mx-auto text-slate-600" />
-                        <p className="mt-2 text-xs text-slate-500">Görüntü önizleme (demo)</p>
+                        <p className="mt-2 text-xs text-slate-500">{t("Görüntü önizleme (demo)")}</p>
                       </div>
                     </div>
-                    <p className="mt-2 text-[10px] text-slate-500">Gerçek DICOM render + güvenli dosya depolama üretim sürümünde eklenecek.</p>
+                    <p className="mt-2 text-[10px] text-slate-500">{t("Gerçek DICOM render + güvenli dosya depolama üretim sürümünde eklenecek.")}</p>
                   </div>
                 )}
               </div>
@@ -206,10 +244,7 @@ export default async function ShareViewerPage({ params }: { params: Promise<{ to
 
       <div className="mt-6 flex items-start gap-2 rounded-xl border border-slate-200 bg-white/60 p-4 text-[11px] text-slate-500">
         <AlertTriangle size={14} className="mt-0.5 shrink-0 text-slate-400" />
-        <p>
-          Bu içerik hastanın açık izniyle, sınırlı süreyle ve yalnızca görüntüleme amacıyla paylaşılmıştır.
-          Hasta erişimi istediği an iptal edebilir; her görüntüleme denetim kaydına (audit trail) işlenir. · portamed (MVP)
-        </p>
+        <p>{t("Bu içerik hastanın açık izniyle, sınırlı süreyle ve yalnızca görüntüleme amacıyla paylaşılmıştır. Hasta erişimi istediği an iptal edebilir; her görüntüleme denetim kaydına (audit trail) işlenir. · portamed (MVP)")}</p>
       </div>
     </Shell>
   );

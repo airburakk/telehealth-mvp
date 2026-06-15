@@ -31,12 +31,12 @@ Vercel serverless kalıcı WebSocket tutamaz → **client-to-server + ephemeral 
 - ✅ **İskelet + token yolu:** `/api/realtime/token` (GET durum + POST mint, `apiVersion: v1alpha`). **Canlıda token mint doğrulandı** (anahtar geçerli).
 - ✅ **Aktivasyon tamam:** `GEMINI_API_KEY` Vercel'de (Production), `enabled:true`.
 - ✅ **İki yönlü gerçek ses (commit `e63e994`):** `LiveInterpreter` — `ai.live.connect`, `translationConfig{targetLanguageCode, echoTargetLanguage:false}`, input/output transkript. Her taraf karşı tarafın gelen sesini kendi diline çevirip yerel oynatır (ScriptProcessor 16kHz giriş → 24kHz kuyruklu çıkış); orijinal yabancı ses kısılır.
-- ⏳ **GERÇEK SES TESTİ kullanıcıda:** mic + iki taraf + **kulaklık** (hoparlörde yankı). Sandbox'ta ses yok → uçtan uca yalnız kullanıcı doğrulayabilir.
+- ✅ **GERÇEK SES TESTİ KULLANICI TARAFINDAN DOĞRULANDI (2026-06-15):** kulaklıkla **çevrilmiş ses + altyazı birlikte duyuldu** (RU→TR). 1. testte altyazı vardı ama ses yoktu → kök sebep: oynatma `AudioContext` token/import/connect `await`'lerinden sonra oluşunca **askıda (suspended)** başlıyordu. Düzeltme (`f233c7f`): playCtx tıklama anında (gesture içinde) oluştur + `resume()`; `playChunk`'ta suspended guard; ses baytları her formatta (base64/binary) sağlam çıkar; tanı sayaçları (🔊 chunk · 📝 altyazı). 2. testte 🔊 arttı + ses duyuldu → **POC uçtan uca tamam.**
 
 ## Bilinen sınırlar (canlı testte izlenecek)
 - **Yankı:** hoparlörde mic, çeviri sesini geri alır → kulaklık şart. (İleride VAD/echo bastırma.)
-- **Gecikme + kalite:** preview model; gerçek anahtarla ölçülecek.
-- `translationConfig` SDK tipinde yoksa `any` ile geçildi; mesaj şekli (`serverContent.modelTurn.parts.inlineData` / `outputTranscription`) canlı testte teyit edilecek.
+- **Gecikme + kalite:** kullanıcı canlı testte **akıcı / çok iyi** buldu (2026-06-15, RU→TR; görüşmede kullanılabilir). Preview model; formal sayısal gecikme ölçümü yapılmadı.
+- `translationConfig` SDK tipinde yoksa `any` ile geçildi; mesaj şekli (`serverContent.modelTurn.parts.inlineData` ses + `outputTranscription` altyazı) **canlı testte teyit edildi**.
 
 ## Açık konular
 - KVKK/GDPR: C'de hastanın **ham sesi** Google'a akar → DPA + aydınlatma metni (üretim öncesi)
