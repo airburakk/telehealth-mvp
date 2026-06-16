@@ -25,7 +25,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
   const u = urgencyStyle(c.urgency);
   const files = c.attachments ? c.attachments.split(",").filter(Boolean) : [];
 
-  const tmap = await getTranslations(c.language, [...STATIC_LABELS, c.branch]);
+  const tmap = await getTranslations(c.language, [...STATIC_LABELS, c.branch, c.reasoning]);
   const t = (s: string) => tmap[s] ?? s;
 
   return (
@@ -67,7 +67,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-teal-700">
             <Sparkles size={14} /> {t("Triyaj Gerekçesi")}
           </div>
-          <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{c.reasoning}</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t(c.reasoning)}</p>
         </div>
 
         {files.length > 0 && (

@@ -103,8 +103,8 @@ export default function TriyajPage() {
   // Arayüz dili — hasta dil seçince otomatik eşitlenir; üstteki seçiciden de değiştirilebilir.
   const [uiLang, setUiLang] = useState("Türkçe");
   const tTexts = useMemo(
-    () => [...STATIC_UI, ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : [])],
-    [effectiveBranch]
+    () => [...STATIC_UI, ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
+    [effectiveBranch, analysis?.reasoning]
   );
   const { t } = useT(uiLang, tTexts);
 
@@ -526,7 +526,7 @@ function AnalysisCard({ analysis, badge, dot, label, t = (s) => s }: { analysis:
         </span>
         <span className="text-xs text-slate-500">{t("Güven")} %{analysis.confidence}</span>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-slate-600">{analysis.reasoning}</p>
+      <p className="mt-2 text-sm leading-relaxed text-slate-600">{t(analysis.reasoning)}</p>
     </div>
   );
 }
