@@ -33,7 +33,9 @@ const STATIC_UI = [
   "Görüşme ücreti alındı:", "Görüşme sigortanız tarafından karşılanıyor", "Poliçe",
   "Acil / Hayati", "Yüksek", "Orta", "Düşük", "Rutin / Elektif",
   "Bu branş için gerekli belgeler", "opsiyonel",
-  "Zorunlu (*) belgeler işaretlenmedi — yükleyip işaretleyin veya Özet adımında eksik göndereceğinizi onaylayın.",
+  "Eksik belgeleriniz var",
+  "Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; hekimimiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.",
+  "Hızlı, doğru ve etkili bir görüşme için gerekli belgelerin eksiksiz yüklenmesi büyük önem taşır. Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi Özet adımında onaylayarak da ilerleyebilirsiniz.",
   "Eksik zorunlu belge", "Bu belgeleri görüşmeden önce ileteceğimi onaylıyorum.",
 ];
 
@@ -366,12 +368,23 @@ export default function TriyajPage() {
                     </li>
                   ))}
                 </ul>
-                {missingRequired.length > 0 && (
-                  <p className="mt-2 flex items-start gap-1 text-[11px] text-amber-700">
-                    <AlertTriangle size={12} className="mt-0.5 shrink-0" />
-                    {t("Zorunlu (*) belgeler işaretlenmedi — yükleyip işaretleyin veya Özet adımında eksik göndereceğinizi onaylayın.")}
-                  </p>
-                )}
+              </div>
+            )}
+
+            {missingRequired.length > 0 && (
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
+                <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-900">
+                  <AlertTriangle size={16} className="shrink-0" /> {t("Eksik belgeleriniz var")}
+                </div>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-amber-900/90">
+                  {t("Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; hekimimiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.")}
+                </p>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-amber-900/90">
+                  {t("Hızlı, doğru ve etkili bir görüşme için gerekli belgelerin eksiksiz yüklenmesi büyük önem taşır. Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi Özet adımında onaylayarak da ilerleyebilirsiniz.")}
+                </p>
+                <ul className="mt-2.5 list-disc space-y-0.5 pl-5 text-[12px] font-medium text-amber-900">
+                  {missingRequired.map((d) => <li key={d.key}>{t(d.label)}</li>)}
+                </ul>
               </div>
             )}
             <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center hover:border-teal-400 hover:bg-teal-50/40">
