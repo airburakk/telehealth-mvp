@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  computePackage, formatUSD, TIER_PRESETS,
+  computePackage, formatUSD, TIER_PRESETS, TRY_PER_USD,
   type Tier, type HospitalType, type PackageSelection, type RecommendedTreatment,
 } from "@/lib/pricing";
 import { countryFlag, countryName } from "@/lib/constants";
@@ -26,8 +26,8 @@ export interface PackageInitial {
 }
 
 export function PackageBuilder({
-  caseId, patientName, branch, country, initial, treatments,
-}: { caseId: string; patientName: string; branch: string; country: string; initial?: PackageInitial; treatments?: RecommendedTreatment[] }) {
+  caseId, patientName, branch, country, initial, treatments, rate = TRY_PER_USD, fxSource, fxAt,
+}: { caseId: string; patientName: string; branch: string; country: string; initial?: PackageInitial; treatments?: RecommendedTreatment[]; rate?: number; fxSource?: string; fxAt?: number }) {
   const router = useRouter();
   const [tier, setTier] = useState<Tier>(initial?.tier ?? "Standart");
   const [hotelStars, setHotelStars] = useState<4 | 5>(initial?.hotelStars ?? 4);
@@ -50,7 +50,7 @@ export function PackageBuilder({
 
   const selection: PackageSelection = { branch, country, tier, hotelStars, hospitalType, nights, translator, insuranceExtended: insExtended, insuranceMalpractice: insMalpractice };
   const hasTx = !!treatments && treatments.length > 0;
-  const quote = useMemo(() => computePackage(selection, treatments), [tier, hotelStars, hospitalType, nights, translator, insExtended, insMalpractice, treatments]);
+  const quote = useMemo(() => computePackage(selection, treatments, rate), [tier, hotelStars, hospitalType, nights, translator, insExtended, insMalpractice, treatments, rate]);
 
   async function confirm() {
     setSubmitting(true);
@@ -171,6 +171,12 @@ export function PackageBuilder({
             <span className="text-sm font-semibold text-slate-700">Toplam</span>
             <span className="text-2xl font-bold text-[#0A3F39]">{formatUSD(quote.total)}</span>
           </div>
+          {hasTx && (
+            <div className="mt-2 text-[11px] text-slate-400">
+              1 USD ≈ {rate.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ₺
+              {fxSource ? ` · ${fxSource}` : ""}{fxAt ? ` · ${new Date(fxAt).toLocaleDateString("tr-TR")}` : ""}
+            </div>
+          )}
 
           <div className="mt-3 flex items-start gap-2 rounded-lg bg-teal-50 px-3 py-2 text-xs text-teal-800 ring-1 ring-teal-100">
             <Lock size={14} className="mt-0.5 shrink-0" />

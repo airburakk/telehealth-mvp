@@ -27,6 +27,7 @@ interface RecommendData {
   branchProcedures: RecProc[];
   doctorPrices: Record<string, number>;
   initial: { code: string; name: string; priceTRY: number }[];
+  rate: number; // güncel USD/₺ (≈$ gösterimi için)
 }
 
 // ── Canlı transkript (Web Speech API) ──
@@ -649,6 +650,7 @@ export function ConsultationRoom({
                   branchProcedures={recommend.branchProcedures}
                   doctorPrices={recommend.doctorPrices}
                   initial={recommend.initial}
+                  rate={recommend.rate}
                 />
               )}
 

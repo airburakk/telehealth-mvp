@@ -42,8 +42,8 @@ const INSURANCE_MALPRACTICE = 480;
 const PLATFORM_FEE_RATE = 0.15;
 
 // ₺ (KSHFT tarifesi / doktorun M5 fiyatı) → $ dönüşümü. Güncel kura göre ayarlayın (ileride env/API).
-export const TRY_PER_USD = 40;
-export function tryToUsd(tl: number): number { return Math.round(tl / TRY_PER_USD); }
+export const TRY_PER_USD = 40; // varsayılan/fallback kur — canlı kur lib/fxrate.ts'ten gelir, buraya parametre olarak geçilir
+export function tryToUsd(tl: number, rate: number = TRY_PER_USD): number { return Math.round(tl / (rate || TRY_PER_USD)); }
 export function formatTRY(n: number): string {
   return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(n);
 }
@@ -72,11 +72,11 @@ export interface PackageQuote {
   split: LineItem[];
 }
 
-export function computePackage(s: PackageSelection, treatments?: RecommendedTreatment[]): PackageQuote {
+export function computePackage(s: PackageSelection, treatments?: RecommendedTreatment[], rate: number = TRY_PER_USD): PackageQuote {
   const hasTx = !!treatments && treatments.length > 0;
-  // Tedavi kalemleri: doktorun M2'de tavsiye ettiği işlemler (₺→$, doktorun fiyatıyla) varsa onlar; yoksa branş taban fiyatı
+  // Tedavi kalemleri: doktorun M2'de tavsiye ettiği işlemler (₺→$, doktorun fiyatıyla, canlı kur) varsa onlar; yoksa branş taban fiyatı
   const treatmentItems: LineItem[] = hasTx
-    ? treatments!.map((t) => ({ key: `tx-${t.code}`, label: `Tedavi · ${t.name}`, amount: tryToUsd(t.priceTRY), note: `Doktor fiyatı ${formatTRY(t.priceTRY)}` }))
+    ? treatments!.map((t) => ({ key: `tx-${t.code}`, label: `Tedavi · ${t.name}`, amount: tryToUsd(t.priceTRY, rate), note: `Doktor fiyatı ${formatTRY(t.priceTRY)}` }))
     : [{ key: "treatment", label: `Tedavi · ${s.branch}`, amount: Math.round(treatmentBase(s.branch) * (HOSPITAL_MULT[s.hospitalType] ?? 1)), note: `${s.hospitalType} hastane` }];
   const treatment = treatmentItems.reduce((a, b) => a + b.amount, 0);
 

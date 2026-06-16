@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { ownsCase } from "@/lib/ownership";
 import { ConsultationRoom } from "@/components/ConsultationRoom";
 import { branchKeyFromLabel, branchLabel as branchLabelOf, getBranchProcedures } from "@/lib/procedures";
+import { getTryPerUsd } from "@/lib/fxrate";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,7 @@ export default async function ConsultationPage({
         branchProcedures: { code: string; name: string; price: number | null; branch: string; group: string }[];
         doctorPrices: Record<string, number>;
         initial: { code: string; name: string; priceTRY: number }[];
+        rate: number;
       }
     | undefined;
   if (selfRole === "doctor") {
@@ -46,11 +48,13 @@ export default async function ConsultationPage({
     try { doctorPrices = consult.doctor.procedures ? JSON.parse(consult.doctor.procedures) : {}; } catch { doctorPrices = {}; }
     let initial: { code: string; name: string; priceTRY: number }[] = [];
     try { initial = c.recommendedProcedures ? JSON.parse(c.recommendedProcedures) : []; } catch { initial = []; }
+    const fx = await getTryPerUsd();
     recommend = {
       branchLabel: branchKey ? branchLabelOf(branchKey) : consult.doctor.branch,
       branchProcedures: branchKey ? getBranchProcedures(branchKey) : [],
       doctorPrices,
       initial,
+      rate: fx.rate,
     };
   }
 

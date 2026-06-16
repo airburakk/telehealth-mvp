@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { computePackage, type PackageSelection, type Tier, type HospitalType, type RecommendedTreatment } from "@/lib/pricing";
+import { getTryPerUsd } from "@/lib/fxrate";
 import { notifyRoles } from "@/lib/notify";
 
 // POST /api/cases/:id/booking — sağlık turizmi paketi rezervasyonu oluştur (Escrow)
@@ -26,7 +27,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   let treatments: RecommendedTreatment[] = [];
   try { treatments = c.recommendedProcedures ? (JSON.parse(c.recommendedProcedures) as RecommendedTreatment[]) : []; } catch { treatments = []; }
 
-  const quote = computePackage(selection, treatments);
+  const fx = await getTryPerUsd();
+  const quote = computePackage(selection, treatments, fx.rate);
 
   const booking = await db.booking.create({
     data: {

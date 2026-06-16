@@ -15,13 +15,14 @@ function hueFor(price: number, floor: number, ceil: number): string {
 }
 
 export default function RecommendedTreatments({
-  caseId, branchLabel, branchProcedures, doctorPrices, initial,
+  caseId, branchLabel, branchProcedures, doctorPrices, initial, rate,
 }: {
   caseId: string;
   branchLabel: string;
   branchProcedures: Proc[];
   doctorPrices: Record<string, number>; // M5: code -> doktorun ₺ fiyatı
   initial: { code: string; name: string; priceTRY: number }[];
+  rate: number; // güncel USD/₺ (≈$ gösterimi)
 }) {
   const router = useRouter();
 
@@ -193,7 +194,7 @@ export default function RecommendedTreatments({
       {entries.length > 0 && (
         <div className="mt-2.5 flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
           <span className="text-slate-500">{entries.length} tedavi · toplam</span>
-          <span className="font-bold text-[#0A3F39]">{formatTRY(totalTRY)} <span className="text-xs font-normal text-slate-400">≈ ${tryToUsd(totalTRY).toLocaleString("en-US")}</span></span>
+          <span className="font-bold text-[#0A3F39]">{formatTRY(totalTRY)} <span className="text-xs font-normal text-slate-400">≈ ${tryToUsd(totalTRY, rate).toLocaleString("en-US")}</span></span>
         </div>
       )}
       {msg && <div className="mt-2 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">{msg}</div>}

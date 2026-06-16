@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { PackageBuilder, type PackageInitial } from "@/components/PackageBuilder";
 import { type RecommendedTreatment } from "@/lib/pricing";
+import { getTryPerUsd } from "@/lib/fxrate";
 import { ArrowLeft, Luggage } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,9 @@ export default async function PackagePage({
   // Doktorun M2'de tavsiye ettiği tedaviler (varsa) — paket fiyatı bunlardan (doktorun ₺ fiyatı → $)
   let treatments: RecommendedTreatment[] = [];
   try { treatments = c.recommendedProcedures ? (JSON.parse(c.recommendedProcedures) as RecommendedTreatment[]) : []; } catch { treatments = []; }
+
+  // Güncel USD/₺ kuru (TCMB; cache + fallback) — tedavi ₺ fiyatları $'a bu kurla çevrilir
+  const fx = await getTryPerUsd();
 
   // Sağlık Turizmi Agent'ı teklifi URL ile gelir (ai=1) — doktor her değeri düzenleyebilir
   const s = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
@@ -47,7 +51,7 @@ export default async function PackagePage({
       </div>
 
       <div className="mt-7">
-        <PackageBuilder caseId={c.id} patientName={c.patientName} branch={c.branch} country={c.country} initial={initial} treatments={treatments} />
+        <PackageBuilder caseId={c.id} patientName={c.patientName} branch={c.branch} country={c.country} initial={initial} treatments={treatments} rate={fx.rate} fxSource={fx.source} fxAt={fx.at} />
       </div>
     </div>
   );
