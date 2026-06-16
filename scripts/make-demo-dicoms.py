@@ -71,6 +71,55 @@ def knee_mr(i, n):
         img[eff] = 1300
     return np.clip(img, 0, 1600).astype(np.uint16)
 
+def sinus_ct(i, n):
+    yy, xx = grid(); rng = np.random.default_rng(200 + i)
+    img = np.zeros((H, W), np.float32)
+    head = ellipse(yy, xx, 0, 0, 0.80, 0.84)
+    img[head] = 280 + rng.normal(0, 12, (H, W))[head]                 # yumuşak doku
+    bone = head & ~ellipse(yy, xx, 0, 0, 0.72, 0.76)
+    img[bone] = 1750                                                  # yüz/kafatası kemiği
+    mL = ellipse(yy, xx, 0.26, -0.34, 0.22, 0.17) & head
+    mR = ellipse(yy, xx, 0.26, 0.34, 0.22, 0.17) & head
+    img[mL] = 40; img[mR] = 40                                        # maksiller sinüsler (hava)
+    img[ellipse(yy, xx, 0.02, 0.0, 0.16, 0.10) & head] = 45          # etmoid
+    img[ellipse(yy, xx, 0.26, 0.0, 0.20, 0.06) & head] = 45          # nazal kavite
+    t = i / (n - 1)
+    if abs(t - 0.5) < 0.4:                                            # sinüzit: sağ maksilerde sıvı/mukoza
+        img[mR & (yy > 0.30)] = 620
+    return np.clip(img, 0, 2000).astype(np.uint16)
+
+def abdomen_ct(i, n):
+    yy, xx = grid(); rng = np.random.default_rng(300 + i)
+    img = np.zeros((H, W), np.float32)
+    body = ellipse(yy, xx, 0.03, 0, 0.74, 0.96)
+    img[body] = 600 + rng.normal(0, 14, (H, W))[body]                 # yağ/yumuşak doku
+    img[ellipse(yy, xx, -0.08, -0.40, 0.46, 0.40) & body] = 1000      # karaciğer
+    img[ellipse(yy, xx, -0.02, 0.52, 0.22, 0.17) & body] = 980        # dalak
+    img[ellipse(yy, xx, 0.30, -0.50, 0.15, 0.10) & body] = 950        # sağ böbrek
+    img[ellipse(yy, xx, 0.30, 0.50, 0.15, 0.10) & body] = 950         # sol böbrek
+    img[ellipse(yy, xx, 0.58, 0, 0.16, 0.14)] = 1820                  # vertebra
+    img[ellipse(yy, xx, 0.36, -0.05, 0.05, 0.05)] = 1150              # aort (kontrast)
+    img[ellipse(yy, xx, 0.36, 0.07, 0.05, 0.04)] = 1080              # VCI
+    for cy0, cx0 in [(-0.05, 0.05), (0.12, 0.18), (-0.20, 0.10)]:
+        img[ellipse(yy, xx, cy0, cx0, 0.08, 0.08) & body] = 120       # barsak gazı
+    t = i / (n - 1); r = 0.07 * max(0.0, 1 - abs(t - 0.5) * 2.4)
+    if r > 0.012:
+        img[ellipse(yy, xx, -0.12, -0.42, r, r)] = 260               # karaciğer kisti (hipodens)
+    return np.clip(img, 0, 2000).astype(np.uint16)
+
+def pelvic_us(i, n):
+    yy, xx = grid(); rng = np.random.default_rng(400 + i)
+    dy = yy - (-1.05); dx = xx - 0.0
+    rad = np.sqrt(dx * dx + dy * dy); ang = np.arctan2(dx, dy)
+    sector = (np.abs(ang) < 0.52) & (rad > 0.18) & (rad < 1.98)       # US sektör (yelpaze)
+    img = np.zeros((H, W), np.float32)
+    img[sector] = rng.normal(430, 95, (H, W))[sector]                 # benek (speckle)
+    img *= np.where(sector, np.clip(1 - 0.30 * rad, 0.3, 1), 1)       # derinlik zayıflaması
+    for cy0, cx0, fr in [(0.30, -0.22, 0.13), (0.55, 0.10, 0.10), (0.45, 0.30, 0.07 + 0.03 * (i % 4))]:
+        img[ellipse(yy, xx, cy0, cx0, fr, fr) & sector] = 35          # foliküller (anekoik)
+    img[~sector] = 0
+    return np.clip(img, 0, 1000).astype(np.uint16)
+
 def build(path, frames_fn, n, modality, sop, name, pid, desc, wc, ww):
     vol = np.stack([frames_fn(i, n) for i in range(n)], 0)
     meta = FileMetaDataset()
@@ -113,6 +162,13 @@ def main():
           "DEMO^Toraks", "DEMO-CT-01", "Toraks BT", 900, 1600)
     build(os.path.join(out, "diz-mr.dcm"), knee_mr, 20, "MR", MRImageStorage,
           "DEMO^Diz", "DEMO-MR-01", "Diz MR", 650, 1300)
+    US = "1.2.840.10008.5.1.4.1.1.6.1"  # Ultrasound Image Storage
+    build(os.path.join(out, "sinus-bt.dcm"), sinus_ct, 16, "CT", CTImageStorage,
+          "DEMO^Sinus", "DEMO-CT-02", "Paranazal Sinus BT", 500, 1800)
+    build(os.path.join(out, "batin-bt.dcm"), abdomen_ct, 20, "CT", CTImageStorage,
+          "DEMO^Batin", "DEMO-CT-03", "Batin BT", 900, 1500)
+    build(os.path.join(out, "pelvik-usg.dcm"), pelvic_us, 10, "US", US,
+          "DEMO^Pelvik", "DEMO-US-01", "Pelvik USG", 380, 650)
 
 if __name__ == "__main__":
     main()
