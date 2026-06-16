@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { countryFlag, formatDateTime } from "@/lib/constants";
-import { doctorCredentials, richBio, academicNote, generatedReviews } from "@/lib/doctor-profile";
+import { doctorCredentials, richBio, academicNote, generatedReviews, avatarVariant, isFemaleName } from "@/lib/doctor-profile";
 import { DoctorVideoCard } from "@/components/DoctorVideoCard";
+import { DoctorArt } from "@/components/PortamedArt";
 import { BadgeCheck, Star, Globe, GraduationCap, ShieldCheck, Video, MapPin, ArrowLeft, CheckCircle2, Stethoscope } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
       {/* Hero */}
       <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <span className="grid h-20 w-20 shrink-0 place-items-center rounded-2xl text-3xl font-bold text-white" style={{ background: d.color }}>{d.name.slice(0, 1)}</span>
+          <span className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl ring-1 ring-slate-200"><DoctorArt i={avatarVariant(d.name)} female={isFemaleName(d.name)} /></span>
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold text-slate-800">{d.title} {d.name}</h1>
@@ -55,11 +56,11 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="mt-5 grid grid-cols-3 gap-3">
-          <Stat value={`${d.experienceYears}`} label="yıl deneyim" />
-          <Stat value={`%${d.successRate}`} label="başarı oranı" />
-          <Stat value={`${d.capacity}`} label="aylık kapasite" />
+        {/* Stats — değere göre renklenen çubuklar (slider görünümü) */}
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <StatBar label="Deneyim" valueText={`${d.experienceYears} yıl`} pct={(d.experienceYears / 30) * 100} />
+          <StatBar label="Başarı oranı" valueText={`%${d.successRate}`} pct={d.successRate} />
+          <StatBar label="Aylık kapasite" valueText={`${d.capacity}`} pct={(d.capacity / 40) * 100} />
         </div>
       </div>
 
@@ -150,11 +151,18 @@ function Card({ title, icon, children }: { title: string; icon?: React.ReactNode
     </div>
   );
 }
-function Stat({ value, label }: { value: string; label: string }) {
+function StatBar({ label, valueText, pct }: { label: string; valueText: string; pct: number }) {
+  const p = Math.max(6, Math.min(100, Math.round(pct)));
+  const hue = Math.round(40 + (p / 100) * 120); // 40 amber (düşük) → 160 teal/yeşil (yüksek)
   return (
-    <div className="rounded-xl bg-slate-50 p-3 text-center">
-      <div className="text-xl font-bold text-[#0A3F39]">{value}</div>
-      <div className="text-xs text-slate-500">{label}</div>
+    <div className="rounded-xl bg-slate-50 p-3">
+      <div className="flex items-baseline justify-between">
+        <span className="text-xs text-slate-500">{label}</span>
+        <span className="text-lg font-bold text-[#0A3F39]">{valueText}</span>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200/70">
+        <div className="h-full rounded-full transition-all" style={{ width: `${p}%`, background: `hsl(${hue} 65% 45%)` }} />
+      </div>
     </div>
   );
 }

@@ -23,6 +23,18 @@ function hash(s: string): number {
 }
 function pick<T>(arr: T[], seed: number): T { return arr[seed % arr.length]; }
 
+// ── İllüstre avatar (telifsiz, kod üretimi) için çeşitleme + isimden cinsiyet ──
+const FEMALE_NAMES = new Set([
+  "ayşe", "elif", "selin", "pelin", "gül", "aslı", "nazlı", "ece", "derya", "canan", "sema", "leyla",
+  "filiz", "zeynep", "fatma", "emine", "hatice", "zehra", "merve", "esra", "büşra", "ayça", "ceren",
+  "melis", "özge", "sibel", "gamze", "seda", "yasemin", "dilek", "irem", "aysu", "duygu", "tuğçe", "ebru",
+]);
+export function isFemaleName(name: string): boolean {
+  const first = (name.trim().split(/\s+/)[0] || "").toLocaleLowerCase("tr-TR");
+  return FEMALE_NAMES.has(first);
+}
+export function avatarVariant(name: string): number { return hash(name + "av") % 6; }
+
 const MED_SCHOOLS = [
   "İstanbul Üniversitesi İstanbul Tıp Fakültesi",
   "Hacettepe Üniversitesi Tıp Fakültesi",

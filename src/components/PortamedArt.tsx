@@ -175,11 +175,14 @@ const AVA = [
   { bg: "#DFEDE7", scrub: "#0E9E97", skin: "#E8C49C", hair: "#243530" },
   { bg: "#E6EEE3", scrub: "#0A3F39", skin: "#D9A87E", hair: "#1B2A26" },
   { bg: "#E3EDEA", scrub: "#0A7D77", skin: "#F0D3B0", hair: "#4A3B2A" },
+  { bg: "#EAF1EC", scrub: "#0E9E97", skin: "#C98D5E", hair: "#2B1C12" },
+  { bg: "#E0EBEE", scrub: "#155E63", skin: "#EAC6A0", hair: "#5A4632" },
+  { bg: "#E8EDE2", scrub: "#0A7D77", skin: "#D7A77C", hair: "#3A2E22" },
 ];
 
-export function DoctorArt({ i = 0 }: { i?: number }) {
+export function DoctorArt({ i = 0, female }: { i?: number; female?: boolean }) {
   const v = AVA[i % AVA.length];
-  const female = i % 3 !== 0; // landing sırası: Burak (e) · Elif (k) · Zeynep (k)
+  const isF = female ?? (i % 3 !== 0); // explicit cinsiyet verilmezse landing sırası heuristiği
   return (
     <svg viewBox="0 0 200 200" className="h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden>
       <rect width="200" height="200" fill={v.bg} />
@@ -191,7 +194,7 @@ export function DoctorArt({ i = 0 }: { i?: number }) {
       <rect x="88" y="112" width="24" height="26" rx="10" fill={v.skin} />
       <circle cx="100" cy="88" r="34" fill={v.skin} />
       {/* Saç */}
-      {female ? (
+      {isF ? (
         <path d="M62 96 c-4 -44 28 -56 38 -56 s42 12 38 56 c-2 18 -10 26 -10 26 8 -40 -10 -52 -28 -52 s-36 12 -28 52 c0 0 -8 -8 -10 -26 z" fill={v.hair} />
       ) : (
         <path d="M66 84 c0 -26 16 -38 34 -38 s34 12 34 38 c0 4 -1 8 -2 10 -4 -20 -14 -28 -32 -28 s-28 8 -32 28 c-1 -2 -2 -6 -2 -10 z" fill={v.hair} />
