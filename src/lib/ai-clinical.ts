@@ -301,3 +301,52 @@ export async function proposePackage(soap: string, ctx: ProposalContext): Promis
     rationale: clean(p.rationale),
   };
 }
+
+// ── Post-op serbest-metin kırmızı bayrak (Modül 4) ──
+// Hastanın günlük check-in NOTUNU (serbest metin) klinik triyaj asistanı gibi değerlendirir.
+// Kural tabanlı keyword taramasının kaçırdığı nüanslı/bağlamsal bulguları yakalar; sonuç
+// checkin'de kural + branş-checklist severity'siyle BİRLEŞİR (en kötü). Hızlı sınıflandırma → Haiku.
+const TRIAGE_MODEL = "claude-haiku-4-5";
+
+const POSTOP_TOOL: Anthropic.Tool = {
+  name: "submit_assessment",
+  description: "Post-op hasta notunun kırmızı-bayrak (aciliyet) değerlendirmesi.",
+  input_schema: {
+    type: "object",
+    properties: {
+      severity: {
+        type: "string",
+        enum: ["NONE", "WATCH", "RED"],
+        description:
+          "RED: acil müdahale gerektiren bulgu (yara enfeksiyonu/irin, kontrolsüz kanama, solunum sıkıntısı, bilinç değişikliği, nakil reddi belirtisi, ani şiddetli ağrı vb.); " +
+          "WATCH: izlenmesi/değerlendirilmesi gereken hafif-orta bulgu; NONE: normal iyileşme / endişe verici bulgu yok",
+      },
+      reason: { type: "string", description: "Kısa Türkçe gerekçe (tek cümle)" },
+    },
+    required: ["severity", "reason"],
+  },
+};
+
+export async function assessPostopNote(
+  note: string,
+  ctx: { branch: string; day: number }
+): Promise<{ severity: "NONE" | "WATCH" | "RED"; reason: string }> {
+  const res = await client().messages.create({
+    model: TRIAGE_MODEL,
+    max_tokens: 300,
+    system:
+      "Sen post-op (ameliyat/işlem sonrası) uzaktan takip için klinik triyaj asistanısın. Hastanın serbest-metin iyileşme notunu değerlendirip kırmızı-bayrak seviyesi belirlersin. " +
+      "Şüpheli veya endişe verici bulguda TEMKİNLİ ol (WATCH/RED'e meyilli ol — uzaktan takipte güvenlik önceliklidir). Notta açıkça olmayan bulguyu UYDURMA. Yanıtı DAİMA submit_assessment aracıyla ver.",
+    tools: [POSTOP_TOOL],
+    tool_choice: { type: "tool", name: "submit_assessment" },
+    messages: [{ role: "user", content: `Branş: ${ctx.branch} · Post-op ${ctx.day}. gün\n\nHasta notu:\n${note}` }],
+  });
+
+  const block = res.content.find((b) => b.type === "tool_use");
+  if (!block || block.type !== "tool_use") throw new Error("Değerlendirme alınamadı.");
+  const a = block.input as { severity?: string; reason?: string };
+  const severity = (["NONE", "WATCH", "RED"] as const).includes(a.severity as never)
+    ? (a.severity as "NONE" | "WATCH" | "RED")
+    : "NONE";
+  return { severity, reason: clean(a.reason) };
+}
