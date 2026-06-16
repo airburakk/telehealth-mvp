@@ -5,6 +5,8 @@ import { countryFlag, countryName, urgencyStyle, CASE_STATUS, formatDateTime } f
 import { StartConsultButton } from "@/components/StartConsultButton";
 import { TranslateButton } from "@/components/TranslateButton";
 import { DischargeReport, type Structured } from "@/components/DischargeReport";
+import { CaseDicom } from "@/components/CaseDicom";
+import { caseDicomStudies } from "@/lib/case-dicom";
 import { ArrowLeft, ArrowRight, FileText, Sparkles, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +19,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
   const u = urgencyStyle(c.urgency);
   const st = CASE_STATUS[c.status] ?? CASE_STATUS.NEW;
   const files = c.attachments ? c.attachments.split(",").filter(Boolean) : [];
+  const dicomStudies = caseDicomStudies(c.id);
   const suggested = await db.doctor.findFirst({ where: { branch: c.branch } });
 
   let dischargeStructured: Structured | null = null;
@@ -99,6 +102,9 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               Not: Radyoloji/patoloji belgeleri görüşme öncesi otomatik çeviri ve özetleme için AI Orchestration katmanına gönderilecektir (yol haritası).
             </p>
           </div>
+
+          {/* Radyoloji (DICOM) — vakaya bağlı çalışmalar, kokpitten görüntülenir */}
+          {dicomStudies.length > 0 && <CaseDicom studies={dicomStudies} />}
 
           {/* AI Epikriz / Taburcu Raporu */}
           <DischargeReport

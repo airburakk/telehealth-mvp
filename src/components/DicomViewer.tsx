@@ -78,7 +78,7 @@ function frameValues(f: ParsedFile, frame: number): Float32Array {
   return out;
 }
 
-export default function DicomViewer({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function DicomViewer({ open, onClose, src }: { open: boolean; onClose: () => void; src?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const filesRef = useRef<ParsedFile[]>([]);
   const slicesRef = useRef<Slice[]>([]);
@@ -200,14 +200,26 @@ export default function DicomViewer({ open, onClose }: { open: boolean; onClose:
     const items = await Promise.all([...fileList].map(async (f) => ({ name: f.name, buf: await f.arrayBuffer() })));
     loadBuffers(items);
   }
-  async function loadSample() {
+  async function loadUrl(url: string, name = "dicom") {
     setLoading(true); setErr("");
     try {
-      const r = await fetch("/sample-dicom.dcm");
-      if (!r.ok) throw new Error("Örnek DICOM yüklenemedi.");
-      await loadBuffers([{ name: "sample-dicom.dcm", buf: await r.arrayBuffer() }]);
-    } catch (e) { setErr(e instanceof Error ? e.message : "Örnek yüklenemedi."); setLoading(false); }
+      const r = await fetch(url);
+      if (!r.ok) throw new Error("DICOM yüklenemedi.");
+      await loadBuffers([{ name, buf: await r.arrayBuffer() }]);
+    } catch (e) { setErr(e instanceof Error ? e.message : "Yüklenemedi."); setLoading(false); }
   }
+  function loadSample() { loadUrl("/sample-dicom.dcm", "sample-dicom.dcm"); }
+
+  // src verildiğinde (vaka kokpitinden) modal açılınca otomatik yükle
+  const loadedSrc = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!open) { loadedSrc.current = undefined; return; }
+    if (src && loadedSrc.current !== src) {
+      loadedSrc.current = src;
+      loadUrl(src, src.split("/").pop() || "dicom");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, src]);
 
   function onWheel(e: React.WheelEvent) {
     e.preventDefault();
