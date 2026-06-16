@@ -6,10 +6,11 @@ import { urgencyStyle } from "@/lib/constants";
 import { TranslateButton } from "@/components/TranslateButton";
 import { LiveInterpreter } from "@/components/LiveInterpreter";
 import RecommendedTreatments from "@/components/RecommendedTreatments";
+import DicomViewer from "@/components/DicomViewer";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
   Save, Check, Pill, FlaskConical, Stethoscope, AlertTriangle, Languages, Loader2, Luggage,
-  Copy, Wifi, WifiOff, UserRound, MessageSquareText,
+  Copy, Wifi, WifiOff, UserRound, MessageSquareText, FileImage,
 } from "lucide-react";
 
 interface CaseData {
@@ -73,6 +74,7 @@ export function ConsultationRoom({
   const [saving, setSaving] = useState(false);
   const [ending, setEnding] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showDicom, setShowDicom] = useState(false);
   const [joined, setJoined] = useState(false);
   const [retry, setRetry] = useState(0);
   const [connState, setConnState] = useState("");
@@ -629,6 +631,9 @@ export function ConsultationRoom({
                 <QuickAction icon={<Pill size={14} />}>Reçete</QuickAction>
                 <QuickAction icon={<FlaskConical size={14} />}>Lab iste</QuickAction>
               </div>
+              <button onClick={() => setShowDicom(true)} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                <FileImage size={15} /> Radyoloji (DICOM) görüntüleyici
+              </button>
             </div>
           )}
 
@@ -685,6 +690,8 @@ export function ConsultationRoom({
           )}
         </aside>
       </div>
+
+      <DicomViewer open={showDicom} onClose={() => setShowDicom(false)} />
     </div>
   );
 }
