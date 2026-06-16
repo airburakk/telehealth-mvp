@@ -42,6 +42,7 @@ model Doctor {
   jci             Boolean        @default(true)
   capacity        Int            @default(20) // aylık işlem kapasitesi
   procedures      String? // M5: doktorun yaptığı işlemler + kendi fiyatı — JSON {"<kod>": <fiyat₺>}
+  licenseNo       String? // FHIR Faz 0: hekim diploma/tescil no → Practitioner.identifier
   cases           Case[]
   consultations   Consultation[]
   reviews         Review[]
@@ -67,6 +68,9 @@ model Case {
   patientName         String
   country             String // DZ, LY, RU, KZ, KG, TR ...
   language            String
+  // FHIR Faz 0: hasta stabil kimliği → Patient.identifier (içsel cuid korunur)
+  patientIdentifier     String? // TC Kimlik / pasaport no (varsa)
+  patientIdentifierType String? // "TC" | "PASSPORT" | ...
   symptoms            String
   durationText        String?
   extra               String? // branşa özel yanıtların JSON'u
@@ -86,6 +90,7 @@ model Case {
   dischargeReport     String? // AI ile üretilen epikriz tam metni (başlık + bölümler)
   dischargeStructured String? // JSON: yapılandırılmış bölümler (tanı, anamnez, ...)
   dischargeAt         DateTime? // epikrizin oluşturulma zamanı
+  icd10Code           String? // FHIR Faz 0: tanı ICD-10 kodu → Condition.code (kodlu; yoksa metin)
   // M2→M3: doktorun görüşmede tavsiye ettiği tedaviler (KSHFT kodları + doktorun ₺ fiyatı)
   recommendedProcedures String? // JSON [{code,name,priceTRY}]
   doctor              Doctor?        @relation(fields: [doctorId], references: [id])

@@ -47,7 +47,12 @@ function containedPatient(c: CaseForFhir): FhirResource {
   return {
     resourceType: "Patient",
     id: "patient",
-    identifier: [{ system: `${ID_SYSTEM}/patient`, value: c.userId ?? c.id }],
+    identifier: [
+      ...(c.patientIdentifier
+        ? [{ type: { text: c.patientIdentifierType || "Kimlik No" }, system: `${ID_SYSTEM}/patient-identifier`, value: c.patientIdentifier }]
+        : []),
+      { system: `${ID_SYSTEM}/patient`, value: c.userId ?? c.id },
+    ],
     name: [{ text: c.patientName }],
     address: c.country ? [{ country: c.country }] : undefined,
     communication: c.language ? [{ language: { text: c.language }, preferred: true }] : undefined,
@@ -59,7 +64,12 @@ function containedPractitioner(d: Doctor | null, fallbackName: string): FhirReso
   return {
     resourceType: "Practitioner",
     id: "practitioner",
-    identifier: d ? [{ system: `${ID_SYSTEM}/practitioner`, value: d.id }] : undefined,
+    identifier: d
+      ? [
+          ...(d.licenseNo ? [{ type: { text: "Diploma/Tescil No" }, system: `${ID_SYSTEM}/practitioner-license`, value: d.licenseNo }] : []),
+          { system: `${ID_SYSTEM}/practitioner`, value: d.id },
+        ]
+      : undefined,
     name: [{ text: name }],
     qualification: d?.branch ? [{ code: { text: d.branch } }] : undefined,
     communication: d?.languages
@@ -119,8 +129,24 @@ function checkInObservations(c: CaseForFhir): FhirResource[] {
   return out;
 }
 
+// Tanı → FHIR Condition (ICD-10 kodu varsa kodlu, yoksa epikriz "tanı" metni). FHIR Faz 0.
+function containedCondition(c: CaseForFhir, taniText: string): FhirResource {
+  return {
+    resourceType: "Condition",
+    id: "condition",
+    clinicalStatus: { coding: [{ system: "http://terminology.hl7.org/CodeSystem/condition-clinical", code: "active" }] },
+    verificationStatus: { coding: [{ system: "http://terminology.hl7.org/CodeSystem/condition-ver-status", code: "confirmed" }] },
+    category: [{ coding: [{ system: "http://terminology.hl7.org/CodeSystem/condition-category", code: "encounter-diagnosis", display: "Encounter Diagnosis" }] }],
+    code: {
+      coding: c.icd10Code ? [{ system: "http://hl7.org/fhir/sid/icd-10", code: c.icd10Code }] : undefined,
+      text: taniText || "Belirtilmedi",
+    },
+    subject: { reference: "#patient" },
+  };
+}
+
 // Epikriz (Case.dischargeStructured) → FHIR R4 Composition (taburcu özeti, LOINC 18842-5).
-// Patient/Practitioner/Encounter/Observation kaynakları `contained` olarak gömülür →
+// Patient/Practitioner/Encounter/Condition/Observation kaynakları `contained` olarak gömülür →
 // tek, kendi kendine yeterli ve doğrulanabilir bir kaynak döner.
 export function caseToComposition(c: CaseForFhir, authorFallbackName: string): FhirResource {
   let d: Discharge;
@@ -131,10 +157,19 @@ export function caseToComposition(c: CaseForFhir, authorFallbackName: string): F
   }
 
   const obs = checkInObservations(c);
+  const cond = containedCondition(c, String(d.tani ?? ""));
+  const enc = containedEncounter(c);
+  // Encounter tanısı → Condition (taburcu tanısı, DD)
+  enc.diagnosis = [{
+    condition: { reference: "#condition" },
+    use: { coding: [{ system: "http://terminology.hl7.org/CodeSystem/diagnosis-role", code: "DD", display: "Discharge diagnosis" }] },
+  }];
+
   const contained: FhirResource[] = [
     containedPatient(c),
     containedPractitioner(c.doctor, authorFallbackName),
-    containedEncounter(c),
+    enc,
+    cond,
     ...obs,
   ];
 
@@ -143,7 +178,8 @@ export function caseToComposition(c: CaseForFhir, authorFallbackName: string): F
       title: s.title,
       text: narrative(String(d[s.key] ?? "Belirtilmedi")),
     };
-    // Klinik seyir bölümüne post-op ölçümlerini (Observation) yapılandırılmış olarak bağla
+    // Tanı bölümünü kodlu Condition'a, klinik seyri post-op Observation'lara bağla
+    if (s.key === "tani") sec.entry = [{ reference: "#condition" }];
     if (s.key === "klinikSeyir" && obs.length) {
       sec.entry = obs.map((o) => ({ reference: `#${(o as { id: string }).id}` }));
     }
@@ -178,7 +214,7 @@ export function caseToComposition(c: CaseForFhir, authorFallbackName: string): F
 // KVKK m.6 (açık rıza) + JCI ISEM (denetlenebilirlik): rıza + audit birebir FHIR karşılığına oturur.
 
 export type ShareForFhir = ShareLink & {
-  case: Pick<Case, "id" | "userId" | "patientName" | "country" | "language">;
+  case: Pick<Case, "id" | "userId" | "patientName" | "country" | "language" | "patientIdentifier" | "patientIdentifierType">;
   accesses: ShareAccess[];
 };
 
@@ -193,7 +229,12 @@ function minimalPatient(c: ShareForFhir["case"]): FhirResource {
   return {
     resourceType: "Patient",
     id: "patient",
-    identifier: [{ system: `${ID_SYSTEM}/patient`, value: c.userId ?? c.id }],
+    identifier: [
+      ...(c.patientIdentifier
+        ? [{ type: { text: c.patientIdentifierType || "Kimlik No" }, system: `${ID_SYSTEM}/patient-identifier`, value: c.patientIdentifier }]
+        : []),
+      { system: `${ID_SYSTEM}/patient`, value: c.userId ?? c.id },
+    ],
     name: [{ text: c.patientName }],
     ...(c.country ? { address: [{ country: c.country }] } : {}),
   };
