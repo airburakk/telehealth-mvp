@@ -6,6 +6,7 @@ import { StartConsultButton } from "@/components/StartConsultButton";
 import { TranslateButton } from "@/components/TranslateButton";
 import { DischargeReport, type Structured } from "@/components/DischargeReport";
 import { CaseDicom } from "@/components/CaseDicom";
+import { FhirCodingForm } from "@/components/FhirCodingForm";
 import { caseDicomStudies } from "@/lib/case-dicom";
 import { ArrowLeft, ArrowRight, FileText, Sparkles, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks } from "lucide-react";
 
@@ -112,6 +113,14 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
             initialReport={c.dischargeReport}
             initialStructured={dischargeStructured}
             initialSavedAt={c.dischargeAt ? c.dischargeAt.toISOString() : null}
+          />
+
+          {/* FHIR Faz 0 — klinik kodlama (ICD-10 tanı + hasta kimliği) → FHIR Condition/Patient.identifier */}
+          <FhirCodingForm
+            caseId={c.id}
+            icd10Code={c.icd10Code}
+            patientIdentifier={c.patientIdentifier}
+            patientIdentifierType={c.patientIdentifierType}
           />
         </div>
 

@@ -3,15 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LANGUAGES, COUNTRIES } from "@/lib/constants";
-import { Globe, MapPin, CalendarClock, Save, Loader2, Check } from "lucide-react";
+import { Globe, MapPin, CalendarClock, Save, Loader2, Check, BadgeCheck } from "lucide-react";
 
 // Hekimin kendi profil tercihleri — hizmet dilleri + hizmet verdiği pazarlar (ülkeler) + aylık kapasite limiti.
 // /api/doctor/preferences'a kaydeder (yalnız oturumdaki hekimin kaydı).
-export function DoctorPreferences({ languages, markets, capacity }: { languages: string[]; markets: string[]; capacity: number }) {
+export function DoctorPreferences({ languages, markets, capacity, licenseNo }: { languages: string[]; markets: string[]; capacity: number; licenseNo: string | null }) {
   const router = useRouter();
   const [langs, setLangs] = useState<string[]>(languages);
   const [mkts, setMkts] = useState<string[]>(markets);
   const [cap, setCap] = useState<number>(capacity);
+  const [lic, setLic] = useState<string>(licenseNo ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState("");
@@ -29,7 +30,7 @@ export function DoctorPreferences({ languages, markets, capacity }: { languages:
       const r = await fetch("/api/doctor/preferences", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ languages: langs, markets: mkts, capacity: cap }),
+        body: JSON.stringify({ languages: langs, markets: mkts, capacity: cap, licenseNo: lic }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Kaydedilemedi.");
@@ -75,6 +76,18 @@ export function DoctorPreferences({ languages, markets, capacity }: { languages:
           />
           <span className="text-xs text-slate-500">işlem / ay</span>
         </div>
+      </div>
+
+      <div className="mt-4">
+        <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-slate-700">
+          <BadgeCheck size={14} className="text-slate-400" /> Diploma / Tescil No
+          <span className="text-xs font-normal text-slate-400">(FHIR Practitioner.identifier)</span>
+        </div>
+        <input
+          type="text" value={lic} placeholder="ör. TR-123456"
+          onChange={(e) => { setLic(e.target.value); setSaved(false); }}
+          className="mt-1.5 w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0E9E97]"
+        />
       </div>
 
       {err && <p className="mt-3 text-sm text-red-600">{err}</p>}

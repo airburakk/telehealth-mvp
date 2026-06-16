@@ -31,10 +31,11 @@ export async function POST(req: Request) {
     : [];
 
   const capacity = Math.min(200, Math.max(1, Math.round(Number(b.capacity) || 20)));
+  const licenseNo = typeof b.licenseNo === "string" && b.licenseNo.trim() ? b.licenseNo.trim().slice(0, 100) : null;
 
   await db.doctor.update({
     where: { id: dbUser.doctorId },
-    data: { languages: languages.join(","), markets: markets.length ? markets.join(",") : null, capacity },
+    data: { languages: languages.join(","), markets: markets.length ? markets.join(",") : null, capacity, licenseNo },
   });
 
   return NextResponse.json({ ok: true });
