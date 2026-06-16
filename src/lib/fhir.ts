@@ -145,9 +145,32 @@ function containedCondition(c: CaseForFhir, taniText: string): FhirResource {
   };
 }
 
+// KSHFT/SUT (T.C. Sağlık Bakanlığı işlem kodu) — Türkiye'nin birincil işlem kod sistemi (MEDULA/SUT).
+const KSHFT_SYSTEM = "http://saglik.gov.tr/CodeSystem/kshft"; // resmî URI tanımlanınca güncellenir
+// KSHFT → SNOMED CT cross-walk — DOĞRULANMIŞ küçük örnek (POC). Tam eşleme (8047 işlem) lisanslı
+// SNOMED referansı + klinik kodlayıcı işidir; eşleme yoksa KSHFT kodu birincil kalır (geçerli FHIR).
+const PROCEDURE_SNOMED: Record<string, { code: string; display: string }> = {
+  SP609230: { code: "38102005", display: "Cholecystectomy" },
+  SP609235: { code: "45595009", display: "Laparoscopic cholecystectomy" },
+  SP603080: { code: "173422009", display: "Tonsillectomy" },
+  SP603090: { code: "232679003", display: "Tonsillectomy and adenoidectomy" },
+  SP619929: { code: "11466000", display: "Cesarean section" },
+  SP619930: { code: "11466000", display: "Cesarean section" },
+  SP704210: { code: "302497006", display: "Hemodialysis" },
+  SP704230: { code: "302497006", display: "Hemodialysis" },
+};
+
+// İşlem kodu → CodeableConcept: KSHFT birincil (her zaman) + SNOMED (cross-walk varsa) + text.
+function procedureCodeableConcept(code: string, name: string): FhirResource {
+  const coding: FhirResource[] = [{ system: KSHFT_SYSTEM, code, display: name }];
+  const sx = PROCEDURE_SNOMED[code];
+  if (sx) coding.push({ system: "http://snomed.info/sct", code: sx.code, display: sx.display });
+  return { coding, text: name };
+}
+
 // Epikriz (Case.dischargeStructured) → FHIR R4 Composition (taburcu özeti, LOINC 18842-5).
-// Patient/Practitioner/Encounter/Condition/Observation kaynakları `contained` olarak gömülür →
-// tek, kendi kendine yeterli ve doğrulanabilir bir kaynak döner.
+// Patient/Practitioner/Encounter/Condition/Observation/ServiceRequest kaynakları `contained` olarak
+// gömülür → tek, kendi kendine yeterli ve doğrulanabilir bir kaynak döner.
 export function caseToComposition(c: CaseForFhir, authorFallbackName: string): FhirResource {
   let d: Discharge;
   try {
@@ -165,12 +188,33 @@ export function caseToComposition(c: CaseForFhir, authorFallbackName: string): F
     use: { coding: [{ system: "http://terminology.hl7.org/CodeSystem/diagnosis-role", code: "DD", display: "Discharge diagnosis" }] },
   }];
 
+  // Önerilen işlemler (recommendedProcedures) → ServiceRequest[] (KSHFT birincil + SNOMED cross-walk)
+  let recs: { code: string; name?: string }[] = [];
+  try {
+    const p = c.recommendedProcedures ? JSON.parse(c.recommendedProcedures) : [];
+    if (Array.isArray(p)) recs = p;
+  } catch {
+    recs = [];
+  }
+  recs = recs.filter((r) => r && typeof r.code === "string" && r.code);
+  const serviceRequests: FhirResource[] = recs.map((r, i) => ({
+    resourceType: "ServiceRequest",
+    id: `servicerequest-${i + 1}`,
+    status: "active",
+    intent: "plan",
+    code: procedureCodeableConcept(r.code, r.name || r.code),
+    subject: { reference: "#patient" },
+    encounter: { reference: "#encounter" },
+    ...(c.doctor ? { requester: { reference: "#practitioner" } } : {}),
+  }));
+
   const contained: FhirResource[] = [
     containedPatient(c),
     containedPractitioner(c.doctor, authorFallbackName),
     enc,
     cond,
     ...obs,
+    ...serviceRequests,
   ];
 
   const section: FhirResource[] = SECTIONS.map((s) => {
@@ -185,6 +229,15 @@ export function caseToComposition(c: CaseForFhir, authorFallbackName: string): F
     }
     return sec;
   });
+
+  // Önerilen işlemler bölümü (kodlu ServiceRequest'lere bağlı)
+  if (serviceRequests.length) {
+    section.push({
+      title: "ÖNERİLEN İŞLEMLER (KSHFT/SNOMED kodlu)",
+      text: narrative(recs.map((r) => `${r.code} — ${r.name || ""}`.trim()).join("\n")),
+      entry: serviceRequests.map((r) => ({ reference: `#${(r as { id: string }).id}` })),
+    });
+  }
 
   const when = (c.dischargeAt ? new Date(c.dischargeAt) : new Date()).toISOString();
   return {
