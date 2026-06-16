@@ -7,6 +7,7 @@ import { TranslateButton } from "@/components/TranslateButton";
 import { DischargeReport, type Structured } from "@/components/DischargeReport";
 import { CaseDicom } from "@/components/CaseDicom";
 import { FhirCodingForm } from "@/components/FhirCodingForm";
+import { icd10ForBranchLabel } from "@/data/coding";
 import { caseDicomStudies } from "@/lib/case-dicom";
 import { ArrowLeft, ArrowRight, FileText, Sparkles, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks } from "lucide-react";
 
@@ -121,6 +122,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
             icd10Code={c.icd10Code}
             patientIdentifier={c.patientIdentifier}
             patientIdentifierType={c.patientIdentifierType}
+            icd10Options={icd10ForBranchLabel(c.branch)}
           />
         </div>
 

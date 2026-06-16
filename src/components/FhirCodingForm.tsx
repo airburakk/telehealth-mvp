@@ -11,11 +11,13 @@ export function FhirCodingForm({
   icd10Code,
   patientIdentifier,
   patientIdentifierType,
+  icd10Options,
 }: {
   caseId: string;
   icd10Code: string | null;
   patientIdentifier: string | null;
   patientIdentifierType: string | null;
+  icd10Options: { code: string; label: string }[];
 }) {
   const router = useRouter();
   const [icd, setIcd] = useState(icd10Code ?? "");
@@ -24,6 +26,7 @@ export function FhirCodingForm({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState("");
+  const selectedLabel = icd10Options.find((o) => o.code === icd.trim().toUpperCase())?.label ?? "";
 
   async function save() {
     setSaving(true);
@@ -58,12 +61,25 @@ export function FhirCodingForm({
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
           <label className="text-sm font-medium text-slate-700">Tanı ICD-10 kodu</label>
+          {icd10Options.length > 0 && (
+            <select
+              value=""
+              onChange={(e) => { if (e.target.value) { setIcd(e.target.value); setSaved(false); } }}
+              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none focus:border-[#0E9E97]"
+            >
+              <option value="">Branşa özel yaygın tanı seç…</option>
+              {icd10Options.map((o) => (
+                <option key={o.code} value={o.code}>{o.code} — {o.label}</option>
+              ))}
+            </select>
+          )}
           <input
             value={icd}
             onChange={(e) => { setIcd(e.target.value); setSaved(false); }}
-            placeholder="ör. I20.9"
+            placeholder="ör. I20.9 (listeden seç ya da elle gir)"
             className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm uppercase outline-none focus:border-[#0E9E97]"
           />
+          {selectedLabel && <p className="mt-1 text-xs text-teal-600">✓ {selectedLabel}</p>}
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700">Hasta kimlik no</label>
