@@ -25,6 +25,7 @@ const TYPE_META: Record<string, { icon: React.ReactNode; cls: string }> = {
   NEW_CASE: { icon: <UserRound size={14} />, cls: "bg-teal-100 text-teal-700" },
   RED_FLAG: { icon: <AlertTriangle size={14} />, cls: "bg-red-100 text-red-700" },
   BOOKING: { icon: <Luggage size={14} />, cls: "bg-emerald-100 text-emerald-700" },
+  OFFER: { icon: <FileText size={14} />, cls: "bg-violet-100 text-violet-700" },
   COMPLAINT: { icon: <Scale size={14} />, cls: "bg-amber-100 text-amber-700" },
   DECISION: { icon: <Scale size={14} />, cls: "bg-violet-100 text-violet-700" },
   SHARE_ACCESS: { icon: <Eye size={14} />, cls: "bg-slate-100 text-slate-600" },

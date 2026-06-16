@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   computePackage, formatUSD, TIER_PRESETS, TRY_PER_USD,
@@ -9,7 +10,7 @@ import {
 import { countryFlag, countryName } from "@/lib/constants";
 import {
   Plane, BedDouble, Building2, Languages, ShieldCheck, Minus, Plus,
-  Lock, Loader2, MessageCircle, Check,
+  Lock, Loader2, MessageCircle, Check, Send, FileText,
 } from "lucide-react";
 
 const TIERS: Tier[] = ["Ekonomik", "Standart", "Premium"];
@@ -36,7 +37,8 @@ export function PackageBuilder({
   const [translator, setTranslator] = useState(initial?.translator ?? false);
   const [insExtended, setInsExtended] = useState(initial?.insuranceExtended ?? true);
   const [insMalpractice, setInsMalpractice] = useState(initial?.insuranceMalpractice ?? false);
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState<null | "offer" | "confirm">(null);
+  const [sentOffer, setSentOffer] = useState<string | null>(null);
 
   function applyTier(t: Tier) {
     setTier(t);
@@ -53,7 +55,7 @@ export function PackageBuilder({
   const quote = useMemo(() => computePackage(selection, treatments, rate), [tier, hotelStars, hospitalType, nights, translator, insExtended, insMalpractice, treatments, rate]);
 
   async function confirm() {
-    setSubmitting(true);
+    setSubmitting("confirm");
     try {
       const res = await fetch(`/api/cases/${caseId}/booking`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -61,8 +63,22 @@ export function PackageBuilder({
       });
       const data = await res.json();
       if (data.bookingId) router.push(`/rezervasyon/${data.bookingId}`);
-      else setSubmitting(false);
-    } catch { setSubmitting(false); }
+      else setSubmitting(null);
+    } catch { setSubmitting(null); }
+  }
+
+  // Hastaya teklif gönder — DRAFT booking oluşturur, hastaya bildirim düşer; onay hastada.
+  async function sendOffer() {
+    setSubmitting("offer");
+    try {
+      const res = await fetch(`/api/cases/${caseId}/booking`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tier, hotelStars, hospitalType, nights, translator, insuranceExtended: insExtended, insuranceMalpractice: insMalpractice, mode: "offer" }),
+      });
+      const data = await res.json();
+      if (data.bookingId) setSentOffer(data.bookingId);
+      else setSubmitting(null);
+    } catch { setSubmitting(null); }
   }
 
   return (
@@ -183,16 +199,35 @@ export function PackageBuilder({
             Ödeme platform Escrow havuzunda emanet tutulur; hizmet tamamlanınca taraflara aktarılır.
           </div>
 
-          <button
-            onClick={confirm}
-            disabled={submitting}
-            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-          >
-            {submitting ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />} Escrow ile onayla
-          </button>
-          <button className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
-            <MessageCircle size={15} /> Koordinatörle konuş
-          </button>
+          {sentOffer ? (
+            <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 p-3.5 text-center">
+              <div className="text-sm font-semibold text-violet-900">✓ Teklif {patientName}&apos;e gönderildi</div>
+              <p className="mt-0.5 text-xs text-violet-800/80">Hastanın bildirimine düştü. Onayladığında Escrow&apos;a alınır.</p>
+              <Link href={`/teklif/${sentOffer}`} className="mt-2.5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">
+                <FileText size={15} /> Teklif sayfasını aç
+              </Link>
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={sendOffer}
+                disabled={!!submitting}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-3 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60"
+              >
+                {submitting === "offer" ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Hastaya teklif gönder
+              </button>
+              <button
+                onClick={confirm}
+                disabled={!!submitting}
+                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
+              >
+                {submitting === "confirm" ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />} Doğrudan Escrow ile onayla
+              </button>
+              <button className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                <MessageCircle size={15} /> Koordinatörle konuş
+              </button>
+            </>
+          )}
         </Card>
       </aside>
     </div>

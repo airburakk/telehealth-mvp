@@ -37,6 +37,7 @@ export const config = {
     "/doktor", "/doktor/:path*",
     "/gorusme/:path*",
     "/paket/:path*",
+    "/teklif/:path*",
     "/rezervasyon/:path*",
     "/takip/:path*",
     "/paylasimlarim", "/paylasimlarim/:path*",

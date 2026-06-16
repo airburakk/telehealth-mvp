@@ -66,7 +66,7 @@ export default async function MyCasesPage() {
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
                     <span className="inline-flex items-center gap-1"><Stethoscope size={12} /> <span className="font-medium text-[#0A7D77]">{c.branch}</span></span>
                     <span>· {formatDateTime(c.createdAt)}</span>
-                    {booking && <span>· {booking.tier} paket (${booking.total.toLocaleString("en-US")})</span>}
+                    {booking && <span>· {booking.tier} {booking.status === "DRAFT" ? "teklifi" : "paket"} (${booking.total.toLocaleString("en-US")})</span>}
                   </div>
                   <p className="mt-2 line-clamp-2 text-sm text-slate-600">{c.symptoms}</p>
                 </div>
@@ -75,7 +75,8 @@ export default async function MyCasesPage() {
               <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
                 <CaseAction href={`/triyaj/${c.id}`} icon={<FileText size={13} />}>Vaka özeti</CaseAction>
                 {c.recovery && <CaseAction href={`/takip/${c.id}`} icon={<HeartPulse size={13} />} tone="text-teal-700 border-teal-200 bg-teal-50 hover:bg-teal-100">Post-Op takip</CaseAction>}
-                {booking && <CaseAction href={`/rezervasyon/${booking.id}`} icon={<Luggage size={13} />} tone="text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100">Rezervasyon</CaseAction>}
+                {booking && booking.status === "CONFIRMED" && <CaseAction href={`/rezervasyon/${booking.id}`} icon={<Luggage size={13} />} tone="text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100">Rezervasyon</CaseAction>}
+                {booking && booking.status === "DRAFT" && <CaseAction href={`/teklif/${booking.id}`} icon={<FileText size={13} />} tone="text-violet-700 border-violet-200 bg-violet-50 hover:bg-violet-100">Bekleyen teklif</CaseAction>}
               </div>
             </div>
           );

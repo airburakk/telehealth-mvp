@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { computePackage, type PackageSelection, type Tier, type HospitalType, type RecommendedTreatment } from "@/lib/pricing";
 import { getTryPerUsd } from "@/lib/fxrate";
-import { notifyRoles } from "@/lib/notify";
+import { notifyRoles, notifyUser } from "@/lib/notify";
 
 // POST /api/cases/:id/booking — sağlık turizmi paketi rezervasyonu oluştur (Escrow)
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -30,6 +30,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const fx = await getTryPerUsd();
   const quote = computePackage(selection, treatments, fx.rate);
 
+  const isOffer = b.mode === "offer"; // hastaya teklif (DRAFT) — onay hastada; aksi halde doğrudan Escrow
+
   const booking = await db.booking.create({
     data: {
       caseId: c.id,
@@ -48,15 +50,39 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       currency: quote.currency,
       breakdown: JSON.stringify(quote.items),
       split: JSON.stringify(quote.split),
+      // Teklif: hasta onayına dek emanet tutulmaz (DRAFT/PENDING); onaylanınca CONFIRMED + HELD olur.
+      status: isOffer ? "DRAFT" : "CONFIRMED",
+      escrowStatus: isOffer ? "PENDING" : "HELD",
     },
   });
+
+  const amount = `$${quote.total.toLocaleString("en-US")}`;
+
+  if (isOffer) {
+    // Vaka "DONE" yapılmaz — teklif beklemede. Hastaya kişisel bildirim + teklif linki.
+    if (c.userId) {
+      await notifyUser(c.userId, {
+        type: "OFFER",
+        title: `📋 Tedavi paketi teklifiniz hazır`,
+        body: `${selection.tier} paket · ${selection.branch} · ${amount} — incelemek için dokunun`,
+        href: `/teklif/${booking.id}`,
+      });
+    }
+    await notifyRoles(["COORDINATOR"], {
+      type: "OFFER",
+      title: `📤 Hastaya teklif gönderildi: ${c.patientName}`,
+      body: `${selection.tier} · ${selection.branch} · ${amount} — hasta onayı bekleniyor`,
+      href: `/teklif/${booking.id}`,
+    });
+    return NextResponse.json({ bookingId: booking.id, mode: "offer" }, { status: 201 });
+  }
 
   await db.case.update({ where: { id: c.id }, data: { status: "DONE" } });
 
   await notifyRoles(["COORDINATOR"], {
     type: "BOOKING",
     title: `💼 Yeni rezervasyon: ${c.patientName}`,
-    body: `${selection.tier} · ${selection.branch} · $${quote.total.toLocaleString("en-US")} (Escrow'da)`,
+    body: `${selection.tier} · ${selection.branch} · ${amount} (Escrow'da)`,
     href: `/rezervasyon/${booking.id}`,
   });
 
