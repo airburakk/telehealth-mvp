@@ -5,6 +5,7 @@ import { formatUSD } from "@/lib/pricing";
 import { formatDateTime } from "@/lib/constants";
 import { branchKeyFromLabel, branchLabel, getBranchProcedures, getByCodes } from "@/lib/procedures";
 import ProcedureSelector from "@/components/ProcedureSelector";
+import { DoctorPreferences } from "@/components/DoctorPreferences";
 import { Star, BadgeCheck, Wallet, CalendarClock, TrendingUp, ExternalLink, Award, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -91,6 +92,15 @@ export default async function DoctorDashboard() {
           />
         </div>
       )}
+
+      {/* M5 — Profil Tercihleri: hizmet dili / pazar (ülke) / aylık kapasite limiti */}
+      <div className="mt-5">
+        <DoctorPreferences
+          languages={doctor.languages.split(",").map((s) => s.trim()).filter(Boolean)}
+          markets={doctor.markets ? doctor.markets.split(",").map((s) => s.trim()).filter(Boolean) : []}
+          capacity={doctor.capacity}
+        />
+      </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_300px]">
         {/* Hakediş */}
