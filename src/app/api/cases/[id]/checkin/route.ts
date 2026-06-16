@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { assessCheckIn } from "@/lib/postop";
+import { assessCheckIn, assessChecklist, worstSeverity } from "@/lib/postop";
 import { notifyRoles } from "@/lib/notify";
 import { canAccessCase } from "@/lib/ownership";
 
@@ -21,23 +21,30 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const pain = Math.min(10, Math.max(0, Number(b.pain) || 0));
   const feverC = Math.min(43, Math.max(34, Number(b.feverC) || 36.5));
   const meds = b.meds !== false;
-  const note = b.note ? String(b.note) : null;
+  const userNote = b.note ? String(b.note) : "";
   const photo = b.photo ? String(b.photo) : null;
+  const checklistAnswers: Record<string, string> = (b.checklist && typeof b.checklist === "object") ? b.checklist : {};
 
-  const assessment = assessCheckIn({ pain, feverC, meds, note: note ?? undefined });
+  // Branşa özel günlük checklist → severity + özet (özet note'a eklenir; şema değişikliği yok)
+  const cl = assessChecklist(c.branch, checklistAnswers);
+  const note = [userNote, cl.summary].filter(Boolean).join(" · ") || null;
+
+  const base = assessCheckIn({ pain, feverC, meds, note: note ?? undefined });
+  const severity = worstSeverity(base.severity, cl.severity);
+  const reasons = [...base.reasons.filter((r) => !(severity !== "NONE" && r.startsWith("Belirti yok"))), ...cl.reasons];
 
   const checkIn = await db.checkIn.create({
-    data: { recoveryId: recovery.id, pain, feverC, meds, note, photo, severity: assessment.severity },
+    data: { recoveryId: recovery.id, pain, feverC, meds, note, photo, severity },
   });
 
-  if (assessment.severity === "RED") {
+  if (severity === "RED") {
     await notifyRoles(["DOCTOR", "COORDINATOR"], {
       type: "RED_FLAG",
       title: `🚨 Kırmızı bayrak: ${c.patientName}`,
-      body: `${c.branch} · ağrı ${pain}/10 · ateş ${feverC.toFixed(1)}°C${note ? ` · "${note.slice(0, 60)}"` : ""}`,
+      body: `${c.branch} · ağrı ${pain}/10 · ateş ${feverC.toFixed(1)}°C${cl.reasons.length ? ` · ${cl.reasons.slice(0, 2).join(", ")}` : ""}`,
       href: `/takip/${c.id}`,
     });
   }
 
-  return NextResponse.json({ id: checkIn.id, severity: assessment.severity, reasons: assessment.reasons }, { status: 201 });
+  return NextResponse.json({ id: checkIn.id, severity, reasons }, { status: 201 });
 }

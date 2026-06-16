@@ -95,3 +95,79 @@ export function severityMeta(s: Severity): { label: string; badge: string; dot: 
   if (s === "WATCH") return { label: "İzlemde", badge: "bg-amber-100 text-amber-800 ring-amber-200", dot: "bg-amber-500" };
   return { label: "Normal", badge: "bg-emerald-100 text-emerald-700 ring-emerald-200", dot: "bg-emerald-500" };
 }
+
+export function worstSeverity(...arr: Severity[]): Severity {
+  return arr.reduce((a, b) => max(a, b), "NONE" as Severity);
+}
+
+// ── Branşa özel GÜNLÜK post-op checklist (genel ağrı/ateş/ilaç'a EK; her seçenek bir severity taşır) ──
+export interface ChecklistOption { v: string; sev: Severity }
+export interface ChecklistItem { id: string; label: string; options: ChecklistOption[] }
+
+const CHECKLISTS: { match: string; items: ChecklistItem[] }[] = [
+  { match: "Saç Ekimi", items: [
+    { id: "kabuk", label: "Ekim bölgesinde kabuklanma", options: [{ v: "Yok", sev: "NONE" }, { v: "Hafif", sev: "NONE" }, { v: "Yoğun", sev: "WATCH" }] },
+    { id: "kizariklik", label: "Kızarıklık / şişlik", options: [{ v: "Yok", sev: "NONE" }, { v: "Hafif", sev: "NONE" }, { v: "Belirgin", sev: "WATCH" }] },
+    { id: "kasinti", label: "Kaşıntı", options: [{ v: "Yok", sev: "NONE" }, { v: "Hafif", sev: "NONE" }, { v: "Şiddetli", sev: "WATCH" }] },
+    { id: "akinti", label: "Donör/ekim bölgesi akıntı", options: [{ v: "Yok", sev: "NONE" }, { v: "Berrak", sev: "WATCH" }, { v: "İrinli", sev: "RED" }] },
+  ] },
+  { match: "Estetik", items: [
+    { id: "sislik", label: "Şişlik / ödem", options: [{ v: "Azalıyor", sev: "NONE" }, { v: "Aynı", sev: "NONE" }, { v: "Artıyor", sev: "WATCH" }] },
+    { id: "morarma", label: "Morarma", options: [{ v: "Azalıyor", sev: "NONE" }, { v: "Aynı", sev: "NONE" }, { v: "Yayılıyor", sev: "WATCH" }] },
+    { id: "dikis", label: "Dikiş bölgesi akıntı", options: [{ v: "Yok", sev: "NONE" }, { v: "Berrak", sev: "WATCH" }, { v: "İrinli", sev: "RED" }] },
+  ] },
+  { match: "Ortopedi", items: [
+    { id: "hareket", label: "Eklem hareketi", options: [{ v: "İyi", sev: "NONE" }, { v: "Sınırlı", sev: "NONE" }, { v: "Çok ağrılı", sev: "WATCH" }] },
+    { id: "sislik", label: "Bölgede şişlik", options: [{ v: "Yok", sev: "NONE" }, { v: "Hafif", sev: "NONE" }, { v: "Belirgin", sev: "WATCH" }] },
+    { id: "dolasim", label: "Parmaklarda renk değişimi / his kaybı", options: [{ v: "Yok", sev: "NONE" }, { v: "Var", sev: "RED" }] },
+  ] },
+  { match: "Onkoloji", items: [
+    { id: "bulanti", label: "Bulantı / kusma", options: [{ v: "Yok", sev: "NONE" }, { v: "Hafif", sev: "NONE" }, { v: "Şiddetli", sev: "WATCH" }] },
+    { id: "istah", label: "İştah", options: [{ v: "Normal", sev: "NONE" }, { v: "Azalmış", sev: "NONE" }, { v: "Yok", sev: "WATCH" }] },
+    { id: "titreme", label: "Ateşle birlikte titreme", options: [{ v: "Yok", sev: "NONE" }, { v: "Var", sev: "RED" }] },
+  ] },
+  { match: "Tüp Bebek", items: [
+    { id: "kanama", label: "Vajinal kanama", options: [{ v: "Yok", sev: "NONE" }, { v: "Lekelenme", sev: "WATCH" }, { v: "Bol", sev: "RED" }] },
+    { id: "ohss", label: "Şiddetli karın ağrısı / şişkinlik (OHSS)", options: [{ v: "Yok", sev: "NONE" }, { v: "Hafif", sev: "WATCH" }, { v: "Şiddetli", sev: "RED" }] },
+  ] },
+  { match: "Kardiyoloji", items: [
+    { id: "gogusagri", label: "Göğüs ağrısı", options: [{ v: "Yok", sev: "NONE" }, { v: "Hafif", sev: "WATCH" }, { v: "Belirgin", sev: "RED" }] },
+    { id: "nefes", label: "Nefes darlığı", options: [{ v: "Yok", sev: "NONE" }, { v: "Eforla", sev: "WATCH" }, { v: "İstirahatte", sev: "RED" }] },
+    { id: "odem", label: "Bacaklarda şişme", options: [{ v: "Yok", sev: "NONE" }, { v: "Var", sev: "WATCH" }] },
+  ] },
+  { match: "Genel Cerrahi", items: [
+    { id: "yara", label: "Yara akıntısı", options: [{ v: "Yok", sev: "NONE" }, { v: "Berrak", sev: "WATCH" }, { v: "İrinli/kanlı", sev: "RED" }] },
+    { id: "karin", label: "Karın ağrısı", options: [{ v: "Yok", sev: "NONE" }, { v: "Hafif", sev: "NONE" }, { v: "Şiddetli", sev: "WATCH" }] },
+    { id: "bagirsak", label: "Gaz / dışkı çıkışı", options: [{ v: "Var", sev: "NONE" }, { v: "Yok", sev: "WATCH" }] },
+  ] },
+  { match: "Organ Nakli", items: [
+    { id: "idrar", label: "İdrar miktarı", options: [{ v: "Normal", sev: "NONE" }, { v: "Azaldı", sev: "RED" }] },
+    { id: "enfeksiyon", label: "Ateş / enfeksiyon belirtisi", options: [{ v: "Yok", sev: "NONE" }, { v: "Var", sev: "RED" }] },
+    { id: "greft", label: "Nakil bölgesi ağrı / hassasiyet", options: [{ v: "Yok", sev: "NONE" }, { v: "Hafif", sev: "WATCH" }, { v: "Belirgin", sev: "RED" }] },
+  ] },
+];
+
+const DEFAULT_CHECKLIST: ChecklistItem[] = [
+  { id: "yara", label: "Yara / işlem bölgesi", options: [{ v: "İyi", sev: "NONE" }, { v: "Kızarık", sev: "WATCH" }, { v: "Akıntılı", sev: "RED" }] },
+  { id: "genel", label: "Genel hâl", options: [{ v: "İyi", sev: "NONE" }, { v: "Halsiz", sev: "WATCH" }, { v: "Kötü", sev: "RED" }] },
+];
+
+export function postopChecklist(branch: string): ChecklistItem[] {
+  return CHECKLISTS.find((c) => branch.includes(c.match))?.items ?? DEFAULT_CHECKLIST;
+}
+
+// Checklist yanıtlarını (id→seçilen değer) değerlendir: en kötü severity + gerekçeler + okunabilir özet
+export function assessChecklist(branch: string, answers: Record<string, string>): { severity: Severity; reasons: string[]; summary: string } {
+  const items = postopChecklist(branch);
+  let severity: Severity = "NONE";
+  const reasons: string[] = [];
+  const parts: string[] = [];
+  for (const it of items) {
+    const ans = answers?.[it.id];
+    if (!ans) continue;
+    parts.push(`${it.label}: ${ans}`);
+    const sev = it.options.find((o) => o.v === ans)?.sev ?? "NONE";
+    if (sev !== "NONE") { severity = max(severity, sev); reasons.push(`${it.label}: ${ans}`); }
+  }
+  return { severity, reasons, summary: parts.join(" · ") };
+}

@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { severityMeta, type Severity } from "@/lib/postop";
-import { Thermometer, Activity, Pill, Camera, Loader2, Send, AlertTriangle, CheckCircle2, X } from "lucide-react";
+import { severityMeta, postopChecklist, type Severity } from "@/lib/postop";
+import { Thermometer, Activity, Pill, Camera, Loader2, Send, AlertTriangle, CheckCircle2, X, ListChecks } from "lucide-react";
 
-export function CheckInForm({ caseId }: { caseId: string }) {
+export function CheckInForm({ caseId, branch }: { caseId: string; branch: string }) {
   const router = useRouter();
+  const items = postopChecklist(branch);
   const [pain, setPain] = useState(2);
   const [feverC, setFeverC] = useState(36.6);
   const [meds, setMeds] = useState(true);
   const [note, setNote] = useState("");
   const [photo, setPhoto] = useState<string>("");
+  const [checklist, setChecklist] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ severity: Severity; reasons: string[] } | null>(null);
 
@@ -21,11 +23,11 @@ export function CheckInForm({ caseId }: { caseId: string }) {
     try {
       const res = await fetch(`/api/cases/${caseId}/checkin`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pain, feverC, meds, note, photo }),
+        body: JSON.stringify({ pain, feverC, meds, note, photo, checklist }),
       });
       const data = await res.json();
       setResult({ severity: data.severity, reasons: data.reasons });
-      setNote(""); setPhoto("");
+      setNote(""); setPhoto(""); setChecklist({});
       router.refresh();
     } finally {
       setSubmitting(false);
@@ -65,6 +67,37 @@ export function CheckInForm({ caseId }: { caseId: string }) {
           <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${meds ? "left-[22px]" : "left-0.5"}`} />
         </span>
       </button>
+
+      {/* Branşa özel günlük kontrol */}
+      {items.length > 0 && (
+        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <ListChecks size={14} /> {branch} · günlük kontrol
+          </div>
+          <div className="mt-2.5 space-y-2.5">
+            {items.map((it) => (
+              <div key={it.id}>
+                <div className="text-sm text-slate-700">{it.label}</div>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {it.options.map((o) => {
+                    const active = checklist[it.id] === o.v;
+                    return (
+                      <button
+                        key={o.v}
+                        type="button"
+                        onClick={() => setChecklist((p) => ({ ...p, [it.id]: active ? "" : o.v }))}
+                        className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[#0E9E97] bg-[#0E9E97] text-white" : "border-slate-300 bg-white text-slate-600 hover:border-[#0E9E97]/40"}`}
+                      >
+                        {o.v}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Not */}
       <div className="mt-4">

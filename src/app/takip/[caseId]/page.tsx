@@ -42,7 +42,7 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
       <div className="mt-7 grid gap-5 lg:grid-cols-[1fr_340px]">
         {/* Sol: kontrol + geçmiş */}
         <div className="space-y-5">
-          <CheckInForm caseId={c.id} />
+          <CheckInForm caseId={c.id} branch={c.branch} />
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="font-bold text-slate-800">Kontrol geçmişi</h2>
