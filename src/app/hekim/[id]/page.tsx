@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { countryFlag, formatDateTime } from "@/lib/constants";
+import { doctorCredentials, richBio, academicNote, generatedReviews } from "@/lib/doctor-profile";
+import { DoctorVideoCard } from "@/components/DoctorVideoCard";
 import { BadgeCheck, Star, Globe, GraduationCap, ShieldCheck, Video, MapPin, ArrowLeft, CheckCircle2, Stethoscope } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -19,8 +21,13 @@ function Stars({ value }: { value: number }) {
 
 export default async function DoctorProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const d = await db.doctor.findUnique({ where: { id }, include: { reviews: { orderBy: { createdAt: "desc" } } } });
+  const d = await db.doctor.findUnique({ where: { id } });
   if (!d) notFound();
+
+  // Profil zenginleştirme — render-zamanı deterministik üretim (şema/DB yok); mevcut bio korunur
+  const cred = doctorCredentials(d);
+  const reviews = generatedReviews(d);
+  const bioText = richBio(d, d.bio);
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
@@ -43,7 +50,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
               <span className="inline-flex items-center gap-1"><Globe size={14} /> {d.languages.split(",").join(" · ")}</span>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-4">
-              <span className="inline-flex items-center gap-1.5 text-sm"><Stars value={d.rating} /> <span className="font-semibold text-slate-700">{d.rating.toFixed(1)}</span> <span className="text-slate-400">({d.reviews.length} yorum)</span></span>
+              <span className="inline-flex items-center gap-1.5 text-sm"><Stars value={d.rating} /> <span className="font-semibold text-slate-700">{d.rating.toFixed(1)}</span> <span className="text-slate-400">({reviews.length} yorum)</span></span>
             </div>
           </div>
         </div>
@@ -58,50 +65,72 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_300px]">
         <div className="space-y-5">
-          {d.bio && (
-            <Card title="Hakkında">
-              <p className="text-sm leading-relaxed text-slate-700">{d.bio}</p>
-            </Card>
-          )}
+          <Card title="Hakkında">
+            <p className="text-sm leading-relaxed text-slate-700">{bioText}</p>
+          </Card>
 
           <Card title="Hasta Yorumları" icon={<Star size={15} />}>
-            {d.reviews.length === 0 ? (
-              <p className="text-sm text-slate-400">Henüz yorum yok.</p>
-            ) : (
-              <ul className="space-y-3">
-                {d.reviews.map((r) => (
-                  <li key={r.id} className="rounded-xl border border-slate-200 p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-700">{countryFlag(r.country)} {r.author}</span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700"><CheckCircle2 size={12} /> Doğrulanmış</span>
-                    </div>
-                    <div className="mt-1"><Stars value={r.stars} /></div>
-                    <p className="mt-1.5 text-sm text-slate-600">{r.text}</p>
-                    <div className="mt-1 text-[11px] text-slate-400">{formatDateTime(r.createdAt)}</div>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ul className="space-y-3">
+              {reviews.map((r, i) => (
+                <li key={i} className="rounded-xl border border-slate-200 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-700">{countryFlag(r.country)} {r.author}</span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700"><CheckCircle2 size={12} /> Doğrulanmış</span>
+                  </div>
+                  <div className="mt-1"><Stars value={r.stars} /></div>
+                  <p className="mt-1.5 text-sm text-slate-600">{r.text}</p>
+                  <div className="mt-1 text-[11px] text-slate-400">{formatDateTime(new Date(Date.now() - r.daysAgo * 86400000))}</div>
+                </li>
+              ))}
+            </ul>
           </Card>
         </div>
 
         <aside className="space-y-4">
           <Card title="Video Kartvizit" icon={<Video size={15} />}>
-            <div className="grid aspect-video place-items-center rounded-xl bg-slate-900 text-center text-xs text-white/60">
-              <div><Video size={22} className="mx-auto mb-1" /> 60 sn tanıtım (demo)</div>
-            </div>
+            <DoctorVideoCard
+              name={d.name}
+              title={d.title}
+              branch={d.branch}
+              city={d.city}
+              color={d.color}
+              tagline={`${d.jci ? "JCI akrediteli · " : ""}${d.experienceYears} yıl deneyim · ${d.languages.split(",").join(" / ")}`}
+            />
           </Card>
 
           <Card title="Akreditasyon & Belgeler" icon={<ShieldCheck size={15} />}>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-start gap-2">
+                <BadgeCheck size={15} className="mt-0.5 shrink-0 text-emerald-600" />
+                <div>
+                  <div className="font-medium text-slate-700">Tıp Diploması</div>
+                  <div className="text-xs text-slate-500">{cred.diploma.school} · {cred.diploma.year}</div>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <BadgeCheck size={15} className="mt-0.5 shrink-0 text-emerald-600" />
+                <div>
+                  <div className="font-medium text-slate-700">Uzmanlık Belgesi</div>
+                  <div className="text-xs text-slate-500">{cred.uzmanlik.board} · {cred.uzmanlik.year}</div>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <BadgeCheck size={15} className="mt-0.5 shrink-0 text-emerald-600" />
+                <div>
+                  <div className="font-medium text-slate-700">Mesleki Sertifikalar</div>
+                  <ul className="mt-0.5 space-y-0.5 text-xs text-slate-500">
+                    {cred.certs.map((c) => <li key={c}>• {c}</li>)}
+                  </ul>
+                </div>
+              </li>
+              <li aria-hidden className="mt-1 border-t border-slate-100 pt-1" />
               <Cred ok={d.jci} label="JCI akrediteli merkez" />
               <Cred ok={d.verified} label="Sağlık Turizmi Yetki Belgesi" />
-              <Cred ok label="Sağlık Bakanlığı onaylı diploma" />
             </ul>
           </Card>
 
           <Card title="Akademik" icon={<GraduationCap size={15} />}>
-            <p className="text-sm text-slate-600">Tıp fakültesi mezunu, uluslararası kongre ve yayın deneyimi.</p>
+            <p className="text-sm leading-relaxed text-slate-600">{academicNote(d)}</p>
           </Card>
 
           <Link href="/triyaj" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77]">

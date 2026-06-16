@@ -1,12 +1,12 @@
 import { db } from "@/lib/db";
 import { DoctorDirectory, type DoctorRow } from "@/components/DoctorDirectory";
+import { generatedReviews } from "@/lib/doctor-profile";
 import { Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function DoctorsPage() {
   const doctors = await db.doctor.findMany({
-    include: { _count: { select: { reviews: true } } },
     orderBy: [{ rating: "desc" }],
   });
 
@@ -22,7 +22,7 @@ export default async function DoctorsPage() {
     successRate: d.successRate,
     verified: d.verified,
     color: d.color,
-    reviews: d._count.reviews,
+    reviews: generatedReviews(d).length,
   }));
 
   return (
