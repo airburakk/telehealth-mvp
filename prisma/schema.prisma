@@ -43,6 +43,12 @@ model Doctor {
   capacity        Int            @default(20) // aylık işlem kapasitesi
   procedures      String? // M5: doktorun yaptığı işlemler + kendi fiyatı — JSON {"<kod>": <fiyat₺>}
   licenseNo       String? // FHIR Faz 0: hekim diploma/tescil no → Practitioner.identifier
+  // Pro Bono — anlık müsaitlik + kontenjan (gönüllü ücretsiz konsültasyon)
+  proBonoState       String    @default("OFFLINE") // OFFLINE | AVAILABLE | IN_SESSION
+  proBonoQuota       Int       @default(2) // dönem (takvim haftası) başına kontenjan
+  proBonoUsed        Int       @default(0)
+  proBonoResetAt     DateTime? // kontenjan dönem başlangıcı
+  proBonoAvailableAt DateTime? // en son AVAILABLE olunan an (eşleştirme sırası / stale tespiti)
   cases           Case[]
   consultations   Consultation[]
   reviews         Review[]
@@ -94,6 +100,9 @@ model Case {
   labResults          String? // FHIR Faz 2: laboratuvar sonuçları JSON [{loinc,name,value,unit}] → Observation
   // M2→M3: doktorun görüşmede tavsiye ettiği tedaviler (KSHFT kodları + doktorun ₺ fiyatı)
   recommendedProcedures String? // JSON [{code,name,priceTRY}]
+  // Pro Bono — ücretsiz konsültasyon akışı (mevcut Case yeniden kullanılır; normal vakada false/null)
+  proBono             Boolean        @default(false)
+  proBonoStatus       String? // WAITING|MATCHED|IN_CONSULT|CONSULT_DONE|TREATMENT_NEEDED|ETHICS_REVIEW|ETHICS_REJECTED|ETHICS_APPROVED|COMPLETED
   doctor              Doctor?        @relation(fields: [doctorId], references: [id])
   doctorId            String?
   consultations       Consultation[]
@@ -104,6 +113,7 @@ model Case {
   createdAt           DateTime       @default(now())
 
   @@index([userId])
+  @@index([proBono, proBonoStatus])
 }
 
 /// Hasta-doktor video görüşmesi

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
 import { PortamedLogo } from "@/components/PortamedLogo";
-import { Stethoscope, UserRound, HeartPulse, Scale, LogOut, LogIn, Users, BadgeCheck, Share2, BarChart3, FolderHeart } from "lucide-react";
+import { Stethoscope, UserRound, HeartPulse, Scale, LogOut, LogIn, Users, BadgeCheck, Share2, BarChart3, FolderHeart, HeartHandshake } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
   PATIENT: "Hasta",
@@ -17,11 +17,13 @@ const ROLE_LABELS: Record<string, string> = {
 const NAV = [
   { href: "/vakalarim", label: "Vakalarım", icon: FolderHeart, roles: ["PATIENT", "ADMIN"] },
   { href: "/triyaj", label: "Triyaj", icon: UserRound, roles: ["PATIENT", "ADMIN"] },
+  { href: "/pro-bono/basvur", label: "Pro Bono", icon: HeartHandshake, roles: ["PATIENT"] },
   { href: "/hekimler", label: "Hekimler", icon: Users, roles: ["PATIENT", "ADMIN"] },
   { href: "/paylasimlarim", label: "Paylaşımlarım", icon: Share2, roles: ["PATIENT", "ADMIN"] },
   { href: "/operasyon", label: "Operasyon", icon: BarChart3, roles: ["COORDINATOR", "ADMIN"] },
   { href: "/doktor", label: "Doktor", icon: Stethoscope, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
   { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
+  { href: "/doktor/pro-bono", label: "Pro Bono", icon: HeartHandshake, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
   { href: "/doktor/profil", label: "Profilim", icon: BadgeCheck, roles: ["DOCTOR", "ADMIN"] },
   { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, roles: ["ETHICS", "ADMIN"] },
 ];

@@ -70,7 +70,7 @@ export function ProBonoContent() {
         {C.introB}
       </p>
       <div className="mt-7 flex flex-wrap gap-3">
-        <Link href="/giris?next=/triyaj" className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+        <Link href="/pro-bono/basvur" className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
           {C.apply} <ArrowRight size={17} />
         </Link>
       </div>
