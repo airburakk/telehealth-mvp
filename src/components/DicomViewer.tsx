@@ -5,8 +5,19 @@ import { createPortal } from "react-dom";
 import dicomParser from "dicom-parser";
 import { X, Upload, ZoomIn, ZoomOut, Maximize2, Contrast, RotateCcw, FileImage, Loader2, Image as ImageIcon } from "lucide-react";
 
-// Sıkıştırmasız transfer sözdizimleri (Little Endian). Sıkıştırılmış (JPEG/RLE) MVP'de desteklenmez.
-const UNCOMPRESSED = new Set(["1.2.840.10008.1.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2"]);
+// Transfer sözdizimleri. Sıkıştırmasız (Little Endian) doğrudan; RLE inline (PackBits);
+// JPEG Baseline tarayıcıyla (createImageBitmap); JPEG Lossless jpeg-lossless-decoder-js ile;
+// JPEG 2000 (OpenJPEG) ve JPEG-LS (CharLS) WASM codec'leriyle çözülür (public/wasm'den yüklenir).
+// Yalnız JPEG Genişletilmiş 12-bit (.51) desteklenmiyor (ayrı libjpeg gerektirir).
+const TS_UNCOMPRESSED = new Set(["1.2.840.10008.1.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2"]);
+const TS_RLE = "1.2.840.10008.1.2.5";
+const TS_JPEG_BASELINE = "1.2.840.10008.1.2.4.50";
+const TS_JPEG_LOSSLESS = new Set(["1.2.840.10008.1.2.4.57", "1.2.840.10008.1.2.4.70"]);
+const TS_JPEGLS = new Set(["1.2.840.10008.1.2.4.80", "1.2.840.10008.1.2.4.81"]); // CharLS (WASM)
+const TS_J2K = new Set(["1.2.840.10008.1.2.4.90", "1.2.840.10008.1.2.4.91"]);    // OpenJPEG (WASM)
+const TS_UNSUPPORTED: Record<string, string> = {
+  "1.2.840.10008.1.2.4.51": "JPEG Genişletilmiş (12-bit)",
+};
 
 interface ParsedFile {
   name: string;
@@ -24,6 +35,9 @@ interface ParsedFile {
   wc: number;
   ww: number;
   pixelOffset: number;
+  ts: string;
+  encapsulated: boolean;
+  decoded?: Float32Array[]; // sıkıştırılmışta önceden çözülmüş kareler (rescale uygulanmış değerler)
   meta: { modality: string; patient: string; desc: string };
 }
 interface Slice { fileIdx: number; frame: number }
@@ -35,9 +49,13 @@ function tagFloat(ds: dicomParser.DataSet, tag: string, dflt: number): number {
 function parseFile(name: string, buf: ArrayBuffer): ParsedFile {
   const byteArray = new Uint8Array(buf);
   const ds = dicomParser.parseDicom(byteArray);
-  const ts = (ds.string("x00020010") || "").trim();
-  if (ts && !UNCOMPRESSED.has(ts)) {
-    throw new Error(`Sıkıştırılmış DICOM (transfer syntax ${ts}) bu görüntüleyicide desteklenmiyor.`);
+  const ts = (ds.string("x00020010") || "1.2.840.10008.1.2").trim();
+  const encapsulated = !TS_UNCOMPRESSED.has(ts);
+  const supported = !encapsulated || ts === TS_RLE || ts === TS_JPEG_BASELINE ||
+    TS_JPEG_LOSSLESS.has(ts) || TS_JPEGLS.has(ts) || TS_J2K.has(ts);
+  if (!supported) {
+    const nm = TS_UNSUPPORTED[ts] || `bu sıkıştırma (${ts})`;
+    throw new Error(`${nm} için ek codec (WASM) gerekiyor — bu sürümde desteklenmiyor. Desteklenen: sıkıştırmasız, RLE, JPEG Baseline, JPEG Lossless.`);
   }
   const px = ds.elements["x7fe00010"];
   if (!px) throw new Error("Piksel verisi bulunamadı.");
@@ -55,7 +73,8 @@ function parseFile(name: string, buf: ArrayBuffer): ParsedFile {
     bits, signed: (ds.uint16("x00280103") || 0) === 1, frames,
     slope: tagFloat(ds, "x00281053", 1), intercept: tagFloat(ds, "x00281052", 0),
     wc: tagFloat(ds, "x00281050", NaN), ww: tagFloat(ds, "x00281051", NaN),
-    pixelOffset: px.dataOffset,
+    pixelOffset: encapsulated ? -1 : px.dataOffset,
+    ts, encapsulated,
     meta: {
       modality: (ds.string("x00080060") || "—").trim(),
       patient: (ds.string("x00100010") || "—").trim().replace(/\^/g, " "),
@@ -64,8 +83,10 @@ function parseFile(name: string, buf: ArrayBuffer): ParsedFile {
   };
 }
 
-// Bir karenin ham piksellerini (rescale uygulanmış değer) döndürür
+// Bir karenin piksellerini (rescale uygulanmış değer) döndürür.
+// Sıkıştırılmış dosyalarda kareler yükleme anında önceden çözülür (f.decoded).
 function frameValues(f: ParsedFile, frame: number): Float32Array {
+  if (f.decoded) return f.decoded[frame] ?? f.decoded[0] ?? new Float32Array(f.rows * f.cols);
   const count = f.rows * f.cols * f.samples;
   const bytesPer = f.bits / 8;
   const start = f.byteArray.byteOffset + f.pixelOffset + frame * count * bytesPer;
@@ -76,6 +97,172 @@ function frameValues(f: ParsedFile, frame: number): Float32Array {
   const out = new Float32Array(f.rows * f.cols * (f.samples === 3 ? 3 : 1));
   for (let i = 0; i < out.length; i++) out[i] = raw[i] * f.slope + f.intercept;
   return out;
+}
+
+// --- Sıkıştırılmış kare çözücüler (yükleme anında çağrılır → f.decoded) ---
+
+// DICOM RLE (Apple PackBits) tek byte düzlemini açar
+function unpackBits(src: Uint8Array, start: number, end: number, out: Uint8Array): void {
+  let o = 0, i = start;
+  while (i < end && o < out.length) {
+    const n = (src[i++] << 24) >> 24; // işaretli int8
+    if (n >= 0) {
+      for (let k = 0; k <= n && i < end && o < out.length; k++) out[o++] = src[i++];
+    } else if (n !== -128) {
+      const v = src[i++];
+      for (let k = 0; k < 1 - n && o < out.length; k++) out[o++] = v;
+    }
+  }
+}
+
+// RLE Lossless karesi: 16-bit mono (byte düzlemi MSB→LSB) · 8-bit mono · 8-bit RGB (3 segment)
+function decodeRLE(frame: Uint8Array, f: ParsedFile): Float32Array {
+  const dv = new DataView(frame.buffer, frame.byteOffset, frame.byteLength);
+  const nSeg = dv.getUint32(0, true);
+  const px = f.rows * f.cols;
+  const bytesPer = f.bits === 8 ? 1 : 2;
+  const comps = f.samples === 3 ? 3 : 1;
+  const planes: Uint8Array[] = [];
+  for (let s = 0; s < nSeg; s++) {
+    const start = dv.getUint32(4 + s * 4, true);
+    const next = s + 1 < nSeg ? dv.getUint32(4 + (s + 1) * 4, true) : frame.byteLength;
+    const plane = new Uint8Array(px);
+    unpackBits(frame, start, next, plane);
+    planes.push(plane);
+  }
+  const out = new Float32Array(px * comps);
+  for (let c = 0; c < comps; c++) {
+    for (let p = 0; p < px; p++) {
+      let val = 0;
+      for (let b = 0; b < bytesPer; b++) { const seg = c * bytesPer + b; val = (val << 8) | (planes[seg]?.[p] ?? 0); }
+      if (comps === 1) {
+        if (f.signed && bytesPer === 2 && val >= 32768) val -= 65536;
+        out[p] = val * f.slope + f.intercept;
+      } else out[p * 3 + c] = val; // RGB 0-255
+    }
+  }
+  return out;
+}
+
+// JPEG Baseline (8-bit): tarayıcının native JPEG çözücüsü (createImageBitmap) — bağımlılıksız
+async function decodeBaseline(frame: Uint8Array, f: ParsedFile): Promise<{ data: Float32Array; samples: number }> {
+  const jpegBytes = new Uint8Array(frame.byteLength); // taze ArrayBuffer → Blob tip uyumu
+  jpegBytes.set(frame);
+  const bmp = await createImageBitmap(new Blob([jpegBytes], { type: "image/jpeg" }));
+  const w = bmp.width, h = bmp.height; // close() boyutu sıfırlar → önce yakala
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const cx = c.getContext("2d", { willReadFrequently: true })!;
+  cx.drawImage(bmp, 0, 0); bmp.close?.();
+  const rgba = cx.getImageData(0, 0, w, h).data;
+  const px = f.rows * f.cols;
+  const color = f.samples === 3;
+  const out = new Float32Array(color ? px * 3 : px);
+  for (let p = 0; p < px; p++) {
+    if (color) { out[p * 3] = rgba[p * 4]; out[p * 3 + 1] = rgba[p * 4 + 1]; out[p * 3 + 2] = rgba[p * 4 + 2]; }
+    else out[p] = rgba[p * 4] * f.slope + f.intercept; // mono: R kanalı
+  }
+  return { data: out, samples: color ? 3 : 1 };
+}
+
+// JPEG Lossless (.57/.70): jpeg-lossless-decoder-js — dinamik import (yalnız gerekince yüklenir)
+async function decodeLossless(frame: Uint8Array, f: ParsedFile): Promise<Float32Array> {
+  const { Decoder } = await import("jpeg-lossless-decoder-js");
+  const bytesPer = f.bits === 8 ? 1 : 2;
+  const raw = new Decoder().decode(frame.buffer as ArrayBuffer, frame.byteOffset, frame.byteLength, bytesPer);
+  const px = f.rows * f.cols;
+  const out = new Float32Array(px);
+  for (let p = 0; p < px; p++) {
+    let v = raw[p] ?? 0;
+    if (f.signed && bytesPer === 2 && v >= 32768) v -= 65536;
+    out[p] = v * f.slope + f.intercept;
+  }
+  return out;
+}
+
+// --- WASM codec'ler: JPEG 2000 (OpenJPEG) ve JPEG-LS (CharLS) ---
+// Glue dinamik import edilir, .wasm public/wasm'den (locateFile) yüklenir; modül singleton cache'lenir.
+type CSFrameInfo = { width: number; height: number; bitsPerSample: number; componentCount: number; isSigned: boolean };
+type CSDecoder = {
+  getEncodedBuffer(size: number): Uint8Array;
+  getDecodedBuffer(): Uint8Array;
+  getFrameInfo(): CSFrameInfo;
+  decode(): void;
+  delete?(): void;
+};
+type CSModule = { J2KDecoder?: new () => CSDecoder; JpegLSDecoder?: new () => CSDecoder };
+type CSFactory = (o: { locateFile: (p: string) => string }) => Promise<CSModule>;
+let _ojModule: Promise<CSModule> | null = null;
+let _charlsModule: Promise<CSModule> | null = null;
+function ojModule(): Promise<CSModule> {
+  if (!_ojModule) _ojModule = import("@cornerstonejs/codec-openjpeg/wasmjs").then((m) => {
+    const factory = (m.default as unknown as CSFactory) ?? (m as unknown as CSFactory);
+    return factory({ locateFile: (p) => "/wasm/" + p });
+  });
+  return _ojModule;
+}
+function charlsModule(): Promise<CSModule> {
+  if (!_charlsModule) _charlsModule = import("@cornerstonejs/codec-charls/wasmjs").then((m) => {
+    const factory = (m.default as unknown as CSFactory) ?? (m as unknown as CSFactory);
+    return factory({ locateFile: (p) => "/wasm/" + p });
+  });
+  return _charlsModule;
+}
+
+// WASM decoder çıktısını (ham byte) frameInfo'ya göre Float32'ye çevir (rescale uygulanmış)
+function csSamples(bytes: Uint8Array, fi: CSFrameInfo, f: ParsedFile): { data: Float32Array; samples: number } {
+  const pxCount = f.rows * f.cols;
+  const comps = fi.componentCount === 3 ? 3 : 1;
+  const copy = bytes.slice(); // wasm heap'ten kopyala (decoder yeniden kullanılınca üzerine yazılır)
+  const samp: Uint8Array | Uint16Array | Int16Array =
+    fi.bitsPerSample <= 8 ? copy : fi.isSigned ? new Int16Array(copy.buffer) : new Uint16Array(copy.buffer);
+  const out = new Float32Array(pxCount * comps);
+  if (comps === 1) for (let p = 0; p < pxCount; p++) out[p] = (samp[p] ?? 0) * f.slope + f.intercept;
+  else for (let i = 0; i < pxCount * 3; i++) out[i] = samp[i] ?? 0; // RGB 0-255
+  return { data: out, samples: comps };
+}
+
+async function decodeWithCS(frame: Uint8Array, f: ParsedFile, dec: CSDecoder) {
+  const enc = dec.getEncodedBuffer(frame.length);
+  enc.set(frame);
+  dec.decode();
+  const res = csSamples(dec.getDecodedBuffer(), dec.getFrameInfo(), f);
+  dec.delete?.();
+  return res;
+}
+
+async function decodeJ2K(frame: Uint8Array, f: ParsedFile) {
+  const m = await ojModule();
+  if (!m.J2KDecoder) throw new Error("JPEG 2000 codec yüklenemedi.");
+  return decodeWithCS(frame, f, new m.J2KDecoder());
+}
+async function decodeJPEGLS(frame: Uint8Array, f: ParsedFile) {
+  const m = await charlsModule();
+  if (!m.JpegLSDecoder) throw new Error("JPEG-LS codec yüklenemedi.");
+  return decodeWithCS(frame, f, new m.JpegLSDecoder());
+}
+
+// Sıkıştırılmış dosyanın TÜM karelerini çöz → f.decoded; RGB'ye dönüştüyse f.samples'ı güncelle
+async function decodeAllFrames(f: ParsedFile): Promise<void> {
+  const pe = f.dataSet.elements["x7fe00010"];
+  if (!pe) throw new Error("Piksel verisi bulunamadı.");
+  const out: Float32Array[] = [];
+  let samples = f.samples;
+  for (let fr = 0; fr < f.frames; fr++) {
+    let enc: Uint8Array;
+    try {
+      enc = dicomParser.readEncapsulatedImageFrame(f.dataSet, pe, fr);
+    } catch {
+      const bot = dicomParser.createJPEGBasicOffsetTable(f.dataSet, pe);
+      enc = dicomParser.readEncapsulatedImageFrame(f.dataSet, pe, fr, bot);
+    }
+    if (f.ts === TS_RLE) out.push(decodeRLE(enc, f));
+    else if (f.ts === TS_JPEG_BASELINE) { const r = await decodeBaseline(enc, f); out.push(r.data); samples = r.samples; }
+    else if (TS_J2K.has(f.ts)) { const r = await decodeJ2K(enc, f); out.push(r.data); samples = r.samples; }
+    else if (TS_JPEGLS.has(f.ts)) { const r = await decodeJPEGLS(enc, f); out.push(r.data); samples = r.samples; }
+    else out.push(await decodeLossless(enc, f));
+  }
+  f.decoded = out;
+  f.samples = samples;
 }
 
 export default function DicomViewer({ open, onClose, src }: { open: boolean; onClose: () => void; src?: string }) {
@@ -171,6 +358,7 @@ export default function DicomViewer({ open, onClose, src }: { open: boolean; onC
       const slices: Slice[] = [];
       for (const it of items) {
         const f = parseFile(it.name, it.buf);
+        if (f.encapsulated) await decodeAllFrames(f); // RLE/JPEG kareleri önceden çöz
         const fi = parsed.push(f) - 1;
         for (let fr = 0; fr < f.frames; fr++) slices.push({ fileIdx: fi, frame: fr });
       }
@@ -302,7 +490,16 @@ export default function DicomViewer({ open, onClose, src }: { open: boolean; onC
             <div className="max-w-md">
               <FileImage size={40} className="mx-auto text-white/30" />
               <h3 className="mt-3 text-lg font-semibold text-white">DICOM görüntüsü açın</h3>
-              <p className="mt-1 text-sm text-white/50">Hastanın radyoloji (.dcm) dosyasını açın ya da <b className="text-teal-400">Örnek DICOM</b> ile deneyin. Sıkıştırmasız BT/MR/röntgen desteklenir; pencere/seviye, yakınlaştırma, kaydırma ve kesit gezinme mevcuttur.</p>
+              <p className="mt-1 text-sm text-white/50">Hastanın radyoloji (.dcm) dosyasını açın ya da örneklerle deneyin. Sıkıştırmasız, <b className="text-teal-400">RLE</b>, <b className="text-teal-400">JPEG Baseline</b>, <b className="text-teal-400">JPEG Lossless</b>, <b className="text-teal-400">JPEG 2000</b> ve <b className="text-teal-400">JPEG-LS</b> desteklenir. Pencere/seviye, yakınlaştırma, kaydırma ve kesit gezinme mevcuttur.</p>
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 text-xs">
+                <span className="text-white/40">Örnekler:</span>
+                <button onClick={loadSample} className="rounded-md bg-white/10 px-2.5 py-1 font-medium text-white/90 hover:bg-white/20">Sıkıştırmasız</button>
+                <button onClick={() => loadUrl("/dicom/test-rle.dcm", "test-rle.dcm")} className="rounded-md bg-white/10 px-2.5 py-1 font-medium text-white/90 hover:bg-white/20">RLE</button>
+                <button onClick={() => loadUrl("/dicom/test-jpeg-lossless.dcm", "test-jpeg-lossless.dcm")} className="rounded-md bg-white/10 px-2.5 py-1 font-medium text-white/90 hover:bg-white/20">JPEG Lossless</button>
+                <button onClick={() => loadUrl("/dicom/test-jpeg-baseline.dcm", "test-jpeg-baseline.dcm")} className="rounded-md bg-white/10 px-2.5 py-1 font-medium text-white/90 hover:bg-white/20">JPEG Baseline</button>
+                <button onClick={() => loadUrl("/dicom/test-jpeg2000.dcm", "test-jpeg2000.dcm")} className="rounded-md bg-white/10 px-2.5 py-1 font-medium text-white/90 hover:bg-white/20">JPEG 2000</button>
+                <button onClick={() => loadUrl("/dicom/test-jpegls.dcm", "test-jpegls.dcm")} className="rounded-md bg-white/10 px-2.5 py-1 font-medium text-white/90 hover:bg-white/20">JPEG-LS</button>
+              </div>
               {err && <p className="mt-3 rounded-lg bg-red-500/15 px-3 py-2 text-sm text-red-300">{err}</p>}
             </div>
           </div>
