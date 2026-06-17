@@ -4,14 +4,16 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { secondOpinionDocSpecs } from "@/data/second-opinion-docs";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
-import { Check, FileText, Link2, AlertTriangle, UserCheck, Loader2, ExternalLink, ClipboardList } from "lucide-react";
+import { Check, FileText, Link2, AlertTriangle, UserCheck, Loader2, ExternalLink, ClipboardList, Video, CalendarClock, CheckCircle2 } from "lucide-react";
 
 type Doc = { id: string; type: string; deliveryMethod: string; externalRef: string | null; label: string | null };
 type Req = { id: string; type: string; description: string; status: string };
 type Data = {
   id: string; status: string; branch: string; branchLabel: string; diagnosisSummary: string;
   patientName: string; createdAt: string; documents: Doc[]; requests: Req[];
-  payment: { status: string; amount: number; currency: string } | null; assignedDoctorName: string | null;
+  payment: { status: string; amount: number; currency: string } | null;
+  appointment: { id: string; scheduledAt: string; status: string } | null;
+  assignedDoctorName: string | null;
 };
 type Doctor = { id: string; name: string; title: string; branch: string };
 
@@ -30,8 +32,33 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
 
   const [reqDesc, setReqDesc] = useState("");
   const [doctorId, setDoctorId] = useState(doctors[0]?.id ?? "");
-  const [busy, setBusy] = useState<"" | "request" | "assign">("");
+  const [schedAt, setSchedAt] = useState("");
+  const [busy, setBusy] = useState<"" | "request" | "assign" | "schedule" | "complete">("");
   const [err, setErr] = useState("");
+
+  async function schedule() {
+    if (!schedAt) return setErr("Tarih/saat seçin.");
+    setErr(""); setBusy("schedule");
+    try {
+      const res = await fetch(`/api/second-opinion/cases/${data.id}/schedule`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduledAt: new Date(schedAt).toISOString() }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Randevu kurulamadı.");
+      router.refresh();
+    } catch (e) { setErr(e instanceof Error ? e.message : "Hata."); setBusy(""); }
+  }
+
+  async function completeVideo() {
+    setErr(""); setBusy("complete");
+    try {
+      const res = await fetch(`/api/second-opinion/cases/${data.id}/complete-video`, { method: "POST" });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Tamamlanamadı.");
+      router.refresh();
+    } catch (e) { setErr(e instanceof Error ? e.message : "Hata."); setBusy(""); }
+  }
 
   const canReview = status === "PENDING_REVIEW";
   const canAssign = status === "PENDING_REVIEW" || status === "READY_FOR_ASSIGNMENT";
@@ -193,6 +220,32 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
       {data.assignedDoctorName && (
         <div className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
           <UserCheck size={18} /> Atanan hekim: <strong>{data.assignedDoctorName}</strong>
+        </div>
+      )}
+
+      {/* Video randevusu — planla / tamamla */}
+      {status === "OPINION_DELIVERED" && (
+        <div className="mt-4 rounded-3xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.05] p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#0E8A95]"><CalendarClock size={17} /> Video görüşme randevusu kur</div>
+          <p className="mt-1 text-xs text-slate-500">Yazılı görüş sunuldu; raporun tesliminden itibaren 15 gün içinde randevu önerilir.</p>
+          <input type="datetime-local" value={schedAt} onChange={(e) => setSchedAt(e.target.value)} className="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-[#14C3D0] focus:outline-none" />
+          <button onClick={schedule} disabled={busy !== ""} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50">
+            {busy === "schedule" ? <Loader2 size={17} className="animate-spin" /> : <>Randevuyu kur ve taraflara bildir</>}
+          </button>
+        </div>
+      )}
+      {status === "VIDEO_SCHEDULED" && data.appointment && (
+        <div className="mt-4 rounded-3xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.06] p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#0E8A95]"><Video size={17} /> Video randevusu kuruldu</div>
+          <p className="mt-1.5 text-lg font-bold text-[#101010]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+          <button onClick={completeVideo} disabled={busy !== ""} className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">
+            {busy === "complete" ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />} Görüşmeyi tamamla ve kapat
+          </button>
+        </div>
+      )}
+      {(status === "VIDEO_COMPLETED" || status === "CLOSED") && (
+        <div className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+          <CheckCircle2 size={18} /> Süreç tamamlandı ve kapandı.
         </div>
       )}
 

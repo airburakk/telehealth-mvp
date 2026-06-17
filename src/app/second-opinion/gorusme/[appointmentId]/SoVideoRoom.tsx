@@ -1,0 +1,235 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Video, VideoOff, Mic, MicOff, PhoneOff, Wifi, WifiOff, UserRound, Stethoscope } from "lucide-react";
+
+type Phase = "idle" | "connecting" | "waiting" | "connected" | "ended" | "error";
+
+// İzole SO video odası — WebRTC (P2P) + mevcut string-anahtarlı sinyalleşme API'si.
+// Doktor 'offer', hasta 'answer' üretir; ICE adayları polling ile değişilir.
+export function SoVideoRoom({
+  roomId, caseId, selfRole, ended, branchLabel, remoteName,
+}: {
+  roomId: string; caseId: string; selfRole: "doctor" | "patient"; ended: boolean; branchLabel: string; remoteName: string;
+}) {
+  const router = useRouter();
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+
+  const [joined, setJoined] = useState(false);
+  const [phase, setPhase] = useState<Phase>(ended ? "ended" : "idle");
+  const [errMsg, setErrMsg] = useState("");
+  const [camOn, setCamOn] = useState(true);
+  const [micOn, setMicOn] = useState(true);
+  const [remoteOn, setRemoteOn] = useState(false);
+  const [connState, setConnState] = useState("");
+
+  useEffect(() => {
+    if (!joined || ended) return;
+    let polling = true;
+    let lastId = 0;
+    let remoteDescSet = false;
+    const pendingIce: RTCIceCandidateInit[] = [];
+
+    async function send(kind: string, data: unknown) {
+      try {
+        await fetch(`/api/consultations/${roomId}/signal`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sender: selfRole, kind, data: JSON.stringify(data) }),
+        });
+      } catch {}
+    }
+
+    async function poll(pc: RTCPeerConnection) {
+      while (polling) {
+        try {
+          const res = await fetch(`/api/consultations/${roomId}/signal?role=${selfRole}&after=${lastId}`);
+          const msgs: { id: number; kind: string; data: string }[] = await res.json();
+          for (const m of msgs) {
+            lastId = Math.max(lastId, m.id);
+            try {
+              const data = JSON.parse(m.data);
+              if (m.kind === "offer" && selfRole === "patient") {
+                await pc.setRemoteDescription(new RTCSessionDescription(data));
+                remoteDescSet = true;
+                for (const cand of pendingIce.splice(0)) { try { await pc.addIceCandidate(cand); } catch {} }
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                await send("answer", answer);
+              } else if (m.kind === "answer" && selfRole === "doctor") {
+                await pc.setRemoteDescription(new RTCSessionDescription(data));
+                remoteDescSet = true;
+                for (const cand of pendingIce.splice(0)) { try { await pc.addIceCandidate(cand); } catch {} }
+              } else if (m.kind === "ice") {
+                if (data) { if (remoteDescSet) { try { await pc.addIceCandidate(data); } catch {} } else pendingIce.push(data); }
+              } else if (m.kind === "bye") {
+                setRemoteOn(false); setPhase("ended");
+              }
+            } catch {}
+          }
+        } catch {}
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+    }
+
+    (async () => {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setErrMsg("Bu tarayıcı kamera erişimini desteklemiyor. Linki Chrome veya Safari'de açın.");
+        setPhase("error"); return;
+      }
+      let stream: MediaStream | null = null;
+      let lastErr = "";
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      } catch (e) {
+        lastErr = (e as DOMException)?.name || "";
+        if (["NotFoundError", "OverconstrainedError", "NotReadableError"].includes(lastErr)) {
+          try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); lastErr = ""; }
+          catch (e2) { lastErr = (e2 as DOMException)?.name || lastErr; }
+        }
+      }
+      if (!stream && (lastErr === "NotAllowedError" || lastErr === "SecurityError")) {
+        setErrMsg(`İzin reddedildi. Kilit simgesinden Kamera ve Mikrofon'a izin verip tekrar deneyin. [${lastErr}]`);
+        setPhase("error"); return;
+      }
+      const hasVideo = !!stream && stream.getVideoTracks().length > 0;
+      const hasAudio = !!stream && stream.getAudioTracks().length > 0;
+      localStreamRef.current = stream;
+      setCamOn(hasVideo);
+      setMicOn(hasAudio);
+      if (!hasVideo) setErrMsg(hasAudio ? "Kamera yok — sesli katıldınız; karşı tarafı görebilirsiniz." : `Kamera/mikrofon yok — yalnızca izleme. [${lastErr || "cihaz yok"}]`);
+      if (stream && localVideoRef.current) { localVideoRef.current.srcObject = stream; localVideoRef.current.play().catch(() => {}); }
+
+      const pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+          { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+          { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+          { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+        ],
+      });
+      pcRef.current = pc;
+      if (stream) stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+      if (!hasVideo) { try { pc.addTransceiver("video", { direction: "recvonly" }); } catch {} }
+      if (!hasAudio) { try { pc.addTransceiver("audio", { direction: "recvonly" }); } catch {} }
+      pc.ontrack = (e) => {
+        if (remoteVideoRef.current) { remoteVideoRef.current.srcObject = e.streams[0]; remoteVideoRef.current.play().catch(() => {}); }
+        setRemoteOn(true);
+      };
+      pc.onicecandidate = (e) => { if (e.candidate) send("ice", e.candidate.toJSON()); };
+      pc.onconnectionstatechange = () => {
+        const s = pc.connectionState;
+        setConnState(s);
+        if (s === "connected") { setPhase("connected"); setErrMsg(""); }
+        else if (s === "failed") setErrMsg("Bağlantı kurulamadı (ağ/NAT). İki cihazı aynı Wi-Fi'ya alıp yenileyin.");
+      };
+
+      setPhase("waiting");
+      if (selfRole === "doctor") {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        await send("offer", offer);
+      }
+      poll(pc);
+    })();
+
+    return () => {
+      polling = false;
+      pcRef.current?.close();
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, [joined, ended, roomId, selfRole]);
+
+  function toggleCam() { const t = localStreamRef.current?.getVideoTracks()[0]; if (t) { t.enabled = !t.enabled; setCamOn(t.enabled); } }
+  function toggleMic() { const t = localStreamRef.current?.getAudioTracks()[0]; if (t) { t.enabled = !t.enabled; setMicOn(t.enabled); } }
+
+  async function hangUp() {
+    try {
+      await fetch(`/api/consultations/${roomId}/signal`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sender: selfRole, kind: "bye", data: "null" }),
+      });
+    } catch {}
+    pcRef.current?.close();
+    localStreamRef.current?.getTracks().forEach((t) => t.stop());
+    setPhase("ended");
+    router.push(`/second-opinion/vaka/${caseId}`);
+  }
+
+  if (phase === "ended" || ended) {
+    return (
+      <div className="mx-auto max-w-md px-5 py-20 text-center">
+        <PhoneOff className="mx-auto mb-3 text-slate-300" size={40} />
+        <h1 className="text-xl font-bold text-[#101010]">Görüşme sona erdi</h1>
+        <p className="mt-2 text-sm text-slate-500">İkinci görüş video görüşmeniz tamamlandı.</p>
+        <button onClick={() => router.push(`/second-opinion/vaka/${caseId}`)} className="mt-5 rounded-xl bg-[#14C3D0] px-5 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+          Vakaya dön
+        </button>
+      </div>
+    );
+  }
+
+  if (!joined) {
+    return (
+      <div className="mx-auto max-w-md px-5 py-16 text-center">
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Stethoscope size={26} /></span>
+        <h1 className="mt-4 text-2xl font-bold text-[#101010]">İkinci Görüş — Video</h1>
+        <p className="mt-1 text-sm text-slate-500">{branchLabel} · {selfRole === "doctor" ? "Hasta" : "Hekim"}: {remoteName}</p>
+        <p className="mt-4 text-[13px] text-slate-500">Kamera ve mikrofon izni istenecek. En iyi deneyim için Chrome veya Safari kullanın.</p>
+        <button onClick={() => { setJoined(true); setPhase("connecting"); }} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+          <Video size={18} /> Görüşmeye katıl
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-bold text-[#101010]">İkinci Görüş — Video</h1>
+          <p className="text-xs text-slate-500">{branchLabel} · {remoteName}</p>
+        </div>
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${phase === "connected" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+          {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />}
+          {phase === "connected" ? "Bağlandı" : phase === "waiting" ? "Karşı taraf bekleniyor…" : phase === "error" ? "Hata" : "Bağlanıyor…"}
+        </span>
+      </div>
+
+      {errMsg && <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{errMsg}</p>}
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-900">
+          <video ref={remoteVideoRef} autoPlay playsInline className="h-full w-full object-cover" />
+          {!remoteOn && (
+            <div className="absolute inset-0 grid place-items-center text-slate-400">
+              <div className="text-center"><UserRound size={36} className="mx-auto" /><p className="mt-2 text-xs">{remoteName} bekleniyor…</p></div>
+            </div>
+          )}
+          <span className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-0.5 text-[11px] text-white">{remoteName}</span>
+        </div>
+        <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-800">
+          <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
+          <span className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-0.5 text-[11px] text-white">Siz</span>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center justify-center gap-3">
+        <button onClick={toggleMic} className={`grid h-12 w-12 place-items-center rounded-full ${micOn ? "bg-slate-200 text-slate-700" : "bg-red-100 text-red-600"}`}>
+          {micOn ? <Mic size={20} /> : <MicOff size={20} />}
+        </button>
+        <button onClick={toggleCam} className={`grid h-12 w-12 place-items-center rounded-full ${camOn ? "bg-slate-200 text-slate-700" : "bg-red-100 text-red-600"}`}>
+          {camOn ? <Video size={20} /> : <VideoOff size={20} />}
+        </button>
+        <button onClick={hangUp} className="grid h-12 w-12 place-items-center rounded-full bg-red-600 text-white hover:bg-red-700">
+          <PhoneOff size={20} />
+        </button>
+      </div>
+      {connState && <p className="mt-2 text-center text-[11px] text-slate-400">Bağlantı: {connState}</p>}
+    </div>
+  );
+}

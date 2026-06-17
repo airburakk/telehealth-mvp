@@ -24,7 +24,7 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
       payment: { select: { status: true, amount: true, currency: true } },
       requests: { orderBy: { createdAt: "desc" }, select: { id: true, type: true, description: true, status: true } },
       opinion: { select: { content: true, submittedAt: true } },
-      appointment: { select: { scheduledAt: true, status: true } },
+      appointment: { select: { id: true, scheduledAt: true, status: true } },
     },
   });
   if (!c) notFound();
@@ -45,7 +45,7 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
         payment: c.payment,
         requests: c.requests,
         opinion: c.opinion ? { content: c.opinion.content, submittedAt: c.opinion.submittedAt.toISOString() } : null,
-        appointment: c.appointment ? { scheduledAt: c.appointment.scheduledAt.toISOString(), status: c.appointment.status } : null,
+        appointment: c.appointment ? { id: c.appointment.id, scheduledAt: c.appointment.scheduledAt.toISOString(), status: c.appointment.status } : null,
       }}
     />
   );

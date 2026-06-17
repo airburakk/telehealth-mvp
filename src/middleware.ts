@@ -48,6 +48,7 @@ export const config = {
     "/second-opinion/basvur", "/second-opinion/basvur/:path*",
     "/second-opinion/vaka/:path*",
     "/second-opinion/vakalarim",
+    "/second-opinion/gorusme/:path*",
     "/pro-bono/basvur", "/pro-bono/bekleme",
   ],
 };

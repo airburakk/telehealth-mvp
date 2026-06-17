@@ -21,6 +21,7 @@ export default async function SoReviewPage({ params }: { params: Promise<{ id: s
       documents: { select: { id: true, type: true, deliveryMethod: true, externalRef: true, label: true }, orderBy: { uploadedAt: "asc" } },
       requests: { orderBy: { createdAt: "desc" } },
       payment: { select: { status: true, amount: true, currency: true } },
+      appointment: { select: { id: true, scheduledAt: true, status: true } },
     },
   });
   if (!c) notFound();
@@ -54,6 +55,7 @@ export default async function SoReviewPage({ params }: { params: Promise<{ id: s
           documents: c.documents,
           requests: c.requests.map((r) => ({ id: r.id, type: r.type, description: r.description, status: r.status })),
           payment: c.payment,
+          appointment: c.appointment ? { id: c.appointment.id, scheduledAt: c.appointment.scheduledAt.toISOString(), status: c.appointment.status } : null,
           assignedDoctorName: assignedDoctor ? `${assignedDoctor.title} ${assignedDoctor.name}` : null,
         }}
         doctors={doctors}

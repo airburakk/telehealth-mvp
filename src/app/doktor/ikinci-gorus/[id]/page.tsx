@@ -21,6 +21,7 @@ export default async function DoctorSoDetailPage({ params }: { params: Promise<{
       documents: { select: { id: true, type: true, deliveryMethod: true, externalRef: true, label: true }, orderBy: { uploadedAt: "asc" } },
       requests: { orderBy: { createdAt: "desc" } },
       opinion: { select: { content: true, structured: true, submittedAt: true } },
+      appointment: { select: { id: true, scheduledAt: true, status: true } },
     },
   });
   if (!c) notFound();
@@ -52,6 +53,7 @@ export default async function DoctorSoDetailPage({ params }: { params: Promise<{
           opinion: c.opinion
             ? { content: c.opinion.content, structured: c.opinion.structured, submittedAt: c.opinion.submittedAt.toISOString() }
             : null,
+          appointment: c.appointment ? { id: c.appointment.id, scheduledAt: c.appointment.scheduledAt.toISOString(), status: c.appointment.status } : null,
         }}
       />
     </div>
