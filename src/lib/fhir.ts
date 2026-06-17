@@ -129,6 +129,41 @@ function checkInObservations(c: CaseForFhir): FhirResource[] {
   return out;
 }
 
+// Case.labResults (JSON [{loinc,name,value,unit}]) → FHIR Observation[] (kategori: laboratory, LOINC kodlu)
+function labObservations(c: CaseForFhir): FhirResource[] {
+  let labs: { loinc?: string; name?: string; value?: string; unit?: string }[] = [];
+  try {
+    const p = c.labResults ? JSON.parse(c.labResults) : [];
+    if (Array.isArray(p)) labs = p;
+  } catch {
+    labs = [];
+  }
+  labs = labs.filter((l) => l && (l.loinc || l.name) && l.value != null && String(l.value).trim());
+  const when = (c.dischargeAt ? new Date(c.dischargeAt) : new Date()).toISOString();
+  const category = { coding: [{ system: "http://terminology.hl7.org/CodeSystem/observation-category", code: "laboratory", display: "Laboratory" }] };
+  return labs.map((l, i) => {
+    const raw = String(l.value).trim();
+    const num = Number(raw.replace(",", "."));
+    const valuePart =
+      raw !== "" && Number.isFinite(num)
+        ? { valueQuantity: { value: num, ...(l.unit ? { unit: l.unit } : {}) } }
+        : { valueString: raw };
+    return {
+      resourceType: "Observation",
+      id: `obs-lab-${i + 1}`,
+      status: "final",
+      category: [category],
+      code: {
+        coding: l.loinc ? [{ system: "http://loinc.org", code: l.loinc, display: l.name || l.loinc }] : undefined,
+        text: l.name || l.loinc || "Laboratuvar",
+      },
+      subject: { reference: "#patient" },
+      effectiveDateTime: when,
+      ...valuePart,
+    };
+  });
+}
+
 // Tanı → FHIR Condition (ICD-10 kodu varsa kodlu, yoksa epikriz "tanı" metni). FHIR Faz 0.
 function containedCondition(c: CaseForFhir, taniText: string): FhirResource {
   return {
@@ -158,6 +193,11 @@ const PROCEDURE_SNOMED: Record<string, { code: string; display: string }> = {
   SP619930: { code: "11466000", display: "Cesarean section" },
   SP704210: { code: "302497006", display: "Hemodialysis" },
   SP704230: { code: "302497006", display: "Hemodialysis" },
+  SPR102262: { code: "26294005", display: "Radical prostatectomy" },
+  SP621390: { code: "90199006", display: "Transurethral prostatectomy" },
+  SP621391: { code: "90199006", display: "Transurethral prostatectomy" },
+  SPR102260: { code: "236886002", display: "Hysterectomy" },
+  SP620419: { code: "265056007", display: "Vaginal hysterectomy" },
 };
 
 // İşlem kodu → CodeableConcept: KSHFT birincil (her zaman) + SNOMED (cross-walk varsa) + text.
@@ -180,6 +220,7 @@ export function caseToComposition(c: CaseForFhir, authorFallbackName: string): F
   }
 
   const obs = checkInObservations(c);
+  const labs = labObservations(c);
   const cond = containedCondition(c, String(d.tani ?? ""));
   const enc = containedEncounter(c);
   // Encounter tanısı → Condition (taburcu tanısı, DD)
@@ -214,6 +255,7 @@ export function caseToComposition(c: CaseForFhir, authorFallbackName: string): F
     enc,
     cond,
     ...obs,
+    ...labs,
     ...serviceRequests,
   ];
 
@@ -236,6 +278,22 @@ export function caseToComposition(c: CaseForFhir, authorFallbackName: string): F
       title: "ÖNERİLEN İŞLEMLER (KSHFT/SNOMED kodlu)",
       text: narrative(recs.map((r) => `${r.code} — ${r.name || ""}`.trim()).join("\n")),
       entry: serviceRequests.map((r) => ({ reference: `#${(r as { id: string }).id}` })),
+    });
+  }
+
+  // Laboratuvar sonuçları bölümü (LOINC kodlu Observation'lara bağlı)
+  if (labs.length) {
+    const labLines = labs.map((o) => {
+      const oo = o as Record<string, unknown>;
+      const name = (oo.code as { text?: string } | undefined)?.text ?? "Lab";
+      const vq = oo.valueQuantity as { value?: number; unit?: string } | undefined;
+      const val = vq ? `${vq.value}${vq.unit ? " " + vq.unit : ""}` : (oo.valueString as string | undefined) ?? "";
+      return `${name}: ${val}`;
+    });
+    section.push({
+      title: "LABORATUVAR SONUÇLARI (LOINC kodlu)",
+      text: narrative(labLines.join("\n")),
+      entry: labs.map((o) => ({ reference: `#${(o as { id: string }).id}` })),
     });
   }
 

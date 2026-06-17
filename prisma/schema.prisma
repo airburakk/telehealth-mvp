@@ -91,6 +91,7 @@ model Case {
   dischargeStructured String? // JSON: yapılandırılmış bölümler (tanı, anamnez, ...)
   dischargeAt         DateTime? // epikrizin oluşturulma zamanı
   icd10Code           String? // FHIR Faz 0: tanı ICD-10 kodu → Condition.code (kodlu; yoksa metin)
+  labResults          String? // FHIR Faz 2: laboratuvar sonuçları JSON [{loinc,name,value,unit}] → Observation
   // M2→M3: doktorun görüşmede tavsiye ettiği tedaviler (KSHFT kodları + doktorun ₺ fiyatı)
   recommendedProcedures String? // JSON [{code,name,priceTRY}]
   doctor              Doctor?        @relation(fields: [doctorId], references: [id])

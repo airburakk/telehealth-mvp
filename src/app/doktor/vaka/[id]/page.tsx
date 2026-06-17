@@ -7,7 +7,8 @@ import { TranslateButton } from "@/components/TranslateButton";
 import { DischargeReport, type Structured } from "@/components/DischargeReport";
 import { CaseDicom } from "@/components/CaseDicom";
 import { FhirCodingForm } from "@/components/FhirCodingForm";
-import { icd10ForBranchLabel } from "@/data/coding";
+import { icd10ForBranchLabel, loincForBranchLabel } from "@/data/coding";
+import { LabResultsForm } from "@/components/LabResultsForm";
 import { caseDicomStudies } from "@/lib/case-dicom";
 import { ArrowLeft, ArrowRight, FileText, Sparkles, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks } from "lucide-react";
 
@@ -29,6 +30,9 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
 
   let triageAnswers: Record<string, string> | null = null;
   try { triageAnswers = c.extra ? (JSON.parse(c.extra) as Record<string, string>) : null; } catch { triageAnswers = null; }
+
+  let labResults: { loinc?: string; name?: string; value?: string; unit?: string }[] = [];
+  try { const p = c.labResults ? JSON.parse(c.labResults) : []; if (Array.isArray(p)) labResults = p; } catch { labResults = []; }
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
@@ -123,6 +127,13 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
             patientIdentifier={c.patientIdentifier}
             patientIdentifierType={c.patientIdentifierType}
             icd10Options={icd10ForBranchLabel(c.branch)}
+          />
+
+          {/* FHIR Faz 2 — laboratuvar sonuçları (LOINC) → Observation */}
+          <LabResultsForm
+            caseId={c.id}
+            initial={labResults}
+            loincOptions={loincForBranchLabel(c.branch)}
           />
         </div>
 
