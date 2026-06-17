@@ -45,7 +45,7 @@ model Doctor {
   licenseNo       String? // FHIR Faz 0: hekim diploma/tescil no → Practitioner.identifier
   // Pro Bono — anlık müsaitlik + kontenjan (gönüllü ücretsiz konsültasyon)
   proBonoState       String    @default("OFFLINE") // OFFLINE | AVAILABLE | IN_SESSION
-  proBonoQuota       Int       @default(2) // dönem (takvim haftası) başına kontenjan
+  proBonoQuota       Int       @default(10) // dönem (takvim haftası) başına kontenjan
   proBonoUsed        Int       @default(0)
   proBonoResetAt     DateTime? // kontenjan dönem başlangıcı
   proBonoAvailableAt DateTime? // en son AVAILABLE olunan an (eşleştirme sırası / stale tespiti)
