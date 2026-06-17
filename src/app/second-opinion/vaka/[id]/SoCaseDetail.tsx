@@ -7,7 +7,7 @@ import { secondOpinionDocSpecs, SO_DOC_TYPE_LABELS, type SoDocType } from "@/dat
 import { SO_STATUS_LABELS, SO_FEE_USD, type SoStatus } from "@/lib/second-opinion";
 import {
   Check, AlertTriangle, CreditCard, Loader2, Link2, Upload, FileText,
-  CircleCheck, Clock, FlaskConical, ArrowLeft,
+  CircleCheck, Clock, FlaskConical, ArrowLeft, NotebookPen, Printer,
 } from "lucide-react";
 
 type DocMeta = { id: string; type: string; deliveryMethod: string; externalRef: string | null; label: string | null };
@@ -16,7 +16,7 @@ type SoData = {
   createdAt: string; documents: DocMeta[];
   payment: { status: string; amount: number; currency: string } | null;
   requests: { id: string; type: string; description: string; status: string }[];
-  hasOpinion: boolean;
+  opinion: { content: string; submittedAt: string } | null;
   appointment: { scheduledAt: string; status: string } | null;
 };
 
@@ -148,7 +148,21 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       </div>
 
       {/* Durum-bağlamlı bilgilendirme */}
-      <StatusBanner status={status} appointment={data.appointment} hasOpinion={data.hasOpinion} />
+      <StatusBanner status={status} appointment={data.appointment} />
+
+      {/* Sunulan yazılı görüş */}
+      {data.opinion && (
+        <div className="mt-4 rounded-3xl border border-emerald-200 bg-emerald-50/50 p-5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800"><NotebookPen size={16} /> Yazılı İkinci Görüşünüz</div>
+            <button onClick={() => window.print()} className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100">
+              <Printer size={12} /> Yazdır / PDF
+            </button>
+          </div>
+          <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">{data.opinion.content}</pre>
+          <div className="mt-2 text-xs text-emerald-600">{new Date(data.opinion.submittedAt).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}</div>
+        </div>
+      )}
 
       {/* Bekleyen talepler (Talep A/B) */}
       {pendingReqs.map((r) => (
@@ -334,11 +348,9 @@ export function SoCaseDetail({ data }: { data: SoData }) {
 function StatusBanner({
   status,
   appointment,
-  hasOpinion,
 }: {
   status: SoStatus;
   appointment: { scheduledAt: string; status: string } | null;
-  hasOpinion: boolean;
 }) {
   const msg: Partial<Record<SoStatus, string>> = {
     DRAFT: "Belgelerinizi yükleyin, ardından ödemeyi tamamlayarak vakanızı incelemeye gönderin.",
@@ -366,8 +378,8 @@ function StatusBanner({
             {new Date(appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}
           </p>
         )}
-        {status === "OPINION_DELIVERED" && hasOpinion && (
-          <p className="mt-1 text-[12px] text-slate-400">Yazılı görüş görüntüleme yakında bu sayfada olacak.</p>
+        {status === "OPINION_DELIVERED" && (
+          <p className="mt-1 text-[12px] text-slate-400">Yazılı görüşünüz aşağıda; video randevunuz planlanacaktır.</p>
         )}
       </div>
     </div>
