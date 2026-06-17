@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { urgencyStyle } from "@/lib/constants";
 import { TranslateButton } from "@/components/TranslateButton";
 import { LiveInterpreter } from "@/components/LiveInterpreter";
+import { ConsultationTimer } from "@/components/ConsultationTimer";
 import RecommendedTreatments from "@/components/RecommendedTreatments";
 import DicomViewer from "@/components/DicomViewer";
 import {
@@ -79,6 +80,7 @@ export function ConsultationRoom({
   const [joined, setJoined] = useState(false);
   const [retry, setRetry] = useState(0);
   const [connState, setConnState] = useState("");
+  const [startTime, setStartTime] = useState<number | null>(null); // video ilk bağlandığı an (süre tüpü)
   const [soapBusy, setSoapBusy] = useState(false);
   const [soapErr, setSoapErr] = useState("");
 
@@ -289,7 +291,7 @@ export function ConsultationRoom({
       pc.onconnectionstatechange = () => {
         const s = pc.connectionState;
         setConnState(s);
-        if (s === "connected") { setPhase("connected"); setErrMsg(""); }
+        if (s === "connected") { setPhase("connected"); setErrMsg(""); setStartTime((prev) => prev ?? Date.now()); }
         else if (s === "failed") setErrMsg("Bağlantı kurulamadı (ağ/NAT). En garantisi: iki cihazı aynı Wi-Fi'ya alın, sonra yenileyin.");
       };
       pc.oniceconnectionstatechange = () => setConnState(pc.iceConnectionState);
@@ -416,6 +418,10 @@ export function ConsultationRoom({
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         {/* Video alanı */}
         <div className="space-y-3">
+          {/* Görüşme süre tüpü — yalnız doktor; video bağlanınca devreye girer */}
+          {isDoctor && startTime !== null && (
+            <ConsultationTimer startTime={startTime} active={phase !== "ended"} />
+          )}
           <div className="relative aspect-video overflow-hidden rounded-3xl bg-slate-900 shadow-lg">
             {/* Uzak taraf (gerçek video) */}
             <video ref={remoteVideoRef} autoPlay playsInline className={`h-full w-full object-cover ${remoteOn ? "" : "hidden"}`} />
