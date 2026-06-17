@@ -36,6 +36,15 @@ export default async function MyCasesPage() {
         </Link>
       </div>
 
+      <Link href="/second-opinion/vakalarim" className="mt-5 flex items-center gap-3 rounded-3xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.06] p-4 transition hover:bg-[#14C3D0]/[0.1]">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Stethoscope size={18} /></span>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-[#101010]">İkinci Görüş</div>
+          <p className="text-xs text-slate-500">Mevcut tanınız için uzmandan bağımsız değerlendirme + video görüşme.</p>
+        </div>
+        <ArrowRight size={16} className="shrink-0 text-[#0E8A95]" />
+      </Link>
+
       <div className="mt-6 space-y-3">
         {cases.length === 0 && (
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white py-14 text-center">

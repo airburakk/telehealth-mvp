@@ -64,7 +64,7 @@ export function SecondOpinionContent() {
       <h1 className="mt-5 text-3xl font-bold leading-tight text-[#101010] sm:text-[40px]">{C.h1}</h1>
       <p className="mt-4 max-w-2xl text-[17px] leading-relaxed text-slate-600">{C.intro}</p>
       <div className="mt-7 flex flex-wrap gap-3">
-        <Link href="/giris?next=/triyaj" className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+        <Link href="/second-opinion/basvur" className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
           {C.start} <ArrowRight size={17} />
         </Link>
         <Link href="/hekimler" className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 py-3 text-[15px] font-semibold text-slate-700 hover:bg-slate-50">

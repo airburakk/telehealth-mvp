@@ -6,7 +6,7 @@ import { db } from "./db";
 import { sendPushToRoles, sendPushToUser } from "./push";
 
 export interface NotifyInput {
-  type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "PROBONO_MATCH" | "PROBONO_TREATMENT";
+  type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "PROBONO_MATCH" | "PROBONO_TREATMENT" | "SO_REVIEW" | "SO_REQUEST" | "SO_ASSIGNED" | "SO_OPINION" | "SO_VIDEO";
   title: string;
   body?: string;
   href?: string;

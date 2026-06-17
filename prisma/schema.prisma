@@ -287,3 +287,130 @@ model ShareAccess {
 
   @@index([shareLinkId])
 }
+
+/// ───────────────────────────────────────────────────────────────────────────
+/// İkinci Görüş (Second Opinion) Modülü — boundary spec §4 (state machine) / §6
+/// Mevcut genel triyaj akışından BAĞIMSIZ paralel akış. Kesişen altyapı
+/// (auth, Notification, video Consultation, Translation, audit deseni) reuse edilir.
+/// patientId / assignedDoctorId — Case.userId deseni gibi gevşek bağ (plain String,
+/// FK relation YOK → User/Doctor modelleri değiştirilmez). Durum/tip string'leri
+/// lib/second-opinion + data/second-opinion-docs ile eşleşir.
+/// ───────────────────────────────────────────────────────────────────────────
+
+/// Tek bir ikinci görüş talebi = bir vaka (§1). 11-durumlu yaşam döngüsü (§4).
+model SecondOpinionCase {
+  id               String  @id @default(cuid())
+  patientId        String // vaka sahibi hasta (User.id)
+  branch           String // 30 branştan biri (lib/triage BRANCHES.key)
+  diagnosisSummary String // hastanın mevcut tanı özeti (serbest metin)
+  status           String  @default("DRAFT") // bkz. lib/second-opinion SO_STATUSES
+  assignedDoctorId String? // atanan hekim (Doctor.id) — §10: tek doktor
+  // SLA zaman damgaları — hesap TEK KAYNAK lib/second-opinion (§11)
+  consentAt          DateTime? // KVKK açık rıza (§8) — başvuru başında alınır
+  paidAt             DateTime? // peşin ödeme onayı
+  readyAt            DateTime? // READY_FOR_ASSIGNMENT — yazılı rapor SLA başlangıcı
+  assignedAt         DateTime?
+  opinionDeliveredAt DateTime? // video penceresi (15 gün) başlangıcı
+  closedAt           DateTime?
+  cancelledAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  documents   SecondOpinionDocument[]
+  requests    SecondOpinionRequest[]
+  opinion     SecondOpinion?
+  appointment SecondOpinionAppointment?
+  payment     SecondOpinionPayment?
+  events      SecondOpinionEvent[]
+
+  @@index([patientId])
+  @@index([assignedDoctorId])
+  @@index([status])
+}
+
+/// Vakaya bağlı tıbbi belge (§6, §6.5). DICOM (IMAGING) harici link olarak tutulur;
+/// diğerleri küçük dosya → base64 (gerçek object storage TODO, §8/§9.2).
+model SecondOpinionDocument {
+  id             String            @id @default(cuid())
+  case           SecondOpinionCase @relation(fields: [caseId], references: [id])
+  caseId         String
+  type           String // EPICRISIS | IMAGING | PATHOLOGY | MEDICATION_LIST
+  deliveryMethod String // FILE_UPLOAD | EXTERNAL_LINK
+  fileRef        String? // base64 veri-URI (küçük dosya; object storage gelince değişir)
+  externalRef    String? // DICOM / bulut linki (IMAGING)
+  label          String? // dosya adı / açıklama
+  uploadedBy     String // User.id
+  uploadedAt     DateTime          @default(now())
+
+  @@index([caseId])
+}
+
+/// Hasta talebi — Talep A (eksik belge) ve Talep B (ek tetkik) aynı varlığın iki tipi (§3.1/§6).
+model SecondOpinionRequest {
+  id          String            @id @default(cuid())
+  case        SecondOpinionCase @relation(fields: [caseId], references: [id])
+  caseId      String
+  type        String // MISSING_DOCUMENT (Talep A) | ADDITIONAL_EXAMINATION (Talep B)
+  description String
+  requestedBy String // "coordinator" | "doctor"
+  requestedById String? // işlemi açan User.id (audit)
+  status      String            @default("PENDING") // PENDING | FULFILLED
+  createdAt   DateTime          @default(now())
+  fulfilledAt DateTime?
+
+  @@index([caseId])
+}
+
+/// Yazılı ikinci görüş (§6). İçerik yapılandırılmış metin; çok dilli sunum Translation ile.
+model SecondOpinion {
+  id          String            @id @default(cuid())
+  case        SecondOpinionCase @relation(fields: [caseId], references: [id])
+  caseId      String            @unique
+  doctorId    String
+  content     String // yazılı görüş tam metni
+  structured  String? // JSON bölümler (opsiyonel)
+  attachments String?
+  submittedAt DateTime          @default(now())
+}
+
+/// Video randevusu (§6). Görüşmeyi mevcut video altyapısı yürütür; burada yalnız randevu + referans.
+model SecondOpinionAppointment {
+  id               String            @id @default(cuid())
+  case             SecondOpinionCase @relation(fields: [caseId], references: [id])
+  caseId           String            @unique
+  patientId        String
+  doctorId         String
+  scheduledAt      DateTime
+  externalVideoRef String? // mevcut video altyapısına referans (Consultation.id) — Faz 4
+  status           String            @default("SCHEDULED") // SCHEDULED | COMPLETED | CANCELLED
+  createdAt        DateTime          @default(now())
+}
+
+/// Peşin ödeme (§6/§11). 600 USD tek ödeme; kart verisi modülde TUTULMAZ. Şimdilik simüle
+/// (gerçek gateway TODO). İade politikası PARK (§9.1) → REFUNDED durumu ileride kullanılır.
+model SecondOpinionPayment {
+  id          String            @id @default(cuid())
+  case        SecondOpinionCase @relation(fields: [caseId], references: [id])
+  caseId      String            @unique
+  amount      Int               @default(600) // USD (§11)
+  currency    String            @default("USD")
+  status      String            @default("PENDING") // PENDING | PAID | REFUNDED | FAILED
+  providerRef String? // simüle ödeme referansı
+  paidAt      DateTime?
+  createdAt   DateTime          @default(now())
+}
+
+/// Denetim izi (§8) — her durum geçişi + belge erişimi (kim/ne zaman). Spec'in çekirdek
+/// varlıkları arasında yok ama §8 NFR'si zorunlu kılıyor → eklendi.
+model SecondOpinionEvent {
+  id        String            @id @default(cuid())
+  case      SecondOpinionCase @relation(fields: [caseId], references: [id])
+  caseId    String
+  actorId   String? // işlemi yapan (User.id); sistem ise null
+  actorRole String?
+  action    String // STATUS_CHANGE | DOC_UPLOAD | DOC_VIEW | REQUEST_OPEN | REQUEST_FULFILL | OPINION_SUBMIT | PAYMENT | ASSIGN | VIDEO
+  detail    String? // ör. "DRAFT→AWAITING_PAYMENT"
+  createdAt DateTime          @default(now())
+
+  @@index([caseId])
+}
