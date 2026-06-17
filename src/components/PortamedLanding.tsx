@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Newsreader, Hanken_Grotesk } from "next/font/google";
 import { PackArtHair, PackArtSmile, PackArtIvf, DoctorArt, TestimonialArt } from "@/components/PortamedArt";
 import { PortamedLogo } from "@/components/PortamedLogo";
+import { HeroShowcase } from "@/components/HeroShowcase";
 
 const serif = Newsreader({ subsets: ["latin", "latin-ext"], weight: ["400", "500"] });
 const sans = Hanken_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["300", "400", "500", "600", "700"] });
@@ -239,36 +240,7 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
             </div>
 
             <div className="relative">
-              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[24px]" style={{ border: "1px solid rgba(255,255,255,.12)", boxShadow: "0 30px 80px -28px rgba(20,195,208,.5)" }}>
-                {/* Gerçek İstanbul: Boğaz + Levent gökdelenleri + köprü. Foto: Unsplash (4JilsL1_rrA) — Unsplash License. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/hero-istanbul.jpg"
-                  alt="İstanbul — Boğaz, köprü ve Levent gökdelenleri"
-                  className="h-full w-full object-cover"
-                  style={{ objectPosition: "50% 38%", filter: "saturate(1.05) contrast(1.02)" }}
-                />
-                <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(16,16,16,0) 42%, rgba(16,16,16,.5) 100%)" }} />
-                <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(20,195,208,.14) 0%, rgba(20,195,208,0) 45%)", mixBlendMode: "screen" }} />
-              </div>
-              {/* Floating: doktor kartı — koyu cam */}
-              <div className="absolute -bottom-5 -left-3 rounded-[18px] p-4 backdrop-blur sm:-left-6" style={{ background: "rgba(26,28,30,.82)", boxShadow: "0 22px 48px -22px rgba(0,0,0,.7)", border: "1px solid rgba(255,255,255,.1)" }}>
-                <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-[#101010]" style={{ background: T.teal }}>E</span>
-                  <div>
-                    <div className="text-[14.5px] font-semibold text-white">{C.hero.cardDoctor}</div>
-                    <div className="text-[12.5px]" style={{ color: "rgba(255,255,255,.6)" }}>{C.hero.cardSpec}</div>
-                  </div>
-                </div>
-                <div className="mt-3 rounded-full px-3 py-1.5 text-center text-[12px] font-semibold" style={{ background: "rgba(20,195,208,.16)", color: "#5FD3E2" }}>
-                  {C.hero.cardChip}
-                </div>
-              </div>
-              {/* Floating: fiyat rozeti — koyu cam + cyan fiyat */}
-              <div className="absolute -right-2 top-6 rounded-[16px] px-5 py-3.5 backdrop-blur sm:-right-4" style={{ background: "rgba(26,28,30,.82)", boxShadow: "0 22px 48px -22px rgba(0,0,0,.7)", border: "1px solid rgba(255,255,255,.1)" }}>
-                <div className="text-[10.5px] font-semibold uppercase tracking-[0.1em]" style={{ color: "rgba(255,255,255,.6)" }}>{C.hero.badgeTop}</div>
-                <div className={`${serif.className} mt-0.5 text-[24px] font-medium leading-none`} style={{ color: "#14C3D0" }}>{C.hero.badgePrice}</div>
-              </div>
+              <HeroShowcase locale={locale} />
             </div>
           </section>
         </div>
