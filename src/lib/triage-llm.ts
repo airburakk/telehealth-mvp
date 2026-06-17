@@ -5,9 +5,14 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { analyzeTriage, BRANCHES, type TriageInput, type TriageOutput } from "./triage";
 
-// Hızlı/ucuz sınıflandırma için Haiku. Daha yüksek kalite gerekiyorsa
-// "claude-sonnet-4-6" veya "claude-opus-4-8" ile değiştirilebilir.
-const MODEL = "claude-haiku-4-5";
+// Triyaj modeli — ortam değişkeniyle ayarlanabilir, böylece Vercel'den kod değişikliği
+// olmadan Haiku/Sonnet/Opus arasında geçilebilir. Triyaj HER hastada çalışır → hacim/maliyet
+// duyarlı bir nokta. Varsayılan: kalite/maliyet dengesi için Sonnet 4.6 (Haiku'dan belirgin
+// daha güçlü akıl yürütme, Opus'tan ucuz). Daha derin akıl yürütme için TRIAGE_MODEL=claude-opus-4-8,
+// en düşük maliyet için claude-haiku-4-5 ayarlanabilir.
+// NOT: aşağıdaki çağrıda sampling parametresi (temperature/top_p) veya effort YOK; bu sayede
+// üç model de aynı kodla çalışır (effort Haiku'da, sampling parametreleri Opus'ta 400 verir).
+const MODEL = process.env.TRIAGE_MODEL || "claude-sonnet-4-6";
 
 const BRANCH_KEYS = BRANCHES.map((b) => b.key);
 
