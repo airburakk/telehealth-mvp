@@ -1,0 +1,96 @@
+"use client";
+
+import Link from "next/link";
+import { Stethoscope, FileSearch, Languages, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
+import { usePublicLocale, LocaleToggle } from "@/components/PublicLocale";
+
+const COPY = {
+  en: {
+    badge: "Second Opinion",
+    h1: "Be sure about your diagnosis — an independent second opinion from accredited specialists.",
+    intro:
+      "Have your current diagnosis and treatment reviewed through the eyes of an accredited specialist in the field. Meet the expert directly over video with live interpreting in 70 languages, and decide with confidence.",
+    start: "Get started",
+    seeDoctors: "See specialists",
+    disclaimer:
+      "A second opinion is not binding and does not replace your current treatment. Its purpose is to support your decision with an independent specialist assessment.",
+  },
+  tr: {
+    badge: "İkinci Görüş",
+    h1: "Tanınızdan emin olun — akredite uzmanlardan bağımsız ikinci görüş.",
+    intro:
+      "Mevcut tanı ve tedavinizi, alanında akredite bir uzmanın gözünden değerlendirin. 70 dilde simültane tercüme hizmetiyle uzmanla doğrudan video görüşün; kararınızı güvenle verin.",
+    start: "Hemen başla",
+    seeDoctors: "Uzmanları gör",
+    disclaimer:
+      "İkinci görüş bağlayıcı değildir ve mevcut tedavinizin yerine geçmez. Amaç, kararınızı bağımsız bir uzman değerlendirmesiyle desteklemektir.",
+  },
+} as const;
+
+const STEPS = [
+  {
+    icon: FileSearch,
+    en: { t: "Share your records", d: "Securely upload your existing diagnosis, imaging and reports." },
+    tr: { t: "Kayıtlarınızı paylaşın", d: "Mevcut tanı, görüntüleme ve raporlarınızı güvenle yükleyin." },
+  },
+  {
+    icon: Stethoscope,
+    en: { t: "A specialist reviews", d: "An accredited specialist independently reviews your file." },
+    tr: { t: "Uzman değerlendirir", d: "Akredite bir uzman dosyanızı bağımsız olarak inceler." },
+  },
+  {
+    icon: Languages,
+    en: { t: "Video consultation", d: "Meet the expert face to face with live interpreting in 70 languages." },
+    tr: { t: "Video görüşme", d: "70 dilde simültane tercümeyle uzmanla yüz yüze görüşün." },
+  },
+  {
+    icon: ShieldCheck,
+    en: { t: "Written second opinion", d: "Receive an independent, documented assessment for your decision." },
+    tr: { t: "Yazılı ikinci görüş", d: "Kararınız için bağımsız, belgeli bir değerlendirme alın." },
+  },
+];
+
+export function SecondOpinionContent() {
+  const [locale, setLocale] = usePublicLocale();
+  const C = COPY[locale];
+  return (
+    <div lang={locale} className="mx-auto max-w-4xl px-5 py-12">
+      <div className="flex items-center justify-between gap-4">
+        <span className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0]/10 px-4 py-1.5 text-[12.5px] font-semibold uppercase tracking-[0.1em] text-[#0E8A95]">
+          <Stethoscope size={15} /> {C.badge}
+        </span>
+        <LocaleToggle locale={locale} onChange={setLocale} />
+      </div>
+      <h1 className="mt-5 text-3xl font-bold leading-tight text-[#101010] sm:text-[40px]">{C.h1}</h1>
+      <p className="mt-4 max-w-2xl text-[17px] leading-relaxed text-slate-600">{C.intro}</p>
+      <div className="mt-7 flex flex-wrap gap-3">
+        <Link href="/giris?next=/triyaj" className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+          {C.start} <ArrowRight size={17} />
+        </Link>
+        <Link href="/hekimler" className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 py-3 text-[15px] font-semibold text-slate-700 hover:bg-slate-50">
+          {C.seeDoctors}
+        </Link>
+      </div>
+
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {STEPS.map((s, i) => {
+          const Icon = s.icon;
+          const txt = s[locale];
+          return (
+            <div key={i} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Icon size={20} /></span>
+              <div className="mt-3 text-[11px] font-bold text-[#14C3D0]">0{i + 1}</div>
+              <div className="mt-1 font-semibold text-[#101010]">{txt.t}</div>
+              <p className="mt-1 text-sm leading-relaxed text-slate-500">{txt.d}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-8 flex items-start gap-3 rounded-3xl border border-[#14C3D0]/25 bg-[#14C3D0]/[0.06] p-5 text-sm text-slate-600">
+        <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-[#0E8A95]" />
+        {C.disclaimer}
+      </div>
+    </div>
+  );
+}
