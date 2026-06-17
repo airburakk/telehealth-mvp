@@ -1,133 +1,153 @@
 "use client";
 
-// Hero görsel showcase — ana sayfada İstanbul fotoğrafının yerini alan 3'lü "çizgi animasyon" slider.
-// Stil: SVG line-art + kendini çizen çizgi (stroke-dashoffset, pathLength=1). Harici görsel/lib yok.
-// 1) AURA ana sayfasından video başlar; ekrandan 8 dilde tıbbi terimler fırlar
-// 2) İkinci Görüş (klinik → teşhis raporu → AURA'ya yükleme → uzmanla video)
-// 3) Pro Bono — insani sorumluluk senaryosu (eller bir kalbi sahiplenir, ihtiyaç sahiplerine uzanır)
+// Hero görsel showcase — ana sayfada İstanbul fotoğrafının yerini alan 3'lü animasyonlu slider.
+// Temiz line-icon (lucide) + akıcı CSS hareket + HTML kompozisyon. Harici görsel/lib yok.
+// 1) Laptop ekranında GERÇEK ana sayfamızın minyatürü → video görüşmeye geçer; 8 dilde tıbbi terimler fırlar
+// 2) İkinci Görüş — teşhis raporunuz bağımsız uzmanca incelenir → onaylı ikinci görüş
+// 3) Pro Bono — insani sorumluluk (eldeki kalp + ihtiyaç sahiplerine ulaşma)
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { UserRound, Search, BadgeCheck, FileText, Activity, HandHeart, Heart, Globe, Video, ArrowRight, MousePointer2 } from "lucide-react";
+import { PortamedLogo } from "@/components/PortamedLogo";
 
 type Locale = "en" | "tr";
+const TEAL = "#14C3D0";
 
 const SHOW = {
   en: {
     slides: [
-      { tag: "Talk to a doctor now", title: "Open AURA — and your video visit begins.", sub: "Start right from our homepage on any device. As you speak, medical terms are interpreted live across 70 languages.", cta: "Start now" },
-      { tag: "Second Opinion", title: "Already diagnosed? Get an independent expert review.", sub: "Upload your existing report, then meet an accredited specialist over video for a confident second opinion.", cta: "Get a second opinion" },
+      { tag: "Talk to a doctor now", title: "Open AURA — your video visit begins.", sub: "Start right from our homepage, on any device. As you talk, medical terms are interpreted live across 70 languages.", cta: "Start now" },
+      { tag: "Second Opinion", title: "A second set of expert eyes on your diagnosis.", sub: "Already diagnosed? Share your reports and an independent, accredited specialist reviews them — clarity and peace of mind before any big decision.", cta: "Get a second opinion" },
       { tag: "Pro Bono", title: "Health is a human right — not a privilege.", sub: "When care is out of reach, our volunteer doctors step in. Looking after one another is a responsibility we all share.", cta: "Join the cause" },
     ],
-    s2: { steps: ["Clinic", "Report", "Upload", "Expert"], badge: "2nd opinion" },
+    hp: { eyebrow: "Health tourism & telehealth", t1: "World-class care", t2: "in Türkiye.", btn: "Talk to a doctor" },
+    s1: { rec: "LIVE" },
+    s2: { doc: "Diagnosis report", reviewing: "Reviewing…", verified: "Second opinion", note: "Independent review" },
   },
   tr: {
     slides: [
-      { tag: "Hemen doktorla görüş", title: "AURA'yı açın — video görüşmeniz başlasın.", sub: "Görüşme doğrudan ana sayfamızdan başlar. Siz konuşurken tıbbi terimler 70 dilde anlık çevrilir.", cta: "Hemen başla" },
-      { tag: "İkinci Görüş", title: "Teşhisiniz mi var? Bağımsız uzman değerlendirmesi alın.", sub: "Elinizdeki raporu yükleyin, ardından akredite uzmanla video görüşerek güvenle ikinci görüş alın.", cta: "İkinci görüş al" },
+      { tag: "Hemen doktorla görüş", title: "AURA'yı açın — video görüşmeniz başlasın.", sub: "Görüşme doğrudan ana sayfamızdan başlar, her cihazdan. Siz konuşurken tıbbi terimler 70 dilde anlık çevrilir.", cta: "Hemen başla" },
+      { tag: "İkinci Görüş", title: "Teşhisinize uzman bir ikinci bakış.", sub: "Elinizde bir teşhis mi var? Raporlarınızı paylaşın; bağımsız, akredite bir uzman bunları yeniden değerlendirsin — büyük karar öncesi netlik ve huzur.", cta: "İkinci görüş al" },
       { tag: "Pro Bono", title: "Sağlık bir insan hakkı — ayrıcalık değil.", sub: "Bakıma ulaşamayanların yanında gönüllü hekimlerimiz var. Birbirimize sahip çıkmak hepimizin sorumluluğudur.", cta: "Destek ol" },
     ],
-    s2: { steps: ["Klinik", "Rapor", "Yükle", "Uzman"], badge: "İkinci görüş" },
+    hp: { eyebrow: "Sağlık turizmi & teletıp", t1: "Birinci sınıf sağlık", t2: "Türkiye'de.", btn: "Hemen doktorla görüş" },
+    s1: { rec: "CANLI" },
+    s2: { doc: "Teşhis raporu", reviewing: "İnceleniyor…", verified: "İkinci görüş", note: "Bağımsız değerlendirme" },
   },
 };
-
 type Show = (typeof SHOW)["en"];
 
 const HREFS = ["/giris", "/second-opinion", "/pro-bono"];
 const BG = [
   "radial-gradient(120% 82% at 50% 12%, #0E2A2E 0%, #0A0B0D 56%)",
   "radial-gradient(120% 82% at 50% 12%, #102330 0%, #0A0B0D 56%)",
-  "radial-gradient(120% 82% at 50% 12%, #16262B 0%, #0A0B0D 56%)",
+  "radial-gradient(120% 82% at 50% 14%, #1A2026 0%, #0A0B0D 56%)",
 ];
 
 // Görüşmede ekrandan fırlayan tıbbi terimler — 8 dil (RU/AZ/KK/KY/AR/EN/FR/DE)
 const TERMS = [
-  { t: "Diagnosis", tx: "-134px", ty: "-74px", d: 0 },     // EN
-  { t: "Diagnose", tx: "10px", ty: "-118px", d: 0.7 },     // DE
-  { t: "Cardiologie", tx: "140px", ty: "-58px", d: 1.4 },  // FR
-  { t: "Кардиолог", tx: "-152px", ty: "10px", d: 2.1 },    // RU
-  { t: "تشخيص", tx: "150px", ty: "26px", d: 2.8 },          // AR
-  { t: "Müayinə", tx: "-116px", ty: "92px", d: 3.5 },      // AZ
-  { t: "Дәрігер", tx: "122px", ty: "98px", d: 4.2 },       // KK
-  { t: "Ден соолук", tx: "4px", ty: "124px", d: 4.9 },     // KY
+  { t: "Diagnosis", tx: "-138px", ty: "-78px", d: 0 },
+  { t: "Diagnose", tx: "12px", ty: "-120px", d: 0.7 },
+  { t: "Cardiologie", tx: "142px", ty: "-62px", d: 1.4 },
+  { t: "Кардиолог", tx: "-156px", ty: "8px", d: 2.1 },
+  { t: "تشخيص", tx: "152px", ty: "26px", d: 2.8 },
+  { t: "Müayinə", tx: "-118px", ty: "94px", d: 3.5 },
+  { t: "Дәрігер", tx: "124px", ty: "100px", d: 4.2 },
+  { t: "Ден соолук", tx: "2px", ty: "126px", d: 4.9 },
 ];
 
 const KF = `
-@keyframes hs-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
 @keyframes hs-fly{0%{opacity:0;transform:translate(0,0) scale(.7)}14%{opacity:1}74%{opacity:.95}100%{opacity:0;transform:translate(var(--tx,0),var(--ty,0)) scale(1.06)}}
 @keyframes hs-phaseA{0%,40%{opacity:1}50%,92%{opacity:0}100%{opacity:1}}
 @keyframes hs-phaseB{0%,40%{opacity:0}50%,92%{opacity:1}100%{opacity:0}}
-@keyframes hs-cursor{0%{transform:translate(0,0)}24%{transform:translate(-86px,16px)}40%{transform:translate(-86px,16px)}56%{transform:translate(0,0)}100%{transform:translate(0,0)}}
-@keyframes hs-quarter{0%{opacity:1}21%{opacity:1}25%{opacity:0}96%{opacity:0}100%{opacity:1}}
+@keyframes hs-cursor{0%{transform:translate(0,0)}26%{transform:translate(var(--cx),var(--cy))}42%{transform:translate(var(--cx),var(--cy))}58%{transform:translate(0,0)}100%{transform:translate(0,0)}}
 @keyframes hs-blink{0%,100%{opacity:1}50%{opacity:.2}}
-@keyframes hs-beat{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@keyframes hs-ring{0%{transform:translate(-50%,-50%) scale(.55);opacity:.7}100%{transform:translate(-50%,-50%) scale(1.7);opacity:0}}
+@keyframes hs-beat{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+@keyframes hs-glow{0%,100%{opacity:.45;transform:translate(-50%,-50%) scale(1)}50%{opacity:.82;transform:translate(-50%,-50%) scale(1.16)}}
+@keyframes hs-rise{0%{opacity:0;transform:translateY(8px) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translateY(-50px) scale(1)}}
+@keyframes hs-scan{0%{transform:translateY(0);opacity:0}14%{opacity:1}86%{opacity:1}100%{transform:translateY(var(--scan,56px));opacity:0}}
+@keyframes hs-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes hs-pop{0%{opacity:0;transform:scale(.5)}60%{opacity:1;transform:scale(1.12)}100%{opacity:1;transform:scale(1)}}
+@keyframes hs-seq{0%,100%{opacity:.3}50%{opacity:1}}
 @media (prefers-reduced-motion: reduce){.hs-root *{animation-duration:1ms!important;animation-iteration-count:1!important}}
 `;
 
-// Kendini çizen çizgi (pathLength=1 → tüm yollar normalize)
-function P({ d, delay = 0, dur = 2.4, w = 2, c = "#9fe9f0", op = 1 }: { d: string; delay?: number; dur?: number; w?: number; c?: string; op?: number }) {
+function Avatar({ size = 46, tone = TEAL, bg = "rgba(20,195,208,.12)" }: { size?: number; tone?: string; bg?: string }) {
   return (
-    <path d={d} fill="none" stroke={c} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" pathLength={1} opacity={op}
-      style={{ strokeDasharray: 1, strokeDashoffset: 1, animation: `hs-draw ${dur}s ease-out ${delay}s forwards` }} />
+    <span style={{ display: "grid", placeItems: "center", width: size, height: size, borderRadius: "50%", background: bg, border: `1.5px solid ${tone}` }}>
+      <UserRound size={Math.round(size * 0.5)} color={tone} />
+    </span>
   );
 }
-const cir = (cx: number, cy: number, r: number) => `M ${cx - r},${cy} a ${r},${r} 0 1,0 ${2 * r},0 a ${r},${r} 0 1,0 ${-2 * r},0`;
-const TEAL = "#14C3D0";
 
-// ── Slayt 1: AURA ana sayfası → video; 8 dilde fırlayan tıbbi terimler ──
-function Scene1() {
+// ── Slayt 1: Laptop ekranında gerçek ana sayfa minyatürü → video; fırlayan terimler ──
+function Scene1({ S }: { S: Show }) {
   return (
     <div className="absolute inset-0">
-      <div style={{ position: "absolute", left: "50%", top: "30%", width: 280, height: 280, transform: "translate(-50%,-50%)", borderRadius: "50%", background: "radial-gradient(circle, rgba(20,195,208,.26), rgba(20,195,208,0) 68%)", filter: "blur(26px)" }} />
-      <svg viewBox="0 0 400 500" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid meet">
-        {/* Laptop gövdesi */}
-        <P d="M112,72 H288 q8,0 8,8 V190 q0,8 -8,8 H112 q-8,0 -8,-8 V80 q0,-8 8,-8 Z" w={2.4} c="#bdf0f5" />
-        <P d="M84,198 H316 L334,226 H66 Z" delay={0.25} w={2.4} c="#bdf0f5" />
-        <P d="M150,198 H250" delay={0.5} w={2} c="rgba(255,255,255,.35)" />
+      <div style={{ position: "absolute", left: "50%", top: "30%", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(20,195,208,.26), rgba(20,195,208,0) 68%)", filter: "blur(26px)", animation: "hs-glow 7s ease-in-out infinite" }} />
 
-        {/* Faz A — AURA ana sayfası (logo + başlık + buton + imleç) */}
-        <g style={{ animation: "hs-phaseA 8s ease-in-out infinite" }}>
-          <P d="M200,90 L210,114 H190 Z" delay={0.6} w={2} c={TEAL} />
-          <P d="M196,108 H204" delay={0.8} w={2} c={TEAL} />
-          <P d="M134,130 H252" delay={0.9} w={2} c="rgba(255,255,255,.5)" />
-          <P d="M134,142 H214" delay={1.0} w={2} c="rgba(255,255,255,.5)" />
-          <P d="M134,156 H196 q6,0 6,6 V170 q0,6 -6,6 H134 q-6,0 -6,-6 V162 q0,-6 6,-6 Z" delay={1.1} w={2} c={TEAL} />
-          <path d="M145,161 v12 l10,-6 Z" fill={TEAL} />
-          <P d="M167,167 H190" delay={1.2} w={1.6} c="rgba(255,255,255,.6)" />
-          <g style={{ animation: "hs-cursor 8s ease-in-out infinite" }}>
-            <path d="M0,0 L0,15 L4,11 L7,17 L9,16 L6,10 L11,10 Z" fill="#fff" transform="translate(238,150)" />
-          </g>
-        </g>
+      {/* Laptop */}
+      <div style={{ position: "absolute", left: "50%", top: "30%", width: "80%", transform: "translate(-50%,-50%)" }}>
+        <div style={{ borderRadius: 13, border: "1px solid rgba(255,255,255,.16)", background: "#1b1d22", padding: 6, boxShadow: "0 26px 56px -22px rgba(0,0,0,.8)" }}>
+          <div style={{ position: "relative", aspectRatio: "16 / 10", borderRadius: 7, overflow: "hidden", background: "#101010" }}>
 
-        {/* Faz B — video görüşme (hekim + REC) */}
-        <g style={{ opacity: 0, animation: "hs-phaseB 8s ease-in-out infinite" }}>
-          <P d={cir(200, 122, 13)} dur={3} w={2} c={TEAL} />
-          <P d="M174,160 q26,-22 52,0" delay={0.2} dur={3} w={2} c={TEAL} />
-          <P d="M193,138 q-7,9 0,16" delay={0.3} dur={3} w={1.6} c="#bdf0f5" />
-          <circle cx="132" cy="96" r="3.4" fill="#ff5b5b" style={{ animation: "hs-blink 1.4s infinite" }} />
-          <P d="M142,96 H160" delay={0.4} dur={3} w={1.6} c="rgba(255,255,255,.55)" />
-        </g>
+            {/* FAZ A — gerçek ana sayfa minyatürü */}
+            <div style={{ position: "absolute", inset: 0, animation: "hs-phaseA 8s ease-in-out infinite" }}>
+              {/* tarayıcı çubuğu */}
+              <div style={{ height: "15%", display: "flex", alignItems: "center", gap: 5, padding: "0 8px", background: "#0A0B0D", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#ff5f57" }} />
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#febc2e" }} />
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#28c840" }} />
+                <span style={{ marginLeft: 6, flex: 1, height: 11, borderRadius: 6, background: "rgba(255,255,255,.07)", display: "flex", alignItems: "center", paddingLeft: 8, fontSize: 7, color: "rgba(255,255,255,.4)" }}>aura.health</span>
+              </div>
+              {/* hero minyatürü */}
+              <div style={{ position: "relative", height: "85%", padding: "9px 11px", background: "linear-gradient(160deg,#101010,#0c1416)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <PortamedLogo size={12} ink="#FFFFFF" />
+                  <div style={{ display: "flex", gap: 5 }}>{[0, 1, 2].map((i) => <span key={i} style={{ width: 9, height: 2, borderRadius: 2, background: "rgba(255,255,255,.3)" }} />)}</div>
+                </div>
+                <span style={{ display: "inline-block", marginTop: 9, fontSize: 6, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "#5FD3E2", background: "rgba(20,195,208,.14)", borderRadius: 999, padding: "2px 6px" }}>{S.hp.eyebrow}</span>
+                <div style={{ marginTop: 7, fontSize: 12, fontWeight: 700, lineHeight: 1.12, color: "#fff" }}>{S.hp.t1}<br />{S.hp.t2}</div>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 9, fontSize: 7.5, fontWeight: 700, color: "#06181a", background: TEAL, borderRadius: 999, padding: "4px 9px" }}>
+                  <span style={{ display: "grid", placeItems: "center", width: 9, height: 9, borderRadius: "50%", background: "#06181a", color: TEAL, fontSize: 5 }}>▶</span>{S.hp.btn}
+                </span>
+                <div style={{ display: "flex", gap: 12, marginTop: 10 }}>
+                  {[["20k+", ""], ["40+", ""], ["4.9★", ""]].map((v, i) => <span key={i} style={{ fontSize: 9, fontWeight: 700, color: "#fff" }}>{v[0]}</span>)}
+                </div>
+                {/* imleç */}
+                <div style={{ position: "absolute", left: 64, top: 70, color: "#fff", ["--cx" as string]: "-22px", ["--cy" as string]: "16px", animation: "hs-cursor 8s ease-in-out infinite" } as React.CSSProperties}>
+                  <MousePointer2 size={13} fill="#fff" />
+                </div>
+              </div>
+            </div>
 
-        {/* Telefon (mobil) */}
-        <g transform="rotate(-8 60 290)">
-          <P d="M40,252 H80 q6,0 6,6 V324 q0,6 -6,6 H40 q-6,0 -6,-6 V258 q0,-6 6,-6 Z" delay={0.7} w={2} c="#bdf0f5" />
-          <P d={cir(60, 291, 9)} delay={1.0} dur={3} w={1.6} c={TEAL} />
-          <path d="M56,287 v8 l7,-4 Z" fill={TEAL} />
-        </g>
-      </svg>
+            {/* FAZ B — video görüşme */}
+            <div style={{ position: "absolute", inset: 0, opacity: 0, display: "grid", placeItems: "center", background: "linear-gradient(150deg,#0E3034,#0A1618)", animation: "hs-phaseB 8s ease-in-out infinite" }}>
+              <div style={{ position: "relative", display: "grid", placeItems: "center" }}>
+                <span style={{ position: "absolute", left: "50%", top: "50%", width: 60, height: 60, borderRadius: "50%", border: "2px solid rgba(20,195,208,.5)", animation: "hs-ring 2.2s ease-out infinite" }} />
+                <Avatar size={48} />
+              </div>
+              <div style={{ position: "absolute", left: 8, top: 7, display: "flex", alignItems: "center", gap: 4, fontSize: 8, fontWeight: 700, color: "#fff", background: "rgba(0,0,0,.4)", padding: "2px 6px", borderRadius: 999 }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#ff5b5b", animation: "hs-blink 1.4s infinite" }} /> {S.s1.rec}
+              </div>
+              <div style={{ position: "absolute", right: 7, bottom: 7, width: "24%", aspectRatio: "4 / 3", borderRadius: 5, border: "1px solid rgba(255,255,255,.2)", background: "linear-gradient(150deg,#1c2a2e,#121a1c)", display: "grid", placeItems: "center" }}>
+                <UserRound size={14} color="rgba(255,255,255,.55)" />
+              </div>
+            </div>
+
+          </div>
+        </div>
+        {/* taban */}
+        <div style={{ margin: "0 auto", height: 6, width: "100%", borderRadius: "0 0 10px 10px", background: "linear-gradient(#26282e,#15171b)" }} />
+        <div style={{ margin: "-1px auto 0", height: 3, width: "26%", borderRadius: "0 0 5px 5px", background: "rgba(255,255,255,.18)" }} />
+      </div>
 
       {/* Fırlayan tıbbi terimler — 8 dil */}
       <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
         {TERMS.map((t, i) => (
           <span key={i} style={{ position: "absolute", left: "50%", top: "29%", transform: "translate(-50%,-50%)" }}>
-            <span
-              style={{
-                display: "inline-block", whiteSpace: "nowrap", fontSize: 10.5, fontWeight: 600,
-                color: i % 2 ? "#bdf0f5" : "#fff", border: "1px solid rgba(20,195,208,.5)",
-                background: "rgba(11,13,15,.55)", borderRadius: 999, padding: "2px 9px", opacity: 0,
-                ["--tx" as string]: t.tx, ["--ty" as string]: t.ty,
-                animation: `hs-fly 5.2s ease-out ${t.d}s infinite`,
-              } as React.CSSProperties}
-            >
+            <span style={{ display: "inline-block", whiteSpace: "nowrap", fontSize: 10.5, fontWeight: 600, color: i % 2 ? "#bdf0f5" : "#fff", border: "1px solid rgba(20,195,208,.5)", background: "rgba(11,13,15,.62)", borderRadius: 999, padding: "2px 9px", opacity: 0, ["--tx" as string]: t.tx, ["--ty" as string]: t.ty, animation: `hs-fly 5.2s ease-out ${t.d}s infinite` } as React.CSSProperties}>
               {t.t}
             </span>
           </span>
@@ -137,99 +157,81 @@ function Scene1() {
   );
 }
 
-// ── Slayt 2: İkinci görüş yolculuğu (line-art, çapraz geçiş) ──
+// ── Slayt 2: İkinci görüş — rapor incelenir → onaylı ikinci görüş ──
 function Scene2({ S }: { S: Show }) {
-  const nx = [72, 158, 244, 330];
-  const stepIcon = [
-    <P key="i0" d="M64,80 H80 M72,72 V88" dur={3} w={2} c={TEAL} />,
-    <P key="i1" d="M151,71 H165 V89 H151 Z M155,77 H161 M155,82 H161" dur={3} w={1.8} c={TEAL} />,
-    <P key="i2" d="M244,88 V72 M238,78 L244,72 L250,78" dur={3} w={1.8} c={TEAL} />,
-    <P key="i3" d="M324,73 L336,80 L324,87 Z" dur={3} w={1.8} c={TEAL} />,
-  ];
   return (
     <div className="absolute inset-0">
-      <svg viewBox="0 0 400 500" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid meet">
-        {/* Adım göstergesi */}
-        <P d="M88,80 H312" w={1.6} c="rgba(255,255,255,.16)" />
-        {nx.map((x, i) => (
-          <g key={i}>
-            <P d={cir(x, 80, 16)} delay={i * 0.15} dur={3} w={1.8} c="rgba(255,255,255,.3)" />
-            <g style={{ opacity: 0, animation: `hs-quarter 12s ease-in-out ${-i * 3}s infinite` }}>
-              <path d={cir(x, 80, 16)} fill="none" stroke={TEAL} strokeWidth={2.4} />
-            </g>
-            {stepIcon[i]}
-            <text x={x} y={108} textAnchor="middle" fontSize="11" fontWeight="600" fill="rgba(255,255,255,.6)">{S.s2.steps[i]}</text>
-          </g>
-        ))}
+      <div style={{ position: "absolute", left: "50%", top: "33%", width: 240, height: 240, transform: "translate(-50%,-50%)", borderRadius: "50%", background: "radial-gradient(circle, rgba(20,195,208,.2), rgba(20,195,208,0) 70%)", filter: "blur(26px)" }} />
+      <div style={{ position: "absolute", left: "50%", top: "33%", transform: "translate(-50%,-50%)", width: 168 }}>
+        {/* Rapor kartı (her zaman) */}
+        <div style={{ position: "relative", borderRadius: 14, background: "#15171B", border: "1px solid rgba(255,255,255,.14)", padding: 14, boxShadow: "0 24px 50px -22px rgba(0,0,0,.7)", overflow: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <span style={{ display: "grid", placeItems: "center", width: 24, height: 24, borderRadius: 7, background: "rgba(20,195,208,.16)", color: TEAL }}><FileText size={14} /></span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>{S.s2.doc}</span>
+          </div>
+          {["88%", "98%", "72%"].map((w, i) => <div key={i} style={{ marginTop: 9, height: 5, width: w, borderRadius: 4, background: "rgba(255,255,255,.13)" }} />)}
+          <div style={{ marginTop: 11, display: "flex", alignItems: "center", gap: 4, color: TEAL }}><Activity size={13} /><div style={{ flex: 1, height: 5, borderRadius: 4, background: "rgba(20,195,208,.18)" }} /></div>
+          {/* tarama çizgisi (faz A) */}
+          <div style={{ position: "absolute", left: 0, right: 0, top: 8, height: 16, background: "linear-gradient(180deg, rgba(20,195,208,0), rgba(20,195,208,.28), rgba(20,195,208,0))", ["--scan" as string]: "92px", animation: "hs-phaseA 8s ease-in-out infinite, hs-scan 2.6s ease-in-out infinite" } as React.CSSProperties} />
+        </div>
 
-        {/* Aşama 1 — Klinik */}
-        <g style={{ opacity: 0, animation: "hs-quarter 12s ease-in-out 0s infinite" }}>
-          <P d={cir(156, 196, 15)} dur={3} w={2} c="#bdf0f5" />
-          <P d="M134,234 q22,-20 44,0" delay={0.2} dur={3} w={2} c="#bdf0f5" />
-          <P d={cir(248, 196, 15)} delay={0.1} dur={3} w={2} c={TEAL} />
-          <P d="M226,234 q22,-20 44,0" delay={0.3} dur={3} w={2} c={TEAL} />
-          <P d="M222,178 q-6,8 0,14" delay={0.4} dur={3} w={1.5} c="#bdf0f5" />
-          {[188, 202, 216].map((x, k) => <circle key={k} cx={x} cy="192" r="2.6" fill={TEAL} style={{ animation: `hs-blink 1.2s ${k * 0.2}s infinite` }} />)}
-        </g>
+        {/* Faz A — büyüteç (inceleme) */}
+        <div style={{ position: "absolute", right: -14, top: -14, animation: "hs-phaseA 8s ease-in-out infinite" }}>
+          <span style={{ display: "grid", placeItems: "center", width: 38, height: 38, borderRadius: "50%", background: "rgba(11,13,15,.9)", border: `1.5px solid ${TEAL}`, color: TEAL, boxShadow: "0 10px 22px -10px rgba(0,0,0,.7)", animation: "hs-float 3s ease-in-out infinite" }}><Search size={19} /></span>
+        </div>
+        <div style={{ position: "absolute", left: -10, bottom: 6, fontSize: 9.5, fontWeight: 600, color: "rgba(255,255,255,.6)", animation: "hs-phaseA 8s ease-in-out infinite" }}>{S.s2.reviewing}</div>
 
-        {/* Aşama 2 — Teşhis raporu */}
-        <g style={{ opacity: 0, animation: "hs-quarter 12s ease-in-out -3s infinite" }}>
-          <P d="M166,158 H234 q4,0 4,4 V252 q0,4 -4,4 H166 q-4,0 -4,-4 V162 q0,-4 4,-4 Z" dur={3} w={2} c="#bdf0f5" />
-          <P d="M178,176 H222" delay={0.2} dur={3} w={2} c={TEAL} />
-          <P d="M178,192 H222" delay={0.3} dur={3} w={1.8} c="rgba(255,255,255,.5)" />
-          <P d="M178,204 H214" delay={0.35} dur={3} w={1.8} c="rgba(255,255,255,.5)" />
-          <P d="M176,224 h10 l5,-12 l6,24 l5,-12 h12" delay={0.5} dur={3} w={2} c={TEAL} />
-          <text x={200} y={246} textAnchor="middle" fontSize="10" fontWeight="700" fill="rgba(255,255,255,.55)">ICD-10</text>
-        </g>
-
-        {/* Aşama 3 — AURA'ya yükleme */}
-        <g style={{ opacity: 0, animation: "hs-quarter 12s ease-in-out -6s infinite" }}>
-          <P d="M168,206 q-12,0 -12,-13 q0,-13 15,-13 q3,-15 21,-15 q17,0 18,17 q12,0 12,12 q0,12 -13,12 Z" dur={3} w={2} c="#bdf0f5" />
-          <P d="M191,202 V178 M182,187 L191,178 L200,187" delay={0.3} dur={3} w={2} c={TEAL} />
-          <P d="M163,232 H237" delay={0.1} dur={3} w={2} c="rgba(255,255,255,.22)" />
-          <P d="M163,232 H237" delay={0.5} dur={2.4} w={2.4} c={TEAL} />
-        </g>
-
-        {/* Aşama 4 — Uzmanla video */}
-        <g style={{ opacity: 0, animation: "hs-quarter 12s ease-in-out -9s infinite" }}>
-          <P d="M150,168 H250 q5,0 5,5 V247 q0,5 -5,5 H150 q-5,0 -5,-5 V173 q0,-5 5,-5 Z" dur={3} w={2} c="#bdf0f5" />
-          <P d={cir(200, 202, 14)} delay={0.2} dur={3} w={2} c={TEAL} />
-          <P d="M178,238 q22,-18 44,0" delay={0.35} dur={3} w={2} c={TEAL} />
-          <P d="M160,180 l5,5 l9,-10" delay={0.5} dur={3} w={2.2} c={TEAL} />
-        </g>
-      </svg>
+        {/* Faz B — onaylı ikinci görüş + uzman */}
+        <div style={{ position: "absolute", right: -18, top: -18, opacity: 0, animation: "hs-phaseB 8s ease-in-out infinite" }}>
+          <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: "50%", background: TEAL, color: "#06181a", boxShadow: "0 12px 26px -10px rgba(20,195,208,.7)" }}><BadgeCheck size={24} /></span>
+        </div>
+        <div style={{ position: "absolute", left: -22, bottom: -16, display: "flex", alignItems: "center", gap: 7, opacity: 0, animation: "hs-phaseB 8s ease-in-out infinite" }}>
+          <Avatar size={36} />
+          <div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: "#fff" }}>{S.s2.verified}</div>
+            <div style={{ fontSize: 8.5, color: "rgba(255,255,255,.55)" }}>{S.s2.note}</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-// ── Slayt 3: Pro Bono — insani sorumluluk (eller bir kalbi sahiplenir, ihtiyaç sahiplerine uzanır) ──
+// ── Slayt 3: Pro Bono — insani sorumluluk (eldeki kalp + ihtiyaç sahiplerine ulaşma) ──
 function Scene3() {
+  const figs = [{ x: "16%", y: "62%", d: "0s" }, { x: "50%", y: "70%", d: "1s" }, { x: "84%", y: "62%", d: "2s" }];
   return (
     <div className="absolute inset-0">
-      <div style={{ position: "absolute", left: "50%", top: "28%", width: 260, height: 260, transform: "translate(-50%,-50%)", borderRadius: "50%", background: "radial-gradient(circle, rgba(198,166,100,.2), rgba(20,195,208,.16) 45%, rgba(20,195,208,0) 70%)", filter: "blur(28px)" }} />
-      <svg viewBox="0 0 400 500" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid meet">
-        {/* İhtiyaç sahiplerine uzanan ince bağ çizgileri */}
-        <P d="M150,210 C120,232 96,250 74,256" delay={0.6} dur={5} w={1.4} c="rgba(20,195,208,.4)" />
-        <P d="M250,210 C280,232 304,250 326,256" delay={0.7} dur={5} w={1.4} c="rgba(20,195,208,.4)" />
+      <div style={{ position: "absolute", left: "50%", top: "32%", width: 250, height: 250, borderRadius: "50%", background: "radial-gradient(circle, rgba(20,195,208,.28), rgba(198,166,100,.14) 48%, rgba(20,195,208,0) 72%)", filter: "blur(26px)", animation: "hs-glow 6s ease-in-out infinite" }} />
 
-        {/* Kalp + medikal çarpı (atan) */}
-        <g style={{ transformBox: "fill-box", transformOrigin: "center", animation: "hs-beat 1.8s ease-in-out infinite" }}>
-          <P d="M200,178 C168,150 150,130 150,110 C150,94 162,84 176,84 C188,84 196,92 200,102 C204,92 212,84 224,84 C238,84 250,94 250,110 C250,130 232,150 200,178 Z" dur={4.5} w={2.4} c={TEAL} />
-          <P d="M192,116 H208 M200,108 V124" delay={0.6} dur={4} w={2.2} c="#bdf0f5" />
-        </g>
-
-        {/* Sahiplenen eller (kalbi kavrayan iki avuç) */}
-        <P d="M150,176 C130,188 124,210 134,228 C139,237 148,241 158,240" delay={0.3} w={2.2} c="#bdf0f5" />
-        <P d="M250,176 C270,188 276,210 266,228 C261,237 252,241 242,240" delay={0.4} w={2.2} c="#bdf0f5" />
-        <P d="M150,232 q50,26 100,0" delay={0.5} w={2.2} c="#bdf0f5" />
-        {[170, 188, 212, 230].map((x, k) => <P key={k} d={`M${x},238 V${k === 0 || k === 3 ? 248 : 251}`} delay={0.6 + k * 0.05} dur={4} w={1.8} c="#bdf0f5" />)}
-
-        {/* İhtiyaç sahibi figürler (sol & sağ) */}
-        <P d={cir(74, 286, 12)} delay={0.8} dur={3.5} w={2} c="rgba(255,255,255,.7)" />
-        <P d="M56,314 q18,-16 36,0" delay={0.9} dur={3.5} w={2} c="rgba(255,255,255,.7)" />
-        <P d={cir(326, 286, 12)} delay={0.85} dur={3.5} w={2} c="rgba(255,255,255,.7)" />
-        <P d="M308,314 q18,-16 36,0" delay={0.95} dur={3.5} w={2} c="rgba(255,255,255,.7)" />
+      {/* bağ çizgileri */}
+      <svg viewBox="0 0 400 500" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid meet" style={{ pointerEvents: "none" }}>
+        <path d="M200,180 C150,250 110,280 66,304" fill="none" stroke="rgba(20,195,208,.28)" strokeWidth="1.6" strokeDasharray="3 6" />
+        <path d="M200,188 L200,338" fill="none" stroke="rgba(20,195,208,.28)" strokeWidth="1.6" strokeDasharray="3 6" />
+        <path d="M200,180 C250,250 290,280 334,304" fill="none" stroke="rgba(20,195,208,.28)" strokeWidth="1.6" strokeDasharray="3 6" />
       </svg>
+
+      {/* Yükselen küçük kalpler */}
+      {[{ x: "40%", d: "0s" }, { x: "56%", d: "1.1s" }, { x: "48%", d: "2.2s" }].map((h, i) => (
+        <span key={i} style={{ position: "absolute", left: h.x, top: "26%", color: TEAL, opacity: 0, animation: `hs-rise 3.3s ease-out ${h.d} infinite` }}><Heart size={11} fill={TEAL} /></span>
+      ))}
+
+      {/* Merkez — el + kalp (atan, ışıyan) */}
+      <div style={{ position: "absolute", left: "50%", top: "30%", transform: "translate(-50%,-50%)" }}>
+        <div style={{ position: "relative", display: "grid", placeItems: "center" }}>
+          <span style={{ position: "absolute", left: "50%", top: "50%", width: 92, height: 92, borderRadius: "50%", border: "1.5px solid rgba(20,195,208,.4)", animation: "hs-ring 2.6s ease-out infinite" }} />
+          <span style={{ display: "grid", placeItems: "center", width: 86, height: 86, borderRadius: "50%", background: "rgba(20,195,208,.1)", border: "1.5px solid rgba(20,195,208,.35)" }}>
+            <span style={{ display: "grid", placeItems: "center", animation: "hs-beat 1.8s ease-in-out infinite" }}><HandHeart size={46} color={TEAL} /></span>
+          </span>
+        </div>
+      </div>
+
+      {/* İhtiyaç sahibi figürler (sırayla parlar) */}
+      {figs.map((f, i) => (
+        <div key={i} style={{ position: "absolute", left: f.x, top: f.y, transform: "translate(-50%,-50%)", animation: `hs-seq 4.5s ease-in-out ${f.d} infinite` }}>
+          <Avatar size={34} tone="rgba(255,255,255,.8)" bg="rgba(255,255,255,.06)" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -255,7 +257,7 @@ export function HeroShowcase({ locale }: { locale: Locale }) {
       <div className="flex h-full w-full" style={{ transform: `translateX(-${active * 100}%)`, transition: "transform .7s cubic-bezier(.7,0,.2,1)" }}>
         {S.slides.map((sl, i) => (
           <Link key={i} href={HREFS[i]} aria-label={sl.tag} className="relative block h-full w-full shrink-0 overflow-hidden" style={{ background: BG[i] }}>
-            {i === 0 ? <Scene1 key={active === 0 ? "on" : "off"} /> : i === 1 ? <Scene2 S={S} key={active === 1 ? "on" : "off"} /> : <Scene3 key={active === 2 ? "on" : "off"} />}
+            {i === 0 ? <Scene1 S={S} /> : i === 1 ? <Scene2 S={S} /> : <Scene3 />}
             <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-11 pt-16 sm:px-6" style={{ background: "linear-gradient(180deg, rgba(8,9,11,0) 0%, rgba(8,9,11,.8) 50%, rgba(8,9,11,.97) 100%)" }}>
               <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.12em]" style={{ background: "rgba(20,195,208,.16)", color: "#5FD3E2" }}>{sl.tag}</span>
               <div className="mt-2.5 text-[17px] font-semibold leading-[1.22] text-white sm:text-[19px]">{sl.title}</div>
