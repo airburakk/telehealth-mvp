@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { ownsCase } from "@/lib/ownership";
-import { matchForCase, queuePosition } from "@/lib/pro-bono";
+import { matchForCase, queuePosition, availableDoctorCount } from "@/lib/pro-bono";
 
 // GET /api/pro-bono/waiting?caseId= — hasta bekleme ekranı poll'u. Tekrar eşleşme dener; eşleşince consultationId döner.
 export async function GET(req: Request) {
@@ -21,7 +21,8 @@ export async function GET(req: Request) {
     const m = await matchForCase(caseId);
     if (m) return NextResponse.json({ status: "MATCHED", consultationId: m.consultationId });
     const pos = await queuePosition(caseId, c.createdAt);
-    return NextResponse.json({ status: "WAITING", queuePos: pos });
+    const online = await availableDoctorCount();
+    return NextResponse.json({ status: "WAITING", queuePos: pos, online });
   }
 
   // Zaten eşleşmiş/görüşmede → aktif konsültasyona yönlendir

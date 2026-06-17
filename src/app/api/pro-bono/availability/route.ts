@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { setDoctorAvailable, matchForDoctor, quotaInfo } from "@/lib/pro-bono";
+import { setDoctorAvailable, matchForDoctor, quotaInfo, notifyStrandedWaiters } from "@/lib/pro-bono";
 
 // POST /api/pro-bono/availability — hekim pro bono müsaitliğini aç/kapa (+ops. kota); açınca eşleşme dener.
 export async function POST(req: Request) {
@@ -28,6 +28,9 @@ export async function POST(req: Request) {
   if (available) {
     const m = await matchForDoctor(doctorId);
     consultationId = m?.consultationId ?? null;
+  } else {
+    // Çevrimdışı olundu → bu son müsait hekimse, havuzda bekleyen hastaları uyar
+    await notifyStrandedWaiters();
   }
 
   const d = await db.doctor.findUnique({ where: { id: doctorId } });

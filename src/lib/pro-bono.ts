@@ -164,6 +164,31 @@ export async function waitingCount(): Promise<number> {
   return db.case.count({ where: { proBono: true, proBonoStatus: "WAITING" } });
 }
 
+// Şu an pro bono hizmeti için MÜSAİT (yeni hasta alabilecek) hekim sayısı.
+// Hasta tarafı "Başvur" butonunun aktifliği + çevrimiçi/çevrimdışı indikatörü buna bağlı.
+export async function availableDoctorCount(): Promise<number> {
+  return db.doctor.count({ where: { proBonoState: "AVAILABLE" } });
+}
+
+// Tüm gönüllü hekimler çevrimdışı olduğunda havuzda BEKLEYEN hastalara haber ver.
+// (Tarayıcı açıksa zaten poll yönlendirir; kapalıysa push düşer — bildirime izin verildiyse.)
+export async function notifyStrandedWaiters(): Promise<void> {
+  if ((await availableDoctorCount()) > 0) return; // hâlâ müsait hekim var → kimse stranded değil
+  const waiting = await db.case.findMany({
+    where: { proBono: true, proBonoStatus: "WAITING", userId: { not: null } },
+    select: { id: true, userId: true },
+  });
+  for (const w of waiting) {
+    if (!w.userId) continue;
+    await notifyUser(w.userId, {
+      type: "PROBONO_MATCH",
+      title: "⏳ Gönüllü hekim şu an çevrimdışı",
+      body: "Hâlâ havuzdasınız. Bir gönüllü hekim çevrimiçi olduğunda size bildirim göndereceğiz.",
+      href: `/pro-bono/bekleme?caseId=${w.id}`,
+    });
+  }
+}
+
 // Bir bekleyen vakanın kuyruktaki sırası (1 tabanlı) — hasta bekleme ekranı için
 export async function queuePosition(caseId: string, createdAt: Date): Promise<number> {
   const ahead = await db.case.count({

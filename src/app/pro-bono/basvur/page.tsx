@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { COUNTRIES, LANGUAGES } from "@/lib/constants";
 import { useT } from "@/components/useT";
@@ -19,6 +19,9 @@ const STATIC_UI = [
   "Lütfen şikayetinizi biraz daha ayrıntılı yazın.",
   "Devam için onay kutusunu işaretleyin.",
   "Başvur ve eşleş", "Başvurunuz oluşturuluyor…",
+  "Pro Bono hizmeti çevrimiçi", "gönüllü hekim şu an müsait", "Şu an çevrimiçi gönüllü hekim yok",
+  "Bir hekim çevrimiçi olduğunda başvurabilirsiniz; havuzdayken bir hekim müsait olunca size bildirim göndeririz.",
+  "Müsaitlik kontrol ediliyor…",
 ];
 
 export default function ProBonoApplyPage() {
@@ -32,6 +35,24 @@ export default function ProBonoApplyPage() {
   const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [online, setOnline] = useState<number | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    const tick = async () => {
+      try {
+        const r = await fetch("/api/pro-bono/status");
+        if (!r.ok) return;
+        const d = await r.json();
+        if (alive) setOnline(typeof d.online === "number" ? d.online : 0);
+      } catch {
+        /* sessiz — sonraki tick tekrar dener */
+      }
+    };
+    tick();
+    const iv = setInterval(tick, 8000);
+    return () => { alive = false; clearInterval(iv); };
+  }, []);
 
   const tTexts = useMemo(() => STATIC_UI, []);
   const { t } = useT(uiLang, tTexts);
@@ -126,10 +147,27 @@ export default function ProBonoApplyPage() {
 
         {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">{t(error)}</div>}
 
+        {/* Çevrimiçi/çevrimdışı indikatörü — buton aktifliği buna bağlı */}
+        <div className="flex items-center gap-2 text-[13px]">
+          <span className={`h-2.5 w-2.5 rounded-full ${online === null ? "bg-slate-300" : online > 0 ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
+          <span className="text-slate-600">
+            {online === null
+              ? t("Müsaitlik kontrol ediliyor…")
+              : online > 0
+                ? `${t("Pro Bono hizmeti çevrimiçi")} · ${online} ${t("gönüllü hekim şu an müsait")}`
+                : t("Şu an çevrimiçi gönüllü hekim yok")}
+          </span>
+        </div>
+        {online === 0 && (
+          <p className="-mt-1 text-xs leading-relaxed text-slate-400">
+            {t("Bir hekim çevrimiçi olduğunda başvurabilirsiniz; havuzdayken bir hekim müsait olunca size bildirim göndeririz.")}
+          </p>
+        )}
+
         <button
           onClick={submit}
-          disabled={submitting}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-3 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60"
+          disabled={submitting || !online || online <= 0}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-3 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
           {submitting ? t("Başvurunuz oluşturuluyor…") : t("Başvur ve eşleş")}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { HeartHandshake, Users, FileCheck2, ShieldCheck, ArrowRight, Info } from "lucide-react";
 import { usePublicLocale, LocaleToggle } from "@/components/PublicLocale";
@@ -13,6 +14,11 @@ const COPY = {
     introB:
       " video consultations with accredited specialists for patients with limited financial means. Our volunteer doctors set aside a certain quota for this purpose each term.",
     apply: "Apply",
+    online: "Pro Bono service is online",
+    onlineN: "volunteer doctor(s) available now",
+    offline: "No volunteer doctor is online right now",
+    offlineHint: "you can apply once a doctor comes online",
+    checking: "Checking availability…",
     note:
       "Quota is limited and applications are subject to a pre-assessment. Your application is reviewed for eligibility by our coordination team.",
   },
@@ -24,6 +30,11 @@ const COPY = {
     introB:
       " video konsültasyon sunar. Gönüllü hekimlerimiz her dönem belirli bir kontenjanı bu amaca ayırır.",
     apply: "Başvur",
+    online: "Pro Bono hizmeti çevrimiçi",
+    onlineN: "gönüllü hekim şu an müsait",
+    offline: "Şu an çevrimiçi gönüllü hekim yok",
+    offlineHint: "bir hekim çevrimiçi olduğunda başvurabilirsiniz",
+    checking: "Müsaitlik kontrol ediliyor…",
     note:
       "Kontenjan sınırlıdır ve başvurular ön değerlendirmeye tabidir. Başvurunuz, uygunluk açısından koordinasyon ekibimizce incelenir.",
   },
@@ -55,6 +66,23 @@ const POINTS = [
 export function ProBonoContent() {
   const [locale, setLocale] = usePublicLocale();
   const C = COPY[locale];
+  const [online, setOnline] = useState<number | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const tick = async () => {
+      try {
+        const r = await fetch("/api/pro-bono/status");
+        if (!r.ok) return;
+        const d = await r.json();
+        if (alive) setOnline(typeof d.online === "number" ? d.online : 0);
+      } catch {
+        /* sessiz — sonraki tick tekrar dener */
+      }
+    };
+    tick();
+    const iv = setInterval(tick, 8000);
+    return () => { alive = false; clearInterval(iv); };
+  }, []);
   return (
     <div lang={locale} className="mx-auto max-w-4xl px-5 py-12">
       <div className="flex items-center justify-between gap-4">
@@ -69,10 +97,23 @@ export function ProBonoContent() {
         <strong className="font-semibold text-slate-800">{C.strong}</strong>
         {C.introB}
       </p>
-      <div className="mt-7 flex flex-wrap gap-3">
-        <Link href="/pro-bono/basvur" className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
-          {C.apply} <ArrowRight size={17} />
-        </Link>
+      <div className="mt-7">
+        {online && online > 0 ? (
+          <Link href="/pro-bono/basvur" className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+            {C.apply} <ArrowRight size={17} />
+          </Link>
+        ) : (
+          <button disabled className="inline-flex cursor-not-allowed items-center gap-2 rounded-full bg-slate-200 px-6 py-3 text-[15px] font-semibold text-slate-400">
+            {C.apply} <ArrowRight size={17} />
+          </button>
+        )}
+        {/* Çevrimiçi/çevrimdışı indikatörü — butonun altında */}
+        <div className="mt-2.5 flex items-center gap-2 text-[13px]">
+          <span className={`h-2.5 w-2.5 rounded-full ${online === null ? "bg-slate-300" : online > 0 ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
+          <span className="text-slate-500">
+            {online === null ? C.checking : online > 0 ? `${C.online} · ${online} ${C.onlineN}` : `${C.offline} — ${C.offlineHint}`}
+          </span>
+        </div>
       </div>
 
       <div className="mt-12 grid gap-4 sm:grid-cols-2">
