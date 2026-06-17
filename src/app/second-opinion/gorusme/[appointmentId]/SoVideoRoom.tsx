@@ -1,11 +1,32 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Video, VideoOff, Mic, MicOff, PhoneOff, Wifi, WifiOff, UserRound, Stethoscope } from "lucide-react";
 import { getIceServers } from "@/lib/ice";
+import { useT } from "@/components/useT";
+import { useSoLang } from "@/components/SoLocale";
 
 type Phase = "idle" | "connecting" | "waiting" | "connected" | "ended" | "error";
+
+// TR kanonik UI metinleri — useT ile hasta diline çevrilir
+const S = {
+  title: "İkinci Görüş — Video",
+  ended: "Görüşme sona erdi",
+  endedSub: "İkinci görüş video görüşmeniz tamamlandı.",
+  backToCase: "Vakaya dön",
+  patient: "Hasta",
+  doctor: "Hekim",
+  permNote: "Kamera ve mikrofon izni istenecek. En iyi deneyim için Chrome veya Safari kullanın.",
+  join: "Görüşmeye katıl",
+  connected: "Bağlandı",
+  waiting: "Karşı taraf bekleniyor…",
+  errorLbl: "Hata",
+  connecting: "Bağlanıyor…",
+  waitingFor: "bekleniyor…",
+  you: "Siz",
+  connLbl: "Bağlantı:",
+} as const;
 
 // İzole SO video odası — WebRTC (P2P) + mevcut string-anahtarlı sinyalleşme API'si.
 // Doktor 'offer', hasta 'answer' üretir; ICE adayları polling ile değişilir.
@@ -27,6 +48,10 @@ export function SoVideoRoom({
   const [micOn, setMicOn] = useState(true);
   const [remoteOn, setRemoteOn] = useState(false);
   const [connState, setConnState] = useState("");
+
+  const [lang] = useSoLang();
+  const texts = useMemo(() => [...Object.values(S), branchLabel], [branchLabel]);
+  const { t } = useT(lang, texts);
 
   useEffect(() => {
     if (!joined || ended) return;
@@ -159,10 +184,10 @@ export function SoVideoRoom({
     return (
       <div className="mx-auto max-w-md px-5 py-20 text-center">
         <PhoneOff className="mx-auto mb-3 text-slate-300" size={40} />
-        <h1 className="text-xl font-bold text-[#101010]">Görüşme sona erdi</h1>
-        <p className="mt-2 text-sm text-slate-500">İkinci görüş video görüşmeniz tamamlandı.</p>
+        <h1 className="text-xl font-bold text-[#101010]">{t(S.ended)}</h1>
+        <p className="mt-2 text-sm text-slate-500">{t(S.endedSub)}</p>
         <button onClick={() => router.push(`/second-opinion/vaka/${caseId}`)} className="mt-5 rounded-xl bg-[#14C3D0] px-5 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
-          Vakaya dön
+          {t(S.backToCase)}
         </button>
       </div>
     );
@@ -172,11 +197,11 @@ export function SoVideoRoom({
     return (
       <div className="mx-auto max-w-md px-5 py-16 text-center">
         <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Stethoscope size={26} /></span>
-        <h1 className="mt-4 text-2xl font-bold text-[#101010]">İkinci Görüş — Video</h1>
-        <p className="mt-1 text-sm text-slate-500">{branchLabel} · {selfRole === "doctor" ? "Hasta" : "Hekim"}: {remoteName}</p>
-        <p className="mt-4 text-[13px] text-slate-500">Kamera ve mikrofon izni istenecek. En iyi deneyim için Chrome veya Safari kullanın.</p>
+        <h1 className="mt-4 text-2xl font-bold text-[#101010]">{t(S.title)}</h1>
+        <p className="mt-1 text-sm text-slate-500">{t(branchLabel)} · {selfRole === "doctor" ? t(S.patient) : t(S.doctor)}: {remoteName}</p>
+        <p className="mt-4 text-[13px] text-slate-500">{t(S.permNote)}</p>
         <button onClick={() => { setJoined(true); setPhase("connecting"); }} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
-          <Video size={18} /> Görüşmeye katıl
+          <Video size={18} /> {t(S.join)}
         </button>
       </div>
     );
@@ -186,12 +211,12 @@ export function SoVideoRoom({
     <div className="mx-auto max-w-5xl px-4 py-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-[#101010]">İkinci Görüş — Video</h1>
-          <p className="text-xs text-slate-500">{branchLabel} · {remoteName}</p>
+          <h1 className="text-lg font-bold text-[#101010]">{t(S.title)}</h1>
+          <p className="text-xs text-slate-500">{t(branchLabel)} · {remoteName}</p>
         </div>
         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${phase === "connected" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
           {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />}
-          {phase === "connected" ? "Bağlandı" : phase === "waiting" ? "Karşı taraf bekleniyor…" : phase === "error" ? "Hata" : "Bağlanıyor…"}
+          {phase === "connected" ? t(S.connected) : phase === "waiting" ? t(S.waiting) : phase === "error" ? t(S.errorLbl) : t(S.connecting)}
         </span>
       </div>
 
@@ -202,14 +227,14 @@ export function SoVideoRoom({
           <video ref={remoteVideoRef} autoPlay playsInline className="h-full w-full object-cover" />
           {!remoteOn && (
             <div className="absolute inset-0 grid place-items-center text-slate-400">
-              <div className="text-center"><UserRound size={36} className="mx-auto" /><p className="mt-2 text-xs">{remoteName} bekleniyor…</p></div>
+              <div className="text-center"><UserRound size={36} className="mx-auto" /><p className="mt-2 text-xs">{remoteName} {t(S.waitingFor)}</p></div>
             </div>
           )}
           <span className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-0.5 text-[11px] text-white">{remoteName}</span>
         </div>
         <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-800">
           <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
-          <span className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-0.5 text-[11px] text-white">Siz</span>
+          <span className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-0.5 text-[11px] text-white">{t(S.you)}</span>
         </div>
       </div>
 
@@ -224,7 +249,7 @@ export function SoVideoRoom({
           <PhoneOff size={20} />
         </button>
       </div>
-      {connState && <p className="mt-2 text-center text-[11px] text-slate-400">Bağlantı: {connState}</p>}
+      {connState && <p className="mt-2 text-center text-[11px] text-slate-400">{t(S.connLbl)} {connState}</p>}
     </div>
   );
 }

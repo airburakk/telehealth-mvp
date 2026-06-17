@@ -1,0 +1,87 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo } from "react";
+import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
+import { useT } from "@/components/useT";
+import { useSoLang, SoLangSelect } from "@/components/SoLocale";
+import { Stethoscope, Plus, ArrowRight, Inbox, Bell } from "lucide-react";
+
+type Row = { id: string; branchLabel: string; status: string; diagnosisSummary: string; createdAt: string; hasPendingReq: boolean };
+
+const S = {
+  title: "İkinci Görüş Vakalarım",
+  subtitle: "Uzmandan bağımsız değerlendirme başvurularınız.",
+  newBtn: "Yeni ikinci görüş",
+  empty: "Henüz ikinci görüş başvurunuz yok.",
+  createBtn: "Başvuru oluştur",
+  actionNeeded: "İşlem gerekiyor",
+} as const;
+
+export function SoCasesList({ rows }: { rows: Row[] }) {
+  const [lang, setLang] = useSoLang();
+  const texts = useMemo(
+    () => [...Object.values(S), ...Object.values(SO_STATUS_LABELS), ...rows.map((r) => r.branchLabel)],
+    [rows],
+  );
+  const { t } = useT(lang, texts);
+
+  return (
+    <div className="mx-auto max-w-3xl px-5 py-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Stethoscope size={22} /></span>
+          <div>
+            <h1 className="text-2xl font-bold text-[#101010]">{t(S.title)}</h1>
+            <p className="text-sm text-slate-500">{t(S.subtitle)}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <SoLangSelect lang={lang} onChange={setLang} />
+          <Link href="/second-opinion/basvur" className="inline-flex items-center gap-1.5 rounded-lg bg-[#14C3D0] px-4 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+            <Plus size={16} /> {t(S.newBtn)}
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-3">
+        {rows.length === 0 && (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-white py-14 text-center">
+            <Inbox className="mx-auto mb-2 text-slate-300" size={28} />
+            <p className="text-sm text-slate-500">{t(S.empty)}</p>
+            <Link href="/second-opinion/basvur" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#14C3D0] px-4 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+              <Plus size={15} /> {t(S.createBtn)}
+            </Link>
+          </div>
+        )}
+
+        {rows.map((c) => (
+          <Link
+            key={c.id}
+            href={`/second-opinion/vaka/${c.id}`}
+            className="block rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-[#14C3D0]/40 hover:shadow"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1 font-semibold text-slate-800">
+                    <Stethoscope size={14} className="text-[#0EA5B2]" /> {t(c.branchLabel)}
+                  </span>
+                  <span className="rounded-full bg-[#14C3D0]/10 px-2 py-0.5 text-[11px] font-semibold text-[#0E8A95]">{t(SO_STATUS_LABELS[c.status as SoStatus] ?? c.status)}</span>
+                  {c.hasPendingReq && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200">
+                      <Bell size={11} /> {t(S.actionNeeded)}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1.5 line-clamp-2 text-sm text-slate-600">{c.diagnosisSummary}</p>
+                <div className="mt-1 text-xs text-slate-400">{new Date(c.createdAt).toLocaleString(lang === "Türkçe" ? "tr-TR" : undefined, { dateStyle: "medium", timeStyle: "short" })}</div>
+              </div>
+              <ArrowRight size={16} className="mt-1 shrink-0 text-slate-300" />
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
