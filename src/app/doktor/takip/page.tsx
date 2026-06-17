@@ -10,7 +10,11 @@ const RANK: Record<Severity, number> = { RED: 0, WATCH: 1, NONE: 2 };
 
 export default async function RecoveryMonitor() {
   const recoveries = await db.recovery.findMany({
-    include: { case: true, checkIns: { orderBy: { createdAt: "desc" } } },
+    include: {
+      case: true,
+      // not/foto (artık base64) bu listede gereksiz; yalnız son durumu süren scalar alanları çek (payload hafif kalsın)
+      checkIns: { orderBy: { createdAt: "desc" }, select: { severity: true, pain: true, feverC: true, createdAt: true } },
+    },
     orderBy: { startedAt: "desc" },
   });
 

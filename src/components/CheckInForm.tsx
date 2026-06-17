@@ -1,9 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { severityMeta, postopChecklist, type Severity } from "@/lib/postop";
 import { Thermometer, Activity, Pill, Camera, Loader2, Send, AlertTriangle, CheckCircle2, X, ListChecks } from "lucide-react";
+
+// İyileşme fotoğrafını tarayıcıda küçültüp JPEG data-URL'e çevirir (S3 yok; AI vision'a + DB'ye uygun, hafif boyut).
+// max kenar 720px · q0.75 ≈ 60-120KB. Başarısızlıkta akışı bozma (fotoğraf atlanır).
+async function downscaleImage(file: File, max = 720, quality = 0.75): Promise<string> {
+  const src = await new Promise<string>((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result as string);
+    fr.onerror = () => reject(new Error("read"));
+    fr.readAsDataURL(file);
+  });
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => reject(new Error("decode"));
+    im.src = src;
+  });
+  const scale = Math.min(1, max / Math.max(img.width, img.height));
+  const w = Math.max(1, Math.round(img.width * scale));
+  const h = Math.max(1, Math.round(img.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const cx = canvas.getContext("2d");
+  if (!cx) return src;
+  cx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", quality);
+}
 
 export function CheckInForm({ caseId, branch }: { caseId: string; branch: string }) {
   const router = useRouter();
@@ -13,9 +40,24 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
   const [meds, setMeds] = useState(true);
   const [note, setNote] = useState("");
   const [photo, setPhoto] = useState<string>("");
+  const [preparing, setPreparing] = useState(false);
   const [checklist, setChecklist] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ severity: Severity; reasons: string[] } | null>(null);
+
+  async function onPickPhoto(e: ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = ""; // aynı dosya tekrar seçilebilsin
+    if (!f) return;
+    setPreparing(true);
+    try {
+      setPhoto(await downscaleImage(f));
+    } catch {
+      // küçültme başarısız → fotoğrafı atla; check-in fotoğrafsız devam eder
+    } finally {
+      setPreparing(false);
+    }
+  }
 
   async function submit() {
     setSubmitting(true);
@@ -109,13 +151,26 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
         />
       </div>
 
-      {/* Foto */}
-      <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 hover:border-teal-400">
-        <Camera size={16} className="text-slate-400" />
-        {photo ? photo : "İyileşme fotoğrafı ekle (opsiyonel)"}
-        <input type="file" accept="image/*" className="hidden" onChange={(e) => setPhoto(e.target.files?.[0]?.name ?? "")} />
-        {photo && <X size={15} className="ml-auto text-slate-400" onClick={(e) => { e.preventDefault(); setPhoto(""); }} />}
-      </label>
+      {/* Foto — küçültülüp AI görsel ön-değerlendirmesine gönderilir */}
+      {photo ? (
+        <div className="mt-3 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photo} alt="İyileşme fotoğrafı" className="h-16 w-16 shrink-0 rounded-md object-cover ring-1 ring-slate-200" />
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-medium text-slate-700">Fotoğraf eklendi</div>
+            <div className="text-xs text-slate-400">Gönderince AI görsel ön-değerlendirme yapar.</div>
+          </div>
+          <button type="button" onClick={() => setPhoto("")} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600">
+            <X size={16} />
+          </button>
+        </div>
+      ) : (
+        <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 hover:border-teal-400">
+          {preparing ? <Loader2 size={16} className="animate-spin text-slate-400" /> : <Camera size={16} className="text-slate-400" />}
+          {preparing ? "Fotoğraf hazırlanıyor…" : "İyileşme fotoğrafı ekle (opsiyonel)"}
+          <input type="file" accept="image/*" className="hidden" disabled={preparing} onChange={onPickPhoto} />
+        </label>
+      )}
 
       <button onClick={submit} disabled={submitting} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-3 text-sm font-semibold text-white hover:bg-[#0A7D77] disabled:opacity-60">
         {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Kontrolü gönder

@@ -64,9 +64,15 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
                           <span className="inline-flex items-center gap-1"><Activity size={12} /> Ağrı {ci.pain}/10</span>
                           <span className="inline-flex items-center gap-1"><Thermometer size={12} /> {ci.feverC.toFixed(1)}°C</span>
                           <span className="inline-flex items-center gap-1"><Pill size={12} /> {ci.meds ? "İlaç ✓" : "İlaç ✗"}</span>
-                          {ci.photo && <span>📷 {ci.photo}</span>}
+                          {ci.photo && !ci.photo.startsWith("data:") && <span>📷 {ci.photo}</span>}
                         </div>
                         {ci.note && <p className="mt-1 text-sm text-slate-600">{ci.note}</p>}
+                        {ci.photo?.startsWith("data:") && (
+                          <a href={ci.photo} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block" title="Büyütmek için aç">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={ci.photo} alt="İyileşme fotoğrafı" className="h-20 w-20 rounded-lg object-cover ring-1 ring-slate-200 transition hover:ring-[#0E9E97]" />
+                          </a>
+                        )}
                       </div>
                     </li>
                   );

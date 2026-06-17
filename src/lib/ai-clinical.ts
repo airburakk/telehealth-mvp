@@ -350,3 +350,72 @@ export async function assessPostopNote(
     : "NONE";
   return { severity, reason: clean(a.reason) };
 }
+
+// ── Post-op FOTOĞRAF (görüntü) kırmızı bayrak değerlendirmesi (Modül 4) ──
+// Hastanın günlük check-in'de yüklediği iyileşme/yara fotoğrafını Claude vision ile değerlendirir.
+// Serbest-metin not değerlendirmesinin (assessPostopNote) görsel karşılığı: enfeksiyon/dikiş/akıntı/şişlik
+// gibi GÖRSEL bulguları yakalar. Sonuç checkin'de kural + checklist + not-AI ile BİRLEŞİR (en kötü).
+// Görsel akıl yürütme kalitesi kritik (yanlış-negatif tehlikeli) → klinik model (Sonnet) kullanılır.
+
+const PHOTO_TOOL: Anthropic.Tool = {
+  name: "submit_photo_assessment",
+  description: "Post-op iyileşme fotoğrafının kırmızı-bayrak (aciliyet) değerlendirmesi.",
+  input_schema: {
+    type: "object",
+    properties: {
+      severity: {
+        type: "string",
+        enum: ["NONE", "WATCH", "RED"],
+        description:
+          "RED: acil müdahale gerektiren görsel bulgu (irin/püy, yayılan kızarıklık/sellülit, dikiş ayrışması/açılması (dehisans), nekroz/siyahlaşma, belirgin pürülan akıntı, aşırı şişlik+morarma birlikte); " +
+          "WATCH: izlenmesi gereken hafif-orta görsel bulgu (sınırlı kızarıklık, hafif akıntı, gerginlik); " +
+          "NONE: normal post-op görünüm (beklenen kabuklanma, sınırlı morarma, temiz/kapanmış yara) VEYA görüntü tıbbi olarak değerlendirilemez (alakasız/bulanık/karanlık)",
+      },
+      findings: {
+        type: "string",
+        description:
+          "Kısa Türkçe görsel bulgu (1-2 cümle): kızarıklık, şişlik, akıntı/irin, dikiş durumu, renk, iyileşme aşaması. " +
+          "Görüntüde NET olmayanı söyleme. Görüntü tıbbi/alakalı değilse veya çok düşük kaliteliyse bunu açıkça belirt.",
+      },
+    },
+    required: ["severity", "findings"],
+  },
+};
+
+export async function assessPostopPhoto(
+  dataUrl: string,
+  ctx: { branch: string; day: number }
+): Promise<{ severity: "NONE" | "WATCH" | "RED"; findings: string }> {
+  const m = /^data:(image\/(?:jpeg|png|webp|gif));base64,(.+)$/.exec(dataUrl);
+  if (!m) throw new Error("Geçersiz görüntü biçimi (data URL bekleniyor).");
+  const mediaType = m[1] as "image/jpeg" | "image/png" | "image/webp" | "image/gif";
+  const b64 = m[2];
+
+  const res = await client().messages.create({
+    model: MODEL,
+    max_tokens: 400,
+    system:
+      "Sen post-op (ameliyat/işlem sonrası) uzaktan takip için klinik GÖRÜNTÜ değerlendirme asistanısın. " +
+      "Hastanın yüklediği iyileşme/yara fotoğrafını değerlendirip kırmızı-bayrak seviyesi ve kısa görsel bulgu üretirsin. " +
+      "Enfeksiyon belirtileri (irin/püy, yayılan kızarıklık, dikiş açılması, nekroz/renk değişimi) RED'e meyilli; hafif/beklenen post-op bulgular (sınırlı kızarıklık, kabuklanma, morarma) WATCH/NONE. " +
+      "Şüpheli veya endişe verici görsel bulguda TEMKİNLİ ol (uzaktan takipte güvenlik önceliklidir). Görüntüde NET OLMAYAN bulguyu UYDURMA; görüntü tıbbi olmayan/alakasız/çok düşük kaliteliyse bunu belirt ve NONE ver. " +
+      "Bu bir ön-değerlendirmedir, kesin tanı değildir. Yanıtı DAİMA submit_photo_assessment aracıyla ver.",
+    tools: [PHOTO_TOOL],
+    tool_choice: { type: "tool", name: "submit_photo_assessment" },
+    messages: [{
+      role: "user",
+      content: [
+        { type: "image", source: { type: "base64", media_type: mediaType, data: b64 } },
+        { type: "text", text: `Branş: ${ctx.branch} · Post-op ${ctx.day}. gün.\nBu iyileşme/yara fotoğrafını değerlendir.` },
+      ],
+    }],
+  });
+
+  const block = res.content.find((b) => b.type === "tool_use");
+  if (!block || block.type !== "tool_use") throw new Error("Görüntü değerlendirmesi alınamadı.");
+  const a = block.input as { severity?: string; findings?: string };
+  const severity = (["NONE", "WATCH", "RED"] as const).includes(a.severity as never)
+    ? (a.severity as "NONE" | "WATCH" | "RED")
+    : "NONE";
+  return { severity, findings: clean(a.findings) };
+}

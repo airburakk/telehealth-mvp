@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { assessCheckIn, assessChecklist, worstSeverity } from "@/lib/postop";
-import { assessPostopNote } from "@/lib/ai-clinical";
+import { assessPostopNote, assessPostopPhoto } from "@/lib/ai-clinical";
 import { notifyRoles } from "@/lib/notify";
 import { canAccessCase } from "@/lib/ownership";
+
+// Not-AI (Haiku) + Foto-AI (Sonnet vision) paralel çalışır; serverless varsayılan limitini aşmasın diye süre tanı.
+export const maxDuration = 30;
 
 // POST /api/cases/:id/checkin — günlük iyileşme kontrolü
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -32,26 +35,38 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const base = assessCheckIn({ pain, feverC, meds, note: note ?? undefined });
 
-  // AI kırmızı bayrak: hastanın serbest-metin notunu değerlendir (keyword taramasının kaçırdığı nüans/bağlam).
-  // Anahtarsız ortamda veya hata → atla; kural + branş-checklist zemini korur, akış asla bozulmaz.
-  let aiSev: "NONE" | "WATCH" | "RED" = "NONE";
-  let aiReason = "";
-  if (userNote.trim().length >= 8 && process.env.ANTHROPIC_API_KEY) {
-    try {
-      const day = Math.max(1, Math.floor((Date.now() - new Date(recovery.startedAt).getTime()) / 86400000) + 1);
-      const ai = await assessPostopNote(userNote, { branch: c.branch, day });
-      aiSev = ai.severity;
-      if (ai.severity !== "NONE") aiReason = `🔍 AI değerlendirmesi: ${ai.reason}`;
-    } catch (e) {
-      console.warn("[checkin] AI not değerlendirmesi atlandı:", e instanceof Error ? e.message : e);
-    }
-  }
+  // AI kırmızı bayrak (Modül 4): hastanın serbest-metin NOTUNU ve yüklediği FOTOĞRAFI değerlendir.
+  // İkisi PARALEL (latency için); anahtarsız ortamda veya hata → atla; kural + branş-checklist zemini korur, akış asla bozulmaz.
+  const day = Math.max(1, Math.floor((Date.now() - new Date(recovery.startedAt).getTime()) / 86400000) + 1);
+  const hasKey = !!process.env.ANTHROPIC_API_KEY;
+  const isPhoto = !!photo && photo.startsWith("data:image");
 
-  const severity = worstSeverity(base.severity, cl.severity, aiSev);
+  const [noteAi, photoAi] = await Promise.all([
+    hasKey && userNote.trim().length >= 8
+      ? assessPostopNote(userNote, { branch: c.branch, day }).catch((e) => {
+          console.warn("[checkin] AI not değerlendirmesi atlandı:", e instanceof Error ? e.message : e);
+          return null;
+        })
+      : Promise.resolve(null),
+    hasKey && isPhoto
+      ? assessPostopPhoto(photo as string, { branch: c.branch, day }).catch((e) => {
+          console.warn("[checkin] AI foto değerlendirmesi atlandı:", e instanceof Error ? e.message : e);
+          return null;
+        })
+      : Promise.resolve(null),
+  ]);
+
+  const aiSev = noteAi?.severity ?? "NONE";
+  const aiReason = noteAi && noteAi.severity !== "NONE" ? `🔍 AI değerlendirmesi: ${noteAi.reason}` : "";
+  const photoSev = photoAi?.severity ?? "NONE";
+  const photoReason = photoAi && photoAi.severity !== "NONE" ? `📷 AI görüntü değerlendirmesi: ${photoAi.findings}` : "";
+
+  const severity = worstSeverity(base.severity, cl.severity, aiSev, photoSev);
   const reasons = [
     ...base.reasons.filter((r) => !(severity !== "NONE" && r.startsWith("Belirti yok"))),
     ...cl.reasons,
     ...(aiReason ? [aiReason] : []),
+    ...(photoReason ? [photoReason] : []),
   ];
 
   const checkIn = await db.checkIn.create({
@@ -59,7 +74,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   });
 
   if (severity === "RED") {
-    const extra = [...cl.reasons, aiReason].filter(Boolean).slice(0, 2).join(", ");
+    const extra = [...cl.reasons, aiReason, photoReason].filter(Boolean).slice(0, 2).join(", ");
     await notifyRoles(["DOCTOR", "COORDINATOR"], {
       type: "RED_FLAG",
       title: `🚨 Kırmızı bayrak: ${c.patientName}`,
