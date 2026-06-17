@@ -11,7 +11,7 @@ export function CaseDicom({ studies }: { studies: DicomStudy[] }) {
   const [src, setSrc] = useState<string | undefined>(undefined);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
         <ScanLine size={15} /> Radyoloji (DICOM)
       </div>

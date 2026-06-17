@@ -44,7 +44,7 @@ export function DoctorPreferences({ languages, markets, capacity, licenseNo }: {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
         <Globe size={15} /> Profil Tercihleri
       </div>
@@ -72,7 +72,7 @@ export function DoctorPreferences({ languages, markets, capacity, licenseNo }: {
           <input
             type="number" min={1} max={200} value={cap}
             onChange={(e) => { setCap(Number(e.target.value)); setSaved(false); }}
-            className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0E9E97]"
+            className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]"
           />
           <span className="text-xs text-slate-500">işlem / ay</span>
         </div>
@@ -86,7 +86,7 @@ export function DoctorPreferences({ languages, markets, capacity, licenseNo }: {
         <input
           type="text" value={lic} placeholder="ör. TR-123456"
           onChange={(e) => { setLic(e.target.value); setSaved(false); }}
-          className="mt-1.5 w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0E9E97]"
+          className="mt-1.5 w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]"
         />
       </div>
 
@@ -95,7 +95,7 @@ export function DoctorPreferences({ languages, markets, capacity, licenseNo }: {
       <button
         onClick={save}
         disabled={saving}
-        className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77] disabled:opacity-60"
+        className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60"
       >
         {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
         {saved ? "Kaydedildi" : "Tercihleri kaydet"}
@@ -109,7 +109,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[#0E9E97] bg-[#0E9E97] text-white" : "border-slate-300 bg-white text-slate-600 hover:border-[#0E9E97]/40 hover:bg-slate-50"}`}
+      className={`rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 bg-white text-slate-600 hover:border-[#14C3D0]/40 hover:bg-slate-50"}`}
     >
       {children}
     </button>

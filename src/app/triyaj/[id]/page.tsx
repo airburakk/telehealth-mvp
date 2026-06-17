@@ -30,7 +30,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-10">
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 flex items-start gap-3">
+      <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 flex items-start gap-3">
         <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" />
         <div>
           <h1 className="font-bold text-emerald-900">{t("Vakanız oluşturuldu ve doktor kuyruğuna eklendi")}</h1>
@@ -40,7 +40,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-xs uppercase tracking-wide text-slate-400">{t("Vaka No")}</div>
@@ -63,7 +63,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
           <p className="mt-1 text-sm text-slate-700">{c.symptoms}</p>
         </div>
 
-        <div className="mt-4 rounded-xl border border-teal-200 bg-teal-50/60 p-4">
+        <div className="mt-4 rounded-2xl border border-teal-200 bg-teal-50/60 p-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-teal-700">
             <Sparkles size={14} /> {t("Triyaj Gerekçesi")}
           </div>
@@ -85,7 +85,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <Link href="/doktor" className="inline-flex items-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77]">
+        <Link href="/doktor" className="inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
           <Stethoscope size={16} /> {t("Doktor panelinde gör")}
         </Link>
         <Link href="/triyaj" className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50">
@@ -100,7 +100,7 @@ function Info({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
   return (
     <div>
       <div className="text-xs uppercase tracking-wide text-slate-400">{k}</div>
-      <div className={`mt-0.5 ${accent ? "font-semibold text-[#0A3F39]" : "text-slate-800"}`}>{v}</div>
+      <div className={`mt-0.5 ${accent ? "font-semibold text-[#101010]" : "text-slate-800"}`}>{v}</div>
     </div>
   );
 }

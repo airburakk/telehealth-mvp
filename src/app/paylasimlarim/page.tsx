@@ -59,17 +59,17 @@ export default async function MySharesPage() {
   return (
     <div className="mx-auto max-w-5xl px-5 py-8">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0E9E97] text-white">
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]">
           <ShieldCheck size={22} />
         </span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0A3F39]">Paylaşım Kontrol Merkezi</h1>
+          <h1 className="text-2xl font-bold text-[#101010]">Paylaşım Kontrol Merkezi</h1>
           <p className="text-sm text-slate-500">Sağlık verilerinizi kendi kontrolünüzde — süreli ve istediğiniz an iptal edilebilir bağlantılarla paylaşın.</p>
         </div>
       </div>
 
       {unseen.length > 0 && (
-        <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <div className="mt-5 rounded-3xl border border-amber-200 bg-amber-50 p-4">
           <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-800">
             <BellRing size={16} /> Yeni erişim bildirimi ({unseen.length})
           </div>

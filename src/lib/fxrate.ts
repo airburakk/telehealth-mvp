@@ -28,7 +28,7 @@ export async function getTryPerUsd(): Promise<FxRate> {
   if (cache && Date.now() - cache.at < TTL_MS) return cache;
   try {
     const r = await fetch(TCMB_URL, {
-      headers: { "User-Agent": "Mozilla/5.0 (Portamed FX)" },
+      headers: { "User-Agent": "Mozilla/5.0 (AURA FX)" },
       signal: AbortSignal.timeout(4500),
       cache: "no-store",
     });

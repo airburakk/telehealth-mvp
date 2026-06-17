@@ -400,7 +400,7 @@ export function shareAccessToAuditEvent(a: ShareAccess, s: ShareForFhir): FhirRe
       ...(a.userAgent ? { name: a.userAgent.slice(0, 200) } : {}),
       network: { address: a.ip || "bilinmiyor", type: "2" }, // 2 = IP adresi
     }],
-    source: { observer: { display: "PortaMed Telehealth" } },
+    source: { observer: { display: "AURA Telehealth" } },
     entity: [{
       what: { reference: `Consent/consent-${s.id}` },
       ...(a.detail ? { detail: [{ type: "downloaded", valueString: a.detail }] } : {}),

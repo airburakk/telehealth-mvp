@@ -107,7 +107,7 @@ export default function RecommendedTreatments({
   const results = catMode ? catRes.filter((p) => !(p.code in sel)) : branchResults;
 
   return (
-    <div className="mt-3 rounded-xl border border-emerald-200 bg-white p-3.5">
+    <div className="mt-3 rounded-2xl border border-emerald-200 bg-white p-3.5">
       <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">
         <ClipboardList size={13} /> Tavsiye Edilen Tedaviler
       </div>
@@ -161,7 +161,7 @@ export default function RecommendedTreatments({
             {entries.map(([code, v]) => {
               const floor = v.floor > 0 ? v.floor : 0;
               const ceil = floor * CEIL_MULT;
-              const color = floor > 0 ? hueFor(v.priceTRY, floor, ceil) : "#0E9E97";
+              const color = floor > 0 ? hueFor(v.priceTRY, floor, ceil) : "#14C3D0";
               const step = floor > 0 ? Math.max(1, Math.round((ceil - floor) / 100)) : 1;
               return (
                 <li key={code} className="rounded-lg border border-slate-200 p-2.5">
@@ -194,7 +194,7 @@ export default function RecommendedTreatments({
       {entries.length > 0 && (
         <div className="mt-2.5 flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
           <span className="text-slate-500">{entries.length} tedavi · toplam</span>
-          <span className="font-bold text-[#0A3F39]">{formatTRY(totalTRY)} <span className="text-xs font-normal text-slate-400">≈ ${tryToUsd(totalTRY, rate).toLocaleString("en-US")}</span></span>
+          <span className="font-bold text-[#101010]">{formatTRY(totalTRY)} <span className="text-xs font-normal text-slate-400">≈ ${tryToUsd(totalTRY, rate).toLocaleString("en-US")}</span></span>
         </div>
       )}
       {msg && <div className="mt-2 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">{msg}</div>}

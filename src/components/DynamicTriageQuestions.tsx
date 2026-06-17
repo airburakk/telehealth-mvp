@@ -50,14 +50,14 @@ export function DynamicTriageQuestions({
             {/* text */}
             {q.type === "text" && (
               <input value={val} onChange={(e) => set(q.label, e.target.value)} placeholder={q.placeholder ? t(q.placeholder) : undefined}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0E9E97]" />
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]" />
             )}
 
             {/* number */}
             {q.type === "number" && (
               <div className="flex items-center gap-2">
                 <input type="number" inputMode="numeric" value={val} onChange={(e) => set(q.label, e.target.value)} placeholder={q.placeholder ? t(q.placeholder) : undefined}
-                  className="w-32 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0E9E97]" />
+                  className="w-32 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]" />
                 {q.unit && <span className="text-sm text-slate-400">{t(q.unit)}</span>}
               </div>
             )}
@@ -94,7 +94,7 @@ export function DynamicTriageQuestions({
               <div className="flex flex-wrap gap-1">
                 {Array.from({ length: 11 }, (_, i) => String(i)).map((n) => (
                   <button key={n} type="button" onClick={() => set(q.label, val === n ? "" : n)}
-                    className={`h-8 w-8 rounded-md text-sm font-medium transition ${val === n ? "bg-[#0E9E97] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
+                    className={`h-8 w-8 rounded-md text-sm font-medium transition ${val === n ? "bg-[#14C3D0] text-[#101010]" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
                     {n}
                   </button>
                 ))}
@@ -110,7 +110,7 @@ export function DynamicTriageQuestions({
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[#0E9E97] bg-[#0E9E97] text-white" : "border-slate-300 bg-white text-slate-600 hover:border-[#0E9E97]/40 hover:bg-slate-50"}`}>
+      className={`rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 bg-white text-slate-600 hover:border-[#14C3D0]/40 hover:bg-slate-50"}`}>
       {children}
     </button>
   );

@@ -416,7 +416,7 @@ export function ConsultationRoom({
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         {/* Video alanı */}
         <div className="space-y-3">
-          <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-900 shadow-lg">
+          <div className="relative aspect-video overflow-hidden rounded-3xl bg-slate-900 shadow-lg">
             {/* Uzak taraf (gerçek video) */}
             <video ref={remoteVideoRef} autoPlay playsInline className={`h-full w-full object-cover ${remoteOn ? "" : "hidden"}`} />
             {!remoteOn && (
@@ -452,7 +452,7 @@ export function ConsultationRoom({
 
             {/* Yerel self-view */}
             {joined && (
-              <div className="absolute bottom-3 right-3 h-28 w-44 overflow-hidden rounded-xl border border-white/20 bg-black/60 shadow-lg">
+              <div className="absolute bottom-3 right-3 h-28 w-44 overflow-hidden rounded-2xl border border-white/20 bg-black/60 shadow-lg">
                 <video ref={localVideoRef} autoPlay muted playsInline className={`h-full w-full object-cover ${camOn ? "" : "hidden"}`} />
                 {!camOn && <div className="grid h-full place-items-center text-center text-[11px] text-white/50"><div><Camera size={18} className="mx-auto mb-1" /> Kamera kapalı</div></div>}
                 <span className="absolute left-1.5 top-1.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white/80">Siz</span>
@@ -490,7 +490,7 @@ export function ConsultationRoom({
 
           {/* Canlı Transkript — iki taraf da kendi konuşmasını yazıya çevirir, karşı tarafa iletilir */}
           {(joined || transcript.length > 0) && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <MessageSquareText size={14} /> Canlı Transkript
@@ -517,7 +517,7 @@ export function ConsultationRoom({
                 )}
                 {transcript.map((l, i) => (
                   <p key={i} className="text-sm leading-snug text-slate-700">
-                    <span className={`font-semibold ${l.who === "doctor" ? "text-[#0A7D77]" : "text-emerald-700"}`}>
+                    <span className={`font-semibold ${l.who === "doctor" ? "text-[#0EA5B2]" : "text-emerald-700"}`}>
                       {l.who === "doctor" ? "Doktor" : "Hasta"}:
                     </span>{" "}
                     {l.text}
@@ -530,7 +530,7 @@ export function ConsultationRoom({
 
           {/* Doktor: hasta bağlantısı paylaş */}
           {isDoctor && (
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-teal-200 bg-teal-50/60 p-3">
+            <div className="flex items-center justify-between gap-2 rounded-2xl border border-teal-200 bg-teal-50/60 p-3">
               <div className="text-sm text-slate-600">
                 <span className="font-semibold text-teal-800">Hastayı davet et:</span> bu görüşme bağlantısını hastayla paylaş.
               </div>
@@ -541,7 +541,7 @@ export function ConsultationRoom({
           )}
 
           {isDoctor && (
-            <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
+            <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3">
               <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" />
               <div className="text-sm text-amber-800"><span className="font-semibold">AI Kritik Uyarı (demo):</span> Hasta dosyasında alerji/ilaç etkileşimi taranıyor.</div>
             </div>
@@ -550,7 +550,7 @@ export function ConsultationRoom({
 
         {/* Sağ panel */}
         <aside className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-slate-800">{caseData.patientName}</h2>
               <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
@@ -558,8 +558,8 @@ export function ConsultationRoom({
               </span>
             </div>
             <div className="mt-1 flex items-center gap-2 text-sm">
-              <Stethoscope size={14} className="text-[#0A7D77]" />
-              <span className="font-medium text-[#0A7D77]">{caseData.branch}</span>
+              <Stethoscope size={14} className="text-[#0EA5B2]" />
+              <span className="font-medium text-[#0EA5B2]">{caseData.branch}</span>
             </div>
             <div className="mt-3">
               <div className="text-xs uppercase tracking-wide text-slate-400">Şikayet</div>
@@ -589,12 +589,12 @@ export function ConsultationRoom({
 
           {/* Not paneli — yalnız doktor */}
           {isDoctor && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Görüşme Notları</div>
                 {saved ? <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600"><Check size={13} /> kaydedildi</span> : <span className="text-[11px] text-amber-600">kaydedilmedi</span>}
               </div>
-              <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#0E9E97]" />
+              <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#14C3D0]" />
 
               {/* Akış: 1) transkriptten taslak → 2) sesli not ekle → 3) SOAP'a dönüştür (güncelle) */}
               <div className="mt-2 grid grid-cols-2 gap-2">
@@ -625,7 +625,7 @@ export function ConsultationRoom({
                 {soapBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} AI · SOAP&apos;a dönüştür
               </button>
               {soapErr && <div className="mt-1 text-[11px] text-red-600">{soapErr}</div>}
-              <button onClick={saveNotes} disabled={saving || saved} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-3 py-2 text-sm font-semibold text-white hover:bg-[#0A7D77] disabled:opacity-50">
+              <button onClick={saveNotes} disabled={saving || saved} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-3 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50">
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Notu kaydet
               </button>
               <div className="mt-3 grid grid-cols-2 gap-2">
@@ -639,7 +639,7 @@ export function ConsultationRoom({
           )}
 
           {isDoctor && (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
+            <div className="rounded-3xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
               <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Tedavi Kararı</div>
 
               {/* M2→M3: doktorun tavsiye ettiği tedaviler (KSHFT listesi + kendi fiyatı) → pakete yansır */}
@@ -668,10 +668,10 @@ export function ConsultationRoom({
               {propErr && <div className="mt-1.5 text-[11px] text-red-600">{propErr}</div>}
 
               {proposal && (
-                <div className="mt-3 rounded-xl border border-violet-200 bg-white p-3.5">
+                <div className="mt-3 rounded-2xl border border-violet-200 bg-white p-3.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-bold text-violet-700">{proposal.proposal.tier}</span>
-                    <span className="text-sm font-bold text-[#0A3F39]">${proposal.quote.total.toLocaleString("en-US")}</span>
+                    <span className="text-sm font-bold text-[#101010]">${proposal.quote.total.toLocaleString("en-US")}</span>
                   </div>
                   <div className="mt-2 text-xs leading-relaxed text-slate-600">
                     {proposal.proposal.nights} gece · {proposal.proposal.hotelStars}★ otel · {proposal.proposal.hospitalType} hastane

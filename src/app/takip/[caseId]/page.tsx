@@ -27,14 +27,14 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href={`/doktor/vaka/${c.id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0A7D77]">
+      <Link href={`/doktor/vaka/${c.id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0EA5B2]">
         <ArrowLeft size={16} /> Vaka detayı
       </Link>
 
       <div className="mt-4 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0E9E97] text-white"><HeartPulse size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><HeartPulse size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0A3F39]">Post-Op Takip</h1>
+          <h1 className="text-2xl font-bold text-[#101010]">Post-Op Takip</h1>
           <p className="text-sm text-slate-500">{c.patientName} · {c.branch} · Tedavi sonrası <strong className="text-slate-700">{day}. gün</strong></p>
         </div>
       </div>
@@ -44,7 +44,7 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
         <div className="space-y-5">
           <CheckInForm caseId={c.id} branch={c.branch} />
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="font-bold text-slate-800">Kontrol geçmişi</h2>
             {recovery.checkIns.length === 0 ? (
               <p className="mt-2 text-sm text-slate-400">Henüz kontrol girilmedi.</p>
@@ -70,7 +70,7 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
                         {ci.photo?.startsWith("data:") && (
                           <a href={ci.photo} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block" title="Büyütmek için aç">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={ci.photo} alt="İyileşme fotoğrafı" className="h-20 w-20 rounded-lg object-cover ring-1 ring-slate-200 transition hover:ring-[#0E9E97]" />
+                            <img src={ci.photo} alt="İyileşme fotoğrafı" className="h-20 w-20 rounded-lg object-cover ring-1 ring-slate-200 transition hover:ring-[#14C3D0]" />
                           </a>
                         )}
                       </div>
@@ -84,7 +84,7 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
 
         {/* Sağ: protokol + hatırlatıcı */}
         <aside className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><CalendarCheck size={15} /> İyileşme Takvimi</div>
             <ol className="mt-3 space-y-0">
               {protocol.map((mst, i) => (
@@ -102,7 +102,7 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
             </ol>
           </div>
 
-          <div className="rounded-2xl border border-teal-200 bg-teal-50/60 p-5">
+          <div className="rounded-3xl border border-teal-200 bg-teal-50/60 p-5">
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700"><Video size={15} /> Tele-Kontrol</div>
             <p className="mt-1.5 text-sm text-slate-600">Kritik dönüm noktalarında doktorunuzla kısa görüşme planlanır.</p>
             <button className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
@@ -110,15 +110,15 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
             </button>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><Pill size={15} /> İlaç Hatırlatıcı</div>
             <p className="mt-1.5 text-sm text-slate-600">Günlük ilaç bildirimleri açık (demo).</p>
           </div>
 
-          <Link href="/paylasimlarim" className="block rounded-2xl border border-[#0E9E97]/20 bg-[#0E9E97]/[0.03] p-5 transition-colors hover:bg-[#0E9E97]/[0.06]">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#0A3F39]"><ShieldCheck size={15} /> Güvenli Paylaşım</div>
+          <Link href="/paylasimlarim" className="block rounded-3xl border border-[#14C3D0]/20 bg-[#14C3D0]/[0.03] p-5 transition-colors hover:bg-[#14C3D0]/[0.06]">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#101010]"><ShieldCheck size={15} /> Güvenli Paylaşım</div>
             <p className="mt-1.5 text-sm text-slate-600">Bu kayıtları kendi ülkenizdeki doktorunuzla süreli ve iptal edilebilir bir bağlantıyla paylaşın.</p>
-            <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0A3F39]">Paylaşım Kontrol Merkezi →</span>
+            <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#101010]">Paylaşım Kontrol Merkezi →</span>
           </Link>
         </aside>
       </div>

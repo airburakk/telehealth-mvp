@@ -178,7 +178,7 @@ export function LiveInterpreter({
   function stop() { teardown(); onMuteRemote(false); setStatus("idle"); }
 
   return (
-    <div className="rounded-2xl border border-teal-200 bg-white p-5 shadow-sm">
+    <div className="rounded-3xl border border-teal-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700">
           <Languages size={15} /> AI Canlı Tercüman

@@ -28,9 +28,9 @@ export default async function DoctorsPage() {
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0E9E97] text-white"><Users size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Users size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0A3F39]">Hekimlerimiz</h1>
+          <h1 className="text-2xl font-bold text-[#101010]">Hekimlerimiz</h1>
           <p className="text-sm text-slate-500">Doğrulanmış, deneyimli uzmanlar — branşa göre filtreleyin.</p>
         </div>
       </div>

@@ -32,21 +32,21 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href="/hekimler" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0A7D77]">
+      <Link href="/hekimler" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0EA5B2]">
         <ArrowLeft size={16} /> Hekimler
       </Link>
 
       {/* Hero */}
-      <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <span className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl ring-1 ring-slate-200"><DoctorArt i={avatarVariant(d.name)} female={isFemaleName(d.name)} /></span>
+          <span className="h-20 w-20 shrink-0 overflow-hidden rounded-3xl ring-1 ring-slate-200"><DoctorArt i={avatarVariant(d.name)} female={isFemaleName(d.name)} /></span>
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold text-slate-800">{d.title} {d.name}</h1>
               {d.verified && <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2.5 py-1 text-xs font-semibold text-teal-700"><BadgeCheck size={14} /> Doğrulanmış</span>}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
-              <span className="inline-flex items-center gap-1 font-medium text-[#0A7D77]"><Stethoscope size={14} /> {d.branch}</span>
+              <span className="inline-flex items-center gap-1 font-medium text-[#0EA5B2]"><Stethoscope size={14} /> {d.branch}</span>
               <span className="inline-flex items-center gap-1"><MapPin size={14} /> {d.city}</span>
               <span className="inline-flex items-center gap-1"><Globe size={14} /> {d.languages.split(",").join(" · ")}</span>
             </div>
@@ -73,7 +73,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
           <Card title="Hasta Yorumları" icon={<Star size={15} />}>
             <ul className="space-y-3">
               {reviews.map((r, i) => (
-                <li key={i} className="rounded-xl border border-slate-200 p-3">
+                <li key={i} className="rounded-2xl border border-slate-200 p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-slate-700">{countryFlag(r.country)} {r.author}</span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700"><CheckCircle2 size={12} /> Doğrulanmış</span>
@@ -134,7 +134,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
             <p className="text-sm leading-relaxed text-slate-600">{academicNote(d)}</p>
           </Card>
 
-          <Link href="/triyaj" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77]">
+          <Link href="/triyaj" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
             <Stethoscope size={16} /> Bu branşta görüşme planla
           </Link>
         </aside>
@@ -145,7 +145,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
 
 function Card({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">{icon} {title}</div>
       <div className="mt-3">{children}</div>
     </div>
@@ -155,10 +155,10 @@ function StatBar({ label, valueText, pct }: { label: string; valueText: string; 
   const p = Math.max(6, Math.min(100, Math.round(pct)));
   const hue = Math.round(40 + (p / 100) * 120); // 40 amber (düşük) → 160 teal/yeşil (yüksek)
   return (
-    <div className="rounded-xl bg-slate-50 p-3">
+    <div className="rounded-2xl bg-slate-50 p-3">
       <div className="flex items-baseline justify-between">
         <span className="text-xs text-slate-500">{label}</span>
-        <span className="text-lg font-bold text-[#0A3F39]">{valueText}</span>
+        <span className="text-lg font-bold text-[#101010]">{valueText}</span>
       </div>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200/70">
         <div className="h-full rounded-full transition-all" style={{ width: `${p}%`, background: `hsl(${hue} 65% 45%)` }} />

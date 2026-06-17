@@ -1,6 +1,6 @@
 {
-  "name": "portamed — Sağlık Turizmi & Teletıp",
-  "short_name": "portamed",
+  "name": "AURA — Sağlık Turizmi & Teletıp",
+  "short_name": "AURA",
   "description": "Triyaj, uzman görüşü ve sağlık turizmi paketlerini birleştiren uçtan uca dijital sağlık platformu.",
   "id": "/",
   "start_url": "/",
@@ -8,7 +8,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
-  "theme_color": "#0A3F39",
+  "theme_color": "#101010",
   "lang": "tr",
   "categories": ["health", "medical"],
   "icons": [

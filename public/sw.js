@@ -1,10 +1,10 @@
-// portamed — Service Worker (PWA faz 2: Web Push)
+// AURA — Service Worker (PWA faz 2: Web Push)
 // Strateji (bilinçli muhafazakâr — sağlık verisi tazeliği önce gelir):
 //   • /api/*           → ASLA önbellek yok, doğrudan ağ (klinik veri + kimlik)
 //   • Sayfa gezinmesi  → network-first; ağ yoksa /offline.html
 //   • /_next/static/*  → cache-first (içerik hash'li, değişmez) + ikonlar
 //   • push             → tarayıcı kapalıyken bildirim göster; tıklayınca ilgili sayfa
-const VERSION = "air-pwa-v3";
+const VERSION = "air-pwa-v4";
 const PRECACHE = ["/offline.html", "/icon-192.png", "/icon-512.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -61,7 +61,7 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch {}
-  const title = data.title || "portamed";
+  const title = data.title || "AURA";
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || "",

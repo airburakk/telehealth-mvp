@@ -33,7 +33,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-10">
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 flex items-start gap-3">
+      <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 flex items-start gap-3">
         <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" />
         <div>
           <h1 className="font-bold text-emerald-900">Paket onaylandı · Ödeme Escrow&apos;da emanette</h1>
@@ -46,13 +46,13 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
       <div className="mt-6 grid gap-5 sm:grid-cols-[1fr_300px]">
         {/* Sol: paket içeriği */}
         <div className="space-y-5">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs uppercase tracking-wide text-slate-400">Rezervasyon No</div>
                 <div className="font-mono text-sm text-slate-700">{booking.id.slice(0, 8).toUpperCase()}</div>
               </div>
-              <span className="rounded-full bg-[#0E9E97] px-3 py-1 text-xs font-semibold text-white">{booking.tier} Paket</span>
+              <span className="rounded-full bg-[#14C3D0] px-3 py-1 text-xs font-semibold text-[#101010]">{booking.tier} Paket</span>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -72,12 +72,12 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
             </ul>
             <div className="mt-3 flex items-end justify-between border-t border-slate-200 pt-3">
               <span className="text-sm font-semibold text-slate-700">Toplam (Escrow)</span>
-              <span className="text-2xl font-bold text-[#0A3F39]">{formatUSD(booking.total)}</span>
+              <span className="text-2xl font-bold text-[#101010]">{formatUSD(booking.total)}</span>
             </div>
           </div>
 
           {/* Hasta yolculuğu */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Hasta Yolculuğu</div>
             <ol className="mt-4 space-y-0">
               {JOURNEY.map((j, i) => {
@@ -101,7 +101,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
 
         {/* Sağ: Escrow + split */}
         <aside className="space-y-4">
-          <div className="rounded-2xl border border-teal-200 bg-teal-50/60 p-5">
+          <div className="rounded-3xl border border-teal-200 bg-teal-50/60 p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-teal-800"><Lock size={16} /> Escrow Durumu</div>
             <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold ring-1 ${esc.color}`}>
               <span className={`h-2 w-2 rounded-full ${esc.dot}`} /> {esc.label}
@@ -111,7 +111,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ödeme Dağılımı (Split)</div>
             <ul className="mt-3 space-y-2 text-sm">
               {split.map((s) => (
@@ -132,7 +132,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
           <Link href={`/sikayet/${c.id}`} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
             <Scale size={15} /> Şikayet / itiraz (Etik Kurul)
           </Link>
-          <Link href="/doktor" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77]">
+          <Link href="/doktor" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
             <Stethoscope size={16} /> Doktor paneline dön
           </Link>
         </aside>

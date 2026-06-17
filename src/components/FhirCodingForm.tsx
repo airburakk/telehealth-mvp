@@ -50,7 +50,7 @@ export function FhirCodingForm({
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
         <Stethoscope size={15} /> Klinik Kodlama (FHIR)
       </div>
@@ -65,7 +65,7 @@ export function FhirCodingForm({
             <select
               value=""
               onChange={(e) => { if (e.target.value) { setIcd(e.target.value); setSaved(false); } }}
-              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none focus:border-[#0E9E97]"
+              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none focus:border-[#14C3D0]"
             >
               <option value="">Branşa özel yaygın tanı seç…</option>
               {icd10Options.map((o) => (
@@ -77,7 +77,7 @@ export function FhirCodingForm({
             value={icd}
             onChange={(e) => { setIcd(e.target.value); setSaved(false); }}
             placeholder="ör. I20.9 (listeden seç ya da elle gir)"
-            className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm uppercase outline-none focus:border-[#0E9E97]"
+            className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm uppercase outline-none focus:border-[#14C3D0]"
           />
           {selectedLabel && <p className="mt-1 text-xs text-teal-600">✓ {selectedLabel}</p>}
         </div>
@@ -87,7 +87,7 @@ export function FhirCodingForm({
             <select
               value={ptype}
               onChange={(e) => { setPtype(e.target.value); setSaved(false); }}
-              className="rounded-lg border border-slate-300 px-2 py-2 text-sm outline-none focus:border-[#0E9E97]"
+              className="rounded-lg border border-slate-300 px-2 py-2 text-sm outline-none focus:border-[#14C3D0]"
             >
               <option value="TC">TC</option>
               <option value="PASSPORT">Pasaport</option>
@@ -97,7 +97,7 @@ export function FhirCodingForm({
               value={pid}
               onChange={(e) => { setPid(e.target.value); setSaved(false); }}
               placeholder="kimlik / pasaport no"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0E9E97]"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]"
             />
           </div>
         </div>
@@ -108,7 +108,7 @@ export function FhirCodingForm({
       <button
         onClick={save}
         disabled={saving}
-        className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77] disabled:opacity-60"
+        className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60"
       >
         {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
         {saved ? "Kaydedildi" : "Kodlamayı kaydet"}

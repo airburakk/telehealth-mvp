@@ -28,7 +28,7 @@ export function OfferActions({ bookingId, total }: { bookingId: string; total: s
   }
 
   if (declined) {
-    return <div className="rounded-xl bg-slate-100 px-4 py-3 text-center text-sm text-slate-600">Teklif reddedildi. Koordinatör bilgilendirildi.</div>;
+    return <div className="rounded-2xl bg-slate-100 px-4 py-3 text-center text-sm text-slate-600">Teklif reddedildi. Koordinatör bilgilendirildi.</div>;
   }
 
   return (

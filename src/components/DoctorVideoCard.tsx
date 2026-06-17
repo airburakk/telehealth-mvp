@@ -25,7 +25,7 @@ export function DoctorVideoCard({
 
       <style>{`
         .dvc { position: relative; aspect-ratio: 16/9; width: 100%; overflow: hidden; border-radius: 0.75rem;
-          background: radial-gradient(120% 120% at 30% 20%, #0E9E97 0%, #0A3F39 55%, #07221f 100%); color: #fff; }
+          background: radial-gradient(120% 120% at 30% 20%, #14C3D0 0%, #101010 55%, #07221f 100%); color: #fff; }
         .dvc-ring { position: absolute; top: -40%; right: -25%; width: 80%; aspect-ratio: 1; border-radius: 50%;
           border: 2px solid rgba(255,255,255,0.10); box-shadow: 0 0 0 18px rgba(255,255,255,0.04), inset 0 0 60px rgba(255,255,255,0.06);
           animation: dvc-spin 18s linear infinite; }

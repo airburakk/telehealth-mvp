@@ -86,14 +86,14 @@ export function PackageBuilder({
       {/* Seçimler */}
       <div className="space-y-4">
         {initial?.aiRationale && (
-          <div className="rounded-xl border border-violet-200 bg-violet-50/70 p-3.5">
+          <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-3.5">
             <div className="text-xs font-semibold uppercase tracking-wide text-violet-700">✨ Sağlık Turizmi Agent&apos;ı teklifi uygulandı</div>
             <p className="mt-1 text-sm leading-relaxed text-slate-600">{initial.aiRationale}</p>
             <p className="mt-1 text-[11px] text-slate-400">Tüm değerleri aşağıdan değiştirebilirsiniz; fiyat platform motorunda hesaplanır.</p>
           </div>
         )}
         {hasTx && (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5">
             <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">🩺 Doktorun tavsiye ettiği tedaviler uygulandı</div>
             <p className="mt-1 text-sm leading-relaxed text-slate-600">
               Tedavi kalemleri ve fiyatları, görüşmeyi yapan doktorun seçtiği işlemlerden (₺) gelir; pakette güncel kurla $ olarak gösterilir.
@@ -109,8 +109,8 @@ export function PackageBuilder({
               <button
                 key={t}
                 onClick={() => applyTier(t)}
-                className={`rounded-xl border px-3 py-3 text-sm font-semibold transition ${
-                  tier === t ? "border-[#0E9E97] bg-[#0E9E97] text-white" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                className={`rounded-2xl border px-3 py-3 text-sm font-semibold transition ${
+                  tier === t ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                 }`}
               >
                 {t}
@@ -185,7 +185,7 @@ export function PackageBuilder({
           </div>
           <div className="mt-2 flex items-end justify-between border-t border-slate-200 pt-3">
             <span className="text-sm font-semibold text-slate-700">Toplam</span>
-            <span className="text-2xl font-bold text-[#0A3F39]">{formatUSD(quote.total)}</span>
+            <span className="text-2xl font-bold text-[#101010]">{formatUSD(quote.total)}</span>
           </div>
           {hasTx && (
             <div className="mt-2 text-[11px] text-slate-400">
@@ -200,7 +200,7 @@ export function PackageBuilder({
           </div>
 
           {sentOffer ? (
-            <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 p-3.5 text-center">
+            <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 p-3.5 text-center">
               <div className="text-sm font-semibold text-violet-900">✓ Teklif {patientName}&apos;e gönderildi</div>
               <p className="mt-0.5 text-xs text-violet-800/80">Hastanın bildirimine düştü. Onayladığında Escrow&apos;a alınır.</p>
               <Link href={`/teklif/${sentOffer}`} className="mt-2.5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">
@@ -235,7 +235,7 @@ export function PackageBuilder({
 }
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">{children}</div>;
+  return <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">{children}</div>;
 }
 function CardTitle({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) {
   return <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">{icon} {children}</div>;
@@ -255,7 +255,7 @@ function Segment({ value, onChange, options, render }: { value: string; onChange
         <button
           key={o}
           onClick={() => onChange(o)}
-          className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${value === o ? "bg-[#0E9E97] text-white" : "text-slate-600 hover:bg-slate-100"}`}
+          className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${value === o ? "bg-[#14C3D0] text-[#101010]" : "text-slate-600 hover:bg-slate-100"}`}
         >
           {render ? render(o) : o}
         </button>

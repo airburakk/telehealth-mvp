@@ -79,7 +79,7 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
   const m = result ? severityMeta(result.severity) : null;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="font-bold text-slate-800">Bugünkü kontrol</h2>
       <p className="text-sm text-slate-500">Durumunuzu paylaşın; ekibiniz uzaktan izliyor.</p>
 
@@ -87,9 +87,9 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
       <div className="mt-5">
         <div className="flex items-center justify-between text-sm">
           <span className="inline-flex items-center gap-1.5 font-medium text-slate-700"><Activity size={15} /> Ağrı düzeyi</span>
-          <span className="font-semibold text-[#0A3F39]">{pain}/10</span>
+          <span className="font-semibold text-[#101010]">{pain}/10</span>
         </div>
-        <input type="range" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} className="mt-2 w-full accent-[#0E9E97]" />
+        <input type="range" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} className="mt-2 w-full accent-[#14C3D0]" />
       </div>
 
       {/* Ateş */}
@@ -98,7 +98,7 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
         <input
           type="number" step="0.1" min={34} max={43} value={feverC}
           onChange={(e) => setFeverC(Number(e.target.value))}
-          className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0E9E97]"
+          className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]"
         />
       </div>
 
@@ -128,7 +128,7 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
                         key={o.v}
                         type="button"
                         onClick={() => setChecklist((p) => ({ ...p, [it.id]: active ? "" : o.v }))}
-                        className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[#0E9E97] bg-[#0E9E97] text-white" : "border-slate-300 bg-white text-slate-600 hover:border-[#0E9E97]/40"}`}
+                        className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 bg-white text-slate-600 hover:border-[#14C3D0]/40"}`}
                       >
                         {o.v}
                       </button>
@@ -147,7 +147,7 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
         <textarea
           value={note} onChange={(e) => setNote(e.target.value)} rows={3}
           placeholder="Örn. Yara bölgesinde hafif kızarıklık var…"
-          className="mt-1.5 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#0E9E97]"
+          className="mt-1.5 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#14C3D0]"
         />
       </div>
 
@@ -172,13 +172,13 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
         </label>
       )}
 
-      <button onClick={submit} disabled={submitting} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-3 text-sm font-semibold text-white hover:bg-[#0A7D77] disabled:opacity-60">
+      <button onClick={submit} disabled={submitting} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-3 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60">
         {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Kontrolü gönder
       </button>
 
       {/* Sonuç */}
       {result && m && (
-        <div className={`mt-4 rounded-xl p-4 ring-1 ${m.badge}`}>
+        <div className={`mt-4 rounded-2xl p-4 ring-1 ${m.badge}`}>
           <div className="flex items-center gap-2 font-semibold">
             {result.severity === "RED" ? <AlertTriangle size={18} /> : result.severity === "WATCH" ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
             {result.severity === "NONE" ? "İyileşme normal" : result.severity === "WATCH" ? "İzleme alındı" : "Acil: ekip bilgilendirildi"}

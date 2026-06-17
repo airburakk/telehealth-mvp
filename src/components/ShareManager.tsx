@@ -62,7 +62,7 @@ function ShareActions({ url, recipient, duration, hasPassword, compact }: {
   const btn = "inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50";
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button onClick={nativeShare} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#0E9E97] px-3 py-2 text-sm font-semibold text-white hover:bg-[#0A7D77]">
+      <button onClick={nativeShare} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#14C3D0] px-3 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
         <Share2 size={15} /> Paylaş
       </button>
       {!compact && (
@@ -139,7 +139,7 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_minmax(320px,380px)]">
       {/* Sol: yeni paylaşım oluştur */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="flex items-center gap-2 font-bold text-slate-800"><Plus size={18} /> Yeni güvenli paylaşım</h2>
         <p className="mt-1 text-sm text-slate-500">Hangi verinin, kim tarafından, ne kadar süre görülebileceğine siz karar verirsiniz.</p>
 
@@ -159,10 +159,10 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
             const on = scopes.includes(s.key);
             return (
               <button type="button" key={s.key} onClick={() => toggleScope(s.key)}
-                className={`flex items-start gap-2.5 rounded-xl border p-3 text-left transition-colors ${on ? "border-[#0E9E97] bg-[#0E9E97]/5 ring-1 ring-[#0E9E97]/20" : "border-slate-200 hover:bg-slate-50"}`}>
-                <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-[#0E9E97] text-white" : "bg-slate-100 text-slate-500"}`}><Icon size={16} /></span>
+                className={`flex items-start gap-2.5 rounded-2xl border p-3 text-left transition-colors ${on ? "border-[#14C3D0] bg-[#14C3D0]/5 ring-1 ring-[#14C3D0]/20" : "border-slate-200 hover:bg-slate-50"}`}>
+                <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-[#14C3D0] text-[#101010]" : "bg-slate-100 text-slate-500"}`}><Icon size={16} /></span>
                 <span className="min-w-0">
-                  <span className="flex items-center gap-1.5 text-sm font-medium text-slate-800">{s.label} {on && <Check size={14} className="text-[#0A3F39]" />}</span>
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-slate-800">{s.label} {on && <Check size={14} className="text-[#101010]" />}</span>
                   <span className="block text-xs text-slate-500">{s.desc}</span>
                 </span>
               </button>
@@ -174,7 +174,7 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
         <div className="mt-1.5 flex flex-wrap gap-2">
           {DURATIONS.map((d) => (
             <button type="button" key={d.key} onClick={() => setDurationKey(d.key)}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${durationKey === d.key ? "border-[#0E9E97] bg-[#0E9E97] text-white" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}>
+              className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${durationKey === d.key ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}>
               {d.label}
             </button>
           ))}
@@ -196,12 +196,12 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
 
         {error && <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"><AlertCircle size={15} /> {error}</div>}
 
-        <button onClick={create} disabled={busy} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0E9E97] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0A7D77] disabled:opacity-50">
+        <button onClick={create} disabled={busy} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50">
           <ShieldCheck size={16} /> {busy ? "Oluşturuluyor…" : "Güvenli link oluştur"}
         </button>
 
         {created && (
-          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+          <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
             <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800"><Check size={16} /> Bağlantı hazır — şimdi paylaşın</div>
             <div className="mt-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs text-slate-600">
               <Link2 size={14} className="shrink-0 text-slate-400" /> <span className="truncate">{created.url}</span>
@@ -212,7 +212,7 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
       </div>
 
       {/* Sağ: aktif paylaşımlar */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="flex items-center gap-2 font-bold text-slate-800">
           <Link2 size={18} /> Paylaşımlarım <span className="text-sm font-normal text-slate-400">({links.length})</span>
         </h2>
@@ -225,7 +225,7 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
               const meta = STATE_META[st];
               const url = `${origin}/paylasim/${l.token}`;
               return (
-                <li key={l.id} className="rounded-xl border border-slate-200 p-3.5">
+                <li key={l.id} className="rounded-2xl border border-slate-200 p-3.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-semibold text-slate-800">{l.recipientName || "Paylaşılan kişi"}</span>
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${meta.badge}`}>{meta.label}</span>

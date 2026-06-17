@@ -38,16 +38,16 @@ export default async function OfferPage({ params }: { params: Promise<{ bookingI
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
-      <Link href="/vakalarim" className="print:hidden inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0A7D77]">
+      <Link href="/vakalarim" className="print:hidden inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0EA5B2]">
         <ArrowLeft size={16} /> Vakalarım
       </Link>
 
       {/* Belge başlığı */}
       <div className="mt-4 flex items-start justify-between gap-3 border-b border-slate-200 pb-5">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-violet-600 text-white"><FileText size={22} /></span>
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-violet-600 text-white"><FileText size={22} /></span>
           <div>
-            <h1 className="text-2xl font-bold text-[#0A3F39]">Tedavi Paketi Teklifi</h1>
+            <h1 className="text-2xl font-bold text-[#101010]">Tedavi Paketi Teklifi</h1>
             <p className="text-sm text-slate-500">{c.patientName} · {countryFlag(c.country)} {countryName(c.country)} · {c.branch}</p>
           </div>
         </div>
@@ -59,7 +59,7 @@ export default async function OfferPage({ params }: { params: Promise<{ bookingI
 
       {/* Durum bandı */}
       {declined ? (
-        <div className="mt-5 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="mt-5 flex items-start gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4">
           <XCircle className="mt-0.5 shrink-0 text-slate-400" />
           <div>
             <div className="font-semibold text-slate-700">Bu teklif reddedildi</div>
@@ -67,7 +67,7 @@ export default async function OfferPage({ params }: { params: Promise<{ bookingI
           </div>
         </div>
       ) : (
-        <div className="mt-5 flex items-start gap-3 rounded-2xl border border-violet-200 bg-violet-50/70 p-4">
+        <div className="mt-5 flex items-start gap-3 rounded-3xl border border-violet-200 bg-violet-50/70 p-4">
           <Sparkles className="mt-0.5 shrink-0 text-violet-600" />
           <div>
             <div className="font-semibold text-violet-900">Size özel hazırlanmış tedavi paketi teklifi</div>
@@ -77,10 +77,10 @@ export default async function OfferPage({ params }: { params: Promise<{ bookingI
       )}
 
       {/* Paket içeriği */}
-      <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Paket içeriği</span>
-          <span className="rounded-full bg-[#0E9E97] px-3 py-1 text-xs font-semibold text-white">{booking.tier} Paket</span>
+          <span className="rounded-full bg-[#14C3D0] px-3 py-1 text-xs font-semibold text-[#101010]">{booking.tier} Paket</span>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
           <Spec icon={<Building2 size={14} />} k="Hastane" v={booking.hospitalType} />
@@ -98,7 +98,7 @@ export default async function OfferPage({ params }: { params: Promise<{ bookingI
         </ul>
         <div className="mt-3 flex items-end justify-between border-t border-slate-200 pt-3">
           <span className="text-sm font-semibold text-slate-700">Toplam</span>
-          <span className="text-2xl font-bold text-[#0A3F39]">{formatUSD(booking.total)}</span>
+          <span className="text-2xl font-bold text-[#101010]">{formatUSD(booking.total)}</span>
         </div>
         <div className="mt-3 flex items-start gap-2 rounded-lg bg-teal-50 px-3 py-2 text-xs text-teal-800 ring-1 ring-teal-100">
           <Lock size={14} className="mt-0.5 shrink-0" />
@@ -107,7 +107,7 @@ export default async function OfferPage({ params }: { params: Promise<{ bookingI
       </div>
 
       {/* Hasta yolculuğu */}
-      <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Hasta Yolculuğu</div>
         <ol className="mt-4 grid gap-3 sm:grid-cols-5">
           {JOURNEY.map((j, i) => {
@@ -131,7 +131,7 @@ export default async function OfferPage({ params }: { params: Promise<{ bookingI
       )}
 
       <p className="mt-6 text-center text-[11px] text-slate-400">
-        Bu teklif PortaMed sağlık turizmi platformu üzerinden hazırlanmıştır · {created}
+        Bu teklif AURA sağlık turizmi platformu üzerinden hazırlanmıştır · {created}
       </p>
     </div>
   );

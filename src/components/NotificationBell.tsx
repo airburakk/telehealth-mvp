@@ -157,7 +157,7 @@ export function NotificationBell() {
 
   return (
     <div ref={boxRef} className="relative">
-      <button onClick={toggle} title="Bildirimler" className="relative grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-[#0A7D77]">
+      <button onClick={toggle} title="Bildirimler" className="relative grid h-9 w-9 place-items-center rounded-lg text-white/55 hover:bg-white/10 hover:text-[#14C3D0]">
         <Bell size={18} />
         {unread > 0 && (
           <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
@@ -167,7 +167,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-11 z-40 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+        <div className="absolute right-0 top-11 z-40 w-80 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Bildirimler</span>
             {loading && <span className="text-[10px] text-slate-400">yenileniyor…</span>}

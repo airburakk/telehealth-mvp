@@ -1,5 +1,5 @@
 // PWA ikon üretici — bağımlılıksız (Node yerleşik zlib ile ham PNG yazar).
-// Tasarım: marka lacivert (#0f2a4a) zemin + beyaz nabız (pulse) çizgisi — Header'daki Activity ikonuyla uyumlu.
+// Tasarım: AURA marka — siyah (#101010) zemin + cyan (#14C3D0) üçgen "A" sembolü.
 // Çalıştırma: node scripts/gen-icons.mjs  → public/icon-192.png, icon-512.png, apple-touch-icon.png
 import { deflateSync } from "node:zlib";
 import { writeFileSync } from "node:fs";
@@ -53,34 +53,42 @@ function segDist(px, py, ax, ay, bx, by) {
   return Math.hypot(px - cx, py - cy);
 }
 
-// PortaMed portal halkası (logo spec: ellipse -18°, round cap) — zümrüt zemin + parlak teal halka
-const BG = [10, 63, 57]; // #0A3F39 emerald
-const FG = [95, 208, 199]; // #5FD0C7 teal-bright
+// AURA "deconstructed" üçgen sembol — 3 yuvarlak blade (ince sol/kalın sağ/yatay alt) + merkez solid üçgen; siyah zemin + cyan
+const BG = [16, 16, 16];   // #101010 siyah
+const FG = [20, 195, 208]; // #14C3D0 cyan
+
+// Nokta üçgenin içinde mi (apex bloğunu doldurmak için)
+function inTri(px, py, a, b, c) {
+  const s = (a[0] - c[0]) * (py - c[1]) - (a[1] - c[1]) * (px - c[0]);
+  const t = (b[0] - a[0]) * (py - a[1]) - (b[1] - a[1]) * (px - a[0]);
+  if ((s < 0) !== (t < 0) && s !== 0 && t !== 0) return false;
+  const d = (c[0] - b[0]) * (py - b[1]) - (c[1] - b[1]) * (px - b[0]);
+  return d === 0 || (d < 0) === (s + t <= 0);
+}
 
 function renderIcon(size) {
-  const s = size / 512;
-  // Halka: 512 uzayında merkez (256,256), rx=118 ry=196, -18°, kalınlık ~56
-  const rx = 118 * s, ry = 196 * s, cx = size / 2, cy = size / 2;
-  const rot = (-18 * Math.PI) / 180;
-  const stroke = 56 * s;
-  // Elipsi parametrik örnekle → nokta bulutuna uzaklıkla kalın halka çiz
-  const pts = [];
-  for (let i = 0; i < 1440; i++) {
-    const a = (i / 1440) * Math.PI * 2;
-    const ex = rx * Math.cos(a), ey = ry * Math.sin(a);
-    pts.push([cx + ex * Math.cos(rot) - ey * Math.sin(rot), cy + ex * Math.sin(rot) + ey * Math.cos(rot)]);
-  }
+  // PortamedLogo AuraMark ile aynı 100-uzay geometrisi → maskable güvenli alana ölçekli/merkezli
+  const f = (size / 100) * 0.80;
+  const c = size / 2;
+  const X = (u) => c + (u - 50) * f;
+  const Y = (v) => c + (v - 50) * f;
+  // AuraMark ile aynı geometri: 3 blade (her biri kendi kalınlığı) + merkez solid üçgen
+  const blades = [
+    [47, 27, 26, 71, 5.5],  // sol ince
+    [54, 20, 76, 69, 8.25], // sağ/apex kalın (tepede baskın)
+    [31, 79, 70, 79, 6.5],  // alt yatay
+  ].map(([ax, ay, bx, by, hw]) => [X(ax), Y(ay), X(bx), Y(by), hw * f]);
+  const tri = [[51, 44], [41, 63], [61, 63]].map(([u, v]) => [X(u), Y(v)]); // merkez üçgen
   const rgba = Buffer.alloc(size * size * 4);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      let d = Infinity;
       const px = x + 0.5, py = y + 0.5;
-      for (const [ex, ey] of pts) {
-        const dd = (px - ex) * (px - ex) + (py - ey) * (py - ey);
-        if (dd < d) d = dd;
+      let t = 0;
+      for (const [ax, ay, bx, by, hw] of blades) {
+        const tt = Math.max(0, Math.min(1, hw + 0.5 - segDist(px, py, ax, ay, bx, by)));
+        if (tt > t) t = tt;
       }
-      d = Math.sqrt(d);
-      const t = Math.max(0, Math.min(1, stroke / 2 + 0.5 - d));
+      if (t < 1 && inTri(px, py, tri[0], tri[1], tri[2])) t = 1; // merkez üçgen dolu
       const o = (y * size + x) * 4;
       rgba[o] = Math.round(BG[0] + (FG[0] - BG[0]) * t);
       rgba[o + 1] = Math.round(BG[1] + (FG[1] - BG[1]) * t);

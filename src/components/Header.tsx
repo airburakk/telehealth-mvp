@@ -45,11 +45,11 @@ export function Header({ user }: { user: { name: string; role: string } | null }
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-white/10 bg-[#101010]/95 backdrop-blur">
       <div className="mx-auto max-w-6xl px-5 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-end gap-2">
-          <PortamedLogo size={23} />
-          <span className="hidden pb-[1px] text-[11px] text-slate-400 sm:block">Sağlık Turizmi & Teletıp</span>
+          <PortamedLogo size={23} ink="#FFFFFF" />
+          <span className="hidden pb-[1px] text-[11px] text-white/45 sm:block">Sağlık Turizmi & Teletıp</span>
         </Link>
 
         <div className="flex items-center gap-1.5">
@@ -61,7 +61,7 @@ export function Header({ user }: { user: { name: string; role: string } | null }
                   key={href}
                   href={href}
                   className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    active ? "bg-[#0E9E97] text-white" : "text-slate-600 hover:bg-slate-100 hover:text-[#0A7D77]"
+                    active ? "bg-[#14C3D0] text-[#101010]" : "text-white/70 hover:bg-white/10 hover:text-[#14C3D0]"
                   }`}
                 >
                   <Icon size={16} />
@@ -72,18 +72,18 @@ export function Header({ user }: { user: { name: string; role: string } | null }
           </nav>
 
           {user ? (
-            <div className="ml-1 flex items-center gap-2 border-l border-slate-200 pl-2">
+            <div className="ml-1 flex items-center gap-2 border-l border-white/10 pl-2">
               <NotificationBell />
               <div className="hidden text-right sm:block">
-                <div className="text-sm font-medium leading-tight text-slate-700">{user.name}</div>
-                <div className="text-[11px] leading-tight text-slate-400">{ROLE_LABELS[user.role] ?? user.role}</div>
+                <div className="text-sm font-medium leading-tight text-white/90">{user.name}</div>
+                <div className="text-[11px] leading-tight text-white/45">{ROLE_LABELS[user.role] ?? user.role}</div>
               </div>
-              <button onClick={logout} title="Çıkış" className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-red-600">
+              <button onClick={logout} title="Çıkış" className="grid h-9 w-9 place-items-center rounded-lg text-white/55 hover:bg-white/10 hover:text-red-400">
                 <LogOut size={17} />
               </button>
             </div>
           ) : (
-            <Link href="/giris" className="ml-1 inline-flex items-center gap-1.5 rounded-lg bg-[#0E9E97] px-3.5 py-2 text-sm font-semibold text-white hover:bg-[#0A7D77]">
+            <Link href="/giris" className="ml-1 inline-flex items-center gap-1.5 rounded-lg bg-[#14C3D0] px-3.5 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
               <LogIn size={16} /> Giriş yap
             </Link>
           )}

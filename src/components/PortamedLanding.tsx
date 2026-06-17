@@ -1,29 +1,31 @@
 "use client";
 
-// PortaMed landing — design_handoff_portamed_landing/README.md spesifikasyonunun birebir uygulaması.
+// AURA landing — design_handoff_portamed_landing/README.md spesifikasyonunun birebir uygulaması.
 // Tema: Light "Editorial Calm" (koyu tema token'ları spec'te hazır; ileride toggle eklenebilir).
 // EN/TR dil anahtarı localStorage'da kalıcıdır. Eski tasarım: design-backup/ + git tag design-klasik-v2.6.
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Newsreader, Hanken_Grotesk } from "next/font/google";
 import { PackArtHair, PackArtSmile, PackArtIvf, DoctorArt, TestimonialArt } from "@/components/PortamedArt";
+import { PortamedLogo } from "@/components/PortamedLogo";
 
 const serif = Newsreader({ subsets: ["latin", "latin-ext"], weight: ["400", "500"] });
 const sans = Hanken_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["300", "400", "500", "600", "700"] });
 
 // ── Design tokens (README "Colors — shared / light") ──
+// ── Design tokens — koyu "AURA" tema (dark-first marka kimliği) ──
 const T = {
-  teal: "#0E9E97",
-  tealDeep: "#0A7D77",
-  emerald: "#0A3F39",
-  ink: "#14211F",
-  bg: "#E4E2DC",
-  surface: "#F7F5EF",
-  surfaceAlt: "#F2EFE7",
-  text: "#14211F",
-  muted: "#5C6663",
-  soft: "#3A4744",
-  border: "rgba(20,33,31,.08)",
+  teal: "#14C3D0",
+  tealDeep: "#0EA5B2",
+  emerald: "#1B1E22", // yükseltilmiş koyu panel (feature) + beyaz buton üstü koyu metin
+  ink: "#1B1E22",     // AI kartı paneli + beyaz buton üstü koyu metin
+  bg: "#0A0A0B",      // sayfa + iç konteyner (en derin)
+  surface: "#15161A", // kartlar (zeminden yükselir)
+  surfaceAlt: "#0E0F12", // bölüm bantları (trust, hekim paneli, footer)
+  text: "#FFFFFF",
+  muted: "rgba(255,255,255,.58)",
+  soft: "rgba(255,255,255,.72)",
+  border: "rgba(255,255,255,.1)",
 };
 
 export interface LandingDoctor { name: string; title: string; branch: string; color: string }
@@ -31,7 +33,7 @@ export interface LandingDoctor { name: string; title: string; branch: string; co
 interface Copy {
   nav: { treatments: string; how: string; doctors: string; clinics: string; signin: string; cta: string };
   hero: {
-    eyebrow: string; h: string; p: string; cta1: string; cta2: string;
+    eyebrow: string; h: string; p: string; cta2: string; cta3: string; cta4: string;
     stats: { n: string; l: string }[];
     cardDoctor: string; cardSpec: string; cardChip: string; badgeTop: string; badgePrice: string;
   };
@@ -51,8 +53,8 @@ const COPY: Record<"en" | "tr", Copy> = {
     hero: {
       eyebrow: "Health tourism & telehealth",
       h: "Your gateway to world-class care in Türkiye.",
-      p: "Triage with AI, meet accredited specialists over video, and travel with an all-inclusive treatment plan — flights, hotel and aftercare handled.",
-      cta1: "Plan my treatment", cta2: "Talk to a doctor now",
+      p: "Triage with AI, meet accredited specialists over video with live interpreting in 70 languages, and travel with an all-inclusive treatment plan — flights, hotel and aftercare handled.",
+      cta2: "Talk to a doctor now", cta3: "Second Opinion", cta4: "Pro Bono",
       stats: [
         { n: "20k+", l: "International patients" },
         { n: "40+", l: "Accredited clinics" },
@@ -106,8 +108,8 @@ const COPY: Record<"en" | "tr", Copy> = {
     hero: {
       eyebrow: "Sağlık turizmi & teletıp",
       h: "Türkiye'de birinci sınıf sağlık hizmetine açılan kapınız.",
-      p: "AI ile triyaj olun, akredite uzmanlarla video görüşün ve her şey dahil tedavi planıyla seyahat edin — uçuş, otel ve iyileşme takibi bizden.",
-      cta1: "Tedavimi planla", cta2: "Hemen doktorla görüş",
+      p: "AI ile triyaj olun, 70 dilde simültane tercüme hizmetiyle akredite uzmanlarla video görüşün ve her şey dahil tedavi planıyla seyahat edin — uçuş, otel ve iyileşme takibi bizden.",
+      cta2: "Hemen doktorla görüş", cta3: "İkinci Görüş", cta4: "Pro Bono",
       stats: [
         { n: "20k+", l: "Uluslararası hasta" },
         { n: "40+", l: "Akredite klinik" },
@@ -158,17 +160,9 @@ const COPY: Record<"en" | "tr", Copy> = {
   },
 };
 
-// ── Logo: "portamed" — "o" yerine portal halkası (spec: rx≈20 ry≈33, -18°, round cap) ──
+// ── Logo: AURA — paylaşılan marka bileşeni (Jost wordmark + üçgen "A") ──
 function Logo({ size = 26 }: { size?: number }) {
-  return (
-    <span className={`${sans.className} inline-flex items-center font-bold`} style={{ fontSize: size, letterSpacing: "-0.035em", color: T.ink }}>
-      <span>p</span>
-      <svg viewBox="0 0 52 76" style={{ height: size * 0.92, margin: "0 0.5px" }} aria-hidden>
-        <ellipse cx="26" cy="38" rx="16" ry="27" transform="rotate(-18 26 38)" fill="none" stroke={T.teal} strokeWidth="8" strokeLinecap="round" />
-      </svg>
-      <span>rta<span style={{ color: T.teal }}>med</span></span>
-    </span>
-  );
+  return <PortamedLogo size={size} ink="#FFFFFF" />;
 }
 
 const pill = "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition";
@@ -186,97 +180,105 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
 
   return (
     <div className={sans.className} style={{ background: T.bg, color: T.text }}>
-      <div className="mx-auto" style={{ maxWidth: 1320, background: T.surface }}>
+      <div className="mx-auto" style={{ maxWidth: 1320, background: T.bg }}>
 
-        {/* 1 · Nav */}
-        <header className="flex items-center justify-between gap-4 px-6 py-5 sm:gap-9 sm:px-12" style={{ borderBottom: `1px solid ${T.border}` }}>
-          <Link href="/" className="shrink-0"><Logo /></Link>
-          <nav className="hidden flex-1 items-center justify-center gap-8 text-[14px] font-medium lg:flex" style={{ color: T.soft }}>
-            <a href="#packages" className="hover:text-[#0A7D77]">{C.nav.treatments}</a>
-            <a href="#how" className="hover:text-[#0A7D77]">{C.nav.how}</a>
-            <a href="#doctors" className="hover:text-[#0A7D77]">{C.nav.doctors}</a>
-            <Link href="/giris" className="hover:text-[#0A7D77]">{C.nav.clinics}</Link>
-          </nav>
-          <div className="flex shrink-0 items-center gap-4">
-            <span className="text-[13px] font-semibold tracking-wide">
-              <button onClick={() => switchLocale("en")} style={{ color: locale === "en" ? T.text : "#9AA5A1" }}>EN</button>
-              <span style={{ color: "#9AA5A1" }}> · </span>
-              <button onClick={() => switchLocale("tr")} style={{ color: locale === "tr" ? T.text : "#9AA5A1" }}>TR</button>
-            </span>
-            <Link href="/giris" className="hidden text-[14px] font-medium hover:text-[#0A7D77] sm:block" style={{ color: T.soft }}>{C.nav.signin}</Link>
-            <Link href={planHref} className={`${pill} px-5 py-[11px] text-[14px] text-white hover:brightness-95`} style={{ background: T.teal }}>{C.nav.cta}</Link>
-          </div>
-        </header>
-
-        {/* 2 · Hero */}
-        <section className="grid items-center gap-11 px-6 pb-16 pt-14 sm:px-12 lg:grid-cols-[1.05fr_0.95fr] lg:pt-[72px]">
-          <div>
-            <span className="inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-[12.5px] font-semibold uppercase tracking-[0.12em]" style={{ background: "rgba(14,158,151,.12)", color: T.tealDeep }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: T.teal }} /> {C.hero.eyebrow}
-            </span>
-            <h1 className={`${serif.className} mt-6 text-[42px] font-medium leading-[1.04] tracking-[-0.015em] sm:text-[54px] lg:text-[62px]`}>
-              {C.hero.h}
-            </h1>
-            <p className="mt-5 max-w-[46ch] text-[18px] leading-[1.6]" style={{ color: T.muted }}>{C.hero.p}</p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href={planHref} className={`${pill} px-6 py-[13px] text-[15px] text-white hover:brightness-95`} style={{ background: T.teal }}>{C.hero.cta1}</Link>
-              <Link href="/giris" className={`${pill} px-6 py-[12px] text-[15px] hover:bg-black/[.04]`} style={{ border: `1.5px solid rgba(20,33,31,.18)`, color: T.text }}>
-                <span className="grid h-5 w-5 place-items-center rounded-full text-[9px]" style={{ background: T.ink, color: "#fff" }}>▶</span>
-                {C.hero.cta2}
-              </Link>
-            </div>
-            <div className="mt-10 flex items-center">
-              {C.hero.stats.map((s, i) => (
-                <div key={s.l} className={i > 0 ? "pl-6 sm:pl-8" : ""} style={i > 0 ? { borderLeft: `1px solid ${T.border}`, marginLeft: 24 } : undefined}>
-                  <div className={`${serif.className} text-[28px] font-medium leading-none sm:text-[30px]`}>{s.n}</div>
-                  <div className="mt-1.5 text-[13px] font-medium" style={{ color: T.muted }}>{s.l}</div>
-                </div>
-              ))}
-            </div>
+        {/* 1+2 · Koyu "AURA" bandı — Nav + Hero (aura glow) */}
+        <div className="relative" style={{ background: "#101010", color: "#fff" }}>
+          <style>{`@keyframes auraFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-26px,22px) scale(1.1)}}@keyframes auraFloat2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(22px,-16px) scale(1.12)}}`}</style>
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute" style={{ right: "-6%", top: "-10%", width: 560, height: 560, borderRadius: "50%", background: "radial-gradient(circle, rgba(20,195,208,.45) 0%, rgba(20,195,208,0) 68%)", filter: "blur(46px)", animation: "auraFloat 11s ease-in-out infinite" }} />
+            <div className="absolute" style={{ right: "16%", top: "30%", width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle, rgba(95,211,226,.28) 0%, rgba(95,211,226,0) 70%)", filter: "blur(44px)", animation: "auraFloat2 14s ease-in-out infinite" }} />
           </div>
 
-          <div className="relative">
-            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[22px]" style={{ border: `1px solid ${T.border}` }}>
-              {/* Gerçek İstanbul: Boğaz + Levent gökdelenleri + köprü (Çamlıca açısı).
-                  Foto: Mehmet Bozgedik · Unsplash (4JilsL1_rrA) — Unsplash License (ticari kullanım serbest). */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/hero-istanbul.jpg"
-                alt="İstanbul — Boğaz, köprü ve Levent gökdelenleri"
-                className="h-full w-full object-cover"
-                style={{ objectPosition: "50% 38%", filter: "saturate(1.08) contrast(1.02)" }}
-              />
-              {/* Marka uyumu: denizi/teal tonları zenginleştiren yumuşak katman */}
-              <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(14,158,151,.10) 0%, rgba(95,208,199,.16) 55%, rgba(10,63,57,.26) 100%)", mixBlendMode: "soft-light" }} />
-              <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(244,241,232,0) 70%, rgba(10,63,57,.18) 100%)" }} />
+          {/* Nav */}
+          <header className="relative z-10 flex items-center justify-between gap-4 px-6 py-5 sm:gap-9 sm:px-12" style={{ borderBottom: "1px solid rgba(255,255,255,.08)" }}>
+            <Link href="/" className="shrink-0"><PortamedLogo size={26} ink="#FFFFFF" /></Link>
+            <nav className="hidden flex-1 items-center justify-center gap-8 text-[14px] font-medium lg:flex" style={{ color: "rgba(255,255,255,.72)" }}>
+              <a href="#packages" className="transition-colors hover:text-[#14C3D0]">{C.nav.treatments}</a>
+              <a href="#how" className="transition-colors hover:text-[#14C3D0]">{C.nav.how}</a>
+              <a href="#doctors" className="transition-colors hover:text-[#14C3D0]">{C.nav.doctors}</a>
+              <Link href="/giris" className="transition-colors hover:text-[#14C3D0]">{C.nav.clinics}</Link>
+            </nav>
+            <div className="flex shrink-0 items-center gap-4">
+              <span className="text-[13px] font-semibold tracking-wide">
+                <button onClick={() => switchLocale("en")} style={{ color: locale === "en" ? "#fff" : "rgba(255,255,255,.45)" }}>EN</button>
+                <span style={{ color: "rgba(255,255,255,.35)" }}> · </span>
+                <button onClick={() => switchLocale("tr")} style={{ color: locale === "tr" ? "#fff" : "rgba(255,255,255,.45)" }}>TR</button>
+              </span>
+              <Link href="/giris" className="hidden text-[14px] font-medium transition-colors hover:text-[#14C3D0] sm:block" style={{ color: "rgba(255,255,255,.72)" }}>{C.nav.signin}</Link>
+              <Link href={planHref} className={`${pill} px-5 py-[11px] text-[14px] text-[#101010] hover:brightness-110`} style={{ background: T.teal }}>{C.nav.cta}</Link>
             </div>
-            {/* Floating: doktor kartı */}
-            <div className="absolute -bottom-5 -left-3 rounded-[18px] p-4 sm:-left-6" style={{ background: T.surface, boxShadow: "0 22px 48px -22px rgba(20,33,31,.5)", border: `1px solid ${T.border}` }}>
-              <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-white" style={{ background: T.teal }}>E</span>
-                <div>
-                  <div className="text-[14.5px] font-semibold">{C.hero.cardDoctor}</div>
-                  <div className="text-[12.5px]" style={{ color: T.muted }}>{C.hero.cardSpec}</div>
-                </div>
+          </header>
+
+          {/* Hero */}
+          <section className="relative z-10 grid items-center gap-11 px-6 pb-20 pt-14 sm:px-12 lg:grid-cols-[1.05fr_0.95fr] lg:pt-[72px]">
+            <div>
+              <span className="inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-[12.5px] font-semibold uppercase tracking-[0.12em]" style={{ background: "rgba(20,195,208,.14)", color: "#5FD3E2" }}>
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: T.teal }} /> {C.hero.eyebrow}
+              </span>
+              <h1 className={`${serif.className} mt-6 text-[42px] font-medium leading-[1.04] tracking-[-0.015em] sm:text-[54px] lg:text-[62px]`} style={{ color: "#fff" }}>
+                {C.hero.h}
+              </h1>
+              <p className="mt-5 max-w-[46ch] text-[18px] font-light leading-[1.6]" style={{ color: "rgba(255,255,255,.66)" }}>{C.hero.p}</p>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link href="/giris" className={`${pill} px-6 py-[13px] text-[15px] text-[#101010] hover:brightness-110`} style={{ background: T.teal, boxShadow: "0 14px 40px -12px rgba(20,195,208,.6)" }}>
+                  <span className="grid h-5 w-5 place-items-center rounded-full text-[9px] text-[#14C3D0]" style={{ background: "#101010" }}>▶</span>
+                  {C.hero.cta2}
+                </Link>
+                <Link href="/second-opinion" className={`${pill} px-6 py-[12px] text-[15px] text-white transition-colors hover:bg-white/[.08]`} style={{ border: "1.5px solid rgba(255,255,255,.22)" }}>{C.hero.cta3}</Link>
+                <Link href="/pro-bono" className={`${pill} px-6 py-[12px] text-[15px] transition-colors hover:bg-white/[.08]`} style={{ border: "1.5px solid rgba(20,195,208,.55)", color: "#5FD3E2" }}>{C.hero.cta4}</Link>
               </div>
-              <div className="mt-3 rounded-full px-3 py-1.5 text-center text-[12px] font-semibold" style={{ background: "rgba(14,158,151,.12)", color: T.tealDeep }}>
-                {C.hero.cardChip}
+              <div className="mt-10 flex items-center">
+                {C.hero.stats.map((s, i) => (
+                  <div key={s.l} className={i > 0 ? "pl-6 sm:pl-8" : ""} style={i > 0 ? { borderLeft: "1px solid rgba(255,255,255,.14)", marginLeft: 24 } : undefined}>
+                    <div className={`${serif.className} text-[28px] font-medium leading-none sm:text-[30px]`} style={{ color: "#fff" }}>{s.n}</div>
+                    <div className="mt-1.5 text-[13px] font-light" style={{ color: "rgba(255,255,255,.55)" }}>{s.l}</div>
+                  </div>
+                ))}
               </div>
             </div>
-            {/* Floating: fiyat rozeti */}
-            <div className="absolute -right-2 top-6 rounded-[16px] px-5 py-3.5 text-white sm:-right-4" style={{ background: T.emerald, boxShadow: "0 22px 48px -22px rgba(20,33,31,.5)" }}>
-              <div className="text-[10.5px] font-semibold uppercase tracking-[0.1em] opacity-75">{C.hero.badgeTop}</div>
-              <div className={`${serif.className} mt-0.5 text-[24px] font-medium leading-none`}>{C.hero.badgePrice}</div>
+
+            <div className="relative">
+              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[24px]" style={{ border: "1px solid rgba(255,255,255,.12)", boxShadow: "0 30px 80px -28px rgba(20,195,208,.5)" }}>
+                {/* Gerçek İstanbul: Boğaz + Levent gökdelenleri + köprü. Foto: Unsplash (4JilsL1_rrA) — Unsplash License. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/hero-istanbul.jpg"
+                  alt="İstanbul — Boğaz, köprü ve Levent gökdelenleri"
+                  className="h-full w-full object-cover"
+                  style={{ objectPosition: "50% 38%", filter: "saturate(1.05) contrast(1.02)" }}
+                />
+                <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(16,16,16,0) 42%, rgba(16,16,16,.5) 100%)" }} />
+                <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(20,195,208,.14) 0%, rgba(20,195,208,0) 45%)", mixBlendMode: "screen" }} />
+              </div>
+              {/* Floating: doktor kartı — koyu cam */}
+              <div className="absolute -bottom-5 -left-3 rounded-[18px] p-4 backdrop-blur sm:-left-6" style={{ background: "rgba(26,28,30,.82)", boxShadow: "0 22px 48px -22px rgba(0,0,0,.7)", border: "1px solid rgba(255,255,255,.1)" }}>
+                <div className="flex items-center gap-3">
+                  <span className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-[#101010]" style={{ background: T.teal }}>E</span>
+                  <div>
+                    <div className="text-[14.5px] font-semibold text-white">{C.hero.cardDoctor}</div>
+                    <div className="text-[12.5px]" style={{ color: "rgba(255,255,255,.6)" }}>{C.hero.cardSpec}</div>
+                  </div>
+                </div>
+                <div className="mt-3 rounded-full px-3 py-1.5 text-center text-[12px] font-semibold" style={{ background: "rgba(20,195,208,.16)", color: "#5FD3E2" }}>
+                  {C.hero.cardChip}
+                </div>
+              </div>
+              {/* Floating: fiyat rozeti — koyu cam + cyan fiyat */}
+              <div className="absolute -right-2 top-6 rounded-[16px] px-5 py-3.5 backdrop-blur sm:-right-4" style={{ background: "rgba(26,28,30,.82)", boxShadow: "0 22px 48px -22px rgba(0,0,0,.7)", border: "1px solid rgba(255,255,255,.1)" }}>
+                <div className="text-[10.5px] font-semibold uppercase tracking-[0.1em]" style={{ color: "rgba(255,255,255,.6)" }}>{C.hero.badgeTop}</div>
+                <div className={`${serif.className} mt-0.5 text-[24px] font-medium leading-none`} style={{ color: "#14C3D0" }}>{C.hero.badgePrice}</div>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
 
         {/* 3 · Trust strip */}
         <section className="flex flex-wrap items-center gap-x-10 gap-y-4 px-6 py-6 sm:px-12" style={{ background: T.surfaceAlt, borderTop: `1px solid ${T.border}` }}>
           <span className="text-[12.5px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.muted }}>{C.trust}</span>
           <div className="flex flex-1 flex-wrap items-center gap-8 opacity-50">
             {["JCI", "ISO 9001", "TÜRSAB", "TGA", "KVKK/GDPR"].map((m) => (
-              <span key={m} className="rounded-md px-3 py-1.5 text-[12px] font-bold tracking-wider" style={{ background: "rgba(20,33,31,.08)", color: T.soft }}>{m}</span>
+              <span key={m} className="rounded-md px-3 py-1.5 text-[12px] font-bold tracking-wider" style={{ background: "rgba(255,255,255,.06)", color: T.soft }}>{m}</span>
             ))}
           </div>
         </section>
@@ -322,7 +324,7 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
           </div>
           <div className="mt-10 grid gap-[22px] sm:grid-cols-2 lg:grid-cols-4">
             {C.how.steps.map((s, i) => (
-              <div key={s.t} className="pt-5" style={{ borderTop: i === 0 ? `2px solid ${T.teal}` : `2px solid rgba(20,33,31,.1)` }}>
+              <div key={s.t} className="pt-5" style={{ borderTop: i === 0 ? `2px solid ${T.teal}` : `2px solid rgba(255,255,255,.14)` }}>
                 <div className={`${serif.className} text-[34px] font-medium leading-none`} style={{ color: T.teal }}>0{i + 1}</div>
                 <div className="mt-3 text-[16.5px] font-semibold">{s.t}</div>
                 <p className="mt-1.5 text-[14px] leading-[1.6]" style={{ color: T.muted }}>{s.d}</p>
@@ -354,7 +356,7 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
             <div className="text-[12.5px] font-semibold uppercase tracking-[0.12em] opacity-70">{C.ai.label}</div>
             <div className="mt-5 space-y-3">
               <div className="ml-auto max-w-[85%] rounded-[14px] rounded-br-[4px] px-4 py-3 text-[14px]" style={{ background: "rgba(255,255,255,.12)" }}>{C.ai.q}</div>
-              <div className="max-w-[90%] rounded-[14px] rounded-bl-[4px] px-4 py-3 text-[14px] leading-[1.55]" style={{ background: T.teal }}>{C.ai.a}</div>
+              <div className="max-w-[90%] rounded-[14px] rounded-bl-[4px] px-4 py-3 text-[14px] leading-[1.55] text-[#101010]" style={{ background: T.teal }}>{C.ai.a}</div>
             </div>
             <Link href={planHref} className={`${pill} mt-auto self-start bg-white px-5 py-[11px] pt-3 text-[14px] hover:brightness-95`} style={{ color: T.ink, marginTop: "auto" }}>
               {C.ai.cta} →
@@ -379,11 +381,11 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
 
         {/* 8 · CTA band */}
         <section className="px-6 pb-16 sm:px-12">
-          <div className="rounded-[20px] px-6 py-14 text-center text-white" style={{ background: T.teal }}>
+          <div className="rounded-[20px] px-6 py-14 text-center text-white" style={{ background: T.emerald }}>
             <h2 className={`${serif.className} mx-auto max-w-[24ch] text-[30px] font-medium leading-[1.1] tracking-[-0.015em] sm:text-[40px]`}>{C.cta.h}</h2>
             <p className="mx-auto mt-4 max-w-[52ch] text-[15.5px] leading-[1.6] opacity-90">{C.cta.p}</p>
             <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-              <Link href={planHref} className={`${pill} bg-white px-6 py-[13px] text-[15px] hover:brightness-95`} style={{ color: T.tealDeep }}>{C.cta.b1}</Link>
+              <Link href={planHref} className={`${pill} bg-white px-6 py-[13px] text-[15px] hover:brightness-95`} style={{ color: "#101010" }}>{C.cta.b1}</Link>
               <Link href="/giris" className={`${pill} px-6 py-[12px] text-[15px] text-white hover:bg-white/25`} style={{ background: "rgba(255,255,255,.16)", border: "1px solid rgba(255,255,255,.35)" }}>{C.cta.b2}</Link>
             </div>
           </div>
@@ -394,7 +396,7 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
           <div className="max-w-xs">
             <Logo size={22} />
             <p className="mt-2 text-[13.5px]" style={{ color: T.muted }}>{C.footer.desc}</p>
-            <p className="mt-4 text-[11.5px]" style={{ color: "#9AA5A1" }}>© {new Date().getFullYear()} portamed · MVP demo</p>
+            <p className="mt-4 text-[11.5px]" style={{ color: "#9AA5A1" }}>© {new Date().getFullYear()} AURA · MVP demo</p>
           </div>
           <div className="flex flex-wrap gap-14">
             {C.footer.cols.map((col) => (
@@ -404,8 +406,8 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
                   {col.links.map((l) => (
                     <li key={l.t}>
                       {l.href.startsWith("#")
-                        ? <a href={l.href} className="hover:text-[#0A7D77]" style={{ color: T.soft }}>{l.t}</a>
-                        : <Link href={l.href} className="hover:text-[#0A7D77]" style={{ color: T.soft }}>{l.t}</Link>}
+                        ? <a href={l.href} className="hover:text-[#0EA5B2]" style={{ color: T.soft }}>{l.t}</a>
+                        : <Link href={l.href} className="hover:text-[#0EA5B2]" style={{ color: T.soft }}>{l.t}</Link>}
                     </li>
                   ))}
                 </ul>
