@@ -110,6 +110,24 @@ export function SoCaseDetail({ data }: { data: SoData }) {
     }
   }
 
+  // talep karşılama (hasta — AWAITING_DOCUMENTS / AWAITING_ADDITIONAL_TESTS)
+  const canFulfill = status === "AWAITING_DOCUMENTS" || status === "AWAITING_ADDITIONAL_TESTS";
+  const [fulfilling, setFulfilling] = useState(false);
+  const [fulfillErr, setFulfillErr] = useState("");
+  async function fulfill() {
+    setFulfillErr("");
+    setFulfilling(true);
+    try {
+      const res = await fetch(`/api/second-opinion/cases/${data.id}/fulfill`, { method: "POST" });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Gönderilemedi.");
+      router.refresh();
+    } catch (e) {
+      setFulfillErr(e instanceof Error ? e.message : "Hata.");
+      setFulfilling(false);
+    }
+  }
+
   const pendingReqs = data.requests.filter((r) => r.status === "PENDING");
 
   return (
@@ -258,6 +276,23 @@ export function SoCaseDetail({ data }: { data: SoData }) {
           </div>
         )}
       </div>
+
+      {/* Talep karşılama (eksik belge / ek tetkik gönderimi) */}
+      {canFulfill && (
+        <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50/60 p-5">
+          <p className="text-sm text-amber-800">
+            Talep edilen belge/tetkikleri yukarıdaki <strong>Belge ekle</strong> bölümünden ekledikten sonra gönderin.
+          </p>
+          {fulfillErr && <p className="mt-2 text-sm text-red-600">{fulfillErr}</p>}
+          <button
+            onClick={fulfill}
+            disabled={fulfilling}
+            className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+          >
+            {fulfilling ? <Loader2 size={16} className="animate-spin" /> : "Belgeleri gönder ve incelemeye sun"}
+          </button>
+        </div>
+      )}
 
       {/* Ödeme (yalnız DRAFT) */}
       {isDraft && !paid && (

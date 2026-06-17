@@ -1,9 +1,10 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { countryFlag, countryName } from "@/lib/constants";
 import { formatUSD } from "@/lib/pricing";
 import {
   BarChart3, Users, Luggage, Wallet, Scale, AlertTriangle, Stethoscope,
-  TrendingUp, Filter, HeartPulse, ShieldCheck, Video,
+  TrendingUp, Filter, HeartPulse, ShieldCheck, Video, ArrowRight,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -84,6 +85,12 @@ export default async function OperationsDashboard() {
   const byStatus: Record<string, number> = {};
   for (const c of cases) byStatus[c.status] = (byStatus[c.status] ?? 0) + 1;
 
+  // İkinci Görüş — koordinatör kuyruğu özeti
+  const [soReviewCount, soActiveCount] = await Promise.all([
+    db.secondOpinionCase.count({ where: { status: "PENDING_REVIEW" } }),
+    db.secondOpinionCase.count({ where: { status: { notIn: ["CLOSED", "CANCELLED"] } } }),
+  ]);
+
   return (
     <div className="mx-auto max-w-6xl px-5 py-8">
       <div className="flex items-center gap-3">
@@ -93,6 +100,16 @@ export default async function OperationsDashboard() {
           <p className="text-sm text-slate-500">S2 Operasyon Şirketi · canlı platform metrikleri</p>
         </div>
       </div>
+
+      <Link href="/operasyon/ikinci-gorus" className="mt-5 flex items-center gap-3 rounded-3xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.06] p-4 transition hover:bg-[#14C3D0]/[0.1]">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Stethoscope size={18} /></span>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-[#101010]">İkinci Görüş — Koordinatör Kuyruğu</div>
+          <p className="text-xs text-slate-500">{soActiveCount} aktif vaka · belge inceleme + doktor atama</p>
+        </div>
+        {soReviewCount > 0 && <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700">{soReviewCount} inceleme bekliyor</span>}
+        <ArrowRight size={16} className="shrink-0 text-[#0E8A95]" />
+      </Link>
 
       {/* KPI kartları */}
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
