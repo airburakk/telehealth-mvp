@@ -112,6 +112,12 @@ export function ConsultationRoom({
 
   useEffect(() => { setSttSupported(!!getSpeechRecognition()); }, []);
 
+  // Süre tüpü: doktor görüşmeye girer girmez başlar (karşı tarafın bağlanmasını beklemez).
+  // Bir kez set edilir; ağ kopup yeniden bağlansa/yenilense bile aynı oturumda sıfırlanmaz.
+  useEffect(() => {
+    if (isDoctor && joined && startTime === null) setStartTime(Date.now());
+  }, [isDoctor, joined, startTime]);
+
   // Sinyal gönder (transkript relay) — effect dışından da kullanılabilir
   async function postSignal(kind: string, data: unknown) {
     try {
@@ -291,7 +297,7 @@ export function ConsultationRoom({
       pc.onconnectionstatechange = () => {
         const s = pc.connectionState;
         setConnState(s);
-        if (s === "connected") { setPhase("connected"); setErrMsg(""); setStartTime((prev) => prev ?? Date.now()); }
+        if (s === "connected") { setPhase("connected"); setErrMsg(""); }
         else if (s === "failed") setErrMsg("Bağlantı kurulamadı (ağ/NAT). En garantisi: iki cihazı aynı Wi-Fi'ya alın, sonra yenileyin.");
       };
       pc.oniceconnectionstatechange = () => setConnState(pc.iceConnectionState);
