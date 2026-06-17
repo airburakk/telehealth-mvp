@@ -8,6 +8,7 @@ import { LiveInterpreter } from "@/components/LiveInterpreter";
 import { ConsultationTimer } from "@/components/ConsultationTimer";
 import RecommendedTreatments from "@/components/RecommendedTreatments";
 import DicomViewer from "@/components/DicomViewer";
+import { getIceServers } from "@/lib/ice";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
   Save, Check, Pill, FlaskConical, Stethoscope, AlertTriangle, Languages, Loader2, Luggage,
@@ -274,16 +275,10 @@ export function ConsultationRoom({
       }
       if (stream && localVideoRef.current) { localVideoRef.current.srcObject = stream; localVideoRef.current.play().catch(() => {}); }
 
-      const pc = new RTCPeerConnection({
-        iceServers: [
-          { urls: "stun:stun.l.google.com:19302" },
-          { urls: "stun:stun1.l.google.com:19302" },
-          // Ücretsiz public TURN (OpenRelay) — mobil/symmetric NAT için relay
-          { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
-          { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
-          { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
-        ],
-      });
+      // ICE sunucuları sunucudan (Metered ephemeral TURN). Cross-network (farklı WiFi/mobil)
+      // bağlantı için TURN relay şart; anahtarsızsa STUN+OpenRelay'e düşer. Bkz. lib/ice + /api/realtime/ice.
+      const iceServers = await getIceServers();
+      const pc = new RTCPeerConnection({ iceServers });
       pcRef.current = pc;
       if (stream) stream.getTracks().forEach((t) => pc.addTrack(t, stream));
       // Kamera/mik yoksa karşı tarafın yayınını alabilmek için alıcı kanal ekle
@@ -298,7 +293,7 @@ export function ConsultationRoom({
         const s = pc.connectionState;
         setConnState(s);
         if (s === "connected") { setPhase("connected"); setErrMsg(""); }
-        else if (s === "failed") setErrMsg("Bağlantı kurulamadı (ağ/NAT). En garantisi: iki cihazı aynı Wi-Fi'ya alın, sonra yenileyin.");
+        else if (s === "failed") setErrMsg("Bağlantı kurulamadı (ağ/NAT). Sayfayı yenileyin; sorun sürerse internet bağlantınızı kontrol edin.");
       };
       pc.oniceconnectionstatechange = () => setConnState(pc.iceConnectionState);
 
