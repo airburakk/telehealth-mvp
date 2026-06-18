@@ -12,7 +12,7 @@ import { getIceServers } from "@/lib/ice";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
   Save, Check, Pill, FlaskConical, Stethoscope, AlertTriangle, Languages, Loader2, Luggage,
-  Copy, Wifi, WifiOff, UserRound, MessageSquareText, FileImage,
+  Copy, Wifi, WifiOff, UserRound, MessageSquareText, FileImage, Volume2,
 } from "lucide-react";
 
 interface CaseData {
@@ -72,6 +72,8 @@ export function ConsultationRoom({
   const [camOn, setCamOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
   const [remoteOn, setRemoteOn] = useState(false);
+  const [remoteAudioBlocked, setRemoteAudioBlocked] = useState(false); // uzak ses autoplay ile engellendi → "Sesi aç" göster
+  const [remoteMutedByInterpreter, setRemoteMutedByInterpreter] = useState(false); // tercüman canlı → uzak kasıtlı kısık
   const [notes, setNotes] = useState(initialNotes);
   const [saved, setSaved] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -166,7 +168,15 @@ export function ConsultationRoom({
       };
       rec.onend = () => {
         if ((sttOnRef.current || dictatingRef.current) && recRef.current === rec) {
-          try { rec.start(); } catch {}
+          // Tercüman başlarken ses giriş cihazı yeniden başlar → start() o an exception atabilir.
+          // Yutma yerine kısa gecikmeyle birkaç kez dene (transkript tercümanla birlikte ayakta kalsın).
+          let tries = 0;
+          const tryStart = () => {
+            if (recRef.current !== rec || !(sttOnRef.current || dictatingRef.current)) return;
+            try { rec.start(); }
+            catch { if (tries++ < 8) setTimeout(tryStart, 250); }
+          };
+          tryStart();
         }
       };
       rec.onerror = (e) => {
@@ -285,7 +295,13 @@ export function ConsultationRoom({
       if (!hasVideo) { try { pc.addTransceiver("video", { direction: "recvonly" }); } catch {} }
       if (!hasAudio) { try { pc.addTransceiver("audio", { direction: "recvonly" }); } catch {} }
       pc.ontrack = (e) => {
-        if (remoteVideoRef.current) { remoteVideoRef.current.srcObject = e.streams[0]; remoteVideoRef.current.play().catch(() => {}); }
+        if (remoteVideoRef.current) {
+          const el = remoteVideoRef.current;
+          el.srcObject = e.streams[0];
+          // Uzak sesi duyulur kıl. Autoplay politikası sesli oynatmayı taze bir jest olmadan engelleyebilir
+          // (özellikle mobil) → reddedilirse "Sesi aç" butonu göster. (LiveInterpreter sesi ayrı yoldan çalar.)
+          el.play().then(() => setRemoteAudioBlocked(false)).catch(() => setRemoteAudioBlocked(true));
+        }
         setRemoteOn(true);
       };
       pc.onicecandidate = (e) => { if (e.candidate) send("ice", e.candidate.toJSON()); };
@@ -315,6 +331,13 @@ export function ConsultationRoom({
 
   function toggleCam() { const t = localStreamRef.current?.getVideoTracks()[0]; if (t) { t.enabled = !t.enabled; setCamOn(t.enabled); } }
   function toggleMic() { const t = localStreamRef.current?.getAudioTracks()[0]; if (t) { t.enabled = !t.enabled; setMicOn(t.enabled); } }
+
+  // Uzak sesi kullanıcı jestiyle aç (autoplay reddini aşar). Tercüman canlıyken bu buton gizli kalır.
+  function enableRemoteAudio() {
+    const el = remoteVideoRef.current; if (!el) return;
+    el.muted = false;
+    el.play().then(() => setRemoteAudioBlocked(false)).catch(() => setRemoteAudioBlocked(true));
+  }
 
   async function saveNotes() {
     setSaving(true);
@@ -426,6 +449,12 @@ export function ConsultationRoom({
           <div className="relative aspect-video overflow-hidden rounded-3xl bg-slate-900 shadow-lg">
             {/* Uzak taraf (gerçek video) */}
             <video ref={remoteVideoRef} autoPlay playsInline className={`h-full w-full object-cover ${remoteOn ? "" : "hidden"}`} />
+            {/* Uzak ses autoplay ile engellendiyse kullanıcı jestiyle aç (tercüman canlıyken gizli) */}
+            {remoteOn && remoteAudioBlocked && !remoteMutedByInterpreter && (
+              <button onClick={enableRemoteAudio} className="absolute left-1/2 top-3 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-lg ring-1 ring-black/5 hover:bg-white">
+                <Volume2 size={14} /> Karşı tarafın sesini aç
+              </button>
+            )}
             {!remoteOn && (
               <div className="absolute inset-0 grid place-items-center p-4 text-center">
                 {!joined ? (
@@ -491,7 +520,7 @@ export function ConsultationRoom({
               targetLabel={isDoctor ? "Türkçe" : caseData.language}
               otherLabel={isDoctor ? caseData.language : "Türkçe"}
               getRemoteStream={() => (remoteVideoRef.current?.srcObject as MediaStream | null) ?? null}
-              onMuteRemote={(m) => { if (remoteVideoRef.current) remoteVideoRef.current.muted = m; }}
+              onMuteRemote={(m) => { if (remoteVideoRef.current) remoteVideoRef.current.muted = m; setRemoteMutedByInterpreter(m); }}
             />
           )}
 
