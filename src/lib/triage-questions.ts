@@ -71,7 +71,6 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
       { id: "ort_complaint", label: "Şikâyet türü", type: "multi", options: ["Ağrı", "Hareket kısıtlılığı", "Şişlik", "Kilitlenme", "Boşalma hissi", "Uyuşma / karıncalanma"] },
       { id: "ort_pain", label: "Ağrı şiddeti", type: "scale", help: "0 = ağrı yok, 10 = dayanılmaz" },
       { id: "ort_trauma", label: "Travma / kaza öyküsü var mı?", type: "bool" },
-      { id: "ort_duration", label: "Şikâyet ne zamandır var?", type: "select", options: ["1 haftadan az", "1-4 hafta", "1-6 ay", "6 aydan fazla"] },
       { id: "ort_walk", label: "Yürüme durumu", type: "select", options: ["Normal", "Aksayarak", "Destekle (baston/koltuk değneği)", "Yürüyemiyor"] },
       { id: "ort_img", label: "Yapılmış görüntüleme", type: "multi", options: ["Röntgen", "MR", "BT", "Yok"] },
       { id: "ort_prior", label: "Daha önce ortopedik ameliyat?", type: "bool" },
@@ -88,7 +87,6 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
       { id: "nor_headache", label: "Baş ağrısı sabaha karşı / kusmayla mı?", type: "select", options: ["Hayır", "Evet", "Baş ağrısı yok"] },
       { id: "nor_img", label: "Yapılmış görüntüleme", type: "multi", options: ["MR", "BT", "EMG", "Yok"] },
       { id: "nor_dx", label: "Bilinen tanı (varsa)", type: "text", placeholder: "Ör. bel fıtığı, beyin tümörü" },
-      { id: "nor_duration", label: "Şikâyet süresi", type: "select", options: ["1 haftadan az", "1-4 hafta", "1-6 ay", "6 aydan fazla"] },
       { id: "nor_prior", label: "Daha önce omurga/beyin ameliyatı?", type: "bool" },
     ],
   },
@@ -98,7 +96,6 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
     questions: [
       { id: "sac_area", label: "Dökülme/seyrelme bölgesi", type: "multi", options: ["Ön saç çizgisi", "Tepe (vertex)", "Şakaklar", "Genel seyrelme", "Sakal", "Kaş"], recommended: true },
       { id: "sac_grade", label: "Dökülme derecesi (Norwood)", type: "select", options: ["Hafif", "Orta", "İleri", "Bilmiyorum"] },
-      { id: "sac_duration", label: "Ne zamandır dökülüyor?", type: "select", options: ["1 yıldan az", "1-3 yıl", "3-5 yıl", "5 yıldan fazla"] },
       { id: "sac_prior", label: "Daha önce saç ekimi yaptırdınız mı?", type: "bool" },
       { id: "sac_donor", label: "Ense (donör) saç yoğunluğu", type: "select", options: ["İyi", "Orta", "Zayıf", "Bilmiyorum"] },
       { id: "sac_meds", label: "Kullanılan saç tedavisi", type: "multi", options: ["Hiçbiri", "Finasterid", "Minoksidil", "PRP", "Mezoterapi"] },
@@ -124,7 +121,6 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
     intro: "Tüp bebek değerlendirmesi için üreme sağlığı geçmişinizi alalım.",
     questions: [
       { id: "ivf_agew", label: "Kadın yaşı", type: "number", unit: "yaş", recommended: true },
-      { id: "ivf_trying", label: "Ne kadardır çocuk sahibi olmaya çalışıyorsunuz?", type: "select", options: ["1 yıldan az", "1-2 yıl", "2-4 yıl", "4 yıldan fazla"], recommended: true },
       { id: "ivf_attempts", label: "Daha önce tüp bebek denemesi", type: "select", options: ["Yok", "1 deneme", "2 deneme", "3 ve üzeri"] },
       { id: "ivf_history", label: "Gebelik / düşük öyküsü", type: "multi", options: ["Yok", "Doğum", "Düşük", "Dış gebelik"] },
       { id: "ivf_dx", label: "Bilinen tanı", type: "multi", options: ["Yok / bilinmiyor", "PCOS", "Endometriozis", "Tüp tıkanıklığı", "Düşük yumurta rezervi", "Erkek faktörü", "Açıklanamayan"] },
@@ -177,7 +173,6 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
     intro: "Dahiliye değerlendirmesi için genel sağlık şikâyetlerinizi alalım.",
     questions: [
       { id: "dah_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Halsizlik", "Tahlil değer yüksekliği", "Mide / bağırsak", "Şeker (diyabet)", "Tansiyon", "Tiroid", "Karaciğer / böbrek", "Kilo değişimi"], recommended: true },
-      { id: "dah_duration", label: "Şikâyet süresi", type: "select", options: ["1 haftadan az", "1-4 hafta", "1-6 ay", "6 aydan fazla"] },
       { id: "dah_fever", label: "Ateş var mı?", type: "select", options: ["Yok", "Hafif", "Yüksek (38.5°C+)"] },
       { id: "dah_weight", label: "İstemsiz kilo kaybı / iştahsızlık?", type: "bool" },
       { id: "dah_labs", label: "Son kan tahlili var mı?", type: "bool" },
@@ -194,7 +189,6 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
       { id: "nrl_seizure", label: "Bilinç kaybı veya nöbet geçirdiniz mi?", type: "bool" },
       { id: "nrl_dx", label: "Bilinen nörolojik tanı", type: "text", placeholder: "Ör. migren, MS, epilepsi / yok" },
       { id: "nrl_img", label: "Yapılmış tetkik", type: "multi", options: ["Beyin MR", "BT", "EEG", "EMG", "Yok"] },
-      { id: "nrl_dur", label: "Şikâyet süresi", type: "select", options: ["1 haftadan az", "1-4 hafta", "1-6 ay", "6 aydan fazla"] },
     ],
   },
 
@@ -206,7 +200,6 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
       { id: "gas_weight", label: "İstemsiz kilo kaybı var mı?", type: "bool" },
       { id: "gas_dx", label: "Bilinen tanı", type: "multi", options: ["Yok", "Reflü", "Gastrit / ülser", "Kolit", "Karaciğer hastalığı", "Safra kesesi"] },
       { id: "gas_scope", label: "Endoskopi / kolonoskopi yapıldı mı?", type: "multi", options: ["Endoskopi", "Kolonoskopi", "Yok"] },
-      { id: "gas_dur", label: "Şikâyet süresi", type: "select", options: ["1 haftadan az", "1-4 hafta", "1-6 ay", "6 aydan fazla"] },
     ],
   },
 
@@ -217,7 +210,6 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
       { id: "end_dx", label: "Bilinen tanı", type: "multi", options: ["Yok", "Hipotiroidi", "Hipertiroidi", "Diyabet", "PCOS", "Osteoporoz"] },
       { id: "end_labs", label: "Tiroid / şeker değerleri biliniyor mu?", type: "bool" },
       { id: "end_weight", label: "Son dönemde kilo değişimi", type: "select", options: ["Yok", "Kilo aldım", "Kilo verdim"] },
-      { id: "end_dur", label: "Şikâyet süresi", type: "select", options: ["1 aydan az", "1-6 ay", "6 ay - 1 yıl", "1 yıldan fazla"] },
     ],
   },
 
@@ -284,7 +276,6 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
       { id: "der_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Sivilce / akne", "Egzama / kaşıntı", "Sedef", "Ben / leke kontrolü", "Saç / tırnak", "Mantar", "Döküntü", "İyileşmeyen yara"], recommended: true },
       { id: "der_area", label: "Etkilenen bölge", type: "text", placeholder: "Ör. yüz, eller, sırt" },
       { id: "der_change", label: "Büyüyen / değişen ben veya yara var mı?", type: "bool", help: "Cilt kanseri taraması açısından önemli." },
-      { id: "der_dur", label: "Ne zamandır var?", type: "select", options: ["1 aydan az", "1-6 ay", "6 ay - 1 yıl", "1 yıldan fazla"] },
       { id: "der_prior", label: "Daha önce kullanılan cilt tedavisi / ilacı", type: "text", placeholder: "Yok / krem-ilaç adı" },
       { id: "der_aesthetic", label: "İlgilenilen estetik dermatoloji", type: "multi", options: ["Yok", "Leke tedavisi", "Lazer", "Dolgu / botoks", "Akne izi", "Cilt gençleştirme"] },
     ],
@@ -294,7 +285,6 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
     intro: "Ruh sağlığı değerlendirmesi için durumunuzu alalım. Verdiğiniz bilgiler gizlidir.",
     questions: [
       { id: "psi_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Depresif duygudurum", "Kaygı / panik", "Uyku sorunu", "Dikkat / odaklanma", "Takıntı (obsesif)", "Duygudurum dalgalanması", "Bağımlılık"], recommended: true },
-      { id: "psi_dur", label: "Şikâyet süresi", type: "select", options: ["1 aydan az", "1-6 ay", "6 ay - 1 yıl", "1 yıldan fazla"] },
       { id: "psi_impact", label: "Günlük yaşamınızı ne kadar etkiliyor?", type: "select", options: ["Hafif", "Orta", "Belirgin"] },
       { id: "psi_prior", label: "Daha önce psikiyatrik tedavi / ilaç aldınız mı?", type: "bool" },
       { id: "psi_risk", label: "Kendinize veya başkasına zarar verme düşünceniz var mı?", type: "select", options: ["Hayır", "Bazen aklıma geliyor", "Evet"], help: "Acil destek için önemlidir; gizli tutulur." },
@@ -308,7 +298,6 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
       { id: "fzt_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Bel / boyun ağrısı", "Kas-eklem ağrısı", "Felç sonrası rehabilitasyon", "Spor yaralanması", "Hareket kısıtlılığı", "Ameliyatsız fıtık tedavisi"], recommended: true },
       { id: "fzt_area", label: "Etkilenen bölge", type: "text", placeholder: "Ör. bel, omuz, diz" },
       { id: "fzt_pain", label: "Ağrı şiddeti", type: "scale", help: "0 = ağrı yok, 10 = dayanılmaz" },
-      { id: "fzt_dur", label: "Şikâyet süresi", type: "select", options: ["1 haftadan az", "1-4 hafta", "1-6 ay", "6 aydan fazla"] },
       { id: "fzt_prior", label: "Daha önce fizik tedavi aldınız mı?", type: "bool" },
       { id: "fzt_img", label: "Yapılmış görüntüleme", type: "multi", options: ["MR", "Röntgen", "BT", "Yok"] },
     ],
@@ -318,7 +307,6 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
     intro: "Çocuk sağlığı değerlendirmesi için bilgileri alalım. (Yaş alanına çocuğun yaşını yazın.)",
     questions: [
       { id: "coc_symp", label: "Ana şikâyet / başvuru", type: "multi", options: ["Ateş / enfeksiyon", "Büyüme-gelişme", "Beslenme", "Aşı", "Alerji", "Solunum (öksürük vb.)", "Sindirim", "Cilt"], recommended: true },
-      { id: "coc_dur", label: "Şikâyet süresi", type: "select", options: ["1-2 gün", "Bir hafta", "Birkaç hafta", "Daha uzun"] },
       { id: "coc_vaccine", label: "Aşıları tam mı?", type: "select", options: ["Evet", "Hayır / eksik", "Bilmiyorum"] },
       { id: "coc_chronic", label: "Çocukta bilinen kronik hastalık", type: "text", placeholder: "Yok / hastalık adı" },
       { id: "coc_birth", label: "Doğum öyküsü (zamanında / erken)", type: "select", options: ["Zamanında", "Erken (prematüre)", "Belirtmek istemiyorum"] },
@@ -343,7 +331,6 @@ export const BRANCH_QUESTIONS: Record<string, BranchQuestionSet> = {
       { id: "kbb_symp", label: "Ana şikâyet(ler)", type: "multi", options: ["Burun tıkanıklığı", "Geniz akıntısı", "İşitme kaybı", "Kulak ağrısı / çınlama", "Boğaz / bademcik", "Ses kısıklığı", "Baş dönmesi", "Horlama"], recommended: true },
       { id: "kbb_hearing", label: "İşitmede azalma var mı?", type: "select", options: ["Yok", "Tek kulakta", "Çift kulakta"] },
       { id: "kbb_proc", label: "İlgilenilen işlem", type: "multi", options: ["Burun estetiği / septum", "Geniz eti / bademcik", "Kulak tüpü / zar", "Sinüs", "Horlama / uyku", "Belirsiz"] },
-      { id: "kbb_dur", label: "Şikâyet süresi", type: "select", options: ["1 haftadan az", "1-4 hafta", "1-6 ay", "6 aydan fazla"] },
       { id: "kbb_tests", label: "Yapılmış tetkik", type: "multi", options: ["Odyometri (işitme testi)", "Sinüs BT", "Endoskopi", "Yok"] },
       { id: "kbb_prior", label: "Geçirilmiş KBB ameliyatı?", type: "bool" },
     ],
