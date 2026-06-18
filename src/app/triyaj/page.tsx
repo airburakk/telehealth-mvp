@@ -9,6 +9,7 @@ import { DynamicTriageQuestions } from "@/components/DynamicTriageQuestions";
 import { questionTexts } from "@/lib/triage-questions";
 import { requiredDocs } from "@/lib/required-docs";
 import { useT } from "@/components/useT";
+import { AuraMark } from "@/components/PortamedLogo";
 import type { Billing } from "@/lib/billing";
 import {
   UserRound, MessageSquareText, Paperclip, ClipboardCheck, ListChecks, Stethoscope,
@@ -23,6 +24,7 @@ const STATIC_UI = [
   "Hasta Adı (veya yakını)", "Örn. Karim B.", "Ülke", "Dil",
   "Şikayetiniz / Semptomlar", "Örn. Babamda akciğer kanseri şüphesi var, biyopsi sonucu çıktı, ikinci görüş istiyoruz.",
   "Şikayet süresi (opsiyonel)", "Örn. 2 ay", "AI ön analizi yap",
+  "Devam'a bastığınızda yapay zeka şikayetinizi analiz edip sizi doğru uzmana yönlendirir.",
   "AI sizi doğru branşa yönlendiriyor…", "Yönlendirilen branş", "elle seçildi", "AI önerisi · doğru değilse değiştirin",
   "Önce şikayet adımında AI ön analizini çalıştırın; sorular branşa göre belirir.",
   "Tıbbi belge yükleyin", "PDF, JPG, DICOM · Tahlil, radyoloji, epikriz",
@@ -291,14 +293,11 @@ export default function TriyajPage() {
             <Field label={t("Şikayet süresi (opsiyonel)")}>
               <input value={durationText} onChange={(e) => setDurationText(e.target.value)} placeholder={t("Örn. 2 ay")} className="inp" />
             </Field>
-            <button
-              onClick={runAnalyze}
-              disabled={analyzing || symptoms.trim().length < 8}
-              className="inline-flex items-center gap-2 rounded-lg bg-teal-50 px-3.5 py-2 text-sm font-medium text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100 disabled:opacity-50"
-            >
-              {analyzing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              {t("AI ön analizi yap")}
-            </button>
+            {!analysis && (
+              <p className="flex items-center gap-1.5 text-xs text-slate-400">
+                <Sparkles size={13} className="text-teal-500" /> {t("Devam'a bastığınızda yapay zeka şikayetinizi analiz edip sizi doğru uzmana yönlendirir.")}
+              </p>
+            )}
             {analysis && u && (
               <AnalysisCard analysis={analysis} badge={u.badge} dot={u.dot} label={u.label} t={t} />
             )}
@@ -309,7 +308,10 @@ export default function TriyajPage() {
         {step === 2 && (
           <div className="space-y-4">
             {analyzing && !analysis && (
-              <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" /> {t("AI sizi doğru branşa yönlendiriyor…")}</div>
+              <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+                <span className="block animate-spin" style={{ animationDuration: "2.4s" }}><AuraMark size={48} /></span>
+                <p className="text-sm font-medium text-slate-500">{t("AI sizi doğru branşa yönlendiriyor…")}</p>
+              </div>
             )}
             {effectiveBranch ? (
               <>
@@ -448,7 +450,12 @@ export default function TriyajPage() {
                 </label>
               </div>
             )}
-            {analyzing && <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" /> {t("Analiz ediliyor…")}</div>}
+            {analyzing && (
+              <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                <span className="block animate-spin" style={{ animationDuration: "2.4s" }}><AuraMark size={40} /></span>
+                <p className="text-sm font-medium text-slate-500">{t("Analiz ediliyor…")}</p>
+              </div>
+            )}
             {analysis && u && <AnalysisCard analysis={analysis} badge={u.badge} dot={u.dot} label={u.label} t={t} />}
             {!analysis && !analyzing && (
               <button onClick={runAnalyze} className="inline-flex items-center gap-2 rounded-lg bg-teal-50 px-3.5 py-2 text-sm font-medium text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100">
