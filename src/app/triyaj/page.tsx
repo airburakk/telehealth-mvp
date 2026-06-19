@@ -3,13 +3,13 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { COUNTRIES, LANGUAGES, urgencyStyle } from "@/lib/constants";
-import { PreConsultGate } from "@/components/PreConsultGate";
+import { PreConsultGate, PRECONSULT_TEXTS } from "@/components/PreConsultGate";
 import { BRANCHES } from "@/lib/triage";
 import { DynamicTriageQuestions } from "@/components/DynamicTriageQuestions";
 import { questionTexts } from "@/lib/triage-questions";
 import { requiredDocs } from "@/lib/required-docs";
 import { useT } from "@/components/useT";
-import { AuraMark } from "@/components/PortamedLogo";
+import { AuraSpinner } from "@/components/PortamedLogo";
 import type { Billing } from "@/lib/billing";
 import {
   UserRound, MessageSquareText, Paperclip, ClipboardCheck, ListChecks, Stethoscope,
@@ -105,7 +105,7 @@ export default function TriyajPage() {
   // Arayüz dili — hasta dil seçince otomatik eşitlenir; üstteki seçiciden de değiştirilebilir.
   const [uiLang, setUiLang] = useState("Türkçe");
   const tTexts = useMemo(
-    () => [...STATIC_UI, ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
+    () => [...STATIC_UI, ...PRECONSULT_TEXTS, ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
     [effectiveBranch, analysis?.reasoning]
   );
   const { t } = useT(uiLang, tTexts);
@@ -309,7 +309,7 @@ export default function TriyajPage() {
           <div className="space-y-4">
             {analyzing && !analysis && (
               <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-                <span className="block animate-spin" style={{ animationDuration: "2.4s" }}><AuraMark size={48} /></span>
+                <AuraSpinner size={48} className="block" />
                 <p className="text-sm font-medium text-slate-500">{t("AI sizi doğru branşa yönlendiriyor…")}</p>
               </div>
             )}
@@ -452,7 +452,7 @@ export default function TriyajPage() {
             )}
             {analyzing && (
               <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                <span className="block animate-spin" style={{ animationDuration: "2.4s" }}><AuraMark size={40} /></span>
+                <AuraSpinner size={40} className="block" />
                 <p className="text-sm font-medium text-slate-500">{t("Analiz ediliyor…")}</p>
               </div>
             )}

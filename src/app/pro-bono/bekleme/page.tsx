@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Users } from "lucide-react";
-import { AuraMark } from "@/components/PortamedLogo";
+import { AuraSpinner } from "@/components/PortamedLogo";
 
 // Pro Bono bekleme odası — eşleşene kadar poll eder; eşleşince görüşme odasına yönlendirir.
 // Hiç çevrimiçi hekim yoksa (online=0) "bir hekim müsait olunca bildirim göndeririz" uyarısı gösterir.
@@ -62,9 +62,7 @@ function WaitingInner() {
       ) : (
         <>
           {/* Dönen AURA logosu (eski dönen halka yerine) */}
-          <span className="mx-auto block w-fit animate-spin" style={{ animationDuration: "2.4s" }}>
-            <AuraMark size={48} />
-          </span>
+          <AuraSpinner size={48} className="mx-auto block" />
           <h1 className="mt-5 text-xl font-bold text-[#101010]">
             {noDoctor ? "Şu an çevrimiçi gönüllü hekim yok" : "Gönüllü hekim aranıyor…"}
           </h1>
@@ -78,7 +76,7 @@ function WaitingInner() {
             </p>
           )}
           <div className={`mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ring-1 ${noDoctor ? "bg-red-50 text-red-700 ring-red-200" : "bg-slate-50 text-slate-600 ring-slate-200"}`}>
-            <span className="inline-block animate-spin" style={{ animationDuration: "2.4s" }}><AuraMark size={15} /></span>
+            <AuraSpinner size={15} className="inline-block" />
             {pos ? (
               <span><Users size={13} className="mb-0.5 mr-1 inline" />Kuyruktaki sıranız: <b className="text-[#101010]">{pos}</b></span>
             ) : (

@@ -13,6 +13,26 @@ const PRIMARY = "inline-flex items-center justify-center gap-1.5 rounded-lg bg-[
 const BACK = "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100";
 const INPUT = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#14C3D0] focus:outline-none";
 
+// Kapının çevrilebilir TÜM statik metinleri — triyaj sayfası bunları useT'ye besler.
+// t() bileşende zaten uygulanıyor; ancak metnin bu listede (yani çeviri fetch'inde) olması
+// ŞART: useT, listede olmayan metin için Türkçe orijinali döndürür (map[s] ?? s).
+export const PRECONSULT_TEXTS: string[] = [
+  "Görüşme bilgisi", "Sigorta", "Doğrulama", "Ödeme",
+  "Uzman görüşmesi — ön bilgilendirme", "Şikayetlerinizi paylaşmadan önce kısa bir bilgilendirme.",
+  "Görüşme ücreti", "Tek seferlik · Tier 1 ön değerlendirme", "Ortalama süre", "15–25 dk",
+  "Uzman hekimle birebir video", "Şikayet ve tıbbi geçmiş değerlendirmesi",
+  "Branş yönlendirmesi ve ikinci görüş", "Tedavi/paket için ön plan", "Devam et",
+  "Sigorta durumu", "Bu görüşmeyi kapsayan bir sağlık sigortanız var mı?",
+  "Evet, sigortam var", "Poliçe numarası ile kapsamı doğrulayın",
+  "Hayır / sigortasız devam", "ödeyerek devam edin", "Geri",
+  "Sigorta poliçesi doğrulama", "Poliçe numaranızı girin; görüşme kapsamı kontrol edilsin.",
+  "Poliçe no (ör. ALZ123456)", "Poliçe numarası geçersiz görünüyor (en az 6 karakter olmalı).",
+  "Dilerseniz ödeme yaparak devam edebilirsiniz.", "Ödeme ile devam", "Doğrula",
+  "Görüşme ücreti:", "Kart bilgileri", "(demo — gerçek ödeme alınmaz)", "Kart numarası",
+  "AA/YY", "öde", "Lütfen geçerli bir kart numarası girin (demo).",
+  "🔒 Ödeme simülasyondur. Gerçek sürümde Iyzico/Stripe + Escrow entegrasyonu kullanılır.",
+];
+
 // t: arayüz çeviri fonksiyonu (hasta arayüzü çok dilli — varsayılan kimlik/Türkçe)
 export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Billing) => void; t?: (s: string) => string }) {
   const [phase, setPhase] = useState<Phase>("info");
@@ -84,7 +104,7 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
               </div>
               <div className="rounded-2xl border border-slate-200 p-4">
                 <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><Clock size={14} /> {t("Ortalama süre")}</div>
-                <div className="mt-1 text-2xl font-bold text-[#101010]">{CONSULT_DURATION_TEXT}</div>
+                <div className="mt-1 text-2xl font-bold text-[#101010]">{t(CONSULT_DURATION_TEXT)}</div>
                 <div className="text-xs text-slate-400">{t("Uzman hekimle birebir video")}</div>
               </div>
             </div>
@@ -124,7 +144,7 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
             <input value={policyNo} onChange={(e) => setPolicyNo(e.target.value)} placeholder={t("Poliçe no (ör. ALZ123456)")} className={`${INPUT} mt-4`} autoFocus />
             {policyMsg && (
               <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                <AlertCircle size={15} className="mt-0.5 shrink-0" /> <span>{policyMsg} {t("Dilerseniz ödeme yaparak devam edebilirsiniz.")}</span>
+                <AlertCircle size={15} className="mt-0.5 shrink-0" /> <span>{t(policyMsg)} {t("Dilerseniz ödeme yaparak devam edebilirsiniz.")}</span>
               </div>
             )}
             <div className="mt-4 flex items-center gap-2">
@@ -149,7 +169,7 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
                 <input placeholder="CVC" className={INPUT} />
               </div>
             </div>
-            {error && <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"><AlertCircle size={15} /> {error}</div>}
+            {error && <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"><AlertCircle size={15} /> {t(error)}</div>}
             <div className="mt-4 flex items-center gap-2">
               <button onClick={() => setPhase("insurance")} className={BACK}><ArrowLeft size={16} /> {t("Geri")}</button>
               <button onClick={pay} disabled={paying} className={`${PRIMARY} ml-auto`}>
