@@ -15,9 +15,7 @@ const STATIC_UI = [
   "Örn. Çocuğumda iki haftadır geçmeyen öksürük ve ateş var; doktora erişimimiz yok.",
   "Şikayet süresi (opsiyonel)", "Örn. 2 hafta",
   "Bu görüşme tamamen ücretsizdir. Gönüllü hekimlerimiz kontenjanları dolana kadar başvuruları sırayla karşılar.",
-  "Bilgilerimin gönüllü hekim eşleştirmesi için işlenmesini ve görüşmenin gizlilik içinde yürütülmesini onaylıyorum.",
   "Lütfen şikayetinizi biraz daha ayrıntılı yazın.",
-  "Devam için onay kutusunu işaretleyin.",
   "Başvur ve eşleş", "Başvurunuz oluşturuluyor…",
   "Pro Bono hizmeti çevrimiçi", "gönüllü hekim şu an müsait", "Şu an çevrimiçi gönüllü hekim yok",
   "Bir hekim çevrimiçi olduğunda başvurabilirsiniz; havuzdayken bir hekim müsait olunca size bildirim göndeririz.",
@@ -32,7 +30,6 @@ export default function ProBonoApplyPage() {
   const [uiLang, setUiLang] = useState("Türkçe");
   const [symptoms, setSymptoms] = useState("");
   const [durationText, setDurationText] = useState("");
-  const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [online, setOnline] = useState<number | null>(null);
@@ -60,13 +57,12 @@ export default function ProBonoApplyPage() {
   async function submit() {
     setError("");
     if (symptoms.trim().length < 8) return setError("Lütfen şikayetinizi biraz daha ayrıntılı yazın.");
-    if (!consent) return setError("Devam için onay kutusunu işaretleyin.");
     setSubmitting(true);
     try {
       const res = await fetch("/api/pro-bono/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patientName, country, language, symptoms, durationText, consent }),
+        body: JSON.stringify({ patientName, country, language, symptoms, durationText, consent: true }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Hata");
       const d = await res.json();
@@ -139,11 +135,6 @@ export default function ProBonoApplyPage() {
         <div className="rounded-2xl border border-teal-200 bg-teal-50/60 px-4 py-3 text-[13px] leading-relaxed text-teal-800">
           {t("Bu görüşme tamamen ücretsizdir. Gönüllü hekimlerimiz kontenjanları dolana kadar başvuruları sırayla karşılar.")}
         </div>
-
-        <label className="flex items-start gap-2 text-[13px] font-medium text-slate-700">
-          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 accent-[#14C3D0]" />
-          <span>{t("Bilgilerimin gönüllü hekim eşleştirmesi için işlenmesini ve görüşmenin gizlilik içinde yürütülmesini onaylıyorum.")}</span>
-        </label>
 
         {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">{t(error)}</div>}
 

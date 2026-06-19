@@ -25,8 +25,6 @@ const S = {
   diagLabel: "Mevcut tanınız / durumunuz",
   diagHint: "Konulan tanıyı, ne zaman ve nasıl tanı aldığınızı kısaca özetleyin.",
   diagPh: "Örn. 3 ay önce sol meme invaziv duktal karsinom tanısı kondu; cerrahi öneriliyor…",
-  consent: "Yükleyeceğim tıbbi belgelerin özel nitelikli kişisel veri olduğunu biliyor; ikinci görüş değerlendirmesi amacıyla işlenmesine ve yetkili sağlık personeliyle paylaşılmasına açık rıza veriyorum.",
-  consentNote: "(KVKK aydınlatma metni — taslak)",
   submit: "Devam et — belge yükleme",
   errGeneric: "Bir hata oluştu.",
 } as const;
@@ -39,11 +37,11 @@ export function SoApplyForm() {
 
   const [diagnosisSummary, setDiagnosisSummary] = useState("");
   const [branch, setBranch] = useState("");
-  const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const canSubmit = consent && diagnosisSummary.trim().length >= 10 && branch && !submitting;
+  // KVKK açık onam girişte bir kez alınır (/onam) → başvuruda tekrar onam kutusu yok.
+  const canSubmit = diagnosisSummary.trim().length >= 10 && branch && !submitting;
 
   async function submit() {
     setError("");
@@ -52,7 +50,7 @@ export function SoApplyForm() {
       const res = await fetch("/api/second-opinion/cases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ consent, diagnosisSummary, branch }),
+        body: JSON.stringify({ consent: true, diagnosisSummary, branch }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || S.errGeneric);
@@ -114,14 +112,6 @@ export function SoApplyForm() {
           placeholder={t(S.diagPh)}
           className="mt-1.5 w-full resize-y rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-[#14C3D0] focus:outline-none focus:ring-2 focus:ring-[#14C3D0]/30"
         />
-
-        {/* KVKK açık rıza kapısı (§8) — mekanizma; nihai hukuki metin kullanıcıda */}
-        <label className="mt-5 flex cursor-pointer items-start gap-2.5 rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
-          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[#14C3D0]" />
-          <span className="text-[13px] leading-relaxed text-slate-600">
-            {t(S.consent)} <span className="text-slate-400">{t(S.consentNote)}</span>
-          </span>
-        </label>
 
         {error && <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 

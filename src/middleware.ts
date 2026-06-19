@@ -1,9 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifyToken } from "@/lib/session";
+import { CONSENT_VERSION } from "@/lib/consent-config";
 
 const DOCTOR_ROLES = ["DOCTOR", "COORDINATOR", "ADMIN"];
 const ETHICS_ROLES = ["ETHICS", "ADMIN"];
 const OPS_ROLES = ["COORDINATOR", "ADMIN"]; // S2 operasyon paneli
+const CONSENT_PATH = "/onam";
 
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
@@ -12,6 +14,17 @@ export async function middleware(req: NextRequest) {
 
   if (!user) {
     const url = new URL("/giris", req.url);
+    url.searchParams.set("next", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Onam sayfası: giriş yeterli (onam kontrolünü atla → döngü olmasın).
+  if (pathname === CONSENT_PATH) return NextResponse.next();
+
+  // KVKK açık onam kapısı: güncel sürümde onam yoksa /onam'a yönlendir (her şeyin ön koşulu).
+  // cv JWT'de taşınır (login/onam'da set edilir) → middleware DB'siz çalışır (Edge).
+  if ((user.cv ?? 0) < CONSENT_VERSION) {
+    const url = new URL(CONSENT_PATH, req.url);
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
@@ -32,6 +45,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    "/onam",
     "/triyaj", "/triyaj/:path*",
     "/hekimler", "/hekim/:path*",
     "/doktor", "/doktor/:path*",

@@ -24,6 +24,21 @@ model User {
   createdAt    DateTime @default(now())
 }
 
+/// KVKK/açık onam kaydı — kullanıcı bazlı, sürümlü (Consent Manager Faz 0).
+/// Bir kez alınır; CONSENT_VERSION (lib/consent-config) artarsa kullanıcı bir kez yeniden onaylar.
+/// scope ileride genişleyebilir (ör. ülkeye/işleme özel ayrı kapsamlar).
+model ConsentRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  scope     String   @default("GENERAL_KVKK")
+  version   Int
+  grantedAt DateTime @default(now())
+  ip        String?
+
+  @@unique([userId, scope, version])
+  @@index([userId])
+}
+
 /// Platformdaki uzman hekim
 model Doctor {
   id            String         @id @default(cuid())

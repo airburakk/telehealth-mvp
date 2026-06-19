@@ -36,7 +36,7 @@ export function LiveInterpreter({
   const [heard, setHeard] = useState("");
   const [trans, setTrans] = useState("");
   const [dbg, setDbg] = useState({ chunks: 0, subs: 0 }); // tanı: gelen ses parçası / altyazı sayısı
-  const [consented, setConsented] = useState(false); // KVKK/GDPR açık rıza kapısı — ses Google'a aktarılmadan önce onay
+  // KVKK açık onam artık giriş sırasında bir kez alınır (lib/consent + /onam) → her video başında tekrar sorulmaz.
 
   const sessionRef = useRef<{ sendRealtimeInput: (x: unknown) => void; close: () => void } | null>(null);
   const capCtxRef = useRef<AudioContext | null>(null);
@@ -201,30 +201,15 @@ export function LiveInterpreter({
 
       {(status === "idle" || status === "error") && (
         <div className="mt-3">
-          {/* Aydınlatma + açık rıza kapısı — ses (özel nitelikli veri) sınır ötesi işlenir.
-              ⚖️ Aşağıdaki metin HUKUKİ TASLAKTIR; veri sorumlusu/hukuk müşaviri nihai hâli vermeli.
-              Bkz. wiki/kavramlar/ai-ceviri-veri-uyumlulugu. */}
-          <div className="rounded-lg bg-slate-50 p-3 text-[11px] leading-relaxed text-slate-600 ring-1 ring-slate-200">
-            <div className="flex items-center gap-1.5 font-semibold text-slate-700">
-              <ShieldCheck size={13} className="text-teal-600" /> Veri işleme bilgilendirmesi (KVKK / GDPR)
-            </div>
-            <p className="mt-1">
-              AI Canlı Tercüman, görüşmedeki sesi gerçek zamanlı çeviri amacıyla Google (Gemini) altyapısına
-              aktarır ve ses yalnızca çeviri için işlenir. Devam etmek için bu aktarıma <strong>açık rıza</strong> gerekir.
-            </p>
-            <label className="mt-2 flex items-start gap-2 font-medium text-slate-700">
-              <input type="checkbox" checked={consented} onChange={(e) => setConsented(e.target.checked)} className="mt-0.5 accent-teal-600" />
-              <span>Bilgilendirmeyi okudum; sesin çeviri için Google'a aktarılmasına <strong>açık rıza</strong> alındı.</span>
-            </label>
-          </div>
+          {/* KVKK açık onam giriş sırasında bir kez alınır (/onam) → burada tekrar kapı yok. */}
           <button
             onClick={start}
-            disabled={!consented}
-            className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
           >
             <Mic size={15} /> Tercümeyi başlat
           </button>
           <p className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-slate-400"><Headphones size={11} /> kulaklık önerilir (hoparlörde yankı olabilir)</p>
+          <p className="mt-1 flex items-start gap-1 text-[10px] leading-relaxed text-slate-400"><ShieldCheck size={11} className="mt-0.5 shrink-0 text-teal-600" /> Ses, girişte verdiğiniz KVKK açık onamı kapsamında yalnızca gerçek zamanlı çeviri için işlenir.</p>
           {err && <p className="mt-1 flex items-start gap-1 text-[11px] text-red-600"><AlertTriangle size={12} className="mt-0.5 shrink-0" /> {err}</p>}
         </div>
       )}
