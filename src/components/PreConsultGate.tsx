@@ -122,12 +122,12 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
             <h2 className="text-lg font-bold text-[#101010]">{t("Sigorta durumu")}</h2>
             <p className="mt-1 text-sm text-slate-500">{t("Bu görüşmeyi kapsayan bir sağlık sigortanız var mı?")}</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <button onClick={() => { setPhase("policy"); setPolicyMsg(""); }} className="rounded-2xl border-2 border-slate-200 p-4 text-left transition-colors hover:border-[#14C3D0] hover:bg-[#14C3D0]/5">
+              <button onClick={() => { setPhase("policy"); setPolicyMsg(""); }} className="rounded-2xl border-2 border-slate-200 p-4 text-start transition-colors hover:border-[#14C3D0] hover:bg-[#14C3D0]/5">
                 <ShieldCheck size={22} className="text-[#101010]" />
                 <div className="mt-2 font-semibold text-slate-800">{t("Evet, sigortam var")}</div>
                 <div className="text-xs text-slate-500">{t("Poliçe numarası ile kapsamı doğrulayın")}</div>
               </button>
-              <button onClick={() => { setError(""); setPhase("payment"); }} className="rounded-2xl border-2 border-slate-200 p-4 text-left transition-colors hover:border-[#14C3D0] hover:bg-[#14C3D0]/5">
+              <button onClick={() => { setError(""); setPhase("payment"); }} className="rounded-2xl border-2 border-slate-200 p-4 text-start transition-colors hover:border-[#14C3D0] hover:bg-[#14C3D0]/5">
                 <CreditCard size={22} className="text-[#101010]" />
                 <div className="mt-2 font-semibold text-slate-800">{t("Hayır / sigortasız devam")}</div>
                 <div className="text-xs text-slate-500">${CONSULT_FEE_USD} {t("ödeyerek devam edin")}</div>
@@ -150,7 +150,7 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
             <div className="mt-4 flex items-center gap-2">
               <button onClick={() => setPhase("insurance")} className={BACK}><ArrowLeft size={16} /> {t("Geri")}</button>
               {policyMsg && <button onClick={() => setPhase("payment")} className="rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">{t("Ödeme ile devam")}</button>}
-              <button onClick={verify} disabled={verifying || policyNo.trim().length < 3} className={`${PRIMARY} ml-auto`}>
+              <button onClick={verify} disabled={verifying || policyNo.trim().length < 3} className={`${PRIMARY} ms-auto`}>
                 {verifying ? <Loader2 size={16} className="animate-spin" /> : <BadgeCheck size={16} />} {t("Doğrula")}
               </button>
             </div>
@@ -172,7 +172,7 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
             {error && <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"><AlertCircle size={15} /> {t(error)}</div>}
             <div className="mt-4 flex items-center gap-2">
               <button onClick={() => setPhase("insurance")} className={BACK}><ArrowLeft size={16} /> {t("Geri")}</button>
-              <button onClick={pay} disabled={paying} className={`${PRIMARY} ml-auto`}>
+              <button onClick={pay} disabled={paying} className={`${PRIMARY} ms-auto`}>
                 {paying ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />} ${CONSULT_FEE_USD} {t("öde")}
               </button>
             </div>

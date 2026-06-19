@@ -18,9 +18,26 @@ export const COUNTRIES: CountryDef[] = [
   { code: "GB", name: "Birleşik Krallık", flag: "🇬🇧", langs: ["İngilizce"] },
   { code: "FR", name: "Fransa", flag: "🇫🇷", langs: ["Fransızca"] },
   { code: "TR", name: "Türkiye", flag: "🇹🇷", langs: ["Türkçe"] },
+  // MENA / Körfez genişlemesi — Arapça (RTL) ve Farsça (RTL) pazarları
+  { code: "SA", name: "Suudi Arabistan", flag: "🇸🇦", langs: ["Arapça", "İngilizce"] },
+  { code: "AE", name: "BAE", flag: "🇦🇪", langs: ["Arapça", "İngilizce"] },
+  { code: "QA", name: "Katar", flag: "🇶🇦", langs: ["Arapça", "İngilizce"] },
+  { code: "KW", name: "Kuveyt", flag: "🇰🇼", langs: ["Arapça"] },
+  { code: "IQ", name: "Irak", flag: "🇮🇶", langs: ["Arapça"] },
+  { code: "IR", name: "İran", flag: "🇮🇷", langs: ["Farsça"] },
 ];
 
-export const LANGUAGES = ["Türkçe", "Rusça", "Azerice", "Arapça", "Fransızca", "İngilizce", "Almanca", "Kazakça", "Kırgızca"];
+export const LANGUAGES = ["Türkçe", "Rusça", "Azerice", "Arapça", "Farsça", "Fransızca", "İngilizce", "Almanca", "Kazakça", "Kırgızca"];
+
+// Sağdan-sola yazılan diller (RTL) — Arapça ve Farsça. Hasta arayüzü bu dillerde
+// `dir="rtl"` ile yansıtılır (langDir). LTR dillerde davranış değişmez.
+const RTL_LANGS = new Set(["Arapça", "Farsça"]);
+export function isRtl(lang?: string | null): boolean {
+  return !!lang && RTL_LANGS.has(lang);
+}
+export function langDir(lang?: string | null): "rtl" | "ltr" {
+  return isRtl(lang) ? "rtl" : "ltr";
+}
 
 export function countryName(code: string): string {
   return COUNTRIES.find((c) => c.code === code)?.name ?? code;

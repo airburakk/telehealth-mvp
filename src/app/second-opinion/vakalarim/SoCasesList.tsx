@@ -6,6 +6,7 @@ import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
 import { useT } from "@/components/useT";
 import { useSoLang, SoLangSelect } from "@/components/SoLocale";
 import { Stethoscope, Plus, ArrowRight, Inbox, Bell } from "lucide-react";
+import { langDir } from "@/lib/constants";
 
 type Row = { id: string; branchLabel: string; status: string; diagnosisSummary: string; createdAt: string; hasPendingReq: boolean };
 
@@ -27,7 +28,7 @@ export function SoCasesList({ rows }: { rows: Row[] }) {
   const { t } = useT(lang, texts);
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-8">
+    <div dir={langDir(lang)} className="mx-auto max-w-3xl px-5 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Stethoscope size={22} /></span>

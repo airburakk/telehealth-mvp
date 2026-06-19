@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { canAccessCase } from "@/lib/ownership";
 import { getTranslations } from "@/lib/i18n";
-import { countryFlag, countryName, urgencyStyle } from "@/lib/constants";
+import { countryFlag, countryName, urgencyStyle, langDir } from "@/lib/constants";
 import { CheckCircle2, FileText, Stethoscope, ArrowRight, Sparkles } from "lucide-react";
 
 // Sonuç sayfası hasta-yüzlü: vaka dili Türkçe değilse statik etiketler + branş + aciliyet
@@ -29,7 +29,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
   const t = (s: string) => tmap[s] ?? s;
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10">
+    <div dir={langDir(c.language)} className="mx-auto max-w-2xl px-5 py-10">
       <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 flex items-start gap-3">
         <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" />
         <div>

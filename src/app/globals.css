@@ -19,6 +19,20 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* RTL (Arapça/Farsça): yalnızca yön bildiren ikonları (ok/chevron) yatay aynala.
+   Düz ikonlara (kalp, kalem, kullanıcı vb.) dokunmaz. dir="rtl" hasta sayfalarının
+   kök kapsayıcısına langDir() ile uygulanır. */
+[dir="rtl"] .lucide-arrow-right,
+[dir="rtl"] .lucide-arrow-left,
+[dir="rtl"] .lucide-arrow-narrow-right,
+[dir="rtl"] .lucide-arrow-narrow-left,
+[dir="rtl"] .lucide-chevron-right,
+[dir="rtl"] .lucide-chevron-left,
+[dir="rtl"] .lucide-corner-down-right,
+[dir="rtl"] .lucide-arrow-up-right {
+  transform: scaleX(-1);
+}
+
 ::selection {
   background: #cfe0f3;
 }

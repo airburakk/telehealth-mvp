@@ -7,6 +7,7 @@ import { SO_DURATION_COPY, SO_FEE_USD } from "@/lib/second-opinion";
 import { useT } from "@/components/useT";
 import { useSoLang, SoLangSelect } from "@/components/SoLocale";
 import { Stethoscope, Clock, Video, ArrowRight, Loader2 } from "lucide-react";
+import { langDir } from "@/lib/constants";
 
 const D = SO_DURATION_COPY.tr;
 const FEE_LINE = `Ücret: ${SO_FEE_USD} USD — peşin ve tek ödeme. Yazılı rapor ve video görüşme dahildir.`;
@@ -63,7 +64,7 @@ export function SoApplyForm() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10">
+    <div dir={langDir(lang)} className="mx-auto max-w-2xl px-5 py-10">
       <div className="flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0]/10 px-4 py-1.5 text-[12.5px] font-semibold uppercase tracking-[0.1em] text-[#0E8A95]">
           <Stethoscope size={15} /> {t(S.eyebrow)}

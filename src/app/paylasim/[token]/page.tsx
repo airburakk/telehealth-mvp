@@ -5,7 +5,7 @@ import { shareState, buildSharedItems, scopeLabel, SHARE_UNLOCK_PREFIX, type Sha
 import { ShareUnlock } from "@/components/ShareUnlock";
 import { ShareLangSelect } from "@/components/ShareLangSelect";
 import { getTranslations } from "@/lib/i18n";
-import { LANGUAGES } from "@/lib/constants";
+import { LANGUAGES, langDir } from "@/lib/constants";
 import {
   Activity, FileText, ScanLine, FlaskConical, Stethoscope,
   ShieldCheck, Clock, Lock, Download, Ban, AlertTriangle, Eye,
@@ -16,10 +16,10 @@ export const maxDuration = 60; // alıcının dilinde ilk (cache'siz) çeviri ~1
 
 const KIND_ICON = { report: FileText, image: ScanLine, lab: FlaskConical, note: Stethoscope } as const;
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, dir = "ltr" }: { children: React.ReactNode; dir?: "ltr" | "rtl" }) {
   return (
     <div className="min-h-screen bg-slate-100">
-      <div className="mx-auto max-w-3xl px-4 py-8">{children}</div>
+      <div dir={dir} className="mx-auto max-w-3xl px-4 py-8">{children}</div>
     </div>
   );
 }
@@ -155,7 +155,7 @@ export default async function ShareViewerPage({
     : null;
 
   return (
-    <Shell>
+    <Shell dir={langDir(lang)}>
       <div className="flex items-center justify-between gap-3">
         <Brand subtitle={t("Güvenli Sağlık Paylaşımı")} />
         <div className="flex items-center gap-2">
@@ -213,8 +213,8 @@ export default async function ShareViewerPage({
                     <tbody>
                       {it.rows.map((r, j) => (
                         <tr key={j} className="border-b border-slate-100 last:border-0">
-                          <td className="py-2 pr-4 text-slate-600">{t(r.k)}</td>
-                          <td className="py-2 text-right font-medium text-slate-800">{t(r.v)}</td>
+                          <td className="py-2 pe-4 text-slate-600">{t(r.k)}</td>
+                          <td className="py-2 text-end font-medium text-slate-800">{t(r.v)}</td>
                         </tr>
                       ))}
                     </tbody>

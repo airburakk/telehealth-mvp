@@ -11,6 +11,7 @@ import {
   Check, AlertTriangle, CreditCard, Loader2, Link2, Upload, FileText,
   CircleCheck, Clock, FlaskConical, ArrowLeft, NotebookPen, Printer, Video,
 } from "lucide-react";
+import { langDir } from "@/lib/constants";
 
 type DocMeta = { id: string; type: string; deliveryMethod: string; externalRef: string | null; label: string | null };
 type SoData = {
@@ -205,7 +206,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-8">
+    <div dir={langDir(lang)} className="mx-auto max-w-2xl px-5 py-8">
       <div className="flex items-center justify-between gap-3">
         <Link href="/second-opinion/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
           <ArrowLeft size={15} /> {t(S.back)}
@@ -278,10 +279,10 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                     {has ? <Check size={14} /> : <span className="text-[11px]">—</span>}
                   </span>
                   <span className="text-sm font-medium text-slate-700">{t(s.label)}</span>
-                  <span className={`ml-auto rounded-full px-2 py-0.5 text-[10.5px] font-semibold ring-1 ${badge.cls}`}>{t(badge.label)}</span>
+                  <span className={`ms-auto rounded-full px-2 py-0.5 text-[10.5px] font-semibold ring-1 ${badge.cls}`}>{t(badge.label)}</span>
                 </div>
                 {items.length > 0 && (
-                  <ul className="mt-2 space-y-1 pl-8">
+                  <ul className="mt-2 space-y-1 ps-8">
                     {items.map((d) => (
                       <li key={d.id} className="flex items-center gap-1.5 text-[12.5px] text-slate-500">
                         {d.deliveryMethod === "EXTERNAL_LINK" ? <Link2 size={12} /> : <FileText size={12} />}
@@ -325,13 +326,13 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                     onClick={() => setMethod("FILE_UPLOAD")}
                     className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "FILE_UPLOAD" ? "bg-[#14C3D0] text-[#101010]" : "text-slate-500"}`}
                   >
-                    <Upload size={13} className="mr-1 inline" /> {t(S.fileBtn)}
+                    <Upload size={13} className="me-1 inline" /> {t(S.fileBtn)}
                   </button>
                   <button
                     onClick={() => setMethod("EXTERNAL_LINK")}
                     className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "EXTERNAL_LINK" ? "bg-[#14C3D0] text-[#101010]" : "text-slate-500"}`}
                   >
-                    <Link2 size={13} className="mr-1 inline" /> {t(S.linkLabel)}
+                    <Link2 size={13} className="me-1 inline" /> {t(S.linkLabel)}
                   </button>
                 </div>
               </div>
@@ -342,7 +343,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                 type="file"
                 accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="mt-3 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700"
+                className="mt-3 block w-full text-sm text-slate-600 file:me-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700"
               />
             ) : (
               <input

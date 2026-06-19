@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { COUNTRIES, LANGUAGES, urgencyStyle } from "@/lib/constants";
+import { COUNTRIES, LANGUAGES, urgencyStyle, langDir } from "@/lib/constants";
 import { PreConsultGate, PRECONSULT_TEXTS } from "@/components/PreConsultGate";
 import { BRANCHES } from "@/lib/triage";
 import { DynamicTriageQuestions } from "@/components/DynamicTriageQuestions";
@@ -179,7 +179,7 @@ export default function TriyajPage() {
   // Ön-konsültasyon kapısı: ücret bilgisi + sigorta/ödeme geçilmeden triyaj başlamaz
   if (!billing) {
     return (
-      <div className="mx-auto max-w-2xl px-5 py-10">
+      <div dir={langDir(uiLang)} className="mx-auto max-w-2xl px-5 py-10">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-[#101010]">{t("Triyaj · Ön Değerlendirme")}</h1>
@@ -195,7 +195,7 @@ export default function TriyajPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10">
+    <div dir={langDir(uiLang)} className="mx-auto max-w-2xl px-5 py-10">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[#101010]">{t("Triyaj · Ön Değerlendirme")}</h1>
@@ -384,7 +384,7 @@ export default function TriyajPage() {
                 <p className="mt-1.5 text-[13px] leading-relaxed text-amber-900/90">
                   {t("Hızlı, doğru ve etkili bir görüşme için gerekli belgelerin eksiksiz yüklenmesi büyük önem taşır. Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi Özet adımında onaylayarak da ilerleyebilirsiniz.")}
                 </p>
-                <ul className="mt-2.5 list-disc space-y-0.5 pl-5 text-[12px] font-medium text-amber-900">
+                <ul className="mt-2.5 list-disc space-y-0.5 ps-5 text-[12px] font-medium text-amber-900">
                   {missingRequired.map((d) => <li key={d.key}>{t(d.label)}</li>)}
                 </ul>
               </div>
@@ -441,7 +441,7 @@ export default function TriyajPage() {
             {missingRequired.length > 0 && (
               <div className="rounded-lg bg-amber-50 px-3 py-2.5 text-sm text-amber-800 ring-1 ring-amber-200">
                 <div className="flex items-center gap-1.5 font-semibold"><AlertTriangle size={15} /> {t("Eksik zorunlu belge")}</div>
-                <ul className="mt-1 list-disc pl-5 text-[13px]">
+                <ul className="mt-1 list-disc ps-5 text-[13px]">
                   {missingRequired.map((d) => <li key={d.key}>{t(d.label)}</li>)}
                 </ul>
                 <label className="mt-2 flex items-start gap-2 text-[13px] font-medium">

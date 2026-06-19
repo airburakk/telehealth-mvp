@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { COUNTRIES, LANGUAGES } from "@/lib/constants";
+import { COUNTRIES, LANGUAGES, langDir } from "@/lib/constants";
 import { useT } from "@/components/useT";
 import { HeartHandshake, Globe, Loader2, ArrowRight } from "lucide-react";
 
@@ -79,7 +79,7 @@ export default function ProBonoApplyPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10">
+    <div dir={langDir(uiLang)} className="mx-auto max-w-2xl px-5 py-10">
       <div className="flex items-start justify-between gap-3">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0]/10 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#0E8A95]">
