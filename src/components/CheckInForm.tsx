@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { severityMeta, postopChecklist, type Severity } from "@/lib/postop";
+import { useT } from "@/components/useT";
 import { Thermometer, Activity, Pill, Camera, Loader2, Send, AlertTriangle, CheckCircle2, X, ListChecks } from "lucide-react";
 
 // İyileşme fotoğrafını tarayıcıda küçültüp JPEG data-URL'e çevirir (S3 yok; AI vision'a + DB'ye uygun, hafif boyut).
@@ -32,9 +33,21 @@ async function downscaleImage(file: File, max = 720, quality = 0.75): Promise<st
   return canvas.toDataURL("image/jpeg", quality);
 }
 
-export function CheckInForm({ caseId, branch }: { caseId: string; branch: string }) {
+// Çevrilen statik metinler (TR kanonik). lang prop RecoveryView'dan gelir → dil seçici tek kaynak.
+const UI = [
+  "Bugünkü kontrol", "Durumunuzu paylaşın; ekibiniz uzaktan izliyor.",
+  "Ağrı düzeyi", "Ateş (°C)", "İlaçlarımı aldım", "günlük kontrol",
+  "Belirti / not", "Örn. Yara bölgesinde hafif kızarıklık var…",
+  "Fotoğraf eklendi", "Gönderince AI görsel ön-değerlendirme yapar.",
+  "Fotoğraf hazırlanıyor…", "İyileşme fotoğrafı ekle (opsiyonel)", "İyileşme fotoğrafı",
+  "Kontrolü gönder",
+  "İyileşme normal", "İzleme alındı", "Acil: ekip bilgilendirildi",
+  "Doktorunuz ve vaka koordinatörünüze acil bildirim gönderildi. Lütfen telefonunuzu açık tutun.",
+];
+
+export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: string; branch: string; lang?: string }) {
   const router = useRouter();
-  const items = postopChecklist(branch);
+  const items = useMemo(() => postopChecklist(branch), [branch]);
   const [pain, setPain] = useState(2);
   const [feverC, setFeverC] = useState(36.6);
   const [meds, setMeds] = useState(true);
@@ -44,6 +57,13 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
   const [checklist, setChecklist] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ severity: Severity; reasons: string[] } | null>(null);
+
+  // Çeviri listesi: statik UI + branş + checklist (label + seçenek değerleri) + (geldiğinde) AI gerekçeleri.
+  const texts = useMemo(
+    () => [...UI, branch, ...items.flatMap((it) => [it.label, ...it.options.map((o) => o.v)]), ...(result?.reasons ?? [])],
+    [branch, items, result],
+  );
+  const { t } = useT(lang, texts);
 
   async function onPickPhoto(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -80,13 +100,13 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="font-bold text-slate-800">Bugünkü kontrol</h2>
-      <p className="text-sm text-slate-500">Durumunuzu paylaşın; ekibiniz uzaktan izliyor.</p>
+      <h2 className="font-bold text-slate-800">{t("Bugünkü kontrol")}</h2>
+      <p className="text-sm text-slate-500">{t("Durumunuzu paylaşın; ekibiniz uzaktan izliyor.")}</p>
 
       {/* Ağrı */}
       <div className="mt-5">
         <div className="flex items-center justify-between text-sm">
-          <span className="inline-flex items-center gap-1.5 font-medium text-slate-700"><Activity size={15} /> Ağrı düzeyi</span>
+          <span className="inline-flex items-center gap-1.5 font-medium text-slate-700"><Activity size={15} /> {t("Ağrı düzeyi")}</span>
           <span className="font-semibold text-[#101010]">{pain}/10</span>
         </div>
         <input type="range" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} className="mt-2 w-full accent-[#14C3D0]" />
@@ -94,7 +114,7 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
 
       {/* Ateş */}
       <div className="mt-4">
-        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700"><Thermometer size={15} /> Ateş (°C)</span>
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700"><Thermometer size={15} /> {t("Ateş (°C)")}</span>
         <input
           type="number" step="0.1" min={34} max={43} value={feverC}
           onChange={(e) => setFeverC(Number(e.target.value))}
@@ -103,10 +123,10 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
       </div>
 
       {/* İlaç */}
-      <button onClick={() => setMeds((v) => !v)} className="mt-4 flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5 text-left hover:border-slate-300">
-        <span className="inline-flex items-center gap-2 text-sm font-medium text-slate-700"><Pill size={16} className="text-slate-500" /> İlaçlarımı aldım</span>
+      <button onClick={() => setMeds((v) => !v)} className="mt-4 flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5 text-start hover:border-slate-300">
+        <span className="inline-flex items-center gap-2 text-sm font-medium text-slate-700"><Pill size={16} className="text-slate-500" /> {t("İlaçlarımı aldım")}</span>
         <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${meds ? "bg-emerald-500" : "bg-slate-300"}`}>
-          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${meds ? "left-[22px]" : "left-0.5"}`} />
+          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${meds ? "start-[22px]" : "start-0.5"}`} />
         </span>
       </button>
 
@@ -114,12 +134,12 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
       {items.length > 0 && (
         <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
           <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <ListChecks size={14} /> {branch} · günlük kontrol
+            <ListChecks size={14} /> {t(branch)} · {t("günlük kontrol")}
           </div>
           <div className="mt-2.5 space-y-2.5">
             {items.map((it) => (
               <div key={it.id}>
-                <div className="text-sm text-slate-700">{it.label}</div>
+                <div className="text-sm text-slate-700">{t(it.label)}</div>
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {it.options.map((o) => {
                     const active = checklist[it.id] === o.v;
@@ -130,7 +150,7 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
                         onClick={() => setChecklist((p) => ({ ...p, [it.id]: active ? "" : o.v }))}
                         className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 bg-white text-slate-600 hover:border-[#14C3D0]/40"}`}
                       >
-                        {o.v}
+                        {t(o.v)}
                       </button>
                     );
                   })}
@@ -143,10 +163,10 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
 
       {/* Not */}
       <div className="mt-4">
-        <span className="text-sm font-medium text-slate-700">Belirti / not</span>
+        <span className="text-sm font-medium text-slate-700">{t("Belirti / not")}</span>
         <textarea
           value={note} onChange={(e) => setNote(e.target.value)} rows={3}
-          placeholder="Örn. Yara bölgesinde hafif kızarıklık var…"
+          placeholder={t("Örn. Yara bölgesinde hafif kızarıklık var…")}
           className="mt-1.5 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#14C3D0]"
         />
       </div>
@@ -155,10 +175,10 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
       {photo ? (
         <div className="mt-3 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photo} alt="İyileşme fotoğrafı" className="h-16 w-16 shrink-0 rounded-md object-cover ring-1 ring-slate-200" />
+          <img src={photo} alt={t("İyileşme fotoğrafı")} className="h-16 w-16 shrink-0 rounded-md object-cover ring-1 ring-slate-200" />
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium text-slate-700">Fotoğraf eklendi</div>
-            <div className="text-xs text-slate-400">Gönderince AI görsel ön-değerlendirme yapar.</div>
+            <div className="text-sm font-medium text-slate-700">{t("Fotoğraf eklendi")}</div>
+            <div className="text-xs text-slate-400">{t("Gönderince AI görsel ön-değerlendirme yapar.")}</div>
           </div>
           <button type="button" onClick={() => setPhoto("")} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600">
             <X size={16} />
@@ -167,13 +187,13 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
       ) : (
         <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 hover:border-teal-400">
           {preparing ? <Loader2 size={16} className="animate-spin text-slate-400" /> : <Camera size={16} className="text-slate-400" />}
-          {preparing ? "Fotoğraf hazırlanıyor…" : "İyileşme fotoğrafı ekle (opsiyonel)"}
+          {preparing ? t("Fotoğraf hazırlanıyor…") : t("İyileşme fotoğrafı ekle (opsiyonel)")}
           <input type="file" accept="image/*" className="hidden" disabled={preparing} onChange={onPickPhoto} />
         </label>
       )}
 
       <button onClick={submit} disabled={submitting} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-3 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60">
-        {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Kontrolü gönder
+        {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t("Kontrolü gönder")}
       </button>
 
       {/* Sonuç */}
@@ -181,13 +201,13 @@ export function CheckInForm({ caseId, branch }: { caseId: string; branch: string
         <div className={`mt-4 rounded-2xl p-4 ring-1 ${m.badge}`}>
           <div className="flex items-center gap-2 font-semibold">
             {result.severity === "RED" ? <AlertTriangle size={18} /> : result.severity === "WATCH" ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
-            {result.severity === "NONE" ? "İyileşme normal" : result.severity === "WATCH" ? "İzleme alındı" : "Acil: ekip bilgilendirildi"}
+            {result.severity === "NONE" ? t("İyileşme normal") : result.severity === "WATCH" ? t("İzleme alındı") : t("Acil: ekip bilgilendirildi")}
           </div>
-          <ul className="mt-1.5 list-disc pl-5 text-sm">
-            {result.reasons.map((r, i) => <li key={i}>{r}</li>)}
+          <ul className="mt-1.5 list-disc ps-5 text-sm">
+            {result.reasons.map((r, i) => <li key={i}>{t(r)}</li>)}
           </ul>
           {result.severity === "RED" && (
-            <p className="mt-2 text-sm font-medium">Doktorunuz ve vaka koordinatörünüze acil bildirim gönderildi. Lütfen telefonunuzu açık tutun.</p>
+            <p className="mt-2 text-sm font-medium">{t("Doktorunuz ve vaka koordinatörünüze acil bildirim gönderildi. Lütfen telefonunuzu açık tutun.")}</p>
           )}
         </div>
       )}
