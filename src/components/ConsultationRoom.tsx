@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { urgencyStyle } from "@/lib/constants";
+import { urgencyStyle, langDir } from "@/lib/constants";
+import { useT } from "@/components/useT";
 import { TranslateButton } from "@/components/TranslateButton";
 import { LiveInterpreter } from "@/components/LiveInterpreter";
 import { ConsultationTimer } from "@/components/ConsultationTimer";
@@ -54,6 +55,26 @@ const SPEECH_LANG: Record<string, string> = {
   "Türkçe": "tr-TR", "Rusça": "ru-RU", "Arapça": "ar-SA", "Farsça": "fa-IR", "Azerice": "az-AZ",
   "İngilizce": "en-US", "Fransızca": "fr-FR", "Almanca": "de-DE", "Kazakça": "kk-KZ", "Kırgızca": "ky-KG",
 };
+
+// Hasta-yüzü + paylaşılan UI metinleri (TR kanonik). Doktor araçları (notlar/SOAP/tedavi) çevrilmez:
+// uiLang=Türkçe'de t() kimlik döndürür; ayrıca o bölümler zaten isDoctor ile koşullu.
+const UI = [
+  "Katılmaya hazır", "Bağlandı", "Karşı taraf bekleniyor…", "Kamera açılıyor…", "Görüşme sona erdi", "Hata",
+  "Doktor görünümü", "Hasta görünümü", "Gerçek WebRTC (P2P)",
+  "Karşı tarafın sesini aç", "Görüşmeye katılın", "Bağlanmak için kamera ve mikrofon izni vermeniz gerekir.", "Kamera & mikrofonla katıl",
+  "Kamera/mikrofona erişilemedi.",
+  "Adres çubuğundaki kilit/kamera simgesine dokunup Kamera ve Mikrofon'a \"İzin ver\" deyin, sonra tekrar deneyin.",
+  "Tekrar dene", "karşı taraf bekleniyor…", "kamera açılıyor…", "Canlı çeviri", "demo",
+  "Kamera kapalı", "Siz", "Bitir",
+  "Canlı Transkript", "Durdur", "Başlat", "Tarayıcı desteklemiyor — Chrome/Edge önerilir",
+  "Başlat'a basın; söyledikleriniz yazıya çevrilir, karşı tarafın konuşması da otomatik gelir.",
+  "Doktor", "Hasta", "Mikrofon izni reddedildi — konuşma tanıma kapatıldı.",
+  "Şikayet", "ile görüşüyorsunuz",
+  // errMsg sabitleri (cihaz-kodlu interpolasyonlu olanlar TR'ye düşer)
+  "Bu tarayıcı kamera erişimini desteklemiyor. Linki uygulama içinde değil, Chrome veya Safari'de açın. [desteksiz]",
+  "Bu cihazda kamera yok — sesli katıldınız; karşı tarafı görebilirsiniz.",
+  "Bağlantı kurulamadı (ağ/NAT). Sayfayı yenileyin; sorun sürerse internet bağlantınızı kontrol edin.",
+];
 
 export function ConsultationRoom({
   consultationId, selfRole, status, initialNotes, doctor, caseData, recommend,
@@ -112,6 +133,11 @@ export function ConsultationRoom({
   const u = urgencyStyle(caseData.urgency);
   const remoteName = isDoctor ? caseData.patientName : `${doctor.title} ${doctor.name}`;
   const myLang = isDoctor ? "tr-TR" : (SPEECH_LANG[caseData.language] ?? "tr-TR");
+
+  // Hasta arayüzü kendi dilinde; doktor TR (klinik araçlar). Yalnız sunum metinleri çevrilir; veri TR kanonik.
+  const uiLang = isDoctor ? "Türkçe" : caseData.language;
+  const texts = useMemo(() => [...UI, caseData.branch], [caseData.branch]);
+  const { t } = useT(uiLang, texts);
 
   useEffect(() => { setSttSupported(!!getSpeechRecognition()); }, []);
 
@@ -421,21 +447,21 @@ export function ConsultationRoom({
   }
 
   const statusLabel = !joined
-    ? "Katılmaya hazır"
-    : phase === "connected" ? "Bağlandı"
-    : phase === "waiting" ? "Karşı taraf bekleniyor…"
-    : phase === "connecting" ? "Kamera açılıyor…"
-    : phase === "ended" ? "Görüşme sona erdi" : "Hata";
+    ? t("Katılmaya hazır")
+    : phase === "connected" ? t("Bağlandı")
+    : phase === "waiting" ? t("Karşı taraf bekleniyor…")
+    : phase === "connecting" ? t("Kamera açılıyor…")
+    : phase === "ended" ? t("Görüşme sona erdi") : t("Hata");
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div dir={langDir(uiLang)} className="mx-auto max-w-6xl px-4 py-6">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-slate-500">
           <span className={`inline-flex h-2.5 w-2.5 rounded-full ${phase === "connected" ? "bg-emerald-500" : phase === "ended" || phase === "error" ? "bg-slate-400" : "bg-amber-500 animate-pulse"}`} />
-          {statusLabel} · {isDoctor ? "Doktor görünümü" : "Hasta görünümü"}{connState ? ` · ${connState}` : ""}
+          {statusLabel} · {isDoctor ? t("Doktor görünümü") : t("Hasta görünümü")}{connState ? ` · ${connState}` : ""}
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
-          {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />} Gerçek WebRTC (P2P)
+          {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />} {t("Gerçek WebRTC (P2P)")}
         </span>
       </div>
 
@@ -452,7 +478,7 @@ export function ConsultationRoom({
             {/* Uzak ses autoplay ile engellendiyse kullanıcı jestiyle aç (tercüman canlıyken gizli) */}
             {remoteOn && remoteAudioBlocked && !remoteMutedByInterpreter && (
               <button onClick={enableRemoteAudio} className="absolute left-1/2 top-3 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-lg ring-1 ring-black/5 hover:bg-white">
-                <Volume2 size={14} /> Karşı tarafın sesini aç
+                <Volume2 size={14} /> {t("Karşı tarafın sesini aç")}
               </button>
             )}
             {!remoteOn && (
@@ -460,27 +486,27 @@ export function ConsultationRoom({
                 {!joined ? (
                   <div>
                     <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-white/10 text-white"><Camera size={28} /></span>
-                    <h3 className="mt-3 text-lg font-semibold text-white">Görüşmeye katılın</h3>
-                    <p className="mx-auto mt-1 max-w-xs text-sm text-white/60">Bağlanmak için kamera ve mikrofon izni vermeniz gerekir.</p>
+                    <h3 className="mt-3 text-lg font-semibold text-white">{t("Görüşmeye katılın")}</h3>
+                    <p className="mx-auto mt-1 max-w-xs text-sm text-white/60">{t("Bağlanmak için kamera ve mikrofon izni vermeniz gerekir.")}</p>
                     <button onClick={() => { setErrMsg(""); setPhase("connecting"); setJoined(true); }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
-                      <Video size={17} /> Kamera & mikrofonla katıl
+                      <Video size={17} /> {t("Kamera & mikrofonla katıl")}
                     </button>
                   </div>
                 ) : phase === "error" ? (
                   <div>
                     <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-amber-500/20 text-amber-300"><AlertTriangle size={28} /></span>
-                    <p className="mx-auto mt-3 max-w-xs text-sm text-white/85">{errMsg || "Kamera/mikrofona erişilemedi."}</p>
-                    <p className="mx-auto mt-1 max-w-xs text-xs text-white/50">Adres çubuğundaki kilit/kamera simgesine dokunup Kamera ve Mikrofon&apos;a &quot;İzin ver&quot; deyin, sonra tekrar deneyin.</p>
+                    <p className="mx-auto mt-3 max-w-xs text-sm text-white/85">{errMsg ? t(errMsg) : t("Kamera/mikrofona erişilemedi.")}</p>
+                    <p className="mx-auto mt-1 max-w-xs text-xs text-white/50">{t("Adres çubuğundaki kilit/kamera simgesine dokunup Kamera ve Mikrofon'a \"İzin ver\" deyin, sonra tekrar deneyin.")}</p>
                     <button onClick={() => { setErrMsg(""); setPhase("connecting"); setRetry((r) => r + 1); }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-100">
-                      Tekrar dene
+                      {t("Tekrar dene")}
                     </button>
                   </div>
                 ) : (
                   <div>
                     <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-white/10 text-2xl font-bold text-white">{remoteName.slice(0, 1)}</div>
                     <div className="mt-3 font-medium text-white/90">{remoteName}</div>
-                    <div className="text-xs text-white/50">{phase === "waiting" ? "karşı taraf bekleniyor…" : "kamera açılıyor…"}</div>
-                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70"><Languages size={13} /> Canlı çeviri: {caseData.language} ⇄ Türkçe (demo)</div>
+                    <div className="text-xs text-white/50">{phase === "waiting" ? t("karşı taraf bekleniyor…") : t("kamera açılıyor…")}</div>
+                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70"><Languages size={13} /> {t("Canlı çeviri")}: {caseData.language} ⇄ Türkçe ({t("demo")})</div>
                   </div>
                 )}
               </div>
@@ -490,8 +516,8 @@ export function ConsultationRoom({
             {joined && (
               <div className="absolute bottom-3 right-3 h-28 w-44 overflow-hidden rounded-2xl border border-white/20 bg-black/60 shadow-lg">
                 <video ref={localVideoRef} autoPlay muted playsInline className={`h-full w-full object-cover ${camOn ? "" : "hidden"}`} />
-                {!camOn && <div className="grid h-full place-items-center text-center text-[11px] text-white/50"><div><Camera size={18} className="mx-auto mb-1" /> Kamera kapalı</div></div>}
-                <span className="absolute left-1.5 top-1.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white/80">Siz</span>
+                {!camOn && <div className="grid h-full place-items-center text-center text-[11px] text-white/50"><div><Camera size={18} className="mx-auto mb-1" /> {t("Kamera kapalı")}</div></div>}
+                <span className="absolute left-1.5 top-1.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white/80">{t("Siz")}</span>
               </div>
             )}
 
@@ -505,7 +531,7 @@ export function ConsultationRoom({
                   {micOn ? <Mic size={18} /> : <MicOff size={18} />}
                 </button>
                 <button onClick={endCall} disabled={ending} className="inline-flex h-11 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60">
-                  {ending ? <Loader2 size={17} className="animate-spin" /> : <PhoneOff size={17} />} Bitir
+                  {ending ? <Loader2 size={17} className="animate-spin" /> : <PhoneOff size={17} />} {t("Bitir")}
                 </button>
               </div>
             )}
@@ -516,6 +542,7 @@ export function ConsultationRoom({
           {/* AI Canlı Tercüman (Gemini) — iki yön: her taraf karşı tarafın sesini kendi dilinde duyar */}
           {joined && (
             <LiveInterpreter
+              lang={uiLang}
               targetLang={isDoctor ? "tr" : (SPEECH_LANG[caseData.language]?.split("-")[0] ?? "en")}
               targetLabel={isDoctor ? "Türkçe" : caseData.language}
               otherLabel={isDoctor ? caseData.language : "Türkçe"}
@@ -529,32 +556,32 @@ export function ConsultationRoom({
             <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <MessageSquareText size={14} /> Canlı Transkript
-                  {sttOn && <span className="ml-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
+                  <MessageSquareText size={14} /> {t("Canlı Transkript")}
+                  {sttOn && <span className="ms-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
                 </div>
                 {sttSupported ? (
                   <button
                     onClick={() => { setSttErr(""); setSttOn((v) => !v); }}
                     className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium ${sttOn ? "border-red-300 bg-red-50 text-red-700 hover:bg-red-100" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"}`}
                   >
-                    <Mic size={13} /> {sttOn ? "Durdur" : `Başlat (${myLang.split("-")[0].toUpperCase()})`}
+                    <Mic size={13} /> {sttOn ? t("Durdur") : `${t("Başlat")} (${myLang.split("-")[0].toUpperCase()})`}
                   </button>
                 ) : (
-                  <span className="text-[11px] text-slate-400">Tarayıcı desteklemiyor — Chrome/Edge önerilir</span>
+                  <span className="text-[11px] text-slate-400">{t("Tarayıcı desteklemiyor — Chrome/Edge önerilir")}</span>
                 )}
               </div>
-              {sttErr && <div className="mt-1 text-[11px] text-red-600">{sttErr}</div>}
+              {sttErr && <div className="mt-1 text-[11px] text-red-600">{t(sttErr)}</div>}
               <div className="mt-2 max-h-44 space-y-1 overflow-y-auto">
                 {transcript.length === 0 && !interim && (
                   <p className="text-xs text-slate-400">
-                    Başlat&apos;a basın; söyledikleriniz yazıya çevrilir, karşı tarafın konuşması da otomatik gelir.
+                    {t("Başlat'a basın; söyledikleriniz yazıya çevrilir, karşı tarafın konuşması da otomatik gelir.")}
                     {isDoctor ? " Görüşme sonunda transkriptten tek tıkla SOAP taslağı oluşturabilirsiniz." : ""}
                   </p>
                 )}
                 {transcript.map((l, i) => (
                   <p key={i} className="text-sm leading-snug text-slate-700">
                     <span className={`font-semibold ${l.who === "doctor" ? "text-[#0EA5B2]" : "text-emerald-700"}`}>
-                      {l.who === "doctor" ? "Doktor" : "Hasta"}:
+                      {l.who === "doctor" ? t("Doktor") : t("Hasta")}:
                     </span>{" "}
                     {l.text}
                   </p>
@@ -595,10 +622,10 @@ export function ConsultationRoom({
             </div>
             <div className="mt-1 flex items-center gap-2 text-sm">
               <Stethoscope size={14} className="text-[#0EA5B2]" />
-              <span className="font-medium text-[#0EA5B2]">{caseData.branch}</span>
+              <span className="font-medium text-[#0EA5B2]">{t(caseData.branch)}</span>
             </div>
             <div className="mt-3">
-              <div className="text-xs uppercase tracking-wide text-slate-400">Şikayet</div>
+              <div className="text-xs uppercase tracking-wide text-slate-400">{t("Şikayet")}</div>
               <p className="mt-1 text-sm text-slate-700">{caseData.symptoms}</p>
               {isDoctor && <TranslateButton text={caseData.symptoms} defaultTarget="Türkçe" />}
             </div>
@@ -610,7 +637,7 @@ export function ConsultationRoom({
             )}
             {!isDoctor && (
               <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800 ring-1 ring-emerald-100">
-                <UserRound size={15} /> {doctor.title} {doctor.name} ile görüşüyorsunuz
+                <UserRound size={15} /> {doctor.title} {doctor.name} {t("ile görüşüyorsunuz")}
               </div>
             )}
             {caseData.files.length > 0 && isDoctor && (

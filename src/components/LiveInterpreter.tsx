@@ -9,9 +9,24 @@
 // await'lerden sonra oluştuğu için ASKIDA başlıyordu. Çözüm: context'i tıklama anında oluştur +
 // resume(); ses baytlarını her formatta sağlam çıkar; tanı sayaçları (chunk/altyazı).
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/components/useT";
+import { langDir } from "@/lib/constants";
 import { Languages, Loader2, KeyRound, Mic, Square, Headphones, AlertTriangle, Volume2, ShieldCheck } from "lucide-react";
 
 type Status = "checking" | "disabled" | "idle" | "connecting" | "live" | "error";
+
+// Çevrilen UI metinleri (TR kanonik). lang prop ConsultationRoom'dan gelir (hasta=kendi dili, doktor=Türkçe).
+const UI = [
+  "AI Canlı Tercüman", "canlı",
+  "Karşı tarafın", "konuşması anında", "sesli + altyazı.",
+  "kontrol ediliyor…", "Devre dışı —", "gerekli.",
+  "Tercümeyi başlat", "kulaklık önerilir (hoparlörde yankı olabilir)",
+  "Ses, girişte verdiğiniz KVKK açık onamı kapsamında yalnızca gerçek zamanlı çeviri için işlenir.",
+  "bağlanılıyor…", "dinleniyor…", "Durdur",
+  // sabit hata mesajları (dinamik olanlar TR'ye düşer)
+  "Karşı taraf henüz bağlı değil (ses yok). Önce görüşmeye katılın.",
+  "Token alınamadı.", "Bağlantı hatası.", "Başlatılamadı.",
+];
 
 // Gemini'den gelen ses verisini (base64 string VEYA binary) Uint8Array'e çevir
 function toBytes(data: unknown): Uint8Array | null {
@@ -25,12 +40,14 @@ function toBytes(data: unknown): Uint8Array | null {
 }
 
 export function LiveInterpreter({
-  targetLang, targetLabel, otherLabel, getRemoteStream, onMuteRemote,
+  targetLang, targetLabel, otherLabel, getRemoteStream, onMuteRemote, lang = "Türkçe",
 }: {
   targetLang: string; targetLabel: string; otherLabel: string;
   getRemoteStream: () => MediaStream | null;
   onMuteRemote: (muted: boolean) => void;
+  lang?: string;
 }) {
+  const { t } = useT(lang, UI);
   const [status, setStatus] = useState<Status>("checking");
   const [err, setErr] = useState("");
   const [heard, setHeard] = useState("");
@@ -178,24 +195,24 @@ export function LiveInterpreter({
   function stop() { teardown(); onMuteRemote(false); setStatus("idle"); }
 
   return (
-    <div className="rounded-3xl border border-teal-200 bg-white p-5 shadow-sm">
+    <div dir={langDir(lang)} className="rounded-3xl border border-teal-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700">
-          <Languages size={15} /> AI Canlı Tercüman
+          <Languages size={15} /> {t("AI Canlı Tercüman")}
           <span className="rounded-full bg-teal-600 px-1.5 py-0.5 text-[9px] tracking-normal text-white">Gemini</span>
         </div>
-        {status === "live" && <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600"><span className="h-2 w-2 animate-pulse rounded-full bg-red-500" /> canlı</span>}
+        {status === "live" && <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600"><span className="h-2 w-2 animate-pulse rounded-full bg-red-500" /> {t("canlı")}</span>}
       </div>
 
       <p className="mt-2 text-xs leading-relaxed text-slate-500">
-        Karşı tarafın <strong className="text-slate-700">{otherLabel}</strong> konuşması anında <strong className="text-slate-700">{targetLabel}</strong> sesli + altyazı.
+        {t("Karşı tarafın")} <strong className="text-slate-700">{otherLabel}</strong> {t("konuşması anında")} <strong className="text-slate-700">{targetLabel}</strong> {t("sesli + altyazı.")}
       </p>
 
-      {status === "checking" && <div className="mt-3 inline-flex items-center gap-2 text-xs text-slate-400"><Loader2 size={13} className="animate-spin" /> kontrol ediliyor…</div>}
+      {status === "checking" && <div className="mt-3 inline-flex items-center gap-2 text-xs text-slate-400"><Loader2 size={13} className="animate-spin" /> {t("kontrol ediliyor…")}</div>}
 
       {status === "disabled" && (
         <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 p-2.5 text-[11px] leading-relaxed text-amber-700 ring-1 ring-amber-100">
-          <KeyRound size={13} className="mt-0.5 shrink-0" /> <span>Devre dışı — <code className="rounded bg-amber-100 px-1">GEMINI_API_KEY</code> gerekli.</span>
+          <KeyRound size={13} className="mt-0.5 shrink-0" /> <span>{t("Devre dışı —")} <code className="rounded bg-amber-100 px-1">GEMINI_API_KEY</code> {t("gerekli.")}</span>
         </div>
       )}
 
@@ -206,11 +223,11 @@ export function LiveInterpreter({
             onClick={start}
             className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
           >
-            <Mic size={15} /> Tercümeyi başlat
+            <Mic size={15} /> {t("Tercümeyi başlat")}
           </button>
-          <p className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-slate-400"><Headphones size={11} /> kulaklık önerilir (hoparlörde yankı olabilir)</p>
-          <p className="mt-1 flex items-start gap-1 text-[10px] leading-relaxed text-slate-400"><ShieldCheck size={11} className="mt-0.5 shrink-0 text-teal-600" /> Ses, girişte verdiğiniz KVKK açık onamı kapsamında yalnızca gerçek zamanlı çeviri için işlenir.</p>
-          {err && <p className="mt-1 flex items-start gap-1 text-[11px] text-red-600"><AlertTriangle size={12} className="mt-0.5 shrink-0" /> {err}</p>}
+          <p className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-slate-400"><Headphones size={11} /> {t("kulaklık önerilir (hoparlörde yankı olabilir)")}</p>
+          <p className="mt-1 flex items-start gap-1 text-[10px] leading-relaxed text-slate-400"><ShieldCheck size={11} className="mt-0.5 shrink-0 text-teal-600" /> {t("Ses, girişte verdiğiniz KVKK açık onamı kapsamında yalnızca gerçek zamanlı çeviri için işlenir.")}</p>
+          {err && <p className="mt-1 flex items-start gap-1 text-[11px] text-red-600"><AlertTriangle size={12} className="mt-0.5 shrink-0" /> {t(err)}</p>}
         </div>
       )}
 
@@ -218,11 +235,11 @@ export function LiveInterpreter({
         <div className="mt-3">
           <div className="min-h-[3.5rem] rounded-lg bg-slate-50 p-2.5 ring-1 ring-slate-100">
             {heard && <p className="text-[11px] text-slate-400">🎙 {otherLabel}: {heard}</p>}
-            <p className="mt-0.5 text-sm font-medium text-slate-800">{trans || (status === "connecting" ? "bağlanılıyor…" : "dinleniyor…")}</p>
+            <p className="mt-0.5 text-sm font-medium text-slate-800">{trans || (status === "connecting" ? t("bağlanılıyor…") : t("dinleniyor…"))}</p>
           </div>
           <div className="mt-2 flex items-center justify-between">
             <button onClick={stop} disabled={status === "connecting"} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50">
-              {status === "connecting" ? <Loader2 size={14} className="animate-spin" /> : <Square size={14} />} Durdur
+              {status === "connecting" ? <Loader2 size={14} className="animate-spin" /> : <Square size={14} />} {t("Durdur")}
             </button>
             <span className="inline-flex items-center gap-1 text-[10px] text-slate-400" title="tanı: gelen ses parçası · altyazı">
               <Volume2 size={11} /> {dbg.chunks} · 📝 {dbg.subs}

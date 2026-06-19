@@ -6,6 +6,7 @@ import { Video, VideoOff, Mic, MicOff, PhoneOff, Wifi, WifiOff, UserRound, Steth
 import { getIceServers } from "@/lib/ice";
 import { useT } from "@/components/useT";
 import { useSoLang } from "@/components/SoLocale";
+import { langDir } from "@/lib/constants";
 
 type Phase = "idle" | "connecting" | "waiting" | "connected" | "ended" | "error";
 
@@ -26,6 +27,10 @@ const S = {
   waitingFor: "bekleniyor…",
   you: "Siz",
   connLbl: "Bağlantı:",
+  // errMsg literalleri (setErrMsg'deki metinlerle birebir → t(errMsg) cache'ten çevirir; cihaz-kod ekli olanlar TR'ye düşer)
+  errNoCam: "Bu tarayıcı kamera erişimini desteklemiyor. Linki Chrome veya Safari'de açın.",
+  errAudioOnly: "Kamera yok — sesli katıldınız; karşı tarafı görebilirsiniz.",
+  errConnFail: "Bağlantı kurulamadı (ağ/NAT). İki cihazı aynı Wi-Fi'ya alıp yenileyin.",
 } as const;
 
 // İzole SO video odası — WebRTC (P2P) + mevcut string-anahtarlı sinyalleşme API'si.
@@ -182,7 +187,7 @@ export function SoVideoRoom({
 
   if (phase === "ended" || ended) {
     return (
-      <div className="mx-auto max-w-md px-5 py-20 text-center">
+      <div dir={langDir(lang)} className="mx-auto max-w-md px-5 py-20 text-center">
         <PhoneOff className="mx-auto mb-3 text-slate-300" size={40} />
         <h1 className="text-xl font-bold text-[#101010]">{t(S.ended)}</h1>
         <p className="mt-2 text-sm text-slate-500">{t(S.endedSub)}</p>
@@ -195,7 +200,7 @@ export function SoVideoRoom({
 
   if (!joined) {
     return (
-      <div className="mx-auto max-w-md px-5 py-16 text-center">
+      <div dir={langDir(lang)} className="mx-auto max-w-md px-5 py-16 text-center">
         <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Stethoscope size={26} /></span>
         <h1 className="mt-4 text-2xl font-bold text-[#101010]">{t(S.title)}</h1>
         <p className="mt-1 text-sm text-slate-500">{t(branchLabel)} · {selfRole === "doctor" ? t(S.patient) : t(S.doctor)}: {remoteName}</p>
@@ -208,7 +213,7 @@ export function SoVideoRoom({
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div dir={langDir(lang)} className="mx-auto max-w-5xl px-4 py-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold text-[#101010]">{t(S.title)}</h1>
@@ -220,7 +225,7 @@ export function SoVideoRoom({
         </span>
       </div>
 
-      {errMsg && <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{errMsg}</p>}
+      {errMsg && <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{t(errMsg)}</p>}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-900">
