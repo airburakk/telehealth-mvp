@@ -87,7 +87,8 @@ export default async function ConsultationPage({
     };
   }
 
-  const room = (
+  // autoJoin: lobiden sonra ConsultationRoom kendi "katıl" ekranını atlar → tek tık (yalnız lobi yolunda true)
+  const buildRoom = (autoJoin: boolean) => (
     <ConsultationRoom
       consultationId={consult.id}
       selfRole={selfRole}
@@ -96,6 +97,7 @@ export default async function ConsultationPage({
       doctor={{ title: consult.doctor.title, name: consult.doctor.name, branch: consult.doctor.branch, color: consult.doctor.color }}
       recommend={recommend}
       clinical={clinical}
+      autoJoin={autoJoin}
       caseData={{
         id: c.id,
         patientName: c.patientName,
@@ -114,7 +116,8 @@ export default async function ConsultationPage({
   // Görüşme Öncesi Oda (Faz B) — aktif görüşmede lobi zorunlu (cihaz testi + hazırlık),
   // biten görüşmede atlanır (oda doğrudan "sona erdi" durumunu gösterir).
   // Talk akışında randevu yok → scheduledAt=null (anlık katılım). Doktor arayüzü Türkçe (ConsultationRoom uiLang ile uyumlu).
-  if (consult.status === "ENDED") return room;
+  // Lobi sonrası autoJoin=true → odanın kendi "katıl" ekranı atlanır (tek tık); ENDED yolunda false (davranış değişmez).
+  if (consult.status === "ENDED") return buildRoom(false);
   return (
     <PreConsultLobby
       lang={selfRole === "doctor" ? "Türkçe" : c.language}
@@ -124,7 +127,7 @@ export default async function ConsultationPage({
       branchLabel={c.branch}
       storageKey={consult.id}
     >
-      {room}
+      {buildRoom(true)}
     </PreConsultLobby>
   );
 }

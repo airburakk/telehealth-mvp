@@ -90,10 +90,11 @@ const UI = [
 ];
 
 export function ConsultationRoom({
-  consultationId, selfRole, status, initialNotes, doctor, caseData, recommend, clinical,
+  consultationId, selfRole, status, initialNotes, doctor, caseData, recommend, clinical, autoJoin = false,
 }: {
   consultationId: string; selfRole: "doctor" | "patient"; status: string;
   initialNotes: string; doctor: DoctorData; caseData: CaseData; recommend?: RecommendData; clinical?: ClinicalData;
+  autoJoin?: boolean; // Görüşme Öncesi Oda (lobi) sonrası: kendi "katıl" ekranını atla → doğrudan bağlan
 }) {
   const router = useRouter();
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -114,7 +115,7 @@ export function ConsultationRoom({
   const [ending, setEnding] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showDicom, setShowDicom] = useState(false);
-  const [joined, setJoined] = useState(false);
+  const [joined, setJoined] = useState(autoJoin);
   const [retry, setRetry] = useState(0);
   const [connState, setConnState] = useState("");
   const [startTime, setStartTime] = useState<number | null>(null); // video ilk bağlandığı an (süre tüpü)
