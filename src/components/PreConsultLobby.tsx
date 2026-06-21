@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Video, VideoOff, Mic, MicOff, Volume2, Camera, Clock, Lock,
   AlertTriangle, NotebookPen, Headphones, Sun, FileText, CheckCircle2,
+  HelpCircle, ShieldCheck, ALargeSmall,
 } from "lucide-react";
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47 } from "@/lib/constants";
@@ -51,6 +52,12 @@ const TX = {
   notesPh: "Görüşmede sormak istediğiniz soruları buraya not edin…",
   notesSaved: "Notlarınız bu cihaza kaydedildi.",
   you: "Siz",
+  // Faz C — erişilebilirlik + dürüst güven
+  bigText: "Büyük yazı",
+  help: "Yardım",
+  helpTitle: "Sorun mu yaşıyorsunuz?",
+  helpBody: "Görüntü veya ses gelmiyorsa: sayfayı yenileyin, internet bağlantınızı kontrol edin ve Chrome ya da Safari kullanın. Cihaz izinlerini adres çubuğundaki kilit simgesinden açabilirsiniz.",
+  secure: "Görüşme bağlantınız şifrelidir; bilgileriniz KVKK kapsamında, açık onayınızla işlenir.",
 } as const;
 
 type Props = {
@@ -106,6 +113,19 @@ export function PreConsultLobby({
   const [micOn, setMicOn] = useState(true);
   const [hasCam, setHasCam] = useState(true);
   const [level, setLevel] = useState(0);
+
+  // ── Erişilebilirlik (Faz C): büyük yazı (cihaz-yerel) + yardım paneli ──
+  const [bigText, setBigText] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- tercih yalnız istemcide (SSR'de localStorage yok)
+    try { if (localStorage.getItem("air_preconsult_bigtext") === "1") setBigText(true); } catch {}
+  }, []);
+  const toggleBigText = () => setBigText((v) => {
+    const n = !v;
+    try { localStorage.setItem("air_preconsult_bigtext", n ? "1" : "0"); } catch {}
+    return n;
+  });
 
   // ── Soru-notu (cihaz-yerel) ──
   const [note, setNote] = useState("");
@@ -287,8 +307,8 @@ export function PreConsultLobby({
     : "";
 
   return (
-    <div dir={dir} className="mx-auto max-w-3xl px-5 py-10">
-      {/* Başlık */}
+    <div dir={dir} style={bigText ? { zoom: 1.18 } : undefined} className="mx-auto max-w-3xl px-5 py-10">
+      {/* Başlık + erişilebilirlik kontrolleri */}
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[#101010]">{t(TX.title)}</h1>
@@ -299,8 +319,28 @@ export function PreConsultLobby({
             </p>
           )}
         </div>
-        {langSelector}
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          {langSelector}
+          <div className="flex items-center gap-1.5">
+            <button onClick={toggleBigText} aria-pressed={bigText}
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${bigText ? "border-[#14C3D0] bg-cyan-50 text-[#0EA5B2]" : "border-slate-300 text-slate-500 hover:bg-slate-50"}`}>
+              <ALargeSmall size={14} /> {t(TX.bigText)}
+            </button>
+            <button onClick={() => setShowHelp((v) => !v)} aria-expanded={showHelp}
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${showHelp ? "border-[#14C3D0] bg-cyan-50 text-[#0EA5B2]" : "border-slate-300 text-slate-500 hover:bg-slate-50"}`}>
+              <HelpCircle size={14} /> {t(TX.help)}
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Yardım paneli (Faz C) — pratik sorun giderme (insan çıpası: dürüst, gerçek adımlar) */}
+      {showHelp && (
+        <div className="mt-4 rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-[#0EA5B2]"><HelpCircle size={15} /> {t(TX.helpTitle)}</p>
+          <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">{t(TX.helpBody)}</p>
+        </div>
+      )}
 
       {/* Geri sayım + Katıl (en görünür öğe) */}
       <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -460,6 +500,11 @@ export function PreConsultLobby({
           </div>
         </div>
       </div>
+
+      {/* Güven şeridi (Faz C) — yalnız DOĞRU iddialar: WebRTC bağlantı şifrelemesi + KVKK onam. E2EE/RFC 3161 = Faz 8 (henüz yok) → iddia EDİLMEZ. */}
+      <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-400">
+        <ShieldCheck size={13} className="text-emerald-500" /> {t(TX.secure)}
+      </p>
     </div>
   );
 }
