@@ -8,6 +8,7 @@ export const SO_STATUSES = [
   "DRAFT",
   "AWAITING_PAYMENT",
   "PENDING_REVIEW",
+  "OFFERED",
   "AWAITING_DOCUMENTS",
   "READY_FOR_ASSIGNMENT",
   "ASSIGNED",
@@ -25,7 +26,8 @@ export type SoStatus = (typeof SO_STATUSES)[number];
 export const SO_TRANSITIONS: Record<SoStatus, SoStatus[]> = {
   DRAFT: ["AWAITING_PAYMENT", "CANCELLED"],
   AWAITING_PAYMENT: ["PENDING_REVIEW", "CANCELLED"],
-  PENDING_REVIEW: ["AWAITING_DOCUMENTS", "READY_FOR_ASSIGNMENT"],
+  PENDING_REVIEW: ["OFFERED", "AWAITING_DOCUMENTS", "READY_FOR_ASSIGNMENT"],
+  OFFERED: ["ASSIGNED", "PENDING_REVIEW"],
   AWAITING_DOCUMENTS: ["PENDING_REVIEW"],
   READY_FOR_ASSIGNMENT: ["ASSIGNED"],
   ASSIGNED: ["AWAITING_ADDITIONAL_TESTS", "OPINION_DELIVERED"],
@@ -48,7 +50,8 @@ export function isTerminal(status: SoStatus): boolean {
 export const SO_STATUS_LABELS: Record<SoStatus, string> = {
   DRAFT: "Taslak — belge hazırlanıyor",
   AWAITING_PAYMENT: "Ödeme bekleniyor",
-  PENDING_REVIEW: "Koordinatör incelemesinde",
+  PENDING_REVIEW: "Dosyanız incelenmeye alındı",
+  OFFERED: "Uzman hekime iletildi — kabul bekleniyor",
   AWAITING_DOCUMENTS: "Eksik belge bekleniyor",
   READY_FOR_ASSIGNMENT: "Doktor ataması bekleniyor",
   ASSIGNED: "Doktor incelemesinde",
@@ -65,6 +68,14 @@ export const SO_FEE_USD = 600;
 export const SO_CURRENCY = "USD";
 export const SO_REPORT_SLA_BUSINESS_DAYS = { min: 5, max: 7 };
 export const SO_VIDEO_WINDOW_DAYS = 15;
+
+// Hoca dosya kabul penceresi (oto-atama → OFFERED). Süre içinde kabul edilmezse dosya diğer
+// branş hocalarına AÇILIR (ilk kabul eden alır — lazy fan-out, accept route). ⚠️ Süre TBD — kullanıcı kararı (placeholder).
+export const SO_ACCEPT_WINDOW_HOURS = 24;
+export function isOfferExpired(offeredAt: Date | null | undefined): boolean {
+  if (!offeredAt) return false;
+  return Date.now() - new Date(offeredAt).getTime() > SO_ACCEPT_WINDOW_HOURS * 3_600_000;
+}
 
 // §12.2 hasta-yüzü süre metni — SO ön-değerlendirme sayfası + özetler buradan beslenir (§12.3).
 export const SO_DURATION_COPY = {

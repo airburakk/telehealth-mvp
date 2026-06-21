@@ -9,9 +9,11 @@ import { useT } from "@/components/useT";
 import { useSoLang, SoLangSelect } from "@/components/SoLocale";
 import {
   Check, AlertTriangle, CreditCard, Loader2, Link2, Upload, FileText,
-  CircleCheck, Clock, FlaskConical, ArrowLeft, NotebookPen, Printer, Video,
+  CircleCheck, Clock, FlaskConical, ArrowLeft, NotebookPen, Printer, Video, Stethoscope,
 } from "lucide-react";
 import { langDir } from "@/lib/constants";
+import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
+import { soTrackerPhases, SO_TRACKER_TEXTS } from "@/lib/so-tracker";
 
 type DocMeta = { id: string; type: string; deliveryMethod: string; externalRef: string | null; label: string | null };
 type SoData = {
@@ -34,7 +36,8 @@ const REQ_BADGE: Record<string, { label: string; cls: string }> = {
 const STATUS_MSG: Partial<Record<SoStatus, string>> = {
   DRAFT: "Belgelerinizi yükleyin, ardından ödemeyi tamamlayarak vakanızı incelemeye gönderin.",
   AWAITING_PAYMENT: "Ödemeniz bekleniyor.",
-  PENDING_REVIEW: "Belgeleriniz koordinatör tarafından inceleniyor. Eksik varsa size bildirilecek.",
+  PENDING_REVIEW: "Dosyanız incelenmeye alındı. Eksik belge varsa size bildirilecek.",
+  OFFERED: "Dosyanız uzman hekiminize iletildi; hekimin onayı bekleniyor.",
   AWAITING_DOCUMENTS: "Eksik belge talep edildi — aşağıdaki bölümden yükleyebilirsiniz.",
   READY_FOR_ASSIGNMENT: "Belgeleriniz tamam. Uygun uzman hekime atama yapılıyor.",
   ASSIGNED: "Uzman hekim dosyanızı inceliyor. Yazılı görüşünüz hazırlanıyor.",
@@ -72,7 +75,8 @@ const S = {
   fulfillBtn: "Belgeleri gönder ve incelemeye sun",
   payTitle: "Ödeme ve gönderim",
   missingLabel: "Eksik zorunlu belge",
-  missingNote: "Yine de devam edebilirsiniz; koordinatör eksikleri talep edebilir.",
+  missingNote: "Devam etmek için eksik belgeleri yükleyin ya da aşağıdaki kutuyu işaretleyin.",
+  willProvide: "Eksik zorunlu belgeleri sonra temin edeceğim.",
   payLine: "Yazılı rapor + video görüşme",
   payBtn: `Öde ve gönder (${SO_FEE_USD} USD)`,
   paySim: "Ödeme simülasyondur — gerçek kart işlemi yapılmaz.",
@@ -84,6 +88,13 @@ const S = {
   errGeneric: "Hata.",
   errPay: "Ödeme alınamadı.",
   errFulfill: "Gönderilemedi.",
+} as const;
+
+const PHASE_ICON = {
+  payment: <CreditCard size={14} />,
+  docs: <FileText size={14} />,
+  doctor: <Stethoscope size={14} />,
+  video: <Video size={14} />,
 } as const;
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -119,10 +130,18 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       ...specs.map((s) => s.label),
       ...pendingReqs.map((r) => r.description),
       ...(data.opinion ? [data.opinion.content] : []),
+      ...SO_TRACKER_TEXTS,
     ],
     [data.branchLabel, specs, pendingReqs, data.opinion],
   );
   const { t } = useT(lang, texts);
+
+  const trackerItems: TrackerItem[] = soTrackerPhases(status).map((p) => ({
+    label: t(p.label),
+    subStatus: t(p.sub),
+    state: p.state,
+    icon: PHASE_ICON[p.key],
+  }));
 
   // belge ekleme formu
   const [addType, setAddType] = useState<SoDocType>("EPICRISIS");
@@ -137,6 +156,10 @@ export function SoCaseDetail({ data }: { data: SoData }) {
   const [paying, setPaying] = useState(false);
   const [payErr, setPayErr] = useState("");
   const [paid, setPaid] = useState(data.payment?.status === "PAID");
+  // Belge gate: eksik zorunlu belge varsa "temin edeceğim" işaretlenmeden ödeme/gönderim yapılamaz
+  // (koordinatör tamlık kontrolü kaldırıldığı için hasta-yüzüne taşındı — Talk to Doctor deseni).
+  const [willProvide, setWillProvide] = useState(false);
+  const payBlocked = missingRequired.length > 0 && !willProvide;
 
   function pickType(tp: SoDocType) {
     setAddType(tp);
@@ -217,6 +240,11 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-[#101010]">{t(data.branchLabel)} · {t(S.soSuffix)}</h1>
         <span className="rounded-full bg-[#14C3D0]/10 px-3 py-1 text-[12px] font-semibold text-[#0E8A95]">{t(SO_STATUS_LABELS[status])}</span>
+      </div>
+
+      {/* Süreç takip göstergesi (fazlara gruplu) */}
+      <div className="mt-4">
+        <ProcessTracker items={trackerItems} dir={langDir(lang)} />
       </div>
 
       {/* Tanı özeti — hastanın kendi girdisi, çevrilmez */}
@@ -396,9 +424,15 @@ export function SoCaseDetail({ data }: { data: SoData }) {
             <CreditCard size={17} /> {t(S.payTitle)}
           </div>
           {missingRequired.length > 0 && (
-            <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-[13px] text-amber-700">
-              <AlertTriangle size={15} className="mt-0.5 shrink-0" />
-              <span>{t(S.missingLabel)}: {missingRequired.map((s) => t(s.label)).join(", ")}. {t(S.missingNote)}</span>
+            <div className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-[13px] text-amber-700">
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+                <span>{t(S.missingLabel)}: {missingRequired.map((s) => t(s.label)).join(", ")}. {t(S.missingNote)}</span>
+              </div>
+              <label className="mt-2 flex items-start gap-2 ps-[23px] font-medium text-amber-800">
+                <input type="checkbox" checked={willProvide} onChange={(e) => setWillProvide(e.target.checked)} className="mt-0.5 accent-[#14C3D0]" />
+                <span>{t(S.willProvide)}</span>
+              </label>
             </div>
           )}
           <div className="mt-3 flex items-center justify-between text-sm">
@@ -408,8 +442,8 @@ export function SoCaseDetail({ data }: { data: SoData }) {
           {payErr && <p className="mt-2 text-sm text-red-600">{payErr}</p>}
           <button
             onClick={pay}
-            disabled={paying}
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50"
+            disabled={paying || payBlocked}
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {paying ? <Loader2 size={17} className="animate-spin" /> : t(S.payBtn)}
           </button>

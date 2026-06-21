@@ -1,0 +1,48 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
+import { BRANCHES } from "@/lib/triage";
+import { isOfferExpired } from "@/lib/second-opinion";
+import { claimSoCase } from "@/lib/second-opinion-service";
+import { notifyUser } from "@/lib/notify";
+
+// POST /api/second-opinion/cases/[id]/accept — hoca oto-atanan dosyayı KABUL eder (OFFERED → ASSIGNED).
+// Directed (kendisine atanan) hoca süre içinde her zaman; diğer branş hocaları yalnız kabul süresi
+// DOLDUYSA (lazy fan-out → ilk kabul eden alır, atomik claimSoCase). Koordinatör YOK.
+export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
+  if (!["DOCTOR", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+
+  const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
+  const myDoctorId = me?.doctorId;
+  if (!myDoctorId) return NextResponse.json({ error: "Doktor profili bulunamadı." }, { status: 403 });
+
+  const doctor = await db.doctor.findUnique({ where: { id: myDoctorId } });
+  if (!doctor) return NextResponse.json({ error: "Doktor bulunamadı." }, { status: 404 });
+
+  const c = await db.secondOpinionCase.findUnique({ where: { id } });
+  if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+  if (c.status !== "OFFERED") return NextResponse.json({ error: "Bu dosya kabul aşamasında değil." }, { status: 409 });
+  if (doctor.branch !== c.branch) return NextResponse.json({ error: "Bu dosya sizin branşınızda değil." }, { status: 403 });
+
+  // Yetki: kendisine atanan (directed) hoca her zaman; başka branş hocası YALNIZ kabul süresi dolduysa
+  const directed = c.assignedDoctorId === myDoctorId;
+  if (!directed && !isOfferExpired(c.assignedAt)) {
+    return NextResponse.json({ error: "Bu dosya şu an atanan hekimin kabul süresinde — henüz açık değil." }, { status: 409 });
+  }
+
+  const ok = await claimSoCase(id, myDoctorId, { actorId: user.id, actorRole: user.role });
+  if (!ok) return NextResponse.json({ error: "Bu dosya artık uygun değil (başka hekim aldı)." }, { status: 409 });
+
+  const branchLabel = BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch;
+  await notifyUser(c.patientId, {
+    type: "SO_ASSIGNED",
+    title: "🩺 Uzman hekiminiz dosyanızı aldı",
+    body: `${branchLabel} · inceleme başladı`,
+    href: `/second-opinion/vaka/${id}`,
+  });
+
+  return NextResponse.json({ ok: true, status: "ASSIGNED" });
+}

@@ -30,14 +30,8 @@ export function quotaInfo(doc: DoctorQuotaFields): { used: number; quota: number
   return { used, quota: doc.proBonoQuota, left: Math.max(0, doc.proBonoQuota - used), needsReset };
 }
 
-function langList(csv: string | null | undefined): string[] {
-  return (csv ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-}
-// Hekim hiç dil belirtmediyse tümüyle eşleşir; aksi halde vakanın dili listede olmalı.
-function langMatch(caseLang: string, doctorLangsCsv: string): boolean {
-  const dl = langList(doctorLangsCsv);
-  return dl.length === 0 || dl.includes(caseLang);
-}
+// NOT: Dil ARTIK eşleştirme kriteri değil — simultane tercüme altyapısı dil farkını kapatır
+// (hasta-doktor dil ayrımı gözetmeden eşleşir). Eski `langMatch`/`langList` filtresi kaldırıldı.
 
 export interface PairResult {
   consultationId: string;
@@ -106,7 +100,6 @@ export async function matchForCase(caseId: string): Promise<PairResult | null> {
   });
   for (const d of candidates) {
     if (quotaInfo(d).left <= 0) continue;
-    if (!langMatch(c.language, d.languages)) continue;
     const r = await pairCaseWithDoctor(caseId, d.id);
     if (r) return r;
   }
@@ -122,7 +115,6 @@ export async function matchForDoctor(doctorId: string): Promise<PairResult | nul
     orderBy: { createdAt: "asc" },
   });
   for (const c of waiting) {
-    if (!langMatch(c.language, d.languages)) continue;
     const r = await pairCaseWithDoctor(c.id, doctorId);
     if (r) return r;
   }
