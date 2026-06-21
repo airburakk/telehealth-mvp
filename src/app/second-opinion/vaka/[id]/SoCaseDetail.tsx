@@ -10,7 +10,7 @@ import { useSoLang, SoLangSelect } from "@/components/SoLocale";
 import {
   Check, AlertTriangle, CreditCard, Loader2, Link2, Upload, FileText,
   CircleCheck, Clock, FlaskConical, ArrowLeft, NotebookPen, Printer, Video, Stethoscope,
-  CalendarClock, RefreshCw,
+  CalendarClock, RefreshCw, Hand,
 } from "lucide-react";
 import { langDir, LANG_BCP47 } from "@/lib/constants";
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
@@ -56,6 +56,17 @@ const STATUS_MSG: Partial<Record<SoStatus, string>> = {
   CANCELLED: "Bu başvuru iptal edilmiştir.",
 };
 
+// A2: hastadan işlem beklenen durumlar → tracker üstünde belirgin "sizden bekleniyor" amber banner
+// (top hastadayken kaçırmasın; amber yalnız gerçekten işlem gerektiğinde). TR kanonik.
+const ACTION_NEEDED: Partial<Record<SoStatus, { title: string; desc: string }>> = {
+  DRAFT: { title: "Başvurunuzu tamamlayın", desc: "Belgelerinizi yükleyip ödemeyi tamamlayarak vakanızı incelemeye gönderin." },
+  AWAITING_DOCUMENTS: { title: "Eksik belge yükleyin", desc: "Talep edilen belgeleri aşağıdaki bölümden yükleyip gönderin." },
+  AWAITING_ADDITIONAL_TESTS: { title: "Ek tetkik yükleyin", desc: "Hekiminizin istediği tetkikleri aşağıdaki bölümden yükleyip gönderin." },
+  VIDEO_OFFERED: { title: "Randevu teklifini yanıtlayın", desc: "Önerilen video görüşme zamanını onaylayın ya da farklı bir zaman isteyin." },
+};
+// A4: belgeler "doğrulandı" sayılır — vaka inceleme/atama kapısını geçtiyse (öncesi: yalnız "alındı").
+const VERIFIED_STATUSES = ["OFFERED", "ASSIGNED", "AWAITING_ADDITIONAL_TESTS", "OPINION_DELIVERED", "VIDEO_OFFERED", "VIDEO_SCHEDULED", "VIDEO_COMPLETED", "CLOSED"];
+
 // Statik UI metinleri (TR kanonik)
 const S = {
   back: "İkinci görüş vakalarım",
@@ -72,6 +83,9 @@ const S = {
   errRespond: "İşlem tamamlanamadı.",
   yourDoctor: "Uzman hekiminiz",
   verifiedDoctor: "Doğrulanmış uzman hekim",
+  actionNeeded: "Sizden bekleniyor",
+  docReceived: "Alındı",
+  docVerified: "Doğrulandı",
   reqAdd: "Ek tetkik talebi",
   reqDoc: "Eksik belge talebi",
   docsTitle: "Belgeler",
@@ -150,6 +164,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       ...Object.values(SO_STATUS_LABELS),
       ...Object.values(SO_DOC_TYPE_LABELS),
       ...Object.values(STATUS_MSG),
+      ...Object.values(ACTION_NEEDED).flatMap((a) => [a.title, a.desc]),
       "Zorunlu", "Varsa", "Opsiyonel",
       data.branchLabel,
       ...specs.map((s) => s.label),
@@ -168,6 +183,9 @@ export function SoCaseDetail({ data }: { data: SoData }) {
     state: p.state,
     icon: PHASE_ICON[p.key],
   }));
+
+  const action = ACTION_NEEDED[status]; // A2: hastadan beklenen işlem (varsa tracker üstünde banner)
+  const docsVerified = VERIFIED_STATUSES.includes(status); // A4: belgeler doğrulandı mı (inceleme kapısı geçildi mi)
 
   // belge ekleme formu
   const [addType, setAddType] = useState<SoDocType>("EPICRISIS");
@@ -293,6 +311,17 @@ export function SoCaseDetail({ data }: { data: SoData }) {
         <ProcessTracker items={trackerItems} dir={langDir(lang)} />
       </div>
 
+      {/* Sizden bekleniyor — top hastadayken belirgin (bekleme odası Faz A2) */}
+      {action && (
+        <div className="mt-4 flex items-start gap-3 rounded-3xl border border-amber-300 bg-amber-50 p-5">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700"><Hand size={18} /></span>
+          <div>
+            <div className="text-sm font-semibold text-amber-900">{t(S.actionNeeded)} · {t(action.title)}</div>
+            <p className="mt-0.5 text-[13px] leading-relaxed text-amber-800">{t(action.desc)}</p>
+          </div>
+        </div>
+      )}
+
       {/* Atanan uzman hekim kimlik kartı (en güçlü güven öğesi — bekleme odası Faz A3) */}
       {data.assignedDoctor && DOCTOR_SHOWN.includes(status) && (
         <div className="mt-4 flex items-center gap-4 rounded-3xl border border-[#14C3D0]/30 bg-white p-5 shadow-sm">
@@ -382,10 +411,15 @@ export function SoCaseDetail({ data }: { data: SoData }) {
             return (
               <li key={s.type} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
                 <div className="flex items-center gap-2">
-                  <span className={`grid h-6 w-6 place-items-center rounded-full ${has ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-400"}`}>
+                  <span className={`grid h-6 w-6 place-items-center rounded-full ${has ? (docsVerified ? "bg-emerald-100 text-emerald-700" : "bg-sky-100 text-sky-700") : "bg-slate-200 text-slate-400"}`}>
                     {has ? <Check size={14} /> : <span className="text-[11px]">—</span>}
                   </span>
                   <span className="text-sm font-medium text-slate-700">{t(s.label)}</span>
+                  {has && (
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${docsVerified ? "bg-emerald-100 text-emerald-700" : "bg-sky-100 text-sky-700"}`}>
+                      {docsVerified ? t(S.docVerified) : t(S.docReceived)}
+                    </span>
+                  )}
                   <span className={`ms-auto rounded-full px-2 py-0.5 text-[10.5px] font-semibold ring-1 ${badge.cls}`}>{t(badge.label)}</span>
                 </div>
                 {items.length > 0 && (
