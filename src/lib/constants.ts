@@ -29,6 +29,12 @@ export const COUNTRIES: CountryDef[] = [
 
 export const LANGUAGES = ["Türkçe", "Rusça", "Azerice", "Arapça", "Farsça", "Fransızca", "İngilizce", "Almanca", "Kazakça", "Kırgızca"];
 
+// Dil adı → BCP-47 yerel kodu (tarih/sayı biçimleme için; ConsultationRoom SPEECH_LANG ile aynı küme).
+export const LANG_BCP47: Record<string, string> = {
+  "Türkçe": "tr-TR", "Rusça": "ru-RU", "Azerice": "az-AZ", "Arapça": "ar-SA", "Farsça": "fa-IR",
+  "Fransızca": "fr-FR", "İngilizce": "en-US", "Almanca": "de-DE", "Kazakça": "kk-KZ", "Kırgızca": "ky-KG",
+};
+
 // Sağdan-sola yazılan diller (RTL) — Arapça ve Farsça. Hasta arayüzü bu dillerde
 // `dir="rtl"` ile yansıtılır (langDir). LTR dillerde davranış değişmez.
 const RTL_LANGS = new Set(["Arapça", "Farsça"]);

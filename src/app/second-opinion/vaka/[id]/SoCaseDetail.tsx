@@ -12,7 +12,7 @@ import {
   CircleCheck, Clock, FlaskConical, ArrowLeft, NotebookPen, Printer, Video, Stethoscope,
   CalendarClock, RefreshCw,
 } from "lucide-react";
-import { langDir } from "@/lib/constants";
+import { langDir, LANG_BCP47 } from "@/lib/constants";
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
 import { soTrackerPhases, SO_TRACKER_TEXTS } from "@/lib/so-tracker";
 
@@ -24,6 +24,7 @@ type SoData = {
   requests: { id: string; type: string; description: string; status: string }[];
   opinion: { content: string; submittedAt: string } | null;
   appointment: { id: string; scheduledAt: string; status: string } | null;
+  readyAt: string | null;
 };
 
 const ADDABLE = ["DRAFT", "AWAITING_DOCUMENTS", "AWAITING_ADDITIONAL_TESTS"];
@@ -113,6 +114,17 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+// Somut "tahmini teslim" tarihi — alıcının dilinde gün+ay (örn. "26 Haziran"). Tarayıcı ICU; geçersiz
+// dil kodu → tr-TR fallback. (Faz A1 — dijital bekleme odası süreç panosu.)
+function fmtTrackerDate(iso: string, lang: string): string {
+  const locale = LANG_BCP47[lang] ?? "tr-TR";
+  try {
+    return new Date(iso).toLocaleDateString(locale, { day: "numeric", month: "long" });
+  } catch {
+    return new Date(iso).toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
+  }
+}
+
 export function SoCaseDetail({ data }: { data: SoData }) {
   const router = useRouter();
   const [lang, setLang] = useSoLang();
@@ -143,9 +155,9 @@ export function SoCaseDetail({ data }: { data: SoData }) {
   );
   const { t } = useT(lang, texts);
 
-  const trackerItems: TrackerItem[] = soTrackerPhases(status).map((p) => ({
+  const trackerItems: TrackerItem[] = soTrackerPhases(status, data.readyAt).map((p) => ({
     label: t(p.label),
-    subStatus: t(p.sub),
+    subStatus: p.dueDate ? `${t(p.sub)} · ${t("Tahmini teslim")}: ${fmtTrackerDate(p.dueDate, lang)}` : t(p.sub),
     state: p.state,
     icon: PHASE_ICON[p.key],
   }));

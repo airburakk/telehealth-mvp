@@ -1,13 +1,16 @@
-import type { SoStatus } from "./second-opinion";
+import { reportDueRange, type SoStatus } from "./second-opinion";
 import type { TrackerState } from "@/components/ProcessTracker";
 
 // İkinci Görüş süreç takibi — durum → faz + güncel alt-durum eşlemesi. 4 faz: Ödeme · Belgeler ·
 // Uzman Hekim · Video. ProcessTracker'a beslenir; metinler TR kanonik (useT ile çevrilir).
+// `dueDate` (ISO): somut "tahmini teslim" tarihi — yalnız ilgili faz aktifken (muğlak yerine somut;
+// tasarım [[dijital-bekleme-odasi]] Faz A1).
 export interface SoTrackerPhase {
   key: "payment" | "docs" | "doctor" | "video";
   label: string;
   state: TrackerState;
   sub: string;
+  dueDate?: string;
 }
 
 const PHASES = [
@@ -34,13 +37,19 @@ const MAP: Partial<Record<SoStatus, { phase: number; sub: string }>> = {
   CANCELLED: { phase: 0, sub: "Başvuru iptal edildi" },
 };
 
-export function soTrackerPhases(status: SoStatus): SoTrackerPhase[] {
+export function soTrackerPhases(status: SoStatus, readyAt?: Date | string | null): SoTrackerPhase[] {
   const m = MAP[status] ?? { phase: 0, sub: PHASES[0].pending };
   const allDone = status === "CLOSED" || status === "VIDEO_COMPLETED";
+  // Uzman hekim fazı aktifken (rapor hazırlanıyor) somut teslim tahmini = readyAt + SLA üst sınırı.
+  const reportDue =
+    (status === "ASSIGNED" || status === "AWAITING_ADDITIONAL_TESTS") && readyAt
+      ? reportDueRange(new Date(readyAt)).max.toISOString()
+      : undefined;
   return PHASES.map((p, i) => {
     const state: TrackerState = allDone || i < m.phase ? "done" : i === m.phase ? "active" : "pending";
     const sub = state === "active" ? m.sub : state === "done" ? p.done : p.pending;
-    return { key: p.key, label: p.label, state, sub };
+    const dueDate = p.key === "doctor" && state === "active" ? reportDue : undefined;
+    return { key: p.key, label: p.label, state, sub, dueDate };
   });
 }
 
@@ -48,4 +57,5 @@ export function soTrackerPhases(status: SoStatus): SoTrackerPhase[] {
 export const SO_TRACKER_TEXTS: string[] = [
   ...PHASES.flatMap((p) => [p.label, p.done, p.pending]),
   ...Object.values(MAP).map((m) => m.sub),
+  "Tahmini teslim",
 ];

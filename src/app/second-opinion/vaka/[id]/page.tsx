@@ -46,6 +46,7 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
         requests: c.requests,
         opinion: c.opinion ? { content: c.opinion.content, submittedAt: c.opinion.submittedAt.toISOString() } : null,
         appointment: c.appointment ? { id: c.appointment.id, scheduledAt: c.appointment.scheduledAt.toISOString(), status: c.appointment.status } : null,
+        readyAt: c.readyAt ? c.readyAt.toISOString() : null,
       }}
     />
   );
