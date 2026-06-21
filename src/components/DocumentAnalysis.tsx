@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
-  FileText, Sparkles, Loader2, RefreshCw, ExternalLink, AlertTriangle, Languages, ListChecks, FileSearch,
+  FileText, Sparkles, Loader2, RefreshCw, ExternalLink, AlertTriangle, Languages, ListChecks, FileSearch, FlaskConical,
 } from "lucide-react";
 
 export interface CaseDoc {
@@ -26,15 +27,17 @@ function isFlagged(flags: string | null): boolean {
 // Tek tıkla her belgeyi değerlendirir: tür + Türkçe çeviri + klinik özet + anormal bulgu.
 // Sonuç DB'ye kaydedilir; orijinal belge "Orijinali aç" ile görüntülenebilir.
 export function DocumentAnalysis({ caseId, initial }: { caseId: string; initial: CaseDoc[] }) {
+  const router = useRouter();
   const [docs, setDocs] = useState<CaseDoc[]>(initial);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [labNote, setLabNote] = useState("");
 
   const pending = docs.filter((d) => !d.assessedAt).length;
   const anyAssessed = docs.some((d) => d.assessedAt);
 
   async function analyze(redo: boolean) {
-    setBusy(true); setErr("");
+    setBusy(true); setErr(""); setLabNote("");
     try {
       const r = await fetch(`/api/cases/${caseId}/analyze-docs`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -44,6 +47,10 @@ export function DocumentAnalysis({ caseId, initial }: { caseId: string; initial:
       if (!r.ok) throw new Error(d.error || "Belgeler değerlendirilemedi.");
       if (Array.isArray(d.documents)) setDocs(d.documents);
       if (d.failed) setErr(`${d.failed} belge değerlendirilemedi (atlandı).`);
+      if (d.addedLabs > 0) {
+        setLabNote(`${d.addedLabs} laboratuvar değeri aşağıdaki “Laboratuvar Sonuçları” formuna öneri olarak eklendi.`);
+        router.refresh(); // Case.labResults değişti → lab formu yeni satırları alsın
+      }
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Hata.");
     } finally { setBusy(false); }
@@ -76,6 +83,11 @@ export function DocumentAnalysis({ caseId, initial }: { caseId: string; initial:
             : "AI · Yeniden değerlendir"}
       </button>
       {err && <div className="mt-1.5 text-[11px] text-red-600">{err}</div>}
+      {labNote && (
+        <div className="mt-1.5 flex items-start gap-1.5 text-[11px] text-teal-700">
+          <FlaskConical size={12} className="mt-0.5 shrink-0" /> <span>{labNote}</span>
+        </div>
+      )}
 
       <div className="mt-4 space-y-3">
         {docs.map((d) => (

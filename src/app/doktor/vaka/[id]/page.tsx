@@ -4,11 +4,9 @@ import { db } from "@/lib/db";
 import { countryFlag, countryName, urgencyStyle, CASE_STATUS, formatDateTime } from "@/lib/constants";
 import { StartConsultButton } from "@/components/StartConsultButton";
 import { TranslateButton } from "@/components/TranslateButton";
-import { DischargeReport, type Structured } from "@/components/DischargeReport";
 import { CaseDicom } from "@/components/CaseDicom";
 import { DocumentAnalysis } from "@/components/DocumentAnalysis";
-import { FhirCodingForm } from "@/components/FhirCodingForm";
-import { icd10ForBranchLabel, loincForBranchLabel } from "@/data/coding";
+import { loincForBranchLabel } from "@/data/coding";
 import { LabResultsForm } from "@/components/LabResultsForm";
 import { caseDicomStudies } from "@/lib/case-dicom";
 import { ArrowLeft, ArrowRight, FileText, Sparkles, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks } from "lucide-react";
@@ -36,13 +34,10 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
   const dicomStudies = caseDicomStudies(c.id);
   const suggested = await db.doctor.findFirst({ where: { branch: c.branch } });
 
-  let dischargeStructured: Structured | null = null;
-  try { dischargeStructured = c.dischargeStructured ? (JSON.parse(c.dischargeStructured) as Structured) : null; } catch { dischargeStructured = null; }
-
   let triageAnswers: Record<string, string> | null = null;
   try { triageAnswers = c.extra ? (JSON.parse(c.extra) as Record<string, string>) : null; } catch { triageAnswers = null; }
 
-  let labResults: { loinc?: string; name?: string; value?: string; unit?: string }[] = [];
+  let labResults: { loinc?: string; name?: string; value?: string; unit?: string; abnormal?: string; aiSuggested?: boolean }[] = [];
   try { const p = c.labResults ? JSON.parse(c.labResults) : []; if (Array.isArray(p)) labResults = p; } catch { labResults = []; }
 
   return (
@@ -128,22 +123,8 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
           {/* Radyoloji (DICOM) — vakaya bağlı çalışmalar, kokpitten görüntülenir */}
           {dicomStudies.length > 0 && <CaseDicom studies={dicomStudies} />}
 
-          {/* AI Epikriz / Taburcu Raporu */}
-          <DischargeReport
-            caseId={c.id}
-            initialReport={c.dischargeReport}
-            initialStructured={dischargeStructured}
-            initialSavedAt={c.dischargeAt ? c.dischargeAt.toISOString() : null}
-          />
-
-          {/* FHIR Faz 0 — klinik kodlama (ICD-10 tanı + hasta kimliği) → FHIR Condition/Patient.identifier */}
-          <FhirCodingForm
-            caseId={c.id}
-            icd10Code={c.icd10Code}
-            patientIdentifier={c.patientIdentifier}
-            patientIdentifierType={c.patientIdentifierType}
-            icd10Options={icd10ForBranchLabel(c.branch)}
-          />
+          {/* AI Epikriz + Klinik Kodlama (FHIR) → görüşme ekranına taşındı
+              (akış: Görüşme Notları → Klinik Kodlama → Tedavi Kararı → AI Epikriz) */}
 
           {/* FHIR Faz 2 — laboratuvar sonuçları (LOINC) → Observation */}
           <LabResultsForm

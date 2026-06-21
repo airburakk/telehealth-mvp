@@ -5,6 +5,8 @@ import { ownsCase } from "@/lib/ownership";
 import { ConsultationRoom } from "@/components/ConsultationRoom";
 import { branchKeyFromLabel, branchLabel as branchLabelOf, getBranchProcedures } from "@/lib/procedures";
 import { getTryPerUsd } from "@/lib/fxrate";
+import { icd10ForBranchLabel } from "@/data/coding";
+import type { Structured } from "@/components/DischargeReport";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +60,32 @@ export default async function ConsultationPage({
     };
   }
 
+  // Kokpitten taşınan FHIR klinik kodlama + AI epikriz verisi — yalnız doktor görünümü için derle
+  let clinical:
+    | {
+        icd10Code: string | null;
+        patientIdentifier: string | null;
+        patientIdentifierType: string | null;
+        icd10Options: { code: string; label: string }[];
+        dischargeReport: string | null;
+        dischargeStructured: Structured | null;
+        dischargeSavedAt: string | null;
+      }
+    | undefined;
+  if (selfRole === "doctor") {
+    let dischargeStructured: Structured | null = null;
+    try { dischargeStructured = c.dischargeStructured ? (JSON.parse(c.dischargeStructured) as Structured) : null; } catch { dischargeStructured = null; }
+    clinical = {
+      icd10Code: c.icd10Code,
+      patientIdentifier: c.patientIdentifier,
+      patientIdentifierType: c.patientIdentifierType,
+      icd10Options: icd10ForBranchLabel(c.branch),
+      dischargeReport: c.dischargeReport,
+      dischargeStructured,
+      dischargeSavedAt: c.dischargeAt ? c.dischargeAt.toISOString() : null,
+    };
+  }
+
   return (
     <ConsultationRoom
       consultationId={consult.id}
@@ -66,6 +94,7 @@ export default async function ConsultationPage({
       initialNotes={consult.notes}
       doctor={{ title: consult.doctor.title, name: consult.doctor.name, branch: consult.doctor.branch, color: consult.doctor.color }}
       recommend={recommend}
+      clinical={clinical}
       caseData={{
         id: c.id,
         patientName: c.patientName,

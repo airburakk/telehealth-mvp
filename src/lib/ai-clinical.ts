@@ -426,11 +426,19 @@ export async function assessPostopPhoto(
 // Görüntü → Claude vision; PDF → Claude native "document" bloğu. Uydurma yok; okunamıyorsa açıkça belirtir.
 // Doktor kokpitte başlatır (düşük hacim) → yüksek kaliteli klinik model (Sonnet, MODEL). DICOM kapsam dışı (viewer-only).
 
+export interface DocLab {
+  name: string; // test/analit adı (mümkünse TR, ör. "Hemoglobin")
+  value: string; // ölçülen değer (belgedeki haliyle)
+  unit: string; // birim (ör. "g/dL"); yoksa ""
+  loinc?: string; // güvenilirse LOINC kodu; emin değilse yok
+  abnormal?: string; // kısa anormal işareti ("düşük"/"yüksek"/"kritik"); normalse yok
+}
 export interface DocAssessment {
   docType: string; // Laboratuvar | Görüntüleme Raporu | Epikriz / Tıbbi Rapor | Reçete | Diğer
   summary: string; // klinik özet (TR)
   translation: string; // belge içeriğinin TR çevirisi
   flags: string; // anormal/kritik bulgu (TR; yoksa "Belirgin anormallik saptanmadı")
+  labs: DocLab[]; // yalnız Laboratuvar belgelerinde dolu → lab formu / FHIR Observation kaynağı
 }
 
 const DOC_TYPES = ["Laboratuvar", "Görüntüleme Raporu", "Epikriz / Tıbbi Rapor", "Reçete", "Diğer"] as const;
@@ -459,14 +467,53 @@ const DOCUMENT_TOOL: Anthropic.Tool = {
         description:
           "Anormal / referans-dışı / kritik bulgular (Türkçe, kısa). Yoksa 'Belirgin anormallik saptanmadı.' yaz. Bulguyu UYDURMA.",
       },
+      labs: {
+        type: "array",
+        description:
+          "YALNIZCA belge bir laboratuvar/tahlil sonucu ise: ölçülen her analiti ayrı satır olarak çıkar. " +
+          "Laboratuvar DIŞINDAKİ belgelerde (görüntüleme, epikriz, reçete) BOŞ dizi döndür. Değerleri AYNEN belgeden al; analit/değer/birim UYDURMA.",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Test/analit adı, mümkünse Türkçe (ör. 'Hemoglobin', 'Lökosit')." },
+            value: { type: "string", description: "Ölçülen değer, belgedeki haliyle (ör. '9.8', '14.2', 'Pozitif')." },
+            unit: { type: "string", description: "Birim (ör. 'g/dL', '10^3/µL'); yoksa boş bırak." },
+            loinc: { type: "string", description: "Bu analitin LOINC kodu — YALNIZ emin isen (ör. Hemoglobin '718-7'). Emin değilsen boş bırak, UYDURMA." },
+            abnormal: { type: "string", description: "Referans dışıysa kısa işaret: 'düşük' / 'yüksek' / 'kritik'. Normal/bilinmiyorsa boş bırak." },
+          },
+          required: ["name", "value"],
+        },
+      },
     },
     required: ["docType", "summary", "translation", "flags"],
   },
 };
 
+const LOINC_RE = /^\d{1,6}-\d$/; // LOINC = sayısal kök + kontrol hanesi → biçimsiz/uydurma kodları ele
+
+function sanitizeDocLabs(raw: unknown): DocLab[] {
+  if (!Array.isArray(raw)) return [];
+  const out: DocLab[] = [];
+  for (const item of raw) {
+    const o = (item ?? {}) as Record<string, unknown>;
+    const name = typeof o.name === "string" ? o.name.trim().slice(0, 120) : "";
+    const value =
+      typeof o.value === "string" ? o.value.trim().slice(0, 60) : typeof o.value === "number" ? String(o.value) : "";
+    if (!name || !value) continue; // ad + değer zorunlu (yoksa atla)
+    const unit = typeof o.unit === "string" ? o.unit.trim().slice(0, 24) : "";
+    const loincRaw = typeof o.loinc === "string" ? o.loinc.trim() : "";
+    const loinc = LOINC_RE.test(loincRaw) ? loincRaw : ""; // biçim dışı kodu at (uydurma yok)
+    const abRaw = typeof o.abnormal === "string" ? o.abnormal.trim().toLowerCase().slice(0, 24) : "";
+    const abnormal = abRaw && !/normal|negatif|yok|none|bilinm/.test(abRaw) ? abRaw : "";
+    out.push({ name, value, unit, ...(loinc ? { loinc } : {}), ...(abnormal ? { abnormal } : {}) });
+    if (out.length >= 40) break;
+  }
+  return out;
+}
+
 export async function assessDocument(
   dataUrl: string,
-  ctx: { branch: string; symptoms: string; language: string; label: string }
+  ctx: { branch: string; symptoms: string; language: string; label: string; loincHints?: { code: string; label: string }[] }
 ): Promise<DocAssessment> {
   const m = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
   if (!m) throw new Error("Geçersiz belge biçimi (base64 data URL bekleniyor).");
@@ -487,7 +534,7 @@ export async function assessDocument(
     max_tokens: 2000,
     system:
       "Sen uluslararası bir telehealth platformunda klinik belge değerlendirme asistanısın. Hastanın triyajda yüklediği tıbbi belgeyi (laboratuvar tahlili, radyoloji/görüntüleme raporu, epikriz, reçete vb.) incelersin. " +
-      "Görevin: (1) belge türünü belirle; (2) belgedeki ANLAMLI tıbbi içeriği Türkçeye çevir; (3) görüşmeyi yapacak doktor için kısa klinik özet çıkar (önemli bulgular + hastanın ilk şikâyetiyle ilişkisi); (4) anormal / referans-dışı / kritik bulguları işaretle. " +
+      "Görevin: (1) belge türünü belirle; (2) belgedeki ANLAMLI tıbbi içeriği Türkçeye çevir; (3) görüşmeyi yapacak doktor için kısa klinik özet çıkar (önemli bulgular + hastanın ilk şikâyetiyle ilişkisi); (4) anormal / referans-dışı / kritik bulguları işaretle; (5) belge bir LABORATUVAR sonucu ise ölçülen her analiti (ad/değer/birim, emin isen LOINC kodu) yapılandırılmış 'labs' olarak çıkar — laboratuvar değilse 'labs' boş bırak. " +
       "Belgede AÇIKÇA olmayan değeri/bulguyu UYDURMA. Belge okunamıyorsa, tıbbi değilse veya çok düşük kaliteliyse bunu açıkça belirt. Bu bir ön-değerlendirmedir, kesin tanı değildir. Yanıtı DAİMA submit_document_assessment aracıyla ver.",
     tools: [DOCUMENT_TOOL],
     tool_choice: { type: "tool", name: "submit_document_assessment" },
@@ -499,7 +546,12 @@ export async function assessDocument(
           type: "text",
           text:
             `Vaka bağlamı:\nBranş: ${ctx.branch}\nHasta dili (belge bu dilde olabilir): ${ctx.language}\n` +
-            `İlk şikâyet: ${ctx.symptoms}\nDosya: ${ctx.label}\n\nBu tıbbi belgeyi değerlendir, Türkçeye çevir ve özetle.`,
+            `İlk şikâyet: ${ctx.symptoms}\nDosya: ${ctx.label}\n` +
+            (ctx.loincHints && ctx.loincHints.length
+              ? `\nBu branşta sık görülen LOINC kodları (laboratuvar satırlarında uygun olanı tercih et, zorlamadan):\n` +
+                ctx.loincHints.map((h) => `- ${h.code}: ${h.label}`).join("\n") + "\n"
+              : "") +
+            `\nBu tıbbi belgeyi değerlendir, Türkçeye çevir ve özetle. Belge bir laboratuvar sonucu ise ölçülen değerleri 'labs' alanında yapılandır.`,
         },
       ],
     }],
@@ -507,7 +559,9 @@ export async function assessDocument(
 
   const block = res.content.find((b) => b.type === "tool_use");
   if (!block || block.type !== "tool_use") throw new Error("Belge değerlendirmesi alınamadı.");
-  const a = block.input as Partial<DocAssessment>;
+  const a = block.input as Partial<DocAssessment> & { labs?: unknown };
   const docType = (DOC_TYPES as readonly string[]).includes(String(a.docType)) ? String(a.docType) : "Diğer";
-  return { docType, summary: clean(a.summary), translation: clean(a.translation), flags: clean(a.flags) };
+  // Yapılandırılmış lab satırları yalnız Laboratuvar belgelerinde (defansif: tür değilse boşalt)
+  const labs = docType === "Laboratuvar" ? sanitizeDocLabs(a.labs) : [];
+  return { docType, summary: clean(a.summary), translation: clean(a.translation), flags: clean(a.flags), labs };
 }

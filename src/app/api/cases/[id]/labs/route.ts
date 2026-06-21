@@ -22,7 +22,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       const value =
         typeof o.value === "string" ? o.value.trim().slice(0, 60) : typeof o.value === "number" ? String(o.value) : "";
       const unit = typeof o.unit === "string" ? o.unit.trim().slice(0, 24) : "";
-      return { loinc, name, value, unit };
+      const abnormal = typeof o.abnormal === "string" ? o.abnormal.trim().slice(0, 24) : "";
+      // Not: aiSuggested taşınmaz → "Kaydet" satırları onaylar (FHIR Observation'a dahil edilir).
+      return { loinc, name, value, unit, ...(abnormal ? { abnormal } : {}) };
     })
     .filter((l) => (l.loinc || l.name) && l.value)
     .slice(0, 50);

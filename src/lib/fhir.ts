@@ -131,14 +131,15 @@ function checkInObservations(c: CaseForFhir): FhirResource[] {
 
 // Case.labResults (JSON [{loinc,name,value,unit}]) → FHIR Observation[] (kategori: laboratory, LOINC kodlu)
 function labObservations(c: CaseForFhir): FhirResource[] {
-  let labs: { loinc?: string; name?: string; value?: string; unit?: string }[] = [];
+  let labs: { loinc?: string; name?: string; value?: string; unit?: string; aiSuggested?: boolean }[] = [];
   try {
     const p = c.labResults ? JSON.parse(c.labResults) : [];
     if (Array.isArray(p)) labs = p;
   } catch {
     labs = [];
   }
-  labs = labs.filter((l) => l && (l.loinc || l.name) && l.value != null && String(l.value).trim());
+  // aiSuggested:true = doktorun henüz onaylamadığı (Kaydet'lemediği) AI önerisi → FHIR'a dahil edilmez.
+  labs = labs.filter((l) => l && !l.aiSuggested && (l.loinc || l.name) && l.value != null && String(l.value).trim());
   const when = (c.dischargeAt ? new Date(c.dischargeAt) : new Date()).toISOString();
   const category = { coding: [{ system: "http://terminology.hl7.org/CodeSystem/observation-category", code: "laboratory", display: "Laboratory" }] };
   return labs.map((l, i) => {

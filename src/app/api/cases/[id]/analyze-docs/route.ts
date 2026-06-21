@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { assessDocument } from "@/lib/ai-clinical";
+import { loincForBranchLabel } from "@/data/coding";
 
 export const maxDuration = 60; // PDF/görüntü vision çağrıları + çoklu belge → uzun sürebilir
 
@@ -16,9 +17,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const c = await db.case.findUnique({
     where: { id },
-    select: { id: true, branch: true, symptoms: true, language: true },
+    select: { id: true, branch: true, symptoms: true, language: true, labResults: true },
   });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+  const loincHints = loincForBranchLabel(c.branch).map((e) => ({ code: e.code, label: e.label }));
 
   const body = await req.json().catch(() => ({}));
   const redo = !!body?.redo;
@@ -38,6 +40,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         symptoms: c.symptoms,
         language: c.language,
         label: d.label,
+        loincHints,
       });
       await db.caseDocument.update({
         where: { id: d.id },
@@ -49,6 +52,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           assessedAt: new Date(),
         },
       });
+      return a.docType === "Laboratuvar" ? a.labs : [];
     })
   );
 
@@ -60,6 +64,44 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const first = results.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined;
     const msg = first?.reason instanceof Error ? first.reason.message : "Belge değerlendirilemedi.";
     return NextResponse.json({ error: msg, failed }, { status: 502 });
+  }
+
+  // AI'nin laboratuvar belgelerinden çıkardığı değerleri lab formuna (Case.labResults) ÖNERİ olarak ekle.
+  // aiSuggested:true → doktor "Kaydet" ile onaylayana dek FHIR Observation'a girmez; var olan satırlar ezilmez (dedup).
+  type LabRow = { loinc?: string; name?: string; value?: string; unit?: string; abnormal?: string; aiSuggested?: boolean };
+  const extracted = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+  let addedLabs = 0;
+  if (extracted.length) {
+    let existing: LabRow[] = [];
+    try {
+      const p = c.labResults ? JSON.parse(c.labResults) : [];
+      if (Array.isArray(p)) existing = p;
+    } catch {
+      existing = [];
+    }
+    const norm = (s?: string) => (s || "").trim().toLowerCase();
+    const keyOf = (r: LabRow) => (r.loinc ? `c:${r.loinc}` : `n:${norm(r.name)}`);
+    const seen = new Set(existing.map(keyOf));
+    const additions: LabRow[] = [];
+    for (const l of extracted) {
+      const row: LabRow = {
+        name: l.name,
+        value: l.value,
+        unit: l.unit,
+        ...(l.loinc ? { loinc: l.loinc } : {}),
+        ...(l.abnormal ? { abnormal: l.abnormal } : {}),
+        aiSuggested: true,
+      };
+      const k = keyOf(row);
+      if (seen.has(k)) continue; // aynı analit zaten var → tekrar ekleme
+      seen.add(k);
+      additions.push(row);
+    }
+    if (additions.length) {
+      const merged = [...existing, ...additions].slice(0, 50);
+      await db.case.update({ where: { id }, data: { labResults: JSON.stringify(merged) } });
+      addedLabs = additions.length;
+    }
   }
 
   // Güncel tüm değerlendirmeleri döndür (içerik hariç) → kokpit reload'suz güncellenir
@@ -76,6 +118,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     ok: true,
     assessed,
     failed,
+    addedLabs,
     documents: all.map((d) => ({ ...d, assessedAt: d.assessedAt ? d.assessedAt.toISOString() : null })),
   });
 }

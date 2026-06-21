@@ -9,6 +9,8 @@ import { LiveInterpreter } from "@/components/LiveInterpreter";
 import { ConsultationTimer } from "@/components/ConsultationTimer";
 import RecommendedTreatments from "@/components/RecommendedTreatments";
 import DicomViewer from "@/components/DicomViewer";
+import { FhirCodingForm } from "@/components/FhirCodingForm";
+import { DischargeReport, type Structured } from "@/components/DischargeReport";
 import { getIceServers } from "@/lib/ice";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
@@ -31,6 +33,17 @@ interface RecommendData {
   doctorPrices: Record<string, number>;
   initial: { code: string; name: string; priceTRY: number }[];
   rate: number; // güncel USD/₺ (≈$ gösterimi için)
+}
+
+// Kokpitten doktor paneline taşınan FHIR klinik kodlama + AI epikriz verisi (yalnız doktor görünümü)
+interface ClinicalData {
+  icd10Code: string | null;
+  patientIdentifier: string | null;
+  patientIdentifierType: string | null;
+  icd10Options: { code: string; label: string }[];
+  dischargeReport: string | null;
+  dischargeStructured: Structured | null;
+  dischargeSavedAt: string | null;
 }
 
 // ── Canlı transkript (Web Speech API) ──
@@ -77,10 +90,10 @@ const UI = [
 ];
 
 export function ConsultationRoom({
-  consultationId, selfRole, status, initialNotes, doctor, caseData, recommend,
+  consultationId, selfRole, status, initialNotes, doctor, caseData, recommend, clinical,
 }: {
   consultationId: string; selfRole: "doctor" | "patient"; status: string;
-  initialNotes: string; doctor: DoctorData; caseData: CaseData; recommend?: RecommendData;
+  initialNotes: string; doctor: DoctorData; caseData: CaseData; recommend?: RecommendData; clinical?: ClinicalData;
 }) {
   const router = useRouter();
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -701,6 +714,17 @@ export function ConsultationRoom({
             </div>
           )}
 
+          {/* Klinik Kodlama (FHIR) — kokpitten taşındı; akış: Görüşme Notları → Klinik Kodlama → Tedavi Kararı → AI Epikriz */}
+          {isDoctor && clinical && (
+            <FhirCodingForm
+              caseId={caseData.id}
+              icd10Code={clinical.icd10Code}
+              patientIdentifier={clinical.patientIdentifier}
+              patientIdentifierType={clinical.patientIdentifierType}
+              icd10Options={clinical.icd10Options}
+            />
+          )}
+
           {isDoctor && (
             <div className="rounded-3xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
               <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Tedavi Kararı</div>
@@ -752,6 +776,16 @@ export function ConsultationRoom({
                 <Luggage size={16} /> Sağlık Turizmi Paketi (manuel)
               </button>
             </div>
+          )}
+
+          {/* AI Epikriz / Taburcu Raporu — kokpitten taşındı; Tedavi Kararı'ndan sonra (akışın son adımı) */}
+          {isDoctor && clinical && (
+            <DischargeReport
+              caseId={caseData.id}
+              initialReport={clinical.dischargeReport}
+              initialStructured={clinical.dischargeStructured}
+              initialSavedAt={clinical.dischargeSavedAt}
+            />
           )}
         </aside>
       </div>
