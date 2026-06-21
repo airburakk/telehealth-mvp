@@ -15,6 +15,7 @@ import {
 import { langDir, LANG_BCP47 } from "@/lib/constants";
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
 import { soTrackerPhases, SO_TRACKER_TEXTS } from "@/lib/so-tracker";
+import { DoctorArt } from "@/components/PortamedArt";
 
 type DocMeta = { id: string; type: string; deliveryMethod: string; externalRef: string | null; label: string | null };
 type SoData = {
@@ -25,9 +26,12 @@ type SoData = {
   opinion: { content: string; submittedAt: string } | null;
   appointment: { id: string; scheduledAt: string; status: string } | null;
   readyAt: string | null;
+  assignedDoctor: { name: string; title: string; branchLabel: string; avatarI: number; female: boolean } | null;
 };
 
 const ADDABLE = ["DRAFT", "AWAITING_DOCUMENTS", "AWAITING_ADDITIONAL_TESTS"];
+// Atanan doktor kimlik kartı yalnız hekim dosyayı ÜSTLENDİKTEN sonra (OFFERED'da henüz kesin değil).
+const DOCTOR_SHOWN = ["ASSIGNED", "AWAITING_ADDITIONAL_TESTS", "OPINION_DELIVERED", "VIDEO_OFFERED", "VIDEO_SCHEDULED", "VIDEO_COMPLETED", "CLOSED"];
 const REQ_BADGE: Record<string, { label: string; cls: string }> = {
   REQUIRED: { label: "Zorunlu", cls: "bg-red-50 text-red-700 ring-red-200" },
   CONDITIONAL: { label: "Varsa", cls: "bg-amber-50 text-amber-700 ring-amber-200" },
@@ -66,6 +70,8 @@ const S = {
   acceptVideo: "Bu zamanı onayla",
   requestChange: "Farklı bir zaman iste",
   errRespond: "İşlem tamamlanamadı.",
+  yourDoctor: "Uzman hekiminiz",
+  verifiedDoctor: "Doğrulanmış uzman hekim",
   reqAdd: "Ek tetkik talebi",
   reqDoc: "Eksik belge talebi",
   docsTitle: "Belgeler",
@@ -150,8 +156,9 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       ...pendingReqs.map((r) => r.description),
       ...(data.opinion ? [data.opinion.content] : []),
       ...SO_TRACKER_TEXTS,
+      ...(data.assignedDoctor ? [data.assignedDoctor.title, data.assignedDoctor.branchLabel] : []),
     ],
-    [data.branchLabel, specs, pendingReqs, data.opinion],
+    [data.branchLabel, specs, pendingReqs, data.opinion, data.assignedDoctor],
   );
   const { t } = useT(lang, texts);
 
@@ -285,6 +292,21 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       <div className="mt-4">
         <ProcessTracker items={trackerItems} dir={langDir(lang)} />
       </div>
+
+      {/* Atanan uzman hekim kimlik kartı (en güçlü güven öğesi — bekleme odası Faz A3) */}
+      {data.assignedDoctor && DOCTOR_SHOWN.includes(status) && (
+        <div className="mt-4 flex items-center gap-4 rounded-3xl border border-[#14C3D0]/30 bg-white p-5 shadow-sm">
+          <span className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl ring-1 ring-slate-200">
+            <DoctorArt i={data.assignedDoctor.avatarI} female={data.assignedDoctor.female} />
+          </span>
+          <div className="min-w-0">
+            <div className="text-xs font-semibold uppercase tracking-wide text-[#0E8A95]">{t(S.yourDoctor)}</div>
+            <div className="mt-0.5 text-lg font-bold text-[#101010]">{t(data.assignedDoctor.title)} {data.assignedDoctor.name}</div>
+            <div className="text-sm text-slate-500">{t(data.assignedDoctor.branchLabel)}</div>
+            <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700"><CircleCheck size={13} /> {t(S.verifiedDoctor)}</div>
+          </div>
+        </div>
+      )}
 
       {/* Tanı özeti — hastanın kendi girdisi, çevrilmez */}
       <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">

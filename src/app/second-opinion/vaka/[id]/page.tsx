@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { ownsSecondOpinionCase } from "@/lib/ownership";
 import { BRANCHES } from "@/lib/triage";
+import { avatarVariant, isFemaleName } from "@/lib/doctor-profile";
 import { SoCaseDetail } from "./SoCaseDetail";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,21 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
 
   const branchLabel = BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch;
 
+  // Atanan uzman hekim — hastaya kimlik kartı (Faz A3). Avatar değerleri sunucuda türetilir
+  // (DoctorArt deterministik: isimden cinsiyet + varyant) → client'a düz değer geçer.
+  const doc = c.assignedDoctorId
+    ? await db.doctor.findUnique({ where: { id: c.assignedDoctorId }, select: { name: true, title: true, branch: true } })
+    : null;
+  const assignedDoctor = doc
+    ? {
+        name: doc.name,
+        title: doc.title,
+        branchLabel: BRANCHES.find((b) => b.key === doc.branch)?.label ?? doc.branch,
+        avatarI: avatarVariant(doc.name),
+        female: isFemaleName(doc.name),
+      }
+    : null;
+
   return (
     <SoCaseDetail
       data={{
@@ -47,6 +63,7 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
         opinion: c.opinion ? { content: c.opinion.content, submittedAt: c.opinion.submittedAt.toISOString() } : null,
         appointment: c.appointment ? { id: c.appointment.id, scheduledAt: c.appointment.scheduledAt.toISOString(), status: c.appointment.status } : null,
         readyAt: c.readyAt ? c.readyAt.toISOString() : null,
+        assignedDoctor,
       }}
     />
   );
