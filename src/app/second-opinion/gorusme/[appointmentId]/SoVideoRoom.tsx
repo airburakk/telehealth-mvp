@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Video, VideoOff, Mic, MicOff, PhoneOff, Wifi, WifiOff, UserRound, Stethoscope } from "lucide-react";
+import { Video, VideoOff, Mic, MicOff, PhoneOff, Wifi, WifiOff, UserRound } from "lucide-react";
 import { getIceServers } from "@/lib/ice";
 import { useT } from "@/components/useT";
-import { useSoLang } from "@/components/SoLocale";
+import { useSoLang, SoLangSelect } from "@/components/SoLocale";
 import { langDir } from "@/lib/constants";
+import { PreConsultLobby } from "@/components/PreConsultLobby";
 
 type Phase = "idle" | "connecting" | "waiting" | "connected" | "ended" | "error";
 
@@ -36,9 +37,9 @@ const S = {
 // İzole SO video odası — WebRTC (P2P) + mevcut string-anahtarlı sinyalleşme API'si.
 // Doktor 'offer', hasta 'answer' üretir; ICE adayları polling ile değişilir.
 export function SoVideoRoom({
-  roomId, caseId, selfRole, ended, branchLabel, remoteName,
+  roomId, caseId, selfRole, ended, branchLabel, remoteName, scheduledAt,
 }: {
-  roomId: string; caseId: string; selfRole: "doctor" | "patient"; ended: boolean; branchLabel: string; remoteName: string;
+  roomId: string; caseId: string; selfRole: "doctor" | "patient"; ended: boolean; branchLabel: string; remoteName: string; scheduledAt: string | null;
 }) {
   const router = useRouter();
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -54,7 +55,7 @@ export function SoVideoRoom({
   const [remoteOn, setRemoteOn] = useState(false);
   const [connState, setConnState] = useState("");
 
-  const [lang] = useSoLang();
+  const [lang, setLang] = useSoLang();
   const texts = useMemo(() => [...Object.values(S), branchLabel], [branchLabel]);
   const { t } = useT(lang, texts);
 
@@ -198,17 +199,20 @@ export function SoVideoRoom({
     );
   }
 
+  // Görüşme Öncesi Oda (Faz B) — odaya girmeden cihaz testi + geri sayım. Katıl → joined.
   if (!joined) {
     return (
-      <div dir={langDir(lang)} className="mx-auto max-w-md px-5 py-16 text-center">
-        <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Stethoscope size={26} /></span>
-        <h1 className="mt-4 text-2xl font-bold text-[#101010]">{t(S.title)}</h1>
-        <p className="mt-1 text-sm text-slate-500">{t(branchLabel)} · {selfRole === "doctor" ? t(S.patient) : t(S.doctor)}: {remoteName}</p>
-        <p className="mt-4 text-[13px] text-slate-500">{t(S.permNote)}</p>
-        <button onClick={() => { setJoined(true); setPhase("connecting"); }} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
-          <Video size={18} /> {t(S.join)}
-        </button>
-      </div>
+      <PreConsultLobby
+        lang={lang}
+        langSelector={<SoLangSelect lang={lang} onChange={setLang} />}
+        scheduledAt={scheduledAt}
+        earlyWindowMin={15}
+        isDoctor={selfRole === "doctor"}
+        remoteLabel={remoteName}
+        branchLabel={branchLabel}
+        storageKey={roomId}
+        onJoin={() => { setJoined(true); setPhase("connecting"); }}
+      />
     );
   }
 

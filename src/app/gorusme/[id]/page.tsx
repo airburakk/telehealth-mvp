@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { ownsCase } from "@/lib/ownership";
 import { ConsultationRoom } from "@/components/ConsultationRoom";
+import { PreConsultLobby } from "@/components/PreConsultLobby";
 import { branchKeyFromLabel, branchLabel as branchLabelOf, getBranchProcedures } from "@/lib/procedures";
 import { getTryPerUsd } from "@/lib/fxrate";
 import { icd10ForBranchLabel } from "@/data/coding";
@@ -86,7 +87,7 @@ export default async function ConsultationPage({
     };
   }
 
-  return (
+  const room = (
     <ConsultationRoom
       consultationId={consult.id}
       selfRole={selfRole}
@@ -108,5 +109,22 @@ export default async function ConsultationPage({
         files: c.attachments ? c.attachments.split(",").filter(Boolean) : [],
       }}
     />
+  );
+
+  // Görüşme Öncesi Oda (Faz B) — aktif görüşmede lobi zorunlu (cihaz testi + hazırlık),
+  // biten görüşmede atlanır (oda doğrudan "sona erdi" durumunu gösterir).
+  // Talk akışında randevu yok → scheduledAt=null (anlık katılım). Doktor arayüzü Türkçe (ConsultationRoom uiLang ile uyumlu).
+  if (consult.status === "ENDED") return room;
+  return (
+    <PreConsultLobby
+      lang={selfRole === "doctor" ? "Türkçe" : c.language}
+      scheduledAt={null}
+      isDoctor={selfRole === "doctor"}
+      remoteLabel={selfRole === "doctor" ? c.patientName : `${consult.doctor.title} ${consult.doctor.name}`.trim()}
+      branchLabel={c.branch}
+      storageKey={consult.id}
+    >
+      {room}
+    </PreConsultLobby>
   );
 }

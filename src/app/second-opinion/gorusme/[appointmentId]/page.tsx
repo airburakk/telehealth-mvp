@@ -51,6 +51,7 @@ export default async function SoVideoPage({
       ended={appt.status === "COMPLETED" || c.status === "CLOSED"}
       branchLabel={branchLabel}
       remoteName={selfRole === "doctor" ? (patient?.name ?? "Hasta") : `${doctor?.title ?? ""} ${doctor?.name ?? ""}`.trim()}
+      scheduledAt={appt.scheduledAt.toISOString()}
     />
   );
 }
