@@ -14,6 +14,7 @@ export const SO_STATUSES = [
   "ASSIGNED",
   "AWAITING_ADDITIONAL_TESTS",
   "OPINION_DELIVERED",
+  "VIDEO_OFFERED",
   "VIDEO_SCHEDULED",
   "VIDEO_COMPLETED",
   "CLOSED",
@@ -32,7 +33,10 @@ export const SO_TRANSITIONS: Record<SoStatus, SoStatus[]> = {
   READY_FOR_ASSIGNMENT: ["ASSIGNED"],
   ASSIGNED: ["AWAITING_ADDITIONAL_TESTS", "OPINION_DELIVERED"],
   AWAITING_ADDITIONAL_TESTS: ["ASSIGNED"],
-  OPINION_DELIVERED: ["VIDEO_SCHEDULED"],
+  // Faz 4 (İcapçı deseni): raporu yazan hoca randevu TEKLİF eder → hasta onaylar (VIDEO_SCHEDULED)
+  // veya değişiklik ister (OPINION_DELIVERED'a döner; hoca yeni zaman önerir). Koordinatör YOK.
+  OPINION_DELIVERED: ["VIDEO_OFFERED"],
+  VIDEO_OFFERED: ["VIDEO_SCHEDULED", "OPINION_DELIVERED"],
   VIDEO_SCHEDULED: ["VIDEO_COMPLETED"],
   VIDEO_COMPLETED: ["CLOSED"],
   CLOSED: [],
@@ -57,6 +61,7 @@ export const SO_STATUS_LABELS: Record<SoStatus, string> = {
   ASSIGNED: "Doktor incelemesinde",
   AWAITING_ADDITIONAL_TESTS: "Ek tetkik bekleniyor",
   OPINION_DELIVERED: "Yazılı görüş sunuldu",
+  VIDEO_OFFERED: "Video randevu teklif edildi",
   VIDEO_SCHEDULED: "Video randevusu kuruldu",
   VIDEO_COMPLETED: "Görüşme tamamlandı",
   CLOSED: "Kapandı",

@@ -10,6 +10,7 @@ import { useSoLang, SoLangSelect } from "@/components/SoLocale";
 import {
   Check, AlertTriangle, CreditCard, Loader2, Link2, Upload, FileText,
   CircleCheck, Clock, FlaskConical, ArrowLeft, NotebookPen, Printer, Video, Stethoscope,
+  CalendarClock, RefreshCw,
 } from "lucide-react";
 import { langDir } from "@/lib/constants";
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
@@ -42,7 +43,8 @@ const STATUS_MSG: Partial<Record<SoStatus, string>> = {
   READY_FOR_ASSIGNMENT: "Belgeleriniz tamam. Uygun uzman hekime atama yapılıyor.",
   ASSIGNED: "Uzman hekim dosyanızı inceliyor. Yazılı görüşünüz hazırlanıyor.",
   AWAITING_ADDITIONAL_TESTS: "Hekim ek tetkik talep etti — aşağıdaki bölümden yükleyebilirsiniz.",
-  OPINION_DELIVERED: "Yazılı ikinci görüşünüz hazır. Video görüşme randevunuz planlanacaktır.",
+  OPINION_DELIVERED: "Yazılı ikinci görüşünüz hazır. Uzman hekiminiz birazdan bir video görüşme zamanı önerecek.",
+  VIDEO_OFFERED: "Uzman hekiminiz bir görüşme zamanı önerdi — onaylayın ya da farklı bir zaman isteyin.",
   VIDEO_SCHEDULED: "Video görüşme randevunuz oluşturuldu.",
   VIDEO_COMPLETED: "Görüşmeniz tamamlandı.",
   CLOSED: "Bu ikinci görüş süreci kapanmıştır.",
@@ -58,6 +60,11 @@ const S = {
   print: "Yazdır / PDF",
   videoTitle: "Video görüşme randevunuz",
   join: "Görüşmeye katıl",
+  videoOfferTitle: "Video randevu teklifi",
+  videoOfferDesc: "Uzman hekiminiz görüşme için aşağıdaki zamanı önerdi:",
+  acceptVideo: "Bu zamanı onayla",
+  requestChange: "Farklı bir zaman iste",
+  errRespond: "İşlem tamamlanamadı.",
   reqAdd: "Ek tetkik talebi",
   reqDoc: "Eksik belge talebi",
   docsTitle: "Belgeler",
@@ -228,6 +235,26 @@ export function SoCaseDetail({ data }: { data: SoData }) {
     }
   }
 
+  // Video randevu teklifine yanıt (VIDEO_OFFERED) — onayla / farklı zaman iste (İcapçı deseni)
+  const [responding, setResponding] = useState<"" | "accept" | "request_change">("");
+  const [respondErr, setRespondErr] = useState("");
+  async function respondVideo(action: "accept" | "request_change") {
+    setRespondErr("");
+    setResponding(action);
+    try {
+      const res = await fetch(`/api/second-opinion/cases/${data.id}/respond-video`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || t(S.errRespond));
+      router.refresh();
+    } catch (e) {
+      setRespondErr(e instanceof Error ? e.message : t(S.errGeneric));
+      setResponding("");
+    }
+  }
+
   return (
     <div dir={langDir(lang)} className="mx-auto max-w-2xl px-5 py-8">
       <div className="flex items-center justify-between gap-3">
@@ -267,6 +294,24 @@ export function SoCaseDetail({ data }: { data: SoData }) {
           </div>
           <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">{t(data.opinion.content)}</pre>
           <div className="mt-2 text-xs text-emerald-600">{new Date(data.opinion.submittedAt).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}</div>
+        </div>
+      )}
+
+      {/* Video randevu teklifi — onayla / farklı zaman iste (İcapçı deseni) */}
+      {status === "VIDEO_OFFERED" && data.appointment && (
+        <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50/60 p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-amber-800"><CalendarClock size={17} /> {t(S.videoOfferTitle)}</div>
+          <p className="mt-1.5 text-[13px] text-amber-700">{t(S.videoOfferDesc)}</p>
+          <p className="mt-1 text-lg font-bold text-[#101010]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+          {respondErr && <p className="mt-2 text-sm text-red-600">{respondErr}</p>}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button onClick={() => respondVideo("accept")} disabled={responding !== ""} className="inline-flex items-center gap-2 rounded-xl bg-[#14C3D0] px-5 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50">
+              {responding === "accept" ? <Loader2 size={16} className="animate-spin" /> : <CircleCheck size={16} />} {t(S.acceptVideo)}
+            </button>
+            <button onClick={() => respondVideo("request_change")} disabled={responding !== ""} className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-white px-5 py-2.5 text-sm font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-50">
+              {responding === "request_change" ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />} {t(S.requestChange)}
+            </button>
+          </div>
         </div>
       )}
 

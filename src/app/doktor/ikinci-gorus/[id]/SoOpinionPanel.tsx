@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { secondOpinionDocSpecs } from "@/data/second-opinion-docs";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
 import Link from "next/link";
-import { Check, FileText, Link2, ExternalLink, FlaskConical, Loader2, ClipboardList, NotebookPen, Video, CheckCircle2 } from "lucide-react";
+import { Check, FileText, Link2, ExternalLink, FlaskConical, Loader2, ClipboardList, NotebookPen, Video, CheckCircle2, CalendarClock, RefreshCw, Clock } from "lucide-react";
 
 type Doc = { id: string; type: string; deliveryMethod: string; externalRef: string | null; label: string | null };
 type Req = { id: string; type: string; description: string; status: string };
@@ -30,7 +30,8 @@ export function SoOpinionPanel({ data }: { data: Data }) {
 
   const [fields, setFields] = useState<Record<string, string>>({ findings: "", assessment: "", opinion: "", recommendations: "" });
   const [testDesc, setTestDesc] = useState("");
-  const [busy, setBusy] = useState<"" | "opinion" | "test" | "complete">("");
+  const [offerAt, setOfferAt] = useState("");
+  const [busy, setBusy] = useState<"" | "opinion" | "test" | "complete" | "offer">("");
   const [err, setErr] = useState("");
 
   async function completeVideo() {
@@ -42,6 +43,23 @@ export function SoOpinionPanel({ data }: { data: Data }) {
       router.refresh();
     } catch (e) { setErr(e instanceof Error ? e.message : "Hata."); setBusy(""); }
   }
+
+  // Faz 4 (İcapçı deseni): raporu yazan hoca video randevu zamanı TEKLİF eder → hasta onaylar/değişiklik ister.
+  async function offerVideo() {
+    if (!offerAt) return setErr("Tarih/saat seçin.");
+    setErr(""); setBusy("offer");
+    try {
+      const res = await fetch(`/api/second-opinion/cases/${data.id}/offer-video`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduledAt: new Date(offerAt).toISOString() }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Teklif gönderilemedi.");
+      router.refresh();
+    } catch (e) { setErr(e instanceof Error ? e.message : "Hata."); setBusy(""); }
+  }
+
+  const changeRequested = data.appointment?.status === "CHANGE_REQUESTED";
 
   const pendingReqs = data.requests.filter((r) => r.status === "PENDING");
   const canWork = status === "ASSIGNED";
@@ -148,6 +166,34 @@ export function SoOpinionPanel({ data }: { data: Data }) {
             <span className="text-xs text-emerald-600">{new Date(data.opinion.submittedAt).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}</span>
           </div>
           <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">{data.opinion.content}</pre>
+        </div>
+      )}
+
+      {/* Faz 4 — video randevu teklifi (raporu yazan hoca; İcapçı deseni) */}
+      {status === "OPINION_DELIVERED" && (
+        <div className="mt-4 rounded-3xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.05] p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#0E8A95]"><CalendarClock size={17} /> Video randevu teklif et</div>
+          {changeRequested ? (
+            <div className="mt-2 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-[13px] text-amber-700">
+              <RefreshCw size={15} className="mt-0.5 shrink-0" />
+              <span>Hasta önerdiğiniz zamanı uygun bulmadı — lütfen farklı bir zaman önerin.</span>
+            </div>
+          ) : (
+            <p className="mt-1 text-xs text-slate-500">Yazılı görüş sunuldu; raporun tesliminden itibaren 15 gün içinde bir görüşme zamanı önerin. Hasta onaylayınca randevu kesinleşir.</p>
+          )}
+          <input type="datetime-local" value={offerAt} onChange={(e) => setOfferAt(e.target.value)} className="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-[#14C3D0] focus:outline-none" />
+          <button onClick={offerVideo} disabled={busy !== ""} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50">
+            {busy === "offer" ? <Loader2 size={17} className="animate-spin" /> : <>Randevu zamanını hastaya öner</>}
+          </button>
+        </div>
+      )}
+
+      {/* Teklif gönderildi — hasta onayı bekleniyor */}
+      {status === "VIDEO_OFFERED" && data.appointment && (
+        <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50/60 p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-amber-800"><Clock size={17} /> Randevu teklifiniz hastaya iletildi</div>
+          <p className="mt-1.5 text-lg font-bold text-[#101010]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+          <p className="mt-1 text-xs text-amber-700">Hasta bu zamanı onayladığında randevu kesinleşir; farklı bir zaman isterse yeniden öneri yapabilirsiniz.</p>
         </div>
       )}
 
