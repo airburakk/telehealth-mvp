@@ -6,6 +6,7 @@ import { StartConsultButton } from "@/components/StartConsultButton";
 import { TranslateButton } from "@/components/TranslateButton";
 import { DischargeReport, type Structured } from "@/components/DischargeReport";
 import { CaseDicom } from "@/components/CaseDicom";
+import { DocumentAnalysis } from "@/components/DocumentAnalysis";
 import { FhirCodingForm } from "@/components/FhirCodingForm";
 import { icd10ForBranchLabel, loincForBranchLabel } from "@/data/coding";
 import { LabResultsForm } from "@/components/LabResultsForm";
@@ -16,12 +17,22 @@ export const dynamic = "force-dynamic";
 
 export default async function CaseDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const c = await db.case.findUnique({ where: { id }, include: { doctor: true } });
+  const c = await db.case.findUnique({
+    where: { id },
+    include: {
+      doctor: true,
+      documents: {
+        select: { id: true, label: true, mimeType: true, aiDocType: true, aiSummary: true, aiTranslation: true, aiFlags: true, assessedAt: true },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
   if (!c) notFound();
 
   const u = urgencyStyle(c.urgency);
   const st = CASE_STATUS[c.status] ?? CASE_STATUS.NEW;
   const files = c.attachments ? c.attachments.split(",").filter(Boolean) : [];
+  const caseDocs = c.documents.map((d) => ({ ...d, assessedAt: d.assessedAt ? d.assessedAt.toISOString() : null }));
   const dicomStudies = caseDicomStudies(c.id);
   const suggested = await db.doctor.findFirst({ where: { branch: c.branch } });
 
@@ -104,10 +115,15 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
             ) : (
               <p className="mt-2 text-sm text-slate-400">Yüklenmiş belge yok.</p>
             )}
-            <p className="mt-3 text-xs text-slate-400">
-              Not: Radyoloji/patoloji belgeleri görüşme öncesi otomatik çeviri ve özetleme için AI Orchestration katmanına gönderilecektir (yol haritası).
-            </p>
+            {caseDocs.length > 0 && (
+              <p className="mt-3 text-xs text-slate-400">
+                Görüntü ve PDF belgeler aşağıdaki <strong>Belge Analizi (AI)</strong> kartında değerlendirilip Türkçeye çevrilir. DICOM görüntüleri Radyoloji görüntüleyicide açılır.
+              </p>
+            )}
           </div>
+
+          {/* Triyajda yüklenen belgelerin AI ön-değerlendirmesi (tür + Türkçe çeviri + klinik özet + anormal bulgu) */}
+          {caseDocs.length > 0 && <DocumentAnalysis caseId={c.id} initial={caseDocs} />}
 
           {/* Radyoloji (DICOM) — vakaya bağlı çalışmalar, kokpitten görüntülenir */}
           {dicomStudies.length > 0 && <CaseDicom studies={dicomStudies} />}

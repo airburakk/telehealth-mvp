@@ -419,3 +419,95 @@ export async function assessPostopPhoto(
     : "NONE";
   return { severity, findings: clean(a.findings) };
 }
+
+// ── Triyaj belge AI ön-değerlendirmesi (Modül 1 — AI Orchestration) ──
+// Hastanın triyajda yüklediği tıbbi belgeyi (tahlil / görüntüleme raporu / epikriz / reçete) değerlendirir:
+// türünü belirler, ANLAMLI içeriğini Türkçeye çevirir, doktor için klinik özet + anormal/kritik bulgu çıkarır.
+// Görüntü → Claude vision; PDF → Claude native "document" bloğu. Uydurma yok; okunamıyorsa açıkça belirtir.
+// Doktor kokpitte başlatır (düşük hacim) → yüksek kaliteli klinik model (Sonnet, MODEL). DICOM kapsam dışı (viewer-only).
+
+export interface DocAssessment {
+  docType: string; // Laboratuvar | Görüntüleme Raporu | Epikriz / Tıbbi Rapor | Reçete | Diğer
+  summary: string; // klinik özet (TR)
+  translation: string; // belge içeriğinin TR çevirisi
+  flags: string; // anormal/kritik bulgu (TR; yoksa "Belirgin anormallik saptanmadı")
+}
+
+const DOC_TYPES = ["Laboratuvar", "Görüntüleme Raporu", "Epikriz / Tıbbi Rapor", "Reçete", "Diğer"] as const;
+
+const DOCUMENT_TOOL: Anthropic.Tool = {
+  name: "submit_document_assessment",
+  description: "Tıbbi belgenin tür + Türkçe çeviri + klinik özet + anormal bulgu değerlendirmesi.",
+  input_schema: {
+    type: "object",
+    properties: {
+      docType: { type: "string", enum: [...DOC_TYPES], description: "Belge türü" },
+      summary: {
+        type: "string",
+        description:
+          "Türkçe klinik özet (2-5 cümle): belgedeki önemli bulgular ve hastanın ilk şikâyetiyle ilişkisi. " +
+          "Belge okunamıyorsa / tıbbi değilse / çok düşük kaliteliyse bunu açıkça yaz.",
+      },
+      translation: {
+        type: "string",
+        description:
+          "Belgedeki ANLAMLI tıbbi içeriğin (değerler, tanılar, ölçümler, hekim notları) Türkçe çevirisi; düzenli ve okunur. " +
+          "Belge zaten Türkçe ise 'Belge zaten Türkçe.' yaz. Olmayan içeriği uydurma.",
+      },
+      flags: {
+        type: "string",
+        description:
+          "Anormal / referans-dışı / kritik bulgular (Türkçe, kısa). Yoksa 'Belirgin anormallik saptanmadı.' yaz. Bulguyu UYDURMA.",
+      },
+    },
+    required: ["docType", "summary", "translation", "flags"],
+  },
+};
+
+export async function assessDocument(
+  dataUrl: string,
+  ctx: { branch: string; symptoms: string; language: string; label: string }
+): Promise<DocAssessment> {
+  const m = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
+  if (!m) throw new Error("Geçersiz belge biçimi (base64 data URL bekleniyor).");
+  const media = m[1];
+  const b64 = m[2];
+
+  let docBlock: Anthropic.ContentBlockParam;
+  if (media === "application/pdf") {
+    docBlock = { type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } };
+  } else if (/^image\/(jpeg|png|webp|gif)$/.test(media)) {
+    docBlock = { type: "image", source: { type: "base64", media_type: media as "image/jpeg" | "image/png" | "image/webp" | "image/gif", data: b64 } };
+  } else {
+    throw new Error("Desteklenmeyen belge türü (yalnız PDF ve görüntü AI ile değerlendirilir; DICOM kapsam dışı).");
+  }
+
+  const res = await client().messages.create({
+    model: MODEL,
+    max_tokens: 2000,
+    system:
+      "Sen uluslararası bir telehealth platformunda klinik belge değerlendirme asistanısın. Hastanın triyajda yüklediği tıbbi belgeyi (laboratuvar tahlili, radyoloji/görüntüleme raporu, epikriz, reçete vb.) incelersin. " +
+      "Görevin: (1) belge türünü belirle; (2) belgedeki ANLAMLI tıbbi içeriği Türkçeye çevir; (3) görüşmeyi yapacak doktor için kısa klinik özet çıkar (önemli bulgular + hastanın ilk şikâyetiyle ilişkisi); (4) anormal / referans-dışı / kritik bulguları işaretle. " +
+      "Belgede AÇIKÇA olmayan değeri/bulguyu UYDURMA. Belge okunamıyorsa, tıbbi değilse veya çok düşük kaliteliyse bunu açıkça belirt. Bu bir ön-değerlendirmedir, kesin tanı değildir. Yanıtı DAİMA submit_document_assessment aracıyla ver.",
+    tools: [DOCUMENT_TOOL],
+    tool_choice: { type: "tool", name: "submit_document_assessment" },
+    messages: [{
+      role: "user",
+      content: [
+        docBlock,
+        {
+          type: "text",
+          text:
+            `Vaka bağlamı:\nBranş: ${ctx.branch}\nHasta dili (belge bu dilde olabilir): ${ctx.language}\n` +
+            `İlk şikâyet: ${ctx.symptoms}\nDosya: ${ctx.label}\n\nBu tıbbi belgeyi değerlendir, Türkçeye çevir ve özetle.`,
+        },
+      ],
+    }],
+  });
+
+  const block = res.content.find((b) => b.type === "tool_use");
+  if (!block || block.type !== "tool_use") throw new Error("Belge değerlendirmesi alınamadı.");
+  const a = block.input as Partial<DocAssessment>;
+  const docType = (DOC_TYPES as readonly string[]).includes(String(a.docType)) ? String(a.docType) : "Diğer";
+  return { docType, summary: clean(a.summary), translation: clean(a.translation), flags: clean(a.flags) };
+}

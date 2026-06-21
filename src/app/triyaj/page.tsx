@@ -58,6 +58,58 @@ const STEPS = [
   { t: "Özet", icon: ClipboardCheck },
 ];
 
+// Triyajda yüklenen belge: ad + (AI'ye gönderilecek) base64 içerik. DICOM/büyük/desteklenmeyen → dataUrl null (yalnız ad).
+type UploadDoc = { name: string; mime: string; dataUrl: string | null };
+
+const DOC_MAX_BYTES = 8 * 1024 * 1024; // 8MB üstü içerik saklanmaz (yalnız ad) — base64 şişmesini sınırla
+const IMG_MAX_DIM = 1600; // görüntüler bu kenar boyutuna küçültülür (AI okunabilirliği korunur)
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(new Error("okunamadı"));
+    r.readAsDataURL(file);
+  });
+}
+
+function downscaleImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => {
+      const img = new window.Image();
+      img.onload = () => {
+        const scale = Math.min(1, IMG_MAX_DIM / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        const cx = canvas.getContext("2d");
+        if (!cx) return reject(new Error("canvas yok"));
+        cx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.8));
+      };
+      img.onerror = () => reject(new Error("görüntü yüklenemedi"));
+      img.src = String(r.result);
+    };
+    r.onerror = () => reject(new Error("okunamadı"));
+    r.readAsDataURL(file);
+  });
+}
+
+// Görüntü → küçültülmüş JPEG; PDF (≤8MB) → base64; diğer (DICOM/büyük) → yalnız ad. AI yalnız içerikli olanları işler.
+async function readDoc(file: File): Promise<UploadDoc> {
+  const name = file.name;
+  const type = file.type || "";
+  try {
+    if (type.startsWith("image/")) return { name, mime: "image/jpeg", dataUrl: await downscaleImage(file) };
+    if (type === "application/pdf" && file.size <= DOC_MAX_BYTES) return { name, mime: "application/pdf", dataUrl: await fileToDataUrl(file) };
+  } catch {
+    // okuma başarısız → yalnız ad
+  }
+  return { name, mime: type, dataUrl: null };
+}
+
 export default function TriyajPage() {
   const router = useRouter();
   const [billing, setBilling] = useState<Billing | null>(null);
@@ -67,7 +119,7 @@ export default function TriyajPage() {
   const [language, setLanguage] = useState("Arapça");
   const [symptoms, setSymptoms] = useState("");
   const [durationText, setDurationText] = useState("");
-  const [files, setFiles] = useState<string[]>([]);
+  const [files, setFiles] = useState<UploadDoc[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [branchOverride, setBranchOverride] = useState(""); // hasta branşı elle seçtiyse (branchKey)
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -124,9 +176,9 @@ export default function TriyajPage() {
   }
 
   function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const names = Array.from(e.target.files ?? []).map((f) => f.name);
-    setFiles((prev) => [...prev, ...names]);
+    const list = Array.from(e.target.files ?? []);
     e.target.value = "";
+    Promise.all(list.map(readDoc)).then((docs) => setFiles((prev) => [...prev, ...docs]));
   }
 
   async function submit() {
@@ -144,7 +196,9 @@ export default function TriyajPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          patientName, country, language, symptoms, durationText, attachments: files,
+          patientName, country, language, symptoms, durationText,
+          attachments: files.map((f) => f.name),
+          documents: files.filter((f) => f.dataUrl).map((f) => ({ label: f.name, mimeType: f.mime, content: f.dataUrl })),
           answers: outAnswers, forceBranchKey: branchOverride || undefined,
           missingDocs: missingLabels,
           consultFee: billing?.fee, payStatus: billing?.status, payMethod: billing?.method,
@@ -400,7 +454,7 @@ export default function TriyajPage() {
               <ul className="space-y-2">
                 {files.map((f, i) => (
                   <li key={i} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
-                    <span className="flex items-center gap-2 text-slate-700"><FileText size={16} className="text-teal-600" /> {f}</span>
+                    <span className="flex items-center gap-2 text-slate-700"><FileText size={16} className="text-teal-600" /> {f.name}{!f.dataUrl && <span className="text-[10px] text-slate-400">(AI analizi dışı)</span>}</span>
                     <button onClick={() => setFiles(files.filter((_, j) => j !== i))} className="text-slate-400 hover:text-red-500"><X size={16} /></button>
                   </li>
                 ))}

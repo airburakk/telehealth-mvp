@@ -67,6 +67,23 @@ export async function POST(req: Request) {
     },
   });
 
+  // Triyajda yüklenen içerikli belgeler → CaseDocument (doktor kokpitte AI ile değerlendirir + Türkçeye çevirir).
+  // Yalnız base64 içerikli (görüntü/PDF) olanlar saklanır; DICOM/büyük dosyalar yalnız ad olarak attachments'ta kalır.
+  type RawDoc = { label?: unknown; mimeType?: unknown; content?: unknown };
+  const documents: RawDoc[] = Array.isArray(body.documents) ? body.documents : [];
+  if (documents.length) {
+    const rows = documents
+      .map((d) => ({
+        caseId: created.id,
+        label: typeof d.label === "string" ? d.label.slice(0, 200) : "belge",
+        mimeType: typeof d.mimeType === "string" ? d.mimeType.slice(0, 100) : "application/octet-stream",
+        content: typeof d.content === "string" && d.content.startsWith("data:") ? d.content : null,
+      }))
+      .filter((r) => !!r.content)
+      .slice(0, 12);
+    if (rows.length) await db.caseDocument.createMany({ data: rows });
+  }
+
   await notifyRoles(["DOCTOR", "COORDINATOR"], {
     type: "NEW_CASE",
     title: `${a.urgency >= 4 ? "🔴 " : ""}Yeni vaka: ${patientName}`,

@@ -125,6 +125,7 @@ model Case {
   recovery            Recovery?
   complaints          Complaint[]
   shareLinks          ShareLink[]
+  documents           CaseDocument[]
   createdAt           DateTime       @default(now())
 
   @@index([userId])
@@ -167,6 +168,27 @@ model Booking {
   status               String   @default("CONFIRMED") // DRAFT, CONFIRMED, CANCELLED
   escrowStatus         String   @default("HELD") // HELD, RELEASED, REFUNDED
   createdAt            DateTime @default(now())
+}
+
+/// Triyajda hastanın yüklediği tıbbi belge (tahlil/görüntüleme raporu/epikriz/reçete) — içerik + AI ön-değerlendirmesi.
+/// İçerik base64 (küçük dosya; gerçek object storage TODO — SO/checkin deseni). DICOM görüntü içeriği saklanmaz
+/// (viewer-only; radyoloji AI yorumu kapsam dışı). AI alanları doktor kokpitte "AI ile değerlendir & çevir" ile doldurulur.
+model CaseDocument {
+  id            String    @id @default(cuid())
+  case          Case      @relation(fields: [caseId], references: [id])
+  caseId        String
+  label         String // dosya adı
+  mimeType      String // application/pdf | image/jpeg | image/png | ...
+  content       String? // base64 data URI — AI girdisi + orijinal görüntüleme (DICOM/büyük → null)
+  // AI ön-değerlendirme (doktor başlatır; assessDocument çıktısı — hepsi Türkçe)
+  aiDocType     String? // Laboratuvar | Görüntüleme Raporu | Epikriz / Tıbbi Rapor | Reçete | Diğer
+  aiSummary     String? // klinik özet (önemli bulgular + triyaj şikayetiyle ilişki)
+  aiTranslation String? // belge içeriğinin Türkçe çevirisi
+  aiFlags       String? // anormal/kritik bulgu vurgusu (boş olabilir)
+  assessedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([caseId])
 }
 
 /// Post-Op iyileşme takibi (Modül 4)
