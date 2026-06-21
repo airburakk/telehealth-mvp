@@ -4,7 +4,16 @@ import { db } from "@/lib/db";
 import { canAccessCase } from "@/lib/ownership";
 import { getTranslations } from "@/lib/i18n";
 import { countryFlag, countryName, urgencyStyle, langDir } from "@/lib/constants";
-import { CheckCircle2, FileText, Stethoscope, ArrowRight, Sparkles } from "lucide-react";
+import { CheckCircle2, FileText, Stethoscope, ArrowRight, Sparkles, Package, HeartPulse } from "lucide-react";
+import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
+import { talkTrackerPhases, TALK_TRACKER_TEXTS } from "@/lib/talk-tracker";
+
+const PHASE_ICON = {
+  case: <FileText size={14} />,
+  consult: <Stethoscope size={14} />,
+  treatment: <Package size={14} />,
+  followup: <HeartPulse size={14} />,
+} as const;
 
 // Sonuç sayfası hasta-yüzlü: vaka dili Türkçe değilse statik etiketler + branş + aciliyet
 // sunucu tarafında çevrilir (Translation cache; ilk hasta sonrası maliyetsiz).
@@ -18,15 +27,30 @@ const STATIC_LABELS = [
 
 export default async function TriyajResult({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const c = await db.case.findUnique({ where: { id } });
+  const c = await db.case.findUnique({
+    where: { id },
+    include: { bookings: { select: { status: true } }, recovery: { select: { id: true } } },
+  });
   if (!c) notFound();
   if (!(await canAccessCase(c))) notFound(); // hasta yalnız kendi vaka sonucunu görür
 
   const u = urgencyStyle(c.urgency);
   const files = c.attachments ? c.attachments.split(",").filter(Boolean) : [];
 
-  const tmap = await getTranslations(c.language, [...STATIC_LABELS, c.branch, c.reasoning]);
+  const tmap = await getTranslations(c.language, [...STATIC_LABELS, c.branch, c.reasoning, ...TALK_TRACKER_TEXTS]);
   const t = (s: string) => tmap[s] ?? s;
+
+  // Süreç takibi: ulaşılan en ileri booking durumu (CONFIRMED > DRAFT) + post-op varlığı
+  const bookingStatus = c.bookings.some((b) => b.status === "CONFIRMED")
+    ? "CONFIRMED"
+    : c.bookings.some((b) => b.status === "DRAFT")
+      ? "DRAFT"
+      : (c.bookings[0]?.status ?? null);
+  const trackerItems: TrackerItem[] = talkTrackerPhases({
+    status: c.status,
+    bookingStatus,
+    hasRecovery: !!c.recovery,
+  }).map((p) => ({ label: t(p.label), subStatus: t(p.sub), state: p.state, icon: PHASE_ICON[p.key] }));
 
   return (
     <div dir={langDir(c.language)} className="mx-auto max-w-2xl px-5 py-10">
@@ -38,6 +62,11 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
             {t("Uzman hekim, hazırlanan vaka özetinizi inceleyip sizinle video görüşmesi planlayacak.")}
           </p>
         </div>
+      </div>
+
+      {/* Süreç takip göstergesi (fazlara gruplu) */}
+      <div className="mt-6">
+        <ProcessTracker items={trackerItems} dir={langDir(c.language)} />
       </div>
 
       <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">

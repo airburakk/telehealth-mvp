@@ -2,8 +2,17 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Users } from "lucide-react";
+import { Users, ClipboardCheck, HeartHandshake, Video, CircleCheck } from "lucide-react";
 import { AuraSpinner } from "@/components/PortamedLogo";
+import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
+import { proBonoTrackerPhases } from "@/lib/pro-bono-tracker";
+
+const PB_PHASE_ICON = {
+  apply: <ClipboardCheck size={14} />,
+  match: <HeartHandshake size={14} />,
+  consult: <Video size={14} />,
+  outcome: <CircleCheck size={14} />,
+} as const;
 
 // Pro Bono bekleme odası — eşleşene kadar poll eder; eşleşince görüşme odasına yönlendirir.
 // Hiç çevrimiçi hekim yoksa (online=0) "bir hekim müsait olunca bildirim göndeririz" uyarısı gösterir.
@@ -49,8 +58,16 @@ function WaitingInner() {
   const ended = status !== "WAITING" && status !== "MATCHED";
   const noDoctor = !ended && online === 0;
 
+  const pbItems: TrackerItem[] = proBonoTrackerPhases(status).map((p) => ({
+    label: p.label,
+    subStatus: p.sub,
+    state: p.state,
+    icon: PB_PHASE_ICON[p.key],
+  }));
+
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
       {ended ? (
         <>
           <span className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-slate-100 text-slate-400">
@@ -85,6 +102,8 @@ function WaitingInner() {
           </div>
         </>
       )}
+      </div>
+      <ProcessTracker items={pbItems} />
     </div>
   );
 }
