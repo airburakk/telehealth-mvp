@@ -3,7 +3,7 @@
 // Roller: Branş Doktoru (online, gerçek-zaman) · İcapçı (offline + icap açık → randevu) · Nöbetçi (7/24 genel/Dahiliye/Acil).
 // Eşleştirme deseni Pro Bono'dan alındı: koşullu updateMany = optimistik kilit (çift-kapma yarışı engellenir).
 import { db } from "./db";
-import { notifyUser } from "./notify";
+import { notifyUser, type NotifyInput } from "./notify";
 import { formatDateTime } from "./constants";
 
 // ───────────────────────── Kapı (gate) müsaitlik kararı ─────────────────────────
@@ -22,6 +22,20 @@ export async function gateAvailability(branch: string): Promise<GateAvailability
     db.doctor.count({ where: { branch, onCall: true } }),
   ]);
   return { hasOnlineBranch: onlineBranch > 0, hasSentinel: sentinel > 0, hasIcapci: icapci > 0 };
+}
+
+// §3.4/§7: klinik aciliyet kancaları (kırmızı bayrak / post-op) artık koordinatöre DEĞİL, görevdeki
+// Nöbetçi'ye (7/24 klinik yanıt) düşer. Sentinel + (ONLINE|IN_SESSION) hekimlere kişisel bildirim;
+// görevde Nöbetçi yoksa sessizce geçilir (Doktor rol-yayını zaten kuyruğu kapsar).
+export async function notifyOnDutySentinels(n: NotifyInput): Promise<void> {
+  const sentinels = await db.doctor.findMany({
+    where: { sentinel: true, clinicalState: { in: ["ONLINE", "IN_SESSION"] } },
+    select: { id: true },
+  });
+  for (const d of sentinels) {
+    const u = await db.user.findFirst({ where: { doctorId: d.id }, select: { id: true } });
+    if (u) await notifyUser(u.id, n);
+  }
 }
 
 // ───────────────────────── Seçenek 1: Nöbetçi ile şimdi görüş ─────────────────────────

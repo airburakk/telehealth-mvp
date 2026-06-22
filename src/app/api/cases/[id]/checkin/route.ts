@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { assessCheckIn, assessChecklist, worstSeverity } from "@/lib/postop";
 import { assessPostopNote, assessPostopPhoto } from "@/lib/ai-clinical";
 import { notifyRoles } from "@/lib/notify";
+import { notifyOnDutySentinels } from "@/lib/clinical-duty";
 import { canAccessCase } from "@/lib/ownership";
 
 // Not-AI (Haiku) + Foto-AI (Sonnet vision) paralel çalışır; serverless varsayılan limitini aşmasın diye süre tanı.
@@ -75,13 +76,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   if (severity === "RED") {
     const extra = [...cl.reasons, aiReason, photoReason].filter(Boolean).slice(0, 2).join(", ");
-    await notifyRoles(["DOCTOR", "COORDINATOR"], {
-      type: "RED_FLAG",
+    const redFlag = {
+      type: "RED_FLAG" as const,
       title: `🚨 Kırmızı bayrak: ${c.patientName}`,
       body: `${c.branch} · ağrı ${pain}/10 · ateş ${feverC.toFixed(1)}°C${extra ? ` · ${extra}` : ""}`,
       href: `/takip/${c.id}`,
-    });
+    };
+    // §3.4/§7: kırmızı bayrak koordinatöre DEĞİL → doktor kuyruğu + görevdeki Nöbetçi (7/24 klinik yanıt).
+    await notifyRoles(["DOCTOR"], redFlag);
+    await notifyOnDutySentinels(redFlag);
   }
+
 
   return NextResponse.json({ id: checkIn.id, severity, reasons }, { status: 201 });
 }

@@ -84,7 +84,8 @@ export async function POST(req: Request) {
     if (rows.length) await db.caseDocument.createMany({ data: rows });
   }
 
-  await notifyRoles(["DOCTOR", "COORDINATOR"], {
+  // §1/§7: yeni klinik vaka koordinatöre DEĞİL doktor kuyruğuna düşer (koordinatör yalnız M3/S3 rezervasyon).
+  await notifyRoles(["DOCTOR"], {
     type: "NEW_CASE",
     title: `${a.urgency >= 4 ? "🔴 " : ""}Yeni vaka: ${patientName}`,
     body: `${a.branch} · aciliyet ${a.urgency}/5`,
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
     ? body.missingDocs.filter((d: unknown) => typeof d === "string").map((d: string) => d.slice(0, 80)).slice(0, 12)
     : [];
   if (missingDocs.length) {
-    await notifyRoles(["COORDINATOR"], {
+    await notifyRoles(["DOCTOR"], {
       type: "MISSING_DOCS",
       title: `📄 Eksik belge: ${patientName}`,
       body: `${a.branch} · eksik: ${missingDocs.join(", ")}`,
