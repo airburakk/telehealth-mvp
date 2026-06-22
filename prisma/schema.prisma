@@ -34,6 +34,15 @@ model ConsentRecord {
   version   Int
   grantedAt DateTime @default(now())
   ip        String?
+  // İspat & bütünlük katmanı (RFC 3161 onam-ispat — dijital-onam-zaman-damgasi). Eski kayıtlar null (geriye dönük backfill yok).
+  textHash    String? // onaylanan metnin (CONSENT_TEXT, o sürüm) SHA-256 hash'i
+  userAgent   String? // cihaz / tarayıcı (User-Agent)
+  channel     String  @default("WEB") // WEB | MOBILE | SMS_OTP ... (çok-kanallı onam)
+  prevHash    String? // bir önceki kaydın entryHash'i (append-only hash-zinciri) — GENESIS=ilk
+  entryHash   String? // SHA-256(userId|scope|version|textHash|ip|ua|grantedAt|prevHash) — bu kaydın mührü
+  tsAuthority String? // zaman damgası otoritesi (şimdilik SIMULATED-LOCAL; üretim = RFC 3161 TSA — hukuk)
+  tsTime      DateTime? // TSA'nın güvenilir zamanı
+  tsToken     String? // imzalı zaman damgası token'ı (entryHash üzerinde)
 
   @@unique([userId, scope, version])
   @@index([userId])
