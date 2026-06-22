@@ -64,6 +64,11 @@ model Doctor {
   proBonoUsed        Int       @default(0)
   proBonoResetAt     DateTime? // kontenjan dönem başlangıcı
   proBonoAvailableAt DateTime? // en son AVAILABLE olunan an (eşleştirme sırası / stale tespiti)
+  // Klinik nöbet/müsaitlik — 3-seçenek kapısı (§8 mahremiyet/akış): Branş online · İcapçı (icap) · Nöbetçi (7/24 genel)
+  clinicalState       String    @default("OFFLINE") // OFFLINE | ONLINE | IN_SESSION — Branş/Nöbetçi gerçek-zaman klinik mevcudiyeti
+  onCall              Boolean   @default(false) // İcapçı: offline ama randevu (icap) açık
+  sentinel            Boolean   @default(false) // Nöbetçi yetkisi (7/24 genel/Dahiliye/Acil havuzu)
+  clinicalAvailableAt DateTime? // en son ONLINE olma anı (eşleştirme sırası)
   cases           Case[]
   consultations   Consultation[]
   reviews         Review[]
@@ -143,6 +148,25 @@ model Consultation {
   status    String    @default("ACTIVE") // ACTIVE, ENDED
   startedAt DateTime  @default(now())
   endedAt   DateTime?
+}
+
+/// İcapçı randevu akışı — "online doktor yoksa 3-seçenek kapısı" Seçenek 2 (§3.2 mahremiyet/akış).
+/// Hasta "Branş randevusu" seçince oluşur; branştaki İcapçı hekimlere düşer, ilk teklif eden atomik
+/// kapar (REQUESTED→OFFERED), hasta onay/değişiklik verir (SO Part B deseni). Case.id ile gevşek bağ
+/// (plain String, FK yok → Case/Doctor modelleri değişmez). Onaylanınca mevcut /consult akışı yürütür.
+model ConsultAppointment {
+  id             String    @id @default(cuid())
+  caseId         String    @unique // her vaka için tek aktif randevu akışı
+  patientId      String? // vaka sahibi (User.id) — bildirim hedefi
+  branch         String
+  doctorId       String? // teklif veren İcapçı (Doctor.id)
+  proposedAt     DateTime? // önerilen randevu zamanı (OFFERED)
+  status         String    @default("REQUESTED") // REQUESTED | OFFERED | CONFIRMED | CHANGE_REQUESTED | CANCELLED
+  consultationId String? // CONFIRMED + hasta katılınca oluşan Consultation.id
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([branch, status])
 }
 
 /// Sağlık turizmi paketi rezervasyonu (Modül 3)

@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { canAccessCase } from "@/lib/ownership";
 import { getTranslations } from "@/lib/i18n";
-import { countryFlag, countryName, urgencyStyle, langDir } from "@/lib/constants";
+import { countryFlag, countryName, urgencyStyle, langDir, formatDateTime } from "@/lib/constants";
 import { CheckCircle2, FileText, Stethoscope, ArrowRight, Sparkles, Package, HeartPulse } from "lucide-react";
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
 import { talkTrackerPhases, TALK_TRACKER_TEXTS } from "@/lib/talk-tracker";
+import { ConsultGate, type GateAppt } from "@/components/ConsultGate";
+import { gateAvailability } from "@/lib/clinical-duty";
 
 const PHASE_ICON = {
   case: <FileText size={14} />,
@@ -29,10 +31,32 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const c = await db.case.findUnique({
     where: { id },
-    include: { bookings: { select: { status: true } }, recovery: { select: { id: true } } },
+    include: {
+      bookings: { select: { status: true } },
+      recovery: { select: { id: true } },
+      consultations: { select: { id: true } },
+    },
   });
   if (!c) notFound();
   if (!(await canAccessCase(c))) notFound(); // hasta yalnız kendi vaka sonucunu görür
+
+  // 3-seçenek kapısı (§3.2): vaka gate aşamasındaysa (görüşme başlamadı) ve branşta çevrimiçi Branş Doktoru
+  // yoksa hastaya 3 seçenek sun. İcapçı randevu akışı sürüyorsa onun durumunu göster (kapı bileşeni içinde).
+  const resolved = ["IN_CONSULT", "DONE"].includes(c.status) || c.consultations.length > 0;
+  let gate: { hasSentinel: boolean; hasIcapci: boolean; appointment: GateAppt | null } | null = null;
+  if (!resolved) {
+    const appt = await db.consultAppointment.findUnique({ where: { caseId: id } });
+    const avail = await gateAvailability(c.branch);
+    if (appt && appt.status !== "CANCELLED") {
+      gate = {
+        hasSentinel: avail.hasSentinel,
+        hasIcapci: avail.hasIcapci,
+        appointment: { status: appt.status, proposedAtLabel: appt.proposedAt ? formatDateTime(appt.proposedAt) : null },
+      };
+    } else if (!avail.hasOnlineBranch) {
+      gate = { hasSentinel: avail.hasSentinel, hasIcapci: avail.hasIcapci, appointment: null };
+    }
+  }
 
   const u = urgencyStyle(c.urgency);
   const files = c.attachments ? c.attachments.split(",").filter(Boolean) : [];
@@ -54,20 +78,27 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
 
   return (
     <div dir={langDir(c.language)} className="mx-auto max-w-2xl px-5 py-10">
-      <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 flex items-start gap-3">
-        <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" />
-        <div>
-          <h1 className="font-bold text-emerald-900">{t("Vakanız oluşturuldu ve doktor kuyruğuna eklendi")}</h1>
-          <p className="mt-0.5 text-sm text-emerald-800/80">
-            {t("Uzman hekim, hazırlanan vaka özetinizi inceleyip sizinle video görüşmesi planlayacak.")}
-          </p>
-        </div>
-      </div>
+      {gate ? (
+        // Kapı: branşta çevrimiçi hekim yok → 3 seçenek (veya süren randevu akışı)
+        <ConsultGate caseId={c.id} lang={c.language} hasSentinel={gate.hasSentinel} hasIcapci={gate.hasIcapci} appointment={gate.appointment} />
+      ) : (
+        <>
+          <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 flex items-start gap-3">
+            <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" />
+            <div>
+              <h1 className="font-bold text-emerald-900">{t("Vakanız oluşturuldu ve doktor kuyruğuna eklendi")}</h1>
+              <p className="mt-0.5 text-sm text-emerald-800/80">
+                {t("Uzman hekim, hazırlanan vaka özetinizi inceleyip sizinle video görüşmesi planlayacak.")}
+              </p>
+            </div>
+          </div>
 
-      {/* Süreç takip göstergesi (fazlara gruplu) */}
-      <div className="mt-6">
-        <ProcessTracker items={trackerItems} dir={langDir(c.language)} />
-      </div>
+          {/* Süreç takip göstergesi (fazlara gruplu) */}
+          <div className="mt-6">
+            <ProcessTracker items={trackerItems} dir={langDir(c.language)} />
+          </div>
+        </>
+      )}
 
       <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between">
@@ -113,14 +144,16 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
         )}
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Link href="/doktor" className="inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
-          <Stethoscope size={16} /> {t("Doktor panelinde gör")}
-        </Link>
-        <Link href="/triyaj" className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50">
-          {t("Yeni triyaj")} <ArrowRight size={16} />
-        </Link>
-      </div>
+      {!gate && (
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link href="/doktor" className="inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+            <Stethoscope size={16} /> {t("Doktor panelinde gör")}
+          </Link>
+          <Link href="/triyaj" className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50">
+            {t("Yeni triyaj")} <ArrowRight size={16} />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
