@@ -64,6 +64,7 @@ dormant kalır / fallback'e düşer).
 | `DATABASE_URL` | ✅ | Neon **pooled** connection string |
 | `DIRECT_URL` | ✅ | Neon **direct** connection string (migration / db push) |
 | `SESSION_SECRET` | ✅ | JWT imzalama — `openssl rand -base64 32` |
+| `DATA_ENCRYPTION_KEK` | ⛅ | At-rest alan şifreleme KEK'i (E2EE Faz 1) — `openssl rand -base64 32`. **Yerel + üretim AYNI değer** (aynı Neon DB!). ⚠️ Kayıp = veri kaybı (escrow/yedek). Boşsa şifreleme dormant (düz metin, okuma bozulmaz) |
 | `ANTHROPIC_API_KEY` | ⛅ | Claude (triyaj/SOAP/epikriz/çeviri/vision). Yoksa triyaj kural tabanlıya düşer |
 | `GEMINI_API_KEY` | ⛅ | Gemini Live tercüman. Yoksa canlı tercüme dormant |
 | `METERED_API_KEY` | ⛅ | WebRTC TURN relay (cross-network video). Yoksa STUN/OpenRelay fallback |

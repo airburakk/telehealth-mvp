@@ -108,6 +108,10 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 - **Değiştirilemez erişim denetimi (E2EE Faz 0):** klinik veriye her anlamlı erişim (okuma/yazma/dışa
   aktarım) `AccessLog`'a mühürlenir (append-only hash-zinciri + zaman damgası); hasta `/erisim-kaydi`'da
   "verime kim, ne zaman, neye erişti"yi doğrulanmış görür. (`lib/audit.ts`)
+- **Uygulama-katmanı at-rest şifreleme (E2EE Faz 1):** hassas klinik kolonları (belge içeriği,
+  transkript, SOAP, epikriz) AES-256-GCM **envelope** ile şifrelenir (per-record DEK + env-KEK); sunucu
+  gerektiğinde çözer → defense-in-depth (DB-dump + KEK'siz operatör). `DATA_ENCRYPTION_KEK` yoksa dormant
+  (düz metin, okuma bozulmaz). KMS swap-point hazır. (`lib/crypto.ts`)
 - **Klinik nöbet rolleri:** Branş / İcapçı / Nöbetçi (`Doctor.clinicalState/onCall/sentinel`) +
   "online doktor yoksa 3-seçenek kapısı" (`/triyaj/[id]`) + `ConsultAppointment`. (`lib/clinical-duty.ts`)
 - **Görüşme öncesi oda:** cihaz testi + geri sayım + 3 alt-durum (`PreConsultLobby`).
@@ -181,7 +185,7 @@ tabanlı `analyzeTriage()`'a düşer (anahtar kelime eşleştirme + kırmızı b
 
 ## Ortam değişkenleri
 
-Tümü `.env.example`'da: `DATABASE_URL` (pooled) · `DIRECT_URL` (direct) · `SESSION_SECRET` ·
+Tümü `.env.example`'da: `DATABASE_URL` (pooled) · `DIRECT_URL` (direct) · `SESSION_SECRET` · `DATA_ENCRYPTION_KEK` ·
 `ANTHROPIC_API_KEY` · `GEMINI_API_KEY` · `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` ·
 `METERED_API_KEY`/`METERED_DOMAIN` (WebRTC TURN) · (opsiyonel) `TRIAGE_MODEL`.
 
@@ -194,7 +198,7 @@ Tümü `.env.example`'da: `DATABASE_URL` (pooled) · `DIRECT_URL` (direct) · `S
 
 Güncel yol haritası vault'ta: `Air/wiki/todo.md`. Öne çıkanlar (altyapı/hukuk gerektirir):
 gerçek ödeme + Escrow gateway (Iyzico/Stripe — şu an simülasyon) · gerçek object storage (belgeler
-şu an base64-in-DB) · E2EE / sıfır-erişim fazları · gerçek RFC 3161 TSA (şimdilik simüle) ·
+şu an base64-in-DB) · ileri E2EE fazları (Faz 0+1 ✅ at-rest/audit; Faz 2 kriptografik allowlist + Faz 3 gerçek sıfır-erişim) · gerçek RFC 3161 TSA (şimdilik simüle) ·
 e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ülkeli pazar girişi için.
 
 ## Güvenlik notları (demo)
