@@ -7,6 +7,7 @@ import {
   FileText, ScanLine, FlaskConical, Stethoscope,
   Share2, Copy, Check, Trash2, Lock, Download, Clock, Eye, Plus,
   MessageCircle, MessageSquare, Mail, ShieldCheck, Link2, AlertCircle,
+  ArrowRight, ArrowLeft,
 } from "lucide-react";
 
 const SCOPE_ICON = { EPIKRIZ: FileText, RADYOLOJI: ScanLine, LAB: FlaskConical, GORUSME_NOTU: Stethoscope } as const;
@@ -55,7 +56,7 @@ function ShareActions({ url, recipient, duration, hasPassword, compact }: {
   }
   async function nativeShare() {
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-      try { await navigator.share({ title: "Air — Güvenli Sağlık Paylaşımı", text: msg, url }); } catch {}
+      try { await navigator.share({ title: "AURA — Güvenli Sağlık Paylaşımı", text: msg, url }); } catch {}
     } else { copy(); }
   }
 
@@ -79,11 +80,35 @@ function ShareActions({ url, recipient, duration, hasPassword, compact }: {
   );
 }
 
+// Adım rayı — Seç → Koru → Paylaş (DESIGN.md: ekran başına tek karar; kaygı azaltma).
+function StepRail({ step }: { step: number }) {
+  return (
+    <div className="mt-5 flex items-center gap-2 text-xs font-medium" aria-label="Paylaşım adımları">
+      {["Seç", "Koru", "Paylaş"].map((label, i) => {
+        const n = i + 1;
+        const done = step > n;
+        const active = step === n;
+        return (
+          <div key={label} className="flex flex-1 items-center gap-2 last:flex-none">
+            <span aria-current={active ? "step" : undefined}
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold ${done || active ? "bg-[#14C3D0] text-[#06262a]" : "bg-slate-100 text-slate-400"}`}>
+              {done ? <Check size={13} /> : n}
+            </span>
+            <span className={active ? "text-slate-800" : done ? "text-[#0b5563]" : "text-slate-400"}>{label}</span>
+            {n < 3 && <span className={`h-px flex-1 ${done ? "bg-[#14C3D0]" : "bg-slate-200"}`} />}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkData[] }) {
   const router = useRouter();
   const [origin, setOrigin] = useState("");
   useEffect(() => setOrigin(window.location.origin), []);
 
+  const [step, setStep] = useState(1);
   const [caseId, setCaseId] = useState(cases[0]?.id ?? "");
   const [recipient, setRecipient] = useState("");
   const [scopes, setScopes] = useState<ScopeKey[]>(["EPIKRIZ"]);
@@ -95,9 +120,27 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
   const [error, setError] = useState("");
   const [created, setCreated] = useState<{ url: string; recipient: string; duration: string; hasPassword: boolean } | null>(null);
 
+  const selectedCase = cases.find((c) => c.id === caseId);
+  const recipientLabel = recipient.trim() ? `${recipient.trim()}'in göreceği` : "Alıcının göreceği";
+
   function toggleScope(k: ScopeKey) {
     setScopes((p) => (p.includes(k) ? p.filter((x) => x !== k) : [...p, k]));
   }
+
+  // Adım ilerletme — her adımın kendi doğrulaması (mevcut create() doğrulamasıyla aynı kurallar).
+  function next() {
+    setError("");
+    if (step === 1) {
+      if (!caseId) { setError("Lütfen bir sağlık kaydı seçin."); return; }
+      if (scopes.length === 0) { setError("En az bir veri kategorisi seçin."); return; }
+      setStep(2);
+    } else if (step === 2) {
+      if (usePassword && password.trim().length < 3) { setError("Erişim şifresi en az 3 karakter olmalı."); return; }
+      setStep(3);
+    }
+  }
+  function back() { setError(""); setStep((s) => Math.max(1, s - 1)); }
+  function reset() { setCreated(null); setError(""); setStep(1); }
 
   async function create() {
     setError("");
@@ -136,79 +179,140 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
     router.refresh();
   }
 
+  const navPrimary = "inline-flex items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50";
+  const navGhost = "inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50";
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_minmax(320px,380px)]">
-      {/* Sol: yeni paylaşım oluştur */}
+      {/* Sol: yeni paylaşım — 3 adımlı akış (Seç → Koru → Paylaş) */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="flex items-center gap-2 font-bold text-slate-800"><Plus size={18} /> Yeni güvenli paylaşım</h2>
-        <p className="mt-1 text-sm text-slate-500">Hangi verinin, kim tarafından, ne kadar süre görülebileceğine siz karar verirsiniz.</p>
+        <p className="mt-1 text-sm text-slate-500">Hangi verinin, kim tarafından, ne kadar süre görülebileceğine adım adım siz karar verirsiniz.</p>
 
-        <label className="mt-5 block text-sm font-medium text-slate-700">Sağlık kaydı</label>
-        <select value={caseId} onChange={(e) => setCaseId(e.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-          {cases.length === 0 && <option value="">Kayıt bulunamadı</option>}
-          {cases.map((c) => <option key={c.id} value={c.id}>{c.patientName} · {c.branch}</option>)}
-        </select>
+        <StepRail step={step} />
 
-        <label className="mt-4 block text-sm font-medium text-slate-700">Alıcı doktor <span className="font-normal text-slate-400">(opsiyonel)</span></label>
-        <input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="ör. Dr. Smith" className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        {/* Adım 1 — Seç: kayıt + alıcı + veriler */}
+        {step === 1 && (
+          <div className="mt-5">
+            <label className="block text-sm font-medium text-slate-700">Sağlık kaydı</label>
+            <select value={caseId} onChange={(e) => setCaseId(e.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+              {cases.length === 0 && <option value="">Kayıt bulunamadı</option>}
+              {cases.map((c) => <option key={c.id} value={c.id}>{c.patientName} · {c.branch}</option>)}
+            </select>
 
-        <div className="mt-4 text-sm font-medium text-slate-700">Paylaşılacak veriler</div>
-        <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
-          {SCOPES.map((s) => {
-            const Icon = SCOPE_ICON[s.key];
-            const on = scopes.includes(s.key);
-            return (
-              <button type="button" key={s.key} onClick={() => toggleScope(s.key)}
-                className={`flex items-start gap-2.5 rounded-2xl border p-3 text-left transition-colors ${on ? "border-[#14C3D0] bg-[#14C3D0]/5 ring-1 ring-[#14C3D0]/20" : "border-slate-200 hover:bg-slate-50"}`}>
-                <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-[#14C3D0] text-[#101010]" : "bg-slate-100 text-slate-500"}`}><Icon size={16} /></span>
-                <span className="min-w-0">
-                  <span className="flex items-center gap-1.5 text-sm font-medium text-slate-800">{s.label} {on && <Check size={14} className="text-[#101010]" />}</span>
-                  <span className="block text-xs text-slate-500">{s.desc}</span>
+            <label className="mt-4 block text-sm font-medium text-slate-700">Alıcı doktor <span className="font-normal text-slate-400">(opsiyonel)</span></label>
+            <input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="ör. Dr. Lefèvre" className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+
+            <div className="mt-4 text-sm font-medium text-slate-700">Paylaşılacak veriler</div>
+            <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
+              {SCOPES.map((s) => {
+                const Icon = SCOPE_ICON[s.key];
+                const on = scopes.includes(s.key);
+                return (
+                  <button type="button" key={s.key} onClick={() => toggleScope(s.key)}
+                    className={`flex items-start gap-2.5 rounded-2xl border p-3 text-left transition-colors ${on ? "border-[#14C3D0] bg-[#14C3D0]/5 ring-1 ring-[#14C3D0]/20" : "border-slate-200 hover:bg-slate-50"}`}>
+                    <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-[#14C3D0] text-[#101010]" : "bg-slate-100 text-slate-500"}`}><Icon size={16} /></span>
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-slate-800">{s.label} {on && <Check size={14} className="text-[#101010]" />}</span>
+                      <span className="block text-xs text-slate-500">{s.desc}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <button onClick={next} className={`${navPrimary} mt-5 w-full`}>Devam <ArrowRight size={16} /></button>
+          </div>
+        )}
+
+        {/* Adım 2 — Koru: süre + koruma + "alıcının göreceği" canlı önizleme */}
+        {step === 2 && (
+          <div className="mt-5">
+            <div className="text-sm font-medium text-slate-700">Erişim süresi</div>
+            <div className="mt-1.5 flex flex-wrap gap-2">
+              {DURATIONS.map((d) => (
+                <button type="button" key={d.key} onClick={() => setDurationKey(d.key)}
+                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${durationKey === d.key ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}>
+                  {d.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4 space-y-2.5">
+              <label className="flex items-center gap-2.5 text-sm text-slate-700">
+                <input type="checkbox" checked={allowDownload} onChange={(e) => setAllowDownload(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+                <Download size={15} className="text-slate-400" /> İndirmeye izin ver <span className="text-slate-400">(varsayılan: yalnız görüntüleme)</span>
+              </label>
+              <label className="flex items-center gap-2.5 text-sm text-slate-700">
+                <input type="checkbox" checked={usePassword} onChange={(e) => setUsePassword(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+                <Lock size={15} className="text-slate-400" /> Erişim şifresi ekle
+              </label>
+              {usePassword && (
+                <input value={password} onChange={(e) => setPassword(e.target.value)} type="text" placeholder="Doktora ayrı kanaldan ileteceğiniz şifre" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              )}
+            </div>
+
+            {/* Canlı önizleme — alıcının tam olarak ne göreceği (somut güven; DESIGN.md: açık/klinik) */}
+            <div className="mt-4 rounded-2xl border border-[#14C3D0]/30 bg-[#14C3D0]/5 p-4">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#0b5563]">
+                <Eye size={13} /> {recipientLabel}
+              </div>
+              <div className="mt-2.5 space-y-1.5">
+                {scopes.length === 0 ? (
+                  <p className="text-xs text-slate-500">Henüz veri seçilmedi.</p>
+                ) : (
+                  SCOPES.filter((s) => scopes.includes(s.key)).map((s) => {
+                    const Icon = SCOPE_ICON[s.key];
+                    return <div key={s.key} className="flex items-center gap-2 text-sm text-slate-700"><Icon size={15} className="text-[#0EA5B2]" /> {s.label}</div>;
+                  })
+                )}
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#14C3D0]/20 pt-2.5 text-[11px] text-slate-500">
+                <span className="inline-flex items-center gap-1"><Clock size={12} /> {durationLabel(durationKey)}</span>
+                <span className="inline-flex items-center gap-1">
+                  {allowDownload ? <><Download size={12} /> indirilebilir</> : <><Eye size={12} /> yalnız görüntüleme</>}
                 </span>
-              </button>
-            );
-          })}
-        </div>
+                {usePassword && <span className="inline-flex items-center gap-1"><Lock size={12} /> şifreli</span>}
+              </div>
+            </div>
 
-        <div className="mt-4 text-sm font-medium text-slate-700">Erişim süresi</div>
-        <div className="mt-1.5 flex flex-wrap gap-2">
-          {DURATIONS.map((d) => (
-            <button type="button" key={d.key} onClick={() => setDurationKey(d.key)}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${durationKey === d.key ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}>
-              {d.label}
-            </button>
-          ))}
-        </div>
+            <div className="mt-5 flex gap-2">
+              <button onClick={back} className={navGhost}><ArrowLeft size={16} /> Geri</button>
+              <button onClick={next} className={`${navPrimary} flex-1`}>Devam <ArrowRight size={16} /></button>
+            </div>
+          </div>
+        )}
 
-        <div className="mt-4 space-y-2.5">
-          <label className="flex items-center gap-2.5 text-sm text-slate-700">
-            <input type="checkbox" checked={allowDownload} onChange={(e) => setAllowDownload(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-            <Download size={15} className="text-slate-400" /> İndirmeye izin ver <span className="text-slate-400">(varsayılan: yalnız görüntüleme)</span>
-          </label>
-          <label className="flex items-center gap-2.5 text-sm text-slate-700">
-            <input type="checkbox" checked={usePassword} onChange={(e) => setUsePassword(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-            <Lock size={15} className="text-slate-400" /> Erişim şifresi ekle
-          </label>
-          {usePassword && (
-            <input value={password} onChange={(e) => setPassword(e.target.value)} type="text" placeholder="Doktora ayrı kanaldan ileteceğiniz şifre" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-          )}
-        </div>
-
-        {error && <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"><AlertCircle size={15} /> {error}</div>}
-
-        <button onClick={create} disabled={busy} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50">
-          <ShieldCheck size={16} /> {busy ? "Oluşturuluyor…" : "Güvenli link oluştur"}
-        </button>
-
-        {created && (
+        {/* Adım 3 — Paylaş: son kontrol + oluştur → hazır bağlantı */}
+        {step === 3 && (created ? (
           <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
             <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800"><Check size={16} /> Bağlantı hazır — şimdi paylaşın</div>
             <div className="mt-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs text-slate-600">
               <Link2 size={14} className="shrink-0 text-slate-400" /> <span className="truncate">{created.url}</span>
             </div>
             <div className="mt-3"><ShareActions url={created.url} recipient={created.recipient} duration={created.duration} hasPassword={created.hasPassword} /></div>
+            <button onClick={reset} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[#0EA5B2] hover:underline"><Plus size={14} /> Yeni paylaşım</button>
           </div>
-        )}
+        ) : (
+          <div className="mt-5">
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <div className="text-sm font-medium text-slate-800">Son kontrol</div>
+              <dl className="mt-2.5 space-y-1.5 text-sm">
+                <div className="flex justify-between gap-3"><dt className="text-slate-500">Alıcı</dt><dd className="text-right text-slate-800">{recipient.trim() || "Belirtilmedi"}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-slate-500">Kayıt</dt><dd className="text-right text-slate-800">{selectedCase ? `${selectedCase.patientName} · ${selectedCase.branch}` : "—"}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-slate-500">Veriler</dt><dd className="text-right text-slate-800">{scopes.map((k) => scopeLabel(k)).join(", ")}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-slate-500">Süre</dt><dd className="text-slate-800">{durationLabel(durationKey)}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-slate-500">Koruma</dt><dd className="text-slate-800">{allowDownload ? "indirilebilir" : "yalnız görüntüleme"}{usePassword ? " · şifreli" : ""}</dd></div>
+              </dl>
+            </div>
+            <div className="mt-5 flex gap-2">
+              <button onClick={back} className={navGhost}><ArrowLeft size={16} /> Geri</button>
+              <button onClick={create} disabled={busy} className={`${navPrimary} flex-1`}><ShieldCheck size={16} /> {busy ? "Oluşturuluyor…" : "Güvenli link oluştur"}</button>
+            </div>
+          </div>
+        ))}
+
+        {error && <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"><AlertCircle size={15} /> {error}</div>}
       </div>
 
       {/* Sağ: aktif paylaşımlar */}
@@ -217,7 +321,11 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
           <Link2 size={18} /> Paylaşımlarım <span className="text-sm font-normal text-slate-400">({links.length})</span>
         </h2>
         {links.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-400">Henüz paylaşım oluşturmadınız.</p>
+          <div className="mt-4 flex flex-col items-center rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center">
+            <span className="grid h-11 w-11 place-items-center rounded-full bg-[#14C3D0]/10 text-[#0EA5B2]"><ShieldCheck size={20} /></span>
+            <p className="mt-3 text-sm font-medium text-slate-700">İlk güvenli paylaşımınızı oluşturun</p>
+            <p className="mt-1 text-xs text-slate-500">Soldaki formdan bir sağlık kaydı seçin; hangi verinin, kim tarafından, ne kadar süre görülebileceğine siz karar verin.</p>
+          </div>
         ) : (
           <ul className="mt-3 space-y-3">
             {links.map((l) => {
