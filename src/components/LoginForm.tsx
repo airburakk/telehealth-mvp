@@ -33,7 +33,7 @@ export function LoginForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Giriş başarısız.");
-      // Tam sayfa yönlendirme: çerezin middleware'e taze taşınmasını ve auth durumunun
+      // Tam sayfa yönlendirme: çerezin proxy'e taze taşınmasını ve auth durumunun
       // doğru yansımasını garantiler (router.push'taki önbellek/zamanlama sorununu önler).
       window.location.assign(next || data.home || "/");
       return;

@@ -22,7 +22,7 @@ Doctor** genel triyaj, **İkinci Görüş**, **Pro Bono** ücretsiz gönüllü k
 - **Next.js 16** (App Router) + **React 19** + **TypeScript 5**
 - **Tailwind CSS 4**, **lucide-react** ikonlar
 - **Prisma 6 + PostgreSQL (Neon)** — yerel ve üretim **aynı** Neon DB (SQLite kullanılmaz)
-- **Kimlik doğrulama:** imzalı JWT (`jose`) httpOnly cookie + `bcryptjs` + rol bazlı middleware
+- **Kimlik doğrulama:** imzalı JWT (`jose`) httpOnly cookie + `bcryptjs` + rol bazlı proxy (Next 16)
 - **AI:** `@anthropic-ai/sdk` (Claude — triyaj/SOAP/epikriz/çeviri/vision) · `@google/genai`
   (Gemini Live — gerçek zamanlı ses→ses tercüme)
 - **Gerçek zamanlı:** WebRTC P2P (polling tabanlı sinyalleşme — `Signal` modeli) + Metered TURN relay
@@ -67,7 +67,7 @@ Demo kullanıcıları (parola `1234`):
 | Koordinatör | `koordinator@air.test` | Operasyon paneli (S2) + doktor alanı |
 | Etik Kurul | `kurul@air.test` | Etik Kurul paneli |
 
-Rol bazlı erişim `src/middleware.ts` ile zorlanır. Yetkisiz erişim `/giris`'e, yanlış rol ana
+Rol bazlı erişim `src/proxy.ts` (Next 16 proxy konvansiyonu) ile zorlanır. Yetkisiz erişim `/giris`'e, yanlış rol ana
 sayfaya, onamsız oturum `/onam`'a yönlendirilir. Parolalar `bcrypt` ile hash'lenir; `.env`
 içinde `SESSION_SECRET` tanımlı olmalıdır.
 
@@ -84,7 +84,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | 5 | **Doktor Adaptasyon** | ✅ İtibar metrikleri, hakediş (komisyon sonrası net), kapasite, müsaitlik, profil tercihleri |
 | 6 | **Doktor Tanıtım** | ✅ Hekim dizini + doğrulanmış profil, yorumlar, akreditasyon (JCI), video kartvizit, akademik |
 | 7 | **Etik Kurul** | ✅ Şikayet, anonimleştirilmiş (data masking) inceleme, karar/yaptırım, **Escrow iade** tetikleyicisi |
-| — | **Kimlik doğrulama** | ✅ Roller (hasta/doktor/koordinatör/kurul/admin), bcrypt + JWT + middleware + KVKK onam kapısı |
+| — | **Kimlik doğrulama** | ✅ Roller (hasta/doktor/koordinatör/kurul/admin), bcrypt + JWT + proxy + KVKK onam kapısı |
 
 ### Paralel hasta akışları
 
@@ -150,7 +150,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 
 ```
 src/
-  middleware.ts              # rol + onam bazlı erişim kontrolü
+  proxy.ts                   # rol + onam bazlı erişim kontrolü (Next 16 proxy)
   app/                       # 21 rota dizini (yukarıdaki tablo) + api/ (17 grup)
   components/                # 45 bileşen (ConsultationRoom, LiveInterpreter, DicomViewer,
                              #   PreConsultLobby, ProcessTracker, NotificationBell, useT, ...)

@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 // Koordinatör aksiyonu bekleyen durumlar (kuyruğun üstünde)
 const ACTION_STATUSES = ["PENDING_REVIEW", "READY_FOR_ASSIGNMENT"];
 
-// İkinci Görüş — Koordinatör kuyruğu. Middleware /operasyon/* zaten OPS rolüyle korur.
+// İkinci Görüş — Koordinatör kuyruğu. Proxy /operasyon/* zaten OPS rolüyle korur.
 export default async function SoQueuePage() {
   const cases = await db.secondOpinionCase.findMany({
     where: { status: { notIn: ["CLOSED", "CANCELLED"] } },

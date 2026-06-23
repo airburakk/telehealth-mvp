@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "E-posta veya parola hatalı." }, { status: 401 });
   }
 
-  // KVKK onam sürümünü oturuma göm → middleware DB'siz kontrol eder; onam yoksa /onam'a yönlenir.
+  // KVKK onam sürümünü oturuma göm → proxy DB'siz kontrol eder; onam yoksa /onam'a yönlenir.
   const cv = await consentedVersion(user.id);
   await createSession({ id: user.id, email: user.email, name: user.name, role: user.role as Role, cv });
   return NextResponse.json({ ok: true, role: user.role, home: roleHome(user.role as Role) });

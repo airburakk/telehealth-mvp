@@ -7,7 +7,7 @@ const ETHICS_ROLES = ["ETHICS", "ADMIN"];
 const OPS_ROLES = ["COORDINATOR", "ADMIN"]; // S2 operasyon paneli
 const CONSENT_PATH = "/onam";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const user = token ? await verifyToken(token) : null;
   const { pathname } = req.nextUrl;
@@ -22,7 +22,7 @@ export async function middleware(req: NextRequest) {
   if (pathname === CONSENT_PATH) return NextResponse.next();
 
   // KVKK açık onam kapısı: güncel sürümde onam yoksa /onam'a yönlendir (her şeyin ön koşulu).
-  // cv JWT'de taşınır (login/onam'da set edilir) → middleware DB'siz çalışır (Edge).
+  // cv JWT'de taşınır (login/onam'da set edilir) → proxy DB'siz çalışır (Node runtime; edge desteklenmez).
   if ((user.cv ?? 0) < CONSENT_VERSION) {
     const url = new URL(CONSENT_PATH, req.url);
     url.searchParams.set("next", pathname);
