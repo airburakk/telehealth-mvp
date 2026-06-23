@@ -1,27 +1,60 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
+import { ownsCase } from "@/lib/ownership";
+import type { SessionUser } from "@/lib/session";
 
 // WebRTC sinyalleşme — polling tabanlı (serverless uyumlu)
+// Erişim: oturum + görüşme katılımcısı. Kanal kimliği iki şemadan biri olabilir:
+//  • Consultation.id (genel akış) · • SecondOpinionAppointment.id (SO izole oda — externalVideoRef, FK yok).
+// Katılımcı = vakanın sahibi hasta VEYA klinik personel (ownsCase deseni). sender oturumdan türetilir
+// (gövdeye güvenilmez → taraf taklidi engellenir).
+async function callerSide(user: SessionUser, channelId: string): Promise<"patient" | "doctor" | null> {
+  const consult = await db.consultation.findUnique({
+    where: { id: channelId },
+    select: { case: { select: { userId: true } } },
+  });
+  if (consult) return ownsCase(user, consult.case) ? (user.role === "PATIENT" ? "patient" : "doctor") : null;
+
+  const appt = await db.secondOpinionAppointment.findUnique({
+    where: { id: channelId },
+    select: { patientId: true },
+  });
+  if (appt) {
+    if (user.role !== "PATIENT") return "doctor"; // klinik personel
+    return appt.patientId === user.id ? "patient" : null; // yalnız vaka sahibi hasta
+  }
+  return null; // tanınmayan kanal
+}
 
 // POST /api/consultations/:id/signal — bir sinyal mesajı gönder
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
   const { id } = await params;
+  const side = await callerSide(user, id);
+  if (!side) return NextResponse.json({ error: "Bu görüşmeye erişim yetkiniz yok." }, { status: 403 });
+
   const b = await req.json().catch(() => ({}));
-  const sender = b.sender === "patient" ? "patient" : "doctor";
   const kind = ["offer", "answer", "ice", "bye", "transcript"].includes(b.kind) ? b.kind : null;
   if (!kind) return NextResponse.json({ error: "Geçersiz tür." }, { status: 400 });
 
+  // sender oturumdan türetilir (gövdedeki b.sender yok sayılır → taklit engeli)
   await db.signal.create({
-    data: { consultationId: id, sender, kind, data: typeof b.data === "string" ? b.data : JSON.stringify(b.data ?? null) },
+    data: { consultationId: id, sender: side, kind, data: typeof b.data === "string" ? b.data : JSON.stringify(b.data ?? null) },
   });
   return NextResponse.json({ ok: true }, { status: 201 });
 }
 
-// GET /api/consultations/:id/signal?role=<me>&after=<id> — karşı taraftan yeni mesajlar
+// GET /api/consultations/:id/signal?after=<id> — karşı taraftan yeni mesajlar
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
   const { id } = await params;
+  const me = await callerSide(user, id);
+  if (!me) return NextResponse.json({ error: "Bu görüşmeye erişim yetkiniz yok." }, { status: 403 });
+
   const { searchParams } = new URL(req.url);
-  const me = searchParams.get("role") === "patient" ? "patient" : "doctor";
   const after = Number(searchParams.get("after") ?? 0) || 0;
 
   const messages = await db.signal.findMany({

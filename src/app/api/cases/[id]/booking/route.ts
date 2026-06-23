@@ -3,12 +3,18 @@ import { db } from "@/lib/db";
 import { computePackage, type PackageSelection, type Tier, type HospitalType, type RecommendedTreatment } from "@/lib/pricing";
 import { getTryPerUsd } from "@/lib/fxrate";
 import { notifyRoles, notifyUser } from "@/lib/notify";
+import { getCurrentUser } from "@/lib/auth";
+import { ownsCase } from "@/lib/ownership";
 
 // POST /api/cases/:id/booking — sağlık turizmi paketi rezervasyonu oluştur (Escrow)
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
+
   const { id } = await params;
   const c = await db.case.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+  if (!ownsCase(user, c)) return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
 
   const b = await req.json().catch(() => ({}));
   const selection: PackageSelection = {
