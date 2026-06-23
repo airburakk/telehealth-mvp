@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { ownsSecondOpinionCase } from "@/lib/ownership";
 import { logSoEvent } from "@/lib/second-opinion-service";
+import { encryptField } from "@/lib/crypto";
 
 const DOC_TYPES = ["EPICRISIS", "IMAGING", "PATHOLOGY", "MEDICATION_LIST"];
 const DELIVERY = ["FILE_UPLOAD", "EXTERNAL_LINK"];
@@ -57,7 +58,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   const doc = await db.secondOpinionDocument.create({
-    data: { caseId: id, type, deliveryMethod, fileRef, externalRef, label, uploadedBy: user.id },
+    // fileRef (base64 belge içeriği) at-rest şifrelenir (E2EE Faz 1); externalRef = sadece link, PHI değil.
+    data: { caseId: id, type, deliveryMethod, fileRef: encryptField(fileRef), externalRef, label, uploadedBy: user.id },
   });
   await logSoEvent(id, {
     actorId: user.id,

@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
 import { notifyRoles } from "@/lib/notify";
 import { getCurrentUser } from "@/lib/auth";
-import { encryptField } from "@/lib/crypto";
+import { encryptField, decryptCaseFields } from "@/lib/crypto";
 
 // GET /api/cases — vaka kuyruğu (filtrelenebilir)
 export async function GET(req: Request) {
@@ -19,7 +19,8 @@ export async function GET(req: Request) {
     include: { doctor: true },
     orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
   });
-  return NextResponse.json(cases);
+  // Klinik metin (symptoms/reasoning/extra) at-rest şifreli → kuyruk tüketicisi düz metin bekler → çöz.
+  return NextResponse.json(cases.map(decryptCaseFields));
 }
 
 // POST /api/cases — yeni vaka oluştur (triyaj sunucu tarafında yeniden hesaplanır)
@@ -51,14 +52,14 @@ export async function POST(req: Request) {
       patientName,
       country: String(body.country ?? "TR"),
       language: String(body.language ?? "Türkçe"),
-      symptoms,
+      symptoms: encryptField(symptoms),
       durationText: body.durationText ? String(body.durationText) : null,
-      extra: body.answers ? JSON.stringify(body.answers) : null,
+      extra: encryptField(body.answers ? JSON.stringify(body.answers) : null), // branş soruları JSON (E2EE Faz 1)
       attachments,
       branch: a.branch,
       urgency: a.urgency,
       confidence: a.confidence,
-      reasoning: a.reasoning,
+      reasoning: encryptField(a.reasoning), // triyaj gerekçesi (E2EE Faz 1)
       status: "NEW",
       consultFee: typeof body.consultFee === "number" ? body.consultFee : null,
       payStatus: ["PAID", "INSURED"].includes(String(body.payStatus)) ? String(body.payStatus) : "PENDING",

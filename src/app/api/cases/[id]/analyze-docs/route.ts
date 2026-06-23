@@ -38,7 +38,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     docs.map(async (d) => {
       const a = await assessDocument(decryptField(d.content as string), { // at-rest şifreli → AI girdisi için çöz
         branch: c.branch,
-        symptoms: c.symptoms,
+        symptoms: decryptField(c.symptoms), // at-rest şifreli → AI bağlamı için çöz
         language: c.language,
         label: d.label,
         loincHints,

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { canAccessCase } from "@/lib/ownership";
 import { recoveryProtocol } from "@/lib/postop";
 import { RecoveryView, type RecoveryData } from "./RecoveryView";
+import { decryptField } from "@/lib/crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -35,8 +36,8 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
       pain: ci.pain,
       feverC: ci.feverC,
       meds: ci.meds,
-      note: ci.note,
-      photo: ci.photo,
+      note: decryptField(ci.note), // post-op not/foto at-rest şifreli → çöz
+      photo: decryptField(ci.photo),
     })),
   };
 

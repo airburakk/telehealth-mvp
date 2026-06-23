@@ -4,7 +4,7 @@ import { ownsCase } from "@/lib/ownership";
 import { caseToComposition } from "@/lib/fhir";
 import { fhirJson, operationOutcome } from "@/lib/fhir-http";
 import { recordAccess, reqMeta } from "@/lib/audit";
-import { decryptField } from "@/lib/crypto";
+import { decryptField, decryptCaseFields } from "@/lib/crypto";
 
 // FHIR R4 export — Faz 1 (şema değişikliği yok). Bkz. [[saglik-veri-standartlari-hl7-fhir]].
 // GET /fhir/Composition/:caseId
@@ -33,5 +33,5 @@ export async function GET(req: Request, { params }: { params: Promise<{ caseId: 
   // Denetim: FHIR dışa aktarım (klinik veri export — kim/ne zaman/hangi vaka).
   await recordAccess({ actor: user, action: "FHIR_EXPORT", resourceType: "FHIR_COMPOSITION", resourceId: c.id, subjectUserId: c.userId, detail: "Composition (epikriz)", ...reqMeta(req) });
   // Epikriz at-rest şifreli → FHIR'a dönüştürmeden önce çöz (kaynak kendinden yeterli düz JSON döner).
-  return fhirJson(caseToComposition({ ...c, dischargeStructured: decryptField(c.dischargeStructured) }, user.name));
+  return fhirJson(caseToComposition({ ...decryptCaseFields(c), dischargeStructured: decryptField(c.dischargeStructured) }, user.name));
 }

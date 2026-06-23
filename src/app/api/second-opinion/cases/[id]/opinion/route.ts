@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { transitionSoCase, logSoEvent, SoError } from "@/lib/second-opinion-service";
 import { notifyUser } from "@/lib/notify";
+import { encryptField } from "@/lib/crypto";
 
 // POST /api/second-opinion/cases/[id]/opinion — atanmış doktor yazılı ikinci görüşü sunar.
 // ASSIGNED → OPINION_DELIVERED (opinionDeliveredAt = video penceresi başlangıcı §11). E-imza PARK.
@@ -30,10 +31,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (content.length < 20) return NextResponse.json({ error: "Görüş metni çok kısa." }, { status: 400 });
   const structured = body.structured ? JSON.stringify(body.structured).slice(0, 20000) : null;
 
+  // SO yazılı görüş (content + yapılandırılmış JSON) at-rest şifrelenir (E2EE Faz 1).
+  const encContent = encryptField(content.slice(0, 20000));
+  const encStructured = encryptField(structured);
   await db.secondOpinion.upsert({
     where: { caseId: id },
-    create: { caseId: id, doctorId: c.assignedDoctorId, content: content.slice(0, 20000), structured },
-    update: { content: content.slice(0, 20000), structured, submittedAt: new Date() },
+    create: { caseId: id, doctorId: c.assignedDoctorId, content: encContent, structured: encStructured },
+    update: { content: encContent, structured: encStructured, submittedAt: new Date() },
   });
 
   try {

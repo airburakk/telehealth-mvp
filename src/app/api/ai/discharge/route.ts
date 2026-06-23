@@ -40,12 +40,13 @@ export async function POST(req: Request) {
   if (c.recovery) {
     const ch = c.recovery.checkIns;
     const last = ch[0];
+    const lastNote = last ? decryptField(last.note) : null; // post-op not at-rest şifreli → epikriz özetine düz
     const day = Math.max(1, Math.floor((Date.now() - new Date(c.recovery.startedAt).getTime()) / 86_400_000) + 1);
     const redCount = ch.filter((x) => x.severity === "RED").length;
     recoverySummary = last
       ? `Post-op ${day}. gün · ${ch.length} kontrol · son: ağrı ${last.pain}/10, ateş ${last.feverC.toFixed(1)}°C, ` +
         `ilaç ${last.meds ? "düzenli" : "aksatıldı"}${redCount ? ` · ${redCount} kırmızı bayrak` : ""}` +
-        `${last.note ? ` · hasta notu: ${last.note}` : ""} · durum: ${c.recovery.status}`
+        `${lastNote ? ` · hasta notu: ${lastNote}` : ""} · durum: ${c.recovery.status}`
       : `Post-op takip başladı (${day}. gün), henüz kontrol girişi yok.`;
   }
 
@@ -56,8 +57,8 @@ export async function POST(req: Request) {
       language: c.language,
       branch: c.branch,
       urgency: c.urgency,
-      symptoms: c.symptoms,
-      triageReasoning: c.reasoning,
+      symptoms: decryptField(c.symptoms),
+      triageReasoning: decryptField(c.reasoning),
       soapNotes: decryptField(c.consultations[0]?.notes ?? ""), // SOAP at-rest şifreli → AI girdisi için çöz
       packageSummary,
       recoverySummary,

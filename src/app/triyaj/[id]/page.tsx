@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { decryptCaseFields } from "@/lib/crypto";
 import { canAccessCase } from "@/lib/ownership";
 import { getTranslations } from "@/lib/i18n";
 import { countryFlag, countryName, urgencyStyle, langDir, formatDateTime } from "@/lib/constants";
@@ -29,14 +30,14 @@ const STATIC_LABELS = [
 
 export default async function TriyajResult({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const c = await db.case.findUnique({
+  const c = decryptCaseFields(await db.case.findUnique({
     where: { id },
     include: {
       bookings: { select: { status: true } },
       recovery: { select: { id: true } },
       consultations: { select: { id: true } },
     },
-  });
+  })); // reasoning/symptoms at-rest şifreli → hastaya gösterim/çeviri için çöz
   if (!c) notFound();
   if (!(await canAccessCase(c))) notFound(); // hasta yalnız kendi vaka sonucunu görür
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { summarizeSOAP } from "@/lib/ai-clinical";
+import { decryptField } from "@/lib/crypto";
 
 // POST /api/ai/soap — doktorun görüşme notunu SOAP formatına çevirir (Claude)
 export async function POST(req: Request) {
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
     const { soap, structured } = await summarizeSOAP(notes, {
       patientName: c?.patientName ?? "—",
       branch: c?.branch ?? "—",
-      symptoms: c?.symptoms ?? "—",
+      symptoms: c?.symptoms ? decryptField(c.symptoms) : "—", // at-rest şifreli → AI bağlamı için çöz
     }, source);
     return NextResponse.json({ soap, structured });
   } catch (e) {

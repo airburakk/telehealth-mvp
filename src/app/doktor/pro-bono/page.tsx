@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { quotaInfo, badgeStats, waitingCount } from "@/lib/pro-bono";
 import { ProBonoConsole, type PBCase } from "@/components/ProBonoConsole";
+import { decryptField } from "@/lib/crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,7 @@ export default async function DoctorProBonoPage() {
     language: c.language,
     branch: c.branch,
     urgency: c.urgency,
-    symptoms: c.symptoms,
+    symptoms: decryptField(c.symptoms), // at-rest şifreli → konsol gösterimi için çöz
     proBonoStatus: c.proBonoStatus ?? "",
     createdAt: c.createdAt.toISOString(),
   });

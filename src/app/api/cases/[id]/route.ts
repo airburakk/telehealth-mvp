@@ -23,6 +23,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   // Epikriz + SOAP notları at-rest şifreli → tüketici (kokpit) düz metin bekler → çöz.
   return NextResponse.json({
     ...item,
+    symptoms: decryptField(item.symptoms),
+    reasoning: decryptField(item.reasoning),
+    extra: decryptField(item.extra),
     dischargeReport: decryptField(item.dischargeReport),
     dischargeStructured: decryptField(item.dischargeStructured),
     consultations: item.consultations.map((co) => ({ ...co, notes: decryptField(co.notes) })),

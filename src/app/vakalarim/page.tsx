@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { MyCasesList, type MyCaseRow } from "./MyCasesList";
+import { decryptField } from "@/lib/crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export default async function MyCasesPage() {
       status: c.status,
       urgency: c.urgency,
       branch: c.branch,
-      symptoms: c.symptoms,
+      symptoms: decryptField(c.symptoms), // at-rest şifreli → liste gösterimi için çöz
       createdAt: c.createdAt.toISOString(),
       booking: b ? { id: b.id, tier: b.tier, status: b.status, total: b.total } : null,
       hasRecovery: !!c.recovery,

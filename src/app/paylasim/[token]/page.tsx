@@ -6,7 +6,7 @@ import { ShareUnlock } from "@/components/ShareUnlock";
 import { ShareLangSelect } from "@/components/ShareLangSelect";
 import { getTranslations } from "@/lib/i18n";
 import { LANGUAGES, langDir } from "@/lib/constants";
-import { decryptField } from "@/lib/crypto";
+import { decryptField, decryptCaseFields } from "@/lib/crypto";
 import {
   Activity, FileText, ScanLine, FlaskConical, Stethoscope,
   ShieldCheck, Clock, Lock, Download, Ban, AlertTriangle, Eye,
@@ -127,7 +127,7 @@ export default async function ShareViewerPage({
   const scopes = link.scopes.split(",");
   // Epikriz + SOAP notları at-rest şifreli → alıcıya gösterilecek/çevrilecek içerik için çöz.
   const caseForShare = {
-    ...link.case,
+    ...decryptCaseFields(link.case),
     dischargeReport: decryptField(link.case.dischargeReport),
     consultations: link.case.consultations.map((co) => ({ ...co, notes: decryptField(co.notes) })),
   };

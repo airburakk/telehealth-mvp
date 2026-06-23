@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { decryptCaseFields } from "@/lib/crypto";
 import { countryFlag, countryName, urgencyStyle, CASE_STATUS, formatDateTime } from "@/lib/constants";
 import { StartConsultButton } from "@/components/StartConsultButton";
 import { TranslateButton } from "@/components/TranslateButton";
@@ -15,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 export default async function CaseDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const c = await db.case.findUnique({
+  const c = decryptCaseFields(await db.case.findUnique({
     where: { id },
     include: {
       doctor: true,
@@ -24,7 +25,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
         orderBy: { createdAt: "asc" },
       },
     },
-  });
+  })); // symptoms/reasoning/extra(triyaj yanıtları) at-rest şifreli → kokpit gösterimi için çöz
   if (!c) notFound();
 
   const u = urgencyStyle(c.urgency);

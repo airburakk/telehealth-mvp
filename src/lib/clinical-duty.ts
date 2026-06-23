@@ -3,6 +3,7 @@
 // Roller: Branş Doktoru (online, gerçek-zaman) · İcapçı (offline + icap açık → randevu) · Nöbetçi (7/24 genel/Dahiliye/Acil).
 // Eşleştirme deseni Pro Bono'dan alındı: koşullu updateMany = optimistik kilit (çift-kapma yarışı engellenir).
 import { db } from "./db";
+import { decryptField } from "./crypto";
 import { notifyUser, type NotifyInput } from "./notify";
 import { formatDateTime } from "./constants";
 
@@ -292,7 +293,7 @@ export async function dutyFeed(doctorId: string): Promise<DutyFeed | null> {
         language: c.language,
         branch: c.branch,
         urgency: c.urgency,
-        symptoms: c.symptoms,
+        symptoms: decryptField(c.symptoms), // at-rest şifreli → İcapçı kuyruğu gösterimi için çöz
         createdAt: a.createdAt.toISOString(),
       };
     })

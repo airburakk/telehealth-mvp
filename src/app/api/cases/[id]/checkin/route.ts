@@ -5,6 +5,7 @@ import { assessPostopNote, assessPostopPhoto } from "@/lib/ai-clinical";
 import { notifyRoles } from "@/lib/notify";
 import { notifyOnDutySentinels } from "@/lib/clinical-duty";
 import { canAccessCase } from "@/lib/ownership";
+import { encryptField } from "@/lib/crypto";
 
 // Not-AI (Haiku) + Foto-AI (Sonnet vision) paralel çalışır; serverless varsayılan limitini aşmasın diye süre tanı.
 export const maxDuration = 30;
@@ -70,8 +71,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     ...(photoReason ? [photoReason] : []),
   ];
 
+  // Post-op not + foto at-rest şifrelenir (E2EE Faz 1); AI değerlendirmesi yukarıda ham değerle yapıldı.
   const checkIn = await db.checkIn.create({
-    data: { recoveryId: recovery.id, pain, feverC, meds, note, photo, severity },
+    data: { recoveryId: recovery.id, pain, feverC, meds, note: encryptField(note), photo: encryptField(photo), severity },
   });
 
   if (severity === "RED") {

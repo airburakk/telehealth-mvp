@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { decryptField } from "@/lib/crypto";
 import { getCurrentUser } from "@/lib/auth";
 import { ownsSecondOpinionCase } from "@/lib/ownership";
 import { BRANCHES } from "@/lib/triage";
@@ -60,7 +61,7 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
         documents: c.documents,
         payment: c.payment,
         requests: c.requests,
-        opinion: c.opinion ? { content: c.opinion.content, submittedAt: c.opinion.submittedAt.toISOString() } : null,
+        opinion: c.opinion ? { content: decryptField(c.opinion.content), submittedAt: c.opinion.submittedAt.toISOString() } : null,
         appointment: c.appointment ? { id: c.appointment.id, scheduledAt: c.appointment.scheduledAt.toISOString(), status: c.appointment.status } : null,
         readyAt: c.readyAt ? c.readyAt.toISOString() : null,
         assignedDoctor,

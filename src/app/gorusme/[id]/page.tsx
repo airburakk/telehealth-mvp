@@ -7,7 +7,7 @@ import { PreConsultLobby } from "@/components/PreConsultLobby";
 import { branchKeyFromLabel, branchLabel as branchLabelOf, getBranchProcedures } from "@/lib/procedures";
 import { getTryPerUsd } from "@/lib/fxrate";
 import { icd10ForBranchLabel } from "@/data/coding";
-import { decryptField } from "@/lib/crypto";
+import { decryptField, decryptCaseFields } from "@/lib/crypto";
 import type { Structured } from "@/components/DischargeReport";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +34,7 @@ export default async function ConsultationPage({
   const selfRole: "doctor" | "patient" =
     sp.role === "patient" ? "patient" : sp.role === "doctor" ? "doctor" : sessionRole;
 
-  const c = consult.case;
+  const c = decryptCaseFields(consult.case); // symptoms/reasoning/extra at-rest şifreli → çöz (discharge alanları aşağıda ayrıca)
 
   // M2→M3 tavsiye edilen tedaviler — yalnız doktor görünümü için derle
   let recommend:

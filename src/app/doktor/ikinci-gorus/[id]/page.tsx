@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { decryptField } from "@/lib/crypto";
 import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
 import { ArrowLeft } from "lucide-react";
@@ -51,7 +52,7 @@ export default async function DoctorSoDetailPage({ params }: { params: Promise<{
           documents: c.documents,
           requests: c.requests.map((r) => ({ id: r.id, type: r.type, description: r.description, status: r.status })),
           opinion: c.opinion
-            ? { content: c.opinion.content, structured: c.opinion.structured, submittedAt: c.opinion.submittedAt.toISOString() }
+            ? { content: decryptField(c.opinion.content), structured: decryptField(c.opinion.structured), submittedAt: c.opinion.submittedAt.toISOString() }
             : null,
           appointment: c.appointment ? { id: c.appointment.id, scheduledAt: c.appointment.scheduledAt.toISOString(), status: c.appointment.status } : null,
         }}
