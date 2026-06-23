@@ -32,6 +32,9 @@ export async function proxy(req: NextRequest) {
   if (pathname.startsWith("/etik-kurul") && !ETHICS_ROLES.includes(user.role)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
+  if (pathname.startsWith("/denetim") && !ETHICS_ROLES.includes(user.role)) {
+    return NextResponse.redirect(new URL("/", req.url)); // denetim izi bütünlüğü = denetçi (ADMIN/Etik Kurul)
+  }
   if (pathname.startsWith("/doktor") && !DOCTOR_ROLES.includes(user.role)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
@@ -57,6 +60,7 @@ export const config = {
     "/paylasimlarim", "/paylasimlarim/:path*",
     "/sikayet/:path*",
     "/etik-kurul", "/etik-kurul/:path*",
+    "/denetim",
     "/operasyon", "/operasyon/:path*",
     "/vakalarim",
     "/erisim-kaydi",

@@ -3,34 +3,13 @@ import Link from "next/link";
 import { ShieldCheck, Clock, Lock } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getAccessLog } from "@/lib/audit";
+import { ACTION_TR, RES_TR, ROLE_TR } from "@/lib/audit-labels";
 
 export const dynamic = "force-dynamic";
 
 // Erişim Kaydım — hasta-yüzü şeffaflık sayfası: "verime kim, ne zaman, neye erişti".
 // Değiştirilemez (append-only hash-zinciri) + (test) RFC 3161 zaman damgalı denetim kaydı (lib/audit).
-// NOT: i18n + RTL increment 2'ye bırakıldı (şimdilik TR).
-
-const ACTION_TR: Record<string, string> = {
-  CASE_VIEW: "Vaka görüntülendi",
-  CONSULT_WRITE: "Klinik not yazıldı",
-  CONSULT_END: "Görüşme kapatıldı",
-  FHIR_EXPORT: "FHIR dışa aktarım",
-  DOCUMENT_VIEW: "Belge görüntülendi",
-};
-const RES_TR: Record<string, string> = {
-  CASE: "Vaka",
-  CONSULTATION: "Görüşme",
-  FHIR_COMPOSITION: "Epikriz (FHIR)",
-  FHIR_CONSENT: "Paylaşım izni (FHIR)",
-  CASE_DOCUMENT: "Belge",
-};
-const ROLE_TR: Record<string, string> = {
-  DOCTOR: "Doktor",
-  COORDINATOR: "Koordinatör",
-  ADMIN: "Yönetici",
-  PATIENT: "Hasta",
-  ETHICS: "Etik Kurul",
-};
+// Etiketler @/lib/audit-labels'ta (denetçi /denetim ile paylaşılır). NOT: i18n + RTL increment 2'ye bırakıldı (şimdilik TR).
 
 export default async function AccessLogPage() {
   const user = await getCurrentUser();

@@ -15,7 +15,11 @@ export type AuditAction =
   | "CONSULT_WRITE"
   | "CONSULT_END"
   | "FHIR_EXPORT"
-  | "DOCUMENT_VIEW";
+  | "DOCUMENT_VIEW"
+  | "CODING_WRITE" // FHIR klinik kodlama (ICD-10 + hasta kimliği) yazıldı
+  | "LABS_WRITE" // laboratuvar sonuçları (LOINC) yazıldı
+  | "DOCUMENT_ANALYZE" // yüklenen belgeler AI ile değerlendirildi/çevrildi (dış AI'ya gider)
+  | "DISCHARGE_GENERATE"; // epikriz/taburcu raporu AI ile üretildi (tüm yolculuk dış AI'ya gider)
 
 interface RecordInput {
   actor: SessionUser | null;
@@ -60,46 +64,59 @@ function computeEntryHash(f: {
   );
 }
 
+// Küresel advisory-lock anahtarı (sabit, 2×int4) — TÜM audit append'lerini tek küresel sıraya dizer.
+const CHAIN_LOCK_A = 0x4155; // 'AU'
+const CHAIN_LOCK_B = 0x4454; // 'DT'
+
 // Bir erişimi mühürleyip kaydet. FAIL-SAFE — hata olursa yutulur (asıl istek etkilenmez).
-// Zincir: global (GENESIS→…); ucu = en güncel mühürlü kayıt. ⚠️ Eşzamanlı yazımda çatallanma olabilir
-// (demo'da nadir; üretim serialization = lock/queue PARK).
+// Zincir: global (GENESIS→…); ucu = en güncel mühürlü kayıt.
+//
+// ÜRETİM SERIALIZATION (inc.2): append, küresel bir advisory **xact**-lock altında tek bir transaction'da
+// yapılır → eşzamanlı yazımlar sıraya girer, zincir ÇATALLANMAZ. xact-lock işlem sonunda otomatik bırakılır
+// (transaction-pooling/Neon-PgBouncer güvenli; session-lock sızabilirdi). Çok-örnekli Vercel serverless'te
+// in-process mutex yetmez (örnekler arası çatal) → kilit DB seviyesinde olmalı.
 export async function recordAccess(input: RecordInput): Promise<void> {
   try {
-    const createdAt = new Date();
-    const tip = await db.accessLog.findFirst({
-      where: { entryHash: { not: null } },
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      select: { entryHash: true },
-    });
-    const prevHash = tip?.entryHash ?? "GENESIS";
-    const entryHash = computeEntryHash({
-      actorId: input.actor?.id ?? null,
-      action: input.action,
-      resourceType: input.resourceType,
-      resourceId: input.resourceId,
-      subjectUserId: input.subjectUserId,
-      createdAt,
-      prevHash,
-    });
-    const ts = getTimestampToken(entryHash);
-    await db.accessLog.create({
-      data: {
+    await db.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${CHAIN_LOCK_A}::int4, ${CHAIN_LOCK_B}::int4)`;
+      // createdAt KİLİT İÇİNDE alınır → insert sırası = createdAt sırası; verify (asc) ile tip (desc) tutarlı,
+      // çatal yok. (Aynı-ms artığı id ile çözülür; kilit+RTT döngüsü ms'i pratikte ayırır.)
+      const createdAt = new Date();
+      const tip = await tx.accessLog.findFirst({
+        where: { entryHash: { not: null } },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        select: { entryHash: true },
+      });
+      const prevHash = tip?.entryHash ?? "GENESIS";
+      const entryHash = computeEntryHash({
         actorId: input.actor?.id ?? null,
-        actorRole: input.actor?.role ?? null,
         action: input.action,
         resourceType: input.resourceType,
         resourceId: input.resourceId,
         subjectUserId: input.subjectUserId,
-        detail: input.detail ?? null,
-        ip: input.ip ?? null,
-        userAgent: input.userAgent ?? null,
         createdAt,
         prevHash,
-        entryHash,
-        tsAuthority: ts.authority,
-        tsTime: ts.time,
-        tsToken: ts.token,
-      },
+      });
+      const ts = getTimestampToken(entryHash);
+      await tx.accessLog.create({
+        data: {
+          actorId: input.actor?.id ?? null,
+          actorRole: input.actor?.role ?? null,
+          action: input.action,
+          resourceType: input.resourceType,
+          resourceId: input.resourceId,
+          subjectUserId: input.subjectUserId,
+          detail: input.detail ?? null,
+          ip: input.ip ?? null,
+          userAgent: input.userAgent ?? null,
+          createdAt,
+          prevHash,
+          entryHash,
+          tsAuthority: ts.authority,
+          tsTime: ts.time,
+          tsToken: ts.token,
+        },
+      });
     });
   } catch (e) {
     // FAIL-SAFE: audit asla çağıran isteği bozmaz (üretimde gözlemlenebilirlik için log'lanır).
@@ -121,6 +138,32 @@ export interface AccessLogEntry {
   verification: { entryHashValid: boolean | null; timestampValid: boolean | null };
 }
 
+// Tek bir kaydın doğrulaması: mührü alanlarından yeniden hesaplanan + zaman damgası geçerli mi?
+// (getAccessLog hasta-yüzü + getChainAudit denetçi-yüzü paylaşır.)
+type VerifiableRow = {
+  actorId: string | null; action: string; resourceType: string; resourceId: string;
+  subjectUserId: string | null; createdAt: Date; prevHash: string | null; entryHash: string | null;
+  tsTime: Date | null; tsToken: string | null;
+};
+function verifyRow(r: VerifiableRow): { entryHashValid: boolean | null; timestampValid: boolean | null } {
+  let entryHashValid: boolean | null = null;
+  if (r.entryHash && r.prevHash) {
+    const recomputed = computeEntryHash({
+      actorId: r.actorId,
+      action: r.action,
+      resourceType: r.resourceType,
+      resourceId: r.resourceId,
+      subjectUserId: r.subjectUserId,
+      createdAt: r.createdAt,
+      prevHash: r.prevHash,
+    });
+    entryHashValid = recomputed === r.entryHash;
+  }
+  const timestampValid =
+    r.entryHash && r.tsTime && r.tsToken ? verifyTimestampToken(r.entryHash, r.tsTime, r.tsToken) : null;
+  return { entryHashValid, timestampValid };
+}
+
 // Bir veri-sahibi hastanın erişim kaydı — "verime kim, ne zaman, neye erişti" + giriş-başına doğrulama.
 export async function getAccessLog(subjectUserId: string, viewerId?: string): Promise<AccessLogEntry[]> {
   const rows = await db.accessLog.findMany({
@@ -128,36 +171,19 @@ export async function getAccessLog(subjectUserId: string, viewerId?: string): Pr
     orderBy: { createdAt: "desc" },
     take: 200,
   });
-  return rows.map((r) => {
-    let entryHashValid: boolean | null = null;
-    if (r.entryHash && r.prevHash) {
-      const recomputed = computeEntryHash({
-        actorId: r.actorId,
-        action: r.action,
-        resourceType: r.resourceType,
-        resourceId: r.resourceId,
-        subjectUserId: r.subjectUserId,
-        createdAt: r.createdAt,
-        prevHash: r.prevHash,
-      });
-      entryHashValid = recomputed === r.entryHash;
-    }
-    const timestampValid =
-      r.entryHash && r.tsTime && r.tsToken ? verifyTimestampToken(r.entryHash, r.tsTime, r.tsToken) : null;
-    return {
-      id: r.id,
-      actorRole: r.actorRole,
-      actorIsYou: !!viewerId && r.actorId === viewerId,
-      action: r.action,
-      resourceType: r.resourceType,
-      resourceId: r.resourceId,
-      detail: r.detail,
-      createdAt: r.createdAt.toISOString(),
-      tsAuthority: r.tsAuthority,
-      tsTime: r.tsTime?.toISOString() ?? null,
-      verification: { entryHashValid, timestampValid },
-    };
-  });
+  return rows.map((r) => ({
+    id: r.id,
+    actorRole: r.actorRole,
+    actorIsYou: !!viewerId && r.actorId === viewerId,
+    action: r.action,
+    resourceType: r.resourceType,
+    resourceId: r.resourceId,
+    detail: r.detail,
+    createdAt: r.createdAt.toISOString(),
+    tsAuthority: r.tsAuthority,
+    tsTime: r.tsTime?.toISOString() ?? null,
+    verification: verifyRow(r),
+  }));
 }
 
 // Global zincir bütünlüğü (denetçi) — her kaydın mührü + prevHash bağı tutuyor mu (silme/araya-ekleme tespiti).
@@ -184,4 +210,54 @@ export async function verifyAccessChain(): Promise<{ ok: boolean; count: number;
     prev = r.entryHash!;
   }
   return { ok: true, count: rows.length, brokenAt: null };
+}
+
+// Denetçi (ADMIN / Etik Kurul) görünümü için tek bir kayıt — küresel zincirin metadata'sı (klinik içerik YOK).
+export interface ChainEntry {
+  id: string;
+  createdAt: string;
+  actorRole: string | null;
+  actorId: string | null;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  subjectUserId: string | null;
+  detail: string | null;
+  ip: string | null;
+  prevHash: string | null;
+  entryHash: string | null;
+  tsAuthority: string | null;
+  tsTime: string | null;
+  verification: { entryHashValid: boolean | null; timestampValid: boolean | null };
+}
+
+// Denetçi tam-zincir görünümü: KÜRESEL bütünlük (tüm zinciri tarar → silme/araya-ekleme/çatal tespiti)
+// + en güncel N mühürlü kaydın metadata'sı. Klinik içerik DÖNDÜRMEZ (yalnız kim/ne-zaman/hangi-kayıt).
+export async function getChainAudit(limit = 200): Promise<{
+  integrity: { ok: boolean; count: number; brokenAt: string | null };
+  entries: ChainEntry[];
+}> {
+  const integrity = await verifyAccessChain();
+  const rows = await db.accessLog.findMany({
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: limit,
+  });
+  const entries: ChainEntry[] = rows.map((r) => ({
+    id: r.id,
+    createdAt: r.createdAt.toISOString(),
+    actorRole: r.actorRole,
+    actorId: r.actorId,
+    action: r.action,
+    resourceType: r.resourceType,
+    resourceId: r.resourceId,
+    subjectUserId: r.subjectUserId,
+    detail: r.detail,
+    ip: r.ip,
+    prevHash: r.prevHash,
+    entryHash: r.entryHash,
+    tsAuthority: r.tsAuthority,
+    tsTime: r.tsTime?.toISOString() ?? null,
+    verification: verifyRow(r),
+  }));
+  return { integrity, entries };
 }

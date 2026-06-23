@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { assessDocument } from "@/lib/ai-clinical";
 import { loincForBranchLabel } from "@/data/coding";
 import { decryptField } from "@/lib/crypto";
+import { recordAccess, reqMeta } from "@/lib/audit";
 
 export const maxDuration = 60; // PDF/görüntü vision çağrıları + çoklu belge → uzun sürebilir
 
@@ -18,7 +19,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const c = await db.case.findUnique({
     where: { id },
-    select: { id: true, branch: true, symptoms: true, language: true, labResults: true },
+    select: { id: true, userId: true, branch: true, symptoms: true, language: true, labResults: true },
   });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
   const loincHints = loincForBranchLabel(c.branch).map((e) => ({ code: e.code, label: e.label }));
@@ -104,6 +105,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       addedLabs = additions.length;
     }
   }
+
+  // Belge içeriği + semptomlar çözülüp dış AI'ya gönderildi → denetim kaydına mühürle.
+  await recordAccess({
+    actor: user, action: "DOCUMENT_ANALYZE", resourceType: "CASE", resourceId: id, subjectUserId: c.userId,
+    detail: `${assessed} belge değerlendirildi${addedLabs ? ` · ${addedLabs} lab önerisi` : ""}`, ...reqMeta(req),
+  });
 
   // Güncel tüm değerlendirmeleri döndür (içerik hariç) → kokpit reload'suz güncellenir
   const all = await db.caseDocument.findMany({

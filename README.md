@@ -105,9 +105,11 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 - **Operasyon Paneli (S2):** `/operasyon` — KPI, dönüşüm hunisi, gelir/Escrow, dağılımlar, trend, kapasite.
 - **Consent Manager + RFC 3161 ispat:** `/onam` tek seferlik KVKK onamı; sürümlü `ConsentRecord` +
   hash-zinciri + zaman damgası + Onay Kanıtı (`/onam/kanit`). (`lib/consent.ts`, `lib/timestamp.ts`)
-- **Değiştirilemez erişim denetimi (E2EE Faz 0):** klinik veriye her anlamlı erişim (okuma/yazma/dışa
-  aktarım) `AccessLog`'a mühürlenir (append-only hash-zinciri + zaman damgası); hasta `/erisim-kaydi`'da
-  "verime kim, ne zaman, neye erişti"yi doğrulanmış görür. (`lib/audit.ts`)
+- **Değiştirilemez erişim denetimi (E2EE Faz 0):** klinik veriye her anlamlı erişim (vaka görüntüleme,
+  klinik not, FHIR dışa aktarım, belge görüntüleme, **klinik kodlama / lab yazımı, AI belge analizi,
+  epikriz üretimi**) `AccessLog`'a mühürlenir — append-only hash-zinciri + zaman damgası, küresel bir
+  **advisory kilit** altında sıralanır (eşzamanlı yazımda çatallanmaz). Hasta `/erisim-kaydi`'da kendi
+  kaydını; denetçi (Etik Kurul / Admin) `/denetim`'de küresel zincir bütünlüğünü doğrulanmış görür. (`lib/audit.ts`)
 - **Uygulama-katmanı at-rest şifreleme (E2EE Faz 1):** hassas klinik kolonları (belge içeriği, transkript,
   SOAP, epikriz, triyaj semptom/gerekçe, post-op not/foto, İkinci Görüş içeriği) AES-256-GCM **envelope** ile şifrelenir (per-record DEK + env-KEK); sunucu
   gerektiğinde çözer → defense-in-depth (DB-dump + KEK'siz operatör). `DATA_ENCRYPTION_KEK` yoksa dormant
@@ -128,7 +130,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/paket/[caseId]` · `/rezervasyon/[id]` · `/teklif/[id]` | Paket · Escrow rezervasyon · hastaya gönderilen teklif |
 | `/takip/[caseId]` | Post-op takip |
 | `/hekimler` · `/hekim/[id]` | Hekim dizini · doğrulanmış profil |
-| `/sikayet/[caseId]` · `/etik-kurul` (+`/[id]`) | Şikayet · Etik Kurul liste/karar |
+| `/sikayet/[caseId]` · `/etik-kurul` (+`/[id]`) · `/denetim` | Şikayet · Etik Kurul liste/karar · denetim izi bütünlüğü (denetçi) |
 | `/operasyon` | Operasyon paneli (S2 — koordinatör/admin) |
 | `/paylasim/[token]` · `/paylasimlarim` | Güvenli paylaşım görüntüleyici · paylaşım yönetimi |
 | `/second-opinion/*` | İkinci Görüş başvuru/vaka/görüşme akışı |

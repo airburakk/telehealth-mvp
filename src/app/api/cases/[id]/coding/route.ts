@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { recordAccess, reqMeta } from "@/lib/audit";
 
 const ID_TYPES = new Set(["TC", "PASSPORT", "OTHER"]);
 
@@ -12,7 +13,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
   const { id } = await params;
-  const exists = await db.case.findUnique({ where: { id }, select: { id: true } });
+  const exists = await db.case.findUnique({ where: { id }, select: { id: true, userId: true } });
   if (!exists) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
 
   const b = await req.json().catch(() => ({}));
@@ -24,5 +25,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const patientIdentifierType = patientIdentifier ? (ID_TYPES.has(rawType) ? rawType : "TC") : null;
 
   await db.case.update({ where: { id }, data: { icd10Code, patientIdentifier, patientIdentifierType } });
+  await recordAccess({
+    actor: user, action: "CODING_WRITE", resourceType: "CASE", resourceId: id, subjectUserId: exists.userId,
+    detail: `ICD-10: ${icd10Code ?? "—"}`, ...reqMeta(req),
+  });
   return NextResponse.json({ ok: true });
 }

@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { generateDischarge } from "@/lib/ai-clinical";
 import { countryName } from "@/lib/constants";
 import { encryptField, decryptField } from "@/lib/crypto";
+import { recordAccess, reqMeta } from "@/lib/audit";
 
 // POST /api/ai/discharge — vakanın tüm yolculuğunu epikriz/taburcu raporuna sentezler (Claude) ve Case'e kaydeder.
 export async function POST(req: Request) {
@@ -79,6 +80,11 @@ export async function POST(req: Request) {
     await db.case.update({
       where: { id: caseId },
       data: { dischargeReport: encryptField(report), dischargeStructured: encryptField(JSON.stringify(structured)), dischargeAt },
+    });
+
+    await recordAccess({
+      actor: user, action: "DISCHARGE_GENERATE", resourceType: "CASE", resourceId: caseId, subjectUserId: c.userId,
+      detail: "Epikriz/taburcu raporu üretildi", ...reqMeta(req),
     });
 
     return NextResponse.json({ report, structured, savedAt: dischargeAt.toISOString() });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { recordAccess, reqMeta } from "@/lib/audit";
 
 // POST /api/cases/:id/labs — laboratuvar sonuçları (FHIR Observation kaynağı, LOINC kodlu). Klinik personel.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -9,7 +10,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
   const { id } = await params;
-  const exists = await db.case.findUnique({ where: { id }, select: { id: true } });
+  const exists = await db.case.findUnique({ where: { id }, select: { id: true, userId: true } });
   if (!exists) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
 
   const b = await req.json().catch(() => ({}));
@@ -30,5 +31,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .slice(0, 50);
 
   await db.case.update({ where: { id }, data: { labResults: labs.length ? JSON.stringify(labs) : null } });
+  await recordAccess({
+    actor: user, action: "LABS_WRITE", resourceType: "CASE", resourceId: id, subjectUserId: exists.userId,
+    detail: `${labs.length} sonuç`, ...reqMeta(req),
+  });
   return NextResponse.json({ ok: true, count: labs.length });
 }
