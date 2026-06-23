@@ -1,0 +1,123 @@
+"use client";
+
+// Erişim Kaydım (hasta-yüzü) — çok dilli (8+ dil) + RTL. Veriyi server page.tsx getirir; burada sunum + çeviri.
+// Değiştirilemez append-only hash-zinciri + (test) RFC 3161 zaman damgalı denetim kaydı (lib/audit).
+// NOT: personel-yüzü denetçi eşi /denetim TR kalır (konvansiyon: personel panelleri TR; hasta yüzeyi lokalize).
+import { useMemo } from "react";
+import Link from "next/link";
+import { ShieldCheck, Clock, Lock } from "lucide-react";
+import { useT } from "@/components/useT";
+import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
+import { langDir, LANG_BCP47 } from "@/lib/constants";
+import { ACTION_TR, RES_TR, ROLE_TR } from "@/lib/audit-labels";
+import type { AccessLogEntry } from "@/lib/audit";
+
+const S = {
+  title: "Erişim Kaydım",
+  subtitle:
+    "Verinize kim, ne zaman, neye eriştiğinin değiştirilemez kaydı. Her satır bir hash-zincirine bağlanır ve zaman damgalanır — sonradan silinemez veya değiştirilemez.",
+  thDate: "Tarih",
+  thWho: "Kim",
+  thAction: "İşlem",
+  thResource: "Kaynak",
+  thVerify: "Doğrulama",
+  empty: "Verinize henüz kayıtlı bir erişim yok. Bir doktor vakanızı görüntülediğinde burada görünür.",
+  you: "Siz",
+  system: "Sistem",
+  verified: "Doğrulandı",
+  footerLead: "Mühür & zaman damgası:",
+  footerBody:
+    "her kayıt bir önceki kaydın mührüne (hash) bağlanır → araya ekleme/silme tespit edilebilir. Zaman damgası şu an mekanizma-doğrulama amaçlı simüle (SIMULATED-LOCAL); üretimde bağımsız RFC 3161 otoritesine takılacak. Yüksek-frekanslı teknik olaylar (sinyal/poll, arayüz çevirisi) kasıtlı olarak kaydedilmez.",
+  proofPrefix: "Onam ispatınız için",
+  proofLink: "Onay Kanıtım",
+} as const;
+
+export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
+  const [lang, setLang] = usePatientLang();
+  // ⚠️ texts MEMOIZE edilmeli — yoksa her render effect'i yeniden kurar, uçuştaki çeviri fetch'i iptal olur (v2.68 dersi).
+  const texts = useMemo(
+    () => [...Object.values(S), ...Object.values(ACTION_TR), ...Object.values(RES_TR), ...Object.values(ROLE_TR)],
+    [],
+  );
+  const { t } = useT(lang, texts);
+  const locale = LANG_BCP47[lang] ?? "tr-TR";
+
+  return (
+    <main dir={langDir(lang)} className="mx-auto max-w-4xl px-5 py-10">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <Lock size={20} className="text-[#0E8A95]" />
+          <h1 className="text-2xl font-semibold text-slate-900">{t(S.title)}</h1>
+        </div>
+        <PatientLangSelect lang={lang} onChange={setLang} />
+      </div>
+      <p className="mt-1.5 max-w-2xl text-sm text-slate-600">{t(S.subtitle)}</p>
+
+      {entries.length === 0 ? (
+        <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 px-5 py-10 text-center text-sm text-slate-500">
+          {t(S.empty)}
+        </div>
+      ) : (
+        <div className="mt-6 overflow-hidden rounded-xl border border-slate-200">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-slate-500">
+              <tr className="text-start">
+                <th className="px-4 py-2.5 font-medium">{t(S.thDate)}</th>
+                <th className="px-4 py-2.5 font-medium">{t(S.thWho)}</th>
+                <th className="px-4 py-2.5 font-medium">{t(S.thAction)}</th>
+                <th className="px-4 py-2.5 font-medium">{t(S.thResource)}</th>
+                <th className="px-4 py-2.5 font-medium">{t(S.thVerify)}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {entries.map((e) => {
+                const verified =
+                  e.verification.entryHashValid === true && e.verification.timestampValid === true;
+                return (
+                  <tr key={e.id} className="text-slate-700">
+                    <td className="px-4 py-2.5 whitespace-nowrap text-slate-500">
+                      {new Date(e.createdAt).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" })}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      {e.actorIsYou ? (
+                        <span className="inline-flex items-center rounded-full bg-[#0E8A95]/10 px-2 py-0.5 text-xs font-medium text-[#0E8A95]">
+                          {t(S.you)}
+                        </span>
+                      ) : (
+                        <span className="font-medium">
+                          {e.actorRole ? t(ROLE_TR[e.actorRole] ?? e.actorRole) : t(S.system)}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5">{t(ACTION_TR[e.action] ?? e.action)}</td>
+                    <td className="px-4 py-2.5 text-slate-500">{t(RES_TR[e.resourceType] ?? e.resourceType)}</td>
+                    <td className="px-4 py-2.5">
+                      {verified ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-600">
+                          <ShieldCheck size={15} /> {t(S.verified)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="mt-6 flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+        <Clock size={15} className="mt-0.5 shrink-0 text-slate-400" />
+        <p>
+          <strong className="text-slate-600">{t(S.footerLead)}</strong> {t(S.footerBody)} {t(S.proofPrefix)}{" "}
+          <Link href="/onam/kanit" className="text-[#0E8A95] hover:underline">
+            {t(S.proofLink)}
+          </Link>
+          .
+        </p>
+      </div>
+    </main>
+  );
+}
