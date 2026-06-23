@@ -72,6 +72,9 @@ async function main() {
   await db.recovery.deleteMany();
   await db.booking.deleteMany();
   await db.consultation.deleteMany();
+  await db.shareAccess.deleteMany();
+  await db.shareLink.deleteMany();
+  await db.caseDocument.deleteMany();
   await db.case.deleteMany();
   await db.doctor.deleteMany();
   await db.user.deleteMany();
@@ -137,6 +140,73 @@ async function main() {
       },
     });
     byName[c.patientName] = created.id;
+  }
+
+  // ── Golden demo vakası (Karim B. · akciğer kanseri ikinci görüş) ───────────────────────────
+  // TRUST omurgası (triyaj → AI belge → görüşme → güvenli paylaşım → FHIR/kanıt) canlı LLM çağrısı
+  // OLMADAN demolanabilsin diye AI çıktıları (epikriz + belge değerlendirmesi) ÖNCEDEN doldurulur.
+  // Canlı demoda soğuk/yavaş AI çağrısı riski sıfır. (Karim'in ENDED görüşmesi + booking'i zaten var.)
+  console.log("Golden demo vakası (AI çıktıları önceden) ekleniyor...");
+  const goldenId = byName["Karim B."];
+  if (goldenId) {
+    const dStruct = {
+      tani: "Sağ akciğer üst lob primer akciğer karsinomu (non-küçük hücreli, adenokarsinom), evre IIIA — transbronşiyal biyopsi ile doğrulandı.",
+      anamnez: "57 yaşında erkek; 2 aydır öksürük, hemoptizi (balgamda kan) ve kilo kaybı. Cezayir'de çekilen toraks BT'de sağ üst lobda 4 cm kitle; biyopsi adenokarsinom ile uyumlu. İkinci görüş ve tedavi planı için başvurdu.",
+      tedaviSureci: "Multidisipliner onkoloji konseyi (göğüs cerrahisi + tıbbi onkoloji + radyasyon onkolojisi) değerlendirdi. PET-BT ve mediastinoskopi ile evreleme tamamlandı; neoadjuvan kemoterapi ardından cerrahi rezeksiyon planı onaylandı.",
+      klinikSeyir: "Hasta planı kabul etti; ECOG performans skoru 1, genel durum stabil, ek hastalık yok.",
+      cikisIlaclari: "Kemoterapi günlerinde antiemetik profilaksi; bulantı için gerektiğinde destek. Kesin doz onkoloji protokolüne göre belirlenir.",
+      oneriler: "1. kemoterapi siklusu sonrası kontrol. Ateş, nefes darlığı veya kontrolsüz kanamada acil başvuru. Epikriz + görüntüler yurt dışı takip hekimine güvenli paylaşımla iletildi.",
+    };
+    const SECT: [string, string][] = [
+      ["TANI", dStruct.tani], ["ÖYKÜ VE BAŞVURU", dStruct.anamnez],
+      ["UYGULANAN TEDAVİ VE İŞLEMLER", dStruct.tedaviSureci], ["KLİNİK SEYİR VE İYİLEŞME", dStruct.klinikSeyir],
+      ["ÇIKIŞ İLAÇLARI", dStruct.cikisIlaclari], ["ÖNERİLER VE KONTROL PLANI", dStruct.oneriler],
+    ];
+    await db.case.update({
+      where: { id: goldenId },
+      data: {
+        icd10Code: "C34.1", // FHIR Condition kodlu döner (malign neoplazm, akciğer üst lobu)
+        dischargeStructured: JSON.stringify(dStruct),
+        dischargeReport: SECT.map(([t, b]) => `${t}\n${b}`).join("\n\n"),
+        dischargeAt: new Date(),
+      },
+    });
+
+    // AI ile önceden değerlendirilmiş tıbbi belge — doktor kokpitinde "AI ile değerlendir" çıktısı hazır (beat 2).
+    await db.caseDocument.create({
+      data: {
+        caseId: goldenId,
+        label: "biyopsi-raporu.pdf",
+        mimeType: "application/pdf",
+        content: null, // demo: ham içerik gerekmez; AI alanları önceden dolu
+        aiDocType: "Epikriz / Tıbbi Rapor",
+        aiSummary: "Transbronşiyal akciğer biyopsisi non-küçük hücreli akciğer karsinomu (adenokarsinom) ile uyumlu. Hastanın öksürük + hemoptizi şikâyetiyle doğrudan ilişkili; ileri evreleme ve onkolojik tedavi planı gerektirir.",
+        aiTranslation: "Belge Fransızca düzenlenmişti. Türkçe çeviri: 'Histopatolojik inceleme — sağ üst lob: bezsel diferansiyasyon gösteren atipik epitel hücreleri; TTF-1 pozitif. Sonuç: akciğer adenokarsinomu ile uyumlu.'",
+        aiFlags: "Kritik: malignite saptandı — ivedi onkoloji yönlendirmesi gerekli.",
+        assessedAt: new Date(),
+      },
+    });
+
+    // Hasta kontrollü güvenli paylaşım (yurt dışı takip hekimi) + bir erişim kaydı → denetim izi dolu görünür (beat 4).
+    const goldenShare = await db.shareLink.create({
+      data: {
+        token: "demo-aura-karim",
+        caseId: goldenId,
+        recipientName: "Dr. Lefèvre · CHU Alger",
+        scopes: "EPIKRIZ,RADYOLOJI,LAB",
+        expiresAt: new Date(Date.now() + 14 * 86400000),
+        allowDownload: false,
+      },
+    });
+    await db.shareAccess.create({
+      data: {
+        shareLinkId: goldenShare.id,
+        action: "VIEW",
+        ip: "41.103.0.0",
+        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) Safari/17.4",
+        createdAt: new Date(Date.now() - 2 * 3600000),
+      },
+    });
   }
 
   // Demo post-op takibi: Ahmed (Ortopedi) — biri kırmızı bayrak; Olga (Saç Ekimi) — normal
