@@ -12,7 +12,7 @@ body {
 body {
   background: #eef1f5;
   color: #1a1f29;
-  font-family: "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans), "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
 }
 
 * {
