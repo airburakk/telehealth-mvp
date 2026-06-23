@@ -3,11 +3,12 @@ import { getCurrentUser } from "@/lib/auth";
 import { ownsCase } from "@/lib/ownership";
 import { shareLinkToConsent } from "@/lib/fhir";
 import { fhirJson, operationOutcome } from "@/lib/fhir-http";
+import { recordAccess, reqMeta } from "@/lib/audit";
 
 // GET /fhir/Consent/:shareId
 // M4 Güvenli Paylaşım iznini (ShareLink) FHIR R4 Consent olarak verir (contained Patient).
 // Erişim: oturum + paylaşımın bağlı olduğu vakanın sahipliği.
-export async function GET(_req: Request, { params }: { params: Promise<{ shareId: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ shareId: string }> }) {
   const user = await getCurrentUser();
   if (!user) return operationOutcome(401, "login", "Kimlik doğrulama gerekli.");
 
@@ -22,5 +23,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ shareId
   if (!s) return operationOutcome(404, "not-found", "Paylaşım kaydı bulunamadı.");
   if (!ownsCase(user, s.case)) return operationOutcome(403, "forbidden", "Bu paylaşıma erişim yetkiniz yok.");
 
+  // Denetim: FHIR dışa aktarım (paylaşım izni export).
+  await recordAccess({ actor: user, action: "FHIR_EXPORT", resourceType: "FHIR_CONSENT", resourceId: s.id, subjectUserId: s.case.userId, detail: "Consent (paylaşım izni)", ...reqMeta(req) });
   return fhirJson(shareLinkToConsent(s));
 }

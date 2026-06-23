@@ -484,3 +484,32 @@ model SecondOpinionEvent {
 
   @@index([caseId])
 }
+
+/// Değiştirilemez erişim denetim kaydı (E2EE Faz 0 — "sıkı erişim kontrolü + audit").
+/// Klinik veriye her ANLAMLI erişim (okuma/yazma/dışa aktarım) burada mühürlenir: kim/ne zaman/hangi kayıt.
+/// v2.72 onam deseni birebir: append-only hash-zinciri (prevHash→entryHash) + (test) RFC 3161 zaman damgası.
+/// Yüksek-frekanslı mekanik olaylar (signal polling, i18n, notifications) KASITLI dışarıda (flood önleme).
+/// Mevcut tablolara dokunmaz → gevşek String bağlar (FK yok). lib/audit.ts ile yazılır/doğrulanır.
+model AccessLog {
+  id            String    @id @default(cuid())
+  actorId       String? // erişen kullanıcı (User.id); sistem ise null
+  actorRole     String? // erişim anındaki rol (snapshot)
+  action        String // CASE_VIEW | CONSULT_WRITE | CONSULT_END | FHIR_EXPORT | DOCUMENT_VIEW ...
+  resourceType  String // CASE | CONSULTATION | FHIR_COMPOSITION | FHIR_CONSENT | CASE_DOCUMENT ...
+  resourceId    String // erişilen kaydın id'si
+  subjectUserId String? // verinin sahibi hasta (User.id) — "verime kim erişti" görünümü için
+  detail        String? // ek bağlam (alan / uç nokta)
+  ip            String?
+  userAgent     String?
+  createdAt     DateTime  @default(now())
+  // İspat & bütünlük (v2.72 deseni): append-only hash-zinciri + (test) RFC 3161 zaman damgası
+  prevHash    String? // önceki kaydın entryHash'i (GENESIS = ilk)
+  entryHash   String? // SHA-256(actorId|action|resourceType|resourceId|subjectUserId|createdAt|prevHash) — bu kaydın mührü
+  tsAuthority String? // zaman damgası otoritesi (şimdilik SIMULATED-LOCAL)
+  tsTime      DateTime? // TSA'nın güvenilir zamanı
+  tsToken     String? // imzalı zaman damgası token'ı (entryHash üzerinde)
+
+  @@index([subjectUserId, createdAt])
+  @@index([resourceType, resourceId])
+  @@index([actorId])
+}

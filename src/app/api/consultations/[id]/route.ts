@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { recordAccess, reqMeta } from "@/lib/audit";
 
 // PATCH /api/consultations/:id — not kaydet / görüşmeyi bitir
 // Erişim: klinik personel (DOCTOR/COORDINATOR/ADMIN) — hasta klinik notu yazamaz / görüşmeyi kapatamaz.
@@ -27,6 +28,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (data.status === "ENDED") {
     await db.case.update({ where: { id: updated.caseId }, data: { status: "DONE" } });
   }
+
+  // Denetim: klinik not yazma / görüşme kapatma (kim/ne zaman/hangi vaka).
+  const subj = await db.case.findUnique({ where: { id: updated.caseId }, select: { userId: true } });
+  await recordAccess({
+    actor: user,
+    action: data.status === "ENDED" ? "CONSULT_END" : "CONSULT_WRITE",
+    resourceType: "CONSULTATION",
+    resourceId: updated.id,
+    subjectUserId: subj?.userId ?? null,
+    detail: data.status === "ENDED" ? "görüşme bitirildi" : "klinik not güncellendi",
+    ...reqMeta(req),
+  });
 
   return NextResponse.json(updated);
 }

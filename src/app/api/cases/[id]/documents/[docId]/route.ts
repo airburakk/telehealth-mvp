@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { recordAccess, reqMeta } from "@/lib/audit";
 
 // GET /api/cases/:id/documents/:docId — orijinal belge içeriği (base64 → ikili akış, tarayıcıda görüntüle).
 // Klinik personel (DOCTOR/COORDINATOR/ADMIN). İçerik DB'de base64 (gerçek object storage TODO).
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string; docId: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string; docId: string }> }) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) {
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
@@ -12,12 +13,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id, docId } = await params;
   const doc = await db.caseDocument.findFirst({
     where: { id: docId, caseId: id },
-    select: { content: true, mimeType: true, label: true },
+    select: { content: true, mimeType: true, label: true, case: { select: { userId: true } } },
   });
   if (!doc || !doc.content) return NextResponse.json({ error: "Belge bulunamadı." }, { status: 404 });
 
   const m = /^data:([^;]+);base64,(.+)$/.exec(doc.content);
   if (!m) return NextResponse.json({ error: "İçerik biçimi geçersiz." }, { status: 422 });
+
+  // Denetim: hasta belgesinin orijinaline erişim (kim/ne zaman/hangi belge).
+  await recordAccess({ actor: user, action: "DOCUMENT_VIEW", resourceType: "CASE_DOCUMENT", resourceId: docId, subjectUserId: doc.case?.userId ?? null, detail: doc.label, ...reqMeta(req) });
 
   const bytes = Buffer.from(m[2], "base64");
   return new NextResponse(new Uint8Array(bytes), {
