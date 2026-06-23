@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { ownsCase } from "@/lib/ownership";
+import { encryptField, decryptField } from "@/lib/crypto";
 import type { SessionUser } from "@/lib/session";
 
 // WebRTC sinyalleşme — polling tabanlı (serverless uyumlu)
@@ -40,8 +41,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!kind) return NextResponse.json({ error: "Geçersiz tür." }, { status: 400 });
 
   // sender oturumdan türetilir (gövdedeki b.sender yok sayılır → taklit engeli)
+  // Signal.data at-rest şifrelenir (E2EE Faz 1): transkript = PHI; offer/answer/ice/bye opak round-trip
+  // (sunucu saklarken şifreli, GET'te çözüp karşı tarafa düz verir → WebRTC bozulmaz).
+  const plain: string = typeof b.data === "string" ? b.data : JSON.stringify(b.data ?? null);
   await db.signal.create({
-    data: { consultationId: id, sender: side, kind, data: typeof b.data === "string" ? b.data : JSON.stringify(b.data ?? null) },
+    data: { consultationId: id, sender: side, kind, data: encryptField(plain) },
   });
   return NextResponse.json({ ok: true }, { status: 201 });
 }
@@ -62,5 +66,5 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     orderBy: { id: "asc" },
     take: 50,
   });
-  return NextResponse.json(messages.map((m) => ({ id: m.id, kind: m.kind, data: m.data })));
+  return NextResponse.json(messages.map((m) => ({ id: m.id, kind: m.kind, data: decryptField(m.data) })));
 }

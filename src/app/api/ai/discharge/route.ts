@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { generateDischarge } from "@/lib/ai-clinical";
 import { countryName } from "@/lib/constants";
+import { encryptField, decryptField } from "@/lib/crypto";
 
 // POST /api/ai/discharge — vakanın tüm yolculuğunu epikriz/taburcu raporuna sentezler (Claude) ve Case'e kaydeder.
 export async function POST(req: Request) {
@@ -57,7 +58,7 @@ export async function POST(req: Request) {
       urgency: c.urgency,
       symptoms: c.symptoms,
       triageReasoning: c.reasoning,
-      soapNotes: c.consultations[0]?.notes ?? "",
+      soapNotes: decryptField(c.consultations[0]?.notes ?? ""), // SOAP at-rest şifreli → AI girdisi için çöz
       packageSummary,
       recoverySummary,
     });
@@ -73,9 +74,10 @@ export async function POST(req: Request) {
     const report = `${header}\n\n${sections}`;
     const dischargeAt = new Date();
 
+    // Epikriz at-rest şifrelenir (E2EE Faz 1). Yanıt RAM'deki düz metni döndürür (yeniden okuma yok).
     await db.case.update({
       where: { id: caseId },
-      data: { dischargeReport: report, dischargeStructured: JSON.stringify(structured), dischargeAt },
+      data: { dischargeReport: encryptField(report), dischargeStructured: encryptField(JSON.stringify(structured)), dischargeAt },
     });
 
     return NextResponse.json({ report, structured, savedAt: dischargeAt.toISOString() });

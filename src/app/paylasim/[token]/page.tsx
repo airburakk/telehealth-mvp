@@ -6,6 +6,7 @@ import { ShareUnlock } from "@/components/ShareUnlock";
 import { ShareLangSelect } from "@/components/ShareLangSelect";
 import { getTranslations } from "@/lib/i18n";
 import { LANGUAGES, langDir } from "@/lib/constants";
+import { decryptField } from "@/lib/crypto";
 import {
   Activity, FileText, ScanLine, FlaskConical, Stethoscope,
   ShieldCheck, Clock, Lock, Download, Ban, AlertTriangle, Eye,
@@ -124,7 +125,13 @@ export default async function ShareViewerPage({
   }
 
   const scopes = link.scopes.split(",");
-  const items = buildSharedItems(link.case, scopes);
+  // Epikriz + SOAP notları at-rest şifreli → alıcıya gösterilecek/çevrilecek içerik için çöz.
+  const caseForShare = {
+    ...link.case,
+    dischargeReport: decryptField(link.case.dischargeReport),
+    consultations: link.case.consultations.map((co) => ({ ...co, notes: decryptField(co.notes) })),
+  };
+  const items = buildSharedItems(caseForShare, scopes);
 
   // Alıcının dili (?lang) — çeviri SUNUCUDA (girişsiz görüntüleyici, /api/i18n auth gerektirir).
   // TR'de kimlik döner (anında, maliyetsiz); diğer dillerde tek Claude çağrısı → Translation tablosunda cache'lenir.

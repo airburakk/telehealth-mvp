@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { recordAccess, reqMeta } from "@/lib/audit";
+import { encryptField } from "@/lib/crypto";
 
 // PATCH /api/consultations/:id — not kaydet / görüşmeyi bitir
 // Erişim: klinik personel (DOCTOR/COORDINATOR/ADMIN) — hasta klinik notu yazamaz / görüşmeyi kapatamaz.
@@ -16,7 +17,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const body = await req.json().catch(() => ({}));
 
   const data: { notes?: string; status?: string; endedAt?: Date } = {};
-  if (typeof body.notes === "string") data.notes = body.notes;
+  if (typeof body.notes === "string") data.notes = encryptField(body.notes as string); // SOAP notu at-rest şifrelenir (E2EE Faz 1)
   if (body.status === "ENDED") {
     data.status = "ENDED";
     data.endedAt = new Date();

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { assessDocument } from "@/lib/ai-clinical";
 import { loincForBranchLabel } from "@/data/coding";
+import { decryptField } from "@/lib/crypto";
 
 export const maxDuration = 60; // PDF/görüntü vision çağrıları + çoklu belge → uzun sürebilir
 
@@ -35,7 +36,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const results = await Promise.allSettled(
     docs.map(async (d) => {
-      const a = await assessDocument(d.content as string, {
+      const a = await assessDocument(decryptField(d.content as string), { // at-rest şifreli → AI girdisi için çöz
         branch: c.branch,
         symptoms: c.symptoms,
         language: c.language,

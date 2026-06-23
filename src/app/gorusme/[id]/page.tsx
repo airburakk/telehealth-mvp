@@ -7,6 +7,7 @@ import { PreConsultLobby } from "@/components/PreConsultLobby";
 import { branchKeyFromLabel, branchLabel as branchLabelOf, getBranchProcedures } from "@/lib/procedures";
 import { getTryPerUsd } from "@/lib/fxrate";
 import { icd10ForBranchLabel } from "@/data/coding";
+import { decryptField } from "@/lib/crypto";
 import type { Structured } from "@/components/DischargeReport";
 
 export const dynamic = "force-dynamic";
@@ -75,13 +76,14 @@ export default async function ConsultationPage({
     | undefined;
   if (selfRole === "doctor") {
     let dischargeStructured: Structured | null = null;
-    try { dischargeStructured = c.dischargeStructured ? (JSON.parse(c.dischargeStructured) as Structured) : null; } catch { dischargeStructured = null; }
+    // Epikriz at-rest şifreli → doktor görünümü için çöz (clinical prop yalnız doktora gider).
+    try { dischargeStructured = c.dischargeStructured ? (JSON.parse(decryptField(c.dischargeStructured)) as Structured) : null; } catch { dischargeStructured = null; }
     clinical = {
       icd10Code: c.icd10Code,
       patientIdentifier: c.patientIdentifier,
       patientIdentifierType: c.patientIdentifierType,
       icd10Options: icd10ForBranchLabel(c.branch),
-      dischargeReport: c.dischargeReport,
+      dischargeReport: decryptField(c.dischargeReport),
       dischargeStructured,
       dischargeSavedAt: c.dischargeAt ? c.dischargeAt.toISOString() : null,
     };
@@ -93,7 +95,7 @@ export default async function ConsultationPage({
       consultationId={consult.id}
       selfRole={selfRole}
       status={consult.status}
-      initialNotes={consult.notes}
+      initialNotes={decryptField(consult.notes)}
       doctor={{ title: consult.doctor.title, name: consult.doctor.name, branch: consult.doctor.branch, color: consult.doctor.color }}
       recommend={recommend}
       clinical={clinical}

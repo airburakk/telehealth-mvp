@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
 import { notifyRoles } from "@/lib/notify";
 import { getCurrentUser } from "@/lib/auth";
+import { encryptField } from "@/lib/crypto";
 
 // GET /api/cases — vaka kuyruğu (filtrelenebilir)
 export async function GET(req: Request) {
@@ -77,7 +78,8 @@ export async function POST(req: Request) {
         caseId: created.id,
         label: typeof d.label === "string" ? d.label.slice(0, 200) : "belge",
         mimeType: typeof d.mimeType === "string" ? d.mimeType.slice(0, 100) : "application/octet-stream",
-        content: typeof d.content === "string" && d.content.startsWith("data:") ? d.content : null,
+        // Belge içeriği at-rest şifrelenir (E2EE Faz 1). filter aşağıda enc-string'i (truthy) korur.
+        content: encryptField(typeof d.content === "string" && d.content.startsWith("data:") ? d.content : null),
       }))
       .filter((r) => !!r.content)
       .slice(0, 12);

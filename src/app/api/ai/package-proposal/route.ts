@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { proposePackage } from "@/lib/ai-clinical";
 import { computePackage, type PackageSelection } from "@/lib/pricing";
 import { countryName } from "@/lib/constants";
+import { decryptField } from "@/lib/crypto";
 
 // POST /api/ai/package-proposal — Sağlık Turizmi Agent'ı: nihai SOAP'tan paket teklifi.
 // AI yalnız parametreleri seçer; fiyat HER ZAMAN platform motorunda (computePackage) hesaplanır.
@@ -23,7 +24,8 @@ export async function POST(req: Request) {
   });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
 
-  const soap = c.consultations.find((x) => x.notes?.trim())?.notes?.trim() ?? "";
+  // SOAP at-rest şifreli → her notu çöz, ilk dolu olanı al (teklif nihai SOAP'a göre).
+  const soap = c.consultations.map((x) => decryptField(x.notes)).find((n) => n.trim())?.trim() ?? "";
   if (!soap) return NextResponse.json({ error: "Önce görüşme notunu (SOAP) kaydedin — teklif nihai SOAP'a göre hazırlanır." }, { status: 400 });
 
   try {
