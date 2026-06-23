@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { notifyRoles, notifyUser } from "@/lib/notify";
+import { getCurrentUser } from "@/lib/auth";
 
 // PATCH /api/complaints/:id — Etik Kurul kararı (yaptırım + Escrow tetikleyicisi)
+// Yetki: YALNIZ Etik Kurul (ETHICS) / yönetici — karar Escrow iadesi + rezervasyon iptali tetikler.
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
+  if (!["ETHICS", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Yalnız Etik Kurul karar verebilir." }, { status: 403 });
   const complaint = await db.complaint.findUnique({ where: { id } });
   if (!complaint) return NextResponse.json({ error: "Başvuru bulunamadı." }, { status: 404 });
 
