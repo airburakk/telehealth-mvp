@@ -108,8 +108,8 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 - **Değiştirilemez erişim denetimi (E2EE Faz 0):** klinik veriye her anlamlı erişim (okuma/yazma/dışa
   aktarım) `AccessLog`'a mühürlenir (append-only hash-zinciri + zaman damgası); hasta `/erisim-kaydi`'da
   "verime kim, ne zaman, neye erişti"yi doğrulanmış görür. (`lib/audit.ts`)
-- **Uygulama-katmanı at-rest şifreleme (E2EE Faz 1):** hassas klinik kolonları (belge içeriği,
-  transkript, SOAP, epikriz) AES-256-GCM **envelope** ile şifrelenir (per-record DEK + env-KEK); sunucu
+- **Uygulama-katmanı at-rest şifreleme (E2EE Faz 1):** hassas klinik kolonları (belge içeriği, transkript,
+  SOAP, epikriz, triyaj semptom/gerekçe, post-op not/foto, İkinci Görüş içeriği) AES-256-GCM **envelope** ile şifrelenir (per-record DEK + env-KEK); sunucu
   gerektiğinde çözer → defense-in-depth (DB-dump + KEK'siz operatör). `DATA_ENCRYPTION_KEK` yoksa dormant
   (düz metin, okuma bozulmaz). KMS swap-point hazır. (`lib/crypto.ts`)
 - **Klinik nöbet rolleri:** Branş / İcapçı / Nöbetçi (`Doctor.clinicalState/onCall/sentinel`) +
