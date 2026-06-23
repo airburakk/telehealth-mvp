@@ -105,6 +105,9 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 - **Operasyon Paneli (S2):** `/operasyon` — KPI, dönüşüm hunisi, gelir/Escrow, dağılımlar, trend, kapasite.
 - **Consent Manager + RFC 3161 ispat:** `/onam` tek seferlik KVKK onamı; sürümlü `ConsentRecord` +
   hash-zinciri + zaman damgası + Onay Kanıtı (`/onam/kanit`). (`lib/consent.ts`, `lib/timestamp.ts`)
+- **Değiştirilemez erişim denetimi (E2EE Faz 0):** klinik veriye her anlamlı erişim (okuma/yazma/dışa
+  aktarım) `AccessLog`'a mühürlenir (append-only hash-zinciri + zaman damgası); hasta `/erisim-kaydi`'da
+  "verime kim, ne zaman, neye erişti"yi doğrulanmış görür. (`lib/audit.ts`)
 - **Klinik nöbet rolleri:** Branş / İcapçı / Nöbetçi (`Doctor.clinicalState/onCall/sentinel`) +
   "online doktor yoksa 3-seçenek kapısı" (`/triyaj/[id]`) + `ConsultAppointment`. (`lib/clinical-duty.ts`)
 - **Görüşme öncesi oda:** cihaz testi + geri sayım + 3 alt-durum (`PreConsultLobby`).
@@ -115,7 +118,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 |------|----------|
 | `/` · `/giris` · `/onam` (+`/onam/kanit`) | Landing · kimlik doğrulama · KVKK onam + Onay Kanıtı |
 | `/triyaj` · `/triyaj/[id]` | Triyaj sihirbazı · vaka süreç sayfası + 3-seçenek kapısı |
-| `/vakalarim` | Hastanın vaka ana ekranı |
+| `/vakalarim` · `/erisim-kaydi` | Hastanın vaka ana ekranı · erişim denetim kaydı ("verime kim erişti") |
 | `/doktor` (+`/vaka/[id]`, `/takip`, `/profil`, `/pro-bono`) | Doktor paneli, kokpit, izleme, profil, Pro Bono, klinik nöbet konsolu |
 | `/gorusme/[id]` | WebRTC video görüşme odası (asimetrik) |
 | `/paket/[caseId]` · `/rezervasyon/[id]` · `/teklif/[id]` | Paket · Escrow rezervasyon · hastaya gönderilen teklif |
@@ -138,7 +141,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `ai` | `soap` · `translate` · `discharge` (Claude) |
 | `i18n` | Arayüz çeviri (Translation cache) |
 | `realtime` | `token` (Gemini Live) · `ice` (Metered TURN credentials) |
-| `consent` | KVKK onam kaydı + `proof` (RFC 3161 kanıt) |
+| `consent` · `access-log` | KVKK onam + `proof` (RFC 3161 kanıt) · erişim denetim kaydı (audit) |
 | `clinical` | `duty` — klinik nöbet/müsaitlik |
 | `second-opinion` | İkinci Görüş state machine işlemleri |
 | `pro-bono` | `apply`/`waiting`/`availability`/`doctor-feed`/`outcome`/`status` |
@@ -151,18 +154,18 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 ```
 src/
   proxy.ts                   # rol + onam bazlı erişim kontrolü (Next 16 proxy)
-  app/                       # 21 rota dizini (yukarıdaki tablo) + api/ (17 grup)
+  app/                       # 22 rota dizini (yukarıdaki tablo) + api/ (18 grup)
   components/                # 45 bileşen (ConsultationRoom, LiveInterpreter, DicomViewer,
                              #   PreConsultLobby, ProcessTracker, NotificationBell, useT, ...)
-  lib/                       # 36 modül:
+  lib/                       # 37 modül:
                              #   db · auth/session · triage(+ -llm,-questions) · ai-clinical
                              #   fhir(+ -http) · second-opinion(+ -service) · pro-bono(+ tracker'lar)
-                             #   clinical-duty · consent(+ -config) · timestamp · i18n · ownership
+                             #   clinical-duty · consent(+ -config) · timestamp · audit · i18n · ownership
                              #   notify · push · ice · billing/pricing/fxrate/procedures · postop · share ...
   data/                      # coding.ts (ICD-10/LOINC/SNOMED) · procedures.json · second-opinion-docs.ts
 prisma/
-  schema.prisma             # 25+ model (User, Doctor, Case, Consultation, Booking, Recovery,
-                            #   CheckIn, ShareLink/ShareAccess, Notification, ConsentRecord,
+  schema.prisma             # 26 model (User, Doctor, Case, Consultation, Booking, Recovery, CheckIn,
+                            #   ShareLink/ShareAccess, Notification, ConsentRecord, AccessLog,
                             #   ConsultAppointment, CaseDocument, SecondOpinion* ×7, ...)
   seed.ts                   # demo veri (30 hekim + 20 vaka)
 scripts/                    # add-demo-cases.ts (idempotent), gen-icons.mjs, ...
