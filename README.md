@@ -2,10 +2,16 @@
 
 **🚀 Canlı demo: https://telehealth-mvp-roan.vercel.app** · Demo girişi: `doktor@air.test` / `1234`
 
-Çok ülkeli sağlık turizmi + telehealth platformunun çalışan sürümü. Hasta triyajından
-doktor kokpitine, gerçek WebRTC video görüşmeye, sağlık turizmi paketine ve post-op takibe
-uzanan **uçtan uca akış canlıda**. Üç paralel hasta akışı vardır: **Talk to Doctor** (genel
-triyaj), **İkinci Görüş** ve **Pro Bono** (ücretsiz gönüllü konsültasyon).
+Çok ülkeli sağlık turizmi + telehealth platformunun çalışan sürümü.
+
+**Farkı nerede:** sınır ötesi sağlığın asıl zor problemi veri/güven/uyum — ve çözülen kısım bu.
+KVKK hash-zincirli onam + RFC 3161 zaman damgalı **Onay Kanıtı**, **FHIR R4** dışa aktarım
+(Composition/Consent + denetim izi) ve uçtan uca **AI klinik** (triyaj, belge analizi, SOAP,
+epikriz, post-op vision). Bir hafta sonunda klonlanamayan parça budur.
+
+Üstüne uçtan uca akış canlıda: hasta triyajından doktor kokpitine, gerçek WebRTC video
+görüşmeye, sağlık turizmi paketine ve post-op takibe — üç paralel hasta akışıyla (**Talk to
+Doctor** genel triyaj, **İkinci Görüş**, **Pro Bono** ücretsiz gönüllü konsültasyon).
 
 > Bilgi tabanı (Obsidian vault) komşu `../Air` klasöründedir. Güncel mimari için
 > `Air/output/guncel-yazilim-mimarisi.md`, modül detayları için `Air/wiki/moduller/`,
