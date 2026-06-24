@@ -124,6 +124,11 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
   alınamaz — bu UI'da net belirtilir). (`lib/postop-access.ts`)
 - **Klinik nöbet rolleri:** Branş / İcapçı / Nöbetçi (`Doctor.clinicalState/onCall/sentinel`) +
   "online doktor yoksa 3-seçenek kapısı" (`/triyaj/[id]`) + `ConsultAppointment`. (`lib/clinical-duty.ts`)
+- **CRM eşleştirme kalite indikatörleri:** doktor seçimi branş/müsaitlik dışında performans metadata'sıyla
+  ağırlıklandırılır — rating (memnuniyet) + başarı + pro bono sayısı + icap dönüş oranı
+  (`Doctor.icapNotified/icapOffered`). Uygulandığı yerler: Nöbetçi seçimi · SO uzman oto-atama (+ yük
+  dengeleme) · İcapçı fan-out sırası. Pro Bono eşleştirmesi adalet için FIFO kalır. Metadata = klinik
+  içerik değil → E2EE uyumlu. (`lib/match-score.ts`)
 - **Görüşme öncesi oda:** cihaz testi + geri sayım + 3 alt-durum (`PreConsultLobby`).
 
 ## Rotalar
