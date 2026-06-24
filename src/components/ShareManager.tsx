@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+// Güvenli paylaşım yöneticisi (hasta-yüzü) — çok dilli (8+ dil) + RTL. Dil `lang` prop'undan gelir
+// (tek kaynak: SharesView). Sabit TR metinler `ST`'de toplanır + lib/share label'ları useT ile çevrilir.
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SCOPES, DURATIONS, durationLabel, scopeLabel, type ScopeKey } from "@/lib/share";
+import { useT } from "@/components/useT";
+import { langDir, LANG_BCP47 } from "@/lib/constants";
 import {
   FileText, ScanLine, FlaskConical, Stethoscope,
   Share2, Copy, Check, Trash2, Lock, Download, Clock, Eye, Plus,
@@ -12,12 +16,95 @@ import {
 
 const SCOPE_ICON = { EPIKRIZ: FileText, RADYOLOJI: ScanLine, LAB: FlaskConical, GORUSME_NOTU: Stethoscope } as const;
 
-interface CaseOpt { id: string; patientName: string; branch: string; country: string }
-interface LinkData {
+export interface CaseOpt { id: string; patientName: string; branch: string; country: string }
+export interface LinkData {
   id: string; token: string; recipientName: string | null; scopes: string[];
   expiresAt: string | null; revokedAt: string | null; allowDownload: boolean;
   createdAt: string; caseName: string; caseBranch: string; accessCount: number; lastAccess: string | null;
 }
+
+type T = (s: string) => string;
+
+// Tüm TR sabit metinler — useT bunları hedef dile çevirir (lang="Türkçe" ise no-op).
+const ST = {
+  // Durum rozetleri
+  stActive: "Aktif",
+  stExpired: "Süresi doldu",
+  stRevoked: "İptal edildi",
+  // Paylaşım mesajı (WhatsApp/e-posta/SMS gövdesi — hasta kendi dilinde okur)
+  msgShared: "Sağlık kayıtlarımı sizinle güvenli olarak paylaştım.",
+  msgRecipient: "Alıcı",
+  msgView: "Görüntülemek için",
+  msgDuration: "Erişim süresi",
+  msgPassword: "Erişim şifresini ayrıca ileteceğim.",
+  // Paylaş aksiyonları
+  shareTitle: "AURA — Güvenli Sağlık Paylaşımı",
+  mailSubject: "Güvenli Sağlık Paylaşımı",
+  share: "Paylaş",
+  email: "E-posta",
+  copied: "Kopyalandı",
+  copy: "Kopyala",
+  // Adım rayı
+  stepsAria: "Paylaşım adımları",
+  stepSelect: "Seç",
+  stepProtect: "Koru",
+  stepShare: "Paylaş",
+  // Yeni paylaşım — Adım 1
+  newShare: "Yeni güvenli paylaşım",
+  newShareDesc: "Hangi verinin, kim tarafından, ne kadar süre görülebileceğine adım adım siz karar verirsiniz.",
+  record: "Sağlık kaydı",
+  noRecord: "Kayıt bulunamadı",
+  recipientDoctor: "Alıcı doktor",
+  optional: "(opsiyonel)",
+  recipientPlaceholder: "ör. Dr. Lefèvre",
+  dataToShare: "Paylaşılacak veriler",
+  next: "Devam",
+  // Adım 2
+  accessDuration: "Erişim süresi",
+  allowDownload: "İndirmeye izin ver",
+  viewOnlyDefault: "(varsayılan: yalnız görüntüleme)",
+  addPassword: "Erişim şifresi ekle",
+  passwordPlaceholder: "Doktora ayrı kanaldan ileteceğiniz şifre",
+  recipientSees: "Alıcının göreceği",
+  noDataYet: "Henüz veri seçilmedi.",
+  downloadable: "indirilebilir",
+  viewOnly: "yalnız görüntüleme",
+  encrypted: "şifreli",
+  back: "Geri",
+  // Adım 3
+  linkReady: "Bağlantı hazır — şimdi paylaşın",
+  newShareLink: "Yeni paylaşım",
+  finalCheck: "Son kontrol",
+  recipient: "Alıcı",
+  notSpecified: "Belirtilmedi",
+  recordCol: "Kayıt",
+  dataCol: "Veriler",
+  durationCol: "Süre",
+  protectionCol: "Koruma",
+  creating: "Oluşturuluyor…",
+  createSecureLink: "Güvenli link oluştur",
+  // Sağ panel — liste
+  myShares: "Paylaşımlarım",
+  emptyTitle: "İlk güvenli paylaşımınızı oluşturun",
+  emptyDesc: "Soldaki formdan bir sağlık kaydı seçin; hangi verinin, kim tarafından, ne kadar süre görülebileceğine siz karar verin.",
+  sharedPerson: "Paylaşılan kişi",
+  ends: "Bitiş",
+  noExpiry: "Süresiz",
+  accessN: "erişim",
+  lastAccess: "son",
+  revokeQ: "Bağlantı iptal edilsin mi?",
+  revokeBody: "İptal, bu bağlantıyla yeni erişimi anında durdurur. Daha önce görüntülenen veya indirilen veriler geri alınamaz.",
+  revoking: "İptal ediliyor…",
+  revokeYes: "Evet, iptal et",
+  revokeCancel: "Vazgeç",
+  revoke: "İptal",
+  // Hatalar
+  errNoRecord: "Lütfen bir sağlık kaydı seçin.",
+  errNoScope: "En az bir veri kategorisi seçin.",
+  errPassword: "Erişim şifresi en az 3 karakter olmalı.",
+  errCreate: "Bağlantı oluşturulamadı.",
+  errGeneric: "Hata oluştu.",
+} as const;
 
 type ShareState = "ACTIVE" | "EXPIRED" | "REVOKED";
 function stateOf(l: LinkData): ShareState {
@@ -25,38 +112,42 @@ function stateOf(l: LinkData): ShareState {
   if (l.expiresAt && new Date(l.expiresAt).getTime() < Date.now()) return "EXPIRED";
   return "ACTIVE";
 }
-const STATE_META: Record<ShareState, { label: string; badge: string }> = {
-  ACTIVE: { label: "Aktif", badge: "bg-emerald-100 text-emerald-700 ring-emerald-200" },
-  EXPIRED: { label: "Süresi doldu", badge: "bg-slate-100 text-slate-600 ring-slate-200" },
-  REVOKED: { label: "İptal edildi", badge: "bg-red-100 text-red-700 ring-red-200" },
+const STATE_BADGE: Record<ShareState, string> = {
+  ACTIVE: "bg-emerald-100 text-emerald-700 ring-emerald-200",
+  EXPIRED: "bg-slate-100 text-slate-600 ring-slate-200",
+  REVOKED: "bg-red-100 text-red-700 ring-red-200",
+};
+const STATE_LABEL: Record<ShareState, string> = {
+  ACTIVE: ST.stActive, EXPIRED: ST.stExpired, REVOKED: ST.stRevoked,
 };
 
-function fmt(d: string | null): string {
+// Tarih — alıcının/hastanın dil yereline göre; timeZone sabit (Istanbul) → SSR↔CSR hydration güvenli.
+function fmt(d: string | null, locale: string): string {
   if (!d) return "—";
-  return new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Istanbul" }).format(new Date(d));
+  return new Date(d).toLocaleString(locale, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Istanbul" });
 }
 
-function buildMessage(url: string, recipient: string, duration: string, hasPassword: boolean): string {
+function buildMessage(url: string, recipient: string, duration: string, hasPassword: boolean, t: T): string {
   return (
-    `Sağlık kayıtlarımı sizinle güvenli olarak paylaştım.${recipient ? ` (Alıcı: ${recipient})` : ""}\n` +
-    `Görüntülemek için: ${url}\n` +
-    `Erişim süresi: ${duration}.` +
-    (hasPassword ? `\nErişim şifresini ayrıca ileteceğim.` : "")
+    `${t(ST.msgShared)}${recipient ? ` (${t(ST.msgRecipient)}: ${recipient})` : ""}\n` +
+    `${t(ST.msgView)}: ${url}\n` +
+    `${t(ST.msgDuration)}: ${duration}.` +
+    (hasPassword ? `\n${t(ST.msgPassword)}` : "")
   );
 }
 
-function ShareActions({ url, recipient, duration, hasPassword, compact }: {
-  url: string; recipient: string; duration: string; hasPassword: boolean; compact?: boolean;
+function ShareActions({ url, recipient, duration, hasPassword, compact, t }: {
+  url: string; recipient: string; duration: string; hasPassword: boolean; compact?: boolean; t: T;
 }) {
   const [copied, setCopied] = useState(false);
-  const msg = buildMessage(url, recipient, duration, hasPassword);
+  const msg = buildMessage(url, recipient, duration, hasPassword, t);
 
   async function copy() {
     try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch {}
   }
   async function nativeShare() {
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-      try { await navigator.share({ title: "AURA — Güvenli Sağlık Paylaşımı", text: msg, url }); } catch {}
+      try { await navigator.share({ title: t(ST.shareTitle), text: msg, url }); } catch {}
     } else { copy(); }
   }
 
@@ -64,32 +155,33 @@ function ShareActions({ url, recipient, duration, hasPassword, compact }: {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button onClick={nativeShare} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#14C3D0] px-3 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
-        <Share2 size={15} /> Paylaş
+        <Share2 size={15} /> {t(ST.share)}
       </button>
       {!compact && (
         <>
           <a href={`https://wa.me/?text=${encodeURIComponent(msg)}`} target="_blank" rel="noopener noreferrer" className={btn}><MessageCircle size={15} /> WhatsApp</a>
-          <a href={`mailto:?subject=${encodeURIComponent("Güvenli Sağlık Paylaşımı")}&body=${encodeURIComponent(msg)}`} className={btn}><Mail size={15} /> E-posta</a>
+          <a href={`mailto:?subject=${encodeURIComponent(t(ST.mailSubject))}&body=${encodeURIComponent(msg)}`} className={btn}><Mail size={15} /> {t(ST.email)}</a>
           <a href={`sms:?body=${encodeURIComponent(msg)}`} className={btn}><MessageSquare size={15} /> SMS</a>
         </>
       )}
       <button onClick={copy} className={btn}>
-        {copied ? <><Check size={15} className="text-emerald-600" /> Kopyalandı</> : <><Copy size={15} /> Kopyala</>}
+        {copied ? <><Check size={15} className="text-emerald-600" /> {t(ST.copied)}</> : <><Copy size={15} /> {t(ST.copy)}</>}
       </button>
     </div>
   );
 }
 
 // Adım rayı — Seç → Koru → Paylaş (DESIGN.md: ekran başına tek karar; kaygı azaltma).
-function StepRail({ step }: { step: number }) {
+function StepRail({ step, t }: { step: number; t: T }) {
+  const labels = [t(ST.stepSelect), t(ST.stepProtect), t(ST.stepShare)];
   return (
-    <div className="mt-5 flex items-center gap-2 text-xs font-medium" aria-label="Paylaşım adımları">
-      {["Seç", "Koru", "Paylaş"].map((label, i) => {
+    <div className="mt-5 flex items-center gap-2 text-xs font-medium" aria-label={t(ST.stepsAria)}>
+      {labels.map((label, i) => {
         const n = i + 1;
         const done = step > n;
         const active = step === n;
         return (
-          <div key={label} className="flex flex-1 items-center gap-2 last:flex-none">
+          <div key={n} className="flex flex-1 items-center gap-2 last:flex-none">
             <span aria-current={active ? "step" : undefined}
               className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold ${done || active ? "bg-[#14C3D0] text-[#06262a]" : "bg-slate-100 text-slate-400"}`}>
               {done ? <Check size={13} /> : n}
@@ -103,10 +195,22 @@ function StepRail({ step }: { step: number }) {
   );
 }
 
-export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkData[] }) {
+export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: LinkData[]; lang: string }) {
   const router = useRouter();
   const [origin, setOrigin] = useState("");
   useEffect(() => setOrigin(window.location.origin), []);
+
+  // texts: ST + lib/share label'ları (SCOPES label/desc + DURATIONS label). MEMOIZE — yoksa her render
+  // useT effect'ini yeniden kurar, uçuştaki çeviri fetch'i iptal olur (v2.68 dersi).
+  const texts = useMemo(
+    () => [...Object.values(ST), ...SCOPES.flatMap((s) => [s.label, s.desc]), ...DURATIONS.map((d) => d.label)],
+    [],
+  );
+  const { t } = useT(lang, texts);
+  const locale = LANG_BCP47[lang] ?? "tr-TR";
+  const rtl = langDir(lang) === "rtl";
+  const FwdArrow = rtl ? ArrowLeft : ArrowRight;
+  const BackArrow = rtl ? ArrowRight : ArrowLeft;
 
   const [step, setStep] = useState(1);
   const [caseId, setCaseId] = useState(cases[0]?.id ?? "");
@@ -123,7 +227,6 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
   const [revoking, setRevoking] = useState(false);
 
   const selectedCase = cases.find((c) => c.id === caseId);
-  const recipientLabel = recipient.trim() ? `${recipient.trim()}'in göreceği` : "Alıcının göreceği";
 
   function toggleScope(k: ScopeKey) {
     setScopes((p) => (p.includes(k) ? p.filter((x) => x !== k) : [...p, k]));
@@ -133,11 +236,11 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
   function next() {
     setError("");
     if (step === 1) {
-      if (!caseId) { setError("Lütfen bir sağlık kaydı seçin."); return; }
-      if (scopes.length === 0) { setError("En az bir veri kategorisi seçin."); return; }
+      if (!caseId) { setError(t(ST.errNoRecord)); return; }
+      if (scopes.length === 0) { setError(t(ST.errNoScope)); return; }
       setStep(2);
     } else if (step === 2) {
-      if (usePassword && password.trim().length < 3) { setError("Erişim şifresi en az 3 karakter olmalı."); return; }
+      if (usePassword && password.trim().length < 3) { setError(t(ST.errPassword)); return; }
       setStep(3);
     }
   }
@@ -146,9 +249,9 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
 
   async function create() {
     setError("");
-    if (!caseId) { setError("Lütfen bir sağlık kaydı seçin."); return; }
-    if (scopes.length === 0) { setError("En az bir veri kategorisi seçin."); return; }
-    if (usePassword && password.trim().length < 3) { setError("Erişim şifresi en az 3 karakter olmalı."); return; }
+    if (!caseId) { setError(t(ST.errNoRecord)); return; }
+    if (scopes.length === 0) { setError(t(ST.errNoScope)); return; }
+    if (usePassword && password.trim().length < 3) { setError(t(ST.errPassword)); return; }
     setBusy(true);
     try {
       const res = await fetch("/api/shares", {
@@ -161,16 +264,16 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Bağlantı oluşturulamadı.");
+      if (!res.ok) throw new Error(data.error || t(ST.errCreate));
       setCreated({
         url: `${window.location.origin}/paylasim/${data.token}`,
         recipient: recipient.trim(),
-        duration: durationLabel(durationKey),
+        duration: durationLabel(durationKey), // raw TR; render'da t() ile çevrilir
         hasPassword: usePassword,
       });
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Hata oluştu.");
+      setError(e instanceof Error ? e.message : t(ST.errGeneric));
     } finally {
       setBusy(false);
     }
@@ -191,54 +294,54 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
     <div className="grid gap-6 lg:grid-cols-[1fr_minmax(320px,380px)]">
       {/* Sol: yeni paylaşım — 3 adımlı akış (Seç → Koru → Paylaş) */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="flex items-center gap-2 font-bold text-slate-800"><Plus size={18} /> Yeni güvenli paylaşım</h2>
-        <p className="mt-1 text-sm text-slate-500">Hangi verinin, kim tarafından, ne kadar süre görülebileceğine adım adım siz karar verirsiniz.</p>
+        <h2 className="flex items-center gap-2 font-bold text-slate-800"><Plus size={18} /> {t(ST.newShare)}</h2>
+        <p className="mt-1 text-sm text-slate-500">{t(ST.newShareDesc)}</p>
 
-        <StepRail step={step} />
+        <StepRail step={step} t={t} />
 
         {/* Adım 1 — Seç: kayıt + alıcı + veriler */}
         {step === 1 && (
           <div className="mt-5">
-            <label className="block text-sm font-medium text-slate-700">Sağlık kaydı</label>
+            <label className="block text-sm font-medium text-slate-700">{t(ST.record)}</label>
             <select value={caseId} onChange={(e) => setCaseId(e.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-              {cases.length === 0 && <option value="">Kayıt bulunamadı</option>}
+              {cases.length === 0 && <option value="">{t(ST.noRecord)}</option>}
               {cases.map((c) => <option key={c.id} value={c.id}>{c.patientName} · {c.branch}</option>)}
             </select>
 
-            <label className="mt-4 block text-sm font-medium text-slate-700">Alıcı doktor <span className="font-normal text-slate-400">(opsiyonel)</span></label>
-            <input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="ör. Dr. Lefèvre" className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+            <label className="mt-4 block text-sm font-medium text-slate-700">{t(ST.recipientDoctor)} <span className="font-normal text-slate-400">{t(ST.optional)}</span></label>
+            <input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder={t(ST.recipientPlaceholder)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
 
-            <div className="mt-4 text-sm font-medium text-slate-700">Paylaşılacak veriler</div>
+            <div className="mt-4 text-sm font-medium text-slate-700">{t(ST.dataToShare)}</div>
             <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
               {SCOPES.map((s) => {
                 const Icon = SCOPE_ICON[s.key];
                 const on = scopes.includes(s.key);
                 return (
                   <button type="button" key={s.key} onClick={() => toggleScope(s.key)}
-                    className={`flex items-start gap-2.5 rounded-2xl border p-3 text-left transition-colors ${on ? "border-[#14C3D0] bg-[#14C3D0]/5 ring-1 ring-[#14C3D0]/20" : "border-slate-200 hover:bg-slate-50"}`}>
+                    className={`flex items-start gap-2.5 rounded-2xl border p-3 text-start transition-colors ${on ? "border-[#14C3D0] bg-[#14C3D0]/5 ring-1 ring-[#14C3D0]/20" : "border-slate-200 hover:bg-slate-50"}`}>
                     <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-[#14C3D0] text-[#101010]" : "bg-slate-100 text-slate-500"}`}><Icon size={16} /></span>
                     <span className="min-w-0">
-                      <span className="flex items-center gap-1.5 text-sm font-medium text-slate-800">{s.label} {on && <Check size={14} className="text-[#101010]" />}</span>
-                      <span className="block text-xs text-slate-500">{s.desc}</span>
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-slate-800">{t(s.label)} {on && <Check size={14} className="text-[#101010]" />}</span>
+                      <span className="block text-xs text-slate-500">{t(s.desc)}</span>
                     </span>
                   </button>
                 );
               })}
             </div>
 
-            <button onClick={next} className={`${navPrimary} mt-5 w-full`}>Devam <ArrowRight size={16} /></button>
+            <button onClick={next} className={`${navPrimary} mt-5 w-full`}>{t(ST.next)} <FwdArrow size={16} /></button>
           </div>
         )}
 
         {/* Adım 2 — Koru: süre + koruma + "alıcının göreceği" canlı önizleme */}
         {step === 2 && (
           <div className="mt-5">
-            <div className="text-sm font-medium text-slate-700">Erişim süresi</div>
+            <div className="text-sm font-medium text-slate-700">{t(ST.accessDuration)}</div>
             <div className="mt-1.5 flex flex-wrap gap-2">
               {DURATIONS.map((d) => (
                 <button type="button" key={d.key} onClick={() => setDurationKey(d.key)}
                   className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${durationKey === d.key ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}>
-                  {d.label}
+                  {t(d.label)}
                 </button>
               ))}
             </div>
@@ -246,44 +349,44 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
             <div className="mt-4 space-y-2.5">
               <label className="flex items-center gap-2.5 text-sm text-slate-700">
                 <input type="checkbox" checked={allowDownload} onChange={(e) => setAllowDownload(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-                <Download size={15} className="text-slate-400" /> İndirmeye izin ver <span className="text-slate-400">(varsayılan: yalnız görüntüleme)</span>
+                <Download size={15} className="text-slate-400" /> {t(ST.allowDownload)} <span className="text-slate-400">{t(ST.viewOnlyDefault)}</span>
               </label>
               <label className="flex items-center gap-2.5 text-sm text-slate-700">
                 <input type="checkbox" checked={usePassword} onChange={(e) => setUsePassword(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-                <Lock size={15} className="text-slate-400" /> Erişim şifresi ekle
+                <Lock size={15} className="text-slate-400" /> {t(ST.addPassword)}
               </label>
               {usePassword && (
-                <input value={password} onChange={(e) => setPassword(e.target.value)} type="text" placeholder="Doktora ayrı kanaldan ileteceğiniz şifre" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                <input value={password} onChange={(e) => setPassword(e.target.value)} type="text" placeholder={t(ST.passwordPlaceholder)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
               )}
             </div>
 
             {/* Canlı önizleme — alıcının tam olarak ne göreceği (somut güven; DESIGN.md: açık/klinik) */}
             <div className="mt-4 rounded-2xl border border-[#14C3D0]/30 bg-[#14C3D0]/5 p-4">
               <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#0b5563]">
-                <Eye size={13} /> {recipientLabel}
+                <Eye size={13} /> {t(ST.recipientSees)}
               </div>
               <div className="mt-2.5 space-y-1.5">
                 {scopes.length === 0 ? (
-                  <p className="text-xs text-slate-500">Henüz veri seçilmedi.</p>
+                  <p className="text-xs text-slate-500">{t(ST.noDataYet)}</p>
                 ) : (
                   SCOPES.filter((s) => scopes.includes(s.key)).map((s) => {
                     const Icon = SCOPE_ICON[s.key];
-                    return <div key={s.key} className="flex items-center gap-2 text-sm text-slate-700"><Icon size={15} className="text-[#0EA5B2]" /> {s.label}</div>;
+                    return <div key={s.key} className="flex items-center gap-2 text-sm text-slate-700"><Icon size={15} className="text-[#0EA5B2]" /> {t(s.label)}</div>;
                   })
                 )}
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#14C3D0]/20 pt-2.5 text-[11px] text-slate-500">
-                <span className="inline-flex items-center gap-1"><Clock size={12} /> {durationLabel(durationKey)}</span>
+                <span className="inline-flex items-center gap-1"><Clock size={12} /> {t(durationLabel(durationKey))}</span>
                 <span className="inline-flex items-center gap-1">
-                  {allowDownload ? <><Download size={12} /> indirilebilir</> : <><Eye size={12} /> yalnız görüntüleme</>}
+                  {allowDownload ? <><Download size={12} /> {t(ST.downloadable)}</> : <><Eye size={12} /> {t(ST.viewOnly)}</>}
                 </span>
-                {usePassword && <span className="inline-flex items-center gap-1"><Lock size={12} /> şifreli</span>}
+                {usePassword && <span className="inline-flex items-center gap-1"><Lock size={12} /> {t(ST.encrypted)}</span>}
               </div>
             </div>
 
             <div className="mt-5 flex gap-2">
-              <button onClick={back} className={navGhost}><ArrowLeft size={16} /> Geri</button>
-              <button onClick={next} className={`${navPrimary} flex-1`}>Devam <ArrowRight size={16} /></button>
+              <button onClick={back} className={navGhost}><BackArrow size={16} /> {t(ST.back)}</button>
+              <button onClick={next} className={`${navPrimary} flex-1`}>{t(ST.next)} <FwdArrow size={16} /></button>
             </div>
           </div>
         )}
@@ -291,28 +394,28 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
         {/* Adım 3 — Paylaş: son kontrol + oluştur → hazır bağlantı */}
         {step === 3 && (created ? (
           <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
-            <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800"><Check size={16} /> Bağlantı hazır — şimdi paylaşın</div>
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800"><Check size={16} /> {t(ST.linkReady)}</div>
             <div className="mt-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs text-slate-600">
               <Link2 size={14} className="shrink-0 text-slate-400" /> <span className="truncate">{created.url}</span>
             </div>
-            <div className="mt-3"><ShareActions url={created.url} recipient={created.recipient} duration={created.duration} hasPassword={created.hasPassword} /></div>
-            <button onClick={reset} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[#0EA5B2] hover:underline"><Plus size={14} /> Yeni paylaşım</button>
+            <div className="mt-3"><ShareActions url={created.url} recipient={created.recipient} duration={t(created.duration)} hasPassword={created.hasPassword} t={t} /></div>
+            <button onClick={reset} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[#0EA5B2] hover:underline"><Plus size={14} /> {t(ST.newShareLink)}</button>
           </div>
         ) : (
           <div className="mt-5">
             <div className="rounded-2xl border border-slate-200 p-4">
-              <div className="text-sm font-medium text-slate-800">Son kontrol</div>
+              <div className="text-sm font-medium text-slate-800">{t(ST.finalCheck)}</div>
               <dl className="mt-2.5 space-y-1.5 text-sm">
-                <div className="flex justify-between gap-3"><dt className="text-slate-500">Alıcı</dt><dd className="text-right text-slate-800">{recipient.trim() || "Belirtilmedi"}</dd></div>
-                <div className="flex justify-between gap-3"><dt className="text-slate-500">Kayıt</dt><dd className="text-right text-slate-800">{selectedCase ? `${selectedCase.patientName} · ${selectedCase.branch}` : "—"}</dd></div>
-                <div className="flex justify-between gap-3"><dt className="text-slate-500">Veriler</dt><dd className="text-right text-slate-800">{scopes.map((k) => scopeLabel(k)).join(", ")}</dd></div>
-                <div className="flex justify-between gap-3"><dt className="text-slate-500">Süre</dt><dd className="text-slate-800">{durationLabel(durationKey)}</dd></div>
-                <div className="flex justify-between gap-3"><dt className="text-slate-500">Koruma</dt><dd className="text-slate-800">{allowDownload ? "indirilebilir" : "yalnız görüntüleme"}{usePassword ? " · şifreli" : ""}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-slate-500">{t(ST.recipient)}</dt><dd className="text-end text-slate-800">{recipient.trim() || t(ST.notSpecified)}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-slate-500">{t(ST.recordCol)}</dt><dd className="text-end text-slate-800">{selectedCase ? `${selectedCase.patientName} · ${selectedCase.branch}` : "—"}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-slate-500">{t(ST.dataCol)}</dt><dd className="text-end text-slate-800">{scopes.map((k) => t(scopeLabel(k))).join(", ")}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-slate-500">{t(ST.durationCol)}</dt><dd className="text-slate-800">{t(durationLabel(durationKey))}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-slate-500">{t(ST.protectionCol)}</dt><dd className="text-slate-800">{allowDownload ? t(ST.downloadable) : t(ST.viewOnly)}{usePassword ? ` · ${t(ST.encrypted)}` : ""}</dd></div>
               </dl>
             </div>
             <div className="mt-5 flex gap-2">
-              <button onClick={back} className={navGhost}><ArrowLeft size={16} /> Geri</button>
-              <button onClick={create} disabled={busy} className={`${navPrimary} flex-1`}><ShieldCheck size={16} /> {busy ? "Oluşturuluyor…" : "Güvenli link oluştur"}</button>
+              <button onClick={back} className={navGhost}><BackArrow size={16} /> {t(ST.back)}</button>
+              <button onClick={create} disabled={busy} className={`${navPrimary} flex-1`}><ShieldCheck size={16} /> {busy ? t(ST.creating) : t(ST.createSecureLink)}</button>
             </div>
           </div>
         ))}
@@ -323,54 +426,53 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
       {/* Sağ: aktif paylaşımlar */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="flex items-center gap-2 font-bold text-slate-800">
-          <Link2 size={18} /> Paylaşımlarım <span className="text-sm font-normal text-slate-400">({links.length})</span>
+          <Link2 size={18} /> {t(ST.myShares)} <span className="text-sm font-normal text-slate-400">({links.length})</span>
         </h2>
         {links.length === 0 ? (
           <div className="mt-4 flex flex-col items-center rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center">
             <span className="grid h-11 w-11 place-items-center rounded-full bg-[#14C3D0]/10 text-[#0EA5B2]"><ShieldCheck size={20} /></span>
-            <p className="mt-3 text-sm font-medium text-slate-700">İlk güvenli paylaşımınızı oluşturun</p>
-            <p className="mt-1 text-xs text-slate-500">Soldaki formdan bir sağlık kaydı seçin; hangi verinin, kim tarafından, ne kadar süre görülebileceğine siz karar verin.</p>
+            <p className="mt-3 text-sm font-medium text-slate-700">{t(ST.emptyTitle)}</p>
+            <p className="mt-1 text-xs text-slate-500">{t(ST.emptyDesc)}</p>
           </div>
         ) : (
           <ul className="mt-3 space-y-3">
             {links.map((l) => {
               const st = stateOf(l);
-              const meta = STATE_META[st];
               const url = `${origin}/paylasim/${l.token}`;
               return (
                 <li key={l.id} className="rounded-2xl border border-slate-200 p-3.5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-slate-800">{l.recipientName || "Paylaşılan kişi"}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${meta.badge}`}>{meta.label}</span>
+                    <span className="text-sm font-semibold text-slate-800">{l.recipientName || t(ST.sharedPerson)}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${STATE_BADGE[st]}`}>{t(STATE_LABEL[st])}</span>
                   </div>
                   <div className="mt-0.5 text-xs text-slate-500">{l.caseName} · {l.caseBranch}</div>
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {l.scopes.map((s) => <span key={s} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">{scopeLabel(s)}</span>)}
+                    {l.scopes.map((s) => <span key={s} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">{t(scopeLabel(s))}</span>)}
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
-                    <span className="inline-flex items-center gap-1"><Clock size={12} /> {l.expiresAt ? `Bitiş ${fmt(l.expiresAt)}` : "Süresiz"}</span>
-                    <span className="inline-flex items-center gap-1"><Eye size={12} /> {l.accessCount} erişim{l.lastAccess ? ` · son ${fmt(l.lastAccess)}` : ""}</span>
-                    {l.allowDownload && <span className="inline-flex items-center gap-1"><Download size={12} /> indirilebilir</span>}
+                    <span className="inline-flex items-center gap-1"><Clock size={12} /> {l.expiresAt ? `${t(ST.ends)} ${fmt(l.expiresAt, locale)}` : t(ST.noExpiry)}</span>
+                    <span className="inline-flex items-center gap-1"><Eye size={12} /> {l.accessCount} {t(ST.accessN)}{l.lastAccess ? ` · ${t(ST.lastAccess)} ${fmt(l.lastAccess, locale)}` : ""}</span>
+                    {l.allowDownload && <span className="inline-flex items-center gap-1"><Download size={12} /> {t(ST.downloadable)}</span>}
                   </div>
                   {st === "ACTIVE" && (confirmRevoke === l.id ? (
                     <div className="mt-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3">
                       <p className="text-xs text-amber-900">
-                        <strong>Bağlantı iptal edilsin mi?</strong> İptal, bu bağlantıyla <strong>yeni erişimi</strong> anında durdurur. Daha önce görüntülenen veya indirilen veriler geri alınamaz.
+                        <strong>{t(ST.revokeQ)}</strong> {t(ST.revokeBody)}
                       </p>
                       <div className="mt-2.5 flex gap-2">
                         <button onClick={() => revoke(l.id)} disabled={revoking} className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50">
-                          <Trash2 size={14} /> {revoking ? "İptal ediliyor…" : "Evet, iptal et"}
+                          <Trash2 size={14} /> {revoking ? t(ST.revoking) : t(ST.revokeYes)}
                         </button>
                         <button onClick={() => setConfirmRevoke(null)} disabled={revoking} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
-                          Vazgeç
+                          {t(ST.revokeCancel)}
                         </button>
                       </div>
                     </div>
                   ) : (
                     <div className="mt-2.5 flex items-center gap-2">
-                      <ShareActions url={url} recipient={l.recipientName || ""} duration={l.expiresAt ? `bitiş ${fmt(l.expiresAt)}` : "süresiz"} hasPassword={false} compact />
-                      <button onClick={() => setConfirmRevoke(l.id)} className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-2.5 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
-                        <Trash2 size={14} /> İptal
+                      <ShareActions url={url} recipient={l.recipientName || ""} duration={l.expiresAt ? `${t(ST.ends)} ${fmt(l.expiresAt, locale)}` : t(ST.noExpiry)} hasPassword={false} compact t={t} />
+                      <button onClick={() => setConfirmRevoke(l.id)} className="ms-auto inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-2.5 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
+                        <Trash2 size={14} /> {t(ST.revoke)}
                       </button>
                     </div>
                   ))}
