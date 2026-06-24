@@ -83,28 +83,27 @@ export function recencyScore(lastActiveSec: number | null): number {
   return clamp01(Math.pow(0.5, days / RECENCY_HALF_LIFE_DAYS));
 }
 
-// 0-1 normalize edilmiş ağırlıklı kalite skoru. Yüksek = eşleştirmede öncelikli. (Saf — test edilebilir.)
+// Ağırlıklı kalite skoru (0-1) — VERİ-OLGUNLUK FARKINDA. Oran/zaman metrikleri (icap dönüş · yanıt süresi ·
+// iptal oranı · güncellik) verisi YOKKEN skoru nötr 0.5 ile dilute etmesin diye ATLANIR; ağırlıkları kalan
+// geçerli metriklere yeniden normalize edilir → metrikler veri geldikçe devreye girer ("ölçekle değer artar")
+// ve az-veri hekim ortaya çekilmez. rating/successRate her zaman geçerli; sayım metrikleri (pro bono · vaka
+// hacmi · yorum) 0 = gerçek düşük sinyal (atlanmaz, düşük puan alır). (Saf — test edilebilir.)
 export function doctorMatchScore(m: DoctorMetrics): number {
-  const nRating = clamp01(m.rating / 5);
-  const nSuccess = clamp01(m.successRate / 100);
-  const nProBono = logSat(m.proBonoCount, PRO_BONO_SATURATION);
-  const nIcap = icapReturnRate(m);
-  const nResp = responsivenessScore(m);
-  const nRel = reliabilityScore(m);
-  const nVolume = logSat(m.completedCases, VOLUME_SATURATION);
-  const nReview = logSat(m.reviewCount, REVIEW_SATURATION);
-  const nRecency = recencyScore(m.lastActiveSec);
-  return (
-    MATCH_WEIGHTS.rating * nRating +
-    MATCH_WEIGHTS.successRate * nSuccess +
-    MATCH_WEIGHTS.proBono * nProBono +
-    MATCH_WEIGHTS.icapReturn * nIcap +
-    MATCH_WEIGHTS.responsiveness * nResp +
-    MATCH_WEIGHTS.reliability * nRel +
-    MATCH_WEIGHTS.volume * nVolume +
-    MATCH_WEIGHTS.reviewVolume * nReview +
-    MATCH_WEIGHTS.recency * nRecency
-  );
+  // Her zaman geçerli (rating/success) + sayım metrikleri (0 = düşük, atlanmaz).
+  const parts: Array<[number, number]> = [
+    [clamp01(m.rating / 5), MATCH_WEIGHTS.rating],
+    [clamp01(m.successRate / 100), MATCH_WEIGHTS.successRate],
+    [logSat(m.proBonoCount, PRO_BONO_SATURATION), MATCH_WEIGHTS.proBono],
+    [logSat(m.completedCases, VOLUME_SATURATION), MATCH_WEIGHTS.volume],
+    [logSat(m.reviewCount, REVIEW_SATURATION), MATCH_WEIGHTS.reviewVolume],
+  ];
+  // Oran/zaman metrikleri: yalnız verisi/paydası varsa ekle (yoksa atla → ağırlık kalanlara yeniden dağılır).
+  if (m.icapNotified > 0) parts.push([icapReturnRate(m), MATCH_WEIGHTS.icapReturn]);
+  if (m.respCount > 0) parts.push([responsivenessScore(m), MATCH_WEIGHTS.responsiveness]);
+  if (m.apptTotal > 0) parts.push([reliabilityScore(m), MATCH_WEIGHTS.reliability]);
+  if (m.lastActiveSec != null) parts.push([recencyScore(m.lastActiveSec), MATCH_WEIGHTS.recency]);
+  const totalW = parts.reduce((s, [, w]) => s + w, 0);
+  return totalW > 0 ? parts.reduce((s, [v, w]) => s + v * (w / totalW), 0) : 0;
 }
 
 // rankDoctorsByQuality'nin ihtiyaç duyduğu minimum doktor alanları (full Doctor row bunları içerir).
@@ -160,19 +159,25 @@ async function lastActiveMap(ids: string[]): Promise<Map<string, Date>> {
   return m;
 }
 
-// İptal istatistiği: atanmış toplam randevu + iptal olan (ConsultAppointment, doctorId dolu olanlar).
+// İptal istatistiği: atanmış toplam randevu + iptal olan. ConsultAppointment (İcapçı) + SecondOpinionAppointment
+// (İkinci Görüş) birleşik — doctorId dolu olanlar. İptal oranı = cancelled/total (iki randevu kanalı toplamı).
 async function cancelStats(ids: string[]): Promise<Map<string, { total: number; cancelled: number }>> {
-  const [totalRows, cancelRows] = await Promise.all([
+  const [caTotal, caCancel, soTotal, soCancel] = await Promise.all([
     db.consultAppointment.groupBy({ by: ["doctorId"], where: { doctorId: { in: ids } }, _count: true }),
     db.consultAppointment.groupBy({ by: ["doctorId"], where: { doctorId: { in: ids }, status: "CANCELLED" }, _count: true }),
+    db.secondOpinionAppointment.groupBy({ by: ["doctorId"], where: { doctorId: { in: ids } }, _count: true }),
+    db.secondOpinionAppointment.groupBy({ by: ["doctorId"], where: { doctorId: { in: ids }, status: "CANCELLED" }, _count: true }),
   ]);
   const m = new Map<string, { total: number; cancelled: number }>();
-  for (const r of totalRows) if (r.doctorId) m.set(r.doctorId, { total: r._count, cancelled: 0 });
-  for (const r of cancelRows) if (r.doctorId) {
-    const e = m.get(r.doctorId) ?? { total: r._count, cancelled: 0 };
-    e.cancelled = r._count;
-    m.set(r.doctorId, e);
-  }
+  const bump = (rows: { doctorId: string | null; _count: number }[], key: "total" | "cancelled") => {
+    for (const r of rows) if (r.doctorId) {
+      const e = m.get(r.doctorId) ?? { total: 0, cancelled: 0 };
+      e[key] += r._count;
+      m.set(r.doctorId, e);
+    }
+  };
+  bump(caTotal, "total"); bump(soTotal, "total");
+  bump(caCancel, "cancelled"); bump(soCancel, "cancelled");
   return m;
 }
 
