@@ -4,6 +4,7 @@
 // Eşleştirme deseni Pro Bono'dan alındı: koşullu updateMany = optimistik kilit (çift-kapma yarışı engellenir).
 import { db } from "./db";
 import { decryptField } from "./crypto";
+import { rankDoctorsByQuality } from "./match-score"; // CRM kalite indikatörleri (rating/pro bono/icap dönüş)
 import { notifyUser, type NotifyInput } from "./notify";
 import { formatDateTime } from "./constants";
 
@@ -48,11 +49,10 @@ export interface SentinelResult {
 
 // Çevrimiçi bir Nöbetçi hekimi ATOMİK kap → konsültasyon oluştur. En uzun süredir müsait olan önce.
 export async function claimSentinelForCase(caseId: string): Promise<SentinelResult | null> {
-  const candidates = await db.doctor.findMany({
-    where: { sentinel: true, clinicalState: "ONLINE" },
-    orderBy: { clinicalAvailableAt: "asc" },
-    select: { id: true },
-  });
+  // CRM kalite indikatörleri: çevrimiçi Nöbetçiler arasında rating/pro bono/icap dönüş oranıyla sırala (yüksek önce).
+  // (Önceki: clinicalAvailableAt asc = salt FIFO.) Atomik claim aşağıda korunur; sıra yalnız deneme önceliğini belirler.
+  const online = await db.doctor.findMany({ where: { sentinel: true, clinicalState: "ONLINE" } });
+  const candidates = await rankDoctorsByQuality(online);
   for (const d of candidates) {
     const r = await claimOneSentinel(caseId, d.id);
     if (r) {
@@ -108,7 +108,13 @@ export async function requestIcapciAppointment(caseId: string): Promise<boolean>
     create: { caseId, patientId: c.userId, branch: c.branch, status: "REQUESTED" },
     update: { status: "REQUESTED", doctorId: null, proposedAt: null },
   });
-  const icapci = await db.doctor.findMany({ where: { branch: c.branch, onCall: true }, select: { id: true } });
+  // CRM kalite indikatörleri: branş İcapçılarını kaliteye göre sırala → yüksek kaliteli/duyarlı hekim önce bildirilir.
+  const icapciRows = await db.doctor.findMany({ where: { branch: c.branch, onCall: true } });
+  const icapci = await rankDoctorsByQuality(icapciRows);
+  // İcap dönüş oranı paydası: her bilgilendirilen İcapçının icapNotified sayacı artar (metadata; offered/notified).
+  if (icapci.length) {
+    await db.doctor.updateMany({ where: { id: { in: icapci.map((d) => d.id) } }, data: { icapNotified: { increment: 1 } } });
+  }
   for (const d of icapci) {
     const u = await db.user.findFirst({ where: { doctorId: d.id }, select: { id: true } });
     if (u) {
@@ -133,6 +139,8 @@ export async function offerAppointment(caseId: string, doctorId: string, propose
     data: { status: "OFFERED", doctorId, proposedAt },
   });
   if (claimed.count === 0) return "TAKEN";
+  // İcap dönüş oranı payı: teklif veren İcapçının icapOffered sayacı artar (CRM kalite metadata; offered/notified).
+  await db.doctor.update({ where: { id: doctorId }, data: { icapOffered: { increment: 1 } } });
   if (appt.patientId) {
     await notifyUser(appt.patientId, {
       type: "CLINIC_OFFER",

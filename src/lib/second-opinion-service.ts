@@ -4,6 +4,7 @@ import { db } from "./db";
 import { canTransition, type SoStatus } from "./second-opinion";
 import { notifyUser } from "./notify";
 import { BRANCHES } from "./triage";
+import { rankDoctorsByQuality } from "./match-score"; // CRM kalite indikatörleri + yük dengeleme
 
 /** HTTP durum kodu taşıyan servis hatası — API route'ları yakalar ve uygun status döner. */
 export class SoError extends Error {
@@ -88,17 +89,18 @@ export async function autoAssignSoCase(caseId: string): Promise<string | null> {
   const c = await db.secondOpinionCase.findUnique({ where: { id: caseId } });
   if (!c || c.status !== "PENDING_REVIEW") return null;
 
-  const doctors = await db.doctor.findMany({ where: { branch: c.branch, verified: true }, select: { id: true } });
+  const doctors = await db.doctor.findMany({ where: { branch: c.branch, verified: true } });
   if (doctors.length === 0) return null;
 
   const ACTIVE: SoStatus[] = ["OFFERED", "ASSIGNED", "AWAITING_ADDITIONAL_TESTS"];
-  const withLoad = await Promise.all(
-    doctors.map(async (d) => ({
-      id: d.id,
-      load: await db.secondOpinionCase.count({ where: { assignedDoctorId: d.id, status: { in: ACTIVE } } }),
-    })),
+  const loadRows = await Promise.all(
+    doctors.map(async (d) => [d.id, await db.secondOpinionCase.count({ where: { assignedDoctorId: d.id, status: { in: ACTIVE } } })] as const),
   );
-  const pick = withLoad.sort((a, b) => a.load - b.load)[0];
+  const loads = new Map<string, number>(loadRows);
+  // CRM kalite indikatörleri + yük dengeleme: birleşik skor = kalite − LOAD_PENALTY·load (kaliteli ama az yüklü hoca önce).
+  // (Önceki: salt en az yüklü.) Aktif dosya yükü dengelenir, eşit/yakın yükte rating/pro bono/icap dönüş belirler.
+  const ranked = await rankDoctorsByQuality(doctors, { loads });
+  const pick = ranked[0];
 
   await transitionSoCase(caseId, "OFFERED", {
     actorId: null,

@@ -78,6 +78,9 @@ model Doctor {
   onCall              Boolean   @default(false) // İcapçı: offline ama randevu (icap) açık
   sentinel            Boolean   @default(false) // Nöbetçi yetkisi (7/24 genel/Dahiliye/Acil havuzu)
   clinicalAvailableAt DateTime? // en son ONLINE olma anı (eşleştirme sırası)
+  // CRM eşleştirme kalite indikatörleri (metadata; klinik içerik değil → şifreleme uyumlu) — lib/match-score.ts
+  icapNotified    Int            @default(0) // İcapçı olarak alınan randevu talebi bildirimi sayısı
+  icapOffered     Int            @default(0) // bu taleplere verilen randevu teklifi sayısı → icap dönüş oranı = offered/notified
   cases           Case[]
   consultations   Consultation[]
   reviews         Review[]
