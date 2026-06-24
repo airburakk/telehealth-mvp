@@ -114,6 +114,10 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
   SOAP, epikriz, triyaj semptom/gerekçe, post-op not/foto, İkinci Görüş içeriği, **hasta kimliği (ad + kimlik no)**) AES-256-GCM **envelope** ile şifrelenir (per-record DEK + env-KEK); sunucu
   gerektiğinde çözer → defense-in-depth (DB-dump + KEK'siz operatör). `DATA_ENCRYPTION_KEK` yoksa dormant
   (düz metin, okuma bozulmaz). KMS swap-point hazır. (`lib/crypto.ts`)
+- **Post-op erişim daraltma (E2EE Faz 2A):** post-op takip tamamlanınca (doktor "Takibi tamamla" veya
+  branş protokol süresi + tampon otomatik/lazy) klinik personel erişimi kapanır → **hasta-only**;
+  daraltılan noktalar (kokpit, vaka API, FHIR, görüşme, check-in, kodlama/lab/AI) 403/409 döner +
+  `POSTOP_ACCESS_DENIED` audit, tamamlama `RECOVERY_COMPLETE` audit. Hasta erişimi korunur. (`lib/postop-access.ts`)
 - **Klinik nöbet rolleri:** Branş / İcapçı / Nöbetçi (`Doctor.clinicalState/onCall/sentinel`) +
   "online doktor yoksa 3-seçenek kapısı" (`/triyaj/[id]`) + `ConsultAppointment`. (`lib/clinical-duty.ts`)
 - **Görüşme öncesi oda:** cihaz testi + geri sayım + 3 alt-durum (`PreConsultLobby`).
@@ -200,7 +204,7 @@ Tümü `.env.example`'da: `DATABASE_URL` (pooled) · `DIRECT_URL` (direct) · `S
 
 Güncel yol haritası vault'ta: `Air/wiki/todo.md`. Öne çıkanlar (altyapı/hukuk gerektirir):
 gerçek ödeme + Escrow gateway (Iyzico/Stripe — şu an simülasyon) · gerçek object storage (belgeler
-şu an base64-in-DB) · ileri E2EE fazları (Faz 0+1 ✅ at-rest/audit; Faz 2 kriptografik allowlist + Faz 3 gerçek sıfır-erişim) · gerçek RFC 3161 TSA (şimdilik simüle) ·
+şu an base64-in-DB) · ileri E2EE fazları (Faz 0+1 ✅ at-rest/audit; Faz 2A ✅ post-op erişim daraltma; 2B kriptografik allowlist + Faz 3 gerçek sıfır-erişim kalan) · gerçek RFC 3161 TSA (şimdilik simüle) ·
 e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ülkeli pazar girişi için.
 
 ## Güvenlik notları (demo)
