@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { generateDischarge } from "@/lib/ai-clinical";
+import { recoveryClosed } from "@/lib/postop-access";
 import { countryName } from "@/lib/constants";
 import { encryptField, decryptField } from "@/lib/crypto";
 import { recordAccess, reqMeta } from "@/lib/audit";
@@ -27,6 +28,12 @@ export async function POST(req: Request) {
     },
   });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+
+  // E2EE Faz 2A — post-op takip tamamlandıysa epikriz üretimi (klinik yazma/AI) kapalı (hasta-only, §0.1·3).
+  if (c.recovery && recoveryClosed(c.recovery).closed) {
+    await recordAccess({ actor: user, action: "POSTOP_ACCESS_DENIED", resourceType: "CASE", resourceId: caseId, subjectUserId: c.userId, detail: `post-op kapalı (${recoveryClosed(c.recovery).reason}) — discharge`, ...reqMeta(req) });
+    return NextResponse.json({ error: "Post-op takip tamamlandı; klinik erişim hastaya devredildi." }, { status: 403 });
+  }
 
   // Tedavi paketi özeti (en güncel rezervasyon)
   const bk = c.bookings[0];

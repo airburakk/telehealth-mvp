@@ -19,7 +19,9 @@ export type AuditAction =
   | "CODING_WRITE" // FHIR klinik kodlama (ICD-10 + hasta kimliği) yazıldı
   | "LABS_WRITE" // laboratuvar sonuçları (LOINC) yazıldı
   | "DOCUMENT_ANALYZE" // yüklenen belgeler AI ile değerlendirildi/çevrildi (dış AI'ya gider)
-  | "DISCHARGE_GENERATE"; // epikriz/taburcu raporu AI ile üretildi (tüm yolculuk dış AI'ya gider)
+  | "DISCHARGE_GENERATE" // epikriz/taburcu raporu AI ile üretildi (tüm yolculuk dış AI'ya gider)
+  | "RECOVERY_COMPLETE" // post-op takip tamamlandı → klinik personel erişimi kapandı, hasta-only (E2EE Faz 2A)
+  | "POSTOP_ACCESS_DENIED"; // post-op kapandıktan sonra klinik personel erişim denemesi reddedildi (daraltma kanıtı)
 
 interface RecordInput {
   actor: SessionUser | null;

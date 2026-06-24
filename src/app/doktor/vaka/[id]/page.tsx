@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { decryptCaseFields } from "@/lib/crypto";
+import { getCurrentUser } from "@/lib/auth";
+import { staffAccessClosed } from "@/lib/postop-access";
 import { countryFlag, countryName, urgencyStyle, CASE_STATUS, formatDateTime } from "@/lib/constants";
 import { StartConsultButton } from "@/components/StartConsultButton";
 import { TranslateButton } from "@/components/TranslateButton";
@@ -10,12 +12,18 @@ import { DocumentAnalysis } from "@/components/DocumentAnalysis";
 import { loincForBranchLabel } from "@/data/coding";
 import { LabResultsForm } from "@/components/LabResultsForm";
 import { caseDicomStudies } from "@/lib/case-dicom";
-import { ArrowLeft, ArrowRight, FileText, Sparkles, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Sparkles, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks, Lock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function CaseDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  // E2EE Faz 2A — post-op erişim daraltma: takip tamamlandıysa klinik personel erişimi kapalı (hasta-only, §0.1·3).
+  // Klinik veri ÇEKİLMEDEN reddet (sızma yok). Hasta kendi kayıtlarını /takip + /vakalarim'de görmeye devam eder.
+  const user = await getCurrentUser();
+  if ((await staffAccessClosed(id, user)).closed) return <PostopClosedScreen />;
+
   const c = decryptCaseFields(await db.case.findUnique({
     where: { id },
     include: {
@@ -213,6 +221,26 @@ function DisabledAction({ children }: { children: React.ReactNode }) {
     <div className="flex items-center justify-between rounded-lg border border-dashed border-slate-200 px-3 py-2 text-slate-400">
       {children}
       <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px]">yakında</span>
+    </div>
+  );
+}
+
+// Post-op takip tamamlanmış vakada (E2EE Faz 2A) klinik personele gösterilen ekran — klinik veri yok.
+function PostopClosedScreen() {
+  return (
+    <div className="mx-auto max-w-2xl px-5 py-8">
+      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0EA5B2]">
+        <ArrowLeft size={16} /> Vaka kuyruğu
+      </Link>
+      <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-500"><Lock size={26} /></span>
+        <h1 className="mt-4 text-lg font-bold text-slate-800">Post-op takip tamamlandı</h1>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">
+          Bu vakanın post-op takip süreci kapandığı için klinik kayıtlara erişim hastaya devredilmiştir.
+          Hekim/personel artık bu vakanın klinik içeriğini görüntüleyemez. Erişim olayları değiştirilemez denetim
+          kaydında zaman damgalıdır.
+        </p>
+      </div>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { severityMeta, type Severity } from "@/lib/postop";
 import { formatDateTime, langDir } from "@/lib/constants";
 import { CheckInForm } from "@/components/CheckInForm";
-import { ArrowLeft, ArrowRight, HeartPulse, CalendarCheck, Pill, Video, Thermometer, Activity, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, HeartPulse, CalendarCheck, Pill, Video, Thermometer, Activity, ShieldCheck, CheckCircle2 } from "lucide-react";
 
 export type RecoveryCheckIn = {
   id: string;
@@ -27,6 +27,7 @@ export type RecoveryData = {
   patientName: string;
   branch: string;
   day: number;
+  closed?: boolean; // E2EE Faz 2A — takip tamamlandı → yeni kontrol girişi kapalı (geçmiş salt-okunur)
   protocol: { day: string; title: string; desc: string }[];
   checkIns: RecoveryCheckIn[];
 };
@@ -42,6 +43,8 @@ const UI = [
   "Bu kayıtları kendi ülkenizdeki doktorunuzla süreli ve iptal edilebilir bir bağlantıyla paylaşın.",
   "Paylaşım Kontrol Merkezi",
   "Kırmızı bayrak", "İzlemde", "Normal", // severityMeta etiketleri (geçmiş rozetleri)
+  "Post-op takip tamamlandı",
+  "Bu sürecin takibi tamamlandı; yeni kontrol girişi kapalıdır. Geçmiş kayıtlarınız aşağıda görüntülenmeye devam eder.",
 ];
 
 export function RecoveryView({ data }: { data: RecoveryData }) {
@@ -72,7 +75,15 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
       <div className="mt-7 grid gap-5 lg:grid-cols-[1fr_340px]">
         {/* Sol: kontrol + geçmiş */}
         <div className="space-y-5">
-          <CheckInForm caseId={data.caseId} branch={data.branch} lang={lang} />
+          {data.closed ? (
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center">
+              <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-600"><CheckCircle2 size={24} /></span>
+              <h2 className="mt-3 font-bold text-slate-800">{t("Post-op takip tamamlandı")}</h2>
+              <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">{t("Bu sürecin takibi tamamlandı; yeni kontrol girişi kapalıdır. Geçmiş kayıtlarınız aşağıda görüntülenmeye devam eder.")}</p>
+            </div>
+          ) : (
+            <CheckInForm caseId={data.caseId} branch={data.branch} lang={lang} />
+          )}
 
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="font-bold text-slate-800">{t("Kontrol geçmişi")}</h2>

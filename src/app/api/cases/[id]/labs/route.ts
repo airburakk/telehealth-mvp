@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { staffAccessClosed } from "@/lib/postop-access";
 import { recordAccess, reqMeta } from "@/lib/audit";
 
 // POST /api/cases/:id/labs — laboratuvar sonuçları (FHIR Observation kaynağı, LOINC kodlu). Klinik personel.
@@ -12,6 +13,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const exists = await db.case.findUnique({ where: { id }, select: { id: true, userId: true } });
   if (!exists) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+
+  // E2EE Faz 2A — post-op takip tamamlandıysa lab sonucu (yazma) kapalı (hasta-only, §0.1·3).
+  const closed = await staffAccessClosed(id, user);
+  if (closed.closed) {
+    await recordAccess({ actor: user, action: "POSTOP_ACCESS_DENIED", resourceType: "CASE", resourceId: id, subjectUserId: exists.userId, detail: `post-op kapalı (${closed.reason}) — labs`, ...reqMeta(req) });
+    return NextResponse.json({ error: "Post-op takip tamamlandı; klinik erişim hastaya devredildi." }, { status: 403 });
+  }
 
   const b = await req.json().catch(() => ({}));
   const arr: unknown[] = Array.isArray(b.labs) ? b.labs : [];

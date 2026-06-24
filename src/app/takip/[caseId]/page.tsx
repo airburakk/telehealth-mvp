@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { canAccessCase } from "@/lib/ownership";
+import { getCurrentUser } from "@/lib/auth";
 import { recoveryProtocol } from "@/lib/postop";
+import { recoveryClosed } from "@/lib/postop-access";
 import { RecoveryView, type RecoveryData } from "./RecoveryView";
 import { decryptField } from "@/lib/crypto";
 
@@ -12,6 +14,7 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
   const { caseId } = await params;
   const c = await db.case.findUnique({ where: { id: caseId } });
   if (!c) notFound();
+  const user = await getCurrentUser();
   if (!(await canAccessCase(c))) notFound(); // hasta yalnız kendi vakasını görür
 
   const recovery = await db.recovery.upsert({
@@ -21,6 +24,11 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
     include: { checkIns: { orderBy: { createdAt: "desc" } } },
   });
 
+  // E2EE Faz 2A — takip tamamlandıysa klinik personel bu sayfaya giremez (hasta-only, §0.1·3).
+  // Hasta kendi geçmişini görmeye devam eder (salt-okunur; yeni kontrol girişi kapalı — RecoveryView).
+  const closed = recoveryClosed(recovery);
+  if (closed.closed && user && user.role !== "PATIENT") notFound();
+
   const day = Math.max(1, Math.floor((Date.now() - new Date(recovery.startedAt).getTime()) / 86400000) + 1);
 
   const data: RecoveryData = {
@@ -28,6 +36,7 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
     patientName: decryptField(c.patientName), // kimlik at-rest şifreli → çöz (E2EE inc.2c)
     branch: c.branch,
     day,
+    closed: closed.closed, // E2EE Faz 2A — takip tamamlandı → hasta yeni kontrol giremez (salt-okunur)
     protocol: recoveryProtocol(c.branch),
     checkIns: recovery.checkIns.map((ci) => ({
       id: ci.id,

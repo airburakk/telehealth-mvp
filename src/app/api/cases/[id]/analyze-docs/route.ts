@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { staffAccessClosed } from "@/lib/postop-access";
 import { assessDocument } from "@/lib/ai-clinical";
 import { loincForBranchLabel } from "@/data/coding";
 import { decryptField } from "@/lib/crypto";
@@ -22,6 +23,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     select: { id: true, userId: true, branch: true, symptoms: true, language: true, labResults: true },
   });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+
+  // E2EE Faz 2A — post-op takip tamamlandıysa belge AI değerlendirmesi (klinik AI) kapalı (hasta-only, §0.1·3).
+  const closed = await staffAccessClosed(id, user);
+  if (closed.closed) {
+    await recordAccess({ actor: user, action: "POSTOP_ACCESS_DENIED", resourceType: "CASE", resourceId: id, subjectUserId: c.userId, detail: `post-op kapalı (${closed.reason}) — analyze-docs`, ...reqMeta(req) });
+    return NextResponse.json({ error: "Post-op takip tamamlandı; klinik erişim hastaya devredildi." }, { status: 403 });
+  }
   const loincHints = loincForBranchLabel(c.branch).map((e) => ({ code: e.code, label: e.label }));
 
   const body = await req.json().catch(() => ({}));

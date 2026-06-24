@@ -230,8 +230,10 @@ model Recovery {
   case      Case      @relation(fields: [caseId], references: [id])
   caseId    String    @unique
   branch    String
-  status    String    @default("ACTIVE") // ACTIVE, COMPLETED
+  status    String    @default("ACTIVE") // ACTIVE, COMPLETED — COMPLETED = post-op erişim daraltma (E2EE Faz 2A): klinik personel erişimi kapanır, hasta-only
   startedAt DateTime  @default(now())
+  completedAt DateTime? // post-op takip tamamlandı (manuel kapatma zamanı; otomatik süre-aşımı kapanması hesaplanır, null kalır)
+  completedBy String?   // tamamlayan User.id (manuel doktor) — denetim
   checkIns  CheckIn[]
 }
 

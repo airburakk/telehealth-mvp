@@ -5,6 +5,7 @@ import { assessPostopNote, assessPostopPhoto } from "@/lib/ai-clinical";
 import { notifyRoles } from "@/lib/notify";
 import { notifyOnDutySentinels } from "@/lib/clinical-duty";
 import { canAccessCase } from "@/lib/ownership";
+import { recoveryClosed } from "@/lib/postop-access";
 import { encryptField } from "@/lib/crypto";
 
 // Not-AI (Haiku) + Foto-AI (Sonnet vision) paralel çalışır; serverless varsayılan limitini aşmasın diye süre tanı.
@@ -22,6 +23,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     update: {},
     create: { caseId: c.id, branch: c.branch },
   });
+
+  // E2EE Faz 2A — post-op takip tamamlandıysa yeni kontrol girişi kapalı (takip bitti; hasta geçmişini görmeye devam eder).
+  if (recoveryClosed(recovery).closed) {
+    return NextResponse.json({ error: "Post-op takip süreci tamamlandı; yeni kontrol girişi kapalıdır." }, { status: 409 });
+  }
 
   const b = await req.json().catch(() => ({}));
   const pain = Math.min(10, Math.max(0, Number(b.pain) || 0));
