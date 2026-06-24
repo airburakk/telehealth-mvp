@@ -11,6 +11,7 @@
 // ⚠️ KEK KAYBI = VERİ KAYBI. Anahtarı escrow/yedekle. Bu betik canlı veriyi geri-döndürülemez şifreler.
 //
 // Çalıştır: npx tsx scripts/encrypt-existing.ts
+import "dotenv/config"; // .env'i process.env'e yükle (DATA_ENCRYPTION_KEK + DATABASE_URL) — Prisma da yükler; bu garanti.
 import { PrismaClient } from "@prisma/client";
 import { encryptField, isEncrypted } from "../src/lib/crypto";
 
