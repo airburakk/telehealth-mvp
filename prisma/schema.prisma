@@ -373,6 +373,8 @@ model SecondOpinionCase {
   patientId        String // vaka sahibi hasta (User.id)
   branch           String // 30 branştan biri (lib/triage BRANCHES.key)
   diagnosisSummary String // hastanın mevcut tanı özeti (serbest metin)
+  country          String? // hasta ülkesi (COUNTRIES.code) — veri ikametgâhı/yönlendirme sinyali (geo-routing)
+  language         String? // hastanın tercih ettiği iletişim dili (LANGUAGES) — eşleştirme + sunum dili
   status           String  @default("DRAFT") // bkz. lib/second-opinion SO_STATUSES
   assignedDoctorId String? // atanan hekim (Doctor.id) — §10: tek doktor
   // SLA zaman damgaları — hesap TEK KAYNAK lib/second-opinion (§11)

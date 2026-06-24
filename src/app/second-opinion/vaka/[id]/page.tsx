@@ -57,6 +57,8 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
         branch: c.branch,
         branchLabel,
         diagnosisSummary: c.diagnosisSummary,
+        country: c.country,
+        language: c.language,
         createdAt: c.createdAt.toISOString(),
         documents: c.documents,
         payment: c.payment,

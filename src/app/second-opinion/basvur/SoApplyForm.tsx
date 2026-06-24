@@ -7,7 +7,7 @@ import { SO_DURATION_COPY, SO_FEE_USD } from "@/lib/second-opinion";
 import { useT } from "@/components/useT";
 import { useSoLang, SoLangSelect } from "@/components/SoLocale";
 import { Stethoscope, Clock, Video, ArrowRight, Loader2 } from "lucide-react";
-import { langDir } from "@/lib/constants";
+import { COUNTRIES, LANGUAGES, langDir } from "@/lib/constants";
 
 const D = SO_DURATION_COPY.tr;
 const FEE_LINE = `Ücret: ${SO_FEE_USD} USD — peşin ve tek ödeme. Yazılı rapor ve video görüşme dahildir.`;
@@ -22,6 +22,10 @@ const S = {
   videoText: D.video,
   branchLabel: "İlgili tıbbi branş",
   branchPlaceholder: "Branş seçin…",
+  countryLabel: "Ülkeniz",
+  countryPlaceholder: "Ülke seçin…",
+  langLabel: "Tercih ettiğiniz iletişim dili",
+  langHint: "Yazılı görüş ve video görüşme bu dilde sağlanır.",
   diagLabel: "Mevcut tanınız / durumunuz",
   diagHint: "Konulan tanıyı, ne zaman ve nasıl tanı aldığınızı kısaca özetleyin.",
   diagPh: "Örn. 3 ay önce sol meme invaziv duktal karsinom tanısı kondu; cerrahi öneriliyor…",
@@ -32,16 +36,24 @@ const S = {
 export function SoApplyForm() {
   const router = useRouter();
   const [lang, setLang] = useSoLang();
-  const texts = useMemo(() => [...Object.values(S), FEE_LINE, ...BRANCHES.map((b) => b.label)], []);
+  const texts = useMemo(() => [...Object.values(S), FEE_LINE, ...BRANCHES.map((b) => b.label), ...COUNTRIES.map((c) => c.name)], []);
   const { t } = useT(lang, texts);
 
   const [diagnosisSummary, setDiagnosisSummary] = useState("");
   const [branch, setBranch] = useState("");
+  const [country, setCountry] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // Ülke seçilince o ülkenin birincil dilini öner + UI dilini (lang) senkronla — Talk to Doctor (triyaj) deseni.
+  function onCountry(code: string) {
+    setCountry(code);
+    const c = COUNTRIES.find((x) => x.code === code);
+    if (c && c.langs[0]) setLang(c.langs[0]);
+  }
+
   // KVKK açık onam girişte bir kez alınır (/onam) → başvuruda tekrar onam kutusu yok.
-  const canSubmit = diagnosisSummary.trim().length >= 10 && branch && !submitting;
+  const canSubmit = diagnosisSummary.trim().length >= 10 && branch && country && !submitting;
 
   async function submit() {
     setError("");
@@ -50,7 +62,7 @@ export function SoApplyForm() {
       const res = await fetch("/api/second-opinion/cases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ consent: true, diagnosisSummary, branch }),
+        body: JSON.stringify({ consent: true, diagnosisSummary, branch, country, language: lang }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || S.errGeneric);
@@ -102,6 +114,36 @@ export function SoApplyForm() {
             <option key={b.key} value={b.key}>{t(b.label)}</option>
           ))}
         </select>
+
+        {/* Ülke + tercih dili — Talk to Doctor (triyaj) deseni: ülke seçilince birincil dil önerilir. */}
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700">{t(S.countryLabel)}</label>
+            <select
+              value={country}
+              onChange={(e) => onCountry(e.target.value)}
+              className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-[#14C3D0] focus:outline-none focus:ring-2 focus:ring-[#14C3D0]/30"
+            >
+              <option value="">{t(S.countryPlaceholder)}</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>{c.flag} {t(c.name)}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700">{t(S.langLabel)}</label>
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value)}
+              className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-[#14C3D0] focus:outline-none focus:ring-2 focus:ring-[#14C3D0]/30"
+            >
+              {LANGUAGES.map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <p className="mt-1.5 text-xs text-slate-500">{t(S.langHint)}</p>
 
         <label className="mt-5 block text-sm font-semibold text-slate-700">{t(S.diagLabel)}</label>
         <p className="text-xs text-slate-500">{t(S.diagHint)}</p>

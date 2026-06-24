@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
+import { COUNTRIES, LANGUAGES } from "@/lib/constants";
 import { logSoEvent } from "@/lib/second-opinion-service";
 
 // GET /api/second-opinion/cases — hasta kendi SO vakalarını listeler (klinik personel: tümü)
@@ -30,6 +31,8 @@ export async function POST(req: Request) {
   const consent = body.consent === true;
   const diagnosisSummary = String(body.diagnosisSummary ?? "").trim();
   const branch = String(body.branch ?? "").trim();
+  const country = String(body.country ?? "").trim();
+  const language = String(body.language ?? "").trim();
 
   if (!consent) {
     return NextResponse.json({ error: "Devam etmek için açık rıza onayı gereklidir." }, { status: 400 });
@@ -40,12 +43,20 @@ export async function POST(req: Request) {
   if (!BRANCHES.some((b) => b.key === branch)) {
     return NextResponse.json({ error: "Geçerli bir tıbbi branş seçin." }, { status: 400 });
   }
+  if (!COUNTRIES.some((c) => c.code === country)) {
+    return NextResponse.json({ error: "Lütfen ülkenizi seçin." }, { status: 400 });
+  }
+  if (!LANGUAGES.includes(language)) {
+    return NextResponse.json({ error: "Lütfen tercih ettiğiniz iletişim dilini seçin." }, { status: 400 });
+  }
 
   const created = await db.secondOpinionCase.create({
     data: {
       patientId: user.id,
       branch,
       diagnosisSummary: diagnosisSummary.slice(0, 4000),
+      country,
+      language,
       status: "DRAFT",
       consentAt: new Date(),
     },

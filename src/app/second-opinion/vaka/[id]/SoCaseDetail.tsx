@@ -10,9 +10,9 @@ import { useSoLang, SoLangSelect } from "@/components/SoLocale";
 import {
   Check, AlertTriangle, CreditCard, Loader2, Link2, Upload, FileText,
   CircleCheck, Clock, FlaskConical, ArrowLeft, NotebookPen, Printer, Video, Stethoscope,
-  CalendarClock, RefreshCw, Hand,
+  CalendarClock, RefreshCw, Hand, Globe,
 } from "lucide-react";
-import { langDir, LANG_BCP47 } from "@/lib/constants";
+import { langDir, LANG_BCP47, countryName, countryFlag } from "@/lib/constants";
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
 import { soTrackerPhases, SO_TRACKER_TEXTS } from "@/lib/so-tracker";
 import { DoctorArt } from "@/components/PortamedArt";
@@ -20,6 +20,7 @@ import { DoctorArt } from "@/components/PortamedArt";
 type DocMeta = { id: string; type: string; deliveryMethod: string; externalRef: string | null; label: string | null };
 type SoData = {
   id: string; status: string; branch: string; branchLabel: string; diagnosisSummary: string;
+  country: string | null; language: string | null;
   createdAt: string; documents: DocMeta[];
   payment: { status: string; amount: number; currency: string } | null;
   requests: { id: string; type: string; description: string; status: string }[];
@@ -172,8 +173,9 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       ...(data.opinion ? [data.opinion.content] : []),
       ...SO_TRACKER_TEXTS,
       ...(data.assignedDoctor ? [data.assignedDoctor.title, data.assignedDoctor.branchLabel] : []),
+      ...(data.country ? [countryName(data.country)] : []),
     ],
-    [data.branchLabel, specs, pendingReqs, data.opinion, data.assignedDoctor],
+    [data.branchLabel, specs, pendingReqs, data.opinion, data.assignedDoctor, data.country],
   );
   const { t } = useT(lang, texts);
 
@@ -305,6 +307,18 @@ export function SoCaseDetail({ data }: { data: SoData }) {
         <h1 className="text-2xl font-bold text-[#101010]">{t(data.branchLabel)} · {t(S.soSuffix)}</h1>
         <span className="rounded-full bg-[#14C3D0]/10 px-3 py-1 text-[12px] font-semibold text-[#0E8A95]">{t(SO_STATUS_LABELS[status])}</span>
       </div>
+
+      {/* Hasta ülkesi + tercih dili (başvuruda alınır; eski vakalarda boş olabilir) */}
+      {(data.country || data.language) && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-slate-500">
+          {data.country && (
+            <span className="inline-flex items-center gap-1.5">{countryFlag(data.country)} {t(countryName(data.country))}</span>
+          )}
+          {data.language && (
+            <span className="inline-flex items-center gap-1.5"><Globe size={13} /> {data.language}</span>
+          )}
+        </div>
+      )}
 
       {/* Süreç takip göstergesi (fazlara gruplu) */}
       <div className="mt-4">
