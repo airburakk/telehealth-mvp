@@ -21,6 +21,7 @@ export type AuditAction =
   | "DOCUMENT_ANALYZE" // yüklenen belgeler AI ile değerlendirildi/çevrildi (dış AI'ya gider)
   | "DISCHARGE_GENERATE" // epikriz/taburcu raporu AI ile üretildi (tüm yolculuk dış AI'ya gider)
   | "RECOVERY_COMPLETE" // post-op takip tamamlandı → klinik personel erişimi kapandı, hasta-only (E2EE Faz 2A)
+  | "RECOVERY_REOPEN" // post-op takip hasta tarafından yeniden açıldı → klinik personel erişimi geri verildi (geri-alma, E2EE Faz 2A)
   | "POSTOP_ACCESS_DENIED"; // post-op kapandıktan sonra klinik personel erişim denemesi reddedildi (daraltma kanıtı)
 
 interface RecordInput {

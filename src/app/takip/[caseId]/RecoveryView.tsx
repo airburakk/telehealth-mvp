@@ -3,13 +3,14 @@
 // Post-Op Takip — çok dilli (8+ dil) + RTL. Veriyi server page.tsx getirir; burada sunum + çeviri.
 // Hasta notu (ci.note) ÇEVRİLMEZ (kendi girdisi); arayüz + protokol + checklist + severity çevrilir.
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { severityMeta, type Severity } from "@/lib/postop";
 import { formatDateTime, langDir } from "@/lib/constants";
 import { CheckInForm } from "@/components/CheckInForm";
-import { ArrowLeft, ArrowRight, HeartPulse, CalendarCheck, Pill, Video, Thermometer, Activity, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, HeartPulse, CalendarCheck, Pill, Video, Thermometer, Activity, ShieldCheck, CheckCircle2, RotateCcw } from "lucide-react";
 
 export type RecoveryCheckIn = {
   id: string;
@@ -45,10 +46,37 @@ const UI = [
   "Kırmızı bayrak", "İzlemde", "Normal", // severityMeta etiketleri (geçmiş rozetleri)
   "Post-op takip tamamlandı",
   "Bu sürecin takibi tamamlandı; yeni kontrol girişi kapalıdır. Geçmiş kayıtlarınız aşağıda görüntülenmeye devam eder.",
+  "Doktora erişimi yeniden ver",
+  "Klinik ekibiniz kayıtlarınıza yeniden erişebilecek. Erişimi yeniden vermek istiyor musunuz?",
+  "Evet, erişimi yeniden ver",
+  "Erişim yeniden açılıyor…",
+  "Vazgeç",
 ];
 
 export function RecoveryView({ data }: { data: RecoveryData }) {
   const [lang, setLang] = usePatientLang();
+  const router = useRouter();
+  const [reopenStep, setReopenStep] = useState<"idle" | "confirm">("idle");
+  const [reopening, setReopening] = useState(false);
+  const [reopenErr, setReopenErr] = useState("");
+
+  // Geri-alma (E2EE Faz 2A) — hasta post-op erişimini klinik ekibe yeniden açar; başarıda sayfa yenilenir → form geri gelir.
+  async function reopen() {
+    setReopening(true);
+    setReopenErr("");
+    try {
+      const res = await fetch(`/api/cases/${data.caseId}/recovery/reopen`, { method: "POST" });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || "İşlem başarısız.");
+      }
+      router.refresh();
+    } catch (e) {
+      setReopenErr(e instanceof Error ? e.message : "Hata oluştu.");
+      setReopening(false);
+    }
+  }
+
   const texts = useMemo(
     () => [...UI, data.branch, ...data.protocol.flatMap((p) => [p.day, p.title, p.desc])],
     [data.branch, data.protocol],
@@ -80,6 +108,27 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
               <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-600"><CheckCircle2 size={24} /></span>
               <h2 className="mt-3 font-bold text-slate-800">{t("Post-op takip tamamlandı")}</h2>
               <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">{t("Bu sürecin takibi tamamlandı; yeni kontrol girişi kapalıdır. Geçmiş kayıtlarınız aşağıda görüntülenmeye devam eder.")}</p>
+              {/* Geri-alma (E2EE Faz 2A) — veri post-op bitince hastaya döner; hasta isterse klinik ekibe erişimi YENİDEN verir (açma hasta kararı). */}
+              <div className="mt-4">
+                {reopenStep === "idle" ? (
+                  <button onClick={() => setReopenStep("confirm")} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    <RotateCcw size={15} /> {t("Doktora erişimi yeniden ver")}
+                  </button>
+                ) : (
+                  <div className="mx-auto max-w-md rounded-2xl border border-amber-200 bg-amber-50 p-4 text-start">
+                    <p className="text-sm text-amber-900">{t("Klinik ekibiniz kayıtlarınıza yeniden erişebilecek. Erişimi yeniden vermek istiyor musunuz?")}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button onClick={reopen} disabled={reopening} className="inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50">
+                        <RotateCcw size={15} /> {reopening ? t("Erişim yeniden açılıyor…") : t("Evet, erişimi yeniden ver")}
+                      </button>
+                      <button onClick={() => { setReopenStep("idle"); setReopenErr(""); }} disabled={reopening} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                        {t("Vazgeç")}
+                      </button>
+                    </div>
+                    {reopenErr && <p className="mt-2 text-sm text-red-600">{reopenErr}</p>}
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <CheckInForm caseId={data.caseId} branch={data.branch} lang={lang} />

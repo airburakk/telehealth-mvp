@@ -119,6 +119,8 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState<{ url: string; recipient: string; duration: string; hasPassword: boolean } | null>(null);
+  const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null); // iptal onayı — "ileriye-dönük" netleştirme (geçmiş erişim geri alınamaz)
+  const [revoking, setRevoking] = useState(false);
 
   const selectedCase = cases.find((c) => c.id === caseId);
   const recipientLabel = recipient.trim() ? `${recipient.trim()}'in göreceği` : "Alıcının göreceği";
@@ -175,7 +177,10 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
   }
 
   async function revoke(id: string) {
+    setRevoking(true);
     await fetch(`/api/shares/${id}`, { method: "PATCH" });
+    setRevoking(false);
+    setConfirmRevoke(null);
     router.refresh();
   }
 
@@ -347,14 +352,28 @@ export function ShareManager({ cases, links }: { cases: CaseOpt[]; links: LinkDa
                     <span className="inline-flex items-center gap-1"><Eye size={12} /> {l.accessCount} erişim{l.lastAccess ? ` · son ${fmt(l.lastAccess)}` : ""}</span>
                     {l.allowDownload && <span className="inline-flex items-center gap-1"><Download size={12} /> indirilebilir</span>}
                   </div>
-                  {st === "ACTIVE" && (
+                  {st === "ACTIVE" && (confirmRevoke === l.id ? (
+                    <div className="mt-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                      <p className="text-xs text-amber-900">
+                        <strong>Bağlantı iptal edilsin mi?</strong> İptal, bu bağlantıyla <strong>yeni erişimi</strong> anında durdurur. Daha önce görüntülenen veya indirilen veriler geri alınamaz.
+                      </p>
+                      <div className="mt-2.5 flex gap-2">
+                        <button onClick={() => revoke(l.id)} disabled={revoking} className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50">
+                          <Trash2 size={14} /> {revoking ? "İptal ediliyor…" : "Evet, iptal et"}
+                        </button>
+                        <button onClick={() => setConfirmRevoke(null)} disabled={revoking} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                          Vazgeç
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
                     <div className="mt-2.5 flex items-center gap-2">
                       <ShareActions url={url} recipient={l.recipientName || ""} duration={l.expiresAt ? `bitiş ${fmt(l.expiresAt)}` : "süresiz"} hasPassword={false} compact />
-                      <button onClick={() => revoke(l.id)} className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-2.5 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
+                      <button onClick={() => setConfirmRevoke(l.id)} className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-2.5 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
                         <Trash2 size={14} /> İptal
                       </button>
                     </div>
-                  )}
+                  ))}
                 </li>
               );
             })}
