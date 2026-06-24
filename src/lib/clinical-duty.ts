@@ -62,7 +62,7 @@ export async function claimSentinelForCase(caseId: string): Promise<SentinelResu
         await notifyUser(u.id, {
           type: "CLINIC_MATCH",
           title: "🎥 Nöbet görüşmesi başlıyor",
-          body: `${c?.branch ?? ""} · ${c?.patientName ?? "hasta"} şimdi görüşmek istiyor`,
+          body: `${c?.branch ?? ""} · bir hasta şimdi görüşmek istiyor`, // isim bildirime gömülmez (E2EE inc.2c)
           href: `/gorusme/${r.consultationId}`,
         });
       }
@@ -115,7 +115,7 @@ export async function requestIcapciAppointment(caseId: string): Promise<boolean>
       await notifyUser(u.id, {
         type: "CLINIC_OFFER",
         title: "📋 Yeni randevu talebi",
-        body: `${c.branch} · ${c.patientName} bir görüşme randevusu bekliyor`,
+        body: `${c.branch} · bir hasta görüşme randevusu bekliyor`,
         href: "/doktor",
       });
     }
@@ -288,7 +288,7 @@ export async function dutyFeed(doctorId: string): Promise<DutyFeed | null> {
       return {
         caseId: a.caseId,
         status: a.status,
-        patientName: c.patientName,
+        patientName: decryptField(c.patientName), // kimlik at-rest şifreli → İcapçı kuyruğu için çöz (E2EE inc.2c)
         country: c.country,
         language: c.language,
         branch: c.branch,

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { severityMeta, type Severity } from "@/lib/postop";
 import { countryFlag, countryName, formatDateTime } from "@/lib/constants";
+import { decryptField } from "@/lib/crypto";
 import { HeartPulse, Activity, Thermometer, ArrowRight, AlertTriangle, Inbox } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +66,7 @@ export default async function RecoveryMonitor() {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-slate-800">{r.case.patientName}</span>
+                  <span className="font-semibold text-slate-800">{decryptField(r.case.patientName)}</span>
                   <span className="text-xs text-slate-400">{countryFlag(r.case.country)} {countryName(r.case.country)}</span>
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${m.badge}`}>{m.label}</span>
                 </div>

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { canAccessCase } from "@/lib/ownership";
 import { formatUSD, type LineItem } from "@/lib/pricing";
 import { countryFlag, countryName } from "@/lib/constants";
+import { decryptField } from "@/lib/crypto";
 import { OfferActions } from "@/components/OfferActions";
 import {
   ArrowLeft, FileText, Building2, BedDouble, Languages, ShieldCheck, Lock,
@@ -48,7 +49,7 @@ export default async function OfferPage({ params }: { params: Promise<{ bookingI
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-violet-600 text-white"><FileText size={22} /></span>
           <div>
             <h1 className="text-2xl font-bold text-[#101010]">Tedavi Paketi Teklifi</h1>
-            <p className="text-sm text-slate-500">{c.patientName} · {countryFlag(c.country)} {countryName(c.country)} · {c.branch}</p>
+            <p className="text-sm text-slate-500">{decryptField(c.patientName)} · {countryFlag(c.country)} {countryName(c.country)} · {c.branch}</p>
           </div>
         </div>
         <div className="text-right text-xs text-slate-400">

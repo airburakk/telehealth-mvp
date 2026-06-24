@@ -116,7 +116,7 @@ export default async function ShareViewerPage({
     const accessNotif = {
       type: "SHARE_ACCESS" as const,
       title: "👁 Sağlık paylaşımınız görüntülendi",
-      body: `${link.recipientName ?? "Alıcı"} · ${link.case.patientName} kayıtları`,
+      body: `${link.recipientName ?? "Alıcı"} kaydınızı görüntüledi`, // isim bildirime gömülmez (E2EE inc.2c)
       href: "/paylasimlarim",
     };
     // Vaka sahibi belliyse kişisel; değilse rol yayını (eski vakalar)
@@ -177,7 +177,7 @@ export default async function ShareViewerPage({
         <div className="flex items-start gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><ShieldCheck size={22} /></span>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-[#101010]">{link.case.patientName} — {t("sağlık kayıtları")}</h1>
+            <h1 className="text-xl font-bold text-[#101010]">{caseForShare.patientName} — {t("sağlık kayıtları")}</h1>
             <p className="text-sm text-slate-500">
               {link.recipientName ?? t("Sizinle paylaşıldı")} · {t("Branş")}: {t(link.case.branch)}
             </p>

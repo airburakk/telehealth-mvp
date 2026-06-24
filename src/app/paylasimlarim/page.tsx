@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { ShareManager } from "@/components/ShareManager";
 import { formatDateTime } from "@/lib/constants";
+import { decryptField } from "@/lib/crypto";
 import { ShieldCheck, BellRing, Eye } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,7 @@ export default async function MySharesPage() {
     .flatMap((l) =>
       l.accesses
         .filter((a) => !a.seenByPatient)
-        .map((a) => ({ id: a.id, when: a.createdAt, recipient: l.recipientName, caseName: l.case.patientName }))
+        .map((a) => ({ id: a.id, when: a.createdAt, recipient: l.recipientName, caseName: decryptField(l.case.patientName) }))
     )
     .sort((a, b) => b.when.getTime() - a.when.getTime());
 
@@ -45,7 +46,7 @@ export default async function MySharesPage() {
     revokedAt: l.revokedAt ? l.revokedAt.toISOString() : null,
     allowDownload: l.allowDownload,
     createdAt: l.createdAt.toISOString(),
-    caseName: l.case.patientName,
+    caseName: decryptField(l.case.patientName), // kimlik at-rest şifreli → çöz (E2EE inc.2c)
     caseBranch: l.case.branch,
     accessCount: l.accesses.length,
     lastAccess: l.accesses[0] ? l.accesses[0].createdAt.toISOString() : null,
@@ -88,7 +89,7 @@ export default async function MySharesPage() {
       )}
 
       <div className="mt-6">
-        <ShareManager cases={cases} links={linkData} />
+        <ShareManager cases={cases.map((c) => ({ ...c, patientName: decryptField(c.patientName) }))} links={linkData} />
       </div>
     </div>
   );

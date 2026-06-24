@@ -34,7 +34,7 @@ export default async function DoctorProBonoPage() {
 
   const ser = (c: (typeof awaiting)[number]): PBCase => ({
     id: c.id,
-    patientName: c.patientName,
+    patientName: decryptField(c.patientName), // kimlik at-rest şifreli → çöz (E2EE inc.2c)
     country: c.country,
     language: c.language,
     branch: c.branch,

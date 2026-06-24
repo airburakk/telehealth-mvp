@@ -30,7 +30,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ booking
     await db.booking.update({ where: { id: booking.id }, data: { status: "CANCELLED" } });
     await notifyRoles(["COORDINATOR"], {
       type: "OFFER",
-      title: `🚫 Teklif reddedildi: ${c.patientName}`,
+      title: `🚫 Teklif reddedildi`, // isim bildirime gömülmez (E2EE inc.2c)
       body: `${booking.tier} · ${booking.branch} · ${amount} — hasta teklifi reddetti`,
       href: `/teklif/${booking.id}`,
     });
@@ -42,7 +42,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ booking
   await db.case.update({ where: { id: c.id }, data: { status: "DONE" } });
   await notifyRoles(["COORDINATOR"], {
     type: "BOOKING",
-    title: `✅ Teklif onaylandı: ${c.patientName}`,
+    title: `✅ Teklif onaylandı`,
     body: `${booking.tier} · ${booking.branch} · ${amount} — Escrow'a alındı`,
     href: `/rezervasyon/${booking.id}`,
   });

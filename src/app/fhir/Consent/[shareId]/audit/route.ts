@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { ownsCase } from "@/lib/ownership";
 import { shareAuditBundle } from "@/lib/fhir";
 import { fhirJson, operationOutcome } from "@/lib/fhir-http";
+import { decryptField } from "@/lib/crypto";
 
 // GET /fhir/Consent/:shareId/audit
 // Paylaşımın erişim denetim izini (ShareAccess) FHIR AuditEvent'lerden oluşan bir Bundle (collection) olarak verir.
@@ -22,5 +23,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ shareId
   if (!s) return operationOutcome(404, "not-found", "Paylaşım kaydı bulunamadı.");
   if (!ownsCase(user, s.case)) return operationOutcome(403, "forbidden", "Bu paylaşıma erişim yetkiniz yok.");
 
-  return fhirJson(shareAuditBundle(s));
+  // Kimlik at-rest şifreli → FHIR Patient için çöz (E2EE inc.2c)
+  return fhirJson(shareAuditBundle({ ...s, case: { ...s.case, patientName: decryptField(s.case.patientName), patientIdentifier: decryptField(s.case.patientIdentifier) } }));
 }

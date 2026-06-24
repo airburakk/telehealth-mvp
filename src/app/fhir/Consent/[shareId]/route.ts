@@ -4,6 +4,7 @@ import { ownsCase } from "@/lib/ownership";
 import { shareLinkToConsent } from "@/lib/fhir";
 import { fhirJson, operationOutcome } from "@/lib/fhir-http";
 import { recordAccess, reqMeta } from "@/lib/audit";
+import { decryptField } from "@/lib/crypto";
 
 // GET /fhir/Consent/:shareId
 // M4 Güvenli Paylaşım iznini (ShareLink) FHIR R4 Consent olarak verir (contained Patient).
@@ -25,5 +26,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ shareId:
 
   // Denetim: FHIR dışa aktarım (paylaşım izni export).
   await recordAccess({ actor: user, action: "FHIR_EXPORT", resourceType: "FHIR_CONSENT", resourceId: s.id, subjectUserId: s.case.userId, detail: "Consent (paylaşım izni)", ...reqMeta(req) });
-  return fhirJson(shareLinkToConsent(s));
+  // Kimlik at-rest şifreli → FHIR Patient için çöz (E2EE inc.2c)
+  return fhirJson(shareLinkToConsent({ ...s, case: { ...s.case, patientName: decryptField(s.case.patientName), patientIdentifier: decryptField(s.case.patientIdentifier) } }));
 }

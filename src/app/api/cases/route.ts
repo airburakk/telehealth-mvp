@@ -90,7 +90,7 @@ export async function POST(req: Request) {
   // §1/§7: yeni klinik vaka koordinatöre DEĞİL doktor kuyruğuna düşer (koordinatör yalnız M3/S3 rezervasyon).
   await notifyRoles(["DOCTOR"], {
     type: "NEW_CASE",
-    title: `${a.urgency >= 4 ? "🔴 " : ""}Yeni vaka: ${patientName}`,
+    title: `${a.urgency >= 4 ? "🔴 " : ""}Yeni vaka`, // isim bildirime gömülmez (E2EE inc.2c) → personel kokpitte görür
     body: `${a.branch} · aciliyet ${a.urgency}/5`,
     href: `/doktor/vaka/${created.id}`,
   });
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
   if (missingDocs.length) {
     await notifyRoles(["DOCTOR"], {
       type: "MISSING_DOCS",
-      title: `📄 Eksik belge: ${patientName}`,
+      title: `📄 Eksik belge`,
       body: `${a.branch} · eksik: ${missingDocs.join(", ")}`,
       href: `/doktor/vaka/${created.id}`,
     });

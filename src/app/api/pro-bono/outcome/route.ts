@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   if (outcome === "TREATMENT_NEEDED") {
     await notifyRoles(["ETHICS", "COORDINATOR"], {
       type: "PROBONO_TREATMENT",
-      title: `🤝 Pro Bono tedavi onayı bekliyor: ${c.patientName}`,
+      title: `🤝 Pro Bono tedavi onayı bekliyor`, // isim bildirime gömülmez (E2EE inc.2c)
       body: `${c.branch} · etik kurul uygunluk değerlendirmesi`,
       href: "/etik-kurul",
     });

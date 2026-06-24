@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { PackageBuilder, type PackageInitial } from "@/components/PackageBuilder";
 import { type RecommendedTreatment } from "@/lib/pricing";
 import { getTryPerUsd } from "@/lib/fxrate";
+import { decryptField } from "@/lib/crypto";
 import { ArrowLeft, Luggage } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -46,12 +47,12 @@ export default async function PackagePage({
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Luggage size={22} /></span>
         <div>
           <h1 className="text-2xl font-bold text-[#101010]">Sağlık Turizmi Paketi</h1>
-          <p className="text-sm text-slate-500">{c.patientName} · {c.branch} tedavisi için uçtan uca paket oluşturun.</p>
+          <p className="text-sm text-slate-500">{decryptField(c.patientName)} · {c.branch} tedavisi için uçtan uca paket oluşturun.</p>
         </div>
       </div>
 
       <div className="mt-7">
-        <PackageBuilder caseId={c.id} patientName={c.patientName} branch={c.branch} country={c.country} initial={initial} treatments={treatments} rate={fx.rate} fxSource={fx.source} fxAt={fx.at} />
+        <PackageBuilder caseId={c.id} patientName={decryptField(c.patientName)} branch={c.branch} country={c.country} initial={initial} treatments={treatments} rate={fx.rate} fxSource={fx.source} fxAt={fx.at} />
       </div>
     </div>
   );

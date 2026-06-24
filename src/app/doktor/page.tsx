@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { CaseQueue, type CaseRow } from "@/components/CaseQueue";
 import { DutyConsole } from "@/components/DutyConsole";
 import { dutyFeed, type DutyRequest } from "@/lib/clinical-duty";
+import { decryptField } from "@/lib/crypto";
 import { Stethoscope, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export default async function DoctorPanel() {
 
   const rows: CaseRow[] = cases.map((c) => ({
     id: c.id,
-    patientName: c.patientName,
+    patientName: decryptField(c.patientName), // kimlik at-rest şifreli → çöz (E2EE inc.2c)
     country: c.country,
     language: c.language,
     branch: c.branch,

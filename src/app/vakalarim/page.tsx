@@ -25,7 +25,7 @@ export default async function MyCasesPage() {
     const b = c.bookings[0];
     return {
       id: c.id,
-      patientName: c.patientName,
+      patientName: decryptField(c.patientName), // kimlik at-rest şifreli → çöz (E2EE inc.2c)
       country: c.country,
       status: c.status,
       urgency: c.urgency,

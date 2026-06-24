@@ -25,7 +25,7 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
 
   const data: RecoveryData = {
     caseId: c.id,
-    patientName: c.patientName,
+    patientName: decryptField(c.patientName), // kimlik at-rest şifreli → çöz (E2EE inc.2c)
     branch: c.branch,
     day,
     protocol: recoveryProtocol(c.branch),

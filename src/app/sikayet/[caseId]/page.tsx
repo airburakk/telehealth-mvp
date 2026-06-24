@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { canAccessCase } from "@/lib/ownership";
 import { ComplaintForm } from "@/components/ComplaintForm";
 import { BOARD } from "@/lib/ethics";
+import { decryptField } from "@/lib/crypto";
 import { ArrowLeft, Scale, ShieldCheck, Lock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default async function ComplaintPage({ params }: { params: Promise<{ case
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Scale size={22} /></span>
         <div>
           <h1 className="text-2xl font-bold text-[#101010]">Tahkim & Etik Denetim</h1>
-          <p className="text-sm text-slate-500">{c.patientName} · {c.branch} · bağımsız kurul güvencesi</p>
+          <p className="text-sm text-slate-500">{decryptField(c.patientName)} · {c.branch} · bağımsız kurul güvencesi</p>
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import { formatDateTime } from "@/lib/constants";
 import { branchKeyFromLabel, branchLabel, getBranchProcedures, getByCodes } from "@/lib/procedures";
 import ProcedureSelector from "@/components/ProcedureSelector";
 import { DoctorPreferences } from "@/components/DoctorPreferences";
+import { decryptField } from "@/lib/crypto";
 import { Star, BadgeCheck, Wallet, CalendarClock, TrendingUp, ExternalLink, Award, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +36,7 @@ export default async function DoctorDashboard() {
 
   const net = CONSULT_FEE * (1 - COMMISSION);
   const ended = doctor.consultations.filter((c) => c.status === "ENDED");
-  const earnings = ended.map((c) => ({ id: c.id, patient: c.case.patientName, date: c.endedAt ?? c.startedAt, net }));
+  const earnings = ended.map((c) => ({ id: c.id, patient: decryptField(c.case.patientName), date: c.endedAt ?? c.startedAt, net }));
   const totalNet = earnings.reduce((a, b) => a + b.net, 0);
 
   // M5 — Yaptığım İşlemler & Fiyatlandırma (branşa göre tarife + taban/tavan fiyat)

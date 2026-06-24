@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
   try {
     const p = await proposePackage(soap, {
-      patientName: c.patientName,
+      patientName: decryptField(c.patientName), // kimlik at-rest şifreli → AI girdisi için çöz (E2EE inc.2c)
       branch: c.branch,
       countryName: countryName(c.country),
       language: c.language,

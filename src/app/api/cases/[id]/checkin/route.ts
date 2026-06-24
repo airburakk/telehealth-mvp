@@ -80,7 +80,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const extra = [...cl.reasons, aiReason, photoReason].filter(Boolean).slice(0, 2).join(", ");
     const redFlag = {
       type: "RED_FLAG" as const,
-      title: `🚨 Kırmızı bayrak: ${c.patientName}`,
+      title: `🚨 Kırmızı bayrak`, // isim bildirime gömülmez (E2EE inc.2c)
       body: `${c.branch} · ağrı ${pain}/10 · ateş ${feverC.toFixed(1)}°C${extra ? ` · ${extra}` : ""}`,
       href: `/takip/${c.id}`,
     };

@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
   try {
     const { sections, structured } = await generateDischarge({
-      patientName: c.patientName,
+      patientName: decryptField(c.patientName), // kimlik at-rest şifreli → AI girdisi için çöz (E2EE inc.2c)
       countryName: countryName(c.country),
       language: c.language,
       branch: c.branch,
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
     const dateLine = new Intl.DateTimeFormat("tr-TR", { dateStyle: "long", timeZone: "Europe/Istanbul" }).format(new Date());
     const header =
       `EPİKRİZ / TABURCU RAPORU\n` +
-      `Hasta: ${c.patientName} · ${countryName(c.country)} · Branş: ${c.branch}\n` +
+      `Hasta: ${decryptField(c.patientName)} · ${countryName(c.country)} · Branş: ${c.branch}\n` +
       `Sorumlu Hekim: ${doctorLine} · Tarih: ${dateLine}\n` +
       `${"─".repeat(40)}`;
     const report = `${header}\n\n${sections}`;

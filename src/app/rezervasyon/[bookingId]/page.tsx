@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { canAccessCase } from "@/lib/ownership";
 import { formatUSD, type LineItem } from "@/lib/pricing";
 import { ESCROW_STATUS } from "@/lib/ethics";
+import { decryptField } from "@/lib/crypto";
 import {
   CheckCircle2, Lock, Plane, BedDouble, Stethoscope, Home,
   MessageCircle, ShieldCheck, Languages, Building2, HeartPulse, Scale,
@@ -38,7 +39,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
         <div>
           <h1 className="font-bold text-emerald-900">Paket onaylandı · Ödeme Escrow&apos;da emanette</h1>
           <p className="mt-0.5 text-sm text-emerald-800/80">
-            {c.patientName} için {booking.branch} tedavi paketi rezerve edildi. Tutar, hizmet tamamlanana dek platform güvencesinde tutulur.
+            {decryptField(c.patientName)} için {booking.branch} tedavi paketi rezerve edildi. Tutar, hizmet tamamlanana dek platform güvencesinde tutulur.
           </p>
         </div>
       </div>

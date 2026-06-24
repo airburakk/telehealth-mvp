@@ -76,7 +76,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
     await notifyRoles(["COORDINATOR"], {
       type: "OFFER",
-      title: `📤 Hastaya teklif gönderildi: ${c.patientName}`,
+      title: `📤 Hastaya teklif gönderildi`, // isim bildirime gömülmez (E2EE inc.2c)
       body: `${selection.tier} · ${selection.branch} · ${amount} — hasta onayı bekleniyor`,
       href: `/teklif/${booking.id}`,
     });
@@ -87,7 +87,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   await notifyRoles(["COORDINATOR"], {
     type: "BOOKING",
-    title: `💼 Yeni rezervasyon: ${c.patientName}`,
+    title: `💼 Yeni rezervasyon`,
     body: `${selection.tier} · ${selection.branch} · ${amount} (Escrow'da)`,
     href: `/rezervasyon/${booking.id}`,
   });

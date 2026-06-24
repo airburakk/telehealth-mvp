@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
   try {
     const { soap, structured } = await summarizeSOAP(notes, {
-      patientName: c?.patientName ?? "—",
+      patientName: decryptField(c?.patientName) ?? "—", // kimlik at-rest şifreli → AI girdisi için çöz (E2EE inc.2c)
       branch: c?.branch ?? "—",
       symptoms: c?.symptoms ? decryptField(c.symptoms) : "—", // at-rest şifreli → AI bağlamı için çöz
     }, source);
