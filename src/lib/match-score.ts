@@ -2,9 +2,12 @@
 // ağırlıklandırır. Kullanım: Nöbetçi seçimi (clinical-duty), SO uzman oto-atama (second-opinion-service),
 // İcapçı randevu fan-out sırası. Pro Bono eşleştirmesi KAPSAM DIŞI (adalet için FIFO kalır — kullanıcı kararı).
 //
-// Tüm metrikler METADATA (rating/successRate/pro bono sayısı/icap dönüş oranı) — klinik içerik DEĞİL →
-// E2EE şifreleme modeliyle uyumlu (şifrelenmez, eşleştirmede serbest kullanılır; [[hasta-verisi-uctan-uca-sifreleme]]).
-// "Ölçekle değer artar": doktor havuzu azken etki küçük; büyüdükçe kaliteli/duyarlı hekimler öne çıkar.
+// 9 metrik (hepsi METADATA — klinik içerik DEĞİL → E2EE şifreleme modeliyle uyumlu, eşleştirmede serbest kullanılır):
+//   rating · successRate · pro bono sayısı · icap dönüş oranı   (v2.85 çekirdek)
+//   + tamamlanan vaka hacmi · yanıt süresi (duyarlılık) · iptal oranı (güvenilirlik) · yorum hacmi · güncellik   (v2.86 ek)
+// "Ölçekle değer artar": doktor havuzu + geçmiş veri azken etki küçük; büyüdükçe duyarlı/güvenilir/deneyimli
+// hekimler öne çıkar. Veri yoksa her metrik NÖTR 0.5 döner → yeni hekim ne cezalı ne avantajlı.
+// Tüm "kalite" girdileri mevcut tablolardan türetilir; yalnız yanıt süresi Doctor.respCount/respTotalSec sayacını kullanır.
 import { db } from "./db";
 
 // Görüşme tamamlandıktan sonraki pro bono durumları (sosyal katkı sayımı) — pro-bono.ts POST_CONSULT ile hizalı.
@@ -16,18 +19,43 @@ export interface DoctorMetrics {
   proBonoCount: number; // tamamlanan pro bono görüşme sayısı — sosyal katkı
   icapNotified: number; // İcapçı olarak alınan talep bildirimi
   icapOffered: number; // bu taleplere verilen teklif → dönüş oranı = offered/notified
+  // ── v2.86 ek metrikler ──
+  completedCases: number; // tamamlanan vaka hacmi (Case.status=DONE) — deneyim/hacim
+  reviewCount: number; // doğrulanmış yorum sayısı (Review) — rating güven aralığı
+  respCount: number; // yanıtlanan İcapçı talebi sayısı (Doctor.respCount)
+  respTotalSec: number; // toplam yanıt süresi sn (Doctor.respTotalSec) → ort = total/count
+  apptCancelled: number; // atanmış randevudan iptal olan (ConsultAppointment CANCELLED)
+  apptTotal: number; // atanmış toplam randevu (iptal oranı paydası)
+  lastActiveSec: number | null; // son aktiviteden (görüşme) bu yana geçen sn; null = hiç veri yok
 }
 
-// Ağırlıklar (toplam 1.0) — ölçekle ayarlanabilir TEK kaynak. Memnuniyet en yüksek ağırlık.
-export const MATCH_WEIGHTS = { rating: 0.4, successRate: 0.2, proBono: 0.2, icapReturn: 0.2 } as const;
+// Ağırlıklar (toplam 1.0) — ölçekle ayarlanabilir TEK kaynak. Memnuniyet (rating) en yüksek ağırlık.
+export const MATCH_WEIGHTS = {
+  rating: 0.22,
+  successRate: 0.12,
+  proBono: 0.1,
+  icapReturn: 0.1,
+  responsiveness: 0.12, // yanıt süresi
+  reliability: 0.1, // 1 − iptal oranı
+  volume: 0.1, // tamamlanan vaka hacmi
+  reviewVolume: 0.07, // yorum hacmi
+  recency: 0.07, // güncellik
+} as const;
 
 // SO yük dengeleme cezası: en kaliteli hoca tüm dosyaları kapmasın → her aktif dosya skoru bu kadar düşürür.
 export const LOAD_PENALTY = 0.08;
 
-// Pro bono sayısı doygunluğu: birkaç görüşme büyük fark, sonra plato (log eğrisi). ~10 görüşme ≈ tam puan.
-const PRO_BONO_SATURATION = 10;
+// Doygunluk eşikleri (log eğrisi: ilk birkaç birim büyük fark, sonra plato).
+const PRO_BONO_SATURATION = 10; // ~10 pro bono görüşme ≈ tam puan
+const VOLUME_SATURATION = 20; // ~20 tamamlanan vaka ≈ tam puan
+const REVIEW_SATURATION = 30; // ~30 yorum ≈ tam güven
+// Yanıt süresi referansı: bu sürede yanıt = 0.5 puan; daha hızlı → 1'e, daha yavaş → 0'a.
+const RESP_TARGET_SEC = 1800; // 30 dk
+// Güncellik yarı-ömrü: son aktiviteden bu kadar gün sonra tazelik yarıya iner.
+const RECENCY_HALF_LIFE_DAYS = 45;
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+const logSat = (n: number, sat: number) => clamp01(Math.log1p(Math.max(0, n)) / Math.log1p(sat));
 
 // İcap dönüş oranı (0-1). Veri yoksa (hiç talep gelmemiş) NÖTR 0.5 → yeni/icapsız hekim ne cezalı ne avantajlı.
 export function icapReturnRate(m: { icapNotified: number; icapOffered: number }): number {
@@ -35,26 +63,65 @@ export function icapReturnRate(m: { icapNotified: number; icapOffered: number })
   return clamp01(m.icapOffered / m.icapNotified);
 }
 
+// Duyarlılık (0-1): ortalama yanıt süresi düşükse yüksek. 1/(1+avg/HEDEF) → avg=0→1, avg=HEDEF→0.5. Veri yoksa nötr.
+export function responsivenessScore(m: { respCount: number; respTotalSec: number }): number {
+  if (m.respCount <= 0) return 0.5;
+  const avg = m.respTotalSec / m.respCount;
+  return clamp01(1 / (1 + avg / RESP_TARGET_SEC));
+}
+
+// Güvenilirlik (0-1): 1 − iptal oranı. Atanmış randevu yoksa NÖTR 0.5.
+export function reliabilityScore(m: { apptCancelled: number; apptTotal: number }): number {
+  if (m.apptTotal <= 0) return 0.5;
+  return clamp01(1 - m.apptCancelled / m.apptTotal);
+}
+
+// Güncellik (0-1): son aktiviteden bu yana üstel azalma (yarı-ömür). Hiç aktivite yoksa NÖTR 0.5.
+export function recencyScore(lastActiveSec: number | null): number {
+  if (lastActiveSec == null) return 0.5;
+  const days = lastActiveSec / 86_400;
+  return clamp01(Math.pow(0.5, days / RECENCY_HALF_LIFE_DAYS));
+}
+
 // 0-1 normalize edilmiş ağırlıklı kalite skoru. Yüksek = eşleştirmede öncelikli. (Saf — test edilebilir.)
 export function doctorMatchScore(m: DoctorMetrics): number {
   const nRating = clamp01(m.rating / 5);
   const nSuccess = clamp01(m.successRate / 100);
-  const nProBono = clamp01(Math.log1p(Math.max(0, m.proBonoCount)) / Math.log1p(PRO_BONO_SATURATION));
+  const nProBono = logSat(m.proBonoCount, PRO_BONO_SATURATION);
   const nIcap = icapReturnRate(m);
+  const nResp = responsivenessScore(m);
+  const nRel = reliabilityScore(m);
+  const nVolume = logSat(m.completedCases, VOLUME_SATURATION);
+  const nReview = logSat(m.reviewCount, REVIEW_SATURATION);
+  const nRecency = recencyScore(m.lastActiveSec);
   return (
     MATCH_WEIGHTS.rating * nRating +
     MATCH_WEIGHTS.successRate * nSuccess +
     MATCH_WEIGHTS.proBono * nProBono +
-    MATCH_WEIGHTS.icapReturn * nIcap
+    MATCH_WEIGHTS.icapReturn * nIcap +
+    MATCH_WEIGHTS.responsiveness * nResp +
+    MATCH_WEIGHTS.reliability * nRel +
+    MATCH_WEIGHTS.volume * nVolume +
+    MATCH_WEIGHTS.reviewVolume * nReview +
+    MATCH_WEIGHTS.recency * nRecency
   );
 }
 
 // rankDoctorsByQuality'nin ihtiyaç duyduğu minimum doktor alanları (full Doctor row bunları içerir).
-type DoctorRow = { id: string; rating: number; successRate: number; icapNotified: number; icapOffered: number };
+type DoctorRow = {
+  id: string;
+  rating: number;
+  successRate: number;
+  icapNotified: number;
+  icapOffered: number;
+  respCount: number;
+  respTotalSec: number;
+};
 
-// Birden çok doktorun tamamlanan pro bono sayısını TEK groupBy ile getir (N+1 sorgu yok).
+// ── Toplu (N+1'siz) veri çekiciler: yalnız aday doktorlar için, tek sorgu ──
+
+// Tamamlanan pro bono görüşme sayısı.
 async function proBonoCounts(ids: string[]): Promise<Map<string, number>> {
-  if (ids.length === 0) return new Map();
   const rows = await db.case.groupBy({
     by: ["doctorId"],
     where: { proBono: true, doctorId: { in: ids }, proBonoStatus: { in: PRO_BONO_DONE } },
@@ -65,24 +132,85 @@ async function proBonoCounts(ids: string[]): Promise<Map<string, number>> {
   return m;
 }
 
+// Tamamlanan vaka hacmi (Case.status=DONE).
+async function completedCaseCounts(ids: string[]): Promise<Map<string, number>> {
+  const rows = await db.case.groupBy({
+    by: ["doctorId"],
+    where: { status: "DONE", doctorId: { in: ids } },
+    _count: true,
+  });
+  const m = new Map<string, number>();
+  for (const r of rows) if (r.doctorId) m.set(r.doctorId, r._count);
+  return m;
+}
+
+// Doğrulanmış yorum sayısı (Review).
+async function reviewCounts(ids: string[]): Promise<Map<string, number>> {
+  const rows = await db.review.groupBy({ by: ["doctorId"], where: { doctorId: { in: ids } }, _count: true });
+  const m = new Map<string, number>();
+  for (const r of rows) m.set(r.doctorId, r._count);
+  return m;
+}
+
+// Son aktivite anı (en son görüşme başlangıcı) → güncellik için.
+async function lastActiveMap(ids: string[]): Promise<Map<string, Date>> {
+  const rows = await db.consultation.groupBy({ by: ["doctorId"], where: { doctorId: { in: ids } }, _max: { startedAt: true } });
+  const m = new Map<string, Date>();
+  for (const r of rows) if (r._max.startedAt) m.set(r.doctorId, r._max.startedAt);
+  return m;
+}
+
+// İptal istatistiği: atanmış toplam randevu + iptal olan (ConsultAppointment, doctorId dolu olanlar).
+async function cancelStats(ids: string[]): Promise<Map<string, { total: number; cancelled: number }>> {
+  const [totalRows, cancelRows] = await Promise.all([
+    db.consultAppointment.groupBy({ by: ["doctorId"], where: { doctorId: { in: ids } }, _count: true }),
+    db.consultAppointment.groupBy({ by: ["doctorId"], where: { doctorId: { in: ids }, status: "CANCELLED" }, _count: true }),
+  ]);
+  const m = new Map<string, { total: number; cancelled: number }>();
+  for (const r of totalRows) if (r.doctorId) m.set(r.doctorId, { total: r._count, cancelled: 0 });
+  for (const r of cancelRows) if (r.doctorId) {
+    const e = m.get(r.doctorId) ?? { total: r._count, cancelled: 0 };
+    e.cancelled = r._count;
+    m.set(r.doctorId, e);
+  }
+  return m;
+}
+
 /**
  * Doktor adaylarını kalite skoruna göre sırala (yüksek önce). `loads` verilirse (SO yük dengeleme)
  * birleşik skor = kalite − LOAD_PENALTY·load → kaliteli ama az yüklü hoca öne gelir, bir hoca boğulmaz.
- * Pro bono sayıları toplu çekilir; salt-okuma (yan etkisiz). 0/1 elemanlı liste güvenli (olduğu gibi döner).
+ * Tüm kalite girdileri toplu (paralel) çekilir; salt-okuma (yan etkisiz). 0/1 elemanlı liste güvenli.
  */
 export async function rankDoctorsByQuality<T extends DoctorRow>(
   doctors: T[],
   opts?: { loads?: Map<string, number> },
 ): Promise<T[]> {
   if (doctors.length <= 1) return [...doctors];
-  const pb = await proBonoCounts(doctors.map((d) => d.id));
+  const ids = doctors.map((d) => d.id);
+  const [pb, cc, rc, la, cs] = await Promise.all([
+    proBonoCounts(ids),
+    completedCaseCounts(ids),
+    reviewCounts(ids),
+    lastActiveMap(ids),
+    cancelStats(ids),
+  ]);
+  const now = Date.now();
   const scored = doctors.map((d) => {
+    const last = la.get(d.id);
+    const cancel = cs.get(d.id);
     const base = doctorMatchScore({
       rating: d.rating,
       successRate: d.successRate,
       proBonoCount: pb.get(d.id) ?? 0,
       icapNotified: d.icapNotified,
       icapOffered: d.icapOffered,
+      completedCases: cc.get(d.id) ?? 0,
+      reviewCount: rc.get(d.id) ?? 0,
+      respCount: d.respCount,
+      respTotalSec: d.respTotalSec,
+      apptCancelled: cancel?.cancelled ?? 0,
+      apptTotal: cancel?.total ?? 0,
+      lastActiveSec: last ? (now - last.getTime()) / 1000 : null,
     });
     const load = opts?.loads?.get(d.id) ?? 0;
     return { d, score: base - LOAD_PENALTY * load };

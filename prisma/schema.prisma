@@ -81,6 +81,9 @@ model Doctor {
   // CRM eşleştirme kalite indikatörleri (metadata; klinik içerik değil → şifreleme uyumlu) — lib/match-score.ts
   icapNotified    Int            @default(0) // İcapçı olarak alınan randevu talebi bildirimi sayısı
   icapOffered     Int            @default(0) // bu taleplere verilen randevu teklifi sayısı → icap dönüş oranı = offered/notified
+  // Yanıt süresi (duyarlılık) — İcapçı talebe ne kadar hızlı teklif veriyor: ort = respTotalSec/respCount (additive sayaç)
+  respCount       Int            @default(0) // yanıtlanan (teklif verilen) İcapçı talebi sayısı
+  respTotalSec    Int            @default(0) // toplam yanıt süresi (saniye) — talep→teklif
   cases           Case[]
   consultations   Consultation[]
   reviews         Review[]

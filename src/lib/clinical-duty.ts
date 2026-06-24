@@ -139,8 +139,13 @@ export async function offerAppointment(caseId: string, doctorId: string, propose
     data: { status: "OFFERED", doctorId, proposedAt },
   });
   if (claimed.count === 0) return "TAKEN";
-  // İcap dönüş oranı payı: teklif veren İcapçının icapOffered sayacı artar (CRM kalite metadata; offered/notified).
-  await db.doctor.update({ where: { id: doctorId }, data: { icapOffered: { increment: 1 } } });
+  // İcap dönüş oranı payı + yanıt süresi: teklif veren İcapçının icapOffered + respCount artar; talep→teklif
+  // süresi (sn) respTotalSec'e eklenir (CRM kalite metadata; duyarlılık = respTotalSec/respCount).
+  const respSec = Math.max(0, Math.round((Date.now() - appt.createdAt.getTime()) / 1000));
+  await db.doctor.update({
+    where: { id: doctorId },
+    data: { icapOffered: { increment: 1 }, respCount: { increment: 1 }, respTotalSec: { increment: respSec } },
+  });
   if (appt.patientId) {
     await notifyUser(appt.patientId, {
       type: "CLINIC_OFFER",
