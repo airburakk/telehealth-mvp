@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
 import { getCurrentUser } from "@/lib/auth";
 import { matchForCase } from "@/lib/pro-bono";
+import { encryptField } from "@/lib/crypto";
 
 // POST /api/pro-bono/apply — hasta ön-triyaj → ÜCRETSİZ pro bono vaka (ödeme kapısı YOK) → anında eşleşme dener.
 export async function POST(req: Request) {
@@ -25,15 +26,15 @@ export async function POST(req: Request) {
   const created = await db.case.create({
     data: {
       userId: user.id,
-      patientName,
+      patientName: encryptField(patientName), // kimlik at-rest şifreli (E2EE inc.2c)
       country: String(body.country ?? "TR"),
       language: String(body.language ?? "Türkçe"),
-      symptoms,
+      symptoms: encryptField(symptoms), // E2EE Faz 1 — pro-bono yazımı inc.2'de atlanmıştı (gap fix)
       durationText: body.durationText ? String(body.durationText) : null,
       branch: a.branch,
       urgency: a.urgency,
       confidence: a.confidence,
-      reasoning: a.reasoning,
+      reasoning: encryptField(a.reasoning), // E2EE Faz 1 (gap fix)
       status: "NEW",
       proBono: true,
       proBonoStatus: "WAITING",

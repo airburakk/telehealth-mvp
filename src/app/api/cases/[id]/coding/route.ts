@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { recordAccess, reqMeta } from "@/lib/audit";
+import { encryptField } from "@/lib/crypto";
 
 const ID_TYPES = new Set(["TC", "PASSPORT", "OTHER"]);
 
@@ -24,7 +25,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const rawType = typeof b.patientIdentifierType === "string" ? b.patientIdentifierType.trim().toUpperCase() : "";
   const patientIdentifierType = patientIdentifier ? (ID_TYPES.has(rawType) ? rawType : "TC") : null;
 
-  await db.case.update({ where: { id }, data: { icd10Code, patientIdentifier, patientIdentifierType } });
+  await db.case.update({ where: { id }, data: { icd10Code, patientIdentifier: encryptField(patientIdentifier), patientIdentifierType } }); // kimlik at-rest şifreli (E2EE inc.2c)
   await recordAccess({
     actor: user, action: "CODING_WRITE", resourceType: "CASE", resourceId: id, subjectUserId: exists.userId,
     detail: `ICD-10: ${icd10Code ?? "—"}`, ...reqMeta(req),

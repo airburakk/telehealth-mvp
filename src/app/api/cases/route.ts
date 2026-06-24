@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   const created = await db.case.create({
     data: {
       userId: creator?.id ?? null, // vaka sahibi (hasta yalnız kendi vakalarını görür)
-      patientName,
+      patientName: encryptField(patientName), // kimlik at-rest şifreli (E2EE inc.2c)
       country: String(body.country ?? "TR"),
       language: String(body.language ?? "Türkçe"),
       symptoms: encryptField(symptoms),

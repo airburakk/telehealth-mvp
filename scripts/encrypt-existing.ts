@@ -2,7 +2,7 @@
 // Mevcut DÜZ METİN klinik kolonlarını uygulama-katmanı envelope ile şifreler (lib/crypto.ts encryptField).
 // Kapsanan (inc.1): CaseDocument.content · Signal.data · Consultation.notes · Case.dischargeReport/dischargeStructured.
 //   (inc.2): Case.symptoms/reasoning/extra · CheckIn.note/photo · SecondOpinion.content/structured · SecondOpinionDocument.fileRef.
-//   (PARK — bu betikte YOK: kimlik patientName/patientIdentifier → ayrı tur.)
+//   (inc.2c): Case.patientName · Case.patientIdentifier (kimlik). İkinci Görüş/User.name kapsam dışı.
 //
 // İDEMPOTENT: zaten şifreli (enc:v1:) / boş ("") / null satırlar ATLANIR → tekrar çalıştırmak güvenli.
 // HİÇBİR ŞEY SİLMEZ. Cursor sayfalama (büyük base64 belgeleri RAM'i doldurmaz).
@@ -104,13 +104,15 @@ async function main() {
     for (;;) {
       const rows = await db.case.findMany({
         where: { id: { gt: cursor } },
-        select: { id: true, symptoms: true, reasoning: true, extra: true, dischargeReport: true, dischargeStructured: true },
+        select: { id: true, patientName: true, patientIdentifier: true, symptoms: true, reasoning: true, extra: true, dischargeReport: true, dischargeStructured: true },
         orderBy: { id: "asc" }, take: 200,
       });
       if (rows.length === 0) break;
       for (const r of rows) {
         scanned++;
-        const data: { symptoms?: string; reasoning?: string; extra?: string; dischargeReport?: string; dischargeStructured?: string } = {};
+        const data: { patientName?: string; patientIdentifier?: string; symptoms?: string; reasoning?: string; extra?: string; dischargeReport?: string; dischargeStructured?: string } = {};
+        if (needsEnc(r.patientName)) data.patientName = encryptField(r.patientName);
+        if (needsEnc(r.patientIdentifier)) data.patientIdentifier = encryptField(r.patientIdentifier);
         if (needsEnc(r.symptoms)) data.symptoms = encryptField(r.symptoms);
         if (needsEnc(r.reasoning)) data.reasoning = encryptField(r.reasoning);
         if (needsEnc(r.extra)) data.extra = encryptField(r.extra);
@@ -124,7 +126,7 @@ async function main() {
       cursor = rows[rows.length - 1].id;
       if (rows.length < 200) break;
     }
-    console.log(`  ${"Case (klinik+epikriz)".padEnd(26)} ${String(scanned).padStart(6)} tarandı · ${String(changed).padStart(6)} şifrelendi`);
+    console.log(`  ${"Case (kimlik+klinik+epikriz)".padEnd(26)} ${String(scanned).padStart(6)} tarandı · ${String(changed).padStart(6)} şifrelendi`);
     total += changed;
   }
 
