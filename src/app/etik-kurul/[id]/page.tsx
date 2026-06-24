@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { decryptField } from "@/lib/crypto"; // triyaj semptom/gerekçe at-rest şifreli (E2EE Faz 1 inc.2) → çöz
 import { maskCaseId, REQUEST_TYPES, VERDICTS, ACTIONS, ESCROW_STATUS } from "@/lib/ethics";
 import { formatUSD } from "@/lib/pricing";
 import { urgencyStyle, formatDateTime } from "@/lib/constants";
@@ -58,11 +59,11 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
             </div>
             <div className="mt-3">
               <div className="text-xs uppercase tracking-wide text-slate-400">Şikayet (triyaj)</div>
-              <p className="mt-1 text-sm text-slate-700">{c.case.symptoms}</p>
+              <p className="mt-1 text-sm text-slate-700">{decryptField(c.case.symptoms)}</p>
             </div>
             <div className="mt-3 rounded-lg bg-teal-50/70 p-3 ring-1 ring-teal-100">
               <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700"><Sparkles size={13} /> AI gerekçe</div>
-              <p className="mt-1 text-xs leading-relaxed text-slate-600">{c.case.reasoning}</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">{decryptField(c.case.reasoning)}</p>
             </div>
           </div>
 
