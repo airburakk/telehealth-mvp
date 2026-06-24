@@ -7,7 +7,8 @@ import { branchKeyFromLabel, branchLabel, getBranchProcedures, getByCodes } from
 import ProcedureSelector from "@/components/ProcedureSelector";
 import { DoctorPreferences } from "@/components/DoctorPreferences";
 import { decryptField } from "@/lib/crypto";
-import { Star, BadgeCheck, Wallet, CalendarClock, TrendingUp, ExternalLink, Award, Users } from "lucide-react";
+import { Star, BadgeCheck, Wallet, CalendarClock, TrendingUp, ExternalLink, Award, Users, Target } from "lucide-react";
+import { getDoctorScorecard, type MetricKey } from "@/lib/match-score";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,7 @@ export default async function DoctorDashboard() {
     );
   }
 
+  const scorecard = await getDoctorScorecard(doctor.id); // CRM eşleştirme kalite kartı (şeffaflık)
   const net = CONSULT_FEE * (1 - COMMISSION);
   const ended = doctor.consultations.filter((c) => c.status === "ENDED");
   const earnings = ended.map((c) => ({ id: c.id, patient: decryptField(c.case.patientName), date: c.endedAt ?? c.startedAt, net }));
@@ -80,6 +82,38 @@ export default async function DoctorDashboard() {
         <Metric icon={<Users size={16} />} value={`${ended.length}`} label="Tamamlanan görüşme" />
         <Metric icon={<Award size={16} />} value={`${doctor.experienceYears} yıl`} label="Deneyim" />
       </div>
+
+      {/* Eşleştirme Kalite Kartı — CRM 9-metrik skoru (Nöbetçi/İcapçı/SO önceliği); doktora şeffaf */}
+      {scorecard && (
+        <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <Target size={15} /> Eşleştirme Kalite Skoru
+            </div>
+            <div className="text-2xl font-bold text-[#0EA5B2]">%{Math.round(scorecard.score * 100)}</div>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            Nöbetçi, İcapçı ve İkinci Görüş eşleştirmesinde önceliğiniz bu metriklerle belirlenir. Veri biriktikçe etkisi artar; verisi olmayan metrikler skoru etkilemez.
+          </p>
+          <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
+            {scorecard.metrics.map((mt) => (
+              <div key={mt.key} className="rounded-2xl border border-slate-100 p-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-slate-700">{METRIC_LABEL[mt.key]}</span>
+                  <span className={mt.active ? "font-semibold text-slate-800" : "text-slate-400"}>{mt.raw}</span>
+                </div>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className={`h-full rounded-full ${mt.active ? "bg-[#14C3D0]" : "bg-slate-300"}`} style={{ width: `${Math.round(mt.value01 * 100)}%` }} />
+                </div>
+                <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                  <span>ağırlık %{Math.round(mt.weight * 100)}</span>
+                  {!mt.active && <span className="text-amber-500">veri bekleniyor</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* M5 — Yaptığım İşlemler & Fiyatlandırma */}
       {branchKey && (
@@ -165,6 +199,18 @@ export default async function DoctorDashboard() {
     </div>
   );
 }
+
+const METRIC_LABEL: Record<MetricKey, string> = {
+  rating: "Memnuniyet",
+  successRate: "Başarı oranı",
+  proBono: "Pro bono katkı",
+  volume: "Tamamlanan vaka",
+  reviewVolume: "Yorum sayısı",
+  icapReturn: "İcap dönüş oranı",
+  responsiveness: "Yanıt süresi",
+  reliability: "Güvenilirlik (iptal)",
+  recency: "Güncellik",
+};
 
 function Metric({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
   return (

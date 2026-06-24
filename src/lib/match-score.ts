@@ -83,27 +83,42 @@ export function recencyScore(lastActiveSec: number | null): number {
   return clamp01(Math.pow(0.5, days / RECENCY_HALF_LIFE_DAYS));
 }
 
-// Ağırlıklı kalite skoru (0-1) — VERİ-OLGUNLUK FARKINDA. Oran/zaman metrikleri (icap dönüş · yanıt süresi ·
-// iptal oranı · güncellik) verisi YOKKEN skoru nötr 0.5 ile dilute etmesin diye ATLANIR; ağırlıkları kalan
-// geçerli metriklere yeniden normalize edilir → metrikler veri geldikçe devreye girer ("ölçekle değer artar")
-// ve az-veri hekim ortaya çekilmez. rating/successRate her zaman geçerli; sayım metrikleri (pro bono · vaka
-// hacmi · yorum) 0 = gerçek düşük sinyal (atlanmaz, düşük puan alır). (Saf — test edilebilir.)
-export function doctorMatchScore(m: DoctorMetrics): number {
-  // Her zaman geçerli (rating/success) + sayım metrikleri (0 = düşük, atlanmaz).
-  const parts: Array<[number, number]> = [
-    [clamp01(m.rating / 5), MATCH_WEIGHTS.rating],
-    [clamp01(m.successRate / 100), MATCH_WEIGHTS.successRate],
-    [logSat(m.proBonoCount, PRO_BONO_SATURATION), MATCH_WEIGHTS.proBono],
-    [logSat(m.completedCases, VOLUME_SATURATION), MATCH_WEIGHTS.volume],
-    [logSat(m.reviewCount, REVIEW_SATURATION), MATCH_WEIGHTS.reviewVolume],
+// Bir metriğin skora katkısı: normalize değer (0-1) + ağırlık + aktif mi (verisi var mı → skora girer).
+// Skor hesabı + doktor profili "kalite kartı" TEK kaynaktan (metricBreakdown) beslenir.
+export type MetricKey =
+  | "rating" | "successRate" | "proBono" | "volume" | "reviewVolume"
+  | "icapReturn" | "responsiveness" | "reliability" | "recency";
+export interface MetricBreakdown {
+  key: MetricKey;
+  value01: number; // 0-1 normalize skor
+  weight: number; // MATCH_WEIGHTS payı
+  active: boolean; // skora dahil mi (oran/zaman metrikleri veri yoksa false → atlanır)
+}
+
+// Tüm metriklerin normalize değeri + aktifliği. rating/successRate + sayım metrikleri (pro bono · vaka · yorum)
+// HER ZAMAN aktif (0 = gerçek düşük sinyal); oran/zaman metrikleri (icap · yanıt · iptal · güncellik) yalnız
+// verisi/paydası varsa aktif (yoksa skoru dilute etmemek için atlanır).
+export function metricBreakdown(m: DoctorMetrics): MetricBreakdown[] {
+  return [
+    { key: "rating", value01: clamp01(m.rating / 5), weight: MATCH_WEIGHTS.rating, active: true },
+    { key: "successRate", value01: clamp01(m.successRate / 100), weight: MATCH_WEIGHTS.successRate, active: true },
+    { key: "proBono", value01: logSat(m.proBonoCount, PRO_BONO_SATURATION), weight: MATCH_WEIGHTS.proBono, active: true },
+    { key: "volume", value01: logSat(m.completedCases, VOLUME_SATURATION), weight: MATCH_WEIGHTS.volume, active: true },
+    { key: "reviewVolume", value01: logSat(m.reviewCount, REVIEW_SATURATION), weight: MATCH_WEIGHTS.reviewVolume, active: true },
+    { key: "icapReturn", value01: icapReturnRate(m), weight: MATCH_WEIGHTS.icapReturn, active: m.icapNotified > 0 },
+    { key: "responsiveness", value01: responsivenessScore(m), weight: MATCH_WEIGHTS.responsiveness, active: m.respCount > 0 },
+    { key: "reliability", value01: reliabilityScore(m), weight: MATCH_WEIGHTS.reliability, active: m.apptTotal > 0 },
+    { key: "recency", value01: recencyScore(m.lastActiveSec), weight: MATCH_WEIGHTS.recency, active: m.lastActiveSec != null },
   ];
-  // Oran/zaman metrikleri: yalnız verisi/paydası varsa ekle (yoksa atla → ağırlık kalanlara yeniden dağılır).
-  if (m.icapNotified > 0) parts.push([icapReturnRate(m), MATCH_WEIGHTS.icapReturn]);
-  if (m.respCount > 0) parts.push([responsivenessScore(m), MATCH_WEIGHTS.responsiveness]);
-  if (m.apptTotal > 0) parts.push([reliabilityScore(m), MATCH_WEIGHTS.reliability]);
-  if (m.lastActiveSec != null) parts.push([recencyScore(m.lastActiveSec), MATCH_WEIGHTS.recency]);
-  const totalW = parts.reduce((s, [, w]) => s + w, 0);
-  return totalW > 0 ? parts.reduce((s, [v, w]) => s + v * (w / totalW), 0) : 0;
+}
+
+// Ağırlıklı kalite skoru (0-1) — VERİ-OLGUNLUK FARKINDA: yalnız AKTİF metrikler (verisi olanlar) skora girer,
+// ağırlıkları kalan aktif kümeye yeniden normalize edilir → oran/zaman metrikleri veri yokken skoru nötr 0.5
+// ile dilute etmez ("ölçekle değer artar"). (Saf — test edilebilir.)
+export function doctorMatchScore(m: DoctorMetrics): number {
+  const active = metricBreakdown(m).filter((p) => p.active);
+  const totalW = active.reduce((s, p) => s + p.weight, 0);
+  return totalW > 0 ? active.reduce((s, p) => s + p.value01 * (p.weight / totalW), 0) : 0;
 }
 
 // rankDoctorsByQuality'nin ihtiyaç duyduğu minimum doktor alanları (full Doctor row bunları içerir).
@@ -222,4 +237,45 @@ export async function rankDoctorsByQuality<T extends DoctorRow>(
   });
   scored.sort((a, b) => b.score - a.score);
   return scored.map((s) => s.d);
+}
+
+// ── Doktor profili "Eşleştirme Kalite Kartı" — tek doktorun metrik dökümü + genel skor (şeffaflık) ──
+export interface DoctorScorecard {
+  score: number; // 0-1 genel kalite skoru (Nöbetçi/İcapçı/SO eşleştirme önceliği)
+  metrics: Array<MetricBreakdown & { raw: string }>; // her metrik + okunur ham değer
+}
+
+// Doktorun kendi profili için kalite kartını üret — rankDoctorsByQuality ile AYNI metrik kaynakları.
+export async function getDoctorScorecard(doctorId: string): Promise<DoctorScorecard | null> {
+  const d = await db.doctor.findUnique({
+    where: { id: doctorId },
+    select: { id: true, rating: true, successRate: true, icapNotified: true, icapOffered: true, respCount: true, respTotalSec: true },
+  });
+  if (!d) return null;
+  const ids = [doctorId];
+  const [pb, cc, rc, la, cs] = await Promise.all([
+    proBonoCounts(ids), completedCaseCounts(ids), reviewCounts(ids), lastActiveMap(ids), cancelStats(ids),
+  ]);
+  const last = la.get(doctorId);
+  const cancel = cs.get(doctorId);
+  const m: DoctorMetrics = {
+    rating: d.rating, successRate: d.successRate, proBonoCount: pb.get(doctorId) ?? 0,
+    icapNotified: d.icapNotified, icapOffered: d.icapOffered,
+    completedCases: cc.get(doctorId) ?? 0, reviewCount: rc.get(doctorId) ?? 0,
+    respCount: d.respCount, respTotalSec: d.respTotalSec,
+    apptCancelled: cancel?.cancelled ?? 0, apptTotal: cancel?.total ?? 0,
+    lastActiveSec: last ? (Date.now() - last.getTime()) / 1000 : null,
+  };
+  const raw: Record<MetricKey, string> = {
+    rating: m.rating.toFixed(1),
+    successRate: `%${m.successRate}`,
+    proBono: `${m.proBonoCount}`,
+    volume: `${m.completedCases}`,
+    reviewVolume: `${m.reviewCount}`,
+    icapReturn: m.icapNotified > 0 ? `${m.icapOffered}/${m.icapNotified}` : "—",
+    responsiveness: m.respCount > 0 ? `~${Math.round(m.respTotalSec / m.respCount / 60)} dk` : "—",
+    reliability: m.apptTotal > 0 ? `${m.apptCancelled}/${m.apptTotal} iptal` : "—",
+    recency: m.lastActiveSec != null ? `${Math.round(m.lastActiveSec / 86_400)} gün önce` : "—",
+  };
+  return { score: doctorMatchScore(m), metrics: metricBreakdown(m).map((p) => ({ ...p, raw: raw[p.key] })) };
 }
