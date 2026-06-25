@@ -234,16 +234,33 @@ export interface ChainEntry {
   verification: { entryHashValid: boolean | null; timestampValid: boolean | null };
 }
 
+// Denetçi tablosunda sayfa başına kayıt (offset-tabanlı sayfalama varsayılanı).
+export const AUDIT_PAGE_SIZE = 50;
+
 // Denetçi tam-zincir görünümü: KÜRESEL bütünlük (tüm zinciri tarar → silme/araya-ekleme/çatal tespiti)
-// + en güncel N mühürlü kaydın metadata'sı. Klinik içerik DÖNDÜRMEZ (yalnız kim/ne-zaman/hangi-kayıt).
-export async function getChainAudit(limit = 200): Promise<{
+// + istenen sayfanın (en güncelden eskiye) metadata'sı. Klinik içerik DÖNDÜRMEZ (yalnız kim/ne-zaman/hangi-kayıt).
+//
+// SAYFALAMA (offset/skip): bütünlük taraması sayfadan BAĞIMSIZ tüm zinciri kapsar (her görünümde tam doğrulama);
+// sayfalama yalnız metadata tablosunun görünür dilimini sınırlar → 200+ kayıtta da denetçi tüm zinciri gezebilir.
+// Yüksek-frekanslı olaylar audit edilmediğinden (flood önleme) toplam kayıt sayısı yönetilebilir → offset uygun.
+export async function getChainAudit(opts: { page?: number; pageSize?: number } = {}): Promise<{
   integrity: { ok: boolean; count: number; brokenAt: string | null };
   entries: ChainEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }> {
+  const pageSize = Math.max(1, Math.floor(opts.pageSize ?? AUDIT_PAGE_SIZE));
   const integrity = await verifyAccessChain();
+  const total = await db.accessLog.count();
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  // İstenen sayfayı geçerli aralığa sıkıştır (0/negatif/NaN/aşırı-büyük güvenli → her zaman dolu veya son sayfa).
+  const page = Math.min(Math.max(1, Math.floor(opts.page || 1)), totalPages);
   const rows = await db.accessLog.findMany({
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    take: limit,
+    skip: (page - 1) * pageSize,
+    take: pageSize,
   });
   const entries: ChainEntry[] = rows.map((r) => ({
     id: r.id,
@@ -262,5 +279,5 @@ export async function getChainAudit(limit = 200): Promise<{
     tsTime: r.tsTime?.toISOString() ?? null,
     verification: verifyRow(r),
   }));
-  return { integrity, entries };
+  return { integrity, entries, total, page, pageSize, totalPages };
 }

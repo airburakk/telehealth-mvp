@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ShieldCheck, ShieldAlert, Clock, Link2 } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Clock, Link2, ChevronLeft, ChevronRight } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getChainAudit } from "@/lib/audit";
 import { ACTION_TR, RES_TR, ROLE_TR } from "@/lib/audit-labels";
@@ -15,12 +15,20 @@ const AUDITOR_ROLES = ["ETHICS", "ADMIN"];
 const short = (s: string | null, head = 8, tail = 0) =>
   !s ? "—" : s.length <= head + tail + 1 ? s : tail ? `${s.slice(0, head)}…${s.slice(-tail)}` : `${s.slice(0, head)}…`;
 
-export default async function DenetimPage() {
+export default async function DenetimPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/giris?next=/denetim");
   if (!AUDITOR_ROLES.includes(user.role)) redirect("/"); // proxy de korur — derinlemesine savunma
 
-  const { integrity, entries } = await getChainAudit(200);
+  const sp = await searchParams;
+  const requestedPage = parseInt(sp.page ?? "1", 10); // getChainAudit içinde aralığa sıkıştırılır (NaN→1)
+  const { integrity, entries, total, page, pageSize, totalPages } = await getChainAudit({
+    page: requestedPage,
+  });
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
@@ -121,12 +129,49 @@ export default async function DenetimPage() {
         </div>
       )}
 
+      {/* Sayfalama — 200+ kayıtta denetçi tüm zinciri (sayfa sayfa) gezebilir. İlk sayfa en güncel kayıtlar. */}
+      {totalPages > 1 && (
+        <nav className="mt-5 flex flex-wrap items-center justify-between gap-3" aria-label="Denetim kaydı sayfaları">
+          <span className="text-xs text-slate-500">
+            Toplam <strong className="text-slate-700">{total}</strong> kayıt · Sayfa{" "}
+            <strong className="text-slate-700">{page}</strong> / {totalPages}
+          </span>
+          <div className="flex items-center gap-2">
+            {page > 1 ? (
+              <Link
+                href={`/denetim?page=${page - 1}`}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                <ChevronLeft size={15} /> Önceki
+              </Link>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 px-3 py-1.5 text-sm font-medium text-slate-300 cursor-not-allowed">
+                <ChevronLeft size={15} /> Önceki
+              </span>
+            )}
+            {page < totalPages ? (
+              <Link
+                href={`/denetim?page=${page + 1}`}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                Sonraki <ChevronRight size={15} />
+              </Link>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 px-3 py-1.5 text-sm font-medium text-slate-300 cursor-not-allowed">
+                Sonraki <ChevronRight size={15} />
+              </span>
+            )}
+          </div>
+        </nav>
+      )}
+
       <div className="mt-6 flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
         <Clock size={15} className="mt-0.5 shrink-0 text-slate-400" />
         <p>
           <strong className="text-slate-600">Mühür, sıralama &amp; zaman damgası:</strong> her kayıt bir önceki
           kaydın mührüne bağlanır; yazımlar küresel bir kilit altında <em>sıralanır</em> (eşzamanlı erişimde bile
-          zincir çatallanmaz). Tabloda son 200 kayıt görünür; <strong>bütünlük taraması tüm zinciri</strong> kapsar.
+          zincir çatallanmaz). Tablo her sayfada en çok {pageSize} kaydı (en güncelden eskiye) gösterir ve
+          sayfalanır; <strong>bütünlük taraması ise her görünümde tüm zinciri</strong> kapsar.
           Zaman damgası şu an mekanizma-doğrulama amaçlı <em>simüle</em> (SIMULATED-LOCAL); üretimde bağımsız
           RFC 3161 otoritesine (freeTSA / TÜBİTAK BİLGEM) takılacak. Hasta kendi kaydını{" "}
           <Link href="/erisim-kaydi" className="text-[#0E8A95] hover:underline">Erişim Kaydım</Link>’dan görür.
