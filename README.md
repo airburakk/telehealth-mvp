@@ -132,6 +132,11 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
   Nöbetçi · SO oto-atama (+ yük dengeleme) · İcapçı fan-out. Doktor `/doktor/profil`'de kendi **kalite
   kartını** (genel skor + metrik dökümü), hasta `/hekim/[id]`'de **güven rozetlerini** (eşik-bazlı, anlam-renk,
   hover tooltip) görür. Pro Bono FIFO kalır. Metadata = klinik içerik değil → E2EE uyumlu. (`lib/match-score.ts`)
+- **Hasta–doktor uyumu (soft boost):** kalite (mutlak) yanına vaka-özel uyum (göreceli) eklenir —
+  pazar (`Doctor.markets` ⊇ `Case.country`) + acil vakada deneyim (`Case.urgency`≥4 → `Doctor.experienceYears`).
+  Uyumlu hekim sıralamada öne çıkar; **uyumsuz ELENMEZ, yalnız geri sıralanır** (erişim korunur). markets boş =
+  "tüm pazarlar". Dil kasıten kriter değil (simultane tercüme kapsar). Nöbetçi · İcapçı · SO oto-atamada etkin.
+  Şema değişmez; "ölçekle değer artar" (hekimler `markets` girdikçe etki büyür). (`fitScore` → `lib/match-score.ts`)
 - **Görüşme öncesi oda:** cihaz testi + geri sayım + 3 alt-durum (`PreConsultLobby`).
 
 ## Rotalar

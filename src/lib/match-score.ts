@@ -121,6 +121,48 @@ export function doctorMatchScore(m: DoctorMetrics): number {
   return totalW > 0 ? active.reduce((s, p) => s + p.value01 * (p.weight / totalW), 0) : 0;
 }
 
+// ── Doktor–hasta UYUM (fit) — hasta-spesifik eşleştirme sinyali (KALİTEDEN AYRI eksen) ──
+// Kalite (yukarısı) = doktor ne kadar iyi (mutlak, hasta-agnostik). Uyum = bu doktor BU vakaya ne kadar
+// uygun (göreceli). SOFT BOOST: uyumlu hekim sıralamada öne çıkar, uyumsuz ELENMEZ (erişim korunur).
+// Şema değişmez — iki sinyal mevcut alanlardan türetilir:
+//   • pazar/ülke   : Doctor.markets ⊇ Case.country  (hekim hastanın pazarına hizmet veriyor mu)
+//   • aciliyet–deneyim: yüksek Case.urgency → Doctor.experienceYears (acil/karmaşık vaka deneyimli hekime)
+// Dil KASITEN dahil değil (simultane tercüme kapsar — kullanıcı kararı, [[match-score]] kalite notuyla aynı).
+export interface CaseContext {
+  country?: string | null; // hasta ülkesi (Case.country / SecondOpinionCase.country) — pazar uyumu; yoksa nötr
+  urgency?: number | null; // 1-5 (Case.urgency); yüksekse deneyim uyumu devreye girer. SO'da yok → null → nötr
+}
+
+// Uyum boost katsayısı: AKTİF metrik kalite skoruna (0-1) eklenen pay. Kaliteyi EZMEZ, tamamlar (ölçekle ayarlanır).
+export const FIT_WEIGHT = 0.18;
+// Uyum iç dengesi: pazar ÇEKİRDEK, aciliyet–deneyim İKİNCİL (toplam 1.0).
+const FIT_MARKET = 0.7;
+const FIT_URGENCY_EXP = 0.3;
+const EXP_SATURATION = 20; // ~20 yıl deneyim ≈ tam puan (log doygunluk)
+const HIGH_URGENCY = 4; // urgency ≥ bu → aciliyet–deneyim uyumu aktifleşir (altı: deneyim ayırt edici değil)
+
+// Pazar uyumu (0-1): hekim pazarları hastanın ülkesini kapsıyor mu. markets BOŞ = "tüm pazarlar" → 1.
+// Hasta ülkesi bilinmiyorsa (null) → 1 (ayrıştıracak veri yok). Kapsamıyorsa 0 (soft → yalnız geri sıralanır).
+export function marketFit(country: string | null | undefined, markets: string | null | undefined): number {
+  const c = country?.trim();
+  if (!c) return 1;
+  const set = (markets ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (set.length === 0) return 1;
+  return set.includes(c) ? 1 : 0;
+}
+
+// Aciliyet–deneyim uyumu (0-1): yalnız YÜKSEK aciliyette (urgency≥HIGH_URGENCY) deneyim öne çıkar.
+// Düşük aciliyet / urgency yok (SO) → NÖTR 0.5 (bu vakada deneyim ayırt edici değil → kaliteyi bozma).
+export function urgencyExperienceFit(urgency: number | null | undefined, experienceYears: number): number {
+  if ((urgency ?? 0) < HIGH_URGENCY) return 0.5;
+  return logSat(experienceYears, EXP_SATURATION);
+}
+
+// Birleşik uyum (0-1): pazar (çekirdek) + aciliyet–deneyim (ikincil). Saf — test edilebilir.
+export function fitScore(ctx: CaseContext, doc: { markets: string | null; experienceYears: number }): number {
+  return FIT_MARKET * marketFit(ctx.country, doc.markets) + FIT_URGENCY_EXP * urgencyExperienceFit(ctx.urgency, doc.experienceYears);
+}
+
 // rankDoctorsByQuality'nin ihtiyaç duyduğu minimum doktor alanları (full Doctor row bunları içerir).
 type DoctorRow = {
   id: string;
@@ -130,6 +172,8 @@ type DoctorRow = {
   icapOffered: number;
   respCount: number;
   respTotalSec: number;
+  markets: string | null; // uyum (pazar) — full Doctor row içerir
+  experienceYears: number; // uyum (aciliyet–deneyim) — full Doctor row içerir
 };
 
 // ── Toplu (N+1'siz) veri çekiciler: yalnız aday doktorlar için, tek sorgu ──
@@ -197,13 +241,16 @@ async function cancelStats(ids: string[]): Promise<Map<string, { total: number; 
 }
 
 /**
- * Doktor adaylarını kalite skoruna göre sırala (yüksek önce). `loads` verilirse (SO yük dengeleme)
- * birleşik skor = kalite − LOAD_PENALTY·load → kaliteli ama az yüklü hoca öne gelir, bir hoca boğulmaz.
- * Tüm kalite girdileri toplu (paralel) çekilir; salt-okuma (yan etkisiz). 0/1 elemanlı liste güvenli.
+ * Doktor adaylarını skoruna göre sırala (yüksek önce). Birleşik skor =
+ *   kalite − LOAD_PENALTY·load + FIT_WEIGHT·uyum
+ * `loads` (SO yük dengeleme) → kaliteli ama az yüklü hoca öne gelir, bir hoca boğulmaz.
+ * `caseContext` (hasta–doktor uyumu) → hastanın pazarına/aciliyetine uygun hekim SOFT olarak öne çıkar
+ * (uyumsuz ELENMEZ, yalnız geri sıralanır → erişim korunur). Bağlam verilmezse uyum boost'u uygulanmaz
+ * (eski davranış birebir). Tüm kalite girdileri toplu (paralel) çekilir; salt-okuma. 0/1 elemanlı liste güvenli.
  */
 export async function rankDoctorsByQuality<T extends DoctorRow>(
   doctors: T[],
-  opts?: { loads?: Map<string, number> },
+  opts?: { loads?: Map<string, number>; caseContext?: CaseContext },
 ): Promise<T[]> {
   if (doctors.length <= 1) return [...doctors];
   const ids = doctors.map((d) => d.id);
@@ -233,7 +280,8 @@ export async function rankDoctorsByQuality<T extends DoctorRow>(
       lastActiveSec: last ? (now - last.getTime()) / 1000 : null,
     });
     const load = opts?.loads?.get(d.id) ?? 0;
-    return { d, score: base - LOAD_PENALTY * load };
+    const fitBoost = opts?.caseContext ? FIT_WEIGHT * fitScore(opts.caseContext, d) : 0;
+    return { d, score: base - LOAD_PENALTY * load + fitBoost };
   });
   scored.sort((a, b) => b.score - a.score);
   return scored.map((s) => s.d);

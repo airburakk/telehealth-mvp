@@ -49,10 +49,12 @@ export interface SentinelResult {
 
 // Çevrimiçi bir Nöbetçi hekimi ATOMİK kap → konsültasyon oluştur. En uzun süredir müsait olan önce.
 export async function claimSentinelForCase(caseId: string): Promise<SentinelResult | null> {
-  // CRM kalite indikatörleri: çevrimiçi Nöbetçiler arasında rating/pro bono/icap dönüş oranıyla sırala (yüksek önce).
-  // (Önceki: clinicalAvailableAt asc = salt FIFO.) Atomik claim aşağıda korunur; sıra yalnız deneme önceliğini belirler.
+  // CRM kalite indikatörleri + hasta–doktor uyumu: çevrimiçi Nöbetçileri kalite (rating/pro bono/icap dönüş)
+  // VE uyum (hastanın pazarı/aciliyeti) ile sırala (yüksek önce). (Önceki: clinicalAvailableAt asc = salt FIFO.)
+  // Atomik claim aşağıda korunur; sıra yalnız deneme önceliğini belirler. Uyum SOFT → uyumsuz Nöbetçi de denenir.
+  const ctx = await db.case.findUnique({ where: { id: caseId }, select: { country: true, urgency: true } });
   const online = await db.doctor.findMany({ where: { sentinel: true, clinicalState: "ONLINE" } });
-  const candidates = await rankDoctorsByQuality(online);
+  const candidates = await rankDoctorsByQuality(online, { caseContext: ctx ?? undefined });
   for (const d of candidates) {
     const r = await claimOneSentinel(caseId, d.id);
     if (r) {
@@ -101,16 +103,17 @@ async function claimOneSentinel(caseId: string, doctorId: string): Promise<Senti
 
 // Hasta "Branş randevusu" seçer → talebi (yeniden) aç + branştaki İcapçı hekimlere bildir.
 export async function requestIcapciAppointment(caseId: string): Promise<boolean> {
-  const c = await db.case.findUnique({ where: { id: caseId }, select: { branch: true, userId: true, patientName: true } });
+  const c = await db.case.findUnique({ where: { id: caseId }, select: { branch: true, userId: true, patientName: true, country: true, urgency: true } });
   if (!c) return false;
   await db.consultAppointment.upsert({
     where: { caseId },
     create: { caseId, patientId: c.userId, branch: c.branch, status: "REQUESTED" },
     update: { status: "REQUESTED", doctorId: null, proposedAt: null },
   });
-  // CRM kalite indikatörleri: branş İcapçılarını kaliteye göre sırala → yüksek kaliteli/duyarlı hekim önce bildirilir.
+  // CRM kalite + hasta–doktor uyumu: branş İcapçılarını kalite VE uyum (hastanın pazarı/aciliyeti) ile sırala
+  // → yüksek kaliteli/duyarlı + uygun pazar hekimi önce bildirilir (uyum SOFT → pazar-dışı İcapçı da bildirilir).
   const icapciRows = await db.doctor.findMany({ where: { branch: c.branch, onCall: true } });
-  const icapci = await rankDoctorsByQuality(icapciRows);
+  const icapci = await rankDoctorsByQuality(icapciRows, { caseContext: { country: c.country, urgency: c.urgency } });
   // İcap dönüş oranı paydası: her bilgilendirilen İcapçının icapNotified sayacı artar (metadata; offered/notified).
   if (icapci.length) {
     await db.doctor.updateMany({ where: { id: { in: icapci.map((d) => d.id) } }, data: { icapNotified: { increment: 1 } } });

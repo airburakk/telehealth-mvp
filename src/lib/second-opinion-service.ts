@@ -97,9 +97,10 @@ export async function autoAssignSoCase(caseId: string): Promise<string | null> {
     doctors.map(async (d) => [d.id, await db.secondOpinionCase.count({ where: { assignedDoctorId: d.id, status: { in: ACTIVE } } })] as const),
   );
   const loads = new Map<string, number>(loadRows);
-  // CRM kalite indikatörleri + yük dengeleme: birleşik skor = kalite − LOAD_PENALTY·load (kaliteli ama az yüklü hoca önce).
-  // (Önceki: salt en az yüklü.) Aktif dosya yükü dengelenir, eşit/yakın yükte rating/pro bono/icap dönüş belirler.
-  const ranked = await rankDoctorsByQuality(doctors, { loads });
+  // CRM kalite + yük dengeleme + hasta–doktor uyumu: birleşik skor = kalite − LOAD_PENALTY·load + FIT_WEIGHT·uyum.
+  // (Önceki: salt en az yüklü.) Yük dengelenir; eşit/yakın yükte kalite + pazar uyumu (hastanın ülkesi) belirler.
+  // SO elektiftir → aciliyet–deneyim sinyali nötr kalır (urgency yok); pazar uyumu SOFT → pazar-dışı hoca da atanabilir.
+  const ranked = await rankDoctorsByQuality(doctors, { loads, caseContext: { country: c.country } });
   const pick = ranked[0];
 
   await transitionSoCase(caseId, "OFFERED", {
