@@ -120,14 +120,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
 
         <aside className="space-y-4">
           <Card title="Video Kartvizit" icon={<Video size={15} />}>
-            <DoctorVideoCard
-              name={d.name}
-              title={d.title}
-              branch={d.branch}
-              city={d.city}
-              color={d.color}
-              tagline={`${d.jci ? "JCI akrediteli · " : ""}${d.experienceYears} yıl deneyim · ${d.languages.split(",").join(" / ")}`}
-            />
+            <DoctorVideoCard name={d.name} title={d.title} female={isFemaleName(d.name)} />
           </Card>
 
           <Card title="Akreditasyon & Belgeler" icon={<ShieldCheck size={15} />}>
