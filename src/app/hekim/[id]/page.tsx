@@ -5,7 +5,8 @@ import { countryFlag, formatDateTime } from "@/lib/constants";
 import { doctorCredentials, richBio, academicNote, generatedReviews, avatarVariant, isFemaleName } from "@/lib/doctor-profile";
 import { DoctorVideoCard } from "@/components/DoctorVideoCard";
 import { DoctorArt } from "@/components/PortamedArt";
-import { BadgeCheck, Star, Globe, GraduationCap, ShieldCheck, Video, MapPin, ArrowLeft, CheckCircle2, Stethoscope } from "lucide-react";
+import { BadgeCheck, Star, Globe, GraduationCap, ShieldCheck, Video, MapPin, ArrowLeft, CheckCircle2, Stethoscope, Award, Heart, Zap, Activity, type LucideIcon } from "lucide-react";
+import { getDoctorBadges } from "@/lib/match-score";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
   const cred = doctorCredentials(d);
   const reviews = generatedReviews(d);
   const bioText = richBio(d, d.bio);
+  const badges = await getDoctorBadges(d.id); // CRM eşik-bazlı public güven rozetleri (ham skor değil)
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
@@ -53,6 +55,19 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
             <div className="mt-3 flex flex-wrap items-center gap-4">
               <span className="inline-flex items-center gap-1.5 text-sm"><Stars value={d.rating} /> <span className="font-semibold text-slate-700">{d.rating.toFixed(1)}</span> <span className="text-slate-400">({reviews.length} yorum)</span></span>
             </div>
+
+            {badges.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {badges.map((b) => {
+                  const Icon = BADGE_ICON[b.key] ?? CheckCircle2;
+                  return (
+                    <span key={b.key} className="inline-flex items-center gap-1 rounded-full bg-[#14C3D0]/10 px-2.5 py-1 text-xs font-medium text-[#0b7c87] ring-1 ring-[#14C3D0]/20">
+                      <Icon size={13} /> {b.label}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
@@ -142,6 +157,15 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
     </div>
   );
 }
+
+const BADGE_ICON: Record<string, LucideIcon> = {
+  rating: Star,
+  volume: Award,
+  proBono: Heart,
+  responsiveness: Zap,
+  reliability: ShieldCheck,
+  recency: Activity,
+};
 
 function Card({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
