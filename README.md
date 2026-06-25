@@ -83,7 +83,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | 3 | **Sağlık Turizmi** | ✅ Tier'lı paket, dinamik fiyat, sigorta, **Escrow + split** + hasta yolculuğu + SOAP'tan AI paket teklifi + hastaya teklif gönderme (link/PDF) |
 | 4 | **Post-Op Takip** | ✅ Günlük kontrol (ağrı/ateş/ilaç/foto), kırmızı bayrak, branş protokolü, doktor izleme + **Güvenli Dijital Paylaşım** (token/TTL/şifre/audit/iptal) + alıcı dilinde görüntüleme + **AI foto analizi** (Claude vision) |
 | 5 | **Doktor Adaptasyon** | ✅ İtibar metrikleri, hakediş (komisyon sonrası net), kapasite, müsaitlik, profil tercihleri (dil/pazar/işlem-ücret) |
-| 6 | **Doktor Tanıtım** | ✅ Hekim dizini + doğrulanmış profil, yorumlar (gerçek Review/üretim-fallback), akreditasyon (JCI), video kartvizit, **kalıcı akademik** (düzenlenebilir) |
+| 6 | **Doktor Tanıtım** | ✅ Hekim dizini + doğrulanmış profil, **gerçek profil fotoğrafı** (`Doctor.photo` per-doktor / cinsiyet-fallback) + **tanıtım videosu** (cinsiyete göre), yorumlar (gerçek Review/üretim-fallback), akreditasyon (JCI), **kalıcı akademik** (düzenlenebilir) |
 | 7 | **Etik Kurul** | ✅ Şikayet, anonimleştirilmiş (data masking) inceleme, karar/yaptırım, **Escrow iade** tetikleyicisi |
 | — | **Kimlik doğrulama** | ✅ Roller (hasta/doktor/koordinatör/kurul/admin), bcrypt + JWT + proxy + KVKK onam kapısı |
 
