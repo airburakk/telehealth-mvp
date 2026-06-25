@@ -28,7 +28,11 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
 
   // Profil zenginleştirme — render-zamanı deterministik üretim (şema/DB yok); mevcut bio korunur
   const cred = doctorCredentials(d);
-  const reviews = generatedReviews(d);
+  // Yorumlar: kalıcı Review tablosundan; yoksa deterministik üretim fallback (geriye uyumlu).
+  const dbReviews = await db.review.findMany({ where: { doctorId: d.id }, orderBy: { createdAt: "desc" } });
+  const reviews = dbReviews.length
+    ? dbReviews.map((r) => ({ author: r.author, country: r.country, stars: r.stars, text: r.text, daysAgo: Math.max(1, Math.round((Date.now() - r.createdAt.getTime()) / 86400000)) }))
+    : generatedReviews(d);
   const bioText = richBio(d, d.bio);
   const badges = await getDoctorBadges(d.id); // CRM eşik-bazlı public güven rozetleri (ham skor değil)
 

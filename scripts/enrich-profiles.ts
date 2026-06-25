@@ -9,6 +9,7 @@ import { PrismaClient } from "@prisma/client";
 import { COUNTRIES } from "../src/lib/constants";
 import { branchKeyFromLabel, getBranchProcedures } from "../src/lib/procedures";
 import { icd10ForBranchLabel, loincForBranchLabel } from "../src/data/coding";
+import { doctorCredentials, generatedReviews } from "../src/lib/doctor-profile";
 
 const db = new PrismaClient();
 
@@ -110,6 +111,24 @@ function recoFor(branchLabel: string, seed: number): string | null {
   return JSON.stringify(picks);
 }
 
+// Branşa uygun 2-3 gerçekçi yayın (deterministik) → publications JSON [{title,venue,year}].
+function publicationsFor(branchLabel: string, seed: number): { title: string; venue: string; year: number }[] {
+  const b = branchLabel;
+  const titles = [
+    `${b} hastalarında tedavi sonuçlarının retrospektif değerlendirilmesi`,
+    `${b} pratiğinde güncel tanı ve tedavi yaklaşımları`,
+    `Uluslararası hastalarda ${b.toLocaleLowerCase("tr-TR")} deneyimi: tek merkez serisi`,
+    `${b} alanında minimal invaziv yöntemlerin klinik etkinliği`,
+  ];
+  const venues = ["Türk Tıp Dergisi", `Ulusal ${b} Kongresi`, "Journal of Clinical Medicine", "Anadolu Klinik Araştırmalar Dergisi"];
+  const n = 2 + (seed % 2); // 2-3
+  const out: { title: string; venue: string; year: number }[] = [];
+  for (let i = 0; i < n; i++) {
+    out.push({ title: titles[(seed + i) % titles.length], venue: venues[(seed + i * 3) % venues.length], year: 2026 - (1 + ((seed + i) % 6)) });
+  }
+  return out;
+}
+
 // attachment dosya adından belge türü + MIME.
 function docMeta(file: string): { mime: string; type: string } {
   const f = file.toLocaleLowerCase("tr-TR");
@@ -122,11 +141,11 @@ function docMeta(file: string): { mime: string; type: string } {
   return { mime, type };
 }
 
-async function enrichDoctors(): Promise<number> {
+async function enrichDoctors(): Promise<{ upd: number; reviews: number }> {
   const doctors = await db.doctor.findMany();
-  let upd = 0;
+  let upd = 0, reviews = 0;
   for (const d of doctors) {
-    const data: { procedures?: string; markets?: string } = {};
+    const data: Record<string, unknown> = {};
     if (!d.procedures) {
       const procs = proceduresFor(d.branch, hash(d.id));
       if (Object.keys(procs).length) data.procedures = JSON.stringify(procs);
@@ -135,9 +154,26 @@ async function enrichDoctors(): Promise<number> {
       const m = marketsFor(d.languages);
       if (m) data.markets = m;
     }
+    // Akademik — boşsa doctor-profile.ts deterministik üretimini kalıcılaştır (her alan ayrı idempotent kontrol).
+    if (!d.eduSchool || !d.specBoard || !d.certifications || !d.publications) {
+      const cred = doctorCredentials(d);
+      if (!d.eduSchool) { data.eduSchool = cred.diploma.school; data.eduYear = cred.diploma.year; }
+      if (!d.specBoard) { data.specBoard = cred.uzmanlik.board; data.specYear = cred.uzmanlik.year; }
+      if (!d.certifications) data.certifications = JSON.stringify(cred.certs);
+      if (!d.publications) data.publications = JSON.stringify(publicationsFor(d.branch, hash(d.id)));
+    }
     if (Object.keys(data).length) { await db.doctor.update({ where: { id: d.id }, data }); upd++; }
+
+    // Yorumlar — hekimin hiç yorumu yoksa generatedReviews'ı kalıcı Review tablosuna yaz (mevcut seed yorumları korunur).
+    const revCount = await db.review.count({ where: { doctorId: d.id } });
+    if (revCount === 0) {
+      for (const r of generatedReviews(d)) {
+        await db.review.create({ data: { doctorId: d.id, author: r.author, country: r.country, stars: r.stars, text: r.text, createdAt: new Date(Date.now() - r.daysAgo * 86400000) } });
+        reviews++;
+      }
+    }
   }
-  return upd;
+  return { upd, reviews };
 }
 
 async function enrichCases(): Promise<{ upd: number; docs: number }> {
@@ -176,11 +212,11 @@ async function enrichCases(): Promise<{ upd: number; docs: number }> {
 }
 
 async function main() {
-  const dUpd = await enrichDoctors();
+  const { upd: dUpd, reviews } = await enrichDoctors();
   const { upd: cUpd, docs } = await enrichCases();
   const totDoctors = await db.doctor.count();
   const totCases = await db.case.count();
-  console.log(`✓ Doktor güncellendi (procedures/markets): ${dUpd}/${totDoctors}`);
+  console.log(`✓ Doktor güncellendi (procedures/markets/akademik): ${dUpd}/${totDoctors} · yeni yorum: ${reviews}`);
   console.log(`✓ Vaka güncellendi (lab/icd10/tedavi): ${cUpd}/${totCases} · yeni CaseDocument: ${docs}`);
 }
 

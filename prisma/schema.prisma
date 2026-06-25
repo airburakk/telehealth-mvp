@@ -67,6 +67,13 @@ model Doctor {
   capacity        Int            @default(20) // aylık işlem kapasitesi
   procedures      String? // M5: doktorun yaptığı işlemler + kendi fiyatı — JSON {"<kod>": <fiyat₺>}
   licenseNo       String? // FHIR Faz 0: hekim diploma/tescil no → Practitioner.identifier
+  // M6 Akademik & Eğitim — kalıcı profil (boşsa lib/doctor-profile.ts deterministik üretim fallback eder)
+  eduSchool       String? // mezun olunan tıp fakültesi
+  eduYear         Int? // mezuniyet yılı
+  specBoard       String? // uzmanlık belgesi / yan dal adı
+  specYear        Int? // uzmanlık (belge) yılı
+  certifications  String? // JSON string[] — mesleki sertifika/üyelikler
+  publications    String? // JSON [{title,venue,year}] — akademik yayın/çalışmalar
   // Pro Bono — anlık müsaitlik + kontenjan (gönüllü ücretsiz konsültasyon)
   proBonoState       String    @default("OFFLINE") // OFFLINE | AVAILABLE | IN_SESSION
   proBonoQuota       Int       @default(10) // dönem (takvim haftası) başına kontenjan

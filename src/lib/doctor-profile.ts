@@ -14,6 +14,13 @@ export interface DoctorLike {
   rating: number;
   jci: boolean;
   verified: boolean;
+  // M6 Akademik & Eğitim — kalıcı DB değerleri (varsa kullanılır, yoksa deterministik üretim fallback)
+  eduSchool?: string | null;
+  eduYear?: number | null;
+  specBoard?: string | null;
+  specYear?: number | null;
+  certifications?: string | null; // JSON string[]
+  publications?: string | null; // JSON [{title,venue,year}]
 }
 
 function hash(s: string): number {
@@ -80,15 +87,20 @@ export interface Credentials {
   certs: string[];
 }
 
+// DB değeri (kalıcı) öncelikli; yoksa branş/deneyim/isimden deterministik üretim (geriye uyumlu fallback).
 export function doctorCredentials(d: DoctorLike): Credentials {
   const seed = hash(d.name);
-  const uzmanlikYear = Math.max(1995, 2026 - Math.max(1, d.experienceYears));
-  const diplomaYear = uzmanlikYear - 5;
   const info = BRANCH_INFO[d.branch] ?? genericInfo(d.branch);
+  const uzmanlikYear = d.specYear ?? Math.max(1995, 2026 - Math.max(1, d.experienceYears));
+  const diplomaYear = d.eduYear ?? uzmanlikYear - 5;
+  let certs = info.certs;
+  if (d.certifications) {
+    try { const p = JSON.parse(d.certifications); if (Array.isArray(p) && p.length) certs = p as string[]; } catch { /* bozuk JSON → üretim */ }
+  }
   return {
-    diploma: { school: pick(MED_SCHOOLS, seed), year: diplomaYear },
-    uzmanlik: { board: info.board, year: uzmanlikYear },
-    certs: info.certs,
+    diploma: { school: d.eduSchool || pick(MED_SCHOOLS, seed), year: diplomaYear },
+    uzmanlik: { board: d.specBoard || info.board, year: uzmanlikYear },
+    certs,
   };
 }
 
@@ -106,7 +118,16 @@ export function richBio(d: DoctorLike, baseBio: string | null): string {
 
 export function academicNote(d: DoctorLike): string {
   const c = doctorCredentials(d);
-  return `${c.diploma.school} mezunu (${c.diploma.year}). ${d.branch} alanında uzmanlığını ${c.uzmanlik.year} yılında tamamlamıştır. Ulusal ve uluslararası kongrelerde sunum ve bilimsel yayın deneyimi bulunmaktadır.`;
+  let pubLine = "Ulusal ve uluslararası kongrelerde sunum ve bilimsel yayın deneyimi bulunmaktadır.";
+  if (d.publications) {
+    try {
+      const pubs = JSON.parse(d.publications) as { title: string; venue: string; year: number }[];
+      if (Array.isArray(pubs) && pubs.length) {
+        pubLine = "Seçilmiş yayınlar: " + pubs.map((p) => `“${p.title}” (${p.venue}, ${p.year})`).join("; ") + ".";
+      }
+    } catch { /* bozuk JSON → üretim cümlesi */ }
+  }
+  return `${c.diploma.school} mezunu (${c.diploma.year}). ${d.branch} alanında uzmanlığını ${c.uzmanlik.year} yılında tamamlamıştır. ${pubLine}`;
 }
 
 // ── Dummy hasta yorumları (deterministik) ──

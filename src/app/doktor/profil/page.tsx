@@ -6,6 +6,7 @@ import { formatDateTime } from "@/lib/constants";
 import { branchKeyFromLabel, branchLabel, getBranchProcedures, getByCodes } from "@/lib/procedures";
 import ProcedureSelector from "@/components/ProcedureSelector";
 import { DoctorPreferences } from "@/components/DoctorPreferences";
+import { AcademicEditor } from "@/components/AcademicEditor";
 import { decryptField } from "@/lib/crypto";
 import { Star, BadgeCheck, Wallet, CalendarClock, TrendingUp, ExternalLink, Award, Users, Target } from "lucide-react";
 import { getDoctorScorecard, type MetricKey } from "@/lib/match-score";
@@ -52,6 +53,12 @@ export default async function DoctorDashboard() {
   }
   const branchCodes = new Set(branchItems.map((p) => p.code));
   const extraItems = getByCodes(Object.keys(initialSel).filter((c) => !branchCodes.has(c)));
+
+  // M6 Akademik & Eğitim — kalıcı alanlar (boşsa public profil deterministik üretim fallback eder)
+  let certs: string[] = [];
+  try { if (doctor.certifications) { const p = JSON.parse(doctor.certifications); if (Array.isArray(p)) certs = p as string[]; } } catch { /* bozuk JSON */ }
+  let pubs: { title: string; venue: string; year: number }[] = [];
+  try { if (doctor.publications) { const p = JSON.parse(doctor.publications); if (Array.isArray(p)) pubs = p; } } catch { /* bozuk JSON */ }
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
@@ -135,6 +142,18 @@ export default async function DoctorDashboard() {
           markets={doctor.markets ? doctor.markets.split(",").map((s) => s.trim()).filter(Boolean) : []}
           capacity={doctor.capacity}
           licenseNo={doctor.licenseNo}
+        />
+      </div>
+
+      {/* M6 — Akademik & Eğitim (kalıcı; public profil bunları gösterir, boşsa otomatik üretir) */}
+      <div className="mt-5">
+        <AcademicEditor
+          eduSchool={doctor.eduSchool}
+          eduYear={doctor.eduYear}
+          specBoard={doctor.specBoard}
+          specYear={doctor.specYear}
+          certifications={certs}
+          publications={pubs}
         />
       </div>
 
