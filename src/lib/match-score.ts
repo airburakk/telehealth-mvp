@@ -283,18 +283,18 @@ export async function getDoctorScorecard(doctorId: string): Promise<DoctorScorec
 // ── Herkese-açık profil (/hekim/[id]) güven rozetleri — EŞİK geçen olumlu metrikler ──
 // ⚠️ Ham skor / sıralama / iptal sayısı GÖSTERİLMEZ (içsel CRM metriği + rakip-hassas); yalnız hastaya
 // anlamlı, olumlu güven sinyalleri rozet olarak. Eşik altı/verisiz metrik → rozet yok (yanlış-pozitif yok).
-export interface DoctorBadge { key: MetricKey; label: string }
+export interface DoctorBadge { key: MetricKey; label: string; desc: string }
 export async function getDoctorBadges(doctorId: string): Promise<DoctorBadge[]> {
   const sc = await getDoctorScorecard(doctorId);
   if (!sc) return [];
   const v = new Map(sc.metrics.map((p) => [p.key, p]));
   const m = (k: MetricKey) => v.get(k)!;
   const badges: DoctorBadge[] = [];
-  if (m("rating").value01 >= 0.92) badges.push({ key: "rating", label: "Yüksek memnuniyet" }); // ~4.6+/5
-  if (m("volume").value01 >= 0.5) badges.push({ key: "volume", label: "Deneyimli" }); // ~4+ tamamlanan vaka
-  if (m("proBono").value01 > 0) badges.push({ key: "proBono", label: "Pro bono gönüllüsü" });
-  if (m("responsiveness").active && m("responsiveness").value01 >= 0.6) badges.push({ key: "responsiveness", label: "Hızlı yanıt" });
-  if (m("reliability").active && m("reliability").value01 >= 0.9) badges.push({ key: "reliability", label: "Güvenilir" }); // düşük iptal
-  if (m("recency").active && m("recency").value01 >= 0.7) badges.push({ key: "recency", label: "Aktif hekim" }); // ~son 30 gün
+  if (m("rating").value01 >= 0.92) badges.push({ key: "rating", label: "Yüksek Memnuniyet", desc: "Hasta memnuniyet puanı yüksek (4.6+/5)" });
+  if (m("volume").value01 >= 0.5) badges.push({ key: "volume", label: "Deneyimli", desc: "Platformda çok sayıda tamamlanmış görüşme" });
+  if (m("proBono").value01 > 0) badges.push({ key: "proBono", label: "Pro Bono Gönüllüsü", desc: "Ücretsiz gönüllü (pro bono) konsültasyon veriyor" });
+  if (m("responsiveness").active && m("responsiveness").value01 >= 0.6) badges.push({ key: "responsiveness", label: "Hızlı Yanıt", desc: "Randevu taleplerine hızlı yanıt veriyor" });
+  if (m("reliability").active && m("reliability").value01 >= 0.9) badges.push({ key: "reliability", label: "Güvenilir", desc: "Randevu iptal oranı düşük" });
+  if (m("recency").active && m("recency").value01 >= 0.7) badges.push({ key: "recency", label: "Aktif Hekim", desc: "Son dönemde aktif olarak görüşme yapıyor" });
   return badges;
 }

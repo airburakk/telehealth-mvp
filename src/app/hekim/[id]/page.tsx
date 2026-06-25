@@ -60,9 +60,21 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {badges.map((b) => {
                   const Icon = BADGE_ICON[b.key] ?? CheckCircle2;
+                  const style = BADGE_STYLE[b.key] ?? "bg-slate-50 text-slate-700 ring-slate-200";
                   return (
-                    <span key={b.key} className="inline-flex items-center gap-1 rounded-full bg-[#14C3D0]/10 px-2.5 py-1 text-xs font-medium text-[#0b7c87] ring-1 ring-[#14C3D0]/20">
+                    <span
+                      key={b.key}
+                      aria-label={`${b.label}: ${b.desc}`}
+                      className={`group relative inline-flex cursor-default items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${style}`}
+                    >
                       <Icon size={13} /> {b.label}
+                      {/* Hover açıklama balonu (CSS-only; mouse ile üzerine gelince) */}
+                      <span
+                        role="tooltip"
+                        className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 hidden w-max max-w-[220px] -translate-x-1/2 rounded-lg bg-slate-800 px-2.5 py-1.5 text-[11px] font-normal leading-snug text-white shadow-lg group-hover:block"
+                      >
+                        {b.desc}
+                      </span>
                     </span>
                   );
                 })}
@@ -165,6 +177,15 @@ const BADGE_ICON: Record<string, LucideIcon> = {
   responsiveness: Zap,
   reliability: ShieldCheck,
   recency: Activity,
+};
+// Anlam-bazlı pastel renk (her rozet ayrı tanınsın; bg-50/text-700/ring-200 tutarlı şekil)
+const BADGE_STYLE: Record<string, string> = {
+  rating: "bg-amber-50 text-amber-700 ring-amber-200",
+  volume: "bg-indigo-50 text-indigo-700 ring-indigo-200",
+  proBono: "bg-rose-50 text-rose-700 ring-rose-200",
+  responsiveness: "bg-violet-50 text-violet-700 ring-violet-200",
+  reliability: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  recency: "bg-cyan-50 text-cyan-700 ring-cyan-200",
 };
 
 function Card({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
