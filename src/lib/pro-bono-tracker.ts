@@ -39,7 +39,7 @@ export function proBonoTrackerPhases(status: string): ProBonoTrackerPhase[] {
   });
 }
 
-// i18n: ileride useT'ye eklenecek tüm TR kanonik metinler (bekleme sayfası şu an TR-only).
+// i18n: bekleme sayfası bunları useT'ye besler → çok dilli (8+ dil) + RTL (v2.91).
 export const PRO_BONO_TRACKER_TEXTS: string[] = [
   ...PHASES.flatMap((p) => [p.label, p.done, p.pending]),
   ...Object.values(MAP).map((m) => m.sub),
