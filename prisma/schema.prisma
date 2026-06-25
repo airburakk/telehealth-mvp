@@ -74,6 +74,7 @@ model Doctor {
   specYear        Int? // uzmanlık (belge) yılı
   certifications  String? // JSON string[] — mesleki sertifika/üyelikler
   publications    String? // JSON [{title,venue,year}] — akademik yayın/çalışmalar
+  photo           String? // profil fotoğrafı yolu (ör. /photos/pool/p07.jpg); yoksa cinsiyet-fallback (DoctorArt)
   // Pro Bono — anlık müsaitlik + kontenjan (gönüllü ücretsiz konsültasyon)
   proBonoState       String    @default("OFFLINE") // OFFLINE | AVAILABLE | IN_SESSION
   proBonoQuota       Int       @default(10) // dönem (takvim haftası) başına kontenjan

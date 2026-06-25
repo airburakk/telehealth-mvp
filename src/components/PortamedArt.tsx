@@ -170,46 +170,14 @@ export function PackArtIvf() {
   );
 }
 
-// ── Hekim avatarları (kare) — i: çeşitleme (önlük rengi/ton) ──
-const AVA = [
-  { bg: "#DFEDE7", scrub: "#14C3D0", skin: "#E8C49C", hair: "#243530" },
-  { bg: "#E6EEE3", scrub: "#101010", skin: "#D9A87E", hair: "#1B2A26" },
-  { bg: "#E3EDEA", scrub: "#0EA5B2", skin: "#F0D3B0", hair: "#4A3B2A" },
-  { bg: "#EAF1EC", scrub: "#14C3D0", skin: "#C98D5E", hair: "#2B1C12" },
-  { bg: "#E0EBEE", scrub: "#155E63", skin: "#EAC6A0", hair: "#5A4632" },
-  { bg: "#E8EDE2", scrub: "#0EA5B2", skin: "#D7A77C", hair: "#3A2E22" },
-];
-
-export function DoctorArt({ i = 0, female }: { i?: number; female?: boolean }) {
-  const v = AVA[i % AVA.length];
+// ── Hekim avatarları (kare) — GERÇEK profil fotoğrafı ──
+// Öncelik: doktorun kendi fotoğrafı (photo, ör. /photos/pool/p07.jpg) → yoksa cinsiyet-fallback
+// (/photos/doctor-female.jpg · doctor-male.jpg). Parent yuvarlatır + kırpar (object-cover).
+export function DoctorArt({ i = 0, female, photo }: { i?: number; female?: boolean; photo?: string | null }) {
   const isF = female ?? (i % 3 !== 0); // explicit cinsiyet verilmezse landing sırası heuristiği
-  return (
-    <svg viewBox="0 0 200 200" className="h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden>
-      <rect width="200" height="200" fill={v.bg} />
-      <circle cx="100" cy="86" r="64" fill="#F4F1E8" opacity="0.6" />
-      {/* Omuzlar + önlük */}
-      <path d="M28 200 c4 -44 32 -64 72 -64 s68 20 72 64 z" fill={v.scrub} />
-      <path d="M100 142 l-15 14 15 26 15 -26 z" fill="#F4F1E8" opacity="0.9" />
-      {/* Boyun + baş */}
-      <rect x="88" y="112" width="24" height="26" rx="10" fill={v.skin} />
-      <circle cx="100" cy="88" r="34" fill={v.skin} />
-      {/* Saç */}
-      {isF ? (
-        <path d="M62 96 c-4 -44 28 -56 38 -56 s42 12 38 56 c-2 18 -10 26 -10 26 8 -40 -10 -52 -28 -52 s-36 12 -28 52 c0 0 -8 -8 -10 -26 z" fill={v.hair} />
-      ) : (
-        <path d="M66 84 c0 -26 16 -38 34 -38 s34 12 34 38 c0 4 -1 8 -2 10 -4 -20 -14 -28 -32 -28 s-28 8 -32 28 c-1 -2 -2 -6 -2 -10 z" fill={v.hair} />
-      )}
-      {/* Yüz */}
-      <g fill="#243530">
-        <circle cx="88" cy="90" r="3.4" />
-        <circle cx="112" cy="90" r="3.4" />
-      </g>
-      <path d="M92 104 q8 7 16 0" stroke="#243530" strokeWidth="3" fill="none" strokeLinecap="round" />
-      {/* Stetoskop */}
-      <path d="M76 168 q0 -16 12 -18 M124 168 q0 -16 -12 -18" stroke="#F4F1E8" strokeWidth="5" fill="none" strokeLinecap="round" opacity="0.95" />
-      <circle cx="76" cy="172" r="7" fill="#C6A664" />
-    </svg>
-  );
+  const src = photo || (isF ? "/photos/doctor-female.jpg" : "/photos/doctor-male.jpg");
+  // eslint-disable-next-line @next/next/no-img-element -- statik yerel görsel; next/image fill için ekstra sarmalayıcı gerekir
+  return <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />;
 }
 
 // ── Referans portresi (kare, zümrüt panel üstünde) ──

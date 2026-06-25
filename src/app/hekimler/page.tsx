@@ -23,6 +23,7 @@ export default async function DoctorsPage() {
     verified: d.verified,
     color: d.color,
     reviews: generatedReviews(d).length,
+    photo: d.photo,
   }));
 
   return (

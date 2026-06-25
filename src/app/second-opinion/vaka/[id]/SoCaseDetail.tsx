@@ -27,7 +27,7 @@ type SoData = {
   opinion: { content: string; submittedAt: string } | null;
   appointment: { id: string; scheduledAt: string; status: string } | null;
   readyAt: string | null;
-  assignedDoctor: { name: string; title: string; branchLabel: string; avatarI: number; female: boolean } | null;
+  assignedDoctor: { name: string; title: string; branchLabel: string; avatarI: number; female: boolean; photo?: string | null } | null;
 };
 
 const ADDABLE = ["DRAFT", "AWAITING_DOCUMENTS", "AWAITING_ADDITIONAL_TESTS"];
@@ -340,7 +340,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       {data.assignedDoctor && DOCTOR_SHOWN.includes(status) && (
         <div className="mt-4 flex items-center gap-4 rounded-3xl border border-[#14C3D0]/30 bg-white p-5 shadow-sm">
           <span className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl ring-1 ring-slate-200">
-            <DoctorArt i={data.assignedDoctor.avatarI} female={data.assignedDoctor.female} />
+            <DoctorArt i={data.assignedDoctor.avatarI} female={data.assignedDoctor.female} photo={data.assignedDoctor.photo} />
           </span>
           <div className="min-w-0">
             <div className="text-xs font-semibold uppercase tracking-wide text-[#0E8A95]">{t(S.yourDoctor)}</div>

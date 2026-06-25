@@ -19,6 +19,7 @@ export interface DoctorRow {
   verified: boolean;
   color: string;
   reviews: number;
+  photo?: string | null;
 }
 
 export function DoctorDirectory({ doctors }: { doctors: DoctorRow[] }) {
@@ -51,7 +52,7 @@ export function DoctorDirectory({ doctors }: { doctors: DoctorRow[] }) {
         {filtered.map((d) => (
           <Link key={d.id} href={`/hekim/${d.id}`} className="group rounded-3xl border border-slate-200 bg-white p-5 transition hover:border-[#14C3D0]/30 hover:shadow-sm">
             <div className="flex items-start gap-3">
-              <span className="h-12 w-12 shrink-0 overflow-hidden rounded-full ring-1 ring-slate-200"><DoctorArt i={avatarVariant(d.name)} female={isFemaleName(d.name)} /></span>
+              <span className="h-12 w-12 shrink-0 overflow-hidden rounded-full ring-1 ring-slate-200"><DoctorArt i={avatarVariant(d.name)} female={isFemaleName(d.name)} photo={d.photo} /></span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <span className="font-semibold text-slate-800">{d.title} {d.name}</span>

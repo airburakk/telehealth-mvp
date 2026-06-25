@@ -9,7 +9,7 @@ import { PrismaClient } from "@prisma/client";
 import { COUNTRIES } from "../src/lib/constants";
 import { branchKeyFromLabel, getBranchProcedures } from "../src/lib/procedures";
 import { icd10ForBranchLabel, loincForBranchLabel } from "../src/data/coding";
-import { doctorCredentials, generatedReviews } from "../src/lib/doctor-profile";
+import { doctorCredentials, generatedReviews, isFemaleName } from "../src/lib/doctor-profile";
 
 const db = new PrismaClient();
 
@@ -141,6 +141,38 @@ function docMeta(file: string): { mime: string; type: string } {
   return { mime, type };
 }
 
+// ── Profil foto havuzu — cinsiyete göre (kontakt sayfasından el ile sınıflandırıldı; tam yollar) ──
+// 32'lik ızgaradan 13 kadın + 19 erkek; + ilk görüntüden 1 kadın (Esmer) + 1 erkek (Volkan) → 14 kadın · 20 erkek.
+const FEMALE_POOL = [
+  "/photos/pool/p01.jpg", "/photos/pool/p03.jpg", "/photos/pool/p04.jpg", "/photos/pool/p09.jpg",
+  "/photos/pool/p11.jpg", "/photos/pool/p12.jpg", "/photos/pool/p17.jpg", "/photos/pool/p18.jpg",
+  "/photos/pool/p19.jpg", "/photos/pool/p20.jpg", "/photos/pool/p23.jpg", "/photos/pool/p25.jpg",
+  "/photos/pool/p27.jpg", "/photos/doctor-female.jpg",
+];
+const MALE_POOL = [
+  "/photos/pool/p02.jpg", "/photos/pool/p05.jpg", "/photos/pool/p06.jpg", "/photos/pool/p07.jpg",
+  "/photos/pool/p08.jpg", "/photos/pool/p10.jpg", "/photos/pool/p13.jpg", "/photos/pool/p14.jpg",
+  "/photos/pool/p15.jpg", "/photos/pool/p16.jpg", "/photos/pool/p21.jpg", "/photos/pool/p22.jpg",
+  "/photos/pool/p24.jpg", "/photos/pool/p26.jpg", "/photos/pool/p28.jpg", "/photos/pool/p29.jpg",
+  "/photos/pool/p30.jpg", "/photos/pool/p31.jpg", "/photos/pool/p32.jpg", "/photos/doctor-male.jpg",
+];
+
+// Her doktora cinsiyetine UYGUN, BENZERSİZ foto ata (deterministik, id sırası). Havuz ≥ doktor → tekrar YOK.
+// Cinsiyet asla karışmaz. Atama deterministik → zaten doğruysa atla (idempotent), yanlışsa düzeltir.
+async function enrichPhotos(): Promise<number> {
+  const doctors = await db.doctor.findMany({ orderBy: { id: "asc" } });
+  let fi = 0, mi = 0, upd = 0;
+  for (const d of doctors) {
+    const isF = isFemaleName(d.name);
+    const pool = isF ? FEMALE_POOL : MALE_POOL;
+    const photo = pool[(isF ? fi++ : mi++) % pool.length];
+    if (d.photo === photo) continue; // zaten doğru atanmış
+    await db.doctor.update({ where: { id: d.id }, data: { photo } });
+    upd++;
+  }
+  return upd;
+}
+
 async function enrichDoctors(): Promise<{ upd: number; reviews: number }> {
   const doctors = await db.doctor.findMany();
   let upd = 0, reviews = 0;
@@ -213,10 +245,11 @@ async function enrichCases(): Promise<{ upd: number; docs: number }> {
 
 async function main() {
   const { upd: dUpd, reviews } = await enrichDoctors();
+  const photos = await enrichPhotos();
   const { upd: cUpd, docs } = await enrichCases();
   const totDoctors = await db.doctor.count();
   const totCases = await db.case.count();
-  console.log(`✓ Doktor güncellendi (procedures/markets/akademik): ${dUpd}/${totDoctors} · yeni yorum: ${reviews}`);
+  console.log(`✓ Doktor güncellendi (procedures/markets/akademik): ${dUpd}/${totDoctors} · yeni yorum: ${reviews} · foto atandı: ${photos}`);
   console.log(`✓ Vaka güncellendi (lab/icd10/tedavi): ${cUpd}/${totCases} · yeni CaseDocument: ${docs}`);
 }
 

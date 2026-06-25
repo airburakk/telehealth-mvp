@@ -37,7 +37,7 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
   // Atanan uzman hekim — hastaya kimlik kartı (Faz A3). Avatar değerleri sunucuda türetilir
   // (DoctorArt deterministik: isimden cinsiyet + varyant) → client'a düz değer geçer.
   const doc = c.assignedDoctorId
-    ? await db.doctor.findUnique({ where: { id: c.assignedDoctorId }, select: { name: true, title: true, branch: true } })
+    ? await db.doctor.findUnique({ where: { id: c.assignedDoctorId }, select: { name: true, title: true, branch: true, photo: true } })
     : null;
   const assignedDoctor = doc
     ? {
@@ -46,6 +46,7 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
         branchLabel: BRANCHES.find((b) => b.key === doc.branch)?.label ?? doc.branch,
         avatarI: avatarVariant(doc.name),
         female: isFemaleName(doc.name),
+        photo: doc.photo,
       }
     : null;
 
