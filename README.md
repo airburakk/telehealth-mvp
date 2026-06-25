@@ -51,8 +51,9 @@ npm run dev                   # http://localhost:3000
 | `npm run build` | `prisma generate && next build` |
 | `npm run start` | Üretim sunucusu |
 | `npm run lint` | ESLint |
-| `npm run db:seed` | `prisma/seed.ts` — demo veri |
+| `npm run db:seed` | `prisma/seed.ts` — demo veri (tam reset) |
 | `npm run db:migrate` | `prisma migrate deploy` |
+| `npx tsx scripts/enrich-profiles.ts` | profil/vaka **zenginleştirme** (idempotent backfill; yalnız boş alan: doktor procedures/markets/akademik + vaka FHIR lab/icd10/belge — silmez) |
 
 ## Roller & Giriş
 
@@ -81,8 +82,8 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | 2 | **Doktor Paneli + Video** | ✅ Aciliyet sıralı kuyruk, kokpit, **gerçek WebRTC** video + canlı transkript (Web Speech) + AI-SOAP + medikal çeviri + **AI Epikriz** + **Gemini canlı tercüman** (iki yönlü ses+altyazı) + **DICOM görüntüleyici** (5 sıkıştırılmış codec) + klinik kodlama (FHIR) |
 | 3 | **Sağlık Turizmi** | ✅ Tier'lı paket, dinamik fiyat, sigorta, **Escrow + split** + hasta yolculuğu + SOAP'tan AI paket teklifi + hastaya teklif gönderme (link/PDF) |
 | 4 | **Post-Op Takip** | ✅ Günlük kontrol (ağrı/ateş/ilaç/foto), kırmızı bayrak, branş protokolü, doktor izleme + **Güvenli Dijital Paylaşım** (token/TTL/şifre/audit/iptal) + alıcı dilinde görüntüleme + **AI foto analizi** (Claude vision) |
-| 5 | **Doktor Adaptasyon** | ✅ İtibar metrikleri, hakediş (komisyon sonrası net), kapasite, müsaitlik, profil tercihleri |
-| 6 | **Doktor Tanıtım** | ✅ Hekim dizini + doğrulanmış profil, yorumlar, akreditasyon (JCI), video kartvizit, akademik |
+| 5 | **Doktor Adaptasyon** | ✅ İtibar metrikleri, hakediş (komisyon sonrası net), kapasite, müsaitlik, profil tercihleri (dil/pazar/işlem-ücret) |
+| 6 | **Doktor Tanıtım** | ✅ Hekim dizini + doğrulanmış profil, yorumlar (gerçek Review/üretim-fallback), akreditasyon (JCI), video kartvizit, **kalıcı akademik** (düzenlenebilir) |
 | 7 | **Etik Kurul** | ✅ Şikayet, anonimleştirilmiş (data masking) inceleme, karar/yaptırım, **Escrow iade** tetikleyicisi |
 | — | **Kimlik doğrulama** | ✅ Roller (hasta/doktor/koordinatör/kurul/admin), bcrypt + JWT + proxy + KVKK onam kapısı |
 
