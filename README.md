@@ -124,11 +124,14 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
   alınamaz — bu UI'da net belirtilir). (`lib/postop-access.ts`)
 - **Klinik nöbet rolleri:** Branş / İcapçı / Nöbetçi (`Doctor.clinicalState/onCall/sentinel`) +
   "online doktor yoksa 3-seçenek kapısı" (`/triyaj/[id]`) + `ConsultAppointment`. (`lib/clinical-duty.ts`)
-- **CRM eşleştirme kalite indikatörleri:** doktor seçimi branş/müsaitlik dışında performans metadata'sıyla
-  ağırlıklandırılır — rating (memnuniyet) + başarı + pro bono sayısı + icap dönüş oranı
-  (`Doctor.icapNotified/icapOffered`). Uygulandığı yerler: Nöbetçi seçimi · SO uzman oto-atama (+ yük
-  dengeleme) · İcapçı fan-out sırası. Pro Bono eşleştirmesi adalet için FIFO kalır. Metadata = klinik
-  içerik değil → E2EE uyumlu. (`lib/match-score.ts`)
+- **CRM eşleştirme kalite indikatörleri (9 metrik):** doktor seçimi branş/müsaitlik dışında performans
+  metadata'sıyla ağırlıklandırılır — rating · başarı · pro bono · icap dönüş oranı · **yanıt süresi**
+  (`Doctor.respCount/respTotalSec`) · **iptal oranı** (ConsultAppointment+SO CANCELLED) · **tamamlanan vaka
+  hacmi** · **yorum hacmi** · **güncellik**. **Veri-olgunluk-farkında:** verisi olmayan oran/zaman metrikleri
+  skoru dilute etmez (ağırlık aktif kümeye yeniden normalize) → "ölçekle değer artar". Uygulandığı yerler:
+  Nöbetçi · SO oto-atama (+ yük dengeleme) · İcapçı fan-out. Doktor `/doktor/profil`'de kendi **kalite
+  kartını** (genel skor + metrik dökümü), hasta `/hekim/[id]`'de **güven rozetlerini** (eşik-bazlı, anlam-renk,
+  hover tooltip) görür. Pro Bono FIFO kalır. Metadata = klinik içerik değil → E2EE uyumlu. (`lib/match-score.ts`)
 - **Görüşme öncesi oda:** cihaz testi + geri sayım + 3 alt-durum (`PreConsultLobby`).
 
 ## Rotalar
