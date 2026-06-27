@@ -80,7 +80,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 |---|-------|-------|
 | 1 | **Triyaj** | ✅ Ön-konsültasyon kapısı (ücret/sigorta) → 5 adımlı sihirbaz, **gerçek Claude** branş+aciliyet (30 branş, ~198 dinamik branş sorusu), belge yükleme + **AI ön-değerlendirme** (vision/PDF → tür+TR çeviri+özet+anormal bayrak) + lab→FHIR oto-dolum |
 | 2 | **Doktor Paneli + Video** | ✅ Aciliyet sıralı kuyruk, kokpit, **gerçek WebRTC** video + canlı transkript (Web Speech) + AI-SOAP + medikal çeviri + **AI Epikriz** + **Gemini canlı tercüman** (iki yönlü ses+altyazı) + **DICOM görüntüleyici** (5 sıkıştırılmış codec) + klinik kodlama (FHIR) |
-| 3 | **Sağlık Turizmi** | ✅ Tier'lı paket, dinamik fiyat, sigorta, **Escrow + split** + hasta yolculuğu + SOAP'tan AI paket teklifi + hastaya teklif gönderme (link/PDF) |
+| 3 | **Sağlık Turizmi** | ✅ Tier'lı paket, dinamik fiyat, sigorta, **Escrow + split** + **lojistik Patient Journey takibi** (durum+tarih+not; koordinatör yönetir, hasta görür) + SOAP'tan AI paket teklifi + hastaya teklif gönderme (link/PDF) |
 | 4 | **Post-Op Takip** | ✅ Günlük kontrol (ağrı/ateş/ilaç/foto), kırmızı bayrak, branş protokolü, doktor izleme + **Güvenli Dijital Paylaşım** (token/TTL/şifre/audit/iptal) + alıcı dilinde görüntüleme + **AI foto analizi** (Claude vision) |
 | 5 | **Doktor Adaptasyon** | ✅ İtibar metrikleri, hakediş (komisyon sonrası net), kapasite, müsaitlik, profil tercihleri (dil/pazar/işlem-ücret) |
 | 6 | **Doktor Tanıtım** | ✅ Hekim dizini + doğrulanmış profil, **gerçek profil fotoğrafı** (`Doctor.photo` per-doktor / cinsiyet-fallback) + **tanıtım videosu** (cinsiyete göre), yorumlar (gerçek Review/üretim-fallback), akreditasyon (JCI), **kalıcı akademik** (düzenlenebilir) |
@@ -103,7 +103,8 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
   `/fhir/Consent/:shareId` + audit. (`lib/fhir.ts`)
 - **PWA + Web Push:** kurulabilir uygulama; tarayıcı kapalıyken cihaz bildirimi (VAPID).
 - **Bildirim Merkezi:** Header zili; rol- ve kullanıcı-hedefli `Notification`.
-- **Operasyon Paneli (S2):** `/operasyon` — KPI, dönüşüm hunisi, gelir/Escrow, dağılımlar, trend, kapasite.
+- **Operasyon Paneli (S2):** `/operasyon` — KPI, dönüşüm hunisi, gelir/Escrow, dağılımlar, trend, kapasite ·
+  **Lojistik takip** (`/operasyon/lojistik` — rezervasyonların Patient Journey aşamalarını yönet). (`lib/journey.ts`)
 - **Consent Manager + RFC 3161 ispat:** `/onam` tek seferlik KVKK onamı; sürümlü `ConsentRecord` +
   hash-zinciri + zaman damgası + Onay Kanıtı (`/onam/kanit`). (`lib/consent.ts`, `lib/timestamp.ts`)
 - **Değiştirilemez erişim denetimi (E2EE Faz 0):** klinik veriye her anlamlı erişim (vaka görüntüleme,
@@ -153,7 +154,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/takip/[caseId]` | Post-op takip |
 | `/hekimler` · `/hekim/[id]` | Hekim dizini · doğrulanmış profil |
 | `/sikayet/[caseId]` · `/etik-kurul` (+`/[id]`) · `/denetim` | Şikayet · Etik Kurul liste/karar · denetim izi bütünlüğü (denetçi) |
-| `/operasyon` | Operasyon paneli (S2 — koordinatör/admin) |
+| `/operasyon` (+`/lojistik`) | Operasyon paneli · lojistik Patient Journey takibi (S2 — koordinatör/admin) |
 | `/paylasim/[token]` · `/paylasimlarim` | Güvenli paylaşım görüntüleyici · paylaşım yönetimi |
 | `/second-opinion/*` | İkinci Görüş başvuru/vaka/görüşme akışı |
 | `/pro-bono/*` | Pro Bono başvuru/bekleme/landing |
