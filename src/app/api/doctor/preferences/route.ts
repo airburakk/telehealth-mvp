@@ -33,9 +33,14 @@ export async function POST(req: Request) {
   const capacity = Math.min(200, Math.max(1, Math.round(Number(b.capacity) || 20)));
   const licenseNo = typeof b.licenseNo === "string" && b.licenseNo.trim() ? b.licenseNo.trim().slice(0, 100) : null;
 
+  // M5 — birim katılımı opt-in'leri (yalnız gövdede boolean geldiyse güncelle; onboarding sonrası değiştirme)
+  const optData: { proBonoOptIn?: boolean; consultOptIn?: boolean } = {};
+  if (typeof b.proBonoOptIn === "boolean") optData.proBonoOptIn = b.proBonoOptIn;
+  if (typeof b.consultOptIn === "boolean") optData.consultOptIn = b.consultOptIn;
+
   await db.doctor.update({
     where: { id: dbUser.doctorId },
-    data: { languages: languages.join(","), markets: markets.length ? markets.join(",") : null, capacity, licenseNo },
+    data: { languages: languages.join(","), markets: markets.length ? markets.join(",") : null, capacity, licenseNo, ...optData },
   });
 
   return NextResponse.json({ ok: true });

@@ -3,16 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LANGUAGES, COUNTRIES } from "@/lib/constants";
-import { Globe, MapPin, CalendarClock, Save, Loader2, Check, BadgeCheck } from "lucide-react";
+import { Globe, MapPin, CalendarClock, Save, Loader2, Check, BadgeCheck, HeartHandshake, Inbox } from "lucide-react";
 
-// Hekimin kendi profil tercihleri — hizmet dilleri + hizmet verdiği pazarlar (ülkeler) + aylık kapasite limiti.
+// Hekimin kendi profil tercihleri — hizmet dilleri + hizmet verdiği pazarlar (ülkeler) + aylık kapasite limiti
+// + birim katılımı (Pro Bono / Konsültasyon opt-in — Ana Sayfa pencere görünürlüğü).
 // /api/doctor/preferences'a kaydeder (yalnız oturumdaki hekimin kaydı).
-export function DoctorPreferences({ languages, markets, capacity, licenseNo }: { languages: string[]; markets: string[]; capacity: number; licenseNo: string | null }) {
+export function DoctorPreferences({ languages, markets, capacity, licenseNo, proBonoOptIn, consultOptIn }: { languages: string[]; markets: string[]; capacity: number; licenseNo: string | null; proBonoOptIn: boolean; consultOptIn: boolean }) {
   const router = useRouter();
   const [langs, setLangs] = useState<string[]>(languages);
   const [mkts, setMkts] = useState<string[]>(markets);
   const [cap, setCap] = useState<number>(capacity);
   const [lic, setLic] = useState<string>(licenseNo ?? "");
+  const [pb, setPb] = useState<boolean>(proBonoOptIn);
+  const [cs, setCs] = useState<boolean>(consultOptIn);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState("");
@@ -30,7 +33,7 @@ export function DoctorPreferences({ languages, markets, capacity, licenseNo }: {
       const r = await fetch("/api/doctor/preferences", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ languages: langs, markets: mkts, capacity: cap, licenseNo: lic }),
+        body: JSON.stringify({ languages: langs, markets: mkts, capacity: cap, licenseNo: lic, proBonoOptIn: pb, consultOptIn: cs }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Kaydedilemedi.");
@@ -90,6 +93,27 @@ export function DoctorPreferences({ languages, markets, capacity, licenseNo }: {
         />
       </div>
 
+      <div className="mt-5 border-t border-slate-100 pt-4">
+        <div className="text-sm font-medium text-slate-700">Birim katılımı</div>
+        <p className="text-xs text-slate-400">Ana Sayfanızdaki pencerelerin görünürlüğünü belirler.</p>
+        <div className="mt-3 space-y-2">
+          <OptToggle
+            active={pb}
+            onToggle={() => { setPb((v) => !v); setSaved(false); }}
+            icon={<HeartHandshake size={16} />}
+            title="Pro Bono — ücretsiz konsültasyon"
+            desc="Ana Sayfada Pro Bono penceresi görünür; gönüllü ücretsiz görüşme alırsınız."
+          />
+          <OptToggle
+            active={cs}
+            onToggle={() => { setCs((v) => !v); setSaved(false); }}
+            icon={<Inbox size={16} />}
+            title="Konsültasyon Talepleri — Partner doktorlar"
+            desc="Anonim hasta dosyalarına görüş verirsiniz; yanıt başına ödeme (simüle)."
+          />
+        </div>
+      </div>
+
       {err && <p className="mt-3 text-sm text-red-600">{err}</p>}
 
       <button
@@ -101,6 +125,26 @@ export function DoctorPreferences({ languages, markets, capacity, licenseNo }: {
         {saved ? "Kaydedildi" : "Tercihleri kaydet"}
       </button>
     </div>
+  );
+}
+
+function OptToggle({ active, onToggle, icon, title, desc }: { active: boolean; onToggle: () => void; icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={active}
+      className={`flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition ${active ? "border-[#14C3D0] bg-[#14C3D0]/[0.06]" : "border-slate-200 bg-white hover:border-[#14C3D0]/40"}`}
+    >
+      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? "bg-[#14C3D0] text-[#101010]" : "bg-slate-100 text-slate-500"}`}>{icon}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium text-slate-700">{title}</span>
+        <span className="block text-xs text-slate-500">{desc}</span>
+      </span>
+      <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${active ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 bg-white text-transparent"}`}>
+        <Check size={12} />
+      </span>
+    </button>
   );
 }
 

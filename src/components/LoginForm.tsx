@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Loader2, LogIn, UserRound, Stethoscope, Headphones, Scale } from "lucide-react";
+import { Loader2, LogIn, UserRound, Stethoscope, Headphones, Scale, Globe } from "lucide-react";
 import { AuraMark } from "@/components/PortamedLogo";
 
 const QUICK = [
@@ -10,6 +10,7 @@ const QUICK = [
   { email: "doktor@air.test", label: "Doktor", icon: Stethoscope },
   { email: "koordinator@air.test", label: "Koordinatör", icon: Headphones },
   { email: "kurul@air.test", label: "Etik Kurul", icon: Scale },
+  { email: "partner@air.test", label: "Partner Doktor", icon: Globe },
 ];
 
 export function LoginForm() {

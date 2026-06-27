@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
 import { PortamedLogo } from "@/components/PortamedLogo";
-import { Stethoscope, UserRound, HeartPulse, Scale, LogOut, LogIn, Users, BadgeCheck, Share2, BarChart3, FolderHeart, HeartHandshake } from "lucide-react";
+import { Stethoscope, UserRound, HeartPulse, Scale, LogOut, LogIn, Users, BadgeCheck, Share2, BarChart3, FolderHeart, HeartHandshake, Globe } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
   PATIENT: "Hasta",
@@ -12,6 +12,7 @@ const ROLE_LABELS: Record<string, string> = {
   COORDINATOR: "Koordinatör",
   ETHICS: "Etik Kurul",
   ADMIN: "Yönetici",
+  PARTNER: "Partner Doktor",
 };
 
 const NAV = [
@@ -26,6 +27,7 @@ const NAV = [
   { href: "/doktor/pro-bono", label: "Pro Bono", icon: HeartHandshake, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
   { href: "/doktor/profil", label: "Profilim", icon: BadgeCheck, roles: ["DOCTOR", "ADMIN"] },
   { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, roles: ["ETHICS", "ADMIN"] },
+  { href: "/partner", label: "Partner", icon: Globe, roles: ["PARTNER", "ADMIN"] },
 ];
 
 export function Header({ user }: { user: { name: string; role: string } | null }) {

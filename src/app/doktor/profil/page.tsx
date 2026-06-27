@@ -142,6 +142,8 @@ export default async function DoctorDashboard() {
           markets={doctor.markets ? doctor.markets.split(",").map((s) => s.trim()).filter(Boolean) : []}
           capacity={doctor.capacity}
           licenseNo={doctor.licenseNo}
+          proBonoOptIn={doctor.proBonoOptIn}
+          consultOptIn={doctor.consultOptIn}
         />
       </div>
 

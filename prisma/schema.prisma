@@ -19,9 +19,26 @@ model User {
   email        String   @unique
   passwordHash String
   name         String
-  role         String // PATIENT, DOCTOR, COORDINATOR, ETHICS, ADMIN
+  role         String // PATIENT, DOCTOR, COORDINATOR, ETHICS, ADMIN, PARTNER
   doctorId     String? // DOCTOR rolündeki kullanıcının hekim profili
+  partnerId    String? // PARTNER rolündeki kullanıcının Partner Doktor profili (M5 Faz 3)
   createdAt    DateTime @default(now())
+}
+
+/// M5 Faz 3 — Partner Doktor: yurtdışından sisteme katılan, hasta yönlendiren ortak hekim.
+/// Uzaktan sağlık hizmeti VERMEZ ve platform hasta veritabanına ERİŞEMEZ (ayrı tablo, ilişki yok).
+/// Tek yetkisi: kendi yönlendirdiği hastanın bilgisini ANONİMLEŞTİREREK konsültasyon talebi açmak.
+model PartnerDoctor {
+  id          String   @id @default(cuid())
+  name        String
+  title       String   @default("Dr.")
+  country     String // ISO ülke kodu (yurtdışı) — DE, RU, AT ...
+  institution String? // kurum/klinik adı
+  branch      String? // ana branş (varsa)
+  email       String   @unique
+  phone       String?
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }
 
 /// KVKK/açık onam kaydı — kullanıcı bazlı, sürümlü (Consent Manager Faz 0).
@@ -75,6 +92,10 @@ model Doctor {
   certifications  String? // JSON string[] — mesleki sertifika/üyelikler
   publications    String? // JSON [{title,venue,year}] — akademik yayın/çalışmalar
   photo           String? // profil fotoğrafı yolu (ör. /photos/pool/p07.jpg); yoksa cinsiyet-fallback (DoctorArt)
+  // M5 Doktor Ana Sayfa onboarding & pencere görünürlüğü (lib/doctor-home.ts)
+  onboardedAt        DateTime? // ilk-giriş onboarding kapısı tamamlandı mı (null = /doktor/baslangic'a yönlendir)
+  proBonoOptIn       Boolean   @default(false) // Pro Bono vaka kabul ediyor mu → Ana Sayfa Pro Bono penceresi görünürlüğü (anlık müsaitlik = proBonoState ayrı)
+  consultOptIn       Boolean   @default(false) // Partner konsültasyon taleplerini yanıtlıyor mu → Konsültasyon Talepleri penceresi görünürlüğü (yanıt başına ödeme, simüle)
   // Pro Bono — anlık müsaitlik + kontenjan (gönüllü ücretsiz konsültasyon)
   proBonoState       String    @default("OFFLINE") // OFFLINE | AVAILABLE | IN_SESSION
   proBonoQuota       Int       @default(10) // dönem (takvim haftası) başına kontenjan
@@ -158,6 +179,31 @@ model Case {
 
   @@index([userId])
   @@index([proBono, proBonoStatus])
+}
+
+/// M5 Faz 2 — Partner doktorun açtığı anonimleştirilmiş konsültasyon talebi.
+/// Hiçbir kişisel veri taşımaz (lib/deidentify.ts ile arındırılır); kayıtlı hekimler görüş verir.
+/// clinicalSummary + answerText klinik içerik → at-rest şifreli (lib/crypto encryptField).
+model ConsultationRequest {
+  id                 String    @id @default(cuid())
+  sourceCaseId       String? // iç izlenebilirlik (hangi vakadan türetildi) — yanıtlayan hekime ASLA gösterilmez
+  requestedByPartnerId String? // talebi açan Partner doktor (M5 Faz 3) — kendi taleplerini/yanıtlarını görür
+  requestedByName    String? // talebi açan Partner doktorun görünen adı (UI gösterimi)
+  branch             String? // null = genel havuz · dolu = yalnız bu branş hekimleri görür
+  region             String // ülke/bölge (kaba bağlam; bireysel tanımlayıcı değil)
+  language           String
+  urgency            Int       @default(3)
+  icd10Code          String? // tanı kodu (varsa)
+  clinicalSummary    String // anonim klinik özet (at-rest şifreli)
+  status             String    @default("OPEN") // OPEN | ANSWERED
+  answeredByDoctorId String? // görüş veren hekim
+  answerText         String? // hekim görüşü (at-rest şifreli)
+  paymentSim         Int? // yanıt başına ödeme (USD, simüle)
+  answeredAt         DateTime?
+  createdAt          DateTime  @default(now())
+
+  @@index([status, branch])
+  @@index([requestedByPartnerId])
 }
 
 /// Hasta-doktor video görüşmesi
