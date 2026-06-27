@@ -111,6 +111,15 @@ export default async function OperationsDashboard() {
         <ArrowRight size={16} className="shrink-0 text-[#0E8A95]" />
       </Link>
 
+      <Link href="/operasyon/lojistik" className="mt-3 flex items-center gap-3 rounded-3xl border border-slate-200 bg-white p-4 transition hover:bg-slate-50">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-teal-100 text-teal-700"><Luggage size={18} /></span>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-[#101010]">Lojistik Takip — Patient Journey</div>
+          <p className="text-xs text-slate-500">Onaylı rezervasyonların karşılama · konaklama · tedavi · dönüş aşamalarını yönet</p>
+        </div>
+        <ArrowRight size={16} className="shrink-0 text-[#0E8A95]" />
+      </Link>
+
       {/* KPI kartları */}
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <Kpi icon={<Users size={16} />} label="Toplam vaka" value={String(cases.length)} sub={`${urgent} yüksek aciliyet`} />

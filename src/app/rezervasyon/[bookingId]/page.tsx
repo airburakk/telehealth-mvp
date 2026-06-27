@@ -9,16 +9,17 @@ import {
   CheckCircle2, Lock, Plane, BedDouble, Stethoscope, Home,
   MessageCircle, ShieldCheck, Languages, Building2, HeartPulse, Scale,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { parseJourney, journeyProgress, JOURNEY_STAGES, JOURNEY_STATUS } from "@/lib/journey";
 
 export const dynamic = "force-dynamic";
 
-const JOURNEY = [
-  { icon: Plane, t: "Karşılama & transfer", d: "Havalimanı VIP karşılama" },
-  { icon: BedDouble, t: "Otel girişi", d: "Konaklama başlangıcı" },
-  { icon: Building2, t: "Hastane & ön muayene", d: "Tetkik ve hazırlık" },
-  { icon: Stethoscope, t: "Operasyon / tedavi", d: "Planlanan işlem" },
-  { icon: Home, t: "Taburcu & dönüş", d: "Kontroller + uçuş" },
-];
+// Aşama anahtarı → ikon (etiket/açıklama lib/journey.ts'te tek kaynak)
+const STAGE_ICONS: Record<string, LucideIcon> = {
+  transfer: Plane, hotel: BedDouble, hospital: Building2, operation: Stethoscope, discharge: Home,
+};
+const fmtJourneyDate = (iso: string) =>
+  new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeZone: "Europe/Istanbul" }).format(new Date(iso));
 
 export default async function ReservationPage({ params }: { params: Promise<{ bookingId: string }> }) {
   const { bookingId } = await params;
@@ -31,6 +32,8 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
   const split: LineItem[] = JSON.parse(booking.split);
   const c = booking.case;
   const esc = ESCROW_STATUS[booking.escrowStatus] ?? ESCROW_STATUS.HELD;
+  const stages = parseJourney(booking.journeyData);
+  const progress = journeyProgress(stages);
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-10">
@@ -77,21 +80,53 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
             </div>
           </div>
 
-          {/* Hasta yolculuğu */}
+          {/* Hasta yolculuğu — lojistik takip (gerçek durumlu; koordinatör /operasyon/lojistik'ten günceller) */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Hasta Yolculuğu</div>
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Hasta Yolculuğu</div>
+              <span className="text-xs text-slate-400">{progress.done}/{progress.total} tamamlandı</span>
+            </div>
             <ol className="mt-4 space-y-0">
-              {JOURNEY.map((j, i) => {
-                const Icon = j.icon;
+              {stages.map((st, i) => {
+                const meta = JOURNEY_STAGES.find((s) => s.key === st.key) ?? { label: st.key, desc: "" };
+                const Icon = STAGE_ICONS[st.key] ?? Plane;
+                const stat = JOURNEY_STATUS[st.status];
+                const dateLabel =
+                  st.status === "done" && st.doneAt
+                    ? `Tamamlandı · ${fmtJourneyDate(st.doneAt)}`
+                    : st.plannedAt
+                      ? `Planlanan · ${fmtJourneyDate(st.plannedAt)}`
+                      : null;
                 return (
-                  <li key={i} className="flex gap-3">
+                  <li key={st.key} className="flex gap-3">
                     <div className="flex flex-col items-center">
-                      <span className="grid h-9 w-9 place-items-center rounded-full bg-teal-100 text-teal-700"><Icon size={16} /></span>
-                      {i < JOURNEY.length - 1 && <span className="my-1 h-6 w-0.5 bg-slate-200" />}
+                      <span
+                        className={`grid h-9 w-9 place-items-center rounded-full ${
+                          st.status === "done"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : st.status === "active"
+                              ? "bg-teal-100 text-teal-700"
+                              : "bg-slate-100 text-slate-400"
+                        }`}
+                      >
+                        {st.status === "done" ? <CheckCircle2 size={16} /> : <Icon size={16} />}
+                      </span>
+                      {i < stages.length - 1 && (
+                        <span className={`my-1 h-6 w-0.5 ${st.status === "done" ? "bg-emerald-200" : "bg-slate-200"}`} />
+                      )}
                     </div>
-                    <div className="pb-2">
-                      <div className="text-sm font-medium text-slate-800">{j.t}</div>
-                      <div className="text-xs text-slate-400">{j.d}</div>
+                    <div className="pb-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`text-sm font-medium ${st.status === "pending" ? "text-slate-400" : "text-slate-800"}`}>
+                          {meta.label}
+                        </span>
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${stat.color}`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${stat.dot}`} /> {stat.label}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-400">{meta.desc}</div>
+                      {dateLabel && <div className="mt-0.5 text-xs text-slate-500">{dateLabel}</div>}
+                      {st.note && <div className="mt-0.5 text-xs text-slate-600">{st.note}</div>}
                     </div>
                   </li>
                 );

@@ -5,6 +5,7 @@ import { getTryPerUsd } from "@/lib/fxrate";
 import { notifyRoles, notifyUser } from "@/lib/notify";
 import { getCurrentUser } from "@/lib/auth";
 import { ownsCase } from "@/lib/ownership";
+import { defaultJourney } from "@/lib/journey";
 
 // POST /api/cases/:id/booking — sağlık turizmi paketi rezervasyonu oluştur (Escrow)
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -59,6 +60,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       // Teklif: hasta onayına dek emanet tutulmaz (DRAFT/PENDING); onaylanınca CONFIRMED + HELD olur.
       status: isOffer ? "DRAFT" : "CONFIRMED",
       escrowStatus: isOffer ? "PENDING" : "HELD",
+      journeyData: JSON.stringify(defaultJourney()), // lojistik Patient Journey başlangıcı (ilk aşama aktif)
     },
   });
 

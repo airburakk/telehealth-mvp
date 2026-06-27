@@ -214,6 +214,7 @@ model Booking {
   split                String // JSON LineItem[]
   status               String   @default("CONFIRMED") // DRAFT, CONFIRMED, CANCELLED
   escrowStatus         String   @default("HELD") // HELD, RELEASED, REFUNDED
+  journeyData          String? // JSON JourneyStage[] — lojistik Patient Journey (transfer/otel/hastane/operasyon/dönüş; aşama durumu+tarih+not). null → defaultJourney() fallback. lib/journey.ts
   createdAt            DateTime @default(now())
 }
 
