@@ -151,7 +151,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/triyaj` · `/triyaj/[id]` | Triyaj sihirbazı · vaka süreç sayfası + 3-seçenek kapısı |
 | `/vakalarim` · `/erisim-kaydi` | Hastanın vaka ana ekranı · erişim denetim kaydı ("verime kim erişti") |
 | `/doktor` (+`/baslangic`, `/vaka/[id]`, `/takip`, `/profil`, `/pro-bono`, `/konsultasyon`) | Doktor Ana Sayfası (5-pencere), ilk-giriş onboarding, kokpit, izleme, profil, Pro Bono, klinik nöbet, Konsültasyon Talepleri kutusu |
-| `/partner` (+`/talep`) | Partner Doktor paneli · anonim konsültasyon talebi oluşturma (hasta DB erişimi yok) |
+| `/partner` (+`/talep`) | Partner Doktor paneli (+ **kendi dilinde haber akışı**) · anonim konsültasyon talebi oluşturma (belge yükleme, hasta DB erişimi yok) |
 | `/gorusme/[id]` | WebRTC video görüşme odası (asimetrik) |
 | `/paket/[caseId]` · `/rezervasyon/[id]` · `/teklif/[id]` | Paket · Escrow rezervasyon · hastaya gönderilen teklif |
 | `/takip/[caseId]` | Post-op takip |
