@@ -87,7 +87,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | 6 | **Doktor Tanıtım** | ✅ Hekim dizini + doğrulanmış profil, **gerçek profil fotoğrafı** (`Doctor.photo` per-doktor / cinsiyet-fallback) + **tanıtım videosu** (cinsiyete göre), yorumlar (gerçek Review/üretim-fallback), akreditasyon (JCI), **kalıcı akademik** (düzenlenebilir) |
 | 7 | **Etik Kurul** | ✅ Şikayet, anonimleştirilmiş (data masking) inceleme, karar/yaptırım, **Escrow iade** tetikleyicisi |
 | — | **Kimlik doğrulama** | ✅ Roller (hasta/doktor/koordinatör/kurul/admin/**partner**), bcrypt + JWT + proxy + KVKK onam kapısı |
-| — | **Partner Doktor + Konsültasyon Havuzu** | ✅ **Partner Doktor** (`PartnerDoctor` + `PARTNER` rolü, `/partner`): hasta DB erişimi YOK, anonim konsültasyon talebi açar → **anonimleştirme katmanı** (`lib/deidentify.ts`: yapısal de-id + TC/pasaport/e-posta/telefon scrub; DICOM hariç) → **`ConsultationRequest` havuzu** (at-rest şifreli; `/doktor/konsultasyon`'da kayıtlı hekimler görüş verir, yanıt başına ödeme simüle) |
+| — | **Partner Doktor + Konsültasyon Havuzu** | ✅ **Partner Doktor** (`PartnerDoctor` + `PARTNER` rolü, `/partner`): hasta DB erişimi YOK, anonim konsültasyon talebi açar (+**tıbbi belge yükleme** → `assessDocument` AI: tür/TR çeviri/özet/anormal bayrak/LOINC lab) → **anonimleştirme katmanı** (`lib/deidentify.ts`: yapısal de-id + TC/pasaport/e-posta/telefon scrub; DICOM hariç) → **`ConsultationRequest` havuzu** (at-rest şifreli; `/doktor/konsultasyon`'da kayıtlı hekimler görüş + **kodlu öneri** verir: lab/görüntüleme=ServiceRequest, ilaç=MedicationRequest ATC). **Çift-yönlü AI çeviri** (özet→TR hekim · görüş→hasta dili partner) + **FHIR Bundle** (`/fhir/ConsultationRequest/[id]`). Yanıt başına ödeme simüle |
 
 ### Paralel hasta akışları
 
@@ -161,7 +161,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/paylasim/[token]` · `/paylasimlarim` | Güvenli paylaşım görüntüleyici · paylaşım yönetimi |
 | `/second-opinion/*` | İkinci Görüş başvuru/vaka/görüşme akışı |
 | `/pro-bono/*` | Pro Bono başvuru/bekleme/landing |
-| `/fhir/*` | FHIR R4 kaynak çıkışı (Composition / Consent / audit) |
+| `/fhir/*` | FHIR R4 kaynak çıkışı (Composition / Consent / audit / **ConsultationRequest** Bundle) |
 
 ### API (route handler grupları — `src/app/api/`)
 
