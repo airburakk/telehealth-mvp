@@ -81,9 +81,9 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 |---|-------|-------|
 | 1 | **Triyaj** | ✅ Ön-konsültasyon kapısı (ücret/sigorta) → 5 adımlı sihirbaz, **gerçek Claude** branş+aciliyet (30 branş, ~198 dinamik branş sorusu), belge yükleme + **AI ön-değerlendirme** (vision/PDF → tür+TR çeviri+özet+anormal bayrak) + lab→FHIR oto-dolum |
 | 2 | **Doktor Paneli + Video** | ✅ Aciliyet sıralı kuyruk, kokpit, **gerçek WebRTC** video + canlı transkript (Web Speech) + AI-SOAP + medikal çeviri + **AI Epikriz** + **Gemini canlı tercüman** (iki yönlü ses+altyazı) + **DICOM görüntüleyici** (5 sıkıştırılmış codec) + klinik kodlama (FHIR) |
-| 3 | **Sağlık Turizmi** | ✅ Tier'lı paket, dinamik fiyat, sigorta, **Escrow + split** + **lojistik Patient Journey takibi** (durum+tarih+not; koordinatör yönetir, hasta görür) + SOAP'tan AI paket teklifi + hastaya teklif gönderme (link/PDF) |
+| 3 | **Sağlık Turizmi** | ✅ Tier'lı paket, dinamik fiyat, **3 kademeli sigorta** (1 zorunlu · 2 operasyon teminat poliçesi [toplam fatura×oran×branş riski] · 3 malpraktis — doktorun yüklediği MMSS'inin bıraktığı boşluğu doldurur; `lib/pricing.ts` `computeInsurance`, parametrik/endikatif), **Escrow + split** + **lojistik Patient Journey takibi** (durum+tarih+not; koordinatör yönetir, hasta görür) + SOAP'tan AI paket teklifi + hastaya teklif gönderme (link/PDF) |
 | 4 | **Post-Op Takip** | ✅ Günlük kontrol (ağrı/ateş/ilaç/foto), kırmızı bayrak, branş protokolü, doktor izleme + **Güvenli Dijital Paylaşım** (token/TTL/şifre/audit/iptal) + alıcı dilinde görüntüleme + **AI foto analizi** (Claude vision) |
-| 5 | **Doktor Adaptasyon** | ✅ **Doktor Ana Sayfası — 5 pencere** (Klinik Nöbet / İkinci Görüş / Pro Bono / Konsültasyon Talepleri / Haberler), her hekime ünvan+opt-in'e göre koşullu (`lib/doctor-home.ts`) + **ilk-giriş onboarding** (`/doktor/baslangic`: İkinci Görüş ünvana göre, Pro Bono + Konsültasyon opt-in) + Panel 1 yalnız eşleşen vakalar + itibar/hakediş/kapasite/profil tercihleri (dil/pazar/işlem-ücret/opt-in) |
+| 5 | **Doktor Adaptasyon** | ✅ **Doktor Ana Sayfası — 5 pencere** (Klinik Nöbet / İkinci Görüş / Pro Bono / Konsültasyon Talepleri / Haberler), her hekime ünvan+opt-in'e göre koşullu (`lib/doctor-home.ts`) + **ilk-giriş onboarding** (`/doktor/baslangic`: **zorunlu mesleki belge** — Tıp Diploması + MMSS poliçesi yüklemeden hesap **aktifleşmez** [`DoctorDocument` + `Doctor.activatedAt` + `lib/doctor-activation`; içerik at-rest şifreli; MMSS teminat limiti → M3 Katman 3 malpraktis girdisi]; İkinci Görüş ünvana göre; Pro Bono + Konsültasyon opt-in) + Panel 1 yalnız eşleşen vakalar + itibar/hakediş/kapasite/profil tercihleri (dil/pazar/işlem-ücret/opt-in) |
 | 6 | **Doktor Tanıtım** | ✅ Hekim dizini + doğrulanmış profil, **gerçek profil fotoğrafı** (`Doctor.photo` per-doktor / cinsiyet-fallback) + **tanıtım videosu** (cinsiyete göre), yorumlar (gerçek Review/üretim-fallback), akreditasyon (JCI), **kalıcı akademik** (düzenlenebilir) |
 | 7 | **Etik Kurul** | ✅ Şikayet, anonimleştirilmiş (data masking) inceleme, karar/yaptırım, **Escrow iade** tetikleyicisi |
 | — | **Kimlik doğrulama** | ✅ Roller (hasta/doktor/koordinatör/kurul/admin/**partner**), bcrypt + JWT + proxy + KVKK onam kapısı |
@@ -201,7 +201,7 @@ prisma/
   schema.prisma             # 32 model (User, Doctor, Case, Consultation, ConsultationMessage,
                             #   ConsultationVideoAppointment, Booking, Recovery, CheckIn,
                             #   ShareLink/ShareAccess, Notification, ConsentRecord, AccessLog,
-                            #   ConsultAppointment, CaseDocument, SecondOpinion* ×7, ...)
+                            #   ConsultAppointment, CaseDocument, DoctorDocument, SecondOpinion* ×7, ...)
   seed.ts                   # demo veri (30 hekim + 20 vaka)
 scripts/                    # add-demo-cases.ts (idempotent), gen-icons.mjs, ...
 public/                     # PWA manifest + ikonlar + wasm/ (DICOM codec'leri)
