@@ -114,9 +114,19 @@ model Doctor {
   // Yanıt süresi (duyarlılık) — İcapçı talebe ne kadar hızlı teklif veriyor: ort = respTotalSec/respCount (additive sayaç)
   respCount       Int            @default(0) // yanıtlanan (teklif verilen) İcapçı talebi sayısı
   respTotalSec    Int            @default(0) // toplam yanıt süresi (saniye) — talep→teklif
+  // M5 — Mesleki belge yükleme + aktivasyon kapısı (diploma + MMSS zorunlu; yüklemeden hesap aktifleşmez)
+  activatedAt          DateTime? // zorunlu belgeler tamam → hesap aktif; null = /doktor/baslangic'a yönlendir
+  // Zorunlu Mesleki Mali Sorumluluk Sigortası (MMSS) özeti — M3 Katman 3 malpraktis ek-prim girdisi
+  mmssInsurer          String? // sigorta şirketi
+  mmssPolicyNo         String? // poliçe no (at-rest şifreli — encryptField)
+  mmssCoverageLimit    Int? // teminat limiti (mmssCoverageCurrency biriminde)
+  mmssCoverageCurrency String?   @default("TRY") // "TRY" | "USD" — hesapta canlı kurla USD'ye normalize edilir
+  mmssValidUntil       DateTime? // poliçe geçerlilik bitişi
+  mmssVerifiedAt       DateTime? // operasyon/admin doğrulaması (ileride; şimdilik yüklemeyle damgalanır)
   cases           Case[]
   consultations   Consultation[]
   reviews         Review[]
+  documents       DoctorDocument[]
   createdAt       DateTime       @default(now())
 }
 
@@ -312,6 +322,22 @@ model CaseDocument {
   createdAt     DateTime  @default(now())
 
   @@index([caseId])
+}
+
+/// M5 — Hekim mesleki belgesi (diploma, MMSS poliçesi, sertifika, akademik çalışma).
+/// Diploma + MMSS ZORUNLU (yüklemeden hesap aktifleşmez); sertifika/akademik ihtiyari.
+/// İçerik base64 data URI + at-rest şifreli (CaseDocument deseni; gerçek object storage TODO).
+model DoctorDocument {
+  id        String   @id @default(cuid())
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+  doctorId  String
+  type      String // DIPLOMA | MMSS | CERTIFICATE | ACADEMIC
+  label     String // dosya adı
+  mimeType  String // application/pdf | image/jpeg | image/png | ...
+  content   String // base64 data URI — at-rest şifreli (encryptField)
+  createdAt DateTime @default(now())
+
+  @@index([doctorId])
 }
 
 /// Post-Op iyileşme takibi (Modül 4)

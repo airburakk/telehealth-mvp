@@ -16,14 +16,25 @@ export default async function DoctorOnboardingPage() {
   const doctor = dbUser?.doctorId
     ? await db.doctor.findUnique({
         where: { id: dbUser.doctorId },
-        select: { title: true, name: true, onboardedAt: true, proBonoOptIn: true, consultOptIn: true },
+        select: {
+          title: true, name: true, onboardedAt: true, activatedAt: true, proBonoOptIn: true, consultOptIn: true,
+          mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true, mmssCoverageCurrency: true, mmssValidUntil: true,
+        },
       })
     : null;
 
   // Hekim profili bağlı değilse (ör. koordinatör) onboarding'in anlamı yok → panele geç.
   if (!doctor) redirect("/doktor");
-  // Zaten onboard olduysa kapıyı atla.
-  if (doctor.onboardedAt) redirect("/doktor");
+  // Onboard OLMUŞ ve zorunlu belgeleri tamamlamış (aktif) ise kapıyı atla. Belge eksikse (activatedAt
+  // null) burada kal — hekim diploma + MMSS yükleyip tamamlasın.
+  if (doctor.onboardedAt && doctor.activatedAt) redirect("/doktor");
+
+  // Yüklü mesleki belgelerin meta listesi (içerik DÖNMEZ) + MMSS metadata pre-fill.
+  const docs = await db.doctorDocument.findMany({
+    where: { doctorId: dbUser!.doctorId! },
+    select: { id: true, type: true, label: true, mimeType: true },
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
     <OnboardingForm
@@ -31,6 +42,14 @@ export default async function DoctorOnboardingPage() {
       soOpen={soEligible(doctor.title)}
       initialProBono={doctor.proBonoOptIn}
       initialConsult={doctor.consultOptIn}
+      initialDocs={docs}
+      initialMmss={{
+        insurer: doctor.mmssInsurer,
+        coverageLimit: doctor.mmssCoverageLimit,
+        currency: doctor.mmssCoverageCurrency,
+        validUntil: doctor.mmssValidUntil ? doctor.mmssValidUntil.toISOString() : null,
+        policyNoSet: !!doctor.mmssPolicyNo,
+      }}
     />
   );
 }

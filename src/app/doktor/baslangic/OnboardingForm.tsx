@@ -2,24 +2,30 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { HeartHandshake, Stethoscope, Inbox, Loader2, ArrowRight, Check, BadgeCheck, Lock } from "lucide-react";
+import { HeartHandshake, Stethoscope, Inbox, Loader2, ArrowRight, Check, BadgeCheck, Lock, ShieldAlert } from "lucide-react";
+import { DoctorDocuments, type DocMeta, type MmssInitial } from "@/components/DoctorDocuments";
 
-// M5 — İlk-giriş onboarding kapısı (client). Pro Bono + Partner Konsültasyon opt-in toplar,
-// İkinci Görüş'ün ünvana göre otomatik durumunu bildirir. Kaydedince /doktor'a geçer.
+// M5 — İlk-giriş onboarding kapısı (client). Önce ZORUNLU mesleki belgeler (diploma + MMSS) yüklenir
+// (yüklenmeden hesap aktifleşmez), sonra Pro Bono + Partner Konsültasyon opt-in toplanır. Kaydedince /doktor'a geçer.
 export function OnboardingForm({
   doctorName,
   soOpen,
   initialProBono,
   initialConsult,
+  initialDocs,
+  initialMmss,
 }: {
   doctorName: string;
   soOpen: boolean;
   initialProBono: boolean;
   initialConsult: boolean;
+  initialDocs: DocMeta[];
+  initialMmss: MmssInitial;
 }) {
   const router = useRouter();
   const [proBono, setProBono] = useState(initialProBono);
   const [consult, setConsult] = useState(initialConsult);
+  const [docsReady, setDocsReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
@@ -50,6 +56,20 @@ export function OnboardingForm({
           Doktor Ana Sayfanız tercihinize göre düzenlenir. Aşağıdaki birimlere katılmak isteyip
           istemediğinizi seçin — dilediğiniz zaman profilinizden değiştirebilirsiniz.
         </p>
+      </div>
+
+      {/* ── Zorunlu mesleki belgeler — hesap aktivasyon kapısı ── */}
+      <div className="mt-8">
+        <div className="flex items-center gap-2 text-sm font-bold text-[#101010]">
+          <ShieldAlert size={16} className="text-amber-500" /> Mesleki Belgeler
+        </div>
+        <p className="mt-1 text-xs text-slate-500">
+          <strong>Tıp diploması</strong> ve <strong>Mesleki Mali Sorumluluk Sigortası (MMSS)</strong> poliçenizi
+          yüklemeden hesabınız aktifleşmez. Sertifika ve akademik çalışmalar ihtiyaridir.
+        </p>
+        <div className="mt-3">
+          <DoctorDocuments initialDocs={initialDocs} initialMmss={initialMmss} onActivationChange={setDocsReady} />
+        </div>
       </div>
 
       <div className="mt-8 space-y-4">
@@ -101,10 +121,16 @@ export function OnboardingForm({
 
       {err && <p className="mt-4 text-center text-sm text-red-600">{err}</p>}
 
+      {!docsReady && (
+        <p className="mt-6 flex items-center justify-center gap-1.5 rounded-xl bg-amber-50 px-3 py-2.5 text-center text-xs font-medium text-amber-700 ring-1 ring-amber-100">
+          <ShieldAlert size={14} /> Devam etmek için tıp diploması ve MMSS poliçenizi (teminat limiti dahil) tamamlayın.
+        </p>
+      )}
+
       <button
         onClick={finish}
-        disabled={saving}
-        className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-[#14C3D0] px-4 py-3 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60"
+        disabled={saving || !docsReady}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#14C3D0] px-4 py-3 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60"
       >
         {saving ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
         Ana Sayfama geç

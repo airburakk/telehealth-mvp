@@ -25,8 +25,10 @@ export default async function DoctorPanel() {
   const me = user ? await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } }) : null;
   const doctor = me?.doctorId ? await db.doctor.findUnique({ where: { id: me.doctorId } }) : null;
 
-  // M5 onboarding kapısı: hekim profili var ama henüz onboard olmadıysa kapıya yönlendir.
-  if (user?.role === "DOCTOR" && doctor && !doctor.onboardedAt) {
+  // M5 onboarding + aktivasyon kapısı: hekim henüz onboard olmadıysa VEYA zorunlu mesleki belgeleri
+  // (diploma + MMSS) tamamlamadıysa (activatedAt yok) kapıya yönlendir. (baslangic sayfası ikisi de
+  // tamamsa /doktor'a geri yönlendirir → sonsuz döngü yok.)
+  if (user?.role === "DOCTOR" && doctor && (!doctor.onboardedAt || !doctor.activatedAt)) {
     redirect("/doktor/baslangic");
   }
 
