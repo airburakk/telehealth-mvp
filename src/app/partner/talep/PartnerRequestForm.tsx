@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Send, Loader2, ShieldCheck, Upload, FileText, X } from "lucide-react";
+import type { FormStrings } from "./page";
 
 interface DocItem { label: string; mime: string; dataUrl: string }
 
@@ -48,12 +49,16 @@ export function PartnerRequestForm({
   languages,
   defaultCountry,
   defaultBranch,
+  t,
+  dir,
 }: {
   branches: string[];
   countries: { code: string; name: string; flag: string }[];
   languages: string[];
   defaultCountry: string;
   defaultBranch: string | null;
+  t: FormStrings;
+  dir: "rtl" | "ltr";
 }) {
   const router = useRouter();
   const [branchLimited, setBranchLimited] = useState<boolean>(!!defaultBranch);
@@ -74,22 +79,22 @@ export function PartnerRequestForm({
     for (const f of Array.from(files).slice(0, 8)) {
       try {
         if (f.type === "application/pdf") {
-          if (f.size > 8_000_000) { setErr(`${f.name}: PDF çok büyük (max ~8MB).`); continue; }
+          if (f.size > 8_000_000) { setErr(`${f.name}: ${t.errPdfBig}`); continue; }
           next.push({ label: f.name, mime: "application/pdf", dataUrl: await readAsDataUrl(f) });
         } else if (/^image\/(jpeg|png|webp|gif)$/.test(f.type)) {
           next.push({ label: f.name, mime: "image/jpeg", dataUrl: await downscaleImage(f) });
         } else {
-          setErr(`${f.name}: yalnız PDF ve görüntü desteklenir (DICOM kapsam dışı).`);
+          setErr(`${f.name}: ${t.errOnlyPdfImg}`);
         }
       } catch {
-        setErr(`${f.name}: okunamadı.`);
+        setErr(`${f.name}: ${t.errUnreadable}`);
       }
     }
     setDocs((prev) => [...prev, ...next].slice(0, 8));
   }
 
   async function submit() {
-    if (clinicalSummary.trim().length < 10) { setErr("Klinik özet en az 10 karakter olmalı."); return; }
+    if (clinicalSummary.trim().length < 10) { setErr(t.errMinSummary); return; }
     setSaving(true);
     setErr("");
     try {
@@ -99,25 +104,25 @@ export function PartnerRequestForm({
         body: JSON.stringify({ branchLimited, branch, region, language, urgency, icd10Code, clinicalSummary, documents: docs }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Gönderilemedi.");
+      if (!r.ok) throw new Error(d.error || t.errSendFail);
       router.push("/partner");
       router.refresh();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Hata oluştu.");
+      setErr(e instanceof Error ? e.message : t.errGeneric);
       setSaving(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-8">
+    <div dir={dir} className="mx-auto max-w-2xl px-5 py-8">
       <button onClick={() => router.push("/partner")} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
-        <ArrowLeft size={15} /> Panel
+        <ArrowLeft size={15} /> {t.back}
       </button>
-      <h1 className="mt-3 text-2xl font-bold text-[#101010]">Konsültasyon Talebi Oluştur</h1>
+      <h1 className="mt-3 text-2xl font-bold text-[#101010]">{t.title}</h1>
 
       <div className="mt-3 flex items-start gap-2 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-3 text-xs text-indigo-800">
         <ShieldCheck size={16} className="mt-0.5 shrink-0" />
-        <span>Girdiğiniz bilgi <strong>anonimleştirme</strong> katmanından geçirilir — yanlışlıkla yazılan ad / kimlik no / iletişim bilgisi otomatik maskelenir. Lütfen yine de hasta kimliği yazmayın.</span>
+        <span>{t.warning}</span>
       </div>
 
       <div className="mt-6 space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -125,56 +130,56 @@ export function PartnerRequestForm({
         <div>
           <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
             <input type="checkbox" checked={branchLimited} onChange={(e) => setBranchLimited(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-            Talebi belirli bir branşla sınırla
+            {t.branchLimit}
           </label>
           {branchLimited && (
             <select value={branch} onChange={(e) => setBranch(e.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#818cf8]">
               {branches.map((b) => <option key={b} value={b}>{b}</option>)}
             </select>
           )}
-          {!branchLimited && <p className="mt-1 text-xs text-slate-400">Sınırsız → tüm uzman hekimler genel havuzda görür.</p>}
+          {!branchLimited && <p className="mt-1 text-xs text-slate-400">{t.branchUnlimited}</p>}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-sm font-medium text-slate-700">Hasta bölgesi / ülkesi</label>
+            <label className="text-sm font-medium text-slate-700">{t.region}</label>
             <select value={region} onChange={(e) => setRegion(e.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#818cf8]">
               {countries.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">Hasta dili</label>
+            <label className="text-sm font-medium text-slate-700">{t.patientLang}</label>
             <select value={language} onChange={(e) => setLanguage(e.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#818cf8]">
               {languages.map((l) => <option key={l} value={l}>{l}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">Aciliyet (1-5)</label>
+            <label className="text-sm font-medium text-slate-700">{t.urgency}</label>
             <input type="number" min={1} max={5} value={urgency} onChange={(e) => setUrgency(Number(e.target.value))} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#818cf8]" />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">ICD-10 kodu (opsiyonel)</label>
+            <label className="text-sm font-medium text-slate-700">{t.icd}</label>
             <input type="text" value={icd10Code} onChange={(e) => setIcd10(e.target.value)} placeholder="ör. C61" className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#818cf8]" />
           </div>
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700">Klinik özet</label>
+          <label className="text-sm font-medium text-slate-700">{t.summary}</label>
           <textarea
             value={clinicalSummary}
             onChange={(e) => { setSummary(e.target.value); setErr(""); }}
             rows={6}
-            placeholder="Tanı, şikâyetler, ilgili tetkik/lab bulguları… (hasta kimliği YAZMAYIN)"
+            placeholder={t.summaryPlaceholder}
             className="mt-1.5 w-full resize-y rounded-lg border border-slate-300 p-3 text-sm outline-none focus:border-[#818cf8]"
           />
         </div>
 
         {/* Tıbbi belge / sonuç / görüntüleme yükleme (anonim; AI ile değerlendirilir + TR çeviri + FHIR) */}
         <div>
-          <label className="text-sm font-medium text-slate-700">Tıbbi belge / sonuç / görüntüleme <span className="font-normal text-slate-400">(opsiyonel, en çok 8)</span></label>
-          <p className="mt-0.5 text-xs text-slate-400">PDF veya görüntü (DICOM kapsam dışı). Lab/radyoloji/epikriz AI ile değerlendirilir, Türkçeye çevrilir ve FHIR olarak kodlanır. Üzerinde hasta kimliği bulunmayan belgeler yükleyin.</p>
+          <label className="text-sm font-medium text-slate-700">{t.docsLabel} <span className="font-normal text-slate-400">{t.docsOptional}</span></label>
+          <p className="mt-0.5 text-xs text-slate-400">{t.docsHelp}</p>
           <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 hover:border-[#818cf8] hover:bg-slate-50">
-            <Upload size={15} /> Belge ekle
+            <Upload size={15} /> {t.addDoc}
             <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp,image/gif" multiple className="hidden" onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
           </label>
           {docs.length > 0 && (
@@ -192,7 +197,7 @@ export function PartnerRequestForm({
         {err && <p className="text-sm text-red-600">{err}</p>}
 
         <button onClick={submit} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-[#818cf8] px-5 py-3 text-sm font-semibold text-white hover:bg-[#6d75e0] disabled:opacity-60">
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {saving ? "Gönderiliyor — belgeler AI ile değerlendiriliyor…" : "Talebi gönder"}
+          {saving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {saving ? t.submitting : t.submit}
         </button>
       </div>
     </div>
