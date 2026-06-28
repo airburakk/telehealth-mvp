@@ -39,6 +39,7 @@ model PartnerDoctor {
   phone       String?
   language    String?  @default("İngilizce") // partner doktorun kendi okuma dili (haber akışı + arayüz çevirisi)
   verified    Boolean  @default(false)
+  lastSeenAt  DateTime? // Faz 3 presence/heartbeat — son aktiflik (online tespiti için)
   createdAt   DateTime @default(now())
 }
 
@@ -114,6 +115,7 @@ model Doctor {
   // Yanıt süresi (duyarlılık) — İcapçı talebe ne kadar hızlı teklif veriyor: ort = respTotalSec/respCount (additive sayaç)
   respCount       Int            @default(0) // yanıtlanan (teklif verilen) İcapçı talebi sayısı
   respTotalSec    Int            @default(0) // toplam yanıt süresi (saniye) — talep→teklif
+  lastSeenAt      DateTime? // Faz 3 presence/heartbeat — son aktiflik (konsültasyon video online tespiti)
   // M5 — Mesleki belge yükleme + aktivasyon kapısı (diploma + MMSS zorunlu; yüklemeden hesap aktifleşmez)
   activatedAt          DateTime? // zorunlu belgeler tamam → hesap aktif; null = /doktor/baslangic'a yönlendir
   // Zorunlu Mesleki Mali Sorumluluk Sigortası (MMSS) özeti — M3 Katman 3 malpraktis ek-prim girdisi
@@ -207,7 +209,8 @@ model ConsultationRequest {
   icd10Code          String? // tanı kodu (varsa)
   clinicalSummary    String // anonim klinik özet (at-rest şifreli)
   summaryTr          String? // klinik özetin Türkçe çevirisi — yanıtlayan hekim için (at-rest şifreli, cache)
-  status             String    @default("OPEN") // OPEN | ANSWERED
+  status             String    @default("OPEN") // OPEN | IN_DISCUSSION | ANSWERED (Faz 2: hekim soru sorunca sahiplenir)
+  engagedByDoctorId  String? // talebi ilk sahiplenen hekim (soru sorunca; answer'da answeredByDoctorId ile aynı) — Faz 2 chat
   answeredByDoctorId String? // görüş veren hekim
   answerText         String? // hekim görüşü (at-rest şifreli)
   answerTr           String? // hekim görüşünün hasta diline çevirisi — partnere dönüş (at-rest şifreli)
@@ -219,9 +222,45 @@ model ConsultationRequest {
   answeredAt         DateTime?
   createdAt          DateTime  @default(now())
   documents          ConsultationRequestDocument[]
+  messages           ConsultationMessage[]
 
   @@index([status, branch])
   @@index([requestedByPartnerId])
+}
+
+/// M5 Faz 2 — Konsültasyon talebine bağlı yazılı görüşme (chat) mesajı.
+/// Partner ↔ sahiplenen/yanıtlayan hekim. body = gönderenin kaynak dili; translated = alıcının dili
+/// (DOCTOR→partner dili · PARTNER→Türkçe; AI translateText). İkisi de at-rest şifreli (lib/crypto).
+model ConsultationMessage {
+  id         String              @id @default(cuid())
+  request    ConsultationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId  String
+  senderRole String // "PARTNER" | "DOCTOR"
+  body       String // gönderenin kaynak dili — at-rest şifreli
+  translated String? // alıcının dilindeki çeviri — at-rest şifreli (TR↔TR ise null)
+  readAt     DateTime?
+  createdAt  DateTime            @default(now())
+
+  @@index([requestId])
+}
+
+/// M5 Faz 3 — Konsültasyon görüntülü görüşme randevusu (İcapçı offer/respond deseni).
+/// Gevşek bağ (FK YOK — anonim): requestId/doctorId/partnerId düz String. Sinyalleşme kanalı = bu kaydın id'si
+/// (api/consultations/[id]/signal callerSide üçüncü kanal olarak tanır). Taraflar: sahiplenen hekim + partner.
+model ConsultationVideoAppointment {
+  id          String    @id @default(cuid())
+  requestId   String // ConsultationRequest.id (gevşek bağ — anonim)
+  doctorId    String // sahiplenen/yanıtlayan hekim (Doctor.id)
+  partnerId   String // talebi açan partner (PartnerDoctor.id)
+  proposedAt  DateTime // hekimin önerdiği zaman
+  scheduledAt DateTime? // partner onaylarsa kesin zaman
+  status      String    @default("OFFERED") // OFFERED | SCHEDULED | DECLINED | COMPLETED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([requestId])
+  @@index([doctorId])
+  @@index([partnerId])
 }
 
 /// M5 — Konsültasyon talebine eklenen anonim tıbbi belge + triyaj-tipi AI değerlendirme sonucu.

@@ -2,13 +2,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { openRequestsForDoctor, answeredByDoctor, PAYMENT_PER_ANSWER, type ConsultReqView, type ConsultDocView } from "@/lib/consultation-requests";
+import { openRequestsForDoctor, answeredByDoctor, engagedByDoctor, PAYMENT_PER_ANSWER, type ConsultReqView, type ConsultDocView } from "@/lib/consultation-requests";
 import { formatUSD } from "@/lib/pricing";
 import { loincForBranchLabel } from "@/data/coding";
 import { imagingForBranch } from "@/data/imaging";
 import { medicationsForBranch } from "@/data/medications";
 import { ConsultAnswerForm, type CatalogProps } from "./ConsultAnswerForm";
-import { Inbox, ShieldCheck, ArrowLeft, Globe, Languages, Stethoscope, Wallet, FileText, FlaskConical, AlertTriangle, Pill, Scan } from "lucide-react";
+import { ConsultationChat } from "@/components/ConsultationChat";
+import { VideoControls } from "@/components/VideoControls";
+import { PresencePinger } from "@/components/PresencePinger";
+import { Inbox, ShieldCheck, ArrowLeft, Globe, Languages, Stethoscope, Wallet, FileText, FlaskConical, AlertTriangle, Pill, Scan, MessagesSquare } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +24,9 @@ export default async function ConsultationInboxPage() {
   if (!doctor) redirect("/doktor");
   if (!doctor.consultOptIn) redirect("/doktor"); // panel görünürlüğüyle tutarlı
 
-  const [open, answered] = await Promise.all([
+  const [open, engaged, answered] = await Promise.all([
     openRequestsForDoctor(doctor.branch),
+    engagedByDoctor(doctor.id),
     answeredByDoctor(doctor.id),
   ]);
   const totalEarned = answered.reduce((a, r) => a + (r.paymentSim ?? 0), 0);
@@ -36,6 +40,7 @@ export default async function ConsultationInboxPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
+      <PresencePinger />
       <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
         <ArrowLeft size={15} /> Ana Sayfa
       </Link>
@@ -68,6 +73,16 @@ export default async function ConsultationInboxPage() {
         </div>
       )}
 
+      {/* Devam eden görüşmeler — bu hekimin sahiplendiği (IN_DISCUSSION) talepler: chat + nihai görüş */}
+      {engaged.length > 0 && (
+        <>
+          <h2 className="mt-8 flex items-center gap-2 text-sm font-semibold text-slate-700"><MessagesSquare size={16} className="text-sky-600" /> Devam eden görüşmeler ({engaged.length})</h2>
+          <div className="mt-3 space-y-4">
+            {engaged.map((r) => <OpenCard key={r.id} r={r} catalog={catalog} engaged />)}
+          </div>
+        </>
+      )}
+
       {/* Yanıtladıklarım */}
       {answered.length > 0 && (
         <>
@@ -83,6 +98,10 @@ export default async function ConsultationInboxPage() {
                 <div className="mt-2 rounded-xl bg-slate-50 p-3 text-sm text-slate-700"><span className="text-xs font-semibold text-slate-400">Görüşünüz: </span>{r.answerText}</div>
                 <RecommendationsView r={r} />
                 <Link href={`/fhir/ConsultationRequest/${r.id}`} target="_blank" className="mt-2 inline-block text-xs text-indigo-600 hover:underline">FHIR Bundle ↗</Link>
+                <div className="mt-3 space-y-3">
+                  <VideoControls requestId={r.id} role="doctor" />
+                  <ConsultationChat requestId={r.id} canSend compact />
+                </div>
               </div>
             ))}
           </div>
@@ -169,7 +188,7 @@ function RecommendationsView({ r }: { r: ConsultReqView }) {
   );
 }
 
-function OpenCard({ r, catalog }: { r: ConsultReqView; catalog: CatalogProps }) {
+function OpenCard({ r, catalog, engaged }: { r: ConsultReqView; catalog: CatalogProps; engaged?: boolean }) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -187,9 +206,24 @@ function OpenCard({ r, catalog }: { r: ConsultReqView; catalog: CatalogProps }) 
         <details className="mt-1 text-xs text-slate-400"><summary className="cursor-pointer">Özgün metin ({r.language})</summary><p className="mt-1 whitespace-pre-wrap">{r.clinicalSummary}</p></details>
       )}
       <DocumentsBlock docs={r.documents} />
-      <div className="mt-4">
-        <ConsultAnswerForm id={r.id} catalog={catalog} />
-      </div>
+
+      {engaged ? (
+        // Sahiplenilmiş görüşme: görüntülü öner + chat açık + nihai görüş formu
+        <div className="mt-4 space-y-3">
+          <VideoControls requestId={r.id} role="doctor" />
+          <ConsultationChat requestId={r.id} canSend />
+          <ConsultAnswerForm id={r.id} catalog={catalog} />
+        </div>
+      ) : (
+        // Açık talep: doğrudan yanıtla VEYA önce soru sor (ilk mesaj talebi üstlenir)
+        <div className="mt-4 space-y-3">
+          <ConsultAnswerForm id={r.id} catalog={catalog} />
+          <details className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
+            <summary className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-slate-500"><MessagesSquare size={13} /> Önce soru sor (bu talebi üstlenirsiniz)</summary>
+            <div className="mt-2"><ConsultationChat requestId={r.id} canSend hintKey="İlk sorunuzu gönderdiğinizde bu talebi üstlenirsiniz." /></div>
+          </details>
+        </div>
+      )}
     </div>
   );
 }

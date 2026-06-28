@@ -7,7 +7,10 @@ import { newsForBranch, NEWS_KIND_LABEL, type NewsItem } from "@/lib/medical-new
 import { getTranslations } from "@/lib/i18n";
 import { LANGUAGES, langDir } from "@/lib/constants";
 import { PartnerNewsLang } from "./PartnerNewsLang";
-import { ShieldOff, Plus, Globe, Languages, Stethoscope, FileText, Clock, CheckCircle2, FlaskConical, Scan, Pill, Download, Newspaper } from "lucide-react";
+import { ConsultationChat } from "@/components/ConsultationChat";
+import { VideoControls } from "@/components/VideoControls";
+import { PresencePinger } from "@/components/PresencePinger";
+import { ShieldOff, Plus, Globe, Languages, Stethoscope, FileText, Clock, CheckCircle2, FlaskConical, Scan, Pill, Download, Newspaper, MessageCircle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +23,8 @@ const UI = {
   createCta: "Konsültasyon Talebi Oluştur",
   createSub: "Hasta bilgisi anonimleştirilerek havuza aktarılır; branşla sınırlandırabilirsiniz.",
   pending: "Bekleyen taleplerim",
+  discussing: "Görüşme sürüyor",
+  inDiscussion: "Uzman hekim görüşmede",
   answered: "Görüş alınanlar",
   noPending: "Bekleyen talebiniz yok.",
   generalPool: "Genel havuz",
@@ -44,6 +49,7 @@ export default async function PartnerHome() {
 
   const reqs = await requestsByPartner(partner.id);
   const open = reqs.filter((r) => r.status === "OPEN");
+  const discussing = reqs.filter((r) => r.status === "IN_DISCUSSION");
   const answered = reqs.filter((r) => r.status === "ANSWERED");
 
   const partnerLang = partner.language || "İngilizce";
@@ -59,6 +65,7 @@ export default async function PartnerHome() {
 
   return (
     <div dir={dir} className="mx-auto max-w-3xl px-5 py-8">
+      <PresencePinger />
       {/* Hero — partner kimliği (ad/kurum/branş = kanonik veri, çevrilmez) */}
       <div className="rounded-3xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-6 shadow-sm">
         <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-600">{tr(UI.panel)}</div>
@@ -86,14 +93,22 @@ export default async function PartnerHome() {
       {open.length === 0 ? (
         <p className="mt-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">{tr(UI.noPending)}</p>
       ) : (
-        <div className="mt-2 space-y-3">{open.map((r) => <ReqCard key={r.id} r={r} tr={tr} />)}</div>
+        <div className="mt-2 space-y-3">{open.map((r) => <ReqCard key={r.id} r={r} tr={tr} lang={partnerLang} />)}</div>
+      )}
+
+      {/* Görüşme sürüyor (hekim sahiplendi, henüz nihai görüş yok) */}
+      {discussing.length > 0 && (
+        <>
+          <h2 className="mt-7 flex items-center gap-2 text-sm font-semibold text-slate-700"><MessageCircle size={16} className="text-sky-600" /> {tr(UI.discussing)} ({discussing.length})</h2>
+          <div className="mt-2 space-y-3">{discussing.map((r) => <ReqCard key={r.id} r={r} tr={tr} lang={partnerLang} />)}</div>
+        </>
       )}
 
       {/* Yanıtlananlar */}
       {answered.length > 0 && (
         <>
           <h2 className="mt-7 flex items-center gap-2 text-sm font-semibold text-slate-700"><CheckCircle2 size={16} className="text-emerald-600" /> {tr(UI.answered)} ({answered.length})</h2>
-          <div className="mt-2 space-y-3">{answered.map((r) => <ReqCard key={r.id} r={r} tr={tr} answered />)}</div>
+          <div className="mt-2 space-y-3">{answered.map((r) => <ReqCard key={r.id} r={r} tr={tr} lang={partnerLang} />)}</div>
         </>
       )}
 
@@ -117,7 +132,7 @@ export default async function PartnerHome() {
   );
 }
 
-function ReqCard({ r, tr, answered }: { r: PartnerRequestView; tr: Tr; answered?: boolean }) {
+function ReqCard({ r, tr, lang }: { r: PartnerRequestView; tr: Tr; lang: string }) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -135,7 +150,7 @@ function ReqCard({ r, tr, answered }: { r: PartnerRequestView; tr: Tr; answered?
       {r.documents.length > 0 && (
         <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-slate-400"><FileText size={12} /> {r.documents.length} {tr(UI.docsAdded)} ({r.documents.map((d) => d.docType || "belge").join(", ")})</p>
       )}
-      {answered ? (
+      {r.status === "ANSWERED" ? (
         <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3">
           <div className="flex items-center justify-between gap-2">
             <div className="text-xs font-semibold text-emerald-700">{tr(UI.expertOpinion)}{r.answeredByDoctorName ? ` · ${r.answeredByDoctorName}` : ""} <span className="font-normal text-emerald-600/70">({r.language})</span></div>
@@ -145,8 +160,18 @@ function ReqCard({ r, tr, answered }: { r: PartnerRequestView; tr: Tr; answered?
           <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{r.answerTr || r.answerText}</p>
           <Recommendations r={r} tr={tr} />
         </div>
+      ) : r.status === "IN_DISCUSSION" ? (
+        <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-700"><MessageCircle size={12} /> {tr(UI.inDiscussion)}{r.answeredByDoctorName ? ` · ${r.answeredByDoctorName}` : ""}</p>
       ) : (
         <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700"><Clock size={12} /> {tr(UI.awaitingOpinion)}</p>
+      )}
+
+      {/* Görüntülü görüşme + yazılı görüşme — hekim sahiplendikten sonra (IN_DISCUSSION/ANSWERED) */}
+      {r.status !== "OPEN" && (
+        <div className="mt-3 space-y-3">
+          <VideoControls requestId={r.id} role="partner" lang={lang} />
+          <ConsultationChat requestId={r.id} lang={lang} canSend />
+        </div>
       )}
     </div>
   );

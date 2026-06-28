@@ -25,6 +25,24 @@ async function callerSide(user: SessionUser, channelId: string): Promise<"patien
     if (user.role !== "PATIENT") return "doctor"; // klinik personel
     return appt.patientId === user.id ? "patient" : null; // yalnız vaka sahibi hasta
   }
+
+  // M5 Faz 3 — konsültasyon görüntülü görüşme kanalı (anonim). Taraflar: sahiplenen hekim + partner.
+  // Partner "patient" tarafına eşlenir (non-doktor uç). Gövdeye güvenilmez → taraf oturumdan türetilir.
+  const va = await db.consultationVideoAppointment.findUnique({
+    where: { id: channelId },
+    select: { doctorId: true, partnerId: true },
+  });
+  if (va) {
+    if (user.role === "DOCTOR") {
+      const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
+      return me?.doctorId === va.doctorId ? "doctor" : null;
+    }
+    if (user.role === "PARTNER") {
+      const me = await db.user.findUnique({ where: { id: user.id }, select: { partnerId: true } });
+      return me?.partnerId === va.partnerId ? "patient" : null; // partner = non-doktor uç
+    }
+    return null;
+  }
   return null; // tanınmayan kanal
 }
 

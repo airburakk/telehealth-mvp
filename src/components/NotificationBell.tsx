@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Inbox, UserRound, AlertTriangle, Luggage, Scale, Eye, Stethoscope, Smartphone, Loader2, FileText, MessageSquare } from "lucide-react";
+import { Bell, Inbox, UserRound, AlertTriangle, Luggage, Scale, Eye, Stethoscope, Smartphone, Loader2, FileText, MessageSquare, Video } from "lucide-react";
 import { useT } from "@/components/useT";
 import { usePatientLang } from "@/components/PatientLocale";
 import { langDir } from "@/lib/constants";
@@ -34,6 +34,8 @@ const TYPE_META: Record<string, { icon: React.ReactNode; cls: string }> = {
   SHARE_ACCESS: { icon: <Eye size={14} />, cls: "bg-slate-100 text-slate-600" },
   MISSING_DOCS: { icon: <FileText size={14} />, cls: "bg-amber-100 text-amber-700" },
   CONSULT_ANSWERED: { icon: <MessageSquare size={14} />, cls: "bg-violet-100 text-violet-700" },
+  CONSULT_MESSAGE: { icon: <MessageSquare size={14} />, cls: "bg-sky-100 text-sky-700" },
+  CONSULT_VIDEO: { icon: <Video size={14} />, cls: "bg-violet-100 text-violet-700" },
 };
 
 // Çevrilecek sabit arayüz metinleri (krom). timeAgo şablonları {n} yer tutuculudur → Claude {n}'i korur.

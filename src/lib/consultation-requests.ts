@@ -7,7 +7,7 @@ import { db } from "./db";
 import { encryptField, decryptField } from "./crypto";
 import { deidentifyCase, scrubText } from "./deidentify";
 import { translateText, assessDocument } from "./ai-clinical";
-import { notifyUser } from "./notify";
+import { notifyUser, notifyDoctorById } from "./notify";
 import { loincForBranchLabel } from "@/data/coding";
 
 export const PAYMENT_PER_ANSWER = 50; // USD — yanıt başına ödeme (simüle)
@@ -280,10 +280,12 @@ export async function answerRequest(id: string, doctorId: string, input: AnswerI
   if (!clean) return "EMPTY";
   const req = await db.consultationRequest.findUnique({
     where: { id },
-    select: { status: true, language: true, requestedByPartnerId: true, branch: true },
+    select: { status: true, language: true, requestedByPartnerId: true, branch: true, engagedByDoctorId: true },
   });
   if (!req) return "NOT_FOUND";
-  if (req.status !== "OPEN") return "TAKEN";
+  // OPEN (doğrudan yanıt) VEYA IN_DISCUSSION ama bu hekim sahiplenmişse yanıtlanabilir; başka durum/sahip → TAKEN.
+  if (req.status === "ANSWERED") return "TAKEN";
+  if (req.status === "IN_DISCUSSION" && req.engagedByDoctorId !== doctorId) return "TAKEN";
 
   // Görüş hasta diline çevrilir (TR ise no-op). Çeviri talebe bağlanmadan önce yapılır (DB kilidini kısa tut).
   let answerTr: string | null = null;
@@ -301,10 +303,12 @@ export async function answerRequest(id: string, doctorId: string, input: AnswerI
   const meds = (input.medications ?? []).filter((m) => m && m.atc); // ATC zorunlu
 
   const claimed = await db.consultationRequest.updateMany({
-    where: { id, status: "OPEN" },
+    // OPEN'ı doğrudan kap VEYA kendi sahiplendiğim IN_DISCUSSION'ı yanıtla (başka hekimin sahiplendiği eşleşmez → yarış-güvenli).
+    where: { id, OR: [{ status: "OPEN" }, { status: "IN_DISCUSSION", engagedByDoctorId: doctorId }] },
     data: {
       status: "ANSWERED",
       answeredByDoctorId: doctorId,
+      engagedByDoctorId: doctorId,
       answerText: encryptField(clean.slice(0, 5000)),
       answerTr: answerTr ? encryptField(answerTr) : null,
       recommendedLabs: labs.length ? JSON.stringify(labs) : null,
@@ -337,4 +341,110 @@ export async function answerRequest(id: string, doctorId: string, input: AnswerI
     }
   }
   return "OK";
+}
+
+// ── Faz 2: Yazılı görüşme (chat) + AI oto-çeviri ──
+export type ChatSenderRole = "PARTNER" | "DOCTOR";
+export type ChatSender = { role: "PARTNER"; partnerId: string } | { role: "DOCTOR"; doctorId: string };
+
+export interface ChatMsgView {
+  id: string;
+  mine: boolean; // viewer === gönderen
+  senderRole: ChatSenderRole;
+  text: string; // viewer diline uygun (kendi mesajı=body · karşı taraf=translated||body)
+  createdAt: string;
+}
+
+export type SendResult = "OK" | "EMPTY" | "NOT_FOUND" | "FORBIDDEN" | "TAKEN" | "NOT_READY";
+
+const MSG_MAX = 4000;
+
+// Mesaj gönder — sahiplik/yarış-güvenli + AI oto-çeviri (DOCTOR→partner dili · PARTNER→Türkçe).
+export async function sendMessage(requestId: string, sender: ChatSender, text: string): Promise<SendResult> {
+  const clean = (text || "").trim().slice(0, MSG_MAX);
+  if (!clean) return "EMPTY";
+
+  const req = await db.consultationRequest.findUnique({
+    where: { id: requestId },
+    select: { status: true, language: true, branch: true, requestedByPartnerId: true, engagedByDoctorId: true },
+  });
+  if (!req) return "NOT_FOUND";
+
+  let translated: string | null = null;
+  const needsTr = !!req.language && req.language.toLowerCase() !== "türkçe";
+
+  if (sender.role === "PARTNER") {
+    if (req.requestedByPartnerId !== sender.partnerId) return "FORBIDDEN";
+    if (req.status === "OPEN") return "NOT_READY"; // henüz hekim sahiplenmedi → sohbet edilecek taraf yok
+    if (needsTr) { // partner kaynak = talep dili → hekim için Türkçe
+      try { translated = (await translateText(clean, "Türkçe")) || null; }
+      catch (e) { console.warn("[consult-chat] çeviri hatası:", e instanceof Error ? e.message : e); }
+    }
+  } else {
+    // DOCTOR — OPEN ise atomik sahiplen (IN_DISCUSSION); başka hekimin sahiplendiği → engelle.
+    if (req.status === "OPEN") {
+      const claimed = await db.consultationRequest.updateMany({
+        where: { id: requestId, status: "OPEN" },
+        data: { status: "IN_DISCUSSION", engagedByDoctorId: sender.doctorId },
+      });
+      if (claimed.count === 0) return "TAKEN";
+    } else if (req.engagedByDoctorId !== sender.doctorId) {
+      return "FORBIDDEN";
+    }
+    if (needsTr) { // hekim kaynak = Türkçe → partner dili
+      try { translated = (await translateText(clean, req.language)) || null; }
+      catch (e) { console.warn("[consult-chat] çeviri hatası:", e instanceof Error ? e.message : e); }
+    }
+  }
+
+  await db.consultationMessage.create({
+    data: {
+      requestId,
+      senderRole: sender.role,
+      body: encryptField(clean),
+      translated: translated ? encryptField(translated) : null,
+    },
+  });
+
+  // Alıcıya kişisel bildirim (jenerik metin — klinik içerik yok). Partner zilinde kendi dilinde (i18n).
+  try {
+    const base = { type: "CONSULT_MESSAGE" as const, title: "💬 Konsültasyon mesajı", body: `${req.branch ?? "Genel"} · yeni mesaj` };
+    if (sender.role === "DOCTOR" && req.requestedByPartnerId) {
+      const pu = await db.user.findFirst({ where: { role: "PARTNER", partnerId: req.requestedByPartnerId }, select: { id: true } });
+      if (pu) await notifyUser(pu.id, { ...base, href: "/partner" });
+    } else if (sender.role === "PARTNER" && req.engagedByDoctorId) {
+      await notifyDoctorById(req.engagedByDoctorId, { ...base, href: "/doktor/konsultasyon" });
+    }
+  } catch (e) {
+    console.warn("[consult-chat] mesaj bildirimi yazılamadı:", e instanceof Error ? e.message : e);
+  }
+  return "OK";
+}
+
+// Thread — viewer kendi mesajında body, karşı tarafta translated (yoksa body) görür. Hepsi at-rest çözülür.
+export async function messagesFor(requestId: string, viewerRole: ChatSenderRole): Promise<ChatMsgView[]> {
+  const rows = await db.consultationMessage.findMany({ where: { requestId }, orderBy: { createdAt: "asc" } });
+  return rows.map((m) => {
+    const mine = m.senderRole === viewerRole;
+    const text = mine ? decryptField(m.body) : m.translated ? decryptField(m.translated) : decryptField(m.body);
+    return { id: m.id, mine, senderRole: m.senderRole as ChatSenderRole, text, createdAt: m.createdAt.toISOString() };
+  });
+}
+
+// Alıcı thread'i açınca karşı tarafın okunmamışlarını okundu işaretle.
+export async function markMessagesRead(requestId: string, viewerRole: ChatSenderRole): Promise<void> {
+  await db.consultationMessage.updateMany({
+    where: { requestId, senderRole: { not: viewerRole }, readAt: null },
+    data: { readAt: new Date() },
+  });
+}
+
+// Hekimin sahiplendiği, henüz nihai görüş vermediği görüşmeler (IN_DISCUSSION).
+export async function engagedByDoctor(doctorId: string): Promise<ConsultReqView[]> {
+  const rows = await db.consultationRequest.findMany({
+    where: { status: "IN_DISCUSSION", engagedByDoctorId: doctorId },
+    orderBy: { createdAt: "desc" },
+    include: { documents: { select: DOC_SELECT } },
+  });
+  return rows.map(toView);
 }
