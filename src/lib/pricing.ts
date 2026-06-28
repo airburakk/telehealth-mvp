@@ -3,6 +3,8 @@
 
 export type Tier = "Ekonomik" | "Standart" | "Premium";
 export type HospitalType = "Özel" | "Üniversite";
+// Sigorta seviyesi (kümülatif): 1 = yalnız zorunlu · 2 = + operasyon teminatı · 3 = + malpraktis/komplikasyon
+export type InsuranceLevel = 1 | 2 | 3;
 
 export interface PackageSelection {
   branch: string;
@@ -12,6 +14,9 @@ export interface PackageSelection {
   hospitalType: HospitalType;
   nights: number;
   translator: boolean;
+  // Sigorta seçimi — kademeli (Seviye 1 zorunlu · 2 operasyon teminatı · 3 + malpraktis/komplikasyon).
+  // insuranceLevel verilirse o esastır (3-kademeli UI); verilmezse eski booleanlardan türetilir (AI/geriye uyum).
+  insuranceLevel?: InsuranceLevel;
   insuranceExtended: boolean;
   insuranceMalpractice: boolean;
 }
@@ -36,10 +41,79 @@ const HOTEL_PER_NIGHT: Record<number, number> = { 4: 80, 5: 150 };
 const TRANSFER_BY_TIER: Record<Tier, number> = { Ekonomik: 0, Standart: 90, Premium: 220 };
 const FLIGHT_BY_COUNTRY: Record<string, number> = { DZ: 480, LY: 520, RU: 260, AZ: 240, KZ: 420, KG: 460, TR: 90 };
 const TRANSLATOR_PRICE = 250;
-const INSURANCE_BASE = 120; // zorunlu
-const INSURANCE_EXTENDED = 320;
-const INSURANCE_MALPRACTICE = 480;
 const PLATFORM_FEE_RATE = 0.15;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sigorta hesaplama (Modül 3) — 3 kademeli, parametrik. ⚠️ ENDİKATİF/TAHMİNİ: bağlayıcı poliçe
+// primini sigortacı belirler. Oranlar sigorta şirketiyle netleşince YALNIZ buradan ayarlanır.
+//   Katman 1 (base)   : Zorunlu sağlık turizmi sigortası — sabit.
+//   Katman 2 (r2)     : Operasyon teminat poliçesi — prim = toplam paket faturası × r2 × branş riski.
+//   Katman 3 (r3)     : Malpraktis & komplikasyon ek teminatı — doktorun mevcut MMSS'inin bıraktığı
+//                       boşluğu doldurur: boşluk = max(0, operasyon×targetMultiple − doktor MMSS limiti).
+//                       prim = boşluk × r3 × branş riski. (Doktor MMSS'i hedefi karşılıyorsa boşluk 0 → ek prim 0.)
+// ─────────────────────────────────────────────────────────────────────────────
+export interface InsuranceConfig {
+  base: number;          // Katman 1 — zorunlu (USD, sabit)
+  r2: number;            // Katman 2 — operasyon teminat prim oranı (placeholder)
+  r3: number;            // Katman 3 — malpraktis prim oranı (placeholder)
+  targetMultiple: number; // Katman 3 — hedef teminat = operasyon tutarı × bu kat
+  branchRisk: Record<string, number>; // branş etiketi substring → cerrahi risk çarpanı (eşleşmeyen = 1.0)
+}
+export const INSURANCE_CONFIG: InsuranceConfig = {
+  base: 120,
+  r2: 0.025,
+  r3: 0.04,
+  targetMultiple: 2,
+  branchRisk: {
+    "Saç": 0.7, "Diş": 0.7,
+    "Estetik": 0.9, "Göz": 0.9,
+    "Ortopedi": 1.2, "Genel Cerrahi": 1.2,
+    "Kardiyoloji": 1.6, "Nöroşirürji": 1.6, "Nöroşirurji": 1.6,
+    "Onkoloji": 1.8, "Organ": 1.8, "Nakil": 1.8,
+  },
+};
+
+export function branchRiskMult(branch: string): number {
+  const key = Object.keys(INSURANCE_CONFIG.branchRisk).find((k) => branch.includes(k));
+  return key ? INSURANCE_CONFIG.branchRisk[key] : 1.0;
+}
+
+// insuranceLevel verilmişse o; yoksa eski booleanlardan türet (AI/geriye uyum: malpraktis→3, genişletilmiş→2, yoksa 1).
+export function effectiveInsuranceLevel(s: { insuranceLevel?: InsuranceLevel; insuranceExtended?: boolean; insuranceMalpractice?: boolean }): InsuranceLevel {
+  if (s.insuranceLevel === 1 || s.insuranceLevel === 2 || s.insuranceLevel === 3) return s.insuranceLevel;
+  if (s.insuranceMalpractice) return 3;
+  if (s.insuranceExtended) return 2;
+  return 1;
+}
+
+export interface InsuranceQuote {
+  level: InsuranceLevel;
+  p1: number; p2: number; p3: number; total: number;
+  coverageBase: number;    // Katman 2 teminat tabanı (toplam paket faturası, sigorta hariç)
+  targetCoverage: number;  // Katman 3 hedef teminat (operasyon × targetMultiple)
+  doctorCoverage: number;  // doktor MMSS limiti (USD'ye normalize)
+  gap: number;             // doktorun karşılamadığı malpraktis teminat boşluğu
+  riskMult: number;        // branş risk çarpanı
+}
+
+// Saf, yan-etkisiz. coverageBaseUsd = sigorta hariç paket toplamı; treatmentTotalUsd = operasyon tutarı.
+export function computeInsurance(opts: {
+  level: InsuranceLevel;
+  coverageBaseUsd: number;
+  treatmentTotalUsd: number;
+  branch: string;
+  doctorMmssLimitUsd?: number;
+}): InsuranceQuote {
+  const { base, r2, r3, targetMultiple } = INSURANCE_CONFIG;
+  const risk = branchRiskMult(opts.branch);
+  const p1 = base;
+  const p2 = opts.level >= 2 ? Math.round(opts.coverageBaseUsd * r2 * risk) : 0;
+  const targetCoverage = Math.round(opts.treatmentTotalUsd * targetMultiple);
+  const doctorCoverage = Math.max(0, Math.round(opts.doctorMmssLimitUsd ?? 0));
+  const gap = Math.max(0, targetCoverage - doctorCoverage);
+  const p3 = opts.level >= 3 ? Math.round(gap * r3 * risk) : 0;
+  return { level: opts.level, p1, p2, p3, total: p1 + p2 + p3, coverageBase: Math.round(opts.coverageBaseUsd), targetCoverage, doctorCoverage, gap, riskMult: risk };
+}
 
 // ₺ (KSHFT tarifesi / doktorun M5 fiyatı) → $ dönüşümü. Güncel kura göre ayarlayın (ileride env/API).
 export const TRY_PER_USD = 40; // varsayılan/fallback kur — canlı kur lib/fxrate.ts'ten gelir, buraya parametre olarak geçilir
@@ -52,9 +126,9 @@ export function formatTRY(n: number): string {
 export interface RecommendedTreatment { code: string; name: string; priceTRY: number; }
 
 export const TIER_PRESETS: Record<Tier, Partial<PackageSelection>> = {
-  Ekonomik: { hotelStars: 4, hospitalType: "Özel", translator: false, insuranceExtended: false, insuranceMalpractice: false },
-  Standart: { hotelStars: 4, hospitalType: "Özel", translator: false, insuranceExtended: true, insuranceMalpractice: false },
-  Premium: { hotelStars: 5, hospitalType: "Üniversite", translator: true, insuranceExtended: true, insuranceMalpractice: true },
+  Ekonomik: { hotelStars: 4, hospitalType: "Özel", translator: false, insuranceLevel: 1, insuranceExtended: false, insuranceMalpractice: false },
+  Standart: { hotelStars: 4, hospitalType: "Özel", translator: false, insuranceLevel: 2, insuranceExtended: true, insuranceMalpractice: false },
+  Premium: { hotelStars: 5, hospitalType: "Üniversite", translator: true, insuranceLevel: 3, insuranceExtended: true, insuranceMalpractice: true },
 };
 
 function treatmentBase(branch: string): number {
@@ -70,9 +144,16 @@ export interface PackageQuote {
   total: number;
   currency: "USD";
   split: LineItem[];
+  insurance: InsuranceQuote; // sigorta seviyesi + katman primleri + teminat/boşluk detayı
 }
 
-export function computePackage(s: PackageSelection, treatments?: RecommendedTreatment[], rate: number = TRY_PER_USD): PackageQuote {
+const INSURANCE_LEVEL_LABEL: Record<InsuranceLevel, string> = {
+  1: "Zorunlu sağlık turizmi sigortası",
+  2: "+ Operasyon teminat poliçesi",
+  3: "+ Malpraktis & komplikasyon teminatı",
+};
+
+export function computePackage(s: PackageSelection, treatments?: RecommendedTreatment[], rate: number = TRY_PER_USD, doctorMmssLimitUsd?: number): PackageQuote {
   const hasTx = !!treatments && treatments.length > 0;
   // Tedavi kalemleri: doktorun M2'de tavsiye ettiği işlemler (₺→$, doktorun fiyatıyla, canlı kur) varsa onlar; yoksa branş taban fiyatı
   const treatmentItems: LineItem[] = hasTx
@@ -84,7 +165,16 @@ export function computePackage(s: PackageSelection, treatments?: RecommendedTrea
   const flight = FLIGHT_BY_COUNTRY[s.country] ?? 400;
   const transfer = TRANSFER_BY_TIER[s.tier] ?? 0;
   const translator = s.translator ? TRANSLATOR_PRICE : 0;
-  const insurance = INSURANCE_BASE + (s.insuranceExtended ? INSURANCE_EXTENDED : 0) + (s.insuranceMalpractice ? INSURANCE_MALPRACTICE : 0);
+  // Sigorta — 3 kademeli motor. Teminat tabanı = sigorta hariç paket toplamı; Katman 3 boşluğu doktor MMSS'inden.
+  const level = effectiveInsuranceLevel(s);
+  const ins = computeInsurance({
+    level,
+    coverageBaseUsd: treatment + hotel + flight + transfer + translator,
+    treatmentTotalUsd: treatment,
+    branch: s.branch,
+    doctorMmssLimitUsd,
+  });
+  const insurance = ins.total;
 
   const items: LineItem[] = [
     ...treatmentItems,
@@ -95,9 +185,9 @@ export function computePackage(s: PackageSelection, treatments?: RecommendedTrea
   if (translator) items.push({ key: "translator", label: "Tıbbi tercüman", amount: translator });
   items.push({
     key: "insurance",
-    label: "Sigorta",
+    label: `Sigorta · Seviye ${level}`,
     amount: insurance,
-    note: ["Zorunlu", s.insuranceExtended ? "Genişletilmiş" : null, s.insuranceMalpractice ? "Malpraktis" : null].filter(Boolean).join(" + "),
+    note: INSURANCE_LEVEL_LABEL[level],
   });
 
   const subtotal = items.reduce((a, b) => a + b.amount, 0);
@@ -114,7 +204,7 @@ export function computePackage(s: PackageSelection, treatments?: RecommendedTrea
     { key: "platform", label: "Platform komisyonu (Escrow)", amount: platformFee },
   ].filter((x) => x.amount > 0);
 
-  return { items, subtotal, platformFee, total, currency: "USD", split };
+  return { items, subtotal, platformFee, total, currency: "USD", split, insurance: ins };
 }
 
 export function formatUSD(n: number): string {

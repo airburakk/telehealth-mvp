@@ -24,6 +24,17 @@ export default async function PackagePage({
   // Güncel USD/₺ kuru (TCMB; cache + fallback) — tedavi ₺ fiyatları $'a bu kurla çevrilir
   const fx = await getTryPerUsd();
 
+  // Vakanın doktorunun mevcut MMSS teminat limiti → Katman 3 (malpraktis ek prim) gösterimi (₺ ise USD'ye normalize)
+  let doctorMmssLimitUsd: number | undefined;
+  let doctorName: string | undefined;
+  if (c.doctorId) {
+    const doc = await db.doctor.findUnique({ where: { id: c.doctorId }, select: { mmssCoverageLimit: true, mmssCoverageCurrency: true, title: true, name: true } });
+    if (doc?.mmssCoverageLimit && doc.mmssCoverageLimit > 0) {
+      doctorMmssLimitUsd = doc.mmssCoverageCurrency === "USD" ? doc.mmssCoverageLimit : Math.round(doc.mmssCoverageLimit / fx.rate);
+      doctorName = `${doc.title} ${doc.name}`;
+    }
+  }
+
   // Sağlık Turizmi Agent'ı teklifi URL ile gelir (ai=1) — doktor her değeri düzenleyebilir
   const s = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
   const initial: PackageInitial | undefined = s("ai") === "1" ? {
@@ -52,7 +63,7 @@ export default async function PackagePage({
       </div>
 
       <div className="mt-7">
-        <PackageBuilder caseId={c.id} patientName={decryptField(c.patientName)} branch={c.branch} country={c.country} initial={initial} treatments={treatments} rate={fx.rate} fxSource={fx.source} fxAt={fx.at} />
+        <PackageBuilder caseId={c.id} patientName={decryptField(c.patientName)} branch={c.branch} country={c.country} initial={initial} treatments={treatments} rate={fx.rate} fxSource={fx.source} fxAt={fx.at} doctorMmssLimitUsd={doctorMmssLimitUsd} doctorName={doctorName} />
       </div>
     </div>
   );

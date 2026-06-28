@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { computePackage, type PackageSelection, type Tier, type HospitalType, type RecommendedTreatment } from "@/lib/pricing";
+import { computePackage, type PackageSelection, type Tier, type HospitalType, type RecommendedTreatment, type InsuranceLevel } from "@/lib/pricing";
 import { getTryPerUsd } from "@/lib/fxrate";
 import { notifyRoles, notifyUser } from "@/lib/notify";
 import { getCurrentUser } from "@/lib/auth";
@@ -18,6 +18,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!ownsCase(user, c)) return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
 
   const b = await req.json().catch(() => ({}));
+  // Sigorta seviyesi: insuranceLevel esas; yoksa eski booleanlardan türet (geriye uyum).
+  const insuranceLevel = ([1, 2, 3].includes(Number(b.insuranceLevel))
+    ? Number(b.insuranceLevel)
+    : b.insuranceMalpractice ? 3 : b.insuranceExtended === false ? 1 : 2) as InsuranceLevel;
   const selection: PackageSelection = {
     branch: c.branch,
     country: c.country,
@@ -26,8 +30,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     hospitalType: (b.hospitalType === "Üniversite" ? "Üniversite" : "Özel") as HospitalType,
     nights: Math.min(30, Math.max(1, Number(b.nights) || 5)),
     translator: !!b.translator,
-    insuranceExtended: !!b.insuranceExtended,
-    insuranceMalpractice: !!b.insuranceMalpractice,
+    insuranceLevel,
+    insuranceExtended: insuranceLevel >= 2,
+    insuranceMalpractice: insuranceLevel >= 3,
   };
 
   // Doktorun M2'de tavsiye ettiği tedaviler (varsa) → fiyat doktorun ₺ değerlerinden ($'a çevrilir)
@@ -35,7 +40,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   try { treatments = c.recommendedProcedures ? (JSON.parse(c.recommendedProcedures) as RecommendedTreatment[]) : []; } catch { treatments = []; }
 
   const fx = await getTryPerUsd();
-  const quote = computePackage(selection, treatments, fx.rate);
+
+  // Katman 3 girdisi: vakanın doktorunun mevcut MMSS teminat limiti (₺ ise canlı kurla USD'ye normalize).
+  // Limit hedefi karşılıyorsa malpraktis ek primi 0 olur (boşluk yok).
+  let doctorMmssLimitUsd: number | undefined;
+  if (c.doctorId) {
+    const doc = await db.doctor.findUnique({ where: { id: c.doctorId }, select: { mmssCoverageLimit: true, mmssCoverageCurrency: true } });
+    if (doc?.mmssCoverageLimit && doc.mmssCoverageLimit > 0) {
+      doctorMmssLimitUsd = doc.mmssCoverageCurrency === "USD" ? doc.mmssCoverageLimit : Math.round(doc.mmssCoverageLimit / fx.rate);
+    }
+  }
+
+  const quote = computePackage(selection, treatments, fx.rate, doctorMmssLimitUsd);
 
   const isOffer = b.mode === "offer"; // hastaya teklif (DRAFT) — onay hastada; aksi halde doğrudan Escrow
 
@@ -51,6 +67,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       translator: selection.translator,
       insuranceExtended: selection.insuranceExtended,
       insuranceMalpractice: selection.insuranceMalpractice,
+      insuranceLevel: selection.insuranceLevel ?? 1,
+      insuranceDetail: JSON.stringify(quote.insurance), // teminat tabanı/hedef/boşluk/katman primleri (endikatif)
       subtotal: quote.subtotal,
       platformFee: quote.platformFee,
       total: quote.total,

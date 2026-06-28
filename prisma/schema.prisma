@@ -330,6 +330,8 @@ model Booking {
   translator           Boolean  @default(false)
   insuranceExtended    Boolean  @default(false)
   insuranceMalpractice Boolean  @default(false)
+  insuranceLevel       Int      @default(1) // M3: 1=zorunlu · 2=+operasyon teminatı · 3=+malpraktis (kümülatif)
+  insuranceDetail      String? // JSON InsuranceQuote — teminat tabanı/hedef/boşluk/katman primleri (endikatif; lib/pricing)
   subtotal             Int
   platformFee          Int
   total                Int

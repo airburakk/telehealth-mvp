@@ -4,16 +4,22 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  computePackage, formatUSD, TIER_PRESETS, TRY_PER_USD,
-  type Tier, type HospitalType, type PackageSelection, type RecommendedTreatment,
+  computePackage, computeInsurance, INSURANCE_CONFIG, formatUSD, TIER_PRESETS, TRY_PER_USD,
+  type Tier, type HospitalType, type PackageSelection, type RecommendedTreatment, type InsuranceLevel,
 } from "@/lib/pricing";
 import { countryFlag, countryName } from "@/lib/constants";
 import {
   Plane, BedDouble, Building2, Languages, ShieldCheck, Minus, Plus,
-  Lock, Loader2, MessageCircle, Check, Send, FileText,
+  Lock, Loader2, MessageCircle, Check, Send, FileText, ShieldPlus, Stethoscope, Info,
 } from "lucide-react";
 
 const TIERS: Tier[] = ["Ekonomik", "Standart", "Premium"];
+const INS_LEVELS: InsuranceLevel[] = [1, 2, 3];
+const INS_LEVEL_INFO: Record<InsuranceLevel, { title: string; desc: string }> = {
+  1: { title: "Zorunlu Sağlık Turizmi Sigortası", desc: "Türk sağlık hukuku gereği · her pakette dahil" },
+  2: { title: "Operasyon Teminat Poliçesi", desc: "Komplikasyon halinde paket bedelini güvenceye alır" },
+  3: { title: "Malpraktis & Komplikasyon Teminatı", desc: "Hekim hatası/komplikasyon rizikolarını da kapsar" },
+};
 
 export interface PackageInitial {
   tier?: Tier;
@@ -21,22 +27,25 @@ export interface PackageInitial {
   hospitalType?: HospitalType;
   nights?: number;
   translator?: boolean;
+  insuranceLevel?: InsuranceLevel;
   insuranceExtended?: boolean;
   insuranceMalpractice?: boolean;
   aiRationale?: string; // doluysa "AI teklifi" banner'ı gösterilir
 }
 
 export function PackageBuilder({
-  caseId, patientName, branch, country, initial, treatments, rate = TRY_PER_USD, fxSource, fxAt,
-}: { caseId: string; patientName: string; branch: string; country: string; initial?: PackageInitial; treatments?: RecommendedTreatment[]; rate?: number; fxSource?: string; fxAt?: number }) {
+  caseId, patientName, branch, country, initial, treatments, rate = TRY_PER_USD, fxSource, fxAt, doctorMmssLimitUsd, doctorName,
+}: { caseId: string; patientName: string; branch: string; country: string; initial?: PackageInitial; treatments?: RecommendedTreatment[]; rate?: number; fxSource?: string; fxAt?: number; doctorMmssLimitUsd?: number; doctorName?: string }) {
   const router = useRouter();
   const [tier, setTier] = useState<Tier>(initial?.tier ?? "Standart");
   const [hotelStars, setHotelStars] = useState<4 | 5>(initial?.hotelStars ?? 4);
   const [hospitalType, setHospitalType] = useState<HospitalType>(initial?.hospitalType ?? "Özel");
   const [nights, setNights] = useState(initial?.nights ?? 5);
   const [translator, setTranslator] = useState(initial?.translator ?? false);
-  const [insExtended, setInsExtended] = useState(initial?.insuranceExtended ?? true);
-  const [insMalpractice, setInsMalpractice] = useState(initial?.insuranceMalpractice ?? false);
+  // Sigorta seviyesi (1/2/3). initial booleanlarından da türetilir (AI teklifi geriye uyum).
+  const [insLevel, setInsLevel] = useState<InsuranceLevel>(
+    initial?.insuranceLevel ?? (initial?.insuranceMalpractice ? 3 : initial?.insuranceExtended === false ? 1 : 2),
+  );
   const [submitting, setSubmitting] = useState<null | "offer" | "confirm">(null);
   const [sentOffer, setSentOffer] = useState<string | null>(null);
 
@@ -46,20 +55,27 @@ export function PackageBuilder({
     if (p.hotelStars) setHotelStars(p.hotelStars);
     if (p.hospitalType) setHospitalType(p.hospitalType);
     setTranslator(!!p.translator);
-    setInsExtended(!!p.insuranceExtended);
-    setInsMalpractice(!!p.insuranceMalpractice);
+    if (p.insuranceLevel) setInsLevel(p.insuranceLevel);
   }
 
-  const selection: PackageSelection = { branch, country, tier, hotelStars, hospitalType, nights, translator, insuranceExtended: insExtended, insuranceMalpractice: insMalpractice };
+  // insuranceLevel ana sürücü; eski booleanlar geriye uyum için türetilir.
+  const selection: PackageSelection = { branch, country, tier, hotelStars, hospitalType, nights, translator, insuranceLevel: insLevel, insuranceExtended: insLevel >= 2, insuranceMalpractice: insLevel >= 3 };
   const hasTx = !!treatments && treatments.length > 0;
-  const quote = useMemo(() => computePackage(selection, treatments, rate), [tier, hotelStars, hospitalType, nights, translator, insExtended, insMalpractice, treatments, rate]);
+  const quote = useMemo(() => computePackage(selection, treatments, rate, doctorMmssLimitUsd), [tier, hotelStars, hospitalType, nights, translator, insLevel, treatments, rate, doctorMmssLimitUsd]);
+
+  // Her sigorta seviyesinin primini canlı göster (kümülatif kartlar). Teminat tabanı/operasyon seçili seviyeden bağımsız.
+  const treatmentTotal = quote.insurance.targetCoverage / INSURANCE_CONFIG.targetMultiple;
+  const insByLevel = useMemo(
+    () => INS_LEVELS.map((lvl) => computeInsurance({ level: lvl, coverageBaseUsd: quote.insurance.coverageBase, treatmentTotalUsd: treatmentTotal, branch, doctorMmssLimitUsd })),
+    [quote.insurance.coverageBase, treatmentTotal, branch, doctorMmssLimitUsd],
+  );
 
   async function confirm() {
     setSubmitting("confirm");
     try {
       const res = await fetch(`/api/cases/${caseId}/booking`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier, hotelStars, hospitalType, nights, translator, insuranceExtended: insExtended, insuranceMalpractice: insMalpractice }),
+        body: JSON.stringify({ tier, hotelStars, hospitalType, nights, translator, insuranceLevel: insLevel }),
       });
       const data = await res.json();
       if (data.bookingId) router.push(`/rezervasyon/${data.bookingId}`);
@@ -73,7 +89,7 @@ export function PackageBuilder({
     try {
       const res = await fetch(`/api/cases/${caseId}/booking`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier, hotelStars, hospitalType, nights, translator, insuranceExtended: insExtended, insuranceMalpractice: insMalpractice, mode: "offer" }),
+        body: JSON.stringify({ tier, hotelStars, hospitalType, nights, translator, insuranceLevel: insLevel, mode: "offer" }),
       });
       const data = await res.json();
       if (data.bookingId) setSentOffer(data.bookingId);
@@ -146,18 +162,63 @@ export function PackageBuilder({
           <Toggle icon={<Languages size={16} />} label="Tıbbi tercüman (refakatçi)" desc="Branşa hakim, hastanın dilinde" on={translator} set={setTranslator} />
         </Card>
 
-        {/* Sigorta */}
+        {/* Sigorta — 3 kademeli kümülatif teminat */}
         <Card>
-          <CardTitle icon={<ShieldCheck size={15} />}>Sigorta</CardTitle>
-          <div className="mt-2 flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5">
-            <div>
-              <div className="text-sm font-medium text-slate-700">Zorunlu sağlık sigortası</div>
-              <div className="text-xs text-slate-400">Türk sağlık hukuku gereği · her pakette dahil</div>
-            </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700"><Check size={13} /> Dahil</span>
+          <CardTitle icon={<ShieldCheck size={15} />}>Sigorta Teminatı</CardTitle>
+          <p className="mt-1 text-xs text-slate-400">Operasyonun mali büyüklüğü ve doktorun mevcut mesleki sigortası dikkate alınarak hesaplanır.</p>
+          <div className="mt-3 space-y-2">
+            {INS_LEVELS.map((lvl) => {
+              const q = insByLevel[lvl - 1];
+              const info = INS_LEVEL_INFO[lvl];
+              const active = insLevel === lvl;
+              const Icon = lvl === 1 ? ShieldCheck : lvl === 2 ? ShieldPlus : Stethoscope;
+              return (
+                <button
+                  key={lvl}
+                  type="button"
+                  onClick={() => setInsLevel(lvl)}
+                  aria-pressed={active}
+                  className={`w-full rounded-2xl border p-3 text-left transition ${active ? "border-[#14C3D0] bg-[#14C3D0]/[0.06]" : "border-slate-200 bg-white hover:border-[#14C3D0]/40"}`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? "bg-[#14C3D0] text-[#101010]" : "bg-slate-100 text-slate-500"}`}>
+                      <Icon size={16} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold text-[#101010]">Seviye {lvl} · {info.title}</span>
+                        <span className="shrink-0 text-sm font-bold text-slate-800">{formatUSD(q.total)}</span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-500">{info.desc}</p>
+                      {lvl >= 2 && (
+                        <p className="mt-1 text-[11px] text-slate-400">Teminat tabanı {formatUSD(q.coverageBase)} · operasyon teminat primi +{formatUSD(q.p2)}</p>
+                      )}
+                      {lvl === 3 && (
+                        <div className="mt-1 rounded-lg bg-slate-50 px-2.5 py-1.5 text-[11px] leading-relaxed text-slate-500">
+                          Hedef malpraktis teminatı {formatUSD(q.targetCoverage)} (operasyon ×{INSURANCE_CONFIG.targetMultiple}).{" "}
+                          {doctorMmssLimitUsd != null ? (
+                            q.gap === 0 ? (
+                              <span className="mt-0.5 block font-medium text-emerald-600">✓ {doctorName ? `${doctorName} ` : "Hekim "}mevcut MMSS poliçesi ({formatUSD(q.doctorCoverage)}) hedefi karşılıyor → ek malpraktis primi yok</span>
+                            ) : (
+                              <span className="mt-0.5 block">Hekim MMSS poliçesi {formatUSD(q.doctorCoverage)} karşılıyor; {formatUSD(q.gap)} boşluk için ek malpraktis primi <strong className="text-slate-700">+{formatUSD(q.p3)}</strong></span>
+                            )
+                          ) : (
+                            <span className="mt-0.5 block text-amber-600">Hekim MMSS bilgisi yok — boşluk tam kabul edildi (+{formatUSD(q.p3)})</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${active ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 bg-white text-transparent"}`}>
+                      <Check size={12} />
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
-          <Toggle label="Genişletilmiş poliçe" desc="Tüm süreci kapsayan, yüksek limitli" on={insExtended} set={setInsExtended} />
-          <Toggle label="Komplikasyon & malpraktis" desc="Operasyon sonrası risk teminatı" on={insMalpractice} set={setInsMalpractice} />
+          <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-slate-400">
+            <Info size={13} className="mt-0.5 shrink-0" /> Primler tahminidir; bağlayıcı poliçe bedelini ve teminat şartlarını sigorta şirketi belirler.
+          </p>
         </Card>
       </div>
 

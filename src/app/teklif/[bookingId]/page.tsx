@@ -6,6 +6,7 @@ import { formatUSD, type LineItem } from "@/lib/pricing";
 import { countryFlag, countryName } from "@/lib/constants";
 import { decryptField } from "@/lib/crypto";
 import { OfferActions } from "@/components/OfferActions";
+import { InsuranceSummary } from "@/components/InsuranceSummary";
 import {
   ArrowLeft, FileText, Building2, BedDouble, Languages, ShieldCheck, Lock,
   Plane, Stethoscope, Home, XCircle, Sparkles,
@@ -87,7 +88,7 @@ export default async function OfferPage({ params }: { params: Promise<{ bookingI
           <Spec icon={<Building2 size={14} />} k="Hastane" v={booking.hospitalType} />
           <Spec icon={<BedDouble size={14} />} k="Otel" v={`${booking.hotelStars}★ · ${booking.nights} gece`} />
           <Spec icon={<Languages size={14} />} k="Tercüman" v={booking.translator ? "Dahil" : "Yok"} />
-          <Spec icon={<ShieldCheck size={14} />} k="Sigorta" v={["Zorunlu", booking.insuranceExtended ? "Genişletilmiş" : null, booking.insuranceMalpractice ? "Malpraktis" : null].filter(Boolean).join(" + ")} />
+          <Spec icon={<ShieldCheck size={14} />} k="Sigorta" v={`Seviye ${booking.insuranceLevel}`} />
         </div>
         <ul className="mt-5 space-y-2 border-t border-slate-100 pt-4">
           {items.map((it) => (
@@ -105,6 +106,11 @@ export default async function OfferPage({ params }: { params: Promise<{ bookingI
           <Lock size={14} className="mt-0.5 shrink-0" />
           Ödeme platform Escrow havuzunda emanet tutulur; hizmet tamamlanınca taraflara aktarılır. Sorun halinde iade Etik Kurul kararıyla yapılır.
         </div>
+      </div>
+
+      {/* Sigorta teminat özeti (3 kademeli) */}
+      <div className="mt-5">
+        <InsuranceSummary detailJson={booking.insuranceDetail} />
       </div>
 
       {/* Hasta yolculuğu */}

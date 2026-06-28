@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { parseJourney, journeyProgress, JOURNEY_STAGES, JOURNEY_STATUS } from "@/lib/journey";
+import { InsuranceSummary } from "@/components/InsuranceSummary";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,7 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
               <Spec icon={<Building2 size={14} />} k="Hastane" v={`${booking.hospitalType}`} />
               <Spec icon={<BedDouble size={14} />} k="Otel" v={`${booking.hotelStars}★ · ${booking.nights} gece`} />
               <Spec icon={<Languages size={14} />} k="Tercüman" v={booking.translator ? "Dahil" : "Yok"} />
-              <Spec icon={<ShieldCheck size={14} />} k="Sigorta" v={["Zorunlu", booking.insuranceExtended ? "Genişletilmiş" : null, booking.insuranceMalpractice ? "Malpraktis" : null].filter(Boolean).join(" + ")} />
+              <Spec icon={<ShieldCheck size={14} />} k="Sigorta" v={`Seviye ${booking.insuranceLevel}`} />
             </div>
 
             <ul className="mt-5 space-y-2 border-t border-slate-100 pt-4">
@@ -79,6 +80,9 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
               <span className="text-2xl font-bold text-[#101010]">{formatUSD(booking.total)}</span>
             </div>
           </div>
+
+          {/* Sigorta teminat özeti (3 kademeli) */}
+          <InsuranceSummary detailJson={booking.insuranceDetail} />
 
           {/* Hasta yolculuğu — lojistik takip (gerçek durumlu; koordinatör /operasyon/lojistik'ten günceller) */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
