@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { PwaRegister } from "@/components/PwaRegister";
 import { getCurrentUser } from "@/lib/auth";
+import { db } from "@/lib/db";
 
 // Uygulama geneli tipografi — landing ile aynı aile (Hanken Grotesk gövde + Newsreader başlık).
 // Önceden uygulama içi Segoe UI/system-ui kullanıyordu; bu, landing↔uygulama kalite uçurumunu kapatır.
@@ -28,11 +29,18 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const user = await getCurrentUser();
+  // Partner doktorun global Header'ı kendi dilinde (diğer roller Türkçe — useT no-op).
+  let headerLang = "Türkçe";
+  if (user?.role === "PARTNER") {
+    const u = await db.user.findUnique({ where: { id: user.id }, select: { partnerId: true } });
+    const p = u?.partnerId ? await db.partnerDoctor.findUnique({ where: { id: u.partnerId }, select: { language: true } }) : null;
+    headerLang = p?.language || "İngilizce";
+  }
   return (
     <html lang="tr" className={`h-full antialiased ${sans.variable} ${serif.variable}`}>
       <body className="min-h-full flex flex-col">
         <PwaRegister />
-        <Header user={user ? { name: user.name, role: user.role } : null} />
+        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} />
         <main className="flex-1">{children}</main>
         <SiteFooter />
       </body>
