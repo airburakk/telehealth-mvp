@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { answerRequest } from "@/lib/consultation-requests";
+import { answerRequest, type LabRec, type ImagingRec, type MedRec } from "@/lib/consultation-requests";
 
-// POST /api/consultation-requests/[id]/answer — hekim anonim konsültasyon talebine görüş verir.
+export const maxDuration = 60; // görüş hasta diline çevrilir (AI) → uzun sürebilir
+
+function arr<T>(v: unknown): T[] {
+  return Array.isArray(v) ? (v as T[]) : [];
+}
+
+// POST /api/consultation-requests/[id]/answer — hekim anonim konsültasyon talebine görüş + kodlu öneriler verir.
 // Self-auth: yalnız consultOptIn=true hekim (panel görünürlüğüyle tutarlı). Yanıt başına ödeme (simüle).
+// Görüş hasta diline çevrilir; lab/görüntüleme (ServiceRequest) + ilaç (MedicationRequest, ATC) FHIR'e bağlanır.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
   if (!user || user.role !== "DOCTOR") {
@@ -23,7 +30,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const b = await req.json().catch(() => ({}));
   const text = typeof b.answer === "string" ? b.answer : "";
 
-  const res = await answerRequest(id, doctor.id, text);
+  // Öneriler: lab/görüntüleme/ilaç (ilaçta ATC kodu zorunlu — servis filtreler).
+  const recommendedLabs = arr<LabRec>(b.recommendedLabs).filter((r) => r && (r.loinc || r.name)).slice(0, 20);
+  const recommendedImaging = arr<ImagingRec>(b.recommendedImaging).filter((r) => r && (r.code || r.name)).slice(0, 20);
+  const medications = arr<MedRec>(b.medications).filter((m) => m && m.atc).slice(0, 20);
+
+  const res = await answerRequest(id, doctor.id, { text, recommendedLabs, recommendedImaging, medications });
   if (res === "EMPTY") return NextResponse.json({ error: "Görüş metni boş olamaz." }, { status: 400 });
   if (res === "NOT_FOUND") return NextResponse.json({ error: "Talep bulunamadı." }, { status: 404 });
   if (res === "TAKEN") return NextResponse.json({ error: "Bu talep başka bir hekim tarafından yanıtlandı." }, { status: 409 });

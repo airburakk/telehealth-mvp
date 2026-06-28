@@ -2,14 +2,17 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { openRequestsForDoctor, answeredByDoctor, PAYMENT_PER_ANSWER, type ConsultReqView } from "@/lib/consultation-requests";
+import { openRequestsForDoctor, answeredByDoctor, PAYMENT_PER_ANSWER, type ConsultReqView, type ConsultDocView } from "@/lib/consultation-requests";
 import { formatUSD } from "@/lib/pricing";
-import { ConsultAnswerForm } from "./ConsultAnswerForm";
-import { Inbox, ShieldCheck, ArrowLeft, Globe, Languages, Stethoscope, Wallet } from "lucide-react";
+import { loincForBranchLabel } from "@/data/coding";
+import { imagingForBranch } from "@/data/imaging";
+import { medicationsForBranch } from "@/data/medications";
+import { ConsultAnswerForm, type CatalogProps } from "./ConsultAnswerForm";
+import { Inbox, ShieldCheck, ArrowLeft, Globe, Languages, Stethoscope, Wallet, FileText, FlaskConical, AlertTriangle, Pill, Scan } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-// M5 Faz 2 — Konsültasyon Talepleri gelen kutusu (anonim hasta dosyaları).
+// M5 — Konsültasyon Talepleri gelen kutusu (anonim hasta dosyaları + belge AI + kodlu öneriler).
 export default async function ConsultationInboxPage() {
   const session = await getCurrentUser();
   const u = session ? await db.user.findUnique({ where: { id: session.id }, select: { doctorId: true } }) : null;
@@ -23,6 +26,13 @@ export default async function ConsultationInboxPage() {
     answeredByDoctor(doctor.id),
   ]);
   const totalEarned = answered.reduce((a, r) => a + (r.paymentSim ?? 0), 0);
+
+  // Kodlu öneri katalogları (branşa göre öne çıkar) — yanıt formuna geçer.
+  const catalog: CatalogProps = {
+    labs: loincForBranchLabel(doctor.branch).map((e) => ({ loinc: e.code, name: e.label })),
+    imaging: imagingForBranch(doctor.branch).map((e) => ({ code: e.code, system: "http://loinc.org", name: e.label })),
+    meds: medicationsForBranch(doctor.branch).map((m) => ({ atc: m.atc, name: m.name })),
+  };
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
@@ -45,7 +55,7 @@ export default async function ConsultationInboxPage() {
       {/* Mahremiyet bilgi şeridi */}
       <div className="mt-5 flex items-start gap-2 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-3 text-xs text-indigo-800">
         <ShieldCheck size={16} className="mt-0.5 shrink-0" />
-        <span>Bu dosyalar otomatik <strong>anonimleştirme</strong> katmanından geçti — hasta adı, kimlik numarası ve görüntü ekleri kaldırıldı. Yalnız klinik içerik gösterilir.</span>
+        <span>Bu dosyalar otomatik <strong>anonimleştirme</strong> katmanından geçti — hasta adı, kimlik numarası ve ham görüntüler kaldırıldı. Belgeler AI ile değerlendirilip Türkçeye çevrildi; yalnız klinik içerik gösterilir.</span>
       </div>
 
       {/* Açık talepler */}
@@ -54,7 +64,7 @@ export default async function ConsultationInboxPage() {
         <p className="mt-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Şu an açık konsültasyon talebi yok.</p>
       ) : (
         <div className="mt-3 space-y-4">
-          {open.map((r) => <OpenCard key={r.id} r={r} />)}
+          {open.map((r) => <OpenCard key={r.id} r={r} catalog={catalog} />)}
         </div>
       )}
 
@@ -69,8 +79,10 @@ export default async function ConsultationInboxPage() {
                   <BranchTag r={r} />
                   <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">{formatUSD(r.paymentSim ?? 0)} · yanıtlandı</span>
                 </div>
-                <p className="mt-2 whitespace-pre-wrap text-xs text-slate-500">{r.clinicalSummary}</p>
+                <p className="mt-2 whitespace-pre-wrap text-xs text-slate-500">{r.summaryTr || r.clinicalSummary}</p>
                 <div className="mt-2 rounded-xl bg-slate-50 p-3 text-sm text-slate-700"><span className="text-xs font-semibold text-slate-400">Görüşünüz: </span>{r.answerText}</div>
+                <RecommendationsView r={r} />
+                <Link href={`/fhir/ConsultationRequest/${r.id}`} target="_blank" className="mt-2 inline-block text-xs text-indigo-600 hover:underline">FHIR Bundle ↗</Link>
               </div>
             ))}
           </div>
@@ -91,7 +103,73 @@ function BranchTag({ r }: { r: ConsultReqView }) {
   );
 }
 
-function OpenCard({ r }: { r: ConsultReqView }) {
+// Yüklenen belgelerin AI değerlendirmesi (tür + TR çeviri + özet + anormal bayrak + LOINC lab tablosu).
+function DocumentsBlock({ docs }: { docs: ConsultDocView[] }) {
+  if (!docs.length) return null;
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Yüklenen belgeler (AI değerlendirme)</div>
+      {docs.map((d) => (
+        <div key={d.id} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <FileText size={14} className="text-slate-400" /> {d.label}
+            {d.docType && <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{d.docType}</span>}
+            {!d.assessed && <span className="text-[10px] text-amber-600">değerlendirilmedi</span>}
+          </div>
+          {d.aiFlags && d.aiFlags.toLowerCase() !== "yok" && (
+            <p className="mt-1.5 inline-flex items-start gap-1 rounded-lg bg-red-50 px-2 py-1 text-xs text-red-700"><AlertTriangle size={13} className="mt-px shrink-0" /> {d.aiFlags}</p>
+          )}
+          {d.aiSummary && <p className="mt-1.5 text-xs text-slate-600"><span className="font-semibold text-slate-500">Özet: </span>{d.aiSummary}</p>}
+          {d.aiTranslation && <p className="mt-1 whitespace-pre-wrap text-xs text-slate-500"><span className="font-semibold">TR çeviri: </span>{d.aiTranslation}</p>}
+          {d.aiLabs.length > 0 && (
+            <div className="mt-2">
+              <div className="mb-1 inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><FlaskConical size={12} /> Laboratuvar (LOINC)</div>
+              <table className="w-full text-xs">
+                <tbody>
+                  {d.aiLabs.map((l, i) => (
+                    <tr key={i} className="border-t border-slate-200">
+                      <td className="py-1 pr-2 text-slate-600">{l.name}{l.loinc ? <span className="ml-1 font-mono text-[9px] text-slate-400">{l.loinc}</span> : null}</td>
+                      <td className="py-1 text-right font-medium text-slate-800">{l.value}{l.unit ? ` ${l.unit}` : ""}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Hekimin verdiği yapılandırılmış öneriler (lab/görüntüleme/ilaç) — okunabilir özet.
+function RecommendationsView({ r }: { r: ConsultReqView }) {
+  if (!r.recommendedLabs.length && !r.recommendedImaging.length && !r.medications.length) return null;
+  return (
+    <div className="mt-2 grid gap-2 sm:grid-cols-3">
+      {r.recommendedLabs.length > 0 && (
+        <div className="rounded-xl border border-slate-200 p-2">
+          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><FlaskConical size={12} /> Lab</div>
+          <ul className="mt-1 space-y-0.5 text-xs text-slate-600">{r.recommendedLabs.map((l, i) => <li key={i}>{l.name}{l.loinc ? <span className="ml-1 font-mono text-[9px] text-slate-400">{l.loinc}</span> : null}</li>)}</ul>
+        </div>
+      )}
+      {r.recommendedImaging.length > 0 && (
+        <div className="rounded-xl border border-slate-200 p-2">
+          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><Scan size={12} /> Görüntüleme</div>
+          <ul className="mt-1 space-y-0.5 text-xs text-slate-600">{r.recommendedImaging.map((l, i) => <li key={i}>{l.name}{l.code ? <span className="ml-1 font-mono text-[9px] text-slate-400">{l.code}</span> : null}</li>)}</ul>
+        </div>
+      )}
+      {r.medications.length > 0 && (
+        <div className="rounded-xl border border-slate-200 p-2">
+          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><Pill size={12} /> İlaç (ATC)</div>
+          <ul className="mt-1 space-y-0.5 text-xs text-slate-600">{r.medications.map((m, i) => <li key={i}>{m.name} <span className="font-mono text-[9px] text-slate-400">{m.atc}</span>{m.dose ? ` · ${m.dose}` : ""}{m.freq ? ` · ${m.freq}` : ""}</li>)}</ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OpenCard({ r, catalog }: { r: ConsultReqView; catalog: CatalogProps }) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -103,9 +181,14 @@ function OpenCard({ r }: { r: ConsultReqView }) {
         </div>
       </div>
       {r.requestedByName && <p className="mt-2 text-xs text-slate-400">Talep eden: {r.requestedByName} (Partner)</p>}
-      <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700">{r.clinicalSummary}</p>
+      {/* Klinik özet — Türkçe (varsa) öncelikli; kaynak dil farklıysa altta */}
+      <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700">{r.summaryTr || r.clinicalSummary}</p>
+      {r.summaryTr && r.summaryTr !== r.clinicalSummary && (
+        <details className="mt-1 text-xs text-slate-400"><summary className="cursor-pointer">Özgün metin ({r.language})</summary><p className="mt-1 whitespace-pre-wrap">{r.clinicalSummary}</p></details>
+      )}
+      <DocumentsBlock docs={r.documents} />
       <div className="mt-4">
-        <ConsultAnswerForm id={r.id} />
+        <ConsultAnswerForm id={r.id} catalog={catalog} />
       </div>
     </div>
   );

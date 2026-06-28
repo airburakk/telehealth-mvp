@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { requestsByPartner, type PartnerRequestView } from "@/lib/consultation-requests";
-import { ShieldOff, Plus, Globe, Languages, Stethoscope, FileText, Clock, CheckCircle2 } from "lucide-react";
+import { ShieldOff, Plus, Globe, Languages, Stethoscope, FileText, Clock, CheckCircle2, FlaskConical, Scan, Pill, Download } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -78,13 +78,48 @@ function ReqCard({ r, answered }: { r: PartnerRequestView; answered?: boolean })
       </div>
       <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-slate-500"><FileText size={13} /> Gönderilen anonim özet:</p>
       <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{r.clinicalSummary}</p>
+      {r.documents.length > 0 && (
+        <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-slate-400"><FileText size={12} /> {r.documents.length} belge eklendi ({r.documents.map((d) => d.docType || "belge").join(", ")})</p>
+      )}
       {answered ? (
         <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3">
-          <div className="text-xs font-semibold text-emerald-700">Uzman görüşü{r.answeredByDoctorName ? ` · ${r.answeredByDoctorName}` : ""}</div>
-          <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{r.answerText}</p>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-xs font-semibold text-emerald-700">Uzman görüşü{r.answeredByDoctorName ? ` · ${r.answeredByDoctorName}` : ""} <span className="font-normal text-emerald-600/70">({r.language})</span></div>
+            <Link href={`/fhir/ConsultationRequest/${r.id}`} target="_blank" className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"><Download size={12} /> FHIR</Link>
+          </div>
+          {/* Görüş hasta dilinde (answerTr); yoksa (hasta dili Türkçe) özgün metin */}
+          <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{r.answerTr || r.answerText}</p>
+          <Recommendations r={r} />
         </div>
       ) : (
         <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700"><Clock size={12} /> Uzman görüşü bekleniyor</p>
+      )}
+    </div>
+  );
+}
+
+// Hekimin verdiği yapılandırılmış öneriler (lab/görüntüleme/ilaç, kodlu) — partner görünümü.
+function Recommendations({ r }: { r: PartnerRequestView }) {
+  if (!r.recommendedLabs.length && !r.recommendedImaging.length && !r.medications.length) return null;
+  return (
+    <div className="mt-3 grid gap-2 sm:grid-cols-3">
+      {r.recommendedLabs.length > 0 && (
+        <div className="rounded-xl border border-emerald-200 bg-white/70 p-2">
+          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><FlaskConical size={12} /> Lab</div>
+          <ul className="mt-1 space-y-0.5 text-xs text-slate-600">{r.recommendedLabs.map((l, i) => <li key={i}>{l.name}</li>)}</ul>
+        </div>
+      )}
+      {r.recommendedImaging.length > 0 && (
+        <div className="rounded-xl border border-emerald-200 bg-white/70 p-2">
+          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><Scan size={12} /> Görüntüleme</div>
+          <ul className="mt-1 space-y-0.5 text-xs text-slate-600">{r.recommendedImaging.map((l, i) => <li key={i}>{l.name}</li>)}</ul>
+        </div>
+      )}
+      {r.medications.length > 0 && (
+        <div className="rounded-xl border border-emerald-200 bg-white/70 p-2">
+          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><Pill size={12} /> İlaç</div>
+          <ul className="mt-1 space-y-0.5 text-xs text-slate-600">{r.medications.map((m, i) => <li key={i}>{m.name}{m.dose ? ` · ${m.dose}` : ""}{m.freq ? ` · ${m.freq}` : ""}</li>)}</ul>
+        </div>
       )}
     </div>
   );

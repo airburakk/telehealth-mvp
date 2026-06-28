@@ -421,3 +421,131 @@ export function shareAuditBundle(s: ShareForFhir): FhirResource {
     entry: events.map((e) => ({ resource: e })),
   };
 }
+
+// ─────────────────────── M5 Konsültasyon Talebi → FHIR Bundle ───────────────────────
+// Anonim konsültasyon (Partner doktor → kayıtlı hekim). Hasta kimliği yok → anonim Patient/anon.
+// İçerik: tanı (Condition, ICD-10) + belge labları (Observation, LOINC) + hekim önerileri
+// (lab/görüntüleme ServiceRequest LOINC · ilaç MedicationRequest ATC). RxNorm/ATC kodlu (kullanıcı kararı).
+const ATC_SYSTEM = "http://www.whocc.no/atc";
+const LOINC_SYSTEM = "http://loinc.org";
+
+export interface ConsultReqFhirInput {
+  id: string;
+  branch: string | null;
+  region: string;
+  language: string;
+  icd10Code: string | null;
+  clinicalSummary: string;
+  answerText: string | null;
+  answeredByName: string | null;
+  answeredAt: Date | null;
+  docLabs: { loinc?: string; name?: string; value?: string; unit?: string }[];
+  recommendedLabs: { loinc?: string; name?: string }[];
+  recommendedImaging: { code?: string; system?: string; name?: string }[];
+  medications: { atc?: string; name?: string; dose?: string; route?: string; freq?: string }[];
+}
+
+function anonPatient(region: string, language: string): FhirResource {
+  return {
+    resourceType: "Patient",
+    id: "anon",
+    // Kimlik yok (anonimleştirilmiş) — yalnız kaba bölge/dil bağlamı
+    ...(region ? { address: [{ text: region }] } : {}),
+    ...(language ? { communication: [{ language: { text: language } }] } : {}),
+  };
+}
+
+export function consultationRequestBundle(x: ConsultReqFhirInput): FhirResource {
+  const when = (x.answeredAt ? new Date(x.answeredAt) : new Date()).toISOString();
+  const entries: FhirResource[] = [{ resource: anonPatient(x.region, x.language) }];
+
+  // Tanı (varsa ICD-10 kodlu)
+  if (x.icd10Code) {
+    entries.push({
+      resource: {
+        resourceType: "Condition",
+        id: "condition",
+        clinicalStatus: { coding: [{ system: "http://terminology.hl7.org/CodeSystem/condition-clinical", code: "active" }] },
+        code: { coding: [{ system: "http://hl7.org/fhir/sid/icd-10", code: x.icd10Code }], text: x.icd10Code },
+        subject: { reference: "Patient/anon" },
+      },
+    });
+  }
+
+  // Belge labları → Observation (LOINC kategori: laboratory)
+  const labCat = { coding: [{ system: "http://terminology.hl7.org/CodeSystem/observation-category", code: "laboratory", display: "Laboratory" }] };
+  x.docLabs
+    .filter((l) => l && (l.loinc || l.name) && l.value != null && String(l.value).trim())
+    .forEach((l, i) => {
+      const raw = String(l.value).trim();
+      const num = Number(raw.replace(",", "."));
+      const valuePart = Number.isFinite(num) ? { valueQuantity: { value: num, ...(l.unit ? { unit: l.unit } : {}) } } : { valueString: raw };
+      entries.push({
+        resource: {
+          resourceType: "Observation", id: `obs-lab-${i + 1}`, status: "final", category: [labCat],
+          code: { coding: l.loinc ? [{ system: LOINC_SYSTEM, code: l.loinc, display: l.name || l.loinc }] : undefined, text: l.name || l.loinc || "Lab" },
+          subject: { reference: "Patient/anon" }, effectiveDateTime: when, ...valuePart,
+        },
+      });
+    });
+
+  // Önerilen lab tetkikleri → ServiceRequest (intent: order, LOINC)
+  const labSrCat = [{ coding: [{ system: "http://snomed.info/sct", code: "108252007", display: "Laboratory procedure" }] }];
+  x.recommendedLabs.filter((r) => r && (r.loinc || r.name)).forEach((r, i) => {
+    entries.push({
+      resource: {
+        resourceType: "ServiceRequest", id: `svc-lab-${i + 1}`, status: "active", intent: "order", category: labSrCat,
+        code: { coding: r.loinc ? [{ system: LOINC_SYSTEM, code: r.loinc, display: r.name || r.loinc }] : undefined, text: r.name || r.loinc || "Lab istemi" },
+        subject: { reference: "Patient/anon" }, authoredOn: when,
+      },
+    });
+  });
+
+  // Önerilen görüntüleme → ServiceRequest (intent: order, LOINC/SNOMED)
+  const imgSrCat = [{ coding: [{ system: "http://snomed.info/sct", code: "363679005", display: "Imaging" }] }];
+  x.recommendedImaging.filter((r) => r && (r.code || r.name)).forEach((r, i) => {
+    entries.push({
+      resource: {
+        resourceType: "ServiceRequest", id: `svc-img-${i + 1}`, status: "active", intent: "order", category: imgSrCat,
+        code: { coding: r.code ? [{ system: r.system || LOINC_SYSTEM, code: r.code, display: r.name || r.code }] : undefined, text: r.name || r.code || "Görüntüleme" },
+        subject: { reference: "Patient/anon" }, authoredOn: when,
+      },
+    });
+  });
+
+  // İlaç önerileri → MedicationRequest (ATC kodlu)
+  x.medications.filter((m) => m && (m.atc || m.name)).forEach((m, i) => {
+    const dosageText = [m.dose, m.route, m.freq].filter(Boolean).join(" · ");
+    entries.push({
+      resource: {
+        resourceType: "MedicationRequest", id: `medreq-${i + 1}`, status: "active", intent: "order",
+        medicationCodeableConcept: { coding: m.atc ? [{ system: ATC_SYSTEM, code: m.atc, display: m.name || m.atc }] : undefined, text: m.name || m.atc },
+        subject: { reference: "Patient/anon" }, authoredOn: when,
+        ...(dosageText ? { dosageInstruction: [{ text: dosageText }] } : {}),
+      },
+    });
+  });
+
+  // Uzman görüşü → Composition (özet + öneriler narrative)
+  if (x.answerText) {
+    entries.push({
+      resource: {
+        resourceType: "Composition", id: "opinion", status: "final",
+        type: { coding: [{ system: LOINC_SYSTEM, code: "11488-4", display: "Consultation note" }], text: "Konsültasyon görüşü" },
+        subject: { reference: "Patient/anon" }, date: when,
+        ...(x.answeredByName ? { author: [{ display: x.answeredByName }] } : {}),
+        title: "Anonim konsültasyon — uzman görüşü",
+        section: [{ title: "UZMAN GÖRÜŞÜ", text: narrative(x.answerText) }],
+      },
+    });
+  }
+
+  return {
+    resourceType: "Bundle",
+    id: `consult-${x.id}`,
+    type: "collection",
+    timestamp: new Date().toISOString(),
+    total: entries.length,
+    entry: entries,
+  };
+}

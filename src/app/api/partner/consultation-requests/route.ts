@@ -1,13 +1,30 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { createRequestFromInput } from "@/lib/consultation-requests";
+import { createRequestFromInput, processRequestAi, type PartnerDocInput } from "@/lib/consultation-requests";
 import { LANGUAGES, COUNTRIES } from "@/lib/constants";
 import { BRANCHES } from "@/lib/triage";
+
+export const maxDuration = 60; // belge AI değerlendirme (vision/PDF) + özet çeviri → uzun sürebilir
 
 const LANG_SET = new Set(LANGUAGES);
 const BRANCH_LABELS = new Set(BRANCHES.map((b) => b.label));
 const COUNTRY_NAME = new Map(COUNTRIES.map((c) => [c.code, c.name]));
+
+// Belge data URL doğrulama: yalnız PDF + yaygın görüntü (DICOM/diğer reddedilir). Boyut kabaca ~8MB.
+const ALLOWED_MIME = /^(application\/pdf|image\/(jpeg|png|webp|gif))$/;
+function parseDocs(raw: unknown): PartnerDocInput[] {
+  if (!Array.isArray(raw)) return [];
+  const out: PartnerDocInput[] = [];
+  for (const d of raw.slice(0, 8)) {
+    if (!d || typeof d.dataUrl !== "string") continue;
+    const m = /^data:([^;]+);base64,/.exec(d.dataUrl);
+    if (!m || !ALLOWED_MIME.test(m[1])) continue;
+    if (d.dataUrl.length > 11_000_000) continue; // ~8MB base64
+    out.push({ label: typeof d.label === "string" ? d.label : "belge", mime: m[1], dataUrl: d.dataUrl });
+  }
+  return out;
+}
 
 // POST /api/partner/consultation-requests — M5 Faz 3: Partner doktor anonim konsültasyon talebi açar.
 // Self-auth: yalnız PARTNER rolü + bağlı PartnerDoctor. Hasta DB'sine erişim YOK; partner klinik bilgiyi kendi girer.
@@ -44,6 +61,8 @@ export async function POST(req: Request) {
   const urgency = Math.min(5, Math.max(1, Math.round(Number(b.urgency) || 3)));
   const icd10Code = typeof b.icd10Code === "string" && b.icd10Code.trim() ? b.icd10Code.trim().slice(0, 20) : null;
 
+  const documents = parseDocs(b.documents);
+
   const id = await createRequestFromInput({
     partnerId: partner.id,
     partnerName: `${partner.title} ${partner.name} (${COUNTRY_NAME.get(partner.country) ?? partner.country})`,
@@ -54,7 +73,11 @@ export async function POST(req: Request) {
     urgency,
     icd10Code,
     clinicalSummary,
-  });
+  }, documents);
+
+  // AI işleme: klinik özeti TR'ye çevir + her belgeyi assessDocument ile değerlendir (tür/çeviri/labs).
+  // Anahtar yoksa/hata olursa talep yine de açık kalır (best-effort).
+  await processRequestAi(id);
 
   return NextResponse.json({ ok: true, id });
 }

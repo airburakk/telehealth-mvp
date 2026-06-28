@@ -2,10 +2,46 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Send, Loader2, ShieldCheck, Upload, FileText, X } from "lucide-react";
 
-// M5 Faz 3 — Partner konsültasyon talebi formu. Partner kendi yönlendirdiği hastanın klinik bilgisini girer;
-// sunucu tarafında anonimleştirme (scrub) uygulanır → havuza yazılır.
+interface DocItem { label: string; mime: string; dataUrl: string }
+
+// Görüntü küçültme (CheckInForm deseni): max kenar 1280px · q0.8 (belge okunabilirliği için biraz büyük).
+async function downscaleImage(file: File, max = 1280, quality = 0.8): Promise<string> {
+  const src = await new Promise<string>((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result as string);
+    fr.onerror = () => reject(new Error("read"));
+    fr.readAsDataURL(file);
+  });
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => reject(new Error("decode"));
+    im.src = src;
+  });
+  const scale = Math.min(1, max / Math.max(img.width, img.height));
+  const w = Math.max(1, Math.round(img.width * scale));
+  const h = Math.max(1, Math.round(img.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const cx = canvas.getContext("2d");
+  if (!cx) return src;
+  cx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
+function readAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result as string);
+    fr.onerror = () => reject(new Error("read"));
+    fr.readAsDataURL(file);
+  });
+}
+
+// M5 Faz 3+ — Partner konsültasyon talebi formu. Partner kendi yönlendirdiği hastanın klinik bilgisini +
+// anonim tıbbi belge/sonuç/görüntüleme yükler; sunucuda scrub + AI değerlendirme (FHIR/çeviri) uygulanır.
 export function PartnerRequestForm({
   branches,
   countries,
@@ -27,8 +63,30 @@ export function PartnerRequestForm({
   const [urgency, setUrgency] = useState<number>(3);
   const [icd10Code, setIcd10] = useState<string>("");
   const [clinicalSummary, setSummary] = useState<string>("");
+  const [docs, setDocs] = useState<DocItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+
+  async function onFiles(files: FileList | null) {
+    if (!files) return;
+    setErr("");
+    const next: DocItem[] = [];
+    for (const f of Array.from(files).slice(0, 8)) {
+      try {
+        if (f.type === "application/pdf") {
+          if (f.size > 8_000_000) { setErr(`${f.name}: PDF çok büyük (max ~8MB).`); continue; }
+          next.push({ label: f.name, mime: "application/pdf", dataUrl: await readAsDataUrl(f) });
+        } else if (/^image\/(jpeg|png|webp|gif)$/.test(f.type)) {
+          next.push({ label: f.name, mime: "image/jpeg", dataUrl: await downscaleImage(f) });
+        } else {
+          setErr(`${f.name}: yalnız PDF ve görüntü desteklenir (DICOM kapsam dışı).`);
+        }
+      } catch {
+        setErr(`${f.name}: okunamadı.`);
+      }
+    }
+    setDocs((prev) => [...prev, ...next].slice(0, 8));
+  }
 
   async function submit() {
     if (clinicalSummary.trim().length < 10) { setErr("Klinik özet en az 10 karakter olmalı."); return; }
@@ -38,7 +96,7 @@ export function PartnerRequestForm({
       const r = await fetch("/api/partner/consultation-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branchLimited, branch, region, language, urgency, icd10Code, clinicalSummary }),
+        body: JSON.stringify({ branchLimited, branch, region, language, urgency, icd10Code, clinicalSummary, documents: docs }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Gönderilemedi.");
@@ -111,10 +169,30 @@ export function PartnerRequestForm({
           />
         </div>
 
+        {/* Tıbbi belge / sonuç / görüntüleme yükleme (anonim; AI ile değerlendirilir + TR çeviri + FHIR) */}
+        <div>
+          <label className="text-sm font-medium text-slate-700">Tıbbi belge / sonuç / görüntüleme <span className="font-normal text-slate-400">(opsiyonel, en çok 8)</span></label>
+          <p className="mt-0.5 text-xs text-slate-400">PDF veya görüntü (DICOM kapsam dışı). Lab/radyoloji/epikriz AI ile değerlendirilir, Türkçeye çevrilir ve FHIR olarak kodlanır. Üzerinde hasta kimliği bulunmayan belgeler yükleyin.</p>
+          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 hover:border-[#818cf8] hover:bg-slate-50">
+            <Upload size={15} /> Belge ekle
+            <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp,image/gif" multiple className="hidden" onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
+          </label>
+          {docs.length > 0 && (
+            <ul className="mt-2 space-y-1.5">
+              {docs.map((d, i) => (
+                <li key={i} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                  <span className="inline-flex min-w-0 items-center gap-1.5 text-slate-700"><FileText size={14} className="shrink-0 text-slate-400" /> <span className="truncate">{d.label}</span></span>
+                  <button type="button" onClick={() => setDocs((p) => p.filter((_, j) => j !== i))} className="shrink-0 text-slate-400 hover:text-red-500"><X size={15} /></button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         {err && <p className="text-sm text-red-600">{err}</p>}
 
         <button onClick={submit} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-[#818cf8] px-5 py-3 text-sm font-semibold text-white hover:bg-[#6d75e0] disabled:opacity-60">
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Talebi gönder
+          {saving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {saving ? "Gönderiliyor — belgeler AI ile değerlendiriliyor…" : "Talebi gönder"}
         </button>
       </div>
     </div>

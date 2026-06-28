@@ -195,15 +195,43 @@ model ConsultationRequest {
   urgency            Int       @default(3)
   icd10Code          String? // tanı kodu (varsa)
   clinicalSummary    String // anonim klinik özet (at-rest şifreli)
+  summaryTr          String? // klinik özetin Türkçe çevirisi — yanıtlayan hekim için (at-rest şifreli, cache)
   status             String    @default("OPEN") // OPEN | ANSWERED
   answeredByDoctorId String? // görüş veren hekim
   answerText         String? // hekim görüşü (at-rest şifreli)
+  answerTr           String? // hekim görüşünün hasta diline çevirisi — partnere dönüş (at-rest şifreli)
+  // Yapılandırılmış FHIR öneriler (hekim görüşe ek olarak verir) — JSON, kodlu
+  recommendedLabs    String? // JSON [{loinc,name}] → FHIR ServiceRequest (lab order, LOINC)
+  recommendedImaging String? // JSON [{code,system,name}] → FHIR ServiceRequest (görüntüleme)
+  medications        String? // JSON [{atc,name,dose,route,freq}] → FHIR MedicationRequest (ATC zorunlu)
   paymentSim         Int? // yanıt başına ödeme (USD, simüle)
   answeredAt         DateTime?
   createdAt          DateTime  @default(now())
+  documents          ConsultationRequestDocument[]
 
   @@index([status, branch])
   @@index([requestedByPartnerId])
+}
+
+/// M5 — Konsültasyon talebine eklenen anonim tıbbi belge + triyaj-tipi AI değerlendirme sonucu.
+/// fileData/aiSummary/aiTranslation/aiFlags at-rest şifreli (lib/crypto). DICOM kapsam dışı.
+/// Yanıtlayan hekim AI-çıkarımı klinik içeriği görür; ham dosya hekime gösterilmez (anonimlik).
+model ConsultationRequestDocument {
+  id            String              @id @default(cuid())
+  request       ConsultationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId     String
+  label         String // dosya adı/etiketi
+  mime          String // application/pdf | image/*
+  fileData      String // base64 data URL — at-rest şifreli; DICOM yok
+  docType       String? // assessDocument türü (Laboratuvar/Radyoloji/Epikriz/...)
+  aiSummary     String? // klinik özet (TR) — şifreli
+  aiTranslation String? // belge içeriği TR çeviri — şifreli
+  aiFlags       String? // anormal/kritik bayraklar — şifreli
+  aiLabs        String? // JSON [{loinc,name,value,unit}] → FHIR Observation
+  assessedAt    DateTime?
+  createdAt     DateTime            @default(now())
+
+  @@index([requestId])
 }
 
 /// Hasta-doktor video görüşmesi
