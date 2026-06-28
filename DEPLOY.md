@@ -82,7 +82,7 @@ dormant kalır / fallback'e düşer).
 
 ## Doğrulama
 
-- Canlı URL'de `/giris` → demo girişleri (parola `1234`): `hasta@` · `doktor@` · `koordinator@` · `kurul@air.test`
+- Canlı URL'de `/giris` → demo girişleri (parola `1234`): `hasta@` · `doktor@` · `koordinator@` · `kurul@` · `partner@air.test`
 - `/` landing · `/triyaj` · `/doktor` · `/operasyon` · `/etik-kurul` → rol bazlı erişim
 - Giriş sonrası `/onam` KVKK kapısı bir kez görünür
 
