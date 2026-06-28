@@ -37,6 +37,7 @@ model PartnerDoctor {
   branch      String? // ana branş (varsa)
   email       String   @unique
   phone       String?
+  language    String?  @default("İngilizce") // partner doktorun kendi okuma dili (haber akışı + arayüz çevirisi)
   verified    Boolean  @default(false)
   createdAt   DateTime @default(now())
 }

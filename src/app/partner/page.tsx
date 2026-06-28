@@ -3,7 +3,11 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { requestsByPartner, type PartnerRequestView } from "@/lib/consultation-requests";
-import { ShieldOff, Plus, Globe, Languages, Stethoscope, FileText, Clock, CheckCircle2, FlaskConical, Scan, Pill, Download } from "lucide-react";
+import { newsForBranch, NEWS_KIND_LABEL, type NewsItem } from "@/lib/medical-news";
+import { getTranslations } from "@/lib/i18n";
+import { LANGUAGES } from "@/lib/constants";
+import { PartnerNewsLang } from "./PartnerNewsLang";
+import { ShieldOff, Plus, Globe, Languages, Stethoscope, FileText, Clock, CheckCircle2, FlaskConical, Scan, Pill, Download, Newspaper } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +23,16 @@ export default async function PartnerHome() {
   const reqs = await requestsByPartner(partner.id);
   const open = reqs.filter((r) => r.status === "OPEN");
   const answered = reqs.filter((r) => r.status === "ANSWERED");
+
+  // Haber akışı — Doktor Ana Sayfası'nın 5. penceresi, partner doktorun KENDİ diline çevrilmiş.
+  const partnerLang = partner.language || "İngilizce";
+  const news = newsForBranch(partner.branch);
+  const NEWS_UI = ["Haberler", "Genel tıp gündemi", "Haber", "Makale", "İlaç Geliştirme"];
+  const tx = await getTranslations(partnerLang, [
+    ...NEWS_UI,
+    ...news.flatMap((n) => [n.title, n.summary, n.source]),
+  ]);
+  const tr = (s: string) => tx[s.trim()] ?? s;
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
@@ -59,6 +73,23 @@ export default async function PartnerHome() {
           <div className="mt-2 space-y-3">{answered.map((r) => <ReqCard key={r.id} r={r} answered />)}</div>
         </>
       )}
+
+      {/* Haberler — partner doktorun kendi dilinde (Doktor Ana Sayfası 5. pencere karşılığı) */}
+      <section className="mt-7 rounded-3xl border border-emerald-200 bg-white p-5 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#34d399] text-[#101010]"><Newspaper size={18} /></span>
+            <div>
+              <h2 className="text-sm font-semibold text-[#101010]">{tr("Haberler")}</h2>
+              <p className="text-xs text-slate-500">{tr("Genel tıp gündemi")}{partner.branch ? ` + ${partner.branch}` : ""}</p>
+            </div>
+          </div>
+          <PartnerNewsLang current={partnerLang} languages={LANGUAGES} />
+        </div>
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+          {news.map((n) => <NewsCard key={n.id} item={n} tr={tr} />)}
+        </ul>
+      </section>
     </div>
   );
 }
@@ -122,5 +153,24 @@ function Recommendations({ r }: { r: PartnerRequestView }) {
         </div>
       )}
     </div>
+  );
+}
+
+// Haber kartı — partner doktorun diline çevrilmiş (başlık/özet/kaynak/tür). tr = çeviri haritası.
+function NewsCard({ item, tr }: { item: NewsItem; tr: (s: string) => string }) {
+  const kindColor: Record<string, string> = {
+    haber: "bg-sky-100 text-sky-700",
+    makale: "bg-violet-100 text-violet-700",
+    ilac: "bg-emerald-100 text-emerald-700",
+  };
+  return (
+    <li className="rounded-2xl border border-slate-100 p-4">
+      <div className="flex items-center gap-2">
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${kindColor[item.kind]}`}>{tr(NEWS_KIND_LABEL[item.kind])}</span>
+        <span className="text-[11px] text-slate-400">{tr(item.source)}</span>
+      </div>
+      <div className="mt-1.5 text-sm font-semibold text-slate-800">{tr(item.title)}</div>
+      <p className="mt-1 text-xs text-slate-500">{tr(item.summary)}</p>
+    </li>
   );
 }
