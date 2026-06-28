@@ -87,7 +87,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | 6 | **Doktor Tanıtım** | ✅ Hekim dizini + doğrulanmış profil, **gerçek profil fotoğrafı** (`Doctor.photo` per-doktor / cinsiyet-fallback) + **tanıtım videosu** (cinsiyete göre), yorumlar (gerçek Review/üretim-fallback), akreditasyon (JCI), **kalıcı akademik** (düzenlenebilir) |
 | 7 | **Etik Kurul** | ✅ Şikayet, anonimleştirilmiş (data masking) inceleme, karar/yaptırım, **Escrow iade** tetikleyicisi |
 | — | **Kimlik doğrulama** | ✅ Roller (hasta/doktor/koordinatör/kurul/admin/**partner**), bcrypt + JWT + proxy + KVKK onam kapısı |
-| — | **Partner Doktor + Konsültasyon Havuzu** | ✅ **Partner Doktor** (`PartnerDoctor` + `PARTNER` rolü, `/partner`): hasta DB erişimi YOK, anonim konsültasyon talebi açar (+**tıbbi belge yükleme** → `assessDocument` AI: tür/TR çeviri/özet/anormal bayrak/LOINC lab) → **anonimleştirme katmanı** (`lib/deidentify.ts`: yapısal de-id + TC/pasaport/e-posta/telefon scrub; DICOM hariç) → **`ConsultationRequest` havuzu** (at-rest şifreli; `/doktor/konsultasyon`'da kayıtlı hekimler görüş + **kodlu öneri** verir: lab/görüntüleme=ServiceRequest, ilaç=MedicationRequest ATC). **Çift-yönlü AI çeviri** (özet→TR hekim · görüş→hasta dili partner) + **FHIR Bundle** (`/fhir/ConsultationRequest/[id]`). Yanıt başına ödeme simüle |
+| — | **Partner Doktor + Konsültasyon Havuzu** | ✅ **Partner Doktor** (`PartnerDoctor` + `PARTNER` rolü, `/partner`): hasta DB erişimi YOK, anonim konsültasyon talebi açar (+**tıbbi belge yükleme** → `assessDocument` AI: tür/TR çeviri/özet/anormal bayrak/LOINC lab) → **anonimleştirme katmanı** (`lib/deidentify.ts`: yapısal de-id + TC/pasaport/e-posta/telefon scrub; DICOM hariç) → **`ConsultationRequest` havuzu** (at-rest şifreli; `/doktor/konsultasyon`'da kayıtlı hekimler görüş + **kodlu öneri** verir: lab/görüntüleme=ServiceRequest, ilaç=MedicationRequest ATC). **Çift-yönlü AI çeviri** (özet→TR hekim · görüş→hasta dili partner) + **FHIR Bundle** (`/fhir/ConsultationRequest/[id]`). Yanıt başına ödeme simüle. **Yazılı görüşme (chat — Faz 2):** partner↔hekim çift-yönlü `ConsultationMessage` (at-rest şifreli + AI oto-çeviri; hekim nihai görüş öncesi de soru sorabilir → talebi atomik sahiplenir, IN_DISCUSSION). **Görüntülü görüşme (video — Faz 3):** presence/heartbeat (`/api/presence/ping`) + İcapçı offer/respond randevu (`ConsultationVideoAppointment`) + WebRTC oda (`/konsultasyon/gorusme/[id]`; sinyalleşme yeniden kullanımı + fallback chat) |
 
 ### Paralel hasta akışları
 
@@ -153,6 +153,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/doktor` (+`/baslangic`, `/vaka/[id]`, `/takip`, `/profil`, `/pro-bono`, `/konsultasyon`) | Doktor Ana Sayfası (5-pencere), ilk-giriş onboarding, kokpit, izleme, profil, Pro Bono, klinik nöbet, Konsültasyon Talepleri kutusu |
 | `/partner` (+`/talep`) | Partner Doktor paneli (**tüm arayüz partner dilinde + RTL**, haber akışı dahil) · anonim konsültasyon talebi oluşturma (belge yükleme, hasta DB erişimi yok) |
 | `/gorusme/[id]` | WebRTC video görüşme odası (asimetrik) |
+| `/konsultasyon/gorusme/[id]` | Konsültasyon görüntülü görüşme odası (partner↔hekim, Faz 3; fallback chat) |
 | `/paket/[caseId]` · `/rezervasyon/[id]` · `/teklif/[id]` | Paket · Escrow rezervasyon · hastaya gönderilen teklif |
 | `/takip/[caseId]` | Post-op takip |
 | `/hekimler` · `/hekim/[id]` | Hekim dizini · doğrulanmış profil |
@@ -179,6 +180,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `pro-bono` | `apply`/`waiting`/`availability`/`doctor-feed`/`outcome`/`status` |
 | `shares` · `complaints` · `bookings` | Güvenli paylaşım · şikayet · rezervasyon |
 | `notifications` · `push` | Bildirim merkezi · Web Push aboneliği |
+| `consultation-requests` · `presence` | Konsültasyon talebi yanıt/belge + **chat (`messages`)** + **video** randevu (offer/respond) · `presence/ping` (heartbeat) |
 | `doctor` · `auth` | Hekim tercihleri · oturum |
 
 ## Proje yapısı
@@ -186,17 +188,18 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 ```
 src/
   proxy.ts                   # rol + onam bazlı erişim kontrolü (Next 16 proxy)
-  app/                       # 22 rota dizini (yukarıdaki tablo) + api/ (18 grup)
-  components/                # 45 bileşen (ConsultationRoom, LiveInterpreter, DicomViewer,
-                             #   PreConsultLobby, ProcessTracker, NotificationBell, useT, ...)
-  lib/                       # 37 modül:
+  app/                       # 24 rota dizini (yukarıdaki tablo) + api/ (21 grup)
+  components/                # 52 bileşen (ConsultationRoom, ConsultationChat, PresencePinger,
+                             #   LiveInterpreter, DicomViewer, ProcessTracker, NotificationBell, useT, ...)
+  lib/                       # 48 modül:
                              #   db · auth/session · triage(+ -llm,-questions) · ai-clinical
                              #   fhir(+ -http) · second-opinion(+ -service) · pro-bono(+ tracker'lar)
                              #   clinical-duty · consent(+ -config) · timestamp · audit · i18n · ownership
                              #   notify · push · ice · billing/pricing/fxrate/procedures · postop · share ...
   data/                      # coding.ts (ICD-10/LOINC/SNOMED) · procedures.json · second-opinion-docs.ts
 prisma/
-  schema.prisma             # 26 model (User, Doctor, Case, Consultation, Booking, Recovery, CheckIn,
+  schema.prisma             # 32 model (User, Doctor, Case, Consultation, ConsultationMessage,
+                            #   ConsultationVideoAppointment, Booking, Recovery, CheckIn,
                             #   ShareLink/ShareAccess, Notification, ConsentRecord, AccessLog,
                             #   ConsultAppointment, CaseDocument, SecondOpinion* ×7, ...)
   seed.ts                   # demo veri (30 hekim + 20 vaka)
