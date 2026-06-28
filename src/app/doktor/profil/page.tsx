@@ -141,7 +141,6 @@ export default async function DoctorDashboard() {
           languages={doctor.languages.split(",").map((s) => s.trim()).filter(Boolean)}
           markets={doctor.markets ? doctor.markets.split(",").map((s) => s.trim()).filter(Boolean) : []}
           capacity={doctor.capacity}
-          licenseNo={doctor.licenseNo}
           proBonoOptIn={doctor.proBonoOptIn}
           consultOptIn={doctor.consultOptIn}
         />
@@ -150,6 +149,7 @@ export default async function DoctorDashboard() {
       {/* M6 — Akademik & Eğitim (kalıcı; public profil bunları gösterir, boşsa otomatik üretir) */}
       <div className="mt-5">
         <AcademicEditor
+          licenseNo={doctor.licenseNo}
           eduSchool={doctor.eduSchool}
           eduYear={doctor.eduYear}
           specBoard={doctor.specBoard}

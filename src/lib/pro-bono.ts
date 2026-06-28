@@ -95,7 +95,7 @@ export async function matchForCase(caseId: string): Promise<PairResult | null> {
   const c = await db.case.findUnique({ where: { id: caseId } });
   if (!c || !c.proBono || c.proBonoStatus !== "WAITING") return null;
   const candidates = await db.doctor.findMany({
-    where: { proBonoState: "AVAILABLE" },
+    where: { proBonoState: "AVAILABLE", verified: true },
     orderBy: { proBonoAvailableAt: "asc" }, // en uzun süredir müsait olan hekim önce
   });
   for (const d of candidates) {

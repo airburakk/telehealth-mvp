@@ -43,6 +43,44 @@ export function missingSteps(docs: { type: string }[], mmss: MmssMeta): string[]
   return out;
 }
 
+// ── M5 Kayıt — ilk-onboarding ek zorunlulukları (yalnız self-signup hekim ilk kez tamamlarken) ──
+// Global canActivate/refreshActivation (belge/MMSS değişiminde TÜM hekimlerde çalışır) DEĞİŞMEZ →
+// mevcut hekimlerde regresyon yok. Aşağıdaki ek koşullar yalnız onboarding finish yolunda uygulanır:
+// ≥1 işlem+ücret (FHIR ServiceRequest/ChargeItem girdisi) + FHIR qualification (diploma/tescil no =
+// Practitioner.identifier · uzmanlık belgesi = Practitioner.qualification).
+
+// En az bir işlem+ücret seçili mi (Doctor.procedures JSON {kod:₺})?
+export function hasProcedures(proceduresJson: string | null): boolean {
+  if (!proceduresJson) return false;
+  try {
+    const o = JSON.parse(proceduresJson);
+    return !!o && typeof o === "object" && Object.keys(o as object).length > 0;
+  } catch {
+    return false;
+  }
+}
+
+// FHIR qualification tam mı: diploma/tescil no + uzmanlık belgesi.
+export function hasQualification(d: { licenseNo: string | null; specBoard: string | null }): boolean {
+  return !!(d.licenseNo && d.licenseNo.trim()) && !!(d.specBoard && d.specBoard.trim());
+}
+
+type OnboardingData = MmssMeta & { procedures: string | null; licenseNo: string | null; specBoard: string | null };
+
+// Onboarding tamamlanabilir mi: zorunlu belgeler + MMSS + ≥1 işlem + FHIR qualification.
+export function canCompleteOnboarding(docs: { type: string }[], d: OnboardingData): boolean {
+  return canActivate(docs, d) && hasProcedures(d.procedures) && hasQualification(d);
+}
+
+// Onboarding için eksik adımlar (UI yönlendirme metni).
+export function missingOnboardingSteps(docs: { type: string }[], d: OnboardingData): string[] {
+  const out = missingSteps(docs, d);
+  if (!hasProcedures(d.procedures)) out.push("En az bir işlem ve ücreti");
+  if (!d.licenseNo || !d.licenseNo.trim()) out.push("Diploma / tescil no");
+  if (!d.specBoard || !d.specBoard.trim()) out.push("Uzmanlık belgesi");
+  return out;
+}
+
 // DB-yan-etkili: belgeler + MMSS metadata'sını okuyup activatedAt damgasını eşitler.
 // Belge yükleme / silme / MMSS kaydı sonrası çağrılır. Aktif olabiliyorsa damga atar, olamıyorsa kaldırır.
 // Döndürür: hesap şu an aktif mi.

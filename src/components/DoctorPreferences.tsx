@@ -3,17 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LANGUAGES, COUNTRIES } from "@/lib/constants";
-import { Globe, MapPin, CalendarClock, Save, Loader2, Check, BadgeCheck, HeartHandshake, Inbox } from "lucide-react";
+import { Globe, MapPin, CalendarClock, Save, Loader2, Check, HeartHandshake, Inbox } from "lucide-react";
 
 // Hekimin kendi profil tercihleri — hizmet dilleri + hizmet verdiği pazarlar (ülkeler) + aylık kapasite limiti
 // + birim katılımı (Pro Bono / Konsültasyon opt-in — Ana Sayfa pencere görünürlüğü).
 // /api/doctor/preferences'a kaydeder (yalnız oturumdaki hekimin kaydı).
-export function DoctorPreferences({ languages, markets, capacity, licenseNo, proBonoOptIn, consultOptIn }: { languages: string[]; markets: string[]; capacity: number; licenseNo: string | null; proBonoOptIn: boolean; consultOptIn: boolean }) {
+// Not: Diploma/tescil no (FHIR Practitioner.identifier) ve uzmanlık belgesi artık AcademicEditor'da
+// (qualification tek yerde toplanır) — burada düzenlenmez.
+export function DoctorPreferences({ languages, markets, capacity, proBonoOptIn, consultOptIn }: { languages: string[]; markets: string[]; capacity: number; proBonoOptIn: boolean; consultOptIn: boolean }) {
   const router = useRouter();
   const [langs, setLangs] = useState<string[]>(languages);
   const [mkts, setMkts] = useState<string[]>(markets);
   const [cap, setCap] = useState<number>(capacity);
-  const [lic, setLic] = useState<string>(licenseNo ?? "");
   const [pb, setPb] = useState<boolean>(proBonoOptIn);
   const [cs, setCs] = useState<boolean>(consultOptIn);
   const [saving, setSaving] = useState(false);
@@ -33,7 +34,7 @@ export function DoctorPreferences({ languages, markets, capacity, licenseNo, pro
       const r = await fetch("/api/doctor/preferences", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ languages: langs, markets: mkts, capacity: cap, licenseNo: lic, proBonoOptIn: pb, consultOptIn: cs }),
+        body: JSON.stringify({ languages: langs, markets: mkts, capacity: cap, proBonoOptIn: pb, consultOptIn: cs }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Kaydedilemedi.");
@@ -79,18 +80,6 @@ export function DoctorPreferences({ languages, markets, capacity, licenseNo, pro
           />
           <span className="text-xs text-slate-500">işlem / ay</span>
         </div>
-      </div>
-
-      <div className="mt-4">
-        <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-slate-700">
-          <BadgeCheck size={14} className="text-slate-400" /> Diploma / Tescil No
-          <span className="text-xs font-normal text-slate-400">(FHIR Practitioner.identifier)</span>
-        </div>
-        <input
-          type="text" value={lic} placeholder="ör. TR-123456"
-          onChange={(e) => { setLic(e.target.value); setSaved(false); }}
-          className="mt-1.5 w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]"
-        />
       </div>
 
       <div className="mt-5 border-t border-slate-100 pt-4">

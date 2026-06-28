@@ -2,18 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { GraduationCap, Save, Loader2, Check, Award, BookOpen } from "lucide-react";
+import { GraduationCap, Save, Loader2, Check, Award, BookOpen, BadgeCheck } from "lucide-react";
 
 interface Pub { title: string; venue: string; year: number }
 
-// Hekimin kalıcı akademik/eğitim profili — /api/doctor/academic'e kaydeder (yalnız oturumdaki hekim).
-// Boş bırakılan alanlar için public profil (lib/doctor-profile.ts) deterministik üretim fallback eder.
+// Hekimin kalıcı akademik/eğitim + FHIR uzmanlık (qualification) profili — /api/doctor/academic'e
+// kaydeder (yalnız oturumdaki hekim). Diploma/tescil no = FHIR Practitioner.identifier; uzmanlık
+// belgesi = Practitioner.qualification. Boş akademik alanlar için public profil (lib/doctor-profile.ts)
+// deterministik üretim fallback eder.
 export function AcademicEditor(props: {
+  licenseNo?: string | null;
   eduSchool: string | null; eduYear: number | null;
   specBoard: string | null; specYear: number | null;
   certifications: string[]; publications: Pub[];
 }) {
   const router = useRouter();
+  const [licenseNo, setLicenseNo] = useState(props.licenseNo ?? "");
   const [eduSchool, setEduSchool] = useState(props.eduSchool ?? "");
   const [eduYear, setEduYear] = useState(props.eduYear ? String(props.eduYear) : "");
   const [specBoard, setSpecBoard] = useState(props.specBoard ?? "");
@@ -36,7 +40,7 @@ export function AcademicEditor(props: {
       }).filter((p) => p.title);
       const r = await fetch("/api/doctor/academic", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eduSchool, eduYear: Number(eduYear) || null, specBoard, specYear: Number(specYear) || null, certifications, publications }),
+        body: JSON.stringify({ licenseNo, eduSchool, eduYear: Number(eduYear) || null, specBoard, specYear: Number(specYear) || null, certifications, publications }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Kaydedilemedi.");
@@ -53,6 +57,10 @@ export function AcademicEditor(props: {
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <Field label="Diploma / Tescil No" icon={<BadgeCheck size={14} />} hint="FHIR Practitioner.identifier">
+          <input type="text" value={licenseNo} onChange={onChange(setLicenseNo)} placeholder="ör. TR-123456" className={INPUT} />
+        </Field>
+        <div className="hidden sm:block" />
         <Field label="Tıp fakültesi" icon={<GraduationCap size={14} />}>
           <input type="text" value={eduSchool} onChange={onChange(setEduSchool)} placeholder="ör. Hacettepe Üniversitesi Tıp Fakültesi" className={INPUT} />
         </Field>

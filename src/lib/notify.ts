@@ -6,7 +6,7 @@ import { db } from "./db";
 import { sendPushToRoles, sendPushToUser } from "./push";
 
 export interface NotifyInput {
-  type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "PROBONO_MATCH" | "PROBONO_TREATMENT" | "SO_REVIEW" | "SO_REQUEST" | "SO_ASSIGNED" | "SO_OPINION" | "SO_VIDEO" | "CLINIC_OFFER" | "CLINIC_MATCH" | "CONSULT_ANSWERED" | "CONSULT_MESSAGE" | "CONSULT_VIDEO";
+  type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "PROBONO_MATCH" | "PROBONO_TREATMENT" | "SO_REVIEW" | "SO_REQUEST" | "SO_ASSIGNED" | "SO_OPINION" | "SO_VIDEO" | "CLINIC_OFFER" | "CLINIC_MATCH" | "CONSULT_ANSWERED" | "CONSULT_MESSAGE" | "CONSULT_VIDEO" | "ACCOUNT_VERIFIED";
   title: string;
   body?: string;
   href?: string;
@@ -51,7 +51,7 @@ export async function notifyDoctorById(doctorId: string, n: NotifyInput): Promis
 // duyurulur (30 branşın tümüne değil). Her hekime userId-hedefli yazılır (push dahil).
 export async function notifyDoctorsByBranch(branch: string, n: NotifyInput): Promise<void> {
   try {
-    const doctors = await db.doctor.findMany({ where: { branch }, select: { id: true } });
+    const doctors = await db.doctor.findMany({ where: { branch, verified: true }, select: { id: true } });
     if (!doctors.length) return;
     const users = await db.user.findMany({
       where: { role: "DOCTOR", doctorId: { in: doctors.map((d) => d.id) } },

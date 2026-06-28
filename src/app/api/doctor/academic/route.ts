@@ -31,6 +31,8 @@ export async function POST(req: Request) {
   await db.doctor.update({
     where: { id: dbUser.doctorId },
     data: {
+      // FHIR Practitioner.identifier — diploma/tescil no (qualification ile birlikte tek yerde toplanır)
+      licenseNo: str(b.licenseNo, 100),
       eduSchool: str(b.eduSchool, 300),
       eduYear: yr(b.eduYear),
       specBoard: str(b.specBoard, 200),

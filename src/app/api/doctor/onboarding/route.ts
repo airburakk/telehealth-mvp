@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { canActivate, missingSteps } from "@/lib/doctor-activation";
+import { canCompleteOnboarding, missingOnboardingSteps } from "@/lib/doctor-activation";
 
 // POST /api/doctor/onboarding — M5 ilk-giriş onboarding kapısı + sonradan opt-in güncelleme.
 // Hekim, Pro Bono ve Partner Konsültasyon taleplerine katılıp katılmayacağını seçer.
@@ -25,13 +25,19 @@ export async function POST(req: Request) {
   // yalnız ilk onboarding'de, onboardedAt henüz yokken zorunlu.)
   const current = await db.doctor.findUnique({
     where: { id: dbUser.doctorId },
-    select: { onboardedAt: true, mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true },
+    select: {
+      onboardedAt: true, mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true,
+      procedures: true, licenseNo: true, specBoard: true,
+    },
   });
   if (!current?.onboardedAt) {
     const docs = await db.doctorDocument.findMany({ where: { doctorId: dbUser.doctorId }, select: { type: true } });
-    if (!canActivate(docs, current ?? { mmssInsurer: null, mmssPolicyNo: null, mmssCoverageLimit: null })) {
+    const data = current ?? { mmssInsurer: null, mmssPolicyNo: null, mmssCoverageLimit: null, procedures: null, licenseNo: null, specBoard: null };
+    // Zorunlu belgeler (diploma + MMSS) + MMSS metadata + ≥1 işlem/ücret + FHIR qualification
+    // (diploma/tescil no + uzmanlık belgesi) tamamlanmadan onboarding bitirilemez → hesap aktifleşmez.
+    if (!canCompleteOnboarding(docs, data)) {
       return NextResponse.json(
-        { error: "Tıp diploması ve MMSS poliçesi yüklemeden hesabınız aktifleşmez.", missing: missingSteps(docs, current ?? { mmssInsurer: null, mmssPolicyNo: null, mmssCoverageLimit: null }) },
+        { error: "Hesabınızı aktifleştirmek için zorunlu adımları tamamlayın.", missing: missingOnboardingSteps(docs, data) },
         { status: 409 },
       );
     }

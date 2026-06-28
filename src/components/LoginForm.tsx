@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Loader2, LogIn, UserRound, Stethoscope, Headphones, Scale, Globe } from "lucide-react";
 import { AuraMark } from "@/components/PortamedLogo";
@@ -84,6 +85,10 @@ export function LoginForm() {
         </div>
         <p className="mt-3 text-center text-[11px] text-slate-400">Demo parolası: <span className="font-mono">1234</span></p>
       </div>
+
+      <p className="mt-4 text-center text-sm text-slate-500">
+        Hekim misiniz? <Link href="/kayit" className="font-semibold text-[#0EA5B2] hover:underline">Kayıt olun</Link>
+      </p>
     </div>
   );
 }

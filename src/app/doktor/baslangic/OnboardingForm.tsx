@@ -4,11 +4,22 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { HeartHandshake, Stethoscope, Inbox, Loader2, ArrowRight, Check, BadgeCheck, Lock, ShieldAlert } from "lucide-react";
 import { DoctorDocuments, type DocMeta, type MmssInitial } from "@/components/DoctorDocuments";
+import ProcedureSelector, { type Proc } from "@/components/ProcedureSelector";
+import { AcademicEditor } from "@/components/AcademicEditor";
 
-// M5 — İlk-giriş onboarding kapısı (client). Önce ZORUNLU mesleki belgeler (diploma + MMSS) yüklenir
-// (yüklenmeden hesap aktifleşmez), sonra Pro Bono + Partner Konsültasyon opt-in toplanır. Kaydedince /doktor'a geçer.
+interface Pub { title: string; venue: string; year: number }
+
+// M5 — İlk-giriş onboarding kapısı (client). Hesap aktifleşmesi için ZORUNLU: (1) FHIR uzmanlık &
+// işlemler — diploma/tescil no + uzmanlık belgesi + branş işlemleri & ücretleri (≥1); (2) mesleki
+// belgeler — diploma + MMSS. Sonra Pro Bono + Partner Konsültasyon opt-in toplanır. Kaydedince /doktor'a geçer.
 export function OnboardingForm({
   doctorName,
+  branchKey,
+  branchLabel,
+  branchItems,
+  initialProc,
+  extraItems,
+  qualification,
   soOpen,
   initialProBono,
   initialConsult,
@@ -16,6 +27,15 @@ export function OnboardingForm({
   initialMmss,
 }: {
   doctorName: string;
+  branchKey: string;
+  branchLabel: string;
+  branchItems: Proc[];
+  initialProc: Record<string, number>;
+  extraItems: Proc[];
+  qualification: {
+    licenseNo: string | null; eduSchool: string | null; eduYear: number | null;
+    specBoard: string | null; specYear: number | null; certifications: string[]; publications: Pub[];
+  };
   soOpen: boolean;
   initialProBono: boolean;
   initialConsult: boolean;
@@ -28,10 +48,12 @@ export function OnboardingForm({
   const [docsReady, setDocsReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+  const [missing, setMissing] = useState<string[]>([]);
 
   async function finish() {
     setSaving(true);
     setErr("");
+    setMissing([]);
     try {
       const r = await fetch("/api/doctor/onboarding", {
         method: "POST",
@@ -39,7 +61,11 @@ export function OnboardingForm({
         body: JSON.stringify({ proBonoOptIn: proBono, consultOptIn: consult }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Kaydedilemedi.");
+      if (!r.ok) {
+        // 409: eksik zorunlu adımlar (işlem/ücret · diploma no · uzmanlık belgesi · belgeler) → listele
+        if (Array.isArray(d.missing)) setMissing(d.missing as string[]);
+        throw new Error(d.error || "Kaydedilemedi.");
+      }
       router.push("/doktor");
       router.refresh();
     } catch (e) {
@@ -56,6 +82,43 @@ export function OnboardingForm({
           Doktor Ana Sayfanız tercihinize göre düzenlenir. Aşağıdaki birimlere katılmak isteyip
           istemediğinizi seçin — dilediğiniz zaman profilinizden değiştirebilirsiniz.
         </p>
+      </div>
+
+      {/* ── Uzmanlık & İşlemler (FHIR) — diploma/tescil no + uzmanlık belgesi + işlem/ücret (zorunlu) ── */}
+      <div className="mt-8">
+        <div className="flex items-center gap-2 text-sm font-bold text-[#101010]">
+          <Stethoscope size={16} className="text-[#0EA5B2]" /> Uzmanlık & İşlemler
+        </div>
+        <p className="mt-1 text-xs text-slate-500">
+          <strong>{branchLabel}</strong> branşı için diploma/tescil numaranızı, uzmanlık belgenizi ve
+          yaptığınız işlemleri (ücretleriyle) tanımlayın. Bu bilgiler <strong>FHIR</strong> standardında
+          (Practitioner.identifier/qualification + ServiceRequest) saklanır ve hesabınız aktifleşmeden
+          zorunludur — en az bir işlem ve ücreti seçmelisiniz.
+        </p>
+
+        {/* FHIR qualification: diploma/tescil no + uzmanlık belgesi (AcademicEditor) */}
+        <div className="mt-3">
+          <AcademicEditor
+            licenseNo={qualification.licenseNo}
+            eduSchool={qualification.eduSchool}
+            eduYear={qualification.eduYear}
+            specBoard={qualification.specBoard}
+            specYear={qualification.specYear}
+            certifications={qualification.certifications}
+            publications={qualification.publications}
+          />
+        </div>
+
+        {/* Branş işlemleri + ücretlendirme (≥1 zorunlu) */}
+        <div className="mt-4">
+          <ProcedureSelector
+            branchKey={branchKey}
+            branchLabel={branchLabel}
+            branchItems={branchItems}
+            initial={initialProc}
+            extraItems={extraItems}
+          />
+        </div>
       </div>
 
       {/* ── Zorunlu mesleki belgeler — hesap aktivasyon kapısı ── */}
@@ -121,9 +184,19 @@ export function OnboardingForm({
 
       {err && <p className="mt-4 text-center text-sm text-red-600">{err}</p>}
 
+      {/* Sunucudan dönen eksik zorunlu adımlar (409) */}
+      {missing.length > 0 && (
+        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200">
+          <div className="flex items-center gap-1.5 font-semibold"><ShieldAlert size={15} /> Eksik zorunlu adımlar</div>
+          <ul className="mt-1.5 list-disc space-y-0.5 pl-5 text-xs">
+            {missing.map((m) => <li key={m}>{m}</li>)}
+          </ul>
+        </div>
+      )}
+
       {!docsReady && (
         <p className="mt-6 flex items-center justify-center gap-1.5 rounded-xl bg-amber-50 px-3 py-2.5 text-center text-xs font-medium text-amber-700 ring-1 ring-amber-100">
-          <ShieldAlert size={14} /> Devam etmek için tıp diploması ve MMSS poliçenizi (teminat limiti dahil) tamamlayın.
+          <ShieldAlert size={14} /> Hesabınızı aktifleştirmek için işlem/ücret seçimi, diploma no, uzmanlık belgesi ve tıp diploması + MMSS poliçesini (teminat limiti dahil) tamamlayın.
         </p>
       )}
 

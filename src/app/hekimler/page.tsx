@@ -6,7 +6,9 @@ import { Users } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function DoctorsPage() {
+  // Yalnız doğrulanmış hekimler dizinde görünür (self-signup → admin/etik kurul onayına kadar gizli).
   const doctors = await db.doctor.findMany({
+    where: { verified: true },
     orderBy: [{ rating: "desc" }],
   });
 

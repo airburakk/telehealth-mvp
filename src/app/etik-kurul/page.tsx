@@ -15,6 +15,7 @@ export default async function EthicsBoard() {
   const rows = complaints.sort((a, b) => (a.status === "PENDING" ? -1 : 1) - (b.status === "PENDING" ? -1 : 1));
   const pending = complaints.filter((c) => c.status === "PENDING").length;
   const resolved = complaints.filter((c) => c.status === "RESOLVED").length;
+  const pendingDoctors = await db.doctor.count({ where: { verified: false } });
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
@@ -29,6 +30,20 @@ export default async function EthicsBoard() {
       <div className="mt-5 flex items-center gap-2 rounded-lg bg-teal-50 px-3 py-2 text-xs text-teal-800 ring-1 ring-teal-100">
         <ShieldCheck size={15} /> Veri maskeleme aktif: kurul hasta kimliğini değil, yalnızca vaka ve operasyon verisini görür.
       </div>
+
+      <Link href="/admin/hekim-onay" className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#14C3D0]/40 hover:shadow-sm">
+        <span className="flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-600"><ShieldCheck size={18} /></span>
+          <span>
+            <span className="block text-sm font-semibold text-[#101010]">Hekim Doğrulama Onayı</span>
+            <span className="block text-xs text-slate-500">Kaydolan hekimleri inceleyip doğrulayın</span>
+          </span>
+        </span>
+        <span className="flex items-center gap-2">
+          {pendingDoctors > 0 && <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700">{pendingDoctors} bekliyor</span>}
+          <ArrowRight size={16} className="text-slate-400" />
+        </span>
+      </Link>
 
       <div className="mt-5 grid grid-cols-3 gap-3 sm:max-w-md">
         <Stat label="Toplam başvuru" value={complaints.length} />

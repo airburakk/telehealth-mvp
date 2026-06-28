@@ -31,7 +31,7 @@ export async function gateAvailability(branch: string): Promise<GateAvailability
 // görevde Nöbetçi yoksa sessizce geçilir (Doktor rol-yayını zaten kuyruğu kapsar).
 export async function notifyOnDutySentinels(n: NotifyInput): Promise<void> {
   const sentinels = await db.doctor.findMany({
-    where: { sentinel: true, clinicalState: { in: ["ONLINE", "IN_SESSION"] } },
+    where: { sentinel: true, verified: true, clinicalState: { in: ["ONLINE", "IN_SESSION"] } },
     select: { id: true },
   });
   for (const d of sentinels) {
@@ -53,7 +53,7 @@ export async function claimSentinelForCase(caseId: string): Promise<SentinelResu
   // VE uyum (hastanın pazarı/aciliyeti) ile sırala (yüksek önce). (Önceki: clinicalAvailableAt asc = salt FIFO.)
   // Atomik claim aşağıda korunur; sıra yalnız deneme önceliğini belirler. Uyum SOFT → uyumsuz Nöbetçi de denenir.
   const ctx = await db.case.findUnique({ where: { id: caseId }, select: { country: true, urgency: true } });
-  const online = await db.doctor.findMany({ where: { sentinel: true, clinicalState: "ONLINE" } });
+  const online = await db.doctor.findMany({ where: { sentinel: true, verified: true, clinicalState: "ONLINE" } });
   const candidates = await rankDoctorsByQuality(online, { caseContext: ctx ?? undefined });
   for (const d of candidates) {
     const r = await claimOneSentinel(caseId, d.id);
@@ -112,7 +112,7 @@ export async function requestIcapciAppointment(caseId: string): Promise<boolean>
   });
   // CRM kalite + hasta–doktor uyumu: branş İcapçılarını kalite VE uyum (hastanın pazarı/aciliyeti) ile sırala
   // → yüksek kaliteli/duyarlı + uygun pazar hekimi önce bildirilir (uyum SOFT → pazar-dışı İcapçı da bildirilir).
-  const icapciRows = await db.doctor.findMany({ where: { branch: c.branch, onCall: true } });
+  const icapciRows = await db.doctor.findMany({ where: { branch: c.branch, onCall: true, verified: true } });
   const icapci = await rankDoctorsByQuality(icapciRows, { caseContext: { country: c.country, urgency: c.urgency } });
   // İcap dönüş oranı paydası: her bilgilendirilen İcapçının icapNotified sayacı artar (metadata; offered/notified).
   if (icapci.length) {
