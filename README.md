@@ -57,9 +57,10 @@ npm run dev                   # http://localhost:3000
 
 ## Roller & Giriş
 
-Uygulama kimlik doğrulama gerektirir (`/giris`). Giriş sonrası tek seferlik KVKK onam kapısı
-(`/onam`) vardır (sürümlü; `lib/consent-config.CONSENT_VERSION` artarsa bir kez yeniden alınır).
-Demo kullanıcıları (parola `1234`):
+Uygulama kimlik doğrulama gerektirir (`/giris`). Hekimler **`/kayit`** ile kendileri kayıt
+olabilir (Google [env-gated] / Apple [yakında] / e-posta). Giriş sonrası tek seferlik KVKK onam
+kapısı (`/onam`) vardır (sürümlü; `lib/consent-config.CONSENT_VERSION` artarsa bir kez yeniden
+alınır). Demo kullanıcıları (parola `1234`):
 
 | Rol | E-posta | Erişim |
 |-----|---------|--------|
@@ -83,10 +84,10 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | 2 | **Doktor Paneli + Video** | ✅ Aciliyet sıralı kuyruk, kokpit, **gerçek WebRTC** video + canlı transkript (Web Speech) + AI-SOAP + medikal çeviri + **AI Epikriz** + **Gemini canlı tercüman** (iki yönlü ses+altyazı) + **DICOM görüntüleyici** (5 sıkıştırılmış codec) + klinik kodlama (FHIR) |
 | 3 | **Sağlık Turizmi** | ✅ Tier'lı paket, dinamik fiyat, **3 kademeli sigorta** (1 zorunlu · 2 operasyon teminat poliçesi [toplam fatura×oran×branş riski] · 3 malpraktis — doktorun yüklediği MMSS'inin bıraktığı boşluğu doldurur; `lib/pricing.ts` `computeInsurance`, parametrik/endikatif), **Escrow + split** + **lojistik Patient Journey takibi** (durum+tarih+not; koordinatör yönetir, hasta görür) + SOAP'tan AI paket teklifi + hastaya teklif gönderme (link/PDF) |
 | 4 | **Post-Op Takip** | ✅ Günlük kontrol (ağrı/ateş/ilaç/foto), kırmızı bayrak, branş protokolü, doktor izleme + **Güvenli Dijital Paylaşım** (token/TTL/şifre/audit/iptal) + alıcı dilinde görüntüleme + **AI foto analizi** (Claude vision) |
-| 5 | **Doktor Adaptasyon** | ✅ **Doktor Ana Sayfası — 5 pencere** (Klinik Nöbet / İkinci Görüş / Pro Bono / Konsültasyon Talepleri / Haberler), her hekime ünvan+opt-in'e göre koşullu (`lib/doctor-home.ts`) + **ilk-giriş onboarding** (`/doktor/baslangic`: **zorunlu mesleki belge** — Tıp Diploması + MMSS poliçesi yüklemeden hesap **aktifleşmez** [`DoctorDocument` + `Doctor.activatedAt` + `lib/doctor-activation`; içerik at-rest şifreli; MMSS teminat limiti → M3 Katman 3 malpraktis girdisi]; İkinci Görüş ünvana göre; Pro Bono + Konsültasyon opt-in) + Panel 1 yalnız eşleşen vakalar + itibar/hakediş/kapasite/profil tercihleri (dil/pazar/işlem-ücret/opt-in) |
+| 5 | **Doktor Adaptasyon** | ✅ **Self-signup** (`/kayit` — Google[env-gated]/Apple[yakında]/e-posta → `User`+`Doctor` `verified:false`, `lib/doctor-signup` + `lib/oauth`) + **Doktor Ana Sayfası — 5 pencere** (Klinik Nöbet / İkinci Görüş / Pro Bono / Konsültasyon Talepleri / Haberler), her hekime ünvan+opt-in'e göre koşullu (`lib/doctor-home.ts`) + **ilk-giriş onboarding** (`/doktor/baslangic`: **FHIR uzmanlık** [diploma/tescil no = Practitioner.identifier + uzmanlık belgesi = qualification] + **branş işlemleri & ücretleri** ≥1 [`ProcedureSelector`→`Doctor.procedures`] + **zorunlu mesleki belge** — Tıp Diploması + MMSS poliçesi; hepsi tamamlanmadan hesap **aktifleşmez** [`canCompleteOnboarding` gate; `DoctorDocument` + `Doctor.activatedAt` + `lib/doctor-activation`; içerik at-rest şifreli; MMSS teminat limiti → M3 Katman 3 malpraktis girdisi]; İkinci Görüş ünvana göre; Pro Bono + Konsültasyon opt-in) + Panel 1 yalnız eşleşen vakalar + itibar/hakediş/kapasite/profil tercihleri (dil/pazar/işlem-ücret/opt-in). **Doğrulama kapısı:** self-signup hekim `verified:false` başlar → hekim dizini + Nöbetçi/İcapçı/Pro Bono eşleştirmelerinde gizli; **`/admin/hekim-onay`** (ADMIN/Etik Kurul) onayıyla `verified:true` olur (bildirim) |
 | 6 | **Doktor Tanıtım** | ✅ Hekim dizini + doğrulanmış profil, **gerçek profil fotoğrafı** (`Doctor.photo` per-doktor / cinsiyet-fallback) + **tanıtım videosu** (cinsiyete göre), yorumlar (gerçek Review/üretim-fallback), akreditasyon (JCI), **kalıcı akademik** (düzenlenebilir) |
 | 7 | **Etik Kurul** | ✅ Şikayet, anonimleştirilmiş (data masking) inceleme, karar/yaptırım, **Escrow iade** tetikleyicisi |
-| — | **Kimlik doğrulama** | ✅ Roller (hasta/doktor/koordinatör/kurul/admin/**partner**), bcrypt + JWT + proxy + KVKK onam kapısı |
+| — | **Kimlik doğrulama** | ✅ Roller (hasta/doktor/koordinatör/kurul/admin/**partner**), bcrypt + JWT + proxy + KVKK onam kapısı + **doktor self-signup** (`/kayit`; e-posta + Google OAuth [env yoksa dormant] + Apple [yakında]) |
 | — | **Partner Doktor + Konsültasyon Havuzu** | ✅ **Partner Doktor** (`PartnerDoctor` + `PARTNER` rolü, `/partner`): hasta DB erişimi YOK, anonim konsültasyon talebi açar (+**tıbbi belge yükleme** → `assessDocument` AI: tür/TR çeviri/özet/anormal bayrak/LOINC lab) → **anonimleştirme katmanı** (`lib/deidentify.ts`: yapısal de-id + TC/pasaport/e-posta/telefon scrub; DICOM hariç) → **`ConsultationRequest` havuzu** (at-rest şifreli; `/doktor/konsultasyon`'da kayıtlı hekimler görüş + **kodlu öneri** verir: lab/görüntüleme=ServiceRequest, ilaç=MedicationRequest ATC). **Çift-yönlü AI çeviri** (özet→TR hekim · görüş→hasta dili partner) + **FHIR Bundle** (`/fhir/ConsultationRequest/[id]`). Yanıt başına ödeme simüle. **Yazılı görüşme (chat — Faz 2):** partner↔hekim çift-yönlü `ConsultationMessage` (at-rest şifreli + AI oto-çeviri; hekim nihai görüş öncesi de soru sorabilir → talebi atomik sahiplenir, IN_DISCUSSION). **Görüntülü görüşme (video — Faz 3):** presence/heartbeat (`/api/presence/ping`) + İcapçı offer/respond randevu (`ConsultationVideoAppointment`) + WebRTC oda (`/konsultasyon/gorusme/[id]`; sinyalleşme yeniden kullanımı + fallback chat) |
 
 ### Paralel hasta akışları
@@ -147,7 +148,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 
 | Rota | Açıklama |
 |------|----------|
-| `/` · `/giris` · `/onam` (+`/onam/kanit`) | Landing · kimlik doğrulama · KVKK onam + Onay Kanıtı |
+| `/` · `/giris` · `/kayit` · `/onam` (+`/onam/kanit`) | Landing · giriş · **doktor kaydı** (Google/Apple/e-posta) · KVKK onam + Onay Kanıtı |
 | `/triyaj` · `/triyaj/[id]` | Triyaj sihirbazı · vaka süreç sayfası + 3-seçenek kapısı |
 | `/vakalarim` · `/erisim-kaydi` | Hastanın vaka ana ekranı · erişim denetim kaydı ("verime kim erişti") |
 | `/doktor` (+`/baslangic`, `/vaka/[id]`, `/takip`, `/profil`, `/pro-bono`, `/konsultasyon`) | Doktor Ana Sayfası (5-pencere), ilk-giriş onboarding, kokpit, izleme, profil, Pro Bono, klinik nöbet, Konsültasyon Talepleri kutusu |
@@ -158,6 +159,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/takip/[caseId]` | Post-op takip |
 | `/hekimler` · `/hekim/[id]` | Hekim dizini · doğrulanmış profil |
 | `/sikayet/[caseId]` · `/etik-kurul` (+`/[id]`) · `/denetim` | Şikayet · Etik Kurul liste/karar · denetim izi bütünlüğü (denetçi) |
+| `/admin/hekim-onay` | Hekim doğrulama onayı (ADMIN/Etik Kurul) — self-signup hekimi `verified:true` yapar |
 | `/operasyon` (+`/lojistik`) | Operasyon paneli · lojistik Patient Journey takibi (S2 — koordinatör/admin) |
 | `/paylasim/[token]` · `/paylasimlarim` | Güvenli paylaşım görüntüleyici · paylaşım yönetimi |
 | `/second-opinion/*` | İkinci Görüş başvuru/vaka/görüşme akışı |
@@ -181,19 +183,21 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `shares` · `complaints` · `bookings` | Güvenli paylaşım · şikayet · rezervasyon |
 | `notifications` · `push` | Bildirim merkezi · Web Push aboneliği |
 | `consultation-requests` · `presence` | Konsültasyon talebi yanıt/belge + **chat (`messages`)** + **video** randevu (offer/respond) · `presence/ping` (heartbeat) |
-| `doctor` · `auth` | Hekim tercihleri · oturum |
+| `doctor` · `auth` | Hekim tercihleri/akademik/işlem · oturum + **`signup`** (doktor kaydı) + **`google/{start,callback}`** (OAuth, env-gated) |
+| `admin` | `doctors/[id]/verify` — hekim doğrulama (ADMIN/Etik Kurul) |
 
 ## Proje yapısı
 
 ```
 src/
   proxy.ts                   # rol + onam bazlı erişim kontrolü (Next 16 proxy)
-  app/                       # 24 rota dizini (yukarıdaki tablo) + api/ (21 grup)
-  components/                # 52 bileşen (ConsultationRoom, ConsultationChat, PresencePinger,
+  app/                       # 26 rota dizini (yukarıdaki tablo) + api/ (22 grup)
+  components/                # 53 bileşen (ConsultationRoom, ConsultationChat, DoctorSignupForm,
                              #   LiveInterpreter, DicomViewer, ProcessTracker, NotificationBell, useT, ...)
-  lib/                       # 48 modül:
-                             #   db · auth/session · triage(+ -llm,-questions) · ai-clinical
-                             #   fhir(+ -http) · second-opinion(+ -service) · pro-bono(+ tracker'lar)
+  lib/                       # 50 modül:
+                             #   db · auth/session · oauth · doctor-signup · doctor-activation
+                             #   triage(+ -llm,-questions) · ai-clinical · fhir(+ -http)
+                             #   second-opinion(+ -service) · pro-bono(+ tracker'lar)
                              #   clinical-duty · consent(+ -config) · timestamp · audit · i18n · ownership
                              #   notify · push · ice · billing/pricing/fxrate/procedures · postop · share ...
   data/                      # coding.ts (ICD-10/LOINC/SNOMED) · procedures.json · second-opinion-docs.ts
@@ -218,7 +222,8 @@ tabanlı `analyzeTriage()`'a düşer (anahtar kelime eşleştirme + kırmızı b
 
 Tümü `.env.example`'da: `DATABASE_URL` (pooled) · `DIRECT_URL` (direct) · `SESSION_SECRET` · `DATA_ENCRYPTION_KEK` ·
 `ANTHROPIC_API_KEY` · `GEMINI_API_KEY` · `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` ·
-`METERED_API_KEY`/`METERED_DOMAIN` (WebRTC TURN) · (opsiyonel) `TRIAGE_MODEL`.
+`METERED_API_KEY`/`METERED_DOMAIN` (WebRTC TURN) · `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (doktor
+kaydında "Google ile devam et"; boşsa dormant) · (opsiyonel) `TRIAGE_MODEL`.
 
 ## Deploy
 
