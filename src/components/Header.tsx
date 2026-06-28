@@ -91,7 +91,7 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
 
           {user ? (
             <div className="ml-1 flex items-center gap-2 border-l border-white/10 ps-2">
-              <NotificationBell />
+              <NotificationBell lang={lang} />
               <div className="hidden text-end sm:block">
                 <div className="text-sm font-medium leading-tight text-white/90">{user.name}</div>
                 <div className="text-[11px] leading-tight text-white/45">{t(ROLE_LABELS[user.role] ?? user.role)}</div>

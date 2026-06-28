@@ -7,6 +7,7 @@ import { db } from "./db";
 import { encryptField, decryptField } from "./crypto";
 import { deidentifyCase, scrubText } from "./deidentify";
 import { translateText, assessDocument } from "./ai-clinical";
+import { notifyUser } from "./notify";
 import { loincForBranchLabel } from "@/data/coding";
 
 export const PAYMENT_PER_ANSWER = 50; // USD — yanıt başına ödeme (simüle)
@@ -277,7 +278,10 @@ export interface AnswerInput {
 export async function answerRequest(id: string, doctorId: string, input: AnswerInput): Promise<"OK" | "TAKEN" | "NOT_FOUND" | "EMPTY"> {
   const clean = (input.text || "").trim();
   if (!clean) return "EMPTY";
-  const req = await db.consultationRequest.findUnique({ where: { id }, select: { status: true, language: true } });
+  const req = await db.consultationRequest.findUnique({
+    where: { id },
+    select: { status: true, language: true, requestedByPartnerId: true, branch: true },
+  });
   if (!req) return "NOT_FOUND";
   if (req.status !== "OPEN") return "TAKEN";
 
@@ -310,5 +314,27 @@ export async function answerRequest(id: string, doctorId: string, input: AnswerI
       answeredAt: new Date(),
     },
   });
-  return claimed.count === 0 ? "TAKEN" : "OK";
+  if (claimed.count === 0) return "TAKEN";
+
+  // Talebi açan Partner doktora KİŞİSEL bildirim (yalnız konsültasyon yanıtlandığında).
+  // Partner zilinde kendi diline çevrilerek gösterilir (i18n); jenerik metin, kişisel/klinik veri taşımaz.
+  if (req.requestedByPartnerId) {
+    try {
+      const pu = await db.user.findFirst({
+        where: { role: "PARTNER", partnerId: req.requestedByPartnerId },
+        select: { id: true },
+      });
+      if (pu) {
+        await notifyUser(pu.id, {
+          type: "CONSULT_ANSWERED",
+          title: "💬 Konsültasyon görüşünüz hazır",
+          body: `${req.branch ?? "Genel"} · uzman görüşü geldi`,
+          href: "/partner",
+        });
+      }
+    } catch (e) {
+      console.warn("[consult] partner bildirimi yazılamadı:", e instanceof Error ? e.message : e);
+    }
+  }
+  return "OK";
 }

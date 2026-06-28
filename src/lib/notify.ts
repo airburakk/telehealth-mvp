@@ -6,7 +6,7 @@ import { db } from "./db";
 import { sendPushToRoles, sendPushToUser } from "./push";
 
 export interface NotifyInput {
-  type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "PROBONO_MATCH" | "PROBONO_TREATMENT" | "SO_REVIEW" | "SO_REQUEST" | "SO_ASSIGNED" | "SO_OPINION" | "SO_VIDEO" | "CLINIC_OFFER" | "CLINIC_MATCH";
+  type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "PROBONO_MATCH" | "PROBONO_TREATMENT" | "SO_REVIEW" | "SO_REQUEST" | "SO_ASSIGNED" | "SO_OPINION" | "SO_VIDEO" | "CLINIC_OFFER" | "CLINIC_MATCH" | "CONSULT_ANSWERED";
   title: string;
   body?: string;
   href?: string;
@@ -33,4 +33,36 @@ export async function notifyUser(userId: string, n: NotifyInput): Promise<void> 
     console.warn("[notify] bildirim yazılamadı:", e instanceof Error ? e.message : e);
   }
   await sendPushToUser(userId, { title: n.title, body: n.body, href: n.href });
+}
+
+// Hekim profili (Doctor.id) üzerinden o hekimin kullanıcı hesabına KİŞİSEL bildirim.
+// Atanmış tedavi eden hekime hedefli uyarı (yayın değil) — bildirim yalnız ilgili hekime gider.
+export async function notifyDoctorById(doctorId: string, n: NotifyInput): Promise<void> {
+  try {
+    const u = await db.user.findFirst({ where: { role: "DOCTOR", doctorId }, select: { id: true } });
+    if (u) await notifyUser(u.id, n);
+  } catch (e) {
+    console.warn("[notify] hekim bildirimi yazılamadı:", e instanceof Error ? e.message : e);
+  }
+}
+
+// Bir branştaki portal hekimlerine KİŞİSEL bildirim (rol yayını DEĞİL — yalnız ilgili branş).
+// Yeni vaka kuyruğa düşerken henüz atanan hekim yoktur → vakanın branşındaki hekimlere
+// duyurulur (30 branşın tümüne değil). Her hekime userId-hedefli yazılır (push dahil).
+export async function notifyDoctorsByBranch(branch: string, n: NotifyInput): Promise<void> {
+  try {
+    const doctors = await db.doctor.findMany({ where: { branch }, select: { id: true } });
+    if (!doctors.length) return;
+    const users = await db.user.findMany({
+      where: { role: "DOCTOR", doctorId: { in: doctors.map((d) => d.id) } },
+      select: { id: true },
+    });
+    if (!users.length) return;
+    await db.notification.createMany({
+      data: users.map((u) => ({ userId: u.id, type: n.type, title: n.title, body: n.body ?? null, href: n.href ?? null })),
+    });
+    await Promise.all(users.map((u) => sendPushToUser(u.id, { title: n.title, body: n.body, href: n.href })));
+  } catch (e) {
+    console.warn("[notify] branş bildirimi yazılamadı:", e instanceof Error ? e.message : e);
+  }
 }

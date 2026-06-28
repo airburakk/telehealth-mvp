@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
-import { notifyRoles } from "@/lib/notify";
+import { notifyDoctorsByBranch } from "@/lib/notify";
 import { getCurrentUser } from "@/lib/auth";
 import { encryptField, decryptCaseFields } from "@/lib/crypto";
 
@@ -88,7 +88,9 @@ export async function POST(req: Request) {
   }
 
   // §1/§7: yeni klinik vaka koordinatöre DEĞİL doktor kuyruğuna düşer (koordinatör yalnız M3/S3 rezervasyon).
-  await notifyRoles(["DOCTOR"], {
+  // Yeni vakada henüz atanan hekim YOK → tüm hekimlere yayın yerine yalnız vakanın BRANŞINDAKİ
+  // portal hekimlerine kişisel bildirim (atama Nöbetçi/İcapçı kapınca yapılır).
+  await notifyDoctorsByBranch(a.branch, {
     type: "NEW_CASE",
     title: `${a.urgency >= 4 ? "🔴 " : ""}Yeni vaka`, // isim bildirime gömülmez (E2EE inc.2c) → personel kokpitte görür
     body: `${a.branch} · aciliyet ${a.urgency}/5`,
@@ -100,7 +102,7 @@ export async function POST(req: Request) {
     ? body.missingDocs.filter((d: unknown) => typeof d === "string").map((d: string) => d.slice(0, 80)).slice(0, 12)
     : [];
   if (missingDocs.length) {
-    await notifyRoles(["DOCTOR"], {
+    await notifyDoctorsByBranch(a.branch, {
       type: "MISSING_DOCS",
       title: `📄 Eksik belge`,
       body: `${a.branch} · eksik: ${missingDocs.join(", ")}`,
