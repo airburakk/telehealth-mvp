@@ -13,6 +13,8 @@ import { COUNTRIES } from "./constants";
 const TC_RE = /\b\d{11}\b/g; // TC Kimlik (11 hane)
 const PASSPORT_RE = /\b[A-Za-z]{1,2}\d{6,9}\b/g; // pasaport benzeri (1-2 harf + 6-9 hane)
 const EMAIL_RE = /\b[\w.+-]+@[\w-]+\.[\w.-]+\b/gi;
+// Tam tarih (DOB) — İKİ ayraç şart → "13.8" (lab) · "C34.1" (ICD) · "120/80" (tansiyon) tetiklemez.
+const DATE_RE = /\b\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\b/g;
 const PHONE_RE = /\+?\d[\d\s().-]{8,}\d/g; // telefon benzeri uzun rakam dizisi
 
 function escapeRe(s: string): string {
@@ -21,8 +23,15 @@ function escapeRe(s: string): string {
 
 // Serbest metinden tanımlayıcıları maskele. names = hastanın adı (ve parçaları) — tam metinden çıkarılır.
 export function scrubText(text: string, names: string[] = []): string {
-  let t = text;
-  // Önce isim(ler): tam ad + ≥3 harfli parçalar
+  // Yapısal tanımlayıcılar İSİMDEN ÖNCE — yoksa e-posta yerel-parçası isim maskesiyle bozulur
+  // ("ahmet@x.com" → "[ad]@x.com") ve domain sızar. DATE_RE, PHONE_RE'den önce (doğru etiket).
+  let t = text
+    .replace(EMAIL_RE, "[e-posta]")
+    .replace(TC_RE, "[kimlik no]")
+    .replace(PASSPORT_RE, "[belge no]")
+    .replace(DATE_RE, "[tarih]")
+    .replace(PHONE_RE, "[telefon]");
+  // Sonra isim(ler): tam ad + ≥3 harfli parçalar
   const parts = new Set<string>();
   for (const n of names) {
     if (!n) continue;
@@ -31,12 +40,6 @@ export function scrubText(text: string, names: string[] = []): string {
     for (const p of trimmed.split(/\s+/)) if (p.length >= 3) parts.add(p);
   }
   for (const p of parts) t = t.replace(new RegExp(escapeRe(p), "gi"), "[ad]");
-  // Sonra yapısal tanımlayıcılar
-  t = t
-    .replace(EMAIL_RE, "[e-posta]")
-    .replace(TC_RE, "[kimlik no]")
-    .replace(PASSPORT_RE, "[belge no]")
-    .replace(PHONE_RE, "[telefon]");
   return t;
 }
 
@@ -102,7 +105,8 @@ export function deidentifyCase(c: DeidCaseInput): DeidResult {
 
   const symptoms = scrubText(decryptField(c.symptoms) || "", names);
   const extraLines = extraToLines(decryptField(c.extra ?? null), names);
-  const labLines = labsToLines(c.labResults);
+  // Lab satırları da scrub'dan geçer (analit adı/serbest metinde olası tanımlayıcıya karşı — T7).
+  const labLines = labsToLines(c.labResults).map((l) => scrubText(l, names));
 
   const sections: string[] = [];
   if (symptoms.trim()) sections.push(`Şikâyet: ${symptoms.trim()}`);
