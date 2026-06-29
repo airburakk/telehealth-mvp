@@ -97,7 +97,7 @@ export function encryptField(plain: string | null | undefined): string | null | 
 // tek çağrı (E2EE Faz 1 inc.2). Select-sınırlı fetch'lerde alan undefined → atlanır (güvenli no-op).
 // Açık helper (Prisma-extension DEĞİL): her çağrı görünür/denetlenebilir.
 // inc.2c: patientName de eklendi (kimlik şifreleme). Hepsi düz-metin passthrough → KEK öncesi/şifresiz no-op.
-type CaseClinical = Partial<Record<"symptoms" | "reasoning" | "extra" | "patientName" | "patientIdentifier", string | null>>;
+type CaseClinical = Partial<Record<"symptoms" | "reasoning" | "extra" | "patientName" | "patientIdentifier" | "dischargeReport" | "dischargeStructured", string | null>>;
 export function decryptCaseFields<T extends CaseClinical>(c: T): T;
 export function decryptCaseFields<T extends CaseClinical>(c: T | null | undefined): T | null | undefined;
 export function decryptCaseFields<T extends CaseClinical>(c: T | null | undefined): T | null | undefined {
@@ -108,6 +108,8 @@ export function decryptCaseFields<T extends CaseClinical>(c: T | null | undefine
   if (typeof out.symptoms === "string") out.symptoms = decryptField(out.symptoms);
   if (typeof out.reasoning === "string") out.reasoning = decryptField(out.reasoning);
   if (out.extra != null) out.extra = decryptField(out.extra);
+  if (typeof out.dischargeReport === "string") out.dischargeReport = decryptField(out.dischargeReport);
+  if (typeof out.dischargeStructured === "string") out.dischargeStructured = decryptField(out.dischargeStructured);
   return out;
 }
 

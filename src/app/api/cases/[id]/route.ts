@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { staffAccessClosed } from "@/lib/postop-access";
 import { recordAccess, reqMeta } from "@/lib/audit";
-import { decryptField } from "@/lib/crypto";
+import { decryptField, decryptCaseFields } from "@/lib/crypto";
 
 // GET /api/cases/:id — vaka detayı
 // Erişim: oturum zorunlu + vaka sahipliği (hasta yalnız kendi vakası; klinik personel serbest).
@@ -28,14 +28,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   }
 
   await recordAccess({ actor: user, action: "CASE_VIEW", resourceType: "CASE", resourceId: item.id, subjectUserId: item.userId, ...reqMeta(req) });
-  // Epikriz + SOAP notları at-rest şifreli → tüketici (kokpit) düz metin bekler → çöz.
+  // Klinik alanlar (kimlik + semptom/gerekçe/extra + epikriz) at-rest şifreli → tek-kaynak helper ile çöz
+  // (T9: dischargeReport/Structured + patientName dahil; consultation notları ayrı). Tüketici düz metin bekler.
   return NextResponse.json({
-    ...item,
-    symptoms: decryptField(item.symptoms),
-    reasoning: decryptField(item.reasoning),
-    extra: decryptField(item.extra),
-    dischargeReport: decryptField(item.dischargeReport),
-    dischargeStructured: decryptField(item.dischargeStructured),
+    ...decryptCaseFields(item),
     consultations: item.consultations.map((co) => ({ ...co, notes: decryptField(co.notes) })),
   });
 }

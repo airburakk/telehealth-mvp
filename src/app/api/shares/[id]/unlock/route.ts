@@ -23,6 +23,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const c = await cookies();
   c.set(`${SHARE_UNLOCK_PREFIX}${link.id}`, "1", {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // T5: HTTPS-only (üretim)
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60, // 1 saat

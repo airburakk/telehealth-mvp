@@ -13,7 +13,30 @@ export interface SessionUser {
   cv?: number; // onaylanan KVKK onam sürümü (consented version); 0/undefined = onam yok
 }
 
-const secret = new TextEncoder().encode(process.env.SESSION_SECRET || "air-mvp-dev-secret");
+// Oturum imzalama anahtarı (T4). ÜRETİMDE eksik/zayıf/varsayılan ise BOOT DURUR (forge edilebilir
+// JWT'yi engeller). Dev'de değer yoksa fallback + yüksek sesli uyarı (çalışan dev'i kırmaz).
+// ⚠️ Deploy ön-koşulu: Vercel'de güçlü SESSION_SECRET set olmalı (openssl rand -base64 32), yoksa
+// üretim boot'ta çöker — bu kasıtlı.
+const WEAK_SECRETS = new Set(["air-mvp-dev-secret", "change-me-to-a-long-random-secret"]);
+function resolveSessionSecret(): Uint8Array {
+  const s = process.env.SESSION_SECRET;
+  const weak = !s || WEAK_SECRETS.has(s) || s.length < 16;
+  if (weak) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "SESSION_SECRET üretimde zorunlu ve güçlü olmalı (eksik/varsayılan/<16 karakter) — boot durduruldu. " +
+        "Vercel ortam değişkenine `openssl rand -base64 32` çıktısı atayın."
+      );
+    }
+    console.warn(
+      "⚠️ SESSION_SECRET eksik/zayıf — yalnız DEV fallback kullanılıyor (forge edilebilir). " +
+      "ÜRETİMDE boot durur. .env'e güçlü bir SESSION_SECRET ekleyin."
+    );
+    return new TextEncoder().encode("air-mvp-dev-secret");
+  }
+  return new TextEncoder().encode(s);
+}
+const secret = resolveSessionSecret();
 
 export async function signToken(user: SessionUser): Promise<string> {
   return new SignJWT({ email: user.email, name: user.name, role: user.role, cv: user.cv ?? 0 })

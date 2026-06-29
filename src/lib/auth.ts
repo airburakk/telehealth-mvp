@@ -16,6 +16,7 @@ export async function createSession(user: SessionUser): Promise<void> {
   const c = await cookies();
   c.set(SESSION_COOKIE, token, {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // T5: HTTPS-only (üretim); dev http localhost'ta kapalı
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7,

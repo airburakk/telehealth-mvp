@@ -12,6 +12,6 @@ export async function GET(req: Request) {
   }
   const state = randomBytes(16).toString("hex");
   const c = await cookies();
-  c.set("g_oauth_state", state, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 600 });
+  c.set("g_oauth_state", state, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 600 });
   return NextResponse.redirect(googleAuthUrl(state, googleRedirectUri(origin)));
 }
