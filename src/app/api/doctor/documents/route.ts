@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { encryptField } from "@/lib/crypto";
+import { storeDocument, deleteDocument } from "@/lib/storage";
 import { ALL_DOC_TYPES, refreshActivation } from "@/lib/doctor-activation";
 
 // Object storage (S3) henüz yok → küçük dosyalar base64 olarak DB'de (data URI). Kaba sınır ~8.5 MB.
@@ -50,11 +50,14 @@ export async function POST(req: Request) {
 
   // Zorunlu/tekil belgeler (diploma + MMSS): tek geçerli kopya tutulur → yeni yükleme eskisini değiştirir.
   if (type === "DIPLOMA" || type === "MMSS") {
+    const old = await db.doctorDocument.findMany({ where: { doctorId, type }, select: { content: true } });
+    await Promise.all(old.map((o) => deleteDocument(o.content))); // eski Blob nesnelerini temizle (T11)
     await db.doctorDocument.deleteMany({ where: { doctorId, type } });
   }
 
+  const stored = await storeDocument(content, { keyPrefix: "doctor-doc" }); // object storage / inline şifreli (T11)
   const doc = await db.doctorDocument.create({
-    data: { doctorId, type, label, mimeType, content: encryptField(content) }, // içerik at-rest şifreli (E2EE Faz 1)
+    data: { doctorId, type, label, mimeType, content: stored as string },
   });
 
   const activated = await refreshActivation(doctorId);
@@ -74,10 +77,11 @@ export async function DELETE(req: Request) {
 
   const id = new URL(req.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id gerekli." }, { status: 400 });
-  const doc = await db.doctorDocument.findUnique({ where: { id }, select: { id: true, doctorId: true } });
+  const doc = await db.doctorDocument.findUnique({ where: { id }, select: { id: true, doctorId: true, content: true } });
   if (!doc || doc.doctorId !== doctorId) return NextResponse.json({ error: "Belge bulunamadı." }, { status: 404 });
 
   await db.doctorDocument.delete({ where: { id } });
+  await deleteDocument(doc.content); // Blob nesnesini de kaldır (T11)
   const activated = await refreshActivation(doctorId);
   return NextResponse.json({ ok: true, activated });
 }

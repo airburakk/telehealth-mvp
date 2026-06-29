@@ -7,6 +7,7 @@ import { assessDocument } from "@/lib/ai-clinical";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { loincForBranchLabel } from "@/data/coding";
 import { decryptField } from "@/lib/crypto";
+import { loadDocument } from "@/lib/storage";
 import { recordAccess, reqMeta } from "@/lib/audit";
 
 export const maxDuration = 60; // PDF/görüntü vision çağrıları + çoklu belge → uzun sürebilir
@@ -51,7 +52,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const results = await Promise.allSettled(
     docs.map(async (d) => {
-      const a = await assessDocument(decryptField(d.content as string), { // at-rest şifreli → AI girdisi için çöz
+      const a = await assessDocument((await loadDocument(d.content as string)) as string, { // object storage'tan (varsa) yükle + çöz (T11)
         branch: c.branch,
         symptoms: decryptField(c.symptoms), // at-rest şifreli → AI bağlamı için çöz
         language: c.language,

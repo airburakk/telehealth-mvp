@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { recordAccess, reqMeta } from "@/lib/audit";
-import { decryptField } from "@/lib/crypto";
+import { loadDocument } from "@/lib/storage";
 
 // GET /api/cases/:id/documents/:docId — orijinal belge içeriği (base64 → ikili akış, tarayıcıda görüntüle).
 // Klinik personel (DOCTOR/COORDINATOR/ADMIN). İçerik DB'de base64 (gerçek object storage TODO).
@@ -18,8 +18,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   });
   if (!doc || !doc.content) return NextResponse.json({ error: "Belge bulunamadı." }, { status: 404 });
 
-  const content = decryptField(doc.content); // at-rest şifreli → orijinali sunmadan önce çöz
-  const m = /^data:([^;]+);base64,(.+)$/.exec(content);
+  const content = await loadDocument(doc.content); // object storage'tan (varsa) yükle + çöz (T11)
+  const m = content ? /^data:([^;]+);base64,(.+)$/.exec(content) : null;
   if (!m) return NextResponse.json({ error: "İçerik biçimi geçersiz." }, { status: 422 });
 
   // Denetim: hasta belgesinin orijinaline erişim (kim/ne zaman/hangi belge).

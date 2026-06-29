@@ -5,6 +5,7 @@
 // (özet→TR yanıtlayan doktor için · görüş→hasta dili partnere) + yapılandırılmış kodlu öneriler.
 import { db } from "./db";
 import { encryptField, decryptField } from "./crypto";
+import { storeDocument, loadDocument } from "./storage";
 import { deidentifyCase, scrubText } from "./deidentify";
 import { translateText, assessDocument } from "./ai-clinical";
 import { notifyUser, notifyDoctorById } from "./notify";
@@ -89,7 +90,7 @@ export async function createRequestFromInput(input: PartnerRequestInput, documen
   for (const d of documents.slice(0, 8)) {
     if (!d?.dataUrl) continue;
     await db.consultationRequestDocument.create({
-      data: { requestId: created.id, label: (d.label || "belge").slice(0, 200), mime: d.mime || "application/octet-stream", fileData: encryptField(d.dataUrl) },
+      data: { requestId: created.id, label: (d.label || "belge").slice(0, 200), mime: d.mime || "application/octet-stream", fileData: (await storeDocument(d.dataUrl, { keyPrefix: "consult-doc" })) as string }, // object storage / inline şifreli (T11)
     });
   }
   return created.id;
@@ -114,7 +115,7 @@ export async function processRequestAi(requestId: string): Promise<void> {
   for (const d of r.documents) {
     if (d.assessedAt) continue;
     try {
-      const a = await assessDocument(decryptField(d.fileData), {
+      const a = await assessDocument((await loadDocument(d.fileData)) as string, { // object storage'tan (varsa) yükle + çöz (T11)
         branch: r.branch ?? "Genel",
         symptoms: decryptField(r.clinicalSummary),
         language: r.language,

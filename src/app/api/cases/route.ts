@@ -4,6 +4,7 @@ import { runTriage } from "@/lib/triage-llm";
 import { notifyDoctorsByBranch } from "@/lib/notify";
 import { requireUser, requireStaff } from "@/lib/api-auth";
 import { encryptField, decryptCaseFields } from "@/lib/crypto";
+import { storeDocument } from "@/lib/storage";
 
 // GET /api/cases — vaka kuyruğu (filtrelenebilir)
 export async function GET(req: Request) {
@@ -80,16 +81,18 @@ export async function POST(req: Request) {
   type RawDoc = { label?: unknown; mimeType?: unknown; content?: unknown };
   const documents: RawDoc[] = Array.isArray(body.documents) ? body.documents : [];
   if (documents.length) {
-    const rows = documents
-      .map((d) => ({
+    const valid = documents
+      .filter((d) => typeof d.content === "string" && (d.content as string).startsWith("data:"))
+      .slice(0, 12);
+    const rows = await Promise.all(
+      valid.map(async (d) => ({
         caseId: created.id,
         label: typeof d.label === "string" ? d.label.slice(0, 200) : "belge",
         mimeType: typeof d.mimeType === "string" ? d.mimeType.slice(0, 100) : "application/octet-stream",
-        // Belge içeriği at-rest şifrelenir (E2EE Faz 1). filter aşağıda enc-string'i (truthy) korur.
-        content: encryptField(typeof d.content === "string" && d.content.startsWith("data:") ? d.content : null),
-      }))
-      .filter((r) => !!r.content)
-      .slice(0, 12);
+        // Belge içeriği object storage'a (varsa) taşınır; yoksa at-rest şifreli inline (E2EE Faz 1). T11.
+        content: await storeDocument(d.content as string, { keyPrefix: "case-doc" }),
+      })),
+    );
     if (rows.length) await db.caseDocument.createMany({ data: rows });
   }
 

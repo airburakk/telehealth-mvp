@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { ownsSecondOpinionCase } from "@/lib/ownership";
 import { logSoEvent } from "@/lib/second-opinion-service";
-import { decryptField } from "@/lib/crypto";
+import { loadDocument } from "@/lib/storage";
 
 // GET /api/second-opinion/cases/[id]/documents/[docId] — belgeyi görüntüle (sahip hasta veya klinik personel).
 // EXTERNAL_LINK → harici bağlantıya yönlendir; FILE_UPLOAD → base64'ü çöz, dosyayı döndür.
@@ -26,7 +26,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   }
   if (!doc.fileRef) return NextResponse.json({ error: "Dosya yok." }, { status: 404 });
 
-  const m = decryptField(doc.fileRef).match(/^data:([^;]+);base64,([\s\S]*)$/); // fileRef at-rest şifreli → çöz
+  const dataUri = await loadDocument(doc.fileRef); // object storage'tan (varsa) yükle + çöz (T11)
+  const m = dataUri ? dataUri.match(/^data:([^;]+);base64,([\s\S]*)$/) : null;
   if (!m) return NextResponse.json({ error: "Dosya biçimi geçersiz." }, { status: 400 });
   const buf = Buffer.from(m[2], "base64");
   return new Response(new Uint8Array(buf), {
