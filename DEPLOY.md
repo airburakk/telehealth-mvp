@@ -72,6 +72,7 @@ dormant kalır / fallback'e düşer).
 | `VAPID_PUBLIC_KEY` | ⛅ | Web Push — `npx web-push generate-vapid-keys` |
 | `VAPID_PRIVATE_KEY` | ⛅ | Web Push gizli anahtar |
 | `VAPID_SUBJECT` | ⛅ | `mailto:...` |
+| `BLOB_READ_WRITE_TOKEN` | ⛅ | **Vercel Blob** object storage (PHI belgeleri — diploma/MMSS/lab/SO ekleri; bytes upload öncesi şifrelenir → Blob yalnız ciphertext). Kur: Vercel → **Storage → Create Database → Blob** → token'ı buraya. **Boşsa:** belgeler şifreli base64 olarak DB'de (fallback, çalışır ama satır şişer). Token sonradan eklenince eski satırlar: `npx tsx scripts/migrate-docs-to-blob.ts` |
 | `TRIAGE_MODEL` | ➖ | Opsiyonel — triyaj modeli (varsayılan `claude-sonnet-4-6`) |
 
 > ✅ zorunlu · ⛅ özellik için gerekli (yoksa fallback) · ➖ opsiyonel.
@@ -82,6 +83,9 @@ dormant kalır / fallback'e düşer).
 
 ## Doğrulama
 
+- **Deploy öncesi:** `npm test` (birim — DB yok) + `npx tsc --noEmit` + `npm run build` → hepsi EXIT 0.
+  Entegrasyon testleri için ayrı **Neon dev branch** (`TEST_DATABASE_URL`) gerekir; prod'a karşı
+  çalıştırma (yerel `.env` üretim Neon'a bağlı) — bkz. `tests/integration/README.md`.
 - Canlı URL'de `/giris` → demo girişleri (parola `1234`): `hasta@` · `doktor@` · `koordinator@` · `kurul@` · `partner@air.test`
 - `/` landing · `/triyaj` · `/doktor` · `/operasyon` · `/etik-kurul` → rol bazlı erişim
 - Giriş sonrası `/onam` KVKK kapısı bir kez görünür

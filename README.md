@@ -51,9 +51,12 @@ npm run dev                   # http://localhost:3000
 | `npm run build` | `prisma generate && next build` |
 | `npm run start` | Üretim sunucusu |
 | `npm run lint` | ESLint |
+| `npm test` | **Birim testleri** (vitest — saf mantık, DB yok; pricing/journey/deidentify/crypto/ownership/rate-limit/postop/storage/ai-minimize) |
+| `npm run test:integration` | **Entegrasyon testleri** (gerçek DB — `TEST_DATABASE_URL` Neon dev branch gerekir; yoksa atlanır, bkz. `tests/integration/README.md`) |
 | `npm run db:seed` | `prisma/seed.ts` — demo veri (tam reset) |
 | `npm run db:migrate` | `prisma migrate deploy` |
 | `npx tsx scripts/enrich-profiles.ts` | profil/vaka **zenginleştirme** (idempotent backfill; yalnız boş alan: doktor procedures/markets/akademik + vaka FHIR lab/icd10/belge — silmez) |
+| `npx tsx scripts/migrate-docs-to-blob.ts [--dry-run]` | belge **object storage backfill** (mevcut base64-in-DB → Vercel Blob; idempotent; `BLOB_READ_WRITE_TOKEN`+`DATA_ENCRYPTION_KEK` gerekir) |
 
 ## Roller & Giriş
 
@@ -198,13 +201,15 @@ src/
   app/                       # 26 rota dizini (yukarıdaki tablo) + api/ (22 grup)
   components/                # 53 bileşen (ConsultationRoom, ConsultationChat, DoctorSignupForm,
                              #   LiveInterpreter, DicomViewer, ProcessTracker, NotificationBell, useT, ...)
-  lib/                       # 50 modül:
+  lib/                       # 52 modül:
                              #   db · auth/session · oauth · doctor-signup · doctor-activation
-                             #   triage(+ -llm,-questions) · ai-clinical · fhir(+ -http)
+                             #   triage(+ -llm,-questions) · ai-clinical · ai-minimize · fhir(+ -http)
                              #   second-opinion(+ -service) · pro-bono(+ tracker'lar)
                              #   clinical-duty · consent(+ -config) · timestamp · audit · i18n · ownership
-                             #   notify · push · ice · billing/pricing/fxrate/procedures · postop · share ...
+                             #   notify · push · ice · billing/pricing/fxrate/procedures · postop · share
+                             #   storage (object storage soyutlaması — Vercel Blob) · rate-limit · api-auth ...
   data/                      # coding.ts (ICD-10/LOINC/SNOMED) · procedures.json · second-opinion-docs.ts
+tests/                       # vitest — unit/ (saf mantık, DB yok) + integration/ (Neon dev branch)
 prisma/
   schema.prisma             # 32 model (User, Doctor, Case, Consultation, ConsultationMessage,
                             #   ConsultationVideoAppointment, Booking, Recovery, CheckIn,
@@ -227,7 +232,8 @@ tabanlı `analyzeTriage()`'a düşer (anahtar kelime eşleştirme + kırmızı b
 Tümü `.env.example`'da: `DATABASE_URL` (pooled) · `DIRECT_URL` (direct) · `SESSION_SECRET` · `DATA_ENCRYPTION_KEK` ·
 `ANTHROPIC_API_KEY` · `GEMINI_API_KEY` · `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` ·
 `METERED_API_KEY`/`METERED_DOMAIN` (WebRTC TURN) · `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (doktor
-kaydında "Google ile devam et"; boşsa dormant) · (opsiyonel) `TRIAGE_MODEL`.
+kaydında "Google ile devam et"; boşsa dormant) · `BLOB_READ_WRITE_TOKEN` (Vercel Blob object storage;
+boşsa belgeler şifreli base64 olarak DB'de — fallback) · (opsiyonel) `TRIAGE_MODEL`.
 
 ## Deploy
 
@@ -237,8 +243,8 @@ kaydında "Google ile devam et"; boşsa dormant) · (opsiyonel) `TRIAGE_MODEL`.
 ## Sonraki adımlar (backlog)
 
 Güncel yol haritası vault'ta: `Air/wiki/todo.md`. Öne çıkanlar (altyapı/hukuk gerektirir):
-gerçek ödeme + Escrow gateway (Iyzico/Stripe — şu an simülasyon) · gerçek object storage (belgeler
-şu an base64-in-DB) · ileri E2EE fazları (Faz 0+1 ✅ at-rest/audit; Faz 2A ✅ post-op erişim daraltma + geri-alma; 2B kriptografik allowlist + Faz 3 gerçek sıfır-erişim kalan) · gerçek RFC 3161 TSA (şimdilik simüle) ·
+gerçek ödeme + Escrow gateway (Iyzico/Stripe — şu an simülasyon) · **object storage ✅ Vercel Blob**
+(belgeler artık Blob'ta şifreli; token yoksa base64-in-DB fallback) · ileri E2EE fazları (Faz 0+1 ✅ at-rest/audit; Faz 2A ✅ post-op erişim daraltma + geri-alma; 2B kriptografik allowlist + Faz 3 gerçek sıfır-erişim kalan) · gerçek RFC 3161 TSA (şimdilik simüle) ·
 e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ülkeli pazar girişi için.
 
 ## Güvenlik notları (demo)
@@ -246,5 +252,11 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
 - Bu bir **demo** sürümüdür: hızlı rol girişi açık, parolalar `1234`. Gerçek kullanımdan önce
   bunları kaldırın; güçlü parola politikası + e-posta doğrulama ekleyin.
 - `SESSION_SECRET` üretimde mutlaka güçlü ve gizli olmalı.
+- **Object storage (Vercel Blob):** PHI belgelerinin bytes'ı Blob'a yüklenmeden ÖNCE at-rest
+  şifrelenir (`lib/storage.ts`) → Blob yalnız ciphertext tutar; URL tahmin-edilemez + asla istemciye
+  sızdırılmaz (auth'lu rota proxy'ler). Token yoksa eski davranış (şifreli base64-in-DB).
+- **AI veri-minimizasyonu (`lib/ai-minimize.ts`):** SOAP/epikriz/paket AI çağrılarında hasta ADI
+  Anthropic'e GÖNDERİLMEZ ([HASTA] placeholder); çıktıda gerçek adla geri-yerleştirilir (doktor
+  görünümü korunur). Klinik içerik AI görevi için gönderilir (de-id sınırı: ad çıkar, semptom kalır).
 - KVKK/GDPR: gerçek hasta verisi işlemeden önce veri işleme sözleşmeleri (DPA/SCC), AI sağlayıcı
   aktarım güvenceleri ve uygun bölge (AB/TR) seçimi gerekir (bkz. vault `wiki/kavramlar/`).
