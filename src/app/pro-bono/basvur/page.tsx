@@ -9,16 +9,16 @@ import { HeartHandshake, Globe, Loader2, ArrowRight } from "lucide-react";
 // Pro Bono ön-triyaj — kısa, ücret kapısı YOK. Başvuru → eşleşme varsa görüşme, yoksa bekleme odası.
 const STATIC_UI = [
   "Pro Bono Başvurusu",
-  "Maddi imkânı kısıtlı hastalar için akredite gönüllü hekimlerle ücretsiz video konsültasyon.",
+  "Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.",
   "Arayüz dili", "Hasta Adı (veya yakını)", "Örn. Amina B.", "Ülke", "Dil",
   "Şikayetiniz / Semptomlar",
   "Örn. Çocuğumda iki haftadır geçmeyen öksürük ve ateş var; doktora erişimimiz yok.",
   "Şikayet süresi (opsiyonel)", "Örn. 2 hafta",
-  "Bu görüşme tamamen ücretsizdir. Gönüllü hekimlerimiz kontenjanları dolana kadar başvuruları sırayla karşılar.",
+  "Bu görüşme tamamen ücretsizdir. Gönüllü doktorlarımiz kontenjanları dolana kadar başvuruları sırayla karşılar.",
   "Lütfen şikayetinizi biraz daha ayrıntılı yazın.",
   "Başvur ve eşleş", "Başvurunuz oluşturuluyor…",
-  "Pro Bono hizmeti çevrimiçi", "gönüllü hekim şu an müsait", "Şu an çevrimiçi gönüllü hekim yok",
-  "Bir hekim çevrimiçi olduğunda başvurabilirsiniz; havuzdayken bir hekim müsait olunca size bildirim göndeririz.",
+  "Pro Bono hizmeti çevrimiçi", "gönüllü doktor şu an müsait", "Şu an çevrimiçi gönüllü doktor yok",
+  "Bir doktor çevrimiçi olduğunda başvurabilirsiniz; havuzdayken bir doktor müsait olunca size bildirim göndeririz.",
   "Müsaitlik kontrol ediliyor…",
 ];
 
@@ -83,7 +83,7 @@ export default function ProBonoApplyPage() {
           </span>
           <h1 className="mt-3 text-2xl font-bold text-[#101010]">{t("Pro Bono Başvurusu")}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {t("Maddi imkânı kısıtlı hastalar için akredite gönüllü hekimlerle ücretsiz video konsültasyon.")}
+            {t("Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.")}
           </p>
         </div>
         <label className="inline-flex shrink-0 items-center gap-1.5 text-xs text-slate-500">
@@ -133,7 +133,7 @@ export default function ProBonoApplyPage() {
         </Field>
 
         <div className="rounded-2xl border border-teal-200 bg-teal-50/60 px-4 py-3 text-[13px] leading-relaxed text-teal-800">
-          {t("Bu görüşme tamamen ücretsizdir. Gönüllü hekimlerimiz kontenjanları dolana kadar başvuruları sırayla karşılar.")}
+          {t("Bu görüşme tamamen ücretsizdir. Gönüllü doktorlarımiz kontenjanları dolana kadar başvuruları sırayla karşılar.")}
         </div>
 
         {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">{t(error)}</div>}
@@ -145,13 +145,13 @@ export default function ProBonoApplyPage() {
             {online === null
               ? t("Müsaitlik kontrol ediliyor…")
               : online > 0
-                ? `${t("Pro Bono hizmeti çevrimiçi")} · ${online} ${t("gönüllü hekim şu an müsait")}`
-                : t("Şu an çevrimiçi gönüllü hekim yok")}
+                ? `${t("Pro Bono hizmeti çevrimiçi")} · ${online} ${t("gönüllü doktor şu an müsait")}`
+                : t("Şu an çevrimiçi gönüllü doktor yok")}
           </span>
         </div>
         {online === 0 && (
           <p className="-mt-1 text-xs leading-relaxed text-slate-400">
-            {t("Bir hekim çevrimiçi olduğunda başvurabilirsiniz; havuzdayken bir hekim müsait olunca size bildirim göndeririz.")}
+            {t("Bir doktor çevrimiçi olduğunda başvurabilirsiniz; havuzdayken bir doktor müsait olunca size bildirim göndeririz.")}
           </p>
         )}
 

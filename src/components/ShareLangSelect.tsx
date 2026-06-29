@@ -1,6 +1,6 @@
 "use client";
 
-// Paylaşım görüntüleyici dil seçici — alıcı (yurt dışı hekim, girişsiz) kayıtları kendi dilinde görür.
+// Paylaşım görüntüleyici dil seçici — alıcı (yurt dışı doktor, girişsiz) kayıtları kendi dilinde görür.
 // Çeviri sunucuda yapıldığı için dil ?lang search param'ı ile taşınır; seçim navigasyonu tetikler.
 // useTransition: çeviri sürerken mevcut içerik görünür kalır + seçicide spinner döner (sayfa boşalmaz).
 import { useTransition } from "react";

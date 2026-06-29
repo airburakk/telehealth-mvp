@@ -34,7 +34,7 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
 
   const branchLabel = BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch;
 
-  // Atanan uzman hekim — hastaya kimlik kartı (Faz A3). Avatar değerleri sunucuda türetilir
+  // Atanan uzman doktor — hastaya kimlik kartı (Faz A3). Avatar değerleri sunucuda türetilir
   // (DoctorArt deterministik: isimden cinsiyet + varyant) → client'a düz değer geçer.
   const doc = c.assignedDoctorId
     ? await db.doctor.findUnique({ where: { id: c.assignedDoctorId }, select: { name: true, title: true, branch: true, photo: true } })

@@ -5,9 +5,9 @@ import { consultationRequestBundle } from "@/lib/fhir";
 import { fhirJson, operationOutcome } from "@/lib/fhir-http";
 
 // GET /fhir/ConsultationRequest/:id — anonim konsültasyon talebini FHIR R4 Bundle olarak verir.
-// İçerik: tanı (Condition ICD-10) + belge labları (Observation LOINC) + hekim önerileri
+// İçerik: tanı (Condition ICD-10) + belge labları (Observation LOINC) + doktor önerileri
 // (lab/görüntüleme ServiceRequest · ilaç MedicationRequest ATC) + uzman görüşü (Composition). Hasta kimliği YOK.
-// Erişim: talebi açan Partner doktor · yanıtlayan hekim · ADMIN.
+// Erişim: talebi açan Partner doktor · yanıtlayan doktor · ADMIN.
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
   if (!user) return operationOutcome(401, "login", "Kimlik doğrulama gerekli.");

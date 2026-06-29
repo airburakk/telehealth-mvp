@@ -5,6 +5,7 @@ import { ownsCase } from "@/lib/ownership";
 import { staffAccessClosed } from "@/lib/postop-access";
 import { ConsultationRoom } from "@/components/ConsultationRoom";
 import { PreConsultLobby } from "@/components/PreConsultLobby";
+import { buildDoctorCard } from "@/lib/doctor-card";
 import { branchKeyFromLabel, branchLabel as branchLabelOf, getBranchProcedures } from "@/lib/procedures";
 import { getTryPerUsd } from "@/lib/fxrate";
 import { icd10ForBranchLabel } from "@/data/coding";
@@ -92,12 +93,16 @@ export default async function ConsultationPage({
     };
   }
 
+  // Atanan doktor public profil özeti — yalnız hasta görünümünde bekleme odası kartına gider.
+  const doctorCard = selfRole === "patient" ? await buildDoctorCard(consult.doctor) : null;
+
   // autoJoin: lobiden sonra ConsultationRoom kendi "katıl" ekranını atlar → tek tık (yalnız lobi yolunda true)
   const buildRoom = (autoJoin: boolean) => (
     <ConsultationRoom
       consultationId={consult.id}
       selfRole={selfRole}
       status={consult.status}
+      storageKey={consult.id}
       initialNotes={decryptField(consult.notes)}
       doctor={{ title: consult.doctor.title, name: consult.doctor.name, branch: consult.doctor.branch, color: consult.doctor.color }}
       recommend={recommend}
@@ -131,6 +136,7 @@ export default async function ConsultationPage({
       remoteLabel={selfRole === "doctor" ? c.patientName : `${consult.doctor.title} ${consult.doctor.name}`.trim()}
       branchLabel={c.branch}
       storageKey={consult.id}
+      doctorCard={doctorCard}
     >
       {buildRoom(true)}
     </PreConsultLobby>

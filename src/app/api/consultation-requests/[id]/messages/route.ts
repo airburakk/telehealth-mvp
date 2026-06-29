@@ -21,7 +21,7 @@ async function resolveSender(userId: string, role: string): Promise<{ sender: Ch
   return null;
 }
 
-// Bu kullanıcı bu talebin tarafı mı? (thread'i yalnız partner sahibi + sahiplenen/yanıtlayan hekim okur)
+// Bu kullanıcı bu talebin tarafı mı? (thread'i yalnız partner sahibi + sahiplenen/yanıtlayan doktor okur)
 async function isParty(requestId: string, sender: ChatSender): Promise<boolean> {
   const r = await db.consultationRequest.findUnique({
     where: { id: requestId },
@@ -64,8 +64,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     EMPTY: { status: 400, error: "Mesaj boş olamaz." },
     NOT_FOUND: { status: 404, error: "Talep bulunamadı." },
     FORBIDDEN: { status: 403, error: "Bu görüşmeye erişiminiz yok." },
-    TAKEN: { status: 409, error: "Bu talebi başka bir hekim sahiplendi." },
-    NOT_READY: { status: 409, error: "Henüz bir uzman hekim görüşmeye katılmadı." },
+    TAKEN: { status: 409, error: "Bu talebi başka bir doktor sahiplendi." },
+    NOT_READY: { status: 409, error: "Henüz bir uzman doktor görüşmeye katılmadı." },
   };
   const e = map[res] ?? { status: 400, error: "Mesaj gönderilemedi." };
   return NextResponse.json({ error: e.error }, { status: e.status });

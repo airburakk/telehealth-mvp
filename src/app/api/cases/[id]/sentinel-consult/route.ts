@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { ownsCase } from "@/lib/ownership";
 import { claimSentinelForCase } from "@/lib/clinical-duty";
 
-// POST /api/cases/:id/sentinel-consult — 3-seçenek kapısı, Seçenek 1: Nöbetçi hekimle ŞİMDİ görüş.
+// POST /api/cases/:id/sentinel-consult — 3-seçenek kapısı, Seçenek 1: Nöbetçi doktorla ŞİMDİ görüş.
 // Çevrimiçi bir Nöbetçi atomik kapılır → konsültasyon oluşur → hasta görüşme odasına gider.
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -17,6 +17,6 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   }
 
   const r = await claimSentinelForCase(id);
-  if (!r) return NextResponse.json({ error: "Şu an çevrimiçi nöbetçi hekim yok." }, { status: 409 });
+  if (!r) return NextResponse.json({ error: "Şu an çevrimiçi nöbetçi doktor yok." }, { status: 409 });
   return NextResponse.json({ consultationId: r.consultationId }, { status: 201 });
 }

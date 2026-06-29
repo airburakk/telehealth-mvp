@@ -52,7 +52,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   await notifyUser(c.patientId, {
     type: "SO_VIDEO",
     title: "📅 Video randevu teklifi",
-    body: `Uzman hekiminiz görüşme için bir zaman önerdi: ${whenStr}. Onaylayın veya farklı bir zaman isteyin.`,
+    body: `Uzman doktorunuz görüşme için bir zaman önerdi: ${whenStr}. Onaylayın veya farklı bir zaman isteyin.`,
     href: `/second-opinion/vaka/${id}`,
   });
 

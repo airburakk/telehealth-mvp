@@ -87,7 +87,7 @@ export function LoginForm() {
       </div>
 
       <p className="mt-4 text-center text-sm text-slate-500">
-        Hekim misiniz? <Link href="/kayit" className="font-semibold text-[#0EA5B2] hover:underline">Kayıt olun</Link>
+        Doktor musunuz? <Link href="/kayit" className="font-semibold text-[#0EA5B2] hover:underline">Kayıt olun</Link>
       </p>
     </div>
   );

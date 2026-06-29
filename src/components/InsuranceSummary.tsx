@@ -30,8 +30,8 @@ export function InsuranceSummary({ detailJson }: { detailJson: string | null }) 
             <Row k={`Malpraktis & komplikasyon · hedef ${formatUSD(q.targetCoverage)}`} v={q.p3 > 0 ? `+${formatUSD(q.p3)}` : "ek prim yok"} />
             <p className="text-[11px] leading-relaxed text-slate-400">
               {q.gap === 0
-                ? `Hekimin mevcut MMSS poliçesi (${formatUSD(q.doctorCoverage)}) hedef teminatı karşılıyor → ek malpraktis primi yok.`
-                : `Hekimin mevcut MMSS poliçesi ${formatUSD(q.doctorCoverage)} karşılıyor; kalan ${formatUSD(q.gap)} boşluk ek teminatla kapatıldı.`}
+                ? `Doktorun mevcut MMSS poliçesi (${formatUSD(q.doctorCoverage)}) hedef teminatı karşılıyor → ek malpraktis primi yok.`
+                : `Doktorun mevcut MMSS poliçesi ${formatUSD(q.doctorCoverage)} karşılıyor; kalan ${formatUSD(q.gap)} boşluk ek teminatla kapatıldı.`}
             </p>
           </>
         )}

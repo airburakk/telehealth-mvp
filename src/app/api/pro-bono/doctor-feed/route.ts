@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { matchForDoctor, waitingCount, quotaInfo } from "@/lib/pro-bono";
 
-// GET /api/pro-bono/doctor-feed — hekim konsolu poll'u. AVAILABLE'ken eşleşme dener; bekleyen sayısı + kota döner.
+// GET /api/pro-bono/doctor-feed — doktor konsolu poll'u. AVAILABLE'ken eşleşme dener; bekleyen sayısı + kota döner.
 export async function GET() {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "ADMIN"].includes(user.role)) {
@@ -11,10 +11,10 @@ export async function GET() {
   }
   const u = await db.user.findUnique({ where: { id: user.id } });
   const doctorId = u?.doctorId;
-  if (!doctorId) return NextResponse.json({ error: "Bu hesap bir hekim profiline bağlı değil." }, { status: 400 });
+  if (!doctorId) return NextResponse.json({ error: "Bu hesap bir doktor profiline bağlı değil." }, { status: 400 });
 
   const d = await db.doctor.findUnique({ where: { id: doctorId } });
-  if (!d) return NextResponse.json({ error: "Hekim bulunamadı." }, { status: 404 });
+  if (!d) return NextResponse.json({ error: "Doktor bulunamadı." }, { status: 404 });
 
   let consultationId: string | null = null;
   if (d.proBonoState === "AVAILABLE") {

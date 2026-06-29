@@ -15,17 +15,17 @@ import { Stethoscope, ArrowRight, Activity, HeartHandshake, Inbox, Newspaper } f
 
 export const dynamic = "force-dynamic";
 
-const OPEN_STATUSES = ["NEW", "IN_REVIEW"]; // henüz hekime atanmamış (kapı/triyaj) vakalar
+const OPEN_STATUSES = ["NEW", "IN_REVIEW"]; // henüz doktora atanmamış (kapı/triyaj) vakalar
 
 export default async function DoctorPanel() {
   const user = await getCurrentUser();
-  const isStaffOnly = !!user && user.role !== "DOCTOR"; // koordinatör/etik/admin → hekim profili yok, tüm kuyruk
+  const isStaffOnly = !!user && user.role !== "DOCTOR"; // koordinatör/etik/admin → doktor profili yok, tüm kuyruk
 
-  // Bağlı hekim profili
+  // Bağlı doktor profili
   const me = user ? await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } }) : null;
   const doctor = me?.doctorId ? await db.doctor.findUnique({ where: { id: me.doctorId } }) : null;
 
-  // M5 onboarding + aktivasyon kapısı: hekim henüz onboard olmadıysa VEYA zorunlu mesleki belgeleri
+  // M5 onboarding + aktivasyon kapısı: doktor henüz onboard olmadıysa VEYA zorunlu mesleki belgeleri
   // (diploma + MMSS) tamamlamadıysa (activatedAt yok) kapıya yönlendir. (baslangic sayfası ikisi de
   // tamamsa /doktor'a geri yönlendirir → sonsuz döngü yok.)
   if (user?.role === "DOCTOR" && doctor && (!doctor.onboardedAt || !doctor.activatedAt)) {
@@ -37,7 +37,7 @@ export default async function DoctorPanel() {
     ? panelVisibility(doctor)
     : { duty: true as const, so: true, proBono: false, consult: false, news: true as const };
 
-  // ── Panel 1: Klinik Nöbet — yalnız bu hekimle eşleşen vakalar (personelde tümü) ──
+  // ── Panel 1: Klinik Nöbet — yalnız bu doktorla eşleşen vakalar (personelde tümü) ──
   const caseWhere = doctor
     ? { OR: [{ doctorId: doctor.id }, { status: { in: OPEN_STATUSES }, branch: doctor.branch }] }
     : {}; // personel: filtresiz tüm kuyruk
@@ -59,7 +59,7 @@ export default async function DoctorPanel() {
     hasFiles: !!c.attachments,
   }));
 
-  // Nöbet konsolu beslemesi (yalnız hekim)
+  // Nöbet konsolu beslemesi (yalnız doktor)
   let duty: { state: string; onCall: boolean; sentinel: boolean; branch: string } | null = null;
   let dutyRequests: DutyRequest[] = [];
   if (doctor) {

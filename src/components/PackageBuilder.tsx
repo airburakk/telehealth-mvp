@@ -18,7 +18,7 @@ const INS_LEVELS: InsuranceLevel[] = [1, 2, 3];
 const INS_LEVEL_INFO: Record<InsuranceLevel, { title: string; desc: string }> = {
   1: { title: "Zorunlu Sağlık Turizmi Sigortası", desc: "Türk sağlık hukuku gereği · her pakette dahil" },
   2: { title: "Operasyon Teminat Poliçesi", desc: "Komplikasyon halinde paket bedelini güvenceye alır" },
-  3: { title: "Malpraktis & Komplikasyon Teminatı", desc: "Hekim hatası/komplikasyon rizikolarını da kapsar" },
+  3: { title: "Malpraktis & Komplikasyon Teminatı", desc: "Doktor hatası/komplikasyon rizikolarını da kapsar" },
 };
 
 export interface PackageInitial {
@@ -198,12 +198,12 @@ export function PackageBuilder({
                           Hedef malpraktis teminatı {formatUSD(q.targetCoverage)} (operasyon ×{INSURANCE_CONFIG.targetMultiple}).{" "}
                           {doctorMmssLimitUsd != null ? (
                             q.gap === 0 ? (
-                              <span className="mt-0.5 block font-medium text-emerald-600">✓ {doctorName ? `${doctorName} ` : "Hekim "}mevcut MMSS poliçesi ({formatUSD(q.doctorCoverage)}) hedefi karşılıyor → ek malpraktis primi yok</span>
+                              <span className="mt-0.5 block font-medium text-emerald-600">✓ {doctorName ? `${doctorName} ` : "Doktor "}mevcut MMSS poliçesi ({formatUSD(q.doctorCoverage)}) hedefi karşılıyor → ek malpraktis primi yok</span>
                             ) : (
-                              <span className="mt-0.5 block">Hekim MMSS poliçesi {formatUSD(q.doctorCoverage)} karşılıyor; {formatUSD(q.gap)} boşluk için ek malpraktis primi <strong className="text-slate-700">+{formatUSD(q.p3)}</strong></span>
+                              <span className="mt-0.5 block">Doktor MMSS poliçesi {formatUSD(q.doctorCoverage)} karşılıyor; {formatUSD(q.gap)} boşluk için ek malpraktis primi <strong className="text-slate-700">+{formatUSD(q.p3)}</strong></span>
                             )
                           ) : (
-                            <span className="mt-0.5 block text-amber-600">Hekim MMSS bilgisi yok — boşluk tam kabul edildi (+{formatUSD(q.p3)})</span>
+                            <span className="mt-0.5 block text-amber-600">Doktor MMSS bilgisi yok — boşluk tam kabul edildi (+{formatUSD(q.p3)})</span>
                           )}
                         </div>
                       )}

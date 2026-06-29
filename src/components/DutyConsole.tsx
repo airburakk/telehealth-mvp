@@ -73,7 +73,7 @@ export function DutyConsole({ initial, initialRequests }: { initial: DutyState; 
         <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[#14C3D0]/10 text-[#0E8A95]"><Activity size={20} /></span>
         <div className="min-w-0">
           <h2 className="text-lg font-bold text-[#101010]">Klinik Nöbet</h2>
-          <p className="text-sm text-slate-500">Branşınız: <b className="text-slate-700">{duty.branch}</b> · hastalar çevrimiçi hekim yoksa size ulaşır.</p>
+          <p className="text-sm text-slate-500">Branşınız: <b className="text-slate-700">{duty.branch}</b> · hastalar çevrimiçi doktor yoksa size ulaşır.</p>
         </div>
         <span className="ms-auto inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
           <StateDot state={duty.state} /> {STATE_LABEL[duty.state] ?? duty.state}

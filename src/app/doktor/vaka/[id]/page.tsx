@@ -151,7 +151,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${st.color}`}>{st.label}</span>
             </div>
 
-            <div className="text-xs uppercase tracking-wide text-slate-400">Atanan / Önerilen Hekim</div>
+            <div className="text-xs uppercase tracking-wide text-slate-400">Atanan / Önerilen Doktor</div>
             <div className="mt-2 flex items-center gap-3">
               <span className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-white" style={{ background: (c.doctor ?? suggested)?.color ?? "#0EA5B2" }}>
                 {((c.doctor ?? suggested)?.name ?? "?").slice(0, 1)}
@@ -170,7 +170,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
             )}
             {(c.doctor ?? suggested) && (
               <Link href={`/hekim/${(c.doctor ?? suggested)!.id}`} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-700 hover:underline">
-                Hekim profilini gör <ArrowRight size={13} />
+                Doktor profilini gör <ArrowRight size={13} />
               </Link>
             )}
 
@@ -178,7 +178,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               <StartConsultButton caseId={c.id} label={c.status === "IN_CONSULT" ? "Görüşmeye Dön" : "Görüşmeyi Başlat"} />
             </div>
             <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
-              Görüşme başlatıldığında hasta için sade arayüz, hekim için veri-yoğun ekran açılır.
+              Görüşme başlatıldığında hasta için sade arayüz, doktor için veri-yoğun ekran açılır.
             </p>
           </div>
 
@@ -237,7 +237,7 @@ function PostopClosedScreen() {
         <h1 className="mt-4 text-lg font-bold text-slate-800">Post-op takip tamamlandı</h1>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">
           Bu vakanın post-op takip süreci kapandığı için klinik kayıtlara erişim hastaya devredilmiştir.
-          Hekim/personel artık bu vakanın klinik içeriğini görüntüleyemez. Erişim olayları değiştirilemez denetim
+          Doktor/personel artık bu vakanın klinik içeriğini görüntüleyemez. Erişim olayları değiştirilemez denetim
           kaydında zaman damgalıdır.
         </p>
       </div>

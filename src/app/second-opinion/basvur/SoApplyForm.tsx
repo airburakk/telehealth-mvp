@@ -15,7 +15,7 @@ const FEE_LINE = `Ücret: ${SO_FEE_USD} USD — peşin ve tek ödeme. Yazılı r
 const S = {
   eyebrow: "İkinci Görüş",
   title: "Second Opinion Ön Değerlendirme",
-  intro: "Mevcut tanınıza ilişkin belgelerinizi yükleyin; alanında uzman bir hekim dosyanızı bağımsız olarak değerlendirsin. Süreç yazılı bir ikinci görüş ve ardından bir video görüşmeyle tamamlanır.",
+  intro: "Mevcut tanınıza ilişkin belgelerinizi yükleyin; alanında uzman bir doktor dosyanızı bağımsız olarak değerlendirsin. Süreç yazılı bir ikinci görüş ve ardından bir video görüşmeyle tamamlanır.",
   reportLabel: D.reportLabel,
   reportValue: D.reportValue,
   videoLabel: "Video görüşme",

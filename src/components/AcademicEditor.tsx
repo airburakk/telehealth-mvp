@@ -6,8 +6,8 @@ import { GraduationCap, Save, Loader2, Check, Award, BookOpen, BadgeCheck } from
 
 interface Pub { title: string; venue: string; year: number }
 
-// Hekimin kalıcı akademik/eğitim + FHIR uzmanlık (qualification) profili — /api/doctor/academic'e
-// kaydeder (yalnız oturumdaki hekim). Diploma/tescil no = FHIR Practitioner.identifier; uzmanlık
+// Doktorun kalıcı akademik/eğitim + FHIR uzmanlık (qualification) profili — /api/doctor/academic'e
+// kaydeder (yalnız oturumdaki doktor). Diploma/tescil no = FHIR Practitioner.identifier; uzmanlık
 // belgesi = Practitioner.qualification. Boş akademik alanlar için public profil (lib/doctor-profile.ts)
 // deterministik üretim fallback eder.
 export function AcademicEditor(props: {

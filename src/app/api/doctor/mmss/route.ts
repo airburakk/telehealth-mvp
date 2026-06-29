@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   const doctorId = await myDoctorId(user.id);
-  if (!doctorId) return NextResponse.json({ error: "Bu hesap bir hekim profiline bağlı değil." }, { status: 400 });
+  if (!doctorId) return NextResponse.json({ error: "Bu hesap bir doktor profiline bağlı değil." }, { status: 400 });
 
   const b = await req.json().catch(() => ({}));
   const insurer = String(b.insurer ?? "").trim().slice(0, 120);

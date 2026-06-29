@@ -24,7 +24,7 @@ const NAV = [
   { href: "/vakalarim", label: "Vakalarım", icon: FolderHeart, roles: ["PATIENT", "ADMIN"] },
   { href: "/triyaj", label: "Triyaj", icon: UserRound, roles: ["PATIENT", "ADMIN"] },
   { href: "/pro-bono/basvur", label: "Pro Bono", icon: HeartHandshake, roles: ["PATIENT"] },
-  { href: "/hekimler", label: "Hekimler", icon: Users, roles: ["PATIENT", "ADMIN"] },
+  { href: "/hekimler", label: "Doktorlar", icon: Users, roles: ["PATIENT", "ADMIN"] },
   { href: "/paylasimlarim", label: "Paylaşımlarım", icon: Share2, roles: ["PATIENT", "ADMIN"] },
   { href: "/operasyon", label: "Operasyon", icon: BarChart3, roles: ["COORDINATOR", "ADMIN"] },
   { href: "/doktor", label: "Doktor", icon: Stethoscope, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },

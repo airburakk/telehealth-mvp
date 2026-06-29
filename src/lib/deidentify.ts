@@ -2,7 +2,7 @@
 // Bir vakayı, Partner doktor konsültasyon havuzuna aktarmadan önce KİŞİSEL VERİDEN ARINDIRIR:
 //   (a) yapısal de-id  — kimlik/iletişim ALANLARINI düşür (ad, kimlik no, userId, dosya ekleri/DICOM)
 //   (b) metin temizliği — serbest klinik metindeki satır-içi tanımlayıcıları (TC, pasaport, e-posta, telefon, ad) maskele
-// Klinik içerik (semptom, süre, branşa özel yanıtlar, ICD-10, lab) KORUNUR — hekim görüş verebilsin diye.
+// Klinik içerik (semptom, süre, branşa özel yanıtlar, ICD-10, lab) KORUNUR — doktor görüş verebilsin diye.
 //
 // ⚠️ Bu "yapısal de-id"dir; tam KVKK/GDPR yeterliliği + DICOM PHI tag-strip ayrı faza park (todo).
 // DICOM/görüntü ekleri bu fazda havuza HİÇ aktarılmaz (attachments tamamen düşürülür).

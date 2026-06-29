@@ -19,12 +19,12 @@ type Tr = (s: string) => string;
 // Partner arayüzünün tüm sabit metinleri (kanonik TR) — partner doktorun diline çevrilir.
 const UI = {
   panel: "Partner Doktor Paneli",
-  boundary: "Bu alan platformun hasta veritabanına erişmez ve uzaktan sağlık hizmeti sunmaz. Yönlendirdiğiniz hasta için yalnızca anonimleştirilmiş bir konsültasyon talebi açabilir, kayıtlı uzman hekimlerden görüş alabilirsiniz.",
+  boundary: "Bu alan platformun hasta veritabanına erişmez ve uzaktan sağlık hizmeti sunmaz. Yönlendirdiğiniz hasta için yalnızca anonimleştirilmiş bir konsültasyon talebi açabilir, kayıtlı uzman doktorlardan görüş alabilirsiniz.",
   createCta: "Konsültasyon Talebi Oluştur",
   createSub: "Hasta bilgisi anonimleştirilerek havuza aktarılır; branşla sınırlandırabilirsiniz.",
   pending: "Bekleyen taleplerim",
   discussing: "Görüşme sürüyor",
-  inDiscussion: "Uzman hekim görüşmede",
+  inDiscussion: "Uzman doktor görüşmede",
   answered: "Görüş alınanlar",
   noPending: "Bekleyen talebiniz yok.",
   generalPool: "Genel havuz",
@@ -96,7 +96,7 @@ export default async function PartnerHome() {
         <div className="mt-2 space-y-3">{open.map((r) => <ReqCard key={r.id} r={r} tr={tr} lang={partnerLang} />)}</div>
       )}
 
-      {/* Görüşme sürüyor (hekim sahiplendi, henüz nihai görüş yok) */}
+      {/* Görüşme sürüyor (doktor sahiplendi, henüz nihai görüş yok) */}
       {discussing.length > 0 && (
         <>
           <h2 className="mt-7 flex items-center gap-2 text-sm font-semibold text-slate-700"><MessageCircle size={16} className="text-sky-600" /> {tr(UI.discussing)} ({discussing.length})</h2>
@@ -166,7 +166,7 @@ function ReqCard({ r, tr, lang }: { r: PartnerRequestView; tr: Tr; lang: string 
         <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700"><Clock size={12} /> {tr(UI.awaitingOpinion)}</p>
       )}
 
-      {/* Görüntülü görüşme + yazılı görüşme — hekim sahiplendikten sonra (IN_DISCUSSION/ANSWERED) */}
+      {/* Görüntülü görüşme + yazılı görüşme — doktor sahiplendikten sonra (IN_DISCUSSION/ANSWERED) */}
       {r.status !== "OPEN" && (
         <div className="mt-3 space-y-3">
           <VideoControls requestId={r.id} role="partner" lang={lang} />
@@ -177,7 +177,7 @@ function ReqCard({ r, tr, lang }: { r: PartnerRequestView; tr: Tr; lang: string 
   );
 }
 
-// Hekimin verdiği yapılandırılmış öneriler — etiketler çevrilir, klinik adlar/kodlar kanonik kalır.
+// Doktorun verdiği yapılandırılmış öneriler — etiketler çevrilir, klinik adlar/kodlar kanonik kalır.
 function Recommendations({ r, tr }: { r: PartnerRequestView; tr: Tr }) {
   if (!r.recommendedLabs.length && !r.recommendedImaging.length && !r.medications.length) return null;
   return (

@@ -88,8 +88,8 @@ export async function POST(req: Request) {
   }
 
   // §1/§7: yeni klinik vaka koordinatöre DEĞİL doktor kuyruğuna düşer (koordinatör yalnız M3/S3 rezervasyon).
-  // Yeni vakada henüz atanan hekim YOK → tüm hekimlere yayın yerine yalnız vakanın BRANŞINDAKİ
-  // portal hekimlerine kişisel bildirim (atama Nöbetçi/İcapçı kapınca yapılır).
+  // Yeni vakada henüz atanan doktor YOK → tüm doktorlara yayın yerine yalnız vakanın BRANŞINDAKİ
+  // portal doktorlarına kişisel bildirim (atama Nöbetçi/İcapçı kapınca yapılır).
   await notifyDoctorsByBranch(a.branch, {
     type: "NEW_CASE",
     title: `${a.urgency >= 4 ? "🔴 " : ""}Yeni vaka`, // isim bildirime gömülmez (E2EE inc.2c) → personel kokpitte görür

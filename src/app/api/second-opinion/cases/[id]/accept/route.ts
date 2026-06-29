@@ -30,16 +30,16 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   // Yetki: kendisine atanan (directed) hoca her zaman; başka branş hocası YALNIZ kabul süresi dolduysa
   const directed = c.assignedDoctorId === myDoctorId;
   if (!directed && !isOfferExpired(c.assignedAt)) {
-    return NextResponse.json({ error: "Bu dosya şu an atanan hekimin kabul süresinde — henüz açık değil." }, { status: 409 });
+    return NextResponse.json({ error: "Bu dosya şu an atanan doktorun kabul süresinde — henüz açık değil." }, { status: 409 });
   }
 
   const ok = await claimSoCase(id, myDoctorId, { actorId: user.id, actorRole: user.role });
-  if (!ok) return NextResponse.json({ error: "Bu dosya artık uygun değil (başka hekim aldı)." }, { status: 409 });
+  if (!ok) return NextResponse.json({ error: "Bu dosya artık uygun değil (başka doktor aldı)." }, { status: 409 });
 
   const branchLabel = BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch;
   await notifyUser(c.patientId, {
     type: "SO_ASSIGNED",
-    title: "🩺 Uzman hekiminiz dosyanızı aldı",
+    title: "🩺 Uzman doktorunuz dosyanızı aldı",
     body: `${branchLabel} · inceleme başladı`,
     href: `/second-opinion/vaka/${id}`,
   });

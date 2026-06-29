@@ -6,7 +6,7 @@ import { LANGUAGES, COUNTRIES } from "@/lib/constants";
 const LANG_SET = new Set(LANGUAGES);
 const CODE_SET = new Set(COUNTRIES.map((c) => c.code));
 
-// POST /api/doctor/preferences — hekim kendi hizmet dili / pazarları / aylık kapasite limitini günceller
+// POST /api/doctor/preferences — doktor kendi hizmet dili / pazarları / aylık kapasite limitini günceller
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "ADMIN"].includes(user.role)) {
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   }
   const dbUser = await db.user.findUnique({ where: { id: user.id } });
   if (!dbUser?.doctorId) {
-    return NextResponse.json({ error: "Bu hesap bir hekim profiline bağlı değil." }, { status: 400 });
+    return NextResponse.json({ error: "Bu hesap bir doktor profiline bağlı değil." }, { status: 400 });
   }
 
   const b = await req.json().catch(() => ({}));

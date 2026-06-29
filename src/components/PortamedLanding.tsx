@@ -22,7 +22,7 @@ const T = {
   ink: "#1B1E22",     // AI kartı paneli + beyaz buton üstü koyu metin
   bg: "#0A0A0B",      // sayfa + iç konteyner (en derin)
   surface: "#15161A", // kartlar (zeminden yükselir)
-  surfaceAlt: "#0E0F12", // bölüm bantları (trust, hekim paneli, footer)
+  surfaceAlt: "#0E0F12", // bölüm bantları (trust, doktor paneli, footer)
   text: "#FFFFFF",
   muted: "rgba(255,255,255,.58)",
   soft: "rgba(255,255,255,.72)",
@@ -105,7 +105,7 @@ const COPY: Record<"en" | "tr", Copy> = {
     },
   },
   tr: {
-    nav: { treatments: "Tedaviler", how: "Nasıl çalışır", doctors: "Hekimler", clinics: "Klinikler için", signin: "Giriş yap", cta: "Ücretsiz ön görüşme" },
+    nav: { treatments: "Tedaviler", how: "Nasıl çalışır", doctors: "Doktorlar", clinics: "Klinikler için", signin: "Giriş yap", cta: "Ücretsiz ön görüşme" },
     hero: {
       eyebrow: "Sağlık turizmi & teletıp",
       h: "Türkiye'de birinci sınıf sağlık hizmetine açılan kapınız.",
@@ -138,7 +138,7 @@ const COPY: Record<"en" | "tr", Copy> = {
         { t: "Evde takip", d: "Günlük iyileşme kontrolleri ve kırmızı bayrak uyarıları, nerede olursanız olun." },
       ],
     },
-    doctors: { h: "Uzmanlarla tanışın", all: "Tüm hekimler →" },
+    doctors: { h: "Uzmanlarla tanışın", all: "Tüm doktorlar →" },
     ai: {
       label: "AI sağlık asistanı",
       q: "Merdiven çıkarken dizim ağrıyor. Ne yapmalıyım?",
@@ -153,7 +153,7 @@ const COPY: Record<"en" | "tr", Copy> = {
     footer: {
       desc: "Teletıp ve sağlık turizmi, uçtan uca.",
       cols: [
-        { h: "Bakım", links: [{ t: "Tedaviler", href: "#packages" }, { t: "Hekimler", href: "/hekimler" }, { t: "Ücretsiz değerlendirme", href: "/triyaj" }] },
+        { h: "Bakım", links: [{ t: "Tedaviler", href: "#packages" }, { t: "Doktorlar", href: "/hekimler" }, { t: "Ücretsiz değerlendirme", href: "/triyaj" }] },
         { h: "Şirket", links: [{ t: "Nasıl çalışır", href: "#how" }, { t: "Klinikler için", href: "/giris" }, { t: "Etik kurul", href: "/giris" }] },
         { h: "Destek", links: [{ t: "Giriş yap", href: "/giris" }, { t: "Hasta portalı", href: "/vakalarim" }, { t: "İletişim", href: "#" }] },
       ],

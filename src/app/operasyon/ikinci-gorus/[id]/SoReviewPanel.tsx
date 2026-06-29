@@ -194,15 +194,15 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
       {/* Atanmış / sonraki aşamalar */}
       {data.assignedDoctorName && (
         <div className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-          <UserCheck size={18} /> Atanan hekim: <strong>{data.assignedDoctorName}</strong>
+          <UserCheck size={18} /> Atanan doktor: <strong>{data.assignedDoctorName}</strong>
         </div>
       )}
 
-      {/* Video aşaması — hekim ↔ hasta arasında yürütülür (koordinatör Faz-4 randevudan çıktı) */}
+      {/* Video aşaması — doktor ↔ hasta arasında yürütülür (koordinatör Faz-4 randevudan çıktı) */}
       {(status === "OPINION_DELIVERED" || status === "VIDEO_OFFERED" || status === "VIDEO_SCHEDULED") && (
         <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
           <Video size={16} className="mt-0.5 shrink-0 text-[#0E8A95]" />
-          <span>Yazılı görüş sunuldu. Video randevusu uzman hekim ile hasta arasında planlanıp yürütülüyor.</span>
+          <span>Yazılı görüş sunuldu. Video randevusu uzman doktor ile hasta arasında planlanıp yürütülüyor.</span>
         </div>
       )}
       {(status === "VIDEO_COMPLETED" || status === "CLOSED") && (

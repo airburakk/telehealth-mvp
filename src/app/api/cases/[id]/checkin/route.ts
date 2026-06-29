@@ -90,9 +90,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       body: `${c.branch} · ağrı ${pain}/10 · ateş ${feverC.toFixed(1)}°C${extra ? ` · ${extra}` : ""}`,
       href: `/takip/${c.id}`,
     };
-    // §3.4/§7: kırmızı bayrak koordinatöre DEĞİL → vakanın ATANAN tedavi eden hekimine (Case.doctorId)
+    // §3.4/§7: kırmızı bayrak koordinatöre DEĞİL → vakanın ATANAN tedavi eden doktoruna (Case.doctorId)
     // + görevdeki Nöbetçi(ler)e (7/24 klinik güvenlik ağı: tedavi eden çevrimdışıysa bile yanıtsız kalmaz).
-    // Tüm hekimlere yayın KALDIRILDI (yalnız ilgili/atanan hekim + nöbet).
+    // Tüm doktorlara yayın KALDIRILDI (yalnız ilgili/atanan doktor + nöbet).
     if (c.doctorId) await notifyDoctorById(c.doctorId, redFlag);
     await notifyOnDutySentinels(redFlag);
   }

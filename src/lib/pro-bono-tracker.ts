@@ -1,7 +1,7 @@
 import type { TrackerState } from "@/components/ProcessTracker";
 
 // Pro Bono (ücretsiz gönüllü konsültasyon) süreç takibi — Case.proBonoStatus → faz + alt-durum.
-// 4 faz: Başvuru · Gönüllü hekim · Görüşme · Sonuç. ProcessTracker'a beslenir. so-tracker.ts deseni.
+// 4 faz: Başvuru · Gönüllü doktor · Görüşme · Sonuç. ProcessTracker'a beslenir. so-tracker.ts deseni.
 export interface ProBonoTrackerPhase {
   key: "apply" | "match" | "consult" | "outcome";
   label: string;
@@ -11,14 +11,14 @@ export interface ProBonoTrackerPhase {
 
 const PHASES = [
   { key: "apply", label: "Başvuru", done: "Başvurunuz alındı", pending: "Başvuru bekleniyor" },
-  { key: "match", label: "Gönüllü hekim", done: "Gönüllü hekiminizle eşleştiniz", pending: "Eşleşme bekleniyor" },
+  { key: "match", label: "Gönüllü doktor", done: "Gönüllü doktorunuzle eşleştiniz", pending: "Eşleşme bekleniyor" },
   { key: "consult", label: "Görüşme", done: "Görüşmeniz tamamlandı", pending: "Görüşme bekleniyor" },
   { key: "outcome", label: "Sonuç", done: "Süreç tamamlandı", pending: "Sonuç bekleniyor" },
 ] as const;
 
 // Aktif faz + o fazın alt-durumu (proBonoStatus bazlı). Faz < aktif → done, = aktif → active, > aktif → pending.
 const MAP: Record<string, { phase: number; sub: string }> = {
-  WAITING: { phase: 1, sub: "Gönüllü hekim aranıyor…" },
+  WAITING: { phase: 1, sub: "Gönüllü doktor aranıyor…" },
   MATCHED: { phase: 2, sub: "Görüşmeniz başlıyor" },
   IN_CONSULT: { phase: 2, sub: "Görüşmeniz sürüyor" },
   CONSULT_DONE: { phase: 3, sub: "Görüşmeniz tamamlandı" },

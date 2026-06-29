@@ -83,7 +83,7 @@ export async function transitionSoCase(
 /**
  * SO OTO-ATAMA (koordinatör YOK) — ödeme sonrası branşa uygun **en az yüklü** hocaya dosyayı
  * `OFFERED` olarak düşür + bildir. Hoca `SO_ACCEPT_WINDOW` içinde kabul etmezse dosya diğer branş
- * hocalarına açılır (accept route lazy fan-out → ilk kabul eden). Branş hekimi yoksa PENDING_REVIEW'da kalır.
+ * hocalarına açılır (accept route lazy fan-out → ilk kabul eden). Branş doktoru yoksa PENDING_REVIEW'da kalır.
  */
 export async function autoAssignSoCase(caseId: string): Promise<string | null> {
   const c = await db.secondOpinionCase.findUnique({ where: { id: caseId } });

@@ -14,7 +14,7 @@ const FORM_UI = {
   title: "Konsültasyon Talebi Oluştur",
   warning: "Girdiğiniz bilgi anonimleştirme katmanından geçirilir — yanlışlıkla yazılan ad / kimlik no / iletişim bilgisi otomatik maskelenir. Lütfen yine de hasta kimliği yazmayın.",
   branchLimit: "Talebi belirli bir branşla sınırla",
-  branchUnlimited: "Sınırsız → tüm uzman hekimler genel havuzda görür.",
+  branchUnlimited: "Sınırsız → tüm uzman doktorlar genel havuzda görür.",
   region: "Hasta bölgesi / ülkesi",
   patientLang: "Hasta dili",
   urgency: "Aciliyet (1-5)",

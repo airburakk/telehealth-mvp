@@ -27,7 +27,7 @@ export async function gateAvailability(branch: string): Promise<GateAvailability
 }
 
 // §3.4/§7: klinik aciliyet kancaları (kırmızı bayrak / post-op) artık koordinatöre DEĞİL, görevdeki
-// Nöbetçi'ye (7/24 klinik yanıt) düşer. Sentinel + (ONLINE|IN_SESSION) hekimlere kişisel bildirim;
+// Nöbetçi'ye (7/24 klinik yanıt) düşer. Sentinel + (ONLINE|IN_SESSION) doktorlara kişisel bildirim;
 // görevde Nöbetçi yoksa sessizce geçilir (Doktor rol-yayını zaten kuyruğu kapsar).
 export async function notifyOnDutySentinels(n: NotifyInput): Promise<void> {
   const sentinels = await db.doctor.findMany({
@@ -47,7 +47,7 @@ export interface SentinelResult {
   doctorId: string;
 }
 
-// Çevrimiçi bir Nöbetçi hekimi ATOMİK kap → konsültasyon oluştur. En uzun süredir müsait olan önce.
+// Çevrimiçi bir Nöbetçi doktoru ATOMİK kap → konsültasyon oluştur. En uzun süredir müsait olan önce.
 export async function claimSentinelForCase(caseId: string): Promise<SentinelResult | null> {
   // CRM kalite indikatörleri + hasta–doktor uyumu: çevrimiçi Nöbetçileri kalite (rating/pro bono/icap dönüş)
   // VE uyum (hastanın pazarı/aciliyeti) ile sırala (yüksek önce). (Önceki: clinicalAvailableAt asc = salt FIFO.)
@@ -101,7 +101,7 @@ async function claimOneSentinel(caseId: string, doctorId: string): Promise<Senti
 
 // ───────────────────────── Seçenek 2: İcapçı randevu akışı ─────────────────────────
 
-// Hasta "Branş randevusu" seçer → talebi (yeniden) aç + branştaki İcapçı hekimlere bildir.
+// Hasta "Branş randevusu" seçer → talebi (yeniden) aç + branştaki İcapçı doktorlara bildir.
 export async function requestIcapciAppointment(caseId: string): Promise<boolean> {
   const c = await db.case.findUnique({ where: { id: caseId }, select: { branch: true, userId: true, patientName: true, country: true, urgency: true } });
   if (!c) return false;
@@ -111,7 +111,7 @@ export async function requestIcapciAppointment(caseId: string): Promise<boolean>
     update: { status: "REQUESTED", doctorId: null, proposedAt: null },
   });
   // CRM kalite + hasta–doktor uyumu: branş İcapçılarını kalite VE uyum (hastanın pazarı/aciliyeti) ile sırala
-  // → yüksek kaliteli/duyarlı + uygun pazar hekimi önce bildirilir (uyum SOFT → pazar-dışı İcapçı da bildirilir).
+  // → yüksek kaliteli/duyarlı + uygun pazar doktoru önce bildirilir (uyum SOFT → pazar-dışı İcapçı da bildirilir).
   const icapciRows = await db.doctor.findMany({ where: { branch: c.branch, onCall: true, verified: true } });
   const icapci = await rankDoctorsByQuality(icapciRows, { caseContext: { country: c.country, urgency: c.urgency } });
   // İcap dönüş oranı paydası: her bilgilendirilen İcapçının icapNotified sayacı artar (metadata; offered/notified).
@@ -132,8 +132,8 @@ export async function requestIcapciAppointment(caseId: string): Promise<boolean>
   return true;
 }
 
-// İcapçı hekim bir zaman teklif eder. Atomik: REQUESTED (herhangi biri) veya kendi CHANGE_REQUESTED'i → OFFERED.
-// İlk teklif eden kapar; ikinci hekim count=0 alır → "başkası aldı".
+// İcapçı doktor bir zaman teklif eder. Atomik: REQUESTED (herhangi biri) veya kendi CHANGE_REQUESTED'i → OFFERED.
+// İlk teklif eden kapar; ikinci doktor count=0 alır → "başkası aldı".
 export async function offerAppointment(caseId: string, doctorId: string, proposedAt: Date): Promise<"OK" | "TAKEN" | "NOT_FOUND"> {
   const appt = await db.consultAppointment.findUnique({ where: { caseId } });
   if (!appt) return "NOT_FOUND";
@@ -153,14 +153,14 @@ export async function offerAppointment(caseId: string, doctorId: string, propose
     await notifyUser(appt.patientId, {
       type: "CLINIC_OFFER",
       title: "📅 Randevu teklifi",
-      body: `Bir hekim görüşme için zaman önerdi: ${formatDateTime(proposedAt)}. Onaylayın veya farklı bir zaman isteyin.`,
+      body: `Bir doktor görüşme için zaman önerdi: ${formatDateTime(proposedAt)}. Onaylayın veya farklı bir zaman isteyin.`,
       href: `/triyaj/${caseId}`,
     });
   }
   return "OK";
 }
 
-// Hasta teklife yanıt verir: accept → CONFIRMED (vakaya İcapçı atanır) · request_change → CHANGE_REQUESTED (aynı hekim yeniden teklif eder).
+// Hasta teklife yanıt verir: accept → CONFIRMED (vakaya İcapçı atanır) · request_change → CHANGE_REQUESTED (aynı doktor yeniden teklif eder).
 export async function respondAppointment(caseId: string, action: "accept" | "request_change"): Promise<"CONFIRMED" | "CHANGE_REQUESTED" | null> {
   const appt = await db.consultAppointment.findUnique({ where: { caseId } });
   if (!appt || appt.status !== "OFFERED") return null;
@@ -246,7 +246,7 @@ export async function setClinicalDuty(doctorId: string, patch: DutyPatch): Promi
   if (Object.keys(data).length) await db.doctor.update({ where: { id: doctorId }, data });
 }
 
-// Görüşme sonrası hekimi serbest bırak: IN_SESSION → Nöbetçi ise ONLINE (7/24 sürer), değilse OFFLINE.
+// Görüşme sonrası doktoru serbest bırak: IN_SESSION → Nöbetçi ise ONLINE (7/24 sürer), değilse OFFLINE.
 export async function releaseClinicalDoctor(doctorId: string): Promise<void> {
   const d = await db.doctor.findUnique({ where: { id: doctorId }, select: { sentinel: true, clinicalState: true } });
   if (!d || d.clinicalState !== "IN_SESSION") return;
@@ -288,7 +288,7 @@ export async function dutyFeed(doctorId: string): Promise<DutyFeed | null> {
     if (cons) consultationId = cons.id;
   }
 
-  // REQUESTED → tüm branş İcapçıları görür · CHANGE_REQUESTED → yalnız teklifi yapan hekim
+  // REQUESTED → tüm branş İcapçıları görür · CHANGE_REQUESTED → yalnız teklifi yapan doktor
   const appts = await db.consultAppointment.findMany({
     where: { branch: d.branch, OR: [{ status: "REQUESTED" }, { status: "CHANGE_REQUESTED", doctorId }] },
     orderBy: { createdAt: "asc" },

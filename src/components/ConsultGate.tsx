@@ -13,24 +13,24 @@ export interface GateAppt {
 }
 
 const TEXTS = [
-  "Şu an çevrimiçi branş hekimi yok",
+  "Şu an çevrimiçi branş doktoru yok",
   "Size en uygun yolu seçin — vakanız kaydedildi, hiçbir bilgi kaybolmaz.",
-  "Nöbetçi hekimle şimdi görüşün",
-  "7/24 görevli Dahiliye/Acil hekimi sizinle hemen bir video görüşmesi yapar.",
+  "Nöbetçi doktorla şimdi görüşün",
+  "7/24 görevli Dahiliye/Acil doktoru sizinle hemen bir video görüşmesi yapar.",
   "Şimdi görüş",
-  "Şu an çevrimiçi nöbetçi hekim yok",
-  "Branş hekiminizle randevu alın",
-  "İcap görevli branş uzmanlarına iletilir; en erken uygun hekim size bir görüşme zamanı önerir.",
+  "Şu an çevrimiçi nöbetçi doktor yok",
+  "Branş doktorunuzle randevu alın",
+  "İcap görevli branş uzmanlarına iletilir; en erken uygun doktor size bir görüşme zamanı önerir.",
   "Randevu iste",
-  "Şu an icap görevli branş hekimi yok",
+  "Şu an icap görevli branş doktoru yok",
   "Süreci sonlandır",
   "Tüm verileriniz kalıcı olarak silinir ve ödemeniz iade edilir.",
   "Sonlandır ve sil",
   "Tüm vaka verileriniz kalıcı olarak silinecek ve ödemeniz iade edilecek. Emin misiniz?",
   "Randevu talebiniz iletildi",
-  "İcap görevli branş hekimleri bilgilendirildi. En erken uygun hekim bir görüşme zamanı önerecek — bu sayfayı açık tutabilirsiniz.",
+  "İcap görevli branş doktorları bilgilendirildi. En erken uygun doktor bir görüşme zamanı önerecek — bu sayfayı açık tutabilirsiniz.",
   "Değişiklik talebiniz iletildi",
-  "Hekim yeni bir görüşme zamanı önerecek.",
+  "Doktor yeni bir görüşme zamanı önerecek.",
   "Video randevu teklifi",
   "Önerilen zaman",
   "Onayla",
@@ -162,7 +162,7 @@ export function ConsultGate({
             <div className="flex items-center gap-2 text-sm font-semibold text-[#0E8A95]">
               <Loader2 size={16} className="animate-spin" /> {t(st === "CHANGE_REQUESTED" ? "Değişiklik talebiniz iletildi" : "Randevu talebiniz iletildi")}
             </div>
-            <p className="mt-2 text-sm text-slate-500">{t(st === "CHANGE_REQUESTED" ? "Hekim yeni bir görüşme zamanı önerecek." : "İcap görevli branş hekimleri bilgilendirildi. En erken uygun hekim bir görüşme zamanı önerecek — bu sayfayı açık tutabilirsiniz.")}</p>
+            <p className="mt-2 text-sm text-slate-500">{t(st === "CHANGE_REQUESTED" ? "Doktor yeni bir görüşme zamanı önerecek." : "İcap görevli branş doktorları bilgilendirildi. En erken uygun doktor bir görüşme zamanı önerecek — bu sayfayı açık tutabilirsiniz.")}</p>
           </>
         )}
         {err && <p className="mt-3 text-sm text-red-600">{err}</p>}
@@ -179,7 +179,7 @@ export function ConsultGate({
       <div className="flex items-start gap-3">
         <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-amber-100 text-amber-700"><ShieldQuestion size={18} /></span>
         <div>
-          <h2 className="font-bold text-amber-900">{t("Şu an çevrimiçi branş hekimi yok")}</h2>
+          <h2 className="font-bold text-amber-900">{t("Şu an çevrimiçi branş doktoru yok")}</h2>
           <p className="mt-0.5 text-sm text-amber-800/80">{t("Size en uygun yolu seçin — vakanız kaydedildi, hiçbir bilgi kaybolmaz.")}</p>
         </div>
       </div>
@@ -189,28 +189,28 @@ export function ConsultGate({
         <GateCard
           icon={<Stethoscope size={18} />}
           tone="teal"
-          title={t("Nöbetçi hekimle şimdi görüşün")}
-          desc={t("7/24 görevli Dahiliye/Acil hekimi sizinle hemen bir video görüşmesi yapar.")}
+          title={t("Nöbetçi doktorla şimdi görüşün")}
+          desc={t("7/24 görevli Dahiliye/Acil doktoru sizinle hemen bir video görüşmesi yapar.")}
           action={
             <button onClick={sentinelNow} disabled={!hasSentinel || !!busy} className="inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:cursor-not-allowed disabled:opacity-50">
               {busy === "sentinel" ? <><Loader2 size={16} className="animate-spin" /> {t("Bağlanıyor…")}</> : <>{t("Şimdi görüş")} <ArrowRight size={16} /></>}
             </button>
           }
-          disabledNote={!hasSentinel ? t("Şu an çevrimiçi nöbetçi hekim yok") : null}
+          disabledNote={!hasSentinel ? t("Şu an çevrimiçi nöbetçi doktor yok") : null}
         />
 
         {/* Seçenek 2 — İcapçı branş randevusu */}
         <GateCard
           icon={<CalendarClock size={18} />}
           tone="teal"
-          title={t("Branş hekiminizle randevu alın")}
-          desc={t("İcap görevli branş uzmanlarına iletilir; en erken uygun hekim size bir görüşme zamanı önerir.")}
+          title={t("Branş doktorunuzle randevu alın")}
+          desc={t("İcap görevli branş uzmanlarına iletilir; en erken uygun doktor size bir görüşme zamanı önerir.")}
           action={
             <button onClick={requestIcapci} disabled={!hasIcapci || !!busy} className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-[#0E8A95] ring-1 ring-[#14C3D0]/40 hover:bg-[#14C3D0]/[0.06] disabled:cursor-not-allowed disabled:opacity-50">
               {busy === "icapci" ? <><Loader2 size={16} className="animate-spin" /> {t("İletiliyor…")}</> : <>{t("Randevu iste")} <ArrowRight size={16} /></>}
             </button>
           }
-          disabledNote={!hasIcapci ? t("Şu an icap görevli branş hekimi yok") : null}
+          disabledNote={!hasIcapci ? t("Şu an icap görevli branş doktoru yok") : null}
         />
 
         {/* Seçenek 3 — Sonlandır + sil + iade */}

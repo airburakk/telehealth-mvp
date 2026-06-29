@@ -36,7 +36,7 @@ const STATIC_UI = [
   "Acil / Hayati", "Yüksek", "Orta", "Düşük", "Rutin / Elektif",
   "Bu branş için gerekli belgeler", "opsiyonel",
   "Eksik belgeleriniz var",
-  "Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; hekimimiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.",
+  "Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.",
   "Hızlı, doğru ve etkili bir görüşme için gerekli belgelerin eksiksiz yüklenmesi büyük önem taşır. Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi Özet adımında onaylayarak da ilerleyebilirsiniz.",
   "Eksik zorunlu belge", "Bu belgeleri görüşmeden önce ileteceğimi onaylıyorum.",
 ];
@@ -433,7 +433,7 @@ export default function TriyajPage() {
                   <AlertTriangle size={16} className="shrink-0" /> {t("Eksik belgeleriniz var")}
                 </div>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-amber-900/90">
-                  {t("Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; hekimimiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.")}
+                  {t("Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.")}
                 </p>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-amber-900/90">
                   {t("Hızlı, doğru ve etkili bir görüşme için gerekli belgelerin eksiksiz yüklenmesi büyük önem taşır. Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi Özet adımında onaylayarak da ilerleyebilirsiniz.")}

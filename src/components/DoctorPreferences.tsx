@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { LANGUAGES, COUNTRIES } from "@/lib/constants";
 import { Globe, MapPin, CalendarClock, Save, Loader2, Check, HeartHandshake, Inbox } from "lucide-react";
 
-// Hekimin kendi profil tercihleri — hizmet dilleri + hizmet verdiği pazarlar (ülkeler) + aylık kapasite limiti
+// Doktorun kendi profil tercihleri — hizmet dilleri + hizmet verdiği pazarlar (ülkeler) + aylık kapasite limiti
 // + birim katılımı (Pro Bono / Konsültasyon opt-in — Ana Sayfa pencere görünürlüğü).
-// /api/doctor/preferences'a kaydeder (yalnız oturumdaki hekimin kaydı).
+// /api/doctor/preferences'a kaydeder (yalnız oturumdaki doktorun kaydı).
 // Not: Diploma/tescil no (FHIR Practitioner.identifier) ve uzmanlık belgesi artık AcademicEditor'da
 // (qualification tek yerde toplanır) — burada düzenlenmez.
 export function DoctorPreferences({ languages, markets, capacity, proBonoOptIn, consultOptIn }: { languages: string[]; markets: string[]; capacity: number; proBonoOptIn: boolean; consultOptIn: boolean }) {

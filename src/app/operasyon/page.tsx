@@ -244,7 +244,7 @@ export default async function OperationsDashboard() {
               );
             })}
           </div>
-          <p className="mt-3 text-[11px] text-slate-400">İlk 6 hekim, tamamlanan+aktif görüşme sayısına göre. Doluluk: görüşme / aylık işlem kapasitesi.</p>
+          <p className="mt-3 text-[11px] text-slate-400">İlk 6 doktor, tamamlanan+aktif görüşme sayısına göre. Doluluk: görüşme / aylık işlem kapasitesi.</p>
         </Section>
       </div>
     </div>

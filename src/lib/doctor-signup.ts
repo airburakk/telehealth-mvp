@@ -1,4 +1,4 @@
-// M5 Kayıt — yeni hekim hesabı oluşturma (e-posta kaydı + Google OAuth callback ortak kullanır).
+// M5 Kayıt — yeni doktor hesabı oluşturma (e-posta kaydı + Google OAuth callback ortak kullanır).
 // Doctor (verified:false → admin/etik kurul onayına kadar public dizin/eşleştirme KAPALI;
 // onboardedAt/activatedAt null → /doktor/baslangic zorunlu kapısı) + bağlı User (DOCTOR). Atomik.
 import { db } from "@/lib/db";
@@ -13,7 +13,7 @@ export interface DoctorSignupInput {
   languages: string;    // CSV ("Türkçe,İngilizce")
 }
 
-// Yeni hekim + bağlı kullanıcı oluşturur, oluşturulan User'ı döndürür.
+// Yeni doktor + bağlı kullanıcı oluşturur, oluşturulan User'ı döndürür.
 export async function createDoctorAccount(input: DoctorSignupInput) {
   return db.$transaction(async (tx) => {
     const doctor = await tx.doctor.create({
@@ -23,7 +23,7 @@ export async function createDoctorAccount(input: DoctorSignupInput) {
         branch: input.branch,
         city: input.city,
         languages: input.languages,
-        verified: false, // küratörlü güven: self-signup hekim doğrulanmamış başlar
+        verified: false, // küratörlü güven: self-signup doktor doğrulanmamış başlar
       },
     });
     const user = await tx.user.create({

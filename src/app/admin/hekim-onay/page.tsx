@@ -5,7 +5,7 @@ import { ShieldCheck, Stethoscope, MapPin, Globe, Check, X, Clock, BadgeCheck } 
 
 export const dynamic = "force-dynamic";
 
-// M5 — Hekim doğrulama onayı (ADMIN / Etik Kurul). Self-signup hekimler verified:false başlar;
+// M5 — Doktor doğrulama onayı (ADMIN / Etik Kurul). Self-signup doktorlar verified:false başlar;
 // burada onaylanınca public dizine + eşleştirmelere dahil olur. Proxy /admin ETHICS_ROLES ile korur.
 export default async function DoctorApprovalPage() {
   const pending = await db.doctor.findMany({
@@ -24,14 +24,14 @@ export default async function DoctorApprovalPage() {
       <div className="flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><ShieldCheck size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">Hekim Doğrulama Onayı</h1>
-          <p className="text-sm text-slate-500">Kaydolan hekimleri inceleyip doğrulayın — onaylanmadan dizinde ve eşleştirmede görünmezler.</p>
+          <h1 className="text-2xl font-bold text-[#101010]">Doktor Doğrulama Onayı</h1>
+          <p className="text-sm text-slate-500">Kaydolan doktorları inceleyip doğrulayın — onaylanmadan dizinde ve eşleştirmede görünmezler.</p>
         </div>
       </div>
 
       {pending.length === 0 ? (
         <div className="mt-8 rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-500">
-          Onay bekleyen hekim yok.
+          Onay bekleyen doktor yok.
         </div>
       ) : (
         <div className="mt-7 space-y-4">

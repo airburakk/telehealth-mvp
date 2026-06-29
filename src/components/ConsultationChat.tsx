@@ -1,6 +1,6 @@
 "use client";
 
-// M5 Faz 2 — Konsültasyon yazılı görüşme (chat). Partner ↔ sahiplenen/yanıtlayan hekim.
+// M5 Faz 2 — Konsültasyon yazılı görüşme (chat). Partner ↔ sahiplenen/yanıtlayan doktor.
 // Mesaj gövdeleri sunucuda alıcı diline çevrilir (translated); burada yalnız chrome i18n + RTL.
 // Poll tabanlı (WebSocket yok — serverless uyumlu, NotificationBell deseni).
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -14,7 +14,7 @@ const CHROME = [
   "Yazılı görüşme",
   "Mesaj yazın…",
   "Henüz mesaj yok.",
-  "Uzman hekim bekleniyor — görüşme başlayınca yazabilirsiniz.",
+  "Uzman doktor bekleniyor — görüşme başlayınca yazabilirsiniz.",
   "İlk sorunuzu gönderdiğinizde bu talebi üstlenirsiniz.",
 ];
 
@@ -115,7 +115,7 @@ export function ConsultationChat({
           </button>
         </div>
       ) : (
-        <p className="mt-2 text-center text-xs text-slate-400">{t(hintKey || "Uzman hekim bekleniyor — görüşme başlayınca yazabilirsiniz.")}</p>
+        <p className="mt-2 text-center text-xs text-slate-400">{t(hintKey || "Uzman doktor bekleniyor — görüşme başlayınca yazabilirsiniz.")}</p>
       )}
       {err && <p className="mt-1 text-xs text-red-500">{err}</p>}
     </div>

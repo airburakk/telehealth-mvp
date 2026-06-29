@@ -5,7 +5,7 @@ import { ownsCase } from "@/lib/ownership";
 import { requestIcapciAppointment } from "@/lib/clinical-duty";
 
 // POST /api/cases/:id/icapci-request — 3-seçenek kapısı, Seçenek 2: Branş Doktoruyla randevu.
-// Branştaki İcapçı hekimlere talep düşer; ilk teklif eden hastaya zaman önerir (appointment route).
+// Branştaki İcapçı doktorlara talep düşer; ilk teklif eden hastaya zaman önerir (appointment route).
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await getCurrentUser();

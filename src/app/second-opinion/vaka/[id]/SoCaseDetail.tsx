@@ -31,7 +31,7 @@ type SoData = {
 };
 
 const ADDABLE = ["DRAFT", "AWAITING_DOCUMENTS", "AWAITING_ADDITIONAL_TESTS"];
-// Atanan doktor kimlik kartı yalnız hekim dosyayı ÜSTLENDİKTEN sonra (OFFERED'da henüz kesin değil).
+// Atanan doktor kimlik kartı yalnız doktor dosyayı ÜSTLENDİKTEN sonra (OFFERED'da henüz kesin değil).
 const DOCTOR_SHOWN = ["ASSIGNED", "AWAITING_ADDITIONAL_TESTS", "OPINION_DELIVERED", "VIDEO_OFFERED", "VIDEO_SCHEDULED", "VIDEO_COMPLETED", "CLOSED"];
 const REQ_BADGE: Record<string, { label: string; cls: string }> = {
   REQUIRED: { label: "Zorunlu", cls: "bg-red-50 text-red-700 ring-red-200" },
@@ -44,13 +44,13 @@ const STATUS_MSG: Partial<Record<SoStatus, string>> = {
   DRAFT: "Belgelerinizi yükleyin, ardından ödemeyi tamamlayarak vakanızı incelemeye gönderin.",
   AWAITING_PAYMENT: "Ödemeniz bekleniyor.",
   PENDING_REVIEW: "Dosyanız incelenmeye alındı. Eksik belge varsa size bildirilecek.",
-  OFFERED: "Dosyanız uzman hekiminize iletildi; hekimin onayı bekleniyor.",
+  OFFERED: "Dosyanız uzman doktorunuze iletildi; doktorun onayı bekleniyor.",
   AWAITING_DOCUMENTS: "Eksik belge talep edildi — aşağıdaki bölümden yükleyebilirsiniz.",
-  READY_FOR_ASSIGNMENT: "Belgeleriniz tamam. Uygun uzman hekime atama yapılıyor.",
-  ASSIGNED: "Uzman hekim dosyanızı inceliyor. Yazılı görüşünüz hazırlanıyor.",
-  AWAITING_ADDITIONAL_TESTS: "Hekim ek tetkik talep etti — aşağıdaki bölümden yükleyebilirsiniz.",
-  OPINION_DELIVERED: "Yazılı ikinci görüşünüz hazır. Uzman hekiminiz birazdan bir video görüşme zamanı önerecek.",
-  VIDEO_OFFERED: "Uzman hekiminiz bir görüşme zamanı önerdi — onaylayın ya da farklı bir zaman isteyin.",
+  READY_FOR_ASSIGNMENT: "Belgeleriniz tamam. Uygun uzman doktora atama yapılıyor.",
+  ASSIGNED: "Uzman doktor dosyanızı inceliyor. Yazılı görüşünüz hazırlanıyor.",
+  AWAITING_ADDITIONAL_TESTS: "Doktor ek tetkik talep etti — aşağıdaki bölümden yükleyebilirsiniz.",
+  OPINION_DELIVERED: "Yazılı ikinci görüşünüz hazır. Uzman doktorunuz birazdan bir video görüşme zamanı önerecek.",
+  VIDEO_OFFERED: "Uzman doktorunuz bir görüşme zamanı önerdi — onaylayın ya da farklı bir zaman isteyin.",
   VIDEO_SCHEDULED: "Video görüşme randevunuz oluşturuldu.",
   VIDEO_COMPLETED: "Görüşmeniz tamamlandı.",
   CLOSED: "Bu ikinci görüş süreci kapanmıştır.",
@@ -62,7 +62,7 @@ const STATUS_MSG: Partial<Record<SoStatus, string>> = {
 const ACTION_NEEDED: Partial<Record<SoStatus, { title: string; desc: string }>> = {
   DRAFT: { title: "Başvurunuzu tamamlayın", desc: "Belgelerinizi yükleyip ödemeyi tamamlayarak vakanızı incelemeye gönderin." },
   AWAITING_DOCUMENTS: { title: "Eksik belge yükleyin", desc: "Talep edilen belgeleri aşağıdaki bölümden yükleyip gönderin." },
-  AWAITING_ADDITIONAL_TESTS: { title: "Ek tetkik yükleyin", desc: "Hekiminizin istediği tetkikleri aşağıdaki bölümden yükleyip gönderin." },
+  AWAITING_ADDITIONAL_TESTS: { title: "Ek tetkik yükleyin", desc: "Doktorunuzin istediği tetkikleri aşağıdaki bölümden yükleyip gönderin." },
   VIDEO_OFFERED: { title: "Randevu teklifini yanıtlayın", desc: "Önerilen video görüşme zamanını onaylayın ya da farklı bir zaman isteyin." },
 };
 // A4: belgeler "doğrulandı" sayılır — vaka inceleme/atama kapısını geçtiyse (öncesi: yalnız "alındı").
@@ -78,12 +78,12 @@ const S = {
   videoTitle: "Video görüşme randevunuz",
   join: "Görüşmeye katıl",
   videoOfferTitle: "Video randevu teklifi",
-  videoOfferDesc: "Uzman hekiminiz görüşme için aşağıdaki zamanı önerdi:",
+  videoOfferDesc: "Uzman doktorunuz görüşme için aşağıdaki zamanı önerdi:",
   acceptVideo: "Bu zamanı onayla",
   requestChange: "Farklı bir zaman iste",
   errRespond: "İşlem tamamlanamadı.",
-  yourDoctor: "Uzman hekiminiz",
-  verifiedDoctor: "Doğrulanmış uzman hekim",
+  yourDoctor: "Uzman doktorunuz",
+  verifiedDoctor: "Doğrulanmış uzman doktor",
   actionNeeded: "Sizden bekleniyor",
   docReceived: "Alındı",
   docVerified: "Doğrulandı",
@@ -336,7 +336,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
         </div>
       )}
 
-      {/* Atanan uzman hekim kimlik kartı (en güçlü güven öğesi — bekleme odası Faz A3) */}
+      {/* Atanan uzman doktor kimlik kartı (en güçlü güven öğesi — bekleme odası Faz A3) */}
       {data.assignedDoctor && DOCTOR_SHOWN.includes(status) && (
         <div className="mt-4 flex items-center gap-4 rounded-3xl border border-[#14C3D0]/30 bg-white p-5 shadow-sm">
           <span className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl ring-1 ring-slate-200">

@@ -28,7 +28,7 @@ const SHOW = {
     slides: [
       { tag: "Hemen doktorla görüş", title: "AURA'yı açın — video görüşmeniz başlasın.", sub: "Görüşme doğrudan ana sayfamızdan başlar, her cihazdan. Siz konuşurken tıbbi terimler 70 dilde anlık çevrilir.", cta: "Hemen başla" },
       { tag: "İkinci Görüş", title: "Teşhisinize uzman bir ikinci bakış.", sub: "Elinizde bir teşhis mi var? Raporlarınızı paylaşın; bağımsız, akredite bir uzman bunları yeniden değerlendirsin — büyük karar öncesi netlik ve huzur.", cta: "İkinci görüş al" },
-      { tag: "Pro Bono", title: "Sağlık bir insan hakkı — ayrıcalık değil.", sub: "Bakıma ulaşamayanların yanında gönüllü hekimlerimiz var. Birbirimize sahip çıkmak hepimizin sorumluluğudur.", cta: "Destek ol" },
+      { tag: "Pro Bono", title: "Sağlık bir insan hakkı — ayrıcalık değil.", sub: "Bakıma ulaşamayanların yanında gönüllü doktorlarımiz var. Birbirimize sahip çıkmak hepimizin sorumluluğudur.", cta: "Destek ol" },
     ],
     hp: { eyebrow: "Sağlık turizmi & teletıp", t1: "Birinci sınıf sağlık", t2: "Türkiye'de.", btn: "Hemen doktorla görüş" },
     s1: { rec: "CANLI" },

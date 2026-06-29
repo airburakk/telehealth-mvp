@@ -31,7 +31,7 @@ function formatSavedAt(iso: string): string {
 
 // Doktor kokpiti — AI epikriz / taburcu raporu paneli.
 // Hastanın tüm yolculuğunu (triyaj + SOAP + paket + post-op) tek tıkla epikrize sentezler;
-// kaydedilir ve Güvenli Sağlık Paylaşımı'nda "Epikriz" kapsamında hastanın yurt dışı hekimine iletilir.
+// kaydedilir ve Güvenli Sağlık Paylaşımı'nda "Epikriz" kapsamında hastanın yurt dışı doktoruna iletilir.
 export function DischargeReport({
   caseId, initialReport, initialStructured, initialSavedAt,
 }: {
@@ -122,7 +122,7 @@ export function DischargeReport({
 
           <div className="mt-3 flex items-start gap-2 rounded-lg bg-violet-50/70 p-2.5 text-[11px] leading-relaxed text-violet-700 ring-1 ring-violet-100">
             <ShieldCheck size={14} className="mt-0.5 shrink-0" />
-            <span>Bu rapor kaydedildi ve Güvenli Sağlık Paylaşımı&apos;nda <strong>&quot;Epikriz / Özet Rapor&quot;</strong> kapsamında hastanın yurt dışı hekimine iletilir.</span>
+            <span>Bu rapor kaydedildi ve Güvenli Sağlık Paylaşımı&apos;nda <strong>&quot;Epikriz / Özet Rapor&quot;</strong> kapsamında hastanın yurt dışı doktoruna iletilir.</span>
           </div>
         </>
       )}

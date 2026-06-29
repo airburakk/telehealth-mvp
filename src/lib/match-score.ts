@@ -6,7 +6,7 @@
 //   rating · successRate · pro bono sayısı · icap dönüş oranı   (v2.85 çekirdek)
 //   + tamamlanan vaka hacmi · yanıt süresi (duyarlılık) · iptal oranı (güvenilirlik) · yorum hacmi · güncellik   (v2.86 ek)
 // "Ölçekle değer artar": doktor havuzu + geçmiş veri azken etki küçük; büyüdükçe duyarlı/güvenilir/deneyimli
-// hekimler öne çıkar. Veri yoksa her metrik NÖTR 0.5 döner → yeni hekim ne cezalı ne avantajlı.
+// doktorlar öne çıkar. Veri yoksa her metrik NÖTR 0.5 döner → yeni doktor ne cezalı ne avantajlı.
 // Tüm "kalite" girdileri mevcut tablolardan türetilir; yalnız yanıt süresi Doctor.respCount/respTotalSec sayacını kullanır.
 import { db } from "./db";
 
@@ -57,7 +57,7 @@ const RECENCY_HALF_LIFE_DAYS = 45;
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 const logSat = (n: number, sat: number) => clamp01(Math.log1p(Math.max(0, n)) / Math.log1p(sat));
 
-// İcap dönüş oranı (0-1). Veri yoksa (hiç talep gelmemiş) NÖTR 0.5 → yeni/icapsız hekim ne cezalı ne avantajlı.
+// İcap dönüş oranı (0-1). Veri yoksa (hiç talep gelmemiş) NÖTR 0.5 → yeni/icapsız doktor ne cezalı ne avantajlı.
 export function icapReturnRate(m: { icapNotified: number; icapOffered: number }): number {
   if (m.icapNotified <= 0) return 0.5;
   return clamp01(m.icapOffered / m.icapNotified);
@@ -123,10 +123,10 @@ export function doctorMatchScore(m: DoctorMetrics): number {
 
 // ── Doktor–hasta UYUM (fit) — hasta-spesifik eşleştirme sinyali (KALİTEDEN AYRI eksen) ──
 // Kalite (yukarısı) = doktor ne kadar iyi (mutlak, hasta-agnostik). Uyum = bu doktor BU vakaya ne kadar
-// uygun (göreceli). SOFT BOOST: uyumlu hekim sıralamada öne çıkar, uyumsuz ELENMEZ (erişim korunur).
+// uygun (göreceli). SOFT BOOST: uyumlu doktor sıralamada öne çıkar, uyumsuz ELENMEZ (erişim korunur).
 // Şema değişmez — iki sinyal mevcut alanlardan türetilir:
-//   • pazar/ülke   : Doctor.markets ⊇ Case.country  (hekim hastanın pazarına hizmet veriyor mu)
-//   • aciliyet–deneyim: yüksek Case.urgency → Doctor.experienceYears (acil/karmaşık vaka deneyimli hekime)
+//   • pazar/ülke   : Doctor.markets ⊇ Case.country  (doktor hastanın pazarına hizmet veriyor mu)
+//   • aciliyet–deneyim: yüksek Case.urgency → Doctor.experienceYears (acil/karmaşık vaka deneyimli doktora)
 // Dil KASITEN dahil değil (simultane tercüme kapsar — kullanıcı kararı, [[match-score]] kalite notuyla aynı).
 export interface CaseContext {
   country?: string | null; // hasta ülkesi (Case.country / SecondOpinionCase.country) — pazar uyumu; yoksa nötr
@@ -141,7 +141,7 @@ const FIT_URGENCY_EXP = 0.3;
 const EXP_SATURATION = 20; // ~20 yıl deneyim ≈ tam puan (log doygunluk)
 const HIGH_URGENCY = 4; // urgency ≥ bu → aciliyet–deneyim uyumu aktifleşir (altı: deneyim ayırt edici değil)
 
-// Pazar uyumu (0-1): hekim pazarları hastanın ülkesini kapsıyor mu. markets BOŞ = "tüm pazarlar" → 1.
+// Pazar uyumu (0-1): doktor pazarları hastanın ülkesini kapsıyor mu. markets BOŞ = "tüm pazarlar" → 1.
 // Hasta ülkesi bilinmiyorsa (null) → 1 (ayrıştıracak veri yok). Kapsamıyorsa 0 (soft → yalnız geri sıralanır).
 export function marketFit(country: string | null | undefined, markets: string | null | undefined): number {
   const c = country?.trim();
@@ -244,7 +244,7 @@ async function cancelStats(ids: string[]): Promise<Map<string, { total: number; 
  * Doktor adaylarını skoruna göre sırala (yüksek önce). Birleşik skor =
  *   kalite − LOAD_PENALTY·load + FIT_WEIGHT·uyum
  * `loads` (SO yük dengeleme) → kaliteli ama az yüklü hoca öne gelir, bir hoca boğulmaz.
- * `caseContext` (hasta–doktor uyumu) → hastanın pazarına/aciliyetine uygun hekim SOFT olarak öne çıkar
+ * `caseContext` (hasta–doktor uyumu) → hastanın pazarına/aciliyetine uygun doktor SOFT olarak öne çıkar
  * (uyumsuz ELENMEZ, yalnız geri sıralanır → erişim korunur). Bağlam verilmezse uyum boost'u uygulanmaz
  * (eski davranış birebir). Tüm kalite girdileri toplu (paralel) çekilir; salt-okuma. 0/1 elemanlı liste güvenli.
  */
@@ -343,6 +343,6 @@ export async function getDoctorBadges(doctorId: string): Promise<DoctorBadge[]> 
   if (m("proBono").value01 > 0) badges.push({ key: "proBono", label: "Pro Bono Gönüllüsü", desc: "Ücretsiz gönüllü (pro bono) konsültasyon veriyor" });
   if (m("responsiveness").active && m("responsiveness").value01 >= 0.6) badges.push({ key: "responsiveness", label: "Hızlı Yanıt", desc: "Randevu taleplerine hızlı yanıt veriyor" });
   if (m("reliability").active && m("reliability").value01 >= 0.9) badges.push({ key: "reliability", label: "Güvenilir", desc: "Randevu iptal oranı düşük" });
-  if (m("recency").active && m("recency").value01 >= 0.7) badges.push({ key: "recency", label: "Aktif Hekim", desc: "Son dönemde aktif olarak görüşme yapıyor" });
+  if (m("recency").active && m("recency").value01 >= 0.7) badges.push({ key: "recency", label: "Aktif Doktor", desc: "Son dönemde aktif olarak görüşme yapıyor" });
   return badges;
 }

@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   }
   const dbUser = await db.user.findUnique({ where: { id: user.id } });
   if (!dbUser?.doctorId) {
-    return NextResponse.json({ error: "Bu hesap bir hekim profiline bağlı değil." }, { status: 400 });
+    return NextResponse.json({ error: "Bu hesap bir doktor profiline bağlı değil." }, { status: 400 });
   }
 
   const b = await req.json().catch(() => ({}));

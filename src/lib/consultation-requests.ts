@@ -1,8 +1,8 @@
 // M5 — Konsültasyon Talepleri havuzu servisi.
-// Partner doktor bir vakayı ANONİMLEŞTİREREK havuza yazar; kayıtlı hekimler (consultOptIn) görüş verir.
+// Partner doktor bir vakayı ANONİMLEŞTİREREK havuza yazar; kayıtlı doktorlar (consultOptIn) görüş verir.
 // Klinik içerik (clinicalSummary/answerText/belge AI/öneriler) at-rest şifrelidir (lib/crypto).
 // Faz 1 (v3.x): belge yükleme + assessDocument AI değerlendirme/FHIR + çift-yönlü çeviri
-// (özet→TR yanıtlayan hekim için · görüş→hasta dili partnere) + yapılandırılmış kodlu öneriler.
+// (özet→TR yanıtlayan doktor için · görüş→hasta dili partnere) + yapılandırılmış kodlu öneriler.
 import { db } from "./db";
 import { encryptField, decryptField } from "./crypto";
 import { deidentifyCase, scrubText } from "./deidentify";
@@ -95,7 +95,7 @@ export async function createRequestFromInput(input: PartnerRequestInput, documen
   return created.id;
 }
 
-// AI işleme: klinik özeti Türkçeye çevir (yanıtlayan hekim için) + her belgeyi assessDocument ile değerlendir.
+// AI işleme: klinik özeti Türkçeye çevir (yanıtlayan doktor için) + her belgeyi assessDocument ile değerlendir.
 // Triyaj analyze-docs deseni: docType + TR çeviri + özet + bayrak + LOINC labs. Hatalı belge atlanır.
 export async function processRequestAi(requestId: string): Promise<void> {
   const r = await db.consultationRequest.findUnique({ where: { id: requestId }, include: { documents: true } });
@@ -163,11 +163,11 @@ export interface ConsultReqView {
   urgency: number;
   icd10Code: string | null;
   clinicalSummary: string; // çözülmüş (kaynak dil)
-  summaryTr: string | null; // Türkçe (yanıtlayan hekim için)
+  summaryTr: string | null; // Türkçe (yanıtlayan doktor için)
   requestedByName: string | null;
   status: string;
-  answerText: string | null; // hekim görüşü (TR kaynak)
-  answerTr: string | null; // hekim görüşü hasta dilinde (partnere)
+  answerText: string | null; // doktor görüşü (TR kaynak)
+  answerTr: string | null; // doktor görüşü hasta dilinde (partnere)
   recommendedLabs: LabRec[];
   recommendedImaging: ImagingRec[];
   medications: MedRec[];
@@ -221,7 +221,7 @@ function toView(r: RowWithDocs): ConsultReqView {
 
 const DOC_SELECT = { id: true, label: true, docType: true, aiSummary: true, aiTranslation: true, aiFlags: true, aiLabs: true, assessedAt: true } as const;
 
-// Hekimin görebileceği AÇIK talepler (genel havuz + kendi branşı) — belge AI içeriğiyle.
+// Doktorun görebileceği AÇIK talepler (genel havuz + kendi branşı) — belge AI içeriğiyle.
 export async function openRequestsForDoctor(branch: string): Promise<ConsultReqView[]> {
   const rows = await db.consultationRequest.findMany({
     where: { status: "OPEN", OR: [{ branch: null }, { branch }] },
@@ -241,7 +241,7 @@ export async function getRequestWithDocs(id: string): Promise<ConsultReqView | n
   return r ? toView(r) : null;
 }
 
-// ── Partner doktorun kendi talepleri + yanıtlayan hekim ──
+// ── Partner doktorun kendi talepleri + yanıtlayan doktor ──
 export interface PartnerRequestView extends ConsultReqView {
   answeredByDoctorName: string | null;
 }
@@ -267,7 +267,7 @@ export async function answeredByDoctor(doctorId: string): Promise<ConsultReqView
   return rows.map(toView);
 }
 
-// ── Hekim görüş verir (+ yapılandırılmış kodlu öneriler + görüş hasta diline çevrilir) ──
+// ── Doktor görüş verir (+ yapılandırılmış kodlu öneriler + görüş hasta diline çevrilir) ──
 export interface AnswerInput {
   text: string;
   recommendedLabs?: LabRec[];
@@ -283,7 +283,7 @@ export async function answerRequest(id: string, doctorId: string, input: AnswerI
     select: { status: true, language: true, requestedByPartnerId: true, branch: true, engagedByDoctorId: true },
   });
   if (!req) return "NOT_FOUND";
-  // OPEN (doğrudan yanıt) VEYA IN_DISCUSSION ama bu hekim sahiplenmişse yanıtlanabilir; başka durum/sahip → TAKEN.
+  // OPEN (doğrudan yanıt) VEYA IN_DISCUSSION ama bu doktor sahiplenmişse yanıtlanabilir; başka durum/sahip → TAKEN.
   if (req.status === "ANSWERED") return "TAKEN";
   if (req.status === "IN_DISCUSSION" && req.engagedByDoctorId !== doctorId) return "TAKEN";
 
@@ -303,7 +303,7 @@ export async function answerRequest(id: string, doctorId: string, input: AnswerI
   const meds = (input.medications ?? []).filter((m) => m && m.atc); // ATC zorunlu
 
   const claimed = await db.consultationRequest.updateMany({
-    // OPEN'ı doğrudan kap VEYA kendi sahiplendiğim IN_DISCUSSION'ı yanıtla (başka hekimin sahiplendiği eşleşmez → yarış-güvenli).
+    // OPEN'ı doğrudan kap VEYA kendi sahiplendiğim IN_DISCUSSION'ı yanıtla (başka doktorun sahiplendiği eşleşmez → yarış-güvenli).
     where: { id, OR: [{ status: "OPEN" }, { status: "IN_DISCUSSION", engagedByDoctorId: doctorId }] },
     data: {
       status: "ANSWERED",
@@ -375,13 +375,13 @@ export async function sendMessage(requestId: string, sender: ChatSender, text: s
 
   if (sender.role === "PARTNER") {
     if (req.requestedByPartnerId !== sender.partnerId) return "FORBIDDEN";
-    if (req.status === "OPEN") return "NOT_READY"; // henüz hekim sahiplenmedi → sohbet edilecek taraf yok
-    if (needsTr) { // partner kaynak = talep dili → hekim için Türkçe
+    if (req.status === "OPEN") return "NOT_READY"; // henüz doktor sahiplenmedi → sohbet edilecek taraf yok
+    if (needsTr) { // partner kaynak = talep dili → doktor için Türkçe
       try { translated = (await translateText(clean, "Türkçe")) || null; }
       catch (e) { console.warn("[consult-chat] çeviri hatası:", e instanceof Error ? e.message : e); }
     }
   } else {
-    // DOCTOR — OPEN ise atomik sahiplen (IN_DISCUSSION); başka hekimin sahiplendiği → engelle.
+    // DOCTOR — OPEN ise atomik sahiplen (IN_DISCUSSION); başka doktorun sahiplendiği → engelle.
     if (req.status === "OPEN") {
       const claimed = await db.consultationRequest.updateMany({
         where: { id: requestId, status: "OPEN" },
@@ -391,7 +391,7 @@ export async function sendMessage(requestId: string, sender: ChatSender, text: s
     } else if (req.engagedByDoctorId !== sender.doctorId) {
       return "FORBIDDEN";
     }
-    if (needsTr) { // hekim kaynak = Türkçe → partner dili
+    if (needsTr) { // doktor kaynak = Türkçe → partner dili
       try { translated = (await translateText(clean, req.language)) || null; }
       catch (e) { console.warn("[consult-chat] çeviri hatası:", e instanceof Error ? e.message : e); }
     }
@@ -439,7 +439,7 @@ export async function markMessagesRead(requestId: string, viewerRole: ChatSender
   });
 }
 
-// Hekimin sahiplendiği, henüz nihai görüş vermediği görüşmeler (IN_DISCUSSION).
+// Doktorun sahiplendiği, henüz nihai görüş vermediği görüşmeler (IN_DISCUSSION).
 export async function engagedByDoctor(doctorId: string): Promise<ConsultReqView[]> {
   const rows = await db.consultationRequest.findMany({
     where: { status: "IN_DISCUSSION", engagedByDoctorId: doctorId },

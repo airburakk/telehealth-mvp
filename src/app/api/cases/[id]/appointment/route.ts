@@ -5,9 +5,9 @@ import { ownsCase } from "@/lib/ownership";
 import { offerAppointment, respondAppointment } from "@/lib/clinical-duty";
 
 // POST /api/cases/:id/appointment — İcapçı randevu akışı (Seçenek 2, SO Part B deseni).
-//   action=offer           → İcapçı hekim zaman teklif eder (body.scheduledAt)
+//   action=offer           → İcapçı doktor zaman teklif eder (body.scheduledAt)
 //   action=accept          → hasta teklifi onaylar → vakaya İcapçı atanır
-//   action=request_change  → hasta farklı zaman ister → aynı hekim yeniden teklif eder
+//   action=request_change  → hasta farklı zaman ister → aynı doktor yeniden teklif eder
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await getCurrentUser();
@@ -16,11 +16,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const body = await req.json().catch(() => ({}));
   const action = String(body.action ?? "");
 
-  // ── İcapçı hekim: zaman teklif et ──
+  // ── İcapçı doktor: zaman teklif et ──
   if (action === "offer") {
     if (!["DOCTOR", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
     const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
-    if (!me?.doctorId) return NextResponse.json({ error: "Hekim profili yok." }, { status: 403 });
+    if (!me?.doctorId) return NextResponse.json({ error: "Doktor profili yok." }, { status: 403 });
 
     const [c, doc] = await Promise.all([
       db.case.findUnique({ where: { id }, select: { branch: true } }),
@@ -37,7 +37,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const res = await offerAppointment(id, me.doctorId, scheduledAt);
     if (res === "NOT_FOUND") return NextResponse.json({ error: "Açık randevu talebi yok." }, { status: 404 });
-    if (res === "TAKEN") return NextResponse.json({ error: "Bu talebi başka bir hekim aldı." }, { status: 409 });
+    if (res === "TAKEN") return NextResponse.json({ error: "Bu talebi başka bir doktor aldı." }, { status: 409 });
     return NextResponse.json({ ok: true, status: "OFFERED" });
   }
 

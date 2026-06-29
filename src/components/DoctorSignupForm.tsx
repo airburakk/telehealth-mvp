@@ -76,7 +76,7 @@ export function DoctorSignupForm({ googleEnabled, branches, languages }: { googl
     <div className="w-full max-w-md">
       <div className="mb-6 flex flex-col items-center text-center">
         <span className="grid h-12 w-12 place-items-center rounded-3xl bg-[#101010] shadow"><AuraMark size={26} /></span>
-        <h1 className="mt-3 flex items-center gap-1.5 text-xl font-bold text-[#101010]"><Stethoscope size={20} className="text-[#0EA5B2]" /> Hekim Kaydı</h1>
+        <h1 className="mt-3 flex items-center gap-1.5 text-xl font-bold text-[#101010]"><Stethoscope size={20} className="text-[#0EA5B2]" /> Doktor Kaydı</h1>
         <p className="text-sm text-slate-500">AURA ağına katılın — birkaç adımda profilinizi oluşturun</p>
       </div>
 
@@ -160,7 +160,7 @@ export function DoctorSignupForm({ googleEnabled, branches, languages }: { googl
         <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
           Kayıt sonrası diploma/tescil no, uzmanlık belgesi, yaptığınız işlemler ve ücretleri ile
           <strong> tıp diploması + MMSS poliçenizi</strong> yüklemeniz istenir. Hesabınız doğrulama
-          onayına kadar hekim dizininde görünmez.
+          onayına kadar doktor dizininde görünmez.
         </p>
       </div>
 

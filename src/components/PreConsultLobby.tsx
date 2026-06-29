@@ -13,10 +13,15 @@ import {
   Video, VideoOff, Mic, MicOff, Volume2, Camera, Clock, Lock,
   AlertTriangle, NotebookPen, Headphones, Sun, FileText, CheckCircle2,
   HelpCircle, ShieldCheck, ALargeSmall,
+  Star, BadgeCheck, ChevronDown, ChevronUp, ExternalLink, GraduationCap,
+  Award, Heart, Zap, Activity, Stethoscope, MapPin, type LucideIcon,
 } from "lucide-react";
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47 } from "@/lib/constants";
 import { AuraSpinner } from "@/components/PortamedLogo";
+import { DoctorArt } from "@/components/PortamedArt";
+import { DoctorVideoCard } from "@/components/DoctorVideoCard";
+import type { DoctorCardData } from "@/lib/doctor-card";
 
 // TR kanonik UI metinleri — useT ile hasta diline çevrilir (çeviri gelene kadar TR).
 const TX = {
@@ -28,7 +33,7 @@ const TX = {
   join: "Görüşmeye katıl",
   lockPre: "Randevudan",
   lockPost: "önce “Katıl” düğmesi etkinleşir. Bu sırada cihazlarınızı test edebilirsiniz.",
-  waitingDoctor: "Hekiminiz sizi bekliyor.",
+  waitingDoctor: "Doktorunuz sizi bekliyor.",
   almost: "Görüşmenize az kaldı — şimdi katılabilirsiniz.",
   readyNow: "Görüşmeniz hazır. Bağlanmak için katılın.",
   doctorNote: "Hasta randevu için bekleniyor. Hazır olduğunuzda katılabilirsiniz.",
@@ -48,7 +53,7 @@ const TX = {
   tip1: "Tıbbi raporlarınızı ve ilaç listenizi yanınızda bulundurun.",
   tip2: "Sessiz, aydınlık ve internet bağlantısı güçlü bir yer seçin.",
   tip3: "Kulaklık kullanmak ses kalitesini artırır, yankıyı önler.",
-  notesLabel: "Hekime sormak istedikleriniz",
+  notesLabel: "Doktora sormak istedikleriniz",
   notesPh: "Görüşmede sormak istediğiniz soruları buraya not edin…",
   notesSaved: "Notlarınız bu cihaza kaydedildi.",
   you: "Siz",
@@ -58,6 +63,22 @@ const TX = {
   helpTitle: "Sorun mu yaşıyorsunuz?",
   helpBody: "Görüntü veya ses gelmiyorsa: sayfayı yenileyin, internet bağlantınızı kontrol edin ve Chrome ya da Safari kullanın. Cihaz izinlerini adres çubuğundaki kilit simgesinden açabilirsiniz.",
   secure: "Görüşme bağlantınız şifrelidir; bilgileriniz KVKK kapsamında, açık onayınızla işlenir.",
+  // Atanan doktor kartı (yalnız hasta görünümü)
+  yourDoctor: "Doktorunuz",
+  verified: "Doğrulanmış",
+  reviews: "yorum",
+  tapForDetails: "Profil özeti için dokunun",
+  about: "Hakkında",
+  stExperience: "Deneyim",
+  stSuccess: "Başarı oranı",
+  stYears: "yıl",
+  trustBadges: "Güven rozetleri",
+  academicTitle: "Akademik & Eğitim",
+  videoCard: "Video Kartvizit",
+  credentialsTitle: "Akreditasyon",
+  diploma: "Tıp Diploması",
+  speciality: "Uzmanlık Belgesi",
+  fullProfile: "Tam profili gör",
 } as const;
 
 type Props = {
@@ -69,14 +90,16 @@ type Props = {
   scheduledAt?: string | null;
   /** "Katıl" randevudan kaç dk önce açılır (kullanıcı kararı: 15). */
   earlyWindowMin?: number;
-  /** Doktor görünümü → geri sayım kilidi uygulanmaz (hekim hazır beklemeli). */
+  /** Doktor görünümü → geri sayım kilidi uygulanmaz (doktor hazır beklemeli). */
   isDoctor?: boolean;
-  /** Karşı tarafın adı (hasta hekimi, hekim hastayı görür). */
+  /** Karşı tarafın adı (hasta doktoru, doktor hastayı görür). */
   remoteLabel?: string;
   /** Branş etiketi (gösterim). */
   branchLabel?: string;
   /** Soru-notu localStorage anahtarı (SO: appointmentId, Talk: consultationId). */
   storageKey?: string;
+  /** Atanan doktor özeti — yalnız hasta görünümünde tıklanabilir kart olarak gösterilir. */
+  doctorCard?: DoctorCardData | null;
   /** SO entegrasyonu: Katıl'a basınca çağrılır (oda kendi joined state'ini açar). */
   onJoin?: () => void;
   /** Talk entegrasyonu: Katıl sonrası render edilen oda (ConsultationRoom). */
@@ -85,7 +108,7 @@ type Props = {
 
 export function PreConsultLobby({
   lang, langSelector, scheduledAt = null, earlyWindowMin = 15,
-  isDoctor = false, remoteLabel, branchLabel, storageKey, onJoin, children,
+  isDoctor = false, remoteLabel, branchLabel, storageKey, doctorCard, onJoin, children,
 }: Props) {
   // texts referansı SABİT olmalı: lobi ses metresi/geri sayım ile sık re-render eder; memoize edilmezse
   // useT'nin effect'i her render yeniden kurulur → uçuştaki çeviri fetch'i cleanup ile iptal olur (çeviri hiç gelmez).
@@ -117,6 +140,9 @@ export function PreConsultLobby({
   // ── Erişilebilirlik (Faz C): büyük yazı (cihaz-yerel) + yardım paneli ──
   const [bigText, setBigText] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  // ── Atanan doktor kartı (hasta görünümü) satır-içi genişleme ──
+  const [docOpen, setDocOpen] = useState(false);
+  const showDoctorCard = !isDoctor && !!doctorCard;
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- tercih yalnız istemcide (SSR'de localStorage yok)
     try { if (localStorage.getItem("air_preconsult_bigtext") === "1") setBigText(true); } catch {}
@@ -313,7 +339,7 @@ export function PreConsultLobby({
         <div>
           <h1 className="text-2xl font-bold text-[#101010]">{t(TX.title)}</h1>
           <p className="mt-1 text-sm text-slate-500">{t(TX.subtitle)}</p>
-          {(remoteLabel || branchLabel) && (
+          {!showDoctorCard && (remoteLabel || branchLabel) && (
             <p className="mt-1 text-xs text-slate-400">
               {branchLabel ? t(branchLabel) : ""}{branchLabel && remoteLabel ? " · " : ""}{remoteLabel ?? ""}
             </p>
@@ -339,6 +365,100 @@ export function PreConsultLobby({
         <div className="mt-4 rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4">
           <p className="flex items-center gap-1.5 text-sm font-semibold text-[#0EA5B2]"><HelpCircle size={15} /> {t(TX.helpTitle)}</p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">{t(TX.helpBody)}</p>
+        </div>
+      )}
+
+      {/* Atanan doktor kartı (yalnız hasta) — tıklayınca public profil ÖZETİ satır-içi genişler */}
+      {showDoctorCard && doctorCard && (
+        <div className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <button
+            onClick={() => setDocOpen((o) => !o)}
+            aria-expanded={docOpen}
+            className="flex w-full items-center gap-3 p-4 text-start hover:bg-slate-50"
+          >
+            <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl ring-1 ring-slate-200">
+              <DoctorArt i={doctorCard.avatarVariant} female={doctorCard.female} photo={doctorCard.photo} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-400">{t(TX.yourDoctor)}</span>
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <span className="font-bold text-[#101010]">{doctorCard.title} {doctorCard.name}</span>
+                {doctorCard.verified && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-semibold text-teal-700"><BadgeCheck size={11} /> {t(TX.verified)}</span>
+                )}
+              </span>
+              <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
+                <span className="inline-flex items-center gap-1 font-medium text-[#0EA5B2]"><Stethoscope size={12} /> {branchLabel ? t(branchLabel) : doctorCard.branch}</span>
+                <span className="inline-flex items-center gap-1"><MapPin size={12} /> {doctorCard.city}</span>
+                <span className="inline-flex items-center gap-1"><Star size={12} className="fill-amber-400 text-amber-400" /> {doctorCard.rating.toFixed(1)}{doctorCard.reviewCount > 0 ? ` · ${doctorCard.reviewCount} ${t(TX.reviews)}` : ""}</span>
+              </span>
+            </span>
+            <span className="flex shrink-0 flex-col items-center text-slate-400">
+              {docOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              {!docOpen && <span className="mt-0.5 hidden text-[9px] sm:block">{t(TX.tapForDetails)}</span>}
+            </span>
+          </button>
+
+          {docOpen && (
+            <div className="space-y-4 border-t border-slate-100 px-4 pb-4 pt-4">
+              {/* Hakkında (doktor bio kanonik metin) */}
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{t(TX.about)}</p>
+                <p className="mt-1 text-[13px] leading-relaxed text-slate-600">{doctorCard.bio}</p>
+              </div>
+
+              {/* İstatistik çubukları */}
+              <div className="grid grid-cols-2 gap-3">
+                <MiniStat label={t(TX.stExperience)} valueText={`${doctorCard.experienceYears} ${t(TX.stYears)}`} pct={(doctorCard.experienceYears / 30) * 100} />
+                <MiniStat label={t(TX.stSuccess)} valueText={`%${doctorCard.successRate}`} pct={doctorCard.successRate} />
+              </div>
+
+              {/* Güven rozetleri */}
+              {doctorCard.badges.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{t(TX.trustBadges)}</p>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {doctorCard.badges.map((b) => {
+                      const Icon = BADGE_ICON[b.key] ?? CheckCircle2;
+                      return (
+                        <span key={b.key} title={b.desc} className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-slate-200">
+                          <Icon size={12} /> {b.label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Akreditasyon özeti */}
+              <div>
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400"><ShieldCheck size={12} /> {t(TX.credentialsTitle)}</p>
+                <ul className="mt-1.5 space-y-1.5 text-[13px] text-slate-600">
+                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className="mt-0.5 shrink-0 text-emerald-600" /><span><span className="font-medium text-slate-700">{t(TX.diploma)}:</span> {doctorCard.credentials.diplomaSchool} · {doctorCard.credentials.diplomaYear}</span></li>
+                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className="mt-0.5 shrink-0 text-emerald-600" /><span><span className="font-medium text-slate-700">{t(TX.speciality)}:</span> {doctorCard.credentials.specBoard} · {doctorCard.credentials.specYear}</span></li>
+                </ul>
+              </div>
+
+              {/* Akademik */}
+              <div>
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400"><GraduationCap size={12} /> {t(TX.academicTitle)}</p>
+                <p className="mt-1 text-[13px] leading-relaxed text-slate-600">{doctorCard.academic}</p>
+              </div>
+
+              {/* Video kartvizit (dil-bazlı video = todo: hizmet verilen ülke/hasta diline göre) */}
+              <div>
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400"><Video size={12} /> {t(TX.videoCard)}</p>
+                <div className="mt-1.5">
+                  <DoctorVideoCard name={doctorCard.name} title={doctorCard.title} female={doctorCard.female} />
+                </div>
+              </div>
+
+              <a href={`/hekim/${doctorCard.id}`} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                <ExternalLink size={13} /> {t(TX.fullProfile)}
+              </a>
+            </div>
+          )}
         </div>
       )}
 
@@ -505,6 +625,28 @@ export function PreConsultLobby({
       <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-400">
         <ShieldCheck size={13} className="text-emerald-500" /> {t(TX.secure)}
       </p>
+    </div>
+  );
+}
+
+// Doktor kartı güven rozeti ikonları (match-score MetricKey ile hizalı; /hekim/[id] ile aynı semantik).
+const BADGE_ICON: Record<string, LucideIcon> = {
+  rating: Star, volume: Award, proBono: Heart, responsiveness: Zap, reliability: ShieldCheck, recency: Activity,
+};
+
+// Doktor kartı satır-içi istatistik çubuğu (değere göre amber→teal renk geçişi).
+function MiniStat({ label, valueText, pct }: { label: string; valueText: string; pct: number }) {
+  const p = Math.max(6, Math.min(100, Math.round(pct)));
+  const hue = Math.round(40 + (p / 100) * 120);
+  return (
+    <div className="rounded-2xl bg-slate-50 p-3">
+      <div className="flex items-baseline justify-between">
+        <span className="text-[11px] text-slate-500">{label}</span>
+        <span className="text-base font-bold text-[#101010]">{valueText}</span>
+      </div>
+      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-200/70">
+        <div className="h-full rounded-full" style={{ width: `${p}%`, background: `hsl(${hue} 65% 45%)` }} />
+      </div>
     </div>
   );
 }

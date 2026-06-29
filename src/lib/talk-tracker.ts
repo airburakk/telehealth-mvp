@@ -24,8 +24,8 @@ const SUB = {
   bookingDraft: "Paket teklifiniz hazır — onayınızı bekliyor",
   planPrep: "Tedavi planınız hazırlanıyor",
   inConsult: "Video görüşmeniz sürüyor",
-  inReview: "Uzman hekim vakanızı inceliyor",
-  queued: "Uzman hekim kuyruğuna eklendiniz",
+  inReview: "Uzman doktor vakanızı inceliyor",
+  queued: "Uzman doktor kuyruğuna eklendiniz",
 } as const;
 
 export interface TalkCaseState {

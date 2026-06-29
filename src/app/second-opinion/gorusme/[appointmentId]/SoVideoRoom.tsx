@@ -2,14 +2,38 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Video, VideoOff, Mic, MicOff, PhoneOff, Wifi, WifiOff, UserRound } from "lucide-react";
+import { Video, VideoOff, Mic, MicOff, PhoneOff, Wifi, WifiOff, UserRound, MessageSquareText } from "lucide-react";
 import { getIceServers } from "@/lib/ice";
 import { useT } from "@/components/useT";
 import { useSoLang, SoLangSelect } from "@/components/SoLocale";
 import { langDir } from "@/lib/constants";
 import { PreConsultLobby } from "@/components/PreConsultLobby";
+import { PatientQuestionsPanel } from "@/components/PatientQuestionsPanel";
+import { LiveInterpreter } from "@/components/LiveInterpreter";
+import type { DoctorCardData } from "@/lib/doctor-card";
 
 type Phase = "idle" | "connecting" | "waiting" | "connected" | "ended" | "error";
+
+// Hasta kendi dilinde konuşur → tanıyıcıya BCP-47 kodu (M2 ConsultationRoom ile aynı tablo)
+const SPEECH_LANG: Record<string, string> = {
+  "Türkçe": "tr-TR", "Rusça": "ru-RU", "Arapça": "ar-SA", "Farsça": "fa-IR", "Azerice": "az-AZ",
+  "İngilizce": "en-US", "Fransızca": "fr-FR", "Almanca": "de-DE", "Kazakça": "kk-KZ", "Kırgızca": "ky-KG",
+};
+
+// ── Canlı transkript (Web Speech API) ──
+interface TLine { who: "doctor" | "patient"; text: string; ts: number }
+type AnySpeechRecognition = {
+  lang: string; continuous: boolean; interimResults: boolean;
+  onresult: ((e: { resultIndex: number; results: { length: number; [i: number]: { isFinal: boolean; 0: { transcript: string } } } }) => void) | null;
+  onend: (() => void) | null;
+  onerror: ((e: { error?: string }) => void) | null;
+  start: () => void; stop: () => void;
+};
+function getSpeechRecognition(): (new () => AnySpeechRecognition) | null {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as Record<string, unknown>;
+  return (w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null) as (new () => AnySpeechRecognition) | null;
+}
 
 // TR kanonik UI metinleri — useT ile hasta diline çevrilir
 const S = {
@@ -18,7 +42,7 @@ const S = {
   endedSub: "İkinci görüş video görüşmeniz tamamlandı.",
   backToCase: "Vakaya dön",
   patient: "Hasta",
-  doctor: "Hekim",
+  doctor: "Doktor",
   permNote: "Kamera ve mikrofon izni istenecek. En iyi deneyim için Chrome veya Safari kullanın.",
   join: "Görüşmeye katıl",
   connected: "Bağlandı",
@@ -28,6 +52,13 @@ const S = {
   waitingFor: "bekleniyor…",
   you: "Siz",
   connLbl: "Bağlantı:",
+  // Canlı transkript
+  transcriptTitle: "Canlı Transkript",
+  stop: "Durdur",
+  auto: "Otomatik",
+  transcriptEmpty: "Konuşma başlayınca otomatik yazıya dökülür; karşı tarafın konuşması da gelir.",
+  notSupported: "Tarayıcı desteklemiyor — Chrome/Edge önerilir",
+  micDenied: "Mikrofon izni reddedildi — konuşma tanıma kapatıldı.",
   // errMsg literalleri (setErrMsg'deki metinlerle birebir → t(errMsg) cache'ten çevirir; cihaz-kod ekli olanlar TR'ye düşer)
   errNoCam: "Bu tarayıcı kamera erişimini desteklemiyor. Linki Chrome veya Safari'de açın.",
   errAudioOnly: "Kamera yok — sesli katıldınız; karşı tarafı görebilirsiniz.",
@@ -36,10 +67,11 @@ const S = {
 
 // İzole SO video odası — WebRTC (P2P) + mevcut string-anahtarlı sinyalleşme API'si.
 // Doktor 'offer', hasta 'answer' üretir; ICE adayları polling ile değişilir.
+// M2 paritesi: AI canlı tercüman + canlı transkript + VAD ile otomatik başlatma (ilk konuşma sesinde).
 export function SoVideoRoom({
-  roomId, caseId, selfRole, ended, branchLabel, remoteName, scheduledAt,
+  roomId, caseId, selfRole, ended, branchLabel, remoteName, scheduledAt, doctorCard, patientLang = "Türkçe",
 }: {
-  roomId: string; caseId: string; selfRole: "doctor" | "patient"; ended: boolean; branchLabel: string; remoteName: string; scheduledAt: string | null;
+  roomId: string; caseId: string; selfRole: "doctor" | "patient"; ended: boolean; branchLabel: string; remoteName: string; scheduledAt: string | null; doctorCard?: DoctorCardData | null; patientLang?: string;
 }) {
   const router = useRouter();
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -55,9 +87,156 @@ export function SoVideoRoom({
   const [remoteOn, setRemoteOn] = useState(false);
   const [connState, setConnState] = useState("");
 
+  // Canlı transkript + AI tercüme (otomatik)
+  const [transcript, setTranscript] = useState<TLine[]>([]);
+  const [sttOn, setSttOn] = useState(false);
+  const [interim, setInterim] = useState("");
+  const [sttErr, setSttErr] = useState("");
+  const [sttSupported, setSttSupported] = useState(true);
+  const [interpAutoStart, setInterpAutoStart] = useState(false); // VAD ilk konuşmayı algılayınca tercüme auto-start (yalnız diller farklıysa)
+  const recRef = useRef<AnySpeechRecognition | null>(null);
+  const sttOnRef = useRef(false);
+  const firstSoundRef = useRef(false); // VAD: ilk konuşma sesi tek seferlik tetik
+
   const [lang, setLang] = useSoLang();
   const texts = useMemo(() => [...Object.values(S), branchLabel], [branchLabel]);
   const { t } = useT(lang, texts);
+
+  const isDoctor = selfRole === "doctor";
+  // Hasta kendi dilinde (başvuru dili) konuşur; doktor Türkçe. Diller aynıysa tercüme gereksiz → otomatik kapalı.
+  const myLang = isDoctor ? "tr-TR" : (SPEECH_LANG[patientLang] ?? "tr-TR");
+  const langsDiffer = patientLang !== "Türkçe";
+
+  useEffect(() => { setSttSupported(!!getSpeechRecognition()); }, []);
+
+  // Transkript relay (WebRTC effect dışından da kullanılır)
+  async function postSignal(kind: string, data: unknown) {
+    try {
+      await fetch(`/api/consultations/${roomId}/signal`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sender: selfRole, kind, data: JSON.stringify(data) }),
+      });
+    } catch {}
+  }
+
+  // Tanınan kesin (final) konuşmayı transkripte ekle + karşı tarafa ilet
+  function routeFinal(text: string) {
+    const tx = text.trim();
+    if (!tx) return;
+    const line: TLine = { who: selfRole, text: tx, ts: Date.now() };
+    setTranscript((prev) => [...prev, line]);
+    postSignal("transcript", line);
+  }
+
+  // Konuşma tanıma yaşam döngüsü (M2 ile aynı): açıkken çalışır; sessizlikte Chrome durdurursa yeniden başlar
+  useEffect(() => {
+    sttOnRef.current = sttOn;
+    const want = sttOn && joined && phase !== "ended";
+    if (want && !recRef.current) {
+      const Ctor = getSpeechRecognition();
+      if (!Ctor) { setSttSupported(false); setSttOn(false); return; }
+      const rec = new Ctor();
+      rec.lang = myLang;
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.onresult = (e) => {
+        let interimTxt = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const r = e.results[i];
+          if (r.isFinal) routeFinal(r[0].transcript);
+          else interimTxt += r[0].transcript;
+        }
+        setInterim(interimTxt);
+      };
+      rec.onend = () => {
+        if (sttOnRef.current && recRef.current === rec) {
+          // Tercüman başlarken ses giriş cihazı yeniden başlar → start() exception atabilir; kısa gecikmeyle dene.
+          let tries = 0;
+          const tryStart = () => {
+            if (recRef.current !== rec || !sttOnRef.current) return;
+            try { rec.start(); }
+            catch { if (tries++ < 8) setTimeout(tryStart, 250); }
+          };
+          tryStart();
+        }
+      };
+      rec.onerror = (e) => {
+        if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+          setSttErr("Mikrofon izni reddedildi — konuşma tanıma kapatıldı.");
+          setSttOn(false);
+        }
+      };
+      recRef.current = rec;
+      try { rec.start(); } catch {}
+    } else if (!want && recRef.current) {
+      const rec = recRef.current;
+      recRef.current = null;
+      try { rec.stop(); } catch {}
+      setInterim("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sttOn, joined, phase]);
+
+  useEffect(() => () => { try { recRef.current?.stop(); } catch {} }, []);
+
+  // ── VAD (ses aktivitesi algılama): herhangi bir taraftan İLK konuşma sesinde AI'ı otomatik başlat (M2 ile aynı) ──
+  useEffect(() => {
+    if (!joined || phase === "ended" || firstSoundRef.current) return;
+    let cancelled = false;
+    let raf = 0;
+    let ctx: AudioContext | null = null;
+    const attached = new WeakSet<MediaStream>();
+    const metered: { an: AnalyserNode; buf: Uint8Array<ArrayBuffer> }[] = [];
+    let hot = 0;
+    const THRESH = 0.045;
+    const NEED = 4;
+
+    const ensureCtx = () => {
+      if (!ctx) {
+        const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        ctx = new AC();
+        ctx.resume().catch(() => {});
+      }
+      return ctx;
+    };
+    const attach = (stream: MediaStream | null) => {
+      if (!stream || attached.has(stream) || stream.getAudioTracks().length === 0) return;
+      try {
+        const c = ensureCtx();
+        const src = c.createMediaStreamSource(stream);
+        const an = c.createAnalyser(); an.fftSize = 256;
+        src.connect(an);
+        metered.push({ an, buf: new Uint8Array(an.fftSize) });
+        attached.add(stream);
+      } catch {}
+    };
+    const tick = () => {
+      if (cancelled) return;
+      attach(localStreamRef.current);
+      attach((remoteVideoRef.current?.srcObject as MediaStream | null) ?? null);
+      let loud = false;
+      for (const m of metered) {
+        m.an.getByteTimeDomainData(m.buf);
+        let sum = 0;
+        for (let i = 0; i < m.buf.length; i++) { const v = (m.buf[i] - 128) / 128; sum += v * v; }
+        if (Math.sqrt(sum / m.buf.length) > THRESH) { loud = true; break; }
+      }
+      hot = loud ? hot + 1 : 0;
+      if (hot >= NEED) {
+        firstSoundRef.current = true;
+        setSttOn(true);
+        if (langsDiffer) setInterpAutoStart(true);
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelled = true;
+      if (raf) cancelAnimationFrame(raf);
+      ctx?.close().catch(() => {});
+    };
+  }, [joined, phase, langsDiffer]);
 
   useEffect(() => {
     if (!joined || ended) return;
@@ -99,6 +278,11 @@ export function SoVideoRoom({
                 if (data) { if (remoteDescSet) { try { await pc.addIceCandidate(data); } catch {} } else pendingIce.push(data); }
               } else if (m.kind === "bye") {
                 setRemoteOn(false); setPhase("ended");
+              } else if (m.kind === "transcript") {
+                if (data && typeof data.text === "string" && data.text.trim()) {
+                  const line: TLine = { who: data.who === "doctor" ? "doctor" : "patient", text: String(data.text), ts: Number(data.ts) || Date.now() };
+                  setTranscript((prev) => [...prev, line].sort((a, b) => a.ts - b.ts));
+                }
               }
             } catch {}
           }
@@ -211,6 +395,7 @@ export function SoVideoRoom({
         remoteLabel={remoteName}
         branchLabel={branchLabel}
         storageKey={roomId}
+        doctorCard={doctorCard}
         onJoin={() => { setJoined(true); setPhase("connecting"); }}
       />
     );
@@ -259,6 +444,66 @@ export function SoVideoRoom({
         </button>
       </div>
       {connState && <p className="mt-2 text-center text-[11px] text-slate-400">{t(S.connLbl)} {connState}</p>}
+
+      {/* AI Canlı Tercüman (Gemini) — yalnız diller farklıysa (aynı dilde gereksiz + karşı sesi kısar);
+          ilk konuşma sesinde otomatik başlar (başlat düğmesi yok). */}
+      {langsDiffer && (
+        <div className="mt-4">
+          <LiveInterpreter
+            lang={isDoctor ? "Türkçe" : lang}
+            targetLang={isDoctor ? "tr" : (SPEECH_LANG[patientLang]?.split("-")[0] ?? "en")}
+            targetLabel={isDoctor ? "Türkçe" : patientLang}
+            otherLabel={isDoctor ? patientLang : "Türkçe"}
+            autoMode={langsDiffer}
+            autoStart={interpAutoStart}
+            getRemoteStream={() => (remoteVideoRef.current?.srcObject as MediaStream | null) ?? null}
+            onMuteRemote={(m) => { if (remoteVideoRef.current) remoteVideoRef.current.muted = m; }}
+          />
+        </div>
+      )}
+
+      {/* Canlı Transkript — iki taraf da kendi konuşmasını yazıya çevirir, karşı tarafa iletilir (otomatik/VAD) */}
+      <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <MessageSquareText size={14} /> {t(S.transcriptTitle)}
+            {sttOn && <span className="ms-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
+          </div>
+          {!sttSupported ? (
+            <span className="text-[11px] text-slate-400">{t(S.notSupported)}</span>
+          ) : sttOn ? (
+            <button onClick={() => { setSttErr(""); setSttOn(false); }} className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 px-2.5 py-1.5 text-[12px] font-medium text-red-700 hover:bg-red-100">
+              <Mic size={13} /> {t(S.stop)}
+            </button>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-[12px] font-medium text-slate-500" title={t(S.transcriptEmpty)}>
+              <Mic size={13} /> {t(S.auto)}
+            </span>
+          )}
+        </div>
+        {sttErr && <div className="mt-1 text-[11px] text-red-600">{t(sttErr)}</div>}
+        <div className="mt-2 max-h-44 space-y-1 overflow-y-auto">
+          {transcript.length === 0 && !interim && (
+            <p className="text-xs text-slate-400">{t(S.transcriptEmpty)}</p>
+          )}
+          {transcript.map((l, i) => (
+            <p key={i} className="text-sm leading-snug text-slate-700">
+              <span className={`font-semibold ${l.who === "doctor" ? "text-[#0EA5B2]" : "text-emerald-700"}`}>
+                {l.who === "doctor" ? t(S.doctor) : t(S.patient)}:
+              </span>{" "}
+              {l.text}
+            </p>
+          ))}
+          {interim && <p className="text-sm italic text-slate-400">{interim}…</p>}
+        </div>
+      </div>
+
+      {/* Hasta "doktora sorularım" notu — bekleme odasıyla aynı localStorage anahtarından (talep #2) */}
+      {selfRole === "patient" && (
+        <div className="mt-4">
+          <PatientQuestionsPanel storageKey={roomId} lang={lang} />
+        </div>
+      )}
     </div>
   );
 }

@@ -14,7 +14,7 @@ export const PRO_BONO_STATES: Record<string, string> = {
   COMPLETED: "Tamamlandı",
 };
 
-// Hekimin anlık müsaitlik durumu (Doctor.proBonoState)
+// Doktorun anlık müsaitlik durumu (Doctor.proBonoState)
 export const DOCTOR_PB_STATES: Record<string, string> = {
   OFFLINE: "Çevrimdışı",
   AVAILABLE: "Müsait",

@@ -7,7 +7,7 @@ import { ALL_DOC_TYPES, refreshActivation } from "@/lib/doctor-activation";
 // Object storage (S3) henüz yok → küçük dosyalar base64 olarak DB'de (data URI). Kaba sınır ~8.5 MB.
 const MAX_FILE_CHARS = 12_000_000;
 
-// Oturumdaki hekimin doctorId'si (yalnız kendi belgelerine erişir — IDOR engeli).
+// Oturumdaki doktorun doctorId'si (yalnız kendi belgelerine erişir — IDOR engeli).
 async function myDoctorId(userId: string): Promise<string | null> {
   const u = await db.user.findUnique({ where: { id: userId }, select: { doctorId: true } });
   return u?.doctorId ?? null;
@@ -18,7 +18,7 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   const doctorId = await myDoctorId(user.id);
-  if (!doctorId) return NextResponse.json({ error: "Bu hesap bir hekim profiline bağlı değil." }, { status: 400 });
+  if (!doctorId) return NextResponse.json({ error: "Bu hesap bir doktor profiline bağlı değil." }, { status: 400 });
   const docs = await db.doctorDocument.findMany({
     where: { doctorId },
     select: { id: true, type: true, label: true, mimeType: true, createdAt: true },
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   const doctorId = await myDoctorId(user.id);
-  if (!doctorId) return NextResponse.json({ error: "Bu hesap bir hekim profiline bağlı değil." }, { status: 400 });
+  if (!doctorId) return NextResponse.json({ error: "Bu hesap bir doktor profiline bağlı değil." }, { status: 400 });
 
   const b = await req.json().catch(() => ({}));
   const type = String(b.type ?? "");
@@ -70,7 +70,7 @@ export async function DELETE(req: Request) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   const doctorId = await myDoctorId(user.id);
-  if (!doctorId) return NextResponse.json({ error: "Bu hesap bir hekim profiline bağlı değil." }, { status: 400 });
+  if (!doctorId) return NextResponse.json({ error: "Bu hesap bir doktor profiline bağlı değil." }, { status: 400 });
 
   const id = new URL(req.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id gerekli." }, { status: 400 });

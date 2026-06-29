@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 // Eski tasarım: design-backup/anasayfa-klasik-v2.6.tsx.bak + git tag design-klasik-v2.6
 export default async function Home() {
   const user = await getCurrentUser();
-  // "Meet the specialists" — gerçek hekimlerden 3'ü (yorum sayısı yüksek olan markalı branşlar önde)
+  // "Meet the specialists" — gerçek doktorlardan 3'ü (yorum sayısı yüksek olan markalı branşlar önde)
   const docs = await db.doctor.findMany({
     where: { branch: { in: ["Saç Ekimi", "Diş Tedavisi", "Tüp Bebek (IVF)"] } },
     take: 3,

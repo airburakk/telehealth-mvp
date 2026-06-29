@@ -1,4 +1,4 @@
-// Doktor tanıtım videosu (kartvizit) — cinsiyete göre yüklenir (erkek/kadın isimli hekim).
+// Doktor tanıtım videosu (kartvizit) — cinsiyete göre yüklenir (erkek/kadın isimli doktor).
 // Kaynak: public/videos/doctor-male.mp4 · doctor-female.mp4. Sessiz otomatik döngü (kartvizit hissi)
 // + tam kontroller (kullanıcı sesli izleyebilir/durdurabilir). Presentational (server component uyumlu).
 export function DoctorVideoCard({ name, title, female }: { name: string; title: string; female: boolean }) {

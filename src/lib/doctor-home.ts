@@ -2,11 +2,11 @@
 // Ana Sayfa UI'si ve onboarding kapısı bu yardımcıları ortak kullanır ki kurallar tek yerde dursun.
 //
 // 5 pencere:
-//   1) Klinik Nöbet      — HER hekimde (her zaman)
-//   2) İkinci Görüş (SO)  — yalnız Prof./Doç. ünvanlı hekimde (opt-in YOK, ünvan kapısı)
+//   1) Klinik Nöbet      — HER doktorda (her zaman)
+//   2) İkinci Görüş (SO)  — yalnız Prof./Doç. ünvanlı doktorda (opt-in YOK, ünvan kapısı)
 //   3) Pro Bono          — yalnız proBonoOptIn=true (onboarding'de seçilir; sonra /doktor/profil'den açılabilir)
 //   4) Konsültasyon Tal. — yalnız consultOptIn=true (Partner doktordan gelen anonim talepler; yanıt başına ödeme)
-//   5) Haberler          — HER hekimde (her zaman)
+//   5) Haberler          — HER doktorda (her zaman)
 
 // İkinci Görüş ünvan kapısı: yalnız doçent/profesör.
 // Doctor.title değerleri: "Prof. Dr." | "Doç. Dr." | "Op. Dr." | "Uzm. Dr."
@@ -29,7 +29,7 @@ export interface PanelVisibility {
   news: true; // her zaman
 }
 
-// Hekimin Ana Sayfa pencerelerinin görünürlüğü. duty + news her zaman; so ünvana, proBono/consult opt-in'e bağlı.
+// Doktorun Ana Sayfa pencerelerinin görünürlüğü. duty + news her zaman; so ünvana, proBono/consult opt-in'e bağlı.
 export function panelVisibility(doc: DoctorPanelFields): PanelVisibility {
   return {
     duty: true,

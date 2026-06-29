@@ -9,7 +9,7 @@ import { isGoogleConfigured, exchangeGoogleCode, googleRedirectUri } from "@/lib
 import { createDoctorAccount } from "@/lib/doctor-signup";
 
 // GET /api/auth/google/callback — Google dönüşü. State (CSRF) doğrula → kod takası → email/ad.
-// Mevcut kullanıcı → giriş (mevcut rol). Yeni → hekim hesabı (kimlik onboarding'de tamamlanır).
+// Mevcut kullanıcı → giriş (mevcut rol). Yeni → doktor hesabı (kimlik onboarding'de tamamlanır).
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const origin = url.origin;
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
 
   let user = await db.user.findUnique({ where: { email: info.email } });
   if (!user) {
-    // Yeni hekim — Google yalnız ad/e-posta verir; branş/şehir/dil onboarding'de tamamlanır.
+    // Yeni doktor — Google yalnız ad/e-posta verir; branş/şehir/dil onboarding'de tamamlanır.
     // Parola girişi devre dışı (rastgele hash); verified:false (admin onayı bekler).
     const passwordHash = await hashPassword(randomBytes(24).toString("hex"));
     user = await createDoctorAccount({

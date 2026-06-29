@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { canCompleteOnboarding, missingOnboardingSteps } from "@/lib/doctor-activation";
 
 // POST /api/doctor/onboarding — M5 ilk-giriş onboarding kapısı + sonradan opt-in güncelleme.
-// Hekim, Pro Bono ve Partner Konsültasyon taleplerine katılıp katılmayacağını seçer.
+// Doktor, Pro Bono ve Partner Konsültasyon taleplerine katılıp katılmayacağını seçer.
 // İlk çağrıda onboardedAt damgalanır (kapı bir daha gösterilmez). Sonraki çağrılar opt-in günceller.
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   }
   const dbUser = await db.user.findUnique({ where: { id: user.id } });
   if (!dbUser?.doctorId) {
-    return NextResponse.json({ error: "Bu hesap bir hekim profiline bağlı değil." }, { status: 400 });
+    return NextResponse.json({ error: "Bu hesap bir doktor profiline bağlı değil." }, { status: 400 });
   }
 
   const b = await req.json().catch(() => ({}));

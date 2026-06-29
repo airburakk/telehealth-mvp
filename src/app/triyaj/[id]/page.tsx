@@ -22,7 +22,7 @@ const PHASE_ICON = {
 // sunucu tarafında çevrilir (Translation cache; ilk hasta sonrası maliyetsiz).
 const STATIC_LABELS = [
   "Vakanız oluşturuldu ve doktor kuyruğuna eklendi",
-  "Uzman hekim, hazırlanan vaka özetinizi inceleyip sizinle video görüşmesi planlayacak.",
+  "Uzman doktor, hazırlanan vaka özetinizi inceleyip sizinle video görüşmesi planlayacak.",
   "Vaka No", "Aciliyet", "Hasta", "Ülke / Dil", "Yönlendirilen Branş", "Süre",
   "Şikayet", "Triyaj Gerekçesi", "Belgeler", "Doktor panelinde gör", "Yeni triyaj",
   "Acil / Hayati", "Yüksek", "Orta", "Düşük", "Rutin / Elektif",
@@ -80,7 +80,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
   return (
     <div dir={langDir(c.language)} className="mx-auto max-w-2xl px-5 py-10">
       {gate ? (
-        // Kapı: branşta çevrimiçi hekim yok → 3 seçenek (veya süren randevu akışı)
+        // Kapı: branşta çevrimiçi doktor yok → 3 seçenek (veya süren randevu akışı)
         <ConsultGate caseId={c.id} lang={c.language} hasSentinel={gate.hasSentinel} hasIcapci={gate.hasIcapci} appointment={gate.appointment} />
       ) : (
         <>
@@ -89,7 +89,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
             <div>
               <h1 className="font-bold text-emerald-900">{t("Vakanız oluşturuldu ve doktor kuyruğuna eklendi")}</h1>
               <p className="mt-0.5 text-sm text-emerald-800/80">
-                {t("Uzman hekim, hazırlanan vaka özetinizi inceleyip sizinle video görüşmesi planlayacak.")}
+                {t("Uzman doktor, hazırlanan vaka özetinizi inceleyip sizinle video görüşmesi planlayacak.")}
               </p>
             </div>
           </div>

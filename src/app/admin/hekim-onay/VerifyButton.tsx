@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, Loader2 } from "lucide-react";
 
-// Admin/Etik Kurul — hekimi doğrula (verified:true). Başarıda liste tazelenir (hekim listeden düşer).
+// Admin/Etik Kurul — doktoru doğrula (verified:true). Başarıda liste tazelenir (doktor listeden düşer).
 export function VerifyButton({ doctorId }: { doctorId: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);

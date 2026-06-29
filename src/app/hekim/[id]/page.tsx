@@ -39,7 +39,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
       <Link href="/hekimler" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0EA5B2]">
-        <ArrowLeft size={16} /> Hekimler
+        <ArrowLeft size={16} /> Doktorlar
       </Link>
 
       {/* Hero */}

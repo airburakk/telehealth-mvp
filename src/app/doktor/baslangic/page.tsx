@@ -26,10 +26,10 @@ export default async function DoctorOnboardingPage() {
       })
     : null;
 
-  // Hekim profili bağlı değilse (ör. koordinatör) onboarding'in anlamı yok → panele geç.
+  // Doktor profili bağlı değilse (ör. koordinatör) onboarding'in anlamı yok → panele geç.
   if (!doctor) redirect("/doktor");
   // Onboard OLMUŞ ve zorunlu belgeleri tamamlamış (aktif) ise kapıyı atla. Belge eksikse (activatedAt
-  // null) burada kal — hekim diploma + MMSS yükleyip tamamlasın.
+  // null) burada kal — doktor diploma + MMSS yükleyip tamamlasın.
   if (doctor.onboardedAt && doctor.activatedAt) redirect("/doktor");
 
   // Yüklü mesleki belgelerin meta listesi (içerik DÖNMEZ) + MMSS metadata pre-fill.
@@ -39,7 +39,7 @@ export default async function DoctorOnboardingPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  // Branş işlemleri (taban/tavan) + hekimin kayıtlı seçimi (FHIR ServiceRequest/ChargeItem girdisi).
+  // Branş işlemleri (taban/tavan) + doktorun kayıtlı seçimi (FHIR ServiceRequest/ChargeItem girdisi).
   const branchKey = branchKeyFromLabel(doctor.branch) ?? "";
   const branchItems = branchKey ? getBranchProcedures(branchKey) : [];
   let initialProc: Record<string, number> = {};

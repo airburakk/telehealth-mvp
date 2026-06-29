@@ -170,7 +170,7 @@ export function PackArtIvf() {
   );
 }
 
-// ── Hekim avatarları (kare) — GERÇEK profil fotoğrafı ──
+// ── Doktor avatarları (kare) — GERÇEK profil fotoğrafı ──
 // Öncelik: doktorun kendi fotoğrafı (photo, ör. /photos/pool/p07.jpg) → yoksa cinsiyet-fallback
 // (/photos/doctor-female.jpg · doctor-male.jpg). Parent yuvarlatır + kırpar (object-cover).
 export function DoctorArt({ i = 0, female, photo }: { i?: number; female?: boolean; photo?: string | null }) {

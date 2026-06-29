@@ -35,7 +35,7 @@ export function DoctorDirectory({ doctors }: { doctors: DoctorRow[] }) {
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Hekim ara…" className="rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-[#14C3D0]" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Doktor ara…" className="rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-[#14C3D0]" />
         </div>
         <select value={branch} onChange={(e) => setBranch(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#14C3D0]">
           <option value="all">Tüm branşlar</option>
@@ -46,7 +46,7 @@ export function DoctorDirectory({ doctors }: { doctors: DoctorRow[] }) {
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         {filtered.length === 0 && (
           <div className="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white py-12 text-center text-slate-400">
-            <Inbox className="mx-auto mb-2" /> Hekim bulunamadı.
+            <Inbox className="mx-auto mb-2" /> Doktor bulunamadı.
           </div>
         )}
         {filtered.map((d) => (

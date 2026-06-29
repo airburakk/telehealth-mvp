@@ -23,6 +23,7 @@ const UI = [
   "Tercümeyi başlat", "kulaklık önerilir (hoparlörde yankı olabilir)",
   "Ses, girişte verdiğiniz KVKK açık onamı kapsamında yalnızca gerçek zamanlı çeviri için işlenir.",
   "bağlanılıyor…", "dinleniyor…", "Durdur",
+  "İlk konuşma algılandığında otomatik başlar…",
   // sabit hata mesajları (dinamik olanlar TR'ye düşer)
   "Karşı taraf henüz bağlı değil (ses yok). Önce görüşmeye katılın.",
   "Token alınamadı.", "Bağlantı hatası.", "Başlatılamadı.",
@@ -41,11 +42,16 @@ function toBytes(data: unknown): Uint8Array | null {
 
 export function LiveInterpreter({
   targetLang, targetLabel, otherLabel, getRemoteStream, onMuteRemote, lang = "Türkçe",
+  autoStart = false, autoMode = false,
 }: {
   targetLang: string; targetLabel: string; otherLabel: string;
   getRemoteStream: () => MediaStream | null;
   onMuteRemote: (muted: boolean) => void;
   lang?: string;
+  /** Diller farklı → otomatik tercüme modu (manuel "başlat" düğmesi gizlenir, gösterge görünür). */
+  autoMode?: boolean;
+  /** İlk konuşma sesi algılandı → bir kez otomatik start() (VAD tetiği). */
+  autoStart?: boolean;
 }) {
   const { t } = useT(lang, UI);
   const [status, setStatus] = useState<Status>("checking");
@@ -62,6 +68,7 @@ export function LiveInterpreter({
   const procRef = useRef<ScriptProcessorNode | null>(null);
   const srcRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const liveRef = useRef(false);
+  const autoStartedRef = useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -71,6 +78,16 @@ export function LiveInterpreter({
     return () => { teardown(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // VAD tetiği: ConsultationRoom ilk konuşmayı algılayınca autoStart=true → bir kez otomatik başlat.
+  // (status idle değilse/disabled ise dokunma; hata sonrası tekrar otomatik başlatma yapılmaz.)
+  useEffect(() => {
+    if (autoStart && status === "idle" && !autoStartedRef.current) {
+      autoStartedRef.current = true;
+      start();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, status]);
 
   // PCM16 baytlarını 24kHz AudioBuffer olarak sıralı oynat
   function playChunk(bytes: Uint8Array) {
@@ -219,12 +236,20 @@ export function LiveInterpreter({
       {(status === "idle" || status === "error") && (
         <div className="mt-3">
           {/* KVKK açık onam giriş sırasında bir kez alınır (/onam) → burada tekrar kapı yok. */}
-          <button
-            onClick={start}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
-          >
-            <Mic size={15} /> {t("Tercümeyi başlat")}
-          </button>
+          {/* Otomatik mod (diller farklı): ilk konuşma algılanınca otomatik başlar → manuel düğme yerine gösterge.
+              Hata durumunda (status==="error") manuel düğme kalır (otomatik kurtarma yapılmaz). */}
+          {autoMode && status === "idle" ? (
+            <div className="inline-flex items-center gap-1.5 rounded-lg bg-teal-50 px-3 py-2 text-sm font-medium text-teal-700 ring-1 ring-teal-100">
+              <Mic size={15} className="text-teal-600" /> {t("İlk konuşma algılandığında otomatik başlar…")}
+            </div>
+          ) : (
+            <button
+              onClick={start}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
+            >
+              <Mic size={15} /> {t("Tercümeyi başlat")}
+            </button>
+          )}
           <p className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-slate-400"><Headphones size={11} /> {t("kulaklık önerilir (hoparlörde yankı olabilir)")}</p>
           <p className="mt-1 flex items-start gap-1 text-[10px] leading-relaxed text-slate-400"><ShieldCheck size={11} className="mt-0.5 shrink-0 text-teal-600" /> {t("Ses, girişte verdiğiniz KVKK açık onamı kapsamında yalnızca gerçek zamanlı çeviri için işlenir.")}</p>
           {err && <p className="mt-1 flex items-start gap-1 text-[11px] text-red-600"><AlertTriangle size={12} className="mt-0.5 shrink-0" /> {t(err)}</p>}

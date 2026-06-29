@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { setDoctorAvailable, matchForDoctor, quotaInfo, notifyStrandedWaiters } from "@/lib/pro-bono";
 
-// POST /api/pro-bono/availability — hekim pro bono müsaitliğini aç/kapa (+ops. kota); açınca eşleşme dener.
+// POST /api/pro-bono/availability — doktor pro bono müsaitliğini aç/kapa (+ops. kota); açınca eşleşme dener.
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "ADMIN"].includes(user.role)) {
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   }
   const u = await db.user.findUnique({ where: { id: user.id } });
   const doctorId = u?.doctorId;
-  if (!doctorId) return NextResponse.json({ error: "Bu hesap bir hekim profiline bağlı değil." }, { status: 400 });
+  if (!doctorId) return NextResponse.json({ error: "Bu hesap bir doktor profiline bağlı değil." }, { status: 400 });
 
   const body = await req.json().catch(() => ({}));
 
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     const m = await matchForDoctor(doctorId);
     consultationId = m?.consultationId ?? null;
   } else {
-    // Çevrimdışı olundu → bu son müsait hekimse, havuzda bekleyen hastaları uyar
+    // Çevrimdışı olundu → bu son müsait doktorse, havuzda bekleyen hastaları uyar
     await notifyStrandedWaiters();
   }
 

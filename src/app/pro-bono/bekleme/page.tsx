@@ -23,19 +23,19 @@ const S = {
   notWaiting: "Bu başvuru artık beklemede değil",
   statusLabel: "Durum:",
   statusFollow: "Vakalarınızdan takip edebilirsiniz.",
-  noDoctorTitle: "Şu an çevrimiçi gönüllü hekim yok",
-  searchingTitle: "Gönüllü hekim aranıyor…",
+  noDoctorTitle: "Şu an çevrimiçi gönüllü doktor yok",
+  searchingTitle: "Gönüllü doktor aranıyor…",
   noDoctorBody:
-    "Başvurunuz havuzda. Bir gönüllü hekim çevrimiçi olduğunda görüşme otomatik başlar; bildirimlere izin verdiyseniz bir hekim müsait olduğunda size haber göndereceğiz. İsterseniz bu sayfayı açık tutabilirsiniz.",
+    "Başvurunuz havuzda. Bir gönüllü doktor çevrimiçi olduğunda görüşme otomatik başlar; bildirimlere izin verdiyseniz bir doktor müsait olduğunda size haber göndereceğiz. İsterseniz bu sayfayı açık tutabilirsiniz.",
   searchingBody:
-    "Başvurunuz alındı. Müsait bir gönüllü hekimle eşleştiğinizde görüşme otomatik başlayacak — bu sayfayı açık tutun.",
+    "Başvurunuz alındı. Müsait bir gönüllü doktorla eşleştiğinizde görüşme otomatik başlayacak — bu sayfayı açık tutun.",
   queuePos: "Kuyruktaki sıranız:",
-  waitingDoctor: "Hekim bekleniyor",
+  waitingDoctor: "Doktor bekleniyor",
   waitingMatch: "Eşleşme bekleniyor",
 } as const;
 
 // Pro Bono bekleme odası — eşleşene kadar poll eder; eşleşince görüşme odasına yönlendirir.
-// Hiç çevrimiçi hekim yoksa (online=0) "bir hekim müsait olunca bildirim göndeririz" uyarısı gösterir.
+// Hiç çevrimiçi doktor yoksa (online=0) "bir doktor müsait olunca bildirim göndeririz" uyarısı gösterir.
 // Çok dilli (8+ dil) + RTL: genel hasta dili (air_lang) + useT; tracker PRO_BONO_TRACKER_TEXTS ile çevrilir.
 function WaitingInner() {
   const router = useRouter();

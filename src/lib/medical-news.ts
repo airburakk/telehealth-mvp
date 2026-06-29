@@ -1,5 +1,5 @@
 // M5 — Haberler penceresi içerik motoru (Faz 1 STUB; Faz 4'te branşa özel küratörlü/AI ile zenginleşir).
-// Harici API yok — kod-config örnek kartlar. Genel tıp haberleri + hekimin branşına özel haber/makale/ilaç raporu.
+// Harici API yok — kod-config örnek kartlar. Genel tıp haberleri + doktorun branşına özel haber/makale/ilaç raporu.
 
 export type NewsKind = "haber" | "makale" | "ilac";
 
@@ -18,7 +18,7 @@ export const NEWS_KIND_LABEL: Record<NewsKind, string> = {
   ilac: "İlaç Geliştirme",
 };
 
-// Her hekime gösterilen genel tıp gündemi (branştan bağımsız).
+// Her doktora gösterilen genel tıp gündemi (branştan bağımsız).
 const GENERAL: NewsItem[] = [
   { id: "gen-1", kind: "haber", title: "DSÖ dijital sağlık çerçevesini güncelledi", source: "WHO Bülten", summary: "Teletıp ve sınır-ötesi konsültasyon için yeni rehber ilkeler yayımlandı.", date: "2026-06-24" },
   { id: "gen-2", kind: "makale", title: "Yapay zekâ destekli triyajda doğruluk meta-analizi", source: "The Lancet Digital Health", summary: "Çok merkezli çalışma, AI ön-değerlendirmenin aciliyet sınıflamasında uzman uyumunu inceledi.", date: "2026-06-20" },
@@ -43,7 +43,7 @@ const BY_BRANCH: Record<string, NewsItem[]> = {
   ],
 };
 
-// Hekimin branşına göre haber akışı: genel gündem + (varsa) branşa özel kartlar.
+// Doktorun branşına göre haber akışı: genel gündem + (varsa) branşa özel kartlar.
 export function newsForBranch(branch: string | null | undefined): NewsItem[] {
   const branchItems = branch && BY_BRANCH[branch] ? BY_BRANCH[branch] : [];
   return [...branchItems, ...GENERAL];

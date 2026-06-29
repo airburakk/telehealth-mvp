@@ -2,7 +2,7 @@ import { reportDueRange, type SoStatus } from "./second-opinion";
 import type { TrackerState } from "@/components/ProcessTracker";
 
 // İkinci Görüş süreç takibi — durum → faz + güncel alt-durum eşlemesi. 4 faz: Ödeme · Belgeler ·
-// Uzman Hekim · Video. ProcessTracker'a beslenir; metinler TR kanonik (useT ile çevrilir).
+// Uzman Doktor · Video. ProcessTracker'a beslenir; metinler TR kanonik (useT ile çevrilir).
 // `dueDate` (ISO): somut "tahmini teslim" tarihi — yalnız ilgili faz aktifken (muğlak yerine somut;
 // tasarım [[dijital-bekleme-odasi]] Faz A1).
 export interface SoTrackerPhase {
@@ -16,7 +16,7 @@ export interface SoTrackerPhase {
 const PHASES = [
   { key: "payment", label: "Ödeme", done: "Ödeme alındı", pending: "Ödeme bekleniyor" },
   { key: "docs", label: "Belgeler", done: "Belge süreci tamamlandı", pending: "Belgeler bekleniyor" },
-  { key: "doctor", label: "Uzman hekim", done: "Yazılı görüşünüz sunuldu", pending: "Uzman hekim aşaması bekleniyor" },
+  { key: "doctor", label: "Uzman doktor", done: "Yazılı görüşünüz sunuldu", pending: "Uzman doktor aşaması bekleniyor" },
   { key: "video", label: "Video görüşme", done: "Görüşme tamamlandı", pending: "Video görüşme bekleniyor" },
 ] as const;
 
@@ -26,10 +26,10 @@ const MAP: Partial<Record<SoStatus, { phase: number; sub: string }>> = {
   AWAITING_PAYMENT: { phase: 0, sub: "Ödemeniz bekleniyor" },
   AWAITING_DOCUMENTS: { phase: 1, sub: "Eksik belge yüklemeniz bekleniyor" },
   PENDING_REVIEW: { phase: 2, sub: "Dosyanız sisteme aktarıldı" },
-  OFFERED: { phase: 2, sub: "Dosyanız uzman hekime iletildi — onay bekleniyor" },
+  OFFERED: { phase: 2, sub: "Dosyanız uzman doktora iletildi — onay bekleniyor" },
   ASSIGNED: { phase: 2, sub: "Dosyanız branş doktoruna atandı — inceleniyor" },
-  AWAITING_ADDITIONAL_TESTS: { phase: 2, sub: "Hekim ek tetkik talep etti" },
-  OPINION_DELIVERED: { phase: 3, sub: "Uzman hekim video randevu teklif edecek" },
+  AWAITING_ADDITIONAL_TESTS: { phase: 2, sub: "Doktor ek tetkik talep etti" },
+  OPINION_DELIVERED: { phase: 3, sub: "Uzman doktor video randevu teklif edecek" },
   VIDEO_OFFERED: { phase: 3, sub: "Video randevu teklifi — onayınız bekleniyor" },
   VIDEO_SCHEDULED: { phase: 3, sub: "Video görüşme randevunuz kuruldu" },
   VIDEO_COMPLETED: { phase: 3, sub: "Görüşmeniz tamamlandı" },
@@ -40,7 +40,7 @@ const MAP: Partial<Record<SoStatus, { phase: number; sub: string }>> = {
 export function soTrackerPhases(status: SoStatus, readyAt?: Date | string | null): SoTrackerPhase[] {
   const m = MAP[status] ?? { phase: 0, sub: PHASES[0].pending };
   const allDone = status === "CLOSED" || status === "VIDEO_COMPLETED";
-  // Uzman hekim fazı aktifken (rapor hazırlanıyor) somut teslim tahmini = readyAt + SLA üst sınırı.
+  // Uzman doktor fazı aktifken (rapor hazırlanıyor) somut teslim tahmini = readyAt + SLA üst sınırı.
   const reportDue =
     (status === "ASSIGNED" || status === "AWAITING_ADDITIONAL_TESTS") && readyAt
       ? reportDueRange(new Date(readyAt)).max.toISOString()

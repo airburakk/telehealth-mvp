@@ -55,7 +55,7 @@ export const SO_STATUS_LABELS: Record<SoStatus, string> = {
   DRAFT: "Taslak — belge hazırlanıyor",
   AWAITING_PAYMENT: "Ödeme bekleniyor",
   PENDING_REVIEW: "Dosyanız incelenmeye alındı",
-  OFFERED: "Uzman hekime iletildi — kabul bekleniyor",
+  OFFERED: "Uzman doktora iletildi — kabul bekleniyor",
   AWAITING_DOCUMENTS: "Eksik belge bekleniyor",
   READY_FOR_ASSIGNMENT: "Doktor ataması bekleniyor",
   ASSIGNED: "Doktor incelemesinde",
@@ -87,7 +87,7 @@ export const SO_DURATION_COPY = {
   tr: {
     reportLabel: "Yazılı raporun hazırlanma süresi",
     reportValue: `${SO_REPORT_SLA_BUSINESS_DAYS.min}-${SO_REPORT_SLA_BUSINESS_DAYS.max} iş günü`,
-    video: `Uzman hekimle birebir video görüşme ise yazılı raporun tesliminden itibaren ${SO_VIDEO_WINDOW_DAYS} gün içerisinde. Size görüşme günü ve saati için bildirim yapılacaktır.`,
+    video: `Uzman doktorla birebir video görüşme ise yazılı raporun tesliminden itibaren ${SO_VIDEO_WINDOW_DAYS} gün içerisinde. Size görüşme günü ve saati için bildirim yapılacaktır.`,
   },
   en: {
     reportLabel: "Written report preparation time",

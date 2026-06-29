@@ -192,9 +192,9 @@ export async function generateDischarge(ctx: DischargeContext): Promise<{ sectio
     model: MODEL,
     max_tokens: 2000,
     system:
-      "Sen kıdemli bir klinik dokümantasyon hekimisin. Hastanın yolculuk verisini (triyaj, görüşme/SOAP notu, tedavi paketi, post-op takip) profesyonel bir EPİKRİZ (taburcu raporu) haline getirirsin. " +
+      "Sen kıdemli bir klinik dokümantasyon doktorusin. Hastanın yolculuk verisini (triyaj, görüşme/SOAP notu, tedavi paketi, post-op takip) profesyonel bir EPİKRİZ (taburcu raporu) haline getirirsin. " +
       "Tıbbi olarak tutarlı, özlü ve resmi Türkçe yaz. Verilmeyen bulguyu/ölçümü UYDURMA; bilgi yoksa 'Belirtilmedi' yaz veya branşa uygun genel/önerilen ifade kullan (kesin doz/değer uydurma). " +
-      "Hasta uluslararası bir sağlık turizmi hastasıdır; rapor yurt dışındaki hekimine iletilecektir. Yanıtı DAİMA submit_discharge aracıyla ver.",
+      "Hasta uluslararası bir sağlık turizmi hastasıdır; rapor yurt dışındaki doktoruna iletilecektir. Yanıtı DAİMA submit_discharge aracıyla ver.",
     tools: [DISCHARGE_TOOL],
     tool_choice: { type: "tool", name: "submit_discharge" },
     messages: [{
@@ -459,7 +459,7 @@ const DOCUMENT_TOOL: Anthropic.Tool = {
       translation: {
         type: "string",
         description:
-          "Belgedeki ANLAMLI tıbbi içeriğin (değerler, tanılar, ölçümler, hekim notları) Türkçe çevirisi; düzenli ve okunur. " +
+          "Belgedeki ANLAMLI tıbbi içeriğin (değerler, tanılar, ölçümler, doktor notları) Türkçe çevirisi; düzenli ve okunur. " +
           "Belge zaten Türkçe ise 'Belge zaten Türkçe.' yaz. Olmayan içeriği uydurma.",
       },
       flags: {

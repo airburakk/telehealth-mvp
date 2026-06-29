@@ -1,6 +1,6 @@
 "use client";
 
-// M5 Faz 3 — Konsültasyon görüntülü görüşme odası (partner ↔ sahiplenen hekim).
+// M5 Faz 3 — Konsültasyon görüntülü görüşme odası (partner ↔ sahiplenen doktor).
 // SoVideoRoom WebRTC P2P çekirdeğinin konsültasyona uyarlaması: SO/case bağı yok, anonim.
 // Sinyalleşme kanalı = ConsultationVideoAppointment.id (roomId). Bağlanılamazsa Faz 2 chat'e düşülür.
 import { useEffect, useMemo, useRef, useState } from "react";

@@ -96,7 +96,7 @@ export function buildSharedItems(c: CaseForShare, scopes: string[]): SharedItem[
         `Aciliyet: ${c.urgency}/5\n\n` +
         `Şikâyet / Semptomlar:\n${c.symptoms}\n\n` +
         `Triyaj Değerlendirmesi:\n${c.reasoning}\n\n` +
-        `(Not: Hekim henüz nihai epikriz oluşturmadı — bu, triyaj verisinden türetilmiş ön özettir.)`;
+        `(Not: Doktor henüz nihai epikriz oluşturmadı — bu, triyaj verisinden türetilmiş ön özettir.)`;
     items.push({ scope: "EPIKRIZ", kind: "report", title: "Epikriz / Özet Rapor", body });
   }
 

@@ -1,6 +1,6 @@
-// M5 — Hekim hesap aktivasyon kapısı.
+// M5 — Doktor hesap aktivasyon kapısı.
 // Zorunlu mesleki belgeler (Tıp Diploması + Mesleki Mali Sorumluluk Sigortası/MMSS) yüklenip MMSS
-// metadata'sı (teminat limiti dahil) tamamlanmadan hekim klinik panellere erişemez. Koşul sağlanınca
+// metadata'sı (teminat limiti dahil) tamamlanmadan doktor klinik panellere erişemez. Koşul sağlanınca
 // Doctor.activatedAt damgalanır; eksilirse damga geri alınır (gate yeniden devreye girer).
 // MMSS teminat limiti aynı zamanda M3 Katman 3 malpraktis ek-prim hesabının girdisidir.
 import { db } from "@/lib/db";
@@ -43,9 +43,9 @@ export function missingSteps(docs: { type: string }[], mmss: MmssMeta): string[]
   return out;
 }
 
-// ── M5 Kayıt — ilk-onboarding ek zorunlulukları (yalnız self-signup hekim ilk kez tamamlarken) ──
-// Global canActivate/refreshActivation (belge/MMSS değişiminde TÜM hekimlerde çalışır) DEĞİŞMEZ →
-// mevcut hekimlerde regresyon yok. Aşağıdaki ek koşullar yalnız onboarding finish yolunda uygulanır:
+// ── M5 Kayıt — ilk-onboarding ek zorunlulukları (yalnız self-signup doktor ilk kez tamamlarken) ──
+// Global canActivate/refreshActivation (belge/MMSS değişiminde TÜM doktorlarde çalışır) DEĞİŞMEZ →
+// mevcut doktorlarde regresyon yok. Aşağıdaki ek koşullar yalnız onboarding finish yolunda uygulanır:
 // ≥1 işlem+ücret (FHIR ServiceRequest/ChargeItem girdisi) + FHIR qualification (diploma/tescil no =
 // Practitioner.identifier · uzmanlık belgesi = Practitioner.qualification).
 

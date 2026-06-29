@@ -375,7 +375,7 @@ export function shareLinkToConsent(s: ShareForFhir): FhirResource {
       },
       actor: [{
         role: { coding: [{ system: "http://terminology.hl7.org/CodeSystem/v3-ParticipationType", code: "IRCP", display: "information recipient" }] },
-        reference: { display: s.recipientName || "Dış hekim (bağlantıyla erişim)" },
+        reference: { display: s.recipientName || "Dış doktor (bağlantıyla erişim)" },
       }],
       action: [{ coding: [{ system: "http://terminology.hl7.org/CodeSystem/consentaction", code: "access", display: "Access" }] }],
       // Paylaşım kapsamı (kategoriler) — kodsuz text (geçerli FHIR)
@@ -396,7 +396,7 @@ export function shareAccessToAuditEvent(a: ShareAccess, s: ShareForFhir): FhirRe
     recorded: new Date(a.createdAt).toISOString(),
     outcome: "0", // başarılı
     agent: [{
-      who: { display: s.recipientName || "Dış hekim (bağlantıyla erişim)" },
+      who: { display: s.recipientName || "Dış doktor (bağlantıyla erişim)" },
       requestor: true,
       ...(a.userAgent ? { name: a.userAgent.slice(0, 200) } : {}),
       network: { address: a.ip || "bilinmiyor", type: "2" }, // 2 = IP adresi
@@ -423,8 +423,8 @@ export function shareAuditBundle(s: ShareForFhir): FhirResource {
 }
 
 // ─────────────────────── M5 Konsültasyon Talebi → FHIR Bundle ───────────────────────
-// Anonim konsültasyon (Partner doktor → kayıtlı hekim). Hasta kimliği yok → anonim Patient/anon.
-// İçerik: tanı (Condition, ICD-10) + belge labları (Observation, LOINC) + hekim önerileri
+// Anonim konsültasyon (Partner doktor → kayıtlı doktor). Hasta kimliği yok → anonim Patient/anon.
+// İçerik: tanı (Condition, ICD-10) + belge labları (Observation, LOINC) + doktor önerileri
 // (lab/görüntüleme ServiceRequest LOINC · ilaç MedicationRequest ATC). RxNorm/ATC kodlu (kullanıcı kararı).
 const ATC_SYSTEM = "http://www.whocc.no/atc";
 const LOINC_SYSTEM = "http://loinc.org";

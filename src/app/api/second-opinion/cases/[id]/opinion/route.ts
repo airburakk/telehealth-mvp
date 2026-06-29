@@ -50,7 +50,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   await notifyUser(c.patientId, {
     type: "SO_OPINION",
     title: "📝 İkinci görüşünüz hazır",
-    body: "Uzman hekim yazılı değerlendirmesini sundu.",
+    body: "Uzman doktor yazılı değerlendirmesini sundu.",
     href: `/second-opinion/vaka/${id}`,
   });
   return NextResponse.json({ ok: true, status: "OPINION_DELIVERED" });

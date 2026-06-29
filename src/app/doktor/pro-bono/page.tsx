@@ -17,8 +17,8 @@ export default async function DoctorProBonoPage() {
   if (!doctor) {
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 text-center">
-        <h1 className="text-xl font-bold text-[#101010]">Hekim profili bağlı değil</h1>
-        <p className="mt-2 text-sm text-slate-500">Pro Bono müsaitliği yalnız hekim profiline bağlı hesaplarda açılır (ör. koordinatör hesabı değil).</p>
+        <h1 className="text-xl font-bold text-[#101010]">Doktor profili bağlı değil</h1>
+        <p className="mt-2 text-sm text-slate-500">Pro Bono müsaitliği yalnız doktor profiline bağlı hesaplarda açılır (ör. koordinatör hesabı değil).</p>
         <Link href="/doktor" className="mt-5 inline-flex rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">Doktor Paneli</Link>
       </div>
     );

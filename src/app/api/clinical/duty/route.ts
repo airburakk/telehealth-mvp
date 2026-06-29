@@ -5,7 +5,7 @@ import { dutyFeed, setClinicalDuty, releaseClinicalDoctor, type DutyPatch } from
 
 export const dynamic = "force-dynamic";
 
-// Oturumdaki kullanıcının hekim profili (DOCTOR/ADMIN). SessionUser doctorId taşımaz → DB'den çöz.
+// Oturumdaki kullanıcının doktor profili (DOCTOR/ADMIN). SessionUser doctorId taşımaz → DB'den çöz.
 async function resolveDoctor() {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "ADMIN"].includes(user.role)) return { user, doctorId: null as string | null };
@@ -17,7 +17,7 @@ async function resolveDoctor() {
 export async function GET() {
   const { user, doctorId } = await resolveDoctor();
   if (!user) return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
-  if (!doctorId) return NextResponse.json({ error: "Hekim profili yok." }, { status: 403 });
+  if (!doctorId) return NextResponse.json({ error: "Doktor profili yok." }, { status: 403 });
   return NextResponse.json((await dutyFeed(doctorId)) ?? {});
 }
 
@@ -25,7 +25,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const { user, doctorId } = await resolveDoctor();
   if (!user) return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
-  if (!doctorId) return NextResponse.json({ error: "Hekim profili yok." }, { status: 403 });
+  if (!doctorId) return NextResponse.json({ error: "Doktor profili yok." }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));
 

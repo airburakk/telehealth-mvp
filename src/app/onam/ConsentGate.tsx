@@ -15,7 +15,7 @@ const PATIENT = {
   intro: "Sağlık hizmetini sunabilmemiz için aşağıdaki veri işleme faaliyetleri hakkında sizi bilgilendiriyor ve açık rızanızı talep ediyoruz. Bu onay bir kez alınır; her girişte veya her görüşmede yeniden sorulmaz.",
   items: [
     "İşlenen veriler: kimlik ve iletişim bilgileriniz; tıbbi geçmiş, şikâyet, tanı, tetkik ve belgeleriniz dâhil sağlık verileriniz (özel nitelikli kişisel veri); video görüşmelerdeki ses ve görüntünüz.",
-    "Amaç: ön değerlendirme (triyaj), uzaktan konsültasyon, ikinci görüş, gönüllü (pro bono) hekim eşleştirmesi, sağlık turizmi organizasyonu ve ameliyat sonrası takip hizmetlerinin sunulması.",
+    "Amaç: ön değerlendirme (triyaj), uzaktan konsültasyon, ikinci görüş, gönüllü (pro bono) doktor eşleştirmesi, sağlık turizmi organizasyonu ve ameliyat sonrası takip hizmetlerinin sunulması.",
     "Aktarım: verileriniz; sizi değerlendiren yetkili sağlık personeliyle, gerçek zamanlı çeviri için yapay zekâ hizmet sağlayıcısıyla (ses verisi yurt dışına aktarılabilir) ve yalnızca sizin oluşturduğunuz paylaşım bağlantısıyla yetkilendirdiğiniz kişilerle paylaşılır.",
     "Haklarınız: KVKK m.11 kapsamında verilerinize erişme, düzeltme, silme ve işlemeye itiraz haklarına sahipsiniz; onamınızı dilediğiniz zaman geri alabilirsiniz.",
   ],

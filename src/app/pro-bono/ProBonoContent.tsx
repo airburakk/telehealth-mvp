@@ -28,12 +28,12 @@ const COPY = {
     introA: "AURA Pro Bono programı, maddi imkânı kısıtlı hastalar için akredite uzmanlarla ",
     strong: "ücretsiz",
     introB:
-      " video konsültasyon sunar. Gönüllü hekimlerimiz her dönem belirli bir kontenjanı bu amaca ayırır.",
+      " video konsültasyon sunar. Gönüllü doktorlarımiz her dönem belirli bir kontenjanı bu amaca ayırır.",
     apply: "Başvur",
     online: "Pro Bono hizmeti çevrimiçi",
-    onlineN: "gönüllü hekim şu an müsait",
-    offline: "Şu an çevrimiçi gönüllü hekim yok",
-    offlineHint: "bir hekim çevrimiçi olduğunda başvurabilirsiniz",
+    onlineN: "gönüllü doktor şu an müsait",
+    offline: "Şu an çevrimiçi gönüllü doktor yok",
+    offlineHint: "bir doktor çevrimiçi olduğunda başvurabilirsiniz",
     checking: "Müsaitlik kontrol ediliyor…",
     note:
       "Kontenjan sınırlıdır ve başvurular ön değerlendirmeye tabidir. Başvurunuz, uygunluk açısından koordinasyon ekibimizce incelenir.",
@@ -49,12 +49,12 @@ const POINTS = [
   {
     icon: FileCheck2,
     en: { t: "How to apply?", d: "Complete a short pre-assessment; your case is forwarded to the volunteer doctor pool." },
-    tr: { t: "Nasıl başvurulur?", d: "Kısa bir ön değerlendirme doldurun; durumunuz gönüllü hekim havuzuna iletilir." },
+    tr: { t: "Nasıl başvurulur?", d: "Kısa bir ön değerlendirme doldurun; durumunuz gönüllü doktor havuzuna iletilir." },
   },
   {
     icon: HeartHandshake,
     en: { t: "Volunteer doctors", d: "Our accredited specialists set aside a certain quota for free consultations each term." },
-    tr: { t: "Gönüllü hekimler", d: "Akredite uzmanlarımız her dönem belirli bir kontenjanı ücretsiz konsültasyona ayırır." },
+    tr: { t: "Gönüllü doktorlar", d: "Akredite uzmanlarımız her dönem belirli bir kontenjanı ücretsiz konsültasyona ayırır." },
   },
   {
     icon: ShieldCheck,

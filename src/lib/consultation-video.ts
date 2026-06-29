@@ -1,6 +1,6 @@
 // M5 Faz 3 — Konsültasyon görüntülü görüşme: presence/heartbeat + İcapçı offer/respond randevu.
 // Sinyalleşme kanalı = ConsultationVideoAppointment.id (api/consultations/[id]/signal callerSide tanır).
-// Taraflar: talebi sahiplenen/yanıtlayan hekim + talebi açan partner. Anonim (FK yok, klinik veri taşımaz).
+// Taraflar: talebi sahiplenen/yanıtlayan doktor + talebi açan partner. Anonim (FK yok, klinik veri taşımaz).
 import { db } from "./db";
 import { notifyUser, notifyDoctorById } from "./notify";
 
@@ -45,7 +45,7 @@ export async function videoForRequest(requestId: string): Promise<VideoApptView 
   };
 }
 
-// Hekim görüntülü görüşme önerir (yalnız talebi sahiplenen/yanıtlayan hekim). Eski açık teklif kapanır (tek aktif).
+// Doktor görüntülü görüşme önerir (yalnız talebi sahiplenen/yanıtlayan doktor). Eski açık teklif kapanır (tek aktif).
 export async function offerVideo(requestId: string, doctorId: string, proposedAt: Date): Promise<"OK" | "FORBIDDEN" | "NOT_FOUND"> {
   const req = await db.consultationRequest.findUnique({
     where: { id: requestId },
@@ -61,11 +61,11 @@ export async function offerVideo(requestId: string, doctorId: string, proposedAt
   });
 
   const pu = await db.user.findFirst({ where: { role: "PARTNER", partnerId: req.requestedByPartnerId }, select: { id: true } });
-  if (pu) await notifyUser(pu.id, { type: "CONSULT_VIDEO", title: "📹 Görüntülü görüşme teklifi", body: `${req.branch ?? "Genel"} · uzman hekim görüntülü görüşme önerdi`, href: "/partner" });
+  if (pu) await notifyUser(pu.id, { type: "CONSULT_VIDEO", title: "📹 Görüntülü görüşme teklifi", body: `${req.branch ?? "Genel"} · uzman doktor görüntülü görüşme önerdi`, href: "/partner" });
   return "OK";
 }
 
-// Partner en güncel OFFERED teklife yanıt verir: accept → SCHEDULED · decline → DECLINED. Hekime bildirir.
+// Partner en güncel OFFERED teklife yanıt verir: accept → SCHEDULED · decline → DECLINED. Doktora bildirir.
 export async function respondVideo(requestId: string, partnerId: string, action: "accept" | "decline"): Promise<"OK" | "FORBIDDEN" | "NOT_FOUND" | "GONE"> {
   const a = await db.consultationVideoAppointment.findFirst({ where: { requestId, status: "OFFERED" }, orderBy: { createdAt: "desc" } });
   if (!a) return "GONE";

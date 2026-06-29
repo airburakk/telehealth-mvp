@@ -6,7 +6,7 @@ import { ConsultVideoRoom } from "./ConsultVideoRoom";
 export const dynamic = "force-dynamic";
 
 // M5 Faz 3 — Konsültasyon görüntülü görüşme odası. [id] = ConsultationVideoAppointment.id (= sinyalleşme kanalı).
-// Erişim: yalnız randevunun hekimi (Doctor) veya partneri (PartnerDoctor). Anonim — hasta verisi yok.
+// Erişim: yalnız randevunun doktoru (Doctor) veya partneri (PartnerDoctor). Anonim — hasta verisi yok.
 export default async function ConsultVideoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await getCurrentUser();
@@ -36,7 +36,7 @@ export default async function ConsultVideoPage({ params }: { params: Promise<{ i
     const partner = await db.partnerDoctor.findUnique({ where: { id: appt.partnerId }, select: { language: true } });
     lang = partner?.language || "İngilizce";
     const doctor = await db.doctor.findUnique({ where: { id: appt.doctorId }, select: { title: true, name: true } });
-    remoteName = doctor ? `${doctor.title} ${doctor.name}` : "Uzman hekim";
+    remoteName = doctor ? `${doctor.title} ${doctor.name}` : "Uzman doktor";
     backHref = "/partner";
   } else {
     notFound();

@@ -73,7 +73,7 @@ export default async function ConsultationInboxPage() {
         </div>
       )}
 
-      {/* Devam eden görüşmeler — bu hekimin sahiplendiği (IN_DISCUSSION) talepler: chat + nihai görüş */}
+      {/* Devam eden görüşmeler — bu doktorun sahiplendiği (IN_DISCUSSION) talepler: chat + nihai görüş */}
       {engaged.length > 0 && (
         <>
           <h2 className="mt-8 flex items-center gap-2 text-sm font-semibold text-slate-700"><MessagesSquare size={16} className="text-sky-600" /> Devam eden görüşmeler ({engaged.length})</h2>
@@ -161,7 +161,7 @@ function DocumentsBlock({ docs }: { docs: ConsultDocView[] }) {
   );
 }
 
-// Hekimin verdiği yapılandırılmış öneriler (lab/görüntüleme/ilaç) — okunabilir özet.
+// Doktorun verdiği yapılandırılmış öneriler (lab/görüntüleme/ilaç) — okunabilir özet.
 function RecommendationsView({ r }: { r: ConsultReqView }) {
   if (!r.recommendedLabs.length && !r.recommendedImaging.length && !r.medications.length) return null;
   return (

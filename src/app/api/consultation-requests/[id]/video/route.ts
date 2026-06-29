@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { offerVideo, respondVideo, completeVideo, videoForRequest, appointmentParties } from "@/lib/consultation-video";
 
 // Faz 3 — konsültasyon görüntülü görüşme randevusu. [id] = ConsultationRequest.id.
-// GET: en güncel randevu + presence. POST: offer (hekim) / accept|decline (partner) / complete.
+// GET: en güncel randevu + presence. POST: offer (doktor) / accept|decline (partner) / complete.
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();

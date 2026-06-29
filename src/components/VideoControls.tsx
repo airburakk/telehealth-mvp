@@ -1,7 +1,7 @@
 "use client";
 
 // M5 Faz 3 — konsültasyon görüntülü görüşme kontrolleri (İcapçı offer/respond).
-// Hekim "öner" → partner "kabul/ret" → SCHEDULED → her iki taraf "odaya katıl".
+// Doktor "öner" → partner "kabul/ret" → SCHEDULED → her iki taraf "odaya katıl".
 // Karşı tarafın online rozeti presence'ten (poll). Partner tarafı useT ile kendi dilinde.
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";

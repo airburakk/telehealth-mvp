@@ -153,7 +153,7 @@ export function OnboardingForm({
                 </p>
               ) : (
                 <p className="mt-1 text-xs text-slate-500">
-                  İkinci Görüş paneli yalnız <strong>Doçent / Profesör</strong> ünvanlı hekimlere açılır;
+                  İkinci Görüş paneli yalnız <strong>Doçent / Profesör</strong> ünvanlı doktorlara açılır;
                   hesabınızda görüntülenmeyecek.
                 </p>
               )}
@@ -209,7 +209,7 @@ export function OnboardingForm({
         Ana Sayfama geç
       </button>
       <p className="mt-3 text-center text-xs text-slate-400">
-        Klinik Nöbet ve Haberler pencereleri her hekimin ana sayfasında bulunur.
+        Klinik Nöbet ve Haberler pencereleri her doktorun ana sayfasında bulunur.
       </p>
     </div>
   );

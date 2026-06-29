@@ -6,7 +6,7 @@ import { Users } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function DoctorsPage() {
-  // Yalnız doğrulanmış hekimler dizinde görünür (self-signup → admin/etik kurul onayına kadar gizli).
+  // Yalnız doğrulanmış doktorlar dizinde görünür (self-signup → admin/etik kurul onayına kadar gizli).
   const doctors = await db.doctor.findMany({
     where: { verified: true },
     orderBy: [{ rating: "desc" }],
@@ -33,7 +33,7 @@ export default async function DoctorsPage() {
       <div className="flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Users size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">Hekimlerimiz</h1>
+          <h1 className="text-2xl font-bold text-[#101010]">Doktorlarımız</h1>
           <p className="text-sm text-slate-500">Doğrulanmış, deneyimli uzmanlar — branşa göre filtreleyin.</p>
         </div>
       </div>

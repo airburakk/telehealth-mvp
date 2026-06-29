@@ -11,6 +11,7 @@ import RecommendedTreatments from "@/components/RecommendedTreatments";
 import DicomViewer from "@/components/DicomViewer";
 import { FhirCodingForm } from "@/components/FhirCodingForm";
 import { DischargeReport, type Structured } from "@/components/DischargeReport";
+import { PatientQuestionsPanel } from "@/components/PatientQuestionsPanel";
 import { getIceServers } from "@/lib/ice";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
@@ -81,6 +82,7 @@ const UI = [
   "Kamera kapalı", "Siz", "Bitir",
   "Canlı Transkript", "Durdur", "Başlat", "Tarayıcı desteklemiyor — Chrome/Edge önerilir",
   "Başlat'a basın; söyledikleriniz yazıya çevrilir, karşı tarafın konuşması da otomatik gelir.",
+  "Otomatik", "Konuşma başlayınca otomatik yazıya dökülür; karşı tarafın konuşması da gelir.",
   "Doktor", "Hasta", "Mikrofon izni reddedildi — konuşma tanıma kapatıldı.",
   "Şikayet", "ile görüşüyorsunuz",
   // errMsg sabitleri (cihaz-kodlu interpolasyonlu olanlar TR'ye düşer)
@@ -90,11 +92,12 @@ const UI = [
 ];
 
 export function ConsultationRoom({
-  consultationId, selfRole, status, initialNotes, doctor, caseData, recommend, clinical, autoJoin = false,
+  consultationId, selfRole, status, initialNotes, doctor, caseData, recommend, clinical, autoJoin = false, storageKey,
 }: {
   consultationId: string; selfRole: "doctor" | "patient"; status: string;
   initialNotes: string; doctor: DoctorData; caseData: CaseData; recommend?: RecommendData; clinical?: ClinicalData;
   autoJoin?: boolean; // Görüşme Öncesi Oda (lobi) sonrası: kendi "katıl" ekranını atla → doğrudan bağlan
+  storageKey?: string; // Hasta "doktora sorular" notu localStorage anahtarı (lobi ile aynı) — bkz. PatientQuestionsPanel
 }) {
   const router = useRouter();
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -130,6 +133,7 @@ export function ConsultationRoom({
   const [sttErr, setSttErr] = useState("");
   const [sttSupported, setSttSupported] = useState(true);
   const [txBusy, setTxBusy] = useState(false);
+  const [interpAutoStart, setInterpAutoStart] = useState(false); // VAD ilk konuşmayı algılayınca tercüme auto-start (yalnız diller farklıysa)
 
   // Sağlık Turizmi Agent'ı — SOAP'tan paket teklifi
   interface ProposalResp {
@@ -142,11 +146,14 @@ export function ConsultationRoom({
   const recRef = useRef<AnySpeechRecognition | null>(null);
   const sttOnRef = useRef(false);
   const dictatingRef = useRef(false);
+  const firstSoundRef = useRef(false); // VAD: ilk konuşma sesi tek seferlik tetik
 
   const isDoctor = selfRole === "doctor";
   const u = urgencyStyle(caseData.urgency);
   const remoteName = isDoctor ? caseData.patientName : `${doctor.title} ${doctor.name}`;
   const myLang = isDoctor ? "tr-TR" : (SPEECH_LANG[caseData.language] ?? "tr-TR");
+  // Doktor TR konuşur; hasta dili Türkçe ise tercüme gereksiz (kendi sesini kısar) → otomatik tercüme kapalı.
+  const langsDiffer = caseData.language !== "Türkçe";
 
   // Hasta arayüzü kendi dilinde; doktor TR (klinik araçlar). Yalnız sunum metinleri çevrilir; veri TR kanonik.
   const uiLang = isDoctor ? "Türkçe" : caseData.language;
@@ -238,6 +245,70 @@ export function ConsultationRoom({
   }, [sttOn, dictating, joined, phase]);
 
   useEffect(() => () => { try { recRef.current?.stop(); } catch {} }, []);
+
+  // ── VAD (ses aktivitesi algılama): herhangi bir taraftan İLK konuşma sesi algılanınca AI'ı otomatik başlat ──
+  // Hem kendi mikrofonumuz (local) hem karşı tarafın akışı (remote) izlenir; RMS eşiği kısa süre aşılınca tek
+  // seferlik tetik → transkript (her durumda) + tercüme (yalnız diller farklıysa). Sessizken Gemini bağlanmaz.
+  useEffect(() => {
+    if (!joined || phase === "ended" || firstSoundRef.current) return;
+    let cancelled = false;
+    let raf = 0;
+    let ctx: AudioContext | null = null;
+    const attached = new WeakSet<MediaStream>();
+    const metered: { an: AnalyserNode; buf: Uint8Array<ArrayBuffer> }[] = [];
+    let hot = 0; // ardışık "ses var" frame sayısı (anlık tıkırtıyı elemek için)
+    const THRESH = 0.045; // PreConsultLobby ses metresiyle uyumlu RMS ölçeği
+    const NEED = 4;       // ~4 ardışık frame ≈ gerçek konuşma başlangıcı
+
+    const ensureCtx = () => {
+      if (!ctx) {
+        const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        ctx = new AC();
+        ctx.resume().catch(() => {});
+      }
+      return ctx;
+    };
+    const attach = (stream: MediaStream | null) => {
+      if (!stream || attached.has(stream) || stream.getAudioTracks().length === 0) return;
+      try {
+        const c = ensureCtx();
+        const src = c.createMediaStreamSource(stream);
+        const an = c.createAnalyser(); an.fftSize = 256;
+        src.connect(an);
+        metered.push({ an, buf: new Uint8Array(an.fftSize) });
+        attached.add(stream);
+      } catch {}
+    };
+
+    const tick = () => {
+      if (cancelled) return;
+      // Akışlar geç gelebilir (remote ontrack sonrası) → her frame lazy bağla
+      attach(localStreamRef.current);
+      attach((remoteVideoRef.current?.srcObject as MediaStream | null) ?? null);
+      let loud = false;
+      for (const m of metered) {
+        m.an.getByteTimeDomainData(m.buf);
+        let sum = 0;
+        for (let i = 0; i < m.buf.length; i++) { const v = (m.buf[i] - 128) / 128; sum += v * v; }
+        if (Math.sqrt(sum / m.buf.length) > THRESH) { loud = true; break; }
+      }
+      hot = loud ? hot + 1 : 0;
+      if (hot >= NEED) {
+        firstSoundRef.current = true;
+        setSttOn(true);                              // transkript — Web Speech kendi VAD'iyle sessizde yazmaz
+        if (langsDiffer) setInterpAutoStart(true);   // tercüme — yalnız diller farklıysa
+        return; // tetiklendi → döngüyü bırak (cleanup ctx'i kapatır)
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      cancelled = true;
+      if (raf) cancelAnimationFrame(raf);
+      ctx?.close().catch(() => {});
+    };
+  }, [joined, phase, langsDiffer]);
 
   useEffect(() => {
     if (status === "ENDED" || !joined) return;
@@ -553,13 +624,16 @@ export function ConsultationRoom({
 
           {errMsg && <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">{errMsg}</div>}
 
-          {/* AI Canlı Tercüman (Gemini) — iki yön: her taraf karşı tarafın sesini kendi dilinde duyar */}
-          {joined && (
+          {/* AI Canlı Tercüman (Gemini) — yalnız diller farklıysa (aynı dilde gereksiz + karşı sesi kısar);
+              ilk konuşma sesinde otomatik başlar (başlat düğmesi yok). */}
+          {joined && langsDiffer && (
             <LiveInterpreter
               lang={uiLang}
               targetLang={isDoctor ? "tr" : (SPEECH_LANG[caseData.language]?.split("-")[0] ?? "en")}
               targetLabel={isDoctor ? "Türkçe" : caseData.language}
               otherLabel={isDoctor ? caseData.language : "Türkçe"}
+              autoMode={langsDiffer}
+              autoStart={interpAutoStart}
               getRemoteStream={() => (remoteVideoRef.current?.srcObject as MediaStream | null) ?? null}
               onMuteRemote={(m) => { if (remoteVideoRef.current) remoteVideoRef.current.muted = m; setRemoteMutedByInterpreter(m); }}
             />
@@ -573,22 +647,27 @@ export function ConsultationRoom({
                   <MessageSquareText size={14} /> {t("Canlı Transkript")}
                   {sttOn && <span className="ms-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
                 </div>
-                {sttSupported ? (
+                {/* Otomatik başlar (VAD): başlat düğmesi yok. Açıkken "Durdur" (kullanıcı kontrolü/gizlilik), kapalıyken pasif "Otomatik" göstergesi. */}
+                {!sttSupported ? (
+                  <span className="text-[11px] text-slate-400">{t("Tarayıcı desteklemiyor — Chrome/Edge önerilir")}</span>
+                ) : sttOn ? (
                   <button
-                    onClick={() => { setSttErr(""); setSttOn((v) => !v); }}
-                    className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium ${sttOn ? "border-red-300 bg-red-50 text-red-700 hover:bg-red-100" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"}`}
+                    onClick={() => { setSttErr(""); setSttOn(false); }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 px-2.5 py-1.5 text-[12px] font-medium text-red-700 hover:bg-red-100"
                   >
-                    <Mic size={13} /> {sttOn ? t("Durdur") : `${t("Başlat")} (${myLang.split("-")[0].toUpperCase()})`}
+                    <Mic size={13} /> {t("Durdur")}
                   </button>
                 ) : (
-                  <span className="text-[11px] text-slate-400">{t("Tarayıcı desteklemiyor — Chrome/Edge önerilir")}</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-[12px] font-medium text-slate-500" title={t("Konuşma başlayınca otomatik yazıya dökülür; karşı tarafın konuşması da gelir.")}>
+                    <Mic size={13} /> {t("Otomatik")}
+                  </span>
                 )}
               </div>
               {sttErr && <div className="mt-1 text-[11px] text-red-600">{t(sttErr)}</div>}
               <div className="mt-2 max-h-44 space-y-1 overflow-y-auto">
                 {transcript.length === 0 && !interim && (
                   <p className="text-xs text-slate-400">
-                    {t("Başlat'a basın; söyledikleriniz yazıya çevrilir, karşı tarafın konuşması da otomatik gelir.")}
+                    {t("Konuşma başlayınca otomatik yazıya dökülür; karşı tarafın konuşması da gelir.")}
                     {isDoctor ? " Görüşme sonunda transkriptten tek tıkla SOAP taslağı oluşturabilirsiniz." : ""}
                   </p>
                 )}
@@ -663,6 +742,11 @@ export function ConsultationRoom({
               </div>
             )}
           </div>
+
+          {/* Hasta "doktora sorular" notu — bekleme odasıyla aynı localStorage anahtarından (talep #2) */}
+          {!isDoctor && storageKey && (
+            <PatientQuestionsPanel storageKey={storageKey} lang={uiLang} />
+          )}
 
           {/* Not paneli — yalnız doktor */}
           {isDoctor && (

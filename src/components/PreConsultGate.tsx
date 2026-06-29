@@ -20,7 +20,7 @@ export const PRECONSULT_TEXTS: string[] = [
   "Görüşme bilgisi", "Sigorta", "Doğrulama", "Ödeme",
   "Uzman görüşmesi — ön bilgilendirme", "Şikayetlerinizi paylaşmadan önce kısa bir bilgilendirme.",
   "Görüşme ücreti", "Tek seferlik · Tier 1 ön değerlendirme", "Ortalama süre", "15–25 dk",
-  "Uzman hekimle birebir video", "Şikayet ve tıbbi geçmiş değerlendirmesi",
+  "Uzman doktorla birebir video", "Şikayet ve tıbbi geçmiş değerlendirmesi",
   "Branş yönlendirmesi ve ikinci görüş", "Tedavi/paket için ön plan", "Devam et",
   "Sigorta durumu", "Bu görüşmeyi kapsayan bir sağlık sigortanız var mı?",
   "Evet, sigortam var", "Poliçe numarası ile kapsamı doğrulayın",
@@ -105,7 +105,7 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
               <div className="rounded-2xl border border-slate-200 p-4">
                 <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><Clock size={14} /> {t("Ortalama süre")}</div>
                 <div className="mt-1 text-2xl font-bold text-[#101010]">{t(CONSULT_DURATION_TEXT)}</div>
-                <div className="text-xs text-slate-400">{t("Uzman hekimle birebir video")}</div>
+                <div className="text-xs text-slate-400">{t("Uzman doktorla birebir video")}</div>
               </div>
             </div>
             <ul className="mt-4 space-y-1.5 text-sm text-slate-600">

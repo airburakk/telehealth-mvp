@@ -5,7 +5,7 @@ import {
   FileText, ShieldCheck, GraduationCap, Award, Upload, Trash2, Loader2, Check, AlertTriangle,
 } from "lucide-react";
 
-// M5 — Hekim mesleki belge yükleme bölümü. Diploma + MMSS ZORUNLU (yüklenip MMSS bilgileri
+// M5 — Doktor mesleki belge yükleme bölümü. Diploma + MMSS ZORUNLU (yüklenip MMSS bilgileri
 // tamamlanmadan hesap aktifleşmez); sertifika/akademik ihtiyari. İçerik base64 → /api/doctor/documents.
 // MMSS metadata (teminat limiti = M3 Katman 3 girdisi) → /api/doctor/mmss.
 

@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   const newStatus = outcome === "TREATMENT_NEEDED" ? "TREATMENT_NEEDED" : "CONSULT_DONE";
   await db.case.update({ where: { id: caseId }, data: { status: "DONE", proBonoStatus: newStatus } });
 
-  // Hekimi serbest bırak (IN_SESSION → OFFLINE); sonraki hasta için tekrar "Müsait ol"
+  // Doktoru serbest bırak (IN_SESSION → OFFLINE); sonraki hasta için tekrar "Müsait ol"
   if (c.doctorId) await releaseDoctor(c.doctorId);
 
   // Tedavi gerekiyorsa etik kurula uygunluk değerlendirmesi için bildir (Faz 2 — Increment 2)

@@ -78,7 +78,7 @@ export async function POST(req: Request) {
     const header =
       `EPİKRİZ / TABURCU RAPORU\n` +
       `Hasta: ${decryptField(c.patientName)} · ${countryName(c.country)} · Branş: ${c.branch}\n` +
-      `Sorumlu Hekim: ${doctorLine} · Tarih: ${dateLine}\n` +
+      `Sorumlu Doktor: ${doctorLine} · Tarih: ${dateLine}\n` +
       `${"─".repeat(40)}`;
     const report = `${header}\n\n${sections}`;
     const dischargeAt = new Date();

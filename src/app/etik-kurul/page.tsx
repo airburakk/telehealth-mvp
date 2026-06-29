@@ -35,8 +35,8 @@ export default async function EthicsBoard() {
         <span className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-600"><ShieldCheck size={18} /></span>
           <span>
-            <span className="block text-sm font-semibold text-[#101010]">Hekim Doğrulama Onayı</span>
-            <span className="block text-xs text-slate-500">Kaydolan hekimleri inceleyip doğrulayın</span>
+            <span className="block text-sm font-semibold text-[#101010]">Doktor Doğrulama Onayı</span>
+            <span className="block text-xs text-slate-500">Kaydolan doktorları inceleyip doğrulayın</span>
           </span>
         </span>
         <span className="flex items-center gap-2">

@@ -39,7 +39,7 @@ export interface PairResult {
   doctorId: string;
 }
 
-// Bir vaka ile bir hekimi ATOMİK eşleştir. Koşullu updateMany'ler optimistik kilit görevi görür:
+// Bir vaka ile bir doktoru ATOMİK eşleştir. Koşullu updateMany'ler optimistik kilit görevi görür:
 // aynı vakayı/hekimi kapmaya çalışan ikinci işlem count=0 alır → çift-eşleşme yarışı engellenir.
 export async function pairCaseWithDoctor(caseId: string, doctorId: string): Promise<PairResult | null> {
   try {
@@ -56,7 +56,7 @@ export async function pairCaseWithDoctor(caseId: string, doctorId: string): Prom
       });
       if (claimedCase.count === 0) return null; // başka eşleşme kaptı
 
-      // 2) Hekimi kap: yalnız hâlâ AVAILABLE ise + kota artışı
+      // 2) Doktoru kap: yalnız hâlâ AVAILABLE ise + kota artışı
       const claimedDoc = await tx.doctor.updateMany({
         where: { id: doctorId, proBonoState: "AVAILABLE" },
         data: {
@@ -76,7 +76,7 @@ export async function pairCaseWithDoctor(caseId: string, doctorId: string): Prom
       if (c?.userId) {
         await notifyUser(c.userId, {
           type: "PROBONO_MATCH",
-          title: "🎥 Gönüllü hekiminiz hazır",
+          title: "🎥 Gönüllü doktorunuz hazır",
           body: `${c.branch} · görüşme başlıyor`,
           href: `/gorusme/${result.consultationId}`,
         });
@@ -90,13 +90,13 @@ export async function pairCaseWithDoctor(caseId: string, doctorId: string): Prom
   }
 }
 
-// Hasta tarafı: bu bekleyen vaka için müsait+kotalı bir hekim bul ve eşleştir.
+// Hasta tarafı: bu bekleyen vaka için müsait+kotalı bir doktor bul ve eşleştir.
 export async function matchForCase(caseId: string): Promise<PairResult | null> {
   const c = await db.case.findUnique({ where: { id: caseId } });
   if (!c || !c.proBono || c.proBonoStatus !== "WAITING") return null;
   const candidates = await db.doctor.findMany({
     where: { proBonoState: "AVAILABLE", verified: true },
-    orderBy: { proBonoAvailableAt: "asc" }, // en uzun süredir müsait olan hekim önce
+    orderBy: { proBonoAvailableAt: "asc" }, // en uzun süredir müsait olan doktor önce
   });
   for (const d of candidates) {
     if (quotaInfo(d).left <= 0) continue;
@@ -121,7 +121,7 @@ export async function matchForDoctor(doctorId: string): Promise<PairResult | nul
   return null;
 }
 
-// Hekim müsaitlik aç/kapa. Açarken yeni haftaysa kota sıfırlanır.
+// Doktor müsaitlik aç/kapa. Açarken yeni haftaysa kota sıfırlanır.
 export async function setDoctorAvailable(doctorId: string, available: boolean): Promise<void> {
   const d = await db.doctor.findUnique({ where: { id: doctorId } });
   if (!d) return;
@@ -143,7 +143,7 @@ export async function setDoctorAvailable(doctorId: string, available: boolean): 
   }
 }
 
-// Görüşme sonrası hekimi serbest bırak (IN_SESSION → OFFLINE). Sonraki hasta için tekrar "Müsait ol".
+// Görüşme sonrası doktoru serbest bırak (IN_SESSION → OFFLINE). Sonraki hasta için tekrar "Müsait ol".
 export async function releaseDoctor(doctorId: string): Promise<void> {
   await db.doctor.updateMany({
     where: { id: doctorId, proBonoState: "IN_SESSION" },
@@ -156,16 +156,16 @@ export async function waitingCount(): Promise<number> {
   return db.case.count({ where: { proBono: true, proBonoStatus: "WAITING" } });
 }
 
-// Şu an pro bono hizmeti için MÜSAİT (yeni hasta alabilecek) hekim sayısı.
+// Şu an pro bono hizmeti için MÜSAİT (yeni hasta alabilecek) doktor sayısı.
 // Hasta tarafı "Başvur" butonunun aktifliği + çevrimiçi/çevrimdışı indikatörü buna bağlı.
 export async function availableDoctorCount(): Promise<number> {
   return db.doctor.count({ where: { proBonoState: "AVAILABLE" } });
 }
 
-// Tüm gönüllü hekimler çevrimdışı olduğunda havuzda BEKLEYEN hastalara haber ver.
+// Tüm gönüllü doktorlar çevrimdışı olduğunda havuzda BEKLEYEN hastalara haber ver.
 // (Tarayıcı açıksa zaten poll yönlendirir; kapalıysa push düşer — bildirime izin verildiyse.)
 export async function notifyStrandedWaiters(): Promise<void> {
-  if ((await availableDoctorCount()) > 0) return; // hâlâ müsait hekim var → kimse stranded değil
+  if ((await availableDoctorCount()) > 0) return; // hâlâ müsait doktor var → kimse stranded değil
   const waiting = await db.case.findMany({
     where: { proBono: true, proBonoStatus: "WAITING", userId: { not: null } },
     select: { id: true, userId: true },
@@ -174,8 +174,8 @@ export async function notifyStrandedWaiters(): Promise<void> {
     if (!w.userId) continue;
     await notifyUser(w.userId, {
       type: "PROBONO_MATCH",
-      title: "⏳ Gönüllü hekim şu an çevrimdışı",
-      body: "Hâlâ havuzdasınız. Bir gönüllü hekim çevrimiçi olduğunda size bildirim göndereceğiz.",
+      title: "⏳ Gönüllü doktor şu an çevrimdışı",
+      body: "Hâlâ havuzdasınız. Bir gönüllü doktor çevrimiçi olduğunda size bildirim göndereceğiz.",
       href: `/pro-bono/bekleme?caseId=${w.id}`,
     });
   }

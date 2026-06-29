@@ -35,20 +35,20 @@ export async function notifyUser(userId: string, n: NotifyInput): Promise<void> 
   await sendPushToUser(userId, { title: n.title, body: n.body, href: n.href });
 }
 
-// Hekim profili (Doctor.id) üzerinden o hekimin kullanıcı hesabına KİŞİSEL bildirim.
-// Atanmış tedavi eden hekime hedefli uyarı (yayın değil) — bildirim yalnız ilgili hekime gider.
+// Doktor profili (Doctor.id) üzerinden o doktorun kullanıcı hesabına KİŞİSEL bildirim.
+// Atanmış tedavi eden doktora hedefli uyarı (yayın değil) — bildirim yalnız ilgili doktora gider.
 export async function notifyDoctorById(doctorId: string, n: NotifyInput): Promise<void> {
   try {
     const u = await db.user.findFirst({ where: { role: "DOCTOR", doctorId }, select: { id: true } });
     if (u) await notifyUser(u.id, n);
   } catch (e) {
-    console.warn("[notify] hekim bildirimi yazılamadı:", e instanceof Error ? e.message : e);
+    console.warn("[notify] doktor bildirimi yazılamadı:", e instanceof Error ? e.message : e);
   }
 }
 
-// Bir branştaki portal hekimlerine KİŞİSEL bildirim (rol yayını DEĞİL — yalnız ilgili branş).
-// Yeni vaka kuyruğa düşerken henüz atanan hekim yoktur → vakanın branşındaki hekimlere
-// duyurulur (30 branşın tümüne değil). Her hekime userId-hedefli yazılır (push dahil).
+// Bir branştaki portal doktorlarına KİŞİSEL bildirim (rol yayını DEĞİL — yalnız ilgili branş).
+// Yeni vaka kuyruğa düşerken henüz atanan doktor yoktur → vakanın branşındaki doktorlara
+// duyurulur (30 branşın tümüne değil). Her doktora userId-hedefli yazılır (push dahil).
 export async function notifyDoctorsByBranch(branch: string, n: NotifyInput): Promise<void> {
   try {
     const doctors = await db.doctor.findMany({ where: { branch, verified: true }, select: { id: true } });

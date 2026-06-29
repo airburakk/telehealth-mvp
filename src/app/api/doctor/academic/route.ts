@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
-// POST /api/doctor/academic — hekim kendi akademik/eğitim profilini günceller (yalnız kendi kaydı).
+// POST /api/doctor/academic — doktor kendi akademik/eğitim profilini günceller (yalnız kendi kaydı).
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "ADMIN"].includes(user.role)) {
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   }
   const dbUser = await db.user.findUnique({ where: { id: user.id } });
   if (!dbUser?.doctorId) {
-    return NextResponse.json({ error: "Bu hesap bir hekim profiline bağlı değil." }, { status: 400 });
+    return NextResponse.json({ error: "Bu hesap bir doktor profiline bağlı değil." }, { status: 400 });
   }
 
   const b = await req.json().catch(() => ({}));

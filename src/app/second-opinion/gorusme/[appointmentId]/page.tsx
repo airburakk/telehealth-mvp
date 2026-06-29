@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
+import { buildDoctorCard } from "@/lib/doctor-card";
 import { SoVideoRoom } from "./SoVideoRoom";
 
 export const dynamic = "force-dynamic";
@@ -39,9 +40,12 @@ export default async function SoVideoPage({
   }
   const selfRole: "doctor" | "patient" = sp.role === "patient" ? "patient" : sp.role === "doctor" ? "doctor" : role;
 
-  const doctor = await db.doctor.findUnique({ where: { id: appt.doctorId }, select: { title: true, name: true } });
+  const doctor = await db.doctor.findUnique({ where: { id: appt.doctorId } });
   const patient = await db.user.findUnique({ where: { id: c.patientId }, select: { name: true } });
   const branchLabel = BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch;
+
+  // Atanan doktor public profil özeti — yalnız hasta görünümünde bekleme odası kartına gider.
+  const doctorCard = doctor && selfRole === "patient" ? await buildDoctorCard(doctor) : null;
 
   return (
     <SoVideoRoom
@@ -52,6 +56,8 @@ export default async function SoVideoPage({
       branchLabel={branchLabel}
       remoteName={selfRole === "doctor" ? (patient?.name ?? "Hasta") : `${doctor?.title ?? ""} ${doctor?.name ?? ""}`.trim()}
       scheduledAt={appt.scheduledAt.toISOString()}
+      doctorCard={doctorCard}
+      patientLang={c.language ?? "Türkçe"}
     />
   );
 }
