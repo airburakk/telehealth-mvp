@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { translateText } from "@/lib/ai-clinical";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 
 const LANGS = ["Türkçe", "Rusça", "Arapça", "Azerice", "İngilizce", "Fransızca", "Kazakça", "Kırgızca"];
 
@@ -8,6 +9,8 @@ const LANGS = ["Türkçe", "Rusça", "Arapça", "Azerice", "İngilizce", "Frans�
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
+  const rl = rateLimit(`ai:${user.id}`, 20, 60_000); // AI maliyet/DoS freni: 20/dk/kullanıcı
+  if (!rl.ok) return tooMany(rl.retryAfter);
 
   const b = await req.json().catch(() => ({}));
   const text = String(b.text ?? "").trim();

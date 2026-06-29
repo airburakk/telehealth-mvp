@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { summarizeSOAP } from "@/lib/ai-clinical";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { decryptField } from "@/lib/crypto";
 
 // POST /api/ai/soap — doktorun görüşme notunu SOAP formatına çevirir (Claude)
@@ -11,6 +12,8 @@ export async function POST(req: Request) {
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) {
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
+  const rl = rateLimit(`ai:${user.id}`, 20, 60_000); // AI maliyet/DoS freni: 20/dk/kullanıcı
+  if (!rl.ok) return tooMany(rl.retryAfter);
 
   const b = await req.json().catch(() => ({}));
   const notes = String(b.notes ?? "").trim();

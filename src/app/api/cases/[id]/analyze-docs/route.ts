@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { staffAccessClosed } from "@/lib/postop-access";
 import { assessDocument } from "@/lib/ai-clinical";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { loincForBranchLabel } from "@/data/coding";
 import { decryptField } from "@/lib/crypto";
 import { recordAccess, reqMeta } from "@/lib/audit";
@@ -18,6 +19,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) {
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
+  const rl = rateLimit(`ai:${user.id}`, 20, 60_000); // AI maliyet/DoS freni: 20/dk/kullanıcı
+  if (!rl.ok) return tooMany(rl.retryAfter);
   const { id } = await params;
   const c = await db.case.findUnique({
     where: { id },

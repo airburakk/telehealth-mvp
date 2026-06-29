@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { proposePackage } from "@/lib/ai-clinical";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { computePackage, type PackageSelection } from "@/lib/pricing";
 import { countryName } from "@/lib/constants";
 import { decryptField } from "@/lib/crypto";
@@ -14,6 +15,8 @@ export async function POST(req: Request) {
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) {
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
+  const rl = rateLimit(`ai:${user.id}`, 20, 60_000); // AI maliyet/DoS freni: 20/dk/kullanıcı
+  if (!rl.ok) return tooMany(rl.retryAfter);
 
   const b = await req.json().catch(() => ({}));
   const caseId = String(b.caseId ?? "");
