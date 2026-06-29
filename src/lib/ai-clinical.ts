@@ -4,6 +4,7 @@
 // 3) generateDischarge: hastanın tüm yolculuğunu epikriz/taburcu raporuna sentezler (zorlanmış tool_use).
 // Anahtar yoksa anlamlı hata fırlatır (bunlar yalnız-AI özellikleridir; kural tabanlı karşılığı yok).
 import Anthropic from "@anthropic-ai/sdk";
+import { minimizedName, reidentifyName } from "./ai-minimize";
 
 const MODEL = "claude-sonnet-4-6"; // klinik dökümanlar (epikriz/SOAP/çeviri) — yüksek kalite akıl yürütme & dil; doktor başlatır, düşük hacim
 
@@ -66,7 +67,8 @@ export async function summarizeSOAP(
     messages: [{
       role: "user",
       content:
-        `Vaka bağlamı:\nHasta: ${ctx.patientName}\nBranş: ${ctx.branch}\nİlk şikâyet: ${ctx.symptoms}\n\n` +
+        // 1C: gerçek ad yerine placeholder gönderilir (PHI AI'a gitmez); çıktıda geri-yerleştirilir.
+        `Vaka bağlamı:\nHasta: ${minimizedName()}\nBranş: ${ctx.branch}\nİlk şikâyet: ${ctx.symptoms}\n\n` +
         (source === "transcript" ? `Görüşme transkripti (+ varsa doktor notları):\n` : `Doktorun görüşme notları:\n`) +
         (notes || "(not girilmedi)"),
     }],
@@ -75,11 +77,12 @@ export async function summarizeSOAP(
   const block = res.content.find((b) => b.type === "tool_use");
   if (!block || block.type !== "tool_use") throw new Error("SOAP aracı yanıtı alınamadı.");
   const s = block.input as Partial<Soap>;
+  const rid = (v: unknown) => reidentifyName(clean(v), ctx.patientName); // 1C: placeholder → gerçek ad
   const structured: Soap = {
-    subjective: clean(s.subjective),
-    objective: clean(s.objective),
-    assessment: clean(s.assessment),
-    plan: clean(s.plan),
+    subjective: rid(s.subjective),
+    objective: rid(s.objective),
+    assessment: rid(s.assessment),
+    plan: rid(s.plan),
   };
   const soap =
     `S — Subjektif:\n${structured.subjective}\n\n` +
@@ -200,7 +203,8 @@ export async function generateDischarge(ctx: DischargeContext): Promise<{ sectio
     messages: [{
       role: "user",
       content:
-        `Hasta: ${ctx.patientName} (${ctx.countryName}, dil: ${ctx.language})\n` +
+        // 1C: gerçek ad yerine placeholder (PHI AI'a gitmez); çıktıda geri-yerleştirilir.
+        `Hasta: ${minimizedName()} (${ctx.countryName}, dil: ${ctx.language})\n` +
         `Branş: ${ctx.branch}\nTriyaj aciliyeti: ${ctx.urgency}/5\n\n` +
         `İlk şikâyet / semptomlar:\n${ctx.symptoms}\n\n` +
         `Triyaj değerlendirmesi:\n${ctx.triageReasoning}\n\n` +
@@ -213,13 +217,14 @@ export async function generateDischarge(ctx: DischargeContext): Promise<{ sectio
   const block = res.content.find((b) => b.type === "tool_use");
   if (!block || block.type !== "tool_use") throw new Error("Epikriz aracı yanıtı alınamadı.");
   const d = block.input as Partial<Discharge>;
+  const rid = (v: unknown) => reidentifyName(clean(v), ctx.patientName); // 1C: placeholder → gerçek ad
   const structured: Discharge = {
-    tani: clean(d.tani),
-    anamnez: clean(d.anamnez),
-    tedaviSureci: clean(d.tedaviSureci),
-    klinikSeyir: clean(d.klinikSeyir),
-    cikisIlaclari: clean(d.cikisIlaclari),
-    oneriler: clean(d.oneriler),
+    tani: rid(d.tani),
+    anamnez: rid(d.anamnez),
+    tedaviSureci: rid(d.tedaviSureci),
+    klinikSeyir: rid(d.klinikSeyir),
+    cikisIlaclari: rid(d.cikisIlaclari),
+    oneriler: rid(d.oneriler),
   };
   const sections = DISCHARGE_SECTIONS.map((s) => `${s.label}\n${structured[s.key]}`).join("\n\n");
   return { sections, structured };
@@ -281,7 +286,8 @@ export async function proposePackage(soap: string, ctx: ProposalContext): Promis
     messages: [{
       role: "user",
       content:
-        `Hasta: ${ctx.patientName} (${ctx.countryName}, dil: ${ctx.language})\n` +
+        // 1C: gerçek ad yerine placeholder (PHI AI'a gitmez).
+        `Hasta: ${minimizedName()} (${ctx.countryName}, dil: ${ctx.language})\n` +
         `Branş: ${ctx.branch} · Triyaj aciliyeti: ${ctx.urgency}/5\n\n` +
         `Nihai SOAP notu:\n${soap}`,
     }],
@@ -298,7 +304,7 @@ export async function proposePackage(soap: string, ctx: ProposalContext): Promis
     translator: !!p.translator,
     insuranceExtended: !!p.insuranceExtended,
     insuranceMalpractice: !!p.insuranceMalpractice,
-    rationale: clean(p.rationale),
+    rationale: reidentifyName(clean(p.rationale), ctx.patientName), // 1C: placeholder → gerçek ad
   };
 }
 
