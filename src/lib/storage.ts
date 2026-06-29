@@ -19,6 +19,10 @@ import { randomUUID } from "crypto";
 
 const BLOB_PREFIX = "blob:v1:";
 
+// Blob erişim modeli — PHI için VARSAYILAN "private" (blob herkese açık DEĞİL, okuma token ister =
+// defense-in-depth + ciphertext). Store public yapılandırıldıysa BLOB_ACCESS="public" ile geç.
+const BLOB_ACCESS: "public" | "private" = process.env.BLOB_ACCESS === "public" ? "public" : "private";
+
 /** Object storage (Vercel Blob) aktif mi? (env token'ı var mı?) */
 export function blobStorageEnabled(): boolean {
   return !!process.env.BLOB_READ_WRITE_TOKEN;
@@ -48,7 +52,7 @@ export async function storeDocument(
   const { put } = await import("@vercel/blob");
   const key = `${opts.keyPrefix ?? "doc"}/${randomUUID()}`;
   const res = await put(key, payload, {
-    access: "public", // ciphertext + tahmin-edilemez URL; asla istemciye sızdırılmaz
+    access: BLOB_ACCESS, // private (varsayılan): blob token'sız okunamaz + içerik zaten ciphertext
     contentType: "application/octet-stream",
     addRandomSuffix: true,
     token: process.env.BLOB_READ_WRITE_TOKEN,
@@ -70,9 +74,11 @@ export async function loadDocument(
 
   if (isBlobRef(ref)) {
     const url = ref.slice(BLOB_PREFIX.length);
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`Belge Blob'tan okunamadı (HTTP ${resp.status}).`);
-    const payload = await resp.text();
+    // Private store: düz fetch token'sız 403 verir → SDK get() ile token'lı indir (public store'da da çalışır).
+    const { get } = await import("@vercel/blob");
+    const res = await get(url, { access: BLOB_ACCESS, token: process.env.BLOB_READ_WRITE_TOKEN });
+    if (!res || !res.stream) throw new Error("Belge Blob'tan okunamadı (bulunamadı veya stream yok).");
+    const payload = await new Response(res.stream).text();
     return decrypt ? decryptField(payload) : payload;
   }
   // inline: enc:v1: → çözülür; düz "data:" → decryptField no-op döner
