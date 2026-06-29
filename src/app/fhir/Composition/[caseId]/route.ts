@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsCase } from "@/lib/ownership";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { recoveryClosed } from "@/lib/postop-access";
 import { caseToComposition } from "@/lib/fhir";
 import { fhirJson, operationOutcome } from "@/lib/fhir-http";
@@ -26,7 +26,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ caseId: 
     },
   });
   if (!c) return operationOutcome(404, "not-found", "Vaka bulunamadı.");
-  if (!ownsCase(user, c)) return operationOutcome(403, "forbidden", "Bu vakaya erişim yetkiniz yok.");
+  if (!(await canCaseBeAccessedBy(user, c))) return operationOutcome(403, "forbidden", "Bu vakaya erişim yetkiniz yok.");
 
   // E2EE Faz 2A — post-op erişim daraltma: takip tamamlandıysa klinik personel FHIR export yapamaz (hasta-only, §0.1·3).
   if (user.role !== "PATIENT" && c.recovery && recoveryClosed(c.recovery).closed) {

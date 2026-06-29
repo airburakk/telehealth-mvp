@@ -4,7 +4,7 @@ import { computePackage, type PackageSelection, type Tier, type HospitalType, ty
 import { getTryPerUsd } from "@/lib/fxrate";
 import { notifyRoles, notifyUser } from "@/lib/notify";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsCase } from "@/lib/ownership";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { defaultJourney } from "@/lib/journey";
 
 // POST /api/cases/:id/booking — sağlık turizmi paketi rezervasyonu oluştur (Escrow)
@@ -15,7 +15,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const c = await db.case.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
-  if (!ownsCase(user, c)) return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
+  if (!(await canCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
 
   const b = await req.json().catch(() => ({}));
   // Sigorta seviyesi: insuranceLevel esas; yoksa eski booleanlardan türet (geriye uyum).

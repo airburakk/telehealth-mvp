@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsCase } from "@/lib/ownership";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { staffAccessClosed } from "@/lib/postop-access";
 import { recordAccess, reqMeta } from "@/lib/audit";
 import { decryptField } from "@/lib/crypto";
@@ -18,7 +18,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     include: { doctor: true, consultations: { include: { doctor: true }, orderBy: { startedAt: "desc" } } },
   });
   if (!item) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
-  if (!ownsCase(user, item)) return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
+  if (!(await canCaseBeAccessedBy(user, item))) return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
 
   // E2EE Faz 2A — post-op erişim daraltma: takip tamamlandıysa klinik personel erişimi kapalı (hasta-only, §0.1·3).
   const closed = await staffAccessClosed(id, user);

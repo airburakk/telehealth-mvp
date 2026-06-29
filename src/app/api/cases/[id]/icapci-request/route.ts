@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsCase } from "@/lib/ownership";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { requestIcapciAppointment } from "@/lib/clinical-duty";
 
 // POST /api/cases/:id/icapci-request — 3-seçenek kapısı, Seçenek 2: Branş Doktoruyla randevu.
@@ -9,9 +9,9 @@ import { requestIcapciAppointment } from "@/lib/clinical-duty";
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await getCurrentUser();
-  const c = await db.case.findUnique({ where: { id }, select: { userId: true, status: true } });
+  const c = await db.case.findUnique({ where: { id }, select: { userId: true, doctorId: true, status: true } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
-  if (!ownsCase(user, c)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+  if (!(await canCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
   if (!["NEW", "IN_REVIEW"].includes(c.status)) {
     return NextResponse.json({ error: "Bu vaka için görüşme zaten başlatılmış." }, { status: 409 });
   }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsCase } from "@/lib/ownership";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { notifyRoles } from "@/lib/notify";
 
 // POST /api/bookings/:bookingId/respond — hasta DRAFT teklifi yanıtlar.
@@ -15,7 +15,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ booking
 
   // Hasta yalnız kendi teklifini yanıtlayabilir (klinik personel serbest)
   const user = await getCurrentUser();
-  if (!ownsCase(user, booking.case)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+  if (!(await canCaseBeAccessedBy(user, booking.case))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
 
   if (booking.status !== "DRAFT") {
     return NextResponse.json({ error: "Bu teklif zaten yanıtlanmış.", status: booking.status }, { status: 409 });

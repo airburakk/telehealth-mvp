@@ -79,6 +79,7 @@ export interface CaseForShare {
   reasoning: string;
   urgency: number;
   attachments: string | null;
+  labResults?: string | null; // FHIR lab sonuçları (LOINC JSON) — paylaşımda GERÇEK lab tablosu
   dischargeReport?: string | null; // kayıtlı AI epikrizi (varsa EPIKRIZ kapsamında gerçek rapor)
   consultations?: { notes: string }[];
 }
@@ -101,23 +102,27 @@ export function buildSharedItems(c: CaseForShare, scopes: string[]): SharedItem[
   }
 
   if (scopes.includes("RADYOLOJI")) {
+    // Yalnız vakaya gerçekten yüklenmiş görüntü dosyaları — yoksa kalem GİZLENİR (placeholder/sahte yok).
     const imgs = files.filter((f) => /\.(dcm|dicom|jpe?g|png|bmp|tiff?)$/i.test(f));
-    const list = imgs.length ? imgs : ["MR_goruntu_serisi.dcm", "BT_kesit.dcm"]; // demo placeholder (gerçek dosya storage = üretim)
-    list.forEach((f) => items.push({ scope: "RADYOLOJI", kind: "image", title: "Radyoloji Görüntüsü", fileName: f }));
+    imgs.forEach((f) => items.push({ scope: "RADYOLOJI", kind: "image", title: "Radyoloji Görüntüsü", fileName: f }));
   }
 
   if (scopes.includes("LAB")) {
-    items.push({
-      scope: "LAB",
-      kind: "lab",
-      title: "Laboratuvar Sonuçları",
-      rows: [
-        { k: "Hemoglobin (Hb)", v: "13.8 g/dL" },
-        { k: "Lökosit (WBC)", v: "7.2 ×10³/µL" },
-        { k: "CRP", v: "4.1 mg/L" },
-        { k: "Kreatinin", v: "0.9 mg/dL" },
-      ],
-    });
+    // GERÇEK lab sonuçları (Case.labResults — LOINC JSON, kokpitten/AI ile girilmiş). Yoksa kalem
+    // GİZLENİR — sahte klinik değer gösterilmez (demoda güven-öldürür / diligence riski).
+    let rows: { k: string; v: string }[] = [];
+    try {
+      const arr = (c.labResults ? JSON.parse(c.labResults) : []) as { name?: string; value?: string | number; unit?: string }[];
+      if (Array.isArray(arr)) {
+        rows = arr
+          .filter((r) => r && (r.name || r.value != null))
+          .map((r) => ({ k: String(r.name ?? "—"), v: `${r.value ?? ""}${r.unit ? " " + r.unit : ""}`.trim() }))
+          .filter((r) => r.v);
+      }
+    } catch { rows = []; }
+    if (rows.length) {
+      items.push({ scope: "LAB", kind: "lab", title: "Laboratuvar Sonuçları", rows });
+    }
   }
 
   if (scopes.includes("GORUSME_NOTU")) {

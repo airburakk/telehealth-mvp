@@ -66,6 +66,25 @@ const CASES = [
 ];
 
 async function main() {
+  // ⚠️ Yıkıcı-seed güvenlik kapısı (T8 — ortam izolasyonu).
+  // Bu betik çekirdek tabloları deleteMany ile TAM RESET eder. Yerel .env üretim Neon DB'sine
+  // bağlı olabileceğinden (bkz. .env.example: "YEREL + ÜRETİM AYNI Neon DB"), kazara çalıştırma
+  // canlı veriyi geri dönüşsüz yok eder. Çalıştırmak için açık onay zorunlu: ALLOW_DESTRUCTIVE_SEED=1
+  const targetHost = (() => {
+    try { return new URL(process.env.DATABASE_URL ?? "").host; } catch { return "(bilinmiyor)"; }
+  })();
+  if (process.env.ALLOW_DESTRUCTIVE_SEED !== "1") {
+    console.error(
+      `\n⛔ Yıkıcı seed engellendi (hedef DB: ${targetHost}).\n` +
+      "Bu betik tüm kullanıcı/doktor/vaka verisini SİLER (tam reset).\n" +
+      "Üretim ve yerel şu an aynı Neon DB olabilir → kazara veri kaybı riski.\n" +
+      "Yalnız İZOLE bir dev/dev-branch DB'de çalıştır:  ALLOW_DESTRUCTIVE_SEED=1 npm run db:seed\n" +
+      "Demo verisi eklemek için yıkıcı-olmayan scriptleri tercih et (add-demo-cases.ts / enrich-profiles.ts).\n"
+    );
+    process.exit(1);
+  }
+  console.log(`⚠️  Yıkıcı seed ONAYLANDI — hedef DB sıfırlanacak: ${targetHost}`);
+
   console.log("Temizleniyor...");
   await db.complaint.deleteMany();
   await db.checkIn.deleteMany();

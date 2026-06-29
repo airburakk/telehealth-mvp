@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { summarizeSOAP } from "@/lib/ai-clinical";
 import { decryptField } from "@/lib/crypto";
 
@@ -18,6 +19,8 @@ export async function POST(req: Request) {
   if (!notes) return NextResponse.json({ error: "Önce görüşme notu girin." }, { status: 400 });
 
   const c = caseId ? await db.case.findUnique({ where: { id: caseId } }) : null;
+  // IDOR kapısı: vaka verildiyse yalnız erişilebilen vaka AI'ya gönderilir (T3 + atama-bazlı T2).
+  if (c && !(await canCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
 
   try {
     const { soap, structured } = await summarizeSOAP(notes, {

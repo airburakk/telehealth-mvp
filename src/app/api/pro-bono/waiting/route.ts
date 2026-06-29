@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsCase } from "@/lib/ownership";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { matchForCase, queuePosition, availableDoctorCount } from "@/lib/pro-bono";
 
 // GET /api/pro-bono/waiting?caseId= — hasta bekleme ekranı poll'u. Tekrar eşleşme dener; eşleşince consultationId döner.
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 
   const c = await db.case.findUnique({ where: { id: caseId } });
   if (!c || !c.proBono) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
-  if (!ownsCase(user, c)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+  if (!(await canCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
 
   if (c.proBonoStatus === "WAITING") {
     const m = await matchForCase(caseId);

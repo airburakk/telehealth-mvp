@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsCase } from "@/lib/ownership";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { staffAccessClosed } from "@/lib/postop-access";
 import { ConsultationRoom } from "@/components/ConsultationRoom";
 import { PreConsultLobby } from "@/components/PreConsultLobby";
@@ -30,7 +30,7 @@ export default async function ConsultationPage({
   if (!consult) notFound();
 
   const user = await getCurrentUser();
-  if (!ownsCase(user, consult.case)) notFound(); // hasta yalnız kendi görüşmesine katılır
+  if (!(await canCaseBeAccessedBy(user, consult.case))) notFound(); // hasta yalnız kendi görüşmesine katılır
   // E2EE Faz 2A — post-op takip tamamlandıysa klinik personel görüşme klinik ekranına giremez (hasta-only, §0.1·3).
   if ((await staffAccessClosed(consult.case.id, user)).closed) notFound();
   const sessionRole =

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { staffAccessClosed } from "@/lib/postop-access";
 import { assessDocument } from "@/lib/ai-clinical";
 import { loincForBranchLabel } from "@/data/coding";
@@ -20,9 +21,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const c = await db.case.findUnique({
     where: { id },
-    select: { id: true, userId: true, branch: true, symptoms: true, language: true, labResults: true },
+    select: { id: true, userId: true, doctorId: true, branch: true, symptoms: true, language: true, labResults: true },
   });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+  // IDOR kapısı: yalnız erişilebilen vakanın belgeleri AI'ya gönderilir (T3 + atama-bazlı T2).
+  if (!(await canCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
 
   // E2EE Faz 2A — post-op takip tamamlandıysa belge AI değerlendirmesi (klinik AI) kapalı (hasta-only, §0.1·3).
   const closed = await staffAccessClosed(id, user);

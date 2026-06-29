@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { proposePackage } from "@/lib/ai-clinical";
 import { computePackage, type PackageSelection } from "@/lib/pricing";
 import { countryName } from "@/lib/constants";
@@ -23,6 +24,8 @@ export async function POST(req: Request) {
     include: { consultations: { orderBy: { startedAt: "desc" } } },
   });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+  // IDOR kapısı: yalnız erişilebilen vaka AI paket teklifine gönderilir (T3 + atama-bazlı T2).
+  if (!(await canCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
 
   // SOAP at-rest şifreli → her notu çöz, ilk dolu olanı al (teklif nihai SOAP'a göre).
   const soap = c.consultations.map((x) => decryptField(x.notes)).find((n) => n.trim())?.trim() ?? "";

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { generateDischarge } from "@/lib/ai-clinical";
 import { recoveryClosed } from "@/lib/postop-access";
 import { countryName } from "@/lib/constants";
@@ -28,6 +29,8 @@ export async function POST(req: Request) {
     },
   });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+  // IDOR kapısı: yalnız erişilebilen vaka AI epikrize gönderilir (T3 + atama-bazlı T2).
+  if (!(await canCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
 
   // E2EE Faz 2A — post-op takip tamamlandıysa epikriz üretimi (klinik yazma/AI) kapalı (hasta-only, §0.1·3).
   if (c.recovery && recoveryClosed(c.recovery).closed) {

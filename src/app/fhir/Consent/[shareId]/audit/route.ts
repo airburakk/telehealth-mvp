@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsCase } from "@/lib/ownership";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { shareAuditBundle } from "@/lib/fhir";
 import { fhirJson, operationOutcome } from "@/lib/fhir-http";
 import { decryptField } from "@/lib/crypto";
@@ -16,12 +16,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ shareId
   const s = await db.shareLink.findUnique({
     where: { id: shareId },
     include: {
-      case: { select: { id: true, userId: true, patientName: true, country: true, language: true, patientIdentifier: true, patientIdentifierType: true } },
+      case: { select: { id: true, userId: true, doctorId: true, patientName: true, country: true, language: true, patientIdentifier: true, patientIdentifierType: true } },
       accesses: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!s) return operationOutcome(404, "not-found", "Paylaşım kaydı bulunamadı.");
-  if (!ownsCase(user, s.case)) return operationOutcome(403, "forbidden", "Bu paylaşıma erişim yetkiniz yok.");
+  if (!(await canCaseBeAccessedBy(user, s.case))) return operationOutcome(403, "forbidden", "Bu paylaşıma erişim yetkiniz yok.");
 
   // Kimlik at-rest şifreli → FHIR Patient için çöz (E2EE inc.2c)
   return fhirJson(shareAuditBundle({ ...s, case: { ...s.case, patientName: decryptField(s.case.patientName), patientIdentifier: decryptField(s.case.patientIdentifier) } }));

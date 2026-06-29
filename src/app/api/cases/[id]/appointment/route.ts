@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsCase } from "@/lib/ownership";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { offerAppointment, respondAppointment } from "@/lib/clinical-duty";
 
 // POST /api/cases/:id/appointment — İcapçı randevu akışı (Seçenek 2, SO Part B deseni).
@@ -43,9 +43,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   // ── Hasta: teklife yanıt ──
   if (action === "accept" || action === "request_change") {
-    const c = await db.case.findUnique({ where: { id }, select: { userId: true } });
+    const c = await db.case.findUnique({ where: { id }, select: { userId: true, doctorId: true } });
     if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
-    if (!ownsCase(user, c)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+    if (!(await canCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
 
     const r = await respondAppointment(id, action);
     if (!r) return NextResponse.json({ error: "Yanıtlanacak bir randevu teklifi yok." }, { status: 409 });

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsCase } from "@/lib/ownership";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { encryptField, decryptField } from "@/lib/crypto";
 import type { SessionUser } from "@/lib/session";
 
@@ -13,9 +13,9 @@ import type { SessionUser } from "@/lib/session";
 async function callerSide(user: SessionUser, channelId: string): Promise<"patient" | "doctor" | null> {
   const consult = await db.consultation.findUnique({
     where: { id: channelId },
-    select: { case: { select: { userId: true } } },
+    select: { case: { select: { userId: true, doctorId: true } } },
   });
-  if (consult) return ownsCase(user, consult.case) ? (user.role === "PATIENT" ? "patient" : "doctor") : null;
+  if (consult) return (await canCaseBeAccessedBy(user, consult.case)) ? (user.role === "PATIENT" ? "patient" : "doctor") : null;
 
   const appt = await db.secondOpinionAppointment.findUnique({
     where: { id: channelId },

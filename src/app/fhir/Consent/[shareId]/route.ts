@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsCase } from "@/lib/ownership";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { shareLinkToConsent } from "@/lib/fhir";
 import { fhirJson, operationOutcome } from "@/lib/fhir-http";
 import { recordAccess, reqMeta } from "@/lib/audit";
@@ -17,12 +17,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ shareId:
   const s = await db.shareLink.findUnique({
     where: { id: shareId },
     include: {
-      case: { select: { id: true, userId: true, patientName: true, country: true, language: true, patientIdentifier: true, patientIdentifierType: true } },
+      case: { select: { id: true, userId: true, doctorId: true, patientName: true, country: true, language: true, patientIdentifier: true, patientIdentifierType: true } },
       accesses: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!s) return operationOutcome(404, "not-found", "Paylaşım kaydı bulunamadı.");
-  if (!ownsCase(user, s.case)) return operationOutcome(403, "forbidden", "Bu paylaşıma erişim yetkiniz yok.");
+  if (!(await canCaseBeAccessedBy(user, s.case))) return operationOutcome(403, "forbidden", "Bu paylaşıma erişim yetkiniz yok.");
 
   // Denetim: FHIR dışa aktarım (paylaşım izni export).
   await recordAccess({ actor: user, action: "FHIR_EXPORT", resourceType: "FHIR_CONSENT", resourceId: s.id, subjectUserId: s.case.userId, detail: "Consent (paylaşım izni)", ...reqMeta(req) });

@@ -2,11 +2,15 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
 import { notifyDoctorsByBranch } from "@/lib/notify";
-import { getCurrentUser } from "@/lib/auth";
+import { requireUser, requireStaff } from "@/lib/api-auth";
 import { encryptField, decryptCaseFields } from "@/lib/crypto";
 
 // GET /api/cases — vaka kuyruğu (filtrelenebilir)
 export async function GET(req: Request) {
+  // Vaka kuyruğu = klinik personel. Kimliksiz PHI dökümü kapandı (T1/P0).
+  const { error } = await requireStaff();
+  if (error) return error;
+
   const { searchParams } = new URL(req.url);
   const branch = searchParams.get("branch");
   const status = searchParams.get("status");
@@ -25,6 +29,10 @@ export async function GET(req: Request) {
 
 // POST /api/cases — yeni vaka oluştur (triyaj sunucu tarafında yeniden hesaplanır)
 export async function POST(req: Request) {
+  // Vaka oluşturma giriş ister → anonim vaka + ölçümsüz AI (DoS/maliyet) kapandı (T1).
+  const { user, error } = await requireUser();
+  if (error) return error;
+
   const body = await req.json().catch(() => ({}));
 
   const patientName = String(body.patientName ?? "").trim();
@@ -44,11 +52,9 @@ export async function POST(req: Request) {
     ? body.attachments.join(",")
     : null;
 
-  const creator = await getCurrentUser();
-
   const created = await db.case.create({
     data: {
-      userId: creator?.id ?? null, // vaka sahibi (hasta yalnız kendi vakalarını görür)
+      userId: user.id, // vaka sahibi = oturum kullanıcısı (hasta yalnız kendi vakalarını görür)
       patientName: encryptField(patientName), // kimlik at-rest şifreli (E2EE inc.2c)
       country: String(body.country ?? "TR"),
       language: String(body.language ?? "Türkçe"),
