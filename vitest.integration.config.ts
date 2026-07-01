@@ -13,8 +13,9 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/integration/**/*.test.ts"],
+    setupFiles: ["./tests/integration/setup.ts"], // .env yükle + DATABASE_URL → dev branch (import'lardan ÖNCE)
     globals: false,
-    fileParallelism: false, // DB testleri seri çalışır (paylaşılan durum)
+    fileParallelism: false, // DB testleri seri çalışır (paylaşılan durum + audit zinciri)
     testTimeout: 30_000, // ağ + dev branch gecikmesi için pay
   },
 });
