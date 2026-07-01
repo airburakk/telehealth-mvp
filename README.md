@@ -53,6 +53,7 @@ npm run dev                   # http://localhost:3000
 | `npm run lint` | ESLint |
 | `npm test` | **Birim testleri** (vitest — saf mantık, DB yok; pricing/journey/deidentify/crypto/ownership/rate-limit/postop/storage/ai-minimize) |
 | `npm run test:integration` | **Entegrasyon testleri** (gerçek DB — `TEST_DATABASE_URL` Neon dev branch gerekir; yoksa atlanır, bkz. `tests/integration/README.md`) |
+| `npm run test:e2e` | **E2E testleri** (Playwright — 3 demo-kritik akış; dev branch'e bağlı sunucu + `E2E_BASE_URL` gerekir, bkz. `tests/e2e/README.md`) |
 | `npm run db:seed` | `prisma/seed.ts` — demo veri (tam reset) |
 | `npm run db:migrate` | `prisma migrate deploy` |
 | `npx tsx scripts/enrich-profiles.ts` | profil/vaka **zenginleştirme** (idempotent backfill; yalnız boş alan: doktor procedures/markets/akademik + vaka FHIR lab/icd10/belge — silmez) |
@@ -209,7 +210,7 @@ src/
                              #   notify · push · ice · billing/pricing/fxrate/procedures · postop · share
                              #   storage (object storage soyutlaması — Vercel Blob) · rate-limit · api-auth ...
   data/                      # coding.ts (ICD-10/LOINC/SNOMED) · procedures.json · second-opinion-docs.ts
-tests/                       # vitest — unit/ (saf mantık, DB yok) + integration/ (Neon dev branch)
+tests/                       # vitest unit/ (saf mantık, DB yok) + integration/ (Neon dev branch) · Playwright e2e/ (3 akış)
 prisma/
   schema.prisma             # 32 model (User, Doctor, Case, Consultation, ConsultationMessage,
                             #   ConsultationVideoAppointment, Booking, Recovery, CheckIn,
@@ -258,5 +259,8 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
 - **AI veri-minimizasyonu (`lib/ai-minimize.ts`):** SOAP/epikriz/paket AI çağrılarında hasta ADI
   Anthropic'e GÖNDERİLMEZ ([HASTA] placeholder); çıktıda gerçek adla geri-yerleştirilir (doktor
   görünümü korunur). Klinik içerik AI görevi için gönderilir (de-id sınırı: ad çıkar, semptom kalır).
+- **Partner konsültasyon de-id (`lib/ai-clinical.redactPersonNames`):** partnerin serbest-metnine
+  yazdığı kişi adları, talep KAYDEDİLMEDEN ÖNCE AI ile `[ad]`'a maskelenir (yapısal scrub e-posta/TC/
+  telefonu; bu katman sistemin bilmediği düz adları) → doktor havuzuna hasta kimliği sızmaz.
 - KVKK/GDPR: gerçek hasta verisi işlemeden önce veri işleme sözleşmeleri (DPA/SCC), AI sağlayıcı
   aktarım güvenceleri ve uygun bölge (AB/TR) seçimi gerekir (bkz. vault `wiki/kavramlar/`).
