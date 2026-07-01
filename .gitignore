@@ -12,6 +12,11 @@
 
 # testing
 /coverage
+# playwright E2E çıktıları (ekran görüntüsü/trace — geçici)
+/test-results/
+/playwright-report/
+/blob-report/
+/.playwright/
 
 # next.js
 /.next/

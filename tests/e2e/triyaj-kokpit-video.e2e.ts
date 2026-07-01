@@ -13,11 +13,30 @@ import { loginAs, contextAs, expectNotVisible } from "./helpers";
 //   • AI triyaj (Claude): yavaş olabilir / ANTHROPIC_API_KEY yoksa kural-fallback → cömert timeout,
 //     sonuç içeriği (branş/aciliyet) assert EDİLMEZ; yalnız akışın ilerlediği doğrulanır.
 //   • WebRTC P2P el sıkışması: sahte medya cihazı ile lobi/oda RENDER olur; iki-uç bağlantı DENENMEZ.
+//
+// LOCALE UYARISI (bu spec'in düşme sebebi):
+//   • Demo Hasta hesabı Cezayir/Arapça taşır → hasta-yüzlü sayfalar (triyaj sonucu dahil) SUNUCUDA
+//     Arapçaya çevrilir. Ayrıca sonuç sayfası, branşta çevrimiçi doktor yoksa "Vakanız oluşturuldu"
+//     yerine 3-seçenek YÖNLENDİRME kapısını (ConsultGate) gösterir. Bu iki gerçek yüzünden sonuç
+//     adımında ÇEVRİLEBİLİR/DURUMA-BAĞLI metne (başlık) assert BAĞLANMAZ. Deterministik + locale-bağımsız
+//     çıpa = URL /triyaj/[id] + her iki görünümde de basılan VAKA-REF token'ı (id.slice(0,8).toUpperCase()).
+//   • Doktor tarafı sayfalar (/doktor, /doktor/vaka/[id]) sunucu-render + TR-sabit metinlidir (çeviri yok);
+//     görüşme lobisi doktor için lang="Türkçe" ile açılır (useT no-op) → lobi başlıkları TR-sabit → güvenli.
 
-// Vakayı doktor kuyruğunda benzersiz bulabilmek için zaman-damgalı hasta adı.
-const patientName = `E2E Test ${Date.now()}`;
+// Vakayı doktor kuyruğunda benzersiz bulabilmek için HARF-YALNIZ (rakamsız) benzersiz marker.
+// NEDEN rakam yok: de-id scrubText PHONE_RE (/\+?\d[\d\s().-]{8,}\d/) 10+ rakam dizisini "[telefon]"
+// olarak maskeler → Date.now() (13 hane) marker'ı bozar. base36'yı harfe indirger + rastgele harf ekleriz.
+const uniqSuffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+  .replace(/[^a-z]/g, "") // yalnız harf bırak (rakamsız → de-id güvenli)
+  .toUpperCase()
+  .slice(0, 10)
+  .padEnd(6, "X"); // her koşulda ≥6 harf (arama/eşleşme için yeterince ayırt edici)
+const patientName = `E2E Test ${uniqSuffix}`;
 const symptomText =
   "Babamda akciğer kanseri şüphesi var, biyopsi sonucu çıktı, ikinci görüş için uzman değerlendirmesi istiyoruz.";
+
+// İki-rol + AI + çok-adım akış → cömert toplam timeout.
+test.setTimeout(150_000);
 
 test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası render", async ({ page, browser }) => {
   // ── 1) HASTA: giriş + triyaj sayfası ──
@@ -84,14 +103,24 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
     await createBtn.click();
   });
 
-  await test.step("Sonuç: vaka oluştu ve doktor kuyruğuna eklendi", async () => {
+  // Vaka-ref token'ı: URL'deki case id'nin ilk 8 karakteri, büyük harf (sonuç sayfası "Vaka No" kartında
+  // c.id.slice(0,8).toUpperCase() ile aynı biçimde basılır). Bir KOD'dur → çevrilmez, de-id maskelemez
+  // (cuid harf+rakam karışık, 10+ ardışık rakam içermez) → hem gate hem gate-siz görünümde deterministik.
+  let caseRefToken = "";
+
+  await test.step("Sonuç: vaka oluştu → /triyaj/[id] + locale-bağımsız vaka-ref çıpası", async () => {
     // submit() başarıda router.push(`/triyaj/${id}`) → sonuç sayfası.
     await page.waitForURL(/\/triyaj\/[^/]+$/, { timeout: 30_000 });
-    await expect(
-      page.getByRole("heading", { name: "Vakanız oluşturuldu ve doktor kuyruğuna eklendi" })
-    ).toBeVisible({ timeout: 15_000 });
-    // Onay kartında hasta adı geçmeli (kimlik at-rest şifreli olsa da hastaya çözülü gösterilir).
-    await expect(page.getByText(patientName, { exact: false }).first()).toBeVisible();
+    const caseId = new URL(page.url()).pathname.split("/").pop() ?? "";
+    expect(caseId.length).toBeGreaterThan(8); // cuid → id gerçekten oluştu
+    caseRefToken = caseId.slice(0, 8).toUpperCase();
+
+    // Sonuç sayfası HASTA DİLİNDE (Arapça) render olur ve branşta çevrimiçi doktor yoksa "Vakanız
+    // oluşturuldu" başlığı yerine 3-seçenek YÖNLENDİRME kapısı (ConsultGate) çıkar. Bu yüzden ÇEVRİLEBİLİR
+    // /DURUMA-BAĞLI başlığa DEĞİL, her iki görünümde de basılan (ve çevrilmeyen) vaka-ref KODUNA assert et.
+    await expect(page.getByText(caseRefToken, { exact: false }).first()).toBeVisible({ timeout: 15_000 });
+    // NOT: Hasta adı sonuç kartında Arapça-bağlamda ("المريض E2E Test …") geçtiği için ada göre değil,
+    // yukarıdaki URL + vaka-ref token ile doğrulandı (locale-bağımsız).
   });
 
   // ── 4) DOKTOR: yeni izole context (çerez karışmasın) → kokpit ──
@@ -101,23 +130,28 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
     await doctorPage.goto("/doktor");
     // LIVE-ITERATE: seed doktoru onboarding/aktivasyon kapısında ise `/doktor/baslangic`'e redirect
     // olabilir (activatedAt yok). O durumda kuyruğa ulaşmak için önce onboarding tamamlanmalı.
+    // Doktor sayfası sunucu-render + TR-sabit metinli → başlık locale-bağımsız.
     await expect(doctorPage.getByRole("heading", { name: "Doktor Ana Sayfası" })).toBeVisible({ timeout: 20_000 });
   });
 
   await test.step("Yeni vaka doktor kuyruğunda görünür", async () => {
     // CaseQueue "Hasta ara…" kutusuyla ada göre filtrele (branş eşleşmesine bağlı kalmadan bul).
+    // Placeholder TR-sabit (CaseQueue client bileşeni çeviri kullanmaz).
     await doctorPage.getByPlaceholder("Hasta ara…").fill(patientName);
-    // Vaka satırı hasta adını taşır (patientName decryptField ile çözülür). Cömert timeout: AI
-    // fallback/senkron ortama göre değişebilir; vaka triyajdan hemen sonra kuyruğa düşer.
-    const caseLink = doctorPage.getByRole("link", { name: new RegExp(patientName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) });
+    // Vaka satırı hasta adını taşır (patientName decryptField ile çözülür → düz metin marker). Cömert
+    // timeout: AI fallback/senkron ortama göre değişebilir; vaka triyajdan hemen sonra kuyruğa düşer.
+    // Seed doktoru Mehmet=Onkoloji; oluşan vaka Onkoloji → branş eşleşir → kuyrukta çıkar.
+    const caseLink = doctorPage.getByRole("link", {
+      name: new RegExp(patientName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+    });
     await expect(caseLink.first()).toBeVisible({ timeout: 30_000 }); // LIVE-ITERATE: vaka branşı doktor branşıyla eşleşmezse kuyrukta çıkmayabilir → gerekirse Koordinatör context'i (tüm kuyruk) kullan
     await caseLink.first().click();
   });
 
   await test.step("Vaka detayı açılır ve görüşme başlatılır", async () => {
     await doctorPage.waitForURL(/\/doktor\/vaka\/[^/]+$/, { timeout: 20_000 });
-    // Kokpit vaka kartında hasta adı başlık olarak görünür.
-    await expect(doctorPage.getByRole("heading", { name: patientName })).toBeVisible();
+    // Kokpit vaka kartında hasta adı başlık (<h1>{c.patientName}</h1>) olarak görünür (TR-sabit sayfa).
+    await expect(doctorPage.getByRole("heading", { name: patientName })).toBeVisible({ timeout: 15_000 });
     // Aksiyon panelindeki başlat butonu: yeni vakada "Görüşmeyi Başlat" (IN_CONSULT'ta "Görüşmeye Dön").
     const startBtn = doctorPage.getByRole("button", { name: /Görüşmeyi Başlat|Görüşmeye Dön/ });
     await expect(startBtn).toBeVisible();
@@ -128,9 +162,10 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
 
   await test.step("Görüşme odası (bekleme odası) RENDER olur — WebRTC el sıkışması denenmez", async () => {
     // /gorusme/[id] aktif görüşmede önce PreConsultLobby ("Görüşmeye hazırlanın") ile açılır.
+    // Doktor görünümünde lobi lang="Türkçe" ile render olur (useT no-op) → başlıklar TR-sabit.
     // Sahte medya cihazı config'te (playwright.config.ts) → getUserMedia izin diyaloğunda asılmaz.
     await expect(doctorPage.getByRole("heading", { name: "Görüşmeye hazırlanın" })).toBeVisible({ timeout: 20_000 });
-    // Cihaz testi bölümü + Katıl düğmesi = odanın kontrol UI'sinin render'ı (deterministik kanıt).
+    // Cihaz testi bölümü (<h2>) + Katıl düğmesi = odanın kontrol UI'sinin render'ı (deterministik kanıt).
     await expect(doctorPage.getByRole("heading", { name: "Cihaz testi" })).toBeVisible();
     await expect(doctorPage.getByRole("button", { name: "Görüşmeye katıl" })).toBeVisible();
     // NOT: "Görüşmeye katıl"a basıp ConsultationRoom'a girmek (P2P/WebRTC) DENENMEZ — kırılgan.
