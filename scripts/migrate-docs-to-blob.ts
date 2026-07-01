@@ -47,6 +47,11 @@ async function migrate(
         skipped++;
         continue;
       }
+      // Kuru çalışma: taşınacak satırı yalnız SAY — Blob'a YÜKLEME + DB YAZMA YOK (yetim blob/yan etki olmaz).
+      if (DRY) {
+        migrated++;
+        continue;
+      }
       try {
         const dataUri = await loadDocument(r.value, { encrypt: true }); // inline çöz
         if (!dataUri) {
