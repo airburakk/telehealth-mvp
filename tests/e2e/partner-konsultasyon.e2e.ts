@@ -51,7 +51,11 @@ function alphaSuffix(): string {
 // Ayırt edici işaretçiler → havuzda tek/kesin eşleşme + de-id sızıntı kontrolü.
 // HEPSİ RAKAMSIZ (scrubText'in TC/telefon/tarih/pasaport kurallarının HİÇBİRİNE takılmaz).
 const uniq = alphaSuffix();
-const secretName = "Zeynep Kaya Test"; // hasta adı — SIZMAMALI (2B görev katmanı · şu an scrubText(...,[]) ile SIZIYOR → fixme)
+// Hasta adı — KOŞUYA ÖZEL benzersiz + isim-benzeri (ör. "Zeynep Mricoc"). Benzersizlik ŞART: dev branch'te
+// önceki koşuların talepleri partner panelinde/havuzda BİRİKİR; sabit ad eski (redaksiyon-öncesi) kayıtlarla
+// yanlış-pozitif verirdi. Benzersiz ad → assertion yalnız BU koşunun talebini denetler.
+// createRequestFromInput'ta AI isim redaksiyonu (redactPersonNames) bunu [ad] yapar → SIZMAMALI.
+const secretName = `Zeynep ${uniq.charAt(0).toUpperCase()}${uniq.slice(1, 6)}`;
 const secretEmail = `hasta.${uniq}@ornek-sizinti.test`; // e-posta — de-id GARANTİLİ maskeler ([e-posta])
 const clinicalMarker = `E2EKONSULTMARKER${uniq}`; // klinik metin işaretçisi (kod-token, RAKAMSIZ) — havuzda GÖRÜNMELİ
 // Özet: klinik içerik + KASITLI sızıntı denemesi (ad + e-posta). min 10 karakter şartını rahat aşar.
@@ -103,9 +107,13 @@ test("partner talep → de-id → doktor havuzu: klinik özet görünür, hasta 
     await page.waitForURL((url) => url.pathname === "/partner", { timeout: 60_000 });
 
     // Panelde talebin gönderilen anonim özeti görünür (klinik işaretçi). Partner KENDİ panelinde
-    // özeti scrub SONRASI haliyle görür; RAKAMSIZ marker scrubText'ten geçse de DEĞİŞMEZ → görünmeli.
-    // Marker kod-token → her dilde aynı (locale-bağımsız).
+    // özeti scrub + AI isim redaksiyonu SONRASI haliyle görür; RAKAMSIZ marker (anlamsız kod-token)
+    // hem scrubText'ten hem isim-redaksiyonundan DEĞİŞMEDEN geçer → görünmeli (locale-bağımsız).
     await expect(page.getByText(clinicalMarker, { exact: false }).first()).toBeVisible({ timeout: 15_000 });
+
+    // DE-ID (partner tarafı): düz hasta adı KAYDEDİLMEDEN redakte edildiği için partnerin KENDİ panelinde
+    // bile görünmemeli (isim DB'ye [ad] olarak yazıldı → summaryTr çevirisi de temiz).
+    await expectNotVisible(page, secretName);
   });
 
   // ── İKİNCİ ROL: Doktor (yeni izole context → çerez karışmaz) ──
@@ -135,7 +143,7 @@ test("partner talep → de-id → doktor havuzu: klinik özet görünür, hasta 
     // heading bulunamaz → test net şekilde başarısız olur (sessiz geçmez).
   });
 
-  await test.step("Doktor havuzu talepleri render eder ama hasta e-postası SIZMAZ", async () => {
+  await test.step("Doktor havuzu talepleri render eder ama hasta KİMLİĞİ (ad + e-posta) SIZMAZ", async () => {
     await doctorPage.goto("/doktor/konsultasyon");
 
     // Havuz sayfası açıldı mı (redirect olmadıysa) — sabit TR başlık "Konsültasyon Talepleri" (h1).
@@ -153,65 +161,13 @@ test("partner talep → de-id → doktor havuzu: klinik özet görünür, hasta 
       doctorPage.getByRole("heading", { name: /Açık talepler \(\d+\)/ }),
     ).toBeVisible({ timeout: 15_000 });
 
-    // (2A) SAĞLAM güvenlik kanıtı — e-posta de-id ile GARANTİLİ maskelenir (scrubText EMAIL_RE →
-    //      "[e-posta]"). Sayfa-geneli kontrol: sızıntı e-postası havuzda HİÇBİR YERDE görünmemeli.
-    //      (Canlıda doğrulandı: çevrili özette bile "iletişim [e-posta]"/"Kontakt [E-Mail]" göründü.)
+    // (2A) E-POSTA — de-id ile GARANTİLİ maskelenir (scrubText EMAIL_RE → "[e-posta]"). Sayfa-geneli
+    //      kontrol: sızıntı e-postası havuzda HİÇBİR YERDE görünmemeli.
     await expectNotVisible(doctorPage, secretEmail);
+
+    // (2B) DÜZ HASTA ADI — AI isim redaksiyonu (createRequestFromInput → redactPersonNames) ile [ad]
+    //      yapıldığından havuzda (çevrili summaryTr dahil) GÖRÜNMEMELİ. Bu, yapısal scrub'ın yakalayamadığı
+    //      serbest-metin adı de-id boşluğunun KAPANDIĞINI doğrular (KVKK/GDPR minimizasyon).
+    await expectNotVisible(doctorPage, secretName);
   });
 });
-
-// ── 2B: ÜRÜN BULGUSU (test-selektör hatası DEĞİL) — fixme ile işaretli ──
-// createRequestFromInput, scrubText'i names=[] (BOŞ isim listesi) ile çağırır
-// (src/lib/consultation-requests.ts:75). scrubText yalnız YAPISAL desenleri (e-posta/TC/telefon/tarih)
-// maskeler; serbest metindeki DÜZ HASTA ADI (yapısal desene uymayan) MASKELENMEZ.
-// → Canlıda DOĞRULANDI: partner panelinde ve doktor havuzunda "Hasta adı Zeynep Kaya Test" DÜZ SIZDI
-//   (e-posta maskeli ama ad açık). Bu bir de-id boşluğudur; ÜRÜN düzeltilmelidir (scrub'a hasta-adı
-//   listesi verilmesi ya da forma ad-yasak doğrulaması). Mevcut sızıntıyı "beklenen" gibi assert ETMEYİZ.
-// fixme → suite YEŞİL kalır; bulgu raporda "pending/fixme" olarak GÖRÜNÜR.
-test.fixme(
-  "de-id: partner serbest-metin hasta adı maskelenmeli — ürün bulgusu (consultation-requests.ts:75 scrubText(...,[]))",
-  async ({ page, browser }) => {
-    test.setTimeout(150_000);
-
-    await test.step("Partner talebi (hasta adı gömülü) oluştur", async () => {
-      await loginAs(page, "Partner Doktor");
-      await page.goto("/partner/talep");
-      const summary = page.locator("textarea");
-      await expect(summary).toBeVisible({ timeout: 15_000 });
-      const formCard = page.locator("div.rounded-3xl").filter({ has: summary });
-      const branchLimitCheckbox = formCard.locator('input[type="checkbox"]').first();
-      if (await branchLimitCheckbox.isChecked()) await branchLimitCheckbox.uncheck();
-      await summary.fill(clinicalSummary);
-      await formCard.getByRole("button").click();
-      await page.waitForURL((url) => url.pathname === "/partner", { timeout: 60_000 });
-    });
-
-    const doctorPage = await contextAs(browser, "Doktor");
-
-    await test.step("Doktor consultOptIn'i açar", async () => {
-      await doctorPage.goto("/doktor/profil");
-      const consultToggle = doctorPage.getByRole("button", { name: /Konsültasyon Talepleri/ });
-      if (await consultToggle.count()) {
-        const pressed = await consultToggle.first().getAttribute("aria-pressed");
-        if (pressed !== "true") {
-          await consultToggle.first().click();
-          await doctorPage.getByRole("button", { name: /Tercihleri kaydet/i }).click();
-          await expect(doctorPage.getByRole("button", { name: /Kaydedildi/i })).toBeVisible({ timeout: 15_000 });
-        }
-      }
-    });
-
-    await test.step("Doktor havuzunda düz hasta ADI GÖRÜNMEMELİ (şu an SIZIYOR → fixme)", async () => {
-      await doctorPage.goto("/doktor/konsultasyon");
-      await expect(
-        doctorPage.getByRole("heading", { name: "Konsültasyon Talepleri" }),
-      ).toBeVisible({ timeout: 15_000 });
-      // Marker'ın havuza düştüğünü teyit (talep gerçekten burada).
-      await expect(
-        doctorPage.getByText(clinicalMarker, { exact: false }).first(),
-      ).toBeVisible({ timeout: 15_000 });
-      // Beklenen (fixme): düz hasta adı maskelenmeli. Ürün bu güvence sağlanınca fixme kalkacak.
-      await expectNotVisible(doctorPage, secretName);
-    });
-  },
-);

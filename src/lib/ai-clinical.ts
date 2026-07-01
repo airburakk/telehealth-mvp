@@ -104,6 +104,44 @@ export async function translateText(text: string, target: string): Promise<strin
   return out && out.type === "text" ? out.text.trim() : "";
 }
 
+// İsim redaksiyonu (de-id) — serbest klinik metindeki KİŞİ ADLARINI (hasta/aile/üçüncü kişi/doktor)
+// '[ad]' ile maskeler. Yapısal scrubText'in (deidentify.ts) yakalayamadığı DÜZ adları kaldırır: partner
+// serbest-metni gibi, sistemin hastanın adını BİLMEDİĞİ durumlarda gereklidir (KVKK/GDPR minimizasyon).
+// Klinik içerik (şikâyet/süre/ölçüm/değer/birim/ilaç/kod/branş) AYNEN korunur. Yalnız-AI; anahtar yoksa
+// veya hata olursa fırlatır → çağıran best-effort fallback (yapısal scrub) yapar.
+const REDACT_TOOL: Anthropic.Tool = {
+  name: "submit_redacted",
+  description: "Metindeki kişi adlarını [ad] ile maskeleyip döndürür; klinik içerik ve diğer her şey aynen korunur.",
+  input_schema: {
+    type: "object",
+    properties: {
+      redacted: { type: "string", description: "Kişi adları [ad] ile maskelenmiş metin; başka hiçbir şey değişmez (klinik içerik/kod/sayı/birim aynen)" },
+    },
+    required: ["redacted"],
+  },
+};
+
+export async function redactPersonNames(text: string): Promise<string> {
+  if (!text.trim()) return text;
+  const res = await client().messages.create({
+    model: MODEL,
+    max_tokens: 2000,
+    system:
+      "Sen bir klinik metin anonimleştiricisisin. Verilen serbest metindeki TÜM KİŞİ ADLARINI (hasta, aile üyeleri, " +
+      "üçüncü kişiler, unvanlı doktor/hekim adları — ad ve/veya soyad) '[ad]' ile değiştir. Klinik içeriği (şikâyet, " +
+      "süre, ölçüm, değer, birim, ilaç, ICD/LOINC kodu, branş adı) ve diğer HER ŞEYİ AYNEN koru — yeni bilgi ekleme, " +
+      "özetleme, çevirme, açıklama yapma. Yer/şehir/ülke/kurum/hastane adı KİŞİ ADI DEĞİLDİR (dokunma). Anlamsız " +
+      "kod/etiket token'larına (harf-rakam karışık işaretçiler) dokunma. Yanıtı DAİMA submit_redacted aracıyla ver.",
+    tools: [REDACT_TOOL],
+    tool_choice: { type: "tool", name: "submit_redacted" },
+    messages: [{ role: "user", content: text }],
+  });
+  const block = res.content.find((b) => b.type === "tool_use");
+  if (!block || block.type !== "tool_use") throw new Error("İsim redaksiyon aracı yanıtı alınamadı.");
+  const out = (block.input as { redacted?: unknown }).redacted;
+  return typeof out === "string" && out.trim() ? out : text;
+}
+
 // Toplu arayüz çevirisi — TR kaynak dizisi → hedef dil, sıra ve sayı birebir korunur.
 // (Hasta arayüzü çok dilli: triyaj sihirbazı + branş soruları. Sonuçlar Translation tablosunda cache'lenir.)
 const TRANSLATE_TOOL: Anthropic.Tool = {

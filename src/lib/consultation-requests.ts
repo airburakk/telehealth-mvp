@@ -7,7 +7,7 @@ import { db } from "./db";
 import { encryptField, decryptField } from "./crypto";
 import { storeDocument, loadDocument } from "./storage";
 import { deidentifyCase, scrubText } from "./deidentify";
-import { translateText, assessDocument } from "./ai-clinical";
+import { translateText, assessDocument, redactPersonNames } from "./ai-clinical";
 import { notifyUser, notifyDoctorById } from "./notify";
 import { loincForBranchLabel } from "@/data/coding";
 
@@ -72,7 +72,18 @@ export interface PartnerRequestInput {
 }
 
 export async function createRequestFromInput(input: PartnerRequestInput, documents: PartnerDocInput[] = []): Promise<string> {
-  const summary = scrubText(input.clinicalSummary.trim().slice(0, 5000), []); // savunma amaçlı satır-içi temizlik
+  // (1) Yapısal satır-içi temizlik: e-posta/TC/telefon/tarih maskelenir (deidentify.scrubText).
+  const structural = scrubText(input.clinicalSummary.trim().slice(0, 5000), []);
+  // (2) AI isim redaksiyonu: yapısal scrub'ın yakalayamadığı DÜZ hasta/kişi adlarını [ad] ile maskele
+  //     (partner serbest-metni — sistem hastanın adını bilmez; KVKK/GDPR minimizasyon). Best-effort:
+  //     AI yoksa/hata ise yapısal scrub ile devam (submit'i bozma; en kötü durum = önceki davranış).
+  //     İsim KAYDEDİLMEDEN ÖNCE maskelenir → düz ad DB'ye hiç yazılmaz + summaryTr çevirisi de temiz olur.
+  let summary = structural;
+  try {
+    summary = await redactPersonNames(structural);
+  } catch (e) {
+    console.warn("[consult] AI isim redaksiyonu atlandı — yapısal scrub ile devam:", e instanceof Error ? e.message : e);
+  }
   const created = await db.consultationRequest.create({
     data: {
       requestedByPartnerId: input.partnerId,
