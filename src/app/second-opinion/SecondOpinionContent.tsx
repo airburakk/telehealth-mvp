@@ -12,6 +12,9 @@ const COPY = {
       "Have your current diagnosis and treatment reviewed through the eyes of an accredited specialist in the field. Meet the expert directly over video with live interpreting in 70 languages, and decide with confidence.",
     start: "Get started",
     seeDoctors: "See specialists",
+    staffCta: "Go to your dashboard",
+    staffNote:
+      "The application flow is for patients. As a clinician you provide opinions — manage second-opinion requests from your dashboard.",
     disclaimer:
       "A second opinion is not binding and does not replace your current treatment. Its purpose is to support your decision with an independent specialist assessment.",
   },
@@ -22,6 +25,9 @@ const COPY = {
       "Mevcut tanı ve tedavinizi, alanında akredite bir uzmanın gözünden değerlendirin. 70 dilde simültane tercüme hizmetiyle uzmanla doğrudan video görüşün; kararınızı güvenle verin.",
     start: "Hemen başla",
     seeDoctors: "Uzmanları gör",
+    staffCta: "Panelinize gidin",
+    staffNote:
+      "Başvuru akışı hastalar içindir. Klinik personel görüş verir — ikinci görüş taleplerini panelinizden yönetin.",
     disclaimer:
       "İkinci görüş bağlayıcı değildir ve mevcut tedavinizin yerine geçmez. Amaç, kararınızı bağımsız bir uzman değerlendirmesiyle desteklemektir.",
   },
@@ -50,7 +56,7 @@ const STEPS = [
   },
 ];
 
-export function SecondOpinionContent() {
+export function SecondOpinionContent({ canApply = true, staffHref = null }: { canApply?: boolean; staffHref?: string | null }) {
   const [locale, setLocale] = usePublicLocale();
   const C = COPY[locale];
   return (
@@ -64,13 +70,20 @@ export function SecondOpinionContent() {
       <h1 className="mt-5 text-3xl font-bold leading-tight text-[#101010] sm:text-[40px]">{C.h1}</h1>
       <p className="mt-4 max-w-2xl text-[17px] leading-relaxed text-slate-600">{C.intro}</p>
       <div className="mt-7 flex flex-wrap gap-3">
-        <Link href="/second-opinion/basvur" className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
-          {C.start} <ArrowRight size={17} />
-        </Link>
+        {canApply ? (
+          <Link href="/second-opinion/basvur" className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+            {C.start} <ArrowRight size={17} />
+          </Link>
+        ) : (
+          <Link href={staffHref ?? "/"} className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+            {C.staffCta} <ArrowRight size={17} />
+          </Link>
+        )}
         <Link href="/hekimler" className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 py-3 text-[15px] font-semibold text-slate-700 hover:bg-slate-50">
           {C.seeDoctors}
         </Link>
       </div>
+      {!canApply && <p className="mt-3 text-[13px] leading-relaxed text-slate-500">{C.staffNote}</p>}
 
       <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {STEPS.map((s, i) => {

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { roleHome } from "@/lib/session";
 import { SoApplyForm } from "./SoApplyForm";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,8 @@ export const dynamic = "force-dynamic";
 export default async function SecondOpinionApplyPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/giris?next=/second-opinion/basvur");
-  if (!["PATIENT", "ADMIN"].includes(user.role)) redirect("/");
+  // Başvuru akışı hasta-only (+ADMIN): doktor/koordinatör vb. görüş VERİR, başvurmaz. Sessizce "/"'a
+  // atmak yerine rolün ana sayfasına yönlendir (ör. doktor → /doktor) — anlamlı iniş (UX düzeltmesi).
+  if (!["PATIENT", "ADMIN"].includes(user.role)) redirect(roleHome(user.role));
   return <SoApplyForm />;
 }
