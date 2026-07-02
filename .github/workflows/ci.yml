@@ -1,0 +1,45 @@
+# CI kapısı (denetim P0 #4) — her push/PR'da tip + birim testi + lint çalışır.
+# AMAÇ: canlı klinik uygulamaya test-geçmeden regresyon gitmesin. Birim katmanı DB'siz (tests/unit),
+# bu yüzden CI'da güvenlidir; entegrasyon/E2E ayrı config'te (Neon dev branch secret'ı gerektirir) →
+# şimdilik opsiyonel iş olarak aşağıda kapalı bırakıldı. Build kapısı Vercel'de zaten çalışır
+# (bozuk build deploy'u durdurur); burada tsc + birim testi hızlı ve deterministik kapıdır.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    # prisma generate + db.ts singleton constructor'ı env değişkenlerinin VAR olmasını bekler (bağlantı
+    # KURMAZ — generate şemayı okur, testler db'yi mock'lar). Sahte/CI-only değerler yeterli.
+    env:
+      DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
+      DIRECT_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
+      SESSION_SECRET: "ci-only-placeholder-secret-not-for-production"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Bağımlılıklar
+        run: npm ci
+      - name: Prisma client üret
+        run: npx prisma generate
+      - name: Tip denetimi (tsc)
+        run: npx tsc --noEmit
+      - name: Birim testleri (DB'siz)
+        run: npm test
+      # `npm run lint` (= eslint .) yerelde tam repoda EXIT 0 (temiz) doğrulandı → bloklayıcı kapı.
+      - name: Lint
+        run: npm run lint
+
+  # Entegrasyon + E2E (Neon dev branch gerektirir) — secret eklenince aç:
+  #   env: { TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }} }  # prod'a ASLA; izole dev branch
+  #   run: npm run test:integration   (ve gerekirse: npx playwright install --with-deps && npm run test:e2e)
+  # Not: TEST_DATABASE_URL yoksa entegrasyon süiti skipIf ile sessizce atlanır → yanlış-yeşil riski;
+  # bu yüzden gerçek kapı için secret şart. Detay: tests/integration/README.md.

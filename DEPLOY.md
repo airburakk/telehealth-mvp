@@ -73,6 +73,10 @@ dormant kalır / fallback'e düşer).
 | `VAPID_PRIVATE_KEY` | ⛅ | Web Push gizli anahtar |
 | `VAPID_SUBJECT` | ⛅ | `mailto:...` |
 | `BLOB_READ_WRITE_TOKEN` | ⛅ | **Vercel Blob** object storage (PHI belgeleri — diploma/MMSS/lab/SO ekleri; bytes upload öncesi şifrelenir → Blob yalnız ciphertext). Kur: Vercel → **Storage → Create Database → Blob** → token'ı buraya. **Boşsa:** belgeler şifreli base64 olarak DB'de (fallback, çalışır ama satır şişer). Token sonradan eklenince eski satırlar: `npx tsx scripts/migrate-docs-to-blob.ts` |
+| `TSA_SECRET` | ⛅ | Simüle RFC 3161 zaman damgası HMAC sırrı (onam/audit kanıt token'ları — `lib/timestamp.ts`). ⚠️ **Üretimde set edilmeli:** boşsa repo'daki sabit varsayılanla imzalanır → kanıt değeri düşer. `openssl rand -base64 32` |
+| `BLOB_ACCESS` | ➖ | Vercel Blob erişim düzeyi override'ı (`lib/storage.ts`). Boş/varsayılan = `private` (PHI için doğru). `public` **yalnız** PHI-dışı içerik için |
+| `GOOGLE_CLIENT_ID` | ⛅ | Google ile giriş/kayıt (M5). Boşsa "Google ile devam et" dormant; e-posta kaydı çalışır. Yetkili yönlendirme: `<origin>/api/auth/google/callback` |
+| `GOOGLE_CLIENT_SECRET` | ⛅ | Google OAuth gizli anahtarı (yukarıdakiyle birlikte) |
 | `TRIAGE_MODEL` | ➖ | Opsiyonel — triyaj modeli (varsayılan `claude-sonnet-4-6`) |
 
 > ✅ zorunlu · ⛅ özellik için gerekli (yoksa fallback) · ➖ opsiyonel.
@@ -83,13 +87,35 @@ dormant kalır / fallback'e düşer).
 
 ## Doğrulama
 
-- **Deploy öncesi:** `npm test` (birim — DB yok) + `npx tsc --noEmit` + `npm run build` → hepsi EXIT 0.
+- **CI kapısı (P0 #4):** `.github/workflows/ci.yml` her push/PR'da `prisma generate` + `tsc --noEmit`
+  + `npm test` (birim, DB'siz) + `npm run lint` çalıştırır. Entegrasyon/E2E secret (`TEST_DATABASE_URL`)
+  eklenince açılır (workflow'da yorumlu). **Öneri:** GitHub branch protection ile CI yeşil olmadan
+  main'e merge/deploy engellensin (Vercel bozuk build'i zaten durdurur ama testleri/tsc'yi durdurmaz).
+- **Deploy öncesi (elle):** `npm test` (birim — DB yok) + `npx tsc --noEmit` + `npm run build` → hepsi EXIT 0.
   Entegrasyon (`npm run test:integration`) + E2E (`npm run test:e2e`) için ayrı **Neon dev branch**
   (`TEST_DATABASE_URL`) gerekir; prod'a karşı **çalıştırma** (yerel `.env` üretim Neon'a bağlı) —
   bkz. `tests/integration/README.md` + `tests/e2e/README.md`.
 - Canlı URL'de `/giris` → demo girişleri (parola `1234`): `hasta@` · `doktor@` · `koordinator@` · `kurul@` · `partner@air.test`
 - `/` landing · `/triyaj` · `/doktor` · `/operasyon` · `/etik-kurul` → rol bazlı erişim
 - Giriş sonrası `/onam` KVKK kapısı bir kez görünür
+
+## Yedekleme / Felaket Kurtarma (DR)
+
+> Canlı gerçek PHI taşıyan bir uygulama için **zorunlu operasyonel disiplin** (denetim P0 #5).
+> Kod değil süreç: aşağıdaki adımları kullanıcı/operatör uygular ve düzenli doğrular.
+
+- **Veritabanı yedeği (Neon):** Neon konsolunda **Point-in-Time Restore (PITR)** penceresini doğrula
+  (plan retention'ına göre). Kurtarma provası: bir **dev branch**'i belirli bir ana geri sar (restore),
+  bütünlüğü kontrol et. ⚠️ Yerel + üretim **aynı** Neon DB olduğundan (bkz. üst not) staging yok — bir
+  an önce ayrı üretim DB + staging branch ayrımı önerilir.
+- **KEK escrow (KRİTİK):** `DATA_ENCRYPTION_KEK` **kaybı = tüm klinik verinin geri döndürülemez kaybı**
+  (at-rest şifreli). KEK'i **en az iki bağımsız güvenli konumda** sakla (ör. parola kasası/secret manager
+  + çevrimdışı şifreli kopya). Rotasyon prosedürünü yazılı tut (şu an tek-anahtar; çoklu-KEK/key-id = P1).
+  Aynı disiplin `SESSION_SECRET` ve `TSA_SECRET` için de geçerli.
+- **Gizli anahtar envanteri:** Vercel'deki tüm env değişkenlerinin (KEK/SESSION_SECRET/TSA_SECRET/API
+  anahtarları) nerede escrow'landığı tek bir güvenli belgede tutulmalı; personel değişiminde erişim gözden geçirilir.
+- **Doğrulama kadansı:** PITR restore provası + KEK erişim testi periyodik (ör. üç ayda bir) tekrarlanmalı;
+  "yedek var" varsayımı değil, **geri yükleme kanıtı** esastır.
 
 ## Güvenlik notları (demo)
 
