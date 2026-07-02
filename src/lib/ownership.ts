@@ -72,8 +72,9 @@ export async function canAccessSecondOpinionCase(c: { patientId: string }): Prom
 
 // İkinci Görüş vakası — DOKTOR-daraltmalı erişim (opinion route'undaki desenin tek-kaynak hali):
 // DOCTOR yalnız DOĞRULANMIŞ hekim VE vaka KENDİSİNE atanmışsa (c.assignedDoctorId === doctorId) erişir.
-// Atanmamış SO vakasına doktor erişemez (SO'da kuyruk yok; atamayı koordinatör yapar). Diğer roller
-// temel kurala (ownsSecondOpinionCase) tabidir. assignedDoctorId ZORUNLU → seçmeyen sorgu derlemede patlar.
+// Atanmamış SO vakasına doktor erişemez — önce üstlenmeli/atanmalı (accept=claim veya koordinatör assign);
+// üstlenince assignedDoctorId set olur → erişim açılır. Diğer roller temel kurala (ownsSecondOpinionCase)
+// tabidir. assignedDoctorId ZORUNLU → seçmeyen sorgu derlemede patlar.
 export type SoCaseRef = { patientId: string; assignedDoctorId: string | null };
 
 export async function canSoCaseBeAccessedBy(user: SessionUser | null, c: SoCaseRef): Promise<boolean> {
