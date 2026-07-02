@@ -34,7 +34,9 @@ jobs:
         run: npx tsc --noEmit
       - name: Birim testleri (DB'siz)
         run: npm test
-      # `npm run lint` (= eslint .) yerelde tam repoda EXIT 0 (temiz) doğrulandı → bloklayıcı kapı.
+      # `npm run lint` (= eslint src) — kaynak ağacını denetler (.next build kalıntısı hariç).
+      # eslint-config-next@16 React Compiler kuralları eslint.config.mjs'de warn'a çekildi (kademeli
+      # benimseme) → gate mevcut kodda EXIT 0 döner; yeni gerçek hatalar (tsc dahil) yine bloklar.
       - name: Lint
         run: npm run lint
 
