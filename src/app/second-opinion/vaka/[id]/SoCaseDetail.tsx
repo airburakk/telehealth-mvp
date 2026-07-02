@@ -6,6 +6,7 @@ import Link from "next/link";
 import { secondOpinionDocSpecs, SO_DOC_TYPE_LABELS, type SoDocType } from "@/data/second-opinion-docs";
 import { SO_STATUS_LABELS, SO_FEE_USD, type SoStatus } from "@/lib/second-opinion";
 import { useT } from "@/components/useT";
+import { useClinicalT } from "@/components/useClinicalT";
 import { useSoLang, SoLangSelect } from "@/components/SoLocale";
 import {
   Check, AlertTriangle, CreditCard, Loader2, Link2, Upload, FileText,
@@ -169,15 +170,25 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       "Zorunlu", "Varsa", "Opsiyonel",
       data.branchLabel,
       ...specs.map((s) => s.label),
-      ...pendingReqs.map((r) => r.description),
-      ...(data.opinion ? [data.opinion.content] : []),
       ...SO_TRACKER_TEXTS,
       ...(data.assignedDoctor ? [data.assignedDoctor.title, data.assignedDoctor.branchLabel] : []),
       ...(data.country ? [countryName(data.country)] : []),
     ],
-    [data.branchLabel, specs, pendingReqs, data.opinion, data.assignedDoctor, data.country],
+    [data.branchLabel, specs, data.assignedDoctor, data.country],
   );
   const { t } = useT(lang, texts);
+
+  // KLİNİK serbest-metin (PHI: uzman görüşü + talep açıklamaları) cache'li useT yolundan AYRILDI —
+  // önbelleksiz + ad maskeli klinik yola gider (P0 #2: düz-metin PHI Translation'a yazılmasın + maskesiz
+  // AI'ya gitmesin). Sunucu tarafı paylasim/triyaj ile aynı translateClinical desenidir.
+  const clinicalTexts = useMemo(
+    () => [
+      ...(data.opinion ? [data.opinion.content] : []),
+      ...pendingReqs.map((r) => r.description),
+    ],
+    [data.opinion, pendingReqs],
+  );
+  const tc = useClinicalT(data.id, lang, clinicalTexts);
 
   const trackerItems: TrackerItem[] = soTrackerPhases(status, data.readyAt).map((p) => ({
     label: t(p.label),
@@ -369,7 +380,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
               <Printer size={12} /> {t(S.print)}
             </button>
           </div>
-          <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">{t(data.opinion.content)}</pre>
+          <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">{tc(data.opinion.content)}</pre>
           <div className="mt-2 text-xs text-emerald-600">{new Date(data.opinion.submittedAt).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}</div>
         </div>
       )}
@@ -409,7 +420,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
           {r.type === "ADDITIONAL_EXAMINATION" ? <FlaskConical size={18} className="mt-0.5 shrink-0 text-amber-600" /> : <FileText size={18} className="mt-0.5 shrink-0 text-amber-600" />}
           <div>
             <div className="text-sm font-semibold text-amber-800">{r.type === "ADDITIONAL_EXAMINATION" ? t(S.reqAdd) : t(S.reqDoc)}</div>
-            <p className="mt-0.5 text-[13px] leading-relaxed text-amber-700">{t(r.description)}</p>
+            <p className="mt-0.5 text-[13px] leading-relaxed text-amber-700">{tc(r.description)}</p>
           </div>
         </div>
       ))}
