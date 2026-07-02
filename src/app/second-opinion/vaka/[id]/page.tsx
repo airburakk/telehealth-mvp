@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { decryptField } from "@/lib/crypto";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsSecondOpinionCase } from "@/lib/ownership";
+import { canSoCaseBeAccessedBy } from "@/lib/ownership";
 import { BRANCHES } from "@/lib/triage";
 import { avatarVariant, isFemaleName } from "@/lib/doctor-profile";
 import { SoCaseDetail } from "./SoCaseDetail";
@@ -30,7 +30,7 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
     },
   });
   if (!c) notFound();
-  if (!ownsSecondOpinionCase(user, c)) redirect("/");
+  if (!(await canSoCaseBeAccessedBy(user, c))) redirect("/");
 
   const branchLabel = BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch;
 

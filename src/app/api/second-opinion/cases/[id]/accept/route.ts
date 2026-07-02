@@ -21,6 +21,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   const doctor = await db.doctor.findUnique({ where: { id: myDoctorId } });
   if (!doctor) return NextResponse.json({ error: "Doktor bulunamadı." }, { status: 404 });
+  // Doğrulanmamış (self-signup) hekim dosya üstlenemez — üstlense de canSoCaseBeAccessedBy her uçta
+  // reddederdi → vaka erişilemez kilitlenirdi (oto-atama zaten yalnız verified'a teklif eder).
+  if (!doctor.verified) return NextResponse.json({ error: "Hesabınız henüz onaylanmadı — dosya üstlenemezsiniz." }, { status: 403 });
 
   const c = await db.secondOpinionCase.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });

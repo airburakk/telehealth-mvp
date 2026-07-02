@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
 import { SO_STATUS_LABELS, isOfferExpired, type SoStatus } from "@/lib/second-opinion";
+import { scrubText } from "@/lib/deidentify";
 import { formatDateTime } from "@/lib/constants";
 import { SoAcceptButton } from "./SoAcceptButton";
 import { Stethoscope, ArrowRight, Inbox, FileText, ArrowLeft, Clock } from "lucide-react";
@@ -78,19 +79,25 @@ export default async function DoctorSoListPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold text-slate-800">{nameById[c.patientId] ?? "Hasta"}</span>
+                        {/* Claim-ÖNCESİ kimlik yok (de-id kararı 2026-07-02) — ad kabul ile açılır */}
+                        <span className="font-semibold text-slate-800">Anonim hasta</span>
                         <span className="inline-flex items-center gap-1 text-xs text-[#0EA5B2]"><Stethoscope size={12} /> {branchLabel}</span>
                         <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${open ? "bg-amber-100 text-amber-700" : "bg-[#14C3D0]/20 text-[#0E8A95]"}`}>
                           {open ? "Açık — süre doldu" : "Size atandı"}
                         </span>
                       </div>
-                      <p className="mt-1.5 line-clamp-2 text-sm text-slate-600">{c.diagnosisSummary}</p>
+                      <p className="mt-1.5 line-clamp-2 text-sm text-slate-600">{scrubText(c.diagnosisSummary, [nameById[c.patientId] ?? ""])}</p>
                       <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
                         <span className="inline-flex items-center gap-1"><FileText size={11} /> {c.documents.length} belge</span>
                         {c.assignedAt && <span className="inline-flex items-center gap-1"><Clock size={11} /> {formatDateTime(c.assignedAt)}</span>}
                       </div>
                     </div>
-                    <SoAcceptButton caseId={c.id} open={open} />
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <SoAcceptButton caseId={c.id} open={open} />
+                      <Link href={`/doktor/ikinci-gorus/${c.id}`} className="text-xs font-medium text-slate-400 hover:text-slate-600">
+                        Önizle →
+                      </Link>
+                    </div>
                   </div>
                 </div>
               );

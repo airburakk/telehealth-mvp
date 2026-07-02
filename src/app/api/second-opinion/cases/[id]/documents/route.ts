@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsSecondOpinionCase } from "@/lib/ownership";
+import { canSoCaseBeAccessedBy } from "@/lib/ownership";
 import { logSoEvent } from "@/lib/second-opinion-service";
 import { storeDocument } from "@/lib/storage";
 
@@ -21,7 +21,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const c = await db.secondOpinionCase.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
-  if (!ownsSecondOpinionCase(user, c)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+  if (!(await canSoCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
   if (!ADDABLE.includes(c.status)) {
     return NextResponse.json({ error: "Bu aşamada belge eklenemez." }, { status: 409 });
   }
