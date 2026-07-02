@@ -107,6 +107,10 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 
 - **i18n (8+ dil) + RTL:** tüm hasta yüzeyleri çevrilir (Arapça/Farsça RTL dâhil); `Translation`
   cache + `lib/i18n.ts` + `/api/i18n` + `useT`. Klinik veri **TR kanonik** (doktor/AI etkilenmez).
+  **Klinik/PHI serbest-metin** (epikriz/SOAP/uzman görüşü/talep açıklaması) hastaya çevrilirken ayrı
+  yoldan geçer: `translateClinical` + `/api/i18n/clinical` + `useClinicalT` — **önbelleksiz** (düz-metin
+  PHI `Translation`'a yazılmaz = at-rest şifrelemeyi baypas etmez) + hasta adı `[HASTA]` ile maskeli
+  (de-id'siz dış AI'ya gitmez, KVKK/GDPR). Cache'li `useT`/`getTranslations` yalnız statik UI etiketleri için.
 - **FHIR R4 dışa aktarım:** `/fhir/Composition/:caseId` (epikriz→Composition; ICD-10/LOINC/SNOMED) ·
   `/fhir/Consent/:shareId` + audit. (`lib/fhir.ts`)
 - **PWA + Web Push:** kurulabilir uygulama; tarayıcı kapalıyken cihaz bildirimi (VAPID).
