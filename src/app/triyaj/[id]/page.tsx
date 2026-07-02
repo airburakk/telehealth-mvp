@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { decryptCaseFields } from "@/lib/crypto";
 import { canAccessCase } from "@/lib/ownership";
-import { getTranslations } from "@/lib/i18n";
+import { getTranslations, translateClinical } from "@/lib/i18n";
 import { countryFlag, countryName, urgencyStyle, langDir, formatDateTime } from "@/lib/constants";
 import { CheckCircle2, FileText, Stethoscope, ArrowRight, Sparkles, Package, HeartPulse } from "lucide-react";
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
@@ -62,7 +62,13 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
   const u = urgencyStyle(c.urgency);
   const files = c.attachments ? c.attachments.split(",").filter(Boolean) : [];
 
-  const tmap = await getTranslations(c.language, [...STATIC_LABELS, c.branch, c.reasoning, ...TALK_TRACKER_TEXTS]);
+  // Klinik gerekçe (c.reasoning — at-rest şifreli PHI): önbelleklenmez + ad AI'dan gizlenir (P0 #2).
+  // Statik etiketler + branş + tracker metinleri PHI değil → cache'lenir.
+  const [uiMap, clinMap] = await Promise.all([
+    getTranslations(c.language, [...STATIC_LABELS, c.branch, ...TALK_TRACKER_TEXTS]),
+    translateClinical(c.language, [c.reasoning], c.patientName),
+  ]);
+  const tmap = { ...uiMap, ...clinMap };
   const t = (s: string) => tmap[s] ?? s;
 
   // Süreç takibi: ulaşılan en ileri booking durumu (CONFIRMED > DRAFT) + post-op varlığı

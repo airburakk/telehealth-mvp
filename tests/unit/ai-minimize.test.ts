@@ -10,7 +10,7 @@ vi.mock("@anthropic-ai/sdk", () => ({
   },
 }));
 
-import { minimizedName, reidentifyName, AI_NAME_PLACEHOLDER } from "@/lib/ai-minimize";
+import { minimizedName, reidentifyName, redactName, AI_NAME_PLACEHOLDER } from "@/lib/ai-minimize";
 import { summarizeSOAP, generateDischarge } from "@/lib/ai-clinical";
 
 describe("ai-minimize — saf yardımcılar", () => {
@@ -29,6 +29,28 @@ describe("ai-minimize — saf yardımcılar", () => {
   });
   it("özel karakterli ad (regex değil split/join) güvenli", () => {
     expect(reidentifyName("[HASTA]", "A. (Test) $1")).toBe("A. (Test) $1");
+  });
+});
+
+describe("redactName — çeviri/AI öncesi ad maskeleme (P0 #2)", () => {
+  it("gerçek adı placeholder ile değiştirir (reidentifyName'in tersi)", () => {
+    expect(redactName("Hasta: Ahmet Yılmaz", "Ahmet Yılmaz")).toBe(`Hasta: ${AI_NAME_PLACEHOLDER}`);
+  });
+  it("aynı metinde birden çok geçişi maskeler", () => {
+    expect(redactName("Ali geldi, sonra Ali gitti", "Ali")).toBe(`${AI_NAME_PLACEHOLDER} geldi, sonra ${AI_NAME_PLACEHOLDER} gitti`);
+  });
+  it("ad boşsa metin aynen döner (maskeleme yok)", () => {
+    expect(redactName("Hasta: Ahmet", "")).toBe("Hasta: Ahmet");
+    expect(redactName("Hasta: Ahmet", null)).toBe("Hasta: Ahmet");
+  });
+  it("Türkçe karakterli ad güvenli (split/join, regex değil)", () => {
+    expect(redactName("Rapor: Şükrü Çağdaş", "Şükrü Çağdaş")).toBe(`Rapor: ${AI_NAME_PLACEHOLDER}`);
+  });
+  it("round-trip: redactName → reidentifyName orijinali geri verir", () => {
+    const original = "Hasta Ahmet Yılmaz baş ağrısıyla başvurdu";
+    const masked = redactName(original, "Ahmet Yılmaz");
+    expect(masked).not.toContain("Ahmet");
+    expect(reidentifyName(masked, "Ahmet Yılmaz")).toBe(original);
   });
 });
 

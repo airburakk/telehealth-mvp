@@ -29,3 +29,14 @@ export function reidentifyName(text: string, realName: string | null | undefined
   if (!realName || !text) return text;
   return text.split(AI_NAME_PLACEHOLDER).join(realName); // split/join = regex-güvenli (özel karakterli ad)
 }
+
+/**
+ * Metindeki gerçek adı placeholder ile değiştir — reidentifyName'in TERSİ. AI'a/çeviriye gönderilecek
+ * klinik metinden hasta adını gizlemek için (P0 #2: çeviri yolu de-id). Tam ad üzerinde split/join
+ * (regex-güvenli, Türkçe-karakter-güvenli). Serbest metindeki kısmi/ilk-ad geçişleri kapsam dışıdır
+ * (klinik anlatı zaten AI görevinin özü — sınır lib/ai-minimize.ts ve lib/deidentify.ts ile aynı).
+ */
+export function redactName(text: string, realName: string | null | undefined): string {
+  if (!realName || !text) return text;
+  return text.split(realName).join(AI_NAME_PLACEHOLDER);
+}

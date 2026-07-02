@@ -4,7 +4,7 @@ import { notifyRoles, notifyUser } from "@/lib/notify";
 import { shareState, buildSharedItems, scopeLabel, SHARE_UNLOCK_PREFIX, type SharedItem } from "@/lib/share";
 import { ShareUnlock } from "@/components/ShareUnlock";
 import { ShareLangSelect } from "@/components/ShareLangSelect";
-import { getTranslations } from "@/lib/i18n";
+import { getTranslations, translateClinical } from "@/lib/i18n";
 import { LANGUAGES, langDir } from "@/lib/constants";
 import { decryptField, decryptCaseFields } from "@/lib/crypto";
 import {
@@ -147,13 +147,21 @@ export default async function ShareViewerPage({
   ];
   const splitParas = (s: string) => s.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
 
+  // Önbelleklenebilir (PHI değil): UI + branş + kalem başlıkları + scope etiketleri + lab satırları
+  // (LOINC ad/değer — yapısal, tanımlayıcı değil). Bunlar Translation tablosunda cache'lenir (paylaşımlar arası tekrar).
   const content: string[] = [link.case.branch];
+  // Klinik serbest-metin (PHI — epikriz/SOAP + "Hasta: ad" + anlatı): ÖNBELLEKLENMEZ + ad AI'dan gizlenir (P0 #2).
+  const clinical: string[] = [];
   for (const it of items) {
     content.push(it.title, scopeLabel(it.scope));
-    if (it.body) content.push(...splitParas(it.body)); // uzun klinik metni paragraf paragraf çevir → getTranslations paralelleştirir + cache granülaritesi
+    if (it.body) clinical.push(...splitParas(it.body)); // uzun klinik metni paragraf paragraf çevir (granülarite)
     if (it.rows) for (const r of it.rows) content.push(r.k, r.v);
   }
-  const tmap = await getTranslations(lang, [...UI, ...content]);
+  const [uiMap, clinMap] = await Promise.all([
+    getTranslations(lang, [...UI, ...content]),
+    translateClinical(lang, clinical, caseForShare.patientName), // önbelleksiz + ad maskeli
+  ]);
+  const tmap = { ...uiMap, ...clinMap };
   const t = (s: string) => (s ? tmap[s.trim()] ?? s : s);
   const tBody = (s: string) => splitParas(s).map((p) => t(p)).join("\n\n");
 

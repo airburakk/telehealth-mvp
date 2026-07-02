@@ -74,7 +74,8 @@ export function isEncrypted(v: string | null | undefined): boolean {
 }
 
 // Yazımda çağır. null/undefined/"" → değişmeden döner; zaten şifreliyse aynen döner (idempotent → backfill güvenli).
-// KEK yoksa düz metni döndürür + bir kez uyarır (yerel dev env'siz çalışsın diye; üretimde KEK set edilmeli).
+// KEK yoksa: ÜRETİMDE fail-closed (throw — düz-metin PHI yazmaktansa yazımı durdur, P0 #3); dev/test'te
+// düz metni döndürür + bir kez uyarır (yerel env'siz çalışsın diye). Üretimde KEK her zaman set edilmeli.
 export function encryptField(plain: string): string;
 export function encryptField(plain: null): null;
 export function encryptField(plain: undefined): undefined;
@@ -84,6 +85,14 @@ export function encryptField(plain: string | null | undefined): string | null | 
   if (plain == null || plain === "" || plain.startsWith(PREFIX)) return plain;
   const kek = getKek();
   if (!kek) {
+    // Üretimde KEK zorunlu — yoksa PHI'yi DÜZ METİN yazmak yerine YAZIMI DURDUR (fail-closed, P0 #3).
+    // Aksi halde bir env kayması (rotasyon/secret kazası) o penceredeki tüm klinik kayıtları sessizce
+    // kalıcı düz-metin yapar ve "enc:" öneki olmadığından sonradan fark edilmez.
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "[crypto] DATA_ENCRYPTION_KEK üretimde tanımsız — klinik alan şifrelenemedi; düz-metin yazımı engellendi (fail-closed). Vercel ortam değişkenini ayarlayın.",
+      );
+    }
     if (!warnedNoKek) {
       console.warn("[crypto] DATA_ENCRYPTION_KEK tanımsız — alan DÜZ METİN saklanıyor (yalnız geliştirme; üretimde KEK şart).");
       warnedNoKek = true;

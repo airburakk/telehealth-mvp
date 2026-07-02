@@ -1,5 +1,5 @@
 // Birim testleri — lib/crypto.ts (E2EE Faz 1 at-rest envelope şifreleme). KEK env üstünden toggle edilir.
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { encryptField, decryptField, isEncrypted, decryptCaseFields } from "@/lib/crypto";
 
 const ORIG_KEK = process.env.DATA_ENCRYPTION_KEK;
@@ -69,5 +69,23 @@ describe("KEK tanımlı (at-rest şifreleme)", () => {
     process.env.DATA_ENCRYPTION_KEK = Buffer.alloc(16, 1).toString("base64"); // 16 byte → geçersiz
     expect(() => encryptField("x")).toThrow(/32 byte/);
     process.env.DATA_ENCRYPTION_KEK = valid; // geri yükle
+  });
+});
+
+// P0 #3 — üretimde KEK yoksa fail-closed (düz-metin PHI yazmaktansa throw). En sonda: NODE_ENV'i izole değiştirir.
+describe("KEK tanımsız + ÜRETİM (fail-closed, P0 #3)", () => {
+  beforeAll(() => {
+    delete process.env.DATA_ENCRYPTION_KEK;
+    vi.stubEnv("NODE_ENV", "production"); // tip-güvenli + izole
+  });
+  afterAll(() => {
+    vi.unstubAllEnvs(); // izolasyon: sonraki testler etkilenmesin
+  });
+  it("içerik varken THROW eder (düz-metin yazımı engellenir)", () => {
+    expect(() => encryptField("gerçek PHI")).toThrow(/DATA_ENCRYPTION_KEK|fail-closed|engellendi/);
+  });
+  it("null/boş üretimde de güvenli passthrough (şifrelenecek içerik yok)", () => {
+    expect(encryptField(null)).toBeNull();
+    expect(encryptField("")).toBe("");
   });
 });

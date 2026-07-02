@@ -3,6 +3,7 @@
 import { createHash } from "crypto";
 import { db } from "./db";
 import { translateBatch } from "./ai-clinical";
+import { redactName, reidentifyName } from "./ai-minimize";
 import { LANGUAGES } from "./constants";
 
 export const UI_LANGS = LANGUAGES; // "Türkçe", "Rusça", "Azerice", "Arapça", "Fransızca", "İngilizce", "Kazakça", "Kırgızca"
@@ -63,4 +64,44 @@ export async function getTranslations(lang: string, texts: string[]): Promise<Re
     for (const s of missing) map[s] = s;
   }
   return map;
+}
+
+// Klinik (PHI içeren) serbest-metni çevir — getTranslations'ın AKSİNE ÖNBELLEKLEMEZ + adı AI'dan gizler.
+//
+// SORUN (P0 #2): getTranslations klinik gövdeyi (epikriz/SOAP/triyaj gerekçesi — hasta adı dahil) hem
+//   Translation tablosuna DÜZ METİN yazıyordu (at-rest şifrelemeyi baypas) hem de hasta adını de-id'siz
+//   dış AI'ya gönderiyordu. Bu yol: (1) adı [HASTA] placeholder'ıyla maskele (AI/önbellek gerçek adı
+//   görmesin), (2) çevir ama Translation'a HİÇBİR ŞEY yazma, (3) çeviriden sonra adı geri koy (hasta
+//   kendi raporunda adını görür). Klinik anlatı çeviri için AI'ya gider (görevin özü, mevcut sınır),
+//   ama AD gitmez ve hiçbir klinik metin DB önbelleğine düşmez.
+export async function translateClinical(
+  lang: string,
+  texts: string[],
+  realName: string | null | undefined,
+): Promise<Record<string, string>> {
+  const uniq = [...new Set(texts.map((t) => t.trim()).filter(Boolean))];
+  const identity = Object.fromEntries(uniq.map((s) => [s, s]));
+  if (lang === "Türkçe" || !UI_LANGS.includes(lang) || uniq.length === 0) return identity;
+  if (!process.env.ANTHROPIC_API_KEY) return identity; // anahtar yok → TR fallback (çevirmeden)
+
+  const masked = uniq.map((s) => redactName(s, realName)); // 1) adı gizle
+  const mmap: Record<string, string> = {}; // maskeli metin → maskeli çeviri
+  await Promise.all(
+    chunkByBudget(masked).map(async (chunk) => {
+      try {
+        const out = await translateBatch(chunk, lang); // 2) çevir — ÖNBELLEKLEME YOK
+        chunk.forEach((m, j) => (mmap[m] = out[j] ?? m));
+      } catch (e) {
+        console.warn("[i18n] klinik çeviri hatası — TR ile devam:", e instanceof Error ? e.message : e);
+        for (const m of chunk) mmap[m] = m;
+      }
+    }),
+  );
+
+  const result: Record<string, string> = {};
+  for (const s of uniq) {
+    const m = redactName(s, realName);
+    result[s] = reidentifyName(mmap[m] ?? m, realName); // 3) adı geri koy → orijinal metin anahtarlı
+  }
+  return result;
 }
