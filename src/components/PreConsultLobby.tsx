@@ -17,7 +17,7 @@ import {
   Award, Heart, Zap, Activity, Stethoscope, MapPin, type LucideIcon,
 } from "lucide-react";
 import { useT } from "@/components/useT";
-import { langDir, LANG_BCP47 } from "@/lib/constants";
+import { langDir, LANG_BCP47, VIDEO_CARD_SCRIPT } from "@/lib/constants";
 import { AuraSpinner } from "@/components/PortamedLogo";
 import { DoctorArt } from "@/components/PortamedArt";
 import { DoctorVideoCard } from "@/components/DoctorVideoCard";
@@ -75,6 +75,7 @@ const TX = {
   trustBadges: "Güven rozetleri",
   academicTitle: "Akademik & Eğitim",
   videoCard: "Video Kartvizit",
+  videoAria: "tanıtım videosu",
   credentialsTitle: "Akreditasyon",
   diploma: "Tıp Diploması",
   speciality: "Uzmanlık Belgesi",
@@ -112,7 +113,7 @@ export function PreConsultLobby({
 }: Props) {
   // texts referansı SABİT olmalı: lobi ses metresi/geri sayım ile sık re-render eder; memoize edilmezse
   // useT'nin effect'i her render yeniden kurulur → uçuştaki çeviri fetch'i cleanup ile iptal olur (çeviri hiç gelmez).
-  const texts = useMemo(() => [...Object.values(TX), ...(branchLabel ? [branchLabel] : [])], [branchLabel]);
+  const texts = useMemo(() => [...Object.values(TX), ...VIDEO_CARD_SCRIPT, ...(branchLabel ? [branchLabel] : [])], [branchLabel]);
   const { t } = useT(lang, texts);
   const dir = langDir(lang);
 
@@ -445,11 +446,18 @@ export function PreConsultLobby({
                 <p className="mt-1 text-[13px] leading-relaxed text-slate-600">{doctorCard.academic}</p>
               </div>
 
-              {/* Video kartvizit (dil-bazlı video = todo: hizmet verilen ülke/hasta diline göre) */}
+              {/* Video kartvizit — hasta dilinde: varsa dil-bazlı video varyantı, her durumda çevrilmiş altyazı */}
               <div>
                 <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400"><Video size={12} /> {t(TX.videoCard)}</p>
                 <div className="mt-1.5">
-                  <DoctorVideoCard name={doctorCard.name} title={doctorCard.title} female={doctorCard.female} />
+                  <DoctorVideoCard
+                    name={doctorCard.name}
+                    title={doctorCard.title}
+                    female={doctorCard.female}
+                    lang={lang}
+                    subtitles={VIDEO_CARD_SCRIPT.map((s) => t(s))}
+                    ariaLabel={`${doctorCard.title} ${doctorCard.name} ${t(TX.videoAria)}`}
+                  />
                 </div>
               </div>
 

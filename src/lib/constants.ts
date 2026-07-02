@@ -35,6 +35,17 @@ export const LANG_BCP47: Record<string, string> = {
   "Fransızca": "fr-FR", "İngilizce": "en-US", "Almanca": "de-DE", "Kazakça": "kk-KZ", "Kırgızca": "ky-KG",
 };
 
+// Doktor video kartviziti kanonik TR tanıtım metni — jenerik (isim/branş interpolasyonu YOK:
+// AI çevirisinde placeholder kaybı riski sıfır + tüm doktorlar aynı çeviri cache girdisini paylaşır).
+// Burada (düz-veri modülü): hem client (PreConsultLobby) hem server (hekim/[id]) import eder —
+// "use client" modülünden veri export'u server'da client-reference'a döner (iterate edilemez).
+export const VIDEO_CARD_SCRIPT = [
+  "Merhaba, hoş geldiniz.",
+  "Uluslararası hastalarımıza yıllardır güvenle hizmet veriyoruz.",
+  "Görüşmemizde tüm sorularınızı rahatça sorabilirsiniz.",
+  "Sağlığınız için her adımda yanınızdayız.",
+];
+
 // Sağdan-sola yazılan diller (RTL) — Arapça ve Farsça. Hasta arayüzü bu dillerde
 // `dir="rtl"` ile yansıtılır (langDir). LTR dillerde davranış değişmez.
 const RTL_LANGS = new Set(["Arapça", "Farsça"]);

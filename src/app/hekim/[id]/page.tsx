@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { countryFlag, formatDateTime } from "@/lib/constants";
+import { countryFlag, formatDateTime, VIDEO_CARD_SCRIPT } from "@/lib/constants";
 import { doctorCredentials, richBio, academicNote, generatedReviews, avatarVariant, isFemaleName } from "@/lib/doctor-profile";
 import { DoctorVideoCard } from "@/components/DoctorVideoCard";
 import { DoctorArt } from "@/components/PortamedArt";
@@ -120,7 +120,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
 
         <aside className="space-y-4">
           <Card title="Video Kartvizit" icon={<Video size={15} />}>
-            <DoctorVideoCard name={d.name} title={d.title} female={isFemaleName(d.name)} />
+            <DoctorVideoCard name={d.name} title={d.title} female={isFemaleName(d.name)} subtitles={[...VIDEO_CARD_SCRIPT]} />
           </Card>
 
           <Card title="Akreditasyon & Belgeler" icon={<ShieldCheck size={15} />}>
