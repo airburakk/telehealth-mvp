@@ -1,20 +1,21 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsSecondOpinionCase } from "@/lib/ownership";
+import { canSoCaseBeAccessedBy } from "@/lib/ownership";
 import { logSoEvent } from "@/lib/second-opinion-service";
 import { loadDocument } from "@/lib/storage";
 
-// GET /api/second-opinion/cases/[id]/documents/[docId] — belgeyi görüntüle (sahip hasta veya klinik personel).
+// GET /api/second-opinion/cases/[id]/documents/[docId] — belgeyi görüntüle (sahip hasta, ATANMIŞ doktor
+// veya koordinatör/admin — BOLA düzeltmesi: doktor yalnız kendisine atanmış vakanın belgesini açabilir).
 // EXTERNAL_LINK → harici bağlantıya yönlendir; FILE_UPLOAD → base64'ü çöz, dosyayı döndür.
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string; docId: string }> }) {
   const { id, docId } = await params;
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
 
-  const c = await db.secondOpinionCase.findUnique({ where: { id }, select: { patientId: true } });
+  const c = await db.secondOpinionCase.findUnique({ where: { id }, select: { patientId: true, assignedDoctorId: true } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
-  if (!ownsSecondOpinionCase(user, c)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+  if (!(await canSoCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
 
   const doc = await db.secondOpinionDocument.findFirst({ where: { id: docId, caseId: id } });
   if (!doc) return NextResponse.json({ error: "Belge bulunamadı." }, { status: 404 });

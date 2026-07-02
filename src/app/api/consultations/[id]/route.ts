@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { recordAccess, reqMeta } from "@/lib/audit";
 import { encryptField } from "@/lib/crypto";
 
 // PATCH /api/consultations/:id — not kaydet / görüşmeyi bitir
-// Erişim: klinik personel (DOCTOR/COORDINATOR/ADMIN) — hasta klinik notu yazamaz / görüşmeyi kapatamaz.
+// Erişim: klinik personel (DOCTOR/COORDINATOR/ADMIN) + vakanın sahipliği (BOLA düzeltmesi: rol tek
+// başına yetmez; doktor yalnız kendi vakasının görüşmesine yazabilir/kapatabilir).
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
@@ -14,6 +16,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const { id } = await params;
+
+  // Sahiplik: update ETMEDEN ÖNCE görüşme→vaka zinciri doğrulanır (status ENDED vakayı DONE yazar).
+  const cons = await db.consultation.findUnique({
+    where: { id },
+    select: { caseId: true, case: { select: { userId: true, doctorId: true } } },
+  });
+  if (!cons) return NextResponse.json({ error: "Görüşme bulunamadı." }, { status: 404 });
+  if (!(await canCaseBeAccessedBy(user, cons.case))) {
+    return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
+  }
+
   const body = await req.json().catch(() => ({}));
 
   const data: { notes?: string; status?: string; endedAt?: Date } = {};
@@ -31,13 +44,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   // Denetim: klinik not yazma / görüşme kapatma (kim/ne zaman/hangi vaka).
-  const subj = await db.case.findUnique({ where: { id: updated.caseId }, select: { userId: true } });
   await recordAccess({
     actor: user,
     action: data.status === "ENDED" ? "CONSULT_END" : "CONSULT_WRITE",
     resourceType: "CONSULTATION",
     resourceId: updated.id,
-    subjectUserId: subj?.userId ?? null,
+    subjectUserId: cons.case?.userId ?? null,
     detail: data.status === "ENDED" ? "görüşme bitirildi" : "klinik not güncellendi",
     ...reqMeta(req),
   });

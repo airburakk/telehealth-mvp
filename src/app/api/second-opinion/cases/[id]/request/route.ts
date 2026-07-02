@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { canSoCaseBeAccessedBy } from "@/lib/ownership";
 import { transitionSoCase, logSoEvent, SoError } from "@/lib/second-opinion-service";
 import { notifyUser } from "@/lib/notify";
 
@@ -34,6 +35,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     requestedBy = "coordinator";
   } else {
     if (!["DOCTOR", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+    // BOLA düzeltmesi: ek tetkik talebini yalnız vakaya ATANMIŞ (doğrulanmış) doktor açabilir.
+    if (user.role === "DOCTOR" && !(await canSoCaseBeAccessedBy(user, c))) {
+      return NextResponse.json({ error: "Bu vaka size atanmamış." }, { status: 403 });
+    }
     if (c.status !== "ASSIGNED") return NextResponse.json({ error: "Ek tetkik talebi yalnız atama sonrası açılabilir." }, { status: 409 });
     nextStatus = "AWAITING_ADDITIONAL_TESTS";
     requestedBy = "doctor";

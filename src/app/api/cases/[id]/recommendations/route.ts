@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { isValidCode, floorPrice, ceilPrice, getByCodes } from "@/lib/procedures";
 
 const STAFF = ["DOCTOR", "COORDINATOR", "ADMIN"];
@@ -15,6 +16,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
   const c = await db.case.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+  // BOLA düzeltmesi: rol tek başına yetmez — doktor yalnız kendisine atanmış/kuyruk vakasına tavsiye yazabilir.
+  if (!(await canCaseBeAccessedBy(user, c))) {
+    return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
+  }
 
   const b = await req.json().catch(() => ({}));
   const raw = Array.isArray(b?.treatments) ? b.treatments : [];

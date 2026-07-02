@@ -55,10 +55,10 @@ export async function canAccessCase(c: CaseRef): Promise<boolean> {
   return canCaseBeAccessedBy(await getCurrentUser(), c);
 }
 
-// İkinci Görüş vakası sahipliği (spec §8). PATIENT yalnız kendi vakasına; PARTNER erişemez; klinik
-// personel (koordinatör/doktor/etik/admin) temel düzeyde erişir. NOT: DOCTOR'ın yalnız KENDİSİNE
-// atanmış SO vakasını görmesi (assignedDoctorId scoping) ayrı bir SO-Faz takibidir (bu yardımcı temel
-// kuraldır; Case modelindeki tam atama-scoping canCaseBeAccessedBy'da uygulanır).
+// İkinci Görüş vakası sahipliği (spec §8) — TEMEL kural. PATIENT yalnız kendi vakasına; PARTNER
+// erişemez; klinik personel (koordinatör/doktor/etik/admin) temel düzeyde erişir.
+// ⚠️ DOCTOR burada DARALTILMAZ (her doktora true döner) → PHI taşıyan uçlarda TEK BAŞINA KULLANMA;
+// atama-daraltmalı `canSoCaseBeAccessedBy` kullan (BOLA düzeltmesi 2026-07-02).
 export function ownsSecondOpinionCase(user: SessionUser | null, c: { patientId: string }): boolean {
   if (!user) return false;
   if (user.role === "PATIENT") return c.patientId === user.id;
@@ -68,4 +68,19 @@ export function ownsSecondOpinionCase(user: SessionUser | null, c: { patientId: 
 
 export async function canAccessSecondOpinionCase(c: { patientId: string }): Promise<boolean> {
   return ownsSecondOpinionCase(await getCurrentUser(), c);
+}
+
+// İkinci Görüş vakası — DOKTOR-daraltmalı erişim (opinion route'undaki desenin tek-kaynak hali):
+// DOCTOR yalnız DOĞRULANMIŞ hekim VE vaka KENDİSİNE atanmışsa (c.assignedDoctorId === doctorId) erişir.
+// Atanmamış SO vakasına doktor erişemez (SO'da kuyruk yok; atamayı koordinatör yapar). Diğer roller
+// temel kurala (ownsSecondOpinionCase) tabidir. assignedDoctorId ZORUNLU → seçmeyen sorgu derlemede patlar.
+export type SoCaseRef = { patientId: string; assignedDoctorId: string | null };
+
+export async function canSoCaseBeAccessedBy(user: SessionUser | null, c: SoCaseRef): Promise<boolean> {
+  if (!user) return false;
+  if (user.role === "DOCTOR") {
+    const { doctorId, verified } = await doctorContext(user);
+    return verified && !!doctorId && c.assignedDoctorId === doctorId;
+  }
+  return ownsSecondOpinionCase(user, c);
 }
