@@ -84,8 +84,9 @@ dormant kalır / fallback'e düşer).
 ## Doğrulama
 
 - **Deploy öncesi:** `npm test` (birim — DB yok) + `npx tsc --noEmit` + `npm run build` → hepsi EXIT 0.
-  Entegrasyon testleri için ayrı **Neon dev branch** (`TEST_DATABASE_URL`) gerekir; prod'a karşı
-  çalıştırma (yerel `.env` üretim Neon'a bağlı) — bkz. `tests/integration/README.md`.
+  Entegrasyon (`npm run test:integration`) + E2E (`npm run test:e2e`) için ayrı **Neon dev branch**
+  (`TEST_DATABASE_URL`) gerekir; prod'a karşı **çalıştırma** (yerel `.env` üretim Neon'a bağlı) —
+  bkz. `tests/integration/README.md` + `tests/e2e/README.md`.
 - Canlı URL'de `/giris` → demo girişleri (parola `1234`): `hasta@` · `doktor@` · `koordinator@` · `kurul@` · `partner@air.test`
 - `/` landing · `/triyaj` · `/doktor` · `/operasyon` · `/etik-kurul` → rol bazlı erişim
 - Giriş sonrası `/onam` KVKK kapısı bir kez görünür
