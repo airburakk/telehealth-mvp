@@ -24,6 +24,9 @@ export async function proxy(req: NextRequest) {
 
   // KVKK açık onam kapısı: güncel sürümde onam yoksa /onam'a yönlendir (her şeyin ön koşulu).
   // cv JWT'de taşınır (login/onam'da set edilir) → proxy DB'siz çalışır (Node runtime; edge desteklenmez).
+  // Bilinçli takas: JWT iptali (sv claim) burada KONTROL EDİLMEZ — iptal edilen token sayfa
+  // kabuğuna kadar gelebilir; gerçek yaptırım veri katmanında (getCurrentUser sv≠DB → null).
+  // Proxy'ye DB koymak her gezintiye sorgu ekler, kazanç marjinal.
   if ((user.cv ?? 0) < CONSENT_VERSION) {
     const url = new URL(CONSENT_PATH, req.url);
     url.searchParams.set("next", pathname);

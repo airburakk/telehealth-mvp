@@ -11,6 +11,7 @@ export interface SessionUser {
   name: string;
   role: Role;
   cv?: number; // onaylanan KVKK onam sürümü (consented version); 0/undefined = onam yok
+  sv?: number; // oturum sürümü (session version) — User.sessionVersion snapshot'ı; uyuşmazsa token iptal (JWT revocation)
 }
 
 // Oturum imzalama anahtarı (T4). ÜRETİMDE eksik/zayıf/varsayılan ise BOOT DURUR (forge edilebilir
@@ -39,7 +40,7 @@ function resolveSessionSecret(): Uint8Array {
 const secret = resolveSessionSecret();
 
 export async function signToken(user: SessionUser): Promise<string> {
-  return new SignJWT({ email: user.email, name: user.name, role: user.role, cv: user.cv ?? 0 })
+  return new SignJWT({ email: user.email, name: user.name, role: user.role, cv: user.cv ?? 0, sv: user.sv ?? 0 })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
     .setIssuedAt()
@@ -56,6 +57,7 @@ export async function verifyToken(token: string): Promise<SessionUser | null> {
       name: String(payload.name),
       role: payload.role as Role,
       cv: Number(payload.cv ?? 0),
+      sv: Number(payload.sv ?? 0), // eski (sv'siz) token → 0 = DB default'u → canlı oturumlar bozulmaz
     };
   } catch {
     return null;

@@ -30,7 +30,7 @@ export async function createAblyTokenRequest(userId: string, channelId: string):
   return client.auth.createTokenRequest({
     clientId: userId,
     capability: JSON.stringify({ [signalChannel(channelId)]: ["subscribe"] }),
-    ttl: 60 * 60 * 1000, // 1 saat; Ably SDK bitmeden authUrl'den yeniler
+    ttl: 15 * 60 * 1000, // 15 dk — logout-all (JWT iptali) sonrası kanal-dinleme penceresini daraltır; SDK bitmeden authUrl'den yeniler (iptal edilmiş oturumda yenileme 401 → abonelik düşer)
   });
 }
 

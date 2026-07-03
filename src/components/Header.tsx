@@ -7,7 +7,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { PortamedLogo } from "@/components/PortamedLogo";
 import { useT } from "@/components/useT";
 import { langDir } from "@/lib/constants";
-import { Stethoscope, UserRound, HeartPulse, Scale, LogOut, LogIn, Users, BadgeCheck, Share2, BarChart3, FolderHeart, HeartHandshake, Globe } from "lucide-react";
+import { Stethoscope, UserRound, HeartPulse, Scale, LogOut, LogIn, Users, BadgeCheck, Share2, BarChart3, FolderHeart, HeartHandshake, Globe, ShieldOff } from "lucide-react";
 
 const BRAND_SUB = "Sağlık Turizmi & Teletıp";
 
@@ -43,7 +43,7 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
   // Çevrilecek metinler: marka altyazısı + görünür nav etiketleri + rol + Çıkış/Giriş.
   // lang="Türkçe" → useT no-op (kimlik). Partner gibi dil-tercihli kullanıcıda /api/i18n cache'i.
   const texts = useMemo(
-    () => [BRAND_SUB, "Çıkış", "Giriş yap", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
+    () => [BRAND_SUB, "Çıkış", "Giriş yap", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
     [items, user]
   );
   const { t } = useT(lang, texts);
@@ -58,6 +58,19 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/giris");
+    router.refresh();
+  }
+
+  // JWT iptali: sessionVersion artar → bu hesabın TÜM cihazlardaki token'ları geçersizleşir.
+  // Güvenlik eylemi sessizce başarısız olmasın: yanıt kontrol edilir, hatada yönlendirme YAPILMAZ.
+  async function logoutAll() {
+    if (!window.confirm(t("Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?"))) return;
+    const res = await fetch("/api/auth/logout-all", { method: "POST" }).catch(() => null);
+    if (!res?.ok) {
+      window.alert(t("İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin."));
+      return;
+    }
     router.push("/giris");
     router.refresh();
   }
@@ -96,6 +109,9 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
                 <div className="text-sm font-medium leading-tight text-white/90">{user.name}</div>
                 <div className="text-[11px] leading-tight text-white/45">{t(ROLE_LABELS[user.role] ?? user.role)}</div>
               </div>
+              <button onClick={logoutAll} title={t("Tüm cihazlardan çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-white/35 hover:bg-white/10 hover:text-red-400">
+                <ShieldOff size={16} />
+              </button>
               <button onClick={logout} title={t("Çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-white/55 hover:bg-white/10 hover:text-red-400">
                 <LogOut size={17} />
               </button>

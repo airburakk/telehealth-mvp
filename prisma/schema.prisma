@@ -22,6 +22,7 @@ model User {
   role         String // PATIENT, DOCTOR, COORDINATOR, ETHICS, ADMIN, PARTNER
   doctorId     String? // DOCTOR rolündeki kullanıcının hekim profili
   partnerId    String? // PARTNER rolündeki kullanıcının Partner Doktor profili (M5 Faz 3)
+  sessionVersion Int    @default(0) // JWT iptali: token'daki `sv` claim'i ile karşılaştırılır; artınca eski oturumlar düşer (logout-all / gelecekte şifre değişikliği)
   createdAt    DateTime @default(now())
 
   @@index([doctorId]) // doktor-hedefli bildirim/atama lookup'ları (lib/notify, clinical-duty, SO)
