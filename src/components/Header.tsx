@@ -7,7 +7,8 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { PortamedLogo } from "@/components/PortamedLogo";
 import { useT } from "@/components/useT";
 import { langDir } from "@/lib/constants";
-import { Stethoscope, UserRound, HeartPulse, Scale, LogOut, LogIn, Users, BadgeCheck, Share2, BarChart3, FolderHeart, HeartHandshake, Globe, ShieldOff } from "lucide-react";
+import { navItemsFor } from "@/lib/nav";
+import { LogOut, LogIn, ShieldOff } from "lucide-react";
 
 const BRAND_SUB = "Sağlık Turizmi & Teletıp";
 
@@ -20,26 +21,13 @@ const ROLE_LABELS: Record<string, string> = {
   PARTNER: "Partner Doktor",
 };
 
-const NAV = [
-  { href: "/vakalarim", label: "Vakalarım", icon: FolderHeart, roles: ["PATIENT", "ADMIN"] },
-  { href: "/triyaj", label: "Triyaj", icon: UserRound, roles: ["PATIENT", "ADMIN"] },
-  { href: "/pro-bono/basvur", label: "Pro Bono", icon: HeartHandshake, roles: ["PATIENT"] },
-  { href: "/hekimler", label: "Doktorlar", icon: Users, roles: ["PATIENT", "ADMIN"] },
-  { href: "/paylasimlarim", label: "Paylaşımlarım", icon: Share2, roles: ["PATIENT", "ADMIN"] },
-  { href: "/operasyon", label: "Operasyon", icon: BarChart3, roles: ["COORDINATOR", "ADMIN"] },
-  { href: "/doktor", label: "Doktor", icon: Stethoscope, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
-  { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
-  { href: "/doktor/pro-bono", label: "Pro Bono", icon: HeartHandshake, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
-  { href: "/doktor/profil", label: "Profilim", icon: BadgeCheck, roles: ["DOCTOR", "ADMIN"] },
-  { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, roles: ["ETHICS", "ADMIN"] },
-  { href: "/partner", label: "Partner", icon: Globe, roles: ["PARTNER", "ADMIN"] },
-];
-
-export function Header({ user, lang = "Türkçe" }: { user: { name: string; role: string } | null; lang?: string }) {
+export function Header({ user, lang = "Türkçe", journey = null }: { user: { name: string; role: string } | null; lang?: string; journey?: string | null }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const items = NAV.filter((n) => user && n.roles.includes(user.role));
+  // Nav öğeleri rol + hasta yolculuğuna göre (lib/nav.ts — SO hastasında Paylaşımlarım gizli,
+  // Vakalarım SO listesine işaret eder).
+  const items = navItemsFor(user?.role, journey);
   // Çevrilecek metinler: marka altyazısı + görünür nav etiketleri + rol + Çıkış/Giriş.
   // lang="Türkçe" → useT no-op (kimlik). Partner gibi dil-tercihli kullanıcıda /api/i18n cache'i.
   const texts = useMemo(

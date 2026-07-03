@@ -78,5 +78,6 @@ export function roleHome(role: Role): string {
   if (role === "DOCTOR") return "/doktor";
   if (role === "ETHICS") return "/etik-kurul";
   if (role === "PARTNER") return "/partner"; // M5 Faz 3 — Partner Doktor alanı
-  return "/vakalarim"; // hasta: kendi vakaları
+  if (role === "PATIENT") return "/basla"; // hasta: her girişte "Nasıl ilerlemek istersiniz?" seçimi
+  return "/vakalarim"; // ADMIN vb.
 }

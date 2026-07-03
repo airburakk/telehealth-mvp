@@ -36,11 +36,17 @@ export default async function RootLayout({
     const p = u?.partnerId ? await db.partnerDoctor.findUnique({ where: { id: u.partnerId }, select: { language: true } }) : null;
     headerLang = p?.language || "İngilizce";
   }
+  // Hasta yolculuğu (/basla seçimi) → nav bileşimi (SO hastasında Paylaşımlarım gizli, Vakalarım→SO).
+  let journey: string | null = null;
+  if (user?.role === "PATIENT") {
+    const u = await db.user.findUnique({ where: { id: user.id }, select: { patientJourney: true } });
+    journey = u?.patientJourney ?? null;
+  }
   return (
     <html lang="tr" className={`h-full antialiased ${sans.variable} ${serif.variable}`}>
       <body className="min-h-full flex flex-col">
         <PwaRegister />
-        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} />
+        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} journey={journey} />
         <main className="flex-1">{children}</main>
         <SiteFooter />
       </body>
