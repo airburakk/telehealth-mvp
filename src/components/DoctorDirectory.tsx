@@ -13,9 +13,10 @@ export interface DoctorRow {
   branch: string;
   city: string;
   languages: string;
-  rating: number;
-  experienceYears: number;
-  successRate: number;
+  // null = "veri yok" → ilgili satır UI'da GİZLENİR (0 göstermek pazarlama-yanlış olur)
+  rating: number | null;
+  experienceYears: number | null;
+  successRate: number | null;
   verified: boolean;
   color: string;
   reviews: number;
@@ -63,12 +64,15 @@ export function DoctorDirectory({ doctors }: { doctors: DoctorRow[] }) {
               </div>
               <ArrowRight size={18} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#0EA5B2]" />
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-              <span className="inline-flex items-center gap-1 font-semibold text-amber-600"><Star size={13} className="fill-amber-400 text-amber-400" /> {d.rating.toFixed(1)}</span>
-              <span>{d.experienceYears} yıl deneyim</span>
-              <span>%{d.successRate} başarı</span>
-              <span>{d.reviews} yorum</span>
-            </div>
+            {/* null = veri yok → o metrik satırı gizlenir (yeni self-signup doktor "0.0 yıldız" ile doğmasın) */}
+            {(d.rating != null || d.experienceYears != null || d.successRate != null || d.reviews > 0) && (
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                {d.rating != null && <span className="inline-flex items-center gap-1 font-semibold text-amber-600"><Star size={13} className="fill-amber-400 text-amber-400" /> {d.rating.toFixed(1)}</span>}
+                {d.experienceYears != null && <span>{d.experienceYears} yıl deneyim</span>}
+                {d.successRate != null && <span>%{d.successRate} başarı</span>}
+                {d.reviews > 0 && <span>{d.reviews} yorum</span>}
+              </div>
+            )}
             <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
               <Globe size={13} /> {d.languages.split(",").join(" · ")}
             </div>

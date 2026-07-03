@@ -22,6 +22,14 @@ export async function POST(req: Request) {
   }
 
   const available = body.available === true;
+  // 🔒 Doğrulanmamış (verified=false) doktor pro bono havuzuna GİREMEZ — AVAILABLE olsaydı hasta-yüzü
+  // "müsait doktor" sayacını şişirirdi; eşleşme zaten merkezde (matchForDoctor/pairCaseWithDoctor) kilitli.
+  if (available) {
+    const doc = await db.doctor.findUnique({ where: { id: doctorId }, select: { verified: true } });
+    if (doc?.verified !== true) {
+      return NextResponse.json({ error: "Pro bono müsaitliği için doktor doğrulaması (admin onayı) gereklidir." }, { status: 403 });
+    }
+  }
   await setDoctorAvailable(doctorId, available);
 
   let consultationId: string | null = null;

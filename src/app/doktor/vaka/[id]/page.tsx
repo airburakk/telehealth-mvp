@@ -41,7 +41,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
   const files = c.attachments ? c.attachments.split(",").filter(Boolean) : [];
   const caseDocs = c.documents.map((d) => ({ ...d, assessedAt: d.assessedAt ? d.assessedAt.toISOString() : null }));
   const dicomStudies = caseDicomStudies(c.id);
-  const suggested = await db.doctor.findFirst({ where: { branch: c.branch } });
+  const suggested = await db.doctor.findFirst({ where: { branch: c.branch, verified: true } }); // v4.19: öneri yalnız doğrulanmış (profil linki de verified-kapılı)
 
   let triageAnswers: Record<string, string> | null = null;
   try { triageAnswers = c.extra ? (JSON.parse(c.extra) as Record<string, string>) : null; } catch { triageAnswers = null; }

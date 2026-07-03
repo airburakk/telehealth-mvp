@@ -100,6 +100,12 @@ export default async function DoctorSoDetailPage({ params }: { params: Promise<{
     }
 
     if (!assignedToMe) redirect("/doktor/ikinci-gorus");
+    // v4.19: canSoCaseBeAccessedBy ile hizalama — atanmış olsa bile doğrulanmamış doktor PHI göremez
+    // (belge uçları zaten 403 veriyordu; sayfa+görüş yolu açık kalmıştı — tutarsız erişim kapatıldı).
+    const myVerified = myDoctorId
+      ? (await db.doctor.findUnique({ where: { id: myDoctorId }, select: { verified: true } }))?.verified
+      : false;
+    if (!myVerified) redirect("/doktor/ikinci-gorus");
   }
   const patient = await db.user.findUnique({ where: { id: c.patientId }, select: { name: true } });
 

@@ -1,15 +1,16 @@
 import { db } from "@/lib/db";
 import { DoctorDirectory, type DoctorRow } from "@/components/DoctorDirectory";
-import { generatedReviews } from "@/lib/doctor-profile";
 import { Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function DoctorsPage() {
   // Yalnız doğrulanmış doktorlar dizinde görünür (self-signup → admin/etik kurul onayına kadar gizli).
+  // rating null olabilir (yeni self-signup) → nulls last ile puanlılar önde kalır.
   const doctors = await db.doctor.findMany({
     where: { verified: true },
-    orderBy: [{ rating: "desc" }],
+    orderBy: [{ rating: { sort: "desc", nulls: "last" } }],
+    include: { _count: { select: { reviews: true } } }, // gerçek DB yorum sayısı (üretilmiş sahte sayı DEĞİL)
   });
 
   const rows: DoctorRow[] = doctors.map((d) => ({
@@ -24,7 +25,7 @@ export default async function DoctorsPage() {
     successRate: d.successRate,
     verified: d.verified,
     color: d.color,
-    reviews: generatedReviews(d).length,
+    reviews: d._count.reviews,
     photo: d.photo,
   }));
 

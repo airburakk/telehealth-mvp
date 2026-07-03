@@ -24,14 +24,17 @@ function Stars({ value }: { value: number }) {
 export default async function DoctorProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const d = await db.doctor.findUnique({ where: { id } });
-  if (!d) notFound();
+  // Vitrin dürüstlüğü: onaylanmamış (verified=false) doktor public profilde YOK — dizin zaten gizliyordu,
+  // public URL de aynı davranır; admin onayı gelince sayfa açılır.
+  if (!d || !d.verified) notFound();
 
   // Profil zenginleştirme — render-zamanı deterministik üretim (şema/DB yok); mevcut bio korunur
   const cred = doctorCredentials(d);
   // Yorumlar: kalıcı Review tablosundan; yoksa deterministik üretim fallback (geriye uyumlu).
   const dbReviews = await db.review.findMany({ where: { doctorId: d.id }, orderBy: { createdAt: "desc" } });
+  // generated: false = gerçek DB yorumu ("Doğrulanmış" çipi yalnız bunlarda); true = üretilmiş örnek içerik.
   const reviews = dbReviews.length
-    ? dbReviews.map((r) => ({ author: r.author, country: r.country, stars: r.stars, text: r.text, daysAgo: Math.max(1, Math.round((Date.now() - r.createdAt.getTime()) / 86400000)) }))
+    ? dbReviews.map((r) => ({ author: r.author, country: r.country, stars: r.stars, text: r.text, daysAgo: Math.max(1, Math.round((Date.now() - r.createdAt.getTime()) / 86400000)), generated: false }))
     : generatedReviews(d);
   const bioText = richBio(d, d.bio);
   const badges = await getDoctorBadges(d.id); // CRM eşik-bazlı public güven rozetleri (ham skor değil)
@@ -56,9 +59,12 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
               <span className="inline-flex items-center gap-1"><MapPin size={14} /> {d.city}</span>
               <span className="inline-flex items-center gap-1"><Globe size={14} /> {d.languages.split(",").join(" · ")}</span>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-4">
-              <span className="inline-flex items-center gap-1.5 text-sm"><Stars value={d.rating} /> <span className="font-semibold text-slate-700">{d.rating.toFixed(1)}</span> <span className="text-slate-400">({reviews.length} yorum)</span></span>
-            </div>
+            {/* Yıldız satırı yalnız gerçek rating verisi varken (null = veri yok → "0.0 yıldız" göstermek yanıltıcı) */}
+            {d.rating != null && (
+              <div className="mt-3 flex flex-wrap items-center gap-4">
+                <span className="inline-flex items-center gap-1.5 text-sm"><Stars value={d.rating} /> <span className="font-semibold text-slate-700">{d.rating.toFixed(1)}</span> <span className="text-slate-400">({reviews.length} yorum)</span></span>
+              </div>
+            )}
 
             {badges.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1.5">
@@ -87,10 +93,10 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
           </div>
         </div>
 
-        {/* Stats — değere göre renklenen çubuklar (slider görünümü) */}
+        {/* Stats — değere göre renklenen çubuklar (slider görünümü); null = veri yok → çubuk hiç çizilmez */}
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <StatBar label="Deneyim" valueText={`${d.experienceYears} yıl`} pct={(d.experienceYears / 30) * 100} />
-          <StatBar label="Başarı oranı" valueText={`%${d.successRate}`} pct={d.successRate} />
+          {d.experienceYears != null && <StatBar label="Deneyim" valueText={`${d.experienceYears} yıl`} pct={(d.experienceYears / 30) * 100} />}
+          {d.successRate != null && <StatBar label="Başarı oranı" valueText={`%${d.successRate}`} pct={d.successRate} />}
           <StatBar label="Aylık kapasite" valueText={`${d.capacity}`} pct={(d.capacity / 40) * 100} />
         </div>
       </div>
@@ -107,7 +113,12 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
                 <li key={i} className="rounded-2xl border border-slate-200 p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-slate-700">{countryFlag(r.country)} {r.author}</span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700"><CheckCircle2 size={12} /> Doğrulanmış</span>
+                    {/* "Doğrulanmış" çipi yalnız gerçek DB yorumlarında; üretilmiş içerik açıkça etiketlenir */}
+                    {r.generated ? (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-400">Örnek değerlendirme</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700"><CheckCircle2 size={12} /> Doğrulanmış</span>
+                    )}
                   </div>
                   <div className="mt-1"><Stars value={r.stars} /></div>
                   <p className="mt-1.5 text-sm text-slate-600">{r.text}</p>
@@ -129,14 +140,15 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
                 <BadgeCheck size={15} className="mt-0.5 shrink-0 text-emerald-600" />
                 <div>
                   <div className="font-medium text-slate-700">Tıp Diploması</div>
-                  <div className="text-xs text-slate-500">{cred.diploma.school} · {cred.diploma.year}</div>
+                  {/* Yıl yalnız gerçek veriden türetilebildiyse (null = fabrikasyon yok) */}
+                  <div className="text-xs text-slate-500">{cred.diploma.school}{cred.diploma.year != null && ` · ${cred.diploma.year}`}</div>
                 </div>
               </li>
               <li className="flex items-start gap-2">
                 <BadgeCheck size={15} className="mt-0.5 shrink-0 text-emerald-600" />
                 <div>
                   <div className="font-medium text-slate-700">Uzmanlık Belgesi</div>
-                  <div className="text-xs text-slate-500">{cred.uzmanlik.board} · {cred.uzmanlik.year}</div>
+                  <div className="text-xs text-slate-500">{cred.uzmanlik.board}{cred.uzmanlik.year != null && ` · ${cred.uzmanlik.year}`}</div>
                 </div>
               </li>
               <li className="flex items-start gap-2">
@@ -149,7 +161,8 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
                 </div>
               </li>
               <li aria-hidden className="mt-1 border-t border-slate-100 pt-1" />
-              <Cred ok={d.jci} label="JCI akrediteli merkez" />
+              {/* JCI satırı yalnız doğrulanmış akreditasyonda — false/null "veri yok"tur, olumsuz beyan değil (üstü çizili negatif sinyal kaldırıldı) */}
+              {d.jci === true && <Cred ok label="JCI akrediteli merkez" />}
               <Cred ok={d.verified} label="Sağlık Turizmi Yetki Belgesi" />
             </ul>
           </Card>

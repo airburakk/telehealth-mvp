@@ -391,7 +391,10 @@ export function PreConsultLobby({
               <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
                 <span className="inline-flex items-center gap-1 font-medium text-[#0EA5B2]"><Stethoscope size={12} /> {branchLabel ? t(branchLabel) : doctorCard.branch}</span>
                 <span className="inline-flex items-center gap-1"><MapPin size={12} /> {doctorCard.city}</span>
-                <span className="inline-flex items-center gap-1"><Star size={12} className="fill-amber-400 text-amber-400" /> {doctorCard.rating.toFixed(1)}{doctorCard.reviewCount > 0 ? ` · ${doctorCard.reviewCount} ${t(TX.reviews)}` : ""}</span>
+                {/* rating null = veri yok → yıldız bloğu tamamen gizlenir (0.0 gösterilmez) */}
+                {doctorCard.rating != null && (
+                  <span className="inline-flex items-center gap-1"><Star size={12} className="fill-amber-400 text-amber-400" /> {doctorCard.rating.toFixed(1)}{doctorCard.reviewCount > 0 ? ` · ${doctorCard.reviewCount} ${t(TX.reviews)}` : ""}</span>
+                )}
               </span>
             </span>
             <span className="flex shrink-0 flex-col items-center text-slate-400">
@@ -408,11 +411,17 @@ export function PreConsultLobby({
                 <p className="mt-1 text-[13px] leading-relaxed text-slate-600">{doctorCard.bio}</p>
               </div>
 
-              {/* İstatistik çubukları */}
-              <div className="grid grid-cols-2 gap-3">
-                <MiniStat label={t(TX.stExperience)} valueText={`${doctorCard.experienceYears} ${t(TX.stYears)}`} pct={(doctorCard.experienceYears / 30) * 100} />
-                <MiniStat label={t(TX.stSuccess)} valueText={`%${doctorCard.successRate}`} pct={doctorCard.successRate} />
-              </div>
+              {/* İstatistik çubukları — null = veri yok → o metrik gizlenir (reviewCount>0 deseniyle aynı) */}
+              {(doctorCard.experienceYears != null || doctorCard.successRate != null) && (
+                <div className="grid grid-cols-2 gap-3">
+                  {doctorCard.experienceYears != null && (
+                    <MiniStat label={t(TX.stExperience)} valueText={`${doctorCard.experienceYears} ${t(TX.stYears)}`} pct={(doctorCard.experienceYears / 30) * 100} />
+                  )}
+                  {doctorCard.successRate != null && (
+                    <MiniStat label={t(TX.stSuccess)} valueText={`%${doctorCard.successRate}`} pct={doctorCard.successRate} />
+                  )}
+                </div>
+              )}
 
               {/* Güven rozetleri */}
               {doctorCard.badges.length > 0 && (
@@ -435,8 +444,9 @@ export function PreConsultLobby({
               <div>
                 <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400"><ShieldCheck size={12} /> {t(TX.credentialsTitle)}</p>
                 <ul className="mt-1.5 space-y-1.5 text-[13px] text-slate-600">
-                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className="mt-0.5 shrink-0 text-emerald-600" /><span><span className="font-medium text-slate-700">{t(TX.diploma)}:</span> {doctorCard.credentials.diplomaSchool} · {doctorCard.credentials.diplomaYear}</span></li>
-                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className="mt-0.5 shrink-0 text-emerald-600" /><span><span className="font-medium text-slate-700">{t(TX.speciality)}:</span> {doctorCard.credentials.specBoard} · {doctorCard.credentials.specYear}</span></li>
+                  {/* yıl null (veri yok) → sarkık " · " ayracı bırakma (v4.19) */}
+                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className="mt-0.5 shrink-0 text-emerald-600" /><span><span className="font-medium text-slate-700">{t(TX.diploma)}:</span> {doctorCard.credentials.diplomaSchool}{doctorCard.credentials.diplomaYear != null ? ` · ${doctorCard.credentials.diplomaYear}` : ""}</span></li>
+                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className="mt-0.5 shrink-0 text-emerald-600" /><span><span className="font-medium text-slate-700">{t(TX.speciality)}:</span> {doctorCard.credentials.specBoard}{doctorCard.credentials.specYear != null ? ` · ${doctorCard.credentials.specYear}` : ""}</span></li>
                 </ul>
               </div>
 
@@ -461,10 +471,13 @@ export function PreConsultLobby({
                 </div>
               </div>
 
-              <a href={`/hekim/${doctorCard.id}`} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
-                <ExternalLink size={13} /> {t(TX.fullProfile)}
-              </a>
+              {/* public profil verified-kapılı (v4.19) — doğrulanmamış doktorda 404'e götüren link gösterme */}
+              {doctorCard.verified && (
+                <a href={`/hekim/${doctorCard.id}`} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                  <ExternalLink size={13} /> {t(TX.fullProfile)}
+                </a>
+              )}
             </div>
           )}
         </div>
@@ -643,8 +656,10 @@ const BADGE_ICON: Record<string, LucideIcon> = {
 };
 
 // Doktor kartı satır-içi istatistik çubuğu (değere göre amber→teal renk geçişi).
+// pct <= 0 (veri yok/sıfır) → çubuk hiç çizilmez (min %6 kırpması "boş"u dolu göstermesin).
 function MiniStat({ label, valueText, pct }: { label: string; valueText: string; pct: number }) {
-  const p = Math.max(6, Math.min(100, Math.round(pct)));
+  const hasBar = Number.isFinite(pct) && pct > 0;
+  const p = hasBar ? Math.max(6, Math.min(100, Math.round(pct))) : 0;
   const hue = Math.round(40 + (p / 100) * 120);
   return (
     <div className="rounded-2xl bg-slate-50 p-3">
@@ -652,9 +667,11 @@ function MiniStat({ label, valueText, pct }: { label: string; valueText: string;
         <span className="text-[11px] text-slate-500">{label}</span>
         <span className="text-base font-bold text-[#101010]">{valueText}</span>
       </div>
-      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-200/70">
-        <div className="h-full rounded-full" style={{ width: `${p}%`, background: `hsl(${hue} 65% 45%)` }} />
-      </div>
+      {hasBar && (
+        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-200/70">
+          <div className="h-full rounded-full" style={{ width: `${p}%`, background: `hsl(${hue} 65% 45%)` }} />
+        </div>
+      )}
     </div>
   );
 }

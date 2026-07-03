@@ -10,9 +10,10 @@ export interface DoctorLike {
   branch: string;
   city: string;
   languages: string;
-  experienceYears: number;
-  rating: number;
-  jci: boolean;
+  // v4.19 veri dürüstlüğü: null = "veri yok" → cümle/satır ÜRETİLMEZ (0 veya uydurma değer yazmak yasak)
+  experienceYears: number | null;
+  rating: number | null;
+  jci: boolean | null;
   verified: boolean;
   // M6 Akademik & Eğitim — kalıcı DB değerleri (varsa kullanılır, yoksa deterministik üretim fallback)
   eduSchool?: string | null;
@@ -82,8 +83,9 @@ function genericInfo(branch: string): { board: string; certs: string[]; focus: s
 }
 
 export interface Credentials {
-  diploma: { school: string; year: number };
-  uzmanlik: { board: string; year: number };
+  // year null = türetilecek gerçek veri yok (deneyim yılı boş) → yıl gösterilmez, fabrikasyon yapılmaz
+  diploma: { school: string; year: number | null };
+  uzmanlik: { board: string; year: number | null };
   certs: string[];
 }
 
@@ -91,8 +93,9 @@ export interface Credentials {
 export function doctorCredentials(d: DoctorLike): Credentials {
   const seed = hash(d.name);
   const info = BRANCH_INFO[d.branch] ?? genericInfo(d.branch);
-  const uzmanlikYear = d.specYear ?? Math.max(1995, 2026 - Math.max(1, d.experienceYears));
-  const diplomaYear = d.eduYear ?? uzmanlikYear - 5;
+  // Yıl yalnız gerçek veriden türetilir: specYear yoksa deneyim yılından; o da null ise yıl ÜRETİLMEZ.
+  const uzmanlikYear = d.specYear ?? (d.experienceYears != null ? Math.max(1995, 2026 - Math.max(1, d.experienceYears)) : null);
+  const diplomaYear = d.eduYear ?? (uzmanlikYear != null ? uzmanlikYear - 5 : null);
   let certs = info.certs;
   if (d.certifications) {
     try { const p = JSON.parse(d.certifications); if (Array.isArray(p) && p.length) certs = p as string[]; } catch { /* bozuk JSON → üretim */ }
@@ -108,11 +111,16 @@ export function richBio(d: DoctorLike, baseBio: string | null): string {
   const info = BRANCH_INFO[d.branch] ?? genericInfo(d.branch);
   const langs = d.languages.split(",").map((s) => s.trim()).filter(Boolean).join(", ");
   const base = (baseBio ?? "").trim();
+  // Deneyim cümlesi yalnız gerçek veri varken kurulur (null = veri yok → yıl iddiası yok).
+  const intro = d.experienceYears != null
+    ? `${d.title} ${d.name}, ${d.experienceYears} yılı aşkın klinik deneyimiyle ${d.city}'de ${d.branch} alanında hizmet vermektedir.`
+    : `${d.title} ${d.name}, ${d.city}'de ${d.branch} alanında hizmet vermektedir.`;
   return [
     base,
-    `${d.title} ${d.name}, ${d.experienceYears} yılı aşkın klinik deneyimiyle ${d.city}'de ${d.branch} alanında hizmet vermektedir.`,
+    intro,
     info.focus,
-    `Kanıta dayalı ve hasta odaklı bir yaklaşım benimser; uluslararası hastalara ${langs} dillerinde hizmet sunar${d.jci ? " ve JCI akrediteli bir merkezde çalışır" : ""}.`,
+    // JCI cümlesi yalnız doğrulanmış akreditasyonda (true); false/null = beyan yapılmaz.
+    `Kanıta dayalı ve hasta odaklı bir yaklaşım benimser; uluslararası hastalara ${langs} dillerinde hizmet sunar${d.jci === true ? " ve JCI akrediteli bir merkezde çalışır" : ""}.`,
   ].filter(Boolean).join(" ");
 }
 
@@ -127,7 +135,12 @@ export function academicNote(d: DoctorLike): string {
       }
     } catch { /* bozuk JSON → üretim cümlesi */ }
   }
-  return `${c.diploma.school} mezunu (${c.diploma.year}). ${d.branch} alanında uzmanlığını ${c.uzmanlik.year} yılında tamamlamıştır. ${pubLine}`;
+  // Yıllar yalnız gerçek veriden türetilebildiyse yazılır (null = yıl iddiası yok — fabrikasyon yasak).
+  const diplomaPart = `${c.diploma.school} mezunu${c.diploma.year != null ? ` (${c.diploma.year})` : ""}.`;
+  const uzmanlikPart = c.uzmanlik.year != null
+    ? `${d.branch} alanında uzmanlığını ${c.uzmanlik.year} yılında tamamlamıştır.`
+    : `${d.branch} alanında uzmanlık eğitimini tamamlamıştır.`;
+  return `${diplomaPart} ${uzmanlikPart} ${pubLine}`;
 }
 
 // ── Dummy hasta yorumları (deterministik) ──
@@ -149,7 +162,9 @@ const REVIEW_TEXTS = [
   "Ameliyat sonrası dijital takip sayesinde kendi ülkemde de sürekli destek aldım.",
 ];
 
-export interface GenReview { author: string; country: string; stars: number; text: string; daysAgo: number; }
+// generated: true = üretilmiş örnek içerik — çağıran "örnek değerlendirme" olarak etiketler,
+// gerçek DB yorumlarına özgü "Doğrulanmış" çipi bu kayıtlarda KULLANILMAZ (vitrin dürüstlüğü).
+export interface GenReview { author: string; country: string; stars: number; text: string; daysAgo: number; generated: true; }
 
 export function generatedReviews(d: DoctorLike): GenReview[] {
   const seed = hash(d.name + d.branch);
@@ -160,9 +175,11 @@ export function generatedReviews(d: DoctorLike): GenReview[] {
     out.push({
       author: pick(REVIEWERS, s).author,
       country: pick(REVIEWERS, s).country,
-      stars: d.rating >= 4.8 ? 5 : (s % 4 === 0 ? 4 : 5), // çoğunlukla 5, ara sıra 4
+      // rating null (veri yok) → nötr 4-5 karışımı; dolu ve ≥4.8 → 5
+      stars: d.rating != null && d.rating >= 4.8 ? 5 : (s % 4 === 0 ? 4 : 5),
       text: pick(REVIEW_TEXTS, s + i),
       daysAgo: 4 + ((s % 90)),
+      generated: true,
     });
   }
   return out;

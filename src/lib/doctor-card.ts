@@ -19,20 +19,21 @@ export interface DoctorCardData {
   avatarVariant: number;
   female: boolean;
   verified: boolean;
-  jci: boolean;
-  rating: number;
+  // v4.19 veri dürüstlüğü: null = "veri yok" → tüketici (PreConsultLobby vb.) o satırı GİZLER (0/uydurma göstermek yasak)
+  jci: boolean | null;
+  rating: number | null;
   reviewCount: number;
-  experienceYears: number;
-  successRate: number;
+  experienceYears: number | null;
+  successRate: number | null;
   languages: string[];
   bio: string;
   academic: string;
   badges: { key: string; label: string; desc: string }[];
-  credentials: { diplomaSchool: string; diplomaYear: number; specBoard: string; specYear: number; certs: string[] };
+  credentials: { diplomaSchool: string; diplomaYear: number | null; specBoard: string; specYear: number | null; certs: string[] };
 }
 
 // richBio/academicNote/credentials için gereken alanlar + kartın gösterdiği ek alanlar.
-type DoctorRecord = DoctorLike & { bio: string | null; photo: string | null; successRate: number };
+type DoctorRecord = DoctorLike & { bio: string | null; photo: string | null; successRate: number | null };
 
 export async function buildDoctorCard(d: DoctorRecord): Promise<DoctorCardData> {
   const cred = doctorCredentials(d);

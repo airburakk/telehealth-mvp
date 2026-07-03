@@ -29,10 +29,13 @@ export default async function SoReviewPage({ params }: { params: Promise<{ id: s
   const branchLabel = BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch;
   const patient = await db.user.findUnique({ where: { id: c.patientId }, select: { name: true } });
 
-  // Branş-eşleşmeli doktorlar (Doctor.branch = etiket); yoksa genel havuz.
-  let doctors = await db.doctor.findMany({ where: { branch: branchLabel }, select: { id: true, name: true, title: true, branch: true }, orderBy: { rating: "desc" } });
+  // Branş-eşleşmeli DOĞRULANMIŞ doktorlar (Doctor.branch = etiket); yoksa genel havuz.
+  // verified filtresi + nulls:"last" (v4.19): rating=null yeni doktor Postgres DESC NULLS FIRST ile
+  // başa çıkıp varsayılan-seçili gelmesin; atama zaten yalnız doğrulanmışa yapılabilir (assign route 403).
+  const doctorOrder = { rating: { sort: "desc", nulls: "last" } } as const;
+  let doctors = await db.doctor.findMany({ where: { branch: branchLabel, verified: true }, select: { id: true, name: true, title: true, branch: true }, orderBy: doctorOrder });
   if (doctors.length === 0) {
-    doctors = await db.doctor.findMany({ select: { id: true, name: true, title: true, branch: true }, orderBy: { rating: "desc" }, take: 20 });
+    doctors = await db.doctor.findMany({ where: { verified: true }, select: { id: true, name: true, title: true, branch: true }, orderBy: doctorOrder, take: 20 });
   }
   const assignedDoctor = c.assignedDoctorId
     ? await db.doctor.findUnique({ where: { id: c.assignedDoctorId }, select: { name: true, title: true } })

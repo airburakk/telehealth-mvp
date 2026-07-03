@@ -19,11 +19,12 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const active = caseItem.consultations.find((c) => c.status === "ACTIVE");
   if (active) return NextResponse.json({ consultationId: active.id }, { status: 200 });
 
-  // Doktor ata: önce atanmış doktor, yoksa branşa uyan, yoksa ilk doktor
+  // Doktor ata: önce atanmış doktor, yoksa branşa uyan, yoksa ilk DOĞRULANMIŞ doktor (v4.19 —
+  // doğrulanmamış doktora otomatik atama hem güven hem profil-linki 404 sorunu üretiyordu)
   let doctorId = caseItem.doctorId;
   if (!doctorId) {
-    const match = await db.doctor.findFirst({ where: { branch: caseItem.branch } });
-    doctorId = match?.id ?? (await db.doctor.findFirst())?.id ?? null;
+    const match = await db.doctor.findFirst({ where: { branch: caseItem.branch, verified: true } });
+    doctorId = match?.id ?? (await db.doctor.findFirst({ where: { verified: true } }))?.id ?? null;
   }
   if (!doctorId) return NextResponse.json({ error: "Sistemde uygun doktor yok." }, { status: 409 });
 

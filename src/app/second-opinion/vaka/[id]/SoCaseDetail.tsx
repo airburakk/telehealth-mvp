@@ -28,7 +28,7 @@ type SoData = {
   opinion: { content: string; submittedAt: string } | null;
   appointment: { id: string; scheduledAt: string; status: string } | null;
   readyAt: string | null;
-  assignedDoctor: { name: string; title: string; branchLabel: string; avatarI: number; female: boolean; photo?: string | null } | null;
+  assignedDoctor: { name: string; title: string; branchLabel: string; avatarI: number; female: boolean; photo?: string | null; verified: boolean } | null;
 };
 
 const ADDABLE = ["DRAFT", "AWAITING_DOCUMENTS", "AWAITING_ADDITIONAL_TESTS"];
@@ -357,7 +357,10 @@ export function SoCaseDetail({ data }: { data: SoData }) {
             <div className="text-xs font-semibold uppercase tracking-wide text-[#0E8A95]">{t(S.yourDoctor)}</div>
             <div className="mt-0.5 text-lg font-bold text-[#101010]">{t(data.assignedDoctor.title)} {data.assignedDoctor.name}</div>
             <div className="text-sm text-slate-500">{t(data.assignedDoctor.branchLabel)}</div>
-            <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700"><CircleCheck size={13} /> {t(S.verifiedDoctor)}</div>
+            {/* Rozet gerçek Doctor.verified değerine bağlı — koşulsuz "doğrulanmış" beyanı kaldırıldı (vitrin dürüstlüğü) */}
+            {data.assignedDoctor.verified && (
+              <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700"><CircleCheck size={13} /> {t(S.verifiedDoctor)}</div>
+            )}
           </div>
         </div>
       )}

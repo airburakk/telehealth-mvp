@@ -18,6 +18,7 @@ export async function GET() {
 
   let consultationId: string | null = null;
   if (d.proBonoState === "AVAILABLE") {
+    // 🔒 verified kapısı MERKEZDE: matchForDoctor doğrulanmamış doktora eşleşme döndürmez (pro-bono.ts).
     const m = await matchForDoctor(doctorId);
     consultationId = m?.consultationId ?? null;
   } else if (d.proBonoState === "IN_SESSION") {

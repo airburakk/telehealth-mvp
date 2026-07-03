@@ -22,6 +22,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!me?.doctorId || me.doctorId !== c.assignedDoctorId) {
       return NextResponse.json({ error: "Bu vaka size atanmamış." }, { status: 403 });
     }
+    // v4.19: canSoCaseBeAccessedBy hizalaması — doğrulanmamış doktor (atanmış olsa bile) görüş sunamaz
+    const d = await db.doctor.findUnique({ where: { id: me.doctorId }, select: { verified: true } });
+    if (!d?.verified) return NextResponse.json({ error: "Görüş sunmak için doktor doğrulaması (admin onayı) gereklidir." }, { status: 403 });
   }
   if (!c.assignedDoctorId) return NextResponse.json({ error: "Vakaya atanmış doktor yok." }, { status: 409 });
   if (c.status !== "ASSIGNED") return NextResponse.json({ error: "Görüş yalnız inceleme (atanmış) aşamasında sunulabilir." }, { status: 409 });

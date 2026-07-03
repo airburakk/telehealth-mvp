@@ -74,6 +74,11 @@ export function ProBonoConsole({
         body: JSON.stringify({ available: next }),
       });
       const d = await r.json();
+      if (!r.ok) {
+        // v4.19: sunucunun anlaşılır hatası (ör. verified 403) sessizce yutulmasın
+        window.alert(d.error ?? "İşlem başarısız — lütfen tekrar deneyin.");
+        return;
+      }
       if (d.consultationId) { router.push(`/gorusme/${d.consultationId}`); return; }
       if (d.quota) setQuota(d.quota);
       setServerState(d.state ?? "OFFLINE");

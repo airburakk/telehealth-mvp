@@ -73,21 +73,29 @@ export default async function DoctorDashboard() {
                 {doctor.verified && <BadgeCheck size={16} className="text-teal-600" />}
               </div>
               <div className="text-sm font-medium text-[#0EA5B2]">{doctor.branch} · {doctor.city}</div>
-              <div className="mt-1 inline-flex items-center gap-1 text-sm text-amber-600"><Star size={14} className="fill-amber-400 text-amber-400" /> {doctor.rating.toFixed(1)} <span className="text-slate-400">({doctor.reviews.length} yorum)</span></div>
+              {/* rating null = veri yok → kendi panelinde dürüst boş-durum "—" (gizleme değil) */}
+              <div className="mt-1 inline-flex items-center gap-1 text-sm text-amber-600"><Star size={14} className="fill-amber-400 text-amber-400" /> {doctor.rating != null ? doctor.rating.toFixed(1) : "—"} <span className="text-slate-400">({doctor.reviews.length} yorum)</span></div>
             </div>
           </div>
-          <Link href={`/hekim/${doctor.id}`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
-            <ExternalLink size={15} /> Herkese açık profil
-          </Link>
+          {doctor.verified ? (
+            <Link href={`/hekim/${doctor.id}`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+              <ExternalLink size={15} /> Herkese açık profil
+            </Link>
+          ) : (
+            // v4.19: public profil verified-kapılı (notFound) — 404'e götüren link yerine durum notu
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-sm text-slate-400" title="Admin onayı sonrası herkese açık profiliniz yayınlanır">
+              <ExternalLink size={15} /> Profil onay sonrası yayınlanır
+            </span>
+          )}
         </div>
       </div>
 
-      {/* İtibar dashboard */}
+      {/* İtibar dashboard — null = veri yok → "—" (kendi panelinde gizlemek yerine dürüst boş-durum) */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Metric icon={<Star size={16} />} value={doctor.rating.toFixed(1)} label="Memnuniyet" />
-        <Metric icon={<TrendingUp size={16} />} value={`%${doctor.successRate}`} label="Başarı oranı" />
+        <Metric icon={<Star size={16} />} value={doctor.rating != null ? doctor.rating.toFixed(1) : "—"} label="Memnuniyet" />
+        <Metric icon={<TrendingUp size={16} />} value={doctor.successRate != null ? `%${doctor.successRate}` : "—"} label="Başarı oranı" />
         <Metric icon={<Users size={16} />} value={`${ended.length}`} label="Tamamlanan görüşme" />
-        <Metric icon={<Award size={16} />} value={`${doctor.experienceYears} yıl`} label="Deneyim" />
+        <Metric icon={<Award size={16} />} value={doctor.experienceYears != null ? `${doctor.experienceYears} yıl` : "—"} label="Deneyim" />
       </div>
 
       {/* Eşleştirme Kalite Kartı — CRM 9-metrik skoru (Nöbetçi/İcapçı/SO önceliği); doktora şeffaf */}
@@ -197,7 +205,8 @@ export default async function DoctorDashboard() {
                 <span className="text-xs text-slate-500">işlem</span>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-[#14C3D0]" style={{ width: `${Math.min(100, (ended.length / doctor.capacity) * 100)}%` }} />
+                {/* capacity<=0 → bölme sıfıra düşmesin (operasyon sayfasındaki Math.max(1,…) deseni; NaN/Infinity engellenir) */}
+                <div className="h-full rounded-full bg-[#14C3D0]" style={{ width: `${Math.min(100, Math.round((ended.length / Math.max(1, doctor.capacity)) * 100))}%` }} />
               </div>
             </div>
           </div>

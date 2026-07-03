@@ -41,11 +41,13 @@ export interface PairResult {
 
 // Bir vaka ile bir doktoru ATOMİK eşleştir. Koşullu updateMany'ler optimistik kilit görevi görür:
 // aynı vakayı/hekimi kapmaya çalışan ikinci işlem count=0 alır → çift-eşleşme yarışı engellenir.
+// 🔒 verified simetrisi: hasta-yüzü (matchForCase) zaten verified filtreli — MERKEZİ kapı burada da
+// zorunlu ki doğrulanmamış doktor bekleyen hastayı kapıp vakayı kilitleyemesin.
 export async function pairCaseWithDoctor(caseId: string, doctorId: string): Promise<PairResult | null> {
   try {
     const result = await db.$transaction(async (tx) => {
       const d = await tx.doctor.findUnique({ where: { id: doctorId } });
-      if (!d || d.proBonoState !== "AVAILABLE") return null;
+      if (!d || d.verified !== true || d.proBonoState !== "AVAILABLE") return null;
       const q = quotaInfo(d);
       if (q.left <= 0) return null;
 
@@ -107,9 +109,10 @@ export async function matchForCase(caseId: string): Promise<PairResult | null> {
 }
 
 // Doktor tarafı: en eski bekleyen uygun vakayı bul ve eşleştir (adil FIFO sırası).
+// 🔒 Yalnız DOĞRULANMIŞ (verified) doktor eşleşebilir — hasta-yüzü matchForCase ile simetrik.
 export async function matchForDoctor(doctorId: string): Promise<PairResult | null> {
   const d = await db.doctor.findUnique({ where: { id: doctorId } });
-  if (!d || d.proBonoState !== "AVAILABLE" || quotaInfo(d).left <= 0) return null;
+  if (!d || d.verified !== true || d.proBonoState !== "AVAILABLE" || quotaInfo(d).left <= 0) return null;
   const waiting = await db.case.findMany({
     where: { proBono: true, proBonoStatus: "WAITING" },
     orderBy: { createdAt: "asc" },
@@ -159,7 +162,10 @@ export async function waitingCount(): Promise<number> {
 // Şu an pro bono hizmeti için MÜSAİT (yeni hasta alabilecek) doktor sayısı.
 // Hasta tarafı "Başvur" butonunun aktifliği + çevrimiçi/çevrimdışı indikatörü buna bağlı.
 export async function availableDoctorCount(): Promise<number> {
-  return db.doctor.count({ where: { proBonoState: "AVAILABLE" } });
+  // verified filtresi eşleşme yüklemiyle (matchForCase) BİREBİR aynı olmalı — aksi halde sayaç
+  // doğrulanmamış AVAILABLE kalıntısını sayar: hasta "çevrimiçi doktor var" görüp başvurur,
+  // eşleşme asla gelmez, stranded bildirimi de (count>0 erken dönüş) hiç gitmez (v4.19 bulgusu).
+  return db.doctor.count({ where: { proBonoState: "AVAILABLE", verified: true } });
 }
 
 // Tüm gönüllü doktorlar çevrimdışı olduğunda havuzda BEKLEYEN hastalara haber ver.

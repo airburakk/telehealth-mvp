@@ -6,7 +6,8 @@
 //   rating · successRate · pro bono sayısı · icap dönüş oranı   (v2.85 çekirdek)
 //   + tamamlanan vaka hacmi · yanıt süresi (duyarlılık) · iptal oranı (güvenilirlik) · yorum hacmi · güncellik   (v2.86 ek)
 // "Ölçekle değer artar": doktor havuzu + geçmiş veri azken etki küçük; büyüdükçe duyarlı/güvenilir/deneyimli
-// doktorlar öne çıkar. Veri yoksa her metrik NÖTR 0.5 döner → yeni doktor ne cezalı ne avantajlı.
+// doktorlar öne çıkar. Veri yoksa metrik ya INACTIVE olur (skordan atlanır, ağırlık yeniden normalize) ya da
+// NÖTR 0.5 döner → yeni doktor ne cezalı ne avantajlı. rating/successRate null = "veri yok" (0 DEĞİL).
 // Tüm "kalite" girdileri mevcut tablolardan türetilir; yalnız yanıt süresi Doctor.respCount/respTotalSec sayacını kullanır.
 import { db } from "./db";
 
@@ -14,8 +15,8 @@ import { db } from "./db";
 const PRO_BONO_DONE = ["CONSULT_DONE", "TREATMENT_NEEDED", "ETHICS_REVIEW", "ETHICS_REJECTED", "ETHICS_APPROVED", "COMPLETED"];
 
 export interface DoctorMetrics {
-  rating: number; // 0-5 — hasta memnuniyeti (Doctor.rating)
-  successRate: number; // 0-100 — başarı oranı (Doctor.successRate)
+  rating: number | null; // 0-5 — hasta memnuniyeti (Doctor.rating); null = veri yok → metrik INACTIVE
+  successRate: number | null; // 0-100 — başarı oranı (Doctor.successRate); null = veri yok → metrik INACTIVE
   proBonoCount: number; // tamamlanan pro bono görüşme sayısı — sosyal katkı
   icapNotified: number; // İcapçı olarak alınan talep bildirimi
   icapOffered: number; // bu taleplere verilen teklif → dönüş oranı = offered/notified
@@ -95,13 +96,14 @@ export interface MetricBreakdown {
   active: boolean; // skora dahil mi (oran/zaman metrikleri veri yoksa false → atlanır)
 }
 
-// Tüm metriklerin normalize değeri + aktifliği. rating/successRate + sayım metrikleri (pro bono · vaka · yorum)
-// HER ZAMAN aktif (0 = gerçek düşük sinyal); oran/zaman metrikleri (icap · yanıt · iptal · güncellik) yalnız
-// verisi/paydası varsa aktif (yoksa skoru dilute etmemek için atlanır).
+// Tüm metriklerin normalize değeri + aktifliği. Sayım metrikleri (pro bono · vaka · yorum) HER ZAMAN aktif
+// (0 = gerçek düşük sinyal); rating/successRate null olabilir (yeni self-signup doktor — veri yok ≠ 0 puan)
+// ve oran/zaman metrikleri (icap · yanıt · iptal · güncellik) gibi yalnız verisi varsa aktif
+// (yoksa skoru dilute etmemek için atlanır → ağırlık kalan aktif kümeye yeniden normalize edilir).
 export function metricBreakdown(m: DoctorMetrics): MetricBreakdown[] {
   return [
-    { key: "rating", value01: clamp01(m.rating / 5), weight: MATCH_WEIGHTS.rating, active: true },
-    { key: "successRate", value01: clamp01(m.successRate / 100), weight: MATCH_WEIGHTS.successRate, active: true },
+    { key: "rating", value01: clamp01((m.rating ?? 0) / 5), weight: MATCH_WEIGHTS.rating, active: m.rating != null },
+    { key: "successRate", value01: clamp01((m.successRate ?? 0) / 100), weight: MATCH_WEIGHTS.successRate, active: m.successRate != null },
     { key: "proBono", value01: logSat(m.proBonoCount, PRO_BONO_SATURATION), weight: MATCH_WEIGHTS.proBono, active: true },
     { key: "volume", value01: logSat(m.completedCases, VOLUME_SATURATION), weight: MATCH_WEIGHTS.volume, active: true },
     { key: "reviewVolume", value01: logSat(m.reviewCount, REVIEW_SATURATION), weight: MATCH_WEIGHTS.reviewVolume, active: true },
@@ -153,27 +155,29 @@ export function marketFit(country: string | null | undefined, markets: string | 
 
 // Aciliyet–deneyim uyumu (0-1): yalnız YÜKSEK aciliyette (urgency≥HIGH_URGENCY) deneyim öne çıkar.
 // Düşük aciliyet / urgency yok (SO) → NÖTR 0.5 (bu vakada deneyim ayırt edici değil → kaliteyi bozma).
-export function urgencyExperienceFit(urgency: number | null | undefined, experienceYears: number): number {
+// experienceYears null (yeni self-signup doktor — veri yok) → NÖTR 0.5 (ne cezalı ne avantajlı).
+export function urgencyExperienceFit(urgency: number | null | undefined, experienceYears: number | null | undefined): number {
   if ((urgency ?? 0) < HIGH_URGENCY) return 0.5;
+  if (experienceYears == null) return 0.5;
   return logSat(experienceYears, EXP_SATURATION);
 }
 
 // Birleşik uyum (0-1): pazar (çekirdek) + aciliyet–deneyim (ikincil). Saf — test edilebilir.
-export function fitScore(ctx: CaseContext, doc: { markets: string | null; experienceYears: number }): number {
+export function fitScore(ctx: CaseContext, doc: { markets: string | null; experienceYears: number | null }): number {
   return FIT_MARKET * marketFit(ctx.country, doc.markets) + FIT_URGENCY_EXP * urgencyExperienceFit(ctx.urgency, doc.experienceYears);
 }
 
 // rankDoctorsByQuality'nin ihtiyaç duyduğu minimum doktor alanları (full Doctor row bunları içerir).
 type DoctorRow = {
   id: string;
-  rating: number;
-  successRate: number;
+  rating: number | null; // null = veri yok (yeni self-signup) → metrik inactive
+  successRate: number | null; // null = veri yok → metrik inactive
   icapNotified: number;
   icapOffered: number;
   respCount: number;
   respTotalSec: number;
   markets: string | null; // uyum (pazar) — full Doctor row içerir
-  experienceYears: number; // uyum (aciliyet–deneyim) — full Doctor row içerir
+  experienceYears: number | null; // uyum (aciliyet–deneyim) — null → nötr; full Doctor row içerir
 };
 
 // ── Toplu (N+1'siz) veri çekiciler: yalnız aday doktorlar için, tek sorgu ──
@@ -315,8 +319,8 @@ export async function getDoctorScorecard(doctorId: string): Promise<DoctorScorec
     lastActiveSec: last ? (Date.now() - last.getTime()) / 1000 : null,
   };
   const raw: Record<MetricKey, string> = {
-    rating: m.rating.toFixed(1),
-    successRate: `%${m.successRate}`,
+    rating: m.rating != null ? m.rating.toFixed(1) : "—", // null = veri yok → 0.0 GÖSTERİLMEZ
+    successRate: m.successRate != null ? `%${m.successRate}` : "—",
     proBono: `${m.proBonoCount}`,
     volume: `${m.completedCases}`,
     reviewVolume: `${m.reviewCount}`,
@@ -338,7 +342,7 @@ export async function getDoctorBadges(doctorId: string): Promise<DoctorBadge[]> 
   const v = new Map(sc.metrics.map((p) => [p.key, p]));
   const m = (k: MetricKey) => v.get(k)!;
   const badges: DoctorBadge[] = [];
-  if (m("rating").value01 >= 0.92) badges.push({ key: "rating", label: "Yüksek Memnuniyet", desc: "Hasta memnuniyet puanı yüksek (4.6+/5)" });
+  if (m("rating").active && m("rating").value01 >= 0.92) badges.push({ key: "rating", label: "Yüksek Memnuniyet", desc: "Hasta memnuniyet puanı yüksek (4.6+/5)" }); // rating null (veri yok) → rozet YOK
   if (m("volume").value01 >= 0.5) badges.push({ key: "volume", label: "Deneyimli", desc: "Platformda çok sayıda tamamlanmış görüşme" });
   if (m("proBono").value01 > 0) badges.push({ key: "proBono", label: "Pro Bono Gönüllüsü", desc: "Ücretsiz gönüllü (pro bono) konsültasyon veriyor" });
   if (m("responsiveness").active && m("responsiveness").value01 >= 0.6) badges.push({ key: "responsiveness", label: "Hızlı Yanıt", desc: "Randevu taleplerine hızlı yanıt veriyor" });

@@ -79,14 +79,17 @@ model Doctor {
   city          String
   languages     String // CSV: "Türkçe,Rusça,İngilizce"
   markets         String? // M5: hekimin hizmet verdiği pazarlar — CSV ISO kod "RU,DE,DZ" (boş = tümü)
-  verified        Boolean        @default(true)
+  // v4.19 veri dürüstlüğü: pazarlama-değerli uydurma @default'lar KALDIRILDI (yeni doktor "4.7★/JCI'lı"
+  // doğmasın — sağlık reklamı mevzuatı). null = "veri yok" → UI gizler, eşleştirme metriği inactive olur.
+  // Mevcut (demo) satırların değerleri migration'da KORUNDU; demo zenginliği seed'in AÇIK değerlerinden gelir.
+  verified        Boolean        @default(false) // güvenlik kapısı — yalnız admin onayı true yapar (kazara-doğrulanmış create riski kapandı)
   bio             String?
   color           String         @default("#16467a")
-  rating          Float          @default(4.7)
-  successRate     Int            @default(95)
-  experienceYears Int            @default(12)
-  jci             Boolean        @default(true)
-  capacity        Int            @default(20) // aylık işlem kapasitesi
+  rating          Float? // gerçek Review agregasyonu bağlanana kadar yalnız seed/elle veri
+  successRate     Int?
+  experienceYears Int?
+  jci             Boolean? // doğrulanmış akreditasyon belgesi girilince true — asla varsayılan değil
+  capacity        Int            @default(20) // aylık işlem kapasitesi (operasyonel varsayılan; preferences 1-200 clamp'li)
   procedures      String? // M5: doktorun yaptığı işlemler + kendi fiyatı — JSON {"<kod>": <fiyat₺>}
   licenseNo       String? // FHIR Faz 0: hekim diploma/tescil no → Practitioner.identifier
   // M6 Akademik & Eğitim — kalıcı profil (boşsa lib/doctor-profile.ts deterministik üretim fallback eder)
