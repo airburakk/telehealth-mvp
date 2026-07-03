@@ -55,9 +55,14 @@ export async function exchangeGoogleCode(code: string, redirectUri: string): Pro
 
     const userRes = await fetch(GOOGLE_USERINFO, { headers: { Authorization: `Bearer ${token.access_token}` } });
     if (!userRes.ok) return null;
-    const u = (await userRes.json()) as { email?: string; name?: string };
+    const u = (await userRes.json()) as { email?: string; name?: string; email_verified?: boolean | string };
     const email = typeof u.email === "string" ? u.email.trim().toLowerCase() : "";
     if (!email) return null;
+    // Google e-postayı DOĞRULAMAMIŞSA reddet. Callback e-postayı hesap anahtarı olarak kullanır
+    // (mevcut kullanıcı e-posta ile eşleşince parolasız giriş) → doğrulanmamış e-posta hesap ele
+    // geçirmeye yol açar (gmail hep verified'dır ama Workspace/kurumsal doğrulanmamış domain false
+    // dönebilir). userinfo ucu boolean döndürür; ID-token uyumu için string "true" da kabul edilir.
+    if (u.email_verified !== true && u.email_verified !== "true") return null;
     const name = typeof u.name === "string" && u.name.trim() ? u.name.trim().slice(0, 120) : email.split("@")[0];
     return { email, name };
   } catch {

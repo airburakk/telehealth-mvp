@@ -13,12 +13,21 @@ export async function checkPassword(pw: string, hash: string): Promise<boolean> 
   return bcrypt.compare(pw, hash);
 }
 
-export async function createSession(user: SessionUser): Promise<void> {
-  // sv (oturum sürümü) MERKEZİ olarak burada DB'den çekilir — 4 mint noktası (login/signup/
-  // OAuth callback/onam re-sign) değişmeden doğru sv ile imzalar. Çağırana bırakılsaydı
-  // onam re-sign'da unutulan sv=0, bump yapılmış kullanıcıyı login döngüsüne sokardı.
-  const rec = await db.user.findUnique({ where: { id: user.id }, select: { sessionVersion: true } });
-  const token = await signToken({ ...user, sv: rec?.sessionVersion ?? 0 });
+export async function createSession(user: SessionUser, opts?: { preserveSv?: boolean }): Promise<void> {
+  // sv (oturum sürümü) VARSAYILAN olarak burada DB'den TAZE çekilir — taze-kimlik mint noktaları
+  // (login/signup/OAuth callback) güncel sv ile imzalamalı (çağırana bırakılsaydı unutulan sv=0,
+  // bump yapılmış kullanıcıyı login döngüsüne sokardı).
+  //
+  // preserveSv: onam re-sign yolu (consent) — getCurrentUser'ın ZATEN doğruladığı `user.sv` KORUNUR,
+  // DB'den ikinci okuma YAPILMAZ. Aksi halde consent'in kimlik-doğrulama (ToC: getCurrentUser sv'yi
+  // doğrular) ile bu DB-okuması (ToU) arasına eşzamanlı logout-all düşerse iptal edilen oturum taze
+  // token'a "yükseltilir" (TOCTOU iptal-kaçışı). sv korunursa: bump ToC sonrası olursa yeni token eski
+  // sv taşır → sonraki istekte getCurrentUser reddeder (oturum iptalli kalır); ToC öncesi olursa
+  // getCurrentUser zaten 401 verir, mint hiç olmaz. Yarış-dışı "diriltme" kusurunu da kapatır.
+  const sv = opts?.preserveSv
+    ? user.sv ?? 0
+    : (await db.user.findUnique({ where: { id: user.id }, select: { sessionVersion: true } }))?.sessionVersion ?? 0;
+  const token = await signToken({ ...user, sv });
   const c = await cookies();
   c.set(SESSION_COOKIE, token, {
     httpOnly: true,

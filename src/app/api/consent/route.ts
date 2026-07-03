@@ -13,7 +13,9 @@ export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
   const userAgent = req.headers.get("user-agent")?.slice(0, 400) || null;
   await recordConsent(user.id, ip, userAgent);
-  await createSession({ id: user.id, email: user.email, name: user.name, role: user.role, cv: CONSENT_VERSION });
+  // preserveSv: sv'yi getCurrentUser'ın doğruladığı değerden koru (DB'den tekrar OKUMA) → eşzamanlı
+  // logout-all ile TOCTOU iptal-kaçışını kapat (bkz. createSession yorumu). user.sv token'dan gelir.
+  await createSession({ id: user.id, email: user.email, name: user.name, role: user.role, cv: CONSENT_VERSION, sv: user.sv }, { preserveSv: true });
 
   return NextResponse.json({ ok: true });
 }
