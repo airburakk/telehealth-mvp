@@ -22,13 +22,16 @@ describe.skipIf(!TEST_DB)("entegrasyon: GET /api/cases yetki (gerçek dev DB)", 
   it("kimliksiz → 401", async () => { asUser(null); expect((await GET(listReq())).status).toBe(401); });
   it("hasta → 403 (staff-only)", async () => { asUser(u(f.patientId, "PATIENT")); expect((await GET(listReq())).status).toBe(403); });
   it("partner → 403 (hasta DB erişimi yok)", async () => { asUser(u("partner-x", "PARTNER")); expect((await GET(listReq())).status).toBe(403); });
-  it("doktor → 200 + dizi (kuyruk döner)", async () => {
+  // 200 mutlu-yolları liste gövdesini çözer (decryptCaseFields) → KEK ister. KEK bilerek CI'a
+  // KONMAZ (en kritik sır GitHub Secrets'a yayılmaz) → bu ikisi yalnız yerelde (KEK'li .env) koşar;
+  // deny-yolları (401/403 + atama matrisi) KEK'siz her ortamda kapıdır.
+  it.skipIf(!process.env.DATA_ENCRYPTION_KEK)("doktor → 200 + dizi (kuyruk döner)", async () => {
     asUser(u(f.d1UserId, "DOCTOR"));
     const r = await GET(listReq());
     expect(r.status).toBe(200);
     expect(Array.isArray(await r.json())).toBe(true);
   });
-  it("koordinatör/etik/admin → 200", async () => {
+  it.skipIf(!process.env.DATA_ENCRYPTION_KEK)("koordinatör/etik/admin → 200", async () => {
     for (const role of ["COORDINATOR", "ETHICS", "ADMIN"]) {
       asUser(u(`staff-${role}`, role));
       expect((await GET(listReq())).status).toBe(200);

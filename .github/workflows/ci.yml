@@ -40,8 +40,27 @@ jobs:
       - name: Lint
         run: npm run lint
 
-  # Entegrasyon + E2E (Neon dev branch gerektirir) — secret eklenince aç:
-  #   env: { TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }} }  # prod'a ASLA; izole dev branch
-  #   run: npm run test:integration   (ve gerekirse: npx playwright install --with-deps && npm run test:e2e)
-  # Not: TEST_DATABASE_URL yoksa entegrasyon süiti skipIf ile sessizce atlanır → yanlış-yeşil riski;
-  # bu yüzden gerçek kapı için secret şart. Detay: tests/integration/README.md.
+  # Entegrasyon testleri — GERÇEK Neon dev branch'e karşı (secrets.TEST_DATABASE_URL; prod'a ASLA).
+  # Fork PR'larında secret verilmez → süit skipIf ile atlanır (job yeşil kalır; kapı işlevi yalnız
+  # kendi push/PR'larımızda). DATA_ENCRYPTION_KEK bilerek YOK: en kritik sır GitHub'a yayılmaz →
+  # KEK isteyen 2 mutlu-yol testi (cases-authz 200'leri) CI'da kendini atlar, deny-yolları tam kapıdır.
+  # E2E (Playwright) CI dışında: yavaş + dev branch'e veri biriktirir → yerel koşu (tests/e2e/README.md).
+  entegrasyon:
+    runs-on: ubuntu-latest
+    env:
+      TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+      DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
+      DIRECT_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
+      SESSION_SECRET: "ci-only-placeholder-secret-not-for-production"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Bağımlılıklar
+        run: npm ci
+      - name: Prisma client üret
+        run: npx prisma generate
+      - name: Entegrasyon testleri (Neon dev branch)
+        run: npm run test:integration
