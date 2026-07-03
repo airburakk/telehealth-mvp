@@ -6,7 +6,7 @@ import { consentedVersion } from "@/lib/consent";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
-  const rl = rateLimit(`login:${clientIp(req)}`, 10, 5 * 60_000); // brute-force freni: 10/5dk/IP
+  const rl = await rateLimit(`login:${clientIp(req)}`, 10, 5 * 60_000); // brute-force freni: 10/5dk/IP
   if (!rl.ok) return tooMany(rl.retryAfter);
 
   const b = await req.json().catch(() => ({}));

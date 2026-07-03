@@ -9,7 +9,7 @@ import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 // Başarılıysa kısa ömürlü httpOnly çerez set eder; görüntüleyici sayfası bunu kontrol eder.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const rl = rateLimit(`unlock:${clientIp(req)}:${id}`, 10, 5 * 60_000); // şifre-deneme freni: 10/5dk/IP/link
+  const rl = await rateLimit(`unlock:${clientIp(req)}:${id}`, 10, 5 * 60_000); // şifre-deneme freni: 10/5dk/IP/link
   if (!rl.ok) return tooMany(rl.retryAfter);
   const link = await db.shareLink.findUnique({ where: { id } });
   if (!link) return NextResponse.json({ error: "Geçersiz bağlantı." }, { status: 404 });

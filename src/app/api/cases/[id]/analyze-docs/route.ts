@@ -20,7 +20,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) {
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
-  const rl = rateLimit(`ai:${user.id}`, 20, 60_000); // AI maliyet/DoS freni: 20/dk/kullanıcı
+  const rl = await rateLimit(`ai:${user.id}`, 20, 60_000); // AI maliyet/DoS freni: 20/dk/kullanıcı
   if (!rl.ok) return tooMany(rl.retryAfter);
   const { id } = await params;
   const c = await db.case.findUnique({

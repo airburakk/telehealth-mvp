@@ -1,5 +1,6 @@
-// Birim testleri — lib/rate-limit.ts (T12 in-memory rate limiter). next/server mock'lanır.
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+// Birim testleri — lib/rate-limit.ts (T12; v4.18 Upstash birincil + in-memory yedek).
+// Testler env'siz koşar → in-memory yol; Upstash yolu ayrıca mock'lu senaryolarla kapsanır.
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // next/server'ı hafif mock'la (gerçek Next runtime'ı node test ortamına çekmemek için).
 vi.mock("next/server", () => ({
@@ -11,35 +12,74 @@ vi.mock("next/server", () => ({
 
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 
-describe("rateLimit", () => {
-  it("limit içinde ok, limit aşılınca reddeder", () => {
+describe("rateLimit (in-memory yol — env'siz)", () => {
+  it("limit içinde ok, limit aşılınca reddeder", async () => {
     const key = "test-key-" + Math.random();
     for (let i = 0; i < 3; i++) {
-      expect(rateLimit(key, 3, 60_000).ok).toBe(true);
+      expect((await rateLimit(key, 3, 60_000)).ok).toBe(true);
     }
-    const blocked = rateLimit(key, 3, 60_000);
+    const blocked = await rateLimit(key, 3, 60_000);
     expect(blocked.ok).toBe(false);
     expect(blocked.retryAfter).toBeGreaterThan(0);
   });
 
-  it("anahtarlar bağımsızdır", () => {
+  it("anahtarlar bağımsızdır", async () => {
     const a = "key-a-" + Math.random();
     const b = "key-b-" + Math.random();
-    expect(rateLimit(a, 1, 60_000).ok).toBe(true);
-    expect(rateLimit(a, 1, 60_000).ok).toBe(false); // a tükendi
-    expect(rateLimit(b, 1, 60_000).ok).toBe(true); // b bağımsız
+    expect((await rateLimit(a, 1, 60_000)).ok).toBe(true);
+    expect((await rateLimit(a, 1, 60_000)).ok).toBe(false); // a tükendi
+    expect((await rateLimit(b, 1, 60_000)).ok).toBe(true); // b bağımsız
   });
 
-  it("pencere dolunca sayaç sıfırlanır", () => {
+  it("pencere dolunca sayaç sıfırlanır", async () => {
     vi.useFakeTimers();
     try {
       const key = "window-" + Math.random();
-      expect(rateLimit(key, 1, 1000).ok).toBe(true);
-      expect(rateLimit(key, 1, 1000).ok).toBe(false); // pencere içinde
+      expect((await rateLimit(key, 1, 1000)).ok).toBe(true);
+      expect((await rateLimit(key, 1, 1000)).ok).toBe(false); // pencere içinde
       vi.advanceTimersByTime(1500); // pencereyi geç
-      expect(rateLimit(key, 1, 1000).ok).toBe(true); // sıfırlandı
+      expect((await rateLimit(key, 1, 1000)).ok).toBe(true); // sıfırlandı
     } finally {
       vi.useRealTimers();
+    }
+  });
+});
+
+// Upstash yolu — @upstash/redis mock'lu izole modül kopyasıyla (env + eval davranışı kontrol altında).
+describe("rateLimit (Upstash yolu — mock)", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.unstubAllEnvs();
+  });
+
+  async function loadWithEval(evalImpl: (...a: unknown[]) => Promise<unknown>) {
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://mock.upstash.io");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "mock-token");
+    vi.doMock("@upstash/redis", () => ({ Redis: class { eval = evalImpl; } }));
+    const mod = await import("@/lib/rate-limit");
+    return mod.rateLimit;
+  }
+
+  it("limit içinde ok; sayaç limit üstüne çıkınca 429 + PTTL'den retryAfter", async () => {
+    let n = 0;
+    const rl = await loadWithEval(async () => [++n, 5000]);
+    expect((await rl("k", 2, 60_000)).ok).toBe(true);
+    expect((await rl("k", 2, 60_000)).ok).toBe(true);
+    const blocked = await rl("k", 2, 60_000);
+    expect(blocked.ok).toBe(false);
+    expect(blocked.retryAfter).toBe(5); // 5000ms PTTL → 5 sn
+  });
+
+  it("Upstash hatasında fail-open: in-memory yedeğe düşer (istek kilitlenmez)", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const rl = await loadWithEval(async () => { throw new Error("bağlantı yok"); });
+      const key = "failopen-" + Math.random();
+      expect((await rl(key, 1, 60_000)).ok).toBe(true); // yedek saydı
+      expect((await rl(key, 1, 60_000)).ok).toBe(false); // yedek limitledi
+      expect(warn).toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
     }
   });
 });
