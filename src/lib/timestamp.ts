@@ -10,8 +10,35 @@ import { createHash, createHmac, timingSafeEqual } from "crypto";
 
 export const TSA_AUTHORITY = "SIMULATED-LOCAL (RFC 3161 placeholder)";
 
-// Demo/dev sırrı; üretimde gerçek TSA kullanılacağı için bu yalnız mekanizma doğrulaması içindir.
-const TSA_SECRET = process.env.TSA_SECRET || "aura-dev-tsa-secret-not-for-production";
+// Eski dev/demo sırrı — YENİ imzada kullanılmaz; yalnız bu sırla imzalanmış TARİHİ token'ların
+// doğrulanması için tutulur (legacy köprüsü, aşağıda). Kod herkese açık olduğundan bu sırla atılan
+// imzaların kanıt değeri zaten yoktu; güçlü sırra geçiş eski kayıtları "tamper" gibi göstermemeli.
+const LEGACY_DEV_TSA_SECRET = "aura-dev-tsa-secret-not-for-production";
+
+// Zaman damgası HMAC sırrı (P1 #8 ilk adım). ÜRETİMDE eksik/varsayılan/kısa ise BOOT DURUR
+// (SESSION_SECRET/T4 ile aynı desen — herkese açık sabitle imzalanan "kanıt" token'ını engeller).
+// Dev'de değer yoksa eski fallback + yüksek sesli uyarı (çalışan dev'i kırmaz).
+// ⚠️ Deploy ön-koşulu: Vercel'de güçlü TSA_SECRET set olmalı (openssl rand -base64 32) — yerel
+// .env ile AYNI değer; yoksa üretim boot'ta çöker — bu kasıtlı.
+function resolveTsaSecret(): string {
+  const s = process.env.TSA_SECRET;
+  const weak = !s || s === LEGACY_DEV_TSA_SECRET || s.length < 16;
+  if (weak) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "TSA_SECRET üretimde zorunlu ve güçlü olmalı (eksik/varsayılan/<16 karakter) — boot durduruldu. " +
+        "Vercel ortam değişkenine `openssl rand -base64 32` çıktısı atayın (yerel .env ile aynı değer)."
+      );
+    }
+    console.warn(
+      "⚠️ TSA_SECRET eksik/zayıf — yalnız DEV fallback kullanılıyor (kanıt değeri yok). " +
+      "ÜRETİMDE boot durur. .env'e güçlü bir TSA_SECRET ekleyin."
+    );
+    return LEGACY_DEV_TSA_SECRET;
+  }
+  return s;
+}
+const TSA_SECRET = resolveTsaSecret();
 
 export function sha256(input: string): string {
   return createHash("sha256").update(input, "utf8").digest("hex");
@@ -32,19 +59,32 @@ export function getTimestampToken(dataHashHex: string): TimestampToken {
 
 // Token doğrula: token, eldeki dataHash + kaydedilen zamandan yeniden üretilenle eşleşiyor mu?
 // (Gerçek RFC 3161'de: token'daki TSA imzası + içindeki hash, veriden yeniden hesaplanan hash ile karşılaştırılır.)
+// Legacy köprüsü: güçlü sırra geçişten ÖNCE yazılmış kayıtlar eski dev sırıyla imzalı — onlar da
+// geçerli sayılır (yoksa tüm tarihî onam/audit token'ları yanlış "tamper" alarmı verir). Yeni imza
+// her zaman güçlü sırla atılır; eski sır yalnız okuma yolunda denenir.
 export function verifyTimestampToken(dataHashHex: string, time: Date, token: string): boolean {
   try {
-    const expected = signToken(dataHashHex, time.toISOString());
-    const a = Buffer.from(expected, "hex");
-    const b = Buffer.from(token, "hex");
-    return a.length === b.length && timingSafeEqual(a, b);
+    const iso = time.toISOString();
+    if (tokenMatches(signToken(dataHashHex, iso), token)) return true;
+    return TSA_SECRET !== LEGACY_DEV_TSA_SECRET &&
+      tokenMatches(signTokenWith(LEGACY_DEV_TSA_SECRET, dataHashHex, iso), token);
   } catch {
     return false;
   }
 }
 
+function tokenMatches(expectedHex: string, tokenHex: string): boolean {
+  const a = Buffer.from(expectedHex, "hex");
+  const b = Buffer.from(tokenHex, "hex");
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 function signToken(dataHashHex: string, isoTime: string): string {
-  return createHmac("sha256", TSA_SECRET).update(`${dataHashHex}|${isoTime}`, "utf8").digest("hex");
+  return signTokenWith(TSA_SECRET, dataHashHex, isoTime);
+}
+
+function signTokenWith(secret: string, dataHashHex: string, isoTime: string): string {
+  return createHmac("sha256", secret).update(`${dataHashHex}|${isoTime}`, "utf8").digest("hex");
 }
 
 // 🔌 GERÇEK RFC 3161 SWAP NOKTASI (üretim — hukuk onayından sonra):

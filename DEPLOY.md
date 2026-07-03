@@ -73,7 +73,7 @@ dormant kalır / fallback'e düşer).
 | `VAPID_PRIVATE_KEY` | ⛅ | Web Push gizli anahtar |
 | `VAPID_SUBJECT` | ⛅ | `mailto:...` |
 | `BLOB_READ_WRITE_TOKEN` | ⛅ | **Vercel Blob** object storage (PHI belgeleri — diploma/MMSS/lab/SO ekleri; bytes upload öncesi şifrelenir → Blob yalnız ciphertext). Kur: Vercel → **Storage → Create Database → Blob** → token'ı buraya. **Boşsa:** belgeler şifreli base64 olarak DB'de (fallback, çalışır ama satır şişer). Token sonradan eklenince eski satırlar: `npx tsx scripts/migrate-docs-to-blob.ts` |
-| `TSA_SECRET` | ⛅ | Simüle RFC 3161 zaman damgası HMAC sırrı (onam/audit kanıt token'ları — `lib/timestamp.ts`). ⚠️ **Üretimde set edilmeli:** boşsa repo'daki sabit varsayılanla imzalanır → kanıt değeri düşer. `openssl rand -base64 32` |
+| `TSA_SECRET` | ✅ | Simüle RFC 3161 zaman damgası HMAC sırrı (onam/audit kanıt token'ları — `lib/timestamp.ts`). ⚠️ **Üretimde ZORUNLU (v4.11):** eksik/varsayılan/<16 karakter ise uygulama **boot'ta durur** (SESSION_SECRET ile aynı desen). `openssl rand -base64 32` — yerel `.env` ile AYNI değer; eski (sır öncesi) kayıtlar legacy sırla doğrulanmaya devam eder |
 | `BLOB_ACCESS` | ➖ | Vercel Blob erişim düzeyi override'ı (`lib/storage.ts`). Boş/varsayılan = `private` (PHI için doğru). `public` **yalnız** PHI-dışı içerik için |
 | `GOOGLE_CLIENT_ID` | ⛅ | Google ile giriş/kayıt (M5). Boşsa "Google ile devam et" dormant; e-posta kaydı çalışır. Yetkili yönlendirme: `<origin>/api/auth/google/callback` |
 | `GOOGLE_CLIENT_SECRET` | ⛅ | Google OAuth gizli anahtarı (yukarıdakiyle birlikte) |
