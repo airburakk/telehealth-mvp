@@ -7,7 +7,9 @@
 // kaydı uygulama işlevinin önüne geçmemeli. Yüksek-frekanslı mekanik olaylar (signal polling, i18n) kasıtlı
 // olarak audit edilmez (flood önleme) — yalnız anlamlı klinik erişim mühürlenir.
 import { db } from "./db";
-import { sha256, getTimestampToken, verifyTimestampToken } from "./timestamp";
+import {
+  sha256, getTimestampToken, verifyTimestampToken, chainSeal, verifyChainSeal, isV2Seal,
+} from "./timestamp";
 import type { SessionUser } from "./session";
 
 export type AuditAction =
@@ -44,8 +46,53 @@ export function reqMeta(req: Request): { ip: string | null; userAgent: string | 
   return { ip, userAgent: req.headers.get("user-agent") };
 }
 
-// entryHash: kaydın mührü — alanlarından deterministik türetilir (yazarken ve doğrularken aynı düzen).
-function computeEntryHash(f: {
+// ── Mühür şeması (sürümlü) ────────────────────────────────────────────────────────────────────────
+// v1 (tarihî): anahtarsız sha256, dar alan kümesi (detail/ip/actorRole/userAgent HARİÇ), pipe-join.
+// v2 (P1 #8): TSA_SECRET'lı HMAC (timestamp.chainSeal, "v2:<kid>:<mac>"), TÜM metadata alanları
+//   kapsanır, kanonik JSON (serbest-metin `detail` ayraç enjeksiyonuna kapalı). Şema değişikliği YOK —
+//   sürüm, değerin önekinden anlaşılır (enc:v1: deseni).
+//
+// TEHDİT MODELİ (dürüst sınırlar — adversarial inceleme sonrası):
+// • Kısmi tamper (v2 çağında bir satırı değiştir/sil/araya ekle): sonraki TÜM satırların mühürleri
+//   anahtarsız yeniden üretilemez → verifyAccessChain yakalar. ✅
+// • Downgrade (v2 satırı anahtarsız v1 mührüyle değiştirme): zincir YÜRÜYÜŞ-SIRASI kuralıyla yakalanır —
+//   zincirde bir v2 görüldükten sonra v1 mühür = bozuk. (Zaman-pini KULLANILMAZ: createdAt saldırgan
+//   kontrolünde olduğundan zaman-tabanlı cutover hem aşılabilirdi hem deploy sarkarsa yanlış alarm üretirdi.) ✅
+// • TÜM zinciri baştan v1 (anahtarsız) yeniden yazma: bu şemayla KANITLANAMAZ (tarihî v1 satırlar
+//   anahtarsız doğrulanabilir kalmak zorunda) → savunma: v1/v2 kompozisyon sayaçları denetçiye raporlanır
+//   (v2 canlıya alındıktan sonra v2Count=0 = anomali); kesin çözüm = harici çapa/gerçek RFC 3161 (park).
+// • Zincirin UCUNDAN kesme (son N satırı silme): iç veriyle tespit edilemez (harici çapa gerekir) —
+//   denetçi UI iddiası buna göre yumuşatıldı.
+const AUDIT_SEAL_DOMAIN = "audit-entry";
+
+interface SealFields {
+  actorId: string | null;
+  actorRole: string | null;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  subjectUserId: string | null;
+  detail: string | null;
+  ip: string | null;
+  userAgent: string | null;
+  createdAt: Date;
+  prevHash: string;
+}
+
+// v2 kanoniği: alan sırası SABİT, JSON dizisi (null'lar korunur → alan kayması/enjeksiyon imkânsız).
+function v2Canonical(f: SealFields): string {
+  return JSON.stringify([
+    f.actorId, f.actorRole, f.action, f.resourceType, f.resourceId, f.subjectUserId,
+    f.detail, f.ip, f.userAgent, f.createdAt.toISOString(), f.prevHash,
+  ]);
+}
+
+function sealEntryV2(f: SealFields): string {
+  return chainSeal(AUDIT_SEAL_DOMAIN, v2Canonical(f));
+}
+
+// v1 mührü (yalnız TARİHÎ satırların doğrulanması için — yeni yazım daima v2).
+function computeLegacyEntryHash(f: {
   actorId: string | null;
   action: string;
   resourceType: string;
@@ -65,6 +112,25 @@ function computeEntryHash(f: {
       f.prevHash,
     ].join("|"),
   );
+}
+
+// Tek satır mühür kararı: true/false = kesin; null = mühürsüz VEYA başka ortamın anahtarı (unknown-key).
+// v1 satırlar burada yalnız legacy formülle denetlenir (satır-yerel bakışta yazım zamanı bilinemez);
+// downgrade tespiti zincir yürüyüşünün işidir (verifyAccessChain — v2'den sonra v1 = bozuk).
+function sealVerdict(r: VerifiableRow): boolean | null {
+  if (!r.entryHash || !r.prevHash) return null;
+  if (isV2Seal(r.entryHash)) {
+    const check = verifyChainSeal(AUDIT_SEAL_DOMAIN, v2Canonical({
+      actorId: r.actorId, actorRole: r.actorRole, action: r.action, resourceType: r.resourceType,
+      resourceId: r.resourceId, subjectUserId: r.subjectUserId, detail: r.detail, ip: r.ip,
+      userAgent: r.userAgent, createdAt: r.createdAt, prevHash: r.prevHash,
+    }), r.entryHash);
+    return check === "valid" ? true : check === "broken" ? false : null; // unknown-key → null
+  }
+  return computeLegacyEntryHash({
+    actorId: r.actorId, action: r.action, resourceType: r.resourceType, resourceId: r.resourceId,
+    subjectUserId: r.subjectUserId, createdAt: r.createdAt, prevHash: r.prevHash,
+  }) === r.entryHash;
 }
 
 // Küresel advisory-lock anahtarı (sabit, 2×int4) — TÜM audit append'lerini tek küresel sıraya dizer.
@@ -91,12 +157,16 @@ export async function recordAccess(input: RecordInput): Promise<void> {
         select: { entryHash: true },
       });
       const prevHash = tip?.entryHash ?? "GENESIS";
-      const entryHash = computeEntryHash({
+      const entryHash = sealEntryV2({
         actorId: input.actor?.id ?? null,
+        actorRole: input.actor?.role ?? null,
         action: input.action,
         resourceType: input.resourceType,
         resourceId: input.resourceId,
         subjectUserId: input.subjectUserId,
+        detail: input.detail ?? null,
+        ip: input.ip ?? null,
+        userAgent: input.userAgent ?? null,
         createdAt,
         prevHash,
       });
@@ -143,25 +213,15 @@ export interface AccessLogEntry {
 
 // Tek bir kaydın doğrulaması: mührü alanlarından yeniden hesaplanan + zaman damgası geçerli mi?
 // (getAccessLog hasta-yüzü + getChainAudit denetçi-yüzü paylaşır.)
+// entryHashValid: true/false kesin karar; null = mühürsüz eski kayıt VEYA başka ortamın anahtarı.
 type VerifiableRow = {
-  actorId: string | null; action: string; resourceType: string; resourceId: string;
-  subjectUserId: string | null; createdAt: Date; prevHash: string | null; entryHash: string | null;
+  actorId: string | null; actorRole: string | null; action: string; resourceType: string;
+  resourceId: string; subjectUserId: string | null; detail: string | null; ip: string | null;
+  userAgent: string | null; createdAt: Date; prevHash: string | null; entryHash: string | null;
   tsTime: Date | null; tsToken: string | null;
 };
 function verifyRow(r: VerifiableRow): { entryHashValid: boolean | null; timestampValid: boolean | null } {
-  let entryHashValid: boolean | null = null;
-  if (r.entryHash && r.prevHash) {
-    const recomputed = computeEntryHash({
-      actorId: r.actorId,
-      action: r.action,
-      resourceType: r.resourceType,
-      resourceId: r.resourceId,
-      subjectUserId: r.subjectUserId,
-      createdAt: r.createdAt,
-      prevHash: r.prevHash,
-    });
-    entryHashValid = recomputed === r.entryHash;
-  }
+  const entryHashValid = sealVerdict(r);
   const timestampValid =
     r.entryHash && r.tsTime && r.tsToken ? verifyTimestampToken(r.entryHash, r.tsTime, r.tsToken) : null;
   return { entryHashValid, timestampValid };
@@ -191,28 +251,52 @@ export async function getAccessLog(subjectUserId: string, viewerId?: string): Pr
 
 // Global zincir bütünlüğü (denetçi) — her kaydın mührü + prevHash bağı tutuyor mu (silme/araya-ekleme tespiti).
 // (createdAt+id ile total-order; ardışık yazımda insert sırasını yeniden kurar. Çatallanma = brokenAt.)
-export async function verifyAccessChain(): Promise<{ ok: boolean; count: number; brokenAt: string | null }> {
-  const rows = await db.accessLog.findMany({
-    where: { entryHash: { not: null } },
-    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-  });
+// Karma zincir: v1 satırlar legacy formülle, v2 satırlar HMAC'le doğrulanır; zincirde bir v2 görüldükten
+// sonra v1 mühür = DOWNGRADE = bozuk (yürüyüş-sırası kuralı — zaman-pini değil).
+// Sayaçlar (denetçiye görünürlük — sessiz geçilmez):
+// • unverifiableSeals: başka ortamın anahtarıyla mühürlü v2 satır (dev branch'te yerel↔CI karışımı
+//   NORMALDİR; ÜRETİMDE > 0 = ŞÜPHELİ — prod tek güçlü anahtarla yazar → araştır).
+// • v1Count/v2Count: kompozisyon — v2 canlıya alındıktan sonra v2Count=0 görünüyorsa zincir baştan
+//   v1'e yeniden yazılmış olabilir (tam-yeniden-yazım bu şemayla kanıtlanamaz; anomaliyi insan okur).
+// • unsealedCount: entryHash'siz tarihî satır sayısı (zincir kapsamı DIŞINDA — mühürsüz satır bağ taşımaz).
+export interface ChainIntegrity {
+  ok: boolean;
+  count: number;
+  brokenAt: string | null;
+  unverifiableSeals: number;
+  v1Count: number;
+  v2Count: number;
+  unsealedCount: number;
+}
+export async function verifyAccessChain(): Promise<ChainIntegrity> {
+  const [rows, unsealedCount] = await Promise.all([
+    db.accessLog.findMany({
+      where: { entryHash: { not: null } },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    }),
+    db.accessLog.count({ where: { entryHash: null } }),
+  ]);
   let prev = "GENESIS";
+  let unverifiableSeals = 0;
+  let v1Count = 0;
+  let v2Count = 0;
+  let sawV2 = false;
+  const fail = (id: string) => ({ ok: false, count: rows.length, brokenAt: id, unverifiableSeals, v1Count, v2Count, unsealedCount });
   for (const r of rows) {
-    const expected = computeEntryHash({
-      actorId: r.actorId,
-      action: r.action,
-      resourceType: r.resourceType,
-      resourceId: r.resourceId,
-      subjectUserId: r.subjectUserId,
-      createdAt: r.createdAt,
-      prevHash: prev,
-    });
-    if (r.prevHash !== prev || r.entryHash !== expected) {
-      return { ok: false, count: rows.length, brokenAt: r.id };
+    if (r.prevHash !== prev) return fail(r.id);
+    if (isV2Seal(r.entryHash)) {
+      v2Count++;
+      sawV2 = true;
+    } else {
+      v1Count++;
+      if (sawV2) return fail(r.id); // downgrade: v2 çağından sonra anahtarsız v1 mühür
     }
+    const verdict = sealVerdict({ ...r, prevHash: prev });
+    if (verdict === false) return fail(r.id);
+    if (verdict === null) unverifiableSeals++; // unknown-key: bağ denetlendi, mühür bu ortamda doğrulanamadı
     prev = r.entryHash!;
   }
-  return { ok: true, count: rows.length, brokenAt: null };
+  return { ok: true, count: rows.length, brokenAt: null, unverifiableSeals, v1Count, v2Count, unsealedCount };
 }
 
 // Denetçi (ADMIN / Etik Kurul) görünümü için tek bir kayıt — küresel zincirin metadata'sı (klinik içerik YOK).
@@ -244,7 +328,7 @@ export const AUDIT_PAGE_SIZE = 50;
 // sayfalama yalnız metadata tablosunun görünür dilimini sınırlar → 200+ kayıtta da denetçi tüm zinciri gezebilir.
 // Yüksek-frekanslı olaylar audit edilmediğinden (flood önleme) toplam kayıt sayısı yönetilebilir → offset uygun.
 export async function getChainAudit(opts: { page?: number; pageSize?: number } = {}): Promise<{
-  integrity: { ok: boolean; count: number; brokenAt: string | null };
+  integrity: ChainIntegrity;
   entries: ChainEntry[];
   total: number;
   page: number;

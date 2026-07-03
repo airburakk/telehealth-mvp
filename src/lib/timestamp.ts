@@ -79,6 +79,49 @@ function tokenMatches(expectedHex: string, tokenHex: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+// ── Zincir mührü v2 (audit + onam hash-zincirleri, P1 #8) ─────────────────────────────────────────
+// v1 mühür anahtarsız sha256 idi → DB'ye yazma erişimi olan biri kaydı değiştirip mührü de "tamir"
+// edebilirdi. v2: HMAC-SHA256(TSA_SECRET, domain + "\n" + canonical) → anahtar olmadan tamir imkânsız.
+// Biçim: "v2:<kid>:<mac>" — kid = anahtarın SHA-256'sının ilk 8 hex'i (sır İFŞA ETMEZ; hangi anahtarla
+// mühürlendiğini işaretler). Karma-ortam zincirlerinde (dev branch: yerel=güçlü sır, CI=dev fallback)
+// doğrulayıcı bilmediği kid'i "bozuk" değil "bu ortamda doğrulanamaz" diye ayırt eder — sayaçla raporlanır.
+function kidOf(secret: string): string {
+  return createHash("sha256").update(secret, "utf8").digest("hex").slice(0, 8);
+}
+const KID_CURRENT = kidOf(TSA_SECRET);
+
+export type SealCheck = "valid" | "broken" | "unknown-key";
+
+function sealMac(secret: string, domain: string, canonical: string): string {
+  return createHmac("sha256", secret).update(`${domain}\n${canonical}`, "utf8").digest("hex");
+}
+
+// Kanonik metni etkin sırla mühürle → "v2:<kid>:<mac>".
+export function chainSeal(domain: string, canonical: string): string {
+  return `v2:${KID_CURRENT}:${sealMac(TSA_SECRET, domain, canonical)}`;
+}
+
+// v2 mühür doğrula. YALNIZ aktif ortam anahtarı kesin karar verebilir (valid/broken); diğer HER kid →
+// "unknown-key" (görünür sayaçla raporlanır, "geçerli" SAYILMAZ). Halka-açık dev fallback sırrı burada
+// bilerek doğrulayıcı DEĞİL: aksi halde DB-yazma erişimli saldırgan mührü o sırla yeniden basıp "valid"
+// alırdı (adversarial inceleme bulgusu). Dev/CI ortamı zaten fallback'i AKTİF anahtar olarak kullanır →
+// kendi yazdığını kendi doğrular; güçlü-anahtarlı ortam fallback-mühürlü satırı yalnız "unknown-key" görür.
+export function verifyChainSeal(domain: string, canonical: string, seal: string): SealCheck {
+  const m = /^v2:([0-9a-f]{8}):([0-9a-f]{64})$/.exec(seal);
+  if (!m) return "broken";
+  const [, kid, mac] = m;
+  if (kid !== KID_CURRENT) return "unknown-key";
+  try {
+    return tokenMatches(sealMac(TSA_SECRET, domain, canonical), mac) ? "valid" : "broken";
+  } catch {
+    return "broken";
+  }
+}
+
+export function isV2Seal(h: string | null | undefined): boolean {
+  return !!h && h.startsWith("v2:");
+}
+
 function signToken(dataHashHex: string, isoTime: string): string {
   return signTokenWith(TSA_SECRET, dataHashHex, isoTime);
 }

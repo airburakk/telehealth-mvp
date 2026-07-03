@@ -42,7 +42,9 @@ export default function ConsentProofPage() {
 
   const v = proof.verification;
   const sealed = v.hasProofLayer;
-  const allValid = sealed && v.entryHashValid && v.timestampValid !== false && v.textHashMatches !== false;
+  // entryHashValid null = mühürsüz eski kayıt VEYA başka ortamın anahtarı (unknown-key) — bozukluk
+  // kanıtı değil → amber uyarıya düşürme; yalnız KESİN false'lar uyarı üretir.
+  const allValid = sealed && v.entryHashValid !== false && v.timestampValid !== false && v.textHashMatches !== false;
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-10">

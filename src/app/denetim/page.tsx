@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ShieldCheck, ShieldAlert, Clock, Link2, ChevronLeft, ChevronRight } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getChainAudit } from "@/lib/audit";
+import { verifyConsentChain } from "@/lib/consent";
 import { ACTION_TR, RES_TR, ROLE_TR } from "@/lib/audit-labels";
 
 export const dynamic = "force-dynamic";
@@ -26,9 +27,10 @@ export default async function DenetimPage({
 
   const sp = await searchParams;
   const requestedPage = parseInt(sp.page ?? "1", 10); // getChainAudit içinde aralığa sıkıştırılır (NaN→1)
-  const { integrity, entries, total, page, pageSize, totalPages } = await getChainAudit({
-    page: requestedPage,
-  });
+  const [{ integrity, entries, total, page, pageSize, totalPages }, consentChain] = await Promise.all([
+    getChainAudit({ page: requestedPage }),
+    verifyConsentChain(),
+  ]);
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
@@ -50,8 +52,21 @@ export default async function DenetimPage({
           <div>
             <p className="font-semibold text-emerald-800">Zincir bütün</p>
             <p className="text-sm text-emerald-700">
-              {integrity.count} mühürlü kayıt doğrulandı (GENESIS → … → uç). Silme veya araya-ekleme tespit edilmedi.
+              {integrity.count} mühürlü kayıt doğrulandı (GENESIS → … → uç). Araya silme/değiştirme/ekleme tespit
+              edilmedi. <span className="text-emerald-600/80">(Uçtan-kesme tespiti harici çapa gerektirir — gerçek
+              RFC 3161 TSA park kapsamında.)</span>
             </p>
+            <p className="mt-1 text-xs text-emerald-700/90">
+              Mühür kompozisyonu: {integrity.v2Count} × v2 (anahtarlı HMAC) · {integrity.v1Count} × v1 (tarihî,
+              anahtarsız){integrity.unsealedCount > 0 ? ` · ${integrity.unsealedCount} mühürsüz tarihî kayıt (zincir kapsamı dışında)` : ""}.
+              {integrity.v2Count === 0 ? " ⚠️ v2 canlıya alındıktan sonra hiç v2 kaydı görünmüyorsa zincir yeniden yazılmış olabilir — araştırın." : ""}
+            </p>
+            {integrity.unverifiableSeals > 0 && (
+              <p className="mt-1 text-sm font-medium text-amber-700">
+                ⚠️ {integrity.unverifiableSeals} kaydın mührü bu ortamın anahtarıyla doğrulanamadı (farklı anahtar
+                kimliği). Üretimde bu sayı 0 olmalıdır — değilse araştırın.
+              </p>
+            )}
           </div>
         </div>
       ) : (
@@ -66,6 +81,14 @@ export default async function DenetimPage({
           </div>
         </div>
       )}
+
+      {/* Onam zinciri bütünlüğü — aynı mühür şeması (consent.verifyConsentChain) tek satır özet */}
+      <p className={`mt-2 flex items-center gap-1.5 text-xs ${consentChain.ok ? "text-slate-500" : "font-medium text-rose-600"}`}>
+        {consentChain.ok ? <ShieldCheck size={13} className="text-emerald-500" /> : <ShieldAlert size={13} />}
+        Onam zinciri: {consentChain.ok
+          ? `bütün (${consentChain.count} kayıt · ${consentChain.v2Count} v2 / ${consentChain.v1Count} v1${consentChain.unverifiableSeals > 0 ? ` · ⚠️ ${consentChain.unverifiableSeals} farklı-anahtar` : ""})`
+          : `BOZUK — ilk kırılma: ${consentChain.brokenAt}`}
+      </p>
 
       {entries.length === 0 ? (
         <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 px-5 py-10 text-center text-sm text-slate-500">
@@ -87,8 +110,12 @@ export default async function DenetimPage({
             </thead>
             <tbody className="divide-y divide-slate-100">
               {entries.map((e) => {
+                // Üç durum: doğrulandı (yeşil) · kesin bozuk (kırmızı) · karar verilemez (gri —
+                // mühürsüz tarihî kayıt veya başka ortamın anahtarı; banner sayaçları bağlam verir).
                 const verified =
                   e.verification.entryHashValid === true && e.verification.timestampValid === true;
+                const brokenSeal =
+                  e.verification.entryHashValid === false || e.verification.timestampValid === false;
                 return (
                   <tr key={e.id} className="text-slate-700 align-top">
                     <td className="px-4 py-2.5 whitespace-nowrap text-slate-500">
@@ -115,9 +142,13 @@ export default async function DenetimPage({
                         <span className="inline-flex items-center gap-1 text-emerald-600">
                           <ShieldCheck size={15} /> Doğrulandı
                         </span>
-                      ) : (
+                      ) : brokenSeal ? (
                         <span className="inline-flex items-center gap-1 text-rose-500">
-                          <ShieldAlert size={15} /> Doğrulanamadı
+                          <ShieldAlert size={15} /> Bozuk mühür
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-slate-400" title="Mühürsüz tarihî kayıt veya başka ortamın anahtarı — bozukluk kanıtı değil">
+                          <ShieldAlert size={15} /> Karar verilemez
                         </span>
                       )}
                     </td>
