@@ -49,6 +49,15 @@ npm run db:seed             # demo veri: kullanıcılar + 30 hekim + 20 vaka + t
 > ⚠️ `prisma db push` üretimde **artık kullanılmaz** (DB'yi şemaya eşitlerken migration
 > geçmişini atlar; eski şemalı bir çalışma kopyasından koşulursa yeni index'leri düşürür).
 > `db push` yalnız Neon dev/test branch'lerinde hızlı deneme için kabul edilebilir.
+>
+> **Sıralama kuralı değişiklik TİPİNE bağlı:** yeni nullable kolon = **migration-önce**
+> (eski kod etkilenmez) · kolonu nullable'a çevirme = **kod-önce** (eski kod null yazamasın).
+> **RENAME COLUMN = KOORDİNELİ** (iki yön de kırılgan): iki aşama uygula — (A) Prisma alanını
+> `@map("eskiAd")` ile yeniden adlandır (kod tam yeni adla, DB'siz, güvenli deploy); (B) ayrı
+> commit'te RENAME migration + `@map` temizliği: push → yeni deployment'ın canlıya geçtiği ANI
+> yakala (örn. silinen bir shim ucunun 404'e dönmesini poll'la) → `migrate deploy`'u ANINDA koş
+> (kırık pencere saniyelere iner; düşük trafik saati seç; ters-RENAME SQL'i hazır tut).
+> Örnek: v4.21 `20260704120000_free_care_rename` (8× RENAME + index + veri UPDATE, idempotent DO-bloklu).
 
 ## Adım 3 — GitHub'a gönder
 

@@ -61,10 +61,21 @@ npm run dev                   # http://localhost:3000
 
 ## Roller & Giriş
 
-Uygulama kimlik doğrulama gerektirir (`/giris`). Doktorlar **`/kayit`** ile kendileri kayıt
-olabilir (Google [env-gated] / Apple [yakında] / e-posta). Giriş sonrası tek seferlik KVKK onam
-kapısı (`/onam`) vardır (sürümlü; `lib/consent-config.CONSENT_VERSION` artarsa bir kez yeniden
-alınır). Demo kullanıcıları (parola `1234`):
+Giriş **iki ekrana ayrıdır** (v4.21): **`/giris` = Hasta Girişi** (Google `intent=patient`
+[env-gated] / Apple [yakında] / e-posta; üyelik **`/kayit/hasta`** → `POST /api/auth/signup-patient`,
+`lib/patient-signup`) · **`/kurumsal-giris`** = Doktor/Koordinatör/Etik Kurul/Partner. Doktorlar
+**`/kayit`** ile kendileri kayıt olabilir (Google [env-gated] / Apple [yakında] / e-posta; Google
+niyeti `g_oauth_intent` cookie'siyle taşınır — mevcut kullanıcıda yok sayılır). Giriş sonrası tek
+seferlik KVKK onam kapısı (`/onam`) vardır (sürümlü; `lib/consent-config.CONSENT_VERSION` artarsa
+bir kez yeniden alınır).
+
+**Hasta akışı:** hasta her girişte **`/basla` "Nasıl İlerlemek İstersiniz?"** ekranına düşer
+(`roleHome`): Branş Doktoru→`/triyaj` · İkinci Görüş→SO başvuru · Sağlık Turizmi ["Yakında"] ·
+Ücretsiz Sağlık Hizmeti→başvuru. Seçim `POST /api/patient/journey` ile `User.patientJourney`'e
+yazılır ve üst bandı belirler (`lib/nav.ts navItemsFor`): Vakalarım · Post Op (`/takip` hub) ·
+Paylaşımlarım; **SO yolculuğunda** Paylaşımlarım gizli + Vakalarım→`/second-opinion/vakalarim`.
+
+Demo kullanıcıları (parola `1234`; hasta demo `/giris`'te, personel demoları `/kurumsal-giris`'te):
 
 | Rol | E-posta | Erişim |
 |-----|---------|--------|
@@ -165,7 +176,8 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 
 | Rota | Açıklama |
 |------|----------|
-| `/` · `/giris` · `/kayit` · `/onam` (+`/onam/kanit`) | Landing · giriş · **doktor kaydı** (Google/Apple/e-posta) · KVKK onam + Onay Kanıtı |
+| `/` · `/giris` · `/kurumsal-giris` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | Landing (**8 dil statik**, `lib/landing-copy.ts`) · **hasta girişi** · **kurumsal giriş** · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
+| `/basla` | Hasta "Nasıl İlerlemek İstersiniz?" seçim ekranı (her girişte; `User.patientJourney`) |
 | `/triyaj` · `/triyaj/[id]` | Triyaj sihirbazı · vaka süreç sayfası + 3-seçenek kapısı |
 | `/vakalarim` · `/erisim-kaydi` | Hastanın vaka ana ekranı · erişim denetim kaydı ("verime kim erişti") |
 | `/doktor` (+`/baslangic`, `/vaka/[id]`, `/takip`, `/profil`, `/ucretsiz-saglik`, `/konsultasyon`) | Doktor Ana Sayfası (5-pencere), ilk-giriş onboarding, kokpit, izleme, profil, Ücretsiz Sağlık Hizmeti, klinik nöbet, Konsültasyon Talepleri kutusu |
@@ -173,7 +185,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/gorusme/[id]` | WebRTC video görüşme odası (asimetrik) |
 | `/konsultasyon/gorusme/[id]` | Konsültasyon görüntülü görüşme odası (partner↔doktor, Faz 3; fallback chat) |
 | `/paket/[caseId]` · `/rezervasyon/[id]` · `/teklif/[id]` | Paket · Escrow rezervasyon · hastaya gönderilen teklif |
-| `/takip/[caseId]` | Post-op takip |
+| `/takip` · `/takip/[caseId]` | Hasta Post-Op hub (takip listesi) · post-op takip |
 | `/hekimler` · `/hekim/[id]` | Doktor dizini · doğrulanmış profil |
 | `/sikayet/[caseId]` · `/etik-kurul` (+`/[id]`) · `/denetim` | Şikayet · Etik Kurul liste/karar · denetim izi bütünlüğü (denetçi) |
 | `/admin/hekim-onay` | Doktor doğrulama onayı (ADMIN/Etik Kurul) — self-signup doktoru `verified:true` yapar |
