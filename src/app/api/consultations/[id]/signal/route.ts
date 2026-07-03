@@ -3,14 +3,26 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { encryptField, decryptField } from "@/lib/crypto";
+import { issueSideToken, verifySideToken, type Side } from "@/lib/signal-token";
 import type { SessionUser } from "@/lib/session";
+
+// Taraf çözümleme (P1): önce imzalı token (DB'siz), yoksa callerSide (DB) → başarılıysa taze token.
+// fresh non-null olduğunda çağıran onu yanıt başlığına koyar; istemci saklayıp sonraki isteklerde yollar.
+async function resolveSide(
+  user: SessionUser, channelId: string, tokenIn: string | null,
+): Promise<{ side: Side | null; fresh: string | null }> {
+  const cached = verifySideToken(tokenIn, user.id, channelId, Date.now());
+  if (cached) return { side: cached, fresh: null };
+  const side = await callerSide(user, channelId);
+  return { side, fresh: side ? issueSideToken(user.id, channelId, side, Date.now()) : null };
+}
 
 // WebRTC sinyalleşme — polling tabanlı (serverless uyumlu)
 // Erişim: oturum + görüşme katılımcısı. Kanal kimliği iki şemadan biri olabilir:
 //  • Consultation.id (genel akış) · • SecondOpinionAppointment.id (SO izole oda — externalVideoRef, FK yok).
 // Katılımcı = vakanın sahibi hasta VEYA klinik personel (ownsCase deseni). sender oturumdan türetilir
 // (gövdeye güvenilmez → taraf taklidi engellenir).
-async function callerSide(user: SessionUser, channelId: string): Promise<"patient" | "doctor" | null> {
+async function callerSide(user: SessionUser, channelId: string): Promise<Side | null> {
   const consult = await db.consultation.findUnique({
     where: { id: channelId },
     select: { case: { select: { userId: true, doctorId: true } } },
@@ -51,7 +63,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
   const { id } = await params;
-  const side = await callerSide(user, id);
+  const { side, fresh } = await resolveSide(user, id, req.headers.get("x-sig-token"));
   if (!side) return NextResponse.json({ error: "Bu görüşmeye erişim yetkiniz yok." }, { status: 403 });
 
   const b = await req.json().catch(() => ({}));
@@ -65,7 +77,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   await db.signal.create({
     data: { consultationId: id, sender: side, kind, data: encryptField(plain) },
   });
-  return NextResponse.json({ ok: true }, { status: 201 });
+  return NextResponse.json({ ok: true }, { status: 201, headers: fresh ? { "x-sig-token": fresh } : undefined });
 }
 
 // GET /api/consultations/:id/signal?after=<id> — karşı taraftan yeni mesajlar
@@ -73,7 +85,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
   const { id } = await params;
-  const me = await callerSide(user, id);
+  const { side: me, fresh } = await resolveSide(user, id, req.headers.get("x-sig-token"));
   if (!me) return NextResponse.json({ error: "Bu görüşmeye erişim yetkiniz yok." }, { status: 403 });
 
   const { searchParams } = new URL(req.url);
@@ -84,5 +96,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     orderBy: { id: "asc" },
     take: 50,
   });
-  return NextResponse.json(messages.map((m) => ({ id: m.id, kind: m.kind, data: decryptField(m.data) })));
+  return NextResponse.json(
+    messages.map((m) => ({ id: m.id, kind: m.kind, data: decryptField(m.data) })),
+    { headers: fresh ? { "x-sig-token": fresh } : undefined },
+  );
 }

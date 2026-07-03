@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Video, VideoOff, Mic, MicOff, PhoneOff, Wifi, WifiOff, UserRound, MessagesSquare } from "lucide-react";
 import { getIceServers } from "@/lib/ice";
+import { signalFetch, signalPollDelayMs } from "@/lib/signal-poll";
 import { useT } from "@/components/useT";
 import { langDir } from "@/lib/constants";
 import { ConsultationChat } from "@/components/ConsultationChat";
@@ -44,6 +45,8 @@ export function ConsultVideoRoom({
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  // Sinyalleşme taraf-token'ı (P1) — ilk yetkiden sonra sunucu DB'siz doğrular; signalFetch yönetir.
+  const sigTokRef = useRef<string | null>(null);
 
   const [joined, setJoined] = useState(false);
   const [phase, setPhase] = useState<Phase>(ended ? "ended" : "idle");
@@ -67,7 +70,7 @@ export function ConsultVideoRoom({
 
     async function send(kind: string, data: unknown) {
       try {
-        await fetch(`/api/consultations/${roomId}/signal`, {
+        await signalFetch(sigTokRef, `/api/consultations/${roomId}/signal`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sender: selfRole, kind, data: JSON.stringify(data) }),
         });
@@ -77,7 +80,7 @@ export function ConsultVideoRoom({
     async function poll(pc: RTCPeerConnection) {
       while (polling) {
         try {
-          const res = await fetch(`/api/consultations/${roomId}/signal?role=${selfRole}&after=${lastId}`);
+          const res = await signalFetch(sigTokRef, `/api/consultations/${roomId}/signal?role=${selfRole}&after=${lastId}`);
           const msgs: { id: number; kind: string; data: string }[] = await res.json();
           for (const m of msgs) {
             lastId = Math.max(lastId, m.id);
@@ -102,7 +105,7 @@ export function ConsultVideoRoom({
             } catch {}
           }
         } catch {}
-        await new Promise((r) => setTimeout(r, 1200));
+        await new Promise((r) => setTimeout(r, signalPollDelayMs(pc)));
       }
     }
 
@@ -172,7 +175,7 @@ export function ConsultVideoRoom({
 
   async function hangUp() {
     try {
-      await fetch(`/api/consultations/${roomId}/signal`, {
+      await signalFetch(sigTokRef, `/api/consultations/${roomId}/signal`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sender: selfRole, kind: "bye", data: "null" }),
       });

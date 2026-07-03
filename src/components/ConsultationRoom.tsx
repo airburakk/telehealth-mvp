@@ -13,6 +13,7 @@ import { FhirCodingForm } from "@/components/FhirCodingForm";
 import { DischargeReport, type Structured } from "@/components/DischargeReport";
 import { PatientQuestionsPanel } from "@/components/PatientQuestionsPanel";
 import { getIceServers } from "@/lib/ice";
+import { signalFetch, signalPollDelayMs } from "@/lib/signal-poll";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
   Save, Check, Pill, FlaskConical, Stethoscope, AlertTriangle, Languages, Loader2, Luggage,
@@ -168,10 +169,13 @@ export function ConsultationRoom({
     if (isDoctor && joined && startTime === null) setStartTime(Date.now());
   }, [isDoctor, joined, startTime]);
 
+  // Sinyalleşme taraf-token'ı (P1) — ilk yetkiden sonra sunucu DB'siz doğrular; signalFetch yönetir.
+  const sigTokRef = useRef<string | null>(null);
+
   // Sinyal gönder (transkript relay) — effect dışından da kullanılabilir
   async function postSignal(kind: string, data: unknown) {
     try {
-      await fetch(`/api/consultations/${consultationId}/signal`, {
+      await signalFetch(sigTokRef, `/api/consultations/${consultationId}/signal`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sender: selfRole, kind, data: JSON.stringify(data) }),
       });
@@ -319,7 +323,7 @@ export function ConsultationRoom({
 
     async function send(kind: string, data: unknown) {
       try {
-        await fetch(`/api/consultations/${consultationId}/signal`, {
+        await signalFetch(sigTokRef, `/api/consultations/${consultationId}/signal`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sender: selfRole, kind, data: JSON.stringify(data) }),
         });
@@ -328,9 +332,11 @@ export function ConsultationRoom({
 
     async function poll(pc: RTCPeerConnection) {
       while (polling) {
+        let hot = false; // bu turda transkript geldi mi → "sıcak" (hızlı poll) kal
         try {
-          const res = await fetch(`/api/consultations/${consultationId}/signal?role=${selfRole}&after=${lastId}`);
+          const res = await signalFetch(sigTokRef, `/api/consultations/${consultationId}/signal?role=${selfRole}&after=${lastId}`);
           const msgs: { id: number; kind: string; data: string }[] = await res.json();
+          hot = msgs.some((m) => m.kind === "transcript");
           for (const m of msgs) {
             lastId = Math.max(lastId, m.id);
             try {
@@ -359,7 +365,7 @@ export function ConsultationRoom({
             } catch {}
           }
         } catch {}
-        await new Promise((r) => setTimeout(r, 1200));
+        await new Promise((r) => setTimeout(r, signalPollDelayMs(pc, hot)));
       }
     }
 
@@ -519,7 +525,7 @@ export function ConsultationRoom({
   async function endCall() {
     setEnding(true);
     try {
-      await fetch(`/api/consultations/${consultationId}/signal`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sender: selfRole, kind: "bye", data: "null" }) });
+      await signalFetch(sigTokRef, `/api/consultations/${consultationId}/signal`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sender: selfRole, kind: "bye", data: "null" }) });
     } catch {}
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     pcRef.current?.close();

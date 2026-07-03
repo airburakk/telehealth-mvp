@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Video, VideoOff, Mic, MicOff, PhoneOff, Wifi, WifiOff, UserRound, MessageSquareText } from "lucide-react";
 import { getIceServers } from "@/lib/ice";
+import { signalFetch, signalPollDelayMs } from "@/lib/signal-poll";
 import { useT } from "@/components/useT";
 import { useSoLang, SoLangSelect } from "@/components/SoLocale";
 import { langDir } from "@/lib/constants";
@@ -109,10 +110,13 @@ export function SoVideoRoom({
 
   useEffect(() => { setSttSupported(!!getSpeechRecognition()); }, []);
 
+  // Sinyalleşme taraf-token'ı (P1) — ilk yetkiden sonra sunucu DB'siz doğrular; signalFetch yönetir.
+  const sigTokRef = useRef<string | null>(null);
+
   // Transkript relay (WebRTC effect dışından da kullanılır)
   async function postSignal(kind: string, data: unknown) {
     try {
-      await fetch(`/api/consultations/${roomId}/signal`, {
+      await signalFetch(sigTokRef, `/api/consultations/${roomId}/signal`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sender: selfRole, kind, data: JSON.stringify(data) }),
       });
@@ -247,7 +251,7 @@ export function SoVideoRoom({
 
     async function send(kind: string, data: unknown) {
       try {
-        await fetch(`/api/consultations/${roomId}/signal`, {
+        await signalFetch(sigTokRef, `/api/consultations/${roomId}/signal`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sender: selfRole, kind, data: JSON.stringify(data) }),
         });
@@ -256,9 +260,11 @@ export function SoVideoRoom({
 
     async function poll(pc: RTCPeerConnection) {
       while (polling) {
+        let hot = false; // bu turda transkript geldi mi → "sıcak" (hızlı poll) kal
         try {
-          const res = await fetch(`/api/consultations/${roomId}/signal?role=${selfRole}&after=${lastId}`);
+          const res = await signalFetch(sigTokRef, `/api/consultations/${roomId}/signal?role=${selfRole}&after=${lastId}`);
           const msgs: { id: number; kind: string; data: string }[] = await res.json();
+          hot = msgs.some((m) => m.kind === "transcript");
           for (const m of msgs) {
             lastId = Math.max(lastId, m.id);
             try {
@@ -287,7 +293,7 @@ export function SoVideoRoom({
             } catch {}
           }
         } catch {}
-        await new Promise((r) => setTimeout(r, 1200));
+        await new Promise((r) => setTimeout(r, signalPollDelayMs(pc, hot)));
       }
     }
 
@@ -359,7 +365,7 @@ export function SoVideoRoom({
 
   async function hangUp() {
     try {
-      await fetch(`/api/consultations/${roomId}/signal`, {
+      await signalFetch(sigTokRef, `/api/consultations/${roomId}/signal`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sender: selfRole, kind: "bye", data: "null" }),
       });
