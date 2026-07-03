@@ -13,6 +13,8 @@ export async function GET() {
   const cases = await db.secondOpinionCase.findMany({
     where: user.role === "PATIENT" ? { patientId: user.id } : {},
     orderBy: { createdAt: "desc" },
+    // Personel (gözetim) dalı emniyet tavanı — hasta dalı sınırsız (kendi vakaları zaten az).
+    ...(user.role === "PATIENT" ? {} : { take: 100 }),
     include: {
       documents: { select: { id: true, type: true, deliveryMethod: true } },
       payment: { select: { status: true } },

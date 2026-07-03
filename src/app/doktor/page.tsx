@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { CaseQueue, type CaseRow } from "@/components/CaseQueue";
+import { CaseQueue, type CaseRow, type CaseQueueStats, type CaseQueueServerFilters } from "@/components/CaseQueue";
+import { CASE_STATUS } from "@/lib/constants";
 import { DutyConsole } from "@/components/DutyConsole";
 import { DashboardPanel } from "@/components/DashboardPanel";
 import { dutyFeed, type DutyRequest } from "@/lib/clinical-duty";
@@ -11,13 +12,32 @@ import { waitingCount } from "@/lib/pro-bono";
 import { openCountForDoctor } from "@/lib/consultation-requests";
 import { newsForBranch, NEWS_KIND_LABEL, type NewsItem } from "@/lib/medical-news";
 import { decryptField } from "@/lib/crypto";
-import { Stethoscope, ArrowRight, Activity, HeartHandshake, Inbox, Newspaper } from "lucide-react";
+import { Stethoscope, ArrowRight, Activity, HeartHandshake, Inbox, Newspaper, ChevronLeft, ChevronRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 const OPEN_STATUSES = ["NEW", "IN_REVIEW"]; // henüz doktora atanmamış (kapı/triyaj) vakalar
+const CASE_PAGE_SIZE = 50; // personel kuyruğu sayfa boyutu (/denetim deseni)
 
-export default async function DoctorPanel() {
+// CaseQueue satır-DTO'su — tam kayıt (şifreli klinik metin/belge) listede taşınmaz.
+const CASE_LIST_SELECT = {
+  id: true,
+  patientName: true,
+  country: true,
+  language: true,
+  branch: true,
+  urgency: true,
+  status: true,
+  createdAt: true,
+  attachments: true, // hasFiles rozetini besler
+  doctor: { select: { title: true, name: true } },
+} as const;
+
+export default async function DoctorPanel({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; branch?: string; status?: string }>;
+}) {
   const user = await getCurrentUser();
   const isStaffOnly = !!user && user.role !== "DOCTOR"; // koordinatör/etik/admin → doktor profili yok, tüm kuyruk
 
@@ -37,15 +57,59 @@ export default async function DoctorPanel() {
     ? panelVisibility(doctor)
     : { duty: true as const, so: true, proBono: false, consult: false, news: true as const };
 
-  // ── Panel 1: Klinik Nöbet — yalnız bu doktorla eşleşen vakalar (personelde tümü) ──
-  const caseWhere = doctor
-    ? { OR: [{ doctorId: doctor.id }, { status: { in: OPEN_STATUSES }, branch: doctor.branch }] }
-    : {}; // personel: filtresiz tüm kuyruk
-  const cases = await db.case.findMany({
-    where: caseWhere,
-    include: { doctor: true },
-    orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
-  });
+  // ── Panel 1: Klinik Nöbet — yalnız bu doktorla eşleşen vakalar (personelde tümü, sayfalı) ──
+  let casePage = 1;
+  let caseTotal = 0;
+  let caseTotalPages = 1;
+  let queueStats: CaseQueueStats | undefined; // personel dalında server-count; doktor dalında rows'tan (mevcut davranış)
+  let queueServerFilters: CaseQueueServerFilters | undefined; // personel dalında sunucu-taraflı branş/durum filtresi
+  let caseFilterQs = ""; // sayfalama linklerinde korunacak filtre parametreleri (&branch=…&status=…)
+  let cases;
+  if (doctor) {
+    // Doktor dalı: eşleşen küme (atanan + branşındaki açık vakalar) + emniyet tavanı.
+    cases = await db.case.findMany({
+      where: { OR: [{ doctorId: doctor.id }, { status: { in: OPEN_STATUSES }, branch: doctor.branch }] },
+      select: CASE_LIST_SELECT,
+      orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
+      take: 100,
+    });
+  } else {
+    // Personel dalı: tüm kuyruk → /denetim deseniyle offset sayfalaması (50/sayfa).
+    // Branş/durum filtresi sunucuda uygulanır (rows yalnız görünür dilim; istemci filtresi yetmez).
+    const sp = await searchParams;
+    const [total, waiting, urgent, branchRows] = await Promise.all([
+      db.case.count(),
+      db.case.count({ where: { status: "NEW" } }),
+      db.case.count({ where: { urgency: { gte: 4 } } }),
+      // Branş dropdown seçenekleri: tam liste (yalnız görünen sayfanın branşları değil).
+      db.case.findMany({ select: { branch: true }, distinct: ["branch"], orderBy: { branch: "asc" } }),
+    ]);
+    const branchOptions = branchRows.map((b) => b.branch);
+    // Geçerli değer kontrolü: branş mevcut listeden, durum CASE_STATUS anahtarlarından; aksi = filtresiz.
+    const branchFilter = sp.branch && branchOptions.includes(sp.branch) ? sp.branch : undefined;
+    const statusFilter = sp.status && sp.status in CASE_STATUS ? sp.status : undefined;
+    const listWhere = {
+      ...(branchFilter ? { branch: branchFilter } : {}),
+      ...(statusFilter ? { status: statusFilter } : {}),
+    };
+    // Liste + sayfalama toplamı filtreli; üst istatistikler taban (filtresiz genel bakış) kalır.
+    caseTotal = branchFilter || statusFilter ? await db.case.count({ where: listWhere }) : total;
+    caseTotalPages = Math.max(1, Math.ceil(caseTotal / CASE_PAGE_SIZE));
+    // İstenen sayfayı geçerli aralığa sıkıştır (0/negatif/NaN/aşırı-büyük güvenli).
+    casePage = Math.min(Math.max(1, parseInt(sp.page ?? "1", 10) || 1), caseTotalPages);
+    queueStats = { total, waiting, urgent }; // üst istatistikler tam kümeden (rows yalnız görünür dilim)
+    queueServerFilters = { branch: branchFilter ?? "all", status: statusFilter ?? "all", branches: branchOptions };
+    caseFilterQs =
+      (branchFilter ? `&branch=${encodeURIComponent(branchFilter)}` : "") +
+      (statusFilter ? `&status=${encodeURIComponent(statusFilter)}` : "");
+    cases = await db.case.findMany({
+      where: listWhere,
+      select: CASE_LIST_SELECT,
+      orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
+      skip: (casePage - 1) * CASE_PAGE_SIZE,
+      take: CASE_PAGE_SIZE,
+    });
+  }
   const rows: CaseRow[] = cases.map((c) => ({
     id: c.id,
     patientName: decryptField(c.patientName), // kimlik at-rest şifreli → çöz (E2EE inc.2c)
@@ -110,7 +174,42 @@ export default async function DoctorPanel() {
         title={queueTitle}
         subtitle={queueSub}
       >
-        <CaseQueue rows={rows} />
+        <CaseQueue rows={rows} stats={queueStats} serverFilters={queueServerFilters} />
+        {/* Sayfalama — yalnız personel (filtresiz tüm kuyruk) dalında; /denetim deseni */}
+        {!doctor && caseTotalPages > 1 && (
+          <nav className="mt-5 flex flex-wrap items-center justify-between gap-3" aria-label="Vaka kuyruğu sayfaları">
+            <span className="text-xs text-slate-500">
+              Toplam <strong className="text-slate-700">{caseTotal}</strong> vaka · Sayfa{" "}
+              <strong className="text-slate-700">{casePage}</strong> / {caseTotalPages}
+            </span>
+            <div className="flex items-center gap-2">
+              {casePage > 1 ? (
+                <Link
+                  href={`/doktor?page=${casePage - 1}${caseFilterQs}`}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                >
+                  <ChevronLeft size={15} /> Önceki
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 px-3 py-1.5 text-sm font-medium text-slate-300 cursor-not-allowed">
+                  <ChevronLeft size={15} /> Önceki
+                </span>
+              )}
+              {casePage < caseTotalPages ? (
+                <Link
+                  href={`/doktor?page=${casePage + 1}${caseFilterQs}`}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                >
+                  Sonraki <ChevronRight size={15} />
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 px-3 py-1.5 text-sm font-medium text-slate-300 cursor-not-allowed">
+                  Sonraki <ChevronRight size={15} />
+                </span>
+              )}
+            </div>
+          </nav>
+        )}
       </DashboardPanel>
 
       {/* ── Panel 2-4: koşullu birimler ── */}

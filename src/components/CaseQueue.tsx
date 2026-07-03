@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { urgencyStyle, CASE_STATUS, countryFlag, countryName, formatDateTime } from "@/lib/constants";
 import { Search, ArrowRight, Inbox } from "lucide-react";
 
@@ -18,32 +19,69 @@ export interface CaseRow {
   hasFiles: boolean;
 }
 
-export function CaseQueue({ rows }: { rows: CaseRow[] }) {
+// Üst istatistikler: sayfalı (personel) görünümde rows yalnız görünür dilim olduğundan
+// server'da count ile hesaplanıp `stats` prop'uyla geçilir; verilmezse rows'tan türetilir (doktor dalı).
+export interface CaseQueueStats {
+  total: number;
+  waiting: number;
+  urgent: number;
+}
+
+// Sunucu-taraflı filtre modu (personel/sayfalı görünüm): rows yalnız görünür dilim olduğundan
+// branş/durum filtresi URL parametresiyle sunucuya taşınır; branş seçenekleri tam listeden gelir.
+// Prop verilmezse mevcut istemci-taraflı filtre davranışı birebir korunur (doktor dalı).
+export interface CaseQueueServerFilters {
+  branch: string; // "all" veya seçili branş
+  status: string; // "all" veya seçili durum
+  branches: string[]; // tam branş listesi (sunucudan, distinct)
+}
+
+export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; stats?: CaseQueueStats; serverFilters?: CaseQueueServerFilters }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [branch, setBranch] = useState("all");
   const [status, setStatus] = useState("all");
   const [q, setQ] = useState("");
 
-  const branches = useMemo(() => Array.from(new Set(rows.map((r) => r.branch))).sort(), [rows]);
+  // Sunucu modunda seçim değeri URL'den (props) gelir; istemci modunda local state.
+  const branchValue = serverFilters ? serverFilters.branch : branch;
+  const statusValue = serverFilters ? serverFilters.status : status;
+
+  const localBranches = useMemo(() => Array.from(new Set(rows.map((r) => r.branch))).sort(), [rows]);
+  const branches = serverFilters ? serverFilters.branches : localBranches;
+
+  // Sunucu modunda filtre değişimi → URL parametresi (page=1'e dönerek); liste sunucudan yenilenir.
+  const pushServerFilters = (nextBranch: string, nextStatus: string) => {
+    const p = new URLSearchParams();
+    p.set("page", "1");
+    if (nextBranch !== "all") p.set("branch", nextBranch);
+    if (nextStatus !== "all") p.set("status", nextStatus);
+    router.push(`${pathname}?${p.toString()}`);
+  };
+  const onBranchChange = (v: string) => (serverFilters ? pushServerFilters(v, statusValue) : setBranch(v));
+  const onStatusChange = (v: string) => (serverFilters ? pushServerFilters(branchValue, v) : setStatus(v));
 
   const filtered = useMemo(
     () =>
       rows.filter(
         (r) =>
-          (branch === "all" || r.branch === branch) &&
-          (status === "all" || r.status === status) &&
+          // Sunucu modunda branş/durum zaten sunucuda uygulandı → yalnız metin araması (bu sayfada).
+          (!!serverFilters || branch === "all" || r.branch === branch) &&
+          (!!serverFilters || status === "all" || r.status === status) &&
           (q === "" || r.patientName.toLocaleLowerCase("tr").includes(q.toLocaleLowerCase("tr")))
       ),
-    [rows, branch, status, q]
+    [rows, branch, status, q, serverFilters]
   );
 
-  const urgent = rows.filter((r) => r.urgency >= 4).length;
-  const waiting = rows.filter((r) => r.status === "NEW").length;
+  const total = stats?.total ?? rows.length;
+  const urgent = stats?.urgent ?? rows.filter((r) => r.urgency >= 4).length;
+  const waiting = stats?.waiting ?? rows.filter((r) => r.status === "NEW").length;
 
   return (
     <div>
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 sm:max-w-md">
-        <Stat label="Toplam vaka" value={rows.length} />
+        <Stat label="Toplam vaka" value={total} />
         <Stat label="Bekleyen" value={waiting} tone="text-blue-700" />
         <Stat label="Acil (4-5)" value={urgent} tone="text-red-600" />
       </div>
@@ -55,15 +93,15 @@ export function CaseQueue({ rows }: { rows: CaseRow[] }) {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Hasta ara…"
+            placeholder={serverFilters ? "Bu sayfada ara…" : "Hasta ara…"}
             className="rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-[#14C3D0]"
           />
         </div>
-        <select value={branch} onChange={(e) => setBranch(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#14C3D0]">
+        <select value={branchValue} onChange={(e) => onBranchChange(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#14C3D0]">
           <option value="all">Tüm branşlar</option>
           {branches.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#14C3D0]">
+        <select value={statusValue} onChange={(e) => onStatusChange(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#14C3D0]">
           <option value="all">Tüm durumlar</option>
           {Object.entries(CASE_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>

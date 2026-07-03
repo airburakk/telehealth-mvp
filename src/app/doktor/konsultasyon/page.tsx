@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { openRequestsForDoctor, answeredByDoctor, engagedByDoctor, PAYMENT_PER_ANSWER, type ConsultReqView, type ConsultDocView } from "@/lib/consultation-requests";
+import { openRequestsForDoctor, answeredByDoctor, answeredStatsForDoctor, engagedByDoctor, PAYMENT_PER_ANSWER, type ConsultReqView, type ConsultDocView } from "@/lib/consultation-requests";
 import { formatUSD } from "@/lib/pricing";
 import { loincForBranchLabel } from "@/data/coding";
 import { imagingForBranch } from "@/data/imaging";
@@ -24,12 +24,13 @@ export default async function ConsultationInboxPage() {
   if (!doctor) redirect("/doktor");
   if (!doctor.consultOptIn) redirect("/doktor"); // panel görünürlüğüyle tutarlı
 
-  const [open, engaged, answered] = await Promise.all([
+  const [open, engaged, answered, stats] = await Promise.all([
     openRequestsForDoctor(doctor.branch),
     engagedByDoctor(doctor.id),
     answeredByDoctor(doctor.id),
+    answeredStatsForDoctor(doctor.id), // kümülatif — liste take 20 ile sınırlı, reduce yanlış olurdu
   ]);
-  const totalEarned = answered.reduce((a, r) => a + (r.paymentSim ?? 0), 0);
+  const totalEarned = stats.totalEarned;
 
   // Kodlu öneri katalogları (branşa göre öne çıkar) — yanıt formuna geçer.
   const catalog: CatalogProps = {
@@ -53,7 +54,7 @@ export default async function ConsultationInboxPage() {
         <div className="shrink-0 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-right">
           <div className="flex items-center justify-end gap-1.5 text-xs font-semibold text-emerald-700"><Wallet size={14} /> Hakediş</div>
           <div className="text-lg font-bold text-emerald-700">{formatUSD(totalEarned)}</div>
-          <div className="text-[10px] text-emerald-600/70">{answered.length} yanıt</div>
+          <div className="text-[10px] text-emerald-600/70">{stats.count} yanıt</div>
         </div>
       </div>
 
@@ -86,7 +87,7 @@ export default async function ConsultationInboxPage() {
       {/* Yanıtladıklarım */}
       {answered.length > 0 && (
         <>
-          <h2 className="mt-8 text-sm font-semibold text-slate-700">Yanıtladıklarım ({answered.length})</h2>
+          <h2 className="mt-8 text-sm font-semibold text-slate-700">Yanıtladıklarım (son {answered.length} / toplam {stats.count})</h2>
           <div className="mt-3 space-y-3">
             {answered.map((r) => (
               <div key={r.id} className="rounded-2xl border border-slate-200 bg-white p-4">

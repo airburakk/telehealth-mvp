@@ -25,11 +25,13 @@ describe.skipIf(!TEST_DB)("entegrasyon: GET /api/cases yetki (gerçek dev DB)", 
   // 200 mutlu-yolları liste gövdesini çözer (decryptCaseFields) → KEK ister. KEK bilerek CI'a
   // KONMAZ (en kritik sır GitHub Secrets'a yayılmaz) → bu ikisi yalnız yerelde (KEK'li .env) koşar;
   // deny-yolları (401/403 + atama matrisi) KEK'siz her ortamda kapıdır.
-  it.skipIf(!process.env.DATA_ENCRYPTION_KEK)("doktor → 200 + dizi (kuyruk döner)", async () => {
+  it.skipIf(!process.env.DATA_ENCRYPTION_KEK)("doktor → 200 + sayfalı zarf (kuyruk döner)", async () => {
     asUser(u(f.d1UserId, "DOCTOR"));
     const r = await GET(listReq());
     expect(r.status).toBe(200);
-    expect(Array.isArray(await r.json())).toBe(true);
+    const body = await r.json(); // v4.17: dizi → {items,total,page,pageSize,totalPages} zarfı
+    expect(Array.isArray(body.items)).toBe(true);
+    expect(typeof body.total).toBe("number");
   });
   it.skipIf(!process.env.DATA_ENCRYPTION_KEK)("koordinatör/etik/admin → 200", async () => {
     for (const role of ["COORDINATOR", "ETHICS", "ADMIN"]) {

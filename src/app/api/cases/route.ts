@@ -3,10 +3,10 @@ import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
 import { notifyDoctorsByBranch } from "@/lib/notify";
 import { requireUser, requireStaff } from "@/lib/api-auth";
-import { encryptField, decryptCaseFields } from "@/lib/crypto";
+import { encryptField, decryptField } from "@/lib/crypto";
 import { storeDocument } from "@/lib/storage";
 
-// GET /api/cases — vaka kuyruğu (filtrelenebilir)
+// GET /api/cases — vaka kuyruğu (filtrelenebilir + sayfalı, /denetim getChainAudit deseni)
 export async function GET(req: Request) {
   // Vaka kuyruğu = klinik personel. Kimliksiz PHI dökümü kapandı (T1/P0).
   const { error } = await requireStaff();
@@ -15,17 +15,39 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const branch = searchParams.get("branch");
   const status = searchParams.get("status");
+  // Sayfalama: varsayılan 50, üst sınır 100 (tüm tabloyu tek yanıtta taşıma).
+  const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") ?? "50", 10) || 50));
+
+  const where = {
+    ...(branch ? { branch } : {}),
+    ...(status ? { status } : {}),
+  };
+  const total = await db.case.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  // İstenen sayfayı geçerli aralığa sıkıştır (0/negatif/NaN/aşırı-büyük güvenli).
+  const page = Math.min(Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1), totalPages);
 
   const cases = await db.case.findMany({
-    where: {
-      ...(branch ? { branch } : {}),
-      ...(status ? { status } : {}),
+    where,
+    // Dar liste-DTO: klinik metin (symptoms/reasoning/extra) ve belge içerikleri listede taşınmaz.
+    select: {
+      id: true,
+      patientName: true,
+      country: true,
+      language: true,
+      branch: true,
+      urgency: true,
+      status: true,
+      createdAt: true,
+      doctor: { select: { title: true, name: true } },
     },
-    include: { doctor: true },
     orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
+    skip: (page - 1) * pageSize,
+    take: pageSize,
   });
-  // Klinik metin (symptoms/reasoning/extra) at-rest şifreli → kuyruk tüketicisi düz metin bekler → çöz.
-  return NextResponse.json(cases.map(decryptCaseFields));
+  // Yalnız kimlik (patientName) at-rest şifreli → çöz (E2EE inc.2c); diğer alanlar düz.
+  const items = cases.map((c) => ({ ...c, patientName: decryptField(c.patientName) }));
+  return NextResponse.json({ items, total, page, pageSize, totalPages });
 }
 
 // POST /api/cases — yeni vaka oluştur (triyaj sunucu tarafında yeniden hesaplanır)

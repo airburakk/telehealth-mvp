@@ -15,8 +15,18 @@ export default async function MyCasesPage() {
   const cases = await db.case.findMany({
     where: user.role === "PATIENT" ? { userId: user.id } : {},
     orderBy: { createdAt: "desc" },
-    include: {
-      bookings: { orderBy: { createdAt: "desc" }, take: 1 },
+    take: 100, // emniyet tavanı (hasta başına vaka azdır; ADMIN görünümü de sınırlanır)
+    // Dar liste-DTO: MyCasesList'in kullandığı alanlar + son rezervasyonun kart alanları (breakdown vb. taşınmaz).
+    select: {
+      id: true,
+      patientName: true,
+      country: true,
+      status: true,
+      urgency: true,
+      branch: true,
+      symptoms: true,
+      createdAt: true,
+      bookings: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true, tier: true, status: true, total: true } },
       recovery: { select: { id: true } },
     },
   });

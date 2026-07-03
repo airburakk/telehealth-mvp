@@ -14,9 +14,10 @@ const RANK: Record<Severity, number> = { RED: 0, WATCH: 1, NONE: 2 };
 export default async function RecoveryMonitor() {
   const recoveries = await db.recovery.findMany({
     include: {
-      case: true,
-      // not/foto (artık base64) bu listede gereksiz; yalnız son durumu süren scalar alanları çek (payload hafif kalsın)
-      checkIns: { orderBy: { createdAt: "desc" }, select: { severity: true, pain: true, feverC: true, createdAt: true } },
+      case: { select: { patientName: true, country: true, branch: true } }, // listede yalnız kimlik+ülke+branş
+      // not/foto (artık base64) bu listede gereksiz; yalnız SON kontrolün hafif scalar alanları (payload hafif kalsın)
+      checkIns: { take: 1, orderBy: { createdAt: "desc" }, select: { severity: true, pain: true, feverC: true, createdAt: true } },
+      _count: { select: { checkIns: true } }, // toplam kontrol sayısı — satırları çekmeden
     },
     orderBy: { startedAt: "desc" },
   });
@@ -27,11 +28,12 @@ export default async function RecoveryMonitor() {
     const day = Math.max(1, Math.floor((Date.now() - new Date(r.startedAt).getTime()) / 86400000) + 1);
     // E2EE Faz 2A — tamamlanmış (manuel COMPLETED veya otomatik süre+tampon) takiplerde personel erişimi kapalı.
     const closed = recoveryClosed(r);
-    return { r, last, severity, day, count: r.checkIns.length, closed };
+    return { r, last, severity, day, count: r._count.checkIns, closed };
   });
 
   const active = all.filter((x) => !x.closed.closed).sort((a, b) => RANK[a.severity] - RANK[b.severity]);
-  const completed = all.filter((x) => x.closed.closed);
+  // Kapanma lazy hesaplandığından (DB alanı değil) dilim in-memory: en güncel 20 tamamlanan gösterilir.
+  const completed = all.filter((x) => x.closed.closed).slice(0, 20);
 
   const redCount = active.filter((x) => x.severity === "RED").length;
   const watchCount = active.filter((x) => x.severity === "WATCH").length;

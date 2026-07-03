@@ -195,7 +195,8 @@ type RowWithDocs = {
   status: string; answerText: string | null; answerTr: string | null; recommendedLabs: string | null;
   recommendedImaging: string | null; medications: string | null; paymentSim: number | null;
   answeredAt: Date | null; createdAt: Date;
-  documents?: { id: string; label: string; docType: string | null; aiSummary: string | null; aiTranslation: string | null; aiFlags: string | null; aiLabs: string | null; assessedAt: Date | null }[];
+  // AI alanları opsiyonel: liste görünümleri (DOC_SELECT_LITE) bunları çekmez → view'da null/[] olur.
+  documents?: { id: string; label: string; docType: string | null; aiSummary?: string | null; aiTranslation?: string | null; aiFlags?: string | null; aiLabs?: string | null; assessedAt: Date | null }[];
 };
 
 function toView(r: RowWithDocs): ConsultReqView {
@@ -232,6 +233,9 @@ function toView(r: RowWithDocs): ConsultReqView {
 }
 
 const DOC_SELECT = { id: true, label: true, docType: true, aiSummary: true, aiTranslation: true, aiFlags: true, aiLabs: true, assessedAt: true } as const;
+// Liste görünümleri (partner "taleplerim" + doktor "yanıtladıklarım") belge AI metinlerini
+// (aiSummary/aiTranslation/aiFlags/aiLabs) GÖSTERMEZ → yalnız sayı/tür için hafif select (şifreli blob taşınmaz).
+const DOC_SELECT_LITE = { id: true, label: true, docType: true, assessedAt: true } as const;
 
 // Doktorun görebileceği AÇIK talepler (genel havuz + kendi branşı) — belge AI içeriğiyle.
 export async function openRequestsForDoctor(branch: string): Promise<ConsultReqView[]> {
@@ -262,7 +266,8 @@ export async function requestsByPartner(partnerId: string): Promise<PartnerReque
   const rows = await db.consultationRequest.findMany({
     where: { requestedByPartnerId: partnerId },
     orderBy: { createdAt: "desc" },
-    include: { documents: { select: DOC_SELECT } },
+    take: 100, // emniyet tavanı — partner panelinde TEK liste var (detay sayfası yok); dar tavan aktif OPEN/ANSWERED talepleri kalıcı gizlerdi
+    include: { documents: { select: DOC_SELECT_LITE } }, // listede yalnız belge sayısı/türü gösterilir
   });
   const docIds = [...new Set(rows.map((r) => r.answeredByDoctorId).filter((x): x is string => !!x))];
   const docs = docIds.length ? await db.doctor.findMany({ where: { id: { in: docIds } }, select: { id: true, title: true, name: true } }) : [];
@@ -274,9 +279,20 @@ export async function answeredByDoctor(doctorId: string): Promise<ConsultReqView
   const rows = await db.consultationRequest.findMany({
     where: { answeredByDoctorId: doctorId, status: "ANSWERED" },
     orderBy: { answeredAt: "desc" },
-    include: { documents: { select: DOC_SELECT } },
+    take: 20, // liste emniyet tavanı (en güncel yanıtlar)
+    include: { documents: { select: DOC_SELECT_LITE } }, // "Yanıtladıklarım" belge içeriği göstermez
   });
   return rows.map(toView);
+}
+
+// Kümülatif hakediş istatistiği — liste take'le sınırlı olduğundan reduce İLE HESAPLANMAZ (v4.17 bulgusu)
+export async function answeredStatsForDoctor(doctorId: string): Promise<{ count: number; totalEarned: number }> {
+  const agg = await db.consultationRequest.aggregate({
+    where: { answeredByDoctorId: doctorId, status: "ANSWERED" },
+    _count: true,
+    _sum: { paymentSim: true },
+  });
+  return { count: agg._count, totalEarned: agg._sum.paymentSim ?? 0 };
 }
 
 // ── Doktor görüş verir (+ yapılandırılmış kodlu öneriler + görüş hasta diline çevrilir) ──

@@ -7,15 +7,27 @@ import { Scale, ArrowRight, Inbox, ShieldCheck } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function EthicsBoard() {
-  const complaints = await db.complaint.findMany({
-    include: { case: true },
-    orderBy: { createdAt: "desc" },
-  });
+  // PENDING tümü (iş kuyruğu — kaçırılmamalı) + RESOLVED en güncel 50 (arşiv büyüse de liste sabit).
+  // Sıralama DB'de (orderBy); in-memory sort kaldırıldı. Listede yalnız kartın kullandığı case.branch taşınır.
+  const [pendingRows, resolvedRows, total, resolved, pendingDoctors] = await Promise.all([
+    db.complaint.findMany({
+      where: { status: "PENDING" },
+      include: { case: { select: { branch: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.complaint.findMany({
+      where: { status: "RESOLVED" },
+      include: { case: { select: { branch: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+    db.complaint.count(),
+    db.complaint.count({ where: { status: "RESOLVED" } }),
+    db.doctor.count({ where: { verified: false } }),
+  ]);
 
-  const rows = complaints.sort((a, b) => (a.status === "PENDING" ? -1 : 1) - (b.status === "PENDING" ? -1 : 1));
-  const pending = complaints.filter((c) => c.status === "PENDING").length;
-  const resolved = complaints.filter((c) => c.status === "RESOLVED").length;
-  const pendingDoctors = await db.doctor.count({ where: { verified: false } });
+  const rows = [...pendingRows, ...resolvedRows]; // PENDING üstte
+  const pending = pendingRows.length;
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
@@ -46,7 +58,7 @@ export default async function EthicsBoard() {
       </Link>
 
       <div className="mt-5 grid grid-cols-3 gap-3 sm:max-w-md">
-        <Stat label="Toplam başvuru" value={complaints.length} />
+        <Stat label="Toplam başvuru" value={total} />
         <Stat label="Beklemede" value={pending} tone="text-amber-600" />
         <Stat label="Karara bağlandı" value={resolved} tone="text-emerald-600" />
       </div>

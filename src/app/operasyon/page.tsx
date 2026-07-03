@@ -16,7 +16,7 @@ export default async function OperationsDashboard() {
     db.case.findMany({ select: { id: true, branch: true, country: true, status: true, urgency: true, payStatus: true, consultFee: true, createdAt: true } }),
     db.consultation.findMany({ select: { id: true, caseId: true, doctorId: true, status: true } }),
     db.booking.findMany({ where: { status: "CONFIRMED" }, select: { caseId: true, tier: true, escrowStatus: true, platformFee: true, total: true } }), // DRAFT teklifler hariç (yalnız onaylı rezervasyonlar)
-    db.recovery.findMany({ include: { checkIns: { orderBy: { createdAt: "desc" }, take: 1 } } }),
+    db.recovery.findMany({ include: { checkIns: { orderBy: { createdAt: "desc" }, take: 1, select: { severity: true } } } }), // yalnız son kontrolün şiddeti (base64 foto/not taşınmaz)
     db.complaint.findMany({ select: { status: true, action: true, refundAmount: true } }),
     db.doctor.findMany({ select: { id: true, name: true, title: true, branch: true, capacity: true, color: true } }),
   ]);
