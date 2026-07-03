@@ -155,6 +155,11 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
   özet kartı** (tıkla-genişlet: bio/akademik/güven rozeti/akreditasyon + video kartvizit + tam profil
   linki; `lib/doctor-card.ts`) + **hasta soru notu** (görüşme odasında da görünür+düzenlenebilir,
   `PatientQuestionsPanel`). 3 akış ortak (Talk/Pro Bono/İkinci Görüş) (`PreConsultLobby`).
+- **Video kartvizit hasta dilinde:** karttaki tanıtım videosu (`DoctorVideoCard`) hasta dilini alır —
+  varsa dil-bazlı varyant `public/videos/doctor-{male,female}-{dilkodu}.mp4` (ör. `-ar`) oynar, dosya
+  yoksa varsayılana düşer (bilinen-404 tekrar denenmez); her durumda kanonik tanıtım metni
+  (`VIDEO_CARD_SCRIPT`, `lib/constants.ts`) AI çevirisiyle hastanın dilinde **WebVTT altyazı** olarak
+  basılır (video süresine eşit dağıtım, RTL dahil). Dil varyantı eklemek = mp4'ü klasöre koymak.
 
 ## Rotalar
 
