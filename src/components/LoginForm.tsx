@@ -1,22 +1,38 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Loader2, LogIn, UserRound, Stethoscope, Headphones, Scale, Globe } from "lucide-react";
+import { Loader2, LogIn, type LucideIcon } from "lucide-react";
 import { AuraMark } from "@/components/PortamedLogo";
 
-const QUICK = [
-  { email: "hasta@air.test", label: "Hasta", icon: UserRound },
-  { email: "doktor@air.test", label: "Doktor", icon: Stethoscope },
-  { email: "koordinator@air.test", label: "Koordinatör", icon: Headphones },
-  { email: "kurul@air.test", label: "Etik Kurul", icon: Scale },
-  { email: "partner@air.test", label: "Partner Doktor", icon: Globe },
-];
+// Genel e-posta/şifre giriş formu — hasta (/giris) ve kurumsal (/kurumsal-giris) ekranları
+// tarafından farklı başlık/demo/sosyal bloklarla kullanılır. `next` param davranışı korunur:
+// başarılı girişte next > data.home > "/" önceliğiyle TAM SAYFA yönlendirme (çerez proxy'e taze taşınır).
+export interface QuickAccount {
+  email: string;
+  label: string;
+  icon: LucideIcon;
+}
 
-export function LoginForm() {
+export function LoginForm({
+  title = "AURA'ya giriş",
+  subtitle = "Rolünüzle devam edin",
+  quick = [],
+  social,
+  footer,
+}: {
+  title?: string;
+  subtitle?: string;
+  quick?: QuickAccount[];
+  social?: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
   const sp = useSearchParams();
   const next = sp.get("next");
+  const oauthMsg =
+    sp.get("oauth") === "unavailable" ? "Google ile giriş henüz yapılandırılmadı (yakında)."
+    : sp.get("oauth") === "error" ? "Google ile giriş tamamlanamadı, lütfen tekrar deneyin."
+    : "";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -49,11 +65,22 @@ export function LoginForm() {
     <div className="w-full max-w-sm">
       <div className="mb-6 flex flex-col items-center text-center">
         <span className="grid h-12 w-12 place-items-center rounded-3xl bg-[#101010] shadow"><AuraMark size={26} /></span>
-        <h1 className="mt-3 text-xl font-bold text-[#101010]">AURA&apos;ya giriş</h1>
-        <p className="text-sm text-slate-500">Rolünüzle devam edin</p>
+        <h1 className="mt-3 text-xl font-bold text-[#101010]">{title}</h1>
+        <p className="text-sm text-slate-500">{subtitle}</p>
       </div>
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        {oauthMsg && <div className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">{oauthMsg}</div>}
+
+        {social && (
+          <>
+            {social}
+            <div className="my-4 flex items-center gap-3 text-xs text-slate-400">
+              <span className="h-px flex-1 bg-slate-200" /> veya e-posta ile <span className="h-px flex-1 bg-slate-200" />
+            </div>
+          </>
+        )}
+
         <form onSubmit={(e) => { e.preventDefault(); login(); }} className="space-y-3">
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-slate-700">E-posta</span>
@@ -69,26 +96,28 @@ export function LoginForm() {
           </button>
         </form>
 
-        <div className="my-4 flex items-center gap-3 text-xs text-slate-400">
-          <span className="h-px flex-1 bg-slate-200" /> Hızlı demo girişi <span className="h-px flex-1 bg-slate-200" />
-        </div>
+        {quick.length > 0 && (
+          <>
+            <div className="my-4 flex items-center gap-3 text-xs text-slate-400">
+              <span className="h-px flex-1 bg-slate-200" /> Hızlı demo girişi <span className="h-px flex-1 bg-slate-200" />
+            </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          {QUICK.map((q) => {
-            const Icon = q.icon;
-            return (
-              <button key={q.email} onClick={() => login(q.email, "1234")} disabled={loading} className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:border-[#14C3D0]/40 hover:bg-slate-50 disabled:opacity-60">
-                <Icon size={15} /> {q.label}
-              </button>
-            );
-          })}
-        </div>
-        <p className="mt-3 text-center text-[11px] text-slate-400">Demo parolası: <span className="font-mono">1234</span></p>
+            <div className={`grid gap-2 ${quick.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+              {quick.map((q) => {
+                const Icon = q.icon;
+                return (
+                  <button key={q.email} onClick={() => login(q.email, "1234")} disabled={loading} className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:border-[#14C3D0]/40 hover:bg-slate-50 disabled:opacity-60">
+                    <Icon size={15} /> {q.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-center text-[11px] text-slate-400">Demo parolası: <span className="font-mono">1234</span></p>
+          </>
+        )}
       </div>
 
-      <p className="mt-4 text-center text-sm text-slate-500">
-        Doktor musunuz? <Link href="/kayit" className="font-semibold text-[#0EA5B2] hover:underline">Kayıt olun</Link>
-      </p>
+      {footer}
     </div>
   );
 }

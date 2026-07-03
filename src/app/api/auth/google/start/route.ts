@@ -3,15 +3,21 @@ import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
 import { isGoogleConfigured, googleAuthUrl, googleRedirectUri } from "@/lib/oauth";
 
-// GET /api/auth/google/start — Google OAuth başlat. Yapılandırılmamışsa kayıt sayfasına dormant
-// uyarısıyla döner; aksi halde CSRF state cookie set edip Google onay ekranına yönlendirir.
+// GET /api/auth/google/start?intent=patient|doctor — Google OAuth başlat. Yapılandırılmamışsa
+// intent'e uygun sayfaya dormant uyarısıyla döner; aksi halde CSRF state + intent cookie'leri set
+// edip Google onay ekranına yönlendirir. intent: yeni hesabın rolünü belirler (callback okur).
 export async function GET(req: Request) {
-  const origin = new URL(req.url).origin;
+  const url = new URL(req.url);
+  const origin = url.origin;
+  const intent = url.searchParams.get("intent") === "patient" ? "patient" : "doctor";
   if (!isGoogleConfigured()) {
-    return NextResponse.redirect(new URL("/kayit?oauth=unavailable", origin));
+    const back = intent === "patient" ? "/giris?oauth=unavailable" : "/kayit?oauth=unavailable";
+    return NextResponse.redirect(new URL(back, origin));
   }
   const state = randomBytes(16).toString("hex");
   const c = await cookies();
-  c.set("g_oauth_state", state, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 600 });
+  const opts = { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax" as const, path: "/", maxAge: 600 };
+  c.set("g_oauth_state", state, opts);
+  c.set("g_oauth_intent", intent, opts); // state deseni değişmez — niyet ayrı cookie'de taşınır
   return NextResponse.redirect(googleAuthUrl(state, googleRedirectUri(origin)));
 }
