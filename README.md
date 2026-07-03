@@ -34,7 +34,7 @@ Doctor** genel triyaj, **İkinci Görüş**, **Pro Bono** ücretsiz gönüllü k
 ```bash
 npm install
 cp .env.example .env          # değerleri doldur (DATABASE_URL, SESSION_SECRET zorunlu)
-npx prisma db push            # şemayı Neon'a uygula (ilk kez)
+npx prisma migrate deploy     # migration geçmişini Neon'a uygula (taze DB'de tüm şemayı kurar)
 npm run db:seed               # demo veri: kullanıcılar + 30 doktor + 20 vaka + takip/şikayet
 npm run dev                   # http://localhost:3000
 ```
@@ -55,7 +55,7 @@ npm run dev                   # http://localhost:3000
 | `npm run test:integration` | **Entegrasyon testleri** (gerçek DB — `TEST_DATABASE_URL` Neon dev branch gerekir; yoksa atlanır, bkz. `tests/integration/README.md`) |
 | `npm run test:e2e` | **E2E testleri** (Playwright — 3 demo-kritik akış; dev branch'e bağlı sunucu + `E2E_BASE_URL` gerekir, bkz. `tests/e2e/README.md`) |
 | `npm run db:seed` | `prisma/seed.ts` — demo veri (tam reset) |
-| `npm run db:migrate` | `prisma migrate deploy` |
+| `npm run db:migrate` | `prisma migrate deploy` — **üretim şema değişikliği yolu** (db push değil; akış: `DEPLOY.md` Adım 2) |
 | `npx tsx scripts/enrich-profiles.ts` | profil/vaka **zenginleştirme** (idempotent backfill; yalnız boş alan: doktor procedures/markets/akademik + vaka FHIR lab/icd10/belge — silmez) |
 | `npx tsx scripts/migrate-docs-to-blob.ts [--dry-run]` | belge **object storage backfill** (mevcut base64-in-DB → Vercel Blob; idempotent; `BLOB_READ_WRITE_TOKEN`+`DATA_ENCRYPTION_KEK` gerekir) |
 

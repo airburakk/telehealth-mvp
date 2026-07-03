@@ -11,7 +11,7 @@ Vercel otomatik deploy.
 ## Akış (özet)
 
 1. **Neon** Postgres veritabanı (pooled + direct connection string).
-2. **`.env`** doldur (aşağıdaki tablo) → `npx prisma db push` → `npm run db:seed`.
+2. **`.env`** doldur (aşağıdaki tablo) → `npx prisma migrate deploy` → `npm run db:seed`.
 3. **GitHub**'a push → **Vercel**'de import → env değişkenleri → Deploy (otomatik).
 4. Sonraki her `git push origin main` → Vercel otomatik yeniden deploy.
 
@@ -29,13 +29,26 @@ Vercel otomatik deploy.
 Şema zaten Postgres olduğu için sağlayıcı değiştirmeye gerek yok:
 
 ```bash
-npx prisma db push     # şemayı Neon'a uygula
-npm run db:seed        # demo veri: kullanıcılar + 30 hekim + 20 vaka + takip + şikayet
+npx prisma migrate deploy   # migration geçmişini Neon'a uygula (taze DB'de tüm şemayı kurar)
+npm run db:seed             # demo veri: kullanıcılar + 30 hekim + 20 vaka + takip + şikayet
 ```
 
-> Şema additive değişiklikler genelde `prisma db push` ile uygulanır (bu repo migration
-> klasörü yerine push kullanır). Üretimde migration tercih edersen `npm run db:migrate`
-> (`prisma migrate deploy`).
+> **Şema yönetimi migration-tabanlıdır** (2026-07-03'ten beri; `prisma/migrations/` —
+> `20260703000000_baseline` mevcut üretim şemasını temsil eder, üretime `migrate resolve
+> --applied` ile işaretlenmiştir). **Üretime şema değişikliği akışı:**
+> 1. `schema.prisma`'yı düzenle → `npx prisma migrate diff --from-schema-datamodel <eski>
+>    --to-schema-datamodel prisma/schema.prisma --script` ile migration SQL üret (veya Neon
+>    dev branch'e karşı `migrate dev`), `prisma/migrations/<timestamp>_<ad>/migration.sql`e koy.
+> 2. Önce **Neon dev branch'te prova**: `DATABASE_URL` + `DIRECT_URL` **birlikte**
+>    `TEST_DATABASE_URL` değerine override edilerek `npx prisma migrate deploy`.
+> 3. Üretim: `npx prisma migrate status` ile bekleyen migration'ı doğrula → `npm run
+>    db:migrate`. Migration SQL'ini idempotent yaz (`IF EXISTS`/`IF NOT EXISTS`) — yarıda
+>    düşen migration `_prisma_migrations`'a failed kayıt bırakır ve sonraki deploy'ları kilitler
+>    (kurtarma: `migrate resolve --rolled-back`).
+>
+> ⚠️ `prisma db push` üretimde **artık kullanılmaz** (DB'yi şemaya eşitlerken migration
+> geçmişini atlar; eski şemalı bir çalışma kopyasından koşulursa yeni index'leri düşürür).
+> `db push` yalnız Neon dev/test branch'lerinde hızlı deneme için kabul edilebilir.
 
 ## Adım 3 — GitHub'a gönder
 
@@ -62,7 +75,7 @@ dormant kalır / fallback'e düşer).
 | Anahtar | Zorunlu | Açıklama |
 |---------|:------:|----------|
 | `DATABASE_URL` | ✅ | Neon **pooled** connection string |
-| `DIRECT_URL` | ✅ | Neon **direct** connection string (migration / db push) |
+| `DIRECT_URL` | ✅ | Neon **direct** connection string (migration; `migrate deploy/resolve` bunu kullanır) |
 | `SESSION_SECRET` | ✅ | JWT imzalama — `openssl rand -base64 32` |
 | `DATA_ENCRYPTION_KEK` | ✅ | At-rest alan şifreleme KEK'i (E2EE Faz 1) — **AKTİF** (2026-06-23 üretimde set + backfill yapıldı → klinik veri artık şifreli; **silmek/değiştirmek prod'u bozar**). `openssl rand -base64 32`. **Yerel + üretim AYNI değer** (aynı Neon DB!). ⚠️ Kayıp = veri kaybı (escrow/yedek) |
 | `ANTHROPIC_API_KEY` | ⛅ | Claude (triyaj/SOAP/epikriz/çeviri/vision). Yoksa triyaj kural tabanlıya düşer |

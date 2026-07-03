@@ -29,8 +29,11 @@ Neon'un **branching** özelliği prod şemasının izole, yazılabilir bir kopya
    TEST_DATABASE_URL="postgres://...&sslmode=require" npm run test:integration
    ```
 
-5. Şema dev branch'te güncel değilse: `TEST_DATABASE_URL` set'liyken `prisma db push`
-   (dev branch'e uygular; prod'a değil).
+5. Şema dev branch'te güncel değilse: `DATABASE_URL` + `DIRECT_URL` **birlikte**
+   `TEST_DATABASE_URL` değerine set'liyken `npx prisma migrate deploy` (dev branch'e uygular;
+   prod'a değil — tek değişken override etmek prod `DIRECT_URL`'e gider, dikkat).
+   Dev branch migration geçmişine sahiptir (2026-07-03 baseline resolve edilmiş); hızlı yerel
+   deneme için `db push` dev branch'te hâlâ kabul edilebilir ama üretimde yasak (`DEPLOY.md`).
 
 ## Çalıştırma
 

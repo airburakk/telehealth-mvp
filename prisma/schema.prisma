@@ -23,6 +23,9 @@ model User {
   doctorId     String? // DOCTOR rolündeki kullanıcının hekim profili
   partnerId    String? // PARTNER rolündeki kullanıcının Partner Doktor profili (M5 Faz 3)
   createdAt    DateTime @default(now())
+
+  @@index([doctorId]) // doktor-hedefli bildirim/atama lookup'ları (lib/notify, clinical-duty, SO)
+  @@index([partnerId]) // partner-hedefli bildirimler (konsültasyon yanıt/mesaj/video)
 }
 
 /// M5 Faz 3 — Partner Doktor: yurtdışından sisteme katılan, hasta yönlendiren ortak hekim.
@@ -64,7 +67,6 @@ model ConsentRecord {
   tsToken     String? // imzalı zaman damgası token'ı (entryHash üzerinde)
 
   @@unique([userId, scope, version])
-  @@index([userId])
 }
 
 /// Platformdaki uzman hekim
@@ -142,6 +144,8 @@ model Review {
   stars     Int
   text      String
   createdAt DateTime @default(now())
+
+  @@index([doctorId, createdAt]) // public doktor profili (liste, createdAt desc) + bekleme odası count + CRM groupBy
 }
 
 /// Triyajdan geçen hasta vakası
@@ -192,6 +196,8 @@ model Case {
 
   @@index([userId])
   @@index([proBono, proBonoStatus])
+  @@index([doctorId]) // doktor kokpit OR-dalı + pro-bono kokpiti + CRM groupBy'lar
+  @@index([branch, status]) // kokpit branş-dalı (status IN) + personel kuyruğu /api/cases?branch=&status=
 }
 
 /// M5 Faz 2 — Partner doktorun açtığı anonimleştirilmiş konsültasyon talebi.
@@ -226,6 +232,7 @@ model ConsultationRequest {
 
   @@index([status, branch])
   @@index([requestedByPartnerId])
+  @@index([answeredByDoctorId]) // doktor "yanıtladıklarım" listesi (/doktor/konsultasyon her yüklemede)
 }
 
 /// M5 Faz 2 — Konsültasyon talebine bağlı yazılı görüşme (chat) mesajı.
@@ -241,7 +248,7 @@ model ConsultationMessage {
   readAt     DateTime?
   createdAt  DateTime            @default(now())
 
-  @@index([requestId])
+  @@index([requestId, createdAt]) // mesaj poll'u (8 sn) — filtre + sıralamayı tek index'ten karşılar
 }
 
 /// M5 Faz 3 — Konsültasyon görüntülü görüşme randevusu (İcapçı offer/respond deseni).
@@ -295,6 +302,9 @@ model Consultation {
   status    String    @default("ACTIVE") // ACTIVE, ENDED
   startedAt DateTime  @default(now())
   endedAt   DateTime?
+
+  @@index([doctorId, status]) // doktor konsolu + pro-bono doctor-feed poll'ları (aktif görüşme var mı)
+  @@index([caseId]) // hasta bekleme poll'u + vaka ilişki yükleri + outcome/terminate güncellemeleri
 }
 
 /// İcapçı randevu akışı — "online doktor yoksa 3-seçenek kapısı" Seçenek 2 (§3.2 mahremiyet/akış).
@@ -342,6 +352,8 @@ model Booking {
   escrowStatus         String   @default("HELD") // HELD, RELEASED, REFUNDED
   journeyData          String? // JSON JourneyStage[] — lojistik Patient Journey (transfer/otel/hastane/operasyon/dönüş; aşama durumu+tarih+not). null → defaultJourney() fallback. lib/journey.ts
   createdAt            DateTime @default(now())
+
+  @@index([caseId, createdAt]) // hasta vaka listesi son-rezervasyon ilişki yükü (take 1, createdAt desc)
 }
 
 /// Triyajda hastanın yüklediği tıbbi belge (tahlil/görüntüleme raporu/epikriz/reçete) — içerik + AI ön-değerlendirmesi.
@@ -407,6 +419,8 @@ model CheckIn {
   photo      String?
   severity   String // NONE, WATCH, RED
   createdAt  DateTime @default(now())
+
+  @@index([recoveryId, createdAt]) // post-op panelleri ilişki yükü (createdAt desc, take 1) — satırlar foto taşır, ağır tablo
 }
 
 /// WebRTC sinyalleşme mesajı (video görüşme — polling tabanlı)
@@ -418,7 +432,7 @@ model Signal {
   data           String // JSON
   createdAt      DateTime @default(now())
 
-  @@index([consultationId])
+  @@index([consultationId, id]) // poll cursor'ı (id > after, orderBy id asc) — eski tekli [consultationId] bu prefix'le kapsanır
 }
 
 /// Etik Kurul / Tahkim başvurusu (Modül 7)
@@ -557,7 +571,7 @@ model SecondOpinionCase {
 
   @@index([patientId])
   @@index([assignedDoctorId])
-  @@index([status])
+  @@index([status, branch]) // lazy fan-out havuzu (OFFERED + branş) — eşitlik/IN status sorguları prefix'ten yararlanır (notIn yararlanmaz)
 }
 
 /// Vakaya bağlı tıbbi belge (§6, §6.5). DICOM (IMAGING) harici link olarak tutulur;
@@ -674,4 +688,5 @@ model AccessLog {
   @@index([subjectUserId, createdAt])
   @@index([resourceType, resourceId])
   @@index([actorId])
+  @@index([createdAt, id]) // zincir tip sorgusu (her append, advisory-lock altında) + verify tam yürüyüş + denetim sayfalaması
 }
