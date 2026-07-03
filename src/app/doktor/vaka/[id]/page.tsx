@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { decryptCaseFields } from "@/lib/crypto";
 import { getCurrentUser } from "@/lib/auth";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { staffAccessClosed } from "@/lib/postop-access";
 import { countryFlag, countryName, urgencyStyle, CASE_STATUS, formatDateTime } from "@/lib/constants";
 import { StartConsultButton } from "@/components/StartConsultButton";
@@ -19,12 +20,18 @@ export const dynamic = "force-dynamic";
 export default async function CaseDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
+  // Rol + sahiplik kapısı. proxy /doktor'u DOCTOR/COORDINATOR/ADMIN'e kapıyor ama sayfa KENDİ savunmasını
+  // yapar (proxy DB'siz → verified/atama/branş bakmaz). BOLA fix (2026-07-03): bu sayfa canCaseBeAccessedBy'ı
+  // ATLIYORDU → giriş yapmış herhangi doktor/personel URL'deki id ile yabancı vakanın PHI'sini görebiliyordu
+  // (SO detay sayfası v4.6'da kapatılmıştı; klinik vaka sayfası eşleniği atlanmıştı).
+  const user = await getCurrentUser();
+  if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) notFound();
+
   // E2EE Faz 2A — post-op erişim daraltma: takip tamamlandıysa klinik personel erişimi kapalı (hasta-only, §0.1·3).
   // Klinik veri ÇEKİLMEDEN reddet (sızma yok). Hasta kendi kayıtlarını /takip + /vakalarim'de görmeye devam eder.
-  const user = await getCurrentUser();
   if ((await staffAccessClosed(id, user)).closed) return <PostopClosedScreen />;
 
-  const c = decryptCaseFields(await db.case.findUnique({
+  const raw = await db.case.findUnique({
     where: { id },
     include: {
       doctor: true,
@@ -33,8 +40,12 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
         orderBy: { createdAt: "asc" },
       },
     },
-  })); // symptoms/reasoning/extra(triyaj yanıtları) at-rest şifreli → kokpit gösterimi için çöz
-  if (!c) notFound();
+  });
+  if (!raw) notFound();
+  // Sahiplik/atama + branş daraltması (ownership tek-kaynak): atanan/eşleşen-branş doktor + operasyon
+  // personeli. Klinik veri DECRYPT edilmeden reddet (sızma yok) → notFound (vakanın varlığını ele vermez).
+  if (!(await canCaseBeAccessedBy(user, { userId: raw.userId, doctorId: raw.doctorId, branch: raw.branch }))) notFound();
+  const c = decryptCaseFields(raw); // symptoms/reasoning/extra(triyaj yanıtları) at-rest şifreli → kokpit gösterimi için çöz
 
   const u = urgencyStyle(c.urgency);
   const st = CASE_STATUS[c.status] ?? CASE_STATUS.NEW;

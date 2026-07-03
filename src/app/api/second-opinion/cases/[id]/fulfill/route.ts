@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsSecondOpinionCase } from "@/lib/ownership";
+import { isSecondOpinionPatient } from "@/lib/ownership";
 import { transitionSoCase, logSoEvent, SoError } from "@/lib/second-opinion-service";
 import { notifyRoles, notifyUser } from "@/lib/notify";
 
@@ -14,7 +14,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   const c = await db.secondOpinionCase.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
-  if (!ownsSecondOpinionCase(user, c)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+  if (!isSecondOpinionPatient(user, c)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 }); // T15b: yalnız hasta belge/tetkik yükler
 
   let nextStatus: "PENDING_REVIEW" | "ASSIGNED";
   if (c.status === "AWAITING_DOCUMENTS") nextStatus = "PENDING_REVIEW";

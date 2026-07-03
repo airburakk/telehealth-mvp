@@ -9,7 +9,7 @@ import { claimSentinelForCase } from "@/lib/clinical-duty";
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await getCurrentUser();
-  const c = await db.case.findUnique({ where: { id }, select: { userId: true, doctorId: true, status: true } });
+  const c = await db.case.findUnique({ where: { id }, select: { userId: true, doctorId: true, branch: true, status: true } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
   if (!(await canCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
   if (!["NEW", "IN_REVIEW"].includes(c.status)) {

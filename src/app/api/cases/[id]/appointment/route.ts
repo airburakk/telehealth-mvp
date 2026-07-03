@@ -43,7 +43,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   // ── Hasta: teklife yanıt ──
   if (action === "accept" || action === "request_change") {
-    const c = await db.case.findUnique({ where: { id }, select: { userId: true, doctorId: true } });
+    const c = await db.case.findUnique({ where: { id }, select: { userId: true, doctorId: true, branch: true } });
     if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
     if (!(await canCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
 

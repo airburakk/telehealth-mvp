@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
 import { notifyDoctorsByBranch } from "@/lib/notify";
@@ -9,7 +10,7 @@ import { storeDocument } from "@/lib/storage";
 // GET /api/cases — vaka kuyruğu (filtrelenebilir + sayfalı, /denetim getChainAudit deseni)
 export async function GET(req: Request) {
   // Vaka kuyruğu = klinik personel. Kimliksiz PHI dökümü kapandı (T1/P0).
-  const { error } = await requireStaff();
+  const { user, error } = await requireStaff();
   if (error) return error;
 
   const { searchParams } = new URL(req.url);
@@ -18,9 +19,24 @@ export async function GET(req: Request) {
   // Sayfalama: varsayılan 50, üst sınır 100 (tüm tabloyu tek yanıtta taşıma).
   const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") ?? "50", 10) || 50));
 
-  const where = {
+  // DOCTOR daraltması (2026-07-03, savunma-derinliği): doktor yalnız kendine atanan + KENDİ branşındaki
+  // atanmamış vakaları listeler (kokpit doktor/page.tsx:71 deseninin API eşleniği; canCaseBeAccessedBy ile
+  // hizalı). COORDINATOR/ETHICS/ADMIN tüm kuyruğu görür. Profili/branşı yoksa → yalnız kendine atananlar.
+  let doctorScope: Prisma.CaseWhereInput = {};
+  if (user.role === "DOCTOR") {
+    const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
+    const doc = me?.doctorId
+      ? await db.doctor.findUnique({ where: { id: me.doctorId }, select: { id: true, branch: true } })
+      : null;
+    doctorScope = doc
+      ? { OR: [{ doctorId: doc.id }, ...(doc.branch ? [{ doctorId: null, branch: doc.branch }] : [])] }
+      : { id: "__none__" }; // profilsiz doktor → boş küme (var olmayan id)
+  }
+
+  const where: Prisma.CaseWhereInput = {
     ...(branch ? { branch } : {}),
     ...(status ? { status } : {}),
+    ...doctorScope,
   };
   const total = await db.case.count({ where });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));

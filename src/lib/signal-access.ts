@@ -11,7 +11,7 @@ import type { SessionUser } from "@/lib/session";
 export async function resolveSignalSide(user: SessionUser, channelId: string): Promise<Side | null> {
   const consult = await db.consultation.findUnique({
     where: { id: channelId },
-    select: { case: { select: { userId: true, doctorId: true } } },
+    select: { case: { select: { userId: true, doctorId: true, branch: true } } },
   });
   if (consult) return (await canCaseBeAccessedBy(user, consult.case)) ? (user.role === "PATIENT" ? "patient" : "doctor") : null;
 

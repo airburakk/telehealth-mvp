@@ -17,7 +17,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ shareId:
   const s = await db.shareLink.findUnique({
     where: { id: shareId },
     include: {
-      case: { select: { id: true, userId: true, doctorId: true, patientName: true, country: true, language: true, patientIdentifier: true, patientIdentifierType: true } },
+      case: { select: { id: true, userId: true, doctorId: true, branch: true, patientName: true, country: true, language: true, patientIdentifier: true, patientIdentifierType: true } },
       accesses: { orderBy: { createdAt: "asc" } },
     },
   });

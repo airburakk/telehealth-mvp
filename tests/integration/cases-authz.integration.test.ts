@@ -13,6 +13,7 @@ const TEST_DB = process.env.TEST_DATABASE_URL;
 const asUser = (u: Partial<SessionUser> | null) => vi.mocked(getCurrentUser).mockResolvedValue((u as SessionUser) ?? null);
 const listReq = () => new Request("http://localhost/api/cases");
 const u = (id: string, role: string) => ({ id, role }) as SessionUser;
+const FIXTURE_BRANCH = "Kardiyoloji"; // helpers.ts seedFixture — tüm fixture doktor/vaka branşı
 
 describe.skipIf(!TEST_DB)("entegrasyon: GET /api/cases yetki (gerçek dev DB)", () => {
   let f: Fixture;
@@ -47,25 +48,30 @@ describe.skipIf(!TEST_DB)("entegrasyon: canCaseBeAccessedBy atama matrisi (gerç
   afterAll(async () => { if (f) await cleanupFixture(f); });
 
   it("hasta: kendi vakası → true, başka hasta vakası → false", async () => {
-    expect(await canCaseBeAccessedBy(u(f.patientId, "PATIENT"), { userId: f.patientId, doctorId: f.d1DoctorId })).toBe(true);
-    expect(await canCaseBeAccessedBy(u(f.patientId, "PATIENT"), { userId: f.otherPatientId, doctorId: null })).toBe(false);
+    expect(await canCaseBeAccessedBy(u(f.patientId, "PATIENT"), { userId: f.patientId, doctorId: f.d1DoctorId, branch: FIXTURE_BRANCH })).toBe(true);
+    expect(await canCaseBeAccessedBy(u(f.patientId, "PATIENT"), { userId: f.otherPatientId, doctorId: null, branch: FIXTURE_BRANCH })).toBe(false);
   });
 
-  it("doğrulanmış hekim: kendisine ATANMIŞ + ATANMAMIŞ (kuyruk) → true", async () => {
-    expect(await canCaseBeAccessedBy(u(f.d1UserId, "DOCTOR"), { userId: f.patientId, doctorId: f.d1DoctorId })).toBe(true);
-    expect(await canCaseBeAccessedBy(u(f.d1UserId, "DOCTOR"), { userId: f.patientId, doctorId: null })).toBe(true);
+  it("doğrulanmış hekim: kendisine ATANMIŞ + ATANMAMIŞ (kendi branşı kuyruk) → true", async () => {
+    expect(await canCaseBeAccessedBy(u(f.d1UserId, "DOCTOR"), { userId: f.patientId, doctorId: f.d1DoctorId, branch: FIXTURE_BRANCH })).toBe(true);
+    expect(await canCaseBeAccessedBy(u(f.d1UserId, "DOCTOR"), { userId: f.patientId, doctorId: null, branch: FIXTURE_BRANCH })).toBe(true);
+  });
+
+  it("BRANŞ-DARALTMASI: doğrulanmış hekim atanmamış YABANCI branş vakasına erişemez", async () => {
+    // d1 branşı Kardiyoloji → atanmamış Onkoloji vakası branş uyuşmazlığından reddedilir (savunma-derinliği)
+    expect(await canCaseBeAccessedBy(u(f.d1UserId, "DOCTOR"), { userId: f.patientId, doctorId: null, branch: "Onkoloji" })).toBe(false);
   });
 
   it("ÇAPRAZ-HEKİM: başka hekime atanmış vaka → false (IDOR engeli)", async () => {
-    expect(await canCaseBeAccessedBy(u(f.d2UserId, "DOCTOR"), { userId: f.patientId, doctorId: f.d1DoctorId })).toBe(false);
+    expect(await canCaseBeAccessedBy(u(f.d2UserId, "DOCTOR"), { userId: f.patientId, doctorId: f.d1DoctorId, branch: FIXTURE_BRANCH })).toBe(false);
   });
 
   it("DOĞRULANMAMIŞ hekim → hiçbir vakaya erişemez (atanmamış dahil)", async () => {
-    expect(await canCaseBeAccessedBy(u(f.unverUserId, "DOCTOR"), { userId: f.patientId, doctorId: null })).toBe(false);
-    expect(await canCaseBeAccessedBy(u(f.unverUserId, "DOCTOR"), { userId: f.patientId, doctorId: f.unverDoctorId })).toBe(false);
+    expect(await canCaseBeAccessedBy(u(f.unverUserId, "DOCTOR"), { userId: f.patientId, doctorId: null, branch: FIXTURE_BRANCH })).toBe(false);
+    expect(await canCaseBeAccessedBy(u(f.unverUserId, "DOCTOR"), { userId: f.patientId, doctorId: f.unverDoctorId, branch: FIXTURE_BRANCH })).toBe(false);
   });
 
   it("partner → hiçbir vakaya erişemez", async () => {
-    expect(await canCaseBeAccessedBy(u("partner-x", "PARTNER"), { userId: f.patientId, doctorId: null })).toBe(false);
+    expect(await canCaseBeAccessedBy(u("partner-x", "PARTNER"), { userId: f.patientId, doctorId: null, branch: FIXTURE_BRANCH })).toBe(false);
   });
 });

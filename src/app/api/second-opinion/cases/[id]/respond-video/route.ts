@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsSecondOpinionCase } from "@/lib/ownership";
+import { isSecondOpinionPatient } from "@/lib/ownership";
 import { transitionSoCase, logSoEvent, SoError } from "@/lib/second-opinion-service";
 import { notifyUser } from "@/lib/notify";
 
@@ -15,7 +15,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const c = await db.secondOpinionCase.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
-  if (!ownsSecondOpinionCase(user, c)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+  if (!isSecondOpinionPatient(user, c)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 }); // T15b: yalnız hasta randevu yanıtlar
   if (c.status !== "VIDEO_OFFERED") return NextResponse.json({ error: "Yanıtlanacak bir randevu teklifi yok." }, { status: 409 });
 
   const appt = await db.secondOpinionAppointment.findUnique({ where: { caseId: id } });

@@ -7,25 +7,34 @@
 //   ETHICS      → şikayet incelemesi (anonimleştirilmiş panel) → geniş
 //   ADMIN       → yönetim → geniş
 //   DOCTOR      → yalnız DOĞRULANMIŞ hekim VE (vaka kendisine atanmış: c.doctorId === doctor.id
-//                 VEYA vaka atanmamış: c.doctorId === null → kuyruktan üstlenebilsin). Başka hekime
-//                 ATANMIŞ vakayı OKUYAMAZ. Doğrulanmamış (self-signup) hekim hiçbir vakaya erişemez.
+//                 VEYA vaka atanmamış: c.doctorId === null VE vaka KENDİ BRANŞINDA → kuyruktan
+//                 üstlenebilsin). Başka hekime ATANMIŞ vakayı VE yabancı-branş atanmamış vakayı
+//                 OKUYAMAZ. Doğrulanmamış (self-signup) hekim hiçbir vakaya erişemez.
+//
+// Branş-daraltması (2026-07-03): atanmamış (kuyruk) vaka artık yalnız hekimin KENDİ branşındaki
+// vakalara açık — kokpit UI'ı (doktor/page.tsx) v3.0'dan beri bu davranıştaydı, ownership/API katmanı
+// hizalandı (savunma-derinliği; caseId bilen doktor yabancı-branş atanmamış vakanın PHI'sine erişemez).
+// Nöbetçi/İcapçı/Pro-bono akışları ETKİLENMEZ: erişimleri hasta-tetikli (PATIENT dalı, branşsız) veya
+// atomik atama-sonrası (c.doctorId set → "bana atanmış" dalı). Boş-branşlı hekim (Google-yolu onboarding
+// tamamlanmamış) atanmamış vakalardan bilinçli fail-closed kesilir.
 //
 // Not: DOCTOR kararı hekim profili + doğrulama gerektirir → DB lookup → fonksiyon ASYNC. Senkron
 // `ownsCase` bilerek KALDIRILDI (bir çağrı yerinde `await` unutmak fail-open yaratırdı). CaseRef.doctorId
-// ZORUNLU (string | null): seçmeyen sorgu derlemede hata verir → fail-open yerine compile-error.
+// VE CaseRef.branch ZORUNLU: seçmeyen sorgu derlemede hata verir → fail-open yerine compile-error.
 import { getCurrentUser } from "./auth";
 import { db } from "./db";
 import type { SessionUser } from "./session";
 
-export type CaseRef = { userId: string | null; doctorId: string | null };
+export type CaseRef = { userId: string | null; doctorId: string | null; branch: string };
 
-// DOCTOR kullanıcısının hekim profili (id + doğrulama). Atama eşleşmesi + doğrulama kapısı için.
-async function doctorContext(user: SessionUser): Promise<{ doctorId: string | null; verified: boolean }> {
+// DOCTOR kullanıcısının hekim profili (id + doğrulama + branş). Atama eşleşmesi + doğrulama +
+// branş-daraltması kapısı için. branch boş string ("") = onboarding tamamlanmamış → fail-closed.
+async function doctorContext(user: SessionUser): Promise<{ doctorId: string | null; verified: boolean; branch: string }> {
   const u = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
   const doctorId = u?.doctorId ?? null;
-  if (!doctorId) return { doctorId: null, verified: false };
-  const d = await db.doctor.findUnique({ where: { id: doctorId }, select: { verified: true } });
-  return { doctorId, verified: !!d?.verified };
+  if (!doctorId) return { doctorId: null, verified: false, branch: "" };
+  const d = await db.doctor.findUnique({ where: { id: doctorId }, select: { verified: true, branch: true } });
+  return { doctorId, verified: !!d?.verified, branch: d?.branch ?? "" };
 }
 
 // Verilen kullanıcı bu vakaya erişebilir mi? (Tek doğruluk kaynağı.)
@@ -41,9 +50,11 @@ export async function canCaseBeAccessedBy(user: SessionUser | null, c: CaseRef):
     case "ADMIN":
       return true; // operasyon/governance/yönetim → geniş erişim
     case "DOCTOR": {
-      const { doctorId, verified } = await doctorContext(user);
+      const { doctorId, verified, branch } = await doctorContext(user);
       if (!verified || !doctorId) return false; // doğrulanmamış hekim → erişim yok
-      return c.doctorId === null || c.doctorId === doctorId; // atanmamış (kuyruk) VEYA bana atanmış
+      if (c.doctorId === doctorId) return true; // bana atanmış
+      // atanmamış (kuyruk) VE kendi branşım (boş-branş → fail-closed); yabancı-branş/başka-atanmış → yok
+      return c.doctorId === null && !!branch && branch === c.branch;
     }
     default:
       return false;
@@ -68,6 +79,14 @@ export function ownsSecondOpinionCase(user: SessionUser | null, c: { patientId: 
 
 export async function canAccessSecondOpinionCase(c: { patientId: string }): Promise<boolean> {
   return ownsSecondOpinionCase(await getCurrentUser(), c);
+}
+
+// İkinci Görüş HASTA-AKSİYON uçları (pay/fulfill/respond-video) — yalnız vaka sahibi hasta (T15b).
+// Bu üç uç PHI OKUMAZ ama state-machine geçişi TETİKLER (ödeme simüle / talep FULFILLED / video randevu
+// yanıtı). Gevşek `ownsSecondOpinionCase` her personele true dönerdi → yabancı doktor state-tamper
+// yapabilirdi. Üçü de saf hasta aksiyonu olduğundan yalnız hastaya daraltıldı (personel dahil edilmez).
+export function isSecondOpinionPatient(user: SessionUser | null, c: { patientId: string }): boolean {
+  return !!user && user.role === "PATIENT" && c.patientId === user.id;
 }
 
 // İkinci Görüş vakası — DOKTOR-daraltmalı erişim (opinion route'undaki desenin tek-kaynak hali):

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ownsSecondOpinionCase } from "@/lib/ownership";
+import { isSecondOpinionPatient } from "@/lib/ownership";
 import { SO_CURRENCY, SO_FEE_USD } from "@/lib/second-opinion";
 import { logSoEvent, transitionSoCase, autoAssignSoCase, SoError } from "@/lib/second-opinion-service";
 
@@ -15,7 +15,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   const c = await db.secondOpinionCase.findUnique({ where: { id }, include: { payment: true } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
-  if (!ownsSecondOpinionCase(user, c)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+  if (!isSecondOpinionPatient(user, c)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 }); // T15b: yalnız hasta öder
   if (c.payment?.status === "PAID") return NextResponse.json({ error: "Bu vaka için ödeme zaten alınmış." }, { status: 409 });
   if (!["DRAFT", "AWAITING_PAYMENT"].includes(c.status)) {
     return NextResponse.json({ error: "Ödeme bu aşamada alınamaz." }, { status: 409 });

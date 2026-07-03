@@ -17,7 +17,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const { id, docId } = await params;
   const doc = await db.caseDocument.findFirst({
     where: { id: docId, caseId: id },
-    select: { content: true, mimeType: true, label: true, case: { select: { userId: true, doctorId: true } } },
+    select: { content: true, mimeType: true, label: true, case: { select: { userId: true, doctorId: true, branch: true } } },
   });
   if (!doc || !doc.content) return NextResponse.json({ error: "Belge bulunamadı." }, { status: 404 });
   if (!(await canCaseBeAccessedBy(user, doc.case))) {
