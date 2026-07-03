@@ -51,7 +51,7 @@ npm run dev                   # http://localhost:3000
 | `npm run build` | `prisma generate && next build` |
 | `npm run start` | Üretim sunucusu |
 | `npm run lint` | ESLint |
-| `npm test` | **Birim testleri** (vitest — saf mantık, DB yok; pricing/journey/deidentify/crypto/ownership/rate-limit/postop/storage/ai-minimize) |
+| `npm test` | **Birim testleri** (vitest — saf mantık, DB yok; pricing/journey/deidentify/crypto/ownership/rate-limit[Upstash mock+fail-open]/postop/storage/ai-minimize/chain-seal/session-sv) |
 | `npm run test:integration` | **Entegrasyon testleri** (gerçek DB — `TEST_DATABASE_URL` Neon dev branch gerekir; yoksa atlanır, bkz. `tests/integration/README.md`) |
 | `npm run test:e2e` | **E2E testleri** (Playwright — 3 demo-kritik akış; dev branch'e bağlı sunucu + `E2E_BASE_URL` gerekir, bkz. `tests/e2e/README.md`) |
 | `npm run db:seed` | `prisma/seed.ts` — demo veri (tam reset) |
@@ -89,7 +89,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | 3 | **Sağlık Turizmi** | ✅ Tier'lı paket, dinamik fiyat, **3 kademeli sigorta** (1 zorunlu · 2 operasyon teminat poliçesi [toplam fatura×oran×branş riski] · 3 malpraktis — doktorun yüklediği MMSS'inin bıraktığı boşluğu doldurur; `lib/pricing.ts` `computeInsurance`, parametrik/endikatif), **Escrow + split** + **lojistik Patient Journey takibi** (durum+tarih+not; koordinatör yönetir, hasta görür) + SOAP'tan AI paket teklifi + hastaya teklif gönderme (link/PDF) |
 | 4 | **Post-Op Takip** | ✅ Günlük kontrol (ağrı/ateş/ilaç/foto), kırmızı bayrak, branş protokolü, doktor izleme + **Güvenli Dijital Paylaşım** (token/TTL/şifre/audit/iptal) + alıcı dilinde görüntüleme + **AI foto analizi** (Claude vision) |
 | 5 | **Doktor Adaptasyon** | ✅ **Self-signup** (`/kayit` — Google[env-gated]/Apple[yakında]/e-posta → `User`+`Doctor` `verified:false`, `lib/doctor-signup` + `lib/oauth`) + **Doktor Ana Sayfası — 5 pencere** (Klinik Nöbet / İkinci Görüş / Pro Bono / Konsültasyon Talepleri / Haberler), her doktora ünvan+opt-in'e göre koşullu (`lib/doctor-home.ts`) + **ilk-giriş onboarding** (`/doktor/baslangic`: **FHIR uzmanlık** [diploma/tescil no = Practitioner.identifier + uzmanlık belgesi = qualification] + **branş işlemleri & ücretleri** ≥1 [`ProcedureSelector`→`Doctor.procedures`] + **zorunlu mesleki belge** — Tıp Diploması + MMSS poliçesi; hepsi tamamlanmadan hesap **aktifleşmez** [`canCompleteOnboarding` gate; `DoctorDocument` + `Doctor.activatedAt` + `lib/doctor-activation`; içerik at-rest şifreli; MMSS teminat limiti → M3 Katman 3 malpraktis girdisi]; İkinci Görüş ünvana göre; Pro Bono + Konsültasyon opt-in) + Panel 1 yalnız eşleşen vakalar + itibar/hakediş/kapasite/profil tercihleri (dil/pazar/işlem-ücret/opt-in). **Doğrulama kapısı:** self-signup doktor `verified:false` başlar → doktor dizini + Nöbetçi/İcapçı/Pro Bono eşleştirmelerinde gizli; **`/admin/hekim-onay`** (ADMIN/Etik Kurul) onayıyla `verified:true` olur (bildirim) |
-| 6 | **Doktor Tanıtım** | ✅ Doktor dizini + doğrulanmış profil, **gerçek profil fotoğrafı** (`Doctor.photo` per-doktor / cinsiyet-fallback) + **tanıtım videosu** (cinsiyete göre), yorumlar (gerçek Review/üretim-fallback), akreditasyon (JCI), **kalıcı akademik** (düzenlenebilir) |
+| 6 | **Doktor Tanıtım** | ✅ Doktor dizini + doğrulanmış profil (**verified-kapılı** — doğrulanmamış doktor public profil alamaz), **gerçek profil fotoğrafı** (`Doctor.photo` per-doktor / cinsiyet-fallback) + **tanıtım videosu** (cinsiyete göre), yorumlar (gerçek Review; üretim-fallback **"örnek değerlendirme" etiketli**), akreditasyon (JCI — yalnız gerçek veri, uydurma varsayılan yok), **kalıcı akademik** (düzenlenebilir) |
 | 7 | **Etik Kurul** | ✅ Şikayet, anonimleştirilmiş (data masking) inceleme, karar/yaptırım, **Escrow iade** tetikleyicisi |
 | — | **Kimlik doğrulama** | ✅ Roller (hasta/doktor/koordinatör/kurul/admin/**partner**), bcrypt + JWT + proxy + KVKK onam kapısı + **doktor self-signup** (`/kayit`; e-posta + Google OAuth [env yoksa dormant] + Apple [yakında]) |
 | — | **Partner Doktor + Konsültasyon Havuzu** | ✅ **Partner Doktor** (`PartnerDoctor` + `PARTNER` rolü, `/partner`): hasta DB erişimi YOK, anonim konsültasyon talebi açar (+**tıbbi belge yükleme** → `assessDocument` AI: tür/TR çeviri/özet/anormal bayrak/LOINC lab) → **anonimleştirme katmanı** (`lib/deidentify.ts`: yapısal de-id + TC/pasaport/e-posta/telefon scrub; DICOM hariç) → **`ConsultationRequest` havuzu** (at-rest şifreli; `/doktor/konsultasyon`'da kayıtlı doktorlar görüş + **kodlu öneri** verir: lab/görüntüleme=ServiceRequest, ilaç=MedicationRequest ATC). **Çift-yönlü AI çeviri** (özet→TR doktor · görüş→hasta dili partner) + **FHIR Bundle** (`/fhir/ConsultationRequest/[id]`). Yanıt başına ödeme simüle. **Yazılı görüşme (chat — Faz 2):** partner↔doktor çift-yönlü `ConsultationMessage` (at-rest şifreli + AI oto-çeviri; doktor nihai görüş öncesi de soru sorabilir → talebi atomik sahiplenir, IN_DISCUSSION). **Görüntülü görüşme (video — Faz 3):** presence/heartbeat (`/api/presence/ping`) + İcapçı offer/respond randevu (`ConsultationVideoAppointment`) + WebRTC oda (`/konsultasyon/gorusme/[id]`; sinyalleşme yeniden kullanımı + fallback chat) |
@@ -217,7 +217,7 @@ src/
                              #   second-opinion(+ -service) · pro-bono(+ tracker'lar)
                              #   clinical-duty · consent(+ -config) · timestamp (audit/onam mühür v2 keyed-HMAC) · audit · i18n · ownership
                              #   notify · push · ice · billing/pricing/fxrate/procedures · postop · share
-                             #   storage (Vercel Blob) · rate-limit · api-auth
+                             #   storage (Vercel Blob) · rate-limit (Upstash dağıtık + in-memory yedek) · api-auth · error-i18n
                              #   signal-access/-token/-poll · ably-server/-client (WebRTC sinyalleşme + Ably realtime) ...
   data/                      # coding.ts (ICD-10/LOINC/SNOMED) · procedures.json · second-opinion-docs.ts
 tests/                       # vitest unit/ (saf mantık, DB yok) + integration/ (Neon dev branch) · Playwright e2e/ (3 akış)
@@ -263,6 +263,19 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
 - Bu bir **demo** sürümüdür: hızlı rol girişi açık, parolalar `1234`. Gerçek kullanımdan önce
   bunları kaldırın; güçlü parola politikası + e-posta doğrulama ekleyin.
 - `SESSION_SECRET` üretimde mutlaka güçlü ve gizli olmalı.
+- **JWT iptali (v4.17):** `User.sessionVersion` + token `sv` claim'i — `POST /api/auth/logout-all`
+  (Header'daki "Tüm cihazlardan çıkış") sürümü artırır, dolaşımdaki tüm token'lar düşer;
+  `getCurrentUser` her istekte DB karşılaştırması yapar (istek-içi `cache()`'li). Eski (sv'siz)
+  token'lar 0 kabul edilir. Proxy bilinçli DB'siz (yaptırım veri katmanında).
+- **Rate-limit (v4.18):** Upstash Redis birincil (dağıtık/atomik; login 10/5dk/IP · paylaşım-şifre
+  10/5dk/IP+link · AI 20/dk/kullanıcı), env yoksa/hatada in-memory yedek (fail-open). Env:
+  `UPSTASH_REDIS_REST_URL/TOKEN`.
+- **Doktor veri dürüstlüğü (v4.19):** rating/successRate/experienceYears/jci nullable + default'sız
+  (uydurma pazarlama varsayılanı yok); `verified` default false; public profil `/hekim/[id]`
+  verified-kapılı; üretilmiş yorumlar "örnek değerlendirme" etiketli; eşleştirme skoru boş metriği
+  inactive sayar. `GET /api/cases` artık sayfalı zarf döner: `{items,total,page,pageSize,totalPages}`.
+- **Hata sınırları (v4.17):** kök `error.tsx` + `global-error.tsx` + `not-found.tsx` — 10 hasta
+  dilinde statik gömülü metin (`lib/error-i18n.ts`), çeviri zinciri/DB'ye bağımlı değil.
 - **Object storage (Vercel Blob):** PHI belgelerinin bytes'ı Blob'a yüklenmeden ÖNCE at-rest
   şifrelenir (`lib/storage.ts`) → Blob yalnız ciphertext tutar; URL tahmin-edilemez + asla istemciye
   sızdırılmaz (auth'lu rota proxy'ler). Token yoksa eski davranış (şifreli base64-in-DB).
