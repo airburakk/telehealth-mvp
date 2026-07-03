@@ -14,6 +14,7 @@ import { DischargeReport, type Structured } from "@/components/DischargeReport";
 import { PatientQuestionsPanel } from "@/components/PatientQuestionsPanel";
 import { getIceServers } from "@/lib/ice";
 import { signalFetch, signalPollDelayMs } from "@/lib/signal-poll";
+import { connectAblySignal } from "@/lib/ably-client";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
   Save, Check, Pill, FlaskConical, Stethoscope, AlertTriangle, Languages, Loader2, Luggage,
@@ -320,6 +321,9 @@ export function ConsultationRoom({
     let lastId = 0;
     let remoteDescSet = false;
     const pendingIce: RTCIceCandidateInit[] = [];
+    // Ably (birincil) + DB poll (yedek) aynı mesajı iletebilir → id ile dedup, iki kez uygulanmaz.
+    const applied = new Set<number>();
+    let ably: { close: () => void; live: () => boolean } | null = null;
 
     async function send(kind: string, data: unknown) {
       try {
@@ -330,6 +334,39 @@ export function ConsultationRoom({
       } catch {}
     }
 
+    // Tek sinyal mesajını uygula (Ably aboneliği + DB poll ORTAK çağırır; dedup id ile).
+    // ⚠️ lastId'i BURADA İLERLETME: poll imleci yalnız poll'ün fetch ettiğiyle ilerlemeli. Ably (rewind
+    // yok) attach-ÖNCESİ DB satırlarını teslim etmez; Ably yüksek bir id ile lastId'i sıçratırsa poll
+    // aradaki (attach penceresinde yazılan) satırları `id>lastId` ile KALICI atlar → ICE/offer kaybı.
+    async function handleSignal(m: { id: number; kind: string; data: string }, pc: RTCPeerConnection) {
+      if (applied.has(m.id)) return;
+      applied.add(m.id);
+      try {
+        const data = JSON.parse(m.data);
+        if (m.kind === "offer" && selfRole === "patient") {
+          await pc.setRemoteDescription(new RTCSessionDescription(data));
+          remoteDescSet = true;
+          for (const c of pendingIce.splice(0)) { try { await pc.addIceCandidate(c); } catch {} }
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await send("answer", answer);
+        } else if (m.kind === "answer" && selfRole === "doctor") {
+          await pc.setRemoteDescription(new RTCSessionDescription(data));
+          remoteDescSet = true;
+          for (const c of pendingIce.splice(0)) { try { await pc.addIceCandidate(c); } catch {} }
+        } else if (m.kind === "ice") {
+          if (data) { if (remoteDescSet) { try { await pc.addIceCandidate(data); } catch {} } else pendingIce.push(data); }
+        } else if (m.kind === "bye") {
+          setRemoteOn(false); setPhase("ended");
+        } else if (m.kind === "transcript") {
+          if (data && typeof data.text === "string" && data.text.trim()) {
+            const line: TLine = { who: data.who === "doctor" ? "doctor" : "patient", text: String(data.text), ts: Number(data.ts) || Date.now() };
+            setTranscript((prev) => [...prev, line].sort((a, b) => a.ts - b.ts));
+          }
+        }
+      } catch {}
+    }
+
     async function poll(pc: RTCPeerConnection) {
       while (polling) {
         let hot = false; // bu turda transkript geldi mi → "sıcak" (hızlı poll) kal
@@ -337,35 +374,10 @@ export function ConsultationRoom({
           const res = await signalFetch(sigTokRef, `/api/consultations/${consultationId}/signal?role=${selfRole}&after=${lastId}`);
           const msgs: { id: number; kind: string; data: string }[] = await res.json();
           hot = msgs.some((m) => m.kind === "transcript");
-          for (const m of msgs) {
-            lastId = Math.max(lastId, m.id);
-            try {
-              const data = JSON.parse(m.data);
-              if (m.kind === "offer" && selfRole === "patient") {
-                await pc.setRemoteDescription(new RTCSessionDescription(data));
-                remoteDescSet = true;
-                for (const c of pendingIce.splice(0)) { try { await pc.addIceCandidate(c); } catch {} }
-                const answer = await pc.createAnswer();
-                await pc.setLocalDescription(answer);
-                await send("answer", answer);
-              } else if (m.kind === "answer" && selfRole === "doctor") {
-                await pc.setRemoteDescription(new RTCSessionDescription(data));
-                remoteDescSet = true;
-                for (const c of pendingIce.splice(0)) { try { await pc.addIceCandidate(c); } catch {} }
-              } else if (m.kind === "ice") {
-                if (data) { if (remoteDescSet) { try { await pc.addIceCandidate(data); } catch {} } else pendingIce.push(data); }
-              } else if (m.kind === "bye") {
-                setRemoteOn(false); setPhase("ended");
-              } else if (m.kind === "transcript") {
-                if (data && typeof data.text === "string" && data.text.trim()) {
-                  const line: TLine = { who: data.who === "doctor" ? "doctor" : "patient", text: String(data.text), ts: Number(data.ts) || Date.now() };
-                  setTranscript((prev) => [...prev, line].sort((a, b) => a.ts - b.ts));
-                }
-              }
-            } catch {}
-          }
+          // lastId YALNIZ poll'ün fetch ettiğiyle ilerler (kesintisiz DB süpürme → atlama yok).
+          for (const m of msgs) { await handleSignal(m, pc); lastId = Math.max(lastId, m.id); }
         } catch {}
-        await new Promise((r) => setTimeout(r, signalPollDelayMs(pc, hot)));
+        await new Promise((r) => setTimeout(r, signalPollDelayMs(pc, hot, ably?.live() ?? false)));
       }
     }
 
@@ -431,6 +443,10 @@ export function ConsultationRoom({
       pc.oniceconnectionstatechange = () => setConnState(pc.iceConnectionState);
 
       setPhase("waiting");
+      // Ably realtime (birincil) — her iki taraf erkenden abone olur; DB poll (yedek) paralel sürer.
+      ably = connectAblySignal(consultationId, selfRole, (m) => { handleSignal(m, pc); });
+      if (!polling) ably.close(); // unmount getIceServers askısındayken oldu → zombie WS bırakma
+
       if (selfRole === "doctor") {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -441,6 +457,7 @@ export function ConsultationRoom({
 
     return () => {
       polling = false;
+      ably?.close();
       pcRef.current?.close();
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
     };

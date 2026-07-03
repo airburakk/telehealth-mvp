@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { Video, VideoOff, Mic, MicOff, PhoneOff, Wifi, WifiOff, UserRound, MessagesSquare } from "lucide-react";
 import { getIceServers } from "@/lib/ice";
 import { signalFetch, signalPollDelayMs } from "@/lib/signal-poll";
+import { connectAblySignal } from "@/lib/ably-client";
 import { useT } from "@/components/useT";
 import { langDir } from "@/lib/constants";
 import { ConsultationChat } from "@/components/ConsultationChat";
@@ -67,6 +68,9 @@ export function ConsultVideoRoom({
     let lastId = 0;
     let remoteDescSet = false;
     const pendingIce: RTCIceCandidateInit[] = [];
+    // Ably (birincil) + DB poll (yedek) aynı mesajı iletebilir → id ile dedup.
+    const applied = new Set<number>();
+    let ably: { close: () => void; live: () => boolean } | null = null;
 
     async function send(kind: string, data: unknown) {
       try {
@@ -77,35 +81,42 @@ export function ConsultVideoRoom({
       } catch {}
     }
 
+    // Tek sinyal mesajını uygula (Ably aboneliği + DB poll ORTAK çağırır; dedup id ile).
+    // ConsultVideoRoom transkript RELAY ETMEZ (video-only) → yalnız offer/answer/ice/bye.
+    async function handleSignal(m: { id: number; kind: string; data: string }, pc: RTCPeerConnection) {
+      if (applied.has(m.id)) return;
+      applied.add(m.id);
+      // ⚠️ lastId'i BURADA İLERLETME (bkz. ConsultationRoom): Ably attach-öncesi mesajları teslim
+      // etmez; poll imleci yalnız poll'ün fetch ettiğiyle ilerlemeli, yoksa aradaki satırlar atlanır.
+      try {
+        const data = JSON.parse(m.data);
+        if (m.kind === "offer" && selfRole === "patient") {
+          await pc.setRemoteDescription(new RTCSessionDescription(data));
+          remoteDescSet = true;
+          for (const cand of pendingIce.splice(0)) { try { await pc.addIceCandidate(cand); } catch {} }
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await send("answer", answer);
+        } else if (m.kind === "answer" && selfRole === "doctor") {
+          await pc.setRemoteDescription(new RTCSessionDescription(data));
+          remoteDescSet = true;
+          for (const cand of pendingIce.splice(0)) { try { await pc.addIceCandidate(cand); } catch {} }
+        } else if (m.kind === "ice") {
+          if (data) { if (remoteDescSet) { try { await pc.addIceCandidate(data); } catch {} } else pendingIce.push(data); }
+        } else if (m.kind === "bye") {
+          setRemoteOn(false); setPhase("ended");
+        }
+      } catch {}
+    }
+
     async function poll(pc: RTCPeerConnection) {
       while (polling) {
         try {
           const res = await signalFetch(sigTokRef, `/api/consultations/${roomId}/signal?role=${selfRole}&after=${lastId}`);
           const msgs: { id: number; kind: string; data: string }[] = await res.json();
-          for (const m of msgs) {
-            lastId = Math.max(lastId, m.id);
-            try {
-              const data = JSON.parse(m.data);
-              if (m.kind === "offer" && selfRole === "patient") {
-                await pc.setRemoteDescription(new RTCSessionDescription(data));
-                remoteDescSet = true;
-                for (const cand of pendingIce.splice(0)) { try { await pc.addIceCandidate(cand); } catch {} }
-                const answer = await pc.createAnswer();
-                await pc.setLocalDescription(answer);
-                await send("answer", answer);
-              } else if (m.kind === "answer" && selfRole === "doctor") {
-                await pc.setRemoteDescription(new RTCSessionDescription(data));
-                remoteDescSet = true;
-                for (const cand of pendingIce.splice(0)) { try { await pc.addIceCandidate(cand); } catch {} }
-              } else if (m.kind === "ice") {
-                if (data) { if (remoteDescSet) { try { await pc.addIceCandidate(data); } catch {} } else pendingIce.push(data); }
-              } else if (m.kind === "bye") {
-                setRemoteOn(false); setPhase("ended");
-              }
-            } catch {}
-          }
+          for (const m of msgs) { await handleSignal(m, pc); lastId = Math.max(lastId, m.id); }
         } catch {}
-        await new Promise((r) => setTimeout(r, signalPollDelayMs(pc)));
+        await new Promise((r) => setTimeout(r, signalPollDelayMs(pc, false, ably?.live() ?? false)));
       }
     }
 
@@ -155,6 +166,10 @@ export function ConsultVideoRoom({
       };
 
       setPhase("waiting");
+      // Ably realtime (birincil) — her iki taraf erkenden abone olur; DB poll (yedek) paralel sürer.
+      ably = connectAblySignal(roomId, selfRole, (m) => { handleSignal(m, pc); });
+      if (!polling) ably.close(); // unmount getIceServers askısındayken oldu → zombie WS bırakma
+
       if (selfRole === "doctor") {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -165,6 +180,7 @@ export function ConsultVideoRoom({
 
     return () => {
       polling = false;
+      ably?.close();
       pcRef.current?.close();
       localStreamRef.current?.getTracks().forEach((tr) => tr.stop());
     };

@@ -1,61 +1,21 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { encryptField, decryptField } from "@/lib/crypto";
-import { issueSideToken, verifySideToken, type Side } from "@/lib/signal-token";
+import { issueSideToken, verifySideToken } from "@/lib/signal-token";
+import { resolveSignalSide } from "@/lib/signal-access";
+import { publishSignal } from "@/lib/ably-server";
 import type { SessionUser } from "@/lib/session";
 
-// Taraf çözümleme (P1): önce imzalı token (DB'siz), yoksa callerSide (DB) → başarılıysa taze token.
+// Taraf çözümleme (P1): önce imzalı token (DB'siz), yoksa resolveSignalSide (DB) → başarılıysa taze token.
 // fresh non-null olduğunda çağıran onu yanıt başlığına koyar; istemci saklayıp sonraki isteklerde yollar.
 async function resolveSide(
   user: SessionUser, channelId: string, tokenIn: string | null,
-): Promise<{ side: Side | null; fresh: string | null }> {
+): Promise<{ side: import("@/lib/signal-token").Side | null; fresh: string | null }> {
   const cached = verifySideToken(tokenIn, user.id, channelId, Date.now());
   if (cached) return { side: cached, fresh: null };
-  const side = await callerSide(user, channelId);
+  const side = await resolveSignalSide(user, channelId);
   return { side, fresh: side ? issueSideToken(user.id, channelId, side, Date.now()) : null };
-}
-
-// WebRTC sinyalleşme — polling tabanlı (serverless uyumlu)
-// Erişim: oturum + görüşme katılımcısı. Kanal kimliği iki şemadan biri olabilir:
-//  • Consultation.id (genel akış) · • SecondOpinionAppointment.id (SO izole oda — externalVideoRef, FK yok).
-// Katılımcı = vakanın sahibi hasta VEYA klinik personel (ownsCase deseni). sender oturumdan türetilir
-// (gövdeye güvenilmez → taraf taklidi engellenir).
-async function callerSide(user: SessionUser, channelId: string): Promise<Side | null> {
-  const consult = await db.consultation.findUnique({
-    where: { id: channelId },
-    select: { case: { select: { userId: true, doctorId: true } } },
-  });
-  if (consult) return (await canCaseBeAccessedBy(user, consult.case)) ? (user.role === "PATIENT" ? "patient" : "doctor") : null;
-
-  const appt = await db.secondOpinionAppointment.findUnique({
-    where: { id: channelId },
-    select: { patientId: true },
-  });
-  if (appt) {
-    if (user.role !== "PATIENT") return "doctor"; // klinik personel
-    return appt.patientId === user.id ? "patient" : null; // yalnız vaka sahibi hasta
-  }
-
-  // M5 Faz 3 — konsültasyon görüntülü görüşme kanalı (anonim). Taraflar: sahiplenen doktor + partner.
-  // Partner "patient" tarafına eşlenir (non-doktor uç). Gövdeye güvenilmez → taraf oturumdan türetilir.
-  const va = await db.consultationVideoAppointment.findUnique({
-    where: { id: channelId },
-    select: { doctorId: true, partnerId: true },
-  });
-  if (va) {
-    if (user.role === "DOCTOR") {
-      const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
-      return me?.doctorId === va.doctorId ? "doctor" : null;
-    }
-    if (user.role === "PARTNER") {
-      const me = await db.user.findUnique({ where: { id: user.id }, select: { partnerId: true } });
-      return me?.partnerId === va.partnerId ? "patient" : null; // partner = non-doktor uç
-    }
-    return null;
-  }
-  return null; // tanınmayan kanal
 }
 
 // POST /api/consultations/:id/signal — bir sinyal mesajı gönder
@@ -74,9 +34,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   // Signal.data at-rest şifrelenir (E2EE Faz 1): transkript = PHI; offer/answer/ice/bye opak round-trip
   // (sunucu saklarken şifreli, GET'te çözüp karşı tarafa düz verir → WebRTC bozulmaz).
   const plain: string = typeof b.data === "string" ? b.data : JSON.stringify(b.data ?? null);
-  await db.signal.create({
+  const row = await db.signal.create({
     data: { consultationId: id, sender: side, kind, data: encryptField(plain) },
+    select: { id: true },
   });
+  // Ably Faz 2: offer/answer/ice/bye anlık Ably'ye yayınlanır (istemci abone → poll beklemeden alır).
+  // TRANSKRİPT YAYINLANMAZ (PHI → Ably'ye gitmez; DB backstop poll taşır). Yayın best-effort (fallback DB).
+  if (kind !== "transcript") {
+    await publishSignal(id, { id: row.id, kind, data: plain, sender: side });
+  }
   return NextResponse.json({ ok: true }, { status: 201, headers: fresh ? { "x-sig-token": fresh } : undefined });
 }
 
