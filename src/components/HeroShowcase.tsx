@@ -1,43 +1,20 @@
 "use client";
 
-// Hero görsel showcase — ana sayfada İstanbul fotoğrafının yerini alan 3'lü animasyonlu slider.
+// Hero görsel showcase — ana sayfada 3'lü animasyonlu slider.
 // Temiz line-icon (lucide) + akıcı CSS hareket + HTML kompozisyon. Harici görsel/lib yok.
 // 1) Laptop ekranında GERÇEK ana sayfamızın minyatürü → video görüşmeye geçer; 8 dilde tıbbi terimler fırlar
 // 2) İkinci Görüş — teşhis raporunuz bağımsız uzmanca incelenir → onaylı ikinci görüş
-// 3) Pro Bono — insani sorumluluk (eldeki kalp + ihtiyaç sahiplerine ulaşma)
+// 3) Ücretsiz Sağlık Hizmeti — insani sorumluluk (eldeki kalp + ihtiyaç sahiplerine ulaşma)
+// Tüm slaytlar TEK huniye bağlanır (href prop → /basla seçim ekranı); kopya landing-copy.ts'te (8 dil).
+// Slider LTR'a sabitlenir (translateX animasyonu RTL'de kırılır); slayt metin blokları locale yönünü alır.
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { UserRound, Search, BadgeCheck, FileText, Activity, HandHeart, Heart, Globe, Video, ArrowRight, MousePointer2 } from "lucide-react";
+import { UserRound, Search, BadgeCheck, FileText, Activity, HandHeart, Heart, ArrowRight, MousePointer2 } from "lucide-react";
 import { PortamedLogo } from "@/components/PortamedLogo";
+import { LANDING_COPY, landingDir, type LandingLocale, type LandingCopy } from "@/lib/landing-copy";
 
-type Locale = "en" | "tr";
 const TEAL = "#14C3D0";
-
-const SHOW = {
-  en: {
-    slides: [
-      { tag: "Talk to a doctor now", title: "Open AURA — your video visit begins.", sub: "Start right from our homepage, on any device. As you talk, medical terms are interpreted live across 70 languages.", cta: "Start now" },
-      { tag: "Second Opinion", title: "A second set of expert eyes on your diagnosis.", sub: "Already diagnosed? Share your reports and an independent, accredited specialist reviews them — clarity and peace of mind before any big decision.", cta: "Get a second opinion" },
-      { tag: "Pro Bono", title: "Health is a human right — not a privilege.", sub: "When care is out of reach, our volunteer doctors step in. Looking after one another is a responsibility we all share.", cta: "Join the cause" },
-    ],
-    hp: { eyebrow: "Health tourism & telehealth", t1: "World-class care", t2: "in Türkiye.", btn: "Talk to a doctor" },
-    s1: { rec: "LIVE" },
-    s2: { doc: "Diagnosis report", reviewing: "Reviewing…", verified: "Second opinion", note: "Independent review" },
-  },
-  tr: {
-    slides: [
-      { tag: "Hemen doktorla görüş", title: "AURA'yı açın — video görüşmeniz başlasın.", sub: "Görüşme doğrudan ana sayfamızdan başlar, her cihazdan. Siz konuşurken tıbbi terimler 70 dilde anlık çevrilir.", cta: "Hemen başla" },
-      { tag: "İkinci Görüş", title: "Teşhisinize uzman bir ikinci bakış.", sub: "Elinizde bir teşhis mi var? Raporlarınızı paylaşın; bağımsız, akredite bir uzman bunları yeniden değerlendirsin — büyük karar öncesi netlik ve huzur.", cta: "İkinci görüş al" },
-      { tag: "Pro Bono", title: "Sağlık bir insan hakkı — ayrıcalık değil.", sub: "Bakıma ulaşamayanların yanında gönüllü doktorlarımiz var. Birbirimize sahip çıkmak hepimizin sorumluluğudur.", cta: "Destek ol" },
-    ],
-    hp: { eyebrow: "Sağlık turizmi & teletıp", t1: "Birinci sınıf sağlık", t2: "Türkiye'de.", btn: "Hemen doktorla görüş" },
-    s1: { rec: "CANLI" },
-    s2: { doc: "Teşhis raporu", reviewing: "İnceleniyor…", verified: "İkinci görüş", note: "Bağımsız değerlendirme" },
-  },
-};
-type Show = (typeof SHOW)["en"];
-
-const HREFS = ["/giris", "/second-opinion", "/pro-bono"];
+type Show = LandingCopy["showcase"];
 const BG = [
   "radial-gradient(120% 82% at 50% 12%, #0E2A2E 0%, #0A0B0D 56%)",
   "radial-gradient(120% 82% at 50% 12%, #102330 0%, #0A0B0D 56%)",
@@ -129,7 +106,7 @@ function Scene1({ S }: { S: Show }) {
                 <Avatar size={48} />
               </div>
               <div style={{ position: "absolute", left: 8, top: 7, display: "flex", alignItems: "center", gap: 4, fontSize: 8, fontWeight: 700, color: "#fff", background: "rgba(0,0,0,.4)", padding: "2px 6px", borderRadius: 999 }}>
-                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#ff5b5b", animation: "hs-blink 1.4s infinite" }} /> {S.s1.rec}
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#ff5b5b", animation: "hs-blink 1.4s infinite" }} /> {S.live}
               </div>
               <div style={{ position: "absolute", right: 7, bottom: 7, width: "24%", aspectRatio: "4 / 3", borderRadius: 5, border: "1px solid rgba(255,255,255,.2)", background: "linear-gradient(150deg,#1c2a2e,#121a1c)", display: "grid", placeItems: "center" }}>
                 <UserRound size={14} color="rgba(255,255,255,.55)" />
@@ -236,8 +213,9 @@ function Scene3() {
   );
 }
 
-export function HeroShowcase({ locale }: { locale: Locale }) {
-  const S = SHOW[locale];
+export function HeroShowcase({ locale, href }: { locale: LandingLocale; href: string }) {
+  const S = LANDING_COPY[locale].showcase;
+  const textDir = landingDir(locale);
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   useEffect(() => {
@@ -248,6 +226,7 @@ export function HeroShowcase({ locale }: { locale: Locale }) {
 
   return (
     <div
+      dir="ltr" // slider translateX animasyonu RTL'de kırılır — kapsayıcı LTR sabit, metinler textDir alır
       className="hs-root relative aspect-[4/5] w-full overflow-hidden rounded-[24px]"
       style={{ border: "1px solid rgba(255,255,255,.12)", boxShadow: "0 30px 80px -28px rgba(20,195,208,.5)", background: "#0A0B0D" }}
       onMouseEnter={() => setPaused(true)}
@@ -256,13 +235,13 @@ export function HeroShowcase({ locale }: { locale: Locale }) {
       <style>{KF}</style>
       <div className="flex h-full w-full" style={{ transform: `translateX(-${active * 100}%)`, transition: "transform .7s cubic-bezier(.7,0,.2,1)" }}>
         {S.slides.map((sl, i) => (
-          <Link key={i} href={HREFS[i]} aria-label={sl.tag} className="relative block h-full w-full shrink-0 overflow-hidden" style={{ background: BG[i] }}>
+          <Link key={i} href={href} aria-label={sl.tag} className="relative block h-full w-full shrink-0 overflow-hidden" style={{ background: BG[i] }}>
             {i === 0 ? <Scene1 S={S} /> : i === 1 ? <Scene2 S={S} /> : <Scene3 />}
-            <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-11 pt-16 sm:px-6" style={{ background: "linear-gradient(180deg, rgba(8,9,11,0) 0%, rgba(8,9,11,.8) 50%, rgba(8,9,11,.97) 100%)" }}>
+            <div dir={textDir} className="absolute inset-x-0 bottom-0 z-10 px-5 pb-11 pt-16 text-start sm:px-6" style={{ background: "linear-gradient(180deg, rgba(8,9,11,0) 0%, rgba(8,9,11,.8) 50%, rgba(8,9,11,.97) 100%)" }}>
               <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.12em]" style={{ background: "rgba(20,195,208,.16)", color: "#5FD3E2" }}>{sl.tag}</span>
               <div className="mt-2.5 text-[17px] font-semibold leading-[1.22] text-white sm:text-[19px]">{sl.title}</div>
               <p className="mt-1.5 text-[12.5px] leading-[1.5] sm:text-[13.5px]" style={{ color: "rgba(255,255,255,.62)" }}>{sl.sub}</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-semibold" style={{ color: TEAL }}>{sl.cta} <ArrowRight size={14} /></span>
+              <span className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-semibold" style={{ color: TEAL }}>{sl.cta} <ArrowRight size={14} className="rtl:rotate-180" /></span>
             </div>
           </Link>
         ))}
