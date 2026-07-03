@@ -103,15 +103,14 @@ model Doctor {
   photo           String? // profil fotoğrafı yolu (ör. /photos/pool/p07.jpg); yoksa cinsiyet-fallback (DoctorArt)
   // M5 Doktor Ana Sayfa onboarding & pencere görünürlüğü (lib/doctor-home.ts)
   onboardedAt        DateTime? // ilk-giriş onboarding kapısı tamamlandı mı (null = /doktor/baslangic'a yönlendir)
-  freeCareOptIn      Boolean   @default(false) @map("proBonoOptIn") // Ücretsiz Sağlık Hizmeti vakası kabul ediyor mu → Ana Sayfa penceresi görünürlüğü (anlık müsaitlik = freeCareState ayrı)
+  freeCareOptIn      Boolean   @default(false) // Ücretsiz Sağlık Hizmeti vakası kabul ediyor mu → Ana Sayfa penceresi görünürlüğü (anlık müsaitlik = freeCareState ayrı)
   consultOptIn       Boolean   @default(false) // Partner konsültasyon taleplerini yanıtlıyor mu → Konsültasyon Talepleri penceresi görünürlüğü (yanıt başına ödeme, simüle)
   // Ücretsiz Sağlık Hizmeti — anlık müsaitlik + kontenjan (gönüllü ücretsiz konsültasyon).
-  // @map: DB kolonları eski adlarında (proBono*) — RENAME COLUMN migration'ı Aşama B'de (ayrı deploy).
-  freeCareState       String    @default("OFFLINE") @map("proBonoState") // OFFLINE | AVAILABLE | IN_SESSION
-  freeCareQuota       Int       @default(10) @map("proBonoQuota") // dönem (takvim haftası) başına kontenjan
-  freeCareUsed        Int       @default(0) @map("proBonoUsed")
-  freeCareResetAt     DateTime? @map("proBonoResetAt") // kontenjan dönem başlangıcı
-  freeCareAvailableAt DateTime? @map("proBonoAvailableAt") // en son AVAILABLE olunan an (eşleştirme sırası / stale tespiti)
+  freeCareState       String    @default("OFFLINE") // OFFLINE | AVAILABLE | IN_SESSION
+  freeCareQuota       Int       @default(10) // dönem (takvim haftası) başına kontenjan
+  freeCareUsed        Int       @default(0)
+  freeCareResetAt     DateTime? // kontenjan dönem başlangıcı
+  freeCareAvailableAt DateTime? // en son AVAILABLE olunan an (eşleştirme sırası / stale tespiti)
   // Klinik nöbet/müsaitlik — 3-seçenek kapısı (§8 mahremiyet/akış): Branş online · İcapçı (icap) · Nöbetçi (7/24 genel)
   clinicalState       String    @default("OFFLINE") // OFFLINE | ONLINE | IN_SESSION — Branş/Nöbetçi gerçek-zaman klinik mevcudiyeti
   onCall              Boolean   @default(false) // İcapçı: offline ama randevu (icap) açık
@@ -188,9 +187,8 @@ model Case {
   // M2→M3: doktorun görüşmede tavsiye ettiği tedaviler (KSHFT kodları + doktorun ₺ fiyatı)
   recommendedProcedures String? // JSON [{code,name,priceTRY}]
   // Ücretsiz Sağlık Hizmeti — ücretsiz konsültasyon akışı (mevcut Case yeniden kullanılır; normal vakada false/null).
-  // @map: DB kolonları eski adlarında (proBono*) — RENAME COLUMN migration'ı Aşama B'de (ayrı deploy).
-  freeCare            Boolean        @default(false) @map("proBono")
-  freeCareStatus      String?        @map("proBonoStatus") // WAITING|MATCHED|IN_CONSULT|CONSULT_DONE|TREATMENT_NEEDED|ETHICS_REVIEW|ETHICS_REJECTED|ETHICS_APPROVED|COMPLETED
+  freeCare            Boolean        @default(false)
+  freeCareStatus      String? // WAITING|MATCHED|IN_CONSULT|CONSULT_DONE|TREATMENT_NEEDED|ETHICS_REVIEW|ETHICS_REJECTED|ETHICS_APPROVED|COMPLETED
   doctor              Doctor?        @relation(fields: [doctorId], references: [id])
   doctorId            String?
   consultations       Consultation[]
@@ -202,7 +200,7 @@ model Case {
   createdAt           DateTime       @default(now())
 
   @@index([userId])
-  @@index([freeCare, freeCareStatus], map: "Case_proBono_proBonoStatus_idx")
+  @@index([freeCare, freeCareStatus])
   @@index([doctorId]) // doktor kokpit OR-dalı + ücretsiz-hizmet kokpiti + CRM groupBy'lar
   @@index([branch, status]) // kokpit branş-dalı (status IN) + personel kuyruğu /api/cases?branch=&status=
 }
