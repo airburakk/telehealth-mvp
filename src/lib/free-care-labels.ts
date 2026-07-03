@@ -1,8 +1,8 @@
-// Pro Bono etiketleri — SAF sabitler (sunucu + istemci ortak).
+// Ücretsiz Sağlık Hizmeti etiketleri — SAF sabitler (sunucu + istemci ortak).
 // Hiçbir sunucu-yalnız modül (notify/push/db) import etmez → client bundle'a güvenle girer.
 
-// Pro bono vaka durum makinesi (Case.proBonoStatus). Faz 2 etik onayına kadar.
-export const PRO_BONO_STATES: Record<string, string> = {
+// Ücretsiz sağlık hizmeti vaka durum makinesi (Case.freeCareStatus). Faz 2 etik onayına kadar.
+export const FREE_CARE_STATES: Record<string, string> = {
   WAITING: "Eşleşme bekliyor",
   MATCHED: "Eşleşti",
   IN_CONSULT: "Görüşmede",
@@ -14,8 +14,8 @@ export const PRO_BONO_STATES: Record<string, string> = {
   COMPLETED: "Tamamlandı",
 };
 
-// Doktorun anlık müsaitlik durumu (Doctor.proBonoState)
-export const DOCTOR_PB_STATES: Record<string, string> = {
+// Doktorun anlık müsaitlik durumu (Doctor.freeCareState)
+export const DOCTOR_FC_STATES: Record<string, string> = {
   OFFLINE: "Çevrimdışı",
   AVAILABLE: "Müsait",
   IN_SESSION: "Görüşmede",

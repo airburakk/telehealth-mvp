@@ -652,7 +652,7 @@ export function PreConsultLobby({
 
 // Doktor kartı güven rozeti ikonları (match-score MetricKey ile hizalı; /hekim/[id] ile aynı semantik).
 const BADGE_ICON: Record<string, LucideIcon> = {
-  rating: Star, volume: Award, proBono: Heart, responsiveness: Zap, reliability: ShieldCheck, recency: Activity,
+  rating: Star, volume: Award, freeCare: Heart, responsiveness: Zap, reliability: ShieldCheck, recency: Activity,
 };
 
 // Doktor kartı satır-içi istatistik çubuğu (değere göre amber→teal renk geçişi).

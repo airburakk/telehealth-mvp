@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Users, ClipboardCheck, HeartHandshake, Video, CircleCheck } from "lucide-react";
 import { AuraSpinner } from "@/components/PortamedLogo";
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
-import { proBonoTrackerPhases, PRO_BONO_TRACKER_TEXTS } from "@/lib/pro-bono-tracker";
+import { freeCareTrackerPhases, FREE_CARE_TRACKER_TEXTS } from "@/lib/free-care-tracker";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { langDir } from "@/lib/constants";
@@ -34,9 +34,9 @@ const S = {
   waitingMatch: "Eşleşme bekleniyor",
 } as const;
 
-// Pro Bono bekleme odası — eşleşene kadar poll eder; eşleşince görüşme odasına yönlendirir.
+// Ücretsiz Sağlık Hizmeti bekleme odası — eşleşene kadar poll eder; eşleşince görüşme odasına yönlendirir.
 // Hiç çevrimiçi doktor yoksa (online=0) "bir doktor müsait olunca bildirim göndeririz" uyarısı gösterir.
-// Çok dilli (8+ dil) + RTL: genel hasta dili (air_lang) + useT; tracker PRO_BONO_TRACKER_TEXTS ile çevrilir.
+// Çok dilli (8+ dil) + RTL: genel hasta dili (air_lang) + useT; tracker FREE_CARE_TRACKER_TEXTS ile çevrilir.
 function WaitingInner() {
   const router = useRouter();
   const sp = useSearchParams();
@@ -45,7 +45,7 @@ function WaitingInner() {
   const [status, setStatus] = useState<string>("WAITING");
   const [online, setOnline] = useState<number | null>(null);
   const [lang, setLang] = usePatientLang();
-  const texts = useMemo(() => [...PRO_BONO_TRACKER_TEXTS, ...Object.values(S)], []);
+  const texts = useMemo(() => [...FREE_CARE_TRACKER_TEXTS, ...Object.values(S)], []);
   const { t } = useT(lang, texts);
   const dir = langDir(lang);
 
@@ -54,7 +54,7 @@ function WaitingInner() {
     let alive = true;
     const tick = async () => {
       try {
-        const r = await fetch(`/api/pro-bono/waiting?caseId=${caseId}`);
+        const r = await fetch(`/api/free-care/waiting?caseId=${caseId}`);
         if (!r.ok) return;
         const d = await r.json();
         if (!alive) return;
@@ -83,7 +83,7 @@ function WaitingInner() {
   const ended = status !== "WAITING" && status !== "MATCHED";
   const noDoctor = !ended && online === 0;
 
-  const pbItems: TrackerItem[] = proBonoTrackerPhases(status).map((p) => ({
+  const pbItems: TrackerItem[] = freeCareTrackerPhases(status).map((p) => ({
     label: t(p.label),
     subStatus: t(p.sub),
     state: p.state,
@@ -130,7 +130,7 @@ function WaitingInner() {
   );
 }
 
-export default function ProBonoWaitingPage() {
+export default function FreeCareWaitingPage() {
   return (
     <div className="mx-auto max-w-lg px-5 py-16">
       <Suspense fallback={<div className="text-center text-sm text-slate-400">…</div>}>

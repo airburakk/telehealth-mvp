@@ -174,7 +174,7 @@ function Scene2({ S }: { S: Show }) {
   );
 }
 
-// ── Slayt 3: Pro Bono — insani sorumluluk (eldeki kalp + ihtiyaç sahiplerine ulaşma) ──
+// ── Slayt 3: Ücretsiz Sağlık Hizmeti — insani sorumluluk (eldeki kalp + ihtiyaç sahiplerine ulaşma) ──
 function Scene3() {
   const figs = [{ x: "16%", y: "62%", d: "0s" }, { x: "50%", y: "70%", d: "1s" }, { x: "84%", y: "62%", d: "2s" }];
   return (

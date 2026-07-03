@@ -1,6 +1,6 @@
 // M5 — Mevcut demo hekimleri onboard et (idempotent). YALNIZCA onboardedAt=null olanları damgalar
 // → re-run'da 0 değişiklik. Hiçbir şey SİLMEZ; opt-in'ler deterministik hash ile (~yarısı açık)
-// ki demo Ana Sayfasında Pro Bono / Konsültasyon pencereleri görünür olsun. SO ünvana göre otomatik.
+// ki demo Ana Sayfasında Ücretsiz Sağlık Hizmeti / Konsültasyon pencereleri görünür olsun. SO ünvana göre otomatik.
 // Çalıştır: npx tsx scripts/onboard-doctors.ts
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
@@ -18,14 +18,14 @@ async function main() {
   console.log(`Onboard bekleyen hekim: ${pending.length}`);
   let n = 0;
   for (const d of pending) {
-    const proBonoOptIn = hash(d.id) % 10 < 6; // ~%60 Pro Bono açık
+    const freeCareOptIn = hash(d.id) % 10 < 6; // ~%60 Ücretsiz Sağlık Hizmeti açık
     const consultOptIn = hash(d.id + "consult") % 10 < 5; // ~%50 Konsültasyon açık
     await db.doctor.update({
       where: { id: d.id },
-      data: { onboardedAt: new Date(), proBonoOptIn, consultOptIn },
+      data: { onboardedAt: new Date(), freeCareOptIn, consultOptIn },
     });
     n++;
-    console.log(`  ✓ ${d.title} ${d.name} — proBono:${proBonoOptIn} consult:${consultOptIn}`);
+    console.log(`  ✓ ${d.title} ${d.name} — freeCare:${freeCareOptIn} consult:${consultOptIn}`);
   }
   console.log(`Damgalanan: ${n}. (re-run → 0)`);
 }

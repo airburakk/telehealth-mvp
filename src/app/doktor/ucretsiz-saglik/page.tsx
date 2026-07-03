@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { quotaInfo, badgeStats, waitingCount } from "@/lib/pro-bono";
-import { ProBonoConsole, type PBCase } from "@/components/ProBonoConsole";
+import { quotaInfo, badgeStats, waitingCount } from "@/lib/free-care";
+import { FreeCareConsole, type PBCase } from "@/components/FreeCareConsole";
 import { decryptField } from "@/lib/crypto";
 
 export const dynamic = "force-dynamic";
 
 const HISTORY_STATUSES = ["CONSULT_DONE", "TREATMENT_NEEDED", "ETHICS_REVIEW", "ETHICS_APPROVED", "ETHICS_REJECTED", "COMPLETED"];
 
-export default async function DoctorProBonoPage() {
+export default async function DoctorFreeCarePage() {
   const session = await getCurrentUser();
   const u = session ? await db.user.findUnique({ where: { id: session.id } }) : null;
   const doctor = u?.doctorId ? await db.doctor.findUnique({ where: { id: u.doctorId } }) : null;
@@ -18,7 +18,7 @@ export default async function DoctorProBonoPage() {
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 text-center">
         <h1 className="text-xl font-bold text-[#101010]">Doktor profili bağlı değil</h1>
-        <p className="mt-2 text-sm text-slate-500">Pro Bono müsaitliği yalnız doktor profiline bağlı hesaplarda açılır (ör. koordinatör hesabı değil).</p>
+        <p className="mt-2 text-sm text-slate-500">Ücretsiz hizmet müsaitliği yalnız doktor profiline bağlı hesaplarda açılır (ör. koordinatör hesabı değil).</p>
         <Link href="/doktor" className="mt-5 inline-flex rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">Doktor Paneli</Link>
       </div>
     );
@@ -28,8 +28,8 @@ export default async function DoctorProBonoPage() {
   const [badge, count, awaiting, recent] = await Promise.all([
     badgeStats(doctor.id),
     waitingCount(),
-    db.case.findMany({ where: { proBono: true, doctorId: doctor.id, proBonoStatus: "IN_CONSULT" }, orderBy: { createdAt: "desc" } }),
-    db.case.findMany({ where: { proBono: true, doctorId: doctor.id, proBonoStatus: { in: HISTORY_STATUSES } }, orderBy: { createdAt: "desc" }, take: 8 }),
+    db.case.findMany({ where: { freeCare: true, doctorId: doctor.id, freeCareStatus: "IN_CONSULT" }, orderBy: { createdAt: "desc" } }),
+    db.case.findMany({ where: { freeCare: true, doctorId: doctor.id, freeCareStatus: { in: HISTORY_STATUSES } }, orderBy: { createdAt: "desc" }, take: 8 }),
   ]);
 
   const ser = (c: (typeof awaiting)[number]): PBCase => ({
@@ -40,13 +40,13 @@ export default async function DoctorProBonoPage() {
     branch: c.branch,
     urgency: c.urgency,
     symptoms: decryptField(c.symptoms), // at-rest şifreli → konsol gösterimi için çöz
-    proBonoStatus: c.proBonoStatus ?? "",
+    freeCareStatus: c.freeCareStatus ?? "",
     createdAt: c.createdAt.toISOString(),
   });
 
   return (
-    <ProBonoConsole
-      initialState={doctor.proBonoState}
+    <FreeCareConsole
+      initialState={doctor.freeCareState}
       quota={{ used: q.used, quota: q.quota, left: q.left }}
       waitingCount={count}
       badge={badge}

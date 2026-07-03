@@ -120,7 +120,7 @@ async function main() {
         experienceYears: 8 + ((di * 5) % 18),
         capacity: 12 + ((di * 4) % 18),
         // Şema default'ları değişti (verified=false, jci=null) → demo vitrini için AÇIKÇA yazılır:
-        verified: true, // demo doktorlar admin-onaylı sayılır (pro bono/erişim kapıları açık)
+        verified: true, // demo doktorlar admin-onaylı sayılır (ücretsiz sağlık hizmeti/erişim kapıları açık)
         jci: true, // demo akreditasyon rozeti korunur (gerçek doktorda yalnız belge ile true)
       },
     }));

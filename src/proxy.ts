@@ -81,6 +81,6 @@ export const config = {
     "/second-opinion/vaka/:path*",
     "/second-opinion/vakalarim",
     "/second-opinion/gorusme/:path*",
-    "/pro-bono/basvur", "/pro-bono/bekleme",
+    "/ucretsiz-saglik/basvur", "/ucretsiz-saglik/bekleme",
   ],
 };

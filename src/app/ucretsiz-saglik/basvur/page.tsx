@@ -6,9 +6,9 @@ import { COUNTRIES, LANGUAGES, langDir } from "@/lib/constants";
 import { useT } from "@/components/useT";
 import { HeartHandshake, Globe, Loader2, ArrowRight } from "lucide-react";
 
-// Pro Bono ön-triyaj — kısa, ücret kapısı YOK. Başvuru → eşleşme varsa görüşme, yoksa bekleme odası.
+// Ücretsiz Sağlık Hizmeti ön-triyaj — kısa, ücret kapısı YOK. Başvuru → eşleşme varsa görüşme, yoksa bekleme odası.
 const STATIC_UI = [
-  "Pro Bono Başvurusu",
+  "Ücretsiz Sağlık Hizmeti Başvurusu",
   "Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.",
   "Arayüz dili", "Hasta Adı (veya yakını)", "Örn. Amina B.", "Ülke", "Dil",
   "Şikayetiniz / Semptomlar",
@@ -17,12 +17,12 @@ const STATIC_UI = [
   "Bu görüşme tamamen ücretsizdir. Gönüllü doktorlarımiz kontenjanları dolana kadar başvuruları sırayla karşılar.",
   "Lütfen şikayetinizi biraz daha ayrıntılı yazın.",
   "Başvur ve eşleş", "Başvurunuz oluşturuluyor…",
-  "Pro Bono hizmeti çevrimiçi", "gönüllü doktor şu an müsait", "Şu an çevrimiçi gönüllü doktor yok",
+  "Ücretsiz Sağlık Hizmeti çevrimiçi", "gönüllü doktor şu an müsait", "Şu an çevrimiçi gönüllü doktor yok",
   "Bir doktor çevrimiçi olduğunda başvurabilirsiniz; havuzdayken bir doktor müsait olunca size bildirim göndeririz.",
   "Müsaitlik kontrol ediliyor…",
 ];
 
-export default function ProBonoApplyPage() {
+export default function FreeCareApplyPage() {
   const router = useRouter();
   const [patientName, setPatientName] = useState("");
   const [country, setCountry] = useState("TR");
@@ -38,7 +38,7 @@ export default function ProBonoApplyPage() {
     let alive = true;
     const tick = async () => {
       try {
-        const r = await fetch("/api/pro-bono/status");
+        const r = await fetch("/api/free-care/status");
         if (!r.ok) return;
         const d = await r.json();
         if (alive) setOnline(typeof d.online === "number" ? d.online : 0);
@@ -59,7 +59,7 @@ export default function ProBonoApplyPage() {
     if (symptoms.trim().length < 8) return setError("Lütfen şikayetinizi biraz daha ayrıntılı yazın.");
     setSubmitting(true);
     try {
-      const res = await fetch("/api/pro-bono/apply", {
+      const res = await fetch("/api/free-care/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ patientName, country, language, symptoms, durationText, consent: true }),
@@ -67,7 +67,7 @@ export default function ProBonoApplyPage() {
       if (!res.ok) throw new Error((await res.json()).error || "Hata");
       const d = await res.json();
       if (d.consultationId) router.push(`/gorusme/${d.consultationId}`);
-      else router.push(`/pro-bono/bekleme?caseId=${d.caseId}`);
+      else router.push(`/ucretsiz-saglik/bekleme?caseId=${d.caseId}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Başvuru oluşturulamadı.");
       setSubmitting(false);
@@ -79,9 +79,9 @@ export default function ProBonoApplyPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0]/10 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#0E8A95]">
-            <HeartHandshake size={14} /> Pro Bono
+            <HeartHandshake size={14} /> Ücretsiz Sağlık Hizmeti
           </span>
-          <h1 className="mt-3 text-2xl font-bold text-[#101010]">{t("Pro Bono Başvurusu")}</h1>
+          <h1 className="mt-3 text-2xl font-bold text-[#101010]">{t("Ücretsiz Sağlık Hizmeti Başvurusu")}</h1>
           <p className="mt-1 text-sm text-slate-500">
             {t("Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.")}
           </p>
@@ -145,7 +145,7 @@ export default function ProBonoApplyPage() {
             {online === null
               ? t("Müsaitlik kontrol ediliyor…")
               : online > 0
-                ? `${t("Pro Bono hizmeti çevrimiçi")} · ${online} ${t("gönüllü doktor şu an müsait")}`
+                ? `${t("Ücretsiz Sağlık Hizmeti çevrimiçi")} · ${online} ${t("gönüllü doktor şu an müsait")}`
                 : t("Şu an çevrimiçi gönüllü doktor yok")}
           </span>
         </div>

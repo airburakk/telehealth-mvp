@@ -8,7 +8,7 @@ import { DutyConsole } from "@/components/DutyConsole";
 import { DashboardPanel } from "@/components/DashboardPanel";
 import { dutyFeed, type DutyRequest } from "@/lib/clinical-duty";
 import { panelVisibility } from "@/lib/doctor-home";
-import { waitingCount } from "@/lib/pro-bono";
+import { waitingCount } from "@/lib/free-care";
 import { openCountForDoctor } from "@/lib/consultation-requests";
 import { newsForBranch, NEWS_KIND_LABEL, type NewsItem } from "@/lib/medical-news";
 import { decryptField } from "@/lib/crypto";
@@ -55,7 +55,7 @@ export default async function DoctorPanel({
   // Pencere görünürlüğü (doktor yoksa = personel: duty[tümü] + SO[gözetim] + haberler).
   const vis = doctor
     ? panelVisibility(doctor)
-    : { duty: true as const, so: true, proBono: false, consult: false, news: true as const };
+    : { duty: true as const, so: true, freeCare: false, consult: false, news: true as const };
 
   // ── Panel 1: Klinik Nöbet — yalnız bu doktorla eşleşen vakalar (personelde tümü, sayfalı) ──
   let casePage = 1;
@@ -142,8 +142,8 @@ export default async function DoctorPanel({
       : await db.secondOpinionCase.count({ where: { status: "ASSIGNED" } });
   }
 
-  // ── Panel 3: Pro Bono bekleyen sayısı ──
-  const pbWaiting = vis.proBono ? await waitingCount() : 0;
+  // ── Panel 3: Ücretsiz Sağlık Hizmeti bekleyen sayısı ──
+  const pbWaiting = vis.freeCare ? await waitingCount() : 0;
 
   // ── Panel 4: açık konsültasyon talebi sayısı (genel havuz + kendi branşı) ──
   const consultOpen = vis.consult && doctor ? await openCountForDoctor(doctor.branch) : 0;
@@ -227,16 +227,16 @@ export default async function DoctorPanel({
           </DashboardPanel>
         )}
 
-        {vis.proBono && (
+        {vis.freeCare && (
           <DashboardPanel
             icon={<HeartHandshake size={18} />}
-            title="Pro Bono"
+            title="Ücretsiz Sağlık Hizmeti"
             subtitle="Ücretsiz gönüllü konsültasyon"
             accent="#fb7185"
             badge={pbWaiting > 0 ? <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-700">{pbWaiting} bekleyen hasta</span> : undefined}
           >
-            <Link href="/doktor/pro-bono" className="inline-flex items-center gap-1.5 text-sm font-semibold text-rose-600 hover:underline">
-              Pro Bono konsolunu aç <ArrowRight size={15} />
+            <Link href="/doktor/ucretsiz-saglik" className="inline-flex items-center gap-1.5 text-sm font-semibold text-rose-600 hover:underline">
+              Ücretsiz hizmet konsolunu aç <ArrowRight size={15} />
             </Link>
           </DashboardPanel>
         )}

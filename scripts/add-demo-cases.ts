@@ -1,5 +1,5 @@
 // EKLEMELİ (additive) demo veri betiği — canlı Neon'a YALNIZCA yeni demo vakaları ekler.
-// HİÇBİR ŞEY SİLMEZ (deleteMany YOK) → mevcut canlı veri (İkinci Görüş, Pro Bono, FHIR vb.) korunur.
+// HİÇBİR ŞEY SİLMEZ (deleteMany YOK) → mevcut canlı veri (İkinci Görüş, Ücretsiz Sağlık Hizmeti, FHIR vb.) korunur.
 // Tekrar çalıştırılabilir (idempotent): aynı isimli vaka zaten varsa atlanır.
 // Branş/aciliyet kural-tabanlı triyajdan türetilir (seed.ts ile aynı mantık) → AI anahtarı gerekmez.
 // Çalıştır: npx tsx scripts/add-demo-cases.ts

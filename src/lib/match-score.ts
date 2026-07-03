@@ -1,9 +1,9 @@
 // CRM eşleştirme kalite indikatörleri — doktor seçimini branş/müsaitlik dışında performans metadata'sıyla
 // ağırlıklandırır. Kullanım: Nöbetçi seçimi (clinical-duty), SO uzman oto-atama (second-opinion-service),
-// İcapçı randevu fan-out sırası. Pro Bono eşleştirmesi KAPSAM DIŞI (adalet için FIFO kalır — kullanıcı kararı).
+// İcapçı randevu fan-out sırası. Ücretsiz Sağlık Hizmeti eşleştirmesi KAPSAM DIŞI (adalet için FIFO kalır — kullanıcı kararı).
 //
 // 9 metrik (hepsi METADATA — klinik içerik DEĞİL → E2EE şifreleme modeliyle uyumlu, eşleştirmede serbest kullanılır):
-//   rating · successRate · pro bono sayısı · icap dönüş oranı   (v2.85 çekirdek)
+//   rating · successRate · ücretsiz sağlık hizmeti sayısı · icap dönüş oranı   (v2.85 çekirdek)
 //   + tamamlanan vaka hacmi · yanıt süresi (duyarlılık) · iptal oranı (güvenilirlik) · yorum hacmi · güncellik   (v2.86 ek)
 // "Ölçekle değer artar": doktor havuzu + geçmiş veri azken etki küçük; büyüdükçe duyarlı/güvenilir/deneyimli
 // doktorlar öne çıkar. Veri yoksa metrik ya INACTIVE olur (skordan atlanır, ağırlık yeniden normalize) ya da
@@ -11,13 +11,13 @@
 // Tüm "kalite" girdileri mevcut tablolardan türetilir; yalnız yanıt süresi Doctor.respCount/respTotalSec sayacını kullanır.
 import { db } from "./db";
 
-// Görüşme tamamlandıktan sonraki pro bono durumları (sosyal katkı sayımı) — pro-bono.ts POST_CONSULT ile hizalı.
-const PRO_BONO_DONE = ["CONSULT_DONE", "TREATMENT_NEEDED", "ETHICS_REVIEW", "ETHICS_REJECTED", "ETHICS_APPROVED", "COMPLETED"];
+// Görüşme tamamlandıktan sonraki ücretsiz sağlık hizmeti durumları (sosyal katkı sayımı) — free-care.ts POST_CONSULT ile hizalı.
+const FREE_CARE_DONE = ["CONSULT_DONE", "TREATMENT_NEEDED", "ETHICS_REVIEW", "ETHICS_REJECTED", "ETHICS_APPROVED", "COMPLETED"];
 
 export interface DoctorMetrics {
   rating: number | null; // 0-5 — hasta memnuniyeti (Doctor.rating); null = veri yok → metrik INACTIVE
   successRate: number | null; // 0-100 — başarı oranı (Doctor.successRate); null = veri yok → metrik INACTIVE
-  proBonoCount: number; // tamamlanan pro bono görüşme sayısı — sosyal katkı
+  freeCareCount: number; // tamamlanan ücretsiz sağlık hizmeti görüşme sayısı — sosyal katkı
   icapNotified: number; // İcapçı olarak alınan talep bildirimi
   icapOffered: number; // bu taleplere verilen teklif → dönüş oranı = offered/notified
   // ── v2.86 ek metrikler ──
@@ -34,7 +34,7 @@ export interface DoctorMetrics {
 export const MATCH_WEIGHTS = {
   rating: 0.22,
   successRate: 0.12,
-  proBono: 0.1,
+  freeCare: 0.1,
   icapReturn: 0.1,
   responsiveness: 0.12, // yanıt süresi
   reliability: 0.1, // 1 − iptal oranı
@@ -47,7 +47,7 @@ export const MATCH_WEIGHTS = {
 export const LOAD_PENALTY = 0.08;
 
 // Doygunluk eşikleri (log eğrisi: ilk birkaç birim büyük fark, sonra plato).
-const PRO_BONO_SATURATION = 10; // ~10 pro bono görüşme ≈ tam puan
+const FREE_CARE_SATURATION = 10; // ~10 ücretsiz sağlık hizmeti görüşme ≈ tam puan
 const VOLUME_SATURATION = 20; // ~20 tamamlanan vaka ≈ tam puan
 const REVIEW_SATURATION = 30; // ~30 yorum ≈ tam güven
 // Yanıt süresi referansı: bu sürede yanıt = 0.5 puan; daha hızlı → 1'e, daha yavaş → 0'a.
@@ -87,7 +87,7 @@ export function recencyScore(lastActiveSec: number | null): number {
 // Bir metriğin skora katkısı: normalize değer (0-1) + ağırlık + aktif mi (verisi var mı → skora girer).
 // Skor hesabı + doktor profili "kalite kartı" TEK kaynaktan (metricBreakdown) beslenir.
 export type MetricKey =
-  | "rating" | "successRate" | "proBono" | "volume" | "reviewVolume"
+  | "rating" | "successRate" | "freeCare" | "volume" | "reviewVolume"
   | "icapReturn" | "responsiveness" | "reliability" | "recency";
 export interface MetricBreakdown {
   key: MetricKey;
@@ -96,7 +96,7 @@ export interface MetricBreakdown {
   active: boolean; // skora dahil mi (oran/zaman metrikleri veri yoksa false → atlanır)
 }
 
-// Tüm metriklerin normalize değeri + aktifliği. Sayım metrikleri (pro bono · vaka · yorum) HER ZAMAN aktif
+// Tüm metriklerin normalize değeri + aktifliği. Sayım metrikleri (ücretsiz sağlık hizmeti · vaka · yorum) HER ZAMAN aktif
 // (0 = gerçek düşük sinyal); rating/successRate null olabilir (yeni self-signup doktor — veri yok ≠ 0 puan)
 // ve oran/zaman metrikleri (icap · yanıt · iptal · güncellik) gibi yalnız verisi varsa aktif
 // (yoksa skoru dilute etmemek için atlanır → ağırlık kalan aktif kümeye yeniden normalize edilir).
@@ -104,7 +104,7 @@ export function metricBreakdown(m: DoctorMetrics): MetricBreakdown[] {
   return [
     { key: "rating", value01: clamp01((m.rating ?? 0) / 5), weight: MATCH_WEIGHTS.rating, active: m.rating != null },
     { key: "successRate", value01: clamp01((m.successRate ?? 0) / 100), weight: MATCH_WEIGHTS.successRate, active: m.successRate != null },
-    { key: "proBono", value01: logSat(m.proBonoCount, PRO_BONO_SATURATION), weight: MATCH_WEIGHTS.proBono, active: true },
+    { key: "freeCare", value01: logSat(m.freeCareCount, FREE_CARE_SATURATION), weight: MATCH_WEIGHTS.freeCare, active: true },
     { key: "volume", value01: logSat(m.completedCases, VOLUME_SATURATION), weight: MATCH_WEIGHTS.volume, active: true },
     { key: "reviewVolume", value01: logSat(m.reviewCount, REVIEW_SATURATION), weight: MATCH_WEIGHTS.reviewVolume, active: true },
     { key: "icapReturn", value01: icapReturnRate(m), weight: MATCH_WEIGHTS.icapReturn, active: m.icapNotified > 0 },
@@ -182,11 +182,11 @@ type DoctorRow = {
 
 // ── Toplu (N+1'siz) veri çekiciler: yalnız aday doktorlar için, tek sorgu ──
 
-// Tamamlanan pro bono görüşme sayısı.
-async function proBonoCounts(ids: string[]): Promise<Map<string, number>> {
+// Tamamlanan ücretsiz sağlık hizmeti görüşme sayısı.
+async function freeCareCounts(ids: string[]): Promise<Map<string, number>> {
   const rows = await db.case.groupBy({
     by: ["doctorId"],
-    where: { proBono: true, doctorId: { in: ids }, proBonoStatus: { in: PRO_BONO_DONE } },
+    where: { freeCare: true, doctorId: { in: ids }, freeCareStatus: { in: FREE_CARE_DONE } },
     _count: true,
   });
   const m = new Map<string, number>();
@@ -259,7 +259,7 @@ export async function rankDoctorsByQuality<T extends DoctorRow>(
   if (doctors.length <= 1) return [...doctors];
   const ids = doctors.map((d) => d.id);
   const [pb, cc, rc, la, cs] = await Promise.all([
-    proBonoCounts(ids),
+    freeCareCounts(ids),
     completedCaseCounts(ids),
     reviewCounts(ids),
     lastActiveMap(ids),
@@ -272,7 +272,7 @@ export async function rankDoctorsByQuality<T extends DoctorRow>(
     const base = doctorMatchScore({
       rating: d.rating,
       successRate: d.successRate,
-      proBonoCount: pb.get(d.id) ?? 0,
+      freeCareCount: pb.get(d.id) ?? 0,
       icapNotified: d.icapNotified,
       icapOffered: d.icapOffered,
       completedCases: cc.get(d.id) ?? 0,
@@ -306,12 +306,12 @@ export async function getDoctorScorecard(doctorId: string): Promise<DoctorScorec
   if (!d) return null;
   const ids = [doctorId];
   const [pb, cc, rc, la, cs] = await Promise.all([
-    proBonoCounts(ids), completedCaseCounts(ids), reviewCounts(ids), lastActiveMap(ids), cancelStats(ids),
+    freeCareCounts(ids), completedCaseCounts(ids), reviewCounts(ids), lastActiveMap(ids), cancelStats(ids),
   ]);
   const last = la.get(doctorId);
   const cancel = cs.get(doctorId);
   const m: DoctorMetrics = {
-    rating: d.rating, successRate: d.successRate, proBonoCount: pb.get(doctorId) ?? 0,
+    rating: d.rating, successRate: d.successRate, freeCareCount: pb.get(doctorId) ?? 0,
     icapNotified: d.icapNotified, icapOffered: d.icapOffered,
     completedCases: cc.get(doctorId) ?? 0, reviewCount: rc.get(doctorId) ?? 0,
     respCount: d.respCount, respTotalSec: d.respTotalSec,
@@ -321,7 +321,7 @@ export async function getDoctorScorecard(doctorId: string): Promise<DoctorScorec
   const raw: Record<MetricKey, string> = {
     rating: m.rating != null ? m.rating.toFixed(1) : "—", // null = veri yok → 0.0 GÖSTERİLMEZ
     successRate: m.successRate != null ? `%${m.successRate}` : "—",
-    proBono: `${m.proBonoCount}`,
+    freeCare: `${m.freeCareCount}`,
     volume: `${m.completedCases}`,
     reviewVolume: `${m.reviewCount}`,
     icapReturn: m.icapNotified > 0 ? `${m.icapOffered}/${m.icapNotified}` : "—",
@@ -344,7 +344,7 @@ export async function getDoctorBadges(doctorId: string): Promise<DoctorBadge[]> 
   const badges: DoctorBadge[] = [];
   if (m("rating").active && m("rating").value01 >= 0.92) badges.push({ key: "rating", label: "Yüksek Memnuniyet", desc: "Hasta memnuniyet puanı yüksek (4.6+/5)" }); // rating null (veri yok) → rozet YOK
   if (m("volume").value01 >= 0.5) badges.push({ key: "volume", label: "Deneyimli", desc: "Platformda çok sayıda tamamlanmış görüşme" });
-  if (m("proBono").value01 > 0) badges.push({ key: "proBono", label: "Pro Bono Gönüllüsü", desc: "Ücretsiz gönüllü (pro bono) konsültasyon veriyor" });
+  if (m("freeCare").value01 > 0) badges.push({ key: "freeCare", label: "Ücretsiz Hizmet Gönüllüsü", desc: "Gönüllü ücretsiz sağlık hizmeti konsültasyonu veriyor" });
   if (m("responsiveness").active && m("responsiveness").value01 >= 0.6) badges.push({ key: "responsiveness", label: "Hızlı Yanıt", desc: "Randevu taleplerine hızlı yanıt veriyor" });
   if (m("reliability").active && m("reliability").value01 >= 0.9) badges.push({ key: "reliability", label: "Güvenilir", desc: "Randevu iptal oranı düşük" });
   if (m("recency").active && m("recency").value01 >= 0.7) badges.push({ key: "recency", label: "Aktif Doktor", desc: "Son dönemde aktif olarak görüşme yapıyor" });

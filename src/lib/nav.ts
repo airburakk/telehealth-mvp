@@ -2,7 +2,7 @@
 // Header'dan ayrıştırıldı: birim testlenebilir (tests/unit/nav.test.ts).
 //
 // Hasta nav kararı (2026-07-03): PATIENT yalnız Vakalarım · Post Op · Paylaşımlarım görür
-// (Triyaj/Pro Bono/Doktorlar sekmeleri kalktı — yeni başvuru /basla seçim ekranından başlar).
+// (Triyaj/Ücretsiz Sağlık Hizmeti/Doktorlar sekmeleri kalktı — yeni başvuru /basla seçim ekranından başlar).
 // İkinci Görüş yolculuğundaki hastada (journey=SECOND_OPINION) Paylaşımlarım da gizlenir ve
 // Vakalarım SO vaka listesine işaret eder.
 import {
@@ -26,7 +26,7 @@ const NAV: NavItem[] = [
   { href: "/operasyon", label: "Operasyon", icon: BarChart3, roles: ["COORDINATOR", "ADMIN"] },
   { href: "/doktor", label: "Doktor", icon: Stethoscope, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
   { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
-  { href: "/doktor/pro-bono", label: "Pro Bono", icon: HeartHandshake, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
+  { href: "/doktor/ucretsiz-saglik", label: "Ücretsiz Hizmet", icon: HeartHandshake, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
   { href: "/doktor/profil", label: "Profilim", icon: BadgeCheck, roles: ["DOCTOR", "ADMIN"] },
   { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, roles: ["ETHICS", "ADMIN"] },
   { href: "/partner", label: "Partner", icon: Globe, roles: ["PARTNER", "ADMIN"] },

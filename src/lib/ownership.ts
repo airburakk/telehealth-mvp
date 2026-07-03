@@ -14,7 +14,7 @@
 // Branş-daraltması (2026-07-03): atanmamış (kuyruk) vaka artık yalnız hekimin KENDİ branşındaki
 // vakalara açık — kokpit UI'ı (doktor/page.tsx) v3.0'dan beri bu davranıştaydı, ownership/API katmanı
 // hizalandı (savunma-derinliği; caseId bilen doktor yabancı-branş atanmamış vakanın PHI'sine erişemez).
-// Nöbetçi/İcapçı/Pro-bono akışları ETKİLENMEZ: erişimleri hasta-tetikli (PATIENT dalı, branşsız) veya
+// Nöbetçi/İcapçı/Ücretsiz-hizmet akışları ETKİLENMEZ: erişimleri hasta-tetikli (PATIENT dalı, branşsız) veya
 // atomik atama-sonrası (c.doctorId set → "bana atanmış" dalı). Boş-branşlı hekim (Google-yolu onboarding
 // tamamlanmamış) atanmamış vakalardan bilinçli fail-closed kesilir.
 //

@@ -149,7 +149,7 @@ export default async function DoctorDashboard() {
           languages={doctor.languages.split(",").map((s) => s.trim()).filter(Boolean)}
           markets={doctor.markets ? doctor.markets.split(",").map((s) => s.trim()).filter(Boolean) : []}
           capacity={doctor.capacity}
-          proBonoOptIn={doctor.proBonoOptIn}
+          freeCareOptIn={doctor.freeCareOptIn}
           consultOptIn={doctor.consultOptIn}
         />
       </div>
@@ -233,7 +233,7 @@ export default async function DoctorDashboard() {
 const METRIC_LABEL: Record<MetricKey, string> = {
   rating: "Memnuniyet",
   successRate: "Başarı oranı",
-  proBono: "Pro bono katkı",
+  freeCare: "Ücretsiz hizmet katkısı",
   volume: "Tamamlanan vaka",
   reviewVolume: "Yorum sayısı",
   icapReturn: "İcap dönüş oranı",

@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { canCompleteOnboarding, missingOnboardingSteps } from "@/lib/doctor-activation";
 
 // POST /api/doctor/onboarding — M5 ilk-giriş onboarding kapısı + sonradan opt-in güncelleme.
-// Doktor, Pro Bono ve Partner Konsültasyon taleplerine katılıp katılmayacağını seçer.
+// Doktor, Ücretsiz Sağlık Hizmeti ve Partner Konsültasyon taleplerine katılıp katılmayacağını seçer.
 // İlk çağrıda onboardedAt damgalanır (kapı bir daha gösterilmez). Sonraki çağrılar opt-in günceller.
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   }
 
   const b = await req.json().catch(() => ({}));
-  const proBonoOptIn = b.proBonoOptIn === true;
+  const freeCareOptIn = b.freeCareOptIn === true;
   const consultOptIn = b.consultOptIn === true;
 
   // Zorunlu mesleki belgeler (diploma + MMSS) ve MMSS metadata tamamlanmadan onboarding bitirilemez
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   await db.doctor.update({
     where: { id: dbUser.doctorId },
     data: {
-      proBonoOptIn,
+      freeCareOptIn,
       consultOptIn,
       onboardedAt: current?.onboardedAt ?? new Date(),
       // Belgeler tamsa aktivasyon damgasını da garanti et (refreshActivation belge API'lerinde de çalışır).

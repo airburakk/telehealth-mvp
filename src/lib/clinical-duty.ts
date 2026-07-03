@@ -1,10 +1,10 @@
 // Klinik nöbet/müsaitlik + "online doktor yoksa 3-seçenek kapısı" (§8 mahremiyet/akış, §3.2).
 // Mevcut `Doctor` (clinicalState/onCall/sentinel) + yeni `ConsultAppointment` üzerine kurulu.
 // Roller: Branş Doktoru (online, gerçek-zaman) · İcapçı (offline + icap açık → randevu) · Nöbetçi (7/24 genel/Dahiliye/Acil).
-// Eşleştirme deseni Pro Bono'dan alındı: koşullu updateMany = optimistik kilit (çift-kapma yarışı engellenir).
+// Eşleştirme deseni ücretsiz-hizmet eşleştirmesinden alındı: koşullu updateMany = optimistik kilit (çift-kapma yarışı engellenir).
 import { db } from "./db";
 import { decryptField } from "./crypto";
-import { rankDoctorsByQuality } from "./match-score"; // CRM kalite indikatörleri (rating/pro bono/icap dönüş)
+import { rankDoctorsByQuality } from "./match-score"; // CRM kalite indikatörleri (rating/ücretsiz sağlık hizmeti/icap dönüş)
 import { notifyUser, type NotifyInput } from "./notify";
 import { formatDateTime } from "./constants";
 
@@ -49,7 +49,7 @@ export interface SentinelResult {
 
 // Çevrimiçi bir Nöbetçi doktoru ATOMİK kap → konsültasyon oluştur. En uzun süredir müsait olan önce.
 export async function claimSentinelForCase(caseId: string): Promise<SentinelResult | null> {
-  // CRM kalite indikatörleri + hasta–doktor uyumu: çevrimiçi Nöbetçileri kalite (rating/pro bono/icap dönüş)
+  // CRM kalite indikatörleri + hasta–doktor uyumu: çevrimiçi Nöbetçileri kalite (rating/ücretsiz sağlık hizmeti/icap dönüş)
   // VE uyum (hastanın pazarı/aciliyeti) ile sırala (yüksek önce). (Önceki: clinicalAvailableAt asc = salt FIFO.)
   // Atomik claim aşağıda korunur; sıra yalnız deneme önceliğini belirler. Uyum SOFT → uyumsuz Nöbetçi de denenir.
   const ctx = await db.case.findUnique({ where: { id: caseId }, select: { country: true, urgency: true } });

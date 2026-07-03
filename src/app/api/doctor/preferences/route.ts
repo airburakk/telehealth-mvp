@@ -33,8 +33,8 @@ export async function POST(req: Request) {
   const capacity = Math.min(200, Math.max(1, Math.round(Number(b.capacity) || 20)));
 
   // M5 — birim katılımı opt-in'leri (yalnız gövdede boolean geldiyse güncelle; onboarding sonrası değiştirme)
-  const optData: { proBonoOptIn?: boolean; consultOptIn?: boolean } = {};
-  if (typeof b.proBonoOptIn === "boolean") optData.proBonoOptIn = b.proBonoOptIn;
+  const optData: { freeCareOptIn?: boolean; consultOptIn?: boolean } = {};
+  if (typeof b.freeCareOptIn === "boolean") optData.freeCareOptIn = b.freeCareOptIn;
   if (typeof b.consultOptIn === "boolean") optData.consultOptIn = b.consultOptIn;
 
   // Not: licenseNo (FHIR Practitioner.identifier) artık /api/doctor/academic'te yönetilir — burada

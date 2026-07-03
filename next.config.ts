@@ -7,6 +7,16 @@ import type { NextConfig } from "next";
 const browserStub = { browser: "./src/empty-module.js" };
 
 const nextConfig: NextConfig = {
+  // Rename (Pro Bono → Ücretsiz Sağlık Hizmeti): eski sayfa URL'leri — tarayıcı geçmişi,
+  // yer imleri ve DB'deki Notification.href satırları kırılmasın (redirect'ler proxy'den ÖNCE koşar).
+  async redirects() {
+    return [
+      { source: "/pro-bono", destination: "/ucretsiz-saglik", permanent: true },
+      { source: "/pro-bono/basvur", destination: "/ucretsiz-saglik/basvur", permanent: true },
+      { source: "/pro-bono/bekleme", destination: "/ucretsiz-saglik/bekleme", permanent: true },
+      { source: "/doktor/pro-bono", destination: "/doktor/ucretsiz-saglik", permanent: true },
+    ];
+  },
   // Turbopack (Next 16 varsayılan builder)
   turbopack: {
     resolveAlias: { fs: browserStub, path: browserStub, crypto: browserStub },

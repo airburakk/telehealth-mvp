@@ -18,7 +18,7 @@ export default async function DoctorOnboardingPage() {
     ? await db.doctor.findUnique({
         where: { id: dbUser.doctorId },
         select: {
-          title: true, name: true, branch: true, onboardedAt: true, activatedAt: true, proBonoOptIn: true, consultOptIn: true,
+          title: true, name: true, branch: true, onboardedAt: true, activatedAt: true, freeCareOptIn: true, consultOptIn: true,
           mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true, mmssCoverageCurrency: true, mmssValidUntil: true,
           procedures: true, licenseNo: true, eduSchool: true, eduYear: true, specBoard: true, specYear: true,
           certifications: true, publications: true,
@@ -71,7 +71,7 @@ export default async function DoctorOnboardingPage() {
         publications: pubs,
       }}
       soOpen={soEligible(doctor.title)}
-      initialProBono={doctor.proBonoOptIn}
+      initialFreeCare={doctor.freeCareOptIn}
       initialConsult={doctor.consultOptIn}
       initialDocs={docs}
       initialMmss={{

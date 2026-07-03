@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { countryFlag, urgencyStyle, formatDateTime } from "@/lib/constants";
-import { PRO_BONO_STATES } from "@/lib/pro-bono-labels";
+import { FREE_CARE_STATES } from "@/lib/free-care-labels";
 import { HeartHandshake, Loader2, Power, Users, Award, Stethoscope, CheckCircle2, Activity, Radio } from "lucide-react";
 
 export interface PBCase {
@@ -14,13 +14,13 @@ export interface PBCase {
   branch: string;
   urgency: number;
   symptoms: string;
-  proBonoStatus: string;
+  freeCareStatus: string;
   createdAt: string;
 }
 
 interface Quota { used: number; quota: number; left: number }
 
-export function ProBonoConsole({
+export function FreeCareConsole({
   initialState,
   quota: initialQuota,
   waitingCount: initialWaiting,
@@ -48,7 +48,7 @@ export function ProBonoConsole({
     let alive = true;
     const tick = async () => {
       try {
-        const r = await fetch("/api/pro-bono/doctor-feed");
+        const r = await fetch("/api/free-care/doctor-feed");
         if (!r.ok) return;
         const d = await r.json();
         if (!alive) return;
@@ -68,7 +68,7 @@ export function ProBonoConsole({
   async function toggle(next: boolean) {
     setBusy(true);
     try {
-      const r = await fetch("/api/pro-bono/availability", {
+      const r = await fetch("/api/free-care/availability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ available: next }),
@@ -93,7 +93,7 @@ export function ProBonoConsole({
   async function markOutcome(caseId: string, outcome: "CONSULT_DONE" | "TREATMENT_NEEDED") {
     setBusy(true);
     try {
-      await fetch("/api/pro-bono/outcome", {
+      await fetch("/api/free-care/outcome", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ caseId, outcome }),
@@ -114,7 +114,7 @@ export function ProBonoConsole({
       <div className="flex items-center gap-2">
         <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[#14C3D0]/10 text-[#0E8A95]"><HeartHandshake size={20} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">Pro Bono Konsolu</h1>
+          <h1 className="text-2xl font-bold text-[#101010]">Ücretsiz Sağlık Hizmeti Konsolu</h1>
           <p className="text-sm text-slate-500">Gönüllü ücretsiz konsültasyon — müsaitlik açın, triyaj sizi bekleyen hastayla eşleştirsin.</p>
         </div>
       </div>
@@ -124,7 +124,7 @@ export function ProBonoConsole({
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-              <StateDot state={serverState} /> Durum: <span className="text-[#101010]">{PRO_BONO_STATES_DOCTOR[serverState] ?? serverState}</span>
+              <StateDot state={serverState} /> Durum: <span className="text-[#101010]">{FREE_CARE_STATES_DOCTOR[serverState] ?? serverState}</span>
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
               <Users size={13} /> {waiting} bekleyen hasta
@@ -137,7 +137,7 @@ export function ProBonoConsole({
             </div>
           ) : quotaFull ? (
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Bu haftaki pro bono kontenjanınız doldu ({quota.used}/{quota.quota}). Kontenjan her hafta yenilenir.
+              Bu haftaki ücretsiz hizmet kontenjanınız doldu ({quota.used}/{quota.quota}). Kontenjan her hafta yenilenir.
             </div>
           ) : (
             <button
@@ -172,7 +172,7 @@ export function ProBonoConsole({
             </div>
           </div>
           <div className="rounded-3xl border border-teal-200 bg-teal-50/60 p-5">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700"><Award size={14} /> Pro Bono Katkınız</div>
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700"><Award size={14} /> Ücretsiz Hizmet Katkınız</div>
             <div className="mt-2 grid grid-cols-2 gap-3 text-center">
               <div><div className="text-2xl font-bold text-teal-800">{badge.consultations}</div><div className="text-[11px] text-teal-700">görüşme</div></div>
               <div><div className="text-2xl font-bold text-teal-800">{badge.converted}</div><div className="text-[11px] text-teal-700">tedaviye yönlendirildi</div></div>
@@ -214,7 +214,7 @@ export function ProBonoConsole({
       {/* Geçmiş */}
       {recent.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-sm font-semibold text-slate-700">Son pro bono vakalarınız</h2>
+          <h2 className="text-sm font-semibold text-slate-700">Son ücretsiz hizmet vakalarınız</h2>
           <ul className="mt-2 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
             {recent.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
@@ -223,7 +223,7 @@ export function ProBonoConsole({
                   <div className="text-xs text-slate-400">{formatDateTime(c.createdAt)}</div>
                 </div>
                 <span className="shrink-0 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
-                  {PRO_BONO_STATES[c.proBonoStatus] ?? c.proBonoStatus}
+                  {FREE_CARE_STATES[c.freeCareStatus] ?? c.freeCareStatus}
                 </span>
               </li>
             ))}
@@ -233,14 +233,14 @@ export function ProBonoConsole({
 
       {awaiting.length === 0 && recent.length === 0 && (
         <p className="mt-8 rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-400">
-          Henüz pro bono görüşmeniz yok. Müsait olun; bekleyen bir hastayla eşleştiğinizde görüşme otomatik başlar.
+          Henüz ücretsiz hizmet görüşmeniz yok. Müsait olun; bekleyen bir hastayla eşleştiğinizde görüşme otomatik başlar.
         </p>
       )}
     </div>
   );
 }
 
-const PRO_BONO_STATES_DOCTOR: Record<string, string> = {
+const FREE_CARE_STATES_DOCTOR: Record<string, string> = {
   OFFLINE: "Çevrimdışı",
   AVAILABLE: "Müsait",
   IN_SESSION: "Görüşmede",

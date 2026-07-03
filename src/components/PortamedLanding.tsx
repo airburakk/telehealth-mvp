@@ -2,7 +2,7 @@
 
 // AURA landing — sade & modern yeniden tasarım (2026-07, rapor: vault output/landing-yenileme-raporu-2026-07.md).
 // Yapı: Nav+Hero (tek CTA) · Trust · Nasıl Çalışır · Doktorlar · Testimonial · CTA band · Footer.
-// Kaldırılanlar: Tedavi Paketleri, AI kartı, İkinci Görüş/Pro Bono CTA'ları, Tedaviler/Doktorlar/
+// Kaldırılanlar: Tedavi Paketleri, AI kartı, İkinci Görüş/Ücretsiz Sağlık Hizmeti CTA'ları, Tedaviler/Doktorlar/
 // Klinikler için nav linkleri — ürün seçimi giriş SONRASI /basla ekranında yapılır (tek huni).
 // 8 dil statik kopya (lib/landing-copy.ts, pm_locale localStorage) + RTL (ar/fa). Tema: koyu AURA.
 import { useEffect, useState } from "react";

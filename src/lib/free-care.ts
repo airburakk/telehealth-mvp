@@ -1,11 +1,11 @@
-// Pro Bono — gönüllü ücretsiz konsültasyon: durum makinesi, eşleştirme, kota, badge.
-// Mevcut `Case` (proBono bayrağı) + `Doctor` (proBonoState) yeniden kullanılır; ayrı tablo yok.
-// Bekleme havuzu türetilir: Case{proBono,proBonoStatus:"WAITING"} ↔ Doctor{proBonoState:"AVAILABLE"}.
+// Ücretsiz Sağlık Hizmeti — gönüllü ücretsiz konsültasyon: durum makinesi, eşleştirme, kota, badge.
+// Mevcut `Case` (freeCare bayrağı) + `Doctor` (freeCareState) yeniden kullanılır; ayrı tablo yok.
+// Bekleme havuzu türetilir: Case{freeCare,freeCareStatus:"WAITING"} ↔ Doctor{freeCareState:"AVAILABLE"}.
 import { db } from "./db";
 import { notifyUser } from "./notify";
 
 // Etiketler istemci-güvenli ayrı dosyada (bu modül notify/push'a bağlı → client bundle'a girmemeli).
-export { PRO_BONO_STATES, DOCTOR_PB_STATES } from "./pro-bono-labels";
+export { FREE_CARE_STATES, DOCTOR_FC_STATES } from "./free-care-labels";
 
 // "Görüşme tamamlandı"dan sonraki durumlar (badge/sayım için)
 const POST_CONSULT = ["CONSULT_DONE", "TREATMENT_NEEDED", "ETHICS_REVIEW", "ETHICS_REJECTED", "ETHICS_APPROVED", "COMPLETED"];
@@ -20,14 +20,14 @@ function weekStart(d = new Date()): Date {
   return x;
 }
 
-type DoctorQuotaFields = { proBonoQuota: number; proBonoUsed: number; proBonoResetAt: Date | null };
+type DoctorQuotaFields = { freeCareQuota: number; freeCareUsed: number; freeCareResetAt: Date | null };
 
 // Kota durumu (yan etkisiz). Yeni haftaysa `used` mantıken 0; gerçek yazım availability/pairing anında.
 export function quotaInfo(doc: DoctorQuotaFields): { used: number; quota: number; left: number; needsReset: boolean } {
   const ws = weekStart();
-  const needsReset = !doc.proBonoResetAt || doc.proBonoResetAt < ws;
-  const used = needsReset ? 0 : doc.proBonoUsed;
-  return { used, quota: doc.proBonoQuota, left: Math.max(0, doc.proBonoQuota - used), needsReset };
+  const needsReset = !doc.freeCareResetAt || doc.freeCareResetAt < ws;
+  const used = needsReset ? 0 : doc.freeCareUsed;
+  return { used, quota: doc.freeCareQuota, left: Math.max(0, doc.freeCareQuota - used), needsReset };
 }
 
 // NOT: Dil ARTIK eşleştirme kriteri değil — simultane tercüme altyapısı dil farkını kapatır
@@ -47,24 +47,24 @@ export async function pairCaseWithDoctor(caseId: string, doctorId: string): Prom
   try {
     const result = await db.$transaction(async (tx) => {
       const d = await tx.doctor.findUnique({ where: { id: doctorId } });
-      if (!d || d.verified !== true || d.proBonoState !== "AVAILABLE") return null;
+      if (!d || d.verified !== true || d.freeCareState !== "AVAILABLE") return null;
       const q = quotaInfo(d);
       if (q.left <= 0) return null;
 
       // 1) Vakayı kap: yalnız hâlâ WAITING ise (UPDATE satır kilidi işlemleri sıraya sokar)
       const claimedCase = await tx.case.updateMany({
-        where: { id: caseId, proBono: true, proBonoStatus: "WAITING" },
-        data: { doctorId, status: "IN_CONSULT", proBonoStatus: "IN_CONSULT" },
+        where: { id: caseId, freeCare: true, freeCareStatus: "WAITING" },
+        data: { doctorId, status: "IN_CONSULT", freeCareStatus: "IN_CONSULT" },
       });
       if (claimedCase.count === 0) return null; // başka eşleşme kaptı
 
       // 2) Doktoru kap: yalnız hâlâ AVAILABLE ise + kota artışı
       const claimedDoc = await tx.doctor.updateMany({
-        where: { id: doctorId, proBonoState: "AVAILABLE" },
+        where: { id: doctorId, freeCareState: "AVAILABLE" },
         data: {
-          proBonoState: "IN_SESSION",
-          proBonoUsed: (q.needsReset ? 0 : d.proBonoUsed) + 1,
-          proBonoResetAt: q.needsReset ? weekStart() : (d.proBonoResetAt ?? weekStart()),
+          freeCareState: "IN_SESSION",
+          freeCareUsed: (q.needsReset ? 0 : d.freeCareUsed) + 1,
+          freeCareResetAt: q.needsReset ? weekStart() : (d.freeCareResetAt ?? weekStart()),
         },
       });
       if (claimedDoc.count === 0) throw new Error("doctor-claim-failed"); // vakayı geri al (rollback)
@@ -77,7 +77,7 @@ export async function pairCaseWithDoctor(caseId: string, doctorId: string): Prom
       const c = await db.case.findUnique({ where: { id: result.caseId }, select: { userId: true, branch: true } });
       if (c?.userId) {
         await notifyUser(c.userId, {
-          type: "PROBONO_MATCH",
+          type: "FREECARE_MATCH",
           title: "🎥 Gönüllü doktorunuz hazır",
           body: `${c.branch} · görüşme başlıyor`,
           href: `/gorusme/${result.consultationId}`,
@@ -87,7 +87,7 @@ export async function pairCaseWithDoctor(caseId: string, doctorId: string): Prom
     return result;
   } catch (e) {
     if (e instanceof Error && e.message === "doctor-claim-failed") return null;
-    console.warn("[pro-bono] eşleştirme hatası:", e instanceof Error ? e.message : e);
+    console.warn("[free-care] eşleştirme hatası:", e instanceof Error ? e.message : e);
     return null;
   }
 }
@@ -95,10 +95,10 @@ export async function pairCaseWithDoctor(caseId: string, doctorId: string): Prom
 // Hasta tarafı: bu bekleyen vaka için müsait+kotalı bir doktor bul ve eşleştir.
 export async function matchForCase(caseId: string): Promise<PairResult | null> {
   const c = await db.case.findUnique({ where: { id: caseId } });
-  if (!c || !c.proBono || c.proBonoStatus !== "WAITING") return null;
+  if (!c || !c.freeCare || c.freeCareStatus !== "WAITING") return null;
   const candidates = await db.doctor.findMany({
-    where: { proBonoState: "AVAILABLE", verified: true },
-    orderBy: { proBonoAvailableAt: "asc" }, // en uzun süredir müsait olan doktor önce
+    where: { freeCareState: "AVAILABLE", verified: true },
+    orderBy: { freeCareAvailableAt: "asc" }, // en uzun süredir müsait olan doktor önce
   });
   for (const d of candidates) {
     if (quotaInfo(d).left <= 0) continue;
@@ -112,9 +112,9 @@ export async function matchForCase(caseId: string): Promise<PairResult | null> {
 // 🔒 Yalnız DOĞRULANMIŞ (verified) doktor eşleşebilir — hasta-yüzü matchForCase ile simetrik.
 export async function matchForDoctor(doctorId: string): Promise<PairResult | null> {
   const d = await db.doctor.findUnique({ where: { id: doctorId } });
-  if (!d || d.verified !== true || d.proBonoState !== "AVAILABLE" || quotaInfo(d).left <= 0) return null;
+  if (!d || d.verified !== true || d.freeCareState !== "AVAILABLE" || quotaInfo(d).left <= 0) return null;
   const waiting = await db.case.findMany({
-    where: { proBono: true, proBonoStatus: "WAITING" },
+    where: { freeCare: true, freeCareStatus: "WAITING" },
     orderBy: { createdAt: "asc" },
   });
   for (const c of waiting) {
@@ -129,43 +129,43 @@ export async function setDoctorAvailable(doctorId: string, available: boolean): 
   const d = await db.doctor.findUnique({ where: { id: doctorId } });
   if (!d) return;
   // Görüşmedeyken müsaitlik değiştirilemez (önce görüşme sonucu işlenmeli)
-  if (d.proBonoState === "IN_SESSION") return;
+  if (d.freeCareState === "IN_SESSION") return;
   if (available) {
     const q = quotaInfo(d);
     await db.doctor.update({
       where: { id: doctorId },
       data: {
-        proBonoState: "AVAILABLE",
-        proBonoAvailableAt: new Date(),
-        proBonoUsed: q.needsReset ? 0 : d.proBonoUsed,
-        proBonoResetAt: q.needsReset ? weekStart() : (d.proBonoResetAt ?? weekStart()),
+        freeCareState: "AVAILABLE",
+        freeCareAvailableAt: new Date(),
+        freeCareUsed: q.needsReset ? 0 : d.freeCareUsed,
+        freeCareResetAt: q.needsReset ? weekStart() : (d.freeCareResetAt ?? weekStart()),
       },
     });
   } else {
-    await db.doctor.update({ where: { id: doctorId }, data: { proBonoState: "OFFLINE" } });
+    await db.doctor.update({ where: { id: doctorId }, data: { freeCareState: "OFFLINE" } });
   }
 }
 
 // Görüşme sonrası doktoru serbest bırak (IN_SESSION → OFFLINE). Sonraki hasta için tekrar "Müsait ol".
 export async function releaseDoctor(doctorId: string): Promise<void> {
   await db.doctor.updateMany({
-    where: { id: doctorId, proBonoState: "IN_SESSION" },
-    data: { proBonoState: "OFFLINE" },
+    where: { id: doctorId, freeCareState: "IN_SESSION" },
+    data: { freeCareState: "OFFLINE" },
   });
 }
 
 // Bekleyen vaka sayısı (doktor konsolu göstergesi)
 export async function waitingCount(): Promise<number> {
-  return db.case.count({ where: { proBono: true, proBonoStatus: "WAITING" } });
+  return db.case.count({ where: { freeCare: true, freeCareStatus: "WAITING" } });
 }
 
-// Şu an pro bono hizmeti için MÜSAİT (yeni hasta alabilecek) doktor sayısı.
+// Şu an ücretsiz sağlık hizmeti hizmeti için MÜSAİT (yeni hasta alabilecek) doktor sayısı.
 // Hasta tarafı "Başvur" butonunun aktifliği + çevrimiçi/çevrimdışı indikatörü buna bağlı.
 export async function availableDoctorCount(): Promise<number> {
   // verified filtresi eşleşme yüklemiyle (matchForCase) BİREBİR aynı olmalı — aksi halde sayaç
   // doğrulanmamış AVAILABLE kalıntısını sayar: hasta "çevrimiçi doktor var" görüp başvurur,
   // eşleşme asla gelmez, stranded bildirimi de (count>0 erken dönüş) hiç gitmez (v4.19 bulgusu).
-  return db.doctor.count({ where: { proBonoState: "AVAILABLE", verified: true } });
+  return db.doctor.count({ where: { freeCareState: "AVAILABLE", verified: true } });
 }
 
 // Tüm gönüllü doktorlar çevrimdışı olduğunda havuzda BEKLEYEN hastalara haber ver.
@@ -173,16 +173,16 @@ export async function availableDoctorCount(): Promise<number> {
 export async function notifyStrandedWaiters(): Promise<void> {
   if ((await availableDoctorCount()) > 0) return; // hâlâ müsait doktor var → kimse stranded değil
   const waiting = await db.case.findMany({
-    where: { proBono: true, proBonoStatus: "WAITING", userId: { not: null } },
+    where: { freeCare: true, freeCareStatus: "WAITING", userId: { not: null } },
     select: { id: true, userId: true },
   });
   for (const w of waiting) {
     if (!w.userId) continue;
     await notifyUser(w.userId, {
-      type: "PROBONO_MATCH",
+      type: "FREECARE_MATCH",
       title: "⏳ Gönüllü doktor şu an çevrimdışı",
       body: "Hâlâ havuzdasınız. Bir gönüllü doktor çevrimiçi olduğunda size bildirim göndereceğiz.",
-      href: `/pro-bono/bekleme?caseId=${w.id}`,
+      href: `/ucretsiz-saglik/bekleme?caseId=${w.id}`,
     });
   }
 }
@@ -190,7 +190,7 @@ export async function notifyStrandedWaiters(): Promise<void> {
 // Bir bekleyen vakanın kuyruktaki sırası (1 tabanlı) — hasta bekleme ekranı için
 export async function queuePosition(caseId: string, createdAt: Date): Promise<number> {
   const ahead = await db.case.count({
-    where: { proBono: true, proBonoStatus: "WAITING", createdAt: { lt: createdAt } },
+    where: { freeCare: true, freeCareStatus: "WAITING", createdAt: { lt: createdAt } },
   });
   return ahead + 1;
 }
@@ -198,8 +198,8 @@ export async function queuePosition(caseId: string, createdAt: Date): Promise<nu
 // İtibar sayaçları — render-zamanı türetilir (ayrı tablo yok)
 export async function badgeStats(doctorId: string): Promise<{ consultations: number; converted: number }> {
   const [consultations, converted] = await Promise.all([
-    db.case.count({ where: { proBono: true, doctorId, proBonoStatus: { in: POST_CONSULT } } }),
-    db.case.count({ where: { proBono: true, doctorId, proBonoStatus: { in: TREATMENT_PATH } } }),
+    db.case.count({ where: { freeCare: true, doctorId, freeCareStatus: { in: POST_CONSULT } } }),
+    db.case.count({ where: { freeCare: true, doctorId, freeCareStatus: { in: TREATMENT_PATH } } }),
   ]);
   return { consultations, converted };
 }

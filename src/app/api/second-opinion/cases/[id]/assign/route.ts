@@ -18,7 +18,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const doctor = await db.doctor.findUnique({ where: { id: doctorId } });
   if (!doctor) return NextResponse.json({ error: "Doktor bulunamadı." }, { status: 404 });
-  // v4.19 verified simetrisi: diğer tüm eşleşme yolları (autoAssign/accept/pro-bono) doğrulanmış şart koşar;
+  // v4.19 verified simetrisi: diğer tüm eşleşme yolları (autoAssign/accept/ücretsiz-hizmet) doğrulanmış şart koşar;
   // doğrulanmamışa manuel atama, doktorun belgelere erişemeyeceği (canSoCaseBeAccessedBy 403) kilitli vaka üretirdi.
   if (!doctor.verified) return NextResponse.json({ error: "Yalnız doğrulanmış (admin onaylı) doktora atama yapılabilir." }, { status: 403 });
 

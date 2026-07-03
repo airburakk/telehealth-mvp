@@ -11,7 +11,7 @@ epikriz, post-op vision). Bir hafta sonunda klonlanamayan parça budur.
 
 Üstüne uçtan uca akış canlıda: hasta triyajından doktor kokpitine, gerçek WebRTC video
 görüşmeye, sağlık turizmi paketine ve post-op takibe — üç paralel hasta akışıyla (**Talk to
-Doctor** genel triyaj, **İkinci Görüş**, **Pro Bono** ücretsiz gönüllü konsültasyon).
+Doctor** genel triyaj, **İkinci Görüş**, **Ücretsiz Sağlık Hizmeti** ücretsiz gönüllü konsültasyon).
 
 > Bilgi tabanı (Obsidian vault) komşu `../Air` klasöründedir. Güncel mimari için
 > `Air/output/guncel-yazilim-mimarisi.md`, modül detayları için `Air/wiki/moduller/`,
@@ -68,8 +68,8 @@ alınır). Demo kullanıcıları (parola `1234`):
 
 | Rol | E-posta | Erişim |
 |-----|---------|--------|
-| Hasta | `hasta@air.test` | Vakalarım, triyaj, paket, takip, şikayet, paylaşım, İkinci Görüş, Pro Bono |
-| Doktor | `doktor@air.test` | **Doktor Ana Sayfası (5-pencere)** + onboarding, video görüşme, klinik kodlama, post-op izleme, klinik nöbet, Pro Bono, **Konsültasyon Talepleri** |
+| Hasta | `hasta@air.test` | Vakalarım, triyaj, paket, takip, şikayet, paylaşım, İkinci Görüş, Ücretsiz Sağlık Hizmeti |
+| Doktor | `doktor@air.test` | **Doktor Ana Sayfası (5-pencere)** + onboarding, video görüşme, klinik kodlama, post-op izleme, klinik nöbet, Ücretsiz Sağlık Hizmeti, **Konsültasyon Talepleri** |
 | Koordinatör | `koordinator@air.test` | Operasyon paneli (S2) + doktor alanı |
 | Etik Kurul | `kurul@air.test` | Etik Kurul paneli |
 | Partner Doktor | `partner@air.test` | **Partner paneli** — yurtdışı ortak doktor; hasta DB erişimi YOK, uzaktan hizmet YOK; yalnız anonim **konsültasyon talebi** açar |
@@ -88,7 +88,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | 2 | **Doktor Paneli + Video** | ✅ Aciliyet sıralı kuyruk, kokpit, **gerçek WebRTC** video + canlı transkript (Web Speech) + AI-SOAP + medikal çeviri + **AI Epikriz** + **Gemini canlı tercüman** (iki yönlü ses+altyazı) — **transkript + tercüme ilk konuşma sesinde otomatik başlar (VAD; başlat düğmesi yok), tercüme yalnız diller farklıysa** + **DICOM görüntüleyici** (5 sıkıştırılmış codec) + klinik kodlama (FHIR) |
 | 3 | **Sağlık Turizmi** | ✅ Tier'lı paket, dinamik fiyat, **3 kademeli sigorta** (1 zorunlu · 2 operasyon teminat poliçesi [toplam fatura×oran×branş riski] · 3 malpraktis — doktorun yüklediği MMSS'inin bıraktığı boşluğu doldurur; `lib/pricing.ts` `computeInsurance`, parametrik/endikatif), **Escrow + split** + **lojistik Patient Journey takibi** (durum+tarih+not; koordinatör yönetir, hasta görür) + SOAP'tan AI paket teklifi + hastaya teklif gönderme (link/PDF) |
 | 4 | **Post-Op Takip** | ✅ Günlük kontrol (ağrı/ateş/ilaç/foto), kırmızı bayrak, branş protokolü, doktor izleme + **Güvenli Dijital Paylaşım** (token/TTL/şifre/audit/iptal) + alıcı dilinde görüntüleme + **AI foto analizi** (Claude vision) |
-| 5 | **Doktor Adaptasyon** | ✅ **Self-signup** (`/kayit` — Google[env-gated]/Apple[yakında]/e-posta → `User`+`Doctor` `verified:false`, `lib/doctor-signup` + `lib/oauth`) + **Doktor Ana Sayfası — 5 pencere** (Klinik Nöbet / İkinci Görüş / Pro Bono / Konsültasyon Talepleri / Haberler), her doktora ünvan+opt-in'e göre koşullu (`lib/doctor-home.ts`) + **ilk-giriş onboarding** (`/doktor/baslangic`: **FHIR uzmanlık** [diploma/tescil no = Practitioner.identifier + uzmanlık belgesi = qualification] + **branş işlemleri & ücretleri** ≥1 [`ProcedureSelector`→`Doctor.procedures`] + **zorunlu mesleki belge** — Tıp Diploması + MMSS poliçesi; hepsi tamamlanmadan hesap **aktifleşmez** [`canCompleteOnboarding` gate; `DoctorDocument` + `Doctor.activatedAt` + `lib/doctor-activation`; içerik at-rest şifreli; MMSS teminat limiti → M3 Katman 3 malpraktis girdisi]; İkinci Görüş ünvana göre; Pro Bono + Konsültasyon opt-in) + Panel 1 yalnız eşleşen vakalar + itibar/hakediş/kapasite/profil tercihleri (dil/pazar/işlem-ücret/opt-in). **Doğrulama kapısı:** self-signup doktor `verified:false` başlar → doktor dizini + Nöbetçi/İcapçı/Pro Bono eşleştirmelerinde gizli; **`/admin/hekim-onay`** (ADMIN/Etik Kurul) onayıyla `verified:true` olur (bildirim) |
+| 5 | **Doktor Adaptasyon** | ✅ **Self-signup** (`/kayit` — Google[env-gated]/Apple[yakında]/e-posta → `User`+`Doctor` `verified:false`, `lib/doctor-signup` + `lib/oauth`) + **Doktor Ana Sayfası — 5 pencere** (Klinik Nöbet / İkinci Görüş / Ücretsiz Sağlık Hizmeti / Konsültasyon Talepleri / Haberler), her doktora ünvan+opt-in'e göre koşullu (`lib/doctor-home.ts`) + **ilk-giriş onboarding** (`/doktor/baslangic`: **FHIR uzmanlık** [diploma/tescil no = Practitioner.identifier + uzmanlık belgesi = qualification] + **branş işlemleri & ücretleri** ≥1 [`ProcedureSelector`→`Doctor.procedures`] + **zorunlu mesleki belge** — Tıp Diploması + MMSS poliçesi; hepsi tamamlanmadan hesap **aktifleşmez** [`canCompleteOnboarding` gate; `DoctorDocument` + `Doctor.activatedAt` + `lib/doctor-activation`; içerik at-rest şifreli; MMSS teminat limiti → M3 Katman 3 malpraktis girdisi]; İkinci Görüş ünvana göre; Ücretsiz Sağlık Hizmeti + Konsültasyon opt-in) + Panel 1 yalnız eşleşen vakalar + itibar/hakediş/kapasite/profil tercihleri (dil/pazar/işlem-ücret/opt-in). **Doğrulama kapısı:** self-signup doktor `verified:false` başlar → doktor dizini + Nöbetçi/İcapçı/Ücretsiz Sağlık Hizmeti eşleştirmelerinde gizli; **`/admin/hekim-onay`** (ADMIN/Etik Kurul) onayıyla `verified:true` olur (bildirim) |
 | 6 | **Doktor Tanıtım** | ✅ Doktor dizini + doğrulanmış profil (**verified-kapılı** — doğrulanmamış doktor public profil alamaz), **gerçek profil fotoğrafı** (`Doctor.photo` per-doktor / cinsiyet-fallback) + **tanıtım videosu** (cinsiyete göre), yorumlar (gerçek Review; üretim-fallback **"örnek değerlendirme" etiketli**), akreditasyon (JCI — yalnız gerçek veri, uydurma varsayılan yok), **kalıcı akademik** (düzenlenebilir) |
 | 7 | **Etik Kurul** | ✅ Şikayet, anonimleştirilmiş (data masking) inceleme, karar/yaptırım, **Escrow iade** tetikleyicisi |
 | — | **Kimlik doğrulama** | ✅ Roller (hasta/doktor/koordinatör/kurul/admin/**partner**), bcrypt + JWT + proxy + KVKK onam kapısı + **doktor self-signup** (`/kayit`; e-posta + Google OAuth [env yoksa dormant] + Apple [yakında]) |
@@ -100,8 +100,8 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
   Prisma modeli, CRM oto-atama + hoca kabul, 4 bölümlü yazılı görüş + video randevu teklifi, izole
   video oda (**AI canlı tercüme + transkript — M2 paritesi, ilk konuşma sesinde otomatik**). SLA:
   **600 USD · 5-7 iş günü · video 15 gün**. (`lib/second-opinion.ts`)
-- **Pro Bono:** sağlığa erişimi kısıtlı hastaları gönüllü doktorlarla **ücretsiz** video görüşmede
-  buluşturan akış — atomik eşleştirme, doktor konsolu + haftalık kontenjan. (`lib/pro-bono.ts`)
+- **Ücretsiz Sağlık Hizmeti:** sağlığa erişimi kısıtlı hastaları gönüllü doktorlarla **ücretsiz** video görüşmede
+  buluşturan akış — atomik eşleştirme, doktor konsolu + haftalık kontenjan. (`lib/free-care.ts`)
 
 ### Kesişen yetenekler
 
@@ -139,13 +139,13 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 - **Klinik nöbet rolleri:** Branş / İcapçı / Nöbetçi (`Doctor.clinicalState/onCall/sentinel`) +
   "online doktor yoksa 3-seçenek kapısı" (`/triyaj/[id]`) + `ConsultAppointment`. (`lib/clinical-duty.ts`)
 - **CRM eşleştirme kalite indikatörleri (9 metrik):** doktor seçimi branş/müsaitlik dışında performans
-  metadata'sıyla ağırlıklandırılır — rating · başarı · pro bono · icap dönüş oranı · **yanıt süresi**
+  metadata'sıyla ağırlıklandırılır — rating · başarı · ücretsiz sağlık hizmeti · icap dönüş oranı · **yanıt süresi**
   (`Doctor.respCount/respTotalSec`) · **iptal oranı** (ConsultAppointment+SO CANCELLED) · **tamamlanan vaka
   hacmi** · **yorum hacmi** · **güncellik**. **Veri-olgunluk-farkında:** verisi olmayan oran/zaman metrikleri
   skoru dilute etmez (ağırlık aktif kümeye yeniden normalize) → "ölçekle değer artar". Uygulandığı yerler:
   Nöbetçi · SO oto-atama (+ yük dengeleme) · İcapçı fan-out. Doktor `/doktor/profil`'de kendi **kalite
   kartını** (genel skor + metrik dökümü), hasta `/hekim/[id]`'de **güven rozetlerini** (eşik-bazlı, anlam-renk,
-  hover tooltip) görür. Pro Bono FIFO kalır. Metadata = klinik içerik değil → E2EE uyumlu. (`lib/match-score.ts`)
+  hover tooltip) görür. Ücretsiz Sağlık Hizmeti FIFO kalır. Metadata = klinik içerik değil → E2EE uyumlu. (`lib/match-score.ts`)
 - **Hasta–doktor uyumu (soft boost):** kalite (mutlak) yanına vaka-özel uyum (göreceli) eklenir —
   pazar (`Doctor.markets` ⊇ `Case.country`) + acil vakada deneyim (`Case.urgency`≥4 → `Doctor.experienceYears`).
   Uyumlu doktor sıralamada öne çıkar; **uyumsuz ELENMEZ, yalnız geri sıralanır** (erişim korunur). markets boş =
@@ -154,7 +154,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 - **Görüşme öncesi oda (bekleme odası):** cihaz testi + geri sayım + 3 alt-durum + **atanan doktor
   özet kartı** (tıkla-genişlet: bio/akademik/güven rozeti/akreditasyon + video kartvizit + tam profil
   linki; `lib/doctor-card.ts`) + **hasta soru notu** (görüşme odasında da görünür+düzenlenebilir,
-  `PatientQuestionsPanel`). 3 akış ortak (Talk/Pro Bono/İkinci Görüş) (`PreConsultLobby`).
+  `PatientQuestionsPanel`). 3 akış ortak (Talk/Ücretsiz Sağlık Hizmeti/İkinci Görüş) (`PreConsultLobby`).
 - **Video kartvizit hasta dilinde:** karttaki tanıtım videosu (`DoctorVideoCard`) hasta dilini alır —
   varsa dil-bazlı varyant `public/videos/doctor-{male,female}-{dilkodu}.mp4` (ör. `-ar`) oynar, dosya
   yoksa varsayılana düşer (bilinen-404 tekrar denenmez); her durumda kanonik tanıtım metni
@@ -168,7 +168,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/` · `/giris` · `/kayit` · `/onam` (+`/onam/kanit`) | Landing · giriş · **doktor kaydı** (Google/Apple/e-posta) · KVKK onam + Onay Kanıtı |
 | `/triyaj` · `/triyaj/[id]` | Triyaj sihirbazı · vaka süreç sayfası + 3-seçenek kapısı |
 | `/vakalarim` · `/erisim-kaydi` | Hastanın vaka ana ekranı · erişim denetim kaydı ("verime kim erişti") |
-| `/doktor` (+`/baslangic`, `/vaka/[id]`, `/takip`, `/profil`, `/pro-bono`, `/konsultasyon`) | Doktor Ana Sayfası (5-pencere), ilk-giriş onboarding, kokpit, izleme, profil, Pro Bono, klinik nöbet, Konsültasyon Talepleri kutusu |
+| `/doktor` (+`/baslangic`, `/vaka/[id]`, `/takip`, `/profil`, `/ucretsiz-saglik`, `/konsultasyon`) | Doktor Ana Sayfası (5-pencere), ilk-giriş onboarding, kokpit, izleme, profil, Ücretsiz Sağlık Hizmeti, klinik nöbet, Konsültasyon Talepleri kutusu |
 | `/partner` (+`/talep`) | Partner Doktor paneli (**tüm arayüz partner dilinde + RTL**, haber akışı dahil) · anonim konsültasyon talebi oluşturma (belge yükleme, hasta DB erişimi yok) |
 | `/gorusme/[id]` | WebRTC video görüşme odası (asimetrik) |
 | `/konsultasyon/gorusme/[id]` | Konsültasyon görüntülü görüşme odası (partner↔doktor, Faz 3; fallback chat) |
@@ -180,7 +180,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/operasyon` (+`/lojistik`) | Operasyon paneli · lojistik Patient Journey takibi (S2 — koordinatör/admin) |
 | `/paylasim/[token]` · `/paylasimlarim` | Güvenli paylaşım görüntüleyici · paylaşım yönetimi |
 | `/second-opinion/*` | İkinci Görüş başvuru/vaka/görüşme akışı |
-| `/pro-bono/*` | Pro Bono başvuru/bekleme/landing |
+| `/ucretsiz-saglik/*` | Ücretsiz Sağlık Hizmeti başvuru/bekleme/landing |
 | `/fhir/*` | FHIR R4 kaynak çıkışı (Composition / Consent / audit / **ConsultationRequest** Bundle) |
 
 ### API (route handler grupları — `src/app/api/`)
@@ -196,7 +196,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `consent` · `access-log` | KVKK onam + `proof` (RFC 3161 kanıt) · erişim denetim kaydı (audit) |
 | `clinical` | `duty` — klinik nöbet/müsaitlik |
 | `second-opinion` | İkinci Görüş state machine işlemleri |
-| `pro-bono` | `apply`/`waiting`/`availability`/`doctor-feed`/`outcome`/`status` |
+| `free-care` | `apply`/`waiting`/`availability`/`doctor-feed`/`outcome`/`status` |
 | `shares` · `complaints` · `bookings` | Güvenli paylaşım · şikayet · rezervasyon |
 | `notifications` · `push` | Bildirim merkezi · Web Push aboneliği |
 | `consultation-requests` · `presence` | Konsültasyon talebi yanıt/belge + **chat (`messages`)** + **video** randevu (offer/respond) · `presence/ping` (heartbeat) |
@@ -214,7 +214,7 @@ src/
   lib/                       # ~58 modül:
                              #   db · auth/session · oauth · doctor-signup · doctor-activation
                              #   triage(+ -llm,-questions) · ai-clinical · ai-minimize · fhir(+ -http)
-                             #   second-opinion(+ -service) · pro-bono(+ tracker'lar)
+                             #   second-opinion(+ -service) · free-care(+ tracker'lar)
                              #   clinical-duty · consent(+ -config) · timestamp (audit/onam mühür v2 keyed-HMAC) · audit · i18n · ownership
                              #   notify · push · ice · billing/pricing/fxrate/procedures · postop · share
                              #   storage (Vercel Blob) · rate-limit (Upstash dağıtık + in-memory yedek) · api-auth · error-i18n

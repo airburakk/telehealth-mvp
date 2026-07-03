@@ -33,7 +33,7 @@ const CARDS: { key: JourneyKey; title: string; desc: string; icon: typeof Stetho
   { key: "SECOND_OPINION", title: "İkinci Görüş Al", desc: "Mevcut tanı ve tedavi planınız için bağımsız uzmandan yazılı rapor + video görüşme alın.", icon: FileSearch, target: "/second-opinion/basvur" },
 ];
 
-const FREE_CARE_CARD = { key: "FREE_CARE" as JourneyKey, title: "Ücretsiz Sağlık Hizmeti İçin Başvur", desc: "Maddi imkânı kısıtlı hastalar için gönüllü doktorlarla ücretsiz video konsültasyon.", icon: HeartHandshake, target: "/pro-bono/basvur" };
+const FREE_CARE_CARD = { key: "FREE_CARE" as JourneyKey, title: "Ücretsiz Sağlık Hizmeti İçin Başvur", desc: "Maddi imkânı kısıtlı hastalar için gönüllü doktorlarla ücretsiz video konsültasyon.", icon: HeartHandshake, target: "/ucretsiz-saglik/basvur" };
 
 export function BaslaCards({ name, journey }: { name: string; journey: string | null }) {
   const [lang, setLang] = usePatientLang();

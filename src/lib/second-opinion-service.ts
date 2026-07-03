@@ -124,7 +124,7 @@ export async function autoAssignSoCase(caseId: string): Promise<string | null> {
 
 /**
  * Hoca dosyayı kabul eder/alır — ATOMİK (yalnız `status==OFFERED` iken; ilk kabul eden kazanır,
- * Pro Bono race-safe deseni). Yetki/pencere kontrolü çağırana (accept route) aittir.
+ * Ücretsiz Sağlık Hizmeti race-safe deseni). Yetki/pencere kontrolü çağırana (accept route) aittir.
  * `readyAt` = kabul anı (yazılı rapor SLA başlangıcı §11).
  */
 export async function claimSoCase(caseId: string, doctorId: string, actor: Actor): Promise<boolean> {

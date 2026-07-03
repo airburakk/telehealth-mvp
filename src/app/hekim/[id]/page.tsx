@@ -183,7 +183,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
 const BADGE_ICON: Record<string, LucideIcon> = {
   rating: Star,
   volume: Award,
-  proBono: Heart,
+  freeCare: Heart,
   responsiveness: Zap,
   reliability: ShieldCheck,
   recency: Activity,
@@ -192,7 +192,7 @@ const BADGE_ICON: Record<string, LucideIcon> = {
 const BADGE_STYLE: Record<string, string> = {
   rating: "bg-amber-50 text-amber-700 ring-amber-200",
   volume: "bg-indigo-50 text-indigo-700 ring-indigo-200",
-  proBono: "bg-rose-50 text-rose-700 ring-rose-200",
+  freeCare: "bg-rose-50 text-rose-700 ring-rose-200",
   responsiveness: "bg-violet-50 text-violet-700 ring-violet-200",
   reliability: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   recency: "bg-cyan-50 text-cyan-700 ring-cyan-200",

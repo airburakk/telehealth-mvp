@@ -11,7 +11,7 @@ interface Pub { title: string; venue: string; year: number }
 
 // M5 — İlk-giriş onboarding kapısı (client). Hesap aktifleşmesi için ZORUNLU: (1) FHIR uzmanlık &
 // işlemler — diploma/tescil no + uzmanlık belgesi + branş işlemleri & ücretleri (≥1); (2) mesleki
-// belgeler — diploma + MMSS. Sonra Pro Bono + Partner Konsültasyon opt-in toplanır. Kaydedince /doktor'a geçer.
+// belgeler — diploma + MMSS. Sonra Ücretsiz Sağlık Hizmeti + Partner Konsültasyon opt-in toplanır. Kaydedince /doktor'a geçer.
 export function OnboardingForm({
   doctorName,
   branchKey,
@@ -21,7 +21,7 @@ export function OnboardingForm({
   extraItems,
   qualification,
   soOpen,
-  initialProBono,
+  initialFreeCare,
   initialConsult,
   initialDocs,
   initialMmss,
@@ -37,13 +37,13 @@ export function OnboardingForm({
     specBoard: string | null; specYear: number | null; certifications: string[]; publications: Pub[];
   };
   soOpen: boolean;
-  initialProBono: boolean;
+  initialFreeCare: boolean;
   initialConsult: boolean;
   initialDocs: DocMeta[];
   initialMmss: MmssInitial;
 }) {
   const router = useRouter();
-  const [proBono, setProBono] = useState(initialProBono);
+  const [freeCare, setFreeCare] = useState(initialFreeCare);
   const [consult, setConsult] = useState(initialConsult);
   const [docsReady, setDocsReady] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -58,7 +58,7 @@ export function OnboardingForm({
       const r = await fetch("/api/doctor/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ proBonoOptIn: proBono, consultOptIn: consult }),
+        body: JSON.stringify({ freeCareOptIn: freeCare, consultOptIn: consult }),
       });
       const d = await r.json();
       if (!r.ok) {
@@ -161,14 +161,14 @@ export function OnboardingForm({
           </div>
         </div>
 
-        {/* Pro Bono opt-in */}
+        {/* Ücretsiz Sağlık Hizmeti opt-in */}
         <OptCard
-          active={proBono}
-          onToggle={() => setProBono((v) => !v)}
+          active={freeCare}
+          onToggle={() => setFreeCare((v) => !v)}
           icon={<HeartHandshake size={18} />}
-          title="Pro Bono — Ücretsiz Konsültasyon"
+          title="Ücretsiz Sağlık Hizmeti — Gönüllü Konsültasyon"
           desc="Sağlığa erişimi kısıtlı hastalarla gönüllü, ücretsiz video görüşmesinde buluşun."
-          benefit="Avantaj: profil itibar rozeti (“Pro Bono Gönüllüsü”), dizinlerde öne çıkma ve etik katkı görünürlüğü. Haftalık kontenjanı kendiniz belirlersiniz."
+          benefit="Avantaj: profil itibar rozeti (“Ücretsiz Hizmet Gönüllüsü”), dizinlerde öne çıkma ve etik katkı görünürlüğü. Haftalık kontenjanı kendiniz belirlersiniz."
         />
 
         {/* Partner Konsültasyon opt-in */}

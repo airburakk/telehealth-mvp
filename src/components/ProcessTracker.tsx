@@ -10,7 +10,7 @@ export interface TrackerItem {
 }
 
 // Gruplu süreç takip göstergesi (hasta-yüzü). Akış-bağımsız: çağıran `items`'ı (faz + güncel
-// alt-durum + done/active/pending) hazırlar. SO/Talk to Doctor/Pro Bono aynı bileşeni kullanır.
+// alt-durum + done/active/pending) hazırlar. SO/Talk to Doctor/Ücretsiz Sağlık Hizmeti aynı bileşeni kullanır.
 export function ProcessTracker({ items, dir = "ltr" }: { items: TrackerItem[]; dir?: "ltr" | "rtl" }) {
   return (
     <div dir={dir} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">

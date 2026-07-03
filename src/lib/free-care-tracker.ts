@@ -1,8 +1,8 @@
 import type { TrackerState } from "@/components/ProcessTracker";
 
-// Pro Bono (ücretsiz gönüllü konsültasyon) süreç takibi — Case.proBonoStatus → faz + alt-durum.
+// Ücretsiz Sağlık Hizmeti (ücretsiz gönüllü konsültasyon) süreç takibi — Case.freeCareStatus → faz + alt-durum.
 // 4 faz: Başvuru · Gönüllü doktor · Görüşme · Sonuç. ProcessTracker'a beslenir. so-tracker.ts deseni.
-export interface ProBonoTrackerPhase {
+export interface FreeCareTrackerPhase {
   key: "apply" | "match" | "consult" | "outcome";
   label: string;
   state: TrackerState;
@@ -16,7 +16,7 @@ const PHASES = [
   { key: "outcome", label: "Sonuç", done: "Süreç tamamlandı", pending: "Sonuç bekleniyor" },
 ] as const;
 
-// Aktif faz + o fazın alt-durumu (proBonoStatus bazlı). Faz < aktif → done, = aktif → active, > aktif → pending.
+// Aktif faz + o fazın alt-durumu (freeCareStatus bazlı). Faz < aktif → done, = aktif → active, > aktif → pending.
 const MAP: Record<string, { phase: number; sub: string }> = {
   WAITING: { phase: 1, sub: "Gönüllü doktor aranıyor…" },
   MATCHED: { phase: 2, sub: "Görüşmeniz başlıyor" },
@@ -29,7 +29,7 @@ const MAP: Record<string, { phase: number; sub: string }> = {
   COMPLETED: { phase: 3, sub: "Süreç tamamlandı" },
 };
 
-export function proBonoTrackerPhases(status: string): ProBonoTrackerPhase[] {
+export function freeCareTrackerPhases(status: string): FreeCareTrackerPhase[] {
   const m = MAP[status] ?? { phase: 1, sub: PHASES[1].pending };
   const allDone = status === "COMPLETED";
   return PHASES.map((p, i) => {
@@ -40,7 +40,7 @@ export function proBonoTrackerPhases(status: string): ProBonoTrackerPhase[] {
 }
 
 // i18n: bekleme sayfası bunları useT'ye besler → çok dilli (8+ dil) + RTL (v2.91).
-export const PRO_BONO_TRACKER_TEXTS: string[] = [
+export const FREE_CARE_TRACKER_TEXTS: string[] = [
   ...PHASES.flatMap((p) => [p.label, p.done, p.pending]),
   ...Object.values(MAP).map((m) => m.sub),
 ];

@@ -7,14 +7,14 @@ import { usePublicLocale, LocaleToggle } from "@/components/PublicLocale";
 
 const COPY = {
   en: {
-    badge: "Pro Bono",
+    badge: "Free Care",
     h1: "Access to health is a right, not a privilege.",
-    introA: "The AURA Pro Bono program offers ",
+    introA: "The AURA Free Care program offers ",
     strong: "free",
     introB:
       " video consultations with accredited specialists for patients with limited financial means. Our volunteer doctors set aside a certain quota for this purpose each term.",
     apply: "Apply",
-    online: "Pro Bono service is online",
+    online: "Free Care service is online",
     onlineN: "volunteer doctor(s) available now",
     offline: "No volunteer doctor is online right now",
     offlineHint: "you can apply once a doctor comes online",
@@ -23,14 +23,14 @@ const COPY = {
       "Quota is limited and applications are subject to a pre-assessment. Your application is reviewed for eligibility by our coordination team.",
   },
   tr: {
-    badge: "Pro Bono",
+    badge: "Ücretsiz Sağlık Hizmeti",
     h1: "Sağlığa erişim bir ayrıcalık değil, haktır.",
-    introA: "AURA Pro Bono programı, maddi imkânı kısıtlı hastalar için akredite uzmanlarla ",
+    introA: "AURA Ücretsiz Sağlık Hizmeti programı, maddi imkânı kısıtlı hastalar için akredite uzmanlarla ",
     strong: "ücretsiz",
     introB:
       " video konsültasyon sunar. Gönüllü doktorlarımiz her dönem belirli bir kontenjanı bu amaca ayırır.",
     apply: "Başvur",
-    online: "Pro Bono hizmeti çevrimiçi",
+    online: "Ücretsiz Sağlık Hizmeti çevrimiçi",
     onlineN: "gönüllü doktor şu an müsait",
     offline: "Şu an çevrimiçi gönüllü doktor yok",
     offlineHint: "bir doktor çevrimiçi olduğunda başvurabilirsiniz",
@@ -58,12 +58,12 @@ const POINTS = [
   },
   {
     icon: ShieldCheck,
-    en: { t: "Same standard", d: "Pro Bono consultations are also conducted with interpreting in 70 languages and full confidentiality." },
-    tr: { t: "Aynı standart", d: "Pro Bono görüşmeler de 70 dilde tercüme ve tam gizlilikle yürütülür." },
+    en: { t: "Same standard", d: "Free Care consultations are also conducted with interpreting in 70 languages and full confidentiality." },
+    tr: { t: "Aynı standart", d: "Ücretsiz sağlık hizmeti görüşmeleri de 70 dilde tercüme ve tam gizlilikle yürütülür." },
   },
 ];
 
-export function ProBonoContent() {
+export function FreeCareContent() {
   const [locale, setLocale] = usePublicLocale();
   const C = COPY[locale];
   const [online, setOnline] = useState<number | null>(null);
@@ -71,7 +71,7 @@ export function ProBonoContent() {
     let alive = true;
     const tick = async () => {
       try {
-        const r = await fetch("/api/pro-bono/status");
+        const r = await fetch("/api/free-care/status");
         if (!r.ok) return;
         const d = await r.json();
         if (alive) setOnline(typeof d.online === "number" ? d.online : 0);
@@ -99,7 +99,7 @@ export function ProBonoContent() {
       </p>
       <div className="mt-7">
         {online && online > 0 ? (
-          <Link href="/pro-bono/basvur" className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+          <Link href="/ucretsiz-saglik/basvur" className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
             {C.apply} <ArrowRight size={17} />
           </Link>
         ) : (

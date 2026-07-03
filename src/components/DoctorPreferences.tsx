@@ -6,16 +6,16 @@ import { LANGUAGES, COUNTRIES } from "@/lib/constants";
 import { Globe, MapPin, CalendarClock, Save, Loader2, Check, HeartHandshake, Inbox } from "lucide-react";
 
 // Doktorun kendi profil tercihleri — hizmet dilleri + hizmet verdiği pazarlar (ülkeler) + aylık kapasite limiti
-// + birim katılımı (Pro Bono / Konsültasyon opt-in — Ana Sayfa pencere görünürlüğü).
+// + birim katılımı (Ücretsiz Sağlık Hizmeti / Konsültasyon opt-in — Ana Sayfa pencere görünürlüğü).
 // /api/doctor/preferences'a kaydeder (yalnız oturumdaki doktorun kaydı).
 // Not: Diploma/tescil no (FHIR Practitioner.identifier) ve uzmanlık belgesi artık AcademicEditor'da
 // (qualification tek yerde toplanır) — burada düzenlenmez.
-export function DoctorPreferences({ languages, markets, capacity, proBonoOptIn, consultOptIn }: { languages: string[]; markets: string[]; capacity: number; proBonoOptIn: boolean; consultOptIn: boolean }) {
+export function DoctorPreferences({ languages, markets, capacity, freeCareOptIn, consultOptIn }: { languages: string[]; markets: string[]; capacity: number; freeCareOptIn: boolean; consultOptIn: boolean }) {
   const router = useRouter();
   const [langs, setLangs] = useState<string[]>(languages);
   const [mkts, setMkts] = useState<string[]>(markets);
   const [cap, setCap] = useState<number>(capacity);
-  const [pb, setPb] = useState<boolean>(proBonoOptIn);
+  const [pb, setPb] = useState<boolean>(freeCareOptIn);
   const [cs, setCs] = useState<boolean>(consultOptIn);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -34,7 +34,7 @@ export function DoctorPreferences({ languages, markets, capacity, proBonoOptIn, 
       const r = await fetch("/api/doctor/preferences", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ languages: langs, markets: mkts, capacity: cap, proBonoOptIn: pb, consultOptIn: cs }),
+        body: JSON.stringify({ languages: langs, markets: mkts, capacity: cap, freeCareOptIn: pb, consultOptIn: cs }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Kaydedilemedi.");
@@ -90,8 +90,8 @@ export function DoctorPreferences({ languages, markets, capacity, proBonoOptIn, 
             active={pb}
             onToggle={() => { setPb((v) => !v); setSaved(false); }}
             icon={<HeartHandshake size={16} />}
-            title="Pro Bono — ücretsiz konsültasyon"
-            desc="Ana Sayfada Pro Bono penceresi görünür; gönüllü ücretsiz görüşme alırsınız."
+            title="Ücretsiz Sağlık Hizmeti — gönüllü konsültasyon"
+            desc="Ana Sayfada Ücretsiz Sağlık Hizmeti penceresi görünür; gönüllü ücretsiz görüşme alırsınız."
           />
           <OptToggle
             active={cs}
