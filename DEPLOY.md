@@ -108,6 +108,16 @@ dormant kalır / fallback'e düşer).
   (plan retention'ına göre). Kurtarma provası: bir **dev branch**'i belirli bir ana geri sar (restore),
   bütünlüğü kontrol et. ⚠️ Yerel + üretim **aynı** Neon DB olduğundan (bkz. üst not) staging yok — bir
   an önce ayrı üretim DB + staging branch ayrımı önerilir.
+- **✅ Son PITR provası: 2026-07-03 (neonctl ile, GEÇTİ).** Runbook (kanıtlı adımlar):
+  1. `npx neonctl branches create --project-id old-credit-34860036 --name pitr-<tarih> --parent "<ISO-zaman>"`
+  2. `npx neonctl connection-string pitr-<tarih> --project-id old-credit-34860036` → salt-okuma bütünlük
+     kontrolü (tablo sayıları + son audit kaydı < restore noktası — zaman-yolculuğu kanıtı)
+  3. Gerçek felakette: Vercel'de `DATABASE_URL`/`DIRECT_URL`'i yeni branch endpoint'ine çevir + redeploy
+  4. Prova bitince branch'i sil (`neonctl branches delete`)
+  Prova sonucu: 07:00Z anına dönüş ~1 dk'da hazır; 46 vaka / 31 doktor / 6 kullanıcı / 28 audit satırı eksiksiz.
+  ⚠️ **BULGU: mevcut planda retention penceresi yalnız 6 SAAT** (öncesi reddedilir: "timestamp is before
+  retention window"). Bozulma 6 saatten geç fark edilirse PITR YETİŞMEZ → plan yükseltme (7-30 güne
+  çıkarma) değerlendirilmeli; en azından kritik değişiklik öncesi manuel dump (`pg_dump`) alınmalı.
 - **KEK escrow (KRİTİK):** `DATA_ENCRYPTION_KEK` **kaybı = tüm klinik verinin geri döndürülemez kaybı**
   (at-rest şifreli). KEK'i **en az iki bağımsız güvenli konumda** sakla (ör. parola kasası/secret manager
   + çevrimdışı şifreli kopya). Rotasyon prosedürünü yazılı tut (şu an tek-anahtar; çoklu-KEK/key-id = P1).
