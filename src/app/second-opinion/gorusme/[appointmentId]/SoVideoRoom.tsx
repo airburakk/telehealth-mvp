@@ -253,6 +253,16 @@ export function SoVideoRoom({
     const applied = new Set<number>();
     let ably: { close: () => void; live: () => boolean } | null = null;
 
+    // Ortak yerel teardown — "bye" alınınca VE unmount cleanup'ında çağrılır (çift çağrı idempotent).
+    // Sıra önemli: poll durur → PC kapanır → kamera/mikrofon bırakılır (ışık söner) → Ably en son.
+    function shutdown() {
+      polling = false;
+      pcRef.current?.close();
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      localStreamRef.current = null;
+      ably?.close();
+    }
+
     async function send(kind: string, data: unknown) {
       try {
         await signalFetch(sigTokRef, `/api/consultations/${roomId}/signal`, {
@@ -284,6 +294,7 @@ export function SoVideoRoom({
         } else if (m.kind === "ice") {
           if (data) { if (remoteDescSet) { try { await pc.addIceCandidate(data); } catch {} } else pendingIce.push(data); }
         } else if (m.kind === "bye") {
+          shutdown(); // karşı taraf kapattı → kamera/mikrofonu hemen bırak (state set'lerinden önce)
           setRemoteOn(false); setPhase("ended");
         } else if (m.kind === "transcript") {
           if (data && typeof data.text === "string" && data.text.trim()) {
@@ -367,12 +378,7 @@ export function SoVideoRoom({
       poll(pc);
     })();
 
-    return () => {
-      polling = false;
-      ably?.close();
-      pcRef.current?.close();
-      localStreamRef.current?.getTracks().forEach((t) => t.stop());
-    };
+    return shutdown; // unmount'ta da aynı teardown (bye ile tekilleştirildi)
   }, [joined, ended, roomId, selfRole]);
 
   function toggleCam() { const t = localStreamRef.current?.getVideoTracks()[0]; if (t) { t.enabled = !t.enabled; setCamOn(t.enabled); } }

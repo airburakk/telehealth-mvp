@@ -325,6 +325,28 @@ export function ConsultationRoom({
     const applied = new Set<number>();
     let ably: { close: () => void; live: () => boolean } | null = null;
 
+    // Ortak yerel teardown — unmount cleanup'ında çağrılır (çift çağrı idempotent).
+    // Sıra önemli: poll durur → PC kapanır → kamera/mikrofon bırakılır (ışık söner) → Ably en son.
+    let byeDrainTimer: ReturnType<typeof setTimeout> | null = null;
+    function shutdown() {
+      if (byeDrainTimer) { clearTimeout(byeDrainTimer); byeDrainTimer = null; }
+      polling = false;
+      pcRef.current?.close();
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      localStreamRef.current = null;
+      ably?.close();
+    }
+    // "bye" alınınca: medya HEMEN bırakılır (kamera ışığı söner) ama poll 5 sn daha yaşar —
+    // transkript PHI gereği yalnız DB-poll ile taşınır; Ably bye'ı anlık ilettiğinden son
+    // transkript satırları henüz çekilmemiş olabilir (drain penceresi, sonra poll durur).
+    function shutdownAfterDrain() {
+      pcRef.current?.close();
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      localStreamRef.current = null;
+      ably?.close();
+      if (!byeDrainTimer) byeDrainTimer = setTimeout(() => { polling = false; }, 5000);
+    }
+
     async function send(kind: string, data: unknown) {
       try {
         await signalFetch(sigTokRef, `/api/consultations/${consultationId}/signal`, {
@@ -357,6 +379,7 @@ export function ConsultationRoom({
         } else if (m.kind === "ice") {
           if (data) { if (remoteDescSet) { try { await pc.addIceCandidate(data); } catch {} } else pendingIce.push(data); }
         } else if (m.kind === "bye") {
+          shutdownAfterDrain(); // karşı taraf kapattı → kamera/mikrofon hemen; poll 5 sn drain (transkript kuyruğu)
           setRemoteOn(false); setPhase("ended");
         } else if (m.kind === "transcript") {
           if (data && typeof data.text === "string" && data.text.trim()) {
@@ -455,12 +478,7 @@ export function ConsultationRoom({
       poll(pc);
     })();
 
-    return () => {
-      polling = false;
-      ably?.close();
-      pcRef.current?.close();
-      localStreamRef.current?.getTracks().forEach((t) => t.stop());
-    };
+    return shutdown; // unmount'ta da aynı teardown (bye ile tekilleştirildi)
   }, [consultationId, selfRole, status, joined, retry]);
 
   function toggleCam() { const t = localStreamRef.current?.getVideoTracks()[0]; if (t) { t.enabled = !t.enabled; setCamOn(t.enabled); } }
@@ -648,8 +666,9 @@ export function ConsultationRoom({
           {errMsg && <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">{errMsg}</div>}
 
           {/* AI Canlı Tercüman (Gemini) — yalnız diller farklıysa (aynı dilde gereksiz + karşı sesi kısar);
-              ilk konuşma sesinde otomatik başlar (başlat düğmesi yok). */}
-          {joined && langsDiffer && (
+              ilk konuşma sesinde otomatik başlar (başlat düğmesi yok). Görüşme bitince (bye dahil)
+              unmount edilir → Gemini oturumu + AudioContext'ler kapanır. */}
+          {joined && langsDiffer && phase !== "ended" && (
             <LiveInterpreter
               lang={uiLang}
               targetLang={isDoctor ? "tr" : (SPEECH_LANG[caseData.language]?.split("-")[0] ?? "en")}
