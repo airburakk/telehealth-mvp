@@ -189,10 +189,10 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 |------|-------|
 | `triage` | Semptom → branş/aciliyet (Claude + kural fallback) |
 | `cases` | Vaka CRUD + `/[id]/{consult,coding,labs,analyze-docs,sentinel-consult,icapci-request,appointment,terminate}` |
-| `consultations` | Görüşme not/bitiş + `/[id]/signal` (WebRTC sinyalleşme) |
+| `consultations` | Görüşme not/bitiş + `/[id]/signal` (WebRTC sinyalleşme — **Ably realtime birincil + DB poll yedek**; transkript DB-only/PHI) |
 | `ai` | `soap` · `translate` · `discharge` (Claude) |
-| `i18n` | Arayüz çeviri (Translation cache) |
-| `realtime` | `token` (Gemini Live) · `ice` (Metered TURN credentials) |
+| `i18n` | Arayüz çeviri (Translation cache) + `clinical` (klinik PHI de-id çeviri — önbelleksiz, maskeli) |
+| `realtime` | `token` (Gemini Live) · `ice` (Metered TURN credentials) · **`ably-token`** (WebRTC sinyalleşme — kanala-özel yalnız-subscribe token, API anahtarı sunucuda) |
 | `consent` · `access-log` | KVKK onam + `proof` (RFC 3161 kanıt) · erişim denetim kaydı (audit) |
 | `clinical` | `duty` — klinik nöbet/müsaitlik |
 | `second-opinion` | İkinci Görüş state machine işlemleri |
@@ -211,13 +211,14 @@ src/
   app/                       # 26 rota dizini (yukarıdaki tablo) + api/ (22 grup)
   components/                # 53 bileşen (ConsultationRoom, ConsultationChat, DoctorSignupForm,
                              #   LiveInterpreter, DicomViewer, ProcessTracker, NotificationBell, useT, ...)
-  lib/                       # 52 modül:
+  lib/                       # ~58 modül:
                              #   db · auth/session · oauth · doctor-signup · doctor-activation
                              #   triage(+ -llm,-questions) · ai-clinical · ai-minimize · fhir(+ -http)
                              #   second-opinion(+ -service) · pro-bono(+ tracker'lar)
-                             #   clinical-duty · consent(+ -config) · timestamp · audit · i18n · ownership
+                             #   clinical-duty · consent(+ -config) · timestamp (audit/onam mühür v2 keyed-HMAC) · audit · i18n · ownership
                              #   notify · push · ice · billing/pricing/fxrate/procedures · postop · share
-                             #   storage (object storage soyutlaması — Vercel Blob) · rate-limit · api-auth ...
+                             #   storage (Vercel Blob) · rate-limit · api-auth
+                             #   signal-access/-token/-poll · ably-server/-client (WebRTC sinyalleşme + Ably realtime) ...
   data/                      # coding.ts (ICD-10/LOINC/SNOMED) · procedures.json · second-opinion-docs.ts
 tests/                       # vitest unit/ (saf mantık, DB yok) + integration/ (Neon dev branch) · Playwright e2e/ (3 akış)
 prisma/
