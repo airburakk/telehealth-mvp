@@ -26,12 +26,14 @@ const TEXTS = [
   "İşlem yapılamadı, lütfen tekrar deneyin.",
 ];
 
-type JourneyKey = "GENERAL" | "SECOND_OPINION" | "FREE_CARE";
+type JourneyKey = "GENERAL" | "SECOND_OPINION" | "FREE_CARE" | "HEALTH_TOURISM";
 
 const CARDS: { key: JourneyKey; title: string; desc: string; icon: typeof Stethoscope; target: string }[] = [
   { key: "GENERAL", title: "Branş Doktoru İle Görüş", desc: "Şikayetinizi anlatın; yapay zekâ destekli ön değerlendirmeyle uygun branş doktoruna bağlanın.", icon: Stethoscope, target: "/triyaj" },
   { key: "SECOND_OPINION", title: "İkinci Görüş Al", desc: "Mevcut tanı ve tedavi planınız için bağımsız uzmandan yazılı rapor + video görüşme alın.", icon: FileSearch, target: "/second-opinion/basvur" },
 ];
+
+const TOURISM_CARD = { key: "HEALTH_TOURISM" as JourneyKey, title: "Sağlık Turizmini Doktorunla Planla", desc: "Tedavi, seyahat ve konaklamayı doktorunuzla birlikte uçtan uca planlayın.", icon: Plane, target: "/saglik-turizmi" };
 
 const FREE_CARE_CARD = { key: "FREE_CARE" as JourneyKey, title: "Ücretsiz Sağlık Hizmeti İçin Başvur", desc: "Maddi imkânı kısıtlı hastalar için gönüllü doktorlarla ücretsiz video konsültasyon.", icon: HeartHandshake, target: "/ucretsiz-saglik/basvur" };
 
@@ -83,13 +85,10 @@ export function BaslaCards({ name, journey }: { name: string; journey: string | 
             onClick={() => choose(c.key, c.target)} />
         ))}
 
-        {/* Sağlık Turizmi — "Yakında" (tasarım ayrı iş; karar 2026-07-03) */}
-        <div className="relative rounded-2xl border border-slate-200 bg-slate-50 p-5 opacity-70">
-          <span className="absolute end-4 top-4 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">{t("Yakında")}</span>
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-slate-200 text-slate-400"><Plane size={20} /></span>
-          <h2 className="mt-3 text-base font-semibold text-slate-400">{t("Sağlık Turizmini Doktorunla Planla")}</h2>
-          <p className="mt-1 text-sm text-slate-400">{t("Tedavi, seyahat ve konaklamayı doktorunuzla birlikte uçtan uca planlayın.")}</p>
-        </div>
+        <ChoiceCard icon={TOURISM_CARD.icon} title={t(TOURISM_CARD.title)} desc={t(TOURISM_CARD.desc)}
+          current={journey === TOURISM_CARD.key ? t("Mevcut seçiminiz") : null}
+          busy={busy === TOURISM_CARD.key} disabled={busy !== null}
+          onClick={() => choose(TOURISM_CARD.key, TOURISM_CARD.target)} />
 
         <ChoiceCard icon={FREE_CARE_CARD.icon} title={t(FREE_CARE_CARD.title)} desc={t(FREE_CARE_CARD.desc)}
           current={journey === FREE_CARE_CARD.key ? t("Mevcut seçiminiz") : null}

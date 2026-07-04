@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/api-auth";
 
 // POST /api/patient/journey — /basla seçimini User.patientJourney'e yazar (her seçimde üzerine).
 // Nav bileşimi bu değere göre kurulur (lib/nav.ts). Yalnız hasta (+ADMIN test) yazabilir.
-const JOURNEYS = new Set(["GENERAL", "SECOND_OPINION", "FREE_CARE"]);
+const JOURNEYS = new Set(["GENERAL", "SECOND_OPINION", "FREE_CARE", "HEALTH_TOURISM"]);
 
 export async function POST(req: Request) {
   const { user, error } = await requireUser();

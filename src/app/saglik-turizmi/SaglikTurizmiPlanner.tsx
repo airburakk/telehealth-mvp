@@ -1,0 +1,211 @@
+"use client";
+
+// Sağlık Turizmi hasta-yüzü planlayıcı (Faz 1) — tercih + ENDİKATİF önizleme (bağlayıcı DEĞİL).
+// Fiyat motoru lib/pricing.ts (doktor-yüzü PackageBuilder ile AYNI); önizlemede doktor işlemi yok →
+// branş taban fiyatı kullanılır. Kesin fiyat = doktor değerlendirmesi sonrası (klinik-önce; disclaimer zorunlu).
+import { useMemo, useState } from "react";
+import { Plane, Hotel, Stethoscope, ShieldCheck, Sparkles, ArrowRight, Info, Loader2 } from "lucide-react";
+import { useT } from "@/components/useT";
+import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
+import { langDir, countryFlag, countryName } from "@/lib/constants";
+import { computePackage, formatUSD, TIER_PRESETS, type PackageSelection, type Tier } from "@/lib/pricing";
+
+// Turizm-ilgili branşlar (lib/pricing.ts TREATMENT_BASE anahtarlarıyla eşleşir → gerçek taban fiyat).
+const BRANCHES = ["Saç Ekimi", "Diş", "Estetik", "Göz", "Tüp Bebek", "Ortopedi", "Kardiyoloji", "Onkoloji", "Genel Cerrahi", "Nöroşirürji", "Dahiliye"];
+// Kaynak ülkeler (lib/pricing.ts FLIGHT_BY_COUNTRY ile hizalı).
+const COUNTRIES = ["DZ", "LY", "RU", "AZ", "KZ", "KG", "TR"];
+const TIERS: Tier[] = ["Ekonomik", "Standart", "Premium"];
+const NIGHT_OPTIONS = [3, 5, 7, 10, 14];
+
+const TEXTS = [
+  "Sağlık Turizmini Planla",
+  "Tedavi, seyahat ve konaklamayı tek yerden tahmini olarak planlayın; kesin planı doktorunuzla birlikte netleştirin.",
+  "Tedavi alanı",
+  "Nereden geliyorsunuz?",
+  "Paket seviyesi",
+  "Konaklama süresi",
+  "gece",
+  "Tahmini paket özeti",
+  "Tedavi",
+  "Seyahat & Konaklama",
+  "Sigorta",
+  "Platform hizmet bedeli",
+  "Tahmini toplam",
+  "Bu bir tahmini (endikatif) fiyattır — kesin fiyat, doktor değerlendirmesi ve tıbbi planınız netleştikten sonra belirlenir. Ödeme ve rezervasyon bu adımda yapılmaz.",
+  "Doktor görüşmesiyle devam et",
+  "Görüşmede tıbbi durumunuz değerlendirilir, tedavi planı ve kesin paket fiyatı oluşturulur.",
+  "Ekonomik",
+  "Standart",
+  "Premium",
+  "Neler dahil?",
+  "Tıbbi tedavi",
+  "Otel + uçuş + transfer",
+  "Zorunlu sağlık turizmi sigortası",
+  "Tıbbi tercüman (Premium)",
+];
+
+const TIER_LABEL: Record<Tier, string> = { Ekonomik: "Ekonomik", Standart: "Standart", Premium: "Premium" };
+
+export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
+  const [lang, setLang] = usePatientLang();
+  const texts = useMemo(() => TEXTS, []); // sabit referans — useT yarış dersi (v3.5)
+  const { t } = useT(lang, texts);
+  const dir = langDir(lang);
+
+  const [branch, setBranch] = useState(BRANCHES[0]);
+  const [country, setCountry] = useState(COUNTRIES[0]);
+  const [tier, setTier] = useState<Tier>("Standart");
+  const [nights, setNights] = useState(7);
+  const [busy, setBusy] = useState(false);
+
+  const quote = useMemo(() => {
+    const p = TIER_PRESETS[tier];
+    const selection: PackageSelection = {
+      branch, country, tier,
+      hotelStars: (p.hotelStars ?? 4) as 4 | 5,
+      hospitalType: p.hospitalType ?? "Özel",
+      nights,
+      translator: p.translator ?? false,
+      insuranceLevel: p.insuranceLevel,
+      insuranceExtended: p.insuranceExtended ?? false,
+      insuranceMalpractice: p.insuranceMalpractice ?? false,
+    };
+    return computePackage(selection, undefined, rate); // doktor işlemi YOK → branş taban fiyatı
+  }, [branch, country, tier, nights, rate]);
+
+  // Kategori-düzeyi döküm (iç split değil — güven + sadelik; tasarım kararı).
+  const cats = useMemo(() => {
+    const sum = (keys: string[]) => quote.items.filter((i) => keys.includes(i.key) || (i.key.startsWith("tx-") && keys.includes("treatment"))).reduce((a, b) => a + b.amount, 0);
+    return {
+      tedavi: sum(["treatment"]),
+      seyahat: sum(["hotel", "flight", "transfer", "translator"]),
+      sigorta: sum(["insurance"]),
+      platform: quote.platformFee,
+    };
+  }, [quote]);
+
+  async function continueToConsult() {
+    setBusy(true);
+    // Journey'i turizm olarak işaretle (doğrudan gelenler için), sonra triyaja geç (Faz 1: klinik giriş).
+    try { await fetch("/api/patient/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ journey: "HEALTH_TOURISM" }) }); } catch { /* önemsiz */ }
+    window.location.assign("/triyaj");
+  }
+
+  return (
+    <div dir={dir} className="mx-auto max-w-5xl px-5 py-8">
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0]/10 text-[#0EA5B2]"><Plane size={22} /></span>
+          <h1 className="mt-3 font-serif text-2xl font-semibold text-[#101010]">{t("Sağlık Turizmini Planla")}</h1>
+          <p className="mt-1 max-w-xl text-sm text-slate-500">{t("Tedavi, seyahat ve konaklamayı tek yerden tahmini olarak planlayın; kesin planı doktorunuzla birlikte netleştirin.")}</p>
+        </div>
+        <PatientLangSelect lang={lang} onChange={setLang} />
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+        {/* Sol: tercih formu */}
+        <div className="space-y-5">
+          <Field icon={<Stethoscope size={15} />} label={t("Tedavi alanı")}>
+            <div className="flex flex-wrap gap-2">
+              {BRANCHES.map((b) => (
+                <Chip key={b} active={branch === b} onClick={() => setBranch(b)}>{b}</Chip>
+              ))}
+            </div>
+          </Field>
+
+          <Field icon={<Plane size={15} />} label={t("Nereden geliyorsunuz?")}>
+            <div className="flex flex-wrap gap-2">
+              {COUNTRIES.map((c) => (
+                <Chip key={c} active={country === c} onClick={() => setCountry(c)}>{countryFlag(c)} {countryName(c)}</Chip>
+              ))}
+            </div>
+          </Field>
+
+          <Field icon={<Sparkles size={15} />} label={t("Paket seviyesi")}>
+            <div className="grid grid-cols-3 gap-2">
+              {TIERS.map((ti) => (
+                <button key={ti} type="button" onClick={() => setTier(ti)}
+                  className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${tier === ti ? "border-[#0EA5B2] bg-[#14C3D0]/10 text-[#0EA5B2]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}>
+                  {t(TIER_LABEL[ti])}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          <Field icon={<Hotel size={15} />} label={t("Konaklama süresi")}>
+            <div className="flex flex-wrap gap-2">
+              {NIGHT_OPTIONS.map((n) => (
+                <Chip key={n} active={nights === n} onClick={() => setNights(n)}>{n} {t("gece")}</Chip>
+              ))}
+            </div>
+          </Field>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><ShieldCheck size={14} /> {t("Neler dahil?")}</div>
+            <ul className="mt-2 grid gap-1.5 text-sm text-slate-600 sm:grid-cols-2">
+              <li className="flex items-center gap-1.5"><Stethoscope size={14} className="text-[#0EA5B2]" /> {t("Tıbbi tedavi")}</li>
+              <li className="flex items-center gap-1.5"><Plane size={14} className="text-[#0EA5B2]" /> {t("Otel + uçuş + transfer")}</li>
+              <li className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-[#0EA5B2]" /> {t("Zorunlu sağlık turizmi sigortası")}</li>
+              {tier === "Premium" && <li className="flex items-center gap-1.5"><Sparkles size={14} className="text-[#0EA5B2]" /> {t("Tıbbi tercüman (Premium)")}</li>}
+            </ul>
+          </div>
+        </div>
+
+        {/* Sağ: tahmini özet (sticky) */}
+        <aside className="lg:sticky lg:top-6 h-fit space-y-4">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t("Tahmini paket özeti")}</div>
+            <dl className="mt-3 space-y-2 text-sm">
+              <Row label={t("Tedavi")} value={formatUSD(cats.tedavi)} />
+              <Row label={t("Seyahat & Konaklama")} value={formatUSD(cats.seyahat)} />
+              <Row label={t("Sigorta")} value={formatUSD(cats.sigorta)} />
+              <Row label={t("Platform hizmet bedeli")} value={formatUSD(cats.platform)} />
+            </dl>
+            <div className="mt-4 flex items-baseline justify-between border-t border-slate-100 pt-3">
+              <span className="text-sm font-semibold text-slate-700">{t("Tahmini toplam")}</span>
+              <span className="font-serif text-2xl font-bold text-[#0EA5B2]">{formatUSD(quote.total)}</span>
+            </div>
+
+            <div className="mt-4 flex gap-2 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-800 ring-1 ring-amber-200">
+              <Info size={15} className="mt-0.5 shrink-0" />
+              <span>{t("Bu bir tahmini (endikatif) fiyattır — kesin fiyat, doktor değerlendirmesi ve tıbbi planınız netleştikten sonra belirlenir. Ödeme ve rezervasyon bu adımda yapılmaz.")}</span>
+            </div>
+
+            <button type="button" onClick={continueToConsult} disabled={busy}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0EA5B2] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0c94a0] disabled:opacity-60">
+              {busy ? <Loader2 size={16} className="animate-spin" /> : <>{t("Doktor görüşmesiyle devam et")} <ArrowRight size={16} className="rtl:rotate-180" /></>}
+            </button>
+            <p className="mt-2 text-center text-[11px] leading-relaxed text-slate-400">{t("Görüşmede tıbbi durumunuz değerlendirilir, tedavi planı ve kesin paket fiyatı oluşturulur.")}</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function Field({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">{icon} {label}</div>
+      {children}
+    </div>
+  );
+}
+
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick}
+      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${active ? "border-[#0EA5B2] bg-[#14C3D0]/10 text-[#0EA5B2]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}>
+      {children}
+    </button>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <dt className="text-slate-500">{label}</dt>
+      <dd className="font-medium text-slate-800">{value}</dd>
+    </div>
+  );
+}
