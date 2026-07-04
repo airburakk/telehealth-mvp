@@ -2,23 +2,25 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { COUNTRIES, LANGUAGES, urgencyStyle, langDir } from "@/lib/constants";
+import { COUNTRIES, LANGUAGES, urgencyStyle } from "@/lib/constants";
 import { PreConsultGate, PRECONSULT_TEXTS } from "@/components/PreConsultGate";
 import { BRANCHES } from "@/lib/triage";
 import { DynamicTriageQuestions } from "@/components/DynamicTriageQuestions";
 import { questionTexts } from "@/lib/triage-questions";
 import { requiredDocs } from "@/lib/required-docs";
 import { useT } from "@/components/useT";
+import { usePatientLang } from "@/components/PatientLocale";
+import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { AuraSpinner } from "@/components/PortamedLogo";
 import type { Billing } from "@/lib/billing";
 import {
   UserRound, MessageSquareText, Paperclip, ClipboardCheck, ListChecks, Stethoscope,
-  Sparkles, Upload, X, ShieldCheck, Loader2, ArrowRight, ArrowLeft, FileText, Globe, AlertTriangle,
+  Sparkles, Upload, X, ShieldCheck, Loader2, ArrowRight, ArrowLeft, FileText, AlertTriangle,
 } from "lucide-react";
 
 // Hasta arayüzü çok dilli: sihirbazın tüm statik metinleri (çeviri /api/i18n cache'inden gelir)
 const STATIC_UI = [
-  "Triyaj · Ön Değerlendirme", "Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.",
+  "Branş Doktoru", "Triyaj · Ön Değerlendirme", "Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.",
   "Birkaç adımda şikayetinizi anlatın; sistem sizi doğru uzmana yönlendirsin.",
   "Arayüz dili", "Hasta", "Şikayet", "Branş Soruları", "Belgeler", "Özet",
   "Hasta Adı (veya yakını)", "Örn. Karim B.", "Ülke", "Dil",
@@ -155,7 +157,7 @@ export default function TriyajPage() {
   const missingRequired = branchDocs.filter((d) => d.required && !providedDocs[d.key]);
 
   // Arayüz dili — hasta dil seçince otomatik eşitlenir; üstteki seçiciden de değiştirilebilir.
-  const [uiLang, setUiLang] = useState("Türkçe");
+  const [uiLang, setUiLang] = usePatientLang(); // /basla'da seçilen dil (air_lang) taşınır
   const tTexts = useMemo(
     () => [...STATIC_UI, ...PRECONSULT_TEXTS, ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
     [effectiveBranch, analysis?.reasoning]
@@ -216,49 +218,19 @@ export default function TriyajPage() {
 
   const u = analysis ? urgencyStyle(analysis.urgency) : null;
 
-  const langSelect = (
-    <label className="inline-flex shrink-0 items-center gap-1.5 text-xs text-slate-500">
-      <Globe size={14} />
-      <span className="hidden sm:inline">{t("Arayüz dili")}</span>
-      <select
-        value={uiLang}
-        onChange={(e) => setUiLang(e.target.value)}
-        className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-[#14C3D0]"
-      >
-        {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
-      </select>
-    </label>
-  );
-
   // Ön-konsültasyon kapısı: ücret bilgisi + sigorta/ödeme geçilmeden triyaj başlamaz
   if (!billing) {
     return (
-      <div dir={langDir(uiLang)} className="mx-auto max-w-2xl px-5 py-10">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-[#101010]">{t("Triyaj · Ön Değerlendirme")}</h1>
-            <p className="mt-1 text-sm text-slate-500">{t("Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.")}</p>
-          </div>
-          {langSelect}
-        </div>
+      <JourneyIntakeShell icon={Stethoscope} eyebrow={t("Branş Doktoru")} title={t("Triyaj · Ön Değerlendirme")} intro={t("Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.")} lang={uiLang} onLangChange={setUiLang} journey="GENERAL" stage={1}>
         <div className="mt-7">
           <PreConsultGate onCleared={setBilling} t={t} />
         </div>
-      </div>
+      </JourneyIntakeShell>
     );
   }
 
   return (
-    <div dir={langDir(uiLang)} className="mx-auto max-w-2xl px-5 py-10">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-[#101010]">{t("Triyaj · Ön Değerlendirme")}</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {t("Birkaç adımda şikayetinizi anlatın; sistem sizi doğru uzmana yönlendirsin.")}
-          </p>
-        </div>
-        {langSelect}
-      </div>
+    <JourneyIntakeShell icon={Stethoscope} eyebrow={t("Branş Doktoru")} title={t("Triyaj · Ön Değerlendirme")} intro={t("Birkaç adımda şikayetinizi anlatın; sistem sizi doğru uzmana yönlendirsin.")} lang={uiLang} onLangChange={setUiLang} journey="GENERAL" stage={1}>
       <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200">
         <ShieldCheck size={15} />
         {billing.status === "INSURED"
@@ -551,7 +523,7 @@ export default function TriyajPage() {
         .inp { width:100%; border:1px solid #cbd5e1; border-radius:0.6rem; padding:0.55rem 0.75rem; font-size:0.9rem; outline:none; background:#fff; }
         .inp:focus { border-color:#14C3D0; box-shadow:0 0 0 3px rgba(20,195,208,0.15); }
       `}</style>
-    </div>
+    </JourneyIntakeShell>
   );
 }
 

@@ -6,8 +6,9 @@
 import { useMemo, useState } from "react";
 import { Plane, Hotel, Stethoscope, ClipboardList, ShieldCheck, Sparkles, ArrowRight, Info, Loader2 } from "lucide-react";
 import { useT } from "@/components/useT";
-import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
-import { langDir, countryFlag, countryName } from "@/lib/constants";
+import { usePatientLang } from "@/components/PatientLocale";
+import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
+import { countryFlag, countryName } from "@/lib/constants";
 import { computePackage, formatUSD, TIER_PRESETS, type PackageSelection, type Tier } from "@/lib/pricing";
 
 // Turizm-ilgili branşlar (lib/pricing.ts TREATMENT_BASE anahtarlarıyla eşleşir → gerçek taban fiyat).
@@ -18,6 +19,7 @@ const TIERS: Tier[] = ["Ekonomik", "Standart", "Premium"];
 const NIGHT_OPTIONS = [3, 5, 7, 10, 14];
 
 const TEXTS = [
+  "Sağlık Turizmi",
   "Sağlık Turizmini Planla",
   "Tedavi, seyahat ve konaklamayı tek yerden tahmini olarak planlayın; kesin planı doktorunuzla birlikte netleştirin.",
   "Tedavi alanı",
@@ -54,7 +56,6 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
   const [lang, setLang] = usePatientLang();
   const texts = useMemo(() => TEXTS, []); // sabit referans — useT yarış dersi (v3.5)
   const { t } = useT(lang, texts);
-  const dir = langDir(lang);
 
   const [branch, setBranch] = useState(BRANCHES[0]);
   const [country, setCountry] = useState(COUNTRIES[0]);
@@ -109,17 +110,9 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
   }
 
   return (
-    <div dir={dir} className="mx-auto max-w-5xl px-5 py-8">
-      <div className="mb-6 flex items-start justify-between gap-3">
-        <div>
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0]/10 text-[#0EA5B2]"><Plane size={22} /></span>
-          <h1 className="mt-3 font-serif text-2xl font-semibold text-[#101010]">{t("Sağlık Turizmini Planla")}</h1>
-          <p className="mt-1 max-w-xl text-sm text-slate-500">{t("Tedavi, seyahat ve konaklamayı tek yerden tahmini olarak planlayın; kesin planı doktorunuzla birlikte netleştirin.")}</p>
-        </div>
-        <PatientLangSelect lang={lang} onChange={setLang} />
-      </div>
+    <JourneyIntakeShell icon={Plane} eyebrow={t("Sağlık Turizmi")} title={t("Sağlık Turizmini Planla")} intro={t("Tedavi, seyahat ve konaklamayı tek yerden tahmini olarak planlayın; kesin planı doktorunuzla birlikte netleştirin.")} lang={lang} onLangChange={setLang} wide journey="HEALTH_TOURISM" stage={1}>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+      <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_360px]">
         {/* Sol: tercih formu */}
         <div className="space-y-5">
           <Field icon={<ClipboardList size={15} />} label={t("Sağlık durumunuz veya hedefiniz nedir?")}>
@@ -204,7 +197,7 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
           </div>
         </aside>
       </div>
-    </div>
+    </JourneyIntakeShell>
   );
 }
 

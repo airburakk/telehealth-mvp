@@ -2,12 +2,15 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { COUNTRIES, LANGUAGES, langDir } from "@/lib/constants";
+import { COUNTRIES, LANGUAGES } from "@/lib/constants";
 import { useT } from "@/components/useT";
-import { HeartHandshake, Globe, Loader2, ArrowRight } from "lucide-react";
+import { usePatientLang } from "@/components/PatientLocale";
+import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
+import { HeartHandshake, Loader2, ArrowRight } from "lucide-react";
 
 // Ücretsiz Sağlık Hizmeti ön-triyaj — kısa, ücret kapısı YOK. Başvuru → eşleşme varsa görüşme, yoksa bekleme odası.
 const STATIC_UI = [
+  "Ücretsiz Sağlık Hizmeti",
   "Ücretsiz Sağlık Hizmeti Başvurusu",
   "Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.",
   "Arayüz dili", "Hasta Adı (veya yakını)", "Örn. Amina B.", "Ülke", "Dil",
@@ -27,7 +30,7 @@ export default function FreeCareApplyPage() {
   const [patientName, setPatientName] = useState("");
   const [country, setCountry] = useState("TR");
   const [language, setLanguage] = useState("Türkçe");
-  const [uiLang, setUiLang] = useState("Türkçe");
+  const [uiLang, setUiLang] = usePatientLang(); // /basla'da seçilen dil (air_lang) taşınır
   const [symptoms, setSymptoms] = useState("");
   const [durationText, setDurationText] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -75,25 +78,7 @@ export default function FreeCareApplyPage() {
   }
 
   return (
-    <div dir={langDir(uiLang)} className="mx-auto max-w-2xl px-5 py-10">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <span className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0]/10 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#0E8A95]">
-            <HeartHandshake size={14} /> Ücretsiz Sağlık Hizmeti
-          </span>
-          <h1 className="mt-3 text-2xl font-bold text-[#101010]">{t("Ücretsiz Sağlık Hizmeti Başvurusu")}</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {t("Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.")}
-          </p>
-        </div>
-        <label className="inline-flex shrink-0 items-center gap-1.5 text-xs text-slate-500">
-          <Globe size={14} />
-          <span className="hidden sm:inline">{t("Arayüz dili")}</span>
-          <select value={uiLang} onChange={(e) => setUiLang(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-[#14C3D0]">
-            {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
-          </select>
-        </label>
-      </div>
+    <JourneyIntakeShell icon={HeartHandshake} eyebrow={t("Ücretsiz Sağlık Hizmeti")} title={t("Ücretsiz Sağlık Hizmeti Başvurusu")} intro={t("Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.")} lang={uiLang} onLangChange={setUiLang} journey="FREE_CARE" stage={1}>
 
       <div className="mt-7 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <Field label={t("Hasta Adı (veya yakını)")}>
@@ -169,7 +154,7 @@ export default function FreeCareApplyPage() {
         .inp { width:100%; border:1px solid #cbd5e1; border-radius:0.6rem; padding:0.55rem 0.75rem; font-size:0.9rem; outline:none; background:#fff; }
         .inp:focus { border-color:#14C3D0; box-shadow:0 0 0 3px rgba(20,195,208,0.15); }
       `}</style>
-    </div>
+    </JourneyIntakeShell>
   );
 }
 
