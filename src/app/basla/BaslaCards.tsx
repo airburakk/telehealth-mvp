@@ -7,11 +7,14 @@ import { useMemo, useState } from "react";
 import { Loader2, Stethoscope, FileSearch, Plane, HeartHandshake, ArrowRight } from "lucide-react";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
+import { AuthSteps } from "@/components/AuthSteps";
 import { langDir } from "@/lib/constants";
 
 const TEXTS = [
   "Nasıl ilerlemek istersiniz?",
   "Hoş geldiniz",
+  "Giriş",
+  "Yol seçimi",
   "Size uygun yolu seçin — seçiminizi daha sonra değiştirebilirsiniz.",
   "Branş Doktoru İle Görüş",
   "Şikayetinizi anlatın; yapay zekâ destekli ön değerlendirmeyle uygun branş doktoruna bağlanın.",
@@ -66,6 +69,7 @@ export function BaslaCards({ name, journey }: { name: string; journey: string | 
 
   return (
     <div dir={dir}>
+      <AuthSteps active={1} labels={[t("Giriş"), t("Yol seçimi")]} />
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
           <p className="text-sm text-slate-500">{t("Hoş geldiniz")}, {name}</p>
