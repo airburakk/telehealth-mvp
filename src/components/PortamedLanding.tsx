@@ -60,23 +60,19 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
             <div className="absolute" style={{ right: "16%", top: "30%", width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle, rgba(95,211,226,.28) 0%, rgba(95,211,226,0) 70%)", filter: "blur(44px)", animation: "auraFloat2 14s ease-in-out infinite" }} />
           </div>
 
-          {/* Nav — logo · Nasıl Çalışır · 8-dil seçici · Kurumsal Giriş · Doktorla Görüş (CTA) */}
+          {/* Nav — logo · 8-dil seçici (renkli oval pill). Doktorla Görüş + Nasıl Çalışır kaldırıldı;
+              Kurumsal Giriş yalnız footer'da (aşağıda). */}
           <header className="relative z-10 flex items-center justify-between gap-3 px-6 py-5 sm:gap-6 sm:px-12" style={{ borderBottom: "1px solid rgba(255,255,255,.08)" }}>
             <Link href="/" className="shrink-0"><PortamedLogo size={26} ink="#FFFFFF" /></Link>
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 sm:gap-5">
-              <a href="#how" className="hidden text-[14px] font-medium transition-colors hover:text-[#14C3D0] sm:block" style={{ color: "rgba(255,255,255,.72)" }}>{C.nav.how}</a>
-              <select
-                value={locale}
-                onChange={(e) => switchLocale(e.target.value as LandingLocale)}
-                aria-label="Language"
-                className="rounded-lg px-2 py-1.5 text-[13px] font-medium outline-none"
-                style={{ background: "rgba(255,255,255,.08)", color: "#fff", border: "1px solid rgba(255,255,255,.14)" }}
-              >
-                {LANDING_LOCALES.map((l) => <option key={l.code} value={l.code} style={{ color: "#101010" }}>{l.native}</option>)}
-              </select>
-              <Link href="/kurumsal-giris" className="hidden text-[14px] font-medium transition-colors hover:text-[#14C3D0] sm:block" style={{ color: "rgba(255,255,255,.72)" }}>{C.nav.corporate}</Link>
-              <Link href={startHref} className={`${pill} px-5 py-[11px] text-[14px] text-[#101010] hover:brightness-110`} style={{ background: T.teal }}>{C.nav.cta}</Link>
-            </div>
+            <select
+              value={locale}
+              onChange={(e) => switchLocale(e.target.value as LandingLocale)}
+              aria-label="Language"
+              className="shrink-0 cursor-pointer rounded-full px-4 py-[10px] text-[14px] font-semibold outline-none transition hover:brightness-110"
+              style={{ background: T.teal, color: "#101010" }}
+            >
+              {LANDING_LOCALES.map((l) => <option key={l.code} value={l.code} style={{ background: "#fff", color: "#101010" }}>{l.native}</option>)}
+            </select>
           </header>
 
           {/* Hero — başlık + paragraf + TEK CTA + istatistikler + showcase */}
