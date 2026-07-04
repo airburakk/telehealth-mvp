@@ -3,12 +3,32 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { canAccessCase } from "@/lib/ownership";
 import { PackageBuilder, type PackageInitial } from "@/components/PackageBuilder";
-import { type RecommendedTreatment } from "@/lib/pricing";
+import { TIER_PRESETS, type RecommendedTreatment } from "@/lib/pricing";
 import { getTryPerUsd } from "@/lib/fxrate";
 import { decryptField } from "@/lib/crypto";
 import { ArrowLeft, Luggage } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+
+// Sağlık Turizmi Faz 2 — Case.tourismPlan (hasta tercihleri JSON) → PackageInitial ön-dolum.
+// TIER_PRESETS'ten otel/hastane/tercüman/sigorta türetilir (hasta önizlemesiyle birebir); doktor düzenler.
+function tourismInitial(raw: string | null): PackageInitial | undefined {
+  if (!raw) return undefined;
+  let p: { tier?: string; nights?: number } | undefined;
+  try { p = JSON.parse(raw) as { tier?: string; nights?: number }; } catch { return undefined; }
+  const tier = (["Ekonomik", "Standart", "Premium"] as const).find((t) => t === p?.tier);
+  const preset = tier ? TIER_PRESETS[tier] : undefined;
+  return {
+    tier,
+    nights: p?.nights ? Math.min(30, Math.max(1, Number(p.nights) || 7)) : undefined,
+    hotelStars: preset?.hotelStars,
+    hospitalType: preset?.hospitalType,
+    translator: preset?.translator,
+    insuranceLevel: preset?.insuranceLevel,
+    rationaleTitle: "🧳 Hastanın sağlık turizmi tercihlerinden ön-dolduruldu",
+    aiRationale: "Hasta /saglik-turizmi'de bu paket seviyesini ve süresini seçti (tahminî). Tüm değerleri düzenleyebilirsiniz; kesin fiyat platform motorunda hesaplanır.",
+  };
+}
 
 export default async function PackagePage({
   params, searchParams,
@@ -52,7 +72,7 @@ export default async function PackagePage({
     insuranceExtended: s("ie") === "1",
     insuranceMalpractice: s("im") === "1",
     aiRationale: s("why") || "SOAP'taki tedavi planına göre hazırlandı.",
-  } : undefined;
+  } : tourismInitial(c.tourismPlan); // ai=1 yoksa: hastanın Sağlık Turizmi tercihleri (Faz 2) ön-doldurur
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">

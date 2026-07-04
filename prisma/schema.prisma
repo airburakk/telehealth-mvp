@@ -189,6 +189,10 @@ model Case {
   // Ücretsiz Sağlık Hizmeti — ücretsiz konsültasyon akışı (mevcut Case yeniden kullanılır; normal vakada false/null).
   freeCare            Boolean        @default(false)
   freeCareStatus      String? // WAITING|MATCHED|IN_CONSULT|CONSULT_DONE|TREATMENT_NEEDED|ETHICS_REVIEW|ETHICS_REJECTED|ETHICS_APPROVED|COMPLETED
+  // Sağlık Turizmi (Faz 2) — hasta /saglik-turizmi tercihleri JSON {tier,nights,country,branch}; normal vakada null.
+  // LOJİSTİK tercih (PHI DEĞİL, düz metin — decryptCaseFields kapsamı DIŞI); doktor PackageBuilder'ı ön-doldurur.
+  // tourismPlan != null aynı zamanda "turizm vakası" ayırt edicisidir (ek boolean gereksiz).
+  tourismPlan         String?
   doctor              Doctor?        @relation(fields: [doctorId], references: [id])
   doctorId            String?
   consultations       Consultation[]

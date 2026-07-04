@@ -17,6 +17,7 @@ export interface CaseRow {
   createdAt: string;
   doctorName: string | null;
   hasFiles: boolean;
+  isTourism?: boolean; // 🧳 Sağlık Turizmi talebi (Faz 2) — opsiyonel: diğer CaseRow üreticileri etkilenmez
 }
 
 // Üst istatistikler: sayfalı (personel) görünümde rows yalnız görünür dilim olduğundan
@@ -137,6 +138,7 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
                   <span>·</span>
                   <span>{formatDateTime(r.createdAt)}</span>
                   {r.hasFiles && <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">📎 dosya</span>}
+                  {r.isTourism && <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">🧳 turizm</span>}
                 </div>
               </div>
               <span className={`hidden sm:inline rounded-full px-2.5 py-1 text-xs font-medium ${st.color}`}>{st.label}</span>

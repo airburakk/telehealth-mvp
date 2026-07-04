@@ -4,7 +4,7 @@
 // Fiyat motoru lib/pricing.ts (doktor-yüzü PackageBuilder ile AYNI); önizlemede doktor işlemi yok →
 // branş taban fiyatı kullanılır. Kesin fiyat = doktor değerlendirmesi sonrası (klinik-önce; disclaimer zorunlu).
 import { useMemo, useState } from "react";
-import { Plane, Hotel, Stethoscope, ShieldCheck, Sparkles, ArrowRight, Info, Loader2 } from "lucide-react";
+import { Plane, Hotel, Stethoscope, ClipboardList, ShieldCheck, Sparkles, ArrowRight, Info, Loader2 } from "lucide-react";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { langDir, countryFlag, countryName } from "@/lib/constants";
@@ -32,8 +32,12 @@ const TEXTS = [
   "Platform hizmet bedeli",
   "Tahmini toplam",
   "Bu bir tahmini (endikatif) fiyattır — kesin fiyat, doktor değerlendirmesi ve tıbbi planınız netleştikten sonra belirlenir. Ödeme ve rezervasyon bu adımda yapılmaz.",
-  "Doktor görüşmesiyle devam et",
-  "Görüşmede tıbbi durumunuz değerlendirilir, tedavi planı ve kesin paket fiyatı oluşturulur.",
+  "Talep Oluştur",
+  "Talebiniz doktora iletilir; görüşmede tıbbi durumunuz değerlendirilip kesin plan ve fiyat oluşturulur. Bu adımda ödeme veya rezervasyon yapılmaz.",
+  "Sağlık durumunuz veya hedefiniz nedir?",
+  "Örn. saç ekimi düşünüyorum; ön bölgede belirgin seyrekleşme var.",
+  "Lütfen sağlık durumunuzu veya hedefinizi birkaç kelimeyle yazın.",
+  "Talep oluşturulamadı, lütfen tekrar deneyin.",
   "Ekonomik",
   "Standart",
   "Premium",
@@ -56,7 +60,9 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
   const [country, setCountry] = useState(COUNTRIES[0]);
   const [tier, setTier] = useState<Tier>("Standart");
   const [nights, setNights] = useState(7);
+  const [symptoms, setSymptoms] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   const quote = useMemo(() => {
     const p = TIER_PRESETS[tier];
@@ -84,11 +90,22 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
     };
   }, [quote]);
 
-  async function continueToConsult() {
-    setBusy(true);
-    // Journey'i turizm olarak işaretle (doğrudan gelenler için), sonra triyaja geç (Faz 1: klinik giriş).
-    try { await fetch("/api/patient/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ journey: "HEALTH_TOURISM" }) }); } catch { /* önemsiz */ }
-    window.location.assign("/triyaj");
+  async function submitRequest() {
+    if (symptoms.trim().length < 8) { setError(t("Lütfen sağlık durumunuzu veya hedefinizi birkaç kelimeyle yazın.")); return; }
+    setError(""); setBusy(true);
+    // Öz-yeterli intake: tourism-etiketli Case oluştur (tercihler + şikayet) → doktor kuyruğu. Klinik-önce:
+    // bağlayıcı fiyat/rezervasyon YOK; doktor görüşmesi + onayı sonrası mevcut teklif/escrow zinciri.
+    try {
+      const res = await fetch("/api/patient/tourism-request", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symptoms: symptoms.trim(), tier, nights, country, branch }),
+      });
+      if (!res.ok) throw new Error();
+      window.location.assign("/vakalarim"); // tam sayfa: nav taze + yeni talep listede görünür
+    } catch {
+      setError(t("Talep oluşturulamadı, lütfen tekrar deneyin."));
+      setBusy(false);
+    }
   }
 
   return (
@@ -105,6 +122,12 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
         {/* Sol: tercih formu */}
         <div className="space-y-5">
+          <Field icon={<ClipboardList size={15} />} label={t("Sağlık durumunuz veya hedefiniz nedir?")}>
+            <textarea value={symptoms} onChange={(e) => setSymptoms(e.target.value)} rows={3}
+              placeholder={t("Örn. saç ekimi düşünüyorum; ön bölgede belirgin seyrekleşme var.")}
+              className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#0EA5B2]" />
+          </Field>
+
           <Field icon={<Stethoscope size={15} />} label={t("Tedavi alanı")}>
             <div className="flex flex-wrap gap-2">
               {BRANCHES.map((b) => (
@@ -171,11 +194,13 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
               <span>{t("Bu bir tahmini (endikatif) fiyattır — kesin fiyat, doktor değerlendirmesi ve tıbbi planınız netleştikten sonra belirlenir. Ödeme ve rezervasyon bu adımda yapılmaz.")}</span>
             </div>
 
-            <button type="button" onClick={continueToConsult} disabled={busy}
+            {error && <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 ring-1 ring-red-200">{error}</div>}
+
+            <button type="button" onClick={submitRequest} disabled={busy}
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0EA5B2] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0c94a0] disabled:opacity-60">
-              {busy ? <Loader2 size={16} className="animate-spin" /> : <>{t("Doktor görüşmesiyle devam et")} <ArrowRight size={16} className="rtl:rotate-180" /></>}
+              {busy ? <Loader2 size={16} className="animate-spin" /> : <>{t("Talep Oluştur")} <ArrowRight size={16} className="rtl:rotate-180" /></>}
             </button>
-            <p className="mt-2 text-center text-[11px] leading-relaxed text-slate-400">{t("Görüşmede tıbbi durumunuz değerlendirilir, tedavi planı ve kesin paket fiyatı oluşturulur.")}</p>
+            <p className="mt-2 text-center text-[11px] leading-relaxed text-slate-400">{t("Talebiniz doktora iletilir; görüşmede tıbbi durumunuz değerlendirilip kesin plan ve fiyat oluşturulur. Bu adımda ödeme veya rezervasyon yapılmaz.")}</p>
           </div>
         </aside>
       </div>

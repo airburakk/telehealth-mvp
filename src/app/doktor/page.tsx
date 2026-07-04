@@ -30,6 +30,7 @@ const CASE_LIST_SELECT = {
   status: true,
   createdAt: true,
   attachments: true, // hasFiles rozetini besler
+  tourismPlan: true, // 🧳 turizm rozeti (Faz 2) — düz metin, decrypt gerekmez
   doctor: { select: { title: true, name: true } },
 } as const;
 
@@ -121,6 +122,7 @@ export default async function DoctorPanel({
     createdAt: c.createdAt.toISOString(),
     doctorName: c.doctor ? `${c.doctor.title} ${c.doctor.name}` : null,
     hasFiles: !!c.attachments,
+    isTourism: !!c.tourismPlan,
   }));
 
   // Nöbet konsolu beslemesi (yalnız doktor)

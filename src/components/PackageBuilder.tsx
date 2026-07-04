@@ -30,7 +30,8 @@ export interface PackageInitial {
   insuranceLevel?: InsuranceLevel;
   insuranceExtended?: boolean;
   insuranceMalpractice?: boolean;
-  aiRationale?: string; // doluysa "AI teklifi" banner'ı gösterilir
+  aiRationale?: string; // doluysa ön-dolum banner'ı gösterilir
+  rationaleTitle?: string; // banner başlığı; verilmezse AI-teklifi varsayılanı (turizm ön-dolumunda hasta-tercihi başlığı geçilir)
 }
 
 export function PackageBuilder({
@@ -103,7 +104,7 @@ export function PackageBuilder({
       <div className="space-y-4">
         {initial?.aiRationale && (
           <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-3.5">
-            <div className="text-xs font-semibold uppercase tracking-wide text-violet-700">✨ Sağlık Turizmi Agent&apos;ı teklifi uygulandı</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-violet-700">{initial?.rationaleTitle ?? "✨ Sağlık Turizmi Agent'ı teklifi uygulandı"}</div>
             <p className="mt-1 text-sm leading-relaxed text-slate-600">{initial.aiRationale}</p>
             <p className="mt-1 text-[11px] text-slate-400">Tüm değerleri aşağıdan değiştirebilirsiniz; fiyat platform motorunda hesaplanır.</p>
           </div>
