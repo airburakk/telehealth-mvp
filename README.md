@@ -185,7 +185,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/partner` (+`/talep`) | Partner Doktor paneli (**tüm arayüz partner dilinde + RTL**, haber akışı dahil) · anonim konsültasyon talebi oluşturma (belge yükleme, hasta DB erişimi yok) |
 | `/gorusme/[id]` | WebRTC video görüşme odası (asimetrik) |
 | `/konsultasyon/gorusme/[id]` | Konsültasyon görüntülü görüşme odası (partner↔doktor, Faz 3; fallback chat) |
-| `/paket/[caseId]` · `/rezervasyon/[id]` · `/teklif/[id]` | Paket · Escrow rezervasyon · hastaya gönderilen teklif |
+| `/paket/[caseId]` · `/rezervasyon/[id]` · `/teklif/[id]` | Paket · Escrow rezervasyon · hastaya gönderilen teklif. Rezervasyon/teklif (v4.27): **escrow milestone güven görseli** (`EscrowMilestones` — "gerçek para yok/simülasyon" etiketli) + **i18n** (hasta dili, `useT`+`air_lang`+RTL; `ReservationView`/`OfferView`) + "Koordinatörle konuş" bildirimi |
 | `/takip` · `/takip/[caseId]` | Hasta Post-Op hub (takip listesi) · post-op takip |
 | `/hekimler` · `/hekim/[id]` | Doktor dizini · doğrulanmış profil |
 | `/sikayet/[caseId]` · `/etik-kurul` (+`/[id]`) · `/denetim` | Şikayet · Etik Kurul liste/karar · denetim izi bütünlüğü (denetçi) |
@@ -210,7 +210,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `clinical` | `duty` — klinik nöbet/müsaitlik |
 | `second-opinion` | İkinci Görüş state machine işlemleri |
 | `free-care` | `apply`/`waiting`/`availability`/`doctor-feed`/`outcome`/`status` |
-| `shares` · `complaints` · `bookings` | Güvenli paylaşım · şikayet · rezervasyon |
+| `shares` · `complaints` · `bookings` | Güvenli paylaşım · şikayet · rezervasyon (`respond` · `journey` · `contact-coordinator` [hasta→koordinatör bildirim talebi, BOLA+rate-limit]) |
 | `notifications` · `push` | Bildirim merkezi · Web Push aboneliği |
 | `consultation-requests` · `presence` | Konsültasyon talebi yanıt/belge + **chat (`messages`)** + **video** randevu (offer/respond) · `presence/ping` (heartbeat) |
 | `doctor` · `auth` | Doktor tercihleri/akademik/işlem · oturum + **`signup`** (doktor kaydı) + **`google/{start,callback}`** (OAuth, env-gated) |
