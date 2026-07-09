@@ -160,7 +160,7 @@ export function ConsultVideoRoom({
       if (!hasVideo) setErrMsg(hasAudio ? S.errAudioOnly : `Kamera/mikrofon yok — yalnızca izleme. [${lastErr || "cihaz yok"}]`);
       if (stream && localVideoRef.current) { localVideoRef.current.srcObject = stream; localVideoRef.current.play().catch(() => {}); }
 
-      const iceServers = await getIceServers();
+      const { iceServers, turnOk } = await getIceServers();
       const pc = new RTCPeerConnection({ iceServers });
       pcRef.current = pc;
       if (stream) stream.getTracks().forEach((tr) => pc.addTrack(tr, stream));
@@ -175,7 +175,13 @@ export function ConsultVideoRoom({
         const s = pc.connectionState;
         setConnState(s);
         if (s === "connected") { setPhase("connected"); setErrMsg(""); }
-        else if (s === "failed") { setErrMsg(S.errConnFail); setShowChat(true); }
+        // TURN yoksa doktora gerçek neden (eksik/ölü METERED anahtarı); partnere genel mesaj (S.errConnFail).
+        else if (s === "failed") {
+          setErrMsg(!turnOk && selfRole === "doctor"
+            ? "Bağlantı kurulamadı — TURN relay yok (METERED_API_KEY eksik/geçersiz/erişilemiyor). Farklı ağdaki hastalar için .env + Vercel anahtarını kontrol edin."
+            : S.errConnFail);
+          setShowChat(true);
+        }
       };
 
       setPhase("waiting");

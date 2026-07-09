@@ -347,7 +347,7 @@ export function SoVideoRoom({
       if (stream && localVideoRef.current) { localVideoRef.current.srcObject = stream; localVideoRef.current.play().catch(() => {}); }
 
       // ICE sunucuları sunucudan (Metered ephemeral TURN) — cross-network için relay şart. Bkz. lib/ice.
-      const iceServers = await getIceServers();
+      const { iceServers, turnOk } = await getIceServers();
       const pc = new RTCPeerConnection({ iceServers });
       pcRef.current = pc;
       if (stream) stream.getTracks().forEach((t) => pc.addTrack(t, stream));
@@ -362,7 +362,10 @@ export function SoVideoRoom({
         const s = pc.connectionState;
         setConnState(s);
         if (s === "connected") { setPhase("connected"); setErrMsg(""); }
-        else if (s === "failed") setErrMsg("Bağlantı kurulamadı (ağ/NAT). İki cihazı aynı Wi-Fi'ya alıp yenileyin.");
+        // TURN yoksa doktora gerçek neden (eksik/ölü METERED anahtarı); hastaya genel mesaj (çevrilebilir).
+        else if (s === "failed") setErrMsg(!turnOk && isDoctor
+          ? "Bağlantı kurulamadı — TURN relay yok (METERED_API_KEY eksik/geçersiz/erişilemiyor). Farklı ağdaki hastalar için .env + Vercel anahtarını kontrol edin."
+          : "Bağlantı kurulamadı (ağ/NAT). İki cihazı aynı Wi-Fi'ya alıp yenileyin.");
       };
 
       setPhase("waiting");

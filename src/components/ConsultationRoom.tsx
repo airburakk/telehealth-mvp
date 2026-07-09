@@ -439,7 +439,7 @@ export function ConsultationRoom({
 
       // ICE sunucuları sunucudan (Metered ephemeral TURN). Cross-network (farklı WiFi/mobil)
       // bağlantı için TURN relay şart; anahtarsızsa STUN+OpenRelay'e düşer. Bkz. lib/ice + /api/realtime/ice.
-      const iceServers = await getIceServers();
+      const { iceServers, turnOk } = await getIceServers();
       const pc = new RTCPeerConnection({ iceServers });
       pcRef.current = pc;
       if (stream) stream.getTracks().forEach((t) => pc.addTrack(t, stream));
@@ -461,7 +461,12 @@ export function ConsultationRoom({
         const s = pc.connectionState;
         setConnState(s);
         if (s === "connected") { setPhase("connected"); setErrMsg(""); }
-        else if (s === "failed") setErrMsg("Bağlantı kurulamadı (ağ/NAT). Sayfayı yenileyin; sorun sürerse internet bağlantınızı kontrol edin.");
+        // Bağlantı koptu: TURN yoksa (turnOk=false) doktora GERÇEK nedeni söyle (eksik/ölü METERED
+        // anahtarı ya da ICE ucu hatası); hasta yüzüne teknik detay yok → genel mesaj (UI[] içinde,
+        // errMsg banner'ı t() ile çevirir; doktor metni texts'te yok → t() kimlik döndürür).
+        else if (s === "failed") setErrMsg(!turnOk && isDoctor
+          ? "Bağlantı kurulamadı — TURN relay yok (METERED_API_KEY eksik/geçersiz/erişilemiyor). Farklı ağdaki hastalar için .env + Vercel anahtarını kontrol edin."
+          : "Bağlantı kurulamadı (ağ/NAT). Sayfayı yenileyin; sorun sürerse internet bağlantınızı kontrol edin.");
       };
       pc.oniceconnectionstatechange = () => setConnState(pc.iceConnectionState);
 
@@ -663,7 +668,7 @@ export function ConsultationRoom({
             )}
           </div>
 
-          {errMsg && <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">{errMsg}</div>}
+          {errMsg && <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">{t(errMsg)}</div>}
 
           {/* AI Canlı Tercüman (Gemini) — yalnız diller farklıysa (aynı dilde gereksiz + karşı sesi kısar);
               ilk konuşma sesinde otomatik başlar (başlat düğmesi yok). Görüşme bitince (bye dahil)
