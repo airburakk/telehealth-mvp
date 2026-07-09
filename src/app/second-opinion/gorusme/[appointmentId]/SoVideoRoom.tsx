@@ -346,7 +346,7 @@ export function SoVideoRoom({
       if (!hasVideo) setErrMsg(hasAudio ? "Kamera yok — sesli katıldınız; karşı tarafı görebilirsiniz." : `Kamera/mikrofon yok — yalnızca izleme. [${lastErr || "cihaz yok"}]`);
       if (stream && localVideoRef.current) { localVideoRef.current.srcObject = stream; localVideoRef.current.play().catch(() => {}); }
 
-      // ICE sunucuları sunucudan (Metered ephemeral TURN) — cross-network için relay şart. Bkz. lib/ice.
+      // ICE sunucuları sunucudan (yönetilen TURN — Cloudflare birincil, Metered yedek) — cross-network için relay şart. Bkz. lib/ice.
       const { iceServers, turnOk } = await getIceServers();
       const pc = new RTCPeerConnection({ iceServers });
       pcRef.current = pc;
@@ -362,9 +362,9 @@ export function SoVideoRoom({
         const s = pc.connectionState;
         setConnState(s);
         if (s === "connected") { setPhase("connected"); setErrMsg(""); }
-        // TURN yoksa doktora gerçek neden (eksik/ölü METERED anahtarı); hastaya genel mesaj (çevrilebilir).
+        // TURN yoksa doktora gerçek neden (eksik/geçersiz sağlayıcı anahtarı); hastaya genel mesaj (çevrilebilir).
         else if (s === "failed") setErrMsg(!turnOk && isDoctor
-          ? "Bağlantı kurulamadı — TURN relay yok (METERED_API_KEY eksik/geçersiz/erişilemiyor). Farklı ağdaki hastalar için .env + Vercel anahtarını kontrol edin."
+          ? "Bağlantı kurulamadı — TURN relay yok (sağlayıcı anahtarı eksik/geçersiz/erişilemiyor). Farklı ağdaki hastalar için .env + Vercel'de CF_TURN_* / METERED_* anahtarlarını kontrol edin."
           : "Bağlantı kurulamadı (ağ/NAT). İki cihazı aynı Wi-Fi'ya alıp yenileyin.");
       };
 

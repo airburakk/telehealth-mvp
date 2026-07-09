@@ -175,10 +175,10 @@ export function ConsultVideoRoom({
         const s = pc.connectionState;
         setConnState(s);
         if (s === "connected") { setPhase("connected"); setErrMsg(""); }
-        // TURN yoksa doktora gerçek neden (eksik/ölü METERED anahtarı); partnere genel mesaj (S.errConnFail).
+        // TURN yoksa doktora gerçek neden (eksik/geçersiz sağlayıcı anahtarı); partnere genel mesaj (S.errConnFail).
         else if (s === "failed") {
           setErrMsg(!turnOk && selfRole === "doctor"
-            ? "Bağlantı kurulamadı — TURN relay yok (METERED_API_KEY eksik/geçersiz/erişilemiyor). Farklı ağdaki hastalar için .env + Vercel anahtarını kontrol edin."
+            ? "Bağlantı kurulamadı — TURN relay yok (sağlayıcı anahtarı eksik/geçersiz/erişilemiyor). Farklı ağdaki hastalar için .env + Vercel'de CF_TURN_* / METERED_* anahtarlarını kontrol edin."
             : S.errConnFail);
           setShowChat(true);
         }

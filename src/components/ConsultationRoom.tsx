@@ -437,8 +437,8 @@ export function ConsultationRoom({
       }
       if (stream && localVideoRef.current) { localVideoRef.current.srcObject = stream; localVideoRef.current.play().catch(() => {}); }
 
-      // ICE sunucuları sunucudan (Metered ephemeral TURN). Cross-network (farklı WiFi/mobil)
-      // bağlantı için TURN relay şart; anahtarsızsa STUN+OpenRelay'e düşer. Bkz. lib/ice + /api/realtime/ice.
+      // ICE sunucuları sunucudan (yönetilen TURN — Cloudflare birincil, Metered yedek). Cross-network
+      // (farklı WiFi/mobil) bağlantı için TURN relay şart; sağlayıcısızsa STUN+OpenRelay'e düşer. Bkz. lib/ice + /api/realtime/ice.
       const { iceServers, turnOk } = await getIceServers();
       const pc = new RTCPeerConnection({ iceServers });
       pcRef.current = pc;
@@ -461,11 +461,11 @@ export function ConsultationRoom({
         const s = pc.connectionState;
         setConnState(s);
         if (s === "connected") { setPhase("connected"); setErrMsg(""); }
-        // Bağlantı koptu: TURN yoksa (turnOk=false) doktora GERÇEK nedeni söyle (eksik/ölü METERED
-        // anahtarı ya da ICE ucu hatası); hasta yüzüne teknik detay yok → genel mesaj (UI[] içinde,
-        // errMsg banner'ı t() ile çevirir; doktor metni texts'te yok → t() kimlik döndürür).
+        // Bağlantı koptu: TURN yoksa (turnOk=false) doktora GERÇEK nedeni söyle (eksik/geçersiz
+        // sağlayıcı anahtarı ya da ICE ucu hatası); hasta yüzüne teknik detay yok → genel mesaj (UI[]
+        // içinde, errMsg banner'ı t() ile çevirir; doktor metni texts'te yok → t() kimlik döndürür).
         else if (s === "failed") setErrMsg(!turnOk && isDoctor
-          ? "Bağlantı kurulamadı — TURN relay yok (METERED_API_KEY eksik/geçersiz/erişilemiyor). Farklı ağdaki hastalar için .env + Vercel anahtarını kontrol edin."
+          ? "Bağlantı kurulamadı — TURN relay yok (sağlayıcı anahtarı eksik/geçersiz/erişilemiyor). Farklı ağdaki hastalar için .env + Vercel'de CF_TURN_* / METERED_* anahtarlarını kontrol edin."
           : "Bağlantı kurulamadı (ağ/NAT). Sayfayı yenileyin; sorun sürerse internet bağlantınızı kontrol edin.");
       };
       pc.oniceconnectionstatechange = () => setConnState(pc.iceConnectionState);

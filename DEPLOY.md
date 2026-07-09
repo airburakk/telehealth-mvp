@@ -89,7 +89,9 @@ dormant kalır / fallback'e düşer).
 | `DATA_ENCRYPTION_KEK` | ✅ | At-rest alan şifreleme KEK'i (E2EE Faz 1) — **AKTİF** (2026-06-23 üretimde set + backfill yapıldı → klinik veri artık şifreli; **silmek/değiştirmek prod'u bozar**). `openssl rand -base64 32`. **Yerel + üretim AYNI değer** (aynı Neon DB!). ⚠️ Kayıp = veri kaybı (escrow/yedek) |
 | `ANTHROPIC_API_KEY` | ⛅ | Claude (triyaj/SOAP/epikriz/çeviri/vision). Yoksa triyaj kural tabanlıya düşer |
 | `GEMINI_API_KEY` | ⛅ | Gemini Live tercüman. Yoksa canlı tercüme dormant |
-| `METERED_API_KEY` | ⛅ | WebRTC TURN relay (cross-network video). Yoksa STUN/OpenRelay fallback |
+| `CF_TURN_KEY_ID` | ⛅ | WebRTC TURN relay **birincil** — Cloudflare Realtime TURN Key ID (dash.cloudflare.com → Realtime → TURN Keys) |
+| `CF_TURN_API_TOKEN` | ⛅ | Cloudflare TURN API Token (yukarıdakiyle birlikte; oluşturmada bir kez gösterilir) |
+| `METERED_API_KEY` | ⛅ | WebRTC TURN relay **yedek** (Metered; CF yoksa/düşerse). Hepsi yoksa STUN/OpenRelay fallback |
 | `METERED_DOMAIN` | ⛅ | Metered hesap alan adı (yukarıdakiyle birlikte) |
 | `VAPID_PUBLIC_KEY` | ⛅ | Web Push — `npx web-push generate-vapid-keys` |
 | `VAPID_PRIVATE_KEY` | ⛅ | Web Push gizli anahtar |

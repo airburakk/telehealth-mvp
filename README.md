@@ -25,7 +25,7 @@ Doctor** genel triyaj, **İkinci Görüş**, **Ücretsiz Sağlık Hizmeti** ücr
 - **Kimlik doğrulama:** imzalı JWT (`jose`) httpOnly cookie + `bcryptjs` + rol bazlı proxy (Next 16)
 - **AI:** `@anthropic-ai/sdk` (Claude — triyaj/SOAP/epikriz/çeviri/vision) · `@google/genai`
   (Gemini Live — gerçek zamanlı ses→ses tercüme)
-- **Gerçek zamanlı:** WebRTC P2P (polling tabanlı sinyalleşme — `Signal` modeli) + Metered TURN relay
+- **Gerçek zamanlı:** WebRTC P2P (polling tabanlı sinyalleşme — `Signal` modeli) + Cloudflare Realtime TURN relay (yedek: Metered)
 - **DICOM:** `dicom-parser` + `@cornerstonejs/codec-openjpeg` + `codec-charls` + `jpeg-lossless-decoder-js`
 - **PWA / bildirim:** service worker + `web-push` (VAPID)
 
@@ -205,7 +205,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `consultations` | Görüşme not/bitiş + `/[id]/signal` (WebRTC sinyalleşme — **Ably realtime birincil + DB poll yedek**; transkript DB-only/PHI) |
 | `ai` | `soap` · `translate` · `discharge` (Claude) |
 | `i18n` | Arayüz çeviri (Translation cache) + `clinical` (klinik PHI de-id çeviri — önbelleksiz, maskeli) |
-| `realtime` | `token` (Gemini Live) · `ice` (Metered TURN credentials) · **`ably-token`** (WebRTC sinyalleşme — kanala-özel yalnız-subscribe token, API anahtarı sunucuda) |
+| `realtime` | `token` (Gemini Live) · `ice` (TURN credentials — Cloudflare birincil, Metered yedek, OpenRelay son çare) · **`ably-token`** (WebRTC sinyalleşme — kanala-özel yalnız-subscribe token, API anahtarı sunucuda) |
 | `consent` · `access-log` | KVKK onam + `proof` (RFC 3161 kanıt) · erişim denetim kaydı (audit) |
 | `clinical` | `duty` — klinik nöbet/müsaitlik |
 | `second-opinion` | İkinci Görüş state machine işlemleri |
@@ -255,7 +255,8 @@ tabanlı `analyzeTriage()`'a düşer (anahtar kelime eşleştirme + kırmızı b
 
 Tümü `.env.example`'da: `DATABASE_URL` (pooled) · `DIRECT_URL` (direct) · `SESSION_SECRET` · `DATA_ENCRYPTION_KEK` ·
 `ANTHROPIC_API_KEY` · `GEMINI_API_KEY` · `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` ·
-`METERED_API_KEY`/`METERED_DOMAIN` (WebRTC TURN) · `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (doktor
+`CF_TURN_KEY_ID`/`CF_TURN_API_TOKEN` (WebRTC TURN birincil — Cloudflare Realtime) ·
+`METERED_API_KEY`/`METERED_DOMAIN` (TURN yedek) · `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (doktor
 kaydında "Google ile devam et"; boşsa dormant) · `BLOB_READ_WRITE_TOKEN` (Vercel Blob object storage;
 boşsa belgeler şifreli base64 olarak DB'de — fallback) · (opsiyonel) `TRIAGE_MODEL`.
 
