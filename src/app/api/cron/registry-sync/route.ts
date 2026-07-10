@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runRegistrySync } from "@/lib/ht-registry";
+import { runRegistrySync, enrichHospitalDetails } from "@/lib/ht-registry";
 
 // GET /api/cron/registry-sync — HealthTürkiye günlük senkronu (FAZ 6, 2026-07-10).
 // vercel.json cron'u günde bir tetikler (03:00 UTC ≈ 06:00 İstanbul; Vercel, CRON_SECRET env'i
@@ -20,6 +20,16 @@ export async function GET(req: Request) {
   }
 
   const s = await runRegistrySync();
+
+  // Detay zenginleştirme (languages/accreditations/facilities adları) — küçük günlük bütçe:
+  // yeni eklenen tesisler + önceki koşularda ağ hatası alanlar sırayla dolar. Senkron sonucunu
+  // riske atmaz (hata yutulur; kalanlar yarınki koşuya kalır).
+  let enrich: Awaited<ReturnType<typeof enrichHospitalDetails>> | { error: string } | null = null;
+  if (s.status === "OK") {
+    try { enrich = await enrichHospitalDetails(40); }
+    catch (e) { enrich = { error: e instanceof Error ? e.message : String(e) }; }
+  }
+
   return NextResponse.json({
     status: s.status,
     date: s.date,
@@ -27,6 +37,7 @@ export async function GET(req: Request) {
     hospitalsTotal: s.hospitalsTotal,
     added: { doctors: s.addedDoctors.length, hospitals: s.addedHospitals.length },
     removed: { doctors: s.removedDoctors.length, hospitals: s.removedHospitals.length },
+    enrich,
     detail: s.detail,
   });
 }

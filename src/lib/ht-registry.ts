@@ -269,6 +269,112 @@ async function writeReport(s: SyncSummary): Promise<void> {
   }
 }
 
+// ── Tesis detay zenginleştirme (2026-07-10): languages/accreditations/facilities ADLARI ──
+// Liste API'si bu alanları yalnız SAYI olarak verir; adlar sitenin SSR detay sayfasında yaşar:
+//   GET https://healthturkiye.gov.tr/_next/data/<buildId>/hospital/<slug>.json
+//     → pageProps.template.hospital.{languages,accreditations,resources,...} [{id,name}]
+// buildId site her deploy'unda değişir → koşu başında anasayfadan dinamik çözülür.
+// Doldurma modeli: languages=null satırlar aday (doctorCount yüksek önce); başarı=adlar,
+// detay-sayfası-yok="[]" (yeniden denenmez), ağ hatası=null bırakılır (sonraki koşu dener).
+const SITE = "https://healthturkiye.gov.tr";
+const ENRICH_CONCURRENCY = 4;
+
+async function siteFetch(path: string): Promise<Response> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      return await fetch(`${SITE}${path}`, {
+        headers: { "User-Agent": UA, Accept: "application/json, text/html" },
+        signal: AbortSignal.timeout(15_000),
+        cache: "no-store",
+      });
+    } catch (e) {
+      lastErr = e;
+      if (attempt < 1) await new Promise((r) => setTimeout(r, 1000));
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+}
+
+async function discoverBuildId(): Promise<string> {
+  const res = await siteFetch("/");
+  if (!res.ok) throw new Error(`healthturkiye site → HTTP ${res.status}`);
+  const html = await res.text();
+  const m = html.match(/"buildId":"([^"]+)"/);
+  if (!m) throw new Error("healthturkiye buildId bulunamadı (site yapısı değişmiş olabilir)");
+  return m[1];
+}
+
+// {id,name} dizisinden temiz ad listesi (trim + boş/yinelenen ayıkla + tavan)
+function names(list: unknown, cap: number): string[] {
+  if (!Array.isArray(list)) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of list) {
+    const raw = typeof item === "string" ? item : (item as { name?: unknown })?.name;
+    if (typeof raw !== "string") continue;
+    const n = raw.replace(/\s+/g, " ").trim().slice(0, 120);
+    if (!n || seen.has(n.toLowerCase())) continue;
+    seen.add(n.toLowerCase());
+    out.push(n);
+    if (out.length >= cap) break;
+  }
+  return out;
+}
+
+type DetailNames = { languages: string[]; accreditations: string[]; facilities: string[] };
+
+// Tek tesisin detay adlarını çek; "notfound" = detay sayfası yok (kalıcı, "[]" yazılır).
+async function fetchHospitalDetailNames(buildId: string, slug: string): Promise<DetailNames | "notfound"> {
+  const res = await siteFetch(`/_next/data/${buildId}/hospital/${encodeURIComponent(slug)}.json`);
+  if (res.status === 404) return "notfound"; // buildId taze iken 404 = sayfa yok
+  if (!res.ok) throw new Error(`hospital/${slug} → HTTP ${res.status}`);
+  const j = (await res.json()) as { pageProps?: { error?: unknown; template?: { hospital?: Record<string, unknown> } } };
+  const h = j.pageProps?.template?.hospital;
+  if (!h) return "notfound"; // CMS "post bulunamadı" cevabı da buraya düşer
+  return {
+    languages: names(h.languages, 30),
+    accreditations: names(h.accreditations, 20),
+    facilities: names(h.resources, 60), // sitedeki "resources" = Tesis Olanakları
+  };
+}
+
+export interface EnrichSummary { scanned: number; enriched: number; empty: number; failed: number }
+
+// languages=null aktif tesisleri detaydan zenginleştir (limit'le sınırlı; cron + bulk script kullanır).
+export async function enrichHospitalDetails(limit: number): Promise<EnrichSummary> {
+  const candidates = await db.registryHospital.findMany({
+    where: { removedAt: null, languages: null },
+    select: { id: true, slug: true },
+    orderBy: { doctorCount: "desc" }, // en görünür tesisler önce dolsun
+    take: limit,
+  });
+  const sum: EnrichSummary = { scanned: candidates.length, enriched: 0, empty: 0, failed: 0 };
+  if (!candidates.length) return sum;
+
+  const buildId = await discoverBuildId();
+  for (const batch of chunk(candidates, ENRICH_CONCURRENCY)) {
+    await Promise.all(batch.map(async (c) => {
+      try {
+        const d = !c.slug ? "notfound" : await fetchHospitalDetailNames(buildId, c.slug);
+        if (d === "notfound") {
+          await db.registryHospital.update({ where: { id: c.id }, data: { languages: "[]", accreditations: "[]", facilities: "[]" } });
+          sum.empty++;
+        } else {
+          await db.registryHospital.update({
+            where: { id: c.id },
+            data: { languages: JSON.stringify(d.languages), accreditations: JSON.stringify(d.accreditations), facilities: JSON.stringify(d.facilities) },
+          });
+          sum.enriched++;
+        }
+      } catch {
+        sum.failed++; // null kalır → sonraki koşu yeniden dener
+      }
+    }));
+  }
+  return sum;
+}
+
 // ── Doktor kayıt doğrulaması (FAZ 6): platform doktoru HealthTürkiye dizininde var mı? ──
 // Ad-soyad normalize eşleşmesi (ünvan öneki atılır; Türkçe karakterler sadeleştirilir).
 // Sonuç Doctor.registryStatus'a yazılır → /admin/hekim-onay onay kartında bayrak olarak görünür.

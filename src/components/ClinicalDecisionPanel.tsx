@@ -20,7 +20,7 @@ import {
 interface Proc { code: string; name: string; price: number | null; branch: string; group: string }
 interface Sel { name: string; priceTRY: number; floor: number }
 interface Suggestion { code: string; name: string; price: number | null; reason: string }
-interface HospitalHit { id: number; name: string; cityName: string | null; cityHasAirport: boolean | null; facilityTypeName: string | null; totalPersonnel: number | null; accreditationCount: number | null }
+interface HospitalHit { id: number; name: string; cityName: string | null; cityHasAirport: boolean | null; facilityTypeName: string | null; totalPersonnel: number | null; accreditationCount: number | null; languages?: string[]; accreditations?: string[] }
 
 const CEIL_MULT = 3;
 
@@ -476,6 +476,14 @@ export default function ClinicalDecisionPanel({
                           {h.totalPersonnel ? ` · ${h.totalPersonnel} personel` : ""}
                           {h.cityHasAirport ? " · ✈ havalimanı" : ""}
                         </span>
+                        {/* Detay zenginleştirmesi (HealthTürkiye): hizmet dilleri + akreditasyon adları */}
+                        {((h.languages?.length ?? 0) > 0 || (h.accreditations?.length ?? 0) > 0) && (
+                          <span className="block truncate text-[10px] text-slate-400">
+                            {(h.languages?.length ?? 0) > 0 && <>🌐 {h.languages!.slice(0, 4).join(", ")}{h.languages!.length > 4 ? ` +${h.languages!.length - 4}` : ""}</>}
+                            {(h.languages?.length ?? 0) > 0 && (h.accreditations?.length ?? 0) > 0 && " · "}
+                            {(h.accreditations?.length ?? 0) > 0 && <>🏅 {h.accreditations!.join(", ")}</>}
+                          </span>
+                        )}
                       </span>
                       <Plus size={14} className="shrink-0 text-teal-600" />
                     </button>

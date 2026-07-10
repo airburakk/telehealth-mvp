@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   const city = (url.searchParams.get("city") ?? "").trim();
   if (q.length < 2 && !city) return NextResponse.json({ items: [] });
 
-  const items = await db.registryHospital.findMany({
+  const rows = await db.registryHospital.findMany({
     where: {
       removedAt: null, // yalnız halen kayıtlı tesisler
       ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
@@ -25,9 +25,17 @@ export async function GET(req: Request) {
     select: {
       id: true, name: true, cityName: true, cityHasAirport: true,
       facilityTypeName: true, totalPersonnel: true, accreditationCount: true,
+      languages: true, accreditations: true, // detay zenginleştirmesi (adlar; null = henüz dolmadı)
     },
     orderBy: [{ doctorCount: "desc" }, { name: "asc" }],
     take: 20,
   });
+  // JSON kolonları diziye aç (bozuk/boş → [])
+  const parse = (s: string | null): string[] => {
+    if (!s) return [];
+    try { const v = JSON.parse(s); return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []; }
+    catch { return []; }
+  };
+  const items = rows.map((h) => ({ ...h, languages: parse(h.languages), accreditations: parse(h.accreditations) }));
   return NextResponse.json({ items });
 }
