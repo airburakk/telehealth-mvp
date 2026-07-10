@@ -528,8 +528,8 @@ export function PreConsultLobby({
         </div>
       </div>
 
-      {/* Cihaz testi + Hazırlık */}
-      <div className="mt-5 grid gap-5 md:grid-cols-2">
+      {/* Cihaz testi + Hazırlık (hazırlık paneli hasta-odaklı → doktor görünümünde gizli, cihaz testi ortalanır) */}
+      <div className={`mt-5 grid gap-5 ${isDoctor ? "md:mx-auto md:w-full md:max-w-xl" : "md:grid-cols-2"}`}>
         {/* B1 — Cihaz testi */}
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="flex items-center gap-1.5 text-sm font-semibold text-[#101010]">
@@ -615,7 +615,8 @@ export function PreConsultLobby({
           <p className="mt-3 text-[11px] leading-relaxed text-slate-400">{t(TX.permNote)}</p>
         </div>
 
-        {/* B3 — Hazırlık ipucu + soru-notu */}
+        {/* B3 — Hazırlık ipucu + soru-notu (yalnız hasta: ipuçları + "doktora soracaklarım" doktora anlamsız) */}
+        {!isDoctor && (
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="flex items-center gap-1.5 text-sm font-semibold text-[#101010]">
             <FileText size={16} className="text-[#0EA5B2]" /> {t(TX.prep)}
@@ -640,6 +641,7 @@ export function PreConsultLobby({
             {note.trim() && <p className="mt-1 text-[11px] text-slate-400">{t(TX.notesSaved)}</p>}
           </div>
         </div>
+        )}
       </div>
 
       {/* Güven şeridi (Faz C) — yalnız DOĞRU iddialar: WebRTC bağlantı şifrelemesi + KVKK onam. E2EE/RFC 3161 = Faz 8 (henüz yok) → iddia EDİLMEZ. */}
