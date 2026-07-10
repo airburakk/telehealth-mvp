@@ -4,7 +4,7 @@ import { countryFlag, countryName } from "@/lib/constants";
 import { formatUSD } from "@/lib/pricing";
 import {
   BarChart3, Users, Luggage, Wallet, Scale, AlertTriangle, Stethoscope,
-  TrendingUp, Filter, HeartPulse, ShieldCheck, Video, ArrowRight,
+  TrendingUp, Filter, HeartPulse, ShieldCheck, Video, ArrowRight, BookMarked,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -85,10 +85,12 @@ export default async function OperationsDashboard() {
   const byStatus: Record<string, number> = {};
   for (const c of cases) byStatus[c.status] = (byStatus[c.status] ?? 0) + 1;
 
-  // İkinci Görüş — koordinatör kuyruğu özeti
-  const [soReviewCount, soActiveCount] = await Promise.all([
+  // İkinci Görüş kuyruğu özeti + HealthTürkiye kayıt defteri sayaçları (giriş kartları)
+  const [soReviewCount, soActiveCount, registryDoctors, registryHospitals] = await Promise.all([
     db.secondOpinionCase.count({ where: { status: "PENDING_REVIEW" } }),
     db.secondOpinionCase.count({ where: { status: { notIn: ["CLOSED", "CANCELLED"] } } }),
+    db.registryDoctor.count({ where: { removedAt: null } }),
+    db.registryHospital.count({ where: { removedAt: null } }),
   ]);
 
   return (
@@ -116,6 +118,17 @@ export default async function OperationsDashboard() {
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-[#101010]">Lojistik Takip — Patient Journey</div>
           <p className="text-xs text-slate-500">Onaylı rezervasyonların karşılama · konaklama · tedavi · dönüş aşamalarını yönet</p>
+        </div>
+        <ArrowRight size={16} className="shrink-0 text-[#0E8A95]" />
+      </Link>
+
+      <Link href="/operasyon/kayit-defteri" className="mt-3 flex items-center gap-3 rounded-3xl border border-slate-200 bg-white p-4 transition hover:bg-slate-50">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-teal-100 text-teal-700"><BookMarked size={18} /></span>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-[#101010]">HealthTürkiye Kayıt Defteri</div>
+          <p className="text-xs text-slate-500">
+            {registryDoctors.toLocaleString("tr-TR")} doktor · {registryHospitals.toLocaleString("tr-TR")} tesis — resmi sağlık turizmi dizini, günlük senkron
+          </p>
         </div>
         <ArrowRight size={16} className="shrink-0 text-[#0E8A95]" />
       </Link>
