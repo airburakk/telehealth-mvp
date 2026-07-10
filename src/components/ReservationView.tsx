@@ -2,8 +2,9 @@
 
 // Rezervasyon hasta-yüzü görünümü (FAZ 3) — server page.tsx auth+decrypt+DB yapar, düz veriyi buraya
 // prop olarak geçer; bu bileşen sunum + i18n (useT/air_lang) + RTL (langDir) + escrow güven görseli
-// (EscrowMilestones) + "Koordinatörle konuş" (CoordinatorContact) sağlar. Klinik/finansal veri
-// (isim, branş, hastane, kalem etiketleri) kaynak dilinde kalır; çevrilen = arayüz kromu.
+// (EscrowMilestones) + "Koordinatörle konuş" (CoordinatorContact) sağlar. Faz 3 cilası: finansal
+// kalem/split etiketleri de çevrilir (katalog terimleri, PHI değil — hasta adı/tanı çeviriye GİRMEZ);
+// dinamik etiketler texts'e içerik-imzalı sabit ref'le eklenir ([[uset-unstable-texts-race]]).
 import { useMemo } from "react";
 import Link from "next/link";
 import {
@@ -25,7 +26,7 @@ const STAGE_ICONS: Record<string, LucideIcon> = {
 
 const TEXTS = [
   "Paket onaylandı",
-  "Tedavi paketiniz rezerve edildi; ödemeniz hizmet tamamlanana dek güvence altında tutulur.",
+  "Tedavi paketiniz rezerve edildi; ödemeniz hizmet tamamlanana dek güvence altında tutulur (escrow simülasyonu).",
   "Paket",
   "Rezervasyon No",
   "Hastane", "Otel", "Tercüman", "Sigorta", "Seviye", "Dahil", "Yok", "gece",
@@ -72,7 +73,11 @@ export interface ReservationViewProps {
 
 export function ReservationView(p: ReservationViewProps) {
   const [lang, setLang] = usePatientLang();
-  const texts = useMemo(() => TEXTS, []); // sabit referans — useT yarış dersi
+  // Sabit kromo + dinamik kalem/split etiketleri (props server-render'dan gelir, ref sabit) — yarış dersi.
+  const texts = useMemo(
+    () => [...TEXTS, ...p.items.flatMap((i) => (i.note ? [i.label, i.note] : [i.label])), ...p.split.map((s) => s.label)],
+    [p.items, p.split],
+  );
   const { t } = useT(lang, texts);
   const progress = journeyProgress(p.stages);
 
@@ -87,7 +92,7 @@ export function ReservationView(p: ReservationViewProps) {
         <div>
           <h1 className="font-bold text-emerald-900">{t("Paket onaylandı")}</h1>
           <p className="mt-0.5 text-xs font-medium text-emerald-800">{p.patientName} · {p.branch}</p>
-          <p className="mt-0.5 text-sm text-emerald-800/80">{t("Tedavi paketiniz rezerve edildi; ödemeniz hizmet tamamlanana dek güvence altında tutulur.")}</p>
+          <p className="mt-0.5 text-sm text-emerald-800/80">{t("Tedavi paketiniz rezerve edildi; ödemeniz hizmet tamamlanana dek güvence altında tutulur (escrow simülasyonu).")}</p>
         </div>
       </div>
 
@@ -113,7 +118,7 @@ export function ReservationView(p: ReservationViewProps) {
             <ul className="mt-5 space-y-2 border-t border-slate-100 pt-4">
               {p.items.map((it) => (
                 <li key={it.key} className="flex items-start justify-between gap-3 text-sm">
-                  <span className="text-slate-600">{it.label}{it.note && <span className="block text-xs text-slate-400">{it.note}</span>}</span>
+                  <span className="text-slate-600">{t(it.label)}{it.note && <span className="block text-xs text-slate-400">{t(it.note)}</span>}</span>
                   <span className="shrink-0 font-medium text-slate-800">{formatUSD(it.amount)}</span>
                 </li>
               ))}
@@ -125,7 +130,7 @@ export function ReservationView(p: ReservationViewProps) {
           </div>
 
           {/* Sigorta teminat özeti (3 kademeli) */}
-          <InsuranceSummary detailJson={p.insuranceDetail} />
+          <InsuranceSummary detailJson={p.insuranceDetail} lang={lang} />
 
           {/* Hasta yolculuğu — lojistik takip (koordinatör /operasyon/lojistik'ten günceller) */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -191,7 +196,7 @@ export function ReservationView(p: ReservationViewProps) {
             <ul className="mt-3 space-y-2 text-sm">
               {p.split.map((s) => (
                 <li key={s.key} className="flex items-center justify-between">
-                  <span className="text-slate-600">{s.label}</span>
+                  <span className="text-slate-600">{t(s.label)}</span>
                   <span className="font-medium text-slate-800">{formatUSD(s.amount)}</span>
                 </li>
               ))}

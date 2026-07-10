@@ -44,7 +44,8 @@ export function ComplaintForm({ caseId }: { caseId: string }) {
             <h2 className="font-bold text-emerald-900">Başvurunuz Etik Kurul&apos;a iletildi</h2>
             <p className="mt-1 text-sm text-emerald-800/80">
               Sağlık hukuku ve tıp uzmanlarından oluşan bağımsız kurul, kimliğiniz gizlenerek (anonim) başvurunuzu
-              değerlendirecek. Ödemeniz karar verilene dek Escrow&apos;da güvence altındadır.
+              değerlendirecek. Ödemeniz karar verilene dek Escrow&apos;da güvence altındadır (escrow simülasyonu —
+              MVP&apos;de gerçek para transferi yapılmaz).
             </p>
             <Link href="/etik-kurul" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:underline">
               Kurul panelinde gör (demo) <ArrowRight size={15} />

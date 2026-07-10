@@ -2,7 +2,8 @@
 
 // Teklif hasta-yüzü görünümü (FAZ 3) — server page.tsx auth+decrypt+DB+redirect yapar, düz veriyi
 // prop olarak geçer; sunum + i18n (useT/air_lang) + RTL (langDir) + escrow güven görseli
-// (EscrowMilestones, PENDING) + i18n'li OfferActions. Finansal kalem etiketleri kaynak dilinde kalır.
+// (EscrowMilestones, PENDING) + i18n'li OfferActions. Faz 3 cilası: finansal kalem etiketleri de
+// çevrilir (katalog terimleri, PHI değil); dinamik etiketler texts'e sabit ref'le eklenir.
 import { useMemo } from "react";
 import Link from "next/link";
 import {
@@ -32,7 +33,7 @@ const TEXTS = [
   "Bu teklif reddedildi",
   "Yeni bir teklif için koordinatörünüzle görüşebilirsiniz.",
   "Size özel hazırlanmış tedavi paketi teklifi",
-  "Aşağıdaki paketi inceleyin. Onayladığınızda ödeme, hizmet tamamlanana dek platform Escrow güvencesinde tutulur.",
+  "Aşağıdaki paketi inceleyin. Onayladığınızda ödeme, hizmet tamamlanana dek platform Escrow güvencesinde tutulur (escrow simülasyonu — gerçek para transferi yapılmaz).",
   "Paket içeriği", "Paket",
   "Hastane", "Otel", "Tercüman", "Sigorta", "Seviye", "Dahil", "Yok", "gece",
   "Toplam",
@@ -68,7 +69,11 @@ export interface OfferViewProps {
 
 export function OfferView(p: OfferViewProps) {
   const [lang, setLang] = usePatientLang();
-  const texts = useMemo(() => TEXTS, []); // sabit referans — useT yarış dersi
+  // Sabit kromo + dinamik kalem etiketleri (props server-render'dan gelir, ref sabit) — yarış dersi.
+  const texts = useMemo(
+    () => [...TEXTS, ...p.items.flatMap((i) => (i.note ? [i.label, i.note] : [i.label]))],
+    [p.items],
+  );
   const { t } = useT(lang, texts);
 
   return (
@@ -109,7 +114,7 @@ export function OfferView(p: OfferViewProps) {
           <Sparkles className="mt-0.5 shrink-0 text-violet-600" />
           <div>
             <div className="font-semibold text-violet-900">{t("Size özel hazırlanmış tedavi paketi teklifi")}</div>
-            <p className="text-sm text-violet-800/80">{t("Aşağıdaki paketi inceleyin. Onayladığınızda ödeme, hizmet tamamlanana dek platform Escrow güvencesinde tutulur.")}</p>
+            <p className="text-sm text-violet-800/80">{t("Aşağıdaki paketi inceleyin. Onayladığınızda ödeme, hizmet tamamlanana dek platform Escrow güvencesinde tutulur (escrow simülasyonu — gerçek para transferi yapılmaz).")}</p>
           </div>
         </div>
       )}
@@ -129,7 +134,7 @@ export function OfferView(p: OfferViewProps) {
         <ul className="mt-5 space-y-2 border-t border-slate-100 pt-4">
           {p.items.map((it) => (
             <li key={it.key} className="flex items-start justify-between gap-3 text-sm">
-              <span className="text-slate-600">{it.label}{it.note && <span className="block text-xs text-slate-400">{it.note}</span>}</span>
+              <span className="text-slate-600">{t(it.label)}{it.note && <span className="block text-xs text-slate-400">{t(it.note)}</span>}</span>
               <span className="shrink-0 font-medium text-slate-800">{formatUSD(it.amount)}</span>
             </li>
           ))}
@@ -149,7 +154,7 @@ export function OfferView(p: OfferViewProps) {
 
       {/* Sigorta teminat özeti (3 kademeli) */}
       <div className="mt-5">
-        <InsuranceSummary detailJson={p.insuranceDetail} />
+        <InsuranceSummary detailJson={p.insuranceDetail} lang={lang} />
       </div>
 
       {/* Hasta yolculuğu (statik önizleme) */}

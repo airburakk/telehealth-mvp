@@ -1,15 +1,38 @@
+"use client";
+
+import { useMemo } from "react";
 import { formatUSD, type InsuranceQuote, type InsuranceLevel } from "@/lib/pricing";
 import { ShieldCheck } from "lucide-react";
+import { useT } from "@/components/useT";
 
 // M3 — Booking.insuranceDetail (JSON InsuranceQuote) → 3 kademeli sigorta teminat özeti.
 // Teklif + rezervasyon sayfalarında ortak kullanılır. Endikatif (bağlayıcı primi sigortacı belirler).
+// i18n: lang prop'uyla çevrilir (Faz 3 cilası) — tutarlar cümle SONUNDA/ayraçla durur ki çeviri
+// kelime sırası bozulmasın; metinler modül-sabit TEXTS'te ([[uset-unstable-texts-race]]).
 const LEVEL_LABEL: Record<InsuranceLevel, string> = {
   1: "Zorunlu Sağlık Turizmi Sigortası",
   2: "+ Operasyon Teminat Poliçesi",
   3: "+ Malpraktis & Komplikasyon Teminatı",
 };
 
-export function InsuranceSummary({ detailJson }: { detailJson: string | null }) {
+const TEXTS = [
+  "Sigorta Teminatı", "Seviye",
+  "Zorunlu Sağlık Turizmi Sigortası", "+ Operasyon Teminat Poliçesi", "+ Malpraktis & Komplikasyon Teminatı",
+  "Zorunlu sağlık turizmi sigortası",
+  "Operasyon teminat poliçesi · taban",
+  "Malpraktis & komplikasyon · hedef",
+  "ek prim yok",
+  "Doktorun mevcut MMSS poliçesi hedef teminatı karşılıyor → ek malpraktis primi yok.",
+  "Doktorun mevcut MMSS poliçesi:",
+  "ek teminatla kapatılan boşluk:",
+  "Sigorta toplam",
+  "Primler tahminidir; bağlayıcı poliçe bedelini ve teminat şartlarını sigorta şirketi belirler.",
+];
+
+export function InsuranceSummary({ detailJson, lang = "Türkçe" }: { detailJson: string | null; lang?: string }) {
+  const texts = useMemo(() => TEXTS, []); // sabit referans — useT yarış dersi
+  const { t } = useT(lang, texts);
+
   if (!detailJson) return null;
   let q: InsuranceQuote;
   try { q = JSON.parse(detailJson) as InsuranceQuote; } catch { return null; }
@@ -18,30 +41,30 @@ export function InsuranceSummary({ detailJson }: { detailJson: string | null }) 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        <ShieldCheck size={14} /> Sigorta Teminatı · Seviye {q.level} — {LEVEL_LABEL[q.level]}
+        <ShieldCheck size={14} /> {t("Sigorta Teminatı")} · {t("Seviye")} {q.level} — {t(LEVEL_LABEL[q.level])}
       </div>
       <div className="mt-3 space-y-1.5 text-sm">
-        <Row k="Zorunlu sağlık turizmi sigortası" v={formatUSD(q.p1)} />
+        <Row k={t("Zorunlu sağlık turizmi sigortası")} v={formatUSD(q.p1)} />
         {q.level >= 2 && (
-          <Row k={`Operasyon teminat poliçesi · taban ${formatUSD(q.coverageBase)}`} v={`+${formatUSD(q.p2)}`} />
+          <Row k={`${t("Operasyon teminat poliçesi · taban")} ${formatUSD(q.coverageBase)}`} v={`+${formatUSD(q.p2)}`} />
         )}
         {q.level >= 3 && (
           <>
-            <Row k={`Malpraktis & komplikasyon · hedef ${formatUSD(q.targetCoverage)}`} v={q.p3 > 0 ? `+${formatUSD(q.p3)}` : "ek prim yok"} />
+            <Row k={`${t("Malpraktis & komplikasyon · hedef")} ${formatUSD(q.targetCoverage)}`} v={q.p3 > 0 ? `+${formatUSD(q.p3)}` : t("ek prim yok")} />
             <p className="text-[11px] leading-relaxed text-slate-400">
               {q.gap === 0
-                ? `Doktorun mevcut MMSS poliçesi (${formatUSD(q.doctorCoverage)}) hedef teminatı karşılıyor → ek malpraktis primi yok.`
-                : `Doktorun mevcut MMSS poliçesi ${formatUSD(q.doctorCoverage)} karşılıyor; kalan ${formatUSD(q.gap)} boşluk ek teminatla kapatıldı.`}
+                ? `${t("Doktorun mevcut MMSS poliçesi hedef teminatı karşılıyor → ek malpraktis primi yok.")} (${formatUSD(q.doctorCoverage)})`
+                : `${t("Doktorun mevcut MMSS poliçesi:")} ${formatUSD(q.doctorCoverage)} · ${t("ek teminatla kapatılan boşluk:")} ${formatUSD(q.gap)}`}
             </p>
           </>
         )}
       </div>
       <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-sm font-semibold">
-        <span className="text-slate-700">Sigorta toplam</span>
+        <span className="text-slate-700">{t("Sigorta toplam")}</span>
         <span className="text-slate-900">{formatUSD(q.total)}</span>
       </div>
       <p className="mt-1.5 text-[10px] leading-relaxed text-slate-400">
-        Primler tahminidir; bağlayıcı poliçe bedelini ve teminat şartlarını sigorta şirketi belirler.
+        {t("Primler tahminidir; bağlayıcı poliçe bedelini ve teminat şartlarını sigorta şirketi belirler.")}
       </p>
     </div>
   );

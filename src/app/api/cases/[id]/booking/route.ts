@@ -108,7 +108,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   await notifyRoles(["COORDINATOR"], {
     type: "BOOKING",
     title: `💼 Yeni rezervasyon`,
-    body: `${selection.tier} · ${selection.branch} · ${amount} (Escrow'da)`,
+    body: `${selection.tier} · ${selection.branch} · ${amount} (Escrow'da — simülasyon)`,
     href: `/rezervasyon/${booking.id}`,
   });
 

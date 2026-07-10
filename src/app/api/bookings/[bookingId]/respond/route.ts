@@ -43,7 +43,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ booking
   await notifyRoles(["COORDINATOR"], {
     type: "BOOKING",
     title: `✅ Teklif onaylandı`,
-    body: `${booking.tier} · ${booking.branch} · ${amount} — Escrow'a alındı`,
+    body: `${booking.tier} · ${booking.branch} · ${amount} — Escrow'a alındı (simülasyon)`,
     href: `/rezervasyon/${booking.id}`,
   });
   return NextResponse.json({ ok: true, bookingId: booking.id });

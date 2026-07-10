@@ -39,7 +39,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const decisionNotif = {
     type: "DECISION" as const,
     title: `⚖️ Etik Kurul kararı: başvuru ${verdictLabel}`,
-    body: refundAmount ? `İade: $${refundAmount.toLocaleString("en-US")} (Escrow'dan)` : rationale?.slice(0, 80) ?? undefined,
+    body: refundAmount ? `İade: $${refundAmount.toLocaleString("en-US")} (Escrow'dan — simülasyon)` : rationale?.slice(0, 80) ?? undefined,
     href: `/sikayet/${complaint.caseId}`,
   };
   // Vaka sahibi belliyse hastaya kişisel bildirim; değilse rol yayını (eski vakalar)
