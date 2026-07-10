@@ -131,7 +131,9 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 - **PWA + Web Push:** kurulabilir uygulama; tarayıcı kapalıyken cihaz bildirimi (VAPID).
 - **Bildirim Merkezi:** Header zili; rol- ve kullanıcı-hedefli `Notification`.
 - **Operasyon Paneli (S2):** `/operasyon` — KPI, dönüşüm hunisi, gelir/Escrow, dağılımlar, trend, kapasite ·
-  **Lojistik takip** (`/operasyon/lojistik` — rezervasyonların Patient Journey aşamalarını yönet). (`lib/journey.ts`)
+  **Lojistik takip** (`/operasyon/lojistik` — rezervasyonların Patient Journey aşamalarını yönet; `lib/journey.ts`) ·
+  **Kayıt defteri tarayıcısı** (`/operasyon/kayit-defteri` — HealthTürkiye doktor+tesis dizinini ara/filtrele/sayfala;
+  ST yetki-belgesi rozeti + dil/akreditasyon chip'leri; doktor kayıtlarında şehir kaynakta boş → filtre veri gelene dek gizli)
 - **Consent Manager + RFC 3161 ispat:** `/onam` tek seferlik KVKK onamı; sürümlü `ConsentRecord` +
   hash-zinciri + zaman damgası + Onay Kanıtı (`/onam/kanit`). (`lib/consent.ts`, `lib/timestamp.ts`)
 - **Değiştirilemez erişim denetimi (E2EE Faz 0):** klinik veriye her anlamlı erişim (vaka görüntüleme,
