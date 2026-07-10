@@ -3,6 +3,7 @@
 // yakalanmayan yapısal kaymaları (dizi uzunlukları) testte yakalansın.
 import { describe, it, expect } from "vitest";
 import { LANDING_COPY, LANDING_LOCALES, landingDir, type LandingLocale } from "@/lib/landing-copy";
+import { LANGUAGES, LANG_NAME_BY_CODE, langCodeFor } from "@/lib/constants";
 
 // İç içe anahtar kümesini düzleştir (dizilerde uzunluk da imzaya girer).
 function shape(o: unknown, prefix = ""): string[] {
@@ -48,5 +49,29 @@ describe("landing-copy", () => {
 
   it("landing kopyasında 'Pro Bono' geçmez (yeni ad: Ücretsiz Sağlık Hizmeti)", () => {
     expect(JSON.stringify(LANDING_COPY)).not.toMatch(/pro\s*bono/i);
+  });
+});
+
+// Tek dil anahtarı köprüsü — `air_lang` dil ADI tutar; landing/public sayfalar kod-bazlıdır.
+// Eşleme kopuk olursa landing↔hasta yüzeyleri dil taşıması sessizce bozulur (pm_locale emeklisi).
+describe("dil kodu ↔ dil adı köprüsü (air_lang birleştirmesi)", () => {
+  it("LANG_NAME_BY_CODE tüm LANGUAGES adlarını birebir kapsar", () => {
+    expect(Object.values(LANG_NAME_BY_CODE).sort()).toEqual([...LANGUAGES].sort());
+  });
+
+  it("her landing locale kodu geçerli bir dil adına eşlenir ve gidiş-dönüş tutarlıdır", () => {
+    for (const { code } of LANDING_LOCALES) {
+      const name = LANG_NAME_BY_CODE[code];
+      expect(name, `code=${code}`).toBeTruthy();
+      expect(LANGUAGES, `code=${code}`).toContain(name);
+      expect(langCodeFor(name), `name=${name}`).toBe(code);
+    }
+  });
+
+  it("langCodeFor: bilinmeyen/boş ad → undefined (air_lang ezilmez, görüntü fallback)", () => {
+    expect(langCodeFor("Klingonca")).toBeUndefined();
+    expect(langCodeFor(null)).toBeUndefined();
+    expect(langCodeFor(undefined)).toBeUndefined();
+    expect(langCodeFor("")).toBeUndefined();
   });
 });

@@ -4,7 +4,9 @@
 // Yapı: Nav+Hero (tek CTA) · Trust · Nasıl Çalışır · Doktorlar · Testimonial · CTA band · Footer.
 // Kaldırılanlar: Tedavi Paketleri, AI kartı, İkinci Görüş/Ücretsiz Sağlık Hizmeti CTA'ları, Tedaviler/Doktorlar/
 // Klinikler için nav linkleri — ürün seçimi giriş SONRASI /basla ekranında yapılır (tek huni).
-// 8 dil statik kopya (lib/landing-copy.ts, pm_locale localStorage) + RTL (ar/fa). Tema: koyu AURA.
+// 8 dil statik kopya (lib/landing-copy.ts) + RTL (ar/fa). Tema: koyu AURA.
+// Dil kalıcılığı: tek anahtar `air_lang` (dil ADI — hasta yüzeyleriyle ortak; emekli `pm_locale`
+// bir defalık taşınır). Landing'de olmayan dil (Kazakça/Kırgızca) → görüntü EN'e düşer, anahtar ezilmez.
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Newsreader, Hanken_Grotesk } from "next/font/google";
@@ -12,6 +14,7 @@ import { DoctorArt, TestimonialArt } from "@/components/PortamedArt";
 import { PortamedLogo } from "@/components/PortamedLogo";
 import { HeroShowcase } from "@/components/HeroShowcase";
 import { LANDING_COPY, LANDING_LOCALES, landingDir, type LandingLocale } from "@/lib/landing-copy";
+import { LANG_NAME_BY_CODE, langCodeFor } from "@/lib/constants";
 
 const serif = Newsreader({ subsets: ["latin", "latin-ext"], weight: ["400", "500"] });
 const sans = Hanken_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["300", "400", "500", "600", "700"] });
@@ -38,10 +41,23 @@ const pill = "inline-flex items-center justify-center gap-2 rounded-full font-se
 export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[]; loggedIn: boolean }) {
   const [locale, setLocale] = useState<LandingLocale>("en");
   useEffect(() => {
-    const saved = localStorage.getItem("pm_locale");
-    if (saved && VALID_LOCALES.has(saved as LandingLocale)) setLocale(saved as LandingLocale); // eski "en"/"tr" değerleri geçerli kalır
+    try {
+      const airName = localStorage.getItem("air_lang");
+      const airCode = langCodeFor(airName);
+      if (airCode && VALID_LOCALES.has(airCode as LandingLocale)) { setLocale(airCode as LandingLocale); return; }
+      const saved = localStorage.getItem("pm_locale");
+      if (saved && VALID_LOCALES.has(saved as LandingLocale)) {
+        setLocale(saved as LandingLocale);
+        // Emekli anahtardan bir defalık taşıma — air_lang doluysa (örn. landing'de olmayan
+        // Kazakça) hastanın seçimine DOKUNULMAZ, pm_locale yalnız görüntü fallback'i kalır.
+        if (!airName) { localStorage.setItem("air_lang", LANG_NAME_BY_CODE[saved]); localStorage.removeItem("pm_locale"); }
+      }
+    } catch {}
   }, []);
-  function switchLocale(l: LandingLocale) { setLocale(l); localStorage.setItem("pm_locale", l); }
+  function switchLocale(l: LandingLocale) {
+    setLocale(l);
+    try { localStorage.setItem("air_lang", LANG_NAME_BY_CODE[l]); localStorage.removeItem("pm_locale"); } catch {}
+  }
 
   const C = LANDING_COPY[locale];
   const dir = landingDir(locale);

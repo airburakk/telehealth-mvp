@@ -92,7 +92,7 @@ export function Header({ user, lang = "Türkçe", journey = null }: { user: { na
 
           {user ? (
             <div className="ml-1 flex items-center gap-2 border-l border-white/10 ps-2">
-              <NotificationBell lang={lang} />
+              <NotificationBell lang={lang} patientLangFallback={user.role === "PATIENT"} />
               <div className="hidden text-end sm:block">
                 <div className="text-sm font-medium leading-tight text-white/90">{user.name}</div>
                 <div className="text-[11px] leading-tight text-white/45">{t(ROLE_LABELS[user.role] ?? user.role)}</div>

@@ -65,9 +65,11 @@ function timeAgo(iso: string, t: (s: string) => string): string {
 
 // Uygulama içi bildirim merkezi — zil + açılır panel. 30 sn'de bir okunmamış sayısını yoklar;
 // panel açılınca rolün okunmamışları okundu işaretlenir.
-// Dil: Header `lang` prop'u (Partner gibi dil-tercihli kullanıcı) öncelikli; yoksa hastanın
-// localStorage dili (`air_lang`). Personel TR-sabit (her ikisi de "Türkçe" → useT no-op).
-export function NotificationBell({ lang = "Türkçe" }: { lang?: string }) {
+// Dil: Header `lang` prop'u (Partner gibi dil-tercihli kullanıcı) öncelikli; hasta ise (`patientLangFallback`)
+// localStorage dili (`air_lang`). Personel TR-sabit — `air_lang` artık halka açık yüzeylerden de
+// (landing/public sayfalar) yazılabildiğinden, paylaşılan tarayıcıda personel arayüzü rol kapısı
+// olmadan beklenmedik dile dönerdi.
+export function NotificationBell({ lang = "Türkçe", patientLangFallback = false }: { lang?: string; patientLangFallback?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notif[]>([]);
@@ -76,7 +78,7 @@ export function NotificationBell({ lang = "Türkçe" }: { lang?: string }) {
   const boxRef = useRef<HTMLDivElement>(null);
 
   const [patientLang] = usePatientLang();
-  const effLang = lang && lang !== "Türkçe" ? lang : patientLang;
+  const effLang = lang && lang !== "Türkçe" ? lang : patientLangFallback ? patientLang : "Türkçe";
   // Krom + açılır paneldeki dinamik bildirim metinleri (title/body) birlikte çevrilir.
   // `texts` referansını İÇERİK imzasına göre sabitle: `refresh()` her çağrıda yeni bir
   // items dizisi üretir; içerik aynıyken referans değişirse useT'nin effect'i gereksiz

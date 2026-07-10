@@ -1,21 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LANG_NAME_BY_CODE, langCodeFor } from "@/lib/constants";
 
 // Public (giriş gerektirmeyen) sayfalar için EN/TR dil anahtarı.
-// Landing (PortamedLanding) ile AYNI localStorage anahtarını ("pm_locale") kullanır
-// → landing'de seçilen dil bu sayfalarda da geçerli olur. Varsayılan "en" (landing ile aynı).
+// Dil kalıcılığı: tek anahtar `air_lang` (dil ADI — hasta yüzeyleri + landing ile ortak; emekli
+// `pm_locale` bir defalık taşınır). Bu sayfaların statik metni yalnız EN/TR olduğundan diğer
+// diller EN'e düşer (görüntü fallback — air_lang EZİLMEZ; yalnız kullanıcı toggle'a basarsa
+// yazılır). Varsayılan "en" (landing ile aynı).
 export type Locale = "en" | "tr";
 
 export function usePublicLocale(): [Locale, (l: Locale) => void] {
   const [locale, setLocale] = useState<Locale>("en");
   useEffect(() => {
-    const saved = localStorage.getItem("pm_locale");
-    if (saved === "tr" || saved === "en") setLocale(saved);
+    try {
+      const airName = localStorage.getItem("air_lang");
+      if (airName) { setLocale(langCodeFor(airName) === "tr" ? "tr" : "en"); return; }
+      const saved = localStorage.getItem("pm_locale");
+      if (saved === "tr" || saved === "en") {
+        setLocale(saved);
+        localStorage.setItem("air_lang", LANG_NAME_BY_CODE[saved]);
+        localStorage.removeItem("pm_locale");
+      }
+    } catch {}
   }, []);
   function update(l: Locale) {
     setLocale(l);
-    localStorage.setItem("pm_locale", l);
+    try { localStorage.setItem("air_lang", LANG_NAME_BY_CODE[l]); localStorage.removeItem("pm_locale"); } catch {}
   }
   return [locale, update];
 }

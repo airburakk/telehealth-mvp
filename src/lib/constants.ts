@@ -35,6 +35,17 @@ export const LANG_BCP47: Record<string, string> = {
   "Fransızca": "fr-FR", "İngilizce": "en-US", "Almanca": "de-DE", "Kazakça": "kk-KZ", "Kırgızca": "ky-KG",
 };
 
+// ISO 639-1 kodu ↔ dil ADI köprüsü — tek dil anahtarı `air_lang` dil ADI tutar (LANGUAGES);
+// kod-bazlı yüzeyler (landing 8 dili, public EN/TR sayfalar) bu eşlemeyle aynı anahtarı paylaşır.
+export const LANG_NAME_BY_CODE: Record<string, string> = {
+  tr: "Türkçe", ru: "Rusça", az: "Azerice", ar: "Arapça", fa: "Farsça",
+  fr: "Fransızca", en: "İngilizce", de: "Almanca", kk: "Kazakça", ky: "Kırgızca",
+};
+export function langCodeFor(name?: string | null): string | undefined {
+  if (!name) return undefined;
+  return Object.keys(LANG_NAME_BY_CODE).find((c) => LANG_NAME_BY_CODE[c] === name);
+}
+
 // Doktor video kartviziti kanonik TR tanıtım metni — jenerik (isim/branş interpolasyonu YOK:
 // AI çevirisinde placeholder kaybı riski sıfır + tüm doktorlar aynı çeviri cache girdisini paylaşır).
 // Burada (düz-veri modülü): hem client (PreConsultLobby) hem server (hekim/[id]) import eder —
