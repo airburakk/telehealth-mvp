@@ -22,6 +22,7 @@ export function DoctorSignupForm({ googleEnabled, branches, languages }: { googl
   const [title, setTitle] = useState("Uzm. Dr.");
   const [branch, setBranch] = useState("");
   const [city, setCity] = useState("");
+  const [phone, setPhone] = useState(""); // FAZ 5 — WhatsApp/SMS bildirim kanalı hedefi (opsiyonel)
   const [langs, setLangs] = useState<string[]>(["Türkçe"]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,7 +43,7 @@ export function DoctorSignupForm({ googleEnabled, branches, languages }: { googl
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, title, branch, city, languages: langs, email, password }),
+        body: JSON.stringify({ name, title, branch, city, phone, languages: langs, email, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Kayıt başarısız.");
@@ -95,6 +96,11 @@ export function DoctorSignupForm({ googleEnabled, branches, languages }: { googl
             <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="İstanbul" className={INPUT} required />
           </Labeled>
 
+          <Labeled label="Cep telefonu (isteğe bağlı)">
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+90 5xx xxx xx xx" className={INPUT} />
+            <span className="mt-1 block text-[11px] text-slate-400">WhatsApp/SMS bildirim kanalını seçerseniz bildirimler bu numaraya gönderilir.</span>
+          </Labeled>
+
           <Labeled label="Hizmet dilleri">
             <div className="flex flex-wrap gap-1.5">
               {languages.map((l) => (
@@ -127,9 +133,9 @@ export function DoctorSignupForm({ googleEnabled, branches, languages }: { googl
         </form>
 
         <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
-          Kayıt sonrası diploma/tescil no, uzmanlık belgesi, yaptığınız işlemler ve ücretleri ile
-          <strong> tıp diploması + MMSS poliçenizi</strong> yüklemeniz istenir. Hesabınız doğrulama
-          onayına kadar doktor dizininde görünmez.
+          Kayıt sonrası diploma/tescil no, uzmanlık belgesi ve yaptığınız işlemler ile
+          <strong> tıp diploması + MMSS poliçenizi</strong> yüklemeniz istenir (işlem ücretleri tedavi
+          kararında belirlenir). Hesabınız doğrulama onayına kadar doktor dizininde görünmez.
         </p>
       </div>
 

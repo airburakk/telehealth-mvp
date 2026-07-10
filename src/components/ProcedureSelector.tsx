@@ -16,20 +16,14 @@ const CEIL_MULT = 3;
 function fmtTRY(n: number): string {
   return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(n);
 }
-// taban→tavan oranına göre yeşil(120)→kırmızı(0) renk
-function hueFor(price: number, floor: number, ceil: number): string {
-  const r = ceil > floor ? Math.min(1, Math.max(0, (price - floor) / (ceil - floor))) : 0;
-  return `hsl(${Math.round(120 * (1 - r))} 75% 42%)`;
-}
 
 export default function ProcedureSelector({
-  branchKey,
   branchLabel,
   branchItems,
   initial,
   extraItems,
 }: {
-  branchKey: string;
+  branchKey?: string; // geriye uyum: çağıranlar geçiyor; fiyat UI kalktığından artık kullanılmıyor
   branchLabel: string;
   branchItems: Proc[];
   initial: Record<string, number>;
@@ -89,19 +83,19 @@ export default function ProcedureSelector({
   const selectedCount = Object.keys(sel).length;
   const dirty = useMemo(() => JSON.stringify(sel) !== JSON.stringify(savedSel), [sel, savedSel]);
 
+  // Seçim değeri = taban fiyat (₺). Ücret ARTIK burada belirlenmez — tedavi kararı ekranında
+  // (RecommendedTreatments slider) seçilir ve doktorun fiyat hafızasına oradan yazılır.
+  // Daha önce fiyat belirlemiş doktorun mevcut değeri, işlem yeniden seçilmedikçe korunur.
   function toggle(p: Proc) {
     setSel((prev) => {
       const next = { ...prev };
       if (next[p.code] != null) {
         delete next[p.code];
       } else {
-        next[p.code] = p.price && p.price > 0 ? p.price : 0; // taban'dan başla (en yeşil)
+        next[p.code] = p.price && p.price > 0 ? p.price : 0; // taban'dan başla
       }
       return next;
     });
-  }
-  function setPrice(code: string, price: number) {
-    setSel((prev) => ({ ...prev, [code]: price }));
   }
   function toggleGroup(g: string) {
     setOpen((prev) => {
@@ -154,11 +148,12 @@ export default function ProcedureSelector({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <Stethoscope size={15} /> Yaptığım İşlemler & Fiyatlandırma
+            <Stethoscope size={15} /> Yaptığım İşlemler
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            <span className="font-medium text-[#0EA5B2]">{branchLabel}</span> branşındaki işlemlerden yaptıklarınızı seçin;
-            her işlem için <span className="font-medium">taban ile tavan (taban×{CEIL_MULT})</span> arası kendi fiyatınızı belirleyin.
+            <span className="font-medium text-[#0EA5B2]">{branchLabel}</span> branşındaki işlemlerden yaptıklarınızı seçin.
+            İşlem ücreti burada belirlenmez — hasta görüşmesi sonrası <span className="font-medium">tedavi kararında</span>,
+            taban ile tavan (taban×{CEIL_MULT}) arası kaydırma çubuğuyla belirlersiniz.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -259,7 +254,7 @@ export default function ProcedureSelector({
                 {isOpen && (
                   <ul className="divide-y divide-slate-100">
                     {items.map((p) => (
-                      <ProcRow key={p.code} p={p} price={sel[p.code]} selected={sel[p.code] != null} onToggle={() => toggle(p)} onPrice={(v) => setPrice(p.code, v)} />
+                      <ProcRow key={p.code} p={p} selected={sel[p.code] != null} onToggle={() => toggle(p)} />
                     ))}
                   </ul>
                 )}
@@ -273,16 +268,15 @@ export default function ProcedureSelector({
   );
 }
 
+// Satır: yalnız işlem seçimi. Ücret burada belirlenmez (2026-07-10 akış değişikliği) —
+// taban/tavan yalnız bilgi amaçlı gösterilir; fiyat, görüşme sonrası tedavi kararında seçilir.
 function ProcRow({
-  p, price, selected, onToggle, onPrice,
+  p, selected, onToggle,
 }: {
-  p: Proc; price: number | undefined; selected: boolean; onToggle: () => void; onPrice: (v: number) => void;
+  p: Proc; selected: boolean; onToggle: () => void;
 }) {
   const floor = p.price && p.price > 0 ? p.price : 0;
   const ceil = floor * CEIL_MULT;
-  const cur = price ?? floor;
-  const color = floor > 0 ? hueFor(cur, floor, ceil) : "#14C3D0";
-  const step = floor > 0 ? Math.max(1, Math.round((ceil - floor) / 100)) : 1;
 
   return (
     <li className="px-4 py-3">
@@ -295,40 +289,10 @@ function ProcRow({
           <div className="text-sm text-slate-700">{p.name}</div>
           <div className="text-[11px] text-slate-400">
             {p.code}
-            {floor > 0 ? <> · taban {fmtTRY(floor)} · tavan {fmtTRY(ceil)}</> : <> · fiyat tanımsız</>}
+            {floor > 0 ? <> · taban {fmtTRY(floor)} · tavan {fmtTRY(ceil)} <span className="text-slate-300">· ücret tedavi kararında belirlenir</span></> : <> · tarife fiyatı tanımsız</>}
           </div>
         </div>
       </label>
-
-      {selected && floor > 0 && (
-        <div className="mt-2.5 pl-8">
-          <div className="flex items-center gap-3">
-            <span className="text-[11px] font-medium text-emerald-600">{fmtTRY(floor)}</span>
-            <input
-              type="range"
-              min={floor}
-              max={ceil}
-              step={step}
-              value={cur}
-              onChange={(e) => onPrice(Number(e.target.value))}
-              className="h-2 flex-1 cursor-pointer"
-              style={{ accentColor: color }}
-            />
-            <span className="text-[11px] font-medium text-red-500">{fmtTRY(ceil)}</span>
-            <span className="w-24 shrink-0 text-right text-sm font-bold tabular-nums" style={{ color }}>{fmtTRY(cur)}</span>
-          </div>
-        </div>
-      )}
-      {selected && floor === 0 && (
-        <div className="mt-2 flex items-center gap-2 pl-8">
-          <span className="text-[11px] text-slate-400">Fiyat (₺):</span>
-          <input
-            type="number" min={0} value={cur || ""}
-            onChange={(e) => onPrice(Math.max(0, Number(e.target.value)))}
-            className="w-32 rounded-md border border-slate-300 px-2 py-1 text-sm outline-none focus:border-teal-500"
-          />
-        </div>
-      )}
     </li>
   );
 }

@@ -8,6 +8,7 @@ import { recoveryClosed } from "@/lib/postop-access";
 import { countryName } from "@/lib/constants";
 import { encryptField, decryptField } from "@/lib/crypto";
 import { recordAccess, reqMeta } from "@/lib/audit";
+import { notifyUser } from "@/lib/notify";
 
 // POST /api/ai/discharge — vakanın tüm yolculuğunu epikriz/taburcu raporuna sentezler (Claude) ve Case'e kaydeder.
 export async function POST(req: Request) {
@@ -99,6 +100,16 @@ export async function POST(req: Request) {
       actor: user, action: "DISCHARGE_GENERATE", resourceType: "CASE", resourceId: caseId, subjectUserId: c.userId,
       detail: "Epikriz/taburcu raporu üretildi", ...reqMeta(req),
     });
+
+    // FAZ 3: rapor hastanın post-op ekranında görüntülenir → hastaya "hazır" bildirimi (talep ettiyse döngü kapanır)
+    if (c.userId) {
+      await notifyUser(c.userId, {
+        type: "DISCHARGE_REQUEST",
+        title: "📄 Epikriz / taburcu raporunuz hazır",
+        body: "Doktorunuz tıbbi özet raporunuzu oluşturdu — Post-Op Takip ekranından görüntüleyebilirsiniz",
+        href: `/takip/${caseId}`,
+      });
+    }
 
     return NextResponse.json({ report, structured, savedAt: dischargeAt.toISOString() });
   } catch (e) {

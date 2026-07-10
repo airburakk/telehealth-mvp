@@ -62,7 +62,7 @@ export function OnboardingForm({
       });
       const d = await r.json();
       if (!r.ok) {
-        // 409: eksik zorunlu adımlar (işlem/ücret · diploma no · uzmanlık belgesi · belgeler) → listele
+        // 409: eksik zorunlu adımlar (işlem · diploma no · uzmanlık belgesi · belgeler) → listele
         if (Array.isArray(d.missing)) setMissing(d.missing as string[]);
         throw new Error(d.error || "Kaydedilemedi.");
       }
@@ -84,16 +84,17 @@ export function OnboardingForm({
         </p>
       </div>
 
-      {/* ── Uzmanlık & İşlemler (FHIR) — diploma/tescil no + uzmanlık belgesi + işlem/ücret (zorunlu) ── */}
+      {/* ── Uzmanlık & İşlemler (FHIR) — diploma/tescil no + uzmanlık belgesi + işlem seçimi (zorunlu; ücret tedavi kararında) ── */}
       <div className="mt-8">
         <div className="flex items-center gap-2 text-sm font-bold text-[#101010]">
           <Stethoscope size={16} className="text-[#0EA5B2]" /> Uzmanlık & İşlemler
         </div>
         <p className="mt-1 text-xs text-slate-500">
           <strong>{branchLabel}</strong> branşı için diploma/tescil numaranızı, uzmanlık belgenizi ve
-          yaptığınız işlemleri (ücretleriyle) tanımlayın. Bu bilgiler <strong>FHIR</strong> standardında
+          yaptığınız işlemleri tanımlayın. Bu bilgiler <strong>FHIR</strong> standardında
           (Practitioner.identifier/qualification + ServiceRequest) saklanır ve hesabınız aktifleşmeden
-          zorunludur — en az bir işlem ve ücreti seçmelisiniz.
+          zorunludur — en az bir işlem seçmelisiniz. İşlem ücreti burada sorulmaz; hasta görüşmesi
+          sonrasında <strong>tedavi kararı</strong> ekranında taban–tavan aralığında belirlersiniz.
         </p>
 
         {/* FHIR qualification: diploma/tescil no + uzmanlık belgesi (AcademicEditor) */}
@@ -196,7 +197,7 @@ export function OnboardingForm({
 
       {!docsReady && (
         <p className="mt-6 flex items-center justify-center gap-1.5 rounded-xl bg-amber-50 px-3 py-2.5 text-center text-xs font-medium text-amber-700 ring-1 ring-amber-100">
-          <ShieldAlert size={14} /> Hesabınızı aktifleştirmek için işlem/ücret seçimi, diploma no, uzmanlık belgesi ve tıp diploması + MMSS poliçesini (teminat limiti dahil) tamamlayın.
+          <ShieldAlert size={14} /> Hesabınızı aktifleştirmek için işlem seçimi, diploma no, uzmanlık belgesi ve tıp diploması + MMSS poliçesini (teminat limiti dahil) tamamlayın.
         </p>
       )}
 

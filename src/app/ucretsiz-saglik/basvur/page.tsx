@@ -6,6 +6,7 @@ import { COUNTRIES, LANGUAGES } from "@/lib/constants";
 import { useT } from "@/components/useT";
 import { usePatientLang } from "@/components/PatientLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
+import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { HeartHandshake, Loader2, ArrowRight } from "lucide-react";
 
 // Ücretsiz Sağlık Hizmeti ön-triyaj — kısa, ücret kapısı YOK. Başvuru → eşleşme varsa görüşme, yoksa bekleme odası.
@@ -30,6 +31,8 @@ export default function FreeCareApplyPage() {
   const [patientName, setPatientName] = useState("");
   const [country, setCountry] = useState("TR");
   const [language, setLanguage] = useState("Türkçe");
+  const [phone, setPhone] = useState(""); // FAZ 8 — hasta iletişim
+  const [contactPref, setContactPref] = useState<ContactPref>("APP");
   const [uiLang, setUiLang] = usePatientLang(); // /basla'da seçilen dil (air_lang) taşınır
   const [symptoms, setSymptoms] = useState("");
   const [durationText, setDurationText] = useState("");
@@ -54,7 +57,7 @@ export default function FreeCareApplyPage() {
     return () => { alive = false; clearInterval(iv); };
   }, []);
 
-  const tTexts = useMemo(() => STATIC_UI, []);
+  const tTexts = useMemo(() => [...STATIC_UI, ...CONTACT_PREF_TEXTS], []);
   const { t } = useT(uiLang, tTexts);
 
   async function submit() {
@@ -65,7 +68,7 @@ export default function FreeCareApplyPage() {
       const res = await fetch("/api/free-care/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patientName, country, language, symptoms, durationText, consent: true }),
+        body: JSON.stringify({ patientName, country, language, symptoms, durationText, consent: true, patientPhone: phone, contactPreference: contactPref }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Hata");
       const d = await res.json();
@@ -104,6 +107,8 @@ export default function FreeCareApplyPage() {
             </select>
           </Field>
         </div>
+        {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
+        <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
         <Field label={t("Şikayetiniz / Semptomlar")}>
           <textarea
             value={symptoms}

@@ -6,6 +6,7 @@ import { recoveryProtocol } from "@/lib/postop";
 import { recoveryClosed } from "@/lib/postop-access";
 import { RecoveryView, type RecoveryData } from "./RecoveryView";
 import { decryptField } from "@/lib/crypto";
+import type { Structured } from "@/components/DischargeReport";
 
 export const dynamic = "force-dynamic";
 
@@ -31,12 +32,23 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
 
   const day = Math.max(1, Math.floor((Date.now() - new Date(recovery.startedAt).getTime()) / 86400000) + 1);
 
+  // FAZ 3 (2026-07-10): AI Epikriz görüşme ekranından buraya taşındı — personel üretir/görür,
+  // hasta salt-okunur görür + "iste" düğmesiyle doktordan talep eder.
+  const isStaff = !!user && ["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role);
+  let dischargeStructured: Structured | null = null;
+  try { dischargeStructured = c.dischargeStructured ? (JSON.parse(decryptField(c.dischargeStructured) ?? "") as Structured) : null; } catch { dischargeStructured = null; }
+
   const data: RecoveryData = {
     caseId: c.id,
     patientName: decryptField(c.patientName), // kimlik at-rest şifreli → çöz (E2EE inc.2c)
     branch: c.branch,
     day,
     closed: closed.closed, // E2EE Faz 2A — takip tamamlandı → hasta yeni kontrol giremez (salt-okunur)
+    isStaff,
+    dischargeRequestedAt: c.dischargeRequestedAt ? c.dischargeRequestedAt.toISOString() : null,
+    discharge: c.dischargeReport
+      ? { report: decryptField(c.dischargeReport) ?? "", structured: dischargeStructured, savedAt: c.dischargeAt ? c.dischargeAt.toISOString() : null }
+      : null,
     protocol: recoveryProtocol(c.branch),
     checkIns: recovery.checkIns.map((ci) => ({
       id: ci.id,

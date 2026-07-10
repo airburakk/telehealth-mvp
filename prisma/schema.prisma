@@ -132,6 +132,11 @@ model Doctor {
   mmssCoverageCurrency String?   @default("TRY") // "TRY" | "USD" — hesapta canlı kurla USD'ye normalize edilir
   mmssValidUntil       DateTime? // poliçe geçerlilik bitişi
   mmssVerifiedAt       DateTime? // operasyon/admin doğrulaması (ileride; şimdilik yüklemeyle damgalanır)
+  // 2026-07-10 — bildirim kanalı tercihi + HealthTürkiye kayıt doğrulaması
+  phone             String? // cep telefonu (at-rest şifreli, encryptField) — WhatsApp/SMS bildirim hedefi
+  notifyChannel     String    @default("APP") // bildirim kanalı: APP | WHATSAPP | SMS (WA/SMS dormant — env yoksa simülasyon)
+  registryStatus    String? // healthturkiye.gov.tr doğrulaması: FOUND | NOT_FOUND (null = henüz bakılmadı) → etik kurul onay bayrağı
+  registryCheckedAt DateTime? // son doğrulama zamanı
   cases           Case[]
   consultations   Consultation[]
   reviews         Review[]
@@ -193,6 +198,15 @@ model Case {
   // LOJİSTİK tercih (PHI DEĞİL, düz metin — decryptCaseFields kapsamı DIŞI); doktor PackageBuilder'ı ön-doldurur.
   // tourismPlan != null aynı zamanda "turizm vakası" ayırt edicisidir (ek boolean gereksiz).
   tourismPlan         String?
+  // 2026-07-10 değişiklik paketi — hasta iletişim + tedavi kararı + STA iletimi + epikriz talebi
+  patientPhone         String? // hasta telefonu (kimlik → at-rest şifreli, encryptField)
+  contactPreference    String? // hastanın iletişim tercihi: APP | SMS | EMAIL
+  treatmentDaysMin     Int? // doktorun öngördüğü tedavi süresi — alt sınır (gün)
+  treatmentDaysMax     Int? // üst sınır (gün); örn. 3–7 gün
+  hospitalRegistryId   Int? // tedavi için seçilen hastane (RegistryHospital.id — gevşek bağ, FK yok)
+  hospitalName         String? // hastane adı snapshot'ı (registry kaydı kalksa da dosyada kalır)
+  agencySentAt         DateTime? // tedavi kararının Sağlık Turizmi Acentesine iletildiği an (null = iletilmedi)
+  dischargeRequestedAt DateTime? // hastanın post-op ekranından epikriz/taburcu raporu talebi
   doctor              Doctor?        @relation(fields: [doctorId], references: [id])
   doctorId            String?
   consultations       Consultation[]
@@ -207,6 +221,7 @@ model Case {
   @@index([freeCare, freeCareStatus])
   @@index([doctorId]) // doktor kokpit OR-dalı + ücretsiz-hizmet kokpiti + CRM groupBy'lar
   @@index([branch, status]) // kokpit branş-dalı (status IN) + personel kuyruğu /api/cases?branch=&status=
+  @@index([agencySentAt]) // STA kuyruğu: agencySentAt != null (acente yalnız iletilen dosyaları görür)
 }
 
 /// M5 Faz 2 — Partner doktorun açtığı anonimleştirilmiş konsültasyon talebi.
@@ -558,6 +573,8 @@ model SecondOpinionCase {
   diagnosisSummary String // hastanın mevcut tanı özeti (serbest metin)
   country          String? // hasta ülkesi (COUNTRIES.code) — veri ikametgâhı/yönlendirme sinyali (geo-routing)
   language         String? // hastanın tercih ettiği iletişim dili (LANGUAGES) — eşleştirme + sunum dili
+  patientPhone      String? // hasta telefonu (kimlik → at-rest şifreli, encryptField) — 2026-07-10
+  contactPreference String? // hastanın iletişim tercihi: APP | SMS | EMAIL
   status           String  @default("DRAFT") // bkz. lib/second-opinion SO_STATUSES
   assignedDoctorId String? // atanan hekim (Doctor.id) — §10: tek doktor
   // SLA zaman damgaları — hesap TEK KAYNAK lib/second-opinion (§11)
@@ -698,4 +715,92 @@ model AccessLog {
   @@index([resourceType, resourceId])
   @@index([actorId])
   @@index([createdAt, id]) // zincir tip sorgusu (her append, advisory-lock altında) + verify tam yürüyüş + denetim sayfalaması
+}
+
+/// HealthTürkiye (healthturkiye.gov.tr) doktor kayıt defteri — günlük senkron (2026-07-10).
+/// Kaynak: web-api.healthturkiye.gov.tr/api/v1/doctor/search (sayfalı; ~10.000 kayıt). PHI DEĞİL —
+/// kamuya açık resmi dizin (şifreleme yok). Soft-delete: kaynaktan kalkan kayıt removedAt damgalanır
+/// (silinmez) → günlük eklenen/çıkarılan raporu + doktor kayıt doğrulaması buradan.
+model RegistryDoctor {
+  id                Int       @id // kaynak kayıt id'si (healthturkiye)
+  name              String
+  lastName          String
+  jobName           String? // Meslek (Professor, Associate Professor, Specialist ...)
+  jobId             Int?
+  branchName        String? // Branş (kaynak dili EN)
+  branchId          Int?
+  cityId            Int?
+  cityName          String? // Şehir (GET /city lookup'ından doldurulur)
+  establishmentId   Int?
+  establishmentName String? // Hastane / kurum
+  slug              String?
+  address           String?
+  experience        Int?
+  genderId          Int?
+  firstSeenAt       DateTime  @default(now()) // dizinde ilk görüldüğü senkron
+  lastSeenAt        DateTime  @default(now()) // son görüldüğü senkron
+  removedAt         DateTime? // kaynaktan çıkarıldığı senkron (null = halen kayıtlı)
+
+  @@index([branchId]) // Branş filtresi
+  @@index([cityId]) // Şehir filtresi
+  @@index([establishmentId]) // Hastane filtresi
+  @@index([jobId]) // Meslek filtresi
+  @@index([removedAt]) // aktif/çıkarılmış ayrımı
+  @@index([lastName, name]) // kayıt doğrulama (ad-soyad eşleşmesi)
+}
+
+/// HealthTürkiye sağlık tesisi kayıt defteri — günlük senkron (2026-07-10).
+/// Kaynak: /api/v1/establishment/search (~4.600 tesis). Tedavi kararındaki hastane seçici buradan.
+/// languages/accreditations/facilities liste API'sinde yalnız sayı olarak var → JSON alanlar detay
+/// zenginleştirmesiyle (establishment-detail) aşamalı dolar; boş = henüz zenginleştirilmedi.
+model RegistryHospital {
+  id                 Int       @id // kaynak kayıt id'si
+  name               String
+  slug               String?
+  cityName           String? // Şehir
+  cityCode           String?
+  cityHasAirport     Boolean? // Havalimanı filtresi
+  address            String?
+  phone              String?
+  totalPersonnel     Int? // Minimum Sağlık Profesyoneli Sayısı filtresi
+  unitCapacity       Int?
+  facilityTypeId     Int?
+  facilityTypeName   String? // Sağlık Tesisi Türü / Tesis Çeşidi (Facility Type)
+  accreditationCount Int? // Akreditasyonlar (sayı; adlar detay zenginleştirmesiyle)
+  certificationCount Int?
+  insuranceCount     Int?
+  doctorCount        Int?
+  foundationYear     Int?
+  latitude           String?
+  longitude          String?
+  branches           String? // JSON [{id,name}] — Branş filtresi
+  treatments         String? // JSON — hizmet verilen tedaviler
+  languages          String? // JSON — Hizmet Verilen Diller (detay zenginleştirme)
+  accreditations     String? // JSON — akreditasyon adları (detay zenginleştirme)
+  facilities         String? // JSON — Tesis Olanakları (detay zenginleştirme)
+  firstSeenAt        DateTime  @default(now())
+  lastSeenAt         DateTime  @default(now())
+  removedAt          DateTime? // kaynaktan çıkarıldığı senkron (null = halen kayıtlı)
+
+  @@index([cityCode]) // Şehir filtresi
+  @@index([facilityTypeId]) // Tesis türü filtresi
+  @@index([removedAt])
+}
+
+/// Günlük registry senkron raporu — doktor + hastane değişimleri TEK raporda (2026-07-10).
+/// Cron her koşuda o günün kaydını yazar; eklenen/çıkarılan listeleri JSON özet olarak tutulur.
+model RegistryReport {
+  id               String   @id @default(cuid())
+  date             String   @unique // YYYY-MM-DD (Europe/Istanbul günü) — günde tek rapor (yeniden koşu üzerine yazar)
+  status           String   @default("OK") // OK | FETCH_FAILED | PARTIAL
+  doctorsTotal     Int      @default(0) // senkron sonunda aktif doktor sayısı
+  hospitalsTotal   Int      @default(0)
+  addedDoctors     String? // JSON [{id,name,lastName,branchName,cityName,establishmentName}]
+  removedDoctors   String? // JSON — aynı biçim
+  addedHospitals   String? // JSON [{id,name,cityName,facilityTypeName}]
+  removedHospitals String? // JSON — aynı biçim
+  detail           String? // hata/bilgi notu (FETCH_FAILED nedeni, kısmi sayfa vb.)
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt]) // rapor listesi (yeni→eski)
 }

@@ -7,10 +7,8 @@ import { useT } from "@/components/useT";
 import { TranslateButton } from "@/components/TranslateButton";
 import { LiveInterpreter } from "@/components/LiveInterpreter";
 import { ConsultationTimer } from "@/components/ConsultationTimer";
-import RecommendedTreatments from "@/components/RecommendedTreatments";
 import DicomViewer from "@/components/DicomViewer";
-import { FhirCodingForm } from "@/components/FhirCodingForm";
-import { DischargeReport, type Structured } from "@/components/DischargeReport";
+import ClinicalDecisionPanel from "@/components/ClinicalDecisionPanel";
 import { PatientQuestionsPanel } from "@/components/PatientQuestionsPanel";
 import { getIceServers } from "@/lib/ice";
 import { signalFetch, signalPollDelayMs } from "@/lib/signal-poll";
@@ -38,15 +36,19 @@ interface RecommendData {
   rate: number; // güncel USD/₺ (≈$ gösterimi için)
 }
 
-// Kokpitten doktor paneline taşınan FHIR klinik kodlama + AI epikriz verisi (yalnız doktor görünümü)
+// Birleşik Klinik Kodlama + Tedavi Kararı verisi (yalnız doktor görünümü) — FAZ 2 (2026-07-10).
+// AI Epikriz görüşme ekranından POST-OP ekranına taşındı (/takip/[caseId], yalnız personel görünümü).
 interface ClinicalData {
   icd10Code: string | null;
   patientIdentifier: string | null;
   patientIdentifierType: string | null;
   icd10Options: { code: string; label: string }[];
-  dischargeReport: string | null;
-  dischargeStructured: Structured | null;
-  dischargeSavedAt: string | null;
+  icdProcedures: Record<string, { code: string; name: string; price: number | null }[]>; // ICD → katalog-çözümlü eşlenmiş işlemler (çapraz-branş dahil)
+  treatmentDaysMin: number | null;
+  treatmentDaysMax: number | null;
+  hospitalRegistryId: number | null;
+  hospitalName: string | null;
+  agencySentAt: string | null;
 }
 
 // ── Canlı transkript (Web Speech API) ──
@@ -137,14 +139,6 @@ export function ConsultationRoom({
   const [txBusy, setTxBusy] = useState(false);
   const [interpAutoStart, setInterpAutoStart] = useState(false); // VAD ilk konuşmayı algılayınca tercüme auto-start (yalnız diller farklıysa)
 
-  // Sağlık Turizmi Agent'ı — SOAP'tan paket teklifi
-  interface ProposalResp {
-    proposal: { tier: string; nights: number; hospitalType: string; hotelStars: number; translator: boolean; insuranceExtended: boolean; insuranceMalpractice: boolean; rationale: string };
-    quote: { total: number; currency: string };
-  }
-  const [proposal, setProposal] = useState<ProposalResp | null>(null);
-  const [propBusy, setPropBusy] = useState(false);
-  const [propErr, setPropErr] = useState("");
   const recRef = useRef<AnySpeechRecognition | null>(null);
   const sttOnRef = useRef(false);
   const dictatingRef = useRef(false);
@@ -530,33 +524,6 @@ export function ConsultationRoom({
     finally { setTxBusy(false); }
   }
 
-  // Adım 4 (Modül 2): nihai SOAP'tan sağlık turizmi teklifi — not önce kaydedilir (teklif kayıtlı SOAP'a göre)
-  async function generateProposal() {
-    setPropBusy(true); setPropErr(""); setProposal(null);
-    try {
-      if (!saved && notes.trim()) await saveNotes();
-      const r = await fetch("/api/ai/package-proposal", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ caseId: caseData.id }),
-      });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Teklif hazırlanamadı.");
-      setProposal(d);
-    } catch (e) { setPropErr(e instanceof Error ? e.message : "Hata."); }
-    finally { setPropBusy(false); }
-  }
-
-  function openProposalPackage() {
-    if (!proposal) return;
-    const p = proposal.proposal;
-    const q = new URLSearchParams({
-      ai: "1", tier: p.tier, nights: String(p.nights), hotel: String(p.hotelStars), htype: p.hospitalType,
-      tr: p.translator ? "1" : "0", ie: p.insuranceExtended ? "1" : "0", im: p.insuranceMalpractice ? "1" : "0",
-      why: p.rationale.slice(0, 300),
-    });
-    router.push(`/paket/${caseData.id}?${q.toString()}`);
-  }
-
   async function copyPatientLink() {
     const url = `${window.location.origin}/gorusme/${consultationId}?role=patient`;
     try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
@@ -846,77 +813,30 @@ export function ConsultationRoom({
             </div>
           )}
 
-          {/* Klinik Kodlama (FHIR) — kokpitten taşındı; akış: Görüşme Notları → Klinik Kodlama → Tedavi Kararı → AI Epikriz */}
-          {isDoctor && clinical && (
-            <FhirCodingForm
+          {/* Birleşik Klinik Kodlama (FHIR) + Tedavi Kararı — FAZ 2 (2026-07-10).
+              Akış: tanı ICD-10 → tanıya eşlenmiş işlemler aktifleşir (+AI önerisi) → slider ücret →
+              süre (gün) → hastane → Kaydet = dosya Sağlık Turizmi Acentesine iletilir.
+              Eski "Paketi oluştur" / "AI Teklif hazırla" / "Sağlık Turizmi Paketi" düğmeleri kaldırıldı
+              (teklifi STA hazırlar); AI Epikriz post-op ekranına taşındı (/takip/[caseId]). */}
+          {isDoctor && clinical && recommend && (
+            <ClinicalDecisionPanel
               caseId={caseData.id}
+              branchLabel={recommend.branchLabel}
+              branchProcedures={recommend.branchProcedures}
+              doctorPrices={recommend.doctorPrices}
+              initial={recommend.initial}
+              rate={recommend.rate}
               icd10Code={clinical.icd10Code}
               patientIdentifier={clinical.patientIdentifier}
               patientIdentifierType={clinical.patientIdentifierType}
               icd10Options={clinical.icd10Options}
-            />
-          )}
-
-          {isDoctor && (
-            <div className="rounded-3xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
-              <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Tedavi Kararı</div>
-
-              {/* M2→M3: doktorun tavsiye ettiği tedaviler (KSHFT listesi + kendi fiyatı) → pakete yansır */}
-              {recommend && (
-                <RecommendedTreatments
-                  caseId={caseData.id}
-                  branchLabel={recommend.branchLabel}
-                  branchProcedures={recommend.branchProcedures}
-                  doctorPrices={recommend.doctorPrices}
-                  initial={recommend.initial}
-                  rate={recommend.rate}
-                />
-              )}
-
-              <div className="mt-3 border-t border-emerald-100 pt-3 text-[11px] font-medium uppercase tracking-wide text-slate-400">veya AI ile otomatik teklif</div>
-
-              {/* Sağlık Turizmi Agent'ı: nihai SOAP → otomatik teklif */}
-              <button
-                onClick={generateProposal}
-                disabled={propBusy || !notes.trim()}
-                title={!notes.trim() ? "Önce SOAP notunu oluşturun" : "SOAP'taki tedavi planından paket teklifi"}
-                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50"
-              >
-                {propBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} AI · Teklif hazırla (SOAP&apos;tan)
-              </button>
-              {propErr && <div className="mt-1.5 text-[11px] text-red-600">{propErr}</div>}
-
-              {proposal && (
-                <div className="mt-3 rounded-2xl border border-violet-200 bg-white p-3.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-bold text-violet-700">{proposal.proposal.tier}</span>
-                    <span className="text-sm font-bold text-[#101010]">${proposal.quote.total.toLocaleString("en-US")}</span>
-                  </div>
-                  <div className="mt-2 text-xs leading-relaxed text-slate-600">
-                    {proposal.proposal.nights} gece · {proposal.proposal.hotelStars}★ otel · {proposal.proposal.hospitalType} hastane
-                    {proposal.proposal.translator ? " · tercüman" : ""}
-                    {proposal.proposal.insuranceMalpractice ? " · malpraktis sigortası" : ""}
-                  </div>
-                  <p className="mt-2 border-t border-slate-100 pt-2 text-[11px] leading-relaxed text-slate-500">{proposal.proposal.rationale}</p>
-                  <button onClick={openProposalPackage} className="mt-2.5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
-                    <Luggage size={15} /> Teklifle paketi aç
-                  </button>
-                </div>
-              )}
-
-              <button onClick={() => router.push(`/paket/${caseData.id}`)} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
-                <Luggage size={16} /> Sağlık Turizmi Paketi (manuel)
-              </button>
-            </div>
-          )}
-
-          {/* AI Epikriz / Taburcu Raporu — kokpitten taşındı; Tedavi Kararı'ndan sonra (akışın son adımı) */}
-          {isDoctor && clinical && (
-            <DischargeReport
-              caseId={caseData.id}
-              initialReport={clinical.dischargeReport}
-              initialStructured={clinical.dischargeStructured}
-              initialSavedAt={clinical.dischargeSavedAt}
+              icdProcedures={clinical.icdProcedures}
+              initialDaysMin={clinical.treatmentDaysMin}
+              initialDaysMax={clinical.treatmentDaysMax}
+              initialHospitalId={clinical.hospitalRegistryId}
+              initialHospitalName={clinical.hospitalName}
+              agencySentAt={clinical.agencySentAt}
+              getNotes={() => notes}
             />
           )}
         </aside>

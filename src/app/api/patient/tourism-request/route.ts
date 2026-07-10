@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
 import { requireUser } from "@/lib/api-auth";
+import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField } from "@/lib/crypto";
 import { notifyDoctorsByBranch } from "@/lib/notify";
 
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
   }
 
   const patientName = String(body.patientName ?? "").trim() || user.name;
+  const contact = parseContactFields(body); // FAZ 8 — telefon + iletişim tercihi
   const country = String(body.country ?? "TR");
   const tier = TIERS.has(String(body.tier)) ? String(body.tier) : "Standart";
   const nights = Math.min(30, Math.max(1, Number(body.nights) || 7));
@@ -51,6 +53,9 @@ export async function POST(req: Request) {
       reasoning: encryptField(a.reasoning),
       status: "NEW",
       tourismPlan: JSON.stringify(plan),
+      // Hasta iletişim (FAZ 8): telefon kimlik → şifreli; tercih (APP|SMS|EMAIL) düz
+      patientPhone: contact.phone ? encryptField(contact.phone) : null,
+      contactPreference: contact.contactPreference,
     },
   });
 

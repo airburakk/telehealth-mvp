@@ -11,6 +11,7 @@ import { panelVisibility } from "@/lib/doctor-home";
 import { waitingCount } from "@/lib/free-care";
 import { openCountForDoctor } from "@/lib/consultation-requests";
 import { newsForBranch, NEWS_KIND_LABEL, type NewsItem } from "@/lib/medical-news";
+import { NotifyChannelCard } from "@/components/NotifyChannelCard";
 import { decryptField } from "@/lib/crypto";
 import { Stethoscope, ArrowRight, Activity, HeartHandshake, Inbox, Newspaper, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -164,6 +165,13 @@ export default async function DoctorPanel({
         <h1 className="text-2xl font-bold text-[#101010]">Doktor Ana Sayfası</h1>
         <p className="mt-1 text-sm text-slate-500">Birimleriniz tercihinize göre düzenlendi.</p>
       </div>
+
+      {/* ── Bildirim kanalı tercihi (FAZ 5) — uygulama / WhatsApp / SMS (WA+SMS dormant-simülasyon) ── */}
+      {doctor && (
+        <div className="mb-5">
+          <NotifyChannelCard initialChannel={doctor.notifyChannel} initialPhone={decryptField(doctor.phone)} />
+        </div>
+      )}
 
       {/* ── Panel 1: Klinik Nöbet (DutyConsole kendi başlığını taşır) + eşleşen vakalar ── */}
       {duty && (

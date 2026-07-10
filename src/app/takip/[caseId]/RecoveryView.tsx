@@ -10,7 +10,9 @@ import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { severityMeta, type Severity } from "@/lib/postop";
 import { formatDateTime, langDir } from "@/lib/constants";
 import { CheckInForm } from "@/components/CheckInForm";
-import { ArrowLeft, ArrowRight, HeartPulse, CalendarCheck, Pill, Video, Thermometer, Activity, ShieldCheck, CheckCircle2, RotateCcw } from "lucide-react";
+import { DischargeReport, type Structured } from "@/components/DischargeReport";
+import { TranslateButton } from "@/components/TranslateButton";
+import { ArrowLeft, ArrowRight, HeartPulse, CalendarCheck, Pill, Video, Thermometer, Activity, ShieldCheck, CheckCircle2, RotateCcw, FileText, Loader2, Check, AlertTriangle } from "lucide-react";
 
 export type RecoveryCheckIn = {
   id: string;
@@ -29,6 +31,10 @@ export type RecoveryData = {
   branch: string;
   day: number;
   closed?: boolean; // E2EE Faz 2A — takip tamamlandı → yeni kontrol girişi kapalı (geçmiş salt-okunur)
+  // FAZ 3 (2026-07-10): AI Epikriz post-op ekranında yaşar — personel üretir, hasta ister + salt-okunur görür
+  isStaff?: boolean;
+  dischargeRequestedAt?: string | null; // hastanın epikriz talebi (ISO)
+  discharge?: { report: string; structured: Structured | null; savedAt: string | null } | null;
   protocol: { day: string; title: string; desc: string }[];
   checkIns: RecoveryCheckIn[];
 };
@@ -44,6 +50,16 @@ const UI = [
   "Bu kayıtları kendi ülkenizdeki doktorunuzla süreli ve iptal edilebilir bir bağlantıyla paylaşın.",
   "Paylaşım Kontrol Merkezi",
   "Kırmızı bayrak", "İzlemde", "Normal", // severityMeta etiketleri (geçmiş rozetleri)
+  // AI Epikriz (FAZ 3) — hasta yüzü
+  "AI Epikriz / Taburcu Raporu",
+  "Tedavi sürecinizin tıbbi özet raporu. Doktorunuz oluşturduğunda burada görüntülenir.",
+  "AI Epikriz / Taburcu Raporu iste",
+  "İstek gönderiliyor…",
+  "Talebiniz doktorunuza iletildi",
+  "Raporu doktorunuz oluşturur; hazır olduğunda bildirim alırsınız.",
+  "Takip kapandığı için yeni talep, doktora erişimi yeniden vermenizle mümkündür.",
+  "oluşturuldu",
+  "Rapor kaynak dilinde (Türkçe) hazırlanır; aşağıdan kendi dilinize çevirebilirsiniz.",
   "Post-op takip tamamlandı",
   "Bu sürecin takibi tamamlandı; yeni kontrol girişi kapalıdır. Geçmiş kayıtlarınız aşağıda görüntülenmeye devam eder.",
   "Doktora erişimi yeniden ver",
@@ -59,6 +75,30 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
   const [reopenStep, setReopenStep] = useState<"idle" | "confirm">("idle");
   const [reopening, setReopening] = useState(false);
   const [reopenErr, setReopenErr] = useState("");
+
+  // AI Epikriz talebi (FAZ 3) — hasta düğmeye basınca doktora bildirim düşer (video talebi deseni)
+  const [reqBusy, setReqBusy] = useState(false);
+  const [reqErr, setReqErr] = useState("");
+  const [requestedAt, setRequestedAt] = useState<string | null>(data.dischargeRequestedAt ?? null);
+
+  async function requestDischarge() {
+    setReqBusy(true);
+    setReqErr("");
+    try {
+      const res = await fetch(`/api/cases/${data.caseId}/discharge-request`, { method: "POST" });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || "Talep gönderilemedi.");
+      setRequestedAt(d.requestedAt ?? new Date().toISOString());
+    } catch (e) {
+      setReqErr(e instanceof Error ? e.message : "Hata oluştu.");
+    } finally {
+      setReqBusy(false);
+    }
+  }
+
+  // Personel bandı: rapor talep sonrası henüz (yeniden) üretilmediyse talep "bekliyor" sayılır
+  const pendingRequest = !!data.dischargeRequestedAt &&
+    (!data.discharge?.savedAt || new Date(data.dischargeRequestedAt) > new Date(data.discharge.savedAt));
 
   // Geri-alma (E2EE Faz 2A) — hasta post-op erişimini klinik ekibe yeniden açar; başarıda sayfa yenilenir → form geri gelir.
   async function reopen() {
@@ -172,8 +212,76 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
           </div>
         </div>
 
-        {/* Sağ: protokol + hatırlatıcı */}
+        {/* Sağ: epikriz + protokol + hatırlatıcı */}
         <aside className="space-y-4">
+          {/* AI Epikriz / Taburcu Raporu — FAZ 3 (2026-07-10): görüşme ekranından buraya taşındı.
+              Personel: üretim paneli (+ hasta talebi bandı) · Hasta: salt-okunur rapor + "iste" düğmesi. */}
+          {data.isStaff ? (
+            <div className="space-y-3">
+              {pendingRequest && (
+                <div className="flex items-start gap-2 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+                  <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                  <span>
+                    <strong>Hasta epikriz / taburcu raporu istedi</strong>
+                    {requestedAt ? ` (${formatDateTime(requestedAt)})` : ""} — aşağıdaki panelden oluşturduğunuzda hastaya bildirim gider.
+                  </span>
+                </div>
+              )}
+              <DischargeReport
+                caseId={data.caseId}
+                initialReport={data.discharge?.report ?? null}
+                initialStructured={data.discharge?.structured ?? null}
+                initialSavedAt={data.discharge?.savedAt ?? null}
+              />
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-violet-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-violet-700">
+                <FileText size={15} /> {t("AI Epikriz / Taburcu Raporu")}
+              </div>
+              {data.discharge ? (
+                <>
+                  {data.discharge.savedAt && (
+                    <div className="mt-1 text-[11px] text-slate-400">{t("oluşturuldu")}: {formatDateTime(data.discharge.savedAt)}</div>
+                  )}
+                  <p className="mt-1.5 text-[11px] text-slate-400">{t("Rapor kaynak dilinde (Türkçe) hazırlanır; aşağıdan kendi dilinize çevirebilirsiniz.")}</p>
+                  <div className="mt-2 max-h-72 overflow-y-auto whitespace-pre-line rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-sm leading-relaxed text-slate-700">
+                    {data.discharge.report}
+                  </div>
+                  <TranslateButton text={data.discharge.report} defaultTarget={lang !== "Türkçe" ? lang : "İngilizce"} compact />
+                </>
+              ) : (
+                <>
+                  <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+                    {t("Tedavi sürecinizin tıbbi özet raporu. Doktorunuz oluşturduğunda burada görüntülenir.")}
+                  </p>
+                  {requestedAt ? (
+                    <div className="mt-3 flex items-start gap-2 rounded-xl bg-teal-50 p-2.5 text-[12px] leading-relaxed text-teal-800 ring-1 ring-teal-100">
+                      <Check size={14} className="mt-0.5 shrink-0" />
+                      <span>
+                        {t("Talebiniz doktorunuza iletildi")} ({formatDateTime(requestedAt)}). {t("Raporu doktorunuz oluşturur; hazır olduğunda bildirim alırsınız.")}
+                      </span>
+                    </div>
+                  ) : data.closed ? (
+                    <p className="mt-3 rounded-xl bg-amber-50 p-2.5 text-[12px] text-amber-700 ring-1 ring-amber-100">
+                      {t("Takip kapandığı için yeni talep, doktora erişimi yeniden vermenizle mümkündür.")}
+                    </p>
+                  ) : (
+                    <button
+                      onClick={requestDischarge}
+                      disabled={reqBusy}
+                      className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50"
+                    >
+                      {reqBusy ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />}
+                      {reqBusy ? t("İstek gönderiliyor…") : t("AI Epikriz / Taburcu Raporu iste")}
+                    </button>
+                  )}
+                  {reqErr && <p className="mt-2 text-xs text-red-600">{reqErr}</p>}
+                </>
+              )}
+            </div>
+          )}
+
           <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><CalendarCheck size={15} /> {t("İyileşme Takvimi")}</div>
             <ol className="mt-3 space-y-0">

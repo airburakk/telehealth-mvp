@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   if (!current?.onboardedAt) {
     const docs = await db.doctorDocument.findMany({ where: { doctorId: dbUser.doctorId }, select: { type: true } });
     const data = current ?? { mmssInsurer: null, mmssPolicyNo: null, mmssCoverageLimit: null, procedures: null, licenseNo: null, specBoard: null };
-    // Zorunlu belgeler (diploma + MMSS) + MMSS metadata + ≥1 işlem/ücret + FHIR qualification
+    // Zorunlu belgeler (diploma + MMSS) + MMSS metadata + ≥1 işlem + FHIR qualification
     // (diploma/tescil no + uzmanlık belgesi) tamamlanmadan onboarding bitirilemez → hesap aktifleşmez.
     if (!canCompleteOnboarding(docs, data)) {
       return NextResponse.json(

@@ -12,8 +12,16 @@ import { connectAblySignal } from "@/lib/ably-client";
 import { useT } from "@/components/useT";
 import { langDir } from "@/lib/constants";
 import { ConsultationChat } from "@/components/ConsultationChat";
+import { ConsultationTimer } from "@/components/ConsultationTimer";
 
 type Phase = "idle" | "connecting" | "waiting" | "connected" | "ended" | "error";
+
+// FAZ 7 (2026-07-10): partner↔konsültasyon doktoru görüşmesi 10 dk ile sınırlıdır (kullanıcı kararı:
+// otomatik kesme YOK — yalnız görsel sınır + uyarı). 0–7 dk yeşil · 7 dk+ kırmızı · 9. dk'da iki
+// tarafa da süre-sonu uyarısı. Timer her iki tarafta kendi bağlantı anından sayar (sinyal gerekmez).
+const LIMIT_MIN = 10;
+const RED_MIN = 7;
+const WARN_MIN = 9;
 
 const S = {
   title: "Konsültasyon — Görüntülü Görüşme",
@@ -33,6 +41,11 @@ const S = {
   errNoCam: "Bu tarayıcı kamera erişimini desteklemiyor. Linki Chrome veya Safari'de açın.",
   errAudioOnly: "Kamera yok — sesli katıldınız; karşı tarafı görebilirsiniz.",
   errConnFail: "Bağlantı kurulamadı (ağ/NAT). Yazılı görüşmeyle devam edebilirsiniz.",
+  // 10 dk süre sınırı (FAZ 7)
+  limitNote: "Konsültasyon görüşmesi 10 dakika ile sınırlıdır.",
+  warn9: "Süre sonu uyarısı: 10 dakikalık görüşme süresi dolmak üzere — lütfen görüşmeyi toparlayın.",
+  zoneOk: "Süre uygun",
+  zoneOver: "Süre doluyor",
 } as const;
 
 export function ConsultVideoRoom({
@@ -57,10 +70,25 @@ export function ConsultVideoRoom({
   const [remoteOn, setRemoteOn] = useState(false);
   const [connState, setConnState] = useState("");
   const [showChat, setShowChat] = useState(false);
+  // 10 dk sınırı (FAZ 7): timer bağlantı kurulunca başlar; 9. dk'da uyarı bandı (otomatik kesme YOK)
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [warn, setWarn] = useState(false);
 
   const texts = useMemo(() => [...Object.values(S), branchLabel], [branchLabel]);
   const { t } = useT(lang, texts);
   const dir = langDir(lang);
+
+  useEffect(() => {
+    if (phase === "connected" && startTime === null) setStartTime(Date.now()); // aynı oturumda sıfırlanmaz
+  }, [phase, startTime]);
+
+  useEffect(() => {
+    if (startTime === null || phase === "ended") return;
+    const id = setInterval(() => {
+      if (Date.now() - startTime >= WARN_MIN * 60_000) setWarn(true);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [startTime, phase]);
 
   useEffect(() => {
     if (!joined || ended) return;
@@ -259,6 +287,25 @@ export function ConsultVideoRoom({
       </div>
 
       {errMsg && <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{t(errMsg)}</p>}
+
+      {/* 10 dk süre tüpü (FAZ 7) — iki taraf da görür; 7'de kırmızı, 9'da uyarı bandı, kesme yok */}
+      {startTime !== null && (
+        <div className="mt-3 space-y-2">
+          <ConsultationTimer
+            startTime={startTime}
+            active // görüşme bitince bu dal zaten render edilmez (erken return) → hep canlı
+            maxMin={LIMIT_MIN}
+            greenMin={RED_MIN}
+            orangeMin={RED_MIN}
+            labels={{ green: t(S.zoneOk), orange: t(S.zoneOver), red: t(S.zoneOver) }}
+          />
+          {warn ? (
+            <p className="animate-pulse rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 ring-1 ring-red-200">⏰ {t(S.warn9)}</p>
+          ) : (
+            <p className="text-center text-[11px] text-slate-400">{t(S.limitNote)}</p>
+          )}
+        </div>
+      )}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-900">

@@ -46,10 +46,11 @@ export function missingSteps(docs: { type: string }[], mmss: MmssMeta): string[]
 // ── M5 Kayıt — ilk-onboarding ek zorunlulukları (yalnız self-signup doktor ilk kez tamamlarken) ──
 // Global canActivate/refreshActivation (belge/MMSS değişiminde TÜM doktorlarde çalışır) DEĞİŞMEZ →
 // mevcut doktorlarde regresyon yok. Aşağıdaki ek koşullar yalnız onboarding finish yolunda uygulanır:
-// ≥1 işlem+ücret (FHIR ServiceRequest/ChargeItem girdisi) + FHIR qualification (diploma/tescil no =
-// Practitioner.identifier · uzmanlık belgesi = Practitioner.qualification).
+// ≥1 işlem (FHIR ServiceRequest girdisi; ücret ARTIK onboarding'de değil, tedavi kararında belirlenir
+// — 2026-07-10) + FHIR qualification (diploma/tescil no = Practitioner.identifier · uzmanlık belgesi =
+// Practitioner.qualification).
 
-// En az bir işlem+ücret seçili mi (Doctor.procedures JSON {kod:₺})?
+// En az bir işlem seçili mi (Doctor.procedures JSON {kod:₺} — değer taban fiyat başlangıçlı)?
 export function hasProcedures(proceduresJson: string | null): boolean {
   if (!proceduresJson) return false;
   try {
@@ -75,7 +76,7 @@ export function canCompleteOnboarding(docs: { type: string }[], d: OnboardingDat
 // Onboarding için eksik adımlar (UI yönlendirme metni).
 export function missingOnboardingSteps(docs: { type: string }[], d: OnboardingData): string[] {
   const out = missingSteps(docs, d);
-  if (!hasProcedures(d.procedures)) out.push("En az bir işlem ve ücreti");
+  if (!hasProcedures(d.procedures)) out.push("En az bir işlem seçimi");
   if (!d.licenseNo || !d.licenseNo.trim()) out.push("Diploma / tescil no");
   if (!d.specBoard || !d.specBoard.trim()) out.push("Uzmanlık belgesi");
   return out;

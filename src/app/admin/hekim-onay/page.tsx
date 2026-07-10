@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { hasProcedures, hasQualification } from "@/lib/doctor-activation";
 import { VerifyButton } from "./VerifyButton";
-import { ShieldCheck, Stethoscope, MapPin, Globe, Check, X, Clock, BadgeCheck } from "lucide-react";
+import { ShieldCheck, Stethoscope, MapPin, Globe, Check, X, Clock, BadgeCheck, Flag } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +15,7 @@ export default async function DoctorApprovalPage() {
       id: true, title: true, name: true, branch: true, city: true, languages: true,
       activatedAt: true, licenseNo: true, specBoard: true, procedures: true,
       mmssInsurer: true, mmssCoverageLimit: true, mmssCoverageCurrency: true,
+      registryStatus: true, // HealthTürkiye dizin doğrulaması (FAZ 6) — NOT_FOUND ise uyarı bayrağı
       documents: { select: { type: true } },
     },
   });
@@ -65,6 +66,14 @@ export default async function DoctorApprovalPage() {
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200"><Clock size={13} /> Onboarding eksik</span>
                     )}
+                    {/* HealthTürkiye dizin doğrulaması (FAZ 6) — kayıtta ad-soyad eşleşmesi arandı */}
+                    {d.registryStatus === "FOUND" ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 ring-1 ring-teal-200" title="healthturkiye.gov.tr doktor dizininde ad-soyad eşleşmesi bulundu"><BadgeCheck size={13} /> HealthTürkiye kaydı ✓</span>
+                    ) : d.registryStatus === "NOT_FOUND" ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700 ring-1 ring-red-200" title="healthturkiye.gov.tr resmi doktor dizininde bulunamadı — onay öncesi ek doğrulama önerilir"><Flag size={13} /> ⚠ HealthTürkiye kaydı YOK</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500" title="Dizin henüz senkronlanmadığı için kontrol yapılamadı">HealthTürkiye: kontrol edilmedi</span>
+                    )}
                     <VerifyButton doctorId={d.id} />
                   </div>
                 </div>
@@ -75,7 +84,7 @@ export default async function DoctorApprovalPage() {
                   <Badge ok={mmssDoc} label="MMSS poliçesi" />
                   <Badge ok={mmssMeta} label={mmssMeta ? `MMSS ${d.mmssCoverageLimit?.toLocaleString("tr-TR")} ${d.mmssCoverageCurrency ?? ""}` : "MMSS teminat"} />
                   <Badge ok={qual} label={qual ? `Diploma no + uzmanlık` : "FHIR uzmanlık"} />
-                  <Badge ok={proc} label={proc ? `${procCount} işlem/ücret` : "İşlem/ücret"} />
+                  <Badge ok={proc} label={proc ? `${procCount} işlem` : "İşlem seçimi"} />
                 </div>
               </div>
             );

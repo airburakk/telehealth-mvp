@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
 import { COUNTRIES, LANGUAGES } from "@/lib/constants";
 import { logSoEvent } from "@/lib/second-opinion-service";
+import { parseContactFields } from "@/lib/contact-pref";
+import { encryptField } from "@/lib/crypto";
 
 // GET /api/second-opinion/cases — hasta kendi SO vakalarını listeler (klinik personel: tümü)
 export async function GET() {
@@ -52,6 +54,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Lütfen tercih ettiğiniz iletişim dilini seçin." }, { status: 400 });
   }
 
+  const contact = parseContactFields(body); // FAZ 8 — telefon + iletişim tercihi
   const created = await db.secondOpinionCase.create({
     data: {
       patientId: user.id,
@@ -61,6 +64,9 @@ export async function POST(req: Request) {
       language,
       status: "DRAFT",
       consentAt: new Date(),
+      // Hasta iletişim (FAZ 8): telefon kimlik → şifreli; tercih (APP|SMS|EMAIL) düz
+      patientPhone: contact.phone ? encryptField(contact.phone) : null,
+      contactPreference: contact.contactPreference,
     },
   });
   await logSoEvent(created.id, {

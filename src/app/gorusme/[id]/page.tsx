@@ -6,11 +6,11 @@ import { staffAccessClosed } from "@/lib/postop-access";
 import { ConsultationRoom } from "@/components/ConsultationRoom";
 import { PreConsultLobby } from "@/components/PreConsultLobby";
 import { buildDoctorCard } from "@/lib/doctor-card";
-import { branchKeyFromLabel, branchLabel as branchLabelOf, getBranchProcedures } from "@/lib/procedures";
+import { branchKeyFromLabel, branchLabel as branchLabelOf, getBranchProcedures, getByCodes } from "@/lib/procedures";
 import { getTryPerUsd } from "@/lib/fxrate";
 import { icd10ForBranchLabel } from "@/data/coding";
+import { ICD_PROCEDURES } from "@/data/icd-procedures";
 import { decryptField, decryptCaseFields } from "@/lib/crypto";
-import type { Structured } from "@/components/DischargeReport";
 
 export const dynamic = "force-dynamic";
 
@@ -66,30 +66,42 @@ export default async function ConsultationPage({
     };
   }
 
-  // Kokpitten taşınan FHIR klinik kodlama + AI epikriz verisi — yalnız doktor görünümü için derle
+  // Birleşik Klinik Kodlama + Tedavi Kararı verisi — yalnız doktor görünümü için derle (FAZ 2).
+  // AI Epikriz artık burada değil: post-op ekranına taşındı (/takip/[caseId], personel görünümü).
   let clinical:
     | {
         icd10Code: string | null;
         patientIdentifier: string | null;
         patientIdentifierType: string | null;
         icd10Options: { code: string; label: string }[];
-        dischargeReport: string | null;
-        dischargeStructured: Structured | null;
-        dischargeSavedAt: string | null;
+        icdProcedures: Record<string, { code: string; name: string; price: number | null }[]>;
+        treatmentDaysMin: number | null;
+        treatmentDaysMax: number | null;
+        hospitalRegistryId: number | null;
+        hospitalName: string | null;
+        agencySentAt: string | null;
       }
     | undefined;
   if (selfRole === "doctor") {
-    let dischargeStructured: Structured | null = null;
-    // Epikriz at-rest şifreli → doktor görünümü için çöz (clinical prop yalnız doktora gider).
-    try { dischargeStructured = c.dischargeStructured ? (JSON.parse(decryptField(c.dischargeStructured)) as Structured) : null; } catch { dischargeStructured = null; }
+    const branchKey = branchKeyFromLabel(consult.doctor.branch);
+    // ICD→işlem eşlemesi KATALOG-çözümlü gönderilir (kod+ad+taban): eşlenmiş kodlar çapraz-branş
+    // olabilir (ör. onkolojide kemoterapi = hematoloji havuzu) → branş listesinde aranmaz.
+    const rawMap = (branchKey ? ICD_PROCEDURES[branchKey] : undefined) ?? {};
+    const icdProcedures: Record<string, { code: string; name: string; price: number | null }[]> = {};
+    for (const [icd, codes] of Object.entries(rawMap)) {
+      icdProcedures[icd] = getByCodes(codes).map((p) => ({ code: p.code, name: p.name, price: p.price }));
+    }
     clinical = {
       icd10Code: c.icd10Code,
       patientIdentifier: c.patientIdentifier,
       patientIdentifierType: c.patientIdentifierType,
       icd10Options: icd10ForBranchLabel(c.branch),
-      dischargeReport: decryptField(c.dischargeReport),
-      dischargeStructured,
-      dischargeSavedAt: c.dischargeAt ? c.dischargeAt.toISOString() : null,
+      icdProcedures,
+      treatmentDaysMin: c.treatmentDaysMin,
+      treatmentDaysMax: c.treatmentDaysMax,
+      hospitalRegistryId: c.hospitalRegistryId,
+      hospitalName: c.hospitalName,
+      agencySentAt: c.agencySentAt ? c.agencySentAt.toISOString() : null,
     };
   }
 

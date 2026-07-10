@@ -105,6 +105,7 @@ async function main() {
     { email: "doktor@air.test", name: "Dr. Demo Hekim", role: "DOCTOR" },
     { email: "koordinator@air.test", name: "Demo Koordinatör", role: "COORDINATOR" },
     { email: "kurul@air.test", name: "Kurul Üyesi", role: "ETHICS" },
+    { email: "acente@air.test", name: "Demo Sağlık Turizmi Acentesi", role: "AGENCY" }, // S3 — FAZ 4 (2026-07-10)
   ];
   for (const u of USERS) await db.user.create({ data: { ...u, passwordHash: pw } });
 

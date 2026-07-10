@@ -8,6 +8,7 @@ import { Plane, Hotel, Stethoscope, ClipboardList, ShieldCheck, Sparkles, ArrowR
 import { useT } from "@/components/useT";
 import { usePatientLang } from "@/components/PatientLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
+import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { countryFlag, countryName } from "@/lib/constants";
 import { computePackage, formatUSD, TIER_PRESETS, type PackageSelection, type Tier } from "@/lib/pricing";
 
@@ -54,7 +55,7 @@ const TIER_LABEL: Record<Tier, string> = { Ekonomik: "Ekonomik", Standart: "Stan
 
 export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
   const [lang, setLang] = usePatientLang();
-  const texts = useMemo(() => TEXTS, []); // sabit referans — useT yarış dersi (v3.5)
+  const texts = useMemo(() => [...TEXTS, ...CONTACT_PREF_TEXTS], []); // sabit referans — useT yarış dersi (v3.5)
   const { t } = useT(lang, texts);
 
   const [branch, setBranch] = useState(BRANCHES[0]);
@@ -62,6 +63,8 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
   const [tier, setTier] = useState<Tier>("Standart");
   const [nights, setNights] = useState(7);
   const [symptoms, setSymptoms] = useState("");
+  const [phone, setPhone] = useState(""); // FAZ 8 — hasta iletişim
+  const [contactPref, setContactPref] = useState<ContactPref>("APP");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -99,7 +102,7 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
     try {
       const res = await fetch("/api/patient/tourism-request", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symptoms: symptoms.trim(), tier, nights, country, branch }),
+        body: JSON.stringify({ symptoms: symptoms.trim(), tier, nights, country, branch, patientPhone: phone, contactPreference: contactPref }),
       });
       if (!res.ok) throw new Error();
       window.location.assign("/vakalarim"); // tam sayfa: nav taze + yeni talep listede görünür
@@ -128,6 +131,11 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
               ))}
             </div>
           </Field>
+
+          {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
+          </div>
 
           <Field icon={<Plane size={15} />} label={t("Nereden geliyorsunuz?")}>
             <div className="flex flex-wrap gap-2">

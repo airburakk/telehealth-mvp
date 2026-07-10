@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
 import { notifyDoctorsByBranch } from "@/lib/notify";
 import { requireUser, requireStaff } from "@/lib/api-auth";
+import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField, decryptField } from "@/lib/crypto";
 import { storeDocument } from "@/lib/storage";
 
@@ -91,6 +92,8 @@ export async function POST(req: Request) {
     ? body.attachments.join(",")
     : null;
 
+  const contact = parseContactFields(body); // FAZ 8 — telefon + iletişim tercihi
+
   const created = await db.case.create({
     data: {
       userId: user.id, // vaka sahibi = oturum kullanıcısı (hasta yalnız kendi vakalarını görür)
@@ -106,6 +109,9 @@ export async function POST(req: Request) {
       confidence: a.confidence,
       reasoning: encryptField(a.reasoning), // triyaj gerekçesi (E2EE Faz 1)
       status: "NEW",
+      // Hasta iletişim (FAZ 8): telefon kimlik verisi → şifreli; tercih (APP|SMS|EMAIL) düz.
+      patientPhone: contact.phone ? encryptField(contact.phone) : null,
+      contactPreference: contact.contactPreference,
       consultFee: typeof body.consultFee === "number" ? body.consultFee : null,
       payStatus: ["PAID", "INSURED"].includes(String(body.payStatus)) ? String(body.payStatus) : "PENDING",
       payMethod: body.payMethod ? String(body.payMethod) : null,

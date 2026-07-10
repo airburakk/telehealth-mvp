@@ -59,6 +59,15 @@ npm run db:seed             # demo veri: kullanıcılar + 30 hekim + 20 vaka + t
 > (kırık pencere saniyelere iner; düşük trafik saati seç; ters-RENAME SQL'i hazır tut).
 > Örnek: v4.21 `20260704120000_free_care_rename` (8× RENAME + index + veri UPDATE, idempotent DO-bloklu).
 
+### Cron — HealthTürkiye günlük senkronu (2026-07-10)
+
+`vercel.json` günde bir (03:00 UTC) `/api/cron/registry-sync`'i tetikler (doktor + tesis dizini
+diff + günlük rapor). Çalışması için Vercel ortam değişkenlerine **`CRON_SECRET`** eklenmeli
+(yerel `.env`'deki değerle AYNI olmalı; Vercel bu değişken tanımlıysa cron isteğine otomatik
+`Authorization: Bearer` başlığı ekler — yoksa uç 503 döner, site etkilenmez). İlk tam çekim
+`npx tsx scripts/registry-sync.ts` ile elle koşulabilir (2026-07-10'da koşuldu). Fonksiyon
+`maxDuration=300` ister (Fluid compute — bu projede varsayılan açık).
+
 ## Adım 3 — GitHub'a gönder
 
 ```bash

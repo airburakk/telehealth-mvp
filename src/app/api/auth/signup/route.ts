@@ -7,7 +7,7 @@ import { BRANCH_LABELS } from "@/lib/procedures";
 import { LANGUAGES } from "@/lib/constants";
 
 // M5 — Doktor e-posta kaydı. Hesap oluşturulur (verified:false, inaktif) → oturum açılır →
-// proxy /onam (KVKK) → /doktor → onboarding kapısı (FHIR uzmanlık + işlem/ücret + diploma + MMSS).
+// proxy /onam (KVKK) → /doktor → onboarding kapısı (FHIR uzmanlık + işlem + diploma + MMSS).
 const TITLES = new Set(["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."]);
 const BRANCH_SET = new Set(Object.values(BRANCH_LABELS));
 const LANG_SET = new Set(LANGUAGES);
@@ -21,6 +21,10 @@ export async function POST(req: Request) {
   const title = String(b.title ?? "").trim();
   const branch = String(b.branch ?? "").trim();
   const city = String(b.city ?? "").trim().slice(0, 80);
+  // Cep telefonu (FAZ 5, 2026-07-10) — opsiyonel; WhatsApp/SMS bildirim kanalı hedefi.
+  // Gevşek normalizasyon: rakam/+/boşluk dışını at, 7-20 karakter değilse yok say.
+  const phoneRaw = String(b.phone ?? "").replace(/[^\d+ ]/g, "").trim().slice(0, 20);
+  const phone = phoneRaw.replace(/\s+/g, " ").length >= 7 ? phoneRaw : null;
   const languages = Array.isArray(b.languages)
     ? [...new Set((b.languages as unknown[]).filter((l): l is string => typeof l === "string" && LANG_SET.has(l)))]
     : [];
@@ -39,7 +43,7 @@ export async function POST(req: Request) {
   if (existing) return NextResponse.json({ error: "Bu e-posta zaten kayıtlı. Giriş yapın." }, { status: 409 });
 
   const passwordHash = await hashPassword(password);
-  const user = await createDoctorAccount({ name, email, passwordHash, title, branch, city, languages: languages.join(",") });
+  const user = await createDoctorAccount({ name, email, passwordHash, title, branch, city, languages: languages.join(","), phone });
 
   // Yeni hesap: henüz onam yok (cv=0) → proxy /onam'a yönlendirir, sonra /doktor → onboarding kapısı.
   const cv = await consentedVersion(user.id);

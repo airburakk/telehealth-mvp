@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { Timer } from "lucide-react";
 
 // Görüşme süre göstergesi — yatay "tüp": süre ilerledikçe dolar, renk eşiklere göre değişir.
-// 0–15 dk yeşil · 15–25 dk turuncu · 25 dk+ kırmızı. Doktor görünümünde, video bağlanır bağlanmaz devreye girer.
+// Varsayılan (hasta-doktor görüşmesi): 0–15 dk yeşil · 15–25 dk turuncu · 25 dk+ kırmızı, tüp 30 dk'da dolar.
+// FAZ 7 (2026-07-10): eşikler parametrik — partner-konsültasyon 10 dk varyantı (7'de kırmızı) aynı
+// bileşeni maxMin/greenMin/orangeMin + labels ile kullanır; buradaki varsayılanlar DEĞİŞMEDİ.
 const MAX_MIN = 30; // tüpün tamamen dolduğu süre (25 dk kırmızı eşiğinin üstünde "ne kadar aşıldı" alanı kalsın)
 const GREEN_MIN = 15; // bu dakikaya kadar yeşil
 const ORANGE_MIN = 25; // bu dakikaya kadar turuncu, sonrası kırmızı
@@ -15,8 +17,16 @@ function fmt(totalSec: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+export interface TimerLabels { green: string; orange: string; red: string }
+
 // startTime: video bağlantısının kurulduğu epoch (ms). active=false ise süre dondurulur (görüşme bitti).
-export function ConsultationTimer({ startTime, active }: { startTime: number; active: boolean }) {
+export function ConsultationTimer({
+  startTime, active, maxMin = MAX_MIN, greenMin = GREEN_MIN, orangeMin = ORANGE_MIN, labels,
+}: {
+  startTime: number; active: boolean;
+  maxMin?: number; greenMin?: number; orangeMin?: number; // eşikler (dk) — greenMin===orangeMin → turuncu bölge atlanır
+  labels?: TimerLabels; // bölge etiketleri (çevrilmiş geçilebilir); verilmezse TR varsayılanları
+}) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -27,17 +37,18 @@ export function ConsultationTimer({ startTime, active }: { startTime: number; ac
 
   const elapsedSec = Math.max(0, Math.floor((now - startTime) / 1000));
   const elapsedMin = elapsedSec / 60;
-  const pct = Math.min(100, (elapsedMin / MAX_MIN) * 100);
+  const pct = Math.min(100, (elapsedMin / maxMin) * 100);
 
-  const zone = elapsedMin < GREEN_MIN ? "green" : elapsedMin < ORANGE_MIN ? "orange" : "red";
+  const zone = elapsedMin < greenMin ? "green" : elapsedMin < orangeMin ? "orange" : "red";
   const fillClass =
     zone === "green" ? "from-emerald-400 to-emerald-500"
     : zone === "orange" ? "from-orange-400 to-orange-500"
     : "from-red-500 to-red-600";
   const textClass =
     zone === "green" ? "text-emerald-600" : zone === "orange" ? "text-orange-600" : "text-red-600";
-  const zoneLabel =
-    zone === "green" ? "İdeal süre" : zone === "orange" ? "Süre uzuyor" : "Süre aşıldı";
+  const zoneLabel = labels
+    ? labels[zone]
+    : zone === "green" ? "İdeal süre" : zone === "orange" ? "Süre uzuyor" : "Süre aşıldı";
 
   return (
     <div
@@ -54,9 +65,11 @@ export function ConsultationTimer({ startTime, active }: { startTime: number; ac
 
         {/* Tüp — süre ilerledikçe dolar */}
         <div className="relative h-5 flex-1 overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200">
-          {/* Eşik işaretleri (15 dk, 25 dk) */}
-          <span className="absolute inset-y-0 z-10 w-px bg-slate-300/70" style={{ left: `${(GREEN_MIN / MAX_MIN) * 100}%` }} />
-          <span className="absolute inset-y-0 z-10 w-px bg-slate-300/70" style={{ left: `${(ORANGE_MIN / MAX_MIN) * 100}%` }} />
+          {/* Eşik işaretleri (yeşil→turuncu, turuncu→kırmızı geçişleri) */}
+          <span className="absolute inset-y-0 z-10 w-px bg-slate-300/70" style={{ left: `${(greenMin / maxMin) * 100}%` }} />
+          {orangeMin > greenMin && (
+            <span className="absolute inset-y-0 z-10 w-px bg-slate-300/70" style={{ left: `${(orangeMin / maxMin) * 100}%` }} />
+          )}
           {/* Dolum */}
           <div
             className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${fillClass} transition-[width] duration-1000 ease-linear ${zone === "red" ? "animate-pulse" : ""}`}

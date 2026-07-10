@@ -7,7 +7,7 @@ import { DoctorSignupForm } from "@/components/DoctorSignupForm";
 export const dynamic = "force-dynamic";
 
 // M5 — Doktor kayıt (sign up). Public (proxy matcher dışı). Hesap oluşturulunca /onam → /doktor →
-// onboarding kapısı (FHIR uzmanlık + işlem/ücret + diploma + MMSS). Hesap admin onayına kadar
+// onboarding kapısı (FHIR uzmanlık + işlem + diploma + MMSS). Hesap admin onayına kadar
 // doğrulanmamış (public dizin/eşleştirme kapalı).
 export default function SignupPage() {
   const branches = Object.values(BRANCH_LABELS).sort((a, b) => a.localeCompare(b, "tr"));

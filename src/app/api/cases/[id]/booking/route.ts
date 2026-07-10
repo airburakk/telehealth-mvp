@@ -15,9 +15,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const c = await db.case.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
-  if (!(await canCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
 
   const b = await req.json().catch(() => ({}));
+
+  // Erişim: AGENCY (S3, FAZ 4) generic vaka kapısından GEÇMEZ (klinik veri kapısı) — yalnız
+  // kendisine İLETİLMİŞ dosyada (agencySentAt) ve YALNIZ teklif modunda çalışabilir (doğrudan
+  // Escrow rezervasyonu açamaz; onay hastada kalır). Diğer roller mevcut kapıdan.
+  if (user.role === "AGENCY") {
+    if (!c.agencySentAt) return NextResponse.json({ error: "Bu dosya acenteye iletilmemiş." }, { status: 403 });
+    if (b.mode !== "offer") return NextResponse.json({ error: "Acente yalnız hastaya teklif gönderebilir." }, { status: 403 });
+  } else if (!(await canCaseBeAccessedBy(user, c))) {
+    return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
+  }
   // Sigorta seviyesi: insuranceLevel esas; yoksa eski booleanlardan türet (geriye uyum).
   const insuranceLevel = ([1, 2, 3].includes(Number(b.insuranceLevel))
     ? Number(b.insuranceLevel)

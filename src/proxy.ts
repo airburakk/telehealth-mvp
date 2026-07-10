@@ -6,6 +6,7 @@ const DOCTOR_ROLES = ["DOCTOR", "COORDINATOR", "ADMIN"];
 const ETHICS_ROLES = ["ETHICS", "ADMIN"];
 const OPS_ROLES = ["COORDINATOR", "ADMIN"]; // S2 operasyon paneli
 const PARTNER_ROLES = ["PARTNER", "ADMIN"]; // M5 Faz 3 — Partner Doktor alanı (hasta DB'sine erişimi yok)
+const AGENCY_ROLES = ["AGENCY", "ADMIN"]; // S3 Sağlık Turizmi Acentesi — yalnız kısıtlı tedavi dosyaları (FAZ 4)
 const CONSENT_PATH = "/onam";
 
 export async function proxy(req: NextRequest) {
@@ -51,6 +52,9 @@ export async function proxy(req: NextRequest) {
   if (pathname.startsWith("/partner") && !PARTNER_ROLES.includes(user.role)) {
     return NextResponse.redirect(new URL("/", req.url)); // yalnız Partner Doktor (+ADMIN); doktor/hasta giremez
   }
+  if (pathname.startsWith("/acente") && !AGENCY_ROLES.includes(user.role)) {
+    return NextResponse.redirect(new URL("/", req.url)); // yalnız acente (+ADMIN); sayfalar ayrıca kendi savunmasını yapar
+  }
   // /gorusme: giriş yeterli (hasta + doktor görüşmeye katılabilir)
 
   return NextResponse.next();
@@ -75,6 +79,7 @@ export const config = {
     "/admin", "/admin/:path*",
     "/operasyon", "/operasyon/:path*",
     "/partner", "/partner/:path*",
+    "/acente", "/acente/:path*",
     "/vakalarim",
     "/erisim-kaydi",
     "/second-opinion/basvur", "/second-opinion/basvur/:path*",

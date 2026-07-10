@@ -7,7 +7,7 @@
 // Vakalarım SO vaka listesine işaret eder.
 import {
   Stethoscope, UserRound, HeartPulse, Scale, Users, BadgeCheck, Share2, BarChart3,
-  FolderHeart, HeartHandshake, Globe, type LucideIcon,
+  FolderHeart, HeartHandshake, Globe, Luggage, type LucideIcon,
 } from "lucide-react";
 
 export interface NavItem {
@@ -30,6 +30,7 @@ const NAV: NavItem[] = [
   { href: "/doktor/profil", label: "Profilim", icon: BadgeCheck, roles: ["DOCTOR", "ADMIN"] },
   { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, roles: ["ETHICS", "ADMIN"] },
   { href: "/partner", label: "Partner", icon: Globe, roles: ["PARTNER", "ADMIN"] },
+  { href: "/acente", label: "Tedavi Dosyaları", icon: Luggage, roles: ["AGENCY"] }, // S3 acente kuyruğu (FAZ 4)
 ];
 
 export function navItemsFor(role: string | null | undefined, journey?: string | null): NavItem[] {

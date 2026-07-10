@@ -11,6 +11,7 @@ import { requiredDocs } from "@/lib/required-docs";
 import { useT } from "@/components/useT";
 import { usePatientLang } from "@/components/PatientLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
+import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { AuraSpinner } from "@/components/PortamedLogo";
 import type { Billing } from "@/lib/billing";
 import {
@@ -119,6 +120,8 @@ export default function TriyajPage() {
   const [patientName, setPatientName] = useState("");
   const [country, setCountry] = useState("DZ");
   const [language, setLanguage] = useState("Arapça");
+  const [phone, setPhone] = useState(""); // FAZ 8 — hasta iletişim
+  const [contactPref, setContactPref] = useState<ContactPref>("APP");
   const [symptoms, setSymptoms] = useState("");
   const [durationText, setDurationText] = useState("");
   const [files, setFiles] = useState<UploadDoc[]>([]);
@@ -159,7 +162,7 @@ export default function TriyajPage() {
   // Arayüz dili — hasta dil seçince otomatik eşitlenir; üstteki seçiciden de değiştirilebilir.
   const [uiLang, setUiLang] = usePatientLang(); // /basla'da seçilen dil (air_lang) taşınır
   const tTexts = useMemo(
-    () => [...STATIC_UI, ...PRECONSULT_TEXTS, ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
+    () => [...STATIC_UI, ...PRECONSULT_TEXTS, ...CONTACT_PREF_TEXTS, ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
     [effectiveBranch, analysis?.reasoning]
   );
   const { t } = useT(uiLang, tTexts);
@@ -199,6 +202,7 @@ export default function TriyajPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           patientName, country, language, symptoms, durationText,
+          patientPhone: phone, contactPreference: contactPref, // FAZ 8 — hasta iletişim
           attachments: files.map((f) => f.name),
           documents: files.filter((f) => f.dataUrl).map((f) => ({ label: f.name, mimeType: f.mime, content: f.dataUrl })),
           answers: outAnswers, forceBranchKey: branchOverride || undefined,
@@ -300,6 +304,8 @@ export default function TriyajPage() {
                 </select>
               </Field>
             </div>
+            {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
+            <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
           </div>
         )}
 

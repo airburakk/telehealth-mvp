@@ -3,7 +3,7 @@ import { SignJWT, jwtVerify } from "jose";
 
 export const SESSION_COOKIE = "air_session";
 
-export type Role = "PATIENT" | "DOCTOR" | "COORDINATOR" | "ETHICS" | "ADMIN" | "PARTNER";
+export type Role = "PATIENT" | "DOCTOR" | "COORDINATOR" | "ETHICS" | "ADMIN" | "PARTNER" | "AGENCY";
 
 export interface SessionUser {
   id: string;
@@ -71,6 +71,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   ETHICS: "Etik Kurul",
   ADMIN: "Yönetici",
   PARTNER: "Partner Doktor",
+  AGENCY: "Sağlık Turizmi Acentesi",
 };
 
 export function roleHome(role: Role): string {
@@ -78,6 +79,7 @@ export function roleHome(role: Role): string {
   if (role === "DOCTOR") return "/doktor";
   if (role === "ETHICS") return "/etik-kurul";
   if (role === "PARTNER") return "/partner"; // M5 Faz 3 — Partner Doktor alanı
+  if (role === "AGENCY") return "/acente"; // S3 Sağlık Turizmi Acentesi — tedavi dosyaları kuyruğu (FAZ 4)
   if (role === "PATIENT") return "/basla"; // hasta: her girişte "Nasıl ilerlemek istersiniz?" seçimi
   return "/vakalarim"; // ADMIN vb.
 }

@@ -92,6 +92,77 @@ export async function summarizeSOAP(
   return { soap, structured };
 }
 
+// ── Tedavi kararı: ICD-10 tanısına uygun işlem önerisi (FAZ 2 hibrit — statik eşlemenin AI kanadı) ──
+// Aday havuz KSHFT branş listesidir (kod+ad); model YALNIZ bu havuzdan seçer (uydurma kod imkânsız:
+// çağıran taraf dönen kodları isValidCode ile ayrıca süzer). PHI: hasta adı gönderilmez (placeholder
+// gerekmez — ad hiç girmiyor); yalnız tanı + şikâyet özeti + doktor notu gider.
+export interface ProcedureSuggestion {
+  code: string;
+  reason: string; // tek cümle klinik gerekçe (TR)
+}
+
+const SUGGEST_PROC_TOOL: Anthropic.Tool = {
+  name: "submit_procedure_suggestions",
+  description: "Tanıya uygun işlem önerilerini döndürür (yalnız verilen aday listesinden).",
+  input_schema: {
+    type: "object",
+    properties: {
+      suggestions: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            code: { type: "string", description: "Aday listesindeki KSHFT işlem kodu (birebir)" },
+            reason: { type: "string", description: "Tek cümlelik klinik gerekçe (Türkçe)" },
+          },
+          required: ["code", "reason"],
+        },
+      },
+    },
+    required: ["suggestions"],
+  },
+};
+
+export async function suggestProcedures(input: {
+  icd10Code: string;
+  icd10Label: string;
+  branch: string;
+  symptoms: string;
+  notes: string; // doktorun görüşme/SOAP notu (opsiyonel bağlam)
+  candidates: { code: string; name: string }[]; // KSHFT branş havuzu (üst sınır çağıranda)
+}): Promise<ProcedureSuggestion[]> {
+  const list = input.candidates.map((c) => `${c.code} | ${c.name}`).join("\n");
+  const res = await client().messages.create({
+    model: MODEL,
+    max_tokens: 900,
+    system:
+      "Sen bir klinik karar destek asistanısın. Verilen ICD-10 tanısına ve klinik bağlama göre, SADECE aday listesinde bulunan işlem kodlarından en uygun 3-6 tanesini seçersin. Aday listesinde olmayan kod ÜRETME. Tedavi kararı doktora aittir; öneriler endikatiftir. Yanıtı DAİMA submit_procedure_suggestions aracıyla ver.",
+    tools: [SUGGEST_PROC_TOOL],
+    tool_choice: { type: "tool", name: "submit_procedure_suggestions" },
+    messages: [{
+      role: "user",
+      content:
+        `Tanı: ${input.icd10Code} — ${input.icd10Label || "(etiket yok)"}\nBranş: ${input.branch}\n` +
+        `Şikâyet özeti: ${input.symptoms || "—"}\n` +
+        (input.notes ? `Doktor notu/SOAP:\n${input.notes}\n` : "") +
+        `\nAday işlem listesi (kod | ad):\n${list}`,
+    }],
+  });
+  const block = res.content.find((b) => b.type === "tool_use");
+  if (!block || block.type !== "tool_use") throw new Error("İşlem önerisi aracı yanıtı alınamadı.");
+  const raw = (block.input as { suggestions?: unknown }).suggestions;
+  if (!Array.isArray(raw)) return [];
+  const allowed = new Set(input.candidates.map((c) => c.code));
+  const out: ProcedureSuggestion[] = [];
+  for (const s of raw) {
+    const code = String((s as { code?: unknown })?.code ?? "").trim();
+    if (!allowed.has(code)) continue; // havuz dışı/uydurma kod ele
+    out.push({ code, reason: clean((s as { reason?: unknown })?.reason).slice(0, 300) });
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
 export async function translateText(text: string, target: string): Promise<string> {
   const res = await client().messages.create({
     model: MODEL,

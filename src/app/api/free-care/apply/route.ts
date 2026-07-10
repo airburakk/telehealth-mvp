@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
 import { getCurrentUser } from "@/lib/auth";
 import { matchForCase } from "@/lib/free-care";
+import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField } from "@/lib/crypto";
 
 // POST /api/free-care/apply — hasta ön-triyaj → ÜCRETSİZ ücretsiz sağlık hizmeti vaka (ödeme kapısı YOK) → anında eşleşme dener.
@@ -16,6 +17,7 @@ export async function POST(req: Request) {
   if (body.consent !== true) return NextResponse.json({ error: "Devam için onay gerekli." }, { status: 400 });
 
   const patientName = String(body.patientName ?? "").trim() || user.name;
+  const contact = parseContactFields(body); // FAZ 8 — telefon + iletişim tercihi
 
   // Branş/aciliyet için triyaj (eşleştirme + doktor bağlamı); ücret/belge kapısı yok.
   const a = await runTriage({
@@ -38,6 +40,9 @@ export async function POST(req: Request) {
       status: "NEW",
       freeCare: true,
       freeCareStatus: "WAITING",
+      // Hasta iletişim (FAZ 8): telefon kimlik → şifreli; tercih (APP|SMS|EMAIL) düz
+      patientPhone: contact.phone ? encryptField(contact.phone) : null,
+      contactPreference: contact.contactPreference,
     },
   });
 

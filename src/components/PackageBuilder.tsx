@@ -35,8 +35,8 @@ export interface PackageInitial {
 }
 
 export function PackageBuilder({
-  caseId, patientName, branch, country, initial, treatments, rate = TRY_PER_USD, fxSource, fxAt, doctorMmssLimitUsd, doctorName,
-}: { caseId: string; patientName: string; branch: string; country: string; initial?: PackageInitial; treatments?: RecommendedTreatment[]; rate?: number; fxSource?: string; fxAt?: number; doctorMmssLimitUsd?: number; doctorName?: string }) {
+  caseId, patientName, branch, country, initial, treatments, rate = TRY_PER_USD, fxSource, fxAt, doctorMmssLimitUsd, doctorName, offerOnly = false,
+}: { caseId: string; patientName: string; branch: string; country: string; initial?: PackageInitial; treatments?: RecommendedTreatment[]; rate?: number; fxSource?: string; fxAt?: number; doctorMmssLimitUsd?: number; doctorName?: string; offerOnly?: boolean }) {
   const router = useRouter();
   const [tier, setTier] = useState<Tier>(initial?.tier ?? "Standart");
   const [hotelStars, setHotelStars] = useState<4 | 5>(initial?.hotelStars ?? 4);
@@ -278,16 +278,21 @@ export function PackageBuilder({
               >
                 {submitting === "offer" ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Hastaya teklif gönder
               </button>
-              <button
-                onClick={confirm}
-                disabled={!!submitting}
-                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
-              >
-                {submitting === "confirm" ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />} Doğrudan Escrow ile onayla
-              </button>
-              <button className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
-                <MessageCircle size={15} /> Koordinatörle konuş
-              </button>
+              {/* Acente modu (offerOnly, FAZ 4): doğrudan Escrow YOK — onay daima hastada */}
+              {!offerOnly && (
+                <>
+                  <button
+                    onClick={confirm}
+                    disabled={!!submitting}
+                    className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
+                  >
+                    {submitting === "confirm" ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />} Doğrudan Escrow ile onayla
+                  </button>
+                  <button className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                    <MessageCircle size={15} /> Koordinatörle konuş
+                  </button>
+                </>
+              )}
             </>
           )}
         </Card>

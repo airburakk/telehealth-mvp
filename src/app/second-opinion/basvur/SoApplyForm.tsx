@@ -7,6 +7,7 @@ import { SO_DURATION_COPY, SO_FEE_USD } from "@/lib/second-opinion";
 import { useT } from "@/components/useT";
 import { useSoLang } from "@/components/SoLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
+import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { Stethoscope, Clock, Video, ArrowRight, Loader2 } from "lucide-react";
 import { COUNTRIES, LANGUAGES } from "@/lib/constants";
 
@@ -37,12 +38,14 @@ const S = {
 export function SoApplyForm() {
   const router = useRouter();
   const [lang, setLang] = useSoLang();
-  const texts = useMemo(() => [...Object.values(S), FEE_LINE, ...BRANCHES.map((b) => b.label), ...COUNTRIES.map((c) => c.name)], []);
+  const texts = useMemo(() => [...Object.values(S), FEE_LINE, ...CONTACT_PREF_TEXTS, ...BRANCHES.map((b) => b.label), ...COUNTRIES.map((c) => c.name)], []);
   const { t } = useT(lang, texts);
 
   const [diagnosisSummary, setDiagnosisSummary] = useState("");
   const [branch, setBranch] = useState("");
   const [country, setCountry] = useState("");
+  const [phone, setPhone] = useState(""); // FAZ 8 — hasta iletişim
+  const [contactPref, setContactPref] = useState<ContactPref>("APP");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -63,7 +66,7 @@ export function SoApplyForm() {
       const res = await fetch("/api/second-opinion/cases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ consent: true, diagnosisSummary, branch, country, language: lang }),
+        body: JSON.stringify({ consent: true, diagnosisSummary, branch, country, language: lang, patientPhone: phone, contactPreference: contactPref }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || S.errGeneric);
@@ -137,6 +140,11 @@ export function SoApplyForm() {
           </div>
         </div>
         <p className="mt-1.5 text-xs text-slate-500">{t(S.langHint)}</p>
+
+        {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
+        <div className="mt-5">
+          <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
+        </div>
 
         <label className="mt-5 block text-sm font-semibold text-slate-700">{t(S.diagLabel)}</label>
         <p className="text-xs text-slate-500">{t(S.diagHint)}</p>
