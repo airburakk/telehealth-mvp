@@ -778,6 +778,7 @@ model RegistryHospital {
   languages          String? // JSON — Hizmet Verilen Diller (detay zenginleştirme)
   accreditations     String? // JSON — akreditasyon adları (detay zenginleştirme)
   facilities         String? // JSON — Tesis Olanakları (detay zenginleştirme)
+  authorizationNumber String? // Sağlık turizmi YETKİ BELGE NO (ör. "ST-0292"; detaydan — "" = kontrol edildi, dizinde belge yok; null = henüz bakılmadı)
   firstSeenAt        DateTime  @default(now())
   lastSeenAt         DateTime  @default(now())
   removedAt          DateTime? // kaynaktan çıkarıldığı senkron (null = halen kayıtlı)

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { formatTRY, tryToUsd } from "@/lib/pricing";
 import {
   Search, Plus, X, Save, Loader2, Check, ClipboardList, Stethoscope,
-  Sparkles, CalendarRange, Building2, Send, Lock,
+  Sparkles, CalendarRange, Building2, Send, Lock, ShieldCheck,
 } from "lucide-react";
 
 // ── Birleşik Klinik Kodlama (FHIR) + Tedavi Kararı paneli (2026-07-10 FAZ 2) ──
@@ -20,7 +20,7 @@ import {
 interface Proc { code: string; name: string; price: number | null; branch: string; group: string }
 interface Sel { name: string; priceTRY: number; floor: number }
 interface Suggestion { code: string; name: string; price: number | null; reason: string }
-interface HospitalHit { id: number; name: string; cityName: string | null; cityHasAirport: boolean | null; facilityTypeName: string | null; totalPersonnel: number | null; accreditationCount: number | null; languages?: string[]; accreditations?: string[] }
+interface HospitalHit { id: number; name: string; cityName: string | null; cityHasAirport: boolean | null; facilityTypeName: string | null; totalPersonnel: number | null; accreditationCount: number | null; languages?: string[]; accreditations?: string[]; authorizationNumber?: string | null }
 
 const CEIL_MULT = 3;
 
@@ -470,7 +470,15 @@ export default function ClinicalDecisionPanel({
                   <li key={h.id}>
                     <button onClick={() => { setHospId(h.id); setHospName(h.name); setHospRes([]); setHospQ(""); }} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-teal-50/60">
                       <span className="min-w-0">
-                        <span className="block truncate text-slate-700">{h.name}</span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="min-w-0 truncate text-slate-700">{h.name}</span>
+                          {/* Sağlık turizmi yetki belgesi (HealthTürkiye dizini) — yalnız pozitif rozet */}
+                          {h.authorizationNumber && (
+                            <span title="Sağlık turizmi yetki belgesi (HealthTürkiye)" className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                              <ShieldCheck size={10} /> {h.authorizationNumber}
+                            </span>
+                          )}
+                        </span>
                         <span className="text-[11px] text-slate-400">
                           {h.cityName ?? "—"}{h.facilityTypeName ? ` · ${h.facilityTypeName}` : ""}
                           {h.totalPersonnel ? ` · ${h.totalPersonnel} personel` : ""}

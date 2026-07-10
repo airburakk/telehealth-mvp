@@ -69,9 +69,11 @@ diff + günlük rapor). Çalışması için Vercel ortam değişkenlerine **`CRO
 `maxDuration=300` ister (Fluid compute — bu projede varsayılan açık).
 
 Senkron sonrası aynı cron, tesis **detay zenginleştirmesi** de yapar (languages/accreditations/
-facilities adları — sitenin `_next/data` SSR JSON'undan; buildId koşu başında anasayfadan çözülür):
-günde 40 tesislik bütçe, yalnız `languages IS NULL` satırlar. İlk toplu doldurma
-`npx tsx scripts/registry-enrich.ts` ile elle koşulur (2026-07-10'da ~4.600 tesis dolduruldu).
+facilities adları + `authorizationNumber` [sağlık turizmi yetki belge no] — sitenin `_next/data`
+SSR JSON'undan; buildId koşu başında anasayfadan çözülür): günde 40 tesislik bütçe, yalnız
+`languages IS NULL` satırlar. İlk toplu doldurma `npx tsx scripts/registry-enrich.ts` ile elle
+koşulur (2026-07-10'da ~4.600 tesis dolduruldu); `authorizationNumber` kolon backfill'i için
+`npx tsx scripts/registry-enrich.ts auth` (v5.2'de koşuldu).
 
 ## Adım 3 — GitHub'a gönder
 

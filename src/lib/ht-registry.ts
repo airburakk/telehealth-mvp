@@ -322,7 +322,7 @@ function names(list: unknown, cap: number): string[] {
   return out;
 }
 
-type DetailNames = { languages: string[]; accreditations: string[]; facilities: string[] };
+type DetailNames = { languages: string[]; accreditations: string[]; facilities: string[]; authorizationNumber: string };
 
 // Tek tesisin detay adlarını çek; "notfound" = detay sayfası yok (kalıcı, "[]" yazılır).
 async function fetchHospitalDetailNames(buildId: string, slug: string): Promise<DetailNames | "notfound"> {
@@ -336,15 +336,20 @@ async function fetchHospitalDetailNames(buildId: string, slug: string): Promise<
     languages: names(h.languages, 30),
     accreditations: names(h.accreditations, 20),
     facilities: names(h.resources, 60), // sitedeki "resources" = Tesis Olanakları
+    // Sağlık turizmi YETKİ BELGE NO (ör. "ST-0292"); yoksa "" = kontrol edildi, dizinde kayıt yok
+    authorizationNumber: typeof h.authorizationNumber === "string" ? h.authorizationNumber.replace(/\s+/g, " ").trim().slice(0, 60) : "",
   };
 }
 
 export interface EnrichSummary { scanned: number; enriched: number; empty: number; failed: number }
 
-// languages=null aktif tesisleri detaydan zenginleştir (limit'le sınırlı; cron + bulk script kullanır).
-export async function enrichHospitalDetails(limit: number): Promise<EnrichSummary> {
+// Aktif tesisleri detaydan zenginleştir (limit'le sınırlı; cron + bulk script kullanır).
+// mode "new" (varsayılan): languages=null adaylar — günlük cron yeni tesisleri böyle doldurur.
+// mode "auth-backfill": authorizationNumber=null adaylar — v5.2 kolon backfill'i (bir defalık;
+// languages dolu satırları da yeniden çeker, taze veriyle üzerine yazar — zararsız tazeleme).
+export async function enrichHospitalDetails(limit: number, mode: "new" | "auth-backfill" = "new"): Promise<EnrichSummary> {
   const candidates = await db.registryHospital.findMany({
-    where: { removedAt: null, languages: null },
+    where: mode === "auth-backfill" ? { removedAt: null, authorizationNumber: null } : { removedAt: null, languages: null },
     select: { id: true, slug: true },
     orderBy: { doctorCount: "desc" }, // en görünür tesisler önce dolsun
     take: limit,
@@ -358,12 +363,15 @@ export async function enrichHospitalDetails(limit: number): Promise<EnrichSummar
       try {
         const d = !c.slug ? "notfound" : await fetchHospitalDetailNames(buildId, c.slug);
         if (d === "notfound") {
-          await db.registryHospital.update({ where: { id: c.id }, data: { languages: "[]", accreditations: "[]", facilities: "[]" } });
+          await db.registryHospital.update({ where: { id: c.id }, data: { languages: "[]", accreditations: "[]", facilities: "[]", authorizationNumber: "" } });
           sum.empty++;
         } else {
           await db.registryHospital.update({
             where: { id: c.id },
-            data: { languages: JSON.stringify(d.languages), accreditations: JSON.stringify(d.accreditations), facilities: JSON.stringify(d.facilities) },
+            data: {
+              languages: JSON.stringify(d.languages), accreditations: JSON.stringify(d.accreditations),
+              facilities: JSON.stringify(d.facilities), authorizationNumber: d.authorizationNumber,
+            },
           });
           sum.enriched++;
         }

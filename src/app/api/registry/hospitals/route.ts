@@ -26,6 +26,7 @@ export async function GET(req: Request) {
       id: true, name: true, cityName: true, cityHasAirport: true,
       facilityTypeName: true, totalPersonnel: true, accreditationCount: true,
       languages: true, accreditations: true, // detay zenginleştirmesi (adlar; null = henüz dolmadı)
+      authorizationNumber: true, // sağlık turizmi yetki belge no ("" = dizinde kayıt yok)
     },
     orderBy: [{ doctorCount: "desc" }, { name: "asc" }],
     take: 20,
@@ -36,6 +37,11 @@ export async function GET(req: Request) {
     try { const v = JSON.parse(s); return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []; }
     catch { return []; }
   };
-  const items = rows.map((h) => ({ ...h, languages: parse(h.languages), accreditations: parse(h.accreditations) }));
+  const items = rows.map((h) => ({
+    ...h,
+    languages: parse(h.languages),
+    accreditations: parse(h.accreditations),
+    authorizationNumber: h.authorizationNumber || null, // "" (belge yok) → null: istemci yalnız pozitif rozet basar
+  }));
   return NextResponse.json({ items });
 }

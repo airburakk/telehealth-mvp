@@ -9,7 +9,7 @@ import { PackageBuilder } from "@/components/PackageBuilder";
 import type { RecommendedTreatment } from "@/lib/pricing";
 import { getTryPerUsd } from "@/lib/fxrate";
 import { recordAccess } from "@/lib/audit";
-import { ArrowLeft, Luggage, Languages, Phone, MessageSquare, CalendarRange, Building2, Stethoscope } from "lucide-react";
+import { ArrowLeft, Luggage, Languages, Phone, MessageSquare, CalendarRange, Building2, Stethoscope, ShieldCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +44,13 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
 
   const patientName = decryptField(c.patientName) ?? "—";
   const patientPhone = decryptField(c.patientPhone);
+
+  // Hastanenin sağlık turizmi yetki belge no'su (HealthTürkiye detay zenginleştirmesi) —
+  // acente için kilit güven sinyali; yalnız pozitif rozet basılır ("" = dizinde kayıt yok).
+  const registryHospital = c.hospitalRegistryId
+    ? await db.registryHospital.findUnique({ where: { id: c.hospitalRegistryId }, select: { authorizationNumber: true } })
+    : null;
+  const hospitalAuthNo = registryHospital?.authorizationNumber || null;
 
   // Erişim denetim izi — hasta "verime kim erişti"de görür (acente erişimi de şeffaf).
   await recordAccess({
@@ -134,6 +141,13 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
             <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400"><Building2 size={12} /> Hastane</div>
             <p className="mt-1 text-sm font-semibold text-slate-800">{c.hospitalName ?? "Doktor belirtmedi"}</p>
             {c.hospitalRegistryId && <p className="text-[11px] text-slate-400">HealthTürkiye #{c.hospitalRegistryId}</p>}
+            {hospitalAuthNo && (
+              <p className="mt-1.5">
+                <span title="Sağlık turizmi yetki belgesi (HealthTürkiye dizini)" className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                  <ShieldCheck size={12} /> Yetki belgesi: {hospitalAuthNo}
+                </span>
+              </p>
+            )}
           </div>
         </div>
 
