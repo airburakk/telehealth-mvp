@@ -5,7 +5,7 @@
 // 1) Laptop ekranında GERÇEK ana sayfamızın minyatürü → video görüşmeye geçer; 8 dilde tıbbi terimler fırlar
 // 2) İkinci Görüş — teşhis raporunuz bağımsız uzmanca incelenir → onaylı ikinci görüş
 // 3) Ücretsiz Sağlık Hizmeti — insani sorumluluk (eldeki kalp + ihtiyaç sahiplerine ulaşma)
-// Tüm slaytlar TEK huniye bağlanır (href prop → /basla seçim ekranı); kopya landing-copy.ts'te (8 dil).
+// Tüm slaytlar TEK huniye bağlanır (href prop → /triyaj Branş Doktoru akışı); kopya landing-copy.ts'te (8 dil).
 // Slider LTR'a sabitlenir (translateX animasyonu RTL'de kırılır); slayt metin blokları locale yönünü alır.
 import Link from "next/link";
 import { useEffect, useState } from "react";

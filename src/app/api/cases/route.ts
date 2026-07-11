@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
 import { notifyDoctorsByBranch } from "@/lib/notify";
 import { requireUser, requireStaff } from "@/lib/api-auth";
+import { stampPatientJourney } from "@/lib/patient-journey";
 import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField, decryptField } from "@/lib/crypto";
 import { storeDocument } from "@/lib/storage";
@@ -162,6 +163,8 @@ export async function POST(req: Request) {
       href: `/doktor/vaka/${created.id}`,
     });
   }
+
+  await stampPatientJourney(user.id, user.role, "GENERAL"); // nav bileşimi başvurulan akıştan
 
   return NextResponse.json(created, { status: 201 });
 }

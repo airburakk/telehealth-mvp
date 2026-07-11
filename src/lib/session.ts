@@ -80,6 +80,6 @@ export function roleHome(role: Role): string {
   if (role === "ETHICS") return "/etik-kurul";
   if (role === "PARTNER") return "/partner"; // M5 Faz 3 — Partner Doktor alanı
   if (role === "AGENCY") return "/acente"; // S3 Sağlık Turizmi Acentesi — tedavi dosyaları kuyruğu (FAZ 4)
-  if (role === "PATIENT") return "/basla"; // hasta: her girişte "Nasıl ilerlemek istersiniz?" seçimi
+  if (role === "PATIENT") return "/triyaj"; // hasta: doğrudan Branş Doktoru akışı (/basla 4'lü seçimi kaldırıldı 2026-07-12; diğer kulvarlar kendi sayfalarından)
   return "/vakalarim"; // ADMIN vb.
 }

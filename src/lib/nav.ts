@@ -1,8 +1,9 @@
 // Üst bant (Header) nav öğeleri — rol + hasta yolculuğu (patientJourney) bazlı saf filtre.
 // Header'dan ayrıştırıldı: birim testlenebilir (tests/unit/nav.test.ts).
 //
-// Hasta nav kararı (2026-07-03): PATIENT yalnız Vakalarım · Post Op · Paylaşımlarım görür
-// (Triyaj/Ücretsiz Sağlık Hizmeti/Doktorlar sekmeleri kalktı — yeni başvuru /basla seçim ekranından başlar).
+// Hasta nav kararı (2026-07-03): PATIENT yalnız Vakalarım · Post Op · Paylaşımlarım görür.
+// /basla 4'lü seçimi kaldırıldı (2026-07-12): yeni başvuru doğrudan /triyaj'dan; diğer kulvarlara
+// köprü Vakalarım üstündeki kulvar kartlarındadır (MyCasesList).
 // İkinci Görüş yolculuğundaki hastada (journey=SECOND_OPINION) Paylaşımlarım da gizlenir ve
 // Vakalarım SO vaka listesine işaret eder.
 import {

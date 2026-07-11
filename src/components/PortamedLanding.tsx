@@ -3,7 +3,7 @@
 // AURA landing — sade & modern yeniden tasarım (2026-07, rapor: vault output/landing-yenileme-raporu-2026-07.md).
 // Yapı: Nav+Hero (tek CTA) · Trust · Nasıl Çalışır · Doktorlar · Testimonial · CTA band · Footer.
 // Kaldırılanlar: Tedavi Paketleri, AI kartı, İkinci Görüş/Ücretsiz Sağlık Hizmeti CTA'ları, Tedaviler/Doktorlar/
-// Klinikler için nav linkleri — ürün seçimi giriş SONRASI /basla ekranında yapılır (tek huni).
+// Klinikler için nav linkleri — birincil CTA'lar doğrudan Branş Doktoru akışına (/triyaj) akar (tek huni).
 // 8 dil statik kopya (lib/landing-copy.ts) + RTL (ar/fa). Tema: koyu AURA — vitrin
 // (aura-health.higgsfield.app) görsel diliyle hizalı: gece #0D0E10 + turkuaz #28C8D8,
 // Space Grotesk display + Inter gövde + JetBrains Mono mikro/durak (2026-07-11).
@@ -64,8 +64,9 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
 
   const C = LANDING_COPY[locale];
   const dir = landingDir(locale);
-  // Tek huni: tüm birincil CTA'lar hasta girişi → /basla ("Nasıl İlerlemek İstersiniz?") ekranına akar.
-  const startHref = loggedIn ? "/basla" : "/giris?next=/basla";
+  // Tek huni: tüm birincil CTA'lar doğrudan Branş Doktoru akışına (/triyaj) akar (/basla 4'lü
+  // seçimi kaldırıldı, 2026-07-12). Diğer kulvarlar kendi sayfalarından (/second-opinion vb.).
+  const startHref = loggedIn ? "/triyaj" : "/giris?next=/triyaj";
 
   return (
     <div dir={dir} lang={locale} className={sans.className} style={{ background: T.bg, color: T.text }}>

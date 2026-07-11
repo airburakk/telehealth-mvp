@@ -160,7 +160,7 @@ export default function TriyajPage() {
   const missingRequired = branchDocs.filter((d) => d.required && !providedDocs[d.key]);
 
   // Arayüz dili — hasta dil seçince otomatik eşitlenir; üstteki seçiciden de değiştirilebilir.
-  const [uiLang, setUiLang] = usePatientLang(); // /basla'da seçilen dil (air_lang) taşınır
+  const [uiLang, setUiLang] = usePatientLang(); // önceki yüzeylerde seçilen dil (air_lang) taşınır
   const tTexts = useMemo(
     () => [...STATIC_UI, ...PRECONSULT_TEXTS, ...CONTACT_PREF_TEXTS, ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
     [effectiveBranch, analysis?.reasoning]

@@ -33,7 +33,7 @@ export default function FreeCareApplyPage() {
   const [language, setLanguage] = useState("Türkçe");
   const [phone, setPhone] = useState(""); // FAZ 8 — hasta iletişim
   const [contactPref, setContactPref] = useState<ContactPref>("APP");
-  const [uiLang, setUiLang] = usePatientLang(); // /basla'da seçilen dil (air_lang) taşınır
+  const [uiLang, setUiLang] = usePatientLang(); // önceki yüzeylerde seçilen dil (air_lang) taşınır
   const [symptoms, setSymptoms] = useState("");
   const [durationText, setDurationText] = useState("");
   const [submitting, setSubmitting] = useState(false);

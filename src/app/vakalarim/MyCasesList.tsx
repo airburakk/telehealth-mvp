@@ -9,7 +9,7 @@ import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { countryFlag, urgencyStyle, CASE_STATUS, formatDateTime, langDir } from "@/lib/constants";
 import { BRANCHES } from "@/lib/triage";
-import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Luggage, FileText, Inbox } from "lucide-react";
+import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Luggage, FileText, Inbox, HandHeart } from "lucide-react";
 
 export type MyCaseRow = {
   id: string;
@@ -30,6 +30,10 @@ const S = {
   newBtn: "Yeni başvuru",
   soTitle: "İkinci Görüş",
   soDesc: "Mevcut tanınız için uzmandan bağımsız değerlendirme + video görüşme.",
+  tourismTitle: "Sağlık Turizmi",
+  tourismDesc: "Tedavi, seyahat ve konaklamayı doktorunuzla planlayın.",
+  freeTitle: "Ücretsiz Sağlık Hizmeti",
+  freeDesc: "Gönüllü doktorlarla ücretsiz video konsültasyon.",
   empty: "Henüz başvurunuz yok.",
   emptyBtn: "Triyaj ile başlayın",
   caseSummary: "Vaka özeti",
@@ -73,14 +77,12 @@ export function MyCasesList({ rows }: { rows: MyCaseRow[] }) {
         </div>
       </div>
 
-      <Link href="/second-opinion/vakalarim" className="mt-5 flex items-center gap-3 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] p-4 transition hover:bg-[#28C8D8]/[0.1]">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Stethoscope size={18} /></span>
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-[#F4F5F3]">{t(S.soTitle)}</div>
-          <p className="text-xs text-white/50">{t(S.soDesc)}</p>
-        </div>
-        <ArrowRight size={16} className="shrink-0 text-[#17919E]" />
-      </Link>
+      {/* Diğer kulvarlara köprü — /basla 4'lü seçimi kaldırıldı (2026-07-12); erişim buradan sürer */}
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <LaneCard href="/second-opinion/vakalarim" icon={<Stethoscope size={18} />} title={t(S.soTitle)} desc={t(S.soDesc)} />
+        <LaneCard href="/saglik-turizmi" icon={<Luggage size={18} />} title={t(S.tourismTitle)} desc={t(S.tourismDesc)} />
+        <LaneCard href="/ucretsiz-saglik/basvur" icon={<HandHeart size={18} />} title={t(S.freeTitle)} desc={t(S.freeDesc)} />
+      </div>
 
       <div className="mt-6 space-y-3">
         {rows.length === 0 && (
@@ -129,6 +131,19 @@ export function MyCasesList({ rows }: { rows: MyCaseRow[] }) {
         })}
       </div>
     </div>
+  );
+}
+
+function LaneCard({ href, icon, title, desc }: { href: string; icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <Link href={href} className="flex items-center gap-3 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] p-4 transition hover:bg-[#28C8D8]/[0.1]">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]">{icon}</span>
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-semibold text-[#F4F5F3]">{title}</div>
+        <p className="text-xs text-white/50">{desc}</p>
+      </div>
+      <ArrowRight size={16} className="shrink-0 text-[#17919E] rtl:rotate-180" />
+    </Link>
   );
 }
 

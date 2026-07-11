@@ -63,7 +63,6 @@ export async function proxy(req: NextRequest) {
 export const config = {
   matcher: [
     "/onam",
-    "/basla",
     "/triyaj", "/triyaj/:path*",
     "/hekimler", "/hekim/:path*",
     "/doktor", "/doktor/:path*",
