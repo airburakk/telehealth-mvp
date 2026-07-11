@@ -15,7 +15,7 @@ import { signalFetch, signalPollDelayMs } from "@/lib/signal-poll";
 import { connectAblySignal } from "@/lib/ably-client";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
-  Save, Check, Pill, FlaskConical, Stethoscope, AlertTriangle, Languages, Loader2, Luggage,
+  Save, Check, Pill, FlaskConical, Stethoscope, AlertTriangle, Languages, Loader2,
   Copy, Wifi, WifiOff, UserRound, MessageSquareText, FileImage, Volume2,
 } from "lucide-react";
 
@@ -707,13 +707,6 @@ export function ConsultationRoom({
               <button onClick={copyPatientLink} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100">
                 {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Kopyalandı" : "Hasta linkini kopyala"}
               </button>
-            </div>
-          )}
-
-          {isDoctor && (
-            <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3">
-              <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" />
-              <div className="text-sm text-amber-800"><span className="font-semibold">AI Kritik Uyarı (demo):</span> Hasta dosyasında alerji/ilaç etkileşimi taranıyor.</div>
             </div>
           )}
         </div>
