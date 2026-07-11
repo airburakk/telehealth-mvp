@@ -60,7 +60,7 @@ export function EscrowMilestones({ status, lang }: { status: string; lang: strin
           : t("Ödemeniz şu anda emanette — tedavi tamamlanana dek platform güvencesinde tutulur.");
 
   return (
-    <div className="rounded-3xl border border-[#28C8D8]/25 bg-teal-50/50 p-5">
+    <div className="rounded-3xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-5">
       <div className="flex items-center gap-2 text-sm font-semibold text-[#28C8D8]">
         <ShieldCheck size={16} /> {t("Ödeme Güvencesi (Escrow)")}
       </div>
@@ -79,7 +79,7 @@ export function EscrowMilestones({ status, lang }: { status: string; lang: strin
                     done
                       ? "bg-emerald-500/15 text-emerald-300"
                       : active
-                        ? "bg-teal-600 text-white ring-4 ring-[#28C8D8]/25"
+                        ? "bg-[#28C8D8] text-[#0D0E10] ring-4 ring-[#28C8D8]/25"
                         : "bg-[#161719] text-white/25 ring-1 ring-white/10"
                   }`}
                 >

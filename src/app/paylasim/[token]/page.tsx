@@ -257,7 +257,7 @@ export default async function ShareViewerPage({
         })}
       </div>
 
-      <div className="mt-6 flex items-start gap-2 rounded-2xl border border-white/10 bg-white/60 p-4 text-[11px] text-white/50">
+      <div className="mt-6 flex items-start gap-2 rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-[11px] text-white/50">
         <AlertTriangle size={14} className="mt-0.5 shrink-0 text-white/40" />
         <p>{t("Bu içerik hastanın açık izniyle, sınırlı süreyle ve yalnızca görüntüleme amacıyla paylaşılmıştır. Hasta erişimi istediği an iptal edebilir; her görüntüleme denetim kaydına (audit trail) işlenir. · AURA (MVP)")}</p>
       </div>

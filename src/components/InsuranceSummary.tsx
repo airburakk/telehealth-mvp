@@ -51,7 +51,7 @@ export function InsuranceSummary({ detailJson, lang = "Türkçe" }: { detailJson
         {q.level >= 3 && (
           <>
             <Row k={`${t("Malpraktis & komplikasyon · hedef")} ${formatUSD(q.targetCoverage)}`} v={q.p3 > 0 ? `+${formatUSD(q.p3)}` : t("ek prim yok")} />
-            <p className="text-[11px] leading-relaxed text-white/40">
+            <p className="text-[11px] leading-relaxed text-white/60">
               {q.gap === 0
                 ? `${t("Doktorun mevcut MMSS poliçesi hedef teminatı karşılıyor → ek malpraktis primi yok.")} (${formatUSD(q.doctorCoverage)})`
                 : `${t("Doktorun mevcut MMSS poliçesi:")} ${formatUSD(q.doctorCoverage)} · ${t("ek teminatla kapatılan boşluk:")} ${formatUSD(q.gap)}`}

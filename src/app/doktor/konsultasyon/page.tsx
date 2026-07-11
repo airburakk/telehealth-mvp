@@ -54,12 +54,12 @@ export default async function ConsultationInboxPage() {
         <div className="shrink-0 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 text-right">
           <div className="flex items-center justify-end gap-1.5 text-xs font-semibold text-emerald-300"><Wallet size={14} /> Hakediş</div>
           <div className="text-lg font-bold text-emerald-300">{formatUSD(totalEarned)}</div>
-          <div className="text-[10px] text-emerald-600/70">{stats.count} yanıt</div>
+          <div className="text-[10px] text-emerald-300/80">{stats.count} yanıt</div>
         </div>
       </div>
 
       {/* Mahremiyet bilgi şeridi */}
-      <div className="mt-5 flex items-start gap-2 rounded-2xl border border-indigo-400/25 bg-indigo-50/60 p-3 text-xs text-indigo-200">
+      <div className="mt-5 flex items-start gap-2 rounded-2xl border border-indigo-400/25 bg-indigo-500/10 p-3 text-xs text-indigo-200">
         <ShieldCheck size={16} className="mt-0.5 shrink-0" />
         <span>Bu dosyalar otomatik <strong>anonimleştirme</strong> katmanından geçti — hasta adı, kimlik numarası ve ham görüntüler kaldırıldı. Belgeler AI ile değerlendirilip Türkçeye çevrildi; yalnız klinik içerik gösterilir.</span>
       </div>

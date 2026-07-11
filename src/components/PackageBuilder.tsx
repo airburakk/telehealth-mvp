@@ -103,14 +103,14 @@ export function PackageBuilder({
       {/* Seçimler */}
       <div className="space-y-4">
         {initial?.aiRationale && (
-          <div className="rounded-2xl border border-violet-400/25 bg-violet-50/70 p-3.5">
+          <div className="rounded-2xl border border-violet-400/25 bg-violet-500/10 p-3.5">
             <div className="text-xs font-semibold uppercase tracking-wide text-violet-300">{initial?.rationaleTitle ?? "✨ Sağlık Turizmi Agent'ı teklifi uygulandı"}</div>
             <p className="mt-1 text-sm leading-relaxed text-white/65">{initial.aiRationale}</p>
             <p className="mt-1 text-[11px] text-white/40">Tüm değerleri aşağıdan değiştirebilirsiniz; fiyat platform motorunda hesaplanır.</p>
           </div>
         )}
         {hasTx && (
-          <div className="rounded-2xl border border-emerald-400/25 bg-emerald-50/70 p-3.5">
+          <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-3.5">
             <div className="text-xs font-semibold uppercase tracking-wide text-emerald-300">🩺 Doktorun tavsiye ettiği tedaviler uygulandı</div>
             <p className="mt-1 text-sm leading-relaxed text-white/65">
               Tedavi kalemleri ve fiyatları, görüşmeyi yapan doktorun seçtiği işlemlerden (₺) gelir; pakette güncel kurla $ olarak gösterilir.
@@ -264,7 +264,7 @@ export function PackageBuilder({
           {sentOffer ? (
             <div className="mt-4 rounded-2xl border border-violet-400/25 bg-violet-500/10 p-3.5 text-center">
               <div className="text-sm font-semibold text-violet-200">✓ Teklif {patientName}&apos;e gönderildi</div>
-              <p className="mt-0.5 text-xs text-violet-800/80">Hastanın bildirimine düştü. Onayladığında Escrow&apos;a alınır.</p>
+              <p className="mt-0.5 text-xs text-violet-200/90">Hastanın bildirimine düştü. Onayladığında Escrow&apos;a alınır.</p>
               <Link href={`/teklif/${sentOffer}`} className="mt-2.5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">
                 <FileText size={15} /> Teklif sayfasını aç
               </Link>

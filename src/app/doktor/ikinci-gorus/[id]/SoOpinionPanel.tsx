@@ -160,7 +160,7 @@ export function SoOpinionPanel({ data }: { data: Data }) {
 
       {/* Teslim edilmiş görüş (read-only) */}
       {data.opinion && (
-        <div className="mt-4 rounded-3xl border border-emerald-400/25 bg-emerald-50/50 p-5">
+        <div className="mt-4 rounded-3xl border border-emerald-400/25 bg-emerald-500/10 p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-semibold text-emerald-200"><NotebookPen size={16} /> Sunulan yazılı görüş</div>
             <span className="text-xs text-emerald-300">{new Date(data.opinion.submittedAt).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}</span>
@@ -190,7 +190,7 @@ export function SoOpinionPanel({ data }: { data: Data }) {
 
       {/* Teklif gönderildi — hasta onayı bekleniyor */}
       {status === "VIDEO_OFFERED" && data.appointment && (
-        <div className="mt-4 rounded-3xl border border-amber-400/25 bg-amber-50/60 p-5">
+        <div className="mt-4 rounded-3xl border border-amber-400/25 bg-amber-500/10 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-amber-200"><Clock size={17} /> Randevu teklifiniz hastaya iletildi</div>
           <p className="mt-1.5 text-lg font-bold text-[#F4F5F3]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
           <p className="mt-1 text-xs text-amber-300">Hasta bu zamanı onayladığında randevu kesinleşir; farklı bir zaman isterse yeniden öneri yapabilirsiniz.</p>

@@ -216,7 +216,7 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
             {loading && <span className="text-[10px] text-white/40">{t("yenileniyor…")}</span>}
           </div>
           {pushState === "ios-hint" && (
-            <div className="border-b border-white/10 bg-teal-50/70 px-4 py-2.5">
+            <div className="border-b border-white/10 bg-[#28C8D8]/10 px-4 py-2.5">
               <div className="flex items-start gap-2 text-xs leading-relaxed text-[#28C8D8]">
                 <Smartphone size={14} className="mt-0.5 shrink-0" />
                 <span>
@@ -258,7 +258,7 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
                 <button
                   key={n.id}
                   onClick={() => go(n)}
-                  className={`flex w-full items-start gap-2.5 border-b border-white/10 px-4 py-3 text-left transition hover:bg-[#1E1F22] ${!n.readAt ? "bg-teal-50/50" : ""}`}
+                  className={`flex w-full items-start gap-2.5 border-b border-white/10 px-4 py-3 text-left transition hover:bg-[#1E1F22] ${!n.readAt ? "bg-[#28C8D8]/10" : ""}`}
                 >
                   <span className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg ${meta.cls}`}>{meta.icon}</span>
                   <span className="min-w-0">

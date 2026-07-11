@@ -347,7 +347,7 @@ export default function TriyajPage() {
             )}
             {effectiveBranch ? (
               <>
-                <div className="rounded-2xl border border-[#28C8D8]/25 bg-teal-50/60 p-3">
+                <div className="rounded-2xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-3">
                   <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]"><Stethoscope size={14} /> {t("Yönlendirilen branş")}</div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <select
@@ -410,10 +410,10 @@ export default function TriyajPage() {
                 <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-200">
                   <AlertTriangle size={16} className="shrink-0" /> {t("Eksik belgeleriniz var")}
                 </div>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-amber-900/90">
+                <p className="mt-1.5 text-[13px] leading-relaxed text-amber-200">
                   {t("Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.")}
                 </p>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-amber-900/90">
+                <p className="mt-1.5 text-[13px] leading-relaxed text-amber-200">
                   {t("Hızlı, doğru ve etkili bir görüşme için gerekli belgelerin eksiksiz yüklenmesi büyük önem taşır. Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi Özet adımında onaylayarak da ilerleyebilirsiniz.")}
                 </p>
                 <ul className="mt-2.5 list-disc space-y-0.5 ps-5 text-[12px] font-medium text-amber-200">
@@ -421,7 +421,7 @@ export default function TriyajPage() {
                 </ul>
               </div>
             )}
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/15 bg-[#1E1F22] px-6 py-10 text-center hover:border-teal-400 hover:bg-teal-50/40">
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/15 bg-[#1E1F22] px-6 py-10 text-center hover:border-teal-400 hover:bg-[#28C8D8]/10">
               <Upload size={26} className="text-white/40" />
               <span className="text-sm font-medium text-white/65">{t("Tıbbi belge yükleyin")}</span>
               <span className="text-xs text-white/40">{t("PDF, JPG, DICOM · Tahlil, radyoloji, epikriz")}</span>
@@ -526,7 +526,8 @@ export default function TriyajPage() {
       </div>
 
       <style>{`
-        .inp { width:100%; border:1px solid #cbd5e1; border-radius:0.6rem; padding:0.55rem 0.75rem; font-size:0.9rem; outline:none; background:#fff; }
+        .inp { width:100%; border:1px solid rgba(255,255,255,0.15); border-radius:0.6rem; padding:0.55rem 0.75rem; font-size:0.9rem; outline:none; background:#1E1F22; color:#F4F5F3; }
+        .inp::placeholder { color:rgba(255,255,255,0.35); }
         .inp:focus { border-color:#28C8D8; box-shadow:0 0 0 3px rgba(40,200,216,0.15); }
       `}</style>
     </JourneyIntakeShell>
@@ -553,7 +554,7 @@ function Summary({ k, v, block }: { k: string; v: string; block?: boolean }) {
 
 function AnalysisCard({ analysis, badge, dot, label, t = (s) => s }: { analysis: Analysis; badge: string; dot: string; label: string; t?: (s: string) => string }) {
   return (
-    <div className="rounded-2xl border border-[#28C8D8]/25 bg-teal-50/60 p-4">
+    <div className="rounded-2xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-4">
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]">
         <Sparkles size={14} /> {t("AI Ön Analizi")}
         {analysis.engine === "llm" && <span className="rounded-full bg-teal-600 px-1.5 py-0.5 text-[9px] tracking-normal text-white">Claude</span>}

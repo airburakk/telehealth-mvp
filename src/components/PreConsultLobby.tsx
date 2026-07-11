@@ -363,7 +363,7 @@ export function PreConsultLobby({
 
       {/* Yardım paneli (Faz C) — pratik sorun giderme (insan çıpası: dürüst, gerçek adımlar) */}
       {showHelp && (
-        <div className="mt-4 rounded-2xl border border-cyan-400/25 bg-cyan-50/60 p-4">
+        <div className="mt-4 rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-4">
           <p className="flex items-center gap-1.5 text-sm font-semibold text-[#1FA9B8]"><HelpCircle size={15} /> {t(TX.helpTitle)}</p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">{t(TX.helpBody)}</p>
         </div>

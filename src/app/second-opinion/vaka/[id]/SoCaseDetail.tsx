@@ -306,7 +306,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
   }
 
   return (
-    <div dir={langDir(lang)} className="mx-auto max-w-2xl px-5 py-8">
+    <div dir={langDir(lang)} className="print-doc mx-auto max-w-2xl px-5 py-8">
       <div className="flex items-center justify-between gap-3">
         <Link href="/second-opinion/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/75">
           <ArrowLeft size={15} /> {t(S.back)}
@@ -376,7 +376,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
 
       {/* Sunulan yazılı görüş — içerik çevrilir */}
       {data.opinion && (
-        <div className="mt-4 rounded-3xl border border-emerald-400/25 bg-emerald-50/50 p-5">
+        <div className="mt-4 rounded-3xl border border-emerald-400/25 bg-emerald-500/10 p-5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-emerald-200"><NotebookPen size={16} /> {t(S.opinionTitle)}</div>
             <button onClick={() => window.print()} className="inline-flex items-center gap-1 rounded-lg border border-emerald-400/30 px-2.5 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/15">
@@ -390,7 +390,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
 
       {/* Video randevu teklifi — onayla / farklı zaman iste (İcapçı deseni) */}
       {status === "VIDEO_OFFERED" && data.appointment && (
-        <div className="mt-4 rounded-3xl border border-amber-400/25 bg-amber-50/60 p-5">
+        <div className="mt-4 rounded-3xl border border-amber-400/25 bg-amber-500/10 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-amber-200"><CalendarClock size={17} /> {t(S.videoOfferTitle)}</div>
           <p className="mt-1.5 text-[13px] text-amber-300">{t(S.videoOfferDesc)}</p>
           <p className="mt-1 text-lg font-bold text-[#F4F5F3]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
@@ -545,7 +545,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
 
       {/* Talep karşılama */}
       {canFulfill && (
-        <div className="mt-4 rounded-3xl border border-amber-400/25 bg-amber-50/60 p-5">
+        <div className="mt-4 rounded-3xl border border-amber-400/25 bg-amber-500/10 p-5">
           <p className="text-sm text-amber-200">{t(S.fulfillNote)}</p>
           {fulfillErr && <p className="mt-2 text-sm text-red-300">{fulfillErr}</p>}
           <button

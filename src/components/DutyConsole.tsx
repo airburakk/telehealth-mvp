@@ -81,7 +81,7 @@ export function DutyConsole({ initial, initialRequests }: { initial: DutyState; 
       </div>
 
       {inSession ? (
-        <div className="mt-4 rounded-2xl border border-violet-400/25 bg-violet-50/70 px-4 py-3 text-sm text-violet-200">
+        <div className="mt-4 rounded-2xl border border-violet-400/25 bg-violet-500/10 px-4 py-3 text-sm text-violet-200">
           <p>Şu an bir nöbet görüşmesindesiniz.</p>
           <button
             onClick={() => patch({ release: true }, "release")}
@@ -172,7 +172,7 @@ function RequestCard({ req, onOffer }: { req: DutyRequest; onOffer: (caseId: str
   }
 
   return (
-    <div className={`rounded-2xl border p-4 shadow-sm ${isChange ? "border-amber-400/30 bg-amber-50/40" : "border-white/10 bg-[#161719]"}`}>
+    <div className={`rounded-2xl border p-4 shadow-sm ${isChange ? "border-amber-400/30 bg-amber-500/10" : "border-white/10 bg-[#161719]"}`}>
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-semibold text-[#F4F5F3]">{countryFlag(req.country)} {req.patientName}</span>
         <span className="rounded-lg bg-[#1E1F22] px-2 py-0.5 text-xs font-medium text-white/65 ring-1 ring-white/10">{req.branch}</span>

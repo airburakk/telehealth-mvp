@@ -61,4 +61,15 @@ body {
     background: #ffffff !important;
     color: #111111 !important;
   }
+  /* Belge yüzeyleri (onam kanıtı, teklif, epikriz, erişim kaydı, ikinci görüş):
+     eleman-düzeyi gece sınıfları kalıtımla ezilemez → kapsam-içi zorla. */
+  .print-doc,
+  .print-doc * {
+    background: #ffffff !important;
+    color: #111111 !important;
+    border-color: #d4d4d8 !important;
+    box-shadow: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
 }

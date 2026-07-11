@@ -97,7 +97,7 @@ export function ReservationView(p: ReservationViewProps) {
         <div>
           <h1 className="font-bold text-emerald-200">{t("Paket onaylandı")}</h1>
           <p className="mt-0.5 text-xs font-medium text-emerald-200">{p.patientName} · {p.branch}</p>
-          <p className="mt-0.5 text-sm text-emerald-800/80">{t("Tedavi paketiniz rezerve edildi; ödemeniz hizmet tamamlanana dek güvence altında tutulur (escrow simülasyonu).")}</p>
+          <p className="mt-0.5 text-sm text-emerald-200/90">{t("Tedavi paketiniz rezerve edildi; ödemeniz hizmet tamamlanana dek güvence altında tutulur (escrow simülasyonu).")}</p>
         </div>
       </div>
 

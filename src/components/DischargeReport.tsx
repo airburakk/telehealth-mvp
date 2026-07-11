@@ -120,7 +120,7 @@ export function DischargeReport({
             {report && <TranslateButton text={report} defaultTarget="İngilizce" compact />}
           </div>
 
-          <div className="mt-3 flex items-start gap-2 rounded-lg bg-violet-50/70 p-2.5 text-[11px] leading-relaxed text-violet-300 ring-1 ring-violet-400/20">
+          <div className="mt-3 flex items-start gap-2 rounded-lg bg-violet-500/10 p-2.5 text-[11px] leading-relaxed text-violet-300 ring-1 ring-violet-400/20">
             <ShieldCheck size={14} className="mt-0.5 shrink-0" />
             <span>Bu rapor kaydedildi ve Güvenli Sağlık Paylaşımı&apos;nda <strong>&quot;Epikriz / Özet Rapor&quot;</strong> kapsamında hastanın yurt dışı doktoruna iletilir.</span>
           </div>

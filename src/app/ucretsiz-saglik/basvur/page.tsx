@@ -122,7 +122,7 @@ export default function FreeCareApplyPage() {
           <input value={durationText} onChange={(e) => setDurationText(e.target.value)} placeholder={t("Örn. 2 hafta")} className="inp" />
         </Field>
 
-        <div className="rounded-2xl border border-[#28C8D8]/25 bg-teal-50/60 px-4 py-3 text-[13px] leading-relaxed text-[#28C8D8]">
+        <div className="rounded-2xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 px-4 py-3 text-[13px] leading-relaxed text-[#28C8D8]">
           {t("Bu görüşme tamamen ücretsizdir. Gönüllü doktorlarımiz kontenjanları dolana kadar başvuruları sırayla karşılar.")}
         </div>
 
@@ -156,7 +156,8 @@ export default function FreeCareApplyPage() {
       </div>
 
       <style>{`
-        .inp { width:100%; border:1px solid #cbd5e1; border-radius:0.6rem; padding:0.55rem 0.75rem; font-size:0.9rem; outline:none; background:#fff; }
+        .inp { width:100%; border:1px solid rgba(255,255,255,0.15); border-radius:0.6rem; padding:0.55rem 0.75rem; font-size:0.9rem; outline:none; background:#1E1F22; color:#F4F5F3; }
+        .inp::placeholder { color:rgba(255,255,255,0.35); }
         .inp:focus { border-color:#28C8D8; box-shadow:0 0 0 3px rgba(40,200,216,0.15); }
       `}</style>
     </JourneyIntakeShell>

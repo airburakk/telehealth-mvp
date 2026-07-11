@@ -189,7 +189,7 @@ export default function ProcedureSelector({
       </div>
 
       {showOther && (
-        <div className="mt-3 rounded-2xl border border-dashed border-[#28C8D8]/30 bg-teal-50/40 p-3">
+        <div className="mt-3 rounded-2xl border border-dashed border-[#28C8D8]/30 bg-[#28C8D8]/10 p-3">
           <div className="text-xs font-semibold text-[#28C8D8]">Tüm tarifede ara (branş dışı / sınıflandırılmamış işlemler dahil)</div>
           <div className="relative mt-2">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />

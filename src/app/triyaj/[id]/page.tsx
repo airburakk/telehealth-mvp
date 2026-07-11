@@ -94,7 +94,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
             <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-300" />
             <div>
               <h1 className="font-bold text-emerald-200">{t("Vakanız oluşturuldu ve doktor kuyruğuna eklendi")}</h1>
-              <p className="mt-0.5 text-sm text-emerald-800/80">
+              <p className="mt-0.5 text-sm text-emerald-200/90">
                 {t("Uzman doktor, hazırlanan vaka özetinizi inceleyip sizinle video görüşmesi planlayacak.")}
               </p>
             </div>
@@ -130,7 +130,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
           <p className="mt-1 text-sm text-white/75">{c.symptoms}</p>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-[#28C8D8]/25 bg-teal-50/60 p-4">
+        <div className="mt-4 rounded-2xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]">
             <Sparkles size={14} /> {t("Triyaj Gerekçesi")}
           </div>

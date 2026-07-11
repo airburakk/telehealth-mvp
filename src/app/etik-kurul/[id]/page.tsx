@@ -61,7 +61,7 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
               <div className="text-xs uppercase tracking-wide text-white/40">Şikayet (triyaj)</div>
               <p className="mt-1 text-sm text-white/75">{decryptField(c.case.symptoms)}</p>
             </div>
-            <div className="mt-3 rounded-lg bg-teal-50/70 p-3 ring-1 ring-[#28C8D8]/20">
+            <div className="mt-3 rounded-lg bg-[#28C8D8]/10 p-3 ring-1 ring-[#28C8D8]/20">
               <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]"><Sparkles size={13} /> AI gerekçe</div>
               <p className="mt-1 text-xs leading-relaxed text-white/65">{decryptField(c.case.reasoning)}</p>
             </div>
@@ -69,7 +69,7 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
 
           {/* Karar (resolved) */}
           {resolved && (
-            <div className="rounded-3xl border border-emerald-400/25 bg-emerald-50/60 p-6">
+            <div className="rounded-3xl border border-emerald-400/25 bg-emerald-500/10 p-6">
               <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-300"><Gavel size={15} /> Kurul Kararı</div>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {c.verdict && <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${VERDICTS[c.verdict].color}`}>{VERDICTS[c.verdict].label}</span>}

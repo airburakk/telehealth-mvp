@@ -575,7 +575,7 @@ export function ConsultationRoom({
             <video ref={remoteVideoRef} autoPlay playsInline className={`h-full w-full object-cover ${remoteOn ? "" : "hidden"}`} />
             {/* Uzak ses autoplay ile engellendiyse kullanıcı jestiyle aç (tercüman canlıyken gizli) */}
             {remoteOn && remoteAudioBlocked && !remoteMutedByInterpreter && (
-              <button onClick={enableRemoteAudio} className="absolute left-1/2 top-3 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-[#F4F5F3] shadow-lg ring-1 ring-black/5 hover:bg-[#161719]">
+              <button onClick={enableRemoteAudio} className="absolute left-1/2 top-3 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-[#0D0E10] shadow-lg ring-1 ring-black/5 hover:bg-white">
                 <Volume2 size={14} /> {t("Karşı tarafın sesini aç")}
               </button>
             )}
@@ -595,7 +595,7 @@ export function ConsultationRoom({
                     <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-amber-500/20 text-amber-300"><AlertTriangle size={28} /></span>
                     <p className="mx-auto mt-3 max-w-xs text-sm text-white/85">{errMsg ? t(errMsg) : t("Kamera/mikrofona erişilemedi.")}</p>
                     <p className="mx-auto mt-1 max-w-xs text-xs text-white/50">{t("Adres çubuğundaki kilit/kamera simgesine dokunup Kamera ve Mikrofon'a \"İzin ver\" deyin, sonra tekrar deneyin.")}</p>
-                    <button onClick={() => { setErrMsg(""); setPhase("connecting"); setRetry((r) => r + 1); }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#161719] px-5 py-2.5 text-sm font-semibold text-[#F4F5F3] hover:bg-white/10">
+                    <button onClick={() => { setErrMsg(""); setPhase("connecting"); setRetry((r) => r + 1); }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-[#F4F5F3] ring-1 ring-white/15 hover:bg-white/20">
                       {t("Tekrar dene")}
                     </button>
                   </div>
@@ -700,7 +700,7 @@ export function ConsultationRoom({
 
           {/* Doktor: hasta bağlantısı paylaş */}
           {isDoctor && (
-            <div className="flex items-center justify-between gap-2 rounded-2xl border border-[#28C8D8]/25 bg-teal-50/60 p-3">
+            <div className="flex items-center justify-between gap-2 rounded-2xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-3">
               <div className="text-sm text-white/65">
                 <span className="font-semibold text-[#28C8D8]">Hastayı davet et:</span> bu görüşme bağlantısını hastayla paylaş.
               </div>
@@ -730,7 +730,7 @@ export function ConsultationRoom({
               {isDoctor && <TranslateButton text={caseData.symptoms} defaultTarget="Türkçe" />}
             </div>
             {isDoctor && (
-              <div className="mt-3 rounded-lg bg-teal-50/70 p-3 ring-1 ring-[#28C8D8]/20">
+              <div className="mt-3 rounded-lg bg-[#28C8D8]/10 p-3 ring-1 ring-[#28C8D8]/20">
                 <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]"><Sparkles size={13} /> AI özeti</div>
                 <p className="mt-1 text-xs leading-relaxed text-white/65">{caseData.reasoning}</p>
               </div>

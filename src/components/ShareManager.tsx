@@ -393,7 +393,7 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
 
         {/* Adım 3 — Paylaş: son kontrol + oluştur → hazır bağlantı */}
         {step === 3 && (created ? (
-          <div className="mt-5 rounded-2xl border border-emerald-400/25 bg-emerald-50/70 p-4">
+          <div className="mt-5 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-4">
             <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-200"><Check size={16} /> {t(ST.linkReady)}</div>
             <div className="mt-2 flex items-center gap-2 rounded-lg border border-emerald-400/25 bg-[#161719] px-3 py-2 text-xs text-white/65">
               <Link2 size={14} className="shrink-0 text-white/40" /> <span className="truncate">{created.url}</span>

@@ -325,7 +325,7 @@ export default function ClinicalDecisionPanel({
             {/* AI önerileri (hibrit kanat) */}
             {aiErr && <div className="mt-2 text-[11px] text-red-300">{aiErr}</div>}
             {aiSugs && (
-              <div className="mt-2 rounded-xl border border-violet-400/25 bg-violet-50/50 p-2.5">
+              <div className="mt-2 rounded-xl border border-violet-400/25 bg-violet-500/10 p-2.5">
                 <div className="text-[11px] font-semibold text-violet-300"><Sparkles size={11} className="inline" /> AI önerileri (endikatif — karar sizindir):</div>
                 {aiSugs.length === 0 && <p className="mt-1 text-[11px] text-white/40">AI bu tanı için havuzdan öneri çıkaramadı.</p>}
                 <ul className="mt-1 space-y-1">
@@ -368,7 +368,7 @@ export default function ClinicalDecisionPanel({
                 {catLoading && <div className="px-3 py-2 text-xs text-white/40">Aranıyor…</div>}
                 {!catLoading && results.length === 0 && <div className="px-3 py-2 text-xs text-white/40">Sonuç yok.</div>}
                 {results.map((p) => (
-                  <button key={p.code} onClick={() => add(p)} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-emerald-50/60">
+                  <button key={p.code} onClick={() => add(p)} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-emerald-500/10">
                     <span className="min-w-0">
                       <span className="block truncate text-white/75">{p.name}</span>
                       <span className="text-[11px] text-white/40">{p.code} · {p.price ? formatTRY(doctorPrices[p.code] ?? p.price) : "fiyat yok"}{doctorPrices[p.code] ? " · sizin fiyatınız" : ""}</span>
@@ -447,7 +447,7 @@ export default function ClinicalDecisionPanel({
           <Building2 size={13} /> 4 · Hastane (isteğe bağlı)
         </div>
         {hospName ? (
-          <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-[#28C8D8]/25 bg-teal-50/60 px-3 py-2 text-sm">
+          <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-[#28C8D8]/25 bg-[#28C8D8]/10 px-3 py-2 text-sm">
             <span className="min-w-0 truncate font-medium text-white/75">{hospName}{hospId ? <span className="text-[11px] font-normal text-white/40"> · HealthTürkiye #{hospId}</span> : ""}</span>
             <button onClick={() => { setHospId(null); setHospName(""); }} className="shrink-0 rounded p-1 text-white/40 hover:bg-red-500/10 hover:text-red-500"><X size={14} /></button>
           </div>
@@ -468,7 +468,7 @@ export default function ClinicalDecisionPanel({
               <ul className="mt-1.5 max-h-40 divide-y divide-white/10 overflow-y-auto rounded-lg border border-white/10">
                 {hospRes.map((h) => (
                   <li key={h.id}>
-                    <button onClick={() => { setHospId(h.id); setHospName(h.name); setHospRes([]); setHospQ(""); }} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-teal-50/60">
+                    <button onClick={() => { setHospId(h.id); setHospName(h.name); setHospRes([]); setHospQ(""); }} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-[#28C8D8]/10">
                       <span className="min-w-0">
                         <span className="flex items-center gap-1.5">
                           <span className="min-w-0 truncate text-white/75">{h.name}</span>

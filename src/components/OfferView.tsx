@@ -82,7 +82,7 @@ export function OfferView(p: OfferViewProps) {
   const { t } = useT(lang, texts);
 
   return (
-    <div dir={langDir(lang)} className="mx-auto max-w-3xl px-5 py-8">
+    <div dir={langDir(lang)} className="print-doc mx-auto max-w-3xl px-5 py-8">
       <div className="print:hidden flex items-center justify-between gap-3">
         <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-[#1FA9B8]">
           <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Vakalarım")}
@@ -115,11 +115,11 @@ export function OfferView(p: OfferViewProps) {
           </div>
         </div>
       ) : (
-        <div className="mt-5 flex items-start gap-3 rounded-3xl border border-violet-400/25 bg-violet-50/70 p-4">
+        <div className="mt-5 flex items-start gap-3 rounded-3xl border border-violet-400/25 bg-violet-500/10 p-4">
           <Sparkles className="mt-0.5 shrink-0 text-violet-300" />
           <div>
             <div className="font-semibold text-violet-200">{t("Size özel hazırlanmış tedavi paketi teklifi")}</div>
-            <p className="text-sm text-violet-800/80">{t("Aşağıdaki paketi inceleyin. Onayladığınızda ödeme, hizmet tamamlanana dek platform Escrow güvencesinde tutulur (escrow simülasyonu — gerçek para transferi yapılmaz).")}</p>
+            <p className="text-sm text-violet-200/90">{t("Aşağıdaki paketi inceleyin. Onayladığınızda ödeme, hizmet tamamlanana dek platform Escrow güvencesinde tutulur (escrow simülasyonu — gerçek para transferi yapılmaz).")}</p>
           </div>
         </div>
       )}

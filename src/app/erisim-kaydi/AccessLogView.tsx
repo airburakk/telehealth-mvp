@@ -43,7 +43,7 @@ export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
   const locale = LANG_BCP47[lang] ?? "tr-TR";
 
   return (
-    <main dir={langDir(lang)} className="mx-auto max-w-4xl px-5 py-10">
+    <main dir={langDir(lang)} className="print-doc mx-auto max-w-4xl px-5 py-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <Lock size={20} className="text-[#17919E]" />

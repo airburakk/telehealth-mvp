@@ -175,12 +175,12 @@ export function ConsultGate({
 
   // ── 3 seçenek ──
   return (
-    <div className="rounded-3xl border border-amber-400/25 bg-amber-50/60 p-5">
+    <div className="rounded-3xl border border-amber-400/25 bg-amber-500/10 p-5">
       <div className="flex items-start gap-3">
         <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-amber-500/15 text-amber-300"><ShieldQuestion size={18} /></span>
         <div>
           <h2 className="font-bold text-amber-200">{t("Şu an çevrimiçi branş doktoru yok")}</h2>
-          <p className="mt-0.5 text-sm text-amber-800/80">{t("Size en uygun yolu seçin — vakanız kaydedildi, hiçbir bilgi kaybolmaz.")}</p>
+          <p className="mt-0.5 text-sm text-amber-200/90">{t("Size en uygun yolu seçin — vakanız kaydedildi, hiçbir bilgi kaybolmaz.")}</p>
         </div>
       </div>
 

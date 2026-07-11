@@ -53,10 +53,10 @@ export default async function DenetimPage({
             <p className="font-semibold text-emerald-200">Zincir bütün</p>
             <p className="text-sm text-emerald-300">
               {integrity.count} mühürlü kayıt doğrulandı (GENESIS → … → uç). Araya silme/değiştirme/ekleme tespit
-              edilmedi. <span className="text-emerald-600/80">(Uçtan-kesme tespiti harici çapa gerektirir — gerçek
+              edilmedi. <span className="text-emerald-300/80">(Uçtan-kesme tespiti harici çapa gerektirir — gerçek
               RFC 3161 TSA park kapsamında.)</span>
             </p>
-            <p className="mt-1 text-xs text-emerald-700/90">
+            <p className="mt-1 text-xs text-emerald-300">
               Mühür kompozisyonu: {integrity.v2Count} × v2 (anahtarlı HMAC) · {integrity.v1Count} × v1 (tarihî,
               anahtarsız){integrity.unsealedCount > 0 ? ` · ${integrity.unsealedCount} mühürsüz tarihî kayıt (zincir kapsamı dışında)` : ""}.
               {integrity.v2Count === 0 ? " ⚠️ v2 canlıya alındıktan sonra hiç v2 kaydı görünmüyorsa zincir yeniden yazılmış olabilir — araştırın." : ""}

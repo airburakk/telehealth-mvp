@@ -127,7 +127,7 @@ export function DoctorDocuments({
         const mine = docs.filter((d) => d.type === type);
         const ok = mine.length > 0;
         return (
-          <div key={type} className={`rounded-3xl border p-4 ${required && !ok ? "border-amber-400/25 bg-amber-50/40" : ok ? "border-emerald-400/25 bg-emerald-50/30" : "border-white/10 bg-[#161719]"}`}>
+          <div key={type} className={`rounded-3xl border p-4 ${required && !ok ? "border-amber-400/25 bg-amber-500/10" : ok ? "border-emerald-400/25 bg-emerald-500/10" : "border-white/10 bg-[#161719]"}`}>
             <div className="flex items-start gap-3">
               <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${ok ? "bg-emerald-500 text-white" : required ? "bg-amber-400 text-white" : "bg-white/10 text-white/50"}`}>
                 {ok ? <Check size={18} /> : <Icon size={18} />}

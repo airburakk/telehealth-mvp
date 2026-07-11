@@ -120,7 +120,7 @@ export function PartnerRequestForm({
       </button>
       <h1 className="mt-3 text-2xl font-bold text-[#F4F5F3]">{t.title}</h1>
 
-      <div className="mt-3 flex items-start gap-2 rounded-2xl border border-indigo-400/25 bg-indigo-50/60 p-3 text-xs text-indigo-200">
+      <div className="mt-3 flex items-start gap-2 rounded-2xl border border-indigo-400/25 bg-indigo-500/10 p-3 text-xs text-indigo-200">
         <ShieldCheck size={16} className="mt-0.5 shrink-0" />
         <span>{t.warning}</span>
       </div>

@@ -124,7 +124,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
   const { t } = useT(lang, texts);
 
   return (
-    <div dir={langDir(lang)} className="mx-auto max-w-4xl px-5 py-8">
+    <div dir={langDir(lang)} className="print-doc mx-auto max-w-4xl px-5 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link href={`/doktor/vaka/${data.caseId}`} className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-[#1FA9B8]">
           <ArrowLeft size={16} /> {t("Vaka detayı")}
@@ -300,7 +300,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
             </ol>
           </div>
 
-          <div className="rounded-3xl border border-[#28C8D8]/25 bg-teal-50/60 p-5">
+          <div className="rounded-3xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-5">
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]"><Video size={15} /> {t("Tele-Kontrol")}</div>
             <p className="mt-1.5 text-sm text-white/65">{t("Kritik dönüm noktalarında doktorunuzla kısa görüşme planlanır.")}</p>
             <button className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-[#161719] px-4 py-2 text-sm font-medium text-white/65 hover:bg-[#1E1F22]">

@@ -20,7 +20,7 @@ export function CaseDicom({ studies }: { studies: DicomStudy[] }) {
           <li key={s.url}>
             <button
               onClick={() => { setSrc(s.url); setOpen(true); }}
-              className="flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-[#1E1F22] px-3 py-2.5 text-sm text-white/75 hover:border-teal-400 hover:bg-teal-50/50"
+              className="flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-[#1E1F22] px-3 py-2.5 text-sm text-white/75 hover:border-teal-400 hover:bg-[#28C8D8]/10"
             >
               <span className="inline-flex items-center gap-2"><FileImage size={16} className="text-[#28C8D8]" /> {s.label}</span>
               <span className="rounded bg-white/15 px-1.5 py-0.5 text-[10px] font-semibold text-white/65">{s.modality}</span>

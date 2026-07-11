@@ -220,7 +220,7 @@ export default async function DoctorDashboard() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[#28C8D8]/25 bg-teal-50/60 p-5 text-sm text-white/65">
+          <div className="rounded-3xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-5 text-sm text-white/65">
             <div className="font-semibold text-[#28C8D8]">Operasyonel yük sıfır</div>
             <p className="mt-1 text-xs">Organizasyon, çeviri ve lojistik platformda. Siz yalnız tıbbi görüşe odaklanın.</p>
           </div>

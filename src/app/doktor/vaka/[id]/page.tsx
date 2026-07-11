@@ -94,7 +94,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               <TranslateButton text={c.symptoms} defaultTarget="Türkçe" />
             </div>
 
-            <div className="mt-5 rounded-2xl border border-[#28C8D8]/25 bg-teal-50/60 p-4">
+            <div className="mt-5 rounded-2xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-4">
               <SectionTitle icon={<Sparkles size={15} />} tone="text-[#28C8D8]">AI Triyaj Gerekçesi</SectionTitle>
               <p className="mt-1.5 text-sm leading-relaxed text-white/65">{c.reasoning}</p>
               <div className="mt-2 text-xs text-white/40">Güven skoru: %{c.confidence}</div>

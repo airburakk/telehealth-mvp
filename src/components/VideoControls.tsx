@@ -66,7 +66,7 @@ export function VideoControls({ requestId, role, lang = "Türkçe" }: { requestI
   const joinHref = video ? `/konsultasyon/gorusme/${video.id}` : "#";
 
   return (
-    <div dir={dir} className="rounded-2xl border border-violet-400/25 bg-violet-50/50 p-3">
+    <div dir={dir} className="rounded-2xl border border-violet-400/25 bg-violet-500/10 p-3">
       <div className="flex items-center justify-between">
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-300"><Video size={14} /> {t("Görüntülü görüşme")}</span>
         <span className={`inline-flex items-center gap-1 text-[11px] font-medium ${counterpartOnline ? "text-emerald-300" : "text-white/40"}`}>

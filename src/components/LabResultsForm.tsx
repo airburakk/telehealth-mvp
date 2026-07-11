@@ -131,20 +131,20 @@ export function LabResultsForm({
                   value={r.name}
                   onChange={(e) => update(i, { name: e.target.value })}
                   placeholder="test adı"
-                  className={`w-full min-w-0 rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-[#28C8D8]/30 bg-teal-50/40" : "border-white/15"}`}
+                  className={`w-full min-w-0 rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-[#28C8D8]/30 bg-[#28C8D8]/10" : "border-white/15"}`}
                 />
               </div>
               <input
                 value={r.value}
                 onChange={(e) => update(i, { value: e.target.value })}
                 placeholder="değer"
-                className={`rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-[#28C8D8]/30 bg-teal-50/40" : "border-white/15"}`}
+                className={`rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-[#28C8D8]/30 bg-[#28C8D8]/10" : "border-white/15"}`}
               />
               <input
                 value={r.unit}
                 onChange={(e) => update(i, { unit: e.target.value })}
                 placeholder="birim"
-                className={`rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-[#28C8D8]/30 bg-teal-50/40" : "border-white/15"}`}
+                className={`rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-[#28C8D8]/30 bg-[#28C8D8]/10" : "border-white/15"}`}
               />
               <button
                 onClick={() => removeRow(i)}

@@ -132,7 +132,7 @@ export function FreeCareConsole({
           </div>
 
           {inSession ? (
-            <div className="mt-4 rounded-2xl border border-violet-400/25 bg-violet-50/70 px-4 py-3 text-sm text-violet-200">
+            <div className="mt-4 rounded-2xl border border-violet-400/25 bg-violet-500/10 px-4 py-3 text-sm text-violet-200">
               Şu an bir görüşmedesiniz. Görüşme bitince aşağıdan <b>sonucu işaretleyin</b>; ardından tekrar müsait olabilirsiniz.
             </div>
           ) : quotaFull ? (
@@ -171,7 +171,7 @@ export function FreeCareConsole({
               <div className="h-full rounded-full bg-[#28C8D8]" style={{ width: `${Math.min(100, (quota.used / Math.max(1, quota.quota)) * 100)}%` }} />
             </div>
           </div>
-          <div className="rounded-3xl border border-[#28C8D8]/25 bg-teal-50/60 p-5">
+          <div className="rounded-3xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-5">
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]"><Award size={14} /> Ücretsiz Hizmet Katkınız</div>
             <div className="mt-2 grid grid-cols-2 gap-3 text-center">
               <div><div className="text-2xl font-bold text-[#28C8D8]">{badge.consultations}</div><div className="text-[11px] text-[#28C8D8]">görüşme</div></div>

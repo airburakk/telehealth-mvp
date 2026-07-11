@@ -47,12 +47,12 @@ export default function ConsentProofPage() {
   const allValid = sealed && v.entryHashValid !== false && v.timestampValid !== false && v.textHashMatches !== false;
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10">
+    <div className="print-doc mx-auto max-w-2xl px-5 py-10">
       <div className={`rounded-3xl border p-5 flex items-start gap-3 ${allValid ? "border-emerald-400/25 bg-emerald-500/10" : "border-amber-400/25 bg-amber-500/10"}`}>
         {allValid ? <ShieldCheck className="mt-0.5 shrink-0 text-emerald-300" /> : <ShieldAlert className="mt-0.5 shrink-0 text-amber-300" />}
         <div>
           <h1 className={`font-bold ${allValid ? "text-emerald-200" : "text-amber-200"}`}>Onay Kanıtı (Consent Proof)</h1>
-          <p className={`mt-0.5 text-sm ${allValid ? "text-emerald-800/80" : "text-amber-800/80"}`}>
+          <p className={`mt-0.5 text-sm ${allValid ? "text-emerald-200/90" : "text-amber-200/90"}`}>
             {sealed
               ? (allValid ? "Bu onam kaydı mühürlü ve bütünlüğü doğrulandı — kayıt verildiği tarihten beri değiştirilmemiştir." : "Bu kayıt mühürlü ancak doğrulama tam geçmedi (aşağıya bakın).")
               : "Bu kayıt eski sürümde alınmış olup ispat katmanı (hash-zinciri + zaman damgası) içermiyor. Güncel sürümde yeniden onam verildiğinde mühürlenir."}
