@@ -737,6 +737,7 @@ model RegistryDoctor {
   address           String?
   experience        Int?
   genderId          Int?
+  fingerprint       String? // liste-API alanlarının kısa hash'i (v5.4 alan-güncelleme; null = backfill bekliyor)
   firstSeenAt       DateTime  @default(now()) // dizinde ilk görüldüğü senkron
   lastSeenAt        DateTime  @default(now()) // son görüldüğü senkron
   removedAt         DateTime? // kaynaktan çıkarıldığı senkron (null = halen kayıtlı)
@@ -779,6 +780,7 @@ model RegistryHospital {
   accreditations     String? // JSON — akreditasyon adları (detay zenginleştirme)
   facilities         String? // JSON — Tesis Olanakları (detay zenginleştirme)
   authorizationNumber String? // Sağlık turizmi YETKİ BELGE NO (ör. "ST-0292"; detaydan — "" = kontrol edildi, dizinde belge yok; null = henüz bakılmadı)
+  fingerprint        String? // liste-API alanlarının kısa hash'i (v5.4 alan-güncelleme; detay/enrichment alanları DAHİL DEĞİL)
   firstSeenAt        DateTime  @default(now())
   lastSeenAt         DateTime  @default(now())
   removedAt          DateTime? // kaynaktan çıkarıldığı senkron (null = halen kayıtlı)
@@ -796,6 +798,8 @@ model RegistryReport {
   status           String   @default("OK") // OK | FETCH_FAILED | PARTIAL
   doctorsTotal     Int      @default(0) // senkron sonunda aktif doktor sayısı
   hospitalsTotal   Int      @default(0)
+  updatedDoctors   Int      @default(0) // alan-güncellemesi yapılan kayıt sayısı (v5.4 fingerprint)
+  updatedHospitals Int      @default(0)
   addedDoctors     String? // JSON [{id,name,lastName,branchName,cityName,establishmentName}]
   removedDoctors   String? // JSON — aynı biçim
   addedHospitals   String? // JSON [{id,name,cityName,facilityTypeName}]

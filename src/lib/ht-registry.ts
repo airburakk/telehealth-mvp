@@ -10,10 +10,12 @@
 // Kamuya açık resmi dizin verisi (PHI DEĞİL) → şifreleme yok.
 //
 // Diff modeli (soft-delete): kaynaktan kalkan kayıt SİLİNMEZ, removedAt damgalanır; geri gelirse
-// removedAt temizlenir. Günlük eklenen/çıkarılan listeleri RegistryReport'a yazılır (tek rapor/gün).
-// Bilinçli sınır: mevcut kayıtların ALAN GÜNCELLEMESİ yapılmaz (ör. hastane adı değişimi) — günlük
-// 14k tekil UPDATE Neon'a gereksiz yük; eklenen/çıkarılan takibi tam ve kesindir. (İleride
-// fingerprint kolonu ile seçici alan-güncelleme eklenebilir.)
+// removedAt temizlenir + alanları tazelenir. Günlük eklenen/çıkarılan listeleri RegistryReport'a
+// yazılır (tek rapor/gün).
+// Alan-güncellemesi (v5.4): fingerprint'li SEÇİCİ UPDATE — liste-API alanlarının kısa hash'i
+// satırda saklanır; senkronda yalnız hash'i değişen kayıtlar güncellenir (14k körlemesine UPDATE
+// yerine günde tipik birkaç kayıt). Detay/enrichment alanları hash'e ve güncellemeye GİRMEZ.
+import { createHash } from "node:crypto";
 import { db } from "./db";
 import { notifyRoles } from "./notify";
 
@@ -92,11 +94,75 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
+// ── Fingerprint (v5.4): liste-API alanlarının kısa hash'i ──
+// Raw (senkron) ve DB satırı (backfill) İKİ yoldan da AYNI değer dizisi üretilmeli — alan sırası
+// sözleşmedir, değiştirme. Doktorda türetilmiş cityName hash'e GİRMEZ (city lookup'ı opsiyonel:
+// lookup'ın düştüğü gün tüm dizinin hash'i değişmesin; cityId değişimi şehri zaten yakalar).
+function fp(vals: unknown[]): string {
+  return createHash("sha256").update(JSON.stringify(vals)).digest("hex").slice(0, 16);
+}
+
+function doctorFpFromRaw(d: RawDoctor): string {
+  return fp([d.name ?? "", d.lastName ?? "", d.jobName, d.jobId, d.branchName, d.branchId, d.cityId, d.establishmentId, d.establishmentName, d.slug, d.address, d.expreience, d.genderId]);
+}
+export function doctorFpFromRow(r: { name: string; lastName: string; jobName: string | null; jobId: number | null; branchName: string | null; branchId: number | null; cityId: number | null; establishmentId: number | null; establishmentName: string | null; slug: string | null; address: string | null; experience: number | null; genderId: number | null }): string {
+  return fp([r.name, r.lastName, r.jobName, r.jobId, r.branchName, r.branchId, r.cityId, r.establishmentId, r.establishmentName, r.slug, r.address, r.experience, r.genderId]);
+}
+
+const hospBranchesStr = (h: RawHospital) => (h.branches ? JSON.stringify(h.branches) : null);
+const hospTreatmentsStr = (h: RawHospital) => (h.treatments ? JSON.stringify(h.treatments).slice(0, 20_000) : null);
+function hospitalFpFromRaw(h: RawHospital): string {
+  return fp([h.name ?? "", h.slug, h.cityName, h.cityCode, h.cityHasAirport, h.address, h.phone, h.totalPersonnel, h.unitCapacity, h.establishmentHealthFacilityTypeId, h.establishmentHealthFacilityTypeName, h.establishmentAccreditationCount, h.establishmentCertificationCount, h.establishmentInsuranceCount, h.establishmentDoctorCount, h.foundationYear, h.xaxisCoordinate, h.yaxisCoordinate, hospBranchesStr(h), hospTreatmentsStr(h)]);
+}
+export function hospitalFpFromRow(r: { name: string; slug: string | null; cityName: string | null; cityCode: string | null; cityHasAirport: boolean | null; address: string | null; phone: string | null; totalPersonnel: number | null; unitCapacity: number | null; facilityTypeId: number | null; facilityTypeName: string | null; accreditationCount: number | null; certificationCount: number | null; insuranceCount: number | null; doctorCount: number | null; foundationYear: number | null; latitude: string | null; longitude: string | null; branches: string | null; treatments: string | null }): string {
+  return fp([r.name, r.slug, r.cityName, r.cityCode, r.cityHasAirport, r.address, r.phone, r.totalPersonnel, r.unitCapacity, r.facilityTypeId, r.facilityTypeName, r.accreditationCount, r.certificationCount, r.insuranceCount, r.doctorCount, r.foundationYear, r.latitude, r.longitude, r.branches, r.treatments]);
+}
+
+// Savunma tavanı: kaynak format kayması / hash sözleşmesi bozulması TÜM dizinin hash'ini
+// değiştirirse cron'u 14k tekil UPDATE ile boğma — o koşuda alan-güncelleme atlanır, rapora not düşer.
+const FIELD_UPDATE_CAP = 1000;
+
+// Tekil güncellemeleri sınırlı eşzamanlılıkla koş (değişen kayıtlar tipik günde birkaç adet).
+async function runUpdates<T>(rows: T[], run: (r: T) => Promise<unknown>): Promise<void> {
+  for (const batch of chunk(rows, 25)) await Promise.all(batch.map(run));
+}
+
+// Doktor alan seti (create/update ortak) — cityName yalnız çözülebiliyorsa yazılır (update'te
+// undefined = mevcut değeri koru; createMany'de ?? null gerekir, aşağıda ayrıca ele alınır).
+function doctorFields(d: RawDoctor, cityMap: Map<number, string>) {
+  return {
+    name: d.name ?? "", lastName: d.lastName ?? "",
+    jobName: d.jobName, jobId: d.jobId, branchName: d.branchName, branchId: d.branchId,
+    cityId: d.cityId, cityName: d.cityId != null ? cityMap.get(d.cityId) : undefined,
+    establishmentId: d.establishmentId, establishmentName: d.establishmentName,
+    slug: d.slug, address: d.address, experience: d.expreience, genderId: d.genderId,
+    fingerprint: doctorFpFromRaw(d),
+  };
+}
+
+// Hastane liste-API alan seti (create/update ortak) — enrichment kolonlarına DOKUNMAZ.
+function hospitalFields(h: RawHospital) {
+  return {
+    name: h.name ?? "", slug: h.slug,
+    cityName: h.cityName, cityCode: h.cityCode, cityHasAirport: h.cityHasAirport,
+    address: h.address, phone: h.phone,
+    totalPersonnel: h.totalPersonnel, unitCapacity: h.unitCapacity,
+    facilityTypeId: h.establishmentHealthFacilityTypeId, facilityTypeName: h.establishmentHealthFacilityTypeName,
+    accreditationCount: h.establishmentAccreditationCount, certificationCount: h.establishmentCertificationCount,
+    insuranceCount: h.establishmentInsuranceCount, doctorCount: h.establishmentDoctorCount,
+    foundationYear: h.foundationYear, latitude: h.xaxisCoordinate, longitude: h.yaxisCoordinate,
+    branches: hospBranchesStr(h), treatments: hospTreatmentsStr(h),
+    fingerprint: hospitalFpFromRaw(h),
+  };
+}
+
 export interface SyncSummary {
   status: "OK" | "FETCH_FAILED";
   date: string;
   doctorsTotal: number;
   hospitalsTotal: number;
+  updatedDoctors: number; // alan-güncellemesi yapılan kayıt (v5.4 fingerprint)
+  updatedHospitals: number;
   addedDoctors: { id: number; name: string; lastName: string; branchName: string | null; cityName: string | null; establishmentName: string | null }[];
   removedDoctors: { id: number; name: string; lastName: string; branchName: string | null; cityName: string | null; establishmentName: string | null }[];
   addedHospitals: { id: number; name: string; cityName: string | null; facilityTypeName: string | null }[];
@@ -133,6 +199,7 @@ export async function runRegistrySync(): Promise<SyncSummary> {
     const detail = e instanceof Error ? e.message : String(e);
     const failed: SyncSummary = {
       status: "FETCH_FAILED", date, doctorsTotal: 0, hospitalsTotal: 0,
+      updatedDoctors: 0, updatedHospitals: 0,
       addedDoctors: [], removedDoctors: [], addedHospitals: [], removedHospitals: [], detail,
     };
     await writeReport(failed);
@@ -140,32 +207,40 @@ export async function runRegistrySync(): Promise<SyncSummary> {
   }
 
   // ── Doktor diff ──
-  const existingDocs = await db.registryDoctor.findMany({ select: { id: true, removedAt: true, name: true, lastName: true, branchName: true, cityName: true, establishmentName: true } });
+  const existingDocs = await db.registryDoctor.findMany({ select: { id: true, removedAt: true, fingerprint: true, name: true, lastName: true, branchName: true, cityName: true, establishmentName: true } });
   const existingDocMap = new Map(existingDocs.map((d) => [d.id, d]));
   const fetchedDocIds = new Set(doctors.map((d) => d.id));
 
   const addedDocs = doctors.filter((d) => !existingDocMap.has(d.id));
-  const returnedDocIds = doctors.filter((d) => existingDocMap.get(d.id)?.removedAt).map((d) => d.id);
+  const returnedDocs = doctors.filter((d) => existingDocMap.get(d.id)?.removedAt);
   const removedDocs = existingDocs.filter((d) => !d.removedAt && !fetchedDocIds.has(d.id));
   const seenDocIds = doctors.filter((d) => existingDocMap.has(d.id) && !existingDocMap.get(d.id)!.removedAt).map((d) => d.id);
+  // Alan-güncellemesi: aktif + fingerprint'i DOLU (backfill'lenmiş) + hash'i değişen kayıtlar.
+  // null-fingerprint satırlar karşılaştırılmaz (ilk doldurma scripts/registry-fingerprint-backfill.ts).
+  const changedDocs = doctors.filter((d) => {
+    const ex = existingDocMap.get(d.id);
+    return ex && !ex.removedAt && ex.fingerprint != null && ex.fingerprint !== doctorFpFromRaw(d);
+  });
+  const docUpdateSkipped = changedDocs.length > FIELD_UPDATE_CAP;
 
   if (addedDocs.length) {
     for (const batch of chunk(addedDocs, 1000)) {
       await db.registryDoctor.createMany({
         data: batch.map((d) => ({
-          id: d.id, name: d.name ?? "", lastName: d.lastName ?? "",
-          jobName: d.jobName, jobId: d.jobId, branchName: d.branchName, branchId: d.branchId,
-          cityId: d.cityId, cityName: d.cityId != null ? cityMap.get(d.cityId) ?? null : null,
-          establishmentId: d.establishmentId, establishmentName: d.establishmentName,
-          slug: d.slug, address: d.address, experience: d.expreience, genderId: d.genderId,
+          ...doctorFields(d, cityMap), id: d.id,
+          cityName: d.cityId != null ? cityMap.get(d.cityId) ?? null : null, // create'te undefined olmaz
           firstSeenAt: now, lastSeenAt: now,
         })),
         skipDuplicates: true,
       });
     }
   }
-  for (const batch of chunk(returnedDocIds, 2000)) {
-    if (batch.length) await db.registryDoctor.updateMany({ where: { id: { in: batch } }, data: { removedAt: null, lastSeenAt: now } });
+  // Geri gelen kayıt: removedAt temizlenir + alanlar tazelenir (aradan geçen sürede değişmiş olabilir)
+  await runUpdates(returnedDocs, (d) =>
+    db.registryDoctor.update({ where: { id: d.id }, data: { ...doctorFields(d, cityMap), removedAt: null, lastSeenAt: now } }));
+  if (!docUpdateSkipped) {
+    await runUpdates(changedDocs, (d) =>
+      db.registryDoctor.update({ where: { id: d.id }, data: { ...doctorFields(d, cityMap), lastSeenAt: now } }));
   }
   for (const batch of chunk(removedDocs.map((d) => d.id), 2000)) {
     if (batch.length) await db.registryDoctor.updateMany({ where: { id: { in: batch } }, data: { removedAt: now } });
@@ -175,37 +250,34 @@ export async function runRegistrySync(): Promise<SyncSummary> {
   }
 
   // ── Hastane diff ──
-  const existingHosps = await db.registryHospital.findMany({ select: { id: true, removedAt: true, name: true, cityName: true, facilityTypeName: true } });
+  const existingHosps = await db.registryHospital.findMany({ select: { id: true, removedAt: true, fingerprint: true, name: true, cityName: true, facilityTypeName: true } });
   const existingHospMap = new Map(existingHosps.map((h) => [h.id, h]));
   const fetchedHospIds = new Set(hospitals.map((h) => h.id));
 
   const addedHosps = hospitals.filter((h) => !existingHospMap.has(h.id));
-  const returnedHospIds = hospitals.filter((h) => existingHospMap.get(h.id)?.removedAt).map((h) => h.id);
+  const returnedHosps = hospitals.filter((h) => existingHospMap.get(h.id)?.removedAt);
   const removedHosps = existingHosps.filter((h) => !h.removedAt && !fetchedHospIds.has(h.id));
   const seenHospIds = hospitals.filter((h) => existingHospMap.has(h.id) && !existingHospMap.get(h.id)!.removedAt).map((h) => h.id);
+  const changedHosps = hospitals.filter((h) => {
+    const ex = existingHospMap.get(h.id);
+    return ex && !ex.removedAt && ex.fingerprint != null && ex.fingerprint !== hospitalFpFromRaw(h);
+  });
+  const hospUpdateSkipped = changedHosps.length > FIELD_UPDATE_CAP;
 
   if (addedHosps.length) {
     for (const batch of chunk(addedHosps, 500)) {
       await db.registryHospital.createMany({
-        data: batch.map((h) => ({
-          id: h.id, name: h.name ?? "", slug: h.slug,
-          cityName: h.cityName, cityCode: h.cityCode, cityHasAirport: h.cityHasAirport,
-          address: h.address, phone: h.phone,
-          totalPersonnel: h.totalPersonnel, unitCapacity: h.unitCapacity,
-          facilityTypeId: h.establishmentHealthFacilityTypeId, facilityTypeName: h.establishmentHealthFacilityTypeName,
-          accreditationCount: h.establishmentAccreditationCount, certificationCount: h.establishmentCertificationCount,
-          insuranceCount: h.establishmentInsuranceCount, doctorCount: h.establishmentDoctorCount,
-          foundationYear: h.foundationYear, latitude: h.xaxisCoordinate, longitude: h.yaxisCoordinate,
-          branches: h.branches ? JSON.stringify(h.branches) : null,
-          treatments: h.treatments ? JSON.stringify(h.treatments).slice(0, 20_000) : null, // aşırı büyük JSON freni
-          firstSeenAt: now, lastSeenAt: now,
-        })),
+        data: batch.map((h) => ({ ...hospitalFields(h), id: h.id, firstSeenAt: now, lastSeenAt: now })),
         skipDuplicates: true,
       });
     }
   }
-  for (const batch of chunk(returnedHospIds, 2000)) {
-    if (batch.length) await db.registryHospital.updateMany({ where: { id: { in: batch } }, data: { removedAt: null, lastSeenAt: now } });
+  // Geri gelen tesis: removedAt temizlenir + liste-API alanları tazelenir (enrichment kolonları korunur)
+  await runUpdates(returnedHosps, (h) =>
+    db.registryHospital.update({ where: { id: h.id }, data: { ...hospitalFields(h), removedAt: null, lastSeenAt: now } }));
+  if (!hospUpdateSkipped) {
+    await runUpdates(changedHosps, (h) =>
+      db.registryHospital.update({ where: { id: h.id }, data: { ...hospitalFields(h), lastSeenAt: now } }));
   }
   for (const batch of chunk(removedHosps.map((h) => h.id), 2000)) {
     if (batch.length) await db.registryHospital.updateMany({ where: { id: { in: batch } }, data: { removedAt: now } });
@@ -214,25 +286,34 @@ export async function runRegistrySync(): Promise<SyncSummary> {
     if (batch.length) await db.registryHospital.updateMany({ where: { id: { in: batch } }, data: { lastSeenAt: now } });
   }
 
+  // Cap notu: kaynak format kayması şüphesi — alan-güncelleme o koşuda atlanır, ertesi gün yeniden değerlendirilir
+  const capNotes = [
+    docUpdateSkipped ? `Alan-güncelleme ATLANDI (doktor): ${changedDocs.length} değişiklik > ${FIELD_UPDATE_CAP} tavanı (kaynak format kayması olabilir).` : "",
+    hospUpdateSkipped ? `Alan-güncelleme ATLANDI (tesis): ${changedHosps.length} değişiklik > ${FIELD_UPDATE_CAP} tavanı.` : "",
+  ].filter(Boolean).join(" ");
+
   const summary: SyncSummary = {
     status: "OK",
     date,
     doctorsTotal: doctors.length,
     hospitalsTotal: hospitals.length,
+    updatedDoctors: docUpdateSkipped ? 0 : changedDocs.length,
+    updatedHospitals: hospUpdateSkipped ? 0 : changedHosps.length,
     addedDoctors: addedDocs.map((d) => ({ id: d.id, name: d.name ?? "", lastName: d.lastName ?? "", branchName: d.branchName, cityName: d.cityId != null ? cityMap.get(d.cityId) ?? null : null, establishmentName: d.establishmentName })),
     removedDoctors: removedDocs.map((d) => ({ id: d.id, name: d.name, lastName: d.lastName, branchName: d.branchName, cityName: d.cityName, establishmentName: d.establishmentName })),
     addedHospitals: addedHosps.map((h) => ({ id: h.id, name: h.name ?? "", cityName: h.cityName, facilityTypeName: h.establishmentHealthFacilityTypeName })),
     removedHospitals: removedHosps.map((h) => ({ id: h.id, name: h.name, cityName: h.cityName, facilityTypeName: h.facilityTypeName })),
+    ...(capNotes ? { detail: capNotes } : {}),
   };
   await writeReport(summary);
 
   // Değişiklik varsa yöneticiye bildirim (günlük rapor sayfasına link)
-  const changes = summary.addedDoctors.length + summary.removedDoctors.length + summary.addedHospitals.length + summary.removedHospitals.length;
+  const changes = summary.addedDoctors.length + summary.removedDoctors.length + summary.addedHospitals.length + summary.removedHospitals.length + summary.updatedDoctors + summary.updatedHospitals;
   if (changes > 0) {
     await notifyRoles(["ADMIN"], {
       type: "REGISTRY_REPORT",
       title: "📋 HealthTürkiye günlük değişiklik raporu",
-      body: `+${summary.addedDoctors.length}/−${summary.removedDoctors.length} doktor · +${summary.addedHospitals.length}/−${summary.removedHospitals.length} tesis`,
+      body: `+${summary.addedDoctors.length}/−${summary.removedDoctors.length}/✎${summary.updatedDoctors} doktor · +${summary.addedHospitals.length}/−${summary.removedHospitals.length}/✎${summary.updatedHospitals} tesis`,
       href: "/admin/registry-raporu",
     });
   }
@@ -253,12 +334,14 @@ async function writeReport(s: SyncSummary): Promise<void> {
       where: { date: s.date },
       update: {
         status: s.status, doctorsTotal: s.doctorsTotal, hospitalsTotal: s.hospitalsTotal,
+        updatedDoctors: s.updatedDoctors, updatedHospitals: s.updatedHospitals,
         addedDoctors: JSON.stringify(cap(s.addedDoctors)), removedDoctors: JSON.stringify(cap(s.removedDoctors)),
         addedHospitals: JSON.stringify(cap(s.addedHospitals)), removedHospitals: JSON.stringify(cap(s.removedHospitals)),
         detail: detail || null,
       },
       create: {
         date: s.date, status: s.status, doctorsTotal: s.doctorsTotal, hospitalsTotal: s.hospitalsTotal,
+        updatedDoctors: s.updatedDoctors, updatedHospitals: s.updatedHospitals,
         addedDoctors: JSON.stringify(cap(s.addedDoctors)), removedDoctors: JSON.stringify(cap(s.removedDoctors)),
         addedHospitals: JSON.stringify(cap(s.addedHospitals)), removedHospitals: JSON.stringify(cap(s.removedHospitals)),
         detail: detail || null,

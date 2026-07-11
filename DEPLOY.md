@@ -75,6 +75,12 @@ SSR JSON'undan; buildId koşu başında anasayfadan çözülür): günde 40 tesi
 koşulur (2026-07-10'da ~4.600 tesis dolduruldu); `authorizationNumber` kolon backfill'i için
 `npx tsx scripts/registry-enrich.ts auth` (v5.2'de koşuldu).
 
+Senkron ayrıca **alan-güncellemesi** yapar (v5.4): liste-API alanlarının hash'i (`fingerprint`)
+satırda tutulur, yalnız hash'i değişen kayıtlar güncellenir (tavan 1000/koşu; aşım = rapor notu,
+o koşuda atlanır). İlk fingerprint doldurması `npx tsx scripts/registry-fingerprint-backfill.ts`
+(v5.4'te koşuldu; kaynağa istek atmaz, DB değerlerinden hesaplar). null-fingerprint satırlar
+karşılaştırılmaz — backfill koşulmadan alan-güncelleme fiilen kapalıdır.
+
 ## Adım 3 — GitHub'a gönder
 
 ```bash

@@ -54,7 +54,8 @@ export default async function RegistryReportPage() {
           const rd = parse<DocRow>(r.removedDoctors);
           const ah = parse<HospRow>(r.addedHospitals);
           const rh = parse<HospRow>(r.removedHospitals);
-          const changes = ad.length + rd.length + ah.length + rh.length;
+          const updates = (r.updatedDoctors ?? 0) + (r.updatedHospitals ?? 0); // alan-güncellemesi (v5.4)
+          const changes = ad.length + rd.length + ah.length + rh.length + updates;
           // JSON listeleri 500'le sınırlı saklanır (ilk tam çekim şişmesin) → rozette "+" ile belirt
           const capped = (r.detail ?? "").includes("(ilk 500");
           return (
@@ -73,7 +74,9 @@ export default async function RegistryReportPage() {
                   )}
                 </div>
                 <span className="text-xs text-slate-400">
-                  {r.doctorsTotal.toLocaleString("tr-TR")} doktor · {r.hospitalsTotal.toLocaleString("tr-TR")} tesis · {formatDateTime(r.createdAt)}
+                  {r.doctorsTotal.toLocaleString("tr-TR")} doktor · {r.hospitalsTotal.toLocaleString("tr-TR")} tesis
+                  {updates > 0 && <span className="text-sky-600"> · ✎ {r.updatedDoctors} doktor / {r.updatedHospitals} tesis güncellendi</span>}
+                  {" · "}{formatDateTime(r.createdAt)}
                 </span>
               </div>
               {r.detail && <p className="mt-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-700 ring-1 ring-amber-100">{r.detail}</p>}

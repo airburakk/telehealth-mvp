@@ -37,6 +37,7 @@ export async function GET(req: Request) {
     hospitalsTotal: s.hospitalsTotal,
     added: { doctors: s.addedDoctors.length, hospitals: s.addedHospitals.length },
     removed: { doctors: s.removedDoctors.length, hospitals: s.removedHospitals.length },
+    updated: { doctors: s.updatedDoctors, hospitals: s.updatedHospitals },
     enrich,
     detail: s.detail,
   });
