@@ -31,7 +31,7 @@ export function CoordinatorContact({ bookingId, lang }: { bookingId: string; lan
 
   if (state === "sent") {
     return (
-      <div className="flex w-full items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700">
+      <div className="flex w-full items-start gap-2 rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-4 py-2.5 text-sm font-medium text-emerald-300">
         <Check size={15} className="mt-0.5 shrink-0" /> {t("Talebiniz koordinatöre iletildi — en kısa sürede sizinle iletişime geçecekler.")}
       </div>
     );
@@ -43,11 +43,11 @@ export function CoordinatorContact({ bookingId, lang }: { bookingId: string; lan
         type="button"
         onClick={send}
         disabled={state === "busy"}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-[#161719] px-4 py-2.5 text-sm font-medium text-white/75 hover:bg-[#1E1F22] disabled:opacity-60"
       >
         {state === "busy" ? <Loader2 size={15} className="animate-spin" /> : <MessageCircle size={15} />} {t("Koordinatörle konuş")}
       </button>
-      {state === "error" && <p className="text-center text-xs text-red-600">{t("Gönderilemedi, lütfen tekrar deneyin.")}</p>}
+      {state === "error" && <p className="text-center text-xs text-red-300">{t("Gönderilemedi, lütfen tekrar deneyin.")}</p>}
     </>
   );
 }

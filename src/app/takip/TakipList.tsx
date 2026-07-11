@@ -37,34 +37,34 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
     <div dir={dir}>
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 font-serif text-2xl font-semibold text-[#0D0E10]">
+          <h1 className="flex items-center gap-2 font-serif text-2xl font-semibold text-[#F4F5F3]">
             <HeartPulse size={22} className="text-[#1FA9B8]" /> {t("Post-Op Takip")}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">{t("Operasyon sonrası iyileşme takipleriniz — günlük kontrol girişleri ve doktor gözetimi.")}</p>
+          <p className="mt-1 text-sm text-white/50">{t("Operasyon sonrası iyileşme takipleriniz — günlük kontrol girişleri ve doktor gözetimi.")}</p>
         </div>
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>
 
       {rows.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <p className="text-sm font-medium text-slate-600">{t("Henüz post-op takibiniz yok.")}</p>
-          <p className="mt-1 text-sm text-slate-400">{t("Takip, operasyonunuz sonrası doktorunuz yönlendirdiğinde burada görünür.")}</p>
+        <div className="rounded-2xl border border-white/10 bg-[#161719] p-8 text-center shadow-sm">
+          <p className="text-sm font-medium text-white/65">{t("Henüz post-op takibiniz yok.")}</p>
+          <p className="mt-1 text-sm text-white/40">{t("Takip, operasyonunuz sonrası doktorunuz yönlendirdiğinde burada görünür.")}</p>
         </div>
       ) : (
         <div className="space-y-3">
           {rows.map((r) => (
             <Link key={r.caseId} href={`/takip/${r.caseId}`}
-              className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-[#28C8D8]/50 hover:shadow">
+              className="group flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#161719] p-4 shadow-sm transition hover:border-[#28C8D8]/50 hover:shadow">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[#0D0E10]">{r.branch}</span>
+                  <span className="text-sm font-semibold text-[#F4F5F3]">{r.branch}</span>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                    r.status === "COMPLETED" ? "bg-slate-100 text-slate-500" : "bg-emerald-50 text-emerald-600"
+                    r.status === "COMPLETED" ? "bg-white/10 text-white/50" : "bg-emerald-500/10 text-emerald-300"
                   }`}>
                     {r.status === "COMPLETED" ? t("Tamamlandı") : t("Aktif")}
                   </span>
                 </div>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="mt-0.5 text-xs text-white/40">
                   {t("Başlangıç")}: {new Date(r.startedAt).toLocaleDateString("tr-TR")}
                 </p>
               </div>

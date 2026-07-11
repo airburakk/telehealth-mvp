@@ -34,31 +34,31 @@ export function DynamicTriageQuestions({
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-slate-500">{t(intro)}</p>
+      <p className="text-sm text-white/50">{t(intro)}</p>
 
       {questions.map((q) => {
         const val = value[q.label] ?? "";
         const multiSel = q.type === "multi" ? val.split(",").map((s) => s.trim()).filter(Boolean) : [];
         return (
           <div key={q.id}>
-            <div className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700">
+            <div className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-white/75">
               {t(q.label)}
-              {q.recommended && <span className="text-[10px] font-semibold uppercase tracking-wide text-teal-600">{t("önerilen")}</span>}
+              {q.recommended && <span className="text-[10px] font-semibold uppercase tracking-wide text-[#28C8D8]">{t("önerilen")}</span>}
             </div>
-            {q.help && <p className="-mt-1 mb-1.5 text-xs text-slate-400">{t(q.help)}</p>}
+            {q.help && <p className="-mt-1 mb-1.5 text-xs text-white/40">{t(q.help)}</p>}
 
             {/* text */}
             {q.type === "text" && (
               <input value={val} onChange={(e) => set(q.label, e.target.value)} placeholder={q.placeholder ? t(q.placeholder) : undefined}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]" />
+                className="w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]" />
             )}
 
             {/* number */}
             {q.type === "number" && (
               <div className="flex items-center gap-2">
                 <input type="number" inputMode="numeric" value={val} onChange={(e) => set(q.label, e.target.value)} placeholder={q.placeholder ? t(q.placeholder) : undefined}
-                  className="w-32 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]" />
-                {q.unit && <span className="text-sm text-slate-400">{t(q.unit)}</span>}
+                  className="w-32 rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]" />
+                {q.unit && <span className="text-sm text-white/40">{t(q.unit)}</span>}
               </div>
             )}
 
@@ -94,7 +94,7 @@ export function DynamicTriageQuestions({
               <div className="flex flex-wrap gap-1">
                 {Array.from({ length: 11 }, (_, i) => String(i)).map((n) => (
                   <button key={n} type="button" onClick={() => set(q.label, val === n ? "" : n)}
-                    className={`h-8 w-8 rounded-md text-sm font-medium transition ${val === n ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
+                    className={`h-8 w-8 rounded-md text-sm font-medium transition ${val === n ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-white/10 text-white/65 hover:bg-white/15"}`}>
                     {n}
                   </button>
                 ))}
@@ -110,7 +110,7 @@ export function DynamicTriageQuestions({
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 bg-white text-slate-600 hover:border-[#28C8D8]/40 hover:bg-slate-50"}`}>
+      className={`rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-white/15 bg-[#161719] text-white/65 hover:border-[#28C8D8]/40 hover:bg-[#1E1F22]"}`}>
       {children}
     </button>
   );

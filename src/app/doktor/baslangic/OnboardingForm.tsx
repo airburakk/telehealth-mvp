@@ -77,8 +77,8 @@ export function OnboardingForm({
   return (
     <div className="mx-auto max-w-2xl px-5 py-10">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-[#0D0E10]">Hoş geldiniz, {doctorName}</h1>
-        <p className="mt-2 text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-[#F4F5F3]">Hoş geldiniz, {doctorName}</h1>
+        <p className="mt-2 text-sm text-white/50">
           Doktor Ana Sayfanız tercihinize göre düzenlenir. Aşağıdaki birimlere katılmak isteyip
           istemediğinizi seçin — dilediğiniz zaman profilinizden değiştirebilirsiniz.
         </p>
@@ -86,10 +86,10 @@ export function OnboardingForm({
 
       {/* ── Uzmanlık & İşlemler (FHIR) — diploma/tescil no + uzmanlık belgesi + işlem seçimi (zorunlu; ücret tedavi kararında) ── */}
       <div className="mt-8">
-        <div className="flex items-center gap-2 text-sm font-bold text-[#0D0E10]">
+        <div className="flex items-center gap-2 text-sm font-bold text-[#F4F5F3]">
           <Stethoscope size={16} className="text-[#1FA9B8]" /> Uzmanlık & İşlemler
         </div>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-white/50">
           <strong>{branchLabel}</strong> branşı için diploma/tescil numaranızı, uzmanlık belgenizi ve
           yaptığınız işlemleri tanımlayın. Bu bilgiler <strong>FHIR</strong> standardında
           (Practitioner.identifier/qualification + ServiceRequest) saklanır ve hesabınız aktifleşmeden
@@ -124,10 +124,10 @@ export function OnboardingForm({
 
       {/* ── Zorunlu mesleki belgeler — hesap aktivasyon kapısı ── */}
       <div className="mt-8">
-        <div className="flex items-center gap-2 text-sm font-bold text-[#0D0E10]">
+        <div className="flex items-center gap-2 text-sm font-bold text-[#F4F5F3]">
           <ShieldAlert size={16} className="text-amber-500" /> Mesleki Belgeler
         </div>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-white/50">
           <strong>Tıp diploması</strong> ve <strong>Mesleki Mali Sorumluluk Sigortası (MMSS)</strong> poliçenizi
           yüklemeden hesabınız aktifleşmez. Sertifika ve akademik çalışmalar ihtiyaridir.
         </p>
@@ -138,22 +138,22 @@ export function OnboardingForm({
 
       <div className="mt-8 space-y-4">
         {/* İkinci Görüş — ünvan kapısı (seçim değil, bilgi) */}
-        <div className={`rounded-3xl border p-5 ${soOpen ? "border-[#28C8D8]/40 bg-[#28C8D8]/[0.06]" : "border-slate-200 bg-slate-50"}`}>
+        <div className={`rounded-3xl border p-5 ${soOpen ? "border-[#28C8D8]/40 bg-[#28C8D8]/[0.06]" : "border-white/10 bg-[#1E1F22]"}`}>
           <div className="flex items-start gap-3">
-            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${soOpen ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-slate-300 text-white"}`}>
+            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${soOpen ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-white/20 text-white"}`}>
               {soOpen ? <Stethoscope size={18} /> : <Lock size={18} />}
             </span>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 text-sm font-semibold text-[#0D0E10]">
-                İkinci Görüş Paneli {soOpen && <BadgeCheck size={15} className="text-teal-600" />}
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-[#F4F5F3]">
+                İkinci Görüş Paneli {soOpen && <BadgeCheck size={15} className="text-[#28C8D8]" />}
               </div>
               {soOpen ? (
-                <p className="mt-1 text-xs text-slate-600">
+                <p className="mt-1 text-xs text-white/65">
                   Ünvanınız uygun — İkinci Görüş paneliniz <strong>otomatik açık</strong>. Tanı konmuş
                   hastaların belgelerini inceleyip yazılı görüş ve video görüşme sunabilirsiniz.
                 </p>
               ) : (
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-white/50">
                   İkinci Görüş paneli yalnız <strong>Doçent / Profesör</strong> ünvanlı doktorlara açılır;
                   hesabınızda görüntülenmeyecek.
                 </p>
@@ -183,11 +183,11 @@ export function OnboardingForm({
         />
       </div>
 
-      {err && <p className="mt-4 text-center text-sm text-red-600">{err}</p>}
+      {err && <p className="mt-4 text-center text-sm text-red-300">{err}</p>}
 
       {/* Sunucudan dönen eksik zorunlu adımlar (409) */}
       {missing.length > 0 && (
-        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200">
+        <div className="mt-4 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-400/25">
           <div className="flex items-center gap-1.5 font-semibold"><ShieldAlert size={15} /> Eksik zorunlu adımlar</div>
           <ul className="mt-1.5 list-disc space-y-0.5 pl-5 text-xs">
             {missing.map((m) => <li key={m}>{m}</li>)}
@@ -196,7 +196,7 @@ export function OnboardingForm({
       )}
 
       {!docsReady && (
-        <p className="mt-6 flex items-center justify-center gap-1.5 rounded-xl bg-amber-50 px-3 py-2.5 text-center text-xs font-medium text-amber-700 ring-1 ring-amber-100">
+        <p className="mt-6 flex items-center justify-center gap-1.5 rounded-xl bg-amber-500/10 px-3 py-2.5 text-center text-xs font-medium text-amber-300 ring-1 ring-amber-400/20">
           <ShieldAlert size={14} /> Hesabınızı aktifleştirmek için işlem seçimi, diploma no, uzmanlık belgesi ve tıp diploması + MMSS poliçesini (teminat limiti dahil) tamamlayın.
         </p>
       )}
@@ -209,7 +209,7 @@ export function OnboardingForm({
         {saving ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
         Ana Sayfama geç
       </button>
-      <p className="mt-3 text-center text-xs text-slate-400">
+      <p className="mt-3 text-center text-xs text-white/40">
         Klinik Nöbet ve Haberler pencereleri her doktorun ana sayfasında bulunur.
       </p>
     </div>
@@ -236,21 +236,21 @@ function OptCard({
       type="button"
       onClick={onToggle}
       aria-pressed={active}
-      className={`w-full rounded-3xl border p-5 text-left transition ${active ? "border-[#28C8D8] bg-[#28C8D8]/[0.06]" : "border-slate-200 bg-white hover:border-[#28C8D8]/40"}`}
+      className={`w-full rounded-3xl border p-5 text-left transition ${active ? "border-[#28C8D8] bg-[#28C8D8]/[0.06]" : "border-white/10 bg-[#161719] hover:border-[#28C8D8]/40"}`}
     >
       <div className="flex items-start gap-3">
-        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${active ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-slate-100 text-slate-500"}`}>
+        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${active ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-white/10 text-white/50"}`}>
           {icon}
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold text-[#0D0E10]">{title}</span>
-            <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 bg-white text-transparent"}`}>
+            <span className="text-sm font-semibold text-[#F4F5F3]">{title}</span>
+            <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-white/15 bg-[#161719] text-transparent"}`}>
               <Check size={14} />
             </span>
           </div>
-          <p className="mt-1 text-xs text-slate-600">{desc}</p>
-          <p className="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-500">{benefit}</p>
+          <p className="mt-1 text-xs text-white/65">{desc}</p>
+          <p className="mt-2 rounded-xl bg-[#1E1F22] px-3 py-2 text-[11px] leading-relaxed text-white/50">{benefit}</p>
         </div>
       </div>
     </button>

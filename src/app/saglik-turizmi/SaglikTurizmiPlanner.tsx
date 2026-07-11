@@ -121,7 +121,7 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
           <Field icon={<ClipboardList size={15} />} label={t("Sağlık durumunuz veya hedefiniz nedir?")}>
             <textarea value={symptoms} onChange={(e) => setSymptoms(e.target.value)} rows={3}
               placeholder={t("Örn. saç ekimi düşünüyorum; ön bölgede belirgin seyrekleşme var.")}
-              className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#1FA9B8]" />
+              className="w-full resize-none rounded-xl border border-white/10 bg-[#161719] px-3 py-2 text-sm text-white/75 outline-none placeholder:text-white/40 focus:border-[#1FA9B8]" />
           </Field>
 
           <Field icon={<Stethoscope size={15} />} label={t("Tedavi alanı")}>
@@ -133,7 +133,7 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
           </Field>
 
           {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="rounded-2xl border border-white/10 bg-[#161719] p-4">
             <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
           </div>
 
@@ -149,7 +149,7 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
             <div className="grid grid-cols-3 gap-2">
               {TIERS.map((ti) => (
                 <button key={ti} type="button" onClick={() => setTier(ti)}
-                  className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${tier === ti ? "border-[#1FA9B8] bg-[#28C8D8]/10 text-[#1FA9B8]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}>
+                  className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${tier === ti ? "border-[#1FA9B8] bg-[#28C8D8]/10 text-[#1FA9B8]" : "border-white/10 bg-[#161719] text-white/65 hover:border-white/15"}`}>
                   {t(TIER_LABEL[ti])}
                 </button>
               ))}
@@ -164,9 +164,9 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
             </div>
           </Field>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><ShieldCheck size={14} /> {t("Neler dahil?")}</div>
-            <ul className="mt-2 grid gap-1.5 text-sm text-slate-600 sm:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-[#161719] p-4">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50"><ShieldCheck size={14} /> {t("Neler dahil?")}</div>
+            <ul className="mt-2 grid gap-1.5 text-sm text-white/65 sm:grid-cols-2">
               <li className="flex items-center gap-1.5"><Stethoscope size={14} className="text-[#1FA9B8]" /> {t("Tıbbi tedavi")}</li>
               <li className="flex items-center gap-1.5"><Plane size={14} className="text-[#1FA9B8]" /> {t("Otel + uçuş + transfer")}</li>
               <li className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-[#1FA9B8]" /> {t("Zorunlu sağlık turizmi sigortası")}</li>
@@ -177,31 +177,31 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
 
         {/* Sağ: tahmini özet (sticky) */}
         <aside className="lg:sticky lg:top-6 h-fit space-y-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t("Tahmini paket özeti")}</div>
+          <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+            <div className="text-xs font-semibold uppercase tracking-wide text-white/40">{t("Tahmini paket özeti")}</div>
             <dl className="mt-3 space-y-2 text-sm">
               <Row label={t("Tedavi")} value={formatUSD(cats.tedavi)} />
               <Row label={t("Seyahat & Konaklama")} value={formatUSD(cats.seyahat)} />
               <Row label={t("Sigorta")} value={formatUSD(cats.sigorta)} />
               <Row label={t("Platform hizmet bedeli")} value={formatUSD(cats.platform)} />
             </dl>
-            <div className="mt-4 flex items-baseline justify-between border-t border-slate-100 pt-3">
-              <span className="text-sm font-semibold text-slate-700">{t("Tahmini toplam")}</span>
+            <div className="mt-4 flex items-baseline justify-between border-t border-white/10 pt-3">
+              <span className="text-sm font-semibold text-white/75">{t("Tahmini toplam")}</span>
               <span className="font-serif text-2xl font-bold text-[#1FA9B8]">{formatUSD(quote.total)}</span>
             </div>
 
-            <div className="mt-4 flex gap-2 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-800 ring-1 ring-amber-200">
+            <div className="mt-4 flex gap-2 rounded-xl bg-amber-500/10 p-3 text-xs leading-relaxed text-amber-200 ring-1 ring-amber-400/25">
               <Info size={15} className="mt-0.5 shrink-0" />
               <span>{t("Bu bir tahmini (endikatif) fiyattır — kesin fiyat, doktor değerlendirmesi ve tıbbi planınız netleştikten sonra belirlenir. Ödeme ve rezervasyon bu adımda yapılmaz.")}</span>
             </div>
 
-            {error && <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 ring-1 ring-red-200">{error}</div>}
+            {error && <div className="mt-3 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-300 ring-1 ring-red-400/25">{error}</div>}
 
             <button type="button" onClick={submitRequest} disabled={busy}
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1FA9B8] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0c94a0] disabled:opacity-60">
               {busy ? <Loader2 size={16} className="animate-spin" /> : <>{t("Talep Oluştur")} <ArrowRight size={16} className="rtl:rotate-180" /></>}
             </button>
-            <p className="mt-2 text-center text-[11px] leading-relaxed text-slate-400">{t("Talebiniz doktora iletilir; görüşmede tıbbi durumunuz değerlendirilip kesin plan ve fiyat oluşturulur. Bu adımda ödeme veya rezervasyon yapılmaz.")}</p>
+            <p className="mt-2 text-center text-[11px] leading-relaxed text-white/40">{t("Talebiniz doktora iletilir; görüşmede tıbbi durumunuz değerlendirilip kesin plan ve fiyat oluşturulur. Bu adımda ödeme veya rezervasyon yapılmaz.")}</p>
           </div>
         </aside>
       </div>
@@ -211,8 +211,8 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
 
 function Field({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-      <div className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">{icon} {label}</div>
+    <div className="rounded-2xl border border-white/10 bg-[#161719] p-4">
+      <div className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">{icon} {label}</div>
       {children}
     </div>
   );
@@ -221,7 +221,7 @@ function Field({ icon, label, children }: { icon: React.ReactNode; label: string
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${active ? "border-[#1FA9B8] bg-[#28C8D8]/10 text-[#1FA9B8]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}>
+      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${active ? "border-[#1FA9B8] bg-[#28C8D8]/10 text-[#1FA9B8]" : "border-white/10 bg-[#161719] text-white/65 hover:border-white/15"}`}>
       {children}
     </button>
   );
@@ -230,8 +230,8 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
-      <dt className="text-slate-500">{label}</dt>
-      <dd className="font-medium text-slate-800">{value}</dd>
+      <dt className="text-white/50">{label}</dt>
+      <dd className="font-medium text-[#F4F5F3]">{value}</dd>
     </div>
   );
 }

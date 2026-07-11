@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
+/* Gece teması (Faz B/C, 2026-07-11): vitrin görsel dili — zemin #0D0E10, metin #F4F5F3.
+   Açık klinik zemin (#eef1f5) emekli; klinik renk semantiği (emerald/amber/red) korunur. */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 html,
@@ -10,8 +12,8 @@ body {
 }
 
 body {
-  background: #eef1f5;
-  color: #1a1f29;
+  background: #0d0e10;
+  color: #f4f5f3;
   font-family: var(--font-sans), "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
 }
 
@@ -34,7 +36,7 @@ body {
 }
 
 ::selection {
-  background: #cfe0f3;
+  background: rgba(40, 200, 216, 0.35);
 }
 
 /* İnce kaydırma çubuğu */
@@ -43,8 +45,20 @@ body {
   height: 10px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #c4cedb;
+  background: #2a2c30;
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: content-box;
+}
+
+/* Yazdırma: gece teması kağıtta mürekkep felaketi olur — zemin/metni açığa zorla.
+   (Onam kanıtı, epikriz vb. çıktı alınan sayfalar için temel güvence.) */
+@media print {
+  :root {
+    color-scheme: light;
+  }
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
 }

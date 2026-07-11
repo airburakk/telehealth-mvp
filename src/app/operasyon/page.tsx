@@ -98,35 +98,35 @@ export default async function OperationsDashboard() {
       <div className="flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><BarChart3 size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0D0E10]">Operasyon Paneli</h1>
-          <p className="text-sm text-slate-500">S2 Operasyon Şirketi · canlı platform metrikleri</p>
+          <h1 className="text-2xl font-bold text-[#F4F5F3]">Operasyon Paneli</h1>
+          <p className="text-sm text-white/50">S2 Operasyon Şirketi · canlı platform metrikleri</p>
         </div>
       </div>
 
       <Link href="/operasyon/ikinci-gorus" className="mt-5 flex items-center gap-3 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] p-4 transition hover:bg-[#28C8D8]/[0.1]">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Stethoscope size={18} /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-[#0D0E10]">İkinci Görüş — Koordinatör Kuyruğu</div>
-          <p className="text-xs text-slate-500">{soActiveCount} aktif vaka · belge inceleme + doktor atama</p>
+          <div className="text-sm font-semibold text-[#F4F5F3]">İkinci Görüş — Koordinatör Kuyruğu</div>
+          <p className="text-xs text-white/50">{soActiveCount} aktif vaka · belge inceleme + doktor atama</p>
         </div>
-        {soReviewCount > 0 && <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700">{soReviewCount} inceleme bekliyor</span>}
+        {soReviewCount > 0 && <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-bold text-amber-300">{soReviewCount} inceleme bekliyor</span>}
         <ArrowRight size={16} className="shrink-0 text-[#17919E]" />
       </Link>
 
-      <Link href="/operasyon/lojistik" className="mt-3 flex items-center gap-3 rounded-3xl border border-slate-200 bg-white p-4 transition hover:bg-slate-50">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-teal-100 text-teal-700"><Luggage size={18} /></span>
+      <Link href="/operasyon/lojistik" className="mt-3 flex items-center gap-3 rounded-3xl border border-white/10 bg-[#161719] p-4 transition hover:bg-[#1E1F22]">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#28C8D8]/15 text-[#28C8D8]"><Luggage size={18} /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-[#0D0E10]">Lojistik Takip — Patient Journey</div>
-          <p className="text-xs text-slate-500">Onaylı rezervasyonların karşılama · konaklama · tedavi · dönüş aşamalarını yönet</p>
+          <div className="text-sm font-semibold text-[#F4F5F3]">Lojistik Takip — Patient Journey</div>
+          <p className="text-xs text-white/50">Onaylı rezervasyonların karşılama · konaklama · tedavi · dönüş aşamalarını yönet</p>
         </div>
         <ArrowRight size={16} className="shrink-0 text-[#17919E]" />
       </Link>
 
-      <Link href="/operasyon/kayit-defteri" className="mt-3 flex items-center gap-3 rounded-3xl border border-slate-200 bg-white p-4 transition hover:bg-slate-50">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-teal-100 text-teal-700"><BookMarked size={18} /></span>
+      <Link href="/operasyon/kayit-defteri" className="mt-3 flex items-center gap-3 rounded-3xl border border-white/10 bg-[#161719] p-4 transition hover:bg-[#1E1F22]">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#28C8D8]/15 text-[#28C8D8]"><BookMarked size={18} /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-[#0D0E10]">HealthTürkiye Kayıt Defteri</div>
-          <p className="text-xs text-slate-500">
+          <div className="text-sm font-semibold text-[#F4F5F3]">HealthTürkiye Kayıt Defteri</div>
+          <p className="text-xs text-white/50">
             {registryDoctors.toLocaleString("tr-TR")} doktor · {registryHospitals.toLocaleString("tr-TR")} tesis — resmi sağlık turizmi dizini, günlük senkron
           </p>
         </div>
@@ -138,9 +138,9 @@ export default async function OperationsDashboard() {
         <Kpi icon={<Users size={16} />} label="Toplam vaka" value={String(cases.length)} sub={`${urgent} yüksek aciliyet`} />
         <Kpi icon={<Video size={16} />} label="Görüşme" value={String(consultations.length)} sub={`${consultations.filter((c) => c.status === "ACTIVE").length} aktif`} />
         <Kpi icon={<Wallet size={16} />} label="Rezervasyon geliri" value={formatUSD(bookingRevenue)} sub={`${bookings.length} paket`} />
-        <Kpi icon={<ShieldCheck size={16} />} label="Platform komisyonu" value={formatUSD(platformFees)} sub="Escrow %15" tone="text-emerald-700" />
-        <Kpi icon={<Scale size={16} />} label="Bekleyen şikayet" value={String(pendingComplaints)} sub={refundedTotal ? `${formatUSD(refundedTotal)} iade` : "iade yok"} tone={pendingComplaints ? "text-amber-600" : undefined} />
-        <Kpi icon={<AlertTriangle size={16} />} label="Kırmızı bayrak" value={String(redFlags)} sub={`${recoveries.length} takipte`} tone={redFlags ? "text-red-600" : undefined} />
+        <Kpi icon={<ShieldCheck size={16} />} label="Platform komisyonu" value={formatUSD(platformFees)} sub="Escrow %15" tone="text-emerald-300" />
+        <Kpi icon={<Scale size={16} />} label="Bekleyen şikayet" value={String(pendingComplaints)} sub={refundedTotal ? `${formatUSD(refundedTotal)} iade` : "iade yok"} tone={pendingComplaints ? "text-amber-300" : undefined} />
+        <Kpi icon={<AlertTriangle size={16} />} label="Kırmızı bayrak" value={String(redFlags)} sub={`${recoveries.length} takipte`} tone={redFlags ? "text-red-300" : undefined} />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
@@ -153,19 +153,19 @@ export default async function OperationsDashboard() {
               return (
                 <div key={f.label}>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="inline-flex items-center gap-1.5 text-slate-600">{f.icon} {f.label}</span>
-                    <span className="font-semibold text-slate-800">{f.count}{conv != null && <span className="ml-1.5 text-xs font-normal text-slate-400">↓ %{conv}</span>}</span>
+                    <span className="inline-flex items-center gap-1.5 text-white/65">{f.icon} {f.label}</span>
+                    <span className="font-semibold text-[#F4F5F3]">{f.count}{conv != null && <span className="ml-1.5 text-xs font-normal text-white/40">↓ %{conv}</span>}</span>
                   </div>
-                  <div className="mt-1 h-2.5 rounded-full bg-slate-100">
+                  <div className="mt-1 h-2.5 rounded-full bg-white/10">
                     <div className="h-2.5 rounded-full bg-[#1FA9B8]" style={{ width: `${Math.max(3, pct)}%` }} />
                   </div>
                 </div>
               );
             })}
           </div>
-          <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-3 text-xs">
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-white/10 pt-3 text-xs">
             {Object.entries(byStatus).map(([k, n]) => (
-              <span key={k} className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">{STATUS_LABELS[k] ?? k}: <b>{n}</b></span>
+              <span key={k} className="rounded-full bg-white/10 px-2.5 py-1 text-white/65">{STATUS_LABELS[k] ?? k}: <b>{n}</b></span>
             ))}
           </div>
         </Section>
@@ -173,9 +173,9 @@ export default async function OperationsDashboard() {
         {/* Gelir & Escrow */}
         <Section icon={<Wallet size={15} />} title="Gelir & Escrow">
           <div className="grid grid-cols-3 gap-2 text-center">
-            <EscrowBox label="Emanette (HELD)" value={formatUSD(escrowSums.HELD)} cls="bg-amber-50 text-amber-700 ring-amber-200" />
-            <EscrowBox label="Serbest (RELEASED)" value={formatUSD(escrowSums.RELEASED)} cls="bg-emerald-50 text-emerald-700 ring-emerald-200" />
-            <EscrowBox label="İade (REFUNDED)" value={formatUSD(escrowSums.REFUNDED)} cls="bg-red-50 text-red-700 ring-red-200" />
+            <EscrowBox label="Emanette (HELD)" value={formatUSD(escrowSums.HELD)} cls="bg-amber-500/10 text-amber-300 ring-amber-400/25" />
+            <EscrowBox label="Serbest (RELEASED)" value={formatUSD(escrowSums.RELEASED)} cls="bg-emerald-500/10 text-emerald-300 ring-emerald-400/25" />
+            <EscrowBox label="İade (REFUNDED)" value={formatUSD(escrowSums.REFUNDED)} cls="bg-red-500/10 text-red-300 ring-red-400/25" />
           </div>
           <div className="mt-4 space-y-1.5 text-sm">
             <Row k="Ön-konsültasyon tahsilatı" v={`${formatUSD(consultFeeRevenue)} · ${consultPaid.length} ödeme`} />
@@ -191,15 +191,15 @@ export default async function OperationsDashboard() {
             {branchRows.map(([branch, n]) => (
               <div key={branch}>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="truncate text-slate-600">{branch}</span>
-                  <span className="ml-2 shrink-0 font-semibold text-slate-800">{n}</span>
+                  <span className="truncate text-white/65">{branch}</span>
+                  <span className="ml-2 shrink-0 font-semibold text-[#F4F5F3]">{n}</span>
                 </div>
-                <div className="mt-0.5 h-2 rounded-full bg-slate-100">
+                <div className="mt-0.5 h-2 rounded-full bg-white/10">
                   <div className="h-2 rounded-full bg-teal-600" style={{ width: `${Math.max(4, Math.round((n / branchMax) * 100))}%` }} />
                 </div>
               </div>
             ))}
-            {branchRows.length === 0 && <p className="text-sm text-slate-400">Henüz vaka yok.</p>}
+            {branchRows.length === 0 && <p className="text-sm text-white/40">Henüz vaka yok.</p>}
           </div>
         </Section>
 
@@ -207,25 +207,25 @@ export default async function OperationsDashboard() {
         <Section icon={<TrendingUp size={15} />} title="Pazar & Trend">
           <div className="flex flex-wrap gap-2">
             {countryRows.map(([code, n]) => (
-              <span key={code} className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
+              <span key={code} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-xs text-white/65">
                 {countryFlag(code)} {countryName(code)} <b>{n}</b>
               </span>
             ))}
           </div>
           <div className="mt-4">
-            <div className="text-xs uppercase tracking-wide text-slate-400">Son 14 gün · yeni vaka</div>
+            <div className="text-xs uppercase tracking-wide text-white/40">Son 14 gün · yeni vaka</div>
             <div className="mt-2 flex h-24 items-end gap-1">
               {days.map((d) => (
                 <div key={d.key} className="group relative flex-1">
                   <div
-                    className={`w-full rounded-t ${d.count ? "bg-[#1FA9B8]" : "bg-slate-100"}`}
+                    className={`w-full rounded-t ${d.count ? "bg-[#1FA9B8]" : "bg-white/10"}`}
                     style={{ height: `${d.count ? Math.max(12, Math.round((d.count / trendMax) * 96)) : 4}px` }}
                     title={`${d.label}: ${d.count} vaka`}
                   />
                 </div>
               ))}
             </div>
-            <div className="mt-1 flex justify-between text-[10px] text-slate-400">
+            <div className="mt-1 flex justify-between text-[10px] text-white/40">
               <span>{days[0].label}</span><span>{days[days.length - 1].label}</span>
             </div>
           </div>
@@ -239,25 +239,25 @@ export default async function OperationsDashboard() {
             {doctorRows.map((d) => {
               const pct = Math.min(100, Math.round((d.consults / Math.max(1, d.capacity)) * 100));
               return (
-                <div key={d.id} className="rounded-2xl border border-slate-200 p-3">
+                <div key={d.id} className="rounded-2xl border border-white/10 p-3">
                   <div className="flex items-center gap-2.5">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white" style={{ background: d.color }}>{d.name.slice(0, 1)}</span>
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-slate-800">{d.title} {d.name}</div>
-                      <div className="truncate text-xs text-slate-500">{d.branch}</div>
+                      <div className="truncate text-sm font-semibold text-[#F4F5F3]">{d.title} {d.name}</div>
+                      <div className="truncate text-xs text-white/50">{d.branch}</div>
                     </div>
                   </div>
-                  <div className="mt-2.5 flex items-center justify-between text-xs text-slate-500">
+                  <div className="mt-2.5 flex items-center justify-between text-xs text-white/50">
                     <span>{d.consults} görüşme</span><span>kapasite {d.capacity}/ay · %{pct}</span>
                   </div>
-                  <div className="mt-1 h-2 rounded-full bg-slate-100">
+                  <div className="mt-1 h-2 rounded-full bg-white/10">
                     <div className={`h-2 rounded-full ${pct >= 90 ? "bg-red-500" : pct >= 60 ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${Math.max(3, pct)}%` }} />
                   </div>
                 </div>
               );
             })}
           </div>
-          <p className="mt-3 text-[11px] text-slate-400">İlk 6 doktor, tamamlanan+aktif görüşme sayısına göre. Doluluk: görüşme / aylık işlem kapasitesi.</p>
+          <p className="mt-3 text-[11px] text-white/40">İlk 6 doktor, tamamlanan+aktif görüşme sayısına göre. Doluluk: görüşme / aylık işlem kapasitesi.</p>
         </Section>
       </div>
     </div>
@@ -266,18 +266,18 @@ export default async function OperationsDashboard() {
 
 function Kpi({ icon, label, value, sub, tone }: { icon: React.ReactNode; label: string; value: string; sub?: string; tone?: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs text-slate-400">{icon} {label}</div>
-      <div className={`mt-1 text-xl font-bold ${tone ?? "text-[#0D0E10]"}`}>{value}</div>
-      {sub && <div className="text-[11px] text-slate-400">{sub}</div>}
+    <div className="rounded-2xl border border-white/10 bg-[#161719] p-3.5 shadow-sm">
+      <div className="flex items-center gap-1.5 text-xs text-white/40">{icon} {label}</div>
+      <div className={`mt-1 text-xl font-bold ${tone ?? "text-[#F4F5F3]"}`}>{value}</div>
+      {sub && <div className="text-[11px] text-white/40">{sub}</div>}
     </div>
   );
 }
 
 function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">{icon} {title}</div>
+    <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">{icon} {title}</div>
       <div className="mt-3">{children}</div>
     </div>
   );
@@ -295,8 +295,8 @@ function EscrowBox({ label, value, cls }: { label: string; value: string; cls: s
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-slate-500">{k}</span>
-      <span className="text-right font-medium text-slate-800">{v}</span>
+      <span className="text-white/50">{k}</span>
+      <span className="text-right font-medium text-[#F4F5F3]">{v}</span>
     </div>
   );
 }

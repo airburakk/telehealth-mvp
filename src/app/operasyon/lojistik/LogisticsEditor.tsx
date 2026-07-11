@@ -46,19 +46,19 @@ export function LogisticsEditor({ bookingId, initialStages }: { bookingId: strin
   }
 
   return (
-    <div className="mt-4 space-y-2.5 border-t border-slate-100 pt-4">
+    <div className="mt-4 space-y-2.5 border-t border-white/10 pt-4">
       {stages.map((st) => {
         const meta = JOURNEY_STAGES.find((s) => s.key === st.key);
         return (
           <div key={st.key} className="grid grid-cols-1 gap-2 sm:grid-cols-[150px_120px_1fr] sm:items-center">
-            <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+            <div className="flex items-center gap-1.5 text-sm font-medium text-white/75">
               <span className={`h-2 w-2 shrink-0 rounded-full ${JOURNEY_STATUS[st.status].dot}`} />
               {meta?.label ?? st.key}
             </div>
             <select
               value={st.status}
               onChange={(e) => update(st.key, { status: e.target.value as JourneyStatus })}
-              className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+              className="rounded-lg border border-white/15 px-2 py-1.5 text-sm"
               aria-label={`${meta?.label ?? st.key} durumu`}
             >
               {STATUS_OPTIONS.map((o) => (
@@ -66,22 +66,22 @@ export function LogisticsEditor({ bookingId, initialStages }: { bookingId: strin
               ))}
             </select>
             <div className="flex flex-wrap items-center gap-2">
-              <label className="flex items-center gap-1 text-xs text-slate-400">
+              <label className="flex items-center gap-1 text-xs text-white/40">
                 Plan
                 <input
                   type="date"
                   value={toDateInput(st.plannedAt)}
                   onChange={(e) => update(st.key, { plannedAt: fromDateInput(e.target.value) })}
-                  className="rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-700"
+                  className="rounded-lg border border-white/15 px-2 py-1 text-sm text-white/75"
                 />
               </label>
-              <label className="flex items-center gap-1 text-xs text-slate-400">
+              <label className="flex items-center gap-1 text-xs text-white/40">
                 Tamam
                 <input
                   type="date"
                   value={toDateInput(st.doneAt)}
                   onChange={(e) => update(st.key, { doneAt: fromDateInput(e.target.value) })}
-                  className="rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-700"
+                  className="rounded-lg border border-white/15 px-2 py-1 text-sm text-white/75"
                 />
               </label>
               <input
@@ -90,7 +90,7 @@ export function LogisticsEditor({ bookingId, initialStages }: { bookingId: strin
                 onChange={(e) => update(st.key, { note: e.target.value })}
                 placeholder="Lojistik not (uçuş, otel, transfer…)"
                 maxLength={500}
-                className="min-w-[160px] flex-1 rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+                className="min-w-[160px] flex-1 rounded-lg border border-white/15 px-2 py-1.5 text-sm"
                 aria-label={`${meta?.label ?? st.key} notu`}
               />
             </div>
@@ -106,7 +106,7 @@ export function LogisticsEditor({ bookingId, initialStages }: { bookingId: strin
           {saving ? <Loader2 size={15} className="animate-spin" /> : saved ? <Check size={15} /> : null}
           {saving ? "Kaydediliyor…" : saved ? "Kaydedildi" : "Kaydet"}
         </button>
-        {error && <span className="text-xs text-red-600">{error}</span>}
+        {error && <span className="text-xs text-red-300">{error}</span>}
       </div>
     </div>
   );

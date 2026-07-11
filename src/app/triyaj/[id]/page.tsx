@@ -90,10 +90,10 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
         <ConsultGate caseId={c.id} lang={c.language} hasSentinel={gate.hasSentinel} hasIcapci={gate.hasIcapci} appointment={gate.appointment} />
       ) : (
         <>
-          <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" />
+          <div className="rounded-3xl border border-emerald-400/25 bg-emerald-500/10 p-5 flex items-start gap-3">
+            <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-300" />
             <div>
-              <h1 className="font-bold text-emerald-900">{t("Vakanız oluşturuldu ve doktor kuyruğuna eklendi")}</h1>
+              <h1 className="font-bold text-emerald-200">{t("Vakanız oluşturuldu ve doktor kuyruğuna eklendi")}</h1>
               <p className="mt-0.5 text-sm text-emerald-800/80">
                 {t("Uzman doktor, hazırlanan vaka özetinizi inceleyip sizinle video görüşmesi planlayacak.")}
               </p>
@@ -107,11 +107,11 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
         </>
       )}
 
-      <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mt-6 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase tracking-wide text-slate-400">{t("Vaka No")}</div>
-            <div className="font-mono text-sm text-slate-700">{c.id.slice(0, 8).toUpperCase()}</div>
+            <div className="text-xs uppercase tracking-wide text-white/40">{t("Vaka No")}</div>
+            <div className="font-mono text-sm text-white/75">{c.id.slice(0, 8).toUpperCase()}</div>
           </div>
           <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
             <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {t("Aciliyet")} {c.urgency}/5 · {t(u.label)}
@@ -126,24 +126,24 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
         </div>
 
         <div className="mt-4">
-          <div className="text-xs uppercase tracking-wide text-slate-400">{t("Şikayet")}</div>
-          <p className="mt-1 text-sm text-slate-700">{c.symptoms}</p>
+          <div className="text-xs uppercase tracking-wide text-white/40">{t("Şikayet")}</div>
+          <p className="mt-1 text-sm text-white/75">{c.symptoms}</p>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-teal-200 bg-teal-50/60 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-teal-700">
+        <div className="mt-4 rounded-2xl border border-[#28C8D8]/25 bg-teal-50/60 p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]">
             <Sparkles size={14} /> {t("Triyaj Gerekçesi")}
           </div>
-          <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t(c.reasoning)}</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-white/65">{t(c.reasoning)}</p>
         </div>
 
         {files.length > 0 && (
           <div className="mt-4">
-            <div className="text-xs uppercase tracking-wide text-slate-400">{t("Belgeler")}</div>
+            <div className="text-xs uppercase tracking-wide text-white/40">{t("Belgeler")}</div>
             <ul className="mt-1.5 flex flex-wrap gap-2">
               {files.map((f) => (
-                <li key={f} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
-                  <FileText size={14} className="text-teal-600" /> {f}
+                <li key={f} className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs text-white/65">
+                  <FileText size={14} className="text-[#28C8D8]" /> {f}
                 </li>
               ))}
             </ul>
@@ -156,7 +156,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
           <Link href="/doktor" className="inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
             <Stethoscope size={16} /> {t("Doktor panelinde gör")}
           </Link>
-          <Link href="/triyaj" className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50">
+          <Link href="/triyaj" className="inline-flex items-center gap-2 rounded-lg bg-[#161719] px-4 py-2.5 text-sm font-semibold text-white/75 ring-1 ring-white/15 hover:bg-[#1E1F22]">
             {t("Yeni triyaj")} <ArrowRight size={16} />
           </Link>
         </div>
@@ -168,8 +168,8 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
 function Info({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-slate-400">{k}</div>
-      <div className={`mt-0.5 ${accent ? "font-semibold text-[#0D0E10]" : "text-slate-800"}`}>{v}</div>
+      <div className="text-xs uppercase tracking-wide text-white/40">{k}</div>
+      <div className={`mt-0.5 ${accent ? "font-semibold text-[#F4F5F3]" : "text-[#F4F5F3]"}`}>{v}</div>
     </div>
   );
 }

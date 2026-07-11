@@ -45,7 +45,7 @@ export function ConsultationTimer({
     : zone === "orange" ? "from-orange-400 to-orange-500"
     : "from-red-500 to-red-600";
   const textClass =
-    zone === "green" ? "text-emerald-600" : zone === "orange" ? "text-orange-600" : "text-red-600";
+    zone === "green" ? "text-emerald-300" : zone === "orange" ? "text-orange-300" : "text-red-300";
   const zoneLabel = labels
     ? labels[zone]
     : zone === "green" ? "İdeal süre" : zone === "orange" ? "Süre uzuyor" : "Süre aşıldı";
@@ -54,7 +54,7 @@ export function ConsultationTimer({
     <div
       role="timer"
       aria-label={`Görüşme süresi ${fmt(elapsedSec)} — ${zoneLabel}`}
-      className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
+      className="rounded-2xl border border-white/10 bg-[#161719] p-3 shadow-sm"
     >
       <div className="flex items-center gap-3">
         {/* Süre okuması */}
@@ -64,11 +64,11 @@ export function ConsultationTimer({
         </div>
 
         {/* Tüp — süre ilerledikçe dolar */}
-        <div className="relative h-5 flex-1 overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200">
+        <div className="relative h-5 flex-1 overflow-hidden rounded-full bg-white/10 ring-1 ring-inset ring-white/10">
           {/* Eşik işaretleri (yeşil→turuncu, turuncu→kırmızı geçişleri) */}
-          <span className="absolute inset-y-0 z-10 w-px bg-slate-300/70" style={{ left: `${(greenMin / maxMin) * 100}%` }} />
+          <span className="absolute inset-y-0 z-10 w-px bg-white/20" style={{ left: `${(greenMin / maxMin) * 100}%` }} />
           {orangeMin > greenMin && (
-            <span className="absolute inset-y-0 z-10 w-px bg-slate-300/70" style={{ left: `${(orangeMin / maxMin) * 100}%` }} />
+            <span className="absolute inset-y-0 z-10 w-px bg-white/20" style={{ left: `${(orangeMin / maxMin) * 100}%` }} />
           )}
           {/* Dolum */}
           <div

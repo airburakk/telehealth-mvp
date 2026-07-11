@@ -103,19 +103,19 @@ export function PackageBuilder({
       {/* Seçimler */}
       <div className="space-y-4">
         {initial?.aiRationale && (
-          <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-3.5">
-            <div className="text-xs font-semibold uppercase tracking-wide text-violet-700">{initial?.rationaleTitle ?? "✨ Sağlık Turizmi Agent'ı teklifi uygulandı"}</div>
-            <p className="mt-1 text-sm leading-relaxed text-slate-600">{initial.aiRationale}</p>
-            <p className="mt-1 text-[11px] text-slate-400">Tüm değerleri aşağıdan değiştirebilirsiniz; fiyat platform motorunda hesaplanır.</p>
+          <div className="rounded-2xl border border-violet-400/25 bg-violet-50/70 p-3.5">
+            <div className="text-xs font-semibold uppercase tracking-wide text-violet-300">{initial?.rationaleTitle ?? "✨ Sağlık Turizmi Agent'ı teklifi uygulandı"}</div>
+            <p className="mt-1 text-sm leading-relaxed text-white/65">{initial.aiRationale}</p>
+            <p className="mt-1 text-[11px] text-white/40">Tüm değerleri aşağıdan değiştirebilirsiniz; fiyat platform motorunda hesaplanır.</p>
           </div>
         )}
         {hasTx && (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5">
-            <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">🩺 Doktorun tavsiye ettiği tedaviler uygulandı</div>
-            <p className="mt-1 text-sm leading-relaxed text-slate-600">
+          <div className="rounded-2xl border border-emerald-400/25 bg-emerald-50/70 p-3.5">
+            <div className="text-xs font-semibold uppercase tracking-wide text-emerald-300">🩺 Doktorun tavsiye ettiği tedaviler uygulandı</div>
+            <p className="mt-1 text-sm leading-relaxed text-white/65">
               Tedavi kalemleri ve fiyatları, görüşmeyi yapan doktorun seçtiği işlemlerden (₺) gelir; pakette güncel kurla $ olarak gösterilir.
             </p>
-            <p className="mt-1 text-[11px] text-slate-400">{treatments!.length} tedavi · özet kartında kalem kalem listelenir.</p>
+            <p className="mt-1 text-[11px] text-white/40">{treatments!.length} tedavi · özet kartında kalem kalem listelenir.</p>
           </div>
         )}
         {/* Tier */}
@@ -127,14 +127,14 @@ export function PackageBuilder({
                 key={t}
                 onClick={() => applyTier(t)}
                 className={`rounded-2xl border px-3 py-3 text-sm font-semibold transition ${
-                  tier === t ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                  tier === t ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-white/10 bg-[#161719] text-white/65 hover:border-white/15"
                 }`}
               >
                 {t}
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs text-slate-400">Seviye seçimi otel, sigorta ve tercüman varsayılanlarını ayarlar; aşağıdan tek tek değiştirebilirsiniz.</p>
+          <p className="mt-2 text-xs text-white/40">Seviye seçimi otel, sigorta ve tercüman varsayılanlarını ayarlar; aşağıdan tek tek değiştirebilirsiniz.</p>
         </Card>
 
         {/* Hastane + Otel */}
@@ -148,11 +148,11 @@ export function PackageBuilder({
           </div>
 
           <div className="mt-4 flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-700">Konaklama süresi</span>
+            <span className="text-sm font-medium text-white/75">Konaklama süresi</span>
             <div className="flex items-center gap-3">
-              <button onClick={() => setNights((n) => Math.max(1, n - 1))} className="grid h-8 w-8 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50"><Minus size={15} /></button>
+              <button onClick={() => setNights((n) => Math.max(1, n - 1))} className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 text-white/65 hover:bg-[#1E1F22]"><Minus size={15} /></button>
               <span className="w-14 text-center text-sm font-semibold">{nights} gece</span>
-              <button onClick={() => setNights((n) => Math.min(30, n + 1))} className="grid h-8 w-8 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50"><Plus size={15} /></button>
+              <button onClick={() => setNights((n) => Math.min(30, n + 1))} className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 text-white/65 hover:bg-[#1E1F22]"><Plus size={15} /></button>
             </div>
           </div>
         </Card>
@@ -166,7 +166,7 @@ export function PackageBuilder({
         {/* Sigorta — 3 kademeli kümülatif teminat */}
         <Card>
           <CardTitle icon={<ShieldCheck size={15} />}>Sigorta Teminatı</CardTitle>
-          <p className="mt-1 text-xs text-slate-400">Operasyonun mali büyüklüğü ve doktorun mevcut mesleki sigortası dikkate alınarak hesaplanır.</p>
+          <p className="mt-1 text-xs text-white/40">Operasyonun mali büyüklüğü ve doktorun mevcut mesleki sigortası dikkate alınarak hesaplanır.</p>
           <div className="mt-3 space-y-2">
             {INS_LEVELS.map((lvl) => {
               const q = insByLevel[lvl - 1];
@@ -179,37 +179,37 @@ export function PackageBuilder({
                   type="button"
                   onClick={() => setInsLevel(lvl)}
                   aria-pressed={active}
-                  className={`w-full rounded-2xl border p-3 text-left transition ${active ? "border-[#28C8D8] bg-[#28C8D8]/[0.06]" : "border-slate-200 bg-white hover:border-[#28C8D8]/40"}`}
+                  className={`w-full rounded-2xl border p-3 text-left transition ${active ? "border-[#28C8D8] bg-[#28C8D8]/[0.06]" : "border-white/10 bg-[#161719] hover:border-[#28C8D8]/40"}`}
                 >
                   <div className="flex items-start gap-2.5">
-                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-slate-100 text-slate-500"}`}>
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-white/10 text-white/50"}`}>
                       <Icon size={16} />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-semibold text-[#0D0E10]">Seviye {lvl} · {info.title}</span>
-                        <span className="shrink-0 text-sm font-bold text-slate-800">{formatUSD(q.total)}</span>
+                        <span className="text-sm font-semibold text-[#F4F5F3]">Seviye {lvl} · {info.title}</span>
+                        <span className="shrink-0 text-sm font-bold text-[#F4F5F3]">{formatUSD(q.total)}</span>
                       </div>
-                      <p className="mt-0.5 text-xs text-slate-500">{info.desc}</p>
+                      <p className="mt-0.5 text-xs text-white/50">{info.desc}</p>
                       {lvl >= 2 && (
-                        <p className="mt-1 text-[11px] text-slate-400">Teminat tabanı {formatUSD(q.coverageBase)} · operasyon teminat primi +{formatUSD(q.p2)}</p>
+                        <p className="mt-1 text-[11px] text-white/40">Teminat tabanı {formatUSD(q.coverageBase)} · operasyon teminat primi +{formatUSD(q.p2)}</p>
                       )}
                       {lvl === 3 && (
-                        <div className="mt-1 rounded-lg bg-slate-50 px-2.5 py-1.5 text-[11px] leading-relaxed text-slate-500">
+                        <div className="mt-1 rounded-lg bg-[#1E1F22] px-2.5 py-1.5 text-[11px] leading-relaxed text-white/50">
                           Hedef malpraktis teminatı {formatUSD(q.targetCoverage)} (operasyon ×{INSURANCE_CONFIG.targetMultiple}).{" "}
                           {doctorMmssLimitUsd != null ? (
                             q.gap === 0 ? (
-                              <span className="mt-0.5 block font-medium text-emerald-600">✓ {doctorName ? `${doctorName} ` : "Doktor "}mevcut MMSS poliçesi ({formatUSD(q.doctorCoverage)}) hedefi karşılıyor → ek malpraktis primi yok</span>
+                              <span className="mt-0.5 block font-medium text-emerald-300">✓ {doctorName ? `${doctorName} ` : "Doktor "}mevcut MMSS poliçesi ({formatUSD(q.doctorCoverage)}) hedefi karşılıyor → ek malpraktis primi yok</span>
                             ) : (
-                              <span className="mt-0.5 block">Doktor MMSS poliçesi {formatUSD(q.doctorCoverage)} karşılıyor; {formatUSD(q.gap)} boşluk için ek malpraktis primi <strong className="text-slate-700">+{formatUSD(q.p3)}</strong></span>
+                              <span className="mt-0.5 block">Doktor MMSS poliçesi {formatUSD(q.doctorCoverage)} karşılıyor; {formatUSD(q.gap)} boşluk için ek malpraktis primi <strong className="text-white/75">+{formatUSD(q.p3)}</strong></span>
                             )
                           ) : (
-                            <span className="mt-0.5 block text-amber-600">Doktor MMSS bilgisi yok — boşluk tam kabul edildi (+{formatUSD(q.p3)})</span>
+                            <span className="mt-0.5 block text-amber-300">Doktor MMSS bilgisi yok — boşluk tam kabul edildi (+{formatUSD(q.p3)})</span>
                           )}
                         </div>
                       )}
                     </div>
-                    <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 bg-white text-transparent"}`}>
+                    <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-white/15 bg-[#161719] text-transparent"}`}>
                       <Check size={12} />
                     </span>
                   </div>
@@ -217,7 +217,7 @@ export function PackageBuilder({
               );
             })}
           </div>
-          <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-slate-400">
+          <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-white/40">
             <Info size={13} className="mt-0.5 shrink-0" /> Primler tahminidir; bağlayıcı poliçe bedelini ve teminat şartlarını sigorta şirketi belirler.
           </p>
         </Card>
@@ -226,44 +226,44 @@ export function PackageBuilder({
       {/* Özet (Escrow) */}
       <aside className="lg:sticky lg:top-20 self-start">
         <Card>
-          <div className="text-xs uppercase tracking-wide text-slate-400">Paket Özeti · {patientName}</div>
-          <div className="mt-1 text-sm text-slate-500">{countryFlag(country)} {countryName(country)} · {branch}</div>
+          <div className="text-xs uppercase tracking-wide text-white/40">Paket Özeti · {patientName}</div>
+          <div className="mt-1 text-sm text-white/50">{countryFlag(country)} {countryName(country)} · {branch}</div>
 
           <ul className="mt-4 space-y-2">
             {quote.items.map((it) => (
               <li key={it.key} className="flex items-start justify-between gap-3 text-sm">
-                <span className="text-slate-600">
+                <span className="text-white/65">
                   {it.label}
-                  {it.note && <span className="block text-xs text-slate-400">{it.note}</span>}
+                  {it.note && <span className="block text-xs text-white/40">{it.note}</span>}
                 </span>
-                <span className="shrink-0 font-medium text-slate-800">{formatUSD(it.amount)}</span>
+                <span className="shrink-0 font-medium text-[#F4F5F3]">{formatUSD(it.amount)}</span>
               </li>
             ))}
           </ul>
 
-          <div className="mt-3 border-t border-slate-200 pt-3 text-sm">
+          <div className="mt-3 border-t border-white/10 pt-3 text-sm">
             <Row k="Ara toplam" v={formatUSD(quote.subtotal)} />
             <Row k="Platform komisyonu" v={formatUSD(quote.platformFee)} muted />
           </div>
-          <div className="mt-2 flex items-end justify-between border-t border-slate-200 pt-3">
-            <span className="text-sm font-semibold text-slate-700">Toplam</span>
-            <span className="text-2xl font-bold text-[#0D0E10]">{formatUSD(quote.total)}</span>
+          <div className="mt-2 flex items-end justify-between border-t border-white/10 pt-3">
+            <span className="text-sm font-semibold text-white/75">Toplam</span>
+            <span className="text-2xl font-bold text-[#F4F5F3]">{formatUSD(quote.total)}</span>
           </div>
           {hasTx && (
-            <div className="mt-2 text-[11px] text-slate-400">
+            <div className="mt-2 text-[11px] text-white/40">
               1 USD ≈ {rate.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ₺
               {fxSource ? ` · ${fxSource}` : ""}{fxAt ? ` · ${new Date(fxAt).toLocaleDateString("tr-TR")}` : ""}
             </div>
           )}
 
-          <div className="mt-3 flex items-start gap-2 rounded-lg bg-teal-50 px-3 py-2 text-xs text-teal-800 ring-1 ring-teal-100">
+          <div className="mt-3 flex items-start gap-2 rounded-lg bg-[#28C8D8]/10 px-3 py-2 text-xs text-[#28C8D8] ring-1 ring-[#28C8D8]/20">
             <Lock size={14} className="mt-0.5 shrink-0" />
             Ödeme platform Escrow havuzunda emanet tutulur; hizmet tamamlanınca taraflara aktarılır.
           </div>
 
           {sentOffer ? (
-            <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 p-3.5 text-center">
-              <div className="text-sm font-semibold text-violet-900">✓ Teklif {patientName}&apos;e gönderildi</div>
+            <div className="mt-4 rounded-2xl border border-violet-400/25 bg-violet-500/10 p-3.5 text-center">
+              <div className="text-sm font-semibold text-violet-200">✓ Teklif {patientName}&apos;e gönderildi</div>
               <p className="mt-0.5 text-xs text-violet-800/80">Hastanın bildirimine düştü. Onayladığında Escrow&apos;a alınır.</p>
               <Link href={`/teklif/${sentOffer}`} className="mt-2.5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">
                 <FileText size={15} /> Teklif sayfasını aç
@@ -284,11 +284,11 @@ export function PackageBuilder({
                   <button
                     onClick={confirm}
                     disabled={!!submitting}
-                    className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
+                    className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-60"
                   >
                     {submitting === "confirm" ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />} Doğrudan Escrow ile onayla
                   </button>
-                  <button className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                  <button className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-white/65 hover:bg-[#1E1F22]">
                     <MessageCircle size={15} /> Koordinatörle konuş
                   </button>
                 </>
@@ -302,27 +302,27 @@ export function PackageBuilder({
 }
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">{children}</div>;
+  return <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">{children}</div>;
 }
 function CardTitle({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) {
-  return <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">{icon} {children}</div>;
+  return <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">{icon} {children}</div>;
 }
 function Row({ k, v, muted }: { k: string; v: string; muted?: boolean }) {
   return (
     <div className="flex items-center justify-between">
-      <span className={muted ? "text-slate-400" : "text-slate-500"}>{k}</span>
-      <span className={muted ? "text-slate-500" : "text-slate-700"}>{v}</span>
+      <span className={muted ? "text-white/40" : "text-white/50"}>{k}</span>
+      <span className={muted ? "text-white/50" : "text-white/75"}>{v}</span>
     </div>
   );
 }
 function Segment({ value, onChange, options, render }: { value: string; onChange: (v: string) => void; options: string[]; render?: (o: string) => string }) {
   return (
-    <div className="mt-2 inline-flex rounded-lg border border-slate-200 p-1">
+    <div className="mt-2 inline-flex rounded-lg border border-white/10 p-1">
       {options.map((o) => (
         <button
           key={o}
           onClick={() => onChange(o)}
-          className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${value === o ? "bg-[#28C8D8] text-[#0D0E10]" : "text-slate-600 hover:bg-slate-100"}`}
+          className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${value === o ? "bg-[#28C8D8] text-[#0D0E10]" : "text-white/65 hover:bg-white/10"}`}
         >
           {render ? render(o) : o}
         </button>
@@ -332,16 +332,16 @@ function Segment({ value, onChange, options, render }: { value: string; onChange
 }
 function Toggle({ icon, label, desc, on, set }: { icon?: React.ReactNode; label: string; desc?: string; on: boolean; set: (v: boolean) => void }) {
   return (
-    <button onClick={() => set(!on)} className="mt-2 flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5 text-left hover:border-slate-300">
+    <button onClick={() => set(!on)} className="mt-2 flex w-full items-center justify-between rounded-lg border border-white/10 px-3 py-2.5 text-left hover:border-white/15">
       <span className="flex items-center gap-2">
-        {icon && <span className="text-slate-500">{icon}</span>}
+        {icon && <span className="text-white/50">{icon}</span>}
         <span>
-          <span className="block text-sm font-medium text-slate-700">{label}</span>
-          {desc && <span className="block text-xs text-slate-400">{desc}</span>}
+          <span className="block text-sm font-medium text-white/75">{label}</span>
+          {desc && <span className="block text-xs text-white/40">{desc}</span>}
         </span>
       </span>
-      <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${on ? "bg-emerald-500" : "bg-slate-300"}`}>
-        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? "left-[22px]" : "left-0.5"}`} />
+      <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${on ? "bg-emerald-500" : "bg-white/20"}`}>
+        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-[#161719] shadow transition-all ${on ? "left-[22px]" : "left-0.5"}`} />
       </span>
     </button>
   );

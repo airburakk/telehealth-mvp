@@ -126,7 +126,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
   return (
     <div dir={langDir(lang)} className="mx-auto max-w-4xl px-5 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href={`/doktor/vaka/${data.caseId}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#1FA9B8]">
+        <Link href={`/doktor/vaka/${data.caseId}`} className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-[#1FA9B8]">
           <ArrowLeft size={16} /> {t("Vaka detayı")}
         </Link>
         <PatientLangSelect lang={lang} onChange={setLang} />
@@ -135,8 +135,8 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
       <div className="mt-4 flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><HeartPulse size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0D0E10]">{t("Post-Op Takip")}</h1>
-          <p className="text-sm text-slate-500">{data.patientName} · {t(data.branch)} · {t("Tedavi sonrası")} <strong className="text-slate-700">{data.day}. {t("gün")}</strong></p>
+          <h1 className="text-2xl font-bold text-[#F4F5F3]">{t("Post-Op Takip")}</h1>
+          <p className="text-sm text-white/50">{data.patientName} · {t(data.branch)} · {t("Tedavi sonrası")} <strong className="text-white/75">{data.day}. {t("gün")}</strong></p>
         </div>
       </div>
 
@@ -144,28 +144,28 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
         {/* Sol: kontrol + geçmiş */}
         <div className="space-y-5">
           {data.closed ? (
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center">
-              <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-600"><CheckCircle2 size={24} /></span>
-              <h2 className="mt-3 font-bold text-slate-800">{t("Post-op takip tamamlandı")}</h2>
-              <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">{t("Bu sürecin takibi tamamlandı; yeni kontrol girişi kapalıdır. Geçmiş kayıtlarınız aşağıda görüntülenmeye devam eder.")}</p>
+            <div className="rounded-3xl border border-white/10 bg-[#1E1F22] p-6 text-center">
+              <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-300"><CheckCircle2 size={24} /></span>
+              <h2 className="mt-3 font-bold text-[#F4F5F3]">{t("Post-op takip tamamlandı")}</h2>
+              <p className="mx-auto mt-1 max-w-md text-sm text-white/50">{t("Bu sürecin takibi tamamlandı; yeni kontrol girişi kapalıdır. Geçmiş kayıtlarınız aşağıda görüntülenmeye devam eder.")}</p>
               {/* Geri-alma (E2EE Faz 2A) — veri post-op bitince hastaya döner; hasta isterse klinik ekibe erişimi YENİDEN verir (açma hasta kararı). */}
               <div className="mt-4">
                 {reopenStep === "idle" ? (
-                  <button onClick={() => setReopenStep("confirm")} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  <button onClick={() => setReopenStep("confirm")} className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-[#161719] px-4 py-2 text-sm font-medium text-white/75 hover:bg-[#1E1F22]">
                     <RotateCcw size={15} /> {t("Doktora erişimi yeniden ver")}
                   </button>
                 ) : (
-                  <div className="mx-auto max-w-md rounded-2xl border border-amber-200 bg-amber-50 p-4 text-start">
-                    <p className="text-sm text-amber-900">{t("Klinik ekibiniz kayıtlarınıza yeniden erişebilecek. Erişimi yeniden vermek istiyor musunuz?")}</p>
+                  <div className="mx-auto max-w-md rounded-2xl border border-amber-400/25 bg-amber-500/10 p-4 text-start">
+                    <p className="text-sm text-amber-200">{t("Klinik ekibiniz kayıtlarınıza yeniden erişebilecek. Erişimi yeniden vermek istiyor musunuz?")}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button onClick={reopen} disabled={reopening} className="inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50">
                         <RotateCcw size={15} /> {reopening ? t("Erişim yeniden açılıyor…") : t("Evet, erişimi yeniden ver")}
                       </button>
-                      <button onClick={() => { setReopenStep("idle"); setReopenErr(""); }} disabled={reopening} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                      <button onClick={() => { setReopenStep("idle"); setReopenErr(""); }} disabled={reopening} className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-white/65 hover:bg-[#1E1F22]">
                         {t("Vazgeç")}
                       </button>
                     </div>
-                    {reopenErr && <p className="mt-2 text-sm text-red-600">{reopenErr}</p>}
+                    {reopenErr && <p className="mt-2 text-sm text-red-300">{reopenErr}</p>}
                   </div>
                 )}
               </div>
@@ -174,33 +174,33 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
             <CheckInForm caseId={data.caseId} branch={data.branch} lang={lang} />
           )}
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="font-bold text-slate-800">{t("Kontrol geçmişi")}</h2>
+          <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+            <h2 className="font-bold text-[#F4F5F3]">{t("Kontrol geçmişi")}</h2>
             {data.checkIns.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-400">{t("Henüz kontrol girilmedi.")}</p>
+              <p className="mt-2 text-sm text-white/40">{t("Henüz kontrol girilmedi.")}</p>
             ) : (
               <ul className="mt-3 space-y-2">
                 {data.checkIns.map((ci) => {
                   const m = severityMeta(ci.severity as Severity);
                   return (
-                    <li key={ci.id} className="flex items-start gap-3 rounded-lg border border-slate-200 p-3">
+                    <li key={ci.id} className="flex items-start gap-3 rounded-lg border border-white/10 p-3">
                       <span className={`mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full ${m.dot}`} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 text-sm">
-                          <span className="font-medium text-slate-700">{formatDateTime(ci.createdAt)}</span>
+                          <span className="font-medium text-white/75">{formatDateTime(ci.createdAt)}</span>
                           <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${m.badge}`}>{t(m.label)}</span>
                         </div>
-                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-500">
+                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-white/50">
                           <span className="inline-flex items-center gap-1"><Activity size={12} /> {t("Ağrı")} {ci.pain}/10</span>
                           <span className="inline-flex items-center gap-1"><Thermometer size={12} /> {ci.feverC.toFixed(1)}°C</span>
                           <span className="inline-flex items-center gap-1"><Pill size={12} /> {t("İlaç")} {ci.meds ? "✓" : "✗"}</span>
                           {ci.photo && !ci.photo.startsWith("data:") && <span>📷 {ci.photo}</span>}
                         </div>
-                        {ci.note && <p className="mt-1 text-sm text-slate-600">{ci.note}</p>}
+                        {ci.note && <p className="mt-1 text-sm text-white/65">{ci.note}</p>}
                         {ci.photo?.startsWith("data:") && (
                           <a href={ci.photo} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block" title={t("Büyütmek için aç")}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={ci.photo} alt={t("İyileşme fotoğrafı")} className="h-20 w-20 rounded-lg object-cover ring-1 ring-slate-200 transition hover:ring-[#28C8D8]" />
+                            <img src={ci.photo} alt={t("İyileşme fotoğrafı")} className="h-20 w-20 rounded-lg object-cover ring-1 ring-white/10 transition hover:ring-[#28C8D8]" />
                           </a>
                         )}
                       </div>
@@ -219,7 +219,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
           {data.isStaff ? (
             <div className="space-y-3">
               {pendingRequest && (
-                <div className="flex items-start gap-2 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+                <div className="flex items-start gap-2 rounded-2xl border border-amber-400/30 bg-amber-500/10 p-3 text-sm text-amber-200">
                   <AlertTriangle size={16} className="mt-0.5 shrink-0" />
                   <span>
                     <strong>Hasta epikriz / taburcu raporu istedi</strong>
@@ -235,88 +235,88 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
               />
             </div>
           ) : (
-            <div className="rounded-3xl border border-violet-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-violet-700">
+            <div className="rounded-3xl border border-violet-400/25 bg-[#161719] p-5 shadow-sm">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-violet-300">
                 <FileText size={15} /> {t("AI Epikriz / Taburcu Raporu")}
               </div>
               {data.discharge ? (
                 <>
                   {data.discharge.savedAt && (
-                    <div className="mt-1 text-[11px] text-slate-400">{t("oluşturuldu")}: {formatDateTime(data.discharge.savedAt)}</div>
+                    <div className="mt-1 text-[11px] text-white/40">{t("oluşturuldu")}: {formatDateTime(data.discharge.savedAt)}</div>
                   )}
-                  <p className="mt-1.5 text-[11px] text-slate-400">{t("Rapor kaynak dilinde (Türkçe) hazırlanır; aşağıdan kendi dilinize çevirebilirsiniz.")}</p>
-                  <div className="mt-2 max-h-72 overflow-y-auto whitespace-pre-line rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-sm leading-relaxed text-slate-700">
+                  <p className="mt-1.5 text-[11px] text-white/40">{t("Rapor kaynak dilinde (Türkçe) hazırlanır; aşağıdan kendi dilinize çevirebilirsiniz.")}</p>
+                  <div className="mt-2 max-h-72 overflow-y-auto whitespace-pre-line rounded-xl border border-white/10 bg-[#1E1F22]/60 p-3 text-sm leading-relaxed text-white/75">
                     {data.discharge.report}
                   </div>
                   <TranslateButton text={data.discharge.report} defaultTarget={lang !== "Türkçe" ? lang : "İngilizce"} compact />
                 </>
               ) : (
                 <>
-                  <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+                  <p className="mt-1.5 text-sm leading-relaxed text-white/50">
                     {t("Tedavi sürecinizin tıbbi özet raporu. Doktorunuz oluşturduğunda burada görüntülenir.")}
                   </p>
                   {requestedAt ? (
-                    <div className="mt-3 flex items-start gap-2 rounded-xl bg-teal-50 p-2.5 text-[12px] leading-relaxed text-teal-800 ring-1 ring-teal-100">
+                    <div className="mt-3 flex items-start gap-2 rounded-xl bg-[#28C8D8]/10 p-2.5 text-[12px] leading-relaxed text-[#28C8D8] ring-1 ring-[#28C8D8]/20">
                       <Check size={14} className="mt-0.5 shrink-0" />
                       <span>
                         {t("Talebiniz doktorunuza iletildi")} ({formatDateTime(requestedAt)}). {t("Raporu doktorunuz oluşturur; hazır olduğunda bildirim alırsınız.")}
                       </span>
                     </div>
                   ) : data.closed ? (
-                    <p className="mt-3 rounded-xl bg-amber-50 p-2.5 text-[12px] text-amber-700 ring-1 ring-amber-100">
+                    <p className="mt-3 rounded-xl bg-amber-500/10 p-2.5 text-[12px] text-amber-300 ring-1 ring-amber-400/20">
                       {t("Takip kapandığı için yeni talep, doktora erişimi yeniden vermenizle mümkündür.")}
                     </p>
                   ) : (
                     <button
                       onClick={requestDischarge}
                       disabled={reqBusy}
-                      className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50"
+                      className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-violet-400/30 bg-violet-500/10 px-3 py-2 text-sm font-semibold text-violet-300 hover:bg-violet-500/15 disabled:opacity-50"
                     >
                       {reqBusy ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />}
                       {reqBusy ? t("İstek gönderiliyor…") : t("AI Epikriz / Taburcu Raporu iste")}
                     </button>
                   )}
-                  {reqErr && <p className="mt-2 text-xs text-red-600">{reqErr}</p>}
+                  {reqErr && <p className="mt-2 text-xs text-red-300">{reqErr}</p>}
                 </>
               )}
             </div>
           )}
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><CalendarCheck size={15} /> {t("İyileşme Takvimi")}</div>
+          <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50"><CalendarCheck size={15} /> {t("İyileşme Takvimi")}</div>
             <ol className="mt-3 space-y-0">
               {data.protocol.map((mst, i) => (
                 <li key={i} className="flex gap-3">
                   <div className="flex flex-col items-center">
-                    <span className="grid h-7 w-7 place-items-center rounded-full bg-teal-100 text-[11px] font-bold text-teal-700">{i + 1}</span>
-                    {i < data.protocol.length - 1 && <span className="my-1 h-5 w-0.5 bg-slate-200" />}
+                    <span className="grid h-7 w-7 place-items-center rounded-full bg-[#28C8D8]/15 text-[11px] font-bold text-[#28C8D8]">{i + 1}</span>
+                    {i < data.protocol.length - 1 && <span className="my-1 h-5 w-0.5 bg-white/15" />}
                   </div>
                   <div className="pb-1.5">
-                    <div className="text-sm font-medium text-slate-800">{t(mst.title)} <span className="text-xs font-normal text-teal-600">· {t(mst.day)}</span></div>
-                    <div className="text-xs text-slate-400">{t(mst.desc)}</div>
+                    <div className="text-sm font-medium text-[#F4F5F3]">{t(mst.title)} <span className="text-xs font-normal text-[#28C8D8]">· {t(mst.day)}</span></div>
+                    <div className="text-xs text-white/40">{t(mst.desc)}</div>
                   </div>
                 </li>
               ))}
             </ol>
           </div>
 
-          <div className="rounded-3xl border border-teal-200 bg-teal-50/60 p-5">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700"><Video size={15} /> {t("Tele-Kontrol")}</div>
-            <p className="mt-1.5 text-sm text-slate-600">{t("Kritik dönüm noktalarında doktorunuzla kısa görüşme planlanır.")}</p>
-            <button className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+          <div className="rounded-3xl border border-[#28C8D8]/25 bg-teal-50/60 p-5">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]"><Video size={15} /> {t("Tele-Kontrol")}</div>
+            <p className="mt-1.5 text-sm text-white/65">{t("Kritik dönüm noktalarında doktorunuzla kısa görüşme planlanır.")}</p>
+            <button className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-[#161719] px-4 py-2 text-sm font-medium text-white/65 hover:bg-[#1E1F22]">
               {t("Randevu iste")}
             </button>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><Pill size={15} /> {t("İlaç Hatırlatıcı")}</div>
-            <p className="mt-1.5 text-sm text-slate-600">{t("Günlük ilaç bildirimleri açık (demo).")}</p>
+          <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50"><Pill size={15} /> {t("İlaç Hatırlatıcı")}</div>
+            <p className="mt-1.5 text-sm text-white/65">{t("Günlük ilaç bildirimleri açık (demo).")}</p>
           </div>
 
           <Link href="/paylasimlarim" className="block rounded-3xl border border-[#28C8D8]/20 bg-[#28C8D8]/[0.03] p-5 transition-colors hover:bg-[#28C8D8]/[0.06]">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#0D0E10]"><ShieldCheck size={15} /> {t("Güvenli Paylaşım")}</div>
-            <p className="mt-1.5 text-sm text-slate-600">{t("Bu kayıtları kendi ülkenizdeki doktorunuzla süreli ve iptal edilebilir bir bağlantıyla paylaşın.")}</p>
-            <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0D0E10]">{t("Paylaşım Kontrol Merkezi")} <ArrowRight size={14} /></span>
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#F4F5F3]"><ShieldCheck size={15} /> {t("Güvenli Paylaşım")}</div>
+            <p className="mt-1.5 text-sm text-white/65">{t("Bu kayıtları kendi ülkenizdeki doktorunuzla süreli ve iptal edilebilir bir bağlantıyla paylaşın.")}</p>
+            <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#F4F5F3]">{t("Paylaşım Kontrol Merkezi")} <ArrowRight size={14} /></span>
           </Link>
         </aside>
       </div>

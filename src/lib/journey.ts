@@ -25,9 +25,9 @@ export const JOURNEY_STAGE_KEYS = JOURNEY_STAGES.map((s) => s.key);
 
 // Durum → etiket + Tailwind renk sınıfları (ESCROW_STATUS deseni, lib/ethics.ts).
 export const JOURNEY_STATUS: Record<JourneyStatus, { label: string; color: string; dot: string }> = {
-  pending: { label: "Bekliyor", color: "bg-slate-100 text-slate-500 ring-slate-200", dot: "bg-slate-300" },
-  active: { label: "Devam ediyor", color: "bg-teal-100 text-teal-700 ring-teal-200", dot: "bg-teal-500" },
-  done: { label: "Tamamlandı", color: "bg-emerald-100 text-emerald-700 ring-emerald-200", dot: "bg-emerald-500" },
+  pending: { label: "Bekliyor", color: "bg-white/10 text-white/50 ring-white/15", dot: "bg-white/20" },
+  active: { label: "Devam ediyor", color: "bg-[#28C8D8]/15 text-[#28C8D8] ring-[#28C8D8]/25", dot: "bg-[#28C8D8]" },
+  done: { label: "Tamamlandı", color: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25", dot: "bg-emerald-500" },
 };
 
 export function isJourneyStatus(s: unknown): s is JourneyStatus {

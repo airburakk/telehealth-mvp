@@ -30,31 +30,31 @@ export function ShareUnlock({ id, recipient }: { id: string; recipient: string |
   }
 
   return (
-    <form onSubmit={submit} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <form onSubmit={submit} className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-100 text-amber-700">
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-500/15 text-amber-300">
           <Lock size={22} />
         </span>
         <div>
-          <h1 className="text-lg font-bold text-[#0D0E10]">Şifre korumalı paylaşım</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-lg font-bold text-[#F4F5F3]">Şifre korumalı paylaşım</h1>
+          <p className="text-sm text-white/50">
             {recipient ? `Sayın ${recipient}, ` : ""}bu sağlık kaydını görüntülemek için hastanın size ayrıca ilettiği erişim şifresini girin.
           </p>
         </div>
       </div>
 
-      <label className="mt-5 block text-sm font-medium text-slate-700">Erişim şifresi</label>
+      <label className="mt-5 block text-sm font-medium text-white/75">Erişim şifresi</label>
       <input
         autoFocus
         value={pw}
         onChange={(e) => setPw(e.target.value)}
         type="password"
         placeholder="••••••"
-        className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+        className="mt-1.5 w-full rounded-lg border border-white/15 px-3 py-2 text-sm"
       />
 
       {error && (
-        <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300">
           <AlertCircle size={15} /> {error}
         </div>
       )}

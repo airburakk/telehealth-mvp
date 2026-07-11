@@ -28,8 +28,8 @@ export function JourneyStageRail({ journey, current, lang }: { journey: JourneyK
                   : done
                     ? "bg-[#28C8D8]/20 text-[#17919E]"
                     : na
-                      ? "border border-dashed border-slate-300 text-slate-300"
-                      : "bg-slate-100 text-slate-400",
+                      ? "border border-dashed border-white/15 text-white/25"
+                      : "bg-white/10 text-white/40",
               ].join(" ")}
               aria-current={isCurrent ? "step" : undefined}
             >
@@ -38,15 +38,15 @@ export function JourneyStageRail({ journey, current, lang }: { journey: JourneyK
             <span
               className={
                 isCurrent
-                  ? "whitespace-nowrap font-semibold text-[#0D0E10]"
+                  ? "whitespace-nowrap font-semibold text-[#F4F5F3]"
                   : na
-                    ? "whitespace-nowrap text-slate-300 line-through"
-                    : "whitespace-nowrap text-slate-400"
+                    ? "whitespace-nowrap text-white/25 line-through"
+                    : "whitespace-nowrap text-white/40"
               }
             >
               {t(label)}
             </span>
-            {i < JOURNEY_STAGES.length - 1 && <span className="mx-0.5 h-px w-3 shrink-0 bg-slate-200" />}
+            {i < JOURNEY_STAGES.length - 1 && <span className="mx-0.5 h-px w-3 shrink-0 bg-white/15" />}
           </li>
         );
       })}

@@ -403,9 +403,9 @@ export function SoVideoRoom({
   if (phase === "ended" || ended) {
     return (
       <div dir={langDir(lang)} className="mx-auto max-w-md px-5 py-20 text-center">
-        <PhoneOff className="mx-auto mb-3 text-slate-300" size={40} />
-        <h1 className="text-xl font-bold text-[#0D0E10]">{t(S.ended)}</h1>
-        <p className="mt-2 text-sm text-slate-500">{t(S.endedSub)}</p>
+        <PhoneOff className="mx-auto mb-3 text-white/25" size={40} />
+        <h1 className="text-xl font-bold text-[#F4F5F3]">{t(S.ended)}</h1>
+        <p className="mt-2 text-sm text-white/50">{t(S.endedSub)}</p>
         <button onClick={() => router.push(`/second-opinion/vaka/${caseId}`)} className="mt-5 rounded-xl bg-[#28C8D8] px-5 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
           {t(S.backToCase)}
         </button>
@@ -435,45 +435,45 @@ export function SoVideoRoom({
     <div dir={langDir(lang)} className="mx-auto max-w-5xl px-4 py-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-[#0D0E10]">{t(S.title)}</h1>
-          <p className="text-xs text-slate-500">{t(branchLabel)} · {remoteName}</p>
+          <h1 className="text-lg font-bold text-[#F4F5F3]">{t(S.title)}</h1>
+          <p className="text-xs text-white/50">{t(branchLabel)} · {remoteName}</p>
         </div>
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${phase === "connected" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${phase === "connected" ? "bg-emerald-500/10 text-emerald-300" : "bg-amber-500/10 text-amber-300"}`}>
           {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />}
           {phase === "connected" ? t(S.connected) : phase === "waiting" ? t(S.waiting) : phase === "error" ? t(S.errorLbl) : t(S.connecting)}
         </span>
       </div>
 
-      {errMsg && <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{t(errMsg)}</p>}
+      {errMsg && <p className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-300">{t(errMsg)}</p>}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-900">
+        <div className="relative aspect-video overflow-hidden rounded-2xl bg-[#101113]">
           <video ref={remoteVideoRef} autoPlay playsInline className="h-full w-full object-cover" />
           {!remoteOn && (
-            <div className="absolute inset-0 grid place-items-center text-slate-400">
+            <div className="absolute inset-0 grid place-items-center text-white/40">
               <div className="text-center"><UserRound size={36} className="mx-auto" /><p className="mt-2 text-xs">{remoteName} {t(S.waitingFor)}</p></div>
             </div>
           )}
           <span className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-0.5 text-[11px] text-white">{remoteName}</span>
         </div>
-        <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-800">
+        <div className="relative aspect-video overflow-hidden rounded-2xl bg-[#26272B]">
           <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
           <span className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-0.5 text-[11px] text-white">{t(S.you)}</span>
         </div>
       </div>
 
       <div className="mt-4 flex items-center justify-center gap-3">
-        <button onClick={toggleMic} className={`grid h-12 w-12 place-items-center rounded-full ${micOn ? "bg-slate-200 text-slate-700" : "bg-red-100 text-red-600"}`}>
+        <button onClick={toggleMic} className={`grid h-12 w-12 place-items-center rounded-full ${micOn ? "bg-white/15 text-white/75" : "bg-red-500/15 text-red-300"}`}>
           {micOn ? <Mic size={20} /> : <MicOff size={20} />}
         </button>
-        <button onClick={toggleCam} className={`grid h-12 w-12 place-items-center rounded-full ${camOn ? "bg-slate-200 text-slate-700" : "bg-red-100 text-red-600"}`}>
+        <button onClick={toggleCam} className={`grid h-12 w-12 place-items-center rounded-full ${camOn ? "bg-white/15 text-white/75" : "bg-red-500/15 text-red-300"}`}>
           {camOn ? <Video size={20} /> : <VideoOff size={20} />}
         </button>
         <button onClick={hangUp} className="grid h-12 w-12 place-items-center rounded-full bg-red-600 text-white hover:bg-red-700">
           <PhoneOff size={20} />
         </button>
       </div>
-      {connState && <p className="mt-2 text-center text-[11px] text-slate-400">{t(S.connLbl)} {connState}</p>}
+      {connState && <p className="mt-2 text-center text-[11px] text-white/40">{t(S.connLbl)} {connState}</p>}
 
       {/* AI Canlı Tercüman (Gemini) — yalnız diller farklıysa (aynı dilde gereksiz + karşı sesi kısar);
           ilk konuşma sesinde otomatik başlar (başlat düğmesi yok). */}
@@ -493,38 +493,38 @@ export function SoVideoRoom({
       )}
 
       {/* Canlı Transkript — iki taraf da kendi konuşmasını yazıya çevirir, karşı tarafa iletilir (otomatik/VAD) */}
-      <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mt-4 rounded-3xl border border-white/10 bg-[#161719] p-4 shadow-sm">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
             <MessageSquareText size={14} /> {t(S.transcriptTitle)}
             {sttOn && <span className="ms-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
           </div>
           {!sttSupported ? (
-            <span className="text-[11px] text-slate-400">{t(S.notSupported)}</span>
+            <span className="text-[11px] text-white/40">{t(S.notSupported)}</span>
           ) : sttOn ? (
-            <button onClick={() => { setSttErr(""); setSttOn(false); }} className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 px-2.5 py-1.5 text-[12px] font-medium text-red-700 hover:bg-red-100">
+            <button onClick={() => { setSttErr(""); setSttOn(false); }} className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/30 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-medium text-red-300 hover:bg-red-500/15">
               <Mic size={13} /> {t(S.stop)}
             </button>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-[12px] font-medium text-slate-500" title={t(S.transcriptEmpty)}>
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1.5 text-[12px] font-medium text-white/50" title={t(S.transcriptEmpty)}>
               <Mic size={13} /> {t(S.auto)}
             </span>
           )}
         </div>
-        {sttErr && <div className="mt-1 text-[11px] text-red-600">{t(sttErr)}</div>}
+        {sttErr && <div className="mt-1 text-[11px] text-red-300">{t(sttErr)}</div>}
         <div className="mt-2 max-h-44 space-y-1 overflow-y-auto">
           {transcript.length === 0 && !interim && (
-            <p className="text-xs text-slate-400">{t(S.transcriptEmpty)}</p>
+            <p className="text-xs text-white/40">{t(S.transcriptEmpty)}</p>
           )}
           {transcript.map((l, i) => (
-            <p key={i} className="text-sm leading-snug text-slate-700">
-              <span className={`font-semibold ${l.who === "doctor" ? "text-[#1FA9B8]" : "text-emerald-700"}`}>
+            <p key={i} className="text-sm leading-snug text-white/75">
+              <span className={`font-semibold ${l.who === "doctor" ? "text-[#1FA9B8]" : "text-emerald-300"}`}>
                 {l.who === "doctor" ? t(S.doctor) : t(S.patient)}:
               </span>{" "}
               {l.text}
             </p>
           ))}
-          {interim && <p className="text-sm italic text-slate-400">{interim}…</p>}
+          {interim && <p className="text-sm italic text-white/40">{interim}…</p>}
         </div>
       </div>
 

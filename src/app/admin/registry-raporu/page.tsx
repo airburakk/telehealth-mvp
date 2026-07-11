@@ -32,8 +32,8 @@ export default async function RegistryReportPage() {
       <div className="flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><ClipboardList size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0D0E10]">HealthTürkiye Günlük Raporları</h1>
-          <p className="text-sm text-slate-500">healthturkiye.gov.tr doktor + tesis dizini — 24 saatte bir senkron, eklenen/çıkarılan kayıtlar.</p>
+          <h1 className="text-2xl font-bold text-[#F4F5F3]">HealthTürkiye Günlük Raporları</h1>
+          <p className="text-sm text-white/50">healthturkiye.gov.tr doktor + tesis dizini — 24 saatte bir senkron, eklenen/çıkarılan kayıtlar.</p>
         </div>
       </div>
 
@@ -43,7 +43,7 @@ export default async function RegistryReportPage() {
       </div>
 
       {reports.length === 0 && (
-        <div className="mt-8 rounded-3xl border border-dashed border-slate-300 bg-white py-12 text-center text-slate-400">
+        <div className="mt-8 rounded-3xl border border-dashed border-white/15 bg-[#161719] py-12 text-center text-white/40">
           <Inbox className="mx-auto mb-2" /> Henüz senkron raporu yok — ilk çekim <code>scripts/registry-sync.ts</code> veya günlük cron ile oluşur.
         </div>
       )}
@@ -59,37 +59,37 @@ export default async function RegistryReportPage() {
           // JSON listeleri 500'le sınırlı saklanır (ilk tam çekim şişmesin) → rozette "+" ile belirt
           const capped = (r.detail ?? "").includes("(ilk 500");
           return (
-            <div key={r.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div key={r.id} className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-base font-bold text-[#0D0E10]">{r.date}</span>
+                  <span className="text-base font-bold text-[#F4F5F3]">{r.date}</span>
                   {r.status === "OK" ? (
                     changes === 0 ? (
-                      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-500">değişiklik yok</span>
+                      <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-white/50">değişiklik yok</span>
                     ) : (
-                      <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700 ring-1 ring-teal-200">{changes}{capped ? "+" : ""} değişiklik</span>
+                      <span className="rounded-full bg-[#28C8D8]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#28C8D8] ring-1 ring-[#28C8D8]/25">{changes}{capped ? "+" : ""} değişiklik</span>
                     )
                   ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-[11px] font-semibold text-red-700 ring-1 ring-red-200"><AlertTriangle size={11} /> {r.status}</span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-red-300 ring-1 ring-red-400/25"><AlertTriangle size={11} /> {r.status}</span>
                   )}
                 </div>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-white/40">
                   {r.doctorsTotal.toLocaleString("tr-TR")} doktor · {r.hospitalsTotal.toLocaleString("tr-TR")} tesis
-                  {updates > 0 && <span className="text-sky-600"> · ✎ {r.updatedDoctors} doktor / {r.updatedHospitals} tesis güncellendi</span>}
+                  {updates > 0 && <span className="text-sky-300"> · ✎ {r.updatedDoctors} doktor / {r.updatedHospitals} tesis güncellendi</span>}
                   {" · "}{formatDateTime(r.createdAt)}
                 </span>
               </div>
-              {r.detail && <p className="mt-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-700 ring-1 ring-amber-100">{r.detail}</p>}
+              {r.detail && <p className="mt-2 rounded-lg bg-amber-500/10 px-3 py-1.5 text-xs text-amber-300 ring-1 ring-amber-400/20">{r.detail}</p>}
 
               {changes > 0 && (
-                <div className="mt-3 grid gap-3 border-t border-slate-100 pt-3 sm:grid-cols-2">
-                  <ChangeList icon={<TrendingUp size={13} />} tone="text-emerald-700" title={`Eklenen doktor (${ad.length})`}
+                <div className="mt-3 grid gap-3 border-t border-white/10 pt-3 sm:grid-cols-2">
+                  <ChangeList icon={<TrendingUp size={13} />} tone="text-emerald-300" title={`Eklenen doktor (${ad.length})`}
                     rows={ad.map((d) => `${d.name} ${d.lastName} — ${d.branchName ?? "?"}${d.establishmentName ? " · " + d.establishmentName : ""}${d.cityName ? " · " + d.cityName : ""}`)} />
-                  <ChangeList icon={<TrendingDown size={13} />} tone="text-red-700" title={`Çıkarılan doktor (${rd.length})`}
+                  <ChangeList icon={<TrendingDown size={13} />} tone="text-red-300" title={`Çıkarılan doktor (${rd.length})`}
                     rows={rd.map((d) => `${d.name} ${d.lastName} — ${d.branchName ?? "?"}${d.establishmentName ? " · " + d.establishmentName : ""}`)} />
-                  <ChangeList icon={<TrendingUp size={13} />} tone="text-emerald-700" title={`Eklenen tesis (${ah.length})`}
+                  <ChangeList icon={<TrendingUp size={13} />} tone="text-emerald-300" title={`Eklenen tesis (${ah.length})`}
                     rows={ah.map((h) => `${h.name}${h.cityName ? " · " + h.cityName : ""}${h.facilityTypeName ? " · " + h.facilityTypeName : ""}`)} />
-                  <ChangeList icon={<TrendingDown size={13} />} tone="text-red-700" title={`Çıkarılan tesis (${rh.length})`}
+                  <ChangeList icon={<TrendingDown size={13} />} tone="text-red-300" title={`Çıkarılan tesis (${rh.length})`}
                     rows={rh.map((h) => `${h.name}${h.cityName ? " · " + h.cityName : ""}`)} />
                 </div>
               )}
@@ -103,9 +103,9 @@ export default async function RegistryReportPage() {
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3.5">
-      <div className="flex items-center gap-1.5 text-2xl font-bold text-[#0D0E10]">{icon} {value.toLocaleString("tr-TR")}</div>
-      <div className="text-xs text-slate-500">{label}</div>
+    <div className="rounded-2xl border border-white/10 bg-[#161719] p-3.5">
+      <div className="flex items-center gap-1.5 text-2xl font-bold text-[#F4F5F3]">{icon} {value.toLocaleString("tr-TR")}</div>
+      <div className="text-xs text-white/50">{label}</div>
     </div>
   );
 }
@@ -113,11 +113,11 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
 function ChangeList({ icon, tone, title, rows }: { icon: React.ReactNode; tone: string; title: string; rows: string[] }) {
   if (rows.length === 0) return null;
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
+    <div className="rounded-2xl border border-white/10 bg-[#1E1F22]/60 p-3">
       <div className={`flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide ${tone}`}>{icon} {title}</div>
-      <ul className="mt-1.5 max-h-48 space-y-0.5 overflow-y-auto text-xs text-slate-600">
+      <ul className="mt-1.5 max-h-48 space-y-0.5 overflow-y-auto text-xs text-white/65">
         {rows.slice(0, 100).map((t, i) => <li key={i} className="truncate">• {t}</li>)}
-        {rows.length > 100 && <li className="text-slate-400">… ve {rows.length - 100} kayıt daha</li>}
+        {rows.length > 100 && <li className="text-white/40">… ve {rows.length - 100} kayıt daha</li>}
       </ul>
     </div>
   );

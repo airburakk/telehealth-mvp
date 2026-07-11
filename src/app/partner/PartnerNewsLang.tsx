@@ -25,13 +25,13 @@ export function PartnerNewsLang({ current, languages }: { current: string; langu
   }
 
   return (
-    <label className="inline-flex items-center gap-1.5 text-xs text-slate-500">
+    <label className="inline-flex items-center gap-1.5 text-xs text-white/50">
       {saving ? <Loader2 size={13} className="animate-spin" /> : <Languages size={13} />}
       <select
         value={current}
         onChange={(e) => change(e.target.value)}
         disabled={saving}
-        className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs outline-none focus:border-[#34d399] disabled:opacity-60"
+        className="rounded-lg border border-white/15 bg-[#161719] px-2 py-1 text-xs outline-none focus:border-[#34d399] disabled:opacity-60"
       >
         {languages.map((l) => <option key={l} value={l}>{l}</option>)}
       </select>

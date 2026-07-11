@@ -48,22 +48,22 @@ export function DoctorPreferences({ languages, markets, capacity, freeCareOptIn,
   }
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+    <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
         <Globe size={15} /> Profil Tercihleri
       </div>
 
       <div className="mt-4">
-        <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700"><Globe size={14} className="text-slate-400" /> Hizmet dilleri</div>
+        <div className="flex items-center gap-1.5 text-sm font-medium text-white/75"><Globe size={14} className="text-white/40" /> Hizmet dilleri</div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {LANGUAGES.map((l) => <Chip key={l} active={langs.includes(l)} onClick={() => toggle(langs, setLangs, l)}>{l}</Chip>)}
         </div>
       </div>
 
       <div className="mt-4">
-        <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-slate-700">
-          <MapPin size={14} className="text-slate-400" /> Hizmet verdiğim ülkeler / pazarlar
-          <span className="text-xs font-normal text-slate-400">(boş = tüm pazarlar)</span>
+        <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-white/75">
+          <MapPin size={14} className="text-white/40" /> Hizmet verdiğim ülkeler / pazarlar
+          <span className="text-xs font-normal text-white/40">(boş = tüm pazarlar)</span>
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {COUNTRIES.map((c) => <Chip key={c.code} active={mkts.includes(c.code)} onClick={() => toggle(mkts, setMkts, c.code)}>{c.flag} {c.name}</Chip>)}
@@ -71,20 +71,20 @@ export function DoctorPreferences({ languages, markets, capacity, freeCareOptIn,
       </div>
 
       <div className="mt-4">
-        <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700"><CalendarClock size={14} className="text-slate-400" /> Aylık kapasite limiti</div>
+        <div className="flex items-center gap-1.5 text-sm font-medium text-white/75"><CalendarClock size={14} className="text-white/40" /> Aylık kapasite limiti</div>
         <div className="mt-1.5 flex items-center gap-2">
           <input
             type="number" min={1} max={200} value={cap}
             onChange={(e) => { setCap(Number(e.target.value)); setSaved(false); }}
-            className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
+            className="w-28 rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
           />
-          <span className="text-xs text-slate-500">işlem / ay</span>
+          <span className="text-xs text-white/50">işlem / ay</span>
         </div>
       </div>
 
-      <div className="mt-5 border-t border-slate-100 pt-4">
-        <div className="text-sm font-medium text-slate-700">Birim katılımı</div>
-        <p className="text-xs text-slate-400">Ana Sayfanızdaki pencerelerin görünürlüğünü belirler.</p>
+      <div className="mt-5 border-t border-white/10 pt-4">
+        <div className="text-sm font-medium text-white/75">Birim katılımı</div>
+        <p className="text-xs text-white/40">Ana Sayfanızdaki pencerelerin görünürlüğünü belirler.</p>
         <div className="mt-3 space-y-2">
           <OptToggle
             active={pb}
@@ -103,7 +103,7 @@ export function DoctorPreferences({ languages, markets, capacity, freeCareOptIn,
         </div>
       </div>
 
-      {err && <p className="mt-3 text-sm text-red-600">{err}</p>}
+      {err && <p className="mt-3 text-sm text-red-300">{err}</p>}
 
       <button
         onClick={save}
@@ -123,14 +123,14 @@ function OptToggle({ active, onToggle, icon, title, desc }: { active: boolean; o
       type="button"
       onClick={onToggle}
       aria-pressed={active}
-      className={`flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition ${active ? "border-[#28C8D8] bg-[#28C8D8]/[0.06]" : "border-slate-200 bg-white hover:border-[#28C8D8]/40"}`}
+      className={`flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition ${active ? "border-[#28C8D8] bg-[#28C8D8]/[0.06]" : "border-white/10 bg-[#161719] hover:border-[#28C8D8]/40"}`}
     >
-      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-slate-100 text-slate-500"}`}>{icon}</span>
+      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-white/10 text-white/50"}`}>{icon}</span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium text-slate-700">{title}</span>
-        <span className="block text-xs text-slate-500">{desc}</span>
+        <span className="block text-sm font-medium text-white/75">{title}</span>
+        <span className="block text-xs text-white/50">{desc}</span>
       </span>
-      <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 bg-white text-transparent"}`}>
+      <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-white/15 bg-[#161719] text-transparent"}`}>
         <Check size={12} />
       </span>
     </button>
@@ -142,7 +142,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 bg-white text-slate-600 hover:border-[#28C8D8]/40 hover:bg-slate-50"}`}
+      className={`rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-white/15 bg-[#161719] text-white/65 hover:border-[#28C8D8]/40 hover:bg-[#1E1F22]"}`}
     >
       {children}
     </button>

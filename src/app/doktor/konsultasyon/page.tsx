@@ -42,32 +42,32 @@ export default async function ConsultationInboxPage() {
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
       <PresencePinger />
-      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
+      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/75">
         <ArrowLeft size={15} /> Ana Sayfa
       </Link>
 
       <div className="mt-3 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#0D0E10]">Konsültasyon Talepleri</h1>
-          <p className="mt-1 text-sm text-slate-500">Partner doktorlardan gelen anonimleştirilmiş hasta dosyaları. Yanıt başına {formatUSD(PAYMENT_PER_ANSWER)} (simüle).</p>
+          <h1 className="text-2xl font-bold text-[#F4F5F3]">Konsültasyon Talepleri</h1>
+          <p className="mt-1 text-sm text-white/50">Partner doktorlardan gelen anonimleştirilmiş hasta dosyaları. Yanıt başına {formatUSD(PAYMENT_PER_ANSWER)} (simüle).</p>
         </div>
-        <div className="shrink-0 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-right">
-          <div className="flex items-center justify-end gap-1.5 text-xs font-semibold text-emerald-700"><Wallet size={14} /> Hakediş</div>
-          <div className="text-lg font-bold text-emerald-700">{formatUSD(totalEarned)}</div>
+        <div className="shrink-0 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 text-right">
+          <div className="flex items-center justify-end gap-1.5 text-xs font-semibold text-emerald-300"><Wallet size={14} /> Hakediş</div>
+          <div className="text-lg font-bold text-emerald-300">{formatUSD(totalEarned)}</div>
           <div className="text-[10px] text-emerald-600/70">{stats.count} yanıt</div>
         </div>
       </div>
 
       {/* Mahremiyet bilgi şeridi */}
-      <div className="mt-5 flex items-start gap-2 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-3 text-xs text-indigo-800">
+      <div className="mt-5 flex items-start gap-2 rounded-2xl border border-indigo-400/25 bg-indigo-50/60 p-3 text-xs text-indigo-200">
         <ShieldCheck size={16} className="mt-0.5 shrink-0" />
         <span>Bu dosyalar otomatik <strong>anonimleştirme</strong> katmanından geçti — hasta adı, kimlik numarası ve ham görüntüler kaldırıldı. Belgeler AI ile değerlendirilip Türkçeye çevrildi; yalnız klinik içerik gösterilir.</span>
       </div>
 
       {/* Açık talepler */}
-      <h2 className="mt-7 flex items-center gap-2 text-sm font-semibold text-slate-700"><Inbox size={16} /> Açık talepler ({open.length})</h2>
+      <h2 className="mt-7 flex items-center gap-2 text-sm font-semibold text-white/75"><Inbox size={16} /> Açık talepler ({open.length})</h2>
       {open.length === 0 ? (
-        <p className="mt-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Şu an açık konsültasyon talebi yok.</p>
+        <p className="mt-3 rounded-2xl border border-dashed border-white/10 bg-[#1E1F22] px-4 py-8 text-center text-sm text-white/50">Şu an açık konsültasyon talebi yok.</p>
       ) : (
         <div className="mt-3 space-y-4">
           {open.map((r) => <OpenCard key={r.id} r={r} catalog={catalog} />)}
@@ -77,7 +77,7 @@ export default async function ConsultationInboxPage() {
       {/* Devam eden görüşmeler — bu doktorun sahiplendiği (IN_DISCUSSION) talepler: chat + nihai görüş */}
       {engaged.length > 0 && (
         <>
-          <h2 className="mt-8 flex items-center gap-2 text-sm font-semibold text-slate-700"><MessagesSquare size={16} className="text-sky-600" /> Devam eden görüşmeler ({engaged.length})</h2>
+          <h2 className="mt-8 flex items-center gap-2 text-sm font-semibold text-white/75"><MessagesSquare size={16} className="text-sky-300" /> Devam eden görüşmeler ({engaged.length})</h2>
           <div className="mt-3 space-y-4">
             {engaged.map((r) => <OpenCard key={r.id} r={r} catalog={catalog} engaged />)}
           </div>
@@ -87,18 +87,18 @@ export default async function ConsultationInboxPage() {
       {/* Yanıtladıklarım */}
       {answered.length > 0 && (
         <>
-          <h2 className="mt-8 text-sm font-semibold text-slate-700">Yanıtladıklarım (son {answered.length} / toplam {stats.count})</h2>
+          <h2 className="mt-8 text-sm font-semibold text-white/75">Yanıtladıklarım (son {answered.length} / toplam {stats.count})</h2>
           <div className="mt-3 space-y-3">
             {answered.map((r) => (
-              <div key={r.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+              <div key={r.id} className="rounded-2xl border border-white/10 bg-[#161719] p-4">
                 <div className="flex items-center justify-between text-sm">
                   <BranchTag r={r} />
-                  <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">{formatUSD(r.paymentSim ?? 0)} · yanıtlandı</span>
+                  <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">{formatUSD(r.paymentSim ?? 0)} · yanıtlandı</span>
                 </div>
-                <p className="mt-2 whitespace-pre-wrap text-xs text-slate-500">{r.summaryTr || r.clinicalSummary}</p>
-                <div className="mt-2 rounded-xl bg-slate-50 p-3 text-sm text-slate-700"><span className="text-xs font-semibold text-slate-400">Görüşünüz: </span>{r.answerText}</div>
+                <p className="mt-2 whitespace-pre-wrap text-xs text-white/50">{r.summaryTr || r.clinicalSummary}</p>
+                <div className="mt-2 rounded-xl bg-[#1E1F22] p-3 text-sm text-white/75"><span className="text-xs font-semibold text-white/40">Görüşünüz: </span>{r.answerText}</div>
                 <RecommendationsView r={r} />
-                <Link href={`/fhir/ConsultationRequest/${r.id}`} target="_blank" className="mt-2 inline-block text-xs text-indigo-600 hover:underline">FHIR Bundle ↗</Link>
+                <Link href={`/fhir/ConsultationRequest/${r.id}`} target="_blank" className="mt-2 inline-block text-xs text-indigo-300 hover:underline">FHIR Bundle ↗</Link>
                 <div className="mt-3 space-y-3">
                   <VideoControls requestId={r.id} role="doctor" />
                   <ConsultationChat requestId={r.id} canSend compact />
@@ -114,11 +114,11 @@ export default async function ConsultationInboxPage() {
 
 function BranchTag({ r }: { r: ConsultReqView }) {
   return (
-    <span className="inline-flex items-center gap-2 text-slate-600">
-      <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+    <span className="inline-flex items-center gap-2 text-white/65">
+      <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/15 px-2 py-0.5 text-xs font-semibold text-indigo-300">
         <Stethoscope size={12} /> {r.branch ?? "Genel havuz"}
       </span>
-      {r.urgency >= 4 && <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">acil {r.urgency}/5</span>}
+      {r.urgency >= 4 && <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-bold text-red-300">acil {r.urgency}/5</span>}
     </span>
   );
 }
@@ -128,28 +128,28 @@ function DocumentsBlock({ docs }: { docs: ConsultDocView[] }) {
   if (!docs.length) return null;
   return (
     <div className="mt-3 space-y-2">
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Yüklenen belgeler (AI değerlendirme)</div>
+      <div className="text-xs font-semibold uppercase tracking-wide text-white/40">Yüklenen belgeler (AI değerlendirme)</div>
       {docs.map((d) => (
-        <div key={d.id} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
-            <FileText size={14} className="text-slate-400" /> {d.label}
-            {d.docType && <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{d.docType}</span>}
-            {!d.assessed && <span className="text-[10px] text-amber-600">değerlendirilmedi</span>}
+        <div key={d.id} className="rounded-2xl border border-white/10 bg-[#1E1F22]/60 p-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-white/75">
+            <FileText size={14} className="text-white/40" /> {d.label}
+            {d.docType && <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold text-white/65">{d.docType}</span>}
+            {!d.assessed && <span className="text-[10px] text-amber-300">değerlendirilmedi</span>}
           </div>
           {d.aiFlags && d.aiFlags.toLowerCase() !== "yok" && (
-            <p className="mt-1.5 inline-flex items-start gap-1 rounded-lg bg-red-50 px-2 py-1 text-xs text-red-700"><AlertTriangle size={13} className="mt-px shrink-0" /> {d.aiFlags}</p>
+            <p className="mt-1.5 inline-flex items-start gap-1 rounded-lg bg-red-500/10 px-2 py-1 text-xs text-red-300"><AlertTriangle size={13} className="mt-px shrink-0" /> {d.aiFlags}</p>
           )}
-          {d.aiSummary && <p className="mt-1.5 text-xs text-slate-600"><span className="font-semibold text-slate-500">Özet: </span>{d.aiSummary}</p>}
-          {d.aiTranslation && <p className="mt-1 whitespace-pre-wrap text-xs text-slate-500"><span className="font-semibold">TR çeviri: </span>{d.aiTranslation}</p>}
+          {d.aiSummary && <p className="mt-1.5 text-xs text-white/65"><span className="font-semibold text-white/50">Özet: </span>{d.aiSummary}</p>}
+          {d.aiTranslation && <p className="mt-1 whitespace-pre-wrap text-xs text-white/50"><span className="font-semibold">TR çeviri: </span>{d.aiTranslation}</p>}
           {d.aiLabs.length > 0 && (
             <div className="mt-2">
-              <div className="mb-1 inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><FlaskConical size={12} /> Laboratuvar (LOINC)</div>
+              <div className="mb-1 inline-flex items-center gap-1 text-[11px] font-semibold text-white/50"><FlaskConical size={12} /> Laboratuvar (LOINC)</div>
               <table className="w-full text-xs">
                 <tbody>
                   {d.aiLabs.map((l, i) => (
-                    <tr key={i} className="border-t border-slate-200">
-                      <td className="py-1 pr-2 text-slate-600">{l.name}{l.loinc ? <span className="ml-1 font-mono text-[9px] text-slate-400">{l.loinc}</span> : null}</td>
-                      <td className="py-1 text-right font-medium text-slate-800">{l.value}{l.unit ? ` ${l.unit}` : ""}</td>
+                    <tr key={i} className="border-t border-white/10">
+                      <td className="py-1 pr-2 text-white/65">{l.name}{l.loinc ? <span className="ml-1 font-mono text-[9px] text-white/40">{l.loinc}</span> : null}</td>
+                      <td className="py-1 text-right font-medium text-[#F4F5F3]">{l.value}{l.unit ? ` ${l.unit}` : ""}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -168,21 +168,21 @@ function RecommendationsView({ r }: { r: ConsultReqView }) {
   return (
     <div className="mt-2 grid gap-2 sm:grid-cols-3">
       {r.recommendedLabs.length > 0 && (
-        <div className="rounded-xl border border-slate-200 p-2">
-          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><FlaskConical size={12} /> Lab</div>
-          <ul className="mt-1 space-y-0.5 text-xs text-slate-600">{r.recommendedLabs.map((l, i) => <li key={i}>{l.name}{l.loinc ? <span className="ml-1 font-mono text-[9px] text-slate-400">{l.loinc}</span> : null}</li>)}</ul>
+        <div className="rounded-xl border border-white/10 p-2">
+          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-white/50"><FlaskConical size={12} /> Lab</div>
+          <ul className="mt-1 space-y-0.5 text-xs text-white/65">{r.recommendedLabs.map((l, i) => <li key={i}>{l.name}{l.loinc ? <span className="ml-1 font-mono text-[9px] text-white/40">{l.loinc}</span> : null}</li>)}</ul>
         </div>
       )}
       {r.recommendedImaging.length > 0 && (
-        <div className="rounded-xl border border-slate-200 p-2">
-          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><Scan size={12} /> Görüntüleme</div>
-          <ul className="mt-1 space-y-0.5 text-xs text-slate-600">{r.recommendedImaging.map((l, i) => <li key={i}>{l.name}{l.code ? <span className="ml-1 font-mono text-[9px] text-slate-400">{l.code}</span> : null}</li>)}</ul>
+        <div className="rounded-xl border border-white/10 p-2">
+          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-white/50"><Scan size={12} /> Görüntüleme</div>
+          <ul className="mt-1 space-y-0.5 text-xs text-white/65">{r.recommendedImaging.map((l, i) => <li key={i}>{l.name}{l.code ? <span className="ml-1 font-mono text-[9px] text-white/40">{l.code}</span> : null}</li>)}</ul>
         </div>
       )}
       {r.medications.length > 0 && (
-        <div className="rounded-xl border border-slate-200 p-2">
-          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><Pill size={12} /> İlaç (ATC)</div>
-          <ul className="mt-1 space-y-0.5 text-xs text-slate-600">{r.medications.map((m, i) => <li key={i}>{m.name} <span className="font-mono text-[9px] text-slate-400">{m.atc}</span>{m.dose ? ` · ${m.dose}` : ""}{m.freq ? ` · ${m.freq}` : ""}</li>)}</ul>
+        <div className="rounded-xl border border-white/10 p-2">
+          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-white/50"><Pill size={12} /> İlaç (ATC)</div>
+          <ul className="mt-1 space-y-0.5 text-xs text-white/65">{r.medications.map((m, i) => <li key={i}>{m.name} <span className="font-mono text-[9px] text-white/40">{m.atc}</span>{m.dose ? ` · ${m.dose}` : ""}{m.freq ? ` · ${m.freq}` : ""}</li>)}</ul>
         </div>
       )}
     </div>
@@ -191,20 +191,20 @@ function RecommendationsView({ r }: { r: ConsultReqView }) {
 
 function OpenCard({ r, catalog, engaged }: { r: ConsultReqView; catalog: CatalogProps; engaged?: boolean }) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <BranchTag r={r} />
-        <div className="flex items-center gap-3 text-xs text-slate-400">
+        <div className="flex items-center gap-3 text-xs text-white/40">
           <span className="inline-flex items-center gap-1"><Globe size={12} /> {r.region}</span>
           <span className="inline-flex items-center gap-1"><Languages size={12} /> {r.language}</span>
-          {r.icd10Code && <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600">{r.icd10Code}</span>}
+          {r.icd10Code && <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10px] text-white/65">{r.icd10Code}</span>}
         </div>
       </div>
-      {r.requestedByName && <p className="mt-2 text-xs text-slate-400">Talep eden: {r.requestedByName} (Partner)</p>}
+      {r.requestedByName && <p className="mt-2 text-xs text-white/40">Talep eden: {r.requestedByName} (Partner)</p>}
       {/* Klinik özet — Türkçe (varsa) öncelikli; kaynak dil farklıysa altta */}
-      <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700">{r.summaryTr || r.clinicalSummary}</p>
+      <p className="mt-3 whitespace-pre-wrap text-sm text-white/75">{r.summaryTr || r.clinicalSummary}</p>
       {r.summaryTr && r.summaryTr !== r.clinicalSummary && (
-        <details className="mt-1 text-xs text-slate-400"><summary className="cursor-pointer">Özgün metin ({r.language})</summary><p className="mt-1 whitespace-pre-wrap">{r.clinicalSummary}</p></details>
+        <details className="mt-1 text-xs text-white/40"><summary className="cursor-pointer">Özgün metin ({r.language})</summary><p className="mt-1 whitespace-pre-wrap">{r.clinicalSummary}</p></details>
       )}
       <DocumentsBlock docs={r.documents} />
 
@@ -219,8 +219,8 @@ function OpenCard({ r, catalog, engaged }: { r: ConsultReqView; catalog: Catalog
         // Açık talep: doğrudan yanıtla VEYA önce soru sor (ilk mesaj talebi üstlenir)
         <div className="mt-4 space-y-3">
           <ConsultAnswerForm id={r.id} catalog={catalog} />
-          <details className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
-            <summary className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-slate-500"><MessagesSquare size={13} /> Önce soru sor (bu talebi üstlenirsiniz)</summary>
+          <details className="rounded-2xl border border-white/10 bg-[#1E1F22]/60 p-3">
+            <summary className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-white/50"><MessagesSquare size={13} /> Önce soru sor (bu talebi üstlenirsiniz)</summary>
             <div className="mt-2"><ConsultationChat requestId={r.id} canSend hintKey="İlk sorunuzu gönderdiğinizde bu talebi üstlenirsiniz." /></div>
           </details>
         </div>

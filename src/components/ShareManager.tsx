@@ -113,9 +113,9 @@ function stateOf(l: LinkData): ShareState {
   return "ACTIVE";
 }
 const STATE_BADGE: Record<ShareState, string> = {
-  ACTIVE: "bg-emerald-100 text-emerald-700 ring-emerald-200",
-  EXPIRED: "bg-slate-100 text-slate-600 ring-slate-200",
-  REVOKED: "bg-red-100 text-red-700 ring-red-200",
+  ACTIVE: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25",
+  EXPIRED: "bg-white/10 text-white/65 ring-white/10",
+  REVOKED: "bg-red-500/15 text-red-300 ring-red-400/25",
 };
 const STATE_LABEL: Record<ShareState, string> = {
   ACTIVE: ST.stActive, EXPIRED: ST.stExpired, REVOKED: ST.stRevoked,
@@ -151,7 +151,7 @@ function ShareActions({ url, recipient, duration, hasPassword, compact, t }: {
     } else { copy(); }
   }
 
-  const btn = "inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50";
+  const btn = "inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-[#161719] px-3 py-2 text-sm font-medium text-white/75 hover:bg-[#1E1F22]";
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button onClick={nativeShare} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#28C8D8] px-3 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
@@ -165,7 +165,7 @@ function ShareActions({ url, recipient, duration, hasPassword, compact, t }: {
         </>
       )}
       <button onClick={copy} className={btn}>
-        {copied ? <><Check size={15} className="text-emerald-600" /> {t(ST.copied)}</> : <><Copy size={15} /> {t(ST.copy)}</>}
+        {copied ? <><Check size={15} className="text-emerald-300" /> {t(ST.copied)}</> : <><Copy size={15} /> {t(ST.copy)}</>}
       </button>
     </div>
   );
@@ -183,11 +183,11 @@ function StepRail({ step, t }: { step: number; t: T }) {
         return (
           <div key={n} className="flex flex-1 items-center gap-2 last:flex-none">
             <span aria-current={active ? "step" : undefined}
-              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold ${done || active ? "bg-[#28C8D8] text-[#06262a]" : "bg-slate-100 text-slate-400"}`}>
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold ${done || active ? "bg-[#28C8D8] text-[#06262a]" : "bg-white/10 text-white/40"}`}>
               {done ? <Check size={13} /> : n}
             </span>
-            <span className={active ? "text-slate-800" : done ? "text-[#0b5563]" : "text-slate-400"}>{label}</span>
-            {n < 3 && <span className={`h-px flex-1 ${done ? "bg-[#28C8D8]" : "bg-slate-200"}`} />}
+            <span className={active ? "text-[#F4F5F3]" : done ? "text-[#0b5563]" : "text-white/40"}>{label}</span>
+            {n < 3 && <span className={`h-px flex-1 ${done ? "bg-[#28C8D8]" : "bg-white/15"}`} />}
           </div>
         );
       })}
@@ -288,41 +288,41 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
   }
 
   const navPrimary = "inline-flex items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50";
-  const navGhost = "inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50";
+  const navGhost = "inline-flex items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22]";
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_minmax(320px,380px)]">
       {/* Sol: yeni paylaşım — 3 adımlı akış (Seç → Koru → Paylaş) */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="flex items-center gap-2 font-bold text-slate-800"><Plus size={18} /> {t(ST.newShare)}</h2>
-        <p className="mt-1 text-sm text-slate-500">{t(ST.newShareDesc)}</p>
+      <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+        <h2 className="flex items-center gap-2 font-bold text-[#F4F5F3]"><Plus size={18} /> {t(ST.newShare)}</h2>
+        <p className="mt-1 text-sm text-white/50">{t(ST.newShareDesc)}</p>
 
         <StepRail step={step} t={t} />
 
         {/* Adım 1 — Seç: kayıt + alıcı + veriler */}
         {step === 1 && (
           <div className="mt-5">
-            <label className="block text-sm font-medium text-slate-700">{t(ST.record)}</label>
-            <select value={caseId} onChange={(e) => setCaseId(e.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            <label className="block text-sm font-medium text-white/75">{t(ST.record)}</label>
+            <select value={caseId} onChange={(e) => setCaseId(e.target.value)} className="mt-1.5 w-full rounded-lg border border-white/15 px-3 py-2 text-sm">
               {cases.length === 0 && <option value="">{t(ST.noRecord)}</option>}
               {cases.map((c) => <option key={c.id} value={c.id}>{c.patientName} · {c.branch}</option>)}
             </select>
 
-            <label className="mt-4 block text-sm font-medium text-slate-700">{t(ST.recipientDoctor)} <span className="font-normal text-slate-400">{t(ST.optional)}</span></label>
-            <input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder={t(ST.recipientPlaceholder)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+            <label className="mt-4 block text-sm font-medium text-white/75">{t(ST.recipientDoctor)} <span className="font-normal text-white/40">{t(ST.optional)}</span></label>
+            <input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder={t(ST.recipientPlaceholder)} className="mt-1.5 w-full rounded-lg border border-white/15 px-3 py-2 text-sm" />
 
-            <div className="mt-4 text-sm font-medium text-slate-700">{t(ST.dataToShare)}</div>
+            <div className="mt-4 text-sm font-medium text-white/75">{t(ST.dataToShare)}</div>
             <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
               {SCOPES.map((s) => {
                 const Icon = SCOPE_ICON[s.key];
                 const on = scopes.includes(s.key);
                 return (
                   <button type="button" key={s.key} onClick={() => toggleScope(s.key)}
-                    className={`flex items-start gap-2.5 rounded-2xl border p-3 text-start transition-colors ${on ? "border-[#28C8D8] bg-[#28C8D8]/5 ring-1 ring-[#28C8D8]/20" : "border-slate-200 hover:bg-slate-50"}`}>
-                    <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-slate-100 text-slate-500"}`}><Icon size={16} /></span>
+                    className={`flex items-start gap-2.5 rounded-2xl border p-3 text-start transition-colors ${on ? "border-[#28C8D8] bg-[#28C8D8]/5 ring-1 ring-[#28C8D8]/20" : "border-white/10 hover:bg-[#1E1F22]"}`}>
+                    <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-white/10 text-white/50"}`}><Icon size={16} /></span>
                     <span className="min-w-0">
-                      <span className="flex items-center gap-1.5 text-sm font-medium text-slate-800">{t(s.label)} {on && <Check size={14} className="text-[#0D0E10]" />}</span>
-                      <span className="block text-xs text-slate-500">{t(s.desc)}</span>
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-[#F4F5F3]">{t(s.label)} {on && <Check size={14} className="text-[#F4F5F3]" />}</span>
+                      <span className="block text-xs text-white/50">{t(s.desc)}</span>
                     </span>
                   </button>
                 );
@@ -336,27 +336,27 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
         {/* Adım 2 — Koru: süre + koruma + "alıcının göreceği" canlı önizleme */}
         {step === 2 && (
           <div className="mt-5">
-            <div className="text-sm font-medium text-slate-700">{t(ST.accessDuration)}</div>
+            <div className="text-sm font-medium text-white/75">{t(ST.accessDuration)}</div>
             <div className="mt-1.5 flex flex-wrap gap-2">
               {DURATIONS.map((d) => (
                 <button type="button" key={d.key} onClick={() => setDurationKey(d.key)}
-                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${durationKey === d.key ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}>
+                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${durationKey === d.key ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-white/15 text-white/65 hover:bg-[#1E1F22]"}`}>
                   {t(d.label)}
                 </button>
               ))}
             </div>
 
             <div className="mt-4 space-y-2.5">
-              <label className="flex items-center gap-2.5 text-sm text-slate-700">
-                <input type="checkbox" checked={allowDownload} onChange={(e) => setAllowDownload(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-                <Download size={15} className="text-slate-400" /> {t(ST.allowDownload)} <span className="text-slate-400">{t(ST.viewOnlyDefault)}</span>
+              <label className="flex items-center gap-2.5 text-sm text-white/75">
+                <input type="checkbox" checked={allowDownload} onChange={(e) => setAllowDownload(e.target.checked)} className="h-4 w-4 rounded border-white/15" />
+                <Download size={15} className="text-white/40" /> {t(ST.allowDownload)} <span className="text-white/40">{t(ST.viewOnlyDefault)}</span>
               </label>
-              <label className="flex items-center gap-2.5 text-sm text-slate-700">
-                <input type="checkbox" checked={usePassword} onChange={(e) => setUsePassword(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-                <Lock size={15} className="text-slate-400" /> {t(ST.addPassword)}
+              <label className="flex items-center gap-2.5 text-sm text-white/75">
+                <input type="checkbox" checked={usePassword} onChange={(e) => setUsePassword(e.target.checked)} className="h-4 w-4 rounded border-white/15" />
+                <Lock size={15} className="text-white/40" /> {t(ST.addPassword)}
               </label>
               {usePassword && (
-                <input value={password} onChange={(e) => setPassword(e.target.value)} type="text" placeholder={t(ST.passwordPlaceholder)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                <input value={password} onChange={(e) => setPassword(e.target.value)} type="text" placeholder={t(ST.passwordPlaceholder)} className="w-full rounded-lg border border-white/15 px-3 py-2 text-sm" />
               )}
             </div>
 
@@ -367,15 +367,15 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
               </div>
               <div className="mt-2.5 space-y-1.5">
                 {scopes.length === 0 ? (
-                  <p className="text-xs text-slate-500">{t(ST.noDataYet)}</p>
+                  <p className="text-xs text-white/50">{t(ST.noDataYet)}</p>
                 ) : (
                   SCOPES.filter((s) => scopes.includes(s.key)).map((s) => {
                     const Icon = SCOPE_ICON[s.key];
-                    return <div key={s.key} className="flex items-center gap-2 text-sm text-slate-700"><Icon size={15} className="text-[#1FA9B8]" /> {t(s.label)}</div>;
+                    return <div key={s.key} className="flex items-center gap-2 text-sm text-white/75"><Icon size={15} className="text-[#1FA9B8]" /> {t(s.label)}</div>;
                   })
                 )}
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#28C8D8]/20 pt-2.5 text-[11px] text-slate-500">
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#28C8D8]/20 pt-2.5 text-[11px] text-white/50">
                 <span className="inline-flex items-center gap-1"><Clock size={12} /> {t(durationLabel(durationKey))}</span>
                 <span className="inline-flex items-center gap-1">
                   {allowDownload ? <><Download size={12} /> {t(ST.downloadable)}</> : <><Eye size={12} /> {t(ST.viewOnly)}</>}
@@ -393,24 +393,24 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
 
         {/* Adım 3 — Paylaş: son kontrol + oluştur → hazır bağlantı */}
         {step === 3 && (created ? (
-          <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
-            <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800"><Check size={16} /> {t(ST.linkReady)}</div>
-            <div className="mt-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs text-slate-600">
-              <Link2 size={14} className="shrink-0 text-slate-400" /> <span className="truncate">{created.url}</span>
+          <div className="mt-5 rounded-2xl border border-emerald-400/25 bg-emerald-50/70 p-4">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-200"><Check size={16} /> {t(ST.linkReady)}</div>
+            <div className="mt-2 flex items-center gap-2 rounded-lg border border-emerald-400/25 bg-[#161719] px-3 py-2 text-xs text-white/65">
+              <Link2 size={14} className="shrink-0 text-white/40" /> <span className="truncate">{created.url}</span>
             </div>
             <div className="mt-3"><ShareActions url={created.url} recipient={created.recipient} duration={t(created.duration)} hasPassword={created.hasPassword} t={t} /></div>
             <button onClick={reset} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[#1FA9B8] hover:underline"><Plus size={14} /> {t(ST.newShareLink)}</button>
           </div>
         ) : (
           <div className="mt-5">
-            <div className="rounded-2xl border border-slate-200 p-4">
-              <div className="text-sm font-medium text-slate-800">{t(ST.finalCheck)}</div>
+            <div className="rounded-2xl border border-white/10 p-4">
+              <div className="text-sm font-medium text-[#F4F5F3]">{t(ST.finalCheck)}</div>
               <dl className="mt-2.5 space-y-1.5 text-sm">
-                <div className="flex justify-between gap-3"><dt className="text-slate-500">{t(ST.recipient)}</dt><dd className="text-end text-slate-800">{recipient.trim() || t(ST.notSpecified)}</dd></div>
-                <div className="flex justify-between gap-3"><dt className="text-slate-500">{t(ST.recordCol)}</dt><dd className="text-end text-slate-800">{selectedCase ? `${selectedCase.patientName} · ${selectedCase.branch}` : "—"}</dd></div>
-                <div className="flex justify-between gap-3"><dt className="text-slate-500">{t(ST.dataCol)}</dt><dd className="text-end text-slate-800">{scopes.map((k) => t(scopeLabel(k))).join(", ")}</dd></div>
-                <div className="flex justify-between gap-3"><dt className="text-slate-500">{t(ST.durationCol)}</dt><dd className="text-slate-800">{t(durationLabel(durationKey))}</dd></div>
-                <div className="flex justify-between gap-3"><dt className="text-slate-500">{t(ST.protectionCol)}</dt><dd className="text-slate-800">{allowDownload ? t(ST.downloadable) : t(ST.viewOnly)}{usePassword ? ` · ${t(ST.encrypted)}` : ""}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-white/50">{t(ST.recipient)}</dt><dd className="text-end text-[#F4F5F3]">{recipient.trim() || t(ST.notSpecified)}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-white/50">{t(ST.recordCol)}</dt><dd className="text-end text-[#F4F5F3]">{selectedCase ? `${selectedCase.patientName} · ${selectedCase.branch}` : "—"}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-white/50">{t(ST.dataCol)}</dt><dd className="text-end text-[#F4F5F3]">{scopes.map((k) => t(scopeLabel(k))).join(", ")}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-white/50">{t(ST.durationCol)}</dt><dd className="text-[#F4F5F3]">{t(durationLabel(durationKey))}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-white/50">{t(ST.protectionCol)}</dt><dd className="text-[#F4F5F3]">{allowDownload ? t(ST.downloadable) : t(ST.viewOnly)}{usePassword ? ` · ${t(ST.encrypted)}` : ""}</dd></div>
               </dl>
             </div>
             <div className="mt-5 flex gap-2">
@@ -420,19 +420,19 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
           </div>
         ))}
 
-        {error && <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"><AlertCircle size={15} /> {error}</div>}
+        {error && <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300"><AlertCircle size={15} /> {error}</div>}
       </div>
 
       {/* Sağ: aktif paylaşımlar */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="flex items-center gap-2 font-bold text-slate-800">
-          <Link2 size={18} /> {t(ST.myShares)} <span className="text-sm font-normal text-slate-400">({links.length})</span>
+      <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+        <h2 className="flex items-center gap-2 font-bold text-[#F4F5F3]">
+          <Link2 size={18} /> {t(ST.myShares)} <span className="text-sm font-normal text-white/40">({links.length})</span>
         </h2>
         {links.length === 0 ? (
-          <div className="mt-4 flex flex-col items-center rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center">
+          <div className="mt-4 flex flex-col items-center rounded-2xl border border-dashed border-white/10 px-4 py-8 text-center">
             <span className="grid h-11 w-11 place-items-center rounded-full bg-[#28C8D8]/10 text-[#1FA9B8]"><ShieldCheck size={20} /></span>
-            <p className="mt-3 text-sm font-medium text-slate-700">{t(ST.emptyTitle)}</p>
-            <p className="mt-1 text-xs text-slate-500">{t(ST.emptyDesc)}</p>
+            <p className="mt-3 text-sm font-medium text-white/75">{t(ST.emptyTitle)}</p>
+            <p className="mt-1 text-xs text-white/50">{t(ST.emptyDesc)}</p>
           </div>
         ) : (
           <ul className="mt-3 space-y-3">
@@ -440,30 +440,30 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
               const st = stateOf(l);
               const url = `${origin}/paylasim/${l.token}`;
               return (
-                <li key={l.id} className="rounded-2xl border border-slate-200 p-3.5">
+                <li key={l.id} className="rounded-2xl border border-white/10 p-3.5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-slate-800">{l.recipientName || t(ST.sharedPerson)}</span>
+                    <span className="text-sm font-semibold text-[#F4F5F3]">{l.recipientName || t(ST.sharedPerson)}</span>
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${STATE_BADGE[st]}`}>{t(STATE_LABEL[st])}</span>
                   </div>
-                  <div className="mt-0.5 text-xs text-slate-500">{l.caseName} · {l.caseBranch}</div>
+                  <div className="mt-0.5 text-xs text-white/50">{l.caseName} · {l.caseBranch}</div>
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {l.scopes.map((s) => <span key={s} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">{t(scopeLabel(s))}</span>)}
+                    {l.scopes.map((s) => <span key={s} className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-white/65">{t(scopeLabel(s))}</span>)}
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/50">
                     <span className="inline-flex items-center gap-1"><Clock size={12} /> {l.expiresAt ? `${t(ST.ends)} ${fmt(l.expiresAt, locale)}` : t(ST.noExpiry)}</span>
                     <span className="inline-flex items-center gap-1"><Eye size={12} /> {l.accessCount} {t(ST.accessN)}{l.lastAccess ? ` · ${t(ST.lastAccess)} ${fmt(l.lastAccess, locale)}` : ""}</span>
                     {l.allowDownload && <span className="inline-flex items-center gap-1"><Download size={12} /> {t(ST.downloadable)}</span>}
                   </div>
                   {st === "ACTIVE" && (confirmRevoke === l.id ? (
-                    <div className="mt-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3">
-                      <p className="text-xs text-amber-900">
+                    <div className="mt-2.5 rounded-xl border border-amber-400/25 bg-amber-500/10 p-3">
+                      <p className="text-xs text-amber-200">
                         <strong>{t(ST.revokeQ)}</strong> {t(ST.revokeBody)}
                       </p>
                       <div className="mt-2.5 flex gap-2">
                         <button onClick={() => revoke(l.id)} disabled={revoking} className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50">
                           <Trash2 size={14} /> {revoking ? t(ST.revoking) : t(ST.revokeYes)}
                         </button>
-                        <button onClick={() => setConfirmRevoke(null)} disabled={revoking} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                        <button onClick={() => setConfirmRevoke(null)} disabled={revoking} className="rounded-lg border border-white/15 px-3 py-1.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22]">
                           {t(ST.revokeCancel)}
                         </button>
                       </div>
@@ -471,7 +471,7 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
                   ) : (
                     <div className="mt-2.5 flex items-center gap-2">
                       <ShareActions url={url} recipient={l.recipientName || ""} duration={l.expiresAt ? `${t(ST.ends)} ${fmt(l.expiresAt, locale)}` : t(ST.noExpiry)} hasPassword={false} compact t={t} />
-                      <button onClick={() => setConfirmRevoke(l.id)} className="ms-auto inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-2.5 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
+                      <button onClick={() => setConfirmRevoke(l.id)} className="ms-auto inline-flex items-center gap-1.5 rounded-lg border border-red-400/25 bg-[#161719] px-2.5 py-2 text-sm font-medium text-red-300 hover:bg-red-500/10">
                         <Trash2 size={14} /> {t(ST.revoke)}
                       </button>
                     </div>

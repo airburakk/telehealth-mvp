@@ -62,21 +62,21 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#1FA9B8]">
+      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-[#1FA9B8]">
         <ArrowLeft size={16} /> Vaka kuyruğu
       </Link>
 
       <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_300px]">
         {/* Sol: Vaka kartı (kokpit) */}
         <div className="space-y-5">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold text-slate-800">{c.patientName}</h1>
-                  <span className="text-sm text-slate-400">{countryFlag(c.country)} {countryName(c.country)}</span>
+                  <h1 className="text-xl font-bold text-[#F4F5F3]">{c.patientName}</h1>
+                  <span className="text-sm text-white/40">{countryFlag(c.country)} {countryName(c.country)}</span>
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
+                <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-white/50">
                   <span className="inline-flex items-center gap-1"><Languages size={14} /> {c.language}</span>
                   <span className="inline-flex items-center gap-1"><Clock size={14} /> {formatDateTime(c.createdAt)}</span>
                   <span className="inline-flex items-center gap-1"><Stethoscope size={14} /> <span className="font-medium text-[#1FA9B8]">{c.branch}</span></span>
@@ -89,27 +89,27 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
 
             <div className="mt-5">
               <SectionTitle icon={<FileText size={15} />}>Şikayet</SectionTitle>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-700">{c.symptoms}</p>
-              {c.durationText && <p className="mt-1 text-xs text-slate-400">Süre: {c.durationText}</p>}
+              <p className="mt-1.5 text-sm leading-relaxed text-white/75">{c.symptoms}</p>
+              {c.durationText && <p className="mt-1 text-xs text-white/40">Süre: {c.durationText}</p>}
               <TranslateButton text={c.symptoms} defaultTarget="Türkçe" />
             </div>
 
-            <div className="mt-5 rounded-2xl border border-teal-200 bg-teal-50/60 p-4">
-              <SectionTitle icon={<Sparkles size={15} />} tone="text-teal-700">AI Triyaj Gerekçesi</SectionTitle>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{c.reasoning}</p>
-              <div className="mt-2 text-xs text-slate-400">Güven skoru: %{c.confidence}</div>
+            <div className="mt-5 rounded-2xl border border-[#28C8D8]/25 bg-teal-50/60 p-4">
+              <SectionTitle icon={<Sparkles size={15} />} tone="text-[#28C8D8]">AI Triyaj Gerekçesi</SectionTitle>
+              <p className="mt-1.5 text-sm leading-relaxed text-white/65">{c.reasoning}</p>
+              <div className="mt-2 text-xs text-white/40">Güven skoru: %{c.confidence}</div>
             </div>
           </div>
 
           {/* Branş ön-değerlendirme yanıtları (dinamik triyaj soruları) */}
           {triageAnswers && Object.keys(triageAnswers).length > 0 && (
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
               <SectionTitle icon={<ListChecks size={15} />}>Ön Değerlendirme · Branş Soruları</SectionTitle>
               <dl className="mt-3 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
                 {Object.entries(triageAnswers).map(([k, v]) => (
                   <div key={k} className="text-sm">
-                    <dt className="text-xs text-slate-400">{k}</dt>
-                    <dd className="font-medium text-slate-700">{v}</dd>
+                    <dt className="text-xs text-white/40">{k}</dt>
+                    <dd className="font-medium text-white/75">{v}</dd>
                   </div>
                 ))}
               </dl>
@@ -117,21 +117,21 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
           )}
 
           {/* Belgeler */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
             <SectionTitle icon={<FileText size={15} />}>Tıbbi Belgeler</SectionTitle>
             {files.length ? (
               <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                 {files.map((f) => (
-                  <li key={f} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                    <FileText size={16} className="text-teal-600" /> {f}
+                  <li key={f} className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#1E1F22] px-3 py-2 text-sm text-white/75">
+                    <FileText size={16} className="text-[#28C8D8]" /> {f}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-slate-400">Yüklenmiş belge yok.</p>
+              <p className="mt-2 text-sm text-white/40">Yüklenmiş belge yok.</p>
             )}
             {caseDocs.length > 0 && (
-              <p className="mt-3 text-xs text-slate-400">
+              <p className="mt-3 text-xs text-white/40">
                 Görüntü ve PDF belgeler aşağıdaki <strong>Belge Analizi (AI)</strong> kartında değerlendirilip Türkçeye çevrilir. DICOM görüntüleri Radyoloji görüntüleyicide açılır.
               </p>
             )}
@@ -156,31 +156,31 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
 
         {/* Sağ: aksiyon paneli */}
         <aside className="space-y-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="text-xs uppercase tracking-wide text-slate-400">Durum</div>
+          <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+            <div className="text-xs uppercase tracking-wide text-white/40">Durum</div>
             <div className="mt-1 mb-4">
               <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${st.color}`}>{st.label}</span>
             </div>
 
-            <div className="text-xs uppercase tracking-wide text-slate-400">Atanan / Önerilen Doktor</div>
+            <div className="text-xs uppercase tracking-wide text-white/40">Atanan / Önerilen Doktor</div>
             <div className="mt-2 flex items-center gap-3">
               <span className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-white" style={{ background: (c.doctor ?? suggested)?.color ?? "#1FA9B8" }}>
                 {((c.doctor ?? suggested)?.name ?? "?").slice(0, 1)}
               </span>
               <div className="text-sm">
-                <div className="font-semibold text-slate-800">
+                <div className="font-semibold text-[#F4F5F3]">
                   {(c.doctor ?? suggested) ? `${(c.doctor ?? suggested)!.title} ${(c.doctor ?? suggested)!.name}` : "Atanmadı"}
                 </div>
-                <div className="text-xs text-slate-500">{(c.doctor ?? suggested)?.branch}</div>
+                <div className="text-xs text-white/50">{(c.doctor ?? suggested)?.branch}</div>
               </div>
             </div>
             {(c.doctor ?? suggested)?.languages && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-white/50">
                 <Globe size={13} /> {(c.doctor ?? suggested)!.languages.split(",").join(" · ")}
               </div>
             )}
             {(c.doctor ?? suggested) && (
-              <Link href={`/hekim/${(c.doctor ?? suggested)!.id}`} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-700 hover:underline">
+              <Link href={`/hekim/${(c.doctor ?? suggested)!.id}`} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[#28C8D8] hover:underline">
                 Doktor profilini gör <ArrowRight size={13} />
               </Link>
             )}
@@ -188,24 +188,24 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
             <div className="mt-5">
               <StartConsultButton caseId={c.id} label={c.status === "IN_CONSULT" ? "Görüşmeye Dön" : "Görüşmeyi Başlat"} />
             </div>
-            <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+            <p className="mt-2 text-[11px] leading-relaxed text-white/40">
               Görüşme başlatıldığında hasta için sade arayüz, doktor için veri-yoğun ekran açılır.
             </p>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
             <SectionTitle icon={<Brain size={15} />}>Hızlı Aksiyonlar</SectionTitle>
             <div className="mt-3 space-y-2 text-sm">
               <Link
                 href={`/paket/${c.id}`}
-                className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 font-medium text-emerald-700 hover:bg-emerald-100"
+                className="flex items-center justify-between rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-3 py-2 font-medium text-emerald-300 hover:bg-emerald-500/15"
               >
                 <span className="inline-flex items-center gap-1.5"><Luggage size={14} /> Sağlık turizmi paketi</span>
                 <ArrowRight size={14} />
               </Link>
               <Link
                 href={`/takip/${c.id}`}
-                className="flex items-center justify-between rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 font-medium text-teal-700 hover:bg-teal-100"
+                className="flex items-center justify-between rounded-lg border border-[#28C8D8]/25 bg-[#28C8D8]/10 px-3 py-2 font-medium text-[#28C8D8] hover:bg-[#28C8D8]/15"
               >
                 <span className="inline-flex items-center gap-1.5"><HeartPulse size={14} /> Post-Op takip</span>
                 <ArrowRight size={14} />
@@ -221,7 +221,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
 
 function SectionTitle({ children, icon, tone }: { children: React.ReactNode; icon: React.ReactNode; tone?: string }) {
   return (
-    <div className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide ${tone ?? "text-slate-500"}`}>
+    <div className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide ${tone ?? "text-white/50"}`}>
       {icon} {children}
     </div>
   );
@@ -229,9 +229,9 @@ function SectionTitle({ children, icon, tone }: { children: React.ReactNode; ico
 
 function DisabledAction({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border border-dashed border-slate-200 px-3 py-2 text-slate-400">
+    <div className="flex items-center justify-between rounded-lg border border-dashed border-white/10 px-3 py-2 text-white/40">
       {children}
-      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px]">yakında</span>
+      <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px]">yakında</span>
     </div>
   );
 }
@@ -240,13 +240,13 @@ function DisabledAction({ children }: { children: React.ReactNode }) {
 function PostopClosedScreen() {
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
-      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#1FA9B8]">
+      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-[#1FA9B8]">
         <ArrowLeft size={16} /> Vaka kuyruğu
       </Link>
-      <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-500"><Lock size={26} /></span>
-        <h1 className="mt-4 text-lg font-bold text-slate-800">Post-op takip tamamlandı</h1>
-        <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">
+      <div className="mt-6 rounded-3xl border border-white/10 bg-[#161719] p-8 text-center shadow-sm">
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white/10 text-white/50"><Lock size={26} /></span>
+        <h1 className="mt-4 text-lg font-bold text-[#F4F5F3]">Post-op takip tamamlandı</h1>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/50">
           Bu vakanın post-op takip süreci kapandığı için klinik kayıtlara erişim hastaya devredilmiştir.
           Doktor/personel artık bu vakanın klinik içeriğini görüntüleyemez. Erişim olayları değiştirilemez denetim
           kaydında zaman damgalıdır.

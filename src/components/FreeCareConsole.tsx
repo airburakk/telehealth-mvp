@@ -114,29 +114,29 @@ export function FreeCareConsole({
       <div className="flex items-center gap-2">
         <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[#28C8D8]/10 text-[#17919E]"><HeartHandshake size={20} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0D0E10]">Ücretsiz Sağlık Hizmeti Konsolu</h1>
-          <p className="text-sm text-slate-500">Gönüllü ücretsiz konsültasyon — müsaitlik açın, triyaj sizi bekleyen hastayla eşleştirsin.</p>
+          <h1 className="text-2xl font-bold text-[#F4F5F3]">Ücretsiz Sağlık Hizmeti Konsolu</h1>
+          <p className="text-sm text-white/50">Gönüllü ücretsiz konsültasyon — müsaitlik açın, triyaj sizi bekleyen hastayla eşleştirsin.</p>
         </div>
       </div>
 
       {/* Müsaitlik + kota + bekleyen */}
       <div className="mt-6 grid gap-4 sm:grid-cols-[1fr_300px]">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-              <StateDot state={serverState} /> Durum: <span className="text-[#0D0E10]">{FREE_CARE_STATES_DOCTOR[serverState] ?? serverState}</span>
+            <div className="flex items-center gap-2 text-sm font-semibold text-white/75">
+              <StateDot state={serverState} /> Durum: <span className="text-[#F4F5F3]">{FREE_CARE_STATES_DOCTOR[serverState] ?? serverState}</span>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#1E1F22] px-3 py-1 text-xs font-medium text-white/65 ring-1 ring-white/10">
               <Users size={13} /> {waiting} bekleyen hasta
             </span>
           </div>
 
           {inSession ? (
-            <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50/70 px-4 py-3 text-sm text-violet-800">
+            <div className="mt-4 rounded-2xl border border-violet-400/25 bg-violet-50/70 px-4 py-3 text-sm text-violet-200">
               Şu an bir görüşmedesiniz. Görüşme bitince aşağıdan <b>sonucu işaretleyin</b>; ardından tekrar müsait olabilirsiniz.
             </div>
           ) : quotaFull ? (
-            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
               Bu haftaki ücretsiz hizmet kontenjanınız doldu ({quota.used}/{quota.quota}). Kontenjan her hafta yenilenir.
             </div>
           ) : (
@@ -144,7 +144,7 @@ export function FreeCareConsole({
               onClick={() => toggle(!available)}
               disabled={busy}
               className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors disabled:opacity-60 ${
-                available ? "bg-slate-800 text-white hover:bg-slate-900" : "bg-[#28C8D8] text-[#0D0E10] hover:bg-[#1FA9B8]"
+                available ? "bg-[#26272B] text-white hover:bg-[#101113]" : "bg-[#28C8D8] text-[#0D0E10] hover:bg-[#1FA9B8]"
               }`}
             >
               {busy ? <Loader2 size={17} className="animate-spin" /> : available ? <Power size={17} /> : <Radio size={17} />}
@@ -153,7 +153,7 @@ export function FreeCareConsole({
           )}
 
           {available && (
-            <div className="mt-3 flex items-center justify-center gap-2 text-xs text-slate-500">
+            <div className="mt-3 flex items-center justify-center gap-2 text-xs text-white/50">
               <Loader2 size={13} className="animate-spin text-[#28C8D8]" /> Eşleşme bekleniyor — bu sayfayı açık tutun
             </div>
           )}
@@ -161,21 +161,21 @@ export function FreeCareConsole({
 
         {/* Kota + itibar */}
         <aside className="space-y-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><Activity size={14} /> Haftalık Kontenjan</div>
+          <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50"><Activity size={14} /> Haftalık Kontenjan</div>
             <div className="mt-2 flex items-end justify-between">
-              <span className="text-2xl font-bold text-[#0D0E10]">{quota.used}<span className="text-base font-normal text-slate-400">/{quota.quota}</span></span>
-              <span className="text-xs text-slate-500">{quota.left} hak kaldı</span>
+              <span className="text-2xl font-bold text-[#F4F5F3]">{quota.used}<span className="text-base font-normal text-white/40">/{quota.quota}</span></span>
+              <span className="text-xs text-white/50">{quota.left} hak kaldı</span>
             </div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
               <div className="h-full rounded-full bg-[#28C8D8]" style={{ width: `${Math.min(100, (quota.used / Math.max(1, quota.quota)) * 100)}%` }} />
             </div>
           </div>
-          <div className="rounded-3xl border border-teal-200 bg-teal-50/60 p-5">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700"><Award size={14} /> Ücretsiz Hizmet Katkınız</div>
+          <div className="rounded-3xl border border-[#28C8D8]/25 bg-teal-50/60 p-5">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]"><Award size={14} /> Ücretsiz Hizmet Katkınız</div>
             <div className="mt-2 grid grid-cols-2 gap-3 text-center">
-              <div><div className="text-2xl font-bold text-teal-800">{badge.consultations}</div><div className="text-[11px] text-teal-700">görüşme</div></div>
-              <div><div className="text-2xl font-bold text-teal-800">{badge.converted}</div><div className="text-[11px] text-teal-700">tedaviye yönlendirildi</div></div>
+              <div><div className="text-2xl font-bold text-[#28C8D8]">{badge.consultations}</div><div className="text-[11px] text-[#28C8D8]">görüşme</div></div>
+              <div><div className="text-2xl font-bold text-[#28C8D8]">{badge.converted}</div><div className="text-[11px] text-[#28C8D8]">tedaviye yönlendirildi</div></div>
             </div>
           </div>
         </aside>
@@ -184,10 +184,10 @@ export function FreeCareConsole({
       {/* Sonuç bekleyen görüşmeler */}
       {awaiting.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-sm font-semibold text-slate-700">Görüşme sonucunu işaretleyin</h2>
+          <h2 className="text-sm font-semibold text-white/75">Görüşme sonucunu işaretleyin</h2>
           <div className="mt-2 space-y-3">
             {awaiting.map((c) => (
-              <div key={c.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div key={c.id} className="rounded-2xl border border-white/10 bg-[#161719] p-4 shadow-sm">
                 <CaseHead c={c} />
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
@@ -200,7 +200,7 @@ export function FreeCareConsole({
                   <button
                     onClick={() => markOutcome(c.id, "TREATMENT_NEEDED")}
                     disabled={busy}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3.5 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-500/15 disabled:opacity-60"
                   >
                     <Stethoscope size={15} /> Tedavi gerekiyor — etik kurula gönder
                   </button>
@@ -214,15 +214,15 @@ export function FreeCareConsole({
       {/* Geçmiş */}
       {recent.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-sm font-semibold text-slate-700">Son ücretsiz hizmet vakalarınız</h2>
-          <ul className="mt-2 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
+          <h2 className="text-sm font-semibold text-white/75">Son ücretsiz hizmet vakalarınız</h2>
+          <ul className="mt-2 divide-y divide-white/10 rounded-2xl border border-white/10 bg-[#161719]">
             {recent.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                 <div className="min-w-0">
-                  <div className="truncate font-medium text-slate-700">{countryFlag(c.country)} {c.patientName} · {c.branch}</div>
-                  <div className="text-xs text-slate-400">{formatDateTime(c.createdAt)}</div>
+                  <div className="truncate font-medium text-white/75">{countryFlag(c.country)} {c.patientName} · {c.branch}</div>
+                  <div className="text-xs text-white/40">{formatDateTime(c.createdAt)}</div>
                 </div>
-                <span className="shrink-0 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
+                <span className="shrink-0 rounded-full bg-[#1E1F22] px-2.5 py-1 text-[11px] font-medium text-white/65 ring-1 ring-white/10">
                   {FREE_CARE_STATES[c.freeCareStatus] ?? c.freeCareStatus}
                 </span>
               </li>
@@ -232,7 +232,7 @@ export function FreeCareConsole({
       )}
 
       {awaiting.length === 0 && recent.length === 0 && (
-        <p className="mt-8 rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-400">
+        <p className="mt-8 rounded-2xl bg-[#1E1F22] px-4 py-8 text-center text-sm text-white/40">
           Henüz ücretsiz hizmet görüşmeniz yok. Müsait olun; bekleyen bir hastayla eşleştiğinizde görüşme otomatik başlar.
         </p>
       )}
@@ -247,7 +247,7 @@ const FREE_CARE_STATES_DOCTOR: Record<string, string> = {
 };
 
 function StateDot({ state }: { state: string }) {
-  const cls = state === "AVAILABLE" ? "bg-emerald-500" : state === "IN_SESSION" ? "bg-violet-500" : "bg-slate-300";
+  const cls = state === "AVAILABLE" ? "bg-emerald-500" : state === "IN_SESSION" ? "bg-violet-500" : "bg-white/20";
   return <span className={`h-2.5 w-2.5 rounded-full ${cls}`} />;
 }
 
@@ -256,14 +256,14 @@ function CaseHead({ c }: { c: PBCase }) {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-semibold text-[#0D0E10]">{countryFlag(c.country)} {c.patientName}</span>
-        <span className="rounded-lg bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200">{c.branch}</span>
+        <span className="font-semibold text-[#F4F5F3]">{countryFlag(c.country)} {c.patientName}</span>
+        <span className="rounded-lg bg-[#1E1F22] px-2 py-0.5 text-xs font-medium text-white/65 ring-1 ring-white/10">{c.branch}</span>
         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${u.badge}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${u.dot}`} /> {c.urgency}/5
         </span>
-        <span className="text-xs text-slate-400">· {c.language}</span>
+        <span className="text-xs text-white/40">· {c.language}</span>
       </div>
-      <p className="mt-1.5 line-clamp-2 text-sm text-slate-600">{c.symptoms}</p>
+      <p className="mt-1.5 line-clamp-2 text-sm text-white/65">{c.symptoms}</p>
     </div>
   );
 }

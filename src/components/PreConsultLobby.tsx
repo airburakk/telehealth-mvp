@@ -338,10 +338,10 @@ export function PreConsultLobby({
       {/* Başlık + erişilebilirlik kontrolleri */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#0D0E10]">{t(TX.title)}</h1>
-          <p className="mt-1 text-sm text-slate-500">{t(TX.subtitle)}</p>
+          <h1 className="text-2xl font-bold text-[#F4F5F3]">{t(TX.title)}</h1>
+          <p className="mt-1 text-sm text-white/50">{t(TX.subtitle)}</p>
           {!showDoctorCard && (remoteLabel || branchLabel) && (
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-white/40">
               {branchLabel ? t(branchLabel) : ""}{branchLabel && remoteLabel ? " · " : ""}{remoteLabel ?? ""}
             </p>
           )}
@@ -350,11 +350,11 @@ export function PreConsultLobby({
           {langSelector}
           <div className="flex items-center gap-1.5">
             <button onClick={toggleBigText} aria-pressed={bigText}
-              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${bigText ? "border-[#28C8D8] bg-cyan-50 text-[#1FA9B8]" : "border-slate-300 text-slate-500 hover:bg-slate-50"}`}>
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${bigText ? "border-[#28C8D8] bg-cyan-500/10 text-[#1FA9B8]" : "border-white/15 text-white/50 hover:bg-[#1E1F22]"}`}>
               <ALargeSmall size={14} /> {t(TX.bigText)}
             </button>
             <button onClick={() => setShowHelp((v) => !v)} aria-expanded={showHelp}
-              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${showHelp ? "border-[#28C8D8] bg-cyan-50 text-[#1FA9B8]" : "border-slate-300 text-slate-500 hover:bg-slate-50"}`}>
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${showHelp ? "border-[#28C8D8] bg-cyan-500/10 text-[#1FA9B8]" : "border-white/15 text-white/50 hover:bg-[#1E1F22]"}`}>
               <HelpCircle size={14} /> {t(TX.help)}
             </button>
           </div>
@@ -363,32 +363,32 @@ export function PreConsultLobby({
 
       {/* Yardım paneli (Faz C) — pratik sorun giderme (insan çıpası: dürüst, gerçek adımlar) */}
       {showHelp && (
-        <div className="mt-4 rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4">
+        <div className="mt-4 rounded-2xl border border-cyan-400/25 bg-cyan-50/60 p-4">
           <p className="flex items-center gap-1.5 text-sm font-semibold text-[#1FA9B8]"><HelpCircle size={15} /> {t(TX.helpTitle)}</p>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">{t(TX.helpBody)}</p>
+          <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">{t(TX.helpBody)}</p>
         </div>
       )}
 
       {/* Atanan doktor kartı (yalnız hasta) — tıklayınca public profil ÖZETİ satır-içi genişler */}
       {showDoctorCard && doctorCard && (
-        <div className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="mt-5 overflow-hidden rounded-3xl border border-white/10 bg-[#161719] shadow-sm">
           <button
             onClick={() => setDocOpen((o) => !o)}
             aria-expanded={docOpen}
-            className="flex w-full items-center gap-3 p-4 text-start hover:bg-slate-50"
+            className="flex w-full items-center gap-3 p-4 text-start hover:bg-[#1E1F22]"
           >
-            <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl ring-1 ring-slate-200">
+            <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl ring-1 ring-white/10">
               <DoctorArt i={doctorCard.avatarVariant} female={doctorCard.female} photo={doctorCard.photo} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-400">{t(TX.yourDoctor)}</span>
+              <span className="block text-[11px] font-medium uppercase tracking-wide text-white/40">{t(TX.yourDoctor)}</span>
               <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                <span className="font-bold text-[#0D0E10]">{doctorCard.title} {doctorCard.name}</span>
+                <span className="font-bold text-[#F4F5F3]">{doctorCard.title} {doctorCard.name}</span>
                 {doctorCard.verified && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-semibold text-teal-700"><BadgeCheck size={11} /> {t(TX.verified)}</span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#28C8D8]/15 px-2 py-0.5 text-[10px] font-semibold text-[#28C8D8]"><BadgeCheck size={11} /> {t(TX.verified)}</span>
                 )}
               </span>
-              <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
+              <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-white/50">
                 <span className="inline-flex items-center gap-1 font-medium text-[#1FA9B8]"><Stethoscope size={12} /> {branchLabel ? t(branchLabel) : doctorCard.branch}</span>
                 <span className="inline-flex items-center gap-1"><MapPin size={12} /> {doctorCard.city}</span>
                 {/* rating null = veri yok → yıldız bloğu tamamen gizlenir (0.0 gösterilmez) */}
@@ -397,18 +397,18 @@ export function PreConsultLobby({
                 )}
               </span>
             </span>
-            <span className="flex shrink-0 flex-col items-center text-slate-400">
+            <span className="flex shrink-0 flex-col items-center text-white/40">
               {docOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               {!docOpen && <span className="mt-0.5 hidden text-[9px] sm:block">{t(TX.tapForDetails)}</span>}
             </span>
           </button>
 
           {docOpen && (
-            <div className="space-y-4 border-t border-slate-100 px-4 pb-4 pt-4">
+            <div className="space-y-4 border-t border-white/10 px-4 pb-4 pt-4">
               {/* Hakkında (doktor bio kanonik metin) */}
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{t(TX.about)}</p>
-                <p className="mt-1 text-[13px] leading-relaxed text-slate-600">{doctorCard.bio}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">{t(TX.about)}</p>
+                <p className="mt-1 text-[13px] leading-relaxed text-white/65">{doctorCard.bio}</p>
               </div>
 
               {/* İstatistik çubukları — null = veri yok → o metrik gizlenir (reviewCount>0 deseniyle aynı) */}
@@ -426,12 +426,12 @@ export function PreConsultLobby({
               {/* Güven rozetleri */}
               {doctorCard.badges.length > 0 && (
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{t(TX.trustBadges)}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">{t(TX.trustBadges)}</p>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {doctorCard.badges.map((b) => {
                       const Icon = BADGE_ICON[b.key] ?? CheckCircle2;
                       return (
-                        <span key={b.key} title={b.desc} className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-slate-200">
+                        <span key={b.key} title={b.desc} className="inline-flex items-center gap-1 rounded-full bg-[#1E1F22] px-2.5 py-1 text-[11px] font-medium text-white/75 ring-1 ring-white/10">
                           <Icon size={12} /> {b.label}
                         </span>
                       );
@@ -442,23 +442,23 @@ export function PreConsultLobby({
 
               {/* Akreditasyon özeti */}
               <div>
-                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400"><ShieldCheck size={12} /> {t(TX.credentialsTitle)}</p>
-                <ul className="mt-1.5 space-y-1.5 text-[13px] text-slate-600">
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-white/40"><ShieldCheck size={12} /> {t(TX.credentialsTitle)}</p>
+                <ul className="mt-1.5 space-y-1.5 text-[13px] text-white/65">
                   {/* yıl null (veri yok) → sarkık " · " ayracı bırakma (v4.19) */}
-                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className="mt-0.5 shrink-0 text-emerald-600" /><span><span className="font-medium text-slate-700">{t(TX.diploma)}:</span> {doctorCard.credentials.diplomaSchool}{doctorCard.credentials.diplomaYear != null ? ` · ${doctorCard.credentials.diplomaYear}` : ""}</span></li>
-                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className="mt-0.5 shrink-0 text-emerald-600" /><span><span className="font-medium text-slate-700">{t(TX.speciality)}:</span> {doctorCard.credentials.specBoard}{doctorCard.credentials.specYear != null ? ` · ${doctorCard.credentials.specYear}` : ""}</span></li>
+                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /><span><span className="font-medium text-white/75">{t(TX.diploma)}:</span> {doctorCard.credentials.diplomaSchool}{doctorCard.credentials.diplomaYear != null ? ` · ${doctorCard.credentials.diplomaYear}` : ""}</span></li>
+                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /><span><span className="font-medium text-white/75">{t(TX.speciality)}:</span> {doctorCard.credentials.specBoard}{doctorCard.credentials.specYear != null ? ` · ${doctorCard.credentials.specYear}` : ""}</span></li>
                 </ul>
               </div>
 
               {/* Akademik */}
               <div>
-                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400"><GraduationCap size={12} /> {t(TX.academicTitle)}</p>
-                <p className="mt-1 text-[13px] leading-relaxed text-slate-600">{doctorCard.academic}</p>
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-white/40"><GraduationCap size={12} /> {t(TX.academicTitle)}</p>
+                <p className="mt-1 text-[13px] leading-relaxed text-white/65">{doctorCard.academic}</p>
               </div>
 
               {/* Video kartvizit — hasta dilinde: varsa dil-bazlı video varyantı, her durumda çevrilmiş altyazı */}
               <div>
-                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400"><Video size={12} /> {t(TX.videoCard)}</p>
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-white/40"><Video size={12} /> {t(TX.videoCard)}</p>
                 <div className="mt-1.5">
                   <DoctorVideoCard
                     name={doctorCard.name}
@@ -474,7 +474,7 @@ export function PreConsultLobby({
               {/* public profil verified-kapılı (v4.19) — doğrulanmamış doktorda 404'e götüren link gösterme */}
               {doctorCard.verified && (
                 <a href={`/hekim/${doctorCard.id}`} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-1.5 text-xs font-medium text-white/65 hover:bg-[#1E1F22]">
                   <ExternalLink size={13} /> {t(TX.fullProfile)}
                 </a>
               )}
@@ -484,24 +484,24 @@ export function PreConsultLobby({
       )}
 
       {/* Geri sayım + Katıl (en görünür öğe) */}
-      <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mt-6 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
         {schedMs !== null && (
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Clock size={15} className="text-[#1FA9B8]" /> {t(TX.appt)}: <span className="font-semibold text-[#0D0E10]">{apptStr}</span>
+          <div className="flex items-center gap-2 text-sm text-white/50">
+            <Clock size={15} className="text-[#1FA9B8]" /> {t(TX.appt)}: <span className="font-semibold text-[#F4F5F3]">{apptStr}</span>
           </div>
         )}
 
         {schedMs !== null && (subState === "before" || subState === "within") && (
           <div className="mt-4 text-center">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{t(TX.remaining)}</p>
-            <p className="mt-1 text-3xl font-bold tabular-nums text-[#0D0E10]">
+            <p className="text-xs font-medium uppercase tracking-wide text-white/40">{t(TX.remaining)}</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums text-[#F4F5F3]">
               {nowMs === null ? "—" : fmtCountdown(remainMs)}
             </p>
           </div>
         )}
 
         {statusLine && (
-          <p className={`mt-4 text-center text-[15px] font-medium ${subState === "time" ? "text-emerald-700" : "text-[#1FA9B8]"}`}>
+          <p className={`mt-4 text-center text-[15px] font-medium ${subState === "time" ? "text-emerald-300" : "text-[#1FA9B8]"}`}>
             {subState === "time" && <CheckCircle2 size={16} className="me-1 inline align-[-2px]" />}
             {statusLine}
           </p>
@@ -515,13 +515,13 @@ export function PreConsultLobby({
             className={`inline-flex items-center gap-2 rounded-2xl px-8 py-3.5 text-[15px] font-semibold transition ${
               canJoin
                 ? "bg-[#28C8D8] text-[#0D0E10] hover:bg-[#1FA9B8]"
-                : "cursor-not-allowed bg-slate-100 text-slate-400"
+                : "cursor-not-allowed bg-white/10 text-white/40"
             }`}
           >
             {canJoin ? <Video size={18} /> : <Lock size={16} />} {t(TX.join)}
           </button>
           {!canJoin && (
-            <p className="mt-2.5 max-w-sm text-center text-[13px] text-slate-500">
+            <p className="mt-2.5 max-w-sm text-center text-[13px] text-white/50">
               {t(TX.lockPre)} {seg(earlyWindowMin, TX.min)} {t(TX.lockPost)}
             </p>
           )}
@@ -531,13 +531,13 @@ export function PreConsultLobby({
       {/* Cihaz testi + Hazırlık (hazırlık paneli hasta-odaklı → doktor görünümünde gizli, cihaz testi ortalanır) */}
       <div className={`mt-5 grid gap-5 ${isDoctor ? "md:mx-auto md:w-full md:max-w-xl" : "md:grid-cols-2"}`}>
         {/* B1 — Cihaz testi */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-[#0D0E10]">
+        <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-[#F4F5F3]">
             <Camera size={16} className="text-[#1FA9B8]" /> {t(TX.deviceTest)}
           </h2>
 
           {/* Ön-izleme */}
-          <div className="relative mt-3 aspect-video overflow-hidden rounded-2xl bg-slate-900">
+          <div className="relative mt-3 aspect-video overflow-hidden rounded-2xl bg-[#101113]">
             <video ref={videoRef} autoPlay playsInline muted className={`h-full w-full object-cover ${hasCam && camOn ? "" : "hidden"}`} />
             {perm === "prompting" && (
               <div className="absolute inset-0 grid place-items-center text-center text-white/80">
@@ -549,7 +549,7 @@ export function PreConsultLobby({
                 <div>
                   <AlertTriangle size={28} className="mx-auto text-amber-300" />
                   <p className="mx-auto mt-2 max-w-xs text-xs text-white/85">{t(TX.denied)}</p>
-                  <button onClick={() => acquire(selCam || undefined, selMic || undefined)} className="mt-3 rounded-xl bg-white px-4 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-100">
+                  <button onClick={() => acquire(selCam || undefined, selMic || undefined)} className="mt-3 rounded-xl bg-[#161719] px-4 py-2 text-xs font-semibold text-[#F4F5F3] hover:bg-white/10">
                     {t(TX.retry)}
                   </button>
                 </div>
@@ -570,23 +570,23 @@ export function PreConsultLobby({
 
           {/* Kamera/mik aç-kapa */}
           <div className="mt-3 flex items-center justify-center gap-3">
-            <button onClick={toggleMic} disabled={perm !== "granted"} className={`grid h-11 w-11 place-items-center rounded-full disabled:opacity-40 ${micOn ? "bg-slate-200 text-slate-700" : "bg-red-100 text-red-600"}`}>
+            <button onClick={toggleMic} disabled={perm !== "granted"} className={`grid h-11 w-11 place-items-center rounded-full disabled:opacity-40 ${micOn ? "bg-white/15 text-white/75" : "bg-red-500/15 text-red-300"}`}>
               {micOn ? <Mic size={18} /> : <MicOff size={18} />}
             </button>
-            <button onClick={toggleCam} disabled={perm !== "granted" || !hasCam} className={`grid h-11 w-11 place-items-center rounded-full disabled:opacity-40 ${camOn && hasCam ? "bg-slate-200 text-slate-700" : "bg-red-100 text-red-600"}`}>
+            <button onClick={toggleCam} disabled={perm !== "granted" || !hasCam} className={`grid h-11 w-11 place-items-center rounded-full disabled:opacity-40 ${camOn && hasCam ? "bg-white/15 text-white/75" : "bg-red-500/15 text-red-300"}`}>
               {camOn && hasCam ? <Video size={18} /> : <VideoOff size={18} />}
             </button>
           </div>
 
           {/* Mik düzeyi */}
           <div className="mt-4">
-            <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wide text-slate-400">
+            <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wide text-white/40">
               <span>{t(TX.micLevel)}</span>
             </div>
-            <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-slate-100">
+            <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-white/10">
               <div className="h-full rounded-full bg-[#28C8D8] transition-[width] duration-75" style={{ width: `${Math.round(level * 100)}%` }} />
             </div>
-            <p className="mt-1 text-[11px] text-slate-400">{t(TX.micHint)}</p>
+            <p className="mt-1 text-[11px] text-white/40">{t(TX.micHint)}</p>
           </div>
 
           {/* Cihaz seçimi */}
@@ -605,30 +605,30 @@ export function PreConsultLobby({
                   <DeviceSelect icon={<Volume2 size={13} />} label={t(TX.speaker)} value={selSpk} options={spks} fallback={t(TX.speaker)}
                     onChange={(id) => setSelSpk(id)} />
                 </div>
-                <button onClick={playTestTone} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                <button onClick={playTestTone} className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs font-medium text-white/65 hover:bg-[#1E1F22]">
                   <Headphones size={13} /> {t(TX.testTone)}
                 </button>
               </div>
             )}
           </div>
 
-          <p className="mt-3 text-[11px] leading-relaxed text-slate-400">{t(TX.permNote)}</p>
+          <p className="mt-3 text-[11px] leading-relaxed text-white/40">{t(TX.permNote)}</p>
         </div>
 
         {/* B3 — Hazırlık ipucu + soru-notu (yalnız hasta: ipuçları + "doktora soracaklarım" doktora anlamsız) */}
         {!isDoctor && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-[#0D0E10]">
+        <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-[#F4F5F3]">
             <FileText size={16} className="text-[#1FA9B8]" /> {t(TX.prep)}
           </h2>
-          <ul className="mt-3 space-y-2.5 text-[13px] text-slate-600">
+          <ul className="mt-3 space-y-2.5 text-[13px] text-white/65">
             <li className="flex gap-2"><FileText size={15} className="mt-0.5 shrink-0 text-[#1FA9B8]" /><span>{t(TX.tip1)}</span></li>
             <li className="flex gap-2"><Sun size={15} className="mt-0.5 shrink-0 text-[#1FA9B8]" /><span>{t(TX.tip2)}</span></li>
             <li className="flex gap-2"><Headphones size={15} className="mt-0.5 shrink-0 text-[#1FA9B8]" /><span>{t(TX.tip3)}</span></li>
           </ul>
 
           <div className="mt-4">
-            <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+            <label className="flex items-center gap-1.5 text-xs font-medium text-white/50">
               <NotebookPen size={14} /> {t(TX.notesLabel)}
             </label>
             <textarea
@@ -636,16 +636,16 @@ export function PreConsultLobby({
               onChange={(e) => onNote(e.target.value)}
               rows={5}
               placeholder={t(TX.notesPh)}
-              className="mt-1.5 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-[#0D0E10] outline-none placeholder:text-slate-400 focus:border-[#28C8D8] focus:bg-white"
+              className="mt-1.5 w-full resize-none rounded-2xl border border-white/10 bg-[#1E1F22] px-3 py-2.5 text-sm text-[#F4F5F3] outline-none placeholder:text-white/40 focus:border-[#28C8D8] focus:bg-[#1E1F22]"
             />
-            {note.trim() && <p className="mt-1 text-[11px] text-slate-400">{t(TX.notesSaved)}</p>}
+            {note.trim() && <p className="mt-1 text-[11px] text-white/40">{t(TX.notesSaved)}</p>}
           </div>
         </div>
         )}
       </div>
 
       {/* Güven şeridi (Faz C) — yalnız DOĞRU iddialar: WebRTC bağlantı şifrelemesi + KVKK onam. E2EE/RFC 3161 = Faz 8 (henüz yok) → iddia EDİLMEZ. */}
-      <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-400">
+      <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/40">
         <ShieldCheck size={13} className="text-emerald-500" /> {t(TX.secure)}
       </p>
     </div>
@@ -664,13 +664,13 @@ function MiniStat({ label, valueText, pct }: { label: string; valueText: string;
   const p = hasBar ? Math.max(6, Math.min(100, Math.round(pct))) : 0;
   const hue = Math.round(40 + (p / 100) * 120);
   return (
-    <div className="rounded-2xl bg-slate-50 p-3">
+    <div className="rounded-2xl bg-[#1E1F22] p-3">
       <div className="flex items-baseline justify-between">
-        <span className="text-[11px] text-slate-500">{label}</span>
-        <span className="text-base font-bold text-[#0D0E10]">{valueText}</span>
+        <span className="text-[11px] text-white/50">{label}</span>
+        <span className="text-base font-bold text-[#F4F5F3]">{valueText}</span>
       </div>
       {hasBar && (
-        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-200/70">
+        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/15">
           <div className="h-full rounded-full" style={{ width: `${p}%`, background: `hsl(${hue} 65% 45%)` }} />
         </div>
       )}
@@ -687,11 +687,11 @@ function DeviceSelect({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-slate-500">{icon} {label}</span>
+      <span className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-white/50">{icon} {label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-700 outline-none focus:border-[#28C8D8]"
+        className="w-full rounded-lg border border-white/15 bg-[#161719] px-2.5 py-2 text-xs font-medium text-white/75 outline-none focus:border-[#28C8D8]"
       >
         {options.map((d, i) => (
           <option key={d.deviceId || i} value={d.deviceId}>{d.label || `${fallback} ${i + 1}`}</option>

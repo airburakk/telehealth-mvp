@@ -29,18 +29,18 @@ export function DecisionForm({ complaintId, bookingTotal }: { complaintId: strin
   }
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
       <div className="flex items-center gap-2">
-        <Gavel size={18} className="text-[#0D0E10]" />
-        <h2 className="font-bold text-slate-800">Kurul Kararı</h2>
+        <Gavel size={18} className="text-[#F4F5F3]" />
+        <h2 className="font-bold text-[#F4F5F3]">Kurul Kararı</h2>
       </div>
 
       <div className="mt-4 space-y-4">
         <div>
-          <span className="mb-1.5 block text-sm font-medium text-slate-700">Karar</span>
+          <span className="mb-1.5 block text-sm font-medium text-white/75">Karar</span>
           <div className="grid grid-cols-3 gap-2">
             {Object.entries(VERDICTS).map(([k, v]) => (
-              <button key={k} onClick={() => setVerdict(k)} className={`rounded-lg border px-2 py-2 text-sm font-medium transition ${verdict === k ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>
+              <button key={k} onClick={() => setVerdict(k)} className={`rounded-lg border px-2 py-2 text-sm font-medium transition ${verdict === k ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-white/10 text-white/65 hover:border-white/15"}`}>
                 {v.label}
               </button>
             ))}
@@ -48,27 +48,27 @@ export function DecisionForm({ complaintId, bookingTotal }: { complaintId: strin
         </div>
 
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium text-slate-700">Yaptırım</span>
-          <select value={action} onChange={(e) => setAction(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]">
+          <span className="mb-1.5 block text-sm font-medium text-white/75">Yaptırım</span>
+          <select value={action} onChange={(e) => setAction(e.target.value)} className="w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]">
             {Object.entries(ACTIONS).map(([k, v]) => <option key={k} value={k} disabled={(k === "REFUND_FULL" || k === "REFUND_PARTIAL") && !bookingTotal}>{v}</option>)}
           </select>
         </label>
 
         {action === "REFUND_PARTIAL" && bookingTotal && (
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700">İade tutarı (max {formatUSD(bookingTotal)})</span>
-            <input type="number" value={refundAmount} min={0} max={bookingTotal} onChange={(e) => setRefundAmount(Number(e.target.value))} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]" />
+            <span className="mb-1.5 block text-sm font-medium text-white/75">İade tutarı (max {formatUSD(bookingTotal)})</span>
+            <input type="number" value={refundAmount} min={0} max={bookingTotal} onChange={(e) => setRefundAmount(Number(e.target.value))} className="w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]" />
           </label>
         )}
 
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium text-slate-700">Gerekçe</span>
-          <textarea value={rationale} onChange={(e) => setRationale(e.target.value)} rows={3} placeholder="Kurul kararının gerekçesi…" className="w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#28C8D8]" />
+          <span className="mb-1.5 block text-sm font-medium text-white/75">Gerekçe</span>
+          <textarea value={rationale} onChange={(e) => setRationale(e.target.value)} rows={3} placeholder="Kurul kararının gerekçesi…" className="w-full resize-none rounded-lg border border-white/15 p-2.5 text-sm outline-none focus:border-[#28C8D8]" />
         </label>
 
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium text-slate-700">İmzalayan kurul üyesi</span>
-          <select value={decidedBy} onChange={(e) => setDecidedBy(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]">
+          <span className="mb-1.5 block text-sm font-medium text-white/75">İmzalayan kurul üyesi</span>
+          <select value={decidedBy} onChange={(e) => setDecidedBy(e.target.value)} className="w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]">
             {BOARD.map((m) => <option key={m.name} value={m.name}>{m.name} · {m.role}</option>)}
           </select>
         </label>

@@ -55,21 +55,21 @@ export default async function DoctorSoListPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
-      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
+      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/75">
         <ArrowLeft size={15} /> Doktor paneli
       </Link>
       <div className="mt-3 flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Stethoscope size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0D0E10]">İkinci Görüş</h1>
-          <p className="text-sm text-slate-500">Önünüze düşen dosyaları kabul edin; kabul ettiklerinizde yazılı görüş sunun.</p>
+          <h1 className="text-2xl font-bold text-[#F4F5F3]">İkinci Görüş</h1>
+          <p className="text-sm text-white/50">Önünüze düşen dosyaları kabul edin; kabul ettiklerinizde yazılı görüş sunun.</p>
         </div>
       </div>
 
       {/* Kabul bekleyen dosyalar (oto-atanan + açık fan-out) */}
       {offers.length > 0 && (
         <section className="mt-6">
-          <h2 className="mb-2 text-sm font-semibold text-slate-700">Kabul bekleyen dosyalar</h2>
+          <h2 className="mb-2 text-sm font-semibold text-white/75">Kabul bekleyen dosyalar</h2>
           <div className="space-y-3">
             {offers.map((c) => {
               const branchLabel = BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch;
@@ -80,21 +80,21 @@ export default async function DoctorSoListPage() {
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         {/* Claim-ÖNCESİ kimlik yok (de-id kararı 2026-07-02) — ad kabul ile açılır */}
-                        <span className="font-semibold text-slate-800">Anonim hasta</span>
+                        <span className="font-semibold text-[#F4F5F3]">Anonim hasta</span>
                         <span className="inline-flex items-center gap-1 text-xs text-[#1FA9B8]"><Stethoscope size={12} /> {branchLabel}</span>
-                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${open ? "bg-amber-100 text-amber-700" : "bg-[#28C8D8]/20 text-[#17919E]"}`}>
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${open ? "bg-amber-500/15 text-amber-300" : "bg-[#28C8D8]/20 text-[#17919E]"}`}>
                           {open ? "Açık — süre doldu" : "Size atandı"}
                         </span>
                       </div>
-                      <p className="mt-1.5 line-clamp-2 text-sm text-slate-600">{scrubText(c.diagnosisSummary, [nameById[c.patientId] ?? ""])}</p>
-                      <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                      <p className="mt-1.5 line-clamp-2 text-sm text-white/65">{scrubText(c.diagnosisSummary, [nameById[c.patientId] ?? ""])}</p>
+                      <div className="mt-1 flex items-center gap-2 text-xs text-white/40">
                         <span className="inline-flex items-center gap-1"><FileText size={11} /> {c.documents.length} belge</span>
                         {c.assignedAt && <span className="inline-flex items-center gap-1"><Clock size={11} /> {formatDateTime(c.assignedAt)}</span>}
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1.5">
                       <SoAcceptButton caseId={c.id} open={open} />
-                      <Link href={`/doktor/ikinci-gorus/${c.id}`} className="text-xs font-medium text-slate-400 hover:text-slate-600">
+                      <Link href={`/doktor/ikinci-gorus/${c.id}`} className="text-xs font-medium text-white/40 hover:text-white/65">
                         Önizle →
                       </Link>
                     </div>
@@ -108,12 +108,12 @@ export default async function DoctorSoListPage() {
 
       {/* Atanan (kabul edilmiş) vakalar */}
       <section className="mt-6">
-        <h2 className="mb-2 text-sm font-semibold text-slate-700">Atanan vakalar</h2>
+        <h2 className="mb-2 text-sm font-semibold text-white/75">Atanan vakalar</h2>
         <div className="space-y-3">
           {sortedAssigned.length === 0 && offers.length === 0 && (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-white py-14 text-center">
-              <Inbox className="mx-auto mb-2 text-slate-300" size={28} />
-              <p className="text-sm text-slate-500">Size atanmış ikinci görüş vakası yok.</p>
+            <div className="rounded-3xl border border-dashed border-white/15 bg-[#161719] py-14 text-center">
+              <Inbox className="mx-auto mb-2 text-white/25" size={28} />
+              <p className="text-sm text-white/50">Size atanmış ikinci görüş vakası yok.</p>
             </div>
           )}
           {sortedAssigned.map((c) => {
@@ -123,24 +123,24 @@ export default async function DoctorSoListPage() {
               <Link
                 key={c.id}
                 href={`/doktor/ikinci-gorus/${c.id}`}
-                className={`block rounded-3xl border bg-white p-5 shadow-sm transition hover:shadow ${needsOpinion ? "border-[#28C8D8]/50" : "border-slate-200"}`}
+                className={`block rounded-3xl border bg-[#161719] p-5 shadow-sm transition hover:shadow ${needsOpinion ? "border-[#28C8D8]/50" : "border-white/10"}`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-slate-800">{nameById[c.patientId] ?? "Hasta"}</span>
+                      <span className="font-semibold text-[#F4F5F3]">{nameById[c.patientId] ?? "Hasta"}</span>
                       <span className="inline-flex items-center gap-1 text-xs text-[#1FA9B8]"><Stethoscope size={12} /> {branchLabel}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${needsOpinion ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${needsOpinion ? "bg-amber-500/15 text-amber-300" : "bg-white/10 text-white/50"}`}>
                         {SO_STATUS_LABELS[c.status as SoStatus] ?? c.status}
                       </span>
                     </div>
-                    <p className="mt-1.5 line-clamp-2 text-sm text-slate-600">{c.diagnosisSummary}</p>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                    <p className="mt-1.5 line-clamp-2 text-sm text-white/65">{c.diagnosisSummary}</p>
+                    <div className="mt-1 flex items-center gap-2 text-xs text-white/40">
                       <span className="inline-flex items-center gap-1"><FileText size={11} /> {c.documents.length} belge</span>
                       {c.assignedAt && <span>· atandı {formatDateTime(c.assignedAt)}</span>}
                     </div>
                   </div>
-                  <ArrowRight size={16} className="mt-1 shrink-0 text-slate-300" />
+                  <ArrowRight size={16} className="mt-1 shrink-0 text-white/25" />
                 </div>
               </Link>
             );

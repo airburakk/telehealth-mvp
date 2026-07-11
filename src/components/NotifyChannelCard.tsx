@@ -39,18 +39,18 @@ export function NotifyChannelCard({ initialChannel, initialPhone }: { initialCha
   }
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
           <Bell size={15} /> Bildirim Tercihi
         </div>
         {channel !== "APP" && (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
             WhatsApp/SMS şimdilik simülasyon
           </span>
         )}
       </div>
-      <p className="mt-1 text-[11px] text-slate-400">
+      <p className="mt-1 text-[11px] text-white/40">
         Vaka, talep ve rapor bildirimlerinizi hangi kanaldan almak istersiniz? Uygulama içi bildirim her durumda düşer.
       </p>
 
@@ -62,12 +62,12 @@ export function NotifyChannelCard({ initialChannel, initialPhone }: { initialCha
             <button
               key={c.key}
               onClick={() => { setChannel(c.key); setSaved(false); }}
-              className={`rounded-2xl border p-3 text-left transition ${active ? "border-[#28C8D8] bg-[#28C8D8]/[0.07]" : "border-slate-200 hover:border-slate-300"}`}
+              className={`rounded-2xl border p-3 text-left transition ${active ? "border-[#28C8D8] bg-[#28C8D8]/[0.07]" : "border-white/10 hover:border-white/15"}`}
             >
-              <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${active ? "text-[#17919E]" : "text-slate-700"}`}>
+              <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${active ? "text-[#17919E]" : "text-white/75"}`}>
                 <Icon size={15} /> {c.label}
               </span>
-              <span className="mt-0.5 block text-[11px] text-slate-400">{c.desc}</span>
+              <span className="mt-0.5 block text-[11px] text-white/40">{c.desc}</span>
             </button>
           );
         })}
@@ -75,19 +75,19 @@ export function NotifyChannelCard({ initialChannel, initialPhone }: { initialCha
 
       {needsPhone && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <label className="text-sm font-medium text-slate-600">Cep telefonu:</label>
+          <label className="text-sm font-medium text-white/65">Cep telefonu:</label>
           <input
             type="tel"
             value={phone}
             onChange={(e) => { setPhone(e.target.value); setSaved(false); }}
             placeholder="+90 5xx xxx xx xx"
-            className="w-52 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
+            className="w-52 rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
           />
-          {!phone.trim() && <span className="text-[11px] text-amber-600">Bu kanal için telefon numarası gerekli.</span>}
+          {!phone.trim() && <span className="text-[11px] text-amber-300">Bu kanal için telefon numarası gerekli.</span>}
         </div>
       )}
 
-      {err && <p className="mt-2 text-xs text-red-600">{err}</p>}
+      {err && <p className="mt-2 text-xs text-red-300">{err}</p>}
       <button
         onClick={save}
         disabled={saving || !dirty || (needsPhone && !phone.trim())}

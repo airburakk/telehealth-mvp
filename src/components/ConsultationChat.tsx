@@ -82,17 +82,17 @@ export function ConsultationChat({
   }
 
   return (
-    <div dir={dir} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
-      <div className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+    <div dir={dir} className="rounded-2xl border border-white/10 bg-[#1E1F22]/60 p-3">
+      <div className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-white/50">
         <MessagesSquare size={13} /> {t("Yazılı görüşme")}
       </div>
       <div ref={boxRef} className={`space-y-2 overflow-y-auto ${compact ? "max-h-56" : "max-h-72"}`}>
-        {msgs.length === 0 && <p className="py-4 text-center text-xs text-slate-400">{t("Henüz mesaj yok.")}</p>}
+        {msgs.length === 0 && <p className="py-4 text-center text-xs text-white/40">{t("Henüz mesaj yok.")}</p>}
         {msgs.map((m) => (
           <div key={m.id} className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[82%] rounded-2xl px-3 py-2 ${m.mine ? "bg-[#28C8D8] text-[#06343a]" : "bg-white text-slate-700 ring-1 ring-slate-200"}`}>
+            <div className={`max-w-[82%] rounded-2xl px-3 py-2 ${m.mine ? "bg-[#28C8D8] text-[#06343a]" : "bg-[#161719] text-white/75 ring-1 ring-white/10"}`}>
               <p className="whitespace-pre-wrap text-sm">{m.text}</p>
-              <p className={`mt-0.5 text-[10px] ${m.mine ? "text-[#06343a]/60" : "text-slate-400"}`}>
+              <p className={`mt-0.5 text-[10px] ${m.mine ? "text-[#06343a]/60" : "text-white/40"}`}>
                 {new Date(m.createdAt).toLocaleString(locale, { dateStyle: "short", timeStyle: "short" })}
               </p>
             </div>
@@ -108,14 +108,14 @@ export function ConsultationChat({
             rows={1}
             placeholder={t("Mesaj yazın…")}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            className="min-h-[40px] flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
+            className="min-h-[40px] flex-1 resize-none rounded-xl border border-white/15 bg-[#161719] px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
           />
           <button onClick={send} disabled={sending || !text.trim()} title={t("Mesaj yazın…")} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#28C8D8] text-[#06343a] transition hover:bg-[#1FA9B8] disabled:opacity-40">
             {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
           </button>
         </div>
       ) : (
-        <p className="mt-2 text-center text-xs text-slate-400">{t(hintKey || "Uzman doktor bekleniyor — görüşme başlayınca yazabilirsiniz.")}</p>
+        <p className="mt-2 text-center text-xs text-white/40">{t(hintKey || "Uzman doktor bekleniyor — görüşme başlayınca yazabilirsiniz.")}</p>
       )}
       {err && <p className="mt-1 text-xs text-red-500">{err}</p>}
     </div>

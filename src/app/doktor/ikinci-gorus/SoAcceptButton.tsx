@@ -33,7 +33,7 @@ export function SoAcceptButton({ caseId, open }: { caseId: string; open?: boolea
       >
         {busy ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />} {open ? "Kabul et (açık)" : "Kabul et"}
       </button>
-      {err && <p className="mt-1 max-w-[200px] text-xs text-red-600">{err}</p>}
+      {err && <p className="mt-1 max-w-[200px] text-xs text-red-300">{err}</p>}
     </div>
   );
 }

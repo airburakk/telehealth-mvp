@@ -35,9 +35,9 @@ const ADDABLE = ["DRAFT", "AWAITING_DOCUMENTS", "AWAITING_ADDITIONAL_TESTS"];
 // Atanan doktor kimlik kartı yalnız doktor dosyayı ÜSTLENDİKTEN sonra (OFFERED'da henüz kesin değil).
 const DOCTOR_SHOWN = ["ASSIGNED", "AWAITING_ADDITIONAL_TESTS", "OPINION_DELIVERED", "VIDEO_OFFERED", "VIDEO_SCHEDULED", "VIDEO_COMPLETED", "CLOSED"];
 const REQ_BADGE: Record<string, { label: string; cls: string }> = {
-  REQUIRED: { label: "Zorunlu", cls: "bg-red-50 text-red-700 ring-red-200" },
-  CONDITIONAL: { label: "Varsa", cls: "bg-amber-50 text-amber-700 ring-amber-200" },
-  OPTIONAL: { label: "Opsiyonel", cls: "bg-slate-100 text-slate-500 ring-slate-200" },
+  REQUIRED: { label: "Zorunlu", cls: "bg-red-500/10 text-red-300 ring-red-400/25" },
+  CONDITIONAL: { label: "Varsa", cls: "bg-amber-500/10 text-amber-300 ring-amber-400/25" },
+  OPTIONAL: { label: "Opsiyonel", cls: "bg-white/10 text-white/50 ring-white/10" },
 };
 
 // Durum-bağlamlı hasta mesajları (TR kanonik; useT ile çevrilir)
@@ -308,20 +308,20 @@ export function SoCaseDetail({ data }: { data: SoData }) {
   return (
     <div dir={langDir(lang)} className="mx-auto max-w-2xl px-5 py-8">
       <div className="flex items-center justify-between gap-3">
-        <Link href="/second-opinion/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
+        <Link href="/second-opinion/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/75">
           <ArrowLeft size={15} /> {t(S.back)}
         </Link>
         <SoLangSelect lang={lang} onChange={setLang} />
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-[#0D0E10]">{t(data.branchLabel)} · {t(S.soSuffix)}</h1>
+        <h1 className="text-2xl font-bold text-[#F4F5F3]">{t(data.branchLabel)} · {t(S.soSuffix)}</h1>
         <span className="rounded-full bg-[#28C8D8]/10 px-3 py-1 text-[12px] font-semibold text-[#17919E]">{t(SO_STATUS_LABELS[status])}</span>
       </div>
 
       {/* Hasta ülkesi + tercih dili (başvuruda alınır; eski vakalarda boş olabilir) */}
       {(data.country || data.language) && (
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-slate-500">
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-white/50">
           {data.country && (
             <span className="inline-flex items-center gap-1.5">{countryFlag(data.country)} {t(countryName(data.country))}</span>
           )}
@@ -338,37 +338,37 @@ export function SoCaseDetail({ data }: { data: SoData }) {
 
       {/* Sizden bekleniyor — top hastadayken belirgin (bekleme odası Faz A2) */}
       {action && (
-        <div className="mt-4 flex items-start gap-3 rounded-3xl border border-amber-300 bg-amber-50 p-5">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700"><Hand size={18} /></span>
+        <div className="mt-4 flex items-start gap-3 rounded-3xl border border-amber-400/30 bg-amber-500/10 p-5">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-500/15 text-amber-300"><Hand size={18} /></span>
           <div>
-            <div className="text-sm font-semibold text-amber-900">{t(S.actionNeeded)} · {t(action.title)}</div>
-            <p className="mt-0.5 text-[13px] leading-relaxed text-amber-800">{t(action.desc)}</p>
+            <div className="text-sm font-semibold text-amber-200">{t(S.actionNeeded)} · {t(action.title)}</div>
+            <p className="mt-0.5 text-[13px] leading-relaxed text-amber-200">{t(action.desc)}</p>
           </div>
         </div>
       )}
 
       {/* Atanan uzman doktor kimlik kartı (en güçlü güven öğesi — bekleme odası Faz A3) */}
       {data.assignedDoctor && DOCTOR_SHOWN.includes(status) && (
-        <div className="mt-4 flex items-center gap-4 rounded-3xl border border-[#28C8D8]/30 bg-white p-5 shadow-sm">
-          <span className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl ring-1 ring-slate-200">
+        <div className="mt-4 flex items-center gap-4 rounded-3xl border border-[#28C8D8]/30 bg-[#161719] p-5 shadow-sm">
+          <span className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl ring-1 ring-white/10">
             <DoctorArt i={data.assignedDoctor.avatarI} female={data.assignedDoctor.female} photo={data.assignedDoctor.photo} />
           </span>
           <div className="min-w-0">
             <div className="text-xs font-semibold uppercase tracking-wide text-[#17919E]">{t(S.yourDoctor)}</div>
-            <div className="mt-0.5 text-lg font-bold text-[#0D0E10]">{t(data.assignedDoctor.title)} {data.assignedDoctor.name}</div>
-            <div className="text-sm text-slate-500">{t(data.assignedDoctor.branchLabel)}</div>
+            <div className="mt-0.5 text-lg font-bold text-[#F4F5F3]">{t(data.assignedDoctor.title)} {data.assignedDoctor.name}</div>
+            <div className="text-sm text-white/50">{t(data.assignedDoctor.branchLabel)}</div>
             {/* Rozet gerçek Doctor.verified değerine bağlı — koşulsuz "doğrulanmış" beyanı kaldırıldı (vitrin dürüstlüğü) */}
             {data.assignedDoctor.verified && (
-              <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700"><CircleCheck size={13} /> {t(S.verifiedDoctor)}</div>
+              <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-300"><CircleCheck size={13} /> {t(S.verifiedDoctor)}</div>
             )}
           </div>
         </div>
       )}
 
       {/* Tanı özeti — hastanın kendi girdisi, çevrilmez */}
-      <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t(S.diagTitle)}</div>
-        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{data.diagnosisSummary}</p>
+      <div className="mt-4 rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+        <div className="text-xs font-semibold uppercase tracking-wide text-white/40">{t(S.diagTitle)}</div>
+        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-white/75">{data.diagnosisSummary}</p>
       </div>
 
       {/* Durum-bağlamlı bilgilendirme */}
@@ -376,30 +376,30 @@ export function SoCaseDetail({ data }: { data: SoData }) {
 
       {/* Sunulan yazılı görüş — içerik çevrilir */}
       {data.opinion && (
-        <div className="mt-4 rounded-3xl border border-emerald-200 bg-emerald-50/50 p-5">
+        <div className="mt-4 rounded-3xl border border-emerald-400/25 bg-emerald-50/50 p-5">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800"><NotebookPen size={16} /> {t(S.opinionTitle)}</div>
-            <button onClick={() => window.print()} className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100">
+            <div className="flex items-center gap-2 text-sm font-semibold text-emerald-200"><NotebookPen size={16} /> {t(S.opinionTitle)}</div>
+            <button onClick={() => window.print()} className="inline-flex items-center gap-1 rounded-lg border border-emerald-400/30 px-2.5 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/15">
               <Printer size={12} /> {t(S.print)}
             </button>
           </div>
-          <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">{tc(data.opinion.content)}</pre>
-          <div className="mt-2 text-xs text-emerald-600">{new Date(data.opinion.submittedAt).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}</div>
+          <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-relaxed text-white/75">{tc(data.opinion.content)}</pre>
+          <div className="mt-2 text-xs text-emerald-300">{new Date(data.opinion.submittedAt).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}</div>
         </div>
       )}
 
       {/* Video randevu teklifi — onayla / farklı zaman iste (İcapçı deseni) */}
       {status === "VIDEO_OFFERED" && data.appointment && (
-        <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50/60 p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-amber-800"><CalendarClock size={17} /> {t(S.videoOfferTitle)}</div>
-          <p className="mt-1.5 text-[13px] text-amber-700">{t(S.videoOfferDesc)}</p>
-          <p className="mt-1 text-lg font-bold text-[#0D0E10]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
-          {respondErr && <p className="mt-2 text-sm text-red-600">{respondErr}</p>}
+        <div className="mt-4 rounded-3xl border border-amber-400/25 bg-amber-50/60 p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-amber-200"><CalendarClock size={17} /> {t(S.videoOfferTitle)}</div>
+          <p className="mt-1.5 text-[13px] text-amber-300">{t(S.videoOfferDesc)}</p>
+          <p className="mt-1 text-lg font-bold text-[#F4F5F3]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+          {respondErr && <p className="mt-2 text-sm text-red-300">{respondErr}</p>}
           <div className="mt-3 flex flex-wrap gap-2">
             <button onClick={() => respondVideo("accept")} disabled={responding !== ""} className="inline-flex items-center gap-2 rounded-xl bg-[#28C8D8] px-5 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50">
               {responding === "accept" ? <Loader2 size={16} className="animate-spin" /> : <CircleCheck size={16} />} {t(S.acceptVideo)}
             </button>
-            <button onClick={() => respondVideo("request_change")} disabled={responding !== ""} className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-white px-5 py-2.5 text-sm font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-50">
+            <button onClick={() => respondVideo("request_change")} disabled={responding !== ""} className="inline-flex items-center gap-2 rounded-xl border border-amber-400/30 bg-[#161719] px-5 py-2.5 text-sm font-semibold text-amber-300 hover:bg-amber-500/10 disabled:opacity-50">
               {responding === "request_change" ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />} {t(S.requestChange)}
             </button>
           </div>
@@ -410,7 +410,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       {status === "VIDEO_SCHEDULED" && data.appointment && (
         <div className="mt-4 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-[#17919E]"><Video size={17} /> {t(S.videoTitle)}</div>
-          <p className="mt-1.5 text-lg font-bold text-[#0D0E10]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+          <p className="mt-1.5 text-lg font-bold text-[#F4F5F3]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
           <Link href={`/second-opinion/gorusme/${data.appointment.id}?role=patient`} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#28C8D8] px-5 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
             <Video size={16} /> {t(S.join)}
           </Link>
@@ -419,32 +419,32 @@ export function SoCaseDetail({ data }: { data: SoData }) {
 
       {/* Bekleyen talepler (Talep A/B) */}
       {pendingReqs.map((r) => (
-        <div key={r.id} className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          {r.type === "ADDITIONAL_EXAMINATION" ? <FlaskConical size={18} className="mt-0.5 shrink-0 text-amber-600" /> : <FileText size={18} className="mt-0.5 shrink-0 text-amber-600" />}
+        <div key={r.id} className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-400/25 bg-amber-500/10 p-4">
+          {r.type === "ADDITIONAL_EXAMINATION" ? <FlaskConical size={18} className="mt-0.5 shrink-0 text-amber-300" /> : <FileText size={18} className="mt-0.5 shrink-0 text-amber-300" />}
           <div>
-            <div className="text-sm font-semibold text-amber-800">{r.type === "ADDITIONAL_EXAMINATION" ? t(S.reqAdd) : t(S.reqDoc)}</div>
-            <p className="mt-0.5 text-[13px] leading-relaxed text-amber-700">{tc(r.description)}</p>
+            <div className="text-sm font-semibold text-amber-200">{r.type === "ADDITIONAL_EXAMINATION" ? t(S.reqAdd) : t(S.reqDoc)}</div>
+            <p className="mt-0.5 text-[13px] leading-relaxed text-amber-300">{tc(r.description)}</p>
           </div>
         </div>
       ))}
 
       {/* Belge kontrol listesi (branş şablonu) */}
-      <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="text-sm font-semibold text-slate-700">{t(S.docsTitle)}</div>
+      <div className="mt-4 rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+        <div className="text-sm font-semibold text-white/75">{t(S.docsTitle)}</div>
         <ul className="mt-3 space-y-2.5">
           {specs.map((s) => {
             const items = docs.filter((d) => d.type === s.type);
             const has = items.length > 0;
             const badge = REQ_BADGE[s.requirement];
             return (
-              <li key={s.type} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+              <li key={s.type} className="rounded-2xl border border-white/10 bg-[#1E1F22]/60 p-3">
                 <div className="flex items-center gap-2">
-                  <span className={`grid h-6 w-6 place-items-center rounded-full ${has ? (docsVerified ? "bg-emerald-100 text-emerald-700" : "bg-sky-100 text-sky-700") : "bg-slate-200 text-slate-400"}`}>
+                  <span className={`grid h-6 w-6 place-items-center rounded-full ${has ? (docsVerified ? "bg-emerald-500/15 text-emerald-300" : "bg-sky-500/15 text-sky-300") : "bg-white/15 text-white/40"}`}>
                     {has ? <Check size={14} /> : <span className="text-[11px]">—</span>}
                   </span>
-                  <span className="text-sm font-medium text-slate-700">{t(s.label)}</span>
+                  <span className="text-sm font-medium text-white/75">{t(s.label)}</span>
                   {has && (
-                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${docsVerified ? "bg-emerald-100 text-emerald-700" : "bg-sky-100 text-sky-700"}`}>
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${docsVerified ? "bg-emerald-500/15 text-emerald-300" : "bg-sky-500/15 text-sky-300"}`}>
                       {docsVerified ? t(S.docVerified) : t(S.docReceived)}
                     </span>
                   )}
@@ -453,7 +453,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                 {items.length > 0 && (
                   <ul className="mt-2 space-y-1 ps-8">
                     {items.map((d) => (
-                      <li key={d.id} className="flex items-center gap-1.5 text-[12.5px] text-slate-500">
+                      <li key={d.id} className="flex items-center gap-1.5 text-[12.5px] text-white/50">
                         {d.deliveryMethod === "EXTERNAL_LINK" ? <Link2 size={12} /> : <FileText size={12} />}
                         {d.externalRef ? (
                           <a href={d.externalRef} target="_blank" rel="noopener noreferrer" className="text-[#17919E] underline">
@@ -473,15 +473,15 @@ export function SoCaseDetail({ data }: { data: SoData }) {
 
         {/* Belge ekleme (yalnız uygun durumlarda) */}
         {canEdit && (
-          <div className="mt-4 rounded-2xl border border-dashed border-slate-300 p-4">
-            <div className="text-sm font-semibold text-slate-700">{t(S.addDoc)}</div>
+          <div className="mt-4 rounded-2xl border border-dashed border-white/15 p-4">
+            <div className="text-sm font-semibold text-white/75">{t(S.addDoc)}</div>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="text-xs font-medium text-slate-500">{t(S.docType)}</label>
+                <label className="text-xs font-medium text-white/50">{t(S.docType)}</label>
                 <select
                   value={addType}
                   onChange={(e) => pickType(e.target.value as SoDocType)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm focus:border-[#28C8D8] focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-white/15 bg-[#161719] px-2.5 py-2 text-sm focus:border-[#28C8D8] focus:outline-none"
                 >
                   {(Object.keys(SO_DOC_TYPE_LABELS) as SoDocType[]).map((tp) => (
                     <option key={tp} value={tp}>{t(SO_DOC_TYPE_LABELS[tp])}</option>
@@ -489,17 +489,17 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-500">{t(S.delivery)}</label>
-                <div className="mt-1 flex rounded-lg border border-slate-300 p-0.5 text-sm">
+                <label className="text-xs font-medium text-white/50">{t(S.delivery)}</label>
+                <div className="mt-1 flex rounded-lg border border-white/15 p-0.5 text-sm">
                   <button
                     onClick={() => setMethod("FILE_UPLOAD")}
-                    className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "FILE_UPLOAD" ? "bg-[#28C8D8] text-[#0D0E10]" : "text-slate-500"}`}
+                    className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "FILE_UPLOAD" ? "bg-[#28C8D8] text-[#0D0E10]" : "text-white/50"}`}
                   >
                     <Upload size={13} className="me-1 inline" /> {t(S.fileBtn)}
                   </button>
                   <button
                     onClick={() => setMethod("EXTERNAL_LINK")}
-                    className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "EXTERNAL_LINK" ? "bg-[#28C8D8] text-[#0D0E10]" : "text-slate-500"}`}
+                    className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "EXTERNAL_LINK" ? "bg-[#28C8D8] text-[#0D0E10]" : "text-white/50"}`}
                   >
                     <Link2 size={13} className="me-1 inline" /> {t(S.linkLabel)}
                   </button>
@@ -512,7 +512,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                 type="file"
                 accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="mt-3 block w-full text-sm text-slate-600 file:me-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700"
+                className="mt-3 block w-full text-sm text-white/65 file:me-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white/75"
               />
             ) : (
               <input
@@ -520,7 +520,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder={t(S.urlPh)}
-                className="mt-3 block w-full rounded-lg border border-slate-300 px-2.5 py-2 text-sm focus:border-[#28C8D8] focus:outline-none"
+                className="mt-3 block w-full rounded-lg border border-white/15 px-2.5 py-2 text-sm focus:border-[#28C8D8] focus:outline-none"
               />
             )}
             <input
@@ -528,26 +528,26 @@ export function SoCaseDetail({ data }: { data: SoData }) {
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder={t(S.labelPh)}
-              className="mt-2 block w-full rounded-lg border border-slate-300 px-2.5 py-2 text-sm focus:border-[#28C8D8] focus:outline-none"
+              className="mt-2 block w-full rounded-lg border border-white/15 px-2.5 py-2 text-sm focus:border-[#28C8D8] focus:outline-none"
             />
-            {addErr && <p className="mt-2 text-sm text-red-600">{addErr}</p>}
+            {addErr && <p className="mt-2 text-sm text-red-300">{addErr}</p>}
             <button
               onClick={addDoc}
               disabled={adding}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 disabled:opacity-50"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#26272B] px-4 py-2 text-sm font-semibold text-white hover:bg-[#101113] disabled:opacity-50"
             >
               {adding ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} {t(S.add)}
             </button>
-            {addType === "IMAGING" && <p className="mt-2 text-[12px] text-slate-400">{t(S.imagingNote)}</p>}
+            {addType === "IMAGING" && <p className="mt-2 text-[12px] text-white/40">{t(S.imagingNote)}</p>}
           </div>
         )}
       </div>
 
       {/* Talep karşılama */}
       {canFulfill && (
-        <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50/60 p-5">
-          <p className="text-sm text-amber-800">{t(S.fulfillNote)}</p>
-          {fulfillErr && <p className="mt-2 text-sm text-red-600">{fulfillErr}</p>}
+        <div className="mt-4 rounded-3xl border border-amber-400/25 bg-amber-50/60 p-5">
+          <p className="text-sm text-amber-200">{t(S.fulfillNote)}</p>
+          {fulfillErr && <p className="mt-2 text-sm text-red-300">{fulfillErr}</p>}
           <button
             onClick={fulfill}
             disabled={fulfilling}
@@ -565,22 +565,22 @@ export function SoCaseDetail({ data }: { data: SoData }) {
             <CreditCard size={17} /> {t(S.payTitle)}
           </div>
           {missingRequired.length > 0 && (
-            <div className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-[13px] text-amber-700">
+            <div className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2 text-[13px] text-amber-300">
               <div className="flex items-start gap-2">
                 <AlertTriangle size={15} className="mt-0.5 shrink-0" />
                 <span>{t(S.missingLabel)}: {missingRequired.map((s) => t(s.label)).join(", ")}. {t(S.missingNote)}</span>
               </div>
-              <label className="mt-2 flex items-start gap-2 ps-[23px] font-medium text-amber-800">
+              <label className="mt-2 flex items-start gap-2 ps-[23px] font-medium text-amber-200">
                 <input type="checkbox" checked={willProvide} onChange={(e) => setWillProvide(e.target.checked)} className="mt-0.5 accent-[#28C8D8]" />
                 <span>{t(S.willProvide)}</span>
               </label>
             </div>
           )}
           <div className="mt-3 flex items-center justify-between text-sm">
-            <span className="text-slate-600">{t(S.payLine)}</span>
-            <span className="text-lg font-bold text-[#0D0E10]">{SO_FEE_USD} USD</span>
+            <span className="text-white/65">{t(S.payLine)}</span>
+            <span className="text-lg font-bold text-[#F4F5F3]">{SO_FEE_USD} USD</span>
           </div>
-          {payErr && <p className="mt-2 text-sm text-red-600">{payErr}</p>}
+          {payErr && <p className="mt-2 text-sm text-red-300">{payErr}</p>}
           <button
             onClick={pay}
             disabled={paying || payBlocked}
@@ -588,12 +588,12 @@ export function SoCaseDetail({ data }: { data: SoData }) {
           >
             {paying ? <Loader2 size={17} className="animate-spin" /> : t(S.payBtn)}
           </button>
-          <p className="mt-2 text-center text-[11px] text-slate-400">{t(S.paySim)}</p>
+          <p className="mt-2 text-center text-[11px] text-white/40">{t(S.paySim)}</p>
         </div>
       )}
 
       {paid && status !== "DRAFT" && (
-        <div className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+        <div className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-4 text-sm text-emerald-200">
           <CircleCheck size={18} /> {t(S.paid)}
         </div>
       )}
@@ -613,12 +613,12 @@ function StatusBanner({
   const text = STATUS_MSG[status];
   if (!text) return null;
   return (
-    <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+    <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-white/10 bg-[#161719] p-4 text-sm text-white/65">
       <Clock size={16} className="mt-0.5 shrink-0 text-[#17919E]" />
       <div>
         <p>{t(text)}</p>
         {status === "VIDEO_SCHEDULED" && appointment && (
-          <p className="mt-1 font-semibold text-slate-800">
+          <p className="mt-1 font-semibold text-[#F4F5F3]">
             {new Date(appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}
           </p>
         )}

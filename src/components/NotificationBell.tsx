@@ -25,17 +25,17 @@ interface Notif {
 }
 
 const TYPE_META: Record<string, { icon: React.ReactNode; cls: string }> = {
-  NEW_CASE: { icon: <UserRound size={14} />, cls: "bg-teal-100 text-teal-700" },
-  RED_FLAG: { icon: <AlertTriangle size={14} />, cls: "bg-red-100 text-red-700" },
-  BOOKING: { icon: <Luggage size={14} />, cls: "bg-emerald-100 text-emerald-700" },
-  OFFER: { icon: <FileText size={14} />, cls: "bg-violet-100 text-violet-700" },
-  COMPLAINT: { icon: <Scale size={14} />, cls: "bg-amber-100 text-amber-700" },
-  DECISION: { icon: <Scale size={14} />, cls: "bg-violet-100 text-violet-700" },
-  SHARE_ACCESS: { icon: <Eye size={14} />, cls: "bg-slate-100 text-slate-600" },
-  MISSING_DOCS: { icon: <FileText size={14} />, cls: "bg-amber-100 text-amber-700" },
-  CONSULT_ANSWERED: { icon: <MessageSquare size={14} />, cls: "bg-violet-100 text-violet-700" },
-  CONSULT_MESSAGE: { icon: <MessageSquare size={14} />, cls: "bg-sky-100 text-sky-700" },
-  CONSULT_VIDEO: { icon: <Video size={14} />, cls: "bg-violet-100 text-violet-700" },
+  NEW_CASE: { icon: <UserRound size={14} />, cls: "bg-[#28C8D8]/15 text-[#28C8D8]" },
+  RED_FLAG: { icon: <AlertTriangle size={14} />, cls: "bg-red-500/15 text-red-300" },
+  BOOKING: { icon: <Luggage size={14} />, cls: "bg-emerald-500/15 text-emerald-300" },
+  OFFER: { icon: <FileText size={14} />, cls: "bg-violet-500/15 text-violet-300" },
+  COMPLAINT: { icon: <Scale size={14} />, cls: "bg-amber-500/15 text-amber-300" },
+  DECISION: { icon: <Scale size={14} />, cls: "bg-violet-500/15 text-violet-300" },
+  SHARE_ACCESS: { icon: <Eye size={14} />, cls: "bg-white/10 text-white/65" },
+  MISSING_DOCS: { icon: <FileText size={14} />, cls: "bg-amber-500/15 text-amber-300" },
+  CONSULT_ANSWERED: { icon: <MessageSquare size={14} />, cls: "bg-violet-500/15 text-violet-300" },
+  CONSULT_MESSAGE: { icon: <MessageSquare size={14} />, cls: "bg-sky-500/15 text-sky-300" },
+  CONSULT_VIDEO: { icon: <Video size={14} />, cls: "bg-violet-500/15 text-violet-300" },
 };
 
 // Çevrilecek sabit arayüz metinleri (krom). timeAgo şablonları {n} yer tutuculudur → Claude {n}'i korur.
@@ -210,14 +210,14 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
       </button>
 
       {open && (
-        <div dir={dir} className="absolute right-0 top-11 z-40 w-80 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("Bildirimler")}</span>
-            {loading && <span className="text-[10px] text-slate-400">{t("yenileniyor…")}</span>}
+        <div dir={dir} className="absolute right-0 top-11 z-40 w-80 overflow-hidden rounded-3xl border border-white/10 bg-[#161719] shadow-xl">
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
+            <span className="text-xs font-semibold uppercase tracking-wide text-white/50">{t("Bildirimler")}</span>
+            {loading && <span className="text-[10px] text-white/40">{t("yenileniyor…")}</span>}
           </div>
           {pushState === "ios-hint" && (
-            <div className="border-b border-slate-100 bg-teal-50/70 px-4 py-2.5">
-              <div className="flex items-start gap-2 text-xs leading-relaxed text-teal-800">
+            <div className="border-b border-white/10 bg-teal-50/70 px-4 py-2.5">
+              <div className="flex items-start gap-2 text-xs leading-relaxed text-[#28C8D8]">
                 <Smartphone size={14} className="mt-0.5 shrink-0" />
                 <span>
                   <strong>{t("iPhone'da cihaz bildirimi için:")}</strong>{" "}
@@ -227,18 +227,18 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
             </div>
           )}
           {pushState !== "hidden" && pushState !== "ios-hint" && (
-            <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/60 px-4 py-2">
-              <span className="inline-flex items-center gap-1.5 text-xs text-slate-600">
+            <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-[#1E1F22]/60 px-4 py-2">
+              <span className="inline-flex items-center gap-1.5 text-xs text-white/65">
                 <Smartphone size={13} /> {t("Cihaz bildirimleri")}
-                <span className="text-[10px] text-slate-400">{t("(tarayıcı kapalıyken)")}</span>
+                <span className="text-[10px] text-white/40">{t("(tarayıcı kapalıyken)")}</span>
               </span>
               <button
                 onClick={togglePush}
                 disabled={pushState === "busy"}
                 className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition ${
                   pushState === "on"
-                    ? "bg-emerald-100 text-emerald-700 ring-emerald-200 hover:bg-emerald-200"
-                    : "bg-white text-slate-500 ring-slate-200 hover:bg-slate-100"
+                    ? "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25 hover:bg-emerald-200"
+                    : "bg-[#161719] text-white/50 ring-white/10 hover:bg-white/10"
                 }`}
               >
                 {pushState === "busy" ? <Loader2 size={11} className="animate-spin" /> : null}
@@ -248,23 +248,23 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
           )}
           <div className="max-h-96 overflow-y-auto">
             {items.length === 0 && (
-              <div className="px-4 py-10 text-center text-sm text-slate-400">
+              <div className="px-4 py-10 text-center text-sm text-white/40">
                 <Inbox size={22} className="mx-auto mb-2" /> {t("Bildirim yok.")}
               </div>
             )}
             {items.map((n) => {
-              const meta = TYPE_META[n.type] ?? { icon: <Stethoscope size={14} />, cls: "bg-slate-100 text-slate-600" };
+              const meta = TYPE_META[n.type] ?? { icon: <Stethoscope size={14} />, cls: "bg-white/10 text-white/65" };
               return (
                 <button
                   key={n.id}
                   onClick={() => go(n)}
-                  className={`flex w-full items-start gap-2.5 border-b border-slate-50 px-4 py-3 text-left transition hover:bg-slate-50 ${!n.readAt ? "bg-teal-50/50" : ""}`}
+                  className={`flex w-full items-start gap-2.5 border-b border-white/10 px-4 py-3 text-left transition hover:bg-[#1E1F22] ${!n.readAt ? "bg-teal-50/50" : ""}`}
                 >
                   <span className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg ${meta.cls}`}>{meta.icon}</span>
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-slate-800">{t(n.title)}</span>
-                    {n.body && <span className="block truncate text-xs text-slate-500">{t(n.body)}</span>}
-                    <span className="block text-[10px] text-slate-400">{timeAgo(n.createdAt, t)}</span>
+                    <span className="block truncate text-sm font-medium text-[#F4F5F3]">{t(n.title)}</span>
+                    {n.body && <span className="block truncate text-xs text-white/50">{t(n.body)}</span>}
+                    <span className="block text-[10px] text-white/40">{timeAgo(n.createdAt, t)}</span>
                   </span>
                   {!n.readAt && <span className="ml-auto mt-1.5 h-2 w-2 shrink-0 rounded-full bg-teal-500" />}
                 </button>

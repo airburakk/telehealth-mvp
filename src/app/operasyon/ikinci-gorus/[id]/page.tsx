@@ -43,7 +43,7 @@ export default async function SoReviewPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
-      <Link href="/operasyon/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
+      <Link href="/operasyon/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/75">
         <ArrowLeft size={15} /> Kuyruk
       </Link>
       <SoReviewPanel

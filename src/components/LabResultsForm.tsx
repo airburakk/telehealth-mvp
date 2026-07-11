@@ -91,16 +91,16 @@ export function LabResultsForm({
   }
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+    <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
         <FlaskConical size={15} /> Laboratuvar Sonuçları (FHIR Observation)
       </div>
-      <p className="mt-1 text-xs text-slate-400">LOINC kodlu lab sonuçları → FHIR Observation (kategori: laboratory).</p>
+      <p className="mt-1 text-xs text-white/40">LOINC kodlu lab sonuçları → FHIR Observation (kategori: laboratory).</p>
 
-      {rows.length === 0 && <p className="mt-3 text-sm text-slate-400">Henüz lab sonucu eklenmedi.</p>}
+      {rows.length === 0 && <p className="mt-3 text-sm text-white/40">Henüz lab sonucu eklenmedi.</p>}
 
       {rows.some((r) => r.aiSuggested) && (
-        <div className="mt-3 flex items-start gap-2 rounded-xl bg-teal-50 px-3 py-2 text-[12px] leading-relaxed text-teal-800 ring-1 ring-teal-200">
+        <div className="mt-3 flex items-start gap-2 rounded-xl bg-[#28C8D8]/10 px-3 py-2 text-[12px] leading-relaxed text-[#28C8D8] ring-1 ring-[#28C8D8]/25">
           <Sparkles size={13} className="mt-0.5 shrink-0" />
           <span>
             Belgelerden AI ile çıkarılan değerler <strong>öneri</strong> olarak eklendi. Gözden geçirip{" "}
@@ -119,7 +119,7 @@ export function LabResultsForm({
                     value={r.loinc}
                     onChange={(e) => pickLoinc(i, e.target.value)}
                     title="Branşa özel LOINC"
-                    className="w-[88px] shrink-0 rounded-lg border border-slate-300 bg-slate-50 px-2 py-2 text-xs text-slate-600 outline-none focus:border-[#28C8D8]"
+                    className="w-[88px] shrink-0 rounded-lg border border-white/15 bg-[#1E1F22] px-2 py-2 text-xs text-white/65 outline-none focus:border-[#28C8D8]"
                   >
                     <option value="">LOINC…</option>
                     {loincOptions.map((o) => (
@@ -131,25 +131,25 @@ export function LabResultsForm({
                   value={r.name}
                   onChange={(e) => update(i, { name: e.target.value })}
                   placeholder="test adı"
-                  className={`w-full min-w-0 rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-teal-300 bg-teal-50/40" : "border-slate-300"}`}
+                  className={`w-full min-w-0 rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-[#28C8D8]/30 bg-teal-50/40" : "border-white/15"}`}
                 />
               </div>
               <input
                 value={r.value}
                 onChange={(e) => update(i, { value: e.target.value })}
                 placeholder="değer"
-                className={`rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-teal-300 bg-teal-50/40" : "border-slate-300"}`}
+                className={`rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-[#28C8D8]/30 bg-teal-50/40" : "border-white/15"}`}
               />
               <input
                 value={r.unit}
                 onChange={(e) => update(i, { unit: e.target.value })}
                 placeholder="birim"
-                className={`rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-teal-300 bg-teal-50/40" : "border-slate-300"}`}
+                className={`rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-[#28C8D8]/30 bg-teal-50/40" : "border-white/15"}`}
               />
               <button
                 onClick={() => removeRow(i)}
                 aria-label="Sil"
-                className="grid h-8 w-7 place-items-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
+                className="grid h-8 w-7 place-items-center rounded-lg text-white/40 hover:bg-red-500/10 hover:text-red-500"
               >
                 <Trash2 size={14} />
               </button>
@@ -157,12 +157,12 @@ export function LabResultsForm({
             {(r.aiSuggested || r.abnormal) && (
               <div className="mt-1 flex flex-wrap items-center gap-2 ps-0.5 text-[11px]">
                 {r.aiSuggested && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-1.5 py-0.5 font-semibold text-teal-700">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#28C8D8]/15 px-1.5 py-0.5 font-semibold text-[#28C8D8]">
                     <Sparkles size={10} /> AI · belgeden
                   </span>
                 )}
                 {r.abnormal && (
-                  <span className="inline-flex items-center gap-1 font-medium text-amber-700">
+                  <span className="inline-flex items-center gap-1 font-medium text-amber-300">
                     <AlertTriangle size={10} /> {r.abnormal}
                   </span>
                 )}
@@ -174,12 +174,12 @@ export function LabResultsForm({
 
       <button
         onClick={addRow}
-        className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+        className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-sm font-medium text-white/65 hover:bg-[#1E1F22]"
       >
         <Plus size={14} /> Sonuç ekle
       </button>
 
-      {err && <p className="mt-3 text-sm text-red-600">{err}</p>}
+      {err && <p className="mt-3 text-sm text-red-300">{err}</p>}
 
       <div className="mt-4">
         <button

@@ -34,7 +34,7 @@ export function CompleteRecoveryButton({ caseId }: { caseId: string }) {
     return (
       <button
         onClick={(e) => { stop(e); setConfirm(true); }}
-        className="shrink-0 rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:border-[#28C8D8] hover:text-[#17919E]"
+        className="shrink-0 rounded-lg border border-white/15 px-2.5 py-1 text-xs font-medium text-white/65 transition hover:border-[#28C8D8] hover:text-[#17919E]"
         title="Post-op takibi tamamla — klinik erişim hastaya devredilir"
       >
         Takibi tamamla
@@ -43,7 +43,7 @@ export function CompleteRecoveryButton({ caseId }: { caseId: string }) {
   }
   return (
     <span className="inline-flex shrink-0 items-center gap-1.5" onClick={stop}>
-      <span className="hidden text-[11px] text-slate-500 sm:inline">Erişim hastaya devredilecek</span>
+      <span className="hidden text-[11px] text-white/50 sm:inline">Erişim hastaya devredilecek</span>
       <button
         onClick={complete}
         disabled={busy}
@@ -51,7 +51,7 @@ export function CompleteRecoveryButton({ caseId }: { caseId: string }) {
       >
         {busy ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} {err ? "Tekrar dene" : "Onayla"}
       </button>
-      <button onClick={(e) => { stop(e); setConfirm(false); }} className="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-500" title="Vazgeç">
+      <button onClick={(e) => { stop(e); setConfirm(false); }} className="rounded-lg border border-white/15 px-2 py-1 text-xs text-white/50" title="Vazgeç">
         <X size={13} />
       </button>
     </span>

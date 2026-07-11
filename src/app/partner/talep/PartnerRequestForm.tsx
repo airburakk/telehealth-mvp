@@ -115,86 +115,86 @@ export function PartnerRequestForm({
 
   return (
     <div dir={dir} className="mx-auto max-w-2xl px-5 py-8">
-      <button onClick={() => router.push("/partner")} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
+      <button onClick={() => router.push("/partner")} className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/75">
         <ArrowLeft size={15} /> {t.back}
       </button>
-      <h1 className="mt-3 text-2xl font-bold text-[#0D0E10]">{t.title}</h1>
+      <h1 className="mt-3 text-2xl font-bold text-[#F4F5F3]">{t.title}</h1>
 
-      <div className="mt-3 flex items-start gap-2 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-3 text-xs text-indigo-800">
+      <div className="mt-3 flex items-start gap-2 rounded-2xl border border-indigo-400/25 bg-indigo-50/60 p-3 text-xs text-indigo-200">
         <ShieldCheck size={16} className="mt-0.5 shrink-0" />
         <span>{t.warning}</span>
       </div>
 
-      <div className="mt-6 space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mt-6 space-y-5 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
         {/* Branş sınırı */}
         <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-            <input type="checkbox" checked={branchLimited} onChange={(e) => setBranchLimited(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+          <label className="flex items-center gap-2 text-sm font-medium text-white/75">
+            <input type="checkbox" checked={branchLimited} onChange={(e) => setBranchLimited(e.target.checked)} className="h-4 w-4 rounded border-white/15" />
             {t.branchLimit}
           </label>
           {branchLimited && (
-            <select value={branch} onChange={(e) => setBranch(e.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#818cf8]">
+            <select value={branch} onChange={(e) => setBranch(e.target.value)} className="mt-2 w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#818cf8]">
               {branches.map((b) => <option key={b} value={b}>{b}</option>)}
             </select>
           )}
-          {!branchLimited && <p className="mt-1 text-xs text-slate-400">{t.branchUnlimited}</p>}
+          {!branchLimited && <p className="mt-1 text-xs text-white/40">{t.branchUnlimited}</p>}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-sm font-medium text-slate-700">{t.region}</label>
-            <select value={region} onChange={(e) => setRegion(e.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#818cf8]">
+            <label className="text-sm font-medium text-white/75">{t.region}</label>
+            <select value={region} onChange={(e) => setRegion(e.target.value)} className="mt-1.5 w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#818cf8]">
               {countries.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">{t.patientLang}</label>
-            <select value={language} onChange={(e) => setLanguage(e.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#818cf8]">
+            <label className="text-sm font-medium text-white/75">{t.patientLang}</label>
+            <select value={language} onChange={(e) => setLanguage(e.target.value)} className="mt-1.5 w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#818cf8]">
               {languages.map((l) => <option key={l} value={l}>{l}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">{t.urgency}</label>
-            <input type="number" min={1} max={5} value={urgency} onChange={(e) => setUrgency(Number(e.target.value))} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#818cf8]" />
+            <label className="text-sm font-medium text-white/75">{t.urgency}</label>
+            <input type="number" min={1} max={5} value={urgency} onChange={(e) => setUrgency(Number(e.target.value))} className="mt-1.5 w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#818cf8]" />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">{t.icd}</label>
-            <input type="text" value={icd10Code} onChange={(e) => setIcd10(e.target.value)} placeholder="ör. C61" className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#818cf8]" />
+            <label className="text-sm font-medium text-white/75">{t.icd}</label>
+            <input type="text" value={icd10Code} onChange={(e) => setIcd10(e.target.value)} placeholder="ör. C61" className="mt-1.5 w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#818cf8]" />
           </div>
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700">{t.summary}</label>
+          <label className="text-sm font-medium text-white/75">{t.summary}</label>
           <textarea
             value={clinicalSummary}
             onChange={(e) => { setSummary(e.target.value); setErr(""); }}
             rows={6}
             placeholder={t.summaryPlaceholder}
-            className="mt-1.5 w-full resize-y rounded-lg border border-slate-300 p-3 text-sm outline-none focus:border-[#818cf8]"
+            className="mt-1.5 w-full resize-y rounded-lg border border-white/15 p-3 text-sm outline-none focus:border-[#818cf8]"
           />
         </div>
 
         {/* Tıbbi belge / sonuç / görüntüleme yükleme (anonim; AI ile değerlendirilir + TR çeviri + FHIR) */}
         <div>
-          <label className="text-sm font-medium text-slate-700">{t.docsLabel} <span className="font-normal text-slate-400">{t.docsOptional}</span></label>
-          <p className="mt-0.5 text-xs text-slate-400">{t.docsHelp}</p>
-          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 hover:border-[#818cf8] hover:bg-slate-50">
+          <label className="text-sm font-medium text-white/75">{t.docsLabel} <span className="font-normal text-white/40">{t.docsOptional}</span></label>
+          <p className="mt-0.5 text-xs text-white/40">{t.docsHelp}</p>
+          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-white/15 px-4 py-2.5 text-sm font-medium text-white/65 hover:border-[#818cf8] hover:bg-[#1E1F22]">
             <Upload size={15} /> {t.addDoc}
             <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp,image/gif" multiple className="hidden" onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
           </label>
           {docs.length > 0 && (
             <ul className="mt-2 space-y-1.5">
               {docs.map((d, i) => (
-                <li key={i} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-                  <span className="inline-flex min-w-0 items-center gap-1.5 text-slate-700"><FileText size={14} className="shrink-0 text-slate-400" /> <span className="truncate">{d.label}</span></span>
-                  <button type="button" onClick={() => setDocs((p) => p.filter((_, j) => j !== i))} className="shrink-0 text-slate-400 hover:text-red-500"><X size={15} /></button>
+                <li key={i} className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-[#1E1F22] px-3 py-2 text-sm">
+                  <span className="inline-flex min-w-0 items-center gap-1.5 text-white/75"><FileText size={14} className="shrink-0 text-white/40" /> <span className="truncate">{d.label}</span></span>
+                  <button type="button" onClick={() => setDocs((p) => p.filter((_, j) => j !== i))} className="shrink-0 text-white/40 hover:text-red-500"><X size={15} /></button>
                 </li>
               ))}
             </ul>
           )}
         </div>
 
-        {err && <p className="text-sm text-red-600">{err}</p>}
+        {err && <p className="text-sm text-red-300">{err}</p>}
 
         <button onClick={submit} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-[#818cf8] px-5 py-3 text-sm font-semibold text-white hover:bg-[#6d75e0] disabled:opacity-60">
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {saving ? t.submitting : t.submit}

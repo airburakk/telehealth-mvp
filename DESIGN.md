@@ -58,9 +58,11 @@ pazarlama + açık sakin klinik. "Emin ellerdesin" hissi nedeniyle terazi **güv
 - **Koyu yüzeyler (gece — vitrinle ortak):** sayfa `#0D0E10` · bölüm bandı `#101113` ·
   panel `#161719` (kart, 22px radius) · yüzey `#1E1F22` (input/çip) · metin `#F4F5F3` /
   muted `rgba(255,255,255,.4–.72)`. Public + giriş/kayıt yüzeyi tamamen bu ailede (Faz A, 2026-07-11).
-- **Açık yüzeyler (klinik — GEÇİŞ SÜRECİNDE):** zemin `#eef1f5` · kart `#FFFFFF` · metin `#1a1f29` /
-  ikincil `slate-500`. Faz B/C'de iç paneller marka-hizalı koyuya taşınacak (klinik okunabilirlik
-  önde, gece paleti + aynı fontlar); o zamana dek mevcut açık düzen geçerli.
+- **İç paneller (klinik — marka-hizalı koyu, Faz B/C 2026-07-11):** açık klinik zemin EMEKLİ.
+  Zemin `#0D0E10` (body, globals.css) · kart/panel `#161719` · input/çip `#1E1F22` · metin
+  `#F4F5F3` / kademeler `white/75·65·50·40`. Durum pastelleri koyu-uyarlandı: `bg-<ton>-500/10-15`
+  + `text-<ton>-200/300` + `ring-<ton>-400/20-30` (ton korunur — klinik semantik bozulmaz).
+  Yazdırmada zemin/metin açığa zorlanır (globals.css `@media print`).
 - **Tersiyer (nadir):** altın `#C6A664` yalnız puan yıldızı.
 
 ### ⚠️ Tıbbi renk semantiği (en kritik kural)
@@ -126,4 +128,5 @@ tıbbi veride gereksiz animasyon.
 | 2026-06-23 | DESIGN.md mevcut AURA dilinden oluşturuldu | `/design-consultation`; memorable-thing "Emin ellerdesin" (tıbbi güven öncelikli) |
 | 2026-06-23 | Uygulama tipografisi landing'e çekildi (Hanken+Newsreader) | `layout.tsx`+`globals.css`; landing↔uygulama kalite uçurumu kapatıldı |
 | 2026-07-11 | **Vitrin görsel diline geçiş (Faz A):** palet `#0D0E10`+`#28C8D8`, tipografi Space Grotesk+Inter+JetBrains Mono; public+giriş yüzeyi gece | Kullanıcı kararı — vitrin (aura-health.higgsfield.app) ile tek marka dili; iç paneller Faz B/C'de |
+| 2026-07-11 | **Faz B+C:** iç paneller (hasta+personel) marka-hizalı koyu — deterministik sınıf haritası (~2.6k dönüşüm, 100+ dosya + lib rozet haritaları), globals.css gece + print koruması | Tek commit: body zemini iki yüzeyi birden çevirir, ara durum kırık olurdu |
 | (açık) | Arapça yoldaş font (Noto Sans Arabic) **veya** bilinçli sistem fallback | Inter Kiril'i kapattı; AR hâlâ markasız fallback'te |

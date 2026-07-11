@@ -77,7 +77,7 @@ function WaitingInner() {
   }, [caseId, router]);
 
   if (!caseId) {
-    return <p dir={dir} className="text-sm text-slate-500">{t(S.invalid)}</p>;
+    return <p dir={dir} className="text-sm text-white/50">{t(S.invalid)}</p>;
   }
 
   const ended = status !== "WAITING" && status !== "MATCHED";
@@ -95,29 +95,29 @@ function WaitingInner() {
       <div className="flex justify-end">
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <div className="rounded-3xl border border-white/10 bg-[#161719] p-8 text-center shadow-sm">
       {ended ? (
         <>
-          <span className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-slate-100 text-slate-400">
+          <span className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-white/10 text-white/40">
             <Users size={28} />
           </span>
-          <h1 className="mt-5 text-xl font-bold text-[#0D0E10]">{t(S.notWaiting)}</h1>
-          <p className="mt-2 text-sm text-slate-500">{t(S.statusLabel)} {status}. {t(S.statusFollow)}</p>
+          <h1 className="mt-5 text-xl font-bold text-[#F4F5F3]">{t(S.notWaiting)}</h1>
+          <p className="mt-2 text-sm text-white/50">{t(S.statusLabel)} {status}. {t(S.statusFollow)}</p>
         </>
       ) : (
         <>
           {/* Dönen AURA logosu (eski dönen halka yerine) */}
           <AuraSpinner size={48} className="mx-auto block" />
-          <h1 className="mt-5 text-xl font-bold text-[#0D0E10]">
+          <h1 className="mt-5 text-xl font-bold text-[#F4F5F3]">
             {noDoctor ? t(S.noDoctorTitle) : t(S.searchingTitle)}
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-slate-500">
+          <p className="mt-2 text-sm leading-relaxed text-white/50">
             {noDoctor ? t(S.noDoctorBody) : t(S.searchingBody)}
           </p>
-          <div className={`mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ring-1 ${noDoctor ? "bg-red-50 text-red-700 ring-red-200" : "bg-slate-50 text-slate-600 ring-slate-200"}`}>
+          <div className={`mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ring-1 ${noDoctor ? "bg-red-500/10 text-red-300 ring-red-400/25" : "bg-[#1E1F22] text-white/65 ring-white/10"}`}>
             <AuraSpinner size={15} className="inline-block" />
             {pos ? (
-              <span><Users size={13} className="mb-0.5 me-1 inline" />{t(S.queuePos)} <b className="text-[#0D0E10]">{pos}</b></span>
+              <span><Users size={13} className="mb-0.5 me-1 inline" />{t(S.queuePos)} <b className="text-[#F4F5F3]">{pos}</b></span>
             ) : (
               noDoctor ? t(S.waitingDoctor) : t(S.waitingMatch)
             )}
@@ -133,7 +133,7 @@ function WaitingInner() {
 export default function FreeCareWaitingPage() {
   return (
     <div className="mx-auto max-w-lg px-5 py-16">
-      <Suspense fallback={<div className="text-center text-sm text-slate-400">…</div>}>
+      <Suspense fallback={<div className="text-center text-sm text-white/40">…</div>}>
         <WaitingInner />
       </Suspense>
     </div>

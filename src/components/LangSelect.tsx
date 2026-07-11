@@ -30,12 +30,12 @@ export function createLangPersistence(key: string, fallback = "Türkçe") {
 // dark: gece-zeminli yüzeyler için (Faz A: /basla; Faz B'de aydınlık varyant emekli olur).
 export function LangSelect({ lang, onChange, dark = false }: { lang: string; onChange: (l: string) => void; dark?: boolean }) {
   return (
-    <label className={`inline-flex shrink-0 items-center gap-1.5 text-xs ${dark ? "text-white/50" : "text-slate-500"}`}>
+    <label className={`inline-flex shrink-0 items-center gap-1.5 text-xs ${dark ? "text-white/50" : "text-white/50"}`}>
       <Globe size={14} />
       <select
         value={lang}
         onChange={(e) => onChange(e.target.value)}
-        className={`rounded-lg border px-2 py-1.5 text-xs font-medium outline-none focus:border-[#28C8D8] ${dark ? "border-white/15 bg-[#1E1F22] text-white/80" : "border-slate-300 bg-white text-slate-700"}`}
+        className={`rounded-lg border px-2 py-1.5 text-xs font-medium outline-none focus:border-[#28C8D8] ${dark ? "border-white/15 bg-[#1E1F22] text-white/80" : "border-white/15 bg-[#161719] text-white/75"}`}
       >
         {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
       </select>

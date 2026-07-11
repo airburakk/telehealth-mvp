@@ -83,7 +83,7 @@ export default function FreeCareApplyPage() {
   return (
     <JourneyIntakeShell icon={HeartHandshake} eyebrow={t("Ücretsiz Sağlık Hizmeti")} title={t("Ücretsiz Sağlık Hizmeti Başvurusu")} intro={t("Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.")} lang={uiLang} onLangChange={setUiLang} journey="FREE_CARE" stage={1}>
 
-      <div className="mt-7 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      <div className="mt-7 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm space-y-4">
         <Field label={t("Hasta Adı (veya yakını)")}>
           <input value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder={t("Örn. Amina B.")} className="inp" />
         </Field>
@@ -122,16 +122,16 @@ export default function FreeCareApplyPage() {
           <input value={durationText} onChange={(e) => setDurationText(e.target.value)} placeholder={t("Örn. 2 hafta")} className="inp" />
         </Field>
 
-        <div className="rounded-2xl border border-teal-200 bg-teal-50/60 px-4 py-3 text-[13px] leading-relaxed text-teal-800">
+        <div className="rounded-2xl border border-[#28C8D8]/25 bg-teal-50/60 px-4 py-3 text-[13px] leading-relaxed text-[#28C8D8]">
           {t("Bu görüşme tamamen ücretsizdir. Gönüllü doktorlarımiz kontenjanları dolana kadar başvuruları sırayla karşılar.")}
         </div>
 
-        {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">{t(error)}</div>}
+        {error && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300 ring-1 ring-red-400/25">{t(error)}</div>}
 
         {/* Çevrimiçi/çevrimdışı indikatörü — buton aktifliği buna bağlı */}
         <div className="flex items-center gap-2 text-[13px]">
-          <span className={`h-2.5 w-2.5 rounded-full ${online === null ? "bg-slate-300" : online > 0 ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
-          <span className="text-slate-600">
+          <span className={`h-2.5 w-2.5 rounded-full ${online === null ? "bg-white/20" : online > 0 ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
+          <span className="text-white/65">
             {online === null
               ? t("Müsaitlik kontrol ediliyor…")
               : online > 0
@@ -140,7 +140,7 @@ export default function FreeCareApplyPage() {
           </span>
         </div>
         {online === 0 && (
-          <p className="-mt-1 text-xs leading-relaxed text-slate-400">
+          <p className="-mt-1 text-xs leading-relaxed text-white/40">
             {t("Bir doktor çevrimiçi olduğunda başvurabilirsiniz; havuzdayken bir doktor müsait olunca size bildirim göndeririz.")}
           </p>
         )}
@@ -166,7 +166,7 @@ export default function FreeCareApplyPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-white/75">{label}</span>
       {children}
     </label>
   );

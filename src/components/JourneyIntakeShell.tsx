@@ -31,8 +31,8 @@ export function JourneyIntakeShell({ icon: Icon, eyebrow, title, intro, lang, on
           <span className="inline-flex items-center gap-2 rounded-full bg-[#28C8D8]/10 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#17919E]">
             <Icon size={14} /> {eyebrow}
           </span>
-          <h1 className="mt-3 text-2xl font-bold text-[#0D0E10]">{title}</h1>
-          {intro && <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{intro}</p>}
+          <h1 className="mt-3 text-2xl font-bold text-[#F4F5F3]">{title}</h1>
+          {intro && <p className="mt-1.5 text-sm leading-relaxed text-white/50">{intro}</p>}
         </div>
         <LangSelect lang={lang} onChange={onLangChange} />
       </div>

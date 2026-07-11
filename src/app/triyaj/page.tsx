@@ -235,7 +235,7 @@ export default function TriyajPage() {
 
   return (
     <JourneyIntakeShell icon={Stethoscope} eyebrow={t("Branş Doktoru")} title={t("Triyaj · Ön Değerlendirme")} intro={t("Birkaç adımda şikayetinizi anlatın; sistem sizi doğru uzmana yönlendirsin.")} lang={uiLang} onLangChange={setUiLang} journey="GENERAL" stage={1}>
-      <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200">
+      <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300 ring-1 ring-emerald-400/25">
         <ShieldCheck size={15} />
         {billing.status === "INSURED"
           ? `${t("Görüşme sigortanız tarafından karşılanıyor")} (${billing.insurer ?? "—"}) · ${t("Poliçe")} ${billing.policyNo}`
@@ -253,20 +253,20 @@ export default function TriyajPage() {
               <div className="flex flex-col items-center">
                 <span
                   className={`grid h-9 w-9 place-items-center rounded-full text-sm font-semibold ${
-                    active ? "bg-[#28C8D8] text-[#0D0E10]" : done ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"
+                    active ? "bg-[#28C8D8] text-[#0D0E10]" : done ? "bg-emerald-500 text-white" : "bg-white/15 text-white/50"
                   }`}
                 >
                   <Icon size={17} />
                 </span>
-                <span className={`mt-1 text-[11px] ${active ? "text-[#0D0E10] font-semibold" : "text-slate-400"}`}>{t(s.t)}</span>
+                <span className={`mt-1 text-[11px] ${active ? "text-[#F4F5F3] font-semibold" : "text-white/40"}`}>{t(s.t)}</span>
               </div>
-              {i < STEPS.length - 1 && <div className={`mx-2 h-0.5 flex-1 rounded ${done ? "bg-emerald-500" : "bg-slate-200"}`} />}
+              {i < STEPS.length - 1 && <div className={`mx-2 h-0.5 flex-1 rounded ${done ? "bg-emerald-500" : "bg-white/15"}`} />}
             </div>
           );
         })}
       </div>
 
-      <div className="mt-7 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mt-7 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
         {/* Step 0 */}
         {step === 0 && (
           <div className="space-y-4">
@@ -326,8 +326,8 @@ export default function TriyajPage() {
               <input value={durationText} onChange={(e) => setDurationText(e.target.value)} placeholder={t("Örn. 2 ay")} className="inp" />
             </Field>
             {!analysis && (
-              <p className="flex items-center gap-1.5 text-xs text-slate-400">
-                <Sparkles size={13} className="text-teal-500" /> {t("Devam'a bastığınızda yapay zeka şikayetinizi analiz edip sizi doğru uzmana yönlendirir.")}
+              <p className="flex items-center gap-1.5 text-xs text-white/40">
+                <Sparkles size={13} className="text-[#28C8D8]" /> {t("Devam'a bastığınızda yapay zeka şikayetinizi analiz edip sizi doğru uzmana yönlendirir.")}
               </p>
             )}
             {analysis && u && (
@@ -342,31 +342,31 @@ export default function TriyajPage() {
             {analyzing && !analysis && (
               <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
                 <AuraSpinner size={48} className="block" />
-                <p className="text-sm font-medium text-slate-500">{t("AI sizi doğru branşa yönlendiriyor…")}</p>
+                <p className="text-sm font-medium text-white/50">{t("AI sizi doğru branşa yönlendiriyor…")}</p>
               </div>
             )}
             {effectiveBranch ? (
               <>
-                <div className="rounded-2xl border border-teal-200 bg-teal-50/60 p-3">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700"><Stethoscope size={14} /> {t("Yönlendirilen branş")}</div>
+                <div className="rounded-2xl border border-[#28C8D8]/25 bg-teal-50/60 p-3">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]"><Stethoscope size={14} /> {t("Yönlendirilen branş")}</div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <select
                       value={effectiveBranch}
                       onChange={(e) => setBranchOverride(e.target.value)}
-                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-[#0D0E10] outline-none focus:border-[#28C8D8]"
+                      className="rounded-lg border border-white/15 bg-[#1E1F22] px-2.5 py-1.5 text-sm font-medium text-[#F4F5F3] outline-none focus:border-[#28C8D8]"
                     >
                       {BRANCHES.map((b) => <option key={b.key} value={b.key}>{t(b.label)}</option>)}
                     </select>
                     {branchOverride
-                      ? <span className="text-xs text-slate-500">{t("elle seçildi")}</span>
-                      : analysis && <span className="text-xs text-slate-500">{t("AI önerisi · doğru değilse değiştirin")}</span>}
+                      ? <span className="text-xs text-white/50">{t("elle seçildi")}</span>
+                      : analysis && <span className="text-xs text-white/50">{t("AI önerisi · doğru değilse değiştirin")}</span>}
                   </div>
                 </div>
                 <DynamicTriageQuestions branchKey={effectiveBranch} value={answers} onChange={setAnswers} t={t} />
               </>
             ) : (
               !analyzing && (
-                <div className="rounded-lg bg-slate-50 px-3 py-6 text-center text-sm text-slate-400">
+                <div className="rounded-lg bg-[#1E1F22] px-3 py-6 text-center text-sm text-white/40">
                   {t("Önce şikayet adımında AI ön analizini çalıştırın; sorular branşa göre belirir.")}
                 </div>
               )
@@ -378,8 +378,8 @@ export default function TriyajPage() {
         {step === 3 && (
           <div className="space-y-4">
             {branchDocs.length > 0 && (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
-                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <div className="rounded-2xl border border-white/10 bg-[#1E1F22] p-3.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/65">
                   <ListChecks size={14} /> {t("Bu branş için gerekli belgeler")}
                 </div>
                 <ul className="mt-2.5 space-y-2">
@@ -392,11 +392,11 @@ export default function TriyajPage() {
                           onChange={(e) => setProvidedDocs((p) => ({ ...p, [d.key]: e.target.checked }))}
                           className="mt-0.5 accent-[#28C8D8]"
                         />
-                        <span className={d.required ? "text-slate-700" : "text-slate-500"}>
+                        <span className={d.required ? "text-white/75" : "text-white/50"}>
                           {t(d.label)}{" "}
                           {d.required
                             ? <span className="font-semibold text-red-500">*</span>
-                            : <span className="text-[11px] text-slate-400">({t("opsiyonel")})</span>}
+                            : <span className="text-[11px] text-white/40">({t("opsiyonel")})</span>}
                         </span>
                       </label>
                     </li>
@@ -406,8 +406,8 @@ export default function TriyajPage() {
             )}
 
             {missingRequired.length > 0 && (
-              <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
-                <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-900">
+              <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4">
+                <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-200">
                   <AlertTriangle size={16} className="shrink-0" /> {t("Eksik belgeleriniz var")}
                 </div>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-amber-900/90">
@@ -416,33 +416,33 @@ export default function TriyajPage() {
                 <p className="mt-1.5 text-[13px] leading-relaxed text-amber-900/90">
                   {t("Hızlı, doğru ve etkili bir görüşme için gerekli belgelerin eksiksiz yüklenmesi büyük önem taşır. Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi Özet adımında onaylayarak da ilerleyebilirsiniz.")}
                 </p>
-                <ul className="mt-2.5 list-disc space-y-0.5 ps-5 text-[12px] font-medium text-amber-900">
+                <ul className="mt-2.5 list-disc space-y-0.5 ps-5 text-[12px] font-medium text-amber-200">
                   {missingRequired.map((d) => <li key={d.key}>{t(d.label)}</li>)}
                 </ul>
               </div>
             )}
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center hover:border-teal-400 hover:bg-teal-50/40">
-              <Upload size={26} className="text-slate-400" />
-              <span className="text-sm font-medium text-slate-600">{t("Tıbbi belge yükleyin")}</span>
-              <span className="text-xs text-slate-400">{t("PDF, JPG, DICOM · Tahlil, radyoloji, epikriz")}</span>
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/15 bg-[#1E1F22] px-6 py-10 text-center hover:border-teal-400 hover:bg-teal-50/40">
+              <Upload size={26} className="text-white/40" />
+              <span className="text-sm font-medium text-white/65">{t("Tıbbi belge yükleyin")}</span>
+              <span className="text-xs text-white/40">{t("PDF, JPG, DICOM · Tahlil, radyoloji, epikriz")}</span>
               <input type="file" multiple className="hidden" onChange={onFiles} accept=".pdf,.jpg,.jpeg,.png,.dcm" />
             </label>
 
             {files.length > 0 && (
               <ul className="space-y-2">
                 {files.map((f, i) => (
-                  <li key={i} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
-                    <span className="flex items-center gap-2 text-slate-700"><FileText size={16} className="text-teal-600" /> {f.name}{!f.dataUrl && <span className="text-[10px] text-slate-400">(AI analizi dışı)</span>}</span>
-                    <button onClick={() => setFiles(files.filter((_, j) => j !== i))} className="text-slate-400 hover:text-red-500"><X size={16} /></button>
+                  <li key={i} className="flex items-center justify-between rounded-lg border border-white/10 bg-[#161719] px-3 py-2 text-sm">
+                    <span className="flex items-center gap-2 text-white/75"><FileText size={16} className="text-[#28C8D8]" /> {f.name}{!f.dataUrl && <span className="text-[10px] text-white/40">(AI analizi dışı)</span>}</span>
+                    <button onClick={() => setFiles(files.filter((_, j) => j !== i))} className="text-white/40 hover:text-red-500"><X size={16} /></button>
                   </li>
                 ))}
               </ul>
             )}
 
-            <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700 ring-1 ring-emerald-200">
+            <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300 ring-1 ring-emerald-400/25">
               <ShieldCheck size={15} /> {t("Yüklenen dosyalar KVKK/GDPR uyumlu şifreli olarak saklanır.")}
             </div>
-            <p className="text-xs text-slate-400">{t("Belge yüklemek opsiyoneldir; bu adımı atlayabilirsiniz.")}</p>
+            <p className="text-xs text-white/40">{t("Belge yüklemek opsiyoneldir; bu adımı atlayabilirsiniz.")}</p>
           </div>
         )}
 
@@ -459,19 +459,19 @@ export default function TriyajPage() {
 
             {Object.keys(answers).length > 0 && (
               <div className="col-span-2">
-                <div className="text-xs uppercase tracking-wide text-slate-400">
+                <div className="text-xs uppercase tracking-wide text-white/40">
                   {t("Branş Soruları")}{effectiveBranch ? ` · ${t(BRANCHES.find((b) => b.key === effectiveBranch)?.label ?? "")}` : ""}
                 </div>
-                <ul className="mt-1 space-y-0.5 text-sm text-slate-700">
+                <ul className="mt-1 space-y-0.5 text-sm text-white/75">
                   {Object.entries(answers).map(([k, v]) => (
-                    <li key={k}><span className="text-slate-500">{t(k)}:</span> {v.split(",").map((s) => t(s.trim())).join(", ")}</li>
+                    <li key={k}><span className="text-white/50">{t(k)}:</span> {v.split(",").map((s) => t(s.trim())).join(", ")}</li>
                   ))}
                 </ul>
               </div>
             )}
 
             {missingRequired.length > 0 && (
-              <div className="rounded-lg bg-amber-50 px-3 py-2.5 text-sm text-amber-800 ring-1 ring-amber-200">
+              <div className="rounded-lg bg-amber-500/10 px-3 py-2.5 text-sm text-amber-200 ring-1 ring-amber-400/25">
                 <div className="flex items-center gap-1.5 font-semibold"><AlertTriangle size={15} /> {t("Eksik zorunlu belge")}</div>
                 <ul className="mt-1 list-disc ps-5 text-[13px]">
                   {missingRequired.map((d) => <li key={d.key}>{t(d.label)}</li>)}
@@ -485,26 +485,26 @@ export default function TriyajPage() {
             {analyzing && (
               <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
                 <AuraSpinner size={40} className="block" />
-                <p className="text-sm font-medium text-slate-500">{t("Analiz ediliyor…")}</p>
+                <p className="text-sm font-medium text-white/50">{t("Analiz ediliyor…")}</p>
               </div>
             )}
             {analysis && u && <AnalysisCard analysis={analysis} badge={u.badge} dot={u.dot} label={u.label} t={t} />}
             {!analysis && !analyzing && (
-              <button onClick={runAnalyze} className="inline-flex items-center gap-2 rounded-lg bg-teal-50 px-3.5 py-2 text-sm font-medium text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100">
+              <button onClick={runAnalyze} className="inline-flex items-center gap-2 rounded-lg bg-[#28C8D8]/10 px-3.5 py-2 text-sm font-medium text-[#28C8D8] ring-1 ring-[#28C8D8]/25 hover:bg-[#28C8D8]/15">
                 <Sparkles size={16} /> {t("Analizi çalıştır")}
               </button>
             )}
           </div>
         )}
 
-        {error && <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">{t(error)}</div>}
+        {error && <div className="mt-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300 ring-1 ring-red-400/25">{t(error)}</div>}
 
         {/* Nav */}
         <div className="mt-6 flex items-center justify-between">
           <button
             onClick={back}
             disabled={step === 0}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-0"
+            className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-white/65 hover:bg-white/10 disabled:opacity-0"
           >
             <ArrowLeft size={16} /> {t("Geri")}
           </button>
@@ -536,7 +536,7 @@ export default function TriyajPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-white/75">{label}</span>
       {children}
     </label>
   );
@@ -545,27 +545,27 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function Summary({ k, v, block }: { k: string; v: string; block?: boolean }) {
   return (
     <div className={block ? "col-span-2" : ""}>
-      <div className="text-xs uppercase tracking-wide text-slate-400">{k}</div>
-      <div className="mt-0.5 text-slate-800">{v}</div>
+      <div className="text-xs uppercase tracking-wide text-white/40">{k}</div>
+      <div className="mt-0.5 text-[#F4F5F3]">{v}</div>
     </div>
   );
 }
 
 function AnalysisCard({ analysis, badge, dot, label, t = (s) => s }: { analysis: Analysis; badge: string; dot: string; label: string; t?: (s: string) => string }) {
   return (
-    <div className="rounded-2xl border border-teal-200 bg-teal-50/60 p-4">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-teal-700">
+    <div className="rounded-2xl border border-[#28C8D8]/25 bg-teal-50/60 p-4">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]">
         <Sparkles size={14} /> {t("AI Ön Analizi")}
         {analysis.engine === "llm" && <span className="rounded-full bg-teal-600 px-1.5 py-0.5 text-[9px] tracking-normal text-white">Claude</span>}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <span className="rounded-lg bg-white px-2.5 py-1 text-sm font-semibold text-[#0D0E10] ring-1 ring-slate-200">{t(analysis.branch)}</span>
+        <span className="rounded-lg bg-[#1E1F22] px-2.5 py-1 text-sm font-semibold text-[#F4F5F3] ring-1 ring-white/10">{t(analysis.branch)}</span>
         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${badge}`}>
           <span className={`h-2 w-2 rounded-full ${dot}`} /> {t("Aciliyet")} {analysis.urgency}/5 · {t(label)}
         </span>
-        <span className="text-xs text-slate-500">{t("Güven")} %{analysis.confidence}</span>
+        <span className="text-xs text-white/50">{t("Güven")} %{analysis.confidence}</span>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-slate-600">{t(analysis.reasoning)}</p>
+      <p className="mt-2 text-sm leading-relaxed text-white/65">{t(analysis.reasoning)}</p>
     </div>
   );
 }

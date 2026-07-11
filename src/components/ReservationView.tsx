@@ -92,11 +92,11 @@ export function ReservationView(p: ReservationViewProps) {
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>
 
-      <div className="flex items-start gap-3 rounded-3xl border border-emerald-200 bg-emerald-50 p-5">
-        <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" />
+      <div className="flex items-start gap-3 rounded-3xl border border-emerald-400/25 bg-emerald-500/10 p-5">
+        <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-300" />
         <div>
-          <h1 className="font-bold text-emerald-900">{t("Paket onaylandı")}</h1>
-          <p className="mt-0.5 text-xs font-medium text-emerald-800">{p.patientName} · {p.branch}</p>
+          <h1 className="font-bold text-emerald-200">{t("Paket onaylandı")}</h1>
+          <p className="mt-0.5 text-xs font-medium text-emerald-200">{p.patientName} · {p.branch}</p>
           <p className="mt-0.5 text-sm text-emerald-800/80">{t("Tedavi paketiniz rezerve edildi; ödemeniz hizmet tamamlanana dek güvence altında tutulur (escrow simülasyonu).")}</p>
         </div>
       </div>
@@ -104,11 +104,11 @@ export function ReservationView(p: ReservationViewProps) {
       <div className="mt-6 grid gap-5 sm:grid-cols-[1fr_300px]">
         {/* Sol: paket içeriği */}
         <div className="space-y-5">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs uppercase tracking-wide text-slate-400">{t("Rezervasyon No")}</div>
-                <div className="font-mono text-sm text-slate-700">{p.rezNo}</div>
+                <div className="text-xs uppercase tracking-wide text-white/40">{t("Rezervasyon No")}</div>
+                <div className="font-mono text-sm text-white/75">{p.rezNo}</div>
               </div>
               <span className="rounded-full bg-[#28C8D8] px-3 py-1 text-xs font-semibold text-[#0D0E10]">{p.tier} {t("Paket")}</span>
             </div>
@@ -122,28 +122,28 @@ export function ReservationView(p: ReservationViewProps) {
 
             {/* Doktorun seçtiği tesis + sağlık turizmi yetki belgesi rozeti (hasta güven sinyali; yalnız pozitif) */}
             {p.hospitalName && (
-              <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm">
+              <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-[#1E1F22]/60 px-3 py-2 text-sm">
                 <Building2 size={14} className="shrink-0 text-[#1FA9B8]" />
-                <span className="min-w-0 font-medium text-slate-700">{p.hospitalName}</span>
+                <span className="min-w-0 font-medium text-white/75">{p.hospitalName}</span>
                 {p.hospitalAuthNo && (
-                  <span title={t("Sağlık turizmi yetki belgeli tesis (T.C. Sağlık Bakanlığı — HealthTürkiye)")} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                  <span title={t("Sağlık turizmi yetki belgeli tesis (T.C. Sağlık Bakanlığı — HealthTürkiye)")} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-400/25">
                     <ShieldCheck size={12} /> {t("Yetki belgesi")}: {p.hospitalAuthNo}
                   </span>
                 )}
               </div>
             )}
 
-            <ul className="mt-5 space-y-2 border-t border-slate-100 pt-4">
+            <ul className="mt-5 space-y-2 border-t border-white/10 pt-4">
               {p.items.map((it) => (
                 <li key={it.key} className="flex items-start justify-between gap-3 text-sm">
-                  <span className="text-slate-600">{t(it.label)}{it.note && <span className="block text-xs text-slate-400">{t(it.note)}</span>}</span>
-                  <span className="shrink-0 font-medium text-slate-800">{formatUSD(it.amount)}</span>
+                  <span className="text-white/65">{t(it.label)}{it.note && <span className="block text-xs text-white/40">{t(it.note)}</span>}</span>
+                  <span className="shrink-0 font-medium text-[#F4F5F3]">{formatUSD(it.amount)}</span>
                 </li>
               ))}
             </ul>
-            <div className="mt-3 flex items-end justify-between border-t border-slate-200 pt-3">
-              <span className="text-sm font-semibold text-slate-700">{t("Toplam (Escrow)")}</span>
-              <span className="text-2xl font-bold text-[#0D0E10]">{formatUSD(p.total)}</span>
+            <div className="mt-3 flex items-end justify-between border-t border-white/10 pt-3">
+              <span className="text-sm font-semibold text-white/75">{t("Toplam (Escrow)")}</span>
+              <span className="text-2xl font-bold text-[#F4F5F3]">{formatUSD(p.total)}</span>
             </div>
           </div>
 
@@ -151,10 +151,10 @@ export function ReservationView(p: ReservationViewProps) {
           <InsuranceSummary detailJson={p.insuranceDetail} lang={lang} />
 
           {/* Hasta yolculuğu — lojistik takip (koordinatör /operasyon/lojistik'ten günceller) */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("Hasta Yolculuğu")}</div>
-              <span className="text-xs text-slate-400">{progress.done}/{progress.total} {t("tamamlandı")}</span>
+              <div className="text-xs font-semibold uppercase tracking-wide text-white/50">{t("Hasta Yolculuğu")}</div>
+              <span className="text-xs text-white/40">{progress.done}/{progress.total} {t("tamamlandı")}</span>
             </div>
             <ol className="mt-4 space-y-0">
               {p.stages.map((st, i) => {
@@ -173,30 +173,30 @@ export function ReservationView(p: ReservationViewProps) {
                       <span
                         className={`grid h-9 w-9 place-items-center rounded-full ${
                           st.status === "done"
-                            ? "bg-emerald-100 text-emerald-700"
+                            ? "bg-emerald-500/15 text-emerald-300"
                             : st.status === "active"
-                              ? "bg-teal-100 text-teal-700"
-                              : "bg-slate-100 text-slate-400"
+                              ? "bg-[#28C8D8]/15 text-[#28C8D8]"
+                              : "bg-white/10 text-white/40"
                         }`}
                       >
                         {st.status === "done" ? <CheckCircle2 size={16} /> : <Icon size={16} />}
                       </span>
                       {i < p.stages.length - 1 && (
-                        <span className={`my-1 h-6 w-0.5 ${st.status === "done" ? "bg-emerald-200" : "bg-slate-200"}`} />
+                        <span className={`my-1 h-6 w-0.5 ${st.status === "done" ? "bg-emerald-200" : "bg-white/15"}`} />
                       )}
                     </div>
                     <div className="pb-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={`text-sm font-medium ${st.status === "pending" ? "text-slate-400" : "text-slate-800"}`}>
+                        <span className={`text-sm font-medium ${st.status === "pending" ? "text-white/40" : "text-[#F4F5F3]"}`}>
                           {t(meta.label)}
                         </span>
                         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${stat.color}`}>
                           <span className={`h-1.5 w-1.5 rounded-full ${stat.dot}`} /> {t(stat.label)}
                         </span>
                       </div>
-                      <div className="text-xs text-slate-400">{t(meta.desc)}</div>
-                      {dateLabel && <div className="mt-0.5 text-xs text-slate-500">{dateLabel}</div>}
-                      {st.note && <div className="mt-0.5 text-xs text-slate-600">{st.note}</div>}
+                      <div className="text-xs text-white/40">{t(meta.desc)}</div>
+                      {dateLabel && <div className="mt-0.5 text-xs text-white/50">{dateLabel}</div>}
+                      {st.note && <div className="mt-0.5 text-xs text-white/65">{st.note}</div>}
                     </div>
                   </li>
                 );
@@ -209,13 +209,13 @@ export function ReservationView(p: ReservationViewProps) {
         <aside className="space-y-4">
           <EscrowMilestones status={p.escrowStatus} lang={lang} />
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("Ödeme Dağılımı (Split)")}</div>
+          <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+            <div className="text-xs font-semibold uppercase tracking-wide text-white/50">{t("Ödeme Dağılımı (Split)")}</div>
             <ul className="mt-3 space-y-2 text-sm">
               {p.split.map((s) => (
                 <li key={s.key} className="flex items-center justify-between">
-                  <span className="text-slate-600">{t(s.label)}</span>
-                  <span className="font-medium text-slate-800">{formatUSD(s.amount)}</span>
+                  <span className="text-white/65">{t(s.label)}</span>
+                  <span className="font-medium text-[#F4F5F3]">{formatUSD(s.amount)}</span>
                 </li>
               ))}
             </ul>
@@ -225,7 +225,7 @@ export function ReservationView(p: ReservationViewProps) {
             <HeartPulse size={16} /> {t("Post-Op takibe başla")}
           </Link>
           <CoordinatorContact bookingId={p.bookingId} lang={lang} />
-          <Link href={`/sikayet/${p.caseId}`} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <Link href={`/sikayet/${p.caseId}`} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-[#161719] px-4 py-2.5 text-sm font-medium text-white/75 hover:bg-[#1E1F22]">
             <Scale size={15} /> {t("Şikayet / itiraz (Etik Kurul)")}
           </Link>
           <Link href="/doktor" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
@@ -239,9 +239,9 @@ export function ReservationView(p: ReservationViewProps) {
 
 function Spec({ icon, k, v }: { icon: React.ReactNode; k: string; v: string }) {
   return (
-    <div className="rounded-lg bg-slate-50 px-3 py-2">
-      <div className="flex items-center gap-1.5 text-xs text-slate-400">{icon} {k}</div>
-      <div className="mt-0.5 text-sm font-medium text-slate-800">{v}</div>
+    <div className="rounded-lg bg-[#1E1F22] px-3 py-2">
+      <div className="flex items-center gap-1.5 text-xs text-white/40">{icon} {k}</div>
+      <div className="mt-0.5 text-sm font-medium text-[#F4F5F3]">{v}</div>
     </div>
   );
 }

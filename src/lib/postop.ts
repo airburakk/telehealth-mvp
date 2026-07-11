@@ -91,9 +91,9 @@ export function recoveryProtocol(branch: string): Milestone[] {
 }
 
 export function severityMeta(s: Severity): { label: string; badge: string; dot: string } {
-  if (s === "RED") return { label: "Kırmızı bayrak", badge: "bg-red-100 text-red-700 ring-red-200", dot: "bg-red-500" };
-  if (s === "WATCH") return { label: "İzlemde", badge: "bg-amber-100 text-amber-800 ring-amber-200", dot: "bg-amber-500" };
-  return { label: "Normal", badge: "bg-emerald-100 text-emerald-700 ring-emerald-200", dot: "bg-emerald-500" };
+  if (s === "RED") return { label: "Kırmızı bayrak", badge: "bg-red-500/15 text-red-300 ring-red-400/25", dot: "bg-red-500" };
+  if (s === "WATCH") return { label: "İzlemde", badge: "bg-amber-500/15 text-amber-200 ring-amber-400/25", dot: "bg-amber-500" };
+  return { label: "Normal", badge: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25", dot: "bg-emerald-500" };
 }
 
 export function worstSeverity(...arr: Severity[]): Severity {

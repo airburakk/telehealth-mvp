@@ -99,47 +99,47 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
   const m = result ? severityMeta(result.severity) : null;
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="font-bold text-slate-800">{t("Bugünkü kontrol")}</h2>
-      <p className="text-sm text-slate-500">{t("Durumunuzu paylaşın; ekibiniz uzaktan izliyor.")}</p>
+    <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+      <h2 className="font-bold text-[#F4F5F3]">{t("Bugünkü kontrol")}</h2>
+      <p className="text-sm text-white/50">{t("Durumunuzu paylaşın; ekibiniz uzaktan izliyor.")}</p>
 
       {/* Ağrı */}
       <div className="mt-5">
         <div className="flex items-center justify-between text-sm">
-          <span className="inline-flex items-center gap-1.5 font-medium text-slate-700"><Activity size={15} /> {t("Ağrı düzeyi")}</span>
-          <span className="font-semibold text-[#0D0E10]">{pain}/10</span>
+          <span className="inline-flex items-center gap-1.5 font-medium text-white/75"><Activity size={15} /> {t("Ağrı düzeyi")}</span>
+          <span className="font-semibold text-[#F4F5F3]">{pain}/10</span>
         </div>
         <input type="range" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} className="mt-2 w-full accent-[#28C8D8]" />
       </div>
 
       {/* Ateş */}
       <div className="mt-4">
-        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700"><Thermometer size={15} /> {t("Ateş (°C)")}</span>
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-white/75"><Thermometer size={15} /> {t("Ateş (°C)")}</span>
         <input
           type="number" step="0.1" min={34} max={43} value={feverC}
           onChange={(e) => setFeverC(Number(e.target.value))}
-          className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
+          className="mt-1.5 w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
         />
       </div>
 
       {/* İlaç */}
-      <button onClick={() => setMeds((v) => !v)} className="mt-4 flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5 text-start hover:border-slate-300">
-        <span className="inline-flex items-center gap-2 text-sm font-medium text-slate-700"><Pill size={16} className="text-slate-500" /> {t("İlaçlarımı aldım")}</span>
-        <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${meds ? "bg-emerald-500" : "bg-slate-300"}`}>
-          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${meds ? "start-[22px]" : "start-0.5"}`} />
+      <button onClick={() => setMeds((v) => !v)} className="mt-4 flex w-full items-center justify-between rounded-lg border border-white/10 px-3 py-2.5 text-start hover:border-white/15">
+        <span className="inline-flex items-center gap-2 text-sm font-medium text-white/75"><Pill size={16} className="text-white/50" /> {t("İlaçlarımı aldım")}</span>
+        <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${meds ? "bg-emerald-500" : "bg-white/20"}`}>
+          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-[#161719] shadow transition-all ${meds ? "start-[22px]" : "start-0.5"}`} />
         </span>
       </button>
 
       {/* Branşa özel günlük kontrol */}
       {items.length > 0 && (
-        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="mt-4 rounded-lg border border-white/10 bg-[#1E1F22] p-3">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
             <ListChecks size={14} /> {t(branch)} · {t("günlük kontrol")}
           </div>
           <div className="mt-2.5 space-y-2.5">
             {items.map((it) => (
               <div key={it.id}>
-                <div className="text-sm text-slate-700">{t(it.label)}</div>
+                <div className="text-sm text-white/75">{t(it.label)}</div>
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {it.options.map((o) => {
                     const active = checklist[it.id] === o.v;
@@ -148,7 +148,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
                         key={o.v}
                         type="button"
                         onClick={() => setChecklist((p) => ({ ...p, [it.id]: active ? "" : o.v }))}
-                        className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 bg-white text-slate-600 hover:border-[#28C8D8]/40"}`}
+                        className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-white/15 bg-[#161719] text-white/65 hover:border-[#28C8D8]/40"}`}
                       >
                         {t(o.v)}
                       </button>
@@ -163,30 +163,30 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
 
       {/* Not */}
       <div className="mt-4">
-        <span className="text-sm font-medium text-slate-700">{t("Belirti / not")}</span>
+        <span className="text-sm font-medium text-white/75">{t("Belirti / not")}</span>
         <textarea
           value={note} onChange={(e) => setNote(e.target.value)} rows={3}
           placeholder={t("Örn. Yara bölgesinde hafif kızarıklık var…")}
-          className="mt-1.5 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#28C8D8]"
+          className="mt-1.5 w-full resize-none rounded-lg border border-white/15 p-2.5 text-sm outline-none focus:border-[#28C8D8]"
         />
       </div>
 
       {/* Foto — küçültülüp AI görsel ön-değerlendirmesine gönderilir */}
       {photo ? (
-        <div className="mt-3 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+        <div className="mt-3 flex items-center gap-3 rounded-lg border border-white/10 bg-[#1E1F22] p-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photo} alt={t("İyileşme fotoğrafı")} className="h-16 w-16 shrink-0 rounded-md object-cover ring-1 ring-slate-200" />
+          <img src={photo} alt={t("İyileşme fotoğrafı")} className="h-16 w-16 shrink-0 rounded-md object-cover ring-1 ring-white/10" />
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium text-slate-700">{t("Fotoğraf eklendi")}</div>
-            <div className="text-xs text-slate-400">{t("Gönderince AI görsel ön-değerlendirme yapar.")}</div>
+            <div className="text-sm font-medium text-white/75">{t("Fotoğraf eklendi")}</div>
+            <div className="text-xs text-white/40">{t("Gönderince AI görsel ön-değerlendirme yapar.")}</div>
           </div>
-          <button type="button" onClick={() => setPhoto("")} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600">
+          <button type="button" onClick={() => setPhoto("")} className="rounded-md p-1.5 text-white/40 hover:bg-white/15 hover:text-white/65">
             <X size={16} />
           </button>
         </div>
       ) : (
-        <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 hover:border-teal-400">
-          {preparing ? <Loader2 size={16} className="animate-spin text-slate-400" /> : <Camera size={16} className="text-slate-400" />}
+        <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-white/15 bg-[#1E1F22] px-3 py-2.5 text-sm text-white/65 hover:border-teal-400">
+          {preparing ? <Loader2 size={16} className="animate-spin text-white/40" /> : <Camera size={16} className="text-white/40" />}
           {preparing ? t("Fotoğraf hazırlanıyor…") : t("İyileşme fotoğrafı ekle (opsiyonel)")}
           <input type="file" accept="image/*" className="hidden" disabled={preparing} onChange={onPickPhoto} />
         </label>

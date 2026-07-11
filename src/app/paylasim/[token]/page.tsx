@@ -19,7 +19,7 @@ const KIND_ICON = { report: FileText, image: ScanLine, lab: FlaskConical, note: 
 
 function Shell({ children, dir = "ltr" }: { children: React.ReactNode; dir?: "ltr" | "rtl" }) {
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-white/10">
       <div dir={dir} className="mx-auto max-w-3xl px-4 py-8">{children}</div>
     </div>
   );
@@ -32,8 +32,8 @@ function Brand({ subtitle = "Güvenli Sağlık Paylaşımı" }: { subtitle?: str
         <Activity size={20} strokeWidth={2.4} />
       </span>
       <span className="leading-tight">
-        <span className="block font-bold text-[#0D0E10]">AURA</span>
-        <span className="block text-[11px] text-slate-500 -mt-0.5">{subtitle}</span>
+        <span className="block font-bold text-[#F4F5F3]">AURA</span>
+        <span className="block text-[11px] text-white/50 -mt-0.5">{subtitle}</span>
       </span>
     </div>
   );
@@ -43,10 +43,10 @@ function StatusScreen({ icon, title, desc }: { icon: React.ReactNode; title: str
   return (
     <Shell>
       <Brand />
-      <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-3xl bg-slate-100 text-slate-500">{icon}</div>
-        <h1 className="mt-4 text-lg font-bold text-slate-800">{title}</h1>
-        <p className="mt-1 text-sm text-slate-500">{desc}</p>
+      <div className="mt-6 rounded-3xl border border-white/10 bg-[#161719] p-8 text-center shadow-sm">
+        <div className="mx-auto grid h-14 w-14 place-items-center rounded-3xl bg-white/10 text-white/50">{icon}</div>
+        <h1 className="mt-4 text-lg font-bold text-[#F4F5F3]">{title}</h1>
+        <p className="mt-1 text-sm text-white/50">{desc}</p>
       </div>
     </Shell>
   );
@@ -175,23 +175,23 @@ export default async function ShareViewerPage({
         <Brand subtitle={t("Güvenli Sağlık Paylaşımı")} />
         <div className="flex items-center gap-2">
           <ShareLangSelect current={lang} />
-          <span className="hidden items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200 sm:inline-flex">
+          <span className="hidden items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-400/25 sm:inline-flex">
             <Eye size={12} /> {t("Yalnız görüntüleme")}
           </span>
         </div>
       </div>
 
-      <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mt-6 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
         <div className="flex items-start gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><ShieldCheck size={22} /></span>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-[#0D0E10]">{caseForShare.patientName} — {t("sağlık kayıtları")}</h1>
-            <p className="text-sm text-slate-500">
+            <h1 className="text-xl font-bold text-[#F4F5F3]">{caseForShare.patientName} — {t("sağlık kayıtları")}</h1>
+            <p className="text-sm text-white/50">
               {link.recipientName ?? t("Sizinle paylaşıldı")} · {t("Branş")}: {t(link.case.branch)}
             </p>
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-t border-slate-100 pt-3 text-xs text-slate-500">
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-t border-white/10 pt-3 text-xs text-white/50">
           <span className="inline-flex items-center gap-1"><Clock size={13} /> {t("Erişim")}: {expiryDate ?? t("Süresiz")}</span>
           <span className="inline-flex items-center gap-1">
             {link.allowDownload ? <><Download size={13} /> {t("İndirme açık")}</> : <><Lock size={13} /> {t("İndirme kapalı")}</>}
@@ -205,14 +205,14 @@ export default async function ShareViewerPage({
           const Icon = KIND_ICON[it.kind];
           const dl = link.allowDownload ? itemDownload(it) : null;
           return (
-            <div key={i} className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-5 py-3">
-                <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-800">
-                  <Icon size={16} className="text-[#0D0E10]" /> {t(it.title)}
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-normal text-slate-500">{t(scopeLabel(it.scope))}</span>
+            <div key={i} className="overflow-hidden rounded-3xl border border-white/10 bg-[#161719] shadow-sm">
+              <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
+                <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#F4F5F3]">
+                  <Icon size={16} className="text-[#F4F5F3]" /> {t(it.title)}
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-normal text-white/50">{t(scopeLabel(it.scope))}</span>
                 </div>
                 {dl && (
-                  <a download={dl.name} href={dl.href} className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#0D0E10] hover:underline">
+                  <a download={dl.name} href={dl.href} className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#F4F5F3] hover:underline">
                     <Download size={13} /> {t("İndir")}
                   </a>
                 )}
@@ -220,16 +220,16 @@ export default async function ShareViewerPage({
 
               <div className="p-5">
                 {(it.kind === "report" || it.kind === "note") && (
-                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">{tBody(it.body || "")}</pre>
+                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-white/75">{tBody(it.body || "")}</pre>
                 )}
 
                 {it.kind === "lab" && it.rows && (
                   <table className="w-full text-sm">
                     <tbody>
                       {it.rows.map((r, j) => (
-                        <tr key={j} className="border-b border-slate-100 last:border-0">
-                          <td className="py-2 pe-4 text-slate-600">{t(r.k)}</td>
-                          <td className="py-2 text-end font-medium text-slate-800">{t(r.v)}</td>
+                        <tr key={j} className="border-b border-white/10 last:border-0">
+                          <td className="py-2 pe-4 text-white/65">{t(r.k)}</td>
+                          <td className="py-2 text-end font-medium text-[#F4F5F3]">{t(r.v)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -237,18 +237,18 @@ export default async function ShareViewerPage({
                 )}
 
                 {it.kind === "image" && (
-                  <div className="rounded-2xl bg-slate-900 p-3">
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <div className="rounded-2xl bg-[#101113] p-3">
+                    <div className="flex items-center justify-between text-[11px] text-white/40">
                       <span className="inline-flex items-center gap-1"><ScanLine size={12} /> {it.fileName}</span>
                       <span>{t("DICOM görüntüleyici")}</span>
                     </div>
                     <div className="mt-2 grid aspect-video place-items-center rounded-lg bg-gradient-to-br from-slate-800 to-black">
                       <div className="text-center">
-                        <ScanLine size={40} className="mx-auto text-slate-600" />
-                        <p className="mt-2 text-xs text-slate-500">{t("Görüntü önizleme (demo)")}</p>
+                        <ScanLine size={40} className="mx-auto text-white/65" />
+                        <p className="mt-2 text-xs text-white/50">{t("Görüntü önizleme (demo)")}</p>
                       </div>
                     </div>
-                    <p className="mt-2 text-[10px] text-slate-500">{t("Gerçek DICOM render + güvenli dosya depolama üretim sürümünde eklenecek.")}</p>
+                    <p className="mt-2 text-[10px] text-white/50">{t("Gerçek DICOM render + güvenli dosya depolama üretim sürümünde eklenecek.")}</p>
                   </div>
                 )}
               </div>
@@ -257,8 +257,8 @@ export default async function ShareViewerPage({
         })}
       </div>
 
-      <div className="mt-6 flex items-start gap-2 rounded-2xl border border-slate-200 bg-white/60 p-4 text-[11px] text-slate-500">
-        <AlertTriangle size={14} className="mt-0.5 shrink-0 text-slate-400" />
+      <div className="mt-6 flex items-start gap-2 rounded-2xl border border-white/10 bg-white/60 p-4 text-[11px] text-white/50">
+        <AlertTriangle size={14} className="mt-0.5 shrink-0 text-white/40" />
         <p>{t("Bu içerik hastanın açık izniyle, sınırlı süreyle ve yalnızca görüntüleme amacıyla paylaşılmıştır. Hasta erişimi istediği an iptal edebilir; her görüntüleme denetim kaydına (audit trail) işlenir. · AURA (MVP)")}</p>
       </div>
     </Shell>

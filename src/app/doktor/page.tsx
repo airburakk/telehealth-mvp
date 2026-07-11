@@ -162,8 +162,8 @@ export default async function DoctorPanel({
   return (
     <div className="mx-auto max-w-5xl px-5 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#0D0E10]">Doktor Ana Sayfası</h1>
-        <p className="mt-1 text-sm text-slate-500">Birimleriniz tercihinize göre düzenlendi.</p>
+        <h1 className="text-2xl font-bold text-[#F4F5F3]">Doktor Ana Sayfası</h1>
+        <p className="mt-1 text-sm text-white/50">Birimleriniz tercihinize göre düzenlendi.</p>
       </div>
 
       {/* ── Bildirim kanalı tercihi (FAZ 5) — uygulama / WhatsApp / SMS (WA+SMS dormant-simülasyon) ── */}
@@ -188,32 +188,32 @@ export default async function DoctorPanel({
         {/* Sayfalama — yalnız personel (filtresiz tüm kuyruk) dalında; /denetim deseni */}
         {!doctor && caseTotalPages > 1 && (
           <nav className="mt-5 flex flex-wrap items-center justify-between gap-3" aria-label="Vaka kuyruğu sayfaları">
-            <span className="text-xs text-slate-500">
-              Toplam <strong className="text-slate-700">{caseTotal}</strong> vaka · Sayfa{" "}
-              <strong className="text-slate-700">{casePage}</strong> / {caseTotalPages}
+            <span className="text-xs text-white/50">
+              Toplam <strong className="text-white/75">{caseTotal}</strong> vaka · Sayfa{" "}
+              <strong className="text-white/75">{casePage}</strong> / {caseTotalPages}
             </span>
             <div className="flex items-center gap-2">
               {casePage > 1 ? (
                 <Link
                   href={`/doktor?page=${casePage - 1}${caseFilterQs}`}
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                  className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22]"
                 >
                   <ChevronLeft size={15} /> Önceki
                 </Link>
               ) : (
-                <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 px-3 py-1.5 text-sm font-medium text-slate-300 cursor-not-allowed">
+                <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/25 cursor-not-allowed">
                   <ChevronLeft size={15} /> Önceki
                 </span>
               )}
               {casePage < caseTotalPages ? (
                 <Link
                   href={`/doktor?page=${casePage + 1}${caseFilterQs}`}
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                  className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22]"
                 >
                   Sonraki <ChevronRight size={15} />
                 </Link>
               ) : (
-                <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 px-3 py-1.5 text-sm font-medium text-slate-300 cursor-not-allowed">
+                <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/25 cursor-not-allowed">
                   Sonraki <ChevronRight size={15} />
                 </span>
               )}
@@ -229,7 +229,7 @@ export default async function DoctorPanel({
             icon={<Stethoscope size={18} />}
             title="İkinci Görüş"
             subtitle="Atanan vakalar — dosya inceleme + yazılı görüş"
-            badge={soCount > 0 ? <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700">{soCount} bekliyor</span> : undefined}
+            badge={soCount > 0 ? <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-bold text-amber-300">{soCount} bekliyor</span> : undefined}
           >
             <Link href="/doktor/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#17919E] hover:underline">
               İkinci Görüş panelini aç <ArrowRight size={15} />
@@ -243,9 +243,9 @@ export default async function DoctorPanel({
             title="Ücretsiz Sağlık Hizmeti"
             subtitle="Ücretsiz gönüllü konsültasyon"
             accent="#fb7185"
-            badge={pbWaiting > 0 ? <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-700">{pbWaiting} bekleyen hasta</span> : undefined}
+            badge={pbWaiting > 0 ? <span className="rounded-full bg-rose-500/15 px-2.5 py-1 text-xs font-bold text-rose-300">{pbWaiting} bekleyen hasta</span> : undefined}
           >
-            <Link href="/doktor/ucretsiz-saglik" className="inline-flex items-center gap-1.5 text-sm font-semibold text-rose-600 hover:underline">
+            <Link href="/doktor/ucretsiz-saglik" className="inline-flex items-center gap-1.5 text-sm font-semibold text-rose-300 hover:underline">
               Ücretsiz hizmet konsolunu aç <ArrowRight size={15} />
             </Link>
           </DashboardPanel>
@@ -257,7 +257,7 @@ export default async function DoctorPanel({
             title="Konsültasyon Talepleri"
             subtitle="Partner doktorlardan anonim hasta dosyaları"
             accent="#818cf8"
-            badge={consultOpen > 0 ? <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-bold text-indigo-700">{consultOpen} açık talep</span> : undefined}
+            badge={consultOpen > 0 ? <span className="rounded-full bg-indigo-500/15 px-2.5 py-1 text-xs font-bold text-indigo-300">{consultOpen} açık talep</span> : undefined}
           >
             <Link href="/doktor/konsultasyon" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#6d75e0] hover:underline">
               Konsültasyon kutusunu aç <ArrowRight size={15} />
@@ -285,18 +285,18 @@ export default async function DoctorPanel({
 
 function NewsCard({ item }: { item: NewsItem }) {
   const kindColor: Record<string, string> = {
-    haber: "bg-sky-100 text-sky-700",
-    makale: "bg-violet-100 text-violet-700",
-    ilac: "bg-emerald-100 text-emerald-700",
+    haber: "bg-sky-500/15 text-sky-300",
+    makale: "bg-violet-500/15 text-violet-300",
+    ilac: "bg-emerald-500/15 text-emerald-300",
   };
   return (
-    <li className="rounded-2xl border border-slate-100 p-4">
+    <li className="rounded-2xl border border-white/10 p-4">
       <div className="flex items-center gap-2">
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${kindColor[item.kind]}`}>{NEWS_KIND_LABEL[item.kind]}</span>
-        <span className="text-[11px] text-slate-400">{item.source}</span>
+        <span className="text-[11px] text-white/40">{item.source}</span>
       </div>
-      <div className="mt-1.5 text-sm font-semibold text-slate-800">{item.title}</div>
-      <p className="mt-1 text-xs text-slate-500">{item.summary}</p>
+      <div className="mt-1.5 text-sm font-semibold text-[#F4F5F3]">{item.title}</div>
+      <p className="mt-1 text-xs text-white/50">{item.summary}</p>
     </li>
   );
 }

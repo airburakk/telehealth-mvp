@@ -554,11 +554,11 @@ export function ConsultationRoom({
   return (
     <div dir={langDir(uiLang)} className="mx-auto max-w-6xl px-4 py-6">
       <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <span className={`inline-flex h-2.5 w-2.5 rounded-full ${phase === "connected" ? "bg-emerald-500" : phase === "ended" || phase === "error" ? "bg-slate-400" : "bg-amber-500 animate-pulse"}`} />
+        <div className="flex items-center gap-2 text-sm text-white/50">
+          <span className={`inline-flex h-2.5 w-2.5 rounded-full ${phase === "connected" ? "bg-emerald-500" : phase === "ended" || phase === "error" ? "bg-white/30" : "bg-amber-500 animate-pulse"}`} />
           {statusLabel} · {isDoctor ? t("Doktor görünümü") : t("Hasta görünümü")}{connState ? ` · ${connState}` : ""}
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs text-white/50">
           {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />} {t("Gerçek WebRTC (P2P)")}
         </span>
       </div>
@@ -570,12 +570,12 @@ export function ConsultationRoom({
           {isDoctor && startTime !== null && (
             <ConsultationTimer startTime={startTime} active={phase !== "ended"} />
           )}
-          <div className="relative aspect-video overflow-hidden rounded-3xl bg-slate-900 shadow-lg">
+          <div className="relative aspect-video overflow-hidden rounded-3xl bg-[#101113] shadow-lg">
             {/* Uzak taraf (gerçek video) */}
             <video ref={remoteVideoRef} autoPlay playsInline className={`h-full w-full object-cover ${remoteOn ? "" : "hidden"}`} />
             {/* Uzak ses autoplay ile engellendiyse kullanıcı jestiyle aç (tercüman canlıyken gizli) */}
             {remoteOn && remoteAudioBlocked && !remoteMutedByInterpreter && (
-              <button onClick={enableRemoteAudio} className="absolute left-1/2 top-3 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-lg ring-1 ring-black/5 hover:bg-white">
+              <button onClick={enableRemoteAudio} className="absolute left-1/2 top-3 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-[#F4F5F3] shadow-lg ring-1 ring-black/5 hover:bg-[#161719]">
                 <Volume2 size={14} /> {t("Karşı tarafın sesini aç")}
               </button>
             )}
@@ -595,7 +595,7 @@ export function ConsultationRoom({
                     <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-amber-500/20 text-amber-300"><AlertTriangle size={28} /></span>
                     <p className="mx-auto mt-3 max-w-xs text-sm text-white/85">{errMsg ? t(errMsg) : t("Kamera/mikrofona erişilemedi.")}</p>
                     <p className="mx-auto mt-1 max-w-xs text-xs text-white/50">{t("Adres çubuğundaki kilit/kamera simgesine dokunup Kamera ve Mikrofon'a \"İzin ver\" deyin, sonra tekrar deneyin.")}</p>
-                    <button onClick={() => { setErrMsg(""); setPhase("connecting"); setRetry((r) => r + 1); }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-100">
+                    <button onClick={() => { setErrMsg(""); setPhase("connecting"); setRetry((r) => r + 1); }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#161719] px-5 py-2.5 text-sm font-semibold text-[#F4F5F3] hover:bg-white/10">
                       {t("Tekrar dene")}
                     </button>
                   </div>
@@ -622,10 +622,10 @@ export function ConsultationRoom({
             {/* Kontroller */}
             {joined && (
               <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2">
-                <button onClick={toggleCam} className={`grid h-11 w-11 place-items-center rounded-full ${camOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-white text-slate-800"}`}>
+                <button onClick={toggleCam} className={`grid h-11 w-11 place-items-center rounded-full ${camOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-[#161719] text-[#F4F5F3]"}`}>
                   {camOn ? <Video size={18} /> : <VideoOff size={18} />}
                 </button>
-                <button onClick={toggleMic} className={`grid h-11 w-11 place-items-center rounded-full ${micOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-white text-slate-800"}`}>
+                <button onClick={toggleMic} className={`grid h-11 w-11 place-items-center rounded-full ${micOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-[#161719] text-[#F4F5F3]"}`}>
                   {micOn ? <Mic size={18} /> : <MicOff size={18} />}
                 </button>
                 <button onClick={endCall} disabled={ending} className="inline-flex h-11 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60">
@@ -635,7 +635,7 @@ export function ConsultationRoom({
             )}
           </div>
 
-          {errMsg && <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">{t(errMsg)}</div>}
+          {errMsg && <div className="rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-300 ring-1 ring-amber-400/25">{t(errMsg)}</div>}
 
           {/* AI Canlı Tercüman (Gemini) — yalnız diller farklıysa (aynı dilde gereksiz + karşı sesi kısar);
               ilk konuşma sesinde otomatik başlar (başlat düğmesi yok). Görüşme bitince (bye dahil)
@@ -655,56 +655,56 @@ export function ConsultationRoom({
 
           {/* Canlı Transkript — iki taraf da kendi konuşmasını yazıya çevirir, karşı tarafa iletilir */}
           {(joined || transcript.length > 0) && (
-            <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-3xl border border-white/10 bg-[#161719] p-4 shadow-sm">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
                   <MessageSquareText size={14} /> {t("Canlı Transkript")}
                   {sttOn && <span className="ms-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
                 </div>
                 {/* Otomatik başlar (VAD): başlat düğmesi yok. Açıkken "Durdur" (kullanıcı kontrolü/gizlilik), kapalıyken pasif "Otomatik" göstergesi. */}
                 {!sttSupported ? (
-                  <span className="text-[11px] text-slate-400">{t("Tarayıcı desteklemiyor — Chrome/Edge önerilir")}</span>
+                  <span className="text-[11px] text-white/40">{t("Tarayıcı desteklemiyor — Chrome/Edge önerilir")}</span>
                 ) : sttOn ? (
                   <button
                     onClick={() => { setSttErr(""); setSttOn(false); }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 px-2.5 py-1.5 text-[12px] font-medium text-red-700 hover:bg-red-100"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/30 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-medium text-red-300 hover:bg-red-500/15"
                   >
                     <Mic size={13} /> {t("Durdur")}
                   </button>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-[12px] font-medium text-slate-500" title={t("Konuşma başlayınca otomatik yazıya dökülür; karşı tarafın konuşması da gelir.")}>
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1.5 text-[12px] font-medium text-white/50" title={t("Konuşma başlayınca otomatik yazıya dökülür; karşı tarafın konuşması da gelir.")}>
                     <Mic size={13} /> {t("Otomatik")}
                   </span>
                 )}
               </div>
-              {sttErr && <div className="mt-1 text-[11px] text-red-600">{t(sttErr)}</div>}
+              {sttErr && <div className="mt-1 text-[11px] text-red-300">{t(sttErr)}</div>}
               <div className="mt-2 max-h-44 space-y-1 overflow-y-auto">
                 {transcript.length === 0 && !interim && (
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-white/40">
                     {t("Konuşma başlayınca otomatik yazıya dökülür; karşı tarafın konuşması da gelir.")}
                     {isDoctor ? " Görüşme sonunda transkriptten tek tıkla SOAP taslağı oluşturabilirsiniz." : ""}
                   </p>
                 )}
                 {transcript.map((l, i) => (
-                  <p key={i} className="text-sm leading-snug text-slate-700">
-                    <span className={`font-semibold ${l.who === "doctor" ? "text-[#1FA9B8]" : "text-emerald-700"}`}>
+                  <p key={i} className="text-sm leading-snug text-white/75">
+                    <span className={`font-semibold ${l.who === "doctor" ? "text-[#1FA9B8]" : "text-emerald-300"}`}>
                       {l.who === "doctor" ? t("Doktor") : t("Hasta")}:
                     </span>{" "}
                     {l.text}
                   </p>
                 ))}
-                {interim && !dictating && <p className="text-sm italic text-slate-400">{interim}…</p>}
+                {interim && !dictating && <p className="text-sm italic text-white/40">{interim}…</p>}
               </div>
             </div>
           )}
 
           {/* Doktor: hasta bağlantısı paylaş */}
           {isDoctor && (
-            <div className="flex items-center justify-between gap-2 rounded-2xl border border-teal-200 bg-teal-50/60 p-3">
-              <div className="text-sm text-slate-600">
-                <span className="font-semibold text-teal-800">Hastayı davet et:</span> bu görüşme bağlantısını hastayla paylaş.
+            <div className="flex items-center justify-between gap-2 rounded-2xl border border-[#28C8D8]/25 bg-teal-50/60 p-3">
+              <div className="text-sm text-white/65">
+                <span className="font-semibold text-[#28C8D8]">Hastayı davet et:</span> bu görüşme bağlantısını hastayla paylaş.
               </div>
-              <button onClick={copyPatientLink} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100">
+              <button onClick={copyPatientLink} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#161719] px-3 py-2 text-sm font-medium text-[#28C8D8] ring-1 ring-[#28C8D8]/25 hover:bg-[#28C8D8]/15">
                 {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Kopyalandı" : "Hasta linkini kopyala"}
               </button>
             </div>
@@ -713,9 +713,9 @@ export function ConsultationRoom({
 
         {/* Sağ panel */}
         <aside className="space-y-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <h2 className="font-bold text-slate-800">{caseData.patientName}</h2>
+              <h2 className="font-bold text-[#F4F5F3]">{caseData.patientName}</h2>
               <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
                 <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {caseData.urgency}/5
               </span>
@@ -725,26 +725,26 @@ export function ConsultationRoom({
               <span className="font-medium text-[#1FA9B8]">{t(caseData.branch)}</span>
             </div>
             <div className="mt-3">
-              <div className="text-xs uppercase tracking-wide text-slate-400">{t("Şikayet")}</div>
-              <p className="mt-1 text-sm text-slate-700">{caseData.symptoms}</p>
+              <div className="text-xs uppercase tracking-wide text-white/40">{t("Şikayet")}</div>
+              <p className="mt-1 text-sm text-white/75">{caseData.symptoms}</p>
               {isDoctor && <TranslateButton text={caseData.symptoms} defaultTarget="Türkçe" />}
             </div>
             {isDoctor && (
-              <div className="mt-3 rounded-lg bg-teal-50/70 p-3 ring-1 ring-teal-100">
-                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700"><Sparkles size={13} /> AI özeti</div>
-                <p className="mt-1 text-xs leading-relaxed text-slate-600">{caseData.reasoning}</p>
+              <div className="mt-3 rounded-lg bg-teal-50/70 p-3 ring-1 ring-[#28C8D8]/20">
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]"><Sparkles size={13} /> AI özeti</div>
+                <p className="mt-1 text-xs leading-relaxed text-white/65">{caseData.reasoning}</p>
               </div>
             )}
             {!isDoctor && (
-              <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800 ring-1 ring-emerald-100">
+              <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-500/10 p-3 text-sm text-emerald-200 ring-1 ring-emerald-400/20">
                 <UserRound size={15} /> {doctor.title} {doctor.name} {t("ile görüşüyorsunuz")}
               </div>
             )}
             {caseData.files.length > 0 && isDoctor && (
               <div className="mt-3">
-                <div className="text-xs uppercase tracking-wide text-slate-400">Belgeler</div>
+                <div className="text-xs uppercase tracking-wide text-white/40">Belgeler</div>
                 <ul className="mt-1.5 space-y-1">
-                  {caseData.files.map((f) => <li key={f} className="flex items-center gap-1.5 text-xs text-slate-600"><FileText size={13} className="text-teal-600" /> {f}</li>)}
+                  {caseData.files.map((f) => <li key={f} className="flex items-center gap-1.5 text-xs text-white/65"><FileText size={13} className="text-[#28C8D8]" /> {f}</li>)}
                 </ul>
               </div>
             )}
@@ -757,12 +757,12 @@ export function ConsultationRoom({
 
           {/* Not paneli — yalnız doktor */}
           {isDoctor && (
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
               <div className="flex items-center justify-between">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Görüşme Notları</div>
-                {saved ? <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600"><Check size={13} /> kaydedildi</span> : <span className="text-[11px] text-amber-600">kaydedilmedi</span>}
+                <div className="text-xs font-semibold uppercase tracking-wide text-white/50">Görüşme Notları</div>
+                {saved ? <span className="inline-flex items-center gap-1 text-[11px] text-emerald-300"><Check size={13} /> kaydedildi</span> : <span className="text-[11px] text-amber-300">kaydedilmedi</span>}
               </div>
-              <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#28C8D8]" />
+              <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-white/15 p-2.5 text-sm outline-none focus:border-[#28C8D8]" />
 
               {/* Akış: 1) transkriptten taslak → 2) sesli not ekle → 3) SOAP'a dönüştür (güncelle) */}
               <div className="mt-2 grid grid-cols-2 gap-2">
@@ -770,7 +770,7 @@ export function ConsultationRoom({
                   onClick={generateSoapFromTranscript}
                   disabled={txBusy || !transcript.length}
                   title={!transcript.length ? "Önce Canlı Transkript'i başlatın" : "Görüşme transkriptinden SOAP taslağı"}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-violet-300 bg-violet-50 px-2 py-2 text-[12px] font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-violet-400/30 bg-violet-500/10 px-2 py-2 text-[12px] font-semibold text-violet-300 hover:bg-violet-500/15 disabled:opacity-50"
                 >
                   {txBusy ? <Loader2 size={13} className="animate-spin" /> : <MessageSquareText size={13} />} Transkriptten taslak
                 </button>
@@ -778,21 +778,21 @@ export function ConsultationRoom({
                   onClick={() => { setSttErr(""); setDictating((v) => !v); }}
                   disabled={!sttSupported}
                   title="Konuşarak nota ekleyin"
-                  className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[12px] font-semibold disabled:opacity-50 ${dictating ? "border-red-300 bg-red-50 text-red-700 hover:bg-red-100" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"}`}
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[12px] font-semibold disabled:opacity-50 ${dictating ? "border-red-400/30 bg-red-500/10 text-red-300 hover:bg-red-500/15" : "border-white/15 bg-[#161719] text-white/65 hover:bg-[#1E1F22]"}`}
                 >
                   <Mic size={13} /> {dictating ? "Dikteyi kapat" : "Sesli not"}
                 </button>
               </div>
               {dictating && (
-                <p className="mt-1 text-[11px] font-medium text-amber-600">
+                <p className="mt-1 text-[11px] font-medium text-amber-300">
                   🎤 Dikte açık — konuştuklarınız nota eklenir{interim ? `: "${interim}…"` : "."}
                 </p>
               )}
 
-              <button onClick={generateSoap} disabled={soapBusy || !notes.trim()} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-100 disabled:opacity-50">
+              <button onClick={generateSoap} disabled={soapBusy || !notes.trim()} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#28C8D8]/30 bg-[#28C8D8]/10 px-3 py-2 text-sm font-semibold text-[#28C8D8] hover:bg-[#28C8D8]/15 disabled:opacity-50">
                 {soapBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} AI · SOAP&apos;a dönüştür
               </button>
-              {soapErr && <div className="mt-1 text-[11px] text-red-600">{soapErr}</div>}
+              {soapErr && <div className="mt-1 text-[11px] text-red-300">{soapErr}</div>}
               <button onClick={saveNotes} disabled={saving || saved} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-3 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50">
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Notu kaydet
               </button>
@@ -800,7 +800,7 @@ export function ConsultationRoom({
                 <QuickAction icon={<Pill size={14} />}>Reçete</QuickAction>
                 <QuickAction icon={<FlaskConical size={14} />}>Lab iste</QuickAction>
               </div>
-              <button onClick={() => setShowDicom(true)} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              <button onClick={() => setShowDicom(true)} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-[#161719] px-3 py-2 text-sm font-semibold text-white/75 hover:bg-[#1E1F22]">
                 <FileImage size={15} /> Radyoloji (DICOM) görüntüleyici
               </button>
             </div>
@@ -842,7 +842,7 @@ export function ConsultationRoom({
 
 function QuickAction({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <button className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-400" title="Yakında">
+    <button className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-white/15 px-3 py-2 text-xs text-white/40" title="Yakında">
       {icon} {children}
     </button>
   );

@@ -35,8 +35,8 @@ export function ContactPrefFields({
   return (
     <div className="space-y-4">
       <label className="block">
-        <span className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700">
-          <Phone size={14} className="text-slate-400" /> {t("Telefon numarası (isteğe bağlı)")}
+        <span className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-white/75">
+          <Phone size={14} className="text-white/40" /> {t("Telefon numarası (isteğe bağlı)")}
         </span>
         <input
           type="tel"
@@ -44,12 +44,12 @@ export function ContactPrefFields({
           onChange={(e) => onPhone(e.target.value)}
           placeholder="+90 5xx xxx xx xx"
           dir="ltr"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
+          className="w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
         />
       </label>
 
       <div>
-        <span className="mb-1.5 block text-sm font-medium text-slate-700">
+        <span className="mb-1.5 block text-sm font-medium text-white/75">
           {t("Sizinle iletişime geçmemiz gerekirse hangi yoldan size ulaşmamızı istersiniz?")}
         </span>
         <div className="flex flex-wrap gap-1.5">
@@ -62,7 +62,7 @@ export function ContactPrefFields({
                 key={o.key}
                 onClick={() => onPref(o.key)}
                 className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition ${
-                  active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 bg-white text-slate-600 hover:border-[#28C8D8]/40"
+                  active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-white/15 bg-[#161719] text-white/65 hover:border-[#28C8D8]/40"
                 }`}
               >
                 <Icon size={13} /> {t(o.label)}

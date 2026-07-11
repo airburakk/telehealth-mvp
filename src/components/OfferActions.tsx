@@ -39,7 +39,7 @@ export function OfferActions({ bookingId, total, lang = "Türkçe" }: { bookingI
   }
 
   if (declined) {
-    return <div className="rounded-2xl bg-slate-100 px-4 py-3 text-center text-sm text-slate-600">{t("Teklif reddedildi. Koordinatör bilgilendirildi.")}</div>;
+    return <div className="rounded-2xl bg-white/10 px-4 py-3 text-center text-sm text-white/65">{t("Teklif reddedildi. Koordinatör bilgilendirildi.")}</div>;
   }
 
   return (
@@ -56,14 +56,14 @@ export function OfferActions({ bookingId, total, lang = "Türkçe" }: { bookingI
         <button
           onClick={() => window.print()}
           disabled={!!busy}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/75 hover:bg-[#1E1F22] disabled:opacity-60"
         >
           <Printer size={15} /> {t("PDF / Yazdır")}
         </button>
         <button
           onClick={() => respond("decline")}
           disabled={!!busy}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-60"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/50 hover:border-red-400/25 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-60"
         >
           {busy === "decline" ? <Loader2 size={15} className="animate-spin" /> : <X size={15} />} {t("Reddet")}
         </button>

@@ -130,43 +130,43 @@ export default async function RegistryBrowserPage({
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-8">
-      <Link href="/operasyon" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
+      <Link href="/operasyon" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/75">
         <ArrowLeft size={15} /> Operasyon Paneli
       </Link>
       <div className="mt-3 flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><BookMarked size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0D0E10]">HealthTürkiye Kayıt Defteri</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-[#F4F5F3]">HealthTürkiye Kayıt Defteri</h1>
+          <p className="text-sm text-white/50">
             healthturkiye.gov.tr doktor + tesis dizini — {activeDoctors.toLocaleString("tr-TR")} doktor · {activeHospitals.toLocaleString("tr-TR")} tesis
-            {lastReport && <> · son senkron {lastReport.date}{lastReport.status !== "OK" && <span className="font-semibold text-amber-600"> ({lastReport.status})</span>}</>}
+            {lastReport && <> · son senkron {lastReport.date}{lastReport.status !== "OK" && <span className="font-semibold text-amber-300"> ({lastReport.status})</span>}</>}
           </p>
         </div>
       </div>
 
       {/* Sekmeler */}
-      <div className="mt-5 inline-flex rounded-xl border border-slate-200 bg-white p-1 text-sm font-medium">
-        <Link href="/operasyon/kayit-defteri?tab=doktor" className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 ${tab === "doktor" ? "bg-[#28C8D8] text-[#0D0E10]" : "text-slate-500 hover:text-slate-700"}`}>
+      <div className="mt-5 inline-flex rounded-xl border border-white/10 bg-[#161719] p-1 text-sm font-medium">
+        <Link href="/operasyon/kayit-defteri?tab=doktor" className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 ${tab === "doktor" ? "bg-[#28C8D8] text-[#0D0E10]" : "text-white/50 hover:text-white/75"}`}>
           <UserRound size={15} /> Doktorlar
         </Link>
-        <Link href="/operasyon/kayit-defteri?tab=tesis" className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 ${tab === "tesis" ? "bg-[#28C8D8] text-[#0D0E10]" : "text-slate-500 hover:text-slate-700"}`}>
+        <Link href="/operasyon/kayit-defteri?tab=tesis" className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 ${tab === "tesis" ? "bg-[#28C8D8] text-[#0D0E10]" : "text-white/50 hover:text-white/75"}`}>
           <Building2 size={15} /> Tesisler
         </Link>
       </div>
 
       {/* Arama + filtre (GET formu — istemci JS'siz çalışır) */}
-      <form method="GET" action="/operasyon/kayit-defteri" className="mt-4 flex flex-wrap items-end gap-2 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+      <form method="GET" action="/operasyon/kayit-defteri" className="mt-4 flex flex-wrap items-end gap-2 rounded-3xl border border-white/10 bg-[#161719] p-4 shadow-sm">
         <input type="hidden" name="tab" value={tab} />
         <label className="min-w-52 flex-1">
-          <span className="text-xs font-medium text-slate-500">{tab === "doktor" ? "Ad, soyad veya kurum" : "Tesis adı"}</span>
+          <span className="text-xs font-medium text-white/50">{tab === "doktor" ? "Ad, soyad veya kurum" : "Tesis adı"}</span>
           <input name="q" defaultValue={q} placeholder={tab === "doktor" ? "ör. Ahmet Yılmaz / Acıbadem" : "ör. Maslak"}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]" />
+            className="mt-1 w-full rounded-lg border border-white/10 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]" />
         </label>
         {/* Doktor kayıtlarında cityName kaynakta boş → filtre yalnız veri varsa gösterilir */}
         {cityOptions.length > 0 && (
           <label>
-            <span className="text-xs font-medium text-slate-500">Şehir</span>
-            <select name="sehir" defaultValue={sehir} className="mt-1 block w-44 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-[#28C8D8]">
+            <span className="text-xs font-medium text-white/50">Şehir</span>
+            <select name="sehir" defaultValue={sehir} className="mt-1 block w-44 rounded-lg border border-white/10 bg-[#161719] px-2.5 py-2 text-sm outline-none focus:border-[#28C8D8]">
               <option value="">Tümü</option>
               {cityOptions.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -174,16 +174,16 @@ export default async function RegistryBrowserPage({
         )}
         {tab === "doktor" ? (
           <label>
-            <span className="text-xs font-medium text-slate-500">Branş</span>
-            <select name="brans" defaultValue={brans} className="mt-1 block w-56 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-[#28C8D8]">
+            <span className="text-xs font-medium text-white/50">Branş</span>
+            <select name="brans" defaultValue={brans} className="mt-1 block w-56 rounded-lg border border-white/10 bg-[#161719] px-2.5 py-2 text-sm outline-none focus:border-[#28C8D8]">
               <option value="">Tümü</option>
               {branchOptions.map((b) => <option key={b} value={b}>{b}</option>)}
             </select>
           </label>
         ) : (
           <label>
-            <span className="text-xs font-medium text-slate-500">Tesis türü</span>
-            <select name="tur" defaultValue={tur} className="mt-1 block w-56 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-[#28C8D8]">
+            <span className="text-xs font-medium text-white/50">Tesis türü</span>
+            <select name="tur" defaultValue={tur} className="mt-1 block w-56 rounded-lg border border-white/10 bg-[#161719] px-2.5 py-2 text-sm outline-none focus:border-[#28C8D8]">
               <option value="">Tümü</option>
               {typeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
@@ -193,29 +193,29 @@ export default async function RegistryBrowserPage({
           <Search size={15} /> Ara
         </button>
         {filtered && (
-          <Link href={`/operasyon/kayit-defteri?tab=${tab}`} className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:text-slate-700">
+          <Link href={`/operasyon/kayit-defteri?tab=${tab}`} className="rounded-lg px-3 py-2 text-sm text-white/50 hover:text-white/75">
             Temizle
           </Link>
         )}
       </form>
 
       {/* Sonuçlar */}
-      <p className="mt-4 text-xs text-slate-500">
-        <strong className="text-slate-700">{total.toLocaleString("tr-TR")}</strong> kayıt{filtered ? " (filtreli)" : ""} · yalnız dizinde halen kayıtlı olanlar
+      <p className="mt-4 text-xs text-white/50">
+        <strong className="text-white/75">{total.toLocaleString("tr-TR")}</strong> kayıt{filtered ? " (filtreli)" : ""} · yalnız dizinde halen kayıtlı olanlar
         {user.role === "ADMIN" // günlük rapor sayfası ADMIN/ETHICS kapılı — koordinatöre kırık bağlantı gösterme
           ? <> (çıkarılanlar <Link href="/admin/registry-raporu" className="text-[#17919E] underline-offset-2 hover:underline">günlük raporlarda</Link>)</>
           : " (çıkarılanlar günlük senkron raporlarında saklanır)"}
       </p>
 
       {total === 0 ? (
-        <div className="mt-4 rounded-3xl border border-dashed border-slate-300 bg-white py-12 text-center text-sm text-slate-400">
+        <div className="mt-4 rounded-3xl border border-dashed border-white/15 bg-[#161719] py-12 text-center text-sm text-white/40">
           Kayıt bulunamadı{filtered ? " — filtreleri gevşetmeyi deneyin" : " — dizin ilk senkronla dolar"}.
         </div>
       ) : tab === "doktor" ? (
-        <div className="mt-3 overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="mt-3 overflow-x-auto rounded-3xl border border-white/10 bg-[#161719] shadow-sm">
           <table className="w-full min-w-[680px] text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-400">
+              <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wide text-white/40">
                 <th className="px-4 py-3 font-semibold">Doktor</th>
                 <th className="px-4 py-3 font-semibold">Branş</th>
                 <th className="px-4 py-3 font-semibold">Kurum</th>
@@ -225,14 +225,14 @@ export default async function RegistryBrowserPage({
             </thead>
             <tbody>
               {doctorRows.map((d) => (
-                <tr key={d.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60">
+                <tr key={d.id} className="border-b border-white/10 last:border-0 hover:bg-[#1E1F22]/60">
                   <td className="px-4 py-2.5">
-                    <div className="font-medium text-slate-800">{d.name} {d.lastName}</div>
-                    <div className="text-xs text-slate-400">{d.jobName ?? "—"}{d.experience ? ` · ${d.experience} yıl` : ""}</div>
+                    <div className="font-medium text-[#F4F5F3]">{d.name} {d.lastName}</div>
+                    <div className="text-xs text-white/40">{d.jobName ?? "—"}{d.experience ? ` · ${d.experience} yıl` : ""}</div>
                   </td>
-                  <td className="px-4 py-2.5 text-slate-600">{d.branchName ?? "—"}</td>
-                  <td className="max-w-64 truncate px-4 py-2.5 text-slate-600" title={d.establishmentName ?? undefined}>{d.establishmentName ?? "—"}</td>
-                  {cityOptions.length > 0 && <td className="px-4 py-2.5 text-slate-600">{d.cityName ?? "—"}</td>}
+                  <td className="px-4 py-2.5 text-white/65">{d.branchName ?? "—"}</td>
+                  <td className="max-w-64 truncate px-4 py-2.5 text-white/65" title={d.establishmentName ?? undefined}>{d.establishmentName ?? "—"}</td>
+                  {cityOptions.length > 0 && <td className="px-4 py-2.5 text-white/65">{d.cityName ?? "—"}</td>}
                 </tr>
               ))}
             </tbody>
@@ -244,19 +244,19 @@ export default async function RegistryBrowserPage({
             const langs = parseNames(h.languages);
             const accs = parseNames(h.accreditations);
             return (
-              <div key={h.id} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div key={h.id} className="rounded-3xl border border-white/10 bg-[#161719] p-4 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-slate-800">{h.name}</span>
+                      <span className="font-semibold text-[#F4F5F3]">{h.name}</span>
                       {h.authorizationNumber && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-semibold text-teal-700 ring-1 ring-teal-200">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#28C8D8]/10 px-2 py-0.5 text-[11px] font-semibold text-[#28C8D8] ring-1 ring-[#28C8D8]/25">
                           <BadgeCheck size={11} /> {h.authorizationNumber}
                         </span>
                       )}
                     </div>
-                    <div className="mt-0.5 text-xs text-slate-500">
-                      {h.cityName ?? "—"}{h.cityHasAirport && <Plane size={11} className="ml-1 inline text-slate-400" aria-label="havalimanı var" />}
+                    <div className="mt-0.5 text-xs text-white/50">
+                      {h.cityName ?? "—"}{h.cityHasAirport && <Plane size={11} className="ml-1 inline text-white/40" aria-label="havalimanı var" />}
                       {h.facilityTypeName && <> · {h.facilityTypeName}</>}
                       {h.doctorCount != null && <> · {h.doctorCount.toLocaleString("tr-TR")} doktor</>}
                       {h.totalPersonnel != null && <> · {h.totalPersonnel.toLocaleString("tr-TR")} personel</>}
@@ -266,19 +266,19 @@ export default async function RegistryBrowserPage({
                 {(langs.length > 0 || accs.length > 0) && (
                   <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
                     {langs.length > 0 && (
-                      <span className="inline-flex items-center gap-1 text-slate-400"><Languages size={11} /></span>
+                      <span className="inline-flex items-center gap-1 text-white/40"><Languages size={11} /></span>
                     )}
                     {langs.slice(0, 6).map((l) => (
-                      <span key={l} className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{l}</span>
+                      <span key={l} className="rounded-full bg-white/10 px-2 py-0.5 text-white/65">{l}</span>
                     ))}
-                    {langs.length > 6 && <span className="text-slate-400">+{langs.length - 6}</span>}
+                    {langs.length > 6 && <span className="text-white/40">+{langs.length - 6}</span>}
                     {accs.length > 0 && (
-                      <span className="ml-1 inline-flex items-center gap-1 text-slate-400"><Award size={11} /></span>
+                      <span className="ml-1 inline-flex items-center gap-1 text-white/40"><Award size={11} /></span>
                     )}
                     {accs.slice(0, 4).map((a) => (
-                      <span key={a} className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-700 ring-1 ring-amber-100">{a}</span>
+                      <span key={a} className="rounded-full bg-amber-500/10 px-2 py-0.5 text-amber-300 ring-1 ring-amber-400/20">{a}</span>
                     ))}
-                    {accs.length > 4 && <span className="text-slate-400">+{accs.length - 4}</span>}
+                    {accs.length > 4 && <span className="text-white/40">+{accs.length - 4}</span>}
                   </div>
                 )}
               </div>
@@ -290,25 +290,25 @@ export default async function RegistryBrowserPage({
       {/* Sayfalama — /denetim deseni */}
       {totalPages > 1 && (
         <nav className="mt-5 flex flex-wrap items-center justify-between gap-3" aria-label="Kayıt defteri sayfaları">
-          <span className="text-xs text-slate-500">
-            Sayfa <strong className="text-slate-700">{page}</strong> / {totalPages.toLocaleString("tr-TR")}
+          <span className="text-xs text-white/50">
+            Sayfa <strong className="text-white/75">{page}</strong> / {totalPages.toLocaleString("tr-TR")}
           </span>
           <div className="flex items-center gap-2">
             {page > 1 ? (
-              <Link href={qs(page - 1)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+              <Link href={qs(page - 1)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22]">
                 <ChevronLeft size={15} /> Önceki
               </Link>
             ) : (
-              <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-slate-100 px-3 py-1.5 text-sm font-medium text-slate-300">
+              <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/25">
                 <ChevronLeft size={15} /> Önceki
               </span>
             )}
             {page < totalPages ? (
-              <Link href={qs(page + 1)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+              <Link href={qs(page + 1)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22]">
                 Sonraki <ChevronRight size={15} />
               </Link>
             ) : (
-              <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-slate-100 px-3 py-1.5 text-sm font-medium text-slate-300">
+              <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/25">
                 Sonraki <ChevronRight size={15} />
               </span>
             )}

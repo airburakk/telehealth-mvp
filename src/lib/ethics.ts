@@ -14,9 +14,9 @@ export const REQUEST_TYPES: Record<string, string> = {
 };
 
 export const VERDICTS: Record<string, { label: string; color: string }> = {
-  FAVOR: { label: "Hasta lehine", color: "bg-emerald-100 text-emerald-700 ring-emerald-200" },
-  PARTIAL: { label: "Kısmen kabul", color: "bg-amber-100 text-amber-800 ring-amber-200" },
-  REJECT: { label: "Reddedildi", color: "bg-slate-100 text-slate-600 ring-slate-200" },
+  FAVOR: { label: "Hasta lehine", color: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25" },
+  PARTIAL: { label: "Kısmen kabul", color: "bg-amber-500/15 text-amber-200 ring-amber-400/25" },
+  REJECT: { label: "Reddedildi", color: "bg-white/10 text-white/65 ring-white/15" },
 };
 
 export const ACTIONS: Record<string, string> = {
@@ -28,14 +28,14 @@ export const ACTIONS: Record<string, string> = {
 };
 
 export const COMPLAINT_STATUS: Record<string, { label: string; color: string }> = {
-  PENDING: { label: "Beklemede", color: "bg-amber-100 text-amber-800" },
-  RESOLVED: { label: "Karara bağlandı", color: "bg-emerald-100 text-emerald-700" },
+  PENDING: { label: "Beklemede", color: "bg-amber-500/15 text-amber-200" },
+  RESOLVED: { label: "Karara bağlandı", color: "bg-emerald-500/15 text-emerald-300" },
 };
 
 export const ESCROW_STATUS: Record<string, { label: string; color: string; dot: string }> = {
-  HELD: { label: "Emanette tutuluyor", color: "bg-amber-100 text-amber-700 ring-amber-200", dot: "bg-amber-500" },
-  RELEASED: { label: "Taraflara aktarıldı", color: "bg-emerald-100 text-emerald-700 ring-emerald-200", dot: "bg-emerald-500" },
-  REFUNDED: { label: "Hastaya iade edildi", color: "bg-teal-100 text-teal-700 ring-teal-200", dot: "bg-teal-500" },
+  HELD: { label: "Emanette tutuluyor", color: "bg-amber-500/15 text-amber-300 ring-amber-400/25", dot: "bg-amber-500" },
+  RELEASED: { label: "Taraflara aktarıldı", color: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25", dot: "bg-emerald-500" },
+  REFUNDED: { label: "Hastaya iade edildi", color: "bg-[#28C8D8]/15 text-[#28C8D8] ring-[#28C8D8]/25", dot: "bg-[#28C8D8]" },
 };
 
 /// Anonimleştirme (data masking): kurul kimliği değil, vakayı görür

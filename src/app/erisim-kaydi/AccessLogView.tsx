@@ -47,20 +47,20 @@ export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <Lock size={20} className="text-[#17919E]" />
-          <h1 className="text-2xl font-semibold text-slate-900">{t(S.title)}</h1>
+          <h1 className="text-2xl font-semibold text-[#F4F5F3]">{t(S.title)}</h1>
         </div>
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>
-      <p className="mt-1.5 max-w-2xl text-sm text-slate-600">{t(S.subtitle)}</p>
+      <p className="mt-1.5 max-w-2xl text-sm text-white/65">{t(S.subtitle)}</p>
 
       {entries.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 px-5 py-10 text-center text-sm text-slate-500">
+        <div className="mt-8 rounded-xl border border-white/10 bg-[#1E1F22] px-5 py-10 text-center text-sm text-white/50">
           {t(S.empty)}
         </div>
       ) : (
-        <div className="mt-6 overflow-hidden rounded-xl border border-slate-200">
+        <div className="mt-6 overflow-hidden rounded-xl border border-white/10">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-500">
+            <thead className="bg-[#1E1F22] text-white/50">
               <tr className="text-start">
                 <th className="px-4 py-2.5 font-medium">{t(S.thDate)}</th>
                 <th className="px-4 py-2.5 font-medium">{t(S.thWho)}</th>
@@ -69,13 +69,13 @@ export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
                 <th className="px-4 py-2.5 font-medium">{t(S.thVerify)}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-white/10">
               {entries.map((e) => {
                 const verified =
                   e.verification.entryHashValid === true && e.verification.timestampValid === true;
                 return (
-                  <tr key={e.id} className="text-slate-700">
-                    <td className="px-4 py-2.5 whitespace-nowrap text-slate-500">
+                  <tr key={e.id} className="text-white/75">
+                    <td className="px-4 py-2.5 whitespace-nowrap text-white/50">
                       {new Date(e.createdAt).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" })}
                     </td>
                     <td className="px-4 py-2.5">
@@ -90,14 +90,14 @@ export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
                       )}
                     </td>
                     <td className="px-4 py-2.5">{t(ACTION_TR[e.action] ?? e.action)}</td>
-                    <td className="px-4 py-2.5 text-slate-500">{t(RES_TR[e.resourceType] ?? e.resourceType)}</td>
+                    <td className="px-4 py-2.5 text-white/50">{t(RES_TR[e.resourceType] ?? e.resourceType)}</td>
                     <td className="px-4 py-2.5">
                       {verified ? (
-                        <span className="inline-flex items-center gap-1 text-emerald-600">
+                        <span className="inline-flex items-center gap-1 text-emerald-300">
                           <ShieldCheck size={15} /> {t(S.verified)}
                         </span>
                       ) : (
-                        <span className="text-slate-400">—</span>
+                        <span className="text-white/40">—</span>
                       )}
                     </td>
                   </tr>
@@ -108,10 +108,10 @@ export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
         </div>
       )}
 
-      <div className="mt-6 flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-        <Clock size={15} className="mt-0.5 shrink-0 text-slate-400" />
+      <div className="mt-6 flex items-start gap-2 rounded-lg border border-white/10 bg-[#1E1F22] px-4 py-3 text-xs text-white/50">
+        <Clock size={15} className="mt-0.5 shrink-0 text-white/40" />
         <p>
-          <strong className="text-slate-600">{t(S.footerLead)}</strong> {t(S.footerBody)} {t(S.proofPrefix)}{" "}
+          <strong className="text-white/65">{t(S.footerLead)}</strong> {t(S.footerBody)} {t(S.proofPrefix)}{" "}
           <Link href="/onam/kanit" className="text-[#17919E] hover:underline">
             {t(S.proofLink)}
           </Link>

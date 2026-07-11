@@ -84,50 +84,50 @@ export function OfferView(p: OfferViewProps) {
   return (
     <div dir={langDir(lang)} className="mx-auto max-w-3xl px-5 py-8">
       <div className="print:hidden flex items-center justify-between gap-3">
-        <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#1FA9B8]">
+        <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-[#1FA9B8]">
           <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Vakalarım")}
         </Link>
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>
 
       {/* Belge başlığı */}
-      <div className="mt-4 flex items-start justify-between gap-3 border-b border-slate-200 pb-5">
+      <div className="mt-4 flex items-start justify-between gap-3 border-b border-white/10 pb-5">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-violet-600 text-white"><FileText size={22} /></span>
           <div>
-            <h1 className="text-2xl font-bold text-[#0D0E10]">{t("Tedavi Paketi Teklifi")}</h1>
-            <p className="text-sm text-slate-500">{p.patientName} · {countryFlag(p.country)} {countryName(p.country)} · {p.branch}</p>
+            <h1 className="text-2xl font-bold text-[#F4F5F3]">{t("Tedavi Paketi Teklifi")}</h1>
+            <p className="text-sm text-white/50">{p.patientName} · {countryFlag(p.country)} {countryName(p.country)} · {p.branch}</p>
           </div>
         </div>
-        <div className="text-right text-xs text-slate-400">
-          <div className="font-mono text-slate-600">{p.rezNo}</div>
+        <div className="text-right text-xs text-white/40">
+          <div className="font-mono text-white/65">{p.rezNo}</div>
           <div>{p.createdLabel}</div>
         </div>
       </div>
 
       {/* Durum bandı */}
       {p.declined ? (
-        <div className="mt-5 flex items-start gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-          <XCircle className="mt-0.5 shrink-0 text-slate-400" />
+        <div className="mt-5 flex items-start gap-3 rounded-3xl border border-white/10 bg-[#1E1F22] p-4">
+          <XCircle className="mt-0.5 shrink-0 text-white/40" />
           <div>
-            <div className="font-semibold text-slate-700">{t("Bu teklif reddedildi")}</div>
-            <p className="text-sm text-slate-500">{t("Yeni bir teklif için koordinatörünüzle görüşebilirsiniz.")}</p>
+            <div className="font-semibold text-white/75">{t("Bu teklif reddedildi")}</div>
+            <p className="text-sm text-white/50">{t("Yeni bir teklif için koordinatörünüzle görüşebilirsiniz.")}</p>
           </div>
         </div>
       ) : (
-        <div className="mt-5 flex items-start gap-3 rounded-3xl border border-violet-200 bg-violet-50/70 p-4">
-          <Sparkles className="mt-0.5 shrink-0 text-violet-600" />
+        <div className="mt-5 flex items-start gap-3 rounded-3xl border border-violet-400/25 bg-violet-50/70 p-4">
+          <Sparkles className="mt-0.5 shrink-0 text-violet-300" />
           <div>
-            <div className="font-semibold text-violet-900">{t("Size özel hazırlanmış tedavi paketi teklifi")}</div>
+            <div className="font-semibold text-violet-200">{t("Size özel hazırlanmış tedavi paketi teklifi")}</div>
             <p className="text-sm text-violet-800/80">{t("Aşağıdaki paketi inceleyin. Onayladığınızda ödeme, hizmet tamamlanana dek platform Escrow güvencesinde tutulur (escrow simülasyonu — gerçek para transferi yapılmaz).")}</p>
           </div>
         </div>
       )}
 
       {/* Paket içeriği */}
-      <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mt-5 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("Paket içeriği")}</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-white/50">{t("Paket içeriği")}</span>
           <span className="rounded-full bg-[#28C8D8] px-3 py-1 text-xs font-semibold text-[#0D0E10]">{p.tier} {t("Paket")}</span>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -138,27 +138,27 @@ export function OfferView(p: OfferViewProps) {
         </div>
         {/* Doktorun seçtiği tesis + sağlık turizmi yetki belgesi rozeti (hasta güven sinyali; yalnız pozitif) */}
         {p.hospitalName && (
-          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm">
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-[#1E1F22]/60 px-3 py-2 text-sm">
             <Building2 size={14} className="shrink-0 text-[#1FA9B8]" />
-            <span className="min-w-0 font-medium text-slate-700">{p.hospitalName}</span>
+            <span className="min-w-0 font-medium text-white/75">{p.hospitalName}</span>
             {p.hospitalAuthNo && (
-              <span title={t("Sağlık turizmi yetki belgeli tesis (T.C. Sağlık Bakanlığı — HealthTürkiye)")} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+              <span title={t("Sağlık turizmi yetki belgeli tesis (T.C. Sağlık Bakanlığı — HealthTürkiye)")} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-400/25">
                 <ShieldCheck size={12} /> {t("Yetki belgesi")}: {p.hospitalAuthNo}
               </span>
             )}
           </div>
         )}
-        <ul className="mt-5 space-y-2 border-t border-slate-100 pt-4">
+        <ul className="mt-5 space-y-2 border-t border-white/10 pt-4">
           {p.items.map((it) => (
             <li key={it.key} className="flex items-start justify-between gap-3 text-sm">
-              <span className="text-slate-600">{t(it.label)}{it.note && <span className="block text-xs text-slate-400">{t(it.note)}</span>}</span>
-              <span className="shrink-0 font-medium text-slate-800">{formatUSD(it.amount)}</span>
+              <span className="text-white/65">{t(it.label)}{it.note && <span className="block text-xs text-white/40">{t(it.note)}</span>}</span>
+              <span className="shrink-0 font-medium text-[#F4F5F3]">{formatUSD(it.amount)}</span>
             </li>
           ))}
         </ul>
-        <div className="mt-3 flex items-end justify-between border-t border-slate-200 pt-3">
-          <span className="text-sm font-semibold text-slate-700">{t("Toplam")}</span>
-          <span className="text-2xl font-bold text-[#0D0E10]">{formatUSD(p.total)}</span>
+        <div className="mt-3 flex items-end justify-between border-t border-white/10 pt-3">
+          <span className="text-sm font-semibold text-white/75">{t("Toplam")}</span>
+          <span className="text-2xl font-bold text-[#F4F5F3]">{formatUSD(p.total)}</span>
         </div>
       </div>
 
@@ -175,16 +175,16 @@ export function OfferView(p: OfferViewProps) {
       </div>
 
       {/* Hasta yolculuğu (statik önizleme) */}
-      <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("Hasta Yolculuğu")}</div>
+      <div className="mt-5 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+        <div className="text-xs font-semibold uppercase tracking-wide text-white/50">{t("Hasta Yolculuğu")}</div>
         <ol className="mt-4 grid gap-3 sm:grid-cols-5">
           {JOURNEY.map((j, i) => {
             const Icon = j.icon;
             return (
               <li key={i} className="flex flex-col items-center text-center">
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-teal-100 text-teal-700"><Icon size={16} /></span>
-                <div className="mt-1.5 text-xs font-medium text-slate-800">{t(j.t)}</div>
-                <div className="text-[10px] text-slate-400">{t(j.d)}</div>
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-[#28C8D8]/15 text-[#28C8D8]"><Icon size={16} /></span>
+                <div className="mt-1.5 text-xs font-medium text-[#F4F5F3]">{t(j.t)}</div>
+                <div className="text-[10px] text-white/40">{t(j.d)}</div>
               </li>
             );
           })}
@@ -198,7 +198,7 @@ export function OfferView(p: OfferViewProps) {
         </div>
       )}
 
-      <p className="mt-6 text-center text-[11px] text-slate-400">
+      <p className="mt-6 text-center text-[11px] text-white/40">
         {t("Bu teklif AURA sağlık turizmi platformu üzerinden hazırlanmıştır")} · {p.createdLabel}
       </p>
     </div>
@@ -207,9 +207,9 @@ export function OfferView(p: OfferViewProps) {
 
 function Spec({ icon, k, v }: { icon: React.ReactNode; k: string; v: string }) {
   return (
-    <div className="rounded-lg bg-slate-50 px-3 py-2">
-      <div className="flex items-center gap-1.5 text-xs text-slate-400">{icon} {k}</div>
-      <div className="mt-0.5 text-sm font-medium text-slate-800">{v}</div>
+    <div className="rounded-lg bg-[#1E1F22] px-3 py-2">
+      <div className="flex items-center gap-1.5 text-xs text-white/40">{icon} {k}</div>
+      <div className="mt-0.5 text-sm font-medium text-[#F4F5F3]">{v}</div>
     </div>
   );
 }

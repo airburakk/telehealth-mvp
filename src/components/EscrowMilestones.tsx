@@ -60,8 +60,8 @@ export function EscrowMilestones({ status, lang }: { status: string; lang: strin
           : t("Ödemeniz şu anda emanette — tedavi tamamlanana dek platform güvencesinde tutulur.");
 
   return (
-    <div className="rounded-3xl border border-teal-200 bg-teal-50/50 p-5">
-      <div className="flex items-center gap-2 text-sm font-semibold text-teal-800">
+    <div className="rounded-3xl border border-[#28C8D8]/25 bg-teal-50/50 p-5">
+      <div className="flex items-center gap-2 text-sm font-semibold text-[#28C8D8]">
         <ShieldCheck size={16} /> {t("Ödeme Güvencesi (Escrow)")}
       </div>
 
@@ -77,33 +77,33 @@ export function EscrowMilestones({ status, lang }: { status: string; lang: strin
                 <span
                   className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${
                     done
-                      ? "bg-emerald-100 text-emerald-700"
+                      ? "bg-emerald-500/15 text-emerald-300"
                       : active
-                        ? "bg-teal-600 text-white ring-4 ring-teal-200"
-                        : "bg-white text-slate-300 ring-1 ring-slate-200"
+                        ? "bg-teal-600 text-white ring-4 ring-[#28C8D8]/25"
+                        : "bg-[#161719] text-white/25 ring-1 ring-white/10"
                   }`}
                 >
                   <Icon size={16} />
                 </span>
                 {i < steps.length - 1 && (
-                  <span className={`mx-1 h-0.5 flex-1 rounded ${done ? "bg-emerald-300" : "bg-slate-200"}`} />
+                  <span className={`mx-1 h-0.5 flex-1 rounded ${done ? "bg-emerald-300" : "bg-white/15"}`} />
                 )}
               </div>
               <div className="mt-1.5">
-                <div className={`text-xs font-semibold ${done ? "text-emerald-800" : active ? "text-teal-800" : "text-slate-400"}`}>{s.label}</div>
-                <div className="text-[10px] leading-tight text-slate-400">{s.desc}</div>
+                <div className={`text-xs font-semibold ${done ? "text-emerald-200" : active ? "text-[#28C8D8]" : "text-white/40"}`}>{s.label}</div>
+                <div className="text-[10px] leading-tight text-white/40">{s.desc}</div>
               </div>
             </li>
           );
         })}
       </ol>
 
-      <p className="mt-3 text-xs leading-relaxed text-slate-600">
+      <p className="mt-3 text-xs leading-relaxed text-white/65">
         {summary} {t("Sorun halinde iade Etik Kurul kararıyla yapılır.")}
       </p>
 
       {/* Simülasyon disclaimer — tasarım §5: simüle escrow'da görünür uyarı zorunlu (hukuki park) */}
-      <div className="mt-3 flex gap-2 rounded-xl bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-800 ring-1 ring-amber-200">
+      <div className="mt-3 flex gap-2 rounded-xl bg-amber-500/10 px-3 py-2 text-[11px] leading-relaxed text-amber-200 ring-1 ring-amber-400/25">
         <Info size={13} className="mt-0.5 shrink-0" />
         <span>{t("Simülasyon — bu bir MVP gösterimidir; gerçek para transferi yapılmaz. Escrow akışı, tam entegrasyonda ödemenizin nasıl korunacağını gösterir.")}</span>
       </div>

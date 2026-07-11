@@ -33,26 +33,26 @@ export function SharesView({ unseen, cases, links }: { unseen: UnseenAccess[]; c
             <ShieldCheck size={22} />
           </span>
           <div>
-            <h1 className="text-2xl font-bold text-[#0D0E10]">{t(S.title)}</h1>
-            <p className="text-sm text-slate-500">{t(S.subtitle)}</p>
+            <h1 className="text-2xl font-bold text-[#F4F5F3]">{t(S.title)}</h1>
+            <p className="text-sm text-white/50">{t(S.subtitle)}</p>
           </div>
         </div>
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>
 
       {unseen.length > 0 && (
-        <div className="mt-5 rounded-3xl border border-amber-200 bg-amber-50 p-4">
-          <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-800">
+        <div className="mt-5 rounded-3xl border border-amber-400/25 bg-amber-500/10 p-4">
+          <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-200">
             <BellRing size={16} /> {t(S.notif)} ({unseen.length})
           </div>
           <ul className="mt-2 space-y-1">
             {unseen.slice(0, 5).map((u) => (
-              <li key={u.id} className="flex flex-wrap items-center gap-x-2 text-sm text-amber-900">
+              <li key={u.id} className="flex flex-wrap items-center gap-x-2 text-sm text-amber-200">
                 <Eye size={14} className="shrink-0" />
                 <span>
                   <strong>{u.recipient || t(S.sharedPerson)}</strong>, {u.caseName} {t(S.viewedRecord)}
                 </span>
-                <span className="text-amber-600">· {new Date(u.when).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" })}</span>
+                <span className="text-amber-300">· {new Date(u.when).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" })}</span>
               </li>
             ))}
           </ul>

@@ -73,27 +73,27 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href="/acente" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#1FA9B8]">
+      <Link href="/acente" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-[#1FA9B8]">
         <ArrowLeft size={16} /> Tedavi dosyaları
       </Link>
 
       <div className="mt-4 flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Luggage size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#0D0E10]">Tedavi Dosyası</h1>
-          <p className="text-sm text-slate-500">Doktorun tedavi kararına göre paket teklifi hazırlayıp hastaya gönderin.</p>
+          <h1 className="text-2xl font-bold text-[#F4F5F3]">Tedavi Dosyası</h1>
+          <p className="text-sm text-white/50">Doktorun tedavi kararına göre paket teklifi hazırlayıp hastaya gönderin.</p>
         </div>
       </div>
 
       {/* Kısıtlı dosya kartı — yalnız kimlik/iletişim + doktor kararı */}
-      <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mt-5 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-800">{patientName}</h2>
-              <span className="text-sm text-slate-400">{countryFlag(c.country)} {countryName(c.country)}</span>
+              <h2 className="text-lg font-bold text-[#F4F5F3]">{patientName}</h2>
+              <span className="text-sm text-white/40">{countryFlag(c.country)} {countryName(c.country)}</span>
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-white/50">
               <span className="inline-flex items-center gap-1"><Languages size={14} /> {c.language}</span>
               {patientPhone && <span className="inline-flex items-center gap-1"><Phone size={14} /> {patientPhone}</span>}
               {c.contactPreference && (
@@ -101,10 +101,10 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
               )}
             </div>
           </div>
-          <div className="text-right text-xs text-slate-400">
+          <div className="text-right text-xs text-white/40">
             iletildi: {formatDateTime(c.agencySentAt)}
             {c.doctor && (
-              <div className="mt-1 inline-flex items-center gap-1 text-slate-500">
+              <div className="mt-1 inline-flex items-center gap-1 text-white/50">
                 <Stethoscope size={13} className="text-[#1FA9B8]" /> {c.doctor.title} {c.doctor.name} · <span className="font-medium text-[#1FA9B8]">{c.branch}</span>
               </div>
             )}
@@ -112,38 +112,38 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Doktorun seçtiği işlemler</div>
+          <div className="rounded-2xl border border-white/10 bg-[#1E1F22]/60 p-3.5">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-white/40">Doktorun seçtiği işlemler</div>
             {treatments.length === 0 ? (
-              <p className="mt-1 text-sm text-slate-400">İşlem seçilmemiş.</p>
+              <p className="mt-1 text-sm text-white/40">İşlem seçilmemiş.</p>
             ) : (
-              <ul className="mt-1.5 space-y-1 text-sm text-slate-700">
+              <ul className="mt-1.5 space-y-1 text-sm text-white/75">
                 {treatments.map((t) => (
                   <li key={t.code} className="flex items-baseline justify-between gap-2">
                     <span className="min-w-0 truncate">{t.name}</span>
                     <span className="shrink-0 font-semibold tabular-nums">{formatTRY(t.priceTRY)}</span>
                   </li>
                 ))}
-                <li className="flex items-baseline justify-between gap-2 border-t border-slate-200 pt-1 text-[13px] font-bold">
+                <li className="flex items-baseline justify-between gap-2 border-t border-white/10 pt-1 text-[13px] font-bold">
                   <span>Toplam</span><span className="tabular-nums">{formatTRY(totalTRY)}</span>
                 </li>
               </ul>
             )}
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5">
-            <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400"><CalendarRange size={12} /> Öngörülen süre</div>
-            <p className="mt-1 text-xl font-bold text-slate-800">
+          <div className="rounded-2xl border border-white/10 bg-[#1E1F22]/60 p-3.5">
+            <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-white/40"><CalendarRange size={12} /> Öngörülen süre</div>
+            <p className="mt-1 text-xl font-bold text-[#F4F5F3]">
               {c.treatmentDaysMin != null && c.treatmentDaysMax != null ? `${c.treatmentDaysMin} – ${c.treatmentDaysMax} gün` : "Belirtilmedi"}
             </p>
-            <p className="text-[11px] text-slate-400">Konaklama gecesi ön-değeri bu süreden alınır.</p>
+            <p className="text-[11px] text-white/40">Konaklama gecesi ön-değeri bu süreden alınır.</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5">
-            <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400"><Building2 size={12} /> Hastane</div>
-            <p className="mt-1 text-sm font-semibold text-slate-800">{c.hospitalName ?? "Doktor belirtmedi"}</p>
-            {c.hospitalRegistryId && <p className="text-[11px] text-slate-400">HealthTürkiye #{c.hospitalRegistryId}</p>}
+          <div className="rounded-2xl border border-white/10 bg-[#1E1F22]/60 p-3.5">
+            <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-white/40"><Building2 size={12} /> Hastane</div>
+            <p className="mt-1 text-sm font-semibold text-[#F4F5F3]">{c.hospitalName ?? "Doktor belirtmedi"}</p>
+            {c.hospitalRegistryId && <p className="text-[11px] text-white/40">HealthTürkiye #{c.hospitalRegistryId}</p>}
             {hospitalAuthNo && (
               <p className="mt-1.5">
-                <span title="Sağlık turizmi yetki belgesi (HealthTürkiye dizini)" className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                <span title="Sağlık turizmi yetki belgesi (HealthTürkiye dizini)" className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-400/25">
                   <ShieldCheck size={12} /> Yetki belgesi: {hospitalAuthNo}
                 </span>
               </p>
@@ -151,7 +151,7 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
           </div>
         </div>
 
-        <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
+        <p className="mt-3 text-[11px] leading-relaxed text-white/40">
           Bu dosyada tıbbi belge, görüntüleme, test sonucu ve şikâyet metni BULUNMAZ (veri minimizasyonu) —
           yalnız teklif hazırlamak için gereken bilgiler paylaşılır. Erişiminiz hastanın denetim kaydına işlenir.
         </p>

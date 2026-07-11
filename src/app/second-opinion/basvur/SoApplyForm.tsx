@@ -82,28 +82,28 @@ export function SoApplyForm() {
 
       {/* §12.2 — süre bilgilendirmesi (tek kaynak: lib/second-opinion; useT ile çok dilli) */}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="rounded-2xl border border-white/10 bg-[#161719] p-4">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
             <Clock size={14} /> {t(S.reportLabel)}
           </div>
-          <div className="mt-1 text-2xl font-bold text-[#0D0E10]">{t(S.reportValue)}</div>
+          <div className="mt-1 text-2xl font-bold text-[#F4F5F3]">{t(S.reportValue)}</div>
         </div>
         <div className="rounded-2xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] p-4">
           <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#17919E]">
             <Video size={14} /> {t(S.videoLabel)}
           </div>
-          <p className="mt-1 text-[13px] leading-relaxed text-slate-600">{t(S.videoText)}</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-white/65">{t(S.videoText)}</p>
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">{t(FEE_LINE)}</div>
+      <div className="mt-4 rounded-2xl border border-white/10 bg-[#1E1F22] px-4 py-3 text-sm text-white/65">{t(FEE_LINE)}</div>
 
-      <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <label className="block text-sm font-semibold text-slate-700">{t(S.branchLabel)}</label>
+      <div className="mt-6 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+        <label className="block text-sm font-semibold text-white/75">{t(S.branchLabel)}</label>
         <select
           value={branch}
           onChange={(e) => setBranch(e.target.value)}
-          className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
+          className="mt-1.5 w-full rounded-xl border border-white/15 bg-[#161719] px-3 py-2.5 text-sm text-[#F4F5F3] focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
         >
           <option value="">{t(S.branchPlaceholder)}</option>
           {BRANCHES.map((b) => (
@@ -114,11 +114,11 @@ export function SoApplyForm() {
         {/* Ülke + tercih dili — Talk to Doctor (triyaj) deseni: ülke seçilince birincil dil önerilir. */}
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-semibold text-slate-700">{t(S.countryLabel)}</label>
+            <label className="block text-sm font-semibold text-white/75">{t(S.countryLabel)}</label>
             <select
               value={country}
               onChange={(e) => onCountry(e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
+              className="mt-1.5 w-full rounded-xl border border-white/15 bg-[#161719] px-3 py-2.5 text-sm text-[#F4F5F3] focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
             >
               <option value="">{t(S.countryPlaceholder)}</option>
               {COUNTRIES.map((c) => (
@@ -127,11 +127,11 @@ export function SoApplyForm() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-700">{t(S.langLabel)}</label>
+            <label className="block text-sm font-semibold text-white/75">{t(S.langLabel)}</label>
             <select
               value={lang}
               onChange={(e) => setLang(e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
+              className="mt-1.5 w-full rounded-xl border border-white/15 bg-[#161719] px-3 py-2.5 text-sm text-[#F4F5F3] focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
             >
               {LANGUAGES.map((l) => (
                 <option key={l} value={l}>{l}</option>
@@ -139,24 +139,24 @@ export function SoApplyForm() {
             </select>
           </div>
         </div>
-        <p className="mt-1.5 text-xs text-slate-500">{t(S.langHint)}</p>
+        <p className="mt-1.5 text-xs text-white/50">{t(S.langHint)}</p>
 
         {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
         <div className="mt-5">
           <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
         </div>
 
-        <label className="mt-5 block text-sm font-semibold text-slate-700">{t(S.diagLabel)}</label>
-        <p className="text-xs text-slate-500">{t(S.diagHint)}</p>
+        <label className="mt-5 block text-sm font-semibold text-white/75">{t(S.diagLabel)}</label>
+        <p className="text-xs text-white/50">{t(S.diagHint)}</p>
         <textarea
           value={diagnosisSummary}
           onChange={(e) => setDiagnosisSummary(e.target.value)}
           rows={5}
           placeholder={t(S.diagPh)}
-          className="mt-1.5 w-full resize-y rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
+          className="mt-1.5 w-full resize-y rounded-xl border border-white/15 bg-[#161719] px-3 py-2.5 text-sm text-[#F4F5F3] focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
         />
 
-        {error && <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {error && <p className="mt-4 rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
 
         <button
           onClick={submit}

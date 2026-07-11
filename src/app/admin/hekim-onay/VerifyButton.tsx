@@ -33,7 +33,7 @@ export function VerifyButton({ doctorId }: { doctorId: string }) {
       >
         {loading ? <Loader2 size={15} className="animate-spin" /> : <ShieldCheck size={15} />} Doğrula
       </button>
-      {err && <span className="text-xs text-red-600">{err}</span>}
+      {err && <span className="text-xs text-red-300">{err}</span>}
     </div>
   );
 }
