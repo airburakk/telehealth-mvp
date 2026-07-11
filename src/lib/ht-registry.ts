@@ -249,6 +249,19 @@ export async function runRegistrySync(): Promise<SyncSummary> {
     if (batch.length) await db.registryDoctor.updateMany({ where: { id: { in: batch } }, data: { lastSeenAt: now } });
   }
 
+  // ── Şehir adı dolumu (v5.5): türetilmiş cityName fingerprint'e GİRMEZ → fingerprint eşit kaldıkça
+  // eski satırlar hiç dolmaz (ilk tam çekim lookup'sızdı: ~10k satırda cityName=null, cityId ~5.7k dolu).
+  // cityId-gruplu updateMany ile ucuz idempotent dolum (~81 sorgu; sonraki günlerde 0 satır etkilenir).
+  // Lookup o koşuda düşmüşse (cityMap boş) adım atlanır, mevcut adlara dokunulmaz.
+  let cityNamesFilled = 0;
+  for (const [cid, cname] of cityMap) {
+    const r = await db.registryDoctor.updateMany({
+      where: { cityId: cid, OR: [{ cityName: null }, { cityName: { not: cname } }] },
+      data: { cityName: cname },
+    });
+    cityNamesFilled += r.count;
+  }
+
   // ── Hastane diff ──
   const existingHosps = await db.registryHospital.findMany({ select: { id: true, removedAt: true, fingerprint: true, name: true, cityName: true, facilityTypeName: true } });
   const existingHospMap = new Map(existingHosps.map((h) => [h.id, h]));
@@ -290,6 +303,7 @@ export async function runRegistrySync(): Promise<SyncSummary> {
   const capNotes = [
     docUpdateSkipped ? `Alan-güncelleme ATLANDI (doktor): ${changedDocs.length} değişiklik > ${FIELD_UPDATE_CAP} tavanı (kaynak format kayması olabilir).` : "",
     hospUpdateSkipped ? `Alan-güncelleme ATLANDI (tesis): ${changedHosps.length} değişiklik > ${FIELD_UPDATE_CAP} tavanı.` : "",
+    cityNamesFilled ? `Şehir adı dolduruldu: ${cityNamesFilled} doktor.` : "",
   ].filter(Boolean).join(" ");
 
   const summary: SyncSummary = {

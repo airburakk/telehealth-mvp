@@ -50,7 +50,7 @@ export default async function RegistryBrowserPage({
   let total = 0;
   let page = 1;
   let totalPages = 1;
-  let doctorRows: { id: number; name: string; lastName: string; jobName: string | null; branchName: string | null; establishmentName: string | null; experience: number | null }[] = [];
+  let doctorRows: { id: number; name: string; lastName: string; jobName: string | null; branchName: string | null; establishmentName: string | null; cityName: string | null; experience: number | null }[] = [];
   let hospitalRows: { id: number; name: string; cityName: string | null; cityHasAirport: boolean | null; facilityTypeName: string | null; doctorCount: number | null; totalPersonnel: number | null; languages: string | null; accreditations: string | null; authorizationNumber: string | null }[] = [];
   let branchOptions: string[] = [];
   let cityOptions: string[] = [];
@@ -80,7 +80,7 @@ export default async function RegistryBrowserPage({
         orderBy: [{ lastName: "asc" }, { name: "asc" }],
         skip: (page - 1) * PAGE_SIZE,
         take: PAGE_SIZE,
-        select: { id: true, name: true, lastName: true, jobName: true, branchName: true, establishmentName: true, experience: true },
+        select: { id: true, name: true, lastName: true, jobName: true, branchName: true, establishmentName: true, cityName: true, experience: true },
       }),
       db.registryDoctor.findMany({ where: { removedAt: null, branchName: { not: null } }, distinct: ["branchName"], select: { branchName: true }, orderBy: { branchName: "asc" } })
         .then((r) => r.map((x) => x.branchName!).filter(Boolean)),
@@ -219,7 +219,8 @@ export default async function RegistryBrowserPage({
                 <th className="px-4 py-3 font-semibold">Doktor</th>
                 <th className="px-4 py-3 font-semibold">Branş</th>
                 <th className="px-4 py-3 font-semibold">Kurum</th>
-                {/* Şehir kolonu bilinçli yok: kaynak dizin doktor kaydında cityName doldurmuyor (tümü boş) */}
+                {/* Şehir: filtreyle aynı veri-kapısı — senkron dolumu (v5.5) çalışana dek gizli kalır */}
+                {cityOptions.length > 0 && <th className="px-4 py-3 font-semibold">Şehir</th>}
               </tr>
             </thead>
             <tbody>
@@ -231,6 +232,7 @@ export default async function RegistryBrowserPage({
                   </td>
                   <td className="px-4 py-2.5 text-slate-600">{d.branchName ?? "—"}</td>
                   <td className="max-w-64 truncate px-4 py-2.5 text-slate-600" title={d.establishmentName ?? undefined}>{d.establishmentName ?? "—"}</td>
+                  {cityOptions.length > 0 && <td className="px-4 py-2.5 text-slate-600">{d.cityName ?? "—"}</td>}
                 </tr>
               ))}
             </tbody>
