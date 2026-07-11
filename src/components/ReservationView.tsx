@@ -31,6 +31,7 @@ const TEXTS = [
   "Rezervasyon No",
   "Hastane", "Otel", "Tercüman", "Sigorta", "Seviye", "Dahil", "Yok", "gece",
   "Toplam (Escrow)",
+  "Yetki belgesi", "Sağlık turizmi yetki belgeli tesis (T.C. Sağlık Bakanlığı — HealthTürkiye)",
   "Ödeme Dağılımı (Split)",
   "Hasta Yolculuğu",
   "tamamlandı",
@@ -54,6 +55,10 @@ const fmtJourneyDate = (iso: string) =>
 export interface ReservationViewProps {
   bookingId: string;
   rezNo: string;
+  /** Doktorun tedavi kararında seçtiği tesis (Case.hospitalName; null = belirtilmedi). */
+  hospitalName: string | null;
+  /** Tesisin sağlık turizmi yetki belge no'su (HealthTürkiye; null = kayıt yok → rozet basılmaz). */
+  hospitalAuthNo: string | null;
   tier: string;
   hospitalType: string;
   hotelStars: number;
@@ -114,6 +119,19 @@ export function ReservationView(p: ReservationViewProps) {
               <Spec icon={<Languages size={14} />} k={t("Tercüman")} v={p.translator ? t("Dahil") : t("Yok")} />
               <Spec icon={<ShieldCheck size={14} />} k={t("Sigorta")} v={`${t("Seviye")} ${p.insuranceLevel}`} />
             </div>
+
+            {/* Doktorun seçtiği tesis + sağlık turizmi yetki belgesi rozeti (hasta güven sinyali; yalnız pozitif) */}
+            {p.hospitalName && (
+              <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm">
+                <Building2 size={14} className="shrink-0 text-[#0EA5B2]" />
+                <span className="min-w-0 font-medium text-slate-700">{p.hospitalName}</span>
+                {p.hospitalAuthNo && (
+                  <span title={t("Sağlık turizmi yetki belgeli tesis (T.C. Sağlık Bakanlığı — HealthTürkiye)")} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                    <ShieldCheck size={12} /> {t("Yetki belgesi")}: {p.hospitalAuthNo}
+                  </span>
+                )}
+              </div>
+            )}
 
             <ul className="mt-5 space-y-2 border-t border-slate-100 pt-4">
               {p.items.map((it) => (

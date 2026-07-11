@@ -20,8 +20,15 @@ export default async function ReservationPage({ params }: { params: Promise<{ bo
   const items: LineItem[] = JSON.parse(booking.breakdown);
   const split: LineItem[] = JSON.parse(booking.split);
 
+  // Doktorun seçtiği hastane + sağlık turizmi yetki belge no'su (HealthTürkiye; hasta güven sinyali)
+  const reg = booking.case.hospitalRegistryId
+    ? await db.registryHospital.findUnique({ where: { id: booking.case.hospitalRegistryId }, select: { authorizationNumber: true } })
+    : null;
+
   return (
     <ReservationView
+      hospitalName={booking.case.hospitalName}
+      hospitalAuthNo={reg?.authorizationNumber || null}
       bookingId={booking.id}
       rezNo={booking.id.slice(0, 8).toUpperCase()}
       tier={booking.tier}
