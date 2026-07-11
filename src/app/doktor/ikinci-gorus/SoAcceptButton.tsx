@@ -29,7 +29,7 @@ export function SoAcceptButton({ caseId, open }: { caseId: string; open?: boolea
       <button
         onClick={accept}
         disabled={busy}
-        className="inline-flex items-center gap-1.5 rounded-xl bg-[#14C3D0] px-4 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-xl bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50"
       >
         {busy ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />} {open ? "Kabul et (açık)" : "Kabul et"}
       </button>

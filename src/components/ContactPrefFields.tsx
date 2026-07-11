@@ -44,7 +44,7 @@ export function ContactPrefFields({
           onChange={(e) => onPhone(e.target.value)}
           placeholder="+90 5xx xxx xx xx"
           dir="ltr"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
         />
       </label>
 
@@ -62,7 +62,7 @@ export function ContactPrefFields({
                 key={o.key}
                 onClick={() => onPref(o.key)}
                 className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition ${
-                  active ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 bg-white text-slate-600 hover:border-[#14C3D0]/40"
+                  active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 bg-white text-slate-600 hover:border-[#28C8D8]/40"
                 }`}
               >
                 <Icon size={13} /> {t(o.label)}

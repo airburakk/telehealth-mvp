@@ -35,9 +35,9 @@ export default async function SoQueuePage() {
         <ArrowLeft size={15} /> Operasyon paneli
       </Link>
       <div className="mt-3 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Stethoscope size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Stethoscope size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">İkinci Görüş — Kuyruk</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">İkinci Görüş — Kuyruk</h1>
           <p className="text-sm text-slate-500">Belge incelemesi + eksik belge talebi + doktor ataması.</p>
         </div>
       </div>
@@ -57,13 +57,13 @@ export default async function SoQueuePage() {
             <Link
               key={c.id}
               href={`/operasyon/ikinci-gorus/${c.id}`}
-              className={`block rounded-3xl border bg-white p-5 shadow-sm transition hover:shadow ${needsAction ? "border-[#14C3D0]/50" : "border-slate-200"}`}
+              className={`block rounded-3xl border bg-white p-5 shadow-sm transition hover:shadow ${needsAction ? "border-[#28C8D8]/50" : "border-slate-200"}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold text-slate-800">{nameById[c.patientId] ?? "Hasta"}</span>
-                    <span className="inline-flex items-center gap-1 text-xs text-[#0EA5B2]"><Stethoscope size={12} /> {branchLabel}</span>
+                    <span className="inline-flex items-center gap-1 text-xs text-[#1FA9B8]"><Stethoscope size={12} /> {branchLabel}</span>
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${needsAction ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"}`}>
                       {SO_STATUS_LABELS[c.status as SoStatus] ?? c.status}
                     </span>

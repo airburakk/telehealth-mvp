@@ -62,17 +62,17 @@ export default async function DoctorSoDetailPage({ params }: { params: Promise<{
           <Link href="/doktor/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
             <ArrowLeft size={15} /> Atanan vakalar
           </Link>
-          <div className="mt-4 rounded-3xl border border-[#14C3D0]/50 bg-[#14C3D0]/[0.05] p-6">
+          <div className="mt-4 rounded-3xl border border-[#28C8D8]/50 bg-[#28C8D8]/[0.05] p-6">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-white">
                 <EyeOff size={11} /> Anonim önizleme
               </span>
-              <span className="inline-flex items-center gap-1 text-xs text-[#0EA5B2]"><Stethoscope size={12} /> {branchLabel}</span>
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${assignedToMe ? "bg-[#14C3D0]/20 text-[#0E8A95]" : "bg-amber-100 text-amber-700"}`}>
+              <span className="inline-flex items-center gap-1 text-xs text-[#1FA9B8]"><Stethoscope size={12} /> {branchLabel}</span>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${assignedToMe ? "bg-[#28C8D8]/20 text-[#17919E]" : "bg-amber-100 text-amber-700"}`}>
                 {assignedToMe ? "Size atandı" : "Açık — süre doldu"}
               </span>
             </div>
-            <h1 className="mt-3 text-lg font-bold text-[#101010]">İkinci görüş dosyası — kabul öncesi önizleme</h1>
+            <h1 className="mt-3 text-lg font-bold text-[#0D0E10]">İkinci görüş dosyası — kabul öncesi önizleme</h1>
             <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{summary}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
               {region && <span>Bölge: {region}</span>}

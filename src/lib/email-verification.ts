@@ -48,7 +48,7 @@ export async function issueVerificationEmail(
       html:
         `<p>Merhaba ${escapeHtml(user.name)},</p>` +
         `<p>AURA hesabınızı etkinleştirmek için e-posta adresinizi doğrulayın:</p>` +
-        `<p><a href="${link}" style="display:inline-block;background:#14C3D0;color:#101010;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600">E-postamı doğrula</a></p>` +
+        `<p><a href="${link}" style="display:inline-block;background:#28C8D8;color:#0D0E10;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600">E-postamı doğrula</a></p>` +
         `<p style="font-size:12px;color:#64748b">Bağlantı 24 saat geçerlidir. Düğme çalışmazsa: <br>${link}</p>` +
         `<p style="font-size:12px;color:#64748b">Bu kaydı siz başlatmadıysanız bu e-postayı yok sayabilirsiniz.</p>`,
     });

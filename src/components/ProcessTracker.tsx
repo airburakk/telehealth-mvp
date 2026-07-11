@@ -20,7 +20,7 @@ export function ProcessTracker({ items, dir = "ltr" }: { items: TrackerItem[]; d
           it.state === "done" ? (
             <span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-100 text-emerald-700"><Check size={16} /></span>
           ) : it.state === "active" ? (
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-[#14C3D0]/20 text-[#0E8A95]"><CircleDot size={16} /></span>
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-[#28C8D8]/20 text-[#17919E]"><CircleDot size={16} /></span>
           ) : (
             <span className="grid h-7 w-7 place-items-center rounded-full border border-slate-300 text-slate-400"><Circle size={16} /></span>
           );
@@ -35,7 +35,7 @@ export function ProcessTracker({ items, dir = "ltr" }: { items: TrackerItem[]; d
                 {it.icon}
                 {it.label}
               </p>
-              <p className={`mt-0.5 text-[13px] ${it.state === "active" ? "font-medium text-[#0E8A95]" : "text-slate-500"}`}>{it.subStatus}</p>
+              <p className={`mt-0.5 text-[13px] ${it.state === "active" ? "font-medium text-[#17919E]" : "text-slate-500"}`}>{it.subStatus}</p>
             </div>
           </div>
         );

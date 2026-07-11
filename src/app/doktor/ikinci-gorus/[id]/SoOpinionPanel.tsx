@@ -102,10 +102,10 @@ export function SoOpinionPanel({ data }: { data: Data }) {
   return (
     <div className="mt-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-[#101010]">{data.patientName}</h1>
-        <span className="rounded-full bg-[#14C3D0]/10 px-3 py-1 text-[12px] font-semibold text-[#0E8A95]">{SO_STATUS_LABELS[status] ?? status}</span>
+        <h1 className="text-2xl font-bold text-[#0D0E10]">{data.patientName}</h1>
+        <span className="rounded-full bg-[#28C8D8]/10 px-3 py-1 text-[12px] font-semibold text-[#17919E]">{SO_STATUS_LABELS[status] ?? status}</span>
       </div>
-      <p className="mt-1 text-sm text-[#0EA5B2]">{data.branchLabel} · İkinci Görüş</p>
+      <p className="mt-1 text-sm text-[#1FA9B8]">{data.branchLabel} · İkinci Görüş</p>
 
       <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Tanı / durum özeti</div>
@@ -131,7 +131,7 @@ export function SoOpinionPanel({ data }: { data: Data }) {
                   <ul className="mt-2 space-y-1 pl-8">
                     {items.map((d) => (
                       <li key={d.id}>
-                        <a href={`/api/second-opinion/cases/${data.id}/documents/${d.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[12.5px] text-[#0E8A95] underline">
+                        <a href={`/api/second-opinion/cases/${data.id}/documents/${d.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[12.5px] text-[#17919E] underline">
                           {d.deliveryMethod === "EXTERNAL_LINK" ? <Link2 size={12} /> : <FileText size={12} />}
                           {d.label || (d.deliveryMethod === "EXTERNAL_LINK" ? "Bağlantı" : "Dosya")}
                           <ExternalLink size={11} />
@@ -171,8 +171,8 @@ export function SoOpinionPanel({ data }: { data: Data }) {
 
       {/* Faz 4 — video randevu teklifi (raporu yazan hoca; İcapçı deseni) */}
       {status === "OPINION_DELIVERED" && (
-        <div className="mt-4 rounded-3xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.05] p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[#0E8A95]"><CalendarClock size={17} /> Video randevu teklif et</div>
+        <div className="mt-4 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.05] p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#17919E]"><CalendarClock size={17} /> Video randevu teklif et</div>
           {changeRequested ? (
             <div className="mt-2 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-[13px] text-amber-700">
               <RefreshCw size={15} className="mt-0.5 shrink-0" />
@@ -181,8 +181,8 @@ export function SoOpinionPanel({ data }: { data: Data }) {
           ) : (
             <p className="mt-1 text-xs text-slate-500">Yazılı görüş sunuldu; raporun tesliminden itibaren 15 gün içinde bir görüşme zamanı önerin. Hasta onaylayınca randevu kesinleşir.</p>
           )}
-          <input type="datetime-local" value={offerAt} onChange={(e) => setOfferAt(e.target.value)} className="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-[#14C3D0] focus:outline-none" />
-          <button onClick={offerVideo} disabled={busy !== ""} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50">
+          <input type="datetime-local" value={offerAt} onChange={(e) => setOfferAt(e.target.value)} className="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-[#28C8D8] focus:outline-none" />
+          <button onClick={offerVideo} disabled={busy !== ""} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#28C8D8] px-6 py-3 text-[15px] font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50">
             {busy === "offer" ? <Loader2 size={17} className="animate-spin" /> : <>Randevu zamanını hastaya öner</>}
           </button>
         </div>
@@ -192,18 +192,18 @@ export function SoOpinionPanel({ data }: { data: Data }) {
       {status === "VIDEO_OFFERED" && data.appointment && (
         <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50/60 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-amber-800"><Clock size={17} /> Randevu teklifiniz hastaya iletildi</div>
-          <p className="mt-1.5 text-lg font-bold text-[#101010]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+          <p className="mt-1.5 text-lg font-bold text-[#0D0E10]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
           <p className="mt-1 text-xs text-amber-700">Hasta bu zamanı onayladığında randevu kesinleşir; farklı bir zaman isterse yeniden öneri yapabilirsiniz.</p>
         </div>
       )}
 
       {/* Video randevusu */}
       {status === "VIDEO_SCHEDULED" && data.appointment && (
-        <div className="mt-4 rounded-3xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.06] p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[#0E8A95]"><Video size={17} /> Video görüşme randevusu</div>
-          <p className="mt-1.5 text-lg font-bold text-[#101010]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+        <div className="mt-4 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#17919E]"><Video size={17} /> Video görüşme randevusu</div>
+          <p className="mt-1.5 text-lg font-bold text-[#0D0E10]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link href={`/second-opinion/gorusme/${data.appointment.id}?role=doctor`} className="inline-flex items-center gap-2 rounded-xl bg-[#14C3D0] px-5 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+            <Link href={`/second-opinion/gorusme/${data.appointment.id}?role=doctor`} className="inline-flex items-center gap-2 rounded-xl bg-[#28C8D8] px-5 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
               <Video size={16} /> Görüşmeye katıl
             </Link>
             <button onClick={completeVideo} disabled={busy !== ""} className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">
@@ -223,7 +223,7 @@ export function SoOpinionPanel({ data }: { data: Data }) {
               onChange={(e) => setTestDesc(e.target.value)}
               rows={2}
               placeholder="Örn. Güncel tümör belirteçleri (CA 15-3) ve toraks BT gerekli."
-              className="mt-2 w-full resize-y rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-[#14C3D0] focus:outline-none"
+              className="mt-2 w-full resize-y rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-[#28C8D8] focus:outline-none"
             />
             <button
               onClick={requestTest}
@@ -234,8 +234,8 @@ export function SoOpinionPanel({ data }: { data: Data }) {
             </button>
           </div>
 
-          <div className="mt-4 rounded-3xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.05] p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#0E8A95]"><NotebookPen size={17} /> Yazılı ikinci görüş</div>
+          <div className="mt-4 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.05] p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#17919E]"><NotebookPen size={17} /> Yazılı ikinci görüş</div>
             {SECTIONS.map((s) => (
               <div key={s.key} className="mt-3">
                 <label className="text-xs font-semibold text-slate-600">{s.label}{s.key === "opinion" && <span className="text-red-500"> *</span>}</label>
@@ -244,14 +244,14 @@ export function SoOpinionPanel({ data }: { data: Data }) {
                   onChange={(e) => setFields((f) => ({ ...f, [s.key]: e.target.value }))}
                   rows={s.key === "opinion" ? 4 : 3}
                   placeholder={s.ph}
-                  className="mt-1 w-full resize-y rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-[#14C3D0] focus:outline-none"
+                  className="mt-1 w-full resize-y rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-[#28C8D8] focus:outline-none"
                 />
               </div>
             ))}
             <button
               onClick={submitOpinion}
               disabled={busy !== ""}
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50"
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#28C8D8] px-6 py-3 text-[15px] font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50"
             >
               {busy === "opinion" ? <Loader2 size={17} className="animate-spin" /> : <>Görüşü hastaya sun</>}
             </button>

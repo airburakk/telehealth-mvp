@@ -32,9 +32,9 @@ export default async function EthicsBoard() {
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Scale size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Scale size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">Tahkim & Etik Denetim Kurulu</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">Tahkim & Etik Denetim Kurulu</h1>
           <p className="text-sm text-slate-500">Bağımsız ombudsmanlık — başvurular anonimleştirilmiş olarak incelenir.</p>
         </div>
       </div>
@@ -43,11 +43,11 @@ export default async function EthicsBoard() {
         <ShieldCheck size={15} /> Veri maskeleme aktif: kurul hasta kimliğini değil, yalnızca vaka ve operasyon verisini görür.
       </div>
 
-      <Link href="/admin/hekim-onay" className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#14C3D0]/40 hover:shadow-sm">
+      <Link href="/admin/hekim-onay" className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#28C8D8]/40 hover:shadow-sm">
         <span className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-600"><ShieldCheck size={18} /></span>
           <span>
-            <span className="block text-sm font-semibold text-[#101010]">Doktor Doğrulama Onayı</span>
+            <span className="block text-sm font-semibold text-[#0D0E10]">Doktor Doğrulama Onayı</span>
             <span className="block text-xs text-slate-500">Kaydolan doktorları inceleyip doğrulayın</span>
           </span>
         </span>
@@ -75,7 +75,7 @@ export default async function EthicsBoard() {
             <Link
               key={c.id}
               href={`/etik-kurul/${c.id}`}
-              className={`group flex items-center gap-4 rounded-2xl border bg-white p-4 transition hover:shadow-sm ${c.status === "PENDING" ? "border-amber-200" : "border-slate-200 hover:border-[#14C3D0]/30"}`}
+              className={`group flex items-center gap-4 rounded-2xl border bg-white p-4 transition hover:shadow-sm ${c.status === "PENDING" ? "border-amber-200" : "border-slate-200 hover:border-[#28C8D8]/30"}`}
             >
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-500"><Scale size={20} /></span>
               <div className="min-w-0 flex-1">
@@ -85,12 +85,12 @@ export default async function EthicsBoard() {
                 </div>
                 <div className="mt-0.5 truncate text-sm text-slate-600">{c.subject}</div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-slate-400">
-                  <span className="font-medium text-[#0EA5B2]">{REQUEST_TYPES[c.requestType]}</span>
+                  <span className="font-medium text-[#1FA9B8]">{REQUEST_TYPES[c.requestType]}</span>
                   <span>· {c.case.branch}</span>
                   <span>· {formatDateTime(c.createdAt)}</span>
                 </div>
               </div>
-              <ArrowRight size={18} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#0EA5B2]" />
+              <ArrowRight size={18} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#1FA9B8]" />
             </Link>
           );
         })}
@@ -102,7 +102,7 @@ export default async function EthicsBoard() {
 function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-3.5">
-      <div className={`text-2xl font-bold ${tone ?? "text-[#101010]"}`}>{value}</div>
+      <div className={`text-2xl font-bold ${tone ?? "text-[#0D0E10]"}`}>{value}</div>
       <div className="text-xs text-slate-500">{label}</div>
     </div>
   );

@@ -34,29 +34,33 @@ pazarlama + açık sakin klinik. "Emin ellerdesin" hissi nedeniyle terazi **güv
 
 ## Tipografi
 
-- **Display / Hero:** **Newsreader** (serif, 400/500/600) — editoryal miras + güven + turizm premium'u.
-  RİSK: aşırı kullanılırsa "dergi" der; yalnız hero/başlık/öne-çıkan rakamda, gövdede değil.
-- **Gövde / UI:** **Hanken Grotesk** (sans, 300–700) — yüksek okunur, sakin, nötr. `var(--font-sans)`
-  ile uygulama geneli (`layout.tsx`); gövde min 16px.
-- **Logo wordmark:** Jost (PortamedLogo).
-- **Data / tablo:** Hanken Grotesk + `tabular-nums` (klinik değer/fiyat hizası).
-- **⚠️ Çok dilli kapsam boşluğu (KARAR GEREKİR):** Hanken Grotesk **Kiril ve Arapça kapsamıyor.**
-  En büyük iki pazar (Rusça/Arapça) şu an sistem fontuna düşüyor → markasız. Çözüm: Kiril+Arapça
-  kapsayan yoldaş font (ör. Noto Sans + Noto Sans Arabic, `:lang()` ile) **veya** bu locale'lerde
-  bilinçli sistem fallback. RTL ikon aynalaması (`[dir="rtl"]`) zaten var.
-- **Yükleme:** `next/font/google` (Newsreader + Hanken Grotesk), `subsets: ["latin","latin-ext"]`.
+- **Display / Hero:** **Space Grotesk** (500/700) — vitrin (aura-health.higgsfield.app) ile ortak
+  display sesi; sıkı tracking (−0.02…−0.03em) ile sinematik. `--font-serif` değişken adı tarihseldir,
+  display yuvası olarak kullanılır.
+- **Gövde / UI:** **Inter** (variable) — yüksek okunur, nötr. `var(--font-sans)` ile uygulama geneli
+  (`layout.tsx`); gövde min 16px.
+- **Mikro / durak:** **JetBrains Mono** (`--font-mono`) — eyebrow, adım numarası (01…), istatistik
+  etiketi, kart eyebrow'ları. Vitrindeki "mono durak" dilinin platform karşılığı.
+- **Logo wordmark:** görsel varlık (aura-word-*.png, PortamedLogo) — font değil.
+- **Data / tablo:** Inter + `tabular-nums` (klinik değer/fiyat hizası).
+- **Çok dilli kapsam:** Inter **Kiril kapsar** (RU pazarı markalı) — Arapça hâlâ sistem fallback
+  (bilinçli; Noto Sans Arabic yoldaş font kararı açık kalem). RTL ikon aynalaması (`[dir="rtl"]`) var.
+- **Yükleme:** `next/font/google` (Space Grotesk + Inter + JetBrains Mono), `subsets: ["latin","latin-ext"]`.
 - **Ölçek:** hero 42→62px (responsive) · bölüm başlık 30→38px · alt başlık 21–27px · gövde 15–18px ·
   yardımcı 12.5–14px · etiket/caption 11–12px. Satır yüksekliği gövdede ~1.6.
 
 ## Renk
 
 - **Yaklaşım:** sınırlı (restrained) — tek marka aksanı (teal) + nötrler. Renk az ve anlamlı.
-- **Marka / aksan:** teal `#14C3D0` · derin `#0EA5B2` · açık aura `#5FD3E2`. (Ürkütücü kırmızı
-  değil, aşınmış kurumsal mavi değil: sakin "tıbbi-modern".) **Tek dekoratif renk budur.**
-- **Koyu yüzeyler (pazarlama):** sayfa `#0A0A0B` · hero `#101010` · kart `#15161A` ·
-  bölüm bandı `#0E0F12` · panel `#1B1E22` · metin `#FFFFFF` / muted `rgba(255,255,255,.58–.72)`.
-- **Açık yüzeyler (klinik):** zemin `#eef1f5` · kart `#FFFFFF` · metin `#1a1f29` /
-  ikincil `slate-500` · seçim `#cfe0f3` · kaydırma `#c4cedb`.
+- **Marka / aksan (vitrin turkuazı):** turkuaz `#28C8D8` · derin/hover `#1FA9B8` · açık aura
+  `#6FDCE8` · açık-zemin metin varyantı `#17919E`. (Kullanıcı logosunun rengi; vitrinle bire bir.)
+  **Tek dekoratif renk budur.**
+- **Koyu yüzeyler (gece — vitrinle ortak):** sayfa `#0D0E10` · bölüm bandı `#101113` ·
+  panel `#161719` (kart, 22px radius) · yüzey `#1E1F22` (input/çip) · metin `#F4F5F3` /
+  muted `rgba(255,255,255,.4–.72)`. Public + giriş/kayıt yüzeyi tamamen bu ailede (Faz A, 2026-07-11).
+- **Açık yüzeyler (klinik — GEÇİŞ SÜRECİNDE):** zemin `#eef1f5` · kart `#FFFFFF` · metin `#1a1f29` /
+  ikincil `slate-500`. Faz B/C'de iç paneller marka-hizalı koyuya taşınacak (klinik okunabilirlik
+  önde, gece paleti + aynı fontlar); o zamana dek mevcut açık düzen geçerli.
 - **Tersiyer (nadir):** altın `#C6A664` yalnız puan yıldızı.
 
 ### ⚠️ Tıbbi renk semantiği (en kritik kural)
@@ -121,4 +125,5 @@ tıbbi veride gereksiz animasyon.
 |-------|-------|---------|
 | 2026-06-23 | DESIGN.md mevcut AURA dilinden oluşturuldu | `/design-consultation`; memorable-thing "Emin ellerdesin" (tıbbi güven öncelikli) |
 | 2026-06-23 | Uygulama tipografisi landing'e çekildi (Hanken+Newsreader) | `layout.tsx`+`globals.css`; landing↔uygulama kalite uçurumu kapatıldı |
-| (açık) | Kiril/Arapça yoldaş font **veya** bilinçli sistem fallback | RU/AR pazarları şu an markasız fallback'te |
+| 2026-07-11 | **Vitrin görsel diline geçiş (Faz A):** palet `#0D0E10`+`#28C8D8`, tipografi Space Grotesk+Inter+JetBrains Mono; public+giriş yüzeyi gece | Kullanıcı kararı — vitrin (aura-health.higgsfield.app) ile tek marka dili; iç paneller Faz B/C'de |
+| (açık) | Arapça yoldaş font (Noto Sans Arabic) **veya** bilinçli sistem fallback | Inter Kiril'i kapattı; AR hâlâ markasız fallback'te |

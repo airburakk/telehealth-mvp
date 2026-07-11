@@ -134,9 +134,9 @@ export default async function RegistryBrowserPage({
         <ArrowLeft size={15} /> Operasyon Paneli
       </Link>
       <div className="mt-3 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><BookMarked size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><BookMarked size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">HealthTürkiye Kayıt Defteri</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">HealthTürkiye Kayıt Defteri</h1>
           <p className="text-sm text-slate-500">
             healthturkiye.gov.tr doktor + tesis dizini — {activeDoctors.toLocaleString("tr-TR")} doktor · {activeHospitals.toLocaleString("tr-TR")} tesis
             {lastReport && <> · son senkron {lastReport.date}{lastReport.status !== "OK" && <span className="font-semibold text-amber-600"> ({lastReport.status})</span>}</>}
@@ -146,10 +146,10 @@ export default async function RegistryBrowserPage({
 
       {/* Sekmeler */}
       <div className="mt-5 inline-flex rounded-xl border border-slate-200 bg-white p-1 text-sm font-medium">
-        <Link href="/operasyon/kayit-defteri?tab=doktor" className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 ${tab === "doktor" ? "bg-[#14C3D0] text-[#101010]" : "text-slate-500 hover:text-slate-700"}`}>
+        <Link href="/operasyon/kayit-defteri?tab=doktor" className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 ${tab === "doktor" ? "bg-[#28C8D8] text-[#0D0E10]" : "text-slate-500 hover:text-slate-700"}`}>
           <UserRound size={15} /> Doktorlar
         </Link>
-        <Link href="/operasyon/kayit-defteri?tab=tesis" className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 ${tab === "tesis" ? "bg-[#14C3D0] text-[#101010]" : "text-slate-500 hover:text-slate-700"}`}>
+        <Link href="/operasyon/kayit-defteri?tab=tesis" className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 ${tab === "tesis" ? "bg-[#28C8D8] text-[#0D0E10]" : "text-slate-500 hover:text-slate-700"}`}>
           <Building2 size={15} /> Tesisler
         </Link>
       </div>
@@ -160,13 +160,13 @@ export default async function RegistryBrowserPage({
         <label className="min-w-52 flex-1">
           <span className="text-xs font-medium text-slate-500">{tab === "doktor" ? "Ad, soyad veya kurum" : "Tesis adı"}</span>
           <input name="q" defaultValue={q} placeholder={tab === "doktor" ? "ör. Ahmet Yılmaz / Acıbadem" : "ör. Maslak"}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]" />
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]" />
         </label>
         {/* Doktor kayıtlarında cityName kaynakta boş → filtre yalnız veri varsa gösterilir */}
         {cityOptions.length > 0 && (
           <label>
             <span className="text-xs font-medium text-slate-500">Şehir</span>
-            <select name="sehir" defaultValue={sehir} className="mt-1 block w-44 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-[#14C3D0]">
+            <select name="sehir" defaultValue={sehir} className="mt-1 block w-44 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-[#28C8D8]">
               <option value="">Tümü</option>
               {cityOptions.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -175,7 +175,7 @@ export default async function RegistryBrowserPage({
         {tab === "doktor" ? (
           <label>
             <span className="text-xs font-medium text-slate-500">Branş</span>
-            <select name="brans" defaultValue={brans} className="mt-1 block w-56 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-[#14C3D0]">
+            <select name="brans" defaultValue={brans} className="mt-1 block w-56 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-[#28C8D8]">
               <option value="">Tümü</option>
               {branchOptions.map((b) => <option key={b} value={b}>{b}</option>)}
             </select>
@@ -183,13 +183,13 @@ export default async function RegistryBrowserPage({
         ) : (
           <label>
             <span className="text-xs font-medium text-slate-500">Tesis türü</span>
-            <select name="tur" defaultValue={tur} className="mt-1 block w-56 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-[#14C3D0]">
+            <select name="tur" defaultValue={tur} className="mt-1 block w-56 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-[#28C8D8]">
               <option value="">Tümü</option>
               {typeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </label>
         )}
-        <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-[#14C3D0] px-4 py-2 text-sm font-semibold text-[#101010] hover:opacity-90">
+        <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:opacity-90">
           <Search size={15} /> Ara
         </button>
         {filtered && (
@@ -203,7 +203,7 @@ export default async function RegistryBrowserPage({
       <p className="mt-4 text-xs text-slate-500">
         <strong className="text-slate-700">{total.toLocaleString("tr-TR")}</strong> kayıt{filtered ? " (filtreli)" : ""} · yalnız dizinde halen kayıtlı olanlar
         {user.role === "ADMIN" // günlük rapor sayfası ADMIN/ETHICS kapılı — koordinatöre kırık bağlantı gösterme
-          ? <> (çıkarılanlar <Link href="/admin/registry-raporu" className="text-[#0E8A95] underline-offset-2 hover:underline">günlük raporlarda</Link>)</>
+          ? <> (çıkarılanlar <Link href="/admin/registry-raporu" className="text-[#17919E] underline-offset-2 hover:underline">günlük raporlarda</Link>)</>
           : " (çıkarılanlar günlük senkron raporlarında saklanır)"}
       </p>
 

@@ -31,15 +31,15 @@ export function SoCasesList({ rows }: { rows: Row[] }) {
     <div dir={langDir(lang)} className="mx-auto max-w-3xl px-5 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Stethoscope size={22} /></span>
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Stethoscope size={22} /></span>
           <div>
-            <h1 className="text-2xl font-bold text-[#101010]">{t(S.title)}</h1>
+            <h1 className="text-2xl font-bold text-[#0D0E10]">{t(S.title)}</h1>
             <p className="text-sm text-slate-500">{t(S.subtitle)}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <SoLangSelect lang={lang} onChange={setLang} />
-          <Link href="/second-opinion/basvur" className="inline-flex items-center gap-1.5 rounded-lg bg-[#14C3D0] px-4 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+          <Link href="/second-opinion/basvur" className="inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
             <Plus size={16} /> {t(S.newBtn)}
           </Link>
         </div>
@@ -50,7 +50,7 @@ export function SoCasesList({ rows }: { rows: Row[] }) {
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white py-14 text-center">
             <Inbox className="mx-auto mb-2 text-slate-300" size={28} />
             <p className="text-sm text-slate-500">{t(S.empty)}</p>
-            <Link href="/second-opinion/basvur" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#14C3D0] px-4 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+            <Link href="/second-opinion/basvur" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
               <Plus size={15} /> {t(S.createBtn)}
             </Link>
           </div>
@@ -60,15 +60,15 @@ export function SoCasesList({ rows }: { rows: Row[] }) {
           <Link
             key={c.id}
             href={`/second-opinion/vaka/${c.id}`}
-            className="block rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-[#14C3D0]/40 hover:shadow"
+            className="block rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-[#28C8D8]/40 hover:shadow"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1 font-semibold text-slate-800">
-                    <Stethoscope size={14} className="text-[#0EA5B2]" /> {t(c.branchLabel)}
+                    <Stethoscope size={14} className="text-[#1FA9B8]" /> {t(c.branchLabel)}
                   </span>
-                  <span className="rounded-full bg-[#14C3D0]/10 px-2 py-0.5 text-[11px] font-semibold text-[#0E8A95]">{t(SO_STATUS_LABELS[c.status as SoStatus] ?? c.status)}</span>
+                  <span className="rounded-full bg-[#28C8D8]/10 px-2 py-0.5 text-[11px] font-semibold text-[#17919E]">{t(SO_STATUS_LABELS[c.status as SoStatus] ?? c.status)}</span>
                   {c.hasPendingReq && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200">
                       <Bell size={11} /> {t(S.actionNeeded)}

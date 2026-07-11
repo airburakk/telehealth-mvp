@@ -89,7 +89,7 @@ export function AcademicEditor(props: {
 
       {err && <p className="mt-3 text-sm text-red-600">{err}</p>}
 
-      <button onClick={save} disabled={saving} className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60">
+      <button onClick={save} disabled={saving} className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60">
         {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
         {saved ? "Kaydedildi" : "Akademik bilgileri kaydet"}
       </button>
@@ -97,7 +97,7 @@ export function AcademicEditor(props: {
   );
 }
 
-const INPUT = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#14C3D0]";
+const INPUT = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#28C8D8]";
 
 function Field({ label, icon, hint, children }: { label: string; icon?: React.ReactNode; hint?: string; children: React.ReactNode }) {
   return (

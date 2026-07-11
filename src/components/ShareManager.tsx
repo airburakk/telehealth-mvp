@@ -154,7 +154,7 @@ function ShareActions({ url, recipient, duration, hasPassword, compact, t }: {
   const btn = "inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50";
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button onClick={nativeShare} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#14C3D0] px-3 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+      <button onClick={nativeShare} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#28C8D8] px-3 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
         <Share2 size={15} /> {t(ST.share)}
       </button>
       {!compact && (
@@ -183,11 +183,11 @@ function StepRail({ step, t }: { step: number; t: T }) {
         return (
           <div key={n} className="flex flex-1 items-center gap-2 last:flex-none">
             <span aria-current={active ? "step" : undefined}
-              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold ${done || active ? "bg-[#14C3D0] text-[#06262a]" : "bg-slate-100 text-slate-400"}`}>
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold ${done || active ? "bg-[#28C8D8] text-[#06262a]" : "bg-slate-100 text-slate-400"}`}>
               {done ? <Check size={13} /> : n}
             </span>
             <span className={active ? "text-slate-800" : done ? "text-[#0b5563]" : "text-slate-400"}>{label}</span>
-            {n < 3 && <span className={`h-px flex-1 ${done ? "bg-[#14C3D0]" : "bg-slate-200"}`} />}
+            {n < 3 && <span className={`h-px flex-1 ${done ? "bg-[#28C8D8]" : "bg-slate-200"}`} />}
           </div>
         );
       })}
@@ -287,7 +287,7 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
     router.refresh();
   }
 
-  const navPrimary = "inline-flex items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50";
+  const navPrimary = "inline-flex items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50";
   const navGhost = "inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50";
 
   return (
@@ -318,10 +318,10 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
                 const on = scopes.includes(s.key);
                 return (
                   <button type="button" key={s.key} onClick={() => toggleScope(s.key)}
-                    className={`flex items-start gap-2.5 rounded-2xl border p-3 text-start transition-colors ${on ? "border-[#14C3D0] bg-[#14C3D0]/5 ring-1 ring-[#14C3D0]/20" : "border-slate-200 hover:bg-slate-50"}`}>
-                    <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-[#14C3D0] text-[#101010]" : "bg-slate-100 text-slate-500"}`}><Icon size={16} /></span>
+                    className={`flex items-start gap-2.5 rounded-2xl border p-3 text-start transition-colors ${on ? "border-[#28C8D8] bg-[#28C8D8]/5 ring-1 ring-[#28C8D8]/20" : "border-slate-200 hover:bg-slate-50"}`}>
+                    <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-slate-100 text-slate-500"}`}><Icon size={16} /></span>
                     <span className="min-w-0">
-                      <span className="flex items-center gap-1.5 text-sm font-medium text-slate-800">{t(s.label)} {on && <Check size={14} className="text-[#101010]" />}</span>
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-slate-800">{t(s.label)} {on && <Check size={14} className="text-[#0D0E10]" />}</span>
                       <span className="block text-xs text-slate-500">{t(s.desc)}</span>
                     </span>
                   </button>
@@ -340,7 +340,7 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
             <div className="mt-1.5 flex flex-wrap gap-2">
               {DURATIONS.map((d) => (
                 <button type="button" key={d.key} onClick={() => setDurationKey(d.key)}
-                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${durationKey === d.key ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}>
+                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${durationKey === d.key ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}>
                   {t(d.label)}
                 </button>
               ))}
@@ -361,7 +361,7 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
             </div>
 
             {/* Canlı önizleme — alıcının tam olarak ne göreceği (somut güven; DESIGN.md: açık/klinik) */}
-            <div className="mt-4 rounded-2xl border border-[#14C3D0]/30 bg-[#14C3D0]/5 p-4">
+            <div className="mt-4 rounded-2xl border border-[#28C8D8]/30 bg-[#28C8D8]/5 p-4">
               <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#0b5563]">
                 <Eye size={13} /> {t(ST.recipientSees)}
               </div>
@@ -371,11 +371,11 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
                 ) : (
                   SCOPES.filter((s) => scopes.includes(s.key)).map((s) => {
                     const Icon = SCOPE_ICON[s.key];
-                    return <div key={s.key} className="flex items-center gap-2 text-sm text-slate-700"><Icon size={15} className="text-[#0EA5B2]" /> {t(s.label)}</div>;
+                    return <div key={s.key} className="flex items-center gap-2 text-sm text-slate-700"><Icon size={15} className="text-[#1FA9B8]" /> {t(s.label)}</div>;
                   })
                 )}
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#14C3D0]/20 pt-2.5 text-[11px] text-slate-500">
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#28C8D8]/20 pt-2.5 text-[11px] text-slate-500">
                 <span className="inline-flex items-center gap-1"><Clock size={12} /> {t(durationLabel(durationKey))}</span>
                 <span className="inline-flex items-center gap-1">
                   {allowDownload ? <><Download size={12} /> {t(ST.downloadable)}</> : <><Eye size={12} /> {t(ST.viewOnly)}</>}
@@ -399,7 +399,7 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
               <Link2 size={14} className="shrink-0 text-slate-400" /> <span className="truncate">{created.url}</span>
             </div>
             <div className="mt-3"><ShareActions url={created.url} recipient={created.recipient} duration={t(created.duration)} hasPassword={created.hasPassword} t={t} /></div>
-            <button onClick={reset} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[#0EA5B2] hover:underline"><Plus size={14} /> {t(ST.newShareLink)}</button>
+            <button onClick={reset} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[#1FA9B8] hover:underline"><Plus size={14} /> {t(ST.newShareLink)}</button>
           </div>
         ) : (
           <div className="mt-5">
@@ -430,7 +430,7 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
         </h2>
         {links.length === 0 ? (
           <div className="mt-4 flex flex-col items-center rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center">
-            <span className="grid h-11 w-11 place-items-center rounded-full bg-[#14C3D0]/10 text-[#0EA5B2]"><ShieldCheck size={20} /></span>
+            <span className="grid h-11 w-11 place-items-center rounded-full bg-[#28C8D8]/10 text-[#1FA9B8]"><ShieldCheck size={20} /></span>
             <p className="mt-3 text-sm font-medium text-slate-700">{t(ST.emptyTitle)}</p>
             <p className="mt-1 text-xs text-slate-500">{t(ST.emptyDesc)}</p>
           </div>

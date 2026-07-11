@@ -153,7 +153,7 @@ export default async function TriyajResult({ params }: { params: Promise<{ id: s
 
       {!gate && (
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/doktor" className="inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+          <Link href="/doktor" className="inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
             <Stethoscope size={16} /> {t("Doktor panelinde gör")}
           </Link>
           <Link href="/triyaj" className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50">
@@ -169,7 +169,7 @@ function Info({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
   return (
     <div>
       <div className="text-xs uppercase tracking-wide text-slate-400">{k}</div>
-      <div className={`mt-0.5 ${accent ? "font-semibold text-[#101010]" : "text-slate-800"}`}>{v}</div>
+      <div className={`mt-0.5 ${accent ? "font-semibold text-[#0D0E10]" : "text-slate-800"}`}>{v}</div>
     </div>
   );
 }

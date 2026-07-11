@@ -133,7 +133,7 @@ export function DoctorDocuments({
                 {ok ? <Check size={18} /> : <Icon size={18} />}
               </span>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 text-sm font-semibold text-[#101010]">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#0D0E10]">
                   {label}
                   {required ? (
                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">Zorunlu</span>
@@ -161,7 +161,7 @@ export function DoctorDocuments({
                 )}
 
                 {/* Yükleme butonu */}
-                <label className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-[#14C3D0] hover:text-[#0E8A95]">
+                <label className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-[#28C8D8] hover:text-[#17919E]">
                   {busy === type ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
                   {ok && (type === "DIPLOMA" || type === "MMSS") ? "Değiştir" : "Dosya yükle"}
                   <input type="file" accept={ACCEPT} className="hidden" disabled={busy === type}
@@ -197,7 +197,7 @@ export function DoctorDocuments({
                   </Field>
                 </div>
                 <button onClick={saveMmss} disabled={savingMmss || !insurer.trim() || coverageLimit === "" || (!policyNo.trim() && !initialMmss.policyNoSet)}
-                  className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-[#14C3D0] px-3 py-1.5 text-xs font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50">
+                  className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-3 py-1.5 text-xs font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50">
                   {savingMmss ? <Loader2 size={13} className="animate-spin" /> : mmssSaved ? <Check size={13} /> : <ShieldCheck size={13} />}
                   {mmssSaved ? "Bilgiler kayıtlı" : "Bilgileri kaydet"}
                 </button>
@@ -214,7 +214,7 @@ export function DoctorDocuments({
   );
 }
 
-const inputCls = "w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:border-[#14C3D0] focus:outline-none";
+const inputCls = "w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:border-[#28C8D8] focus:outline-none";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

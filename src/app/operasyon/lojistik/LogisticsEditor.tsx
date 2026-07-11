@@ -101,7 +101,7 @@ export function LogisticsEditor({ bookingId, initialStages }: { bookingId: strin
         <button
           onClick={save}
           disabled={saving}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#14C3D0] px-4 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60"
         >
           {saving ? <Loader2 size={15} className="animate-spin" /> : saved ? <Check size={15} /> : null}
           {saving ? "Kaydediliyor…" : saved ? "Kaydedildi" : "Kaydet"}

@@ -17,14 +17,14 @@ export default async function ComplaintPage({ params }: { params: Promise<{ case
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
-      <Link href={`/doktor/vaka/${c.id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0EA5B2]">
+      <Link href={`/doktor/vaka/${c.id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#1FA9B8]">
         <ArrowLeft size={16} /> Vaka detayı
       </Link>
 
       <div className="mt-4 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Scale size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Scale size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">Tahkim & Etik Denetim</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">Tahkim & Etik Denetim</h1>
           <p className="text-sm text-slate-500">{decryptField(c.patientName)} · {c.branch} · bağımsız kurul güvencesi</p>
         </div>
       </div>
@@ -38,7 +38,7 @@ export default async function ComplaintPage({ params }: { params: Promise<{ case
             <ul className="mt-3 space-y-3">
               {BOARD.map((m) => (
                 <li key={m.name} className="flex items-center gap-3">
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[#14C3D0] text-xs font-bold text-[#101010]">{m.name.split(" ").slice(-1)[0].slice(0, 1)}</span>
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[#28C8D8] text-xs font-bold text-[#0D0E10]">{m.name.split(" ").slice(-1)[0].slice(0, 1)}</span>
                   <div>
                     <div className="text-sm font-medium text-slate-800">{m.name}</div>
                     <div className="text-xs text-slate-500">{m.role}</div>

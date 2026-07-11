@@ -338,7 +338,7 @@ export function PreConsultLobby({
       {/* Başlık + erişilebilirlik kontrolleri */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">{t(TX.title)}</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">{t(TX.title)}</h1>
           <p className="mt-1 text-sm text-slate-500">{t(TX.subtitle)}</p>
           {!showDoctorCard && (remoteLabel || branchLabel) && (
             <p className="mt-1 text-xs text-slate-400">
@@ -350,11 +350,11 @@ export function PreConsultLobby({
           {langSelector}
           <div className="flex items-center gap-1.5">
             <button onClick={toggleBigText} aria-pressed={bigText}
-              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${bigText ? "border-[#14C3D0] bg-cyan-50 text-[#0EA5B2]" : "border-slate-300 text-slate-500 hover:bg-slate-50"}`}>
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${bigText ? "border-[#28C8D8] bg-cyan-50 text-[#1FA9B8]" : "border-slate-300 text-slate-500 hover:bg-slate-50"}`}>
               <ALargeSmall size={14} /> {t(TX.bigText)}
             </button>
             <button onClick={() => setShowHelp((v) => !v)} aria-expanded={showHelp}
-              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${showHelp ? "border-[#14C3D0] bg-cyan-50 text-[#0EA5B2]" : "border-slate-300 text-slate-500 hover:bg-slate-50"}`}>
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${showHelp ? "border-[#28C8D8] bg-cyan-50 text-[#1FA9B8]" : "border-slate-300 text-slate-500 hover:bg-slate-50"}`}>
               <HelpCircle size={14} /> {t(TX.help)}
             </button>
           </div>
@@ -364,7 +364,7 @@ export function PreConsultLobby({
       {/* Yardım paneli (Faz C) — pratik sorun giderme (insan çıpası: dürüst, gerçek adımlar) */}
       {showHelp && (
         <div className="mt-4 rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4">
-          <p className="flex items-center gap-1.5 text-sm font-semibold text-[#0EA5B2]"><HelpCircle size={15} /> {t(TX.helpTitle)}</p>
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-[#1FA9B8]"><HelpCircle size={15} /> {t(TX.helpTitle)}</p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">{t(TX.helpBody)}</p>
         </div>
       )}
@@ -383,13 +383,13 @@ export function PreConsultLobby({
             <span className="min-w-0 flex-1">
               <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-400">{t(TX.yourDoctor)}</span>
               <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                <span className="font-bold text-[#101010]">{doctorCard.title} {doctorCard.name}</span>
+                <span className="font-bold text-[#0D0E10]">{doctorCard.title} {doctorCard.name}</span>
                 {doctorCard.verified && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-semibold text-teal-700"><BadgeCheck size={11} /> {t(TX.verified)}</span>
                 )}
               </span>
               <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
-                <span className="inline-flex items-center gap-1 font-medium text-[#0EA5B2]"><Stethoscope size={12} /> {branchLabel ? t(branchLabel) : doctorCard.branch}</span>
+                <span className="inline-flex items-center gap-1 font-medium text-[#1FA9B8]"><Stethoscope size={12} /> {branchLabel ? t(branchLabel) : doctorCard.branch}</span>
                 <span className="inline-flex items-center gap-1"><MapPin size={12} /> {doctorCard.city}</span>
                 {/* rating null = veri yok → yıldız bloğu tamamen gizlenir (0.0 gösterilmez) */}
                 {doctorCard.rating != null && (
@@ -487,21 +487,21 @@ export function PreConsultLobby({
       <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         {schedMs !== null && (
           <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Clock size={15} className="text-[#0EA5B2]" /> {t(TX.appt)}: <span className="font-semibold text-[#101010]">{apptStr}</span>
+            <Clock size={15} className="text-[#1FA9B8]" /> {t(TX.appt)}: <span className="font-semibold text-[#0D0E10]">{apptStr}</span>
           </div>
         )}
 
         {schedMs !== null && (subState === "before" || subState === "within") && (
           <div className="mt-4 text-center">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{t(TX.remaining)}</p>
-            <p className="mt-1 text-3xl font-bold tabular-nums text-[#101010]">
+            <p className="mt-1 text-3xl font-bold tabular-nums text-[#0D0E10]">
               {nowMs === null ? "—" : fmtCountdown(remainMs)}
             </p>
           </div>
         )}
 
         {statusLine && (
-          <p className={`mt-4 text-center text-[15px] font-medium ${subState === "time" ? "text-emerald-700" : "text-[#0EA5B2]"}`}>
+          <p className={`mt-4 text-center text-[15px] font-medium ${subState === "time" ? "text-emerald-700" : "text-[#1FA9B8]"}`}>
             {subState === "time" && <CheckCircle2 size={16} className="me-1 inline align-[-2px]" />}
             {statusLine}
           </p>
@@ -514,7 +514,7 @@ export function PreConsultLobby({
             disabled={!canJoin}
             className={`inline-flex items-center gap-2 rounded-2xl px-8 py-3.5 text-[15px] font-semibold transition ${
               canJoin
-                ? "bg-[#14C3D0] text-[#101010] hover:bg-[#0EA5B2]"
+                ? "bg-[#28C8D8] text-[#0D0E10] hover:bg-[#1FA9B8]"
                 : "cursor-not-allowed bg-slate-100 text-slate-400"
             }`}
           >
@@ -532,8 +532,8 @@ export function PreConsultLobby({
       <div className={`mt-5 grid gap-5 ${isDoctor ? "md:mx-auto md:w-full md:max-w-xl" : "md:grid-cols-2"}`}>
         {/* B1 — Cihaz testi */}
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-[#101010]">
-            <Camera size={16} className="text-[#0EA5B2]" /> {t(TX.deviceTest)}
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-[#0D0E10]">
+            <Camera size={16} className="text-[#1FA9B8]" /> {t(TX.deviceTest)}
           </h2>
 
           {/* Ön-izleme */}
@@ -584,7 +584,7 @@ export function PreConsultLobby({
               <span>{t(TX.micLevel)}</span>
             </div>
             <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-slate-100">
-              <div className="h-full rounded-full bg-[#14C3D0] transition-[width] duration-75" style={{ width: `${Math.round(level * 100)}%` }} />
+              <div className="h-full rounded-full bg-[#28C8D8] transition-[width] duration-75" style={{ width: `${Math.round(level * 100)}%` }} />
             </div>
             <p className="mt-1 text-[11px] text-slate-400">{t(TX.micHint)}</p>
           </div>
@@ -618,13 +618,13 @@ export function PreConsultLobby({
         {/* B3 — Hazırlık ipucu + soru-notu (yalnız hasta: ipuçları + "doktora soracaklarım" doktora anlamsız) */}
         {!isDoctor && (
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-[#101010]">
-            <FileText size={16} className="text-[#0EA5B2]" /> {t(TX.prep)}
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-[#0D0E10]">
+            <FileText size={16} className="text-[#1FA9B8]" /> {t(TX.prep)}
           </h2>
           <ul className="mt-3 space-y-2.5 text-[13px] text-slate-600">
-            <li className="flex gap-2"><FileText size={15} className="mt-0.5 shrink-0 text-[#0EA5B2]" /><span>{t(TX.tip1)}</span></li>
-            <li className="flex gap-2"><Sun size={15} className="mt-0.5 shrink-0 text-[#0EA5B2]" /><span>{t(TX.tip2)}</span></li>
-            <li className="flex gap-2"><Headphones size={15} className="mt-0.5 shrink-0 text-[#0EA5B2]" /><span>{t(TX.tip3)}</span></li>
+            <li className="flex gap-2"><FileText size={15} className="mt-0.5 shrink-0 text-[#1FA9B8]" /><span>{t(TX.tip1)}</span></li>
+            <li className="flex gap-2"><Sun size={15} className="mt-0.5 shrink-0 text-[#1FA9B8]" /><span>{t(TX.tip2)}</span></li>
+            <li className="flex gap-2"><Headphones size={15} className="mt-0.5 shrink-0 text-[#1FA9B8]" /><span>{t(TX.tip3)}</span></li>
           </ul>
 
           <div className="mt-4">
@@ -636,7 +636,7 @@ export function PreConsultLobby({
               onChange={(e) => onNote(e.target.value)}
               rows={5}
               placeholder={t(TX.notesPh)}
-              className="mt-1.5 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-[#101010] outline-none placeholder:text-slate-400 focus:border-[#14C3D0] focus:bg-white"
+              className="mt-1.5 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-[#0D0E10] outline-none placeholder:text-slate-400 focus:border-[#28C8D8] focus:bg-white"
             />
             {note.trim() && <p className="mt-1 text-[11px] text-slate-400">{t(TX.notesSaved)}</p>}
           </div>
@@ -667,7 +667,7 @@ function MiniStat({ label, valueText, pct }: { label: string; valueText: string;
     <div className="rounded-2xl bg-slate-50 p-3">
       <div className="flex items-baseline justify-between">
         <span className="text-[11px] text-slate-500">{label}</span>
-        <span className="text-base font-bold text-[#101010]">{valueText}</span>
+        <span className="text-base font-bold text-[#0D0E10]">{valueText}</span>
       </div>
       {hasBar && (
         <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-200/70">
@@ -691,7 +691,7 @@ function DeviceSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-700 outline-none focus:border-[#14C3D0]"
+        className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-700 outline-none focus:border-[#28C8D8]"
       >
         {options.map((d, i) => (
           <option key={d.deviceId || i} value={d.deviceId}>{d.label || `${fallback} ${i + 1}`}</option>

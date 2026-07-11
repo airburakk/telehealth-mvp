@@ -77,7 +77,7 @@ export function OnboardingForm({
   return (
     <div className="mx-auto max-w-2xl px-5 py-10">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-[#101010]">Hoş geldiniz, {doctorName}</h1>
+        <h1 className="text-2xl font-bold text-[#0D0E10]">Hoş geldiniz, {doctorName}</h1>
         <p className="mt-2 text-sm text-slate-500">
           Doktor Ana Sayfanız tercihinize göre düzenlenir. Aşağıdaki birimlere katılmak isteyip
           istemediğinizi seçin — dilediğiniz zaman profilinizden değiştirebilirsiniz.
@@ -86,8 +86,8 @@ export function OnboardingForm({
 
       {/* ── Uzmanlık & İşlemler (FHIR) — diploma/tescil no + uzmanlık belgesi + işlem seçimi (zorunlu; ücret tedavi kararında) ── */}
       <div className="mt-8">
-        <div className="flex items-center gap-2 text-sm font-bold text-[#101010]">
-          <Stethoscope size={16} className="text-[#0EA5B2]" /> Uzmanlık & İşlemler
+        <div className="flex items-center gap-2 text-sm font-bold text-[#0D0E10]">
+          <Stethoscope size={16} className="text-[#1FA9B8]" /> Uzmanlık & İşlemler
         </div>
         <p className="mt-1 text-xs text-slate-500">
           <strong>{branchLabel}</strong> branşı için diploma/tescil numaranızı, uzmanlık belgenizi ve
@@ -124,7 +124,7 @@ export function OnboardingForm({
 
       {/* ── Zorunlu mesleki belgeler — hesap aktivasyon kapısı ── */}
       <div className="mt-8">
-        <div className="flex items-center gap-2 text-sm font-bold text-[#101010]">
+        <div className="flex items-center gap-2 text-sm font-bold text-[#0D0E10]">
           <ShieldAlert size={16} className="text-amber-500" /> Mesleki Belgeler
         </div>
         <p className="mt-1 text-xs text-slate-500">
@@ -138,13 +138,13 @@ export function OnboardingForm({
 
       <div className="mt-8 space-y-4">
         {/* İkinci Görüş — ünvan kapısı (seçim değil, bilgi) */}
-        <div className={`rounded-3xl border p-5 ${soOpen ? "border-[#14C3D0]/40 bg-[#14C3D0]/[0.06]" : "border-slate-200 bg-slate-50"}`}>
+        <div className={`rounded-3xl border p-5 ${soOpen ? "border-[#28C8D8]/40 bg-[#28C8D8]/[0.06]" : "border-slate-200 bg-slate-50"}`}>
           <div className="flex items-start gap-3">
-            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${soOpen ? "bg-[#14C3D0] text-[#101010]" : "bg-slate-300 text-white"}`}>
+            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${soOpen ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-slate-300 text-white"}`}>
               {soOpen ? <Stethoscope size={18} /> : <Lock size={18} />}
             </span>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 text-sm font-semibold text-[#101010]">
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-[#0D0E10]">
                 İkinci Görüş Paneli {soOpen && <BadgeCheck size={15} className="text-teal-600" />}
               </div>
               {soOpen ? (
@@ -204,7 +204,7 @@ export function OnboardingForm({
       <button
         onClick={finish}
         disabled={saving || !docsReady}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#14C3D0] px-4 py-3 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60"
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#28C8D8] px-4 py-3 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60"
       >
         {saving ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
         Ana Sayfama geç
@@ -236,16 +236,16 @@ function OptCard({
       type="button"
       onClick={onToggle}
       aria-pressed={active}
-      className={`w-full rounded-3xl border p-5 text-left transition ${active ? "border-[#14C3D0] bg-[#14C3D0]/[0.06]" : "border-slate-200 bg-white hover:border-[#14C3D0]/40"}`}
+      className={`w-full rounded-3xl border p-5 text-left transition ${active ? "border-[#28C8D8] bg-[#28C8D8]/[0.06]" : "border-slate-200 bg-white hover:border-[#28C8D8]/40"}`}
     >
       <div className="flex items-start gap-3">
-        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${active ? "bg-[#14C3D0] text-[#101010]" : "bg-slate-100 text-slate-500"}`}>
+        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${active ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-slate-100 text-slate-500"}`}>
           {icon}
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold text-[#101010]">{title}</span>
-            <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border ${active ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 bg-white text-transparent"}`}>
+            <span className="text-sm font-semibold text-[#0D0E10]">{title}</span>
+            <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 bg-white text-transparent"}`}>
               <Check size={14} />
             </span>
           </div>

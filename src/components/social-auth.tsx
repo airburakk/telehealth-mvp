@@ -27,16 +27,16 @@ export function SocialAuthButtons({ googleEnabled, intent }: { googleEnabled: bo
   return (
     <div className="grid grid-cols-1 gap-2">
       {googleEnabled ? (
-        <a href={`/api/auth/google/start?intent=${intent}`} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+        <a href={`/api/auth/google/start?intent=${intent}`} className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-[#1E1F22] px-4 py-2.5 text-sm font-semibold text-white/85 hover:border-white/20 hover:text-[#F4F5F3]">
           <GoogleIcon /> Google ile devam et
         </a>
       ) : (
-        <button type="button" disabled title="Yakında — yapılandırma gerektirir" className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-400">
-          <span className="opacity-40"><GoogleIcon /></span> Google ile devam et <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase">Yakında</span>
+        <button type="button" disabled title="Yakında — yapılandırma gerektirir" className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-white/5 bg-[#1E1F22]/60 px-4 py-2.5 text-sm font-semibold text-white/35">
+          <span className="opacity-40"><GoogleIcon /></span> Google ile devam et <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase">Yakında</span>
         </button>
       )}
-      <button type="button" disabled title="Yakında — Apple Developer hesabı gerektirir" className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-400">
-        <AppleIcon /> Apple ile devam et <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase">Yakında</span>
+      <button type="button" disabled title="Yakında — Apple Developer hesabı gerektirir" className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-white/5 bg-[#1E1F22]/60 px-4 py-2.5 text-sm font-semibold text-white/35">
+        <AppleIcon /> Apple ile devam et <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase">Yakında</span>
       </button>
     </div>
   );

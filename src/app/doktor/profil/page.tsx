@@ -29,9 +29,9 @@ export default async function DoctorDashboard() {
   if (!doctor) {
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 text-center">
-        <h1 className="text-xl font-bold text-[#101010]">Doktor profili bağlı değil</h1>
+        <h1 className="text-xl font-bold text-[#0D0E10]">Doktor profili bağlı değil</h1>
         <p className="mt-2 text-sm text-slate-500">Bu hesap bir doktor profiline bağlı değil (ör. koordinatör). Vaka kuyruğuna gidin.</p>
-        <Link href="/doktor" className="mt-5 inline-flex rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">Doktor Paneli</Link>
+        <Link href="/doktor" className="mt-5 inline-flex rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">Doktor Paneli</Link>
       </div>
     );
   }
@@ -72,7 +72,7 @@ export default async function DoctorDashboard() {
                 <h1 className="text-xl font-bold text-slate-800">{doctor.title} {doctor.name}</h1>
                 {doctor.verified && <BadgeCheck size={16} className="text-teal-600" />}
               </div>
-              <div className="text-sm font-medium text-[#0EA5B2]">{doctor.branch} · {doctor.city}</div>
+              <div className="text-sm font-medium text-[#1FA9B8]">{doctor.branch} · {doctor.city}</div>
               {/* rating null = veri yok → kendi panelinde dürüst boş-durum "—" (gizleme değil) */}
               <div className="mt-1 inline-flex items-center gap-1 text-sm text-amber-600"><Star size={14} className="fill-amber-400 text-amber-400" /> {doctor.rating != null ? doctor.rating.toFixed(1) : "—"} <span className="text-slate-400">({doctor.reviews.length} yorum)</span></div>
             </div>
@@ -105,7 +105,7 @@ export default async function DoctorDashboard() {
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <Target size={15} /> Eşleştirme Kalite Skoru
             </div>
-            <div className="text-2xl font-bold text-[#0EA5B2]">%{Math.round(scorecard.score * 100)}</div>
+            <div className="text-2xl font-bold text-[#1FA9B8]">%{Math.round(scorecard.score * 100)}</div>
           </div>
           <p className="mt-1 text-xs text-slate-500">
             Nöbetçi, İcapçı ve İkinci Görüş eşleştirmesinde önceliğiniz bu metriklerle belirlenir. Veri biriktikçe etkisi artar; verisi olmayan metrikler skoru etkilemez.
@@ -118,7 +118,7 @@ export default async function DoctorDashboard() {
                   <span className={mt.active ? "font-semibold text-slate-800" : "text-slate-400"}>{mt.raw}</span>
                 </div>
                 <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                  <div className={`h-full rounded-full ${mt.active ? "bg-[#14C3D0]" : "bg-slate-300"}`} style={{ width: `${Math.round(mt.value01 * 100)}%` }} />
+                  <div className={`h-full rounded-full ${mt.active ? "bg-[#28C8D8]" : "bg-slate-300"}`} style={{ width: `${Math.round(mt.value01 * 100)}%` }} />
                 </div>
                 <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
                   <span>ağırlık %{Math.round(mt.weight * 100)}</span>
@@ -201,12 +201,12 @@ export default async function DoctorDashboard() {
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><CalendarClock size={15} /> Aylık Kapasite</div>
             <div className="mt-3">
               <div className="flex items-end justify-between">
-                <span className="text-2xl font-bold text-[#101010]">{ended.length}<span className="text-base font-normal text-slate-400">/{doctor.capacity}</span></span>
+                <span className="text-2xl font-bold text-[#0D0E10]">{ended.length}<span className="text-base font-normal text-slate-400">/{doctor.capacity}</span></span>
                 <span className="text-xs text-slate-500">işlem</span>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
                 {/* capacity<=0 → bölme sıfıra düşmesin (operasyon sayfasındaki Math.max(1,…) deseni; NaN/Infinity engellenir) */}
-                <div className="h-full rounded-full bg-[#14C3D0]" style={{ width: `${Math.min(100, Math.round((ended.length / Math.max(1, doctor.capacity)) * 100))}%` }} />
+                <div className="h-full rounded-full bg-[#28C8D8]" style={{ width: `${Math.min(100, Math.round((ended.length / Math.max(1, doctor.capacity)) * 100))}%` }} />
               </div>
             </div>
           </div>
@@ -246,7 +246,7 @@ function Metric({ icon, value, label }: { icon: React.ReactNode; value: string; 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4">
       <div className="flex items-center gap-1.5 text-slate-400">{icon}</div>
-      <div className="mt-1 text-xl font-bold text-[#101010]">{value}</div>
+      <div className="mt-1 text-xl font-bold text-[#0D0E10]">{value}</div>
       <div className="text-xs text-slate-500">{label}</div>
     </div>
   );

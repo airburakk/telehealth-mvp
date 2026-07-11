@@ -151,7 +151,7 @@ export default function ProcedureSelector({
             <Stethoscope size={15} /> Yaptığım İşlemler
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            <span className="font-medium text-[#0EA5B2]">{branchLabel}</span> branşındaki işlemlerden yaptıklarınızı seçin.
+            <span className="font-medium text-[#1FA9B8]">{branchLabel}</span> branşındaki işlemlerden yaptıklarınızı seçin.
             İşlem ücreti burada belirlenmez — hasta görüşmesi sonrası <span className="font-medium">tedavi kararında</span>,
             taban ile tavan (taban×{CEIL_MULT}) arası kaydırma çubuğuyla belirlersiniz.
           </p>
@@ -161,7 +161,7 @@ export default function ProcedureSelector({
           <button
             onClick={save}
             disabled={!dirty || saving}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#14C3D0] px-3.5 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-3.5 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Save size={15} /> {saving ? "Kaydediliyor…" : "Kaydet"}
           </button>
@@ -281,7 +281,7 @@ function ProcRow({
   return (
     <li className="px-4 py-3">
       <label className="flex cursor-pointer items-start gap-3">
-        <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded border ${selected ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 bg-white"}`}>
+        <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded border ${selected ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 bg-white"}`}>
           {selected && <Check size={13} />}
         </span>
         <input type="checkbox" checked={selected} onChange={onToggle} className="sr-only" />

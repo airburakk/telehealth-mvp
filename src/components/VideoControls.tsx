@@ -76,7 +76,7 @@ export function VideoControls({ requestId, role, lang = "Türkçe" }: { requestI
 
       <div className="mt-2">
         {status === "SCHEDULED" ? (
-          <Link href={joinHref} className="inline-flex items-center gap-1.5 rounded-xl bg-[#14C3D0] px-4 py-2 text-sm font-semibold text-[#06343a] hover:bg-[#0EA5B2]">
+          <Link href={joinHref} className="inline-flex items-center gap-1.5 rounded-xl bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#06343a] hover:bg-[#1FA9B8]">
             <Video size={15} /> {t("Görüşmeye katıl")}
           </Link>
         ) : role === "doctor" ? (

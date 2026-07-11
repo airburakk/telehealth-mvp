@@ -118,9 +118,9 @@ export function ConsultGate({
     return (
       <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
         <CheckCircle2 className="mx-auto text-emerald-600" size={28} />
-        <h2 className="mt-2 font-bold text-[#101010]">{t("Süreciniz sonlandırıldı")}</h2>
+        <h2 className="mt-2 font-bold text-[#0D0E10]">{t("Süreciniz sonlandırıldı")}</h2>
         <p className="mt-1 text-sm text-slate-500">{t("Tüm verileriniz silindi ve ödemeniz iade edildi.")}</p>
-        <button onClick={() => router.push("/vakalarim")} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+        <button onClick={() => router.push("/vakalarim")} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
           {t("Vakalarıma dön")} <ArrowRight size={16} />
         </button>
       </div>
@@ -134,10 +134,10 @@ export function ConsultGate({
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         {st === "OFFERED" ? (
           <>
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#0E8A95]"><CalendarClock size={18} /> {t("Video randevu teklifi")}</div>
-            <div className="mt-3 rounded-2xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.06] px-4 py-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#17919E]"><CalendarClock size={18} /> {t("Video randevu teklifi")}</div>
+            <div className="mt-3 rounded-2xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] px-4 py-3">
               <div className="text-xs uppercase tracking-wide text-slate-400">{t("Önerilen zaman")}</div>
-              <div className="mt-0.5 text-lg font-bold text-[#101010]">{appointment.proposedAtLabel}</div>
+              <div className="mt-0.5 text-lg font-bold text-[#0D0E10]">{appointment.proposedAtLabel}</div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <button onClick={() => respond("accept")} disabled={!!busy} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
@@ -151,15 +151,15 @@ export function ConsultGate({
         ) : st === "CONFIRMED" ? (
           <>
             <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700"><CheckCircle2 size={18} /> {t("Randevunuz onaylandı")}</div>
-            <div className="mt-2 text-lg font-bold text-[#101010]">{appointment.proposedAtLabel}</div>
-            <button onClick={join} disabled={!!busy} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60">
+            <div className="mt-2 text-lg font-bold text-[#0D0E10]">{appointment.proposedAtLabel}</div>
+            <button onClick={join} disabled={!!busy} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60">
               {busy === "join" ? <Loader2 size={16} className="animate-spin" /> : <Video size={16} />} {t("Görüşmeye katıl")}
             </button>
           </>
         ) : (
           // REQUESTED | CHANGE_REQUESTED → bekleme
           <>
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#0E8A95]">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#17919E]">
               <Loader2 size={16} className="animate-spin" /> {t(st === "CHANGE_REQUESTED" ? "Değişiklik talebiniz iletildi" : "Randevu talebiniz iletildi")}
             </div>
             <p className="mt-2 text-sm text-slate-500">{t(st === "CHANGE_REQUESTED" ? "Doktor yeni bir görüşme zamanı önerecek." : "İcap görevli branş doktorları bilgilendirildi. En erken uygun doktor bir görüşme zamanı önerecek — bu sayfayı açık tutabilirsiniz.")}</p>
@@ -192,7 +192,7 @@ export function ConsultGate({
           title={t("Nöbetçi doktorla şimdi görüşün")}
           desc={t("7/24 görevli Dahiliye/Acil doktoru sizinle hemen bir video görüşmesi yapar.")}
           action={
-            <button onClick={sentinelNow} disabled={!hasSentinel || !!busy} className="inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:cursor-not-allowed disabled:opacity-50">
+            <button onClick={sentinelNow} disabled={!hasSentinel || !!busy} className="inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:cursor-not-allowed disabled:opacity-50">
               {busy === "sentinel" ? <><Loader2 size={16} className="animate-spin" /> {t("Bağlanıyor…")}</> : <>{t("Şimdi görüş")} <ArrowRight size={16} /></>}
             </button>
           }
@@ -206,7 +206,7 @@ export function ConsultGate({
           title={t("Branş doktorunuzle randevu alın")}
           desc={t("İcap görevli branş uzmanlarına iletilir; en erken uygun doktor size bir görüşme zamanı önerir.")}
           action={
-            <button onClick={requestIcapci} disabled={!hasIcapci || !!busy} className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-[#0E8A95] ring-1 ring-[#14C3D0]/40 hover:bg-[#14C3D0]/[0.06] disabled:cursor-not-allowed disabled:opacity-50">
+            <button onClick={requestIcapci} disabled={!hasIcapci || !!busy} className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-[#17919E] ring-1 ring-[#28C8D8]/40 hover:bg-[#28C8D8]/[0.06] disabled:cursor-not-allowed disabled:opacity-50">
               {busy === "icapci" ? <><Loader2 size={16} className="animate-spin" /> {t("İletiliyor…")}</> : <>{t("Randevu iste")} <ArrowRight size={16} /></>}
             </button>
           }
@@ -236,13 +236,13 @@ export function ConsultGate({
 function GateCard({ icon, tone, title, desc, action, disabledNote }: {
   icon: React.ReactNode; tone: "teal" | "rose"; title: string; desc: string; action: React.ReactNode; disabledNote: string | null;
 }) {
-  const toneCls = tone === "rose" ? "bg-rose-50 text-rose-600" : "bg-[#14C3D0]/10 text-[#0E8A95]";
+  const toneCls = tone === "rose" ? "bg-rose-50 text-rose-600" : "bg-[#28C8D8]/10 text-[#17919E]";
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <span className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl ${toneCls}`}>{icon}</span>
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-[#101010]">{title}</h3>
+          <h3 className="font-semibold text-[#0D0E10]">{title}</h3>
           <p className="mt-0.5 text-sm text-slate-500">{desc}</p>
           <div className="mt-3">{action}</div>
           {disabledNote && <p className="mt-1.5 text-xs text-slate-400">{disabledNote}</p>}

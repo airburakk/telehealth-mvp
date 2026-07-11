@@ -253,12 +253,12 @@ export default function TriyajPage() {
               <div className="flex flex-col items-center">
                 <span
                   className={`grid h-9 w-9 place-items-center rounded-full text-sm font-semibold ${
-                    active ? "bg-[#14C3D0] text-[#101010]" : done ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"
+                    active ? "bg-[#28C8D8] text-[#0D0E10]" : done ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"
                   }`}
                 >
                   <Icon size={17} />
                 </span>
-                <span className={`mt-1 text-[11px] ${active ? "text-[#101010] font-semibold" : "text-slate-400"}`}>{t(s.t)}</span>
+                <span className={`mt-1 text-[11px] ${active ? "text-[#0D0E10] font-semibold" : "text-slate-400"}`}>{t(s.t)}</span>
               </div>
               {i < STEPS.length - 1 && <div className={`mx-2 h-0.5 flex-1 rounded ${done ? "bg-emerald-500" : "bg-slate-200"}`} />}
             </div>
@@ -353,7 +353,7 @@ export default function TriyajPage() {
                     <select
                       value={effectiveBranch}
                       onChange={(e) => setBranchOverride(e.target.value)}
-                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-[#101010] outline-none focus:border-[#14C3D0]"
+                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-[#0D0E10] outline-none focus:border-[#28C8D8]"
                     >
                       {BRANCHES.map((b) => <option key={b.key} value={b.key}>{t(b.label)}</option>)}
                     </select>
@@ -390,7 +390,7 @@ export default function TriyajPage() {
                           type="checkbox"
                           checked={!!providedDocs[d.key]}
                           onChange={(e) => setProvidedDocs((p) => ({ ...p, [d.key]: e.target.checked }))}
-                          className="mt-0.5 accent-[#14C3D0]"
+                          className="mt-0.5 accent-[#28C8D8]"
                         />
                         <span className={d.required ? "text-slate-700" : "text-slate-500"}>
                           {t(d.label)}{" "}
@@ -509,7 +509,7 @@ export default function TriyajPage() {
             <ArrowLeft size={16} /> {t("Geri")}
           </button>
           {step < 4 ? (
-            <button onClick={next} className="inline-flex items-center gap-1.5 rounded-lg bg-[#14C3D0] px-4 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+            <button onClick={next} className="inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
               {t("Devam")} <ArrowRight size={16} />
             </button>
           ) : (
@@ -527,7 +527,7 @@ export default function TriyajPage() {
 
       <style>{`
         .inp { width:100%; border:1px solid #cbd5e1; border-radius:0.6rem; padding:0.55rem 0.75rem; font-size:0.9rem; outline:none; background:#fff; }
-        .inp:focus { border-color:#14C3D0; box-shadow:0 0 0 3px rgba(20,195,208,0.15); }
+        .inp:focus { border-color:#28C8D8; box-shadow:0 0 0 3px rgba(40,200,216,0.15); }
       `}</style>
     </JourneyIntakeShell>
   );
@@ -559,7 +559,7 @@ function AnalysisCard({ analysis, badge, dot, label, t = (s) => s }: { analysis:
         {analysis.engine === "llm" && <span className="rounded-full bg-teal-600 px-1.5 py-0.5 text-[9px] tracking-normal text-white">Claude</span>}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <span className="rounded-lg bg-white px-2.5 py-1 text-sm font-semibold text-[#101010] ring-1 ring-slate-200">{t(analysis.branch)}</span>
+        <span className="rounded-lg bg-white px-2.5 py-1 text-sm font-semibold text-[#0D0E10] ring-1 ring-slate-200">{t(analysis.branch)}</span>
         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${badge}`}>
           <span className={`h-2 w-2 rounded-full ${dot}`} /> {t("Aciliyet")} {analysis.urgency}/5 · {t(label)}
         </span>

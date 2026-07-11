@@ -47,7 +47,7 @@ export function PatientQuestionsPanel({ storageKey, lang }: { storageKey: string
         className="flex w-full items-center justify-between gap-2"
       >
         <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-          <NotebookPen size={14} className="text-[#0EA5B2]" /> {t(TX.title)}
+          <NotebookPen size={14} className="text-[#1FA9B8]" /> {t(TX.title)}
         </span>
         {open ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
       </button>
@@ -60,7 +60,7 @@ export function PatientQuestionsPanel({ storageKey, lang }: { storageKey: string
             onChange={(e) => onNote(e.target.value)}
             rows={4}
             placeholder={t(TX.placeholder)}
-            className="mt-2 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-[#101010] outline-none placeholder:text-slate-400 focus:border-[#14C3D0] focus:bg-white"
+            className="mt-2 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-[#0D0E10] outline-none placeholder:text-slate-400 focus:border-[#28C8D8] focus:bg-white"
           />
           {note.trim() && <p className="mt-1 text-[11px] text-slate-400">{t(TX.saved)}</p>}
         </div>

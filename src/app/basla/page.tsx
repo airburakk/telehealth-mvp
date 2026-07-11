@@ -16,8 +16,10 @@ export default async function BaslaPage() {
   const u = await db.user.findUnique({ where: { id: user.id }, select: { patientJourney: true } });
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-10">
-      <BaslaCards name={user.name} journey={u?.patientJourney ?? null} />
+    <div className="min-h-[calc(100vh-8rem)] bg-[#0D0E10]">
+      <div className="mx-auto max-w-3xl px-5 py-10">
+        <BaslaCards name={user.name} journey={u?.patientJourney ?? null} />
+      </div>
     </div>
   );
 }

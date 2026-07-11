@@ -4,30 +4,33 @@
 // Yapı: Nav+Hero (tek CTA) · Trust · Nasıl Çalışır · Doktorlar · Testimonial · CTA band · Footer.
 // Kaldırılanlar: Tedavi Paketleri, AI kartı, İkinci Görüş/Ücretsiz Sağlık Hizmeti CTA'ları, Tedaviler/Doktorlar/
 // Klinikler için nav linkleri — ürün seçimi giriş SONRASI /basla ekranında yapılır (tek huni).
-// 8 dil statik kopya (lib/landing-copy.ts) + RTL (ar/fa). Tema: koyu AURA.
+// 8 dil statik kopya (lib/landing-copy.ts) + RTL (ar/fa). Tema: koyu AURA — vitrin
+// (aura-health.higgsfield.app) görsel diliyle hizalı: gece #0D0E10 + turkuaz #28C8D8,
+// Space Grotesk display + Inter gövde + JetBrains Mono mikro/durak (2026-07-11).
 // Dil kalıcılığı: tek anahtar `air_lang` (dil ADI — hasta yüzeyleriyle ortak; emekli `pm_locale`
 // bir defalık taşınır). Landing'de olmayan dil (Kazakça/Kırgızca) → görüntü EN'e düşer, anahtar ezilmez.
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Newsreader, Hanken_Grotesk } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import { DoctorArt, TestimonialArt } from "@/components/PortamedArt";
 import { PortamedLogo } from "@/components/PortamedLogo";
 import { HeroShowcase } from "@/components/HeroShowcase";
 import { LANDING_COPY, LANDING_LOCALES, landingDir, type LandingLocale } from "@/lib/landing-copy";
 import { LANG_NAME_BY_CODE, langCodeFor } from "@/lib/constants";
 
-const serif = Newsreader({ subsets: ["latin", "latin-ext"], weight: ["400", "500"] });
-const sans = Hanken_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["300", "400", "500", "600", "700"] });
+const serif = Space_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["500", "700"] });
+const sans = Inter({ subsets: ["latin", "latin-ext"] });
+const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext"], weight: ["500", "700"] });
 
 // ── Design tokens — koyu "AURA" tema (dark-first marka kimliği) ──
 const T = {
-  teal: "#14C3D0",
-  tealDeep: "#0EA5B2",
-  emerald: "#1B1E22", // yükseltilmiş koyu panel
-  bg: "#0A0A0B",      // sayfa + iç konteyner (en derin)
-  surface: "#15161A",
-  surfaceAlt: "#0E0F12", // bölüm bantları (trust, doktor paneli, footer)
-  text: "#FFFFFF",
+  teal: "#28C8D8",
+  tealDeep: "#1FA9B8",
+  emerald: "#1E1F22", // yükseltilmiş koyu panel
+  bg: "#0D0E10",      // sayfa + iç konteyner (en derin)
+  surface: "#161719",
+  surfaceAlt: "#101113", // bölüm bantları (trust, doktor paneli, footer)
+  text: "#F4F5F3",
   muted: "rgba(255,255,255,.58)",
   soft: "rgba(255,255,255,.72)",
   border: "rgba(255,255,255,.1)",
@@ -69,11 +72,11 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
       <div className="mx-auto" style={{ maxWidth: 1320, background: T.bg }}>
 
         {/* 1+2 · Koyu "AURA" bandı — Nav + Hero (aura glow) */}
-        <div className="relative" style={{ background: "#101010", color: "#fff" }}>
+        <div className="relative" style={{ background: "#0D0E10", color: "#fff" }}>
           <style>{`@keyframes auraFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-26px,22px) scale(1.1)}}@keyframes auraFloat2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(22px,-16px) scale(1.12)}}`}</style>
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="absolute" style={{ right: "-6%", top: "-10%", width: 560, height: 560, borderRadius: "50%", background: "radial-gradient(circle, rgba(20,195,208,.45) 0%, rgba(20,195,208,0) 68%)", filter: "blur(46px)", animation: "auraFloat 11s ease-in-out infinite" }} />
-            <div className="absolute" style={{ right: "16%", top: "30%", width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle, rgba(95,211,226,.28) 0%, rgba(95,211,226,0) 70%)", filter: "blur(44px)", animation: "auraFloat2 14s ease-in-out infinite" }} />
+            <div className="absolute" style={{ right: "-6%", top: "-10%", width: 560, height: 560, borderRadius: "50%", background: "radial-gradient(circle, rgba(40,200,216,.45) 0%, rgba(40,200,216,0) 68%)", filter: "blur(46px)", animation: "auraFloat 11s ease-in-out infinite" }} />
+            <div className="absolute" style={{ right: "16%", top: "30%", width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle, rgba(111,220,232,.28) 0%, rgba(111,220,232,0) 70%)", filter: "blur(44px)", animation: "auraFloat2 14s ease-in-out infinite" }} />
           </div>
 
           {/* Nav — logo · 8-dil seçici (renkli oval pill). Doktorla Görüş + Nasıl Çalışır kaldırıldı;
@@ -85,33 +88,33 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
               onChange={(e) => switchLocale(e.target.value as LandingLocale)}
               aria-label="Language"
               className="shrink-0 cursor-pointer rounded-full px-4 py-[10px] text-[14px] font-semibold outline-none transition hover:brightness-110"
-              style={{ background: T.teal, color: "#101010" }}
+              style={{ background: T.teal, color: "#0D0E10" }}
             >
-              {LANDING_LOCALES.map((l) => <option key={l.code} value={l.code} style={{ background: "#fff", color: "#101010" }}>{l.native}</option>)}
+              {LANDING_LOCALES.map((l) => <option key={l.code} value={l.code} style={{ background: "#fff", color: "#0D0E10" }}>{l.native}</option>)}
             </select>
           </header>
 
           {/* Hero — başlık + paragraf + TEK CTA + istatistikler + showcase */}
           <section className="relative z-10 grid items-center gap-11 px-6 pb-20 pt-14 sm:px-12 lg:grid-cols-[1.05fr_0.95fr] lg:pt-[72px]">
             <div>
-              <span className="inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-[12.5px] font-semibold uppercase tracking-[0.12em]" style={{ background: "rgba(20,195,208,.14)", color: "#5FD3E2" }}>
+              <span className={`${mono.className} inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-[12px] font-medium uppercase tracking-[0.12em]`} style={{ background: "rgba(40,200,216,.14)", color: "#6FDCE8" }}>
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: T.teal }} /> {C.hero.eyebrow}
               </span>
-              <h1 className={`${serif.className} mt-6 text-[42px] font-medium leading-[1.04] tracking-[-0.015em] sm:text-[54px] lg:text-[62px]`} style={{ color: "#fff" }}>
+              <h1 className={`${serif.className} mt-6 text-[42px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[54px] lg:text-[62px]`} style={{ color: T.text }}>
                 {C.hero.h}
               </h1>
               <p className="mt-5 max-w-[46ch] text-[18px] font-light leading-[1.6]" style={{ color: "rgba(255,255,255,.66)" }}>{C.hero.p}</p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link href={startHref} className={`${pill} px-6 py-[13px] text-[15px] text-[#101010] hover:brightness-110`} style={{ background: T.teal, boxShadow: "0 14px 40px -12px rgba(20,195,208,.6)" }}>
-                  <span className="grid h-5 w-5 place-items-center rounded-full text-[9px] text-[#14C3D0]" style={{ background: "#101010" }}>▶</span>
+                <Link href={startHref} className={`${pill} px-6 py-[13px] text-[15px] text-[#0D0E10] hover:brightness-110`} style={{ background: T.teal, boxShadow: "0 14px 40px -12px rgba(40,200,216,.6)" }}>
+                  <span className="grid h-5 w-5 place-items-center rounded-full text-[9px] text-[#28C8D8]" style={{ background: "#0D0E10" }}>▶</span>
                   {C.nav.cta}
                 </Link>
               </div>
               <div className="mt-10 flex items-center">
                 {C.hero.stats.map((s, i) => (
                   <div key={s.l} className={i > 0 ? "ps-6 sm:ps-8" : ""} style={i > 0 ? { borderInlineStart: "1px solid rgba(255,255,255,.14)", marginInlineStart: 24 } : undefined}>
-                    <div className={`${serif.className} text-[28px] font-medium leading-none sm:text-[30px]`} style={{ color: "#fff" }}>{s.n}</div>
-                    <div className="mt-1.5 text-[13px] font-light" style={{ color: "rgba(255,255,255,.55)" }}>{s.l}</div>
+                    <div className={`${serif.className} text-[28px] font-bold leading-none sm:text-[30px]`} style={{ color: T.text }}>{s.n}</div>
+                    <div className={`${mono.className} mt-1.5 text-[11.5px] font-medium uppercase tracking-[0.08em]`} style={{ color: "rgba(255,255,255,.55)" }}>{s.l}</div>
                   </div>
                 ))}
               </div>
@@ -125,7 +128,7 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
 
         {/* 3 · Trust strip */}
         <section className="flex flex-wrap items-center gap-x-10 gap-y-4 px-6 py-6 sm:px-12" style={{ background: T.surfaceAlt, borderTop: `1px solid ${T.border}` }}>
-          <span className="text-[12.5px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.muted }}>{C.trust}</span>
+          <span className={`${mono.className} text-[12px] font-medium uppercase tracking-[0.12em]`} style={{ color: T.muted }}>{C.trust}</span>
           <div className="flex flex-1 flex-wrap items-center gap-8 opacity-50">
             {["JCI", "ISO 9001", "TÜRSAB", "TGA", "KVKK/GDPR"].map((m) => (
               <span key={m} className="rounded-md px-3 py-1.5 text-[12px] font-bold tracking-wider" style={{ background: "rgba(255,255,255,.06)", color: T.soft }}>{m}</span>
@@ -136,13 +139,13 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
         {/* 4 · Nasıl Çalışır */}
         <section id="how" className="px-6 py-16 sm:px-12">
           <div className="text-center">
-            <div className="text-[12.5px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.tealDeep }}>{C.how.eyebrow}</div>
-            <h2 className={`${serif.className} mt-2 text-[30px] font-medium leading-[1.08] tracking-[-0.015em] sm:text-[38px]`}>{C.how.h}</h2>
+            <div className={`${mono.className} text-[12px] font-medium uppercase tracking-[0.12em]`} style={{ color: T.teal }}>{C.how.eyebrow}</div>
+            <h2 className={`${serif.className} mt-2 text-[30px] font-bold leading-[1.06] tracking-[-0.025em] sm:text-[38px]`}>{C.how.h}</h2>
           </div>
           <div className="mt-10 grid gap-[22px] sm:grid-cols-2 lg:grid-cols-4">
             {C.how.steps.map((s, i) => (
               <div key={s.t} className="pt-5" style={{ borderTop: i === 0 ? `2px solid ${T.teal}` : `2px solid rgba(255,255,255,.14)` }}>
-                <div className={`${serif.className} text-[34px] font-medium leading-none`} style={{ color: T.teal }}>0{i + 1}</div>
+                <div className={`${mono.className} text-[30px] font-bold leading-none`} style={{ color: T.teal }}>0{i + 1}</div>
                 <div className="mt-3 text-[16.5px] font-semibold">{s.t}</div>
                 <p className="mt-1.5 text-[14px] leading-[1.6]" style={{ color: T.muted }}>{s.d}</p>
               </div>
@@ -176,7 +179,7 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
             </div>
             <div className="flex flex-col justify-center">
               <div className="text-[15px] tracking-[0.2em]" style={{ color: "#C6A664" }}>★★★★★</div>
-              <p className={`${serif.className} mt-4 text-[21px] font-normal leading-[1.3] sm:text-[27px]`}>{C.testimonial.quote}</p>
+              <p className={`${serif.className} mt-4 text-[21px] font-medium leading-[1.3] sm:text-[27px]`}>{C.testimonial.quote}</p>
               <div className="mt-5 text-[14.5px] font-semibold">{C.testimonial.name}</div>
               <div className="text-[13px] opacity-70">{C.testimonial.meta}</div>
             </div>
@@ -186,10 +189,10 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
         {/* 7 · CTA band — tek buton */}
         <section className="px-6 pb-16 sm:px-12">
           <div className="rounded-[20px] px-6 py-14 text-center text-white" style={{ background: T.emerald }}>
-            <h2 className={`${serif.className} mx-auto max-w-[24ch] text-[30px] font-medium leading-[1.1] tracking-[-0.015em] sm:text-[40px]`}>{C.cta.h}</h2>
+            <h2 className={`${serif.className} mx-auto max-w-[24ch] text-[30px] font-bold leading-[1.08] tracking-[-0.025em] sm:text-[40px]`}>{C.cta.h}</h2>
             <p className="mx-auto mt-4 max-w-[52ch] text-[15.5px] leading-[1.6] opacity-90">{C.cta.p}</p>
             <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-              <Link href={startHref} className={`${pill} bg-white px-6 py-[13px] text-[15px] hover:brightness-95`} style={{ color: "#101010" }}>{C.cta.b}</Link>
+              <Link href={startHref} className={`${pill} bg-white px-6 py-[13px] text-[15px] hover:brightness-95`} style={{ color: "#0D0E10" }}>{C.cta.b}</Link>
             </div>
           </div>
         </section>
@@ -202,11 +205,11 @@ export function PortamedLanding({ doctors, loggedIn }: { doctors: LandingDoctor[
             <p className="mt-4 text-[11.5px]" style={{ color: "#9AA5A1" }}>© {new Date().getFullYear()} AURA · MVP demo</p>
           </div>
           <ul className="flex flex-wrap items-center gap-x-8 gap-y-3 text-[14px] font-medium">
-            <li><a href="#how" className="hover:text-[#0EA5B2]" style={{ color: T.soft }}>{C.footer.how}</a></li>
-            <li><Link href="/giris" className="hover:text-[#0EA5B2]" style={{ color: T.soft }}>{C.footer.patientLogin}</Link></li>
-            <li><Link href="/kayit/hasta" className="hover:text-[#0EA5B2]" style={{ color: T.soft }}>{C.footer.patientSignup}</Link></li>
-            <li><Link href="/kurumsal-giris" className="hover:text-[#0EA5B2]" style={{ color: T.soft }}>{C.footer.corporate}</Link></li>
-            <li><Link href="/kayit" className="hover:text-[#0EA5B2]" style={{ color: T.soft }}>{C.footer.doctorSignup}</Link></li>
+            <li><a href="#how" className="hover:text-[#1FA9B8]" style={{ color: T.soft }}>{C.footer.how}</a></li>
+            <li><Link href="/giris" className="hover:text-[#1FA9B8]" style={{ color: T.soft }}>{C.footer.patientLogin}</Link></li>
+            <li><Link href="/kayit/hasta" className="hover:text-[#1FA9B8]" style={{ color: T.soft }}>{C.footer.patientSignup}</Link></li>
+            <li><Link href="/kurumsal-giris" className="hover:text-[#1FA9B8]" style={{ color: T.soft }}>{C.footer.corporate}</Link></li>
+            <li><Link href="/kayit" className="hover:text-[#1FA9B8]" style={{ color: T.soft }}>{C.footer.doctorSignup}</Link></li>
           </ul>
         </footer>
       </div>

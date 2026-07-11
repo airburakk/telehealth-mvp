@@ -30,17 +30,19 @@ export default async function DoctorsPage() {
   }));
 
   return (
+    <div className="min-h-[calc(100vh-8rem)] bg-[#0D0E10]">
     <div className="mx-auto max-w-4xl px-5 py-10">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Users size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Users size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">Doktorlarımız</h1>
-          <p className="text-sm text-slate-500">Doğrulanmış, deneyimli uzmanlar — branşa göre filtreleyin.</p>
+          <h1 className="font-serif text-2xl font-bold tracking-tight text-[#F4F5F3]">Doktorlarımız</h1>
+          <p className="text-sm text-white/50">Doğrulanmış, deneyimli uzmanlar — branşa göre filtreleyin.</p>
         </div>
       </div>
       <div className="mt-7">
         <DoctorDirectory doctors={rows} />
       </div>
+    </div>
     </div>
   );
 }

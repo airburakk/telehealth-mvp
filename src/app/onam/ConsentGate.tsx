@@ -71,8 +71,8 @@ export function ConsentGate({ isPatient, dest }: { isPatient: boolean; dest: str
     <div dir={langDir(lang)} className="mx-auto max-w-2xl px-5 py-10">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><ShieldCheck size={22} /></span>
-          <h1 className="text-xl font-bold text-[#101010]">{t(C.title)}</h1>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><ShieldCheck size={22} /></span>
+          <h1 className="text-xl font-bold text-[#0D0E10]">{t(C.title)}</h1>
         </div>
         {isPatient && <PatientLangSelect lang={patientLang} onChange={setPatientLang} />}
       </div>
@@ -82,14 +82,14 @@ export function ConsentGate({ isPatient, dest }: { isPatient: boolean; dest: str
       <ul className="mt-4 space-y-2.5">
         {C.items.map((it, i) => (
           <li key={i} className="flex gap-2.5 rounded-2xl border border-slate-200 bg-white p-3.5 text-[13px] leading-relaxed text-slate-600">
-            <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#14C3D0]/15 text-[11px] font-bold text-[#0E8A95]">{i + 1}</span>
+            <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#28C8D8]/15 text-[11px] font-bold text-[#17919E]">{i + 1}</span>
             <span>{t(it)}</span>
           </li>
         ))}
       </ul>
 
       <label className="mt-5 flex cursor-pointer items-start gap-2.5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[#14C3D0]" />
+        <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[#28C8D8]" />
         <span className="text-[13px] leading-relaxed text-slate-700">
           {t(C.consent)} <span className="text-slate-400">{t(C.draft)}</span>
         </span>
@@ -100,7 +100,7 @@ export function ConsentGate({ isPatient, dest }: { isPatient: boolean; dest: str
       <button
         onClick={accept}
         disabled={!agreed || submitting}
-        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#14C3D0] px-5 py-3 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#28C8D8] px-5 py-3 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitting ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />} {t(C.accept)}
       </button>

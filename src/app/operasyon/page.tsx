@@ -96,41 +96,41 @@ export default async function OperationsDashboard() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-8">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><BarChart3 size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><BarChart3 size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">Operasyon Paneli</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">Operasyon Paneli</h1>
           <p className="text-sm text-slate-500">S2 Operasyon Şirketi · canlı platform metrikleri</p>
         </div>
       </div>
 
-      <Link href="/operasyon/ikinci-gorus" className="mt-5 flex items-center gap-3 rounded-3xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.06] p-4 transition hover:bg-[#14C3D0]/[0.1]">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Stethoscope size={18} /></span>
+      <Link href="/operasyon/ikinci-gorus" className="mt-5 flex items-center gap-3 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] p-4 transition hover:bg-[#28C8D8]/[0.1]">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Stethoscope size={18} /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-[#101010]">İkinci Görüş — Koordinatör Kuyruğu</div>
+          <div className="text-sm font-semibold text-[#0D0E10]">İkinci Görüş — Koordinatör Kuyruğu</div>
           <p className="text-xs text-slate-500">{soActiveCount} aktif vaka · belge inceleme + doktor atama</p>
         </div>
         {soReviewCount > 0 && <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700">{soReviewCount} inceleme bekliyor</span>}
-        <ArrowRight size={16} className="shrink-0 text-[#0E8A95]" />
+        <ArrowRight size={16} className="shrink-0 text-[#17919E]" />
       </Link>
 
       <Link href="/operasyon/lojistik" className="mt-3 flex items-center gap-3 rounded-3xl border border-slate-200 bg-white p-4 transition hover:bg-slate-50">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-teal-100 text-teal-700"><Luggage size={18} /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-[#101010]">Lojistik Takip — Patient Journey</div>
+          <div className="text-sm font-semibold text-[#0D0E10]">Lojistik Takip — Patient Journey</div>
           <p className="text-xs text-slate-500">Onaylı rezervasyonların karşılama · konaklama · tedavi · dönüş aşamalarını yönet</p>
         </div>
-        <ArrowRight size={16} className="shrink-0 text-[#0E8A95]" />
+        <ArrowRight size={16} className="shrink-0 text-[#17919E]" />
       </Link>
 
       <Link href="/operasyon/kayit-defteri" className="mt-3 flex items-center gap-3 rounded-3xl border border-slate-200 bg-white p-4 transition hover:bg-slate-50">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-teal-100 text-teal-700"><BookMarked size={18} /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-[#101010]">HealthTürkiye Kayıt Defteri</div>
+          <div className="text-sm font-semibold text-[#0D0E10]">HealthTürkiye Kayıt Defteri</div>
           <p className="text-xs text-slate-500">
             {registryDoctors.toLocaleString("tr-TR")} doktor · {registryHospitals.toLocaleString("tr-TR")} tesis — resmi sağlık turizmi dizini, günlük senkron
           </p>
         </div>
-        <ArrowRight size={16} className="shrink-0 text-[#0E8A95]" />
+        <ArrowRight size={16} className="shrink-0 text-[#17919E]" />
       </Link>
 
       {/* KPI kartları */}
@@ -157,7 +157,7 @@ export default async function OperationsDashboard() {
                     <span className="font-semibold text-slate-800">{f.count}{conv != null && <span className="ml-1.5 text-xs font-normal text-slate-400">↓ %{conv}</span>}</span>
                   </div>
                   <div className="mt-1 h-2.5 rounded-full bg-slate-100">
-                    <div className="h-2.5 rounded-full bg-[#0EA5B2]" style={{ width: `${Math.max(3, pct)}%` }} />
+                    <div className="h-2.5 rounded-full bg-[#1FA9B8]" style={{ width: `${Math.max(3, pct)}%` }} />
                   </div>
                 </div>
               );
@@ -218,7 +218,7 @@ export default async function OperationsDashboard() {
               {days.map((d) => (
                 <div key={d.key} className="group relative flex-1">
                   <div
-                    className={`w-full rounded-t ${d.count ? "bg-[#0EA5B2]" : "bg-slate-100"}`}
+                    className={`w-full rounded-t ${d.count ? "bg-[#1FA9B8]" : "bg-slate-100"}`}
                     style={{ height: `${d.count ? Math.max(12, Math.round((d.count / trendMax) * 96)) : 4}px` }}
                     title={`${d.label}: ${d.count} vaka`}
                   />
@@ -268,7 +268,7 @@ function Kpi({ icon, label, value, sub, tone }: { icon: React.ReactNode; label: 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
       <div className="flex items-center gap-1.5 text-xs text-slate-400">{icon} {label}</div>
-      <div className={`mt-1 text-xl font-bold ${tone ?? "text-[#101010]"}`}>{value}</div>
+      <div className={`mt-1 text-xl font-bold ${tone ?? "text-[#0D0E10]"}`}>{value}</div>
       {sub && <div className="text-[11px] text-slate-400">{sub}</div>}
     </div>
   );

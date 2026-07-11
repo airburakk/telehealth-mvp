@@ -239,7 +239,7 @@ export default function ClinicalDecisionPanel({
           <select
             value=""
             onChange={(e) => { if (e.target.value) { setIcd(e.target.value); setCodingSaved(false); setAiSugs(null); } }}
-            className="mt-2 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none focus:border-[#14C3D0]"
+            className="mt-2 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none focus:border-[#28C8D8]"
           >
             <option value="">Branşa özel yaygın tanı seç…</option>
             {icd10Options.map((o) => (
@@ -253,7 +253,7 @@ export default function ClinicalDecisionPanel({
           value={icd}
           onChange={(e) => { setIcd(e.target.value); setCodingSaved(false); setAiSugs(null); }}
           placeholder="ör. I20.9 (listeden seç ya da elle gir)"
-          className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm uppercase outline-none focus:border-[#14C3D0]"
+          className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm uppercase outline-none focus:border-[#28C8D8]"
         />
         {selectedIcdLabel && <p className="mt-1 text-xs text-teal-600">✓ {selectedIcdLabel}{mappedIcdCodes.has(icdNorm) ? " · ★ eşlenmiş işlem önerileri var" : ""}</p>}
 
@@ -261,18 +261,18 @@ export default function ClinicalDecisionPanel({
           <div className="min-w-[180px] flex-1">
             <label className="text-[11px] font-medium text-slate-500">Hasta kimlik no</label>
             <div className="mt-1 flex gap-1.5">
-              <select value={ptype} onChange={(e) => { setPtype(e.target.value); setCodingSaved(false); }} className="rounded-lg border border-slate-300 px-2 py-2 text-sm outline-none focus:border-[#14C3D0]">
+              <select value={ptype} onChange={(e) => { setPtype(e.target.value); setCodingSaved(false); }} className="rounded-lg border border-slate-300 px-2 py-2 text-sm outline-none focus:border-[#28C8D8]">
                 <option value="TC">TC</option>
                 <option value="PASSPORT">Pasaport</option>
                 <option value="OTHER">Diğer</option>
               </select>
-              <input value={pid} onChange={(e) => { setPid(e.target.value); setCodingSaved(false); }} placeholder="kimlik / pasaport no" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]" />
+              <input value={pid} onChange={(e) => { setPid(e.target.value); setCodingSaved(false); }} placeholder="kimlik / pasaport no" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]" />
             </div>
           </div>
           <button
             onClick={saveCoding}
             disabled={codingSaving}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#14C3D0] px-3 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#28C8D8] px-3 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60"
           >
             {codingSaving ? <Loader2 size={14} className="animate-spin" /> : codingSaved ? <Check size={14} /> : <Save size={14} />}
             {codingSaved ? "Kaydedildi" : "Kodlamayı kaydet"}
@@ -388,7 +388,7 @@ export default function ClinicalDecisionPanel({
                   {entries.map(([code, v]) => {
                     const floor = v.floor > 0 ? v.floor : 0;
                     const ceil = floor * CEIL_MULT;
-                    const color = floor > 0 ? hueFor(v.priceTRY, floor, ceil) : "#14C3D0";
+                    const color = floor > 0 ? hueFor(v.priceTRY, floor, ceil) : "#28C8D8";
                     const step = floor > 0 ? Math.max(1, Math.round((ceil - floor) / 100)) : 1;
                     return (
                       <li key={code} className="rounded-lg border border-slate-200 p-2.5">
@@ -420,7 +420,7 @@ export default function ClinicalDecisionPanel({
             {entries.length > 0 && (
               <div className="mt-2.5 flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
                 <span className="text-slate-500">{entries.length} işlem · toplam</span>
-                <span className="font-bold text-[#101010]">{formatTRY(totalTRY)} <span className="text-xs font-normal text-slate-400">≈ ${tryToUsd(totalTRY, rate).toLocaleString("en-US")}</span></span>
+                <span className="font-bold text-[#0D0E10]">{formatTRY(totalTRY)} <span className="text-xs font-normal text-slate-400">≈ ${tryToUsd(totalTRY, rate).toLocaleString("en-US")}</span></span>
               </div>
             )}
           </>
@@ -433,9 +433,9 @@ export default function ClinicalDecisionPanel({
           <CalendarRange size={13} /> 3 · Öngörülen tedavi süresi
         </div>
         <div className="mt-2 flex items-center gap-2 text-sm">
-          <input type="number" min={1} max={365} value={daysMin} onChange={(e) => setDaysMin(e.target.value)} placeholder="3" disabled={!icdChosen} className="w-20 rounded-lg border border-slate-300 px-2.5 py-2 text-center outline-none focus:border-[#14C3D0] disabled:bg-slate-50" />
+          <input type="number" min={1} max={365} value={daysMin} onChange={(e) => setDaysMin(e.target.value)} placeholder="3" disabled={!icdChosen} className="w-20 rounded-lg border border-slate-300 px-2.5 py-2 text-center outline-none focus:border-[#28C8D8] disabled:bg-slate-50" />
           <span className="text-slate-400">–</span>
-          <input type="number" min={1} max={365} value={daysMax} onChange={(e) => setDaysMax(e.target.value)} placeholder="7" disabled={!icdChosen} className="w-20 rounded-lg border border-slate-300 px-2.5 py-2 text-center outline-none focus:border-[#14C3D0] disabled:bg-slate-50" />
+          <input type="number" min={1} max={365} value={daysMax} onChange={(e) => setDaysMax(e.target.value)} placeholder="7" disabled={!icdChosen} className="w-20 rounded-lg border border-slate-300 px-2.5 py-2 text-center outline-none focus:border-[#28C8D8] disabled:bg-slate-50" />
           <span className="text-slate-500">gün <span className="text-slate-400">(ör. 3 – 7 gün)</span></span>
         </div>
         {icdChosen && daysMin && daysMax && !daysOk && <p className="mt-1.5 text-[11px] text-red-600">Geçerli bir gün aralığı girin (alt sınır ≥ 1, üst sınır ≥ alt sınır).</p>}

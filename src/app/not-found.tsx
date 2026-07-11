@@ -17,14 +17,14 @@ export default function NotFound() {
   const t = ERROR_I18N[lang];
 
   return (
-    <div lang={lang} dir={errDir(lang)} className="grid min-h-[calc(100vh-8rem)] place-items-center px-5 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <p className="text-5xl font-semibold tracking-tight text-slate-300">404</p>
-        <h1 className="mt-4 text-xl font-semibold text-slate-800">{t.notFoundTitle}</h1>
-        <p className="mt-2 text-sm leading-relaxed text-slate-500">{t.notFoundDesc}</p>
+    <div lang={lang} dir={errDir(lang)} className="grid min-h-[calc(100vh-8rem)] place-items-center bg-[#0D0E10] px-5 py-10">
+      <div className="w-full max-w-md rounded-[22px] border border-white/10 bg-[#161719] p-8 text-center">
+        <p className="font-mono text-5xl font-semibold tracking-tight text-white/20">404</p>
+        <h1 className="mt-4 font-serif text-xl font-semibold text-[#F4F5F3]">{t.notFoundTitle}</h1>
+        <p className="mt-2 text-sm leading-relaxed text-white/50">{t.notFoundDesc}</p>
         <Link
           href="/"
-          className="mt-6 inline-flex items-center justify-center rounded-lg bg-[#14C3D0] px-5 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]"
+          className="mt-6 inline-flex items-center justify-center rounded-lg bg-[#28C8D8] px-5 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]"
         >
           {t.home}
         </Link>

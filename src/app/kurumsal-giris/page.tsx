@@ -6,8 +6,8 @@ import { CorporateLoginForm } from "@/components/CorporateLoginForm";
 // Form içeriği CorporateLoginForm'da ("use client" — ikon fonksiyonları server'dan geçirilemez).
 export default function CorporateLoginPage() {
   return (
-    <div className="grid min-h-[calc(100vh-8rem)] place-items-center px-5 py-10">
-      <Suspense fallback={<div className="text-sm text-slate-400">Yükleniyor…</div>}>
+    <div className="grid min-h-[calc(100vh-8rem)] place-items-center bg-[#0D0E10] px-5 py-10">
+      <Suspense fallback={<div className="text-sm text-white/40">Yükleniyor…</div>}>
         <CorporateLoginForm />
       </Suspense>
     </div>

@@ -95,14 +95,14 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={serverFilters ? "Bu sayfada ara…" : "Hasta ara…"}
-            className="rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-[#14C3D0]"
+            className="rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-[#28C8D8]"
           />
         </div>
-        <select value={branchValue} onChange={(e) => onBranchChange(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#14C3D0]">
+        <select value={branchValue} onChange={(e) => onBranchChange(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#28C8D8]">
           <option value="all">Tüm branşlar</option>
           {branches.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
-        <select value={statusValue} onChange={(e) => onStatusChange(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#14C3D0]">
+        <select value={statusValue} onChange={(e) => onStatusChange(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#28C8D8]">
           <option value="all">Tüm durumlar</option>
           {Object.entries(CASE_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
@@ -122,7 +122,7 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
             <Link
               key={r.id}
               href={`/doktor/vaka/${r.id}`}
-              className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#14C3D0]/30 hover:shadow-sm"
+              className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#28C8D8]/30 hover:shadow-sm"
             >
               <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-sm font-bold ring-1 ${u.badge}`}>
                 {r.urgency}
@@ -134,7 +134,7 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
                   <span className="text-xs text-slate-400">{countryFlag(r.country)} {countryName(r.country)}</span>
                 </div>
                 <div className="mt-0.5 flex items-center gap-2 text-sm text-slate-500">
-                  <span className="font-medium text-[#0EA5B2]">{r.branch}</span>
+                  <span className="font-medium text-[#1FA9B8]">{r.branch}</span>
                   <span>·</span>
                   <span>{formatDateTime(r.createdAt)}</span>
                   {r.hasFiles && <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">📎 dosya</span>}
@@ -142,7 +142,7 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
                 </div>
               </div>
               <span className={`hidden sm:inline rounded-full px-2.5 py-1 text-xs font-medium ${st.color}`}>{st.label}</span>
-              <ArrowRight size={18} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#0EA5B2]" />
+              <ArrowRight size={18} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#1FA9B8]" />
             </Link>
           );
         })}
@@ -154,7 +154,7 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
 function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-3.5">
-      <div className={`text-2xl font-bold ${tone ?? "text-[#101010]"}`}>{value}</div>
+      <div className={`text-2xl font-bold ${tone ?? "text-[#0D0E10]"}`}>{value}</div>
       <div className="text-xs text-slate-500">{label}</div>
     </div>
   );

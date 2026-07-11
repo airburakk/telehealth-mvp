@@ -84,33 +84,34 @@ export function FreeCareContent() {
     return () => { alive = false; clearInterval(iv); };
   }, []);
   return (
+    <div className="min-h-[calc(100vh-8rem)] bg-[#0D0E10]">
     <div lang={locale} className="mx-auto max-w-4xl px-5 py-12">
       <div className="flex items-center justify-between gap-4">
-        <span className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0]/10 px-4 py-1.5 text-[12.5px] font-semibold uppercase tracking-[0.1em] text-[#0E8A95]">
+        <span className="inline-flex items-center gap-2 rounded-full bg-[#28C8D8]/10 px-4 py-1.5 font-mono text-[12px] font-medium uppercase tracking-[0.1em] text-[#28C8D8]">
           <HeartHandshake size={15} /> {C.badge}
         </span>
         <LocaleToggle locale={locale} onChange={setLocale} />
       </div>
-      <h1 className="mt-5 text-3xl font-bold leading-tight text-[#101010] sm:text-[40px]">{C.h1}</h1>
-      <p className="mt-4 max-w-2xl text-[17px] leading-relaxed text-slate-600">
+      <h1 className="mt-5 font-serif text-3xl font-bold leading-tight tracking-[-0.02em] text-[#F4F5F3] sm:text-[40px]">{C.h1}</h1>
+      <p className="mt-4 max-w-2xl text-[17px] leading-relaxed text-white/60">
         {C.introA}
-        <strong className="font-semibold text-slate-800">{C.strong}</strong>
+        <strong className="font-semibold text-[#F4F5F3]">{C.strong}</strong>
         {C.introB}
       </p>
       <div className="mt-7">
         {online && online > 0 ? (
-          <Link href="/ucretsiz-saglik/basvur" className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+          <Link href="/ucretsiz-saglik/basvur" className="inline-flex items-center gap-2 rounded-full bg-[#28C8D8] px-6 py-3 text-[15px] font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
             {C.apply} <ArrowRight size={17} />
           </Link>
         ) : (
-          <button disabled className="inline-flex cursor-not-allowed items-center gap-2 rounded-full bg-slate-200 px-6 py-3 text-[15px] font-semibold text-slate-400">
+          <button disabled className="inline-flex cursor-not-allowed items-center gap-2 rounded-full bg-white/10 px-6 py-3 text-[15px] font-semibold text-white/35">
             {C.apply} <ArrowRight size={17} />
           </button>
         )}
         {/* Çevrimiçi/çevrimdışı indikatörü — butonun altında */}
         <div className="mt-2.5 flex items-center gap-2 text-[13px]">
-          <span className={`h-2.5 w-2.5 rounded-full ${online === null ? "bg-slate-300" : online > 0 ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
-          <span className="text-slate-500">
+          <span className={`h-2.5 w-2.5 rounded-full ${online === null ? "bg-white/25" : online > 0 ? "bg-emerald-400 animate-pulse" : "bg-red-400"}`} />
+          <span className="text-white/50">
             {online === null ? C.checking : online > 0 ? `${C.online} · ${online} ${C.onlineN}` : `${C.offline} — ${C.offlineHint}`}
           </span>
         </div>
@@ -121,19 +122,20 @@ export function FreeCareContent() {
           const Icon = p.icon;
           const txt = p[locale];
           return (
-            <div key={i} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Icon size={20} /></span>
-              <div className="mt-3 font-semibold text-[#101010]">{txt.t}</div>
-              <p className="mt-1 text-sm leading-relaxed text-slate-500">{txt.d}</p>
+            <div key={i} className="rounded-[22px] border border-white/10 bg-[#161719] p-6">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Icon size={20} /></span>
+              <div className="mt-3 font-semibold text-[#F4F5F3]">{txt.t}</div>
+              <p className="mt-1 text-sm leading-relaxed text-white/50">{txt.d}</p>
             </div>
           );
         })}
       </div>
 
-      <div className="mt-8 flex items-start gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
-        <Info size={18} className="mt-0.5 shrink-0 text-slate-400" />
+      <div className="mt-8 flex items-start gap-3 rounded-[22px] border border-white/10 bg-[#161719] p-5 text-sm text-white/60">
+        <Info size={18} className="mt-0.5 shrink-0 text-white/40" />
         {C.note}
       </div>
+    </div>
     </div>
   );
 }

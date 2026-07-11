@@ -41,9 +41,9 @@ export default async function RecoveryMonitor() {
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><HeartPulse size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><HeartPulse size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">Post-Op İzleme</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">Post-Op İzleme</h1>
           <p className="text-sm text-slate-500">Uzaktan iyileşme takibi — kırmızı bayraklı hastalar üstte.</p>
         </div>
       </div>
@@ -65,7 +65,7 @@ export default async function RecoveryMonitor() {
           return (
             <div
               key={r.id}
-              className={`group flex items-center gap-4 rounded-2xl border bg-white p-4 transition hover:shadow-sm ${severity === "RED" ? "border-red-200" : "border-slate-200 hover:border-[#14C3D0]/30"}`}
+              className={`group flex items-center gap-4 rounded-2xl border bg-white p-4 transition hover:shadow-sm ${severity === "RED" ? "border-red-200" : "border-slate-200 hover:border-[#28C8D8]/30"}`}
             >
               <Link href={`/takip/${r.caseId}`} className="flex min-w-0 flex-1 items-center gap-4">
                 <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ring-1 ${m.badge}`}>
@@ -78,7 +78,7 @@ export default async function RecoveryMonitor() {
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${m.badge}`}>{m.label}</span>
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
-                    <span className="font-medium text-[#0EA5B2]">{r.branch}</span>
+                    <span className="font-medium text-[#1FA9B8]">{r.branch}</span>
                     <span>· {day}. gün</span>
                     {last ? (
                       <>
@@ -133,7 +133,7 @@ export default async function RecoveryMonitor() {
 function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-3.5">
-      <div className={`text-2xl font-bold ${tone ?? "text-[#101010]"}`}>{value}</div>
+      <div className={`text-2xl font-bold ${tone ?? "text-[#0D0E10]"}`}>{value}</div>
       <div className="text-xs text-slate-500">{label}</div>
     </div>
   );

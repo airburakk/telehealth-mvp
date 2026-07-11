@@ -9,9 +9,9 @@ import {
 
 type Phase = "info" | "insurance" | "policy" | "payment";
 
-const PRIMARY = "inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50";
+const PRIMARY = "inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50";
 const BACK = "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100";
-const INPUT = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#14C3D0] focus:outline-none";
+const INPUT = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#28C8D8] focus:outline-none";
 
 // Kapının çevrilebilir TÜM statik metinleri — triyaj sayfası bunları useT'ye besler.
 // t() bileşende zaten uygulanıyor; ancak metnin bu listede (yani çeviri fetch'inde) olması
@@ -76,8 +76,8 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
       {/* mini ilerleme */}
       <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
         {steps.map((label, i) => (
-          <span key={i} className={`inline-flex items-center gap-1.5 ${i <= stepIndex ? "font-semibold text-[#101010]" : "text-slate-400"}`}>
-            <span className={`grid h-5 w-5 place-items-center rounded-full text-[10px] ${i < stepIndex ? "bg-emerald-500 text-white" : i === stepIndex ? "bg-[#14C3D0] text-[#101010]" : "bg-slate-200 text-slate-500"}`}>
+          <span key={i} className={`inline-flex items-center gap-1.5 ${i <= stepIndex ? "font-semibold text-[#0D0E10]" : "text-slate-400"}`}>
+            <span className={`grid h-5 w-5 place-items-center rounded-full text-[10px] ${i < stepIndex ? "bg-emerald-500 text-white" : i === stepIndex ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-slate-200 text-slate-500"}`}>
               {i < stepIndex ? <Check size={11} /> : i + 1}
             </span>
             {label}
@@ -90,21 +90,21 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
         {phase === "info" && (
           <div>
             <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Video size={22} /></span>
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Video size={22} /></span>
               <div>
-                <h2 className="text-lg font-bold text-[#101010]">{t("Uzman görüşmesi — ön bilgilendirme")}</h2>
+                <h2 className="text-lg font-bold text-[#0D0E10]">{t("Uzman görüşmesi — ön bilgilendirme")}</h2>
                 <p className="text-sm text-slate-500">{t("Şikayetlerinizi paylaşmadan önce kısa bir bilgilendirme.")}</p>
               </div>
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 p-4">
                 <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><Wallet size={14} /> {t("Görüşme ücreti")}</div>
-                <div className="mt-1 text-2xl font-bold text-[#101010]">${CONSULT_FEE_USD}</div>
+                <div className="mt-1 text-2xl font-bold text-[#0D0E10]">${CONSULT_FEE_USD}</div>
                 <div className="text-xs text-slate-400">{t("Tek seferlik · Tier 1 ön değerlendirme")}</div>
               </div>
               <div className="rounded-2xl border border-slate-200 p-4">
                 <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><Clock size={14} /> {t("Ortalama süre")}</div>
-                <div className="mt-1 text-2xl font-bold text-[#101010]">{t(CONSULT_DURATION_TEXT)}</div>
+                <div className="mt-1 text-2xl font-bold text-[#0D0E10]">{t(CONSULT_DURATION_TEXT)}</div>
                 <div className="text-xs text-slate-400">{t("Uzman doktorla birebir video")}</div>
               </div>
             </div>
@@ -119,16 +119,16 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
 
         {phase === "insurance" && (
           <div>
-            <h2 className="text-lg font-bold text-[#101010]">{t("Sigorta durumu")}</h2>
+            <h2 className="text-lg font-bold text-[#0D0E10]">{t("Sigorta durumu")}</h2>
             <p className="mt-1 text-sm text-slate-500">{t("Bu görüşmeyi kapsayan bir sağlık sigortanız var mı?")}</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <button onClick={() => { setPhase("policy"); setPolicyMsg(""); }} className="rounded-2xl border-2 border-slate-200 p-4 text-start transition-colors hover:border-[#14C3D0] hover:bg-[#14C3D0]/5">
-                <ShieldCheck size={22} className="text-[#101010]" />
+              <button onClick={() => { setPhase("policy"); setPolicyMsg(""); }} className="rounded-2xl border-2 border-slate-200 p-4 text-start transition-colors hover:border-[#28C8D8] hover:bg-[#28C8D8]/5">
+                <ShieldCheck size={22} className="text-[#0D0E10]" />
                 <div className="mt-2 font-semibold text-slate-800">{t("Evet, sigortam var")}</div>
                 <div className="text-xs text-slate-500">{t("Poliçe numarası ile kapsamı doğrulayın")}</div>
               </button>
-              <button onClick={() => { setError(""); setPhase("payment"); }} className="rounded-2xl border-2 border-slate-200 p-4 text-start transition-colors hover:border-[#14C3D0] hover:bg-[#14C3D0]/5">
-                <CreditCard size={22} className="text-[#101010]" />
+              <button onClick={() => { setError(""); setPhase("payment"); }} className="rounded-2xl border-2 border-slate-200 p-4 text-start transition-colors hover:border-[#28C8D8] hover:bg-[#28C8D8]/5">
+                <CreditCard size={22} className="text-[#0D0E10]" />
                 <div className="mt-2 font-semibold text-slate-800">{t("Hayır / sigortasız devam")}</div>
                 <div className="text-xs text-slate-500">${CONSULT_FEE_USD} {t("ödeyerek devam edin")}</div>
               </button>
@@ -139,7 +139,7 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
 
         {phase === "policy" && (
           <div>
-            <h2 className="text-lg font-bold text-[#101010]">{t("Sigorta poliçesi doğrulama")}</h2>
+            <h2 className="text-lg font-bold text-[#0D0E10]">{t("Sigorta poliçesi doğrulama")}</h2>
             <p className="mt-1 text-sm text-slate-500">{t("Poliçe numaranızı girin; görüşme kapsamı kontrol edilsin.")}</p>
             <input value={policyNo} onChange={(e) => setPolicyNo(e.target.value)} placeholder={t("Poliçe no (ör. ALZ123456)")} className={`${INPUT} mt-4`} autoFocus />
             {policyMsg && (
@@ -159,7 +159,7 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
 
         {phase === "payment" && (
           <div>
-            <h2 className="text-lg font-bold text-[#101010]">{t("Ödeme")}</h2>
+            <h2 className="text-lg font-bold text-[#0D0E10]">{t("Ödeme")}</h2>
             <p className="mt-1 text-sm text-slate-500">{t("Görüşme ücreti:")} <strong className="text-slate-700">${CONSULT_FEE_USD}</strong></p>
             <div className="mt-3 space-y-3 rounded-2xl border border-slate-200 p-4">
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("Kart bilgileri")} <span className="font-normal text-slate-400">{t("(demo — gerçek ödeme alınmaz)")}</span></div>

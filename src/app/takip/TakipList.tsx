@@ -37,8 +37,8 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
     <div dir={dir}>
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 font-serif text-2xl font-semibold text-[#101010]">
-            <HeartPulse size={22} className="text-[#0EA5B2]" /> {t("Post-Op Takip")}
+          <h1 className="flex items-center gap-2 font-serif text-2xl font-semibold text-[#0D0E10]">
+            <HeartPulse size={22} className="text-[#1FA9B8]" /> {t("Post-Op Takip")}
           </h1>
           <p className="mt-1 text-sm text-slate-500">{t("Operasyon sonrası iyileşme takipleriniz — günlük kontrol girişleri ve doktor gözetimi.")}</p>
         </div>
@@ -54,10 +54,10 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
         <div className="space-y-3">
           {rows.map((r) => (
             <Link key={r.caseId} href={`/takip/${r.caseId}`}
-              className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-[#14C3D0]/50 hover:shadow">
+              className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-[#28C8D8]/50 hover:shadow">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[#101010]">{r.branch}</span>
+                  <span className="text-sm font-semibold text-[#0D0E10]">{r.branch}</span>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
                     r.status === "COMPLETED" ? "bg-slate-100 text-slate-500" : "bg-emerald-50 text-emerald-600"
                   }`}>
@@ -68,7 +68,7 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
                   {t("Başlangıç")}: {new Date(r.startedAt).toLocaleDateString("tr-TR")}
                 </p>
               </div>
-              <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#0EA5B2]">
+              <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#1FA9B8]">
                 {t("Takibi aç")} <ArrowRight size={15} className="transition group-hover:translate-x-0.5 rtl:rotate-180" />
               </span>
             </Link>

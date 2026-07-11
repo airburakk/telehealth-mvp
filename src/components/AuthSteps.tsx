@@ -10,17 +10,17 @@ export function AuthSteps({ active, labels }: { active: 0 | 1; labels: readonly 
           <span
             className={`grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold ${
               i === active
-                ? "bg-[#14C3D0] text-[#101010]"
+                ? "bg-[#28C8D8] text-[#0D0E10]"
                 : i < active
-                  ? "bg-[#14C3D0]/20 text-[#0E8A95]"
-                  : "bg-slate-100 text-slate-400"
+                  ? "bg-[#28C8D8]/20 text-[#28C8D8]"
+                  : "bg-white/10 text-white/40"
             }`}
             aria-current={i === active ? "step" : undefined}
           >
             {i + 1}
           </span>
-          <span className={i === active ? "font-semibold text-[#101010]" : "text-slate-400"}>{s}</span>
-          {i < labels.length - 1 && <span className="mx-1 h-px w-6 bg-slate-200" />}
+          <span className={i === active ? "font-semibold text-[#F4F5F3]" : "text-white/40"}>{s}</span>
+          {i < labels.length - 1 && <span className="mx-1 h-px w-6 bg-white/15" />}
         </li>
       ))}
     </ol>

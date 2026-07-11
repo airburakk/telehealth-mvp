@@ -687,7 +687,7 @@ export function ConsultationRoom({
                 )}
                 {transcript.map((l, i) => (
                   <p key={i} className="text-sm leading-snug text-slate-700">
-                    <span className={`font-semibold ${l.who === "doctor" ? "text-[#0EA5B2]" : "text-emerald-700"}`}>
+                    <span className={`font-semibold ${l.who === "doctor" ? "text-[#1FA9B8]" : "text-emerald-700"}`}>
                       {l.who === "doctor" ? t("Doktor") : t("Hasta")}:
                     </span>{" "}
                     {l.text}
@@ -721,8 +721,8 @@ export function ConsultationRoom({
               </span>
             </div>
             <div className="mt-1 flex items-center gap-2 text-sm">
-              <Stethoscope size={14} className="text-[#0EA5B2]" />
-              <span className="font-medium text-[#0EA5B2]">{t(caseData.branch)}</span>
+              <Stethoscope size={14} className="text-[#1FA9B8]" />
+              <span className="font-medium text-[#1FA9B8]">{t(caseData.branch)}</span>
             </div>
             <div className="mt-3">
               <div className="text-xs uppercase tracking-wide text-slate-400">{t("Şikayet")}</div>
@@ -762,7 +762,7 @@ export function ConsultationRoom({
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Görüşme Notları</div>
                 {saved ? <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600"><Check size={13} /> kaydedildi</span> : <span className="text-[11px] text-amber-600">kaydedilmedi</span>}
               </div>
-              <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#14C3D0]" />
+              <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#28C8D8]" />
 
               {/* Akış: 1) transkriptten taslak → 2) sesli not ekle → 3) SOAP'a dönüştür (güncelle) */}
               <div className="mt-2 grid grid-cols-2 gap-2">
@@ -793,7 +793,7 @@ export function ConsultationRoom({
                 {soapBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} AI · SOAP&apos;a dönüştür
               </button>
               {soapErr && <div className="mt-1 text-[11px] text-red-600">{soapErr}</div>}
-              <button onClick={saveNotes} disabled={saving || saved} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-3 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50">
+              <button onClick={saveNotes} disabled={saving || saved} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-3 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50">
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Notu kaydet
               </button>
               <div className="mt-3 grid grid-cols-2 gap-2">

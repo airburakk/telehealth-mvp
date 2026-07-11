@@ -162,7 +162,7 @@ export default async function DoctorPanel({
   return (
     <div className="mx-auto max-w-5xl px-5 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#101010]">Doktor Ana Sayfası</h1>
+        <h1 className="text-2xl font-bold text-[#0D0E10]">Doktor Ana Sayfası</h1>
         <p className="mt-1 text-sm text-slate-500">Birimleriniz tercihinize göre düzenlendi.</p>
       </div>
 
@@ -231,7 +231,7 @@ export default async function DoctorPanel({
             subtitle="Atanan vakalar — dosya inceleme + yazılı görüş"
             badge={soCount > 0 ? <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700">{soCount} bekliyor</span> : undefined}
           >
-            <Link href="/doktor/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0E8A95] hover:underline">
+            <Link href="/doktor/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#17919E] hover:underline">
               İkinci Görüş panelini aç <ArrowRight size={15} />
             </Link>
           </DashboardPanel>

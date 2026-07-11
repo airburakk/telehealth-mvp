@@ -62,9 +62,9 @@ export function NotifyChannelCard({ initialChannel, initialPhone }: { initialCha
             <button
               key={c.key}
               onClick={() => { setChannel(c.key); setSaved(false); }}
-              className={`rounded-2xl border p-3 text-left transition ${active ? "border-[#14C3D0] bg-[#14C3D0]/[0.07]" : "border-slate-200 hover:border-slate-300"}`}
+              className={`rounded-2xl border p-3 text-left transition ${active ? "border-[#28C8D8] bg-[#28C8D8]/[0.07]" : "border-slate-200 hover:border-slate-300"}`}
             >
-              <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${active ? "text-[#0E8A95]" : "text-slate-700"}`}>
+              <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${active ? "text-[#17919E]" : "text-slate-700"}`}>
                 <Icon size={15} /> {c.label}
               </span>
               <span className="mt-0.5 block text-[11px] text-slate-400">{c.desc}</span>
@@ -81,7 +81,7 @@ export function NotifyChannelCard({ initialChannel, initialPhone }: { initialCha
             value={phone}
             onChange={(e) => { setPhone(e.target.value); setSaved(false); }}
             placeholder="+90 5xx xxx xx xx"
-            className="w-52 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]"
+            className="w-52 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
           />
           {!phone.trim() && <span className="text-[11px] text-amber-600">Bu kanal için telefon numarası gerekli.</span>}
         </div>
@@ -91,7 +91,7 @@ export function NotifyChannelCard({ initialChannel, initialPhone }: { initialCha
       <button
         onClick={save}
         disabled={saving || !dirty || (needsPhone && !phone.trim())}
-        className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#14C3D0] px-3.5 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-40"
+        className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-3.5 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-40"
       >
         {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <Check size={14} /> : <Save size={14} />}
         {saved ? "Kaydedildi" : "Tercihi kaydet"}

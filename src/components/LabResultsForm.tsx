@@ -119,7 +119,7 @@ export function LabResultsForm({
                     value={r.loinc}
                     onChange={(e) => pickLoinc(i, e.target.value)}
                     title="Branşa özel LOINC"
-                    className="w-[88px] shrink-0 rounded-lg border border-slate-300 bg-slate-50 px-2 py-2 text-xs text-slate-600 outline-none focus:border-[#14C3D0]"
+                    className="w-[88px] shrink-0 rounded-lg border border-slate-300 bg-slate-50 px-2 py-2 text-xs text-slate-600 outline-none focus:border-[#28C8D8]"
                   >
                     <option value="">LOINC…</option>
                     {loincOptions.map((o) => (
@@ -131,20 +131,20 @@ export function LabResultsForm({
                   value={r.name}
                   onChange={(e) => update(i, { name: e.target.value })}
                   placeholder="test adı"
-                  className={`w-full min-w-0 rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#14C3D0] ${r.aiSuggested ? "border-teal-300 bg-teal-50/40" : "border-slate-300"}`}
+                  className={`w-full min-w-0 rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-teal-300 bg-teal-50/40" : "border-slate-300"}`}
                 />
               </div>
               <input
                 value={r.value}
                 onChange={(e) => update(i, { value: e.target.value })}
                 placeholder="değer"
-                className={`rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#14C3D0] ${r.aiSuggested ? "border-teal-300 bg-teal-50/40" : "border-slate-300"}`}
+                className={`rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-teal-300 bg-teal-50/40" : "border-slate-300"}`}
               />
               <input
                 value={r.unit}
                 onChange={(e) => update(i, { unit: e.target.value })}
                 placeholder="birim"
-                className={`rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#14C3D0] ${r.aiSuggested ? "border-teal-300 bg-teal-50/40" : "border-slate-300"}`}
+                className={`rounded-lg border px-2 py-2 text-sm outline-none focus:border-[#28C8D8] ${r.aiSuggested ? "border-teal-300 bg-teal-50/40" : "border-slate-300"}`}
               />
               <button
                 onClick={() => removeRow(i)}
@@ -185,7 +185,7 @@ export function LabResultsForm({
         <button
           onClick={save}
           disabled={saving}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
           {saved ? "Kaydedildi" : "Lab sonuçlarını kaydet"}

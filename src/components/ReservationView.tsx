@@ -110,7 +110,7 @@ export function ReservationView(p: ReservationViewProps) {
                 <div className="text-xs uppercase tracking-wide text-slate-400">{t("Rezervasyon No")}</div>
                 <div className="font-mono text-sm text-slate-700">{p.rezNo}</div>
               </div>
-              <span className="rounded-full bg-[#14C3D0] px-3 py-1 text-xs font-semibold text-[#101010]">{p.tier} {t("Paket")}</span>
+              <span className="rounded-full bg-[#28C8D8] px-3 py-1 text-xs font-semibold text-[#0D0E10]">{p.tier} {t("Paket")}</span>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -123,7 +123,7 @@ export function ReservationView(p: ReservationViewProps) {
             {/* Doktorun seçtiği tesis + sağlık turizmi yetki belgesi rozeti (hasta güven sinyali; yalnız pozitif) */}
             {p.hospitalName && (
               <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm">
-                <Building2 size={14} className="shrink-0 text-[#0EA5B2]" />
+                <Building2 size={14} className="shrink-0 text-[#1FA9B8]" />
                 <span className="min-w-0 font-medium text-slate-700">{p.hospitalName}</span>
                 {p.hospitalAuthNo && (
                   <span title={t("Sağlık turizmi yetki belgeli tesis (T.C. Sağlık Bakanlığı — HealthTürkiye)")} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
@@ -143,7 +143,7 @@ export function ReservationView(p: ReservationViewProps) {
             </ul>
             <div className="mt-3 flex items-end justify-between border-t border-slate-200 pt-3">
               <span className="text-sm font-semibold text-slate-700">{t("Toplam (Escrow)")}</span>
-              <span className="text-2xl font-bold text-[#101010]">{formatUSD(p.total)}</span>
+              <span className="text-2xl font-bold text-[#0D0E10]">{formatUSD(p.total)}</span>
             </div>
           </div>
 
@@ -228,7 +228,7 @@ export function ReservationView(p: ReservationViewProps) {
           <Link href={`/sikayet/${p.caseId}`} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
             <Scale size={15} /> {t("Şikayet / itiraz (Etik Kurul)")}
           </Link>
-          <Link href="/doktor" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+          <Link href="/doktor" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
             <Stethoscope size={16} /> {t("Doktor paneline dön")}
           </Link>
         </aside>

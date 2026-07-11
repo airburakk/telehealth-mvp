@@ -511,7 +511,7 @@ export default function DicomViewer({ open, onClose, src }: { open: boolean; onC
       {hasImg && total > 1 && (
         <div className="flex items-center gap-3 border-t border-white/10 px-4 py-2 text-white">
           <span className="text-xs text-white/60">Kesit</span>
-          <input type="range" min={0} max={total - 1} value={idx} onChange={(e) => setIdx(Number(e.target.value))} className="flex-1" style={{ accentColor: "#14C3D0" }} />
+          <input type="range" min={0} max={total - 1} value={idx} onChange={(e) => setIdx(Number(e.target.value))} className="flex-1" style={{ accentColor: "#28C8D8" }} />
           <span className="w-14 text-right text-xs tabular-nums">{idx + 1}/{total}</span>
         </div>
       )}

@@ -121,7 +121,7 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
           <Field icon={<ClipboardList size={15} />} label={t("Sağlık durumunuz veya hedefiniz nedir?")}>
             <textarea value={symptoms} onChange={(e) => setSymptoms(e.target.value)} rows={3}
               placeholder={t("Örn. saç ekimi düşünüyorum; ön bölgede belirgin seyrekleşme var.")}
-              className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#0EA5B2]" />
+              className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#1FA9B8]" />
           </Field>
 
           <Field icon={<Stethoscope size={15} />} label={t("Tedavi alanı")}>
@@ -149,7 +149,7 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
             <div className="grid grid-cols-3 gap-2">
               {TIERS.map((ti) => (
                 <button key={ti} type="button" onClick={() => setTier(ti)}
-                  className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${tier === ti ? "border-[#0EA5B2] bg-[#14C3D0]/10 text-[#0EA5B2]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}>
+                  className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${tier === ti ? "border-[#1FA9B8] bg-[#28C8D8]/10 text-[#1FA9B8]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}>
                   {t(TIER_LABEL[ti])}
                 </button>
               ))}
@@ -167,10 +167,10 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><ShieldCheck size={14} /> {t("Neler dahil?")}</div>
             <ul className="mt-2 grid gap-1.5 text-sm text-slate-600 sm:grid-cols-2">
-              <li className="flex items-center gap-1.5"><Stethoscope size={14} className="text-[#0EA5B2]" /> {t("Tıbbi tedavi")}</li>
-              <li className="flex items-center gap-1.5"><Plane size={14} className="text-[#0EA5B2]" /> {t("Otel + uçuş + transfer")}</li>
-              <li className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-[#0EA5B2]" /> {t("Zorunlu sağlık turizmi sigortası")}</li>
-              {tier === "Premium" && <li className="flex items-center gap-1.5"><Sparkles size={14} className="text-[#0EA5B2]" /> {t("Tıbbi tercüman (Premium)")}</li>}
+              <li className="flex items-center gap-1.5"><Stethoscope size={14} className="text-[#1FA9B8]" /> {t("Tıbbi tedavi")}</li>
+              <li className="flex items-center gap-1.5"><Plane size={14} className="text-[#1FA9B8]" /> {t("Otel + uçuş + transfer")}</li>
+              <li className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-[#1FA9B8]" /> {t("Zorunlu sağlık turizmi sigortası")}</li>
+              {tier === "Premium" && <li className="flex items-center gap-1.5"><Sparkles size={14} className="text-[#1FA9B8]" /> {t("Tıbbi tercüman (Premium)")}</li>}
             </ul>
           </div>
         </div>
@@ -187,7 +187,7 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
             </dl>
             <div className="mt-4 flex items-baseline justify-between border-t border-slate-100 pt-3">
               <span className="text-sm font-semibold text-slate-700">{t("Tahmini toplam")}</span>
-              <span className="font-serif text-2xl font-bold text-[#0EA5B2]">{formatUSD(quote.total)}</span>
+              <span className="font-serif text-2xl font-bold text-[#1FA9B8]">{formatUSD(quote.total)}</span>
             </div>
 
             <div className="mt-4 flex gap-2 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-800 ring-1 ring-amber-200">
@@ -198,7 +198,7 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
             {error && <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 ring-1 ring-red-200">{error}</div>}
 
             <button type="button" onClick={submitRequest} disabled={busy}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0EA5B2] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0c94a0] disabled:opacity-60">
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1FA9B8] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0c94a0] disabled:opacity-60">
               {busy ? <Loader2 size={16} className="animate-spin" /> : <>{t("Talep Oluştur")} <ArrowRight size={16} className="rtl:rotate-180" /></>}
             </button>
             <p className="mt-2 text-center text-[11px] leading-relaxed text-slate-400">{t("Talebiniz doktora iletilir; görüşmede tıbbi durumunuz değerlendirilip kesin plan ve fiyat oluşturulur. Bu adımda ödeme veya rezervasyon yapılmaz.")}</p>
@@ -221,7 +221,7 @@ function Field({ icon, label, children }: { icon: React.ReactNode; label: string
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${active ? "border-[#0EA5B2] bg-[#14C3D0]/10 text-[#0EA5B2]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}>
+      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${active ? "border-[#1FA9B8] bg-[#28C8D8]/10 text-[#1FA9B8]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}>
       {children}
     </button>
   );

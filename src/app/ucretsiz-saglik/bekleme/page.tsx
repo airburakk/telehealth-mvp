@@ -101,14 +101,14 @@ function WaitingInner() {
           <span className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-slate-100 text-slate-400">
             <Users size={28} />
           </span>
-          <h1 className="mt-5 text-xl font-bold text-[#101010]">{t(S.notWaiting)}</h1>
+          <h1 className="mt-5 text-xl font-bold text-[#0D0E10]">{t(S.notWaiting)}</h1>
           <p className="mt-2 text-sm text-slate-500">{t(S.statusLabel)} {status}. {t(S.statusFollow)}</p>
         </>
       ) : (
         <>
           {/* Dönen AURA logosu (eski dönen halka yerine) */}
           <AuraSpinner size={48} className="mx-auto block" />
-          <h1 className="mt-5 text-xl font-bold text-[#101010]">
+          <h1 className="mt-5 text-xl font-bold text-[#0D0E10]">
             {noDoctor ? t(S.noDoctorTitle) : t(S.searchingTitle)}
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-slate-500">
@@ -117,7 +117,7 @@ function WaitingInner() {
           <div className={`mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ring-1 ${noDoctor ? "bg-red-50 text-red-700 ring-red-200" : "bg-slate-50 text-slate-600 ring-slate-200"}`}>
             <AuraSpinner size={15} className="inline-block" />
             {pos ? (
-              <span><Users size={13} className="mb-0.5 me-1 inline" />{t(S.queuePos)} <b className="text-[#101010]">{pos}</b></span>
+              <span><Users size={13} className="mb-0.5 me-1 inline" />{t(S.queuePos)} <b className="text-[#0D0E10]">{pos}</b></span>
             ) : (
               noDoctor ? t(S.waitingDoctor) : t(S.waitingMatch)
             )}

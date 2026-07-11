@@ -55,9 +55,9 @@ export default async function LogisticsPage({
         <ArrowLeft size={15} /> Operasyon Paneli
       </Link>
       <div className="mt-3 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Luggage size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Luggage size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">Lojistik Takip</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">Lojistik Takip</h1>
           <p className="text-sm text-slate-500">Patient Journey — karşılama · konaklama · tedavi · dönüş aşamalarını yönet</p>
         </div>
       </div>

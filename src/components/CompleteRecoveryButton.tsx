@@ -34,7 +34,7 @@ export function CompleteRecoveryButton({ caseId }: { caseId: string }) {
     return (
       <button
         onClick={(e) => { stop(e); setConfirm(true); }}
-        className="shrink-0 rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:border-[#14C3D0] hover:text-[#0E8A95]"
+        className="shrink-0 rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:border-[#28C8D8] hover:text-[#17919E]"
         title="Post-op takibi tamamla — klinik erişim hastaya devredilir"
       >
         Takibi tamamla
@@ -47,7 +47,7 @@ export function CompleteRecoveryButton({ caseId }: { caseId: string }) {
       <button
         onClick={complete}
         disabled={busy}
-        className="inline-flex items-center gap-1 rounded-lg bg-[#14C3D0] px-2.5 py-1 text-xs font-semibold text-[#101010] transition hover:bg-[#0EA5B2] disabled:opacity-50"
+        className="inline-flex items-center gap-1 rounded-lg bg-[#28C8D8] px-2.5 py-1 text-xs font-semibold text-[#0D0E10] transition hover:bg-[#1FA9B8] disabled:opacity-50"
       >
         {busy ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} {err ? "Tekrar dene" : "Onayla"}
       </button>

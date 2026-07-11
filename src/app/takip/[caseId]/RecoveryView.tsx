@@ -126,16 +126,16 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
   return (
     <div dir={langDir(lang)} className="mx-auto max-w-4xl px-5 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href={`/doktor/vaka/${data.caseId}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0EA5B2]">
+        <Link href={`/doktor/vaka/${data.caseId}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#1FA9B8]">
           <ArrowLeft size={16} /> {t("Vaka detayı")}
         </Link>
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>
 
       <div className="mt-4 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><HeartPulse size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><HeartPulse size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">{t("Post-Op Takip")}</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">{t("Post-Op Takip")}</h1>
           <p className="text-sm text-slate-500">{data.patientName} · {t(data.branch)} · {t("Tedavi sonrası")} <strong className="text-slate-700">{data.day}. {t("gün")}</strong></p>
         </div>
       </div>
@@ -158,7 +158,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
                   <div className="mx-auto max-w-md rounded-2xl border border-amber-200 bg-amber-50 p-4 text-start">
                     <p className="text-sm text-amber-900">{t("Klinik ekibiniz kayıtlarınıza yeniden erişebilecek. Erişimi yeniden vermek istiyor musunuz?")}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <button onClick={reopen} disabled={reopening} className="inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50">
+                      <button onClick={reopen} disabled={reopening} className="inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50">
                         <RotateCcw size={15} /> {reopening ? t("Erişim yeniden açılıyor…") : t("Evet, erişimi yeniden ver")}
                       </button>
                       <button onClick={() => { setReopenStep("idle"); setReopenErr(""); }} disabled={reopening} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
@@ -200,7 +200,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
                         {ci.photo?.startsWith("data:") && (
                           <a href={ci.photo} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block" title={t("Büyütmek için aç")}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={ci.photo} alt={t("İyileşme fotoğrafı")} className="h-20 w-20 rounded-lg object-cover ring-1 ring-slate-200 transition hover:ring-[#14C3D0]" />
+                            <img src={ci.photo} alt={t("İyileşme fotoğrafı")} className="h-20 w-20 rounded-lg object-cover ring-1 ring-slate-200 transition hover:ring-[#28C8D8]" />
                           </a>
                         )}
                       </div>
@@ -313,10 +313,10 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
             <p className="mt-1.5 text-sm text-slate-600">{t("Günlük ilaç bildirimleri açık (demo).")}</p>
           </div>
 
-          <Link href="/paylasimlarim" className="block rounded-3xl border border-[#14C3D0]/20 bg-[#14C3D0]/[0.03] p-5 transition-colors hover:bg-[#14C3D0]/[0.06]">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#101010]"><ShieldCheck size={15} /> {t("Güvenli Paylaşım")}</div>
+          <Link href="/paylasimlarim" className="block rounded-3xl border border-[#28C8D8]/20 bg-[#28C8D8]/[0.03] p-5 transition-colors hover:bg-[#28C8D8]/[0.06]">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#0D0E10]"><ShieldCheck size={15} /> {t("Güvenli Paylaşım")}</div>
             <p className="mt-1.5 text-sm text-slate-600">{t("Bu kayıtları kendi ülkenizdeki doktorunuzla süreli ve iptal edilebilir bir bağlantıyla paylaşın.")}</p>
-            <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#101010]">{t("Paylaşım Kontrol Merkezi")} <ArrowRight size={14} /></span>
+            <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0D0E10]">{t("Paylaşım Kontrol Merkezi")} <ArrowRight size={14} /></span>
           </Link>
         </aside>
       </div>

@@ -62,7 +62,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0EA5B2]">
+      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#1FA9B8]">
         <ArrowLeft size={16} /> Vaka kuyruğu
       </Link>
 
@@ -79,7 +79,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
                 <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
                   <span className="inline-flex items-center gap-1"><Languages size={14} /> {c.language}</span>
                   <span className="inline-flex items-center gap-1"><Clock size={14} /> {formatDateTime(c.createdAt)}</span>
-                  <span className="inline-flex items-center gap-1"><Stethoscope size={14} /> <span className="font-medium text-[#0EA5B2]">{c.branch}</span></span>
+                  <span className="inline-flex items-center gap-1"><Stethoscope size={14} /> <span className="font-medium text-[#1FA9B8]">{c.branch}</span></span>
                 </div>
               </div>
               <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
@@ -164,7 +164,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
 
             <div className="text-xs uppercase tracking-wide text-slate-400">Atanan / Önerilen Doktor</div>
             <div className="mt-2 flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-white" style={{ background: (c.doctor ?? suggested)?.color ?? "#0EA5B2" }}>
+              <span className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-white" style={{ background: (c.doctor ?? suggested)?.color ?? "#1FA9B8" }}>
                 {((c.doctor ?? suggested)?.name ?? "?").slice(0, 1)}
               </span>
               <div className="text-sm">
@@ -240,7 +240,7 @@ function DisabledAction({ children }: { children: React.ReactNode }) {
 function PostopClosedScreen() {
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
-      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0EA5B2]">
+      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#1FA9B8]">
         <ArrowLeft size={16} /> Vaka kuyruğu
       </Link>
       <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">

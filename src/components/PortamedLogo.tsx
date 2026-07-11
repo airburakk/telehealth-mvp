@@ -28,7 +28,7 @@ export function AuraSpinner({ size = 48, durationMs = 2400, className = "" }: { 
   );
 }
 
-export function PortamedLogo({ size = 24, ink = "#101010" }: { size?: number; ink?: string }) {
+export function PortamedLogo({ size = 24, ink = "#0D0E10" }: { size?: number; ink?: string }) {
   const onDark = ink === "#FFFFFF" || ink === "#fff" || ink === "white";
   const wordH = Math.round(size * 0.6);
   return (

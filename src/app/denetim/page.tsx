@@ -35,7 +35,7 @@ export default async function DenetimPage({
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
       <div className="flex items-center gap-2.5 mb-1.5">
-        <Link2 size={20} className="text-[#0E8A95]" />
+        <Link2 size={20} className="text-[#17919E]" />
         <h1 className="text-2xl font-semibold text-slate-900">Denetim İzi Bütünlüğü</h1>
       </div>
       <p className="text-sm text-slate-600 max-w-3xl">
@@ -205,7 +205,7 @@ export default async function DenetimPage({
           sayfalanır; <strong>bütünlük taraması ise her görünümde tüm zinciri</strong> kapsar.
           Zaman damgası şu an mekanizma-doğrulama amaçlı <em>simüle</em> (SIMULATED-LOCAL); üretimde bağımsız
           RFC 3161 otoritesine (freeTSA / TÜBİTAK BİLGEM) takılacak. Hasta kendi kaydını{" "}
-          <Link href="/erisim-kaydi" className="text-[#0E8A95] hover:underline">Erişim Kaydım</Link>’dan görür.
+          <Link href="/erisim-kaydi" className="text-[#17919E] hover:underline">Erişim Kaydım</Link>’dan görür.
         </p>
       </div>
     </main>

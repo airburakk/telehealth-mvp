@@ -24,9 +24,9 @@ export function JourneyStageRail({ journey, current, lang }: { journey: JourneyK
               className={[
                 "grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold",
                 isCurrent
-                  ? "bg-[#14C3D0] text-[#101010]"
+                  ? "bg-[#28C8D8] text-[#0D0E10]"
                   : done
-                    ? "bg-[#14C3D0]/20 text-[#0E8A95]"
+                    ? "bg-[#28C8D8]/20 text-[#17919E]"
                     : na
                       ? "border border-dashed border-slate-300 text-slate-300"
                       : "bg-slate-100 text-slate-400",
@@ -38,7 +38,7 @@ export function JourneyStageRail({ journey, current, lang }: { journey: JourneyK
             <span
               className={
                 isCurrent
-                  ? "whitespace-nowrap font-semibold text-[#101010]"
+                  ? "whitespace-nowrap font-semibold text-[#0D0E10]"
                   : na
                     ? "whitespace-nowrap text-slate-300 line-through"
                     : "whitespace-nowrap text-slate-400"

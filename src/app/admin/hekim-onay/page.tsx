@@ -23,9 +23,9 @@ export default async function DoctorApprovalPage() {
   return (
     <div className="mx-auto max-w-3xl px-5 py-10">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><ShieldCheck size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><ShieldCheck size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">Doktor Doğrulama Onayı</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">Doktor Doğrulama Onayı</h1>
           <p className="text-sm text-slate-500">Kaydolan doktorları inceleyip doğrulayın — onaylanmadan dizinde ve eşleştirmede görünmezler.</p>
         </div>
       </div>
@@ -51,11 +51,11 @@ export default async function DoctorApprovalPage() {
               <div key={d.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2 text-base font-bold text-[#101010]">
-                      <Stethoscope size={16} className="text-[#0EA5B2]" /> {d.title} {d.name}
+                    <div className="flex items-center gap-2 text-base font-bold text-[#0D0E10]">
+                      <Stethoscope size={16} className="text-[#1FA9B8]" /> {d.title} {d.name}
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                      <span className="font-medium text-[#0EA5B2]">{d.branch || "— branş belirtilmemiş"}</span>
+                      <span className="font-medium text-[#1FA9B8]">{d.branch || "— branş belirtilmemiş"}</span>
                       <span className="inline-flex items-center gap-1"><MapPin size={12} /> {d.city || "—"}</span>
                       <span className="inline-flex items-center gap-1"><Globe size={12} /> {d.languages}</span>
                     </div>

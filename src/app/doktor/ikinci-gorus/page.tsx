@@ -59,9 +59,9 @@ export default async function DoctorSoListPage() {
         <ArrowLeft size={15} /> Doktor paneli
       </Link>
       <div className="mt-3 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Stethoscope size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Stethoscope size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">İkinci Görüş</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">İkinci Görüş</h1>
           <p className="text-sm text-slate-500">Önünüze düşen dosyaları kabul edin; kabul ettiklerinizde yazılı görüş sunun.</p>
         </div>
       </div>
@@ -75,14 +75,14 @@ export default async function DoctorSoListPage() {
               const branchLabel = BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch;
               const open = c.assignedDoctorId !== myDoctorId; // açık fan-out (süre dolmuş)
               return (
-                <div key={c.id} className="rounded-3xl border border-[#14C3D0]/50 bg-[#14C3D0]/[0.05] p-5">
+                <div key={c.id} className="rounded-3xl border border-[#28C8D8]/50 bg-[#28C8D8]/[0.05] p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         {/* Claim-ÖNCESİ kimlik yok (de-id kararı 2026-07-02) — ad kabul ile açılır */}
                         <span className="font-semibold text-slate-800">Anonim hasta</span>
-                        <span className="inline-flex items-center gap-1 text-xs text-[#0EA5B2]"><Stethoscope size={12} /> {branchLabel}</span>
-                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${open ? "bg-amber-100 text-amber-700" : "bg-[#14C3D0]/20 text-[#0E8A95]"}`}>
+                        <span className="inline-flex items-center gap-1 text-xs text-[#1FA9B8]"><Stethoscope size={12} /> {branchLabel}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${open ? "bg-amber-100 text-amber-700" : "bg-[#28C8D8]/20 text-[#17919E]"}`}>
                           {open ? "Açık — süre doldu" : "Size atandı"}
                         </span>
                       </div>
@@ -123,13 +123,13 @@ export default async function DoctorSoListPage() {
               <Link
                 key={c.id}
                 href={`/doktor/ikinci-gorus/${c.id}`}
-                className={`block rounded-3xl border bg-white p-5 shadow-sm transition hover:shadow ${needsOpinion ? "border-[#14C3D0]/50" : "border-slate-200"}`}
+                className={`block rounded-3xl border bg-white p-5 shadow-sm transition hover:shadow ${needsOpinion ? "border-[#28C8D8]/50" : "border-slate-200"}`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold text-slate-800">{nameById[c.patientId] ?? "Hasta"}</span>
-                      <span className="inline-flex items-center gap-1 text-xs text-[#0EA5B2]"><Stethoscope size={12} /> {branchLabel}</span>
+                      <span className="inline-flex items-center gap-1 text-xs text-[#1FA9B8]"><Stethoscope size={12} /> {branchLabel}</span>
                       <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${needsOpinion ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"}`}>
                         {SO_STATUS_LABELS[c.status as SoStatus] ?? c.status}
                       </span>

@@ -28,11 +28,11 @@ function Shell({ children, dir = "ltr" }: { children: React.ReactNode; dir?: "lt
 function Brand({ subtitle = "Güvenli Sağlık Paylaşımı" }: { subtitle?: string }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span className="grid h-9 w-9 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]">
+      <span className="grid h-9 w-9 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]">
         <Activity size={20} strokeWidth={2.4} />
       </span>
       <span className="leading-tight">
-        <span className="block font-bold text-[#101010]">AURA</span>
+        <span className="block font-bold text-[#0D0E10]">AURA</span>
         <span className="block text-[11px] text-slate-500 -mt-0.5">{subtitle}</span>
       </span>
     </div>
@@ -183,9 +183,9 @@ export default async function ShareViewerPage({
 
       <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-start gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><ShieldCheck size={22} /></span>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><ShieldCheck size={22} /></span>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-[#101010]">{caseForShare.patientName} — {t("sağlık kayıtları")}</h1>
+            <h1 className="text-xl font-bold text-[#0D0E10]">{caseForShare.patientName} — {t("sağlık kayıtları")}</h1>
             <p className="text-sm text-slate-500">
               {link.recipientName ?? t("Sizinle paylaşıldı")} · {t("Branş")}: {t(link.case.branch)}
             </p>
@@ -208,11 +208,11 @@ export default async function ShareViewerPage({
             <div key={i} className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-5 py-3">
                 <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-800">
-                  <Icon size={16} className="text-[#101010]" /> {t(it.title)}
+                  <Icon size={16} className="text-[#0D0E10]" /> {t(it.title)}
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-normal text-slate-500">{t(scopeLabel(it.scope))}</span>
                 </div>
                 {dl && (
-                  <a download={dl.name} href={dl.href} className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#101010] hover:underline">
+                  <a download={dl.name} href={dl.href} className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#0D0E10] hover:underline">
                     <Download size={13} /> {t("İndir")}
                   </a>
                 )}

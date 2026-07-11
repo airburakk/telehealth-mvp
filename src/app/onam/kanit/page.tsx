@@ -86,7 +86,7 @@ export default function ConsentProofPage() {
       </div>
 
       <div className="print:hidden mt-6">
-        <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+        <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
           <Printer size={16} /> Yazdır / PDF olarak kaydet
         </button>
       </div>

@@ -59,9 +59,9 @@ export function MyCasesList({ rows }: { rows: MyCaseRow[] }) {
     <div dir={langDir(lang)} className="mx-auto max-w-4xl px-5 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><FolderHeart size={22} /></span>
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><FolderHeart size={22} /></span>
           <div>
-            <h1 className="text-2xl font-bold text-[#101010]">{t(S.title)}</h1>
+            <h1 className="text-2xl font-bold text-[#0D0E10]">{t(S.title)}</h1>
             <p className="text-sm text-slate-500">{t(S.subtitle)}</p>
           </div>
         </div>
@@ -73,13 +73,13 @@ export function MyCasesList({ rows }: { rows: MyCaseRow[] }) {
         </div>
       </div>
 
-      <Link href="/second-opinion/vakalarim" className="mt-5 flex items-center gap-3 rounded-3xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.06] p-4 transition hover:bg-[#14C3D0]/[0.1]">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Stethoscope size={18} /></span>
+      <Link href="/second-opinion/vakalarim" className="mt-5 flex items-center gap-3 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] p-4 transition hover:bg-[#28C8D8]/[0.1]">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Stethoscope size={18} /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-[#101010]">{t(S.soTitle)}</div>
+          <div className="text-sm font-semibold text-[#0D0E10]">{t(S.soTitle)}</div>
           <p className="text-xs text-slate-500">{t(S.soDesc)}</p>
         </div>
-        <ArrowRight size={16} className="shrink-0 text-[#0E8A95]" />
+        <ArrowRight size={16} className="shrink-0 text-[#17919E]" />
       </Link>
 
       <div className="mt-6 space-y-3">
@@ -87,7 +87,7 @@ export function MyCasesList({ rows }: { rows: MyCaseRow[] }) {
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white py-14 text-center">
             <Inbox className="mx-auto mb-2 text-slate-300" size={28} />
             <p className="text-sm text-slate-500">{t(S.empty)}</p>
-            <Link href="/triyaj" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#14C3D0] px-4 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+            <Link href="/triyaj" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
               <Plus size={15} /> {t(S.emptyBtn)}
             </Link>
           </div>
@@ -110,7 +110,7 @@ export function MyCasesList({ rows }: { rows: MyCaseRow[] }) {
                     </span>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
-                    <span className="inline-flex items-center gap-1"><Stethoscope size={12} /> <span className="font-medium text-[#0EA5B2]">{t(c.branch)}</span></span>
+                    <span className="inline-flex items-center gap-1"><Stethoscope size={12} /> <span className="font-medium text-[#1FA9B8]">{t(c.branch)}</span></span>
                     <span>· {formatDateTime(c.createdAt)}</span>
                     {booking && <span>· {t(booking.tier)} {booking.status === "DRAFT" ? t(S.offerWord) : t(S.packageWord)} (${booking.total.toLocaleString("en-US")})</span>}
                   </div>

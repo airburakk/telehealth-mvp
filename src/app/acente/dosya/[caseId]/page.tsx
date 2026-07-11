@@ -73,14 +73,14 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href="/acente" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0EA5B2]">
+      <Link href="/acente" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#1FA9B8]">
         <ArrowLeft size={16} /> Tedavi dosyaları
       </Link>
 
       <div className="mt-4 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Luggage size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Luggage size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">Tedavi Dosyası</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">Tedavi Dosyası</h1>
           <p className="text-sm text-slate-500">Doktorun tedavi kararına göre paket teklifi hazırlayıp hastaya gönderin.</p>
         </div>
       </div>
@@ -105,7 +105,7 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
             iletildi: {formatDateTime(c.agencySentAt)}
             {c.doctor && (
               <div className="mt-1 inline-flex items-center gap-1 text-slate-500">
-                <Stethoscope size={13} className="text-[#0EA5B2]" /> {c.doctor.title} {c.doctor.name} · <span className="font-medium text-[#0EA5B2]">{c.branch}</span>
+                <Stethoscope size={13} className="text-[#1FA9B8]" /> {c.doctor.title} {c.doctor.name} · <span className="font-medium text-[#1FA9B8]">{c.branch}</span>
               </div>
             )}
           </div>

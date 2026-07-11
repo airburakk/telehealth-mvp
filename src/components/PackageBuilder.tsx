@@ -127,7 +127,7 @@ export function PackageBuilder({
                 key={t}
                 onClick={() => applyTier(t)}
                 className={`rounded-2xl border px-3 py-3 text-sm font-semibold transition ${
-                  tier === t ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                  tier === t ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                 }`}
               >
                 {t}
@@ -179,15 +179,15 @@ export function PackageBuilder({
                   type="button"
                   onClick={() => setInsLevel(lvl)}
                   aria-pressed={active}
-                  className={`w-full rounded-2xl border p-3 text-left transition ${active ? "border-[#14C3D0] bg-[#14C3D0]/[0.06]" : "border-slate-200 bg-white hover:border-[#14C3D0]/40"}`}
+                  className={`w-full rounded-2xl border p-3 text-left transition ${active ? "border-[#28C8D8] bg-[#28C8D8]/[0.06]" : "border-slate-200 bg-white hover:border-[#28C8D8]/40"}`}
                 >
                   <div className="flex items-start gap-2.5">
-                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? "bg-[#14C3D0] text-[#101010]" : "bg-slate-100 text-slate-500"}`}>
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? "bg-[#28C8D8] text-[#0D0E10]" : "bg-slate-100 text-slate-500"}`}>
                       <Icon size={16} />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-semibold text-[#101010]">Seviye {lvl} · {info.title}</span>
+                        <span className="text-sm font-semibold text-[#0D0E10]">Seviye {lvl} · {info.title}</span>
                         <span className="shrink-0 text-sm font-bold text-slate-800">{formatUSD(q.total)}</span>
                       </div>
                       <p className="mt-0.5 text-xs text-slate-500">{info.desc}</p>
@@ -209,7 +209,7 @@ export function PackageBuilder({
                         </div>
                       )}
                     </div>
-                    <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${active ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 bg-white text-transparent"}`}>
+                    <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 bg-white text-transparent"}`}>
                       <Check size={12} />
                     </span>
                   </div>
@@ -247,7 +247,7 @@ export function PackageBuilder({
           </div>
           <div className="mt-2 flex items-end justify-between border-t border-slate-200 pt-3">
             <span className="text-sm font-semibold text-slate-700">Toplam</span>
-            <span className="text-2xl font-bold text-[#101010]">{formatUSD(quote.total)}</span>
+            <span className="text-2xl font-bold text-[#0D0E10]">{formatUSD(quote.total)}</span>
           </div>
           {hasTx && (
             <div className="mt-2 text-[11px] text-slate-400">
@@ -322,7 +322,7 @@ function Segment({ value, onChange, options, render }: { value: string; onChange
         <button
           key={o}
           onClick={() => onChange(o)}
-          className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${value === o ? "bg-[#14C3D0] text-[#101010]" : "text-slate-600 hover:bg-slate-100"}`}
+          className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${value === o ? "bg-[#28C8D8] text-[#0D0E10]" : "text-slate-600 hover:bg-slate-100"}`}
         >
           {render ? render(o) : o}
         </button>

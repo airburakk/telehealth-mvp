@@ -60,50 +60,52 @@ export function SecondOpinionContent({ canApply = true, staffHref = null }: { ca
   const [locale, setLocale] = usePublicLocale();
   const C = COPY[locale];
   return (
+    <div className="min-h-[calc(100vh-8rem)] bg-[#0D0E10]">
     <div lang={locale} className="mx-auto max-w-4xl px-5 py-12">
       <div className="flex items-center justify-between gap-4">
-        <span className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0]/10 px-4 py-1.5 text-[12.5px] font-semibold uppercase tracking-[0.1em] text-[#0E8A95]">
+        <span className="inline-flex items-center gap-2 rounded-full bg-[#28C8D8]/10 px-4 py-1.5 font-mono text-[12px] font-medium uppercase tracking-[0.1em] text-[#28C8D8]">
           <Stethoscope size={15} /> {C.badge}
         </span>
         <LocaleToggle locale={locale} onChange={setLocale} />
       </div>
-      <h1 className="mt-5 text-3xl font-bold leading-tight text-[#101010] sm:text-[40px]">{C.h1}</h1>
-      <p className="mt-4 max-w-2xl text-[17px] leading-relaxed text-slate-600">{C.intro}</p>
+      <h1 className="mt-5 font-serif text-3xl font-bold leading-tight tracking-[-0.02em] text-[#F4F5F3] sm:text-[40px]">{C.h1}</h1>
+      <p className="mt-4 max-w-2xl text-[17px] leading-relaxed text-white/60">{C.intro}</p>
       <div className="mt-7 flex flex-wrap gap-3">
         {canApply ? (
-          <Link href="/second-opinion/basvur" className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+          <Link href="/second-opinion/basvur" className="inline-flex items-center gap-2 rounded-full bg-[#28C8D8] px-6 py-3 text-[15px] font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
             {C.start} <ArrowRight size={17} />
           </Link>
         ) : (
-          <Link href={staffHref ?? "/"} className="inline-flex items-center gap-2 rounded-full bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+          <Link href={staffHref ?? "/"} className="inline-flex items-center gap-2 rounded-full bg-[#28C8D8] px-6 py-3 text-[15px] font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
             {C.staffCta} <ArrowRight size={17} />
           </Link>
         )}
-        <Link href="/hekimler" className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 py-3 text-[15px] font-semibold text-slate-700 hover:bg-slate-50">
+        <Link href="/hekimler" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-[15px] font-semibold text-white/80 hover:border-white/30">
           {C.seeDoctors}
         </Link>
       </div>
-      {!canApply && <p className="mt-3 text-[13px] leading-relaxed text-slate-500">{C.staffNote}</p>}
+      {!canApply && <p className="mt-3 text-[13px] leading-relaxed text-white/50">{C.staffNote}</p>}
 
       <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {STEPS.map((s, i) => {
           const Icon = s.icon;
           const txt = s[locale];
           return (
-            <div key={i} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Icon size={20} /></span>
-              <div className="mt-3 text-[11px] font-bold text-[#14C3D0]">0{i + 1}</div>
-              <div className="mt-1 font-semibold text-[#101010]">{txt.t}</div>
-              <p className="mt-1 text-sm leading-relaxed text-slate-500">{txt.d}</p>
+            <div key={i} className="rounded-[22px] border border-white/10 bg-[#161719] p-5">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Icon size={20} /></span>
+              <div className="mt-3 font-mono text-[11px] font-bold text-[#28C8D8]">0{i + 1}</div>
+              <div className="mt-1 font-semibold text-[#F4F5F3]">{txt.t}</div>
+              <p className="mt-1 text-sm leading-relaxed text-white/50">{txt.d}</p>
             </div>
           );
         })}
       </div>
 
-      <div className="mt-8 flex items-start gap-3 rounded-3xl border border-[#14C3D0]/25 bg-[#14C3D0]/[0.06] p-5 text-sm text-slate-600">
-        <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-[#0E8A95]" />
+      <div className="mt-8 flex items-start gap-3 rounded-3xl border border-[#28C8D8]/25 bg-[#28C8D8]/[0.06] p-5 text-sm text-white/60">
+        <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-[#28C8D8]" />
         {C.disclaimer}
       </div>
+    </div>
     </div>
   );
 }

@@ -118,7 +118,7 @@ export function PartnerRequestForm({
       <button onClick={() => router.push("/partner")} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
         <ArrowLeft size={15} /> {t.back}
       </button>
-      <h1 className="mt-3 text-2xl font-bold text-[#101010]">{t.title}</h1>
+      <h1 className="mt-3 text-2xl font-bold text-[#0D0E10]">{t.title}</h1>
 
       <div className="mt-3 flex items-start gap-2 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-3 text-xs text-indigo-800">
         <ShieldCheck size={16} className="mt-0.5 shrink-0" />

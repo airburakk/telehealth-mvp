@@ -69,7 +69,7 @@ export default async function PartnerHome() {
       {/* Hero — partner kimliği (ad/kurum/branş = kanonik veri, çevrilmez) */}
       <div className="rounded-3xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-6 shadow-sm">
         <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-600">{tr(UI.panel)}</div>
-        <h1 className="mt-1 text-2xl font-bold text-[#101010]">{partner.title} {partner.name}</h1>
+        <h1 className="mt-1 text-2xl font-bold text-[#0D0E10]">{partner.title} {partner.name}</h1>
         <p className="text-sm text-slate-500">{partner.institution ? `${partner.institution} · ` : ""}{partner.country}{partner.branch ? ` · ${partner.branch}` : ""}</p>
       </div>
 
@@ -83,7 +83,7 @@ export default async function PartnerHome() {
       <Link href="/partner/talep" className="mt-5 flex items-center gap-3 rounded-3xl border border-[#818cf8]/40 bg-[#818cf8]/[0.08] p-5 transition hover:bg-[#818cf8]/[0.14]">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#818cf8] text-white"><Plus size={20} /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-[#101010]">{tr(UI.createCta)}</div>
+          <div className="text-sm font-semibold text-[#0D0E10]">{tr(UI.createCta)}</div>
           <p className="text-xs text-slate-500">{tr(UI.createSub)}</p>
         </div>
       </Link>
@@ -116,9 +116,9 @@ export default async function PartnerHome() {
       <section className="mt-7 rounded-3xl border border-emerald-200 bg-white p-5 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#34d399] text-[#101010]"><Newspaper size={18} /></span>
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#34d399] text-[#0D0E10]"><Newspaper size={18} /></span>
             <div>
-              <h2 className="text-sm font-semibold text-[#101010]">{tr(UI.news)}</h2>
+              <h2 className="text-sm font-semibold text-[#0D0E10]">{tr(UI.news)}</h2>
               <p className="text-xs text-slate-500">{tr(UI.newsSub)}{partner.branch ? ` + ${partner.branch}` : ""}</p>
             </div>
           </div>

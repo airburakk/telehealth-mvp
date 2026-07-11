@@ -46,7 +46,7 @@ export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
     <main dir={langDir(lang)} className="mx-auto max-w-4xl px-5 py-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <Lock size={20} className="text-[#0E8A95]" />
+          <Lock size={20} className="text-[#17919E]" />
           <h1 className="text-2xl font-semibold text-slate-900">{t(S.title)}</h1>
         </div>
         <PatientLangSelect lang={lang} onChange={setLang} />
@@ -80,7 +80,7 @@ export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
                     </td>
                     <td className="px-4 py-2.5">
                       {e.actorIsYou ? (
-                        <span className="inline-flex items-center rounded-full bg-[#0E8A95]/10 px-2 py-0.5 text-xs font-medium text-[#0E8A95]">
+                        <span className="inline-flex items-center rounded-full bg-[#17919E]/10 px-2 py-0.5 text-xs font-medium text-[#17919E]">
                           {t(S.you)}
                         </span>
                       ) : (
@@ -112,7 +112,7 @@ export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
         <Clock size={15} className="mt-0.5 shrink-0 text-slate-400" />
         <p>
           <strong className="text-slate-600">{t(S.footerLead)}</strong> {t(S.footerBody)} {t(S.proofPrefix)}{" "}
-          <Link href="/onam/kanit" className="text-[#0E8A95] hover:underline">
+          <Link href="/onam/kanit" className="text-[#17919E] hover:underline">
             {t(S.proofLink)}
           </Link>
           .

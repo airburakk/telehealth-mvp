@@ -49,15 +49,15 @@ export function PatientSignupForm({ googleEnabled }: { googleEnabled: boolean })
   if (verifySent) {
     return (
       <div className="w-full max-w-sm">
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-50 text-emerald-600"><MailCheck size={28} /></span>
-          <h1 className="mt-4 text-lg font-bold text-[#101010]">Doğrulama bağlantısı gönderildi</h1>
-          <p className="mt-2 text-sm text-slate-500">
-            <span className="font-medium text-slate-700">{email}</span> adresine bir doğrulama
+        <div className="rounded-[22px] border border-white/10 bg-[#161719] p-8 text-center">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-500/15 text-emerald-300"><MailCheck size={28} /></span>
+          <h1 className="mt-4 font-serif text-lg font-bold text-[#F4F5F3]">Doğrulama bağlantısı gönderildi</h1>
+          <p className="mt-2 text-sm text-white/50">
+            <span className="font-medium text-white/80">{email}</span> adresine bir doğrulama
             e-postası gönderdik. Bağlantıya tıkladıktan sonra giriş yapabilirsiniz.
           </p>
-          <p className="mt-3 text-xs text-slate-400">E-posta birkaç dakika içinde gelmezse spam klasörünü kontrol edin.</p>
-          <Link href="/giris" className="mt-5 inline-flex items-center justify-center rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+          <p className="mt-3 text-xs text-white/40">E-posta birkaç dakika içinde gelmezse spam klasörünü kontrol edin.</p>
+          <Link href="/giris" className="mt-5 inline-flex items-center justify-center rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
             Giriş ekranına dön
           </Link>
         </div>
@@ -68,58 +68,58 @@ export function PatientSignupForm({ googleEnabled }: { googleEnabled: boolean })
   return (
     <div className="w-full max-w-sm">
       <div className="mb-6 flex flex-col items-center text-center">
-        <span className="grid h-12 w-12 place-items-center rounded-3xl bg-[#101010] shadow"><AuraMark size={26} /></span>
-        <h1 className="mt-3 flex items-center gap-1.5 text-xl font-bold text-[#101010]"><HeartPulse size={20} className="text-[#0EA5B2]" /> Hasta Üyeliği</h1>
-        <p className="text-sm text-slate-500">Birkaç adımda hesabınızı oluşturun</p>
+        <span className="grid h-12 w-12 place-items-center rounded-3xl bg-[#161719] ring-1 ring-white/10"><AuraMark size={26} /></span>
+        <h1 className="mt-3 flex items-center gap-1.5 font-serif text-xl font-bold tracking-tight text-[#F4F5F3]"><HeartPulse size={20} className="text-[#28C8D8]" /> Hasta Üyeliği</h1>
+        <p className="text-sm text-white/50">Birkaç adımda hesabınızı oluşturun</p>
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        {oauthMsg && <div className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">{oauthMsg}</div>}
+      <div className="rounded-[22px] border border-white/10 bg-[#161719] p-6">
+        {oauthMsg && <div className="mb-3 rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-300 ring-1 ring-amber-400/25">{oauthMsg}</div>}
 
         <SocialAuthButtons googleEnabled={googleEnabled} intent="patient" />
 
-        <div className="my-4 flex items-center gap-3 text-xs text-slate-400">
-          <span className="h-px flex-1 bg-slate-200" /> veya e-posta ile <span className="h-px flex-1 bg-slate-200" />
+        <div className="my-4 flex items-center gap-3 text-xs text-white/40">
+          <span className="h-px flex-1 bg-white/10" /> veya e-posta ile <span className="h-px flex-1 bg-white/10" />
         </div>
 
         <form onSubmit={submit} className="space-y-3">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700">Ad soyad</span>
+            <span className="mb-1.5 block text-sm font-medium text-white/70">Ad soyad</span>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ayşe Yılmaz" className={INPUT} required />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700">E-posta</span>
+            <span className="mb-1.5 block text-sm font-medium text-white/70">E-posta</span>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ayse@example.com" className={INPUT} required />
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-slate-700">Parola</span>
+              <span className="mb-1.5 block text-sm font-medium text-white/70">Parola</span>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="en az 8 karakter" className={INPUT} required minLength={8} />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-slate-700">Parola (tekrar)</span>
+              <span className="mb-1.5 block text-sm font-medium text-white/70">Parola (tekrar)</span>
               <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} placeholder="••••••••" className={INPUT} required minLength={8} />
             </label>
           </div>
 
-          {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">{error}</div>}
+          {error && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300 ring-1 ring-red-400/25">{error}</div>}
 
-          <button type="submit" disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60">
+          <button type="submit" disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60">
             {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />} Üye ol
           </button>
         </form>
 
-        <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
+        <p className="mt-3 text-[11px] leading-relaxed text-white/40">
           Üyelik sonrası kişisel verilerinizin işlenmesine ilişkin KVKK açık onam metni gösterilir;
           sağlık verileriniz uçtan uca erişim kontrolü ve şifreleme ile korunur.
         </p>
       </div>
 
-      <p className="mt-4 text-center text-sm text-slate-500">
-        Zaten hesabınız var mı? <Link href="/giris" className="font-semibold text-[#0EA5B2] hover:underline">Giriş yapın</Link>
+      <p className="mt-4 text-center text-sm text-white/50">
+        Zaten hesabınız var mı? <Link href="/giris" className="font-semibold text-[#28C8D8] hover:underline">Giriş yapın</Link>
       </p>
     </div>
   );
 }
 
-const INPUT = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]";
+const INPUT = "w-full rounded-lg border border-white/10 bg-[#1E1F22] px-3 py-2 text-sm text-[#F4F5F3] outline-none placeholder:text-white/25 focus:border-[#28C8D8]";

@@ -84,7 +84,7 @@ export function OfferView(p: OfferViewProps) {
   return (
     <div dir={langDir(lang)} className="mx-auto max-w-3xl px-5 py-8">
       <div className="print:hidden flex items-center justify-between gap-3">
-        <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0EA5B2]">
+        <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#1FA9B8]">
           <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Vakalarım")}
         </Link>
         <PatientLangSelect lang={lang} onChange={setLang} />
@@ -95,7 +95,7 @@ export function OfferView(p: OfferViewProps) {
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-violet-600 text-white"><FileText size={22} /></span>
           <div>
-            <h1 className="text-2xl font-bold text-[#101010]">{t("Tedavi Paketi Teklifi")}</h1>
+            <h1 className="text-2xl font-bold text-[#0D0E10]">{t("Tedavi Paketi Teklifi")}</h1>
             <p className="text-sm text-slate-500">{p.patientName} · {countryFlag(p.country)} {countryName(p.country)} · {p.branch}</p>
           </div>
         </div>
@@ -128,7 +128,7 @@ export function OfferView(p: OfferViewProps) {
       <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("Paket içeriği")}</span>
-          <span className="rounded-full bg-[#14C3D0] px-3 py-1 text-xs font-semibold text-[#101010]">{p.tier} {t("Paket")}</span>
+          <span className="rounded-full bg-[#28C8D8] px-3 py-1 text-xs font-semibold text-[#0D0E10]">{p.tier} {t("Paket")}</span>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
           <Spec icon={<Building2 size={14} />} k={t("Hastane")} v={p.hospitalType} />
@@ -139,7 +139,7 @@ export function OfferView(p: OfferViewProps) {
         {/* Doktorun seçtiği tesis + sağlık turizmi yetki belgesi rozeti (hasta güven sinyali; yalnız pozitif) */}
         {p.hospitalName && (
           <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm">
-            <Building2 size={14} className="shrink-0 text-[#0EA5B2]" />
+            <Building2 size={14} className="shrink-0 text-[#1FA9B8]" />
             <span className="min-w-0 font-medium text-slate-700">{p.hospitalName}</span>
             {p.hospitalAuthNo && (
               <span title={t("Sağlık turizmi yetki belgeli tesis (T.C. Sağlık Bakanlığı — HealthTürkiye)")} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
@@ -158,7 +158,7 @@ export function OfferView(p: OfferViewProps) {
         </ul>
         <div className="mt-3 flex items-end justify-between border-t border-slate-200 pt-3">
           <span className="text-sm font-semibold text-slate-700">{t("Toplam")}</span>
-          <span className="text-2xl font-bold text-[#101010]">{formatUSD(p.total)}</span>
+          <span className="text-2xl font-bold text-[#0D0E10]">{formatUSD(p.total)}</span>
         </div>
       </div>
 

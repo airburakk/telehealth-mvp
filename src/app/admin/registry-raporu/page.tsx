@@ -30,9 +30,9 @@ export default async function RegistryReportPage() {
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><ClipboardList size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><ClipboardList size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">HealthTürkiye Günlük Raporları</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">HealthTürkiye Günlük Raporları</h1>
           <p className="text-sm text-slate-500">healthturkiye.gov.tr doktor + tesis dizini — 24 saatte bir senkron, eklenen/çıkarılan kayıtlar.</p>
         </div>
       </div>
@@ -62,7 +62,7 @@ export default async function RegistryReportPage() {
             <div key={r.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-base font-bold text-[#101010]">{r.date}</span>
+                  <span className="text-base font-bold text-[#0D0E10]">{r.date}</span>
                   {r.status === "OK" ? (
                     changes === 0 ? (
                       <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-500">değişiklik yok</span>
@@ -104,7 +104,7 @@ export default async function RegistryReportPage() {
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-3.5">
-      <div className="flex items-center gap-1.5 text-2xl font-bold text-[#101010]">{icon} {value.toLocaleString("tr-TR")}</div>
+      <div className="flex items-center gap-1.5 text-2xl font-bold text-[#0D0E10]">{icon} {value.toLocaleString("tr-TR")}</div>
       <div className="text-xs text-slate-500">{label}</div>
     </div>
   );

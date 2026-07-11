@@ -26,13 +26,13 @@ export default function ErrorBoundary({
   const t = ERROR_I18N[lang];
 
   return (
-    <div lang={lang} dir={errDir(lang)} className="grid min-h-[calc(100vh-8rem)] place-items-center px-5 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-amber-50">
-          <AlertTriangle className="h-6 w-6 text-amber-500" />
+    <div lang={lang} dir={errDir(lang)} className="grid min-h-[calc(100vh-8rem)] place-items-center bg-[#0D0E10] px-5 py-10">
+      <div className="w-full max-w-md rounded-[22px] border border-white/10 bg-[#161719] p-8 text-center">
+        <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-amber-500/10">
+          <AlertTriangle className="h-6 w-6 text-amber-300" />
         </div>
-        <h1 className="mt-4 text-xl font-semibold text-slate-800">{t.errorTitle}</h1>
-        <p className="mt-2 text-sm leading-relaxed text-slate-500">{t.errorDesc}</p>
+        <h1 className="mt-4 font-serif text-xl font-semibold text-[#F4F5F3]">{t.errorTitle}</h1>
+        <p className="mt-2 text-sm leading-relaxed text-white/50">{t.errorDesc}</p>
         <button
           type="button"
           onClick={() =>
@@ -41,13 +41,13 @@ export default function ErrorBoundary({
               reset();
             })
           }
-          className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-5 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]"
+          className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-5 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]"
         >
           <RefreshCw className="h-4 w-4" />
           {t.retry}
         </button>
         {error.digest && (
-          <p className="mt-4 text-[11px] text-slate-400">
+          <p className="mt-4 text-[11px] text-white/40">
             {t.reference}: {error.digest}
           </p>
         )}

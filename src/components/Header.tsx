@@ -64,7 +64,7 @@ export function Header({ user, lang = "Türkçe", journey = null }: { user: { na
   }
 
   return (
-    <header dir={dir} className="sticky top-0 z-30 border-b border-white/10 bg-[#101010]/95 backdrop-blur">
+    <header dir={dir} className="sticky top-0 z-30 border-b border-white/10 bg-[#0D0E10]/95 backdrop-blur">
       <div className="mx-auto max-w-6xl px-5 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-end gap-2">
           <PortamedLogo size={23} ink="#FFFFFF" />
@@ -80,7 +80,7 @@ export function Header({ user, lang = "Türkçe", journey = null }: { user: { na
                   key={href}
                   href={href}
                   className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    active ? "bg-[#14C3D0] text-[#101010]" : "text-white/70 hover:bg-white/10 hover:text-[#14C3D0]"
+                    active ? "bg-[#28C8D8] text-[#0D0E10]" : "text-white/70 hover:bg-white/10 hover:text-[#28C8D8]"
                   }`}
                 >
                   <Icon size={16} />
@@ -105,7 +105,7 @@ export function Header({ user, lang = "Türkçe", journey = null }: { user: { na
               </button>
             </div>
           ) : (
-            <Link href="/giris" className="ms-1 inline-flex items-center gap-1.5 rounded-lg bg-[#14C3D0] px-3.5 py-2 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+            <Link href="/giris" className="ms-1 inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-3.5 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
               <LogIn size={16} /> {t("Giriş yap")}
             </Link>
           )}

@@ -70,10 +70,10 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
   return (
     <div className="mt-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-[#101010]">{data.patientName}</h1>
-        <span className="rounded-full bg-[#14C3D0]/10 px-3 py-1 text-[12px] font-semibold text-[#0E8A95]">{SO_STATUS_LABELS[status] ?? status}</span>
+        <h1 className="text-2xl font-bold text-[#0D0E10]">{data.patientName}</h1>
+        <span className="rounded-full bg-[#28C8D8]/10 px-3 py-1 text-[12px] font-semibold text-[#17919E]">{SO_STATUS_LABELS[status] ?? status}</span>
       </div>
-      <p className="mt-1 text-sm text-[#0EA5B2]">{data.branchLabel} · İkinci Görüş</p>
+      <p className="mt-1 text-sm text-[#1FA9B8]">{data.branchLabel} · İkinci Görüş</p>
 
       <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Tanı / durum özeti</div>
@@ -111,7 +111,7 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
                           href={`/api/second-opinion/cases/${data.id}/documents/${d.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-[12.5px] text-[#0E8A95] underline"
+                          className="inline-flex items-center gap-1.5 text-[12.5px] text-[#17919E] underline"
                         >
                           {d.deliveryMethod === "EXTERNAL_LINK" ? <Link2 size={12} /> : <FileText size={12} />}
                           {d.label || (d.deliveryMethod === "EXTERNAL_LINK" ? "Bağlantı" : "Dosya")}
@@ -149,7 +149,7 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
             onChange={(e) => setReqDesc(e.target.value)}
             rows={2}
             placeholder="Örn. Patoloji raporu eksik, lütfen biyopsi sonucunu yükleyin."
-            className="mt-2 w-full resize-y rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-[#14C3D0] focus:outline-none"
+            className="mt-2 w-full resize-y rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-[#28C8D8] focus:outline-none"
           />
           <button
             onClick={openRequest}
@@ -163,8 +163,8 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
 
       {/* Doktor atama */}
       {canAssign && (
-        <div className="mt-4 rounded-3xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.05] p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[#0E8A95]"><UserCheck size={17} /> Doktora ata</div>
+        <div className="mt-4 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.05] p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#17919E]"><UserCheck size={17} /> Doktora ata</div>
           {missingRequired.length > 0 && (
             <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-[13px] text-amber-700">
               <AlertTriangle size={15} className="mt-0.5 shrink-0" />
@@ -174,7 +174,7 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
           <select
             value={doctorId}
             onChange={(e) => setDoctorId(e.target.value)}
-            className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-[#14C3D0] focus:outline-none"
+            className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-[#28C8D8] focus:outline-none"
           >
             {doctors.length === 0 && <option value="">Uygun doktor yok</option>}
             {doctors.map((d) => (
@@ -184,7 +184,7 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
           <button
             onClick={assign}
             disabled={busy !== "" || !doctorId}
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#28C8D8] px-6 py-3 text-[15px] font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50"
           >
             {busy === "assign" ? <Loader2 size={17} className="animate-spin" /> : <>Belgeler yeterli — doktora ata</>}
           </button>
@@ -201,7 +201,7 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
       {/* Video aşaması — doktor ↔ hasta arasında yürütülür (koordinatör Faz-4 randevudan çıktı) */}
       {(status === "OPINION_DELIVERED" || status === "VIDEO_OFFERED" || status === "VIDEO_SCHEDULED") && (
         <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
-          <Video size={16} className="mt-0.5 shrink-0 text-[#0E8A95]" />
+          <Video size={16} className="mt-0.5 shrink-0 text-[#17919E]" />
           <span>Yazılı görüş sunuldu. Video randevusu uzman doktor ile hasta arasında planlanıp yürütülüyor.</span>
         </div>
       )}

@@ -112,9 +112,9 @@ export function FreeCareConsole({
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
       <div className="flex items-center gap-2">
-        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[#14C3D0]/10 text-[#0E8A95]"><HeartHandshake size={20} /></span>
+        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[#28C8D8]/10 text-[#17919E]"><HeartHandshake size={20} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">Ücretsiz Sağlık Hizmeti Konsolu</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">Ücretsiz Sağlık Hizmeti Konsolu</h1>
           <p className="text-sm text-slate-500">Gönüllü ücretsiz konsültasyon — müsaitlik açın, triyaj sizi bekleyen hastayla eşleştirsin.</p>
         </div>
       </div>
@@ -124,7 +124,7 @@ export function FreeCareConsole({
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-              <StateDot state={serverState} /> Durum: <span className="text-[#101010]">{FREE_CARE_STATES_DOCTOR[serverState] ?? serverState}</span>
+              <StateDot state={serverState} /> Durum: <span className="text-[#0D0E10]">{FREE_CARE_STATES_DOCTOR[serverState] ?? serverState}</span>
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
               <Users size={13} /> {waiting} bekleyen hasta
@@ -144,7 +144,7 @@ export function FreeCareConsole({
               onClick={() => toggle(!available)}
               disabled={busy}
               className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors disabled:opacity-60 ${
-                available ? "bg-slate-800 text-white hover:bg-slate-900" : "bg-[#14C3D0] text-[#101010] hover:bg-[#0EA5B2]"
+                available ? "bg-slate-800 text-white hover:bg-slate-900" : "bg-[#28C8D8] text-[#0D0E10] hover:bg-[#1FA9B8]"
               }`}
             >
               {busy ? <Loader2 size={17} className="animate-spin" /> : available ? <Power size={17} /> : <Radio size={17} />}
@@ -154,7 +154,7 @@ export function FreeCareConsole({
 
           {available && (
             <div className="mt-3 flex items-center justify-center gap-2 text-xs text-slate-500">
-              <Loader2 size={13} className="animate-spin text-[#14C3D0]" /> Eşleşme bekleniyor — bu sayfayı açık tutun
+              <Loader2 size={13} className="animate-spin text-[#28C8D8]" /> Eşleşme bekleniyor — bu sayfayı açık tutun
             </div>
           )}
         </div>
@@ -164,11 +164,11 @@ export function FreeCareConsole({
           <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><Activity size={14} /> Haftalık Kontenjan</div>
             <div className="mt-2 flex items-end justify-between">
-              <span className="text-2xl font-bold text-[#101010]">{quota.used}<span className="text-base font-normal text-slate-400">/{quota.quota}</span></span>
+              <span className="text-2xl font-bold text-[#0D0E10]">{quota.used}<span className="text-base font-normal text-slate-400">/{quota.quota}</span></span>
               <span className="text-xs text-slate-500">{quota.left} hak kaldı</span>
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-              <div className="h-full rounded-full bg-[#14C3D0]" style={{ width: `${Math.min(100, (quota.used / Math.max(1, quota.quota)) * 100)}%` }} />
+              <div className="h-full rounded-full bg-[#28C8D8]" style={{ width: `${Math.min(100, (quota.used / Math.max(1, quota.quota)) * 100)}%` }} />
             </div>
           </div>
           <div className="rounded-3xl border border-teal-200 bg-teal-50/60 p-5">
@@ -256,7 +256,7 @@ function CaseHead({ c }: { c: PBCase }) {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-semibold text-[#101010]">{countryFlag(c.country)} {c.patientName}</span>
+        <span className="font-semibold text-[#0D0E10]">{countryFlag(c.country)} {c.patientName}</span>
         <span className="rounded-lg bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200">{c.branch}</span>
         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${u.badge}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${u.dot}`} /> {c.urgency}/5

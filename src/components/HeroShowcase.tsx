@@ -13,7 +13,7 @@ import { UserRound, Search, BadgeCheck, FileText, Activity, HandHeart, Heart, Ar
 import { PortamedLogo } from "@/components/PortamedLogo";
 import { LANDING_COPY, landingDir, type LandingLocale, type LandingCopy } from "@/lib/landing-copy";
 
-const TEAL = "#14C3D0";
+const TEAL = "#28C8D8";
 type Show = LandingCopy["showcase"];
 const BG = [
   "radial-gradient(120% 82% at 50% 12%, #0E2A2E 0%, #0A0B0D 56%)",
@@ -50,7 +50,7 @@ const KF = `
 @media (prefers-reduced-motion: reduce){.hs-root *{animation-duration:1ms!important;animation-iteration-count:1!important}}
 `;
 
-function Avatar({ size = 46, tone = TEAL, bg = "rgba(20,195,208,.12)" }: { size?: number; tone?: string; bg?: string }) {
+function Avatar({ size = 46, tone = TEAL, bg = "rgba(40,200,216,.12)" }: { size?: number; tone?: string; bg?: string }) {
   return (
     <span style={{ display: "grid", placeItems: "center", width: size, height: size, borderRadius: "50%", background: bg, border: `1.5px solid ${tone}` }}>
       <UserRound size={Math.round(size * 0.5)} color={tone} />
@@ -62,12 +62,12 @@ function Avatar({ size = 46, tone = TEAL, bg = "rgba(20,195,208,.12)" }: { size?
 function Scene1({ S }: { S: Show }) {
   return (
     <div className="absolute inset-0">
-      <div style={{ position: "absolute", left: "50%", top: "30%", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(20,195,208,.26), rgba(20,195,208,0) 68%)", filter: "blur(26px)", animation: "hs-glow 7s ease-in-out infinite" }} />
+      <div style={{ position: "absolute", left: "50%", top: "30%", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(40,200,216,.26), rgba(40,200,216,0) 68%)", filter: "blur(26px)", animation: "hs-glow 7s ease-in-out infinite" }} />
 
       {/* Laptop */}
       <div style={{ position: "absolute", left: "50%", top: "30%", width: "80%", transform: "translate(-50%,-50%)" }}>
         <div style={{ borderRadius: 13, border: "1px solid rgba(255,255,255,.16)", background: "#1b1d22", padding: 6, boxShadow: "0 26px 56px -22px rgba(0,0,0,.8)" }}>
-          <div style={{ position: "relative", aspectRatio: "16 / 10", borderRadius: 7, overflow: "hidden", background: "#101010" }}>
+          <div style={{ position: "relative", aspectRatio: "16 / 10", borderRadius: 7, overflow: "hidden", background: "#0D0E10" }}>
 
             {/* FAZ A — gerçek ana sayfa minyatürü */}
             <div style={{ position: "absolute", inset: 0, animation: "hs-phaseA 8s ease-in-out infinite" }}>
@@ -79,12 +79,12 @@ function Scene1({ S }: { S: Show }) {
                 <span style={{ marginLeft: 6, flex: 1, height: 11, borderRadius: 6, background: "rgba(255,255,255,.07)", display: "flex", alignItems: "center", paddingLeft: 8, fontSize: 7, color: "rgba(255,255,255,.4)" }}>aura.health</span>
               </div>
               {/* hero minyatürü */}
-              <div style={{ position: "relative", height: "85%", padding: "9px 11px", background: "linear-gradient(160deg,#101010,#0c1416)" }}>
+              <div style={{ position: "relative", height: "85%", padding: "9px 11px", background: "linear-gradient(160deg,#0D0E10,#0c1416)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <PortamedLogo size={12} ink="#FFFFFF" />
                   <div style={{ display: "flex", gap: 5 }}>{[0, 1, 2].map((i) => <span key={i} style={{ width: 9, height: 2, borderRadius: 2, background: "rgba(255,255,255,.3)" }} />)}</div>
                 </div>
-                <span style={{ display: "inline-block", marginTop: 9, fontSize: 6, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "#5FD3E2", background: "rgba(20,195,208,.14)", borderRadius: 999, padding: "2px 6px" }}>{S.hp.eyebrow}</span>
+                <span style={{ display: "inline-block", marginTop: 9, fontSize: 6, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "#6FDCE8", background: "rgba(40,200,216,.14)", borderRadius: 999, padding: "2px 6px" }}>{S.hp.eyebrow}</span>
                 <div style={{ marginTop: 7, fontSize: 12, fontWeight: 700, lineHeight: 1.12, color: "#fff" }}>{S.hp.t1}<br />{S.hp.t2}</div>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 9, fontSize: 7.5, fontWeight: 700, color: "#06181a", background: TEAL, borderRadius: 999, padding: "4px 9px" }}>
                   <span style={{ display: "grid", placeItems: "center", width: 9, height: 9, borderRadius: "50%", background: "#06181a", color: TEAL, fontSize: 5 }}>▶</span>{S.hp.btn}
@@ -102,7 +102,7 @@ function Scene1({ S }: { S: Show }) {
             {/* FAZ B — video görüşme */}
             <div style={{ position: "absolute", inset: 0, opacity: 0, display: "grid", placeItems: "center", background: "linear-gradient(150deg,#0E3034,#0A1618)", animation: "hs-phaseB 8s ease-in-out infinite" }}>
               <div style={{ position: "relative", display: "grid", placeItems: "center" }}>
-                <span style={{ position: "absolute", left: "50%", top: "50%", width: 60, height: 60, borderRadius: "50%", border: "2px solid rgba(20,195,208,.5)", animation: "hs-ring 2.2s ease-out infinite" }} />
+                <span style={{ position: "absolute", left: "50%", top: "50%", width: 60, height: 60, borderRadius: "50%", border: "2px solid rgba(40,200,216,.5)", animation: "hs-ring 2.2s ease-out infinite" }} />
                 <Avatar size={48} />
               </div>
               <div style={{ position: "absolute", left: 8, top: 7, display: "flex", alignItems: "center", gap: 4, fontSize: 8, fontWeight: 700, color: "#fff", background: "rgba(0,0,0,.4)", padding: "2px 6px", borderRadius: 999 }}>
@@ -124,7 +124,7 @@ function Scene1({ S }: { S: Show }) {
       <div className="absolute inset-0" style={{ pointerEvents: "none" }}>
         {TERMS.map((t, i) => (
           <span key={i} style={{ position: "absolute", left: "50%", top: "29%", transform: "translate(-50%,-50%)" }}>
-            <span style={{ display: "inline-block", whiteSpace: "nowrap", fontSize: 10.5, fontWeight: 600, color: i % 2 ? "#bdf0f5" : "#fff", border: "1px solid rgba(20,195,208,.5)", background: "rgba(11,13,15,.62)", borderRadius: 999, padding: "2px 9px", opacity: 0, ["--tx" as string]: t.tx, ["--ty" as string]: t.ty, animation: `hs-fly 5.2s ease-out ${t.d}s infinite` } as React.CSSProperties}>
+            <span style={{ display: "inline-block", whiteSpace: "nowrap", fontSize: 10.5, fontWeight: 600, color: i % 2 ? "#bdf0f5" : "#fff", border: "1px solid rgba(40,200,216,.5)", background: "rgba(11,13,15,.62)", borderRadius: 999, padding: "2px 9px", opacity: 0, ["--tx" as string]: t.tx, ["--ty" as string]: t.ty, animation: `hs-fly 5.2s ease-out ${t.d}s infinite` } as React.CSSProperties}>
               {t.t}
             </span>
           </span>
@@ -138,18 +138,18 @@ function Scene1({ S }: { S: Show }) {
 function Scene2({ S }: { S: Show }) {
   return (
     <div className="absolute inset-0">
-      <div style={{ position: "absolute", left: "50%", top: "33%", width: 240, height: 240, transform: "translate(-50%,-50%)", borderRadius: "50%", background: "radial-gradient(circle, rgba(20,195,208,.2), rgba(20,195,208,0) 70%)", filter: "blur(26px)" }} />
+      <div style={{ position: "absolute", left: "50%", top: "33%", width: 240, height: 240, transform: "translate(-50%,-50%)", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,200,216,.2), rgba(40,200,216,0) 70%)", filter: "blur(26px)" }} />
       <div style={{ position: "absolute", left: "50%", top: "33%", transform: "translate(-50%,-50%)", width: 168 }}>
         {/* Rapor kartı (her zaman) */}
         <div style={{ position: "relative", borderRadius: 14, background: "#15171B", border: "1px solid rgba(255,255,255,.14)", padding: 14, boxShadow: "0 24px 50px -22px rgba(0,0,0,.7)", overflow: "hidden" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-            <span style={{ display: "grid", placeItems: "center", width: 24, height: 24, borderRadius: 7, background: "rgba(20,195,208,.16)", color: TEAL }}><FileText size={14} /></span>
+            <span style={{ display: "grid", placeItems: "center", width: 24, height: 24, borderRadius: 7, background: "rgba(40,200,216,.16)", color: TEAL }}><FileText size={14} /></span>
             <span style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>{S.s2.doc}</span>
           </div>
           {["88%", "98%", "72%"].map((w, i) => <div key={i} style={{ marginTop: 9, height: 5, width: w, borderRadius: 4, background: "rgba(255,255,255,.13)" }} />)}
-          <div style={{ marginTop: 11, display: "flex", alignItems: "center", gap: 4, color: TEAL }}><Activity size={13} /><div style={{ flex: 1, height: 5, borderRadius: 4, background: "rgba(20,195,208,.18)" }} /></div>
+          <div style={{ marginTop: 11, display: "flex", alignItems: "center", gap: 4, color: TEAL }}><Activity size={13} /><div style={{ flex: 1, height: 5, borderRadius: 4, background: "rgba(40,200,216,.18)" }} /></div>
           {/* tarama çizgisi (faz A) */}
-          <div style={{ position: "absolute", left: 0, right: 0, top: 8, height: 16, background: "linear-gradient(180deg, rgba(20,195,208,0), rgba(20,195,208,.28), rgba(20,195,208,0))", ["--scan" as string]: "92px", animation: "hs-phaseA 8s ease-in-out infinite, hs-scan 2.6s ease-in-out infinite" } as React.CSSProperties} />
+          <div style={{ position: "absolute", left: 0, right: 0, top: 8, height: 16, background: "linear-gradient(180deg, rgba(40,200,216,0), rgba(40,200,216,.28), rgba(40,200,216,0))", ["--scan" as string]: "92px", animation: "hs-phaseA 8s ease-in-out infinite, hs-scan 2.6s ease-in-out infinite" } as React.CSSProperties} />
         </div>
 
         {/* Faz A — büyüteç (inceleme) */}
@@ -160,7 +160,7 @@ function Scene2({ S }: { S: Show }) {
 
         {/* Faz B — onaylı ikinci görüş + uzman */}
         <div style={{ position: "absolute", right: -18, top: -18, opacity: 0, animation: "hs-phaseB 8s ease-in-out infinite" }}>
-          <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: "50%", background: TEAL, color: "#06181a", boxShadow: "0 12px 26px -10px rgba(20,195,208,.7)" }}><BadgeCheck size={24} /></span>
+          <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: "50%", background: TEAL, color: "#06181a", boxShadow: "0 12px 26px -10px rgba(40,200,216,.7)" }}><BadgeCheck size={24} /></span>
         </div>
         <div style={{ position: "absolute", left: -22, bottom: -16, display: "flex", alignItems: "center", gap: 7, opacity: 0, animation: "hs-phaseB 8s ease-in-out infinite" }}>
           <Avatar size={36} />
@@ -179,13 +179,13 @@ function Scene3() {
   const figs = [{ x: "16%", y: "62%", d: "0s" }, { x: "50%", y: "70%", d: "1s" }, { x: "84%", y: "62%", d: "2s" }];
   return (
     <div className="absolute inset-0">
-      <div style={{ position: "absolute", left: "50%", top: "32%", width: 250, height: 250, borderRadius: "50%", background: "radial-gradient(circle, rgba(20,195,208,.28), rgba(198,166,100,.14) 48%, rgba(20,195,208,0) 72%)", filter: "blur(26px)", animation: "hs-glow 6s ease-in-out infinite" }} />
+      <div style={{ position: "absolute", left: "50%", top: "32%", width: 250, height: 250, borderRadius: "50%", background: "radial-gradient(circle, rgba(40,200,216,.28), rgba(198,166,100,.14) 48%, rgba(40,200,216,0) 72%)", filter: "blur(26px)", animation: "hs-glow 6s ease-in-out infinite" }} />
 
       {/* bağ çizgileri */}
       <svg viewBox="0 0 400 500" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid meet" style={{ pointerEvents: "none" }}>
-        <path d="M200,180 C150,250 110,280 66,304" fill="none" stroke="rgba(20,195,208,.28)" strokeWidth="1.6" strokeDasharray="3 6" />
-        <path d="M200,188 L200,338" fill="none" stroke="rgba(20,195,208,.28)" strokeWidth="1.6" strokeDasharray="3 6" />
-        <path d="M200,180 C250,250 290,280 334,304" fill="none" stroke="rgba(20,195,208,.28)" strokeWidth="1.6" strokeDasharray="3 6" />
+        <path d="M200,180 C150,250 110,280 66,304" fill="none" stroke="rgba(40,200,216,.28)" strokeWidth="1.6" strokeDasharray="3 6" />
+        <path d="M200,188 L200,338" fill="none" stroke="rgba(40,200,216,.28)" strokeWidth="1.6" strokeDasharray="3 6" />
+        <path d="M200,180 C250,250 290,280 334,304" fill="none" stroke="rgba(40,200,216,.28)" strokeWidth="1.6" strokeDasharray="3 6" />
       </svg>
 
       {/* Yükselen küçük kalpler */}
@@ -196,8 +196,8 @@ function Scene3() {
       {/* Merkez — el + kalp (atan, ışıyan) */}
       <div style={{ position: "absolute", left: "50%", top: "30%", transform: "translate(-50%,-50%)" }}>
         <div style={{ position: "relative", display: "grid", placeItems: "center" }}>
-          <span style={{ position: "absolute", left: "50%", top: "50%", width: 92, height: 92, borderRadius: "50%", border: "1.5px solid rgba(20,195,208,.4)", animation: "hs-ring 2.6s ease-out infinite" }} />
-          <span style={{ display: "grid", placeItems: "center", width: 86, height: 86, borderRadius: "50%", background: "rgba(20,195,208,.1)", border: "1.5px solid rgba(20,195,208,.35)" }}>
+          <span style={{ position: "absolute", left: "50%", top: "50%", width: 92, height: 92, borderRadius: "50%", border: "1.5px solid rgba(40,200,216,.4)", animation: "hs-ring 2.6s ease-out infinite" }} />
+          <span style={{ display: "grid", placeItems: "center", width: 86, height: 86, borderRadius: "50%", background: "rgba(40,200,216,.1)", border: "1.5px solid rgba(40,200,216,.35)" }}>
             <span style={{ display: "grid", placeItems: "center", animation: "hs-beat 1.8s ease-in-out infinite" }}><HandHeart size={46} color={TEAL} /></span>
           </span>
         </div>
@@ -228,7 +228,7 @@ export function HeroShowcase({ locale, href }: { locale: LandingLocale; href: st
     <div
       dir="ltr" // slider translateX animasyonu RTL'de kırılır — kapsayıcı LTR sabit, metinler textDir alır
       className="hs-root relative aspect-[4/5] w-full overflow-hidden rounded-[24px]"
-      style={{ border: "1px solid rgba(255,255,255,.12)", boxShadow: "0 30px 80px -28px rgba(20,195,208,.5)", background: "#0A0B0D" }}
+      style={{ border: "1px solid rgba(255,255,255,.12)", boxShadow: "0 30px 80px -28px rgba(40,200,216,.5)", background: "#0A0B0D" }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -238,7 +238,7 @@ export function HeroShowcase({ locale, href }: { locale: LandingLocale; href: st
           <Link key={i} href={href} aria-label={sl.tag} className="relative block h-full w-full shrink-0 overflow-hidden" style={{ background: BG[i] }}>
             {i === 0 ? <Scene1 S={S} /> : i === 1 ? <Scene2 S={S} /> : <Scene3 />}
             <div dir={textDir} className="absolute inset-x-0 bottom-0 z-10 px-5 pb-11 pt-16 text-start sm:px-6" style={{ background: "linear-gradient(180deg, rgba(8,9,11,0) 0%, rgba(8,9,11,.8) 50%, rgba(8,9,11,.97) 100%)" }}>
-              <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.12em]" style={{ background: "rgba(20,195,208,.16)", color: "#5FD3E2" }}>{sl.tag}</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.12em]" style={{ background: "rgba(40,200,216,.16)", color: "#6FDCE8" }}>{sl.tag}</span>
               <div className="mt-2.5 text-[17px] font-semibold leading-[1.22] text-white sm:text-[19px]">{sl.title}</div>
               <p className="mt-1.5 text-[12.5px] leading-[1.5] sm:text-[13.5px]" style={{ color: "rgba(255,255,255,.62)" }}>{sl.sub}</p>
               <span className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-semibold" style={{ color: TEAL }}>{sl.cta} <ArrowRight size={14} className="rtl:rotate-180" /></span>

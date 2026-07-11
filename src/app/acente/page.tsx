@@ -44,9 +44,9 @@ export default async function AgencyQueue() {
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#14C3D0] text-[#101010]"><Luggage size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Luggage size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#101010]">Tedavi Dosyaları</h1>
+          <h1 className="text-2xl font-bold text-[#0D0E10]">Tedavi Dosyaları</h1>
           <p className="text-sm text-slate-500">Doktorların ilettiği tedavi kararları — teklif hazırlayıp hastaya gönderin.</p>
         </div>
       </div>
@@ -66,7 +66,7 @@ export default async function AgencyQueue() {
           <Link
             key={c.id}
             href={`/acente/dosya/${c.id}`}
-            className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#14C3D0]/40 hover:shadow-sm"
+            className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#28C8D8]/40 hover:shadow-sm"
           >
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-teal-50 text-teal-600 ring-1 ring-teal-100">
               <Luggage size={20} />
@@ -87,7 +87,7 @@ export default async function AgencyQueue() {
                 )}
               </div>
               <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
-                <span className="font-medium text-[#0EA5B2]">{c.branch}</span>
+                <span className="font-medium text-[#1FA9B8]">{c.branch}</span>
                 <span>· {procs.length} işlem{totalTRY ? ` · ${formatTRY(totalTRY)}` : ""}</span>
                 {c.treatmentDaysMin != null && c.treatmentDaysMax != null && (
                   <span className="inline-flex items-center gap-1"><CalendarRange size={12} /> {c.treatmentDaysMin}–{c.treatmentDaysMax} gün</span>
@@ -97,7 +97,7 @@ export default async function AgencyQueue() {
                 {c.agencySentAt && <span className="text-slate-400">· iletildi: {formatDateTime(c.agencySentAt)}</span>}
               </div>
             </div>
-            <ArrowRight size={18} className="hidden shrink-0 text-slate-300 group-hover:text-[#14C3D0] sm:block" />
+            <ArrowRight size={18} className="hidden shrink-0 text-slate-300 group-hover:text-[#28C8D8] sm:block" />
           </Link>
         ))}
       </div>
@@ -114,7 +114,7 @@ export default async function AgencyQueue() {
 function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-3.5">
-      <div className={`text-2xl font-bold ${tone ?? "text-[#101010]"}`}>{value}</div>
+      <div className={`text-2xl font-bold ${tone ?? "text-[#0D0E10]"}`}>{value}</div>
       <div className="text-xs text-slate-500">{label}</div>
     </div>
   );

@@ -200,7 +200,7 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
 
   return (
     <div ref={boxRef} className="relative">
-      <button onClick={toggle} title={t("Bildirimler")} className="relative grid h-9 w-9 place-items-center rounded-lg text-white/55 hover:bg-white/10 hover:text-[#14C3D0]">
+      <button onClick={toggle} title={t("Bildirimler")} className="relative grid h-9 w-9 place-items-center rounded-lg text-white/55 hover:bg-white/10 hover:text-[#28C8D8]">
         <Bell size={18} />
         {unread > 0 && (
           <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">

@@ -148,7 +148,7 @@ export default function FreeCareApplyPage() {
         <button
           onClick={submit}
           disabled={submitting || !online || online <= 0}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-3 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-3 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
           {submitting ? t("Başvurunuz oluşturuluyor…") : t("Başvur ve eşleş")}
@@ -157,7 +157,7 @@ export default function FreeCareApplyPage() {
 
       <style>{`
         .inp { width:100%; border:1px solid #cbd5e1; border-radius:0.6rem; padding:0.55rem 0.75rem; font-size:0.9rem; outline:none; background:#fff; }
-        .inp:focus { border-color:#14C3D0; box-shadow:0 0 0 3px rgba(20,195,208,0.15); }
+        .inp:focus { border-color:#28C8D8; box-shadow:0 0 0 3px rgba(40,200,216,0.15); }
       `}</style>
     </JourneyIntakeShell>
   );

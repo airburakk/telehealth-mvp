@@ -254,9 +254,9 @@ export function ConsultVideoRoom({
     return (
       <div dir={dir} className="mx-auto max-w-md px-5 py-20 text-center">
         <PhoneOff className="mx-auto mb-3 text-slate-300" size={40} />
-        <h1 className="text-xl font-bold text-[#101010]">{t(S.ended)}</h1>
+        <h1 className="text-xl font-bold text-[#0D0E10]">{t(S.ended)}</h1>
         <p className="mt-2 text-sm text-slate-500">{t(S.endedSub)}</p>
-        <button onClick={() => router.push(backHref)} className="mt-5 rounded-xl bg-[#14C3D0] px-5 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">{t(S.back)}</button>
+        <button onClick={() => router.push(backHref)} className="mt-5 rounded-xl bg-[#28C8D8] px-5 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">{t(S.back)}</button>
       </div>
     );
   }
@@ -264,11 +264,11 @@ export function ConsultVideoRoom({
   if (!joined) {
     return (
       <div dir={dir} className="mx-auto max-w-md px-5 py-16 text-center">
-        <Video className="mx-auto mb-3 text-[#14C3D0]" size={40} />
-        <h1 className="text-xl font-bold text-[#101010]">{t(S.title)}</h1>
+        <Video className="mx-auto mb-3 text-[#28C8D8]" size={40} />
+        <h1 className="text-xl font-bold text-[#0D0E10]">{t(S.title)}</h1>
         <p className="mt-1 text-sm text-slate-500">{t(branchLabel)} · {remoteName}</p>
         <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-500">{t(S.permNote)}</p>
-        <button onClick={() => { setJoined(true); setPhase("connecting"); }} className="mt-5 rounded-xl bg-[#14C3D0] px-6 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">{t(S.join)}</button>
+        <button onClick={() => { setJoined(true); setPhase("connecting"); }} className="mt-5 rounded-xl bg-[#28C8D8] px-6 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">{t(S.join)}</button>
       </div>
     );
   }
@@ -277,7 +277,7 @@ export function ConsultVideoRoom({
     <div dir={dir} className="mx-auto max-w-5xl px-4 py-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-[#101010]">{t(S.title)}</h1>
+          <h1 className="text-lg font-bold text-[#0D0E10]">{t(S.title)}</h1>
           <p className="text-xs text-slate-500">{t(branchLabel)} · {remoteName}</p>
         </div>
         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${phase === "connected" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>

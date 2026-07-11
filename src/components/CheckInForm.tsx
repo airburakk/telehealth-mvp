@@ -107,9 +107,9 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
       <div className="mt-5">
         <div className="flex items-center justify-between text-sm">
           <span className="inline-flex items-center gap-1.5 font-medium text-slate-700"><Activity size={15} /> {t("Ağrı düzeyi")}</span>
-          <span className="font-semibold text-[#101010]">{pain}/10</span>
+          <span className="font-semibold text-[#0D0E10]">{pain}/10</span>
         </div>
-        <input type="range" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} className="mt-2 w-full accent-[#14C3D0]" />
+        <input type="range" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} className="mt-2 w-full accent-[#28C8D8]" />
       </div>
 
       {/* Ateş */}
@@ -118,7 +118,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
         <input
           type="number" step="0.1" min={34} max={43} value={feverC}
           onChange={(e) => setFeverC(Number(e.target.value))}
-          className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]"
+          className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
         />
       </div>
 
@@ -148,7 +148,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
                         key={o.v}
                         type="button"
                         onClick={() => setChecklist((p) => ({ ...p, [it.id]: active ? "" : o.v }))}
-                        className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[#14C3D0] bg-[#14C3D0] text-[#101010]" : "border-slate-300 bg-white text-slate-600 hover:border-[#14C3D0]/40"}`}
+                        className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-slate-300 bg-white text-slate-600 hover:border-[#28C8D8]/40"}`}
                       >
                         {t(o.v)}
                       </button>
@@ -167,7 +167,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
         <textarea
           value={note} onChange={(e) => setNote(e.target.value)} rows={3}
           placeholder={t("Örn. Yara bölgesinde hafif kızarıklık var…")}
-          className="mt-1.5 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#14C3D0]"
+          className="mt-1.5 w-full resize-none rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-[#28C8D8]"
         />
       </div>
 
@@ -192,7 +192,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
         </label>
       )}
 
-      <button onClick={submit} disabled={submitting} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-3 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60">
+      <button onClick={submit} disabled={submitting} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-3 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60">
         {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t("Kontrolü gönder")}
       </button>
 

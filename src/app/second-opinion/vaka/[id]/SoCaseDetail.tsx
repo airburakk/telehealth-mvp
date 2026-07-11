@@ -315,8 +315,8 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-[#101010]">{t(data.branchLabel)} · {t(S.soSuffix)}</h1>
-        <span className="rounded-full bg-[#14C3D0]/10 px-3 py-1 text-[12px] font-semibold text-[#0E8A95]">{t(SO_STATUS_LABELS[status])}</span>
+        <h1 className="text-2xl font-bold text-[#0D0E10]">{t(data.branchLabel)} · {t(S.soSuffix)}</h1>
+        <span className="rounded-full bg-[#28C8D8]/10 px-3 py-1 text-[12px] font-semibold text-[#17919E]">{t(SO_STATUS_LABELS[status])}</span>
       </div>
 
       {/* Hasta ülkesi + tercih dili (başvuruda alınır; eski vakalarda boş olabilir) */}
@@ -349,13 +349,13 @@ export function SoCaseDetail({ data }: { data: SoData }) {
 
       {/* Atanan uzman doktor kimlik kartı (en güçlü güven öğesi — bekleme odası Faz A3) */}
       {data.assignedDoctor && DOCTOR_SHOWN.includes(status) && (
-        <div className="mt-4 flex items-center gap-4 rounded-3xl border border-[#14C3D0]/30 bg-white p-5 shadow-sm">
+        <div className="mt-4 flex items-center gap-4 rounded-3xl border border-[#28C8D8]/30 bg-white p-5 shadow-sm">
           <span className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl ring-1 ring-slate-200">
             <DoctorArt i={data.assignedDoctor.avatarI} female={data.assignedDoctor.female} photo={data.assignedDoctor.photo} />
           </span>
           <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase tracking-wide text-[#0E8A95]">{t(S.yourDoctor)}</div>
-            <div className="mt-0.5 text-lg font-bold text-[#101010]">{t(data.assignedDoctor.title)} {data.assignedDoctor.name}</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[#17919E]">{t(S.yourDoctor)}</div>
+            <div className="mt-0.5 text-lg font-bold text-[#0D0E10]">{t(data.assignedDoctor.title)} {data.assignedDoctor.name}</div>
             <div className="text-sm text-slate-500">{t(data.assignedDoctor.branchLabel)}</div>
             {/* Rozet gerçek Doctor.verified değerine bağlı — koşulsuz "doğrulanmış" beyanı kaldırıldı (vitrin dürüstlüğü) */}
             {data.assignedDoctor.verified && (
@@ -393,10 +393,10 @@ export function SoCaseDetail({ data }: { data: SoData }) {
         <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50/60 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-amber-800"><CalendarClock size={17} /> {t(S.videoOfferTitle)}</div>
           <p className="mt-1.5 text-[13px] text-amber-700">{t(S.videoOfferDesc)}</p>
-          <p className="mt-1 text-lg font-bold text-[#101010]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+          <p className="mt-1 text-lg font-bold text-[#0D0E10]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
           {respondErr && <p className="mt-2 text-sm text-red-600">{respondErr}</p>}
           <div className="mt-3 flex flex-wrap gap-2">
-            <button onClick={() => respondVideo("accept")} disabled={responding !== ""} className="inline-flex items-center gap-2 rounded-xl bg-[#14C3D0] px-5 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50">
+            <button onClick={() => respondVideo("accept")} disabled={responding !== ""} className="inline-flex items-center gap-2 rounded-xl bg-[#28C8D8] px-5 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50">
               {responding === "accept" ? <Loader2 size={16} className="animate-spin" /> : <CircleCheck size={16} />} {t(S.acceptVideo)}
             </button>
             <button onClick={() => respondVideo("request_change")} disabled={responding !== ""} className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-white px-5 py-2.5 text-sm font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-50">
@@ -408,10 +408,10 @@ export function SoCaseDetail({ data }: { data: SoData }) {
 
       {/* Video randevusu — katıl */}
       {status === "VIDEO_SCHEDULED" && data.appointment && (
-        <div className="mt-4 rounded-3xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.06] p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[#0E8A95]"><Video size={17} /> {t(S.videoTitle)}</div>
-          <p className="mt-1.5 text-lg font-bold text-[#101010]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
-          <Link href={`/second-opinion/gorusme/${data.appointment.id}?role=patient`} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#14C3D0] px-5 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+        <div className="mt-4 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#17919E]"><Video size={17} /> {t(S.videoTitle)}</div>
+          <p className="mt-1.5 text-lg font-bold text-[#0D0E10]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+          <Link href={`/second-opinion/gorusme/${data.appointment.id}?role=patient`} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#28C8D8] px-5 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
             <Video size={16} /> {t(S.join)}
           </Link>
         </div>
@@ -456,7 +456,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                       <li key={d.id} className="flex items-center gap-1.5 text-[12.5px] text-slate-500">
                         {d.deliveryMethod === "EXTERNAL_LINK" ? <Link2 size={12} /> : <FileText size={12} />}
                         {d.externalRef ? (
-                          <a href={d.externalRef} target="_blank" rel="noopener noreferrer" className="text-[#0E8A95] underline">
+                          <a href={d.externalRef} target="_blank" rel="noopener noreferrer" className="text-[#17919E] underline">
                             {d.label || t(S.linkLabel)}
                           </a>
                         ) : (
@@ -481,7 +481,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                 <select
                   value={addType}
                   onChange={(e) => pickType(e.target.value as SoDocType)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm focus:border-[#14C3D0] focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm focus:border-[#28C8D8] focus:outline-none"
                 >
                   {(Object.keys(SO_DOC_TYPE_LABELS) as SoDocType[]).map((tp) => (
                     <option key={tp} value={tp}>{t(SO_DOC_TYPE_LABELS[tp])}</option>
@@ -493,13 +493,13 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                 <div className="mt-1 flex rounded-lg border border-slate-300 p-0.5 text-sm">
                   <button
                     onClick={() => setMethod("FILE_UPLOAD")}
-                    className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "FILE_UPLOAD" ? "bg-[#14C3D0] text-[#101010]" : "text-slate-500"}`}
+                    className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "FILE_UPLOAD" ? "bg-[#28C8D8] text-[#0D0E10]" : "text-slate-500"}`}
                   >
                     <Upload size={13} className="me-1 inline" /> {t(S.fileBtn)}
                   </button>
                   <button
                     onClick={() => setMethod("EXTERNAL_LINK")}
-                    className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "EXTERNAL_LINK" ? "bg-[#14C3D0] text-[#101010]" : "text-slate-500"}`}
+                    className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "EXTERNAL_LINK" ? "bg-[#28C8D8] text-[#0D0E10]" : "text-slate-500"}`}
                   >
                     <Link2 size={13} className="me-1 inline" /> {t(S.linkLabel)}
                   </button>
@@ -520,7 +520,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder={t(S.urlPh)}
-                className="mt-3 block w-full rounded-lg border border-slate-300 px-2.5 py-2 text-sm focus:border-[#14C3D0] focus:outline-none"
+                className="mt-3 block w-full rounded-lg border border-slate-300 px-2.5 py-2 text-sm focus:border-[#28C8D8] focus:outline-none"
               />
             )}
             <input
@@ -528,7 +528,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder={t(S.labelPh)}
-              className="mt-2 block w-full rounded-lg border border-slate-300 px-2.5 py-2 text-sm focus:border-[#14C3D0] focus:outline-none"
+              className="mt-2 block w-full rounded-lg border border-slate-300 px-2.5 py-2 text-sm focus:border-[#28C8D8] focus:outline-none"
             />
             {addErr && <p className="mt-2 text-sm text-red-600">{addErr}</p>}
             <button
@@ -560,8 +560,8 @@ export function SoCaseDetail({ data }: { data: SoData }) {
 
       {/* Ödeme (yalnız DRAFT) */}
       {isDraft && !paid && (
-        <div className="mt-4 rounded-3xl border border-[#14C3D0]/30 bg-[#14C3D0]/[0.05] p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[#0E8A95]">
+        <div className="mt-4 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.05] p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#17919E]">
             <CreditCard size={17} /> {t(S.payTitle)}
           </div>
           {missingRequired.length > 0 && (
@@ -571,20 +571,20 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                 <span>{t(S.missingLabel)}: {missingRequired.map((s) => t(s.label)).join(", ")}. {t(S.missingNote)}</span>
               </div>
               <label className="mt-2 flex items-start gap-2 ps-[23px] font-medium text-amber-800">
-                <input type="checkbox" checked={willProvide} onChange={(e) => setWillProvide(e.target.checked)} className="mt-0.5 accent-[#14C3D0]" />
+                <input type="checkbox" checked={willProvide} onChange={(e) => setWillProvide(e.target.checked)} className="mt-0.5 accent-[#28C8D8]" />
                 <span>{t(S.willProvide)}</span>
               </label>
             </div>
           )}
           <div className="mt-3 flex items-center justify-between text-sm">
             <span className="text-slate-600">{t(S.payLine)}</span>
-            <span className="text-lg font-bold text-[#101010]">{SO_FEE_USD} USD</span>
+            <span className="text-lg font-bold text-[#0D0E10]">{SO_FEE_USD} USD</span>
           </div>
           {payErr && <p className="mt-2 text-sm text-red-600">{payErr}</p>}
           <button
             onClick={pay}
             disabled={paying || payBlocked}
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#14C3D0] px-6 py-3 text-[15px] font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#28C8D8] px-6 py-3 text-[15px] font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {paying ? <Loader2 size={17} className="animate-spin" /> : t(S.payBtn)}
           </button>
@@ -614,7 +614,7 @@ function StatusBanner({
   if (!text) return null;
   return (
     <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-      <Clock size={16} className="mt-0.5 shrink-0 text-[#0E8A95]" />
+      <Clock size={16} className="mt-0.5 shrink-0 text-[#17919E]" />
       <div>
         <p>{t(text)}</p>
         {status === "VIDEO_SCHEDULED" && appointment && (

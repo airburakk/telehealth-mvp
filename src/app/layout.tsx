@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Newsreader, Hanken_Grotesk } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -7,10 +7,12 @@ import { PwaRegister } from "@/components/PwaRegister";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-// Uygulama geneli tipografi — landing ile aynı aile (Hanken Grotesk gövde + Newsreader başlık).
-// Önceden uygulama içi Segoe UI/system-ui kullanıyordu; bu, landing↔uygulama kalite uçurumunu kapatır.
-const sans = Hanken_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["300", "400", "500", "600", "700"], variable: "--font-sans", display: "swap" });
-const serif = Newsreader({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "600"], variable: "--font-serif", display: "swap" });
+// Uygulama geneli tipografi — vitrin (aura-health) ile aynı aile: Inter gövde + Space Grotesk
+// display (--font-serif değişken adı tarihsel; display yuvası olarak kullanılır) + JetBrains Mono
+// mikro/durak. Inter, Hanken'in aksine Kiril kapsar (RU pazarı markalı kalır; Arapça hâlâ fallback).
+const sans = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-sans", display: "swap" });
+const serif = Space_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "600", "700"], variable: "--font-serif", display: "swap" });
+const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-mono", display: "swap" });
 
 export const metadata: Metadata = {
   title: "AURA — Sağlık Turizmi & Teletıp",
@@ -22,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#101010",
+  themeColor: "#0D0E10",
 };
 
 export default async function RootLayout({
@@ -43,7 +45,7 @@ export default async function RootLayout({
     journey = u?.patientJourney ?? null;
   }
   return (
-    <html lang="tr" className={`h-full antialiased ${sans.variable} ${serif.variable}`}>
+    <html lang="tr" className={`h-full antialiased ${sans.variable} ${serif.variable} ${mono.variable}`}>
       <body className="min-h-full flex flex-col">
         <PwaRegister />
         <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} journey={journey} />
