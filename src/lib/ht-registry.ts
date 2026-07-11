@@ -65,7 +65,7 @@ async function htFetch<T>(path: string): Promise<T> {
 }
 
 // Sayfalı ucu tamamen çek (pageIndex 0-bazlı; CONCURRENCY şeritli).
-async function fetchAll<T>(endpoint: "doctor/search" | "establishment/search"): Promise<T[]> {
+async function fetchAll<T>(endpoint: "doctor/search" | "establishment/search" | "city"): Promise<T[]> {
   const first = await htFetch<SearchResp<T>>(`${endpoint}?pageIndex=0&pageSize=${PAGE_SIZE}`);
   const pages = Math.max(1, Math.ceil(first.dataCount / PAGE_SIZE));
   const out: T[][] = [first.data];
@@ -92,6 +92,25 @@ function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
   return out;
+}
+
+interface RawCity { id: number; name: string }
+
+// Şehir lookup'ı (cityId → ad). ⚠️ /city ucu SAYFALIDIR (~4.9k dünya şehri, 49 sayfa) — parametresiz
+// çağrı yalnız İLK 10 kaydı verir (v5.5 ilk gece dolumunun 0 kalmasının kök nedeni; 2026-07-11 06:04
+// cron'unda yakalandı) → fetchAll ile tam çekilir. Hata/boşlukta boş map döner: şehir-dolum adımı
+// atlanır, senkronun kendisi ETKİLENMEZ (fill opsiyonel süs verisi, diff değil).
+export async function fetchCityMap(): Promise<Map<number, string>> {
+  try {
+    const cities = await fetchAll<RawCity>("city");
+    return new Map(
+      cities
+        .filter((c) => typeof c?.id === "number" && typeof c?.name === "string" && c.name.trim())
+        .map((c) => [c.id, c.name.trim()]),
+    );
+  } catch {
+    return new Map();
+  }
 }
 
 // ── Fingerprint (v5.4): liste-API alanlarının kısa hash'i ──
@@ -183,12 +202,9 @@ export async function runRegistrySync(): Promise<SyncSummary> {
   let hospitals: RawHospital[];
   let cityMap = new Map<number, string>();
   try {
-    // Şehir lookup — doktor kaydındaki cityId'yi ada çevirir (rapor + filtre okunabilirliği)
-    try {
-      const cities = await htFetch<{ data?: { id: number; name: string }[] } | { id: number; name: string }[]>("city");
-      const list = Array.isArray(cities) ? cities : (cities.data ?? []);
-      cityMap = new Map(list.map((c) => [c.id, c.name]));
-    } catch { /* şehir lookup opsiyonel — adsız devam */ }
+    // Şehir lookup — doktor kaydındaki cityId'yi ada çevirir (rapor + filtre + şehir-dolum adımı).
+    // Sayfalı tam çekim (fetchCityMap); başarısızlıkta boş map = adsız devam (opsiyonel).
+    cityMap = await fetchCityMap();
 
     [doctors, hospitals] = await Promise.all([
       fetchAll<RawDoctor>("doctor/search"),
@@ -251,10 +267,15 @@ export async function runRegistrySync(): Promise<SyncSummary> {
 
   // ── Şehir adı dolumu (v5.5): türetilmiş cityName fingerprint'e GİRMEZ → fingerprint eşit kaldıkça
   // eski satırlar hiç dolmaz (ilk tam çekim lookup'sızdı: ~10k satırda cityName=null, cityId ~5.7k dolu).
-  // cityId-gruplu updateMany ile ucuz idempotent dolum (~81 sorgu; sonraki günlerde 0 satır etkilenir).
+  // cityId-gruplu updateMany ile ucuz idempotent dolum; sonraki günlerde 0 satır etkilenir.
+  // ⚠️ YALNIZ doktorlarda geçen cityId'ler üzerinde dönülür (~≤100): cityMap ~4.9k DÜNYA şehridir —
+  // tamamında dönmek ~4.9k sorgu = cron maxDuration aşımı (dev-branch provasında yakalandı, 2026-07-11).
   // Lookup o koşuda düşmüşse (cityMap boş) adım atlanır, mevcut adlara dokunulmaz.
   let cityNamesFilled = 0;
-  for (const [cid, cname] of cityMap) {
+  const usedCityIds = new Set<number>();
+  for (const d of doctors) if (d.cityId != null && cityMap.has(d.cityId)) usedCityIds.add(d.cityId);
+  for (const cid of usedCityIds) {
+    const cname = cityMap.get(cid)!;
     const r = await db.registryDoctor.updateMany({
       where: { cityId: cid, OR: [{ cityName: null }, { cityName: { not: cname } }] },
       data: { cityName: cname },
