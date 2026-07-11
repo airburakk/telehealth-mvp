@@ -125,6 +125,8 @@ dormant kalır / fallback'e düşer).
 | `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` | ⛅ | **Upstash Redis** — dağıtık rate-limit (`lib/rate-limit.ts`: login 10/5dk/IP · paylaşım-şifre 10/5dk/IP+link · AI 20/dk/kullanıcı). **Boşsa:** in-memory yedek (kırılmaz; serverless'ta instance-başına en-iyi-çaba). Upstash hatasında fail-open → in-memory. Kur: console.upstash.com → Redis Database → REST API iki değeri buraya + Vercel (Production+Preview, Sensitive). Vercel Marketplace `KV_REST_API_*` adları da tanınır |
 | `GOOGLE_CLIENT_ID` | ⛅ | Google ile giriş/kayıt (M5). Boşsa "Google ile devam et" dormant; e-posta kaydı çalışır. Yetkili yönlendirme: `<origin>/api/auth/google/callback` |
 | `GOOGLE_CLIENT_SECRET` | ⛅ | Google OAuth gizli anahtarı (yukarıdakiyle birlikte) |
+| `RESEND_API_KEY` | ⛅ | E-posta gönderimi + **e-posta doğrulama** (v5.6, `lib/email.ts`). **Boşsa dormant:** gönderim simüle edilir VE yeni-kayıt doğrulama zorunluluğu devreye girmez (akış bugünkü gibi). Etkinleşince yeni e-posta kayıtları doğrulama bağlantısı almadan giriş yapamaz (mevcut/demo muaf; Google doğrulanmış sayılır). Kur: resend.com → API Key (Sensitive; sır aktarımı bash `printf` ile — CRLF tuzağı) |
+| `EMAIL_FROM` | ➖ | Gönderici adresi (ör. `AURA <no-reply@ornek.com>`; Resend'de domain DNS doğrulaması ister). **Boşsa** Resend test göndericisi (`onboarding@resend.dev` — yalnız hesap sahibinin adresine gönderir, test içindir) |
 | `TRIAGE_MODEL` | ➖ | Opsiyonel — triyaj modeli (varsayılan `claude-sonnet-4-6`) |
 
 > ✅ zorunlu · ⛅ özellik için gerekli (yoksa fallback) · ➖ opsiyonel.
