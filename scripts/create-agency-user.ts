@@ -15,7 +15,8 @@ async function main() {
   }
   const passwordHash = await bcrypt.hash("1234", 10); // demo parolası (diğer *@air.test hesaplarıyla aynı)
   const u = await db.user.create({
-    data: { email, name: "Demo Sağlık Turizmi Acentesi", role: "AGENCY", passwordHash },
+    // emailVerifiedAt: operatör eliyle açılan hesap doğrulama zorunluluğundan muaf (v5.6)
+    data: { email, name: "Demo Sağlık Turizmi Acentesi", role: "AGENCY", passwordHash, emailVerifiedAt: new Date() },
   });
   console.log(`✓ AGENCY kullanıcısı oluşturuldu: ${email} (id=${u.id})`);
 }

@@ -51,6 +51,15 @@ export async function GET(req: Request) {
       });
     }
   }
+  // Google e-postayı zaten doğrular (exchangeGoogleCode email_verified şartı) → hesap doğrulanmış
+  // damgalanır (v5.6). E-posta kaydıyla açılıp doğrulanmadan Google ile girene de geçerli: aynı
+  // posta kutusunun sahibi olduğu Google'ca kanıtlandı; bekleyen token temizlenir.
+  if (!user.emailVerifiedAt) {
+    await db.user.update({
+      where: { id: user.id },
+      data: { emailVerifiedAt: new Date(), emailVerifyTokenHash: null },
+    });
+  }
 
   const cv = await consentedVersion(user.id);
   await createSession({ id: user.id, email: user.email, name: user.name, role: user.role as Role, cv });

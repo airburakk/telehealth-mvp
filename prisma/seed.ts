@@ -107,7 +107,9 @@ async function main() {
     { email: "kurul@air.test", name: "Kurul Üyesi", role: "ETHICS" },
     { email: "acente@air.test", name: "Demo Sağlık Turizmi Acentesi", role: "AGENCY" }, // S3 — FAZ 4 (2026-07-10)
   ];
-  for (const u of USERS) await db.user.create({ data: { ...u, passwordHash: pw } });
+  // emailVerifiedAt: demo hesaplar doğrulama zorunluluğundan muaf (v5.6 — RESEND_API_KEY'li taze
+  // kurulumda demo girişleri kilitlenmesin; prod'daki mevcut hesapları migration damgaladı).
+  for (const u of USERS) await db.user.create({ data: { ...u, passwordHash: pw, emailVerifiedAt: new Date() } });
 
   console.log("Doktorlar ekleniyor...");
   const doctors = [];

@@ -5,6 +5,8 @@ import { consentedVersion } from "@/lib/consent";
 import { roleHome } from "@/lib/session";
 import { createPatientAccount } from "@/lib/patient-signup";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
+import { isEmailConfigured } from "@/lib/email";
+import { issueVerificationEmail } from "@/lib/email-verification";
 
 // Hasta e-posta kaydı. Hesap oluşturulur (role=PATIENT) → oturum açılır → proxy /onam (KVKK) →
 // hasta ana akışı (roleHome). Doktor kaydının (signup) sadeleştirilmiş karşılığı.
@@ -28,6 +30,14 @@ export async function POST(req: Request) {
 
   const passwordHash = await hashPassword(password);
   const user = await createPatientAccount({ name, email, passwordHash });
+
+  // E-posta doğrulama (v5.6): yapılandırılmışsa oturum AÇILMAZ — doğrulama bağlantısı gönderilir.
+  // Dormant'ken hesap kayıt anında doğrulanmış damgalanır, bugünkü akış birebir sürer.
+  if (isEmailConfigured()) {
+    await issueVerificationEmail({ id: user.id, email: user.email, name: user.name }, new URL(req.url).origin);
+    return NextResponse.json({ ok: true, needsVerification: true });
+  }
+  await db.user.update({ where: { id: user.id }, data: { emailVerifiedAt: new Date() } });
 
   // Yeni hesap: henüz onam yok (cv=0) → proxy /onam'a yönlendirir, sonra hasta ana akışı.
   const cv = await consentedVersion(user.id);

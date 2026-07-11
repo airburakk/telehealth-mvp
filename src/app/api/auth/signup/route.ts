@@ -5,6 +5,8 @@ import { consentedVersion } from "@/lib/consent";
 import { createDoctorAccount } from "@/lib/doctor-signup";
 import { BRANCH_LABELS } from "@/lib/procedures";
 import { LANGUAGES } from "@/lib/constants";
+import { isEmailConfigured } from "@/lib/email";
+import { issueVerificationEmail } from "@/lib/email-verification";
 
 // M5 — Doktor e-posta kaydı. Hesap oluşturulur (verified:false, inaktif) → oturum açılır →
 // proxy /onam (KVKK) → /doktor → onboarding kapısı (FHIR uzmanlık + işlem + diploma + MMSS).
@@ -44,6 +46,15 @@ export async function POST(req: Request) {
 
   const passwordHash = await hashPassword(password);
   const user = await createDoctorAccount({ name, email, passwordHash, title, branch, city, languages: languages.join(","), phone });
+
+  // E-posta doğrulama (v5.6): yapılandırılmışsa oturum AÇILMAZ — doğrulama bağlantısı gönderilir,
+  // giriş doğrulama sonrasına kalır. Dormant'ken (RESEND_API_KEY yok) hesap kayıt anında doğrulanmış
+  // damgalanır ve bugünkü akış (otomatik giriş → /onam → onboarding) birebir sürer.
+  if (isEmailConfigured()) {
+    await issueVerificationEmail({ id: user.id, email: user.email, name: user.name }, new URL(req.url).origin);
+    return NextResponse.json({ ok: true, needsVerification: true });
+  }
+  await db.user.update({ where: { id: user.id }, data: { emailVerifiedAt: new Date() } });
 
   // Yeni hesap: henüz onam yok (cv=0) → proxy /onam'a yönlendirir, sonra /doktor → onboarding kapısı.
   const cv = await consentedVersion(user.id);

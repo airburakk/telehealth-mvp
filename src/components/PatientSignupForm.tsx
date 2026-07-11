@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Loader2, UserPlus, HeartPulse } from "lucide-react";
+import { Loader2, UserPlus, HeartPulse, MailCheck } from "lucide-react";
 import { AuraMark } from "@/components/PortamedLogo";
 import { SocialAuthButtons } from "@/components/social-auth";
 
@@ -22,6 +22,7 @@ export function PatientSignupForm({ googleEnabled }: { googleEnabled: boolean })
   const [password2, setPassword2] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [verifySent, setVerifySent] = useState(false); // v5.6: e-posta doğrulama etkinse kayıt oturum açmaz
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,12 +37,32 @@ export function PatientSignupForm({ googleEnabled }: { googleEnabled: boolean })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Kayıt başarısız.");
+      if (data.needsVerification) { setVerifySent(true); return; } // doğrulama ekranı (oturum yok)
       // Tam sayfa yönlendirme: çerez proxy'e taze taşınır (onam kapısına düşer).
       window.location.assign(data.home || "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kayıt başarısız.");
       setLoading(false);
     }
+  }
+
+  if (verifySent) {
+    return (
+      <div className="w-full max-w-sm">
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-50 text-emerald-600"><MailCheck size={28} /></span>
+          <h1 className="mt-4 text-lg font-bold text-[#101010]">Doğrulama bağlantısı gönderildi</h1>
+          <p className="mt-2 text-sm text-slate-500">
+            <span className="font-medium text-slate-700">{email}</span> adresine bir doğrulama
+            e-postası gönderdik. Bağlantıya tıkladıktan sonra giriş yapabilirsiniz.
+          </p>
+          <p className="mt-3 text-xs text-slate-400">E-posta birkaç dakika içinde gelmezse spam klasörünü kontrol edin.</p>
+          <Link href="/giris" className="mt-5 inline-flex items-center justify-center rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2]">
+            Giriş ekranına dön
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

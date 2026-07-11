@@ -33,15 +33,25 @@ export function LoginForm({
     sp.get("oauth") === "unavailable" ? "Google ile giriş henüz yapılandırılmadı (yakında)."
     : sp.get("oauth") === "error" ? "Google ile giriş tamamlanamadı, lütfen tekrar deneyin."
     : "";
+  // E-posta doğrulama bağlantısından dönüş banner'ı (v5.6): /api/auth/verify-email ?verify= ile yönlendirir.
+  const verifyMsg =
+    sp.get("verify") === "ok" ? "E-posta adresiniz doğrulandı — şimdi giriş yapabilirsiniz."
+    : sp.get("verify") === "already" ? "E-posta adresiniz zaten doğrulanmış. Giriş yapabilirsiniz."
+    : sp.get("verify") === "invalid" ? "Doğrulama bağlantısı geçersiz veya süresi dolmuş. Girişte e-postanızı yazıp bağlantıyı yeniden isteyebilirsiniz."
+    : "";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [needsVerify, setNeedsVerify] = useState(false); // 403 EMAIL_UNVERIFIED → yeniden-gönder sunulur
+  const [resendMsg, setResendMsg] = useState("");
 
   async function login(em?: string, pw?: string) {
     const e = em ?? email;
     const p = pw ?? password;
     setError("");
+    setNeedsVerify(false);
+    setResendMsg("");
     setLoading(true);
     try {
       const res = await fetch("/api/auth/login", {
@@ -50,7 +60,10 @@ export function LoginForm({
         body: JSON.stringify({ email: e, password: p }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Giriş başarısız.");
+      if (!res.ok) {
+        if (data.code === "EMAIL_UNVERIFIED") setNeedsVerify(true);
+        throw new Error(data.error || "Giriş başarısız.");
+      }
       // Tam sayfa yönlendirme: çerezin proxy'e taze taşınmasını ve auth durumunun
       // doğru yansımasını garantiler (router.push'taki önbellek/zamanlama sorununu önler).
       window.location.assign(next || data.home || "/");
@@ -58,6 +71,21 @@ export function LoginForm({
     } catch (err) {
       setError(err instanceof Error ? err.message : "Giriş başarısız.");
       setLoading(false);
+    }
+  }
+
+  async function resendVerification() {
+    setResendMsg("");
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      setResendMsg(data.message || "Doğrulama bağlantısı istendi — gelen kutunuzu kontrol edin.");
+    } catch {
+      setResendMsg("İstek gönderilemedi, lütfen tekrar deneyin.");
     }
   }
 
@@ -71,6 +99,11 @@ export function LoginForm({
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         {oauthMsg && <div className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">{oauthMsg}</div>}
+        {verifyMsg && (
+          <div className={`mb-3 rounded-lg px-3 py-2 text-sm ring-1 ${sp.get("verify") === "invalid" ? "bg-amber-50 text-amber-700 ring-amber-200" : "bg-emerald-50 text-emerald-700 ring-emerald-200"}`}>
+            {verifyMsg}
+          </div>
+        )}
 
         {social && (
           <>
@@ -91,6 +124,17 @@ export function LoginForm({
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#14C3D0]" />
           </label>
           {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">{error}</div>}
+          {needsVerify && (
+            <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">
+              {resendMsg ? (
+                resendMsg
+              ) : (
+                <button type="button" onClick={resendVerification} className="font-semibold text-[#0E8A95] underline-offset-2 hover:underline">
+                  Doğrulama e-postasını yeniden gönder
+                </button>
+              )}
+            </div>
+          )}
           <button type="submit" disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#14C3D0] px-4 py-2.5 text-sm font-semibold text-[#101010] hover:bg-[#0EA5B2] disabled:opacity-60">
             {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />} Giriş yap
           </button>
