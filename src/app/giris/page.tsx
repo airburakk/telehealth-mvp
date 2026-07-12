@@ -1,19 +1,25 @@
 import { Suspense } from "react";
-import { isGoogleConfigured } from "@/lib/oauth";
-import { PatientLoginForm } from "@/components/PatientLoginForm";
+import type { Metadata } from "next";
+import { SigninGate } from "@/components/aura/auth-gates";
 
-export const dynamic = "force-dynamic";
+// Hasta giriş kapısı — vitrin "AURA Sign Up" panelinin birebir inşası
+// (aura-health.higgsfield.app'ten taşındı, 2026-07-12; kullanıcı kararı
+// "birebir kapı + ayrı form"). Google doğrudan OAuth'a; Apple/E-posta çalışan
+// forma (/giris/e-posta) götürür. Proxy kimliksizi ?next ile buraya düşürür —
+// kapı parametreyi forma iletir. Header/SiteFooter bu rotada gizli (landing
+// deseni); panel kendi logo + "← ana sayfa" bağlantısını taşır.
+export const metadata: Metadata = {
+  title: "AURA · Sign in",
+  description: "Sign in to AURA and start your care journey.",
+};
 
-// Hasta girişi. Kurumsal roller (Doktor/Koordinatör/Etik Kurul/Partner) → /kurumsal-giris.
-// Girişten sonra hasta doğrudan Branş Doktoru akışına iner (/basla 4'lü seçimi kaldırıldı, 2026-07-12).
-export default function LoginPage() {
+export default function LoginGatePage() {
+  // useSearchParams (kapıdaki ?next iletimi) Suspense sınırı ister.
   return (
-    <div className="bg-[#0D0E10]">
-      <div className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-sm flex-col justify-center px-5 py-10">
-        <Suspense fallback={<div className="text-center text-sm text-white/40">Yükleniyor…</div>}>
-          <PatientLoginForm googleEnabled={isGoogleConfigured()} />
-        </Suspense>
-      </div>
-    </div>
+    <Suspense
+      fallback={<div className="aura-page min-h-dvh" aria-hidden />}
+    >
+      <SigninGate />
+    </Suspense>
   );
 }

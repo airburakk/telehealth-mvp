@@ -27,7 +27,7 @@ export function CorporateLoginForm() {
             Doktor musunuz? <Link href="/kayit" className="font-semibold text-[#28C8D8] hover:underline">Kayıt olun</Link>
           </p>
           <p className="text-[13px]">
-            Hasta mısınız? <Link href="/giris" className="font-semibold text-[#28C8D8] hover:underline">Hasta girişi →</Link>
+            Hasta mısınız? <Link href="/giris/e-posta" className="font-semibold text-[#28C8D8] hover:underline">Hasta girişi →</Link>
           </p>
         </div>
       }

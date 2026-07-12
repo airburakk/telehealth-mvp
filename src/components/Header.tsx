@@ -37,8 +37,10 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
   const { t } = useT(lang, texts);
   const dir = langDir(lang);
 
-  // AURA landing (/ ve /how-it-works) kendi nav/footer'ını taşır — global krom gizlenir
-  if (pathname === "/" || pathname === "/how-it-works") return null;
+  // AURA landing (/ ve /how-it-works) kendi nav/footer'ını taşır — global krom gizlenir.
+  // Giriş kapıları (/giris, /kurumsal-giris) tam-ekran vitrin panelleridir (kendi logo +
+  // "← ana sayfa" bağlantısıyla); /e-posta form alt-rotalarında krom durur (exact match).
+  if (["/", "/how-it-works", "/giris", "/kurumsal-giris"].includes(pathname)) return null;
 
   const activeHref = items
     .filter((n) => pathname === n.href || pathname.startsWith(n.href + "/"))

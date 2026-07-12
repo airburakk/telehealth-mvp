@@ -12,20 +12,21 @@ export async function GET(req: Request) {
   const back = (path: string, status: string) => NextResponse.redirect(new URL(`${path}?verify=${status}`, url.origin));
 
   // Token tahmin/tarama freni (bağlantı tıklamaları için cömert): 20/5dk/IP
+  // Hedefler /e-posta FORM rotaları (kapı/form ayrımı 2026-07-12): ?verify banner'ı formda çizilir.
   const rl = await rateLimit(`verify-email:${clientIp(req)}`, 20, 5 * 60_000);
-  if (!rl.ok) return back("/giris", "invalid");
+  if (!rl.ok) return back("/giris/e-posta", "invalid");
 
   const uid = (url.searchParams.get("uid") ?? "").slice(0, 64);
   const token = (url.searchParams.get("token") ?? "").slice(0, 128);
-  if (!uid || !token) return back("/giris", "invalid");
+  if (!uid || !token) return back("/giris/e-posta", "invalid");
 
   const user = await db.user.findUnique({
     where: { id: uid },
     select: { id: true, role: true, emailVerifiedAt: true, emailVerifyTokenHash: true, emailVerifySentAt: true },
   });
-  const loginPath = user?.role === "PATIENT" ? "/giris" : "/kurumsal-giris"; // doktor girişi kurumsal ekranda
+  const loginPath = user?.role === "PATIENT" ? "/giris/e-posta" : "/kurumsal-giris/e-posta"; // doktor girişi kurumsal ekranda
 
-  if (!user) return back("/giris", "invalid");
+  if (!user) return back("/giris/e-posta", "invalid");
   if (user.emailVerifiedAt) return back(loginPath, "already");
   if (!verifyTokenMatches(user, token)) return back(loginPath, "invalid");
 

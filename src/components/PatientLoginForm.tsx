@@ -22,7 +22,7 @@ export function PatientLoginForm({ googleEnabled }: { googleEnabled: boolean }) 
           </p>
           <p className="text-[13px]">
             Doktor, koordinatör veya kurum çalışanı mısınız?{" "}
-            <Link href="/kurumsal-giris" className="font-semibold text-[#28C8D8] hover:underline">Kurumsal giriş →</Link>
+            <Link href="/kurumsal-giris/e-posta" className="font-semibold text-[#28C8D8] hover:underline">Kurumsal giriş →</Link>
           </p>
         </div>
       }

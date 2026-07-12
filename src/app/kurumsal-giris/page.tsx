@@ -1,15 +1,25 @@
 import { Suspense } from "react";
-import { CorporateLoginForm } from "@/components/CorporateLoginForm";
+import type { Metadata } from "next";
+import { CorporateGate } from "@/components/aura/auth-gates";
 
-// Kurumsal giriş — Doktor, Koordinatör, Etik Kurul, Partner Doktor. Halka açık (proxy matcher dışı);
-// hasta girişi /giris'te ayrıdır. Landing üst bandındaki "Kurumsal Giriş" butonu buraya gelir.
-// Form içeriği CorporateLoginForm'da ("use client" — ikon fonksiyonları server'dan geçirilemez).
-export default function CorporateLoginPage() {
+// Kurumsal giriş kapısı — vitrin panelinin personel/iş-ortağı uyarlaması
+// (aura-health.higgsfield.app'ten taşındı, 2026-07-12): rol seçici (görsel
+// bağlam) + tek CTA çalışan forma (/kurumsal-giris/e-posta) götürür.
+// Landing üst bandındaki "Kurumsal Giriş" butonu buraya gelir. Personel
+// kapısı arama sonuçlarından ayrık tutulur (noindex — vitrindeki karar).
+export const metadata: Metadata = {
+  title: "AURA · Corporate sign-in",
+  description: "Corporate sign-in for verified staff and partners of the AURA platform.",
+  robots: { index: false, follow: false },
+};
+
+export default function CorporateGatePage() {
+  // useSearchParams (kapıdaki ?next iletimi) Suspense sınırı ister.
   return (
-    <div className="grid min-h-[calc(100vh-8rem)] place-items-center bg-[#0D0E10] px-5 py-10">
-      <Suspense fallback={<div className="text-sm text-white/40">Yükleniyor…</div>}>
-        <CorporateLoginForm />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={<div className="aura-page min-h-dvh" aria-hidden />}
+    >
+      <CorporateGate />
+    </Suspense>
   );
 }

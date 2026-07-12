@@ -69,7 +69,7 @@ export function DoctorSignupForm({ googleEnabled, branches, languages }: { googl
             onboarding adımlarını tamamlayabilirsiniz.
           </p>
           <p className="mt-3 text-xs text-white/40">E-posta birkaç dakika içinde gelmezse spam klasörünü kontrol edin.</p>
-          <Link href="/kurumsal-giris" className="mt-5 inline-flex items-center justify-center rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
+          <Link href="/kurumsal-giris/e-posta" className="mt-5 inline-flex items-center justify-center rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
             Kurumsal girişe dön
           </Link>
         </div>
@@ -162,7 +162,7 @@ export function DoctorSignupForm({ googleEnabled, branches, languages }: { googl
       </div>
 
       <p className="mt-4 text-center text-sm text-white/50">
-        Zaten hesabınız var mı? <Link href="/giris" className="font-semibold text-[#28C8D8] hover:underline">Giriş yapın</Link>
+        Zaten hesabınız var mı? <Link href="/kurumsal-giris/e-posta" className="font-semibold text-[#28C8D8] hover:underline">Giriş yapın</Link>
       </p>
     </div>
   );

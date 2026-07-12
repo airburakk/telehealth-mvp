@@ -22,13 +22,17 @@ export function langDir(l: Lang): "rtl" | "ltr" {
 
 // Vitrin platforma tasindi (2026-07-12): hedefler artik ayni uygulamanin
 // GORELI rotalari. /giris sonrasi hasta zaten huniye iner (tek huni /triyaj).
+// Kapi/form ayrimi (ayni gun): /giris ve /kurumsal-giris vitrin KAPI
+// panelleri; calisan e-posta/demo formlari /e-posta alt rotalarinda.
 export const LINKS = {
   platformLogin: "/giris",
+  emailLogin: "/giris/e-posta",
   googleStart: "/api/auth/google/start?intent=patient",
   platformSignup: "/kayit/hasta",
   secondOpinion: "/second-opinion",
   freeCare: "/ucretsiz-saglik",
   corporateLogin: "/kurumsal-giris",
+  corporateEmailLogin: "/kurumsal-giris/e-posta",
   doctorSignup: "/kayit",
 };
 

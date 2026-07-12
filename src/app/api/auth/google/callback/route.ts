@@ -20,10 +20,11 @@ export async function GET(req: Request) {
   const c = await cookies();
   const intent = c.get("g_oauth_intent")?.value === "patient" ? "patient" : "doctor";
   c.delete("g_oauth_intent");
-  const errBack = intent === "patient" ? "/giris?oauth=error" : "/kayit?oauth=error";
+  // ?oauth banner'ı formda çizilir → /e-posta form rotası (kapı/form ayrımı 2026-07-12)
+  const errBack = intent === "patient" ? "/giris/e-posta?oauth=error" : "/kayit?oauth=error";
 
   if (!isGoogleConfigured()) {
-    const back = intent === "patient" ? "/giris?oauth=unavailable" : "/kayit?oauth=unavailable";
+    const back = intent === "patient" ? "/giris/e-posta?oauth=unavailable" : "/kayit?oauth=unavailable";
     return NextResponse.redirect(new URL(back, origin));
   }
 
