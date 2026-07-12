@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BRANCHES } from "@/lib/triage";
 import { SO_DURATION_COPY, SO_FEE_USD } from "@/lib/second-opinion";
@@ -8,8 +8,9 @@ import { useT } from "@/components/useT";
 import { useSoLang } from "@/components/SoLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
-import { Stethoscope, Clock, Video, ArrowRight, Loader2 } from "lucide-react";
-import { COUNTRIES, LANGUAGES } from "@/lib/constants";
+import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
+import { Stethoscope, Clock, Video, ArrowRight, Loader2, Globe } from "lucide-react";
+import { COUNTRIES } from "@/lib/constants";
 
 const D = SO_DURATION_COPY.tr;
 const FEE_LINE = `Ücret: ${SO_FEE_USD} USD — peşin ve tek ödeme. Yazılı rapor ve video görüşme dahildir.`;
@@ -38,7 +39,7 @@ const S = {
 export function SoApplyForm() {
   const router = useRouter();
   const [lang, setLang] = useSoLang();
-  const texts = useMemo(() => [...Object.values(S), FEE_LINE, ...CONTACT_PREF_TEXTS, ...BRANCHES.map((b) => b.label), ...COUNTRIES.map((c) => c.name)], []);
+  const texts = useMemo(() => [...Object.values(S), FEE_LINE, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...BRANCHES.map((b) => b.label), ...COUNTRIES.map((c) => c.name)], []);
   const { t } = useT(lang, texts);
 
   const [diagnosisSummary, setDiagnosisSummary] = useState("");
@@ -49,11 +50,30 @@ export function SoApplyForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  // Ülke seçilince o ülkenin birincil dilini öner + UI dilini (lang) senkronla — Talk to Doctor (triyaj) deseni.
+  // Profil hafızası (Faz 1): prefill + kompakt şerit; dil TEK kaynak air_lang (sağ üst seçici) —
+  // ülke önerisi yalnız hasta dili hiç açıkça seçmemişse (langLocked).
+  const { profile } = usePatientProfile();
+  const [editProfile, setEditProfile] = useState(false);
+  const [langLocked, setLangLocked] = useState(false);
+  const seededRef = useRef(false);
+  useEffect(() => {
+    try { if (localStorage.getItem("air_lang")) setLangLocked(true); } catch {}
+  }, []);
+  useEffect(() => {
+    if (!profile || seededRef.current) return;
+    seededRef.current = true;
+    if (profile.country) setCountry(profile.country);
+    if (profile.phone) setPhone(profile.phone);
+    if (profile.contactPref) setContactPref(profile.contactPref);
+    try { if (!localStorage.getItem("air_lang") && profile.language) setLang(profile.language); } catch {}
+  }, [profile, setLang]);
+  function chooseLang(l: string) { setLangLocked(true); setLang(l); }
+  const showStrip = profileComplete(profile, "full") && !editProfile;
+
   function onCountry(code: string) {
     setCountry(code);
     const c = COUNTRIES.find((x) => x.code === code);
-    if (c && c.langs[0]) setLang(c.langs[0]);
+    if (c && c.langs[0] && !langLocked) setLang(c.langs[0]); // dil TEK kaynak (air_lang); açık seçim ezilmez
   }
 
   // KVKK açık onam girişte bir kez alınır (/onam) → başvuruda tekrar onam kutusu yok.
@@ -78,7 +98,7 @@ export function SoApplyForm() {
   }
 
   return (
-    <JourneyIntakeShell icon={Stethoscope} eyebrow={t(S.eyebrow)} title={t(S.title)} intro={t(S.intro)} lang={lang} onLangChange={setLang} journey="SECOND_OPINION" stage={1}>
+    <JourneyIntakeShell icon={Stethoscope} eyebrow={t(S.eyebrow)} title={t(S.title)} intro={t(S.intro)} lang={lang} onLangChange={chooseLang} journey="SECOND_OPINION" stage={1}>
 
       {/* §12.2 — süre bilgilendirmesi (tek kaynak: lib/second-opinion; useT ile çok dilli) */}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -111,40 +131,38 @@ export function SoApplyForm() {
           ))}
         </select>
 
-        {/* Ülke + tercih dili — Talk to Doctor (triyaj) deseni: ülke seçilince birincil dil önerilir. */}
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-semibold text-white/75">{t(S.countryLabel)}</label>
-            <select
-              value={country}
-              onChange={(e) => onCountry(e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-white/15 bg-[#161719] px-3 py-2.5 text-sm text-[#F4F5F3] focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
-            >
-              <option value="">{t(S.countryPlaceholder)}</option>
-              {COUNTRIES.map((c) => (
-                <option key={c.code} value={c.code}>{c.flag} {t(c.name)}</option>
-              ))}
-            </select>
+        {showStrip && profile ? (
+          // Profil dolu → ülke + iletişim alanları yerine kompakt şerit (Faz 1)
+          <div className="mt-5">
+            <ProfileStrip profile={profile} fields="full" onEdit={() => setEditProfile(true)} t={t} />
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-white/75">{t(S.langLabel)}</label>
-            <select
-              value={lang}
-              onChange={(e) => setLang(e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-white/15 bg-[#161719] px-3 py-2.5 text-sm text-[#F4F5F3] focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l} value={l}>{l}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <p className="mt-1.5 text-xs text-white/50">{t(S.langHint)}</p>
+        ) : (
+          <>
+            <div className="mt-5">
+              <label className="block text-sm font-semibold text-white/75">{t(S.countryLabel)}</label>
+              <select
+                value={country}
+                onChange={(e) => onCountry(e.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-white/15 bg-[#161719] px-3 py-2.5 text-sm text-[#F4F5F3] focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
+              >
+                <option value="">{t(S.countryPlaceholder)}</option>
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code}>{c.flag} {t(c.name)}</option>
+                ))}
+              </select>
+            </div>
 
-        {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
-        <div className="mt-5">
-          <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
-        </div>
+            {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
+            <div className="mt-5">
+              <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
+            </div>
+          </>
+        )}
+
+        {/* Dil TEK kaynak: sağ üst seçici (air_lang). Yazılı görüş + video bu dilde sağlanır. */}
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-white/50">
+          <Globe size={13} className="text-[#28C8D8]" /> {lang} · {t(S.langHint)}
+        </p>
 
         <label className="mt-5 block text-sm font-semibold text-white/75">{t(S.diagLabel)}</label>
         <p className="text-xs text-white/50">{t(S.diagHint)}</p>

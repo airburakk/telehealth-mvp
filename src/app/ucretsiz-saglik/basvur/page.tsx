@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { COUNTRIES, LANGUAGES } from "@/lib/constants";
+import { COUNTRIES, countryName } from "@/lib/constants";
 import { useT } from "@/components/useT";
 import { usePatientLang } from "@/components/PatientLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
+import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
 import { HeartHandshake, Loader2, ArrowRight } from "lucide-react";
 
 // Ücretsiz Sağlık Hizmeti ön-triyaj — kısa, ücret kapısı YOK. Başvuru → eşleşme varsa görüşme, yoksa bekleme odası.
@@ -30,10 +31,30 @@ export default function FreeCareApplyPage() {
   const router = useRouter();
   const [patientName, setPatientName] = useState("");
   const [country, setCountry] = useState("TR");
-  const [language, setLanguage] = useState("Türkçe");
   const [phone, setPhone] = useState(""); // FAZ 8 — hasta iletişim
   const [contactPref, setContactPref] = useState<ContactPref>("APP");
   const [uiLang, setUiLang] = usePatientLang(); // önceki yüzeylerde seçilen dil (air_lang) taşınır
+
+  // Profil hafızası (Faz 1): prefill + kompakt şerit; dil TEK kaynak air_lang (ülke önerisi
+  // yalnız hasta dili hiç açıkça seçmemişse — langLocked).
+  const { profile } = usePatientProfile();
+  const [editProfile, setEditProfile] = useState(false);
+  const [langLocked, setLangLocked] = useState(false);
+  const seededRef = useRef(false);
+  useEffect(() => {
+    try { if (localStorage.getItem("air_lang")) setLangLocked(true); } catch {}
+  }, []);
+  useEffect(() => {
+    if (!profile || seededRef.current) return;
+    seededRef.current = true;
+    setPatientName((v) => v || profile.name);
+    if (profile.country) setCountry(profile.country);
+    if (profile.phone) setPhone(profile.phone);
+    if (profile.contactPref) setContactPref(profile.contactPref);
+    try { if (!localStorage.getItem("air_lang") && profile.language) setUiLang(profile.language); } catch {}
+  }, [profile, setUiLang]);
+  function chooseLang(l: string) { setLangLocked(true); setUiLang(l); }
+  const showStrip = profileComplete(profile, "full") && !editProfile;
   const [symptoms, setSymptoms] = useState("");
   const [durationText, setDurationText] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -57,7 +78,7 @@ export default function FreeCareApplyPage() {
     return () => { alive = false; clearInterval(iv); };
   }, []);
 
-  const tTexts = useMemo(() => [...STATIC_UI, ...CONTACT_PREF_TEXTS], []);
+  const tTexts = useMemo(() => [...STATIC_UI, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...(profile?.country ? [countryName(profile.country)] : [])], [profile]);
   const { t } = useT(uiLang, tTexts);
 
   async function submit() {
@@ -68,7 +89,7 @@ export default function FreeCareApplyPage() {
       const res = await fetch("/api/free-care/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patientName, country, language, symptoms, durationText, consent: true, patientPhone: phone, contactPreference: contactPref }),
+        body: JSON.stringify({ patientName, country, language: uiLang, symptoms, durationText, consent: true, patientPhone: phone, contactPreference: contactPref }), // dil TEK kaynak: air_lang
       });
       if (!res.ok) throw new Error((await res.json()).error || "Hata");
       const d = await res.json();
@@ -81,34 +102,34 @@ export default function FreeCareApplyPage() {
   }
 
   return (
-    <JourneyIntakeShell icon={HeartHandshake} eyebrow={t("Ücretsiz Sağlık Hizmeti")} title={t("Ücretsiz Sağlık Hizmeti Başvurusu")} intro={t("Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.")} lang={uiLang} onLangChange={setUiLang} journey="FREE_CARE" stage={1}>
+    <JourneyIntakeShell icon={HeartHandshake} eyebrow={t("Ücretsiz Sağlık Hizmeti")} title={t("Ücretsiz Sağlık Hizmeti Başvurusu")} intro={t("Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.")} lang={uiLang} onLangChange={chooseLang} journey="FREE_CARE" stage={1}>
 
       <div className="mt-7 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm space-y-4">
-        <Field label={t("Hasta Adı (veya yakını)")}>
-          <input value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder={t("Örn. Amina B.")} className="inp" />
-        </Field>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label={t("Ülke")}>
-            <select
-              value={country}
-              onChange={(e) => {
-                setCountry(e.target.value);
-                const c = COUNTRIES.find((x) => x.code === e.target.value);
-                if (c) { setLanguage(c.langs[0]); setUiLang(c.langs[0]); }
-              }}
-              className="inp"
-            >
-              {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
-            </select>
-          </Field>
-          <Field label={t("Dil")}>
-            <select value={language} onChange={(e) => { setLanguage(e.target.value); setUiLang(e.target.value); }} className="inp">
-              {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
-            </select>
-          </Field>
-        </div>
-        {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
-        <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
+        {showStrip && profile ? (
+          // Profil dolu → alanlar yerine kompakt şerit (Faz 1); yakını için başvuru = Değiştir
+          <ProfileStrip profile={profile} fields="full" onEdit={() => setEditProfile(true)} t={t} />
+        ) : (
+          <>
+            <Field label={t("Hasta Adı (veya yakını)")}>
+              <input value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder={t("Örn. Amina B.")} className="inp" />
+            </Field>
+            <Field label={t("Ülke")}>
+              <select
+                value={country}
+                onChange={(e) => {
+                  setCountry(e.target.value);
+                  const c = COUNTRIES.find((x) => x.code === e.target.value);
+                  if (c && !langLocked) setUiLang(c.langs[0]); // dil TEK kaynak (air_lang); açık seçim ezilmez
+                }}
+                className="inp"
+              >
+                {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
+              </select>
+            </Field>
+            {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
+            <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
+          </>
+        )}
         <Field label={t("Şikayetiniz / Semptomlar")}>
           <textarea
             value={symptoms}

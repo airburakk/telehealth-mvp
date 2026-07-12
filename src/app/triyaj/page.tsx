@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { COUNTRIES, LANGUAGES, urgencyStyle } from "@/lib/constants";
+import { COUNTRIES, countryName, urgencyStyle } from "@/lib/constants";
 import { PreConsultGate, PRECONSULT_TEXTS } from "@/components/PreConsultGate";
 import { BRANCHES } from "@/lib/triage";
 import { DynamicTriageQuestions } from "@/components/DynamicTriageQuestions";
@@ -12,6 +12,7 @@ import { useT } from "@/components/useT";
 import { usePatientLang } from "@/components/PatientLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
+import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
 import { AuraSpinner } from "@/components/PortamedLogo";
 import type { Billing } from "@/lib/billing";
 import {
@@ -119,7 +120,6 @@ export default function TriyajPage() {
   const [step, setStep] = useState(0);
   const [patientName, setPatientName] = useState("");
   const [country, setCountry] = useState("DZ");
-  const [language, setLanguage] = useState("Arapça");
   const [phone, setPhone] = useState(""); // FAZ 8 — hasta iletişim
   const [contactPref, setContactPref] = useState<ContactPref>("APP");
   const [symptoms, setSymptoms] = useState("");
@@ -133,6 +133,14 @@ export default function TriyajPage() {
   const [error, setError] = useState("");
   const [providedDocs, setProvidedDocs] = useState<Record<string, boolean>>({}); // hasta beyanı: hangi gerekli belge sağlandı
   const [docAck, setDocAck] = useState(false); // eksik zorunlu belgeleri görüşmeden önce iletme onayı
+
+  // Profil hafızası (basitleştirme Faz 1): önceki başvurulardan prefill; profil yeterliyse
+  // alanların yerine kompakt şerit ("Değiştir" alanları geri açar). Dil TEK kaynak: air_lang —
+  // ülke önerisi yalnız hasta dili hiç açıkça seçmemişse uygulanır (langLocked).
+  const { profile } = usePatientProfile();
+  const [editProfile, setEditProfile] = useState(false);
+  const [langLocked, setLangLocked] = useState(false);
+  const seededRef = useRef(false);
 
   const selectedCountry = COUNTRIES.find((c) => c.code === country);
 
@@ -161,9 +169,23 @@ export default function TriyajPage() {
 
   // Arayüz dili — hasta dil seçince otomatik eşitlenir; üstteki seçiciden de değiştirilebilir.
   const [uiLang, setUiLang] = usePatientLang(); // önceki yüzeylerde seçilen dil (air_lang) taşınır
+  useEffect(() => {
+    try { if (localStorage.getItem("air_lang")) setLangLocked(true); } catch {}
+  }, []);
+  useEffect(() => {
+    if (!profile || seededRef.current) return;
+    seededRef.current = true;
+    setPatientName((v) => v || profile.name);
+    if (profile.country) setCountry(profile.country);
+    if (profile.phone) setPhone(profile.phone);
+    if (profile.contactPref) setContactPref(profile.contactPref);
+    try { if (!localStorage.getItem("air_lang") && profile.language) setUiLang(profile.language); } catch {}
+  }, [profile, setUiLang]);
+  function chooseLang(l: string) { setLangLocked(true); setUiLang(l); } // açık seçim → ülke-önerisi kilitlenir
+  const showStrip = profileComplete(profile, "full") && !editProfile;
   const tTexts = useMemo(
-    () => [...STATIC_UI, ...PRECONSULT_TEXTS, ...CONTACT_PREF_TEXTS, ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
-    [effectiveBranch, analysis?.reasoning]
+    () => [...STATIC_UI, ...PRECONSULT_TEXTS, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...(profile?.country ? [countryName(profile.country)] : []), ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
+    [effectiveBranch, analysis?.reasoning, profile]
   );
   const { t } = useT(uiLang, tTexts);
 
@@ -201,7 +223,7 @@ export default function TriyajPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          patientName, country, language, symptoms, durationText,
+          patientName, country, language: uiLang, symptoms, durationText, // dil TEK kaynak: air_lang
           patientPhone: phone, contactPreference: contactPref, // FAZ 8 — hasta iletişim
           attachments: files.map((f) => f.name),
           documents: files.filter((f) => f.dataUrl).map((f) => ({ label: f.name, mimeType: f.mime, content: f.dataUrl })),
@@ -225,7 +247,7 @@ export default function TriyajPage() {
   // Ön-konsültasyon kapısı: ücret bilgisi + sigorta/ödeme geçilmeden triyaj başlamaz
   if (!billing) {
     return (
-      <JourneyIntakeShell icon={Stethoscope} eyebrow={t("Branş Doktoru")} title={t("Triyaj · Ön Değerlendirme")} intro={t("Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.")} lang={uiLang} onLangChange={setUiLang} journey="GENERAL" stage={1}>
+      <JourneyIntakeShell icon={Stethoscope} eyebrow={t("Branş Doktoru")} title={t("Triyaj · Ön Değerlendirme")} intro={t("Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.")} lang={uiLang} onLangChange={chooseLang} journey="GENERAL" stage={1}>
         <div className="mt-7">
           <PreConsultGate onCleared={setBilling} t={t} />
         </div>
@@ -234,7 +256,7 @@ export default function TriyajPage() {
   }
 
   return (
-    <JourneyIntakeShell icon={Stethoscope} eyebrow={t("Branş Doktoru")} title={t("Triyaj · Ön Değerlendirme")} intro={t("Birkaç adımda şikayetinizi anlatın; sistem sizi doğru uzmana yönlendirsin.")} lang={uiLang} onLangChange={setUiLang} journey="GENERAL" stage={1}>
+    <JourneyIntakeShell icon={Stethoscope} eyebrow={t("Branş Doktoru")} title={t("Triyaj · Ön Değerlendirme")} intro={t("Birkaç adımda şikayetinizi anlatın; sistem sizi doğru uzmana yönlendirsin.")} lang={uiLang} onLangChange={chooseLang} journey="GENERAL" stage={1}>
       <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300 ring-1 ring-emerald-400/25">
         <ShieldCheck size={15} />
         {billing.status === "INSURED"
@@ -270,42 +292,39 @@ export default function TriyajPage() {
         {/* Step 0 */}
         {step === 0 && (
           <div className="space-y-4">
-            <Field label={t("Hasta Adı (veya yakını)")}>
-              <input
-                value={patientName}
-                onChange={(e) => setPatientName(e.target.value)}
-                placeholder={t("Örn. Karim B.")}
-                className="inp"
-                autoFocus
-              />
-            </Field>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label={t("Ülke")}>
-                <select
-                  value={country}
-                  onChange={(e) => {
-                    setCountry(e.target.value);
-                    const c = COUNTRIES.find((x) => x.code === e.target.value);
-                    if (c) { setLanguage(c.langs[0]); setUiLang(c.langs[0]); }
-                  }}
-                  className="inp"
-                >
-                  {COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label={t("Dil")}>
-                {/* Hasta sistemdeki TÜM dilleri seçebilir (ülkeden bağımsız); ülke yalnız makul varsayılanı belirler */}
-                <select value={language} onChange={(e) => { setLanguage(e.target.value); setUiLang(e.target.value); }} className="inp">
-                  {LANGUAGES.map((l) => (
-                    <option key={l} value={l}>{l}</option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-            {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
-            <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
+            {showStrip && profile ? (
+              // Profil dolu → alanlar yerine kompakt şerit (Faz 1); yakını için başvuru = Değiştir
+              <ProfileStrip profile={profile} fields="full" onEdit={() => setEditProfile(true)} t={t} />
+            ) : (
+              <>
+                <Field label={t("Hasta Adı (veya yakını)")}>
+                  <input
+                    value={patientName}
+                    onChange={(e) => setPatientName(e.target.value)}
+                    placeholder={t("Örn. Karim B.")}
+                    className="inp"
+                    autoFocus
+                  />
+                </Field>
+                <Field label={t("Ülke")}>
+                  <select
+                    value={country}
+                    onChange={(e) => {
+                      setCountry(e.target.value);
+                      const c = COUNTRIES.find((x) => x.code === e.target.value);
+                      if (c && !langLocked) setUiLang(c.langs[0]); // dil TEK kaynak (air_lang); açık seçim ezilmez
+                    }}
+                    className="inp"
+                  >
+                    {COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+                    ))}
+                  </select>
+                </Field>
+                {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
+                <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
+              </>
+            )}
           </div>
         )}
 
@@ -451,7 +470,7 @@ export default function TriyajPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 text-sm">
               <Summary k={t("Hasta")} v={patientName} />
-              <Summary k={t("Ülke / Dil")} v={`${selectedCountry?.flag} ${selectedCountry?.name} · ${language}`} />
+              <Summary k={t("Ülke / Dil")} v={`${selectedCountry?.flag} ${selectedCountry?.name} · ${uiLang}`} />
               <Summary k={t("Süre")} v={durationText || "—"} />
               <Summary k={t("Belgeler")} v={files.length ? `${files.length} ${t("dosya")}` : "—"} />
             </div>

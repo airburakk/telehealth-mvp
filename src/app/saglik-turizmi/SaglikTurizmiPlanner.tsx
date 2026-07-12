@@ -3,12 +3,13 @@
 // Sağlık Turizmi hasta-yüzü planlayıcı (Faz 1) — tercih + ENDİKATİF önizleme (bağlayıcı DEĞİL).
 // Fiyat motoru lib/pricing.ts (doktor-yüzü PackageBuilder ile AYNI); önizlemede doktor işlemi yok →
 // branş taban fiyatı kullanılır. Kesin fiyat = doktor değerlendirmesi sonrası (klinik-önce; disclaimer zorunlu).
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Plane, Hotel, Stethoscope, ClipboardList, ShieldCheck, Sparkles, ArrowRight, Info, Loader2 } from "lucide-react";
 import { useT } from "@/components/useT";
 import { usePatientLang } from "@/components/PatientLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
+import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
 import { countryFlag, countryName } from "@/lib/constants";
 import { computePackage, formatUSD, TIER_PRESETS, type PackageSelection, type Tier } from "@/lib/pricing";
 
@@ -55,7 +56,7 @@ const TIER_LABEL: Record<Tier, string> = { Ekonomik: "Ekonomik", Standart: "Stan
 
 export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
   const [lang, setLang] = usePatientLang();
-  const texts = useMemo(() => [...TEXTS, ...CONTACT_PREF_TEXTS], []); // sabit referans — useT yarış dersi (v3.5)
+  const texts = useMemo(() => [...TEXTS, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS], []); // sabit referans — useT yarış dersi (v3.5)
   const { t } = useT(lang, texts);
 
   const [branch, setBranch] = useState(BRANCHES[0]);
@@ -67,6 +68,19 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
   const [contactPref, setContactPref] = useState<ContactPref>("APP");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  // Profil hafızası (Faz 1): telefon/tercih (+ listedeyse ülke) prefill; iletişim kutusu yerine şerit.
+  const { profile } = usePatientProfile();
+  const [editProfile, setEditProfile] = useState(false);
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!profile || seededRef.current) return;
+    seededRef.current = true;
+    if (profile.country && COUNTRIES.includes(profile.country)) setCountry(profile.country);
+    if (profile.phone) setPhone(profile.phone);
+    if (profile.contactPref) setContactPref(profile.contactPref);
+  }, [profile]);
+  const showStrip = profileComplete(profile, "contact") && !editProfile;
 
   const quote = useMemo(() => {
     const p = TIER_PRESETS[tier];
@@ -132,10 +146,14 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
             </div>
           </Field>
 
-          {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
-          <div className="rounded-2xl border border-white/10 bg-[#161719] p-4">
-            <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
-          </div>
+          {/* FAZ 8 — telefon + iletişim tercihi; profil doluysa kompakt şerit (Faz 1) */}
+          {showStrip && profile ? (
+            <ProfileStrip profile={profile} fields="contact" onEdit={() => setEditProfile(true)} t={t} />
+          ) : (
+            <div className="rounded-2xl border border-white/10 bg-[#161719] p-4">
+              <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
+            </div>
+          )}
 
           <Field icon={<Plane size={15} />} label={t("Nereden geliyorsunuz?")}>
             <div className="flex flex-wrap gap-2">
