@@ -16,7 +16,7 @@ import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS }
 import { AuraSpinner } from "@/components/PortamedLogo";
 import type { Billing } from "@/lib/billing";
 import {
-  UserRound, MessageSquareText, Paperclip, ClipboardCheck, ListChecks, Stethoscope,
+  MessageSquareText, ClipboardCheck, ListChecks, Stethoscope,
   Sparkles, Upload, X, ShieldCheck, Loader2, ArrowRight, ArrowLeft, FileText, AlertTriangle,
 } from "lucide-react";
 
@@ -24,16 +24,16 @@ import {
 const STATIC_UI = [
   "Branş Doktoru", "Triyaj · Ön Değerlendirme", "Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.",
   "Birkaç adımda şikayetinizi anlatın; sistem sizi doğru uzmana yönlendirsin.",
-  "Arayüz dili", "Hasta", "Şikayet", "Branş Soruları", "Belgeler", "Özet",
-  "Hasta Adı (veya yakını)", "Örn. Karim B.", "Ülke", "Dil",
+  "Şikayet", "Branş Soruları", "Belgeler & Gönder",
+  "Hasta Adı (veya yakını)", "Örn. Karim B.", "Ülke",
   "Şikayetiniz / Semptomlar", "Örn. Babamda akciğer kanseri şüphesi var, biyopsi sonucu çıktı, ikinci görüş istiyoruz.",
-  "Şikayet süresi (opsiyonel)", "Örn. 2 ay", "AI ön analizi yap",
+  "Şikayet süresi (opsiyonel)", "Örn. 2 ay",
   "Devam'a bastığınızda yapay zeka şikayetinizi analiz edip sizi doğru uzmana yönlendirir.",
   "AI sizi doğru branşa yönlendiriyor…", "Yönlendirilen branş", "elle seçildi", "AI önerisi · doğru değilse değiştirin",
   "Önce şikayet adımında AI ön analizini çalıştırın; sorular branşa göre belirir.",
   "Tıbbi belge yükleyin", "PDF, JPG, DICOM · Tahlil, radyoloji, epikriz",
-  "Yüklenen dosyalar KVKK/GDPR uyumlu şifreli olarak saklanır.", "Belge yüklemek opsiyoneldir; bu adımı atlayabilirsiniz.",
-  "Ülke / Dil", "Süre", "dosya", "Analiz ediliyor…", "Analizi çalıştır", "AI Ön Analizi", "Aciliyet", "Güven",
+  "Yüklenen dosyalar KVKK/GDPR uyumlu şifreli olarak saklanır.", "Belge yüklemek opsiyoneldir.",
+  "AI Ön Analizi", "Aciliyet", "Güven",
   "Geri", "Devam", "Vakayı oluştur",
   "Lütfen hasta adını girin.", "Lütfen şikayetinizi biraz daha ayrıntılı yazın.",
   "Görüşme ücreti alındı:", "Görüşme sigortanız tarafından karşılanıyor", "Poliçe",
@@ -41,8 +41,8 @@ const STATIC_UI = [
   "Bu branş için gerekli belgeler", "opsiyonel",
   "Eksik belgeleriniz var",
   "Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.",
-  "Hızlı, doğru ve etkili bir görüşme için gerekli belgelerin eksiksiz yüklenmesi büyük önem taşır. Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi Özet adımında onaylayarak da ilerleyebilirsiniz.",
-  "Eksik zorunlu belge", "Bu belgeleri görüşmeden önce ileteceğimi onaylıyorum.",
+  "Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi aşağıda onaylayarak da ilerleyebilirsiniz.",
+  "Bu belgeleri görüşmeden önce ileteceğimi onaylıyorum.",
 ];
 
 interface Analysis {
@@ -54,12 +54,14 @@ interface Analysis {
   engine?: "llm" | "rules";
 }
 
+// Basitleştirme Faz 2 (2026-07-12): sihirbaz 5→3 adım — Hasta+Şikayet birleşti (kimlik zaten
+// profil şeridi/prefill), Belgeler+Özet birleşti (eksik-belge uyarısı + onay TEK yerde; ayrı Özet
+// ekranı kalktı — makbuz /triyaj/[id] sonuç sayfasıdır). İkinci istemci AI koşusu da kalktı:
+// /api/cases triyajı sunucuda zaten yeniden koşar (istemci koşusu yalnız görüntülemeydi).
 const STEPS = [
-  { t: "Hasta", icon: UserRound },
   { t: "Şikayet", icon: MessageSquareText },
   { t: "Branş Soruları", icon: ListChecks },
-  { t: "Belgeler", icon: Paperclip },
-  { t: "Özet", icon: ClipboardCheck },
+  { t: "Belgeler & Gönder", icon: ClipboardCheck },
 ];
 
 // Triyajda yüklenen belge: ad + (AI'ye gönderilecek) base64 içerik. DICOM/büyük/desteklenmeyen → dataUrl null (yalnız ad).
@@ -142,8 +144,6 @@ export default function TriyajPage() {
   const [langLocked, setLangLocked] = useState(false);
   const seededRef = useRef(false);
 
-  const selectedCountry = COUNTRIES.find((c) => c.code === country);
-
   async function runAnalyze() {
     if (!symptoms.trim()) return;
     setAnalyzing(true);
@@ -192,10 +192,9 @@ export default function TriyajPage() {
   function next() {
     setError("");
     if (step === 0 && !patientName.trim()) return setError("Lütfen hasta adını girin.");
-    if (step === 1 && symptoms.trim().length < 8) return setError("Lütfen şikayetinizi biraz daha ayrıntılı yazın.");
-    if (step === 1 && !analysis) runAnalyze(); // Branş Soruları'na geçerken branşı belirle
-    if (step === 3) runAnalyze(); // Özet'e geçerken yanıt + branş seçimiyle yeniden değerlendir
-    setStep((s) => Math.min(4, s + 1));
+    if (step === 0 && symptoms.trim().length < 8) return setError("Lütfen şikayetinizi biraz daha ayrıntılı yazın.");
+    if (step === 0 && !analysis) runAnalyze(); // Branş Soruları'na geçerken branşı belirle
+    setStep((s) => Math.min(2, s + 1));
   }
   function back() {
     setError("");
@@ -244,7 +243,7 @@ export default function TriyajPage() {
 
   const u = analysis ? urgencyStyle(analysis.urgency) : null;
 
-  // Ön-konsültasyon kapısı: ücret bilgisi + sigorta/ödeme geçilmeden triyaj başlamaz
+  // Ön-konsültasyon kapısı: ücret bilgisi + sigorta/ödeme geçilmeden triyaj başlamaz (tek ekran, Faz 2)
   if (!billing) {
     return (
       <JourneyIntakeShell icon={Stethoscope} eyebrow={t("Branş Doktoru")} title={t("Triyaj · Ön Değerlendirme")} intro={t("Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.")} lang={uiLang} onLangChange={chooseLang} journey="GENERAL" stage={1}>
@@ -264,7 +263,7 @@ export default function TriyajPage() {
           : `${t("Görüşme ücreti alındı:")} $${billing.fee} · Ref ${billing.payRef}`}
       </div>
 
-      {/* Stepper */}
+      {/* Stepper — 3 adım (Faz 2) */}
       <div className="mt-6 flex items-center">
         {STEPS.map((s, i) => {
           const Icon = s.icon;
@@ -289,7 +288,7 @@ export default function TriyajPage() {
       </div>
 
       <div className="mt-7 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
-        {/* Step 0 */}
+        {/* Adım 0 — Şikayet (kimlik şeridi/alanları + semptom; eski Hasta+Şikayet birleşimi) */}
         {step === 0 && (
           <div className="space-y-4">
             {showStrip && profile ? (
@@ -303,7 +302,6 @@ export default function TriyajPage() {
                     onChange={(e) => setPatientName(e.target.value)}
                     placeholder={t("Örn. Karim B.")}
                     className="inp"
-                    autoFocus
                   />
                 </Field>
                 <Field label={t("Ülke")}>
@@ -325,12 +323,6 @@ export default function TriyajPage() {
                 <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
               </>
             )}
-          </div>
-        )}
-
-        {/* Step 1 */}
-        {step === 1 && (
-          <div className="space-y-4">
             <Field label={t("Şikayetiniz / Semptomlar")}>
               <textarea
                 value={symptoms}
@@ -355,8 +347,8 @@ export default function TriyajPage() {
           </div>
         )}
 
-        {/* Step 2 — Branş Soruları */}
-        {step === 2 && (
+        {/* Adım 1 — Branş Soruları */}
+        {step === 1 && (
           <div className="space-y-4">
             {analyzing && !analysis && (
               <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
@@ -393,8 +385,8 @@ export default function TriyajPage() {
           </div>
         )}
 
-        {/* Step 3 — Belgeler */}
-        {step === 3 && (
+        {/* Adım 2 — Belgeler & Gönder (eski Belgeler+Özet birleşimi: uyarı + onay TEK yerde) */}
+        {step === 2 && (
           <div className="space-y-4">
             {branchDocs.length > 0 && (
               <div className="rounded-2xl border border-white/10 bg-[#1E1F22] p-3.5">
@@ -424,22 +416,6 @@ export default function TriyajPage() {
               </div>
             )}
 
-            {missingRequired.length > 0 && (
-              <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4">
-                <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-200">
-                  <AlertTriangle size={16} className="shrink-0" /> {t("Eksik belgeleriniz var")}
-                </div>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-amber-200">
-                  {t("Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.")}
-                </p>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-amber-200">
-                  {t("Hızlı, doğru ve etkili bir görüşme için gerekli belgelerin eksiksiz yüklenmesi büyük önem taşır. Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi Özet adımında onaylayarak da ilerleyebilirsiniz.")}
-                </p>
-                <ul className="mt-2.5 list-disc space-y-0.5 ps-5 text-[12px] font-medium text-amber-200">
-                  {missingRequired.map((d) => <li key={d.key}>{t(d.label)}</li>)}
-                </ul>
-              </div>
-            )}
             <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/15 bg-[#1E1F22] px-6 py-10 text-center hover:border-teal-400 hover:bg-[#28C8D8]/10">
               <Upload size={26} className="text-white/40" />
               <span className="text-sm font-medium text-white/65">{t("Tıbbi belge yükleyin")}</span>
@@ -458,61 +434,32 @@ export default function TriyajPage() {
               </ul>
             )}
 
-            <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300 ring-1 ring-emerald-400/25">
-              <ShieldCheck size={15} /> {t("Yüklenen dosyalar KVKK/GDPR uyumlu şifreli olarak saklanır.")}
-            </div>
-            <p className="text-xs text-white/40">{t("Belge yüklemek opsiyoneldir; bu adımı atlayabilirsiniz.")}</p>
-          </div>
-        )}
-
-        {/* Step 4 — Özet */}
-        {step === 4 && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <Summary k={t("Hasta")} v={patientName} />
-              <Summary k={t("Ülke / Dil")} v={`${selectedCountry?.flag} ${selectedCountry?.name} · ${uiLang}`} />
-              <Summary k={t("Süre")} v={durationText || "—"} />
-              <Summary k={t("Belgeler")} v={files.length ? `${files.length} ${t("dosya")}` : "—"} />
-            </div>
-            <Summary k={t("Şikayet")} v={symptoms} block />
-
-            {Object.keys(answers).length > 0 && (
-              <div className="col-span-2">
-                <div className="text-xs uppercase tracking-wide text-white/40">
-                  {t("Branş Soruları")}{effectiveBranch ? ` · ${t(BRANCHES.find((b) => b.key === effectiveBranch)?.label ?? "")}` : ""}
-                </div>
-                <ul className="mt-1 space-y-0.5 text-sm text-white/75">
-                  {Object.entries(answers).map(([k, v]) => (
-                    <li key={k}><span className="text-white/50">{t(k)}:</span> {v.split(",").map((s) => t(s.trim())).join(", ")}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
+            {/* Eksik zorunlu belge uyarısı + iletme onayı — TEK yerde (Faz 2; eski 2 ekrandaki çift uyarı birleşti) */}
             {missingRequired.length > 0 && (
-              <div className="rounded-lg bg-amber-500/10 px-3 py-2.5 text-sm text-amber-200 ring-1 ring-amber-400/25">
-                <div className="flex items-center gap-1.5 font-semibold"><AlertTriangle size={15} /> {t("Eksik zorunlu belge")}</div>
-                <ul className="mt-1 list-disc ps-5 text-[13px]">
+              <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4">
+                <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-200">
+                  <AlertTriangle size={16} className="shrink-0" /> {t("Eksik belgeleriniz var")}
+                </div>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-amber-200">
+                  {t("Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.")}
+                </p>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-amber-200">
+                  {t("Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi aşağıda onaylayarak da ilerleyebilirsiniz.")}
+                </p>
+                <ul className="mt-2.5 list-disc space-y-0.5 ps-5 text-[12px] font-medium text-amber-200">
                   {missingRequired.map((d) => <li key={d.key}>{t(d.label)}</li>)}
                 </ul>
-                <label className="mt-2 flex items-start gap-2 text-[13px] font-medium">
+                <label className="mt-3 flex items-start gap-2 text-[13px] font-medium text-amber-100">
                   <input type="checkbox" checked={docAck} onChange={(e) => setDocAck(e.target.checked)} className="mt-0.5 accent-amber-600" />
                   <span>{t("Bu belgeleri görüşmeden önce ileteceğimi onaylıyorum.")}</span>
                 </label>
               </div>
             )}
-            {analyzing && (
-              <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                <AuraSpinner size={40} className="block" />
-                <p className="text-sm font-medium text-white/50">{t("Analiz ediliyor…")}</p>
-              </div>
-            )}
-            {analysis && u && <AnalysisCard analysis={analysis} badge={u.badge} dot={u.dot} label={u.label} t={t} />}
-            {!analysis && !analyzing && (
-              <button onClick={runAnalyze} className="inline-flex items-center gap-2 rounded-lg bg-[#28C8D8]/10 px-3.5 py-2 text-sm font-medium text-[#28C8D8] ring-1 ring-[#28C8D8]/25 hover:bg-[#28C8D8]/15">
-                <Sparkles size={16} /> {t("Analizi çalıştır")}
-              </button>
-            )}
+
+            <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300 ring-1 ring-emerald-400/25">
+              <ShieldCheck size={15} /> {t("Yüklenen dosyalar KVKK/GDPR uyumlu şifreli olarak saklanır.")}
+            </div>
+            <p className="text-xs text-white/40">{t("Belge yüklemek opsiyoneldir.")}</p>
           </div>
         )}
 
@@ -527,7 +474,7 @@ export default function TriyajPage() {
           >
             <ArrowLeft size={16} /> {t("Geri")}
           </button>
-          {step < 4 ? (
+          {step < 2 ? (
             <button onClick={next} className="inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
               {t("Devam")} <ArrowRight size={16} />
             </button>
@@ -559,15 +506,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="mb-1.5 block text-sm font-medium text-white/75">{label}</span>
       {children}
     </label>
-  );
-}
-
-function Summary({ k, v, block }: { k: string; v: string; block?: boolean }) {
-  return (
-    <div className={block ? "col-span-2" : ""}>
-      <div className="text-xs uppercase tracking-wide text-white/40">{k}</div>
-      <div className="mt-0.5 text-[#F4F5F3]">{v}</div>
-    </div>
   );
 }
 
