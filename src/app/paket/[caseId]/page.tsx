@@ -12,11 +12,14 @@ export const dynamic = "force-dynamic";
 
 // Sağlık Turizmi Faz 2 — Case.tourismPlan (hasta tercihleri JSON) → PackageInitial ön-dolum.
 // TIER_PRESETS'ten otel/hastane/tercüman/sigorta türetilir (hasta önizlemesiyle birebir); doktor düzenler.
+// 2026-07-12: hasta-yüzü artık tier/gece sormuyor — plan'da ikisi de yoksa ön-dolum İDDİASI yapılmaz
+// (sahte "hasta tercihi" rationale'i doktora gitmesin; veri dürüstlüğü).
 function tourismInitial(raw: string | null): PackageInitial | undefined {
   if (!raw) return undefined;
   let p: { tier?: string; nights?: number } | undefined;
   try { p = JSON.parse(raw) as { tier?: string; nights?: number }; } catch { return undefined; }
   const tier = (["Ekonomik", "Standart", "Premium"] as const).find((t) => t === p?.tier);
+  if (!tier && !p?.nights) return undefined;
   const preset = tier ? TIER_PRESETS[tier] : undefined;
   return {
     tier,

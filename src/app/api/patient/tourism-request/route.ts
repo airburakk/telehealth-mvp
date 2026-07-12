@@ -4,15 +4,19 @@ import { runTriage } from "@/lib/triage-llm";
 import { requireUser } from "@/lib/api-auth";
 import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField } from "@/lib/crypto";
-import { notifyDoctorsByBranch } from "@/lib/notify";
+import { notifyDoctorsByBranch, notifyUser } from "@/lib/notify";
 import { stampPatientProfile } from "@/lib/patient-journey";
+import { BRANCHES } from "@/lib/triage";
+import { TOURISM_DISCLAIMER_TITLE, TOURISM_DISCLAIMER_BODY } from "@/lib/tourism-disclaimer";
 
-// POST /api/patient/tourism-request — Sağlık Turizmi öz-yeterli intake (Faz 2).
-// Hasta tercihleri (tier/gece/ülke + seçtiği tedavi alanı) + kısa şikayet/hedef → tourism-etiketli Case
-// (tourismPlan JSON dolu, status NEW) → runTriage ile branş/aciliyet → branş doktorlarına bildirim.
-// ÜCRET KAPISI YOK (klinik-önce; bağlayıcı ödeme DAİMA doktor onayı + escrow sonrası). tourismPlan lojistik
-// (PHI DEĞİL, düz metin). PHI alanları (patientName/symptoms/reasoning) at-rest şifreli (E2EE inc.2c/Faz1).
-const TIERS = new Set(["Ekonomik", "Standart", "Premium"]);
+// POST /api/patient/tourism-request — Sağlık Turizmi öz-yeterli intake (2026-07-12 yeniden tasarım).
+// İki adımlı hasta-yüzü: Ön Bilgi (kimlik + iletişim + sağlık durumu) → AI branş → Tedavi Alanı seçimi.
+// Bu uç, hastanın NİHAİ branş seçimini (branchKey) alır → forceBranchKey ile o branşta tourism-etiketli
+// Case (status NEW) → seçilen BRANŞIN DOKTOR HAVUZUNA bildirim. Doktorlar yazılı teklif/video sunar;
+// anlaşınca fiyat girer → acente dosyası → mevcut escrow zinciri. ÜCRET KAPISI YOK (klinik-önce).
+// tourismPlan lojistik (PHI DEĞİL, düz metin: country + branch). PHI (patientName/symptoms/reasoning)
+// at-rest şifreli (E2EE inc.2c/Faz1). Talep sonrası hastaya AURA-dışı sorumluluk reddi mesajı gider
+// (notifyUser — uygulama-içi + push canlı; SMS/e-posta kanalı dormant → aktifleşince eklenir).
 
 export async function POST(req: Request) {
   const { user, error } = await requireUser();
@@ -30,16 +34,15 @@ export async function POST(req: Request) {
   const patientName = String(body.patientName ?? "").trim() || user.name;
   const contact = parseContactFields(body); // FAZ 8 — telefon + iletişim tercihi
   const country = String(body.country ?? "TR");
-  const tier = TIERS.has(String(body.tier)) ? String(body.tier) : "Standart";
-  const nights = Math.min(30, Math.max(1, Number(body.nights) || 7));
-  const area = String(body.branch ?? "").trim(); // hastanın seçtiği tedavi alanı (planlayıcı chip'i)
+  // Hastanın Tedavi Alanı adımında seçtiği NİHAİ branş (AI önerisi ön-seçili gelir, hasta değiştirebilir).
+  const branchKey = BRANCHES.some((b) => b.key === String(body.branchKey)) ? String(body.branchKey) : undefined;
 
-  // Branş/aciliyet: seçilen tedavi alanını bağlam olarak enjekte et → runTriage KANONİK BRANCHES
-  // etiketi döndürür (doktor kuyruğu doctor.branch === case.branch TAM eşleşmesi doğru olsun).
-  const a = await runTriage({ symptoms: area ? `Tedavi alanı: ${area}. ${symptoms}` : symptoms });
+  // Aciliyet/gerekçe LLM'den; branş HASTANIN seçimiyle kilitli (forceBranchKey) → doktor kuyruğu
+  // doctor.branch === case.branch TAM eşleşmesi hasta niyetiyle hizalı.
+  const a = await runTriage({ symptoms, forceBranchKey: branchKey });
 
-  // Lojistik tercih (düz metin) — hasta önizlemesiyle aynı; doktor PackageBuilder'ını ön-doldurur.
-  const plan = { tier, nights, country, branch: area || a.branch };
+  // Lojistik tercih (düz metin) — fiyat/paket/gece hasta-yüzünden kalktı; yalnız ülke + branş.
+  const plan = { country, branch: a.branch };
 
   const created = await db.case.create({
     data: {
@@ -65,6 +68,15 @@ export async function POST(req: Request) {
     title: `${a.urgency >= 4 ? "🔴 " : "🧳 "}Sağlık turizmi talebi`, // isim gömülmez (E2EE inc.2c)
     body: `${a.branch} · aciliyet ${a.urgency}/5`,
     href: `/doktor/vaka/${created.id}`,
+  });
+
+  // AURA-dışı sorumluluk reddi — hasta iletişim tercihi üzerinden (lib/tourism-disclaimer). Fire-safe:
+  // bildirim düşse bile talep oluşturma bozulmaz (hasta onay ekranını yine görür).
+  await notifyUser(user.id, {
+    type: "TOURISM_DISCLAIMER",
+    title: TOURISM_DISCLAIMER_TITLE,
+    body: TOURISM_DISCLAIMER_BODY,
+    href: `/vaka/${created.id}`,
   });
 
   // Nav bileşimi + profil hafızası (Faz 0) — turizm intake'inde dil alanı yok (air_lang UI'da)

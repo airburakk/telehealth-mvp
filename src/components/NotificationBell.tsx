@@ -36,6 +36,7 @@ const TYPE_META: Record<string, { icon: React.ReactNode; cls: string }> = {
   CONSULT_ANSWERED: { icon: <MessageSquare size={14} />, cls: "bg-violet-500/15 text-violet-300" },
   CONSULT_MESSAGE: { icon: <MessageSquare size={14} />, cls: "bg-sky-500/15 text-sky-300" },
   CONSULT_VIDEO: { icon: <Video size={14} />, cls: "bg-violet-500/15 text-violet-300" },
+  TOURISM_DISCLAIMER: { icon: <AlertTriangle size={14} />, cls: "bg-amber-500/15 text-amber-300" },
 };
 
 // Çevrilecek sabit arayüz metinleri (krom). timeAgo şablonları {n} yer tutuculudur → Claude {n}'i korur.
