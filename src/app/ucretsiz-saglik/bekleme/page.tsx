@@ -32,6 +32,8 @@ const S = {
   queuePos: "Kuyruktaki sıranız:",
   waitingDoctor: "Doktor bekleniyor",
   waitingMatch: "Eşleşme bekleniyor",
+  cancelBtn: "Başvuruyu iptal et",
+  cancelErr: "İptal edilemedi, lütfen tekrar deneyin.",
 } as const;
 
 // Ücretsiz Sağlık Hizmeti bekleme odası — eşleşene kadar poll eder; eşleşince görüşme odasına yönlendirir.
@@ -44,6 +46,8 @@ function WaitingInner() {
   const [pos, setPos] = useState<number | null>(null);
   const [status, setStatus] = useState<string>("WAITING");
   const [online, setOnline] = useState<number | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelErr, setCancelErr] = useState("");
   const [lang, setLang] = usePatientLang();
   const texts = useMemo(() => [...FREE_CARE_TRACKER_TEXTS, ...Object.values(S)], []);
   const { t } = useT(lang, texts);
@@ -78,6 +82,24 @@ function WaitingInner() {
 
   if (!caseId) {
     return <p dir={dir} className="text-sm text-white/50">{t(S.invalid)}</p>;
+  }
+
+  // Faz 4: hasta sıradan çekilebilir (kapı kalktı → çıkış hakkı) — yalnız WAITING'de sunucu kabul eder.
+  async function cancel() {
+    setCancelErr("");
+    setCancelling(true);
+    try {
+      const r = await fetch("/api/free-care/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caseId }),
+      });
+      if (!r.ok) throw new Error();
+      router.push("/vakalarim");
+    } catch {
+      setCancelErr(t(S.cancelErr));
+      setCancelling(false);
+    }
   }
 
   const ended = status !== "WAITING" && status !== "MATCHED";
@@ -125,6 +147,19 @@ function WaitingInner() {
         </>
       )}
       </div>
+      {!ended && (
+        <div className="text-center">
+          {cancelErr && <p className="mb-2 text-xs text-red-300">{cancelErr}</p>}
+          <button
+            type="button"
+            onClick={cancel}
+            disabled={cancelling}
+            className="text-xs font-medium text-white/40 underline-offset-2 hover:text-red-300 hover:underline disabled:opacity-50"
+          >
+            {t(S.cancelBtn)}
+          </button>
+        </div>
+      )}
       <ProcessTracker items={pbItems} dir={dir} />
     </div>
   );

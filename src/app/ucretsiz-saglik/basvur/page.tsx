@@ -10,7 +10,8 @@ import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/compo
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
 import { HeartHandshake, Loader2, ArrowRight } from "lucide-react";
 
-// Ücretsiz Sağlık Hizmeti ön-triyaj — kısa, ücret kapısı YOK. Başvuru → eşleşme varsa görüşme, yoksa bekleme odası.
+// Ücretsiz Sağlık Hizmeti ön-triyaj — kısa, ücret kapısı YOK. Başvuru HER ZAMAN alınır (Faz 4:
+// çevrimiçi-doktor kilidi kalktı): eşleşme varsa görüşme, yoksa bekleme havuzu + bildirim.
 const STATIC_UI = [
   "Ücretsiz Sağlık Hizmeti",
   "Ücretsiz Sağlık Hizmeti Başvurusu",
@@ -23,7 +24,7 @@ const STATIC_UI = [
   "Lütfen şikayetinizi biraz daha ayrıntılı yazın.",
   "Başvur ve eşleş", "Başvurunuz oluşturuluyor…",
   "Ücretsiz Sağlık Hizmeti çevrimiçi", "gönüllü doktor şu an müsait", "Şu an çevrimiçi gönüllü doktor yok",
-  "Bir doktor çevrimiçi olduğunda başvurabilirsiniz; havuzdayken bir doktor müsait olunca size bildirim göndeririz.",
+  "Başvurunuzu şimdi bırakabilirsiniz: sıraya alınır, bir gönüllü doktor müsait olunca size bildirim gönderilir.",
   "Müsaitlik kontrol ediliyor…",
 ];
 
@@ -162,13 +163,13 @@ export default function FreeCareApplyPage() {
         </div>
         {online === 0 && (
           <p className="-mt-1 text-xs leading-relaxed text-white/40">
-            {t("Bir doktor çevrimiçi olduğunda başvurabilirsiniz; havuzdayken bir doktor müsait olunca size bildirim göndeririz.")}
+            {t("Başvurunuzu şimdi bırakabilirsiniz: sıraya alınır, bir gönüllü doktor müsait olunca size bildirim gönderilir.")}
           </p>
         )}
 
         <button
           onClick={submit}
-          disabled={submitting || !online || online <= 0}
+          disabled={submitting} // Faz 4: çevrimiçi kilidi kalktı — başvuru her zaman alınır (havuz+bildirim)
           className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-3 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
