@@ -187,7 +187,8 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 
 | Rota | Açıklama |
 |------|----------|
-| `/` · `/giris` · `/kurumsal-giris` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | Landing (**8 dil statik**, `lib/landing-copy.ts`) · **hasta girişi** · **kurumsal giriş** · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
+| `/` · `/giris` · `/kurumsal-giris` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | **AURA sinematik landing** (v5.9 — vitrinden taşındı: hero video+letterform, 4 chapter destesi, gsap+lenis; 8 dil statik `lib/aura-landing/copy.ts`, dil anahtarı `air_lang`) · **hasta girişi** · **kurumsal giriş** · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
+| `/how-it-works` | **Nasıl Çalışır rehberi** (v5.9 — vitrinden taşındı): 4 yolculuğun adım listeleri + tıkla-oynat rehber videoları + HowTo JSON-LD; global Header/SiteFooter bu rotada ve `/`'de gizli (sayfa kendi aura nav/footer'ını taşır). Eski vitrin aura-health.higgsfield.app tüm sayfaları buraya 301 yönlendirir |
 | `/basla` | KALDIRILDI (v5.8) — eski linkler için `/triyaj`'a kalıcı redirect |
 | `/saglik-turizmi` | **Sağlık Turizmi hasta-yüzü planlama** (v4.24-25): tercih (branş/ülke/seviye/gece) + endikatif paket önizlemesi (`computePackage`) + öz-yeterli "Talep Oluştur" → `POST /api/patient/tourism-request` (runTriage → tourism-etiketli Case, `Case.tourismPlan` JSON; doktor `/paket` PackageBuilder ön-değeri + kokpit 🧳 rozeti). Klinik-önce: bağlayıcı fiyat/rezervasyon daima doktor onayı sonrası (simüle/park; USHAŞ yetki belgesi + TÜRSAB hukuki zemini vault'ta belgeli) |
 | `/triyaj` | Triyaj sihirbazı (tek ekran ödeme kapısı + 3 adım — v5.8) |
