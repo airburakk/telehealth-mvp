@@ -3,13 +3,16 @@
 // Vakalarım — hastanın kendi başvuruları, çok dilli (8+ dil) + RTL. Veriyi server page.tsx getirir,
 // burada yalnız sunum + çeviri yapılır. Hastanın kendi girdisi (isim, semptom) ÇEVRİLMEZ; yalnız
 // arayüz metinleri + durum/branş/tier etiketleri çevrilir (TR kanonik → doktor/AI etkilenmez).
+// Tam birleşme (2026-07-12): İkinci Görüş vakaları da bu listede — genel vakalarla tek kronolojik
+// akışta, "İkinci Görüş" rozetli kart olarak (kullanıcı kararı: karma kronolojik, bölüm yok).
 import Link from "next/link";
 import { useMemo } from "react";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { countryFlag, urgencyStyle, CASE_STATUS, formatDateTime, langDir } from "@/lib/constants";
 import { BRANCHES } from "@/lib/triage";
-import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Luggage, FileText, Inbox, HandHeart } from "lucide-react";
+import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
+import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Luggage, FileText, Inbox, HandHeart, Bell } from "lucide-react";
 
 export type MyCaseRow = {
   id: string;
@@ -22,6 +25,15 @@ export type MyCaseRow = {
   createdAt: string; // ISO
   booking: { id: string; tier: string; status: string; total: number } | null;
   hasRecovery: boolean;
+};
+
+export type SoCaseRow = {
+  id: string;
+  branchLabel: string;
+  status: string;
+  diagnosisSummary: string;
+  createdAt: string; // ISO
+  hasPendingReq: boolean;
 };
 
 const S = {
@@ -42,22 +54,37 @@ const S = {
   offer: "Bekleyen teklif",
   offerWord: "teklifi",
   packageWord: "paket",
+  soBadge: "İkinci Görüş",
+  actionNeeded: "İşlem gerekiyor",
 } as const;
 
 const TIERS = ["Ekonomik", "Standart", "Premium"];
 
-export function MyCasesList({ rows }: { rows: MyCaseRow[] }) {
+// Karma kronolojik akış: genel + SO vakaları tek listede yeni→eski (tam birleşme, 2026-07-12).
+type MergedRow = { kind: "general"; createdAt: string; row: MyCaseRow } | { kind: "so"; createdAt: string; row: SoCaseRow };
+
+export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?: SoCaseRow[] }) {
   const [lang, setLang] = usePatientLang();
   const texts = useMemo(
     () => [
       ...Object.values(S),
       ...Object.values(CASE_STATUS).map((s) => s.label),
+      ...Object.values(SO_STATUS_LABELS),
       ...BRANCHES.map((b) => b.label),
       ...TIERS,
     ],
     [],
   );
   const { t } = useT(lang, texts);
+
+  const merged = useMemo<MergedRow[]>(
+    () =>
+      [
+        ...rows.map((r): MergedRow => ({ kind: "general", createdAt: r.createdAt, row: r })),
+        ...soRows.map((r): MergedRow => ({ kind: "so", createdAt: r.createdAt, row: r })),
+      ].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [rows, soRows],
+  );
 
   return (
     <div dir={langDir(lang)} className="mx-auto max-w-4xl px-5 py-8">
@@ -77,15 +104,16 @@ export function MyCasesList({ rows }: { rows: MyCaseRow[] }) {
         </div>
       </div>
 
-      {/* Diğer kulvarlara köprü — /basla 4'lü seçimi kaldırıldı (2026-07-12); erişim buradan sürer */}
+      {/* Diğer kulvarlara köprü — /basla 4'lü seçimi kaldırıldı (2026-07-12); erişim buradan sürer.
+          SO kartı yeni başvuruya gider (SO vakaları artık bu listede — tam birleşme). */}
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <LaneCard href="/second-opinion/vakalarim" icon={<Stethoscope size={18} />} title={t(S.soTitle)} desc={t(S.soDesc)} />
+        <LaneCard href="/second-opinion/basvur" icon={<Stethoscope size={18} />} title={t(S.soTitle)} desc={t(S.soDesc)} />
         <LaneCard href="/saglik-turizmi" icon={<Luggage size={18} />} title={t(S.tourismTitle)} desc={t(S.tourismDesc)} />
         <LaneCard href="/ucretsiz-saglik/basvur" icon={<HandHeart size={18} />} title={t(S.freeTitle)} desc={t(S.freeDesc)} />
       </div>
 
       <div className="mt-6 space-y-3">
-        {rows.length === 0 && (
+        {merged.length === 0 && (
           <div className="rounded-3xl border border-dashed border-white/15 bg-[#161719] py-14 text-center">
             <Inbox className="mx-auto mb-2 text-white/25" size={28} />
             <p className="text-sm text-white/50">{t(S.empty)}</p>
@@ -95,7 +123,32 @@ export function MyCasesList({ rows }: { rows: MyCaseRow[] }) {
           </div>
         )}
 
-        {rows.map((c) => {
+        {merged.map((m) => {
+          if (m.kind === "so") {
+            const c = m.row;
+            return (
+              <div key={`so-${c.id}`} className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[11px] font-semibold text-violet-300 ring-1 ring-violet-400/25">
+                    <Stethoscope size={11} /> {t(S.soBadge)}
+                  </span>
+                  <span className="font-semibold text-[#F4F5F3]">{t(c.branchLabel)}</span>
+                  <span className="rounded-full bg-[#28C8D8]/10 px-2 py-0.5 text-[11px] font-semibold text-[#17919E]">{t(SO_STATUS_LABELS[c.status as SoStatus] ?? c.status)}</span>
+                  {c.hasPendingReq && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-300 ring-1 ring-amber-400/25">
+                      <Bell size={11} /> {t(S.actionNeeded)}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-1 text-xs text-white/50">{formatDateTime(c.createdAt)}</div>
+                <p className="mt-2 line-clamp-2 text-sm text-white/65">{c.diagnosisSummary}</p>
+                <div className="mt-3 flex flex-wrap gap-2 border-t border-white/10 pt-3">
+                  <CaseAction href={`/second-opinion/vaka/${c.id}`} icon={<FileText size={13} />}>{t(S.caseSummary)}</CaseAction>
+                </div>
+              </div>
+            );
+          }
+          const c = m.row;
           const u = urgencyStyle(c.urgency);
           const st = CASE_STATUS[c.status] ?? CASE_STATUS.NEW;
           const booking = c.booking;

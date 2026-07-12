@@ -1,36 +1,29 @@
-// navItemsFor — rol + hasta yolculuğu nav bileşimi matrisi (FAZ 2, 2026-07-04).
-// Hasta nav kararı: PATIENT = Vakalarım · Post Op · Paylaşımlarım (Triyaj/Ücretsiz Sağlık Hizmeti/Doktorlar kalktı);
-// SO yolculuğunda Paylaşımlarım gizli + Vakalarım SO listesine işaret eder.
+// navItemsFor — rol bazlı nav bileşimi matrisi (FAZ 2, 2026-07-04).
+// Hasta nav kararı: PATIENT = Vakalarım · Post Op · Paylaşımlarım (Triyaj/Ücretsiz Sağlık Hizmeti/Doktorlar kalktı).
+// Tam birleşme (2026-07-12): journey-bazlı SO daraltması KALDIRILDI — hasta nav'ı herkes için aynı,
+// SO vakaları /vakalarim'daki karma listede.
 import { describe, it, expect } from "vitest";
-import { navItemsFor, effectiveNavJourney } from "@/lib/nav";
+import { navItemsFor } from "@/lib/nav";
 
-const hrefs = (role: string | null, journey?: string | null) => navItemsFor(role, journey).map((n) => n.href);
+const hrefs = (role: string | null) => navItemsFor(role).map((n) => n.href);
 
 describe("navItemsFor", () => {
-  it("PATIENT (journey yok): Vakalarım + Post Op + Paylaşımlarım; Triyaj/Ücretsiz Sağlık Hizmeti/Doktorlar YOK", () => {
-    const h = hrefs("PATIENT", null);
+  it("PATIENT: Vakalarım + Post Op + Paylaşımlarım; Triyaj/Ücretsiz Sağlık Hizmeti/Doktorlar YOK", () => {
+    const h = hrefs("PATIENT");
     expect(h).toEqual(["/vakalarim", "/takip", "/paylasimlarim"]);
     expect(h).not.toContain("/triyaj");
     expect(h).not.toContain("/ucretsiz-saglik/basvur");
     expect(h).not.toContain("/hekimler");
   });
 
-  it("PATIENT + SECOND_OPINION: Paylaşımlarım gizli, Vakalarım → SO listesi", () => {
-    const h = hrefs("PATIENT", "SECOND_OPINION");
-    expect(h).toEqual(["/second-opinion/vakalarim", "/takip"]);
-  });
-
-  it("PATIENT + GENERAL/FREE_CARE: normal hasta nav'ı (SO daraltması yalnız SECOND_OPINION)", () => {
-    expect(hrefs("PATIENT", "GENERAL")).toEqual(["/vakalarim", "/takip", "/paylasimlarim"]);
-    expect(hrefs("PATIENT", "FREE_CARE")).toEqual(["/vakalarim", "/takip", "/paylasimlarim"]);
+  it("PATIENT: SO daraltması yok — Vakalarım daima /vakalarim, Paylaşımlarım daima görünür (tam birleşme)", () => {
+    const h = hrefs("PATIENT");
+    expect(h).not.toContain("/second-opinion/vakalarim");
+    expect(h).toContain("/paylasimlarim");
   });
 
   it("DOCTOR: değişmedi (Doktor, Post-Op, Ücretsiz Sağlık Hizmeti, Profilim); hasta sekmeleri yok", () => {
     expect(hrefs("DOCTOR")).toEqual(["/doktor", "/doktor/takip", "/doktor/ucretsiz-saglik", "/doktor/profil"]);
-  });
-
-  it("DOCTOR: journey parametresinden etkilenmez (yalnız PATIENT daraltması)", () => {
-    expect(hrefs("DOCTOR", "SECOND_OPINION")).toEqual(hrefs("DOCTOR"));
   });
 
   it("COORDINATOR: Operasyon + Doktor + Post-Op + Ücretsiz Sağlık Hizmeti", () => {
@@ -50,27 +43,5 @@ describe("navItemsFor", () => {
     expect(hrefs("ETHICS")).toEqual(["/etik-kurul"]);
     expect(hrefs("PARTNER")).toEqual(["/partner"]);
     expect(hrefs(null)).toEqual([]);
-  });
-});
-
-// Karma-kulvar düzeltmesi (2026-07-12): SO damgalı hastanın GENERAL vakası da varsa nav'daki
-// SO daraltması (Vakalarım→SO, Paylaşımlarım gizli) uygulanmaz — layout journey'yi Header'a
-// geçirmeden önce bu filtreden geçirir.
-describe("effectiveNavJourney", () => {
-  it("karma hasta (SO + genel vaka): journey null'a düşer → tam hasta nav'ı", () => {
-    expect(effectiveNavJourney("SECOND_OPINION", true)).toBeNull();
-    expect(hrefs("PATIENT", effectiveNavJourney("SECOND_OPINION", true))).toEqual(["/vakalarim", "/takip", "/paylasimlarim"]);
-  });
-
-  it("saf-SO hastası: SO daraltması sürer (Vakalarım → SO listesi)", () => {
-    expect(effectiveNavJourney("SECOND_OPINION", false)).toBe("SECOND_OPINION");
-    expect(hrefs("PATIENT", effectiveNavJourney("SECOND_OPINION", false))).toEqual(["/second-opinion/vakalarim", "/takip"]);
-  });
-
-  it("SO-dışı damgalar aynen geçer; boş damga null olur", () => {
-    expect(effectiveNavJourney("GENERAL", true)).toBe("GENERAL");
-    expect(effectiveNavJourney("HEALTH_TOURISM", false)).toBe("HEALTH_TOURISM");
-    expect(effectiveNavJourney(null, true)).toBeNull();
-    expect(effectiveNavJourney(undefined, false)).toBeNull();
   });
 });

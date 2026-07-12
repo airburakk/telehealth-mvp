@@ -19,13 +19,13 @@ const ROLE_LABELS: Record<string, string> = {
   PARTNER: "Partner Doktor",
 };
 
-export function Header({ user, lang = "Türkçe", journey = null }: { user: { name: string; role: string } | null; lang?: string; journey?: string | null }) {
+export function Header({ user, lang = "Türkçe" }: { user: { name: string; role: string } | null; lang?: string }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Nav öğeleri rol + hasta yolculuğuna göre (lib/nav.ts — SO hastasında Paylaşımlarım gizli,
-  // Vakalarım SO listesine işaret eder).
-  const items = navItemsFor(user?.role, journey);
+  // Nav öğeleri rol bazlı (lib/nav.ts — tam birleşme 2026-07-12: journey daraltması kalktı,
+  // hasta nav'ı herkes için aynı).
+  const items = navItemsFor(user?.role);
   // Çevrilecek metinler: görünür nav etiketleri + rol + Çıkış/Giriş.
   // lang="Türkçe" → useT no-op (kimlik). Partner gibi dil-tercihli kullanıcıda /api/i18n cache'i.
   const texts = useMemo(

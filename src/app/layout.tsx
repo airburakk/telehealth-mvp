@@ -6,7 +6,6 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { PwaRegister } from "@/components/PwaRegister";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { effectiveNavJourney } from "@/lib/nav";
 
 // Uygulama geneli tipografi — vitrin (aura-health) ile aynı aile: Inter gövde + Space Grotesk
 // display (--font-serif değişken adı tarihsel; display yuvası olarak kullanılır) + JetBrains Mono
@@ -39,20 +38,13 @@ export default async function RootLayout({
     const p = u?.partnerId ? await db.partnerDoctor.findUnique({ where: { id: u.partnerId }, select: { language: true } }) : null;
     headerLang = p?.language || "İngilizce";
   }
-  // Hasta yolculuğu (başvurulan akışta damgalanır — lib/patient-journey) → nav bileşimi (SO hastasında Paylaşımlarım gizli, Vakalarım→SO).
-  // Karma-kulvar: SO damgalı hastanın GENERAL vakası da varsa SO daraltması uygulanmaz (lib/nav
-  // effectiveNavJourney) — count sorgusu yalnız SO-damgalı hastada koşar.
-  let journey: string | null = null;
-  if (user?.role === "PATIENT") {
-    const u = await db.user.findUnique({ where: { id: user.id }, select: { patientJourney: true } });
-    const generalCount = u?.patientJourney === "SECOND_OPINION" ? await db.case.count({ where: { userId: user.id } }) : 0;
-    journey = effectiveNavJourney(u?.patientJourney, generalCount > 0);
-  }
+  // Tam birleşme (2026-07-12): nav journey'ye bakmaz — hasta nav'ı herkes için aynı,
+  // patientJourney sorgusu layout'tan kalktı.
   return (
     <html lang="tr" className={`h-full antialiased ${sans.variable} ${serif.variable} ${mono.variable}`}>
       <body className="min-h-full flex flex-col">
         <PwaRegister />
-        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} journey={journey} />
+        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} />
         <main className="flex-1">{children}</main>
         <SiteFooter />
       </body>
