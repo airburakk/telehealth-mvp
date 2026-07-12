@@ -1,17 +1,41 @@
+import type { Metadata } from "next";
 import { AuraLanding } from "@/components/aura/landing";
 import { StructuredData } from "@/components/aura/structured-data";
+import { OG_LOCALE, OG_ALTERNATE_LOCALES, SITE_URL } from "@/lib/aura-landing/seo";
 
 // AURA sinematik landing (vitrin aura-health.higgsfield.app'ten taşındı,
-// 2026-07-12) — vitrin + platform tek sitede birleşti.
-// Önceki tasarımlar: PortamedLanding (src/components/PortamedLanding.tsx,
-// design_handoff_portamed_landing) · daha eskisi design-backup/anasayfa-klasik-v2.6.tsx.bak.
-// Sayfa statik sözlükle çizilir (DB sorgusu yok); dil seçimi client'ta
-// air_lang'dan okunur.
+// 2026-07-12) — vitrin + platform tek sitede birleşti. Önceki tasarım
+// PortamedLanding v5.9.1'de emekli edildi (ölü kod silindi). Sayfa statik
+// sözlükle çizilir (DB sorgusu yok); dil seçimi client'ta air_lang'dan okunur.
+const SITE = SITE_URL;
 
-// SEO: JSON-LD (MedicalOrganization + WebSite) — modül-düzeyi sabit dize
-// (StructuredData sözleşmesi). COPY verisi "use client"sız copy.ts'te durur;
-// (RSC client-referans tuzağına girmez).
-const SITE = "https://telehealth-mvp-roan.vercel.app";
+// SEO metadata: landing-özel zengin başlık + OpenGraph/Twitter kart + canonical.
+// hreflang KARARI (v5.9.1): landing 8 dil TEK URL'de (dil client-side, air_lang) —
+// klasik path-başına-URL yerine og:locale:alternate + JSON-LD inLanguage ile işaretlenir
+// (gerçeğe uygun; ayrı rota/prerender üretmez).
+export const metadata: Metadata = {
+  title: { absolute: "AURA — Telehealth & Health Tourism, End to End" },
+  description:
+    "AURA: AI triage, video consultations, independent second opinions and planned health tourism in Türkiye — end to end, in 8 languages.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "AURA",
+    title: "AURA — Telehealth & Health Tourism, End to End",
+    description:
+      "AI triage, video consultations, independent second opinions and planned health tourism in Türkiye — end to end.",
+    locale: OG_LOCALE.en,
+    alternateLocale: OG_ALTERNATE_LOCALES,
+    images: [{ url: "/assets/video/p-hero3.jpg", width: 1280, height: 720, alt: "AURA" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AURA — Telehealth & Health Tourism, End to End",
+    description: "AI triage, video consultations, second opinions and health tourism — end to end.",
+    images: ["/assets/video/p-hero3.jpg"],
+  },
+};
 const LD_JSON = JSON.stringify({
   "@context": "https://schema.org",
   "@graph": [

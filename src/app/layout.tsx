@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { PwaRegister } from "@/components/PwaRegister";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { SITE_URL } from "@/lib/aura-landing/seo";
 
 // Uygulama geneli tipografi — vitrin (aura-health) ile aynı aile: Inter gövde + Space Grotesk
 // display (--font-serif değişken adı tarihsel; display yuvası olarak kullanılır) + JetBrains Mono
@@ -15,8 +16,11 @@ const serif = Space_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["400", "
 const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-mono", display: "swap" });
 
 export const metadata: Metadata = {
+  // metadataBase: canonical + OpenGraph göreli URL'lerini mutlaklaştırır (yoksa Next uyarı verir).
+  metadataBase: new URL(SITE_URL),
   // Sekme başlığı sadeleştirildi (2026-07-12, kullanıcı kararı): üst banttaki yalın-logo diliyle hizalı.
-  title: "AURA Health",
+  // Sayfalar kendi title'ını verebilir; landing/how-it-works zengin başlık taşır.
+  title: { default: "AURA Health", template: "%s · AURA" },
   description:
     "Triyaj, uzman görüşü ve sağlık turizmi paketlerini birleştiren uçtan uca dijital sağlık platformu (MVP).",
   manifest: "/manifest.webmanifest",

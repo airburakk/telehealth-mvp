@@ -2,15 +2,32 @@ import type { Metadata } from "next";
 import { HowItWorks } from "@/components/aura/how-it-works";
 import { StructuredData } from "@/components/aura/structured-data";
 import { COPY } from "@/lib/aura-landing/copy";
+import { OG_LOCALE, OG_ALTERNATE_LOCALES } from "@/lib/aura-landing/seo";
 
 // /how-it-works (vitrinden taşındı, 2026-07-12): dört yolculuğun adım adım
 // rehberi. Global Header/SiteFooter bu rotada gizlidir — sayfa kendi aura
-// nav/footer'ını taşır.
+// nav/footer'ını taşır. SEO: landing ile aynı 8-dil-tek-URL sinyali (og:locale:alternate).
 export const metadata: Metadata = {
-  title: "AURA · How it works",
+  title: "How it works", // layout template → "How it works · AURA"
   description:
     "How AURA works, step by step: telehealth visits, independent second opinions, planned health tourism in Türkiye and free volunteer care.",
-  alternates: { canonical: "https://telehealth-mvp-roan.vercel.app/how-it-works" },
+  alternates: { canonical: "/how-it-works" },
+  openGraph: {
+    type: "article",
+    url: "/how-it-works",
+    siteName: "AURA",
+    title: "How AURA works, step by step",
+    description:
+      "Telehealth visits, independent second opinions, planned health tourism and free volunteer care — how each journey works.",
+    locale: OG_LOCALE.en,
+    alternateLocale: OG_ALTERNATE_LOCALES,
+    images: [{ url: "/assets/video/p-hero3.jpg", width: 1280, height: 720, alt: "AURA" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "How AURA works, step by step",
+    images: ["/assets/video/p-hero3.jpg"],
+  },
 };
 
 // SEO: 4 rehber = 4 HowTo şeması (EN birincil; modül-düzeyi sabit dize —
