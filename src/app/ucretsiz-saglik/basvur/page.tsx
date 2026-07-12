@@ -103,7 +103,7 @@ export default function FreeCareApplyPage() {
   }
 
   return (
-    <JourneyIntakeShell icon={HeartHandshake} eyebrow={t("Ücretsiz Sağlık Hizmeti")} title={t("Ücretsiz Sağlık Hizmeti Başvurusu")} intro={t("Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.")} lang={uiLang} onLangChange={chooseLang} journey="FREE_CARE" stage={1}>
+    <JourneyIntakeShell icon={HeartHandshake} eyebrow={t("Ücretsiz Sağlık Hizmeti")} title={t("Ücretsiz Sağlık Hizmeti Başvurusu")} intro={t("Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.")} lang={uiLang} onLangChange={chooseLang} journey="FREE_CARE" stage={0}>
 
       <div className="mt-7 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm space-y-4">
         {showStrip && profile ? (

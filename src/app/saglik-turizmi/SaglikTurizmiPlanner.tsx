@@ -127,7 +127,7 @@ export function SaglikTurizmiPlanner({ rate }: { rate: number }) {
   }
 
   return (
-    <JourneyIntakeShell icon={Plane} eyebrow={t("Sağlık Turizmi")} title={t("Sağlık Turizmini Planla")} intro={t("Tedavi, seyahat ve konaklamayı tek yerden tahmini olarak planlayın; kesin planı doktorunuzla birlikte netleştirin.")} lang={lang} onLangChange={setLang} wide journey="HEALTH_TOURISM" stage={1}>
+    <JourneyIntakeShell icon={Plane} eyebrow={t("Sağlık Turizmi")} title={t("Sağlık Turizmini Planla")} intro={t("Tedavi, seyahat ve konaklamayı tek yerden tahmini olarak planlayın; kesin planı doktorunuzla birlikte netleştirin.")} lang={lang} onLangChange={setLang} wide journey="HEALTH_TOURISM" stage={0}>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_360px]">
         {/* Sol: tercih formu */}

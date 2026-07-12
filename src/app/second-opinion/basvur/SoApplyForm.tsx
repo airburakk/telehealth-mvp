@@ -184,7 +184,7 @@ export function SoApplyForm() {
   }
 
   return (
-    <JourneyIntakeShell icon={Stethoscope} eyebrow={t(S.eyebrow)} title={t(S.title)} intro={t(S.intro)} lang={lang} onLangChange={chooseLang} journey="SECOND_OPINION" stage={1}>
+    <JourneyIntakeShell icon={Stethoscope} eyebrow={t(S.eyebrow)} title={t(S.title)} intro={t(S.intro)} lang={lang} onLangChange={chooseLang} journey="SECOND_OPINION" stage={0}>
 
       {/* §12.2 — süre bilgilendirmesi (tek kaynak: lib/second-opinion; useT ile çok dilli) */}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">

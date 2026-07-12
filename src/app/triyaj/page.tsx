@@ -246,7 +246,7 @@ export default function TriyajPage() {
   // Ön-konsültasyon kapısı: ücret bilgisi + sigorta/ödeme geçilmeden triyaj başlamaz (tek ekran, Faz 2)
   if (!billing) {
     return (
-      <JourneyIntakeShell icon={Stethoscope} eyebrow={t("Branş Doktoru")} title={t("Triyaj · Ön Değerlendirme")} intro={t("Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.")} lang={uiLang} onLangChange={chooseLang} journey="GENERAL" stage={1}>
+      <JourneyIntakeShell icon={Stethoscope} eyebrow={t("Branş Doktoru")} title={t("Triyaj · Ön Değerlendirme")} intro={t("Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.")} lang={uiLang} onLangChange={chooseLang} journey="GENERAL" stage={0}>
         <div className="mt-7">
           <PreConsultGate onCleared={setBilling} t={t} />
         </div>
