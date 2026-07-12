@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 import { decryptField } from "@/lib/crypto"; // triyaj semptom/gerekçe at-rest şifreli (E2EE Faz 1 inc.2) → çöz
 import { maskCaseId, REQUEST_TYPES, VERDICTS, ACTIONS, ESCROW_STATUS } from "@/lib/ethics";
 import { formatUSD } from "@/lib/pricing";
@@ -10,7 +11,15 @@ import { ArrowLeft, Scale, FileText, Sparkles, Lock, Gavel, ShieldCheck, EyeOff 
 
 export const dynamic = "force-dynamic";
 
+const ETHICS_ROLES = ["ETHICS", "ADMIN"];
+
 export default async function ComplaintDetail({ params }: { params: Promise<{ id: string }> }) {
+  // Derinlemesine savunma (2026-07-12): proxy TOKEN roluyle korur; bu detay şikayet + ÇÖZÜLMÜŞ triyaj
+  // semptom/gerekçesini (decryptField) gösterdiğinden getCurrentUser (DB-rol otoriter) kapısı ŞART.
+  // Yetkisiz → notFound (varlık sızdırmaz; detay-sayfa deseni doktor/vaka/[id] ile aynı).
+  const user = await getCurrentUser();
+  if (!user || !ETHICS_ROLES.includes(user.role)) notFound();
+
   const { id } = await params;
   const c = await db.complaint.findUnique({ where: { id }, include: { case: true } });
   if (!c) notFound();

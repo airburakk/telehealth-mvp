@@ -3,7 +3,14 @@ import { SignJWT, jwtVerify } from "jose";
 
 export const SESSION_COOKIE = "air_session";
 
-export type Role = "PATIENT" | "DOCTOR" | "COORDINATOR" | "ETHICS" | "ADMIN" | "PARTNER" | "AGENCY";
+export const ROLES = ["PATIENT", "DOCTOR", "COORDINATOR", "ETHICS", "ADMIN", "PARTNER", "AGENCY"] as const;
+export type Role = (typeof ROLES)[number];
+
+// DB `role` kolonu şemada denetimsiz String (enum değil) — malformed/typo/gelecek değer olabilir.
+// getCurrentUser bu guard'la doğrular; tanınmayan rol otoriter kabul edilmez (fail-closed).
+export function isRole(v: unknown): v is Role {
+  return typeof v === "string" && (ROLES as readonly string[]).includes(v);
+}
 
 export interface SessionUser {
   id: string;

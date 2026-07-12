@@ -3,7 +3,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
-import { SESSION_COOKIE, signToken, verifyToken, type SessionUser, type Role } from "./session";
+import { SESSION_COOKIE, signToken, verifyToken, isRole, type SessionUser } from "./session";
 
 export async function hashPassword(pw: string): Promise<string> {
   return bcrypt.hash(pw, 10);
@@ -69,5 +69,6 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const rec = await db.user.findUnique({ where: { id: user.id }, select: { sessionVersion: true, role: true } });
   if (!rec) return null; // kullanıcı silinmiş → oturum geçersiz
   if ((user.sv ?? 0) !== rec.sessionVersion) return null; // iptal edilmiş token
-  return { ...user, role: rec.role as Role }; // DB rolü otoriter (token rolü yalnız imza taşıyıcısı)
+  if (!isRole(rec.role)) return null; // malformed/tanınmayan DB rolü → otoriter kabul etme (fail-closed)
+  return { ...user, role: rec.role }; // DB rolü otoriter (token rolü yalnız imza taşıyıcısı)
 });

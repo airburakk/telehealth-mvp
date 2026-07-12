@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
 import { formatDateTime } from "@/lib/constants";
@@ -7,11 +9,18 @@ import { Stethoscope, ArrowRight, Inbox, FileText, Bell, ArrowLeft } from "lucid
 
 export const dynamic = "force-dynamic";
 
+const STAFF_ROLES = ["COORDINATOR", "ADMIN"];
+
 // Koordinatör aksiyonu bekleyen durumlar (kuyruğun üstünde)
 const ACTION_STATUSES = ["PENDING_REVIEW", "READY_FOR_ASSIGNMENT"];
 
-// İkinci Görüş — Koordinatör kuyruğu. Proxy /operasyon/* zaten OPS rolüyle korur.
+// İkinci Görüş — Koordinatör kuyruğu. Proxy /operasyon/* TOKEN roluyle korur; hasta adı/PHI çektiği
+// için getCurrentUser (DB-rol otoriter) öz-savunması ŞART (derinlemesine savunma, 2026-07-12).
 export default async function SoQueuePage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/giris?next=/operasyon/ikinci-gorus");
+  if (!STAFF_ROLES.includes(user.role)) redirect("/");
+
   const cases = await db.secondOpinionCase.findMany({
     where: { status: { notIn: ["CLOSED", "CANCELLED"] } },
     orderBy: { createdAt: "desc" },

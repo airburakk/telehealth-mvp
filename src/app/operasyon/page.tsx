@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 import { countryFlag, countryName } from "@/lib/constants";
 import { formatUSD } from "@/lib/pricing";
 import {
@@ -9,9 +11,18 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const STAFF_ROLES = ["COORDINATOR", "ADMIN"];
+
 // Operasyon Paneli (S2) — vaka hacmi, dönüşüm hunisi, gelir/Escrow, doktor kapasite, trend.
 // Salt server component: tüm metrikler istek anında canlı DB'den hesaplanır.
 export default async function OperationsDashboard() {
+  // Derinlemesine savunma (2026-07-12): proxy /operasyon'u TOKEN roluyle korur (DB'siz) — DB'de rolü
+  // düşürülmüş token kabuğa gelebilir; bu sayfa finansalı DB'den çektiği için getCurrentUser (DB-rol
+  // otoriter) kapısı ŞART. Diğer /operasyon/* sayfalarındaki desenle aynı.
+  const user = await getCurrentUser();
+  if (!user) redirect("/giris?next=/operasyon");
+  if (!STAFF_ROLES.includes(user.role)) redirect("/");
+
   const [cases, consultations, bookings, recoveries, complaints, doctors] = await Promise.all([
     db.case.findMany({ select: { id: true, branch: true, country: true, status: true, urgency: true, payStatus: true, consultFee: true, createdAt: true } }),
     db.consultation.findMany({ select: { id: true, caseId: true, doctorId: true, status: true } }),

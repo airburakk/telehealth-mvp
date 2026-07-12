@@ -1,13 +1,22 @@
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 import { hasProcedures, hasQualification } from "@/lib/doctor-activation";
 import { VerifyButton } from "./VerifyButton";
 import { ShieldCheck, Stethoscope, MapPin, Globe, Check, X, Clock, BadgeCheck, Flag } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
+const ADMIN_ROLES = ["ETHICS", "ADMIN"]; // proxy /admin ETHICS_ROLES ile korur (doktor doğrulama onayı)
+
 // M5 — Doktor doğrulama onayı (ADMIN / Etik Kurul). Self-signup doktorlar verified:false başlar;
-// burada onaylanınca public dizine + eşleştirmelere dahil olur. Proxy /admin ETHICS_ROLES ile korur.
+// burada onaylanınca public dizine + eşleştirmelere dahil olur. Proxy TOKEN roluyle korur; doğrulama
+// onay yetkisi kritik olduğundan getCurrentUser (DB-rol otoriter) öz-savunması ŞART (2026-07-12).
 export default async function DoctorApprovalPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/giris?next=/admin/hekim-onay");
+  if (!ADMIN_ROLES.includes(user.role)) redirect("/");
+
   const pending = await db.doctor.findMany({
     where: { verified: false },
     orderBy: { name: "asc" },

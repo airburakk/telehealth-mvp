@@ -1,12 +1,22 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 import { maskCaseId, REQUEST_TYPES, COMPLAINT_STATUS } from "@/lib/ethics";
 import { formatDateTime } from "@/lib/constants";
 import { Scale, ArrowRight, Inbox, ShieldCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
+const ETHICS_ROLES = ["ETHICS", "ADMIN"];
+
 export default async function EthicsBoard() {
+  // Derinlemesine savunma (2026-07-12): proxy /etik-kurul'u TOKEN roluyle korur (DB'siz). Şikayet
+  // kuyruğu + doktor doğrulama sayımları çekildiği için getCurrentUser (DB-rol otoriter) kapısı ŞART.
+  const user = await getCurrentUser();
+  if (!user) redirect("/giris?next=/etik-kurul");
+  if (!ETHICS_ROLES.includes(user.role)) redirect("/");
+
   // PENDING tümü (iş kuyruğu — kaçırılmamalı) + RESOLVED en güncel 50 (arşiv büyüse de liste sabit).
   // Sıralama DB'de (orderBy); in-memory sort kaldırıldı. Listede yalnız kartın kullandığı case.branch taşınır.
   const [pendingRows, resolvedRows, total, resolved, pendingDoctors] = await Promise.all([

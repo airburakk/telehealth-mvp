@@ -47,6 +47,12 @@ describe("getCurrentUser — rol kaynağı DB", () => {
     expect(await getCurrentUser()).toBeNull();
   });
 
+  it("malformed/tanınmayan DB rolü → null (fail-closed; denetimsiz cast kapandı)", async () => {
+    getCookie.mockReturnValue({ value: await signToken(TOKEN_USER) });
+    vi.mocked(db.user.findUnique).mockResolvedValue({ sessionVersion: 1, role: "SUPERUSER" } as never);
+    expect(await getCurrentUser()).toBeNull();
+  });
+
   it("cookie yoksa null (DB'ye gidilmez)", async () => {
     getCookie.mockReturnValue(undefined);
     expect(await getCurrentUser()).toBeNull();

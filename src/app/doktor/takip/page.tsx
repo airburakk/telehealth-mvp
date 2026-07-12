@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 import { severityMeta, type Severity } from "@/lib/postop";
 import { recoveryClosed } from "@/lib/postop-access";
 import { countryFlag, countryName, formatDateTime } from "@/lib/constants";
@@ -9,9 +11,16 @@ import { CompleteRecoveryButton } from "@/components/CompleteRecoveryButton";
 
 export const dynamic = "force-dynamic";
 
+const DOCTOR_ROLES = ["DOCTOR", "COORDINATOR", "ADMIN"];
 const RANK: Record<Severity, number> = { RED: 0, WATCH: 1, NONE: 2 };
 
 export default async function RecoveryMonitor() {
+  // Derinlemesine savunma (2026-07-12): proxy /doktor/* TOKEN roluyle korur; post-op takip listesi
+  // hasta adı + ağrı/ateş/şiddet (ÇÖZÜLMÜŞ PHI) gösterdiğinden getCurrentUser (DB-rol otoriter) ŞART.
+  const user = await getCurrentUser();
+  if (!user) redirect("/giris?next=/doktor/takip");
+  if (!DOCTOR_ROLES.includes(user.role)) redirect("/");
+
   const recoveries = await db.recovery.findMany({
     include: {
       case: { select: { patientName: true, country: true, branch: true } }, // listede yalnız kimlik+ülke+branş
