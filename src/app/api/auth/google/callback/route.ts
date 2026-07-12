@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { db } from "@/lib/db";
 import { createSession, hashPassword } from "@/lib/auth";
 import { roleHome, type Role } from "@/lib/session";
+import { patientHome } from "@/lib/patient-journey";
 import { consentedVersion } from "@/lib/consent";
 import { isGoogleConfigured, exchangeGoogleCode, googleRedirectUri } from "@/lib/oauth";
 import { createDoctorAccount } from "@/lib/doctor-signup";
@@ -63,5 +64,7 @@ export async function GET(req: Request) {
 
   const cv = await consentedVersion(user.id);
   await createSession({ id: user.id, email: user.email, name: user.name, role: user.role as Role, cv });
-  return NextResponse.redirect(new URL(roleHome(user.role as Role), origin));
+  // Faz 5: dönen hasta vaka merkezine iner (başvurusu yoksa /triyaj)
+  const home = user.role === "PATIENT" ? await patientHome(user.id) : roleHome(user.role as Role);
+  return NextResponse.redirect(new URL(home, origin));
 }

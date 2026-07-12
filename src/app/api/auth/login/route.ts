@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkPassword, createSession } from "@/lib/auth";
 import { roleHome, type Role } from "@/lib/session";
+import { patientHome } from "@/lib/patient-journey";
 import { consentedVersion } from "@/lib/consent";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 import { isEmailConfigured } from "@/lib/email";
@@ -32,5 +33,7 @@ export async function POST(req: Request) {
   // KVKK onam sürümünü oturuma göm → proxy DB'siz kontrol eder; onam yoksa /onam'a yönlenir.
   const cv = await consentedVersion(user.id);
   await createSession({ id: user.id, email: user.email, name: user.name, role: user.role as Role, cv });
-  return NextResponse.json({ ok: true, role: user.role, home: roleHome(user.role as Role) });
+  // Faz 5: dönen hasta vaka merkezine iner (başvurusu yoksa /triyaj); diğer roller statik
+  const home = user.role === "PATIENT" ? await patientHome(user.id) : roleHome(user.role as Role);
+  return NextResponse.json({ ok: true, role: user.role, home });
 }

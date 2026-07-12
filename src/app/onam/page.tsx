@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { hasCurrentConsent } from "@/lib/consent";
 import { roleHome } from "@/lib/session";
+import { patientHome } from "@/lib/patient-journey";
 import { ConsentGate } from "./ConsentGate";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,9 @@ export default async function ConsentPage({ searchParams }: { searchParams: Prom
   if (!user) redirect("/giris?next=/onam");
 
   const { next } = await searchParams;
-  const dest = next && next.startsWith("/") && next !== "/onam" ? next : roleHome(user.role);
+  // Faz 5: hasta için varsayılan iniş dinamik (vaka merkezi / triyaj)
+  const fallback = user.role === "PATIENT" ? await patientHome(user.id) : roleHome(user.role);
+  const dest = next && next.startsWith("/") && next !== "/onam" ? next : fallback;
 
   if (await hasCurrentConsent(user.id)) redirect(dest);
 

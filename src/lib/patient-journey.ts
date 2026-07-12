@@ -19,6 +19,25 @@ export interface PatientProfileStamp {
   contactPref?: string | null; // APP | SMS | EMAIL
 }
 
+// Dönen hasta iniş noktası (basitleştirme Faz 5, 2026-07-12): başvurusu OLAN hasta girişte vaka
+// merkezine iner (SO-yolculuğundaysa SO listesine — nav bileşimiyle aynı eşleme); hiç başvurusu
+// olmayan doğrudan Branş Doktoru akışına (/triyaj). roleHome'un PATIENT dalının dinamik hali —
+// sync çağıranlar (statik fallback) roleHome'da kalır.
+export async function patientHome(userId: string): Promise<string> {
+  try {
+    const [u, caseCount, soCount] = await Promise.all([
+      db.user.findUnique({ where: { id: userId }, select: { patientJourney: true } }),
+      db.case.count({ where: { userId } }),
+      db.secondOpinionCase.count({ where: { patientId: userId } }),
+    ]);
+    if (u?.patientJourney === "SECOND_OPINION" && soCount > 0) return "/second-opinion/vakalarim";
+    if (caseCount > 0 || soCount > 0) return "/vakalarim";
+  } catch {
+    /* sorgu düşerse güvenli varsayılan */
+  }
+  return "/triyaj";
+}
+
 export async function stampPatientProfile(userId: string, role: string, stamp: PatientProfileStamp): Promise<void> {
   if (role !== "PATIENT") return;
   const data: Record<string, string> = { patientJourney: stamp.journey };
