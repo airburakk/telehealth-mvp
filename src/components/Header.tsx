@@ -10,8 +10,6 @@ import { langDir } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
 import { LogOut, LogIn, ShieldOff } from "lucide-react";
 
-const BRAND_SUB = "Sağlık Turizmi & Teletıp";
-
 const ROLE_LABELS: Record<string, string> = {
   PATIENT: "Hasta",
   DOCTOR: "Doktor",
@@ -28,10 +26,10 @@ export function Header({ user, lang = "Türkçe", journey = null }: { user: { na
   // Nav öğeleri rol + hasta yolculuğuna göre (lib/nav.ts — SO hastasında Paylaşımlarım gizli,
   // Vakalarım SO listesine işaret eder).
   const items = navItemsFor(user?.role, journey);
-  // Çevrilecek metinler: marka altyazısı + görünür nav etiketleri + rol + Çıkış/Giriş.
+  // Çevrilecek metinler: görünür nav etiketleri + rol + Çıkış/Giriş.
   // lang="Türkçe" → useT no-op (kimlik). Partner gibi dil-tercihli kullanıcıda /api/i18n cache'i.
   const texts = useMemo(
-    () => [BRAND_SUB, "Çıkış", "Giriş yap", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
+    () => ["Çıkış", "Giriş yap", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
     [items, user]
   );
   const { t } = useT(lang, texts);
@@ -66,9 +64,9 @@ export function Header({ user, lang = "Türkçe", journey = null }: { user: { na
   return (
     <header dir={dir} className="sticky top-0 z-30 border-b border-white/10 bg-[#0D0E10]/95 backdrop-blur">
       <div className="mx-auto max-w-6xl px-5 h-16 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-end gap-2">
+        {/* Marka altyazısı ("Sağlık Turizmi & Teletıp") kullanıcı isteğiyle kaldırıldı (2026-07-12) — yalnız logo */}
+        <Link href="/" className="flex items-end">
           <PortamedLogo size={23} ink="#FFFFFF" />
-          <span className="hidden pb-[1px] text-[11px] text-white/45 sm:block">{t(BRAND_SUB)}</span>
         </Link>
 
         <div className="flex items-center gap-1.5">
