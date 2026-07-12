@@ -69,11 +69,15 @@ niyeti `g_oauth_intent` cookie'siyle taşınır — mevcut kullanıcıda yok say
 seferlik KVKK onam kapısı (`/onam`) vardır (sürümlü; `lib/consent-config.CONSENT_VERSION` artarsa
 bir kez yeniden alınır).
 
-**Hasta akışı:** hasta her girişte **`/basla` "Nasıl İlerlemek İstersiniz?"** ekranına düşer
-(`roleHome`): Branş Doktoru→`/triyaj` · İkinci Görüş→SO başvuru · Sağlık Turizmi→`/saglik-turizmi`
-(endikatif önizleme + öz-yeterli talep) · Ücretsiz Sağlık Hizmeti→başvuru. Seçim `POST /api/patient/journey` ile `User.patientJourney`'e
-yazılır ve üst bandı belirler (`lib/nav.ts navItemsFor`): Vakalarım · Post Op (`/takip` hub) ·
-Paylaşımlarım; **SO yolculuğunda** Paylaşımlarım gizli + Vakalarım→`/second-opinion/vakalarim`.
+**Hasta akışı (v5.8 basitleştirme):** `/basla` 4'lü seçim ekranı KALDIRILDI — giriş hunisi doğrudan
+**Branş Doktoru akışına** (`/triyaj`) iner; **dönen hasta** (başvurusu olan) girişte **vaka merkezine**
+(`/vakalarim`; SO yolculuğunda `/second-opinion/vakalarim`) iner (`lib/patient-journey.patientHome`).
+Diğer kulvarlara erişim: Vakalarım üstündeki kulvar kartları + kendi sayfaları (İkinci Görüş →
+`/second-opinion/basvur` · Sağlık Turizmi → `/saglik-turizmi` · Ücretsiz Sağlık → `/ucretsiz-saglik/basvur`).
+`User.patientJourney` artık **başvurulan akışta damgalanır** (`stampPatientJourney` → intake API'leri) ve
+üst bandı belirler (`lib/nav.ts navItemsFor`); **profil hafızası** (Faz 0/1): intake'te girilen
+ülke/dil/telefon(şifreli)/iletişim tercihi `User`'a yaz-geri edilir, sonraki intake'ler kompakt
+"Kayıtlı bilgileriniz" şeridiyle prefill eder (`GET /api/patient/profile` + `ProfilePrefill`).
 
 Demo kullanıcıları (parola `1234`; hasta demo `/giris`'te, personel demoları `/kurumsal-giris`'te):
 
@@ -183,7 +187,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | Rota | Açıklama |
 |------|----------|
 | `/` · `/giris` · `/kurumsal-giris` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | Landing (**8 dil statik**, `lib/landing-copy.ts`) · **hasta girişi** · **kurumsal giriş** · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
-| `/basla` | Hasta "Nasıl İlerlemek İstersiniz?" seçim ekranı (her girişte; `User.patientJourney`) |
+| `/basla` | KALDIRILDI (v5.8) — eski linkler için `/triyaj`'a kalıcı redirect |
 | `/saglik-turizmi` | **Sağlık Turizmi hasta-yüzü planlama** (v4.24-25): tercih (branş/ülke/seviye/gece) + endikatif paket önizlemesi (`computePackage`) + öz-yeterli "Talep Oluştur" → `POST /api/patient/tourism-request` (runTriage → tourism-etiketli Case, `Case.tourismPlan` JSON; doktor `/paket` PackageBuilder ön-değeri + kokpit 🧳 rozeti). Klinik-önce: bağlayıcı fiyat/rezervasyon daima doktor onayı sonrası (simüle/park; USHAŞ yetki belgesi + TÜRSAB hukuki zemini vault'ta belgeli) |
 | `/triyaj` · `/triyaj/[id]` | Triyaj sihirbazı · vaka süreç sayfası + 3-seçenek kapısı |
 | `/vakalarim` · `/erisim-kaydi` | Hastanın vaka ana ekranı · erişim denetim kaydı ("verime kim erişti") |
