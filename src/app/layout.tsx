@@ -15,7 +15,8 @@ const serif = Space_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["400", "
 const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-mono", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "AURA — Sağlık Turizmi & Teletıp",
+  // Sekme başlığı sadeleştirildi (2026-07-12, kullanıcı kararı): üst banttaki yalın-logo diliyle hizalı.
+  title: "AURA Health",
   description:
     "Triyaj, uzman görüşü ve sağlık turizmi paketlerini birleştiren uçtan uca dijital sağlık platformu (MVP).",
   manifest: "/manifest.webmanifest",
