@@ -3,10 +3,10 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
-// Global alt bilgi — ana sayfada gizli (AURA landing kendi footer'ını taşır)
+// Global alt bilgi — AURA landing rotalarında gizli (sayfa kendi footer'ını taşır)
 export function SiteFooter() {
   const pathname = usePathname();
-  if (pathname === "/") return null;
+  if (pathname === "/" || pathname === "/how-it-works") return null;
   return (
     <footer className="border-t border-white/10 bg-[#0D0E10] print:hidden">
       <div className="mx-auto max-w-6xl px-5 py-5 text-xs text-white/45 flex flex-wrap items-center justify-between gap-2">

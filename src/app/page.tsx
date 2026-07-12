@@ -1,22 +1,43 @@
-import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
-import { PortamedLanding, type LandingDoctor } from "@/components/PortamedLanding";
+import { AuraLanding } from "@/components/aura/landing";
+import { StructuredData } from "@/components/aura/structured-data";
 
-export const dynamic = "force-dynamic";
+// AURA sinematik landing (vitrin aura-health.higgsfield.app'ten taşındı,
+// 2026-07-12) — vitrin + platform tek sitede birleşti.
+// Önceki tasarımlar: PortamedLanding (src/components/PortamedLanding.tsx,
+// design_handoff_portamed_landing) · daha eskisi design-backup/anasayfa-klasik-v2.6.tsx.bak.
+// Sayfa statik sözlükle çizilir (DB sorgusu yok); dil seçimi client'ta
+// air_lang'dan okunur.
 
-// PortaMed landing (design_handoff_portamed_landing spesifikasyonu).
-// Eski tasarım: design-backup/anasayfa-klasik-v2.6.tsx.bak + git tag design-klasik-v2.6
-export default async function Home() {
-  const user = await getCurrentUser();
-  // "Meet the specialists" — gerçek doktorlardan 3'ü (yorum sayısı yüksek olan markalı branşlar önde)
-  const docs = await db.doctor.findMany({
-    where: { branch: { in: ["Saç Ekimi", "Diş Tedavisi", "Tüp Bebek (IVF)"] } },
-    take: 3,
-    orderBy: { name: "asc" },
-  });
-  const fallback = await db.doctor.findMany({ take: 3, orderBy: { name: "asc" } });
-  const list = (docs.length >= 3 ? docs : fallback).slice(0, 3);
-  const doctors: LandingDoctor[] = list.map((d) => ({ name: d.name, title: d.title, branch: d.branch, color: d.color }));
+// SEO: JSON-LD (MedicalOrganization + WebSite) — modül-düzeyi sabit dize
+// (StructuredData sözleşmesi). COPY verisi "use client"sız copy.ts'te durur;
+// (RSC client-referans tuzağına girmez).
+const SITE = "https://telehealth-mvp-roan.vercel.app";
+const LD_JSON = JSON.stringify({
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "MedicalOrganization",
+      name: "AURA",
+      url: SITE,
+      logo: `${SITE}/assets/aura-symbol.png`,
+      description:
+        "Telehealth and health tourism, end to end — AI triage, video consultations, independent second opinions and planned health tourism in Türkiye.",
+      areaServed: "Türkiye",
+    },
+    {
+      "@type": "WebSite",
+      name: "AURA — Telehealth & Health Tourism",
+      url: SITE,
+      inLanguage: ["en", "tr", "de", "fr", "ru", "ar", "fa", "az"],
+    },
+  ],
+});
 
-  return <PortamedLanding doctors={doctors} loggedIn={!!user} />;
+export default function Home() {
+  return (
+    <>
+      <StructuredData json={LD_JSON} />
+      <AuraLanding />
+    </>
+  );
 }

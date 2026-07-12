@@ -51,6 +51,171 @@ body {
   background-clip: content-box;
 }
 
+/* ============================================================
+ * AURA landing katmanı (vitrin aura-health.higgsfield.app'ten taşındı,
+ * 2026-07-12). Sinematik gece paleti: #0D0E10 zemin + #28C8D8 turkuaz.
+ * Fontlar platformun next/font değişkenlerine bağlanır (layout.tsx:
+ * --font-serif = Space Grotesk display yuvası, --font-sans = Inter,
+ * --font-mono = JetBrains Mono).
+ * ============================================================ */
+:root {
+  --aura-bg: #0d0e10; /* gece siyahı */
+  --aura-panel: #161719; /* büyük panel */
+  --aura-surface: #1e1f22; /* buton/yüzey */
+  --aura-ink: #f4f5f3; /* başlık metni */
+  --aura-grey: #9a9c99; /* ikincil metin */
+  --aura-micro: #6c6e67; /* mikro metin */
+  --aura-accent: #28c8d8; /* TEK vurgu: logo turkuazı */
+  --aura-hairline: rgba(255, 255, 255, 0.09);
+  --aura-font-display: var(--font-serif), "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --aura-font-sans: var(--font-sans), "Inter", ui-sans-serif, system-ui, sans-serif;
+  --aura-font-mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* @layer components: utility sınıfları (px-4 gibi) aura bileşen stillerini
+   ezebilsin (vitrindeki katman sözleşmesiyle aynı — HIW izle-kapağı buna dayanır). */
+@layer components {
+  .aura-page {
+    background-color: var(--aura-bg);
+    color: var(--aura-ink);
+    font-family: var(--aura-font-sans);
+  }
+  .aura-page ::selection {
+    background-color: var(--aura-accent);
+    color: var(--aura-bg);
+  }
+  .aura-display {
+    font-family: var(--aura-font-display);
+  }
+  .aura-mono {
+    font-family: var(--aura-font-mono);
+  }
+  /* 3D roll sahnesi: chapter içeriği perspektif içinde yuvarlanarak girer */
+  .aura-roll-stage {
+    perspective: 1100px;
+    perspective-origin: 50% 40%;
+  }
+  /* AURA letterform "aura"sı: imleç kelimenin üzerine gelince harflerin
+   * çevresinde turkuaz ışıma nefes alır; reduced-motion'da sabit ışıma. */
+  .aura-word img {
+    transition: filter 0.45s ease;
+  }
+  .aura-word:hover img {
+    animation: aura-breathe 2.6s ease-in-out infinite;
+  }
+  @keyframes aura-breathe {
+    0%,
+    100% {
+      filter: drop-shadow(0 0 14px rgba(40, 200, 216, 0.6))
+        drop-shadow(0 0 44px rgba(40, 200, 216, 0.32))
+        drop-shadow(0 0 90px rgba(40, 200, 216, 0.16));
+    }
+    50% {
+      filter: drop-shadow(0 0 26px rgba(40, 200, 216, 0.95))
+        drop-shadow(0 0 80px rgba(40, 200, 216, 0.55))
+        drop-shadow(0 0 150px rgba(40, 200, 216, 0.3));
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .aura-word:hover img {
+      animation: none;
+      filter: drop-shadow(0 0 20px rgba(40, 200, 216, 0.75))
+        drop-shadow(0 0 60px rgba(40, 200, 216, 0.4));
+    }
+  }
+  /* Nav "How It Works" sekmesi: turkuaz renk şeridi metnin İLK harfinden SON
+   * harfine doğru akar (gradient-clip metin) + nefes alan aura ışıması.
+   * Yalnız standart özellikler: -webkit- çevirileri minifier ekler (el ile
+   * eklenirse birleştirmede standart bildirim düşüyor — backdrop-filter dersi). */
+  .aura-nav-how {
+    background-image: linear-gradient(
+      90deg,
+      var(--aura-ink) 0%,
+      var(--aura-ink) 38%,
+      var(--aura-accent) 50%,
+      var(--aura-ink) 62%,
+      var(--aura-ink) 100%
+    );
+    background-size: 300% 100%;
+    background-clip: text;
+    color: transparent;
+    animation:
+      aura-nav-flow 2.4s linear infinite,
+      aura-nav-glow 2.4s ease-in-out infinite;
+  }
+  @keyframes aura-nav-flow {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: 0% 0;
+    }
+  }
+  @keyframes aura-nav-glow {
+    0%,
+    100% {
+      filter: drop-shadow(0 0 5px rgba(40, 200, 216, 0.55))
+        drop-shadow(0 0 16px rgba(40, 200, 216, 0.3));
+    }
+    50% {
+      filter: drop-shadow(0 0 9px rgba(40, 200, 216, 0.95))
+        drop-shadow(0 0 26px rgba(40, 200, 216, 0.6));
+    }
+  }
+  /* Chapter/rehber etiket rozeti ("01 / 04 · telehealth"): cam zemin +
+   * turkuaz metin + nefes alan aura ışıması. */
+  .aura-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.42em 0.95em;
+    border-radius: 999px;
+    border: 1px solid rgba(40, 200, 216, 0.35);
+    background: rgba(40, 200, 216, 0.1);
+    color: var(--aura-accent);
+    backdrop-filter: blur(12px);
+    animation: aura-badge-breathe 3.2s ease-in-out infinite alternate;
+  }
+  @keyframes aura-badge-breathe {
+    from {
+      box-shadow:
+        0 0 10px rgba(40, 200, 216, 0.14),
+        inset 0 0 8px rgba(40, 200, 216, 0.07);
+    }
+    to {
+      box-shadow:
+        0 0 24px rgba(40, 200, 216, 0.38),
+        inset 0 0 14px rgba(40, 200, 216, 0.16);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .aura-nav-how {
+      animation: none;
+      background: none;
+      color: var(--aura-accent);
+      filter: drop-shadow(0 0 10px rgba(40, 200, 216, 0.6));
+    }
+    .aura-badge {
+      animation: none;
+      box-shadow:
+        0 0 16px rgba(40, 200, 216, 0.25),
+        inset 0 0 10px rgba(40, 200, 216, 0.1);
+    }
+  }
+  /* GLOBAL motion-reduce güvenlik ağı: .aura-page altındaki TÜM CSS
+   * animasyon/geçişleri tek kurala bağlar (bileşen-bazlı JS gate'lerin
+   * üstüne) — ileride eklenen bir animasyon unutulsa bile kapsanır. */
+  @media (prefers-reduced-motion: reduce) {
+    .aura-page *,
+    .aura-page *::before,
+    .aura-page *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
 /* Yazdırma: gece teması kağıtta mürekkep felaketi olur — zemin/metni açığa zorla.
    (Onam kanıtı, epikriz vb. çıktı alınan sayfalar için temel güvence.) */
 @media print {

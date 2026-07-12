@@ -35,8 +35,8 @@ export function Header({ user, lang = "Türkçe", journey = null }: { user: { na
   const { t } = useT(lang, texts);
   const dir = langDir(lang);
 
-  // Ana sayfa PortaMed landing'i kendi nav/footer'ını taşır — global krom gizlenir
-  if (pathname === "/") return null;
+  // AURA landing (/ ve /how-it-works) kendi nav/footer'ını taşır — global krom gizlenir
+  if (pathname === "/" || pathname === "/how-it-works") return null;
 
   const activeHref = items
     .filter((n) => pathname === n.href || pathname.startsWith(n.href + "/"))
