@@ -66,15 +66,18 @@ export async function canAccessCase(c: CaseRef): Promise<boolean> {
   return canCaseBeAccessedBy(await getCurrentUser(), c);
 }
 
-// İkinci Görüş vakası sahipliği (spec §8) — TEMEL kural. PATIENT yalnız kendi vakasına; PARTNER
-// erişemez; klinik personel (koordinatör/doktor/etik/admin) temel düzeyde erişir.
+// İkinci Görüş vakası sahipliği (spec §8) — TEMEL kural. PATIENT yalnız kendi vakasına; klinik
+// personel (doktor/koordinatör/etik/admin) temel düzeyde erişir; DİĞER HER ROL fail-closed reddedilir.
 // ⚠️ DOCTOR burada DARALTILMAZ (her doktora true döner) → PHI taşıyan uçlarda TEK BAŞINA KULLANMA;
 // atama-daraltmalı `canSoCaseBeAccessedBy` kullan (BOLA düzeltmesi 2026-07-02).
+// Fail-closed (2026-07-12): eski `else → true` PARTNER dışı HER rolü personel sayıyordu → AGENCY
+// (hasta DB erişimi YOK, klinik değil) + malformed/tanınmayan rol SO belgelerine/PHI'ye erişebiliyordu.
+// Artık açık allow-list; AGENCY/PARTNER/bilinmeyen → false. (getCurrentUser zaten malformed rolü eler.)
+const SO_CLINICAL_STAFF: readonly SessionUser["role"][] = ["DOCTOR", "COORDINATOR", "ETHICS", "ADMIN"];
 export function ownsSecondOpinionCase(user: SessionUser | null, c: { patientId: string }): boolean {
   if (!user) return false;
   if (user.role === "PATIENT") return c.patientId === user.id;
-  if (user.role === "PARTNER") return false; // hasta DB erişimi yok
-  return true; // klinik personel (DOCTOR/COORDINATOR/ETHICS/ADMIN)
+  return SO_CLINICAL_STAFF.includes(user.role); // PARTNER/AGENCY/tanınmayan → fail-closed
 }
 
 export async function canAccessSecondOpinionCase(c: { patientId: string }): Promise<boolean> {

@@ -85,15 +85,23 @@ describe("canCaseBeAccessedBy — DOCTOR atama + doğrulama + branş-daraltması
   });
 });
 
-describe("ownsSecondOpinionCase — saf/sync", () => {
+describe("ownsSecondOpinionCase — saf/sync (fail-closed allow-list)", () => {
   it("PATIENT yalnız kendi SO vakası", () => {
     expect(ownsSecondOpinionCase(user("PATIENT", "u1"), { patientId: "u1" })).toBe(true);
     expect(ownsSecondOpinionCase(user("PATIENT", "u1"), { patientId: "u2" })).toBe(false);
   });
-  it("PARTNER erişemez, klinik personel erişir", () => {
+  it("klinik personel (DOCTOR/COORDINATOR/ETHICS/ADMIN) erişir", () => {
+    for (const role of ["DOCTOR", "COORDINATOR", "ETHICS", "ADMIN"]) {
+      expect(ownsSecondOpinionCase(user(role), { patientId: "u1" })).toBe(true);
+    }
+  });
+  it("AGENCY erişemez (klinik personel DEĞİL — BOLA fail-open düzeltmesi 2026-07-12)", () => {
+    expect(ownsSecondOpinionCase(user("AGENCY"), { patientId: "u1" })).toBe(false);
+  });
+  it("PARTNER + tanınmayan/malformed rol → fail-closed (eski else→true kapandı)", () => {
     expect(ownsSecondOpinionCase(user("PARTNER"), { patientId: "u1" })).toBe(false);
-    expect(ownsSecondOpinionCase(user("DOCTOR"), { patientId: "u1" })).toBe(true);
-    expect(ownsSecondOpinionCase(user("COORDINATOR"), { patientId: "u1" })).toBe(true);
+    expect(ownsSecondOpinionCase(user("SUPPORT" as never), { patientId: "u1" })).toBe(false);
+    expect(ownsSecondOpinionCase(user("Patient" as never), { patientId: "u1" })).toBe(false); // case-mismatch typo
   });
   it("kimliksiz → false", () => {
     expect(ownsSecondOpinionCase(null, { patientId: "u1" })).toBe(false);
