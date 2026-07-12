@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
 import { PortamedLogo } from "@/components/PortamedLogo";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/components/useT";
 import { langDir } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
@@ -22,6 +23,7 @@ const ROLE_LABELS: Record<string, string> = {
 export function Header({ user, lang = "Türkçe" }: { user: { name: string; role: string } | null; lang?: string }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
 
   // Nav öğeleri rol bazlı (lib/nav.ts — tam birleşme 2026-07-12: journey daraltması kalktı,
   // hasta nav'ı herkes için aynı).
@@ -29,7 +31,7 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
   // Çevrilecek metinler: görünür nav etiketleri + rol + Çıkış/Giriş.
   // lang="Türkçe" → useT no-op (kimlik). Partner gibi dil-tercihli kullanıcıda /api/i18n cache'i.
   const texts = useMemo(
-    () => ["Çıkış", "Giriş yap", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
+    () => ["Çıkış", "Giriş yap", "Vazgeç", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
     [items, user]
   );
   const { t } = useT(lang, texts);
@@ -50,13 +52,15 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
 
   // JWT iptali: sessionVersion artar → bu hesabın TÜM cihazlardaki token'ları geçersizleşir.
   // Güvenlik eylemi sessizce başarısız olmasın: yanıt kontrol edilir, hatada yönlendirme YAPILMAZ.
-  async function logoutAll() {
-    if (!window.confirm(t("Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?"))) return;
+  // Native confirm() yerine ConfirmDialog (2026-07-12).
+  async function doLogoutAll() {
     const res = await fetch("/api/auth/logout-all", { method: "POST" }).catch(() => null);
     if (!res?.ok) {
+      setConfirmLogoutAll(false);
       window.alert(t("İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin."));
       return;
     }
+    setConfirmLogoutAll(false);
     router.push("/giris");
     router.refresh();
   }
@@ -95,7 +99,7 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
                 <div className="text-sm font-medium leading-tight text-white/90">{user.name}</div>
                 <div className="text-[11px] leading-tight text-white/45">{t(ROLE_LABELS[user.role] ?? user.role)}</div>
               </div>
-              <button onClick={logoutAll} title={t("Tüm cihazlardan çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-white/35 hover:bg-white/10 hover:text-red-400">
+              <button onClick={() => setConfirmLogoutAll(true)} title={t("Tüm cihazlardan çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-white/35 hover:bg-white/10 hover:text-red-400">
                 <ShieldOff size={16} />
               </button>
               <button onClick={logout} title={t("Çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-white/55 hover:bg-white/10 hover:text-red-400">
@@ -109,6 +113,15 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmLogoutAll}
+        message={t("Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?")}
+        confirmLabel={t("Tüm cihazlardan çıkış")}
+        cancelLabel={t("Vazgeç")}
+        danger
+        onConfirm={doLogoutAll}
+        onCancel={() => setConfirmLogoutAll(false)}
+      />
     </header>
   );
 }

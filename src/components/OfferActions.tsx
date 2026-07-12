@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Loader2, Printer, X } from "lucide-react";
 import { useT } from "@/components/useT";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 // Hasta teklifi aksiyonları — onayla (Escrow), PDF/yazdır, reddet. i18n: useT (lang OfferView'dan).
 // Yazdırırken (print:hidden) bu çubuk gizlenir → temiz PDF belgesi.
@@ -13,6 +14,7 @@ const TEXTS = [
   "Teklifi onayla · Escrow güvencesiyle",
   "PDF / Yazdır",
   "Reddet",
+  "Vazgeç",
 ];
 
 export function OfferActions({ bookingId, total, lang = "Türkçe" }: { bookingId: string; total: string; lang?: string }) {
@@ -21,9 +23,9 @@ export function OfferActions({ bookingId, total, lang = "Türkçe" }: { bookingI
   const { t } = useT(lang, texts);
   const [busy, setBusy] = useState<null | "approve" | "decline">(null);
   const [declined, setDeclined] = useState(false);
+  const [confirmDecline, setConfirmDecline] = useState(false); // native confirm() yerine ConfirmDialog (2026-07-12)
 
   async function respond(action: "approve" | "decline") {
-    if (action === "decline" && !confirm(t("Teklifi reddetmek istediğinize emin misiniz?"))) return;
     setBusy(action);
     try {
       const res = await fetch(`/api/bookings/${bookingId}/respond`, {
@@ -61,13 +63,23 @@ export function OfferActions({ bookingId, total, lang = "Türkçe" }: { bookingI
           <Printer size={15} /> {t("PDF / Yazdır")}
         </button>
         <button
-          onClick={() => respond("decline")}
+          onClick={() => setConfirmDecline(true)}
           disabled={!!busy}
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/50 hover:border-red-400/25 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-60"
         >
           {busy === "decline" ? <Loader2 size={15} className="animate-spin" /> : <X size={15} />} {t("Reddet")}
         </button>
       </div>
+      <ConfirmDialog
+        open={confirmDecline}
+        message={t("Teklifi reddetmek istediğinize emin misiniz?")}
+        confirmLabel={t("Reddet")}
+        cancelLabel={t("Vazgeç")}
+        danger
+        busy={busy === "decline"}
+        onConfirm={() => { setConfirmDecline(false); respond("decline"); }}
+        onCancel={() => setConfirmDecline(false)}
+      />
     </div>
   );
 }

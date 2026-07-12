@@ -5,6 +5,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/useT";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Stethoscope, CalendarClock, Trash2, Loader2, ArrowRight, CheckCircle2, Clock, ShieldQuestion, Video } from "lucide-react";
 
 export interface GateAppt {
@@ -27,6 +28,7 @@ const TEXTS = [
   "Tüm verileriniz kalıcı olarak silinir ve ödemeniz iade edilir.",
   "Sonlandır ve sil",
   "Tüm vaka verileriniz kalıcı olarak silinecek ve ödemeniz iade edilecek. Emin misiniz?",
+  "Vazgeç",
   "Randevu talebiniz iletildi",
   "İcap görevli branş doktorları bilgilendirildi. En erken uygun doktor bir görüşme zamanı önerecek — bu sayfayı açık tutabilirsiniz.",
   "Değişiklik talebiniz iletildi",
@@ -64,6 +66,7 @@ export function ConsultGate({
   const [busy, setBusy] = useState<null | string>(null);
   const [err, setErr] = useState<string | null>(null);
   const [terminated, setTerminated] = useState(false);
+  const [confirmTerminate, setConfirmTerminate] = useState(false);
 
   async function post(path: string, body?: unknown): Promise<Record<string, unknown> | null> {
     setErr(null);
@@ -106,13 +109,29 @@ export function ConsultGate({
     if (d?.consultationId) { router.push(`/gorusme/${d.consultationId}`); return; }
     setBusy(null);
   }
-  async function terminate() {
-    if (!confirm(t("Tüm vaka verileriniz kalıcı olarak silinecek ve ödemeniz iade edilecek. Emin misiniz?"))) return;
+  // Native confirm() yerine ConfirmDialog (2026-07-12): buton diyaloğu açar, onay doTerminate'i koşar.
+  function terminate() {
+    setConfirmTerminate(true);
+  }
+  async function doTerminate() {
     setBusy("terminate");
     const d = await post(`/api/cases/${caseId}/terminate`);
-    if (d?.ok) { setTerminated(true); return; }
+    if (d?.ok) { setConfirmTerminate(false); setTerminated(true); return; }
+    setConfirmTerminate(false);
     setBusy(null);
   }
+  const terminateDialog = (
+    <ConfirmDialog
+      open={confirmTerminate}
+      message={t("Tüm vaka verileriniz kalıcı olarak silinecek ve ödemeniz iade edilecek. Emin misiniz?")}
+      confirmLabel={t("Sonlandır ve sil")}
+      cancelLabel={t("Vazgeç")}
+      danger
+      busy={busy === "terminate"}
+      onConfirm={doTerminate}
+      onCancel={() => setConfirmTerminate(false)}
+    />
+  );
 
   if (terminated) {
     return (
@@ -169,6 +188,7 @@ export function ConsultGate({
         <button onClick={terminate} disabled={!!busy} className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-white/40 hover:text-red-300 disabled:opacity-60">
           <Trash2 size={13} /> {t("Süreci sonlandır")}
         </button>
+        {terminateDialog}
       </div>
     );
   }
@@ -229,6 +249,7 @@ export function ConsultGate({
       </div>
 
       {err && <p className="mt-3 text-sm text-red-300">{err}</p>}
+      {terminateDialog}
     </div>
   );
 }
