@@ -3,7 +3,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
-import { SESSION_COOKIE, signToken, verifyToken, type SessionUser } from "./session";
+import { SESSION_COOKIE, signToken, verifyToken, type SessionUser, type Role } from "./session";
 
 export async function hashPassword(pw: string): Promise<string> {
   return bcrypt.hash(pw, 10);
@@ -43,18 +43,31 @@ export async function destroySession(): Promise<void> {
   c.delete(SESSION_COOKIE);
 }
 
-// JWT iptal kontrolü (P1): token'daki sv, User.sessionVersion ile karşılaştırılır — uyuşmazsa
-// oturum geçersiz (logout-all / gelecekte şifre değişikliği bump'lar). cache() aynı istek içinde
-// layout+page+route çağrılarını TEK PK sorgusuna indirir. Proxy bilinçli DB'siz kalır (bkz.
-// src/proxy.ts) → iptal edilen token sayfa kabuğuna gelebilir ama veri katmanı burada reddeder.
+// Oturum iptali primitifi ("session tablosu" ilkesi, tek nokta): User.sessionVersion'ı artırır →
+// bu kullanıcının dolaşımdaki TÜM token'larının sv claim'i bayatlar, getCurrentUser hepsini reddeder.
+// logout-all bunu çağırır; gelecekteki rol düşürme / parola değişikliği akışları da buradan iptal
+// etmeli (rol düşürünce token'ı zorla tazele — kullanıcı yeniden giriş yapıp güncel rolle imzalanır).
+export async function revokeUserSessions(userId: string): Promise<void> {
+  await db.user.update({ where: { id: userId }, data: { sessionVersion: { increment: 1 } } });
+}
+
+// JWT iptal kontrolü (P1) + rol kaynağı DB (rol bayatlığı kapatma, 2026-07-12): token'daki sv,
+// User.sessionVersion ile karşılaştırılır — uyuşmazsa oturum geçersiz (logout-all bump'lar). AYNI
+// PK sorgusunda ROL de çekilir ve DB rolü otoriter kabul edilir: rol token'dan okunsaydı DB'de
+// değişse bile token TTL'i (7 gün) kadar bayat kalırdı; artık her istekte taze. cache() aynı istek
+// içinde layout+page+route çağrılarını TEK sorguya indirir. Proxy bilinçli DB'siz kalır (bkz.
+// src/proxy.ts) → iptal/rol-değişmiş token sayfa KABUĞUNA gelebilir ama veri katmanı burada reddeder.
+// (Onam `cv`: proxy token cv'siyle CONSENT_VERSION'ı karşılar; sürüm artınca eski token /onam'a
+// düşer → yeniden onam → taze token. Bu ileri-yön yeterli olduğundan her isteğe ConsentRecord
+// sorgusu EKLENMEZ; onam sayfası zaten hasCurrentConsent ile DB-taze doğrular.)
 export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const c = await cookies();
   const token = c.get(SESSION_COOKIE)?.value;
   if (!token) return null;
   const user = await verifyToken(token);
   if (!user) return null;
-  const rec = await db.user.findUnique({ where: { id: user.id }, select: { sessionVersion: true } });
+  const rec = await db.user.findUnique({ where: { id: user.id }, select: { sessionVersion: true, role: true } });
   if (!rec) return null; // kullanıcı silinmiş → oturum geçersiz
   if ((user.sv ?? 0) !== rec.sessionVersion) return null; // iptal edilmiş token
-  return user;
+  return { ...user, role: rec.role as Role }; // DB rolü otoriter (token rolü yalnız imza taşıyıcısı)
 });
