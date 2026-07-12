@@ -61,9 +61,14 @@ npm run dev                   # http://localhost:3000
 
 ## Roller & Giriş
 
-Giriş **iki ekrana ayrıdır** (v4.21): **`/giris` = Hasta Girişi** (Google `intent=patient`
-[env-gated] / Apple [yakında] / e-posta; üyelik **`/kayit/hasta`** → `POST /api/auth/signup-patient`,
-`lib/patient-signup`) · **`/kurumsal-giris`** = Doktor/Koordinatör/Etik Kurul/Partner/**Sağlık Turizmi Acentesi**. Doktorlar
+Giriş **iki ekrana ayrıdır** (v4.21): **`/giris` = Hasta Girişi** · **`/kurumsal-giris`** =
+Doktor/Koordinatör/Etik Kurul/Partner/**Sağlık Turizmi Acentesi**. **Kapı/form ayrımı (v5.9.1):**
+`/giris` ve `/kurumsal-giris` artık vitrin **AURA giriş kapılarıdır** (letterform panel + yan video;
+`components/aura/auth-gates.tsx`) — Google doğrudan OAuth'a, Apple/E-posta ise **çalışan formlara**
+(`/giris/e-posta` hasta = Google `intent=patient` [env-gated] / Apple [yakında] / e-posta,
+üyelik **`/kayit/hasta`** → `POST /api/auth/signup-patient`, `lib/patient-signup`; `/kurumsal-giris/e-posta`
+= personel/acente demoları) götürür. Kapılar `?next`/`?verify`/`?oauth` parametrelerini forma iletir;
+Header/SiteFooter kromu kapılarda gizli. Doktorlar
 **`/kayit`** ile kendileri kayıt olabilir (Google [env-gated] / Apple [yakında] / e-posta; Google
 niyeti `g_oauth_intent` cookie'siyle taşınır — mevcut kullanıcıda yok sayılır). Giriş sonrası tek
 seferlik KVKK onam kapısı (`/onam`) vardır (sürümlü; `lib/consent-config.CONSENT_VERSION` artarsa
@@ -187,7 +192,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 
 | Rota | Açıklama |
 |------|----------|
-| `/` · `/giris` · `/kurumsal-giris` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | **AURA sinematik landing** (v5.9 — vitrinden taşındı: hero video+letterform, 4 chapter destesi, gsap+lenis; 8 dil statik `lib/aura-landing/copy.ts`, dil anahtarı `air_lang`) · **hasta girişi** · **kurumsal giriş** · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
+| `/` · `/giris` · `/giris/e-posta` · `/kurumsal-giris` · `/kurumsal-giris/e-posta` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | **AURA sinematik landing** (v5.9 — vitrinden taşındı: hero video+letterform, 4 chapter destesi, gsap+lenis; 8 dil statik `lib/aura-landing/copy.ts`, dil anahtarı `air_lang`) · **hasta giriş kapısı** + **`/giris/e-posta` çalışan form** · **kurumsal giriş kapısı** (noindex) + **`/kurumsal-giris/e-posta` form** (v5.9.1 kapı/form ayrımı — kapılar `components/aura/auth-gates.tsx`) · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
 | `/how-it-works` | **Nasıl Çalışır rehberi** (v5.9 — vitrinden taşındı): 4 yolculuğun adım listeleri + tıkla-oynat rehber videoları + HowTo JSON-LD; global Header/SiteFooter bu rotada ve `/`'de gizli (sayfa kendi aura nav/footer'ını taşır). Eski vitrin aura-health.higgsfield.app tüm sayfaları buraya 301 yönlendirir |
 | `/basla` | KALDIRILDI (v5.8) — eski linkler için `/triyaj`'a kalıcı redirect |
 | `/saglik-turizmi` | **Sağlık Turizmi hasta-yüzü planlama** (v4.24-25): tercih (branş/ülke/seviye/gece) + endikatif paket önizlemesi (`computePackage`) + öz-yeterli "Talep Oluştur" → `POST /api/patient/tourism-request` (runTriage → tourism-etiketli Case, `Case.tourismPlan` JSON; doktor `/paket` PackageBuilder ön-değeri + kokpit 🧳 rozeti). Klinik-önce: bağlayıcı fiyat/rezervasyon daima doktor onayı sonrası (simüle/park; USHAŞ yetki belgesi + TÜRSAB hukuki zemini vault'ta belgeli) |
