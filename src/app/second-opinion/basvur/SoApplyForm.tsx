@@ -4,16 +4,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BRANCHES } from "@/lib/triage";
 import { SO_DURATION_COPY, SO_FEE_USD } from "@/lib/second-opinion";
+import { secondOpinionDocSpecs, type SoDeliveryMethod } from "@/data/second-opinion-docs";
 import { useT } from "@/components/useT";
 import { useSoLang } from "@/components/SoLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
-import { Stethoscope, Clock, Video, ArrowRight, Loader2, Globe } from "lucide-react";
+import { Stethoscope, Clock, Video, ArrowRight, Loader2, Globe, FileText, Link2, X, CreditCard, AlertTriangle } from "lucide-react";
 import { COUNTRIES } from "@/lib/constants";
 
 const D = SO_DURATION_COPY.tr;
 const FEE_LINE = `Ücret: ${SO_FEE_USD} USD — peşin ve tek ödeme. Yazılı rapor ve video görüşme dahildir.`;
+const MAX_FILE_CHARS = 12_000_000; // sunucu sınırıyla aynı (≈ 8.5 MB ham dosya)
+
 // TR kanonik metinler — useT ile hedef dile çevrilir (cache + Claude). Türkçe'de aynen kalır.
 const S = {
   eyebrow: "İkinci Görüş",
@@ -27,28 +30,65 @@ const S = {
   branchPlaceholder: "Branş seçin…",
   countryLabel: "Ülkeniz",
   countryPlaceholder: "Ülke seçin…",
-  langLabel: "Tercih ettiğiniz iletişim dili",
   langHint: "Yazılı görüş ve video görüşme bu dilde sağlanır.",
   diagLabel: "Mevcut tanınız / durumunuz",
   diagHint: "Konulan tanıyı, ne zaman ve nasıl tanı aldığınızı kısaca özetleyin.",
   diagPh: "Örn. 3 ay önce sol meme invaziv duktal karsinom tanısı kondu; cerrahi öneriliyor…",
-  submit: "Devam et — belge yükleme",
+  // Faz 3 — belgeler + ödeme aynı oturumda (hub'a ödenmiş inersiniz)
+  docsTitle: "Belgeler",
+  docsHint: "Branşınız için istenen belgeleri şimdi ekleyin; başvurunuz tek adımda incelemeye girsin.",
+  fileBtn: "Dosya",
+  linkBtn: "Bağlantı",
+  add: "Ekle",
+  urlPh: "https://… (DICOM / bulut bağlantısı)",
+  imagingNote: "DICOM görüntüleme dosyaları büyüktür; bunları bulut/link olarak eklemeniz önerilir.",
+  reqRequired: "Zorunlu",
+  reqConditional: "Varsa",
+  reqOptional: "Opsiyonel",
+  missingLead: "Eksik zorunlu belge",
+  willProvide: "Eksik zorunlu belgeleri sonra temin edeceğim.",
+  payBtn: `Öde ve gönder (${SO_FEE_USD} USD)`,
+  laterBtn: "Belgeleri sonra tamamla",
+  paySim: "Ödeme simülasyondur — gerçek kart işlemi yapılmaz.",
+  errLink: "Geçerli bir bağlantı (http/https) girin.",
+  errBig: "Dosya 8 MB'tan büyük — lütfen bağlantı olarak ekleyin.",
   errGeneric: "Bir hata oluştu.",
 } as const;
+
+// Formda bekletilen belge — vaka oluşunca sırayla /documents API'sine gönderilir.
+type PendingDoc = { type: string; deliveryMethod: SoDeliveryMethod; fileRef?: string; externalRef?: string; label: string };
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result));
+    r.onerror = () => rej(new Error("Dosya okunamadı."));
+    r.readAsDataURL(file);
+  });
+}
 
 export function SoApplyForm() {
   const router = useRouter();
   const [lang, setLang] = useSoLang();
-  const texts = useMemo(() => [...Object.values(S), FEE_LINE, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...BRANCHES.map((b) => b.label), ...COUNTRIES.map((c) => c.name)], []);
-  const { t } = useT(lang, texts);
 
   const [diagnosisSummary, setDiagnosisSummary] = useState("");
   const [branch, setBranch] = useState("");
   const [country, setCountry] = useState("");
   const [phone, setPhone] = useState(""); // FAZ 8 — hasta iletişim
   const [contactPref, setContactPref] = useState<ContactPref>("APP");
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState<"" | "pay" | "later">("");
   const [error, setError] = useState("");
+
+  // Faz 3 — tek oturumluk başvuru: belgeler + ödeme formda; hub'a ödenmiş inilir
+  const [docs, setDocs] = useState<PendingDoc[]>([]);
+  const [linkOpen, setLinkOpen] = useState<string>(""); // bağlantı girişi açık olan belge tipi
+  const [linkDraft, setLinkDraft] = useState("");
+  const [willProvide, setWillProvide] = useState(false);
+  const [docErr, setDocErr] = useState("");
+
+  const specs = useMemo(() => (branch ? secondOpinionDocSpecs(branch) : []), [branch]);
+  const attachedTypes = useMemo(() => new Set(docs.map((d) => d.type)), [docs]);
+  const missingRequired = specs.filter((s) => s.requirement === "REQUIRED" && !attachedTypes.has(s.type));
 
   // Profil hafızası (Faz 1): prefill + kompakt şerit; dil TEK kaynak air_lang (sağ üst seçici) —
   // ülke önerisi yalnız hasta dili hiç açıkça seçmemişse (langLocked).
@@ -70,18 +110,48 @@ export function SoApplyForm() {
   function chooseLang(l: string) { setLangLocked(true); setLang(l); }
   const showStrip = profileComplete(profile, "full") && !editProfile;
 
+  const texts = useMemo(
+    () => [...Object.values(S), FEE_LINE, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...BRANCHES.map((b) => b.label), ...COUNTRIES.map((c) => c.name), ...specs.map((s) => s.label)],
+    [specs],
+  );
+  const { t } = useT(lang, texts);
+
   function onCountry(code: string) {
     setCountry(code);
     const c = COUNTRIES.find((x) => x.code === code);
     if (c && c.langs[0] && !langLocked) setLang(c.langs[0]); // dil TEK kaynak (air_lang); açık seçim ezilmez
   }
 
+  async function attachFile(type: string, file: File) {
+    setDocErr("");
+    try {
+      const data = await fileToDataUrl(file);
+      if (data.length > MAX_FILE_CHARS) return setDocErr(t(S.errBig));
+      setDocs((prev) => [...prev.filter((d) => d.type !== type), { type, deliveryMethod: "FILE_UPLOAD", fileRef: data, label: file.name }]);
+    } catch {
+      setDocErr(t(S.errGeneric));
+    }
+  }
+
+  function attachLink(type: string) {
+    setDocErr("");
+    const url = linkDraft.trim();
+    if (!/^https?:\/\/.+/i.test(url)) return setDocErr(t(S.errLink));
+    setDocs((prev) => [...prev.filter((d) => d.type !== type), { type, deliveryMethod: "EXTERNAL_LINK", externalRef: url, label: url }]);
+    setLinkOpen("");
+    setLinkDraft("");
+  }
+
   // KVKK açık onam girişte bir kez alınır (/onam) → başvuruda tekrar onam kutusu yok.
   const canSubmit = diagnosisSummary.trim().length >= 10 && branch && country && !submitting;
+  const canPayNow = canSubmit && (missingRequired.length === 0 || willProvide);
 
-  async function submit() {
+  // Tek oturumluk başvuru (Faz 3): vaka oluştur → bekletilen belgeleri yükle → (payNow) öde → hub.
+  // Ara adım hata verirse yine hub'a inilir — hub DRAFT durumunda kalan adımları kendisi sunar.
+  async function submit(payNow: boolean) {
     setError("");
-    setSubmitting(true);
+    setSubmitting(payNow ? "pay" : "later");
+    let caseId = "";
     try {
       const res = await fetch("/api/second-opinion/cases", {
         method: "POST",
@@ -90,11 +160,27 @@ export function SoApplyForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || S.errGeneric);
-      router.push(`/second-opinion/vaka/${data.id}`);
+      caseId = data.id;
     } catch (e) {
       setError(e instanceof Error ? e.message : t(S.errGeneric));
-      setSubmitting(false);
+      setSubmitting("");
+      return;
     }
+    try {
+      for (const d of docs) {
+        await fetch(`/api/second-opinion/cases/${caseId}/documents`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(d),
+        });
+      }
+      if (payNow) {
+        await fetch(`/api/second-opinion/cases/${caseId}/pay`, { method: "POST" });
+      }
+    } catch {
+      /* vaka oluştu — kalan adımlar hub'da (DRAFT kurtarma yolu) */
+    }
+    router.push(`/second-opinion/vaka/${caseId}`);
   }
 
   return (
@@ -174,14 +260,81 @@ export function SoApplyForm() {
           className="mt-1.5 w-full resize-y rounded-xl border border-white/15 bg-[#161719] px-3 py-2.5 text-sm text-[#F4F5F3] focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
         />
 
-        {error && <p className="mt-4 rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
+        {/* Faz 3 — Belgeler formda (branş seçilince): tip tip ekle; başvuru tek oturumda incelemeye girer */}
+        {specs.length > 0 && (
+          <div className="mt-6">
+            <div className="text-sm font-semibold text-white/75">{t(S.docsTitle)}</div>
+            <p className="text-xs text-white/50">{t(S.docsHint)}</p>
+            <ul className="mt-2.5 space-y-2">
+              {specs.map((sp) => {
+                const attached = docs.find((d) => d.type === sp.type);
+                const badge = sp.requirement === "REQUIRED" ? { l: S.reqRequired, cls: "bg-red-500/10 text-red-300 ring-red-400/25" }
+                  : sp.requirement === "CONDITIONAL" ? { l: S.reqConditional, cls: "bg-amber-500/10 text-amber-300 ring-amber-400/25" }
+                  : { l: S.reqOptional, cls: "bg-white/10 text-white/50 ring-white/10" };
+                return (
+                  <li key={sp.type} className="rounded-2xl border border-white/10 bg-[#1E1F22] p-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm text-white/75">{t(sp.label)}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${badge.cls}`}>{t(badge.l)}</span>
+                      {attached ? (
+                        <span className="ms-auto inline-flex min-w-0 items-center gap-1.5 text-xs text-[#28C8D8]">
+                          {attached.deliveryMethod === "FILE_UPLOAD" ? <FileText size={13} /> : <Link2 size={13} />}
+                          <span className="max-w-[180px] truncate" dir="ltr">{attached.label}</span>
+                          <button type="button" onClick={() => setDocs((p) => p.filter((d) => d.type !== sp.type))} className="text-white/40 hover:text-red-400"><X size={14} /></button>
+                        </span>
+                      ) : (
+                        <span className="ms-auto flex items-center gap-1.5">
+                          <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs font-medium text-white/65 hover:border-[#28C8D8]/40">
+                            <FileText size={12} /> {t(S.fileBtn)}
+                            <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) attachFile(sp.type, f); }} />
+                          </label>
+                          <button type="button" onClick={() => { setLinkOpen(linkOpen === sp.type ? "" : sp.type); setLinkDraft(""); }} className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs font-medium text-white/65 hover:border-[#28C8D8]/40">
+                            <Link2 size={12} /> {t(S.linkBtn)}
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                    {linkOpen === sp.type && !attached && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <input value={linkDraft} onChange={(e) => setLinkDraft(e.target.value)} placeholder={t(S.urlPh)} dir="ltr" className="w-full rounded-lg border border-white/15 bg-[#161719] px-3 py-2 text-sm text-[#F4F5F3] focus:border-[#28C8D8] focus:outline-none" />
+                        <button type="button" onClick={() => attachLink(sp.type)} className="shrink-0 rounded-lg bg-[#28C8D8] px-3 py-2 text-xs font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">{t(S.add)}</button>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-2 text-xs text-white/40">{t(S.imagingNote)}</p>
 
+            {missingRequired.length > 0 && (
+              <div className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2.5 text-[13px] text-amber-200 ring-1 ring-amber-400/25">
+                <div className="flex items-center gap-1.5 font-semibold"><AlertTriangle size={14} /> {t(S.missingLead)}: {missingRequired.map((m) => t(m.label)).join(", ")}</div>
+                <label className="mt-2 flex items-start gap-2 font-medium">
+                  <input type="checkbox" checked={willProvide} onChange={(e) => setWillProvide(e.target.checked)} className="mt-0.5 accent-amber-600" />
+                  <span>{t(S.willProvide)}</span>
+                </label>
+              </div>
+            )}
+          </div>
+        )}
+
+        {(error || docErr) && <p className="mt-4 rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-300">{error || docErr}</p>}
+
+        {/* Faz 3 — tek oturum: Öde ve gönder (varsayılan) · Belgeleri sonra tamamla (DRAFT çıkışı) */}
         <button
-          onClick={submit}
-          disabled={!canSubmit}
+          onClick={() => submit(true)}
+          disabled={!canPayNow}
           className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#28C8D8] px-6 py-3 text-[15px] font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting ? <Loader2 size={17} className="animate-spin" /> : <>{t(S.submit)} <ArrowRight size={17} /></>}
+          {submitting === "pay" ? <Loader2 size={17} className="animate-spin" /> : <><CreditCard size={17} /> {t(S.payBtn)}</>}
+        </button>
+        <p className="mt-1.5 text-center text-[11px] text-white/40">{t(S.paySim)}</p>
+        <button
+          onClick={() => submit(false)}
+          disabled={!canSubmit}
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#161719] px-6 py-2.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {submitting === "later" ? <Loader2 size={16} className="animate-spin" /> : <>{t(S.laterBtn)} <ArrowRight size={16} /></>}
         </button>
       </div>
     </JourneyIntakeShell>

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
-import { SO_STATUS_LABELS, isOfferExpired, type SoStatus } from "@/lib/second-opinion";
+import { SO_STATUS_LABELS, isOfferExpired, type SoStatus, soBranchVariants } from "@/lib/second-opinion";
 import { scrubText } from "@/lib/deidentify";
 import { formatDateTime } from "@/lib/constants";
 import { SoAcceptButton } from "./SoAcceptButton";
@@ -37,7 +37,7 @@ export default async function DoctorSoListPage() {
   // Açık dosyalar (lazy fan-out): kabul süresi DOLAN, branşıma uygun, bana ait OLMAYAN OFFERED vakalar
   const branchOffered = isDoctor && myDoctor
     ? await db.secondOpinionCase.findMany({
-        where: { status: "OFFERED", branch: myDoctor.branch, assignedDoctorId: { not: myDoctorId } },
+        where: { status: "OFFERED", branch: { in: soBranchVariants(myDoctor.branch) }, assignedDoctorId: { not: myDoctorId } }, // anahtar/etiket uyuşmazlığı düzeltmesi (Faz 3)
         orderBy: { assignedAt: "asc" },
         include: { documents: { select: { id: true } } },
       })

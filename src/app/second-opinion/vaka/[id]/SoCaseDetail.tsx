@@ -26,7 +26,7 @@ type SoData = {
   payment: { status: string; amount: number; currency: string } | null;
   requests: { id: string; type: string; description: string; status: string }[];
   opinion: { content: string; submittedAt: string } | null;
-  appointment: { id: string; scheduledAt: string; status: string } | null;
+  appointment: { id: string; scheduledAt: string; status: string; proposedSlots?: string[] | null } | null;
   readyAt: string | null;
   assignedDoctor: { name: string; title: string; branchLabel: string; avatarI: number; female: boolean; photo?: string | null; verified: boolean } | null;
 };
@@ -80,6 +80,7 @@ const S = {
   join: "Görüşmeye katıl",
   videoOfferTitle: "Video randevu teklifi",
   videoOfferDesc: "Uzman doktorunuz görüşme için aşağıdaki zamanı önerdi:",
+  videoOfferDescMulti: "Uzman doktorunuz görüşme için birden fazla zaman önerdi — size uygun olanı seçin:",
   acceptVideo: "Bu zamanı onayla",
   requestChange: "Farklı bir zaman iste",
   errRespond: "İşlem tamamlanamadı.",
@@ -288,13 +289,13 @@ export function SoCaseDetail({ data }: { data: SoData }) {
   // Video randevu teklifine yanıt (VIDEO_OFFERED) — onayla / farklı zaman iste (İcapçı deseni)
   const [responding, setResponding] = useState<"" | "accept" | "request_change">("");
   const [respondErr, setRespondErr] = useState("");
-  async function respondVideo(action: "accept" | "request_change") {
+  async function respondVideo(action: "accept" | "request_change", scheduledAt?: string) {
     setRespondErr("");
     setResponding(action);
     try {
       const res = await fetch(`/api/second-opinion/cases/${data.id}/respond-video`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify(scheduledAt ? { action, scheduledAt } : { action }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || t(S.errRespond));
@@ -392,13 +393,37 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       {status === "VIDEO_OFFERED" && data.appointment && (
         <div className="mt-4 rounded-3xl border border-amber-400/25 bg-amber-500/10 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-amber-200"><CalendarClock size={17} /> {t(S.videoOfferTitle)}</div>
-          <p className="mt-1.5 text-[13px] text-amber-300">{t(S.videoOfferDesc)}</p>
-          <p className="mt-1 text-lg font-bold text-[#F4F5F3]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+          {(data.appointment.proposedSlots?.length ?? 0) > 1 ? (
+            <>
+              {/* Faz 3: çok-slot teklif — hasta tek tıkla seçer (değişiklik turu gerekmez) */}
+              <p className="mt-1.5 text-[13px] text-amber-300">{t(S.videoOfferDescMulti)}</p>
+              <div className="mt-3 grid gap-2">
+                {data.appointment.proposedSlots!.map((slot) => (
+                  <button
+                    key={slot}
+                    onClick={() => respondVideo("accept", slot)}
+                    disabled={responding !== ""}
+                    className="inline-flex items-center justify-between gap-3 rounded-xl border border-amber-400/30 bg-[#161719] px-4 py-3 text-start text-sm font-semibold text-[#F4F5F3] transition hover:border-[#28C8D8] hover:bg-[#28C8D8]/10 disabled:opacity-50"
+                  >
+                    <span className="inline-flex items-center gap-2"><CalendarClock size={15} className="text-[#28C8D8]" /> {new Date(slot).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</span>
+                    {responding === "accept" ? <Loader2 size={15} className="animate-spin" /> : <CircleCheck size={15} className="text-[#28C8D8]" />}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="mt-1.5 text-[13px] text-amber-300">{t(S.videoOfferDesc)}</p>
+              <p className="mt-1 text-lg font-bold text-[#F4F5F3]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+            </>
+          )}
           {respondErr && <p className="mt-2 text-sm text-red-300">{respondErr}</p>}
           <div className="mt-3 flex flex-wrap gap-2">
+            {(data.appointment.proposedSlots?.length ?? 0) <= 1 && (
             <button onClick={() => respondVideo("accept")} disabled={responding !== ""} className="inline-flex items-center gap-2 rounded-xl bg-[#28C8D8] px-5 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50">
               {responding === "accept" ? <Loader2 size={16} className="animate-spin" /> : <CircleCheck size={16} />} {t(S.acceptVideo)}
             </button>
+            )}
             <button onClick={() => respondVideo("request_change")} disabled={responding !== ""} className="inline-flex items-center gap-2 rounded-xl border border-amber-400/30 bg-[#161719] px-5 py-2.5 text-sm font-semibold text-amber-300 hover:bg-amber-500/10 disabled:opacity-50">
               {responding === "request_change" ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />} {t(S.requestChange)}
             </button>

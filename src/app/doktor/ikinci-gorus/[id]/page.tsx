@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { decryptField } from "@/lib/crypto";
 import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
-import { isOfferExpired } from "@/lib/second-opinion";
+import { isOfferExpired, soBranchVariants } from "@/lib/second-opinion";
 import { scrubText } from "@/lib/deidentify";
 import { COUNTRIES, formatDateTime } from "@/lib/constants";
 import { SO_DOC_TYPE_LABELS, type SoDocType } from "@/data/second-opinion-docs";
@@ -48,7 +48,7 @@ export default async function DoctorSoDetailPage({ params }: { params: Promise<{
         ? await db.doctor.findUnique({ where: { id: myDoctorId }, select: { branch: true, verified: true } })
         : null;
       const claimable =
-        !!myDoctor?.verified && myDoctor.branch === c.branch && (assignedToMe || isOfferExpired(c.assignedAt));
+        !!myDoctor?.verified && soBranchVariants(myDoctor.branch).includes(c.branch) && (assignedToMe || isOfferExpired(c.assignedAt));
       if (!claimable) redirect("/doktor/ikinci-gorus");
 
       // De-id özet: ad/kimlik yok; serbest metin scrub'lanır; belge yalnız TÜR olarak listelenir

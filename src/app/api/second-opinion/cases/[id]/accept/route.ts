@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
-import { isOfferExpired } from "@/lib/second-opinion";
+import { isOfferExpired, soBranchVariants } from "@/lib/second-opinion";
 import { claimSoCase } from "@/lib/second-opinion-service";
 import { notifyUser } from "@/lib/notify";
 
@@ -28,7 +28,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const c = await db.secondOpinionCase.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
   if (c.status !== "OFFERED") return NextResponse.json({ error: "Bu dosya kabul aşamasında değil." }, { status: 409 });
-  if (doctor.branch !== c.branch) return NextResponse.json({ error: "Bu dosya sizin branşınızda değil." }, { status: 403 });
+  if (!soBranchVariants(doctor.branch).includes(c.branch)) return NextResponse.json({ error: "Bu dosya sizin branşınızda değil." }, { status: 403 }); // anahtar/etiket uyuşmazlığı düzeltmesi (Faz 3)
 
   // Yetki: kendisine atanan (directed) hoca her zaman; başka branş hocası YALNIZ kabul süresi dolduysa
   const directed = c.assignedDoctorId === myDoctorId;

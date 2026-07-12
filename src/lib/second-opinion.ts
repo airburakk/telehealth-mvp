@@ -3,6 +3,15 @@
 // Boundary spec §4 (state machine). İADE POLİTİKASI PARK (§9.1) → ödeme sonrası iptal
 // bilinçli olarak modellenmedi; iptal yalnız ödeme öncesi (DRAFT / AWAITING_PAYMENT).
 import { secondOpinionDocSpecs, type SoDocType } from "@/data/second-opinion-docs";
+import { BRANCHES } from "@/lib/triage";
+
+// SO vakası branşı BRANCHES.key ("onkoloji") saklar; Doctor.branch etiket ("Onkoloji") tutar.
+// Doktor-vaka branş karşılaştırması/sorgusu iki biçimi de kapsamalı — tekil karşılaştırma
+// sessizce hiç eşleşmiyordu (oto-atama null, havuz boş, accept 403; 2026-07-12 Faz 3'te yakalandı).
+export function soBranchVariants(branch: string): string[] {
+  const b = BRANCHES.find((x) => x.key === branch || x.label === branch);
+  return b ? [...new Set([b.key, b.label])] : [branch];
+}
 
 export const SO_STATUSES = [
   "DRAFT",

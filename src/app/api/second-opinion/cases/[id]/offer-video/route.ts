@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { transitionSoCase, logSoEvent, SoError } from "@/lib/second-opinion-service";
@@ -6,7 +7,9 @@ import { notifyUser } from "@/lib/notify";
 
 // POST /api/second-opinion/cases/[id]/offer-video — raporu yazan hoca video randevu TEKLİF eder.
 // OPINION_DELIVERED → VIDEO_OFFERED (İcapçı deseni; koordinatör YOK). Hasta kabul/değişiklik route'u: respond-video.
-// Teklif appointment'a status="OFFERED" + önerilen scheduledAt olarak yazılır (şema değişikliği yok).
+// Faz 3 (basitleştirme, 2026-07-12): doktor 1-3 ALTERNATİF zaman önerebilir (slots[]) — hasta tek
+// tıkla birini seçer (el sıkışması tek tur). Tek-zaman teklifi (scheduledAt) geriye uyumlu çalışır.
+// Teklif appointment'a status="OFFERED" + scheduledAt=ilk slot + proposedSlots (çoklu ise) yazılır.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await getCurrentUser();
@@ -29,16 +32,29 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   const body = await req.json().catch(() => ({}));
-  const scheduledAt = new Date(String(body.scheduledAt ?? ""));
-  if (isNaN(scheduledAt.getTime())) return NextResponse.json({ error: "Geçerli bir tarih/saat girin." }, { status: 400 });
-  if (scheduledAt.getTime() < Date.now() - 60_000) return NextResponse.json({ error: "Geçmiş bir zaman seçilemez." }, { status: 400 });
+  // slots[] (1-3) veya tekil scheduledAt (geriye uyumlu)
+  const raw: string[] = Array.isArray(body.slots) && body.slots.length
+    ? body.slots.map((s: unknown) => String(s))
+    : [String(body.scheduledAt ?? "")];
+  const slots = [...new Set(raw)]
+    .map((s) => new Date(s))
+    .filter((d) => !isNaN(d.getTime()))
+    .sort((a, b) => a.getTime() - b.getTime());
+  if (!slots.length || slots.length > 3) {
+    return NextResponse.json({ error: "1 ile 3 arasında geçerli tarih/saat girin." }, { status: 400 });
+  }
+  if (slots.some((d) => d.getTime() < Date.now() - 60_000)) {
+    return NextResponse.json({ error: "Geçmiş bir zaman seçilemez." }, { status: 400 });
+  }
+  const scheduledAt = slots[0];
+  const proposedSlots = slots.length > 1 ? slots.map((d) => d.toISOString()) : null;
 
   // Teklifi appointment'a yaz (var olanı günceller → değişiklik sonrası yeniden teklif). externalVideoRef
   // hasta kabul edince (respond-video) atanır → izole SO video odası ancak onaydan sonra açılır.
   await db.secondOpinionAppointment.upsert({
     where: { caseId: id },
-    create: { caseId: id, patientId: c.patientId, doctorId: c.assignedDoctorId, scheduledAt, status: "OFFERED" },
-    update: { scheduledAt, status: "OFFERED" },
+    create: { caseId: id, patientId: c.patientId, doctorId: c.assignedDoctorId, scheduledAt, proposedSlots: proposedSlots ?? undefined, status: "OFFERED" },
+    update: { scheduledAt, proposedSlots: proposedSlots ?? Prisma.DbNull, status: "OFFERED" },
   });
 
   try {
@@ -48,11 +64,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     throw e;
   }
   const whenStr = scheduledAt.toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" });
-  await logSoEvent(id, { actorId: user.id, actorRole: user.role, action: "VIDEO", detail: `offered ${scheduledAt.toISOString()}` });
+  await logSoEvent(id, { actorId: user.id, actorRole: user.role, action: "VIDEO", detail: `offered ${slots.map((d) => d.toISOString()).join(",")}` });
   await notifyUser(c.patientId, {
     type: "SO_VIDEO",
     title: "📅 Video randevu teklifi",
-    body: `Uzman doktorunuz görüşme için bir zaman önerdi: ${whenStr}. Onaylayın veya farklı bir zaman isteyin.`,
+    body: proposedSlots
+      ? `Uzman doktorunuz görüşme için ${slots.length} alternatif zaman önerdi — size uygun olanı tek tıkla seçin.`
+      : `Uzman doktorunuz görüşme için bir zaman önerdi: ${whenStr}. Onaylayın veya farklı bir zaman isteyin.`,
     href: `/second-opinion/vaka/${id}`,
   });
 

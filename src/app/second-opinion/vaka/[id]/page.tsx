@@ -26,7 +26,7 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
       payment: { select: { status: true, amount: true, currency: true } },
       requests: { orderBy: { createdAt: "desc" }, select: { id: true, type: true, description: true, status: true } },
       opinion: { select: { content: true, submittedAt: true } },
-      appointment: { select: { id: true, scheduledAt: true, status: true } },
+      appointment: { select: { id: true, scheduledAt: true, status: true, proposedSlots: true } },
     },
   });
   if (!c) notFound();
@@ -66,7 +66,7 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
         payment: c.payment,
         requests: c.requests,
         opinion: c.opinion ? { content: decryptField(c.opinion.content), submittedAt: c.opinion.submittedAt.toISOString() } : null,
-        appointment: c.appointment ? { id: c.appointment.id, scheduledAt: c.appointment.scheduledAt.toISOString(), status: c.appointment.status } : null,
+        appointment: c.appointment ? { id: c.appointment.id, scheduledAt: c.appointment.scheduledAt.toISOString(), status: c.appointment.status, proposedSlots: Array.isArray(c.appointment.proposedSlots) ? (c.appointment.proposedSlots as string[]) : null } : null,
         readyAt: c.readyAt ? c.readyAt.toISOString() : null,
         assignedDoctor,
       }}

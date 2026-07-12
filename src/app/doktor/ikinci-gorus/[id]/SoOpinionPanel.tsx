@@ -31,6 +31,8 @@ export function SoOpinionPanel({ data }: { data: Data }) {
   const [fields, setFields] = useState<Record<string, string>>({ findings: "", assessment: "", opinion: "", recommendations: "" });
   const [testDesc, setTestDesc] = useState("");
   const [offerAt, setOfferAt] = useState("");
+  const [offerAt2, setOfferAt2] = useState(""); // Faz 3: opsiyonel alternatif zamanlar (hasta tek tıkla seçer)
+  const [offerAt3, setOfferAt3] = useState("");
   const [busy, setBusy] = useState<"" | "opinion" | "test" | "complete" | "offer">("");
   const [err, setErr] = useState("");
 
@@ -49,9 +51,11 @@ export function SoOpinionPanel({ data }: { data: Data }) {
     if (!offerAt) return setErr("Tarih/saat seçin.");
     setErr(""); setBusy("offer");
     try {
+      // Faz 3: 1-3 alternatif slot — hasta tek tıkla birini seçer (el sıkışması tek tur)
+      const slots = [offerAt, offerAt2, offerAt3].filter(Boolean).map((v) => new Date(v).toISOString());
       const res = await fetch(`/api/second-opinion/cases/${data.id}/offer-video`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scheduledAt: new Date(offerAt).toISOString() }),
+        body: JSON.stringify({ slots }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Teklif gönderilemedi.");
@@ -182,6 +186,12 @@ export function SoOpinionPanel({ data }: { data: Data }) {
             <p className="mt-1 text-xs text-white/50">Yazılı görüş sunuldu; raporun tesliminden itibaren 15 gün içinde bir görüşme zamanı önerin. Hasta onaylayınca randevu kesinleşir.</p>
           )}
           <input type="datetime-local" value={offerAt} onChange={(e) => setOfferAt(e.target.value)} className="mt-3 w-full rounded-xl border border-white/15 px-3 py-2.5 text-sm focus:border-[#28C8D8] focus:outline-none" />
+          {/* Faz 3: opsiyonel alternatifler — hasta tek tıkla seçsin, değişiklik turu gerekmesin */}
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <input type="datetime-local" value={offerAt2} onChange={(e) => setOfferAt2(e.target.value)} placeholder="Alternatif 2 (opsiyonel)" className="w-full rounded-xl border border-white/15 px-3 py-2.5 text-sm focus:border-[#28C8D8] focus:outline-none" />
+            <input type="datetime-local" value={offerAt3} onChange={(e) => setOfferAt3(e.target.value)} placeholder="Alternatif 3 (opsiyonel)" className="w-full rounded-xl border border-white/15 px-3 py-2.5 text-sm focus:border-[#28C8D8] focus:outline-none" />
+          </div>
+          <p className="mt-1.5 text-xs text-white/40">Birden fazla zaman önerirseniz hasta kendine uygun olanı tek tıkla seçer — değişiklik turu gerekmez.</p>
           <button onClick={offerVideo} disabled={busy !== ""} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#28C8D8] px-6 py-3 text-[15px] font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50">
             {busy === "offer" ? <Loader2 size={17} className="animate-spin" /> : <>Randevu zamanını hastaya öner</>}
           </button>

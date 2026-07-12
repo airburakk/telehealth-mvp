@@ -1,7 +1,7 @@
 // İkinci Görüş — sunucu servis katmanı. Durum geçişlerini TEK YERDE doğrular + denetim
 // izi (§8) yazar. Tüm fazlar (hasta/koordinatör/doktor) bunu kullanır → DRY + tutarlı audit.
 import { db } from "./db";
-import { canTransition, type SoStatus } from "./second-opinion";
+import { canTransition, soBranchVariants, type SoStatus } from "./second-opinion";
 import { notifyUser } from "./notify";
 import { BRANCHES } from "./triage";
 import { rankDoctorsByQuality } from "./match-score"; // CRM kalite indikatörleri + yük dengeleme
@@ -89,7 +89,8 @@ export async function autoAssignSoCase(caseId: string): Promise<string | null> {
   const c = await db.secondOpinionCase.findUnique({ where: { id: caseId } });
   if (!c || c.status !== "PENDING_REVIEW") return null;
 
-  const doctors = await db.doctor.findMany({ where: { branch: c.branch, verified: true } });
+  // Branş anahtar/etiket uyuşmazlığı (soBranchVariants açıklaması) — iki biçim de kapsanır.
+  const doctors = await db.doctor.findMany({ where: { branch: { in: soBranchVariants(c.branch) }, verified: true } });
   if (doctors.length === 0) return null;
 
   const ACTIVE: SoStatus[] = ["OFFERED", "ASSIGNED", "AWAITING_ADDITIONAL_TESTS"];
