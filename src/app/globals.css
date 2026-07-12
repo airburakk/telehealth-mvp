@@ -39,6 +39,32 @@ body {
   background: rgba(40, 200, 216, 0.35);
 }
 
+/* Form alanı — `.inp` (triyaj + ücretsiz sağlık + sağlık turizmi intake ortak sınıfı).
+   Tailwind preflight input/textarea/select'i border-0 + şeffaf bırakır → gece paneli (#161719)
+   içinde görünmez olurlar; bu kural tek kaynak görünür stili verir. Diğer formlar
+   (kayıt/PreConsultGate/doktor) kendi açık class'larını kullanır → bu kural onları etkilemez.
+   `@layer components`: Tailwind utility'leri (`resize-none` vb.) `.inp`'i ezebilsin diye. */
+@layer components {
+  .inp {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    background-color: #161719;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: rgb(244 245 243 / 0.9);
+    outline: none;
+    color-scheme: dark;
+  }
+  .inp::placeholder {
+    color: rgb(255 255 255 / 0.4);
+  }
+  .inp:focus {
+    border-color: #1fa9b8;
+  }
+}
+
 /* İnce kaydırma çubuğu */
 *::-webkit-scrollbar {
   width: 10px;

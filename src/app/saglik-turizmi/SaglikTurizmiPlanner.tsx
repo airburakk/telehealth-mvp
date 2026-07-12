@@ -45,11 +45,6 @@ const TEXTS = [
   TOURISM_DISCLAIMER_BODY,
 ];
 
-// Form alanı stili — `.inp` global class'ı bu projede tanımlı DEĞİL (Tailwind preflight textarea/input'u
-// border-0 + şeffaf bırakır → görünmez), o yüzden açık ve kendine yeten Tailwind sınıfı kullanıyoruz.
-const INPUT_CLS =
-  "w-full rounded-xl border border-white/10 bg-[#161719] px-3 py-2 text-sm text-white/80 outline-none placeholder:text-white/40 focus:border-[#1FA9B8]";
-
 export function SaglikTurizmiPlanner() {
   const [lang, setLang] = usePatientLang();
   const texts = useMemo(() => [...TEXTS, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...BRANCHES.map((b) => b.label)], []); // sabit referans — useT yarış dersi (v3.5)
@@ -171,10 +166,10 @@ export function SaglikTurizmiPlanner() {
             ) : (
               <>
                 <Field label={t("Hasta Adı (veya yakını)")}>
-                  <input value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder={t("Örn. Karim B.")} className={INPUT_CLS} />
+                  <input value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder={t("Örn. Karim B.")} className="inp" />
                 </Field>
                 <Field label={t("Ülke")}>
-                  <select value={country} onChange={(e) => setCountry(e.target.value)} className={INPUT_CLS}>
+                  <select value={country} onChange={(e) => setCountry(e.target.value)} className="inp">
                     {COUNTRIES.map((c) => (
                       <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
                     ))}
@@ -188,7 +183,7 @@ export function SaglikTurizmiPlanner() {
             <Field label={t("Sağlık durumunuz veya hedefiniz nedir?")}>
               <textarea value={symptoms} onChange={(e) => { setSymptoms(e.target.value); }} rows={4}
                 placeholder={t("Örn. saç ekimi düşünüyorum; ön bölgede belirgin seyrekleşme var.")}
-                className={`${INPUT_CLS} resize-none`} />
+                className="inp resize-none" />
             </Field>
 
             {error && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-300 ring-1 ring-red-400/25">{error}</div>}
