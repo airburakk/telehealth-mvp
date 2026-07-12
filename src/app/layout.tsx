@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { PwaRegister } from "@/components/PwaRegister";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { effectiveNavJourney } from "@/lib/nav";
 
 // Uygulama geneli tipografi — vitrin (aura-health) ile aynı aile: Inter gövde + Space Grotesk
 // display (--font-serif değişken adı tarihsel; display yuvası olarak kullanılır) + JetBrains Mono
@@ -39,10 +40,13 @@ export default async function RootLayout({
     headerLang = p?.language || "İngilizce";
   }
   // Hasta yolculuğu (başvurulan akışta damgalanır — lib/patient-journey) → nav bileşimi (SO hastasında Paylaşımlarım gizli, Vakalarım→SO).
+  // Karma-kulvar: SO damgalı hastanın GENERAL vakası da varsa SO daraltması uygulanmaz (lib/nav
+  // effectiveNavJourney) — count sorgusu yalnız SO-damgalı hastada koşar.
   let journey: string | null = null;
   if (user?.role === "PATIENT") {
     const u = await db.user.findUnique({ where: { id: user.id }, select: { patientJourney: true } });
-    journey = u?.patientJourney ?? null;
+    const generalCount = u?.patientJourney === "SECOND_OPINION" ? await db.case.count({ where: { userId: user.id } }) : 0;
+    journey = effectiveNavJourney(u?.patientJourney, generalCount > 0);
   }
   return (
     <html lang="tr" className={`h-full antialiased ${sans.variable} ${serif.variable} ${mono.variable}`}>

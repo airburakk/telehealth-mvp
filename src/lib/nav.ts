@@ -34,6 +34,16 @@ const NAV: NavItem[] = [
   { href: "/acente", label: "Tedavi Dosyaları", icon: Luggage, roles: ["AGENCY"] }, // S3 acente kuyruğu (FAZ 4)
 ];
 
+// Karma-kulvar hastası (journey=SECOND_OPINION damgalı ama GENERAL vakası da var) SO
+// daraltmasına girmez: "Vakalarım" /vakalarim'a işaret eder (tüm genel vakalar + kulvar
+// kartları) ve Paylaşımlarım görünür. Saf-SO hastasında davranış değişmez. Layout, journey'yi
+// Header'a geçirmeden önce bunu uygular (patientJourney son-yazan-kazanır; tek damga karma
+// portföyü temsil edemez — lib/patient-journey patientHomeFor'daki kuralla aynı mantık).
+export function effectiveNavJourney(journey: string | null | undefined, hasGeneralCases: boolean): string | null {
+  if (journey === "SECOND_OPINION" && hasGeneralCases) return null;
+  return journey ?? null;
+}
+
 export function navItemsFor(role: string | null | undefined, journey?: string | null): NavItem[] {
   if (!role) return [];
   let items = NAV.filter((n) => n.roles.includes(role));

@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
 import { useT } from "@/components/useT";
 import { useSoLang, SoLangSelect } from "@/components/SoLocale";
-import { Stethoscope, Plus, ArrowRight, Inbox, Bell } from "lucide-react";
+import { Stethoscope, Plus, ArrowRight, Inbox, Bell, FolderHeart } from "lucide-react";
 import { langDir } from "@/lib/constants";
 
 type Row = { id: string; branchLabel: string; status: string; diagnosisSummary: string; createdAt: string; hasPendingReq: boolean };
@@ -14,6 +14,7 @@ const S = {
   title: "İkinci Görüş Vakalarım",
   subtitle: "Uzmandan bağımsız değerlendirme başvurularınız.",
   newBtn: "Yeni ikinci görüş",
+  allCases: "Tüm vakalarım",
   empty: "Henüz ikinci görüş başvurunuz yok.",
   createBtn: "Başvuru oluştur",
   actionNeeded: "İşlem gerekiyor",
@@ -39,6 +40,10 @@ export function SoCasesList({ rows }: { rows: Row[] }) {
         </div>
         <div className="flex items-center gap-3">
           <SoLangSelect lang={lang} onChange={setLang} />
+          {/* Kulvar köprüsü — SO silosundan tüm vakalara/diğer kulvar kartlarına çıkış (karma-kulvar düzeltmesi) */}
+          <Link href="/vakalarim" className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-white/70 hover:border-[#28C8D8]/40 hover:text-[#F4F5F3]">
+            <FolderHeart size={16} /> {t(S.allCases)}
+          </Link>
           <Link href="/second-opinion/basvur" className="inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
             <Plus size={16} /> {t(S.newBtn)}
           </Link>

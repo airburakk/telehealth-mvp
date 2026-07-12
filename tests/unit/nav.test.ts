@@ -2,7 +2,7 @@
 // Hasta nav kararı: PATIENT = Vakalarım · Post Op · Paylaşımlarım (Triyaj/Ücretsiz Sağlık Hizmeti/Doktorlar kalktı);
 // SO yolculuğunda Paylaşımlarım gizli + Vakalarım SO listesine işaret eder.
 import { describe, it, expect } from "vitest";
-import { navItemsFor } from "@/lib/nav";
+import { navItemsFor, effectiveNavJourney } from "@/lib/nav";
 
 const hrefs = (role: string | null, journey?: string | null) => navItemsFor(role, journey).map((n) => n.href);
 
@@ -50,5 +50,27 @@ describe("navItemsFor", () => {
     expect(hrefs("ETHICS")).toEqual(["/etik-kurul"]);
     expect(hrefs("PARTNER")).toEqual(["/partner"]);
     expect(hrefs(null)).toEqual([]);
+  });
+});
+
+// Karma-kulvar düzeltmesi (2026-07-12): SO damgalı hastanın GENERAL vakası da varsa nav'daki
+// SO daraltması (Vakalarım→SO, Paylaşımlarım gizli) uygulanmaz — layout journey'yi Header'a
+// geçirmeden önce bu filtreden geçirir.
+describe("effectiveNavJourney", () => {
+  it("karma hasta (SO + genel vaka): journey null'a düşer → tam hasta nav'ı", () => {
+    expect(effectiveNavJourney("SECOND_OPINION", true)).toBeNull();
+    expect(hrefs("PATIENT", effectiveNavJourney("SECOND_OPINION", true))).toEqual(["/vakalarim", "/takip", "/paylasimlarim"]);
+  });
+
+  it("saf-SO hastası: SO daraltması sürer (Vakalarım → SO listesi)", () => {
+    expect(effectiveNavJourney("SECOND_OPINION", false)).toBe("SECOND_OPINION");
+    expect(hrefs("PATIENT", effectiveNavJourney("SECOND_OPINION", false))).toEqual(["/second-opinion/vakalarim", "/takip"]);
+  });
+
+  it("SO-dışı damgalar aynen geçer; boş damga null olur", () => {
+    expect(effectiveNavJourney("GENERAL", true)).toBe("GENERAL");
+    expect(effectiveNavJourney("HEALTH_TOURISM", false)).toBe("HEALTH_TOURISM");
+    expect(effectiveNavJourney(null, true)).toBeNull();
+    expect(effectiveNavJourney(undefined, false)).toBeNull();
   });
 });

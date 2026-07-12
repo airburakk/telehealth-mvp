@@ -20,9 +20,18 @@ export interface PatientProfileStamp {
 }
 
 // Dönen hasta iniş noktası (basitleştirme Faz 5, 2026-07-12): başvurusu OLAN hasta girişte vaka
-// merkezine iner (SO-yolculuğundaysa SO listesine — nav bileşimiyle aynı eşleme); hiç başvurusu
-// olmayan doğrudan Branş Doktoru akışına (/triyaj). roleHome'un PATIENT dalının dinamik hali —
+// merkezine iner; hiç başvurusu olmayan doğrudan Branş Doktoru akışına (/triyaj).
+// Karma-kulvar düzeltmesi (2026-07-12): SO listesine yalnız SADECE-SO hastası iner. patientJourney
+// son-yazan-kazanır damgadır — GENERAL vakası da olan hasta SO silosuna inince genel vakalarına
+// UI'dan hiç ulaşamıyordu (SO listesinde diğer kulvarlara çıkış yoktu). Karma hasta /vakalarim'a:
+// tüm genel vakaları + kulvar kartları orada. roleHome'un PATIENT dalının dinamik hali —
 // sync çağıranlar (statik fallback) roleHome'da kalır.
+export function patientHomeFor(journey: string | null | undefined, caseCount: number, soCount: number): string {
+  if (journey === "SECOND_OPINION" && soCount > 0 && caseCount === 0) return "/second-opinion/vakalarim";
+  if (caseCount > 0 || soCount > 0) return "/vakalarim";
+  return "/triyaj";
+}
+
 export async function patientHome(userId: string): Promise<string> {
   try {
     const [u, caseCount, soCount] = await Promise.all([
@@ -30,8 +39,7 @@ export async function patientHome(userId: string): Promise<string> {
       db.case.count({ where: { userId } }),
       db.secondOpinionCase.count({ where: { patientId: userId } }),
     ]);
-    if (u?.patientJourney === "SECOND_OPINION" && soCount > 0) return "/second-opinion/vakalarim";
-    if (caseCount > 0 || soCount > 0) return "/vakalarim";
+    return patientHomeFor(u?.patientJourney, caseCount, soCount);
   } catch {
     /* sorgu düşerse güvenli varsayılan */
   }
