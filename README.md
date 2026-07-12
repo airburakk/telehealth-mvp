@@ -71,7 +71,8 @@ bir kez yeniden alınır).
 
 **Hasta akışı (v5.8 basitleştirme):** `/basla` 4'lü seçim ekranı KALDIRILDI — giriş hunisi doğrudan
 **Branş Doktoru akışına** (`/triyaj`) iner; **dönen hasta** (başvurusu olan) girişte **vaka merkezine**
-(`/vakalarim`; SO yolculuğunda `/second-opinion/vakalarim`) iner (`lib/patient-journey.patientHome`).
+(`/vakalarim`; SO yolculuğunda `/second-opinion/vakalarim`) iner (`lib/patient-journey.patientHome`);
+her vakanın tek merkezi `/vaka/[caseId]` hub'ıdır (teklif/rezervasyon gömülü, eski rotalar redirect).
 Diğer kulvarlara erişim: Vakalarım üstündeki kulvar kartları + kendi sayfaları (İkinci Görüş →
 `/second-opinion/basvur` · Sağlık Turizmi → `/saglik-turizmi` · Ücretsiz Sağlık → `/ucretsiz-saglik/basvur`).
 `User.patientJourney` artık **başvurulan akışta damgalanır** (`stampPatientJourney` → intake API'leri) ve
@@ -158,7 +159,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
   erişimini geri açamaz. M4 paylaşımda iptal **ileriye dönüktür** (yeni erişimi durdurur; görülen veri geri
   alınamaz — bu UI'da net belirtilir). (`lib/postop-access.ts`)
 - **Klinik nöbet rolleri:** Branş / İcapçı / Nöbetçi (`Doctor.clinicalState/onCall/sentinel`) +
-  "online doktor yoksa 3-seçenek kapısı" (`/triyaj/[id]`) + `ConsultAppointment`. (`lib/clinical-duty.ts`)
+  "online doktor yoksa 3-seçenek kapısı" (`/vaka/[caseId]` hub'ında) + `ConsultAppointment`. (`lib/clinical-duty.ts`)
 - **CRM eşleştirme kalite indikatörleri (9 metrik):** doktor seçimi branş/müsaitlik dışında performans
   metadata'sıyla ağırlıklandırılır — rating · başarı · ücretsiz sağlık hizmeti · icap dönüş oranı · **yanıt süresi**
   (`Doctor.respCount/respTotalSec`) · **iptal oranı** (ConsultAppointment+SO CANCELLED) · **tamamlanan vaka
@@ -189,7 +190,8 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/` · `/giris` · `/kurumsal-giris` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | Landing (**8 dil statik**, `lib/landing-copy.ts`) · **hasta girişi** · **kurumsal giriş** · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
 | `/basla` | KALDIRILDI (v5.8) — eski linkler için `/triyaj`'a kalıcı redirect |
 | `/saglik-turizmi` | **Sağlık Turizmi hasta-yüzü planlama** (v4.24-25): tercih (branş/ülke/seviye/gece) + endikatif paket önizlemesi (`computePackage`) + öz-yeterli "Talep Oluştur" → `POST /api/patient/tourism-request` (runTriage → tourism-etiketli Case, `Case.tourismPlan` JSON; doktor `/paket` PackageBuilder ön-değeri + kokpit 🧳 rozeti). Klinik-önce: bağlayıcı fiyat/rezervasyon daima doktor onayı sonrası (simüle/park; USHAŞ yetki belgesi + TÜRSAB hukuki zemini vault'ta belgeli) |
-| `/triyaj` · `/triyaj/[id]` | Triyaj sihirbazı · vaka süreç sayfası + 3-seçenek kapısı |
+| `/triyaj` | Triyaj sihirbazı (tek ekran ödeme kapısı + 3 adım — v5.8) |
+| `/vaka/[caseId]` | **Tek hasta vaka merkezi** (v5.8 F6): süreç tracker + 3-seçenek kapısı + vaka bilgisi + aktif görüşme CTA + teklif (`#teklif`) + rezervasyon (`#rezervasyon`) gömülü; eski hasta rotaları (`/triyaj/[id]` · `/teklif/[bookingId]` · `/rezervasyon/[bookingId]`) buraya kalıcı redirect |
 | `/vakalarim` · `/erisim-kaydi` | Hastanın vaka ana ekranı · erişim denetim kaydı ("verime kim erişti") |
 | `/doktor` (+`/baslangic`, `/vaka/[id]`, `/takip`, `/profil`, `/ucretsiz-saglik`, `/konsultasyon`) | Doktor Ana Sayfası (5-pencere), ilk-giriş onboarding, kokpit, izleme, profil, Ücretsiz Sağlık Hizmeti, klinik nöbet, Konsültasyon Talepleri kutusu |
 | `/partner` (+`/talep`) | Partner Doktor paneli (**tüm arayüz partner dilinde + RTL**, haber akışı dahil) · anonim konsültasyon talebi oluşturma (belge yükleme, hasta DB erişimi yok) |
