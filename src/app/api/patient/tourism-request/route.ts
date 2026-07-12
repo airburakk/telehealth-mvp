@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/api-auth";
 import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField } from "@/lib/crypto";
 import { notifyDoctorsByBranch } from "@/lib/notify";
-import { stampPatientJourney } from "@/lib/patient-journey";
+import { stampPatientProfile } from "@/lib/patient-journey";
 
 // POST /api/patient/tourism-request — Sağlık Turizmi öz-yeterli intake (Faz 2).
 // Hasta tercihleri (tier/gece/ülke + seçtiği tedavi alanı) + kısa şikayet/hedef → tourism-etiketli Case
@@ -67,7 +67,12 @@ export async function POST(req: Request) {
     href: `/doktor/vaka/${created.id}`,
   });
 
-  await stampPatientJourney(user.id, user.role, "HEALTH_TOURISM"); // nav bileşimi başvurulan akıştan
+  // Nav bileşimi + profil hafızası (Faz 0) — turizm intake'inde dil alanı yok (air_lang UI'da)
+  await stampPatientProfile(user.id, user.role, {
+    journey: "HEALTH_TOURISM",
+    country,
+    phone: contact.phone, contactPref: contact.contactPreference,
+  });
 
   return NextResponse.json({ caseId: created.id }, { status: 201 });
 }

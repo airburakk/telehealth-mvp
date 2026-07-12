@@ -6,7 +6,7 @@ import { COUNTRIES, LANGUAGES } from "@/lib/constants";
 import { logSoEvent } from "@/lib/second-opinion-service";
 import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField } from "@/lib/crypto";
-import { stampPatientJourney } from "@/lib/patient-journey";
+import { stampPatientProfile } from "@/lib/patient-journey";
 
 // GET /api/second-opinion/cases — hasta kendi SO vakalarını listeler (klinik personel: tümü)
 export async function GET() {
@@ -76,6 +76,11 @@ export async function POST(req: Request) {
     action: "STATUS_CHANGE",
     detail: "→DRAFT (açık rıza alındı)",
   });
-  await stampPatientJourney(user.id, user.role, "SECOND_OPINION"); // nav bileşimi başvurulan akıştan
+  // Nav bileşimi + profil hafızası (Faz 0)
+  await stampPatientProfile(user.id, user.role, {
+    journey: "SECOND_OPINION",
+    country, language,
+    phone: contact.phone, contactPref: contact.contactPreference,
+  });
   return NextResponse.json(created, { status: 201 });
 }

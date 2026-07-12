@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { matchForCase } from "@/lib/free-care";
 import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField } from "@/lib/crypto";
-import { stampPatientJourney } from "@/lib/patient-journey";
+import { stampPatientProfile } from "@/lib/patient-journey";
 
 // POST /api/free-care/apply — hasta ön-triyaj → ÜCRETSİZ ücretsiz sağlık hizmeti vaka (ödeme kapısı YOK) → anında eşleşme dener.
 export async function POST(req: Request) {
@@ -47,7 +47,12 @@ export async function POST(req: Request) {
     },
   });
 
-  await stampPatientJourney(user.id, user.role, "FREE_CARE"); // nav bileşimi başvurulan akıştan
+  // Nav bileşimi + profil hafızası (Faz 0)
+  await stampPatientProfile(user.id, user.role, {
+    journey: "FREE_CARE",
+    country: String(body.country ?? ""), language: String(body.language ?? ""),
+    phone: contact.phone, contactPref: contact.contactPreference,
+  });
   const match = await matchForCase(created.id);
   return NextResponse.json(
     { caseId: created.id, consultationId: match?.consultationId ?? null },

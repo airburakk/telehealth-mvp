@@ -23,7 +23,14 @@ model User {
   doctorId     String? // DOCTOR rolündeki kullanıcının hekim profili
   partnerId    String? // PARTNER rolündeki kullanıcının Partner Doktor profili (M5 Faz 3)
   sessionVersion Int    @default(0) // JWT iptali: token'daki `sv` claim'i ile karşılaştırılır; artınca eski oturumlar düşer (logout-all / gelecekte şifre değişikliği)
-  patientJourney String? // hasta yolculuğu tercihi (/basla): GENERAL | SECOND_OPINION | FREE_CARE; null = henüz seçmedi → GENERAL nav
+  patientJourney String? // hasta yolculuğu — başvurulan akışta damgalanır (lib/patient-journey): GENERAL | SECOND_OPINION | FREE_CARE | HEALTH_TOURISM; null = henüz başvurmadı → GENERAL nav
+  // Profil hafızası (basitleştirme Faz 0, 2026-07-12): "bir kez sor, her yerde kullan" — intake'te
+  // girilen değerler buraya yaz-geri edilir (son değer kazanır), sonraki intake'ler prefill eder.
+  // Yalnız PATIENT rolünde dolar; telefon KİMLİK verisi → at-rest ŞİFRELİ (lib/crypto encryptField).
+  patientCountry     String? // ISO ülke kodu (DZ, TR, ...)
+  patientLanguage    String? // dil ADI (air_lang ile aynı sözlük: "Türkçe", "Arapça", ...)
+  patientPhone       String? // ŞİFRELİ (enc:v1:...) — decryptField ile okunur
+  patientContactPref String? // APP | SMS | EMAIL
   // E-posta doğrulama (Auth Faz 5, v5.6 — RESEND_API_KEY yoksa DORMANT): null = doğrulanmamış YENİ
   // e-posta kaydı (girişi engellenir). Mevcut hesaplar migration'da damgalandı; dormant modda ve
   // Google girişlerinde kayıt anında damgalanır (Google e-postayı zaten doğrulamış olur).
@@ -659,6 +666,7 @@ model SecondOpinionAppointment {
   patientId        String
   doctorId         String
   scheduledAt      DateTime
+  proposedSlots    Json? // basitleştirme Faz 3: doktorun önerdiği 2-3 alternatif zaman (ISO dizisi) — hasta tek tıkla seçer; null = tek-zaman teklifi (eski davranış)
   externalVideoRef String? // mevcut video altyapısına referans (Consultation.id) — Faz 4
   status           String            @default("SCHEDULED") // SCHEDULED | COMPLETED | CANCELLED
   createdAt        DateTime          @default(now())

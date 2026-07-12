@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
 import { notifyDoctorsByBranch } from "@/lib/notify";
 import { requireUser, requireStaff } from "@/lib/api-auth";
-import { stampPatientJourney } from "@/lib/patient-journey";
+import { stampPatientProfile } from "@/lib/patient-journey";
 import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField, decryptField } from "@/lib/crypto";
 import { storeDocument } from "@/lib/storage";
@@ -164,7 +164,12 @@ export async function POST(req: Request) {
     });
   }
 
-  await stampPatientJourney(user.id, user.role, "GENERAL"); // nav bileşimi başvurulan akıştan
+  // Nav bileşimi + profil hafızası (Faz 0): journey ve iletişim/ülke/dil User'a yaz-geri
+  await stampPatientProfile(user.id, user.role, {
+    journey: "GENERAL",
+    country: String(body.country ?? ""), language: String(body.language ?? ""),
+    phone: contact.phone, contactPref: contact.contactPreference,
+  });
 
   return NextResponse.json(created, { status: 201 });
 }
