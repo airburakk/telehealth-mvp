@@ -74,6 +74,8 @@ export interface ReservationViewProps {
   escrowStatus: string;
   stages: JourneyStage[];
   caseId: string;
+  /** Vaka merkezinde (Faz 6) bölüm olarak gömülü: kendi kromu (dil seçici + dış boşluk) gizlenir. */
+  embedded?: boolean;
 }
 
 export function ReservationView(p: ReservationViewProps) {
@@ -87,10 +89,12 @@ export function ReservationView(p: ReservationViewProps) {
   const progress = journeyProgress(p.stages);
 
   return (
-    <div dir={langDir(lang)} className="mx-auto max-w-3xl px-5 py-10">
-      <div className="mb-4 flex items-center justify-end">
-        <PatientLangSelect lang={lang} onChange={setLang} />
-      </div>
+    <div dir={langDir(lang)} className={p.embedded ? "" : "mx-auto max-w-3xl px-5 py-10"}>
+      {!p.embedded && (
+        <div className="mb-4 flex items-center justify-end">
+          <PatientLangSelect lang={lang} onChange={setLang} />
+        </div>
+      )}
 
       <div className="flex items-start gap-3 rounded-3xl border border-emerald-400/25 bg-emerald-500/10 p-5">
         <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-300" />

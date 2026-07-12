@@ -70,6 +70,8 @@ export interface OfferViewProps {
   escrowStatus: string;
   declined: boolean;
   createdLabel: string;
+  /** Vaka merkezinde (Faz 6) bölüm olarak gömülü: kendi kromu (geri linki + dil seçici + dış boşluk) gizlenir. */
+  embedded?: boolean;
 }
 
 export function OfferView(p: OfferViewProps) {
@@ -82,13 +84,15 @@ export function OfferView(p: OfferViewProps) {
   const { t } = useT(lang, texts);
 
   return (
-    <div dir={langDir(lang)} className="print-doc mx-auto max-w-3xl px-5 py-8">
-      <div className="print:hidden flex items-center justify-between gap-3">
-        <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-[#1FA9B8]">
-          <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Vakalarım")}
-        </Link>
-        <PatientLangSelect lang={lang} onChange={setLang} />
-      </div>
+    <div dir={langDir(lang)} className={p.embedded ? "print-doc" : "print-doc mx-auto max-w-3xl px-5 py-8"}>
+      {!p.embedded && (
+        <div className="print:hidden flex items-center justify-between gap-3">
+          <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-[#1FA9B8]">
+            <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Vakalarım")}
+          </Link>
+          <PatientLangSelect lang={lang} onChange={setLang} />
+        </div>
+      )}
 
       {/* Belge başlığı */}
       <div className="mt-4 flex items-start justify-between gap-3 border-b border-white/10 pb-5">

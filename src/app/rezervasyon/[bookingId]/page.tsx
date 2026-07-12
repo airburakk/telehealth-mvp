@@ -1,51 +1,14 @@
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { canAccessCase } from "@/lib/ownership";
-import { type LineItem } from "@/lib/pricing";
-import { decryptField } from "@/lib/crypto";
-import { parseJourney } from "@/lib/journey";
-import { ReservationView } from "@/components/ReservationView";
 
 export const dynamic = "force-dynamic";
 
-// /rezervasyon/[bookingId] — onaylanmış rezervasyon (CONFIRMED). Server: auth + decrypt + DB;
-// sunum + i18n + escrow güven görseli client ReservationView'da (FAZ 3).
-export default async function ReservationPage({ params }: { params: Promise<{ bookingId: string }> }) {
+// Rezervasyon görünümü tek hasta vaka merkezine taşındı (basitleştirme Faz 6, 2026-07-12) —
+// ReservationView artık /vaka/[caseId]#rezervasyon bölümünde gömülü. Eski linkler/bildirimler için
+// kalıcı köprü; auth/BOLA kapısını hub yapar (buradaki lookup yalnız bookingId→caseId çevirisidir).
+export default async function ReservationRedirect({ params }: { params: Promise<{ bookingId: string }> }) {
   const { bookingId } = await params;
-  const booking = await db.booking.findUnique({ where: { id: bookingId }, include: { case: true } });
+  const booking = await db.booking.findUnique({ where: { id: bookingId }, select: { caseId: true } });
   if (!booking) notFound();
-  if (!(await canAccessCase(booking.case))) notFound(); // hasta yalnız kendi rezervasyonunu görür
-  if (booking.status !== "CONFIRMED") redirect(`/teklif/${booking.id}`); // taslak/iptal teklif → teklif sayfası
-
-  const items: LineItem[] = JSON.parse(booking.breakdown);
-  const split: LineItem[] = JSON.parse(booking.split);
-
-  // Doktorun seçtiği hastane + sağlık turizmi yetki belge no'su (HealthTürkiye; hasta güven sinyali)
-  const reg = booking.case.hospitalRegistryId
-    ? await db.registryHospital.findUnique({ where: { id: booking.case.hospitalRegistryId }, select: { authorizationNumber: true } })
-    : null;
-
-  return (
-    <ReservationView
-      hospitalName={booking.case.hospitalName}
-      hospitalAuthNo={reg?.authorizationNumber || null}
-      bookingId={booking.id}
-      rezNo={booking.id.slice(0, 8).toUpperCase()}
-      tier={booking.tier}
-      hospitalType={booking.hospitalType}
-      hotelStars={booking.hotelStars}
-      nights={booking.nights}
-      translator={booking.translator}
-      insuranceLevel={booking.insuranceLevel}
-      insuranceDetail={booking.insuranceDetail}
-      items={items}
-      split={split}
-      total={booking.total}
-      patientName={decryptField(booking.case.patientName)}
-      branch={booking.branch}
-      escrowStatus={booking.escrowStatus}
-      stages={parseJourney(booking.journeyData)}
-      caseId={booking.case.id}
-    />
-  );
+  redirect(`/vaka/${booking.caseId}#rezervasyon`);
 }

@@ -234,7 +234,7 @@ export default function TriyajPage() {
       });
       if (!res.ok) throw new Error((await res.json()).error || "Hata");
       const created = await res.json();
-      router.push(`/triyaj/${created.id}`);
+      router.push(`/vaka/${created.id}`); // tek vaka merkezi (Faz 6)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Vaka oluşturulamadı.");
       setSubmitting(false);

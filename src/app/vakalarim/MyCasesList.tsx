@@ -121,10 +121,10 @@ export function MyCasesList({ rows }: { rows: MyCaseRow[] }) {
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2 border-t border-white/10 pt-3">
-                <CaseAction href={`/triyaj/${c.id}`} icon={<FileText size={13} />}>{t(S.caseSummary)}</CaseAction>
+                <CaseAction href={`/vaka/${c.id}`} icon={<FileText size={13} />}>{t(S.caseSummary)}</CaseAction>
                 {c.hasRecovery && <CaseAction href={`/takip/${c.id}`} icon={<HeartPulse size={13} />} tone="text-[#28C8D8] border-[#28C8D8]/25 bg-[#28C8D8]/10 hover:bg-[#28C8D8]/15">{t(S.postop)}</CaseAction>}
-                {booking && booking.status === "CONFIRMED" && <CaseAction href={`/rezervasyon/${booking.id}`} icon={<Luggage size={13} />} tone="text-emerald-300 border-emerald-400/25 bg-emerald-500/10 hover:bg-emerald-500/15">{t(S.booking)}</CaseAction>}
-                {booking && booking.status === "DRAFT" && <CaseAction href={`/teklif/${booking.id}`} icon={<FileText size={13} />} tone="text-violet-300 border-violet-400/25 bg-violet-500/10 hover:bg-violet-500/15">{t(S.offer)}</CaseAction>}
+                {booking && booking.status === "CONFIRMED" && <CaseAction href={`/vaka/${c.id}#rezervasyon`} icon={<Luggage size={13} />} tone="text-emerald-300 border-emerald-400/25 bg-emerald-500/10 hover:bg-emerald-500/15">{t(S.booking)}</CaseAction>}
+                {booking && booking.status === "DRAFT" && <CaseAction href={`/vaka/${c.id}#teklif`} icon={<FileText size={13} />} tone="text-violet-300 border-violet-400/25 bg-violet-500/10 hover:bg-violet-500/15">{t(S.offer)}</CaseAction>}
               </div>
             </div>
           );

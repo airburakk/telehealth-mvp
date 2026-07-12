@@ -64,6 +64,7 @@ export const config = {
   matcher: [
     "/onam",
     "/triyaj", "/triyaj/:path*",
+    "/vaka/:path*",
     "/hekimler", "/hekim/:path*",
     "/doktor", "/doktor/:path*",
     "/gorusme/:path*",
