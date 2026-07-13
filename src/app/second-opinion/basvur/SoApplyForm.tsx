@@ -10,6 +10,7 @@ import { useSoLang } from "@/components/SoLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
+import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
 import { Stethoscope, Clock, Video, ArrowRight, Loader2, Globe, FileText, Link2, X, CreditCard, AlertTriangle } from "lucide-react";
 import { COUNTRIES } from "@/lib/constants";
 
@@ -111,7 +112,7 @@ export function SoApplyForm() {
   const showStrip = profileComplete(profile, "full") && !editProfile;
 
   const texts = useMemo(
-    () => [...Object.values(S), FEE_LINE, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...BRANCHES.map((b) => b.label), ...COUNTRIES.map((c) => c.name), ...specs.map((s) => s.label)],
+    () => [...Object.values(S), FEE_LINE, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...DICTATION_TEXTS, ...BRANCHES.map((b) => b.label), ...COUNTRIES.map((c) => c.name), ...specs.map((s) => s.label)],
     [specs],
   );
   const { t } = useT(lang, texts);
@@ -250,7 +251,10 @@ export function SoApplyForm() {
           <Globe size={13} className="text-[#28C8D8]" /> {lang} · {t(S.langHint)}
         </p>
 
-        <label className="mt-5 block text-sm font-semibold text-white/75">{t(S.diagLabel)}</label>
+        <div className="mt-5 flex items-center justify-between gap-2">
+          <label className="block text-sm font-semibold text-white/75">{t(S.diagLabel)}</label>
+          <DictationButton lang={lang} onAppend={(txt) => setDiagnosisSummary((v) => (v.trim() ? v.trim() + " " : "") + txt)} t={t} />
+        </div>
         <p className="text-xs text-white/50">{t(S.diagHint)}</p>
         <textarea
           value={diagnosisSummary}

@@ -14,6 +14,7 @@ import { usePatientLang } from "@/components/PatientLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
+import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
 import { COUNTRIES, countryName } from "@/lib/constants";
 import { BRANCHES } from "@/lib/triage";
 import { TOURISM_DISCLAIMER_TITLE, TOURISM_DISCLAIMER_BODY } from "@/lib/tourism-disclaimer";
@@ -47,7 +48,7 @@ const TEXTS = [
 
 export function SaglikTurizmiPlanner() {
   const [lang, setLang] = usePatientLang();
-  const texts = useMemo(() => [...TEXTS, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...BRANCHES.map((b) => b.label)], []); // sabit referans — useT yarış dersi (v3.5)
+  const texts = useMemo(() => [...TEXTS, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...DICTATION_TEXTS, ...BRANCHES.map((b) => b.label)], []); // sabit referans — useT yarış dersi (v3.5)
   const { t } = useT(lang, texts);
 
   const [step, setStep] = useState<0 | 1>(0);
@@ -180,11 +181,15 @@ export function SaglikTurizmiPlanner() {
               </>
             )}
 
-            <Field label={t("Sağlık durumunuz veya hedefiniz nedir?")}>
+            <div>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <span className="block text-sm font-medium text-white/75">{t("Sağlık durumunuz veya hedefiniz nedir?")}</span>
+                <DictationButton lang={lang} onAppend={(txt) => setSymptoms((v) => (v.trim() ? v.trim() + " " : "") + txt)} t={t} />
+              </div>
               <textarea value={symptoms} onChange={(e) => { setSymptoms(e.target.value); }} rows={4}
                 placeholder={t("Örn. saç ekimi düşünüyorum; ön bölgede belirgin seyrekleşme var.")}
                 className="inp resize-none" />
-            </Field>
+            </div>
 
             {error && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-300 ring-1 ring-red-400/25">{error}</div>}
 

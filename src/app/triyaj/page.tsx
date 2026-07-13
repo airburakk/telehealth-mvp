@@ -13,6 +13,8 @@ import { usePatientLang } from "@/components/PatientLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
+import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
+import { BranchBanner } from "@/components/BranchBanner";
 import { AuraSpinner } from "@/components/PortamedLogo";
 import type { Billing } from "@/lib/billing";
 import {
@@ -29,7 +31,7 @@ const STATIC_UI = [
   "Şikayetiniz / Semptomlar", "Örn. Babamda akciğer kanseri şüphesi var, biyopsi sonucu çıktı, ikinci görüş istiyoruz.",
   "Şikayet süresi (opsiyonel)", "Örn. 2 ay",
   "Devam'a bastığınızda yapay zeka şikayetinizi analiz edip sizi doğru uzmana yönlendirir.",
-  "AI sizi doğru branşa yönlendiriyor…", "Yönlendirilen branş", "elle seçildi", "AI önerisi · doğru değilse değiştirin",
+  "AI sizi doğru branşa yönlendiriyor…", "Yönlendirilen branş", "Branşınız", "elle seçildi", "AI önerisi · doğru değilse değiştirin",
   "Önce şikayet adımında AI ön analizini çalıştırın; sorular branşa göre belirir.",
   "Tıbbi belge yükleyin", "PDF, JPG, DICOM · Tahlil, radyoloji, epikriz",
   "Yüklenen dosyalar KVKK/GDPR uyumlu şifreli olarak saklanır.", "Belge yüklemek opsiyoneldir.",
@@ -184,7 +186,7 @@ export default function TriyajPage() {
   function chooseLang(l: string) { setLangLocked(true); setUiLang(l); } // açık seçim → ülke-önerisi kilitlenir
   const showStrip = profileComplete(profile, "full") && !editProfile;
   const tTexts = useMemo(
-    () => [...STATIC_UI, ...PRECONSULT_TEXTS, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...(profile?.country ? [countryName(profile.country)] : []), ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
+    () => [...STATIC_UI, ...PRECONSULT_TEXTS, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...DICTATION_TEXTS, ...(profile?.country ? [countryName(profile.country)] : []), ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
     [effectiveBranch, analysis?.reasoning, profile]
   );
   const { t } = useT(uiLang, tTexts);
@@ -323,7 +325,15 @@ export default function TriyajPage() {
                 <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
               </>
             )}
-            <Field label={t("Şikayetiniz / Semptomlar")}>
+            <div>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <span className="block text-sm font-medium text-white/75">{t("Şikayetiniz / Semptomlar")}</span>
+                <DictationButton
+                  lang={uiLang}
+                  onAppend={(txt) => { setSymptoms((v) => (v.trim() ? v.trim() + " " : "") + txt); setAnalysis(null); }}
+                  t={t}
+                />
+              </div>
               <textarea
                 value={symptoms}
                 onChange={(e) => { setSymptoms(e.target.value); setAnalysis(null); }}
@@ -332,7 +342,7 @@ export default function TriyajPage() {
                 className="inp resize-none"
                 autoFocus
               />
-            </Field>
+            </div>
             <Field label={t("Şikayet süresi (opsiyonel)")}>
               <input value={durationText} onChange={(e) => setDurationText(e.target.value)} placeholder={t("Örn. 2 ay")} className="inp" />
             </Field>
@@ -358,6 +368,11 @@ export default function TriyajPage() {
             )}
             {effectiveBranch ? (
               <>
+                <BranchBanner
+                  branchKey={effectiveBranch}
+                  branchLabel={t(BRANCHES.find((b) => b.key === effectiveBranch)?.label ?? effectiveBranch)}
+                  eyebrow={t("Branşınız")}
+                />
                 <div className="rounded-2xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-3">
                   <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]"><Stethoscope size={14} /> {t("Yönlendirilen branş")}</div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">

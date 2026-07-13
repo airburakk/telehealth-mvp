@@ -11,6 +11,7 @@ import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { countryFlag, urgencyStyle, CASE_STATUS, formatDateTime, langDir } from "@/lib/constants";
 import { BRANCHES } from "@/lib/triage";
+import { BranchAvatar } from "@/components/BranchAvatar";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
 import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Luggage, FileText, Inbox, HandHeart, Bell } from "lucide-react";
 
@@ -132,6 +133,7 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
                   <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[11px] font-semibold text-violet-300 ring-1 ring-violet-400/25">
                     <Stethoscope size={11} /> {t(S.soBadge)}
                   </span>
+                  <BranchAvatar branchKey={BRANCHES.find((b) => b.label === c.branchLabel)?.key} size={30} />
                   <span className="font-semibold text-[#F4F5F3]">{t(c.branchLabel)}</span>
                   <span className="rounded-full bg-[#28C8D8]/10 px-2 py-0.5 text-[11px] font-semibold text-[#17919E]">{t(SO_STATUS_LABELS[c.status as SoStatus] ?? c.status)}</span>
                   {c.hasPendingReq && (
@@ -157,6 +159,7 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
+                    <BranchAvatar branchKey={c.branch} size={30} />
                     <span className="font-semibold text-[#F4F5F3]">{c.patientName}</span>
                     <span className="text-xs text-white/40">{countryFlag(c.country)}</span>
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${st.color}`}>{t(st.label)}</span>

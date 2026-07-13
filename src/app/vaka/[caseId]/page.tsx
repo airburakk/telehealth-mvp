@@ -14,6 +14,8 @@ import { ConsultGate, type GateAppt } from "@/components/ConsultGate";
 import { gateAvailability } from "@/lib/clinical-duty";
 import { OfferView } from "@/components/OfferView";
 import { ReservationView } from "@/components/ReservationView";
+import { BranchBanner } from "@/components/BranchBanner";
+import { BRANCHES } from "@/lib/triage";
 
 const PHASE_ICON = {
   case: <FileText size={14} />,
@@ -32,7 +34,7 @@ const STATIC_LABELS = [
   "Vakalarım",
   "Vakanız oluşturuldu ve doktor kuyruğuna eklendi",
   "Uzman doktor, hazırlanan vaka özetinizi inceleyip sizinle video görüşmesi planlayacak.",
-  "Vaka No", "Aciliyet", "Hasta", "Ülke / Dil", "Yönlendirilen Branş", "Süre",
+  "Vaka No", "Aciliyet", "Hasta", "Ülke / Dil", "Yönlendirilen Branş", "Süre", "Vakanız",
   "Şikayet", "Triyaj Gerekçesi", "Belgeler",
   "Acil / Hayati", "Yüksek", "Orta", "Düşük", "Rutin / Elektif",
   "Aktif görüşmeniz var", "Doktorunuzla görüşme odası açık — katılabilirsiniz.", "Görüşmeye katıl",
@@ -86,8 +88,9 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
 
   // Klinik gerekçe (at-rest şifreli PHI): önbelleklenmez + ad AI'dan gizlenir (P0 #2);
   // statik etiketler + branş + tracker metinleri PHI değil → cache'lenir.
+  const branchLabel = BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch;
   const [uiMap, clinMap] = await Promise.all([
-    getTranslations(c.language, [...STATIC_LABELS, c.branch, ...TALK_TRACKER_TEXTS]),
+    getTranslations(c.language, [...STATIC_LABELS, c.branch, branchLabel, ...TALK_TRACKER_TEXTS]),
     translateClinical(c.language, [c.reasoning], c.patientName),
   ]);
   const tmap = { ...uiMap, ...clinMap };
@@ -116,6 +119,11 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
           <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {t("Aciliyet")} {c.urgency}/5 · {t(u.label)}
         </span>
+      </div>
+
+      {/* Branş görsel kimliği bandı — vaka merkezi üstünde (renk-türevi CSS banner + SVG amblem) */}
+      <div className="mt-4">
+        <BranchBanner branchKey={c.branch} branchLabel={t(branchLabel)} eyebrow={t("Vakanız")} />
       </div>
 
       {gate ? (

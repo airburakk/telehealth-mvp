@@ -8,6 +8,7 @@ import { usePatientLang } from "@/components/PatientLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
+import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
 import { HeartHandshake, Loader2, ArrowRight } from "lucide-react";
 
 // Ücretsiz Sağlık Hizmeti ön-triyaj — kısa, ücret kapısı YOK. Başvuru HER ZAMAN alınır (Faz 4:
@@ -79,7 +80,7 @@ export default function FreeCareApplyPage() {
     return () => { alive = false; clearInterval(iv); };
   }, []);
 
-  const tTexts = useMemo(() => [...STATIC_UI, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...(profile?.country ? [countryName(profile.country)] : [])], [profile]);
+  const tTexts = useMemo(() => [...STATIC_UI, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...DICTATION_TEXTS, ...(profile?.country ? [countryName(profile.country)] : [])], [profile]);
   const { t } = useT(uiLang, tTexts);
 
   async function submit() {
@@ -131,7 +132,11 @@ export default function FreeCareApplyPage() {
             <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
           </>
         )}
-        <Field label={t("Şikayetiniz / Semptomlar")}>
+        <div>
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <span className="block text-sm font-medium text-white/75">{t("Şikayetiniz / Semptomlar")}</span>
+            <DictationButton lang={uiLang} onAppend={(txt) => setSymptoms((v) => (v.trim() ? v.trim() + " " : "") + txt)} t={t} />
+          </div>
           <textarea
             value={symptoms}
             onChange={(e) => setSymptoms(e.target.value)}
@@ -139,7 +144,7 @@ export default function FreeCareApplyPage() {
             placeholder={t("Örn. Çocuğumda iki haftadır geçmeyen öksürük ve ateş var; doktora erişimimiz yok.")}
             className="inp resize-none"
           />
-        </Field>
+        </div>
         <Field label={t("Şikayet süresi (opsiyonel)")}>
           <input value={durationText} onChange={(e) => setDurationText(e.target.value)} placeholder={t("Örn. 2 hafta")} className="inp" />
         </Field>
