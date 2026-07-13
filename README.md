@@ -187,6 +187,15 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
   yoksa varsayılana düşer (bilinen-404 tekrar denenmez); her durumda kanonik tanıtım metni
   (`VIDEO_CARD_SCRIPT`, `lib/constants.ts`) AI çevirisiyle hastanın dilinde **WebVTT altyazı** olarak
   basılır (video süresine eşit dağıtım, RTL dahil). Dil varyantı eklemek = mp4'ü klasöre koymak.
+- **Sesle dikte (v6.0):** 4 hasta intake kulvarının (triyaj / İkinci Görüş / Ücretsiz Sağlık Hizmeti /
+  Sağlık Turizmi) semptom/hedef alanına konuşarak metin girişi — tarayıcının **Web Speech API**'si ile;
+  **harici servis/kütüphane YOK**, ses tanıma tamamen istemcide çalışır (PHI sunucuya ekstra gitmez).
+  Çok dilli (`air_lang`→BCP-47); API'yi desteklemeyen tarayıcıda düğme gizli. (`components/DictationButton.tsx`)
+- **30 branş görsel kimliği (v6.0):** her klinik branşa semantik renk + SVG amblem + renk-türevi CSS banner
+  (`BRANCH_COLORS` + `branchBannerBg`; `BranchBanner` + `BranchAvatar`; `public/branches/*.svg` ×30 — Recraft
+  vector). Yerleşim: triyaj bandı + `/vaka/[id]` banner + `/vakalarim` amblemleri (genel + İkinci Görüş).
+  **`resolveBranchKey`** kritik köprü: `Case.branch` (LABEL) ile triyaj `effectiveBranch` (KEY) farkını tek
+  noktada normalize eder (hem key hem label kabul eder). (`lib/branch-visuals.ts`)
 
 ## Rotalar
 
