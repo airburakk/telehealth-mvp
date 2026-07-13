@@ -68,7 +68,7 @@ export function MasterPanel({ users, masterId, masterEmail }: { users: U[]; mast
             Herhangi bir hesaba bürünüp o kullanıcının ekranlarını görebilirsin. Her bürünme audit&apos;e yazılır.
           </p>
         </div>
-        <span className="ml-auto hidden rounded-full bg-[var(--c-ink)]/5 px-3 py-1 text-xs text-[var(--c-ink-2)] ring-1 ring-white/10 sm:inline">
+        <span className="ml-auto hidden rounded-full bg-[var(--c-ink)]/5 px-3 py-1 text-xs text-[var(--c-ink-2)] ring-1 ring-[var(--c-hairline)] sm:inline">
           {masterEmail}
         </span>
       </div>
@@ -112,7 +112,7 @@ export function MasterPanel({ users, masterId, masterEmail }: { users: U[]; mast
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="truncate font-semibold text-[var(--c-ink)]">{u.name}</span>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ${ROLE_CHIP[u.role] ?? "text-[var(--c-ink-2)] ring-white/15 bg-[var(--c-ink)]/5"}`}>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ${ROLE_CHIP[u.role] ?? "text-[var(--c-ink-2)] ring-[var(--c-hairline)] bg-[var(--c-ink)]/5"}`}>
                     {ROLE_LABELS[u.role as Role] ?? u.role}
                   </span>
                 </div>
@@ -140,7 +140,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${
-        active ? "bg-[var(--c-accent)] text-[var(--c-bg)] ring-[var(--c-accent)]" : "bg-[var(--c-ink)]/5 text-white/65 ring-white/15 hover:bg-[var(--c-ink)]/10"
+        active ? "bg-[var(--c-accent)] text-[var(--c-bg)] ring-[var(--c-accent)]" : "bg-[var(--c-ink)]/5 text-[var(--c-ink-2)] ring-[var(--c-hairline)] hover:bg-[var(--c-ink)]/10"
       }`}
     >
       {children}

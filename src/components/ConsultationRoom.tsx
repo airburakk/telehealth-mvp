@@ -558,9 +558,12 @@ export function ConsultationRoom({
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <h2 className="font-bold text-[var(--c-ink)]">{caseData.patientName}</h2>
-        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
-          <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {caseData.urgency}/5
-        </span>
+        {/* Aciliyet yalnız doktora (2026-07-13, kullanıcı isteği) — hasta video odasında görmez */}
+        {isDoctor && (
+          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
+            <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {caseData.urgency}/5
+          </span>
+        )}
       </div>
       <div className="mt-1 flex items-center gap-2 text-sm">
         <Stethoscope size={14} className="text-[var(--c-accent-strong)]" />
@@ -594,11 +597,11 @@ export function ConsultationRoom({
   );
 
   const inviteEl = isDoctor ? (
-    <div className="flex items-center justify-between gap-2 rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-3">
-      <div className="text-sm text-[var(--c-ink-2)]">
-        <span className="font-semibold text-[var(--c-accent)]">Hastayı davet et:</span> bu görüşme bağlantısını hastayla paylaş.
+    <div className="flex items-center justify-between gap-2 rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-3 landscape:border-white/15 landscape:bg-white/10">
+      <div className="text-sm text-[var(--c-ink-2)] landscape:text-white/85">
+        <span className="font-semibold text-[var(--c-accent)] landscape:text-[#5dd6e2]">Hastayı davet et:</span> bu görüşme bağlantısını hastayla paylaş.
       </div>
-      <button onClick={copyPatientLink} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--c-panel)] px-3 py-2 text-sm font-medium text-[var(--c-accent)] ring-1 ring-[var(--c-accent)]/25 hover:bg-[var(--c-accent)]/15">
+      <button onClick={copyPatientLink} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--c-panel)] px-3 py-2 text-sm font-medium text-[var(--c-accent)] ring-1 ring-[var(--c-accent)]/25 hover:bg-[var(--c-accent)]/15 landscape:bg-white/15 landscape:text-[#5dd6e2]">
         {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Kopyalandı" : "Hasta linkini kopyala"}
       </button>
     </div>
@@ -792,9 +795,9 @@ export function ConsultationRoom({
               </div>
             )}
 
-            {/* Yerel self-view — sağ üst köşe (alt-orta kontrollerle çakışmaz) */}
+            {/* Yerel self-view — dikey: sağ üst · yatay: sol üst (sağdaki cam panelin arkasında kalmasın) */}
             {joined && (
-              <div className="absolute right-3 top-14 h-24 w-36 overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-black/60 shadow-lg sm:h-28 sm:w-44">
+              <div className="absolute top-14 right-3 h-24 w-36 overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-black/60 shadow-lg sm:h-28 sm:w-44 landscape:right-auto landscape:left-3">
                 <video ref={localVideoRef} autoPlay muted playsInline className={`h-full w-full object-cover ${camOn ? "" : "hidden"}`} />
                 {!camOn && <div className="grid h-full place-items-center text-center text-[11px] text-[var(--c-ink-2)]"><div><Camera size={18} className="mx-auto mb-1" /> {t("Kamera kapalı")}</div></div>}
                 <span className="absolute left-1.5 top-1.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-[var(--c-ink)]">{t("Siz")}</span>
@@ -829,8 +832,8 @@ export function ConsultationRoom({
               {inviteEl}
               {interpreterEl}
               {transcriptEl}
-              {/* ── ALT: Tanı & Tedavi ── (yatayda logo-yeşili zemin → koyu-turkuaz metin okunur) */}
-              <div className="mt-1 flex items-center gap-1.5 border-t border-[var(--c-hairline)] pt-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)] landscape:border-[#06343a]/25 landscape:text-[#06343a]">
+              {/* ── ALT: Tanı & Tedavi ── (yatayda koyu cam zemin → açık başlık) */}
+              <div className="mt-1 flex items-center gap-1.5 border-t border-[var(--c-hairline)] pt-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)] landscape:border-white/15 landscape:text-white/80">
                 <Stethoscope size={12} /> {t("Tanı & Tedavi")}
               </div>
               {notesEl}

@@ -180,7 +180,7 @@ export default async function DoctorDashboard() {
           {earnings.length === 0 ? (
             <p className="mt-3 text-sm text-[var(--c-ink-3)]">Henüz tamamlanmış görüşme yok.</p>
           ) : (
-            <ul className="mt-4 divide-y divide-white/10">
+            <ul className="mt-4 divide-y divide-[var(--c-hairline)]">
               {earnings.map((e) => (
                 <li key={e.id} className="flex items-center justify-between py-2.5 text-sm">
                   <div>
@@ -215,12 +215,12 @@ export default async function DoctorDashboard() {
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]"><CalendarClock size={15} /> Müsaitlik (demo)</div>
             <div className="mt-3 grid grid-cols-4 gap-1.5 text-center text-[11px]">
               {["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz", "—"].slice(0, 7).map((g, i) => (
-                <div key={g} className={`rounded-md py-2 ${i < 5 ? "bg-emerald-500/10 text-emerald-300" : "bg-[var(--c-surface)] text-white/40"}`}>{g}<div className="font-semibold">{i < 5 ? "09-17" : "—"}</div></div>
+                <div key={g} className={`rounded-md py-2 ${i < 5 ? "bg-emerald-500/10 text-emerald-300" : "bg-[var(--c-surface)] text-[var(--c-ink-3)]"}`}>{g}<div className="font-semibold">{i < 5 ? "09-17" : "—"}</div></div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-5 text-sm text-white/65">
+          <div className="rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-5 text-sm text-[var(--c-ink-2)]">
             <div className="font-semibold text-[var(--c-accent)]">Operasyonel yük sıfır</div>
             <p className="mt-1 text-xs">Organizasyon, çeviri ve lojistik platformda. Siz yalnız tıbbi görüşe odaklanın.</p>
           </div>

@@ -125,7 +125,7 @@ function OptToggle({ active, onToggle, icon, title, desc }: { active: boolean; o
       aria-pressed={active}
       className={`flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)]/[0.06]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] hover:border-[var(--c-accent)]/40"}`}
     >
-      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/10 text-white/50"}`}>{icon}</span>
+      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]"}`}>{icon}</span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium text-[var(--c-ink)]">{title}</span>
         <span className="block text-xs text-[var(--c-ink-2)]">{desc}</span>
@@ -142,7 +142,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-white/65 hover:border-[var(--c-accent)]/40 hover:bg-[var(--c-surface)]"}`}
+      className={`rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40 hover:bg-[var(--c-surface)]"}`}
     >
       {children}
     </button>

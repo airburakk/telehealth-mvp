@@ -350,11 +350,11 @@ export function PreConsultLobby({
           {langSelector}
           <div className="flex items-center gap-1.5">
             <button onClick={toggleBigText} aria-pressed={bigText}
-              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${bigText ? "border-[var(--c-accent)] bg-cyan-500/10 text-[var(--c-accent-strong)]" : "border-[var(--c-hairline)] text-white/50 hover:bg-[var(--c-surface)]"}`}>
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${bigText ? "border-[var(--c-accent)] bg-cyan-500/10 text-[var(--c-accent-strong)]" : "border-[var(--c-hairline)] text-[var(--c-ink-3)] hover:bg-[var(--c-surface)]"}`}>
               <ALargeSmall size={14} /> {t(TX.bigText)}
             </button>
             <button onClick={() => setShowHelp((v) => !v)} aria-expanded={showHelp}
-              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${showHelp ? "border-[var(--c-accent)] bg-cyan-500/10 text-[var(--c-accent-strong)]" : "border-[var(--c-hairline)] text-white/50 hover:bg-[var(--c-surface)]"}`}>
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${showHelp ? "border-[var(--c-accent)] bg-cyan-500/10 text-[var(--c-accent-strong)]" : "border-[var(--c-hairline)] text-[var(--c-ink-3)] hover:bg-[var(--c-surface)]"}`}>
               <HelpCircle size={14} /> {t(TX.help)}
             </button>
           </div>
@@ -377,7 +377,7 @@ export function PreConsultLobby({
             aria-expanded={docOpen}
             className="flex w-full items-center gap-3 p-4 text-start hover:bg-[var(--c-surface)]"
           >
-            <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl ring-1 ring-white/10">
+            <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl ring-1 ring-[var(--c-hairline)]">
               <DoctorArt i={doctorCard.avatarVariant} female={doctorCard.female} photo={doctorCard.photo} />
             </span>
             <span className="min-w-0 flex-1">
@@ -431,7 +431,7 @@ export function PreConsultLobby({
                     {doctorCard.badges.map((b) => {
                       const Icon = BADGE_ICON[b.key] ?? CheckCircle2;
                       return (
-                        <span key={b.key} title={b.desc} className="inline-flex items-center gap-1 rounded-full bg-[var(--c-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--c-ink)] ring-1 ring-white/10">
+                        <span key={b.key} title={b.desc} className="inline-flex items-center gap-1 rounded-full bg-[var(--c-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--c-ink)] ring-1 ring-[var(--c-hairline)]">
                           <Icon size={12} /> {b.label}
                         </span>
                       );
@@ -565,15 +565,15 @@ export function PreConsultLobby({
                 <div><VideoOff size={26} className="mx-auto" /><p className="mt-2 text-xs">{t(TX.camOff)}</p></div>
               </div>
             )}
-            <span className="absolute bottom-2 start-2 rounded bg-black/50 px-2 py-0.5 text-[11px] text-[var(--c-ink)]">{t(TX.you)}</span>
+            <span className="absolute bottom-2 start-2 rounded bg-black/50 px-2 py-0.5 text-[11px] text-white">{t(TX.you)}</span>
           </div>
 
           {/* Kamera/mik aç-kapa */}
           <div className="mt-3 flex items-center justify-center gap-3">
-            <button onClick={toggleMic} disabled={perm !== "granted"} className={`grid h-11 w-11 place-items-center rounded-full disabled:opacity-40 ${micOn ? "bg-[var(--c-ink)]/15 text-white/75" : "bg-red-500/15 text-red-300"}`}>
+            <button onClick={toggleMic} disabled={perm !== "granted"} className={`grid h-11 w-11 place-items-center rounded-full disabled:opacity-40 ${micOn ? "bg-[var(--c-ink)]/15 text-[var(--c-ink-2)]" : "bg-red-500/15 text-red-300"}`}>
               {micOn ? <Mic size={18} /> : <MicOff size={18} />}
             </button>
-            <button onClick={toggleCam} disabled={perm !== "granted" || !hasCam} className={`grid h-11 w-11 place-items-center rounded-full disabled:opacity-40 ${camOn && hasCam ? "bg-[var(--c-ink)]/15 text-white/75" : "bg-red-500/15 text-red-300"}`}>
+            <button onClick={toggleCam} disabled={perm !== "granted" || !hasCam} className={`grid h-11 w-11 place-items-center rounded-full disabled:opacity-40 ${camOn && hasCam ? "bg-[var(--c-ink)]/15 text-[var(--c-ink-2)]" : "bg-red-500/15 text-red-300"}`}>
               {camOn && hasCam ? <Video size={18} /> : <VideoOff size={18} />}
             </button>
           </div>

@@ -239,7 +239,7 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
                 className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition ${
                   pushState === "on"
                     ? "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25 hover:bg-emerald-200"
-                    : "bg-[var(--c-panel)] text-[var(--c-ink-2)] ring-white/10 hover:bg-[var(--c-ink)]/10"
+                    : "bg-[var(--c-panel)] text-[var(--c-ink-2)] ring-[var(--c-hairline)] hover:bg-[var(--c-ink)]/10"
                 }`}
               >
                 {pushState === "busy" ? <Loader2 size={11} className="animate-spin" /> : null}

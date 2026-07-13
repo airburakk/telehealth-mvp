@@ -258,7 +258,7 @@ export function LiveInterpreter({
 
       {(status === "connecting" || status === "live") && (
         <div className="mt-3">
-          <div className="min-h-[3.5rem] rounded-lg bg-[var(--c-surface)] p-2.5 ring-1 ring-white/10">
+          <div className="min-h-[3.5rem] rounded-lg bg-[var(--c-surface)] p-2.5 ring-1 ring-[var(--c-hairline)]">
             {heard && <p className="text-[11px] text-[var(--c-ink-3)]">🎙 {otherLabel}: {heard}</p>}
             <p className="mt-0.5 text-sm font-medium text-[var(--c-ink)]">{trans || (status === "connecting" ? t("bağlanılıyor…") : t("dinleniyor…"))}</p>
           </div>

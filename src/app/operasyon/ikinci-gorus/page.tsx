@@ -73,7 +73,7 @@ export default async function SoQueuePage() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold text-[var(--c-ink)]">{nameById[c.patientId] ?? "Hasta"}</span>
                     <span className="inline-flex items-center gap-1 text-xs text-[var(--c-accent-strong)]"><Stethoscope size={12} /> {branchLabel}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${needsAction ? "bg-amber-500/15 text-amber-300" : "bg-[var(--c-ink)]/10 text-white/50"}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${needsAction ? "bg-amber-500/15 text-amber-300" : "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)]"}`}>
                       {SO_STATUS_LABELS[c.status as SoStatus] ?? c.status}
                     </span>
                     {c.requests.length > 0 && (

@@ -143,7 +143,7 @@ export function DutyConsole({ initial, initialRequests }: { initial: DutyState; 
       {/* İcapçı gelen kutusu */}
       {duty.onCall && (
         <div className="mt-5">
-          <h3 className="flex items-center gap-1.5 text-sm font-semibold text-white/75"><Users size={14} /> Randevu talepleri {requests.length > 0 && <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-bold text-amber-300">{requests.length}</span>}</h3>
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold text-[var(--c-ink-2)]"><Users size={14} /> Randevu talepleri {requests.length > 0 && <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-bold text-amber-300">{requests.length}</span>}</h3>
           {requests.length === 0 ? (
             <p className="mt-2 rounded-2xl bg-[var(--c-surface)] px-4 py-6 text-center text-sm text-[var(--c-ink-3)]">Açık randevu talebi yok. İcap açıkken branşınızdaki talepler buraya düşer.</p>
           ) : (
@@ -175,7 +175,7 @@ function RequestCard({ req, onOffer }: { req: DutyRequest; onOffer: (caseId: str
     <div className={`rounded-2xl border p-4 shadow-sm ${isChange ? "border-amber-400/30 bg-amber-500/10" : "border-[var(--c-hairline)] bg-[var(--c-panel)]"}`}>
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-semibold text-[var(--c-ink)]">{countryFlag(req.country)} {req.patientName}</span>
-        <span className="rounded-lg bg-[var(--c-surface)] px-2 py-0.5 text-xs font-medium text-[var(--c-ink-2)] ring-1 ring-white/10">{req.branch}</span>
+        <span className="rounded-lg bg-[var(--c-surface)] px-2 py-0.5 text-xs font-medium text-[var(--c-ink-2)] ring-1 ring-[var(--c-hairline)]">{req.branch}</span>
         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${u.badge}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${u.dot}`} /> {req.urgency}/5
         </span>

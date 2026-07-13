@@ -90,7 +90,7 @@ export function ConsultationChat({
         {msgs.length === 0 && <p className="py-4 text-center text-xs text-[var(--c-ink-3)]">{t("Henüz mesaj yok.")}</p>}
         {msgs.map((m) => (
           <div key={m.id} className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[82%] rounded-2xl px-3 py-2 ${m.mine ? "bg-[var(--c-accent)] text-[#06343a]" : "bg-[var(--c-panel)] text-white/75 ring-1 ring-white/10"}`}>
+            <div className={`max-w-[82%] rounded-2xl px-3 py-2 ${m.mine ? "bg-[var(--c-accent)] text-[#06343a]" : "bg-[var(--c-panel)] text-[var(--c-ink-2)] ring-1 ring-[var(--c-hairline)]"}`}>
               <p className="whitespace-pre-wrap text-sm">{m.text}</p>
               <p className={`mt-0.5 text-[10px] ${m.mine ? "text-[#06343a]/60" : "text-[var(--c-ink-3)]"}`}>
                 {new Date(m.createdAt).toLocaleString(locale, { dateStyle: "short", timeStyle: "short" })}

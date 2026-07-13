@@ -38,11 +38,12 @@ export function VideoCallShell({
   return (
     <div
       dir={dir}
-      className="fixed inset-0 z-30 flex flex-col overflow-hidden bg-[var(--c-bg)] landscape:flex-row"
+      className="fixed inset-0 z-30 flex flex-col overflow-hidden bg-black"
       style={{ height: "100dvh" }}
     >
-      {/* Video kolonu — kalan alanı doldurur (portrait: üst · landscape: sol) */}
-      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+      {/* Video kolonu — portrait: üst (kalan alan) · landscape: TAM EKRAN (panel arkasında,
+          buzlu cam için) */}
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col landscape:absolute landscape:inset-0">
         {statusBar && (
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/55 to-transparent p-3">
             {statusBar}
@@ -51,15 +52,16 @@ export function VideoCallShell({
         <div className="relative min-h-0 flex-1">{video}</div>
       </div>
 
-      {/* Panel — portrait: alt (ekranın ≤%46'sı, koyu zemin) · landscape: sağ (sabit genişlik,
-          AURA logo yeşili zemin — #02cfdb, logonun gerçek dominant rengi; SABİT, her iki temada
-          aynı parlak logo tonu) · her ikisinde scroll. İçerik kartları kendi koyu/açık zeminlerini
-          taşır, çıplak panel metinleri landscape'te koyu-turkuaza döner → logo zemininde okunur. */}
+      {/* Panel — portrait: alt (ekranın ≤%46'sı, koyu zemin) · landscape: sağ üstte SİYAH BUZLU CAM
+          overlay (video'nun üstüne biner → arkasındaki görüntü backdrop-blur ile bulanıklaşır, elit
+          cam görünümü). İçerik kartları kendi zeminlerini taşır → cam üstünde okunur. */}
       <aside
         aria-label={panelLabel}
         className="flex shrink-0 flex-col gap-3 overflow-y-auto border-[var(--c-hairline)] p-3
                    border-t portrait:max-h-[46dvh] portrait:bg-[var(--c-bg-deep)]
-                   landscape:h-full landscape:w-[min(390px,42vw)] landscape:border-l landscape:border-t-0 landscape:bg-[#02cfdb]"
+                   landscape:absolute landscape:right-0 landscape:top-0 landscape:z-20 landscape:h-full
+                   landscape:w-[min(400px,44vw)] landscape:border-l landscape:border-t-0 landscape:border-white/10
+                   landscape:bg-black/60 landscape:backdrop-blur-2xl landscape:shadow-2xl"
       >
         {panel}
       </aside>

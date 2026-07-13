@@ -48,7 +48,7 @@ export default async function ComplaintPage({ params }: { params: Promise<{ case
             </ul>
           </div>
 
-          <div className="rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-5 text-sm text-white/65">
+          <div className="rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-5 text-sm text-[var(--c-ink-2)]">
             <div className="flex items-center gap-1.5 font-semibold text-[var(--c-accent)]"><Lock size={15} /> Escrow güvencesi</div>
             <p className="mt-1.5">Karar verilene dek ödemeniz emanette tutulur.</p>
             <div className="mt-3 flex items-center gap-1.5 font-semibold text-[var(--c-accent)]"><ShieldCheck size={15} /> Anonim inceleme</div>

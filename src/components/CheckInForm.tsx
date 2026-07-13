@@ -148,7 +148,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
                         key={o.v}
                         type="button"
                         onClick={() => setChecklist((p) => ({ ...p, [it.id]: active ? "" : o.v }))}
-                        className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-white/65 hover:border-[var(--c-accent)]/40"}`}
+                        className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40"}`}
                       >
                         {t(o.v)}
                       </button>
@@ -175,7 +175,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
       {photo ? (
         <div className="mt-3 flex items-center gap-3 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] p-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photo} alt={t("İyileşme fotoğrafı")} className="h-16 w-16 shrink-0 rounded-md object-cover ring-1 ring-white/10" />
+          <img src={photo} alt={t("İyileşme fotoğrafı")} className="h-16 w-16 shrink-0 rounded-md object-cover ring-1 ring-[var(--c-hairline)]" />
           <div className="min-w-0 flex-1">
             <div className="text-sm font-medium text-[var(--c-ink)]">{t("Fotoğraf eklendi")}</div>
             <div className="text-xs text-[var(--c-ink-3)]">{t("Gönderince AI görsel ön-değerlendirme yapar.")}</div>

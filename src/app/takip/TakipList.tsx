@@ -59,7 +59,7 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-[var(--c-ink)]">{r.branch}</span>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                    r.status === "COMPLETED" ? "bg-[var(--c-ink)]/10 text-white/50" : "bg-emerald-500/10 text-emerald-300"
+                    r.status === "COMPLETED" ? "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]" : "bg-emerald-500/10 text-emerald-300"
                   }`}>
                     {r.status === "COMPLETED" ? t("Tamamlandı") : t("Aktif")}
                   </span>

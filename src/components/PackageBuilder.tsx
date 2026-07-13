@@ -127,7 +127,7 @@ export function PackageBuilder({
                 key={t}
                 onClick={() => applyTier(t)}
                 className={`rounded-2xl border px-3 py-3 text-sm font-semibold transition ${
-                  tier === t ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-white/65 hover:border-[var(--c-hairline)]"
+                  tier === t ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-[var(--c-ink-2)] hover:border-[var(--c-hairline)]"
                 }`}
               >
                 {t}
@@ -182,7 +182,7 @@ export function PackageBuilder({
                   className={`w-full rounded-2xl border p-3 text-left transition ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)]/[0.06]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] hover:border-[var(--c-accent)]/40"}`}
                 >
                   <div className="flex items-start gap-2.5">
-                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/10 text-white/50"}`}>
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]"}`}>
                       <Icon size={16} />
                     </span>
                     <div className="min-w-0 flex-1">
@@ -322,7 +322,7 @@ function Segment({ value, onChange, options, render }: { value: string; onChange
         <button
           key={o}
           onClick={() => onChange(o)}
-          className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${value === o ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-white/65 hover:bg-[var(--c-ink)]/10"}`}
+          className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${value === o ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-[var(--c-ink-2)] hover:bg-[var(--c-ink)]/10"}`}
         >
           {render ? render(o) : o}
         </button>

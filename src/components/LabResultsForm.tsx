@@ -149,7 +149,7 @@ export function LabResultsForm({
               <button
                 onClick={() => removeRow(i)}
                 aria-label="Sil"
-                className="grid h-8 w-7 place-items-center rounded-lg text-white/40 hover:bg-red-500/10 hover:text-red-500"
+                className="grid h-8 w-7 place-items-center rounded-lg text-[var(--c-ink-3)] hover:bg-red-500/10 hover:text-red-500"
               >
                 <Trash2 size={14} />
               </button>

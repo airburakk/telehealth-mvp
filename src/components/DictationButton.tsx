@@ -116,7 +116,7 @@ export function DictationButton({
         className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium ring-1 transition ${
           listening
             ? "bg-red-500/15 text-red-300 ring-red-400/30"
-            : "bg-[var(--c-ink)]/5 text-white/70 ring-white/15 hover:bg-[var(--c-accent)]/10 hover:text-[var(--c-accent)] hover:ring-[var(--c-accent)]/30"
+            : "bg-[var(--c-ink)]/5 text-[var(--c-ink-2)] ring-[var(--c-hairline)] hover:bg-[var(--c-accent)]/10 hover:text-[var(--c-accent)] hover:ring-[var(--c-accent)]/30"
         }`}
       >
         {listening ? (

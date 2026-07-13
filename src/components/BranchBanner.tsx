@@ -1,10 +1,13 @@
 "use client";
 
 // Branş görsel kimliği bandı — hasta bir branşa yönlendiğinde/geçtiğinde gösterilir.
-// Atmosferik banner (branş renginden türetilen CSS gradyan) + SVG amblem + branşın semantik rengi.
+// Atmosferik banner (branş renginden türetilen CSS gradyan) + lucide branş amblemi + semantik renk.
+// Amblem, vaka listesiyle (MyCasesList) TEK TİP olsun diye BranchAvatar'dır (lucide ikon); eski
+// Higgsfield SVG sembolü kaldırıldı (2026-07-13, kullanıcı isteği — liste ikon/detay sembol tutarsızlığı).
 // Görsel kimliği olmayan branşta hiç render edilmez (hasBranchVisual guard); 30 branşın tamamı hazır.
 
-import { branchColor, branchSymbolSrc, branchBannerBg, hasBranchVisual } from "@/lib/branch-visuals";
+import { branchColor, branchBannerBg, hasBranchVisual } from "@/lib/branch-visuals";
+import { BranchAvatar } from "@/components/BranchAvatar";
 
 export function BranchBanner({
   branchKey,
@@ -25,14 +28,7 @@ export function BranchBanner({
       style={{ minHeight: 128, background: branchBannerBg(branchKey) }}
     >
       <div className="relative flex items-center gap-4 p-5">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={branchSymbolSrc(branchKey)}
-          alt=""
-          aria-hidden
-          className="h-16 w-16 shrink-0 rounded-2xl ring-1 ring-white/10"
-          style={{ background: "var(--c-bg)", boxShadow: `0 0 24px -6px ${color}66` }}
-        />
+        <BranchAvatar branchKey={branchKey} size={64} />
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color }}>{eyebrow}</div>
           <div className="mt-0.5 text-lg font-bold leading-tight text-[var(--c-ink)] sm:text-xl">{branchLabel}</div>

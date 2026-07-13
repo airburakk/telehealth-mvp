@@ -96,7 +96,7 @@ export function VideoControls({ requestId, role, lang = "Türkçe" }: { requestI
                 <button onClick={() => act("accept")} disabled={!!busy} className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
                   {busy === "accept" ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} {t("Kabul et")}
                 </button>
-                <button onClick={() => act("decline")} disabled={!!busy} className="inline-flex items-center gap-1 rounded-lg bg-[var(--c-panel)] px-3 py-1.5 text-xs font-semibold text-[var(--c-ink-2)] ring-1 ring-white/10 hover:bg-[var(--c-surface)] disabled:opacity-50">
+                <button onClick={() => act("decline")} disabled={!!busy} className="inline-flex items-center gap-1 rounded-lg bg-[var(--c-panel)] px-3 py-1.5 text-xs font-semibold text-[var(--c-ink-2)] ring-1 ring-[var(--c-hairline)] hover:bg-[var(--c-surface)] disabled:opacity-50">
                   {busy === "decline" ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />} {t("Reddet")}
                 </button>
               </div>

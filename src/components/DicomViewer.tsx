@@ -433,7 +433,7 @@ export default function DicomViewer({ open, onClose, src }: { open: boolean; onC
   const hasImg = total > 0;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex flex-col bg-black/95">
+    <div className="theme-dark fixed inset-0 z-50 flex flex-col bg-black/95 text-[var(--c-ink)]">
       {/* Üst bar */}
       <div className="flex flex-wrap items-center gap-2 border-b border-[var(--c-hairline)] px-4 py-2.5 text-[var(--c-ink)]">
         <span className="flex items-center gap-1.5 text-sm font-semibold"><FileImage size={16} className="text-teal-400" /> Radyoloji (DICOM) Görüntüleyici</span>

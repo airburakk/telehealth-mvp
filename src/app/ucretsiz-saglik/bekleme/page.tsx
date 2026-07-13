@@ -136,7 +136,7 @@ function WaitingInner() {
           <p className="mt-2 text-sm leading-relaxed text-[var(--c-ink-2)]">
             {noDoctor ? t(S.noDoctorBody) : t(S.searchingBody)}
           </p>
-          <div className={`mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ring-1 ${noDoctor ? "bg-red-500/10 text-red-300 ring-red-400/25" : "bg-[var(--c-surface)] text-white/65 ring-white/10"}`}>
+          <div className={`mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ring-1 ${noDoctor ? "bg-red-500/10 text-red-300 ring-red-400/25" : "bg-[var(--c-surface)] text-[var(--c-ink-2)] ring-[var(--c-hairline)]"}`}>
             <AuraSpinner size={15} className="inline-block" />
             {pos ? (
               <span><Users size={13} className="mb-0.5 me-1 inline" />{t(S.queuePos)} <b className="text-[var(--c-ink)]">{pos}</b></span>

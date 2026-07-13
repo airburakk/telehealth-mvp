@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { COUNTRIES, countryName, urgencyStyle } from "@/lib/constants";
+import { COUNTRIES, countryName } from "@/lib/constants";
 import { PreConsultGate, PRECONSULT_TEXTS } from "@/components/PreConsultGate";
 import { BRANCHES } from "@/lib/triage";
 import { DynamicTriageQuestions } from "@/components/DynamicTriageQuestions";
@@ -243,8 +243,6 @@ export default function TriyajPage() {
     }
   }
 
-  const u = analysis ? urgencyStyle(analysis.urgency) : null;
-
   // Ön-konsültasyon kapısı: ücret bilgisi + sigorta/ödeme geçilmeden triyaj başlamaz (tek ekran, Faz 2)
   if (!billing) {
     return (
@@ -276,7 +274,7 @@ export default function TriyajPage() {
               <div className="flex flex-col items-center">
                 <span
                   className={`grid h-9 w-9 place-items-center rounded-full text-sm font-semibold ${
-                    active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : done ? "bg-emerald-500 text-white" : "bg-[var(--c-ink)]/15 text-white/50"
+                    active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : done ? "bg-emerald-500 text-white" : "bg-[var(--c-ink)]/15 text-[var(--c-ink-3)]"
                   }`}
                 >
                   <Icon size={17} />
@@ -351,8 +349,8 @@ export default function TriyajPage() {
                 <Sparkles size={13} className="text-[var(--c-accent)]" /> {t("Devam'a bastığınızda yapay zeka şikayetinizi analiz edip sizi doğru uzmana yönlendirir.")}
               </p>
             )}
-            {analysis && u && (
-              <AnalysisCard analysis={analysis} badge={u.badge} dot={u.dot} label={u.label} t={t} />
+            {analysis && (
+              <AnalysisCard analysis={analysis} t={t} />
             )}
           </div>
         )}
@@ -524,7 +522,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function AnalysisCard({ analysis, badge, dot, label, t = (s) => s }: { analysis: Analysis; badge: string; dot: string; label: string; t?: (s: string) => string }) {
+function AnalysisCard({ analysis, t = (s) => s }: { analysis: Analysis; t?: (s: string) => string }) {
+  // Aciliyet + Triyaj Gerekçesi hastadan gizli (2026-07-13, kullanıcı isteği) — yalnız doktor
+  // kokpitinde görünür (/doktor/vaka/[id]). Hastaya yönlendirilen branş + güven yeterli.
   return (
     <div className="rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-4">
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]">
@@ -532,13 +532,9 @@ function AnalysisCard({ analysis, badge, dot, label, t = (s) => s }: { analysis:
         {analysis.engine === "llm" && <span className="rounded-full bg-teal-600 px-1.5 py-0.5 text-[9px] tracking-normal text-white">Claude</span>}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <span className="rounded-lg bg-[var(--c-surface)] px-2.5 py-1 text-sm font-semibold text-[var(--c-ink)] ring-1 ring-white/10">{t(analysis.branch)}</span>
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${badge}`}>
-          <span className={`h-2 w-2 rounded-full ${dot}`} /> {t("Aciliyet")} {analysis.urgency}/5 · {t(label)}
-        </span>
+        <span className="rounded-lg bg-[var(--c-surface)] px-2.5 py-1 text-sm font-semibold text-[var(--c-ink)] ring-1 ring-[var(--c-hairline)]">{t(analysis.branch)}</span>
         <span className="text-xs text-[var(--c-ink-2)]">{t("Güven")} %{analysis.confidence}</span>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-[var(--c-ink-2)]">{t(analysis.reasoning)}</p>
     </div>
   );
 }

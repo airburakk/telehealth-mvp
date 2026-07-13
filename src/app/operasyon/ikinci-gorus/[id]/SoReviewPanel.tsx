@@ -20,7 +20,7 @@ type Doctor = { id: string; name: string; title: string; branch: string };
 const REQ_BADGE: Record<string, { label: string; cls: string }> = {
   REQUIRED: { label: "Zorunlu", cls: "bg-red-500/10 text-red-300 ring-red-400/25" },
   CONDITIONAL: { label: "Varsa", cls: "bg-amber-500/10 text-amber-300 ring-amber-400/25" },
-  OPTIONAL: { label: "Opsiyonel", cls: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)] ring-white/10" },
+  OPTIONAL: { label: "Opsiyonel", cls: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)] ring-[var(--c-hairline)]" },
 };
 
 export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[] }) {
@@ -97,7 +97,7 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
             return (
               <li key={s.type} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 p-3">
                 <div className="flex items-center gap-2">
-                  <span className={`grid h-6 w-6 place-items-center rounded-full ${has ? "bg-emerald-500/15 text-emerald-300" : "bg-[var(--c-ink)]/15 text-white/40"}`}>
+                  <span className={`grid h-6 w-6 place-items-center rounded-full ${has ? "bg-emerald-500/15 text-emerald-300" : "bg-[var(--c-ink)]/15 text-[var(--c-ink-3)]"}`}>
                     {has ? <Check size={14} /> : <span className="text-[11px]">—</span>}
                   </span>
                   <span className="text-sm font-medium text-[var(--c-ink)]">{s.label}</span>

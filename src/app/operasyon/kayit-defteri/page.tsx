@@ -146,10 +146,10 @@ export default async function RegistryBrowserPage({
 
       {/* Sekmeler */}
       <div className="mt-5 inline-flex rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-1 text-sm font-medium">
-        <Link href="/operasyon/kayit-defteri?tab=doktor" className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 ${tab === "doktor" ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-white/50 hover:text-white/75"}`}>
+        <Link href="/operasyon/kayit-defteri?tab=doktor" className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 ${tab === "doktor" ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"}`}>
           <UserRound size={15} /> Doktorlar
         </Link>
-        <Link href="/operasyon/kayit-defteri?tab=tesis" className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 ${tab === "tesis" ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-white/50 hover:text-white/75"}`}>
+        <Link href="/operasyon/kayit-defteri?tab=tesis" className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 ${tab === "tesis" ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"}`}>
           <Building2 size={15} /> Tesisler
         </Link>
       </div>

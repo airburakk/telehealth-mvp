@@ -62,7 +62,7 @@ export function ContactPrefFields({
                 key={o.key}
                 onClick={() => onPref(o.key)}
                 className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition ${
-                  active ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-white/65 hover:border-[var(--c-accent)]/40"
+                  active ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40"
                 }`}
               >
                 <Icon size={13} /> {t(o.label)}

@@ -240,7 +240,7 @@ export function ConsultGate({
           title={t("Süreci sonlandır")}
           desc={t("Tüm verileriniz kalıcı olarak silinir ve ödemeniz iade edilir.")}
           action={
-            <button onClick={terminate} disabled={!!busy} className="inline-flex items-center gap-2 rounded-lg border border-[var(--c-hairline)] px-4 py-2.5 text-sm font-medium text-white/50 hover:border-red-400/25 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-60">
+            <button onClick={terminate} disabled={!!busy} className="inline-flex items-center gap-2 rounded-lg border border-[var(--c-hairline)] px-4 py-2.5 text-sm font-medium text-[var(--c-ink-3)] hover:border-red-400/25 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-60">
               {busy === "terminate" ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />} {t("Sonlandır ve sil")}
             </button>
           }

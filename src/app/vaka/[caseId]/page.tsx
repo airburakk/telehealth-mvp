@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { decryptCaseFields } from "@/lib/crypto";
-import { canAccessCase } from "@/lib/ownership";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
+import { getCurrentUser } from "@/lib/auth";
 import { getTranslations, translateClinical } from "@/lib/i18n";
 import { countryFlag, countryName, urgencyStyle, langDir, formatDateTime } from "@/lib/constants";
 import { type LineItem } from "@/lib/pricing";
@@ -52,8 +53,14 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
     },
   });
   if (!raw) notFound();
-  if (!(await canAccessCase(raw))) notFound(); // BOLA kapısı decrypt ÖNCESİ
+  const viewer = await getCurrentUser();
+  if (!(await canCaseBeAccessedBy(viewer, raw))) notFound(); // BOLA kapısı decrypt ÖNCESİ
   const c = decryptCaseFields(raw);
+
+  // Aciliyet + Triyaj Gerekçesi klinik-yorum → yalnız klinik personele (doktor/koordinatör/etik/admin)
+  // görünür; hasta bu hasta-merkezi sayfada görmez (2026-07-13, kullanıcı isteği). Doktor bu bilgiyi
+  // kendi kokpitinde de görür (/doktor/vaka/[id]) — buradaki gizleme yalnız hasta-yüzünü sadeleştirir.
+  const isClinician = viewer?.role !== "PATIENT";
 
   // 3-seçenek kapısı (§3.2): görüşme başlamadıysa ve branşta çevrimiçi doktor yoksa
   const resolved = ["IN_CONSULT", "DONE"].includes(c.status) || c.consultations.length > 0;
@@ -116,9 +123,11 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
         <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">
           <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Vakalarım")}
         </Link>
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
-          <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {t("Aciliyet")} {c.urgency}/5 · {t(u.label)}
-        </span>
+        {isClinician && (
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
+            <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {t("Aciliyet")} {c.urgency}/5 · {t(u.label)}
+          </span>
+        )}
       </div>
 
       {/* Branş görsel kimliği bandı — vaka merkezi üstünde (renk-türevi CSS banner + SVG amblem) */}
@@ -184,12 +193,14 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
           <p className="mt-1 text-sm text-[var(--c-ink)]">{c.symptoms}</p>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]">
-            <Sparkles size={14} /> {t("Triyaj Gerekçesi")}
+        {isClinician && (
+          <div className="mt-4 rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-4">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]">
+              <Sparkles size={14} /> {t("Triyaj Gerekçesi")}
+            </div>
+            <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink-2)]">{t(c.reasoning)}</p>
           </div>
-          <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink-2)]">{t(c.reasoning)}</p>
-        </div>
+        )}
 
         {files.length > 0 && (
           <div className="mt-4">

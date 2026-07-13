@@ -12,7 +12,7 @@ import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { countryFlag, CASE_STATUS, formatDateTime, langDir } from "@/lib/constants";
 import { BRANCHES } from "@/lib/triage";
 import { BranchAvatar } from "@/components/BranchAvatar";
-import { branchColor } from "@/lib/branch-visuals";
+import { branchColor, branchBannerBg } from "@/lib/branch-visuals";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
 import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Luggage, FileText, Inbox, HandHeart, Bell, X } from "lucide-react";
 
@@ -58,13 +58,8 @@ const STAGE_INK: Record<string, string> = {
   IN_CONSULT: "#6d28d9",
   DONE: "#15803d",
 };
-function urgencyInk(u: number): string {
-  if (u >= 5) return "#b91c1c";
-  if (u === 4) return "#c2410c";
-  if (u === 3) return "#b45309";
-  if (u === 2) return "#17919e";
-  return "#57534e";
-}
+// Aciliyet (urgency) hasta ekranından KALDIRILDI (2026-07-13, kullanıcı isteği) — yalnız doktor
+// ekranlarında görünür (/doktor/vaka/[id] + CaseQueue). Hasta gereksiz panik/klinik yorum görmesin.
 
 const S = {
   title: "Vakalarım",
@@ -162,7 +157,6 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
                   laneName={t(LANES.so.name)}
                   stageLabel={t(SO_STATUS_LABELS[c.status as SoStatus] ?? c.status)}
                   stageInk={LANES.so.ink}
-                  urgency={null}
                   date={formatDateTime(c.createdAt)}
                   body={c.diagnosisSummary}
                   summaryHref={`/second-opinion/vaka/${c.id}`}
@@ -182,7 +176,6 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
                 laneName={t(LANES[c.lane].name)}
                 stageLabel={t(st.label)}
                 stageInk={STAGE_INK[c.status] ?? "#57534e"}
-                urgency={c.urgency}
                 date={formatDateTime(c.createdAt)}
                 patientName={c.patientName}
                 country={c.country}
@@ -251,7 +244,6 @@ function GlassCase({
   laneName,
   stageLabel,
   stageInk,
-  urgency,
   date,
   body,
   summaryHref,
@@ -266,7 +258,6 @@ function GlassCase({
   laneName: string;
   stageLabel: string;
   stageInk: string;
-  urgency: number | null;
   date: string;
   body: string;
   summaryHref: string;
@@ -277,20 +268,24 @@ function GlassCase({
 }) {
   const L = LANES[lane];
   const bc = branchColor(branchKey);
-  const bInk = `color-mix(in srgb, ${bc}, #000 42%)`;
-  const innerBox = {
-    background: `linear-gradient(135deg, ${bc}30, ${bc}12)`,
-    border: `1px solid ${bc}4d`,
-  } as const;
+  // Footer: kulvar renginin bir ton koyusu (sabit koyu bant, her iki temada koyu → beyaz metin okunur).
+  const laneDeep = `color-mix(in srgb, ${L.color}, #000 34%)`;
+  // Header: branş rengi tint + Higgsfield banner deseni (branchBannerBg — branş renginden türev CSS).
+  // Metin tema-nötr (var(--c-ink)): bazı branş renkleri gündüz beyaz banner üstünde okunmaz →
+  // branş kimliğini amblem (BranchAvatar) + banner deseni + renk tint taşır, metin daima okunur.
+  const headerBg = `linear-gradient(135deg, ${bc}2b, ${bc}0d 44%, transparent 72%), ${branchBannerBg(branchKey)}`;
   return (
     <article
       className="rounded-[26px] border p-2.5"
-      style={{ borderColor: L.color + "3d", background: L.color + "0d" }}
+      style={{ borderColor: L.color + "5c", background: `color-mix(in srgb, ${L.color}, var(--c-panel) 86%)` }}
     >
-      {/* İÇ HEADER KUTUSU — branş renginde: sembol + branş adı BÜYÜK */}
-      <div className="flex items-center gap-2.5 rounded-2xl px-3 py-2" style={innerBox}>
+      {/* İÇ HEADER KUTUSU — branş rengi + banner deseni: sembol + branş adı BÜYÜK */}
+      <div
+        className="flex items-center gap-2.5 overflow-hidden rounded-2xl px-3 py-2.5"
+        style={{ background: headerBg, border: `1px solid ${bc}40` }}
+      >
         <BranchAvatar branchKey={branchKey} size={26} />
-        <span className="min-w-0 flex-1 truncate text-[15px] font-bold uppercase tracking-wide" style={{ color: bInk }}>
+        <span className="min-w-0 flex-1 truncate text-[15px] font-bold uppercase tracking-wide text-[var(--c-ink)]">
           {branchName}
         </span>
         {alert && (
@@ -300,7 +295,7 @@ function GlassCase({
         )}
       </div>
 
-      {/* GÖVDE */}
+      {/* GÖVDE — dış kutu kulvar tonu zemininde */}
       <div className="px-3 py-3">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           {patientName && <span className="text-sm font-semibold text-[var(--c-ink)]">{patientName}</span>}
@@ -310,15 +305,17 @@ function GlassCase({
         <p className="mt-1.5 line-clamp-2 text-sm text-[var(--c-ink-2)]">{body}</p>
       </div>
 
-      {/* İÇ FOOTER KUTUSU — branş renginde: kulvar adı + aşama + aciliyet + vaka özeti */}
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl px-3 py-2" style={innerBox}>
-        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: bInk }}>{laneName}</span>
+      {/* İÇ FOOTER KUTUSU — kulvar renginin bir ton koyusu: kulvar adı + aşama + vaka özeti */}
+      <div
+        className="flex flex-wrap items-center gap-2 rounded-2xl px-3 py-2.5"
+        style={{ background: laneDeep, border: `1px solid ${L.color}66` }}
+      >
+        <span className="text-[11px] font-bold uppercase tracking-wider text-white/95">{laneName}</span>
         <FooterBadge ink={stageInk} label={stageLabel} />
-        {urgency != null && <FooterBadge ink={urgencyInk(urgency)} label={`${urgency}/5`} />}
         <Link
           href={summaryHref}
-          className="ms-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-opacity hover:opacity-90"
-          style={{ background: L.color, color: L.on }}
+          className="ms-auto inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold shadow-sm transition-opacity hover:opacity-90"
+          style={{ color: L.ink }}
         >
           <FileText size={13} /> {summaryLabel} <ArrowRight size={12} className="rtl:rotate-180" />
         </Link>

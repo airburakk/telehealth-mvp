@@ -80,7 +80,7 @@ export function DoctorSignupForm({ googleEnabled, branches, languages }: { googl
   return (
     <div className="w-full max-w-md">
       <div className="mb-6 flex flex-col items-center text-center">
-        <span className="grid h-12 w-12 place-items-center rounded-3xl bg-[var(--c-panel)] ring-1 ring-white/10"><AuraMark size={26} /></span>
+        <span className="grid h-12 w-12 place-items-center rounded-3xl bg-[var(--c-panel)] ring-1 ring-[var(--c-hairline)]"><AuraMark size={26} /></span>
         <h1 className="mt-3 flex items-center gap-1.5 font-serif text-xl font-bold tracking-tight text-[var(--c-ink)]"><Stethoscope size={20} className="text-[var(--c-accent)]" /> Doktor Kaydı</h1>
         <p className="text-sm text-[var(--c-ink-2)]">AURA ağına katılın — birkaç adımda profilinizi oluşturun</p>
       </div>
@@ -127,7 +127,7 @@ export function DoctorSignupForm({ googleEnabled, branches, languages }: { googl
             <div className="flex flex-wrap gap-1.5">
               {languages.map((l) => (
                 <button type="button" key={l} onClick={() => toggleLang(l)}
-                  className={`rounded-full border px-3 py-1.5 text-sm transition ${langs.includes(l) ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-surface)] text-white/60 hover:border-[var(--c-accent)]/40"}`}>
+                  className={`rounded-full border px-3 py-1.5 text-sm transition ${langs.includes(l) ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-surface)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40"}`}>
                   {l}
                 </button>
               ))}

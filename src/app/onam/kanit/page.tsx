@@ -95,7 +95,7 @@ export default function ConsentProofPage() {
 }
 
 function Badge({ ok, label }: { ok: boolean | null; label: string }) {
-  const tone = ok === true ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-300" : ok === false ? "border-red-400/25 bg-red-500/10 text-red-300" : "border-[var(--c-hairline)] bg-[var(--c-surface)] text-white/40";
+  const tone = ok === true ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-300" : ok === false ? "border-red-400/25 bg-red-500/10 text-red-300" : "border-[var(--c-hairline)] bg-[var(--c-surface)] text-[var(--c-ink-3)]";
   return (
     <div className={`rounded-2xl border px-3 py-2.5 text-center ${tone}`}>
       <div className="text-base font-bold">{ok === true ? "✓" : ok === false ? "✗" : "—"}</div>

@@ -101,7 +101,7 @@ export function SecondOpinionContent({ canApply = true, staffHref = null }: { ca
         })}
       </div>
 
-      <div className="mt-8 flex items-start gap-3 rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/[0.06] p-5 text-sm text-white/60">
+      <div className="mt-8 flex items-start gap-3 rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/[0.06] p-5 text-sm text-[var(--c-ink-2)]">
         <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-[var(--c-accent)]" />
         {C.disclaimer}
       </div>

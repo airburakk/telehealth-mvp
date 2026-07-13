@@ -129,7 +129,7 @@ export function DoctorDocuments({
         return (
           <div key={type} className={`rounded-3xl border p-4 ${required && !ok ? "border-amber-400/25 bg-amber-500/10" : ok ? "border-emerald-400/25 bg-emerald-500/10" : "border-[var(--c-hairline)] bg-[var(--c-panel)]"}`}>
             <div className="flex items-start gap-3">
-              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${ok ? "bg-emerald-500 text-white" : required ? "bg-amber-400 text-white" : "bg-[var(--c-ink)]/10 text-white/50"}`}>
+              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${ok ? "bg-emerald-500 text-white" : required ? "bg-amber-400 text-white" : "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]"}`}>
                 {ok ? <Check size={18} /> : <Icon size={18} />}
               </span>
               <div className="min-w-0 flex-1">
@@ -147,7 +147,7 @@ export function DoctorDocuments({
                 {mine.length > 0 && (
                   <ul className="mt-2 space-y-1">
                     {mine.map((d) => (
-                      <li key={d.id} className="flex items-center justify-between gap-2 rounded-lg bg-[var(--c-panel)] px-3 py-1.5 text-xs ring-1 ring-white/10">
+                      <li key={d.id} className="flex items-center justify-between gap-2 rounded-lg bg-[var(--c-panel)] px-3 py-1.5 text-xs ring-1 ring-[var(--c-hairline)]">
                         <span className="flex min-w-0 items-center gap-1.5 text-[var(--c-ink-2)]">
                           <FileText size={13} className="shrink-0 text-[var(--c-ink-3)]" />
                           <span className="truncate">{d.label}</span>
@@ -173,7 +173,7 @@ export function DoctorDocuments({
 
             {/* MMSS poliçe bilgileri formu (yalnız MMSS kartında) */}
             {type === "MMSS" && (
-              <div className="mt-3 rounded-2xl bg-[var(--c-panel)] p-3 ring-1 ring-white/10">
+              <div className="mt-3 rounded-2xl bg-[var(--c-panel)] p-3 ring-1 ring-[var(--c-hairline)]">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">Poliçe Bilgileri</div>
                 <p className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">Teminat limiti, malpraktis/komplikasyon ek teminat hesabında kullanılır.</p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">

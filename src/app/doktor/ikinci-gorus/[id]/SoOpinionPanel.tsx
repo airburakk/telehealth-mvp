@@ -126,7 +126,7 @@ export function SoOpinionPanel({ data }: { data: Data }) {
             return (
               <li key={s.type} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 p-3">
                 <div className="flex items-center gap-2">
-                  <span className={`grid h-6 w-6 place-items-center rounded-full ${has ? "bg-emerald-500/15 text-emerald-300" : "bg-[var(--c-ink)]/15 text-white/40"}`}>
+                  <span className={`grid h-6 w-6 place-items-center rounded-full ${has ? "bg-emerald-500/15 text-emerald-300" : "bg-[var(--c-ink)]/15 text-[var(--c-ink-3)]"}`}>
                     {has ? <Check size={14} /> : <span className="text-[11px]">—</span>}
                   </span>
                   <span className="text-sm font-medium text-[var(--c-ink)]">{s.label}</span>

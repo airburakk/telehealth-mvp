@@ -37,7 +37,7 @@ const DOCTOR_SHOWN = ["ASSIGNED", "AWAITING_ADDITIONAL_TESTS", "OPINION_DELIVERE
 const REQ_BADGE: Record<string, { label: string; cls: string }> = {
   REQUIRED: { label: "Zorunlu", cls: "bg-red-500/10 text-red-300 ring-red-400/25" },
   CONDITIONAL: { label: "Varsa", cls: "bg-amber-500/10 text-amber-300 ring-amber-400/25" },
-  OPTIONAL: { label: "Opsiyonel", cls: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)] ring-white/10" },
+  OPTIONAL: { label: "Opsiyonel", cls: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)] ring-[var(--c-hairline)]" },
 };
 
 // Durum-bağlamlı hasta mesajları (TR kanonik; useT ile çevrilir)
@@ -351,7 +351,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       {/* Atanan uzman doktor kimlik kartı (en güçlü güven öğesi — bekleme odası Faz A3) */}
       {data.assignedDoctor && DOCTOR_SHOWN.includes(status) && (
         <div className="mt-4 flex items-center gap-4 rounded-3xl border border-[var(--c-accent)]/30 bg-[var(--c-panel)] p-5 shadow-sm">
-          <span className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl ring-1 ring-white/10">
+          <span className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl ring-1 ring-[var(--c-hairline)]">
             <DoctorArt i={data.assignedDoctor.avatarI} female={data.assignedDoctor.female} photo={data.assignedDoctor.photo} />
           </span>
           <div className="min-w-0">
@@ -464,7 +464,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
             return (
               <li key={s.type} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 p-3">
                 <div className="flex items-center gap-2">
-                  <span className={`grid h-6 w-6 place-items-center rounded-full ${has ? (docsVerified ? "bg-emerald-500/15 text-emerald-300" : "bg-sky-500/15 text-sky-300") : "bg-[var(--c-ink)]/15 text-white/40"}`}>
+                  <span className={`grid h-6 w-6 place-items-center rounded-full ${has ? (docsVerified ? "bg-emerald-500/15 text-emerald-300" : "bg-sky-500/15 text-sky-300") : "bg-[var(--c-ink)]/15 text-[var(--c-ink-3)]"}`}>
                     {has ? <Check size={14} /> : <span className="text-[11px]">—</span>}
                   </span>
                   <span className="text-sm font-medium text-[var(--c-ink)]">{t(s.label)}</span>
@@ -518,13 +518,13 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                 <div className="mt-1 flex rounded-lg border border-[var(--c-hairline)] p-0.5 text-sm">
                   <button
                     onClick={() => setMethod("FILE_UPLOAD")}
-                    className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "FILE_UPLOAD" ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-white/50"}`}
+                    className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "FILE_UPLOAD" ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-[var(--c-ink-3)]"}`}
                   >
                     <Upload size={13} className="me-1 inline" /> {t(S.fileBtn)}
                   </button>
                   <button
                     onClick={() => setMethod("EXTERNAL_LINK")}
-                    className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "EXTERNAL_LINK" ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-white/50"}`}
+                    className={`flex-1 rounded-md px-2 py-1.5 font-medium ${method === "EXTERNAL_LINK" ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-[var(--c-ink-3)]"}`}
                   >
                     <Link2 size={13} className="me-1 inline" /> {t(S.linkLabel)}
                   </button>

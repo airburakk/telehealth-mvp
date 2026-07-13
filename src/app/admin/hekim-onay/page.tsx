@@ -106,7 +106,7 @@ export default async function DoctorApprovalPage() {
 
 function Badge({ ok, label }: { ok: boolean; label: string }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${ok ? "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-400/25" : "bg-[var(--c-ink)]/10 text-white/40"}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${ok ? "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-400/25" : "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]"}`}>
       {ok ? <Check size={12} /> : <X size={12} />} {label}
     </span>
   );

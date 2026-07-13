@@ -140,7 +140,7 @@ export function OnboardingForm({
         {/* İkinci Görüş — ünvan kapısı (seçim değil, bilgi) */}
         <div className={`rounded-3xl border p-5 ${soOpen ? "border-[var(--c-accent)]/40 bg-[var(--c-accent)]/[0.06]" : "border-[var(--c-hairline)] bg-[var(--c-surface)]"}`}>
           <div className="flex items-start gap-3">
-            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${soOpen ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/20 text-white"}`}>
+            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${soOpen ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/20 text-[var(--c-ink-3)]"}`}>
               {soOpen ? <Stethoscope size={18} /> : <Lock size={18} />}
             </span>
             <div className="min-w-0 flex-1">
@@ -239,7 +239,7 @@ function OptCard({
       className={`w-full rounded-3xl border p-5 text-left transition ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)]/[0.06]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] hover:border-[var(--c-accent)]/40"}`}
     >
       <div className="flex items-start gap-3">
-        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/10 text-white/50"}`}>
+        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]"}`}>
           {icon}
         </span>
         <div className="min-w-0 flex-1">

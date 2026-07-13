@@ -126,7 +126,7 @@ export function FreeCareConsole({
             <div className="flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]">
               <StateDot state={serverState} /> Durum: <span className="text-[var(--c-ink)]">{FREE_CARE_STATES_DOCTOR[serverState] ?? serverState}</span>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--c-surface)] px-3 py-1 text-xs font-medium text-[var(--c-ink-2)] ring-1 ring-white/10">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--c-surface)] px-3 py-1 text-xs font-medium text-[var(--c-ink-2)] ring-1 ring-[var(--c-hairline)]">
               <Users size={13} /> {waiting} bekleyen hasta
             </span>
           </div>
@@ -144,7 +144,7 @@ export function FreeCareConsole({
               onClick={() => toggle(!available)}
               disabled={busy}
               className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors disabled:opacity-60 ${
-                available ? "bg-[var(--c-surface-2)] text-white hover:bg-[var(--c-bg-deep)]" : "bg-[var(--c-accent)] text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]"
+                available ? "bg-[var(--c-surface-2)] text-[var(--c-ink)] hover:bg-[var(--c-bg-deep)]" : "bg-[var(--c-accent)] text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]"
               }`}
             >
               {busy ? <Loader2 size={17} className="animate-spin" /> : available ? <Power size={17} /> : <Radio size={17} />}
@@ -215,14 +215,14 @@ export function FreeCareConsole({
       {recent.length > 0 && (
         <section className="mt-6">
           <h2 className="text-sm font-semibold text-[var(--c-ink)]">Son ücretsiz hizmet vakalarınız</h2>
-          <ul className="mt-2 divide-y divide-white/10 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)]">
+          <ul className="mt-2 divide-y divide-[var(--c-hairline)] rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)]">
             {recent.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                 <div className="min-w-0">
                   <div className="truncate font-medium text-[var(--c-ink)]">{countryFlag(c.country)} {c.patientName} · {c.branch}</div>
                   <div className="text-xs text-[var(--c-ink-3)]">{formatDateTime(c.createdAt)}</div>
                 </div>
-                <span className="shrink-0 rounded-full bg-[var(--c-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--c-ink-2)] ring-1 ring-white/10">
+                <span className="shrink-0 rounded-full bg-[var(--c-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--c-ink-2)] ring-1 ring-[var(--c-hairline)]">
                   {FREE_CARE_STATES[c.freeCareStatus] ?? c.freeCareStatus}
                 </span>
               </li>
@@ -257,7 +257,7 @@ function CaseHead({ c }: { c: PBCase }) {
     <div>
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-semibold text-[var(--c-ink)]">{countryFlag(c.country)} {c.patientName}</span>
-        <span className="rounded-lg bg-[var(--c-surface)] px-2 py-0.5 text-xs font-medium text-[var(--c-ink-2)] ring-1 ring-white/10">{c.branch}</span>
+        <span className="rounded-lg bg-[var(--c-surface)] px-2 py-0.5 text-xs font-medium text-[var(--c-ink-2)] ring-1 ring-[var(--c-hairline)]">{c.branch}</span>
         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${u.badge}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${u.dot}`} /> {c.urgency}/5
         </span>

@@ -94,7 +94,7 @@ export function DynamicTriageQuestions({
               <div className="flex flex-wrap gap-1">
                 {Array.from({ length: 11 }, (_, i) => String(i)).map((n) => (
                   <button key={n} type="button" onClick={() => set(q.label, val === n ? "" : n)}
-                    className={`h-8 w-8 rounded-md text-sm font-medium transition ${val === n ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/10 text-white/65 hover:bg-[var(--c-ink)]/15"}`}>
+                    className={`h-8 w-8 rounded-md text-sm font-medium transition ${val === n ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)] hover:bg-[var(--c-ink)]/15"}`}>
                     {n}
                   </button>
                 ))}
@@ -110,7 +110,7 @@ export function DynamicTriageQuestions({
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-white/65 hover:border-[var(--c-accent)]/40 hover:bg-[var(--c-surface)]"}`}>
+      className={`rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40 hover:bg-[var(--c-surface)]"}`}>
       {children}
     </button>
   );

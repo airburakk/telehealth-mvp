@@ -456,8 +456,8 @@ export function SoVideoRoom({
           )}
           <span className="absolute bottom-20 left-3 rounded bg-black/50 px-2 py-0.5 text-[11px] text-[var(--c-ink)]">{remoteName}</span>
 
-          {/* Yerel self-view — sağ üst köşe */}
-          <div className="absolute right-3 top-14 h-24 w-36 overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface-2)] shadow-lg sm:h-28 sm:w-44">
+          {/* Yerel self-view — dikey: sağ üst · yatay: sol üst (sağdaki cam panelin arkasında kalmasın) */}
+          <div className="absolute top-14 right-3 h-24 w-36 overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface-2)] shadow-lg sm:h-28 sm:w-44 landscape:right-auto landscape:left-3">
             <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
             <span className="absolute bottom-1.5 left-1.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-[var(--c-ink)]">{t(S.you)}</span>
           </div>

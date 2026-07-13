@@ -41,7 +41,7 @@ export function LocaleToggle({ locale, onChange }: { locale: Locale; onChange: (
           onClick={() => onChange(l)}
           aria-pressed={locale === l}
           className={`rounded-full px-3 py-1 uppercase tracking-wide transition-colors ${
-            locale === l ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-white/50 hover:text-[var(--c-ink)]"
+            locale === l ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-[var(--c-ink-3)] hover:text-[var(--c-ink)]"
           }`}
         >
           {l}

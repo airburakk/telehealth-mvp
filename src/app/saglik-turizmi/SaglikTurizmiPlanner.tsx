@@ -200,7 +200,7 @@ export function SaglikTurizmiPlanner() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex gap-2 rounded-xl bg-[var(--c-accent)]/10 p-3 text-xs leading-relaxed text-[#8fe6ef] ring-1 ring-[var(--c-accent)]/20">
+            <div className="flex gap-2 rounded-xl bg-[var(--c-accent)]/10 p-3 text-xs leading-relaxed text-[var(--c-accent-strong)] ring-1 ring-[var(--c-accent)]/20">
               <Sparkles size={15} className="mt-0.5 shrink-0" />
               <span>{t("Verdiğiniz bilgilere göre önerilen tedavi alanı aşağıda seçili geldi; dilerseniz değiştirebilirsiniz.")}</span>
             </div>
@@ -209,7 +209,7 @@ export function SaglikTurizmiPlanner() {
               <div className="flex flex-wrap gap-2">
                 {BRANCHES.map((b) => (
                   <button key={b.key} type="button" onClick={() => setBranchKey(b.key)}
-                    className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${branchKey === b.key ? "border-[var(--c-accent-strong)] bg-[var(--c-accent)]/10 text-[var(--c-accent-strong)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-white/65 hover:border-[var(--c-hairline)]"}`}>
+                    className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${branchKey === b.key ? "border-[var(--c-accent-strong)] bg-[var(--c-accent)]/10 text-[var(--c-accent-strong)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40"}`}>
                     {t(b.label)}
                   </button>
                 ))}
@@ -239,7 +239,7 @@ export function SaglikTurizmiPlanner() {
 function SubStep({ n, label, active, done }: { n: number; label: string; active: boolean; done: boolean }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className={`grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold ${active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : done ? "bg-[var(--c-accent)]/20 text-[var(--c-accent-stronger)]" : "bg-[var(--c-ink)]/10 text-white/40"}`}>{n}</span>
+      <span className={`grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold ${active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : done ? "bg-[var(--c-accent)]/20 text-[var(--c-accent-stronger)]" : "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]"}`}>{n}</span>
       <span className={active ? "font-semibold text-[var(--c-ink)]" : "text-[var(--c-ink-3)]"}>{label}</span>
     </span>
   );

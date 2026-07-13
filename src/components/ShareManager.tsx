@@ -114,7 +114,7 @@ function stateOf(l: LinkData): ShareState {
 }
 const STATE_BADGE: Record<ShareState, string> = {
   ACTIVE: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25",
-  EXPIRED: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)] ring-white/10",
+  EXPIRED: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)] ring-[var(--c-hairline)]",
   REVOKED: "bg-red-500/15 text-red-300 ring-red-400/25",
 };
 const STATE_LABEL: Record<ShareState, string> = {
@@ -183,7 +183,7 @@ function StepRail({ step, t }: { step: number; t: T }) {
         return (
           <div key={n} className="flex flex-1 items-center gap-2 last:flex-none">
             <span aria-current={active ? "step" : undefined}
-              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold ${done || active ? "bg-[var(--c-accent)] text-[#06262a]" : "bg-[var(--c-ink)]/10 text-white/40"}`}>
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold ${done || active ? "bg-[var(--c-accent)] text-[#06262a]" : "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]"}`}>
               {done ? <Check size={13} /> : n}
             </span>
             <span className={active ? "text-[var(--c-ink)]" : done ? "text-[#0b5563]" : "text-[var(--c-ink-3)]"}>{label}</span>
@@ -319,7 +319,7 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
                 return (
                   <button type="button" key={s.key} onClick={() => toggleScope(s.key)}
                     className={`flex items-start gap-2.5 rounded-2xl border p-3 text-start transition-colors ${on ? "border-[var(--c-accent)] bg-[var(--c-accent)]/5 ring-1 ring-[var(--c-accent)]/20" : "border-[var(--c-hairline)] hover:bg-[var(--c-surface)]"}`}>
-                    <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/10 text-white/50"}`}><Icon size={16} /></span>
+                    <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]"}`}><Icon size={16} /></span>
                     <span className="min-w-0">
                       <span className="flex items-center gap-1.5 text-sm font-medium text-[var(--c-ink)]">{t(s.label)} {on && <Check size={14} className="text-[var(--c-ink)]" />}</span>
                       <span className="block text-xs text-[var(--c-ink-2)]">{t(s.desc)}</span>
@@ -340,7 +340,7 @@ export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: 
             <div className="mt-1.5 flex flex-wrap gap-2">
               {DURATIONS.map((d) => (
                 <button type="button" key={d.key} onClick={() => setDurationKey(d.key)}
-                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${durationKey === d.key ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] text-white/65 hover:bg-[var(--c-surface)]"}`}>
+                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${durationKey === d.key ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"}`}>
                   {t(d.label)}
                 </button>
               ))}

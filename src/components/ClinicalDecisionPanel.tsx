@@ -357,14 +357,14 @@ export default function ClinicalDecisionPanel({
               <button
                 onClick={() => { setCatMode((v) => !v); setCatRes([]); }}
                 title="Branş dışı / sınıflandırılmamış işlemleri de ara"
-                className={`shrink-0 rounded-lg border px-2 py-1.5 text-[11px] font-medium ${catMode ? "border-emerald-400 bg-emerald-500/10 text-emerald-300" : "border-[var(--c-hairline)] text-white/50 hover:bg-[var(--c-surface)]"}`}
+                className={`shrink-0 rounded-lg border px-2 py-1.5 text-[11px] font-medium ${catMode ? "border-emerald-400 bg-emerald-500/10 text-emerald-300" : "border-[var(--c-hairline)] text-[var(--c-ink-3)] hover:bg-[var(--c-surface)]"}`}
               >
                 Tüm katalog
               </button>
             </div>
 
             {query.trim().length >= (catMode ? 2 : 1) && (
-              <div className="mt-1.5 max-h-44 divide-y divide-white/10 overflow-y-auto rounded-lg border border-[var(--c-hairline)]">
+              <div className="mt-1.5 max-h-44 divide-y divide-[var(--c-hairline)] overflow-y-auto rounded-lg border border-[var(--c-hairline)]">
                 {catLoading && <div className="px-3 py-2 text-xs text-[var(--c-ink-3)]">Aranıyor…</div>}
                 {!catLoading && results.length === 0 && <div className="px-3 py-2 text-xs text-[var(--c-ink-3)]">Sonuç yok.</div>}
                 {results.map((p) => (
@@ -397,7 +397,7 @@ export default function ClinicalDecisionPanel({
                             <div className="text-sm text-[var(--c-ink)]">{v.name}</div>
                             <div className="text-[11px] text-[var(--c-ink-3)]">{code}{floor > 0 ? ` · taban ${formatTRY(floor)} · tavan ${formatTRY(ceil)}` : ""}</div>
                           </div>
-                          <button onClick={() => remove(code)} className="shrink-0 rounded p-1 text-white/40 hover:bg-red-500/10 hover:text-red-500"><X size={15} /></button>
+                          <button onClick={() => remove(code)} className="shrink-0 rounded p-1 text-[var(--c-ink-3)] hover:bg-red-500/10 hover:text-red-500"><X size={15} /></button>
                         </div>
                         {floor > 0 ? (
                           <div className="mt-1.5 flex items-center gap-2">
@@ -449,7 +449,7 @@ export default function ClinicalDecisionPanel({
         {hospName ? (
           <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 px-3 py-2 text-sm">
             <span className="min-w-0 truncate font-medium text-[var(--c-ink)]">{hospName}{hospId ? <span className="text-[11px] font-normal text-[var(--c-ink-3)]"> · HealthTürkiye #{hospId}</span> : ""}</span>
-            <button onClick={() => { setHospId(null); setHospName(""); }} className="shrink-0 rounded p-1 text-white/40 hover:bg-red-500/10 hover:text-red-500"><X size={14} /></button>
+            <button onClick={() => { setHospId(null); setHospName(""); }} className="shrink-0 rounded p-1 text-[var(--c-ink-3)] hover:bg-red-500/10 hover:text-red-500"><X size={14} /></button>
           </div>
         ) : (
           <>
@@ -465,7 +465,7 @@ export default function ClinicalDecisionPanel({
             </div>
             {hospLoading && <div className="mt-1.5 text-xs text-[var(--c-ink-3)]">Aranıyor…</div>}
             {hospRes.length > 0 && (
-              <ul className="mt-1.5 max-h-40 divide-y divide-white/10 overflow-y-auto rounded-lg border border-[var(--c-hairline)]">
+              <ul className="mt-1.5 max-h-40 divide-y divide-[var(--c-hairline)] overflow-y-auto rounded-lg border border-[var(--c-hairline)]">
                 {hospRes.map((h) => (
                   <li key={h.id}>
                     <button onClick={() => { setHospId(h.id); setHospName(h.name); setHospRes([]); setHospQ(""); }} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-[var(--c-accent)]/10">

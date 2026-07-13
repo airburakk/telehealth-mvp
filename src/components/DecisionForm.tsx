@@ -40,7 +40,7 @@ export function DecisionForm({ complaintId, bookingTotal }: { complaintId: strin
           <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink)]">Karar</span>
           <div className="grid grid-cols-3 gap-2">
             {Object.entries(VERDICTS).map(([k, v]) => (
-              <button key={k} onClick={() => setVerdict(k)} className={`rounded-lg border px-2 py-2 text-sm font-medium transition ${verdict === k ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] text-white/65 hover:border-[var(--c-hairline)]"}`}>
+              <button key={k} onClick={() => setVerdict(k)} className={`rounded-lg border px-2 py-2 text-sm font-medium transition ${verdict === k ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:border-[var(--c-hairline)]"}`}>
                 {v.label}
               </button>
             ))}

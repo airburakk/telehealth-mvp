@@ -54,6 +54,52 @@
   color-scheme: dark;
 }
 
+/* ============================================================
+ * GÜNDÜZ KONTRAST GÜVENCESİ (2026-07-13, kullanıcı isteği): Gece teması için
+ * yazılmış açık-ton Tailwind metin sınıfları (text-emerald-300, text-amber-200,
+ * text-red-300/80 …) gündüz beyaz zeminde okunmuyordu ("Vakanız oluşturuldu"
+ * kutusu vb.). Bu blok YALNIZ .theme-light altında bu açık tonları semantik koyu
+ * karşılıklarına bağlar (WCAG AA). Gece teması (.theme-dark) DOKUNULMAZ — açık
+ * tonlar koyu zeminde zaten okunur. Landing (.aura-page) kendi paletindedir,
+ * status Tailwind sınıfı kullanmaz → etkilenmez. Substring seçici (100/200/300 +
+ * /opacity + hover: varyantları) hepsini tek noktadan yakalar; tek tek ~360 kullanımı
+ * düzeltmek yerine kaynakta çözer. Koyu-sabit zemin (yalnız bg-black overlay'ler)
+ * metin taşımadığından ters-kontrast riski yok. */
+.theme-light :is([class*="text-emerald-1"],[class*="text-emerald-2"],[class*="text-emerald-3"],
+  [class*="text-green-1"],[class*="text-green-2"],[class*="text-green-3"],
+  [class*="text-teal-1"],[class*="text-teal-2"],[class*="text-teal-3"],
+  [class*="text-lime-2"],[class*="text-lime-3"]) {
+  color: #15803d;
+}
+.theme-light :is([class*="text-amber-1"],[class*="text-amber-2"],[class*="text-amber-3"],
+  [class*="text-yellow-1"],[class*="text-yellow-2"],[class*="text-yellow-3"],
+  [class*="text-orange-2"],[class*="text-orange-3"]) {
+  color: #b45309;
+}
+.theme-light :is([class*="text-red-1"],[class*="text-red-2"],[class*="text-red-3"],
+  [class*="text-rose-2"],[class*="text-rose-3"],
+  [class*="text-pink-2"],[class*="text-pink-3"]) {
+  color: #b91c1c;
+}
+.theme-light :is([class*="text-sky-2"],[class*="text-sky-3"],
+  [class*="text-blue-2"],[class*="text-blue-3"],
+  [class*="text-cyan-2"],[class*="text-cyan-3"]) {
+  color: #1d4ed8;
+}
+.theme-light :is([class*="text-indigo-2"],[class*="text-indigo-3"],
+  [class*="text-violet-2"],[class*="text-violet-3"],
+  [class*="text-purple-2"],[class*="text-purple-3"],
+  [class*="text-fuchsia-2"],[class*="text-fuchsia-3"]) {
+  color: #4338ca;
+}
+.theme-light :is([class*="text-slate-2"],[class*="text-slate-3"],
+  [class*="text-gray-2"],[class*="text-gray-3"],
+  [class*="text-zinc-2"],[class*="text-zinc-3"],
+  [class*="text-neutral-2"],[class*="text-neutral-3"],
+  [class*="text-stone-2"],[class*="text-stone-3"]) {
+  color: #57534e;
+}
+
 html,
 body {
   height: 100%;
@@ -88,28 +134,28 @@ body {
 }
 
 /* Form alanı — `.inp` (triyaj + ücretsiz sağlık + sağlık turizmi intake ortak sınıfı).
-   Tailwind preflight input/textarea/select'i border-0 + şeffaf bırakır → gece paneli (#161719)
-   içinde görünmez olurlar; bu kural tek kaynak görünür stili verir. Diğer formlar
-   (kayıt/PreConsultGate/doktor) kendi açık class'larını kullanır → bu kural onları etkilemez.
+   Tailwind preflight input/textarea/select'i border-0 + şeffaf bırakır → bu kural tek kaynak
+   görünür stili verir. TEMA-DUYARLI token'lar: gündüz (theme-light) açık kutu + siyah yazı,
+   gece (theme-dark) koyu kutu + açık yazı. Diğer formlar (kayıt/PreConsultGate/doktor) kendi
+   class'larını kullanır → bu kural onları etkilemez.
    `@layer components`: Tailwind utility'leri (`resize-none` vb.) `.inp`'i ezebilsin diye. */
 @layer components {
   .inp {
     width: 100%;
     border-radius: 0.75rem;
-    border: 1px solid rgb(255 255 255 / 0.1);
-    background-color: #161719;
+    border: 1px solid var(--c-hairline);
+    background-color: var(--c-surface);
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
     line-height: 1.25rem;
-    color: rgb(244 245 243 / 0.9);
+    color: var(--c-ink);
     outline: none;
-    color-scheme: dark;
   }
   .inp::placeholder {
-    color: rgb(255 255 255 / 0.4);
+    color: var(--c-ink-3);
   }
   .inp:focus {
-    border-color: #1fa9b8;
+    border-color: var(--c-accent);
   }
 }
 
