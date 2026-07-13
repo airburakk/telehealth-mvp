@@ -2,7 +2,7 @@
 // Oturum kimliği hedef kullanıcıya döner; gerçek master kimliği imp claim'inde saklanır (banner + geri
 // dönüş + audit). Her bürünme başı değiştirilemez audit zincirine yazılır.
 import { NextResponse } from "next/server";
-import { requireMaster } from "@/lib/master";
+import { requireMaster } from "@/lib/master-guard";
 import { createSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { recordAccess, reqMeta } from "@/lib/audit";
