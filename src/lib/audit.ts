@@ -24,7 +24,9 @@ export type AuditAction =
   | "DISCHARGE_GENERATE" // epikriz/taburcu raporu AI ile üretildi (tüm yolculuk dış AI'ya gider)
   | "RECOVERY_COMPLETE" // post-op takip tamamlandı → klinik personel erişimi kapandı, hasta-only (E2EE Faz 2A)
   | "RECOVERY_REOPEN" // post-op takip hasta tarafından yeniden açıldı → klinik personel erişimi geri verildi (geri-alma, E2EE Faz 2A)
-  | "POSTOP_ACCESS_DENIED"; // post-op kapandıktan sonra klinik personel erişim denemesi reddedildi (daraltma kanıtı)
+  | "POSTOP_ACCESS_DENIED" // post-op kapandıktan sonra klinik personel erişim denemesi reddedildi (daraltma kanıtı)
+  | "IMPERSONATE_START" // MASTER bir kullanıcıya büründü (actor=master, subject=hedef kullanıcı)
+  | "IMPERSONATE_END"; // MASTER bürünmeyi bitirdi (kendi kimliğine döndü)
 
 interface RecordInput {
   actor: SessionUser | null;

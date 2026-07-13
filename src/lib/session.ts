@@ -19,6 +19,8 @@ export interface SessionUser {
   role: Role;
   cv?: number; // onaylanan KVKK onam sürümü (consented version); 0/undefined = onam yok
   sv?: number; // oturum sürümü (session version) — User.sessionVersion snapshot'ı; uyuşmazsa token iptal (JWT revocation)
+  imp?: string; // MASTER impersonation: bu oturum bir master tarafından başlatıldıysa gerçek master'ın User.id'si
+                // (kimlik = bürünülen kullanıcı; imp yalnız "master'a dön" + banner + audit izi için taşınır)
 }
 
 // Oturum imzalama anahtarı (T4). ÜRETİMDE eksik/zayıf/varsayılan ise BOOT DURUR (forge edilebilir
@@ -47,7 +49,9 @@ function resolveSessionSecret(): Uint8Array {
 const secret = resolveSessionSecret();
 
 export async function signToken(user: SessionUser): Promise<string> {
-  return new SignJWT({ email: user.email, name: user.name, role: user.role, cv: user.cv ?? 0, sv: user.sv ?? 0 })
+  const claims: Record<string, unknown> = { email: user.email, name: user.name, role: user.role, cv: user.cv ?? 0, sv: user.sv ?? 0 };
+  if (user.imp) claims.imp = user.imp; // yalnız bürünme oturumunda taşınır
+  return new SignJWT(claims)
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
     .setIssuedAt()
@@ -65,6 +69,7 @@ export async function verifyToken(token: string): Promise<SessionUser | null> {
       role: payload.role as Role,
       cv: Number(payload.cv ?? 0),
       sv: Number(payload.sv ?? 0), // eski (sv'siz) token → 0 = DB default'u → canlı oturumlar bozulmaz
+      imp: payload.imp ? String(payload.imp) : undefined, // master impersonation izi (varsa)
     };
   } catch {
     return null;

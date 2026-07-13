@@ -4,7 +4,9 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { PwaRegister } from "@/components/PwaRegister";
+import { MasterBar } from "@/components/MasterBar";
 import { getCurrentUser } from "@/lib/auth";
+import { isMaster } from "@/lib/master";
 import { db } from "@/lib/db";
 import { SITE_URL } from "@/lib/aura-landing/seo";
 
@@ -50,6 +52,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <PwaRegister />
         <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} />
+        {user?.imp ? <MasterBar mode="impersonating" userName={user.name} /> : isMaster(user) ? <MasterBar mode="master" /> : null}
         <main className="flex-1">{children}</main>
         <SiteFooter />
       </body>

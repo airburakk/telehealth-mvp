@@ -55,6 +55,16 @@ export async function proxy(req: NextRequest) {
   if (pathname.startsWith("/acente") && !AGENCY_ROLES.includes(user.role)) {
     return NextResponse.redirect(new URL("/", req.url)); // yalnız acente (+ADMIN); sayfalar ayrıca kendi savunmasını yapar
   }
+  // MASTER paneli: env-gated + e-posta allowlist (rol DEĞİL). Bürünme oturumu (imp) master sayılmaz.
+  // Kontrol inline (middleware'i auth.ts/db'ye bağlamamak için); sayfa da isMaster ile kendi savunmasını yapar.
+  if (pathname.startsWith("/master")) {
+    const enabled = process.env.MASTER_ACCOUNT_ENABLED === "true";
+    const allow = (process.env.MASTER_ACCOUNT_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+    const email = (user.email ?? "").toLowerCase();
+    if (!enabled || user.imp || !allow.includes(email)) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+  }
   // /gorusme: giriş yeterli (hasta + doktor görüşmeye katılabilir)
 
   return NextResponse.next();
@@ -80,6 +90,7 @@ export const config = {
     "/operasyon", "/operasyon/:path*",
     "/partner", "/partner/:path*",
     "/acente", "/acente/:path*",
+    "/master", "/master/:path*",
     "/vakalarim",
     "/erisim-kaydi",
     "/second-opinion/basvur", "/second-opinion/basvur/:path*",
