@@ -214,6 +214,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/second-opinion/*` | İkinci Görüş başvuru/vaka/görüşme akışı |
 | `/ucretsiz-saglik/*` | Ücretsiz Sağlık Hizmeti başvuru/bekleme/landing |
 | `/fhir/*` | FHIR R4 kaynak çıkışı (Composition / Consent / audit / **ConsultationRequest** Bundle) |
+| `/master` (+`/api/master/*`) | **Master paneli (v6.0, env-dormant impersonation)** — `MASTER_ACCOUNT_ENABLED` + `MASTER_ACCOUNT_EMAILS` env'i açıkken allowlist'teki e-posta (rol değil, e-posta yetkisi) herhangi bir kullanıcıya **bürünüp** ekranlarını görebilir; gerçek master kimliği `imp` claim'inde (imzalı JWT), her bürünme `IMPERSONATE_START/END` ile değiştirilemez audit'e; **üç katmanlı kapı** (proxy + sayfa + API), env kapalıysa **404** (özellik sızmaz); üstte kırmızı "Master'a dön" bandı (`MasterBar`) |
 
 ### API (route handler grupları — `src/app/api/`)
 
