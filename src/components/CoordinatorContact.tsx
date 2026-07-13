@@ -43,7 +43,7 @@ export function CoordinatorContact({ bookingId, lang }: { bookingId: string; lan
         type="button"
         onClick={send}
         disabled={state === "busy"}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-[#161719] px-4 py-2.5 text-sm font-medium text-white/75 hover:bg-[#1E1F22] disabled:opacity-60"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-4 py-2.5 text-sm font-medium text-[var(--c-ink)] hover:bg-[var(--c-surface)] disabled:opacity-60"
       >
         {state === "busy" ? <Loader2 size={15} className="animate-spin" /> : <MessageCircle size={15} />} {t("Koordinatörle konuş")}
       </button>

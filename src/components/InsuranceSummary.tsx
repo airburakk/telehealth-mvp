@@ -39,8 +39,8 @@ export function InsuranceSummary({ detailJson, lang = "Türkçe" }: { detailJson
   if (!q || typeof q.level !== "number") return null;
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
+    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
+      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
         <ShieldCheck size={14} /> {t("Sigorta Teminatı")} · {t("Seviye")} {q.level} — {t(LEVEL_LABEL[q.level])}
       </div>
       <div className="mt-3 space-y-1.5 text-sm">
@@ -51,7 +51,7 @@ export function InsuranceSummary({ detailJson, lang = "Türkçe" }: { detailJson
         {q.level >= 3 && (
           <>
             <Row k={`${t("Malpraktis & komplikasyon · hedef")} ${formatUSD(q.targetCoverage)}`} v={q.p3 > 0 ? `+${formatUSD(q.p3)}` : t("ek prim yok")} />
-            <p className="text-[11px] leading-relaxed text-white/60">
+            <p className="text-[11px] leading-relaxed text-[var(--c-ink-2)]">
               {q.gap === 0
                 ? `${t("Doktorun mevcut MMSS poliçesi hedef teminatı karşılıyor → ek malpraktis primi yok.")} (${formatUSD(q.doctorCoverage)})`
                 : `${t("Doktorun mevcut MMSS poliçesi:")} ${formatUSD(q.doctorCoverage)} · ${t("ek teminatla kapatılan boşluk:")} ${formatUSD(q.gap)}`}
@@ -59,11 +59,11 @@ export function InsuranceSummary({ detailJson, lang = "Türkçe" }: { detailJson
           </>
         )}
       </div>
-      <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-sm font-semibold">
-        <span className="text-white/75">{t("Sigorta toplam")}</span>
-        <span className="text-[#F4F5F3]">{formatUSD(q.total)}</span>
+      <div className="mt-3 flex items-center justify-between border-t border-[var(--c-hairline)] pt-3 text-sm font-semibold">
+        <span className="text-[var(--c-ink)]">{t("Sigorta toplam")}</span>
+        <span className="text-[var(--c-ink)]">{formatUSD(q.total)}</span>
       </div>
-      <p className="mt-1.5 text-[10px] leading-relaxed text-white/40">
+      <p className="mt-1.5 text-[10px] leading-relaxed text-[var(--c-ink-3)]">
         {t("Primler tahminidir; bağlayıcı poliçe bedelini ve teminat şartlarını sigorta şirketi belirler.")}
       </p>
     </div>
@@ -73,8 +73,8 @@ export function InsuranceSummary({ detailJson, lang = "Türkçe" }: { detailJson
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex items-start justify-between gap-3">
-      <span className="text-white/65">{k}</span>
-      <span className="shrink-0 font-medium text-[#F4F5F3]">{v}</span>
+      <span className="text-[var(--c-ink-2)]">{k}</span>
+      <span className="shrink-0 font-medium text-[var(--c-ink)]">{v}</span>
     </div>
   );
 }

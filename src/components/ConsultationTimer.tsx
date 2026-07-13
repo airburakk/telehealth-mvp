@@ -44,8 +44,10 @@ export function ConsultationTimer({
     zone === "green" ? "from-emerald-400 to-emerald-500"
     : zone === "orange" ? "from-orange-400 to-orange-500"
     : "from-red-500 to-red-600";
+  // Tema-duyarlı süre/etiket rengi (gündüz koyu ton · gece açık ton → her iki temada okunur;
+  // eski sabit -300 tonları gündüz açık kart zemininde kayboluyordu).
   const textClass =
-    zone === "green" ? "text-emerald-300" : zone === "orange" ? "text-orange-300" : "text-red-300";
+    zone === "green" ? "text-[var(--c-success)]" : zone === "orange" ? "text-[var(--c-warning)]" : "text-[var(--c-danger)]";
   const zoneLabel = labels
     ? labels[zone]
     : zone === "green" ? "İdeal süre" : zone === "orange" ? "Süre uzuyor" : "Süre aşıldı";
@@ -54,7 +56,7 @@ export function ConsultationTimer({
     <div
       role="timer"
       aria-label={`Görüşme süresi ${fmt(elapsedSec)} — ${zoneLabel}`}
-      className="rounded-2xl border border-white/10 bg-[#161719] p-3 shadow-sm"
+      className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3 shadow-sm"
     >
       <div className="flex items-center gap-3">
         {/* Süre okuması */}
@@ -64,11 +66,11 @@ export function ConsultationTimer({
         </div>
 
         {/* Tüp — süre ilerledikçe dolar */}
-        <div className="relative h-5 flex-1 overflow-hidden rounded-full bg-white/10 ring-1 ring-inset ring-white/10">
+        <div className="relative h-5 flex-1 overflow-hidden rounded-full bg-[var(--c-ink)]/10 ring-1 ring-inset ring-white/10">
           {/* Eşik işaretleri (yeşil→turuncu, turuncu→kırmızı geçişleri) */}
-          <span className="absolute inset-y-0 z-10 w-px bg-white/20" style={{ left: `${(greenMin / maxMin) * 100}%` }} />
+          <span className="absolute inset-y-0 z-10 w-px bg-[var(--c-ink)]/20" style={{ left: `${(greenMin / maxMin) * 100}%` }} />
           {orangeMin > greenMin && (
-            <span className="absolute inset-y-0 z-10 w-px bg-white/20" style={{ left: `${(orangeMin / maxMin) * 100}%` }} />
+            <span className="absolute inset-y-0 z-10 w-px bg-[var(--c-ink)]/20" style={{ left: `${(orangeMin / maxMin) * 100}%` }} />
           )}
           {/* Dolum */}
           <div
@@ -76,7 +78,7 @@ export function ConsultationTimer({
             style={{ width: `${pct}%` }}
           >
             {/* Camsı üst yansıma — tüp hissi */}
-            <span className="absolute inset-x-0 top-0 h-1/2 rounded-t-full bg-white/25" />
+            <span className="absolute inset-x-0 top-0 h-1/2 rounded-t-full bg-[var(--c-ink)]/25" />
           </div>
         </div>
 

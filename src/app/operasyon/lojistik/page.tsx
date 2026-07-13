@@ -51,19 +51,19 @@ export default async function LogisticsPage({
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href="/operasyon" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/75">
+      <Link href="/operasyon" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
         <ArrowLeft size={15} /> Operasyon Paneli
       </Link>
       <div className="mt-3 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Luggage size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><Luggage size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#F4F5F3]">Lojistik Takip</h1>
-          <p className="text-sm text-white/50">Patient Journey — karşılama · konaklama · tedavi · dönüş aşamalarını yönet</p>
+          <h1 className="text-2xl font-bold text-[var(--c-ink)]">Lojistik Takip</h1>
+          <p className="text-sm text-[var(--c-ink-2)]">Patient Journey — karşılama · konaklama · tedavi · dönüş aşamalarını yönet</p>
         </div>
       </div>
 
       {bookings.length === 0 ? (
-        <div className="mt-8 rounded-3xl border border-white/10 bg-[#1E1F22] px-5 py-10 text-center text-sm text-white/50">
+        <div className="mt-8 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-5 py-10 text-center text-sm text-[var(--c-ink-2)]">
           Henüz onaylı (Escrow) rezervasyon yok. Bir paket onaylanınca lojistik takibi burada açılır.
         </div>
       ) : (
@@ -72,17 +72,17 @@ export default async function LogisticsPage({
             const stages = parseJourney(b.journeyData);
             const progress = journeyProgress(stages);
             return (
-              <div key={b.id} className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+              <div key={b.id} className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <div className="font-semibold text-[#F4F5F3]">{decryptField(b.case.patientName)}</div>
-                    <div className="text-xs text-white/50">
+                    <div className="font-semibold text-[var(--c-ink)]">{decryptField(b.case.patientName)}</div>
+                    <div className="text-xs text-[var(--c-ink-2)]">
                       {countryFlag(b.case.country)} {countryName(b.case.country)} · {b.branch} · {b.tier} · {b.hotelStars}★ / {b.nights} gece
                     </div>
                   </div>
-                  <div className="text-right text-xs text-white/40">
+                  <div className="text-right text-xs text-[var(--c-ink-3)]">
                     <div className="font-mono">{b.id.slice(0, 8).toUpperCase()}</div>
-                    <div>{progress.done}/{progress.total} · <span className="font-medium text-[#28C8D8]">{progress.current}</span></div>
+                    <div>{progress.done}/{progress.total} · <span className="font-medium text-[var(--c-accent)]">{progress.current}</span></div>
                   </div>
                 </div>
                 <LogisticsEditor bookingId={b.id} initialStages={stages} />
@@ -95,32 +95,32 @@ export default async function LogisticsPage({
       {/* Sayfalama — /denetim deseni: Toplam N · Sayfa X/Y + Önceki/Sonraki */}
       {totalPages > 1 && (
         <nav className="mt-5 flex flex-wrap items-center justify-between gap-3" aria-label="Lojistik takip sayfaları">
-          <span className="text-xs text-white/50">
-            Toplam <strong className="text-white/75">{total}</strong> rezervasyon · Sayfa{" "}
-            <strong className="text-white/75">{page}</strong> / {totalPages}
+          <span className="text-xs text-[var(--c-ink-2)]">
+            Toplam <strong className="text-[var(--c-ink)]">{total}</strong> rezervasyon · Sayfa{" "}
+            <strong className="text-[var(--c-ink)]">{page}</strong> / {totalPages}
           </span>
           <div className="flex items-center gap-2">
             {page > 1 ? (
               <Link
                 href={`/operasyon/lojistik?page=${page - 1}`}
-                className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22]"
+                className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
               >
                 <ChevronLeft size={15} /> Önceki
               </Link>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/25 cursor-not-allowed">
+              <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-3)] cursor-not-allowed">
                 <ChevronLeft size={15} /> Önceki
               </span>
             )}
             {page < totalPages ? (
               <Link
                 href={`/operasyon/lojistik?page=${page + 1}`}
-                className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22]"
+                className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
               >
                 Sonraki <ChevronRight size={15} />
               </Link>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/25 cursor-not-allowed">
+              <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-3)] cursor-not-allowed">
                 Sonraki <ChevronRight size={15} />
               </span>
             )}

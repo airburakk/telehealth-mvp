@@ -212,20 +212,20 @@ export function LiveInterpreter({
   function stop() { teardown(); onMuteRemote(false); setStatus("idle"); }
 
   return (
-    <div dir={langDir(lang)} className="rounded-3xl border border-[#28C8D8]/25 bg-[#161719] p-5 shadow-sm">
+    <div dir={langDir(lang)} className="rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-panel)] p-5 shadow-sm">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]">
+        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]">
           <Languages size={15} /> {t("AI Canlı Tercüman")}
           <span className="rounded-full bg-teal-600 px-1.5 py-0.5 text-[9px] tracking-normal text-white">Gemini</span>
         </div>
         {status === "live" && <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-300"><span className="h-2 w-2 animate-pulse rounded-full bg-red-500" /> {t("canlı")}</span>}
       </div>
 
-      <p className="mt-2 text-xs leading-relaxed text-white/50">
-        {t("Karşı tarafın")} <strong className="text-white/75">{otherLabel}</strong> {t("konuşması anında")} <strong className="text-white/75">{targetLabel}</strong> {t("sesli + altyazı.")}
+      <p className="mt-2 text-xs leading-relaxed text-[var(--c-ink-2)]">
+        {t("Karşı tarafın")} <strong className="text-[var(--c-ink)]">{otherLabel}</strong> {t("konuşması anında")} <strong className="text-[var(--c-ink)]">{targetLabel}</strong> {t("sesli + altyazı.")}
       </p>
 
-      {status === "checking" && <div className="mt-3 inline-flex items-center gap-2 text-xs text-white/40"><Loader2 size={13} className="animate-spin" /> {t("kontrol ediliyor…")}</div>}
+      {status === "checking" && <div className="mt-3 inline-flex items-center gap-2 text-xs text-[var(--c-ink-3)]"><Loader2 size={13} className="animate-spin" /> {t("kontrol ediliyor…")}</div>}
 
       {status === "disabled" && (
         <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-500/10 p-2.5 text-[11px] leading-relaxed text-amber-300 ring-1 ring-amber-400/20">
@@ -239,8 +239,8 @@ export function LiveInterpreter({
           {/* Otomatik mod (diller farklı): ilk konuşma algılanınca otomatik başlar → manuel düğme yerine gösterge.
               Hata durumunda (status==="error") manuel düğme kalır (otomatik kurtarma yapılmaz). */}
           {autoMode && status === "idle" ? (
-            <div className="inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8]/10 px-3 py-2 text-sm font-medium text-[#28C8D8] ring-1 ring-[#28C8D8]/20">
-              <Mic size={15} className="text-[#28C8D8]" /> {t("İlk konuşma algılandığında otomatik başlar…")}
+            <div className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-accent)]/10 px-3 py-2 text-sm font-medium text-[var(--c-accent)] ring-1 ring-[var(--c-accent)]/20">
+              <Mic size={15} className="text-[var(--c-accent)]" /> {t("İlk konuşma algılandığında otomatik başlar…")}
             </div>
           ) : (
             <button
@@ -250,23 +250,23 @@ export function LiveInterpreter({
               <Mic size={15} /> {t("Tercümeyi başlat")}
             </button>
           )}
-          <p className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-white/40"><Headphones size={11} /> {t("kulaklık önerilir (hoparlörde yankı olabilir)")}</p>
-          <p className="mt-1 flex items-start gap-1 text-[10px] leading-relaxed text-white/40"><ShieldCheck size={11} className="mt-0.5 shrink-0 text-[#28C8D8]" /> {t("Ses, girişte verdiğiniz KVKK açık onamı kapsamında yalnızca gerçek zamanlı çeviri için işlenir.")}</p>
+          <p className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-[var(--c-ink-3)]"><Headphones size={11} /> {t("kulaklık önerilir (hoparlörde yankı olabilir)")}</p>
+          <p className="mt-1 flex items-start gap-1 text-[10px] leading-relaxed text-[var(--c-ink-3)]"><ShieldCheck size={11} className="mt-0.5 shrink-0 text-[var(--c-accent)]" /> {t("Ses, girişte verdiğiniz KVKK açık onamı kapsamında yalnızca gerçek zamanlı çeviri için işlenir.")}</p>
           {err && <p className="mt-1 flex items-start gap-1 text-[11px] text-red-300"><AlertTriangle size={12} className="mt-0.5 shrink-0" /> {t(err)}</p>}
         </div>
       )}
 
       {(status === "connecting" || status === "live") && (
         <div className="mt-3">
-          <div className="min-h-[3.5rem] rounded-lg bg-[#1E1F22] p-2.5 ring-1 ring-white/10">
-            {heard && <p className="text-[11px] text-white/40">🎙 {otherLabel}: {heard}</p>}
-            <p className="mt-0.5 text-sm font-medium text-[#F4F5F3]">{trans || (status === "connecting" ? t("bağlanılıyor…") : t("dinleniyor…"))}</p>
+          <div className="min-h-[3.5rem] rounded-lg bg-[var(--c-surface)] p-2.5 ring-1 ring-white/10">
+            {heard && <p className="text-[11px] text-[var(--c-ink-3)]">🎙 {otherLabel}: {heard}</p>}
+            <p className="mt-0.5 text-sm font-medium text-[var(--c-ink)]">{trans || (status === "connecting" ? t("bağlanılıyor…") : t("dinleniyor…"))}</p>
           </div>
           <div className="mt-2 flex items-center justify-between">
-            <button onClick={stop} disabled={status === "connecting"} className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-[#161719] px-3 py-1.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22] disabled:opacity-50">
+            <button onClick={stop} disabled={status === "connecting"} className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] disabled:opacity-50">
               {status === "connecting" ? <Loader2 size={14} className="animate-spin" /> : <Square size={14} />} {t("Durdur")}
             </button>
-            <span className="inline-flex items-center gap-1 text-[10px] text-white/40" title="tanı: gelen ses parçası · altyazı">
+            <span className="inline-flex items-center gap-1 text-[10px] text-[var(--c-ink-3)]" title="tanı: gelen ses parçası · altyazı">
               <Volume2 size={11} /> {dbg.chunks} · 📝 {dbg.subs}
             </span>
           </div>

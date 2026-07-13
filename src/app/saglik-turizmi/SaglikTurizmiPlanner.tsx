@@ -128,8 +128,8 @@ export function SaglikTurizmiPlanner() {
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-300"><CheckCircle2 size={22} /></span>
           <div>
-            <h1 className="text-2xl font-bold text-[#F4F5F3]">{t("Talebiniz alındı")}</h1>
-            <p className="text-sm text-white/50">{t("Talebiniz seçtiğiniz tedavi alanının doktor havuzuna iletildi. Doktorlar tekliflerini hazırladıkça iletişim tercihinizden bilgilendirileceksiniz.")}</p>
+            <h1 className="text-2xl font-bold text-[var(--c-ink)]">{t("Talebiniz alındı")}</h1>
+            <p className="text-sm text-[var(--c-ink-2)]">{t("Talebiniz seçtiğiniz tedavi alanının doktor havuzuna iletildi. Doktorlar tekliflerini hazırladıkça iletişim tercihinizden bilgilendirileceksiniz.")}</p>
           </div>
         </div>
 
@@ -142,7 +142,7 @@ export function SaglikTurizmiPlanner() {
         </div>
 
         <button type="button" onClick={() => window.location.assign("/vakalarim")}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1FA9B8] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0c94a0]">
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--c-accent-strong)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0c94a0]">
           {t("Anladım, Vakalarıma git")} <ArrowRight size={16} className="rtl:rotate-180" />
         </button>
       </div>
@@ -155,11 +155,11 @@ export function SaglikTurizmiPlanner() {
       {/* İki adımlı mini-gösterge (Branş Doktoru sihirbazına benzer) */}
       <div className="mt-6 flex items-center gap-2 text-xs">
         <SubStep n={1} label={t("Ön Bilgi")} active={step === 0} done={step > 0} />
-        <span className="h-px w-6 bg-white/15" />
+        <span className="h-px w-6 bg-[var(--c-ink)]/15" />
         <SubStep n={2} label={t("Tedavi Alanı")} active={step === 1} done={false} />
       </div>
 
-      <div className="mt-5 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+      <div className="mt-5 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
         {step === 0 ? (
           <div className="space-y-4">
             {showStrip && profile ? (
@@ -183,7 +183,7 @@ export function SaglikTurizmiPlanner() {
 
             <div>
               <div className="mb-1.5 flex items-center justify-between gap-2">
-                <span className="block text-sm font-medium text-white/75">{t("Sağlık durumunuz veya hedefiniz nedir?")}</span>
+                <span className="block text-sm font-medium text-[var(--c-ink)]">{t("Sağlık durumunuz veya hedefiniz nedir?")}</span>
                 <DictationButton lang={lang} onAppend={(txt) => setSymptoms((v) => (v.trim() ? v.trim() + " " : "") + txt)} t={t} />
               </div>
               <textarea value={symptoms} onChange={(e) => { setSymptoms(e.target.value); }} rows={4}
@@ -194,13 +194,13 @@ export function SaglikTurizmiPlanner() {
             {error && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-300 ring-1 ring-red-400/25">{error}</div>}
 
             <button type="button" onClick={analyze} disabled={analyzing}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1FA9B8] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0c94a0] disabled:opacity-60">
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--c-accent-strong)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0c94a0] disabled:opacity-60">
               {analyzing ? <Loader2 size={16} className="animate-spin" /> : <>{t("Devam")} <ArrowRight size={16} className="rtl:rotate-180" /></>}
             </button>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex gap-2 rounded-xl bg-[#28C8D8]/10 p-3 text-xs leading-relaxed text-[#8fe6ef] ring-1 ring-[#28C8D8]/20">
+            <div className="flex gap-2 rounded-xl bg-[var(--c-accent)]/10 p-3 text-xs leading-relaxed text-[#8fe6ef] ring-1 ring-[var(--c-accent)]/20">
               <Sparkles size={15} className="mt-0.5 shrink-0" />
               <span>{t("Verdiğiniz bilgilere göre önerilen tedavi alanı aşağıda seçili geldi; dilerseniz değiştirebilirsiniz.")}</span>
             </div>
@@ -209,7 +209,7 @@ export function SaglikTurizmiPlanner() {
               <div className="flex flex-wrap gap-2">
                 {BRANCHES.map((b) => (
                   <button key={b.key} type="button" onClick={() => setBranchKey(b.key)}
-                    className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${branchKey === b.key ? "border-[#1FA9B8] bg-[#28C8D8]/10 text-[#1FA9B8]" : "border-white/10 bg-[#161719] text-white/65 hover:border-white/15"}`}>
+                    className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${branchKey === b.key ? "border-[var(--c-accent-strong)] bg-[var(--c-accent)]/10 text-[var(--c-accent-strong)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-white/65 hover:border-[var(--c-hairline)]"}`}>
                     {t(b.label)}
                   </button>
                 ))}
@@ -220,15 +220,15 @@ export function SaglikTurizmiPlanner() {
 
             <div className="flex items-center gap-3">
               <button type="button" onClick={() => { setError(""); setStep(0); }} disabled={submitting}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 px-4 py-3 text-sm font-semibold text-white/70 transition hover:border-white/25 hover:text-white disabled:opacity-60">
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--c-hairline)] px-4 py-3 text-sm font-semibold text-[var(--c-ink-2)] transition hover:border-[var(--c-hairline)] hover:text-[var(--c-ink)] disabled:opacity-60">
                 <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Geri")}
               </button>
               <button type="button" onClick={submitRequest} disabled={submitting || !branchKey}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#1FA9B8] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0c94a0] disabled:opacity-60">
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--c-accent-strong)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0c94a0] disabled:opacity-60">
                 {submitting ? <Loader2 size={16} className="animate-spin" /> : <>{t("Talep Oluştur")} <ArrowRight size={16} className="rtl:rotate-180" /></>}
               </button>
             </div>
-            <p className="text-center text-[11px] leading-relaxed text-white/40">{t("Talebiniz seçtiğiniz alanın doktor havuzuna iletilir; doktorlar size yazılı teklif veya görüntülü görüşme randevusu sunar. Bu adımda ödeme veya rezervasyon yapılmaz.")}</p>
+            <p className="text-center text-[11px] leading-relaxed text-[var(--c-ink-3)]">{t("Talebiniz seçtiğiniz alanın doktor havuzuna iletilir; doktorlar size yazılı teklif veya görüntülü görüşme randevusu sunar. Bu adımda ödeme veya rezervasyon yapılmaz.")}</p>
           </div>
         )}
       </div>
@@ -239,8 +239,8 @@ export function SaglikTurizmiPlanner() {
 function SubStep({ n, label, active, done }: { n: number; label: string; active: boolean; done: boolean }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className={`grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold ${active ? "bg-[#28C8D8] text-[#0D0E10]" : done ? "bg-[#28C8D8]/20 text-[#17919E]" : "bg-white/10 text-white/40"}`}>{n}</span>
-      <span className={active ? "font-semibold text-[#F4F5F3]" : "text-white/40"}>{label}</span>
+      <span className={`grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold ${active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : done ? "bg-[var(--c-accent)]/20 text-[var(--c-accent-stronger)]" : "bg-[var(--c-ink)]/10 text-white/40"}`}>{n}</span>
+      <span className={active ? "font-semibold text-[var(--c-ink)]" : "text-[var(--c-ink-3)]"}>{label}</span>
     </span>
   );
 }
@@ -248,7 +248,7 @@ function SubStep({ n, label, active, done }: { n: number; label: string; active:
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-white/50">{label}</label>
+      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{label}</label>
       {children}
     </div>
   );

@@ -162,8 +162,8 @@ export default async function DoctorPanel({
   return (
     <div className="mx-auto max-w-5xl px-5 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#F4F5F3]">Doktor Ana Sayfası</h1>
-        <p className="mt-1 text-sm text-white/50">Birimleriniz tercihinize göre düzenlendi.</p>
+        <h1 className="text-2xl font-bold text-[var(--c-ink)]">Doktor Ana Sayfası</h1>
+        <p className="mt-1 text-sm text-[var(--c-ink-2)]">Birimleriniz tercihinize göre düzenlendi.</p>
       </div>
 
       {/* ── Bildirim kanalı tercihi (FAZ 5) — uygulama / WhatsApp / SMS (WA+SMS dormant-simülasyon) ── */}
@@ -188,32 +188,32 @@ export default async function DoctorPanel({
         {/* Sayfalama — yalnız personel (filtresiz tüm kuyruk) dalında; /denetim deseni */}
         {!doctor && caseTotalPages > 1 && (
           <nav className="mt-5 flex flex-wrap items-center justify-between gap-3" aria-label="Vaka kuyruğu sayfaları">
-            <span className="text-xs text-white/50">
-              Toplam <strong className="text-white/75">{caseTotal}</strong> vaka · Sayfa{" "}
-              <strong className="text-white/75">{casePage}</strong> / {caseTotalPages}
+            <span className="text-xs text-[var(--c-ink-2)]">
+              Toplam <strong className="text-[var(--c-ink)]">{caseTotal}</strong> vaka · Sayfa{" "}
+              <strong className="text-[var(--c-ink)]">{casePage}</strong> / {caseTotalPages}
             </span>
             <div className="flex items-center gap-2">
               {casePage > 1 ? (
                 <Link
                   href={`/doktor?page=${casePage - 1}${caseFilterQs}`}
-                  className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22]"
+                  className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
                 >
                   <ChevronLeft size={15} /> Önceki
                 </Link>
               ) : (
-                <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/25 cursor-not-allowed">
+                <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-3)] cursor-not-allowed">
                   <ChevronLeft size={15} /> Önceki
                 </span>
               )}
               {casePage < caseTotalPages ? (
                 <Link
                   href={`/doktor?page=${casePage + 1}${caseFilterQs}`}
-                  className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22]"
+                  className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
                 >
                   Sonraki <ChevronRight size={15} />
                 </Link>
               ) : (
-                <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/25 cursor-not-allowed">
+                <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-3)] cursor-not-allowed">
                   Sonraki <ChevronRight size={15} />
                 </span>
               )}
@@ -231,7 +231,7 @@ export default async function DoctorPanel({
             subtitle="Atanan vakalar — dosya inceleme + yazılı görüş"
             badge={soCount > 0 ? <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-bold text-amber-300">{soCount} bekliyor</span> : undefined}
           >
-            <Link href="/doktor/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#17919E] hover:underline">
+            <Link href="/doktor/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--c-accent-stronger)] hover:underline">
               İkinci Görüş panelini aç <ArrowRight size={15} />
             </Link>
           </DashboardPanel>
@@ -256,7 +256,7 @@ export default async function DoctorPanel({
             icon={<Inbox size={18} />}
             title="Konsültasyon Talepleri"
             subtitle="Partner doktorlardan anonim hasta dosyaları"
-            accent="#818cf8"
+            accent="var(--c-indigo)"
             badge={consultOpen > 0 ? <span className="rounded-full bg-indigo-500/15 px-2.5 py-1 text-xs font-bold text-indigo-300">{consultOpen} açık talep</span> : undefined}
           >
             <Link href="/doktor/konsultasyon" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#6d75e0] hover:underline">
@@ -290,13 +290,13 @@ function NewsCard({ item }: { item: NewsItem }) {
     ilac: "bg-emerald-500/15 text-emerald-300",
   };
   return (
-    <li className="rounded-2xl border border-white/10 p-4">
+    <li className="rounded-2xl border border-[var(--c-hairline)] p-4">
       <div className="flex items-center gap-2">
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${kindColor[item.kind]}`}>{NEWS_KIND_LABEL[item.kind]}</span>
-        <span className="text-[11px] text-white/40">{item.source}</span>
+        <span className="text-[11px] text-[var(--c-ink-3)]">{item.source}</span>
       </div>
-      <div className="mt-1.5 text-sm font-semibold text-[#F4F5F3]">{item.title}</div>
-      <p className="mt-1 text-xs text-white/50">{item.summary}</p>
+      <div className="mt-1.5 text-sm font-semibold text-[var(--c-ink)]">{item.title}</div>
+      <p className="mt-1 text-xs text-[var(--c-ink-2)]">{item.summary}</p>
     </li>
   );
 }

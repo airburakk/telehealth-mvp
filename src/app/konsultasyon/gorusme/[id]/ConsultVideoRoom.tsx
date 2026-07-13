@@ -13,6 +13,7 @@ import { useT } from "@/components/useT";
 import { langDir } from "@/lib/constants";
 import { ConsultationChat } from "@/components/ConsultationChat";
 import { ConsultationTimer } from "@/components/ConsultationTimer";
+import { VideoCallShell } from "@/components/VideoCallShell";
 
 type Phase = "idle" | "connecting" | "waiting" | "connected" | "ended" | "error";
 
@@ -253,10 +254,10 @@ export function ConsultVideoRoom({
   if (phase === "ended" || ended) {
     return (
       <div dir={dir} className="mx-auto max-w-md px-5 py-20 text-center">
-        <PhoneOff className="mx-auto mb-3 text-white/25" size={40} />
-        <h1 className="text-xl font-bold text-[#F4F5F3]">{t(S.ended)}</h1>
-        <p className="mt-2 text-sm text-white/50">{t(S.endedSub)}</p>
-        <button onClick={() => router.push(backHref)} className="mt-5 rounded-xl bg-[#28C8D8] px-5 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">{t(S.back)}</button>
+        <PhoneOff className="mx-auto mb-3 text-[var(--c-ink-3)]" size={40} />
+        <h1 className="text-xl font-bold text-[var(--c-ink)]">{t(S.ended)}</h1>
+        <p className="mt-2 text-sm text-[var(--c-ink-2)]">{t(S.endedSub)}</p>
+        <button onClick={() => router.push(backHref)} className="mt-5 rounded-xl bg-[var(--c-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">{t(S.back)}</button>
       </div>
     );
   }
@@ -264,80 +265,93 @@ export function ConsultVideoRoom({
   if (!joined) {
     return (
       <div dir={dir} className="mx-auto max-w-md px-5 py-16 text-center">
-        <Video className="mx-auto mb-3 text-[#28C8D8]" size={40} />
-        <h1 className="text-xl font-bold text-[#F4F5F3]">{t(S.title)}</h1>
-        <p className="mt-1 text-sm text-white/50">{t(branchLabel)} · {remoteName}</p>
-        <p className="mt-4 rounded-xl bg-[#1E1F22] px-4 py-3 text-xs text-white/50">{t(S.permNote)}</p>
-        <button onClick={() => { setJoined(true); setPhase("connecting"); }} className="mt-5 rounded-xl bg-[#28C8D8] px-6 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">{t(S.join)}</button>
+        <Video className="mx-auto mb-3 text-[var(--c-accent)]" size={40} />
+        <h1 className="text-xl font-bold text-[var(--c-ink)]">{t(S.title)}</h1>
+        <p className="mt-1 text-sm text-[var(--c-ink-2)]">{t(branchLabel)} · {remoteName}</p>
+        <p className="mt-4 rounded-xl bg-[var(--c-surface)] px-4 py-3 text-xs text-[var(--c-ink-2)]">{t(S.permNote)}</p>
+        <button onClick={() => { setJoined(true); setPhase("connecting"); }} className="mt-5 rounded-xl bg-[var(--c-accent)] px-6 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">{t(S.join)}</button>
       </div>
     );
   }
 
   return (
-    <div dir={dir} className="mx-auto max-w-5xl px-4 py-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-bold text-[#F4F5F3]">{t(S.title)}</h1>
-          <p className="text-xs text-white/50">{t(branchLabel)} · {remoteName}</p>
+    <VideoCallShell
+      dir={dir}
+      panelLabel={t(S.title)}
+      statusBar={
+        <div className="flex items-center justify-between gap-2 text-xs font-medium text-white/90">
+          <span className="min-w-0 truncate">{t(S.title)} · {t(branchLabel)} · {remoteName}{connState ? ` · ${connState}` : ""}</span>
+          <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 ${phase === "connected" ? "bg-emerald-500/20 text-emerald-200" : "bg-black/35 text-amber-200"}`}>
+            {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />}
+            {phase === "connected" ? t(S.connected) : phase === "waiting" ? t(S.waiting) : phase === "error" ? t(S.errorLbl) : t(S.connecting)}
+          </span>
         </div>
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${phase === "connected" ? "bg-emerald-500/10 text-emerald-300" : "bg-amber-500/10 text-amber-300"}`}>
-          {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />}
-          {phase === "connected" ? t(S.connected) : phase === "waiting" ? t(S.waiting) : phase === "error" ? t(S.errorLbl) : t(S.connecting)}
-        </span>
-      </div>
-
-      {errMsg && <p className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-300">{t(errMsg)}</p>}
-
-      {/* 10 dk süre tüpü (FAZ 7) — iki taraf da görür; 7'de kırmızı, 9'da uyarı bandı, kesme yok */}
-      {startTime !== null && (
-        <div className="mt-3 space-y-2">
-          <ConsultationTimer
-            startTime={startTime}
-            active // görüşme bitince bu dal zaten render edilmez (erken return) → hep canlı
-            maxMin={LIMIT_MIN}
-            greenMin={RED_MIN}
-            orangeMin={RED_MIN}
-            labels={{ green: t(S.zoneOk), orange: t(S.zoneOver), red: t(S.zoneOver) }}
-          />
-          {warn ? (
-            <p className="animate-pulse rounded-xl bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300 ring-1 ring-red-400/25">⏰ {t(S.warn9)}</p>
-          ) : (
-            <p className="text-center text-[11px] text-white/40">{t(S.limitNote)}</p>
-          )}
-        </div>
-      )}
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div className="relative aspect-video overflow-hidden rounded-2xl bg-[#101113]">
+      }
+      video={
+        <div className="absolute inset-0 bg-[var(--c-bg-deep)]">
+          {/* Uzak taraf (gerçek video) — tüm alanı doldurur */}
           <video ref={remoteVideoRef} autoPlay playsInline className="h-full w-full object-cover" />
           {!remoteOn && (
-            <div className="absolute inset-0 grid place-items-center text-white/40">
-              <div className="text-center"><UserRound size={36} className="mx-auto" /><p className="mt-2 text-xs">{remoteName} {t(S.waitingFor)}</p></div>
+            <div className="absolute inset-0 grid place-items-center text-[var(--c-ink-3)]">
+              <div className="text-center"><UserRound size={40} className="mx-auto" /><p className="mt-2 text-xs">{remoteName} {t(S.waitingFor)}</p></div>
             </div>
           )}
-          <span className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-0.5 text-[11px] text-white">{remoteName}</span>
-        </div>
-        <div className="relative aspect-video overflow-hidden rounded-2xl bg-[#26272B]">
-          <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
-          <span className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-0.5 text-[11px] text-white">{t(S.you)}</span>
-        </div>
-      </div>
+          <span className="absolute bottom-20 left-3 rounded bg-black/50 px-2 py-0.5 text-[11px] text-[var(--c-ink)]">{remoteName}</span>
 
-      <div className="mt-4 flex items-center justify-center gap-3">
-        <button onClick={toggleMic} className={`grid h-12 w-12 place-items-center rounded-full ${micOn ? "bg-white/15 text-white/75" : "bg-red-500/15 text-red-300"}`}>{micOn ? <Mic size={20} /> : <MicOff size={20} />}</button>
-        <button onClick={toggleCam} className={`grid h-12 w-12 place-items-center rounded-full ${camOn ? "bg-white/15 text-white/75" : "bg-red-500/15 text-red-300"}`}>{camOn ? <Video size={20} /> : <VideoOff size={20} />}</button>
-        <button onClick={() => setShowChat((v) => !v)} className="grid h-12 w-12 place-items-center rounded-full bg-white/15 text-white/75 hover:bg-white/20" title={t(S.fallbackNote)}><MessagesSquare size={20} /></button>
-        <button onClick={hangUp} className="grid h-12 w-12 place-items-center rounded-full bg-red-600 text-white hover:bg-red-700"><PhoneOff size={20} /></button>
-      </div>
-      {connState && <p className="mt-2 text-center text-[11px] text-white/40">{t(S.connLbl)} {connState}</p>}
+          {/* Yerel self-view — sağ üst köşe */}
+          <div className="absolute right-3 top-14 h-24 w-36 overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface-2)] shadow-lg sm:h-28 sm:w-44">
+            <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
+            <span className="absolute bottom-1.5 left-1.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-[var(--c-ink)]">{t(S.you)}</span>
+          </div>
 
-      {/* Fallback / yardımcı yazılı görüşme (Faz 2 chat) */}
-      {showChat && (
-        <div className="mx-auto mt-4 max-w-xl">
-          <p className="mb-2 text-center text-xs text-white/50">{t(S.fallbackNote)}</p>
-          <ConsultationChat requestId={requestId} lang={chatLang} canSend compact />
+          {/* Kontroller — video altında ortada (chat toggle dahil) */}
+          <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-3">
+            <button onClick={toggleMic} className={`grid h-12 w-12 place-items-center rounded-full backdrop-blur ${micOn ? "bg-white/15 text-white/90" : "bg-red-500/20 text-red-200"}`}>{micOn ? <Mic size={20} /> : <MicOff size={20} />}</button>
+            <button onClick={toggleCam} className={`grid h-12 w-12 place-items-center rounded-full backdrop-blur ${camOn ? "bg-white/15 text-white/90" : "bg-red-500/20 text-red-200"}`}>{camOn ? <Video size={20} /> : <VideoOff size={20} />}</button>
+            <button onClick={() => setShowChat((v) => !v)} className={`grid h-12 w-12 place-items-center rounded-full backdrop-blur ${showChat ? "bg-[var(--c-accent)]/30 text-[var(--c-accent)]" : "bg-white/15 text-white/90 hover:bg-white/25"}`} title={t(S.fallbackNote)}><MessagesSquare size={20} /></button>
+            <button onClick={hangUp} className="grid h-12 w-12 place-items-center rounded-full bg-red-600 text-white hover:bg-red-700"><PhoneOff size={20} /></button>
+          </div>
+
+          {errMsg && <div className="absolute inset-x-4 bottom-20 z-20 mx-auto max-w-md rounded-lg bg-amber-500/15 px-3 py-2 text-center text-sm text-amber-200 ring-1 ring-amber-400/25 backdrop-blur">{t(errMsg)}</div>}
         </div>
-      )}
-    </div>
+      }
+      panel={
+        <>
+          {/* 10 dk süre tüpü (FAZ 7) — iki taraf da görür; 7'de kırmızı, 9'da uyarı bandı, kesme yok */}
+          {startTime !== null && (
+            <div className="space-y-2">
+              <ConsultationTimer
+                startTime={startTime}
+                active // görüşme bitince bu dal zaten render edilmez (erken return) → hep canlı
+                maxMin={LIMIT_MIN}
+                greenMin={RED_MIN}
+                orangeMin={RED_MIN}
+                labels={{ green: t(S.zoneOk), orange: t(S.zoneOver), red: t(S.zoneOver) }}
+              />
+              {warn ? (
+                <p className="animate-pulse rounded-xl bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300 ring-1 ring-red-400/25">⏰ {t(S.warn9)}</p>
+              ) : (
+                <p className="text-center text-[11px] text-[var(--c-ink-3)] landscape:text-[#06343a]">{t(S.limitNote)}</p>
+              )}
+            </div>
+          )}
+
+          {/* Karşı taraf (uzman) bilgisi */}
+          <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
+            <h2 className="font-bold text-[var(--c-ink)]">{remoteName}</h2>
+            <p className="mt-1 text-sm font-medium text-[var(--c-accent-strong)]">{t(branchLabel)}</p>
+            <p className="mt-2 text-xs text-[var(--c-ink-3)]">{t(S.title)}</p>
+          </div>
+
+          {/* Yardımcı yazılı görüşme (Faz 2 chat) — chat düğmesiyle açılır */}
+          {showChat && (
+            <div>
+              <p className="mb-2 text-center text-xs text-[var(--c-ink-2)]">{t(S.fallbackNote)}</p>
+              <ConsultationChat requestId={requestId} lang={chatLang} canSend compact />
+            </div>
+          )}
+        </>
+      }
+    />
   );
 }

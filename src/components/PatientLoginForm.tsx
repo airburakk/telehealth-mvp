@@ -16,13 +16,13 @@ export function PatientLoginForm({ googleEnabled }: { googleEnabled: boolean }) 
       social={<SocialAuthButtons googleEnabled={googleEnabled} intent="patient" />}
       quick={[{ email: "hasta@air.test", label: "Hasta (demo)", icon: UserRound }]}
       footer={
-        <div className="mt-4 space-y-1.5 text-center text-sm text-white/50">
+        <div className="mt-4 space-y-1.5 text-center text-sm text-[var(--c-ink-2)]">
           <p>
-            Hesabınız yok mu? <Link href="/kayit/hasta" className="font-semibold text-[#28C8D8] hover:underline">Üye olun</Link>
+            Hesabınız yok mu? <Link href="/kayit/hasta" className="font-semibold text-[var(--c-accent)] hover:underline">Üye olun</Link>
           </p>
           <p className="text-[13px]">
             Doktor, koordinatör veya kurum çalışanı mısınız?{" "}
-            <Link href="/kurumsal-giris/e-posta" className="font-semibold text-[#28C8D8] hover:underline">Kurumsal giriş →</Link>
+            <Link href="/kurumsal-giris/e-posta" className="font-semibold text-[var(--c-accent)] hover:underline">Kurumsal giriş →</Link>
           </p>
         </div>
       }

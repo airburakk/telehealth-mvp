@@ -81,12 +81,15 @@ export const CASE_STATUS: Record<string, { label: string; color: string }> = {
   DONE: { label: "Tamamlandı", color: "bg-emerald-500/15 text-emerald-200" },
 };
 
+// Aciliyet stili — tema-duyarlı semantic token'lar (gündüz koyu / gece açık ton → her iki temada
+// okunur; eski sabit -200/-300 tonları gündüz açık kart zemininde soluk kalıyordu). 5=kırmızı,
+// 4=dolu turuncu, 3=hafif turuncu (sayı + etiket ayırır), 2=turkuaz, 1=nötr.
 export function urgencyStyle(u: number): { label: string; badge: string; dot: string } {
-  if (u >= 5) return { label: "Acil / Hayati", badge: "bg-red-500/15 text-red-300 ring-red-400/25", dot: "bg-red-500" };
-  if (u === 4) return { label: "Yüksek", badge: "bg-orange-500/15 text-orange-300 ring-orange-400/25", dot: "bg-orange-500" };
-  if (u === 3) return { label: "Orta", badge: "bg-amber-500/15 text-amber-200 ring-amber-400/25", dot: "bg-amber-500" };
-  if (u === 2) return { label: "Düşük", badge: "bg-[#28C8D8]/15 text-[#28C8D8] ring-[#28C8D8]/25", dot: "bg-[#28C8D8]" };
-  return { label: "Rutin", badge: "bg-white/10 text-white/65 ring-white/15", dot: "bg-white/30" };
+  if (u >= 5) return { label: "Acil / Hayati", badge: "bg-[var(--c-danger)]/15 text-[var(--c-danger)] ring-[var(--c-danger)]/30", dot: "bg-[var(--c-danger)]" };
+  if (u === 4) return { label: "Yüksek", badge: "bg-[var(--c-warning)]/20 text-[var(--c-warning)] ring-[var(--c-warning)]/35", dot: "bg-[var(--c-warning)]" };
+  if (u === 3) return { label: "Orta", badge: "bg-[var(--c-warning)]/12 text-[var(--c-warning)] ring-[var(--c-warning)]/22", dot: "bg-[var(--c-warning)]" };
+  if (u === 2) return { label: "Düşük", badge: "bg-[var(--c-accent)]/15 text-[var(--c-accent)] ring-[var(--c-accent)]/25", dot: "bg-[var(--c-accent)]" };
+  return { label: "Rutin", badge: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)] ring-white/15", dot: "bg-[var(--c-ink)]/30" };
 }
 
 export function formatDateTime(d: Date | string): string {

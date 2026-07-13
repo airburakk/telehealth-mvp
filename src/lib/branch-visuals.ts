@@ -1,5 +1,5 @@
 // Branş görsel kimliği — her tıbbi branşın rengi + (üretilen) sembol/banner varlıkları.
-// Renkler semantik (kalp=kırmızı, onkoloji=mor, nöro=indigo…) + koyu tema (#0D0E10 zemin) üzerinde
+// Renkler semantik (kalp=kırmızı, onkoloji=mor, nöro=indigo…) + koyu tema (var(--c-bg) zemin) üzerinde
 // okunur orta-parlak tonlar; anahtarlar lib/triage BRANCHES.key ile birebir aynı (30 branş).
 // Sembol + banner görselleri Higgsfield ile üretilip public/branches/ altına düşer (Faz C).
 import { BRANCHES } from "./triage";
@@ -16,7 +16,7 @@ export const BRANCH_COLORS: Record<string, string> = {
   goz: "#22D3EE",                   // cyan — göz
   "genel-cerrahi": "#0D9488",       // koyu turkuaz — cerrahi
   dahiliye: "#22C55E",              // yeşil — iç hastalıkları
-  noroloji: "#818CF8",              // açık indigo — sinir/beyin
+  noroloji: "var(--c-indigo)",              // açık indigo — sinir/beyin
   gastroenteroloji: "#F97316",      // turuncu — sindirim
   endokrinoloji: "#10B981",         // zümrüt — hormon/metabolizma
   nefroloji: "#2563EB",             // koyu mavi — böbrek
@@ -38,7 +38,7 @@ export const BRANCH_COLORS: Record<string, string> = {
 };
 
 // AURA turkuaz vurgusu — branş bilinmiyorsa/eşleşmiyorsa nötr geri düşüş.
-export const DEFAULT_BRANCH_COLOR = "#28C8D8";
+export const DEFAULT_BRANCH_COLOR = "var(--c-accent)";
 
 // Case.branch LABEL tutar ("Kardiyoloji"), triyaj effectiveBranch ise KEY ("kardiyoloji") —
 // görsel fonksiyonlar HER İKİSİNİ de kabul etsin diye tek noktada key'e normalize edilir.
@@ -65,7 +65,7 @@ export function branchSymbolSrc(v: string): string {
 // uyumlu, sonsuz ölçeklenir. Pilot kardiyoloji banner'ının koyu + diagonal ışık dalgası hissini taklit.
 export function branchBannerBg(key?: string | null): string {
   const c = branchColor(key);
-  return `radial-gradient(120% 150% at 78% 22%, ${c}40 0%, ${c}1a 28%, transparent 58%), radial-gradient(90% 120% at 12% 105%, ${c}26 0%, transparent 55%), #0D0E10`;
+  return `radial-gradient(120% 150% at 78% 22%, ${c}40 0%, ${c}1a 28%, transparent 58%), radial-gradient(90% 120% at 12% 105%, ${c}26 0%, transparent 55%), var(--c-bg)`;
 }
 
 // Bir branşın görsel kimliği (renk + sembol) var mı? Girdi key veya label olabilir → resolve.

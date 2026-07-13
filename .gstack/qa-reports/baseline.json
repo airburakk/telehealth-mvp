@@ -1,0 +1,10 @@
+{
+  "date": "2026-07-12",
+  "url": "http://localhost:3000",
+  "scope": "v5.8 hasta akis turu (triyaj + prefill + vaka hub + kulvar raylari)",
+  "healthScore": 99,
+  "issues": [
+    { "id": "OBS-001", "title": "Sonlandir-ve-sil onayi native confirm() kullaniyor", "severity": "low", "category": "ux", "status": "deferred" }
+  ],
+  "categoryScores": { "console": 100, "links": 100, "visual": 100, "functional": 100, "ux": 97, "performance": 100, "content": 100, "accessibility": 100 }
+}

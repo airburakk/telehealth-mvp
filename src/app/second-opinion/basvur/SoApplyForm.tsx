@@ -189,28 +189,28 @@ export function SoApplyForm() {
 
       {/* §12.2 — süre bilgilendirmesi (tek kaynak: lib/second-opinion; useT ile çok dilli) */}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl border border-white/10 bg-[#161719] p-4">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
+        <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
             <Clock size={14} /> {t(S.reportLabel)}
           </div>
-          <div className="mt-1 text-2xl font-bold text-[#F4F5F3]">{t(S.reportValue)}</div>
+          <div className="mt-1 text-2xl font-bold text-[var(--c-ink)]">{t(S.reportValue)}</div>
         </div>
-        <div className="rounded-2xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] p-4">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#17919E]">
+        <div className="rounded-2xl border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.06] p-4">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent-stronger)]">
             <Video size={14} /> {t(S.videoLabel)}
           </div>
-          <p className="mt-1 text-[13px] leading-relaxed text-white/65">{t(S.videoText)}</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-[var(--c-ink-2)]">{t(S.videoText)}</p>
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-white/10 bg-[#1E1F22] px-4 py-3 text-sm text-white/65">{t(FEE_LINE)}</div>
+      <div className="mt-4 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3 text-sm text-[var(--c-ink-2)]">{t(FEE_LINE)}</div>
 
-      <div className="mt-6 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
-        <label className="block text-sm font-semibold text-white/75">{t(S.branchLabel)}</label>
+      <div className="mt-6 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
+        <label className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.branchLabel)}</label>
         <select
           value={branch}
           onChange={(e) => setBranch(e.target.value)}
-          className="mt-1.5 w-full rounded-xl border border-white/15 bg-[#161719] px-3 py-2.5 text-sm text-[#F4F5F3] focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
+          className="mt-1.5 w-full rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2.5 text-sm text-[var(--c-ink)] focus:border-[var(--c-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--c-accent)]/30"
         >
           <option value="">{t(S.branchPlaceholder)}</option>
           {BRANCHES.map((b) => (
@@ -226,11 +226,11 @@ export function SoApplyForm() {
         ) : (
           <>
             <div className="mt-5">
-              <label className="block text-sm font-semibold text-white/75">{t(S.countryLabel)}</label>
+              <label className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.countryLabel)}</label>
               <select
                 value={country}
                 onChange={(e) => onCountry(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-white/15 bg-[#161719] px-3 py-2.5 text-sm text-[#F4F5F3] focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
+                className="mt-1.5 w-full rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2.5 text-sm text-[var(--c-ink)] focus:border-[var(--c-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--c-accent)]/30"
               >
                 <option value="">{t(S.countryPlaceholder)}</option>
                 {COUNTRIES.map((c) => (
@@ -247,52 +247,52 @@ export function SoApplyForm() {
         )}
 
         {/* Dil TEK kaynak: sağ üst seçici (air_lang). Yazılı görüş + video bu dilde sağlanır. */}
-        <p className="mt-3 flex items-center gap-1.5 text-xs text-white/50">
-          <Globe size={13} className="text-[#28C8D8]" /> {lang} · {t(S.langHint)}
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-[var(--c-ink-2)]">
+          <Globe size={13} className="text-[var(--c-accent)]" /> {lang} · {t(S.langHint)}
         </p>
 
         <div className="mt-5 flex items-center justify-between gap-2">
-          <label className="block text-sm font-semibold text-white/75">{t(S.diagLabel)}</label>
+          <label className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.diagLabel)}</label>
           <DictationButton lang={lang} onAppend={(txt) => setDiagnosisSummary((v) => (v.trim() ? v.trim() + " " : "") + txt)} t={t} />
         </div>
-        <p className="text-xs text-white/50">{t(S.diagHint)}</p>
+        <p className="text-xs text-[var(--c-ink-2)]">{t(S.diagHint)}</p>
         <textarea
           value={diagnosisSummary}
           onChange={(e) => setDiagnosisSummary(e.target.value)}
           rows={5}
           placeholder={t(S.diagPh)}
-          className="mt-1.5 w-full resize-y rounded-xl border border-white/15 bg-[#161719] px-3 py-2.5 text-sm text-[#F4F5F3] focus:border-[#28C8D8] focus:outline-none focus:ring-2 focus:ring-[#28C8D8]/30"
+          className="mt-1.5 w-full resize-y rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2.5 text-sm text-[var(--c-ink)] focus:border-[var(--c-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--c-accent)]/30"
         />
 
         {/* Faz 3 — Belgeler formda (branş seçilince): tip tip ekle; başvuru tek oturumda incelemeye girer */}
         {specs.length > 0 && (
           <div className="mt-6">
-            <div className="text-sm font-semibold text-white/75">{t(S.docsTitle)}</div>
-            <p className="text-xs text-white/50">{t(S.docsHint)}</p>
+            <div className="text-sm font-semibold text-[var(--c-ink)]">{t(S.docsTitle)}</div>
+            <p className="text-xs text-[var(--c-ink-2)]">{t(S.docsHint)}</p>
             <ul className="mt-2.5 space-y-2">
               {specs.map((sp) => {
                 const attached = docs.find((d) => d.type === sp.type);
                 const badge = sp.requirement === "REQUIRED" ? { l: S.reqRequired, cls: "bg-red-500/10 text-red-300 ring-red-400/25" }
                   : sp.requirement === "CONDITIONAL" ? { l: S.reqConditional, cls: "bg-amber-500/10 text-amber-300 ring-amber-400/25" }
-                  : { l: S.reqOptional, cls: "bg-white/10 text-white/50 ring-white/10" };
+                  : { l: S.reqOptional, cls: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)] ring-white/10" };
                 return (
-                  <li key={sp.type} className="rounded-2xl border border-white/10 bg-[#1E1F22] p-3">
+                  <li key={sp.type} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm text-white/75">{t(sp.label)}</span>
+                      <span className="text-sm text-[var(--c-ink)]">{t(sp.label)}</span>
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${badge.cls}`}>{t(badge.l)}</span>
                       {attached ? (
-                        <span className="ms-auto inline-flex min-w-0 items-center gap-1.5 text-xs text-[#28C8D8]">
+                        <span className="ms-auto inline-flex min-w-0 items-center gap-1.5 text-xs text-[var(--c-accent)]">
                           {attached.deliveryMethod === "FILE_UPLOAD" ? <FileText size={13} /> : <Link2 size={13} />}
                           <span className="max-w-[180px] truncate" dir="ltr">{attached.label}</span>
-                          <button type="button" onClick={() => setDocs((p) => p.filter((d) => d.type !== sp.type))} className="text-white/40 hover:text-red-400"><X size={14} /></button>
+                          <button type="button" onClick={() => setDocs((p) => p.filter((d) => d.type !== sp.type))} className="text-[var(--c-ink-3)] hover:text-red-400"><X size={14} /></button>
                         </span>
                       ) : (
                         <span className="ms-auto flex items-center gap-1.5">
-                          <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs font-medium text-white/65 hover:border-[#28C8D8]/40">
+                          <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-2.5 py-1.5 text-xs font-medium text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40">
                             <FileText size={12} /> {t(S.fileBtn)}
                             <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) attachFile(sp.type, f); }} />
                           </label>
-                          <button type="button" onClick={() => { setLinkOpen(linkOpen === sp.type ? "" : sp.type); setLinkDraft(""); }} className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs font-medium text-white/65 hover:border-[#28C8D8]/40">
+                          <button type="button" onClick={() => { setLinkOpen(linkOpen === sp.type ? "" : sp.type); setLinkDraft(""); }} className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-2.5 py-1.5 text-xs font-medium text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40">
                             <Link2 size={12} /> {t(S.linkBtn)}
                           </button>
                         </span>
@@ -300,15 +300,15 @@ export function SoApplyForm() {
                     </div>
                     {linkOpen === sp.type && !attached && (
                       <div className="mt-2 flex items-center gap-2">
-                        <input value={linkDraft} onChange={(e) => setLinkDraft(e.target.value)} placeholder={t(S.urlPh)} dir="ltr" className="w-full rounded-lg border border-white/15 bg-[#161719] px-3 py-2 text-sm text-[#F4F5F3] focus:border-[#28C8D8] focus:outline-none" />
-                        <button type="button" onClick={() => attachLink(sp.type)} className="shrink-0 rounded-lg bg-[#28C8D8] px-3 py-2 text-xs font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">{t(S.add)}</button>
+                        <input value={linkDraft} onChange={(e) => setLinkDraft(e.target.value)} placeholder={t(S.urlPh)} dir="ltr" className="w-full rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm text-[var(--c-ink)] focus:border-[var(--c-accent)] focus:outline-none" />
+                        <button type="button" onClick={() => attachLink(sp.type)} className="shrink-0 rounded-lg bg-[var(--c-accent)] px-3 py-2 text-xs font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">{t(S.add)}</button>
                       </div>
                     )}
                   </li>
                 );
               })}
             </ul>
-            <p className="mt-2 text-xs text-white/40">{t(S.imagingNote)}</p>
+            <p className="mt-2 text-xs text-[var(--c-ink-3)]">{t(S.imagingNote)}</p>
 
             {missingRequired.length > 0 && (
               <div className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2.5 text-[13px] text-amber-200 ring-1 ring-amber-400/25">
@@ -328,15 +328,15 @@ export function SoApplyForm() {
         <button
           onClick={() => submit(true)}
           disabled={!canPayNow}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#28C8D8] px-6 py-3 text-[15px] font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--c-accent)] px-6 py-3 text-[15px] font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting === "pay" ? <Loader2 size={17} className="animate-spin" /> : <><CreditCard size={17} /> {t(S.payBtn)}</>}
         </button>
-        <p className="mt-1.5 text-center text-[11px] text-white/40">{t(S.paySim)}</p>
+        <p className="mt-1.5 text-center text-[11px] text-[var(--c-ink-3)]">{t(S.paySim)}</p>
         <button
           onClick={() => submit(false)}
           disabled={!canSubmit}
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-[#161719] px-6 py-2.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22] disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-6 py-2.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting === "later" ? <Loader2 size={16} className="animate-spin" /> : <>{t(S.laterBtn)} <ArrowRight size={16} /></>}
         </button>

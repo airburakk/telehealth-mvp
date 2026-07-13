@@ -223,23 +223,23 @@ export default function ClinicalDecisionPanel({
   const results = catMode ? catRes.filter((p) => !(p.code in sel)) : branchResults;
 
   return (
-    <div className="rounded-3xl border border-emerald-400/25 bg-[#161719] p-5 shadow-sm">
+    <div className="rounded-3xl border border-emerald-400/25 bg-[var(--c-panel)] p-5 shadow-sm">
       <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-300">
         <Stethoscope size={15} /> Klinik Kodlama & Tedavi Kararı
       </div>
-      <p className="mt-1 text-[11px] text-white/40">
+      <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
         Tanıyı seçin → tanıya uygun işlemler aktifleşir → ücret ve süreyi belirleyin → Kaydet ile dosya
         Sağlık Turizmi Acentesine iletilir. FHIR: tanı → Condition (ICD-10), kimlik → Patient.identifier.
       </p>
 
       {/* ── 1 · Tanı (ICD-10) + hasta kimliği ── */}
-      <div className="mt-4 rounded-2xl border border-white/10 p-3.5">
-        <div className="text-[11px] font-bold uppercase tracking-wide text-white/50">1 · Tanı (ICD-10)</div>
+      <div className="mt-4 rounded-2xl border border-[var(--c-hairline)] p-3.5">
+        <div className="text-[11px] font-bold uppercase tracking-wide text-[var(--c-ink-2)]">1 · Tanı (ICD-10)</div>
         {icd10Options.length > 0 && (
           <select
             value=""
             onChange={(e) => { if (e.target.value) { setIcd(e.target.value); setCodingSaved(false); setAiSugs(null); } }}
-            className="mt-2 w-full rounded-lg border border-white/15 bg-[#1E1F22] px-3 py-2 text-sm text-white/65 outline-none focus:border-[#28C8D8]"
+            className="mt-2 w-full rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2 text-sm text-[var(--c-ink-2)] outline-none focus:border-[var(--c-accent)]"
           >
             <option value="">Branşa özel yaygın tanı seç…</option>
             {icd10Options.map((o) => (
@@ -253,26 +253,26 @@ export default function ClinicalDecisionPanel({
           value={icd}
           onChange={(e) => { setIcd(e.target.value); setCodingSaved(false); setAiSugs(null); }}
           placeholder="ör. I20.9 (listeden seç ya da elle gir)"
-          className="mt-1.5 w-full rounded-lg border border-white/15 px-3 py-2 text-sm uppercase outline-none focus:border-[#28C8D8]"
+          className="mt-1.5 w-full rounded-lg border border-[var(--c-hairline)] px-3 py-2 text-sm uppercase outline-none focus:border-[var(--c-accent)]"
         />
-        {selectedIcdLabel && <p className="mt-1 text-xs text-[#28C8D8]">✓ {selectedIcdLabel}{mappedIcdCodes.has(icdNorm) ? " · ★ eşlenmiş işlem önerileri var" : ""}</p>}
+        {selectedIcdLabel && <p className="mt-1 text-xs text-[var(--c-accent)]">✓ {selectedIcdLabel}{mappedIcdCodes.has(icdNorm) ? " · ★ eşlenmiş işlem önerileri var" : ""}</p>}
 
         <div className="mt-3 flex flex-wrap items-end gap-2">
           <div className="min-w-[180px] flex-1">
-            <label className="text-[11px] font-medium text-white/50">Hasta kimlik no</label>
+            <label className="text-[11px] font-medium text-[var(--c-ink-2)]">Hasta kimlik no</label>
             <div className="mt-1 flex gap-1.5">
-              <select value={ptype} onChange={(e) => { setPtype(e.target.value); setCodingSaved(false); }} className="rounded-lg border border-white/15 px-2 py-2 text-sm outline-none focus:border-[#28C8D8]">
+              <select value={ptype} onChange={(e) => { setPtype(e.target.value); setCodingSaved(false); }} className="rounded-lg border border-[var(--c-hairline)] px-2 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
                 <option value="TC">TC</option>
                 <option value="PASSPORT">Pasaport</option>
                 <option value="OTHER">Diğer</option>
               </select>
-              <input value={pid} onChange={(e) => { setPid(e.target.value); setCodingSaved(false); }} placeholder="kimlik / pasaport no" className="w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]" />
+              <input value={pid} onChange={(e) => { setPid(e.target.value); setCodingSaved(false); }} placeholder="kimlik / pasaport no" className="w-full rounded-lg border border-[var(--c-hairline)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]" />
             </div>
           </div>
           <button
             onClick={saveCoding}
             disabled={codingSaving}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#28C8D8] px-3 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--c-accent)] px-3 py-2 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-60"
           >
             {codingSaving ? <Loader2 size={14} className="animate-spin" /> : codingSaved ? <Check size={14} /> : <Save size={14} />}
             {codingSaved ? "Kaydedildi" : "Kodlamayı kaydet"}
@@ -282,9 +282,9 @@ export default function ClinicalDecisionPanel({
       </div>
 
       {/* ── 2 · Tedavi / işlem seçimi — tanı seçilince aktifleşir ── */}
-      <div className={`mt-3 rounded-2xl border p-3.5 ${icdChosen ? "border-emerald-400/25" : "border-dashed border-white/10 bg-[#1E1F22]/60"}`}>
+      <div className={`mt-3 rounded-2xl border p-3.5 ${icdChosen ? "border-emerald-400/25" : "border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)]/60"}`}>
         <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-white/50">
+          <div className="text-[11px] font-bold uppercase tracking-wide text-[var(--c-ink-2)]">
             2 · Tedavi / İşlem {icdChosen ? "" : "(önce tanı seçin)"}
           </div>
           {icdChosen && (
@@ -300,7 +300,7 @@ export default function ClinicalDecisionPanel({
         </div>
 
         {!icdChosen ? (
-          <p className="mt-2 flex items-center gap-1.5 text-xs text-white/40"><Lock size={13} /> Tanı ICD-10 kodu seçildiğinde tanıya uygun tedavi/işlem listesi burada aktifleşir.</p>
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-[var(--c-ink-3)]"><Lock size={13} /> Tanı ICD-10 kodu seçildiğinde tanıya uygun tedavi/işlem listesi burada aktifleşir.</p>
         ) : (
           <>
             {/* Tanıya eşlenmiş işlemler (statik küratörlü eşleme) */}
@@ -327,14 +327,14 @@ export default function ClinicalDecisionPanel({
             {aiSugs && (
               <div className="mt-2 rounded-xl border border-violet-400/25 bg-violet-500/10 p-2.5">
                 <div className="text-[11px] font-semibold text-violet-300"><Sparkles size={11} className="inline" /> AI önerileri (endikatif — karar sizindir):</div>
-                {aiSugs.length === 0 && <p className="mt-1 text-[11px] text-white/40">AI bu tanı için havuzdan öneri çıkaramadı.</p>}
+                {aiSugs.length === 0 && <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">AI bu tanı için havuzdan öneri çıkaramadı.</p>}
                 <ul className="mt-1 space-y-1">
                   {aiSugs.filter((s) => !(s.code in sel)).map((s) => (
                     <li key={s.code} className="flex items-start justify-between gap-2 text-[12px]">
-                      <span className="min-w-0 text-white/75">
+                      <span className="min-w-0 text-[var(--c-ink)]">
                         <span className="font-medium">{s.name}</span>
-                        <span className="text-white/40"> · {s.code}</span>
-                        <span className="block text-[11px] text-white/50">{s.reason}</span>
+                        <span className="text-[var(--c-ink-3)]"> · {s.code}</span>
+                        <span className="block text-[11px] text-[var(--c-ink-2)]">{s.reason}</span>
                       </span>
                       <button onClick={() => add(s)} className="shrink-0 rounded-md border border-violet-400/30 px-2 py-0.5 text-[11px] font-medium text-violet-300 hover:bg-violet-500/15">Ekle</button>
                     </li>
@@ -346,32 +346,32 @@ export default function ClinicalDecisionPanel({
             {/* Arama: branş listesi / tüm katalog */}
             <div className="mt-2.5 flex items-center gap-1.5">
               <div className="relative flex-1">
-                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40" />
+                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--c-ink-3)]" />
                 <input
                   value={query}
                   onChange={(e) => catSearch(e.target.value)}
                   placeholder={catMode ? "Tüm katalogda ara…" : `${branchLabel} tedavisi ara…`}
-                  className="w-full rounded-lg border border-white/15 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-emerald-500"
+                  className="w-full rounded-lg border border-[var(--c-hairline)] py-1.5 pl-8 pr-2 text-sm outline-none focus:border-emerald-500"
                 />
               </div>
               <button
                 onClick={() => { setCatMode((v) => !v); setCatRes([]); }}
                 title="Branş dışı / sınıflandırılmamış işlemleri de ara"
-                className={`shrink-0 rounded-lg border px-2 py-1.5 text-[11px] font-medium ${catMode ? "border-emerald-400 bg-emerald-500/10 text-emerald-300" : "border-white/15 text-white/50 hover:bg-[#1E1F22]"}`}
+                className={`shrink-0 rounded-lg border px-2 py-1.5 text-[11px] font-medium ${catMode ? "border-emerald-400 bg-emerald-500/10 text-emerald-300" : "border-[var(--c-hairline)] text-white/50 hover:bg-[var(--c-surface)]"}`}
               >
                 Tüm katalog
               </button>
             </div>
 
             {query.trim().length >= (catMode ? 2 : 1) && (
-              <div className="mt-1.5 max-h-44 divide-y divide-white/10 overflow-y-auto rounded-lg border border-white/10">
-                {catLoading && <div className="px-3 py-2 text-xs text-white/40">Aranıyor…</div>}
-                {!catLoading && results.length === 0 && <div className="px-3 py-2 text-xs text-white/40">Sonuç yok.</div>}
+              <div className="mt-1.5 max-h-44 divide-y divide-white/10 overflow-y-auto rounded-lg border border-[var(--c-hairline)]">
+                {catLoading && <div className="px-3 py-2 text-xs text-[var(--c-ink-3)]">Aranıyor…</div>}
+                {!catLoading && results.length === 0 && <div className="px-3 py-2 text-xs text-[var(--c-ink-3)]">Sonuç yok.</div>}
                 {results.map((p) => (
                   <button key={p.code} onClick={() => add(p)} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-emerald-500/10">
                     <span className="min-w-0">
-                      <span className="block truncate text-white/75">{p.name}</span>
-                      <span className="text-[11px] text-white/40">{p.code} · {p.price ? formatTRY(doctorPrices[p.code] ?? p.price) : "fiyat yok"}{doctorPrices[p.code] ? " · sizin fiyatınız" : ""}</span>
+                      <span className="block truncate text-[var(--c-ink)]">{p.name}</span>
+                      <span className="text-[11px] text-[var(--c-ink-3)]">{p.code} · {p.price ? formatTRY(doctorPrices[p.code] ?? p.price) : "fiyat yok"}{doctorPrices[p.code] ? " · sizin fiyatınız" : ""}</span>
                     </span>
                     <Plus size={15} className="shrink-0 text-emerald-300" />
                   </button>
@@ -382,20 +382,20 @@ export default function ClinicalDecisionPanel({
             {/* Seçilenler + slider ücret */}
             <div className="mt-3">
               {entries.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-white/15 bg-[#1E1F22] px-3 py-3 text-center text-xs text-white/40">Henüz işlem eklenmedi. Önerilerden veya aramadan ekleyin.</p>
+                <p className="rounded-lg border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-3 text-center text-xs text-[var(--c-ink-3)]">Henüz işlem eklenmedi. Önerilerden veya aramadan ekleyin.</p>
               ) : (
                 <ul className="space-y-2">
                   {entries.map(([code, v]) => {
                     const floor = v.floor > 0 ? v.floor : 0;
                     const ceil = floor * CEIL_MULT;
-                    const color = floor > 0 ? hueFor(v.priceTRY, floor, ceil) : "#28C8D8";
+                    const color = floor > 0 ? hueFor(v.priceTRY, floor, ceil) : "var(--c-accent)";
                     const step = floor > 0 ? Math.max(1, Math.round((ceil - floor) / 100)) : 1;
                     return (
-                      <li key={code} className="rounded-lg border border-white/10 p-2.5">
+                      <li key={code} className="rounded-lg border border-[var(--c-hairline)] p-2.5">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <div className="text-sm text-white/75">{v.name}</div>
-                            <div className="text-[11px] text-white/40">{code}{floor > 0 ? ` · taban ${formatTRY(floor)} · tavan ${formatTRY(ceil)}` : ""}</div>
+                            <div className="text-sm text-[var(--c-ink)]">{v.name}</div>
+                            <div className="text-[11px] text-[var(--c-ink-3)]">{code}{floor > 0 ? ` · taban ${formatTRY(floor)} · tavan ${formatTRY(ceil)}` : ""}</div>
                           </div>
                           <button onClick={() => remove(code)} className="shrink-0 rounded p-1 text-white/40 hover:bg-red-500/10 hover:text-red-500"><X size={15} /></button>
                         </div>
@@ -406,8 +406,8 @@ export default function ClinicalDecisionPanel({
                           </div>
                         ) : (
                           <div className="mt-1.5 flex items-center gap-2">
-                            <span className="text-[11px] text-white/40">Fiyat (₺):</span>
-                            <input type="number" min={0} value={v.priceTRY || ""} onChange={(e) => setPrice(code, Math.max(0, Number(e.target.value)))} className="w-28 rounded-md border border-white/15 px-2 py-1 text-sm outline-none focus:border-emerald-500" />
+                            <span className="text-[11px] text-[var(--c-ink-3)]">Fiyat (₺):</span>
+                            <input type="number" min={0} value={v.priceTRY || ""} onChange={(e) => setPrice(code, Math.max(0, Number(e.target.value)))} className="w-28 rounded-md border border-[var(--c-hairline)] px-2 py-1 text-sm outline-none focus:border-emerald-500" />
                           </div>
                         )}
                       </li>
@@ -418,9 +418,9 @@ export default function ClinicalDecisionPanel({
             </div>
 
             {entries.length > 0 && (
-              <div className="mt-2.5 flex items-center justify-between rounded-lg bg-[#1E1F22] px-3 py-2 text-sm">
-                <span className="text-white/50">{entries.length} işlem · toplam</span>
-                <span className="font-bold text-[#F4F5F3]">{formatTRY(totalTRY)} <span className="text-xs font-normal text-white/40">≈ ${tryToUsd(totalTRY, rate).toLocaleString("en-US")}</span></span>
+              <div className="mt-2.5 flex items-center justify-between rounded-lg bg-[var(--c-surface)] px-3 py-2 text-sm">
+                <span className="text-[var(--c-ink-2)]">{entries.length} işlem · toplam</span>
+                <span className="font-bold text-[var(--c-ink)]">{formatTRY(totalTRY)} <span className="text-xs font-normal text-[var(--c-ink-3)]">≈ ${tryToUsd(totalTRY, rate).toLocaleString("en-US")}</span></span>
               </div>
             )}
           </>
@@ -428,50 +428,50 @@ export default function ClinicalDecisionPanel({
       </div>
 
       {/* ── 3 · Öngörülen tedavi süresi ── */}
-      <div className={`mt-3 rounded-2xl border p-3.5 ${icdChosen ? "border-white/10" : "border-dashed border-white/10 bg-[#1E1F22]/60"}`}>
-        <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-white/50">
+      <div className={`mt-3 rounded-2xl border p-3.5 ${icdChosen ? "border-[var(--c-hairline)]" : "border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)]/60"}`}>
+        <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-[var(--c-ink-2)]">
           <CalendarRange size={13} /> 3 · Öngörülen tedavi süresi
         </div>
         <div className="mt-2 flex items-center gap-2 text-sm">
-          <input type="number" min={1} max={365} value={daysMin} onChange={(e) => setDaysMin(e.target.value)} placeholder="3" disabled={!icdChosen} className="w-20 rounded-lg border border-white/15 px-2.5 py-2 text-center outline-none focus:border-[#28C8D8] disabled:bg-[#1E1F22]" />
-          <span className="text-white/40">–</span>
-          <input type="number" min={1} max={365} value={daysMax} onChange={(e) => setDaysMax(e.target.value)} placeholder="7" disabled={!icdChosen} className="w-20 rounded-lg border border-white/15 px-2.5 py-2 text-center outline-none focus:border-[#28C8D8] disabled:bg-[#1E1F22]" />
-          <span className="text-white/50">gün <span className="text-white/40">(ör. 3 – 7 gün)</span></span>
+          <input type="number" min={1} max={365} value={daysMin} onChange={(e) => setDaysMin(e.target.value)} placeholder="3" disabled={!icdChosen} className="w-20 rounded-lg border border-[var(--c-hairline)] px-2.5 py-2 text-center outline-none focus:border-[var(--c-accent)] disabled:bg-[var(--c-surface)]" />
+          <span className="text-[var(--c-ink-3)]">–</span>
+          <input type="number" min={1} max={365} value={daysMax} onChange={(e) => setDaysMax(e.target.value)} placeholder="7" disabled={!icdChosen} className="w-20 rounded-lg border border-[var(--c-hairline)] px-2.5 py-2 text-center outline-none focus:border-[var(--c-accent)] disabled:bg-[var(--c-surface)]" />
+          <span className="text-[var(--c-ink-2)]">gün <span className="text-[var(--c-ink-3)]">(ör. 3 – 7 gün)</span></span>
         </div>
         {icdChosen && daysMin && daysMax && !daysOk && <p className="mt-1.5 text-[11px] text-red-300">Geçerli bir gün aralığı girin (alt sınır ≥ 1, üst sınır ≥ alt sınır).</p>}
       </div>
 
       {/* ── 4 · Hastane seçimi (HealthTürkiye dizini) ── */}
-      <div className={`mt-3 rounded-2xl border p-3.5 ${icdChosen ? "border-white/10" : "border-dashed border-white/10 bg-[#1E1F22]/60"}`}>
-        <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-white/50">
+      <div className={`mt-3 rounded-2xl border p-3.5 ${icdChosen ? "border-[var(--c-hairline)]" : "border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)]/60"}`}>
+        <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-[var(--c-ink-2)]">
           <Building2 size={13} /> 4 · Hastane (isteğe bağlı)
         </div>
         {hospName ? (
-          <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-[#28C8D8]/25 bg-[#28C8D8]/10 px-3 py-2 text-sm">
-            <span className="min-w-0 truncate font-medium text-white/75">{hospName}{hospId ? <span className="text-[11px] font-normal text-white/40"> · HealthTürkiye #{hospId}</span> : ""}</span>
+          <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 px-3 py-2 text-sm">
+            <span className="min-w-0 truncate font-medium text-[var(--c-ink)]">{hospName}{hospId ? <span className="text-[11px] font-normal text-[var(--c-ink-3)]"> · HealthTürkiye #{hospId}</span> : ""}</span>
             <button onClick={() => { setHospId(null); setHospName(""); }} className="shrink-0 rounded p-1 text-white/40 hover:bg-red-500/10 hover:text-red-500"><X size={14} /></button>
           </div>
         ) : (
           <>
             <div className="relative mt-2">
-              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40" />
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--c-ink-3)]" />
               <input
                 value={hospQ}
                 onChange={(e) => hospSearch(e.target.value)}
                 placeholder="HealthTürkiye tesis dizininde ara (ad/şehir)…"
                 disabled={!icdChosen}
-                className="w-full rounded-lg border border-white/15 py-2 pl-8 pr-2 text-sm outline-none focus:border-teal-500 disabled:bg-[#1E1F22]"
+                className="w-full rounded-lg border border-[var(--c-hairline)] py-2 pl-8 pr-2 text-sm outline-none focus:border-teal-500 disabled:bg-[var(--c-surface)]"
               />
             </div>
-            {hospLoading && <div className="mt-1.5 text-xs text-white/40">Aranıyor…</div>}
+            {hospLoading && <div className="mt-1.5 text-xs text-[var(--c-ink-3)]">Aranıyor…</div>}
             {hospRes.length > 0 && (
-              <ul className="mt-1.5 max-h-40 divide-y divide-white/10 overflow-y-auto rounded-lg border border-white/10">
+              <ul className="mt-1.5 max-h-40 divide-y divide-white/10 overflow-y-auto rounded-lg border border-[var(--c-hairline)]">
                 {hospRes.map((h) => (
                   <li key={h.id}>
-                    <button onClick={() => { setHospId(h.id); setHospName(h.name); setHospRes([]); setHospQ(""); }} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-[#28C8D8]/10">
+                    <button onClick={() => { setHospId(h.id); setHospName(h.name); setHospRes([]); setHospQ(""); }} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-[var(--c-accent)]/10">
                       <span className="min-w-0">
                         <span className="flex items-center gap-1.5">
-                          <span className="min-w-0 truncate text-white/75">{h.name}</span>
+                          <span className="min-w-0 truncate text-[var(--c-ink)]">{h.name}</span>
                           {/* Sağlık turizmi yetki belgesi (HealthTürkiye dizini) — yalnız pozitif rozet */}
                           {h.authorizationNumber && (
                             <span title="Sağlık turizmi yetki belgesi (HealthTürkiye)" className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 ring-1 ring-emerald-400/25">
@@ -479,30 +479,30 @@ export default function ClinicalDecisionPanel({
                             </span>
                           )}
                         </span>
-                        <span className="text-[11px] text-white/40">
+                        <span className="text-[11px] text-[var(--c-ink-3)]">
                           {h.cityName ?? "—"}{h.facilityTypeName ? ` · ${h.facilityTypeName}` : ""}
                           {h.totalPersonnel ? ` · ${h.totalPersonnel} personel` : ""}
                           {h.cityHasAirport ? " · ✈ havalimanı" : ""}
                         </span>
                         {/* Detay zenginleştirmesi (HealthTürkiye): hizmet dilleri + akreditasyon adları */}
                         {((h.languages?.length ?? 0) > 0 || (h.accreditations?.length ?? 0) > 0) && (
-                          <span className="block truncate text-[10px] text-white/40">
+                          <span className="block truncate text-[10px] text-[var(--c-ink-3)]">
                             {(h.languages?.length ?? 0) > 0 && <>🌐 {h.languages!.slice(0, 4).join(", ")}{h.languages!.length > 4 ? ` +${h.languages!.length - 4}` : ""}</>}
                             {(h.languages?.length ?? 0) > 0 && (h.accreditations?.length ?? 0) > 0 && " · "}
                             {(h.accreditations?.length ?? 0) > 0 && <>🏅 {h.accreditations!.join(", ")}</>}
                           </span>
                         )}
                       </span>
-                      <Plus size={14} className="shrink-0 text-[#28C8D8]" />
+                      <Plus size={14} className="shrink-0 text-[var(--c-accent)]" />
                     </button>
                   </li>
                 ))}
               </ul>
             )}
             {hospSearched && !hospLoading && hospRes.length === 0 && hospQ.trim().length >= 2 && (
-              <div className="mt-1.5 rounded-lg border border-dashed border-white/15 px-3 py-2 text-[11px] text-white/50">
+              <div className="mt-1.5 rounded-lg border border-dashed border-[var(--c-hairline)] px-3 py-2 text-[11px] text-[var(--c-ink-2)]">
                 Dizinde sonuç yok. Hastane adını serbest yazmak için:{" "}
-                <button onClick={() => { setHospName(hospQ.trim()); setHospId(null); }} className="font-semibold text-[#28C8D8] hover:underline">
+                <button onClick={() => { setHospName(hospQ.trim()); setHospId(null); }} className="font-semibold text-[var(--c-accent)] hover:underline">
                   &quot;{hospQ.trim()}&quot; olarak kullan
                 </button>
               </div>
@@ -513,7 +513,7 @@ export default function ClinicalDecisionPanel({
 
       {/* ── 5 · Kaydet → STA'ya iletim ── */}
       {sentAt && (
-        <div className="mt-3 flex items-start gap-2 rounded-xl bg-[#28C8D8]/10 p-2.5 text-[11px] leading-relaxed text-[#28C8D8] ring-1 ring-[#28C8D8]/20">
+        <div className="mt-3 flex items-start gap-2 rounded-xl bg-[var(--c-accent)]/10 p-2.5 text-[11px] leading-relaxed text-[var(--c-accent)] ring-1 ring-[var(--c-accent)]/20">
           <Check size={14} className="mt-0.5 shrink-0" />
           <span>Dosya Sağlık Turizmi Acentesine iletildi ({new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" }).format(new Date(sentAt))}). Yeniden kaydetmek acente dosyasını günceller.</span>
         </div>
@@ -529,7 +529,7 @@ export default function ClinicalDecisionPanel({
         {saving ? <Loader2 size={15} className="animate-spin" /> : sentAt ? <Send size={15} /> : <ClipboardList size={15} />}
         {saving ? "Kaydediliyor…" : sentAt ? "Güncelle (acente dosyası güncellenir)" : "Kaydet — Sağlık Turizmi Acentesine ilet"}
       </button>
-      <p className="mt-1.5 text-[10px] leading-relaxed text-white/40">
+      <p className="mt-1.5 text-[10px] leading-relaxed text-[var(--c-ink-3)]">
         Acenteye YALNIZ: hasta adı, ülke, dil, iletişim tercihi, seçtiğiniz işlem ve ücretler, öngörülen süre
         ve hastane gider. Tıbbi belge, görüntüleme, test sonucu ve şikâyet metni acenteyle PAYLAŞILMAZ.
       </p>

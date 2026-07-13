@@ -19,7 +19,7 @@ export function AuraClosing() {
           <div className="mt-10 flex justify-center">
             <Link
               href="/giris"
-              className="group relative inline-flex items-center gap-3 overflow-hidden rounded-lg border border-[var(--aura-accent)]/60 px-8 py-4 text-base font-semibold text-[var(--aura-ink)] transition-transform duration-200 hover:translate-x-1 active:scale-[0.98]"
+              className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-[var(--aura-accent)]/60 px-8 py-4 text-base font-semibold text-[var(--aura-ink)] transition-transform duration-200 hover:translate-x-1 active:scale-[0.98]"
             >
               <span
                 aria-hidden

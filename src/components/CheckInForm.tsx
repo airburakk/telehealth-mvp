@@ -99,47 +99,47 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
   const m = result ? severityMeta(result.severity) : null;
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
-      <h2 className="font-bold text-[#F4F5F3]">{t("Bugünkü kontrol")}</h2>
-      <p className="text-sm text-white/50">{t("Durumunuzu paylaşın; ekibiniz uzaktan izliyor.")}</p>
+    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
+      <h2 className="font-bold text-[var(--c-ink)]">{t("Bugünkü kontrol")}</h2>
+      <p className="text-sm text-[var(--c-ink-2)]">{t("Durumunuzu paylaşın; ekibiniz uzaktan izliyor.")}</p>
 
       {/* Ağrı */}
       <div className="mt-5">
         <div className="flex items-center justify-between text-sm">
-          <span className="inline-flex items-center gap-1.5 font-medium text-white/75"><Activity size={15} /> {t("Ağrı düzeyi")}</span>
-          <span className="font-semibold text-[#F4F5F3]">{pain}/10</span>
+          <span className="inline-flex items-center gap-1.5 font-medium text-[var(--c-ink)]"><Activity size={15} /> {t("Ağrı düzeyi")}</span>
+          <span className="font-semibold text-[var(--c-ink)]">{pain}/10</span>
         </div>
-        <input type="range" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} className="mt-2 w-full accent-[#28C8D8]" />
+        <input type="range" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} className="mt-2 w-full accent-[var(--c-accent)]" />
       </div>
 
       {/* Ateş */}
       <div className="mt-4">
-        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-white/75"><Thermometer size={15} /> {t("Ateş (°C)")}</span>
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--c-ink)]"><Thermometer size={15} /> {t("Ateş (°C)")}</span>
         <input
           type="number" step="0.1" min={34} max={43} value={feverC}
           onChange={(e) => setFeverC(Number(e.target.value))}
-          className="mt-1.5 w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]"
+          className="mt-1.5 w-full rounded-lg border border-[var(--c-hairline)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]"
         />
       </div>
 
       {/* İlaç */}
-      <button onClick={() => setMeds((v) => !v)} className="mt-4 flex w-full items-center justify-between rounded-lg border border-white/10 px-3 py-2.5 text-start hover:border-white/15">
-        <span className="inline-flex items-center gap-2 text-sm font-medium text-white/75"><Pill size={16} className="text-white/50" /> {t("İlaçlarımı aldım")}</span>
-        <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${meds ? "bg-emerald-500" : "bg-white/20"}`}>
-          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-[#161719] shadow transition-all ${meds ? "start-[22px]" : "start-0.5"}`} />
+      <button onClick={() => setMeds((v) => !v)} className="mt-4 flex w-full items-center justify-between rounded-lg border border-[var(--c-hairline)] px-3 py-2.5 text-start hover:border-[var(--c-hairline)]">
+        <span className="inline-flex items-center gap-2 text-sm font-medium text-[var(--c-ink)]"><Pill size={16} className="text-[var(--c-ink-2)]" /> {t("İlaçlarımı aldım")}</span>
+        <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${meds ? "bg-emerald-500" : "bg-[var(--c-ink)]/20"}`}>
+          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-[var(--c-panel)] shadow transition-all ${meds ? "start-[22px]" : "start-0.5"}`} />
         </span>
       </button>
 
       {/* Branşa özel günlük kontrol */}
       {items.length > 0 && (
-        <div className="mt-4 rounded-lg border border-white/10 bg-[#1E1F22] p-3">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
+        <div className="mt-4 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] p-3">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
             <ListChecks size={14} /> {t(branch)} · {t("günlük kontrol")}
           </div>
           <div className="mt-2.5 space-y-2.5">
             {items.map((it) => (
               <div key={it.id}>
-                <div className="text-sm text-white/75">{t(it.label)}</div>
+                <div className="text-sm text-[var(--c-ink)]">{t(it.label)}</div>
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {it.options.map((o) => {
                     const active = checklist[it.id] === o.v;
@@ -148,7 +148,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
                         key={o.v}
                         type="button"
                         onClick={() => setChecklist((p) => ({ ...p, [it.id]: active ? "" : o.v }))}
-                        className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-white/15 bg-[#161719] text-white/65 hover:border-[#28C8D8]/40"}`}
+                        className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-white/65 hover:border-[var(--c-accent)]/40"}`}
                       >
                         {t(o.v)}
                       </button>
@@ -163,36 +163,36 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
 
       {/* Not */}
       <div className="mt-4">
-        <span className="text-sm font-medium text-white/75">{t("Belirti / not")}</span>
+        <span className="text-sm font-medium text-[var(--c-ink)]">{t("Belirti / not")}</span>
         <textarea
           value={note} onChange={(e) => setNote(e.target.value)} rows={3}
           placeholder={t("Örn. Yara bölgesinde hafif kızarıklık var…")}
-          className="mt-1.5 w-full resize-none rounded-lg border border-white/15 p-2.5 text-sm outline-none focus:border-[#28C8D8]"
+          className="mt-1.5 w-full resize-none rounded-lg border border-[var(--c-hairline)] p-2.5 text-sm outline-none focus:border-[var(--c-accent)]"
         />
       </div>
 
       {/* Foto — küçültülüp AI görsel ön-değerlendirmesine gönderilir */}
       {photo ? (
-        <div className="mt-3 flex items-center gap-3 rounded-lg border border-white/10 bg-[#1E1F22] p-2.5">
+        <div className="mt-3 flex items-center gap-3 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] p-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={photo} alt={t("İyileşme fotoğrafı")} className="h-16 w-16 shrink-0 rounded-md object-cover ring-1 ring-white/10" />
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium text-white/75">{t("Fotoğraf eklendi")}</div>
-            <div className="text-xs text-white/40">{t("Gönderince AI görsel ön-değerlendirme yapar.")}</div>
+            <div className="text-sm font-medium text-[var(--c-ink)]">{t("Fotoğraf eklendi")}</div>
+            <div className="text-xs text-[var(--c-ink-3)]">{t("Gönderince AI görsel ön-değerlendirme yapar.")}</div>
           </div>
-          <button type="button" onClick={() => setPhoto("")} className="rounded-md p-1.5 text-white/40 hover:bg-white/15 hover:text-white/65">
+          <button type="button" onClick={() => setPhoto("")} className="rounded-md p-1.5 text-[var(--c-ink-3)] hover:bg-[var(--c-ink)]/15 hover:text-[var(--c-ink-2)]">
             <X size={16} />
           </button>
         </div>
       ) : (
-        <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-white/15 bg-[#1E1F22] px-3 py-2.5 text-sm text-white/65 hover:border-teal-400">
-          {preparing ? <Loader2 size={16} className="animate-spin text-white/40" /> : <Camera size={16} className="text-white/40" />}
+        <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5 text-sm text-[var(--c-ink-2)] hover:border-teal-400">
+          {preparing ? <Loader2 size={16} className="animate-spin text-[var(--c-ink-3)]" /> : <Camera size={16} className="text-[var(--c-ink-3)]" />}
           {preparing ? t("Fotoğraf hazırlanıyor…") : t("İyileşme fotoğrafı ekle (opsiyonel)")}
           <input type="file" accept="image/*" className="hidden" disabled={preparing} onChange={onPickPhoto} />
         </label>
       )}
 
-      <button onClick={submit} disabled={submitting} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-3 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60">
+      <button onClick={submit} disabled={submitting} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-3 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-60">
         {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t("Kontrolü gönder")}
       </button>
 

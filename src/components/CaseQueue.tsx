@@ -90,19 +90,19 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
       {/* Filters */}
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <div className="relative">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-ink-3)]" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={serverFilters ? "Bu sayfada ara…" : "Hasta ara…"}
-            className="rounded-lg border border-white/15 bg-[#161719] py-2 pl-9 pr-3 text-sm outline-none focus:border-[#28C8D8]"
+            className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] py-2 pl-9 pr-3 text-sm outline-none focus:border-[var(--c-accent)]"
           />
         </div>
-        <select value={branchValue} onChange={(e) => onBranchChange(e.target.value)} className="rounded-lg border border-white/15 bg-[#161719] px-3 py-2 text-sm outline-none focus:border-[#28C8D8]">
+        <select value={branchValue} onChange={(e) => onBranchChange(e.target.value)} className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
           <option value="all">Tüm branşlar</option>
           {branches.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
-        <select value={statusValue} onChange={(e) => onStatusChange(e.target.value)} className="rounded-lg border border-white/15 bg-[#161719] px-3 py-2 text-sm outline-none focus:border-[#28C8D8]">
+        <select value={statusValue} onChange={(e) => onStatusChange(e.target.value)} className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
           <option value="all">Tüm durumlar</option>
           {Object.entries(CASE_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
@@ -111,7 +111,7 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
       {/* List */}
       <div className="mt-4 space-y-2.5">
         {filtered.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-white/15 bg-[#161719] py-12 text-center text-white/40">
+          <div className="rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-panel)] py-12 text-center text-[var(--c-ink-3)]">
             <Inbox className="mx-auto mb-2" /> Eşleşen vaka yok.
           </div>
         )}
@@ -122,7 +122,7 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
             <Link
               key={r.id}
               href={`/doktor/vaka/${r.id}`}
-              className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-[#161719] p-4 transition hover:border-[#28C8D8]/30 hover:shadow-sm"
+              className="group flex items-center gap-4 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 transition hover:border-[var(--c-accent)]/30 hover:shadow-sm"
             >
               <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-sm font-bold ring-1 ${u.badge}`}>
                 {r.urgency}
@@ -130,19 +130,19 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#F4F5F3]">{r.patientName}</span>
-                  <span className="text-xs text-white/40">{countryFlag(r.country)} {countryName(r.country)}</span>
+                  <span className="font-semibold text-[var(--c-ink)]">{r.patientName}</span>
+                  <span className="text-xs text-[var(--c-ink-3)]">{countryFlag(r.country)} {countryName(r.country)}</span>
                 </div>
-                <div className="mt-0.5 flex items-center gap-2 text-sm text-white/50">
-                  <span className="font-medium text-[#1FA9B8]">{r.branch}</span>
+                <div className="mt-0.5 flex items-center gap-2 text-sm text-[var(--c-ink-2)]">
+                  <span className="font-medium text-[var(--c-accent-strong)]">{r.branch}</span>
                   <span>·</span>
                   <span>{formatDateTime(r.createdAt)}</span>
-                  {r.hasFiles && <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-white/50">📎 dosya</span>}
+                  {r.hasFiles && <span className="rounded bg-[var(--c-ink)]/10 px-1.5 py-0.5 text-[10px] text-[var(--c-ink-2)]">📎 dosya</span>}
                   {r.isTourism && <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300">🧳 turizm</span>}
                 </div>
               </div>
               <span className={`hidden sm:inline rounded-full px-2.5 py-1 text-xs font-medium ${st.color}`}>{st.label}</span>
-              <ArrowRight size={18} className="shrink-0 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-[#1FA9B8]" />
+              <ArrowRight size={18} className="shrink-0 text-[var(--c-ink-3)] transition group-hover:translate-x-0.5 group-hover:text-[var(--c-accent-strong)]" />
             </Link>
           );
         })}
@@ -153,9 +153,9 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
 
 function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#161719] p-3.5">
-      <div className={`text-2xl font-bold ${tone ?? "text-[#F4F5F3]"}`}>{value}</div>
-      <div className="text-xs text-white/50">{label}</div>
+    <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3.5">
+      <div className={`text-2xl font-bold ${tone ?? "text-[var(--c-ink)]"}`}>{value}</div>
+      <div className="text-xs text-[var(--c-ink-2)]">{label}</div>
     </div>
   );
 }

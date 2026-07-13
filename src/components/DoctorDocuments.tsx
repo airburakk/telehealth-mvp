@@ -127,32 +127,32 @@ export function DoctorDocuments({
         const mine = docs.filter((d) => d.type === type);
         const ok = mine.length > 0;
         return (
-          <div key={type} className={`rounded-3xl border p-4 ${required && !ok ? "border-amber-400/25 bg-amber-500/10" : ok ? "border-emerald-400/25 bg-emerald-500/10" : "border-white/10 bg-[#161719]"}`}>
+          <div key={type} className={`rounded-3xl border p-4 ${required && !ok ? "border-amber-400/25 bg-amber-500/10" : ok ? "border-emerald-400/25 bg-emerald-500/10" : "border-[var(--c-hairline)] bg-[var(--c-panel)]"}`}>
             <div className="flex items-start gap-3">
-              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${ok ? "bg-emerald-500 text-white" : required ? "bg-amber-400 text-white" : "bg-white/10 text-white/50"}`}>
+              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${ok ? "bg-emerald-500 text-white" : required ? "bg-amber-400 text-white" : "bg-[var(--c-ink)]/10 text-white/50"}`}>
                 {ok ? <Check size={18} /> : <Icon size={18} />}
               </span>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 text-sm font-semibold text-[#F4F5F3]">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]">
                   {label}
                   {required ? (
                     <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-300">Zorunlu</span>
                   ) : (
-                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase text-white/50">İhtiyari</span>
+                    <span className="rounded-full bg-[var(--c-ink)]/10 px-2 py-0.5 text-[10px] font-bold uppercase text-[var(--c-ink-2)]">İhtiyari</span>
                   )}
                 </div>
-                <p className="mt-0.5 text-xs text-white/50">{desc}</p>
+                <p className="mt-0.5 text-xs text-[var(--c-ink-2)]">{desc}</p>
 
                 {/* Yüklü belgeler */}
                 {mine.length > 0 && (
                   <ul className="mt-2 space-y-1">
                     {mine.map((d) => (
-                      <li key={d.id} className="flex items-center justify-between gap-2 rounded-lg bg-[#161719] px-3 py-1.5 text-xs ring-1 ring-white/10">
-                        <span className="flex min-w-0 items-center gap-1.5 text-white/65">
-                          <FileText size={13} className="shrink-0 text-white/40" />
+                      <li key={d.id} className="flex items-center justify-between gap-2 rounded-lg bg-[var(--c-panel)] px-3 py-1.5 text-xs ring-1 ring-white/10">
+                        <span className="flex min-w-0 items-center gap-1.5 text-[var(--c-ink-2)]">
+                          <FileText size={13} className="shrink-0 text-[var(--c-ink-3)]" />
                           <span className="truncate">{d.label}</span>
                         </span>
-                        <button onClick={() => remove(d)} disabled={busy === type} className="shrink-0 text-white/40 hover:text-red-300 disabled:opacity-50" aria-label="Kaldır">
+                        <button onClick={() => remove(d)} disabled={busy === type} className="shrink-0 text-[var(--c-ink-3)] hover:text-red-300 disabled:opacity-50" aria-label="Kaldır">
                           <Trash2 size={14} />
                         </button>
                       </li>
@@ -161,21 +161,21 @@ export function DoctorDocuments({
                 )}
 
                 {/* Yükleme butonu */}
-                <label className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-white/15 bg-[#161719] px-3 py-1.5 text-xs font-medium text-white/65 hover:border-[#28C8D8] hover:text-[#17919E]">
+                <label className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-1.5 text-xs font-medium text-[var(--c-ink-2)] hover:border-[var(--c-accent)] hover:text-[var(--c-accent-stronger)]">
                   {busy === type ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
                   {ok && (type === "DIPLOMA" || type === "MMSS") ? "Değiştir" : "Dosya yükle"}
                   <input type="file" accept={ACCEPT} className="hidden" disabled={busy === type}
                     onChange={(e) => { upload(type, e.target.files?.[0] ?? null); e.target.value = ""; }} />
                 </label>
-                <span className="ml-2 text-[10px] text-white/40">PDF / JPG / PNG · ~8 MB'a kadar</span>
+                <span className="ml-2 text-[10px] text-[var(--c-ink-3)]">PDF / JPG / PNG · ~8 MB'a kadar</span>
               </div>
             </div>
 
             {/* MMSS poliçe bilgileri formu (yalnız MMSS kartında) */}
             {type === "MMSS" && (
-              <div className="mt-3 rounded-2xl bg-[#161719] p-3 ring-1 ring-white/10">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Poliçe Bilgileri</div>
-                <p className="mt-0.5 text-[11px] text-white/40">Teminat limiti, malpraktis/komplikasyon ek teminat hesabında kullanılır.</p>
+              <div className="mt-3 rounded-2xl bg-[var(--c-panel)] p-3 ring-1 ring-white/10">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">Poliçe Bilgileri</div>
+                <p className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">Teminat limiti, malpraktis/komplikasyon ek teminat hesabında kullanılır.</p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   <Field label="Sigorta şirketi">
                     <input value={insurer} onChange={(e) => { setInsurer(e.target.value); setMmssSaved(false); }} placeholder="Örn. Allianz" className={inputCls} />
@@ -186,7 +186,7 @@ export function DoctorDocuments({
                   <Field label="Teminat limiti">
                     <div className="flex gap-1.5">
                       <input value={coverageLimit} onChange={(e) => { setCoverageLimit(e.target.value.replace(/[^0-9]/g, "")); setMmssSaved(false); }} inputMode="numeric" placeholder="Örn. 2000000" className={inputCls} />
-                      <select value={currency} onChange={(e) => { setCurrency(e.target.value); setMmssSaved(false); }} className="rounded-lg border border-white/15 px-2 text-sm">
+                      <select value={currency} onChange={(e) => { setCurrency(e.target.value); setMmssSaved(false); }} className="rounded-lg border border-[var(--c-hairline)] px-2 text-sm">
                         <option value="TRY">₺</option>
                         <option value="USD">$</option>
                       </select>
@@ -197,7 +197,7 @@ export function DoctorDocuments({
                   </Field>
                 </div>
                 <button onClick={saveMmss} disabled={savingMmss || !insurer.trim() || coverageLimit === "" || (!policyNo.trim() && !initialMmss.policyNoSet)}
-                  className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-3 py-1.5 text-xs font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50">
+                  className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-accent)] px-3 py-1.5 text-xs font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-50">
                   {savingMmss ? <Loader2 size={13} className="animate-spin" /> : mmssSaved ? <Check size={13} /> : <ShieldCheck size={13} />}
                   {mmssSaved ? "Bilgiler kayıtlı" : "Bilgileri kaydet"}
                 </button>
@@ -214,12 +214,12 @@ export function DoctorDocuments({
   );
 }
 
-const inputCls = "w-full rounded-lg border border-white/15 px-2.5 py-1.5 text-sm focus:border-[#28C8D8] focus:outline-none";
+const inputCls = "w-full rounded-lg border border-[var(--c-hairline)] px-2.5 py-1.5 text-sm focus:border-[var(--c-accent)] focus:outline-none";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-medium text-white/50">{label}</span>
+      <span className="mb-1 block text-[11px] font-medium text-[var(--c-ink-2)]">{label}</span>
       {children}
     </label>
   );

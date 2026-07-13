@@ -32,15 +32,15 @@ export default async function DoctorApprovalPage() {
   return (
     <div className="mx-auto max-w-3xl px-5 py-10">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><ShieldCheck size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><ShieldCheck size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#F4F5F3]">Doktor Doğrulama Onayı</h1>
-          <p className="text-sm text-white/50">Kaydolan doktorları inceleyip doğrulayın — onaylanmadan dizinde ve eşleştirmede görünmezler.</p>
+          <h1 className="text-2xl font-bold text-[var(--c-ink)]">Doktor Doğrulama Onayı</h1>
+          <p className="text-sm text-[var(--c-ink-2)]">Kaydolan doktorları inceleyip doğrulayın — onaylanmadan dizinde ve eşleştirmede görünmezler.</p>
         </div>
       </div>
 
       {pending.length === 0 ? (
-        <div className="mt-8 rounded-3xl border border-dashed border-white/15 bg-[#1E1F22] p-10 text-center text-sm text-white/50">
+        <div className="mt-8 rounded-3xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] p-10 text-center text-sm text-[var(--c-ink-2)]">
           Onay bekleyen doktor yok.
         </div>
       ) : (
@@ -57,14 +57,14 @@ export default async function DoctorApprovalPage() {
             try { if (d.procedures) procCount = Object.keys(JSON.parse(d.procedures) as object).length; } catch { procCount = 0; }
 
             return (
-              <div key={d.id} className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+              <div key={d.id} className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2 text-base font-bold text-[#F4F5F3]">
-                      <Stethoscope size={16} className="text-[#1FA9B8]" /> {d.title} {d.name}
+                    <div className="flex items-center gap-2 text-base font-bold text-[var(--c-ink)]">
+                      <Stethoscope size={16} className="text-[var(--c-accent-strong)]" /> {d.title} {d.name}
                     </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/50">
-                      <span className="font-medium text-[#1FA9B8]">{d.branch || "— branş belirtilmemiş"}</span>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--c-ink-2)]">
+                      <span className="font-medium text-[var(--c-accent-strong)]">{d.branch || "— branş belirtilmemiş"}</span>
                       <span className="inline-flex items-center gap-1"><MapPin size={12} /> {d.city || "—"}</span>
                       <span className="inline-flex items-center gap-1"><Globe size={12} /> {d.languages}</span>
                     </div>
@@ -77,18 +77,18 @@ export default async function DoctorApprovalPage() {
                     )}
                     {/* HealthTürkiye dizin doğrulaması (FAZ 6) — kayıtta ad-soyad eşleşmesi arandı */}
                     {d.registryStatus === "FOUND" ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#28C8D8]/10 px-2.5 py-1 text-xs font-semibold text-[#28C8D8] ring-1 ring-[#28C8D8]/25" title="healthturkiye.gov.tr doktor dizininde ad-soyad eşleşmesi bulundu"><BadgeCheck size={13} /> HealthTürkiye kaydı ✓</span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--c-accent)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--c-accent)] ring-1 ring-[var(--c-accent)]/25" title="healthturkiye.gov.tr doktor dizininde ad-soyad eşleşmesi bulundu"><BadgeCheck size={13} /> HealthTürkiye kaydı ✓</span>
                     ) : d.registryStatus === "NOT_FOUND" ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-bold text-red-300 ring-1 ring-red-400/25" title="healthturkiye.gov.tr resmi doktor dizininde bulunamadı — onay öncesi ek doğrulama önerilir"><Flag size={13} /> ⚠ HealthTürkiye kaydı YOK</span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-white/50" title="Dizin henüz senkronlanmadığı için kontrol yapılamadı">HealthTürkiye: kontrol edilmedi</span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--c-ink)]/10 px-2.5 py-1 text-xs font-medium text-[var(--c-ink-2)]" title="Dizin henüz senkronlanmadığı için kontrol yapılamadı">HealthTürkiye: kontrol edilmedi</span>
                     )}
                     <VerifyButton doctorId={d.id} />
                   </div>
                 </div>
 
                 {/* Belge / FHIR uzmanlık durum rozetleri */}
-                <div className="mt-3 flex flex-wrap gap-2 border-t border-white/10 pt-3">
+                <div className="mt-3 flex flex-wrap gap-2 border-t border-[var(--c-hairline)] pt-3">
                   <Badge ok={diploma} label="Diploma" />
                   <Badge ok={mmssDoc} label="MMSS poliçesi" />
                   <Badge ok={mmssMeta} label={mmssMeta ? `MMSS ${d.mmssCoverageLimit?.toLocaleString("tr-TR")} ${d.mmssCoverageCurrency ?? ""}` : "MMSS teminat"} />
@@ -106,7 +106,7 @@ export default async function DoctorApprovalPage() {
 
 function Badge({ ok, label }: { ok: boolean; label: string }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${ok ? "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-400/25" : "bg-white/10 text-white/40"}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${ok ? "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-400/25" : "bg-[var(--c-ink)]/10 text-white/40"}`}>
       {ok ? <Check size={12} /> : <X size={12} />} {label}
     </span>
   );

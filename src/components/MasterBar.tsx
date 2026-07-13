@@ -42,9 +42,9 @@ export function MasterBar({ mode, userName }: { mode: "master" | "impersonating"
   }
 
   return (
-    <div className="flex items-center justify-center gap-2 bg-rose-500/15 px-4 py-1.5 text-center text-xs text-rose-200 ring-1 ring-inset ring-rose-400/20">
+    <div className="flex items-center justify-center gap-2 bg-rose-500/15 px-4 py-1.5 text-center text-xs text-[var(--c-danger)] ring-1 ring-inset ring-rose-400/20">
       <ShieldCheck size={13} /> Master modu
-      <Link href="/master" className="font-semibold underline underline-offset-2 hover:text-rose-100">
+      <Link href="/master" className="font-semibold underline underline-offset-2 hover:opacity-80">
         Panel
       </Link>
     </div>

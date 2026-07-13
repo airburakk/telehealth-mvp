@@ -67,18 +67,18 @@ export function ProfileStrip({
   const pref = profile.contactPref ? PREF_META[profile.contactPref] : null;
   const PrefIcon = pref?.icon ?? Bell;
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl border border-[#28C8D8]/25 bg-[#28C8D8]/[0.06] px-4 py-3">
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#17919E]">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/[0.06] px-4 py-3">
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent-stronger)]">
         <UserRound size={14} /> {t("Kayıtlı bilgileriniz")}
       </span>
-      <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-white/75">
-        {fields === "full" && <span className="font-medium text-[#F4F5F3]">{profile.name}</span>}
+      <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-[var(--c-ink)]">
+        {fields === "full" && <span className="font-medium text-[var(--c-ink)]">{profile.name}</span>}
         {fields === "full" && profile.country && (
           <span>{countryFlag(profile.country)} {t(countryName(profile.country))}</span>
         )}
         {profile.phone && <span dir="ltr">{profile.phone}</span>}
         {pref && (
-          <span className="inline-flex items-center gap-1 text-white/50">
+          <span className="inline-flex items-center gap-1 text-[var(--c-ink-2)]">
             <PrefIcon size={13} /> {t(pref.label)}
           </span>
         )}
@@ -86,7 +86,7 @@ export function ProfileStrip({
       <button
         type="button"
         onClick={onEdit}
-        className="ms-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[#28C8D8] hover:bg-[#28C8D8]/10"
+        className="ms-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[var(--c-accent)] hover:bg-[var(--c-accent)]/10"
       >
         <Pencil size={12} /> {t("Değiştir")}
       </button>

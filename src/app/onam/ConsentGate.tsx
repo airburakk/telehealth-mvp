@@ -71,27 +71,27 @@ export function ConsentGate({ isPatient, dest }: { isPatient: boolean; dest: str
     <div dir={langDir(lang)} className="mx-auto max-w-2xl px-5 py-10">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><ShieldCheck size={22} /></span>
-          <h1 className="text-xl font-bold text-[#F4F5F3]">{t(C.title)}</h1>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><ShieldCheck size={22} /></span>
+          <h1 className="text-xl font-bold text-[var(--c-ink)]">{t(C.title)}</h1>
         </div>
         {isPatient && <PatientLangSelect lang={patientLang} onChange={setPatientLang} />}
       </div>
 
-      <p className="mt-5 text-sm leading-relaxed text-white/65">{t(C.intro)}</p>
+      <p className="mt-5 text-sm leading-relaxed text-[var(--c-ink-2)]">{t(C.intro)}</p>
 
       <ul className="mt-4 space-y-2.5">
         {C.items.map((it, i) => (
-          <li key={i} className="flex gap-2.5 rounded-2xl border border-white/10 bg-[#161719] p-3.5 text-[13px] leading-relaxed text-white/65">
-            <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#28C8D8]/15 text-[11px] font-bold text-[#17919E]">{i + 1}</span>
+          <li key={i} className="flex gap-2.5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3.5 text-[13px] leading-relaxed text-[var(--c-ink-2)]">
+            <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[var(--c-accent)]/15 text-[11px] font-bold text-[var(--c-accent-stronger)]">{i + 1}</span>
             <span>{t(it)}</span>
           </li>
         ))}
       </ul>
 
-      <label className="mt-5 flex cursor-pointer items-start gap-2.5 rounded-2xl border border-white/10 bg-[#1E1F22] p-4">
-        <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[#28C8D8]" />
-        <span className="text-[13px] leading-relaxed text-white/75">
-          {t(C.consent)} <span className="text-white/40">{t(C.draft)}</span>
+      <label className="mt-5 flex cursor-pointer items-start gap-2.5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-4">
+        <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--c-accent)]" />
+        <span className="text-[13px] leading-relaxed text-[var(--c-ink)]">
+          {t(C.consent)} <span className="text-[var(--c-ink-3)]">{t(C.draft)}</span>
         </span>
       </label>
 
@@ -100,7 +100,7 @@ export function ConsentGate({ isPatient, dest }: { isPatient: boolean; dest: str
       <button
         onClick={accept}
         disabled={!agreed || submitting}
-        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#28C8D8] px-5 py-3 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--c-accent)] px-5 py-3 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitting ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />} {t(C.accept)}
       </button>

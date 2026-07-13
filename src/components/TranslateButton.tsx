@@ -35,18 +35,18 @@ export function TranslateButton({ text, defaultTarget = "Türkçe", compact }: {
   return (
     <div className={compact ? "" : "mt-1.5"}>
       <div className="flex items-center gap-1.5">
-        <select value={target} onChange={(e) => setTarget(e.target.value)} className="rounded border border-white/15 bg-[#161719] px-1.5 py-1 text-[11px] text-white/65 outline-none">
+        <select value={target} onChange={(e) => setTarget(e.target.value)} className="rounded border border-[var(--c-hairline)] bg-[var(--c-panel)] px-1.5 py-1 text-[11px] text-[var(--c-ink-2)] outline-none">
           {LANGS.map((l) => <option key={l} value={l}>{l}</option>)}
         </select>
-        <button onClick={go} disabled={busy || !text} className="inline-flex items-center gap-1 rounded border border-white/15 bg-[#161719] px-2 py-1 text-[11px] font-medium text-white/65 hover:bg-[#1E1F22] disabled:opacity-50">
+        <button onClick={go} disabled={busy || !text} className="inline-flex items-center gap-1 rounded border border-[var(--c-hairline)] bg-[var(--c-panel)] px-2 py-1 text-[11px] font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] disabled:opacity-50">
           {busy ? <Loader2 size={12} className="animate-spin" /> : <Languages size={12} />} {target} çevir
         </button>
       </div>
       {err && <div className="mt-1 text-[11px] text-red-300">{err}</div>}
       {out && (
-        <div className="mt-1.5 rounded-lg bg-[#28C8D8]/10 p-2 ring-1 ring-[#28C8D8]/20">
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-[#28C8D8]">{target} çeviri</div>
-          <p className="mt-0.5 whitespace-pre-line text-sm text-white/75">{out}</p>
+        <div className="mt-1.5 rounded-lg bg-[var(--c-accent)]/10 p-2 ring-1 ring-[var(--c-accent)]/20">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-[var(--c-accent)]">{target} çeviri</div>
+          <p className="mt-0.5 whitespace-pre-line text-sm text-[var(--c-ink)]">{out}</p>
         </div>
       )}
     </div>

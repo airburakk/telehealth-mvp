@@ -10,6 +10,7 @@ import { ConsultationTimer } from "@/components/ConsultationTimer";
 import DicomViewer from "@/components/DicomViewer";
 import ClinicalDecisionPanel from "@/components/ClinicalDecisionPanel";
 import { PatientQuestionsPanel } from "@/components/PatientQuestionsPanel";
+import { VideoCallShell } from "@/components/VideoCallShell";
 import { getIceServers } from "@/lib/ice";
 import { signalFetch, signalPollDelayMs } from "@/lib/signal-poll";
 import { connectAblySignal } from "@/lib/ably-client";
@@ -551,31 +552,212 @@ export function ConsultationRoom({
     : phase === "connecting" ? t("Kamera açılıyor…")
     : phase === "ended" ? t("Görüşme sona erdi") : t("Hata");
 
-  return (
-    <div dir={langDir(uiLang)} className="mx-auto max-w-6xl px-4 py-6">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-white/50">
-          <span className={`inline-flex h-2.5 w-2.5 rounded-full ${phase === "connected" ? "bg-emerald-500" : phase === "ended" || phase === "error" ? "bg-white/30" : "bg-amber-500 animate-pulse"}`} />
-          {statusLabel} · {isDoctor ? t("Doktor görünümü") : t("Hasta görünümü")}{connState ? ` · ${connState}` : ""}
-        </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs text-white/50">
-          {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />} {t("Gerçek WebRTC (P2P)")}
+  // ── Panel parçaları (immersive VideoCallShell düzeni, 2026-07-13) ──
+  // Hasta: video full + [görüşme notları] · Doktor: video full + [ÜST script+hasta bilgi · ALT tanı+tedavi]
+  const caseInfoCard = (
+    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
+      <div className="flex items-center justify-between">
+        <h2 className="font-bold text-[var(--c-ink)]">{caseData.patientName}</h2>
+        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
+          <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {caseData.urgency}/5
         </span>
       </div>
+      <div className="mt-1 flex items-center gap-2 text-sm">
+        <Stethoscope size={14} className="text-[var(--c-accent-strong)]" />
+        <span className="font-medium text-[var(--c-accent-strong)]">{t(caseData.branch)}</span>
+      </div>
+      <div className="mt-3">
+        <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Şikayet")}</div>
+        <p className="mt-1 text-sm text-[var(--c-ink)]">{caseData.symptoms}</p>
+        {isDoctor && <TranslateButton text={caseData.symptoms} defaultTarget="Türkçe" />}
+      </div>
+      {isDoctor && (
+        <div className="mt-3 rounded-lg bg-[var(--c-accent)]/10 p-3 ring-1 ring-[var(--c-accent)]/20">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]"><Sparkles size={13} /> AI özeti</div>
+          <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">{caseData.reasoning}</p>
+        </div>
+      )}
+      {!isDoctor && (
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-500/10 p-3 text-sm text-emerald-200 ring-1 ring-emerald-400/20">
+          <UserRound size={15} /> {doctor.title} {doctor.name} {t("ile görüşüyorsunuz")}
+        </div>
+      )}
+      {caseData.files.length > 0 && isDoctor && (
+        <div className="mt-3">
+          <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">Belgeler</div>
+          <ul className="mt-1.5 space-y-1">
+            {caseData.files.map((f) => <li key={f} className="flex items-center gap-1.5 text-xs text-[var(--c-ink-2)]"><FileText size={13} className="text-[var(--c-accent)]" /> {f}</li>)}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        {/* Video alanı */}
-        <div className="space-y-3">
-          {/* Görüşme süre tüpü — yalnız doktor; video bağlanınca devreye girer */}
-          {isDoctor && startTime !== null && (
-            <ConsultationTimer startTime={startTime} active={phase !== "ended"} />
-          )}
-          <div className="relative aspect-video overflow-hidden rounded-3xl bg-[#101113] shadow-lg">
-            {/* Uzak taraf (gerçek video) */}
+  const inviteEl = isDoctor ? (
+    <div className="flex items-center justify-between gap-2 rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-3">
+      <div className="text-sm text-[var(--c-ink-2)]">
+        <span className="font-semibold text-[var(--c-accent)]">Hastayı davet et:</span> bu görüşme bağlantısını hastayla paylaş.
+      </div>
+      <button onClick={copyPatientLink} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--c-panel)] px-3 py-2 text-sm font-medium text-[var(--c-accent)] ring-1 ring-[var(--c-accent)]/25 hover:bg-[var(--c-accent)]/15">
+        {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Kopyalandı" : "Hasta linkini kopyala"}
+      </button>
+    </div>
+  ) : null;
+
+  const interpreterEl = joined && langsDiffer && phase !== "ended" ? (
+    <LiveInterpreter
+      lang={uiLang}
+      targetLang={isDoctor ? "tr" : (SPEECH_LANG[caseData.language]?.split("-")[0] ?? "en")}
+      targetLabel={isDoctor ? "Türkçe" : caseData.language}
+      otherLabel={isDoctor ? caseData.language : "Türkçe"}
+      autoMode={langsDiffer}
+      autoStart={interpAutoStart}
+      getRemoteStream={() => (remoteVideoRef.current?.srcObject as MediaStream | null) ?? null}
+      onMuteRemote={(m) => { if (remoteVideoRef.current) remoteVideoRef.current.muted = m; setRemoteMutedByInterpreter(m); }}
+    />
+  ) : null;
+
+  const transcriptEl = (joined || transcript.length > 0) ? (
+    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+          <MessageSquareText size={14} /> {t("Canlı Transkript")}
+          {sttOn && <span className="ms-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
+        </div>
+        {!sttSupported ? (
+          <span className="text-[11px] text-[var(--c-ink-3)]">{t("Tarayıcı desteklemiyor — Chrome/Edge önerilir")}</span>
+        ) : sttOn ? (
+          <button
+            onClick={() => { setSttErr(""); setSttOn(false); }}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/30 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-medium text-red-300 hover:bg-red-500/15"
+          >
+            <Mic size={13} /> {t("Durdur")}
+          </button>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-ink)]/10 px-2.5 py-1.5 text-[12px] font-medium text-[var(--c-ink-2)]" title={t("Konuşma başlayınca otomatik yazıya dökülür; karşı tarafın konuşması da gelir.")}>
+            <Mic size={13} /> {t("Otomatik")}
+          </span>
+        )}
+      </div>
+      {sttErr && <div className="mt-1 text-[11px] text-red-300">{t(sttErr)}</div>}
+      <div className="mt-2 max-h-44 space-y-1 overflow-y-auto">
+        {transcript.length === 0 && !interim && (
+          <p className="text-xs text-[var(--c-ink-3)]">
+            {t("Konuşma başlayınca otomatik yazıya dökülür; karşı tarafın konuşması da gelir.")}
+            {isDoctor ? " Görüşme sonunda transkriptten tek tıkla SOAP taslağı oluşturabilirsiniz." : ""}
+          </p>
+        )}
+        {transcript.map((l, i) => (
+          <p key={i} className="text-sm leading-snug text-[var(--c-ink)]">
+            <span className={`font-semibold ${l.who === "doctor" ? "text-[var(--c-accent-strong)]" : "text-emerald-300"}`}>
+              {l.who === "doctor" ? t("Doktor") : t("Hasta")}:
+            </span>{" "}
+            {l.text}
+          </p>
+        ))}
+        {interim && !dictating && <p className="text-sm italic text-[var(--c-ink-3)]">{interim}…</p>}
+      </div>
+    </div>
+  ) : null;
+
+  const notesEl = isDoctor ? (
+    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">Görüşme Notları</div>
+        {saved ? <span className="inline-flex items-center gap-1 text-[11px] text-emerald-300"><Check size={13} /> kaydedildi</span> : <span className="text-[11px] text-amber-300">kaydedilmedi</span>}
+      </div>
+      <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-[var(--c-hairline)] p-2.5 text-sm outline-none focus:border-[var(--c-accent)]" />
+
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <button
+          onClick={generateSoapFromTranscript}
+          disabled={txBusy || !transcript.length}
+          title={!transcript.length ? "Önce Canlı Transkript'i başlatın" : "Görüşme transkriptinden SOAP taslağı"}
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-violet-400/30 bg-violet-500/10 px-2 py-2 text-[12px] font-semibold text-violet-300 hover:bg-violet-500/15 disabled:opacity-50"
+        >
+          {txBusy ? <Loader2 size={13} className="animate-spin" /> : <MessageSquareText size={13} />} Transkriptten taslak
+        </button>
+        <button
+          onClick={() => { setSttErr(""); setDictating((v) => !v); }}
+          disabled={!sttSupported}
+          title="Konuşarak nota ekleyin"
+          className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[12px] font-semibold disabled:opacity-50 ${dictating ? "border-red-400/30 bg-red-500/10 text-red-300 hover:bg-red-500/15" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-white/65 hover:bg-[var(--c-surface)]"}`}
+        >
+          <Mic size={13} /> {dictating ? "Dikteyi kapat" : "Sesli not"}
+        </button>
+      </div>
+      {dictating && (
+        <p className="mt-1 text-[11px] font-medium text-amber-300">
+          🎤 Dikte açık — konuştuklarınız nota eklenir{interim ? `: "${interim}…"` : "."}
+        </p>
+      )}
+
+      <button onClick={generateSoap} disabled={soapBusy || !notes.trim()} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/10 px-3 py-2 text-sm font-semibold text-[var(--c-accent)] hover:bg-[var(--c-accent)]/15 disabled:opacity-50">
+        {soapBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} AI · SOAP&apos;a dönüştür
+      </button>
+      {soapErr && <div className="mt-1 text-[11px] text-red-300">{soapErr}</div>}
+      <button onClick={saveNotes} disabled={saving || saved} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--c-accent)] px-3 py-2 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-50">
+        {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Notu kaydet
+      </button>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <QuickAction icon={<Pill size={14} />}>Reçete</QuickAction>
+        <QuickAction icon={<FlaskConical size={14} />}>Lab iste</QuickAction>
+      </div>
+      <button onClick={() => setShowDicom(true)} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm font-semibold text-[var(--c-ink)] hover:bg-[var(--c-surface)]">
+        <FileImage size={15} /> Radyoloji (DICOM) görüntüleyici
+      </button>
+    </div>
+  ) : null;
+
+  const clinicalEl = isDoctor && clinical && recommend ? (
+    <ClinicalDecisionPanel
+      caseId={caseData.id}
+      branchLabel={recommend.branchLabel}
+      branchProcedures={recommend.branchProcedures}
+      doctorPrices={recommend.doctorPrices}
+      initial={recommend.initial}
+      rate={recommend.rate}
+      icd10Code={clinical.icd10Code}
+      patientIdentifier={clinical.patientIdentifier}
+      patientIdentifierType={clinical.patientIdentifierType}
+      icd10Options={clinical.icd10Options}
+      icdProcedures={clinical.icdProcedures}
+      initialDaysMin={clinical.treatmentDaysMin}
+      initialDaysMax={clinical.treatmentDaysMax}
+      initialHospitalId={clinical.hospitalRegistryId}
+      initialHospitalName={clinical.hospitalName}
+      agencySentAt={clinical.agencySentAt}
+      getNotes={() => notes}
+    />
+  ) : null;
+
+  const patientQuestionsEl = !isDoctor && storageKey ? (
+    <PatientQuestionsPanel storageKey={storageKey} lang={uiLang} />
+  ) : null;
+
+  return (
+    <>
+      <VideoCallShell
+        dir={langDir(uiLang)}
+        panelLabel={isDoctor ? t("Doktor görünümü") : t("Hasta görünümü")}
+        statusBar={
+          <div className="flex items-center justify-between gap-2 text-xs font-medium text-white/90">
+            <span className="inline-flex items-center gap-2">
+              <span className={`inline-flex h-2.5 w-2.5 rounded-full ${phase === "connected" ? "bg-emerald-400" : phase === "ended" || phase === "error" ? "bg-white/40" : "bg-amber-400 animate-pulse"}`} />
+              {statusLabel} · {isDoctor ? t("Doktor görünümü") : t("Hasta görünümü")}{connState ? ` · ${connState}` : ""}
+            </span>
+            <span className="hidden items-center gap-1.5 rounded-full bg-black/35 px-3 py-1 sm:inline-flex">
+              {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />} {t("Gerçek WebRTC (P2P)")}
+            </span>
+          </div>
+        }
+        video={
+          <div className="absolute inset-0 bg-[var(--c-bg-deep)]">
+            {/* Uzak taraf (gerçek video) — tüm alanı doldurur */}
             <video ref={remoteVideoRef} autoPlay playsInline className={`h-full w-full object-cover ${remoteOn ? "" : "hidden"}`} />
             {/* Uzak ses autoplay ile engellendiyse kullanıcı jestiyle aç (tercüman canlıyken gizli) */}
             {remoteOn && remoteAudioBlocked && !remoteMutedByInterpreter && (
-              <button onClick={enableRemoteAudio} className="absolute left-1/2 top-3 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-[#0D0E10] shadow-lg ring-1 ring-black/5 hover:bg-white">
+              <button onClick={enableRemoteAudio} className="absolute left-1/2 top-14 z-20 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-[var(--c-ink)]/90 px-3 py-1.5 text-xs font-semibold text-[var(--c-bg)] shadow-lg ring-1 ring-black/5 hover:bg-white">
                 <Volume2 size={14} /> {t("Karşı tarafın sesini aç")}
               </button>
             )}
@@ -583,9 +765,9 @@ export function ConsultationRoom({
               <div className="absolute inset-0 grid place-items-center p-4 text-center">
                 {!joined ? (
                   <div>
-                    <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-white/10 text-white"><Camera size={28} /></span>
-                    <h3 className="mt-3 text-lg font-semibold text-white">{t("Görüşmeye katılın")}</h3>
-                    <p className="mx-auto mt-1 max-w-xs text-sm text-white/60">{t("Bağlanmak için kamera ve mikrofon izni vermeniz gerekir.")}</p>
+                    <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[var(--c-ink)]/10 text-[var(--c-ink)]"><Camera size={28} /></span>
+                    <h3 className="mt-3 text-lg font-semibold text-[var(--c-ink)]">{t("Görüşmeye katılın")}</h3>
+                    <p className="mx-auto mt-1 max-w-xs text-sm text-[var(--c-ink-2)]">{t("Bağlanmak için kamera ve mikrofon izni vermeniz gerekir.")}</p>
                     <button onClick={() => { setErrMsg(""); setPhase("connecting"); setJoined(true); }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
                       <Video size={17} /> {t("Kamera & mikrofonla katıl")}
                     </button>
@@ -593,39 +775,39 @@ export function ConsultationRoom({
                 ) : phase === "error" ? (
                   <div>
                     <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-amber-500/20 text-amber-300"><AlertTriangle size={28} /></span>
-                    <p className="mx-auto mt-3 max-w-xs text-sm text-white/85">{errMsg ? t(errMsg) : t("Kamera/mikrofona erişilemedi.")}</p>
-                    <p className="mx-auto mt-1 max-w-xs text-xs text-white/50">{t("Adres çubuğundaki kilit/kamera simgesine dokunup Kamera ve Mikrofon'a \"İzin ver\" deyin, sonra tekrar deneyin.")}</p>
-                    <button onClick={() => { setErrMsg(""); setPhase("connecting"); setRetry((r) => r + 1); }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-[#F4F5F3] ring-1 ring-white/15 hover:bg-white/20">
+                    <p className="mx-auto mt-3 max-w-xs text-sm text-[var(--c-ink)]">{errMsg ? t(errMsg) : t("Kamera/mikrofona erişilemedi.")}</p>
+                    <p className="mx-auto mt-1 max-w-xs text-xs text-[var(--c-ink-2)]">{t("Adres çubuğundaki kilit/kamera simgesine dokunup Kamera ve Mikrofon'a \"İzin ver\" deyin, sonra tekrar deneyin.")}</p>
+                    <button onClick={() => { setErrMsg(""); setPhase("connecting"); setRetry((r) => r + 1); }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-[var(--c-ink)]/10 px-5 py-2.5 text-sm font-semibold text-[var(--c-ink)] ring-1 ring-white/15 hover:bg-[var(--c-ink)]/20">
                       {t("Tekrar dene")}
                     </button>
                   </div>
                 ) : (
                   <div>
-                    <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-white/10 text-2xl font-bold text-white">{remoteName.slice(0, 1)}</div>
-                    <div className="mt-3 font-medium text-white/90">{remoteName}</div>
-                    <div className="text-xs text-white/50">{phase === "waiting" ? t("karşı taraf bekleniyor…") : t("kamera açılıyor…")}</div>
-                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70"><Languages size={13} /> {t("Canlı çeviri")}: {caseData.language} ⇄ Türkçe ({t("demo")})</div>
+                    <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-[var(--c-ink)]/10 text-2xl font-bold text-[var(--c-ink)]">{remoteName.slice(0, 1)}</div>
+                    <div className="mt-3 font-medium text-[var(--c-ink)]">{remoteName}</div>
+                    <div className="text-xs text-[var(--c-ink-2)]">{phase === "waiting" ? t("karşı taraf bekleniyor…") : t("kamera açılıyor…")}</div>
+                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--c-ink)]/10 px-3 py-1 text-xs text-[var(--c-ink-2)]"><Languages size={13} /> {t("Canlı çeviri")}: {caseData.language} ⇄ Türkçe ({t("demo")})</div>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Yerel self-view */}
+            {/* Yerel self-view — sağ üst köşe (alt-orta kontrollerle çakışmaz) */}
             {joined && (
-              <div className="absolute bottom-3 right-3 h-28 w-44 overflow-hidden rounded-2xl border border-white/20 bg-black/60 shadow-lg">
+              <div className="absolute right-3 top-14 h-24 w-36 overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-black/60 shadow-lg sm:h-28 sm:w-44">
                 <video ref={localVideoRef} autoPlay muted playsInline className={`h-full w-full object-cover ${camOn ? "" : "hidden"}`} />
-                {!camOn && <div className="grid h-full place-items-center text-center text-[11px] text-white/50"><div><Camera size={18} className="mx-auto mb-1" /> {t("Kamera kapalı")}</div></div>}
-                <span className="absolute left-1.5 top-1.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white/80">{t("Siz")}</span>
+                {!camOn && <div className="grid h-full place-items-center text-center text-[11px] text-[var(--c-ink-2)]"><div><Camera size={18} className="mx-auto mb-1" /> {t("Kamera kapalı")}</div></div>}
+                <span className="absolute left-1.5 top-1.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-[var(--c-ink)]">{t("Siz")}</span>
               </div>
             )}
 
-            {/* Kontroller */}
+            {/* Kontroller — video altında ortada */}
             {joined && (
-              <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2">
-                <button onClick={toggleCam} className={`grid h-11 w-11 place-items-center rounded-full ${camOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-[#161719] text-[#F4F5F3]"}`}>
+              <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-2">
+                <button onClick={toggleCam} className={`grid h-11 w-11 place-items-center rounded-full backdrop-blur ${camOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-[var(--c-panel)] text-[var(--c-ink)]"}`}>
                   {camOn ? <Video size={18} /> : <VideoOff size={18} />}
                 </button>
-                <button onClick={toggleMic} className={`grid h-11 w-11 place-items-center rounded-full ${micOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-[#161719] text-[#F4F5F3]"}`}>
+                <button onClick={toggleMic} className={`grid h-11 w-11 place-items-center rounded-full backdrop-blur ${micOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-[var(--c-panel)] text-[var(--c-ink)]"}`}>
                   {micOn ? <Mic size={18} /> : <MicOff size={18} />}
                 </button>
                 <button onClick={endCall} disabled={ending} className="inline-flex h-11 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60">
@@ -633,216 +815,46 @@ export function ConsultationRoom({
                 </button>
               </div>
             )}
+
+            {/* Hata mesajı — video üzerinde toast (kontrollerin üstünde) */}
+            {errMsg && <div className="absolute inset-x-4 bottom-20 z-20 mx-auto max-w-md rounded-lg bg-amber-500/15 px-3 py-2 text-center text-sm text-amber-200 ring-1 ring-amber-400/25 backdrop-blur">{t(errMsg)}</div>}
           </div>
-
-          {errMsg && <div className="rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-300 ring-1 ring-amber-400/25">{t(errMsg)}</div>}
-
-          {/* AI Canlı Tercüman (Gemini) — yalnız diller farklıysa (aynı dilde gereksiz + karşı sesi kısar);
-              ilk konuşma sesinde otomatik başlar (başlat düğmesi yok). Görüşme bitince (bye dahil)
-              unmount edilir → Gemini oturumu + AudioContext'ler kapanır. */}
-          {joined && langsDiffer && phase !== "ended" && (
-            <LiveInterpreter
-              lang={uiLang}
-              targetLang={isDoctor ? "tr" : (SPEECH_LANG[caseData.language]?.split("-")[0] ?? "en")}
-              targetLabel={isDoctor ? "Türkçe" : caseData.language}
-              otherLabel={isDoctor ? caseData.language : "Türkçe"}
-              autoMode={langsDiffer}
-              autoStart={interpAutoStart}
-              getRemoteStream={() => (remoteVideoRef.current?.srcObject as MediaStream | null) ?? null}
-              onMuteRemote={(m) => { if (remoteVideoRef.current) remoteVideoRef.current.muted = m; setRemoteMutedByInterpreter(m); }}
-            />
-          )}
-
-          {/* Canlı Transkript — iki taraf da kendi konuşmasını yazıya çevirir, karşı tarafa iletilir */}
-          {(joined || transcript.length > 0) && (
-            <div className="rounded-3xl border border-white/10 bg-[#161719] p-4 shadow-sm">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
-                  <MessageSquareText size={14} /> {t("Canlı Transkript")}
-                  {sttOn && <span className="ms-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
-                </div>
-                {/* Otomatik başlar (VAD): başlat düğmesi yok. Açıkken "Durdur" (kullanıcı kontrolü/gizlilik), kapalıyken pasif "Otomatik" göstergesi. */}
-                {!sttSupported ? (
-                  <span className="text-[11px] text-white/40">{t("Tarayıcı desteklemiyor — Chrome/Edge önerilir")}</span>
-                ) : sttOn ? (
-                  <button
-                    onClick={() => { setSttErr(""); setSttOn(false); }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/30 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-medium text-red-300 hover:bg-red-500/15"
-                  >
-                    <Mic size={13} /> {t("Durdur")}
-                  </button>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1.5 text-[12px] font-medium text-white/50" title={t("Konuşma başlayınca otomatik yazıya dökülür; karşı tarafın konuşması da gelir.")}>
-                    <Mic size={13} /> {t("Otomatik")}
-                  </span>
-                )}
+        }
+        panel={
+          isDoctor ? (
+            <>
+              {/* ── ÜST: Hasta bilgileri + script (transkript) ── */}
+              {startTime !== null && <ConsultationTimer startTime={startTime} active={phase !== "ended"} />}
+              {caseInfoCard}
+              {inviteEl}
+              {interpreterEl}
+              {transcriptEl}
+              {/* ── ALT: Tanı & Tedavi ── (yatayda logo-yeşili zemin → koyu-turkuaz metin okunur) */}
+              <div className="mt-1 flex items-center gap-1.5 border-t border-[var(--c-hairline)] pt-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)] landscape:border-[#06343a]/25 landscape:text-[#06343a]">
+                <Stethoscope size={12} /> {t("Tanı & Tedavi")}
               </div>
-              {sttErr && <div className="mt-1 text-[11px] text-red-300">{t(sttErr)}</div>}
-              <div className="mt-2 max-h-44 space-y-1 overflow-y-auto">
-                {transcript.length === 0 && !interim && (
-                  <p className="text-xs text-white/40">
-                    {t("Konuşma başlayınca otomatik yazıya dökülür; karşı tarafın konuşması da gelir.")}
-                    {isDoctor ? " Görüşme sonunda transkriptten tek tıkla SOAP taslağı oluşturabilirsiniz." : ""}
-                  </p>
-                )}
-                {transcript.map((l, i) => (
-                  <p key={i} className="text-sm leading-snug text-white/75">
-                    <span className={`font-semibold ${l.who === "doctor" ? "text-[#1FA9B8]" : "text-emerald-300"}`}>
-                      {l.who === "doctor" ? t("Doktor") : t("Hasta")}:
-                    </span>{" "}
-                    {l.text}
-                  </p>
-                ))}
-                {interim && !dictating && <p className="text-sm italic text-white/40">{interim}…</p>}
-              </div>
-            </div>
-          )}
-
-          {/* Doktor: hasta bağlantısı paylaş */}
-          {isDoctor && (
-            <div className="flex items-center justify-between gap-2 rounded-2xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-3">
-              <div className="text-sm text-white/65">
-                <span className="font-semibold text-[#28C8D8]">Hastayı davet et:</span> bu görüşme bağlantısını hastayla paylaş.
-              </div>
-              <button onClick={copyPatientLink} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#161719] px-3 py-2 text-sm font-medium text-[#28C8D8] ring-1 ring-[#28C8D8]/25 hover:bg-[#28C8D8]/15">
-                {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Kopyalandı" : "Hasta linkini kopyala"}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Sağ panel */}
-        <aside className="space-y-4">
-          <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-[#F4F5F3]">{caseData.patientName}</h2>
-              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
-                <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {caseData.urgency}/5
-              </span>
-            </div>
-            <div className="mt-1 flex items-center gap-2 text-sm">
-              <Stethoscope size={14} className="text-[#1FA9B8]" />
-              <span className="font-medium text-[#1FA9B8]">{t(caseData.branch)}</span>
-            </div>
-            <div className="mt-3">
-              <div className="text-xs uppercase tracking-wide text-white/40">{t("Şikayet")}</div>
-              <p className="mt-1 text-sm text-white/75">{caseData.symptoms}</p>
-              {isDoctor && <TranslateButton text={caseData.symptoms} defaultTarget="Türkçe" />}
-            </div>
-            {isDoctor && (
-              <div className="mt-3 rounded-lg bg-[#28C8D8]/10 p-3 ring-1 ring-[#28C8D8]/20">
-                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]"><Sparkles size={13} /> AI özeti</div>
-                <p className="mt-1 text-xs leading-relaxed text-white/65">{caseData.reasoning}</p>
-              </div>
-            )}
-            {!isDoctor && (
-              <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-500/10 p-3 text-sm text-emerald-200 ring-1 ring-emerald-400/20">
-                <UserRound size={15} /> {doctor.title} {doctor.name} {t("ile görüşüyorsunuz")}
-              </div>
-            )}
-            {caseData.files.length > 0 && isDoctor && (
-              <div className="mt-3">
-                <div className="text-xs uppercase tracking-wide text-white/40">Belgeler</div>
-                <ul className="mt-1.5 space-y-1">
-                  {caseData.files.map((f) => <li key={f} className="flex items-center gap-1.5 text-xs text-white/65"><FileText size={13} className="text-[#28C8D8]" /> {f}</li>)}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* Hasta "doktora sorular" notu — bekleme odasıyla aynı localStorage anahtarından (talep #2) */}
-          {!isDoctor && storageKey && (
-            <PatientQuestionsPanel storageKey={storageKey} lang={uiLang} />
-          )}
-
-          {/* Not paneli — yalnız doktor */}
-          {isDoctor && (
-            <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-semibold uppercase tracking-wide text-white/50">Görüşme Notları</div>
-                {saved ? <span className="inline-flex items-center gap-1 text-[11px] text-emerald-300"><Check size={13} /> kaydedildi</span> : <span className="text-[11px] text-amber-300">kaydedilmedi</span>}
-              </div>
-              <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-white/15 p-2.5 text-sm outline-none focus:border-[#28C8D8]" />
-
-              {/* Akış: 1) transkriptten taslak → 2) sesli not ekle → 3) SOAP'a dönüştür (güncelle) */}
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <button
-                  onClick={generateSoapFromTranscript}
-                  disabled={txBusy || !transcript.length}
-                  title={!transcript.length ? "Önce Canlı Transkript'i başlatın" : "Görüşme transkriptinden SOAP taslağı"}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-violet-400/30 bg-violet-500/10 px-2 py-2 text-[12px] font-semibold text-violet-300 hover:bg-violet-500/15 disabled:opacity-50"
-                >
-                  {txBusy ? <Loader2 size={13} className="animate-spin" /> : <MessageSquareText size={13} />} Transkriptten taslak
-                </button>
-                <button
-                  onClick={() => { setSttErr(""); setDictating((v) => !v); }}
-                  disabled={!sttSupported}
-                  title="Konuşarak nota ekleyin"
-                  className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[12px] font-semibold disabled:opacity-50 ${dictating ? "border-red-400/30 bg-red-500/10 text-red-300 hover:bg-red-500/15" : "border-white/15 bg-[#161719] text-white/65 hover:bg-[#1E1F22]"}`}
-                >
-                  <Mic size={13} /> {dictating ? "Dikteyi kapat" : "Sesli not"}
-                </button>
-              </div>
-              {dictating && (
-                <p className="mt-1 text-[11px] font-medium text-amber-300">
-                  🎤 Dikte açık — konuştuklarınız nota eklenir{interim ? `: "${interim}…"` : "."}
-                </p>
-              )}
-
-              <button onClick={generateSoap} disabled={soapBusy || !notes.trim()} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#28C8D8]/30 bg-[#28C8D8]/10 px-3 py-2 text-sm font-semibold text-[#28C8D8] hover:bg-[#28C8D8]/15 disabled:opacity-50">
-                {soapBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} AI · SOAP&apos;a dönüştür
-              </button>
-              {soapErr && <div className="mt-1 text-[11px] text-red-300">{soapErr}</div>}
-              <button onClick={saveNotes} disabled={saving || saved} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-3 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50">
-                {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Notu kaydet
-              </button>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <QuickAction icon={<Pill size={14} />}>Reçete</QuickAction>
-                <QuickAction icon={<FlaskConical size={14} />}>Lab iste</QuickAction>
-              </div>
-              <button onClick={() => setShowDicom(true)} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-[#161719] px-3 py-2 text-sm font-semibold text-white/75 hover:bg-[#1E1F22]">
-                <FileImage size={15} /> Radyoloji (DICOM) görüntüleyici
-              </button>
-            </div>
-          )}
-
-          {/* Birleşik Klinik Kodlama (FHIR) + Tedavi Kararı — FAZ 2 (2026-07-10).
-              Akış: tanı ICD-10 → tanıya eşlenmiş işlemler aktifleşir (+AI önerisi) → slider ücret →
-              süre (gün) → hastane → Kaydet = dosya Sağlık Turizmi Acentesine iletilir.
-              Eski "Paketi oluştur" / "AI Teklif hazırla" / "Sağlık Turizmi Paketi" düğmeleri kaldırıldı
-              (teklifi STA hazırlar); AI Epikriz post-op ekranına taşındı (/takip/[caseId]). */}
-          {isDoctor && clinical && recommend && (
-            <ClinicalDecisionPanel
-              caseId={caseData.id}
-              branchLabel={recommend.branchLabel}
-              branchProcedures={recommend.branchProcedures}
-              doctorPrices={recommend.doctorPrices}
-              initial={recommend.initial}
-              rate={recommend.rate}
-              icd10Code={clinical.icd10Code}
-              patientIdentifier={clinical.patientIdentifier}
-              patientIdentifierType={clinical.patientIdentifierType}
-              icd10Options={clinical.icd10Options}
-              icdProcedures={clinical.icdProcedures}
-              initialDaysMin={clinical.treatmentDaysMin}
-              initialDaysMax={clinical.treatmentDaysMax}
-              initialHospitalId={clinical.hospitalRegistryId}
-              initialHospitalName={clinical.hospitalName}
-              agencySentAt={clinical.agencySentAt}
-              getNotes={() => notes}
-            />
-          )}
-        </aside>
-      </div>
-
+              {notesEl}
+              {clinicalEl}
+            </>
+          ) : (
+            <>
+              {/* Hasta: görüşme notları — bilgi + çeviri + transkript + doktora sorular */}
+              {caseInfoCard}
+              {interpreterEl}
+              {transcriptEl}
+              {patientQuestionsEl}
+            </>
+          )
+        }
+      />
       <DicomViewer open={showDicom} onClose={() => setShowDicom(false)} />
-    </div>
+    </>
   );
 }
 
 function QuickAction({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <button className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-white/15 px-3 py-2 text-xs text-white/40" title="Yakında">
+    <button className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-[var(--c-hairline)] px-3 py-2 text-xs text-[var(--c-ink-3)]" title="Yakında">
       {icon} {children}
     </button>
   );

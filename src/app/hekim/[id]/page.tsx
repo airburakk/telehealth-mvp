@@ -15,7 +15,7 @@ function Stars({ value }: { value: number }) {
   return (
     <span className="inline-flex items-center gap-0.5">
       {Array.from({ length: 5 }).map((_, i) => (
-        <Star key={i} size={15} className={i < full ? "fill-amber-400 text-amber-400" : "text-white/20"} />
+        <Star key={i} size={15} className={i < full ? "fill-amber-400 text-amber-400" : "text-[var(--c-ink-3)]"} />
       ))}
     </span>
   );
@@ -40,30 +40,30 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
   const badges = await getDoctorBadges(d.id); // CRM eşik-bazlı public güven rozetleri (ham skor değil)
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] bg-[#0D0E10]">
+    <div className="min-h-[calc(100vh-8rem)] bg-[var(--c-bg)]">
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href="/hekimler" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-[#28C8D8]">
+      <Link href="/hekimler" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent)]">
         <ArrowLeft size={16} /> Doktorlar
       </Link>
 
       {/* Hero */}
-      <div className="mt-4 rounded-[22px] border border-white/10 bg-[#161719] p-6">
+      <div className="mt-4 rounded-[22px] border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
           <span className="h-20 w-20 shrink-0 overflow-hidden rounded-3xl ring-1 ring-white/15"><DoctorArt i={avatarVariant(d.name)} female={isFemaleName(d.name)} photo={d.photo} /></span>
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-serif text-2xl font-bold tracking-tight text-[#F4F5F3]">{d.title} {d.name}</h1>
-              {d.verified && <span className="inline-flex items-center gap-1 rounded-full bg-[#28C8D8]/15 px-2.5 py-1 text-xs font-semibold text-[#28C8D8]"><BadgeCheck size={14} /> Doğrulanmış</span>}
+              <h1 className="font-serif text-2xl font-bold tracking-tight text-[var(--c-ink)]">{d.title} {d.name}</h1>
+              {d.verified && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--c-accent)]/15 px-2.5 py-1 text-xs font-semibold text-[var(--c-accent)]"><BadgeCheck size={14} /> Doğrulanmış</span>}
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-white/50">
-              <span className="inline-flex items-center gap-1 font-medium text-[#28C8D8]"><Stethoscope size={14} /> {d.branch}</span>
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--c-ink-2)]">
+              <span className="inline-flex items-center gap-1 font-medium text-[var(--c-accent)]"><Stethoscope size={14} /> {d.branch}</span>
               <span className="inline-flex items-center gap-1"><MapPin size={14} /> {d.city}</span>
               <span className="inline-flex items-center gap-1"><Globe size={14} /> {d.languages.split(",").join(" · ")}</span>
             </div>
             {/* Yıldız satırı yalnız gerçek rating verisi varken (null = veri yok → "0.0 yıldız" göstermek yanıltıcı) */}
             {d.rating != null && (
               <div className="mt-3 flex flex-wrap items-center gap-4">
-                <span className="inline-flex items-center gap-1.5 text-sm"><Stars value={d.rating} /> <span className="font-semibold text-white/80">{d.rating.toFixed(1)}</span> <span className="text-white/40">({reviews.length} yorum)</span></span>
+                <span className="inline-flex items-center gap-1.5 text-sm"><Stars value={d.rating} /> <span className="font-semibold text-[var(--c-ink)]">{d.rating.toFixed(1)}</span> <span className="text-[var(--c-ink-3)]">({reviews.length} yorum)</span></span>
               </div>
             )}
 
@@ -71,7 +71,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {badges.map((b) => {
                   const Icon = BADGE_ICON[b.key] ?? CheckCircle2;
-                  const style = BADGE_STYLE[b.key] ?? "bg-white/5 text-white/70 ring-white/15";
+                  const style = BADGE_STYLE[b.key] ?? "bg-[var(--c-ink)]/5 text-[var(--c-ink-2)] ring-white/15";
                   return (
                     <span
                       key={b.key}
@@ -82,7 +82,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
                       {/* Hover açıklama balonu (CSS-only; mouse ile üzerine gelince) */}
                       <span
                         role="tooltip"
-                        className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 hidden w-max max-w-[220px] -translate-x-1/2 rounded-lg bg-[#26272B] px-2.5 py-1.5 text-[11px] font-normal leading-snug text-white/90 shadow-lg ring-1 ring-white/10 group-hover:block"
+                        className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 hidden w-max max-w-[220px] -translate-x-1/2 rounded-lg bg-[var(--c-surface-2)] px-2.5 py-1.5 text-[11px] font-normal leading-snug text-[var(--c-ink)] shadow-lg ring-1 ring-white/10 group-hover:block"
                       >
                         {b.desc}
                       </span>
@@ -105,25 +105,25 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
       <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_300px]">
         <div className="space-y-5">
           <Card title="Hakkında">
-            <p className="text-sm leading-relaxed text-white/70">{bioText}</p>
+            <p className="text-sm leading-relaxed text-[var(--c-ink-2)]">{bioText}</p>
           </Card>
 
           <Card title="Hasta Yorumları" icon={<Star size={15} />}>
             <ul className="space-y-3">
               {reviews.map((r, i) => (
-                <li key={i} className="rounded-2xl border border-white/10 p-3">
+                <li key={i} className="rounded-2xl border border-[var(--c-hairline)] p-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-white/80">{countryFlag(r.country)} {r.author}</span>
+                    <span className="text-sm font-medium text-[var(--c-ink)]">{countryFlag(r.country)} {r.author}</span>
                     {/* "Doğrulanmış" çipi yalnız gerçek DB yorumlarında; üretilmiş içerik açıkça etiketlenir */}
                     {r.generated ? (
-                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium text-white/40">Örnek değerlendirme</span>
+                      <span className="rounded-full bg-[var(--c-ink)]/10 px-2 py-0.5 text-[11px] font-medium text-[var(--c-ink-3)]">Örnek değerlendirme</span>
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-300"><CheckCircle2 size={12} /> Doğrulanmış</span>
                     )}
                   </div>
                   <div className="mt-1"><Stars value={r.stars} /></div>
-                  <p className="mt-1.5 text-sm text-white/60">{r.text}</p>
-                  <div className="mt-1 text-[11px] text-white/35">{formatDateTime(new Date(Date.now() - r.daysAgo * 86400000))}</div>
+                  <p className="mt-1.5 text-sm text-[var(--c-ink-2)]">{r.text}</p>
+                  <div className="mt-1 text-[11px] text-[var(--c-ink-3)]">{formatDateTime(new Date(Date.now() - r.daysAgo * 86400000))}</div>
                 </li>
               ))}
             </ul>
@@ -140,28 +140,28 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
               <li className="flex items-start gap-2">
                 <BadgeCheck size={15} className="mt-0.5 shrink-0 text-emerald-400" />
                 <div>
-                  <div className="font-medium text-white/75">Tıp Diploması</div>
+                  <div className="font-medium text-[var(--c-ink)]">Tıp Diploması</div>
                   {/* Yıl yalnız gerçek veriden türetilebildiyse (null = fabrikasyon yok) */}
-                  <div className="text-xs text-white/45">{cred.diploma.school}{cred.diploma.year != null && ` · ${cred.diploma.year}`}</div>
+                  <div className="text-xs text-[var(--c-ink-3)]">{cred.diploma.school}{cred.diploma.year != null && ` · ${cred.diploma.year}`}</div>
                 </div>
               </li>
               <li className="flex items-start gap-2">
                 <BadgeCheck size={15} className="mt-0.5 shrink-0 text-emerald-400" />
                 <div>
-                  <div className="font-medium text-white/75">Uzmanlık Belgesi</div>
-                  <div className="text-xs text-white/45">{cred.uzmanlik.board}{cred.uzmanlik.year != null && ` · ${cred.uzmanlik.year}`}</div>
+                  <div className="font-medium text-[var(--c-ink)]">Uzmanlık Belgesi</div>
+                  <div className="text-xs text-[var(--c-ink-3)]">{cred.uzmanlik.board}{cred.uzmanlik.year != null && ` · ${cred.uzmanlik.year}`}</div>
                 </div>
               </li>
               <li className="flex items-start gap-2">
                 <BadgeCheck size={15} className="mt-0.5 shrink-0 text-emerald-400" />
                 <div>
-                  <div className="font-medium text-white/75">Mesleki Sertifikalar</div>
-                  <ul className="mt-0.5 space-y-0.5 text-xs text-white/45">
+                  <div className="font-medium text-[var(--c-ink)]">Mesleki Sertifikalar</div>
+                  <ul className="mt-0.5 space-y-0.5 text-xs text-[var(--c-ink-3)]">
                     {cred.certs.map((c) => <li key={c}>• {c}</li>)}
                   </ul>
                 </div>
               </li>
-              <li aria-hidden className="mt-1 border-t border-white/10 pt-1" />
+              <li aria-hidden className="mt-1 border-t border-[var(--c-hairline)] pt-1" />
               {/* JCI satırı yalnız doğrulanmış akreditasyonda — false/null "veri yok"tur, olumsuz beyan değil (üstü çizili negatif sinyal kaldırıldı) */}
               {d.jci === true && <Cred ok label="JCI akrediteli merkez" />}
               <Cred ok={d.verified} label="Sağlık Turizmi Yetki Belgesi" />
@@ -169,10 +169,10 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
           </Card>
 
           <Card title="Akademik" icon={<GraduationCap size={15} />}>
-            <p className="text-sm leading-relaxed text-white/60">{academicNote(d)}</p>
+            <p className="text-sm leading-relaxed text-[var(--c-ink-2)]">{academicNote(d)}</p>
           </Card>
 
-          <Link href="/triyaj" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
+          <Link href="/triyaj" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
             <Stethoscope size={16} /> Bu branşta görüşme planla
           </Link>
         </aside>
@@ -202,8 +202,8 @@ const BADGE_STYLE: Record<string, string> = {
 
 function Card({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-[#161719] p-5">
-      <div className="flex items-center gap-1.5 font-mono text-xs font-medium uppercase tracking-wide text-white/45">{icon} {title}</div>
+    <div className="rounded-[22px] border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5">
+      <div className="flex items-center gap-1.5 font-mono text-xs font-medium uppercase tracking-wide text-[var(--c-ink-3)]">{icon} {title}</div>
       <div className="mt-3">{children}</div>
     </div>
   );
@@ -212,12 +212,12 @@ function StatBar({ label, valueText, pct }: { label: string; valueText: string; 
   const p = Math.max(6, Math.min(100, Math.round(pct)));
   const hue = Math.round(40 + (p / 100) * 120); // 40 amber (düşük) → 160 teal/yeşil (yüksek)
   return (
-    <div className="rounded-2xl bg-[#1E1F22] p-3">
+    <div className="rounded-2xl bg-[var(--c-surface)] p-3">
       <div className="flex items-baseline justify-between">
-        <span className="text-xs text-white/50">{label}</span>
-        <span className="text-lg font-bold text-[#F4F5F3]">{valueText}</span>
+        <span className="text-xs text-[var(--c-ink-2)]">{label}</span>
+        <span className="text-lg font-bold text-[var(--c-ink)]">{valueText}</span>
       </div>
-      <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--c-ink)]/10">
         <div className="h-full rounded-full transition-all" style={{ width: `${p}%`, background: `hsl(${hue} 65% 55%)` }} />
       </div>
     </div>
@@ -226,8 +226,8 @@ function StatBar({ label, valueText, pct }: { label: string; valueText: string; 
 function Cred({ ok, label }: { ok: boolean; label: string }) {
   return (
     <li className="flex items-center gap-2">
-      <CheckCircle2 size={15} className={ok ? "text-emerald-400" : "text-white/25"} />
-      <span className={ok ? "text-white/75" : "text-white/35 line-through"}>{label}</span>
+      <CheckCircle2 size={15} className={ok ? "text-emerald-400" : "text-[var(--c-ink-3)]"} />
+      <span className={ok ? "text-[var(--c-ink)]" : "text-[var(--c-ink-3)] line-through"}>{label}</span>
     </li>
   );
 }

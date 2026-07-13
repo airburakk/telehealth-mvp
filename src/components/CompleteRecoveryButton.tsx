@@ -34,7 +34,7 @@ export function CompleteRecoveryButton({ caseId }: { caseId: string }) {
     return (
       <button
         onClick={(e) => { stop(e); setConfirm(true); }}
-        className="shrink-0 rounded-lg border border-white/15 px-2.5 py-1 text-xs font-medium text-white/65 transition hover:border-[#28C8D8] hover:text-[#17919E]"
+        className="shrink-0 rounded-lg border border-[var(--c-hairline)] px-2.5 py-1 text-xs font-medium text-[var(--c-ink-2)] transition hover:border-[var(--c-accent)] hover:text-[var(--c-accent-stronger)]"
         title="Post-op takibi tamamla — klinik erişim hastaya devredilir"
       >
         Takibi tamamla
@@ -43,15 +43,15 @@ export function CompleteRecoveryButton({ caseId }: { caseId: string }) {
   }
   return (
     <span className="inline-flex shrink-0 items-center gap-1.5" onClick={stop}>
-      <span className="hidden text-[11px] text-white/50 sm:inline">Erişim hastaya devredilecek</span>
+      <span className="hidden text-[11px] text-[var(--c-ink-2)] sm:inline">Erişim hastaya devredilecek</span>
       <button
         onClick={complete}
         disabled={busy}
-        className="inline-flex items-center gap-1 rounded-lg bg-[#28C8D8] px-2.5 py-1 text-xs font-semibold text-[#0D0E10] transition hover:bg-[#1FA9B8] disabled:opacity-50"
+        className="inline-flex items-center gap-1 rounded-lg bg-[var(--c-accent)] px-2.5 py-1 text-xs font-semibold text-[var(--c-bg)] transition hover:bg-[var(--c-accent-strong)] disabled:opacity-50"
       >
         {busy ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} {err ? "Tekrar dene" : "Onayla"}
       </button>
-      <button onClick={(e) => { stop(e); setConfirm(false); }} className="rounded-lg border border-white/15 px-2 py-1 text-xs text-white/50" title="Vazgeç">
+      <button onClick={(e) => { stop(e); setConfirm(false); }} className="rounded-lg border border-[var(--c-hairline)] px-2 py-1 text-xs text-[var(--c-ink-2)]" title="Vazgeç">
         <X size={13} />
       </button>
     </span>

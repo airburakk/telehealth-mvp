@@ -10,9 +10,9 @@ export const dynamic = "force-dynamic";
 // Girişten sonra hasta doğrudan Branş Doktoru akışına iner (/basla 4'lü seçimi kaldırıldı, 2026-07-12).
 export default function PatientEmailLoginPage() {
   return (
-    <div className="bg-[#0D0E10]">
+    <div className="bg-[var(--c-bg)]">
       <div className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-sm flex-col justify-center px-5 py-10">
-        <Suspense fallback={<div className="text-center text-sm text-white/40">Yükleniyor…</div>}>
+        <Suspense fallback={<div className="text-center text-sm text-[var(--c-ink-3)]">Yükleniyor…</div>}>
           <PatientLoginForm googleEnabled={isGoogleConfigured()} />
         </Suspense>
       </div>

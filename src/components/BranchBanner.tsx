@@ -21,7 +21,7 @@ export function BranchBanner({
   const color = branchColor(branchKey);
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border border-white/10 ${className}`}
+      className={`relative overflow-hidden rounded-2xl border border-[var(--c-hairline)] ${className}`}
       style={{ minHeight: 128, background: branchBannerBg(branchKey) }}
     >
       <div className="relative flex items-center gap-4 p-5">
@@ -31,11 +31,11 @@ export function BranchBanner({
           alt=""
           aria-hidden
           className="h-16 w-16 shrink-0 rounded-2xl ring-1 ring-white/10"
-          style={{ background: "#0D0E10", boxShadow: `0 0 24px -6px ${color}66` }}
+          style={{ background: "var(--c-bg)", boxShadow: `0 0 24px -6px ${color}66` }}
         />
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color }}>{eyebrow}</div>
-          <div className="mt-0.5 text-lg font-bold leading-tight text-white sm:text-xl">{branchLabel}</div>
+          <div className="mt-0.5 text-lg font-bold leading-tight text-[var(--c-ink)] sm:text-xl">{branchLabel}</div>
         </div>
       </div>
       {/* Marka şeridi — branş rengi */}

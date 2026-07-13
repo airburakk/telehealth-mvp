@@ -57,15 +57,15 @@ export function DocumentAnalysis({ caseId, initial }: { caseId: string; initial:
   }
 
   return (
-    <div className="rounded-3xl border border-[#28C8D8]/25 bg-[#161719] p-6 shadow-sm">
+    <div className="rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-panel)] p-6 shadow-sm">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]">
+        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]">
           <FileSearch size={15} /> Ön Değerlendirme · Belge Analizi (AI)
         </div>
-        <span className="shrink-0 text-[11px] text-white/40">{docs.length} belge</span>
+        <span className="shrink-0 text-[11px] text-[var(--c-ink-3)]">{docs.length} belge</span>
       </div>
 
-      <p className="mt-2 text-sm leading-relaxed text-white/50">
+      <p className="mt-2 text-sm leading-relaxed text-[var(--c-ink-2)]">
         Hastanın triyajda yüklediği tıbbi belgeleri (tahlil, görüntüleme raporu, epikriz) AI ile değerlendirir:
         türünü belirler, içeriğini Türkçeye çevirir, önemli ve anormal bulguları çıkarır. Belgede olmayan bulgu uydurulmaz.
       </p>
@@ -73,7 +73,7 @@ export function DocumentAnalysis({ caseId, initial }: { caseId: string; initial:
       <button
         onClick={() => analyze(anyAssessed && pending === 0)}
         disabled={busy}
-        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#28C8D8]/30 bg-[#28C8D8]/10 px-3 py-2 text-sm font-semibold text-[#28C8D8] hover:bg-[#28C8D8]/15 disabled:opacity-50"
+        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/10 px-3 py-2 text-sm font-semibold text-[var(--c-accent)] hover:bg-[var(--c-accent)]/15 disabled:opacity-50"
       >
         {busy ? <Loader2 size={15} className="animate-spin" /> : anyAssessed && pending === 0 ? <RefreshCw size={15} /> : <Sparkles size={15} />}
         {busy
@@ -84,24 +84,24 @@ export function DocumentAnalysis({ caseId, initial }: { caseId: string; initial:
       </button>
       {err && <div className="mt-1.5 text-[11px] text-red-300">{err}</div>}
       {labNote && (
-        <div className="mt-1.5 flex items-start gap-1.5 text-[11px] text-[#28C8D8]">
+        <div className="mt-1.5 flex items-start gap-1.5 text-[11px] text-[var(--c-accent)]">
           <FlaskConical size={12} className="mt-0.5 shrink-0" /> <span>{labNote}</span>
         </div>
       )}
 
       <div className="mt-4 space-y-3">
         {docs.map((d) => (
-          <div key={d.id} className="rounded-2xl border border-white/10 bg-[#1E1F22]/60 p-3.5">
+          <div key={d.id} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 p-3.5">
             <div className="flex items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
-                <FileText size={15} className="shrink-0 text-[#28C8D8]" />
-                <span className="truncate text-sm font-medium text-white/75">{d.label}</span>
+                <FileText size={15} className="shrink-0 text-[var(--c-accent)]" />
+                <span className="truncate text-sm font-medium text-[var(--c-ink)]">{d.label}</span>
               </div>
               <a
                 href={`/api/cases/${caseId}/documents/${d.id}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-white/50 hover:text-[#28C8D8]"
+                className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-[var(--c-ink-2)] hover:text-[var(--c-accent)]"
               >
                 Orijinali aç <ExternalLink size={12} />
               </a>
@@ -110,7 +110,7 @@ export function DocumentAnalysis({ caseId, initial }: { caseId: string; initial:
             {d.assessedAt ? (
               <div className="mt-2.5 space-y-2.5">
                 {d.aiDocType && (
-                  <span className="inline-block rounded-full bg-[#28C8D8]/15 px-2 py-0.5 text-[11px] font-semibold text-[#28C8D8]">
+                  <span className="inline-block rounded-full bg-[var(--c-accent)]/15 px-2 py-0.5 text-[11px] font-semibold text-[var(--c-accent)]">
                     {d.aiDocType}
                   </span>
                 )}
@@ -124,13 +124,13 @@ export function DocumentAnalysis({ caseId, initial }: { caseId: string; initial:
                 <Field icon={<Languages size={12} />} label="Türkçe Çeviri" value={d.aiTranslation} />
               </div>
             ) : (
-              <p className="mt-1.5 text-[12px] text-white/40">Henüz değerlendirilmedi.</p>
+              <p className="mt-1.5 text-[12px] text-[var(--c-ink-3)]">Henüz değerlendirilmedi.</p>
             )}
           </div>
         ))}
       </div>
 
-      <div className="mt-3 text-[11px] leading-relaxed text-white/40">
+      <div className="mt-3 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
         AI ön-değerlendirmesidir; kesin tanı değildir. DICOM görüntüleri ayrı görüntüleyicide incelenir.
       </div>
     </div>
@@ -141,10 +141,10 @@ function Field({ icon, label, value }: { icon: React.ReactNode; label: string; v
   if (!value) return null;
   return (
     <div>
-      <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-white/50">
+      <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
         {icon} {label}
       </div>
-      <p className="mt-0.5 whitespace-pre-line text-sm leading-relaxed text-white/75">{value}</p>
+      <p className="mt-0.5 whitespace-pre-line text-sm leading-relaxed text-[var(--c-ink)]">{value}</p>
     </div>
   );
 }

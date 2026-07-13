@@ -79,15 +79,15 @@ export default async function PackagePage({
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
-      <Link href={`/doktor/vaka/${c.id}`} className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-[#1FA9B8]">
+      <Link href={`/doktor/vaka/${c.id}`} className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">
         <ArrowLeft size={16} /> Vaka detayı
       </Link>
 
       <div className="mt-4 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Luggage size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><Luggage size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#F4F5F3]">Sağlık Turizmi Paketi</h1>
-          <p className="text-sm text-white/50">{decryptField(c.patientName)} · {c.branch} tedavisi için uçtan uca paket oluşturun.</p>
+          <h1 className="text-2xl font-bold text-[var(--c-ink)]">Sağlık Turizmi Paketi</h1>
+          <p className="text-sm text-[var(--c-ink-2)]">{decryptField(c.patientName)} · {c.branch} tedavisi için uçtan uca paket oluşturun.</p>
         </div>
       </div>
 

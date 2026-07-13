@@ -435,24 +435,24 @@ export default function DicomViewer({ open, onClose, src }: { open: boolean; onC
   return createPortal(
     <div className="fixed inset-0 z-50 flex flex-col bg-black/95">
       {/* Üst bar */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-white/10 px-4 py-2.5 text-white">
+      <div className="flex flex-wrap items-center gap-2 border-b border-[var(--c-hairline)] px-4 py-2.5 text-[var(--c-ink)]">
         <span className="flex items-center gap-1.5 text-sm font-semibold"><FileImage size={16} className="text-teal-400" /> Radyoloji (DICOM) Görüntüleyici</span>
-        <label className="ml-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium hover:bg-white/20">
+        <label className="ml-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-[var(--c-ink)]/10 px-3 py-1.5 text-xs font-medium hover:bg-[var(--c-ink)]/20">
           <Upload size={14} /> DICOM aç (.dcm)
           <input type="file" accept=".dcm,application/dicom" multiple className="hidden" onChange={(e) => onFiles(e.target.files)} />
         </label>
         <button onClick={loadSample} className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-medium hover:bg-teal-500"><ImageIcon size={14} /> Örnek DICOM</button>
         {hasImg && (
           <>
-            <span className="mx-1 h-5 w-px bg-white/15" />
-            <button onClick={() => setZoom((z) => Math.min(8, z * 1.2))} className="rounded p-1.5 hover:bg-white/10" title="Yakınlaştır"><ZoomIn size={16} /></button>
-            <button onClick={() => setZoom((z) => Math.max(0.2, z / 1.2))} className="rounded p-1.5 hover:bg-white/10" title="Uzaklaştır"><ZoomOut size={16} /></button>
-            <button onClick={reset} className="rounded p-1.5 hover:bg-white/10" title="Sığdır / sıfırla"><Maximize2 size={16} /></button>
-            <button onClick={() => setInvert((v) => !v)} className={`rounded p-1.5 hover:bg-white/10 ${invert ? "text-teal-400" : ""}`} title="Renk tersle"><Contrast size={16} /></button>
-            <button onClick={reset} className="rounded p-1.5 hover:bg-white/10" title="W/L sıfırla"><RotateCcw size={16} /></button>
+            <span className="mx-1 h-5 w-px bg-[var(--c-ink)]/15" />
+            <button onClick={() => setZoom((z) => Math.min(8, z * 1.2))} className="rounded p-1.5 hover:bg-[var(--c-ink)]/10" title="Yakınlaştır"><ZoomIn size={16} /></button>
+            <button onClick={() => setZoom((z) => Math.max(0.2, z / 1.2))} className="rounded p-1.5 hover:bg-[var(--c-ink)]/10" title="Uzaklaştır"><ZoomOut size={16} /></button>
+            <button onClick={reset} className="rounded p-1.5 hover:bg-[var(--c-ink)]/10" title="Sığdır / sıfırla"><Maximize2 size={16} /></button>
+            <button onClick={() => setInvert((v) => !v)} className={`rounded p-1.5 hover:bg-[var(--c-ink)]/10 ${invert ? "text-teal-400" : ""}`} title="Renk tersle"><Contrast size={16} /></button>
+            <button onClick={reset} className="rounded p-1.5 hover:bg-[var(--c-ink)]/10" title="W/L sıfırla"><RotateCcw size={16} /></button>
           </>
         )}
-        <button onClick={onClose} className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium hover:bg-white/20"><X size={15} /> Kapat</button>
+        <button onClick={onClose} className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-ink)]/10 px-3 py-1.5 text-xs font-medium hover:bg-[var(--c-ink)]/20"><X size={15} /> Kapat</button>
       </div>
 
       {/* Görüntü alanı */}
@@ -479,26 +479,26 @@ export default function DicomViewer({ open, onClose, src }: { open: boolean; onC
         )}
         {/* Alt ipucu */}
         {hasImg && (
-          <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1 text-[11px] text-white/70">
+          <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-[var(--c-ink)]/10 px-3 py-1 text-[11px] text-[var(--c-ink-2)]">
             Sürükle: pencere/seviye · Shift+sürükle: kaydır · Tekerlek: {total > 1 ? "kesit" : "zoom"} · Ctrl+tekerlek: zoom
           </div>
         )}
 
-        {loading && <div className="absolute inset-0 grid place-items-center text-white/80"><Loader2 className="animate-spin" /></div>}
+        {loading && <div className="absolute inset-0 grid place-items-center text-[var(--c-ink)]"><Loader2 className="animate-spin" /></div>}
         {!hasImg && !loading && (
           <div className="absolute inset-0 grid place-items-center px-6 text-center">
             <div className="max-w-md">
-              <FileImage size={40} className="mx-auto text-white/30" />
-              <h3 className="mt-3 text-lg font-semibold text-white">DICOM görüntüsü açın</h3>
-              <p className="mt-1 text-sm text-white/50">Hastanın radyoloji (.dcm) dosyasını açın ya da örneklerle deneyin. Sıkıştırmasız, <b className="text-teal-400">RLE</b>, <b className="text-teal-400">JPEG Baseline</b>, <b className="text-teal-400">JPEG Lossless</b>, <b className="text-teal-400">JPEG 2000</b> ve <b className="text-teal-400">JPEG-LS</b> desteklenir. Pencere/seviye, yakınlaştırma, kaydırma ve kesit gezinme mevcuttur.</p>
+              <FileImage size={40} className="mx-auto text-[var(--c-ink-3)]" />
+              <h3 className="mt-3 text-lg font-semibold text-[var(--c-ink)]">DICOM görüntüsü açın</h3>
+              <p className="mt-1 text-sm text-[var(--c-ink-2)]">Hastanın radyoloji (.dcm) dosyasını açın ya da örneklerle deneyin. Sıkıştırmasız, <b className="text-teal-400">RLE</b>, <b className="text-teal-400">JPEG Baseline</b>, <b className="text-teal-400">JPEG Lossless</b>, <b className="text-teal-400">JPEG 2000</b> ve <b className="text-teal-400">JPEG-LS</b> desteklenir. Pencere/seviye, yakınlaştırma, kaydırma ve kesit gezinme mevcuttur.</p>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 text-xs">
-                <span className="text-white/40">Örnekler:</span>
-                <button onClick={loadSample} className="rounded-md bg-white/10 px-2.5 py-1 font-medium text-white/90 hover:bg-white/20">Sıkıştırmasız</button>
-                <button onClick={() => loadUrl("/dicom/test-rle.dcm", "test-rle.dcm")} className="rounded-md bg-white/10 px-2.5 py-1 font-medium text-white/90 hover:bg-white/20">RLE</button>
-                <button onClick={() => loadUrl("/dicom/test-jpeg-lossless.dcm", "test-jpeg-lossless.dcm")} className="rounded-md bg-white/10 px-2.5 py-1 font-medium text-white/90 hover:bg-white/20">JPEG Lossless</button>
-                <button onClick={() => loadUrl("/dicom/test-jpeg-baseline.dcm", "test-jpeg-baseline.dcm")} className="rounded-md bg-white/10 px-2.5 py-1 font-medium text-white/90 hover:bg-white/20">JPEG Baseline</button>
-                <button onClick={() => loadUrl("/dicom/test-jpeg2000.dcm", "test-jpeg2000.dcm")} className="rounded-md bg-white/10 px-2.5 py-1 font-medium text-white/90 hover:bg-white/20">JPEG 2000</button>
-                <button onClick={() => loadUrl("/dicom/test-jpegls.dcm", "test-jpegls.dcm")} className="rounded-md bg-white/10 px-2.5 py-1 font-medium text-white/90 hover:bg-white/20">JPEG-LS</button>
+                <span className="text-[var(--c-ink-3)]">Örnekler:</span>
+                <button onClick={loadSample} className="rounded-md bg-[var(--c-ink)]/10 px-2.5 py-1 font-medium text-[var(--c-ink)] hover:bg-[var(--c-ink)]/20">Sıkıştırmasız</button>
+                <button onClick={() => loadUrl("/dicom/test-rle.dcm", "test-rle.dcm")} className="rounded-md bg-[var(--c-ink)]/10 px-2.5 py-1 font-medium text-[var(--c-ink)] hover:bg-[var(--c-ink)]/20">RLE</button>
+                <button onClick={() => loadUrl("/dicom/test-jpeg-lossless.dcm", "test-jpeg-lossless.dcm")} className="rounded-md bg-[var(--c-ink)]/10 px-2.5 py-1 font-medium text-[var(--c-ink)] hover:bg-[var(--c-ink)]/20">JPEG Lossless</button>
+                <button onClick={() => loadUrl("/dicom/test-jpeg-baseline.dcm", "test-jpeg-baseline.dcm")} className="rounded-md bg-[var(--c-ink)]/10 px-2.5 py-1 font-medium text-[var(--c-ink)] hover:bg-[var(--c-ink)]/20">JPEG Baseline</button>
+                <button onClick={() => loadUrl("/dicom/test-jpeg2000.dcm", "test-jpeg2000.dcm")} className="rounded-md bg-[var(--c-ink)]/10 px-2.5 py-1 font-medium text-[var(--c-ink)] hover:bg-[var(--c-ink)]/20">JPEG 2000</button>
+                <button onClick={() => loadUrl("/dicom/test-jpegls.dcm", "test-jpegls.dcm")} className="rounded-md bg-[var(--c-ink)]/10 px-2.5 py-1 font-medium text-[var(--c-ink)] hover:bg-[var(--c-ink)]/20">JPEG-LS</button>
               </div>
               {err && <p className="mt-3 rounded-lg bg-red-500/15 px-3 py-2 text-sm text-red-300">{err}</p>}
             </div>
@@ -509,9 +509,9 @@ export default function DicomViewer({ open, onClose, src }: { open: boolean; onC
 
       {/* Alt: kesit kaydırıcı */}
       {hasImg && total > 1 && (
-        <div className="flex items-center gap-3 border-t border-white/10 px-4 py-2 text-white">
-          <span className="text-xs text-white/60">Kesit</span>
-          <input type="range" min={0} max={total - 1} value={idx} onChange={(e) => setIdx(Number(e.target.value))} className="flex-1" style={{ accentColor: "#28C8D8" }} />
+        <div className="flex items-center gap-3 border-t border-[var(--c-hairline)] px-4 py-2 text-[var(--c-ink)]">
+          <span className="text-xs text-[var(--c-ink-2)]">Kesit</span>
+          <input type="range" min={0} max={total - 1} value={idx} onChange={(e) => setIdx(Number(e.target.value))} className="flex-1" style={{ accentColor: "var(--c-accent)" }} />
           <span className="w-14 text-right text-xs tabular-nums">{idx + 1}/{total}</span>
         </div>
       )}

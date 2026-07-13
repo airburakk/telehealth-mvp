@@ -1,6 +1,6 @@
 // PortaMed landing illüstrasyonları — fotoğraf yerine marka paletinde (teal/zümrüt/fildişi/altın)
 // editorial flat SVG sanatı. Lisanssız, retina-keskin, tema ile bütün.
-// Palet: teal #28C8D8 · teal-deep #1FA9B8 · teal-bright #5FD0C7 · emerald #0D0E10 · ivory #F4F1E8 · gold #C6A664
+// Palet: teal var(--c-accent) · teal-deep var(--c-accent-strong) · teal-bright #5FD0C7 · emerald var(--c-bg) · ivory var(--c-cream) · gold var(--c-gold)
 
 // ── Hero (4:5): "Türkiye'ye açılan kapı" — portal halkası güneş + İstanbul silüeti + Boğaz ──
 export function HeroArt() {
@@ -26,12 +26,12 @@ export function HeroArt() {
 
       {/* Güneş-portal: marka halkası */}
       <circle cx="200" cy="170" r="120" fill="url(#pm-glow)" />
-      <ellipse cx="200" cy="168" rx="56" ry="92" transform="rotate(-18 200 168)" fill="none" stroke="#28C8D8" strokeWidth="17" strokeLinecap="round" />
-      <ellipse cx="200" cy="168" rx="56" ry="92" transform="rotate(-18 200 168)" fill="#F4F1E8" opacity="0.35" />
+      <ellipse cx="200" cy="168" rx="56" ry="92" transform="rotate(-18 200 168)" fill="none" stroke="var(--c-accent)" strokeWidth="17" strokeLinecap="round" />
+      <ellipse cx="200" cy="168" rx="56" ry="92" transform="rotate(-18 200 168)" fill="var(--c-cream)" opacity="0.35" />
 
       {/* Kuşlar */}
-      <path d="M96 96 q7 -7 14 0 M110 96 q7 -7 14 0" stroke="#0D0E10" strokeWidth="2.4" fill="none" strokeLinecap="round" opacity="0.55" />
-      <path d="M292 122 q6 -6 12 0 M304 122 q6 -6 12 0" stroke="#0D0E10" strokeWidth="2.2" fill="none" strokeLinecap="round" opacity="0.4" />
+      <path d="M96 96 q7 -7 14 0 M110 96 q7 -7 14 0" stroke="var(--c-bg)" strokeWidth="2.4" fill="none" strokeLinecap="round" opacity="0.55" />
+      <path d="M292 122 q6 -6 12 0 M304 122 q6 -6 12 0" stroke="var(--c-bg)" strokeWidth="2.2" fill="none" strokeLinecap="round" opacity="0.4" />
 
       {/* Arka sıra silüet (uzak yaka) */}
       <g fill="#7AB5AA" opacity="0.7">
@@ -42,14 +42,14 @@ export function HeroArt() {
       </g>
 
       {/* Ana silüet: cami kubbesi + minareler + Galata */}
-      <g fill="#0D0E10">
+      <g fill="var(--c-bg)">
         {/* Galata kulesi */}
         <rect x="58" y="252" width="26" height="92" rx="3" />
         <path d="M52 258 h38 l-6 -12 h-26 z" />
         <path d="M71 222 l13 24 h-26 z" />
-        <rect x="63" y="262" width="4" height="7" rx="2" fill="#F4F1E8" opacity="0.85" />
-        <rect x="72" y="262" width="4" height="7" rx="2" fill="#F4F1E8" opacity="0.85" />
-        <rect x="81" y="262" width="3" height="7" rx="1.5" fill="#F4F1E8" opacity="0.85" />
+        <rect x="63" y="262" width="4" height="7" rx="2" fill="var(--c-cream)" opacity="0.85" />
+        <rect x="72" y="262" width="4" height="7" rx="2" fill="var(--c-cream)" opacity="0.85" />
+        <rect x="81" y="262" width="3" height="7" rx="1.5" fill="var(--c-cream)" opacity="0.85" />
 
         {/* Minare sol */}
         <rect x="142" y="216" width="9" height="128" rx="2" />
@@ -70,7 +70,7 @@ export function HeroArt() {
         <rect x="309" y="252" width="17" height="5" rx="2.5" />
       </g>
       {/* Kubbe kapı/pencere ışıkları */}
-      <g fill="#F4F1E8" opacity="0.9">
+      <g fill="var(--c-cream)" opacity="0.9">
         <path d="M222 344 v-26 a10 10 0 0 1 20 0 v26 z" />
         <rect x="186" y="320" width="7" height="11" rx="3.5" />
         <rect x="271" y="320" width="7" height="11" rx="3.5" />
@@ -78,7 +78,7 @@ export function HeroArt() {
 
       {/* Boğaz */}
       <rect y="344" width="400" height="156" fill="url(#pm-sea)" />
-      <g stroke="#F4F1E8" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.7">
+      <g stroke="var(--c-cream)" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.7">
         <path d="M28 388 q14 -8 28 0 t28 0" />
         <path d="M212 416 q14 -8 28 0 t28 0" />
         <path d="M96 452 q14 -8 28 0 t28 0" />
@@ -89,12 +89,12 @@ export function HeroArt() {
 
       {/* Vapur */}
       <g transform="translate(284 396)">
-        <path d="M0 18 h74 l-10 16 h-54 z" fill="#0D0E10" />
-        <rect x="12" y="6" width="44" height="13" rx="3" fill="#F4F1E8" />
-        <rect x="20" y="9" width="6" height="6" rx="1.5" fill="#1FA9B8" />
-        <rect x="31" y="9" width="6" height="6" rx="1.5" fill="#1FA9B8" />
-        <rect x="42" y="9" width="6" height="6" rx="1.5" fill="#1FA9B8" />
-        <rect x="50" y="-4" width="5" height="11" rx="2" fill="#C6A664" />
+        <path d="M0 18 h74 l-10 16 h-54 z" fill="var(--c-bg)" />
+        <rect x="12" y="6" width="44" height="13" rx="3" fill="var(--c-cream)" />
+        <rect x="20" y="9" width="6" height="6" rx="1.5" fill="var(--c-accent-strong)" />
+        <rect x="31" y="9" width="6" height="6" rx="1.5" fill="var(--c-accent-strong)" />
+        <rect x="42" y="9" width="6" height="6" rx="1.5" fill="var(--c-accent-strong)" />
+        <rect x="50" y="-4" width="5" height="11" rx="2" fill="var(--c-gold)" />
       </g>
     </svg>
   );
@@ -108,14 +108,14 @@ export function PackArtHair() {
       <circle cx="330" cy="50" r="90" fill="#D7E9E2" />
       <circle cx="56" cy="252" r="70" fill="#D7E9E2" />
       {/* Profil silüeti */}
-      <path d="M150 268 v-36 c-26 -8 -44 -32 -44 -62 0 -38 30 -68 70 -68 38 0 68 27 70 64 1 14 -3 22 7 34 4 5 3 10 -4 12 -5 1 -6 3 -5 9 0 4 -2 7 -6 8 -3 1 -4 3 -3 7 2 8 -3 13 -12 12 l-14 -1 v21 z" fill="#0D0E10" />
+      <path d="M150 268 v-36 c-26 -8 -44 -32 -44 -62 0 -38 30 -68 70 -68 38 0 68 27 70 64 1 14 -3 22 7 34 4 5 3 10 -4 12 -5 1 -6 3 -5 9 0 4 -2 7 -6 8 -3 1 -4 3 -3 7 2 8 -3 13 -12 12 l-14 -1 v21 z" fill="var(--c-bg)" />
       {/* Saç çizgisi + greft noktaları */}
       <path d="M118 130 q24 -44 66 -36" stroke="#5FD0C7" strokeWidth="6" fill="none" strokeLinecap="round" />
-      <g fill="#28C8D8">
+      <g fill="var(--c-accent)">
         <circle cx="128" cy="118" r="5" /><circle cx="146" cy="104" r="5" /><circle cx="166" cy="96" r="5" /><circle cx="186" cy="94" r="5" />
       </g>
       {/* Filiz/büyüme kıvılcımları */}
-      <g stroke="#C6A664" strokeWidth="3.4" strokeLinecap="round" fill="none">
+      <g stroke="var(--c-gold)" strokeWidth="3.4" strokeLinecap="round" fill="none">
         <path d="M226 84 v-16 M218 76 h16" />
         <path d="M254 116 v-12 M248 110 h12" />
       </g>
@@ -130,16 +130,16 @@ export function PackArtSmile() {
       <circle cx="64" cy="56" r="84" fill="#DCEAE2" />
       <circle cx="348" cy="248" r="76" fill="#DCEAE2" />
       {/* Diş */}
-      <path d="M158 86 c-26 0 -42 20 -40 46 2 24 10 34 12 56 1 13 6 26 16 26 9 0 10 -11 12 -22 2 -12 4 -18 12 -18 8 0 10 6 12 18 2 11 3 22 12 22 10 0 15 -13 16 -26 2 -22 10 -32 12 -56 2 -26 -14 -46 -40 -46 -7 0 -17 4 -12 4 5 0 -5 -4 -12 -4 z" fill="#FDFCF8" stroke="#0D0E10" strokeWidth="7" strokeLinejoin="round" transform="translate(28 0)" />
+      <path d="M158 86 c-26 0 -42 20 -40 46 2 24 10 34 12 56 1 13 6 26 16 26 9 0 10 -11 12 -22 2 -12 4 -18 12 -18 8 0 10 6 12 18 2 11 3 22 12 22 10 0 15 -13 16 -26 2 -22 10 -32 12 -56 2 -26 -14 -46 -40 -46 -7 0 -17 4 -12 4 5 0 -5 -4 -12 -4 z" fill="#FDFCF8" stroke="var(--c-bg)" strokeWidth="7" strokeLinejoin="round" transform="translate(28 0)" />
       {/* Parlama */}
       <path d="M180 124 q10 -12 24 -10" stroke="#5FD0C7" strokeWidth="6" fill="none" strokeLinecap="round" transform="translate(28 0)" />
       {/* Altın kıvılcımlar */}
-      <g fill="#C6A664">
+      <g fill="var(--c-gold)">
         <path d="M286 78 l5 12 12 5 -12 5 -5 12 -5 -12 -12 -5 12 -5 z" />
         <path d="M104 196 l4 9 9 4 -9 4 -4 9 -4 -9 -9 -4 9 -4 z" />
       </g>
       {/* Gülüş yayı */}
-      <path d="M132 238 q84 36 164 -10" stroke="#28C8D8" strokeWidth="7" fill="none" strokeLinecap="round" />
+      <path d="M132 238 q84 36 164 -10" stroke="var(--c-accent)" strokeWidth="7" fill="none" strokeLinecap="round" />
     </svg>
   );
 }
@@ -151,19 +151,19 @@ export function PackArtIvf() {
       <circle cx="350" cy="58" r="86" fill="#DAE9E4" />
       <circle cx="44" cy="246" r="64" fill="#DAE9E4" />
       {/* Embriyo: bölünen hücreler */}
-      <circle cx="200" cy="150" r="86" fill="none" stroke="#0D0E10" strokeWidth="7" />
-      <circle cx="200" cy="150" r="86" fill="#F4F1E8" opacity="0.5" />
-      <g fill="#28C8D8" opacity="0.92">
+      <circle cx="200" cy="150" r="86" fill="none" stroke="var(--c-bg)" strokeWidth="7" />
+      <circle cx="200" cy="150" r="86" fill="var(--c-cream)" opacity="0.5" />
+      <g fill="var(--c-accent)" opacity="0.92">
         <circle cx="172" cy="124" r="30" />
         <circle cx="230" cy="126" r="28" />
         <circle cx="174" cy="180" r="28" />
         <circle cx="228" cy="178" r="30" />
       </g>
-      <g fill="#F4F1E8">
+      <g fill="var(--c-cream)">
         <circle cx="172" cy="124" r="9" /><circle cx="230" cy="126" r="8" /><circle cx="174" cy="180" r="8" /><circle cx="228" cy="178" r="9" />
       </g>
       {/* Kalp */}
-      <path d="M306 212 c-6 -10 -22 -8 -22 6 0 10 12 16 22 24 10 -8 22 -14 22 -24 0 -14 -16 -16 -22 -6 z" fill="#C6A664" />
+      <path d="M306 212 c-6 -10 -22 -8 -22 6 0 10 12 16 22 24 10 -8 22 -14 22 -24 0 -14 -16 -16 -22 -6 z" fill="var(--c-gold)" />
       {/* Yörünge kıvılcımı */}
       <circle cx="118" cy="84 " r="6" fill="#5FD0C7" />
     </svg>
@@ -186,10 +186,10 @@ export function TestimonialArt() {
     <svg viewBox="0 0 240 240" className="h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden>
       <rect width="240" height="240" fill="#0C4A43" />
       <circle cx="120" cy="104" r="78" fill="#7FE9E0" opacity="0.14" />
-      <circle cx="120" cy="100" r="58" fill="none" stroke="#C6A664" strokeWidth="3" opacity="0.7" />
+      <circle cx="120" cy="100" r="58" fill="none" stroke="var(--c-gold)" strokeWidth="3" opacity="0.7" />
       {/* Omuz + ceket */}
-      <path d="M36 240 c6 -52 38 -74 84 -74 s78 22 84 74 z" fill="#F4F1E8" />
-      <path d="M120 170 l-17 16 17 34 17 -34 z" fill="#28C8D8" />
+      <path d="M36 240 c6 -52 38 -74 84 -74 s78 22 84 74 z" fill="var(--c-cream)" />
+      <path d="M120 170 l-17 16 17 34 17 -34 z" fill="var(--c-accent)" />
       {/* Boyun + baş */}
       <rect x="106" y="128" width="28" height="30" rx="12" fill="#E9C29B" />
       <circle cx="120" cy="100" r="40" fill="#E9C29B" />

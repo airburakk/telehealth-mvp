@@ -70,18 +70,18 @@ export function DischargeReport({
   }
 
   return (
-    <div className="rounded-3xl border border-violet-400/25 bg-[#161719] p-6 shadow-sm">
+    <div className="rounded-3xl border border-violet-400/25 bg-[var(--c-panel)] p-6 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-violet-300">
           <FileText size={15} /> AI Epikriz / Taburcu Raporu
         </div>
         {has && savedAt && (
-          <span className="shrink-0 text-[11px] text-white/40">oluşturuldu: {formatSavedAt(savedAt)}</span>
+          <span className="shrink-0 text-[11px] text-[var(--c-ink-3)]">oluşturuldu: {formatSavedAt(savedAt)}</span>
         )}
       </div>
 
       {!has && (
-        <p className="mt-2 text-sm leading-relaxed text-white/50">
+        <p className="mt-2 text-sm leading-relaxed text-[var(--c-ink-2)]">
           Hastanın tüm yolculuğunu (triyaj, görüşme/SOAP notu, tedavi paketi ve post-op takip) tek tıkla
           profesyonel bir epikrize sentezler. Veride olmayan bulgu uydurulmaz.
         </p>
@@ -101,19 +101,19 @@ export function DischargeReport({
         <>
           <div className="mt-4 space-y-3">
             {SECTIONS.map((s) => (
-              <div key={s.key} className="rounded-2xl border border-white/10 bg-[#1E1F22]/60 p-3.5">
-                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-white/50">
+              <div key={s.key} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 p-3.5">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
                   {s.icon} {s.label}
                 </div>
-                <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-white/75">{structured[s.key]}</p>
+                <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-[var(--c-ink)]">{structured[s.key]}</p>
               </div>
             ))}
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
+          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--c-hairline)] pt-3">
             <button
               onClick={copy}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-[#161719] px-2.5 py-1.5 text-[12px] font-medium text-white/65 hover:bg-[#1E1F22]"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-2.5 py-1.5 text-[12px] font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
             >
               {copied ? <Check size={13} className="text-emerald-300" /> : <Copy size={13} />} {copied ? "Kopyalandı" : "Raporu kopyala"}
             </button>

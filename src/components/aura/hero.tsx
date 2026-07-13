@@ -188,7 +188,7 @@ function SeeDoctorCta({ label }: { label: string }) {
   return (
     <Link
       href="/giris"
-      className="group inline-flex items-center gap-3 rounded-lg bg-[var(--aura-accent)] px-7 py-3.5 text-base font-semibold text-[var(--aura-bg)] transition-transform duration-200 [transform-style:preserve-3d] hover:[transform:rotateX(14deg)] active:scale-[0.98]"
+      className="group inline-flex items-center gap-3 rounded-full bg-[var(--aura-accent)] px-7 py-3.5 text-base font-semibold text-[var(--aura-bg)] transition-transform duration-200 [transform-style:preserve-3d] hover:[transform:rotateX(14deg)] active:scale-[0.98]"
     >
       {label}
       <svg

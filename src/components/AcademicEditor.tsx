@@ -50,10 +50,10 @@ export function AcademicEditor(props: {
   }
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
-      <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
+    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
+      <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
         <GraduationCap size={15} /> Akademik & Eğitim
-        <span className="ml-1 text-[10px] font-normal normal-case text-white/40">(boş alanlar profilde otomatik üretilir)</span>
+        <span className="ml-1 text-[10px] font-normal normal-case text-[var(--c-ink-3)]">(boş alanlar profilde otomatik üretilir)</span>
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -89,7 +89,7 @@ export function AcademicEditor(props: {
 
       {err && <p className="mt-3 text-sm text-red-300">{err}</p>}
 
-      <button onClick={save} disabled={saving} className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60">
+      <button onClick={save} disabled={saving} className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-60">
         {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
         {saved ? "Kaydedildi" : "Akademik bilgileri kaydet"}
       </button>
@@ -97,14 +97,14 @@ export function AcademicEditor(props: {
   );
 }
 
-const INPUT = "w-full rounded-lg border border-white/15 px-3 py-2 text-sm text-white/75 outline-none focus:border-[#28C8D8]";
+const INPUT = "w-full rounded-lg border border-[var(--c-hairline)] px-3 py-2 text-sm text-[var(--c-ink)] outline-none focus:border-[var(--c-accent)]";
 
 function Field({ label, icon, hint, children }: { label: string; icon?: React.ReactNode; hint?: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-white/75">
-        {icon && <span className="text-white/40">{icon}</span>} {label}
-        {hint && <span className="text-xs font-normal text-white/40">({hint})</span>}
+      <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-[var(--c-ink)]">
+        {icon && <span className="text-[var(--c-ink-3)]">{icon}</span>} {label}
+        {hint && <span className="text-xs font-normal text-[var(--c-ink-3)]">({hint})</span>}
       </div>
       <div className="mt-1.5">{children}</div>
     </div>

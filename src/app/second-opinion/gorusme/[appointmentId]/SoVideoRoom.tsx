@@ -11,6 +11,7 @@ import { useSoLang, SoLangSelect } from "@/components/SoLocale";
 import { langDir } from "@/lib/constants";
 import { PreConsultLobby } from "@/components/PreConsultLobby";
 import { PatientQuestionsPanel } from "@/components/PatientQuestionsPanel";
+import { VideoCallShell } from "@/components/VideoCallShell";
 import { LiveInterpreter } from "@/components/LiveInterpreter";
 import type { DoctorCardData } from "@/lib/doctor-card";
 
@@ -403,10 +404,10 @@ export function SoVideoRoom({
   if (phase === "ended" || ended) {
     return (
       <div dir={langDir(lang)} className="mx-auto max-w-md px-5 py-20 text-center">
-        <PhoneOff className="mx-auto mb-3 text-white/25" size={40} />
-        <h1 className="text-xl font-bold text-[#F4F5F3]">{t(S.ended)}</h1>
-        <p className="mt-2 text-sm text-white/50">{t(S.endedSub)}</p>
-        <button onClick={() => router.push(`/second-opinion/vaka/${caseId}`)} className="mt-5 rounded-xl bg-[#28C8D8] px-5 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
+        <PhoneOff className="mx-auto mb-3 text-[var(--c-ink-3)]" size={40} />
+        <h1 className="text-xl font-bold text-[var(--c-ink)]">{t(S.ended)}</h1>
+        <p className="mt-2 text-sm text-[var(--c-ink-2)]">{t(S.endedSub)}</p>
+        <button onClick={() => router.push(`/second-opinion/vaka/${caseId}`)} className="mt-5 rounded-xl bg-[var(--c-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
           {t(S.backToCase)}
         </button>
       </div>
@@ -432,108 +433,117 @@ export function SoVideoRoom({
   }
 
   return (
-    <div dir={langDir(lang)} className="mx-auto max-w-5xl px-4 py-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-bold text-[#F4F5F3]">{t(S.title)}</h1>
-          <p className="text-xs text-white/50">{t(branchLabel)} · {remoteName}</p>
+    <VideoCallShell
+      dir={langDir(lang)}
+      panelLabel={t(S.title)}
+      statusBar={
+        <div className="flex items-center justify-between gap-2 text-xs font-medium text-white/90">
+          <span className="min-w-0 truncate">{t(S.title)} · {t(branchLabel)} · {remoteName}{connState ? ` · ${connState}` : ""}</span>
+          <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 ${phase === "connected" ? "bg-emerald-500/20 text-emerald-200" : "bg-black/35 text-amber-200"}`}>
+            {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />}
+            {phase === "connected" ? t(S.connected) : phase === "waiting" ? t(S.waiting) : phase === "error" ? t(S.errorLbl) : t(S.connecting)}
+          </span>
         </div>
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${phase === "connected" ? "bg-emerald-500/10 text-emerald-300" : "bg-amber-500/10 text-amber-300"}`}>
-          {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />}
-          {phase === "connected" ? t(S.connected) : phase === "waiting" ? t(S.waiting) : phase === "error" ? t(S.errorLbl) : t(S.connecting)}
-        </span>
-      </div>
-
-      {errMsg && <p className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-300">{t(errMsg)}</p>}
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div className="relative aspect-video overflow-hidden rounded-2xl bg-[#101113]">
+      }
+      video={
+        <div className="absolute inset-0 bg-[var(--c-bg-deep)]">
+          {/* Uzak taraf (gerçek video) — tüm alanı doldurur */}
           <video ref={remoteVideoRef} autoPlay playsInline className="h-full w-full object-cover" />
           {!remoteOn && (
-            <div className="absolute inset-0 grid place-items-center text-white/40">
-              <div className="text-center"><UserRound size={36} className="mx-auto" /><p className="mt-2 text-xs">{remoteName} {t(S.waitingFor)}</p></div>
+            <div className="absolute inset-0 grid place-items-center text-[var(--c-ink-3)]">
+              <div className="text-center"><UserRound size={40} className="mx-auto" /><p className="mt-2 text-xs">{remoteName} {t(S.waitingFor)}</p></div>
             </div>
           )}
-          <span className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-0.5 text-[11px] text-white">{remoteName}</span>
-        </div>
-        <div className="relative aspect-video overflow-hidden rounded-2xl bg-[#26272B]">
-          <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
-          <span className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-0.5 text-[11px] text-white">{t(S.you)}</span>
-        </div>
-      </div>
+          <span className="absolute bottom-20 left-3 rounded bg-black/50 px-2 py-0.5 text-[11px] text-[var(--c-ink)]">{remoteName}</span>
 
-      <div className="mt-4 flex items-center justify-center gap-3">
-        <button onClick={toggleMic} className={`grid h-12 w-12 place-items-center rounded-full ${micOn ? "bg-white/15 text-white/75" : "bg-red-500/15 text-red-300"}`}>
-          {micOn ? <Mic size={20} /> : <MicOff size={20} />}
-        </button>
-        <button onClick={toggleCam} className={`grid h-12 w-12 place-items-center rounded-full ${camOn ? "bg-white/15 text-white/75" : "bg-red-500/15 text-red-300"}`}>
-          {camOn ? <Video size={20} /> : <VideoOff size={20} />}
-        </button>
-        <button onClick={hangUp} className="grid h-12 w-12 place-items-center rounded-full bg-red-600 text-white hover:bg-red-700">
-          <PhoneOff size={20} />
-        </button>
-      </div>
-      {connState && <p className="mt-2 text-center text-[11px] text-white/40">{t(S.connLbl)} {connState}</p>}
-
-      {/* AI Canlı Tercüman (Gemini) — yalnız diller farklıysa (aynı dilde gereksiz + karşı sesi kısar);
-          ilk konuşma sesinde otomatik başlar (başlat düğmesi yok). */}
-      {langsDiffer && (
-        <div className="mt-4">
-          <LiveInterpreter
-            lang={isDoctor ? "Türkçe" : lang}
-            targetLang={isDoctor ? "tr" : (SPEECH_LANG[patientLang]?.split("-")[0] ?? "en")}
-            targetLabel={isDoctor ? "Türkçe" : patientLang}
-            otherLabel={isDoctor ? patientLang : "Türkçe"}
-            autoMode={langsDiffer}
-            autoStart={interpAutoStart}
-            getRemoteStream={() => (remoteVideoRef.current?.srcObject as MediaStream | null) ?? null}
-            onMuteRemote={(m) => { if (remoteVideoRef.current) remoteVideoRef.current.muted = m; }}
-          />
-        </div>
-      )}
-
-      {/* Canlı Transkript — iki taraf da kendi konuşmasını yazıya çevirir, karşı tarafa iletilir (otomatik/VAD) */}
-      <div className="mt-4 rounded-3xl border border-white/10 bg-[#161719] p-4 shadow-sm">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
-            <MessageSquareText size={14} /> {t(S.transcriptTitle)}
-            {sttOn && <span className="ms-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
+          {/* Yerel self-view — sağ üst köşe */}
+          <div className="absolute right-3 top-14 h-24 w-36 overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface-2)] shadow-lg sm:h-28 sm:w-44">
+            <video ref={localVideoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
+            <span className="absolute bottom-1.5 left-1.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-[var(--c-ink)]">{t(S.you)}</span>
           </div>
-          {!sttSupported ? (
-            <span className="text-[11px] text-white/40">{t(S.notSupported)}</span>
-          ) : sttOn ? (
-            <button onClick={() => { setSttErr(""); setSttOn(false); }} className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/30 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-medium text-red-300 hover:bg-red-500/15">
-              <Mic size={13} /> {t(S.stop)}
-            </button>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1.5 text-[12px] font-medium text-white/50" title={t(S.transcriptEmpty)}>
-              <Mic size={13} /> {t(S.auto)}
-            </span>
-          )}
-        </div>
-        {sttErr && <div className="mt-1 text-[11px] text-red-300">{t(sttErr)}</div>}
-        <div className="mt-2 max-h-44 space-y-1 overflow-y-auto">
-          {transcript.length === 0 && !interim && (
-            <p className="text-xs text-white/40">{t(S.transcriptEmpty)}</p>
-          )}
-          {transcript.map((l, i) => (
-            <p key={i} className="text-sm leading-snug text-white/75">
-              <span className={`font-semibold ${l.who === "doctor" ? "text-[#1FA9B8]" : "text-emerald-300"}`}>
-                {l.who === "doctor" ? t(S.doctor) : t(S.patient)}:
-              </span>{" "}
-              {l.text}
-            </p>
-          ))}
-          {interim && <p className="text-sm italic text-white/40">{interim}…</p>}
-        </div>
-      </div>
 
-      {/* Hasta "doktora sorularım" notu — bekleme odasıyla aynı localStorage anahtarından (talep #2) */}
-      {selfRole === "patient" && (
-        <div className="mt-4">
-          <PatientQuestionsPanel storageKey={roomId} lang={lang} />
+          {/* Kontroller — video altında ortada */}
+          <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-3">
+            <button onClick={toggleMic} className={`grid h-12 w-12 place-items-center rounded-full backdrop-blur ${micOn ? "bg-white/15 text-white/90" : "bg-red-500/20 text-red-200"}`}>
+              {micOn ? <Mic size={20} /> : <MicOff size={20} />}
+            </button>
+            <button onClick={toggleCam} className={`grid h-12 w-12 place-items-center rounded-full backdrop-blur ${camOn ? "bg-white/15 text-white/90" : "bg-red-500/20 text-red-200"}`}>
+              {camOn ? <Video size={20} /> : <VideoOff size={20} />}
+            </button>
+            <button onClick={hangUp} className="grid h-12 w-12 place-items-center rounded-full bg-red-600 text-white hover:bg-red-700">
+              <PhoneOff size={20} />
+            </button>
+          </div>
+
+          {errMsg && <div className="absolute inset-x-4 bottom-20 z-20 mx-auto max-w-md rounded-lg bg-amber-500/15 px-3 py-2 text-center text-sm text-amber-200 ring-1 ring-amber-400/25 backdrop-blur">{t(errMsg)}</div>}
         </div>
-      )}
-    </div>
+      }
+      panel={
+        <>
+          {/* Hasta bilgileri (script yanı sıra) */}
+          <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
+            <h2 className="font-bold text-[var(--c-ink)]">{remoteName}</h2>
+            <p className="mt-1 text-sm font-medium text-[var(--c-accent-strong)]">{t(branchLabel)}</p>
+            <p className="mt-2 text-xs text-[var(--c-ink-3)]">{t(S.title)}</p>
+          </div>
+
+          {/* AI Canlı Tercüman (Gemini) — yalnız diller farklıysa (aynı dilde gereksiz + karşı sesi kısar);
+              ilk konuşma sesinde otomatik başlar (başlat düğmesi yok). */}
+          {langsDiffer && (
+            <LiveInterpreter
+              lang={isDoctor ? "Türkçe" : lang}
+              targetLang={isDoctor ? "tr" : (SPEECH_LANG[patientLang]?.split("-")[0] ?? "en")}
+              targetLabel={isDoctor ? "Türkçe" : patientLang}
+              otherLabel={isDoctor ? patientLang : "Türkçe"}
+              autoMode={langsDiffer}
+              autoStart={interpAutoStart}
+              getRemoteStream={() => (remoteVideoRef.current?.srcObject as MediaStream | null) ?? null}
+              onMuteRemote={(m) => { if (remoteVideoRef.current) remoteVideoRef.current.muted = m; }}
+            />
+          )}
+
+          {/* Canlı Transkript (script) — iki taraf da kendi konuşmasını yazıya çevirir, karşı tarafa iletilir (otomatik/VAD) */}
+          <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+                <MessageSquareText size={14} /> {t(S.transcriptTitle)}
+                {sttOn && <span className="ms-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
+              </div>
+              {!sttSupported ? (
+                <span className="text-[11px] text-[var(--c-ink-3)]">{t(S.notSupported)}</span>
+              ) : sttOn ? (
+                <button onClick={() => { setSttErr(""); setSttOn(false); }} className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/30 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-medium text-red-300 hover:bg-red-500/15">
+                  <Mic size={13} /> {t(S.stop)}
+                </button>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-ink)]/10 px-2.5 py-1.5 text-[12px] font-medium text-[var(--c-ink-2)]" title={t(S.transcriptEmpty)}>
+                  <Mic size={13} /> {t(S.auto)}
+                </span>
+              )}
+            </div>
+            {sttErr && <div className="mt-1 text-[11px] text-red-300">{t(sttErr)}</div>}
+            <div className="mt-2 max-h-44 space-y-1 overflow-y-auto">
+              {transcript.length === 0 && !interim && (
+                <p className="text-xs text-[var(--c-ink-3)]">{t(S.transcriptEmpty)}</p>
+              )}
+              {transcript.map((l, i) => (
+                <p key={i} className="text-sm leading-snug text-[var(--c-ink)]">
+                  <span className={`font-semibold ${l.who === "doctor" ? "text-[var(--c-accent-strong)]" : "text-emerald-300"}`}>
+                    {l.who === "doctor" ? t(S.doctor) : t(S.patient)}:
+                  </span>{" "}
+                  {l.text}
+                </p>
+              ))}
+              {interim && <p className="text-sm italic text-[var(--c-ink-3)]">{interim}…</p>}
+            </div>
+          </div>
+
+          {/* Hasta "doktora sorularım" notu — bekleme odasıyla aynı localStorage anahtarından (talep #2) */}
+          {selfRole === "patient" && (
+            <PatientQuestionsPanel storageKey={roomId} lang={lang} />
+          )}
+        </>
+      }
+    />
   );
 }

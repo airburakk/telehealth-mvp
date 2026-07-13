@@ -57,40 +57,40 @@ export function ComplaintForm({ caseId }: { caseId: string }) {
   }
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
       <div className="flex items-center gap-2">
-        <Scale size={18} className="text-[#F4F5F3]" />
-        <h2 className="font-bold text-[#F4F5F3]">Etik Kurul Başvurusu</h2>
+        <Scale size={18} className="text-[var(--c-ink)]" />
+        <h2 className="font-bold text-[var(--c-ink)]">Etik Kurul Başvurusu</h2>
       </div>
-      <p className="mt-1 text-sm text-white/50">Memnuniyetsizlik veya şikayetinizi bağımsız kurula iletin.</p>
+      <p className="mt-1 text-sm text-[var(--c-ink-2)]">Memnuniyetsizlik veya şikayetinizi bağımsız kurula iletin.</p>
 
       <div className="mt-5 space-y-4">
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium text-white/75">Konu</span>
-          <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Örn. Operasyon sonrası komplikasyon" className="w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]" />
+          <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink)]">Konu</span>
+          <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Örn. Operasyon sonrası komplikasyon" className="w-full rounded-lg border border-[var(--c-hairline)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]" />
         </label>
 
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium text-white/75">Talep türü</span>
-          <select value={requestType} onChange={(e) => setRequestType(e.target.value)} className="w-full rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:border-[#28C8D8]">
+          <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink)]">Talep türü</span>
+          <select value={requestType} onChange={(e) => setRequestType(e.target.value)} className="w-full rounded-lg border border-[var(--c-hairline)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
             {Object.entries(REQUEST_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </label>
 
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium text-white/75">Açıklama</span>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Yaşadığınız durumu ayrıntılı anlatın…" className="w-full resize-none rounded-lg border border-white/15 p-2.5 text-sm outline-none focus:border-[#28C8D8]" />
+          <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink)]">Açıklama</span>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Yaşadığınız durumu ayrıntılı anlatın…" className="w-full resize-none rounded-lg border border-[var(--c-hairline)] p-2.5 text-sm outline-none focus:border-[var(--c-accent)]" />
         </label>
 
-        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-white/15 bg-[#1E1F22] px-3 py-2.5 text-sm text-white/65 hover:border-teal-400">
-          <Upload size={16} className="text-white/40" />
+        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5 text-sm text-[var(--c-ink-2)] hover:border-teal-400">
+          <Upload size={16} className="text-[var(--c-ink-3)]" />
           {evidence || "Kanıt ekle (foto/belge/video — opsiyonel)"}
           <input type="file" className="hidden" onChange={(e) => setEvidence(e.target.files?.[0]?.name ?? "")} />
         </label>
 
         {error && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300 ring-1 ring-red-400/25">{error}</div>}
 
-        <button onClick={submit} disabled={submitting} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-3 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60">
+        <button onClick={submit} disabled={submitting} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-3 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-60">
           {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Kurula gönder
         </button>
       </div>

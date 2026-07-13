@@ -106,7 +106,7 @@ export default function FreeCareApplyPage() {
   return (
     <JourneyIntakeShell icon={HeartHandshake} eyebrow={t("Ücretsiz Sağlık Hizmeti")} title={t("Ücretsiz Sağlık Hizmeti Başvurusu")} intro={t("Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.")} lang={uiLang} onLangChange={chooseLang} journey="FREE_CARE" stage={0}>
 
-      <div className="mt-7 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm space-y-4">
+      <div className="mt-7 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm space-y-4">
         {showStrip && profile ? (
           // Profil dolu → alanlar yerine kompakt şerit (Faz 1); yakını için başvuru = Değiştir
           <ProfileStrip profile={profile} fields="full" onEdit={() => setEditProfile(true)} t={t} />
@@ -134,7 +134,7 @@ export default function FreeCareApplyPage() {
         )}
         <div>
           <div className="mb-1.5 flex items-center justify-between gap-2">
-            <span className="block text-sm font-medium text-white/75">{t("Şikayetiniz / Semptomlar")}</span>
+            <span className="block text-sm font-medium text-[var(--c-ink)]">{t("Şikayetiniz / Semptomlar")}</span>
             <DictationButton lang={uiLang} onAppend={(txt) => setSymptoms((v) => (v.trim() ? v.trim() + " " : "") + txt)} t={t} />
           </div>
           <textarea
@@ -149,7 +149,7 @@ export default function FreeCareApplyPage() {
           <input value={durationText} onChange={(e) => setDurationText(e.target.value)} placeholder={t("Örn. 2 hafta")} className="inp" />
         </Field>
 
-        <div className="rounded-2xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 px-4 py-3 text-[13px] leading-relaxed text-[#28C8D8]">
+        <div className="rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 px-4 py-3 text-[13px] leading-relaxed text-[var(--c-accent)]">
           {t("Bu görüşme tamamen ücretsizdir. Gönüllü doktorlarımiz kontenjanları dolana kadar başvuruları sırayla karşılar.")}
         </div>
 
@@ -157,8 +157,8 @@ export default function FreeCareApplyPage() {
 
         {/* Çevrimiçi/çevrimdışı indikatörü — buton aktifliği buna bağlı */}
         <div className="flex items-center gap-2 text-[13px]">
-          <span className={`h-2.5 w-2.5 rounded-full ${online === null ? "bg-white/20" : online > 0 ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
-          <span className="text-white/65">
+          <span className={`h-2.5 w-2.5 rounded-full ${online === null ? "bg-[var(--c-ink)]/20" : online > 0 ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
+          <span className="text-[var(--c-ink-2)]">
             {online === null
               ? t("Müsaitlik kontrol ediliyor…")
               : online > 0
@@ -167,7 +167,7 @@ export default function FreeCareApplyPage() {
           </span>
         </div>
         {online === 0 && (
-          <p className="-mt-1 text-xs leading-relaxed text-white/40">
+          <p className="-mt-1 text-xs leading-relaxed text-[var(--c-ink-3)]">
             {t("Başvurunuzu şimdi bırakabilirsiniz: sıraya alınır, bir gönüllü doktor müsait olunca size bildirim gönderilir.")}
           </p>
         )}
@@ -175,7 +175,7 @@ export default function FreeCareApplyPage() {
         <button
           onClick={submit}
           disabled={submitting} // Faz 4: çevrimiçi kilidi kalktı — başvuru her zaman alınır (havuz+bildirim)
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-3 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-3 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
           {submitting ? t("Başvurunuz oluşturuluyor…") : t("Başvur ve eşleş")}
@@ -183,9 +183,9 @@ export default function FreeCareApplyPage() {
       </div>
 
       <style>{`
-        .inp { width:100%; border:1px solid rgba(255,255,255,0.15); border-radius:0.6rem; padding:0.55rem 0.75rem; font-size:0.9rem; outline:none; background:#1E1F22; color:#F4F5F3; }
+        .inp { width:100%; border:1px solid rgba(255,255,255,0.15); border-radius:0.6rem; padding:0.55rem 0.75rem; font-size:0.9rem; outline:none; background:var(--c-surface); color:var(--c-ink); }
         .inp::placeholder { color:rgba(255,255,255,0.35); }
-        .inp:focus { border-color:#28C8D8; box-shadow:0 0 0 3px rgba(40,200,216,0.15); }
+        .inp:focus { border-color:var(--c-accent); box-shadow:0 0 0 3px rgba(40,200,216,0.15); }
       `}</style>
     </JourneyIntakeShell>
   );
@@ -194,7 +194,7 @@ export default function FreeCareApplyPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-white/75">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink)]">{label}</span>
       {children}
     </label>
   );

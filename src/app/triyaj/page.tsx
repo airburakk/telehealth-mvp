@@ -276,20 +276,20 @@ export default function TriyajPage() {
               <div className="flex flex-col items-center">
                 <span
                   className={`grid h-9 w-9 place-items-center rounded-full text-sm font-semibold ${
-                    active ? "bg-[#28C8D8] text-[#0D0E10]" : done ? "bg-emerald-500 text-white" : "bg-white/15 text-white/50"
+                    active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : done ? "bg-emerald-500 text-white" : "bg-[var(--c-ink)]/15 text-white/50"
                   }`}
                 >
                   <Icon size={17} />
                 </span>
-                <span className={`mt-1 text-[11px] ${active ? "text-[#F4F5F3] font-semibold" : "text-white/40"}`}>{t(s.t)}</span>
+                <span className={`mt-1 text-[11px] ${active ? "text-[var(--c-ink)] font-semibold" : "text-[var(--c-ink-3)]"}`}>{t(s.t)}</span>
               </div>
-              {i < STEPS.length - 1 && <div className={`mx-2 h-0.5 flex-1 rounded ${done ? "bg-emerald-500" : "bg-white/15"}`} />}
+              {i < STEPS.length - 1 && <div className={`mx-2 h-0.5 flex-1 rounded ${done ? "bg-emerald-500" : "bg-[var(--c-ink)]/15"}`} />}
             </div>
           );
         })}
       </div>
 
-      <div className="mt-7 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+      <div className="mt-7 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
         {/* Adım 0 — Şikayet (kimlik şeridi/alanları + semptom; eski Hasta+Şikayet birleşimi) */}
         {step === 0 && (
           <div className="space-y-4">
@@ -327,7 +327,7 @@ export default function TriyajPage() {
             )}
             <div>
               <div className="mb-1.5 flex items-center justify-between gap-2">
-                <span className="block text-sm font-medium text-white/75">{t("Şikayetiniz / Semptomlar")}</span>
+                <span className="block text-sm font-medium text-[var(--c-ink)]">{t("Şikayetiniz / Semptomlar")}</span>
                 <DictationButton
                   lang={uiLang}
                   onAppend={(txt) => { setSymptoms((v) => (v.trim() ? v.trim() + " " : "") + txt); setAnalysis(null); }}
@@ -347,8 +347,8 @@ export default function TriyajPage() {
               <input value={durationText} onChange={(e) => setDurationText(e.target.value)} placeholder={t("Örn. 2 ay")} className="inp" />
             </Field>
             {!analysis && (
-              <p className="flex items-center gap-1.5 text-xs text-white/40">
-                <Sparkles size={13} className="text-[#28C8D8]" /> {t("Devam'a bastığınızda yapay zeka şikayetinizi analiz edip sizi doğru uzmana yönlendirir.")}
+              <p className="flex items-center gap-1.5 text-xs text-[var(--c-ink-3)]">
+                <Sparkles size={13} className="text-[var(--c-accent)]" /> {t("Devam'a bastığınızda yapay zeka şikayetinizi analiz edip sizi doğru uzmana yönlendirir.")}
               </p>
             )}
             {analysis && u && (
@@ -363,7 +363,7 @@ export default function TriyajPage() {
             {analyzing && !analysis && (
               <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
                 <AuraSpinner size={48} className="block" />
-                <p className="text-sm font-medium text-white/50">{t("AI sizi doğru branşa yönlendiriyor…")}</p>
+                <p className="text-sm font-medium text-[var(--c-ink-2)]">{t("AI sizi doğru branşa yönlendiriyor…")}</p>
               </div>
             )}
             {effectiveBranch ? (
@@ -373,26 +373,26 @@ export default function TriyajPage() {
                   branchLabel={t(BRANCHES.find((b) => b.key === effectiveBranch)?.label ?? effectiveBranch)}
                   eyebrow={t("Branşınız")}
                 />
-                <div className="rounded-2xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-3">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]"><Stethoscope size={14} /> {t("Yönlendirilen branş")}</div>
+                <div className="rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-3">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]"><Stethoscope size={14} /> {t("Yönlendirilen branş")}</div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <select
                       value={effectiveBranch}
                       onChange={(e) => setBranchOverride(e.target.value)}
-                      className="rounded-lg border border-white/15 bg-[#1E1F22] px-2.5 py-1.5 text-sm font-medium text-[#F4F5F3] outline-none focus:border-[#28C8D8]"
+                      className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-2.5 py-1.5 text-sm font-medium text-[var(--c-ink)] outline-none focus:border-[var(--c-accent)]"
                     >
                       {BRANCHES.map((b) => <option key={b.key} value={b.key}>{t(b.label)}</option>)}
                     </select>
                     {branchOverride
-                      ? <span className="text-xs text-white/50">{t("elle seçildi")}</span>
-                      : analysis && <span className="text-xs text-white/50">{t("AI önerisi · doğru değilse değiştirin")}</span>}
+                      ? <span className="text-xs text-[var(--c-ink-2)]">{t("elle seçildi")}</span>
+                      : analysis && <span className="text-xs text-[var(--c-ink-2)]">{t("AI önerisi · doğru değilse değiştirin")}</span>}
                   </div>
                 </div>
                 <DynamicTriageQuestions branchKey={effectiveBranch} value={answers} onChange={setAnswers} t={t} />
               </>
             ) : (
               !analyzing && (
-                <div className="rounded-lg bg-[#1E1F22] px-3 py-6 text-center text-sm text-white/40">
+                <div className="rounded-lg bg-[var(--c-surface)] px-3 py-6 text-center text-sm text-[var(--c-ink-3)]">
                   {t("Önce şikayet adımında AI ön analizini çalıştırın; sorular branşa göre belirir.")}
                 </div>
               )
@@ -404,8 +404,8 @@ export default function TriyajPage() {
         {step === 2 && (
           <div className="space-y-4">
             {branchDocs.length > 0 && (
-              <div className="rounded-2xl border border-white/10 bg-[#1E1F22] p-3.5">
-                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/65">
+              <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-3.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
                   <ListChecks size={14} /> {t("Bu branş için gerekli belgeler")}
                 </div>
                 <ul className="mt-2.5 space-y-2">
@@ -416,13 +416,13 @@ export default function TriyajPage() {
                           type="checkbox"
                           checked={!!providedDocs[d.key]}
                           onChange={(e) => setProvidedDocs((p) => ({ ...p, [d.key]: e.target.checked }))}
-                          className="mt-0.5 accent-[#28C8D8]"
+                          className="mt-0.5 accent-[var(--c-accent)]"
                         />
-                        <span className={d.required ? "text-white/75" : "text-white/50"}>
+                        <span className={d.required ? "text-[var(--c-ink)]" : "text-[var(--c-ink-2)]"}>
                           {t(d.label)}{" "}
                           {d.required
                             ? <span className="font-semibold text-red-500">*</span>
-                            : <span className="text-[11px] text-white/40">({t("opsiyonel")})</span>}
+                            : <span className="text-[11px] text-[var(--c-ink-3)]">({t("opsiyonel")})</span>}
                         </span>
                       </label>
                     </li>
@@ -431,19 +431,19 @@ export default function TriyajPage() {
               </div>
             )}
 
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/15 bg-[#1E1F22] px-6 py-10 text-center hover:border-teal-400 hover:bg-[#28C8D8]/10">
-              <Upload size={26} className="text-white/40" />
-              <span className="text-sm font-medium text-white/65">{t("Tıbbi belge yükleyin")}</span>
-              <span className="text-xs text-white/40">{t("PDF, JPG, DICOM · Tahlil, radyoloji, epikriz")}</span>
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-6 py-10 text-center hover:border-teal-400 hover:bg-[var(--c-accent)]/10">
+              <Upload size={26} className="text-[var(--c-ink-3)]" />
+              <span className="text-sm font-medium text-[var(--c-ink-2)]">{t("Tıbbi belge yükleyin")}</span>
+              <span className="text-xs text-[var(--c-ink-3)]">{t("PDF, JPG, DICOM · Tahlil, radyoloji, epikriz")}</span>
               <input type="file" multiple className="hidden" onChange={onFiles} accept=".pdf,.jpg,.jpeg,.png,.dcm" />
             </label>
 
             {files.length > 0 && (
               <ul className="space-y-2">
                 {files.map((f, i) => (
-                  <li key={i} className="flex items-center justify-between rounded-lg border border-white/10 bg-[#161719] px-3 py-2 text-sm">
-                    <span className="flex items-center gap-2 text-white/75"><FileText size={16} className="text-[#28C8D8]" /> {f.name}{!f.dataUrl && <span className="text-[10px] text-white/40">(AI analizi dışı)</span>}</span>
-                    <button onClick={() => setFiles(files.filter((_, j) => j !== i))} className="text-white/40 hover:text-red-500"><X size={16} /></button>
+                  <li key={i} className="flex items-center justify-between rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm">
+                    <span className="flex items-center gap-2 text-[var(--c-ink)]"><FileText size={16} className="text-[var(--c-accent)]" /> {f.name}{!f.dataUrl && <span className="text-[10px] text-[var(--c-ink-3)]">(AI analizi dışı)</span>}</span>
+                    <button onClick={() => setFiles(files.filter((_, j) => j !== i))} className="text-[var(--c-ink-3)] hover:text-red-500"><X size={16} /></button>
                   </li>
                 ))}
               </ul>
@@ -474,7 +474,7 @@ export default function TriyajPage() {
             <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300 ring-1 ring-emerald-400/25">
               <ShieldCheck size={15} /> {t("Yüklenen dosyalar KVKK/GDPR uyumlu şifreli olarak saklanır.")}
             </div>
-            <p className="text-xs text-white/40">{t("Belge yüklemek opsiyoneldir.")}</p>
+            <p className="text-xs text-[var(--c-ink-3)]">{t("Belge yüklemek opsiyoneldir.")}</p>
           </div>
         )}
 
@@ -485,12 +485,12 @@ export default function TriyajPage() {
           <button
             onClick={back}
             disabled={step === 0}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-white/65 hover:bg-white/10 disabled:opacity-0"
+            className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-ink)]/10 disabled:opacity-0"
           >
             <ArrowLeft size={16} /> {t("Geri")}
           </button>
           {step < 2 ? (
-            <button onClick={next} className="inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
+            <button onClick={next} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-accent)] px-4 py-2 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
               {t("Devam")} <ArrowRight size={16} />
             </button>
           ) : (
@@ -507,9 +507,9 @@ export default function TriyajPage() {
       </div>
 
       <style>{`
-        .inp { width:100%; border:1px solid rgba(255,255,255,0.15); border-radius:0.6rem; padding:0.55rem 0.75rem; font-size:0.9rem; outline:none; background:#1E1F22; color:#F4F5F3; }
+        .inp { width:100%; border:1px solid rgba(255,255,255,0.15); border-radius:0.6rem; padding:0.55rem 0.75rem; font-size:0.9rem; outline:none; background:var(--c-surface); color:var(--c-ink); }
         .inp::placeholder { color:rgba(255,255,255,0.35); }
-        .inp:focus { border-color:#28C8D8; box-shadow:0 0 0 3px rgba(40,200,216,0.15); }
+        .inp:focus { border-color:var(--c-accent); box-shadow:0 0 0 3px rgba(40,200,216,0.15); }
       `}</style>
     </JourneyIntakeShell>
   );
@@ -518,7 +518,7 @@ export default function TriyajPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-white/75">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink)]">{label}</span>
       {children}
     </label>
   );
@@ -526,19 +526,19 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function AnalysisCard({ analysis, badge, dot, label, t = (s) => s }: { analysis: Analysis; badge: string; dot: string; label: string; t?: (s: string) => string }) {
   return (
-    <div className="rounded-2xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-4">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]">
+    <div className="rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-4">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]">
         <Sparkles size={14} /> {t("AI Ön Analizi")}
         {analysis.engine === "llm" && <span className="rounded-full bg-teal-600 px-1.5 py-0.5 text-[9px] tracking-normal text-white">Claude</span>}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <span className="rounded-lg bg-[#1E1F22] px-2.5 py-1 text-sm font-semibold text-[#F4F5F3] ring-1 ring-white/10">{t(analysis.branch)}</span>
+        <span className="rounded-lg bg-[var(--c-surface)] px-2.5 py-1 text-sm font-semibold text-[var(--c-ink)] ring-1 ring-white/10">{t(analysis.branch)}</span>
         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${badge}`}>
           <span className={`h-2 w-2 rounded-full ${dot}`} /> {t("Aciliyet")} {analysis.urgency}/5 · {t(label)}
         </span>
-        <span className="text-xs text-white/50">{t("Güven")} %{analysis.confidence}</span>
+        <span className="text-xs text-[var(--c-ink-2)]">{t("Güven")} %{analysis.confidence}</span>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-white/65">{t(analysis.reasoning)}</p>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--c-ink-2)]">{t(analysis.reasoning)}</p>
     </div>
   );
 }

@@ -29,12 +29,12 @@ export function SharesView({ unseen, cases, links }: { unseen: UnseenAccess[]; c
     <main dir={langDir(lang)} className="mx-auto max-w-5xl px-5 py-8">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]">
             <ShieldCheck size={22} />
           </span>
           <div>
-            <h1 className="text-2xl font-bold text-[#F4F5F3]">{t(S.title)}</h1>
-            <p className="text-sm text-white/50">{t(S.subtitle)}</p>
+            <h1 className="text-2xl font-bold text-[var(--c-ink)]">{t(S.title)}</h1>
+            <p className="text-sm text-[var(--c-ink-2)]">{t(S.subtitle)}</p>
           </div>
         </div>
         <PatientLangSelect lang={lang} onChange={setLang} />

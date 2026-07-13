@@ -116,7 +116,7 @@ export function DictationButton({
         className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium ring-1 transition ${
           listening
             ? "bg-red-500/15 text-red-300 ring-red-400/30"
-            : "bg-white/5 text-white/70 ring-white/15 hover:bg-[#28C8D8]/10 hover:text-[#28C8D8] hover:ring-[#28C8D8]/30"
+            : "bg-[var(--c-ink)]/5 text-white/70 ring-white/15 hover:bg-[var(--c-accent)]/10 hover:text-[var(--c-accent)] hover:ring-[var(--c-accent)]/30"
         }`}
       >
         {listening ? (
@@ -129,7 +129,7 @@ export function DictationButton({
         )}
         {listening ? t("Dinleniyor…") : t("Sesle yaz")}
       </button>
-      {interim && <span className="text-xs italic text-white/40">{interim}</span>}
+      {interim && <span className="text-xs italic text-[var(--c-ink-3)]">{interim}</span>}
       {err && <span className="text-xs text-red-300">{err}</span>}
     </div>
   );

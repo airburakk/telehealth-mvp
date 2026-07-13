@@ -33,7 +33,7 @@ export function usePublicLocale(): [Locale, (l: Locale) => void] {
 
 export function LocaleToggle({ locale, onChange }: { locale: Locale; onChange: (l: Locale) => void }) {
   return (
-    <div className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-white/15 bg-[#161719] p-0.5 text-[12px] font-semibold">
+    <div className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-[var(--c-hairline)] bg-[var(--c-panel)] p-0.5 text-[12px] font-semibold">
       {(["en", "tr"] as const).map((l) => (
         <button
           key={l}
@@ -41,7 +41,7 @@ export function LocaleToggle({ locale, onChange }: { locale: Locale; onChange: (
           onClick={() => onChange(l)}
           aria-pressed={locale === l}
           className={`rounded-full px-3 py-1 uppercase tracking-wide transition-colors ${
-            locale === l ? "bg-[#28C8D8] text-[#0D0E10]" : "text-white/50 hover:text-[#F4F5F3]"
+            locale === l ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-white/50 hover:text-[var(--c-ink)]"
           }`}
         >
           {l}

@@ -26,12 +26,12 @@ export function JourneyStageRail({ journey, current, lang }: { journey: JourneyK
               className={[
                 "grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold",
                 isCurrent
-                  ? "bg-[#28C8D8] text-[#0D0E10]"
+                  ? "bg-[var(--c-accent)] text-[var(--c-bg)]"
                   : done
-                    ? "bg-[#28C8D8]/20 text-[#17919E]"
+                    ? "bg-[var(--c-accent)]/20 text-[var(--c-accent-stronger)]"
                     : na
-                      ? "border border-dashed border-white/15 text-white/25"
-                      : "bg-white/10 text-white/40",
+                      ? "border border-dashed border-[var(--c-hairline)] text-[var(--c-ink-3)]"
+                      : "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]",
               ].join(" ")}
               aria-current={isCurrent ? "step" : undefined}
             >
@@ -40,15 +40,15 @@ export function JourneyStageRail({ journey, current, lang }: { journey: JourneyK
             <span
               className={
                 isCurrent
-                  ? "whitespace-nowrap font-semibold text-[#F4F5F3]"
+                  ? "whitespace-nowrap font-semibold text-[var(--c-ink)]"
                   : na
-                    ? "whitespace-nowrap text-white/25 line-through"
-                    : "whitespace-nowrap text-white/40"
+                    ? "whitespace-nowrap text-[var(--c-ink-3)] line-through"
+                    : "whitespace-nowrap text-[var(--c-ink-3)]"
               }
             >
               {t(label)}
             </span>
-            {i < stages.length - 1 && <span className="mx-0.5 h-px w-3 shrink-0 bg-white/15" />}
+            {i < stages.length - 1 && <span className="mx-0.5 h-px w-3 shrink-0 bg-[var(--c-ink)]/15" />}
           </li>
         );
       })}

@@ -60,8 +60,8 @@ export function EscrowMilestones({ status, lang }: { status: string; lang: strin
           : t("Ödemeniz şu anda emanette — tedavi tamamlanana dek platform güvencesinde tutulur.");
 
   return (
-    <div className="rounded-3xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-5">
-      <div className="flex items-center gap-2 text-sm font-semibold text-[#28C8D8]">
+    <div className="rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-5">
+      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--c-accent)]">
         <ShieldCheck size={16} /> {t("Ödeme Güvencesi (Escrow)")}
       </div>
 
@@ -79,26 +79,26 @@ export function EscrowMilestones({ status, lang }: { status: string; lang: strin
                     done
                       ? "bg-emerald-500/15 text-emerald-300"
                       : active
-                        ? "bg-[#28C8D8] text-[#0D0E10] ring-4 ring-[#28C8D8]/25"
-                        : "bg-[#161719] text-white/25 ring-1 ring-white/10"
+                        ? "bg-[var(--c-accent)] text-[var(--c-bg)] ring-4 ring-[var(--c-accent)]/25"
+                        : "bg-[var(--c-panel)] text-[var(--c-ink-3)] ring-1 ring-white/10"
                   }`}
                 >
                   <Icon size={16} />
                 </span>
                 {i < steps.length - 1 && (
-                  <span className={`mx-1 h-0.5 flex-1 rounded ${done ? "bg-emerald-300" : "bg-white/15"}`} />
+                  <span className={`mx-1 h-0.5 flex-1 rounded ${done ? "bg-emerald-300" : "bg-[var(--c-ink)]/15"}`} />
                 )}
               </div>
               <div className="mt-1.5">
-                <div className={`text-xs font-semibold ${done ? "text-emerald-200" : active ? "text-[#28C8D8]" : "text-white/40"}`}>{s.label}</div>
-                <div className="text-[10px] leading-tight text-white/40">{s.desc}</div>
+                <div className={`text-xs font-semibold ${done ? "text-emerald-200" : active ? "text-[var(--c-accent)]" : "text-[var(--c-ink-3)]"}`}>{s.label}</div>
+                <div className="text-[10px] leading-tight text-[var(--c-ink-3)]">{s.desc}</div>
               </div>
             </li>
           );
         })}
       </ol>
 
-      <p className="mt-3 text-xs leading-relaxed text-white/65">
+      <p className="mt-3 text-xs leading-relaxed text-[var(--c-ink-2)]">
         {summary} {t("Sorun halinde iade Etik Kurul kararıyla yapılır.")}
       </p>
 

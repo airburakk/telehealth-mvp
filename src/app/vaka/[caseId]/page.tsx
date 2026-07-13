@@ -113,7 +113,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
   return (
     <div dir={dir} className="mx-auto max-w-3xl px-5 py-10">
       <div className="flex items-center justify-between gap-3">
-        <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-[#1FA9B8]">
+        <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">
           <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Vakalarım")}
         </Link>
         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
@@ -150,26 +150,26 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
 
       {/* Aktif görüşme CTA — oda açıksa hasta tek tıkla katılır */}
       {activeConsult && (
-        <div className="mt-5 flex flex-wrap items-center gap-3 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.08] p-5">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Video size={20} /></span>
+        <div className="mt-5 flex flex-wrap items-center gap-3 rounded-3xl border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.08] p-5">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><Video size={20} /></span>
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-[#F4F5F3]">{t("Aktif görüşmeniz var")}</div>
-            <p className="text-xs text-white/50">{t("Doktorunuzla görüşme odası açık — katılabilirsiniz.")}</p>
+            <div className="text-sm font-semibold text-[var(--c-ink)]">{t("Aktif görüşmeniz var")}</div>
+            <p className="text-xs text-[var(--c-ink-2)]">{t("Doktorunuzla görüşme odası açık — katılabilirsiniz.")}</p>
           </div>
-          <Link href={`/gorusme/${activeConsult.id}`} className="inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
+          <Link href={`/gorusme/${activeConsult.id}`} className="inline-flex items-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
             <Video size={16} /> {t("Görüşmeye katıl")}
           </Link>
         </div>
       )}
 
       {/* Vaka bilgi kartı */}
-      <div className="mt-5 rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+      <div className="mt-5 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase tracking-wide text-white/40">{t("Vaka No")}</div>
-            <div className="font-mono text-sm text-white/75">{c.id.slice(0, 8).toUpperCase()}</div>
+            <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Vaka No")}</div>
+            <div className="font-mono text-sm text-[var(--c-ink)]">{c.id.slice(0, 8).toUpperCase()}</div>
           </div>
-          <div className="text-right text-xs text-white/40">{formatDateTime(c.createdAt)}</div>
+          <div className="text-right text-xs text-[var(--c-ink-3)]">{formatDateTime(c.createdAt)}</div>
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-4 text-sm">
@@ -180,24 +180,24 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
         </div>
 
         <div className="mt-4">
-          <div className="text-xs uppercase tracking-wide text-white/40">{t("Şikayet")}</div>
-          <p className="mt-1 text-sm text-white/75">{c.symptoms}</p>
+          <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Şikayet")}</div>
+          <p className="mt-1 text-sm text-[var(--c-ink)]">{c.symptoms}</p>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]">
+        <div className="mt-4 rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]">
             <Sparkles size={14} /> {t("Triyaj Gerekçesi")}
           </div>
-          <p className="mt-1.5 text-sm leading-relaxed text-white/65">{t(c.reasoning)}</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink-2)]">{t(c.reasoning)}</p>
         </div>
 
         {files.length > 0 && (
           <div className="mt-4">
-            <div className="text-xs uppercase tracking-wide text-white/40">{t("Belgeler")}</div>
+            <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Belgeler")}</div>
             <ul className="mt-1.5 flex flex-wrap gap-2">
               {files.map((f) => (
-                <li key={f} className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs text-white/65">
-                  <FileText size={14} className="text-[#28C8D8]" /> {f}
+                <li key={f} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-ink)]/10 px-2.5 py-1 text-xs text-[var(--c-ink-2)]">
+                  <FileText size={14} className="text-[var(--c-accent)]" /> {f}
                 </li>
               ))}
             </ul>
@@ -281,8 +281,8 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
 function Info({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-white/40">{k}</div>
-      <div className={`mt-0.5 ${accent ? "font-semibold text-[#F4F5F3]" : "text-[#F4F5F3]"}`}>{v}</div>
+      <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{k}</div>
+      <div className={`mt-0.5 ${accent ? "font-semibold text-[var(--c-ink)]" : "text-[var(--c-ink)]"}`}>{v}</div>
     </div>
   );
 }

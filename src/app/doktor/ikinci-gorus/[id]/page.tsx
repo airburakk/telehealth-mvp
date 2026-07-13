@@ -59,37 +59,37 @@ export default async function DoctorSoDetailPage({ params }: { params: Promise<{
 
       return (
         <div className="mx-auto max-w-2xl px-5 py-8">
-          <Link href="/doktor/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/75">
+          <Link href="/doktor/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
             <ArrowLeft size={15} /> Atanan vakalar
           </Link>
-          <div className="mt-4 rounded-3xl border border-[#28C8D8]/50 bg-[#28C8D8]/[0.05] p-6">
+          <div className="mt-4 rounded-3xl border border-[var(--c-accent)]/50 bg-[var(--c-accent)]/[0.05] p-6">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#26272B] px-2.5 py-1 text-[11px] font-semibold text-white">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--c-surface-2)] px-2.5 py-1 text-[11px] font-semibold text-[var(--c-ink)]">
                 <EyeOff size={11} /> Anonim önizleme
               </span>
-              <span className="inline-flex items-center gap-1 text-xs text-[#1FA9B8]"><Stethoscope size={12} /> {branchLabel}</span>
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${assignedToMe ? "bg-[#28C8D8]/20 text-[#17919E]" : "bg-amber-500/15 text-amber-300"}`}>
+              <span className="inline-flex items-center gap-1 text-xs text-[var(--c-accent-strong)]"><Stethoscope size={12} /> {branchLabel}</span>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${assignedToMe ? "bg-[var(--c-accent)]/20 text-[var(--c-accent-stronger)]" : "bg-amber-500/15 text-amber-300"}`}>
                 {assignedToMe ? "Size atandı" : "Açık — süre doldu"}
               </span>
             </div>
-            <h1 className="mt-3 text-lg font-bold text-[#F4F5F3]">İkinci görüş dosyası — kabul öncesi önizleme</h1>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-white/75">{summary}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-white/50">
+            <h1 className="mt-3 text-lg font-bold text-[var(--c-ink)]">İkinci görüş dosyası — kabul öncesi önizleme</h1>
+            <p className="mt-2 whitespace-pre-wrap text-sm text-[var(--c-ink)]">{summary}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[var(--c-ink-2)]">
               {region && <span>Bölge: {region}</span>}
               {c.language && <span>· Dil: {c.language}</span>}
               {c.assignedAt && <span>· Teklif: {formatDateTime(c.assignedAt)}</span>}
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {c.documents.map((d) => (
-                <span key={d.id} className="rounded-full bg-[#161719] px-2.5 py-1 text-[11px] font-medium text-white/65 ring-1 ring-white/10">
+                <span key={d.id} className="rounded-full bg-[var(--c-panel)] px-2.5 py-1 text-[11px] font-medium text-[var(--c-ink-2)] ring-1 ring-white/10">
                   <FileText size={10} className="mr-1 inline" />
                   {SO_DOC_TYPE_LABELS[d.type as SoDocType] ?? d.type}
                 </span>
               ))}
-              {c.documents.length === 0 && <span className="text-xs text-white/40">Belge yok</span>}
+              {c.documents.length === 0 && <span className="text-xs text-[var(--c-ink-3)]">Belge yok</span>}
             </div>
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#161719] p-4 ring-1 ring-white/10">
-              <p className="max-w-[320px] text-xs text-white/50">
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[var(--c-panel)] p-4 ring-1 ring-white/10">
+              <p className="max-w-[320px] text-xs text-[var(--c-ink-2)]">
                 Hasta kimliği ve belge içerikleri, dosyayı <strong>kabul ettikten sonra</strong> açılır.
               </p>
               <SoAcceptButton caseId={c.id} open={!assignedToMe} />
@@ -111,7 +111,7 @@ export default async function DoctorSoDetailPage({ params }: { params: Promise<{
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
-      <Link href="/doktor/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/75">
+      <Link href="/doktor/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
         <ArrowLeft size={15} /> Atanan vakalar
       </Link>
       <SoOpinionPanel

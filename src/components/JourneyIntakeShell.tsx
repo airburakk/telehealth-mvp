@@ -28,11 +28,11 @@ export function JourneyIntakeShell({ icon: Icon, eyebrow, title, intro, lang, on
     <div dir={langDir(lang)} className={`mx-auto ${wide ? "max-w-5xl" : "max-w-2xl"} px-5 py-10`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <span className="inline-flex items-center gap-2 rounded-full bg-[#28C8D8]/10 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#17919E]">
+          <span className="inline-flex items-center gap-2 rounded-full bg-[var(--c-accent)]/10 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--c-accent-stronger)]">
             <Icon size={14} /> {eyebrow}
           </span>
-          <h1 className="mt-3 text-2xl font-bold text-[#F4F5F3]">{title}</h1>
-          {intro && <p className="mt-1.5 text-sm leading-relaxed text-white/50">{intro}</p>}
+          <h1 className="mt-3 text-2xl font-bold text-[var(--c-ink)]">{title}</h1>
+          {intro && <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink-2)]">{intro}</p>}
         </div>
         <LangSelect lang={lang} onChange={onLangChange} />
       </div>

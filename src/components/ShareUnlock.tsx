@@ -30,27 +30,27 @@ export function ShareUnlock({ id, recipient }: { id: string; recipient: string |
   }
 
   return (
-    <form onSubmit={submit} className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+    <form onSubmit={submit} className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
       <div className="flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-500/15 text-amber-300">
           <Lock size={22} />
         </span>
         <div>
-          <h1 className="text-lg font-bold text-[#F4F5F3]">Şifre korumalı paylaşım</h1>
-          <p className="text-sm text-white/50">
+          <h1 className="text-lg font-bold text-[var(--c-ink)]">Şifre korumalı paylaşım</h1>
+          <p className="text-sm text-[var(--c-ink-2)]">
             {recipient ? `Sayın ${recipient}, ` : ""}bu sağlık kaydını görüntülemek için hastanın size ayrıca ilettiği erişim şifresini girin.
           </p>
         </div>
       </div>
 
-      <label className="mt-5 block text-sm font-medium text-white/75">Erişim şifresi</label>
+      <label className="mt-5 block text-sm font-medium text-[var(--c-ink)]">Erişim şifresi</label>
       <input
         autoFocus
         value={pw}
         onChange={(e) => setPw(e.target.value)}
         type="password"
         placeholder="••••••"
-        className="mt-1.5 w-full rounded-lg border border-white/15 px-3 py-2 text-sm"
+        className="mt-1.5 w-full rounded-lg border border-[var(--c-hairline)] px-3 py-2 text-sm"
       />
 
       {error && (
@@ -62,7 +62,7 @@ export function ShareUnlock({ id, recipient }: { id: string; recipient: string |
       <button
         type="submit"
         disabled={busy}
-        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-50"
+        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-50"
       >
         <ShieldCheck size={16} /> {busy ? "Doğrulanıyor…" : "Görüntüle"}
       </button>

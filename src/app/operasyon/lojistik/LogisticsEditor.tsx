@@ -46,19 +46,19 @@ export function LogisticsEditor({ bookingId, initialStages }: { bookingId: strin
   }
 
   return (
-    <div className="mt-4 space-y-2.5 border-t border-white/10 pt-4">
+    <div className="mt-4 space-y-2.5 border-t border-[var(--c-hairline)] pt-4">
       {stages.map((st) => {
         const meta = JOURNEY_STAGES.find((s) => s.key === st.key);
         return (
           <div key={st.key} className="grid grid-cols-1 gap-2 sm:grid-cols-[150px_120px_1fr] sm:items-center">
-            <div className="flex items-center gap-1.5 text-sm font-medium text-white/75">
+            <div className="flex items-center gap-1.5 text-sm font-medium text-[var(--c-ink)]">
               <span className={`h-2 w-2 shrink-0 rounded-full ${JOURNEY_STATUS[st.status].dot}`} />
               {meta?.label ?? st.key}
             </div>
             <select
               value={st.status}
               onChange={(e) => update(st.key, { status: e.target.value as JourneyStatus })}
-              className="rounded-lg border border-white/15 px-2 py-1.5 text-sm"
+              className="rounded-lg border border-[var(--c-hairline)] px-2 py-1.5 text-sm"
               aria-label={`${meta?.label ?? st.key} durumu`}
             >
               {STATUS_OPTIONS.map((o) => (
@@ -66,22 +66,22 @@ export function LogisticsEditor({ bookingId, initialStages }: { bookingId: strin
               ))}
             </select>
             <div className="flex flex-wrap items-center gap-2">
-              <label className="flex items-center gap-1 text-xs text-white/40">
+              <label className="flex items-center gap-1 text-xs text-[var(--c-ink-3)]">
                 Plan
                 <input
                   type="date"
                   value={toDateInput(st.plannedAt)}
                   onChange={(e) => update(st.key, { plannedAt: fromDateInput(e.target.value) })}
-                  className="rounded-lg border border-white/15 px-2 py-1 text-sm text-white/75"
+                  className="rounded-lg border border-[var(--c-hairline)] px-2 py-1 text-sm text-[var(--c-ink)]"
                 />
               </label>
-              <label className="flex items-center gap-1 text-xs text-white/40">
+              <label className="flex items-center gap-1 text-xs text-[var(--c-ink-3)]">
                 Tamam
                 <input
                   type="date"
                   value={toDateInput(st.doneAt)}
                   onChange={(e) => update(st.key, { doneAt: fromDateInput(e.target.value) })}
-                  className="rounded-lg border border-white/15 px-2 py-1 text-sm text-white/75"
+                  className="rounded-lg border border-[var(--c-hairline)] px-2 py-1 text-sm text-[var(--c-ink)]"
                 />
               </label>
               <input
@@ -90,7 +90,7 @@ export function LogisticsEditor({ bookingId, initialStages }: { bookingId: strin
                 onChange={(e) => update(st.key, { note: e.target.value })}
                 placeholder="Lojistik not (uçuş, otel, transfer…)"
                 maxLength={500}
-                className="min-w-[160px] flex-1 rounded-lg border border-white/15 px-2 py-1.5 text-sm"
+                className="min-w-[160px] flex-1 rounded-lg border border-[var(--c-hairline)] px-2 py-1.5 text-sm"
                 aria-label={`${meta?.label ?? st.key} notu`}
               />
             </div>
@@ -101,7 +101,7 @@ export function LogisticsEditor({ bookingId, initialStages }: { bookingId: strin
         <button
           onClick={save}
           disabled={saving}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-accent)] px-4 py-2 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-60"
         >
           {saving ? <Loader2 size={15} className="animate-spin" /> : saved ? <Check size={15} /> : null}
           {saving ? "Kaydediliyor…" : saved ? "Kaydedildi" : "Kaydet"}

@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0D0E10",
+  themeColor: "#ffffff",
 };
 
 export default async function RootLayout({
@@ -48,7 +48,7 @@ export default async function RootLayout({
   // Tam birleşme (2026-07-12): nav journey'ye bakmaz — hasta nav'ı herkes için aynı,
   // patientJourney sorgusu layout'tan kalktı.
   return (
-    <html lang="tr" className={`h-full antialiased ${sans.variable} ${serif.variable} ${mono.variable}`}>
+    <html lang="tr" className={`theme-light h-full antialiased ${sans.variable} ${serif.variable} ${mono.variable}`}>
       <body className="min-h-full flex flex-col">
         <PwaRegister />
         <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} />

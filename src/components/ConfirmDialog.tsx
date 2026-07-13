@@ -44,16 +44,16 @@ export function ConfirmDialog({
         aria-modal="true"
         aria-label={message}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#161719] p-5 shadow-xl"
+        className="w-full max-w-sm rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-xl"
       >
         {danger && <AlertTriangle className="text-rose-300" size={22} />}
-        <p className={`text-sm leading-relaxed text-white/75 ${danger ? "mt-2.5" : ""}`}>{message}</p>
+        <p className={`text-sm leading-relaxed text-[var(--c-ink)] ${danger ? "mt-2.5" : ""}`}>{message}</p>
         <div className="mt-4 flex justify-end gap-2">
           <button
             ref={cancelRef}
             onClick={onCancel}
             disabled={busy}
-            className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-white/70 hover:bg-[#1E1F22] disabled:opacity-60"
+            className="rounded-lg border border-[var(--c-hairline)] px-4 py-2 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] disabled:opacity-60"
           >
             {cancelLabel}
           </button>
@@ -61,7 +61,7 @@ export function ConfirmDialog({
             onClick={onConfirm}
             disabled={busy}
             className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-60 ${
-              danger ? "bg-rose-600 text-white hover:bg-rose-500" : "bg-[#28C8D8] text-[#0D0E10] hover:bg-[#1FA9B8]"
+              danger ? "bg-rose-600 text-white hover:bg-rose-500" : "bg-[var(--c-accent)] text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]"
             }`}
           >
             {busy && <Loader2 size={14} className="animate-spin" />} {confirmLabel}

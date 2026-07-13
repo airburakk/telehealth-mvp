@@ -35,10 +35,10 @@ export default async function DenetimPage({
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
       <div className="flex items-center gap-2.5 mb-1.5">
-        <Link2 size={20} className="text-[#17919E]" />
-        <h1 className="text-2xl font-semibold text-[#F4F5F3]">Denetim İzi Bütünlüğü</h1>
+        <Link2 size={20} className="text-[var(--c-accent-stronger)]" />
+        <h1 className="text-2xl font-semibold text-[var(--c-ink)]">Denetim İzi Bütünlüğü</h1>
       </div>
-      <p className="text-sm text-white/65 max-w-3xl">
+      <p className="text-sm text-[var(--c-ink-2)] max-w-3xl">
         Klinik veriye yapılan tüm anlamlı erişimin <strong>değiştirilemez küresel kaydı</strong>. Her satır bir
         önceki kaydın mührüne (hash) bağlanır ve zaman damgalanır — sonradan silme, araya ekleme veya değiştirme
         bağımsız olarak tespit edilebilir. Bu görünüm yalnız <strong>metadata</strong> içerir (kim · ne zaman ·
@@ -83,7 +83,7 @@ export default async function DenetimPage({
       )}
 
       {/* Onam zinciri bütünlüğü — aynı mühür şeması (consent.verifyConsentChain) tek satır özet */}
-      <p className={`mt-2 flex items-center gap-1.5 text-xs ${consentChain.ok ? "text-white/50" : "font-medium text-rose-300"}`}>
+      <p className={`mt-2 flex items-center gap-1.5 text-xs ${consentChain.ok ? "text-[var(--c-ink-2)]" : "font-medium text-rose-300"}`}>
         {consentChain.ok ? <ShieldCheck size={13} className="text-emerald-500" /> : <ShieldAlert size={13} />}
         Onam zinciri: {consentChain.ok
           ? `bütün (${consentChain.count} kayıt · ${consentChain.v2Count} v2 / ${consentChain.v1Count} v1${consentChain.unverifiableSeals > 0 ? ` · ⚠️ ${consentChain.unverifiableSeals} farklı-anahtar` : ""})`
@@ -91,13 +91,13 @@ export default async function DenetimPage({
       </p>
 
       {entries.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-white/10 bg-[#1E1F22] px-5 py-10 text-center text-sm text-white/50">
+        <div className="mt-8 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-5 py-10 text-center text-sm text-[var(--c-ink-2)]">
           Henüz kayıtlı erişim yok.
         </div>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-xl border border-white/10">
+        <div className="mt-6 overflow-x-auto rounded-xl border border-[var(--c-hairline)]">
           <table className="w-full text-sm">
-            <thead className="bg-[#1E1F22] text-white/50">
+            <thead className="bg-[var(--c-surface)] text-[var(--c-ink-2)]">
               <tr className="text-left">
                 <th className="px-4 py-2.5 font-medium whitespace-nowrap">Tarih</th>
                 <th className="px-4 py-2.5 font-medium">Aktör</th>
@@ -117,25 +117,25 @@ export default async function DenetimPage({
                 const brokenSeal =
                   e.verification.entryHashValid === false || e.verification.timestampValid === false;
                 return (
-                  <tr key={e.id} className="text-white/75 align-top">
-                    <td className="px-4 py-2.5 whitespace-nowrap text-white/50">
+                  <tr key={e.id} className="text-[var(--c-ink)] align-top">
+                    <td className="px-4 py-2.5 whitespace-nowrap text-[var(--c-ink-2)]">
                       {new Date(e.createdAt).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" })}
                     </td>
                     <td className="px-4 py-2.5">
                       <span className="font-medium">{e.actorRole ? ROLE_TR[e.actorRole] ?? e.actorRole : "Sistem"}</span>
-                      {e.actorId && <span className="block font-mono text-[11px] text-white/40">{short(e.actorId)}</span>}
+                      {e.actorId && <span className="block font-mono text-[11px] text-[var(--c-ink-3)]">{short(e.actorId)}</span>}
                     </td>
                     <td className="px-4 py-2.5">
                       {ACTION_TR[e.action] ?? e.action}
-                      {e.detail && <span className="block text-xs text-white/40">{e.detail}</span>}
+                      {e.detail && <span className="block text-xs text-[var(--c-ink-3)]">{e.detail}</span>}
                     </td>
-                    <td className="px-4 py-2.5 text-white/50">
+                    <td className="px-4 py-2.5 text-[var(--c-ink-2)]">
                       {RES_TR[e.resourceType] ?? e.resourceType}
-                      <span className="block font-mono text-[11px] text-white/40">{short(e.resourceId)}</span>
+                      <span className="block font-mono text-[11px] text-[var(--c-ink-3)]">{short(e.resourceId)}</span>
                     </td>
-                    <td className="px-4 py-2.5 font-mono text-[11px] text-white/40">{short(e.subjectUserId)}</td>
-                    <td className="px-4 py-2.5 font-mono text-[11px] text-white/50 whitespace-nowrap">
-                      {short(e.prevHash, 6)} <span className="text-white/25">→</span> {short(e.entryHash, 10)}
+                    <td className="px-4 py-2.5 font-mono text-[11px] text-[var(--c-ink-3)]">{short(e.subjectUserId)}</td>
+                    <td className="px-4 py-2.5 font-mono text-[11px] text-[var(--c-ink-2)] whitespace-nowrap">
+                      {short(e.prevHash, 6)} <span className="text-[var(--c-ink-3)]">→</span> {short(e.entryHash, 10)}
                     </td>
                     <td className="px-4 py-2.5">
                       {verified ? (
@@ -147,7 +147,7 @@ export default async function DenetimPage({
                           <ShieldAlert size={15} /> Bozuk mühür
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-white/40" title="Mühürsüz tarihî kayıt veya başka ortamın anahtarı — bozukluk kanıtı değil">
+                        <span className="inline-flex items-center gap-1 text-[var(--c-ink-3)]" title="Mühürsüz tarihî kayıt veya başka ortamın anahtarı — bozukluk kanıtı değil">
                           <ShieldAlert size={15} /> Karar verilemez
                         </span>
                       )}
@@ -163,32 +163,32 @@ export default async function DenetimPage({
       {/* Sayfalama — 200+ kayıtta denetçi tüm zinciri (sayfa sayfa) gezebilir. İlk sayfa en güncel kayıtlar. */}
       {totalPages > 1 && (
         <nav className="mt-5 flex flex-wrap items-center justify-between gap-3" aria-label="Denetim kaydı sayfaları">
-          <span className="text-xs text-white/50">
-            Toplam <strong className="text-white/75">{total}</strong> kayıt · Sayfa{" "}
-            <strong className="text-white/75">{page}</strong> / {totalPages}
+          <span className="text-xs text-[var(--c-ink-2)]">
+            Toplam <strong className="text-[var(--c-ink)]">{total}</strong> kayıt · Sayfa{" "}
+            <strong className="text-[var(--c-ink)]">{page}</strong> / {totalPages}
           </span>
           <div className="flex items-center gap-2">
             {page > 1 ? (
               <Link
                 href={`/denetim?page=${page - 1}`}
-                className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22]"
+                className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
               >
                 <ChevronLeft size={15} /> Önceki
               </Link>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/25 cursor-not-allowed">
+              <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-3)] cursor-not-allowed">
                 <ChevronLeft size={15} /> Önceki
               </span>
             )}
             {page < totalPages ? (
               <Link
                 href={`/denetim?page=${page + 1}`}
-                className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22]"
+                className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
               >
                 Sonraki <ChevronRight size={15} />
               </Link>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-white/25 cursor-not-allowed">
+              <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-3)] cursor-not-allowed">
                 Sonraki <ChevronRight size={15} />
               </span>
             )}
@@ -196,16 +196,16 @@ export default async function DenetimPage({
         </nav>
       )}
 
-      <div className="mt-6 flex items-start gap-2 rounded-lg border border-white/10 bg-[#1E1F22] px-4 py-3 text-xs text-white/50">
-        <Clock size={15} className="mt-0.5 shrink-0 text-white/40" />
+      <div className="mt-6 flex items-start gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3 text-xs text-[var(--c-ink-2)]">
+        <Clock size={15} className="mt-0.5 shrink-0 text-[var(--c-ink-3)]" />
         <p>
-          <strong className="text-white/65">Mühür, sıralama &amp; zaman damgası:</strong> her kayıt bir önceki
+          <strong className="text-[var(--c-ink-2)]">Mühür, sıralama &amp; zaman damgası:</strong> her kayıt bir önceki
           kaydın mührüne bağlanır; yazımlar küresel bir kilit altında <em>sıralanır</em> (eşzamanlı erişimde bile
           zincir çatallanmaz). Tablo her sayfada en çok {pageSize} kaydı (en güncelden eskiye) gösterir ve
           sayfalanır; <strong>bütünlük taraması ise her görünümde tüm zinciri</strong> kapsar.
           Zaman damgası şu an mekanizma-doğrulama amaçlı <em>simüle</em> (SIMULATED-LOCAL); üretimde bağımsız
           RFC 3161 otoritesine (freeTSA / TÜBİTAK BİLGEM) takılacak. Hasta kendi kaydını{" "}
-          <Link href="/erisim-kaydi" className="text-[#17919E] hover:underline">Erişim Kaydım</Link>’dan görür.
+          <Link href="/erisim-kaydi" className="text-[var(--c-accent-stronger)] hover:underline">Erişim Kaydım</Link>’dan görür.
         </p>
       </div>
     </main>

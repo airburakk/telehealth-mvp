@@ -135,11 +135,11 @@ export function ConsultGate({
 
   if (terminated) {
     return (
-      <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 text-center shadow-sm">
+      <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 text-center shadow-sm">
         <CheckCircle2 className="mx-auto text-emerald-300" size={28} />
-        <h2 className="mt-2 font-bold text-[#F4F5F3]">{t("Süreciniz sonlandırıldı")}</h2>
-        <p className="mt-1 text-sm text-white/50">{t("Tüm verileriniz silindi ve ödemeniz iade edildi.")}</p>
-        <button onClick={() => router.push("/vakalarim")} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
+        <h2 className="mt-2 font-bold text-[var(--c-ink)]">{t("Süreciniz sonlandırıldı")}</h2>
+        <p className="mt-1 text-sm text-[var(--c-ink-2)]">{t("Tüm verileriniz silindi ve ödemeniz iade edildi.")}</p>
+        <button onClick={() => router.push("/vakalarim")} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
           {t("Vakalarıma dön")} <ArrowRight size={16} />
         </button>
       </div>
@@ -150,19 +150,19 @@ export function ConsultGate({
   if (appointment && appointment.status !== "CANCELLED") {
     const st = appointment.status;
     return (
-      <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+      <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
         {st === "OFFERED" ? (
           <>
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#17919E]"><CalendarClock size={18} /> {t("Video randevu teklifi")}</div>
-            <div className="mt-3 rounded-2xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] px-4 py-3">
-              <div className="text-xs uppercase tracking-wide text-white/40">{t("Önerilen zaman")}</div>
-              <div className="mt-0.5 text-lg font-bold text-[#F4F5F3]">{appointment.proposedAtLabel}</div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--c-accent-stronger)]"><CalendarClock size={18} /> {t("Video randevu teklifi")}</div>
+            <div className="mt-3 rounded-2xl border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.06] px-4 py-3">
+              <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Önerilen zaman")}</div>
+              <div className="mt-0.5 text-lg font-bold text-[var(--c-ink)]">{appointment.proposedAtLabel}</div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <button onClick={() => respond("accept")} disabled={!!busy} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
                 {busy === "accept" ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} {t("Onayla")}
               </button>
-              <button onClick={() => respond("request_change")} disabled={!!busy} className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/65 hover:bg-[#1E1F22] disabled:opacity-60">
+              <button onClick={() => respond("request_change")} disabled={!!busy} className="inline-flex items-center gap-2 rounded-lg border border-[var(--c-hairline)] px-4 py-2.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] disabled:opacity-60">
                 {busy === "request_change" ? <Loader2 size={16} className="animate-spin" /> : <Clock size={16} />} {t("Farklı zaman iste")}
               </button>
             </div>
@@ -170,22 +170,22 @@ export function ConsultGate({
         ) : st === "CONFIRMED" ? (
           <>
             <div className="flex items-center gap-2 text-sm font-semibold text-emerald-300"><CheckCircle2 size={18} /> {t("Randevunuz onaylandı")}</div>
-            <div className="mt-2 text-lg font-bold text-[#F4F5F3]">{appointment.proposedAtLabel}</div>
-            <button onClick={join} disabled={!!busy} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:opacity-60">
+            <div className="mt-2 text-lg font-bold text-[var(--c-ink)]">{appointment.proposedAtLabel}</div>
+            <button onClick={join} disabled={!!busy} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-60">
               {busy === "join" ? <Loader2 size={16} className="animate-spin" /> : <Video size={16} />} {t("Görüşmeye katıl")}
             </button>
           </>
         ) : (
           // REQUESTED | CHANGE_REQUESTED → bekleme
           <>
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#17919E]">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--c-accent-stronger)]">
               <Loader2 size={16} className="animate-spin" /> {t(st === "CHANGE_REQUESTED" ? "Değişiklik talebiniz iletildi" : "Randevu talebiniz iletildi")}
             </div>
-            <p className="mt-2 text-sm text-white/50">{t(st === "CHANGE_REQUESTED" ? "Doktor yeni bir görüşme zamanı önerecek." : "İcap görevli branş doktorları bilgilendirildi. En erken uygun doktor bir görüşme zamanı önerecek — bu sayfayı açık tutabilirsiniz.")}</p>
+            <p className="mt-2 text-sm text-[var(--c-ink-2)]">{t(st === "CHANGE_REQUESTED" ? "Doktor yeni bir görüşme zamanı önerecek." : "İcap görevli branş doktorları bilgilendirildi. En erken uygun doktor bir görüşme zamanı önerecek — bu sayfayı açık tutabilirsiniz.")}</p>
           </>
         )}
         {err && <p className="mt-3 text-sm text-red-300">{err}</p>}
-        <button onClick={terminate} disabled={!!busy} className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-white/40 hover:text-red-300 disabled:opacity-60">
+        <button onClick={terminate} disabled={!!busy} className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--c-ink-3)] hover:text-red-300 disabled:opacity-60">
           <Trash2 size={13} /> {t("Süreci sonlandır")}
         </button>
         {terminateDialog}
@@ -212,7 +212,7 @@ export function ConsultGate({
           title={t("Nöbetçi doktorla şimdi görüşün")}
           desc={t("7/24 görevli Dahiliye/Acil doktoru sizinle hemen bir video görüşmesi yapar.")}
           action={
-            <button onClick={sentinelNow} disabled={!hasSentinel || !!busy} className="inline-flex items-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:cursor-not-allowed disabled:opacity-50">
+            <button onClick={sentinelNow} disabled={!hasSentinel || !!busy} className="inline-flex items-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:cursor-not-allowed disabled:opacity-50">
               {busy === "sentinel" ? <><Loader2 size={16} className="animate-spin" /> {t("Bağlanıyor…")}</> : <>{t("Şimdi görüş")} <ArrowRight size={16} /></>}
             </button>
           }
@@ -226,7 +226,7 @@ export function ConsultGate({
           title={t("Branş doktorunuzle randevu alın")}
           desc={t("İcap görevli branş uzmanlarına iletilir; en erken uygun doktor size bir görüşme zamanı önerir.")}
           action={
-            <button onClick={requestIcapci} disabled={!hasIcapci || !!busy} className="inline-flex items-center gap-2 rounded-lg bg-[#161719] px-4 py-2.5 text-sm font-semibold text-[#17919E] ring-1 ring-[#28C8D8]/40 hover:bg-[#28C8D8]/[0.06] disabled:cursor-not-allowed disabled:opacity-50">
+            <button onClick={requestIcapci} disabled={!hasIcapci || !!busy} className="inline-flex items-center gap-2 rounded-lg bg-[var(--c-panel)] px-4 py-2.5 text-sm font-semibold text-[var(--c-accent-stronger)] ring-1 ring-[var(--c-accent)]/40 hover:bg-[var(--c-accent)]/[0.06] disabled:cursor-not-allowed disabled:opacity-50">
               {busy === "icapci" ? <><Loader2 size={16} className="animate-spin" /> {t("İletiliyor…")}</> : <>{t("Randevu iste")} <ArrowRight size={16} /></>}
             </button>
           }
@@ -240,7 +240,7 @@ export function ConsultGate({
           title={t("Süreci sonlandır")}
           desc={t("Tüm verileriniz kalıcı olarak silinir ve ödemeniz iade edilir.")}
           action={
-            <button onClick={terminate} disabled={!!busy} className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/50 hover:border-red-400/25 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-60">
+            <button onClick={terminate} disabled={!!busy} className="inline-flex items-center gap-2 rounded-lg border border-[var(--c-hairline)] px-4 py-2.5 text-sm font-medium text-white/50 hover:border-red-400/25 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-60">
               {busy === "terminate" ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />} {t("Sonlandır ve sil")}
             </button>
           }
@@ -257,16 +257,16 @@ export function ConsultGate({
 function GateCard({ icon, tone, title, desc, action, disabledNote }: {
   icon: React.ReactNode; tone: "teal" | "rose"; title: string; desc: string; action: React.ReactNode; disabledNote: string | null;
 }) {
-  const toneCls = tone === "rose" ? "bg-rose-500/10 text-rose-300" : "bg-[#28C8D8]/10 text-[#17919E]";
+  const toneCls = tone === "rose" ? "bg-rose-500/10 text-rose-300" : "bg-[var(--c-accent)]/10 text-[var(--c-accent-stronger)]";
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#161719] p-4 shadow-sm">
+    <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <span className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl ${toneCls}`}>{icon}</span>
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-[#F4F5F3]">{title}</h3>
-          <p className="mt-0.5 text-sm text-white/50">{desc}</p>
+          <h3 className="font-semibold text-[var(--c-ink)]">{title}</h3>
+          <p className="mt-0.5 text-sm text-[var(--c-ink-2)]">{desc}</p>
           <div className="mt-3">{action}</div>
-          {disabledNote && <p className="mt-1.5 text-xs text-white/40">{disabledNote}</p>}
+          {disabledNote && <p className="mt-1.5 text-xs text-[var(--c-ink-3)]">{disabledNote}</p>}
         </div>
       </div>
     </div>

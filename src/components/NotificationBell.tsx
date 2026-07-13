@@ -25,13 +25,13 @@ interface Notif {
 }
 
 const TYPE_META: Record<string, { icon: React.ReactNode; cls: string }> = {
-  NEW_CASE: { icon: <UserRound size={14} />, cls: "bg-[#28C8D8]/15 text-[#28C8D8]" },
+  NEW_CASE: { icon: <UserRound size={14} />, cls: "bg-[var(--c-accent)]/15 text-[var(--c-accent)]" },
   RED_FLAG: { icon: <AlertTriangle size={14} />, cls: "bg-red-500/15 text-red-300" },
   BOOKING: { icon: <Luggage size={14} />, cls: "bg-emerald-500/15 text-emerald-300" },
   OFFER: { icon: <FileText size={14} />, cls: "bg-violet-500/15 text-violet-300" },
   COMPLAINT: { icon: <Scale size={14} />, cls: "bg-amber-500/15 text-amber-300" },
   DECISION: { icon: <Scale size={14} />, cls: "bg-violet-500/15 text-violet-300" },
-  SHARE_ACCESS: { icon: <Eye size={14} />, cls: "bg-white/10 text-white/65" },
+  SHARE_ACCESS: { icon: <Eye size={14} />, cls: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)]" },
   MISSING_DOCS: { icon: <FileText size={14} />, cls: "bg-amber-500/15 text-amber-300" },
   CONSULT_ANSWERED: { icon: <MessageSquare size={14} />, cls: "bg-violet-500/15 text-violet-300" },
   CONSULT_MESSAGE: { icon: <MessageSquare size={14} />, cls: "bg-sky-500/15 text-sky-300" },
@@ -201,7 +201,7 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
 
   return (
     <div ref={boxRef} className="relative">
-      <button onClick={toggle} title={t("Bildirimler")} className="relative grid h-9 w-9 place-items-center rounded-lg text-white/55 hover:bg-white/10 hover:text-[#28C8D8]">
+      <button onClick={toggle} title={t("Bildirimler")} className="relative grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-2)] hover:bg-[var(--c-ink)]/10 hover:text-[var(--c-accent)]">
         <Bell size={18} />
         {unread > 0 && (
           <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
@@ -211,14 +211,14 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
       </button>
 
       {open && (
-        <div dir={dir} className="absolute right-0 top-11 z-40 w-80 overflow-hidden rounded-3xl border border-white/10 bg-[#161719] shadow-xl">
-          <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
-            <span className="text-xs font-semibold uppercase tracking-wide text-white/50">{t("Bildirimler")}</span>
-            {loading && <span className="text-[10px] text-white/40">{t("yenileniyor…")}</span>}
+        <div dir={dir} className="absolute right-0 top-11 z-40 w-80 overflow-hidden rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] shadow-xl">
+          <div className="flex items-center justify-between border-b border-[var(--c-hairline)] px-4 py-2.5">
+            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("Bildirimler")}</span>
+            {loading && <span className="text-[10px] text-[var(--c-ink-3)]">{t("yenileniyor…")}</span>}
           </div>
           {pushState === "ios-hint" && (
-            <div className="border-b border-white/10 bg-[#28C8D8]/10 px-4 py-2.5">
-              <div className="flex items-start gap-2 text-xs leading-relaxed text-[#28C8D8]">
+            <div className="border-b border-[var(--c-hairline)] bg-[var(--c-accent)]/10 px-4 py-2.5">
+              <div className="flex items-start gap-2 text-xs leading-relaxed text-[var(--c-accent)]">
                 <Smartphone size={14} className="mt-0.5 shrink-0" />
                 <span>
                   <strong>{t("iPhone'da cihaz bildirimi için:")}</strong>{" "}
@@ -228,10 +228,10 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
             </div>
           )}
           {pushState !== "hidden" && pushState !== "ios-hint" && (
-            <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-[#1E1F22]/60 px-4 py-2">
-              <span className="inline-flex items-center gap-1.5 text-xs text-white/65">
+            <div className="flex items-center justify-between gap-2 border-b border-[var(--c-hairline)] bg-[var(--c-surface)]/60 px-4 py-2">
+              <span className="inline-flex items-center gap-1.5 text-xs text-[var(--c-ink-2)]">
                 <Smartphone size={13} /> {t("Cihaz bildirimleri")}
-                <span className="text-[10px] text-white/40">{t("(tarayıcı kapalıyken)")}</span>
+                <span className="text-[10px] text-[var(--c-ink-3)]">{t("(tarayıcı kapalıyken)")}</span>
               </span>
               <button
                 onClick={togglePush}
@@ -239,7 +239,7 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
                 className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition ${
                   pushState === "on"
                     ? "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25 hover:bg-emerald-200"
-                    : "bg-[#161719] text-white/50 ring-white/10 hover:bg-white/10"
+                    : "bg-[var(--c-panel)] text-[var(--c-ink-2)] ring-white/10 hover:bg-[var(--c-ink)]/10"
                 }`}
               >
                 {pushState === "busy" ? <Loader2 size={11} className="animate-spin" /> : null}
@@ -249,23 +249,23 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
           )}
           <div className="max-h-96 overflow-y-auto">
             {items.length === 0 && (
-              <div className="px-4 py-10 text-center text-sm text-white/40">
+              <div className="px-4 py-10 text-center text-sm text-[var(--c-ink-3)]">
                 <Inbox size={22} className="mx-auto mb-2" /> {t("Bildirim yok.")}
               </div>
             )}
             {items.map((n) => {
-              const meta = TYPE_META[n.type] ?? { icon: <Stethoscope size={14} />, cls: "bg-white/10 text-white/65" };
+              const meta = TYPE_META[n.type] ?? { icon: <Stethoscope size={14} />, cls: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)]" };
               return (
                 <button
                   key={n.id}
                   onClick={() => go(n)}
-                  className={`flex w-full items-start gap-2.5 border-b border-white/10 px-4 py-3 text-left transition hover:bg-[#1E1F22] ${!n.readAt ? "bg-[#28C8D8]/10" : ""}`}
+                  className={`flex w-full items-start gap-2.5 border-b border-[var(--c-hairline)] px-4 py-3 text-left transition hover:bg-[var(--c-surface)] ${!n.readAt ? "bg-[var(--c-accent)]/10" : ""}`}
                 >
                   <span className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg ${meta.cls}`}>{meta.icon}</span>
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-[#F4F5F3]">{t(n.title)}</span>
-                    {n.body && <span className="block truncate text-xs text-white/50">{t(n.body)}</span>}
-                    <span className="block text-[10px] text-white/40">{timeAgo(n.createdAt, t)}</span>
+                    <span className="block truncate text-sm font-medium text-[var(--c-ink)]">{t(n.title)}</span>
+                    {n.body && <span className="block truncate text-xs text-[var(--c-ink-2)]">{t(n.body)}</span>}
+                    <span className="block text-[10px] text-[var(--c-ink-3)]">{timeAgo(n.createdAt, t)}</span>
                   </span>
                   {!n.readAt && <span className="ml-auto mt-1.5 h-2 w-2 shrink-0 rounded-full bg-teal-500" />}
                 </button>

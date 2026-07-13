@@ -1,8 +1,56 @@
 @import "tailwindcss";
 
-/* Gece teması (Faz B/C, 2026-07-11): vitrin görsel dili — zemin #0D0E10, metin #F4F5F3.
-   Açık klinik zemin (#eef1f5) emekli; klinik renk semantiği (emerald/amber/red) korunur. */
-:root {
+/* ============================================================
+ * SİSTEM TEMA TOKEN'LARI (v6.1, 2026-07-13): iç panellerin renkleri artık
+ * semantic değişkenlere bağlı → gece↔gündüz TEK class ile (.theme-dark /
+ * .theme-light html'de). Landing kendi --aura-* setini AYRI korur (dokunulmaz).
+ * Krom (bg/panel/surface/ink/hairline/accent) tema-değişken; klinik semantik
+ * renkler (--c-success/danger/warning) her temada uygun tonda. Gündüz accent:
+ * yeşil birincil + koyu turkuaz ikincil (kullanıcı kararı 2026-07-13). */
+.theme-light {
+  --c-bg: #ffffff;
+  --c-bg-deep: #f4f5f3;
+  --c-panel: #f7f8f5;
+  --c-surface: #eef1ec;
+  --c-surface-2: #e6e8e2;
+  --c-ink: #171a18;
+  --c-ink-2: #57534e;
+  --c-ink-3: #6b6660;
+  --c-hairline: rgba(0, 0, 0, 0.1);
+  --c-accent: #17919e;
+  --c-accent-strong: #127e8a;
+  --c-accent-stronger: #0d6470;
+  --c-accent-2: #0e7d8c;
+  --c-cream: #faf9f7;
+  --c-gold: #8a6414;
+  --c-indigo: #4f46e5;
+  --c-success: #15803d;
+  --c-warning: #b45309;
+  --c-danger: #b91c1c;
+  color: var(--c-ink);
+  color-scheme: light;
+}
+.theme-dark {
+  --c-bg: #0d0e10;
+  --c-bg-deep: #101113;
+  --c-panel: #161719;
+  --c-surface: #1e1f22;
+  --c-surface-2: #26272b;
+  --c-ink: #f4f5f3;
+  --c-ink-2: #9a9c99;
+  --c-ink-3: #82847c;
+  --c-hairline: rgba(255, 255, 255, 0.09);
+  --c-accent: #28c8d8;
+  --c-accent-strong: #1fa9b8;
+  --c-accent-stronger: #17919e;
+  --c-accent-2: #7fe9e0;
+  --c-cream: #f4f1e8;
+  --c-gold: #c6a664;
+  --c-indigo: #818cf8;
+  --c-success: #34d399;
+  --c-warning: #fbbf24;
+  --c-danger: #f87171;
+  color: var(--c-ink);
   color-scheme: dark;
 }
 
@@ -12,8 +60,8 @@ body {
 }
 
 body {
-  background: #0d0e10;
-  color: #f4f5f3;
+  background: var(--c-bg);
+  color: var(--c-ink);
   font-family: var(--font-sans), "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
 }
 
@@ -90,12 +138,32 @@ body {
   --aura-surface: #1e1f22; /* buton/yüzey */
   --aura-ink: #f4f5f3; /* başlık metni */
   --aura-grey: #9a9c99; /* ikincil metin */
-  --aura-micro: #6c6e67; /* mikro metin */
+  --aura-micro: #82847c; /* mikro metin — gece zemininde ~5:1 (WCAG AA); grey'den bir kademe soluk */
   --aura-accent: #28c8d8; /* TEK vurgu: logo turkuazı */
   --aura-hairline: rgba(255, 255, 255, 0.09);
   --aura-font-display: var(--font-serif), "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --aura-font-sans: var(--font-sans), "Inter", ui-sans-serif, system-ui, sans-serif;
   --aura-font-mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Gündüz gövdesi (sandwich): landing'de gece bantların ARASINDAKI beyaz şerit.
+   aura-* token'ları açık değerlere geçer → içindeki bileşenler (doctors/trust)
+   otomatik açık render eder; gece hero/chapters/nav/closing DOKUNULMAZ. Accent
+   gündüzde YEŞİL (gece turkuazının sıcak karşılığı); micro beyazda ~5:1 (AA). */
+.aura-light {
+  --aura-bg: #ffffff;
+  --aura-panel: #f7f8f5;
+  --aura-surface: #eff1ec;
+  --aura-ink: #171a18;
+  --aura-grey: #57534e;
+  --aura-micro: #6b6660;
+  --aura-accent: #17919e;
+  --aura-hairline: rgba(0, 0, 0, 0.1);
+  /* color'ı bu subtree'de yeniden bağla: .aura-page color'ı gece --aura-ink'iyle
+     ZATEN hesaplayıp inherit ettiriyor; değişkeni değiştirmek yetmez, açık renk
+     vermeyen (inherit eden) başlık/isim/metrikler yoksa beyaz-on-beyaz kalır. */
+  color: var(--aura-ink);
+  background-color: var(--aura-bg);
 }
 
 /* @layer components: utility sınıfları (px-4 gibi) aura bileşen stillerini
@@ -240,6 +308,20 @@ body {
       scroll-behavior: auto !important;
     }
   }
+}
+
+/* Tema-farkında logo wordmark (PortamedLogo): gündüz lacivert, gece beyaz PNG. */
+.logo-word-light {
+  display: block;
+}
+.logo-word-dark {
+  display: none;
+}
+.theme-dark .logo-word-light {
+  display: none;
+}
+.theme-dark .logo-word-dark {
+  display: block;
 }
 
 /* Yazdırma: gece teması kağıtta mürekkep felaketi olur — zemin/metni açığa zorla.

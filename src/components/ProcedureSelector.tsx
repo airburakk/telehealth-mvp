@@ -144,24 +144,24 @@ export default function ProcedureSelector({
   const searching = query.trim().length > 0;
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
             <Stethoscope size={15} /> Yaptığım İşlemler
           </div>
-          <p className="mt-1 text-sm text-white/50">
-            <span className="font-medium text-[#1FA9B8]">{branchLabel}</span> branşındaki işlemlerden yaptıklarınızı seçin.
+          <p className="mt-1 text-sm text-[var(--c-ink-2)]">
+            <span className="font-medium text-[var(--c-accent-strong)]">{branchLabel}</span> branşındaki işlemlerden yaptıklarınızı seçin.
             İşlem ücreti burada belirlenmez — hasta görüşmesi sonrası <span className="font-medium">tedavi kararında</span>,
             taban ile tavan (taban×{CEIL_MULT}) arası kaydırma çubuğuyla belirlersiniz.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-[#28C8D8]/10 px-3 py-1 text-xs font-semibold text-[#28C8D8]">{selectedCount} seçili</span>
+          <span className="rounded-full bg-[var(--c-accent)]/10 px-3 py-1 text-xs font-semibold text-[var(--c-accent)]">{selectedCount} seçili</span>
           <button
             onClick={save}
             disabled={!dirty || saving}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-3.5 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8] disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-accent)] px-3.5 py-2 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Save size={15} /> {saving ? "Kaydediliyor…" : "Kaydet"}
           </button>
@@ -172,52 +172,52 @@ export default function ProcedureSelector({
       {/* Arama + Diğer havuzu */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-ink-3)]" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`${branchLabel} işlemlerinde ara…`}
-            className="w-full rounded-lg border border-white/15 py-2 pl-9 pr-3 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-[#28C8D8]/20"
+            className="w-full rounded-lg border border-[var(--c-hairline)] py-2 pl-9 pr-3 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-[var(--c-accent)]/20"
           />
         </div>
         <button
           onClick={() => setShowOther((v) => !v)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-sm font-medium text-white/65 hover:bg-[#1E1F22]"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] px-3 py-2 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
         >
           <Plus size={15} /> Diğer havuzundan ekle
         </button>
       </div>
 
       {showOther && (
-        <div className="mt-3 rounded-2xl border border-dashed border-[#28C8D8]/30 bg-[#28C8D8]/10 p-3">
-          <div className="text-xs font-semibold text-[#28C8D8]">Tüm tarifede ara (branş dışı / sınıflandırılmamış işlemler dahil)</div>
+        <div className="mt-3 rounded-2xl border border-dashed border-[var(--c-accent)]/30 bg-[var(--c-accent)]/10 p-3">
+          <div className="text-xs font-semibold text-[var(--c-accent)]">Tüm tarifede ara (branş dışı / sınıflandırılmamış işlemler dahil)</div>
           <div className="relative mt-2">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-ink-3)]" />
             <input
               value={otherQ}
               onChange={(e) => searchOther(e.target.value)}
               placeholder="örn. botoks, biyopsi, USG…"
-              className="w-full rounded-lg border border-white/15 py-2 pl-9 pr-3 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-[#28C8D8]/20"
+              className="w-full rounded-lg border border-[var(--c-hairline)] py-2 pl-9 pr-3 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-[var(--c-accent)]/20"
             />
           </div>
-          {otherLoading && <div className="mt-2 text-xs text-white/40">Aranıyor…</div>}
+          {otherLoading && <div className="mt-2 text-xs text-[var(--c-ink-3)]">Aranıyor…</div>}
           {!otherLoading && otherQ.trim().length >= 2 && otherRes.length === 0 && (
-            <div className="mt-2 text-xs text-white/40">Sonuç yok.</div>
+            <div className="mt-2 text-xs text-[var(--c-ink-3)]">Sonuç yok.</div>
           )}
           {otherRes.length > 0 && (
-            <ul className="mt-2 max-h-60 divide-y divide-white/10 overflow-y-auto rounded-lg border border-white/10 bg-[#161719]">
+            <ul className="mt-2 max-h-60 divide-y divide-white/10 overflow-y-auto rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)]">
               {otherRes.map((p) => {
                 const added = sel[p.code] != null;
                 return (
                   <li key={p.code} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
                     <div className="min-w-0">
-                      <div className="truncate text-white/75">{p.name}</div>
-                      <div className="text-[11px] text-white/40">{p.code} · {p.price ? fmtTRY(p.price) : "fiyat yok"} · {p.group}</div>
+                      <div className="truncate text-[var(--c-ink)]">{p.name}</div>
+                      <div className="text-[11px] text-[var(--c-ink-3)]">{p.code} · {p.price ? fmtTRY(p.price) : "fiyat yok"} · {p.group}</div>
                     </div>
                     <button
                       onClick={() => addFromOther(p)}
                       disabled={added}
-                      className="shrink-0 rounded-md border border-[#28C8D8]/30 px-2 py-1 text-xs font-medium text-[#28C8D8] hover:bg-[#28C8D8]/10 disabled:opacity-40"
+                      className="shrink-0 rounded-md border border-[var(--c-accent)]/30 px-2 py-1 text-xs font-medium text-[var(--c-accent)] hover:bg-[var(--c-accent)]/10 disabled:opacity-40"
                     >
                       {added ? "Eklendi" : "Ekle"}
                     </button>
@@ -231,7 +231,7 @@ export default function ProcedureSelector({
 
       {/* Liste */}
       {allItems.length === 0 ? (
-        <div className="mt-5 rounded-2xl border border-dashed border-white/15 bg-[#1E1F22] p-6 text-center text-sm text-white/50">
+        <div className="mt-5 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] p-6 text-center text-sm text-[var(--c-ink-2)]">
           Bu branş için tarifede tanımlı hazır işlem yok. Yukarıdaki <b>“Diğer havuzundan ekle”</b> ile yaptığınız işlemleri arayıp ekleyebilirsiniz.
         </div>
       ) : (
@@ -240,14 +240,14 @@ export default function ProcedureSelector({
             const isOpen = searching || open.has(g);
             const selInGroup = items.filter((p) => sel[p.code] != null).length;
             return (
-              <div key={g} className="overflow-hidden rounded-2xl border border-white/10">
+              <div key={g} className="overflow-hidden rounded-2xl border border-[var(--c-hairline)]">
                 <button
                   onClick={() => toggleGroup(g)}
-                  className="flex w-full items-center justify-between gap-2 bg-[#1E1F22] px-4 py-2.5 text-left text-sm font-semibold text-white/75 hover:bg-white/10"
+                  className="flex w-full items-center justify-between gap-2 bg-[var(--c-surface)] px-4 py-2.5 text-left text-sm font-semibold text-[var(--c-ink)] hover:bg-[var(--c-ink)]/10"
                 >
                   <span className="truncate">{g}</span>
-                  <span className="flex shrink-0 items-center gap-2 text-xs font-normal text-white/40">
-                    {selInGroup > 0 && <span className="rounded-full bg-[#28C8D8]/15 px-2 py-0.5 font-semibold text-[#28C8D8]">{selInGroup}</span>}
+                  <span className="flex shrink-0 items-center gap-2 text-xs font-normal text-[var(--c-ink-3)]">
+                    {selInGroup > 0 && <span className="rounded-full bg-[var(--c-accent)]/15 px-2 py-0.5 font-semibold text-[var(--c-accent)]">{selInGroup}</span>}
                     {items.length} işlem {isOpen ? "▲" : "▼"}
                   </span>
                 </button>
@@ -261,7 +261,7 @@ export default function ProcedureSelector({
               </div>
             );
           })}
-          {groups.length === 0 && <div className="rounded-2xl border border-dashed border-white/15 p-4 text-center text-sm text-white/40">Aramayla eşleşen işlem yok.</div>}
+          {groups.length === 0 && <div className="rounded-2xl border border-dashed border-[var(--c-hairline)] p-4 text-center text-sm text-[var(--c-ink-3)]">Aramayla eşleşen işlem yok.</div>}
         </div>
       )}
     </div>
@@ -281,15 +281,15 @@ function ProcRow({
   return (
     <li className="px-4 py-3">
       <label className="flex cursor-pointer items-start gap-3">
-        <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded border ${selected ? "border-[#28C8D8] bg-[#28C8D8] text-[#0D0E10]" : "border-white/15 bg-[#161719]"}`}>
+        <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded border ${selected ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)]"}`}>
           {selected && <Check size={13} />}
         </span>
         <input type="checkbox" checked={selected} onChange={onToggle} className="sr-only" />
         <div className="min-w-0 flex-1">
-          <div className="text-sm text-white/75">{p.name}</div>
-          <div className="text-[11px] text-white/40">
+          <div className="text-sm text-[var(--c-ink)]">{p.name}</div>
+          <div className="text-[11px] text-[var(--c-ink-3)]">
             {p.code}
-            {floor > 0 ? <> · taban {fmtTRY(floor)} · tavan {fmtTRY(ceil)} <span className="text-white/25">· ücret tedavi kararında belirlenir</span></> : <> · tarife fiyatı tanımsız</>}
+            {floor > 0 ? <> · taban {fmtTRY(floor)} · tavan {fmtTRY(ceil)} <span className="text-[var(--c-ink-3)]">· ücret tedavi kararında belirlenir</span></> : <> · tarife fiyatı tanımsız</>}
           </div>
         </div>
       </label>

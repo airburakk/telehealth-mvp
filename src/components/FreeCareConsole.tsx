@@ -112,21 +112,21 @@ export function FreeCareConsole({
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
       <div className="flex items-center gap-2">
-        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[#28C8D8]/10 text-[#17919E]"><HeartHandshake size={20} /></span>
+        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--c-accent)]/10 text-[var(--c-accent-stronger)]"><HeartHandshake size={20} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#F4F5F3]">Ücretsiz Sağlık Hizmeti Konsolu</h1>
-          <p className="text-sm text-white/50">Gönüllü ücretsiz konsültasyon — müsaitlik açın, triyaj sizi bekleyen hastayla eşleştirsin.</p>
+          <h1 className="text-2xl font-bold text-[var(--c-ink)]">Ücretsiz Sağlık Hizmeti Konsolu</h1>
+          <p className="text-sm text-[var(--c-ink-2)]">Gönüllü ücretsiz konsültasyon — müsaitlik açın, triyaj sizi bekleyen hastayla eşleştirsin.</p>
         </div>
       </div>
 
       {/* Müsaitlik + kota + bekleyen */}
       <div className="mt-6 grid gap-4 sm:grid-cols-[1fr_300px]">
-        <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+        <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white/75">
-              <StateDot state={serverState} /> Durum: <span className="text-[#F4F5F3]">{FREE_CARE_STATES_DOCTOR[serverState] ?? serverState}</span>
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]">
+              <StateDot state={serverState} /> Durum: <span className="text-[var(--c-ink)]">{FREE_CARE_STATES_DOCTOR[serverState] ?? serverState}</span>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#1E1F22] px-3 py-1 text-xs font-medium text-white/65 ring-1 ring-white/10">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--c-surface)] px-3 py-1 text-xs font-medium text-[var(--c-ink-2)] ring-1 ring-white/10">
               <Users size={13} /> {waiting} bekleyen hasta
             </span>
           </div>
@@ -144,7 +144,7 @@ export function FreeCareConsole({
               onClick={() => toggle(!available)}
               disabled={busy}
               className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors disabled:opacity-60 ${
-                available ? "bg-[#26272B] text-white hover:bg-[#101113]" : "bg-[#28C8D8] text-[#0D0E10] hover:bg-[#1FA9B8]"
+                available ? "bg-[var(--c-surface-2)] text-white hover:bg-[var(--c-bg-deep)]" : "bg-[var(--c-accent)] text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]"
               }`}
             >
               {busy ? <Loader2 size={17} className="animate-spin" /> : available ? <Power size={17} /> : <Radio size={17} />}
@@ -153,29 +153,29 @@ export function FreeCareConsole({
           )}
 
           {available && (
-            <div className="mt-3 flex items-center justify-center gap-2 text-xs text-white/50">
-              <Loader2 size={13} className="animate-spin text-[#28C8D8]" /> Eşleşme bekleniyor — bu sayfayı açık tutun
+            <div className="mt-3 flex items-center justify-center gap-2 text-xs text-[var(--c-ink-2)]">
+              <Loader2 size={13} className="animate-spin text-[var(--c-accent)]" /> Eşleşme bekleniyor — bu sayfayı açık tutun
             </div>
           )}
         </div>
 
         {/* Kota + itibar */}
         <aside className="space-y-4">
-          <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50"><Activity size={14} /> Haftalık Kontenjan</div>
+          <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]"><Activity size={14} /> Haftalık Kontenjan</div>
             <div className="mt-2 flex items-end justify-between">
-              <span className="text-2xl font-bold text-[#F4F5F3]">{quota.used}<span className="text-base font-normal text-white/40">/{quota.quota}</span></span>
-              <span className="text-xs text-white/50">{quota.left} hak kaldı</span>
+              <span className="text-2xl font-bold text-[var(--c-ink)]">{quota.used}<span className="text-base font-normal text-[var(--c-ink-3)]">/{quota.quota}</span></span>
+              <span className="text-xs text-[var(--c-ink-2)]">{quota.left} hak kaldı</span>
             </div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full rounded-full bg-[#28C8D8]" style={{ width: `${Math.min(100, (quota.used / Math.max(1, quota.quota)) * 100)}%` }} />
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--c-ink)]/10">
+              <div className="h-full rounded-full bg-[var(--c-accent)]" style={{ width: `${Math.min(100, (quota.used / Math.max(1, quota.quota)) * 100)}%` }} />
             </div>
           </div>
-          <div className="rounded-3xl border border-[#28C8D8]/25 bg-[#28C8D8]/10 p-5">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#28C8D8]"><Award size={14} /> Ücretsiz Hizmet Katkınız</div>
+          <div className="rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-5">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]"><Award size={14} /> Ücretsiz Hizmet Katkınız</div>
             <div className="mt-2 grid grid-cols-2 gap-3 text-center">
-              <div><div className="text-2xl font-bold text-[#28C8D8]">{badge.consultations}</div><div className="text-[11px] text-[#28C8D8]">görüşme</div></div>
-              <div><div className="text-2xl font-bold text-[#28C8D8]">{badge.converted}</div><div className="text-[11px] text-[#28C8D8]">tedaviye yönlendirildi</div></div>
+              <div><div className="text-2xl font-bold text-[var(--c-accent)]">{badge.consultations}</div><div className="text-[11px] text-[var(--c-accent)]">görüşme</div></div>
+              <div><div className="text-2xl font-bold text-[var(--c-accent)]">{badge.converted}</div><div className="text-[11px] text-[var(--c-accent)]">tedaviye yönlendirildi</div></div>
             </div>
           </div>
         </aside>
@@ -184,10 +184,10 @@ export function FreeCareConsole({
       {/* Sonuç bekleyen görüşmeler */}
       {awaiting.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-sm font-semibold text-white/75">Görüşme sonucunu işaretleyin</h2>
+          <h2 className="text-sm font-semibold text-[var(--c-ink)]">Görüşme sonucunu işaretleyin</h2>
           <div className="mt-2 space-y-3">
             {awaiting.map((c) => (
-              <div key={c.id} className="rounded-2xl border border-white/10 bg-[#161719] p-4 shadow-sm">
+              <div key={c.id} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
                 <CaseHead c={c} />
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
@@ -214,15 +214,15 @@ export function FreeCareConsole({
       {/* Geçmiş */}
       {recent.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-sm font-semibold text-white/75">Son ücretsiz hizmet vakalarınız</h2>
-          <ul className="mt-2 divide-y divide-white/10 rounded-2xl border border-white/10 bg-[#161719]">
+          <h2 className="text-sm font-semibold text-[var(--c-ink)]">Son ücretsiz hizmet vakalarınız</h2>
+          <ul className="mt-2 divide-y divide-white/10 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)]">
             {recent.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                 <div className="min-w-0">
-                  <div className="truncate font-medium text-white/75">{countryFlag(c.country)} {c.patientName} · {c.branch}</div>
-                  <div className="text-xs text-white/40">{formatDateTime(c.createdAt)}</div>
+                  <div className="truncate font-medium text-[var(--c-ink)]">{countryFlag(c.country)} {c.patientName} · {c.branch}</div>
+                  <div className="text-xs text-[var(--c-ink-3)]">{formatDateTime(c.createdAt)}</div>
                 </div>
-                <span className="shrink-0 rounded-full bg-[#1E1F22] px-2.5 py-1 text-[11px] font-medium text-white/65 ring-1 ring-white/10">
+                <span className="shrink-0 rounded-full bg-[var(--c-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--c-ink-2)] ring-1 ring-white/10">
                   {FREE_CARE_STATES[c.freeCareStatus] ?? c.freeCareStatus}
                 </span>
               </li>
@@ -232,7 +232,7 @@ export function FreeCareConsole({
       )}
 
       {awaiting.length === 0 && recent.length === 0 && (
-        <p className="mt-8 rounded-2xl bg-[#1E1F22] px-4 py-8 text-center text-sm text-white/40">
+        <p className="mt-8 rounded-2xl bg-[var(--c-surface)] px-4 py-8 text-center text-sm text-[var(--c-ink-3)]">
           Henüz ücretsiz hizmet görüşmeniz yok. Müsait olun; bekleyen bir hastayla eşleştiğinizde görüşme otomatik başlar.
         </p>
       )}
@@ -247,7 +247,7 @@ const FREE_CARE_STATES_DOCTOR: Record<string, string> = {
 };
 
 function StateDot({ state }: { state: string }) {
-  const cls = state === "AVAILABLE" ? "bg-emerald-500" : state === "IN_SESSION" ? "bg-violet-500" : "bg-white/20";
+  const cls = state === "AVAILABLE" ? "bg-emerald-500" : state === "IN_SESSION" ? "bg-violet-500" : "bg-[var(--c-ink)]/20";
   return <span className={`h-2.5 w-2.5 rounded-full ${cls}`} />;
 }
 
@@ -256,14 +256,14 @@ function CaseHead({ c }: { c: PBCase }) {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-semibold text-[#F4F5F3]">{countryFlag(c.country)} {c.patientName}</span>
-        <span className="rounded-lg bg-[#1E1F22] px-2 py-0.5 text-xs font-medium text-white/65 ring-1 ring-white/10">{c.branch}</span>
+        <span className="font-semibold text-[var(--c-ink)]">{countryFlag(c.country)} {c.patientName}</span>
+        <span className="rounded-lg bg-[var(--c-surface)] px-2 py-0.5 text-xs font-medium text-[var(--c-ink-2)] ring-1 ring-white/10">{c.branch}</span>
         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${u.badge}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${u.dot}`} /> {c.urgency}/5
         </span>
-        <span className="text-xs text-white/40">· {c.language}</span>
+        <span className="text-xs text-[var(--c-ink-3)]">· {c.language}</span>
       </div>
-      <p className="mt-1.5 line-clamp-2 text-sm text-white/65">{c.symptoms}</p>
+      <p className="mt-1.5 line-clamp-2 text-sm text-[var(--c-ink-2)]">{c.symptoms}</p>
     </div>
   );
 }

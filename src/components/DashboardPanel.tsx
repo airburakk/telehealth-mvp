@@ -8,7 +8,7 @@ export function DashboardPanel({
   badge,
   action,
   children,
-  accent = "#28C8D8",
+  accent = "var(--c-accent)",
 }: {
   icon: ReactNode;
   title: string;
@@ -19,15 +19,15 @@ export function DashboardPanel({
   accent?: string;
 }) {
   return (
-    <section className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
+    <section className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-[#F4F5F3]" style={{ background: accent }}>
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-[var(--c-ink)]" style={{ background: accent }}>
             {icon}
           </span>
           <div>
-            <h2 className="text-sm font-semibold text-[#F4F5F3]">{title}</h2>
-            {subtitle && <p className="text-xs text-white/50">{subtitle}</p>}
+            <h2 className="text-sm font-semibold text-[var(--c-ink)]">{title}</h2>
+            {subtitle && <p className="text-xs text-[var(--c-ink-2)]">{subtitle}</p>}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">

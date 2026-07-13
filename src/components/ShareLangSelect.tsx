@@ -14,8 +14,8 @@ export function ShareLangSelect({ current }: { current: string }) {
   const [pending, start] = useTransition();
 
   return (
-    <label className="inline-flex shrink-0 items-center gap-1.5 text-xs text-white/50" title="Dil / Language">
-      {pending ? <Loader2 size={14} className="animate-spin text-[#28C8D8]" /> : <Globe size={14} />}
+    <label className="inline-flex shrink-0 items-center gap-1.5 text-xs text-[var(--c-ink-2)]" title="Dil / Language">
+      {pending ? <Loader2 size={14} className="animate-spin text-[var(--c-accent)]" /> : <Globe size={14} />}
       <select
         value={current}
         disabled={pending}
@@ -23,7 +23,7 @@ export function ShareLangSelect({ current }: { current: string }) {
           const v = e.target.value;
           start(() => router.replace(v === "Türkçe" ? pathname : `${pathname}?lang=${encodeURIComponent(v)}`, { scroll: false }));
         }}
-        className="rounded-lg border border-white/15 bg-[#161719] px-2 py-1.5 text-xs font-medium text-white/75 outline-none focus:border-[#28C8D8] disabled:opacity-60"
+        className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-2 py-1.5 text-xs font-medium text-[var(--c-ink)] outline-none focus:border-[var(--c-accent)] disabled:opacity-60"
         aria-label="Dil / Language"
       >
         {LANGUAGES.map((l) => (

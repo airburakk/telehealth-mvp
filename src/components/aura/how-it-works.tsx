@@ -99,7 +99,7 @@ function HiwPicker() {
             >
               <p className="aura-mono text-[12px]">
                 <span className="aura-badge">
-                  {ch.n}{" · "}
+                  {ch.n} / 04{" · "}
                   <span className="uppercase tracking-wider">{ch.strand}</span>
                 </span>
               </p>

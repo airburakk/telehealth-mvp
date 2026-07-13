@@ -11,8 +11,8 @@ export function CaseDicom({ studies }: { studies: DicomStudy[] }) {
   const [src, setSrc] = useState<string | undefined>(undefined);
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
+    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
+      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
         <ScanLine size={15} /> Radyoloji (DICOM)
       </div>
       <ul className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -20,15 +20,15 @@ export function CaseDicom({ studies }: { studies: DicomStudy[] }) {
           <li key={s.url}>
             <button
               onClick={() => { setSrc(s.url); setOpen(true); }}
-              className="flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-[#1E1F22] px-3 py-2.5 text-sm text-white/75 hover:border-teal-400 hover:bg-[#28C8D8]/10"
+              className="flex w-full items-center justify-between gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5 text-sm text-white/75 hover:border-teal-400 hover:bg-[var(--c-accent)]/10"
             >
-              <span className="inline-flex items-center gap-2"><FileImage size={16} className="text-[#28C8D8]" /> {s.label}</span>
-              <span className="rounded bg-white/15 px-1.5 py-0.5 text-[10px] font-semibold text-white/65">{s.modality}</span>
+              <span className="inline-flex items-center gap-2"><FileImage size={16} className="text-[var(--c-accent)]" /> {s.label}</span>
+              <span className="rounded bg-[var(--c-ink)]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--c-ink-2)]">{s.modality}</span>
             </button>
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-[11px] text-white/40">
+      <p className="mt-3 text-[11px] text-[var(--c-ink-3)]">
         Görüntüleyicide: pencere/seviye (sürükle), yakınlaştır, kesit gezinme (tekerlek), renk tersle. Sıkıştırmasız BT/MR.
       </p>
       <DicomViewer open={open} src={src} onClose={() => setOpen(false)} />

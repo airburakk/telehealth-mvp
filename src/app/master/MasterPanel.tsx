@@ -8,7 +8,7 @@ type U = { id: string; email: string; name: string; role: string; createdAt: str
 
 const ROLE_CHIP: Record<string, string> = {
   PATIENT: "text-emerald-300 ring-emerald-400/30 bg-emerald-500/10",
-  DOCTOR: "text-[#28C8D8] ring-[#28C8D8]/30 bg-[#28C8D8]/10",
+  DOCTOR: "text-[var(--c-accent)] ring-[var(--c-accent)]/30 bg-[var(--c-accent)]/10",
   COORDINATOR: "text-amber-300 ring-amber-400/30 bg-amber-500/10",
   ETHICS: "text-violet-300 ring-violet-400/30 bg-violet-500/10",
   ADMIN: "text-rose-300 ring-rose-400/30 bg-rose-500/10",
@@ -63,35 +63,35 @@ export function MasterPanel({ users, masterId, masterEmail }: { users: U[]; mast
           <ShieldCheck size={22} />
         </span>
         <div>
-          <h1 className="text-xl font-bold text-[#F4F5F3]">Master Paneli</h1>
-          <p className="text-sm text-white/50">
+          <h1 className="text-xl font-bold text-[var(--c-ink)]">Master Paneli</h1>
+          <p className="text-sm text-[var(--c-ink-2)]">
             Herhangi bir hesaba bürünüp o kullanıcının ekranlarını görebilirsin. Her bürünme audit&apos;e yazılır.
           </p>
         </div>
-        <span className="ml-auto hidden rounded-full bg-white/5 px-3 py-1 text-xs text-white/50 ring-1 ring-white/10 sm:inline">
+        <span className="ml-auto hidden rounded-full bg-[var(--c-ink)]/5 px-3 py-1 text-xs text-[var(--c-ink-2)] ring-1 ring-white/10 sm:inline">
           {masterEmail}
         </span>
       </div>
 
       {/* Arama */}
-      <div className="mt-6 flex items-center gap-2 rounded-xl border border-white/15 bg-[#1E1F22] px-3">
-        <Search size={16} className="text-white/40" />
+      <div className="mt-6 flex items-center gap-2 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3">
+        <Search size={16} className="text-[var(--c-ink-3)]" />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Ad veya e-posta ara…"
-          className="w-full bg-transparent py-2.5 text-sm text-[#F4F5F3] outline-none placeholder:text-white/35"
+          className="w-full bg-transparent py-2.5 text-sm text-[var(--c-ink)] outline-none placeholder:text-[var(--c-ink-3)]"
         />
       </div>
 
       {/* Rol filtreleri */}
       <div className="mt-3 flex flex-wrap gap-1.5">
         <Chip active={role === "ALL"} onClick={() => setRole("ALL")}>
-          Tümü <span className="text-white/40">{users.length}</span>
+          Tümü <span className="text-[var(--c-ink-3)]">{users.length}</span>
         </Chip>
         {ROLES.filter((r) => counts[r]).map((r) => (
           <Chip key={r} active={role === r} onClick={() => setRole(r)}>
-            {ROLE_LABELS[r as Role]} <span className="text-white/40">{counts[r]}</span>
+            {ROLE_LABELS[r as Role]} <span className="text-[var(--c-ink-3)]">{counts[r]}</span>
           </Chip>
         ))}
       </div>
@@ -104,19 +104,19 @@ export function MasterPanel({ users, masterId, masterEmail }: { users: U[]; mast
 
       {/* Liste */}
       <div className="mt-4 space-y-2">
-        {filtered.length === 0 && <div className="rounded-xl bg-[#1E1F22] px-4 py-8 text-center text-sm text-white/40">Eşleşen kullanıcı yok.</div>}
+        {filtered.length === 0 && <div className="rounded-xl bg-[var(--c-surface)] px-4 py-8 text-center text-sm text-[var(--c-ink-3)]">Eşleşen kullanıcı yok.</div>}
         {filtered.map((u) => {
           const isSelf = u.id === masterId;
           return (
-            <div key={u.id} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#161719] px-4 py-3">
+            <div key={u.id} className="flex items-center gap-3 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-4 py-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="truncate font-semibold text-[#F4F5F3]">{u.name}</span>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ${ROLE_CHIP[u.role] ?? "text-white/50 ring-white/15 bg-white/5"}`}>
+                  <span className="truncate font-semibold text-[var(--c-ink)]">{u.name}</span>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ${ROLE_CHIP[u.role] ?? "text-[var(--c-ink-2)] ring-white/15 bg-[var(--c-ink)]/5"}`}>
                     {ROLE_LABELS[u.role as Role] ?? u.role}
                   </span>
                 </div>
-                <div className="truncate text-xs text-white/45">{u.email}</div>
+                <div className="truncate text-xs text-[var(--c-ink-3)]">{u.email}</div>
               </div>
               <button
                 onClick={() => impersonate(u.id)}
@@ -140,7 +140,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${
-        active ? "bg-[#28C8D8] text-[#0D0E10] ring-[#28C8D8]" : "bg-white/5 text-white/65 ring-white/15 hover:bg-white/10"
+        active ? "bg-[var(--c-accent)] text-[var(--c-bg)] ring-[var(--c-accent)]" : "bg-[var(--c-ink)]/5 text-white/65 ring-white/15 hover:bg-[var(--c-ink)]/10"
       }`}
     >
       {children}

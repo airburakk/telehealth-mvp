@@ -46,21 +46,21 @@ export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
     <main dir={langDir(lang)} className="print-doc mx-auto max-w-4xl px-5 py-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <Lock size={20} className="text-[#17919E]" />
-          <h1 className="text-2xl font-semibold text-[#F4F5F3]">{t(S.title)}</h1>
+          <Lock size={20} className="text-[var(--c-accent-stronger)]" />
+          <h1 className="text-2xl font-semibold text-[var(--c-ink)]">{t(S.title)}</h1>
         </div>
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>
-      <p className="mt-1.5 max-w-2xl text-sm text-white/65">{t(S.subtitle)}</p>
+      <p className="mt-1.5 max-w-2xl text-sm text-[var(--c-ink-2)]">{t(S.subtitle)}</p>
 
       {entries.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-white/10 bg-[#1E1F22] px-5 py-10 text-center text-sm text-white/50">
+        <div className="mt-8 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-5 py-10 text-center text-sm text-[var(--c-ink-2)]">
           {t(S.empty)}
         </div>
       ) : (
-        <div className="mt-6 overflow-hidden rounded-xl border border-white/10">
+        <div className="mt-6 overflow-hidden rounded-xl border border-[var(--c-hairline)]">
           <table className="w-full text-sm">
-            <thead className="bg-[#1E1F22] text-white/50">
+            <thead className="bg-[var(--c-surface)] text-[var(--c-ink-2)]">
               <tr className="text-start">
                 <th className="px-4 py-2.5 font-medium">{t(S.thDate)}</th>
                 <th className="px-4 py-2.5 font-medium">{t(S.thWho)}</th>
@@ -74,13 +74,13 @@ export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
                 const verified =
                   e.verification.entryHashValid === true && e.verification.timestampValid === true;
                 return (
-                  <tr key={e.id} className="text-white/75">
-                    <td className="px-4 py-2.5 whitespace-nowrap text-white/50">
+                  <tr key={e.id} className="text-[var(--c-ink)]">
+                    <td className="px-4 py-2.5 whitespace-nowrap text-[var(--c-ink-2)]">
                       {new Date(e.createdAt).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" })}
                     </td>
                     <td className="px-4 py-2.5">
                       {e.actorIsYou ? (
-                        <span className="inline-flex items-center rounded-full bg-[#17919E]/10 px-2 py-0.5 text-xs font-medium text-[#17919E]">
+                        <span className="inline-flex items-center rounded-full bg-[var(--c-accent-stronger)]/10 px-2 py-0.5 text-xs font-medium text-[var(--c-accent-stronger)]">
                           {t(S.you)}
                         </span>
                       ) : (
@@ -90,14 +90,14 @@ export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
                       )}
                     </td>
                     <td className="px-4 py-2.5">{t(ACTION_TR[e.action] ?? e.action)}</td>
-                    <td className="px-4 py-2.5 text-white/50">{t(RES_TR[e.resourceType] ?? e.resourceType)}</td>
+                    <td className="px-4 py-2.5 text-[var(--c-ink-2)]">{t(RES_TR[e.resourceType] ?? e.resourceType)}</td>
                     <td className="px-4 py-2.5">
                       {verified ? (
                         <span className="inline-flex items-center gap-1 text-emerald-300">
                           <ShieldCheck size={15} /> {t(S.verified)}
                         </span>
                       ) : (
-                        <span className="text-white/40">—</span>
+                        <span className="text-[var(--c-ink-3)]">—</span>
                       )}
                     </td>
                   </tr>
@@ -108,11 +108,11 @@ export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
         </div>
       )}
 
-      <div className="mt-6 flex items-start gap-2 rounded-lg border border-white/10 bg-[#1E1F22] px-4 py-3 text-xs text-white/50">
-        <Clock size={15} className="mt-0.5 shrink-0 text-white/40" />
+      <div className="mt-6 flex items-start gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3 text-xs text-[var(--c-ink-2)]">
+        <Clock size={15} className="mt-0.5 shrink-0 text-[var(--c-ink-3)]" />
         <p>
-          <strong className="text-white/65">{t(S.footerLead)}</strong> {t(S.footerBody)} {t(S.proofPrefix)}{" "}
-          <Link href="/onam/kanit" className="text-[#17919E] hover:underline">
+          <strong className="text-[var(--c-ink-2)]">{t(S.footerLead)}</strong> {t(S.footerBody)} {t(S.proofPrefix)}{" "}
+          <Link href="/onam/kanit" className="text-[var(--c-accent-stronger)] hover:underline">
             {t(S.proofLink)}
           </Link>
           .

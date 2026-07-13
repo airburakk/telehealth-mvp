@@ -50,10 +50,10 @@ export default async function RecoveryMonitor() {
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><HeartPulse size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><HeartPulse size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#F4F5F3]">Post-Op İzleme</h1>
-          <p className="text-sm text-white/50">Uzaktan iyileşme takibi — kırmızı bayraklı hastalar üstte.</p>
+          <h1 className="text-2xl font-bold text-[var(--c-ink)]">Post-Op İzleme</h1>
+          <p className="text-sm text-[var(--c-ink-2)]">Uzaktan iyileşme takibi — kırmızı bayraklı hastalar üstte.</p>
         </div>
       </div>
 
@@ -65,7 +65,7 @@ export default async function RecoveryMonitor() {
 
       <div className="mt-6 space-y-2.5">
         {active.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-white/15 bg-[#161719] py-12 text-center text-white/40">
+          <div className="rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-panel)] py-12 text-center text-[var(--c-ink-3)]">
             <Inbox className="mx-auto mb-2" /> Aktif takipte hasta yok.
           </div>
         )}
@@ -74,7 +74,7 @@ export default async function RecoveryMonitor() {
           return (
             <div
               key={r.id}
-              className={`group flex items-center gap-4 rounded-2xl border bg-[#161719] p-4 transition hover:shadow-sm ${severity === "RED" ? "border-red-400/25" : "border-white/10 hover:border-[#28C8D8]/30"}`}
+              className={`group flex items-center gap-4 rounded-2xl border bg-[var(--c-panel)] p-4 transition hover:shadow-sm ${severity === "RED" ? "border-red-400/25" : "border-[var(--c-hairline)] hover:border-[var(--c-accent)]/30"}`}
             >
               <Link href={`/takip/${r.caseId}`} className="flex min-w-0 flex-1 items-center gap-4">
                 <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ring-1 ${m.badge}`}>
@@ -82,12 +82,12 @@ export default async function RecoveryMonitor() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-[#F4F5F3]">{decryptField(r.case.patientName)}</span>
-                    <span className="text-xs text-white/40">{countryFlag(r.case.country)} {countryName(r.case.country)}</span>
+                    <span className="font-semibold text-[var(--c-ink)]">{decryptField(r.case.patientName)}</span>
+                    <span className="text-xs text-[var(--c-ink-3)]">{countryFlag(r.case.country)} {countryName(r.case.country)}</span>
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${m.badge}`}>{m.label}</span>
                   </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-white/50">
-                    <span className="font-medium text-[#1FA9B8]">{r.branch}</span>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[var(--c-ink-2)]">
+                    <span className="font-medium text-[var(--c-accent-strong)]">{r.branch}</span>
                     <span>· {day}. gün</span>
                     {last ? (
                       <>
@@ -96,14 +96,14 @@ export default async function RecoveryMonitor() {
                         <span>· son: {formatDateTime(last.createdAt)}</span>
                       </>
                     ) : (
-                      <span className="text-white/40">henüz kontrol yok</span>
+                      <span className="text-[var(--c-ink-3)]">henüz kontrol yok</span>
                     )}
-                    <span className="text-white/40">· {count} kontrol</span>
+                    <span className="text-[var(--c-ink-3)]">· {count} kontrol</span>
                   </div>
                 </div>
               </Link>
               <CompleteRecoveryButton caseId={r.caseId} />
-              <ArrowRight size={18} className="hidden shrink-0 text-white/25 sm:block" />
+              <ArrowRight size={18} className="hidden shrink-0 text-[var(--c-ink-3)] sm:block" />
             </div>
           );
         })}
@@ -112,24 +112,24 @@ export default async function RecoveryMonitor() {
       {/* E2EE Faz 2A — tamamlanmış takipler: klinik erişim hastaya devredildi → yalnız metadata, klinik içerik linki YOK. */}
       {completed.length > 0 && (
         <div className="mt-10">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/40">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
             <Lock size={13} /> Tamamlanan takipler · erişim hastada
           </div>
           <div className="mt-3 space-y-2">
             {completed.map(({ r, day, count, closed }) => (
-              <div key={r.id} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#1E1F22]/60 p-3.5 text-sm">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/10 text-white/40"><Lock size={16} /></span>
+              <div key={r.id} className="flex items-center gap-3 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 p-3.5 text-sm">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]"><Lock size={16} /></span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-white/65">{decryptField(r.case.patientName)}</span>
-                    <span className="text-xs text-white/40">{r.branch}</span>
+                    <span className="font-medium text-[var(--c-ink-2)]">{decryptField(r.case.patientName)}</span>
+                    <span className="text-xs text-[var(--c-ink-3)]">{r.branch}</span>
                   </div>
-                  <div className="text-xs text-white/40">
+                  <div className="text-xs text-[var(--c-ink-3)]">
                     {closed.reason === "MANUAL" ? "Doktor tamamladı" : "Süre doldu (otomatik)"}
                     {r.completedAt ? ` · ${formatDateTime(r.completedAt)}` : ""} · {count} kontrol · {day}. gün
                   </div>
                 </div>
-                <span className="shrink-0 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white/50">klinik erişim kapalı</span>
+                <span className="shrink-0 rounded-full bg-[var(--c-ink)]/15 px-2 py-0.5 text-[10px] font-medium text-[var(--c-ink-2)]">klinik erişim kapalı</span>
               </div>
             ))}
           </div>
@@ -141,9 +141,9 @@ export default async function RecoveryMonitor() {
 
 function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#161719] p-3.5">
-      <div className={`text-2xl font-bold ${tone ?? "text-[#F4F5F3]"}`}>{value}</div>
-      <div className="text-xs text-white/50">{label}</div>
+    <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3.5">
+      <div className={`text-2xl font-bold ${tone ?? "text-[var(--c-ink)]"}`}>{value}</div>
+      <div className="text-xs text-[var(--c-ink-2)]">{label}</div>
     </div>
   );
 }

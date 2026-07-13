@@ -108,13 +108,13 @@ export function ReservationView(p: ReservationViewProps) {
       <div className="mt-6 grid gap-5 sm:grid-cols-[1fr_300px]">
         {/* Sol: paket içeriği */}
         <div className="space-y-5">
-          <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+          <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs uppercase tracking-wide text-white/40">{t("Rezervasyon No")}</div>
-                <div className="font-mono text-sm text-white/75">{p.rezNo}</div>
+                <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Rezervasyon No")}</div>
+                <div className="font-mono text-sm text-[var(--c-ink)]">{p.rezNo}</div>
               </div>
-              <span className="rounded-full bg-[#28C8D8] px-3 py-1 text-xs font-semibold text-[#0D0E10]">{p.tier} {t("Paket")}</span>
+              <span className="rounded-full bg-[var(--c-accent)] px-3 py-1 text-xs font-semibold text-[var(--c-bg)]">{p.tier} {t("Paket")}</span>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -126,9 +126,9 @@ export function ReservationView(p: ReservationViewProps) {
 
             {/* Doktorun seçtiği tesis + sağlık turizmi yetki belgesi rozeti (hasta güven sinyali; yalnız pozitif) */}
             {p.hospitalName && (
-              <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-[#1E1F22]/60 px-3 py-2 text-sm">
-                <Building2 size={14} className="shrink-0 text-[#1FA9B8]" />
-                <span className="min-w-0 font-medium text-white/75">{p.hospitalName}</span>
+              <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 px-3 py-2 text-sm">
+                <Building2 size={14} className="shrink-0 text-[var(--c-accent-strong)]" />
+                <span className="min-w-0 font-medium text-[var(--c-ink)]">{p.hospitalName}</span>
                 {p.hospitalAuthNo && (
                   <span title={t("Sağlık turizmi yetki belgeli tesis (T.C. Sağlık Bakanlığı — HealthTürkiye)")} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-400/25">
                     <ShieldCheck size={12} /> {t("Yetki belgesi")}: {p.hospitalAuthNo}
@@ -137,17 +137,17 @@ export function ReservationView(p: ReservationViewProps) {
               </div>
             )}
 
-            <ul className="mt-5 space-y-2 border-t border-white/10 pt-4">
+            <ul className="mt-5 space-y-2 border-t border-[var(--c-hairline)] pt-4">
               {p.items.map((it) => (
                 <li key={it.key} className="flex items-start justify-between gap-3 text-sm">
-                  <span className="text-white/65">{t(it.label)}{it.note && <span className="block text-xs text-white/40">{t(it.note)}</span>}</span>
-                  <span className="shrink-0 font-medium text-[#F4F5F3]">{formatUSD(it.amount)}</span>
+                  <span className="text-[var(--c-ink-2)]">{t(it.label)}{it.note && <span className="block text-xs text-[var(--c-ink-3)]">{t(it.note)}</span>}</span>
+                  <span className="shrink-0 font-medium text-[var(--c-ink)]">{formatUSD(it.amount)}</span>
                 </li>
               ))}
             </ul>
-            <div className="mt-3 flex items-end justify-between border-t border-white/10 pt-3">
-              <span className="text-sm font-semibold text-white/75">{t("Toplam (Escrow)")}</span>
-              <span className="text-2xl font-bold text-[#F4F5F3]">{formatUSD(p.total)}</span>
+            <div className="mt-3 flex items-end justify-between border-t border-[var(--c-hairline)] pt-3">
+              <span className="text-sm font-semibold text-[var(--c-ink)]">{t("Toplam (Escrow)")}</span>
+              <span className="text-2xl font-bold text-[var(--c-ink)]">{formatUSD(p.total)}</span>
             </div>
           </div>
 
@@ -155,10 +155,10 @@ export function ReservationView(p: ReservationViewProps) {
           <InsuranceSummary detailJson={p.insuranceDetail} lang={lang} />
 
           {/* Hasta yolculuğu — lojistik takip (koordinatör /operasyon/lojistik'ten günceller) */}
-          <div className="rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-sm">
+          <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-semibold uppercase tracking-wide text-white/50">{t("Hasta Yolculuğu")}</div>
-              <span className="text-xs text-white/40">{progress.done}/{progress.total} {t("tamamlandı")}</span>
+              <div className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("Hasta Yolculuğu")}</div>
+              <span className="text-xs text-[var(--c-ink-3)]">{progress.done}/{progress.total} {t("tamamlandı")}</span>
             </div>
             <ol className="mt-4 space-y-0">
               {p.stages.map((st, i) => {
@@ -179,28 +179,28 @@ export function ReservationView(p: ReservationViewProps) {
                           st.status === "done"
                             ? "bg-emerald-500/15 text-emerald-300"
                             : st.status === "active"
-                              ? "bg-[#28C8D8]/15 text-[#28C8D8]"
-                              : "bg-white/10 text-white/40"
+                              ? "bg-[var(--c-accent)]/15 text-[var(--c-accent)]"
+                              : "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]"
                         }`}
                       >
                         {st.status === "done" ? <CheckCircle2 size={16} /> : <Icon size={16} />}
                       </span>
                       {i < p.stages.length - 1 && (
-                        <span className={`my-1 h-6 w-0.5 ${st.status === "done" ? "bg-emerald-200" : "bg-white/15"}`} />
+                        <span className={`my-1 h-6 w-0.5 ${st.status === "done" ? "bg-emerald-200" : "bg-[var(--c-ink)]/15"}`} />
                       )}
                     </div>
                     <div className="pb-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={`text-sm font-medium ${st.status === "pending" ? "text-white/40" : "text-[#F4F5F3]"}`}>
+                        <span className={`text-sm font-medium ${st.status === "pending" ? "text-[var(--c-ink-3)]" : "text-[var(--c-ink)]"}`}>
                           {t(meta.label)}
                         </span>
                         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${stat.color}`}>
                           <span className={`h-1.5 w-1.5 rounded-full ${stat.dot}`} /> {t(stat.label)}
                         </span>
                       </div>
-                      <div className="text-xs text-white/40">{t(meta.desc)}</div>
-                      {dateLabel && <div className="mt-0.5 text-xs text-white/50">{dateLabel}</div>}
-                      {st.note && <div className="mt-0.5 text-xs text-white/65">{st.note}</div>}
+                      <div className="text-xs text-[var(--c-ink-3)]">{t(meta.desc)}</div>
+                      {dateLabel && <div className="mt-0.5 text-xs text-[var(--c-ink-2)]">{dateLabel}</div>}
+                      {st.note && <div className="mt-0.5 text-xs text-[var(--c-ink-2)]">{st.note}</div>}
                     </div>
                   </li>
                 );
@@ -213,13 +213,13 @@ export function ReservationView(p: ReservationViewProps) {
         <aside className="space-y-4">
           <EscrowMilestones status={p.escrowStatus} lang={lang} />
 
-          <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
-            <div className="text-xs font-semibold uppercase tracking-wide text-white/50">{t("Ödeme Dağılımı (Split)")}</div>
+          <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
+            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("Ödeme Dağılımı (Split)")}</div>
             <ul className="mt-3 space-y-2 text-sm">
               {p.split.map((s) => (
                 <li key={s.key} className="flex items-center justify-between">
-                  <span className="text-white/65">{t(s.label)}</span>
-                  <span className="font-medium text-[#F4F5F3]">{formatUSD(s.amount)}</span>
+                  <span className="text-[var(--c-ink-2)]">{t(s.label)}</span>
+                  <span className="font-medium text-[var(--c-ink)]">{formatUSD(s.amount)}</span>
                 </li>
               ))}
             </ul>
@@ -229,10 +229,10 @@ export function ReservationView(p: ReservationViewProps) {
             <HeartPulse size={16} /> {t("Post-Op takibe başla")}
           </Link>
           <CoordinatorContact bookingId={p.bookingId} lang={lang} />
-          <Link href={`/sikayet/${p.caseId}`} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-[#161719] px-4 py-2.5 text-sm font-medium text-white/75 hover:bg-[#1E1F22]">
+          <Link href={`/sikayet/${p.caseId}`} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-4 py-2.5 text-sm font-medium text-[var(--c-ink)] hover:bg-[var(--c-surface)]">
             <Scale size={15} /> {t("Şikayet / itiraz (Etik Kurul)")}
           </Link>
-          <Link href="/doktor" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#28C8D8] px-4 py-2.5 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
+          <Link href="/doktor" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
             <Stethoscope size={16} /> {t("Doktor paneline dön")}
           </Link>
         </aside>
@@ -243,9 +243,9 @@ export function ReservationView(p: ReservationViewProps) {
 
 function Spec({ icon, k, v }: { icon: React.ReactNode; k: string; v: string }) {
   return (
-    <div className="rounded-lg bg-[#1E1F22] px-3 py-2">
-      <div className="flex items-center gap-1.5 text-xs text-white/40">{icon} {k}</div>
-      <div className="mt-0.5 text-sm font-medium text-[#F4F5F3]">{v}</div>
+    <div className="rounded-lg bg-[var(--c-surface)] px-3 py-2">
+      <div className="flex items-center gap-1.5 text-xs text-[var(--c-ink-3)]">{icon} {k}</div>
+      <div className="mt-0.5 text-sm font-medium text-[var(--c-ink)]">{v}</div>
     </div>
   );
 }

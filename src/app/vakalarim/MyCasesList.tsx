@@ -2,18 +2,21 @@
 
 // Vakalarım — hastanın kendi başvuruları, çok dilli (8+ dil) + RTL. Veriyi server page.tsx getirir,
 // burada yalnız sunum + çeviri yapılır. Hastanın kendi girdisi (isim, semptom) ÇEVRİLMEZ; yalnız
-// arayüz metinleri + durum/branş/tier etiketleri çevrilir (TR kanonik → doktor/AI etkilenmez).
-// Tam birleşme (2026-07-12): İkinci Görüş vakaları da bu listede — genel vakalarla tek kronolojik
-// akışta, "İkinci Görüş" rozetli kart olarak (kullanıcı kararı: karma kronolojik, bölüm yok).
+// arayüz metinleri + durum/branş/kulvar etiketleri çevrilir (TR kanonik → doktor/AI etkilenmez).
+// Glass kart tasarımı (2026-07-13): her vaka bir cam kutu — dış kutu kulvar renginde, içindeki
+// header + footer branş renginde (kutu-içinde-kutu). "Yeni başvuru" → 4 kulvar seçim modalı.
 import Link from "next/link";
-import { useMemo } from "react";
+import { createElement, useMemo, useState } from "react";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
-import { countryFlag, urgencyStyle, CASE_STATUS, formatDateTime, langDir } from "@/lib/constants";
+import { countryFlag, CASE_STATUS, formatDateTime, langDir } from "@/lib/constants";
 import { BRANCHES } from "@/lib/triage";
 import { BranchAvatar } from "@/components/BranchAvatar";
+import { branchColor } from "@/lib/branch-visuals";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
-import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Luggage, FileText, Inbox, HandHeart, Bell } from "lucide-react";
+import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Luggage, FileText, Inbox, HandHeart, Bell, X } from "lucide-react";
+
+export type Lane = "telehealth" | "so" | "tourism" | "free";
 
 export type MyCaseRow = {
   id: string;
@@ -26,6 +29,7 @@ export type MyCaseRow = {
   createdAt: string; // ISO
   booking: { id: string; tier: string; status: string; total: number } | null;
   hasRecovery: boolean;
+  lane: "telehealth" | "tourism" | "free";
 };
 
 export type SoCaseRow = {
@@ -37,42 +41,64 @@ export type SoCaseRow = {
   hasPendingReq: boolean;
 };
 
+// 4 kulvar — adlar TR-kanonik (useT ile hedef dile çevrilir: TR'de Türkçe, EN'de "Telehealth"...).
+// color = bant/aksan (açık zeminde AA), ink = başlık metni (koyu ton). telehealth = logo turkuazı.
+// color = kulvar kimlik rengi (bant/buton), ink = koyu ton (metin), on = renk üstü metin
+// (açık renklerde koyu, koyu renklerde beyaz — kontrast güvencesi).
+const LANES: Record<Lane, { name: string; color: string; ink: string; on: string }> = {
+  telehealth: { name: "Uzaktan Sağlık", color: "#2a64f5", ink: "#1a3f9e", on: "#ffffff" }, // teknolojik mavi
+  so: { name: "İkinci Görüş", color: "#1a2b45", ink: "#0f1a2b", on: "#ffffff" }, // derin gece mavisi
+  tourism: { name: "Sağlık Turizmi", color: "#00c2b2", ink: "#00655d", on: "#00423c" }, // huzurlu turkuaz
+  free: { name: "Ücretsiz Sağlık Hizmeti", color: "#ff7e67", ink: "#a83e28", on: "#5c1e10" }, // mercan turuncu
+};
+
+const STAGE_INK: Record<string, string> = {
+  NEW: "#1d4ed8",
+  IN_REVIEW: "#b45309",
+  IN_CONSULT: "#6d28d9",
+  DONE: "#15803d",
+};
+function urgencyInk(u: number): string {
+  if (u >= 5) return "#b91c1c";
+  if (u === 4) return "#c2410c";
+  if (u === 3) return "#b45309";
+  if (u === 2) return "#17919e";
+  return "#57534e";
+}
+
 const S = {
   title: "Vakalarım",
   subtitle: "Sağlık başvurularınız — yalnızca siz görürsünüz.",
   newBtn: "Yeni başvuru",
-  soTitle: "İkinci Görüş",
-  soDesc: "Mevcut tanınız için uzmandan bağımsız değerlendirme + video görüşme.",
-  tourismTitle: "Sağlık Turizmi",
-  tourismDesc: "Tedavi, seyahat ve konaklamayı doktorunuzla planlayın.",
-  freeTitle: "Ücretsiz Sağlık Hizmeti",
-  freeDesc: "Gönüllü doktorlarla ücretsiz video konsültasyon.",
+  pickTitle: "Nasıl ilerlemek istersiniz?",
+  pickDesc: "Başvurunuz için bir kulvar seçin.",
+  cancel: "Vazgeç",
   empty: "Henüz başvurunuz yok.",
-  emptyBtn: "Triyaj ile başlayın",
+  emptyBtn: "Yeni başvuru",
   caseSummary: "Vaka özeti",
-  postop: "Post-Op takip",
-  booking: "Rezervasyon",
-  offer: "Bekleyen teklif",
-  offerWord: "teklifi",
-  packageWord: "paket",
-  soBadge: "İkinci Görüş",
   actionNeeded: "İşlem gerekiyor",
 } as const;
 
-const TIERS = ["Ekonomik", "Standart", "Premium"];
+// "Yeni başvuru" seçim modalı — 4 kulvar → ilgili başvuru akışı.
+const LANE_PICK: { key: Lane; href: string; icon: typeof HeartPulse }[] = [
+  { key: "telehealth", href: "/triyaj", icon: HeartPulse },
+  { key: "so", href: "/second-opinion/basvur", icon: Stethoscope },
+  { key: "tourism", href: "/saglik-turizmi", icon: Luggage },
+  { key: "free", href: "/ucretsiz-saglik/basvur", icon: HandHeart },
+];
 
-// Karma kronolojik akış: genel + SO vakaları tek listede yeni→eski (tam birleşme, 2026-07-12).
 type MergedRow = { kind: "general"; createdAt: string; row: MyCaseRow } | { kind: "so"; createdAt: string; row: SoCaseRow };
 
 export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?: SoCaseRow[] }) {
   const [lang, setLang] = usePatientLang();
+  const [pickerOpen, setPickerOpen] = useState(false);
   const texts = useMemo(
     () => [
       ...Object.values(S),
+      ...Object.values(LANES).map((l) => l.name),
       ...Object.values(CASE_STATUS).map((s) => s.label),
       ...Object.values(SO_STATUS_LABELS),
       ...BRANCHES.map((b) => b.label),
-      ...TIERS,
     ],
     [],
   );
@@ -88,125 +114,223 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
   );
 
   return (
-    <div dir={langDir(lang)} className="mx-auto max-w-4xl px-5 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><FolderHeart size={22} /></span>
-          <div>
-            <h1 className="text-2xl font-bold text-[#F4F5F3]">{t(S.title)}</h1>
-            <p className="text-sm text-white/50">{t(S.subtitle)}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <PatientLangSelect lang={lang} onChange={setLang} />
-          <Link href="/triyaj" className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
-            <Plus size={16} /> {t(S.newBtn)}
-          </Link>
-        </div>
-      </div>
-
-      {/* Diğer kulvarlara köprü — /basla 4'lü seçimi kaldırıldı (2026-07-12); erişim buradan sürer.
-          SO kartı yeni başvuruya gider (SO vakaları artık bu listede — tam birleşme). */}
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <LaneCard href="/second-opinion/basvur" icon={<Stethoscope size={18} />} title={t(S.soTitle)} desc={t(S.soDesc)} />
-        <LaneCard href="/saglik-turizmi" icon={<Luggage size={18} />} title={t(S.tourismTitle)} desc={t(S.tourismDesc)} />
-        <LaneCard href="/ucretsiz-saglik/basvur" icon={<HandHeart size={18} />} title={t(S.freeTitle)} desc={t(S.freeDesc)} />
-      </div>
-
-      <div className="mt-6 space-y-3">
-        {merged.length === 0 && (
-          <div className="rounded-3xl border border-dashed border-white/15 bg-[#161719] py-14 text-center">
-            <Inbox className="mx-auto mb-2 text-white/25" size={28} />
-            <p className="text-sm text-white/50">{t(S.empty)}</p>
-            <Link href="/triyaj" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-4 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
-              <Plus size={15} /> {t(S.emptyBtn)}
-            </Link>
-          </div>
-        )}
-
-        {merged.map((m) => {
-          if (m.kind === "so") {
-            const c = m.row;
-            return (
-              <div key={`so-${c.id}`} className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[11px] font-semibold text-violet-300 ring-1 ring-violet-400/25">
-                    <Stethoscope size={11} /> {t(S.soBadge)}
-                  </span>
-                  <BranchAvatar branchKey={BRANCHES.find((b) => b.label === c.branchLabel)?.key} size={30} />
-                  <span className="font-semibold text-[#F4F5F3]">{t(c.branchLabel)}</span>
-                  <span className="rounded-full bg-[#28C8D8]/10 px-2 py-0.5 text-[11px] font-semibold text-[#17919E]">{t(SO_STATUS_LABELS[c.status as SoStatus] ?? c.status)}</span>
-                  {c.hasPendingReq && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-300 ring-1 ring-amber-400/25">
-                      <Bell size={11} /> {t(S.actionNeeded)}
-                    </span>
-                  )}
-                </div>
-                <div className="mt-1 text-xs text-white/50">{formatDateTime(c.createdAt)}</div>
-                <p className="mt-2 line-clamp-2 text-sm text-white/65">{c.diagnosisSummary}</p>
-                <div className="mt-3 flex flex-wrap gap-2 border-t border-white/10 pt-3">
-                  <CaseAction href={`/second-opinion/vaka/${c.id}`} icon={<FileText size={13} />}>{t(S.caseSummary)}</CaseAction>
-                </div>
-              </div>
-            );
-          }
-          const c = m.row;
-          const u = urgencyStyle(c.urgency);
-          const st = CASE_STATUS[c.status] ?? CASE_STATUS.NEW;
-          const booking = c.booking;
-          return (
-            <div key={c.id} className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <BranchAvatar branchKey={c.branch} size={30} />
-                    <span className="font-semibold text-[#F4F5F3]">{c.patientName}</span>
-                    <span className="text-xs text-white/40">{countryFlag(c.country)}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${st.color}`}>{t(st.label)}</span>
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${u.badge}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${u.dot}`} /> {c.urgency}/5
-                    </span>
-                  </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-white/50">
-                    <span className="inline-flex items-center gap-1"><Stethoscope size={12} /> <span className="font-medium text-[#1FA9B8]">{t(c.branch)}</span></span>
-                    <span>· {formatDateTime(c.createdAt)}</span>
-                    {booking && <span>· {t(booking.tier)} {booking.status === "DRAFT" ? t(S.offerWord) : t(S.packageWord)} (${booking.total.toLocaleString("en-US")})</span>}
-                  </div>
-                  <p className="mt-2 line-clamp-2 text-sm text-white/65">{c.symptoms}</p>
-                </div>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-2 border-t border-white/10 pt-3">
-                <CaseAction href={`/vaka/${c.id}`} icon={<FileText size={13} />}>{t(S.caseSummary)}</CaseAction>
-                {c.hasRecovery && <CaseAction href={`/takip/${c.id}`} icon={<HeartPulse size={13} />} tone="text-[#28C8D8] border-[#28C8D8]/25 bg-[#28C8D8]/10 hover:bg-[#28C8D8]/15">{t(S.postop)}</CaseAction>}
-                {booking && booking.status === "CONFIRMED" && <CaseAction href={`/vaka/${c.id}#rezervasyon`} icon={<Luggage size={13} />} tone="text-emerald-300 border-emerald-400/25 bg-emerald-500/10 hover:bg-emerald-500/15">{t(S.booking)}</CaseAction>}
-                {booking && booking.status === "DRAFT" && <CaseAction href={`/vaka/${c.id}#teklif`} icon={<FileText size={13} />} tone="text-violet-300 border-violet-400/25 bg-violet-500/10 hover:bg-violet-500/15">{t(S.offer)}</CaseAction>}
-              </div>
+    <div className="min-h-full">
+      <div dir={langDir(lang)} className="mx-auto max-w-4xl px-5 py-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28c8d8] text-[#0a4148]"><FolderHeart size={22} /></span>
+            <div>
+              <h1 className="text-2xl font-bold text-[var(--c-ink)]">{t(S.title)}</h1>
+              <p className="text-sm text-[var(--c-ink-2)]">{t(S.subtitle)}</p>
             </div>
-          );
-        })}
+          </div>
+          <div className="flex items-center gap-3">
+            <PatientLangSelect lang={lang} onChange={setLang} />
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#28c8d8] px-4 py-2 text-sm font-semibold text-[#0a4148] hover:bg-[#22b4c2]"
+            >
+              <Plus size={16} /> {t(S.newBtn)}
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-6 space-y-4">
+          {merged.length === 0 && (
+            <div className="rounded-3xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-panel)] py-14 text-center">
+              <Inbox className="mx-auto mb-2 text-[var(--c-ink-3)]" size={28} />
+              <p className="text-sm text-[var(--c-ink-2)]">{t(S.empty)}</p>
+              <button
+                onClick={() => setPickerOpen(true)}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#28c8d8] px-4 py-2 text-sm font-semibold text-[#0a4148] hover:bg-[#22b4c2]"
+              >
+                <Plus size={15} /> {t(S.emptyBtn)}
+              </button>
+            </div>
+          )}
+
+          {merged.map((m) => {
+            if (m.kind === "so") {
+              const c = m.row;
+              const branchKey = BRANCHES.find((b) => b.label === c.branchLabel)?.key;
+              return (
+                <GlassCase
+                  key={`so-${c.id}`}
+                  lane="so"
+                  branchKey={branchKey}
+                  branchName={t(c.branchLabel)}
+                  laneName={t(LANES.so.name)}
+                  stageLabel={t(SO_STATUS_LABELS[c.status as SoStatus] ?? c.status)}
+                  stageInk={LANES.so.ink}
+                  urgency={null}
+                  date={formatDateTime(c.createdAt)}
+                  body={c.diagnosisSummary}
+                  summaryHref={`/second-opinion/vaka/${c.id}`}
+                  summaryLabel={t(S.caseSummary)}
+                  alert={c.hasPendingReq ? t(S.actionNeeded) : null}
+                />
+              );
+            }
+            const c = m.row;
+            const st = CASE_STATUS[c.status] ?? CASE_STATUS.NEW;
+            return (
+              <GlassCase
+                key={c.id}
+                lane={c.lane}
+                branchKey={c.branch}
+                branchName={t(c.branch)}
+                laneName={t(LANES[c.lane].name)}
+                stageLabel={t(st.label)}
+                stageInk={STAGE_INK[c.status] ?? "#57534e"}
+                urgency={c.urgency}
+                date={formatDateTime(c.createdAt)}
+                patientName={c.patientName}
+                country={c.country}
+                body={c.symptoms}
+                summaryHref={`/vaka/${c.id}`}
+                summaryLabel={t(S.caseSummary)}
+                alert={null}
+              />
+            );
+          })}
+        </div>
       </div>
+
+      {/* Yeni başvuru → 4 kulvar seçim modalı */}
+      {pickerOpen && (
+        <div
+          dir={langDir(lang)}
+          className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4 backdrop-blur-sm"
+          onClick={() => setPickerOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-[var(--c-ink)]">{t(S.pickTitle)}</h2>
+                <p className="mt-1 text-sm text-[var(--c-ink-2)]">{t(S.pickDesc)}</p>
+              </div>
+              <button onClick={() => setPickerOpen(false)} aria-label={t(S.cancel)} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[var(--c-ink-3)] hover:bg-[var(--c-surface)]">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="mt-4 grid gap-2.5">
+              {LANE_PICK.map((p) => {
+                const L = LANES[p.key];
+                const Icon = p.icon;
+                return (
+                  <Link
+                    key={p.key}
+                    href={p.href}
+                    className="flex items-center gap-3 rounded-2xl border px-4 py-3 transition-transform hover:-translate-y-0.5"
+                    style={{ borderColor: L.color + "59", background: L.color + "16" }}
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl" style={{ background: L.color, color: L.on }}>
+                      {createElement(Icon, { size: 18, color: L.on })}
+                    </span>
+                    <span className="font-semibold" style={{ color: L.ink }}>{t(L.name)}</span>
+                    <ArrowRight size={16} className="ms-auto rtl:rotate-180" style={{ color: L.color }} />
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function LaneCard({ href, icon, title, desc }: { href: string; icon: React.ReactNode; title: string; desc: string }) {
+// Cam vaka kutusu — dış kutu kulvar renginde liquid glass; içteki header + footer branş renginde.
+function GlassCase({
+  lane,
+  branchKey,
+  branchName,
+  laneName,
+  stageLabel,
+  stageInk,
+  urgency,
+  date,
+  body,
+  summaryHref,
+  summaryLabel,
+  patientName,
+  country,
+  alert,
+}: {
+  lane: Lane;
+  branchKey?: string | null;
+  branchName: string;
+  laneName: string;
+  stageLabel: string;
+  stageInk: string;
+  urgency: number | null;
+  date: string;
+  body: string;
+  summaryHref: string;
+  summaryLabel: string;
+  patientName?: string;
+  country?: string;
+  alert: string | null;
+}) {
+  const L = LANES[lane];
+  const bc = branchColor(branchKey);
+  const bInk = `color-mix(in srgb, ${bc}, #000 42%)`;
+  const innerBox = {
+    background: `linear-gradient(135deg, ${bc}30, ${bc}12)`,
+    border: `1px solid ${bc}4d`,
+  } as const;
   return (
-    <Link href={href} className="flex items-center gap-3 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] p-4 transition hover:bg-[#28C8D8]/[0.1]">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]">{icon}</span>
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold text-[#F4F5F3]">{title}</div>
-        <p className="text-xs text-white/50">{desc}</p>
+    <article
+      className="rounded-[26px] border p-2.5"
+      style={{ borderColor: L.color + "3d", background: L.color + "0d" }}
+    >
+      {/* İÇ HEADER KUTUSU — branş renginde: sembol + branş adı BÜYÜK */}
+      <div className="flex items-center gap-2.5 rounded-2xl px-3 py-2" style={innerBox}>
+        <BranchAvatar branchKey={branchKey} size={26} />
+        <span className="min-w-0 flex-1 truncate text-[15px] font-bold uppercase tracking-wide" style={{ color: bInk }}>
+          {branchName}
+        </span>
+        {alert && (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
+            <Bell size={11} /> {alert}
+          </span>
+        )}
       </div>
-      <ArrowRight size={16} className="shrink-0 text-[#17919E] rtl:rotate-180" />
-    </Link>
+
+      {/* GÖVDE */}
+      <div className="px-3 py-3">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          {patientName && <span className="text-sm font-semibold text-[var(--c-ink)]">{patientName}</span>}
+          {country && <span className="text-xs text-[var(--c-ink-3)]">{countryFlag(country)}</span>}
+          <span className="text-xs text-[var(--c-ink-3)]">{date}</span>
+        </div>
+        <p className="mt-1.5 line-clamp-2 text-sm text-[var(--c-ink-2)]">{body}</p>
+      </div>
+
+      {/* İÇ FOOTER KUTUSU — branş renginde: kulvar adı + aşama + aciliyet + vaka özeti */}
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl px-3 py-2" style={innerBox}>
+        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: bInk }}>{laneName}</span>
+        <FooterBadge ink={stageInk} label={stageLabel} />
+        {urgency != null && <FooterBadge ink={urgencyInk(urgency)} label={`${urgency}/5`} />}
+        <Link
+          href={summaryHref}
+          className="ms-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-opacity hover:opacity-90"
+          style={{ background: L.color, color: L.on }}
+        >
+          <FileText size={13} /> {summaryLabel} <ArrowRight size={12} className="rtl:rotate-180" />
+        </Link>
+      </div>
+    </article>
   );
 }
 
-function CaseAction({ href, icon, children, tone }: { href: string; icon: React.ReactNode; children: React.ReactNode; tone?: string }) {
+function FooterBadge({ ink, label }: { ink: string; label: string }) {
   return (
-    <Link href={href} className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium ${tone ?? "border-white/10 bg-[#161719] text-white/65 hover:bg-[#1E1F22]"}`}>
-      {icon} {children} <ArrowRight size={11} />
-    </Link>
+    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--c-bg)] px-2.5 py-0.5 text-[11px] font-semibold shadow-sm ring-1 ring-black/5" style={{ color: ink }}>
+      <span className="h-1.5 w-1.5 rounded-full" style={{ background: ink }} /> {label}
+    </span>
   );
 }

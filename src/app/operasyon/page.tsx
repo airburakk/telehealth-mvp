@@ -107,41 +107,41 @@ export default async function OperationsDashboard() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-8">
       <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><BarChart3 size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><BarChart3 size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#F4F5F3]">Operasyon Paneli</h1>
-          <p className="text-sm text-white/50">S2 Operasyon Şirketi · canlı platform metrikleri</p>
+          <h1 className="text-2xl font-bold text-[var(--c-ink)]">Operasyon Paneli</h1>
+          <p className="text-sm text-[var(--c-ink-2)]">S2 Operasyon Şirketi · canlı platform metrikleri</p>
         </div>
       </div>
 
-      <Link href="/operasyon/ikinci-gorus" className="mt-5 flex items-center gap-3 rounded-3xl border border-[#28C8D8]/30 bg-[#28C8D8]/[0.06] p-4 transition hover:bg-[#28C8D8]/[0.1]">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Stethoscope size={18} /></span>
+      <Link href="/operasyon/ikinci-gorus" className="mt-5 flex items-center gap-3 rounded-3xl border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.06] p-4 transition hover:bg-[var(--c-accent)]/[0.1]">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><Stethoscope size={18} /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-[#F4F5F3]">İkinci Görüş — Koordinatör Kuyruğu</div>
-          <p className="text-xs text-white/50">{soActiveCount} aktif vaka · belge inceleme + doktor atama</p>
+          <div className="text-sm font-semibold text-[var(--c-ink)]">İkinci Görüş — Koordinatör Kuyruğu</div>
+          <p className="text-xs text-[var(--c-ink-2)]">{soActiveCount} aktif vaka · belge inceleme + doktor atama</p>
         </div>
         {soReviewCount > 0 && <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-bold text-amber-300">{soReviewCount} inceleme bekliyor</span>}
-        <ArrowRight size={16} className="shrink-0 text-[#17919E]" />
+        <ArrowRight size={16} className="shrink-0 text-[var(--c-accent-stronger)]" />
       </Link>
 
-      <Link href="/operasyon/lojistik" className="mt-3 flex items-center gap-3 rounded-3xl border border-white/10 bg-[#161719] p-4 transition hover:bg-[#1E1F22]">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#28C8D8]/15 text-[#28C8D8]"><Luggage size={18} /></span>
+      <Link href="/operasyon/lojistik" className="mt-3 flex items-center gap-3 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 transition hover:bg-[var(--c-surface)]">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)]/15 text-[var(--c-accent)]"><Luggage size={18} /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-[#F4F5F3]">Lojistik Takip — Patient Journey</div>
-          <p className="text-xs text-white/50">Onaylı rezervasyonların karşılama · konaklama · tedavi · dönüş aşamalarını yönet</p>
+          <div className="text-sm font-semibold text-[var(--c-ink)]">Lojistik Takip — Patient Journey</div>
+          <p className="text-xs text-[var(--c-ink-2)]">Onaylı rezervasyonların karşılama · konaklama · tedavi · dönüş aşamalarını yönet</p>
         </div>
-        <ArrowRight size={16} className="shrink-0 text-[#17919E]" />
+        <ArrowRight size={16} className="shrink-0 text-[var(--c-accent-stronger)]" />
       </Link>
 
-      <Link href="/operasyon/kayit-defteri" className="mt-3 flex items-center gap-3 rounded-3xl border border-white/10 bg-[#161719] p-4 transition hover:bg-[#1E1F22]">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#28C8D8]/15 text-[#28C8D8]"><BookMarked size={18} /></span>
+      <Link href="/operasyon/kayit-defteri" className="mt-3 flex items-center gap-3 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 transition hover:bg-[var(--c-surface)]">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)]/15 text-[var(--c-accent)]"><BookMarked size={18} /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-[#F4F5F3]">HealthTürkiye Kayıt Defteri</div>
-          <p className="text-xs text-white/50">
+          <div className="text-sm font-semibold text-[var(--c-ink)]">HealthTürkiye Kayıt Defteri</div>
+          <p className="text-xs text-[var(--c-ink-2)]">
             {registryDoctors.toLocaleString("tr-TR")} doktor · {registryHospitals.toLocaleString("tr-TR")} tesis — resmi sağlık turizmi dizini, günlük senkron
           </p>
         </div>
-        <ArrowRight size={16} className="shrink-0 text-[#17919E]" />
+        <ArrowRight size={16} className="shrink-0 text-[var(--c-accent-stronger)]" />
       </Link>
 
       {/* KPI kartları */}
@@ -164,19 +164,19 @@ export default async function OperationsDashboard() {
               return (
                 <div key={f.label}>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="inline-flex items-center gap-1.5 text-white/65">{f.icon} {f.label}</span>
-                    <span className="font-semibold text-[#F4F5F3]">{f.count}{conv != null && <span className="ml-1.5 text-xs font-normal text-white/40">↓ %{conv}</span>}</span>
+                    <span className="inline-flex items-center gap-1.5 text-[var(--c-ink-2)]">{f.icon} {f.label}</span>
+                    <span className="font-semibold text-[var(--c-ink)]">{f.count}{conv != null && <span className="ml-1.5 text-xs font-normal text-[var(--c-ink-3)]">↓ %{conv}</span>}</span>
                   </div>
-                  <div className="mt-1 h-2.5 rounded-full bg-white/10">
-                    <div className="h-2.5 rounded-full bg-[#1FA9B8]" style={{ width: `${Math.max(3, pct)}%` }} />
+                  <div className="mt-1 h-2.5 rounded-full bg-[var(--c-ink)]/10">
+                    <div className="h-2.5 rounded-full bg-[var(--c-accent-strong)]" style={{ width: `${Math.max(3, pct)}%` }} />
                   </div>
                 </div>
               );
             })}
           </div>
-          <div className="mt-4 flex flex-wrap gap-2 border-t border-white/10 pt-3 text-xs">
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--c-hairline)] pt-3 text-xs">
             {Object.entries(byStatus).map(([k, n]) => (
-              <span key={k} className="rounded-full bg-white/10 px-2.5 py-1 text-white/65">{STATUS_LABELS[k] ?? k}: <b>{n}</b></span>
+              <span key={k} className="rounded-full bg-[var(--c-ink)]/10 px-2.5 py-1 text-[var(--c-ink-2)]">{STATUS_LABELS[k] ?? k}: <b>{n}</b></span>
             ))}
           </div>
         </Section>
@@ -202,15 +202,15 @@ export default async function OperationsDashboard() {
             {branchRows.map(([branch, n]) => (
               <div key={branch}>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="truncate text-white/65">{branch}</span>
-                  <span className="ml-2 shrink-0 font-semibold text-[#F4F5F3]">{n}</span>
+                  <span className="truncate text-[var(--c-ink-2)]">{branch}</span>
+                  <span className="ml-2 shrink-0 font-semibold text-[var(--c-ink)]">{n}</span>
                 </div>
-                <div className="mt-0.5 h-2 rounded-full bg-white/10">
+                <div className="mt-0.5 h-2 rounded-full bg-[var(--c-ink)]/10">
                   <div className="h-2 rounded-full bg-teal-600" style={{ width: `${Math.max(4, Math.round((n / branchMax) * 100))}%` }} />
                 </div>
               </div>
             ))}
-            {branchRows.length === 0 && <p className="text-sm text-white/40">Henüz vaka yok.</p>}
+            {branchRows.length === 0 && <p className="text-sm text-[var(--c-ink-3)]">Henüz vaka yok.</p>}
           </div>
         </Section>
 
@@ -218,25 +218,25 @@ export default async function OperationsDashboard() {
         <Section icon={<TrendingUp size={15} />} title="Pazar & Trend">
           <div className="flex flex-wrap gap-2">
             {countryRows.map(([code, n]) => (
-              <span key={code} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-xs text-white/65">
+              <span key={code} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--c-ink)]/10 px-2.5 py-1 text-xs text-[var(--c-ink-2)]">
                 {countryFlag(code)} {countryName(code)} <b>{n}</b>
               </span>
             ))}
           </div>
           <div className="mt-4">
-            <div className="text-xs uppercase tracking-wide text-white/40">Son 14 gün · yeni vaka</div>
+            <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">Son 14 gün · yeni vaka</div>
             <div className="mt-2 flex h-24 items-end gap-1">
               {days.map((d) => (
                 <div key={d.key} className="group relative flex-1">
                   <div
-                    className={`w-full rounded-t ${d.count ? "bg-[#1FA9B8]" : "bg-white/10"}`}
+                    className={`w-full rounded-t ${d.count ? "bg-[var(--c-accent-strong)]" : "bg-[var(--c-ink)]/10"}`}
                     style={{ height: `${d.count ? Math.max(12, Math.round((d.count / trendMax) * 96)) : 4}px` }}
                     title={`${d.label}: ${d.count} vaka`}
                   />
                 </div>
               ))}
             </div>
-            <div className="mt-1 flex justify-between text-[10px] text-white/40">
+            <div className="mt-1 flex justify-between text-[10px] text-[var(--c-ink-3)]">
               <span>{days[0].label}</span><span>{days[days.length - 1].label}</span>
             </div>
           </div>
@@ -250,25 +250,25 @@ export default async function OperationsDashboard() {
             {doctorRows.map((d) => {
               const pct = Math.min(100, Math.round((d.consults / Math.max(1, d.capacity)) * 100));
               return (
-                <div key={d.id} className="rounded-2xl border border-white/10 p-3">
+                <div key={d.id} className="rounded-2xl border border-[var(--c-hairline)] p-3">
                   <div className="flex items-center gap-2.5">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white" style={{ background: d.color }}>{d.name.slice(0, 1)}</span>
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-[var(--c-ink)]" style={{ background: d.color }}>{d.name.slice(0, 1)}</span>
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-[#F4F5F3]">{d.title} {d.name}</div>
-                      <div className="truncate text-xs text-white/50">{d.branch}</div>
+                      <div className="truncate text-sm font-semibold text-[var(--c-ink)]">{d.title} {d.name}</div>
+                      <div className="truncate text-xs text-[var(--c-ink-2)]">{d.branch}</div>
                     </div>
                   </div>
-                  <div className="mt-2.5 flex items-center justify-between text-xs text-white/50">
+                  <div className="mt-2.5 flex items-center justify-between text-xs text-[var(--c-ink-2)]">
                     <span>{d.consults} görüşme</span><span>kapasite {d.capacity}/ay · %{pct}</span>
                   </div>
-                  <div className="mt-1 h-2 rounded-full bg-white/10">
+                  <div className="mt-1 h-2 rounded-full bg-[var(--c-ink)]/10">
                     <div className={`h-2 rounded-full ${pct >= 90 ? "bg-red-500" : pct >= 60 ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${Math.max(3, pct)}%` }} />
                   </div>
                 </div>
               );
             })}
           </div>
-          <p className="mt-3 text-[11px] text-white/40">İlk 6 doktor, tamamlanan+aktif görüşme sayısına göre. Doluluk: görüşme / aylık işlem kapasitesi.</p>
+          <p className="mt-3 text-[11px] text-[var(--c-ink-3)]">İlk 6 doktor, tamamlanan+aktif görüşme sayısına göre. Doluluk: görüşme / aylık işlem kapasitesi.</p>
         </Section>
       </div>
     </div>
@@ -277,18 +277,18 @@ export default async function OperationsDashboard() {
 
 function Kpi({ icon, label, value, sub, tone }: { icon: React.ReactNode; label: string; value: string; sub?: string; tone?: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#161719] p-3.5 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs text-white/40">{icon} {label}</div>
-      <div className={`mt-1 text-xl font-bold ${tone ?? "text-[#F4F5F3]"}`}>{value}</div>
-      {sub && <div className="text-[11px] text-white/40">{sub}</div>}
+    <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3.5 shadow-sm">
+      <div className="flex items-center gap-1.5 text-xs text-[var(--c-ink-3)]">{icon} {label}</div>
+      <div className={`mt-1 text-xl font-bold ${tone ?? "text-[var(--c-ink)]"}`}>{value}</div>
+      {sub && <div className="text-[11px] text-[var(--c-ink-3)]">{sub}</div>}
     </div>
   );
 }
 
 function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#161719] p-5 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">{icon} {title}</div>
+    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
+      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{icon} {title}</div>
       <div className="mt-3">{children}</div>
     </div>
   );
@@ -306,8 +306,8 @@ function EscrowBox({ label, value, cls }: { label: string; value: string; cls: s
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-white/50">{k}</span>
-      <span className="text-right font-medium text-[#F4F5F3]">{v}</span>
+      <span className="text-[var(--c-ink-2)]">{k}</span>
+      <span className="text-right font-medium text-[var(--c-ink)]">{v}</span>
     </div>
   );
 }

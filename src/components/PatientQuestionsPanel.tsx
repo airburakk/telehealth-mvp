@@ -40,29 +40,29 @@ export function PatientQuestionsPanel({ storageKey, lang }: { storageKey: string
   };
 
   return (
-    <div dir={dir} className="rounded-3xl border border-white/10 bg-[#161719] p-4 shadow-sm">
+    <div dir={dir} className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         className="flex w-full items-center justify-between gap-2"
       >
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
-          <NotebookPen size={14} className="text-[#1FA9B8]" /> {t(TX.title)}
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+          <NotebookPen size={14} className="text-[var(--c-accent-strong)]" /> {t(TX.title)}
         </span>
-        {open ? <ChevronUp size={16} className="text-white/40" /> : <ChevronDown size={16} className="text-white/40" />}
+        {open ? <ChevronUp size={16} className="text-[var(--c-ink-3)]" /> : <ChevronDown size={16} className="text-[var(--c-ink-3)]" />}
       </button>
 
       {open && (
         <div className="mt-3">
-          <p className="text-[11px] leading-relaxed text-white/40">{t(TX.hint)}</p>
+          <p className="text-[11px] leading-relaxed text-[var(--c-ink-3)]">{t(TX.hint)}</p>
           <textarea
             value={note}
             onChange={(e) => onNote(e.target.value)}
             rows={4}
             placeholder={t(TX.placeholder)}
-            className="mt-2 w-full resize-none rounded-2xl border border-white/10 bg-[#1E1F22] px-3 py-2.5 text-sm text-[#F4F5F3] outline-none placeholder:text-white/40 focus:border-[#28C8D8] focus:bg-[#1E1F22]"
+            className="mt-2 w-full resize-none rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5 text-sm text-[var(--c-ink)] outline-none placeholder:text-[var(--c-ink-3)] focus:border-[var(--c-accent)] focus:bg-[var(--c-surface)]"
           />
-          {note.trim() && <p className="mt-1 text-[11px] text-white/40">{t(TX.saved)}</p>}
+          {note.trim() && <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">{t(TX.saved)}</p>}
         </div>
       )}
     </div>

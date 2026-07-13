@@ -16,7 +16,7 @@ export const REQUEST_TYPES: Record<string, string> = {
 export const VERDICTS: Record<string, { label: string; color: string }> = {
   FAVOR: { label: "Hasta lehine", color: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25" },
   PARTIAL: { label: "Kısmen kabul", color: "bg-amber-500/15 text-amber-200 ring-amber-400/25" },
-  REJECT: { label: "Reddedildi", color: "bg-white/10 text-white/65 ring-white/15" },
+  REJECT: { label: "Reddedildi", color: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)] ring-white/15" },
 };
 
 export const ACTIONS: Record<string, string> = {
@@ -35,7 +35,7 @@ export const COMPLAINT_STATUS: Record<string, { label: string; color: string }> 
 export const ESCROW_STATUS: Record<string, { label: string; color: string; dot: string }> = {
   HELD: { label: "Emanette tutuluyor", color: "bg-amber-500/15 text-amber-300 ring-amber-400/25", dot: "bg-amber-500" },
   RELEASED: { label: "Taraflara aktarıldı", color: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25", dot: "bg-emerald-500" },
-  REFUNDED: { label: "Hastaya iade edildi", color: "bg-[#28C8D8]/15 text-[#28C8D8] ring-[#28C8D8]/25", dot: "bg-[#28C8D8]" },
+  REFUNDED: { label: "Hastaya iade edildi", color: "bg-[var(--c-accent)]/15 text-[var(--c-accent)] ring-[var(--c-accent)]/25", dot: "bg-[var(--c-accent)]" },
 };
 
 /// Anonimleştirme (data masking): kurul kimliği değil, vakayı görür

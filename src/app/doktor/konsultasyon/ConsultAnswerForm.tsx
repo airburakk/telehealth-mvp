@@ -64,28 +64,28 @@ export function ConsultAnswerForm({ id, catalog }: { id: string; catalog: Catalo
 
   if (!open) {
     return (
-      <button onClick={() => setOpen(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-[#818cf8] px-3.5 py-2 text-sm font-semibold text-white hover:bg-[#6d75e0]">
+      <button onClick={() => setOpen(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-indigo)] px-3.5 py-2 text-sm font-semibold text-[var(--c-ink)] hover:bg-[#6d75e0]">
         <Send size={14} /> Görüş ver
       </button>
     );
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-white/10 bg-[#1E1F22] p-3">
+    <div className="space-y-3 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-3">
       <div>
-        <label className="text-xs font-semibold text-white/50">Klinik görüş</label>
+        <label className="text-xs font-semibold text-[var(--c-ink-2)]">Klinik görüş</label>
         <textarea
           value={text}
           onChange={(e) => { setText(e.target.value); setErr(""); }}
           rows={4}
           placeholder="Klinik görüşünüzü yazın (anonim dosya üzerinden; hasta diline otomatik çevrilir)…"
-          className="mt-1 w-full resize-y rounded-lg border border-white/15 p-3 text-sm outline-none focus:border-[#818cf8]"
+          className="mt-1 w-full resize-y rounded-lg border border-[var(--c-hairline)] p-3 text-sm outline-none focus:border-[var(--c-indigo)]"
         />
       </div>
 
       {/* Lab önerisi (LOINC → FHIR ServiceRequest) */}
       <div>
-        <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/50"><FlaskConical size={13} /> Lab tetkik önerisi</div>
+        <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--c-ink-2)]"><FlaskConical size={13} /> Lab tetkik önerisi</div>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {catalog.labs.slice(0, 16).map((l) => (
             <Chip key={l.loinc} active={labs.includes(l.loinc)} onClick={() => toggle(labs, setLabs, l.loinc)}>{l.name}</Chip>
@@ -95,7 +95,7 @@ export function ConsultAnswerForm({ id, catalog }: { id: string; catalog: Catalo
 
       {/* Görüntüleme önerisi (LOINC/SNOMED → ServiceRequest) */}
       <div>
-        <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/50"><Scan size={13} /> Görüntüleme önerisi</div>
+        <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--c-ink-2)]"><Scan size={13} /> Görüntüleme önerisi</div>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {catalog.imaging.slice(0, 12).map((it) => (
             <Chip key={it.code} active={imaging.includes(it.code)} onClick={() => toggle(imaging, setImaging, it.code)}>{it.name}</Chip>
@@ -105,22 +105,22 @@ export function ConsultAnswerForm({ id, catalog }: { id: string; catalog: Catalo
 
       {/* İlaç önerisi (ATC zorunlu → MedicationRequest) */}
       <div>
-        <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/50"><Pill size={13} /> İlaç önerisi <span className="font-normal text-white/40">(ATC kodlu)</span></div>
+        <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--c-ink-2)]"><Pill size={13} /> İlaç önerisi <span className="font-normal text-[var(--c-ink-3)]">(ATC kodlu)</span></div>
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-          <select value={medAtc} onChange={(e) => setMedAtc(e.target.value)} className="rounded-lg border border-white/15 px-2 py-1.5 text-xs outline-none focus:border-[#818cf8]">
+          <select value={medAtc} onChange={(e) => setMedAtc(e.target.value)} className="rounded-lg border border-[var(--c-hairline)] px-2 py-1.5 text-xs outline-none focus:border-[var(--c-indigo)]">
             {catalog.meds.map((m) => <option key={m.atc} value={m.atc}>{m.name} ({m.atc})</option>)}
           </select>
-          <input value={dose} onChange={(e) => setDose(e.target.value)} placeholder="doz (ör. 500mg)" className="w-28 rounded-lg border border-white/15 px-2 py-1.5 text-xs outline-none focus:border-[#818cf8]" />
-          <input value={route} onChange={(e) => setRoute(e.target.value)} placeholder="yol (oral)" className="w-24 rounded-lg border border-white/15 px-2 py-1.5 text-xs outline-none focus:border-[#818cf8]" />
-          <input value={freq} onChange={(e) => setFreq(e.target.value)} placeholder="sıklık (2x1)" className="w-24 rounded-lg border border-white/15 px-2 py-1.5 text-xs outline-none focus:border-[#818cf8]" />
-          <button type="button" onClick={addMed} className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-2.5 py-1.5 text-xs font-semibold text-white/75 hover:bg-white/20"><Plus size={13} /> Ekle</button>
+          <input value={dose} onChange={(e) => setDose(e.target.value)} placeholder="doz (ör. 500mg)" className="w-28 rounded-lg border border-[var(--c-hairline)] px-2 py-1.5 text-xs outline-none focus:border-[var(--c-indigo)]" />
+          <input value={route} onChange={(e) => setRoute(e.target.value)} placeholder="yol (oral)" className="w-24 rounded-lg border border-[var(--c-hairline)] px-2 py-1.5 text-xs outline-none focus:border-[var(--c-indigo)]" />
+          <input value={freq} onChange={(e) => setFreq(e.target.value)} placeholder="sıklık (2x1)" className="w-24 rounded-lg border border-[var(--c-hairline)] px-2 py-1.5 text-xs outline-none focus:border-[var(--c-indigo)]" />
+          <button type="button" onClick={addMed} className="inline-flex items-center gap-1 rounded-lg bg-[var(--c-ink)]/15 px-2.5 py-1.5 text-xs font-semibold text-[var(--c-ink)] hover:bg-[var(--c-ink)]/20"><Plus size={13} /> Ekle</button>
         </div>
         {meds.length > 0 && (
           <ul className="mt-2 space-y-1">
             {meds.map((m, i) => (
-              <li key={m.atc} className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-[#161719] px-2.5 py-1.5 text-xs">
-                <span className="text-white/75">{m.name} <span className="font-mono text-[9px] text-white/40">{m.atc}</span>{m.dose ? ` · ${m.dose}` : ""}{m.route ? ` · ${m.route}` : ""}{m.freq ? ` · ${m.freq}` : ""}</span>
-                <button type="button" onClick={() => setMeds((p) => p.filter((_, j) => j !== i))} className="text-white/40 hover:text-red-500"><X size={13} /></button>
+              <li key={m.atc} className="flex items-center justify-between gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-2.5 py-1.5 text-xs">
+                <span className="text-[var(--c-ink)]">{m.name} <span className="font-mono text-[9px] text-[var(--c-ink-3)]">{m.atc}</span>{m.dose ? ` · ${m.dose}` : ""}{m.route ? ` · ${m.route}` : ""}{m.freq ? ` · ${m.freq}` : ""}</span>
+                <button type="button" onClick={() => setMeds((p) => p.filter((_, j) => j !== i))} className="text-[var(--c-ink-3)] hover:text-red-500"><X size={13} /></button>
               </li>
             ))}
           </ul>
@@ -129,10 +129,10 @@ export function ConsultAnswerForm({ id, catalog }: { id: string; catalog: Catalo
 
       {err && <p className="text-sm text-red-300">{err}</p>}
       <div className="flex items-center gap-2">
-        <button onClick={submit} disabled={sending} className="inline-flex items-center gap-1.5 rounded-lg bg-[#818cf8] px-3.5 py-2 text-sm font-semibold text-white hover:bg-[#6d75e0] disabled:opacity-60">
+        <button onClick={submit} disabled={sending} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-indigo)] px-3.5 py-2 text-sm font-semibold text-[var(--c-ink)] hover:bg-[#6d75e0] disabled:opacity-60">
           {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />} {sending ? "Gönderiliyor — görüş çevriliyor…" : "Gönder"}
         </button>
-        <button onClick={() => { setOpen(false); setErr(""); }} disabled={sending} className="rounded-lg px-3 py-2 text-sm text-white/50 hover:text-white/75">İptal</button>
+        <button onClick={() => { setOpen(false); setErr(""); }} disabled={sending} className="rounded-lg px-3 py-2 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">İptal</button>
       </div>
     </div>
   );
@@ -140,7 +140,7 @@ export function ConsultAnswerForm({ id, catalog }: { id: string; catalog: Catalo
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[#818cf8] bg-[#818cf8] text-white" : "border-white/15 bg-[#161719] text-white/65 hover:border-[#818cf8]/50"}`}>
+    <button type="button" onClick={onClick} className={`rounded-full border px-2.5 py-1 text-xs transition ${active ? "border-[var(--c-indigo)] bg-[var(--c-indigo)] text-[var(--c-ink)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-[var(--c-ink-2)] hover:border-[var(--c-indigo)]/50"}`}>
       {children}
     </button>
   );

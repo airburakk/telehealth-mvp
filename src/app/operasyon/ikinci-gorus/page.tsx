@@ -40,22 +40,22 @@ export default async function SoQueuePage() {
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
-      <Link href="/operasyon" className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/75">
+      <Link href="/operasyon" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
         <ArrowLeft size={15} /> Operasyon paneli
       </Link>
       <div className="mt-3 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28C8D8] text-[#0D0E10]"><Stethoscope size={22} /></span>
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><Stethoscope size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[#F4F5F3]">İkinci Görüş — Kuyruk</h1>
-          <p className="text-sm text-white/50">Belge incelemesi + eksik belge talebi + doktor ataması.</p>
+          <h1 className="text-2xl font-bold text-[var(--c-ink)]">İkinci Görüş — Kuyruk</h1>
+          <p className="text-sm text-[var(--c-ink-2)]">Belge incelemesi + eksik belge talebi + doktor ataması.</p>
         </div>
       </div>
 
       <div className="mt-6 space-y-3">
         {sorted.length === 0 && (
-          <div className="rounded-3xl border border-dashed border-white/15 bg-[#161719] py-14 text-center">
-            <Inbox className="mx-auto mb-2 text-white/25" size={28} />
-            <p className="text-sm text-white/50">Aktif ikinci görüş vakası yok.</p>
+          <div className="rounded-3xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-panel)] py-14 text-center">
+            <Inbox className="mx-auto mb-2 text-[var(--c-ink-3)]" size={28} />
+            <p className="text-sm text-[var(--c-ink-2)]">Aktif ikinci görüş vakası yok.</p>
           </div>
         )}
 
@@ -66,14 +66,14 @@ export default async function SoQueuePage() {
             <Link
               key={c.id}
               href={`/operasyon/ikinci-gorus/${c.id}`}
-              className={`block rounded-3xl border bg-[#161719] p-5 shadow-sm transition hover:shadow ${needsAction ? "border-[#28C8D8]/50" : "border-white/10"}`}
+              className={`block rounded-3xl border bg-[var(--c-panel)] p-5 shadow-sm transition hover:shadow ${needsAction ? "border-[var(--c-accent)]/50" : "border-[var(--c-hairline)]"}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-[#F4F5F3]">{nameById[c.patientId] ?? "Hasta"}</span>
-                    <span className="inline-flex items-center gap-1 text-xs text-[#1FA9B8]"><Stethoscope size={12} /> {branchLabel}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${needsAction ? "bg-amber-500/15 text-amber-300" : "bg-white/10 text-white/50"}`}>
+                    <span className="font-semibold text-[var(--c-ink)]">{nameById[c.patientId] ?? "Hasta"}</span>
+                    <span className="inline-flex items-center gap-1 text-xs text-[var(--c-accent-strong)]"><Stethoscope size={12} /> {branchLabel}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${needsAction ? "bg-amber-500/15 text-amber-300" : "bg-[var(--c-ink)]/10 text-white/50"}`}>
                       {SO_STATUS_LABELS[c.status as SoStatus] ?? c.status}
                     </span>
                     {c.requests.length > 0 && (
@@ -82,13 +82,13 @@ export default async function SoQueuePage() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-1.5 line-clamp-2 text-sm text-white/65">{c.diagnosisSummary}</p>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-white/40">
+                  <p className="mt-1.5 line-clamp-2 text-sm text-[var(--c-ink-2)]">{c.diagnosisSummary}</p>
+                  <div className="mt-1 flex items-center gap-2 text-xs text-[var(--c-ink-3)]">
                     <span className="inline-flex items-center gap-1"><FileText size={11} /> {c.documents.length} belge</span>
                     <span>· {formatDateTime(c.createdAt)}</span>
                   </div>
                 </div>
-                <ArrowRight size={16} className="mt-1 shrink-0 text-white/25" />
+                <ArrowRight size={16} className="mt-1 shrink-0 text-[var(--c-ink-3)]" />
               </div>
             </Link>
           );

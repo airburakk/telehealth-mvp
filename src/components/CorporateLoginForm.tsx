@@ -22,12 +22,12 @@ export function CorporateLoginForm() {
       subtitle="Doktor · Koordinatör · Etik Kurul · Partner Doktor · Sağlık Turizmi Acentesi"
       quick={STAFF_QUICK}
       footer={
-        <div className="mt-4 space-y-1.5 text-center text-sm text-white/50">
+        <div className="mt-4 space-y-1.5 text-center text-sm text-[var(--c-ink-2)]">
           <p>
-            Doktor musunuz? <Link href="/kayit" className="font-semibold text-[#28C8D8] hover:underline">Kayıt olun</Link>
+            Doktor musunuz? <Link href="/kayit" className="font-semibold text-[var(--c-accent)] hover:underline">Kayıt olun</Link>
           </p>
           <p className="text-[13px]">
-            Hasta mısınız? <Link href="/giris/e-posta" className="font-semibold text-[#28C8D8] hover:underline">Hasta girişi →</Link>
+            Hasta mısınız? <Link href="/giris/e-posta" className="font-semibold text-[var(--c-accent)] hover:underline">Hasta girişi →</Link>
           </p>
         </div>
       }

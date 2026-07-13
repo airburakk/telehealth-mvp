@@ -28,19 +28,22 @@ export function AuraSpinner({ size = 48, durationMs = 2400, className = "" }: { 
   );
 }
 
-export function PortamedLogo({ size = 24, ink = "#0D0E10" }: { size?: number; ink?: string }) {
-  const onDark = ink === "#FFFFFF" || ink === "#fff" || ink === "white";
+// Tema-farkında wordmark: her iki PNG de render edilir, görünürlüğü globals.css'teki
+// .theme-* kuralları seçer (gündüz = lacivert light PNG, gece = beyaz dark PNG).
+// `ink` prop'u artık YOK-sayılır (geriye uyumluluk için imzada bırakıldı) — tema toggle
+// sabit prop ile çözülemezdi (eski onDark anahtarı render-zamanı sabitti).
+export function PortamedLogo({ size = 24 }: { size?: number; ink?: string }) {
   const wordH = Math.round(size * 0.6);
+  // display INLINE verilmez — görünürlüğü .logo-word-* class'ları yönetir (inline style
+  // CSS kuralını ezip her iki wordmark'ı birden gösterirdi).
+  const wStyle = { height: wordH, width: "auto", marginLeft: Math.round(size * 0.3) } as const;
   return (
     <span className="inline-flex items-center" style={{ lineHeight: 1 }}>
       <AuraMark size={size} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={onDark ? "/aura-word-dark.png" : "/aura-word-light.png"}
-        alt="AURA"
-        height={wordH}
-        style={{ display: "block", height: wordH, width: "auto", marginLeft: Math.round(size * 0.3) }}
-      />
+      <img src="/aura-word-light.png" alt="AURA" className="logo-word-light" height={wordH} style={wStyle} />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/aura-word-dark.png" alt="" aria-hidden className="logo-word-dark" height={wordH} style={wStyle} />
     </span>
   );
 }

@@ -25,8 +25,8 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
           alignItems: "center",
           justifyContent: "center",
           padding: 20,
-          background: "#0D0E10",
-          color: "#F4F5F3",
+          background: "var(--c-bg)",
+          color: "var(--c-ink)",
           fontFamily: "system-ui, 'Segoe UI', -apple-system, Helvetica, Arial, sans-serif",
         }}
       >
@@ -34,14 +34,14 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
           style={{
             width: "100%",
             maxWidth: 420,
-            background: "#161719",
+            background: "var(--c-panel)",
             border: "1px solid rgba(255,255,255,.1)",
             borderRadius: 16,
             padding: 32,
             textAlign: "center",
           }}
         >
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "#F4F5F3" }}>{t.errorTitle}</h1>
+          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "var(--c-ink)" }}>{t.errorTitle}</h1>
           <p style={{ margin: "8px 0 0", fontSize: 14, lineHeight: 1.5, color: "rgba(255,255,255,.55)" }}>{t.errorDesc}</p>
           <button
             type="button"
@@ -50,8 +50,8 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
               marginTop: 24,
               border: "none",
               borderRadius: 8,
-              background: "#28C8D8",
-              color: "#0D0E10",
+              background: "var(--c-accent)",
+              color: "var(--c-bg)",
               padding: "10px 20px",
               fontSize: 14,
               fontWeight: 600,

@@ -57,7 +57,7 @@ export function shareState(link: { expiresAt: Date | string | null; revokedAt: D
 
 export const SHARE_STATE_META: Record<ShareState, { label: string; badge: string; dot: string }> = {
   ACTIVE: { label: "Aktif", badge: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25", dot: "bg-emerald-500" },
-  EXPIRED: { label: "Süresi doldu", badge: "bg-white/10 text-white/65 ring-white/15", dot: "bg-white/30" },
+  EXPIRED: { label: "Süresi doldu", badge: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)] ring-white/15", dot: "bg-[var(--c-ink)]/30" },
   REVOKED: { label: "İptal edildi", badge: "bg-red-500/15 text-red-300 ring-red-400/25", dot: "bg-red-500" },
 };
 

@@ -36,8 +36,12 @@ function LandingShell() {
       <main>
         <AuraHero />
         <AuraChapters />
-        <AuraDoctors />
-        <AuraTrust />
+        {/* Sandwich gövdesi: gece bantların arasındaki gündüz şeridi. Wrapper
+            aura-light → içteki aura-* açık değerlere geçer; bg beyaz. */}
+        <div className="aura-light bg-[var(--aura-bg)]">
+          <AuraDoctors />
+          <AuraTrust />
+        </div>
         <AuraClosing />
       </main>
     </div>

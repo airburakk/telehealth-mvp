@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/components/useT";
 import { langDir } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
+import { isImmersiveCallPath } from "@/lib/immersive-routes";
 import { LogOut, LogIn, ShieldOff } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -40,7 +41,8 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
   // AURA landing (/ ve /how-it-works) kendi nav/footer'ını taşır — global krom gizlenir.
   // Giriş kapıları (/giris, /kurumsal-giris) tam-ekran vitrin panelleridir (kendi logo +
   // "← ana sayfa" bağlantısıyla); /e-posta form alt-rotalarında krom durur (exact match).
-  if (["/", "/how-it-works", "/giris", "/kurumsal-giris"].includes(pathname)) return null;
+  // Video görüşme rotaları IMMERSIVE tam-ekran (100dvh video+panel) → krom gizlenir.
+  if (["/", "/how-it-works", "/giris", "/kurumsal-giris"].includes(pathname) || isImmersiveCallPath(pathname)) return null;
 
   const activeHref = items
     .filter((n) => pathname === n.href || pathname.startsWith(n.href + "/"))
@@ -68,11 +70,11 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
   }
 
   return (
-    <header dir={dir} className="sticky top-0 z-30 border-b border-white/10 bg-[#0D0E10]/95 backdrop-blur">
+    <header dir={dir} className="theme-dark sticky top-0 z-30 border-b border-[var(--c-hairline)] bg-[var(--c-bg)]/95 backdrop-blur">
       <div className="mx-auto max-w-6xl px-5 h-16 flex items-center justify-between gap-4">
         {/* Marka altyazısı ("Sağlık Turizmi & Teletıp") kullanıcı isteğiyle kaldırıldı (2026-07-12) — yalnız logo */}
         <Link href="/" className="flex items-end">
-          <PortamedLogo size={23} ink="#FFFFFF" />
+          <PortamedLogo size={23} />
         </Link>
 
         <div className="flex items-center gap-1.5">
@@ -84,7 +86,7 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
                   key={href}
                   href={href}
                   className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    active ? "bg-[#28C8D8] text-[#0D0E10]" : "text-white/70 hover:bg-white/10 hover:text-[#28C8D8]"
+                    active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] hover:text-[var(--c-accent)]"
                   }`}
                 >
                   <Icon size={16} />
@@ -95,21 +97,21 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
           </nav>
 
           {user ? (
-            <div className="ml-1 flex items-center gap-2 border-l border-white/10 ps-2">
+            <div className="ml-1 flex items-center gap-2 border-l border-[var(--c-hairline)] ps-2">
               <NotificationBell lang={lang} patientLangFallback={user.role === "PATIENT"} />
               <div className="hidden text-end sm:block">
-                <div className="text-sm font-medium leading-tight text-white/90">{user.name}</div>
-                <div className="text-[11px] leading-tight text-white/45">{t(ROLE_LABELS[user.role] ?? user.role)}</div>
+                <div className="text-sm font-medium leading-tight text-[var(--c-ink)]">{user.name}</div>
+                <div className="text-[11px] leading-tight text-[var(--c-ink-3)]">{t(ROLE_LABELS[user.role] ?? user.role)}</div>
               </div>
-              <button onClick={() => setConfirmLogoutAll(true)} title={t("Tüm cihazlardan çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-white/35 hover:bg-white/10 hover:text-red-400">
+              <button onClick={() => setConfirmLogoutAll(true)} title={t("Tüm cihazlardan çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-3)] hover:bg-[var(--c-surface)] hover:text-red-400">
                 <ShieldOff size={16} />
               </button>
-              <button onClick={logout} title={t("Çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-white/55 hover:bg-white/10 hover:text-red-400">
+              <button onClick={logout} title={t("Çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] hover:text-red-400">
                 <LogOut size={17} />
               </button>
             </div>
           ) : (
-            <Link href="/giris" className="ms-1 inline-flex items-center gap-1.5 rounded-lg bg-[#28C8D8] px-3.5 py-2 text-sm font-semibold text-[#0D0E10] hover:bg-[#1FA9B8]">
+            <Link href="/giris" className="ms-1 inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-accent)] px-3.5 py-2 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
               <LogIn size={16} /> {t("Giriş yap")}
             </Link>
           )}

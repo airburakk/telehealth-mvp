@@ -31,6 +31,7 @@ export default async function MyCasesPage() {
         branch: true,
         symptoms: true,
         createdAt: true,
+        tourismPlan: true,
         bookings: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true, tier: true, status: true, total: true } },
         recovery: { select: { id: true } },
       },
@@ -56,6 +57,8 @@ export default async function MyCasesPage() {
       createdAt: c.createdAt.toISOString(),
       booking: b ? { id: b.id, tier: b.tier, status: b.status, total: b.total } : null,
       hasRecovery: !!c.recovery,
+      // Kulvar: turizm planı varsa Health Tourism, aksi halde Telehealth (SO ayrı model → so kulvarı).
+      lane: (c.tourismPlan ? "tourism" : "telehealth") as MyCaseRow["lane"],
     };
   });
 
