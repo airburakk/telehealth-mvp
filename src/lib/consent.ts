@@ -9,17 +9,22 @@ import {
 } from "./timestamp";
 
 // Kullanıcının verdiği EN GÜNCEL onam sürümü (0 = hiç onam yok).
-export async function consentedVersion(userId: string): Promise<number> {
+// scope varsayılan GENERAL_KVKK; AI işleme rızası gibi ayrı kovalar scope geçerek kullanılır (AI_TRIAGE).
+export async function consentedVersion(userId: string, scope: string = CONSENT_SCOPE): Promise<number> {
   const row = await db.consentRecord.findFirst({
-    where: { userId, scope: CONSENT_SCOPE },
+    where: { userId, scope },
     orderBy: { version: "desc" },
     select: { version: true },
   });
   return row?.version ?? 0;
 }
 
-export async function hasCurrentConsent(userId: string): Promise<boolean> {
-  return (await consentedVersion(userId)) >= CONSENT_VERSION;
+export async function hasCurrentConsent(
+  userId: string,
+  scope: string = CONSENT_SCOPE,
+  version: number = CONSENT_VERSION,
+): Promise<boolean> {
+  return (await consentedVersion(userId, scope)) >= version;
 }
 
 // ── Mühür şeması (audit.ts ile aynı desen, P1 #8) ────────────────────────────────────────────────
@@ -70,14 +75,25 @@ const CONSENT_LOCK_B = 0x4e53; // 'NS'
 // Güncel sürümde onam kaydı oluştur (idempotent — aynı kullanıcı/kapsam/sürüm bir kez).
 // İlk kez ise: metin hash'i + cihaz + hash-zinciri + zaman damgasıyla MÜHÜRLENİR.
 // Append, advisory xact-lock altında tek transaction'da: tip okuması + insert atomik sıraya girer.
-export async function recordConsent(userId: string, ip?: string | null, userAgent?: string | null): Promise<void> {
+// scope/version/text varsayılan GENERAL_KVKK; AI işleme rızası (AI_TRIAGE) gibi ayrı kovalar opts ile
+// geçilir — tüm kapsamlar TEK append-only hash-zincirine yazılır (mühür scope'u içerir → ayrım korunur).
+export async function recordConsent(
+  userId: string,
+  ip?: string | null,
+  userAgent?: string | null,
+  opts?: { scope?: string; version?: number; text?: string },
+): Promise<void> {
+  const scope = opts?.scope ?? CONSENT_SCOPE;
+  const version = opts?.version ?? CONSENT_VERSION;
+  const text = opts?.text ?? CONSENT_TEXT;
+
   const existing = await db.consentRecord.findUnique({
-    where: { userId_scope_version: { userId, scope: CONSENT_SCOPE, version: CONSENT_VERSION } },
+    where: { userId_scope_version: { userId, scope, version } },
     select: { id: true },
   });
   if (existing) return; // idempotent — zaten onaylı
 
-  const textHash = sha256(CONSENT_TEXT);
+  const textHash = sha256(text);
   try {
     await db.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(${CONSENT_LOCK_A}::int4, ${CONSENT_LOCK_B}::int4)`;
@@ -89,11 +105,11 @@ export async function recordConsent(userId: string, ip?: string | null, userAgen
         select: { entryHash: true },
       });
       const prevHash = tip?.entryHash ?? "GENESIS";
-      const entryHash = sealEntryV2({ userId, scope: CONSENT_SCOPE, version: CONSENT_VERSION, textHash, ip: ip ?? null, userAgent: userAgent ?? null, grantedAt, prevHash });
+      const entryHash = sealEntryV2({ userId, scope, version, textHash, ip: ip ?? null, userAgent: userAgent ?? null, grantedAt, prevHash });
       const ts = getTimestampToken(entryHash);
       await tx.consentRecord.create({
         data: {
-          userId, scope: CONSENT_SCOPE, version: CONSENT_VERSION, grantedAt, ip: ip ?? null,
+          userId, scope, version, grantedAt, ip: ip ?? null,
           textHash, userAgent: userAgent ?? null, channel: "WEB",
           prevHash, entryHash, tsAuthority: ts.authority, tsTime: ts.time, tsToken: ts.token,
         },

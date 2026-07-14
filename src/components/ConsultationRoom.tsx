@@ -574,12 +574,7 @@ export function ConsultationRoom({
         <p className="mt-1 text-sm text-[var(--c-ink)]">{caseData.symptoms}</p>
         {isDoctor && <TranslateButton text={caseData.symptoms} defaultTarget="Türkçe" />}
       </div>
-      {isDoctor && (
-        <div className="mt-3 rounded-lg bg-[var(--c-accent)]/10 p-3 ring-1 ring-[var(--c-accent)]/20">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]"><Sparkles size={13} /> AI özeti</div>
-          <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">{caseData.reasoning}</p>
-        </div>
-      )}
+      {/* AI özeti kartı kaldırıldı (2026-07-14, kullanıcı isteği) — doktor triyaj gerekçesini görmez. */}
       {!isDoctor && (
         <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-500/10 p-3 text-sm text-emerald-200 ring-1 ring-emerald-400/20">
           <UserRound size={15} /> {doctor.title} {doctor.name} {t("ile görüşüyorsunuz")}

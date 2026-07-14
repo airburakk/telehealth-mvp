@@ -7,6 +7,7 @@ import { SO_DURATION_COPY, SO_FEE_USD } from "@/lib/second-opinion";
 import { secondOpinionDocSpecs, type SoDeliveryMethod } from "@/data/second-opinion-docs";
 import { useT } from "@/components/useT";
 import { useSoLang } from "@/components/SoLocale";
+import { AiConsentGate } from "@/components/AiConsentGate";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
@@ -69,6 +70,15 @@ function fileToDataUrl(file: File): Promise<string> {
 }
 
 export function SoApplyForm() {
+  // AI karşılama rıza kapısı — semptom/tanı girişinden ÖNCE. "Süreci Sonlandır" → hasta ana sekmesi.
+  return (
+    <AiConsentGate dest="/vakalarim">
+      <SoApplyFormInner />
+    </AiConsentGate>
+  );
+}
+
+function SoApplyFormInner() {
   const router = useRouter();
   const [lang, setLang] = useSoLang();
 

@@ -13,7 +13,7 @@ import { DocumentAnalysis } from "@/components/DocumentAnalysis";
 import { loincForBranchLabel } from "@/data/coding";
 import { LabResultsForm } from "@/components/LabResultsForm";
 import { caseDicomStudies } from "@/lib/case-dicom";
-import { ArrowLeft, ArrowRight, FileText, Sparkles, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks, Lock } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks, Lock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -94,11 +94,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               <TranslateButton text={c.symptoms} defaultTarget="Türkçe" />
             </div>
 
-            <div className="mt-5 rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-4">
-              <SectionTitle icon={<Sparkles size={15} />} tone="text-[var(--c-accent)]">AI Triyaj Gerekçesi</SectionTitle>
-              <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink-2)]">{c.reasoning}</p>
-              <div className="mt-2 text-xs text-[var(--c-ink-3)]">Güven skoru: %{c.confidence}</div>
-            </div>
+            {/* AI Triyaj Gerekçesi kartı kaldırıldı (2026-07-14, kullanıcı isteği). */}
           </div>
 
           {/* Branş ön-değerlendirme yanıtları (dinamik triyaj soruları) */}

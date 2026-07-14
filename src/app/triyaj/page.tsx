@@ -10,6 +10,7 @@ import { questionTexts } from "@/lib/triage-questions";
 import { requiredDocs } from "@/lib/required-docs";
 import { useT } from "@/components/useT";
 import { usePatientLang } from "@/components/PatientLocale";
+import { AiConsentGate } from "@/components/AiConsentGate";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
@@ -119,6 +120,15 @@ async function readDoc(file: File): Promise<UploadDoc> {
 }
 
 export default function TriyajPage() {
+  // AI karşılama rıza kapısı — semptom/tanı girişinden ÖNCE. "Süreci Sonlandır" → hasta ana sekmesi.
+  return (
+    <AiConsentGate dest="/vakalarim">
+      <TriyajInner />
+    </AiConsentGate>
+  );
+}
+
+function TriyajInner() {
   const router = useRouter();
   const [billing, setBilling] = useState<Billing | null>(null);
   const [step, setStep] = useState(0);

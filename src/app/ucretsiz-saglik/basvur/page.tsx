@@ -10,6 +10,7 @@ import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/compo
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
 import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
 import { HeartHandshake, Loader2, ArrowRight } from "lucide-react";
+import { AiConsentGate } from "@/components/AiConsentGate";
 
 // Ücretsiz Sağlık Hizmeti ön-triyaj — kısa, ücret kapısı YOK. Başvuru HER ZAMAN alınır (Faz 4:
 // çevrimiçi-doktor kilidi kalktı): eşleşme varsa görüşme, yoksa bekleme havuzu + bildirim.
@@ -30,6 +31,15 @@ const STATIC_UI = [
 ];
 
 export default function FreeCareApplyPage() {
+  // AI karşılama rıza kapısı — semptom/tanı girişinden ÖNCE. "Süreci Sonlandır" → hasta ana sekmesi.
+  return (
+    <AiConsentGate dest="/vakalarim">
+      <FreeCareApplyInner />
+    </AiConsentGate>
+  );
+}
+
+function FreeCareApplyInner() {
   const router = useRouter();
   const [patientName, setPatientName] = useState("");
   const [country, setCountry] = useState("TR");

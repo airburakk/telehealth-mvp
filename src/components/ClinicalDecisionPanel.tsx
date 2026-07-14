@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { formatTRY, tryToUsd } from "@/lib/pricing";
 import {
   Search, Plus, X, Save, Loader2, Check, ClipboardList, Stethoscope,
-  Sparkles, CalendarRange, Building2, Send, Lock, ShieldCheck,
+  Sparkles, CalendarRange, Building2, Send, Lock, ShieldCheck, Plane,
 } from "lucide-react";
 
 // ── Birleşik Klinik Kodlama (FHIR) + Tedavi Kararı paneli (2026-07-10 FAZ 2) ──
@@ -104,10 +104,14 @@ export default function ClinicalDecisionPanel({
   const [saveMsg, setSaveMsg] = useState("");
   const [saveErr, setSaveErr] = useState("");
   const [sentAt, setSentAt] = useState<string | null>(agencySentAt);
+  // Tedavi/İşlem bölümü artık yalnız "Sağlık Turizmi Planlaması" tuşuyla açılır (2026-07-14, kullanıcı
+  // isteği). Dosya daha önce acenteye iletildiyse plan zaten yapılmış → açık başlar (doktor mevcut planı görür).
+  const [planningOpen, setPlanningOpen] = useState<boolean>(!!agencySentAt);
 
   const icdChosen = icdNorm.length >= 2; // elle girilen kod da tanı sayılır (liste dışı tanılar)
   // Katalog-çözümlü eşleme (sunucudan): çapraz-branş kodlar da chip olur (ör. onkolojide kemoterapi).
   const mappedProcs = useMemo(() => (icdProcedures ?? {})[icdNorm] ?? [], [icdProcedures, icdNorm]);
+  const treatmentActive = icdChosen && planningOpen; // Tedavi/İşlem yalnız tanı + "Sağlık Turizmi Planlaması" tuşuyla aktif
 
   async function saveCoding() {
     setCodingSaving(true); setCodingErr(""); setCodingSaved(false);
@@ -228,8 +232,9 @@ export default function ClinicalDecisionPanel({
         <Stethoscope size={15} /> Klinik Kodlama & Tedavi Kararı
       </div>
       <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
-        Tanıyı seçin → tanıya uygun işlemler aktifleşir → ücret ve süreyi belirleyin → Kaydet ile dosya
-        Sağlık Turizmi Acentesine iletilir. FHIR: tanı → Condition (ICD-10), kimlik → Patient.identifier.
+        Tanıyı seçin → <strong>Sağlık Turizmi Planlaması</strong> ile tanıya uygun işlemler açılır (AI sıralar,
+        siz seçersiniz) → ücret ve süreyi belirleyin → Kaydet ile dosya Sağlık Turizmi Acentesine iletilir.
+        FHIR: tanı → Condition (ICD-10), kimlik → Patient.identifier.
       </p>
 
       {/* ── 1 · Tanı (ICD-10) + hasta kimliği ── */}
@@ -281,13 +286,13 @@ export default function ClinicalDecisionPanel({
         {codingErr && <p className="mt-2 text-xs text-red-300">{codingErr}</p>}
       </div>
 
-      {/* ── 2 · Tedavi / işlem seçimi — tanı seçilince aktifleşir ── */}
-      <div className={`mt-3 rounded-2xl border p-3.5 ${icdChosen ? "border-emerald-400/25" : "border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)]/60"}`}>
+      {/* ── 2 · Tedavi / İşlem — yalnız "Sağlık Turizmi Planlaması" tuşuyla aktifleşir (2026-07-14) ── */}
+      <div className={`mt-3 rounded-2xl border p-3.5 ${treatmentActive ? "border-emerald-400/25" : "border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)]/60"}`}>
         <div className="flex items-center justify-between gap-2">
           <div className="text-[11px] font-bold uppercase tracking-wide text-[var(--c-ink-2)]">
-            2 · Tedavi / İşlem {icdChosen ? "" : "(önce tanı seçin)"}
+            2 · Tedavi / İşlem {treatmentActive ? "" : "(Sağlık Turizmi Planlaması ile açılır)"}
           </div>
-          {icdChosen && (
+          {treatmentActive && (
             <button
               onClick={askAi}
               disabled={aiBusy}
@@ -299,8 +304,22 @@ export default function ClinicalDecisionPanel({
           )}
         </div>
 
-        {!icdChosen ? (
-          <p className="mt-2 flex items-center gap-1.5 text-xs text-[var(--c-ink-3)]"><Lock size={13} /> Tanı ICD-10 kodu seçildiğinde tanıya uygun tedavi/işlem listesi burada aktifleşir.</p>
+        {!treatmentActive ? (
+          !icdChosen ? (
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-[var(--c-ink-3)]"><Lock size={13} /> Önce 1. adımdan tanı (ICD-10) kodunu seçin; ardından Sağlık Turizmi Planlaması ile tedavi/işlem planı açılır.</p>
+          ) : (
+            <div className="mt-2">
+              <button
+                onClick={() => { setPlanningOpen(true); askAi(); }}
+                className="inline-flex items-center gap-2 rounded-lg bg-emerald-500/15 px-3.5 py-2.5 text-sm font-semibold text-emerald-200 ring-1 ring-emerald-400/30 hover:bg-emerald-500/25"
+              >
+                <Plane size={15} /> Sağlık Turizmi Planlaması
+              </button>
+              <p className="mt-2 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
+                Tanıya göre AI, uygun tedavi/işlemleri sıralar; siz seçip ücret ve süreyi belirlersiniz. Kaydet ile dosya Sağlık Turizmi Acentesine iletilir.
+              </p>
+            </div>
+          )
         ) : (
           <>
             {/* Tanıya eşlenmiş işlemler (statik küratörlü eşleme) */}
@@ -427,22 +446,22 @@ export default function ClinicalDecisionPanel({
         )}
       </div>
 
-      {/* ── 3 · Öngörülen tedavi süresi ── */}
-      <div className={`mt-3 rounded-2xl border p-3.5 ${icdChosen ? "border-[var(--c-hairline)]" : "border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)]/60"}`}>
+      {/* ── 3 · Öngörülen tedavi süresi ── (Sağlık Turizmi Planlaması ile birlikte aktifleşir) */}
+      <div className={`mt-3 rounded-2xl border p-3.5 ${treatmentActive ? "border-[var(--c-hairline)]" : "border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)]/60"}`}>
         <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-[var(--c-ink-2)]">
           <CalendarRange size={13} /> 3 · Öngörülen tedavi süresi
         </div>
         <div className="mt-2 flex items-center gap-2 text-sm">
-          <input type="number" min={1} max={365} value={daysMin} onChange={(e) => setDaysMin(e.target.value)} placeholder="3" disabled={!icdChosen} className="w-20 rounded-lg border border-[var(--c-hairline)] px-2.5 py-2 text-center outline-none focus:border-[var(--c-accent)] disabled:bg-[var(--c-surface)]" />
+          <input type="number" min={1} max={365} value={daysMin} onChange={(e) => setDaysMin(e.target.value)} placeholder="3" disabled={!treatmentActive} className="w-20 rounded-lg border border-[var(--c-hairline)] px-2.5 py-2 text-center outline-none focus:border-[var(--c-accent)] disabled:bg-[var(--c-surface)]" />
           <span className="text-[var(--c-ink-3)]">–</span>
-          <input type="number" min={1} max={365} value={daysMax} onChange={(e) => setDaysMax(e.target.value)} placeholder="7" disabled={!icdChosen} className="w-20 rounded-lg border border-[var(--c-hairline)] px-2.5 py-2 text-center outline-none focus:border-[var(--c-accent)] disabled:bg-[var(--c-surface)]" />
+          <input type="number" min={1} max={365} value={daysMax} onChange={(e) => setDaysMax(e.target.value)} placeholder="7" disabled={!treatmentActive} className="w-20 rounded-lg border border-[var(--c-hairline)] px-2.5 py-2 text-center outline-none focus:border-[var(--c-accent)] disabled:bg-[var(--c-surface)]" />
           <span className="text-[var(--c-ink-2)]">gün <span className="text-[var(--c-ink-3)]">(ör. 3 – 7 gün)</span></span>
         </div>
-        {icdChosen && daysMin && daysMax && !daysOk && <p className="mt-1.5 text-[11px] text-red-300">Geçerli bir gün aralığı girin (alt sınır ≥ 1, üst sınır ≥ alt sınır).</p>}
+        {treatmentActive && daysMin && daysMax && !daysOk && <p className="mt-1.5 text-[11px] text-red-300">Geçerli bir gün aralığı girin (alt sınır ≥ 1, üst sınır ≥ alt sınır).</p>}
       </div>
 
-      {/* ── 4 · Hastane seçimi (HealthTürkiye dizini) ── */}
-      <div className={`mt-3 rounded-2xl border p-3.5 ${icdChosen ? "border-[var(--c-hairline)]" : "border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)]/60"}`}>
+      {/* ── 4 · Hastane seçimi (HealthTürkiye dizini) ── (Sağlık Turizmi Planlaması ile aktifleşir) */}
+      <div className={`mt-3 rounded-2xl border p-3.5 ${treatmentActive ? "border-[var(--c-hairline)]" : "border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)]/60"}`}>
         <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-[var(--c-ink-2)]">
           <Building2 size={13} /> 4 · Hastane (isteğe bağlı)
         </div>
@@ -459,7 +478,7 @@ export default function ClinicalDecisionPanel({
                 value={hospQ}
                 onChange={(e) => hospSearch(e.target.value)}
                 placeholder="HealthTürkiye tesis dizininde ara (ad/şehir)…"
-                disabled={!icdChosen}
+                disabled={!treatmentActive}
                 className="w-full rounded-lg border border-[var(--c-hairline)] py-2 pl-8 pr-2 text-sm outline-none focus:border-teal-500 disabled:bg-[var(--c-surface)]"
               />
             </div>
@@ -523,7 +542,7 @@ export default function ClinicalDecisionPanel({
       <button
         onClick={saveDecision}
         disabled={!canSave}
-        title={!icdChosen ? "Önce tanı seçin" : entries.length === 0 ? "En az bir işlem ekleyin" : !daysOk ? "Öngörülen tedavi süresini girin" : "Tedavi kararını kaydet — dosya acenteye iletilir"}
+        title={!icdChosen ? "Önce tanı seçin" : !planningOpen ? "Sağlık Turizmi Planlaması'nı başlatın" : entries.length === 0 ? "En az bir işlem ekleyin" : !daysOk ? "Öngörülen tedavi süresini girin" : "Tedavi kararını kaydet — dosya acenteye iletilir"}
         className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-40"
       >
         {saving ? <Loader2 size={15} className="animate-spin" /> : sentAt ? <Send size={15} /> : <ClipboardList size={15} />}

@@ -10,6 +10,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Plane, Stethoscope, ClipboardList, ArrowRight, ArrowLeft, Loader2, ShieldAlert, CheckCircle2, Sparkles } from "lucide-react";
 import { useT } from "@/components/useT";
+import { AiConsentGate } from "@/components/AiConsentGate";
 import { usePatientLang } from "@/components/PatientLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
@@ -47,6 +48,15 @@ const TEXTS = [
 ];
 
 export function SaglikTurizmiPlanner() {
+  // AI karşılama rıza kapısı — semptom/tanı girişinden ÖNCE. "Süreci Sonlandır" → hasta ana sekmesi.
+  return (
+    <AiConsentGate dest="/vakalarim">
+      <SaglikTurizmiPlannerInner />
+    </AiConsentGate>
+  );
+}
+
+function SaglikTurizmiPlannerInner() {
   const [lang, setLang] = usePatientLang();
   const texts = useMemo(() => [...TEXTS, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...DICTATION_TEXTS, ...BRANCHES.map((b) => b.label)], []); // sabit referans — useT yarış dersi (v3.5)
   const { t } = useT(lang, texts);
