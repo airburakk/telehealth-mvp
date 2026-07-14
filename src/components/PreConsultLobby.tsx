@@ -9,15 +9,18 @@
 // ConsultationRoom'a DOKUNULMAZ; lobi onun ÖNÜNE konur. Tasarım: [[dijital-bekleme-odasi]].
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Video, VideoOff, Mic, MicOff, Volume2, Camera, Clock, Lock,
   AlertTriangle, NotebookPen, Headphones, Sun, FileText, CheckCircle2,
   HelpCircle, ShieldCheck, ALargeSmall,
   Star, BadgeCheck, ChevronDown, ChevronUp, ExternalLink, GraduationCap,
-  Award, Heart, Zap, Activity, Stethoscope, MapPin, type LucideIcon,
+  Award, Heart, Zap, Activity, Stethoscope, MapPin,
+  Sparkles, Loader2, XCircle, type LucideIcon,
 } from "lucide-react";
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47, VIDEO_CARD_SCRIPT } from "@/lib/constants";
+import { AI_INTERPRET_TEXT } from "@/lib/ai-consent";
 import { AuraSpinner } from "@/components/PortamedLogo";
 import { DoctorArt } from "@/components/PortamedArt";
 import { DoctorVideoCard } from "@/components/DoctorVideoCard";
@@ -80,6 +83,11 @@ const TX = {
   diploma: "Tıp Diploması",
   speciality: "Uzmanlık Belgesi",
   fullProfile: "Tam profili gör",
+  // Simültane tercüme açık rıza kapısı (görüşmeden önce, yalnız hasta)
+  interpretTitle: "Yapay Zeka ile Simültane Tercüme — Açık Rıza",
+  interpretYes: "Açık Rızam Vardır",
+  interpretNo: "Süreci Sonlandır",
+  interpretErr: "Bir hata oluştu, lütfen tekrar deneyin.",
 } as const;
 
 type Props = {
@@ -113,11 +121,30 @@ export function PreConsultLobby({
 }: Props) {
   // texts referansı SABİT olmalı: lobi ses metresi/geri sayım ile sık re-render eder; memoize edilmezse
   // useT'nin effect'i her render yeniden kurulur → uçuştaki çeviri fetch'i cleanup ile iptal olur (çeviri hiç gelmez).
-  const texts = useMemo(() => [...Object.values(TX), ...VIDEO_CARD_SCRIPT, ...(branchLabel ? [branchLabel] : [])], [branchLabel]);
+  const texts = useMemo(() => [...Object.values(TX), AI_INTERPRET_TEXT, ...VIDEO_CARD_SCRIPT, ...(branchLabel ? [branchLabel] : [])], [branchLabel]);
   const { t } = useT(lang, texts);
   const dir = langDir(lang);
+  const router = useRouter();
 
   const [entered, setEntered] = useState(false);
+
+  // ── Simültane tercüme açık rıza kapısı (yalnız hasta; doktor rıza görmez → başlangıçta geçmiş sayılır) ──
+  // Rıza verilene kadar cihaz/kamera izni İSTENMEZ (acquire effect'i interpretOk'a bağlı) ve lobi mount olmaz.
+  const [interpretOk, setInterpretOk] = useState(isDoctor);
+  const [consenting, setConsenting] = useState(false);
+  const [consentErr, setConsentErr] = useState("");
+  async function acceptInterpret() {
+    setConsenting(true);
+    setConsentErr("");
+    try {
+      const r = await fetch("/api/consent/ai-interpret", { method: "POST" });
+      if (!r.ok) throw new Error();
+      setInterpretOk(true);
+    } catch {
+      setConsentErr(t(TX.interpretErr));
+      setConsenting(false);
+    }
+  }
 
   // ── Cihaz / ön-izleme ──
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -261,11 +288,12 @@ export function PreConsultLobby({
   }, [startMeter, stopMeter, stopStream]);
 
   useEffect(() => {
+    if (!interpretOk) return; // simültane tercüme rızası verilmeden kamera/mikrofon izni istenmez
     mounted.current = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- medya cihazı senkronu (getUserMedia) = harici sistem; etki için doğru yer
     acquire();
     return () => { mounted.current = false; stopAll(); };
-  }, [acquire, stopAll]);
+  }, [acquire, stopAll, interpretOk]);
 
   function toggleCam() { const tr = streamRef.current?.getVideoTracks()[0]; if (tr) { tr.enabled = !tr.enabled; setCamOn(tr.enabled); } }
   function toggleMic() { const tr = streamRef.current?.getAudioTracks()[0]; if (tr) { tr.enabled = !tr.enabled; setMicOn(tr.enabled); } }
@@ -296,6 +324,48 @@ export function PreConsultLobby({
 
   // ── Katıldıktan sonra: oda devralır (3. alt-durum = "doktorunuz birazdan katılacak" odada) ──
   if (entered) return <>{children ?? null}</>;
+
+  // ── Simültane tercüme açık rıza kapısı — cihaz testine/görüşmeye geçmeden önce (yalnız hasta) ──
+  // "Açık Rızam Vardır" → /api/consent/ai-interpret (idempotent, ispatlı) + lobi açılır.
+  // "Süreci Sonlandır" → hastanın ana sekmesine (/vakalarim) döner; cihaz izni hiç istenmez.
+  if (!interpretOk) {
+    return (
+      <div dir={dir} className="mx-auto max-w-2xl px-5 py-10">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]">
+              <Sparkles size={22} />
+            </span>
+            <h1 className="text-xl font-bold text-[var(--c-ink)]">{t(TX.interpretTitle)}</h1>
+          </div>
+          {langSelector}
+        </div>
+
+        <div className="mt-5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5">
+          <p className="text-[14px] leading-relaxed text-[var(--c-ink)]">{t(AI_INTERPRET_TEXT)}</p>
+        </div>
+
+        {consentErr && <p className="mt-3 text-sm text-red-300">{consentErr}</p>}
+
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <button
+            onClick={acceptInterpret}
+            disabled={consenting}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--c-accent)] px-5 py-3 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {consenting ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />} {t(TX.interpretYes)}
+          </button>
+          <button
+            onClick={() => router.push("/vakalarim")}
+            disabled={consenting}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-5 py-3 text-sm font-semibold text-[var(--c-ink-2)] hover:bg-[var(--c-panel)] disabled:opacity-50"
+          >
+            <XCircle size={16} /> {t(TX.interpretNo)}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ── Geri sayım / alt-durum hesabı ──
   const schedMs = scheduledAt ? new Date(scheduledAt).getTime() : null;
