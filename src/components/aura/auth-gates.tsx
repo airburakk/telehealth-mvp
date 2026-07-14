@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useSearchParams } from "next/navigation";
 import { WordHeadline } from "@/components/aura/word-headline";
-import { AuraMark, AuraBraille } from "@/components/PortamedLogo";
+import { AuraMark } from "@/components/PortamedLogo";
 import { LangProvider, useLang, langDir, LINKS, VIDEOS } from "@/lib/aura-landing/i18n";
 
 // Vitrin giriş kapıları (aura-health.higgsfield.app'ten taşındı, 2026-07-12 —
@@ -114,15 +114,15 @@ function SigninPanel() {
 
   return (
     <GateShell video={VIDEOS.hero}>
-      <Link href="/" aria-label="AURA" className="inline-flex flex-col items-start gap-2">
+      <Link href="/" aria-label="AURA" className="inline-flex">
         <AuraMark size={40} />
-        <AuraBraille height={9} className="text-[var(--aura-grey)]" />
       </Link>
       <WordHeadline
         word={t.signin.word}
         wordBefore={t.signin.wordBefore}
         wordAfter={t.signin.wordAfter}
         lineAfter={t.signin.lineAfter}
+        braille
       />
       <p className="mt-3 text-[15px] text-[var(--aura-grey)]">{t.signin.sub}</p>
 
@@ -179,15 +179,15 @@ function CorporatePanel() {
 
   return (
     <GateShell video={VIDEOS.so}>
-      <Link href="/" aria-label="AURA" className="inline-flex flex-col items-start gap-2">
+      <Link href="/" aria-label="AURA" className="inline-flex">
         <AuraMark size={40} />
-        <AuraBraille height={9} className="text-[var(--aura-grey)]" />
       </Link>
       <WordHeadline
         word={c.word}
         wordBefore={c.wordBefore}
         wordAfter={c.wordAfter}
         lineAfter={c.lineAfter}
+        braille
       />
       <p className="mt-3 text-[15px] text-[var(--aura-grey)]">{c.sub}</p>
 

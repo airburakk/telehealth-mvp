@@ -80,8 +80,14 @@ export function AuraSpinner({ size = 48, className = "" }: { size?: number; dura
 // AURA Braille (⠁⠥⠗⠁) — kullanıcının logosundaki dokunsal marka detayı. Nokta
 // koordinatları orijinal SVG'den (translate(17,0) uygulanmış). fill=currentColor →
 // kullanıldığı yerin metin rengini alır (tema-uyumlu: gece açık, gündüz koyu).
-// Yalnız büyük gösterim alanlarında (giriş kapıları, landing) — nav gibi küçük
-// yerlerde okunmaz kalır, oralarda kullanılmaz. viewBox noktaları r=7 payıyla sarar.
+// viewBox noktaları r=7 payıyla sarar.
+//
+// ⚠️ MARKA KURALI (kullanıcı, 2026-07-14): Braille DAİMA "AURA" yazısının (wordmark
+// PNG veya WordHeadline letterform) **TAM ALTINDA, hizalı** yerleştirilir — sembolün
+// altında veya tek başına ASLA. Yeni bir yere Braille eklerken orada bir "AURA" yazısı
+// olmalı ve Braille onun altına ortalanmalı. Küçük yerlerde (nav) okunmaz → hiç konmaz.
+// Mevcut yerler: landing footer (closing.tsx, wordmark altı) + giriş kapıları
+// (word-headline.tsx braille prop, letterform altı). Detay: [[aura-braille-under-wordmark]].
 const BRAILLE_DOTS: ReadonlyArray<readonly [number, number]> = [
   [415, 1178],
   [527, 1178],

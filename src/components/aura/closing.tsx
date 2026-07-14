@@ -55,11 +55,15 @@ function AuraFooter() {
     <footer className="border-t border-[var(--aura-hairline)] bg-[var(--aura-bg)]">
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[2fr_1fr_1fr] md:px-8">
         <div>
+          {/* Braille "AURA" wordmark'ın TAM ALTINDA, ortalı hizalı (marka kuralı:
+              Braille daima AURA yazısının altında — [[aura-braille-under-wordmark]]). */}
           <div className="flex items-center gap-2.5">
             <AuraMark size={36} />
-            <img src="/assets/aura-word-dark.png" alt="AURA" className="h-4 w-auto" />
+            <span className="inline-flex flex-col items-center">
+              <img src="/assets/aura-word-dark.png" alt="AURA" className="h-4 w-auto" />
+              <AuraBraille height={9} className="mt-1.5 text-[var(--aura-micro)]" />
+            </span>
           </div>
-          <AuraBraille height={9} className="mt-3 text-[var(--aura-micro)]" />
           <p className="mt-4 max-w-[38ch] text-sm leading-relaxed text-[var(--aura-grey)]">
             {t.chapters[0].body}
           </p>
