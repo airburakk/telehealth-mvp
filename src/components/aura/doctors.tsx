@@ -1,6 +1,6 @@
 "use client";
 
-import { HeartPulse, Brain, Bone, Sparkles, Baby, Stethoscope, type LucideIcon } from "lucide-react";
+import { HeartPulse, Brain, PersonStanding, Layers, Dna, Stethoscope, type LucideIcon } from "lucide-react";
 import { useLang } from "@/lib/aura-landing/i18n";
 
 // Doktorlar v4 (sandwich gündüz gövdesi): beyaz zeminde yatay portre şeridi. Her karta branşının
@@ -10,9 +10,9 @@ import { useLang } from "@/lib/aura-landing/i18n";
 const DOC_BRAND: Record<string, { color: string; Icon: LucideIcon }> = {
   "doc-cardio": { color: "#E5484D", Icon: HeartPulse }, // kardiyoloji — kırmızı
   "doc-neuro": { color: "#6E56CF", Icon: Brain }, // nöroloji — mor/indigo
-  "doc-ortho": { color: "#3E63DD", Icon: Bone }, // ortopedi — mavi
-  "doc-derm": { color: "#E5720A", Icon: Sparkles }, // dermatoloji — amber
-  "doc-ivf": { color: "#12A594", Icon: Baby }, // tüp bebek — turkuaz
+  "doc-ortho": { color: "#3E63DD", Icon: PersonStanding }, // ortopedi — mavi (BranchAvatar ile senkron)
+  "doc-derm": { color: "#E5720A", Icon: Layers }, // dermatoloji — amber (cilt katmanları)
+  "doc-ivf": { color: "#12A594", Icon: Dna }, // tüp bebek — turkuaz (IVF/genetik)
 };
 const DOC_FALLBACK = { color: "#17919e", Icon: Stethoscope };
 
@@ -34,7 +34,14 @@ export function AuraDoctors() {
           aria-hidden
           className="absolute left-0 right-0 top-[131px] h-px bg-[var(--aura-accent)]/40"
         />
-        <div className="flex snap-x snap-mandatory gap-6 overflow-x-auto px-5 pb-4 md:px-8 [scrollbar-width:thin]">
+        {/* Yatay kaydırma şeridi klavye erişimli: tabIndex + role/aria-label ile
+            odaklanınca ok tuşlarıyla kaydırılır (WCAG 2.1.1). */}
+        <div
+          role="group"
+          aria-label={t.doctors.headline}
+          tabIndex={0}
+          className="flex snap-x snap-mandatory gap-6 overflow-x-auto px-5 pb-4 md:px-8 [scrollbar-width:thin]"
+        >
           {t.doctors.list.map((d) => {
             const brand = DOC_BRAND[d.img] ?? DOC_FALLBACK;
             const Icon = brand.Icon;
@@ -48,9 +55,11 @@ export function AuraDoctors() {
                 {/* Branş renk-kodu şeridi (kart üstü) */}
                 <div aria-hidden className="h-[3px] w-full" style={{ background: brand.color }} />
                 <div className="relative h-64 overflow-hidden">
+                  {/* Portre dekoratif: isim + branş zaten altında metin olarak
+                      okunur → alt boş (ekran okuyucuda çift okumayı önler). */}
                   <img
                     src={`/assets/${d.img}.jpg`}
-                    alt={d.name}
+                    alt=""
                     className="h-full w-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-[1.03] group-hover:opacity-100"
                     loading="lazy"
                   />

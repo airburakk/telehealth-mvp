@@ -384,7 +384,7 @@ export const COPY = {
         { img: "doc-neuro", name: "Dr. Ayşe Kaya", field: "Nöroloji" },
         { img: "doc-ortho", name: "Dr. Can Demir", field: "Ortopedi" },
         { img: "doc-derm", name: "Dr. Elif Öztürk", field: "Dermatoloji" },
-        { img: "doc-ivf", name: "Dr. Murat Çelik", field: "Tüp bebek" },
+        { img: "doc-ivf", name: "Dr. Murat Çelik", field: "Tüp Bebek" },
       ],
     },
     trust: {

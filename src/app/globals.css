@@ -224,6 +224,18 @@ body {
     background-color: var(--aura-accent);
     color: var(--aura-bg);
   }
+  /* Klavye focus göstergesi: marka-tutarlı turkuaz halka (WCAG 2.4.7). Fare
+     tıklamasında görünmez (:focus-visible). GuideVideo izle-kapağı bunu zaten
+     manuel taşıyordu — burada aura-page geneline (nav/CTA/select/kaydırma kabı)
+     yayılır. Gece default outline'ı siyah zeminde zayıf kalıyordu. */
+  .aura-page a:focus-visible,
+  .aura-page button:focus-visible,
+  .aura-page select:focus-visible,
+  .aura-page [tabindex]:focus-visible {
+    outline: 2px solid var(--aura-accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
   .aura-display {
     font-family: var(--aura-font-display);
   }

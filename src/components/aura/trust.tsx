@@ -37,8 +37,10 @@ export function AuraTrust() {
       {/* Donen tipografik alinti destesi */}
       <QuoteCarousel quotes={t.trust.quotes} />
 
-      {/* Akreditasyon monogram seridi (hover'da tam ad) */}
-      <div className="mt-16 flex flex-wrap items-center justify-center gap-x-10 gap-y-5 opacity-50">
+      {/* Akreditasyon monogram seridi (hover'da tam ad) — soluk ama okunur:
+          opacity-50 kontrastı ~2.34'e düşürüyordu (grafik AA 3.0 altı); 70 ile
+          ~3.3'e çıkar, güven şeridinin sessiz tonu korunur. */}
+      <div className="mt-16 flex flex-wrap items-center justify-center gap-x-10 gap-y-5 opacity-70">
         {ACCREDS.map((a) => (
           <Monogram key={a.label} label={a.label} full={a.full} />
         ))}
@@ -141,6 +143,7 @@ function QuoteCarousel({ quotes }: { quotes: { quote: string; name: string; role
               type="button"
               onClick={() => setI(idx)}
               aria-label={`${idx + 1} / ${quotes.length}`}
+              aria-current={idx === i ? "true" : undefined}
               className="h-1.5 rounded-full transition-all duration-300"
               style={{
                 width: idx === i ? 22 : 6,
