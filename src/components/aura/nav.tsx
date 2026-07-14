@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { AuraMark } from "@/components/PortamedLogo";
 import { LANGS, useLang, type Lang } from "@/lib/aura-landing/i18n";
 
 // Ust bant v2: kullanicinin logosu (sembol + acik yazi markasi) + iki
@@ -19,7 +20,7 @@ export function AuraNav() {
         {/* Logo → ana sayfa (Next Link: / üzerindeyken en üste kaydırır,
             alt sayfalardan client-nav ile döner). */}
         <Link href="/" className="flex items-center gap-2.5" aria-label="AURA">
-          <img src="/assets/aura-symbol.png" alt="" aria-hidden className="h-8 w-8" />
+          <AuraMark size={32} />
           <img src="/assets/aura-word-dark.png" alt="AURA" className="h-4 w-auto" />
         </Link>
 

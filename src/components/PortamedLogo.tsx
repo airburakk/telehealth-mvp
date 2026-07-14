@@ -1,30 +1,114 @@
-// AURA logosu — kullanıcının GERÇEK logosu (public/aura-symbol.png + aura-word-*.png).
-// Sembol ve wordmark kullanıcının orijinal görselinden ayıklandı (scripts/extract-logo.py). Elle çizim / font YOK.
+// AURA logosu — kullanıcının GERÇEK logosu. Sembol artık animasyonlu VEKTÖREL inline SVG
+// (kullanıcının AURA_logo_animated_web_braille_white_v3.svg dosyasından ayıklandı: yörünge
+// halkaları + nefes alan çekirdek + aura nabzı; beyaz zemin/wordmark/braille çıkarıldı →
+// şeffaf, her zeminde çalışır). Wordmark hâlâ tema-çift PNG (aura-word-light/dark.png).
 // Açık zeminde lacivert wordmark, koyu zeminde beyaz. Landing + iç uygulama Header'ı ortak kullanır.
 
-// Yalnız sembol — kullanıcının gerçek logosu (şeffaf PNG; cyan, her zeminde çalışır).
-export function AuraMark({ size = 26 }: { size?: number }) {
-  const s = Math.round(size * 1.18);
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src="/aura-symbol.png" alt="" width={s} height={s} style={{ display: "block" }} />;
+// Sembol geometrisi — tüm AuraMark/AuraSpinner örneklerinde ortak. Gradient/filter id'leri
+// SABİT: aynı sayfada birden çok kez inline edilince çift-id oluşur ama TÜM tanımlar özdeş
+// olduğundan her url(#id) referansı geçerli (özdeş) tanıma çözülür → görsel bozulmaz.
+// viewBox pulse'ın en geniş halini (scale 1.75) + ışıma payını kapsar (kırpılma yok).
+function AuraSymbol({ size, spin = false, className = "" }: { size: number; spin?: boolean; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="236 156 728 728"
+      role="img"
+      aria-label="AURA"
+      className={`${spin ? "aura-sym-fast " : ""}${className}`.trim()}
+      style={{ display: "block", overflow: "visible" }}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <radialGradient id="auraCoreGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#8AE6EC" />
+          <stop offset="100%" stopColor="#28C8D8" />
+        </radialGradient>
+        <radialGradient id="auraFillGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#8AE6EC" stopOpacity=".24" />
+          <stop offset="55%" stopColor="#4FD6E2" stopOpacity=".07" />
+          <stop offset="100%" stopColor="#28C8D8" stopOpacity="0" />
+        </radialGradient>
+        <filter id="auraSoftGlow" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="7" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="auraWideGlow" x="-120%" y="-120%" width="340%" height="340%">
+          <feGaussianBlur stdDeviation="20" />
+        </filter>
+      </defs>
+      <circle className="aura-sym-pulse" cx="600" cy="520" r="185" fill="url(#auraFillGrad)" filter="url(#auraWideGlow)" />
+      <circle className="aura-sym-pulse two" cx="600" cy="520" r="185" fill="url(#auraFillGrad)" filter="url(#auraWideGlow)" />
+      <g transform="translate(160 80) scale(7.3333333333)">
+        <circle cx="60" cy="60" r="22" fill="#28C8D8" fillOpacity=".16" />
+      </g>
+      <g className="aura-sym-orbit">
+        <g transform="translate(160 80) scale(7.3333333333)" strokeWidth="6.5" strokeLinecap="round" fill="none">
+          <g opacity=".34" filter="url(#auraSoftGlow)">
+            <path d="M60 24 A36 36 0 0 1 91 42" stroke="#28C8D8" />
+            <path d="M91 78 A36 36 0 0 1 60 96" stroke="#4FD6E2" />
+            <path d="M29 78 A36 36 0 0 1 29 42" stroke="#8AE6EC" />
+          </g>
+          <path d="M60 24 A36 36 0 0 1 91 42" stroke="#28C8D8" />
+          <path d="M91 78 A36 36 0 0 1 60 96" stroke="#4FD6E2" />
+          <path d="M29 78 A36 36 0 0 1 29 42" stroke="#8AE6EC" />
+        </g>
+      </g>
+      <g className="aura-sym-core">
+        <circle cx="600" cy="520" r="73.333333" fill="url(#auraCoreGrad)" filter="url(#auraSoftGlow)" />
+      </g>
+    </svg>
+  );
 }
 
-// Dönen AURA sembolü — bekleme göstergesi. Dönüş ekseni, sembolün GÖRSEL merkezi olan
-// ortadaki ÜÇGENİN ağırlık merkezine sabitlenir (%53.95 / %56.37 — aura-symbol.png 504×504
-// tuvalinde piksel analiziyle ölçüldü; 3 damlanın dönel-simetri merkeziyle ~3px örtüşür).
-// Aksi halde kare PNG kendi geometrik merkezinde (%50/%50) döner ve işaret yalpalar.
-export function AuraSpinner({ size = 48, durationMs = 2400, className = "" }: { size?: number; durationMs?: number; className?: string }) {
-  const s = Math.round(size * 1.18);
-  // eslint-disable-next-line @next/next/no-img-element
+// Yalnız sembol — animasyonlu vektörel AURA amblemi (şeffaf, her zeminde çalışır).
+export function AuraMark({ size = 26, className = "" }: { size?: number; className?: string }) {
+  return <AuraSymbol size={size} className={className} />;
+}
+
+// Dönen AURA sembolü — bekleme göstergesi. Aynı vektörel amblem; yörünge belirgin
+// hızlanır (aura-sym-fast). durationMs artık YOK-sayılır (imzada geriye uyumluluk için;
+// hız CSS'te .aura-sym-fast ile sabit) — eski PNG animate-spin yaklaşımının yerini aldı.
+export function AuraSpinner({ size = 48, className = "" }: { size?: number; durationMs?: number; className?: string }) {
+  return <AuraSymbol size={size} spin className={className} />;
+}
+
+// AURA Braille (⠁⠥⠗⠁) — kullanıcının logosundaki dokunsal marka detayı. Nokta
+// koordinatları orijinal SVG'den (translate(17,0) uygulanmış). fill=currentColor →
+// kullanıldığı yerin metin rengini alır (tema-uyumlu: gece açık, gündüz koyu).
+// Yalnız büyük gösterim alanlarında (giriş kapıları, landing) — nav gibi küçük
+// yerlerde okunmaz kalır, oralarda kullanılmaz. viewBox noktaları r=7 payıyla sarar.
+const BRAILLE_DOTS: ReadonlyArray<readonly [number, number]> = [
+  [415, 1178],
+  [527, 1178],
+  [527, 1228],
+  [552, 1228],
+  [639, 1178],
+  [639, 1203],
+  [639, 1228],
+  [664, 1203],
+  [751, 1178],
+];
+export function AuraBraille({ height = 11, className = "" }: { height?: number; className?: string }) {
   return (
-    <img
-      src="/aura-symbol.png"
-      alt=""
-      width={s}
-      height={s}
-      className={`animate-spin ${className}`.trim()}
-      style={{ transformOrigin: "53.95% 56.37%", animationDuration: `${durationMs}ms` }}
-    />
+    <svg
+      height={height}
+      viewBox="401 1164 364 78"
+      role="img"
+      aria-label="AURA"
+      fill="currentColor"
+      className={className}
+      style={{ width: "auto", display: "block" }}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {BRAILLE_DOTS.map(([cx, cy], i) => (
+        <circle key={i} cx={cx} cy={cy} r="7" />
+      ))}
+    </svg>
   );
 }
 

@@ -382,6 +382,65 @@ body {
   display: block;
 }
 
+/* AURA sembolü (AuraMark/AuraSpinner) — kullanıcının animasyonlu vektörel logosu:
+   yörünge halkaları döner, çekirdek nefes alır, aura nabzı dışa açılır. Şeffaf →
+   her zeminde çalışır. transform-origin sembol merkezine sabit (viewBox 600,520).
+   İsimler "aura-sym-" ön ekli — globals'taki farklı amaçlı .aura-word aura-breathe
+   ile ÇAKIŞMASIN diye (o filter-glow, bu scale). */
+.aura-sym-orbit {
+  transform-box: view-box;
+  transform-origin: 600px 520px;
+  animation: aura-sym-orbit 8s linear infinite;
+}
+.aura-sym-core {
+  transform-box: view-box;
+  transform-origin: 600px 520px;
+  animation: aura-sym-core 2.8s ease-in-out infinite;
+}
+.aura-sym-pulse {
+  transform-box: view-box;
+  transform-origin: 600px 520px;
+  animation: aura-sym-pulse 2.6s ease-out infinite;
+}
+.aura-sym-pulse.two {
+  animation-delay: 1.3s;
+}
+/* Bekleme göstergesi (AuraSpinner spin): yörünge belirgin şekilde hızlanır. */
+.aura-sym-fast .aura-sym-orbit {
+  animation-duration: 1.3s;
+}
+@keyframes aura-sym-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes aura-sym-core {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.09);
+  }
+}
+@keyframes aura-sym-pulse {
+  0% {
+    transform: scale(0.48);
+    opacity: 0.48;
+  }
+  100% {
+    transform: scale(1.75);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aura-sym-orbit,
+  .aura-sym-core,
+  .aura-sym-pulse {
+    animation: none !important;
+  }
+}
+
 /* Yazdırma: gece teması kağıtta mürekkep felaketi olur — zemin/metni açığa zorla.
    (Onam kanıtı, epikriz vb. çıktı alınan sayfalar için temel güvence.) */
 @media print {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useSearchParams } from "next/navigation";
 import { WordHeadline } from "@/components/aura/word-headline";
+import { AuraMark, AuraBraille } from "@/components/PortamedLogo";
 import { LangProvider, useLang, langDir, LINKS, VIDEOS } from "@/lib/aura-landing/i18n";
 
 // Vitrin giriş kapıları (aura-health.higgsfield.app'ten taşındı, 2026-07-12 —
@@ -113,8 +114,9 @@ function SigninPanel() {
 
   return (
     <GateShell video={VIDEOS.hero}>
-      <Link href="/" aria-label="AURA">
-        <img src="/assets/aura-symbol.png" alt="" aria-hidden className="h-10 w-10" />
+      <Link href="/" aria-label="AURA" className="inline-flex flex-col items-start gap-2">
+        <AuraMark size={40} />
+        <AuraBraille height={9} className="text-[var(--aura-grey)]" />
       </Link>
       <WordHeadline
         word={t.signin.word}
@@ -177,8 +179,9 @@ function CorporatePanel() {
 
   return (
     <GateShell video={VIDEOS.so}>
-      <Link href="/" aria-label="AURA">
-        <img src="/assets/aura-symbol.png" alt="" aria-hidden className="h-10 w-10" />
+      <Link href="/" aria-label="AURA" className="inline-flex flex-col items-start gap-2">
+        <AuraMark size={40} />
+        <AuraBraille height={9} className="text-[var(--aura-grey)]" />
       </Link>
       <WordHeadline
         word={c.word}
