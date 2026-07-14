@@ -75,8 +75,9 @@ function GateShell({
       className="aura-page flex min-h-dvh items-center justify-center px-4 py-8 md:px-10"
     >
       <div className="grid w-full max-w-6xl overflow-hidden rounded-[22px] border border-[var(--aura-hairline)] bg-[var(--aura-panel)] md:min-h-[640px] md:grid-cols-[minmax(380px,467px)_1fr]">
-        {/* Sol: form kolonu */}
-        <div className="flex flex-col justify-center px-8 py-12 md:px-12">{children}</div>
+        {/* Sol: form kolonu — içerik yatay ortalı (logo/AURA başlık/metin ortada;
+            w-full butonlar tam genişlikte kalır, flex item stretch sayesinde). */}
+        <div className="flex flex-col justify-center px-8 py-12 text-center md:px-12">{children}</div>
 
         {/* Sağ: video paneli */}
         <div className="relative hidden md:block">
@@ -114,7 +115,7 @@ function SigninPanel() {
 
   return (
     <GateShell video={VIDEOS.hero}>
-      <Link href="/" aria-label="AURA" className="inline-flex">
+      <Link href="/" aria-label="AURA" className="flex justify-center">
         <AuraMark size={40} />
       </Link>
       <WordHeadline
@@ -179,7 +180,7 @@ function CorporatePanel() {
 
   return (
     <GateShell video={VIDEOS.so}>
-      <Link href="/" aria-label="AURA" className="inline-flex">
+      <Link href="/" aria-label="AURA" className="flex justify-center">
         <AuraMark size={40} />
       </Link>
       <WordHeadline
