@@ -153,6 +153,13 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
   idempotent, `/onam/kanit`'te görünür), **"Süreci Sonlandır"** hastayı ana sekmeye döndürür. Rıza verilene dek asıl
   form **mount edilmez**. Metin ⚖️ **TASLAK** (`lib/ai-consent.ts`, `AI_CONSENT_VERSION` sürümlü). Ayrı migration
   gerektirmez (`ConsentRecord` scope zaten kompozit); `lib/consent.ts` scope-parametreli. (`lib/ai-consent.ts`)
+- **Simültane tercüme açık rızası (`AI_INTERPRET` scope, v6.5):** dijital bekleme odasında
+  (`components/PreConsultLobby.tsx` — cross-cutting; hem Talk `/gorusme/[id]` hem ikinci görüş
+  `SoVideoRoom` görüşmelerinin önünde → 4 kulvar tek noktadan) canlı görüşmeden **ÖNCE** ayrı rıza kapısı —
+  görüşme sesinin AI tarafından yalnız simültane tercüme için işleneceğini bildirir. **"Açık Rızam Vardır"**
+  rızayı aynı ispat altyapısıyla kaydeder (`POST /api/consent/ai-interpret`, idempotent), **"Süreci Sonlandır"**
+  hastayı ana sekmeye (`/vakalarim`) döndürür. Doktor görünümünde çıkmaz; rıza verilene dek kamera/mikrofon
+  izni istenmez. Metin ⚖️ **TASLAK** (`AI_INTERPRET_VERSION` sürümlü). Ayrı migration gerektirmez. (`lib/ai-consent.ts`)
 - **Değiştirilemez erişim denetimi (E2EE Faz 0):** klinik veriye her anlamlı erişim (vaka görüntüleme,
   klinik not, FHIR dışa aktarım, belge görüntüleme, **klinik kodlama / lab yazımı, AI belge analizi,
   epikriz üretimi**) `AccessLog`'a mühürlenir — append-only hash-zinciri + zaman damgası, küresel bir
@@ -242,7 +249,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `ai` | `soap` · `translate` · `discharge` (Claude) |
 | `i18n` | Arayüz çeviri (Translation cache) + `clinical` (klinik PHI de-id çeviri — önbelleksiz, maskeli) |
 | `realtime` | `token` (Gemini Live) · `ice` (TURN credentials — Cloudflare birincil, Metered yedek, OpenRelay son çare) · **`ably-token`** (WebRTC sinyalleşme — kanala-özel yalnız-subscribe token, API anahtarı sunucuda) |
-| `consent` · `access-log` | KVKK onam (`GENERAL_KVKK`) + **`consent/ai`** (AI işleme açık rızası `AI_TRIAGE` scope, v6.4) + `proof` (RFC 3161 kanıt) · erişim denetim kaydı (audit) |
+| `consent` · `access-log` | KVKK onam (`GENERAL_KVKK`) + **`consent/ai`** (AI işleme açık rızası `AI_TRIAGE` scope, v6.4) + **`consent/ai-interpret`** (simültane tercüme rızası `AI_INTERPRET` scope, v6.5) + `proof` (RFC 3161 kanıt) · erişim denetim kaydı (audit) |
 | `clinical` | `duty` — klinik nöbet/müsaitlik |
 | `second-opinion` | İkinci Görüş state machine işlemleri |
 | `free-care` | `apply`/`waiting`/`availability`/`doctor-feed`/`outcome`/`status` |
