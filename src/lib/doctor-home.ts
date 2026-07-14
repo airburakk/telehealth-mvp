@@ -1,12 +1,14 @@
 // M5 — Doktor Ana Sayfası pencere görünürlük kararı (tek kaynak).
 // Ana Sayfa UI'si ve onboarding kapısı bu yardımcıları ortak kullanır ki kurallar tek yerde dursun.
 //
-// 5 pencere:
+// 6 pencere:
 //   1) Klinik Nöbet      — HER doktorda (her zaman)
 //   2) İkinci Görüş (SO)  — yalnız Prof./Doç. ünvanlı doktorda (opt-in YOK, ünvan kapısı)
 //   3) Ücretsiz Sağlık Hizmeti          — yalnız freeCareOptIn=true (onboarding'de seçilir; sonra /doktor/profil'den açılabilir)
 //   4) Konsültasyon Tal. — yalnız consultOptIn=true (Partner doktordan gelen anonim talepler; yanıt başına ödeme)
-//   5) Haberler          — HER doktorda (her zaman)
+//   5) Sağlık Turizmi    — HER branş doktorunda (opt-in YOK): kendi branş havuzuna düşen sağlık turizmi
+//                          talepleri; doktor tanıtım mesajı + video randevu teklifi gönderir (2026-07-14)
+//   6) Haberler          — HER doktorda (her zaman)
 
 // İkinci Görüş ünvan kapısı: yalnız doçent/profesör.
 // Doctor.title değerleri: "Prof. Dr." | "Doç. Dr." | "Op. Dr." | "Uzm. Dr."
@@ -26,16 +28,18 @@ export interface PanelVisibility {
   so: boolean; // ünvan kapısı
   freeCare: boolean; // opt-in
   consult: boolean; // opt-in
+  tourism: true; // her branş doktoru — sağlık turizmi havuzu (branş bazlı)
   news: true; // her zaman
 }
 
-// Doktorun Ana Sayfa pencerelerinin görünürlüğü. duty + news her zaman; so ünvana, freeCare/consult opt-in'e bağlı.
+// Doktorun Ana Sayfa pencerelerinin görünürlüğü. duty + tourism + news her zaman; so ünvana, freeCare/consult opt-in'e bağlı.
 export function panelVisibility(doc: DoctorPanelFields): PanelVisibility {
   return {
     duty: true,
     so: soEligible(doc.title),
     freeCare: !!doc.freeCareOptIn,
     consult: !!doc.consultOptIn,
+    tourism: true,
     news: true,
   };
 }

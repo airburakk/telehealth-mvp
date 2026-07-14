@@ -363,6 +363,26 @@ model ConsultAppointment {
   @@index([branch, status])
 }
 
+/// Sağlık turizmi ilk-temas (2026-07-14): branş havuzundaki doktor → hastaya tanıtım mesajı
+/// + opsiyonel video randevu teklifi. ÇOKLU doktor aynı tourism-Case'e outreach yapabilir; hasta
+/// bekleme ekranında hepsini görür, bir video teklifini kabul eder → ConsultAppointment (CONFIRMED)
+/// + görüşme. Görüşme sonrası mevcut tedavi kararı → acente → escrow zinciri aynen sürer (ilk-temas
+/// katmanı; zincir bozulmaz). message PHI değil (doktor tanıtımı) → düz metin.
+model TourismOutreach {
+  id             String    @id @default(cuid())
+  caseId         String // tourism-Case (Case.id, journey=HEALTH_TOURISM)
+  doctorId       String // outreach yapan branş doktoru (Doctor.id)
+  message        String // doktorun tanıtım mesajı
+  proposedAt     DateTime? // önerilen video görüşme zamanı; null = yalnız mesaj
+  status         String    @default("SENT") // SENT | ACCEPTED | DECLINED | CANCELLED
+  consultationId String? // ACCEPTED + görüşme başlayınca oluşan Consultation.id
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([caseId])
+  @@index([doctorId, status])
+}
+
 /// Sağlık turizmi paketi rezervasyonu (Modül 3)
 model Booking {
   id                   String   @id @default(cuid())

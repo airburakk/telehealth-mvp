@@ -12,6 +12,7 @@ import { CheckCircle2, FileText, Stethoscope, Sparkles, Package, HeartPulse, Vid
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
 import { talkTrackerPhases, TALK_TRACKER_TEXTS } from "@/lib/talk-tracker";
 import { ConsultGate, type GateAppt } from "@/components/ConsultGate";
+import { TourismInbox } from "@/components/TourismInbox";
 import { gateAvailability } from "@/lib/clinical-duty";
 import { OfferView } from "@/components/OfferView";
 import { ReservationView } from "@/components/ReservationView";
@@ -62,20 +63,41 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
   // kendi kokpitinde de görür (/doktor/vaka/[id]) — buradaki gizleme yalnız hasta-yüzünü sadeleştirir.
   const isClinician = viewer?.role !== "PATIENT";
 
-  // 3-seçenek kapısı (§3.2): görüşme başlamadıysa ve branşta çevrimiçi doktor yoksa
+  // 3-seçenek kapısı (§3.2): görüşme başlamadıysa ve branşta çevrimiçi doktor yoksa.
+  // Sağlık turizmi (tourismPlan != null) FARKLI (2026-07-14): 3-seçenek/nöbetçi kapısı YOK →
+  // branş havuzu doktorlarının mesaj/teklifleri (TourismOutreach) beklenir. Bir teklif kabul
+  // edilip randevu onaylanınca her iki akışta da aynı "görüşmeye katıl" CTA'sı gösterilir.
+  const isTourism = !!c.tourismPlan;
   const resolved = ["IN_CONSULT", "DONE"].includes(c.status) || c.consultations.length > 0;
   let gate: { hasSentinel: boolean; hasIcapci: boolean; appointment: GateAppt | null } | null = null;
+  let tourismInbox: { id: string; doctorName: string; message: string; proposedAtLabel: string | null; status: string }[] | null = null;
   if (!resolved) {
     const appt = await db.consultAppointment.findUnique({ where: { caseId } });
-    const avail = await gateAvailability(c.branch);
     if (appt && appt.status !== "CANCELLED") {
+      const avail = isTourism ? { hasSentinel: false, hasIcapci: false } : await gateAvailability(c.branch);
       gate = {
         hasSentinel: avail.hasSentinel,
         hasIcapci: avail.hasIcapci,
         appointment: { status: appt.status, proposedAtLabel: appt.proposedAt ? formatDateTime(appt.proposedAt) : null },
       };
-    } else if (!avail.hasOnlineBranch) {
-      gate = { hasSentinel: avail.hasSentinel, hasIcapci: avail.hasIcapci, appointment: null };
+    } else if (isTourism) {
+      const rawOut = await db.tourismOutreach.findMany({ where: { caseId }, orderBy: { createdAt: "desc" }, take: 50 });
+      const docIds = [...new Set(rawOut.map((o) => o.doctorId))];
+      const docs = docIds.length ? await db.doctor.findMany({ where: { id: { in: docIds } }, select: { id: true, name: true, title: true } }) : [];
+      const docMap = new Map(docs.map((d) => [d.id, d]));
+      tourismInbox = rawOut.map((o) => {
+        const d = docMap.get(o.doctorId);
+        return {
+          id: o.id,
+          doctorName: `${d?.title ?? ""} ${d?.name ?? "Doktor"}`.trim(),
+          message: o.message,
+          proposedAtLabel: o.proposedAt ? formatDateTime(o.proposedAt) : null,
+          status: o.status,
+        };
+      });
+    } else {
+      const avail = await gateAvailability(c.branch);
+      if (!avail.hasOnlineBranch) gate = { hasSentinel: avail.hasSentinel, hasIcapci: avail.hasIcapci, appointment: null };
     }
   }
 
@@ -139,6 +161,11 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
         // Kapı: branşta çevrimiçi doktor yok → 3 seçenek (veya süren randevu akışı)
         <div className="mt-4">
           <ConsultGate caseId={c.id} lang={c.language} hasSentinel={gate.hasSentinel} hasIcapci={gate.hasIcapci} appointment={gate.appointment} />
+        </div>
+      ) : tourismInbox ? (
+        // Sağlık turizmi: branş havuzu doktorlarının mesaj/teklifleri (3-seçenek yok)
+        <div className="mt-4">
+          <TourismInbox caseId={c.id} branchLabel={t(branchLabel)} country={c.country} outreaches={tourismInbox} />
         </div>
       ) : (
         <div className="mt-4 rounded-3xl border border-emerald-400/25 bg-emerald-500/10 p-5 flex items-start gap-3">

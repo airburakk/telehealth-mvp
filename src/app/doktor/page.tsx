@@ -13,7 +13,7 @@ import { openCountForDoctor } from "@/lib/consultation-requests";
 import { newsForBranch, NEWS_KIND_LABEL, type NewsItem } from "@/lib/medical-news";
 import { NotifyChannelCard } from "@/components/NotifyChannelCard";
 import { decryptField } from "@/lib/crypto";
-import { Stethoscope, ArrowRight, Activity, HeartHandshake, Inbox, Newspaper, ChevronLeft, ChevronRight } from "lucide-react";
+import { Stethoscope, ArrowRight, Activity, HeartHandshake, Inbox, Newspaper, ChevronLeft, ChevronRight, Plane } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +57,7 @@ export default async function DoctorPanel({
   // Pencere görünürlüğü (doktor yoksa = personel: duty[tümü] + SO[gözetim] + haberler).
   const vis = doctor
     ? panelVisibility(doctor)
-    : { duty: true as const, so: true, freeCare: false, consult: false, news: true as const };
+    : { duty: true as const, so: true, freeCare: false, consult: false, tourism: true as const, news: true as const };
 
   // ── Panel 1: Klinik Nöbet — yalnız bu doktorla eşleşen vakalar (personelde tümü, sayfalı) ──
   let casePage = 1;
@@ -150,6 +150,11 @@ export default async function DoctorPanel({
 
   // ── Panel 4: açık konsültasyon talebi sayısı (genel havuz + kendi branşı) ──
   const consultOpen = vis.consult && doctor ? await openCountForDoctor(doctor.branch) : 0;
+
+  // ── Sağlık Turizmi havuzu (branş bazlı, yeni talepler) ──
+  const tourismPool = vis.tourism && doctor
+    ? await db.case.count({ where: { branch: doctor.branch, tourismPlan: { not: null }, status: "NEW" } })
+    : 0;
 
   // ── Panel 5: Haberler ──
   const news = newsForBranch(doctor?.branch);
@@ -261,6 +266,20 @@ export default async function DoctorPanel({
           >
             <Link href="/doktor/konsultasyon" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#6d75e0] hover:underline">
               Konsültasyon kutusunu aç <ArrowRight size={15} />
+            </Link>
+          </DashboardPanel>
+        )}
+
+        {vis.tourism && (
+          <DashboardPanel
+            icon={<Plane size={18} />}
+            title="Sağlık Turizmi"
+            subtitle={doctor?.branch ? `${doctor.branch} branşı yurtdışı hasta talepleri` : "Yurtdışı hasta talepleri"}
+            accent="var(--c-accent)"
+            badge={tourismPool > 0 ? <span className="rounded-full bg-[var(--c-accent)]/15 px-2.5 py-1 text-xs font-bold text-[var(--c-accent-stronger)]">{tourismPool} yeni talep</span> : undefined}
+          >
+            <Link href="/doktor/saglik-turizmi" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--c-accent-stronger)] hover:underline">
+              Sağlık turizmi havuzunu aç <ArrowRight size={15} />
             </Link>
           </DashboardPanel>
         )}
