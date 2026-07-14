@@ -1,18 +1,20 @@
 "use client";
 
+import { HeartPulse, Brain, Bone, Sparkles, Baby, Stethoscope, type LucideIcon } from "lucide-react";
 import { useLang } from "@/lib/aura-landing/i18n";
 
-// Doktorlar v3 (sandwich gündüz gövdesi): beyaz zeminde yatay portre şeridi.
-// Her karta branşına göre pastel ÜST ŞERİT (renk-kodu) + branş metni o rengin
-// koyu tonunda (beyazda AA). Portreler açık temada tam renkli (gece duotone
-// katmanı kaldırıldı). Doğal yatay scroll + snap (mobil dostu).
-const DOCTOR_ACCENTS = [
-  { strip: "#0e7d8c", ink: "#0b6673" }, // turkuaz (AURA marka)
-  { strip: "#3f82c4", ink: "#2f6091" }, // mavi
-  { strip: "#d4749f", ink: "#9c5478" }, // pembe
-  { strip: "#d79a3c", ink: "#8a6524" }, // altın
-  { strip: "#8b6fb0", ink: "#654a8c" }, // mor
-];
+// Doktorlar v4 (sandwich gündüz gövdesi): beyaz zeminde yatay portre şeridi. Her karta branşının
+// SEMANTİK rengi + lucide branş ikonu (platform BranchAvatar ile TEK TİP — vitrin↔platform görsel
+// birliği, 2026-07-13). Portre köşesinde branş rozeti; üst şerit + branş adı branş renginde.
+// Renkler landing'de doğrudan hex (var(--c-*) token'ları .aura-page altında tanımsız → hex şart).
+const DOC_BRAND: Record<string, { color: string; Icon: LucideIcon }> = {
+  "doc-cardio": { color: "#E5484D", Icon: HeartPulse }, // kardiyoloji — kırmızı
+  "doc-neuro": { color: "#6E56CF", Icon: Brain }, // nöroloji — mor/indigo
+  "doc-ortho": { color: "#3E63DD", Icon: Bone }, // ortopedi — mavi
+  "doc-derm": { color: "#E5720A", Icon: Sparkles }, // dermatoloji — amber
+  "doc-ivf": { color: "#12A594", Icon: Baby }, // tüp bebek — turkuaz
+};
+const DOC_FALLBACK = { color: "#17919e", Icon: Stethoscope };
 
 export function AuraDoctors() {
   const { t } = useLang();
@@ -33,26 +35,36 @@ export function AuraDoctors() {
           className="absolute left-0 right-0 top-[131px] h-px bg-[var(--aura-accent)]/40"
         />
         <div className="flex snap-x snap-mandatory gap-6 overflow-x-auto px-5 pb-4 md:px-8 [scrollbar-width:thin]">
-          {t.doctors.list.map((d, i) => {
-            const a = DOCTOR_ACCENTS[i % DOCTOR_ACCENTS.length];
+          {t.doctors.list.map((d) => {
+            const brand = DOC_BRAND[d.img] ?? DOC_FALLBACK;
+            const Icon = brand.Icon;
+            // Branş adı beyaz sandwich zemininde okunsun diye branş renginin koyu tonu (AA).
+            const fieldInk = `color-mix(in srgb, ${brand.color}, #000 26%)`;
             return (
               <article
                 key={d.img}
                 className="group relative w-60 flex-none snap-start overflow-hidden rounded-xl border border-[var(--aura-hairline)] bg-[var(--aura-panel)] transition-transform duration-300 hover:-translate-y-1"
               >
                 {/* Branş renk-kodu şeridi (kart üstü) */}
-                <div aria-hidden className="h-[3px] w-full" style={{ background: a.strip }} />
-                <div className="h-64 overflow-hidden">
+                <div aria-hidden className="h-[3px] w-full" style={{ background: brand.color }} />
+                <div className="relative h-64 overflow-hidden">
                   <img
                     src={`/assets/${d.img}.jpg`}
                     alt={d.name}
                     className="h-full w-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-[1.03] group-hover:opacity-100"
                     loading="lazy"
                   />
+                  {/* Branş rozeti — platform lucide ikonuyla TEK TİP; branş renginde dolu daire */}
+                  <span
+                    className="absolute bottom-3 left-3 grid h-9 w-9 place-items-center rounded-full ring-1 ring-white/25 shadow-lg"
+                    style={{ background: brand.color }}
+                  >
+                    <Icon size={18} className="text-white" strokeWidth={2.2} />
+                  </span>
                 </div>
                 <div className="p-4">
                   <p className="aura-display text-base font-bold leading-tight">{d.name}</p>
-                  <p className="aura-mono mt-1.5 text-[12px]" style={{ color: a.ink }}>
+                  <p className="aura-mono mt-1.5 text-[12px]" style={{ color: fieldInk }}>
                     {d.field}
                   </p>
                 </div>

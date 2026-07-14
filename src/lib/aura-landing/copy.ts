@@ -184,9 +184,30 @@ export const COPY = {
         { value: 4.9, suffix: "", label: "rating" },
       ],
       footnote: "* demo data",
-      quote: "From the first video call to the follow-ups at home, everything was organised.",
-      attribName: "James W.",
-      attribRole: "Hair transplant, London",
+      quotes: [
+        { quote: "From the first video call to the follow-ups at home, everything was organised.", name: "James W.", role: "Hair transplant, London" },
+        { quote: "An independent second opinion confirmed my diagnosis — I finally felt sure.", name: "Sofia M.", role: "Second opinion, Berlin" },
+        { quote: "I saw a specialist by video the same week, without leaving home.", name: "Karim A.", role: "Cardiology consult, Dubai" },
+      ],
+    },
+    howItWorks: {
+      headline: "How it works",
+      note: "Four steps, one continuous journey.",
+      steps: [
+        { title: "Tell us", desc: "Describe your symptoms or goal in your own language." },
+        { title: "AI matches", desc: "Smart triage routes you to the right specialist in minutes." },
+        { title: "Video consult", desc: "Meet your doctor over secure video, with live interpretation." },
+        { title: "Follow-up", desc: "Reports, recovery checks and aftercare — all from home." },
+      ],
+      cta: "See the full walkthrough",
+    },
+    transparency: {
+      headline: "Care you can trust",
+      items: [
+        { title: "Encrypted end to end", desc: "Your data is protected under KVKK & GDPR, encrypted at rest." },
+        { title: "Transparent pricing", desc: "Clear costs before you commit — no surprises." },
+        { title: "Independent opinions", desc: "Second opinions come from accredited, unaffiliated specialists." },
+      ],
     },
     closing: {
       headline: "Ready when you are.",
@@ -373,9 +394,30 @@ export const COPY = {
         { value: 4.9, suffix: "", label: "puan" },
       ],
       footnote: "* demo verisi",
-      quote: "İlk video görüşmesinden evdeki takiplere kadar her şey organizeydi.",
-      attribName: "James W.",
-      attribRole: "Saç ekimi, Londra",
+      quotes: [
+        { quote: "İlk video görüşmesinden evdeki takiplere kadar her şey organizeydi.", name: "James W.", role: "Saç ekimi, Londra" },
+        { quote: "Bağımsız ikinci görüş tanımı doğruladı — sonunda içim rahat etti.", name: "Sofia M.", role: "İkinci görüş, Berlin" },
+        { quote: "Uzmanla aynı hafta, evden çıkmadan video görüşme yaptım.", name: "Karim A.", role: "Kardiyoloji görüşmesi, Dubai" },
+      ],
+    },
+    howItWorks: {
+      headline: "Nasıl çalışır",
+      note: "Dört adım, tek kesintisiz yolculuk.",
+      steps: [
+        { title: "Anlatın", desc: "Şikayetinizi veya hedefinizi kendi dilinizde anlatın." },
+        { title: "Yapay zeka eşleştirir", desc: "Akıllı triyaj sizi dakikalar içinde doğru uzmana yönlendirir." },
+        { title: "Video görüşme", desc: "Doktorunuzla güvenli video ve canlı çeviriyle görüşün." },
+        { title: "Takip", desc: "Raporlar, iyileşme kontrolleri ve bakım — hepsi evden." },
+      ],
+      cta: "Tüm adımları görün",
+    },
+    transparency: {
+      headline: "Güvenebileceğiniz sağlık hizmeti",
+      items: [
+        { title: "Uçtan uca şifreli", desc: "Verileriniz KVKK & GDPR kapsamında, at-rest şifreli korunur." },
+        { title: "Şeffaf fiyatlandırma", desc: "Karar vermeden önce net maliyet — sürpriz yok." },
+        { title: "Bağımsız görüşler", desc: "İkinci görüşler akredite, bağımsız uzmanlardan gelir." },
+      ],
     },
     closing: {
       headline: "Siz hazır olduğunuzda.",
@@ -513,9 +555,30 @@ export const COPY = {
         { value: 4.9, suffix: "", label: "Bewertung" },
       ],
       footnote: "* Demodaten",
-      quote: "Vom ersten Videogespräch bis zur Nachsorge zu Hause war alles organisiert.",
-      attribName: "James W.",
-      attribRole: "Haartransplantation, London",
+      quotes: [
+        { quote: "Vom ersten Videogespräch bis zur Nachsorge zu Hause war alles organisiert.", name: "James W.", role: "Haartransplantation, London" },
+        { quote: "Eine unabhängige Zweitmeinung bestätigte meine Diagnose — endlich Gewissheit.", name: "Sofia M.", role: "Zweitmeinung, Berlin" },
+        { quote: "Noch in derselben Woche sprach ich per Video mit einem Facharzt, von zu Hause aus.", name: "Karim A.", role: "Kardiologie-Beratung, Dubai" },
+      ],
+    },
+    howItWorks: {
+      headline: "So funktioniert es",
+      note: "Vier Schritte, eine durchgehende Reise.",
+      steps: [
+        { title: "Erzählen Sie uns", desc: "Beschreiben Sie Ihre Beschwerden oder Ihr Ziel in Ihrer Sprache." },
+        { title: "KI vermittelt", desc: "Intelligente Triage leitet Sie in Minuten zum richtigen Facharzt." },
+        { title: "Videosprechstunde", desc: "Treffen Sie Ihren Arzt per sicherem Video mit Live-Dolmetschen." },
+        { title: "Nachsorge", desc: "Berichte, Genesungskontrollen und Betreuung — alles von zu Hause." },
+      ],
+      cta: "Zur vollständigen Anleitung",
+    },
+    transparency: {
+      headline: "Versorgung, der Sie vertrauen können",
+      items: [
+        { title: "Ende-zu-Ende verschlüsselt", desc: "Ihre Daten sind nach KVKK & DSGVO geschützt, ruhend verschlüsselt." },
+        { title: "Transparente Preise", desc: "Klare Kosten, bevor Sie sich entscheiden — keine Überraschungen." },
+        { title: "Unabhängige Meinungen", desc: "Zweitmeinungen von akkreditierten, unabhängigen Fachärzten." },
+      ],
     },
     closing: { headline: "Bereit, wenn Sie es sind.", cta: "Arzt sprechen" },
     footer: {
@@ -625,9 +688,30 @@ export const COPY = {
         { value: 4.9, suffix: "", label: "note" },
       ],
       footnote: "* données de démonstration",
-      quote: "Du premier appel vidéo aux suivis à domicile, tout était organisé.",
-      attribName: "James W.",
-      attribRole: "Greffe de cheveux, Londres",
+      quotes: [
+        { quote: "Du premier appel vidéo aux suivis à domicile, tout était organisé.", name: "James W.", role: "Greffe de cheveux, Londres" },
+        { quote: "Un deuxième avis indépendant a confirmé mon diagnostic — enfin rassuré.", name: "Sofia M.", role: "Deuxième avis, Berlin" },
+        { quote: "J'ai consulté un spécialiste en vidéo la même semaine, sans quitter la maison.", name: "Karim A.", role: "Consultation cardiologie, Dubaï" },
+      ],
+    },
+    howItWorks: {
+      headline: "Comment ça marche",
+      note: "Quatre étapes, un parcours continu.",
+      steps: [
+        { title: "Expliquez-nous", desc: "Décrivez vos symptômes ou votre objectif dans votre langue." },
+        { title: "L'IA vous oriente", desc: "Un triage intelligent vous dirige vers le bon spécialiste en minutes." },
+        { title: "Consultation vidéo", desc: "Rencontrez votre médecin en vidéo sécurisée, avec interprétation en direct." },
+        { title: "Suivi", desc: "Comptes rendus, contrôles de récupération et soins — depuis chez vous." },
+      ],
+      cta: "Voir le parcours complet",
+    },
+    transparency: {
+      headline: "Des soins dignes de confiance",
+      items: [
+        { title: "Chiffré de bout en bout", desc: "Vos données sont protégées par KVKK et RGPD, chiffrées au repos." },
+        { title: "Tarifs transparents", desc: "Des coûts clairs avant de vous engager — aucune surprise." },
+        { title: "Avis indépendants", desc: "Les deuxièmes avis proviennent de spécialistes accrédités et indépendants." },
+      ],
     },
     closing: { headline: "Prêts quand vous l'êtes.", cta: "Consulter un médecin" },
     footer: {
@@ -737,9 +821,30 @@ export const COPY = {
         { value: 4.9, suffix: "", label: "рейтинг" },
       ],
       footnote: "* демо-данные",
-      quote: "От первого видеозвонка до наблюдения дома — всё было организовано.",
-      attribName: "James W.",
-      attribRole: "Пересадка волос, Лондон",
+      quotes: [
+        { quote: "От первого видеозвонка до наблюдения дома — всё было организовано.", name: "James W.", role: "Пересадка волос, Лондон" },
+        { quote: "Независимое второе мнение подтвердило диагноз — я наконец успокоилась.", name: "Sofia M.", role: "Второе мнение, Берлин" },
+        { quote: "Я поговорил со специалистом по видео в ту же неделю, не выходя из дома.", name: "Karim A.", role: "Консультация кардиолога, Дубай" },
+      ],
+    },
+    howItWorks: {
+      headline: "Как это работает",
+      note: "Четыре шага, один непрерывный путь.",
+      steps: [
+        { title: "Расскажите нам", desc: "Опишите симптомы или цель на своём языке." },
+        { title: "ИИ подбирает", desc: "Умная сортировка направит вас к нужному специалисту за минуты." },
+        { title: "Видеоконсультация", desc: "Встреча с врачом по защищённому видео с живым переводом." },
+        { title: "Наблюдение", desc: "Отчёты, контроль восстановления и уход — всё из дома." },
+      ],
+      cta: "Посмотреть весь процесс",
+    },
+    transparency: {
+      headline: "Медицина, которой можно доверять",
+      items: [
+        { title: "Сквозное шифрование", desc: "Ваши данные защищены по KVKK и GDPR, шифруются при хранении." },
+        { title: "Прозрачные цены", desc: "Понятная стоимость до решения — без сюрпризов." },
+        { title: "Независимые мнения", desc: "Второе мнение от аккредитованных независимых специалистов." },
+      ],
     },
     closing: { headline: "Мы готовы, когда готовы вы.", cta: "Поговорить с врачом" },
     footer: {
@@ -849,9 +954,30 @@ export const COPY = {
         { value: 4.9, suffix: "", label: "التقييم" },
       ],
       footnote: "* بيانات تجريبية",
-      quote: "من أول مكالمة فيديو إلى المتابعة في المنزل، كان كل شيء منظمًا.",
-      attribName: "James W.",
-      attribRole: "زراعة شعر، لندن",
+      quotes: [
+        { quote: "من أول مكالمة فيديو إلى المتابعة في المنزل، كان كل شيء منظمًا.", name: "James W.", role: "زراعة شعر، لندن" },
+        { quote: "رأي ثانٍ مستقل أكّد تشخيصي — شعرت أخيرًا بالاطمئنان.", name: "Sofia M.", role: "رأي ثانٍ، برلين" },
+        { quote: "تحدثت مع أخصائي عبر الفيديو في الأسبوع نفسه دون مغادرة المنزل.", name: "Karim A.", role: "استشارة قلب، دبي" },
+      ],
+    },
+    howItWorks: {
+      headline: "كيف يعمل",
+      note: "أربع خطوات، رحلة واحدة متواصلة.",
+      steps: [
+        { title: "أخبرنا", desc: "صِف أعراضك أو هدفك بلغتك." },
+        { title: "الذكاء الاصطناعي يوجّهك", desc: "فرز ذكي يوجّهك إلى الأخصائي المناسب خلال دقائق." },
+        { title: "استشارة فيديو", desc: "قابل طبيبك عبر فيديو آمن مع ترجمة فورية." },
+        { title: "المتابعة", desc: "التقارير وفحوص التعافي والرعاية — كلها من المنزل." },
+      ],
+      cta: "شاهد الدليل الكامل",
+    },
+    transparency: {
+      headline: "رعاية تثق بها",
+      items: [
+        { title: "مشفّر من الطرف إلى الطرف", desc: "بياناتك محمية وفق KVKK و GDPR، ومشفّرة أثناء التخزين." },
+        { title: "أسعار شفافة", desc: "تكاليف واضحة قبل الالتزام — دون مفاجآت." },
+        { title: "آراء مستقلة", desc: "الآراء الثانية من أخصائيين معتمدين ومستقلين." },
+      ],
     },
     closing: { headline: "جاهزون متى كنت جاهزًا.", cta: "تحدث إلى طبيب" },
     footer: {
@@ -961,9 +1087,30 @@ export const COPY = {
         { value: 4.9, suffix: "", label: "امتیاز" },
       ],
       footnote: "* داده نمایشی",
-      quote: "از اولین تماس تصویری تا پیگیری‌های خانه، همه چیز منظم بود.",
-      attribName: "James W.",
-      attribRole: "کاشت مو، لندن",
+      quotes: [
+        { quote: "از اولین تماس تصویری تا پیگیری‌های خانه، همه چیز منظم بود.", name: "James W.", role: "کاشت مو، لندن" },
+        { quote: "یک نظر دوم مستقل تشخیص مرا تأیید کرد — بالاخره خیالم راحت شد.", name: "Sofia M.", role: "نظر دوم، برلین" },
+        { quote: "همان هفته بدون خروج از خانه با یک متخصص به‌صورت تصویری صحبت کردم.", name: "Karim A.", role: "مشاوره قلب، دبی" },
+      ],
+    },
+    howItWorks: {
+      headline: "چگونه کار می‌کند",
+      note: "چهار گام، یک سفر پیوسته.",
+      steps: [
+        { title: "به ما بگویید", desc: "علائم یا هدف خود را به زبان خودتان شرح دهید." },
+        { title: "هوش مصنوعی هدایت می‌کند", desc: "غربالگری هوشمند شما را در چند دقیقه به متخصص مناسب می‌رساند." },
+        { title: "مشاوره ویدیویی", desc: "با پزشک خود از طریق ویدیوی امن و ترجمه زنده ملاقات کنید." },
+        { title: "پیگیری", desc: "گزارش‌ها، بررسی‌های بهبود و مراقبت — همه از خانه." },
+      ],
+      cta: "مشاهده راهنمای کامل",
+    },
+    transparency: {
+      headline: "مراقبتی که می‌توانید به آن اعتماد کنید",
+      items: [
+        { title: "رمزگذاری سرتاسری", desc: "داده‌های شما تحت KVKK و GDPR محافظت و در حالت ذخیره رمزگذاری می‌شوند." },
+        { title: "قیمت‌گذاری شفاف", desc: "هزینه‌های روشن پیش از تعهد — بدون غافلگیری." },
+        { title: "نظرات مستقل", desc: "نظر دوم از متخصصان معتبر و مستقل ارائه می‌شود." },
+      ],
     },
     closing: { headline: "هر وقت آماده بودید، ما هستیم.", cta: "با پزشک صحبت کنید" },
     footer: {
@@ -1073,9 +1220,30 @@ export const COPY = {
         { value: 4.9, suffix: "", label: "reytinq" },
       ],
       footnote: "* demo verilənləri",
-      quote: "İlk video zəngdən evdəki izləmələrə qədər hər şey mütəşəkkil idi.",
-      attribName: "James W.",
-      attribRole: "Saç əkimi, London",
+      quotes: [
+        { quote: "İlk video zəngdən evdəki izləmələrə qədər hər şey mütəşəkkil idi.", name: "James W.", role: "Saç əkimi, London" },
+        { quote: "Müstəqil ikinci rəy diaqnozumu təsdiqlədi — nəhayət arxayın oldum.", name: "Sofia M.", role: "İkinci rəy, Berlin" },
+        { quote: "Həmin həftə evdən çıxmadan mütəxəssislə video ilə danışdım.", name: "Karim A.", role: "Kardiologiya məsləhəti, Dubay" },
+      ],
+    },
+    howItWorks: {
+      headline: "Necə işləyir",
+      note: "Dörd addım, bir davamlı yolçuluq.",
+      steps: [
+        { title: "Bizə danışın", desc: "Şikayətinizi və ya hədəfinizi öz dilinizdə təsvir edin." },
+        { title: "Sİ uyğunlaşdırır", desc: "Ağıllı triyaj sizi dəqiqələr içində doğru mütəxəssisə yönləndirir." },
+        { title: "Video görüş", desc: "Həkiminizlə təhlükəsiz video və canlı tərcümə ilə görüşün." },
+        { title: "İzləmə", desc: "Hesabatlar, sağalma yoxlamaları və qulluq — hamısı evdən." },
+      ],
+      cta: "Tam təlimatı görün",
+    },
+    transparency: {
+      headline: "Etibar edə biləcəyiniz qayğı",
+      items: [
+        { title: "Uçtan-uca şifrələnmiş", desc: "Məlumatlarınız KVKK və GDPR çərçivəsində qorunur, saxlanarkən şifrələnir." },
+        { title: "Şəffaf qiymət", desc: "Qərar verməzdən əvvəl aydın xərclər — sürpriz yox." },
+        { title: "Müstəqil rəylər", desc: "İkinci rəy akkreditə olunmuş müstəqil mütəxəssislərdən gəlir." },
+      ],
     },
     closing: { headline: "Siz hazır olanda.", cta: "Həkimlə görüş" },
     footer: {

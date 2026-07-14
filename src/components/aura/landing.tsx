@@ -4,6 +4,8 @@ import { AuraChapters } from "./chapters";
 import { AuraClosing } from "./closing";
 import { AuraDoctors } from "./doctors";
 import { AuraHero } from "./hero";
+import { AuraHowItWorks } from "./how";
+import { AuraTransparency } from "./transparency";
 import { SmoothScroll } from "./motion";
 import { AuraNav } from "./nav";
 import { AuraTrust } from "./trust";
@@ -37,10 +39,13 @@ function LandingShell() {
         <AuraHero />
         <AuraChapters />
         {/* Sandwich gövdesi: gece bantların arasındaki gündüz şeridi. Wrapper
-            aura-light → içteki aura-* açık değerlere geçer; bg beyaz. */}
+            aura-light → içteki aura-* açık değerlere geçer; bg beyaz. Akış:
+            nasıl çalışır (nasıl) → doktorlar (kim) → güven (kanıt) → şeffaflık (güvence). */}
         <div className="aura-light bg-[var(--aura-bg)]">
+          <AuraHowItWorks />
           <AuraDoctors />
           <AuraTrust />
+          <AuraTransparency />
         </div>
         <AuraClosing />
       </main>
