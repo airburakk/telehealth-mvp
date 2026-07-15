@@ -327,6 +327,13 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
 - **Rate-limit (v4.18):** Upstash Redis birincil (dağıtık/atomik; login 10/5dk/IP · paylaşım-şifre
   10/5dk/IP+link · AI 20/dk/kullanıcı), env yoksa/hatada in-memory yedek (fail-open). Env:
   `UPSTASH_REDIS_REST_URL/TOKEN`.
+- **Veri ikametgâhı — işlem bölgesi `fra1` (v6.10):** `vercel.json` `"regions": ["fra1"]` (Frankfurt).
+  **Neden:** Neon veritabanı **`eu-central-1` (Frankfurt)**; Vercel varsayılanı ise `iad1` (Washington DC)
+  idi → PHI AB'de saklanıyor ama **her istekte ABD'de işleniyordu** (şifre orada çözülür) = gereksiz
+  uluslararası aktarım + her sorgu Atlantik'i geçiyordu. `fra1` ikisini aynı yere koyar: **veri uçtan uca
+  AB'de** + DB gecikmesi düşer. ⚠️ **Bölgeyi değiştirmeden önce Neon bölgesini kontrol et** — ikisi ayrı
+  düşerse hem gecikme hem aktarım yükü geri gelir. AB dışına taşımak KVKK/GDPR aktarım analizi gerektirir.
+  (Bölge dışı sağlayıcılar ayrı konu: AI çağrıları — bkz. AI veri-minimizasyonu.)
 - **Doktor veri dürüstlüğü (v4.19):** rating/successRate/experienceYears/jci nullable + default'sız
   (uydurma pazarlama varsayılanı yok); `verified` default false; public profil `/hekim/[id]`
   verified-kapılı; üretilmiş yorumlar "örnek değerlendirme" etiketli; eşleştirme skoru boş metriği
