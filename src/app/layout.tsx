@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { PwaRegister } from "@/components/PwaRegister";
 import { MasterBar } from "@/components/MasterBar";
+import { AuraAnimPause } from "@/components/aura/anim-pause";
 import { getCurrentUser } from "@/lib/auth";
 import { isMaster } from "@/lib/master";
 import { db } from "@/lib/db";
@@ -12,10 +13,23 @@ import { SITE_URL } from "@/lib/aura-landing/seo";
 
 // Uygulama geneli tipografi — vitrin (aura-health) ile aynı aile: Inter gövde + Space Grotesk
 // display (--font-serif değişken adı tarihsel; display yuvası olarak kullanılır) + JetBrains Mono
-// mikro/durak. Inter, Hanken'in aksine Kiril kapsar (RU pazarı markalı kalır; Arapça hâlâ fallback).
+// mikro/durak. `subsets` YALNIZ PRELOAD'u belirler — @font-face kuralları diğer subset'leri de
+// içerir ve unicode-range ile talep üzerine iner. Inter Kiril kapsar → RU/KK/KY markalı (ölçüldü
+// 2026-07-15: gerçek Inter face'i U+400-45F'i kapsıyor). Space Grotesk Kiril kapsamaz → RU
+// başlıkları fallback (kabul; Google Fonts'ta Kiril subset'i yok).
 const sans = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-sans", display: "swap" });
 const serif = Space_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "600", "700"], variable: "--font-serif", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-mono", display: "swap" });
+// Arapça/Farsça (v6.9): Inter/Space Grotesk/JetBrains Mono'nun HİÇBİRİ Arap alfabesini kapsamıyordu
+// → ar/fa denetimsiz sistem fallback'indeydi (tasarım sistemi kuralı: öncelikli RTL pazarları
+// kontrolsüz fallback'e bırakılmaz). Noto Sans Arabic gövde VE başlıkta kullanılır (kullanıcı kararı;
+// Space Grotesk'in Arapça muadili yok).
+//
+// `preload: false` KASITLI: 8 dilin yalnız 2'si bu fontu kullanır → Latin kullanıcıya indirilmez;
+// tarayıcı yalnız Arapça glif çizilecekse çeker (ar/fa'da "loaded", diğer dillerde hiç istenmez —
+// ölçüldü). Yığına genel olarak DEĞİL, `:lang(ar)/:lang(fa)` altında bağlanır — nedeni globals.css'te
+// (next/font'un "<Aile> Fallback" face'i U+0-10FFFF kapsar ve sıralamayı iki yönlü bozar).
+const arabic = Noto_Sans_Arabic({ subsets: ["arabic"], variable: "--font-arabic", display: "swap", preload: false });
 
 export const metadata: Metadata = {
   // metadataBase: canonical + OpenGraph göreli URL'lerini mutlaklaştırır (yoksa Next uyarı verir).
@@ -48,9 +62,12 @@ export default async function RootLayout({
   // Tam birleşme (2026-07-12): nav journey'ye bakmaz — hasta nav'ı herkes için aynı,
   // patientJourney sorgusu layout'tan kalktı.
   return (
-    <html lang="tr" className={`theme-light h-full antialiased ${sans.variable} ${serif.variable} ${mono.variable}`}>
+    <html lang="tr" className={`theme-light h-full antialiased ${sans.variable} ${serif.variable} ${mono.variable} ${arabic.variable}`}>
       <body className="min-h-full flex flex-col">
         <PwaRegister />
+        {/* Ekran dışına çıkan sürekli dekoratif animasyonları duraklatır. Kökte: landing'in
+            yanı sıra uygulama içi Header/spinner sembollerini de kapsar. Render etmez (null). */}
+        <AuraAnimPause />
         <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} />
         {user?.imp ? <MasterBar mode="impersonating" userName={user.name} /> : isMaster(user) ? <MasterBar mode="master" /> : null}
         <main className="flex-1">{children}</main>

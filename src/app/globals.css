@@ -111,6 +111,34 @@ body {
   font-family: var(--font-sans), "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
 }
 
+/* ── Arapça / Farsça tipografi (v6.9) ──────────────────────────────────────────
+ * SORUN: Inter · Space Grotesk · JetBrains Mono'nun hiçbiri Arap alfabesini kapsamıyor
+ * → ar/fa denetimsiz SİSTEM fontuna düşüyordu (tasarım sistemi: öncelikli RTL pazarları
+ * kontrolsüz fallback'e bırakılmaz).
+ *
+ * 🪤 NEDEN GENEL YIĞINA EKLENMEDİ (ölçümle bulundu 2026-07-15): next/font her aileye
+ * metrik-ayarlı bir "<Aile> Fallback" (local sistem fontu) üretir, CSS DEĞİŞKENİNE gömer
+ * ve o face'in unicode-range'i U+0-10FFFF = HER ŞEY. Sonuç iki yönlü kapan:
+ *   - --font-arabic yığında SONRA ise → önündeki "Inter Fallback" (Segoe UI) Arapçayı
+ *     kapar, Noto hiç indirilmez (font durumu "unloaded" ile doğrulandı);
+ *   - --font-arabic yığında ÖNCE ise → "Noto Sans Arabic Fallback" Latin'i Inter'den çalar.
+ * `adjustFontFallback: false` bu sürümde değişkeni değiştirmiyor → sıralamayla çözülemez.
+ *
+ * ÇÖZÜM: dile göre kapsamla. Arapça ailesi YALNIZ ar/fa içeriğinde ve orada en başta;
+ * Latin yüzeyler yığına hiç dokunulmadığı için etkilenmez. :lang() dil alt-etiketiyle
+ * eşleşir ("ar-SA" → :lang(ar) ✓) ve alt ağaca kalıtılır.
+ * ⚠️ Çalışması `lang` niteliğine bağlı: landing/how-it-works konteynerleri + JourneyIntakeShell
+ * verir. ar/fa çizen YENİ bir yüzey eklerken `lang` vermeyi UNUTMA (yoksa sessizce
+ * sistem fontuna düşer — tsc/build yakalamaz). */
+:lang(ar),
+:lang(fa) {
+  font-family: var(--font-arabic), var(--font-sans), "Segoe UI", system-ui, sans-serif;
+  /* Landing token'ları da burada yeniden tanımlanır → alt ağaçta var() bu değeri çözer. */
+  --aura-font-display: var(--font-arabic), var(--font-serif), ui-sans-serif, system-ui, sans-serif;
+  --aura-font-sans: var(--font-arabic), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --aura-font-mono: var(--font-arabic), var(--font-mono), ui-monospace, monospace;
+}
+
 * {
   -webkit-tap-highlight-color: transparent;
 }
@@ -439,6 +467,13 @@ body {
   .aura-sym-pulse {
     animation: none !important;
   }
+}
+
+/* Ekran dışı duraklatma (v6.9) — sınıfı AuraAnimPause'un tek global IntersectionObserver'ı
+   uygular/kaldırır. `paused` (none değil): eleman geri görününce animasyon kaldığı kareden
+   sürer, baştan zıplamaz. Sürekli dekoratif hareket görünmezken CPU/GPU yakmaz. */
+.aura-anim-paused {
+  animation-play-state: paused !important;
 }
 
 /* Yazdırma: gece teması kağıtta mürekkep felaketi olur — zemin/metni açığa zorla.

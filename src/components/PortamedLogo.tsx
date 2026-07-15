@@ -88,6 +88,10 @@ export function AuraSpinner({ size = 48, className = "" }: { size?: number; dura
 // olmalı ve Braille onun altına ortalanmalı. Küçük yerlerde (nav) okunmaz → hiç konmaz.
 // Mevcut yerler: landing footer (closing.tsx, wordmark altı) + giriş kapıları
 // (word-headline.tsx braille prop, letterform altı). Detay: [[aura-braille-under-wordmark]].
+//
+// ⚠️ MİN-GENİŞLİK (v6.9): height*4.67 < 56px ise AuraBraille null döner — "yeterli
+// netlikle çizilemiyorsa kaldır" kuralı artık kodda zorunlu, yorumla değil. İkisi de
+// height=12 (56px) kullanır; küçültmek Braille'i sessizce YOK EDER (kasıtlı).
 const BRAILLE_DOTS: ReadonlyArray<readonly [number, number]> = [
   [415, 1178],
   [527, 1178],
@@ -99,11 +103,26 @@ const BRAILLE_DOTS: ReadonlyArray<readonly [number, number]> = [
   [664, 1203],
   [751, 1178],
 ];
-export function AuraBraille({ height = 11, className = "" }: { height?: number; className?: string }) {
+// Braille viewBox'ı 364×78 → çizilen genişlik = height × 364/78 (≈ 4.67 kat).
+const BRAILLE_VB_W = 364;
+const BRAILLE_VB_H = 78;
+// ⚠️ MİN-GENİŞLİK EŞİĞİ (marka kuralı: "yeterli boşluk ve netlikle çizilemiyorsa Braille
+// kaldırılır"). 56px = giriş kapılarındaki mevcut boyut → nokta çapı ~2.15px, noktalar
+// birbirinden ayırt edilebilir. Altında Braille okunaksız lekeye döner → HİÇ çizilmez
+// (bozuk çizmektense yok say). Ölçüldü 2026-07-15: nokta çapı ≈ genişlik × 0.0385.
+const BRAILLE_MIN_WIDTH = 56;
+
+// Varsayılan 12 = eşiğin tam karşılığı (56px): parametresiz <AuraBraille /> çizer.
+// (Eski varsayılan 11 → 51.3px, eşiğin ALTINDA kalıp sessizce hiçbir şey çizmezdi.)
+export function AuraBraille({ height = 12, className = "" }: { height?: number; className?: string }) {
+  // Eşiğin altındaki her çağrı sessizce boş döner — çağıranın koşul yazması gerekmez.
+  // Çarpma BÖLMEDEN önce: height=12 tam sınırdadır (12×364/78 = 56) ve `h*(364/78)`
+  // kayan-nokta yuvarlamasıyla 55.999… verip Braille'i sessizce yok edebilirdi.
+  if ((height * BRAILLE_VB_W) / BRAILLE_VB_H < BRAILLE_MIN_WIDTH) return null;
   return (
     <svg
       height={height}
-      viewBox="401 1164 364 78"
+      viewBox={`401 1164 ${BRAILLE_VB_W} ${BRAILLE_VB_H}`}
       role="img"
       aria-label="AURA"
       fill="currentColor"

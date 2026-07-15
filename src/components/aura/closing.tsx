@@ -61,7 +61,9 @@ function AuraFooter() {
             <AuraMark size={36} />
             <span className="inline-flex flex-col items-center">
               <img src="/assets/aura-word-dark.png" alt="AURA" className="h-4 w-auto" />
-              <AuraBraille height={9} className="mt-1.5 text-[var(--aura-micro)]" />
+              {/* height=12 → 56px: AuraBraille min-genişlik eşiği (56px). Daha küçüğü
+                  eşiğin altına düşer ve Braille hiç çizilmez → küçültme. */}
+              <AuraBraille height={12} className="mt-1.5 text-[var(--aura-micro)]" />
             </span>
           </div>
           <p className="mt-4 max-w-[38ch] text-sm leading-relaxed text-[var(--aura-grey)]">

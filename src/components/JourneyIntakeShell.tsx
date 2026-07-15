@@ -7,7 +7,7 @@
 import type { LucideIcon } from "lucide-react";
 import { LangSelect } from "@/components/LangSelect";
 import { JourneyStageRail } from "@/components/JourneyStageRail";
-import { langDir } from "@/lib/constants";
+import { langDir, LANG_BCP47 } from "@/lib/constants";
 import type { JourneyKey } from "@/lib/journey-stages";
 
 type Props = {
@@ -25,7 +25,10 @@ type Props = {
 
 export function JourneyIntakeShell({ icon: Icon, eyebrow, title, intro, lang, onLangChange, wide, journey, stage, children }: Props) {
   return (
-    <div dir={langDir(lang)} className={`mx-auto ${wide ? "max-w-5xl" : "max-w-2xl"} px-5 py-10`}>
+    // lang: dir'in yanında BCP-47 kodu da verilir (v6.9) — yalnız a11y/ekran okuyucu için değil,
+    // Arapça/Farsça web fontu `:lang(ar)/:lang(fa)` ile bağlandığı için ŞART (globals.css).
+    // lang prop'u dil ADIdır ("Arapça") → LANG_BCP47 ile koda çevrilir ("ar-SA").
+    <div dir={langDir(lang)} lang={LANG_BCP47[lang]} className={`mx-auto ${wide ? "max-w-5xl" : "max-w-2xl"} px-5 py-10`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full bg-[var(--c-accent)]/10 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--c-accent-stronger)]">
