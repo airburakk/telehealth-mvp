@@ -554,9 +554,12 @@ export const COPY = {
     },
     signin: {
       word: "AURA",
+      // 🪤 wordAfter BOŞ: dil eki letterform dilimlerinden ~9px kopuk çizilirdi
+      // ("AURA 'ya hoş geldiniz"; ölçüldü 2026-07-16) — dilimlerin doğal sağ
+      // boşluğu + ml-1. Ek/noktalama gereken dillerde lineAfter kullan.
       wordBefore: "",
-      wordAfter: "'ya",
-      lineAfter: "hoş geldiniz",
+      wordAfter: "",
+      lineAfter: "Hoş geldiniz",
       sub: "Bakım yolculuğunuza başlamak için giriş yapın",
       google: "Google ile devam et",
       apple: "Apple ile devam et",
@@ -1939,7 +1942,8 @@ export const COPY = {
       legal: "© 2026 AURA. MVP demo, tibbi məsləhət deyil.",
     },
     signin: {
-      word: "AURA", wordBefore: "", wordAfter: "-ya", lineAfter: "xoş gəlmisiniz",
+      // wordAfter boş — TR ile aynı letterform tuzağı ("AURA -ya xoş gəlmisiniz").
+      word: "AURA", wordBefore: "", wordAfter: "", lineAfter: "Xoş gəlmisiniz",
       sub: "Baxım səyahətinizə başlamaq üçün daxil olun",
       google: "Google ilə davam et", apple: "Apple ilə davam et", email: "E-poçt ilə davam et", or: "VƏ YA",
       legal: "Davam etməklə ",
