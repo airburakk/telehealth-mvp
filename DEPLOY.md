@@ -75,6 +75,28 @@ SSR JSON'undan; buildId koşu başında anasayfadan çözülür): günde 40 tesi
 koşulur (2026-07-10'da ~4.600 tesis dolduruldu); `authorizationNumber` kolon backfill'i için
 `npx tsx scripts/registry-enrich.ts auth` (v5.2'de koşuldu).
 
+### Cron — saklama süresi dolan kayıtların imhası (v6.11, 2026-07-15)
+
+`vercel.json` günde bir (03:30 UTC) `/api/cron/purge-deleted`'i tetikler. Aynı `CRON_SECRET` Bearer
+deseni (registry-sync ile ortak; yoksa uç 503, site etkilenmez). Batch: 50 kayıt/gün — kalanı ertesi
+gün alınır (idempotent; yalnız `purgeAfter <= now`).
+
+**Bu cron silme akışının SÖZÜNÜ TUTAN parçasıdır.** Hasta hesabını sildiğinde klinik kayıt yasal
+yükümlülük gereği saklanır ama erişime kapanır (`deletionLockedAt`); `RETENTION_YEARS` (**20**,
+`lib/account-deletion.ts` — tek sabit) dolunca kaydı **fiziken** siler. **Cron devre dışı kalırsa
+"süre sonunda imha edilir" beyanı boş vaade döner** → `CRON_SECRET`'ın üretimde tanımlı olduğunu
+doğrula. Elle: `curl -H "Authorization: Bearer $CRON_SECRET" <site>/api/cron/purge-deleted`.
+
+### İşlem bölgesi — `fra1` (v6.10, 2026-07-15) ⚠️ VERİ İKAMETGÂHI
+
+`vercel.json` `"regions": ["fra1"]` (Frankfurt). **Neon veritabanı `eu-central-1` = Frankfurt** →
+işlem ve veri **aynı yerde**: PHI uçtan uca AB'de kalır + DB gecikmesi düşer. Öncesinde Vercel
+varsayılanı `iad1` (Washington DC) idi → veri AB'de saklanıp **ABD'de işleniyordu**.
+
+⚠️ **Bölgeyi değiştirmeden ÖNCE Neon bölgesini kontrol et** — ikisi ayrı düşerse hem gecikme hem
+uluslararası aktarım yükü geri gelir. AB dışına taşımak KVKK/GDPR aktarım analizi gerektirir.
+Doğrulama: deploy metadata `regions:["fra1"]` **veya** yanıt başlığı `X-Vercel-Id: fra1::fra1`.
+
 Senkron ayrıca **alan-güncellemesi** yapar (v5.4): liste-API alanlarının hash'i (`fingerprint`)
 satırda tutulur, yalnız hash'i değişen kayıtlar güncellenir (tavan 1000/koşu; aşım = rapor notu,
 o koşuda atlanır). İlk fingerprint doldurması `npx tsx scripts/registry-fingerprint-backfill.ts`
