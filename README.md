@@ -381,6 +381,22 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
   📌 `copy.ts`'e çok-dilli bölüm eklerken: `sections` **uniform** tut, bölüme özgü parçaları **kökte**
   tut (`aiEmphasis`/`transferItems`) → `tests/unit/aura-landing-copy` `shape()` imzası (dizide **uzunluk
   da imzada**) 8 dilde birebir kalır; bölüm-özgü render **key ile** bağlanır, index ile DEĞİL.
+- **Design token mimarisi (v6.13) — RENK/ÖLÇEK DEĞİŞTİRMEDEN ÖNCE OKU:** `globals.css`'te **ÜÇ ayrı
+  sistem** var, karıştırma: **(1)** `--c-*` + `.theme-light`/`.theme-dark` = **sistem geneli** (v6.1;
+  `.logo-word-*` toggle buna bağlı) · **(2)** `--aura-*` + **`.aura-light`** = **landing/vitrin**
+  (⚠️ landing gündüzü `.theme-light` DEĞİL `.aura-light`) · **(3)** ~~`.aura-theme-*`~~ = kullanıcı
+  draft'ının getirmek istediği ikinci tema sistemi — **ALINMADI**, ekleme.
+  `--aura-*` iki KATMANDIR: **ham palet** (`:root` üstteki blok — `cyan-50..900`/`night`/`deep-ink`/
+  `stone-*`/durum renkleri/text/space/radius/shadow/duration/ease/content) = **statik kaynak**;
+  **rol token'ları** (`--aura-bg/panel/surface/ink/grey/micro/accent/hairline`) = **tema değişkeni**,
+  ham paletten değer alır. 🪤 **Bileşende ham paleti DOĞRUDAN kullanma** (`var(--aura-cyan-500)`) —
+  daima rol token'ı (`var(--aura-accent)`); yoksa o yüzey gündüz temasında sabit kalır = kırılır.
+  🪤 Yeni renk rolü eklerken **gece `:root` + gündüz `.aura-light`'a İKİSİNE birden** ekle.
+  Ölçek token'ları tanımlı ama bileşenlere uygulanmadı (mevcut değerler yerinde; taşıma ayrı tur).
+  ⚠️ Draft'tan 2 kasıtlı sapma: `stone-100` `#eff1ec` (draft `#eef1ec`) · `border-dark` `0.09`
+  (draft `0.10`) — sıfır-görsel-değişiklik için kod değerleri korundu.
+  📌 **Token'a dokunan değişikliğin doğrulaması:** bu ortamda screenshot alınamıyor → **değişiklikten
+  ÖNCE** computed-style baseline al, sonra karşılaştır (v6.13 böyle kanıtlandı: dev + prod sıfır diff).
 - **Tipografi / Arapça-Farsça (v6.9) — YENİ YÜZEY EKLERKEN OKU:** Inter Kiril kapsar (RU/KK/KY markalı;
   `subsets` YALNIZ preload'u belirler, `@font-face` diğer subset'leri de içerir) ama **hiçbir Latin
   ailesi Arap alfabesini kapsamaz** → **Noto Sans Arabic** `:lang(ar)/:lang(fa)` altında bağlıdır
