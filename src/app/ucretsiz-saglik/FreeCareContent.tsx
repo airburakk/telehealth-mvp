@@ -7,14 +7,18 @@ import { usePublicLocale, LocaleToggle } from "@/components/PublicLocale";
 
 const COPY = {
   en: {
-    badge: "Free Care",
+    // "Access Care" = EN vitrin adi (kullanici karari 2026-07-16). TR ve diger
+    // dillerde urun/hukuki ad "Ucretsiz Saglik Hizmeti" (v4.21) KORUNUR.
+    // ⚠️ Ad ucretsizligi soylemiyor → "free" (strong) ve asagidaki ucretsizlik
+    // ifadeleri KASITLI kaldi; ad degisimi o bilgiyi silmemeli.
+    badge: "Access Care",
     h1: "Access to health is a right, not a privilege.",
-    introA: "The AURA Free Care program offers ",
+    introA: "The AURA Access Care program offers ",
     strong: "free",
     introB:
       " video consultations with volunteer specialists for patients with limited financial means. Our volunteer doctors set aside a certain quota for this purpose each term.",
     apply: "Apply",
-    online: "Free Care service is online",
+    online: "Access Care service is online",
     onlineN: "volunteer doctor(s) available now",
     offline: "No volunteer doctor is online right now",
     offlineHint: "you can apply once a doctor comes online",
@@ -58,7 +62,7 @@ const POINTS = [
   },
   {
     icon: ShieldCheck,
-    en: { t: "Same standard", d: "Free Care consultations are also conducted with interpreting support and the same confidentiality." },
+    en: { t: "Same standard", d: "Access Care consultations are also conducted with interpreting support and the same confidentiality." },
     tr: { t: "Aynı standart", d: "Ücretsiz sağlık hizmeti görüşmeleri de tercüme desteği ve aynı gizlilikle yürütülür." },
   },
 ];
