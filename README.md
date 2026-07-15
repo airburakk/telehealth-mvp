@@ -215,7 +215,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 
 | Rota | Açıklama |
 |------|----------|
-| `/` · `/giris` · `/giris/e-posta` · `/kurumsal-giris` · `/kurumsal-giris/e-posta` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | **AURA sinematik landing** (v5.9 — vitrinden taşındı: hero video+letterform, 4 chapter destesi, gsap+lenis; 8 dil statik `lib/aura-landing/copy.ts`, dil anahtarı `air_lang`) · **SEO (v5.9.2):** canonical + OpenGraph/Twitter kart + 8-dil `og:locale:alternate` (tek URL — `lib/aura-landing/seo.ts`) + JSON-LD MedicalOrganization/WebSite · **hasta giriş kapısı** + **`/giris/e-posta` çalışan form** · **kurumsal giriş kapısı** (noindex) + **`/kurumsal-giris/e-posta` form** (v5.9.1 kapı/form ayrımı — kapılar `components/aura/auth-gates.tsx`) · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
+| `/` · `/giris` · `/giris/e-posta` · `/kurumsal-giris` · `/kurumsal-giris/e-posta` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | **AURA sinematik landing** (v5.9 — vitrinden taşındı: hero video+letterform, 4 chapter destesi, gsap+lenis; 8 dil statik `lib/aura-landing/copy.ts`, dil anahtarı `air_lang`). **Bölüm akışı (v6.8):** hero → chapters → nasıl çalışır (+AI sorumluluk notu) → doktorlar → **güven (6 ürün-kanıtlanabilir kart)** → kapanış; eski *Şeffaflık* bölümü v6.8'de Güven'e birleştirildi (`transparency.tsx` kaldırıldı — aynı iddiayı iki kez veriyordu). İddia kuralları: aşağıda "Vitrin iddia dürüstlüğü (v6.8)" · **SEO (v5.9.2):** canonical + OpenGraph/Twitter kart + 8-dil `og:locale:alternate` (tek URL — `lib/aura-landing/seo.ts`) + JSON-LD MedicalOrganization/WebSite · **hasta giriş kapısı** + **`/giris/e-posta` çalışan form** · **kurumsal giriş kapısı** (noindex) + **`/kurumsal-giris/e-posta` form** (v5.9.1 kapı/form ayrımı — kapılar `components/aura/auth-gates.tsx`) · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
 | `/how-it-works` | **Nasıl Çalışır rehberi** (v5.9 — vitrinden taşındı): 4 yolculuğun adım listeleri + tıkla-oynat rehber videoları + HowTo JSON-LD + OpenGraph (title template `%s · AURA`); global Header/SiteFooter bu rotada ve `/`'de gizli (sayfa kendi aura nav/footer'ını taşır). Eski vitrin aura-health.higgsfield.app tüm sayfaları buraya 301 yönlendirir |
 | `/sitemap.xml` · `/robots.txt` | **SEO altyapısı (v5.9.2):** `app/sitemap.ts` yalnız 7 halka açık rota (/, /how-it-works, /giris, /kayit, /kayit/hasta, /second-opinion, /ucretsiz-saglik) · `app/robots.ts` hassas panel/API disallow + sitemap referansı. `SITE_URL` tek kaynak `lib/aura-landing/seo.ts` (domain taşınırsa tek nokta) |
 | `/basla` | KALDIRILDI (v5.8) — eski linkler için `/triyaj`'a kalıcı redirect |
@@ -331,6 +331,22 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
   (uydurma pazarlama varsayılanı yok); `verified` default false; public profil `/hekim/[id]`
   verified-kapılı; üretilmiş yorumlar "örnek değerlendirme" etiketli; eşleştirme skoru boş metriği
   inactive sayar. `GET /api/cases` artık sayfalı zarf döner: `{items,total,page,pageSize,totalPages}`.
+- **Vitrin iddia dürüstlüğü (v6.8) — HALKA AÇIK METİN YAZARKEN OKU:** vitrinde yalnız **üründe
+  kanıtlanabilir** iddia bulunur. Kaldırıldı, geri EKLEME: akreditasyon rozetleri (JCI/ISO 9001/
+  TÜRSAB/TGA/KVKK — belgeli ilişki yok; 4'ü 3. taraf tescilli markası, KVKK ise bir kanun) · demo
+  metrikler (20k+/40+/4.9) · uydurma hasta yorumları. Kurallar: **"uçtan uca / end-to-end şifreleme"
+  YAZMA** (gerçek: TLS + Faz 1 envelope, **sunucu KEK** → "iletimde ve sunucuda şifreli") · "KVKK/GDPR
+  **kapsamında korunur**" gibi hukuki **sonuç** iddiası yerine "yükümlülüklerini **destekleyecek
+  şekilde tasarlandı**" · doktor için "akredite" YOK ("bağımsız"; klinik için "sağlık turizmi **yetki
+  belgeli**" = kayıt defterinden doğrulanabilir) · AI dili determinist olamaz ("doğru uzmana
+  yönlendirir" ✗ → "uygun branşı **önerir**") · ölçülmemiş hız/oran iddiası YOK ("dakikalar içinde" ✗)
+  · "güvenli video" değil **"şifreli video"** (WebRTC DTLS-SRTP) · dil sayısı `SPEECH_LANG` ile
+  eşleşmeli (**10**) ya da sayı verilmemeli. Güven bölümünün 6 kartı (`copy.ts` `trust`) kod kanıtlıdır
+  (`consent.ts` · `crypto.ts` · `ownership.ts` · `/admin/hekim-onay` · `audit.ts` · `booking`
+  `agencySentAt` kapısı) — **madde eklemeden ÖNCE kod kanıtını göster.**
+  ⚠️ **Görünür metin YETMEZ:** `meta`/`og`/`twitter`/**JSON-LD** (`app/page.tsx`) aynı iddia sınıfıdır,
+  ayrı tara. 🪤 hero "Telehealth and Health Tourism, **end to end**" + `layout.tsx` "uçtan uca dijital
+  sağlık platformu" = **hizmet sürekliliği**, şifreleme iddiası DEĞİL → dokunma.
 - **Hata sınırları (v4.17):** kök `error.tsx` + `global-error.tsx` + `not-found.tsx` — 10 hasta
   dilinde statik gömülü metin (`lib/error-i18n.ts`), çeviri zinciri/DB'ye bağımlı değil.
 - **Object storage (Vercel Blob):** PHI belgelerinin bytes'ı Blob'a yüklenmeden ÖNCE at-rest
