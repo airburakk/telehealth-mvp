@@ -347,6 +347,22 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
   ⚠️ **Görünür metin YETMEZ:** `meta`/`og`/`twitter`/**JSON-LD** (`app/page.tsx`) aynı iddia sınıfıdır,
   ayrı tara. 🪤 hero "Telehealth and Health Tourism, **end to end**" + `layout.tsx` "uçtan uca dijital
   sağlık platformu" = **hizmet sürekliliği**, şifreleme iddiası DEĞİL → dokunma.
+- **Tipografi / Arapça-Farsça (v6.9) — YENİ YÜZEY EKLERKEN OKU:** Inter Kiril kapsar (RU/KK/KY markalı;
+  `subsets` YALNIZ preload'u belirler, `@font-face` diğer subset'leri de içerir) ama **hiçbir Latin
+  ailesi Arap alfabesini kapsamaz** → **Noto Sans Arabic** `:lang(ar)/:lang(fa)` altında bağlıdır
+  (`globals.css`). 🪤 Genel font yığınına **sıralamayla eklenemez**: next/font her aileye gömdüğü
+  `"<Aile> Fallback"` face'inin `unicode-range`'i U+0-10FFFF'tir → sonra koyarsan `"Inter Fallback"`
+  (sistem fontu) Arapçayı kapar ve Noto hiç inmez, önce koyarsan `"Noto … Fallback"` Latin'i Inter'den
+  çalar; `adjustFontFallback:false` etkisiz. ⚠️ **ar/fa çizen YENİ yüzeye `lang` niteliği vermeyi
+  UNUTMA** (`JourneyIntakeShell`/landing verir; `LANG_BCP47[dilAdı]` → "ar-SA") — yoksa font **sessizce**
+  sistem fallback'ine düşer, tsc/build YAKALAMAZ.
+- **Braille eşiği (v6.9):** `<AuraBraille height>` — `height*364/78 < 56px` ise **hiçbir şey çizmez**
+  (marka kuralı: yeterli netlikle çizilemiyorsa Braille konmaz). Kullanılan iki yer `height={12}` (=56px).
+  Küçültmek Braille'i **sessizce yok eder**.
+- **Ekran-dışı animasyon duraklatma (v6.9):** `AuraAnimPause` (kök layout) tek global IntersectionObserver
+  ile `.aura-sym-*`/`.aura-word`'e `.aura-anim-paused` (`animation-play-state: paused`) uygular. Yeni
+  sürekli dekoratif animasyon eklersen **sınıfını bu seçiciye ekle**. `AuraMark`/`AuraSpinner` KASITLI
+  hook'suzdur (server-component uyumlu) → içine `useEffect` koyma; duraklatma dışarıdan uygulanır.
 - **Hata sınırları (v4.17):** kök `error.tsx` + `global-error.tsx` + `not-found.tsx` — 10 hasta
   dilinde statik gömülü metin (`lib/error-i18n.ts`), çeviri zinciri/DB'ye bağımlı değil.
 - **Object storage (Vercel Blob):** PHI belgelerinin bytes'ı Blob'a yüklenmeden ÖNCE at-rest
