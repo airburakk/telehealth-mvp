@@ -44,7 +44,7 @@ export default async function PackagePage({
   // Sahiplik kapısı (BOLA fix 2026-07-03 — /doktor/vaka/[id] A-bulgusunun eşleniği): hasta kendi vakası +
   // atanan/eşleşen-branş doktor + operasyon personeli. proxy /paket'i yalnız giriş+onam'a kapıyor (rol/sahiplik
   // DEĞİL) → sayfa kendi savunmasını yapar. PHI (decryptField'li hasta adı/MMSS) çözülmeden reddet → notFound.
-  if (!(await canAccessCase({ userId: c.userId, doctorId: c.doctorId, branch: c.branch }))) notFound();
+  if (!(await canAccessCase({ userId: c.userId, doctorId: c.doctorId, branch: c.branch, deletionLockedAt: c.deletionLockedAt }))) notFound();
 
   // Doktorun M2'de tavsiye ettiği tedaviler (varsa) — paket fiyatı bunlardan (doktorun ₺ fiyatı → $)
   let treatments: RecommendedTreatment[] = [];

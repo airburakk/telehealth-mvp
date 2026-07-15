@@ -21,11 +21,17 @@
 // Not: DOCTOR kararı hekim profili + doğrulama gerektirir → DB lookup → fonksiyon ASYNC. Senkron
 // `ownsCase` bilerek KALDIRILDI (bir çağrı yerinde `await` unutmak fail-open yaratırdı). CaseRef.doctorId
 // VE CaseRef.branch ZORUNLU: seçmeyen sorgu derlemede hata verir → fail-open yerine compile-error.
+//
+// HESAP SİLME KİLİDİ (v6.11): hasta hesabını silince klinik kayıt yasal saklama süresi boyunca durur
+// ama HERKESE kapanır (hasta, doktor, koordinatör, ADMIN dahil). Kilit rol kontrolünden ÖNCE uygulanır —
+// aksi halde ADMIN/COORDINATOR/ETHICS geniş dalları kilidi delerdi. `deletionLockedAt` CaseRef'te
+// ZORUNLU: seçmeyen sorgu DERLEMEDE patlar → fail-open yerine compile-error (doctorId/branch deseni).
 import { getCurrentUser } from "./auth";
 import { db } from "./db";
+import { deletionLocked } from "./account-deletion";
 import type { SessionUser } from "./session";
 
-export type CaseRef = { userId: string | null; doctorId: string | null; branch: string };
+export type CaseRef = { userId: string | null; doctorId: string | null; branch: string; deletionLockedAt: Date | null };
 
 // DOCTOR kullanıcısının hekim profili (id + doğrulama + branş). Atama eşleşmesi + doğrulama +
 // branş-daraltması kapısı için. branch boş string ("") = onboarding tamamlanmamış → fail-closed.
@@ -40,6 +46,9 @@ async function doctorContext(user: SessionUser): Promise<{ doctorId: string | nu
 // Verilen kullanıcı bu vakaya erişebilir mi? (Tek doğruluk kaynağı.)
 export async function canCaseBeAccessedBy(user: SessionUser | null, c: CaseRef): Promise<boolean> {
   if (!user) return false;
+  // Hesap silme kilidi — HER ROLDEN ÖNCE. Hasta silinmesini istedi; kayıt yalnız yasal yükümlülük
+  // gereği duruyor, kimsenin okuması için değil. Süre dolunca cron fiziken imha eder.
+  if (deletionLocked(c)) return false;
   switch (user.role) {
     case "PATIENT":
       return c.userId === user.id;
@@ -97,10 +106,11 @@ export function isSecondOpinionPatient(user: SessionUser | null, c: { patientId:
 // Atanmamış SO vakasına doktor erişemez — önce üstlenmeli/atanmalı (accept=claim veya koordinatör assign);
 // üstlenince assignedDoctorId set olur → erişim açılır. Diğer roller temel kurala (ownsSecondOpinionCase)
 // tabidir. assignedDoctorId ZORUNLU → seçmeyen sorgu derlemede patlar.
-export type SoCaseRef = { patientId: string; assignedDoctorId: string | null };
+export type SoCaseRef = { patientId: string; assignedDoctorId: string | null; deletionLockedAt: Date | null };
 
 export async function canSoCaseBeAccessedBy(user: SessionUser | null, c: SoCaseRef): Promise<boolean> {
   if (!user) return false;
+  if (deletionLocked(c)) return false; // hesap silme kilidi — her rolden önce (bkz. canCaseBeAccessedBy)
   if (user.role === "DOCTOR") {
     const { doctorId, verified } = await doctorContext(user);
     return verified && !!doctorId && c.assignedDoctorId === doctorId;

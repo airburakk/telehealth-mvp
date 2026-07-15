@@ -92,6 +92,7 @@ export const config = {
     "/acente", "/acente/:path*",
     "/master", "/master/:path*",
     "/vakalarim",
+    "/hesap", // hesap ayarları / veri silme (v6.11) — sayfa ayrıca kendi PATIENT kapısını yapar
     "/erisim-kaydi",
     "/second-opinion/basvur", "/second-opinion/basvur/:path*",
     "/second-opinion/vaka/:path*",

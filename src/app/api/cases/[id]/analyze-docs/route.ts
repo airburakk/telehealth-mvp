@@ -25,7 +25,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const c = await db.case.findUnique({
     where: { id },
-    select: { id: true, userId: true, doctorId: true, branch: true, symptoms: true, language: true, labResults: true },
+    select: { id: true, userId: true, doctorId: true, branch: true, symptoms: true, language: true, labResults: true, deletionLockedAt: true },
   });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
   // IDOR kapısı: yalnız erişilebilen vakanın belgeleri AI'ya gönderilir (T3 + atama-bazlı T2).

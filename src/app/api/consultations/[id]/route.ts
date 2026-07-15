@@ -20,7 +20,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   // Sahiplik: update ETMEDEN ÖNCE görüşme→vaka zinciri doğrulanır (status ENDED vakayı DONE yazar).
   const cons = await db.consultation.findUnique({
     where: { id },
-    select: { caseId: true, case: { select: { userId: true, doctorId: true, branch: true } } },
+    select: { caseId: true, case: { select: { userId: true, doctorId: true, branch: true, deletionLockedAt: true } } },
   });
   if (!cons) return NextResponse.json({ error: "Görüşme bulunamadı." }, { status: 404 });
   if (!(await canCaseBeAccessedBy(user, cons.case))) {

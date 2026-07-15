@@ -44,7 +44,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
   if (!raw) notFound();
   // Sahiplik/atama + branş daraltması (ownership tek-kaynak): atanan/eşleşen-branş doktor + operasyon
   // personeli. Klinik veri DECRYPT edilmeden reddet (sızma yok) → notFound (vakanın varlığını ele vermez).
-  if (!(await canCaseBeAccessedBy(user, { userId: raw.userId, doctorId: raw.doctorId, branch: raw.branch }))) notFound();
+  if (!(await canCaseBeAccessedBy(user, { userId: raw.userId, doctorId: raw.doctorId, branch: raw.branch, deletionLockedAt: raw.deletionLockedAt }))) notFound();
   const c = decryptCaseFields(raw); // symptoms/reasoning/extra(triyaj yanıtları) at-rest şifreli → kokpit gösterimi için çöz
 
   const u = urgencyStyle(c.urgency);

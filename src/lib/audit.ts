@@ -26,7 +26,10 @@ export type AuditAction =
   | "RECOVERY_REOPEN" // post-op takip hasta tarafından yeniden açıldı → klinik personel erişimi geri verildi (geri-alma, E2EE Faz 2A)
   | "POSTOP_ACCESS_DENIED" // post-op kapandıktan sonra klinik personel erişim denemesi reddedildi (daraltma kanıtı)
   | "IMPERSONATE_START" // MASTER bir kullanıcıya büründü (actor=master, subject=hedef kullanıcı)
-  | "IMPERSONATE_END"; // MASTER bürünmeyi bitirdi (kendi kimliğine döndü)
+  | "IMPERSONATE_END" // MASTER bürünmeyi bitirdi (kendi kimliğine döndü)
+  | "ACCOUNT_DELETE" // hasta hesabını sildi → kişisel veri silindi, klinik kayıt kilitlendi + imha tarihi damgalandı (v6.11)
+  | "DELETION_ACCESS_DENIED" // hesap-silme kilidindeki kayda erişim denemesi reddedildi (kilit kanıtı)
+  | "RECORD_PURGE"; // saklama süresi doldu → klinik kayıt fiziken imha edildi (cron; v6.11)
 
 interface RecordInput {
   actor: SessionUser | null;

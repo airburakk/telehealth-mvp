@@ -10,7 +10,7 @@ import { useT } from "@/components/useT";
 import { langDir } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
 import { isImmersiveCallPath } from "@/lib/immersive-routes";
-import { LogOut, LogIn, ShieldOff } from "lucide-react";
+import { LogOut, LogIn, ShieldOff, UserCog } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
   PATIENT: "Hasta",
@@ -32,7 +32,7 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
   // Çevrilecek metinler: görünür nav etiketleri + rol + Çıkış/Giriş.
   // lang="Türkçe" → useT no-op (kimlik). Partner gibi dil-tercihli kullanıcıda /api/i18n cache'i.
   const texts = useMemo(
-    () => ["Çıkış", "Giriş yap", "Vazgeç", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
+    () => ["Çıkış", "Giriş yap", "Vazgeç", "Hesabım", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
     [items, user]
   );
   const { t } = useT(lang, texts);
@@ -103,6 +103,13 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
                 <div className="text-sm font-medium leading-tight text-[var(--c-ink)]">{user.name}</div>
                 <div className="text-[11px] leading-tight text-[var(--c-ink-3)]">{t(ROLE_LABELS[user.role] ?? user.role)}</div>
               </div>
+              {/* Hesap ayarları — yalnız hastada (v6.11): hesap/veri silme oradan yapılır (KVKK m.7).
+                  Personelde gizli; sayfa + API de PATIENT'a kapılı (savunma-derinliği). */}
+              {user.role === "PATIENT" && (
+                <Link href="/hesap" title={t("Hesabım")} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-3)] hover:bg-[var(--c-surface)] hover:text-[var(--c-accent)]">
+                  <UserCog size={17} />
+                </Link>
+              )}
               <button onClick={() => setConfirmLogoutAll(true)} title={t("Tüm cihazlardan çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-3)] hover:bg-[var(--c-surface)] hover:text-red-400">
                 <ShieldOff size={16} />
               </button>

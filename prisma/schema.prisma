@@ -37,8 +37,15 @@ model User {
   emailVerifiedAt      DateTime?
   emailVerifyTokenHash String? // aktif doğrulama token'ının sha256'sı (ham token yalnız e-postadaki bağlantıda)
   emailVerifySentAt    DateTime? // son doğrulama e-postası zamanı (yeniden-gönder soğuması + 24s token TTL tabanı)
+  // Hesap silme (v6.11 — lib/account-deletion): damgalıysa kişisel alanlar (email/name/patient*) ZATEN
+  // boşaltılmış + parola çöpe atılmış + sessionVersion artırılmıştır → giriş imkânsız, kişisel veri gitmiştir.
+  // ⚠️ Satır neden hemen SİLİNMİYOR: sakladığımız klinik kayıtların RIZASINI ispat eden ConsentRecord.userId
+  // bağı kopmasın (yasal saklama süresi boyunca "bu kaydı neden tutuyoruz"un kanıtı). Süre dolunca
+  // (Case.purgeAfter) kabuk da imha edilir → o an gerçekten hiçbir şey kalmaz.
+  deletedAt    DateTime?
   createdAt    DateTime @default(now())
 
+  @@index([deletedAt]) // imha cron'u: süresi dolan silinmiş hesapları tarar
   @@index([doctorId]) // doktor-hedefli bildirim/atama lookup'ları (lib/notify, clinical-duty, SO)
   @@index([partnerId]) // partner-hedefli bildirimler (konsültasyon yanıt/mesaj/video)
 }
@@ -220,6 +227,13 @@ model Case {
   hospitalName         String? // hastane adı snapshot'ı (registry kaydı kalksa da dosyada kalır)
   agencySentAt         DateTime? // tedavi kararının Sağlık Turizmi Acentesine iletildiği an (null = iletilmedi)
   dischargeRequestedAt DateTime? // hastanın post-op ekranından epikriz/taburcu raporu talebi
+  // Hesap silme (v6.11 — lib/account-deletion). Hasta hesabını silince klinik kayıt SİLİNMEZ (yasal
+  // saklama yükümlülüğü) ama ERİŞİME KAPANIR: deletionLockedAt damgalıysa canCaseBeAccessedBy HERKESE
+  // false döner (ADMIN/COORDINATOR/ETHICS geniş dalları dahil). purgeAfter = saklama süresi sonu →
+  // cron o tarihten sonra kaydı GERÇEKTEN imha eder (satır + belgeler + rıza + hesap kabuğu).
+  // Post-op daraltmadan (postop-access, Faz 2A) FARKI: bu geri alınamaz ve hastayı da kapsar.
+  deletionLockedAt     DateTime?
+  purgeAfter           DateTime?
   doctor              Doctor?        @relation(fields: [doctorId], references: [id])
   doctorId            String?
   consultations       Consultation[]
@@ -231,6 +245,7 @@ model Case {
   createdAt           DateTime       @default(now())
 
   @@index([userId])
+  @@index([purgeAfter]) // imha cron'u: süresi dolan kayıtları tarar
   @@index([freeCare, freeCareStatus])
   @@index([doctorId]) // doktor kokpit OR-dalı + ücretsiz-hizmet kokpiti + CRM groupBy'lar
   @@index([branch, status]) // kokpit branş-dalı (status IN) + personel kuyruğu /api/cases?branch=&status=
@@ -620,6 +635,10 @@ model SecondOpinionCase {
   cancelledAt        DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
+  // Hesap silme (v6.11) — Case ile AYNI kural: kayıt saklanır, erişim kapanır, süre sonunda imha edilir.
+  // SO vakası ayrı bir PHI deposudur (tanı özeti + belgeler + rapor) → silme akışı ikisini birlikte kilitler.
+  deletionLockedAt   DateTime?
+  purgeAfter         DateTime?
 
   documents   SecondOpinionDocument[]
   requests    SecondOpinionRequest[]
@@ -629,6 +648,7 @@ model SecondOpinionCase {
   events      SecondOpinionEvent[]
 
   @@index([patientId])
+  @@index([purgeAfter]) // imha cron'u
   @@index([assignedDoctorId])
   @@index([status, branch]) // lazy fan-out havuzu (OFFERED + branş) — eşitlik/IN status sorguları prefix'ten yararlanır (notIn yararlanmaz)
 }

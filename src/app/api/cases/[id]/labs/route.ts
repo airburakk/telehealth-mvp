@@ -12,7 +12,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
   const { id } = await params;
-  const exists = await db.case.findUnique({ where: { id }, select: { id: true, userId: true, doctorId: true, branch: true } });
+  const exists = await db.case.findUnique({ where: { id }, select: { id: true, userId: true, doctorId: true, branch: true, deletionLockedAt: true } });
   if (!exists) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
   // BOLA düzeltmesi: rol tek başına yetmez — doktor yalnız kendisine atanmış/kuyruk vakasına lab yazabilir.
   if (!(await canCaseBeAccessedBy(user, exists))) {

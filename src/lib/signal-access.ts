@@ -11,19 +11,21 @@ import type { SessionUser } from "@/lib/session";
 export async function resolveSignalSide(user: SessionUser, channelId: string): Promise<Side | null> {
   const consult = await db.consultation.findUnique({
     where: { id: channelId },
-    select: { case: { select: { userId: true, doctorId: true, branch: true } } },
+    select: { case: { select: { userId: true, doctorId: true, branch: true, deletionLockedAt: true } } },
   });
   if (consult) return (await canCaseBeAccessedBy(user, consult.case)) ? (user.role === "PATIENT" ? "patient" : "doctor") : null;
 
   // İkinci Görüş kanalı — PHI transkript taşır → ATAMA-daraltmalı canSoCaseBeAccessedBy ŞART
   // (BOLA fix 2026-07-02): doktor yalnız DOĞRULANMIŞ + bu randevuya ATANMIŞ (appt.doctorId) ise;
   // PARTNER ve atanmamış/doğrulanmamış doktor REDDEDİLİR. Hasta yalnız kendi vakası; koordinatör/etik/admin geniş.
+  // deletionLockedAt randevuda DEĞİL, bağlı SO VAKASINDA durur → ilişkiden çekilir (kilit vakanın
+  // özelliğidir; randevu yalnız kanaldır). Seçilmezse SoCaseRef derlemede patlar → fail-closed.
   const appt = await db.secondOpinionAppointment.findUnique({
     where: { id: channelId },
-    select: { patientId: true, doctorId: true },
+    select: { patientId: true, doctorId: true, case: { select: { deletionLockedAt: true } } },
   });
   if (appt) {
-    const ok = await canSoCaseBeAccessedBy(user, { patientId: appt.patientId, assignedDoctorId: appt.doctorId });
+    const ok = await canSoCaseBeAccessedBy(user, { patientId: appt.patientId, assignedDoctorId: appt.doctorId, deletionLockedAt: appt.case.deletionLockedAt });
     if (!ok) return null;
     return user.role === "PATIENT" ? "patient" : "doctor";
   }

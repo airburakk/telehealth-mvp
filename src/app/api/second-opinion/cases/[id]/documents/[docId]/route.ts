@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
 
-  const c = await db.secondOpinionCase.findUnique({ where: { id }, select: { patientId: true, assignedDoctorId: true } });
+  const c = await db.secondOpinionCase.findUnique({ where: { id }, select: { patientId: true, assignedDoctorId: true, deletionLockedAt: true } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
   if (!(await canSoCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
 
