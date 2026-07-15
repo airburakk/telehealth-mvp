@@ -217,7 +217,8 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 |------|----------|
 | `/` · `/giris` · `/giris/e-posta` · `/kurumsal-giris` · `/kurumsal-giris/e-posta` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | **AURA sinematik landing** (v5.9 — vitrinden taşındı: hero video+letterform, 4 chapter destesi, gsap+lenis; 8 dil statik `lib/aura-landing/copy.ts`, dil anahtarı `air_lang`). **Bölüm akışı (v6.8):** hero → chapters → nasıl çalışır (+AI sorumluluk notu) → doktorlar → **güven (6 ürün-kanıtlanabilir kart)** → kapanış; eski *Şeffaflık* bölümü v6.8'de Güven'e birleştirildi (`transparency.tsx` kaldırıldı — aynı iddiayı iki kez veriyordu). İddia kuralları: aşağıda "Vitrin iddia dürüstlüğü (v6.8)" · **SEO (v5.9.2):** canonical + OpenGraph/Twitter kart + 8-dil `og:locale:alternate` (tek URL — `lib/aura-landing/seo.ts`) + JSON-LD MedicalOrganization/WebSite · **hasta giriş kapısı** + **`/giris/e-posta` çalışan form** · **kurumsal giriş kapısı** (noindex) + **`/kurumsal-giris/e-posta` form** (v5.9.1 kapı/form ayrımı — kapılar `components/aura/auth-gates.tsx`) · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
 | `/how-it-works` | **Nasıl Çalışır rehberi** (v5.9 — vitrinden taşındı): 4 yolculuğun adım listeleri + tıkla-oynat rehber videoları + HowTo JSON-LD + OpenGraph (title template `%s · AURA`); global Header/SiteFooter bu rotada ve `/`'de gizli (sayfa kendi aura nav/footer'ını taşır). Eski vitrin aura-health.higgsfield.app tüm sayfaları buraya 301 yönlendirir |
-| `/sitemap.xml` · `/robots.txt` | **SEO altyapısı (v5.9.2):** `app/sitemap.ts` yalnız 7 halka açık rota (/, /how-it-works, /giris, /kayit, /kayit/hasta, /second-opinion, /ucretsiz-saglik) · `app/robots.ts` hassas panel/API disallow + sitemap referansı. `SITE_URL` tek kaynak `lib/aura-landing/seo.ts` (domain taşınırsa tek nokta) |
+| `/guven-ve-gizlilik` | **Güven ve Gizlilik** (v6.12): iddia dürüstlüğü sayfası — 10 bölüm × 8 dil (`copy.ts` `trustPage`), 5'inde **"neyi iddia etmiyoruz"** kutusu + FAQPage JSON-LD (cevap gövde+sınırı birlikte taşır) + OG 8 dil; global Header/SiteFooter burada da gizli (kendi aura nav/footer'ı). **`/trust` → 308.** ⚠️ Gizlilik Politikası **değildir**. Kurallar: Güvenlik notları "Güven ve Gizlilik sayfası (v6.12)" |
+| `/sitemap.xml` · `/robots.txt` | **SEO altyapısı (v5.9.2 · v6.12):** `app/sitemap.ts` yalnız 8 halka açık rota (/, /how-it-works, **/guven-ve-gizlilik**, /giris, /kayit, /kayit/hasta, /second-opinion, /ucretsiz-saglik) · `app/robots.ts` hassas panel/API disallow + sitemap referansı. `SITE_URL` tek kaynak `lib/aura-landing/seo.ts` (domain taşınırsa tek nokta) |
 | `/basla` | KALDIRILDI (v5.8) — eski linkler için `/triyaj`'a kalıcı redirect |
 | `/saglik-turizmi` | **Sağlık Turizmi hasta-yüzü planlama** (v4.24-25): tercih (branş/ülke/seviye/gece) + endikatif paket önizlemesi (`computePackage`) + öz-yeterli "Talep Oluştur" → `POST /api/patient/tourism-request` (runTriage → tourism-etiketli Case, `Case.tourismPlan` JSON; doktor `/paket` PackageBuilder ön-değeri + kokpit 🧳 rozeti). Klinik-önce: bağlayıcı fiyat/rezervasyon daima doktor onayı sonrası (simüle/park; USHAŞ yetki belgesi + TÜRSAB hukuki zemini vault'ta belgeli) |
 | `/triyaj` | Triyaj sihirbazı (tek ekran ödeme kapısı + 3 adım — v5.8) |
@@ -367,6 +368,19 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
   ⚠️ **Görünür metin YETMEZ:** `meta`/`og`/`twitter`/**JSON-LD** (`app/page.tsx`) aynı iddia sınıfıdır,
   ayrı tara. 🪤 hero "Telehealth and Health Tourism, **end to end**" + `layout.tsx` "uçtan uca dijital
   sağlık platformu" = **hizmet sürekliliği**, şifreleme iddiası DEĞİL → dokunma.
+- **Güven ve Gizlilik sayfası (v6.12) — `/guven-ve-gizlilik`, iddia dürüstlüğünün ANA YÜZEYİ:** yukarıdaki
+  kuralların uzun biçimi; 10 bölüm × 8 dil (`copy.ts` `trustPage` · `components/aura/trust-safety.tsx`).
+  **Sayfanın değeri "neyi iddia etmiyoruz" kutularındadır** (kullanıcı kararı) — 5 bölümde: uçtan uca
+  şifreleme **değil** (anahtar sunucuda, çünkü klinik özet/tercüme/doktor görünümü sunucuda işlem
+  gerektirir) · "akredite doktor" **demiyoruz** · denetim kaydı **fail-safe** sınırı · silme
+  **crypto-shred değil, fiziken** · ihbar adresi **⚖️ TASLAK** (uydurma adres YAZMA). Bu kutular bir
+  istisna değil sayfanın omurgasıdır → **sessizce kaldırma**; madde eklemeden önce kod kanıtını göster.
+  ⚠️ Sayfa bir **Gizlilik Politikası DEĞİLDİR** (o belge hâlâ yok) — yerine koyma. `/trust` buraya 308.
+  🪤 **Letterform `wordAfter` tuzağı:** AURA harf dilimlerinden sonraki ek/noktalama **~12px kopuk**
+  çizilir ("AURA ." / "AURA 'da") → `trustPage.wordAfter` tüm dillerde **boş**, noktalama `lineAfter`'a.
+  📌 `copy.ts`'e çok-dilli bölüm eklerken: `sections` **uniform** tut, bölüme özgü parçaları **kökte**
+  tut (`aiEmphasis`/`transferItems`) → `tests/unit/aura-landing-copy` `shape()` imzası (dizide **uzunluk
+  da imzada**) 8 dilde birebir kalır; bölüm-özgü render **key ile** bağlanır, index ile DEĞİL.
 - **Tipografi / Arapça-Farsça (v6.9) — YENİ YÜZEY EKLERKEN OKU:** Inter Kiril kapsar (RU/KK/KY markalı;
   `subsets` YALNIZ preload'u belirler, `@font-face` diğer subset'leri de içerir) ama **hiçbir Latin
   ailesi Arap alfabesini kapsamaz** → **Noto Sans Arabic** `:lang(ar)/:lang(fa)` altında bağlıdır
