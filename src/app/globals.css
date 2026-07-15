@@ -414,17 +414,50 @@ body {
   .aura-word:hover img {
     animation: aura-breathe 2.6s ease-in-out infinite;
   }
-  /* Marka bloğu (v6.14.2, kullanıcı: "braille'e AURA ile aynı glowing efekti"):
-   * letterform + ALTINDAKİ Braille TEK parça gibi nefes alır — bloğun herhangi
-   * bir yerine gelmek ikisini birden ışıtır (Braille tek başına hover
-   * gerektirmez; marka kuralı gereği ikisi ayrılmaz — [[aura-braille-under-wordmark]]).
-   * Aynı `aura-breathe` keyframe'i: SVG'de drop-shadow img ile birebir çalışır. */
+  /* Marka bloğu (v6.14.2/.3 — kullanıcı: "braille'e AURA ile aynı glowing
+   * efekti"): letterform + ALTINDAKİ Braille TEK parça gibi ışır. Bloğun
+   * herhangi bir yerine gelmek ikisini birden nefes aldırır (Braille tek başına
+   * hover gerektirmez; marka kuralı gereği ikisi ayrılmaz —
+   * [[aura-braille-under-wordmark]]).
+   *
+   * 🪤 AYNI KEYFRAME'İ VERMEK ÇALIŞMAZ (v6.14.2'de öyle yapıldı → kullanıcı
+   * "braille üzerinde glow yok hâlâ" dedi): `aura-breathe` blur yarıçapları
+   * (14/44/90px) letterform ÖLÇEĞİNE göre; Braille 9 daireden oluşur ve
+   * height=30'da her nokta ≈ 5.4px çap (r=7 × 30/78 × 2) → 90px blur o küçük
+   * alanda tamamen dağılır = görünmez. Aynı EFEKT ≠ aynı DEĞER; blur nokta
+   * boyutuna göre yeniden ölçeklendi (3/8/18 → hover 6/16/32).
+   *
+   * Ayrıca ikisine de SÜREKLİ hafif ışıma verildi (hover'sız da görünür —
+   * kullanıcı hover yapmadan bakıyordu). Seçiciler `.aura-brand` altında =
+   * yalnız /v2 hero'su; landing'in `.aura-word` davranışı DEĞİŞMEDİ. */
+  .aura-brand .aura-word img {
+    filter: drop-shadow(0 0 10px rgba(40, 200, 216, 0.45))
+      drop-shadow(0 0 30px rgba(40, 200, 216, 0.22));
+  }
   .aura-brand .aura-braille {
     transition: filter 0.45s ease;
+    filter: drop-shadow(0 0 3px rgba(40, 200, 216, 0.9))
+      drop-shadow(0 0 8px rgba(40, 200, 216, 0.5));
   }
-  .aura-brand:hover .aura-word img,
-  .aura-brand:hover .aura-braille {
+  .aura-brand:hover .aura-word img {
     animation: aura-breathe 2.6s ease-in-out infinite;
+  }
+  .aura-brand:hover .aura-braille {
+    animation: aura-breathe-braille 2.6s ease-in-out infinite;
+  }
+  /* Braille ölçeğine göre: nokta ≈ 5.4px → blur nokta çapı mertebesinde. */
+  @keyframes aura-breathe-braille {
+    0%,
+    100% {
+      filter: drop-shadow(0 0 3px rgba(40, 200, 216, 0.95))
+        drop-shadow(0 0 8px rgba(40, 200, 216, 0.6))
+        drop-shadow(0 0 18px rgba(40, 200, 216, 0.35));
+    }
+    50% {
+      filter: drop-shadow(0 0 6px rgba(40, 200, 216, 1))
+        drop-shadow(0 0 16px rgba(40, 200, 216, 0.8))
+        drop-shadow(0 0 32px rgba(40, 200, 216, 0.5));
+    }
   }
   @keyframes aura-breathe {
     0%,
@@ -441,11 +474,17 @@ body {
   }
   @media (prefers-reduced-motion: reduce) {
     .aura-word:hover img,
-    .aura-brand:hover .aura-word img,
-    .aura-brand:hover .aura-braille {
+    .aura-brand:hover .aura-word img {
       animation: none;
       filter: drop-shadow(0 0 20px rgba(40, 200, 216, 0.75))
         drop-shadow(0 0 60px rgba(40, 200, 216, 0.4));
+    }
+    /* Braille'in sabit ışıması da kendi ölçeğinde (letterform blur'u burada da
+       dağılır) — nefes yok, sabit ve GÖRÜNÜR. */
+    .aura-brand:hover .aura-braille {
+      animation: none;
+      filter: drop-shadow(0 0 5px rgba(40, 200, 216, 1))
+        drop-shadow(0 0 14px rgba(40, 200, 216, 0.65));
     }
   }
   /* Nav "How It Works" sekmesi: turkuaz renk şeridi metnin İLK harfinden SON
