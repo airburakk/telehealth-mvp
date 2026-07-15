@@ -157,9 +157,16 @@ export function V2EntryPaths() {
             />
           );
         })}
-        {/* Okunabilirlik perdesi: kart metni videonun üstünde WCAG'i tutsun. */}
-        <div className="absolute inset-0 bg-[var(--aura-night)]/75" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[var(--aura-night)] via-transparent to-[var(--aura-night)]" />
+        {/* Okunurluk skrimi — ⚠️ v6.14.1: ilk sürümde düz /75 perdeydi ve
+            kullanıcı "video tam seçilmiyor, çok karartılmış" dedi → /40'a
+            açıldı. Kontrastı taşıyan asıl katman KARTLARIN KENDİ zemini
+            (panel/85 + backdrop-blur), perde değil; perde yalnız videonun
+            parlak karelerinde başlık/intro'yu korur. Daha fazla koyultma
+            gerekirse önce kart zeminini artır, perdeyi değil. */}
+        <div className="absolute inset-0 bg-[var(--aura-night)]/40" />
+        {/* Üst/alt koyu, orta açık: başlık üstte okunur, video ortada görünür,
+            alt kenar bir sonraki bölüme yumuşak bağlanır. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[var(--aura-night)] via-[var(--aura-night)]/10 to-[var(--aura-night)]" />
       </div>
 
       <div className="mx-auto max-w-6xl px-5 md:px-8">
@@ -207,10 +214,13 @@ function EntryCard({
       ref={cardRef}
       onMouseEnter={onActivate}
       onFocus={onActivate}
-      className={`group flex flex-col rounded-[18px] border p-6 backdrop-blur-sm transition-all duration-300 ${
+      // Kart zemini kontrastı TAŞIYAN katman (perde açıldı, v6.14.1) →
+      // backdrop-blur + yüksek opaklık: video ne kadar parlak olursa olsun
+      // kart metni okunur kalır. Aktif kart daha opak + turkuaz kenar.
+      className={`group flex flex-col rounded-[18px] border p-6 backdrop-blur-md transition-all duration-300 ${
         active
-          ? "border-[var(--aura-accent)]/60 bg-[var(--aura-panel)]/85"
-          : "border-[var(--aura-hairline)] bg-[var(--aura-panel)]/60"
+          ? "border-[var(--aura-accent)]/60 bg-[var(--aura-panel)]/90"
+          : "border-[var(--aura-hairline)] bg-[var(--aura-panel)]/75"
       }`}
     >
       <p className="aura-mono text-[12px]">

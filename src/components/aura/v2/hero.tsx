@@ -2,19 +2,26 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { VIDEOS, useLang } from "@/lib/aura-landing/i18n";
+import { AuraBraille } from "@/components/PortamedLogo";
+import { LETTERS, VIDEOS, useLang } from "@/lib/aura-landing/i18n";
 
-// /v2 hero — blueprint Hero (marka mesajı "Care, without borders.").
+// /v2 hero — blueprint Hero'nun marka mesajı ("Care, without borders.") +
+// mevcut landing'in MARKA VURUŞU.
 //
-// Blueprint hero medyasını boş bir <div aria-hidden> olarak bırakmıştı (kendi
-// ifadesiyle "intentionally avoids video implementation details"); wireframe §1
-// ise "current cinematic video can remain" diyor → mevcut hero videosu taşındı.
-// Kinetik letterform (gsap) BURAYA ALINMADI: blueprint hero'da AURA letterform'u
-// değil METİN başlık istiyor ("Care, without borders." okunabilir olmalı) ve
-// letterform ölçüm tuzağı taşıyor (v6.13: wordAfter ~9-12px kopuk).
+// ⚠️ v6.14.1 (kullanıcı geri bildirimi): ilk sürümde blueprint'e uyup düz metin
+// başlık yazmıştım → "hero olmamış, AURA yazısı vurucu, o olmadan o hissiyatı
+// vermiyor". Dev AURA letterform GERİ GELDİ + marka kuralı gereği ALTINA Braille
+// ([[aura-braille-under-wordmark]]: Braille daima AURA yazısının tam altında,
+// ortalı — sembol altında/tek başına ASLA).
 //
-// Kaynak seçimi: 1080p "src" — tam genişlik ana ekran (landing hero'su ile aynı
-// kullanıcı kararı; 720p tam ekranda kalite kaybediyordu).
+// SEMANTİK: letterform role="img" aria-label="AURA" (görsel marka); <h1> =
+// "Care, without borders." (blueprint + SEO'nun istediği okunabilir başlık).
+// Böylece hem marka vuruşu hem doğru belge başlığı olur.
+//
+// SKRİM: mevcut landing'in ALT-KOYU/ÜST-AÇIK gradyanı (0.86 → 0.35 → 0.25).
+// ⚠️ Düz perde (bg-night/65) KULLANMA — v6.14'te öyleydi ve kullanıcı "video tam
+// seçilmiyor, çok karartılmış" dedi. Metin altta okunur, video üstte görünür.
+// Kaynak: 1080p "src" (kullanıcı kararı — tam ekranda 720p kalite kaybediyor).
 // REDUCED-MOTION: video oynatılmaz, poster kalır.
 export function V2Hero() {
   const { t } = useLang();
@@ -49,37 +56,63 @@ export function V2Hero() {
   }, []);
 
   return (
-    <section className="relative isolate flex min-h-dvh items-center overflow-hidden">
+    <section id="top" className="relative isolate min-h-dvh overflow-hidden">
       <video
         ref={videoRef}
-        src={VIDEOS.hero.src}
-        poster={VIDEOS.hero.poster}
         muted
         loop
         playsInline
-        preload="metadata"
+        preload="none"
+        poster={VIDEOS.hero.poster}
         aria-hidden
         className="absolute inset-0 -z-10 h-full w-full object-cover"
-      />
-      {/* Okunabilirlik perdesi — hero metni videonun üstünde AA'yı tutsun. */}
-      <div aria-hidden className="absolute inset-0 -z-10 bg-[var(--aura-night)]/65" />
+      >
+        <source src={VIDEOS.hero.src} type="video/mp4" />
+      </video>
+      {/* Okunurluk skrimi — landing ile aynı: metnin olduğu ALT koyu, video'nun
+          göründüğü ÜST açık. Düz perdeye çevirme (video boğulur). */}
       <div
         aria-hidden
-        className="absolute inset-0 -z-10 bg-gradient-to-b from-[var(--aura-night)]/80 via-transparent to-[var(--aura-night)]"
+        className="absolute inset-0 -z-10 bg-[linear-gradient(to_top,rgba(13,14,16,0.88)_0%,rgba(13,14,16,0.40)_45%,rgba(13,14,16,0.22)_100%)]"
       />
 
-      <div className="mx-auto w-full max-w-6xl px-5 py-28 md:px-8">
+      <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col items-center justify-center px-5 py-24 text-center md:px-8">
         <p className="aura-mono text-sm text-[var(--aura-accent)]">/ {h.eyebrow}</p>
-        <h1 className="aura-display mt-5 max-w-4xl text-5xl font-bold leading-[1.05] tracking-tighter text-[var(--aura-ink)] md:text-7xl">
+
+        {/* Marka vuruşu: dev AURA letterform + TAM ALTINDA ortalı Braille.
+            Ölçek landing hero'suyla aynı clamp; Braille dikey grupta ortalanır. */}
+        <div
+          role="img"
+          aria-label="AURA"
+          className="mt-6 inline-flex flex-col items-center"
+        >
+          <span className="aura-word flex select-none items-end justify-center gap-[clamp(0.7rem,3.2vw,2.5rem)]">
+            {LETTERS.map((letter) => (
+              <img
+                key={letter}
+                src={`/assets/letters/${letter}.png`}
+                alt=""
+                aria-hidden
+                draggable={false}
+                className="h-[clamp(3.5rem,15vw,12rem)] w-auto"
+              />
+            ))}
+          </span>
+          {/* height=18 → ~84px: AuraBraille'in 56px min-genişlik eşiğinin
+              üstünde (height<12 hiç çizmez — v6.9 kuralı). */}
+          <AuraBraille height={18} className="mt-4 text-[var(--aura-micro)]" />
+        </div>
+
+        <h1 className="aura-display mt-8 max-w-4xl text-4xl font-bold leading-[1.05] tracking-tighter text-[var(--aura-ink)] md:text-6xl">
           {h.headline}
         </h1>
-        <p className="mt-6 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg">
+        <p className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg">
           {h.lede}
         </p>
 
         {/* Wireframe: "No more than two equal-priority actions" + birincil CTA
             kaydırmadan görünür. */}
-        <div className="mt-10 flex flex-wrap items-center gap-3">
+        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/giris"
             className="inline-flex items-center gap-2 rounded-full bg-[var(--aura-accent)] px-7 py-3.5 text-base font-semibold text-[var(--aura-night)] transition-transform duration-200 hover:translate-x-0.5 active:scale-[0.98]"
@@ -88,15 +121,14 @@ export function V2Hero() {
             <span aria-hidden>→</span>
           </Link>
           <Link
-            href="#how"
-            className="inline-flex items-center rounded-full border border-[var(--aura-hairline)] px-7 py-3.5 text-base font-semibold text-[var(--aura-ink)] transition-colors duration-200 hover:border-[var(--aura-accent)]/60"
+            href="#care"
+            className="inline-flex items-center rounded-full border border-[var(--aura-hairline)] bg-[var(--aura-night)]/40 px-7 py-3.5 text-base font-semibold text-[var(--aura-ink)] backdrop-blur-sm transition-colors duration-200 hover:border-[var(--aura-accent)]/60"
           >
             {h.ctaSecondary}
           </Link>
         </div>
 
-        {/* Klinik sorumluluk mikro-metni (v6.8 dürüstlük çizgisi) — CTA'nın
-            hemen altında, wireframe §1 gereği. */}
+        {/* Klinik sorumluluk mikro-metni (v6.8 dürüstlük çizgisi). */}
         <p className="mt-8 max-w-xl text-[13px] leading-relaxed text-[var(--aura-micro)]">
           {h.safety}
         </p>
