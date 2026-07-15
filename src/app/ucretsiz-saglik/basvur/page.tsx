@@ -17,7 +17,7 @@ import { AiConsentGate } from "@/components/AiConsentGate";
 const STATIC_UI = [
   "Ücretsiz Sağlık Hizmeti",
   "Ücretsiz Sağlık Hizmeti Başvurusu",
-  "Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.",
+  "Maddi imkânı kısıtlı hastalar için gönüllü doktorlarla ücretsiz video konsültasyon.",
   "Arayüz dili", "Hasta Adı (veya yakını)", "Örn. Amina B.", "Ülke", "Dil",
   "Şikayetiniz / Semptomlar",
   "Örn. Çocuğumda iki haftadır geçmeyen öksürük ve ateş var; doktora erişimimiz yok.",
@@ -114,7 +114,7 @@ function FreeCareApplyInner() {
   }
 
   return (
-    <JourneyIntakeShell icon={HeartHandshake} eyebrow={t("Ücretsiz Sağlık Hizmeti")} title={t("Ücretsiz Sağlık Hizmeti Başvurusu")} intro={t("Maddi imkânı kısıtlı hastalar için akredite gönüllü doktorlarla ücretsiz video konsültasyon.")} lang={uiLang} onLangChange={chooseLang} journey="FREE_CARE" stage={0}>
+    <JourneyIntakeShell icon={HeartHandshake} eyebrow={t("Ücretsiz Sağlık Hizmeti")} title={t("Ücretsiz Sağlık Hizmeti Başvurusu")} intro={t("Maddi imkânı kısıtlı hastalar için gönüllü doktorlarla ücretsiz video konsültasyon.")} lang={uiLang} onLangChange={chooseLang} journey="FREE_CARE" stage={0}>
 
       <div className="mt-7 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm space-y-4">
         {showStrip && profile ? (

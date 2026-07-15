@@ -111,7 +111,7 @@ export function PatientSignupForm({ googleEnabled }: { googleEnabled: boolean })
 
         <p className="mt-3 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
           Üyelik sonrası kişisel verilerinizin işlenmesine ilişkin KVKK açık onam metni gösterilir;
-          sağlık verileriniz uçtan uca erişim kontrolü ve şifreleme ile korunur.
+          sağlık verileriniz sıkı erişim kontrolü ile, iletimde ve sunucuda şifrelenerek korunur.
         </p>
       </div>
 

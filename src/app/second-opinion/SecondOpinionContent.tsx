@@ -7,9 +7,9 @@ import { usePublicLocale, LocaleToggle } from "@/components/PublicLocale";
 const COPY = {
   en: {
     badge: "Second Opinion",
-    h1: "Be sure about your diagnosis — an independent second opinion from accredited specialists.",
+    h1: "Be sure about your diagnosis — an independent second opinion from specialists.",
     intro:
-      "Have your current diagnosis and treatment reviewed through the eyes of an accredited specialist in the field. Meet the expert directly over video with live interpreting in 70 languages, and decide with confidence.",
+      "Have your current diagnosis and treatment reviewed through the eyes of an independent specialist in the field. Meet the expert directly over video with live interpreting, and decide with confidence.",
     start: "Get started",
     seeDoctors: "See specialists",
     staffCta: "Go to your dashboard",
@@ -20,9 +20,9 @@ const COPY = {
   },
   tr: {
     badge: "İkinci Görüş",
-    h1: "Tanınızdan emin olun — akredite uzmanlardan bağımsız ikinci görüş.",
+    h1: "Tanınızdan emin olun — uzmanlardan bağımsız ikinci görüş.",
     intro:
-      "Mevcut tanı ve tedavinizi, alanında akredite bir uzmanın gözünden değerlendirin. 70 dilde simültane tercüme hizmetiyle uzmanla doğrudan video görüşün; kararınızı güvenle verin.",
+      "Mevcut tanı ve tedavinizi, alanında bağımsız bir uzmanın gözünden değerlendirin. Simültane tercüme desteğiyle uzmanla doğrudan video görüşün; kararınızı güvenle verin.",
     start: "Hemen başla",
     seeDoctors: "Uzmanları gör",
     staffCta: "Panelinize gidin",
@@ -41,13 +41,13 @@ const STEPS = [
   },
   {
     icon: Stethoscope,
-    en: { t: "A specialist reviews", d: "An accredited specialist independently reviews your file." },
-    tr: { t: "Uzman değerlendirir", d: "Akredite bir uzman dosyanızı bağımsız olarak inceler." },
+    en: { t: "A specialist reviews", d: "An independent specialist reviews your file." },
+    tr: { t: "Uzman değerlendirir", d: "Bağımsız bir uzman dosyanızı inceler." },
   },
   {
     icon: Languages,
-    en: { t: "Video consultation", d: "Meet the expert face to face with live interpreting in 70 languages." },
-    tr: { t: "Video görüşme", d: "70 dilde simültane tercümeyle uzmanla yüz yüze görüşün." },
+    en: { t: "Video consultation", d: "Meet the expert face to face with live interpreting." },
+    tr: { t: "Video görüşme", d: "Simültane tercüme desteğiyle uzmanla yüz yüze görüşün." },
   },
   {
     icon: ShieldCheck,

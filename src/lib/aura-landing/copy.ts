@@ -130,7 +130,7 @@ export const COPY = {
         key: "consult",
         strand: "telehealth",
         title: "Talk to a doctor.",
-        body: "AI triage routes you to the right specialist in minutes.",
+        body: "AURA prepares your case and suggests an appropriate specialty.",
         cta: "enter consult",
         href: "/giris",
         external: false,
@@ -140,7 +140,7 @@ export const COPY = {
         key: "so",
         strand: "Second Opinion",
         title: "A second set of eyes.",
-        body: "Independent accredited specialists review your diagnosis.",
+        body: "Independent specialists review your diagnosis.",
         cta: "request review",
         href: LINKS.secondOpinion,
         external: true,
@@ -177,17 +177,21 @@ export const COPY = {
         { img: "doc-ivf", name: "Dr. Murat Çelik", field: "IVF" },
       ],
     },
+    // Guven bolumu (P0 durustluk, 2026-07-15): demo metrik + uydurma yorum +
+    // akreditasyon rozetleri KALDIRILDI (olculmeden/belgelenmeden iddia edilmez).
+    // Yerine yalniz URUNDE KANITLANABILIR olan (Tier A) 6 madde — her birinin kod
+    // karsiligi dogrulandi: consent.ts · crypto.ts · ownership.ts · admin/hekim-onay
+    // · audit.ts · booking route agencySentAt kapisi. Yeni madde eklemeden ONCE
+    // kod kanitini goster (claims framework: iddia > kanit > sahip > tarih).
     trust: {
-      metrics: [
-        { value: 20, suffix: "k+", label: "patients" },
-        { value: 40, suffix: "+", label: "clinics" },
-        { value: 4.9, suffix: "", label: "rating" },
-      ],
-      footnote: "* demo data",
-      quotes: [
-        { quote: "From the first video call to the follow-ups at home, everything was organised.", name: "James W.", role: "Hair transplant, London" },
-        { quote: "An independent second opinion confirmed my diagnosis — I finally felt sure.", name: "Sofia M.", role: "Second opinion, Berlin" },
-        { quote: "I saw a specialist by video the same week, without leaving home.", name: "Karim A.", role: "Cardiology consult, Dubai" },
+      headline: "Trust is part of the product",
+      items: [
+        { title: "Clear consent", desc: "Consent is recorded before AI-supported steps, with the approved text, a timestamp and a tamper-evident chain." },
+        { title: "Encrypted in transit and at rest", desc: "Health data is encrypted in transit and encrypted again before it is stored." },
+        { title: "Role-based access", desc: "Patients, doctors, coordinators and partners see only what their role requires." },
+        { title: "Verified doctor onboarding", desc: "Professional documents are reviewed and approved before a doctor becomes visible." },
+        { title: "Tamper-evident access log", desc: "Access to clinical data is written to an append-only chain that can be independently verified." },
+        { title: "Assessment before commitments", desc: "Pricing and travel arrangements only follow a clinical assessment — never precede it." },
       ],
     },
     howItWorks: {
@@ -195,19 +199,14 @@ export const COPY = {
       note: "Four steps, one continuous journey.",
       steps: [
         { title: "Tell us", desc: "Describe your symptoms or goal in your own language." },
-        { title: "AI matches", desc: "Smart triage routes you to the right specialist in minutes." },
-        { title: "Video consult", desc: "Meet your doctor over secure video, with live interpretation." },
+        { title: "AURA prepares your case", desc: "Your information is organised and an appropriate specialty is suggested." },
+        { title: "Video consult", desc: "Meet your doctor over encrypted video, with live interpretation." },
         { title: "Follow-up", desc: "Reports, recovery checks and aftercare — all from home." },
       ],
+      // AI sorumluluk mikro-metni (backlog P0#5) — AI adiminin hemen altinda durur:
+      // destek ile klinik yargiyi ayirir. Cevirilerde bu ayrim korunmali.
+      safety: "Medical decisions are made by qualified healthcare professionals. AURA supports assessment, coordination and communication.",
       cta: "See the full walkthrough",
-    },
-    transparency: {
-      headline: "Care you can trust",
-      items: [
-        { title: "Encrypted end to end", desc: "Your data is protected under KVKK & GDPR, encrypted at rest." },
-        { title: "Transparent pricing", desc: "Clear costs before you commit — no surprises." },
-        { title: "Independent opinions", desc: "Second opinions come from accredited, unaffiliated specialists." },
-      ],
     },
     closing: {
       headline: "Ready when you are.",
@@ -278,10 +277,10 @@ export const COPY = {
           steps: [
             { t: "Create your account", d: "Sign up in minutes with Google, Apple or e-mail." },
             { t: "Complete payment", d: "One transparent fee, paid securely by card." },
-            { t: "Describe your symptoms", d: "A short guided form; AI triage reads it instantly." },
-            { t: "Get matched to a specialist", d: "You are assigned to the right doctor for your case." },
+            { t: "Describe your symptoms", d: "A short guided form; AURA organises what you share." },
+            { t: "Get matched to a specialist", d: "You are assigned to a doctor in the suggested specialty." },
             { t: "Wait in the digital lounge", d: "Follow your place in the digital waiting room in real time." },
-            { t: "Meet your doctor on video", d: "A secure video visit; notes and next steps are saved to your file." },
+            { t: "Meet your doctor on video", d: "An encrypted video visit; notes and next steps are saved to your file." },
           ],
         },
         {
@@ -298,7 +297,7 @@ export const COPY = {
           key: "tourism",
           steps: [
             { t: "Choose your treatment", d: "Hollywood smile, hair transplant, aesthetic surgery, or a medical operation." },
-            { t: "Explore options in Türkiye", d: "Compare accredited clinics and specialists for your case." },
+            { t: "Explore options in Türkiye", d: "Compare health-tourism authorised clinics and specialists for your case." },
             { t: "Talk to specialists", d: "Meet doctors and health advisors over video." },
             { t: "Receive your offer", d: "A clear package covering treatment, stay and logistics." },
             { t: "Travel with a full plan", d: "Flights, hotel, procedure and aftercare, planned end to end." },
@@ -340,7 +339,7 @@ export const COPY = {
         key: "consult",
         strand: "uzaktan sağlık",
         title: "Doktorla görüşün.",
-        body: "Yapay zeka triyajı sizi dakikalar içinde doğru uzmana yönlendirir.",
+        body: "AURA vakanızı hazırlar ve uygun branşı önerir.",
         cta: "görüşmeye başla",
         href: "/giris",
         external: false,
@@ -350,7 +349,7 @@ export const COPY = {
         key: "so",
         strand: "İkinci Görüş",
         title: "İkinci bir uzman gözü.",
-        body: "Bağımsız, akredite uzmanlar tanınızı yeniden değerlendirir.",
+        body: "Bağımsız uzmanlar tanınızı yeniden değerlendirir.",
         cta: "inceleme iste",
         href: LINKS.secondOpinion,
         external: true,
@@ -388,16 +387,14 @@ export const COPY = {
       ],
     },
     trust: {
-      metrics: [
-        { value: 20, suffix: "b+", label: "hasta" },
-        { value: 40, suffix: "+", label: "klinik" },
-        { value: 4.9, suffix: "", label: "puan" },
-      ],
-      footnote: "* demo verisi",
-      quotes: [
-        { quote: "İlk video görüşmesinden evdeki takiplere kadar her şey organizeydi.", name: "James W.", role: "Saç ekimi, Londra" },
-        { quote: "Bağımsız ikinci görüş tanımı doğruladı — sonunda içim rahat etti.", name: "Sofia M.", role: "İkinci görüş, Berlin" },
-        { quote: "Uzmanla aynı hafta, evden çıkmadan video görüşme yaptım.", name: "Karim A.", role: "Kardiyoloji görüşmesi, Dubai" },
+      headline: "Güven, ürünün bir parçası",
+      items: [
+        { title: "Açık rıza kaydı", desc: "Yapay zeka destekli adımlardan önce rızanız; onaylanan metin, zaman damgası ve değiştirilemez zincirle kaydedilir." },
+        { title: "İletimde ve sunucuda şifreli", desc: "Sağlık verileriniz iletim sırasında şifrelenir, saklanmadan önce yeniden şifrelenir." },
+        { title: "Rol-bazlı erişim", desc: "Hasta, doktor, koordinatör ve iş ortakları yalnız rollerinin gerektirdiğini görür." },
+        { title: "Doktor belge doğrulaması", desc: "Mesleki belgeler incelenip onaylanmadan doktor profili yayına çıkmaz." },
+        { title: "Değiştirilemez erişim kaydı", desc: "Klinik veriye her erişim, bağımsız doğrulanabilen ekle-only bir zincire işlenir." },
+        { title: "Önce değerlendirme, sonra taahhüt", desc: "Fiyat ve seyahat düzenlemeleri klinik değerlendirmenin ardından gelir — öncesinde asla." },
       ],
     },
     howItWorks: {
@@ -405,19 +402,12 @@ export const COPY = {
       note: "Dört adım, tek kesintisiz yolculuk.",
       steps: [
         { title: "Anlatın", desc: "Şikayetinizi veya hedefinizi kendi dilinizde anlatın." },
-        { title: "Yapay zeka eşleştirir", desc: "Akıllı triyaj sizi dakikalar içinde doğru uzmana yönlendirir." },
-        { title: "Video görüşme", desc: "Doktorunuzla güvenli video ve canlı çeviriyle görüşün." },
+        { title: "AURA vakanızı hazırlar", desc: "Bilgileriniz düzenlenir ve uygun branş önerilir." },
+        { title: "Video görüşme", desc: "Doktorunuzla şifreli video ve canlı çeviriyle görüşün." },
         { title: "Takip", desc: "Raporlar, iyileşme kontrolleri ve bakım — hepsi evden." },
       ],
+      safety: "Tıbbi kararları yetkili sağlık profesyonelleri verir. AURA değerlendirme, koordinasyon ve iletişimi destekler.",
       cta: "Tüm adımları görün",
-    },
-    transparency: {
-      headline: "Güvenebileceğiniz sağlık hizmeti",
-      items: [
-        { title: "Uçtan uca şifreli", desc: "Verileriniz KVKK & GDPR kapsamında, at-rest şifreli korunur." },
-        { title: "Şeffaf fiyatlandırma", desc: "Karar vermeden önce net maliyet — sürpriz yok." },
-        { title: "Bağımsız görüşler", desc: "İkinci görüşler akredite, bağımsız uzmanlardan gelir." },
-      ],
     },
     closing: {
       headline: "Siz hazır olduğunuzda.",
@@ -484,10 +474,10 @@ export const COPY = {
           steps: [
             { t: "Hesabınızı oluşturun", d: "Google, Apple veya e-posta ile dakikalar içinde kaydolun." },
             { t: "Ödemeyi tamamlayın", d: "Tek ve şeffaf ücret; kartla güvenle ödeyin." },
-            { t: "Semptomlarınızı anlatın", d: "Kısa yönlendirmeli form; yapay zeka triyajı anında değerlendirir." },
-            { t: "Doğru uzmana atanın", d: "Vakanıza uygun doktora yönlendirilirsiniz." },
+            { t: "Semptomlarınızı anlatın", d: "Kısa yönlendirmeli form; AURA paylaştıklarınızı düzenler." },
+            { t: "Uzmana atanın", d: "Önerilen branştaki bir doktora yönlendirilirsiniz." },
             { t: "Dijital bekleme odasında bekleyin", d: "Sıranızı gerçek zamanlı takip edin." },
-            { t: "Doktorunuzla görüntülü görüşün", d: "Güvenli video görüşme; notlar ve sonraki adımlar dosyanıza işlenir." },
+            { t: "Doktorunuzla görüntülü görüşün", d: "Şifreli video görüşme; notlar ve sonraki adımlar dosyanıza işlenir." },
           ],
         },
         {
@@ -504,7 +494,7 @@ export const COPY = {
           key: "tourism",
           steps: [
             { t: "Tedavinizi seçin", d: "Hollywood gülüşü, saç ekimi, estetik operasyon ya da medikal bir operasyon." },
-            { t: "Türkiye'deki seçenekleri keşfedin", d: "Akredite klinikleri ve uzmanları vakanız için karşılaştırın." },
+            { t: "Türkiye'deki seçenekleri keşfedin", d: "Sağlık turizmi yetki belgeli klinikleri ve uzmanları vakanız için karşılaştırın." },
             { t: "Uzmanlarla görüşün", d: "Doktorlar ve sağlık danışmanlarıyla görüntülü tanışın." },
             { t: "Teklifinizi alın", d: "Tedavi, konaklama ve lojistiği kapsayan net bir paket." },
             { t: "Tam planla yola çıkın", d: "Uçuş, otel, operasyon ve sonrası; uçtan uca planlı." },
@@ -532,8 +522,8 @@ export const COPY = {
       scenes: "01/04 Szenen",
     },
     chapters: [
-      { n: "01", key: "consult", strand: "telemedizin", title: "Sprechen Sie mit einem Arzt.", body: "KI-Triage führt Sie in Minuten zum richtigen Facharzt.", cta: "beratung starten", href: "/giris", external: false },
-      { n: "02", key: "so", strand: "Zweitmeinung", title: "Ein zweites Paar Augen.", body: "Unabhängige, akkreditierte Fachärzte prüfen Ihre Diagnose.", cta: "prüfung anfordern", href: LINKS.secondOpinion, external: true },
+      { n: "01", key: "consult", strand: "telemedizin", title: "Sprechen Sie mit einem Arzt.", body: "AURA bereitet Ihren Fall auf und schlägt ein passendes Fachgebiet vor.", cta: "beratung starten", href: "/giris", external: false },
+      { n: "02", key: "so", strand: "Zweitmeinung", title: "Ein zweites Paar Augen.", body: "Unabhängige Fachärzte prüfen Ihre Diagnose.", cta: "prüfung anfordern", href: LINKS.secondOpinion, external: true },
       { n: "03", key: "tourism", strand: "gesundheitstourismus", title: "Gesundheitstourismus, geplant.", body: "Flug, Hotel, Operation und Nachsorge in einem Plan.", cta: "reise planen", href: "/giris", external: false },
       { n: "04", key: "freecare", strand: "kostenlose Versorgung", title: "Gesundheit ist ein Recht.", body: "Freiwillige Ärzte helfen, wenn Versorgung unerreichbar ist.", cta: "kostenlos bewerben", href: LINKS.freeCare, external: true },
     ],
@@ -549,16 +539,14 @@ export const COPY = {
       ],
     },
     trust: {
-      metrics: [
-        { value: 20, suffix: "k+", label: "Patienten" },
-        { value: 40, suffix: "+", label: "Kliniken" },
-        { value: 4.9, suffix: "", label: "Bewertung" },
-      ],
-      footnote: "* Demodaten",
-      quotes: [
-        { quote: "Vom ersten Videogespräch bis zur Nachsorge zu Hause war alles organisiert.", name: "James W.", role: "Haartransplantation, London" },
-        { quote: "Eine unabhängige Zweitmeinung bestätigte meine Diagnose — endlich Gewissheit.", name: "Sofia M.", role: "Zweitmeinung, Berlin" },
-        { quote: "Noch in derselben Woche sprach ich per Video mit einem Facharzt, von zu Hause aus.", name: "Karim A.", role: "Kardiologie-Beratung, Dubai" },
+      headline: "Vertrauen ist Teil des Produkts",
+      items: [
+        { title: "Klare Einwilligung", desc: "Vor KI-gestützten Schritten wird Ihre Einwilligung mit dem freigegebenen Text, Zeitstempel und manipulationssicherer Kette erfasst." },
+        { title: "Verschlüsselt bei Übertragung und Speicherung", desc: "Gesundheitsdaten werden bei der Übertragung verschlüsselt und vor der Speicherung erneut verschlüsselt." },
+        { title: "Rollenbasierter Zugriff", desc: "Patienten, Ärzte, Koordinatoren und Partner sehen nur, was ihre Rolle erfordert." },
+        { title: "Geprüfte Arzt-Registrierung", desc: "Berufsnachweise werden geprüft und freigegeben, bevor ein Arzt sichtbar wird." },
+        { title: "Manipulationssicheres Zugriffsprotokoll", desc: "Zugriffe auf klinische Daten werden in eine unabhängig überprüfbare Kette geschrieben." },
+        { title: "Erst Beurteilung, dann Zusagen", desc: "Preise und Reisearrangements folgen der klinischen Beurteilung — sie gehen ihr nie voraus." },
       ],
     },
     howItWorks: {
@@ -566,19 +554,12 @@ export const COPY = {
       note: "Vier Schritte, eine durchgehende Reise.",
       steps: [
         { title: "Erzählen Sie uns", desc: "Beschreiben Sie Ihre Beschwerden oder Ihr Ziel in Ihrer Sprache." },
-        { title: "KI vermittelt", desc: "Intelligente Triage leitet Sie in Minuten zum richtigen Facharzt." },
-        { title: "Videosprechstunde", desc: "Treffen Sie Ihren Arzt per sicherem Video mit Live-Dolmetschen." },
+        { title: "AURA bereitet Ihren Fall auf", desc: "Ihre Angaben werden geordnet und ein passendes Fachgebiet vorgeschlagen." },
+        { title: "Videosprechstunde", desc: "Treffen Sie Ihren Arzt per verschlüsseltem Video mit Live-Dolmetschen." },
         { title: "Nachsorge", desc: "Berichte, Genesungskontrollen und Betreuung — alles von zu Hause." },
       ],
+      safety: "Medizinische Entscheidungen treffen qualifizierte Fachkräfte. AURA unterstützt Beurteilung, Koordination und Kommunikation.",
       cta: "Zur vollständigen Anleitung",
-    },
-    transparency: {
-      headline: "Versorgung, der Sie vertrauen können",
-      items: [
-        { title: "Ende-zu-Ende verschlüsselt", desc: "Ihre Daten sind nach KVKK & DSGVO geschützt, ruhend verschlüsselt." },
-        { title: "Transparente Preise", desc: "Klare Kosten, bevor Sie sich entscheiden — keine Überraschungen." },
-        { title: "Unabhängige Meinungen", desc: "Zweitmeinungen von akkreditierten, unabhängigen Fachärzten." },
-      ],
     },
     closing: { headline: "Bereit, wenn Sie es sind.", cta: "Arzt sprechen" },
     footer: {
@@ -617,10 +598,10 @@ export const COPY = {
           steps: [
             { t: "Konto erstellen", d: "In Minuten registrieren, mit Google, Apple oder E-Mail." },
             { t: "Zahlung abschließen", d: "Eine transparente Gebühr, sicher per Karte bezahlt." },
-            { t: "Symptome beschreiben", d: "Ein kurzes geführtes Formular; die KI-Triage wertet sofort aus." },
-            { t: "Dem richtigen Facharzt zugewiesen", d: "Sie werden dem passenden Arzt für Ihren Fall zugeteilt." },
+            { t: "Symptome beschreiben", d: "Ein kurzes geführtes Formular; AURA ordnet Ihre Angaben." },
+            { t: "Einem Facharzt zugewiesen", d: "Sie werden einem Arzt im vorgeschlagenen Fachgebiet zugeteilt." },
             { t: "Im digitalen Wartezimmer", d: "Verfolgen Sie Ihren Platz in Echtzeit." },
-            { t: "Videogespräch mit dem Arzt", d: "Sicherer Videotermin; Notizen und nächste Schritte in Ihrer Akte." },
+            { t: "Videogespräch mit dem Arzt", d: "Verschlüsselter Videotermin; Notizen und nächste Schritte in Ihrer Akte." },
           ],
         },
         {
@@ -637,7 +618,7 @@ export const COPY = {
           key: "tourism",
           steps: [
             { t: "Behandlung wählen", d: "Hollywood-Lächeln, Haartransplantation, ästhetische Chirurgie oder eine medizinische Operation." },
-            { t: "Optionen in der Türkei entdecken", d: "Vergleichen Sie akkreditierte Kliniken und Spezialisten." },
+            { t: "Optionen in der Türkei entdecken", d: "Vergleichen Sie für den Gesundheitstourismus zugelassene Kliniken und Spezialisten." },
             { t: "Mit Spezialisten sprechen", d: "Lernen Sie Ärzte und Gesundheitsberater per Video kennen." },
             { t: "Angebot erhalten", d: "Ein klares Paket für Behandlung, Aufenthalt und Logistik." },
             { t: "Mit komplettem Plan reisen", d: "Flug, Hotel, Eingriff und Nachsorge, von Anfang bis Ende geplant." },
@@ -665,8 +646,8 @@ export const COPY = {
       scenes: "01/04 scènes",
     },
     chapters: [
-      { n: "01", key: "consult", strand: "télésanté", title: "Parlez à un médecin.", body: "Le triage par IA vous oriente vers le bon spécialiste en quelques minutes.", cta: "démarrer la consultation", href: "/giris", external: false },
-      { n: "02", key: "so", strand: "Deuxième avis", title: "Un deuxième regard d'expert.", body: "Des spécialistes indépendants et accrédités réévaluent votre diagnostic.", cta: "demander un examen", href: LINKS.secondOpinion, external: true },
+      { n: "01", key: "consult", strand: "télésanté", title: "Parlez à un médecin.", body: "AURA prépare votre dossier et propose une spécialité appropriée.", cta: "démarrer la consultation", href: "/giris", external: false },
+      { n: "02", key: "so", strand: "Deuxième avis", title: "Un deuxième regard d'expert.", body: "Des spécialistes indépendants réévaluent votre diagnostic.", cta: "demander un examen", href: LINKS.secondOpinion, external: true },
       { n: "03", key: "tourism", strand: "tourisme médical", title: "Tourisme médical, planifié.", body: "Vol, hôtel, chirurgie et suivi dans un seul plan.", cta: "planifier mon voyage", href: "/giris", external: false },
       { n: "04", key: "freecare", strand: "soins gratuits", title: "La santé est un droit.", body: "Des médecins bénévoles interviennent quand les soins sont hors de portée.", cta: "demander des soins gratuits", href: LINKS.freeCare, external: true },
     ],
@@ -682,16 +663,14 @@ export const COPY = {
       ],
     },
     trust: {
-      metrics: [
-        { value: 20, suffix: "k+", label: "patients" },
-        { value: 40, suffix: "+", label: "cliniques" },
-        { value: 4.9, suffix: "", label: "note" },
-      ],
-      footnote: "* données de démonstration",
-      quotes: [
-        { quote: "Du premier appel vidéo aux suivis à domicile, tout était organisé.", name: "James W.", role: "Greffe de cheveux, Londres" },
-        { quote: "Un deuxième avis indépendant a confirmé mon diagnostic — enfin rassuré.", name: "Sofia M.", role: "Deuxième avis, Berlin" },
-        { quote: "J'ai consulté un spécialiste en vidéo la même semaine, sans quitter la maison.", name: "Karim A.", role: "Consultation cardiologie, Dubaï" },
+      headline: "La confiance fait partie du produit",
+      items: [
+        { title: "Consentement explicite", desc: "Avant les étapes assistées par IA, votre consentement est enregistré avec le texte approuvé, un horodatage et une chaîne inviolable." },
+        { title: "Chiffré en transit et au repos", desc: "Les données de santé sont chiffrées en transit puis chiffrées à nouveau avant stockage." },
+        { title: "Accès selon le rôle", desc: "Patients, médecins, coordinateurs et partenaires ne voient que ce que leur rôle exige." },
+        { title: "Inscription vérifiée des médecins", desc: "Les documents professionnels sont examinés et approuvés avant qu'un médecin soit visible." },
+        { title: "Journal d'accès inviolable", desc: "Chaque accès aux données cliniques est inscrit dans une chaîne vérifiable de façon indépendante." },
+        { title: "L'évaluation avant les engagements", desc: "Les tarifs et les modalités de voyage suivent l'évaluation clinique — jamais l'inverse." },
       ],
     },
     howItWorks: {
@@ -699,19 +678,12 @@ export const COPY = {
       note: "Quatre étapes, un parcours continu.",
       steps: [
         { title: "Expliquez-nous", desc: "Décrivez vos symptômes ou votre objectif dans votre langue." },
-        { title: "L'IA vous oriente", desc: "Un triage intelligent vous dirige vers le bon spécialiste en minutes." },
-        { title: "Consultation vidéo", desc: "Rencontrez votre médecin en vidéo sécurisée, avec interprétation en direct." },
+        { title: "AURA prépare votre dossier", desc: "Vos informations sont organisées et une spécialité appropriée est proposée." },
+        { title: "Consultation vidéo", desc: "Rencontrez votre médecin en vidéo chiffrée, avec interprétation en direct." },
         { title: "Suivi", desc: "Comptes rendus, contrôles de récupération et soins — depuis chez vous." },
       ],
+      safety: "Les décisions médicales sont prises par des professionnels de santé qualifiés. AURA soutient l'évaluation, la coordination et la communication.",
       cta: "Voir le parcours complet",
-    },
-    transparency: {
-      headline: "Des soins dignes de confiance",
-      items: [
-        { title: "Chiffré de bout en bout", desc: "Vos données sont protégées par KVKK et RGPD, chiffrées au repos." },
-        { title: "Tarifs transparents", desc: "Des coûts clairs avant de vous engager — aucune surprise." },
-        { title: "Avis indépendants", desc: "Les deuxièmes avis proviennent de spécialistes accrédités et indépendants." },
-      ],
     },
     closing: { headline: "Prêts quand vous l'êtes.", cta: "Consulter un médecin" },
     footer: {
@@ -750,10 +722,10 @@ export const COPY = {
           steps: [
             { t: "Créez votre compte", d: "Inscrivez-vous en quelques minutes avec Google, Apple ou e-mail." },
             { t: "Réglez le paiement", d: "Un tarif unique et transparent, payé en toute sécurité par carte." },
-            { t: "Décrivez vos symptômes", d: "Un court formulaire guidé ; le triage par IA l'évalue aussitôt." },
-            { t: "Orienté vers le bon spécialiste", d: "Vous êtes affecté au médecin adapté à votre cas." },
+            { t: "Décrivez vos symptômes", d: "Un court formulaire guidé ; AURA organise ce que vous partagez." },
+            { t: "Orienté vers un spécialiste", d: "Vous êtes affecté à un médecin de la spécialité proposée." },
             { t: "Salle d'attente numérique", d: "Suivez votre place en temps réel." },
-            { t: "Consultation vidéo", d: "Visite vidéo sécurisée ; notes et prochaines étapes dans votre dossier." },
+            { t: "Consultation vidéo", d: "Visite vidéo chiffrée ; notes et prochaines étapes dans votre dossier." },
           ],
         },
         {
@@ -770,7 +742,7 @@ export const COPY = {
           key: "tourism",
           steps: [
             { t: "Choisissez votre traitement", d: "Sourire hollywoodien, greffe de cheveux, chirurgie esthétique ou opération médicale." },
-            { t: "Explorez les options en Türkiye", d: "Comparez cliniques accréditées et spécialistes pour votre cas." },
+            { t: "Explorez les options en Türkiye", d: "Comparez cliniques autorisées pour le tourisme médical et spécialistes pour votre cas." },
             { t: "Parlez aux spécialistes", d: "Échangez en vidéo avec médecins et conseillers santé." },
             { t: "Recevez votre offre", d: "Un forfait clair : traitement, séjour et logistique." },
             { t: "Partez avec un plan complet", d: "Vol, hôtel, intervention et suivi, planifiés de bout en bout." },
@@ -798,8 +770,8 @@ export const COPY = {
       scenes: "01/04 сцены",
     },
     chapters: [
-      { n: "01", key: "consult", strand: "телемедицина", title: "Поговорите с врачом.", body: "ИИ-триаж за минуты направит вас к нужному специалисту.", cta: "начать консультацию", href: "/giris", external: false },
-      { n: "02", key: "so", strand: "Второе мнение", title: "Свежий взгляд специалиста.", body: "Независимые аккредитованные врачи пересмотрят ваш диагноз.", cta: "запросить пересмотр", href: LINKS.secondOpinion, external: true },
+      { n: "01", key: "consult", strand: "телемедицина", title: "Поговорите с врачом.", body: "AURA готовит ваш случай и предлагает подходящую специальность.", cta: "начать консультацию", href: "/giris", external: false },
+      { n: "02", key: "so", strand: "Второе мнение", title: "Свежий взгляд специалиста.", body: "Независимые врачи пересмотрят ваш диагноз.", cta: "запросить пересмотр", href: LINKS.secondOpinion, external: true },
       { n: "03", key: "tourism", strand: "медицинский туризм", title: "Медицинский туризм — по плану.", body: "Перелёт, отель, операция и восстановление в одном плане.", cta: "спланировать поездку", href: "/giris", external: false },
       { n: "04", key: "freecare", strand: "бесплатная помощь", title: "Здоровье — это право.", body: "Врачи-волонтёры помогают, когда лечение недоступно.", cta: "подать заявку", href: LINKS.freeCare, external: true },
     ],
@@ -815,16 +787,14 @@ export const COPY = {
       ],
     },
     trust: {
-      metrics: [
-        { value: 20, suffix: "тыс+", label: "пациентов" },
-        { value: 40, suffix: "+", label: "клиник" },
-        { value: 4.9, suffix: "", label: "рейтинг" },
-      ],
-      footnote: "* демо-данные",
-      quotes: [
-        { quote: "От первого видеозвонка до наблюдения дома — всё было организовано.", name: "James W.", role: "Пересадка волос, Лондон" },
-        { quote: "Независимое второе мнение подтвердило диагноз — я наконец успокоилась.", name: "Sofia M.", role: "Второе мнение, Берлин" },
-        { quote: "Я поговорил со специалистом по видео в ту же неделю, не выходя из дома.", name: "Karim A.", role: "Консультация кардиолога, Дубай" },
+      headline: "Доверие — часть продукта",
+      items: [
+        { title: "Явное согласие", desc: "Перед шагами с участием ИИ согласие фиксируется вместе с утверждённым текстом, отметкой времени и защищённой от подмены цепочкой." },
+        { title: "Шифрование при передаче и хранении", desc: "Медицинские данные шифруются при передаче и повторно шифруются перед сохранением." },
+        { title: "Доступ по роли", desc: "Пациенты, врачи, координаторы и партнёры видят только то, что требует их роль." },
+        { title: "Проверка документов врача", desc: "Профессиональные документы проверяются и утверждаются до появления врача в системе." },
+        { title: "Защищённый журнал доступа", desc: "Каждый доступ к клиническим данным записывается в цепочку, которую можно проверить независимо." },
+        { title: "Сначала оценка, потом обязательства", desc: "Цены и организация поездки следуют за клинической оценкой — никогда не предшествуют ей." },
       ],
     },
     howItWorks: {
@@ -832,19 +802,12 @@ export const COPY = {
       note: "Четыре шага, один непрерывный путь.",
       steps: [
         { title: "Расскажите нам", desc: "Опишите симптомы или цель на своём языке." },
-        { title: "ИИ подбирает", desc: "Умная сортировка направит вас к нужному специалисту за минуты." },
-        { title: "Видеоконсультация", desc: "Встреча с врачом по защищённому видео с живым переводом." },
+        { title: "AURA готовит ваш случай", desc: "Ваши данные упорядочиваются, и предлагается подходящая специальность." },
+        { title: "Видеоконсультация", desc: "Встреча с врачом по зашифрованному видео с живым переводом." },
         { title: "Наблюдение", desc: "Отчёты, контроль восстановления и уход — всё из дома." },
       ],
+      safety: "Медицинские решения принимают квалифицированные специалисты здравоохранения. AURA поддерживает оценку, координацию и общение.",
       cta: "Посмотреть весь процесс",
-    },
-    transparency: {
-      headline: "Медицина, которой можно доверять",
-      items: [
-        { title: "Сквозное шифрование", desc: "Ваши данные защищены по KVKK и GDPR, шифруются при хранении." },
-        { title: "Прозрачные цены", desc: "Понятная стоимость до решения — без сюрпризов." },
-        { title: "Независимые мнения", desc: "Второе мнение от аккредитованных независимых специалистов." },
-      ],
     },
     closing: { headline: "Мы готовы, когда готовы вы.", cta: "Поговорить с врачом" },
     footer: {
@@ -883,10 +846,10 @@ export const COPY = {
           steps: [
             { t: "Создайте аккаунт", d: "Регистрация за несколько минут через Google, Apple или e-mail." },
             { t: "Оплатите визит", d: "Единая прозрачная цена; безопасная оплата картой." },
-            { t: "Опишите симптомы", d: "Короткая анкета; ИИ-триаж мгновенно её оценивает." },
-            { t: "Назначение к специалисту", d: "Вас направляют к врачу, подходящему для вашего случая." },
+            { t: "Опишите симптомы", d: "Короткая анкета; AURA упорядочивает то, чем вы делитесь." },
+            { t: "Назначение к специалисту", d: "Вас направляют к врачу предложенной специальности." },
             { t: "Цифровая комната ожидания", d: "Следите за своей очередью в реальном времени." },
-            { t: "Видеоконсультация с врачом", d: "Защищённый видеоприём; заметки и дальнейшие шаги в вашей карте." },
+            { t: "Видеоконсультация с врачом", d: "Зашифрованный видеоприём; заметки и дальнейшие шаги в вашей карте." },
           ],
         },
         {
@@ -903,7 +866,7 @@ export const COPY = {
           key: "tourism",
           steps: [
             { t: "Выберите лечение", d: "Голливудская улыбка, пересадка волос, пластическая операция или медицинская операция." },
-            { t: "Изучите варианты в Турции", d: "Сравните аккредитованные клиники и специалистов." },
+            { t: "Изучите варианты в Турции", d: "Сравните клиники с разрешением на медицинский туризм и специалистов." },
             { t: "Пообщайтесь со специалистами", d: "Видеовстречи с врачами и медицинскими консультантами." },
             { t: "Получите предложение", d: "Понятный пакет: лечение, проживание и логистика." },
             { t: "Поездка по полному плану", d: "Перелёт, отель, операция и восстановление; всё спланировано." },
@@ -931,8 +894,8 @@ export const COPY = {
       scenes: "01/04 مشاهد",
     },
     chapters: [
-      { n: "01", key: "consult", strand: "الرعاية عن بُعد", title: "تحدث إلى طبيب.", body: "الفرز بالذكاء الاصطناعي يوجهك إلى الأخصائي المناسب خلال دقائق.", cta: "ابدأ الاستشارة", href: "/giris", external: false },
-      { n: "02", key: "so", strand: "رأي ثانٍ", title: "عين خبيرة ثانية.", body: "أخصائيون مستقلون معتمدون يراجعون تشخيصك.", cta: "اطلب مراجعة", href: LINKS.secondOpinion, external: true },
+      { n: "01", key: "consult", strand: "الرعاية عن بُعد", title: "تحدث إلى طبيب.", body: "تُعدّ AURA ملفك وتقترح تخصصًا مناسبًا.", cta: "ابدأ الاستشارة", href: "/giris", external: false },
+      { n: "02", key: "so", strand: "رأي ثانٍ", title: "عين خبيرة ثانية.", body: "أخصائيون مستقلون يراجعون تشخيصك.", cta: "اطلب مراجعة", href: LINKS.secondOpinion, external: true },
       { n: "03", key: "tourism", strand: "السياحة العلاجية", title: "سياحة علاجية مخطط لها.", body: "الطيران والفندق والجراحة والمتابعة في خطة واحدة.", cta: "خطط رحلتي", href: "/giris", external: false },
       { n: "04", key: "freecare", strand: "رعاية مجانية", title: "الصحة حق.", body: "أطباء متطوعون يتدخلون عندما تتعذر الرعاية.", cta: "قدّم للرعاية المجانية", href: LINKS.freeCare, external: true },
     ],
@@ -948,16 +911,14 @@ export const COPY = {
       ],
     },
     trust: {
-      metrics: [
-        { value: 20, suffix: "ألف+", label: "مريض" },
-        { value: 40, suffix: "+", label: "عيادة" },
-        { value: 4.9, suffix: "", label: "التقييم" },
-      ],
-      footnote: "* بيانات تجريبية",
-      quotes: [
-        { quote: "من أول مكالمة فيديو إلى المتابعة في المنزل، كان كل شيء منظمًا.", name: "James W.", role: "زراعة شعر، لندن" },
-        { quote: "رأي ثانٍ مستقل أكّد تشخيصي — شعرت أخيرًا بالاطمئنان.", name: "Sofia M.", role: "رأي ثانٍ، برلين" },
-        { quote: "تحدثت مع أخصائي عبر الفيديو في الأسبوع نفسه دون مغادرة المنزل.", name: "Karim A.", role: "استشارة قلب، دبي" },
+      headline: "الثقة جزء من المنتج",
+      items: [
+        { title: "موافقة صريحة", desc: "قبل الخطوات المدعومة بالذكاء الاصطناعي، تُسجَّل موافقتك مع النص المعتمد وختم زمني وسلسلة يصعب العبث بها." },
+        { title: "مشفّر أثناء النقل والتخزين", desc: "تُشفَّر البيانات الصحية أثناء النقل، ثم تُشفَّر مرة أخرى قبل تخزينها." },
+        { title: "وصول حسب الدور", desc: "المرضى والأطباء والمنسقون والشركاء يرون فقط ما يتطلبه دورهم." },
+        { title: "تحقق من وثائق الطبيب", desc: "تُراجَع الوثائق المهنية وتُعتمد قبل ظهور الطبيب في المنصة." },
+        { title: "سجل وصول محمي من العبث", desc: "يُكتب كل وصول إلى البيانات السريرية في سلسلة يمكن التحقق منها بشكل مستقل." },
+        { title: "التقييم أولًا، ثم الالتزامات", desc: "الأسعار وترتيبات السفر تأتي بعد التقييم السريري — لا تسبقه أبدًا." },
       ],
     },
     howItWorks: {
@@ -965,19 +926,12 @@ export const COPY = {
       note: "أربع خطوات، رحلة واحدة متواصلة.",
       steps: [
         { title: "أخبرنا", desc: "صِف أعراضك أو هدفك بلغتك." },
-        { title: "الذكاء الاصطناعي يوجّهك", desc: "فرز ذكي يوجّهك إلى الأخصائي المناسب خلال دقائق." },
-        { title: "استشارة فيديو", desc: "قابل طبيبك عبر فيديو آمن مع ترجمة فورية." },
+        { title: "AURA تُعدّ ملفك", desc: "تُنظَّم معلوماتك ويُقترح تخصص مناسب." },
+        { title: "استشارة فيديو", desc: "قابل طبيبك عبر فيديو مشفّر مع ترجمة فورية." },
         { title: "المتابعة", desc: "التقارير وفحوص التعافي والرعاية — كلها من المنزل." },
       ],
+      safety: "القرارات الطبية يتخذها مختصون مؤهلون في الرعاية الصحية. تدعم AURA التقييم والتنسيق والتواصل.",
       cta: "شاهد الدليل الكامل",
-    },
-    transparency: {
-      headline: "رعاية تثق بها",
-      items: [
-        { title: "مشفّر من الطرف إلى الطرف", desc: "بياناتك محمية وفق KVKK و GDPR، ومشفّرة أثناء التخزين." },
-        { title: "أسعار شفافة", desc: "تكاليف واضحة قبل الالتزام — دون مفاجآت." },
-        { title: "آراء مستقلة", desc: "الآراء الثانية من أخصائيين معتمدين ومستقلين." },
-      ],
     },
     closing: { headline: "جاهزون متى كنت جاهزًا.", cta: "تحدث إلى طبيب" },
     footer: {
@@ -1016,10 +970,10 @@ export const COPY = {
           steps: [
             { t: "أنشئ حسابك", d: "سجّل خلال دقائق عبر Google أو Apple أو البريد الإلكتروني." },
             { t: "أكمل الدفع", d: "رسوم واحدة وشفافة؛ ادفع بأمان بالبطاقة." },
-            { t: "صف أعراضك", d: "نموذج قصير موجّه؛ يقيّمه الفرز بالذكاء الاصطناعي فورًا." },
-            { t: "التوجيه إلى الأخصائي المناسب", d: "تُسند حالتك إلى الطبيب الأنسب لها." },
+            { t: "صف أعراضك", d: "نموذج قصير موجّه؛ تنظّم AURA ما تشاركه." },
+            { t: "التوجيه إلى أخصائي", d: "تُسند حالتك إلى طبيب في التخصص المقترح." },
             { t: "غرفة الانتظار الرقمية", d: "تابع دورك لحظة بلحظة." },
-            { t: "قابل طبيبك عبر الفيديو", d: "زيارة فيديو آمنة؛ تُحفظ الملاحظات والخطوات التالية في ملفك." },
+            { t: "قابل طبيبك عبر الفيديو", d: "زيارة فيديو مشفّرة؛ تُحفظ الملاحظات والخطوات التالية في ملفك." },
           ],
         },
         {
@@ -1036,7 +990,7 @@ export const COPY = {
           key: "tourism",
           steps: [
             { t: "اختر علاجك", d: "ابتسامة هوليوود، زراعة الشعر، جراحة تجميلية أو عملية طبية." },
-            { t: "استكشف الخيارات في تركيا", d: "قارن العيادات المعتمدة والأخصائيين لحالتك." },
+            { t: "استكشف الخيارات في تركيا", d: "قارن العيادات المرخّصة للسياحة العلاجية والأخصائيين لحالتك." },
             { t: "تحدث إلى الأخصائيين", d: "لقاءات فيديو مع الأطباء ومستشاري الصحة." },
             { t: "استلم عرضك", d: "باقة واضحة تشمل العلاج والإقامة والتنقل." },
             { t: "سافر بخطة كاملة", d: "الطيران والفندق والإجراء والمتابعة؛ مخطط من البداية إلى النهاية." },
@@ -1064,8 +1018,8 @@ export const COPY = {
       scenes: "01/04 صحنه",
     },
     chapters: [
-      { n: "01", key: "consult", strand: "سلامت از راه دور", title: "با پزشک صحبت کنید.", body: "تریاژ هوش مصنوعی شما را در چند دقیقه به متخصص درست می‌رساند.", cta: "شروع مشاوره", href: "/giris", external: false },
-      { n: "02", key: "so", strand: "نظر دوم", title: "نگاه دومِ یک متخصص.", body: "متخصصان مستقل و معتبر تشخیص شما را بازبینی می‌کنند.", cta: "درخواست بازبینی", href: LINKS.secondOpinion, external: true },
+      { n: "01", key: "consult", strand: "سلامت از راه دور", title: "با پزشک صحبت کنید.", body: "AURA پرونده شما را آماده می‌کند و تخصص مناسبی پیشنهاد می‌دهد.", cta: "شروع مشاوره", href: "/giris", external: false },
+      { n: "02", key: "so", strand: "نظر دوم", title: "نگاه دومِ یک متخصص.", body: "متخصصان مستقل تشخیص شما را بازبینی می‌کنند.", cta: "درخواست بازبینی", href: LINKS.secondOpinion, external: true },
       { n: "03", key: "tourism", strand: "گردشگری سلامت", title: "گردشگری سلامت، برنامه‌ریزی‌شده.", body: "پرواز، هتل، جراحی و مراقبت پس از آن در یک برنامه.", cta: "برنامه‌ریزی سفر من", href: "/giris", external: false },
       { n: "04", key: "freecare", strand: "مراقبت رایگان", title: "سلامت یک حق است.", body: "وقتی درمان در دسترس نیست، پزشکان داوطلب وارد می‌شوند.", cta: "درخواست مراقبت رایگان", href: LINKS.freeCare, external: true },
     ],
@@ -1081,16 +1035,14 @@ export const COPY = {
       ],
     },
     trust: {
-      metrics: [
-        { value: 20, suffix: "هزار+", label: "بیمار" },
-        { value: 40, suffix: "+", label: "کلینیک" },
-        { value: 4.9, suffix: "", label: "امتیاز" },
-      ],
-      footnote: "* داده نمایشی",
-      quotes: [
-        { quote: "از اولین تماس تصویری تا پیگیری‌های خانه، همه چیز منظم بود.", name: "James W.", role: "کاشت مو، لندن" },
-        { quote: "یک نظر دوم مستقل تشخیص مرا تأیید کرد — بالاخره خیالم راحت شد.", name: "Sofia M.", role: "نظر دوم، برلین" },
-        { quote: "همان هفته بدون خروج از خانه با یک متخصص به‌صورت تصویری صحبت کردم.", name: "Karim A.", role: "مشاوره قلب، دبی" },
+      headline: "اعتماد بخشی از محصول است",
+      items: [
+        { title: "رضایت صریح", desc: "پیش از گام‌های مبتنی بر هوش مصنوعی، رضایت شما همراه با متن تأییدشده، مهر زمانی و زنجیره‌ای مقاوم در برابر دستکاری ثبت می‌شود." },
+        { title: "رمزگذاری در انتقال و ذخیره‌سازی", desc: "داده‌های سلامت هنگام انتقال رمزگذاری و پیش از ذخیره‌سازی دوباره رمزگذاری می‌شوند." },
+        { title: "دسترسی بر پایه نقش", desc: "بیماران، پزشکان، هماهنگ‌کنندگان و شرکا فقط آنچه را نقششان ایجاب می‌کند می‌بینند." },
+        { title: "بررسی مدارک پزشک", desc: "مدارک حرفه‌ای پیش از نمایش پزشک در پلتفرم بررسی و تأیید می‌شوند." },
+        { title: "گزارش دسترسی مقاوم در برابر دستکاری", desc: "هر دسترسی به داده‌های بالینی در زنجیره‌ای ثبت می‌شود که مستقل قابل راستی‌آزمایی است." },
+        { title: "نخست ارزیابی، سپس تعهدات", desc: "قیمت‌ها و ترتیبات سفر پس از ارزیابی بالینی می‌آیند — هرگز پیش از آن." },
       ],
     },
     howItWorks: {
@@ -1098,19 +1050,12 @@ export const COPY = {
       note: "چهار گام، یک سفر پیوسته.",
       steps: [
         { title: "به ما بگویید", desc: "علائم یا هدف خود را به زبان خودتان شرح دهید." },
-        { title: "هوش مصنوعی هدایت می‌کند", desc: "غربالگری هوشمند شما را در چند دقیقه به متخصص مناسب می‌رساند." },
-        { title: "مشاوره ویدیویی", desc: "با پزشک خود از طریق ویدیوی امن و ترجمه زنده ملاقات کنید." },
+        { title: "AURA پرونده شما را آماده می‌کند", desc: "اطلاعات شما سامان می‌یابد و تخصص مناسبی پیشنهاد می‌شود." },
+        { title: "مشاوره ویدیویی", desc: "با پزشک خود از طریق ویدیوی رمزگذاری‌شده و ترجمه زنده ملاقات کنید." },
         { title: "پیگیری", desc: "گزارش‌ها، بررسی‌های بهبود و مراقبت — همه از خانه." },
       ],
+      safety: "تصمیم‌های پزشکی را متخصصان واجد شرایط سلامت می‌گیرند. AURA از ارزیابی، هماهنگی و ارتباط پشتیبانی می‌کند.",
       cta: "مشاهده راهنمای کامل",
-    },
-    transparency: {
-      headline: "مراقبتی که می‌توانید به آن اعتماد کنید",
-      items: [
-        { title: "رمزگذاری سرتاسری", desc: "داده‌های شما تحت KVKK و GDPR محافظت و در حالت ذخیره رمزگذاری می‌شوند." },
-        { title: "قیمت‌گذاری شفاف", desc: "هزینه‌های روشن پیش از تعهد — بدون غافلگیری." },
-        { title: "نظرات مستقل", desc: "نظر دوم از متخصصان معتبر و مستقل ارائه می‌شود." },
-      ],
     },
     closing: { headline: "هر وقت آماده بودید، ما هستیم.", cta: "با پزشک صحبت کنید" },
     footer: {
@@ -1149,10 +1094,10 @@ export const COPY = {
           steps: [
             { t: "حساب خود را بسازید", d: "در چند دقیقه با Google، Apple یا ایمیل ثبت‌نام کنید." },
             { t: "پرداخت را کامل کنید", d: "یک هزینه شفاف؛ پرداخت امن با کارت." },
-            { t: "علائم خود را شرح دهید", d: "فرم کوتاه هدایت‌شده؛ تریاژ هوش مصنوعی فوراً ارزیابی می‌کند." },
-            { t: "به متخصص مناسب سپرده شوید", d: "به پزشک مناسب پرونده‌تان ارجاع می‌شوید." },
+            { t: "علائم خود را شرح دهید", d: "فرم کوتاه هدایت‌شده؛ AURA آنچه را به اشتراک می‌گذارید سامان می‌دهد." },
+            { t: "به متخصص سپرده شوید", d: "به پزشکی در تخصص پیشنهادشده ارجاع می‌شوید." },
             { t: "اتاق انتظار دیجیتال", d: "نوبت خود را به‌صورت زنده دنبال کنید." },
-            { t: "دیدار تصویری با پزشک", d: "ویزیت ویدیویی امن؛ یادداشت‌ها و گام‌های بعدی در پرونده شما ثبت می‌شود." },
+            { t: "دیدار تصویری با پزشک", d: "ویزیت ویدیویی رمزگذاری‌شده؛ یادداشت‌ها و گام‌های بعدی در پرونده شما ثبت می‌شود." },
           ],
         },
         {
@@ -1169,7 +1114,7 @@ export const COPY = {
           key: "tourism",
           steps: [
             { t: "درمان خود را انتخاب کنید", d: "لبخند هالیوودی، کاشت مو، جراحی زیبایی یا یک عمل پزشکی." },
-            { t: "گزینه‌های ترکیه را بررسی کنید", d: "کلینیک‌های معتبر و متخصصان را مقایسه کنید." },
+            { t: "گزینه‌های ترکیه را بررسی کنید", d: "کلینیک‌های دارای مجوز گردشگری سلامت و متخصصان را مقایسه کنید." },
             { t: "با متخصصان گفتگو کنید", d: "دیدارهای ویدیویی با پزشکان و مشاوران سلامت." },
             { t: "پیشنهاد خود را دریافت کنید", d: "بسته‌ای شفاف شامل درمان، اقامت و رفت‌وآمد." },
             { t: "با برنامه کامل سفر کنید", d: "پرواز، هتل، عمل و مراقبت پس از آن؛ از ابتدا تا انتها." },
@@ -1197,8 +1142,8 @@ export const COPY = {
       scenes: "01/04 səhnə",
     },
     chapters: [
-      { n: "01", key: "consult", strand: "teletibb", title: "Həkimlə danışın.", body: "Sİ triajı sizi dəqiqələr içində düzgün mütəxəssisə yönləndirir.", cta: "məsləhətə başla", href: "/giris", external: false },
-      { n: "02", key: "so", strand: "İkinci Rəy", title: "İkinci mütəxəssis baxışı.", body: "Müstəqil, akkreditə olunmuş mütəxəssislər diaqnozunuzu yenidən dəyərləndirir.", cta: "baxış istə", href: LINKS.secondOpinion, external: true },
+      { n: "01", key: "consult", strand: "teletibb", title: "Həkimlə danışın.", body: "AURA işinizi hazırlayır və uyğun ixtisas təklif edir.", cta: "məsləhətə başla", href: "/giris", external: false },
+      { n: "02", key: "so", strand: "İkinci Rəy", title: "İkinci mütəxəssis baxışı.", body: "Müstəqil mütəxəssislər diaqnozunuzu yenidən dəyərləndirir.", cta: "baxış istə", href: LINKS.secondOpinion, external: true },
       { n: "03", key: "tourism", strand: "sağlamlıq turizmi", title: "Sağlamlıq turizmi, planlı.", body: "Uçuş, otel, əməliyyat və sonrası tək planda.", cta: "səyahətimi planla", href: "/giris", external: false },
       { n: "04", key: "freecare", strand: "pulsuz xidmət", title: "Sağlamlıq haqdır.", body: "Müalicə əlçatmaz olanda könüllü həkimlər köməyə gəlir.", cta: "pulsuz müraciət et", href: LINKS.freeCare, external: true },
     ],
@@ -1214,16 +1159,14 @@ export const COPY = {
       ],
     },
     trust: {
-      metrics: [
-        { value: 20, suffix: "min+", label: "xəstə" },
-        { value: 40, suffix: "+", label: "klinika" },
-        { value: 4.9, suffix: "", label: "reytinq" },
-      ],
-      footnote: "* demo verilənləri",
-      quotes: [
-        { quote: "İlk video zəngdən evdəki izləmələrə qədər hər şey mütəşəkkil idi.", name: "James W.", role: "Saç əkimi, London" },
-        { quote: "Müstəqil ikinci rəy diaqnozumu təsdiqlədi — nəhayət arxayın oldum.", name: "Sofia M.", role: "İkinci rəy, Berlin" },
-        { quote: "Həmin həftə evdən çıxmadan mütəxəssislə video ilə danışdım.", name: "Karim A.", role: "Kardiologiya məsləhəti, Dubay" },
+      headline: "Etibar məhsulun bir hissəsidir",
+      items: [
+        { title: "Açıq razılıq", desc: "Sİ dəstəkli addımlardan əvvəl razılığınız təsdiqlənmiş mətn, vaxt möhürü və dəyişdirilməsi aşkarlanan zəncirlə qeyd olunur." },
+        { title: "Ötürülmədə və saxlanmada şifrəli", desc: "Sağlamlıq məlumatları ötürülərkən şifrələnir və saxlanmadan əvvəl yenidən şifrələnir." },
+        { title: "Rol əsaslı giriş", desc: "Xəstələr, həkimlər, koordinatorlar və tərəfdaşlar yalnız rollarının tələb etdiyini görür." },
+        { title: "Həkim sənədlərinin yoxlanması", desc: "Peşə sənədləri həkim görünməzdən əvvəl yoxlanır və təsdiqlənir." },
+        { title: "Dəyişdirilməsi aşkarlanan giriş jurnalı", desc: "Klinik məlumatlara hər giriş müstəqil yoxlana bilən zəncirə yazılır." },
+        { title: "Əvvəl qiymətləndirmə, sonra öhdəliklər", desc: "Qiymət və səyahət tənzimləmələri klinik qiymətləndirmədən sonra gəlir — heç vaxt ondan əvvəl." },
       ],
     },
     howItWorks: {
@@ -1231,19 +1174,12 @@ export const COPY = {
       note: "Dörd addım, bir davamlı yolçuluq.",
       steps: [
         { title: "Bizə danışın", desc: "Şikayətinizi və ya hədəfinizi öz dilinizdə təsvir edin." },
-        { title: "Sİ uyğunlaşdırır", desc: "Ağıllı triyaj sizi dəqiqələr içində doğru mütəxəssisə yönləndirir." },
-        { title: "Video görüş", desc: "Həkiminizlə təhlükəsiz video və canlı tərcümə ilə görüşün." },
+        { title: "AURA işinizi hazırlayır", desc: "Məlumatlarınız nizamlanır və uyğun ixtisas təklif olunur." },
+        { title: "Video görüş", desc: "Həkiminizlə şifrəli video və canlı tərcümə ilə görüşün." },
         { title: "İzləmə", desc: "Hesabatlar, sağalma yoxlamaları və qulluq — hamısı evdən." },
       ],
+      safety: "Tibbi qərarları ixtisaslı səhiyyə mütəxəssisləri verir. AURA qiymətləndirmə, koordinasiya və ünsiyyəti dəstəkləyir.",
       cta: "Tam təlimatı görün",
-    },
-    transparency: {
-      headline: "Etibar edə biləcəyiniz qayğı",
-      items: [
-        { title: "Uçtan-uca şifrələnmiş", desc: "Məlumatlarınız KVKK və GDPR çərçivəsində qorunur, saxlanarkən şifrələnir." },
-        { title: "Şəffaf qiymət", desc: "Qərar verməzdən əvvəl aydın xərclər — sürpriz yox." },
-        { title: "Müstəqil rəylər", desc: "İkinci rəy akkreditə olunmuş müstəqil mütəxəssislərdən gəlir." },
-      ],
     },
     closing: { headline: "Siz hazır olanda.", cta: "Həkimlə görüş" },
     footer: {
@@ -1282,10 +1218,10 @@ export const COPY = {
           steps: [
             { t: "Hesabınızı yaradın", d: "Google, Apple və ya e-poçt ilə dəqiqələr içində qeydiyyatdan keçin." },
             { t: "Ödənişi tamamlayın", d: "Tək və şəffaf ödəniş; kartla təhlükəsiz ödəyin." },
-            { t: "Simptomlarınızı təsvir edin", d: "Qısa yönləndirilmiş form; Sİ triajı dərhal qiymətləndirir." },
-            { t: "Düzgün mütəxəssisə yönləndirilin", d: "Vəziyyətinizə uyğun həkimə təyin olunursunuz." },
+            { t: "Simptomlarınızı təsvir edin", d: "Qısa yönləndirilmiş form; AURA paylaşdıqlarınızı nizamlayır." },
+            { t: "Mütəxəssisə yönləndirilin", d: "Təklif olunan ixtisasdan bir həkimə təyin olunursunuz." },
             { t: "Rəqəmsal gözləmə otağı", d: "Növbənizi real vaxtda izləyin." },
-            { t: "Həkimlə video görüş", d: "Təhlükəsiz video görüş; qeydlər və növbəti addımlar faylınıza yazılır." },
+            { t: "Həkimlə video görüş", d: "Şifrəli video görüş; qeydlər və növbəti addımlar faylınıza yazılır." },
           ],
         },
         {
@@ -1302,7 +1238,7 @@ export const COPY = {
           key: "tourism",
           steps: [
             { t: "Müalicənizi seçin", d: "Hollivud gülüşü, saç əkimi, estetik əməliyyat və ya tibbi əməliyyat." },
-            { t: "Türkiyədəki seçimləri kəşf edin", d: "Akkreditə olunmuş klinikaları və mütəxəssisləri müqayisə edin." },
+            { t: "Türkiyədəki seçimləri kəşf edin", d: "Sağlamlıq turizmi icazəli klinikaları və mütəxəssisləri müqayisə edin." },
             { t: "Mütəxəssislərlə danışın", d: "Həkimlər və sağlamlıq məsləhətçiləri ilə video görüşlər." },
             { t: "Təklifinizi alın", d: "Müalicə, qalma və logistikanı əhatə edən aydın paket." },
             { t: "Tam planla yola çıxın", d: "Uçuş, otel, əməliyyat və sonrakı qulluq; başdan sona planlı." },

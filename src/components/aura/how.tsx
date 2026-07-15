@@ -41,7 +41,13 @@ export function AuraHowItWorks() {
         })}
       </ol>
 
-      <div className="mt-12 text-center">
+      {/* AI sorumluluk notu (P0#5) — adımların hemen altında: AURA'nın desteklediği
+          ile klinik yargının kime ait olduğunu ayırır. Sessiz ama gizlenmemiş. */}
+      <p className="mx-auto mt-10 max-w-2xl text-center text-[13px] leading-relaxed text-[var(--aura-grey)]">
+        {t.howItWorks.safety}
+      </p>
+
+      <div className="mt-8 text-center">
         <Link
           href="/how-it-works"
           className="inline-flex items-center gap-2 rounded-full border border-[var(--aura-accent)]/40 px-6 py-3 text-sm font-semibold text-[var(--aura-accent)] transition-colors hover:bg-[var(--aura-accent)]/10"

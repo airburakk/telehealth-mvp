@@ -12,7 +12,7 @@ const COPY = {
     introA: "The AURA Free Care program offers ",
     strong: "free",
     introB:
-      " video consultations with accredited specialists for patients with limited financial means. Our volunteer doctors set aside a certain quota for this purpose each term.",
+      " video consultations with volunteer specialists for patients with limited financial means. Our volunteer doctors set aside a certain quota for this purpose each term.",
     apply: "Apply",
     online: "Free Care service is online",
     onlineN: "volunteer doctor(s) available now",
@@ -25,7 +25,7 @@ const COPY = {
   tr: {
     badge: "Ücretsiz Sağlık Hizmeti",
     h1: "Sağlığa erişim bir ayrıcalık değil, haktır.",
-    introA: "AURA Ücretsiz Sağlık Hizmeti programı, maddi imkânı kısıtlı hastalar için akredite uzmanlarla ",
+    introA: "AURA Ücretsiz Sağlık Hizmeti programı, maddi imkânı kısıtlı hastalar için gönüllü uzmanlarla ",
     strong: "ücretsiz",
     introB:
       " video konsültasyon sunar. Gönüllü doktorlarımiz her dönem belirli bir kontenjanı bu amaca ayırır.",
@@ -53,13 +53,13 @@ const POINTS = [
   },
   {
     icon: HeartHandshake,
-    en: { t: "Volunteer doctors", d: "Our accredited specialists set aside a certain quota for free consultations each term." },
-    tr: { t: "Gönüllü doktorlar", d: "Akredite uzmanlarımız her dönem belirli bir kontenjanı ücretsiz konsültasyona ayırır." },
+    en: { t: "Volunteer doctors", d: "Our specialists set aside a certain quota for free consultations each term." },
+    tr: { t: "Gönüllü doktorlar", d: "Uzmanlarımız her dönem belirli bir kontenjanı ücretsiz konsültasyona ayırır." },
   },
   {
     icon: ShieldCheck,
-    en: { t: "Same standard", d: "Free Care consultations are also conducted with interpreting in 70 languages and full confidentiality." },
-    tr: { t: "Aynı standart", d: "Ücretsiz sağlık hizmeti görüşmeleri de 70 dilde tercüme ve tam gizlilikle yürütülür." },
+    en: { t: "Same standard", d: "Free Care consultations are also conducted with interpreting support and the same confidentiality." },
+    tr: { t: "Aynı standart", d: "Ücretsiz sağlık hizmeti görüşmeleri de tercüme desteği ve aynı gizlilikle yürütülür." },
   },
 ];
 
