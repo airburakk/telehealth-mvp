@@ -327,6 +327,19 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
 - **Rate-limit (v4.18):** Upstash Redis birincil (dağıtık/atomik; login 10/5dk/IP · paylaşım-şifre
   10/5dk/IP+link · AI 20/dk/kullanıcı), env yoksa/hatada in-memory yedek (fail-open). Env:
   `UPSTASH_REDIS_REST_URL/TOKEN`.
+- **Hesap ve veri silme (v6.11) — `lib/account-deletion.ts`:** ⚖️ **"hepsini sil" YAPILMADI, bilinçli:**
+  sağlık kaydı yasal saklamaya tabidir (KVKK m.7 → m.5/m.6) → düz bir silme düğmesi hukuka aykırı olurdu.
+  **İki katman:** kişisel veri gerçekten silinir (+ parola çöpe, `sessionVersion++` → giriş imkânsız);
+  klinik kayıt **HERKESE kapanır** (`deletionLockedAt`) ve `RETENTION_YEARS` (**20**, tek sabit) sonunda
+  `cron/purge-deleted` **fiziken imha eder**. `ConsentRecord` (dayanağın ispatı) + `AuditLog` (hash-zinciri;
+  satır silmek zinciri kırar) **kasıtlı saklanır**; `User` satırı rıza-ispat bağı için **kabuk** kalır.
+  ⚠️ **Kilit rol kontrolünden ÖNCE** (`ownership.ts` en başta `deletionLocked()`): ADMIN/COORDINATOR/ETHICS
+  geniş dalları kilidi **delemez** — testle sabit (`tests/unit/ownership`), oraya dokunma.
+  ⚠️ `deletionLockedAt` `CaseRef`/`SoCaseRef`'te **ZORUNLU**: yeni bir vaka sorgusu yazarken **select'e
+  eklemeyi unutursan DERLEME PATLAR** (kasıtlı — fail-open yerine compile-error).
+  🔌 **Gerçek crypto-shred YOK ve bugünkü mimaride kurulamaz:** DEK alanın içinde (`crypto.ts` envelope) →
+  imha edilebilir tek anahtar global KEK (= herkesin verisi). Hasta-bazlı DEK'e geçilirse (`crypto.ts:17`
+  KMS swap noktası) purge "anahtar satırını sil"e döner. **Onam metni "crypto-shred" diyor — açık kalem.**
 - **Veri ikametgâhı — işlem bölgesi `fra1` (v6.10):** `vercel.json` `"regions": ["fra1"]` (Frankfurt).
   **Neden:** Neon veritabanı **`eu-central-1` (Frankfurt)**; Vercel varsayılanı ise `iad1` (Washington DC)
   idi → PHI AB'de saklanıyor ama **her istekte ABD'de işleniyordu** (şifre orada çözülür) = gereksiz
