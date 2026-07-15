@@ -5,29 +5,29 @@ import { useEffect, useRef } from "react";
 import { AuraBraille } from "@/components/PortamedLogo";
 import { LETTERS, VIDEOS, useLang } from "@/lib/aura-landing/i18n";
 
-// /v2 hero — blueprint Hero'nun marka mesajı ("Care, without borders.") +
-// mevcut landing'in MARKA VURUŞU.
+// /v2 hero — SAHNELİ AÇILIŞ (v6.14.4, kullanıcı kararı):
+// "başta yalnızca AURA ve braille olsun, aşağıya kaydırdıkça yazılar gelsin ama
+//  hâlâ hero'da kalalım; tüm yazılar geldikten sonra bir sonraki sahneye geçelim"
+// ⇒ ScrollTrigger PIN + SCRUB: hero ekranda sabitlenir, scroll ilerledikçe metin
+// parçaları sırayla belirir; timeline bitince pin çözülür ve sayfa akar.
 //
-// ⚠️ v6.14.1 (kullanıcı geri bildirimi): ilk sürümde blueprint'e uyup düz metin
-// başlık yazmıştım → "hero olmamış, AURA yazısı vurucu, o olmadan o hissiyatı
-// vermiyor". Dev AURA letterform GERİ GELDİ + marka kuralı gereği ALTINA Braille
-// ([[aura-braille-under-wordmark]]: Braille daima AURA yazısının tam altında,
-// ortalı — sembol altında/tek başına ASLA).
+// ⚠️ BİLİNÇLİ ÇELİŞKİ: wireframe "Avoid scroll-jacking" diyor; bu desen tam
+// olarak odur. Kullanıcı kararı (2026-07-16) — gerekçe: hero "çok kalabalık"tı,
+// marka vuruşu metin yığınında kayboluyordu. Zararı a11y kollarıyla sınırlandı:
 //
-// SEMANTİK: letterform role="img" aria-label="AURA" (görsel marka); <h1> =
-// "Care, without borders." (blueprint + SEO'nun istediği okunabilir başlık).
-// Böylece hem marka vuruşu hem doğru belge başlığı olur.
-//
-// SKRİM: mevcut landing'in ALT-KOYU/ÜST-AÇIK gradyanı (0.86 → 0.35 → 0.25).
-// ⚠️ Düz perde (bg-night/65) KULLANMA — v6.14'te öyleydi ve kullanıcı "video tam
-// seçilmiyor, çok karartılmış" dedi. Metin altta okunur, video üstte görünür.
-// Kaynak: 1080p "src" (kullanıcı kararı — tam ekranda 720p kalite kaybediyor).
-// REDUCED-MOTION: video oynatılmaz, poster kalır.
+// A11Y/SEO SÖZLEŞMESİ (bozma):
+//  · reduced-motion → pin/scrub HİÇ kurulmaz, tüm metin görünür, normal scroll.
+//  · Metinler SSR'da DOM'da ve okunur; gizleme yalnız mount SONRASI gsap.set ile
+//    (JS yoksa/hata alırsa içerik görünür kalır — fail-open, SEO güvenli).
+//  · Pin sırasında klavye Tab çalışır; hero zaten ekranda olduğu için focus
+//    kaybolmaz. Metin parçaları opacity ile gelir, DOM'dan çıkmaz.
 export function V2Hero() {
   const { t } = useLang();
   const h = t.v2.hero;
   const videoRef = useRef<HTMLVideoElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
+  // Video: mevcut landing hero'suyla aynı sözleşme (IO + arka-plan sekme yaması).
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -43,8 +43,6 @@ export function V2Hero() {
       { threshold: 0.1 },
     );
     io.observe(video);
-    // Arka plan sekmesinde mount-play reddedilir ve hero hep kesişimde kaldığı
-    // için IO bir daha ateşlemez → görünür olunca yeniden dene (hero.tsx tuzağı).
     const onVis = () => {
       if (document.visibilityState === "visible" && inView) void video.play().catch(() => {});
     };
@@ -55,8 +53,54 @@ export function V2Hero() {
     };
   }, []);
 
+  // Sahneli açılış: pin + scrub timeline.
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const section = sectionRef.current;
+    if (!section) return;
+
+    let ctx: { revert: () => void } | undefined;
+    let cancelled = false;
+
+    void (async () => {
+      const [gsapMod, stMod] = await Promise.all([import("gsap"), import("gsap/ScrollTrigger")]);
+      if (cancelled) return;
+      const gsap = gsapMod.gsap;
+      gsap.registerPlugin(stMod.ScrollTrigger);
+
+      ctx = gsap.context(() => {
+        const steps = gsap.utils.toArray<HTMLElement>("[data-hero-step]");
+        // Mount SONRASI gizle → SSR/JS-siz durumda metin görünür kalır.
+        gsap.set(steps, { opacity: 0, y: 28 });
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: section,
+            start: "top top",
+            // Pin süresi: her adım için ~55vh scroll + sonda okuma payı.
+            end: () => `+=${steps.length * 55 + 40}%`,
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.8,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+          },
+        });
+        // Parçalar DOM sırasıyla belirir: eyebrow → başlık → lede → CTA → not.
+        steps.forEach((el) => {
+          tl.to(el, { opacity: 1, y: 0, duration: 1, ease: "power2.out" }).to({}, { duration: 0.35 });
+        });
+      }, section);
+    })();
+
+    return () => {
+      cancelled = true;
+      ctx?.revert();
+    };
+  }, [t]);
+
   return (
-    <section id="top" className="relative isolate min-h-dvh overflow-hidden">
+    <section ref={sectionRef} id="top" className="relative isolate min-h-dvh overflow-hidden">
       <video
         ref={videoRef}
         muted
@@ -69,25 +113,17 @@ export function V2Hero() {
       >
         <source src={VIDEOS.hero.src} type="video/mp4" />
       </video>
-      {/* Okunurluk skrimi — landing ile aynı: metnin olduğu ALT koyu, video'nun
-          göründüğü ÜST açık. Düz perdeye çevirme (video boğulur). */}
+      {/* Okunurluk skrimi: metnin olduğu ALT koyu, videonun göründüğü ÜST açık.
+          Düz perdeye çevirme — v6.14'te öyleydi, "video boğuluyor" geri bildirimi. */}
       <div
         aria-hidden
         className="absolute inset-0 -z-10 bg-[linear-gradient(to_top,rgba(13,14,16,0.88)_0%,rgba(13,14,16,0.40)_45%,rgba(13,14,16,0.22)_100%)]"
       />
 
       <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col items-center justify-center px-5 py-24 text-center md:px-8">
-        <p className="aura-mono text-sm text-[var(--aura-accent)]">/ {h.eyebrow}</p>
-
-        {/* Marka vuruşu: dev AURA letterform + TAM ALTINDA ortalı Braille.
-            Ölçek landing hero'suyla aynı clamp; Braille dikey grupta ortalanır. */}
-        {/* aura-brand: letterform + Braille TEK marka bloğu → ikisi birlikte
-            nefes alır (globals.css .aura-brand:hover, aura-breathe). */}
-        <div
-          role="img"
-          aria-label="AURA"
-          className="aura-brand mt-6 inline-flex flex-col items-center"
-        >
+        {/* SAHNE 0 — açılışta YALNIZ bunlar görünür (kullanıcı: "başta yalnızca
+            AURA ve braille olsun"). data-hero-step YOK: hiç gizlenmez. */}
+        <div role="img" aria-label="AURA" className="aura-brand inline-flex flex-col items-center">
           <span className="aura-word flex select-none items-end justify-center gap-[clamp(0.7rem,3.2vw,2.5rem)]">
             {LETTERS.map((letter) => (
               <img
@@ -100,28 +136,27 @@ export function V2Hero() {
               />
             ))}
           </span>
-          {/* v6.14.2 (kullanıcı: "braille'i büyüt"): height 18 → 30 (~140px
-              genişlik; letterform genişliğinin ~1/4'ü). Alt sınır 12 —
-              AuraBraille height<12'de HİÇ çizmez (v6.9 kuralı, 56px eşiği).
-              `aura-braille` sınıfı glow için ŞART (.aura-brand:hover seçicisi). */}
-          <AuraBraille
-            height={30}
-            className="aura-braille mt-5 text-[var(--aura-ink)]"
-          />
+          {/* height=30 → 140px. Alt sınır 12: AuraBraille height<12'de HİÇ çizmez. */}
+          <AuraBraille height={30} className="aura-braille mt-5 text-[var(--aura-ink)]" />
         </div>
 
-        {/* mt-8 → mt-16 (kullanıcı: "başlığı biraz daha aşağıya it") — marka
-            bloğu ile başlık arasında nefes payı. */}
-        <h1 className="aura-display mt-16 max-w-4xl text-4xl font-bold leading-[1.05] tracking-tighter text-[var(--aura-ink)] md:text-6xl">
+        {/* SAHNE 1..n — scroll ilerledikçe sırayla belirir. */}
+        <p data-hero-step className="aura-mono mt-14 text-sm text-[var(--aura-accent)]">
+          / {h.eyebrow}
+        </p>
+        <h1
+          data-hero-step
+          className="aura-display mt-5 max-w-4xl text-4xl font-bold leading-[1.05] tracking-tighter text-[var(--aura-ink)] md:text-6xl"
+        >
           {h.headline}
         </h1>
-        <p className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg">
+        <p
+          data-hero-step
+          className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg"
+        >
           {h.lede}
         </p>
-
-        {/* Wireframe: "No more than two equal-priority actions" + birincil CTA
-            kaydırmadan görünür. */}
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+        <div data-hero-step className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/giris"
             className="inline-flex items-center gap-2 rounded-full bg-[var(--aura-accent)] px-7 py-3.5 text-base font-semibold text-[var(--aura-night)] transition-transform duration-200 hover:translate-x-0.5 active:scale-[0.98]"
@@ -136,9 +171,8 @@ export function V2Hero() {
             {h.ctaSecondary}
           </Link>
         </div>
-
-        {/* Klinik sorumluluk mikro-metni (v6.8 dürüstlük çizgisi). */}
-        <p className="mt-8 max-w-xl text-[13px] leading-relaxed text-[var(--aura-micro)]">
+        {/* Klinik sorumluluk mikro-metni (v6.8 dürüstlük çizgisi) — son sahne. */}
+        <p data-hero-step className="mt-7 max-w-xl text-[13px] leading-relaxed text-[var(--aura-micro)]">
           {h.safety}
         </p>
       </div>
