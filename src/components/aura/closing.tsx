@@ -114,6 +114,14 @@ function AuraFooter() {
                 {t.nav.how}
               </Link>
             </li>
+            <li>
+              <Link
+                href="/guven-ve-gizlilik"
+                className="transition-colors duration-200 hover:text-[var(--aura-accent)]"
+              >
+                {f.trust}
+              </Link>
+            </li>
           </ul>
         </div>
       </div>

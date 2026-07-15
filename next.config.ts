@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
       { source: "/pro-bono/basvur", destination: "/ucretsiz-saglik/basvur", permanent: true },
       { source: "/pro-bono/bekleme", destination: "/ucretsiz-saglik/bekleme", permanent: true },
       { source: "/doktor/pro-bono", destination: "/doktor/ucretsiz-saglik", permanent: true },
+      // Güven ve Gizlilik sayfası (2026-07-15): kanonik rota Türkçe; /trust
+      // kısa/İngilizce yolu tek kanonik URL'e toplanır (8 dil zaten tek URL'de).
+      { source: "/trust", destination: "/guven-ve-gizlilik", permanent: true },
     ];
   },
   // Turbopack (Next 16 varsayılan builder)

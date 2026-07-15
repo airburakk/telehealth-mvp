@@ -222,6 +222,7 @@ export const COPY = {
       telehealth: "Telehealth",
       tourism: "Health Tourism",
       doctors: "Specialists",
+      trust: "Trust & Privacy",
       legal: "© 2026 AURA. MVP demo, not medical advice.",
     },
     signin: {
@@ -236,7 +237,16 @@ export const COPY = {
       apple: "Continue with Apple",
       email: "Continue with Email",
       or: "OR",
-      legal: "By continuing, you acknowledge the platform's Privacy Policy and agree to its Terms of Use.",
+      // DURUSTLUK (2026-07-15): eski metin "Gizlilik Politikasi + Kullanim
+      // Kosullari"na atif yapiyordu — IKISI DE YOK (link bile degil). Okunamayan
+      // belgeye onay aldirmak v6.8'de temizlenen iddia sinifi. Simdi YAYINDA OLAN
+      // /guven-ve-gizlilik sayfasina atif + gercek link (legalLink).
+      // ⚠️ Gizlilik Politikasi + Kullanim Kosullari yazilinca burasi yeniden duzenlenir.
+      // Cumle-ici link: [legal] <a>legalLink</a> [legalAfter] — sayfa adi bir kez
+      // gecer (ayri link satiri sayfa adini TEKRARLIYORDU). Bosluklar kasitli.
+      legal: "By continuing, you accept the data-processing principles set out on our ",
+      legalLink: "Trust & Privacy",
+      legalAfter: " page.",
       back: "Back to home",
     },
     corporate: {
@@ -258,6 +268,122 @@ export const COPY = {
       continue: "Continue to sign in",
       legal: "Corporate access is limited to verified staff and partners of the platform.",
       back: "Back to home",
+    },
+    // /guven-ve-gizlilik — Guven ve Gizlilik sayfasi (2026-07-15).
+    // KURAL [[public-claim-honesty]]: her madde KOD KANITLI. Kanit haritasi
+    // vault: output/trust-safety-sayfa-taslagi-2026-07-15.md (bolum → dosya).
+    // Sayfanin degeri "neyi iddia ETMIYORUZ" kutularinda (kullanici karari:
+    // "sayfanin asil degeri bu") → note.text dolu olan bolumlerde cizilir.
+    // Yapisal not: sections UNIFORM ({key,n,title,body,note}) — bolume ozgu iki
+    // parca kokte durur (aiEmphasis=02 · transferItems=08) ki 8 dilin yapi
+    // imzasi birebir kalsin (tests/unit/aura-landing-copy.test.ts shape()).
+    trustPage: {
+      eyebrow: "trust",
+      word: "AURA",
+      // ⚠️ wordAfter BOS BIRAKILDI (olculdu 2026-07-15): letterform dilimlerinin
+      // dogal sag boslugu + ml-1 = ~12px → "AURA ." gibi kopuk noktalama cizer.
+      // Noktalama/dil eki gerekiyorsa lineAfter'a (ayri satir) yazilir.
+      wordBefore: "Trust and privacy at",
+      wordAfter: "",
+      lineAfter: "",
+      sub: "At AURA, trust is not a marketing promise — it is something you can point to in the product. Under every heading below we set out what we do, what we do not yet do, and what is not ours to decide.",
+      sections: [
+        {
+          key: "security",
+          n: "01",
+          title: "How your health data is protected",
+          body: "Your data is encrypted in transit, and encrypted a second time with a separate key before it is written to our servers. Reports and images you upload arrive at storage already encrypted — the storage provider only ever sees the encrypted form. Your data is stored and processed in the European Union (Frankfurt).",
+          note: {
+            label: "What we don't claim",
+            text: "This is not \"end-to-end encryption\". The key is managed on our servers — because clinical summaries, interpretation and the doctor's view all require the data to be processed on the server. A truly end-to-end encrypted system could not offer those functions.",
+          },
+        },
+        {
+          key: "consent",
+          n: "02",
+          title: "Consent and artificial intelligence",
+          body: "Three separate consents are taken, and none stands in for another: general data-protection consent · AI pre-assessment of your complaint · AI simultaneous interpretation of your visit. For each one we store the exact text you approved, the moment you approved it, and a chain showing it has not been altered since. No step begins before consent — the form does not open, camera permission is not requested. You can view your own consent record at any time.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "access",
+          n: "03",
+          title: "Who can see what",
+          body: "Access follows your role: patients see only their own records · a doctor only if verified and assigned to the case · a partner doctor cannot reach the patient database at all, and personal names are masked in the question forwarded to them · coordinators and agencies see logistics, not clinical records. When your post-operative follow-up ends, clinical staff access closes and the record stays with you alone; you can reopen it whenever you wish.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "doctors",
+          n: "04",
+          title: "Doctor verification",
+          body: "Before a doctor becomes visible or receives any patient assignment, they upload their professional documents — diploma, specialty certificate and professional liability insurance — and these are reviewed and approved. An unapproved doctor's profile is never published.",
+          note: {
+            label: "What we don't claim",
+            text: "We do not say \"accredited doctor\" — what we verify is the existence and validity of the documents.",
+          },
+        },
+        {
+          key: "video",
+          n: "05",
+          title: "Video, documents and sharing",
+          body: "Your consultations are not recorded. Video and audio are encrypted with WebRTC; when a direct connection cannot be established, the relay server that steps in carries only encrypted traffic and cannot see its content. When you share your records, you choose which categories are visible; you can set an expiry, add a password, disable downloads, and revoke the link at any moment. Every access is logged.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "audit",
+          n: "06",
+          title: "Audit and access history",
+          body: "Every meaningful access to your clinical data is written to a chain that cannot later be deleted or altered, and that can be independently verified.",
+          note: {
+            label: "The limit",
+            text: "The audit log is designed not to block the application — if an entry cannot be written, the operation still completes. High-frequency technical events such as signalling are deliberately not logged.",
+          },
+        },
+        {
+          key: "retention",
+          n: "07",
+          title: "Retention and deletion",
+          body: "You can delete your account and your personal data. When you do, your e-mail, name, phone number, profile and notifications are genuinely deleted, your share links are revoked, and signing in becomes impossible. Your health records must be kept for the statutory retention period of 20 years — but they close to access (no one can open them: not doctors, not coordinators, not administrators, and not you) and they are destroyed automatically when the period ends. Two things are kept on purpose: your consent records, which prove the legal basis for what we hold and are destroyed together with the records, and the access history, a tamper-evident chain that carries no identifying data and whose deletion would break the chain.",
+          note: {
+            label: "What we don't claim",
+            text: "Deletion is not performed by destroying a key (\"crypto-shredding\") but by physically deleting the record.",
+          },
+        },
+        {
+          key: "transfers",
+          n: "08",
+          title: "International transfer and service providers",
+          body: "Storage and processing take place in the European Union (Frankfurt). The limited cases that leave the EU:",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "responsibility",
+          n: "09",
+          title: "Clinical responsibility",
+          body: "Diagnosis, treatment and medical decisions belong to qualified healthcare professionals. AURA supports assessment, coordination and communication; it does not replace your doctor. A second opinion is not binding.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "report",
+          n: "10",
+          title: "Report a privacy or security concern",
+          body: "If you have a concern about your data, or a security finding, tell us.",
+          note: {
+            label: "⚖️ Draft",
+            text: "The data controller's contact address has not been published yet; this section will be updated once it is final. We are not inventing an address in the meantime.",
+          },
+        },
+      ],
+      // 02'nin altinda vurgulu paragraf: AI destegi ile klinik yargiyi ayirir
+      // (howItWorks.safety ile ayni sinir — cevirilerde ayrim korunmali).
+      aiEmphasis: "Medical decisions do not belong to artificial intelligence: AURA organises your information and suggests an appropriate specialty; diagnosis and treatment decisions are made by qualified healthcare professionals.",
+      // 08'in madde listesi.
+      transferItems: [
+        "AI pre-assessment and clinical summary (Anthropic, USA): your name is not sent — a placeholder is used; the clinical content is sent because it is the substance of the task.",
+        "Simultaneous interpretation (Google, USA): the audio of your visit is processed for interpretation, subject to separate explicit consent; without that consent it does not run.",
+        "Connection relay (Cloudflare): carries encrypted media only.",
+        "Signalling (Ably) and rate limiting (Upstash): no health data is sent.",
+      ],
     },
     // How-It-Works rehberi: hero parcalari + 4 rehberin adim listeleri.
     // Rehberin n/strand/baslik/intro/CTA'si chapters kaydindan key ile bulunur.
@@ -423,6 +549,7 @@ export const COPY = {
       telehealth: "Uzaktan Sağlık",
       tourism: "Sağlık Turizmi",
       doctors: "Uzmanlar",
+      trust: "Güven ve Gizlilik",
       legal: "© 2026 AURA. MVP demo, tıbbi tavsiye değildir.",
     },
     signin: {
@@ -435,7 +562,9 @@ export const COPY = {
       apple: "Apple ile devam et",
       email: "E-posta ile devam et",
       or: "VEYA",
-      legal: "Devam ederek platformun Gizlilik Politikasını kabul etmiş ve Kullanım Koşullarını onaylamış olursunuz.",
+      legal: "Devam ederek ",
+      legalLink: "Güven ve Gizlilik",
+      legalAfter: " sayfasında açıklanan veri işleme esaslarını kabul edersiniz.",
       back: "Ana sayfaya dön",
     },
     corporate: {
@@ -457,6 +586,109 @@ export const COPY = {
       continue: "Girişe devam et",
       legal: "Kurumsal erişim, platformun doğrulanmış personeli ve iş ortaklarıyla sınırlıdır.",
       back: "Ana sayfaya dön",
+    },
+    trustPage: {
+      eyebrow: "güven",
+      word: "AURA",
+      // wordAfter boş: "'da" eki letterform'dan ~12px kopuk çizilirdi ("AURA 'da").
+      wordBefore: "",
+      wordAfter: "",
+      lineAfter: "Güven ve gizlilik.",
+      sub: "AURA'da güven bir pazarlama vaadi değil, üründe gösterilebilen bir şey. Aşağıda her başlıkta ne yaptığımızı, neyi henüz yapmadığımızı ve neyin bize bağlı olmadığını ayrı yazdık.",
+      sections: [
+        {
+          key: "security",
+          n: "01",
+          title: "Sağlık bilgileriniz nasıl korunur",
+          body: "Verileriniz iletim sırasında şifrelenir; sunucuya kaydedilmeden önce ikinci kez, ayrı bir anahtarla şifrelenir. Yüklediğiniz rapor ve görüntüler depoya şifrelenmiş gider — depolama sağlayıcısı yalnız şifreli hâli görür. Verileriniz Avrupa Birliği'nde (Frankfurt) saklanır ve işlenir.",
+          note: {
+            label: "Neyi iddia etmiyoruz",
+            text: "Bu bir \"uçtan uca şifreleme\" değildir. Anahtar bizim sunucumuzda yönetilir — çünkü klinik özet, tercüme ve doktor görünümü verinin sunucuda işlenmesini gerektirir. Gerçekten uçtan uca şifreli bir sistem bu işlevleri veremez.",
+          },
+        },
+        {
+          key: "consent",
+          n: "02",
+          title: "Rıza ve yapay zeka",
+          body: "Üç ayrı rıza alınır, biri diğerinin yerine geçmez: genel KVKK açık rızası · şikayetin AI ile ön değerlendirilmesi · görüşmenin AI ile simültane tercümesi. Her rızada onayladığınız metnin birebir kendisi, onay anınız ve sonradan değiştirilmediğini gösteren zincir saklanır. Rıza vermeden adım başlamaz — form açılmaz, kamera izni istenmez. Kendi rıza kaydınızı istediğiniz an görüntüleyebilirsiniz.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "access",
+          n: "03",
+          title: "Kim neye erişir",
+          body: "Erişim role bağlıdır: hasta yalnız kendi kayıtlarına · doktor yalnız doğrulanmış ve vakaya atanmışsa · partner doktor hasta veritabanına erişemez, kendisine iletilen soruda kişi adları maskelenir · koordinatör ve acente lojistik bilgi görür, klinik kayıt değil. Post-op takibiniz bitince klinik personelin erişimi kapanır, kayıt yalnız size kalır; isterseniz yeniden açarsınız.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "doctors",
+          n: "04",
+          title: "Doktor doğrulaması",
+          body: "Bir doktor görünür olmadan ve hasta ataması almadan önce mesleki belgelerini yükler — diploma, uzmanlık belgesi ve mesleki sorumluluk sigortası — ve bunlar incelenip onaylanır. Onaylanmamış doktorun profili yayında olmaz.",
+          note: {
+            label: "Neyi iddia etmiyoruz",
+            text: "\"Akredite doktor\" demiyoruz — doğruladığımız şey belgelerin varlığı ve geçerliliğidir.",
+          },
+        },
+        {
+          key: "video",
+          n: "05",
+          title: "Video, belgeler ve paylaşım",
+          body: "Görüşmeleriniz kaydedilmez. Video ve ses WebRTC ile şifrelenir; doğrudan bağlantı kurulamayınca devreye giren röle sunucusu yalnız şifreli trafiği taşır, içeriği göremez. Kayıtlarınızı paylaşırken hangi kategorilerin görüneceğini siz seçersiniz; süre koyabilir, şifre ekleyebilir, indirmeyi kapatabilir, linki istediğiniz an iptal edebilirsiniz. Her erişim kaydedilir.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "audit",
+          n: "06",
+          title: "Denetim ve erişim geçmişi",
+          body: "Klinik verinize yapılan anlamlı her erişim, sonradan silinip değiştirilemeyen bir zincire yazılır ve bağımsız doğrulanabilir.",
+          note: {
+            label: "Sınırı",
+            text: "Denetim kaydı uygulamayı bloke etmeyecek şekilde tasarlandı — kayıt yazılamazsa işlem yine tamamlanır. Sinyalleşme gibi yüksek frekanslı teknik olaylar kasıtlı olarak kaydedilmez.",
+          },
+        },
+        {
+          key: "retention",
+          n: "07",
+          title: "Saklama ve silme",
+          body: "Hesabınızı ve kişisel verilerinizi silebilirsiniz. Sildiğinizde e-posta, ad, telefon, profil ve bildirimleriniz gerçekten silinir; paylaşım linkleriniz iptal edilir ve giriş imkânsız hâle gelir. Sağlık kayıtlarınız yasal saklama süresi boyunca — 20 yıl — tutulmak zorundadır; ancak erişime kapanır (doktorlar, koordinatörler, yöneticiler ve siz dahil hiç kimse açamaz) ve süre dolunca otomatik olarak imha edilir. Bilerek saklanan iki şey var: onay kayıtlarınız, sakladığımız kaydın hukuki dayanağını ispatlar ve kayıtlarla birlikte imha edilir; erişim geçmişi ise değiştirilemez bir denetim zinciridir, kimlik verisi taşımaz ve silinmesi zinciri kırar.",
+          note: {
+            label: "Neyi iddia etmiyoruz",
+            text: "Silme, anahtar imhası (\"crypto-shred\") ile değil, kaydın fiziken silinmesiyle yapılır.",
+          },
+        },
+        {
+          key: "transfers",
+          n: "08",
+          title: "Uluslararası aktarım ve hizmet sağlayıcılar",
+          body: "Saklama ve işleme Avrupa Birliği'nde (Frankfurt) gerçekleşir. AB dışına çıkan sınırlı durumlar:",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "responsibility",
+          n: "09",
+          title: "Klinik sorumluluk",
+          body: "Tanı, tedavi ve tıbbi kararlar yetkili sağlık profesyonellerine aittir. AURA değerlendirmeyi, koordinasyonu ve iletişimi destekler; hekimin yerine geçmez. İkinci görüş bağlayıcı değildir.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "report",
+          n: "10",
+          title: "Gizlilik veya güvenlik endişesi bildirin",
+          body: "Verilerinizle ilgili bir endişeniz veya bir güvenlik bulgunuz varsa bize bildirin.",
+          note: {
+            label: "⚖️ Taslak",
+            text: "Veri sorumlusunun iletişim adresi henüz yayımlanmadı; adres netleşince bu bölüm güncellenecek. O zamana kadar uydurma bir adres yazmıyoruz.",
+          },
+        },
+      ],
+      aiEmphasis: "Tıbbi karar yapay zekaya ait değildir: AURA bilgilerinizi düzenler, uygun branşı önerir; tanı ve tedavi kararını yetkili sağlık profesyonelleri verir.",
+      transferItems: [
+        "AI ön değerlendirme ve klinik özet (Anthropic, ABD): adınız gönderilmez — yer tutucu kullanılır; klinik içerik, görevin özü olduğu için gönderilir.",
+        "Simültane tercüme (Google, ABD): görüşme sesi tercüme için işlenir, ayrı açık rızaya tabidir; rıza vermezseniz çalışmaz.",
+        "Bağlantı rölesi (Cloudflare): yalnız şifreli medya taşır.",
+        "Sinyalleşme (Ably) ve hız sınırlama (Upstash): sağlık verisi gönderilmez.",
+      ],
     },
     hiw: {
       eyebrow: "rehber",
@@ -563,14 +795,16 @@ export const COPY = {
     },
     closing: { headline: "Bereit, wenn Sie es sind.", cta: "Arzt sprechen" },
     footer: {
-      platform: "Plattform", explore: "Entdecken", patientLogin: "Patienten-Login", patientSignup: "Patienten-Registrierung", corporateLogin: "Firmen-Login", doctorSignup: "Arzt-Registrierung", telehealth: "Telemedizin", tourism: "Gesundheitstourismus", doctors: "Fachärzte",
+      platform: "Plattform", explore: "Entdecken", patientLogin: "Patienten-Login", patientSignup: "Patienten-Registrierung", corporateLogin: "Firmen-Login", doctorSignup: "Arzt-Registrierung", telehealth: "Telemedizin", tourism: "Gesundheitstourismus", doctors: "Fachärzte", trust: "Vertrauen und Datenschutz",
       legal: "© 2026 AURA. MVP-Demo, keine medizinische Beratung.",
     },
     signin: {
       word: "AURA", wordBefore: "Willkommen bei", wordAfter: "", lineAfter: "",
       sub: "Melden Sie sich an und beginnen Sie Ihre Behandlungsreise",
       google: "Weiter mit Google", apple: "Weiter mit Apple", email: "Weiter mit E-Mail", or: "ODER",
-      legal: "Mit dem Fortfahren erkennen Sie die Datenschutzerklärung der Plattform an und stimmen den Nutzungsbedingungen zu.",
+      legal: "Mit dem Fortfahren akzeptieren Sie die auf der Seite ",
+      legalLink: "Vertrauen und Datenschutz",
+      legalAfter: " dargelegten Grundsätze der Datenverarbeitung.",
       back: "Zurück zur Startseite",
     },
     corporate: {
@@ -581,6 +815,108 @@ export const COPY = {
       continue: "Weiter zur Anmeldung",
       legal: "Der Firmenzugang ist auf verifizierte Mitarbeitende und Partner der Plattform beschränkt.",
       back: "Zurück zur Startseite",
+    },
+    trustPage: {
+      eyebrow: "Vertrauen",
+      word: "AURA",
+      wordBefore: "Vertrauen und Datenschutz bei",
+      wordAfter: "",
+      lineAfter: "",
+      sub: "Bei AURA ist Vertrauen kein Marketingversprechen, sondern etwas, das sich im Produkt zeigen lässt. Unter jeder Überschrift steht getrennt, was wir tun, was wir noch nicht tun und was nicht in unserer Hand liegt.",
+      sections: [
+        {
+          key: "security",
+          n: "01",
+          title: "Wie Ihre Gesundheitsdaten geschützt werden",
+          body: "Ihre Daten werden bei der Übertragung verschlüsselt und vor dem Speichern ein zweites Mal mit einem separaten Schlüssel verschlüsselt. Hochgeladene Befunde und Bilder erreichen den Speicher bereits verschlüsselt — der Speicheranbieter sieht ausschließlich die verschlüsselte Form. Ihre Daten werden in der Europäischen Union (Frankfurt) gespeichert und verarbeitet.",
+          note: {
+            label: "Was wir nicht behaupten",
+            text: "Dies ist keine „Ende-zu-Ende-Verschlüsselung\". Der Schlüssel wird auf unseren Servern verwaltet — denn klinische Zusammenfassung, Dolmetschen und die Arztansicht setzen voraus, dass die Daten auf dem Server verarbeitet werden. Ein wirklich Ende-zu-Ende verschlüsseltes System könnte diese Funktionen nicht bieten.",
+          },
+        },
+        {
+          key: "consent",
+          n: "02",
+          title: "Einwilligung und künstliche Intelligenz",
+          body: "Es werden drei getrennte Einwilligungen eingeholt, von denen keine die andere ersetzt: allgemeine Datenschutzeinwilligung · KI-Vorbewertung Ihres Anliegens · KI-Simultandolmetschen Ihres Gesprächs. Zu jeder Einwilligung speichern wir den exakten Text, den Sie bestätigt haben, den Zeitpunkt der Bestätigung und eine Kette, die belegt, dass er seither nicht verändert wurde. Ohne Einwilligung beginnt kein Schritt — das Formular öffnet sich nicht, die Kameraerlaubnis wird nicht angefragt. Ihren eigenen Einwilligungsnachweis können Sie jederzeit einsehen.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "access",
+          n: "03",
+          title: "Wer was sehen kann",
+          body: "Der Zugriff richtet sich nach der Rolle: Patientinnen und Patienten sehen nur ihre eigenen Unterlagen · eine Ärztin oder ein Arzt nur, wenn verifiziert und dem Fall zugewiesen · eine Partnerärztin oder ein Partnerarzt hat überhaupt keinen Zugriff auf die Patientendatenbank, und in der weitergeleiteten Frage werden Personennamen maskiert · Koordination und Agentur sehen Logistik, keine klinischen Unterlagen. Endet Ihre postoperative Nachsorge, schließt sich der Zugang des klinischen Personals und die Unterlagen bleiben allein bei Ihnen; auf Wunsch öffnen Sie sie wieder.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "doctors",
+          n: "04",
+          title: "Ärztliche Verifizierung",
+          body: "Bevor eine Ärztin oder ein Arzt sichtbar wird oder eine Zuweisung erhält, werden die Berufsnachweise hochgeladen — Approbation, Facharztnachweis und Berufshaftpflichtversicherung — und geprüft und freigegeben. Das Profil einer nicht freigegebenen Ärztin oder eines nicht freigegebenen Arztes wird nie veröffentlicht.",
+          note: {
+            label: "Was wir nicht behaupten",
+            text: "Wir sagen nicht „akkreditierte Ärztin\" oder „akkreditierter Arzt\" — geprüft wird das Vorliegen und die Gültigkeit der Nachweise.",
+          },
+        },
+        {
+          key: "video",
+          n: "05",
+          title: "Video, Dokumente und Freigaben",
+          body: "Ihre Gespräche werden nicht aufgezeichnet. Video und Ton werden mit WebRTC verschlüsselt; kommt keine direkte Verbindung zustande, überträgt der einspringende Relay-Server ausschließlich verschlüsselten Verkehr und kann den Inhalt nicht sehen. Beim Teilen Ihrer Unterlagen wählen Sie, welche Kategorien sichtbar sind; Sie können eine Frist setzen, ein Passwort ergänzen, das Herunterladen deaktivieren und den Link jederzeit widerrufen. Jeder Zugriff wird protokolliert.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "audit",
+          n: "06",
+          title: "Protokoll und Zugriffshistorie",
+          body: "Jeder relevante Zugriff auf Ihre klinischen Daten wird in eine Kette geschrieben, die später weder gelöscht noch verändert werden kann und unabhängig überprüfbar ist.",
+          note: {
+            label: "Die Grenze",
+            text: "Das Protokoll ist so ausgelegt, dass es die Anwendung nicht blockiert — lässt sich ein Eintrag nicht schreiben, wird der Vorgang dennoch abgeschlossen. Hochfrequente technische Ereignisse wie die Signalisierung werden bewusst nicht protokolliert.",
+          },
+        },
+        {
+          key: "retention",
+          n: "07",
+          title: "Aufbewahrung und Löschung",
+          body: "Sie können Ihr Konto und Ihre personenbezogenen Daten löschen. Dabei werden E-Mail, Name, Telefonnummer, Profil und Benachrichtigungen tatsächlich gelöscht, Ihre Freigabelinks widerrufen und eine Anmeldung wird unmöglich. Ihre Gesundheitsunterlagen müssen für die gesetzliche Aufbewahrungsfrist von 20 Jahren aufbewahrt werden — sie werden jedoch für den Zugriff geschlossen (niemand kann sie öffnen: weder Ärztinnen und Ärzte noch Koordination, Verwaltung oder Sie selbst) und nach Ablauf der Frist automatisch vernichtet. Zwei Dinge bleiben bewusst erhalten: Ihre Einwilligungsnachweise, die die Rechtsgrundlage des Aufbewahrten belegen und gemeinsam mit den Unterlagen vernichtet werden, sowie die Zugriffshistorie — eine manipulationssichere Kette, die keine Identifikationsdaten enthält und deren Löschung die Kette brechen würde.",
+          note: {
+            label: "Was wir nicht behaupten",
+            text: "Die Löschung erfolgt nicht durch Vernichtung eines Schlüssels („Crypto-Shredding\"), sondern durch physisches Löschen des Datensatzes.",
+          },
+        },
+        {
+          key: "transfers",
+          n: "08",
+          title: "Internationale Übermittlung und Dienstleister",
+          body: "Speicherung und Verarbeitung finden in der Europäischen Union (Frankfurt) statt. Die begrenzten Fälle, die die EU verlassen:",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "responsibility",
+          n: "09",
+          title: "Klinische Verantwortung",
+          body: "Diagnose, Behandlung und medizinische Entscheidungen liegen bei qualifizierten Gesundheitsfachkräften. AURA unterstützt Bewertung, Koordination und Kommunikation; es ersetzt Ihre Ärztin oder Ihren Arzt nicht. Eine Zweitmeinung ist nicht bindend.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "report",
+          n: "10",
+          title: "Datenschutz- oder Sicherheitsbedenken melden",
+          body: "Wenn Sie Bedenken zu Ihren Daten oder einen Sicherheitsbefund haben, teilen Sie es uns mit.",
+          note: {
+            label: "⚖️ Entwurf",
+            text: "Die Kontaktadresse des Verantwortlichen ist noch nicht veröffentlicht; sobald sie feststeht, wird dieser Abschnitt aktualisiert. Bis dahin erfinden wir keine Adresse.",
+          },
+        },
+      ],
+      aiEmphasis: "Die medizinische Entscheidung gehört nicht der künstlichen Intelligenz: AURA ordnet Ihre Angaben und schlägt ein passendes Fachgebiet vor; Diagnose und Behandlungsentscheidung treffen qualifizierte Gesundheitsfachkräfte.",
+      transferItems: [
+        "KI-Vorbewertung und klinische Zusammenfassung (Anthropic, USA): Ihr Name wird nicht übermittelt — es wird ein Platzhalter verwendet; der klinische Inhalt wird übermittelt, weil er der Kern der Aufgabe ist.",
+        "Simultandolmetschen (Google, USA): der Ton Ihres Gesprächs wird zum Dolmetschen verarbeitet und unterliegt einer gesonderten ausdrücklichen Einwilligung; ohne diese Einwilligung läuft es nicht.",
+        "Verbindungs-Relay (Cloudflare): überträgt ausschließlich verschlüsselte Medien.",
+        "Signalisierung (Ably) und Ratenbegrenzung (Upstash): es werden keine Gesundheitsdaten übermittelt.",
+      ],
     },
     hiw: {
       eyebrow: "Leitfaden",
@@ -687,14 +1023,16 @@ export const COPY = {
     },
     closing: { headline: "Prêts quand vous l'êtes.", cta: "Consulter un médecin" },
     footer: {
-      platform: "Plateforme", explore: "Explorer", patientLogin: "Connexion patient", patientSignup: "Inscription patient", corporateLogin: "Connexion professionnelle", doctorSignup: "Inscription médecin", telehealth: "Télésanté", tourism: "Tourisme médical", doctors: "Spécialistes",
+      platform: "Plateforme", explore: "Explorer", patientLogin: "Connexion patient", patientSignup: "Inscription patient", corporateLogin: "Connexion professionnelle", doctorSignup: "Inscription médecin", telehealth: "Télésanté", tourism: "Tourisme médical", doctors: "Spécialistes", trust: "Confiance et confidentialité",
       legal: "© 2026 AURA. Démo MVP, ne constitue pas un avis médical.",
     },
     signin: {
       word: "AURA", wordBefore: "Bienvenue chez", wordAfter: "", lineAfter: "",
       sub: "Connectez-vous pour commencer votre parcours de soins",
       google: "Continuer avec Google", apple: "Continuer avec Apple", email: "Continuer avec l'e-mail", or: "OU",
-      legal: "En continuant, vous reconnaissez la politique de confidentialité de la plateforme et acceptez ses conditions d'utilisation.",
+      legal: "En continuant, vous acceptez les principes de traitement des données exposés sur la page ",
+      legalLink: "Confiance et confidentialité",
+      legalAfter: ".",
       back: "Retour à l'accueil",
     },
     corporate: {
@@ -705,6 +1043,108 @@ export const COPY = {
       continue: "Continuer vers la connexion",
       legal: "L'accès professionnel est réservé au personnel vérifié et aux partenaires de la plateforme.",
       back: "Retour à l'accueil",
+    },
+    trustPage: {
+      eyebrow: "confiance",
+      word: "AURA",
+      wordBefore: "Confiance et confidentialité chez",
+      wordAfter: "",
+      lineAfter: "",
+      sub: "Chez AURA, la confiance n'est pas une promesse marketing : c'est quelque chose que l'on peut montrer dans le produit. Sous chaque titre, nous indiquons séparément ce que nous faisons, ce que nous ne faisons pas encore et ce qui ne dépend pas de nous.",
+      sections: [
+        {
+          key: "security",
+          n: "01",
+          title: "Comment vos données de santé sont protégées",
+          body: "Vos données sont chiffrées pendant leur transmission, puis chiffrées une seconde fois avec une clé distincte avant d'être enregistrées sur nos serveurs. Les comptes rendus et images que vous téléversez arrivent déjà chiffrés dans le stockage — le prestataire de stockage n'en voit jamais que la forme chiffrée. Vos données sont conservées et traitées dans l'Union européenne (Francfort).",
+          note: {
+            label: "Ce que nous ne prétendons pas",
+            text: "Il ne s'agit pas d'un « chiffrement de bout en bout ». La clé est gérée sur nos serveurs — car le résumé clinique, l'interprétation et la vue du médecin exigent que les données soient traitées côté serveur. Un système réellement chiffré de bout en bout ne pourrait pas offrir ces fonctions.",
+          },
+        },
+        {
+          key: "consent",
+          n: "02",
+          title: "Consentement et intelligence artificielle",
+          body: "Trois consentements distincts sont recueillis, et aucun ne remplace l'autre : consentement général en matière de protection des données · pré-évaluation de votre demande par l'IA · interprétation simultanée de votre consultation par l'IA. Pour chacun, nous conservons le texte exact que vous avez approuvé, le moment de votre approbation et une chaîne montrant qu'il n'a pas été modifié depuis. Aucune étape ne commence sans consentement — le formulaire ne s'ouvre pas, l'autorisation de la caméra n'est pas demandée. Vous pouvez consulter votre propre preuve de consentement à tout moment.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "access",
+          n: "03",
+          title: "Qui voit quoi",
+          body: "L'accès dépend du rôle : le patient ne voit que ses propres dossiers · un médecin uniquement s'il est vérifié et affecté au dossier · un médecin partenaire n'a aucun accès à la base de données patients, et les noms des personnes sont masqués dans la question qui lui est transmise · les coordinateurs et l'agence voient la logistique, pas le dossier clinique. Lorsque votre suivi postopératoire se termine, l'accès du personnel clinique se ferme et le dossier ne reste qu'à vous ; vous pouvez le rouvrir si vous le souhaitez.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "doctors",
+          n: "04",
+          title: "Vérification des médecins",
+          body: "Avant qu'un médecin ne devienne visible ou ne reçoive une affectation, il téléverse ses justificatifs professionnels — diplôme, titre de spécialiste et assurance de responsabilité civile professionnelle — qui sont examinés et approuvés. Le profil d'un médecin non approuvé n'est jamais publié.",
+          note: {
+            label: "Ce que nous ne prétendons pas",
+            text: "Nous ne disons pas « médecin accrédité » — ce que nous vérifions, c'est l'existence et la validité des documents.",
+          },
+        },
+        {
+          key: "video",
+          n: "05",
+          title: "Vidéo, documents et partage",
+          body: "Vos consultations ne sont pas enregistrées. La vidéo et l'audio sont chiffrés avec WebRTC ; lorsqu'une connexion directe ne peut être établie, le serveur relais qui prend le relais ne transporte que du trafic chiffré et ne peut pas en voir le contenu. Lorsque vous partagez vos dossiers, vous choisissez les catégories visibles ; vous pouvez fixer une échéance, ajouter un mot de passe, désactiver le téléchargement et révoquer le lien à tout instant. Chaque accès est journalisé.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "audit",
+          n: "06",
+          title: "Journal et historique des accès",
+          body: "Chaque accès significatif à vos données cliniques est inscrit dans une chaîne qui ne peut ensuite être ni supprimée ni modifiée, et qui peut être vérifiée de manière indépendante.",
+          note: {
+            label: "La limite",
+            text: "Le journal est conçu pour ne pas bloquer l'application — si une entrée ne peut pas être écrite, l'opération aboutit tout de même. Les événements techniques à haute fréquence, comme la signalisation, ne sont délibérément pas journalisés.",
+          },
+        },
+        {
+          key: "retention",
+          n: "07",
+          title: "Conservation et suppression",
+          body: "Vous pouvez supprimer votre compte et vos données personnelles. Dans ce cas, votre e-mail, votre nom, votre téléphone, votre profil et vos notifications sont réellement supprimés, vos liens de partage sont révoqués et la connexion devient impossible. Vos dossiers de santé doivent être conservés pendant la durée légale de conservation de 20 ans — mais ils sont fermés à tout accès (personne ne peut les ouvrir : ni les médecins, ni les coordinateurs, ni les administrateurs, ni vous) et sont détruits automatiquement à l'expiration de ce délai. Deux éléments sont conservés à dessein : vos preuves de consentement, qui établissent la base légale de ce que nous conservons et sont détruites avec les dossiers, et l'historique des accès, une chaîne infalsifiable qui ne contient aucune donnée d'identification et dont la suppression romprait la chaîne.",
+          note: {
+            label: "Ce que nous ne prétendons pas",
+            text: "La suppression ne se fait pas par destruction d'une clé (« crypto-shredding ») mais par l'effacement physique de l'enregistrement.",
+          },
+        },
+        {
+          key: "transfers",
+          n: "08",
+          title: "Transferts internationaux et prestataires",
+          body: "La conservation et le traitement ont lieu dans l'Union européenne (Francfort). Les cas limités qui sortent de l'UE :",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "responsibility",
+          n: "09",
+          title: "Responsabilité clinique",
+          body: "Le diagnostic, le traitement et les décisions médicales relèvent des professionnels de santé qualifiés. AURA soutient l'évaluation, la coordination et la communication ; elle ne remplace pas votre médecin. Un deuxième avis n'a pas de valeur contraignante.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "report",
+          n: "10",
+          title: "Signaler une inquiétude de confidentialité ou de sécurité",
+          body: "Si vous avez une inquiétude concernant vos données ou une découverte de sécurité, dites-le-nous.",
+          note: {
+            label: "⚖️ Projet",
+            text: "L'adresse de contact du responsable de traitement n'est pas encore publiée ; cette section sera mise à jour dès qu'elle sera arrêtée. D'ici là, nous n'inventons pas d'adresse.",
+          },
+        },
+      ],
+      aiEmphasis: "La décision médicale n'appartient pas à l'intelligence artificielle : AURA organise vos informations et suggère une spécialité appropriée ; le diagnostic et la décision thérapeutique reviennent aux professionnels de santé qualifiés.",
+      transferItems: [
+        "Pré-évaluation par l'IA et résumé clinique (Anthropic, États-Unis) : votre nom n'est pas transmis — un espace réservé est utilisé ; le contenu clinique est transmis car il constitue l'objet même de la tâche.",
+        "Interprétation simultanée (Google, États-Unis) : l'audio de votre consultation est traité à des fins d'interprétation, sous réserve d'un consentement explicite distinct ; sans ce consentement, la fonction ne s'exécute pas.",
+        "Relais de connexion (Cloudflare) : ne transporte que des médias chiffrés.",
+        "Signalisation (Ably) et limitation de débit (Upstash) : aucune donnée de santé n'est transmise.",
+      ],
     },
     hiw: {
       eyebrow: "guide",
@@ -811,14 +1251,16 @@ export const COPY = {
     },
     closing: { headline: "Мы готовы, когда готовы вы.", cta: "Поговорить с врачом" },
     footer: {
-      platform: "Платформа", explore: "Обзор", patientLogin: "Вход для пациентов", patientSignup: "Регистрация пациента", corporateLogin: "Корпоративный вход", doctorSignup: "Регистрация врача", telehealth: "Телемедицина", tourism: "Медицинский туризм", doctors: "Специалисты",
+      platform: "Платформа", explore: "Обзор", patientLogin: "Вход для пациентов", patientSignup: "Регистрация пациента", corporateLogin: "Корпоративный вход", doctorSignup: "Регистрация врача", telehealth: "Телемедицина", tourism: "Медицинский туризм", doctors: "Специалисты", trust: "Доверие и конфиденциальность",
       legal: "© 2026 AURA. MVP-демо, не является медицинской рекомендацией.",
     },
     signin: {
       word: "AURA", wordBefore: "Добро пожаловать в", wordAfter: "", lineAfter: "",
       sub: "Войдите, чтобы начать путь к лечению",
       google: "Продолжить с Google", apple: "Продолжить с Apple", email: "Продолжить по эл. почте", or: "ИЛИ",
-      legal: "Продолжая, вы принимаете Политику конфиденциальности платформы и соглашаетесь с Условиями использования.",
+      legal: "Продолжая, вы принимаете принципы обработки данных, изложенные на странице ",
+      legalLink: "Доверие и конфиденциальность",
+      legalAfter: ".",
       back: "На главную",
     },
     corporate: {
@@ -829,6 +1271,108 @@ export const COPY = {
       continue: "Перейти ко входу",
       legal: "Корпоративный доступ предоставляется только проверенным сотрудникам и партнёрам платформы.",
       back: "На главную",
+    },
+    trustPage: {
+      eyebrow: "доверие",
+      word: "AURA",
+      wordBefore: "Доверие и конфиденциальность в",
+      wordAfter: "",
+      lineAfter: "",
+      sub: "В AURA доверие — не маркетинговое обещание, а то, что можно показать в самом продукте. Под каждым заголовком мы отдельно указываем, что мы делаем, чего ещё не делаем и что от нас не зависит.",
+      sections: [
+        {
+          key: "security",
+          n: "01",
+          title: "Как защищены ваши медицинские данные",
+          body: "Ваши данные шифруются при передаче и шифруются второй раз отдельным ключом перед записью на наши серверы. Загружаемые вами заключения и снимки попадают в хранилище уже зашифрованными — поставщик хранилища видит только зашифрованную форму. Ваши данные хранятся и обрабатываются в Европейском союзе (Франкфурт).",
+          note: {
+            label: "Чего мы не утверждаем",
+            text: "Это не «сквозное шифрование». Ключ управляется на наших серверах — потому что клиническое резюме, перевод и представление для врача требуют обработки данных на сервере. Система с настоящим сквозным шифрованием не смогла бы предоставить эти функции.",
+          },
+        },
+        {
+          key: "consent",
+          n: "02",
+          title: "Согласие и искусственный интеллект",
+          body: "Берутся три отдельных согласия, и ни одно не заменяет другое: общее согласие на обработку данных · предварительная оценка вашего обращения с помощью ИИ · синхронный перевод приёма с помощью ИИ. По каждому согласию мы сохраняем точный текст, который вы одобрили, момент одобрения и цепочку, подтверждающую, что он не изменялся впоследствии. Без согласия ни один шаг не начинается — форма не открывается, разрешение на камеру не запрашивается. Свою запись о согласии вы можете посмотреть в любой момент.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "access",
+          n: "03",
+          title: "Кто что видит",
+          body: "Доступ зависит от роли: пациент видит только свои записи · врач — только если он проверен и назначен на случай · партнёрский врач вообще не имеет доступа к базе данных пациентов, а в передаваемом ему вопросе имена людей маскируются · координаторы и агентство видят логистику, а не клинические записи. После завершения послеоперационного наблюдения доступ клинического персонала закрывается, и запись остаётся только у вас; при желании вы открываете её снова.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "doctors",
+          n: "04",
+          title: "Проверка врачей",
+          body: "Прежде чем врач станет видимым и получит назначение пациента, он загружает профессиональные документы — диплом, сертификат специалиста и страхование профессиональной ответственности, — которые проверяются и утверждаются. Профиль неутверждённого врача не публикуется.",
+          note: {
+            label: "Чего мы не утверждаем",
+            text: "Мы не говорим «аккредитованный врач» — мы проверяем наличие и действительность документов.",
+          },
+        },
+        {
+          key: "video",
+          n: "05",
+          title: "Видео, документы и обмен",
+          body: "Ваши консультации не записываются. Видео и звук шифруются по WebRTC; когда прямое соединение установить не удаётся, подключающийся ретранслятор передаёт только зашифрованный трафик и не видит его содержимого. Делясь своими записями, вы сами выбираете, какие категории будут видны; можно задать срок, добавить пароль, отключить скачивание и отозвать ссылку в любой момент. Каждый доступ фиксируется.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "audit",
+          n: "06",
+          title: "Аудит и история доступа",
+          body: "Каждый значимый доступ к вашим клиническим данным записывается в цепочку, которую впоследствии нельзя удалить или изменить и которую можно независимо проверить.",
+          note: {
+            label: "Ограничение",
+            text: "Журнал аудита спроектирован так, чтобы не блокировать приложение: если запись не удаётся сохранить, операция всё равно завершается. Высокочастотные технические события, такие как сигнализация, намеренно не журналируются.",
+          },
+        },
+        {
+          key: "retention",
+          n: "07",
+          title: "Хранение и удаление",
+          body: "Вы можете удалить свою учётную запись и персональные данные. При этом ваши e-mail, имя, телефон, профиль и уведомления действительно удаляются, ссылки для обмена отзываются, а вход становится невозможным. Ваши медицинские записи должны храниться в течение установленного законом срока — 20 лет, — но они закрываются для доступа (открыть их не может никто: ни врачи, ни координаторы, ни администраторы, ни вы) и по истечении срока уничтожаются автоматически. Намеренно сохраняются две вещи: ваши записи о согласии, подтверждающие правовое основание хранения и уничтожаемые вместе с записями, и история доступа — защищённая от подделки цепочка, которая не содержит идентифицирующих данных и удаление которой разорвало бы цепочку.",
+          note: {
+            label: "Чего мы не утверждаем",
+            text: "Удаление выполняется не уничтожением ключа («crypto-shredding»), а физическим удалением записи.",
+          },
+        },
+        {
+          key: "transfers",
+          n: "08",
+          title: "Международная передача и поставщики услуг",
+          body: "Хранение и обработка происходят в Европейском союзе (Франкфурт). Ограниченные случаи, выходящие за пределы ЕС:",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "responsibility",
+          n: "09",
+          title: "Клиническая ответственность",
+          body: "Диагноз, лечение и медицинские решения принадлежат квалифицированным специалистам здравоохранения. AURA поддерживает оценку, координацию и общение; она не заменяет врача. Второе мнение не является обязывающим.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "report",
+          n: "10",
+          title: "Сообщить о проблеме конфиденциальности или безопасности",
+          body: "Если у вас есть опасения по поводу ваших данных или находка в области безопасности, сообщите нам.",
+          note: {
+            label: "⚖️ Черновик",
+            text: "Контактный адрес оператора данных ещё не опубликован; этот раздел будет обновлён, как только он будет определён. До тех пор мы не выдумываем адрес.",
+          },
+        },
+      ],
+      aiEmphasis: "Медицинское решение не принадлежит искусственному интеллекту: AURA упорядочивает вашу информацию и предлагает подходящую специальность; диагноз и решение о лечении принимают квалифицированные специалисты здравоохранения.",
+      transferItems: [
+        "Предварительная оценка ИИ и клиническое резюме (Anthropic, США): ваше имя не передаётся — используется заполнитель; клиническое содержание передаётся, поскольку составляет суть задачи.",
+        "Синхронный перевод (Google, США): звук приёма обрабатывается для перевода и требует отдельного явного согласия; без него функция не работает.",
+        "Ретранслятор соединения (Cloudflare): передаёт только зашифрованные медиаданные.",
+        "Сигнализация (Ably) и ограничение частоты запросов (Upstash): медицинские данные не передаются.",
+      ],
     },
     hiw: {
       eyebrow: "гид",
@@ -935,14 +1479,16 @@ export const COPY = {
     },
     closing: { headline: "جاهزون متى كنت جاهزًا.", cta: "تحدث إلى طبيب" },
     footer: {
-      platform: "المنصة", explore: "استكشف", patientLogin: "دخول المرضى", patientSignup: "تسجيل المرضى", corporateLogin: "الدخول المؤسسي", doctorSignup: "تسجيل الأطباء", telehealth: "الرعاية عن بُعد", tourism: "السياحة العلاجية", doctors: "الأخصائيون",
+      platform: "المنصة", explore: "استكشف", patientLogin: "دخول المرضى", patientSignup: "تسجيل المرضى", corporateLogin: "الدخول المؤسسي", doctorSignup: "تسجيل الأطباء", telehealth: "الرعاية عن بُعد", tourism: "السياحة العلاجية", doctors: "الأخصائيون", trust: "الثقة والخصوصية",
       legal: "© 2026 AURA. عرض تجريبي (MVP)، وليس نصيحة طبية.",
     },
     signin: {
       word: "AURA", wordBefore: "مرحبًا بك في", wordAfter: "", lineAfter: "",
       sub: "سجّل الدخول لبدء رحلة رعايتك",
       google: "المتابعة عبر Google", apple: "المتابعة عبر Apple", email: "المتابعة عبر البريد الإلكتروني", or: "أو",
-      legal: "بالمتابعة، فإنك تقر بسياسة الخصوصية الخاصة بالمنصة وتوافق على شروط الاستخدام.",
+      legal: "بالمتابعة، فإنك تقبل مبادئ معالجة البيانات الموضحة في صفحة ",
+      legalLink: "الثقة والخصوصية",
+      legalAfter: ".",
       back: "العودة إلى الرئيسية",
     },
     corporate: {
@@ -953,6 +1499,108 @@ export const COPY = {
       continue: "المتابعة لتسجيل الدخول",
       legal: "الدخول المؤسسي مقصور على موظفي المنصة وشركائها الموثقين.",
       back: "العودة إلى الرئيسية",
+    },
+    trustPage: {
+      eyebrow: "الثقة",
+      word: "AURA",
+      wordBefore: "الثقة والخصوصية في",
+      wordAfter: "",
+      lineAfter: "",
+      sub: "في AURA، الثقة ليست وعدًا تسويقيًا بل شيء يمكن إظهاره داخل المنتج. تحت كل عنوان أدناه نوضح بشكل منفصل ما نفعله، وما لم نفعله بعد، وما ليس بيدنا.",
+      sections: [
+        {
+          key: "security",
+          n: "01",
+          title: "كيف تُحمى بياناتك الصحية",
+          body: "تُشفَّر بياناتك أثناء النقل، ثم تُشفَّر مرة ثانية بمفتاح منفصل قبل حفظها على خوادمنا. التقارير والصور التي ترفعها تصل إلى التخزين مشفَّرة بالفعل — ومزوّد التخزين لا يرى سوى الشكل المشفَّر. تُخزَّن بياناتك وتُعالَج داخل الاتحاد الأوروبي (فرانكفورت).",
+          note: {
+            label: "ما لا ندّعيه",
+            text: "هذا ليس «تشفيرًا من طرف إلى طرف». المفتاح يُدار على خوادمنا — لأن الملخص السريري والترجمة وعرض الطبيب تتطلب جميعها معالجة البيانات على الخادم. أي نظام مشفَّر فعليًا من طرف إلى طرف لا يمكنه تقديم هذه الوظائف.",
+          },
+        },
+        {
+          key: "consent",
+          n: "02",
+          title: "الموافقة والذكاء الاصطناعي",
+          body: "تُؤخذ ثلاث موافقات منفصلة، ولا تحل أي منها محل الأخرى: الموافقة العامة على حماية البيانات · التقييم الأولي لشكواك بالذكاء الاصطناعي · الترجمة الفورية لجلستك بالذكاء الاصطناعي. لكل موافقة نحفظ النص الذي وافقت عليه حرفيًا، ولحظة موافقتك، وسلسلة تثبت أنه لم يُعدَّل بعدها. لا تبدأ أي خطوة قبل الموافقة — لا يُفتح النموذج ولا يُطلب إذن الكاميرا. ويمكنك الاطلاع على سجل موافقتك في أي وقت.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "access",
+          n: "03",
+          title: "من يرى ماذا",
+          body: "الوصول يتبع الدور: المريض يرى سجلاته فقط · الطبيب فقط إذا كان موثقًا ومُسندًا إلى الحالة · الطبيب الشريك لا يصل إلى قاعدة بيانات المرضى إطلاقًا، وتُخفى أسماء الأشخاص في السؤال المُحال إليه · المنسّقون والوكالة يرون البيانات اللوجستية لا السجل السريري. وعند انتهاء متابعتك بعد العملية يُغلق وصول الطاقم السريري ويبقى السجل لك وحدك؛ ويمكنك إعادة فتحه متى شئت.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "doctors",
+          n: "04",
+          title: "توثيق الأطباء",
+          body: "قبل أن يظهر الطبيب أو يتلقى أي إسناد لمريض، يرفع وثائقه المهنية — الشهادة الجامعية وشهادة التخصص وتأمين المسؤولية المهنية — وتُراجع وتُعتمد. ولا يُنشر ملف طبيب غير معتمد.",
+          note: {
+            label: "ما لا ندّعيه",
+            text: "لا نقول «طبيب معتمد اعتمادًا مؤسسيًا» — ما نتحقق منه هو وجود الوثائق وصلاحيتها.",
+          },
+        },
+        {
+          key: "video",
+          n: "05",
+          title: "الفيديو والمستندات والمشاركة",
+          body: "جلساتك لا تُسجَّل. يُشفَّر الفيديو والصوت عبر WebRTC؛ وعند تعذّر الاتصال المباشر، ينقل خادم التتابع الذي يتدخل حركة مشفَّرة فقط ولا يمكنه رؤية محتواها. وعند مشاركة سجلاتك تختار أنت الفئات الظاهرة؛ ويمكنك تحديد مدة، وإضافة كلمة مرور، وتعطيل التنزيل، وإلغاء الرابط في أي لحظة. وكل وصول يُسجَّل.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "audit",
+          n: "06",
+          title: "التدقيق وسجل الوصول",
+          body: "كل وصول ذي معنى إلى بياناتك السريرية يُكتب في سلسلة لا يمكن حذفها أو تغييرها لاحقًا، ويمكن التحقق منها بشكل مستقل.",
+          note: {
+            label: "الحد",
+            text: "صُمِّم سجل التدقيق بحيث لا يعطّل التطبيق — فإذا تعذّرت كتابة قيد، تكتمل العملية رغم ذلك. أما الأحداث التقنية عالية التكرار مثل الإشارات فلا تُسجَّل عن قصد.",
+          },
+        },
+        {
+          key: "retention",
+          n: "07",
+          title: "الحفظ والحذف",
+          body: "يمكنك حذف حسابك وبياناتك الشخصية. وعندها يُحذف فعليًا بريدك الإلكتروني واسمك وهاتفك وملفك وإشعاراتك، وتُلغى روابط المشاركة، ويصبح تسجيل الدخول مستحيلًا. أما سجلاتك الصحية فيجب حفظها طوال مدة الحفظ القانونية — 20 عامًا — لكنها تُغلق أمام الوصول (لا يستطيع أحد فتحها: لا الأطباء ولا المنسّقون ولا الإداريون ولا أنت) وتُتلف تلقائيًا عند انتهاء المدة. ويُحتفظ بشيئين عن قصد: سجلات موافقتك، التي تثبت الأساس القانوني لما نحفظه وتُتلف مع السجلات، وسجل الوصول، وهو سلسلة تدقيق غير قابلة للتلاعب لا تحمل بيانات تعريف، وحذفها يكسر السلسلة.",
+          note: {
+            label: "ما لا ندّعيه",
+            text: "الحذف لا يتم بإتلاف مفتاح («crypto-shredding») بل بالحذف الفعلي للسجل.",
+          },
+        },
+        {
+          key: "transfers",
+          n: "08",
+          title: "النقل الدولي ومزوّدو الخدمة",
+          body: "يجري الحفظ والمعالجة داخل الاتحاد الأوروبي (فرانكفورت). أما الحالات المحدودة التي تخرج من الاتحاد الأوروبي:",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "responsibility",
+          n: "09",
+          title: "المسؤولية السريرية",
+          body: "التشخيص والعلاج والقرارات الطبية تعود إلى المهنيين الصحيين المؤهلين. تدعم AURA التقييم والتنسيق والتواصل؛ وهي لا تحل محل طبيبك. والرأي الثاني غير مُلزِم.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "report",
+          n: "10",
+          title: "أبلغ عن مخاوف تتعلق بالخصوصية أو الأمان",
+          body: "إذا كان لديك قلق بشأن بياناتك أو اكتشاف أمني، فأخبرنا.",
+          note: {
+            label: "⚖️ مسودة",
+            text: "لم يُنشر بعد عنوان التواصل الخاص بالمسؤول عن البيانات؛ وسيُحدَّث هذا القسم فور تحديده. وإلى ذلك الحين لا نختلق عنوانًا.",
+          },
+        },
+      ],
+      aiEmphasis: "القرار الطبي ليس ملكًا للذكاء الاصطناعي: تنظّم AURA معلوماتك وتقترح التخصص المناسب؛ أما قرار التشخيص والعلاج فيتخذه المهنيون الصحيون المؤهلون.",
+      transferItems: [
+        "التقييم الأولي بالذكاء الاصطناعي والملخص السريري (Anthropic، الولايات المتحدة): لا يُرسل اسمك — يُستخدم عنصر نائب؛ ويُرسل المحتوى السريري لأنه جوهر المهمة.",
+        "الترجمة الفورية (Google، الولايات المتحدة): يُعالَج صوت جلستك لأغراض الترجمة، ويخضع ذلك لموافقة صريحة منفصلة؛ ودون هذه الموافقة لا يعمل.",
+        "تتابع الاتصال (Cloudflare): ينقل الوسائط المشفَّرة فقط.",
+        "الإشارات (Ably) وتحديد المعدل (Upstash): لا تُرسل أي بيانات صحية.",
+      ],
     },
     hiw: {
       eyebrow: "دليل",
@@ -1059,14 +1707,16 @@ export const COPY = {
     },
     closing: { headline: "هر وقت آماده بودید، ما هستیم.", cta: "با پزشک صحبت کنید" },
     footer: {
-      platform: "پلتفرم", explore: "کاوش", patientLogin: "ورود بیمار", patientSignup: "ثبت‌نام بیمار", corporateLogin: "ورود سازمانی", doctorSignup: "ثبت‌نام پزشک", telehealth: "سلامت از راه دور", tourism: "گردشگری سلامت", doctors: "متخصصان",
+      platform: "پلتفرم", explore: "کاوش", patientLogin: "ورود بیمار", patientSignup: "ثبت‌نام بیمار", corporateLogin: "ورود سازمانی", doctorSignup: "ثبت‌نام پزشک", telehealth: "سلامت از راه دور", tourism: "گردشگری سلامت", doctors: "متخصصان", trust: "اعتماد و حریم خصوصی",
       legal: "© 2026 AURA. دموی MVP؛ توصیه پزشکی نیست.",
     },
     signin: {
       word: "AURA", wordBefore: "به", wordAfter: "", lineAfter: "خوش آمدید",
       sub: "برای شروع مسیر درمان خود وارد شوید",
       google: "ادامه با Google", apple: "ادامه با Apple", email: "ادامه با ایمیل", or: "یا",
-      legal: "با ادامه، سیاست حفظ حریم خصوصی پلتفرم را می‌پذیرید و با شرایط استفاده موافقت می‌کنید.",
+      legal: "با ادامه، اصول پردازش داده‌ها را که در صفحهٔ ",
+      legalLink: "اعتماد و حریم خصوصی",
+      legalAfter: " توضیح داده شده می‌پذیرید.",
       back: "بازگشت به خانه",
     },
     corporate: {
@@ -1077,6 +1727,108 @@ export const COPY = {
       continue: "ادامه به ورود",
       legal: "دسترسی سازمانی به کارکنان و شرکای تأییدشده پلتفرم محدود است.",
       back: "بازگشت به خانه",
+    },
+    trustPage: {
+      eyebrow: "اعتماد",
+      word: "AURA",
+      wordBefore: "اعتماد و حریم خصوصی در",
+      wordAfter: "",
+      lineAfter: "",
+      sub: "در AURA اعتماد یک وعدهٔ بازاریابی نیست؛ چیزی است که می‌توان در خودِ محصول نشان داد. زیر هر عنوان جداگانه نوشته‌ایم چه می‌کنیم، چه چیزی را هنوز انجام نداده‌ایم و چه چیزی در اختیار ما نیست.",
+      sections: [
+        {
+          key: "security",
+          n: "01",
+          title: "داده‌های سلامت شما چگونه محافظت می‌شود",
+          body: "داده‌های شما هنگام انتقال رمزگذاری می‌شوند و پیش از ذخیره روی سرورهای ما بار دوم با کلیدی جداگانه رمزگذاری می‌شوند. گزارش‌ها و تصاویری که بارگذاری می‌کنید، رمزگذاری‌شده به فضای ذخیره‌سازی می‌رسند — ارائه‌دهندهٔ ذخیره‌سازی تنها شکل رمزگذاری‌شده را می‌بیند. داده‌های شما در اتحادیهٔ اروپا (فرانکفورت) ذخیره و پردازش می‌شود.",
+          note: {
+            label: "چه چیزی را ادعا نمی‌کنیم",
+            text: "این «رمزگذاری سرتاسری» نیست. کلید روی سرورهای ما مدیریت می‌شود — زیرا خلاصهٔ بالینی، ترجمه و نمای پزشک همگی نیازمند پردازش داده روی سرور هستند. سامانه‌ای که واقعاً سرتاسری رمزگذاری شده باشد نمی‌تواند این کارکردها را ارائه دهد.",
+          },
+        },
+        {
+          key: "consent",
+          n: "02",
+          title: "رضایت و هوش مصنوعی",
+          body: "سه رضایت جداگانه گرفته می‌شود و هیچ‌کدام جای دیگری را نمی‌گیرد: رضایت عمومی حفاظت از داده‌ها · ارزیابی اولیهٔ شکایت شما با هوش مصنوعی · ترجمهٔ همزمان ویزیت شما با هوش مصنوعی. برای هر رضایت، عین متنی که تأیید کرده‌اید، لحظهٔ تأیید و زنجیره‌ای که نشان می‌دهد پس از آن تغییر نکرده است نگهداری می‌شود. هیچ مرحله‌ای پیش از رضایت آغاز نمی‌شود — فرم باز نمی‌شود و اجازهٔ دوربین درخواست نمی‌شود. سابقهٔ رضایت خود را هر زمان می‌توانید ببینید.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "access",
+          n: "03",
+          title: "چه کسی چه چیزی را می‌بیند",
+          body: "دسترسی بر پایهٔ نقش است: بیمار فقط سوابق خودش را می‌بیند · پزشک تنها اگر تأییدشده و به پرونده گمارده شده باشد · پزشک همکار اصلاً به پایگاه دادهٔ بیماران دسترسی ندارد و در پرسشی که به او ارجاع می‌شود نام اشخاص پوشانده می‌شود · هماهنگ‌کننده و آژانس اطلاعات لجستیکی را می‌بینند نه پروندهٔ بالینی را. با پایان پیگیری پس از عمل، دسترسی کادر بالینی بسته می‌شود و پرونده تنها نزد شما می‌ماند؛ در صورت تمایل دوباره آن را باز می‌کنید.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "doctors",
+          n: "04",
+          title: "احراز هویت پزشکان",
+          body: "پیش از آنکه پزشک دیده شود یا بیماری به او ارجاع شود، مدارک حرفه‌ای خود را بارگذاری می‌کند — مدرک تحصیلی، گواهی تخصص و بیمهٔ مسئولیت حرفه‌ای — و این مدارک بررسی و تأیید می‌شوند. پروفایل پزشک تأییدنشده هرگز منتشر نمی‌شود.",
+          note: {
+            label: "چه چیزی را ادعا نمی‌کنیم",
+            text: "ما نمی‌گوییم «پزشک دارای اعتبارنامهٔ نهادی» — آنچه راستی‌آزمایی می‌کنیم وجود و اعتبار مدارک است.",
+          },
+        },
+        {
+          key: "video",
+          n: "05",
+          title: "ویدیو، اسناد و اشتراک‌گذاری",
+          body: "ویزیت‌های شما ضبط نمی‌شود. ویدیو و صدا با WebRTC رمزگذاری می‌شوند؛ هنگامی که اتصال مستقیم برقرار نشود، سرور رله‌ای که وارد می‌شود تنها ترافیک رمزگذاری‌شده را حمل می‌کند و محتوای آن را نمی‌بیند. هنگام اشتراک‌گذاری سوابق، خودتان انتخاب می‌کنید کدام دسته‌ها دیده شوند؛ می‌توانید مهلت بگذارید، رمز عبور بیفزایید، دانلود را غیرفعال کنید و پیوند را هر لحظه باطل کنید. هر دسترسی ثبت می‌شود.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "audit",
+          n: "06",
+          title: "ممیزی و تاریخچهٔ دسترسی",
+          body: "هر دسترسی معنادار به داده‌های بالینی شما در زنجیره‌ای نوشته می‌شود که بعداً نه حذف و نه تغییر می‌پذیرد و می‌توان آن را مستقلاً راستی‌آزمایی کرد.",
+          note: {
+            label: "مرز آن",
+            text: "سابقهٔ ممیزی چنان طراحی شده که برنامه را متوقف نکند — اگر ثبت یک رکورد ممکن نباشد، عملیات همچنان کامل می‌شود. رویدادهای فنی پرتکرار مانند سیگنالینگ عمداً ثبت نمی‌شوند.",
+          },
+        },
+        {
+          key: "retention",
+          n: "07",
+          title: "نگهداری و حذف",
+          body: "می‌توانید حساب و داده‌های شخصی خود را حذف کنید. در این صورت ایمیل، نام، تلفن، پروفایل و اعلان‌های شما واقعاً حذف می‌شوند، پیوندهای اشتراک باطل می‌شوند و ورود ناممکن می‌شود. سوابق سلامت شما باید در طول مدت نگهداری قانونی — ۲۰ سال — نگه داشته شوند؛ اما به روی دسترسی بسته می‌شوند (هیچ‌کس نمی‌تواند آن‌ها را باز کند: نه پزشکان، نه هماهنگ‌کنندگان، نه مدیران و نه خود شما) و با پایان مدت به‌صورت خودکار امحا می‌شوند. دو چیز عمداً نگه داشته می‌شود: سوابق رضایت شما که مبنای قانونی آنچه نگه می‌داریم را اثبات می‌کند و همراه با سوابق امحا می‌شود، و تاریخچهٔ دسترسی که زنجیره‌ای دست‌نخوردنی است، دادهٔ هویتی ندارد و حذف آن زنجیره را می‌شکند.",
+          note: {
+            label: "چه چیزی را ادعا نمی‌کنیم",
+            text: "حذف با امحای کلید («crypto-shredding») انجام نمی‌شود، بلکه با حذف فیزیکی رکورد انجام می‌شود.",
+          },
+        },
+        {
+          key: "transfers",
+          n: "08",
+          title: "انتقال بین‌المللی و ارائه‌دهندگان خدمات",
+          body: "نگهداری و پردازش در اتحادیهٔ اروپا (فرانکفورت) انجام می‌شود. موارد محدودی که از اتحادیهٔ اروپا خارج می‌شوند:",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "responsibility",
+          n: "09",
+          title: "مسئولیت بالینی",
+          body: "تشخیص، درمان و تصمیم‌های پزشکی از آنِ متخصصان صلاحیت‌دار سلامت است. AURA از ارزیابی، هماهنگی و ارتباط پشتیبانی می‌کند؛ جایگزین پزشک شما نیست. نظر دوم الزام‌آور نیست.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "report",
+          n: "10",
+          title: "گزارش نگرانی حریم خصوصی یا امنیت",
+          body: "اگر دربارهٔ داده‌هایتان نگرانی یا یافته‌ای امنیتی دارید، به ما بگویید.",
+          note: {
+            label: "⚖️ پیش‌نویس",
+            text: "نشانی تماس مسئول داده هنوز منتشر نشده است؛ به‌محض نهایی‌شدن، این بخش به‌روز می‌شود. تا آن زمان نشانی ساختگی نمی‌نویسیم.",
+          },
+        },
+      ],
+      aiEmphasis: "تصمیم پزشکی از آنِ هوش مصنوعی نیست: AURA اطلاعات شما را سامان می‌دهد و تخصص مناسب را پیشنهاد می‌کند؛ تشخیص و تصمیم درمان را متخصصان صلاحیت‌دار سلامت می‌گیرند.",
+      transferItems: [
+        "ارزیابی اولیه با هوش مصنوعی و خلاصهٔ بالینی (Anthropic، ایالات متحده): نام شما ارسال نمی‌شود — از جانگهدار استفاده می‌شود؛ محتوای بالینی ارسال می‌شود چون جوهرِ کار است.",
+        "ترجمهٔ همزمان (Google، ایالات متحده): صدای ویزیت شما برای ترجمه پردازش می‌شود و مشمول رضایت صریح جداگانه است؛ بدون آن رضایت کار نمی‌کند.",
+        "رلهٔ اتصال (Cloudflare): تنها رسانهٔ رمزگذاری‌شده را حمل می‌کند.",
+        "سیگنالینگ (Ably) و محدودسازی نرخ (Upstash): هیچ دادهٔ سلامتی ارسال نمی‌شود.",
+      ],
     },
     hiw: {
       eyebrow: "راهنما",
@@ -1183,14 +1935,16 @@ export const COPY = {
     },
     closing: { headline: "Siz hazır olanda.", cta: "Həkimlə görüş" },
     footer: {
-      platform: "Platforma", explore: "Kəşf et", patientLogin: "Xəstə girişi", patientSignup: "Xəstə qeydiyyatı", corporateLogin: "Korporativ giriş", doctorSignup: "Həkim qeydiyyatı", telehealth: "Teletibb", tourism: "Sağlamlıq Turizmi", doctors: "Mütəxəssislər",
+      platform: "Platforma", explore: "Kəşf et", patientLogin: "Xəstə girişi", patientSignup: "Xəstə qeydiyyatı", corporateLogin: "Korporativ giriş", doctorSignup: "Həkim qeydiyyatı", telehealth: "Teletibb", tourism: "Sağlamlıq Turizmi", doctors: "Mütəxəssislər", trust: "Etibar və Məxfilik",
       legal: "© 2026 AURA. MVP demo, tibbi məsləhət deyil.",
     },
     signin: {
       word: "AURA", wordBefore: "", wordAfter: "-ya", lineAfter: "xoş gəlmisiniz",
       sub: "Baxım səyahətinizə başlamaq üçün daxil olun",
       google: "Google ilə davam et", apple: "Apple ilə davam et", email: "E-poçt ilə davam et", or: "VƏ YA",
-      legal: "Davam etməklə platformanın Məxfilik Siyasətini qəbul etmiş və İstifadə Şərtlərini təsdiqləmiş olursunuz.",
+      legal: "Davam etməklə ",
+      legalLink: "Etibar və Məxfilik",
+      legalAfter: " səhifəsində izah olunan məlumat emalı prinsiplərini qəbul edirsiniz.",
       back: "Ana səhifəyə qayıt",
     },
     corporate: {
@@ -1201,6 +1955,109 @@ export const COPY = {
       continue: "Girişə davam et",
       legal: "Korporativ giriş platformanın təsdiqlənmiş əməkdaşları və tərəfdaşları ilə məhdudlaşır.",
       back: "Ana səhifəyə qayıt",
+    },
+    trustPage: {
+      eyebrow: "etibar",
+      word: "AURA",
+      // wordAfter boş: "-da" eki letterform'dan ~12px kopuk çizilirdi.
+      wordBefore: "",
+      wordAfter: "",
+      lineAfter: "Etibar və məxfilik.",
+      sub: "AURA-da etibar marketinq vədi deyil, məhsulun içində göstərilə bilən bir şeydir. Aşağıda hər başlıq altında nə etdiyimizi, nəyi hələ etmədiyimizi və nəyin bizdən asılı olmadığını ayrıca yazdıq.",
+      sections: [
+        {
+          key: "security",
+          n: "01",
+          title: "Sağlamlıq məlumatlarınız necə qorunur",
+          body: "Məlumatlarınız ötürülmə zamanı şifrələnir; serverə yazılmazdan əvvəl ikinci dəfə, ayrıca açarla şifrələnir. Yüklədiyiniz hesabatlar və görüntülər anbara artıq şifrələnmiş halda çatır — anbar təchizatçısı yalnız şifrələnmiş formanı görür. Məlumatlarınız Avropa İttifaqında (Frankfurt) saxlanılır və emal olunur.",
+          note: {
+            label: "Nəyi iddia etmirik",
+            text: "Bu, «uçdan-uca şifrələmə» deyil. Açar bizim serverlərimizdə idarə olunur — çünki klinik xülasə, tərcümə və həkim görünüşü məlumatın serverdə emalını tələb edir. Həqiqətən uçdan-uca şifrələnmiş sistem bu funksiyaları verə bilməzdi.",
+          },
+        },
+        {
+          key: "consent",
+          n: "02",
+          title: "Razılıq və süni intellekt",
+          body: "Üç ayrı razılıq alınır və heç biri digərini əvəz etmir: ümumi məlumatların qorunması razılığı · şikayətinizin süni intellektlə ilkin qiymətləndirilməsi · görüşünüzün süni intellektlə sinxron tərcüməsi. Hər razılıqda təsdiqlədiyiniz mətnin eynisi, təsdiq anınız və sonradan dəyişdirilmədiyini göstərən zəncir saxlanılır. Razılıq olmadan heç bir addım başlamır — forma açılmır, kamera icazəsi istənilmir. Öz razılıq qeydinizi istənilən vaxt görə bilərsiniz.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "access",
+          n: "03",
+          title: "Kim nəyi görür",
+          body: "Giriş rola bağlıdır: xəstə yalnız öz qeydlərini görür · həkim yalnız təsdiqlənmişdirsə və işə təyin olunubsa · tərəfdaş həkimin xəstə bazasına ümumiyyətlə girişi yoxdur və ona ötürülən sualda şəxs adları maskalanır · koordinator və agentlik logistik məlumatı görür, klinik qeydi yox. Əməliyyatdan sonrakı müşahidəniz bitdikdə klinik heyətin girişi bağlanır və qeyd yalnız sizdə qalır; istəsəniz yenidən açırsınız.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "doctors",
+          n: "04",
+          title: "Həkim təsdiqi",
+          body: "Həkim görünməzdən və hər hansı xəstə təyinatı almazdan əvvəl peşə sənədlərini yükləyir — diplom, ixtisas sənədi və peşə məsuliyyət sığortası — və bunlar yoxlanılıb təsdiqlənir. Təsdiqlənməmiş həkimin profili yayımlanmır.",
+          note: {
+            label: "Nəyi iddia etmirik",
+            text: "«Akkreditə olunmuş həkim» demirik — yoxladığımız şey sənədlərin mövcudluğu və etibarlılığıdır.",
+          },
+        },
+        {
+          key: "video",
+          n: "05",
+          title: "Video, sənədlər və paylaşma",
+          body: "Görüşləriniz qeydə alınmır. Video və səs WebRTC ilə şifrələnir; birbaşa əlaqə qurulmadıqda işə düşən rele serveri yalnız şifrələnmiş trafiki daşıyır və məzmununu görə bilmir. Qeydlərinizi paylaşarkən hansı kateqoriyaların görünəcəyini siz seçirsiniz; müddət qoya, parol əlavə edə, yükləməni söndürə və linki istənilən an ləğv edə bilərsiniz. Hər giriş qeydə alınır.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "audit",
+          n: "06",
+          title: "Audit və giriş tarixçəsi",
+          body: "Klinik məlumatınıza edilən hər mənalı giriş sonradan silinə və dəyişdirilə bilməyən bir zəncirə yazılır və müstəqil şəkildə yoxlana bilər.",
+          note: {
+            label: "Həddi",
+            text: "Audit qeydi tətbiqi bloklamayacaq şəkildə hazırlanıb — qeyd yazıla bilmirsə, əməliyyat yenə tamamlanır. Siqnallaşma kimi yüksək tezlikli texniki hadisələr qəsdən qeyd edilmir.",
+          },
+        },
+        {
+          key: "retention",
+          n: "07",
+          title: "Saxlanma və silinmə",
+          body: "Hesabınızı və şəxsi məlumatlarınızı silə bilərsiniz. Bu zaman e-poçtunuz, adınız, telefonunuz, profiliniz və bildirişləriniz həqiqətən silinir, paylaşım linkləriniz ləğv olunur və giriş mümkünsüz olur. Sağlamlıq qeydləriniz qanuni saxlanma müddəti boyunca — 20 il — saxlanmalıdır; lakin girişə bağlanır (heç kim aça bilmir: nə həkimlər, nə koordinatorlar, nə inzibatçılar, nə də siz) və müddət bitdikdə avtomatik məhv edilir. İki şey qəsdən saxlanılır: saxladığımızın hüquqi əsasını sübut edən və qeydlərlə birlikdə məhv edilən razılıq qeydləriniz, və giriş tarixçəsi — dəyişdirilə bilməyən audit zənciridir, kimlik məlumatı daşımır və silinməsi zənciri qırar.",
+          note: {
+            label: "Nəyi iddia etmirik",
+            text: "Silinmə açarın məhv edilməsi («crypto-shredding») ilə deyil, qeydin fiziki olaraq silinməsi ilə həyata keçirilir.",
+          },
+        },
+        {
+          key: "transfers",
+          n: "08",
+          title: "Beynəlxalq ötürmə və xidmət təchizatçıları",
+          body: "Saxlanma və emal Avropa İttifaqında (Frankfurt) baş verir. Aİ-dən kənara çıxan məhdud hallar:",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "responsibility",
+          n: "09",
+          title: "Klinik məsuliyyət",
+          body: "Diaqnoz, müalicə və tibbi qərarlar səlahiyyətli səhiyyə mütəxəssislərinə aiddir. AURA qiymətləndirməni, koordinasiyanı və ünsiyyəti dəstəkləyir; həkiminizi əvəz etmir. İkinci rəy məcburi deyil.",
+          note: { label: "", text: "" },
+        },
+        {
+          key: "report",
+          n: "10",
+          title: "Məxfilik və ya təhlükəsizlik narahatlığını bildirin",
+          body: "Məlumatlarınızla bağlı narahatlığınız və ya təhlükəsizlik tapıntınız varsa, bizə bildirin.",
+          note: {
+            label: "⚖️ Layihə",
+            text: "Məlumat operatorunun əlaqə ünvanı hələ dərc olunmayıb; ünvan dəqiqləşdikdə bu bölmə yenilənəcək. O vaxta qədər uydurma ünvan yazmırıq.",
+          },
+        },
+      ],
+      aiEmphasis: "Tibbi qərar süni intellektə aid deyil: AURA məlumatlarınızı nizamlayır və uyğun ixtisası təklif edir; diaqnoz və müalicə qərarını səlahiyyətli səhiyyə mütəxəssisləri verir.",
+      transferItems: [
+        "Süni intellektlə ilkin qiymətləndirmə və klinik xülasə (Anthropic, ABŞ): adınız göndərilmir — yer tutucu istifadə olunur; klinik məzmun tapşırığın mahiyyəti olduğu üçün göndərilir.",
+        "Sinxron tərcümə (Google, ABŞ): görüşünüzün səsi tərcümə üçün emal olunur və ayrıca açıq razılığa tabedir; həmin razılıq olmadan işləmir.",
+        "Bağlantı relesi (Cloudflare): yalnız şifrələnmiş medianı daşıyır.",
+        "Siqnallaşma (Ably) və sürət məhdudlaşdırma (Upstash): sağlamlıq məlumatı göndərilmir.",
+      ],
     },
     hiw: {
       eyebrow: "bələdçi",

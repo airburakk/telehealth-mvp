@@ -38,11 +38,11 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
   const { t } = useT(lang, texts);
   const dir = langDir(lang);
 
-  // AURA landing (/ ve /how-it-works) kendi nav/footer'ını taşır — global krom gizlenir.
+  // AURA landing (/, /how-it-works, /guven-ve-gizlilik) kendi nav/footer'ını taşır — global krom gizlenir.
   // Giriş kapıları (/giris, /kurumsal-giris) tam-ekran vitrin panelleridir (kendi logo +
   // "← ana sayfa" bağlantısıyla); /e-posta form alt-rotalarında krom durur (exact match).
   // Video görüşme rotaları IMMERSIVE tam-ekran (100dvh video+panel) → krom gizlenir.
-  if (["/", "/how-it-works", "/giris", "/kurumsal-giris"].includes(pathname) || isImmersiveCallPath(pathname)) return null;
+  if (["/", "/how-it-works", "/guven-ve-gizlilik", "/giris", "/kurumsal-giris"].includes(pathname) || isImmersiveCallPath(pathname)) return null;
 
   const activeHref = items
     .filter((n) => pathname === n.href || pathname.startsWith(n.href + "/"))

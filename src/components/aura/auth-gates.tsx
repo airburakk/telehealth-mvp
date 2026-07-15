@@ -157,7 +157,21 @@ function SigninPanel() {
         {t.signin.back}
       </Link>
 
-      <p className="mt-8 text-[12px] leading-relaxed text-[var(--aura-micro)]">{t.signin.legal}</p>
+      {/* DÜRÜSTLÜK (2026-07-15): eski metin "Gizlilik Politikası + Kullanım
+          Koşulları"na atıf yapıyordu — ikisi de YOK, link bile değildi (kullanıcı
+          okuyamadığı belgeyi kabul etmiş sayılıyordu). Artık YAYINDA OLAN
+          /guven-ve-gizlilik'e atıf + gerçek link. ⚠️ İki belge yazılınca metin
+          yeniden düzenlenir (copy.ts signin.legal + legalLink, 8 dil). */}
+      <p className="mt-8 text-[12px] leading-relaxed text-[var(--aura-micro)]">
+        {t.signin.legal}
+        <Link
+          href="/guven-ve-gizlilik"
+          className="text-[var(--aura-grey)] underline underline-offset-2 transition-colors duration-200 hover:text-[var(--aura-accent)]"
+        >
+          {t.signin.legalLink}
+        </Link>
+        {t.signin.legalAfter}
+      </p>
     </GateShell>
   );
 }
