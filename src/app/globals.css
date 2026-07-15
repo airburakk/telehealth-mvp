@@ -200,21 +200,152 @@ body {
 }
 
 /* ============================================================
+ * AURA HAM PALET + ÖLÇEK (v6.13, 2026-07-16) — STATİK KAYNAK, tema-bağımsız.
+ *
+ * Kaynak: kullanıcının `aura-design-tokens-v1.css` draft'ı ("draft only; no
+ * repository changes made"). Draft OLDUĞU GİBİ eklenemezdi: `:root`'ta
+ * `--aura-ink/panel/surface`i SABİT (gündüz) değerlerle tanımlıyordu, oysa bu
+ * dosyada aynı isimler TEMA DEĞİŞKENİ (aşağıda gece ↔ .aura-light gündüz) →
+ * eklenseydi gece zeminde koyu metin = vitrin okunamazdı.
+ *
+ * ÇÖZÜM (v6.13): iki katman ayrıldı —
+ *   1) HAM PALET (burası): statik, çakışmayan isim alanı. Renk SEÇİMİ burada.
+ *   2) ROL TOKEN'LARI (aşağısı): tema değişkeni; ham paletten değer alır.
+ *      Bileşenler DAİMA rol token'ı kullanır (`var(--aura-ink)`), ham paleti
+ *      doğrudan kullanmaz — yoksa tema geçişi o yüzeyde kırılır.
+ *
+ * Draft'ın çakışan rol adları burada yeniden adlandırıldı:
+ *   draft --aura-ink #171a18       → --aura-stone-900
+ *   draft --aura-ink-subtle #57534e → --aura-stone-600
+ *   draft --aura-ink-muted #6b6660  → --aura-stone-500
+ *   draft --aura-surface           → --aura-stone-100
+ *   draft --aura-panel             → --aura-stone-50
+ * Draft'ın `.aura-theme-light/dark` blokları ALINMADI: jenerik `--bg/--text/
+ * --accent` adlarıyla ÜÇÜNCÜ bir isim alanı + ikinci tema sistemi getiriyordu
+ * (kodda zaten `.theme-*` [sistem, --c-*] ve `.aura-light` [landing] var).
+ * Draft'ın gece değerleri kodun mevcut gece rolleriyle BİREBİR aynı → tema
+ * blokları olduğu gibi korundu.
+ *
+ * ⚠️ DRAFT'TAN İKİ KASITLI SAPMA (sıfır-görsel-değişiklik ilkesi; v6.13'ün
+ * başarı ölçütü "hiçbir computed değer değişmedi" idi ve ölçümle kanıtlandı):
+ *   --aura-stone-100: draft #eef1ec → KOD değeri #eff1ec korundu
+ *   --aura-border-dark: draft rgba(255,255,255,0.10) → KOD değeri 0.09 korundu
+ * İkisi de gözle ayırt edilemez; draft'a tam uyum istenirse tek satır değişir
+ * (kullanıcı kararı bekliyor).
+ *
+ * Ölçek token'ları (text/space/radius/shadow/duration/ease/content) draft'tan
+ * AYNEN alındı ama bileşenlere ZORLA UYGULANMADI (kullanıcı kararı: "çakışmayı
+ * çöz + skalayı tanımla", 129 dosyalık süpürme YOK). Yeni ana sayfa bunları
+ * kullanacak; mevcut bileşenler kendi değerleriyle çalışmaya devam eder.
+ * ============================================================ */
+:root {
+  /* Turkuaz skala — 500 gece vurgusu, 600 gündüz vurgusu (mevcut kullanım) */
+  --aura-cyan-50: #eefcfd;
+  --aura-cyan-100: #d5f7f9;
+  --aura-cyan-200: #aceff3;
+  --aura-cyan-300: #7fe4ea;
+  --aura-cyan-400: #4fd6e2;
+  --aura-cyan-500: #28c8d8;
+  --aura-cyan-600: #17919e;
+  --aura-cyan-700: #127e8a;
+  --aura-cyan-800: #0d6470;
+  --aura-cyan-900: #0f4e58;
+
+  /* Nötrler */
+  --aura-night: #0d0e10;
+  --aura-deep-ink: #0f2231;
+  --aura-white: #ffffff;
+  --aura-stone-900: #171a18;
+  --aura-stone-600: #57534e;
+  --aura-stone-500: #6b6660;
+  --aura-stone-100: #eff1ec; /* ⚠️ draft #eef1ec — kod değeri korundu */
+  --aura-stone-50: #f7f8f5;
+
+  /* Semantik durum renkleri — draft'tan; TANIMLI ama henüz kullanılmıyor
+     (klinik renk semantiği bileşenlerde Tailwind ton sınıflarıyla yaşıyor). */
+  --aura-success: #15803d;
+  --aura-warning: #b45309;
+  --aura-danger: #b91c1c;
+  --aura-info: #1d4ed8;
+  --aura-second-opinion: #4f46e5;
+
+  /* Kenarlık / gölge */
+  --aura-border-light: rgba(0, 0, 0, 0.1);
+  --aura-border-dark: rgba(255, 255, 255, 0.09); /* ⚠️ draft 0.10 — kod değeri korundu */
+  --aura-shadow-sm: 0 1px 2px rgba(15, 34, 49, 0.08);
+  --aura-shadow-md: 0 10px 30px rgba(15, 34, 49, 0.1);
+  --aura-shadow-focus: 0 0 0 3px rgba(40, 200, 216, 0.28);
+
+  /* Tipografi ölçeği */
+  --aura-text-xs: 0.75rem;
+  --aura-text-sm: 0.875rem;
+  --aura-text-md: 1rem;
+  --aura-text-lg: 1.125rem;
+  --aura-text-xl: 1.25rem;
+  --aura-text-2xl: 1.5rem;
+  --aura-text-3xl: clamp(2rem, 4vw, 3.5rem);
+  --aura-text-hero: clamp(3.5rem, 10vw, 9rem);
+
+  /* Boşluk ölçeği */
+  --aura-space-1: 0.25rem;
+  --aura-space-2: 0.5rem;
+  --aura-space-3: 0.75rem;
+  --aura-space-4: 1rem;
+  --aura-space-5: 1.25rem;
+  --aura-space-6: 1.5rem;
+  --aura-space-8: 2rem;
+  --aura-space-10: 2.5rem;
+  --aura-space-12: 3rem;
+  --aura-space-16: 4rem;
+  --aura-space-24: 6rem;
+  --aura-space-32: 8rem;
+
+  /* Köşe yarıçapı */
+  --aura-radius-sm: 0.5rem;
+  --aura-radius-md: 0.75rem;
+  --aura-radius-lg: 1rem;
+  --aura-radius-xl: 1.5rem;
+  --aura-radius-pill: 999px;
+
+  /* Hareket — mevcut bileşenlerdeki dağınık süreler bu değerlerden gelir
+     (160/240/360/2400ms); taşıma ayrı bir tur (backlog eksik #6). */
+  --aura-duration-fast: 160ms;
+  --aura-duration-base: 240ms;
+  --aura-duration-panel: 360ms;
+  --aura-duration-brand: 2400ms;
+  --aura-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --aura-ease-emphasized: cubic-bezier(0.2, 0, 0, 1.2);
+
+  /* Ölçü */
+  --aura-content-sm: 42rem;
+  --aura-content-md: 64rem;
+  --aura-content-lg: 72rem;
+  --aura-target-min: 44px;
+}
+
+/* ============================================================
  * AURA landing katmanı (vitrin aura-health.higgsfield.app'ten taşındı,
  * 2026-07-12). Sinematik gece paleti: #0D0E10 zemin + #28C8D8 turkuaz.
+ * ROL TOKEN'LARI — gece varsayılanı; gündüz karşılığı .aura-light'ta.
+ * Değerler artık ham paletten gelir (v6.13); hex yalnız ham paletin
+ * karşılığı OLMAYAN gece nötrlerinde kaldı (draft onları ham skalada
+ * vermemişti — kendi tema bloğunda hex veriyordu; isim uydurmak yerine
+ * korundular).
  * Fontlar platformun next/font değişkenlerine bağlanır (layout.tsx:
  * --font-serif = Space Grotesk display yuvası, --font-sans = Inter,
  * --font-mono = JetBrains Mono).
+ * ⚠️ Font token'ları :lang(ar)/:lang(fa) bloğunda YENİDEN TANIMLANIR (v6.9,
+ * yukarısı) — sıralamaya dokunma, [[nextfont-fallback-unicode-trap]].
  * ============================================================ */
 :root {
-  --aura-bg: #0d0e10; /* gece siyahı */
-  --aura-panel: #161719; /* büyük panel */
-  --aura-surface: #1e1f22; /* buton/yüzey */
-  --aura-ink: #f4f5f3; /* başlık metni */
-  --aura-grey: #9a9c99; /* ikincil metin */
+  --aura-bg: var(--aura-night); /* gece siyahı #0d0e10 */
+  --aura-panel: #161719; /* büyük panel — ham palette karşılığı yok */
+  --aura-surface: #1e1f22; /* buton/yüzey — ham palette karşılığı yok */
+  --aura-ink: #f4f5f3; /* başlık metni — ham palette karşılığı yok */
+  --aura-grey: #9a9c99; /* ikincil metin — ham palette karşılığı yok */
   --aura-micro: #82847c; /* mikro metin — gece zemininde ~5:1 (WCAG AA); grey'den bir kademe soluk */
-  --aura-accent: #28c8d8; /* TEK vurgu: logo turkuazı */
-  --aura-hairline: rgba(255, 255, 255, 0.09);
+  --aura-accent: var(--aura-cyan-500); /* TEK vurgu: logo turkuazı #28c8d8 */
+  --aura-hairline: var(--aura-border-dark);
   --aura-font-display: var(--font-serif), "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --aura-font-sans: var(--font-sans), "Inter", ui-sans-serif, system-ui, sans-serif;
   --aura-font-mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
@@ -225,14 +356,14 @@ body {
    otomatik açık render eder; gece hero/chapters/nav/closing DOKUNULMAZ. Accent
    gündüzde YEŞİL (gece turkuazının sıcak karşılığı); micro beyazda ~5:1 (AA). */
 .aura-light {
-  --aura-bg: #ffffff;
-  --aura-panel: #f7f8f5;
-  --aura-surface: #eff1ec;
-  --aura-ink: #171a18;
-  --aura-grey: #57534e;
-  --aura-micro: #6b6660;
-  --aura-accent: #17919e;
-  --aura-hairline: rgba(0, 0, 0, 0.1);
+  --aura-bg: var(--aura-white);
+  --aura-panel: var(--aura-stone-50);
+  --aura-surface: var(--aura-stone-100);
+  --aura-ink: var(--aura-stone-900);
+  --aura-grey: var(--aura-stone-600);
+  --aura-micro: var(--aura-stone-500);
+  --aura-accent: var(--aura-cyan-600);
+  --aura-hairline: var(--aura-border-light);
   /* color'ı bu subtree'de yeniden bağla: .aura-page color'ı gece --aura-ink'iyle
      ZATEN hesaplayıp inherit ettiriyor; değişkeni değiştirmek yetmez, açık renk
      vermeyen (inherit eden) başlık/isim/metrikler yoksa beyaz-on-beyaz kalır. */
