@@ -414,6 +414,18 @@ body {
   .aura-word:hover img {
     animation: aura-breathe 2.6s ease-in-out infinite;
   }
+  /* Marka bloğu (v6.14.2, kullanıcı: "braille'e AURA ile aynı glowing efekti"):
+   * letterform + ALTINDAKİ Braille TEK parça gibi nefes alır — bloğun herhangi
+   * bir yerine gelmek ikisini birden ışıtır (Braille tek başına hover
+   * gerektirmez; marka kuralı gereği ikisi ayrılmaz — [[aura-braille-under-wordmark]]).
+   * Aynı `aura-breathe` keyframe'i: SVG'de drop-shadow img ile birebir çalışır. */
+  .aura-brand .aura-braille {
+    transition: filter 0.45s ease;
+  }
+  .aura-brand:hover .aura-word img,
+  .aura-brand:hover .aura-braille {
+    animation: aura-breathe 2.6s ease-in-out infinite;
+  }
   @keyframes aura-breathe {
     0%,
     100% {
@@ -428,7 +440,9 @@ body {
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .aura-word:hover img {
+    .aura-word:hover img,
+    .aura-brand:hover .aura-word img,
+    .aura-brand:hover .aura-braille {
       animation: none;
       filter: drop-shadow(0 0 20px rgba(40, 200, 216, 0.75))
         drop-shadow(0 0 60px rgba(40, 200, 216, 0.4));

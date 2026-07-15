@@ -81,10 +81,12 @@ export function V2Hero() {
 
         {/* Marka vuruşu: dev AURA letterform + TAM ALTINDA ortalı Braille.
             Ölçek landing hero'suyla aynı clamp; Braille dikey grupta ortalanır. */}
+        {/* aura-brand: letterform + Braille TEK marka bloğu → ikisi birlikte
+            nefes alır (globals.css .aura-brand:hover, aura-breathe). */}
         <div
           role="img"
           aria-label="AURA"
-          className="mt-6 inline-flex flex-col items-center"
+          className="aura-brand mt-6 inline-flex flex-col items-center"
         >
           <span className="aura-word flex select-none items-end justify-center gap-[clamp(0.7rem,3.2vw,2.5rem)]">
             {LETTERS.map((letter) => (
@@ -98,12 +100,19 @@ export function V2Hero() {
               />
             ))}
           </span>
-          {/* height=18 → ~84px: AuraBraille'in 56px min-genişlik eşiğinin
-              üstünde (height<12 hiç çizmez — v6.9 kuralı). */}
-          <AuraBraille height={18} className="mt-4 text-[var(--aura-micro)]" />
+          {/* v6.14.2 (kullanıcı: "braille'i büyüt"): height 18 → 30 (~140px
+              genişlik; letterform genişliğinin ~1/4'ü). Alt sınır 12 —
+              AuraBraille height<12'de HİÇ çizmez (v6.9 kuralı, 56px eşiği).
+              `aura-braille` sınıfı glow için ŞART (.aura-brand:hover seçicisi). */}
+          <AuraBraille
+            height={30}
+            className="aura-braille mt-5 text-[var(--aura-ink)]"
+          />
         </div>
 
-        <h1 className="aura-display mt-8 max-w-4xl text-4xl font-bold leading-[1.05] tracking-tighter text-[var(--aura-ink)] md:text-6xl">
+        {/* mt-8 → mt-16 (kullanıcı: "başlığı biraz daha aşağıya it") — marka
+            bloğu ile başlık arasında nefes payı. */}
+        <h1 className="aura-display mt-16 max-w-4xl text-4xl font-bold leading-[1.05] tracking-tighter text-[var(--aura-ink)] md:text-6xl">
           {h.headline}
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg">

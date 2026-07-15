@@ -157,16 +157,16 @@ export function V2EntryPaths() {
             />
           );
         })}
-        {/* Okunurluk skrimi — ⚠️ v6.14.1: ilk sürümde düz /75 perdeydi ve
-            kullanıcı "video tam seçilmiyor, çok karartılmış" dedi → /40'a
-            açıldı. Kontrastı taşıyan asıl katman KARTLARIN KENDİ zemini
-            (panel/85 + backdrop-blur), perde değil; perde yalnız videonun
-            parlak karelerinde başlık/intro'yu korur. Daha fazla koyultma
-            gerekirse önce kart zeminini artır, perdeyi değil. */}
-        <div className="absolute inset-0 bg-[var(--aura-night)]/40" />
-        {/* Üst/alt koyu, orta açık: başlık üstte okunur, video ortada görünür,
-            alt kenar bir sonraki bölüme yumuşak bağlanır. */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[var(--aura-night)] via-[var(--aura-night)]/10 to-[var(--aura-night)]" />
+        {/* Okunurluk skrimi — kullanıcı geri bildirimiyle İKİ KEZ açıldı:
+            v6.14 düz /75 ("çok karartılmış") → v6.14.1 /40 → v6.14.2 /22
+            ("4'lü videoyu biraz daha aç"). Kontrastı taşıyan asıl katman
+            KARTLARIN KENDİ zemini (panel/90+/75 + backdrop-blur-md), perde
+            DEĞİL. ⚠️ Daha fazla koyultma gerekirse önce kart zeminini artır —
+            perdeyi artırmak videoyu boğar ve bu geri bildirimi geri getirir. */}
+        <div className="absolute inset-0 bg-[var(--aura-night)]/22" />
+        {/* Üst/alt koyu, orta AÇIK: başlık/intro üstte okunur (gradyanın opak
+            ucu), video ortada net görünür, alt kenar sonraki bölüme bağlanır. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[var(--aura-night)] via-transparent to-[var(--aura-night)]" />
       </div>
 
       <div className="mx-auto max-w-6xl px-5 md:px-8">
