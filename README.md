@@ -328,6 +328,18 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
 - **Rate-limit (v4.18):** Upstash Redis birincil (dağıtık/atomik; login 10/5dk/IP · paylaşım-şifre
   10/5dk/IP+link · AI 20/dk/kullanıcı), env yoksa/hatada in-memory yedek (fail-open). Env:
   `UPSTASH_REDIS_REST_URL/TOKEN`.
+- **Kök layout DB dayanıklılığı (v6.15) — `src/app/layout.tsx`:** kök layout HER sayfada (vitrin dahil)
+  çalışır ve çerez varsa `getCurrentUser()` → DB okur. DB erişilemezse (Neon uyanması/kesinti) buradan
+  fırlayan hata **DB sorgusu OLMAYAN statik landing'i bile** `error.tsx`'e düşürüyordu → oturum okuması
+  `try/catch` ile izole, hata yutulur ve **misafir kabuk** çizilir.
+  🔒 **Bu FAIL-CLOSED'dır, fail-open değil:** `user = null` **en az yetki** demektir. Oturumu token'dan
+  "kurtarmak" (DB doğrulamasını atlayıp token'a güvenmek) **fail-open** olurdu — iptal edilmiş oturum
+  geçer + rol bayatlar (bkz. JWT iptali maddesi) ⇒ **yapma**. Korunan sayfa/API kendi
+  `getCurrentUser`/`requireUser` kapısında yine reddeder; yalnız vitrin kabuğu ayakta kalır.
+  ⚠️ **`getCurrentUser`'ın KENDİSİNE bu davranışı taşıma** (17+ çağrı noktası; yaptırım orada olmalı).
+  🪤 Belirti aldatıcıdır: çerezsiz ziyaretçi `getCurrentUser`'da DB'ye hiç gitmez ⇒ hata **yalnız giriş
+  yapmış kullanıcıda** görünür ("bende çalışıyor"); runtime hata kümesinde `users=1` bunun imzasıdır.
+  Kök neden ayrı: `DATABASE_URL` → `connect_timeout=15` (bkz. `DEPLOY.md` Adım 1).
 - **Hesap ve veri silme (v6.11) — `lib/account-deletion.ts`:** ⚖️ **"hepsini sil" YAPILMADI, bilinçli:**
   sağlık kaydı yasal saklamaya tabidir (KVKK m.7 → m.5/m.6) → düz bir silme düğmesi hukuka aykırı olurdu.
   **İki katman:** kişisel veri gerçekten silinir (+ parola çöpe, `sessionVersion++` → giriş imkânsız);

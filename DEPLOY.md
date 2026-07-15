@@ -23,6 +23,22 @@ Vercel otomatik deploy.
 2. İki connection string al:
    - **Pooled** (`-pooler` içerir) → `DATABASE_URL` (uygulama çalışma zamanı)
    - **Direct** (havuzsuz) → `DIRECT_URL` (migration / `db push`; yalnız CLI)
+3. ⚠️ **`DATABASE_URL`'in sonuna `&connect_timeout=15` ekle** (v6.15, 2026-07-16 — atlanırsa
+   üretimde aralıklı 500'ler üretir):
+
+   ```
+   ...neondb?sslmode=require&channel_binding=require&connect_timeout=15
+   ```
+
+   **Neden:** Neon boşta compute'u sıfıra indirir (scale-to-zero). Uyanması Prisma'nın **varsayılan
+   5 sn**'lik connect timeout'unu aşınca `PrismaClientInitializationError: Can't reach database
+   server` fırlar. **Belirti aralıklıdır** — haftada birkaç kez, sonra kendiliğinden düzelir ⇒ kalıcı
+   kesinti gibi görünmez, gözden kaçar (2026-07-16'da canlıda böyle yakalandı: digest `2661872092`).
+   ⚠️ Env değişikliği **yalnız yeni deployment'ta** etkin → değiştirdikten sonra **redeploy** şart.
+
+   **🪤 Teşhis tuzağı:** host'un 5432 portunun açık olması DB'yi ayakta **kanıtlamaz** — ayakta olan
+   Neon'un **paylaşılan pooler**'ıdır; arkadaki compute askıda olabilir. Gerçek kanıt: salt-okunur
+   `SELECT 1`.
 
 ## Adım 2 — Şema + demo veri
 
