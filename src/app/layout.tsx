@@ -51,13 +51,29 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const user = await getCurrentUser();
+  // Kök layout HER sayfada (vitrin dahil) çalışır → oturum okuması DB'ye gider. DB erişilemezse
+  // (Neon scale-to-zero uyanması / kesinti) buradan fırlayan hata TÜM siteyi error.tsx'e düşürürdü:
+  // statik landing bile 500 verirdi (2026-07-15, digest 2661872092). Hata yutulur ve misafir kabuk
+  // çizilir. FAIL-CLOSED yöndedir: user=null EN AZ yetkidir, oturum "kurtarılmaz" — korunan
+  // sayfa/API kendi getCurrentUser/requireUser kapısında yine reddeder. getCurrentUser'ın sv/rol
+  // doğrulaması KASTEN atlanmaz (token'dan devam etmek iptal edilmiş oturumu geçirir = fail-open).
+  let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
+  try {
+    user = await getCurrentUser();
+  } catch {
+    user = null;
+  }
   // Partner doktorun global Header'ı kendi dilinde (diğer roller Türkçe — useT no-op).
   let headerLang = "Türkçe";
   if (user?.role === "PARTNER") {
-    const u = await db.user.findUnique({ where: { id: user.id }, select: { partnerId: true } });
-    const p = u?.partnerId ? await db.partnerDoctor.findUnique({ where: { id: u.partnerId }, select: { language: true } }) : null;
-    headerLang = p?.language || "İngilizce";
+    // Aynı gerekçe: dil tercihi kozmetiktir, kabuğu düşürmemeli (havuz tükenmesi vb.).
+    try {
+      const u = await db.user.findUnique({ where: { id: user.id }, select: { partnerId: true } });
+      const p = u?.partnerId ? await db.partnerDoctor.findUnique({ where: { id: u.partnerId }, select: { language: true } }) : null;
+      headerLang = p?.language || "İngilizce";
+    } catch {
+      headerLang = "İngilizce";
+    }
   }
   // Tam birleşme (2026-07-12): nav journey'ye bakmaz — hasta nav'ı herkes için aynı,
   // patientJourney sorgusu layout'tan kalktı.
