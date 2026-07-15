@@ -110,7 +110,12 @@ export const COPY = {
       telehealth: "Telehealth",
       so: "Second Opinion",
       tourism: "Health Tourism",
-      freecare: "Free Health Care",
+      // "Access Care" = EN vitrin adi (kullanici karari 2026-07-16, brand paketi).
+      // ⚠️ YALNIZ EN: urun/hukuki ad "Ucretsiz Saglik Hizmeti" (v4.21 rename) TR ve
+      // diger dillerde KORUNUR; rota /ucretsiz-saglik + DB freeCare* degismedi.
+      // ⚠️ Ad ucretsizligi SOYLEMIYOR → "free" bilgisi metinlerde TUTULUR (cta +
+      // /ucretsiz-saglik sayfasi). Adi degistirirken o bilgiyi silme.
+      freecare: "Access Care",
       how: "How It Works",
       cta: "See a doctor",
       menu: "Menu",
@@ -158,10 +163,12 @@ export const COPY = {
       {
         n: "04",
         key: "freecare",
-        strand: "Free Health Care",
+        strand: "Access Care",
         title: "Health is a right.",
         body: "Volunteer doctors step in when care is out of reach.",
-        cta: "apply for free health care",
+        // "free" KASITLI: ad artik ucretsizligi soylemiyor (Access Care) →
+        // tek ucretsizlik sinyali burada kaldi, silme.
+        cta: "apply for free care",
         href: LINKS.freeCare,
         external: true,
       },
@@ -269,6 +276,68 @@ export const COPY = {
       legal: "Corporate access is limited to verified staff and partners of the platform.",
       back: "Back to home",
     },
+    // ——— /v2 — YENI ANA SAYFA (2026-07-16, onizleme rotasi; noindex) ———
+    // Kaynak: kullanicinin brand paketi (AURA_homepage_copy_v1.md + wireframe +
+    // blueprint). ⚠️ Blueprint kendi basliginda "review artifact, NOT a drop-in
+    // replacement" diyor ve video/gsap'i KASTEN disarida birakiyor → IA + metin
+    // ondan alinir, sinematik katman MEVCUT bilesenlerden tasinir (wireframe §1
+    // de "current cinematic video can remain" diyor).
+    //
+    // KULLANICI KARARI (2026-07-16): chapters'in 4 kulvar videosu entryPaths
+    // bölümünün ARKASINA gömülür; hangi kart aktifse o video oynar.
+    //
+    // 🪤 copy_v1 §3 "Connect by SECURE video" diyor → YAZILMADI: "secure" bizim
+    // yasak ifademiz ([[public-claim-honesty]]); blueprint'in kendisi "protected"
+    // kullaniyor. Burada "encrypted" (v6.8 onayli ifade) kullanildi.
+    v2: {
+      hero: {
+        eyebrow: "Cross-border digital care",
+        headline: "Care, without borders.",
+        lede: "Meet the right specialist, understand your options and continue your care wherever you are — with multilingual support from first assessment to follow-up.",
+        ctaPrimary: "Start your care",
+        ctaSecondary: "See how AURA works",
+        // Klinik sorumluluk mikro-metni — hero'da, CTA'nin hemen altinda.
+        safety: "Clinical decisions are made by qualified healthcare professionals. AURA supports assessment, coordination and communication.",
+      },
+      entry: {
+        eyebrow: "Start from what you need today",
+        headline: "One care journey. Four ways to begin.",
+        intro: "AURA organises the next steps around you.",
+        // Kart sirasi = arkadaki video sirasi (key → VIDEOS haritasi).
+        cards: [
+          {
+            key: "consult",
+            n: "01",
+            title: "Talk to a Doctor",
+            body: "Describe your concern in your own language. AURA prepares your case and guides you to the appropriate specialty.",
+            cta: "Start an assessment",
+          },
+          {
+            key: "so",
+            n: "02",
+            title: "Second Opinion",
+            body: "Have a diagnosis, scan or treatment plan reviewed by an independent specialist.",
+            cta: "Prepare my case",
+          },
+          {
+            key: "tourism",
+            n: "03",
+            title: "Health Tourism",
+            body: "Explore treatment in Türkiye only after clinical review — before travel, price or reservation is confirmed.",
+            cta: "Explore treatment options",
+          },
+          {
+            key: "freecare",
+            n: "04",
+            title: "Access Care",
+            // ⚠️ Ad ucretsizligi soylemiyor → "free" burada KASITLI.
+            body: "Apply for free, supported consultations when distance, cost or access stands between you and care.",
+            cta: "Apply for support",
+          },
+        ],
+      },
+    },
+
     // /guven-ve-gizlilik — Guven ve Gizlilik sayfasi (2026-07-15).
     // KURAL [[public-claim-honesty]]: her madde KOD KANITLI. Kanit haritasi
     // vault: output/trust-safety-sayfa-taslagi-2026-07-15.md (bolum → dosya).
@@ -590,6 +659,53 @@ export const COPY = {
       legal: "Kurumsal erişim, platformun doğrulanmış personeli ve iş ortaklarıyla sınırlıdır.",
       back: "Ana sayfaya dön",
     },
+    v2: {
+      hero: {
+        eyebrow: "Sınır ötesi dijital bakım",
+        headline: "Bakım, sınırların ötesinde.",
+        lede: "Doğru uzmanla buluşun, seçeneklerinizi anlayın ve bakımınıza bulunduğunuz yerden devam edin — ilk değerlendirmeden takibe kadar çok dilli destekle.",
+        ctaPrimary: "Bakım yolculuğunu başlat",
+        ctaSecondary: "AURA nasıl çalışır?",
+        safety: "Tıbbi kararları yetkili sağlık profesyonelleri verir. AURA değerlendirme, koordinasyon ve iletişimi destekler.",
+      },
+      entry: {
+        eyebrow: "Bugün neye ihtiyacınız varsa oradan başlayın",
+        headline: "Tek bakım yolculuğu. Başlamanın dört yolu.",
+        intro: "AURA sonraki adımları sizin etrafınızda düzenler.",
+        cards: [
+          {
+            key: "consult",
+            n: "01",
+            title: "Doktorla Görüşün",
+            body: "Şikayetinizi kendi dilinizde anlatın. AURA vakanızı hazırlar ve uygun branşa yönlendirir.",
+            cta: "Değerlendirmeye başla",
+          },
+          {
+            key: "so",
+            n: "02",
+            title: "İkinci Görüş",
+            body: "Tanınızı, görüntülemenizi veya tedavi planınızı bağımsız bir uzmana inceletin.",
+            cta: "Vakamı hazırla",
+          },
+          {
+            key: "tourism",
+            n: "03",
+            title: "Sağlık Turizmi",
+            body: "Türkiye'de tedaviyi ancak klinik değerlendirmeden sonra keşfedin — seyahat, fiyat veya rezervasyon onaylanmadan önce.",
+            cta: "Tedavi seçeneklerini keşfet",
+          },
+          {
+            key: "freecare",
+            n: "04",
+            // TR'de urun/hukuki ad korunur (v4.21); "Access Care" YALNIZ EN.
+            title: "Ücretsiz Sağlık Hizmeti",
+            body: "Mesafe, maliyet veya erişim sizinle bakım arasına girdiğinde ücretsiz, destekli görüşme için başvurun.",
+            cta: "Destek için başvur",
+          },
+        ],
+      },
+    },
+
     trustPage: {
       eyebrow: "güven",
       word: "AURA",
@@ -819,6 +935,52 @@ export const COPY = {
       legal: "Der Firmenzugang ist auf verifizierte Mitarbeitende und Partner der Plattform beschränkt.",
       back: "Zurück zur Startseite",
     },
+    v2: {
+      hero: {
+        eyebrow: "Grenzüberschreitende digitale Versorgung",
+        headline: "Versorgung, ohne Grenzen.",
+        lede: "Finden Sie die richtige Fachärztin oder den richtigen Facharzt, verstehen Sie Ihre Optionen und setzen Sie Ihre Versorgung fort, wo immer Sie sind — mit mehrsprachiger Unterstützung von der ersten Einschätzung bis zur Nachsorge.",
+        ctaPrimary: "Versorgung beginnen",
+        ctaSecondary: "So funktioniert AURA",
+        safety: "Medizinische Entscheidungen treffen qualifizierte Gesundheitsfachkräfte. AURA unterstützt Bewertung, Koordination und Kommunikation.",
+      },
+      entry: {
+        eyebrow: "Beginnen Sie mit dem, was Sie heute brauchen",
+        headline: "Eine Versorgung. Vier Wege, zu beginnen.",
+        intro: "AURA ordnet die nächsten Schritte um Sie herum.",
+        cards: [
+          {
+            key: "consult",
+            n: "01",
+            title: "Mit einer Ärztin sprechen",
+            body: "Schildern Sie Ihr Anliegen in Ihrer eigenen Sprache. AURA bereitet Ihren Fall auf und leitet Sie zum passenden Fachgebiet.",
+            cta: "Einschätzung starten",
+          },
+          {
+            key: "so",
+            n: "02",
+            title: "Zweitmeinung",
+            body: "Lassen Sie Diagnose, Aufnahme oder Behandlungsplan von unabhängigen Fachleuten prüfen.",
+            cta: "Meinen Fall vorbereiten",
+          },
+          {
+            key: "tourism",
+            n: "03",
+            title: "Gesundheitstourismus",
+            body: "Behandlung in der Türkei erst nach klinischer Prüfung erkunden — bevor Reise, Preis oder Reservierung bestätigt werden.",
+            cta: "Behandlungsoptionen erkunden",
+          },
+          {
+            key: "freecare",
+            n: "04",
+            title: "Kostenlose Versorgung",
+            body: "Beantragen Sie kostenlose, unterstützte Beratungen, wenn Entfernung, Kosten oder Zugang zwischen Ihnen und der Versorgung stehen.",
+            cta: "Unterstützung beantragen",
+          },
+        ],
+      },
+    },
+
     trustPage: {
       eyebrow: "Vertrauen",
       word: "AURA",
@@ -1047,6 +1209,52 @@ export const COPY = {
       legal: "L'accès professionnel est réservé au personnel vérifié et aux partenaires de la plateforme.",
       back: "Retour à l'accueil",
     },
+    v2: {
+      hero: {
+        eyebrow: "Soins numériques transfrontaliers",
+        headline: "Des soins, sans frontières.",
+        lede: "Rencontrez le bon spécialiste, comprenez vos options et poursuivez vos soins où que vous soyez — avec un accompagnement multilingue, de la première évaluation au suivi.",
+        ctaPrimary: "Commencer mes soins",
+        ctaSecondary: "Comment fonctionne AURA",
+        safety: "Les décisions médicales relèvent des professionnels de santé qualifiés. AURA soutient l'évaluation, la coordination et la communication.",
+      },
+      entry: {
+        eyebrow: "Commencez par ce dont vous avez besoin aujourd'hui",
+        headline: "Un parcours de soins. Quatre façons de commencer.",
+        intro: "AURA organise les prochaines étapes autour de vous.",
+        cards: [
+          {
+            key: "consult",
+            n: "01",
+            title: "Parler à un médecin",
+            body: "Décrivez votre problème dans votre langue. AURA prépare votre dossier et vous oriente vers la spécialité appropriée.",
+            cta: "Commencer une évaluation",
+          },
+          {
+            key: "so",
+            n: "02",
+            title: "Deuxième avis",
+            body: "Faites examiner un diagnostic, une imagerie ou un plan de traitement par un spécialiste indépendant.",
+            cta: "Préparer mon dossier",
+          },
+          {
+            key: "tourism",
+            n: "03",
+            title: "Tourisme médical",
+            body: "Explorez un traitement en Türkiye uniquement après examen clinique — avant toute confirmation de voyage, de prix ou de réservation.",
+            cta: "Explorer les options de traitement",
+          },
+          {
+            key: "freecare",
+            n: "04",
+            title: "Soins solidaires",
+            body: "Demandez des consultations gratuites et accompagnées lorsque la distance, le coût ou l'accès vous séparent des soins.",
+            cta: "Demander un accompagnement",
+          },
+        ],
+      },
+    },
+
     trustPage: {
       eyebrow: "confiance",
       word: "AURA",
@@ -1275,6 +1483,52 @@ export const COPY = {
       legal: "Корпоративный доступ предоставляется только проверенным сотрудникам и партнёрам платформы.",
       back: "На главную",
     },
+    v2: {
+      hero: {
+        eyebrow: "Трансграничная цифровая медицина",
+        headline: "Забота без границ.",
+        lede: "Найдите нужного специалиста, разберитесь в своих вариантах и продолжайте лечение, где бы вы ни были — с многоязычной поддержкой от первой оценки до наблюдения.",
+        ctaPrimary: "Начать заботу о себе",
+        ctaSecondary: "Как работает AURA",
+        safety: "Медицинские решения принимают квалифицированные специалисты здравоохранения. AURA поддерживает оценку, координацию и общение.",
+      },
+      entry: {
+        eyebrow: "Начните с того, что нужно вам сегодня",
+        headline: "Один путь лечения. Четыре способа начать.",
+        intro: "AURA выстраивает следующие шаги вокруг вас.",
+        cards: [
+          {
+            key: "consult",
+            n: "01",
+            title: "Поговорить с врачом",
+            body: "Опишите жалобу на своём языке. AURA подготовит ваш случай и направит к подходящей специальности.",
+            cta: "Начать оценку",
+          },
+          {
+            key: "so",
+            n: "02",
+            title: "Второе мнение",
+            body: "Дайте независимому специалисту проверить диагноз, снимок или план лечения.",
+            cta: "Подготовить мой случай",
+          },
+          {
+            key: "tourism",
+            n: "03",
+            title: "Медицинский туризм",
+            body: "Рассматривайте лечение в Турции только после клинической оценки — до подтверждения поездки, цены или брони.",
+            cta: "Изучить варианты лечения",
+          },
+          {
+            key: "freecare",
+            n: "04",
+            title: "Бесплатная помощь",
+            body: "Подайте заявку на бесплатные консультации с поддержкой, когда расстояние, стоимость или доступ стоят между вами и лечением.",
+            cta: "Обратиться за поддержкой",
+          },
+        ],
+      },
+    },
+
     trustPage: {
       eyebrow: "доверие",
       word: "AURA",
@@ -1503,6 +1757,52 @@ export const COPY = {
       legal: "الدخول المؤسسي مقصور على موظفي المنصة وشركائها الموثقين.",
       back: "العودة إلى الرئيسية",
     },
+    v2: {
+      hero: {
+        eyebrow: "رعاية رقمية عابرة للحدود",
+        headline: "رعاية بلا حدود.",
+        lede: "التقِ بالأخصائي المناسب، افهم خياراتك، وواصل رعايتك أينما كنت — بدعم متعدد اللغات من التقييم الأول حتى المتابعة.",
+        ctaPrimary: "ابدأ رعايتك",
+        ctaSecondary: "كيف تعمل AURA",
+        safety: "القرارات الطبية يتخذها مهنيون صحيون مؤهلون. تدعم AURA التقييم والتنسيق والتواصل.",
+      },
+      entry: {
+        eyebrow: "ابدأ مما تحتاجه اليوم",
+        headline: "رحلة رعاية واحدة. أربع طرق للبدء.",
+        intro: "تنظّم AURA الخطوات التالية حولك.",
+        cards: [
+          {
+            key: "consult",
+            n: "01",
+            title: "تحدّث إلى طبيب",
+            body: "صِف شكواك بلغتك. تجهّز AURA حالتك وتوجّهك إلى التخصص المناسب.",
+            cta: "ابدأ التقييم",
+          },
+          {
+            key: "so",
+            n: "02",
+            title: "رأي ثانٍ",
+            body: "دع أخصائيًا مستقلًا يراجع تشخيصك أو صورك أو خطة علاجك.",
+            cta: "جهّز حالتي",
+          },
+          {
+            key: "tourism",
+            n: "03",
+            title: "السياحة العلاجية",
+            body: "استكشف العلاج في تركيا بعد المراجعة السريرية فقط — قبل تأكيد السفر أو السعر أو الحجز.",
+            cta: "استكشف خيارات العلاج",
+          },
+          {
+            key: "freecare",
+            n: "04",
+            title: "رعاية ميسّرة",
+            body: "قدّم طلبًا لاستشارات مجانية مدعومة عندما تحول المسافة أو التكلفة أو صعوبة الوصول بينك وبين الرعاية.",
+            cta: "اطلب الدعم",
+          },
+        ],
+      },
+    },
+
     trustPage: {
       eyebrow: "الثقة",
       word: "AURA",
@@ -1731,6 +2031,52 @@ export const COPY = {
       legal: "دسترسی سازمانی به کارکنان و شرکای تأییدشده پلتفرم محدود است.",
       back: "بازگشت به خانه",
     },
+    v2: {
+      hero: {
+        eyebrow: "مراقبت دیجیتال فرامرزی",
+        headline: "مراقبت، بدون مرز.",
+        lede: "با متخصص مناسب دیدار کنید، گزینه‌هایتان را بشناسید و مراقبت خود را هرجا که هستید ادامه دهید — با پشتیبانی چندزبانه از نخستین ارزیابی تا پیگیری.",
+        ctaPrimary: "مراقبت خود را آغاز کنید",
+        ctaSecondary: "AURA چگونه کار می‌کند",
+        safety: "تصمیم‌های پزشکی را متخصصان صلاحیت‌دار سلامت می‌گیرند. AURA از ارزیابی، هماهنگی و ارتباط پشتیبانی می‌کند.",
+      },
+      entry: {
+        eyebrow: "از همان چیزی شروع کنید که امروز نیاز دارید",
+        headline: "یک مسیر مراقبت. چهار راه برای شروع.",
+        intro: "AURA گام‌های بعدی را پیرامون شما سامان می‌دهد.",
+        cards: [
+          {
+            key: "consult",
+            n: "01",
+            title: "با پزشک صحبت کنید",
+            body: "مشکل خود را به زبان خودتان شرح دهید. AURA پرونده‌تان را آماده می‌کند و شما را به تخصص مناسب راهنمایی می‌کند.",
+            cta: "شروع ارزیابی",
+          },
+          {
+            key: "so",
+            n: "02",
+            title: "نظر دوم",
+            body: "بگذارید متخصصی مستقل تشخیص، تصویربرداری یا طرح درمان شما را بررسی کند.",
+            cta: "آماده‌سازی پرونده‌ام",
+          },
+          {
+            key: "tourism",
+            n: "03",
+            title: "گردشگری سلامت",
+            body: "درمان در ترکیه را تنها پس از بررسی بالینی بررسی کنید — پیش از تأیید سفر، قیمت یا رزرو.",
+            cta: "بررسی گزینه‌های درمان",
+          },
+          {
+            key: "freecare",
+            n: "04",
+            title: "مراقبت در دسترس",
+            body: "وقتی فاصله، هزینه یا دسترسی میان شما و مراقبت قرار می‌گیرد، برای مشاورهٔ رایگان و پشتیبانی‌شده درخواست دهید.",
+            cta: "درخواست پشتیبانی",
+          },
+        ],
+      },
+    },
+
     trustPage: {
       eyebrow: "اعتماد",
       word: "AURA",
@@ -1960,6 +2306,52 @@ export const COPY = {
       legal: "Korporativ giriş platformanın təsdiqlənmiş əməkdaşları və tərəfdaşları ilə məhdudlaşır.",
       back: "Ana səhifəyə qayıt",
     },
+    v2: {
+      hero: {
+        eyebrow: "Sərhədlərarası rəqəmsal qayğı",
+        headline: "Qayğı, sərhədsiz.",
+        lede: "Doğru mütəxəssislə görüşün, seçimlərinizi anlayın və qayğınıza olduğunuz yerdən davam edin — ilk qiymətləndirmədən izləməyə qədər çoxdilli dəstəklə.",
+        ctaPrimary: "Qayğınıza başlayın",
+        ctaSecondary: "AURA necə işləyir",
+        safety: "Tibbi qərarları səlahiyyətli səhiyyə mütəxəssisləri verir. AURA qiymətləndirmə, koordinasiya və ünsiyyəti dəstəkləyir.",
+      },
+      entry: {
+        eyebrow: "Bu gün nəyə ehtiyacınız varsa oradan başlayın",
+        headline: "Bir qayğı yolu. Başlamağın dörd yolu.",
+        intro: "AURA sonrakı addımları sizin ətrafınızda nizamlayır.",
+        cards: [
+          {
+            key: "consult",
+            n: "01",
+            title: "Həkimlə danışın",
+            body: "Şikayətinizi öz dilinizdə danışın. AURA işinizi hazırlayır və uyğun ixtisasa yönləndirir.",
+            cta: "Qiymətləndirməyə başla",
+          },
+          {
+            key: "so",
+            n: "02",
+            title: "İkinci rəy",
+            body: "Diaqnozunuzu, təsvirinizi və ya müalicə planınızı müstəqil mütəxəssisə yoxlatın.",
+            cta: "İşimi hazırla",
+          },
+          {
+            key: "tourism",
+            n: "03",
+            title: "Sağlamlıq Turizmi",
+            body: "Türkiyədə müalicəni yalnız klinik dəyərləndirmədən sonra araşdırın — səyahət, qiymət və ya rezervasiya təsdiqlənməzdən əvvəl.",
+            cta: "Müalicə seçimlərini araşdır",
+          },
+          {
+            key: "freecare",
+            n: "04",
+            title: "Pulsuz Sağlamlıq Xidməti",
+            body: "Məsafə, xərc və ya əlçatanlıq sizinlə qayğı arasına girəndə pulsuz, dəstəkli görüş üçün müraciət edin.",
+            cta: "Dəstək üçün müraciət et",
+          },
+        ],
+      },
+    },
+
     trustPage: {
       eyebrow: "etibar",
       word: "AURA",

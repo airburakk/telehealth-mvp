@@ -42,7 +42,7 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
   // Giriş kapıları (/giris, /kurumsal-giris) tam-ekran vitrin panelleridir (kendi logo +
   // "← ana sayfa" bağlantısıyla); /e-posta form alt-rotalarında krom durur (exact match).
   // Video görüşme rotaları IMMERSIVE tam-ekran (100dvh video+panel) → krom gizlenir.
-  if (["/", "/how-it-works", "/guven-ve-gizlilik", "/giris", "/kurumsal-giris"].includes(pathname) || isImmersiveCallPath(pathname)) return null;
+  if (["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/giris", "/kurumsal-giris"].includes(pathname) || isImmersiveCallPath(pathname)) return null;
 
   const activeHref = items
     .filter((n) => pathname === n.href || pathname.startsWith(n.href + "/"))
