@@ -301,6 +301,27 @@ export const COPY = {
     // yasak ifademiz ([[public-claim-honesty]]); blueprint'in kendisi "protected"
     // kullaniyor. Burada "encrypted" (v6.8 onayli ifade) kullanildi.
     v2: {
+      // Nav (v6.16): dort hizmet sekmesi → tek bakim mimarisi. Sayfa "tek bakim
+      // yolculugu, dort giris kapisi" derken nav'in dort ayri hizmeti ayri sekme
+      // olarak siralamasi sayfayla CELISIYORDU. Care → #care capasi (entry-paths).
+      // ⚠️ Bu sozluk YALNIZ /v2 nav'ina bagli: mevcut / landing'in nav'i (kok nav
+      // alani) dokunulmadan durur — #care capasi orada YOK (kirik link olurdu).
+      // cta = hero.ctaPrimary ile AYNI etiket (nav.tsx "ayni etiket = ayni niyet":
+      // ayni hedefe -/giris- giden iki dugme ayni sozu vermeli).
+      // 🪤 OLCULDU (v6.16): brand paketinin nav cevirileri ile v6.14 hero cevirileri
+      // AYRI kalemlerden gelmis → EN disinda 7 dilde iki farkli etiket cikti
+      // (TR "Bakiminiza baslayin" vs "Bakim yolculugunu baslat"). nav.cta HER dilde
+      // hero.ctaPrimary'ye esitlendi. Tasma degil, SES sorunuydu: 1024px'te en uzun
+      // etiket (TR 187px) ile link grubu arasinda 222px bosluk olculdu.
+      // ⚠️ hero.ctaPrimary'yi degistirirsen nav.cta'yi da degistir (8 dil).
+      // menu/close kok nav sozlugunden yeniden kullanilir (t.nav.menu) — 8 dilde hazir.
+      nav: {
+        care: "Care",
+        how: "How It Works",
+        trust: "Trust & Privacy",
+        clinicians: "For Clinicians",
+        cta: "Start your care",
+      },
       hero: {
         eyebrow: "Cross-border digital care",
         headline: "Care, without borders.",
@@ -346,6 +367,99 @@ export const COPY = {
             cta: "Apply for support",
           },
         ],
+      },
+
+      // ——— FAZ 2 (v6.16): AI sorumlulugu + Erisilebilirlik ———
+      // KURAL [[public-claim-honesty]]: her madde KOD KANITLI. Kanit haritasi:
+      //   ai.01 → components/ClinicalDecisionPanel.tsx ("AI — endikatif; karar doktora aittir")
+      //   ai.02 → lib/ai-consent.ts (AI_TRIAGE scope, GENERAL_KVKK'dan AYRI kova) + AiConsentGate
+      //           (riza verilene dek form MOUNT OLMAZ — "form acilmaz" iddiasi buradan)
+      //   ai.03 → lib/ai-minimize.ts (ad → [HASTA] placeholder; istek cikmadan once degisir,
+      //           doktorun okudugunda geri konur ⇒ "saglayici adi HIC gormez")
+      //   ai.04 → lib/ai-consent.ts kapsam metni (brans yonlendirme + belge cevirisi)
+      //   a11y.01 → copy.ts LANG_CODES (8) + langDir (ar/fa = rtl; dir KONTEYNERE, koke degil)
+      //   a11y.02 → v2/hero.tsx + motion.tsx + chapters.tsx: reduced-motion'da pin/scrub HIC kurulmaz
+      //   a11y.03 → v2/entry-paths.tsx (kart aktifligi hover + KLAVYE focus + mobil IO)
+      //   a11y.04 → v2/hero.tsx (gizleme yalniz mount SONRASI gsap.set = fail-open)
+      //
+      // ⚠️ BOLUME GIRMEYENLER (kasitli — iddia edemedigimiz icin):
+      //   · Sesle dikte: KULLANICI KARARI (2026-07-16) — yalnzi 3 hasta formunda
+      //     (triyaj/SO/turizm), TUM yuzeylerde degil ⇒ landing'de genel vaat YANILTICI olurdu.
+      //   · Braille: GORSEL marka ogesi — Braille cihazi/ekran okuyucu destegi DEGIL. note'ta
+      //     acikca reddediliyor ([[aura-braille-under-wordmark]] marka kurali, a11y kaniti DEGIL).
+      //   · WCAG: bagimsiz denetim YOK ⇒ uyumluluk beyani YOK (note'ta).
+      // 🪤 Yeni madde eklerken: once KOD KANITI bul, sonra yaz. Kanitlanamayan madde GIRMEZ.
+      // Yapisal not: items UNIFORM ({key,n,title,body}) + note ({label,text}) — 8 dilin yapi
+      // imzasi birebir kalsin (tests/unit/aura-landing-copy.test.ts shape(), dizi UZUNLUGU da imzada).
+      ai: {
+        eyebrow: "Where AI stops",
+        headline: "AI prepares. Doctors decide.",
+        intro: "AURA uses AI for a narrow job, behind a consent gate you control.",
+        items: [
+          {
+            key: "decision",
+            n: "01",
+            title: "The decision is your doctor's",
+            body: "Where AI suggests a procedure for a diagnosis, your doctor sees it labelled as indicative — and decides.",
+          },
+          {
+            key: "consent",
+            n: "02",
+            title: "AI processing has its own consent",
+            body: "Separate from general data-protection consent, and asked before you describe a single symptom. Until you give it, the form does not open.",
+          },
+          {
+            key: "minimize",
+            n: "03",
+            title: "Your name never reaches the AI provider",
+            body: "Clinical content is the AI's job, so it is sent. Your name is not needed for that job — it is replaced before the request leaves us, and restored in what your doctor reads.",
+          },
+          {
+            key: "scope",
+            n: "04",
+            title: "A narrow job",
+            body: "Guiding you to the right specialty, and translating the documents you upload. That is the scope.",
+          },
+        ],
+        note: {
+          label: "What we don't claim",
+          text: "AI does not diagnose, choose treatment, or produce clinical judgement. Any AI output you see is indicative — it informs your doctor's decision, it does not replace it.",
+        },
+      },
+      accessibility: {
+        eyebrow: "Accessibility",
+        headline: "Built to be usable, not just visible.",
+        intro: "Your language, your reading direction, your motion preference — read from your device, not asked twice.",
+        items: [
+          {
+            key: "languages",
+            n: "01",
+            title: "Eight languages, two read right to left",
+            body: "Arabic and Persian mirror the whole layout, not just the text.",
+          },
+          {
+            key: "motion",
+            n: "02",
+            title: "If you asked your device for less motion, we listen",
+            body: "The cinematic opening is not toned down — it is not built at all. Everything stays readable, scrolling stays normal.",
+          },
+          {
+            key: "keyboard",
+            n: "03",
+            title: "The keyboard is not an afterthought",
+            body: "Cards respond to focus, not only to a hovering mouse.",
+          },
+          {
+            key: "resilience",
+            n: "04",
+            title: "If our scripts fail, the words stay",
+            body: "Text is in the page before any animation runs.",
+          },
+        ],
+        note: {
+          label: "What we don't claim",
+          text: "We make no WCAG conformance claim — we have not been independently audited. The Braille mark beneath the AURA wordmark is a visual brand element; it does not mean Braille device or screen-reader support.",
+        },
       },
     },
 
@@ -671,6 +785,14 @@ export const COPY = {
       back: "Ana sayfaya dön",
     },
     v2: {
+      // ⚠️ "Doktorlar İçin" — "Hekim" DEĞİL (v4.21 proje-geneli rename).
+      nav: {
+        care: "Bakım",
+        how: "Nasıl Çalışır",
+        trust: "Güven ve Gizlilik",
+        clinicians: "Doktorlar İçin",
+        cta: "Bakım yolculuğunu başlat",
+      },
       hero: {
         eyebrow: "Sınır ötesi dijital bakım",
         headline: "Bakım, sınırların ötesinde.",
@@ -714,6 +836,76 @@ export const COPY = {
             cta: "Destek için başvur",
           },
         ],
+      },
+      ai: {
+        eyebrow: "Yapay zekânın durduğu yer",
+        headline: "AI hazırlar. Kararı doktor verir.",
+        intro: "AURA yapay zekâyı dar bir iş için, sizin kontrol ettiğiniz bir rıza kapısının ardında kullanır.",
+        items: [
+          {
+            key: "decision",
+            n: "01",
+            title: "Karar doktorunuzundur",
+            body: "Yapay zekâ bir tanıya işlem önerdiğinde, doktorunuz bunu “endikatif” etiketiyle görür — ve kararı verir.",
+          },
+          {
+            key: "consent",
+            n: "02",
+            title: "AI işlemesinin ayrı rızası var",
+            body: "Genel veri koruma onamından ayrı; tek bir semptom yazmadan önce sorulur. Siz vermeden form açılmaz.",
+          },
+          {
+            key: "minimize",
+            n: "03",
+            title: "Adınız AI sağlayıcısına hiç ulaşmaz",
+            body: "Klinik içerik yapay zekânın işidir, gönderilir. Adınız o iş için gerekli değildir — istek bizden çıkmadan önce değiştirilir, doktorunuzun okuduğu metinde geri konur.",
+          },
+          {
+            key: "scope",
+            n: "04",
+            title: "Dar bir görev",
+            body: "Sizi doğru branşa yönlendirmek ve yüklediğiniz belgeleri çevirmek. Kapsam bu kadar.",
+          },
+        ],
+        note: {
+          label: "Neyi iddia etmiyoruz",
+          text: "Yapay zekâ tanı koymaz, tedavi seçmez, klinik yargı üretmez. Gördüğünüz AI çıktısı endikatiftir — doktorunuzun kararının yerine geçmez, ona bağlam olur.",
+        },
+      },
+      accessibility: {
+        eyebrow: "Erişilebilirlik",
+        headline: "Görünür değil, kullanılabilir olsun diye.",
+        intro: "Diliniz, okuma yönünüz, hareket tercihiniz — cihazınızdan okunur, size iki kez sorulmaz.",
+        items: [
+          {
+            key: "languages",
+            n: "01",
+            title: "Sekiz dil, ikisi sağdan sola",
+            body: "Arapça ve Farsça yalnız metni değil, düzenin tamamını aynalar.",
+          },
+          {
+            key: "motion",
+            n: "02",
+            title: "Cihazınızdan az hareket istediyseniz, dinleriz",
+            body: "Sinematik açılış hafifletilmez — hiç kurulmaz. Her şey okunur kalır, kaydırma normal çalışır.",
+          },
+          {
+            key: "keyboard",
+            n: "03",
+            title: "Klavye sonradan eklenmiş bir şey değil",
+            body: "Kartlar yalnız fareyle üzerine gelmeye değil, klavye odağına da yanıt verir.",
+          },
+          {
+            key: "resilience",
+            n: "04",
+            title: "Kodumuz çökerse, kelimeler kalır",
+            body: "Metin, hiçbir animasyon çalışmadan önce sayfadadır.",
+          },
+        ],
+        note: {
+          label: "Neyi iddia etmiyoruz",
+          text: "WCAG uyumluluk beyanımız yok — bağımsız erişilebilirlik denetiminden geçmedik. AURA yazısının altındaki Braille işareti görsel bir marka öğesidir; Braille cihazı veya ekran okuyucu desteği anlamına gelmez.",
+        },
       },
     },
 
@@ -947,6 +1139,13 @@ export const COPY = {
       back: "Zurück zur Startseite",
     },
     v2: {
+      nav: {
+        care: "Versorgung",
+        how: "So funktioniert es",
+        trust: "Vertrauen & Datenschutz",
+        clinicians: "Für Ärztinnen und Ärzte",
+        cta: "Versorgung beginnen",
+      },
       hero: {
         eyebrow: "Grenzüberschreitende digitale Versorgung",
         headline: "Versorgung, ohne Grenzen.",
@@ -989,6 +1188,76 @@ export const COPY = {
             cta: "Unterstützung beantragen",
           },
         ],
+      },
+      ai: {
+        eyebrow: "Wo KI aufhört",
+        headline: "KI bereitet vor. Ärztinnen und Ärzte entscheiden.",
+        intro: "AURA setzt KI für eine eng umrissene Aufgabe ein — hinter einer Einwilligung, die Sie steuern.",
+        items: [
+          {
+            key: "decision",
+            n: "01",
+            title: "Die Entscheidung trifft Ihre Ärztin oder Ihr Arzt",
+            body: "Schlägt die KI zu einer Diagnose einen Eingriff vor, sieht Ihre Ärztin oder Ihr Arzt diesen als „indikativ“ gekennzeichnet — und entscheidet.",
+          },
+          {
+            key: "consent",
+            n: "02",
+            title: "Die KI-Verarbeitung hat ihre eigene Einwilligung",
+            body: "Getrennt von der allgemeinen Datenschutzeinwilligung und erfragt, bevor Sie ein einziges Symptom beschreiben. Bis Sie sie erteilen, öffnet sich das Formular nicht.",
+          },
+          {
+            key: "minimize",
+            n: "03",
+            title: "Ihr Name erreicht den KI-Anbieter nie",
+            body: "Klinische Inhalte sind die Aufgabe der KI und werden übermittelt. Ihr Name wird dafür nicht gebraucht — er wird ersetzt, bevor die Anfrage uns verlässt, und in dem, was Ihre Ärztin oder Ihr Arzt liest, wiederhergestellt.",
+          },
+          {
+            key: "scope",
+            n: "04",
+            title: "Eine eng umrissene Aufgabe",
+            body: "Sie zum richtigen Fachgebiet führen und die von Ihnen hochgeladenen Dokumente übersetzen. Das ist der Umfang.",
+          },
+        ],
+        note: {
+          label: "Was wir nicht behaupten",
+          text: "Die KI stellt keine Diagnose, wählt keine Behandlung und bildet kein klinisches Urteil. Jede KI-Ausgabe, die Sie sehen, ist indikativ — sie informiert die ärztliche Entscheidung, ersetzt sie nicht.",
+        },
+      },
+      accessibility: {
+        eyebrow: "Barrierefreiheit",
+        headline: "Gebaut, um nutzbar zu sein — nicht nur sichtbar.",
+        intro: "Ihre Sprache, Ihre Leserichtung, Ihre Bewegungspräferenz — von Ihrem Gerät gelesen, nicht zweimal gefragt.",
+        items: [
+          {
+            key: "languages",
+            n: "01",
+            title: "Acht Sprachen, zwei von rechts nach links",
+            body: "Arabisch und Persisch spiegeln das gesamte Layout, nicht nur den Text.",
+          },
+          {
+            key: "motion",
+            n: "02",
+            title: "Wenn Sie Ihr Gerät um weniger Bewegung gebeten haben, hören wir zu",
+            body: "Die filmische Eröffnung wird nicht abgeschwächt — sie wird gar nicht erst aufgebaut. Alles bleibt lesbar, das Scrollen bleibt normal.",
+          },
+          {
+            key: "keyboard",
+            n: "03",
+            title: "Die Tastatur ist kein nachträglicher Einfall",
+            body: "Karten reagieren auf den Fokus, nicht nur auf eine schwebende Maus.",
+          },
+          {
+            key: "resilience",
+            n: "04",
+            title: "Versagen unsere Skripte, bleiben die Worte",
+            body: "Der Text steht auf der Seite, bevor irgendeine Animation läuft.",
+          },
+        ],
+        note: {
+          label: "Was wir nicht behaupten",
+          text: "Wir erheben keinen Anspruch auf WCAG-Konformität — wir wurden nicht unabhängig geprüft. Das Braille-Zeichen unter dem AURA-Schriftzug ist ein visuelles Markenelement; es bedeutet keine Unterstützung für Braillezeilen oder Screenreader.",
+        },
       },
     },
 
@@ -1221,6 +1490,13 @@ export const COPY = {
       back: "Retour à l'accueil",
     },
     v2: {
+      nav: {
+        care: "Soins",
+        how: "Comment ça marche",
+        trust: "Confiance & confidentialité",
+        clinicians: "Pour les cliniciens",
+        cta: "Commencer mes soins",
+      },
       hero: {
         eyebrow: "Soins numériques transfrontaliers",
         headline: "Des soins, sans frontières.",
@@ -1263,6 +1539,76 @@ export const COPY = {
             cta: "Demander un accompagnement",
           },
         ],
+      },
+      ai: {
+        eyebrow: "Là où l'IA s'arrête",
+        headline: "L'IA prépare. Le médecin décide.",
+        intro: "AURA utilise l'IA pour une tâche restreinte, derrière un consentement que vous contrôlez.",
+        items: [
+          {
+            key: "decision",
+            n: "01",
+            title: "La décision revient à votre médecin",
+            body: "Lorsque l'IA propose un acte pour un diagnostic, votre médecin le voit signalé comme indicatif — et décide.",
+          },
+          {
+            key: "consent",
+            n: "02",
+            title: "Le traitement par l'IA a son propre consentement",
+            body: "Distinct du consentement général à la protection des données, et demandé avant que vous ne décriviez le moindre symptôme. Tant que vous ne l'avez pas donné, le formulaire ne s'ouvre pas.",
+          },
+          {
+            key: "minimize",
+            n: "03",
+            title: "Votre nom n'atteint jamais le fournisseur d'IA",
+            body: "Le contenu clinique est la tâche de l'IA : il est transmis. Votre nom n'est pas nécessaire à cette tâche — il est remplacé avant que la requête ne nous quitte, et rétabli dans ce que lit votre médecin.",
+          },
+          {
+            key: "scope",
+            n: "04",
+            title: "Une tâche restreinte",
+            body: "Vous orienter vers la bonne spécialité et traduire les documents que vous déposez. Voilà le périmètre.",
+          },
+        ],
+        note: {
+          label: "Ce que nous ne prétendons pas",
+          text: "L'IA ne pose pas de diagnostic, ne choisit pas de traitement et ne produit pas de jugement clinique. Toute sortie d'IA que vous voyez est indicative — elle éclaire la décision de votre médecin, elle ne la remplace pas.",
+        },
+      },
+      accessibility: {
+        eyebrow: "Accessibilité",
+        headline: "Conçu pour être utilisable, pas seulement visible.",
+        intro: "Votre langue, votre sens de lecture, votre préférence de mouvement — lus depuis votre appareil, sans vous le demander deux fois.",
+        items: [
+          {
+            key: "languages",
+            n: "01",
+            title: "Huit langues, deux se lisent de droite à gauche",
+            body: "L'arabe et le persan reflètent toute la mise en page, pas seulement le texte.",
+          },
+          {
+            key: "motion",
+            n: "02",
+            title: "Si vous avez demandé moins de mouvement à votre appareil, nous écoutons",
+            body: "L'ouverture cinématographique n'est pas atténuée — elle n'est pas construite du tout. Tout reste lisible, le défilement reste normal.",
+          },
+          {
+            key: "keyboard",
+            n: "03",
+            title: "Le clavier n'est pas une arrière-pensée",
+            body: "Les cartes répondent au focus, pas seulement à une souris qui survole.",
+          },
+          {
+            key: "resilience",
+            n: "04",
+            title: "Si nos scripts échouent, les mots restent",
+            body: "Le texte est dans la page avant que la moindre animation ne s'exécute.",
+          },
+        ],
+        note: {
+          label: "Ce que nous ne prétendons pas",
+          text: "Nous ne revendiquons aucune conformité WCAG — nous n'avons pas fait l'objet d'un audit indépendant. Le signe braille sous le logotype AURA est un élément visuel de marque ; il ne signifie pas la prise en charge des plages braille ou des lecteurs d'écran.",
+        },
       },
     },
 
@@ -1495,6 +1841,13 @@ export const COPY = {
       back: "На главную",
     },
     v2: {
+      nav: {
+        care: "Медицинская помощь",
+        how: "Как это работает",
+        trust: "Доверие и конфиденциальность",
+        clinicians: "Для врачей",
+        cta: "Начать заботу о себе",
+      },
       hero: {
         eyebrow: "Трансграничная цифровая медицина",
         headline: "Забота без границ.",
@@ -1537,6 +1890,76 @@ export const COPY = {
             cta: "Обратиться за поддержкой",
           },
         ],
+      },
+      ai: {
+        eyebrow: "Где ИИ останавливается",
+        headline: "ИИ готовит. Решает врач.",
+        intro: "AURA использует ИИ для узкой задачи — за согласием, которым управляете вы.",
+        items: [
+          {
+            key: "decision",
+            n: "01",
+            title: "Решение принимает ваш врач",
+            body: "Когда ИИ предлагает процедуру к диагнозу, врач видит её с пометкой «ориентировочно» — и принимает решение.",
+          },
+          {
+            key: "consent",
+            n: "02",
+            title: "У обработки с помощью ИИ отдельное согласие",
+            body: "Оно отделено от общего согласия на защиту данных и запрашивается прежде, чем вы опишете хотя бы один симптом. Пока вы его не дадите, форма не откроется.",
+          },
+          {
+            key: "minimize",
+            n: "03",
+            title: "Ваше имя никогда не доходит до поставщика ИИ",
+            body: "Клиническое содержание — задача ИИ, поэтому оно передаётся. Ваше имя для этой задачи не нужно: оно заменяется до того, как запрос уходит от нас, и восстанавливается в том, что читает врач.",
+          },
+          {
+            key: "scope",
+            n: "04",
+            title: "Узкая задача",
+            body: "Направить вас к нужной специальности и перевести загруженные вами документы. Вот и весь объём.",
+          },
+        ],
+        note: {
+          label: "Чего мы не утверждаем",
+          text: "ИИ не ставит диагноз, не выбирает лечение и не формирует клиническое суждение. Любой результат ИИ, который вы видите, носит ориентировочный характер — он информирует решение врача, но не заменяет его.",
+        },
+      },
+      accessibility: {
+        eyebrow: "Доступность",
+        headline: "Сделано, чтобы им можно было пользоваться, а не только смотреть.",
+        intro: "Ваш язык, ваше направление чтения, ваше предпочтение по движению — считываются с вашего устройства, а не спрашиваются дважды.",
+        items: [
+          {
+            key: "languages",
+            n: "01",
+            title: "Восемь языков, два читаются справа налево",
+            body: "Арабский и персидский зеркалят всю вёрстку, а не только текст.",
+          },
+          {
+            key: "motion",
+            n: "02",
+            title: "Если вы попросили устройство о меньшем движении, мы слышим",
+            body: "Кинематографичное вступление не смягчается — оно вовсе не создаётся. Всё остаётся читаемым, прокрутка остаётся обычной.",
+          },
+          {
+            key: "keyboard",
+            n: "03",
+            title: "Клавиатура — не запоздалая мысль",
+            body: "Карточки реагируют на фокус, а не только на наведённую мышь.",
+          },
+          {
+            key: "resilience",
+            n: "04",
+            title: "Если наши скрипты откажут, слова останутся",
+            body: "Текст есть на странице ещё до того, как запустится любая анимация.",
+          },
+        ],
+        note: {
+          label: "Чего мы не утверждаем",
+          text: "Мы не заявляем о соответствии WCAG — независимого аудита мы не проходили. Знак Брайля под логотипом AURA — визуальный элемент бренда; он не означает поддержку брайлевских дисплеев или программ чтения с экрана.",
+        },
       },
     },
 
@@ -1769,6 +2192,13 @@ export const COPY = {
       back: "العودة إلى الرئيسية",
     },
     v2: {
+      nav: {
+        care: "الرعاية",
+        how: "كيف تعمل AURA",
+        trust: "الثقة والخصوصية",
+        clinicians: "للأطباء",
+        cta: "ابدأ رعايتك",
+      },
       hero: {
         eyebrow: "رعاية رقمية عابرة للحدود",
         headline: "رعاية بلا حدود.",
@@ -1811,6 +2241,76 @@ export const COPY = {
             cta: "اطلب الدعم",
           },
         ],
+      },
+      ai: {
+        eyebrow: "حيث يتوقف الذكاء الاصطناعي",
+        headline: "الذكاء الاصطناعي يُهيّئ. والطبيب يقرر.",
+        intro: "تستخدم AURA الذكاء الاصطناعي لمهمة ضيقة، خلف بوابة موافقة تتحكم أنت بها.",
+        items: [
+          {
+            key: "decision",
+            n: "01",
+            title: "القرار قرار طبيبك",
+            body: "حين يقترح الذكاء الاصطناعي إجراءً لتشخيص ما، يراه طبيبك موسومًا بأنه استرشادي — ثم يقرر.",
+          },
+          {
+            key: "consent",
+            n: "02",
+            title: "لمعالجة الذكاء الاصطناعي موافقة خاصة بها",
+            body: "منفصلة عن الموافقة العامة لحماية البيانات، وتُطلب قبل أن تصف عرضًا واحدًا. وإلى أن تمنحها، لا يُفتح النموذج.",
+          },
+          {
+            key: "minimize",
+            n: "03",
+            title: "اسمك لا يصل أبدًا إلى مزوّد الذكاء الاصطناعي",
+            body: "المحتوى السريري هو مهمة الذكاء الاصطناعي، لذا يُرسل. أما اسمك فليس لازمًا لتلك المهمة — يُستبدل قبل أن يغادر الطلب من عندنا، ويُعاد في ما يقرأه طبيبك.",
+          },
+          {
+            key: "scope",
+            n: "04",
+            title: "مهمة ضيقة",
+            body: "توجيهك إلى التخصص المناسب، وترجمة المستندات التي ترفعها. هذا هو النطاق.",
+          },
+        ],
+        note: {
+          label: "ما لا ندّعيه",
+          text: "الذكاء الاصطناعي لا يُشخّص، ولا يختار العلاج، ولا يُنتج حكمًا سريريًا. أي مخرج للذكاء الاصطناعي تراه هو استرشادي — يُثري قرار طبيبك ولا يحل محله.",
+        },
+      },
+      accessibility: {
+        eyebrow: "إمكانية الوصول",
+        headline: "مبني ليكون قابلًا للاستخدام، لا ليُرى فحسب.",
+        intro: "لغتك، واتجاه قراءتك، وتفضيلك للحركة — تُقرأ من جهازك، ولا تُسأل عنها مرتين.",
+        items: [
+          {
+            key: "languages",
+            n: "01",
+            title: "ثماني لغات، اثنتان تُقرأان من اليمين إلى اليسار",
+            body: "العربية والفارسية تعكسان التخطيط بأكمله، لا النص وحده.",
+          },
+          {
+            key: "motion",
+            n: "02",
+            title: "إن طلبت من جهازك حركة أقل، فنحن نُصغي",
+            body: "الافتتاحية السينمائية لا تُخفَّف — بل لا تُبنى أصلًا. يبقى كل شيء مقروءًا، ويبقى التمرير طبيعيًا.",
+          },
+          {
+            key: "keyboard",
+            n: "03",
+            title: "لوحة المفاتيح ليست فكرة لاحقة",
+            body: "البطاقات تستجيب للتركيز، لا لمؤشر الفأرة المُحوّم وحده.",
+          },
+          {
+            key: "resilience",
+            n: "04",
+            title: "إن تعطّلت برامجنا، تبقى الكلمات",
+            body: "النص موجود في الصفحة قبل أن تعمل أي حركة.",
+          },
+        ],
+        note: {
+          label: "ما لا ندّعيه",
+          text: "لا ندّعي مطابقة WCAG — لم نخضع لتدقيق مستقل. وعلامة برايل أسفل شعار AURA عنصر بصري للعلامة التجارية؛ وهي لا تعني دعم أجهزة برايل أو قارئات الشاشة.",
+        },
       },
     },
 
@@ -2043,6 +2543,13 @@ export const COPY = {
       back: "بازگشت به خانه",
     },
     v2: {
+      nav: {
+        care: "مراقبت",
+        how: "AURA چگونه کار می‌کند",
+        trust: "اعتماد و حریم خصوصی",
+        clinicians: "برای پزشکان",
+        cta: "مراقبت خود را آغاز کنید",
+      },
       hero: {
         eyebrow: "مراقبت دیجیتال فرامرزی",
         headline: "مراقبت، بدون مرز.",
@@ -2085,6 +2592,76 @@ export const COPY = {
             cta: "درخواست پشتیبانی",
           },
         ],
+      },
+      ai: {
+        eyebrow: "جایی که هوش مصنوعی متوقف می‌شود",
+        headline: "هوش مصنوعی آماده می‌کند. پزشک تصمیم می‌گیرد.",
+        intro: "AURA از هوش مصنوعی برای وظیفه‌ای محدود استفاده می‌کند، پشت دروازهٔ رضایتی که در اختیار شماست.",
+        items: [
+          {
+            key: "decision",
+            n: "01",
+            title: "تصمیم با پزشک شماست",
+            body: "هرگاه هوش مصنوعی برای یک تشخیص اقدامی پیشنهاد دهد، پزشک شما آن را با برچسب «راهنما» می‌بیند — و تصمیم می‌گیرد.",
+          },
+          {
+            key: "consent",
+            n: "02",
+            title: "پردازش با هوش مصنوعی رضایت جداگانهٔ خود را دارد",
+            body: "جدا از رضایت عمومی حفاظت از داده‌ها، و پیش از آنکه حتی یک نشانه را شرح دهید پرسیده می‌شود. تا آن را ندهید، فرم باز نمی‌شود.",
+          },
+          {
+            key: "minimize",
+            n: "03",
+            title: "نام شما هرگز به ارائه‌دهندهٔ هوش مصنوعی نمی‌رسد",
+            body: "محتوای بالینی وظیفهٔ هوش مصنوعی است، پس فرستاده می‌شود. نام شما برای آن وظیفه لازم نیست — پیش از آنکه درخواست از ما خارج شود جایگزین می‌گردد و در آنچه پزشکتان می‌خواند بازگردانده می‌شود.",
+          },
+          {
+            key: "scope",
+            n: "04",
+            title: "وظیفه‌ای محدود",
+            body: "راهنمایی شما به تخصص درست، و ترجمهٔ مدارکی که بارگذاری می‌کنید. دامنه همین است.",
+          },
+        ],
+        note: {
+          label: "آنچه ادعا نمی‌کنیم",
+          text: "هوش مصنوعی تشخیص نمی‌دهد، درمان انتخاب نمی‌کند و قضاوت بالینی تولید نمی‌کند. هر خروجی هوش مصنوعی که می‌بینید راهنماست — به تصمیم پزشک شما آگاهی می‌دهد، جایگزین آن نمی‌شود.",
+        },
+      },
+      accessibility: {
+        eyebrow: "دسترس‌پذیری",
+        headline: "ساخته شده تا قابل استفاده باشد، نه فقط دیده شود.",
+        intro: "زبان شما، جهت خواندن شما، ترجیح شما برای حرکت — از دستگاهتان خوانده می‌شود، دو بار پرسیده نمی‌شود.",
+        items: [
+          {
+            key: "languages",
+            n: "01",
+            title: "هشت زبان، دو زبان از راست به چپ",
+            body: "عربی و فارسی کل چیدمان را آینه می‌کنند، نه فقط متن را.",
+          },
+          {
+            key: "motion",
+            n: "02",
+            title: "اگر از دستگاهتان حرکت کمتر خواسته‌اید، ما می‌شنویم",
+            body: "گشایش سینمایی کم‌رنگ نمی‌شود — اصلاً ساخته نمی‌شود. همه چیز خوانا می‌ماند و پیمایش عادی می‌ماند.",
+          },
+          {
+            key: "keyboard",
+            n: "03",
+            title: "صفحه‌کلید فکری ثانویه نیست",
+            body: "کارت‌ها به فوکوس پاسخ می‌دهند، نه فقط به ماوسی که روی آن‌ها می‌ایستد.",
+          },
+          {
+            key: "resilience",
+            n: "04",
+            title: "اگر کدهای ما از کار بیفتند، واژه‌ها می‌مانند",
+            body: "متن پیش از اجرای هر انیمیشنی در صفحه هست.",
+          },
+        ],
+        note: {
+          label: "آنچه ادعا نمی‌کنیم",
+          text: "ما ادعای انطباق با WCAG نداریم — ممیزی مستقل نشده‌ایم. نشان بریل زیر نشان‌واژهٔ AURA یک عنصر بصری برند است؛ به معنای پشتیبانی از نمایشگر بریل یا صفحه‌خوان نیست.",
+        },
       },
     },
 
@@ -2318,6 +2895,13 @@ export const COPY = {
       back: "Ana səhifəyə qayıt",
     },
     v2: {
+      nav: {
+        care: "Qayğı",
+        how: "Necə işləyir",
+        trust: "Etibar və məxfilik",
+        clinicians: "Həkimlər üçün",
+        cta: "Qayğınıza başlayın",
+      },
       hero: {
         eyebrow: "Sərhədlərarası rəqəmsal qayğı",
         headline: "Qayğı, sərhədsiz.",
@@ -2360,6 +2944,76 @@ export const COPY = {
             cta: "Dəstək üçün müraciət et",
           },
         ],
+      },
+      ai: {
+        eyebrow: "Süni intellektin dayandığı yer",
+        headline: "Süni intellekt hazırlayır. Qərarı həkim verir.",
+        intro: "AURA süni intellektdən dar bir iş üçün, sizin idarə etdiyiniz razılıq qapısının arxasında istifadə edir.",
+        items: [
+          {
+            key: "decision",
+            n: "01",
+            title: "Qərar həkiminizindir",
+            body: "Süni intellekt bir diaqnoza əməliyyat təklif etdikdə, həkiminiz bunu “təxmini” etiketi ilə görür — və qərarı verir.",
+          },
+          {
+            key: "consent",
+            n: "02",
+            title: "Süni intellekt emalının öz razılığı var",
+            body: "Ümumi məlumatların qorunması razılığından ayrıdır və siz bir dənə də əlamət yazmadan əvvəl soruşulur. Siz verməyincə forma açılmır.",
+          },
+          {
+            key: "minimize",
+            n: "03",
+            title: "Adınız süni intellekt təchizatçısına heç vaxt çatmır",
+            body: "Klinik məzmun süni intellektin işidir, ona görə göndərilir. Adınız isə o iş üçün lazım deyil — sorğu bizdən çıxmazdan əvvəl əvəzlənir və həkiminizin oxuduğu mətndə geri qaytarılır.",
+          },
+          {
+            key: "scope",
+            n: "04",
+            title: "Dar bir iş",
+            body: "Sizi doğru ixtisasa yönəltmək və yüklədiyiniz sənədləri tərcümə etmək. Əhatə bundan ibarətdir.",
+          },
+        ],
+        note: {
+          label: "İddia etmədiklərimiz",
+          text: "Süni intellekt diaqnoz qoymur, müalicə seçmir, klinik mühakimə yürütmür. Gördüyünüz istənilən süni intellekt nəticəsi təxminidir — həkiminizin qərarına məlumat verir, onu əvəz etmir.",
+        },
+      },
+      accessibility: {
+        eyebrow: "Əlçatanlıq",
+        headline: "Yalnız görünmək üçün deyil, istifadə oluna bilmək üçün quruldu.",
+        intro: "Diliniz, oxuma istiqamətiniz, hərəkət seçiminiz — cihazınızdan oxunur, sizdən iki dəfə soruşulmur.",
+        items: [
+          {
+            key: "languages",
+            n: "01",
+            title: "Səkkiz dil, ikisi sağdan sola",
+            body: "Ərəb və fars dilləri yalnız mətni deyil, bütöv düzümü güzgüləyir.",
+          },
+          {
+            key: "motion",
+            n: "02",
+            title: "Cihazınızdan az hərəkət istəmisinizsə, eşidirik",
+            body: "Kinematik açılış yumşaldılmır — ümumiyyətlə qurulmur. Hər şey oxunaqlı qalır, sürüşdürmə normal işləyir.",
+          },
+          {
+            key: "keyboard",
+            n: "03",
+            title: "Klaviatura sonradan düşünülmüş bir şey deyil",
+            body: "Kartlar yalnız üzərinə gələn siçana deyil, klaviatura fokusuna da cavab verir.",
+          },
+          {
+            key: "resilience",
+            n: "04",
+            title: "Kodumuz sınarsa, sözlər qalır",
+            body: "Mətn hər hansı animasiya işləməzdən əvvəl səhifədədir.",
+          },
+        ],
+        note: {
+          label: "İddia etmədiklərimiz",
+          text: "WCAG uyğunluğu iddiamız yoxdur — müstəqil auditdən keçməmişik. AURA sözünün altındakı Brayl işarəsi vizual bir brend elementidir; Brayl cihazı və ya ekran oxuyucu dəstəyi demək deyil.",
+        },
       },
     },
 

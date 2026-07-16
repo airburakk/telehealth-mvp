@@ -170,8 +170,12 @@ export function V2Hero() {
             {h.ctaPrimary}
             <span aria-hidden>→</span>
           </Link>
+          {/* Hedef #how (v6.16 düzeltmesi): etiket "AURA nasıl çalışır?" diyor →
+              4 adımlık "nasıl çalışır" şeridine iner. Önce #care'e (dört giriş
+              kapısı) gidiyordu = etiketle hedef çelişiyordu. #care'e giden yol
+              kapanmadı: nav'ın "Bakım" sekmesi ve doğal kaydırma sırası aynı. */}
           <Link
-            href="#care"
+            href="#how"
             className="inline-flex items-center rounded-full border border-[var(--aura-hairline)] bg-[var(--aura-night)]/40 px-7 py-3.5 text-base font-semibold text-[var(--aura-ink)] backdrop-blur-sm transition-colors duration-200 hover:border-[var(--aura-accent)]/60"
           >
             {h.ctaSecondary}

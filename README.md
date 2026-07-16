@@ -218,7 +218,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/` · `/giris` · `/giris/e-posta` · `/kurumsal-giris` · `/kurumsal-giris/e-posta` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | **AURA sinematik landing** (v5.9 — vitrinden taşındı: hero video+letterform, 4 chapter destesi, gsap+lenis; 8 dil statik `lib/aura-landing/copy.ts`, dil anahtarı `air_lang`). **Bölüm akışı (v6.8):** hero → chapters → nasıl çalışır (+AI sorumluluk notu) → doktorlar → **güven (6 ürün-kanıtlanabilir kart)** → kapanış; eski *Şeffaflık* bölümü v6.8'de Güven'e birleştirildi (`transparency.tsx` kaldırıldı — aynı iddiayı iki kez veriyordu). İddia kuralları: aşağıda "Vitrin iddia dürüstlüğü (v6.8)" · **SEO (v5.9.2):** canonical + OpenGraph/Twitter kart + 8-dil `og:locale:alternate` (tek URL — `lib/aura-landing/seo.ts`) + JSON-LD MedicalOrganization/WebSite · **hasta giriş kapısı** + **`/giris/e-posta` çalışan form** · **kurumsal giriş kapısı** (noindex) + **`/kurumsal-giris/e-posta` form** (v5.9.1 kapı/form ayrımı — kapılar `components/aura/auth-gates.tsx`) · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
 | `/how-it-works` | **Nasıl Çalışır rehberi** (v5.9 — vitrinden taşındı): 4 yolculuğun adım listeleri + tıkla-oynat rehber videoları + HowTo JSON-LD + OpenGraph (title template `%s · AURA`); global Header/SiteFooter bu rotada ve `/`'de gizli (sayfa kendi aura nav/footer'ını taşır). Eski vitrin aura-health.higgsfield.app tüm sayfaları buraya 301 yönlendirir |
 | `/guven-ve-gizlilik` | **Güven ve Gizlilik** (v6.12): iddia dürüstlüğü sayfası — 10 bölüm × 8 dil (`copy.ts` `trustPage`), 5'inde **"neyi iddia etmiyoruz"** kutusu + FAQPage JSON-LD (cevap gövde+sınırı birlikte taşır) + OG 8 dil; global Header/SiteFooter burada da gizli (kendi aura nav/footer'ı). **`/trust` → 308.** ⚠️ Gizlilik Politikası **değildir**. Kurallar: Güvenlik notları "Güven ve Gizlilik sayfası (v6.12)" |
-| `/v2` | **Yeni ana sayfa ÖNİZLEMESİ** (v6.14 · `components/aura/v2/{home,hero,entry-paths}.tsx` · `copy.ts` `v2`, 8 dil). **noindex + sitemap'te YOK** — aynı içeriğin iki URL'de indekslenmesi `/`'nin SEO'sunu bölerdi. Canlı `/` **dokunulmadı**. **Bölümler:** hero (sahneli açılış) → entry-paths (video-arkalı 4 kart) → mevcut how/doctors/trust → closing. **`/`'ye taşırken:** eski landing'e **git tag** (geri dönüş) → `app/page.tsx`→`V2Home` → `/v2`+noindex kalkar → sitemap'e girer → ⚠️ `.aura-brand` seçicileri artık landing'i de kapsar, **token/glow ölçümünü tekrarla**. Sözleşme: aşağıda "/v2 hero + entry-paths (v6.14)" |
+| `/v2` | **Yeni ana sayfa ÖNİZLEMESİ** (v6.14 · `components/aura/v2/{home,hero,entry-paths,nav}.tsx` · `copy.ts` `v2`, 8 dil). **noindex + sitemap'te YOK** — aynı içeriğin iki URL'de indekslenmesi `/`'nin SEO'sunu bölerdi. Canlı `/` **dokunulmadı**. **Bölümler:** nav (tek bakım mimarisi, v6.16) → hero (sahneli açılış) → entry-paths (video-arkalı 4 kart, `id="care"`) → mevcut how (`id="how"`)/doctors/trust → closing. **`/`'ye taşırken:** eski landing'e **git tag** (geri dönüş) → `app/page.tsx`→`V2Home` → `/v2`+noindex kalkar → sitemap'e girer → ⚠️ `.aura-brand` seçicileri artık landing'i de kapsar, **token/glow ölçümünü tekrarla** → ⚠️ `v2/nav.tsx` kök `aura/nav.tsx`'in yerini alır ve içindeki `/v2` hedefleri (logo · `#care` çapası) **`/` köküne döner**. Sözleşme: aşağıda "/v2 hero + entry-paths (v6.14)" + "/v2 nav (v6.16)" |
 | `/sitemap.xml` · `/robots.txt` | **SEO altyapısı (v5.9.2 · v6.12):** `app/sitemap.ts` yalnız 8 halka açık rota (/, /how-it-works, **/guven-ve-gizlilik**, /giris, /kayit, /kayit/hasta, /second-opinion, /ucretsiz-saglik) · `app/robots.ts` hassas panel/API disallow + sitemap referansı. `SITE_URL` tek kaynak `lib/aura-landing/seo.ts` (domain taşınırsa tek nokta) |
 | `/basla` | KALDIRILDI (v5.8) — eski linkler için `/triyaj`'a kalıcı redirect |
 | `/saglik-turizmi` | **Sağlık Turizmi hasta-yüzü planlama** (v4.24-25): tercih (branş/ülke/seviye/gece) + endikatif paket önizlemesi (`computePackage`) + öz-yeterli "Talep Oluştur" → `POST /api/patient/tourism-request` (runTriage → tourism-etiketli Case, `Case.tourismPlan` JSON; doktor `/paket` PackageBuilder ön-değeri + kokpit 🧳 rozeti). Klinik-önce: bağlayıcı fiyat/rezervasyon daima doktor onayı sonrası (simüle/park; USHAŞ yetki belgesi + TÜRSAB hukuki zemini vault'ta belgeli) |
@@ -416,6 +416,57 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
   🪤 **Glow: "aynı efekt" ≠ aynı değer** — `aura-breathe` blur'u (14/44/90px) letterform ölçeğine göre;
   Braille noktası **5.38px** (26× fark) → aynı blur **görünmez**. Braille'in kendi keyframe'i var
   (`aura-breathe-braille`, 3/8/18). İkisinde de **sürekli hafif ışıma** + hover'da nefes.
+- **`/v2` nav (v6.16) — `V2Nav` neden kök `AuraNav`'dan AYRI:** kök nav `/` **ve** `/how-it-works`
+  tarafından kullanılıyor; `V2Nav`'ın **"Bakım"** sekmesi `#care` çapasına gider ve o çapa **yalnız
+  /v2'de** var (entry-paths) ⇒ kök nav'ı düzenlemek **canlı landing'e kırık link** koyardı. `v2/`
+  klasörü zaten "taşıma anında köke geçer" deseniyle kurulu.
+  · **Ne değişti:** dört hizmet sekmesi (Telehealth · İkinci Görüş · Sağlık Turizmi · Ücretsiz Sağlık)
+  → **tek bakım mimarisi** (Bakım · Nasıl Çalışır · Güven ve Gizlilik · Doktorlar İçin). Sayfa *"tek
+  bakım yolculuğu, dört giriş kapısı"* derken nav'ın dört ayrı hizmet sıralaması **sayfayla
+  çelişiyordu**. Sözlük `copy.ts` → `v2.nav` (8 dil); `menu`/`close` **kök nav sözlüğünden yeniden
+  kullanılır** (`t.nav.menu` — zaten 8 dilde çevrili, tekrar tanımlama).
+  · 🪤 **`nav.cta` = `hero.ctaPrimary` — 8 dilde AYNI etiket** (`nav.tsx`'in *"aynı etiket = aynı
+  niyet"* sözleşmesi: ikisi de `/giris`'e gidiyor). Brand paketinin nav çevirileri v6.14 hero
+  çevirilerinden **ayrı kalemden** gelmişti → EN dışında **7 dilde iki farklı etiket** çıkmıştı
+  (TR *"Bakımınıza başlayın"* vs *"Bakım yolculuğunu başlat"*). **Birini değiştirirsen diğerini de
+  değiştir.** Taşma değil ses sorunuydu: 1024px'te en uzun etiket (TR **187px**) ile link grubu
+  arasında **222px** boşluk ölçüldü — uzunluk kısıt değil.
+  · **Hero ikincil CTA → `#how`** (v6.16): etiket *"AURA nasıl çalışır?"* diyor → 4 adımlık şeride
+  iner. Önce `#care`'e gidiyordu = **etiketle hedef çelişiyordu**.
+  · **Doktorlar İçin → `/kurumsal-giris`** (geçici): todo'daki `/for-clinicians` rotası gelince oraya
+  bağlanır. ⚠️ **"Hekim" DEĞİL "Doktor"** — v4.21 proje-geneli rename (brand paketi "Hekimler İçin"
+  önermişti, düzeltildi).
+  · **a11y:** mobil panel **Escape** ile kapanır · dokunma hedefleri **44px** (hamburger 36→44) ·
+  `aria-controls`/`aria-expanded` bağlı · çapa dışı hedefler `<a>` değil **`<Link>`** (client-side →
+  `air_lang` dil seçimi ve video durumu korunur).
+- **`how.tsx` 2. adım ikonu (v6.16):** `Sparkles` **DEĞİL** `ClipboardCheck` — yıldız-parıltı AI'yı
+  ürünün öznesi gibi gösteriyordu; metin zaten doğruydu (v6.8), **ikon onunla çelişiyordu**. Bölüm
+  `/` **ve** `/v2`'de ORTAK → değişiklik ikisini birden etkiler.
+- **`--aura-accent-stronger` (v6.16) — accent'in METİN rolü:** gece `cyan-500` (= accent, koyu zeminde
+  9.5 zaten yeterli) · gündüz **`cyan-800` #0d6470** (beyazda **6.83**). 🪤 **ÖLÇÜLDÜ:** `--aura-accent`
+  (#17919e) beyazda **3.76** = **WCAG AA'nın (4.5) ALTINDA** → gündüz şeridindeki mono üst etiketler ve
+  adım numaraları eşiği geçmiyordu. **Kullanım kuralı:** METİN olan accent → `-stronger`; zemin/border/
+  ring (`bg-…/12`, `border-…/40`) → düz `--aura-accent` (dekoratif, kontrast eşiği yok). Accent'in
+  kendisi DEĞİŞTİRİLMEDİ — marka turkuazı yüzeylerde aynı. **Kapsam:** `.aura-light` ortak → canlı `/`
+  landing'in gündüz şeridi de koyulaştı (kullanıcı onaylı). Gece bantlar **hiç etkilenmez** (ölçüldü:
+  9.51 sabit).
+- **`/v2` iddia bölümleri (v6.16 Faz 2) — `v2/claim-section.tsx`:** AI sorumluluğu (`#ai`) +
+  Erişilebilirlik (`#accessibility`). **TEK bileşen, iki besleme** (aynı şekil: eyebrow/headline/intro +
+  4 madde + not) — sözlük `copy.ts` `v2.ai` / `v2.accessibility`, 8 dil.
+  · ⚠️ **"Neyi iddia etmiyoruz" kutusu bölümün OMURGASI** — sessizce kaldırma (`/guven-ve-gizlilik` ile
+  aynı kullanıcı kararı). AI kutusu: *AI tanı koymaz/tedavi seçmez/klinik yargı üretmez, çıktı
+  endikatiftir*. A11y kutusu: *WCAG uyumluluk beyanı YOK (bağımsız denetimden geçilmedi)* + **Braille
+  GÖRSEL marka öğesidir, Braille cihazı/ekran okuyucu desteği DEĞİL**.
+  · 🪤 **Her madde KOD KANITLI** (harita `copy.ts` `v2.ai` başlığında: ClinicalDecisionPanel ·
+  ai-consent · ai-minimize · langDir · reduced-motion · entry-paths klavye · hero fail-open).
+  **Kanıtlanamayan madde GİRMEZ** ([[public-claim-honesty]]).
+  · **Bölüme girmeyenler (kasıtlı):** **sesle dikte** — yalnız 3 hasta formunda (triyaj/SO/turizm), TÜM
+  yüzeylerde değil ⇒ landing'de genel vaat yanıltıcı olurdu (kullanıcı kararı 2026-07-16).
+- 🪤 **Turbopack CSS cache (v6.16):** globals.css'e **yeni** bir değişken eklendiğinde dev server bunu
+  kısmi güncelleyebiliyor — `:root` tanımı geliyor ama aynı derlemedeki `.aura-light` override'ı
+  **gelmiyor** (aynı dosya, aynı commit). Belirti: token gündüzde gece değerini veriyor ama `--aura-accent`
+  doğru. **Çözüm: `.next` sil + dev server yeniden başlat.** Ölçüm yapmadan önce token'ın computed
+  değerini doğrula — yoksa "düzeltmem çalışmadı" diye kaynağı boşuna kurcalarsın.
 - **Video posterleri (v6.14.5) — YENİ/YENİLENEN VİDEO EKLERKEN OKU:** poster **daima o videonun ilk
   karesinden**: `ffmpeg -i <video> -frames:v 1 -q:v 2 <poster>.jpg`. **Ad-versiyonla** (`p-consult2.jpg`)
   — aynı URL'de içerik değiştirmek **edge cache'te eskiyi** sundurur. 🪤 4 kulvar posteri eski sürümden

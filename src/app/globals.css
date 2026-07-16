@@ -345,6 +345,11 @@ body {
   --aura-grey: #9a9c99; /* ikincil metin — ham palette karşılığı yok */
   --aura-micro: #82847c; /* mikro metin — gece zemininde ~5:1 (WCAG AA); grey'den bir kademe soluk */
   --aura-accent: var(--aura-cyan-500); /* TEK vurgu: logo turkuazı #28c8d8 */
+  /* Accent'in METİN rolü. Gece'de accent ile AYNI (koyu zeminde #28c8d8 zaten
+     yüksek kontrast) → gece hiçbir yüzey değişmez. Gündüz karşılığı .aura-light'ta
+     koyulaşır; ayrım orada anlam kazanır. Zemin/border/ring gibi DEKORATİF
+     kullanımlar --aura-accent'te kalır (kontrast eşiği yok). */
+  --aura-accent-stronger: var(--aura-cyan-500);
   --aura-hairline: var(--aura-border-dark);
   --aura-font-display: var(--font-serif), "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --aura-font-sans: var(--font-sans), "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -363,6 +368,15 @@ body {
   --aura-grey: var(--aura-stone-600);
   --aura-micro: var(--aura-stone-500);
   --aura-accent: var(--aura-cyan-600);
+  /* 🪤 ÖLÇÜLDÜ (v6.16): --aura-accent (#17919e) beyaz üzerinde 3.76 = WCAG AA'nın
+     (4.5) ALTINDA → gündüz şeridindeki mono üst etiketler ve adım numaraları
+     eşiği geçmiyordu. cyan-800 (#0d6470) beyazda 6.83 ✓. Accent'in kendisi
+     DEĞİŞTİRİLMEDİ: marka turkuazı zemin/border/ring'lerde aynı kalsın, yalnız
+     METİN koyulaşsın. Kullanıcı onaylı (2026-07-16) — canlı / landing'in gündüz
+     şeridini de kapsar (ortak bileşen: how/doctors/trust).
+     📌 Dış paket bu eksiği görmüştü ama token'ı TANIMLAMADAN kullanıyordu →
+     tanımsız var() = tsc/build yakalamaz, renk sessizce kaybolur ([[dis-paket-denetimi]]). */
+  --aura-accent-stronger: var(--aura-cyan-800);
   --aura-hairline: var(--aura-border-light);
   /* color'ı bu subtree'de yeniden bağla: .aura-page color'ı gece --aura-ink'iyle
      ZATEN hesaplayıp inherit ettiriyor; değişkeni değiştirmek yetmez, açık renk

@@ -1,12 +1,13 @@
 "use client";
 
 import { AuraClosing } from "../closing";
-import { AuraNav } from "../nav";
 import { AuraTrust } from "../trust";
 import { AuraDoctors } from "../doctors";
 import { AuraHowItWorks } from "../how";
+import { V2Accessibility, V2AiResponsibility } from "./claim-section";
 import { V2EntryPaths } from "./entry-paths";
 import { V2Hero } from "./hero";
+import { V2Nav } from "./nav";
 import { LangProvider, langDir, useLang } from "@/lib/aura-landing/i18n";
 
 // /v2 — YENİ ANA SAYFA (2026-07-16), ÖNİZLEME rotası (noindex).
@@ -32,16 +33,24 @@ function V2Shell() {
   const { lang } = useLang();
   return (
     <div dir={langDir(lang)} lang={lang} className="aura-page min-h-dvh">
-      <AuraNav />
+      {/* V2Nav (v6.16): kök AuraNav yerine — dört hizmet sekmesi yerine tek
+          bakım mimarisi. Kök nav / ve /how-it-works'te dokunulmadan durur. */}
+      <V2Nav />
       <main>
         <V2Hero />
         <V2EntryPaths />
         {/* Sandwich gövdesi: gece bantların arasındaki gündüz şeridi (mevcut
             landing ile aynı desen; token'lar .aura-light'ta açık değerlere geçer). */}
+        {/* Gündüz şeridi — akış: nasıl işliyor → kim (doktorlar) → kanıt (güven) →
+            AI'nın SINIRI → erişilebilirlik. İki yeni bölüm (v6.16 Faz 2) güvenin
+            HEMEN ardında: güven "neye güvenebilirsiniz"i, bunlar "neyi iddia
+            etmiyoruz"u söyler — sıra bilinçli, ikisi birbirini tamamlıyor. */}
         <div className="aura-light bg-[var(--aura-bg)]">
           <AuraHowItWorks />
           <AuraDoctors />
           <AuraTrust />
+          <V2AiResponsibility />
+          <V2Accessibility />
         </div>
         <AuraClosing />
       </main>

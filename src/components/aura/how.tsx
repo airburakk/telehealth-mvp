@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { MessageSquareText, Sparkles, Video, HeartPulse, ArrowRight, type LucideIcon } from "lucide-react";
+import { MessageSquareText, ClipboardCheck, Video, HeartPulse, ArrowRight, type LucideIcon } from "lucide-react";
 import { useLang } from "@/lib/aura-landing/i18n";
 
 // Nasıl çalışır (sandwich gündüz gövdesi): 4 adımlık süreç şeridi (Anlat → AI eşleştir →
 // Video görüş → Takip) + /how-it-works detay sayfasına köprü. Chapters "ne sunuyoruz"u,
 // bu bölüm "nasıl işliyor"u anlatır. Metin copy.ts howItWorks (8 dil).
-const STEP_ICONS: LucideIcon[] = [MessageSquareText, Sparkles, Video, HeartPulse];
+//
+// 2. adımın ikonu Sparkles DEĞİL (v6.16): yıldız-parıltı AI'yı ürünün öznesi gibi
+// gösteriyordu; pano ikonu yapılan işi (vaka hazırlama) anlatır. Metin zaten doğruydu
+// ([[public-claim-honesty]] v6.8) — ikon onunla çelişiyordu. Bölüm / ve /v2'de ORTAK.
+const STEP_ICONS: LucideIcon[] = [MessageSquareText, ClipboardCheck, Video, HeartPulse];
 
 export function AuraHowItWorks() {
   const { t } = useLang();
@@ -23,14 +27,14 @@ export function AuraHowItWorks() {
 
       <ol className="mt-14 grid gap-8 md:grid-cols-4">
         {t.howItWorks.steps.map((s, i) => {
-          const Icon = STEP_ICONS[i] ?? Sparkles;
+          const Icon = STEP_ICONS[i] ?? ClipboardCheck;
           return (
             <li key={i} className="relative">
               <div className="flex items-center gap-3">
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[var(--aura-accent)]/12 text-[var(--aura-accent)] ring-1 ring-[var(--aura-accent)]/25">
-                  <Icon size={22} strokeWidth={2} />
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[var(--aura-accent)]/12 text-[var(--aura-accent-stronger)] ring-1 ring-[var(--aura-accent)]/25">
+                  <Icon aria-hidden size={22} strokeWidth={2} />
                 </span>
-                <span className="aura-mono text-[11px] font-semibold text-[var(--aura-accent)]">
+                <span className="aura-mono text-[11px] font-semibold text-[var(--aura-accent-stronger)]">
                   {String(i + 1).padStart(2, "0")}
                 </span>
               </div>
@@ -50,10 +54,10 @@ export function AuraHowItWorks() {
       <div className="mt-8 text-center">
         <Link
           href="/how-it-works"
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--aura-accent)]/40 px-6 py-3 text-sm font-semibold text-[var(--aura-accent)] transition-colors hover:bg-[var(--aura-accent)]/10"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-[var(--aura-accent)]/40 px-6 py-3 text-sm font-semibold text-[var(--aura-accent-stronger)] transition-colors hover:bg-[var(--aura-accent)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aura-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--aura-bg)]"
         >
           {t.howItWorks.cta}
-          <ArrowRight size={16} className="rtl:rotate-180" />
+          <ArrowRight aria-hidden size={16} className="rtl:rotate-180" />
         </Link>
       </div>
     </section>

@@ -31,7 +31,7 @@ export function AuraTrust() {
             const Icon = ITEM_ICONS[i] ?? Lock;
             return (
               <div key={i} className="text-center md:text-start">
-                <span className="inline-grid h-11 w-11 place-items-center rounded-xl bg-[var(--aura-accent)]/12 text-[var(--aura-accent)]">
+                <span className="inline-grid h-11 w-11 place-items-center rounded-xl bg-[var(--aura-accent)]/12 text-[var(--aura-accent-stronger)]">
                   <Icon size={20} strokeWidth={2} />
                 </span>
                 <h3 className="aura-display mt-4 text-base font-bold text-[var(--aura-ink)]">{it.title}</h3>
