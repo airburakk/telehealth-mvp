@@ -32,6 +32,13 @@ export function V2Hero() {
     const video = videoRef.current;
     if (!video) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Save-Data (v6.17): veri tasarrufu isteginde video hic baslatilmaz
+    // (preload="none" → play edilmeyen video inmez, poster kalir). Kok hero ile ayni.
+    if (
+      "connection" in navigator &&
+      (navigator as { connection?: { saveData?: boolean } }).connection?.saveData === true
+    )
+      return;
 
     let inView = false;
     const io = new IntersectionObserver(
@@ -117,6 +124,9 @@ export function V2Hero() {
         aria-hidden
         className="absolute inset-0 -z-10 h-full w-full object-cover"
       >
+        {/* Mobil kaynak (v6.17): telefonda src720 (848KB), masaustunde 1080p
+            kullanici karari korunur — gerekce kok hero.tsx'te. */}
+        <source media="(max-width: 767px)" src={VIDEOS.hero.src720} type="video/mp4" />
         <source src={VIDEOS.hero.src} type="video/mp4" />
       </video>
       {/* Okunurluk skrimi: metnin olduğu ALT koyu, videonun göründüğü ÜST açık.

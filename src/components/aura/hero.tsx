@@ -18,10 +18,17 @@ export function AuraHero() {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const video = videoRef.current;
 
-    // Video: reduced-motion disinda sessiz dongu; sekme gorunur degilken durur.
+    // Save-Data (v6.17): kullanici tarayicidan veri tasarrufu istediyse video HIC
+    // baslatilmaz — preload="none" oldugundan play() cagrilmayan video hic inmez,
+    // poster kalir. reduced-motion ile ayni sonuc, farkli sinyal.
+    const saveData =
+      "connection" in navigator &&
+      (navigator as { connection?: { saveData?: boolean } }).connection?.saveData === true;
+
+    // Video: reduced-motion/Save-Data disinda sessiz dongu; sekme gorunur degilken durur.
     let io: IntersectionObserver | undefined;
     let onVis: (() => void) | undefined;
-    if (video && !reduced) {
+    if (video && !reduced && !saveData) {
       let inView = false;
       io = new IntersectionObserver(
         (entries) => {
@@ -122,6 +129,12 @@ export function AuraHero() {
         className="absolute inset-0 h-full w-full object-cover"
         aria-hidden
       >
+        {/* Mobil kaynak secimi (v6.17, OLCULDU): 1080p karari yalniz TAM-GENISLIK
+            masaustu ekrani icindi — mobilde ayni 11.7MB iniyordu. <source media>
+            ile telefonda src720 (848KB, %93 kucuk) secilir; preload="none" +
+            play-aninda-indirme sozlesmesi korunur. WebM DENENDI ve ATILDI:
+            VP9 CRF34 = 1112KB > mevcut h264 720p 848KB (zaten agresif sikistirilmis). */}
+        <source media="(max-width: 767px)" src={VIDEOS.hero.src720} type="video/mp4" />
         <source src={VIDEOS.hero.src} type="video/mp4" />
       </video>
       {/* Okunurluk skrimi */}
