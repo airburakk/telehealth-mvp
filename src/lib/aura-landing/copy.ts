@@ -703,7 +703,7 @@ export const COPY = {
           key: "consult",
           steps: [
             { t: "Create your account", d: "Sign up in minutes with Google, Apple or e-mail." },
-            { t: "Complete payment", d: "One transparent fee, paid securely by card." },
+            { t: "Complete payment", d: "One transparent fee, paid securely by card. (Demo version — no real payment is taken.)" },
             { t: "Describe your symptoms", d: "A short guided form; AURA organises what you share." },
             { t: "Get matched to a specialist", d: "You are assigned to a doctor in the suggested specialty." },
             { t: "Wait in the digital lounge", d: "Follow your place in the digital waiting room in real time." },
@@ -766,7 +766,7 @@ export const COPY = {
         key: "consult",
         strand: "uzaktan sağlık",
         title: "Doktorla görüşün.",
-        body: "AURA vakanızı hazırlar ve uygun branşı önerir.",
+        body: "AURA başvurunuzu hazırlar ve uygun branşı önerir.",
         cta: "görüşmeye başla",
         href: "/giris",
         external: false,
@@ -829,7 +829,7 @@ export const COPY = {
       note: "Dört adım, tek kesintisiz yolculuk.",
       steps: [
         { title: "Anlatın", desc: "Şikayetinizi veya hedefinizi kendi dilinizde anlatın." },
-        { title: "AURA vakanızı hazırlar", desc: "Bilgileriniz düzenlenir ve uygun branş önerilir." },
+        { title: "AURA başvurunuzu hazırlar", desc: "Bilgileriniz düzenlenir ve uygun branş önerilir." },
         { title: "Video görüşme", desc: "Doktorunuzla şifreli video ve canlı çeviriyle görüşün." },
         { title: "Takip", desc: "Raporlar, iyileşme kontrolleri ve bakım — hepsi evden." },
       ],
@@ -917,7 +917,7 @@ export const COPY = {
             key: "consult",
             n: "01",
             title: "Doktorla Görüşün",
-            body: "Şikayetinizi kendi dilinizde anlatın. AURA vakanızı hazırlar ve uygun branşa yönlendirir.",
+            body: "Şikayetinizi kendi dilinizde anlatın. AURA başvurunuzu hazırlar ve uygun branşa yönlendirir.",
             cta: "Değerlendirmeye başla",
           },
           {
@@ -925,7 +925,7 @@ export const COPY = {
             n: "02",
             title: "İkinci Görüş",
             body: "Tanınızı, görüntülemenizi veya tedavi planınızı bağımsız bir uzmana inceletin.",
-            cta: "Vakamı hazırla",
+            cta: "Başvurumu hazırla",
           },
           {
             key: "tourism",
@@ -1035,7 +1035,7 @@ export const COPY = {
             key: "record",
             n: "03",
             title: "Baştan sona tek kayıt",
-            body: "Notlar, belgeler ve kararlar tek vaka dosyasında toplanır — takip alanınızda okuyabileceğiniz epikriz özetine kadar.",
+            body: "Notlar, belgeler ve kararlar tek başvuru dosyasında toplanır — takip alanınızda okuyabileceğiniz epikriz özetine kadar.",
           },
           {
             key: "documents",
@@ -1046,7 +1046,7 @@ export const COPY = {
         ],
         note: {
           label: "Neyi iddia etmiyoruz",
-          text: "Bağlantılı olmak, sınırsız erişim demek değildir. Vakanızı kimin görebileceği role ve atamaya bağlıdır — ameliyat sonrası takip bittiğinde klinik personelin erişimi kapanır. Kayıt yalnız size döner.",
+          text: "Bağlantılı olmak, sınırsız erişim demek değildir. Başvurunuzu kimin görebileceği role ve atamaya bağlıdır — ameliyat sonrası takip bittiğinde klinik personelin erişimi kapanır. Kayıt yalnız size döner.",
         },
       },
       clinicians: {
@@ -1121,7 +1121,7 @@ export const COPY = {
           key: "access",
           n: "03",
           title: "Kim neye erişir",
-          body: "Erişim role bağlıdır: hasta yalnız kendi kayıtlarına · doktor yalnız doğrulanmış ve vakaya atanmışsa · partner doktor hasta veritabanına erişemez, kendisine iletilen soruda kişi adları maskelenir · koordinatör ve acente lojistik bilgi görür, klinik kayıt değil. Post-op takibiniz bitince klinik personelin erişimi kapanır, kayıt yalnız size kalır; isterseniz yeniden açarsınız.",
+          body: "Erişim role bağlıdır: hasta yalnız kendi kayıtlarına · doktor yalnız doğrulanmış ve başvurunuza atanmışsa · partner doktor hasta veritabanına erişemez, kendisine iletilen soruda kişi adları maskelenir · koordinatör ve acente lojistik bilgi görür, klinik kayıt değil. Post-op takibiniz bitince klinik personelin erişimi kapanır, kayıt yalnız size kalır; isterseniz yeniden açarsınız.",
           note: { label: "", text: "" },
         },
         {
@@ -1209,7 +1209,7 @@ export const COPY = {
           key: "consult",
           steps: [
             { t: "Hesabınızı oluşturun", d: "Google, Apple veya e-posta ile dakikalar içinde kaydolun." },
-            { t: "Ödemeyi tamamlayın", d: "Tek ve şeffaf ücret; kartla güvenle ödeyin." },
+            { t: "Ödemeyi tamamlayın", d: "Tek ve şeffaf ücret; kartla güvenle ödeyin. (Demo sürüm — gerçek ödeme alınmaz.)" },
             { t: "Semptomlarınızı anlatın", d: "Kısa yönlendirmeli form; AURA paylaştıklarınızı düzenler." },
             { t: "Uzmana atanın", d: "Önerilen branştaki bir doktora yönlendirilirsiniz." },
             { t: "Dijital bekleme odasında bekleyin", d: "Sıranızı gerçek zamanlı takip edin." },
@@ -1220,7 +1220,7 @@ export const COPY = {
           key: "so",
           steps: [
             { t: "Teşhisinizle başlayın", d: "Bir doktora göründünüz; elinizde bir teşhis ya da tedavi planı var." },
-            { t: "AURA'ya girin", d: "İkinci Görüş akışını açın ve vakanızı oluşturun." },
+            { t: "AURA'ya girin", d: "İkinci Görüş akışını açın ve başvurunuzu oluşturun." },
             { t: "Dosyalarınızı yükleyin", d: "Raporlar, MR ve tahliller; güvenli ve gizli." },
             { t: "Hocayla görüşün", d: "Kıdemli akademik uzmanla görüntülü seans." },
             { t: "Yazılı raporunuzu alın", d: "Ayrıntılı, yapılandırılmış ikinci görüş raporu." },
@@ -1230,7 +1230,7 @@ export const COPY = {
           key: "tourism",
           steps: [
             { t: "Tedavinizi seçin", d: "Hollywood gülüşü, saç ekimi, estetik operasyon ya da medikal bir operasyon." },
-            { t: "Türkiye'deki seçenekleri keşfedin", d: "Sağlık turizmi yetki belgeli klinikleri ve uzmanları vakanız için karşılaştırın." },
+            { t: "Türkiye'deki seçenekleri keşfedin", d: "Sağlık turizmi yetki belgeli klinikleri ve uzmanları başvurunuz için karşılaştırın." },
             { t: "Uzmanlarla görüşün", d: "Doktorlar ve sağlık danışmanlarıyla görüntülü tanışın." },
             { t: "Teklifinizi alın", d: "Tedavi, konaklama ve lojistiği kapsayan net bir paket." },
             { t: "Tam planla yola çıkın", d: "Uçuş, otel, operasyon ve sonrası; uçtan uca planlı." },
@@ -1241,7 +1241,7 @@ export const COPY = {
           steps: [
             { t: "Şartları kontrol edin", d: "Uygunluk, yaşadığınız yere ve ihtiyaç duyduğunuz branşa göre belirlenir." },
             { t: "Online başvurun", d: "Durumunuzu özetleyen kısa bir başvuru." },
-            { t: "Gönüllüyle eşleşin", d: "Doğru branştan gönüllü bir doktor vakanızı üstlenir." },
+            { t: "Gönüllüyle eşleşin", d: "Doğru branştan gönüllü bir doktor başvurunuzu üstlenir." },
             { t: "Görüntülü görüşün", d: "Doktorunuz çevrimiçi olduğunda görüşme video ile yapılır." },
           ],
         },
@@ -1635,7 +1635,7 @@ export const COPY = {
           key: "consult",
           steps: [
             { t: "Konto erstellen", d: "In Minuten registrieren, mit Google, Apple oder E-Mail." },
-            { t: "Zahlung abschließen", d: "Eine transparente Gebühr, sicher per Karte bezahlt." },
+            { t: "Zahlung abschließen", d: "Eine transparente Gebühr, sicher per Karte bezahlt. (Demoversion — es wird keine echte Zahlung erhoben.)" },
             { t: "Symptome beschreiben", d: "Ein kurzes geführtes Formular; AURA ordnet Ihre Angaben." },
             { t: "Einem Facharzt zugewiesen", d: "Sie werden einem Arzt im vorgeschlagenen Fachgebiet zugeteilt." },
             { t: "Im digitalen Wartezimmer", d: "Verfolgen Sie Ihren Platz in Echtzeit." },
@@ -2061,7 +2061,7 @@ export const COPY = {
           key: "consult",
           steps: [
             { t: "Créez votre compte", d: "Inscrivez-vous en quelques minutes avec Google, Apple ou e-mail." },
-            { t: "Réglez le paiement", d: "Un tarif unique et transparent, payé en toute sécurité par carte." },
+            { t: "Réglez le paiement", d: "Un tarif unique et transparent, payé en toute sécurité par carte. (Version démo — aucun paiement réel n'est prélevé.)" },
             { t: "Décrivez vos symptômes", d: "Un court formulaire guidé ; AURA organise ce que vous partagez." },
             { t: "Orienté vers un spécialiste", d: "Vous êtes affecté à un médecin de la spécialité proposée." },
             { t: "Salle d'attente numérique", d: "Suivez votre place en temps réel." },
@@ -2487,7 +2487,7 @@ export const COPY = {
           key: "consult",
           steps: [
             { t: "Создайте аккаунт", d: "Регистрация за несколько минут через Google, Apple или e-mail." },
-            { t: "Оплатите визит", d: "Единая прозрачная цена; безопасная оплата картой." },
+            { t: "Оплатите визит", d: "Единая прозрачная цена; безопасная оплата картой. (Демо-версия — реальная оплата не взимается.)" },
             { t: "Опишите симптомы", d: "Короткая анкета; AURA упорядочивает то, чем вы делитесь." },
             { t: "Назначение к специалисту", d: "Вас направляют к врачу предложенной специальности." },
             { t: "Цифровая комната ожидания", d: "Следите за своей очередью в реальном времени." },
@@ -2913,7 +2913,7 @@ export const COPY = {
           key: "consult",
           steps: [
             { t: "أنشئ حسابك", d: "سجّل خلال دقائق عبر Google أو Apple أو البريد الإلكتروني." },
-            { t: "أكمل الدفع", d: "رسوم واحدة وشفافة؛ ادفع بأمان بالبطاقة." },
+            { t: "أكمل الدفع", d: "رسوم واحدة وشفافة؛ ادفع بأمان بالبطاقة. (نسخة تجريبية — لا يتم تحصيل أي دفعة حقيقية.)" },
             { t: "صف أعراضك", d: "نموذج قصير موجّه؛ تنظّم AURA ما تشاركه." },
             { t: "التوجيه إلى أخصائي", d: "تُسند حالتك إلى طبيب في التخصص المقترح." },
             { t: "غرفة الانتظار الرقمية", d: "تابع دورك لحظة بلحظة." },
@@ -3339,7 +3339,7 @@ export const COPY = {
           key: "consult",
           steps: [
             { t: "حساب خود را بسازید", d: "در چند دقیقه با Google، Apple یا ایمیل ثبت‌نام کنید." },
-            { t: "پرداخت را کامل کنید", d: "یک هزینه شفاف؛ پرداخت امن با کارت." },
+            { t: "پرداخت را کامل کنید", d: "یک هزینه شفاف؛ پرداخت امن با کارت. (نسخه آزمایشی — پرداخت واقعی انجام نمی‌شود.)" },
             { t: "علائم خود را شرح دهید", d: "فرم کوتاه هدایت‌شده؛ AURA آنچه را به اشتراک می‌گذارید سامان می‌دهد." },
             { t: "به متخصص سپرده شوید", d: "به پزشکی در تخصص پیشنهادشده ارجاع می‌شوید." },
             { t: "اتاق انتظار دیجیتال", d: "نوبت خود را به‌صورت زنده دنبال کنید." },
@@ -3767,7 +3767,7 @@ export const COPY = {
           key: "consult",
           steps: [
             { t: "Hesabınızı yaradın", d: "Google, Apple və ya e-poçt ilə dəqiqələr içində qeydiyyatdan keçin." },
-            { t: "Ödənişi tamamlayın", d: "Tək və şəffaf ödəniş; kartla təhlükəsiz ödəyin." },
+            { t: "Ödənişi tamamlayın", d: "Tək və şəffaf ödəniş; kartla təhlükəsiz ödəyin. (Demo versiya — real ödəniş alınmır.)" },
             { t: "Simptomlarınızı təsvir edin", d: "Qısa yönləndirilmiş form; AURA paylaşdıqlarınızı nizamlayır." },
             { t: "Mütəxəssisə yönləndirilin", d: "Təklif olunan ixtisasdan bir həkimə təyin olunursunuz." },
             { t: "Rəqəmsal gözləmə otağı", d: "Növbənizi real vaxtda izləyin." },

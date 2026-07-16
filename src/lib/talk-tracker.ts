@@ -1,7 +1,8 @@
 import type { TrackerState } from "@/components/ProcessTracker";
 
 // Talk to Doctor (genel triyaj) süreç takibi — vaka durumu + rezervasyon + post-op varlığına göre
-// faz + güncel alt-durum eşlemesi. 4 faz: Vaka · Görüşme · Tedavi & Paket · Takip.
+// faz + güncel alt-durum eşlemesi. 4 faz: Başvuru · Görüşme · Tedavi & Paket · Takip.
+// Hasta-yüzü dil: "vaka" değil "başvuru" (v6.20; klinik personel yüzeylerinde "vaka" kalır).
 // ProcessTracker'a beslenir; metinler TR kanonik (useT/getTranslations ile çevrilir). so-tracker.ts deseni.
 export interface TalkTrackerPhase {
   key: "case" | "consult" | "treatment" | "followup";
@@ -11,7 +12,7 @@ export interface TalkTrackerPhase {
 }
 
 const PHASES = [
-  { key: "case", label: "Vaka oluşturuldu", done: "Vakanız oluşturuldu", pending: "Vaka bekleniyor" },
+  { key: "case", label: "Başvuru oluşturuldu", done: "Başvurunuz oluşturuldu", pending: "Başvuru bekleniyor" },
   { key: "consult", label: "Doktor görüşmesi", done: "Görüşme tamamlandı", pending: "Doktor görüşmesi bekleniyor" },
   { key: "treatment", label: "Tedavi & paket", done: "Paketiniz onaylandı", pending: "Tedavi planı bekleniyor" },
   { key: "followup", label: "Post-op takip", done: "Takip tamamlandı", pending: "Post-op takip bekleniyor" },
@@ -24,7 +25,7 @@ const SUB = {
   bookingDraft: "Paket teklifiniz hazır — onayınızı bekliyor",
   planPrep: "Tedavi planınız hazırlanıyor",
   inConsult: "Video görüşmeniz sürüyor",
-  inReview: "Uzman doktor vakanızı inceliyor",
+  inReview: "Uzman doktor başvurunuzu inceliyor",
   queued: "Uzman doktor kuyruğuna eklendiniz",
 } as const;
 

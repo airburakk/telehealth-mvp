@@ -100,9 +100,9 @@ test("İkinci Görüş: başvuru + ödeme → hasta vakalarım → koordinatör 
     await expect(payBtn).toBeHidden({ timeout: 20_000 });
   });
 
-  await test.step("Hasta 'İkinci Görüş Vakalarım' listesinde yeni vaka görünür", async () => {
+  await test.step("Hasta 'İkinci Görüş Yolculuğum' listesinde yeni vaka görünür", async () => {
     await page.goto("/second-opinion/vakalarim");
-    await expect(page.getByRole("heading", { name: "İkinci Görüş Vakalarım" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "İkinci Görüş Yolculuğum" })).toBeVisible();
 
     // Yeni vaka satırı — benzersiz tanı özeti (marker) ile kesin eşleşme. diagnosisSummary listede
     // ÇEVRİLMEDEN, doğrudan render edilir (SoCasesList: {c.diagnosisSummary}) → marker aynen görünür.

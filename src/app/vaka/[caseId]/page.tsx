@@ -34,9 +34,9 @@ const PHASE_ICON = {
 // Sonuç sayfası hasta-yüzlü: vaka dili Türkçe değilse statik etiketler sunucuda çevrilir.
 const STATIC_LABELS = [
   "Bakım Yolculuğum",
-  "Vakanız oluşturuldu ve doktor kuyruğuna eklendi",
-  "Uzman doktor, hazırlanan vaka özetinizi inceleyip sizinle video görüşmesi planlayacak.",
-  "Vaka No", "Aciliyet", "Hasta", "Ülke / Dil", "Yönlendirilen Branş", "Süre", "Vakanız",
+  "Başvurunuz oluşturuldu ve doktor kuyruğuna eklendi",
+  "Uzman doktor, hazırlanan başvuru özetinizi inceleyip sizinle video görüşmesi planlayacak.",
+  "Başvuru No", "Aciliyet", "Hasta", "Ülke / Dil", "Yönlendirilen Branş", "Süre", "Başvurunuz",
   "Şikayet", "Triyaj Gerekçesi", "Belgeler",
   "Acil / Hayati", "Yüksek", "Orta", "Düşük", "Rutin / Elektif",
   "Aktif görüşmeniz var", "Doktorunuzla görüşme odası açık — katılabilirsiniz.", "Görüşmeye katıl",
@@ -154,7 +154,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
 
       {/* Branş görsel kimliği bandı — vaka merkezi üstünde (renk-türevi CSS banner + SVG amblem) */}
       <div className="mt-4">
-        <BranchBanner branchKey={c.branch} branchLabel={t(branchLabel)} eyebrow={t("Vakanız")} />
+        <BranchBanner branchKey={c.branch} branchLabel={t(branchLabel)} eyebrow={t("Başvurunuz")} />
       </div>
 
       {gate ? (
@@ -171,9 +171,9 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
         <div className="mt-4 rounded-3xl border border-emerald-400/25 bg-emerald-500/10 p-5 flex items-start gap-3">
           <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-300" />
           <div>
-            <h1 className="font-bold text-emerald-200">{t("Vakanız oluşturuldu ve doktor kuyruğuna eklendi")}</h1>
+            <h1 className="font-bold text-emerald-200">{t("Başvurunuz oluşturuldu ve doktor kuyruğuna eklendi")}</h1>
             <p className="mt-0.5 text-sm text-emerald-200/80">
-              {t("Uzman doktor, hazırlanan vaka özetinizi inceleyip sizinle video görüşmesi planlayacak.")}
+              {t("Uzman doktor, hazırlanan başvuru özetinizi inceleyip sizinle video görüşmesi planlayacak.")}
             </p>
           </div>
         </div>
@@ -202,7 +202,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
       <div className="mt-5 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Vaka No")}</div>
+            <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Başvuru No")}</div>
             <div className="font-mono text-sm text-[var(--c-ink)]">{c.id.slice(0, 8).toUpperCase()}</div>
           </div>
           <div className="text-right text-xs text-[var(--c-ink-3)]">{formatDateTime(c.createdAt)}</div>

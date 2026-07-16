@@ -37,7 +37,7 @@ const STATIC_UI = [
   "Tıbbi belge yükleyin", "PDF, JPG, DICOM · Tahlil, radyoloji, epikriz",
   "Yüklenen dosyalar KVKK/GDPR uyumlu şifreli olarak saklanır.", "Belge yüklemek opsiyoneldir.",
   "AI Ön Analizi", "Aciliyet", "Güven",
-  "Geri", "Devam", "Vakayı oluştur",
+  "Geri", "Devam", "Başvuruyu oluştur",
   "Lütfen hasta adını girin.", "Lütfen şikayetinizi biraz daha ayrıntılı yazın.",
   "Görüşme ücreti alındı:", "Görüşme sigortanız tarafından karşılanıyor", "Poliçe",
   "Acil / Hayati", "Yüksek", "Orta", "Düşük", "Rutin / Elektif",
@@ -248,7 +248,7 @@ function TriyajInner() {
       const created = await res.json();
       router.push(`/vaka/${created.id}`); // tek vaka merkezi (Faz 6)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Vaka oluşturulamadı.");
+      setError(e instanceof Error ? e.message : "Başvuru oluşturulamadı.");
       setSubmitting(false);
     }
   }
@@ -508,7 +508,7 @@ function TriyajInner() {
               className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
             >
               {submitting ? <Loader2 size={16} className="animate-spin" /> : <ClipboardCheck size={16} />}
-              {t("Vakayı oluştur")}
+              {t("Başvuruyu oluştur")}
             </button>
           )}
         </div>

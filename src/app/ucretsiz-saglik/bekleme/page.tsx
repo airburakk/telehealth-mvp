@@ -22,7 +22,7 @@ const S = {
   invalid: "Geçersiz başvuru. Lütfen tekrar başvurun.",
   notWaiting: "Bu başvuru artık beklemede değil",
   statusLabel: "Durum:",
-  statusFollow: "Vakalarınızdan takip edebilirsiniz.",
+  statusFollow: "Bakım Yolculuğum sayfasından takip edebilirsiniz.",
   noDoctorTitle: "Şu an çevrimiçi gönüllü doktor yok",
   searchingTitle: "Gönüllü doktor aranıyor…",
   noDoctorBody:

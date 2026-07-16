@@ -5,7 +5,7 @@ import { loginAs, contextAs, expectNotVisible } from "./helpers";
 //
 // Kapsam (deterministik):
 //   1) Hasta: ön-konsültasyon ödeme kapısı (sigortasız/demo ödeme) → triyaj sihirbazı
-//      (Hasta → Şikayet → Branş Soruları → Belgeler → Özet) → "Vakayı oluştur" → sonuç sayfası.
+//      (Hasta → Şikayet → Branş Soruları → Belgeler → Özet) → "Başvuruyu oluştur" → sonuç sayfası.
 //   2) Doktor: yeni izole context → doktor kokpit (Vaka Kuyruğu) → vakayı ada göre bul →
 //      vaka detayı → "Görüşmeyi Başlat" → görüşme odasının (PreConsultLobby) RENDER'ı.
 //
@@ -16,7 +16,7 @@ import { loginAs, contextAs, expectNotVisible } from "./helpers";
 //
 // LOCALE UYARISI (bu spec'in düşme sebebi):
 //   • Demo Hasta hesabı Cezayir/Arapça taşır → hasta-yüzlü sayfalar (triyaj sonucu dahil) SUNUCUDA
-//     Arapçaya çevrilir. Ayrıca sonuç sayfası, branşta çevrimiçi doktor yoksa "Vakanız oluşturuldu"
+//     Arapçaya çevrilir. Ayrıca sonuç sayfası, branşta çevrimiçi doktor yoksa "Başvurunuz oluşturuldu"
 //     yerine 3-seçenek YÖNLENDİRME kapısını (ConsultGate) gösterir. Bu iki gerçek yüzünden sonuç
 //     adımında ÇEVRİLEBİLİR/DURUMA-BAĞLI metne (başlık) assert BAĞLANMAZ. Deterministik + locale-bağımsız
 //     çıpa = URL /triyaj/[id] + her iki görünümde de basılan VAKA-REF token'ı (id.slice(0,8).toUpperCase()).
@@ -91,9 +91,9 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
 
   await test.step("Adım 4 — Özet: vaka oluşturulur", async () => {
     // Özet adımı Özet'e geçerken tekrar runAnalyze çağırır (analyzing spinner olabilir).
-    // "Vakayı oluştur" butonu görünür olmalı; eksik zorunlu belge onayı bu senaryoda gerekmez
+    // "Başvuruyu oluştur" butonu görünür olmalı; eksik zorunlu belge onayı bu senaryoda gerekmez
     // (belge işaretlenmedi → missingRequired branşa göre değişebilir).
-    const createBtn = page.getByRole("button", { name: "Vakayı oluştur" });
+    const createBtn = page.getByRole("button", { name: "Başvuruyu oluştur" });
     await expect(createBtn).toBeVisible({ timeout: 45_000 });
     // LIVE-ITERATE: bazı branşlarda zorunlu belge (*) işaretlenmediğinde buton disabled kalır ve
     // "Bu belgeleri görüşmeden önce ileteceğimi onaylıyorum." onayı gerekir. Gerekirse önce onayla:
@@ -103,7 +103,7 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
     await createBtn.click();
   });
 
-  // Vaka-ref token'ı: URL'deki case id'nin ilk 8 karakteri, büyük harf (sonuç sayfası "Vaka No" kartında
+  // Vaka-ref token'ı: URL'deki case id'nin ilk 8 karakteri, büyük harf (sonuç sayfası "Başvuru No" kartında
   // c.id.slice(0,8).toUpperCase() ile aynı biçimde basılır). Bir KOD'dur → çevrilmez, de-id maskelemez
   // (cuid harf+rakam karışık, 10+ ardışık rakam içermez) → hem gate hem gate-siz görünümde deterministik.
   let caseRefToken = "";
@@ -115,7 +115,7 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
     expect(caseId.length).toBeGreaterThan(8); // cuid → id gerçekten oluştu
     caseRefToken = caseId.slice(0, 8).toUpperCase();
 
-    // Sonuç sayfası HASTA DİLİNDE (Arapça) render olur ve branşta çevrimiçi doktor yoksa "Vakanız
+    // Sonuç sayfası HASTA DİLİNDE (Arapça) render olur ve branşta çevrimiçi doktor yoksa "Başvurunuz
     // oluşturuldu" başlığı yerine 3-seçenek YÖNLENDİRME kapısı (ConsultGate) çıkar. Bu yüzden ÇEVRİLEBİLİR
     // /DURUMA-BAĞLI başlığa DEĞİL, her iki görünümde de basılan (ve çevrilmeyen) vaka-ref KODUNA assert et.
     await expect(page.getByText(caseRefToken, { exact: false }).first()).toBeVisible({ timeout: 15_000 });

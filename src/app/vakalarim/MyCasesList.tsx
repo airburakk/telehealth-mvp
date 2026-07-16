@@ -71,7 +71,7 @@ const S = {
   cancel: "Vazgeç",
   empty: "Henüz başvurunuz yok.",
   emptyBtn: "Yeni başvuru",
-  caseSummary: "Vaka özeti",
+  caseSummary: "Başvuru özeti",
   actionNeeded: "İşlem gerekiyor",
 } as const;
 

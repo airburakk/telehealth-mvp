@@ -11,10 +11,10 @@ import { langDir } from "@/lib/constants";
 type Row = { id: string; branchLabel: string; status: string; diagnosisSummary: string; createdAt: string; hasPendingReq: boolean };
 
 const S = {
-  title: "İkinci Görüş Vakalarım",
+  title: "İkinci Görüş Yolculuğum",
   subtitle: "Uzmandan bağımsız değerlendirme başvurularınız.",
   newBtn: "Yeni ikinci görüş",
-  allCases: "Tüm vakalarım",
+  allCases: "Bakım Yolculuğum",
   empty: "Henüz ikinci görüş başvurunuz yok.",
   createBtn: "Başvuru oluştur",
   actionNeeded: "İşlem gerekiyor",

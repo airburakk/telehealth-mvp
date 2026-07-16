@@ -42,10 +42,10 @@ const REQ_BADGE: Record<string, { label: string; cls: string }> = {
 
 // Durum-bağlamlı hasta mesajları (TR kanonik; useT ile çevrilir)
 const STATUS_MSG: Partial<Record<SoStatus, string>> = {
-  DRAFT: "Belgelerinizi yükleyin, ardından ödemeyi tamamlayarak vakanızı incelemeye gönderin.",
+  DRAFT: "Belgelerinizi yükleyin, ardından ödemeyi tamamlayarak başvurunuzu incelemeye gönderin.",
   AWAITING_PAYMENT: "Ödemeniz bekleniyor.",
   PENDING_REVIEW: "Dosyanız incelenmeye alındı. Eksik belge varsa size bildirilecek.",
-  OFFERED: "Dosyanız uzman doktorunuze iletildi; doktorun onayı bekleniyor.",
+  OFFERED: "Dosyanız uzman doktorunuza iletildi; doktorun onayı bekleniyor.",
   AWAITING_DOCUMENTS: "Eksik belge talep edildi — aşağıdaki bölümden yükleyebilirsiniz.",
   READY_FOR_ASSIGNMENT: "Belgeleriniz tamam. Uygun uzman doktora atama yapılıyor.",
   ASSIGNED: "Uzman doktor dosyanızı inceliyor. Yazılı görüşünüz hazırlanıyor.",
@@ -61,9 +61,9 @@ const STATUS_MSG: Partial<Record<SoStatus, string>> = {
 // A2: hastadan işlem beklenen durumlar → tracker üstünde belirgin "sizden bekleniyor" amber banner
 // (top hastadayken kaçırmasın; amber yalnız gerçekten işlem gerektiğinde). TR kanonik.
 const ACTION_NEEDED: Partial<Record<SoStatus, { title: string; desc: string }>> = {
-  DRAFT: { title: "Başvurunuzu tamamlayın", desc: "Belgelerinizi yükleyip ödemeyi tamamlayarak vakanızı incelemeye gönderin." },
+  DRAFT: { title: "Başvurunuzu tamamlayın", desc: "Belgelerinizi yükleyip ödemeyi tamamlayarak başvurunuzu incelemeye gönderin." },
   AWAITING_DOCUMENTS: { title: "Eksik belge yükleyin", desc: "Talep edilen belgeleri aşağıdaki bölümden yükleyip gönderin." },
-  AWAITING_ADDITIONAL_TESTS: { title: "Ek tetkik yükleyin", desc: "Doktorunuzin istediği tetkikleri aşağıdaki bölümden yükleyip gönderin." },
+  AWAITING_ADDITIONAL_TESTS: { title: "Ek tetkik yükleyin", desc: "Doktorunuzun istediği tetkikleri aşağıdaki bölümden yükleyip gönderin." },
   VIDEO_OFFERED: { title: "Randevu teklifini yanıtlayın", desc: "Önerilen video görüşme zamanını onaylayın ya da farklı bir zaman isteyin." },
 };
 // A4: belgeler "doğrulandı" sayılır — vaka inceleme/atama kapısını geçtiyse (öncesi: yalnız "alındı").
@@ -71,7 +71,7 @@ const VERIFIED_STATUSES = ["OFFERED", "ASSIGNED", "AWAITING_ADDITIONAL_TESTS", "
 
 // Statik UI metinleri (TR kanonik)
 const S = {
-  back: "İkinci görüş vakalarım",
+  back: "İkinci Görüş Yolculuğum",
   soSuffix: "İkinci Görüş",
   diagTitle: "Tanı / durum özeti",
   opinionTitle: "Yazılı İkinci Görüşünüz",

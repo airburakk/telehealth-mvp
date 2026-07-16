@@ -40,7 +40,7 @@ export type RecoveryData = {
 };
 
 const UI = [
-  "Vaka detayı", "Post-Op Takip", "Tedavi sonrası", "gün",
+  "Vaka detayı", "Başvuru detayı", "Post-Op Takip", "Tedavi sonrası", "gün",
   "Kontrol geçmişi", "Henüz kontrol girilmedi.", "Ağrı", "İlaç",
   "İyileşme fotoğrafı", "Büyütmek için aç",
   "İyileşme Takvimi", "Tele-Kontrol",
@@ -126,8 +126,9 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
   return (
     <div dir={langDir(lang)} className="print-doc mx-auto max-w-4xl px-5 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href={`/doktor/vaka/${data.caseId}`} className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">
-          <ArrowLeft size={16} /> {t("Vaka detayı")}
+        {/* Geri link rol-duyarlı: hasta /doktor/vaka'ya giremez → kendi başvuru merkezine döner (v6.20) */}
+        <Link href={data.isStaff ? `/doktor/vaka/${data.caseId}` : `/vaka/${data.caseId}`} className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">
+          <ArrowLeft size={16} /> {t(data.isStaff ? "Vaka detayı" : "Başvuru detayı")}
         </Link>
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>

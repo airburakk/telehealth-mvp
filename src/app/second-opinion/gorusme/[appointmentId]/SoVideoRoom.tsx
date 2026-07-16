@@ -43,7 +43,7 @@ const S = {
   title: "İkinci Görüş — Video",
   ended: "Görüşme sona erdi",
   endedSub: "İkinci görüş video görüşmeniz tamamlandı.",
-  backToCase: "Vakaya dön",
+  backToCase: "Başvuruya dön",
   patient: "Hasta",
   doctor: "Doktor",
   permNote: "Kamera ve mikrofon izni istenecek. En iyi deneyim için Chrome veya Safari kullanın.",

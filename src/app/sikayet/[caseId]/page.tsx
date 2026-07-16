@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 import { canAccessCase } from "@/lib/ownership";
 import { ComplaintForm } from "@/components/ComplaintForm";
 import { BOARD } from "@/lib/ethics";
@@ -14,11 +15,14 @@ export default async function ComplaintPage({ params }: { params: Promise<{ case
   const c = await db.case.findUnique({ where: { id: caseId } });
   if (!c) notFound();
   if (!(await canAccessCase(c))) notFound(); // hasta yalnız kendi vakası için başvurabilir
+  const user = await getCurrentUser();
+  const isStaff = !!user && ["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role);
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
-      <Link href={`/doktor/vaka/${c.id}`} className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">
-        <ArrowLeft size={16} /> Vaka detayı
+      {/* Geri link rol-duyarlı: hasta /doktor/vaka'ya giremez → kendi başvuru merkezine döner (v6.20) */}
+      <Link href={isStaff ? `/doktor/vaka/${c.id}` : `/vaka/${c.id}`} className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">
+        <ArrowLeft size={16} /> {isStaff ? "Vaka detayı" : "Başvuru detayı"}
       </Link>
 
       <div className="mt-4 flex items-center gap-3">

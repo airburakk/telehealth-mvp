@@ -21,7 +21,7 @@ const S = {
   thAction: "İşlem",
   thResource: "Kaynak",
   thVerify: "Doğrulama",
-  empty: "Verinize henüz kayıtlı bir erişim yok. Bir doktor vakanızı görüntülediğinde burada görünür.",
+  empty: "Verinize henüz kayıtlı bir erişim yok. Bir doktor başvurunuzu görüntülediğinde burada görünür.",
   you: "Siz",
   system: "Sistem",
   verified: "Doğrulandı",

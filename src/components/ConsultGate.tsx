@@ -15,7 +15,7 @@ export interface GateAppt {
 
 const TEXTS = [
   "Şu an çevrimiçi branş doktoru yok",
-  "Size en uygun yolu seçin — vakanız kaydedildi, hiçbir bilgi kaybolmaz.",
+  "Size en uygun yolu seçin — başvurunuz kaydedildi, hiçbir bilgi kaybolmaz.",
   "Nöbetçi doktorla şimdi görüşün",
   "7/24 görevli Dahiliye/Acil doktoru sizinle hemen bir video görüşmesi yapar.",
   "Şimdi görüş",
@@ -200,7 +200,7 @@ export function ConsultGate({
         <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-amber-500/15 text-amber-300"><ShieldQuestion size={18} /></span>
         <div>
           <h2 className="font-bold text-amber-200">{t("Şu an çevrimiçi branş doktoru yok")}</h2>
-          <p className="mt-0.5 text-sm text-amber-200/90">{t("Size en uygun yolu seçin — vakanız kaydedildi, hiçbir bilgi kaybolmaz.")}</p>
+          <p className="mt-0.5 text-sm text-amber-200/90">{t("Size en uygun yolu seçin — başvurunuz kaydedildi, hiçbir bilgi kaybolmaz.")}</p>
         </div>
       </div>
 
