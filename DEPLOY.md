@@ -246,8 +246,8 @@ Her push/deploy öncesi (sıra önemli):
 ## Ortam ayrımı (Ray B, launch-gate 3 — 2026-07-16)
 
 **Hedef durum:** üretim · geliştirme · test ayrı veritabanları + ortam-başına ayrı anahtarlar
-(KEK/SESSION_SECRET). Mevcut durum: test katmanı ayrı (Neon dev branch, `TEST_DATABASE_URL`);
-**yerel geliştirme hâlâ üretim Neon'una bağlı** (bilinçli MVP kabulüydü — kapatılıyor).
+(KEK/SESSION_SECRET). Durum (2026-07-16): **ÜÇ KATMAN AYRI** — üretim (`production` branch) ·
+geliştirme (`development` branch) · test (`test` branch, `TEST_DATABASE_URL`).
 
 **B1 — DB guard (AKTİF):** `src/lib/db.ts` üretim-dışı bir süreç (next dev, tsx script) üretim
 endpoint'ine bağlanırken YÜKSEK SESLE uyarır. Kurulum (yerel `.env`, zorunlu):
@@ -258,7 +258,20 @@ endpoint'ine bağlanırken YÜKSEK SESLE uyarır. Kurulum (yerel `.env`, zorunlu
 Guard Vercel'de devre dışıdır (NODE_ENV=production / VERCEL=1 — üretimin kendi DB'sine bağlanması
 normal). Parmak izi kodda tutulmaz (public repo).
 
-**B2 (sırada):** geliştirme için ayrı Neon branch + ayrı `DATA_ENCRYPTION_KEK`/`SESSION_SECRET` +
-seed/demo verisi → sonra yerel `.env` `DATABASE_URL`'i dev branch'e döner ve `AURA_DB_GUARD=block`
-varsayılan olur. ⚠️ O günden sonra "canlı doğrulama" akışları yeniden tanımlanır: prod'a yalnız
-smoke; fonksiyonel doğrulama dev branch'te.
+**B2 — TAMAMLANDI (2026-07-16):** Neon `development` branch'i (schema-only fork, auto-delete YOK)
++ yerel `.env` düzeni değişti:
+
+- `DATABASE_URL`/`DIRECT_URL` → **development branch** (+`connect_timeout=15`); `DATA_ENCRYPTION_KEK`
+  ve `SESSION_SECRET` → **yeni, dev'e özgü** değerler; `AURA_DB_GUARD="block"` varsayılan.
+- Üretim değerleri `PROD_DATABASE_URL`/`PROD_DIRECT_URL`/`PROD_DATA_ENCRYPTION_KEK`/
+  `PROD_SESSION_SECRET` adlarıyla `.env`'de saklı (kaynak-of-truth Vercel env). **Prod'a bilinçli
+  işlem** (ör. onaylı `migrate deploy`): komuta `DATABASE_URL`/`DIRECT_URL` PROD değerleriyle
+  AÇIKÇA verilir — varsayılan hiçbir akış artık prod'a gitmez.
+- Yeni makinede kurulum sırası: branch aç (schema-only) → `.env` DEV url'leri →
+  `prisma migrate reset --force --skip-seed` (YALNIZ dev!) → `ALLOW_DESTRUCTIVE_SEED=1 npm run db:seed`.
+- 📌 **Doğrulama alışkanlığı değişti:** fonksiyonel doğrulama artık dev branch'te (seed: 5 kullanıcı ·
+  30 doktor · 20 vaka; demo girişler çalışır); üretime yalnız HTTP smoke.
+- ⚠️ Bilinçli sınırlar (açık kalemler): tedarikçi API anahtarları (AI/Blob/Ably/TURN…) ortamlar
+  arasında hâlâ ORTAK (ayrımı ayrı kalem) · **Vercel Preview deployment'ları hâlâ prod DB'ye bakar**
+  (`DATABASE_URL` kapsamı "Production and Preview") — istenirse panelde Preview kapsamına
+  development branch bağlantısı atanır.
