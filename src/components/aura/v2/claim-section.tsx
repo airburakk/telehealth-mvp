@@ -1,6 +1,7 @@
 "use client";
 
-import { ShieldCheck, Scale, Route, type LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ShieldCheck, Scale, Route, Stethoscope, type LucideIcon } from "lucide-react";
 import { useLang, type Copy } from "@/lib/aura-landing/i18n";
 
 // /v2 FAZ 2 (v6.16) — "iddia bölümü" iskeleti: AI sorumluluğu + Erişilebilirlik.
@@ -23,10 +24,14 @@ export function V2ClaimSection({
   id,
   copy,
   icon: Icon = ShieldCheck,
+  cta,
 }: {
   id: string;
   copy: ClaimCopy;
   icon?: LucideIcon;
+  // Opsiyonel köprü (v6.17): bölümün tam sayfası varsa not kutusundan sonra
+  // tek link — ai/accessibility/connected'da YOK, clinicians → /for-clinicians.
+  cta?: { label: string; href: string };
 }) {
   const headingId = `${id}-heading`;
 
@@ -85,6 +90,18 @@ export function V2ClaimSection({
           </div>
         </div>
       </div>
+
+      {cta && (
+        <div className="mt-8">
+          <Link
+            href={cta.href}
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-[var(--aura-accent)]/40 px-6 py-3 text-sm font-semibold text-[var(--aura-accent-stronger)] transition-colors hover:bg-[var(--aura-accent)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aura-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--aura-bg)]"
+          >
+            {cta.label}
+            <ArrowRight aria-hidden size={16} className="rtl:rotate-180" />
+          </Link>
+        </div>
+      )}
     </section>
   );
 }
@@ -107,4 +124,19 @@ export function V2Accessibility() {
 export function V2ConnectedCare() {
   const { t } = useLang();
   return <V2ClaimSection id="connected" copy={t.v2.connected} icon={Route} />;
+}
+
+// Dördüncü besleme (v6.17): Clinicians — /v2'de kompakt bölüm; tam sayfa
+// /for-clinicians (cta.more oraya köprü). Sözlük İKİ yüzeyi de besler.
+export function V2Clinicians() {
+  const { t } = useLang();
+  const c = t.v2.clinicians;
+  return (
+    <V2ClaimSection
+      id="clinicians"
+      copy={c}
+      icon={Stethoscope}
+      cta={{ label: c.cta.more, href: "/for-clinicians" }}
+    />
+  );
 }

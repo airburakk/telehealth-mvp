@@ -54,9 +54,9 @@ export function V2Nav() {
             {nav.how}
           </Link>
           <NavLink href="/guven-ve-gizlilik" label={nav.trust} />
-          {/* Doktorlar İçin → şimdilik kurumsal giriş kapısı; todo'daki
-              /for-clinicians rotası gelince oraya bağlanır. */}
-          <NavLink href="/kurumsal-giris" label={nav.clinicians} />
+          {/* Doktorlar İçin → /for-clinicians (v6.17; önceki geçici hedef
+              /kurumsal-giris idi — sayfa artık var). */}
+          <NavLink href="/for-clinicians" label={nav.clinicians} />
         </div>
 
         <div className="flex items-center gap-4 md:gap-6">
@@ -113,7 +113,7 @@ export function V2Nav() {
               {nav.how}
             </Link>
             <MobileLink href="/guven-ve-gizlilik" label={nav.trust} close={() => setOpen(false)} />
-            <MobileLink href="/kurumsal-giris" label={nav.clinicians} close={() => setOpen(false)} />
+            <MobileLink href="/for-clinicians" label={nav.clinicians} close={() => setOpen(false)} />
           </div>
           <Link
             href="/giris"

@@ -4,7 +4,7 @@ import { AuraClosing } from "../closing";
 import { AuraTrust } from "../trust";
 import { AuraDoctors } from "../doctors";
 import { AuraHowItWorks } from "../how";
-import { V2Accessibility, V2AiResponsibility, V2ConnectedCare } from "./claim-section";
+import { V2Accessibility, V2AiResponsibility, V2Clinicians, V2ConnectedCare } from "./claim-section";
 import { V2EntryPaths } from "./entry-paths";
 import { V2Hero } from "./hero";
 import { V2Nav } from "./nav";
@@ -54,6 +54,9 @@ function V2Shell() {
           <AuraTrust />
           <V2AiResponsibility />
           <V2Accessibility />
+          {/* Clinicians (v6.17): blueprint IA'da kapanıştan önce son bölüm —
+              hasta anlatısı bitti, doktor köprüsü (cta → /for-clinicians). */}
+          <V2Clinicians />
         </div>
         <AuraClosing />
       </main>

@@ -512,6 +512,62 @@ export const COPY = {
           text: "Connected does not mean open-ended access. Who can see your case follows role and assignment — and when post-operative follow-up ends, clinical staff access closes. Your record returns to you alone.",
         },
       },
+
+      // ——— FAZ 2 kalan (v6.17): Clinicians — /v2 bolumu + /for-clinicians sayfasi ———
+      // TEK sozluk iki yuzeyi besler: /v2'deki kompakt bolum (cta.more → sayfa) ve
+      // /for-clinicians tam sayfasi (cta.signup → /kayit · cta.login → /kurumsal-giris).
+      // KURAL [[public-claim-honesty]]: her madde KOD KANITLI:
+      //   clinicians.01 (verify) → /kayit self-signup (v4.0) + verified:false →
+      //     /admin/hekim-onay; "belgeler incelenip onaylanmadan profil yayina cikmaz"
+      //     ZATEN onayli canli metin (bu dosyada trust items).
+      //   clinicians.02 (onboarding) → FHIR-tabanli onboarding: islem/ucret + licenseNo
+      //     → AcademicEditor (m5 v4.0).
+      //   clinicians.03 (tools) → ai-clinical.ts summarizeSOAP + generateDischarge;
+      //     ClinicalDecisionPanel etiketi: "AI — endikatif; karar doktora aittir".
+      //   clinicians.04 (partner) → PARTNER rolu hasta DB erisimi YOK; havuza aktarim
+      //     ONCESI deidentify.ts (yapisal de-id + metin maskeleme, DICOM haric).
+      //   note → dogrulama ≠ akreditasyon (v6.8: "akredite" YASAK kelime — biz belge
+      //     inceleriz, unvan/akreditasyon VERMEYIZ).
+      clinicians: {
+        eyebrow: "For clinicians",
+        headline: "Practice across borders. Keep your judgement.",
+        intro: "AURA brings you cross-border patients with prepared cases — and stays out of your clinical decisions.",
+        items: [
+          {
+            key: "verify",
+            n: "01",
+            title: "Verified before visible",
+            body: "Your professional documents are reviewed and approved before your profile goes live. Patients only ever see verified doctors.",
+          },
+          {
+            key: "onboarding",
+            n: "02",
+            title: "Onboarding that speaks FHIR",
+            body: "Procedures, fees and licence details are captured as structured clinical data — not free text lost in a form.",
+          },
+          {
+            key: "tools",
+            n: "03",
+            title: "AI drafts, you decide",
+            body: "Messy visit notes become a SOAP summary; a whole journey becomes a discharge draft. Every AI output is labelled indicative — the clinical decision stays yours.",
+          },
+          {
+            key: "partner",
+            n: "04",
+            title: "Consult without holding data",
+            body: "As a partner doctor, you give opinions on de-identified cases — with no access to the patient database at all.",
+          },
+        ],
+        note: {
+          label: "What we don't claim",
+          text: "Verification is document review, not accreditation. We check professional documents before a profile goes live — we do not award titles, and we make no claims about clinical outcomes.",
+        },
+        cta: {
+          more: "See how AURA works for clinicians",
+          signup: "Apply as a doctor",
+          login: "Staff sign-in",
+        },
+      },
     },
 
     // /guven-ve-gizlilik — Guven ve Gizlilik sayfasi (2026-07-15).
@@ -993,6 +1049,46 @@ export const COPY = {
           text: "Bağlantılı olmak, sınırsız erişim demek değildir. Vakanızı kimin görebileceği role ve atamaya bağlıdır — ameliyat sonrası takip bittiğinde klinik personelin erişimi kapanır. Kayıt yalnız size döner.",
         },
       },
+      clinicians: {
+        eyebrow: "Doktorlar için",
+        headline: "Sınır ötesinde çalışın. Yargınız sizde kalsın.",
+        intro: "AURA size hazırlanmış vakalarla sınır ötesi hastalar getirir — klinik kararlarınızın dışında durur.",
+        items: [
+          {
+            key: "verify",
+            n: "01",
+            title: "Görünmeden önce doğrulanır",
+            body: "Mesleki belgeleriniz incelenip onaylanmadan profiliniz yayına çıkmaz. Hastalar yalnız doğrulanmış doktorları görür.",
+          },
+          {
+            key: "onboarding",
+            n: "02",
+            title: "FHIR konuşan bir başlangıç",
+            body: "İşlemler, ücretler ve lisans bilgileri yapılandırılmış klinik veri olarak alınır — bir formda kaybolan serbest metin değil.",
+          },
+          {
+            key: "tools",
+            n: "03",
+            title: "AI taslak yazar, siz karar verirsiniz",
+            body: "Dağınık görüşme notları SOAP özetine, bütün bir yolculuk epikriz taslağına dönüşür. Her AI çıktısı endikatif etiketlidir — klinik karar sizde kalır.",
+          },
+          {
+            key: "partner",
+            n: "04",
+            title: "Veri tutmadan görüş verin",
+            body: "Partner doktor olarak kimliksizleştirilmiş vakalara görüş verirsiniz — hasta veritabanına erişiminiz hiç olmaz.",
+          },
+        ],
+        note: {
+          label: "Neyi iddia etmiyoruz",
+          text: "Doğrulama bir belge incelemesidir, akreditasyon değildir. Profil yayına çıkmadan önce mesleki belgeleri kontrol ederiz — unvan vermeyiz ve klinik sonuçlar hakkında iddiada bulunmayız.",
+        },
+        cta: {
+          more: "AURA doktorlar için nasıl çalışır",
+          signup: "Doktor olarak başvurun",
+          login: "Personel girişi",
+        },
+      },
     },
 
     trustPage: {
@@ -1378,6 +1474,46 @@ export const COPY = {
         note: {
           label: "Was wir nicht behaupten",
           text: "Vernetzt bedeutet nicht unbegrenzter Zugriff. Wer Ihren Fall sehen kann, folgt Rolle und Zuweisung — und wenn die postoperative Nachsorge endet, schließt sich der Zugriff des klinischen Personals. Ihre Akte gehört wieder Ihnen allein.",
+        },
+      },
+      clinicians: {
+        eyebrow: "Für Ärztinnen und Ärzte",
+        headline: "Über Grenzen hinweg praktizieren. Das Urteil bleibt bei Ihnen.",
+        intro: "AURA bringt Ihnen grenzüberschreitende Patientinnen und Patienten mit vorbereiteten Fällen — und hält sich aus Ihren klinischen Entscheidungen heraus.",
+        items: [
+          {
+            key: "verify",
+            n: "01",
+            title: "Verifiziert, bevor sichtbar",
+            body: "Ihre Berufsdokumente werden geprüft und freigegeben, bevor Ihr Profil online geht. Patientinnen und Patienten sehen ausschließlich verifizierte Ärztinnen und Ärzte.",
+          },
+          {
+            key: "onboarding",
+            n: "02",
+            title: "Ein Onboarding, das FHIR spricht",
+            body: "Eingriffe, Honorare und Lizenzdaten werden als strukturierte klinische Daten erfasst — kein Freitext, der in einem Formular verloren geht.",
+          },
+          {
+            key: "tools",
+            n: "03",
+            title: "KI entwirft, Sie entscheiden",
+            body: "Ungeordnete Gesprächsnotizen werden zur SOAP-Zusammenfassung, eine ganze Reise zum Entlassungsentwurf. Jede KI-Ausgabe ist als indikativ gekennzeichnet — die klinische Entscheidung bleibt Ihre.",
+          },
+          {
+            key: "partner",
+            n: "04",
+            title: "Beraten, ohne Daten zu halten",
+            body: "Als Partnerärztin oder Partnerarzt geben Sie Einschätzungen zu de-identifizierten Fällen ab — ganz ohne Zugriff auf die Patientendatenbank.",
+          },
+        ],
+        note: {
+          label: "Was wir nicht behaupten",
+          text: "Verifizierung ist Dokumentenprüfung, keine Akkreditierung. Wir prüfen Berufsdokumente, bevor ein Profil online geht — wir vergeben keine Titel und machen keine Aussagen über klinische Ergebnisse.",
+        },
+        cta: {
+          more: "So funktioniert AURA für Ärztinnen und Ärzte",
+          signup: "Als Ärztin oder Arzt bewerben",
+          login: "Anmeldung für Personal",
         },
       },
     },
@@ -1766,6 +1902,46 @@ export const COPY = {
           text: "Connecté ne veut pas dire accès illimité. Qui peut voir votre dossier dépend du rôle et de l'affectation — et quand le suivi postopératoire se termine, l'accès du personnel clinique se ferme. Votre dossier vous revient, à vous seul.",
         },
       },
+      clinicians: {
+        eyebrow: "Pour les cliniciens",
+        headline: "Exercez au-delà des frontières. Gardez votre jugement.",
+        intro: "AURA vous amène des patients transfrontaliers avec des dossiers préparés — et reste en dehors de vos décisions cliniques.",
+        items: [
+          {
+            key: "verify",
+            n: "01",
+            title: "Vérifié avant d'être visible",
+            body: "Vos documents professionnels sont examinés et approuvés avant la mise en ligne de votre profil. Les patients ne voient que des médecins vérifiés.",
+          },
+          {
+            key: "onboarding",
+            n: "02",
+            title: "Un onboarding qui parle FHIR",
+            body: "Actes, honoraires et données de licence sont saisis comme données cliniques structurées — pas du texte libre perdu dans un formulaire.",
+          },
+          {
+            key: "tools",
+            n: "03",
+            title: "L'IA rédige, vous décidez",
+            body: "Des notes de consultation éparses deviennent un résumé SOAP ; tout un parcours devient un projet de compte rendu de sortie. Chaque sortie d'IA est marquée indicative — la décision clinique reste la vôtre.",
+          },
+          {
+            key: "partner",
+            n: "04",
+            title: "Donner un avis sans détenir de données",
+            body: "En tant que médecin partenaire, vous donnez des avis sur des dossiers dé-identifiés — sans aucun accès à la base de données des patients.",
+          },
+        ],
+        note: {
+          label: "Ce que nous ne prétendons pas",
+          text: "La vérification est un examen de documents, pas une accréditation. Nous contrôlons les documents professionnels avant la mise en ligne d'un profil — nous ne décernons pas de titres et ne faisons aucune affirmation sur les résultats cliniques.",
+        },
+        cta: {
+          more: "Comment AURA fonctionne pour les cliniciens",
+          signup: "Postuler comme médecin",
+          login: "Connexion du personnel",
+        },
+      },
     },
 
     trustPage: {
@@ -2150,6 +2326,46 @@ export const COPY = {
         note: {
           label: "Чего мы не утверждаем",
           text: "Связанность не означает неограниченный доступ. Кто может видеть ваше дело, определяется ролью и назначением — а когда послеоперационное наблюдение заканчивается, доступ клинического персонала закрывается. Запись возвращается только вам.",
+        },
+      },
+      clinicians: {
+        eyebrow: "Для врачей",
+        headline: "Практикуйте через границы. Решение остаётся за вами.",
+        intro: "AURA приводит к вам зарубежных пациентов с подготовленными делами — и не вмешивается в ваши клинические решения.",
+        items: [
+          {
+            key: "verify",
+            n: "01",
+            title: "Проверен — прежде чем виден",
+            body: "Ваши профессиональные документы проверяются и утверждаются до публикации профиля. Пациенты видят только проверенных врачей.",
+          },
+          {
+            key: "onboarding",
+            n: "02",
+            title: "Онбординг, говорящий на FHIR",
+            body: "Процедуры, гонорары и данные лицензии фиксируются как структурированные клинические данные — а не свободный текст, теряющийся в форме.",
+          },
+          {
+            key: "tools",
+            n: "03",
+            title: "ИИ готовит черновик — решаете вы",
+            body: "Разрозненные заметки приёма становятся SOAP-резюме, весь путь пациента — черновиком выписного эпикриза. Каждый результат ИИ помечен как ориентировочный — клиническое решение остаётся за вами.",
+          },
+          {
+            key: "partner",
+            n: "04",
+            title: "Консультируйте, не храня данных",
+            body: "Как врач-партнёр вы даёте заключения по обезличенным делам — вовсе без доступа к базе данных пациентов.",
+          },
+        ],
+        note: {
+          label: "Чего мы не утверждаем",
+          text: "Проверка — это экспертиза документов, а не аккредитация. Мы проверяем профессиональные документы перед публикацией профиля — мы не присваиваем званий и не делаем заявлений о клинических результатах.",
+        },
+        cta: {
+          more: "Как AURA работает для врачей",
+          signup: "Подать заявку как врач",
+          login: "Вход для персонала",
         },
       },
     },
@@ -2538,6 +2754,46 @@ export const COPY = {
           text: "الترابط لا يعني وصولًا بلا حدود. من يستطيع رؤية حالتك يتبع الدور والتكليف — وعندما تنتهي متابعة ما بعد العملية، يُغلق وصول الطاقم السريري. يعود السجل إليك وحدك.",
         },
       },
+      clinicians: {
+        eyebrow: "للأطباء",
+        headline: "مارِس عبر الحدود. ويبقى القرار لك.",
+        intro: "تجلب لك AURA مرضى من خارج الحدود بملفات مُعدّة — وتبقى خارج قراراتك السريرية.",
+        items: [
+          {
+            key: "verify",
+            n: "01",
+            title: "مُوثَّق قبل أن يُرى",
+            body: "تُراجَع مستنداتك المهنية وتُعتمد قبل نشر ملفك. لا يرى المرضى إلا أطباء موثَّقين.",
+          },
+          {
+            key: "onboarding",
+            n: "02",
+            title: "انضمام يتحدث FHIR",
+            body: "الإجراءات والأتعاب وبيانات الترخيص تُسجَّل كبيانات سريرية منظّمة — لا نصًا حرًا يضيع في نموذج.",
+          },
+          {
+            key: "tools",
+            n: "03",
+            title: "الذكاء الاصطناعي يُسوِّد، وأنت تقرر",
+            body: "ملاحظات الزيارة المتناثرة تصبح ملخص SOAP، والرحلة كاملة تصبح مسودة تقرير خروج. كل مخرج للذكاء الاصطناعي موسوم بأنه استرشادي — والقرار السريري يبقى لك.",
+          },
+          {
+            key: "partner",
+            n: "04",
+            title: "استشر دون الاحتفاظ بالبيانات",
+            body: "بصفتك طبيبًا شريكًا تُبدي رأيك في حالات منزوعة الهوية — دون أي وصول إلى قاعدة بيانات المرضى.",
+          },
+        ],
+        note: {
+          label: "ما لا ندّعيه",
+          text: "التوثيق مراجعة مستندات، لا اعتماد. نفحص المستندات المهنية قبل نشر الملف — لا نمنح ألقابًا ولا ندّعي شيئًا عن النتائج السريرية.",
+        },
+        cta: {
+          more: "كيف تعمل AURA للأطباء",
+          signup: "قدّم كطبيب",
+          login: "دخول الموظفين",
+        },
+      },
     },
 
     trustPage: {
@@ -2922,6 +3178,46 @@ export const COPY = {
         note: {
           label: "آنچه ادعا نمی‌کنیم",
           text: "پیوسته بودن به معنای دسترسی بی‌حدومرز نیست. اینکه چه کسی پروندهٔ شما را می‌بیند تابع نقش و تخصیص است — و وقتی پیگیری پس از عمل پایان می‌یابد، دسترسی کادر درمانی بسته می‌شود. پرونده تنها به شما بازمی‌گردد.",
+        },
+      },
+      clinicians: {
+        eyebrow: "برای پزشکان",
+        headline: "فراتر از مرزها طبابت کنید. قضاوت از آنِ شما می‌ماند.",
+        intro: "AURA بیماران فرامرزی را با پرونده‌های آماده نزد شما می‌آورد — و از تصمیم‌های بالینی شما بیرون می‌ماند.",
+        items: [
+          {
+            key: "verify",
+            n: "01",
+            title: "پیش از دیده شدن، تأیید می‌شود",
+            body: "مدارک حرفه‌ای شما پیش از انتشار نمایه بررسی و تأیید می‌شود. بیماران تنها پزشکان تأییدشده را می‌بینند.",
+          },
+          {
+            key: "onboarding",
+            n: "02",
+            title: "آغازی که FHIR سخن می‌گوید",
+            body: "اقدامات، تعرفه‌ها و اطلاعات پروانه به‌صورت دادهٔ بالینی ساخت‌یافته ثبت می‌شوند — نه متنی آزاد که در فرمی گم شود.",
+          },
+          {
+            key: "tools",
+            n: "03",
+            title: "هوش مصنوعی پیش‌نویس می‌کند، شما تصمیم می‌گیرید",
+            body: "یادداشت‌های پراکندهٔ ویزیت به خلاصهٔ SOAP و کل مسیر به پیش‌نویس ترخیص تبدیل می‌شود. هر خروجی هوش مصنوعی برچسب راهنما دارد — تصمیم بالینی از آنِ شماست.",
+          },
+          {
+            key: "partner",
+            n: "04",
+            title: "بدون نگه‌داشتن داده مشاوره دهید",
+            body: "به‌عنوان پزشک همکار دربارهٔ پرونده‌های هویت‌زدایی‌شده نظر می‌دهید — بی هیچ دسترسی به پایگاه دادهٔ بیماران.",
+          },
+        ],
+        note: {
+          label: "آنچه ادعا نمی‌کنیم",
+          text: "تأیید یعنی بررسی مدارک، نه اعتباربخشی. ما مدارک حرفه‌ای را پیش از انتشار نمایه بررسی می‌کنیم — عنوانی اعطا نمی‌کنیم و دربارهٔ نتایج بالینی ادعایی نداریم.",
+        },
+        cta: {
+          more: "AURA برای پزشکان چگونه کار می‌کند",
+          signup: "به‌عنوان پزشک درخواست دهید",
+          login: "ورود کارکنان",
         },
       },
     },
@@ -3309,6 +3605,46 @@ export const COPY = {
         note: {
           label: "İddia etmədiklərimiz",
           text: "Əlaqəli olmaq sərhədsiz giriş demək deyil. İşinizi kimin görə biləcəyi rola və təyinata bağlıdır — əməliyyatdan sonrakı izləmə bitdikdə klinik heyətin girişi bağlanır. Qeyd yalnız sizə qayıdır.",
+        },
+      },
+      clinicians: {
+        eyebrow: "Həkimlər üçün",
+        headline: "Sərhədlərin o tayında çalışın. Qərar sizdə qalsın.",
+        intro: "AURA sizə hazırlanmış işlərlə sərhədlərarası xəstələr gətirir — klinik qərarlarınızın kənarında qalır.",
+        items: [
+          {
+            key: "verify",
+            n: "01",
+            title: "Görünməzdən əvvəl təsdiqlənir",
+            body: "Peşəkar sənədləriniz yoxlanılıb təsdiqlənmədən profiliniz yayımlanmır. Xəstələr yalnız təsdiqlənmiş həkimləri görür.",
+          },
+          {
+            key: "onboarding",
+            n: "02",
+            title: "FHIR danışan bir başlanğıc",
+            body: "Prosedurlar, haqlar və lisenziya məlumatları strukturlaşdırılmış klinik məlumat kimi qeydə alınır — formada itən sərbəst mətn deyil.",
+          },
+          {
+            key: "tools",
+            n: "03",
+            title: "Sİ qaralama yazır, siz qərar verirsiniz",
+            body: "Dağınıq görüş qeydləri SOAP xülasəsinə, bütöv bir yol epikriz qaralamasına çevrilir. Hər Sİ nəticəsi təxmini etiketlidir — klinik qərar sizdə qalır.",
+          },
+          {
+            key: "partner",
+            n: "04",
+            title: "Məlumat saxlamadan məsləhət verin",
+            body: "Tərəfdaş həkim kimi eyniləşdirmədən çıxarılmış işlərə rəy verirsiniz — xəstə verilənlər bazasına heç bir girişiniz olmur.",
+          },
+        ],
+        note: {
+          label: "İddia etmədiklərimiz",
+          text: "Təsdiq sənəd yoxlamasıdır, akkreditasiya deyil. Profil yayımlanmazdan əvvəl peşəkar sənədləri yoxlayırıq — ad-san vermirik və klinik nəticələr barədə iddia irəli sürmürük.",
+        },
+        cta: {
+          more: "AURA həkimlər üçün necə işləyir",
+          signup: "Həkim kimi müraciət edin",
+          login: "Heyət girişi",
         },
       },
     },

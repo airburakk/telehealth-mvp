@@ -9,7 +9,7 @@ export function SiteFooter() {
   const pathname = usePathname();
   // Giriş kapıları da tam-ekran vitrin paneli (Header ile aynı liste; /e-posta formlarında krom durur).
   // Video görüşme rotaları immersive tam-ekran → footer gizlenir (Header ile simetrik).
-  if (["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/giris", "/kurumsal-giris"].includes(pathname) || isImmersiveCallPath(pathname)) return null;
+  if (["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/for-clinicians", "/giris", "/kurumsal-giris"].includes(pathname) || isImmersiveCallPath(pathname)) return null;
   return (
     <footer className="theme-dark border-t border-[var(--c-hairline)] bg-[var(--c-bg)] print:hidden">
       <div className="mx-auto max-w-6xl px-5 py-5 text-xs text-[var(--c-ink-3)] flex flex-wrap items-center justify-between gap-2">
