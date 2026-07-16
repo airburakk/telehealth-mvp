@@ -81,9 +81,10 @@ export function V2Hero() {
             // v6.14.4'te `adım×55+40` yazmıştım = ~315vh ≈ ekranın 3 katı →
             // kullanıcı: "scroll jacking çok olmuş, bir kez scroll yaptığımda
             // direkt yazılar gelsin; mobilde 3 kez kaydırmam gerekiyor".
-            // 55vh ≈ TEK kaydırma hareketi: yazılar akıp gelir, pin hemen çözülür.
-            // Adım sayısı artarsa burayı ÇARPMA — stagger'ı sıkılaştır.
-            end: "+=55%",
+            // v6.14.7: stagger sıfırlandı (kullanıcı: "tek yeter") → tüm metin
+            // TEK hamlede gelir ⇒ pin de kısaldı: 55% → 30% (~1 kaydırma).
+            // Adım sayısı artarsa burayı ÇARPMA.
+            end: "+=30%",
             pin: true,
             pinSpacing: true,
             scrub: 0.4, // düşük = kaydırmaya çevik yanıt (0.8 gecikmeli hissettiriyordu)
@@ -91,8 +92,10 @@ export function V2Hero() {
             invalidateOnRefresh: true,
           },
         });
-        // Hepsi TEK tween'de, kısa stagger ile akar: eyebrow → h1 → lede → CTA → not.
-        tl.to(steps, { opacity: 1, y: 0, duration: 1, stagger: 0.3, ease: "power2.out" });
+        // Kullanıcı kararı (v6.14.7): stagger YOK — eyebrow/h1/lede/CTA/not
+        // hepsi AYNI ANDA belirir. Sıralı akış "bir kez scroll = yazılar gelsin"
+        // isteğini geciktiriyordu. Geri eklenecekse pin süresini de büyüt.
+        tl.to(steps, { opacity: 1, y: 0, duration: 1, ease: "power2.out" });
       }, section);
     })();
 
