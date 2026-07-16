@@ -4,7 +4,7 @@ import { AuraClosing } from "../closing";
 import { AuraTrust } from "../trust";
 import { AuraDoctors } from "../doctors";
 import { AuraHowItWorks } from "../how";
-import { V2Accessibility, V2AiResponsibility } from "./claim-section";
+import { V2Accessibility, V2AiResponsibility, V2ConnectedCare } from "./claim-section";
 import { V2EntryPaths } from "./entry-paths";
 import { V2Hero } from "./hero";
 import { V2Nav } from "./nav";
@@ -47,6 +47,9 @@ function V2Shell() {
             etmiyoruz"u söyler — sıra bilinçli, ikisi birbirini tamamlıyor. */}
         <div className="aura-light bg-[var(--aura-bg)]">
           <AuraHowItWorks />
+          {/* ConnectedCare (v6.17) blueprint IA'ya uygun: süreç (how) → ne bağlı
+              kalır (connected) → kim (doctors) → kanıt (trust) → sınırlar (ai/a11y). */}
+          <V2ConnectedCare />
           <AuraDoctors />
           <AuraTrust />
           <V2AiResponsibility />

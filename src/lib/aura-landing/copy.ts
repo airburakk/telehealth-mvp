@@ -461,6 +461,57 @@ export const COPY = {
           text: "We make no WCAG conformance claim — we have not been independently audited. The Braille mark beneath the AURA wordmark is a visual brand element; it does not mean Braille device or screen-reader support.",
         },
       },
+
+      // ——— FAZ 2 kalan (v6.17): Connected care ———
+      // KURAL [[public-claim-honesty]]: her madde KOD KANITLI. Kanit haritasi:
+      //   connected.01 (profile) → /api/patient/profile + prefill DORT intake'te
+      //     (triyaj/page.tsx · SoApplyForm.tsx · SaglikTurizmiPlanner.tsx · ucretsiz-saglik/basvur)
+      //   connected.02 (video) → ConsultationRoom.tsx (transcript + ceviri yonlendirme) +
+      //     PreConsultLobby.tsx AI_INTERPRET ayri riza (v6.5). ⚠️ "encrypted video, with live
+      //     interpretation" ifadesi ZATEN onayli canli metin (bu dosyada trust items) —
+      //     yeni iddia ICAT EDILMEDI, ayni dil yeniden kullanildi.
+      //   connected.03 (record) → /vaka hub (v5.8) + /takip epikriz (hasta-yuzu) +
+      //     generateDischarge (ai-clinical.ts) + fhir/Composition/[caseId] export
+      //   connected.04 (documents) → lib/storage.ts: bytes upload ONCESI encryptField →
+      //     Blob yalniz ciphertext tutar (trust sayfasindaki onayli iddiayla ayni sinir)
+      //   note → lib/postop-access.ts (takip bitince personel erisimi kapanir → hasta-only,
+      //     Faz 2A) + canCaseBeAccessedBy (rol+atama-bazli erisim)
+      // 🪤 "baglantili" fazla-okunmasin diye not kutusu SINIRI soyler (erisim sinirsiz degil).
+      connected: {
+        eyebrow: "Connected care",
+        headline: "Every step knows the one before.",
+        intro: "Whichever way you enter, assessment, consultation, planning and follow-up stay part of one journey.",
+        items: [
+          {
+            key: "profile",
+            n: "01",
+            title: "Tell your story once",
+            body: "Your profile carries into every application form — triage, second opinion, health tourism or supported care — so you don't start from zero.",
+          },
+          {
+            key: "video",
+            n: "02",
+            title: "A visit that speaks your language",
+            body: "Meet your doctor over encrypted video, with live interpretation — switched on only after your separate consent in the waiting room.",
+          },
+          {
+            key: "record",
+            n: "03",
+            title: "One record, start to finish",
+            body: "Notes, documents and decisions gather in one case file — through to a discharge summary you can read in your follow-up area.",
+          },
+          {
+            key: "documents",
+            n: "04",
+            title: "Documents that travel sealed",
+            body: "Reports and images are encrypted before they reach storage — the storage provider only ever holds the sealed form.",
+          },
+        ],
+        note: {
+          label: "What we don't claim",
+          text: "Connected does not mean open-ended access. Who can see your case follows role and assignment — and when post-operative follow-up ends, clinical staff access closes. Your record returns to you alone.",
+        },
+      },
     },
 
     // /guven-ve-gizlilik — Guven ve Gizlilik sayfasi (2026-07-15).
@@ -907,6 +958,41 @@ export const COPY = {
           text: "WCAG uyumluluk beyanımız yok — bağımsız erişilebilirlik denetiminden geçmedik. AURA yazısının altındaki Braille işareti görsel bir marka öğesidir; Braille cihazı veya ekran okuyucu desteği anlamına gelmez.",
         },
       },
+      connected: {
+        eyebrow: "Bağlantılı bakım",
+        headline: "Her adım bir öncekini bilir.",
+        intro: "Hangi kapıdan girerseniz girin — değerlendirme, görüşme, planlama ve takip tek yolculuğun parçası kalır.",
+        items: [
+          {
+            key: "profile",
+            n: "01",
+            title: "Hikâyenizi bir kez anlatın",
+            body: "Profiliniz her başvuru formuna taşınır — triyaj, ikinci görüş, sağlık turizmi veya destekli bakım — sıfırdan başlamazsınız.",
+          },
+          {
+            key: "video",
+            n: "02",
+            title: "Dilinizi konuşan bir görüşme",
+            body: "Doktorunuzla şifreli video üzerinden, canlı çeviriyle görüşün — çeviri yalnız bekleme odasında verdiğiniz ayrı rızadan sonra açılır.",
+          },
+          {
+            key: "record",
+            n: "03",
+            title: "Baştan sona tek kayıt",
+            body: "Notlar, belgeler ve kararlar tek vaka dosyasında toplanır — takip alanınızda okuyabileceğiniz epikriz özetine kadar.",
+          },
+          {
+            key: "documents",
+            n: "04",
+            title: "Mühürlü yolculuk eden belgeler",
+            body: "Raporlar ve görüntüler depoya ulaşmadan önce şifrelenir — depolama sağlayıcısı yalnız mühürlü hâli tutar.",
+          },
+        ],
+        note: {
+          label: "Neyi iddia etmiyoruz",
+          text: "Bağlantılı olmak, sınırsız erişim demek değildir. Vakanızı kimin görebileceği role ve atamaya bağlıdır — ameliyat sonrası takip bittiğinde klinik personelin erişimi kapanır. Kayıt yalnız size döner.",
+        },
+      },
     },
 
     trustPage: {
@@ -1257,6 +1343,41 @@ export const COPY = {
         note: {
           label: "Was wir nicht behaupten",
           text: "Wir erheben keinen Anspruch auf WCAG-Konformität — wir wurden nicht unabhängig geprüft. Das Braille-Zeichen unter dem AURA-Schriftzug ist ein visuelles Markenelement; es bedeutet keine Unterstützung für Braillezeilen oder Screenreader.",
+        },
+      },
+      connected: {
+        eyebrow: "Vernetzte Versorgung",
+        headline: "Jeder Schritt kennt den vorherigen.",
+        intro: "Egal, über welchen Weg Sie kommen — Einschätzung, Gespräch, Planung und Nachsorge bleiben Teil einer Reise.",
+        items: [
+          {
+            key: "profile",
+            n: "01",
+            title: "Erzählen Sie Ihre Geschichte einmal",
+            body: "Ihr Profil fließt in jedes Antragsformular ein — Ersteinschätzung, Zweitmeinung, Gesundheitstourismus oder unterstützte Versorgung — Sie fangen nie bei null an.",
+          },
+          {
+            key: "video",
+            n: "02",
+            title: "Ein Gespräch, das Ihre Sprache spricht",
+            body: "Treffen Sie Ihre Ärztin oder Ihren Arzt per verschlüsseltem Video mit Live-Dolmetschung — aktiviert erst nach Ihrer gesonderten Einwilligung im Warteraum.",
+          },
+          {
+            key: "record",
+            n: "03",
+            title: "Eine Akte, von Anfang bis Ende",
+            body: "Notizen, Dokumente und Entscheidungen sammeln sich in einer Fallakte — bis hin zum Entlassungsbericht, den Sie in Ihrem Nachsorgebereich lesen können.",
+          },
+          {
+            key: "documents",
+            n: "04",
+            title: "Dokumente, die versiegelt reisen",
+            body: "Befunde und Bilder werden verschlüsselt, bevor sie den Speicher erreichen — der Speicheranbieter hält nur die versiegelte Form.",
+          },
+        ],
+        note: {
+          label: "Was wir nicht behaupten",
+          text: "Vernetzt bedeutet nicht unbegrenzter Zugriff. Wer Ihren Fall sehen kann, folgt Rolle und Zuweisung — und wenn die postoperative Nachsorge endet, schließt sich der Zugriff des klinischen Personals. Ihre Akte gehört wieder Ihnen allein.",
         },
       },
     },
@@ -1610,6 +1731,41 @@ export const COPY = {
           text: "Nous ne revendiquons aucune conformité WCAG — nous n'avons pas fait l'objet d'un audit indépendant. Le signe braille sous le logotype AURA est un élément visuel de marque ; il ne signifie pas la prise en charge des plages braille ou des lecteurs d'écran.",
         },
       },
+      connected: {
+        eyebrow: "Soins connectés",
+        headline: "Chaque étape connaît la précédente.",
+        intro: "Quelle que soit votre porte d'entrée, l'évaluation, la consultation, la planification et le suivi restent les parties d'un même parcours.",
+        items: [
+          {
+            key: "profile",
+            n: "01",
+            title: "Racontez votre histoire une seule fois",
+            body: "Votre profil se retrouve dans chaque formulaire de demande — évaluation, deuxième avis, tourisme médical ou soins accompagnés — vous ne repartez jamais de zéro.",
+          },
+          {
+            key: "video",
+            n: "02",
+            title: "Une consultation qui parle votre langue",
+            body: "Rencontrez votre médecin en vidéo chiffrée, avec interprétation en direct — activée seulement après votre consentement distinct dans la salle d'attente.",
+          },
+          {
+            key: "record",
+            n: "03",
+            title: "Un dossier, du début à la fin",
+            body: "Notes, documents et décisions se rassemblent dans un seul dossier — jusqu'au compte rendu de sortie, lisible dans votre espace de suivi.",
+          },
+          {
+            key: "documents",
+            n: "04",
+            title: "Des documents qui voyagent scellés",
+            body: "Comptes rendus et images sont chiffrés avant d'atteindre le stockage — le prestataire de stockage ne détient jamais que la forme scellée.",
+          },
+        ],
+        note: {
+          label: "Ce que nous ne prétendons pas",
+          text: "Connecté ne veut pas dire accès illimité. Qui peut voir votre dossier dépend du rôle et de l'affectation — et quand le suivi postopératoire se termine, l'accès du personnel clinique se ferme. Votre dossier vous revient, à vous seul.",
+        },
+      },
     },
 
     trustPage: {
@@ -1959,6 +2115,41 @@ export const COPY = {
         note: {
           label: "Чего мы не утверждаем",
           text: "Мы не заявляем о соответствии WCAG — независимого аудита мы не проходили. Знак Брайля под логотипом AURA — визуальный элемент бренда; он не означает поддержку брайлевских дисплеев или программ чтения с экрана.",
+        },
+      },
+      connected: {
+        eyebrow: "Связанная помощь",
+        headline: "Каждый шаг знает предыдущий.",
+        intro: "Каким бы путём вы ни пришли — оценка, консультация, планирование и наблюдение остаются частями одного пути.",
+        items: [
+          {
+            key: "profile",
+            n: "01",
+            title: "Расскажите свою историю один раз",
+            body: "Ваш профиль переносится в каждую форму обращения — первичная оценка, второе мнение, медицинский туризм или поддерживаемая помощь — вы никогда не начинаете с нуля.",
+          },
+          {
+            key: "video",
+            n: "02",
+            title: "Приём, говорящий на вашем языке",
+            body: "Встречайтесь с врачом по зашифрованному видео с живым переводом — он включается только после вашего отдельного согласия в комнате ожидания.",
+          },
+          {
+            key: "record",
+            n: "03",
+            title: "Одна запись, от начала до конца",
+            body: "Заметки, документы и решения собираются в одном деле — вплоть до выписного эпикриза, который вы можете прочитать в разделе наблюдения.",
+          },
+          {
+            key: "documents",
+            n: "04",
+            title: "Документы путешествуют запечатанными",
+            body: "Заключения и снимки шифруются до того, как попадут в хранилище — провайдер хранилища видит только запечатанную форму.",
+          },
+        ],
+        note: {
+          label: "Чего мы не утверждаем",
+          text: "Связанность не означает неограниченный доступ. Кто может видеть ваше дело, определяется ролью и назначением — а когда послеоперационное наблюдение заканчивается, доступ клинического персонала закрывается. Запись возвращается только вам.",
         },
       },
     },
@@ -2312,6 +2503,41 @@ export const COPY = {
           text: "لا ندّعي مطابقة WCAG — لم نخضع لتدقيق مستقل. وعلامة برايل أسفل شعار AURA عنصر بصري للعلامة التجارية؛ وهي لا تعني دعم أجهزة برايل أو قارئات الشاشة.",
         },
       },
+      connected: {
+        eyebrow: "رعاية مترابطة",
+        headline: "كل خطوة تعرف ما قبلها.",
+        intro: "أيًّا كان بابك إلى AURA، يبقى التقييم والاستشارة والتخطيط والمتابعة أجزاءً من رحلة واحدة.",
+        items: [
+          {
+            key: "profile",
+            n: "01",
+            title: "احكِ قصتك مرة واحدة",
+            body: "ملفك الشخصي يُحمل إلى كل نموذج طلب — التقييم الأولي، الرأي الثاني، السياحة العلاجية أو الرعاية المدعومة — فلا تبدأ من الصفر أبدًا.",
+          },
+          {
+            key: "video",
+            n: "02",
+            title: "زيارة تتحدث لغتك",
+            body: "قابل طبيبك عبر فيديو مشفّر مع ترجمة فورية — لا تُفعَّل إلا بعد موافقتك المنفصلة في غرفة الانتظار.",
+          },
+          {
+            key: "record",
+            n: "03",
+            title: "سجل واحد، من البداية إلى النهاية",
+            body: "الملاحظات والمستندات والقرارات تتجمع في ملف حالة واحد — وصولًا إلى تقرير الخروج الذي يمكنك قراءته في قسم المتابعة.",
+          },
+          {
+            key: "documents",
+            n: "04",
+            title: "مستندات تسافر مختومة",
+            body: "التقارير والصور تُشفَّر قبل أن تصل إلى التخزين — مزوّد التخزين لا يحتفظ إلا بالصيغة المختومة.",
+          },
+        ],
+        note: {
+          label: "ما لا ندّعيه",
+          text: "الترابط لا يعني وصولًا بلا حدود. من يستطيع رؤية حالتك يتبع الدور والتكليف — وعندما تنتهي متابعة ما بعد العملية، يُغلق وصول الطاقم السريري. يعود السجل إليك وحدك.",
+        },
+      },
     },
 
     trustPage: {
@@ -2661,6 +2887,41 @@ export const COPY = {
         note: {
           label: "آنچه ادعا نمی‌کنیم",
           text: "ما ادعای انطباق با WCAG نداریم — ممیزی مستقل نشده‌ایم. نشان بریل زیر نشان‌واژهٔ AURA یک عنصر بصری برند است؛ به معنای پشتیبانی از نمایشگر بریل یا صفحه‌خوان نیست.",
+        },
+      },
+      connected: {
+        eyebrow: "مراقبت پیوسته",
+        headline: "هر گام، گام پیشین را می‌شناسد.",
+        intro: "از هر دری که وارد شوید، ارزیابی، مشاوره، برنامه‌ریزی و پیگیری بخش‌های یک مسیر می‌مانند.",
+        items: [
+          {
+            key: "profile",
+            n: "01",
+            title: "داستانتان را یک بار بگویید",
+            body: "نمایهٔ شما به هر فرم درخواست منتقل می‌شود — ارزیابی اولیه، نظر دوم، گردشگری سلامت یا مراقبت حمایت‌شده — هرگز از صفر شروع نمی‌کنید.",
+          },
+          {
+            key: "video",
+            n: "02",
+            title: "ویزیتی که به زبان شما سخن می‌گوید",
+            body: "با پزشک خود از طریق ویدیوی رمزگذاری‌شده و با ترجمهٔ همزمان دیدار کنید — تنها پس از رضایت جداگانهٔ شما در اتاق انتظار فعال می‌شود.",
+          },
+          {
+            key: "record",
+            n: "03",
+            title: "یک پرونده، از آغاز تا پایان",
+            body: "یادداشت‌ها، مدارک و تصمیم‌ها در یک پروندهٔ واحد گرد می‌آیند — تا خلاصهٔ ترخیصی که در بخش پیگیری می‌توانید بخوانید.",
+          },
+          {
+            key: "documents",
+            n: "04",
+            title: "مدارکی که مهروموم سفر می‌کنند",
+            body: "گزارش‌ها و تصاویر پیش از رسیدن به فضای ذخیره‌سازی رمزگذاری می‌شوند — ارائه‌دهندهٔ ذخیره‌سازی تنها شکل مهرومو‌م‌شده را نگه می‌دارد.",
+          },
+        ],
+        note: {
+          label: "آنچه ادعا نمی‌کنیم",
+          text: "پیوسته بودن به معنای دسترسی بی‌حدومرز نیست. اینکه چه کسی پروندهٔ شما را می‌بیند تابع نقش و تخصیص است — و وقتی پیگیری پس از عمل پایان می‌یابد، دسترسی کادر درمانی بسته می‌شود. پرونده تنها به شما بازمی‌گردد.",
         },
       },
     },
@@ -3013,6 +3274,41 @@ export const COPY = {
         note: {
           label: "İddia etmədiklərimiz",
           text: "WCAG uyğunluğu iddiamız yoxdur — müstəqil auditdən keçməmişik. AURA sözünün altındakı Brayl işarəsi vizual bir brend elementidir; Brayl cihazı və ya ekran oxuyucu dəstəyi demək deyil.",
+        },
+      },
+      connected: {
+        eyebrow: "Əlaqəli qayğı",
+        headline: "Hər addım əvvəlkini tanıyır.",
+        intro: "Hansı qapıdan girsəniz də — qiymətləndirmə, konsultasiya, planlaşdırma və izləmə bir yolun hissələri olaraq qalır.",
+        items: [
+          {
+            key: "profile",
+            n: "01",
+            title: "Hekayənizi bir dəfə danışın",
+            body: "Profiliniz hər müraciət formasına daşınır — ilkin qiymətləndirmə, ikinci rəy, sağlamlıq turizmi və ya dəstəkli qayğı — heç vaxt sıfırdan başlamırsınız.",
+          },
+          {
+            key: "video",
+            n: "02",
+            title: "Dilinizdə danışan bir görüş",
+            body: "Həkiminizlə şifrələnmiş video üzərindən, canlı tərcümə ilə görüşün — tərcümə yalnız gözləmə otağında verdiyiniz ayrıca razılıqdan sonra açılır.",
+          },
+          {
+            key: "record",
+            n: "03",
+            title: "Başdan sona bir qeyd",
+            body: "Qeydlər, sənədlər və qərarlar bir iş sənədində toplanır — izləmə bölməsində oxuya biləcəyiniz epikriz xülasəsinə qədər.",
+          },
+          {
+            key: "documents",
+            n: "04",
+            title: "Möhürlü səyahət edən sənədlər",
+            body: "Hesabatlar və görüntülər anbara çatmazdan əvvəl şifrələnir — saxlama provayderi yalnız möhürlü formanı saxlayır.",
+          },
+        ],
+        note: {
+          label: "İddia etmədiklərimiz",
+          text: "Əlaqəli olmaq sərhədsiz giriş demək deyil. İşinizi kimin görə biləcəyi rola və təyinata bağlıdır — əməliyyatdan sonrakı izləmə bitdikdə klinik heyətin girişi bağlanır. Qeyd yalnız sizə qayıdır.",
         },
       },
     },

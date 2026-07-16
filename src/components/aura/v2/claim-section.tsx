@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldCheck, Scale, type LucideIcon } from "lucide-react";
+import { ShieldCheck, Scale, Route, type LucideIcon } from "lucide-react";
 import { useLang, type Copy } from "@/lib/aura-landing/i18n";
 
 // /v2 FAZ 2 (v6.16) — "iddia bölümü" iskeleti: AI sorumluluğu + Erişilebilirlik.
@@ -99,4 +99,12 @@ export function V2Accessibility() {
   const { t } = useLang();
   // Accessibility notu da ShieldCheck değil — ayrı ikon: kutu "güvenlik" değil "sınır" anlatıyor.
   return <V2ClaimSection id="accessibility" copy={t.v2.accessibility} icon={Scale} />;
+}
+
+// Üçüncü besleme (v6.17, Faz 2 kalanı): Connected care — yolculuk sürekliliği.
+// Not kutusu erişim SINIRINI söyler (postop-access: takip bitince personel erişimi
+// kapanır) → ikon Route (yolculuk), kutu yine "sınır" tonunda.
+export function V2ConnectedCare() {
+  const { t } = useLang();
+  return <V2ClaimSection id="connected" copy={t.v2.connected} icon={Route} />;
 }
