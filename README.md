@@ -492,10 +492,15 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
   VP9 çıktısı (1112KB) mevcut h264 720p'den BÜYÜK — kaynak zaten agresif sıkıştırılmış; **eklemeden
   önce ölç**.
   · **"Bakım Yolculuğum"** = hasta-yüzü ad; **rota `/vakalarim` KALDI**, klinik personelde "vaka"
-  KALIR. Açık kalem: SO alt-başlıkları ("İkinci Görüş Vakalarım") + "Vaka No/Vakanız" etiketleri.
+  KALIR. **v6.20:** hasta yüzünde tam rename tamamlandı — SO listesi **"İkinci Görüş Yolculuğum"**
+  (köprü "Bakım Yolculuğum"), "Başvuru No"/"Başvurunuz"/"Başvuruyu oluştur" vb.; vitrin TR "başvuru"
+  ailesi (7 dil zaten case/Fall/dossier). Hasta yüzünde "vaka" kalan TEK yer `DeleteAccountPanel`
+  (⚖️ bilinçli — hukukçu turu, vault output/ paketi). `/takip` + `/sikayet` geri linki **rol-duyarlı**
+  (hasta → `/vaka/[id]`, personel → `/doktor/vaka/[id]`).
   · **Locale rotaları `/en…/az` (`app/[lang]`):** ÇALIŞIR ama **bilinçli noindex + sitemap dışı** —
-  "/" hâlâ 8-dil-tek-URL kanoniği (v5.9.1). **İndekslemeye açmak = kullanıcı kararı** (robots satırı +
-  sitemap + "/" canonical stratejisi birlikte). `dynamicParams=false` ŞART (kök segment — kaldırılırsa
+  "/" hâlâ 8-dil-tek-URL kanoniği (v5.9.1). **📌 Kullanıcı kararı (2026-07-16): KAPALI KALIYOR** —
+  Gizlilik Politikası + gerçek ödeme öncesi indeksleme erken; hukuki metinler nihaileşince yeniden
+  değerlendirilecek (robots satırı + sitemap + "/" canonical stratejisi birlikte). `dynamicParams=false` ŞART (kök segment — kaldırılırsa
   /herhangi-şey bu rotaya düşer). `LangProvider initialLang`: URL dili kazanır, `air_lang` ezilmez.
 - **Video posterleri (v6.14.5) — YENİ/YENİLENEN VİDEO EKLERKEN OKU:** poster **daima o videonun ilk
   karesinden**: `ffmpeg -i <video> -frames:v 1 -q:v 2 <poster>.jpg`. **Ad-versiyonla** (`p-consult2.jpg`)
