@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AuraLanding } from "@/components/aura/landing";
+import { V2Home } from "@/components/aura/v2/home";
 import { COPY, LANG_CODES, type Lang } from "@/lib/aura-landing/copy";
 import { OG_LOCALE } from "@/lib/aura-landing/seo";
 
@@ -31,8 +31,8 @@ const HREFLANG = Object.fromEntries([
 ]) as Record<string, string>;
 
 // Metadata metinleri MEVCUT onaylı sözlükten kurulur (yeni kamu metni YOK,
-// [[public-claim-honesty]]): başlık = landing hero cümlesi (canlıda görünen),
-// açıklama = v2.hero.lede (8 dilde onaylı konumlandırma cümlesi).
+// [[public-claim-honesty]]): başlık = v2.hero.headline ("/" ile aynı konumlandırma,
+// taşıma 2026-07-16), açıklama = v2.hero.lede — ikisi de 8 dilde onaylı.
 export async function generateMetadata({
   params,
 }: {
@@ -41,7 +41,7 @@ export async function generateMetadata({
   const { lang } = await params;
   const l = lang as Lang;
   const t = COPY[l];
-  const heroLine = `${t.hero.l1.a}${t.hero.l1.mid}${t.hero.l1.b}${t.hero.l1.tail} ${t.hero.line2}`;
+  const heroLine = t.v2.hero.headline;
 
   return {
     title: { absolute: `AURA — ${heroLine}` },
@@ -69,5 +69,7 @@ export default async function LocaleLandingPage({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
-  return <AuraLanding initialLang={lang as Lang} />;
+  // Taşıma (2026-07-16): locale rotaları da YENİ ana sayfayı render eder —
+  // /tr eski landing'i gösterip "/" yenisini gösterseydi tutarsız olurdu.
+  return <V2Home initialLang={lang as Lang} />;
 }

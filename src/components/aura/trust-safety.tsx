@@ -1,7 +1,7 @@
 "use client";
 
 import { AuraClosing } from "./closing";
-import { AuraNav } from "./nav";
+import { V2Nav } from "./v2/nav";
 import { LETTERS, LangProvider, langDir, useLang, type Copy } from "@/lib/aura-landing/i18n";
 
 type Section = Copy["trustPage"]["sections"][number];
@@ -28,7 +28,9 @@ function TrustShell() {
   const { lang } = useLang();
   return (
     <div dir={langDir(lang)} lang={lang} className="aura-page min-h-dvh">
-      <AuraNav />
+      {/* V2Nav (taşıma 2026-07-16): kök AuraNav'ın /#ch-* çapaları yeni ana
+          sayfada karşılıksız — site geneli nav artık tek bakım mimarisi. */}
+      <V2Nav />
       <main className="pt-16">
         <TrustHero />
         <TrustSections />

@@ -8,20 +8,20 @@ import { V2Accessibility, V2AiResponsibility, V2Clinicians, V2ConnectedCare } fr
 import { V2EntryPaths } from "./entry-paths";
 import { V2Hero } from "./hero";
 import { V2Nav } from "./nav";
-import { LangProvider, langDir, useLang } from "@/lib/aura-landing/i18n";
+import { LangProvider, langDir, useLang, type Lang } from "@/lib/aura-landing/i18n";
 
-// /v2 — YENİ ANA SAYFA (2026-07-16), ÖNİZLEME rotası (noindex).
-// Kullanıcı kararı: yeni sayfa /v2'de kurulur, gerçek cihazda mevcut / ile
-// karşılaştırılır, onaylanınca /'ye taşınır (eski landing tag'le geri alınabilir).
+// ANA SAYFA (taşıma 2026-07-16 — /v2 önizleme dönemi bitti, "/" bunu render eder;
+// /v2 rotası kalıcı redirect). Eski landing tag'de: `landing-eski-v5.9-son`.
 //
-// Blueprint IA sırası: Hero → EntryPaths → CareJourney → ConnectedCare → Trust
-// → HumanExpertise → Accessibility → Clinicians → Closing.
-// FAZ 1 (bu commit): Hero + EntryPaths (video arkalı) + mevcut how/doctors/trust
-// + closing. Kalan bölümler (ConnectedCare · HumanExpertise · Accessibility ·
-// Clinicians + /for-clinicians) sonraki fazlarda — hepsi kullanıcı onaylı.
-export function V2Home() {
+// Blueprint IA tamamlandı (Faz 1 v6.14 + Faz 2 v6.16-17): Hero → EntryPaths →
+// How → ConnectedCare → Doctors → Trust → AI → Accessibility → Clinicians →
+// Closing — açık/koyu almaşık ritimde (kullanıcı planı, aşağıdaki not).
+//
+// initialLang: locale rotaları (/tr /ar …) ana sayfayı URL dilinde SSR'lar;
+// prop'suz çağrı ("/") eski davranış (EN + mount'ta air_lang) — i18n.tsx sözleşmesi.
+export function V2Home({ initialLang }: { initialLang?: Lang } = {}) {
   return (
-    <LangProvider>
+    <LangProvider initialLang={initialLang}>
       <V2Shell />
     </LangProvider>
   );
@@ -33,8 +33,8 @@ function V2Shell() {
   const { lang } = useLang();
   return (
     <div dir={langDir(lang)} lang={lang} className="aura-page min-h-dvh">
-      {/* V2Nav (v6.16): kök AuraNav yerine — dört hizmet sekmesi yerine tek
-          bakım mimarisi. Kök nav / ve /how-it-works'te dokunulmadan durur. */}
+      {/* V2Nav: tek bakım mimarisi — taşımadan beri SİTE GENELİ nav
+          (how-it-works · guven-ve-gizlilik · for-clinicians da bunu kullanır). */}
       <V2Nav />
       <main>
         <V2Hero />

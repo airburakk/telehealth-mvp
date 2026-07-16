@@ -40,16 +40,16 @@ export function V2Nav() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-[var(--aura-hairline)] bg-[color-mix(in_srgb,var(--aura-bg)_82%,transparent)] backdrop-blur-md">
       <nav aria-label="AURA" className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 md:px-8">
-        {/* ⚠️ TAŞIMA NOTU: /v2 → / taşınırken logo ve #care çapası "/" köküne
-            döner. Önizleme boyunca /v2'de kalır (logoya basınca eski landing'e
-            düşmek önizleme testini bozardı). */}
-        <Link href="/v2" className="flex items-center gap-2.5" aria-label="AURA">
+        {/* Taşıma yapıldı (2026-07-16): logo + #care çapası "/" kökünde. Nav artık
+            SİTE GENELİ (/, /how-it-works, /for-clinicians…) — çapalar kök-göreli
+            (/#care) ki her sayfadan çalışsın (kök nav'ın eski sözleşmesiyle aynı). */}
+        <Link href="/" className="flex items-center gap-2.5" aria-label="AURA">
           <AuraMark size={32} />
           <img src="/assets/aura-word-dark.png" alt="AURA" className="h-4 w-auto" />
         </Link>
 
         <div className="hidden items-center gap-6 lg:flex">
-          <NavLink href="/v2#care" label={nav.care} accent />
+          <NavLink href="/#care" label={nav.care} accent />
           <Link href="/how-it-works" className="aura-nav-how inline-flex min-h-[44px] items-center text-sm">
             {nav.how}
           </Link>
@@ -104,7 +104,7 @@ export function V2Nav() {
           className="border-t border-[var(--aura-hairline)] bg-[var(--aura-bg)]/95 px-5 pb-6 pt-3 backdrop-blur-md lg:hidden"
         >
           <div className="flex flex-col gap-1">
-            <MobileLink href="/v2#care" label={nav.care} close={() => setOpen(false)} accent />
+            <MobileLink href="/#care" label={nav.care} close={() => setOpen(false)} accent />
             <Link
               href="/how-it-works"
               onClick={() => setOpen(false)}

@@ -1,44 +1,47 @@
 import type { Metadata } from "next";
-import { AuraLanding } from "@/components/aura/landing";
+import { V2Home } from "@/components/aura/v2/home";
 import { StructuredData } from "@/components/aura/structured-data";
 import { OG_LOCALE, OG_ALTERNATE_LOCALES, SITE_URL } from "@/lib/aura-landing/seo";
 
-// AURA sinematik landing (vitrin aura-health.higgsfield.app'ten taşındı,
-// 2026-07-12) — vitrin + platform tek sitede birleşti. Önceki tasarım
-// PortamedLanding v5.9.1'de emekli edildi (ölü kod silindi). Sayfa statik
-// sözlükle çizilir (DB sorgusu yok); dil seçimi client'ta air_lang'dan okunur.
+// ANA SAYFA = V2 (taşıma 2026-07-16, kullanıcı onayı: "v2'yi siteye geçebiliriz").
+// Önceki sinematik landing (AuraLanding, v5.9→v6.15) tag'de: `landing-eski-v5.9-son`
+// — bileşenleri repoda duruyor (geri dönüş; silme = ayrı temizlik kararı).
+// /v2 rotası kalıcı redirect'e döndü (bookmark kırılmaz).
+// Sayfa statik sözlükle çizilir (DB yok); dil client'ta air_lang'dan.
 const SITE = SITE_URL;
 
-// SEO metadata: landing-özel zengin başlık + OpenGraph/Twitter kart + canonical.
-// hreflang KARARI (v5.9.1): landing 8 dil TEK URL'de (dil client-side, air_lang) —
-// klasik path-başına-URL yerine og:locale:alternate + JSON-LD inLanguage ile işaretlenir
-// (gerçeğe uygun; ayrı rota/prerender üretmez).
-// P0 dürüstlük (v6.8): SEO metni de görünür metinle aynı iddia disiplinine tabi —
-// "AI triage" (determinist/klinik ses tonu) → "AI-supported case preparation".
-// Buradaki "end to end" ŞİFRELEME DEĞİL, hizmet sürekliliğidir (hero ile aynı) → kalır.
+// Metadata = yeni konumlandırma (brand paketi + v6.14 kullanıcı onaylı metinler):
+// başlık "Care, without borders." · açıklama v2.hero.lede (onaylı 8-dil setinin EN'i).
+// hreflang KARARI değişmedi: "/" kanonik, 8 dil tek URL (og:locale:alternate);
+// /en…/az rotaları var ama noindex — indeksleme AYRI kullanıcı kararı ([lang]/page.tsx).
+// İddia disiplini (v6.8): determinist AI dili yok, "end to end" ifadesi tamamen çıktı.
 export const metadata: Metadata = {
-  title: { absolute: "AURA — Telehealth & Health Tourism, End to End" },
+  title: { absolute: "AURA — Care, without borders." },
   description:
-    "AURA: AI-supported case preparation, video consultations, independent second opinions and planned health tourism in Türkiye — end to end, in 8 languages.",
+    "Meet the right specialist, understand your options and continue your care wherever you are — with multilingual support from first assessment to follow-up.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     url: "/",
     siteName: "AURA",
-    title: "AURA — Telehealth & Health Tourism, End to End",
+    title: "AURA — Care, without borders.",
     description:
-      "AI-supported case preparation, video consultations, independent second opinions and planned health tourism in Türkiye — end to end.",
+      "One care journey, four ways to begin: talk to a doctor, second opinion, health tourism and access care — in 8 languages.",
     locale: OG_LOCALE.en,
     alternateLocale: OG_ALTERNATE_LOCALES,
     images: [{ url: "/assets/video/p-hero3.jpg", width: 1280, height: 720, alt: "AURA" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AURA — Telehealth & Health Tourism, End to End",
-    description: "AI-supported case preparation, video consultations, second opinions and health tourism — end to end.",
+    title: "AURA — Care, without borders.",
+    description:
+      "Meet the right specialist and keep your care connected from first assessment to follow-up.",
     images: ["/assets/video/p-hero3.jpg"],
   },
 };
+
+// JSON-LD de yeni konumlandırmada — görünür metinle aynı iddia disiplini
+// (v6.8: meta/OG/JSON-LD ayrı taranır; determinist/sonuç iddiası yok).
 const LD_JSON = JSON.stringify({
   "@context": "https://schema.org",
   "@graph": [
@@ -48,12 +51,12 @@ const LD_JSON = JSON.stringify({
       url: SITE,
       logo: `${SITE}/assets/aura-symbol.png`,
       description:
-        "Telehealth and health tourism, end to end — AI-supported case preparation, video consultations, independent second opinions and planned health tourism in Türkiye.",
+        "A multilingual digital care platform connecting case preparation, specialist consultation, treatment planning and follow-up across borders.",
       areaServed: "Türkiye",
     },
     {
       "@type": "WebSite",
-      name: "AURA — Telehealth & Health Tourism",
+      name: "AURA — Cross-Border Digital Care",
       url: SITE,
       inLanguage: ["en", "tr", "de", "fr", "ru", "ar", "fa", "az"],
     },
@@ -64,7 +67,7 @@ export default function Home() {
   return (
     <>
       <StructuredData json={LD_JSON} />
-      <AuraLanding />
+      <V2Home />
     </>
   );
 }

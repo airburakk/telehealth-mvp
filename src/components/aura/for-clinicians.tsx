@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Stethoscope } from "lucide-react";
 import { AuraClosing } from "./closing";
-import { AuraNav } from "./nav";
+import { V2Nav } from "./v2/nav";
 import { V2ClaimSection } from "./v2/claim-section";
 import { LangProvider, langDir, useLang } from "@/lib/aura-landing/i18n";
 
@@ -28,7 +28,9 @@ function Shell() {
 
   return (
     <div dir={langDir(lang)} lang={lang} className="aura-page min-h-dvh">
-      <AuraNav />
+      {/* V2Nav (taşıma 2026-07-16): kök AuraNav'ın /#ch-* çapaları yeni ana
+          sayfada karşılıksız — site geneli nav artık tek bakım mimarisi. */}
+      <V2Nav />
       <main className="pt-16">
         {/* Gündüz gövde: iddia bölümü /v2'dekiyle aynı iskeletten çizilir
             (tek kaynak) — yalnız cta.more köprüsü YOK (zaten bu sayfadayız),
