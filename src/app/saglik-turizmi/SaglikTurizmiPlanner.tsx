@@ -13,10 +13,11 @@ import { useT } from "@/components/useT";
 import { AiConsentGate } from "@/components/AiConsentGate";
 import { usePatientLang } from "@/components/PatientLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
+import { JourneyStageRail } from "@/components/JourneyStageRail";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
 import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
-import { COUNTRIES, countryName } from "@/lib/constants";
+import { COUNTRIES, countryName, langDir } from "@/lib/constants";
 import { BRANCHES } from "@/lib/triage";
 import { TOURISM_DISCLAIMER_TITLE, TOURISM_DISCLAIMER_BODY } from "@/lib/tourism-disclaimer";
 
@@ -131,10 +132,15 @@ function SaglikTurizmiPlannerInner() {
     }
   }
 
-  // Talep sonrası: hukuki uyarı onay ekranı (mesaj ayrıca bildirim olarak da gönderildi)
+  // Talep sonrası: hukuki uyarı onay ekranı (mesaj ayrıca bildirim olarak da gönderildi).
+  // v6.19 "sırada ne var" fişi: sahne rayı burada da çizilir (current=2 "Eşleşme" —
+  // başvuru bitti, doktor eşleşmesi bekleniyor) → hasta kalan yolu tek bakışta görür;
+  // dört yolun rayı artık aynı ([[backlog P1: intake standardizasyonu]]).
+  // dir: fiş shell DIŞINDA render olur — RTL sarmalayıcıyı kendisi taşımalı (v6.19 fix).
   if (submitted) {
     return (
-      <div className="mx-auto max-w-2xl px-5 py-12">
+      <div dir={langDir(lang)} className="mx-auto max-w-2xl px-5 py-12">
+        <JourneyStageRail journey="HEALTH_TOURISM" current={2} lang={lang} />
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-300"><CheckCircle2 size={22} /></span>
           <div>
@@ -160,7 +166,7 @@ function SaglikTurizmiPlannerInner() {
   }
 
   return (
-    <JourneyIntakeShell icon={Plane} eyebrow={t("Sağlık Turizmi")} title={t("Sağlık Turizmini Planla")} intro={t("Tedavi hedefinizi ve tercihlerinizi paylaşın; kesin planı ve fiyatı görüşmede birlikte netleştirin.")} lang={lang} onLangChange={setLang}>
+    <JourneyIntakeShell icon={Plane} eyebrow={t("Sağlık Turizmi")} title={t("Sağlık Turizmini Planla")} intro={t("Tedavi hedefinizi ve tercihlerinizi paylaşın; kesin planı ve fiyatı görüşmede birlikte netleştirin.")} lang={lang} onLangChange={setLang} journey="HEALTH_TOURISM" stage={0}>
 
       {/* İki adımlı mini-gösterge (Branş Doktoru sihirbazına benzer) */}
       <div className="mt-6 flex items-center gap-2 text-xs">
