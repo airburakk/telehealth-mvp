@@ -71,25 +71,28 @@ export function V2Hero() {
       ctx = gsap.context(() => {
         const steps = gsap.utils.toArray<HTMLElement>("[data-hero-step]");
         // Mount SONRASI gizle → SSR/JS-siz durumda metin görünür kalır.
-        gsap.set(steps, { opacity: 0, y: 28 });
+        gsap.set(steps, { opacity: 0, y: 20 });
 
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: section,
             start: "top top",
-            // Pin süresi: her adım için ~55vh scroll + sonda okuma payı.
-            end: () => `+=${steps.length * 55 + 40}%`,
+            // ⚠️ TOPLAM pin süresi — adım BAŞINA değil (v6.14.6).
+            // v6.14.4'te `adım×55+40` yazmıştım = ~315vh ≈ ekranın 3 katı →
+            // kullanıcı: "scroll jacking çok olmuş, bir kez scroll yaptığımda
+            // direkt yazılar gelsin; mobilde 3 kez kaydırmam gerekiyor".
+            // 55vh ≈ TEK kaydırma hareketi: yazılar akıp gelir, pin hemen çözülür.
+            // Adım sayısı artarsa burayı ÇARPMA — stagger'ı sıkılaştır.
+            end: "+=55%",
             pin: true,
             pinSpacing: true,
-            scrub: 0.8,
+            scrub: 0.4, // düşük = kaydırmaya çevik yanıt (0.8 gecikmeli hissettiriyordu)
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },
         });
-        // Parçalar DOM sırasıyla belirir: eyebrow → başlık → lede → CTA → not.
-        steps.forEach((el) => {
-          tl.to(el, { opacity: 1, y: 0, duration: 1, ease: "power2.out" }).to({}, { duration: 0.35 });
-        });
+        // Hepsi TEK tween'de, kısa stagger ile akar: eyebrow → h1 → lede → CTA → not.
+        tl.to(steps, { opacity: 1, y: 0, duration: 1, stagger: 0.3, ease: "power2.out" });
       }, section);
     })();
 
