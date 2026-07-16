@@ -310,6 +310,32 @@ boşsa belgeler şifreli base64 olarak DB'de — fallback) · (opsiyonel) `TRIAG
 **Vercel** (serverless) + **Neon Postgres** üzerinde canlı. GitHub `airburakk/telehealth-mvp`
 (`main`) → Vercel otomatik deploy. Adım adım kılavuz: [`DEPLOY.md`](./DEPLOY.md).
 
+## Gözlemlenebilirlik (Faz 5 Ray C, 2026-07-16)
+
+İki katman + bir bağlayıcı kural:
+
+- **Sentetik rota kontrolleri** — `.github/workflows/synthetic.yml` ~30 dk'da bir
+  `scripts/synthetic-checks.mjs` koşturur (8 halka açık rota: durum · süre · title · h1 · kritik CTA ·
+  noindex beklentisi + TLS sertifika bitimi + statik asset). Zamanlayıcı GitHub Actions'ta çünkü
+  Vercel Hobby cron limiti (2) dolu; koşu düşünce GitHub otomatik e-posta atar. Elle koşu:
+  `node scripts/synthetic-checks.mjs` (`--base=` ile yerel/preview'a yöneltilebilir). Vitrin
+  metni bilinçli değişirse script'teki beklentiler de güncellenir.
+- **Kod-içi kritik alarmlar** — `src/lib/alerts.ts` (`sendAlert`): consent yazım hatası
+  (fail-closed) · onam/audit zincir bütünlük kırığı (purge cron'u günlük nöbette doğrular) ·
+  audit yazım hatası (istek bozulmaz ama boşluk birikimi görünür) · KEK yokluğu (SEV-1) ·
+  decrypt hata kümesi (10 dk'da 5+) · cron başarısızlıkları. Kanal: her zaman `[ALERT] <olay>`
+  log satırı (Vercel log'unda grep'lenir); `ALERT_EMAIL` + `RESEND_API_KEY` set ise e-posta
+  (aynı olay 30 dk'da bir). Test ortamında alarm susar (kasıtlı kurcalama testleri için).
+
+### 🚫 Asla loglama (bağlayıcı kural)
+
+İzleme, sağlık verisini log'a kopyalamadan hata tespit eder. Şunlar **hiçbir** log/alarm/hata
+mesajına giremez: semptom metni · tanı/teşhis · belge içeriği ve belge **adı** · görüşme/transkript
+içeriği · hasta bilgisi taşıyan görüntü metadata'sı · sağlık verisi içeren AI prompt'ları · tıbbi
+bağlamda gerçek ad-soyad · erişim token'ları · şifreleme anahtarları/materyali · oturum çerezleri.
+Yerine iç ID (userId/caseId), olay kategorisi, hata kodu, süre/adet kovası kullanılır. Kural kodda
+`src/lib/alerts.ts` başlığında da durur; yeni log satırı eklerken oradaki listeye uy.
+
 ## Sonraki adımlar (backlog)
 
 Güncel yol haritası vault'ta: `Air/wiki/todo.md`. Öne çıkanlar (altyapı/hukuk gerektirir):

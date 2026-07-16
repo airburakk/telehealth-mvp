@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { purgeExpired, RETENTION_YEARS } from "@/lib/account-deletion";
+import { verifyAccessChain } from "@/lib/audit";
+import { verifyConsentChain } from "@/lib/consent";
+import { sendAlert } from "@/lib/alerts";
 
 // GET /api/cron/purge-deleted — saklama süresi dolan klinik kayıtları GERÇEKTEN imha eder (v6.11).
 // vercel.json cron'u günde bir tetikler. registry-sync ile aynı Bearer deseni (anonim tetiklenemez).
@@ -22,6 +25,31 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
 
-  const r = await purgeExpired();
-  return NextResponse.json({ ok: true, retentionYears: RETENTION_YEARS, ...r });
+  try {
+    const r = await purgeExpired();
+
+    // Günlük bütünlük NÖBETİ (Ray C): iki append-only zincir (audit + onam) baştan sona doğrulanır.
+    // Kırıksa verify fonksiyonları kendi alarmını düşürür; burada yalnız sayaçlar raporlanır.
+    // MVP hacminde ucuz (tüm mühürlü satırlar okunur, maxDuration=300); hacim büyüyünce artımlı
+    // doğrulamaya geçilir (zincir ucu checkpoint'i) — bilinçli erteleme.
+    const [audit, consent] = await Promise.all([verifyAccessChain(), verifyConsentChain()]);
+
+    return NextResponse.json({
+      ok: true,
+      retentionYears: RETENTION_YEARS,
+      ...r,
+      chains: {
+        audit: { ok: audit.ok, count: audit.count, brokenAt: audit.brokenAt, unverifiableSeals: audit.unverifiableSeals },
+        consent: { ok: consent.ok, count: consent.count, brokenAt: consent.brokenAt, unverifiableSeals: consent.unverifiableSeals },
+      },
+    });
+  } catch (e) {
+    // Saklama-imha sözünün bekçisi sessizce düşemez (Ray C): alarm + 500 (Vercel cron log'unda görünür).
+    void sendAlert(
+      "cron-purge",
+      "purge-deleted cron BAŞARISIZ — saklama süresi dolan kayıtların imhası koşmadı",
+      e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200),
+    );
+    return NextResponse.json({ error: "purge-deleted başarısız." }, { status: 500 });
+  }
 }

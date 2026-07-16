@@ -12,12 +12,15 @@
 // döndürür (eski satırlar / "" / null). Yeni yazımlar hep şifreli. Backfill: scripts/encrypt-existing.ts.
 //
 // ⚠️ KEK KAYBI = VERİ KAYBI. DATA_ENCRYPTION_KEK üretimde escrow/yedekli saklanmalı.
-// ⚠️ Yerel + üretim AYNI Neon DB → KEK her ortamda AYNI değer olmalı (farklı KEK = çapraz çözememe).
+// Ortam ayrımı (Faz 5 Ray B2, 2026-07-16): yerel .env Neon DEVELOPMENT branch'ine + dev'e özgü KEK'e
+// bakar; üretim KEK'i yalnız Vercel'de ve PROD_* önekli bilinçli işlemlerde. Yanlış ortam anahtarıyla
+// okuma = decrypt hatası (aşağıdaki küme alarmı bunu yakalar).
 //
 // 🔌 KMS SWAP NOKTASI (üretim — vendor kararından sonra; timestamp.ts RFC 3161 swap deseni): yalnız DEK'in
 // sarılması/açılması (wrapDek/unwrapDek) AWS KMS / GCP KMS / HSM çağrılarıyla değiştirilir. İçerik şifreleme
 // (AES-256-GCM + per-record DEK) aynı kalır → DEK ham KEK yerine KMS'te sarılır, sunucu DEK'i RAM'de görür.
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import { sendAlert, noteDecryptFailure } from "./alerts";
 
 const PREFIX = "enc:v1:";
 
@@ -89,6 +92,8 @@ export function encryptField(plain: string | null | undefined): string | null | 
     // Aksi halde bir env kayması (rotasyon/secret kazası) o penceredeki tüm klinik kayıtları sessizce
     // kalıcı düz-metin yapar ve "enc:" öneki olmadığından sonradan fark edilmez.
     if (process.env.NODE_ENV === "production") {
+      // SEV-1 (Ray C): üretimde şifreleme anahtarı erişilemez → anında alarm (yazım zaten durdu).
+      void sendAlert("kek-missing", "Üretimde DATA_ENCRYPTION_KEK tanımsız — klinik yazım durduruldu (SEV-1)", "encryptField fail-closed");
       throw new Error(
         "[crypto] DATA_ENCRYPTION_KEK üretimde tanımsız — klinik alan şifrelenemedi; düz-metin yazımı engellendi (fail-closed). Vercel ortam değişkenini ayarlayın.",
       );
@@ -134,6 +139,16 @@ export function decryptField(stored: string | null | undefined): string | null |
 export function decryptField(stored: string | null | undefined): string | null | undefined {
   if (stored == null || !stored.startsWith(PREFIX)) return stored;
   const kek = getKek();
-  if (!kek) throw new Error("Şifreli veri var ama DATA_ENCRYPTION_KEK tanımsız — çözülemiyor (anahtar kayıp/yanlış ortam?).");
-  return decryptRaw(stored, kek);
+  if (!kek) {
+    // SEV-1 (Ray C): şifreli veri var ama anahtar erişilemez (kayıp KEK / yanlış ortam) → anında alarm.
+    void sendAlert("kek-missing", "Şifreli veri var ama DATA_ENCRYPTION_KEK tanımsız — okuma çözülemiyor (SEV-1)", "decryptField");
+    throw new Error("Şifreli veri var ama DATA_ENCRYPTION_KEK tanımsız — çözülemiyor (anahtar kayıp/yanlış ortam?).");
+  }
+  try {
+    return decryptRaw(stored, kek);
+  } catch (e) {
+    // Tek tük hata bozuk satır olabilir; KISA PENCEREDE KÜME = yanlış KEK/ortam → alerts.ts eşikte tek alarm.
+    noteDecryptFailure("decryptField");
+    throw e;
+  }
 }

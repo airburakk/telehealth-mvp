@@ -1,0 +1,34 @@
+# Sentetik rota kontrolleri (Faz 5 Ray C, 2026-07-16) — üretimi DIŞARIDAN, gerçek kullanıcı
+# perspektifinden denetler (Vercel tümden çökse bile bu koşucu ayakta kalır ve yakalar).
+#
+# Zamanlayıcı neden burada: Vercel Hobby planında cron limiti 2 ve ikisi de dolu (registry-sync +
+# purge-deleted); Hobby cron'ları zaten günde 1 hassasiyetinde. GitHub Actions mevcut CI yüzeyi
+# (yeni tedarikçi yok) ve secret GEREKMEZ — yalnız halka açık rotalar GET'lenir.
+#
+# Bildirim: koşu BAŞARISIZ olunca GitHub, zamanlanmış workflow'un son değiştiricisine otomatik
+# e-posta atar → Resend/ALERT_EMAIL aktivasyonu beklemeden bildirim kanalı hazır.
+# Not: GitHub, 60 gün commit'siz repoda zamanlanmış workflow'u uyutur (Actions sekmesinde uyarı
+# çıkar, tek tıkla uyanır) — repo aktifken sorun değil.
+name: Sentetik kontroller
+
+on:
+  schedule:
+    - cron: "*/30 * * * *" # ~30 dk'da bir (GitHub yoğun saatlerde birkaç dk kaydırabilir)
+  workflow_dispatch: {} # elle tetikleme: Actions sekmesi → Sentetik kontroller → Run workflow
+
+concurrency:
+  group: synthetic-checks
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Script bağımlılıksız (yalnız Node yerleşikleri) → npm ci gerekmez, koşu ~15 sn.
+      - name: Sentetik rota kontrolleri (8 rota + TLS + asset)
+        run: node scripts/synthetic-checks.mjs

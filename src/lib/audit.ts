@@ -10,6 +10,7 @@ import { db } from "./db";
 import {
   sha256, getTimestampToken, verifyTimestampToken, chainSeal, verifyChainSeal, isV2Seal,
 } from "./timestamp";
+import { sendAlert } from "./alerts";
 import type { SessionUser } from "./session";
 
 export type AuditAction =
@@ -198,7 +199,14 @@ export async function recordAccess(input: RecordInput): Promise<void> {
     });
   } catch (e) {
     // FAIL-SAFE: audit asla çağıran isteği bozmaz (üretimde gözlemlenebilirlik için log'lanır).
+    // Ama sessiz de kalmaz (Ray C): yazım saatlerce düşerse zincirde denetlenmemiş erişim boşluğu
+    // birikir → alarm (cooldown'lu; davranış değişmez, istek yine bozulmaz).
     console.error("[audit] recordAccess başarısız (yutuldu):", e);
+    void sendAlert(
+      "audit-write",
+      "Audit kaydı yazılamadı (istek bozulmadı ama zincirde boşluk birikiyor)",
+      `action=${input.action} — ${e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200)}`,
+    );
   }
 }
 
@@ -286,7 +294,11 @@ export async function verifyAccessChain(): Promise<ChainIntegrity> {
   let v1Count = 0;
   let v2Count = 0;
   let sawV2 = false;
-  const fail = (id: string) => ({ ok: false, count: rows.length, brokenAt: id, unverifiableSeals, v1Count, v2Count, unsealedCount });
+  // Kırık zincir = kurcalama/veri kaybı şüphesi → alarm (Ray C — purge-deleted cron'u günlük nöbette koşturur).
+  const fail = (id: string) => {
+    void sendAlert("audit-chain", "Audit zinciri bütünlük doğrulaması BAŞARISIZ", `brokenAt=${id}`);
+    return { ok: false, count: rows.length, brokenAt: id, unverifiableSeals, v1Count, v2Count, unsealedCount };
+  };
   for (const r of rows) {
     if (r.prevHash !== prev) return fail(r.id);
     if (isV2Seal(r.entryHash)) {

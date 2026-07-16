@@ -7,6 +7,7 @@ import { CONSENT_SCOPE, CONSENT_VERSION, CONSENT_TEXT } from "./consent-config";
 import {
   sha256, getTimestampToken, verifyTimestampToken, chainSeal, verifyChainSeal, isV2Seal,
 } from "./timestamp";
+import { sendAlert } from "./alerts";
 
 // Kullanıcının verdiği EN GÜNCEL onam sürümü (0 = hiç onam yok).
 // scope varsayılan GENERAL_KVKK; AI işleme rızası gibi ayrı kovalar scope geçerek kullanılır (AI_TRIAGE).
@@ -115,8 +116,18 @@ export async function recordConsent(
         },
       });
     });
-  } catch {
-    // unique ihlali (yarış) → başka istek aynı sürümü kaydetti, yoksay (idempotent).
+  } catch (e) {
+    // unique ihlali (P2002, yarış) → başka istek aynı sürümü kaydetti, yoksay (idempotent).
+    if ((e as { code?: string } | null)?.code === "P2002") return;
+    // Diğer her hata GERÇEK yazım hatasıdır: onam kaydı OLUŞMADI. Yutulursa /api/consent oturumu
+    // yine "onaylı" (cv güncel) imzalar ve kullanıcıya bir daha SORULMAZ → ispat zinciri kalıcı
+    // delik kalır. Fail-closed: alarm + fırlat (çağıran 500 döner, kapı kapalı kalır).
+    void sendAlert(
+      "consent-write",
+      "Onam kaydı yazılamadı (fail-closed: akış durduruldu)",
+      `scope=${scope} v${version} — ${e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200)}`,
+    );
+    throw e;
   }
 }
 
@@ -138,7 +149,12 @@ export async function verifyConsentChain(): Promise<{
   let v1Count = 0;
   let v2Count = 0;
   let sawV2 = false;
-  const fail = (id: string) => ({ ok: false, count: rows.length, brokenAt: id, unverifiableSeals, v1Count, v2Count, unsealedCount });
+  // Kırık zincir = kurcalama/veri kaybı şüphesi → denetçi görünümüne ek olarak alarm da düşer
+  // (Ray C — sayfayı kimse açmasa da purge-deleted cron'u günlük nöbette bunu koşturur).
+  const fail = (id: string) => {
+    void sendAlert("consent-chain", "Onam zinciri bütünlük doğrulaması BAŞARISIZ", `brokenAt=${id}`);
+    return { ok: false, count: rows.length, brokenAt: id, unverifiableSeals, v1Count, v2Count, unsealedCount };
+  };
   for (const r of rows) {
     if (r.prevHash !== prev) return fail(r.id);
     if (isV2Seal(r.entryHash)) {

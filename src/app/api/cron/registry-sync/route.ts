@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runRegistrySync, enrichHospitalDetails } from "@/lib/ht-registry";
+import { sendAlert } from "@/lib/alerts";
 
 // GET /api/cron/registry-sync — HealthTürkiye günlük senkronu (FAZ 6, 2026-07-10).
 // vercel.json cron'u günde bir tetikler (03:00 UTC ≈ 06:00 İstanbul; Vercel, CRON_SECRET env'i
@@ -19,7 +20,18 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
 
-  const s = await runRegistrySync();
+  let s: Awaited<ReturnType<typeof runRegistrySync>>;
+  try {
+    s = await runRegistrySync();
+  } catch (e) {
+    // Ray C: cron sessiz düşemez — alarm + 500 (Vercel cron log'unda görünür).
+    void sendAlert("cron-registry", "registry-sync cron BAŞARISIZ (beklenmeyen hata)", e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200));
+    return NextResponse.json({ error: "registry-sync başarısız." }, { status: 500 });
+  }
+  if (s.status !== "OK") {
+    // Kaynak API'den çekim başarısız — tek günlük aksama tolere edilir ama görünür olmalı (Ray C).
+    void sendAlert("cron-registry", "registry-sync günlük çekimi BAŞARISIZ (FETCH_FAILED)", `date=${s.date}`);
+  }
 
   // Detay zenginleştirme (languages/accreditations/facilities adları) — küçük günlük bütçe:
   // yeni eklenen tesisler + önceki koşularda ağ hatası alanlar sırayla dolar. Senkron sonucunu
