@@ -218,6 +218,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/` · `/giris` · `/giris/e-posta` · `/kurumsal-giris` · `/kurumsal-giris/e-posta` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | **AURA sinematik landing** (v5.9 — vitrinden taşındı: hero video+letterform, 4 chapter destesi, gsap+lenis; 8 dil statik `lib/aura-landing/copy.ts`, dil anahtarı `air_lang`). **Bölüm akışı (v6.8):** hero → chapters → nasıl çalışır (+AI sorumluluk notu) → doktorlar → **güven (6 ürün-kanıtlanabilir kart)** → kapanış; eski *Şeffaflık* bölümü v6.8'de Güven'e birleştirildi (`transparency.tsx` kaldırıldı — aynı iddiayı iki kez veriyordu). İddia kuralları: aşağıda "Vitrin iddia dürüstlüğü (v6.8)" · **SEO (v5.9.2):** canonical + OpenGraph/Twitter kart + 8-dil `og:locale:alternate` (tek URL — `lib/aura-landing/seo.ts`) + JSON-LD MedicalOrganization/WebSite · **hasta giriş kapısı** + **`/giris/e-posta` çalışan form** · **kurumsal giriş kapısı** (noindex) + **`/kurumsal-giris/e-posta` form** (v5.9.1 kapı/form ayrımı — kapılar `components/aura/auth-gates.tsx`) · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
 | `/how-it-works` | **Nasıl Çalışır rehberi** (v5.9 — vitrinden taşındı): 4 yolculuğun adım listeleri + tıkla-oynat rehber videoları + HowTo JSON-LD + OpenGraph (title template `%s · AURA`); global Header/SiteFooter bu rotada ve `/`'de gizli (sayfa kendi aura nav/footer'ını taşır). Eski vitrin aura-health.higgsfield.app tüm sayfaları buraya 301 yönlendirir |
 | `/guven-ve-gizlilik` | **Güven ve Gizlilik** (v6.12): iddia dürüstlüğü sayfası — 10 bölüm × 8 dil (`copy.ts` `trustPage`), 5'inde **"neyi iddia etmiyoruz"** kutusu + FAQPage JSON-LD (cevap gövde+sınırı birlikte taşır) + OG 8 dil; global Header/SiteFooter burada da gizli (kendi aura nav/footer'ı). **`/trust` → 308.** ⚠️ Gizlilik Politikası **değildir**. Kurallar: Güvenlik notları "Güven ve Gizlilik sayfası (v6.12)" |
+| `/v2` | **Yeni ana sayfa ÖNİZLEMESİ** (v6.14 · `components/aura/v2/{home,hero,entry-paths}.tsx` · `copy.ts` `v2`, 8 dil). **noindex + sitemap'te YOK** — aynı içeriğin iki URL'de indekslenmesi `/`'nin SEO'sunu bölerdi. Canlı `/` **dokunulmadı**. **Bölümler:** hero (sahneli açılış) → entry-paths (video-arkalı 4 kart) → mevcut how/doctors/trust → closing. **`/`'ye taşırken:** eski landing'e **git tag** (geri dönüş) → `app/page.tsx`→`V2Home` → `/v2`+noindex kalkar → sitemap'e girer → ⚠️ `.aura-brand` seçicileri artık landing'i de kapsar, **token/glow ölçümünü tekrarla**. Sözleşme: aşağıda "/v2 hero + entry-paths (v6.14)" |
 | `/sitemap.xml` · `/robots.txt` | **SEO altyapısı (v5.9.2 · v6.12):** `app/sitemap.ts` yalnız 8 halka açık rota (/, /how-it-works, **/guven-ve-gizlilik**, /giris, /kayit, /kayit/hasta, /second-opinion, /ucretsiz-saglik) · `app/robots.ts` hassas panel/API disallow + sitemap referansı. `SITE_URL` tek kaynak `lib/aura-landing/seo.ts` (domain taşınırsa tek nokta) |
 | `/basla` | KALDIRILDI (v5.8) — eski linkler için `/triyaj`'a kalıcı redirect |
 | `/saglik-turizmi` | **Sağlık Turizmi hasta-yüzü planlama** (v4.24-25): tercih (branş/ülke/seviye/gece) + endikatif paket önizlemesi (`computePackage`) + öz-yeterli "Talep Oluştur" → `POST /api/patient/tourism-request` (runTriage → tourism-etiketli Case, `Case.tourismPlan` JSON; doktor `/paket` PackageBuilder ön-değeri + kokpit 🧳 rozeti). Klinik-önce: bağlayıcı fiyat/rezervasyon daima doktor onayı sonrası (simüle/park; USHAŞ yetki belgesi + TÜRSAB hukuki zemini vault'ta belgeli) |
@@ -393,6 +394,35 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
   📌 `copy.ts`'e çok-dilli bölüm eklerken: `sections` **uniform** tut, bölüme özgü parçaları **kökte**
   tut (`aiEmphasis`/`transferItems`) → `tests/unit/aura-landing-copy` `shape()` imzası (dizide **uzunluk
   da imzada**) 8 dilde birebir kalır; bölüm-özgü render **key ile** bağlanır, index ile DEĞİL.
+- **`/v2` hero + entry-paths (v6.14) — DOKUNMADAN ÖNCE OKU:** sayfa **5 turluk kullanıcı geri
+  bildirimiyle** ayarlandı; aşağıdakiler **kullanıcı kararıdır**, sessizce değiştirme.
+  · **Video-arkalı kart mimarisi SABİT** (kullanıcı: *"video gömmesi çok iyi olmuş, sıra doğru"*): aktif
+  kartın kulvar videosu arkada oynar — aktiflik **hover + KLAVYE focus + mobilde IntersectionObserver**
+  (hover tek keşif yolu olamaz); `preload="none"` → açılışta hiçbir video inmez; ekran dışında/sekme
+  gizliyken hepsi pause.
+  · 🪤 **Kontrastı PERDE DEĞİL KART ZEMİNİ taşır** (`panel/90` aktif · `/75` pasif + `backdrop-blur-md`).
+  Daha koyu gerekirse **kart zeminini artır, perdeyi değil** — düz perde videoyu boğar (v6.14'ün hatası:
+  `night/65`+`/75` → *"video tam seçilmiyor"*). Hero skrimi **alt-koyu/üst-açık gradyan** (0.88→0.40→0.22),
+  entry perdesi `/22`.
+  · 🪤 **Hero sahneli açılış (pin+scrub):** `end: "+=30%"` = **TOPLAM** süre, adım **BAŞINA DEĞİL**
+  (v6.14.4'te `adım×55+40` yazıldı = ~315vh → *"3 kez kaydırmam gerekiyor"*; 14× kısaltıldı). **stagger
+  YOK** (kullanıcı: *"tek yeter"*) — geri eklenirse **pin süresini de büyüt**. `scrub 0.4`.
+  · ⚠️ **A11y sözleşmesi — BOZMA:** `reduced-motion`'da pin/scrub **hiç kurulmaz** (tüm metin görünür,
+  normal scroll) · metinler **SSR'da DOM'da**, gizleme yalnız **mount sonrası** `gsap.set` ile ⇒ JS
+  yoksa/hata alırsa içerik görünür kalır (**fail-open**, SEO güvenli). Bu **bilinçli** scroll-jacking:
+  wireframe "avoid" diyor, kullanıcı kararıyla yapıldı.
+  · **Marka bloğu (`.aura-brand`)**: AURA letterform + **tam altında Braille** (merkez farkı 0px).
+  🪤 `wordAfter`'a dil eki/noktalama **yazma** (letterform sonrası ~9-12px kopuk çizer → `lineAfter`'a).
+  🪤 **Glow: "aynı efekt" ≠ aynı değer** — `aura-breathe` blur'u (14/44/90px) letterform ölçeğine göre;
+  Braille noktası **5.38px** (26× fark) → aynı blur **görünmez**. Braille'in kendi keyframe'i var
+  (`aura-breathe-braille`, 3/8/18). İkisinde de **sürekli hafif ışıma** + hover'da nefes.
+- **Video posterleri (v6.14.5) — YENİ/YENİLENEN VİDEO EKLERKEN OKU:** poster **daima o videonun ilk
+  karesinden**: `ffmpeg -i <video> -frames:v 1 -q:v 2 <poster>.jpg`. **Ad-versiyonla** (`p-consult2.jpg`)
+  — aynı URL'de içerik değiştirmek **edge cache'te eskiyi** sundurur. 🪤 4 kulvar posteri eski sürümden
+  kalmıştı (fark **23-46**; hero **0.4** ve HIW **0.7-1.1** kontrol grubuydu) → `preload="none"` ile
+  **görünür zıplama**; poster ortak `VIDEOS` haritasından geldiği için hata **canlı landing'de de** vardı.
+  **Ölç, göz kararı yapma:** yeni poster ↔ ilk kare farkı **< ~1.5** (JPEG payı); en-boy oranı tutmuyorsa
+  veya video posterden yeniyse **şüphelen**.
 - **Design token mimarisi (v6.13) — RENK/ÖLÇEK DEĞİŞTİRMEDEN ÖNCE OKU:** `globals.css`'te **ÜÇ ayrı
   sistem** var, karıştırma: **(1)** `--c-*` + `.theme-light`/`.theme-dark` = **sistem geneli** (v6.1;
   `.logo-word-*` toggle buna bağlı) · **(2)** `--aura-*` + **`.aura-light`** = **landing/vitrin**
