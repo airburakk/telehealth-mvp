@@ -41,21 +41,29 @@ function V2Shell() {
         <V2EntryPaths />
         {/* Sandwich gövdesi: gece bantların arasındaki gündüz şeridi (mevcut
             landing ile aynı desen; token'lar .aura-light'ta açık değerlere geçer). */}
-        {/* Gündüz şeridi — akış: nasıl işliyor → kim (doktorlar) → kanıt (güven) →
-            AI'nın SINIRI → erişilebilirlik. İki yeni bölüm (v6.16 Faz 2) güvenin
-            HEMEN ardında: güven "neye güvenebilirsiniz"i, bunlar "neyi iddia
-            etmiyoruz"u söyler — sıra bilinçli, ikisi birbirini tamamlıyor. */}
+        {/* AÇIK/KOYU RİTİM (v6.17, kullanıcı planı): önceki tek gündüz şeridi
+            "iki siyah → full beyaz" kompozisyonu veriyordu; kullanıcının
+            wireframe'i BİR AÇIK BİR KOYU istiyor. Yeni ritim (çift-koyu açılış
+            sonrası katı almaşık): hero(K) → entry(K) → how(A) → connected(K) →
+            doctors(A) → trust(K) → ai(A) → accessibility(K) → clinicians(A) →
+            closing(K). Koyu bölümler .aura-page gece token'larını miras alır
+            (sarmalayıcısız); açık bölümler tekil .aura-light sarmalanır — tüm
+            bölümler rol token'ı kullandığından tema otomatik döner.
+            İçerik sırası DEĞİŞMEDİ: süreç → ne bağlı kalır → kim → kanıt →
+            sınırlar (ai/a11y) → doktor köprüsü (cta → /for-clinicians). */}
         <div className="aura-light bg-[var(--aura-bg)]">
           <AuraHowItWorks />
-          {/* ConnectedCare (v6.17) blueprint IA'ya uygun: süreç (how) → ne bağlı
-              kalır (connected) → kim (doctors) → kanıt (trust) → sınırlar (ai/a11y). */}
-          <V2ConnectedCare />
+        </div>
+        <V2ConnectedCare />
+        <div className="aura-light bg-[var(--aura-bg)]">
           <AuraDoctors />
-          <AuraTrust />
+        </div>
+        <AuraTrust />
+        <div className="aura-light bg-[var(--aura-bg)]">
           <V2AiResponsibility />
-          <V2Accessibility />
-          {/* Clinicians (v6.17): blueprint IA'da kapanıştan önce son bölüm —
-              hasta anlatısı bitti, doktor köprüsü (cta → /for-clinicians). */}
+        </div>
+        <V2Accessibility />
+        <div className="aura-light bg-[var(--aura-bg)]">
           <V2Clinicians />
         </div>
         <AuraClosing />

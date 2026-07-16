@@ -1172,7 +1172,7 @@ export const COPY = {
           key: "responsibility",
           n: "09",
           title: "Klinik sorumluluk",
-          body: "Tanı, tedavi ve tıbbi kararlar yetkili sağlık profesyonellerine aittir. AURA değerlendirmeyi, koordinasyonu ve iletişimi destekler; hekimin yerine geçmez. İkinci görüş bağlayıcı değildir.",
+          body: "Tanı, tedavi ve tıbbi kararlar yetkili sağlık profesyonellerine aittir. AURA değerlendirmeyi, koordinasyonu ve iletişimi destekler; doktorun yerine geçmez. İkinci görüş bağlayıcı değildir.",
           note: { label: "", text: "" },
         },
         {
