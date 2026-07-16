@@ -242,3 +242,23 @@ Her push/deploy öncesi (sıra önemli):
    değişen metin canlıda örneklenir (korumalı rota deploy-sinyali YAPILMAZ).
 6. **Belge senkronu:** vault mvp/changelog/todo/log + kod repo README/DEPLOY sürüklenmesi
    (CLAUDE.md kapanış protokolü).
+
+## Ortam ayrımı (Ray B, launch-gate 3 — 2026-07-16)
+
+**Hedef durum:** üretim · geliştirme · test ayrı veritabanları + ortam-başına ayrı anahtarlar
+(KEK/SESSION_SECRET). Mevcut durum: test katmanı ayrı (Neon dev branch, `TEST_DATABASE_URL`);
+**yerel geliştirme hâlâ üretim Neon'una bağlı** (bilinçli MVP kabulüydü — kapatılıyor).
+
+**B1 — DB guard (AKTİF):** `src/lib/db.ts` üretim-dışı bir süreç (next dev, tsx script) üretim
+endpoint'ine bağlanırken YÜKSEK SESLE uyarır. Kurulum (yerel `.env`, zorunlu):
+
+1. `PROD_DB_FINGERPRINT="<uretim-endpoint-parcasi>"` — ör. DATABASE_URL host'unun `ep-...` kısmı.
+2. İstenirse `AURA_DB_GUARD=block` → uyarı yerine HATA (bağlantı hiç kurulmaz).
+
+Guard Vercel'de devre dışıdır (NODE_ENV=production / VERCEL=1 — üretimin kendi DB'sine bağlanması
+normal). Parmak izi kodda tutulmaz (public repo).
+
+**B2 (sırada):** geliştirme için ayrı Neon branch + ayrı `DATA_ENCRYPTION_KEK`/`SESSION_SECRET` +
+seed/demo verisi → sonra yerel `.env` `DATABASE_URL`'i dev branch'e döner ve `AURA_DB_GUARD=block`
+varsayılan olur. ⚠️ O günden sonra "canlı doğrulama" akışları yeniden tanımlanır: prod'a yalnız
+smoke; fonksiyonel doğrulama dev branch'te.
