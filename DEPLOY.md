@@ -222,3 +222,23 @@ dormant kalır / fallback'e düşer).
 - `SESSION_SECRET` üretimde mutlaka güçlü ve gizli olmalı; tüm API anahtarları yalnız sunucuda.
 - KVKK/GDPR: gerçek hasta verisi işlemeden önce veri işleme sözleşmeleri (DPA/SCC) + uygun bölge
   (AB/TR) + AI sağlayıcı aktarım güvenceleri gerekir (bkz. vault `wiki/kavramlar/` + `wiki/platform-mimarisi.md`).
+
+## Yayın kabul checklist'i (v6.20+, launch-gate 10 gereği)
+
+Her push/deploy öncesi (sıra önemli):
+
+1. **Doğrulama:** `npx tsc --noEmit` 0 · `npx vitest run` yeşil · `npm run build` EXIT 0
+   (⚠️ dev server kapalı — prisma generate EPERM) · gerekiyorsa lint.
+2. **Metin değiştiyse:** vault `wiki/yonetisim/iddia-kaydi.md` kontrolü — yasak ifade taraması
+   (uçtan uca şifreli · akredite · determinist AI · ölçülmemiş metrik · WCAG beyanı) +
+   **meta/OG/JSON-LD ayrı taranır** (görünür metin yetmez) + 8 dilin HEPSİ hizalanır (EN'e bakıp
+   "tutarlı" sanma).
+3. **Terminoloji:** hasta yüzü "başvuru" (vaka değil) · "Doktor" (Hekim değil) · "Access Care"
+   yalnız EN · klinik personel yüzeyinde "vaka" kalır.
+4. **Push kapsamı:** `git fetch` + `git log origin/main..HEAD` — paralel oturum commit'i taşınmıyor
+   mu? Kapsam kontrolü ile push AYRI adım (zincirleme `&&` yok).
+5. **Deploy sonrası:** Vercel state READY + doğru SHA · prod smoke (`/` `/how-it-works`
+   `/guven-ve-gizlilik` `/giris` 200 · `/v2` `/trust` 308 · `X-Vercel-Id: fra1::fra1`) ·
+   değişen metin canlıda örneklenir (korumalı rota deploy-sinyali YAPILMAZ).
+6. **Belge senkronu:** vault mvp/changelog/todo/log + kod repo README/DEPLOY sürüklenmesi
+   (CLAUDE.md kapanış protokolü).
