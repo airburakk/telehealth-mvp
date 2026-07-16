@@ -353,7 +353,9 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
   eklemeyi unutursan DERLEME PATLAR** (kasıtlı — fail-open yerine compile-error).
   🔌 **Gerçek crypto-shred YOK ve bugünkü mimaride kurulamaz:** DEK alanın içinde (`crypto.ts` envelope) →
   imha edilebilir tek anahtar global KEK (= herkesin verisi). Hasta-bazlı DEK'e geçilirse (`crypto.ts:17`
-  KMS swap noktası) purge "anahtar satırını sil"e döner. **Onam metni "crypto-shred" diyor — açık kalem.**
+  KMS swap noktası) purge "anahtar satırını sil"e döner. ✅ **Onam metni v6.19'da düzeltildi** (v3,
+  hukukçu onaylı): "(crypto-shred)" vaadi çıktı, metin fiziken-imha gerçeğini söylüyor;
+  `CONSENT_VERSION` 2→3 = herkes `/onam`'da bir kez yeniden onaylar.
 - **Veri ikametgâhı — işlem bölgesi `fra1` (v6.10):** `vercel.json` `"regions": ["fra1"]` (Frankfurt).
   **Neden:** Neon veritabanı **`eu-central-1` (Frankfurt)**; Vercel varsayılanı ise `iad1` (Washington DC)
   idi → PHI AB'de saklanıyor ama **her istekte ABD'de işleniyordu** (şifre orada çözülür) = gereksiz
@@ -468,9 +470,10 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
   doğru. **Çözüm: `.next` sil + dev server yeniden başlat.** Ölçüm yapmadan önce token'ın computed
   değerini doğrula — yoksa "düzeltmem çalışmadı" diye kaynağı boşuna kurcalarsın.
 - **v6.18 TAŞIMA (2026-07-16) — V2 = ANA SAYFA:** `/` artık `V2Home` render eder; `/v2` →
-  `permanentRedirect("/")`. **Geri dönüş: tag `landing-eski-v5.9-son`** (eski bileşenler — `landing.tsx`,
-  `aura/hero.tsx`, `chapters` sinematik destesi, kök `nav.tsx` — repoda DURUYOR; silme = ayrı temizlik
-  kararı; `chapters.tsx` kısmen CANLI: how-it-works `ChapterCta` kullanıyor). **`V2Nav` = SİTE GENELİ nav**
+  `permanentRedirect("/")`. **Geri dönüş: tag `landing-eski-v5.9-son`** (eski bileşenler **v6.19'da
+  SİLİNDİ** — `724d601`, −769 satır: landing/eski hero/kök nav/motion/client-only; geri dönüş yalnız
+  tag'ten. `chapters.tsx` küçültülmüş CANLI: how-it-works `ChapterCta`+`ChapterData` kullanır,
+  `AuraChapters` artık yok). **`V2Nav` = SİTE GENELİ nav**
   (/, /how-it-works, /guven-ve-gizlilik, /for-clinicians) — kök `AuraNav`'ın `/#ch-*` çapaları yeni ana
   sayfada karşılıksız (kullanma). Metadata/JSON-LD yeni konumlandırmada ("Care, without borders."; "end
   to end" tamamen çıktı). **Açık/koyu ritim (kullanıcı planı):** çift-koyu açılış sonrası katı almaşık —
