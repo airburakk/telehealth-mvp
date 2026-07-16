@@ -50,28 +50,39 @@ export const VIDEOS = {
     src720: "/assets/video/v-hero3-720.mp4",
     poster: "/assets/video/p-hero3.jpg",
   },
+  // ⚠️ POSTERLER "2" SONEKLI (v6.14.5) — DÜZ p-consult.jpg'ye GERİ DÖNME:
+  // 4 kulvar videosu 2026-07-12'de yeniden üretildi ama posterler bir gün
+  // önceki ESKİ sürümden kaldı → poster ile videonun ilk karesi FARKLI SAHNE
+  // (ölçüldü: ortalama fark 23-46; hero 0.4 ve HIW 0.7-1.1 ile kıyasla).
+  // Kullanıcı /v2'de yakaladı: "videonun başında başka bir fotoğraf var,
+  // sonradan videoya bağlanıyor" — preload="none" posteri uzun tuttuğu için
+  // orada göze battı, ama CANLI landing chapters'ında da aynı zıplama vardı.
+  // Yeniden üretim: ffmpeg -i <video> -frames:v 1 -q:v 2 → fark 0.87-1.26 ✓
+  // Ad-versiyonlama ŞART: aynı URL'de içerik değiştirmek edge cache'te ESKİYİ
+  // sundurur (video yenilemelerindeki aynı ders). Yeni video = yeni poster +
+  // yeni ad; posterin videodan ÜRETİLDİĞİNİ ölç, göz kararı yapma.
   consult: {
     src: "/assets/video/v-consult.mp4",
     src720: "/assets/video/v-consult-720.mp4",
-    poster: "/assets/video/p-consult.jpg",
+    poster: "/assets/video/p-consult2.jpg",
     scrub: "/assets/video/v-consult-k720.mp4",
   },
   so: {
     src: "/assets/video/v-so.mp4",
     src720: "/assets/video/v-so-720.mp4",
-    poster: "/assets/video/p-so.jpg",
+    poster: "/assets/video/p-so2.jpg",
     scrub: "/assets/video/v-so-k720.mp4",
   },
   tourism: {
     src: "/assets/video/v-tourism.mp4",
     src720: "/assets/video/v-tourism-720.mp4",
-    poster: "/assets/video/p-tourism.jpg",
+    poster: "/assets/video/p-tourism2.jpg",
     scrub: "/assets/video/v-tourism-k720.mp4",
   },
   freecare: {
     src: "/assets/video/v-freecare.mp4",
     src720: "/assets/video/v-freecare-720.mp4",
-    poster: "/assets/video/p-freecare.jpg",
+    poster: "/assets/video/p-freecare2.jpg",
     scrub: "/assets/video/v-freecare-k720.mp4",
   },
 };
