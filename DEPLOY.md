@@ -232,14 +232,17 @@ Her push/deploy öncesi (sıra önemli):
 2. **Metin değiştiyse:** vault `wiki/yonetisim/iddia-kaydi.md` kontrolü — yasak ifade taraması
    (uçtan uca şifreli · akredite · determinist AI · ölçülmemiş metrik · WCAG beyanı) +
    **meta/OG/JSON-LD ayrı taranır** (görünür metin yetmez) + 8 dilin HEPSİ hizalanır (EN'e bakıp
-   "tutarlı" sanma).
+   "tutarlı" sanma). Vitrin title/h1/CTA değiştiyse `scripts/synthetic-checks.mjs` beklentileri
+   de güncellenir (yoksa sentetik kontrol yanlış alarm üretir — Ray C).
 3. **Terminoloji:** hasta yüzü "başvuru" (vaka değil) · "Doktor" (Hekim değil) · "Access Care"
    yalnız EN · klinik personel yüzeyinde "vaka" kalır.
 4. **Push kapsamı:** `git fetch` + `git log origin/main..HEAD` — paralel oturum commit'i taşınmıyor
    mu? Kapsam kontrolü ile push AYRI adım (zincirleme `&&` yok).
-5. **Deploy sonrası:** Vercel state READY + doğru SHA · prod smoke (`/` `/how-it-works`
-   `/guven-ve-gizlilik` `/giris` 200 · `/v2` `/trust` 308 · `X-Vercel-Id: fra1::fra1`) ·
-   değişen metin canlıda örneklenir (korumalı rota deploy-sinyali YAPILMAZ).
+5. **Deploy sonrası:** Vercel state READY + doğru SHA · prod smoke: `node scripts/synthetic-checks.mjs`
+   (8 rota durum/title/h1/CTA/noindex + TLS + asset — eski elle 200 listesi bunun alt kümesi) +
+   ayrıca `/v2` `/trust` 308 ve `X-Vercel-Id: fra1::fra1` teyidi · değişen metin canlıda örneklenir
+   (korumalı rota deploy-sinyali YAPILMAZ). Sürekli nöbet zaten GitHub Actions'ta (~30 dk,
+   `.github/workflows/synthetic.yml`; düşen koşu e-posta bildirir).
 6. **Belge senkronu:** vault mvp/changelog/todo/log + kod repo README/DEPLOY sürüklenmesi
    (CLAUDE.md kapanış protokolü).
 
