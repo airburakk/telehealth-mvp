@@ -467,6 +467,16 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
   **gelmiyor** (aynı dosya, aynı commit). Belirti: token gündüzde gece değerini veriyor ama `--aura-accent`
   doğru. **Çözüm: `.next` sil + dev server yeniden başlat.** Ölçüm yapmadan önce token'ın computed
   değerini doğrula — yoksa "düzeltmem çalışmadı" diye kaynağı boşuna kurcalarsın.
+- **v6.18 TAŞIMA (2026-07-16) — V2 = ANA SAYFA:** `/` artık `V2Home` render eder; `/v2` →
+  `permanentRedirect("/")`. **Geri dönüş: tag `landing-eski-v5.9-son`** (eski bileşenler — `landing.tsx`,
+  `aura/hero.tsx`, `chapters` sinematik destesi, kök `nav.tsx` — repoda DURUYOR; silme = ayrı temizlik
+  kararı; `chapters.tsx` kısmen CANLI: how-it-works `ChapterCta` kullanıyor). **`V2Nav` = SİTE GENELİ nav**
+  (/, /how-it-works, /guven-ve-gizlilik, /for-clinicians) — kök `AuraNav`'ın `/#ch-*` çapaları yeni ana
+  sayfada karşılıksız (kullanma). Metadata/JSON-LD yeni konumlandırmada ("Care, without borders."; "end
+  to end" tamamen çıktı). **Açık/koyu ritim (kullanıcı planı):** çift-koyu açılış sonrası katı almaşık —
+  hero(K) entry(K) how(A) connected(K) doctors(A) trust(K) ai(A) accessibility(K) clinicians(A)
+  closing(K); koyu bölümler sarmalayıcısız (gece token miras), açıklar tekil `.aura-light`. Koyu kontrast
+  ÖLÇÜLDÜ (6.48–17.66 AA üstü). `[lang]` locale rotaları da `V2Home` (initialLang) + v2 metadata.
 - **v6.17 sözleşmeleri (2026-07-16):**
   · **`/v2` bölüm sırası:** hero → entry(`#care`) → how(`#how`) → **connected** → doctors → trust →
   ai → accessibility → **clinicians** (+`cta` → `/for-clinicians`). Connected/Clinicians da
