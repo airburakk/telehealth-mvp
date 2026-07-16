@@ -25,6 +25,7 @@ export function V2ClaimSection({
   copy,
   icon: Icon = ShieldCheck,
   cta,
+  headingLevel: Heading = "h2",
 }: {
   id: string;
   copy: ClaimCopy;
@@ -32,6 +33,10 @@ export function V2ClaimSection({
   // Opsiyonel köprü (v6.17): bölümün tam sayfası varsa not kutusundan sonra
   // tek link — ai/accessibility/connected'da YOK, clinicians → /for-clinicians.
   cta?: { label: string; href: string };
+  // Ray D a11y (2026-07-17): ana sayfada bölüm başlığı = h2 (h1 hero'da); ama bu
+  // iskelet /for-clinicians'ta SAYFANIN tepe başlığıdır → h1 verilmezse sayfa h1'siz
+  // kalır (sentetik kalibrasyon bulgusu). Görsel/metin AYNI, yalnız semantik seviye.
+  headingLevel?: "h1" | "h2";
 }) {
   const headingId = `${id}-heading`;
 
@@ -45,12 +50,12 @@ export function V2ClaimSection({
         <p className="aura-mono text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--aura-accent-stronger)]">
           {copy.eyebrow}
         </p>
-        <h2
+        <Heading
           id={headingId}
           className="aura-display mt-4 text-3xl font-bold leading-[1.02] tracking-tighter text-[var(--aura-ink)] md:text-5xl"
         >
           {copy.headline}
-        </h2>
+        </Heading>
         <p className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg">
           {copy.intro}
         </p>

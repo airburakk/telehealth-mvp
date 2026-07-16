@@ -20,15 +20,15 @@ const TIMEOUT_MS = 30_000;
 const SLOW_MS = 8_000; // Neon uyanması + soğuk fonksiyon ilk isteği yavaşlatabilir → yavaşlık raporlanır ama düşürmez
 const CERT_MIN_DAYS = 14;
 
-// title/h1/cta = HAM HTML'de aranan alt dize (büyük/küçük duyarsız). h1: null = SSR çıktısında h1 yok
-// (bilinen eksik — Ray D a11y kalemi); noindex: true = meta robots noindex ZORUNLU, false = YASAK.
+// title/h1/cta = HAM HTML'de aranan alt dize (büyük/küçük duyarsız). h1: null = bu rotada h1 denetlenmez.
+// noindex: true = meta robots noindex ZORUNLU, false = YASAK.
 const ROUTES = [
   { path: "/",                  title: "Care, without borders",      h1: "Care, without borders", cta: "/giris",                  noindex: false },
   { path: "/tr",                title: "Bakım, sınırların ötesinde", h1: "Bakım",                 cta: "/giris",                  noindex: true },
   { path: "/ar",                title: "رعاية بلا حدود",              h1: "رعاية",                  cta: "/giris",                  noindex: true },
   { path: "/how-it-works",      title: "How it works",               h1: "works",                 cta: "/kayit/hasta",            noindex: false },
   { path: "/guven-ve-gizlilik", title: "Trust",                      h1: "Trust",                 cta: "/kayit/hasta",            noindex: false },
-  { path: "/for-clinicians",    title: "For clinicians",             h1: null,                    cta: "/kurumsal-giris",         noindex: false },
+  { path: "/for-clinicians",    title: "For clinicians",             h1: "Practice across borders", cta: "/kurumsal-giris",        noindex: false },
   { path: "/giris",             title: "Sign in",                    h1: "Welcome",               cta: "/giris/e-posta",          noindex: false },
   { path: "/kurumsal-giris",    title: "Corporate sign-in",          h1: "Corporate sign-in",     cta: "/kurumsal-giris/e-posta", noindex: true },
 ];

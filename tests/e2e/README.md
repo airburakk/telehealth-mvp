@@ -1,21 +1,27 @@
-# E2E Testleri (Playwright — T10 Katman 3)
+# E2E Testleri (Playwright — T10 Katman 3 + Ray D)
 
-3 demo-kritik akış tarayıcıda uçtan uca doğrulanır:
+3 demo-kritik akış + erişilebilirlik smoke paketi tarayıcıda uçtan uca doğrulanır:
 - `triyaj-kokpit-video.e2e.ts` — hasta triyaj → vaka → doktor kokpit → görüşme odası
 - `ikinci-gorus.e2e.ts` — İkinci Görüş başvuru → hasta listesi → koordinatör kuyruğu
 - `partner-konsultasyon.e2e.ts` — partner talep → **de-id** → doktor havuzu (isim SIZMAZ)
+- `erisilebilirlik.e2e.ts` — **salt-okur** a11y smoke (Ray D): axe taraması (kritik/ciddi = düşer) ·
+  tek-h1 · klavye-yalnız · reduced-motion · RTL. WCAG İDDİASI DEĞİLDİR (vault
+  `wiki/yonetisim/erisilebilirlik-denetim-checklist.md`). Tek başına:
+  `npx playwright test erisilebilirlik`
 
 ## ⚠️ Prod'a ASLA çalıştırma
 
-E2E uygulamaya **yazar** (vaka/talep oluşturur). Yerel `.env` **üretim Neon**'a bağlıdır → E2E
-yalnız **dev branch'e bağlı bir sunucuya** karşı koşulmalıdır.
+Akış testleri uygulamaya **yazar** (vaka/talep oluşturur) → yalnız dev-branch'e bağlı sunucuya karşı
+koş. **Ray B2'den beri (2026-07-16) yerel `.env` zaten Neon `development` branch'indedir** → normal
+`npm run dev` yeterli; aşağıdaki `TEST_DATABASE_URL` reçetesi test-branch'e karşı koşmak istersen
+hâlâ geçerli.
 
 ## Çalıştırma
 
 ```powershell
-# 1) Dev sunucusunu DEV BRANCH'e bağlı başlat (ayrı terminal):
-$env:DATABASE_URL = $env:TEST_DATABASE_URL   # Neon dev branch (bkz. tests/integration/README.md)
+# 1) Dev sunucusunu başlat (ayrı terminal) — yerel .env zaten development branch (Ray B2):
 npm run dev                                   # http://localhost:3000
+# (İstersen test branch'i: $env:DATABASE_URL = $env:TEST_DATABASE_URL)
 
 # 2) Başka terminalde E2E:
 $env:E2E_BASE_URL = "http://localhost:3000"

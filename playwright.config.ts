@@ -1,7 +1,8 @@
-// Playwright E2E (T10 Katman 3) — 3 demo-kritik akış.
-// ⚠️ Bu testler UYGULAMAYA YAZAR (vaka/talep oluşturur). Yerel `.env` ÜRETİM Neon'a bağlı olduğundan
-// E2E, **dev branch'e bağlı bir sunucuya** karşı çalıştırılmalıdır (asla prod'a). Bkz. tests/e2e/README.md:
-//   1) DATABASE_URL=$TEST_DATABASE_URL ile dev sunucusu başlat  2) E2E_BASE_URL ver  3) npm run test:e2e
+// Playwright E2E (T10 Katman 3) — 3 demo-kritik akış + erişilebilirlik smoke paketi (Ray D).
+// ⚠️ Akış testleri UYGULAMAYA YAZAR (vaka/talep oluşturur) → ASLA prod'a karşı koşma.
+// Ray B2'den beri (2026-07-16) yerel `.env` zaten Neon DEVELOPMENT branch'inde → normal
+// `npm run dev` sunucusu E2E için güvenlidir (eski TEST_DATABASE_URL reçetesi de çalışır;
+// bkz. tests/e2e/README.md). erisilebilirlik.e2e.ts salt-okurdur (giriş yok, veri yazmaz).
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.E2E_BASE_URL || "http://localhost:3000";
