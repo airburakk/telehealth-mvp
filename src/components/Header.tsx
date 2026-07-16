@@ -10,6 +10,7 @@ import { useT } from "@/components/useT";
 import { langDir } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
 import { isImmersiveCallPath } from "@/lib/immersive-routes";
+import { LANG_CODES } from "@/lib/aura-landing/copy";
 import { LogOut, LogIn, ShieldOff, UserCog } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -42,7 +43,13 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
   // Giriş kapıları (/giris, /kurumsal-giris) tam-ekran vitrin panelleridir (kendi logo +
   // "← ana sayfa" bağlantısıyla); /e-posta form alt-rotalarında krom durur (exact match).
   // Video görüşme rotaları IMMERSIVE tam-ekran (100dvh video+panel) → krom gizlenir.
-  if (["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/for-clinicians", "/giris", "/kurumsal-giris"].includes(pathname) || isImmersiveCallPath(pathname)) return null;
+  // Locale rotaları (/en /tr … — v6.17) da landing'dir: kendi nav/footer'ını taşır.
+  if (
+    ["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/for-clinicians", "/giris", "/kurumsal-giris"].includes(pathname) ||
+    (LANG_CODES as readonly string[]).includes(pathname.slice(1)) ||
+    isImmersiveCallPath(pathname)
+  )
+    return null;
 
   const activeHref = items
     .filter((n) => pathname === n.href || pathname.startsWith(n.href + "/"))

@@ -9,16 +9,18 @@ import { SmoothScroll } from "./motion";
 import { AuraNav } from "./nav";
 import { AuraTrust } from "./trust";
 import { ClientOnly } from "./client-only";
-import { LangProvider, langDir, useLang } from "@/lib/aura-landing/i18n";
+import { LangProvider, langDir, useLang, type Lang } from "@/lib/aura-landing/i18n";
 
 // AURA sinematik landing (vitrinden taşındı, 2026-07-12): hero (video +
 // kinetik tipografi) → 4 sahnelik 3D roll chapter destesi → doktorlar →
 // güven → kapanış. Tüm bölümler SSR'da tam render edilir; hareket katmanı
 // (gsap/lenis) mount sonrası. Global Header/SiteFooter "/"de gizlidir —
 // sayfa kendi nav/footer'ını taşır (PortamedLanding dönemiyle aynı sözleşme).
-export function AuraLanding() {
+// initialLang (v6.17): locale rotaları (/tr /ar …) landing'i URL dilinde SSR'lar;
+// prop'suz çağrı ("/") birebir eski davranış (EN + mount'ta air_lang).
+export function AuraLanding({ initialLang }: { initialLang?: Lang } = {}) {
   return (
-    <LangProvider>
+    <LangProvider initialLang={initialLang}>
       <LandingShell />
     </LangProvider>
   );

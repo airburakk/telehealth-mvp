@@ -26,10 +26,22 @@ const LangContext = createContext<{
   setLang: (l: Lang) => void;
 }>({ lang: "en", t: COPY.en, setLang: () => {} });
 
-export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("en");
+// initialLang (v6.17, locale rotaları): /tr /ar gibi bir locale rotasından
+// gelindiğinde URL'deki dil KAZANIR — SSR ilk boyamada o dilde çizilir ve
+// air_lang okuması ATLANIR (URL açık bir istek; kayıtlı tercih ezilMEZ, yalnız
+// o sayfada devre dışı). Prop verilmediğinde davranış BİREBİR eski: EN başla,
+// mount'ta air_lang'dan düzelt. setLang her iki modda da air_lang'a yazar.
+export function LangProvider({
+  children,
+  initialLang,
+}: {
+  children: ReactNode;
+  initialLang?: Lang;
+}) {
+  const [lang, setLangState] = useState<Lang>(initialLang ?? "en");
 
   useEffect(() => {
+    if (initialLang) return; // URL dili kazandı — depolama okuması yok
     try {
       const code = langCodeFor(window.localStorage.getItem("air_lang"));
       if (code && (LANG_CODES as string[]).includes(code)) {
@@ -38,7 +50,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
     } catch {
       // depolama engellenmiş olabilir; dil EN kalır
     }
-  }, []);
+  }, [initialLang]);
 
   // Kök <html> dir/lang'a DOKUNULMAZ (birleşik uygulamada diğer sayfalara
   // sızardı) — RTL/lang landing'in kendi konteynerine uygulanır
