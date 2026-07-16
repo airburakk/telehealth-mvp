@@ -41,7 +41,7 @@ const TEXTS = [
   "Görüşmeye katıl",
   "Süreciniz sonlandırıldı",
   "Tüm verileriniz silindi ve ödemeniz iade edildi.",
-  "Vakalarıma dön",
+  "Bakım Yolculuğuma dön",
   "Bir hata oluştu, lütfen tekrar deneyin.",
   "Bağlanıyor…",
   "İletiliyor…",
@@ -140,7 +140,7 @@ export function ConsultGate({
         <h2 className="mt-2 font-bold text-[var(--c-ink)]">{t("Süreciniz sonlandırıldı")}</h2>
         <p className="mt-1 text-sm text-[var(--c-ink-2)]">{t("Tüm verileriniz silindi ve ödemeniz iade edildi.")}</p>
         <button onClick={() => router.push("/vakalarim")} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
-          {t("Vakalarıma dön")} <ArrowRight size={16} />
+          {t("Bakım Yolculuğuma dön")} <ArrowRight size={16} />
         </button>
       </div>
     );

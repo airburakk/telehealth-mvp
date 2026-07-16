@@ -17,7 +17,12 @@ export interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { href: "/vakalarim", label: "Vakalarım", icon: FolderHeart, roles: ["PATIENT", "ADMIN"] },
+  // "Bakım Yolculuğum" (v6.17, backlog P1): hasta-yüzü ad — hasta kendini "vaka"
+  // olarak görmemeli. ⚠️ ROTA DEĞİŞMEDİ (/vakalarim: bookmark + dış bağlantılar);
+  // klinik personel yüzeylerinde (aşağıda /doktor…) "vaka" terminolojisi KALIR
+  // (backlog: keep clinician terminology as case/vaka). Etiket ADMIN'de de bu —
+  // admin hasta yüzeyini hasta gözüyle denetler, ayrı personel sekmeleri zaten var.
+  { href: "/vakalarim", label: "Bakım Yolculuğum", icon: FolderHeart, roles: ["PATIENT", "ADMIN"] },
   { href: "/takip", label: "Post Op", icon: HeartPulse, roles: ["PATIENT"] },
   { href: "/paylasimlarim", label: "Paylaşımlarım", icon: Share2, roles: ["PATIENT", "ADMIN"] },
   { href: "/triyaj", label: "Triyaj", icon: UserRound, roles: ["ADMIN"] },

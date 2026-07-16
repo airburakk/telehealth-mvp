@@ -62,7 +62,8 @@ const STAGE_INK: Record<string, string> = {
 // ekranlarında görünür (/doktor/vaka/[id] + CaseQueue). Hasta gereksiz panik/klinik yorum görmesin.
 
 const S = {
-  title: "Vakalarım",
+  // "Bakım Yolculuğum" (v6.17): hasta-yüzü ad; rota /vakalarim KALDI (lib/nav.ts notu).
+  title: "Bakım Yolculuğum",
   subtitle: "Sağlık başvurularınız — yalnızca siz görürsünüz.",
   newBtn: "Yeni başvuru",
   pickTitle: "Nasıl ilerlemek istersiniz?",

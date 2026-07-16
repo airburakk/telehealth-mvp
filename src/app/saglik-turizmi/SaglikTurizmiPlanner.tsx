@@ -42,7 +42,7 @@ const TEXTS = [
   "Talep oluşturulamadı, lütfen tekrar deneyin.",
   "Talebiniz alındı",
   "Talebiniz seçtiğiniz tedavi alanının doktor havuzuna iletildi. Doktorlar tekliflerini hazırladıkça iletişim tercihinizden bilgilendirileceksiniz.",
-  "Anladım, Vakalarıma git",
+  "Anladım, Bakım Yolculuğuma git",
   TOURISM_DISCLAIMER_TITLE,
   TOURISM_DISCLAIMER_BODY,
 ];
@@ -153,7 +153,7 @@ function SaglikTurizmiPlannerInner() {
 
         <button type="button" onClick={() => window.location.assign("/vakalarim")}
           className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--c-accent-strong)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0c94a0]">
-          {t("Anladım, Vakalarıma git")} <ArrowRight size={16} className="rtl:rotate-180" />
+          {t("Anladım, Bakım Yolculuğuma git")} <ArrowRight size={16} className="rtl:rotate-180" />
         </button>
       </div>
     );

@@ -33,7 +33,7 @@ const PHASE_ICON = {
 // (bildirim linkleri kırılmaz). BOLA: canAccessCase kapısı DECRYPT ÖNCESİ ([[server-page-bola-ownership]]).
 // Sonuç sayfası hasta-yüzlü: vaka dili Türkçe değilse statik etiketler sunucuda çevrilir.
 const STATIC_LABELS = [
-  "Vakalarım",
+  "Bakım Yolculuğum",
   "Vakanız oluşturuldu ve doktor kuyruğuna eklendi",
   "Uzman doktor, hazırlanan vaka özetinizi inceleyip sizinle video görüşmesi planlayacak.",
   "Vaka No", "Aciliyet", "Hasta", "Ülke / Dil", "Yönlendirilen Branş", "Süre", "Vakanız",
@@ -143,7 +143,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
     <div dir={dir} className="mx-auto max-w-3xl px-5 py-10">
       <div className="flex items-center justify-between gap-3">
         <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">
-          <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Vakalarım")}
+          <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Bakım Yolculuğum")}
         </Link>
         {isClinician && (
           <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${u.badge}`}>

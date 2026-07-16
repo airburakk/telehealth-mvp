@@ -28,7 +28,7 @@ const JOURNEY: { icon: LucideIcon; t: string; d: string }[] = [
 ];
 
 const TEXTS = [
-  "Vakalarım",
+  "Bakım Yolculuğum",
   "Tedavi Paketi Teklifi",
   "Bu teklif reddedildi",
   "Yeni bir teklif için koordinatörünüzle görüşebilirsiniz.",
@@ -88,7 +88,7 @@ export function OfferView(p: OfferViewProps) {
       {!p.embedded && (
         <div className="print:hidden flex items-center justify-between gap-3">
           <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">
-            <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Vakalarım")}
+            <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Bakım Yolculuğum")}
           </Link>
           <PatientLangSelect lang={lang} onChange={setLang} />
         </div>
