@@ -467,6 +467,23 @@ e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ül
   **gelmiyor** (aynı dosya, aynı commit). Belirti: token gündüzde gece değerini veriyor ama `--aura-accent`
   doğru. **Çözüm: `.next` sil + dev server yeniden başlat.** Ölçüm yapmadan önce token'ın computed
   değerini doğrula — yoksa "düzeltmem çalışmadı" diye kaynağı boşuna kurcalarsın.
+- **v6.17 sözleşmeleri (2026-07-16):**
+  · **`/v2` bölüm sırası:** hero → entry(`#care`) → how(`#how`) → **connected** → doctors → trust →
+  ai → accessibility → **clinicians** (+`cta` → `/for-clinicians`). Connected/Clinicians da
+  `claim-section` beslemesi — **her madde kod kanıtlı**, harita `copy.ts` ilgili blok başlığında.
+  · **`/for-clinicians`:** how-it-works sözleşmesi (indekslenir, sitemap 0.7, kendi aura nav/footer —
+  Header/SiteFooter gizleme listesinde). Sözlük `v2.clinicians` **iki yüzeyi** besler (bölüm + sayfa).
+  Not kutusu: doğrulama = belge incelemesi, **akreditasyon DEĞİL** (v6.8).
+  · **Hero mobil kaynak:** `<source media="(max-width:767px)">` → `src720` (848KB); masaüstü 1080p
+  **kullanıcı kararı, dokunma**. Save-Data → video hiç başlatılmaz. 🪤 **WebM DENENDİ ve ATILDI:**
+  VP9 çıktısı (1112KB) mevcut h264 720p'den BÜYÜK — kaynak zaten agresif sıkıştırılmış; **eklemeden
+  önce ölç**.
+  · **"Bakım Yolculuğum"** = hasta-yüzü ad; **rota `/vakalarim` KALDI**, klinik personelde "vaka"
+  KALIR. Açık kalem: SO alt-başlıkları ("İkinci Görüş Vakalarım") + "Vaka No/Vakanız" etiketleri.
+  · **Locale rotaları `/en…/az` (`app/[lang]`):** ÇALIŞIR ama **bilinçli noindex + sitemap dışı** —
+  "/" hâlâ 8-dil-tek-URL kanoniği (v5.9.1). **İndekslemeye açmak = kullanıcı kararı** (robots satırı +
+  sitemap + "/" canonical stratejisi birlikte). `dynamicParams=false` ŞART (kök segment — kaldırılırsa
+  /herhangi-şey bu rotaya düşer). `LangProvider initialLang`: URL dili kazanır, `air_lang` ezilmez.
 - **Video posterleri (v6.14.5) — YENİ/YENİLENEN VİDEO EKLERKEN OKU:** poster **daima o videonun ilk
   karesinden**: `ffmpeg -i <video> -frames:v 1 -q:v 2 <poster>.jpg`. **Ad-versiyonla** (`p-consult2.jpg`)
   — aynı URL'de içerik değiştirmek **edge cache'te eskiyi** sundurur. 🪤 4 kulvar posteri eski sürümden
