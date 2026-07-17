@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#0d0e10", // gece varsayılanı (v6.22) — mobil tarayıcı kromu zeminle uyumlu
 };
 
 export default async function RootLayout({
@@ -78,7 +78,10 @@ export default async function RootLayout({
   // Tam birleşme (2026-07-12): nav journey'ye bakmaz — hasta nav'ı herkes için aynı,
   // patientJourney sorgusu layout'tan kalktı.
   return (
-    <html lang="tr" className={`theme-light h-full antialiased ${sans.variable} ${serif.variable} ${mono.variable} ${arabic.variable}`}>
+    /* GECE VARSAYILAN (v6.22, 2026-07-17 kullanıcı kararı — /palet-onizleme karşılaştırmasıyla):
+       iç yüzey landing ile aynı gece paletinde açılır ("iki ayrı ürün" kopuşu biter). Gündüz
+       token seti (.theme-light) SİLİNMEDİ — ileride kullanıcı tema seçeneği için hazır. */
+    <html lang="tr" className={`theme-dark h-full antialiased ${sans.variable} ${serif.variable} ${mono.variable} ${arabic.variable}`}>
       <body className="min-h-full flex flex-col">
         <PwaRegister />
         {/* Ekran dışına çıkan sürekli dekoratif animasyonları duraklatır. Kökte: landing'in

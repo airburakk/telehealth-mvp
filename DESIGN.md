@@ -21,8 +21,11 @@ bu hisse hizmet eder; çelişiyorsa karar yanlıştır. Soğukkanlı, kesin, kli
 ## Kategorinin temel gerilimi
 
 İki zıt kuvvet **aynı anda** tutulur: **tıbbi güven** (klinik, güvenli, yetkin) ↔ **turizm
-sıcaklığı** (davetkâr, premium misafirperverlik). Çözüm **yüzeye göre çift mod**: koyu dramatik
-pazarlama + açık sakin klinik. "Emin ellerdesin" hissi nedeniyle terazi **güven** tarafına eğiktir.
+sıcaklığı** (davetkâr, premium misafirperverlik). ~~Çözüm yüzeye göre çift mod: koyu dramatik
+pazarlama + açık sakin klinik.~~ **v6.22 (2026-07-17, kullanıcı kararı):** iç yüzey de GECE
+varsayılanına döndü — tek gece dili, "iki ayrı ürün" kopuşu bitti. Gündüz token seti
+(.theme-light) SAKLI (ileride kullanıcı tema seçeneği). "Emin ellerdesin" hissi nedeniyle
+terazi **güven** tarafına eğiktir.
 
 ## Estetik yön
 
@@ -152,4 +155,5 @@ tıbbi veride gereksiz animasyon.
 | 2026-07-11 | **Vitrin görsel diline geçiş (Faz A):** palet `#0D0E10`+`#28C8D8`, tipografi Space Grotesk+Inter+JetBrains Mono; public+giriş yüzeyi gece | Kullanıcı kararı — vitrin (aura-health.higgsfield.app) ile tek marka dili; iç paneller Faz B/C'de |
 | 2026-07-11 | **Faz B+C:** iç paneller (hasta+personel) marka-hizalı koyu — deterministik sınıf haritası (~2.6k dönüşüm, 100+ dosya + lib rozet haritaları), globals.css gece + print koruması | Tek commit: body zemini iki yüzeyi birden çevirir, ara durum kırık olurdu |
 | 2026-07-17 | **Aura UI kiti (Doz 1 Sakin Premium):** iç yüzey landing tipografi diline — kit bileşenleri + display/mono sözleşmesi + Header V2Nav dili | Kullanıcı kararı ("tam kit"); /kit-onizleme canlı doz karşılaştırmasıyla seçildi; klinik semantik + data-bold istisnaları korundu |
+| 2026-07-17 | **v6.22 GECE VARSAYILAN + renk disiplini:** iç yüzey gece paletiyle açılır (v6.1 gündüz-varsayılan kararını süpersede eder); kulvar rengi yüzey boyamaz — 3px kenar şeridi + mono etiket (gece-güvenli açık tonlar, LANE_ACCENT); hasta kartı "cam kutu" → sakin nötr panel | Kullanıcı bulgusu ("landing premium, içerisi eski nesil") + /palet-onizleme 4-varyant canlı karşılaştırması; gündüz tokenları toggle için saklı |
 | (açık) | Arapça yoldaş font (Noto Sans Arabic) **veya** bilinçli sistem fallback | Inter Kiril'i kapattı; AR hâlâ markasız fallback'te |

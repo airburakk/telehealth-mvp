@@ -12,7 +12,6 @@ import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { countryFlag, CASE_STATUS, formatDateTime, langDir } from "@/lib/constants";
 import { BRANCHES } from "@/lib/triage";
 import { BranchAvatar } from "@/components/BranchAvatar";
-import { branchColor, branchBannerBg } from "@/lib/branch-visuals";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
 import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Luggage, FileText, HandHeart, Bell, X } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -58,6 +57,26 @@ const STAGE_INK: Record<string, string> = {
   IN_REVIEW: "#b45309",
   IN_CONSULT: "#6d28d9",
   DONE: "#15803d",
+};
+
+// Renk disiplini (v6.22, kullanıcı kararı — /palet-onizleme V2): kulvar rengi yüzey BOYAMAZ,
+// yalnız kimlik vurgusudur (3px kenar şeridi + mono etiket). Gece zemininde LANES.color'ın
+// koyu üyeleri (özellikle SO gece-mavisi) okunmaz → gece-güvenli açık vurgu tonları.
+// Gündüz toggle'ı gelirse light karşılıkları: telehealth #1a3f9e · so #1a2b45 · tourism #00655d · free #a83e28.
+const LANE_ACCENT: Record<Lane, string> = {
+  telehealth: "#7da8ff",
+  so: "#93a9e8",
+  tourism: "#2dd4bf",
+  free: "#ff9d8a",
+};
+// Durum noktası — koyu zeminde okunur açık tonlar (klinik semantik ton AİLESİ korunur).
+const DOT_DARK: Record<string, string> = {
+  "#1d4ed8": "#60a5fa",
+  "#b45309": "#fbbf24",
+  "#6d28d9": "#a78bfa",
+  "#15803d": "#34d399",
+  "#57534e": "#a8a29e",
+  "#0f1a2b": "#93a9e8",
 };
 // Aciliyet (urgency) hasta ekranından KALDIRILDI (2026-07-13, kullanıcı isteği) — yalnız doktor
 // ekranlarında görünür (/doktor/vaka/[id] + CaseQueue). Hasta gereksiz panik/klinik yorum görmesin.
@@ -217,18 +236,21 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
               {LANE_PICK.map((p) => {
                 const L = LANES[p.key];
                 const Icon = p.icon;
+                const accent = LANE_ACCENT[p.key];
                 return (
+                  // Renk disiplini (v6.22): seçenek zeminleri nötr; kulvar kimliği ikon çipi +
+                  // kenar şeridi + ok renginde. (Eski renkli-zemin + koyu ink metin gece okunmazdı.)
                   <Link
                     key={p.key}
                     href={p.href}
-                    className="flex items-center gap-3 rounded-2xl border px-4 py-3 transition-transform hover:-translate-y-0.5"
-                    style={{ borderColor: L.color + "59", background: L.color + "16" }}
+                    className="flex items-center gap-3 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3 transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]"
+                    style={{ borderInlineStart: `3px solid ${accent}` }}
                   >
                     <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl" style={{ background: L.color, color: L.on }}>
                       {createElement(Icon, { size: 18, color: L.on })}
                     </span>
-                    <span className="font-semibold" style={{ color: L.ink }}>{t(L.name)}</span>
-                    <ArrowRight size={16} className="ms-auto rtl:rotate-180" style={{ color: L.color }} />
+                    <span className="font-semibold text-[var(--c-ink)]">{t(L.name)}</span>
+                    <ArrowRight size={16} className="ms-auto rtl:rotate-180" style={{ color: accent }} />
                   </Link>
                 );
               })}
@@ -240,7 +262,9 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
   );
 }
 
-// Cam vaka kutusu — dış kutu kulvar renginde liquid glass; içteki header + footer branş renginde.
+// Sakin kulvar kartı (v6.22 — eski "cam kutu" tasarımının halefi; /palet-onizleme V2 kullanıcı
+// seçimi): yüzeyler nötr gece paneli; kulvar rengi YALNIZ 3px kenar şeridi + mono etiket,
+// branş yalnız amblem, etkileşim tek vurgu (turkuaz). Klinik durum noktası korunur.
 function GlassCase({
   lane,
   branchKey,
@@ -270,68 +294,46 @@ function GlassCase({
   country?: string;
   alert: string | null;
 }) {
-  const L = LANES[lane];
-  const bc = branchColor(branchKey);
-  // Footer: kulvar renginin bir ton koyusu (sabit koyu bant, her iki temada koyu → beyaz metin okunur).
-  const laneDeep = `color-mix(in srgb, ${L.color}, #000 34%)`;
-  // Header: branş rengi tint + Higgsfield banner deseni (branchBannerBg — branş renginden türev CSS).
-  // Metin tema-nötr (var(--c-ink)): bazı branş renkleri gündüz beyaz banner üstünde okunmaz →
-  // branş kimliğini amblem (BranchAvatar) + banner deseni + renk tint taşır, metin daima okunur.
-  const headerBg = `linear-gradient(135deg, ${bc}2b, ${bc}0d 44%, transparent 72%), ${branchBannerBg(branchKey)}`;
+  const accent = LANE_ACCENT[lane];
+  const dot = DOT_DARK[stageInk] ?? stageInk;
   return (
     <article
-      className="rounded-[26px] border p-2.5"
-      style={{ borderColor: L.color + "5c", background: `color-mix(in srgb, ${L.color}, var(--c-panel) 86%)` }}
+      className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5"
+      style={{ borderInlineStart: `3px solid ${accent}` }}
     >
-      {/* İÇ HEADER KUTUSU — branş rengi + banner deseni: sembol + branş adı BÜYÜK */}
-      <div
-        className="flex items-center gap-2.5 overflow-hidden rounded-2xl px-3 py-2.5"
-        style={{ background: headerBg, border: `1px solid ${bc}40` }}
-      >
-        <BranchAvatar branchKey={branchKey} size={26} />
-        <span className="aura-display min-w-0 flex-1 truncate text-[15px] font-semibold uppercase tracking-wide text-[var(--c-ink)]">
-          {branchName}
-        </span>
-        {alert && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
-            <Bell size={11} /> {alert}
-          </span>
-        )}
-      </div>
-
-      {/* GÖVDE — dış kutu kulvar tonu zemininde */}
-      <div className="px-3 py-3">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          {patientName && <span className="text-sm font-semibold text-[var(--c-ink)]">{patientName}</span>}
-          {country && <span className="text-xs text-[var(--c-ink-3)]">{countryFlag(country)}</span>}
-          <span className="text-xs text-[var(--c-ink-3)]">{date}</span>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <BranchAvatar branchKey={branchKey} size={24} />
+          <span className="aura-display min-w-0 truncate text-[16px] font-medium tracking-tight text-[var(--c-ink)]">{branchName}</span>
         </div>
-        <p className="mt-1.5 line-clamp-2 text-sm text-[var(--c-ink-2)]">{body}</p>
+        <div className="flex shrink-0 items-center gap-2">
+          {alert && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-200 ring-1 ring-amber-400/30">
+              <Bell size={11} /> {alert}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--c-hairline)] bg-[var(--c-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--c-ink-2)]">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: dot }} /> {stageLabel}
+          </span>
+        </div>
       </div>
 
-      {/* İÇ FOOTER KUTUSU — kulvar renginin bir ton koyusu: kulvar adı + aşama + vaka özeti */}
-      <div
-        className="flex flex-wrap items-center gap-2 rounded-2xl px-3 py-2.5"
-        style={{ background: laneDeep, border: `1px solid ${L.color}66` }}
-      >
-        <span className="aura-mono text-[11px] uppercase tracking-[0.15em] text-white/95">{laneName}</span>
-        <FooterBadge ink={stageInk} label={stageLabel} />
+      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--c-ink-3)]">
+        {patientName && <span className="font-medium text-[var(--c-ink-2)]">{patientName}</span>}
+        {country && <span>{countryFlag(country)}</span>}
+        <span>{date}</span>
+      </div>
+      <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--c-ink-2)]">{body}</p>
+
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--c-hairline)] pt-3">
+        <span className="aura-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: accent }}>{laneName}</span>
         <Link
           href={summaryHref}
-          className="ms-auto inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold shadow-sm transition-opacity hover:opacity-90"
-          style={{ color: L.ink }}
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--c-accent)] transition-colors duration-200 hover:text-[var(--c-accent-2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]"
         >
-          <FileText size={13} /> {summaryLabel} <ArrowRight size={12} className="rtl:rotate-180" />
+          <FileText size={14} /> {summaryLabel} <ArrowRight size={13} className="rtl:rotate-180" />
         </Link>
       </div>
     </article>
-  );
-}
-
-function FooterBadge({ ink, label }: { ink: string; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--c-bg)] px-2.5 py-0.5 text-[11px] font-semibold shadow-sm ring-1 ring-black/5" style={{ color: ink }}>
-      <span className="h-1.5 w-1.5 rounded-full" style={{ background: ink }} /> {label}
-    </span>
   );
 }
