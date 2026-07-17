@@ -11,7 +11,7 @@ import { langDir } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
 import { isImmersiveCallPath } from "@/lib/immersive-routes";
 import { LANG_CODES } from "@/lib/aura-landing/copy";
-import { LogOut, LogIn, ShieldOff, UserCog } from "lucide-react";
+import { LogOut, ShieldOff, UserCog } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
   PATIENT: "Hasta",
@@ -76,8 +76,11 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
     router.refresh();
   }
 
+  // Aura kiti (2026-07-17, kullanıcı kararı): iç krom V2Nav diline çekildi — cam zemin
+  // (color-mix + blur), pill yerine metin sekmeleri (aktif = turkuaz), mono rol etiketi,
+  // durak-noktalı giriş CTA'sı. Davranış (rol bazlı nav, logout, bildirim) DEĞİŞMEDİ.
   return (
-    <header dir={dir} className="theme-dark sticky top-0 z-30 border-b border-[var(--c-hairline)] bg-[var(--c-bg)]/95 backdrop-blur">
+    <header dir={dir} className="theme-dark sticky top-0 z-30 border-b border-[var(--c-hairline)] bg-[color-mix(in_srgb,var(--c-bg)_82%,transparent)] backdrop-blur-md">
       <div className="mx-auto max-w-6xl px-5 h-16 flex items-center justify-between gap-4">
         {/* Marka altyazısı ("Sağlık Turizmi & Teletıp") kullanıcı isteğiyle kaldırıldı (2026-07-12) — yalnız logo */}
         <Link href="/" className="flex items-end">
@@ -85,15 +88,15 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
         </Link>
 
         <div className="flex items-center gap-1.5">
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-1 sm:gap-4">
             {items.map(({ href, label, icon: Icon }) => {
               const active = href === activeHref;
               return (
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] hover:text-[var(--c-accent)]"
+                  className={`flex min-h-[44px] items-center gap-2 px-2 text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${
+                    active ? "font-medium text-[var(--c-accent)]" : "text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"
                   }`}
                 >
                   <Icon size={16} />
@@ -108,25 +111,28 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
               <NotificationBell lang={lang} patientLangFallback={user.role === "PATIENT"} />
               <div className="hidden text-end sm:block">
                 <div className="text-sm font-medium leading-tight text-[var(--c-ink)]">{user.name}</div>
-                <div className="text-[11px] leading-tight text-[var(--c-ink-3)]">{t(ROLE_LABELS[user.role] ?? user.role)}</div>
+                {/* Mono rol etiketi — landing'in "mono durak" dili */}
+                <div className="aura-mono text-[10px] uppercase tracking-[0.18em] leading-tight text-[var(--c-ink-3)]">{t(ROLE_LABELS[user.role] ?? user.role)}</div>
               </div>
               {/* Hesap ayarları — yalnız hastada (v6.11): hesap/veri silme oradan yapılır (KVKK m.7).
                   Personelde gizli; sayfa + API de PATIENT'a kapılı (savunma-derinliği). */}
               {user.role === "PATIENT" && (
-                <Link href="/hesap" title={t("Hesabım")} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-3)] hover:bg-[var(--c-surface)] hover:text-[var(--c-accent)]">
+                <Link href="/hesap" title={t("Hesabım")} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-3)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]">
                   <UserCog size={17} />
                 </Link>
               )}
-              <button onClick={() => setConfirmLogoutAll(true)} title={t("Tüm cihazlardan çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-3)] hover:bg-[var(--c-surface)] hover:text-red-400">
+              <button onClick={() => setConfirmLogoutAll(true)} title={t("Tüm cihazlardan çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-3)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-red-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]">
                 <ShieldOff size={16} />
               </button>
-              <button onClick={logout} title={t("Çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] hover:text-red-400">
+              <button onClick={logout} title={t("Çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-red-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]">
                 <LogOut size={17} />
               </button>
             </div>
           ) : (
-            <Link href="/giris" className="ms-1 inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-accent)] px-3.5 py-2 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
-              <LogIn size={16} /> {t("Giriş yap")}
+            // V2Nav CTA dili: turkuaz durak noktası + mono etiket
+            <Link href="/giris" className="group ms-1 flex min-h-[44px] items-center gap-2 px-2 text-sm font-medium text-[var(--c-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]">
+              <span aria-hidden className="h-2 w-2 rounded-full border border-[var(--c-accent)] transition-colors duration-200 group-hover:bg-[var(--c-accent)]" />
+              <span className="aura-mono text-[13px] transition-colors duration-200 group-hover:text-[var(--c-accent)]">{t("Giriş yap")}</span>
             </Link>
           )}
         </div>
