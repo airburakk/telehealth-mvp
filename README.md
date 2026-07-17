@@ -53,7 +53,7 @@ npm run dev                   # http://localhost:3000
 | `npm run lint` | ESLint |
 | `npm test` | **Birim testleri** (vitest — saf mantık, DB yok; pricing/journey/deidentify/crypto/ownership/rate-limit[Upstash mock+fail-open]/postop/storage/ai-minimize/chain-seal/session-sv) |
 | `npm run test:integration` | **Entegrasyon testleri** (gerçek DB — `TEST_DATABASE_URL` Neon dev branch gerekir; yoksa atlanır, bkz. `tests/integration/README.md`) |
-| `npm run test:e2e` | **E2E testleri** (Playwright — 3 demo-kritik akış; dev branch'e bağlı sunucu + `E2E_BASE_URL` gerekir, bkz. `tests/e2e/README.md`) |
+| `npm run test:e2e` | **E2E testleri** (Playwright — 3 demo-kritik akış + erişilebilirlik smoke paketi [salt-okur: axe · tek-h1 · klavye · reduced-motion · RTL; WCAG İDDİASI DEĞİL]; Ray B2'den beri normal `npm run dev` sunucusu yeterli, bkz. `tests/e2e/README.md`) |
 | `npm run db:seed` | `prisma/seed.ts` — demo veri (tam reset) |
 | `npm run db:migrate` | `prisma migrate deploy` — **üretim şema değişikliği yolu** (db push değil; akış: `DEPLOY.md` Adım 2) |
 | `npx tsx scripts/enrich-profiles.ts` | profil/vaka **zenginleştirme** (idempotent backfill; yalnız boş alan: doktor procedures/markets/akademik + vaka FHIR lab/icd10/belge — silmez) |
@@ -278,7 +278,7 @@ src/
                              #   storage (Vercel Blob) · rate-limit (Upstash dağıtık + in-memory yedek) · api-auth · error-i18n
                              #   signal-access/-token/-poll · ably-server/-client (WebRTC sinyalleşme + Ably realtime) ...
   data/                      # coding.ts (ICD-10/LOINC/SNOMED) · procedures.json · second-opinion-docs.ts
-tests/                       # vitest unit/ (saf mantık, DB yok) + integration/ (Neon dev branch) · Playwright e2e/ (3 akış)
+tests/                       # vitest unit/ (saf mantık, DB yok) + integration/ (Neon dev branch) · Playwright e2e/ (3 akış + a11y smoke)
 prisma/
   schema.prisma             # 32 model (User, Doctor, Case, Consultation, ConsultationMessage,
                             #   ConsultationVideoAppointment, Booking, Recovery, CheckIn,

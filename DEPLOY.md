@@ -146,7 +146,7 @@ dormant kalır / fallback'e düşer).
 | `DATABASE_URL` | ✅ | Neon **pooled** connection string |
 | `DIRECT_URL` | ✅ | Neon **direct** connection string (migration; `migrate deploy/resolve` bunu kullanır) |
 | `SESSION_SECRET` | ✅ | JWT imzalama — `openssl rand -base64 32` |
-| `DATA_ENCRYPTION_KEK` | ✅ | At-rest alan şifreleme KEK'i (E2EE Faz 1) — **AKTİF** (2026-06-23 üretimde set + backfill yapıldı → klinik veri artık şifreli; **silmek/değiştirmek prod'u bozar**). `openssl rand -base64 32`. **Yerel + üretim AYNI değer** (aynı Neon DB!). ⚠️ Kayıp = veri kaybı (escrow/yedek) |
+| `DATA_ENCRYPTION_KEK` | ✅ | At-rest alan şifreleme KEK'i (E2EE Faz 1) — **AKTİF** (2026-06-23 üretimde set + backfill → klinik veri şifreli; **silmek/değiştirmek prod'u bozar**). `openssl rand -base64 32`. **Ortam-başına AYRI değer (Ray B2, 2026-07-16):** yerel `.env` = dev branch + dev KEK'i; üretim KEK'i yalnız Vercel'de (yerelde `PROD_DATA_ENCRYPTION_KEK` adıyla, bilinçli işlemler için). ⚠️ Kayıp = veri kaybı (escrow/yedek). Rotasyon: `scripts/rotate-kek.ts` + runbook (aşağıdaki escrow bloğu) |
 | `ANTHROPIC_API_KEY` | ⛅ | Claude (triyaj/SOAP/epikriz/çeviri/vision). Yoksa triyaj kural tabanlıya düşer |
 | `GEMINI_API_KEY` | ⛅ | Gemini Live tercüman. Yoksa canlı tercüme dormant |
 | `CF_TURN_KEY_ID` | ⛅ | WebRTC TURN relay **birincil** — Cloudflare Realtime TURN Key ID (dash.cloudflare.com → Realtime → TURN Keys) |
@@ -208,7 +208,10 @@ dormant kalır / fallback'e düşer).
   çıkarma) değerlendirilmeli; en azından kritik değişiklik öncesi manuel dump (`pg_dump`) alınmalı.
 - **KEK escrow (KRİTİK):** `DATA_ENCRYPTION_KEK` **kaybı = tüm klinik verinin geri döndürülemez kaybı**
   (at-rest şifreli). KEK'i **en az iki bağımsız güvenli konumda** sakla (ör. parola kasası/secret manager
-  + çevrimdışı şifreli kopya). Rotasyon prosedürünü yazılı tut (şu an tek-anahtar; çoklu-KEK/key-id = P1).
+  + çevrimdışı şifreli kopya). **Rotasyon aracı VAR (2026-07-17):** `scripts/rotate-kek.ts` — içerik
+  çözülmeden yalnız DEK sarımı değişir; dry-run varsayılan, prod için `ALLOW_PROD_KEK_ROTATION=1` şart;
+  dev tam-tur provası yapıldı. Adım adım runbook: vault `wiki/yonetisim/sir-envanteri.md` §3.1.
+  ⚠️ Rotasyon sonrası **eski KEK imha edilmez, arşivlenir** (PITR/yedek restore eski sarımları getirir).
   Aynı disiplin `SESSION_SECRET` ve `TSA_SECRET` için de geçerli.
 - **Gizli anahtar envanteri:** Vercel'deki tüm env değişkenlerinin (KEK/SESSION_SECRET/TSA_SECRET/API
   anahtarları) nerede escrow'landığı tek bir güvenli belgede tutulmalı; personel değişiminde erişim gözden geçirilir.
