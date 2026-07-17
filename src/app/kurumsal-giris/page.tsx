@@ -8,7 +8,8 @@ import { CorporateGate } from "@/components/aura/auth-gates";
 // Landing üst bandındaki "Kurumsal Giriş" butonu buraya gelir. Personel
 // kapısı arama sonuçlarından ayrık tutulur (noindex — vitrindeki karar).
 export const metadata: Metadata = {
-  title: "AURA · Corporate sign-in",
+  // Kök layout şablonu "· AURA" ekler → marka tekrarı yazılmaz (Ray D title-çifti düzeltmesi).
+  title: "Corporate sign-in",
   description: "Corporate sign-in for verified staff and partners of the AURA platform.",
   robots: { index: false, follow: false },
 };

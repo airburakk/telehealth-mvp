@@ -9,7 +9,9 @@ import { SigninGate } from "@/components/aura/auth-gates";
 // kapı parametreyi forma iletir. Header/SiteFooter bu rotada gizli (landing
 // deseni); panel kendi logo + "← ana sayfa" bağlantısını taşır.
 export const metadata: Metadata = {
-  title: "AURA · Sign in",
+  // Kök layout şablonu "· AURA" ekler → burada marka tekrar yazılmaz
+  // (eski "AURA · Sign in" sekmede "AURA · Sign in · AURA" çiftlenmesi üretiyordu — Ray D).
+  title: "Sign in",
   description: "Sign in to AURA and start your care journey.",
 };
 
