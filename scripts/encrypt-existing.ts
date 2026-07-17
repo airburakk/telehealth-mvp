@@ -7,7 +7,10 @@
 // İDEMPOTENT: zaten şifreli (enc:v1:) / boş ("") / null satırlar ATLANIR → tekrar çalıştırmak güvenli.
 // HİÇBİR ŞEY SİLMEZ. Cursor sayfalama (büyük base64 belgeleri RAM'i doldurmaz).
 //
-// ⚠️ ÇALIŞTIRMADAN ÖNCE: DATA_ENCRYPTION_KEK .env'de ÜRETİMLE AYNI değer olmalı (yerel+üretim AYNI Neon DB!).
+// ⚠️ ÇALIŞTIRMADAN ÖNCE: DATA_ENCRYPTION_KEK, BAĞLANDIĞIN DB'nin ortam anahtarı olmalı. Ray B2'den
+//   (2026-07-16) beri yerel .env = DEV branch + dev KEK'i → yerel koşu dev'i şifreler (serbest);
+//   üretim koşusu yalnız PROD_* değerleri AÇIKÇA verilerek + onayla (eski "yerel=üretim aynı DB"
+//   uyarısı Ray B2 ile geçersizleşti).
 // ⚠️ KEK KAYBI = VERİ KAYBI. Anahtarı escrow/yedekle. Bu betik canlı veriyi geri-döndürülemez şifreler.
 //
 // Çalıştır: npx tsx scripts/encrypt-existing.ts

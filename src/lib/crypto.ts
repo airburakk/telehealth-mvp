@@ -76,6 +76,38 @@ export function isEncrypted(v: string | null | undefined): boolean {
   return typeof v === "string" && v.startsWith(PREFIX);
 }
 
+// ── KEK ROTASYONU (gate 4, 2026-07-17) ──────────────────────────────────────────────────────────
+// Envelope tasarımının karşılığı: içerik DEK ile şifreli, DEK KEK ile sarılı → rotasyon yalnız
+// SARIMI değiştirir (unwrap eski KEK → wrap yeni KEK); iv/tag/ct'ye DOKUNULMAZ, içerik hiç
+// çözülmez (DEK yalnız RAM'de anlık görünür — normal okuma yolundakiyle aynı maruziyet).
+// Kullanan: scripts/rotate-kek.ts (dry-run + prova runbook'u vault [[sir-envanteri]] §3).
+
+/** base64 KEK dizesini doğrulayıp Buffer'a çevir (32 byte şartı — getKek ile aynı kural). */
+export function kekFromBase64(raw: string): Buffer {
+  const key = Buffer.from(raw, "base64");
+  if (key.length !== 32) throw new Error("KEK 32 byte (base64) olmalı — `openssl rand -base64 32`.");
+  return key;
+}
+
+/**
+ * Envelope'un DEK sarımını eski KEK'ten yeni KEK'e taşı. İçerik (iv/tag/ct) aynen korunur.
+ * Yanlış eski-KEK → unwrapDek GCM auth hatasıyla fırlatır (yanlış anahtarla asla yazılmaz).
+ * Dönüş, yeni KEK ile doğrulanmış sarımdır (yazmadan önce ters-kontrol içeride yapılır).
+ */
+export function rewrapEnvelope(stored: string, oldKek: Buffer, newKek: Buffer): string {
+  if (!stored.startsWith(PREFIX)) throw new Error("rewrapEnvelope yalnız enc:v1: envelope kabul eder.");
+  const parts = stored.slice(PREFIX.length).split(":");
+  if (parts.length !== 4) throw new Error("Bozuk şifreli alan biçimi (4 alan bekleniyordu).");
+  const [wrapped, iv, tag, ct] = parts;
+  const dek = unwrapDek(Buffer.from(wrapped, "base64"), oldKek);
+  const rewrapped = wrapDek(dek, newKek);
+  // Yazım öncesi ters-kontrol: yeni sarım yeni KEK ile açılıyor ve AYNI DEK'i veriyor mu?
+  if (!unwrapDek(rewrapped, newKek).equals(dek)) {
+    throw new Error("rewrap ters-kontrolü başarısız — yazım iptal (beklenmeyen durum).");
+  }
+  return PREFIX + [rewrapped.toString("base64"), iv, tag, ct].join(":");
+}
+
 // Yazımda çağır. null/undefined/"" → değişmeden döner; zaten şifreliyse aynen döner (idempotent → backfill güvenli).
 // KEK yoksa: ÜRETİMDE fail-closed (throw — düz-metin PHI yazmaktansa yazımı durdur, P0 #3); dev/test'te
 // düz metni döndürür + bir kez uyarır (yerel env'siz çalışsın diye). Üretimde KEK her zaman set edilmeli.
