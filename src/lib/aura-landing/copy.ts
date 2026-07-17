@@ -50,7 +50,8 @@ export const VIDEOS = {
     src720: "/assets/video/v-hero3-720.mp4",
     poster: "/assets/video/p-hero3.jpg",
   },
-  // ⚠️ POSTERLER "2" SONEKLI (v6.14.5) — DÜZ p-consult.jpg'ye GERİ DÖNME:
+  // ⚠️ POSTERLER "2" SONEKLI (v6.14.5) — düz-adlı eski posterler (p-consult.jpg
+  // ailesi) Ray E'de SİLİNDİ (2026-07-17); yeni poster daima YENİ AD alır:
   // 4 kulvar videosu 2026-07-12'de yeniden üretildi ama posterler bir gün
   // önceki ESKİ sürümden kaldı → poster ile videonun ilk karesi FARKLI SAHNE
   // (ölçüldü: ortalama fark 23-46; hero 0.4 ve HIW 0.7-1.1 ile kıyasla).
@@ -116,29 +117,15 @@ export const LETTERS = ["aura-a1-t", "aura-u-t", "aura-r-t", "aura-a2-t"];
 
 export const COPY = {
   en: {
+    // Ray E (2026-07-17): eski landing'in nav çapaları (telehealth/so/tourism/freecare/cta)
+    // + hero bölümü 8 dilden SİLİNDİ — v6.18'de V2 ana sayfa olunca öksüz kaldılar (0 kullanım;
+    // canlı nav = v2.nav, canlı hero = v2.hero). "end to end / uçtan uca" kalıntısı da böylece
+    // sözlükten tamamen çıktı. Kalanlar: how (closing) + menu/close (V2Nav kök sözlükten kullanır).
+    // ⚠️ "Access Care" YALNIZ-EN vitrin adı kuralı (v4.21 + 2026-07-16) chapters freecare notunda yaşıyor.
     nav: {
-      // 4 sekme = 4 chapter capasi (sirali); iki marka ayagi turkuaz vurgulu.
-      telehealth: "Telehealth",
-      so: "Second Opinion",
-      tourism: "Health Tourism",
-      // "Access Care" = EN vitrin adi (kullanici karari 2026-07-16, brand paketi).
-      // ⚠️ YALNIZ EN: urun/hukuki ad "Ucretsiz Saglik Hizmeti" (v4.21 rename) TR ve
-      // diger dillerde KORUNUR; rota /ucretsiz-saglik + DB freeCare* degismedi.
-      // ⚠️ Ad ucretsizligi SOYLEMIYOR → "free" bilgisi metinlerde TUTULUR (cta +
-      // /ucretsiz-saglik sayfasi). Adi degistirirken o bilgiyi silme.
-      freecare: "Access Care",
       how: "How It Works",
-      cta: "See a doctor",
       menu: "Menu",
       close: "Close menu",
-    },
-    hero: {
-      word: "AURA",
-      // Ilk satir parcali: iki marka ayagi (a/b) turkuaza boyanir.
-      l1: { a: "Telehealth", mid: " and ", b: "Health Tourism", tail: "," },
-      line2: "end to end.",
-      cta: "See a doctor",
-      scenes: "01/04 scenes",
     },
     chapters: [
       {
@@ -744,21 +731,9 @@ export const COPY = {
   },
   tr: {
     nav: {
-      telehealth: "Uzaktan Sağlık",
-      so: "İkinci Görüş",
-      tourism: "Sağlık Turizmi",
-      freecare: "Ücretsiz Sağlık",
       how: "Nasıl Çalışır",
-      cta: "Doktorla görüş",
       menu: "Menü",
       close: "Menüyü kapat",
-    },
-    hero: {
-      word: "AURA",
-      l1: { a: "Uzaktan Sağlık", mid: " ve ", b: "Sağlık Turizmi", tail: "," },
-      line2: "uçtan uca.",
-      cta: "Doktorla görüş",
-      scenes: "01/04 sahne",
     },
     chapters: [
       {
@@ -1249,14 +1224,7 @@ export const COPY = {
     },
   },
   de: {
-    nav: { telehealth: "Telemedizin", so: "Zweitmeinung", tourism: "Gesundheitstourismus", freecare: "Kostenlose Versorgung", how: "So funktioniert's", cta: "Arzt sprechen", menu: "Menü", close: "Menü schließen" },
-    hero: {
-      word: "AURA",
-      l1: { a: "Telemedizin", mid: " und ", b: "Gesundheitstourismus", tail: "," },
-      line2: "von Anfang bis Ende.",
-      cta: "Arzt sprechen",
-      scenes: "01/04 Szenen",
-    },
+    nav: { how: "So funktioniert's", menu: "Menü", close: "Menü schließen" },
     chapters: [
       { n: "01", key: "consult", strand: "telemedizin", title: "Sprechen Sie mit einem Arzt.", body: "AURA bereitet Ihren Fall auf und schlägt ein passendes Fachgebiet vor.", cta: "beratung starten", href: "/giris", external: false },
       { n: "02", key: "so", strand: "Zweitmeinung", title: "Ein zweites Paar Augen.", body: "Unabhängige Fachärzte prüfen Ihre Diagnose.", cta: "prüfung anfordern", href: LINKS.secondOpinion, external: true },
@@ -1675,14 +1643,7 @@ export const COPY = {
     },
   },
   fr: {
-    nav: { telehealth: "Télésanté", so: "Deuxième avis", tourism: "Tourisme médical", freecare: "Soins gratuits", how: "Comment ça marche", cta: "Consulter un médecin", menu: "Menu", close: "Fermer le menu" },
-    hero: {
-      word: "AURA",
-      l1: { a: "Télésanté", mid: " et ", b: "Tourisme médical", tail: "," },
-      line2: "de bout en bout.",
-      cta: "Consulter un médecin",
-      scenes: "01/04 scènes",
-    },
+    nav: { how: "Comment ça marche", menu: "Menu", close: "Fermer le menu" },
     chapters: [
       { n: "01", key: "consult", strand: "télésanté", title: "Parlez à un médecin.", body: "AURA prépare votre dossier et propose une spécialité appropriée.", cta: "démarrer la consultation", href: "/giris", external: false },
       { n: "02", key: "so", strand: "Deuxième avis", title: "Un deuxième regard d'expert.", body: "Des spécialistes indépendants réévaluent votre diagnostic.", cta: "demander un examen", href: LINKS.secondOpinion, external: true },
@@ -2101,14 +2062,7 @@ export const COPY = {
     },
   },
   ru: {
-    nav: { telehealth: "Телемедицина", so: "Второе мнение", tourism: "Медицинский туризм", freecare: "Бесплатная помощь", how: "Как это работает", cta: "Поговорить с врачом", menu: "Меню", close: "Закрыть меню" },
-    hero: {
-      word: "AURA",
-      l1: { a: "Телемедицина", mid: " и ", b: "медицинский туризм", tail: "," },
-      line2: "от начала до конца.",
-      cta: "Поговорить с врачом",
-      scenes: "01/04 сцены",
-    },
+    nav: { how: "Как это работает", menu: "Меню", close: "Закрыть меню" },
     chapters: [
       { n: "01", key: "consult", strand: "телемедицина", title: "Поговорите с врачом.", body: "AURA готовит ваш случай и предлагает подходящую специальность.", cta: "начать консультацию", href: "/giris", external: false },
       { n: "02", key: "so", strand: "Второе мнение", title: "Свежий взгляд специалиста.", body: "Независимые врачи пересмотрят ваш диагноз.", cta: "запросить пересмотр", href: LINKS.secondOpinion, external: true },
@@ -2527,14 +2481,7 @@ export const COPY = {
     },
   },
   ar: {
-    nav: { telehealth: "الرعاية عن بُعد", so: "رأي ثانٍ", tourism: "السياحة العلاجية", freecare: "رعاية مجانية", how: "كيف يعمل", cta: "تحدث إلى طبيب", menu: "القائمة", close: "إغلاق القائمة" },
-    hero: {
-      word: "AURA",
-      l1: { a: "الرعاية عن بُعد", mid: " و", b: "السياحة العلاجية", tail: "،" },
-      line2: "من البداية إلى النهاية.",
-      cta: "تحدث إلى طبيب",
-      scenes: "01/04 مشاهد",
-    },
+    nav: { how: "كيف يعمل", menu: "القائمة", close: "إغلاق القائمة" },
     chapters: [
       { n: "01", key: "consult", strand: "الرعاية عن بُعد", title: "تحدث إلى طبيب.", body: "تُعدّ AURA ملفك وتقترح تخصصًا مناسبًا.", cta: "ابدأ الاستشارة", href: "/giris", external: false },
       { n: "02", key: "so", strand: "رأي ثانٍ", title: "عين خبيرة ثانية.", body: "أخصائيون مستقلون يراجعون تشخيصك.", cta: "اطلب مراجعة", href: LINKS.secondOpinion, external: true },
@@ -2953,14 +2900,7 @@ export const COPY = {
     },
   },
   fa: {
-    nav: { telehealth: "سلامت از راه دور", so: "نظر دوم", tourism: "گردشگری سلامت", freecare: "مراقبت رایگان", how: "چطور کار می‌کند", cta: "با پزشک صحبت کنید", menu: "منو", close: "بستن منو" },
-    hero: {
-      word: "AURA",
-      l1: { a: "سلامت از راه دور", mid: " و ", b: "گردشگری سلامت", tail: "،" },
-      line2: "از ابتدا تا انتها.",
-      cta: "با پزشک صحبت کنید",
-      scenes: "01/04 صحنه",
-    },
+    nav: { how: "چطور کار می‌کند", menu: "منو", close: "بستن منو" },
     chapters: [
       { n: "01", key: "consult", strand: "سلامت از راه دور", title: "با پزشک صحبت کنید.", body: "AURA پرونده شما را آماده می‌کند و تخصص مناسبی پیشنهاد می‌دهد.", cta: "شروع مشاوره", href: "/giris", external: false },
       { n: "02", key: "so", strand: "نظر دوم", title: "نگاه دومِ یک متخصص.", body: "متخصصان مستقل تشخیص شما را بازبینی می‌کنند.", cta: "درخواست بازبینی", href: LINKS.secondOpinion, external: true },
@@ -3379,14 +3319,7 @@ export const COPY = {
     },
   },
   az: {
-    nav: { telehealth: "Teletibb", so: "İkinci Rəy", tourism: "Sağlamlıq Turizmi", freecare: "Pulsuz Xidmət", how: "Necə işləyir", cta: "Həkimlə görüş", menu: "Menyu", close: "Menyunu bağla" },
-    hero: {
-      word: "AURA",
-      l1: { a: "Teletibb", mid: " və ", b: "Sağlamlıq Turizmi", tail: "," },
-      line2: "başdan sona.",
-      cta: "Həkimlə görüş",
-      scenes: "01/04 səhnə",
-    },
+    nav: { how: "Necə işləyir", menu: "Menyu", close: "Menyunu bağla" },
     chapters: [
       { n: "01", key: "consult", strand: "teletibb", title: "Həkimlə danışın.", body: "AURA işinizi hazırlayır və uyğun ixtisas təklif edir.", cta: "məsləhətə başla", href: "/giris", external: false },
       { n: "02", key: "so", strand: "İkinci Rəy", title: "İkinci mütəxəssis baxışı.", body: "Müstəqil mütəxəssislər diaqnozunuzu yenidən dəyərləndirir.", cta: "baxış istə", href: LINKS.secondOpinion, external: true },
