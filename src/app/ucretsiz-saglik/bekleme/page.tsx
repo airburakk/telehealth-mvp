@@ -123,14 +123,14 @@ function WaitingInner() {
           <span className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]">
             <Users size={28} />
           </span>
-          <h1 className="mt-5 text-xl font-bold text-[var(--c-ink)]">{t(S.notWaiting)}</h1>
+          <h1 className="aura-display mt-5 text-2xl font-medium tracking-tight text-[var(--c-ink)]">{t(S.notWaiting)}</h1>
           <p className="mt-2 text-sm text-[var(--c-ink-2)]">{t(S.statusLabel)} {status}. {t(S.statusFollow)}</p>
         </>
       ) : (
         <>
           {/* Dönen AURA logosu (eski dönen halka yerine) */}
           <AuraSpinner size={48} className="mx-auto block" />
-          <h1 className="mt-5 text-xl font-bold text-[var(--c-ink)]">
+          <h1 className="aura-display mt-5 text-2xl font-medium tracking-tight text-[var(--c-ink)]">
             {noDoctor ? t(S.noDoctorTitle) : t(S.searchingTitle)}
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-[var(--c-ink-2)]">

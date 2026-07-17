@@ -53,7 +53,7 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
         <div className="space-y-5">
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
             <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><FileText size={15} /> Başvuru</div>
-            <h2 className="mt-2 font-bold text-[var(--c-ink)]">{c.subject}</h2>
+            <h2 className="aura-display mt-2 text-lg font-medium tracking-tight text-[var(--c-ink)]">{c.subject}</h2>
             <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink)]">{c.description}</p>
             {c.evidence && <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-ink)]/10 px-2.5 py-1 text-xs text-[var(--c-ink-2)]"><FileText size={13} /> {c.evidence}</div>}
           </div>

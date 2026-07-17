@@ -36,7 +36,7 @@ export default async function DenetimPage({
     <main className="mx-auto max-w-6xl px-5 py-10">
       <div className="flex items-center gap-2.5 mb-1.5">
         <Link2 size={20} className="text-[var(--c-accent-stronger)]" />
-        <h1 className="text-2xl font-semibold text-[var(--c-ink)]">Denetim İzi Bütünlüğü</h1>
+        <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Denetim İzi Bütünlüğü</h1>
       </div>
       <p className="text-sm text-[var(--c-ink-2)] max-w-3xl">
         Klinik veriye yapılan tüm anlamlı erişimin <strong>değiştirilemez küresel kaydı</strong>. Her satır bir

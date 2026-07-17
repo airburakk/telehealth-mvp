@@ -47,7 +47,7 @@ export function AccessLogView({ entries }: { entries: AccessLogEntry[] }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <Lock size={20} className="text-[var(--c-accent-stronger)]" />
-          <h1 className="text-2xl font-semibold text-[var(--c-ink)]">{t(S.title)}</h1>
+          <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">{t(S.title)}</h1>
         </div>
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>

@@ -137,7 +137,7 @@ export function ConsultGate({
     return (
       <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 text-center shadow-sm">
         <CheckCircle2 className="mx-auto text-emerald-300" size={28} />
-        <h2 className="mt-2 font-bold text-[var(--c-ink)]">{t("Süreciniz sonlandırıldı")}</h2>
+        <h2 className="aura-display mt-2 text-lg font-medium tracking-tight text-[var(--c-ink)]">{t("Süreciniz sonlandırıldı")}</h2>
         <p className="mt-1 text-sm text-[var(--c-ink-2)]">{t("Tüm verileriniz silindi ve ödemeniz iade edildi.")}</p>
         <button onClick={() => router.push("/vakalarim")} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
           {t("Bakım Yolculuğuma dön")} <ArrowRight size={16} />

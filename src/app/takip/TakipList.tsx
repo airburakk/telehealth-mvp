@@ -37,7 +37,7 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
     <div dir={dir}>
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 font-serif text-2xl font-semibold text-[var(--c-ink)]">
+          <h1 className="aura-display flex items-center gap-2 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
             <HeartPulse size={22} className="text-[var(--c-accent-strong)]" /> {t("Post-Op Takip")}
           </h1>
           <p className="mt-1 text-sm text-[var(--c-ink-2)]">{t("Operasyon sonrası iyileşme takipleriniz — günlük kontrol girişleri ve doktor gözetimi.")}</p>

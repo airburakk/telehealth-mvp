@@ -118,7 +118,7 @@ export default async function PartnerHome() {
           <div className="flex items-center gap-3">
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#34d399] text-[var(--c-ink)]"><Newspaper size={18} /></span>
             <div>
-              <h2 className="text-sm font-semibold text-[var(--c-ink)]">{tr(UI.news)}</h2>
+              <h2 className="aura-display text-base font-medium tracking-tight text-[var(--c-ink)]">{tr(UI.news)}</h2>
               <p className="text-xs text-[var(--c-ink-2)]">{tr(UI.newsSub)}{partner.branch ? ` + ${partner.branch}` : ""}</p>
             </div>
           </div>

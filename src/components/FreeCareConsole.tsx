@@ -184,7 +184,7 @@ export function FreeCareConsole({
       {/* Sonuç bekleyen görüşmeler */}
       {awaiting.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-sm font-semibold text-[var(--c-ink)]">Görüşme sonucunu işaretleyin</h2>
+          <h2 className="aura-display text-base font-medium tracking-tight text-[var(--c-ink)]">Görüşme sonucunu işaretleyin</h2>
           <div className="mt-2 space-y-3">
             {awaiting.map((c) => (
               <div key={c.id} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
@@ -214,7 +214,7 @@ export function FreeCareConsole({
       {/* Geçmiş */}
       {recent.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-sm font-semibold text-[var(--c-ink)]">Son ücretsiz hizmet vakalarınız</h2>
+          <h2 className="aura-display text-base font-medium tracking-tight text-[var(--c-ink)]">Son ücretsiz hizmet vakalarınız</h2>
           <ul className="mt-2 divide-y divide-[var(--c-hairline)] rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)]">
             {recent.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
