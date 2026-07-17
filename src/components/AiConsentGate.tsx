@@ -55,7 +55,7 @@ export function AiConsentGate({ children, dest = "/vakalarim" }: { children: Rea
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]">
             <Sparkles size={22} />
           </span>
-          <h1 className="text-xl font-bold text-[var(--c-ink)]">{t(UI.title)}</h1>
+          <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{t(UI.title)}</h1>
         </div>
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>

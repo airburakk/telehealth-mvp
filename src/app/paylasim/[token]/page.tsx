@@ -45,7 +45,7 @@ function StatusScreen({ icon, title, desc }: { icon: React.ReactNode; title: str
       <Brand />
       <div className="mt-6 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-8 text-center shadow-sm">
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-3xl bg-[var(--c-ink)]/10 text-[var(--c-ink-2)]">{icon}</div>
-        <h1 className="mt-4 text-lg font-bold text-[var(--c-ink)]">{title}</h1>
+        <h1 className="aura-display mt-4 text-lg font-medium tracking-tight text-[var(--c-ink)]">{title}</h1>
         <p className="mt-1 text-sm text-[var(--c-ink-2)]">{desc}</p>
       </div>
     </Shell>
@@ -185,7 +185,7 @@ export default async function ShareViewerPage({
         <div className="flex items-start gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><ShieldCheck size={22} /></span>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-[var(--c-ink)]">{caseForShare.patientName} — {t("sağlık kayıtları")}</h1>
+            <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{caseForShare.patientName} — {t("sağlık kayıtları")}</h1>
             <p className="text-sm text-[var(--c-ink-2)]">
               {link.recipientName ?? t("Sizinle paylaşıldı")} · {t("Branş")}: {t(link.case.branch)}
             </p>

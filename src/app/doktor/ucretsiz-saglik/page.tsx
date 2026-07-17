@@ -17,7 +17,7 @@ export default async function DoctorFreeCarePage() {
   if (!doctor) {
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 text-center">
-        <h1 className="text-xl font-bold text-[var(--c-ink)]">Doktor profili bağlı değil</h1>
+        <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">Doktor profili bağlı değil</h1>
         <p className="mt-2 text-sm text-[var(--c-ink-2)]">Ücretsiz hizmet müsaitliği yalnız doktor profiline bağlı hesaplarda açılır (ör. koordinatör hesabı değil).</p>
         <Link href="/doktor" className="mt-5 inline-flex rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">Doktor Paneli</Link>
       </div>

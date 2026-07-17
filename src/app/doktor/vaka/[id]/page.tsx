@@ -73,7 +73,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold text-[var(--c-ink)]">{c.patientName}</h1>
+                  <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{c.patientName}</h1>
                   <span className="text-sm text-[var(--c-ink-3)]">{countryFlag(c.country)} {countryName(c.country)}</span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--c-ink-2)]">
@@ -241,7 +241,7 @@ function PostopClosedScreen() {
       </Link>
       <div className="mt-6 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-8 text-center shadow-sm">
         <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[var(--c-ink)]/10 text-[var(--c-ink-2)]"><Lock size={26} /></span>
-        <h1 className="mt-4 text-lg font-bold text-[var(--c-ink)]">Post-op takip tamamlandı</h1>
+        <h1 className="aura-display mt-4 text-lg font-medium tracking-tight text-[var(--c-ink)]">Post-op takip tamamlandı</h1>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[var(--c-ink-2)]">
           Bu vakanın post-op takip süreci kapandığı için klinik kayıtlara erişim hastaya devredilmiştir.
           Doktor/personel artık bu vakanın klinik içeriğini görüntüleyemez. Erişim olayları değiştirilemez denetim

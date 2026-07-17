@@ -26,8 +26,9 @@ export function DashboardPanel({
             {icon}
           </span>
           <div>
-            <h2 className="text-sm font-semibold text-[var(--c-ink)]">{title}</h2>
-            {subtitle && <p className="text-xs text-[var(--c-ink-2)]">{subtitle}</p>}
+            {/* Aura kiti (Doz 1): pencere başlığı display — landing tipografi hiyerarşisi */}
+            <h2 className="aura-display text-[17px] font-medium leading-tight tracking-tight text-[var(--c-ink)]">{title}</h2>
+            {subtitle && <p className="mt-0.5 text-xs text-[var(--c-ink-2)]">{subtitle}</p>}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">

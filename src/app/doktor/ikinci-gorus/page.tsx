@@ -69,7 +69,7 @@ export default async function DoctorSoListPage() {
       {/* Kabul bekleyen dosyalar (oto-atanan + açık fan-out) */}
       {offers.length > 0 && (
         <section className="mt-6">
-          <h2 className="mb-2 text-sm font-semibold text-[var(--c-ink)]">Kabul bekleyen dosyalar</h2>
+          <h2 className="aura-display mb-2 text-base font-medium tracking-tight text-[var(--c-ink)]">Kabul bekleyen dosyalar</h2>
           <div className="space-y-3">
             {offers.map((c) => {
               const branchLabel = BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch;
@@ -108,7 +108,7 @@ export default async function DoctorSoListPage() {
 
       {/* Atanan (kabul edilmiş) vakalar */}
       <section className="mt-6">
-        <h2 className="mb-2 text-sm font-semibold text-[var(--c-ink)]">Atanan vakalar</h2>
+        <h2 className="aura-display mb-2 text-base font-medium tracking-tight text-[var(--c-ink)]">Atanan vakalar</h2>
         <div className="space-y-3">
           {sortedAssigned.length === 0 && offers.length === 0 && (
             <div className="rounded-3xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-panel)] py-14 text-center">

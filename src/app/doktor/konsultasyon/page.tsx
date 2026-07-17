@@ -65,7 +65,7 @@ export default async function ConsultationInboxPage() {
       </div>
 
       {/* Açık talepler */}
-      <h2 className="mt-7 flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]"><Inbox size={16} /> Açık talepler ({open.length})</h2>
+      <h2 className="aura-display mt-7 flex items-center gap-2 text-base font-medium tracking-tight text-[var(--c-ink)]"><Inbox size={16} /> Açık talepler ({open.length})</h2>
       {open.length === 0 ? (
         <p className="mt-3 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-8 text-center text-sm text-[var(--c-ink-2)]">Şu an açık konsültasyon talebi yok.</p>
       ) : (
@@ -77,7 +77,7 @@ export default async function ConsultationInboxPage() {
       {/* Devam eden görüşmeler — bu doktorun sahiplendiği (IN_DISCUSSION) talepler: chat + nihai görüş */}
       {engaged.length > 0 && (
         <>
-          <h2 className="mt-8 flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]"><MessagesSquare size={16} className="text-sky-300" /> Devam eden görüşmeler ({engaged.length})</h2>
+          <h2 className="aura-display mt-8 flex items-center gap-2 text-base font-medium tracking-tight text-[var(--c-ink)]"><MessagesSquare size={16} className="text-sky-300" /> Devam eden görüşmeler ({engaged.length})</h2>
           <div className="mt-3 space-y-4">
             {engaged.map((r) => <OpenCard key={r.id} r={r} catalog={catalog} engaged />)}
           </div>
@@ -87,7 +87,7 @@ export default async function ConsultationInboxPage() {
       {/* Yanıtladıklarım */}
       {answered.length > 0 && (
         <>
-          <h2 className="mt-8 text-sm font-semibold text-[var(--c-ink)]">Yanıtladıklarım (son {answered.length} / toplam {stats.count})</h2>
+          <h2 className="aura-display mt-8 text-base font-medium tracking-tight text-[var(--c-ink)]">Yanıtladıklarım (son {answered.length} / toplam {stats.count})</h2>
           <div className="mt-3 space-y-3">
             {answered.map((r) => (
               <div key={r.id} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4">

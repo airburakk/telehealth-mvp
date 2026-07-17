@@ -44,7 +44,7 @@ export default async function DoctorTourismPoolPage() {
       <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
         <ArrowLeft size={15} /> Ana sayfa
       </Link>
-      <h1 className="mt-3 flex items-center gap-2 text-xl font-bold text-[var(--c-ink)]">
+      <h1 className="aura-display mt-3 flex items-center gap-2 text-2xl font-medium tracking-tight text-[var(--c-ink)]">
         <Plane size={20} className="text-[var(--c-accent-strong)]" /> Sağlık Turizmi Havuzu
       </h1>
       <p className="mt-1 text-sm text-[var(--c-ink-2)]">

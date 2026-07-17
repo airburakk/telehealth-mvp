@@ -405,7 +405,7 @@ export function SoVideoRoom({
     return (
       <div dir={langDir(lang)} className="mx-auto max-w-md px-5 py-20 text-center">
         <PhoneOff className="mx-auto mb-3 text-[var(--c-ink-3)]" size={40} />
-        <h1 className="text-xl font-bold text-[var(--c-ink)]">{t(S.ended)}</h1>
+        <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{t(S.ended)}</h1>
         <p className="mt-2 text-sm text-[var(--c-ink-2)]">{t(S.endedSub)}</p>
         <button onClick={() => router.push(`/second-opinion/vaka/${caseId}`)} className="mt-5 rounded-xl bg-[var(--c-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
           {t(S.backToCase)}

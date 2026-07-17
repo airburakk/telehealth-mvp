@@ -255,7 +255,7 @@ export function ConsultVideoRoom({
     return (
       <div dir={dir} className="mx-auto max-w-md px-5 py-20 text-center">
         <PhoneOff className="mx-auto mb-3 text-[var(--c-ink-3)]" size={40} />
-        <h1 className="text-xl font-bold text-[var(--c-ink)]">{t(S.ended)}</h1>
+        <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{t(S.ended)}</h1>
         <p className="mt-2 text-sm text-[var(--c-ink-2)]">{t(S.endedSub)}</p>
         <button onClick={() => router.push(backHref)} className="mt-5 rounded-xl bg-[var(--c-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">{t(S.back)}</button>
       </div>
@@ -266,7 +266,7 @@ export function ConsultVideoRoom({
     return (
       <div dir={dir} className="mx-auto max-w-md px-5 py-16 text-center">
         <Video className="mx-auto mb-3 text-[var(--c-accent)]" size={40} />
-        <h1 className="text-xl font-bold text-[var(--c-ink)]">{t(S.title)}</h1>
+        <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{t(S.title)}</h1>
         <p className="mt-1 text-sm text-[var(--c-ink-2)]">{t(branchLabel)} · {remoteName}</p>
         <p className="mt-4 rounded-xl bg-[var(--c-surface)] px-4 py-3 text-xs text-[var(--c-ink-2)]">{t(S.permNote)}</p>
         <button onClick={() => { setJoined(true); setPhase("connecting"); }} className="mt-5 rounded-xl bg-[var(--c-accent)] px-6 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">{t(S.join)}</button>

@@ -72,7 +72,7 @@ export default async function DoctorSoDetailPage({ params }: { params: Promise<{
                 {assignedToMe ? "Size atandı" : "Açık — süre doldu"}
               </span>
             </div>
-            <h1 className="mt-3 text-lg font-bold text-[var(--c-ink)]">İkinci görüş dosyası — kabul öncesi önizleme</h1>
+            <h1 className="aura-display mt-3 text-lg font-medium tracking-tight text-[var(--c-ink)]">İkinci görüş dosyası — kabul öncesi önizleme</h1>
             <p className="mt-2 whitespace-pre-wrap text-sm text-[var(--c-ink)]">{summary}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[var(--c-ink-2)]">
               {region && <span>Bölge: {region}</span>}

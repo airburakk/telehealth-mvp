@@ -29,7 +29,7 @@ export default async function DoctorDashboard() {
   if (!doctor) {
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 text-center">
-        <h1 className="text-xl font-bold text-[var(--c-ink)]">Doktor profili bağlı değil</h1>
+        <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">Doktor profili bağlı değil</h1>
         <p className="mt-2 text-sm text-[var(--c-ink-2)]">Bu hesap bir doktor profiline bağlı değil (ör. koordinatör). Vaka kuyruğuna gidin.</p>
         <Link href="/doktor" className="mt-5 inline-flex rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">Doktor Paneli</Link>
       </div>
@@ -69,7 +69,7 @@ export default async function DoctorDashboard() {
             <span className="grid h-16 w-16 place-items-center rounded-3xl text-2xl font-bold text-[var(--c-ink)]" style={{ background: doctor.color }}>{doctor.name.slice(0, 1)}</span>
             <div>
               <div className="flex items-center gap-1.5">
-                <h1 className="text-xl font-bold text-[var(--c-ink)]">{doctor.title} {doctor.name}</h1>
+                <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{doctor.title} {doctor.name}</h1>
                 {doctor.verified && <BadgeCheck size={16} className="text-[var(--c-accent)]" />}
               </div>
               <div className="text-sm font-medium text-[var(--c-accent-strong)]">{doctor.branch} · {doctor.city}</div>

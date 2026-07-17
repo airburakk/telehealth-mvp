@@ -72,7 +72,7 @@ export function ConsentGate({ isPatient, dest }: { isPatient: boolean; dest: str
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><ShieldCheck size={22} /></span>
-          <h1 className="text-xl font-bold text-[var(--c-ink)]">{t(C.title)}</h1>
+          <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{t(C.title)}</h1>
         </div>
         {isPatient && <PatientLangSelect lang={patientLang} onChange={setPatientLang} />}
       </div>

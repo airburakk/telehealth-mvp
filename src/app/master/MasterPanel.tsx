@@ -76,7 +76,7 @@ export function MasterPanel({ entries, masterEmail }: { entries: Entry[]; master
           <ShieldCheck size={22} />
         </span>
         <div>
-          <h1 className="text-xl font-bold text-[var(--c-ink)]">Master Paneli</h1>
+          <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">Master Paneli</h1>
           <p className="text-sm text-[var(--c-ink-2)]">
             Herhangi bir hesaba ya da doktor profiline bürünebilirsin. Giriş hesabı olmayan
             doktorlara bürününce arka planda gölge hesap açılır. Her bürünme audit&apos;e yazılır.

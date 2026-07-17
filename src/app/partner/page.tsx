@@ -89,7 +89,7 @@ export default async function PartnerHome() {
       </Link>
 
       {/* Açık talepler */}
-      <h2 className="mt-7 flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]"><Clock size={16} /> {tr(UI.pending)} ({open.length})</h2>
+      <h2 className="aura-display mt-7 flex items-center gap-2 text-base font-medium tracking-tight text-[var(--c-ink)]"><Clock size={16} /> {tr(UI.pending)} ({open.length})</h2>
       {open.length === 0 ? (
         <p className="mt-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-6 text-center text-sm text-[var(--c-ink-2)]">{tr(UI.noPending)}</p>
       ) : (
@@ -99,7 +99,7 @@ export default async function PartnerHome() {
       {/* Görüşme sürüyor (doktor sahiplendi, henüz nihai görüş yok) */}
       {discussing.length > 0 && (
         <>
-          <h2 className="mt-7 flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]"><MessageCircle size={16} className="text-sky-300" /> {tr(UI.discussing)} ({discussing.length})</h2>
+          <h2 className="aura-display mt-7 flex items-center gap-2 text-base font-medium tracking-tight text-[var(--c-ink)]"><MessageCircle size={16} className="text-sky-300" /> {tr(UI.discussing)} ({discussing.length})</h2>
           <div className="mt-2 space-y-3">{discussing.map((r) => <ReqCard key={r.id} r={r} tr={tr} lang={partnerLang} />)}</div>
         </>
       )}
@@ -107,7 +107,7 @@ export default async function PartnerHome() {
       {/* Yanıtlananlar */}
       {answered.length > 0 && (
         <>
-          <h2 className="mt-7 flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]"><CheckCircle2 size={16} className="text-emerald-300" /> {tr(UI.answered)} ({answered.length})</h2>
+          <h2 className="aura-display mt-7 flex items-center gap-2 text-base font-medium tracking-tight text-[var(--c-ink)]"><CheckCircle2 size={16} className="text-emerald-300" /> {tr(UI.answered)} ({answered.length})</h2>
           <div className="mt-2 space-y-3">{answered.map((r) => <ReqCard key={r.id} r={r} tr={tr} lang={partnerLang} />)}</div>
         </>
       )}
