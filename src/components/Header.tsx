@@ -12,6 +12,7 @@ import { navItemsFor } from "@/lib/nav";
 import { isImmersiveCallPath } from "@/lib/immersive-routes";
 import { LANG_CODES } from "@/lib/aura-landing/copy";
 import { LogOut, ShieldOff, UserCog } from "lucide-react";
+import { ThemeToggle, type ThemeName } from "@/components/ThemeToggle";
 
 const ROLE_LABELS: Record<string, string> = {
   PATIENT: "Hasta",
@@ -22,7 +23,7 @@ const ROLE_LABELS: Record<string, string> = {
   PARTNER: "Partner Doktor",
 };
 
-export function Header({ user, lang = "Türkçe" }: { user: { name: string; role: string } | null; lang?: string }) {
+export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { name: string; role: string } | null; lang?: string; theme?: ThemeName }) {
   const pathname = usePathname();
   const router = useRouter();
   const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
@@ -33,7 +34,7 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
   // Çevrilecek metinler: görünür nav etiketleri + rol + Çıkış/Giriş.
   // lang="Türkçe" → useT no-op (kimlik). Partner gibi dil-tercihli kullanıcıda /api/i18n cache'i.
   const texts = useMemo(
-    () => ["Çıkış", "Giriş yap", "Vazgeç", "Hesabım", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
+    () => ["Çıkış", "Giriş yap", "Vazgeç", "Hesabım", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", "Gündüz temasına geç", "Gece temasına geç", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
     [items, user]
   );
   const { t } = useT(lang, texts);
@@ -106,6 +107,8 @@ export function Header({ user, lang = "Türkçe" }: { user: { name: string; role
             })}
           </nav>
 
+          {/* Tema anahtarı (v6.22): gece varsayılan ↔ gündüz; tercih cookie'de, misafirde de görünür */}
+          <ThemeToggle initial={theme} t={t} />
           {user ? (
             <div className="ml-1 flex items-center gap-2 border-l border-[var(--c-hairline)] ps-2">
               <NotificationBell lang={lang} patientLangFallback={user.role === "PATIENT"} />

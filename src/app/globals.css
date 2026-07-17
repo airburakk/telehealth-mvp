@@ -27,6 +27,12 @@
   --c-success: #15803d;
   --c-warning: #b45309;
   --c-danger: #b91c1c;
+  --c-info: #1d4ed8;
+  /* Kulvar kimlik vurguları (v6.22 renk disiplini) — gündüzde koyu/kontrastlı tonlar */
+  --lane-telehealth: #1a3f9e;
+  --lane-so: #1a2b45;
+  --lane-tourism: #00655d;
+  --lane-free: #a83e28;
   color: var(--c-ink);
   color-scheme: light;
 }
@@ -50,6 +56,12 @@
   --c-success: #34d399;
   --c-warning: #fbbf24;
   --c-danger: #f87171;
+  --c-info: #60a5fa;
+  /* Kulvar kimlik vurguları (v6.22) — gece-güvenli açık tonlar (SO gece-mavisi düz halde okunmaz) */
+  --lane-telehealth: #7da8ff;
+  --lane-so: #93a9e8;
+  --lane-tourism: #2dd4bf;
+  --lane-free: #ff9d8a;
   color: var(--c-ink);
   color-scheme: dark;
 }

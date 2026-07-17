@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import { Space_Grotesk, Inter, JetBrains_Mono, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
@@ -77,17 +78,19 @@ export default async function RootLayout({
   }
   // Tam birleşme (2026-07-12): nav journey'ye bakmaz — hasta nav'ı herkes için aynı,
   // patientJourney sorgusu layout'tan kalktı.
+  // GECE VARSAYILAN + tema anahtarı (v6.22, kullanıcı kararı): tercih aura_theme cookie'sinde —
+  // SSR ilk boyamada doğru temayı basar (FOUC yok). Cookie yoksa gece. Landing kendi
+  // .aura-* token'larında, tema sınıfından bağımsız.
+  const themeCookie = (await cookies()).get("aura_theme")?.value;
+  const theme = themeCookie === "light" ? "light" : "dark";
   return (
-    /* GECE VARSAYILAN (v6.22, 2026-07-17 kullanıcı kararı — /palet-onizleme karşılaştırmasıyla):
-       iç yüzey landing ile aynı gece paletinde açılır ("iki ayrı ürün" kopuşu biter). Gündüz
-       token seti (.theme-light) SİLİNMEDİ — ileride kullanıcı tema seçeneği için hazır. */
-    <html lang="tr" className={`theme-dark h-full antialiased ${sans.variable} ${serif.variable} ${mono.variable} ${arabic.variable}`}>
+    <html lang="tr" className={`theme-${theme} h-full antialiased ${sans.variable} ${serif.variable} ${mono.variable} ${arabic.variable}`}>
       <body className="min-h-full flex flex-col">
         <PwaRegister />
         {/* Ekran dışına çıkan sürekli dekoratif animasyonları duraklatır. Kökte: landing'in
             yanı sıra uygulama içi Header/spinner sembollerini de kapsar. Render etmez (null). */}
         <AuraAnimPause />
-        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} />
+        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} theme={theme} />
         {user?.imp ? <MasterBar mode="impersonating" userName={user.name} /> : isMaster(user) ? <MasterBar mode="master" /> : null}
         <main className="flex-1">{children}</main>
         <SiteFooter />

@@ -52,31 +52,24 @@ const LANES: Record<Lane, { name: string; color: string; ink: string; on: string
   free: { name: "Ücretsiz Sağlık Hizmeti", color: "#ff7e67", ink: "#a83e28", on: "#5c1e10" }, // mercan turuncu
 };
 
+// Durum noktaları — TEMA-DUYARLI semantik token'lar (v6.22 + toggle): gece açık ton,
+// gündüz koyu ton; değerler globals.css .theme-dark/.theme-light bloklarından gelir.
 const STAGE_INK: Record<string, string> = {
-  NEW: "#1d4ed8",
-  IN_REVIEW: "#b45309",
-  IN_CONSULT: "#6d28d9",
-  DONE: "#15803d",
+  NEW: "var(--c-info)",
+  IN_REVIEW: "var(--c-warning)",
+  IN_CONSULT: "var(--c-indigo)",
+  DONE: "var(--c-success)",
 };
 
 // Renk disiplini (v6.22, kullanıcı kararı — /palet-onizleme V2): kulvar rengi yüzey BOYAMAZ,
-// yalnız kimlik vurgusudur (3px kenar şeridi + mono etiket). Gece zemininde LANES.color'ın
-// koyu üyeleri (özellikle SO gece-mavisi) okunmaz → gece-güvenli açık vurgu tonları.
-// Gündüz toggle'ı gelirse light karşılıkları: telehealth #1a3f9e · so #1a2b45 · tourism #00655d · free #a83e28.
+// yalnız kimlik vurgusudur (3px kenar şeridi + mono etiket). Değerler TEMA-DUYARLI CSS
+// değişkenlerinden (globals.css --lane-*): gece açık tonlar (SO gece-mavisi düz halde okunmaz),
+// gündüz koyu/kontrastlı tonlar.
 const LANE_ACCENT: Record<Lane, string> = {
-  telehealth: "#7da8ff",
-  so: "#93a9e8",
-  tourism: "#2dd4bf",
-  free: "#ff9d8a",
-};
-// Durum noktası — koyu zeminde okunur açık tonlar (klinik semantik ton AİLESİ korunur).
-const DOT_DARK: Record<string, string> = {
-  "#1d4ed8": "#60a5fa",
-  "#b45309": "#fbbf24",
-  "#6d28d9": "#a78bfa",
-  "#15803d": "#34d399",
-  "#57534e": "#a8a29e",
-  "#0f1a2b": "#93a9e8",
+  telehealth: "var(--lane-telehealth)",
+  so: "var(--lane-so)",
+  tourism: "var(--lane-tourism)",
+  free: "var(--lane-free)",
 };
 // Aciliyet (urgency) hasta ekranından KALDIRILDI (2026-07-13, kullanıcı isteği) — yalnız doktor
 // ekranlarında görünür (/doktor/vaka/[id] + CaseQueue). Hasta gereksiz panik/klinik yorum görmesin.
@@ -179,7 +172,7 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
                   branchName={t(c.branchLabel)}
                   laneName={t(LANES.so.name)}
                   stageLabel={t(SO_STATUS_LABELS[c.status as SoStatus] ?? c.status)}
-                  stageInk={LANES.so.ink}
+                  stageInk="var(--c-indigo)"
                   date={formatDateTime(c.createdAt)}
                   body={c.diagnosisSummary}
                   summaryHref={`/second-opinion/vaka/${c.id}`}
@@ -198,7 +191,7 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
                 branchName={t(c.branch)}
                 laneName={t(LANES[c.lane].name)}
                 stageLabel={t(st.label)}
-                stageInk={STAGE_INK[c.status] ?? "#57534e"}
+                stageInk={STAGE_INK[c.status] ?? "var(--c-ink-3)"}
                 date={formatDateTime(c.createdAt)}
                 patientName={c.patientName}
                 country={c.country}
@@ -295,7 +288,7 @@ function GlassCase({
   alert: string | null;
 }) {
   const accent = LANE_ACCENT[lane];
-  const dot = DOT_DARK[stageInk] ?? stageInk;
+  const dot = stageInk; // tema-duyarlı var(--c-*) token'ı (çağıran geçirir)
   return (
     <article
       className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5"
