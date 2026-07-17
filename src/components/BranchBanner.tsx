@@ -30,8 +30,9 @@ export function BranchBanner({
       <div className="relative flex items-center gap-4 p-5">
         <BranchAvatar branchKey={branchKey} size={64} />
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color }}>{eyebrow}</div>
-          <div className="mt-0.5 text-lg font-bold leading-tight text-[var(--c-ink)] sm:text-xl">{branchLabel}</div>
+          {/* Aura kiti (Doz 1): mono durak + display başlık — landing tipografi hiyerarşisi */}
+          <div className="aura-mono text-[11px] uppercase tracking-[0.2em]" style={{ color }}>{eyebrow}</div>
+          <div className="aura-display mt-1 text-2xl font-medium leading-tight tracking-tight text-[var(--c-ink)] sm:text-3xl">{branchLabel}</div>
         </div>
       </div>
       {/* Marka şeridi — branş rengi */}

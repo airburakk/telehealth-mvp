@@ -10,6 +10,9 @@ import { type LineItem } from "@/lib/pricing";
 import { parseJourney } from "@/lib/journey";
 import { CheckCircle2, FileText, Stethoscope, Sparkles, Package, HeartPulse, Video, ArrowLeft } from "lucide-react";
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
+import { AuraPanel } from "@/components/ui/AuraPanel";
+import { AuraButtonLink } from "@/components/ui/AuraButton";
+import { InfoField, SectionLabel } from "@/components/ui/InfoField";
 import { talkTrackerPhases, TALK_TRACKER_TEXTS } from "@/lib/talk-tracker";
 import { ConsultGate, type GateAppt } from "@/components/ConsultGate";
 import { TourismInbox } from "@/components/TourismInbox";
@@ -36,7 +39,7 @@ const STATIC_LABELS = [
   "Bakım Yolculuğum",
   "Başvurunuz oluşturuldu ve doktor kuyruğuna eklendi",
   "Uzman doktor, hazırlanan başvuru özetinizi inceleyip sizinle video görüşmesi planlayacak.",
-  "Başvuru No", "Aciliyet", "Hasta", "Ülke / Dil", "Yönlendirilen Branş", "Süre", "Başvurunuz",
+  "Başvuru No", "Başvuru Özeti", "Aciliyet", "Hasta", "Ülke / Dil", "Yönlendirilen Branş", "Süre", "Başvurunuz",
   "Şikayet", "Triyaj Gerekçesi", "Belgeler",
   "Acil / Hayati", "Yüksek", "Orta", "Düşük", "Rutin / Elektif",
   "Aktif görüşmeniz var", "Doktorunuzla görüşme odası açık — katılabilirsiniz.", "Görüşmeye katıl",
@@ -142,7 +145,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
   return (
     <div dir={dir} className="mx-auto max-w-3xl px-5 py-10">
       <div className="flex items-center justify-between gap-3">
-        <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">
+        <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:text-[var(--c-accent)]">
           <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Bakım Yolculuğum")}
         </Link>
         {isClinician && (
@@ -153,7 +156,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
       </div>
 
       {/* Branş görsel kimliği bandı — vaka merkezi üstünde (renk-türevi CSS banner + SVG amblem) */}
-      <div className="mt-4">
+      <div className="mt-5">
         <BranchBanner branchKey={c.branch} branchLabel={t(branchLabel)} eyebrow={t("Başvurunuz")} />
       </div>
 
@@ -171,7 +174,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
         <div className="mt-4 rounded-3xl border border-emerald-400/25 bg-emerald-500/10 p-5 flex items-start gap-3">
           <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-300" />
           <div>
-            <h1 className="font-bold text-emerald-200">{t("Başvurunuz oluşturuldu ve doktor kuyruğuna eklendi")}</h1>
+            <h1 className="font-semibold text-emerald-200">{t("Başvurunuz oluşturuldu ve doktor kuyruğuna eklendi")}</h1>
             <p className="mt-0.5 text-sm text-emerald-200/80">
               {t("Uzman doktor, hazırlanan başvuru özetinizi inceleyip sizinle video görüşmesi planlayacak.")}
             </p>
@@ -180,49 +183,45 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
       )}
 
       {/* Süreç takip göstergesi (fazlara gruplu) */}
-      <div className="mt-5">
+      <div className="mt-6">
         <ProcessTracker items={trackerItems} dir={dir} />
       </div>
 
       {/* Aktif görüşme CTA — oda açıksa hasta tek tıkla katılır */}
       {activeConsult && (
-        <div className="mt-5 flex flex-wrap items-center gap-3 rounded-3xl border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.08] p-5">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><Video size={20} /></span>
+        <div className="mt-5 flex flex-wrap items-center gap-4 rounded-3xl border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.08] p-6">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><Video size={20} /></span>
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-[var(--c-ink)]">{t("Aktif görüşmeniz var")}</div>
-            <p className="text-xs text-[var(--c-ink-2)]">{t("Doktorunuzla görüşme odası açık — katılabilirsiniz.")}</p>
+            <div className="aura-display text-lg font-medium text-[var(--c-ink)]">{t("Aktif görüşmeniz var")}</div>
+            <p className="mt-0.5 text-sm text-[var(--c-ink-2)]">{t("Doktorunuzla görüşme odası açık — katılabilirsiniz.")}</p>
           </div>
-          <Link href={`/gorusme/${activeConsult.id}`} className="inline-flex items-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
+          <AuraButtonLink href={`/gorusme/${activeConsult.id}`}>
             <Video size={16} /> {t("Görüşmeye katıl")}
-          </Link>
+          </AuraButtonLink>
         </div>
       )}
 
-      {/* Vaka bilgi kartı */}
-      <div className="mt-5 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Başvuru No")}</div>
-            <div className="font-mono text-sm text-[var(--c-ink)]">{c.id.slice(0, 8).toUpperCase()}</div>
-          </div>
-          <div className="text-right text-xs text-[var(--c-ink-3)]">{formatDateTime(c.createdAt)}</div>
+      {/* Vaka bilgi kartı — Aura kiti (Doz 1): display başlık + mono meta + InfoField ızgarası */}
+      <AuraPanel
+        className="mt-6"
+        title={t("Başvuru Özeti")}
+        meta={`${c.id.slice(0, 8).toUpperCase()} · ${formatDateTime(c.createdAt)}`}
+      >
+        <div className="grid grid-cols-2 gap-x-4 gap-y-5 text-sm">
+          <InfoField k={t("Hasta")} v={patientName} />
+          <InfoField k={t("Ülke / Dil")} v={`${countryFlag(c.country)} ${countryName(c.country)} · ${c.language}`} />
+          <InfoField k={t("Yönlendirilen Branş")} v={t(c.branch)} accent />
+          <InfoField k={t("Süre")} v={c.durationText || "—"} />
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-4 text-sm">
-          <Info k={t("Hasta")} v={patientName} />
-          <Info k={t("Ülke / Dil")} v={`${countryFlag(c.country)} ${countryName(c.country)} · ${c.language}`} />
-          <Info k={t("Yönlendirilen Branş")} v={t(c.branch)} accent />
-          <Info k={t("Süre")} v={c.durationText || "—"} />
-        </div>
-
-        <div className="mt-4">
-          <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Şikayet")}</div>
-          <p className="mt-1 text-sm text-[var(--c-ink)]">{c.symptoms}</p>
+        <div className="mt-6">
+          <SectionLabel>{t("Şikayet")}</SectionLabel>
+          <p className="mt-1.5 text-[15px] leading-relaxed text-[var(--c-ink)]">{c.symptoms}</p>
         </div>
 
         {isClinician && (
-          <div className="mt-4 rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]">
+          <div className="mt-6 rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-4">
+            <div className="aura-mono flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[var(--c-accent)]">
               <Sparkles size={14} /> {t("Triyaj Gerekçesi")}
             </div>
             <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink-2)]">{t(c.reasoning)}</p>
@@ -230,18 +229,18 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
         )}
 
         {files.length > 0 && (
-          <div className="mt-4">
-            <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Belgeler")}</div>
-            <ul className="mt-1.5 flex flex-wrap gap-2">
+          <div className="mt-6">
+            <SectionLabel>{t("Belgeler")}</SectionLabel>
+            <ul className="mt-2 flex flex-wrap gap-2">
               {files.map((f) => (
-                <li key={f} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-ink)]/10 px-2.5 py-1 text-xs text-[var(--c-ink-2)]">
+                <li key={f} className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-1.5 text-xs text-[var(--c-ink-2)]">
                   <FileText size={14} className="text-[var(--c-accent)]" /> {f}
                 </li>
               ))}
             </ul>
           </div>
         )}
-      </div>
+      </AuraPanel>
 
       {/* Post-op bandı — takip kendi ekranında (check-in/rapor etkileşimleri orada) */}
       {c.recovery && (
@@ -251,7 +250,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
             <div className="text-sm font-semibold text-emerald-200">{t("Post-Op takibiniz aktif")}</div>
             <p className="text-xs text-emerald-200/80">{t("İyileşme kontrolleri ve raporlar takip ekranındadır.")}</p>
           </div>
-          <Link href={`/takip/${c.id}`} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
+          <Link href={`/takip/${c.id}`} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
             <HeartPulse size={16} /> {t("Takip ekranını aç")}
           </Link>
         </div>
@@ -312,15 +311,6 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
           />
         </section>
       )}
-    </div>
-  );
-}
-
-function Info({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
-  return (
-    <div>
-      <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{k}</div>
-      <div className={`mt-0.5 ${accent ? "font-semibold text-[var(--c-ink)]" : "text-[var(--c-ink)]"}`}>{v}</div>
     </div>
   );
 }
