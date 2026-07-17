@@ -482,7 +482,7 @@ export function SoVideoRoom({
         <>
           {/* Hasta bilgileri (script yanı sıra) */}
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
-            <h2 className="font-bold text-[var(--c-ink)]">{remoteName}</h2>
+            <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">{remoteName}</h2>
             <p className="mt-1 text-sm font-medium text-[var(--c-accent-strong)]">{t(branchLabel)}</p>
             <p className="mt-2 text-xs text-[var(--c-ink-3)]">{t(S.title)}</p>
           </div>

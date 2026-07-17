@@ -49,7 +49,7 @@ export function TourismInbox({
       <div className="flex items-start gap-3 rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/[0.08] p-5">
         <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)]/15 text-[var(--c-accent-strong)]"><Plane size={18} /></span>
         <div>
-          <h1 className="font-bold text-[var(--c-ink)]">Talebiniz {branchLabel} doktorlarına iletildi</h1>
+          <h1 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">Talebiniz {branchLabel} doktorlarına iletildi</h1>
           <p className="mt-0.5 text-sm text-[var(--c-ink-2)]">
             {country} için {branchLabel} branşındaki doktorlar talebinizi inceliyor. Size tanıtım mesajı gönderip
             video görüşme randevusu önerecekler. Gelen tekliflerden birini kabul ettiğinizde görüşme planlanır.

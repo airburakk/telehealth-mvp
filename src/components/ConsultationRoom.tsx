@@ -557,7 +557,7 @@ export function ConsultationRoom({
   const caseInfoCard = (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <h2 className="font-bold text-[var(--c-ink)]">{caseData.patientName}</h2>
+        <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">{caseData.patientName}</h2>
         {/* Aciliyet yalnız doktora (2026-07-13, kullanıcı isteği) — hasta video odasında görmez */}
         {isDoctor && (
           <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${u.badge}`}>

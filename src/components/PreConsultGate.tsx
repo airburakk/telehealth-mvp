@@ -73,7 +73,7 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
       <div className="flex items-center gap-3">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><Video size={22} /></span>
         <div>
-          <h2 className="text-lg font-bold text-[var(--c-ink)]">{t("Uzman görüşmesi — ön bilgilendirme")}</h2>
+          <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">{t("Uzman görüşmesi — ön bilgilendirme")}</h2>
           <p className="text-sm text-[var(--c-ink-2)]">{t("Şikayetlerinizi paylaşmadan önce kısa bir bilgilendirme.")}</p>
         </div>
       </div>

@@ -100,7 +100,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
 
   return (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-      <h2 className="font-bold text-[var(--c-ink)]">{t("Bugünkü kontrol")}</h2>
+      <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">{t("Bugünkü kontrol")}</h2>
       <p className="text-sm text-[var(--c-ink-2)]">{t("Durumunuzu paylaşın; ekibiniz uzaktan izliyor.")}</p>
 
       {/* Ağrı */}

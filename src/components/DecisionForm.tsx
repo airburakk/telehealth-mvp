@@ -32,7 +32,7 @@ export function DecisionForm({ complaintId, bookingTotal }: { complaintId: strin
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
       <div className="flex items-center gap-2">
         <Gavel size={18} className="text-[var(--c-ink)]" />
-        <h2 className="font-bold text-[var(--c-ink)]">Kurul Kararı</h2>
+        <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">Kurul Kararı</h2>
       </div>
 
       <div className="mt-4 space-y-4">

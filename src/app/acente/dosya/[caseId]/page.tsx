@@ -90,7 +90,7 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-[var(--c-ink)]">{patientName}</h2>
+              <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">{patientName}</h2>
               <span className="text-sm text-[var(--c-ink-3)]">{countryFlag(c.country)} {countryName(c.country)}</span>
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--c-ink-2)]">

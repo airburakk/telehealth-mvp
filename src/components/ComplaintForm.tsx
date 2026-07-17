@@ -60,7 +60,7 @@ export function ComplaintForm({ caseId }: { caseId: string }) {
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
       <div className="flex items-center gap-2">
         <Scale size={18} className="text-[var(--c-ink)]" />
-        <h2 className="font-bold text-[var(--c-ink)]">Etik Kurul Başvurusu</h2>
+        <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">Etik Kurul Başvurusu</h2>
       </div>
       <p className="mt-1 text-sm text-[var(--c-ink-2)]">Memnuniyetsizlik veya şikayetinizi bağımsız kurula iletin.</p>
 

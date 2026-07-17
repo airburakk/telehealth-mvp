@@ -147,7 +147,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
           {data.closed ? (
             <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-6 text-center">
               <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-300"><CheckCircle2 size={24} /></span>
-              <h2 className="mt-3 font-bold text-[var(--c-ink)]">{t("Post-op takip tamamlandı")}</h2>
+              <h2 className="aura-display mt-3 text-lg font-medium tracking-tight text-[var(--c-ink)]">{t("Post-op takip tamamlandı")}</h2>
               <p className="mx-auto mt-1 max-w-md text-sm text-[var(--c-ink-2)]">{t("Bu sürecin takibi tamamlandı; yeni kontrol girişi kapalıdır. Geçmiş kayıtlarınız aşağıda görüntülenmeye devam eder.")}</p>
               {/* Geri-alma (E2EE Faz 2A) — veri post-op bitince hastaya döner; hasta isterse klinik ekibe erişimi YENİDEN verir (açma hasta kararı). */}
               <div className="mt-4">
@@ -176,7 +176,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
           )}
 
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-            <h2 className="font-bold text-[var(--c-ink)]">{t("Kontrol geçmişi")}</h2>
+            <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">{t("Kontrol geçmişi")}</h2>
             {data.checkIns.length === 0 ? (
               <p className="mt-2 text-sm text-[var(--c-ink-3)]">{t("Henüz kontrol girilmedi.")}</p>
             ) : (
