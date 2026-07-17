@@ -32,6 +32,7 @@ export default async function MyCasesPage() {
         symptoms: true,
         createdAt: true,
         tourismPlan: true,
+        freeCare: true, // kulvar rozeti (2026-07-17 fix: seçilmediği için free vakalar "Uzaktan Sağlık" görünürdü)
         bookings: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true, tier: true, status: true, total: true } },
         recovery: { select: { id: true } },
       },
@@ -57,8 +58,9 @@ export default async function MyCasesPage() {
       createdAt: c.createdAt.toISOString(),
       booking: b ? { id: b.id, tier: b.tier, status: b.status, total: b.total } : null,
       hasRecovery: !!c.recovery,
-      // Kulvar: turizm planı varsa Health Tourism, aksi halde Telehealth (SO ayrı model → so kulvarı).
-      lane: (c.tourismPlan ? "tourism" : "telehealth") as MyCaseRow["lane"],
+      // Kulvar: turizm planı varsa Health Tourism, freeCare işaretliyse Ücretsiz Sağlık,
+      // aksi halde Telehealth (SO ayrı model → so kulvarı).
+      lane: (c.tourismPlan ? "tourism" : c.freeCare ? "free" : "telehealth") as MyCaseRow["lane"],
     };
   });
 

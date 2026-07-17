@@ -204,6 +204,49 @@ async function main() {
     });
   }
 
+  // ── Sağlık Turizmi + Ücretsiz Sağlık kulvar örnekleri (2026-07-17, kullanıcı isteği) ────────
+  // Bakım Yolculuğum listesi 4 kulvarın 4'ünü de göstersin (rozet/renk demo değeri).
+  // Alanlar gerçek başvuru uçlarıyla birebir: tourism = api/patient/tourism-request
+  // (tourismPlan JSON {country,branch}), free = api/free-care/apply (freeCare + WAITING).
+  if (patientUser) {
+    const tSym = "Kalça protezi ameliyatı için Türkiye'de tedavi ve konaklama planlıyorum; uygun hastane ve doktor arıyorum.";
+    const tA = analyzeTriage({ symptoms: tSym });
+    await db.case.create({
+      data: {
+        userId: patientUser.id,
+        patientName: "Rustam A.",
+        country: "KZ",
+        language: "Kazakça",
+        symptoms: tSym,
+        branch: tA.branch,
+        urgency: tA.urgency,
+        confidence: tA.confidence,
+        reasoning: tA.reasoning,
+        status: "NEW",
+        tourismPlan: JSON.stringify({ country: "KZ", branch: tA.branch }),
+      },
+    });
+
+    const fSym = "Şeker hastalığım var; ilaçlarımı düzenleyecek doktora erişimim yok, ücretsiz uzaktan muayene talep ediyorum.";
+    const fA = analyzeTriage({ symptoms: fSym });
+    await db.case.create({
+      data: {
+        userId: patientUser.id,
+        patientName: "Amina S.",
+        country: "LY",
+        language: "Arapça",
+        symptoms: fSym,
+        branch: fA.branch,
+        urgency: fA.urgency,
+        confidence: fA.confidence,
+        reasoning: fA.reasoning,
+        status: "NEW",
+        freeCare: true,
+        freeCareStatus: "WAITING",
+      },
+    });
+  }
+
   // ── Golden demo vakası (Karim B. · akciğer kanseri uzman değerlendirmesi) ───────────────────
   // TRUST omurgası (triyaj → AI belge → görüşme → güvenli paylaşım → FHIR/kanıt) canlı LLM çağrısı
   // OLMADAN demolanabilsin diye AI çıktıları (epikriz + belge değerlendirmesi) ÖNCEDEN doldurulur.
