@@ -15,6 +15,7 @@ import { AuraButtonLink } from "@/components/ui/AuraButton";
 import { InfoField, SectionLabel } from "@/components/ui/InfoField";
 import { talkTrackerPhases, TALK_TRACKER_TEXTS } from "@/lib/talk-tracker";
 import { ConsultGate, type GateAppt } from "@/components/ConsultGate";
+import { CONSULT_GATE_TEXTS } from "@/lib/consult-gate-texts";
 import { TourismInbox } from "@/components/TourismInbox";
 import { gateAvailability } from "@/lib/clinical-duty";
 import { OfferView } from "@/components/OfferView";
@@ -121,8 +122,10 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
   // Klinik gerekçe (at-rest şifreli PHI): önbelleklenmez + ad AI'dan gizlenir (P0 #2);
   // statik etiketler + branş + tracker metinleri PHI değil → cache'lenir.
   const branchLabel = BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch;
+  // Kapı ekranı metinleri de SUNUCUDA çevrilir (2026-07-17, kullanıcı bulgusu): istemci useT'nin
+  // asenkron ilk-boyama Türkçesi kapıda görünmesin — hazır harita ConsultGate'e prop gider.
   const [uiMap, clinMap] = await Promise.all([
-    getTranslations(c.language, [...STATIC_LABELS, c.branch, branchLabel, ...TALK_TRACKER_TEXTS]),
+    getTranslations(c.language, [...STATIC_LABELS, c.branch, branchLabel, ...TALK_TRACKER_TEXTS, ...(gate ? CONSULT_GATE_TEXTS : [])]),
     translateClinical(c.language, [c.reasoning], c.patientName),
   ]);
   const tmap = { ...uiMap, ...clinMap };
@@ -163,7 +166,14 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
       {gate ? (
         // Kapı: branşta çevrimiçi doktor yok → 3 seçenek (veya süren randevu akışı)
         <div className="mt-4">
-          <ConsultGate caseId={c.id} lang={c.language} hasSentinel={gate.hasSentinel} hasIcapci={gate.hasIcapci} appointment={gate.appointment} />
+          <ConsultGate
+            caseId={c.id}
+            lang={c.language}
+            hasSentinel={gate.hasSentinel}
+            hasIcapci={gate.hasIcapci}
+            appointment={gate.appointment}
+            tmap={Object.fromEntries(CONSULT_GATE_TEXTS.map((s) => [s, t(s)]))}
+          />
         </div>
       ) : tourismInbox ? (
         // Sağlık turizmi: branş havuzu doktorlarının mesaj/teklifleri (3-seçenek yok)

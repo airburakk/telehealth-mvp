@@ -41,7 +41,10 @@ const DOCTORS = [
 ];
 
 const CASES = [
-  { patientName: "Karim B.", country: "DZ", language: "Arapça", symptoms: "Babamda akciğer kanseri şüphesi var. Biyopsi sonucu çıktı, ikinci görüş ve tedavi planı istiyoruz.", durationText: "2 ay", attachments: "akciger-BT.pdf,biyopsi-raporu.pdf", assign: false },
+  // ⚠️ Kulvar-metin tutarlılığı (2026-07-17, kullanıcı bulgusu): bu liste TELEHEALTH vakası üretir —
+  // şikayet metinlerinde "ikinci görüş" İFADESİ kullanılmaz (İkinci Görüş AYRI kulvar/modeldir;
+  // kartta "Uzaktan Sağlık" rozetiyle çelişip demoyu yanıltıyordu). SO örneği aşağıda ayrıca eklenir.
+  { patientName: "Karim B.", country: "DZ", language: "Arapça", symptoms: "Babamda akciğer kanseri şüphesi var. Biyopsi sonucu çıktı, uzman değerlendirmesi ve tedavi planı istiyoruz.", durationText: "2 ay", attachments: "akciger-BT.pdf,biyopsi-raporu.pdf", assign: false },
   { patientName: "Olga P.", country: "RU", language: "Rusça", symptoms: "Saç dökülmesi son aylarda çok arttı, ön bölge açıldı. FUE saç ekimi düşünüyorum.", durationText: "1 yıl", attachments: "sac-fotograf.jpg", assign: false },
   { patientName: "Aigerim T.", country: "KZ", language: "Kazakça", symptoms: "3 yıldır çocuğumuz olmuyor, tüp bebek (IVF) tedavisi araştırıyoruz. Hormon tahlillerimiz mevcut.", durationText: "3 yıl", attachments: "hormon-paneli.pdf", assign: true },
   { patientName: "Ahmed M.", country: "LY", language: "Arapça", symptoms: "Dizimde menisküs yırtığı var, MR çektirdim. Protez gerekebilir dediler, ortopedi görüşü istiyorum.", durationText: "6 ay", attachments: "diz-MR.pdf", assign: false },
@@ -57,12 +60,12 @@ const CASES = [
   { patientName: "Nurlan T.", country: "KZ", language: "Kazakça", symptoms: "Kronik böbrek hastalığı son evrede, böbrek nakli için canlı verici (donör) değerlendirmesi istiyoruz. Uzun süredir nakil bekleme listesindeyiz.", durationText: "1 yıl", attachments: "nefroloji-raporu.pdf", assign: false },
   { patientName: "Mehmet K.", country: "TR", language: "Türkçe", symptoms: "Bel fıtığı nedeniyle bacağıma yayılan ağrı ve uyuşma var. Omurga cerrahisi / disk ameliyatı gerekli mi diye nöroşirürji görüşü istiyorum.", durationText: "4 ay", attachments: "bel-MR.pdf", assign: false },
   { patientName: "Stefan R.", country: "DE", language: "Almanca", symptoms: "Uzun süredir KOAH hastasıyım; öksürük, balgam ve hırıltı artıyor. Astım tedavimin gözden geçirilmesini istiyorum.", durationText: "3 yıl", attachments: "", assign: false },
-  { patientName: "Pierre L.", country: "FR", language: "Fransızca", symptoms: "Sürekli reflü ve mide yanması var, gastrit şüphesiyle endoskopi planlanıyor. Gastroenteroloji ikinci görüşü istiyorum.", durationText: "6 ay", attachments: "endoskopi-rapor.pdf", assign: true },
+  { patientName: "Pierre L.", country: "FR", language: "Fransızca", symptoms: "Sürekli reflü ve mide yanması var, gastrit şüphesiyle endoskopi planlanıyor. Gastroenteroloji uzman değerlendirmesi istiyorum.", durationText: "6 ay", attachments: "endoskopi-rapor.pdf", assign: true },
   { patientName: "Irina M.", country: "RU", language: "Rusça", symptoms: "Cilt yüzeyimde renk değiştiren şüpheli bir ben var; ben kontrolü ve cilt muayenesi istiyorum. Yüzümde akne ve leke de var.", durationText: "3 ay", attachments: "ben-foto.jpg", assign: false },
   { patientName: "Aliya N.", country: "KZ", language: "Kazakça", symptoms: "Tiroid bezimde guatr var ve hormon değerlerim düzensiz. Halsizlik ve kilo değişimi yaşıyorum, endokrinoloji takibi istiyorum.", durationText: "1 yıl", attachments: "tiroid-usg.pdf", assign: false },
   { patientName: "Sergey D.", country: "RU", language: "Rusça", symptoms: "Sürekli halsizlik ve kansızlık (anemi) var, hemoglobin düşük çıkıyor. Boyunda şişlik nedeniyle lenfoma açısından hematoloji değerlendirmesi istiyoruz.", durationText: "5 ay", attachments: "kan-tahlili.pdf", assign: true },
   { patientName: "Emma T.", country: "GB", language: "İngilizce", symptoms: "Aylardır depresyon ve yoğun anksiyete yaşıyorum, uykusuzluk ve sürekli stres var. Psikiyatri desteği ve psikoterapi istiyorum.", durationText: "8 ay", attachments: "", assign: false },
-  { patientName: "Elnur M.", country: "AZ", language: "Azerice", symptoms: "Kalp kapağı yetmezliğim var, kapak ameliyatı ve bypass önerildi. Açık kalp cerrahisi / kalp ameliyatı için kalp ve damar cerrahisi ikinci görüşü istiyorum.", durationText: "2 ay", attachments: "anjiyo-rapor.pdf", assign: false },
+  { patientName: "Elnur M.", country: "AZ", language: "Azerice", symptoms: "Kalp kapağı yetmezliğim var, kapak ameliyatı ve bypass önerildi. Açık kalp cerrahisi / kalp ameliyatı öncesi kalp ve damar cerrahisi değerlendirmesi istiyorum.", durationText: "2 ay", attachments: "anjiyo-rapor.pdf", assign: false },
 ];
 
 async function main() {
@@ -86,6 +89,15 @@ async function main() {
   console.log(`⚠️  Yıkıcı seed ONAYLANDI — hedef DB sıfırlanacak: ${targetHost}`);
 
   console.log("Temizleniyor...");
+  // İkinci Görüş tabloları (2026-07-17): SO seed örneği eklendi → tekrar koşular orphan
+  // biriktirmesin diye çocuklar → vaka sırasıyla temizlenir (FK'lar cascade değil).
+  await db.secondOpinionEvent.deleteMany();
+  await db.secondOpinionPayment.deleteMany();
+  await db.secondOpinionAppointment.deleteMany();
+  await db.secondOpinion.deleteMany();
+  await db.secondOpinionRequest.deleteMany();
+  await db.secondOpinionDocument.deleteMany();
+  await db.secondOpinionCase.deleteMany();
   await db.complaint.deleteMany();
   await db.checkIn.deleteMany();
   await db.recovery.deleteMany();
@@ -95,6 +107,10 @@ async function main() {
   await db.shareLink.deleteMany();
   await db.caseDocument.deleteMany();
   await db.case.deleteMany();
+  // Doctor'a RESTRICT FK ile bağlı, sonradan eklenen tablolar (2026-07-17'de fark edildi —
+  // temizlik listesi bayattı): önce çocuklar, sonra doktor.
+  await db.review.deleteMany();
+  await db.doctorDocument.deleteMany();
   await db.doctor.deleteMany();
   await db.user.deleteMany();
 
@@ -167,7 +183,28 @@ async function main() {
     byName[c.patientName] = created.id;
   }
 
-  // ── Golden demo vakası (Karim B. · akciğer kanseri ikinci görüş) ───────────────────────────
+  // ── İkinci Görüş kulvarı örneği (2026-07-17, kullanıcı kararı) ──────────────────────────────
+  // "ikinci görüş" ifadesi telehealth metinlerinden çıkarıldı; kulvarın kendisi artık GERÇEK bir
+  // SecondOpinionCase ile temsil edilir (Bakım Yolculuğum'da SO kartı da görünür — demo değeri).
+  // Kurgu: Elnur M.'nin kalp ameliyatı kararı için ayrıca SO başvurusu var.
+  if (patientUser) {
+    await db.secondOpinionCase.create({
+      data: {
+        patientId: patientUser.id,
+        branch: "kvc", // BRANCHES.key — SO modeli KEY taşır (Doctor.branch=etiket tuzağına dikkat)
+        diagnosisSummary:
+          "Kalp kapağı yetmezliği tanısı kondu; kapak ameliyatı ve bypass önerildi. Ameliyat kararı öncesi uzman ikinci görüşü istiyorum.",
+        country: "AZ",
+        language: "Azerice",
+        status: "READY_FOR_ASSIGNMENT", // lib/second-opinion SO_STATUSES — "Doktor ataması bekleniyor"
+        consentAt: new Date(),
+        paidAt: new Date(),
+        readyAt: new Date(),
+      },
+    });
+  }
+
+  // ── Golden demo vakası (Karim B. · akciğer kanseri uzman değerlendirmesi) ───────────────────
   // TRUST omurgası (triyaj → AI belge → görüşme → güvenli paylaşım → FHIR/kanıt) canlı LLM çağrısı
   // OLMADAN demolanabilsin diye AI çıktıları (epikriz + belge değerlendirmesi) ÖNCEDEN doldurulur.
   // Canlı demoda soğuk/yavaş AI çağrısı riski sıfır. (Karim'in ENDED görüşmesi + booking'i zaten var.)

@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/useT";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { CONSULT_GATE_TEXTS } from "@/lib/consult-gate-texts";
 import { Stethoscope, CalendarClock, Trash2, Loader2, ArrowRight, CheckCircle2, Clock, ShieldQuestion, Video } from "lucide-react";
 
 export interface GateAppt {
@@ -13,56 +14,28 @@ export interface GateAppt {
   proposedAtLabel: string | null;
 }
 
-const TEXTS = [
-  "Şu an çevrimiçi branş doktoru yok",
-  "Size en uygun yolu seçin — başvurunuz kaydedildi, hiçbir bilgi kaybolmaz.",
-  "Nöbetçi doktorla şimdi görüşün",
-  "7/24 görevli Dahiliye/Acil doktoru sizinle hemen bir video görüşmesi yapar.",
-  "Şimdi görüş",
-  "Şu an çevrimiçi nöbetçi doktor yok",
-  "Branş doktorunuzle randevu alın",
-  "İcap görevli branş uzmanlarına iletilir; en erken uygun doktor size bir görüşme zamanı önerir.",
-  "Randevu iste",
-  "Şu an icap görevli branş doktoru yok",
-  "Süreci sonlandır",
-  "Tüm verileriniz kalıcı olarak silinir ve ödemeniz iade edilir.",
-  "Sonlandır ve sil",
-  "Tüm vaka verileriniz kalıcı olarak silinecek ve ödemeniz iade edilecek. Emin misiniz?",
-  "Vazgeç",
-  "Randevu talebiniz iletildi",
-  "İcap görevli branş doktorları bilgilendirildi. En erken uygun doktor bir görüşme zamanı önerecek — bu sayfayı açık tutabilirsiniz.",
-  "Değişiklik talebiniz iletildi",
-  "Doktor yeni bir görüşme zamanı önerecek.",
-  "Video randevu teklifi",
-  "Önerilen zaman",
-  "Onayla",
-  "Farklı zaman iste",
-  "Randevunuz onaylandı",
-  "Görüşmeye katıl",
-  "Süreciniz sonlandırıldı",
-  "Tüm verileriniz silindi ve ödemeniz iade edildi.",
-  "Bakım Yolculuğuma dön",
-  "Bir hata oluştu, lütfen tekrar deneyin.",
-  "Bağlanıyor…",
-  "İletiliyor…",
-];
-
 export function ConsultGate({
   caseId,
   lang,
   hasSentinel,
   hasIcapci,
   appointment,
+  tmap,
 }: {
   caseId: string;
   lang: string;
   hasSentinel: boolean;
   hasIcapci: boolean;
   appointment: GateAppt | null;
+  // Sunucuda hazırlanmış çeviri haritası (2026-07-17): varsa ilk boyamadan itibaren hasta
+  // dilinde render edilir; useT no-op'a düşer (lang="Türkçe" = kimlik). Yoksa eski istemci
+  // useT davranışı (geriye uyumlu).
+  tmap?: Record<string, string>;
 }) {
   const router = useRouter();
-  const texts = useMemo(() => TEXTS, []);
-  const { t } = useT(lang, texts);
+  const texts = useMemo(() => CONSULT_GATE_TEXTS, []);
+  const { t: tClient } = useT(tmap ? "Türkçe" : lang, texts);
+  const t = (s: string) => tmap?.[s] ?? tClient(s);
   const [busy, setBusy] = useState<null | string>(null);
   const [err, setErr] = useState<string | null>(null);
   const [terminated, setTerminated] = useState(false);

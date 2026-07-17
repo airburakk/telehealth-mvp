@@ -29,7 +29,9 @@ const STATIC_UI = [
   "Birkaç adımda şikayetinizi anlatın; sistem sizi doğru uzmana yönlendirsin.",
   "Şikayet", "Branş Soruları", "Belgeler & Gönder",
   "Hasta Adı (veya yakını)", "Örn. Karim B.", "Ülke",
-  "Şikayetiniz / Semptomlar", "Örn. Babamda akciğer kanseri şüphesi var, biyopsi sonucu çıktı, ikinci görüş istiyoruz.",
+  // Placeholder örneği kulvar-nötr (2026-07-17): "ikinci görüş" ifadesi SO kulvarına ait —
+  // telehealth örnek metni hastayı yanlış kulvara davet etmesin (seed düzeltmesiyle aynı karar).
+  "Şikayetiniz / Semptomlar", "Örn. Babamda akciğer kanseri şüphesi var, biyopsi sonucu çıktı, tedavi planı istiyoruz.",
   "Şikayet süresi (opsiyonel)", "Örn. 2 ay",
   "Devam'a bastığınızda yapay zeka şikayetinizi analiz edip sizi doğru uzmana yönlendirir.",
   "AI sizi doğru branşa yönlendiriyor…", "Yönlendirilen branş", "Branşınız", "elle seçildi", "AI önerisi · doğru değilse değiştirin",
@@ -42,6 +44,9 @@ const STATIC_UI = [
   "Görüşme ücreti alındı:", "Görüşme sigortanız tarafından karşılanıyor", "Poliçe",
   "Acil / Hayati", "Yüksek", "Orta", "Düşük", "Rutin / Elektif",
   "Bu branş için gerekli belgeler", "opsiyonel",
+  "İkinci Görüş mü arıyorsunuz?",
+  "Elinizde mevcut bir tanı veya rapor var ve bunun için uzman değerlendirmesi istiyorsanız, İkinci Görüş Yolculuğu bu ihtiyaca özel yolumuzdur.",
+  "İkinci Görüş'e geç", "Buradan devam et",
   "Eksik belgeleriniz var",
   "Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.",
   "Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi aşağıda onaylayarak da ilerleyebilirsiniz.",
@@ -55,6 +60,7 @@ interface Analysis {
   confidence: number;
   reasoning: string;
   engine?: "llm" | "rules";
+  soSuggested?: boolean; // "ikinci görüş" niyeti algılandı → SO kulvarı önerisi (lib/so-intent)
 }
 
 // Basitleştirme Faz 2 (2026-07-12): sihirbaz 5→3 adım — Hasta+Şikayet birleşti (kimlik zaten
@@ -147,6 +153,7 @@ function TriyajInner() {
   const [error, setError] = useState("");
   const [providedDocs, setProvidedDocs] = useState<Record<string, boolean>>({}); // hasta beyanı: hangi gerekli belge sağlandı
   const [docAck, setDocAck] = useState(false); // eksik zorunlu belgeleri görüşmeden önce iletme onayı
+  const [soDismissed, setSoDismissed] = useState(false); // SO kulvar önerisi "Buradan devam et" ile kapatıldı
 
   // Profil hafızası (basitleştirme Faz 1): önceki başvurulardan prefill; profil yeterliyse
   // alanların yerine kompakt şerit ("Değiştir" alanları geri açar). Dil TEK kaynak: air_lang —
@@ -346,7 +353,7 @@ function TriyajInner() {
                 value={symptoms}
                 onChange={(e) => { setSymptoms(e.target.value); setAnalysis(null); }}
                 rows={5}
-                placeholder={t("Örn. Babamda akciğer kanseri şüphesi var, biyopsi sonucu çıktı, ikinci görüş istiyoruz.")}
+                placeholder={t("Örn. Babamda akciğer kanseri şüphesi var, biyopsi sonucu çıktı, tedavi planı istiyoruz.")}
                 className="inp resize-none"
                 autoFocus
               />
@@ -372,6 +379,34 @@ function TriyajInner() {
               <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
                 <AuraSpinner size={48} className="block" />
                 <p className="text-sm font-medium text-[var(--c-ink-2)]">{t("AI sizi doğru branşa yönlendiriyor…")}</p>
+              </div>
+            )}
+            {/* SO kulvar önerisi (2026-07-17, kullanıcı kararı): semptomda "ikinci görüş" niyeti
+                algılanırsa (lib/so-intent, deterministik) hastaya SO Yolculuğu önerilir. Yalnız
+                ÖNERİ — hasta "Buradan devam et" ile telehealth'te kalabilir. SO rengi indigo
+                (--c-indigo); klinik durum tonlarıyla çakışmaz. */}
+            {analysis?.soSuggested && !soDismissed && (
+              <div className="rounded-2xl border border-[var(--c-indigo)]/35 bg-[var(--c-indigo)]/10 p-4">
+                <div className="aura-display text-[17px] font-medium tracking-tight text-[var(--c-ink)]">
+                  {t("İkinci Görüş mü arıyorsunuz?")}
+                </div>
+                <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink-2)]">
+                  {t("Elinizde mevcut bir tanı veya rapor var ve bunun için uzman değerlendirmesi istiyorsanız, İkinci Görüş Yolculuğu bu ihtiyaca özel yolumuzdur.")}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <a
+                    href="/second-opinion/basvur"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[var(--c-indigo)] px-5 py-2.5 text-sm font-semibold text-white transition-opacity duration-200 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-indigo)]"
+                  >
+                    {t("İkinci Görüş'e geç")} <ArrowRight size={16} className="rtl:rotate-180" />
+                  </a>
+                  <button
+                    onClick={() => setSoDismissed(true)}
+                    className="inline-flex items-center rounded-xl border border-[var(--c-hairline)] px-4 py-2.5 text-sm font-medium text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)]"
+                  >
+                    {t("Buradan devam et")}
+                  </button>
+                </div>
               </div>
             )}
             {effectiveBranch ? (
