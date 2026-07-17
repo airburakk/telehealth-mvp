@@ -114,7 +114,7 @@ export function FreeCareConsole({
       <div className="flex items-center gap-2">
         <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--c-accent)]/10 text-[var(--c-accent-stronger)]"><HeartHandshake size={20} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[var(--c-ink)]">Ücretsiz Sağlık Hizmeti Konsolu</h1>
+          <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Ücretsiz Sağlık Hizmeti Konsolu</h1>
           <p className="text-sm text-[var(--c-ink-2)]">Gönüllü ücretsiz konsültasyon — müsaitlik açın, triyaj sizi bekleyen hastayla eşleştirsin.</p>
         </div>
       </div>
@@ -162,7 +162,7 @@ export function FreeCareConsole({
         {/* Kota + itibar */}
         <aside className="space-y-4">
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]"><Activity size={14} /> Haftalık Kontenjan</div>
+            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><Activity size={14} /> Haftalık Kontenjan</div>
             <div className="mt-2 flex items-end justify-between">
               <span className="text-2xl font-bold text-[var(--c-ink)]">{quota.used}<span className="text-base font-normal text-[var(--c-ink-3)]">/{quota.quota}</span></span>
               <span className="text-xs text-[var(--c-ink-2)]">{quota.left} hak kaldı</span>
@@ -172,7 +172,7 @@ export function FreeCareConsole({
             </div>
           </div>
           <div className="rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-5">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]"><Award size={14} /> Ücretsiz Hizmet Katkınız</div>
+            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-accent)]"><Award size={14} /> Ücretsiz Hizmet Katkınız</div>
             <div className="mt-2 grid grid-cols-2 gap-3 text-center">
               <div><div className="text-2xl font-bold text-[var(--c-accent)]">{badge.consultations}</div><div className="text-[11px] text-[var(--c-accent)]">görüşme</div></div>
               <div><div className="text-2xl font-bold text-[var(--c-accent)]">{badge.converted}</div><div className="text-[11px] text-[var(--c-accent)]">tedaviye yönlendirildi</div></div>

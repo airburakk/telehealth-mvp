@@ -104,14 +104,14 @@ export function PackageBuilder({
       <div className="space-y-4">
         {initial?.aiRationale && (
           <div className="rounded-2xl border border-violet-400/25 bg-violet-500/10 p-3.5">
-            <div className="text-xs font-semibold uppercase tracking-wide text-violet-300">{initial?.rationaleTitle ?? "✨ Sağlık Turizmi Agent'ı teklifi uygulandı"}</div>
+            <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-violet-300">{initial?.rationaleTitle ?? "✨ Sağlık Turizmi Agent'ı teklifi uygulandı"}</div>
             <p className="mt-1 text-sm leading-relaxed text-[var(--c-ink-2)]">{initial.aiRationale}</p>
             <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">Tüm değerleri aşağıdan değiştirebilirsiniz; fiyat platform motorunda hesaplanır.</p>
           </div>
         )}
         {hasTx && (
           <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-3.5">
-            <div className="text-xs font-semibold uppercase tracking-wide text-emerald-300">🩺 Doktorun tavsiye ettiği tedaviler uygulandı</div>
+            <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-emerald-300">🩺 Doktorun tavsiye ettiği tedaviler uygulandı</div>
             <p className="mt-1 text-sm leading-relaxed text-[var(--c-ink-2)]">
               Tedavi kalemleri ve fiyatları, görüşmeyi yapan doktorun seçtiği işlemlerden (₺) gelir; pakette güncel kurla $ olarak gösterilir.
             </p>
@@ -226,7 +226,7 @@ export function PackageBuilder({
       {/* Özet (Escrow) */}
       <aside className="lg:sticky lg:top-20 self-start">
         <Card>
-          <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">Paket Özeti · {patientName}</div>
+          <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">Paket Özeti · {patientName}</div>
           <div className="mt-1 text-sm text-[var(--c-ink-2)]">{countryFlag(country)} {countryName(country)} · {branch}</div>
 
           <ul className="mt-4 space-y-2">
@@ -305,7 +305,7 @@ function Card({ children }: { children: React.ReactNode }) {
   return <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">{children}</div>;
 }
 function CardTitle({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) {
-  return <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{icon} {children}</div>;
+  return <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{icon} {children}</div>;
 }
 function Row({ k, v, muted }: { k: string; v: string; muted?: boolean }) {
   return (

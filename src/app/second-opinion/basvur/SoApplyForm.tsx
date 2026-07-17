@@ -200,13 +200,13 @@ function SoApplyFormInner() {
       {/* §12.2 — süre bilgilendirmesi (tek kaynak: lib/second-opinion; useT ile çok dilli) */}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+          <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
             <Clock size={14} /> {t(S.reportLabel)}
           </div>
           <div className="mt-1 text-2xl font-bold text-[var(--c-ink)]">{t(S.reportValue)}</div>
         </div>
         <div className="rounded-2xl border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.06] p-4">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent-stronger)]">
+          <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-accent-stronger)]">
             <Video size={14} /> {t(S.videoLabel)}
           </div>
           <p className="mt-1 text-[13px] leading-relaxed text-[var(--c-ink-2)]">{t(S.videoText)}</p>

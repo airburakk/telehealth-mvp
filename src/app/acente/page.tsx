@@ -46,7 +46,7 @@ export default async function AgencyQueue() {
       <div className="flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><Luggage size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[var(--c-ink)]">Tedavi Dosyaları</h1>
+          <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Tedavi Dosyaları</h1>
           <p className="text-sm text-[var(--c-ink-2)]">Doktorların ilettiği tedavi kararları — teklif hazırlayıp hastaya gönderin.</p>
         </div>
       </div>

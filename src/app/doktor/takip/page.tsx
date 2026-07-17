@@ -52,7 +52,7 @@ export default async function RecoveryMonitor() {
       <div className="flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><HeartPulse size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[var(--c-ink)]">Post-Op İzleme</h1>
+          <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Post-Op İzleme</h1>
           <p className="text-sm text-[var(--c-ink-2)]">Uzaktan iyileşme takibi — kırmızı bayraklı hastalar üstte.</p>
         </div>
       </div>
@@ -112,7 +112,7 @@ export default async function RecoveryMonitor() {
       {/* E2EE Faz 2A — tamamlanmış takipler: klinik erişim hastaya devredildi → yalnız metadata, klinik içerik linki YOK. */}
       {completed.length > 0 && (
         <div className="mt-10">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
+          <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">
             <Lock size={13} /> Tamamlanan takipler · erişim hastada
           </div>
           <div className="mt-3 space-y-2">

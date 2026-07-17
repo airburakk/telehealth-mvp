@@ -48,7 +48,7 @@ export default async function ConsultationInboxPage() {
 
       <div className="mt-3 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--c-ink)]">Konsültasyon Talepleri</h1>
+          <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Konsültasyon Talepleri</h1>
           <p className="mt-1 text-sm text-[var(--c-ink-2)]">Partner doktorlardan gelen anonimleştirilmiş hasta dosyaları. Yanıt başına {formatUSD(PAYMENT_PER_ANSWER)} (simüle).</p>
         </div>
         <div className="shrink-0 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 text-right">
@@ -128,7 +128,7 @@ function DocumentsBlock({ docs }: { docs: ConsultDocView[] }) {
   if (!docs.length) return null;
   return (
     <div className="mt-3 space-y-2">
-      <div className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">Yüklenen belgeler (AI değerlendirme)</div>
+      <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">Yüklenen belgeler (AI değerlendirme)</div>
       {docs.map((d) => (
         <div key={d.id} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 p-3">
           <div className="flex items-center gap-2 text-sm font-medium text-[var(--c-ink)]">

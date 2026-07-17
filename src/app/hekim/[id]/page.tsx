@@ -52,7 +52,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
           <span className="h-20 w-20 shrink-0 overflow-hidden rounded-3xl ring-1 ring-white/15"><DoctorArt i={avatarVariant(d.name)} female={isFemaleName(d.name)} photo={d.photo} /></span>
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-serif text-2xl font-bold tracking-tight text-[var(--c-ink)]">{d.title} {d.name}</h1>
+              <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">{d.title} {d.name}</h1>
               {d.verified && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--c-accent)]/15 px-2.5 py-1 text-xs font-semibold text-[var(--c-accent)]"><BadgeCheck size={14} /> Doğrulanmış</span>}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--c-ink-2)]">

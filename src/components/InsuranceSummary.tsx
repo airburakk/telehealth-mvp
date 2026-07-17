@@ -40,7 +40,7 @@ export function InsuranceSummary({ detailJson, lang = "Türkçe" }: { detailJson
 
   return (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+      <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
         <ShieldCheck size={14} /> {t("Sigorta Teminatı")} · {t("Seviye")} {q.level} — {t(LEVEL_LABEL[q.level])}
       </div>
       <div className="mt-3 space-y-1.5 text-sm">

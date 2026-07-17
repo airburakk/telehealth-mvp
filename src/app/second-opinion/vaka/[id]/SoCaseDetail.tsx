@@ -316,7 +316,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-[var(--c-ink)]">{t(data.branchLabel)} · {t(S.soSuffix)}</h1>
+        <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">{t(data.branchLabel)} · {t(S.soSuffix)}</h1>
         <span className="rounded-full bg-[var(--c-accent)]/10 px-3 py-1 text-[12px] font-semibold text-[var(--c-accent-stronger)]">{t(SO_STATUS_LABELS[status])}</span>
       </div>
 
@@ -355,7 +355,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
             <DoctorArt i={data.assignedDoctor.avatarI} female={data.assignedDoctor.female} photo={data.assignedDoctor.photo} />
           </span>
           <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--c-accent-stronger)]">{t(S.yourDoctor)}</div>
+            <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-accent-stronger)]">{t(S.yourDoctor)}</div>
             <div className="mt-0.5 text-lg font-bold text-[var(--c-ink)]">{t(data.assignedDoctor.title)} {data.assignedDoctor.name}</div>
             <div className="text-sm text-[var(--c-ink-2)]">{t(data.assignedDoctor.branchLabel)}</div>
             {/* Rozet gerçek Doctor.verified değerine bağlı — koşulsuz "doğrulanmış" beyanı kaldırıldı (vitrin dürüstlüğü) */}
@@ -368,7 +368,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
 
       {/* Tanı özeti — hastanın kendi girdisi, çevrilmez */}
       <div className="mt-4 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-        <div className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">{t(S.diagTitle)}</div>
+        <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">{t(S.diagTitle)}</div>
         <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[var(--c-ink)]">{data.diagnosisSummary}</p>
       </div>
 

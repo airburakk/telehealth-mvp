@@ -35,7 +35,7 @@ export default async function DoctorsPage() {
       <div className="flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><Users size={22} /></span>
         <div>
-          <h1 className="font-serif text-2xl font-bold tracking-tight text-[var(--c-ink)]">Doktorlarımız</h1>
+          <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Doktorlarımız</h1>
           <p className="text-sm text-[var(--c-ink-2)]">Doğrulanmış, deneyimli uzmanlar — branşa göre filtreleyin.</p>
         </div>
       </div>

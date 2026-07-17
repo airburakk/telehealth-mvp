@@ -70,13 +70,13 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
   return (
     <div className="mt-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-[var(--c-ink)]">{data.patientName}</h1>
+        <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">{data.patientName}</h1>
         <span className="rounded-full bg-[var(--c-accent)]/10 px-3 py-1 text-[12px] font-semibold text-[var(--c-accent-stronger)]">{SO_STATUS_LABELS[status] ?? status}</span>
       </div>
       <p className="mt-1 text-sm text-[var(--c-accent-strong)]">{data.branchLabel} · İkinci Görüş</p>
 
       <div className="mt-4 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-        <div className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">Tanı / durum özeti</div>
+        <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">Tanı / durum özeti</div>
         <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[var(--c-ink)]">{data.diagnosisSummary}</p>
         {data.payment?.status === "PAID" && (
           <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[12px] font-medium text-emerald-300">

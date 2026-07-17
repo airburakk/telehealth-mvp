@@ -25,7 +25,7 @@ export default async function AccountPage() {
       <span className="inline-flex items-center gap-2 rounded-full bg-[var(--c-accent)]/10 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--c-accent-stronger)]">
         <UserCog size={14} /> Hesabım
       </span>
-      <h1 className="mt-3 text-2xl font-bold tracking-tight text-[var(--c-ink)]">Hesap ayarları</h1>
+      <h1 className="aura-display mt-3 text-3xl font-medium tracking-tight text-[var(--c-ink)]">Hesap ayarları</h1>
 
       <div className="mt-8">
         <DeleteAccountPanel lang={lang} retentionYears={RETENTION_YEARS} />

@@ -167,7 +167,7 @@ export default async function DoctorPanel({
   return (
     <div className="mx-auto max-w-5xl px-5 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[var(--c-ink)]">Doktor Ana Sayfası</h1>
+        <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Doktor Ana Sayfası</h1>
         <p className="mt-1 text-sm text-[var(--c-ink-2)]">Birimleriniz tercihinize göre düzenlendi.</p>
       </div>
 

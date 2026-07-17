@@ -228,7 +228,7 @@ export default function ClinicalDecisionPanel({
 
   return (
     <div className="rounded-3xl border border-emerald-400/25 bg-[var(--c-panel)] p-5 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-300">
+      <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-emerald-300">
         <Stethoscope size={15} /> Klinik Kodlama & Tedavi Kararı
       </div>
       <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">

@@ -33,7 +33,7 @@ export function SharesView({ unseen, cases, links }: { unseen: UnseenAccess[]; c
             <ShieldCheck size={22} />
           </span>
           <div>
-            <h1 className="text-2xl font-bold text-[var(--c-ink)]">{t(S.title)}</h1>
+            <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">{t(S.title)}</h1>
             <p className="text-sm text-[var(--c-ink-2)]">{t(S.subtitle)}</p>
           </div>
         </div>

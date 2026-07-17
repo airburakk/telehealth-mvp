@@ -14,7 +14,8 @@ import { BRANCHES } from "@/lib/triage";
 import { BranchAvatar } from "@/components/BranchAvatar";
 import { branchColor, branchBannerBg } from "@/lib/branch-visuals";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
-import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Luggage, FileText, Inbox, HandHeart, Bell, X } from "lucide-react";
+import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Luggage, FileText, HandHeart, Bell, X } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export type Lane = "telehealth" | "so" | "tourism" | "free";
 
@@ -116,15 +117,16 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
           <div className="flex items-center gap-3">
             <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28c8d8] text-[#0a4148]"><FolderHeart size={22} /></span>
             <div>
-              <h1 className="text-2xl font-bold text-[var(--c-ink)]">{t(S.title)}</h1>
-              <p className="text-sm text-[var(--c-ink-2)]">{t(S.subtitle)}</p>
+              {/* Aura kiti (Doz 1): display başlık — landing tipografi hiyerarşisi */}
+              <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">{t(S.title)}</h1>
+              <p className="mt-0.5 text-[15px] text-[var(--c-ink-2)]">{t(S.subtitle)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <PatientLangSelect lang={lang} onChange={setLang} />
             <button
               onClick={() => setPickerOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#28c8d8] px-4 py-2 text-sm font-semibold text-[#0a4148] hover:bg-[#22b4c2]"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#28c8d8] px-4 py-2.5 text-sm font-semibold text-[#0a4148] transition-colors duration-200 hover:bg-[#22b4c2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]"
             >
               <Plus size={16} /> {t(S.newBtn)}
             </button>
@@ -133,16 +135,17 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
 
         <div className="mt-6 space-y-4">
           {merged.length === 0 && (
-            <div className="rounded-3xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-panel)] py-14 text-center">
-              <Inbox className="mx-auto mb-2 text-[var(--c-ink-3)]" size={28} />
-              <p className="text-sm text-[var(--c-ink-2)]">{t(S.empty)}</p>
-              <button
-                onClick={() => setPickerOpen(true)}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#28c8d8] px-4 py-2 text-sm font-semibold text-[#0a4148] hover:bg-[#22b4c2]"
-              >
-                <Plus size={15} /> {t(S.emptyBtn)}
-              </button>
-            </div>
+            <EmptyState
+              title={t(S.empty)}
+              action={
+                <button
+                  onClick={() => setPickerOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#28c8d8] px-4 py-2.5 text-sm font-semibold text-[#0a4148] transition-colors duration-200 hover:bg-[#22b4c2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]"
+                >
+                  <Plus size={15} /> {t(S.emptyBtn)}
+                </button>
+              }
+            />
           )}
 
           {merged.map((m) => {
@@ -203,7 +206,7 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold text-[var(--c-ink)]">{t(S.pickTitle)}</h2>
+                <h2 className="aura-display text-xl font-medium tracking-tight text-[var(--c-ink)]">{t(S.pickTitle)}</h2>
                 <p className="mt-1 text-sm text-[var(--c-ink-2)]">{t(S.pickDesc)}</p>
               </div>
               <button onClick={() => setPickerOpen(false)} aria-label={t(S.cancel)} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[var(--c-ink-3)] hover:bg-[var(--c-surface)]">
@@ -286,7 +289,7 @@ function GlassCase({
         style={{ background: headerBg, border: `1px solid ${bc}40` }}
       >
         <BranchAvatar branchKey={branchKey} size={26} />
-        <span className="min-w-0 flex-1 truncate text-[15px] font-bold uppercase tracking-wide text-[var(--c-ink)]">
+        <span className="aura-display min-w-0 flex-1 truncate text-[15px] font-semibold uppercase tracking-wide text-[var(--c-ink)]">
           {branchName}
         </span>
         {alert && (
@@ -311,7 +314,7 @@ function GlassCase({
         className="flex flex-wrap items-center gap-2 rounded-2xl px-3 py-2.5"
         style={{ background: laneDeep, border: `1px solid ${L.color}66` }}
       >
-        <span className="text-[11px] font-bold uppercase tracking-wider text-white/95">{laneName}</span>
+        <span className="aura-mono text-[11px] uppercase tracking-[0.15em] text-white/95">{laneName}</span>
         <FooterBadge ink={stageInk} label={stageLabel} />
         <Link
           href={summaryHref}

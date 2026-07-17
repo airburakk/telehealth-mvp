@@ -214,7 +214,7 @@ export function LiveInterpreter({
   return (
     <div dir={langDir(lang)} className="rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-panel)] p-5 shadow-sm">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]">
+        <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-accent)]">
           <Languages size={15} /> {t("AI Canlı Tercüman")}
           <span className="rounded-full bg-teal-600 px-1.5 py-0.5 text-[9px] tracking-normal text-white">Gemini</span>
         </div>

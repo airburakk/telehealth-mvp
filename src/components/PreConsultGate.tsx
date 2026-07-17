@@ -79,12 +79,12 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-[var(--c-hairline)] p-4">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]"><Wallet size={14} /> {t("Görüşme ücreti")}</div>
+          <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><Wallet size={14} /> {t("Görüşme ücreti")}</div>
           <div className="mt-1 text-2xl font-bold text-[var(--c-ink)]">${CONSULT_FEE_USD}</div>
           <div className="text-xs text-[var(--c-ink-3)]">{t("Tek seferlik · Tier 1 ön değerlendirme")}</div>
         </div>
         <div className="rounded-2xl border border-[var(--c-hairline)] p-4">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]"><Clock size={14} /> {t("Ortalama süre")}</div>
+          <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><Clock size={14} /> {t("Ortalama süre")}</div>
           <div className="mt-1 text-2xl font-bold text-[var(--c-ink)]">{t(CONSULT_DURATION_TEXT)}</div>
           <div className="text-xs text-[var(--c-ink-3)]">{t("Uzman doktorla birebir video")}</div>
         </div>
@@ -97,7 +97,7 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
 
       {/* Yöntem seçimi — sigorta ↔ kart aynı ekranda geçişli */}
       <div className="mt-5">
-        <div className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("Ödeme yöntemi")}</div>
+        <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Ödeme yöntemi")}</div>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           <button
             type="button"
@@ -138,7 +138,7 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
       ) : (
         <div className="mt-4">
           <div className="space-y-3 rounded-2xl border border-[var(--c-hairline)] p-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("Kart bilgileri")} <span className="font-normal text-[var(--c-ink-3)]">{t("(demo — gerçek ödeme alınmaz)")}</span></div>
+            <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Kart bilgileri")} <span className="font-normal text-[var(--c-ink-3)]">{t("(demo — gerçek ödeme alınmaz)")}</span></div>
             <input value={card} onChange={(e) => setCard(e.target.value)} inputMode="numeric" placeholder={t("Kart numarası")} className={INPUT} autoFocus />
             <div className="grid grid-cols-2 gap-3">
               <input placeholder={t("AA/YY")} className={INPUT} />

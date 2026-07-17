@@ -59,7 +59,7 @@ export function DocumentAnalysis({ caseId, initial }: { caseId: string; initial:
   return (
     <div className="rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-panel)] p-6 shadow-sm">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]">
+        <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-accent)]">
           <FileSearch size={15} /> Ön Değerlendirme · Belge Analizi (AI)
         </div>
         <span className="shrink-0 text-[11px] text-[var(--c-ink-3)]">{docs.length} belge</span>

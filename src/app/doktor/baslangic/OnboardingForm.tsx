@@ -77,7 +77,7 @@ export function OnboardingForm({
   return (
     <div className="mx-auto max-w-2xl px-5 py-10">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-[var(--c-ink)]">Hoş geldiniz, {doctorName}</h1>
+        <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Hoş geldiniz, {doctorName}</h1>
         <p className="mt-2 text-sm text-[var(--c-ink-2)]">
           Doktor Ana Sayfanız tercihinize göre düzenlenir. Aşağıdaki birimlere katılmak isteyip
           istemediğinizi seçin — dilediğiniz zaman profilinizden değiştirebilirsiniz.

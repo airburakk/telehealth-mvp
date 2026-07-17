@@ -153,12 +153,12 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
         {/* Sağ: aksiyon paneli */}
         <aside className="space-y-4">
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-            <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">Durum</div>
+            <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">Durum</div>
             <div className="mt-1 mb-4">
               <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${st.color}`}>{st.label}</span>
             </div>
 
-            <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">Atanan / Önerilen Doktor</div>
+            <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">Atanan / Önerilen Doktor</div>
             <div className="mt-2 flex items-center gap-3">
               <span className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-[var(--c-ink)]" style={{ background: (c.doctor ?? suggested)?.color ?? "var(--c-accent-strong)" }}>
                 {((c.doctor ?? suggested)?.name ?? "?").slice(0, 1)}
@@ -217,7 +217,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
 
 function SectionTitle({ children, icon, tone }: { children: React.ReactNode; icon: React.ReactNode; tone?: string }) {
   return (
-    <div className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide ${tone ?? "text-[var(--c-ink-2)]"}`}>
+    <div className={`flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] ${tone ?? "text-[var(--c-ink-2)]"}`}>
       {icon} {children}
     </div>
   );

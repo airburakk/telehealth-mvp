@@ -144,7 +144,7 @@ function SaglikTurizmiPlannerInner() {
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-300"><CheckCircle2 size={22} /></span>
           <div>
-            <h1 className="text-2xl font-bold text-[var(--c-ink)]">{t("Talebiniz alındı")}</h1>
+            <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">{t("Talebiniz alındı")}</h1>
             <p className="text-sm text-[var(--c-ink-2)]">{t("Talebiniz seçtiğiniz tedavi alanının doktor havuzuna iletildi. Doktorlar tekliflerini hazırladıkça iletişim tercihinizden bilgilendirileceksiniz.")}</p>
           </div>
         </div>
@@ -264,7 +264,7 @@ function SubStep({ n, label, active, done }: { n: number; label: string; active:
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{label}</label>
+      <label className="mb-1.5 block aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{label}</label>
       {children}
     </div>
   );

@@ -570,7 +570,7 @@ export function ConsultationRoom({
         <span className="font-medium text-[var(--c-accent-strong)]">{t(caseData.branch)}</span>
       </div>
       <div className="mt-3">
-        <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Şikayet")}</div>
+        <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">{t("Şikayet")}</div>
         <p className="mt-1 text-sm text-[var(--c-ink)]">{caseData.symptoms}</p>
         {isDoctor && <TranslateButton text={caseData.symptoms} defaultTarget="Türkçe" />}
       </div>
@@ -582,7 +582,7 @@ export function ConsultationRoom({
       )}
       {caseData.files.length > 0 && isDoctor && (
         <div className="mt-3">
-          <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">Belgeler</div>
+          <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">Belgeler</div>
           <ul className="mt-1.5 space-y-1">
             {caseData.files.map((f) => <li key={f} className="flex items-center gap-1.5 text-xs text-[var(--c-ink-2)]"><FileText size={13} className="text-[var(--c-accent)]" /> {f}</li>)}
           </ul>
@@ -618,7 +618,7 @@ export function ConsultationRoom({
   const transcriptEl = (joined || transcript.length > 0) ? (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+        <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
           <MessageSquareText size={14} /> {t("Canlı Transkript")}
           {sttOn && <span className="ms-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
         </div>
@@ -661,7 +661,7 @@ export function ConsultationRoom({
   const notesEl = isDoctor ? (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <div className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">Görüşme Notları</div>
+        <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">Görüşme Notları</div>
         {saved ? <span className="inline-flex items-center gap-1 text-[11px] text-emerald-300"><Check size={13} /> kaydedildi</span> : <span className="text-[11px] text-amber-300">kaydedilmedi</span>}
       </div>
       <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-[var(--c-hairline)] p-2.5 text-sm outline-none focus:border-[var(--c-accent)]" />

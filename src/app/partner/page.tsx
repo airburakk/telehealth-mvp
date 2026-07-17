@@ -68,8 +68,8 @@ export default async function PartnerHome() {
       <PresencePinger />
       {/* Hero — partner kimliği (ad/kurum/branş = kanonik veri, çevrilmez) */}
       <div className="rounded-3xl border border-sky-400/25 bg-sky-500/10 p-6">
-        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-300">{tr(UI.panel)}</div>
-        <h1 className="mt-1 text-2xl font-bold text-[var(--c-ink)]">{partner.title} {partner.name}</h1>
+        <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-sky-300">{tr(UI.panel)}</div>
+        <h1 className="aura-display mt-1 text-3xl font-medium tracking-tight text-[var(--c-ink)]">{partner.title} {partner.name}</h1>
         <p className="text-sm text-[var(--c-ink-2)]">{partner.institution ? `${partner.institution} · ` : ""}{partner.country}{partner.branch ? ` · ${partner.branch}` : ""}</p>
       </div>
 

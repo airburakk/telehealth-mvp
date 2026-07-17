@@ -213,7 +213,7 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
       {open && (
         <div dir={dir} className="absolute right-0 top-11 z-40 w-80 overflow-hidden rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] shadow-xl">
           <div className="flex items-center justify-between border-b border-[var(--c-hairline)] px-4 py-2.5">
-            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("Bildirimler")}</span>
+            <span className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Bildirimler")}</span>
             {loading && <span className="text-[10px] text-[var(--c-ink-3)]">{t("yenileniyor…")}</span>}
           </div>
           {pushState === "ios-hint" && (

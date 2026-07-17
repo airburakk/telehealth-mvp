@@ -102,7 +102,7 @@ export default async function DoctorDashboard() {
       {scorecard && (
         <div className="mt-5 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
               <Target size={15} /> Eşleştirme Kalite Skoru
             </div>
             <div className="text-2xl font-bold text-[var(--c-accent-strong)]">%{Math.round(scorecard.score * 100)}</div>
@@ -171,7 +171,7 @@ export default async function DoctorDashboard() {
         {/* Hakediş */}
         <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]"><Wallet size={15} /> Hakediş</div>
+            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><Wallet size={15} /> Hakediş</div>
             <div className="text-right">
               <div className="text-xs text-[var(--c-ink-3)]">Toplam net (komisyon sonrası)</div>
               <div className="text-xl font-bold text-emerald-300">{formatUSD(totalNet)}</div>
@@ -198,7 +198,7 @@ export default async function DoctorDashboard() {
         {/* Kapasite + müsaitlik */}
         <aside className="space-y-4">
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]"><CalendarClock size={15} /> Aylık Kapasite</div>
+            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><CalendarClock size={15} /> Aylık Kapasite</div>
             <div className="mt-3">
               <div className="flex items-end justify-between">
                 <span className="text-2xl font-bold text-[var(--c-ink)]">{ended.length}<span className="text-base font-normal text-[var(--c-ink-3)]">/{doctor.capacity}</span></span>
@@ -212,7 +212,7 @@ export default async function DoctorDashboard() {
           </div>
 
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]"><CalendarClock size={15} /> Müsaitlik (demo)</div>
+            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><CalendarClock size={15} /> Müsaitlik (demo)</div>
             <div className="mt-3 grid grid-cols-4 gap-1.5 text-center text-[11px]">
               {["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz", "—"].slice(0, 7).map((g, i) => (
                 <div key={g} className={`rounded-md py-2 ${i < 5 ? "bg-emerald-500/10 text-emerald-300" : "bg-[var(--c-surface)] text-[var(--c-ink-3)]"}`}>{g}<div className="font-semibold">{i < 5 ? "09-17" : "—"}</div></div>

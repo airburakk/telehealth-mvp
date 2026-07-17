@@ -41,7 +41,7 @@ export function NotifyChannelCard({ initialChannel, initialPhone }: { initialCha
   return (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+        <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
           <Bell size={15} /> Bildirim Tercihi
         </div>
         {channel !== "APP" && (

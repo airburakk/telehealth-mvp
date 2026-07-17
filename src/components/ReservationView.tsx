@@ -111,7 +111,7 @@ export function ReservationView(p: ReservationViewProps) {
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Rezervasyon No")}</div>
+                <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">{t("Rezervasyon No")}</div>
                 <div className="font-mono text-sm text-[var(--c-ink)]">{p.rezNo}</div>
               </div>
               <span className="rounded-full bg-[var(--c-accent)] px-3 py-1 text-xs font-semibold text-[var(--c-bg)]">{p.tier} {t("Paket")}</span>
@@ -157,7 +157,7 @@ export function ReservationView(p: ReservationViewProps) {
           {/* Hasta yolculuğu — lojistik takip (koordinatör /operasyon/lojistik'ten günceller) */}
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("Hasta Yolculuğu")}</div>
+              <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Hasta Yolculuğu")}</div>
               <span className="text-xs text-[var(--c-ink-3)]">{progress.done}/{progress.total} {t("tamamlandı")}</span>
             </div>
             <ol className="mt-4 space-y-0">
@@ -214,7 +214,7 @@ export function ReservationView(p: ReservationViewProps) {
           <EscrowMilestones status={p.escrowStatus} lang={lang} />
 
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("Ödeme Dağılımı (Split)")}</div>
+            <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Ödeme Dağılımı (Split)")}</div>
             <ul className="mt-3 space-y-2 text-sm">
               {p.split.map((s) => (
                 <li key={s.key} className="flex items-center justify-between">

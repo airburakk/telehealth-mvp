@@ -107,7 +107,7 @@ function Badge({ ok, label }: { ok: boolean | null; label: string }) {
 function Row({ icon, k, v, mono }: { icon: React.ReactNode; k: string; v: string; mono?: boolean }) {
   return (
     <div>
-      <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{icon} {k}</div>
+      <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">{icon} {k}</div>
       <div className={`mt-0.5 break-all text-sm ${mono ? "font-mono text-xs text-[var(--c-ink-2)]" : "text-[var(--c-ink)]"}`}>{v}</div>
     </div>
   );

@@ -289,7 +289,7 @@ function TriyajInner() {
                 >
                   <Icon size={17} />
                 </span>
-                <span className={`mt-1 text-[11px] ${active ? "text-[var(--c-ink)] font-semibold" : "text-[var(--c-ink-3)]"}`}>{t(s.t)}</span>
+                <span className={`aura-mono mt-1.5 text-[10px] uppercase tracking-[0.12em] ${active ? "text-[var(--c-ink)]" : "text-[var(--c-ink-3)]"}`}>{t(s.t)}</span>
               </div>
               {i < STEPS.length - 1 && <div className={`mx-2 h-0.5 flex-1 rounded ${done ? "bg-emerald-500" : "bg-[var(--c-ink)]/15"}`} />}
             </div>
@@ -382,7 +382,7 @@ function TriyajInner() {
                   eyebrow={t("Branşınız")}
                 />
                 <div className="rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-3">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]"><Stethoscope size={14} /> {t("Yönlendirilen branş")}</div>
+                  <div className="aura-mono flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] text-[var(--c-accent)]"><Stethoscope size={14} /> {t("Yönlendirilen branş")}</div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <select
                       value={effectiveBranch}
@@ -413,7 +413,7 @@ function TriyajInner() {
           <div className="space-y-4">
             {branchDocs.length > 0 && (
               <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-3.5">
-                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+                <div className="aura-mono flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
                   <ListChecks size={14} /> {t("Bu branş için gerekli belgeler")}
                 </div>
                 <ul className="mt-2.5 space-y-2">
@@ -493,19 +493,19 @@ function TriyajInner() {
           <button
             onClick={back}
             disabled={step === 0}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-ink)]/10 disabled:opacity-0"
+            className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-medium text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-accent)] disabled:opacity-0"
           >
             <ArrowLeft size={16} /> {t("Geri")}
           </button>
           {step < 2 ? (
-            <button onClick={next} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-accent)] px-4 py-2 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
+            <button onClick={next} className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--c-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--c-bg)] transition-colors duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-[var(--c-accent-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]">
               {t("Devam")} <ArrowRight size={16} />
             </button>
           ) : (
             <button
               onClick={submit}
               disabled={submitting || (missingRequired.length > 0 && !docAck)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-emerald-700 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
             >
               {submitting ? <Loader2 size={16} className="animate-spin" /> : <ClipboardCheck size={16} />}
               {t("Başvuruyu oluştur")}
@@ -537,7 +537,7 @@ function AnalysisCard({ analysis, t = (s) => s }: { analysis: Analysis; t?: (s: 
   // kokpitinde görünür (/doktor/vaka/[id]). Hastaya yönlendirilen branş + güven yeterli.
   return (
     <div className="rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-4">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]">
+      <div className="aura-mono flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[var(--c-accent)]">
         <Sparkles size={14} /> {t("AI Ön Analizi")}
         {analysis.engine === "llm" && <span className="rounded-full bg-teal-600 px-1.5 py-0.5 text-[9px] tracking-normal text-white">Claude</span>}
       </div>

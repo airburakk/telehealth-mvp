@@ -136,7 +136,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
       <div className="mt-4 flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><HeartPulse size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[var(--c-ink)]">{t("Post-Op Takip")}</h1>
+          <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">{t("Post-Op Takip")}</h1>
           <p className="text-sm text-[var(--c-ink-2)]">{data.patientName} · {t(data.branch)} · {t("Tedavi sonrası")} <strong className="text-[var(--c-ink)]">{data.day}. {t("gün")}</strong></p>
         </div>
       </div>
@@ -237,7 +237,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
             </div>
           ) : (
             <div className="rounded-3xl border border-violet-400/25 bg-[var(--c-panel)] p-5 shadow-sm">
-              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-violet-300">
+              <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-violet-300">
                 <FileText size={15} /> {t("AI Epikriz / Taburcu Raporu")}
               </div>
               {data.discharge ? (
@@ -284,7 +284,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
           )}
 
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]"><CalendarCheck size={15} /> {t("İyileşme Takvimi")}</div>
+            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><CalendarCheck size={15} /> {t("İyileşme Takvimi")}</div>
             <ol className="mt-3 space-y-0">
               {data.protocol.map((mst, i) => (
                 <li key={i} className="flex gap-3">
@@ -302,7 +302,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
           </div>
 
           <div className="rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-5">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-accent)]"><Video size={15} /> {t("Tele-Kontrol")}</div>
+            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-accent)]"><Video size={15} /> {t("Tele-Kontrol")}</div>
             <p className="mt-1.5 text-sm text-[var(--c-ink-2)]">{t("Kritik dönüm noktalarında doktorunuzla kısa görüşme planlanır.")}</p>
             <button className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-4 py-2 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]">
               {t("Randevu iste")}
@@ -310,12 +310,12 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
           </div>
 
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]"><Pill size={15} /> {t("İlaç Hatırlatıcı")}</div>
+            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><Pill size={15} /> {t("İlaç Hatırlatıcı")}</div>
             <p className="mt-1.5 text-sm text-[var(--c-ink-2)]">{t("Günlük ilaç bildirimleri açık (demo).")}</p>
           </div>
 
           <Link href="/paylasimlarim" className="block rounded-3xl border border-[var(--c-accent)]/20 bg-[var(--c-accent)]/[0.03] p-5 transition-colors hover:bg-[var(--c-accent)]/[0.06]">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink)]"><ShieldCheck size={15} /> {t("Güvenli Paylaşım")}</div>
+            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink)]"><ShieldCheck size={15} /> {t("Güvenli Paylaşım")}</div>
             <p className="mt-1.5 text-sm text-[var(--c-ink-2)]">{t("Bu kayıtları kendi ülkenizdeki doktorunuzla süreli ve iptal edilebilir bir bağlantıyla paylaşın.")}</p>
             <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--c-ink)]">{t("Paylaşım Kontrol Merkezi")} <ArrowRight size={14} /></span>
           </Link>

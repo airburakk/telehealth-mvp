@@ -505,7 +505,7 @@ export function SoVideoRoom({
           {/* Canlı Transkript (script) — iki taraf da kendi konuşmasını yazıya çevirir, karşı tarafa iletilir (otomatik/VAD) */}
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+              <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
                 <MessageSquareText size={14} /> {t(S.transcriptTitle)}
                 {sttOn && <span className="ms-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
               </div>

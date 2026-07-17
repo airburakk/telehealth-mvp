@@ -46,7 +46,7 @@ export function PatientQuestionsPanel({ storageKey, lang }: { storageKey: string
         aria-expanded={open}
         className="flex w-full items-center justify-between gap-2"
       >
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+        <span className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
           <NotebookPen size={14} className="text-[var(--c-accent-strong)]" /> {t(TX.title)}
         </span>
         {open ? <ChevronUp size={16} className="text-[var(--c-ink-3)]" /> : <ChevronDown size={16} className="text-[var(--c-ink-3)]" />}

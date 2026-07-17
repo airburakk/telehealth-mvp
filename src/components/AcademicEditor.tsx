@@ -51,7 +51,7 @@ export function AcademicEditor(props: {
 
   return (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-      <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+      <div className="flex flex-wrap items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
         <GraduationCap size={15} /> Akademik & Eğitim
         <span className="ml-1 text-[10px] font-normal normal-case text-[var(--c-ink-3)]">(boş alanlar profilde otomatik üretilir)</span>
       </div>

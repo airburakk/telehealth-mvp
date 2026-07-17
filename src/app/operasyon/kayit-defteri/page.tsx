@@ -136,7 +136,7 @@ export default async function RegistryBrowserPage({
       <div className="mt-3 flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><BookMarked size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[var(--c-ink)]">HealthTürkiye Kayıt Defteri</h1>
+          <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">HealthTürkiye Kayıt Defteri</h1>
           <p className="text-sm text-[var(--c-ink-2)]">
             healthturkiye.gov.tr doktor + tesis dizini — {activeDoctors.toLocaleString("tr-TR")} doktor · {activeHospitals.toLocaleString("tr-TR")} tesis
             {lastReport && <> · son senkron {lastReport.date}{lastReport.status !== "OK" && <span className="font-semibold text-amber-300"> ({lastReport.status})</span>}</>}
@@ -215,7 +215,7 @@ export default async function RegistryBrowserPage({
         <div className="mt-3 overflow-x-auto rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] shadow-sm">
           <table className="w-full min-w-[680px] text-sm">
             <thead>
-              <tr className="border-b border-[var(--c-hairline)] text-left text-xs uppercase tracking-wide text-[var(--c-ink-3)]">
+              <tr className="border-b border-[var(--c-hairline)] text-left aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">
                 <th className="px-4 py-3 font-semibold">Doktor</th>
                 <th className="px-4 py-3 font-semibold">Branş</th>
                 <th className="px-4 py-3 font-semibold">Kurum</th>

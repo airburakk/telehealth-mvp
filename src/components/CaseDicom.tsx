@@ -12,7 +12,7 @@ export function CaseDicom({ studies }: { studies: DicomStudy[] }) {
 
   return (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+      <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
         <ScanLine size={15} /> Radyoloji (DICOM)
       </div>
       <ul className="mt-3 grid gap-2 sm:grid-cols-2">

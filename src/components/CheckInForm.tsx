@@ -133,7 +133,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
       {/* Branşa özel günlük kontrol */}
       {items.length > 0 && (
         <div className="mt-4 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] p-3">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+          <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
             <ListChecks size={14} /> {t(branch)} · {t("günlük kontrol")}
           </div>
           <div className="mt-2.5 space-y-2.5">

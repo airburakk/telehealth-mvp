@@ -155,7 +155,7 @@ export function ConsultGate({
           <>
             <div className="flex items-center gap-2 text-sm font-semibold text-[var(--c-accent-stronger)]"><CalendarClock size={18} /> {t("Video randevu teklifi")}</div>
             <div className="mt-3 rounded-2xl border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.06] px-4 py-3">
-              <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">{t("Önerilen zaman")}</div>
+              <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">{t("Önerilen zaman")}</div>
               <div className="mt-0.5 text-lg font-bold text-[var(--c-ink)]">{appointment.proposedAtLabel}</div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">

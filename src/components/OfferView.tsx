@@ -99,7 +99,7 @@ export function OfferView(p: OfferViewProps) {
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-violet-600 text-white"><FileText size={22} /></span>
           <div>
-            <h1 className="text-2xl font-bold text-[var(--c-ink)]">{t("Tedavi Paketi Teklifi")}</h1>
+            <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">{t("Tedavi Paketi Teklifi")}</h1>
             <p className="text-sm text-[var(--c-ink-2)]">{p.patientName} · {countryFlag(p.country)} {countryName(p.country)} · {p.branch}</p>
           </div>
         </div>
@@ -131,7 +131,7 @@ export function OfferView(p: OfferViewProps) {
       {/* Paket içeriği */}
       <div className="mt-5 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("Paket içeriği")}</span>
+          <span className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Paket içeriği")}</span>
           <span className="rounded-full bg-[var(--c-accent)] px-3 py-1 text-xs font-semibold text-[var(--c-bg)]">{p.tier} {t("Paket")}</span>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -180,7 +180,7 @@ export function OfferView(p: OfferViewProps) {
 
       {/* Hasta yolculuğu (statik önizleme) */}
       <div className="mt-5 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-        <div className="text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("Hasta Yolculuğu")}</div>
+        <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Hasta Yolculuğu")}</div>
         <ol className="mt-4 grid gap-3 sm:grid-cols-5">
           {JOURNEY.map((j, i) => {
             const Icon = j.icon;

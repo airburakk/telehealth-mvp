@@ -92,7 +92,7 @@ export function LabResultsForm({
 
   return (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
+      <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
         <FlaskConical size={15} /> Laboratuvar Sonuçları (FHIR Observation)
       </div>
       <p className="mt-1 text-xs text-[var(--c-ink-3)]">LOINC kodlu lab sonuçları → FHIR Observation (kategori: laboratory).</p>

@@ -72,7 +72,7 @@ export function DischargeReport({
   return (
     <div className="rounded-3xl border border-violet-400/25 bg-[var(--c-panel)] p-6 shadow-sm">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-violet-300">
+        <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-violet-300">
           <FileText size={15} /> AI Epikriz / Taburcu Raporu
         </div>
         {has && savedAt && (

@@ -109,7 +109,7 @@ export default async function OperationsDashboard() {
       <div className="flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><BarChart3 size={22} /></span>
         <div>
-          <h1 className="text-2xl font-bold text-[var(--c-ink)]">Operasyon Paneli</h1>
+          <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Operasyon Paneli</h1>
           <p className="text-sm text-[var(--c-ink-2)]">S2 Operasyon Şirketi · canlı platform metrikleri</p>
         </div>
       </div>
@@ -224,7 +224,7 @@ export default async function OperationsDashboard() {
             ))}
           </div>
           <div className="mt-4">
-            <div className="text-xs uppercase tracking-wide text-[var(--c-ink-3)]">Son 14 gün · yeni vaka</div>
+            <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">Son 14 gün · yeni vaka</div>
             <div className="mt-2 flex h-24 items-end gap-1">
               {days.map((d) => (
                 <div key={d.key} className="group relative flex-1">
@@ -288,7 +288,7 @@ function Kpi({ icon, label, value, sub, tone }: { icon: React.ReactNode; label: 
 function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{icon} {title}</div>
+      <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{icon} {title}</div>
       <div className="mt-3">{children}</div>
     </div>
   );
