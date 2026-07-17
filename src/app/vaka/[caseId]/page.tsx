@@ -16,6 +16,7 @@ import { InfoField, SectionLabel } from "@/components/ui/InfoField";
 import { talkTrackerPhases, TALK_TRACKER_TEXTS } from "@/lib/talk-tracker";
 import { ConsultGate, type GateAppt } from "@/components/ConsultGate";
 import { CONSULT_GATE_TEXTS } from "@/lib/consult-gate-texts";
+import { TOURISM_INBOX_TEXTS } from "@/lib/tourism-inbox-texts";
 import { TourismInbox } from "@/components/TourismInbox";
 import { gateAvailability } from "@/lib/clinical-duty";
 import { OfferView } from "@/components/OfferView";
@@ -125,7 +126,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
   // Kapı ekranı metinleri de SUNUCUDA çevrilir (2026-07-17, kullanıcı bulgusu): istemci useT'nin
   // asenkron ilk-boyama Türkçesi kapıda görünmesin — hazır harita ConsultGate'e prop gider.
   const [uiMap, clinMap] = await Promise.all([
-    getTranslations(c.language, [...STATIC_LABELS, c.branch, branchLabel, ...TALK_TRACKER_TEXTS, ...(gate ? CONSULT_GATE_TEXTS : [])]),
+    getTranslations(c.language, [...STATIC_LABELS, c.branch, branchLabel, ...TALK_TRACKER_TEXTS, ...(gate ? CONSULT_GATE_TEXTS : []), ...(tourismInbox ? TOURISM_INBOX_TEXTS : [])]),
     translateClinical(c.language, [c.reasoning], c.patientName),
   ]);
   const tmap = { ...uiMap, ...clinMap };
@@ -178,7 +179,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
       ) : tourismInbox ? (
         // Sağlık turizmi: branş havuzu doktorlarının mesaj/teklifleri (3-seçenek yok)
         <div className="mt-4">
-          <TourismInbox caseId={c.id} branchLabel={t(branchLabel)} country={c.country} outreaches={tourismInbox} />
+          <TourismInbox caseId={c.id} branchLabel={t(branchLabel)} country={c.country} outreaches={tourismInbox} tmap={Object.fromEntries(TOURISM_INBOX_TEXTS.map((s) => [s, t(s)]))} />
         </div>
       ) : (
         <div className="mt-4 rounded-3xl border border-emerald-400/25 bg-emerald-500/10 p-5 flex items-start gap-3">
