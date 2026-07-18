@@ -21,11 +21,13 @@ Doctor** genel triyaj, **İkinci Görüş**, **Ücretsiz Sağlık Hizmeti** ücr
 
 - **Next.js 16** (App Router) + **React 19** + **TypeScript 5**
 - **Tailwind CSS 4**, **lucide-react** ikonlar
-- **Prisma 6 + PostgreSQL (Neon)** — yerel ve üretim **aynı** Neon DB (SQLite kullanılmaz)
+- **Prisma 6 + PostgreSQL (Neon)** — yerel `.env` Neon **development branch**'ine bağlanır; üretim
+  ayrı branch'tedir ve yalnız `PROD_*` env'i AÇIKÇA verilerek dokunulur (Ray B2 ortam ayrımı,
+  `DEPLOY.md` §B2; SQLite kullanılmaz)
 - **Kimlik doğrulama:** imzalı JWT (`jose`) httpOnly cookie + `bcryptjs` + rol bazlı proxy (Next 16)
 - **AI:** `@anthropic-ai/sdk` (Claude — triyaj/SOAP/epikriz/çeviri/vision) · `@google/genai`
   (Gemini Live — gerçek zamanlı ses→ses tercüme)
-- **Gerçek zamanlı:** WebRTC P2P (polling tabanlı sinyalleşme — `Signal` modeli) + Cloudflare Realtime TURN relay (yedek: Metered)
+- **Gerçek zamanlı:** WebRTC P2P (sinyalleşme: **Ably realtime birincil** + DB `Signal` yedeği, v4.15) + Cloudflare Realtime TURN relay (yedek: Metered)
 - **DICOM:** `dicom-parser` + `@cornerstonejs/codec-openjpeg` + `codec-charls` + `jpeg-lossless-decoder-js`
 - **PWA / bildirim:** service worker + `web-push` (VAPID)
 
@@ -39,7 +41,9 @@ npm run db:seed               # demo veri: kullanıcılar + 30 doktor + 20 vaka 
 npm run dev                   # http://localhost:3000
 ```
 
-> Yerel `.env` doğrudan **üretim Neon DB'sine** yazar (tek ortak DB). Dikkatli ol.
+> Yerel `.env` Neon **development branch**'ine yazar (dev'e özgü KEK/SESSION_SECRET, seed'li) ve
+> `AURA_DB_GUARD="block"` üretim-dışı sürecin prod'a bağlanmasını **engeller** (`src/lib/db.ts`).
+> Üretim işlemi = ayrı onay + `PROD_DATABASE_URL` açıkça (runbook: `DEPLOY.md` §B2).
 > `ANTHROPIC_API_KEY` yoksa triyaj kural tabanlı motora düşer; `GEMINI_API_KEY` yoksa canlı
 > tercüme dormant kalır — uygulama yine çalışır.
 
