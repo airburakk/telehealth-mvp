@@ -19,7 +19,10 @@
     <img class="logo" src="/icon-192.png" alt="AURA" />
     <h1>İnternet bağlantısı yok</h1>
     <p>Sayfa yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin — sağlık verileriniz güncelliği için her zaman canlı sunucudan alınır.</p>
-    <button onclick="location.reload()">Tekrar dene</button>
+    <button id="retry">Tekrar dene</button>
   </div>
+  <!-- Inline handler değil script: sıkı CSP'de (nonce/hash) statik dosya script'i sha256 ile
+       allowlist'lenebilir; onclick attribute'u ise ancak 'unsafe-hashes' ile kurtarılırdı. -->
+  <script>document.getElementById("retry").addEventListener("click", function () { location.reload(); });</script>
 </body>
 </html>
