@@ -83,11 +83,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   });
 
   if (severity === "RED") {
-    const extra = [...cl.reasons, aiReason, photoReason].filter(Boolean).slice(0, 2).join(", ");
+    // İsim VE klinik detay (vital/AI bulgusu) bildirime gömülmez (E2EE inc.2c): Notification.body
+    // at-rest şifresiz + dormant kanal simülasyonu log'a düşer → gövde jenerik, detay uygulamada.
     const redFlag = {
       type: "RED_FLAG" as const,
-      title: `🚨 Kırmızı bayrak`, // isim bildirime gömülmez (E2EE inc.2c)
-      body: `${c.branch} · ağrı ${pain}/10 · ateş ${feverC.toFixed(1)}°C${extra ? ` · ${extra}` : ""}`,
+      title: `🚨 Kırmızı bayrak`,
+      body: `${c.branch} · bir hastanızda kırmızı bayrak — detay için uygulamayı açın`,
       href: `/takip/${c.id}`,
     };
     // §3.4/§7: kırmızı bayrak koordinatöre DEĞİL → vakanın ATANAN tedavi eden doktoruna (Case.doctorId)

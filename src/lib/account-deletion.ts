@@ -134,56 +134,79 @@ export async function deleteAccount(actor: SessionUser, ip?: string | null, user
  * Sıra: bağımlı kayıtlar → vaka → (hesabın son vakası da gittiyse) hesap kabuğu + rıza kaydı.
  * Batch sınırı: cron zaman aşımına girmesin (maxDuration) — kalanı ertesi gün alınır (idempotent).
  */
-export async function purgeExpired(limit = 50): Promise<{ purgedCases: number; purgedSoCases: number; purgedUsers: number }> {
+export async function purgeExpired(limit = 50): Promise<{ purgedCases: number; purgedSoCases: number; purgedUsers: number; failed: number }> {
   const now = new Date();
+  let purgedCases = 0;
+  let purgedSoCases = 0;
+  let purgedUsers = 0;
+  let failed = 0; // tek bozuk kayıt batch'i düşürmesin; kısmi başarısızlık çağırana raporlanır (cron alarm verir)
 
   const cases = await db.case.findMany({ where: { purgeAfter: { lte: now } }, select: { id: true, userId: true }, take: limit });
   for (const c of cases) {
     // Bağımlı kayıtlar (FK) önce — belgeler dahil (CaseDocument içeriği at-rest şifreli; satır gidince şifreli
-    // hâli de gider). ⚠️ Blob'daki nesneler ayrı temizlik gerektirir → aşağıdaki TODO.
-    await db.$transaction([
-      db.shareAccess.deleteMany({ where: { shareLink: { caseId: c.id } } }),
-      db.shareLink.deleteMany({ where: { caseId: c.id } }),
-      db.caseDocument.deleteMany({ where: { caseId: c.id } }),
-      db.recovery.deleteMany({ where: { caseId: c.id } }),
-      db.complaint.deleteMany({ where: { caseId: c.id } }),
-      db.booking.deleteMany({ where: { caseId: c.id } }),
-      db.consultation.deleteMany({ where: { caseId: c.id } }),
-      db.case.delete({ where: { id: c.id } }),
-    ]);
+    // hâli de gider). Grandchild zincirleri iki aşama: ShareLink→ShareAccess ve Recovery→CheckIn
+    // (CheckIn.recovery Restrict — önce silinmezse recovery.deleteMany FK ihlaliyle fırlar).
+    // ⚠️ Blob'daki nesneler ayrı temizlik gerektirir → aşağıdaki TODO.
+    try {
+      await db.$transaction([
+        db.shareAccess.deleteMany({ where: { shareLink: { caseId: c.id } } }),
+        db.shareLink.deleteMany({ where: { caseId: c.id } }),
+        db.caseDocument.deleteMany({ where: { caseId: c.id } }),
+        db.checkIn.deleteMany({ where: { recovery: { caseId: c.id } } }),
+        db.recovery.deleteMany({ where: { caseId: c.id } }),
+        db.complaint.deleteMany({ where: { caseId: c.id } }),
+        db.booking.deleteMany({ where: { caseId: c.id } }),
+        db.consultation.deleteMany({ where: { caseId: c.id } }),
+        db.case.delete({ where: { id: c.id } }),
+      ]);
+      purgedCases++;
+    } catch (e) {
+      failed++;
+      console.warn(`[purge] vaka imha edilemedi (${c.id}) — batch devam ediyor:`, e instanceof Error ? e.message : e);
+    }
   }
 
   const soCases = await db.secondOpinionCase.findMany({ where: { purgeAfter: { lte: now } }, select: { id: true }, take: limit });
   for (const s of soCases) {
-    await db.$transaction([
-      db.secondOpinionDocument.deleteMany({ where: { caseId: s.id } }),
-      db.secondOpinionRequest.deleteMany({ where: { caseId: s.id } }),
-      db.secondOpinionEvent.deleteMany({ where: { caseId: s.id } }),
-      db.secondOpinion.deleteMany({ where: { caseId: s.id } }),
-      db.secondOpinionAppointment.deleteMany({ where: { caseId: s.id } }),
-      db.secondOpinionPayment.deleteMany({ where: { caseId: s.id } }),
-      db.secondOpinionCase.delete({ where: { id: s.id } }),
-    ]);
+    try {
+      await db.$transaction([
+        db.secondOpinionDocument.deleteMany({ where: { caseId: s.id } }),
+        db.secondOpinionRequest.deleteMany({ where: { caseId: s.id } }),
+        db.secondOpinionEvent.deleteMany({ where: { caseId: s.id } }),
+        db.secondOpinion.deleteMany({ where: { caseId: s.id } }),
+        db.secondOpinionAppointment.deleteMany({ where: { caseId: s.id } }),
+        db.secondOpinionPayment.deleteMany({ where: { caseId: s.id } }),
+        db.secondOpinionCase.delete({ where: { id: s.id } }),
+      ]);
+      purgedSoCases++;
+    } catch (e) {
+      failed++;
+      console.warn(`[purge] ikinci görüş vakası imha edilemedi (${s.id}) — batch devam ediyor:`, e instanceof Error ? e.message : e);
+    }
   }
 
   // Hesap kabuğu + rıza kaydı: YALNIZ hiç klinik kaydı kalmayan silinmiş hesaplarda. Rıza kaydı
   // saklanan kaydın dayanağıydı; saklanacak kayıt kalmadıysa dayanağı da tutmanın sebebi kalmaz.
   const shells = await db.user.findMany({ where: { deletedAt: { not: null } }, select: { id: true }, take: limit });
-  let purgedUsers = 0;
   for (const u of shells) {
-    const [cases, soCases] = await Promise.all([
+    const [caseCount, soCaseCount] = await Promise.all([
       db.case.count({ where: { userId: u.id } }),
       db.secondOpinionCase.count({ where: { patientId: u.id } }),
     ]);
-    if (cases > 0 || soCases > 0) continue; // hâlâ saklanan klinik kayıt var → kabuk durur
-    await db.$transaction([
-      db.consentRecord.deleteMany({ where: { userId: u.id } }),
-      db.user.delete({ where: { id: u.id } }),
-    ]);
-    purgedUsers++;
+    if (caseCount > 0 || soCaseCount > 0) continue; // hâlâ saklanan klinik kayıt var → kabuk durur
+    try {
+      await db.$transaction([
+        db.consentRecord.deleteMany({ where: { userId: u.id } }),
+        db.user.delete({ where: { id: u.id } }),
+      ]);
+      purgedUsers++;
+    } catch (e) {
+      failed++;
+      console.warn(`[purge] hesap kabuğu imha edilemedi (${u.id}) — batch devam ediyor:`, e instanceof Error ? e.message : e);
+    }
   }
 
   // AuditLog KASITLI olarak dokunulmaz: append-only hash-zinciri (satır silmek zinciri kırar +
   // doğrulanamaz kılar) ve erişim kaydı başlı başına yasal belgedir; kimlik verisi taşımaz.
-  return { purgedCases: cases.length, purgedSoCases: soCases.length, purgedUsers };
+  return { purgedCases, purgedSoCases, purgedUsers, failed };
 }

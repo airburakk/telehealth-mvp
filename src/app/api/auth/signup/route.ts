@@ -7,6 +7,7 @@ import { BRANCH_LABELS } from "@/lib/procedures";
 import { LANGUAGES } from "@/lib/constants";
 import { isEmailConfigured } from "@/lib/email";
 import { issueVerificationEmail } from "@/lib/email-verification";
+import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 
 // M5 — Doktor e-posta kaydı. Hesap oluşturulur (verified:false, inaktif) → oturum açılır →
 // proxy /onam (KVKK) → /doktor → onboarding kapısı (FHIR uzmanlık + işlem + diploma + MMSS).
@@ -16,6 +17,11 @@ const LANG_SET = new Set(LANGUAGES);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: Request) {
+  // Kötüye kullanım freni: 10/5dk/IP (signup-patient/login ile aynı desen). Doğrulamadan ÖNCE —
+  // en pahalı uç (harici registry sorgusu + doğrulama e-postası) hiç tetiklenmesin.
+  const rl = await rateLimit(`signup-doctor:${clientIp(req)}`, 10, 5 * 60_000);
+  if (!rl.ok) return tooMany(rl.retryAfter);
+
   const b = await req.json().catch(() => ({}));
   const name = String(b.name ?? "").trim().slice(0, 120);
   const email = String(b.email ?? "").trim().toLowerCase();

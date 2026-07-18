@@ -5,7 +5,8 @@
 // (*gerçek sağlayıcı API çağrısı aktivasyon sırasında bu dosyada tamamlanır; arayüz sabit kalır.)
 //
 // Fire-safe: gönderim hatası ana akışı (bildirim yazımı) ASLA bozmaz.
-// PHI: mesaj gövdesi bildirim başlık/gövdesidir — bildirimler zaten isim/klinik detay gömmez (E2EE inc.2c).
+// PHI / asla-loglama: msg.body console'a YAZILMAZ (savunma-derinliği — bir çağıran klinik detay
+// geçirse bile log'a düşmesin); simülasyon izi yalnız title + maskeli telefon içerir.
 
 export type MessageChannel = "APP" | "WHATSAPP" | "SMS";
 
@@ -42,7 +43,7 @@ export async function sendChannelMessage(
     if (channel === "WHATSAPP") {
       if (!whatsappConfigured()) {
         // DORMANT: WhatsApp Business API (Meta Cloud) anahtarı yok → simülasyon izi
-        console.log(`[messaging] (simülasyon) WhatsApp → ${maskPhone(phone)}: ${msg.title}${msg.body ? " — " + msg.body : ""}`);
+        console.log(`[messaging] (simülasyon) WhatsApp → ${maskPhone(phone)}: ${msg.title}`);
         return { sent: false, simulated: true };
       }
       // AKTİVASYON NOKTASI: Meta Cloud API POST /{PHONE_ID}/messages (env: WHATSAPP_API_TOKEN, WHATSAPP_PHONE_ID)
@@ -51,7 +52,7 @@ export async function sendChannelMessage(
     }
     if (channel === "SMS") {
       if (!smsConfigured()) {
-        console.log(`[messaging] (simülasyon) SMS → ${maskPhone(phone)}: ${msg.title}${msg.body ? " — " + msg.body : ""}`);
+        console.log(`[messaging] (simülasyon) SMS → ${maskPhone(phone)}: ${msg.title}`);
         return { sent: false, simulated: true };
       }
       // AKTİVASYON NOKTASI: SMS sağlayıcısı (ör. Twilio/NetGSM) çağrısı (env: SMS_API_KEY, SMS_SENDER_ID)
