@@ -65,7 +65,7 @@ const TX = {
   help: "Yardım",
   helpTitle: "Sorun mu yaşıyorsunuz?",
   helpBody: "Görüntü veya ses gelmiyorsa: sayfayı yenileyin, internet bağlantınızı kontrol edin ve Chrome ya da Safari kullanın. Cihaz izinlerini adres çubuğundaki kilit simgesinden açabilirsiniz.",
-  secure: "Görüşme bağlantınız şifrelidir; bilgileriniz KVKK kapsamında, açık onayınızla işlenir.",
+  secure: "Görüşme bağlantınız şifrelidir; bilgileriniz yalnızca verdiğiniz açık onam kapsamında işlenir.",
   // Atanan doktor kartı (yalnız hasta görünümü)
   yourDoctor: "Doktorunuz",
   verified: "Doğrulanmış",
