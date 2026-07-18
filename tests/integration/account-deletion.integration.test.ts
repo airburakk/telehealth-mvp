@@ -5,17 +5,19 @@
 //   B) purgeExpired: purgeAfter dolmuş vaka (Recovery→CheckIn zinciri DAHİL — FK Restrict fix'i #8)
 //      imha edilir; dolmamış korunur; klinik kaydı duran silinmiş hesabın KABUĞU korunur.
 //
-// ⚠️ ZİNCİR GÜVENLİĞİ: test kullanıcılarına ASLA recordConsent yazılmaz. purgeExpired kabuk imhasında
-// ConsentRecord'u FİZİKEN siler; o kayıtlar onam zincirinin ortasındaysa zincir KALICI kırılır
-// (append-only prevHash bağı). Aynı nedenle deleteAccount'un yazdığı audit satırlarına da cleanup'ta
-// DOKUNULMAZ (audit zinciri append-only — satır silmek zinciri kırar; kalması zararsız).
+// ZİNCİR GÜVENLİĞİ (bağ-koruyan imha, 2026-07-18): purgeExpired artık ConsentRecord SİLMEZ —
+// kişisel alanları boşaltır + purgedAt damgalar (satır zincir halkası olarak kalır). Bu test bunu
+// BİLEREK onam yazarak kanıtlar: purge sonrası zincir ok kalmalı. deleteAccount'un yazdığı audit
+// satırlarına cleanup'ta DOKUNULMAZ (audit zinciri append-only — satır silmek zinciri kırar).
 import { describe, it, expect, afterAll } from "vitest";
 import { db } from "@/lib/db";
 import { deleteAccount, purgeExpired, purgeDateFrom, RETENTION_YEARS } from "@/lib/account-deletion";
+import { recordConsent, verifyConsentChain } from "@/lib/consent";
 import type { SessionUser } from "@/lib/session";
 
 const TEST_DB = process.env.TEST_DATABASE_URL;
 const RUN = `itest-del-${Date.now()}`;
+const SCOPE = `ITEST_DEL_${Date.now()}`; // gerçek GENERAL_KVKK kovasına karışma
 
 const mkPatient = (tag: string) =>
   db.user.create({
@@ -34,22 +36,6 @@ const mkCase = (userId: string) =>
     },
   });
 
-// Dev DB'de "consent'li + klinik kaydı olmayan + silinmiş" YABANCI kabuk varsa purgeExpired onların
-// ConsentRecord'unu siler → onam zinciri kalıcı kırılır. Böyle kirlilik varsa bu koşuda purge testini
-// atlamak zinciri korur (kabuğun kendisi purge'un normal işi; sorun yalnız consent satırlarıdır).
-async function chainBreakingShellExists(): Promise<boolean> {
-  const shells = await db.user.findMany({ where: { deletedAt: { not: null } }, select: { id: true } });
-  for (const s of shells) {
-    const [c, so, cr] = await Promise.all([
-      db.case.count({ where: { userId: s.id } }),
-      db.secondOpinionCase.count({ where: { patientId: s.id } }),
-      db.consentRecord.count({ where: { userId: s.id } }),
-    ]);
-    if (c === 0 && so === 0 && cr > 0) return true;
-  }
-  return false;
-}
-
 describe.skipIf(!TEST_DB)("entegrasyon: hesap silme + fiziksel imha (gerçek dev DB)", () => {
   const userIds: string[] = [];
   const caseIds: string[] = [];
@@ -60,6 +46,19 @@ describe.skipIf(!TEST_DB)("entegrasyon: hesap silme + fiziksel imha (gerçek dev
     await db.recovery.deleteMany({ where: { caseId: { in: caseIds } } });
     await db.case.deleteMany({ where: { id: { in: caseIds } } });
     await db.user.deleteMany({ where: { id: { in: userIds } } });
+    // Purged onam stub'ları: YALNIZ zincirin ucundaysa silinir (audit testi deseni) — ortadaysa
+    // silmek zinciri kırar, bırakılır (anonim halka, zararsız).
+    const mine = await db.consentRecord.findMany({ where: { userId: { in: userIds } }, select: { id: true } });
+    if (mine.length) {
+      const tip = await db.consentRecord.findFirst({
+        where: { entryHash: { not: null } },
+        orderBy: [{ grantedAt: "desc" }, { id: "desc" }],
+        select: { id: true },
+      });
+      if (tip && mine.some((m) => m.id === tip.id)) {
+        await db.consentRecord.deleteMany({ where: { id: { in: mine.map((m) => m.id) } } });
+      }
+    }
   });
 
   it("deleteAccount: tombstone + kişisel alanlar boşalır + sessionVersion artar + klinik kilit + idempotent", async () => {
@@ -104,13 +103,9 @@ describe.skipIf(!TEST_DB)("entegrasyon: hesap silme + fiziksel imha (gerçek dev
     expect(lockedAt2!.getTime()).toBe(lockedAt!.getTime());
   });
 
-  it("purgeExpired: dolmuş vaka (CheckIn'li) imha + dolmamış korunur + klinik kaydı duran kabuk korunur", async () => {
-    if (await chainBreakingShellExists()) {
-      console.warn("[itest] dev DB'de consent'li klinik-kayıtsız silinmiş kabuk var — purge testi zincir güvenliği için atlandı.");
-      return;
-    }
-
-    // u1: vakası DOLMUŞ (backdate) + Recovery→CheckIn zincirli → imha edilmeli (FK fix #8 kanıtı).
+  it("purgeExpired: dolmuş vaka (CheckIn'li) imha + dolmamış korunur + kabuk korunur + ONAM ZİNCİRİ KIRILMAZ", async () => {
+    // u1: vakası DOLMUŞ (backdate) + Recovery→CheckIn zincirli → imha edilmeli (FK fix #8 kanıtı)
+    //     + ONAMLI → kabuk purge'unda bağ-koruyan boşaltma kanıtı (satır kalır, kişisel alanlar gider).
     // u2: vakası DOLMAMIŞ → korunmalı; kabuğu da (klinik kayıt durduğu için) korunmalı.
     const u1 = await mkPatient("p1");
     const u2 = await mkPatient("p2");
@@ -120,6 +115,10 @@ describe.skipIf(!TEST_DB)("entegrasyon: hesap silme + fiziksel imha (gerçek dev
     caseIds.push(c1.id, c2.id);
     const rec = await db.recovery.create({ data: { caseId: c1.id, branch: "Kardiyoloji" } });
     await db.checkIn.create({ data: { recoveryId: rec.id, pain: 8, feverC: 38.6, severity: "RED" } });
+    await recordConsent(u1.id, "203.0.113.9", "itest-agent", { scope: SCOPE, version: 1, text: "itest silme onam metni" });
+
+    const chainBefore = await verifyConsentChain();
+    expect(chainBefore.ok).toBe(true); // zemin sağlıklı olmalı ki purge-sonrası iddia anlamlı olsun
 
     await deleteAccount({ id: u1.id, role: "PATIENT" } as SessionUser);
     await deleteAccount({ id: u2.id, role: "PATIENT" } as SessionUser);
@@ -135,6 +134,20 @@ describe.skipIf(!TEST_DB)("entegrasyon: hesap silme + fiziksel imha (gerçek dev
     expect(await db.recovery.findUnique({ where: { id: rec.id } })).toBeNull();
     expect(await db.checkIn.count({ where: { recoveryId: rec.id } })).toBe(0);
     expect(await db.user.findUnique({ where: { id: u1.id } })).toBeNull();
+
+    // BAĞ-KORUYAN BOŞALTMA: onam satırı DURUYOR, kişisel alanlar İMHA, purgedAt damgalı, mühür alanları yerinde.
+    const stub = await db.consentRecord.findUnique({ where: { userId_scope_version: { userId: u1.id, scope: SCOPE, version: 1 } } });
+    expect(stub).not.toBeNull();
+    expect(stub!.purgedAt).not.toBeNull();
+    expect(stub!.ip).toBeNull();
+    expect(stub!.userAgent).toBeNull();
+    expect(stub!.entryHash).not.toBeNull(); // zincir halkası korunur
+    expect(stub!.textHash).not.toBeNull(); // hangi metnin onaylandığının kanıtı kişisel veri değil — kalır
+
+    // ZİNCİR KIRILMADI: purge sonrası küresel doğrulama ok + purged sayacı görünür.
+    const chainAfter = await verifyConsentChain();
+    expect(chainAfter.ok).toBe(true);
+    expect(chainAfter.purgedSeals).toBeGreaterThanOrEqual(1);
 
     // u2: purgeAfter dolmadı → vaka da kabuk da DURUYOR (kabuk-koruma kapısı).
     expect(await db.case.findUnique({ where: { id: c2.id } })).not.toBeNull();

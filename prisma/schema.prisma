@@ -87,6 +87,10 @@ model ConsentRecord {
   tsAuthority String? // zaman damgası otoritesi (şimdilik SIMULATED-LOCAL; üretim = RFC 3161 TSA — hukuk)
   tsTime      DateTime? // TSA'nın güvenilir zamanı
   tsToken     String? // imzalı zaman damgası token'ı (entryHash üzerinde)
+  // Bağ-koruyan imha (kabuk purge'u): damgalıysa ip/userAgent BOŞALTILMIŞTIR (kişisel veri imhası;
+  // kalan userId cuid'i User satırı silindiği için anonimdir). Satır zincir HALKASI olarak durur —
+  // fiziksel silme append-only zinciri kırardı. verifyConsentChain purged satırda mührü atlar, bağı sürdürür.
+  purgedAt    DateTime?
 
   @@unique([userId, scope, version])
 }

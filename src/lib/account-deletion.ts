@@ -17,7 +17,11 @@
 // Kişisel alanlar zaten boşaltıldığı için kabukta kimlik verisi KALMAZ; imha anında kabuk da gider.
 //
 // SAKLANANLAR ve nedenleri (Trust & Safety sayfasında AYNEN yazılır — gizli tutulmaz):
-//   · ConsentRecord → saklanan kaydın hukuki dayanağının ispatı (imha anında birlikte gider)
+//   · ConsentRecord → saklanan kaydın hukuki dayanağının ispatı. İmha anında BAĞ-KORUYAN boşaltma
+//                     (2026-07-18): kişisel alanlar (ip/userAgent) silinir + purgedAt damgalanır ama
+//                     SATIR KALIR — onam kayıtları da append-only hash-zinciridir, satır silmek
+//                     zinciri ortadan kırardı (sonraki kaydın prevHash bağı boşa düşer). Kalan userId
+//                     cuid'i User kabuğu silindiği için anonimdir (KVKK'da anonimleştirme = imha yöntemi).
 //   · AuditLog      → append-only hash-ZİNCİRİ; satır silmek zinciri kırar ve doğrulanamaz hale getirir.
 //                     Ayrıca erişim kaydı başlı başına yasal belgedir. Kimlik verisi taşımaz (id + eylem).
 //
@@ -131,7 +135,8 @@ export async function deleteAccount(actor: SessionUser, ip?: string | null, user
 
 /**
  * Saklama süresi dolmuş kayıtları GERÇEKTEN imha et (cron). Kilitli + purgeAfter geçmiş olanlar.
- * Sıra: bağımlı kayıtlar → vaka → (hesabın son vakası da gittiyse) hesap kabuğu + rıza kaydı.
+ * Sıra: bağımlı kayıtlar → vaka → (hesabın son vakası da gittiyse) hesap kabuğu silinir + rıza
+ * kaydı bağ-koruyan boşaltılır (satır kalır — zincir; kişisel alanlar gider).
  * Batch sınırı: cron zaman aşımına girmesin (maxDuration) — kalanı ertesi gün alınır (idempotent).
  */
 export async function purgeExpired(limit = 50): Promise<{ purgedCases: number; purgedSoCases: number; purgedUsers: number; failed: number }> {
@@ -185,8 +190,11 @@ export async function purgeExpired(limit = 50): Promise<{ purgedCases: number; p
     }
   }
 
-  // Hesap kabuğu + rıza kaydı: YALNIZ hiç klinik kaydı kalmayan silinmiş hesaplarda. Rıza kaydı
-  // saklanan kaydın dayanağıydı; saklanacak kayıt kalmadıysa dayanağı da tutmanın sebebi kalmaz.
+  // Hesap kabuğu + rıza kaydı: YALNIZ hiç klinik kaydı kalmayan silinmiş hesaplarda.
+  // Rıza kaydında BAĞ-KORUYAN boşaltma: satır SİLİNMEZ (onam zinciri append-only — fiziksel silme
+  // zincirin ortasını kırar, verifyConsentChain kalıcı KIRIK olurdu); kişisel alanlar (ip/userAgent)
+  // boşaltılır + purgedAt damgalanır. Kalan userId cuid'i kabuk silinince anonimdir (KVKK: anonimleştirme
+  // = imha yöntemi). Doğrulayıcı purged satırda mührü atlar, bağı sürdürür (consent.ts).
   const shells = await db.user.findMany({ where: { deletedAt: { not: null } }, select: { id: true }, take: limit });
   for (const u of shells) {
     const [caseCount, soCaseCount] = await Promise.all([
@@ -196,7 +204,10 @@ export async function purgeExpired(limit = 50): Promise<{ purgedCases: number; p
     if (caseCount > 0 || soCaseCount > 0) continue; // hâlâ saklanan klinik kayıt var → kabuk durur
     try {
       await db.$transaction([
-        db.consentRecord.deleteMany({ where: { userId: u.id } }),
+        db.consentRecord.updateMany({
+          where: { userId: u.id, purgedAt: null },
+          data: { ip: null, userAgent: null, purgedAt: now },
+        }),
         db.user.delete({ where: { id: u.id } }),
       ]);
       purgedUsers++;

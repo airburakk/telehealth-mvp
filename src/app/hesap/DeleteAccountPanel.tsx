@@ -21,7 +21,7 @@ const TEXTS = [
   "Sağlık kayıtlarınız (vakalarınız, raporlarınız, görüşme notlarınız) yasal saklama süresi boyunca tutulmak zorundadır. Ancak bu kayıtlar erişime kapanır — doktorlar, koordinatörler ve yöneticiler dahil hiç kimse açamaz. Süre dolduğunda otomatik olarak imha edilir.",
   "Siz de erişemezsiniz — silmeden önce saklamak istediğiniz belge varsa şimdi indirin.",
   "Bilerek saklanan iki şey",
-  "Onay kayıtlarınız: sakladığımız kayıtların hukuki dayanağını ispatlar; kayıtlarla birlikte imha edilir. Erişim geçmişi: değiştirilemez denetim zinciri — kimlik verisi taşımaz, silinmesi zinciri kırar.",
+  "Onay kayıtlarınız: sakladığımız kayıtların hukuki dayanağını ispatlar; saklama süresi sonunda kişisel içeriği (IP, cihaz bilgisi) imha edilir, kayıt anonim doğrulama halkası olarak kalır. Erişim geçmişi: değiştirilemez denetim zinciri — kimlik verisi taşımaz, silinmesi zinciri kırar.",
   "Onaylamak için aşağıya SİL yazın",
   "Siliniyor…",
   "Hesabınız silindi. Kişisel verileriniz kaldırıldı; klinik kayıtlarınız erişime kapatıldı.",
@@ -89,7 +89,7 @@ export function DeleteAccountPanel({ lang, retentionYears }: { lang: string; ret
 
       <h3 className="mt-5 text-[13px] font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("Bilerek saklanan iki şey")}</h3>
       <p className="mt-1 text-sm leading-relaxed text-[var(--c-ink-2)]">
-        {t("Onay kayıtlarınız: sakladığımız kayıtların hukuki dayanağını ispatlar; kayıtlarla birlikte imha edilir. Erişim geçmişi: değiştirilemez denetim zinciri — kimlik verisi taşımaz, silinmesi zinciri kırar.")}
+        {t("Onay kayıtlarınız: sakladığımız kayıtların hukuki dayanağını ispatlar; saklama süresi sonunda kişisel içeriği (IP, cihaz bilgisi) imha edilir, kayıt anonim doğrulama halkası olarak kalır. Erişim geçmişi: değiştirilemez denetim zinciri — kimlik verisi taşımaz, silinmesi zinciri kırar.")}
       </p>
 
       <label className="mt-6 block text-sm font-medium text-[var(--c-ink)]" htmlFor="confirm-delete">

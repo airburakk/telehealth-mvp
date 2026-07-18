@@ -133,9 +133,12 @@ export async function recordConsent(
 
 // Onam zinciri küresel bütünlüğü (denetçi) — audit verifyAccessChain ile aynı kurallar:
 // bağ + mühür + yürüyüş-sırası downgrade kuralı + görünürlük sayaçları.
+// Purged satırlar (bağ-koruyan imha, account-deletion): ip/userAgent boşaltıldığı için mühür artık
+// yeniden HESAPLANAMAZ → mühür kontrolü atlanır (purgedSeals sayacı), ama saklanan entryHash ile
+// zincir BAĞI aynen sürer — imha zinciri kırmaz, kurcalamayı da gizlemez (bağ + sıra kontrolü kalır).
 export async function verifyConsentChain(): Promise<{
   ok: boolean; count: number; brokenAt: string | null;
-  unverifiableSeals: number; v1Count: number; v2Count: number; unsealedCount: number;
+  unverifiableSeals: number; purgedSeals: number; v1Count: number; v2Count: number; unsealedCount: number;
 }> {
   const [rows, unsealedCount] = await Promise.all([
     db.consentRecord.findMany({
@@ -146,6 +149,7 @@ export async function verifyConsentChain(): Promise<{
   ]);
   let prev = "GENESIS";
   let unverifiableSeals = 0;
+  let purgedSeals = 0;
   let v1Count = 0;
   let v2Count = 0;
   let sawV2 = false;
@@ -153,7 +157,7 @@ export async function verifyConsentChain(): Promise<{
   // (Ray C — sayfayı kimse açmasa da purge-deleted cron'u günlük nöbette bunu koşturur).
   const fail = (id: string) => {
     void sendAlert("consent-chain", "Onam zinciri bütünlük doğrulaması BAŞARISIZ", `brokenAt=${id}`);
-    return { ok: false, count: rows.length, brokenAt: id, unverifiableSeals, v1Count, v2Count, unsealedCount };
+    return { ok: false, count: rows.length, brokenAt: id, unverifiableSeals, purgedSeals, v1Count, v2Count, unsealedCount };
   };
   for (const r of rows) {
     if (r.prevHash !== prev) return fail(r.id);
@@ -165,15 +169,19 @@ export async function verifyConsentChain(): Promise<{
       if (sawV2) return fail(r.id); // downgrade: v2 çağından sonra anahtarsız v1 mühür
     }
     if (!r.textHash) return fail(r.id); // mühürlü kayıtta metin hash'i olmak zorunda
-    const verdict = sealVerdict({
-      userId: r.userId, scope: r.scope, version: r.version, textHash: r.textHash,
-      ip: r.ip, userAgent: r.userAgent, grantedAt: r.grantedAt, prevHash: prev,
-    }, r.entryHash!);
-    if (verdict === false) return fail(r.id);
-    if (verdict === null) unverifiableSeals++;
+    if (r.purgedAt) {
+      purgedSeals++; // kişisel alanlar imha edildi → mühür yeniden hesaplanamaz; bağ sürer
+    } else {
+      const verdict = sealVerdict({
+        userId: r.userId, scope: r.scope, version: r.version, textHash: r.textHash,
+        ip: r.ip, userAgent: r.userAgent, grantedAt: r.grantedAt, prevHash: prev,
+      }, r.entryHash!);
+      if (verdict === false) return fail(r.id);
+      if (verdict === null) unverifiableSeals++;
+    }
     prev = r.entryHash!;
   }
-  return { ok: true, count: rows.length, brokenAt: null, unverifiableSeals, v1Count, v2Count, unsealedCount };
+  return { ok: true, count: rows.length, brokenAt: null, unverifiableSeals, purgedSeals, v1Count, v2Count, unsealedCount };
 }
 
 export interface ConsentProof {
