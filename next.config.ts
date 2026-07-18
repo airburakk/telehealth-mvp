@@ -6,7 +6,30 @@ import type { NextConfig } from "next";
 // boş modüle yönlendir; sunucu (SSR/Node) tarafında gerçek modüller kullanılır.
 const browserStub = { browser: "./src/empty-module.js" };
 
+// HTTP güvenlik başlıkları (2026-07-18 denetimi P1). Tüm rotalara uygulanır.
+// KAPSAM NOTU: burada CLICKJACKING (frame-ancestors/X-Frame-Options), TRANSPORT (HSTS),
+// REFERER SIZINTISI (özellikle /paylasim/[token] — strict-origin-when-cross-origin ile cross-origin
+// navigasyonda yalnız origin gider, token yolu gitmez), MIME-sniffing ve izin yüzeyi kapatılır.
+// Tam `default-src`/`script-src` CSP BİLİNÇLİ EKLENMEDİ: WebRTC (Cloudflare TURN) + Ably websocket +
+// Vercel Blob + Google OAuth + font origin'lerinin allowlist'i ayrı, sayfa-sayfa test isteyen bir iş;
+// yanlış CSP üretimde sessizce görüşme/font/harita kırar. Ayrı kalem (todo).
+const securityHeaders = [
+  // Not: HSTS preload BİLİNÇLİ eklenmedi — preload listesine girmek kalıcı taahhüt; custom domain
+  // kararından sonra ayrıca değerlendirilir. max-age + includeSubDomains güvenli ve geri alınabilir.
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=()" },
+];
+
 const nextConfig: NextConfig = {
+  // Sürüm parmak izini gizle (X-Powered-By: Next.js başlığı — 2026-07-18 denetimi P3).
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
   // Rename (Pro Bono → Ücretsiz Sağlık Hizmeti): eski sayfa URL'leri — tarayıcı geçmişi,
   // yer imleri ve DB'deki Notification.href satırları kırılmasın (redirect'ler proxy'den ÖNCE koşar).
   async redirects() {

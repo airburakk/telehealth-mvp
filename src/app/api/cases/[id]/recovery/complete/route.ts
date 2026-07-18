@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { recordAccess, reqMeta } from "@/lib/audit";
 
 // POST /api/cases/:id/recovery/complete — post-op takibi tamamla → klinik personel erişimi kapanır (E2EE Faz 2A).
@@ -13,8 +14,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   // Tamamlamayı yalnız klinik personel (tedavi/takip ekibi) tetikler — hasta değil.
   if (user.role === "PATIENT") return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
 
-  const c = await db.case.findUnique({ where: { id }, select: { id: true, userId: true } });
+  const c = await db.case.findUnique({ where: { id }, select: { id: true, userId: true, doctorId: true, branch: true, deletionLockedAt: true } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
+  // BOLA düzeltmesi (2026-07-18 denetimi): rol tek başına yetmez — kardeş rotalarla (coding/labs/
+  // documents) simetri. Doktor yalnız kendisine atanmış/kuyruk vakasının post-op takibini kapatabilir;
+  // aksi halde atanmamış bir doktor rastgele vakanın takibini kapatıp tedavi ekibi erişimini kesebilir.
+  if (!(await canCaseBeAccessedBy(user, c))) {
+    return NextResponse.json({ error: "Bu vakaya erişim yetkiniz yok." }, { status: 403 });
+  }
 
   const recovery = await db.recovery.findUnique({ where: { caseId: id } });
   if (!recovery) return NextResponse.json({ error: "Bu vakada post-op takip yok." }, { status: 404 });
