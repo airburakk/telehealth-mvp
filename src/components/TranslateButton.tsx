@@ -35,7 +35,7 @@ export function TranslateButton({ text, defaultTarget = "Türkçe", compact }: {
   return (
     <div className={compact ? "" : "mt-1.5"}>
       <div className="flex items-center gap-1.5">
-        <select value={target} onChange={(e) => setTarget(e.target.value)} className="rounded border border-[var(--c-hairline)] bg-[var(--c-panel)] px-1.5 py-1 text-[11px] text-[var(--c-ink-2)] outline-none">
+        <select value={target} onChange={(e) => setTarget(e.target.value)} aria-label="Çeviri hedef dili" className="rounded border border-[var(--c-hairline)] bg-[var(--c-panel)] px-1.5 py-1 text-[11px] text-[var(--c-ink-2)] outline-none">
           {LANGS.map((l) => <option key={l} value={l}>{l}</option>)}
         </select>
         <button onClick={go} disabled={busy || !text} className="inline-flex items-center gap-1 rounded border border-[var(--c-hairline)] bg-[var(--c-panel)] px-2 py-1 text-[11px] font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] disabled:opacity-50">

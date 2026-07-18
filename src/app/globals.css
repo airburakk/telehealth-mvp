@@ -112,6 +112,15 @@
   color: #57534e;
 }
 
+/* İç yüzey klavye odak halkası (WCAG 2.4.7) — vitrindeki .aura-page kuralının eşleniği.
+   KASITLI layer DIŞI: form girdilerindeki Tailwind outline-none utility'sini cascade'de
+   yenmesi gerekir (layer'sız kural > @layer utilities). Fare tıklamasında görünmez. */
+.theme-dark :is(a, button, input, select, textarea, [tabindex]):focus-visible,
+.theme-light :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
 html,
 body {
   height: 100%;

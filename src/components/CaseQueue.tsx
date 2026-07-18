@@ -98,11 +98,11 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
             className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] py-2 pl-9 pr-3 text-sm outline-none focus:border-[var(--c-accent)]"
           />
         </div>
-        <select value={branchValue} onChange={(e) => onBranchChange(e.target.value)} className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
+        <select value={branchValue} onChange={(e) => onBranchChange(e.target.value)} aria-label="Branşa göre filtrele" className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
           <option value="all">Tüm branşlar</option>
           {branches.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
-        <select value={statusValue} onChange={(e) => onStatusChange(e.target.value)} className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
+        <select value={statusValue} onChange={(e) => onStatusChange(e.target.value)} aria-label="Duruma göre filtrele" className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
           <option value="all">Tüm durumlar</option>
           {Object.entries(CASE_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>

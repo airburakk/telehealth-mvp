@@ -216,8 +216,9 @@ function SoApplyFormInner() {
       <div className="mt-4 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3 text-sm text-[var(--c-ink-2)]">{t(FEE_LINE)}</div>
 
       <div className="mt-6 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-        <label className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.branchLabel)}</label>
+        <label htmlFor="so-branch" className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.branchLabel)}</label>
         <select
+          id="so-branch"
           value={branch}
           onChange={(e) => setBranch(e.target.value)}
           className="mt-1.5 w-full rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2.5 text-sm text-[var(--c-ink)] focus:border-[var(--c-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--c-accent)]/30"
@@ -236,8 +237,9 @@ function SoApplyFormInner() {
         ) : (
           <>
             <div className="mt-5">
-              <label className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.countryLabel)}</label>
+              <label htmlFor="so-country" className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.countryLabel)}</label>
               <select
+                id="so-country"
                 value={country}
                 onChange={(e) => onCountry(e.target.value)}
                 className="mt-1.5 w-full rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2.5 text-sm text-[var(--c-ink)] focus:border-[var(--c-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--c-accent)]/30"
@@ -262,11 +264,12 @@ function SoApplyFormInner() {
         </p>
 
         <div className="mt-5 flex items-center justify-between gap-2">
-          <label className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.diagLabel)}</label>
+          <label htmlFor="so-diagnosis" className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.diagLabel)}</label>
           <DictationButton lang={lang} onAppend={(txt) => setDiagnosisSummary((v) => (v.trim() ? v.trim() + " " : "") + txt)} t={t} />
         </div>
         <p className="text-xs text-[var(--c-ink-2)]">{t(S.diagHint)}</p>
         <textarea
+          id="so-diagnosis"
           value={diagnosisSummary}
           onChange={(e) => setDiagnosisSummary(e.target.value)}
           rows={5}

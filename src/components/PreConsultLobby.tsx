@@ -47,6 +47,9 @@ const TX = {
   micHint: "Konuşun; çubuğun hareket ettiğini görmelisiniz.",
   testTone: "Test sesi çal",
   camOff: "Kamera kapalı",
+  // Ekran okuyucu etiketleri — ikon-tek toggle'lar (WCAG 4.1.2; görünür metin yok)
+  micAriaOff: "Mikrofonu kapat", micAriaOn: "Mikrofonu aç",
+  camAriaOff: "Kamerayı kapat", camAriaOn: "Kamerayı aç",
   noCam: "Kamera bulunamadı — sesli katılabilirsiniz.",
   prompting: "Kamera ve mikrofon izni isteniyor…",
   denied: "Kamera/mikrofon izni reddedildi. Adres çubuğundaki kilit simgesinden izin verip yeniden deneyin.",
@@ -640,10 +643,10 @@ export function PreConsultLobby({
 
           {/* Kamera/mik aç-kapa */}
           <div className="mt-3 flex items-center justify-center gap-3">
-            <button onClick={toggleMic} disabled={perm !== "granted"} className={`grid h-11 w-11 place-items-center rounded-full disabled:opacity-40 ${micOn ? "bg-[var(--c-ink)]/15 text-[var(--c-ink-2)]" : "bg-red-500/15 text-red-300"}`}>
+            <button onClick={toggleMic} disabled={perm !== "granted"} aria-label={micOn ? t(TX.micAriaOff) : t(TX.micAriaOn)} aria-pressed={micOn} className={`grid h-11 w-11 place-items-center rounded-full disabled:opacity-40 ${micOn ? "bg-[var(--c-ink)]/15 text-[var(--c-ink-2)]" : "bg-red-500/15 text-red-300"}`}>
               {micOn ? <Mic size={18} /> : <MicOff size={18} />}
             </button>
-            <button onClick={toggleCam} disabled={perm !== "granted" || !hasCam} className={`grid h-11 w-11 place-items-center rounded-full disabled:opacity-40 ${camOn && hasCam ? "bg-[var(--c-ink)]/15 text-[var(--c-ink-2)]" : "bg-red-500/15 text-red-300"}`}>
+            <button onClick={toggleCam} disabled={perm !== "granted" || !hasCam} aria-label={camOn && hasCam ? t(TX.camAriaOff) : t(TX.camAriaOn)} aria-pressed={camOn && hasCam} className={`grid h-11 w-11 place-items-center rounded-full disabled:opacity-40 ${camOn && hasCam ? "bg-[var(--c-ink)]/15 text-[var(--c-ink-2)]" : "bg-red-500/15 text-red-300"}`}>
               {camOn && hasCam ? <Video size={18} /> : <VideoOff size={18} />}
             </button>
           </div>

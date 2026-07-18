@@ -85,6 +85,8 @@ const UI = [
   "Adres çubuğundaki kilit/kamera simgesine dokunup Kamera ve Mikrofon'a \"İzin ver\" deyin, sonra tekrar deneyin.",
   "Tekrar dene", "karşı taraf bekleniyor…", "kamera açılıyor…", "Canlı çeviri", "demo",
   "Kamera kapalı", "Siz", "Bitir",
+  // Ekran okuyucu etiketleri — ikon-tek toggle'lar (WCAG 4.1.2)
+  "Mikrofonu kapat", "Mikrofonu aç", "Kamerayı kapat", "Kamerayı aç",
   "Canlı Transkript", "Durdur", "Başlat", "Tarayıcı desteklemiyor — Chrome/Edge önerilir",
   "Başlat'a basın; söyledikleriniz yazıya çevrilir, karşı tarafın konuşması da otomatik gelir.",
   "Otomatik", "Konuşma başlayınca otomatik yazıya dökülür; karşı tarafın konuşması da gelir.",
@@ -802,10 +804,10 @@ export function ConsultationRoom({
             {/* Kontroller — video altında ortada */}
             {joined && (
               <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-2">
-                <button onClick={toggleCam} className={`grid h-11 w-11 place-items-center rounded-full backdrop-blur ${camOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-[var(--c-panel)] text-[var(--c-ink)]"}`}>
+                <button onClick={toggleCam} aria-label={camOn ? t("Kamerayı kapat") : t("Kamerayı aç")} aria-pressed={camOn} className={`grid h-11 w-11 place-items-center rounded-full backdrop-blur ${camOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-[var(--c-panel)] text-[var(--c-ink)]"}`}>
                   {camOn ? <Video size={18} /> : <VideoOff size={18} />}
                 </button>
-                <button onClick={toggleMic} className={`grid h-11 w-11 place-items-center rounded-full backdrop-blur ${micOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-[var(--c-panel)] text-[var(--c-ink)]"}`}>
+                <button onClick={toggleMic} aria-label={micOn ? t("Mikrofonu kapat") : t("Mikrofonu aç")} aria-pressed={micOn} className={`grid h-11 w-11 place-items-center rounded-full backdrop-blur ${micOn ? "bg-white/15 text-white hover:bg-white/25" : "bg-[var(--c-panel)] text-[var(--c-ink)]"}`}>
                   {micOn ? <Mic size={18} /> : <MicOff size={18} />}
                 </button>
                 <button onClick={endCall} disabled={ending} className="inline-flex h-11 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60">

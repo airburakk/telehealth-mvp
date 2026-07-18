@@ -38,7 +38,7 @@ export function DoctorDirectory({ doctors }: { doctors: DoctorRow[] }) {
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-ink-3)]" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Doktor ara…" className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] py-2 pl-9 pr-3 text-sm text-[var(--c-ink)] outline-none placeholder:text-[var(--c-ink-3)] focus:border-[var(--c-accent)]" />
         </div>
-        <select value={branch} onChange={(e) => setBranch(e.target.value)} className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2 text-sm text-[var(--c-ink)] outline-none focus:border-[var(--c-accent)]">
+        <select value={branch} onChange={(e) => setBranch(e.target.value)} aria-label="Doktoru branşa göre filtrele" className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2 text-sm text-[var(--c-ink)] outline-none focus:border-[var(--c-accent)]">
           <option value="all">Tüm branşlar</option>
           {branches.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
