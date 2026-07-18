@@ -7,6 +7,11 @@ import { consentedVersion } from "@/lib/consent";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 import { isEmailConfigured } from "@/lib/email";
 
+// Sabit-zaman 401 (denetim #21): kullanıcı YOKKEN de aynı maliyette bcrypt koşturulur — yanıt süresi
+// e-postanın kayıtlı olup olmadığını sızdırmasın (hesap enumerasyonu; resend-verification'ın jenerik
+// yanıt disipliniyle simetri). Geçerli cost-10 hash: karşılaştırma tam bcrypt turu yapar, asla eşleşmez.
+const DUMMY_HASH = "$2b$10$9hE/6LArtUdLP81/s1gXx.MQgKk0552oxDw6J7s4DFLWgBAxxOGVW";
+
 export async function POST(req: Request) {
   const rl = await rateLimit(`login:${clientIp(req)}`, 10, 5 * 60_000); // brute-force freni: 10/5dk/IP
   if (!rl.ok) return tooMany(rl.retryAfter);
@@ -16,7 +21,7 @@ export async function POST(req: Request) {
   const password = String(b.password ?? "");
 
   const user = await db.user.findUnique({ where: { email } });
-  if (!user || !(await checkPassword(password, user.passwordHash))) {
+  if (!(await checkPassword(password, user?.passwordHash ?? DUMMY_HASH)) || !user) {
     return NextResponse.json({ error: "E-posta veya parola hatalı." }, { status: 401 });
   }
 

@@ -17,11 +17,13 @@ export interface GateAvailability {
 }
 
 // Bir branş için kapı müsaitliğini hesapla. Branş Doktoru = clinicalState ONLINE + sentinel:false.
+// verified:true ŞART (denetim #20): atama/kapma yolları (claimSentinelForCase, consult, icapçı) zaten
+// verified filtreler — sayım da aynı filtreyi taşımalı, yoksa doğrulanmamış doktor kapıyı yanlış gösterir.
 export async function gateAvailability(branch: string): Promise<GateAvailability> {
   const [onlineBranch, sentinel, icapci] = await Promise.all([
-    db.doctor.count({ where: { branch, clinicalState: "ONLINE", sentinel: false } }),
-    db.doctor.count({ where: { sentinel: true, clinicalState: "ONLINE" } }),
-    db.doctor.count({ where: { branch, onCall: true } }),
+    db.doctor.count({ where: { branch, clinicalState: "ONLINE", sentinel: false, verified: true } }),
+    db.doctor.count({ where: { sentinel: true, clinicalState: "ONLINE", verified: true } }),
+    db.doctor.count({ where: { branch, onCall: true, verified: true } }),
   ]);
   return { hasOnlineBranch: onlineBranch > 0, hasSentinel: sentinel > 0, hasIcapci: icapci > 0 };
 }

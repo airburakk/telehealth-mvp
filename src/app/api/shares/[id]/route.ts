@@ -10,8 +10,12 @@ export async function PATCH(_req: Request, { params }: { params: Promise<{ id: s
   }
 
   const { id } = await params;
-  const link = await db.shareLink.findUnique({ where: { id } });
+  const link = await db.shareLink.findUnique({ where: { id }, include: { case: { select: { userId: true } } } });
   if (!link) return NextResponse.json({ error: "Bulunamadı." }, { status: 404 });
+  // Nesne sahipliği (POST'taki desenle simetri — denetim #19): hasta yalnız KENDİ vakasının linkini iptal edebilir.
+  if (user.role === "PATIENT" && link.case.userId !== user.id) {
+    return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+  }
 
   if (!link.revokedAt) {
     await db.shareLink.update({ where: { id }, data: { revokedAt: new Date() } });
