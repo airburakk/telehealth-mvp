@@ -11,11 +11,8 @@ export function isGoogleConfigured(): boolean {
   return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 }
 
-// Apple "Sign in with Apple" — şimdilik PARKED (Apple Developer hesabı + Service ID + JWT client
-// secret gerektirir). Yapılandırma noktası ileride buraya eklenecek; şu an her zaman false.
-export function isAppleConfigured(): boolean {
-  return false;
-}
+// Apple "Sign in with Apple" — PARKED (Apple Developer hesabı + Service ID + JWT client secret).
+// Aktivasyonda isGoogleConfigured desenine eş bir isAppleConfigured buraya eklenir (ölü stub silindi — denetim #22).
 
 // İstek origin'inden callback URI türet (yerel + Vercel origin uyumlu — Google Console'a bu eklenir).
 export function googleRedirectUri(origin: string): string {

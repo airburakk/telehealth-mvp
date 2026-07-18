@@ -27,31 +27,6 @@ function safeParse<T>(s: string | null | undefined, fallback: T): T {
   }
 }
 
-// Bir vakadan anonim konsültasyon talebi oluştur (Faz 2 demo seed kullanır).
-export async function createRequestFromCase(
-  caseId: string,
-  opts: { branchLimited?: boolean; requestedByName?: string; requestedByPartnerId?: string } = {},
-): Promise<string | null> {
-  const c = await db.case.findUnique({ where: { id: caseId } });
-  if (!c) return null;
-  const deid = deidentifyCase(c);
-  const created = await db.consultationRequest.create({
-    data: {
-      sourceCaseId: c.id,
-      requestedByPartnerId: opts.requestedByPartnerId ?? null,
-      requestedByName: opts.requestedByName ?? null,
-      branch: opts.branchLimited ? c.branch : null,
-      region: deid.region,
-      language: deid.language,
-      urgency: deid.urgency,
-      icd10Code: deid.icd10Code,
-      clinicalSummary: encryptField(deid.clinicalSummary),
-      status: "OPEN",
-    },
-  });
-  return created.id;
-}
-
 // ── Partner formundan anonim talep (+ opsiyonel belgeler) ──
 export interface PartnerDocInput {
   label: string;

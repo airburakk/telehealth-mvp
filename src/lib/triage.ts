@@ -71,16 +71,6 @@ function normalize(t: string): string {
   return (t || "").toLocaleLowerCase("tr-TR");
 }
 
-export function urgencyLabel(u: number): string {
-  switch (u) {
-    case 5: return "Acil / Hayati";
-    case 4: return "Yüksek";
-    case 3: return "Orta";
-    case 2: return "Düşük";
-    default: return "Rutin / Elektif";
-  }
-}
-
 export function analyzeTriage(input: TriageInput): TriageOutput {
   const text = normalize([input.symptoms, input.durationText, Object.values(input.answers || {}).join(" ")].join(" "));
 

@@ -20,10 +20,6 @@ export const SCOPES: ScopeDef[] = [
 export function scopeLabel(key: string): string {
   return SCOPES.find((s) => s.key === key)?.label ?? key;
 }
-export function scopeDef(key: string): ScopeDef | undefined {
-  return SCOPES.find((s) => s.key === key);
-}
-
 export interface DurationOpt {
   key: string;
   label: string;
@@ -54,12 +50,6 @@ export function shareState(link: { expiresAt: Date | string | null; revokedAt: D
   if (link.expiresAt && new Date(link.expiresAt).getTime() < Date.now()) return "EXPIRED";
   return "ACTIVE";
 }
-
-export const SHARE_STATE_META: Record<ShareState, { label: string; badge: string; dot: string }> = {
-  ACTIVE: { label: "Aktif", badge: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25", dot: "bg-emerald-500" },
-  EXPIRED: { label: "Süresi doldu", badge: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)] ring-white/15", dot: "bg-[var(--c-ink)]/30" },
-  REVOKED: { label: "İptal edildi", badge: "bg-red-500/15 text-red-300 ring-red-400/25", dot: "bg-red-500" },
-};
 
 // ── Paylaşılan veri kalemleri — vaka + seçilen scope'lardan türetilir (görüntüleyici için) ──
 

@@ -28,11 +28,6 @@ export function canActivate(docs: { type: string }[], mmss: MmssMeta): boolean {
   return hasRequiredDocs(docs) && mmssComplete(mmss);
 }
 
-// Klinik panel erişimi için: aktivasyon damgası var mı?
-export function isActivated(d: { activatedAt: Date | null }): boolean {
-  return !!d.activatedAt;
-}
-
 // Eksik zorunlu adımları döndür (UI'da yönlendirme metni için).
 export function missingSteps(docs: { type: string }[], mmss: MmssMeta): string[] {
   const types = new Set(docs.map((x) => x.type));

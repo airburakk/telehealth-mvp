@@ -56,10 +56,6 @@ export function canTransition(from: SoStatus, to: SoStatus): boolean {
   return (SO_TRANSITIONS[from] ?? []).includes(to);
 }
 
-export function isTerminal(status: SoStatus): boolean {
-  return (SO_TRANSITIONS[status] ?? []).length === 0;
-}
-
 export const SO_STATUS_LABELS: Record<SoStatus, string> = {
   DRAFT: "Taslak — belge hazırlanıyor",
   AWAITING_PAYMENT: "Ödeme bekleniyor",
@@ -125,20 +121,3 @@ export function reportDueRange(readyAt: Date): { min: Date; max: Date } {
   };
 }
 
-/** Video randevu son tarihi — opinionDeliveredAt + 15 takvim günü (§11). */
-export function videoDueDate(opinionDeliveredAt: Date): Date {
-  const d = new Date(opinionDeliveredAt);
-  d.setDate(d.getDate() + SO_VIDEO_WINDOW_DAYS);
-  return d;
-}
-
-/**
- * Mekanik tamlık kontrolü (§3.1/§5): branş şablonuna göre eksik ZORUNLU belge tipleri.
- * Yeterlilik kararı İNSANA aittir (koordinatör/doktor) — bu yalnız mekanik kontroldür.
- */
-export function missingRequiredDocTypes(branchKey: string, providedTypes: SoDocType[]): SoDocType[] {
-  const provided = new Set(providedTypes);
-  return secondOpinionDocSpecs(branchKey)
-    .filter((s) => s.requirement === "REQUIRED" && !provided.has(s.type))
-    .map((s) => s.type);
-}

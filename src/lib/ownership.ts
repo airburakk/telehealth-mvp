@@ -89,9 +89,8 @@ export function ownsSecondOpinionCase(user: SessionUser | null, c: { patientId: 
   return SO_CLINICAL_STAFF.includes(user.role); // PARTNER/AGENCY/tanınmayan → fail-closed
 }
 
-export async function canAccessSecondOpinionCase(c: { patientId: string }): Promise<boolean> {
-  return ownsSecondOpinionCase(await getCurrentUser(), c);
-}
+// NOT (denetim #22): eski gevşek `canAccessSecondOpinionCase` SİLİNDİ — atama-bazlı
+// `canSoCaseBeAccessedBy` (api-auth) canlı kapıdır; gevşek varyantın yeniden bağlanma riski kalksın.
 
 // İkinci Görüş HASTA-AKSİYON uçları (pay/fulfill/respond-video) — yalnız vaka sahibi hasta (T15b).
 // Bu üç uç PHI OKUMAZ ama state-machine geçişi TETİKLER (ödeme simüle / talep FULFILLED / video randevu

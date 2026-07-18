@@ -43,6 +43,7 @@ yarn-error.log*
 /prisma/*.db
 /prisma/*.db-journal
 /dev.log
+/dev-*.log
 
 # vercel
 .vercel

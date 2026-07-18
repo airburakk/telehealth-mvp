@@ -55,11 +55,6 @@ export function branchColor(v?: string | null): string {
   return (k && BRANCH_COLORS[k]) || DEFAULT_BRANCH_COLOR;
 }
 
-// Branşın SVG amblemi (public/branches/, Higgsfield Recraft vector ile üretildi — 30 branş).
-export function branchSymbolSrc(v: string): string {
-  return `/branches/${resolveBranchKey(v) ?? v}-symbol.svg`; // 1:1 minimal vektör amblem (koyu zemin)
-}
-
 // Branşın atmosferik banner arka planı — Higgsfield görseli DEĞİL, branş renginden türetilen CSS
 // gradyan (kullanıcı kararı 2026-07-13). Tutarlı, kredi harcamaz, her branşın rengiyle otomatik
 // uyumlu, sonsuz ölçeklenir. Pilot kardiyoloji banner'ının koyu + diagonal ışık dalgası hissini taklit.
@@ -70,7 +65,6 @@ export function branchBannerBg(key?: string | null): string {
 
 // Bir branşın görsel kimliği (renk + sembol) var mı? Girdi key veya label olabilir → resolve.
 // 30 branşın tamamı üretildi; BRANCH_COLORS anahtarları otoriter kaynak.
-export const BRANCHES_WITH_VISUALS = new Set<string>(Object.keys(BRANCH_COLORS));
 export function hasBranchVisual(v?: string | null): boolean {
   return !!resolveBranchKey(v);
 }
