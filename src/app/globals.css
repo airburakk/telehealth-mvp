@@ -44,7 +44,9 @@
   --c-surface-2: #26272b;
   --c-ink: #f4f5f3;
   --c-ink-2: #9a9c99;
-  --c-ink-3: #82847c;
+  /* #82847c → #90928a (denetim #16): eski ton yükseltilmiş yüzeylerde AA altındaydı
+     (surface-2 #26272b üstünde 3.94:1); yeni ton surface-2'de 4.73:1, en koyu zeminde 6.13:1. */
+  --c-ink-3: #90928a;
   --c-hairline: rgba(255, 255, 255, 0.09);
   --c-accent: #28c8d8;
   --c-accent-strong: #1fa9b8;

@@ -9,7 +9,7 @@ import Link from "next/link";
 import { createElement, useMemo, useState } from "react";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
-import { countryFlag, CASE_STATUS, formatDateTime, langDir } from "@/lib/constants";
+import { countryFlag, CASE_STATUS, formatDateTime, langDir, LANG_BCP47 } from "@/lib/constants";
 import { BRANCHES } from "@/lib/triage";
 import { BranchAvatar } from "@/components/BranchAvatar";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
@@ -124,7 +124,8 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
 
   return (
     <div className="min-h-full">
-      <div dir={langDir(lang)} className="mx-auto max-w-4xl px-5 py-8">
+      {/* lang ŞART (denetim #27): globals.css Arapça/Farsça fontu yalnız :lang(ar|fa) ile bağlar (v6.9) */}
+      <div dir={langDir(lang)} lang={LANG_BCP47[lang]} className="mx-auto max-w-4xl px-5 py-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#28c8d8] text-[#0a4148]"><FolderHeart size={22} /></span>
@@ -209,6 +210,7 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
       {pickerOpen && (
         <div
           dir={langDir(lang)}
+          lang={LANG_BCP47[lang]}
           className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4 backdrop-blur-sm"
           onClick={() => setPickerOpen(false)}
         >

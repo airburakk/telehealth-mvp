@@ -38,8 +38,9 @@ export const metadata: Metadata = {
   // Sekme başlığı sadeleştirildi (2026-07-12, kullanıcı kararı): üst banttaki yalın-logo diliyle hizalı.
   // Sayfalar kendi title'ını verebilir; landing/how-it-works zengin başlık taşır.
   title: { default: "AURA Health", template: "%s · AURA" },
+  // "uçtan uca" bilinçli YOK (vitrin iddia disiplini v6.8/v6.18 — ana sayfayla hizalı; kullanıcı onayı 2026-07-18).
   description:
-    "Triyaj, uzman görüşü ve sağlık turizmi paketlerini birleştiren uçtan uca dijital sağlık platformu (MVP).",
+    "Triyaj, uzman görüşü ve sağlık turizmi paketlerini birleştiren dijital sağlık platformu (MVP).",
   manifest: "/manifest.webmanifest",
   icons: { apple: "/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "AURA", statusBarStyle: "default" },

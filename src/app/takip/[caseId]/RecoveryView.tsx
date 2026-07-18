@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { severityMeta, type Severity } from "@/lib/postop";
-import { formatDateTime, langDir } from "@/lib/constants";
+import { formatDateTime, langDir, LANG_BCP47 } from "@/lib/constants";
 import { CheckInForm } from "@/components/CheckInForm";
 import { DischargeReport, type Structured } from "@/components/DischargeReport";
 import { TranslateButton } from "@/components/TranslateButton";
@@ -124,7 +124,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
   const { t } = useT(lang, texts);
 
   return (
-    <div dir={langDir(lang)} className="print-doc mx-auto max-w-4xl px-5 py-8">
+    <div dir={langDir(lang)} lang={LANG_BCP47[lang]} className="print-doc mx-auto max-w-4xl px-5 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Geri link rol-duyarlı: hasta /doktor/vaka'ya giremez → kendi başvuru merkezine döner (v6.20) */}
         <Link href={data.isStaff ? `/doktor/vaka/${data.caseId}` : `/vaka/${data.caseId}`} className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">

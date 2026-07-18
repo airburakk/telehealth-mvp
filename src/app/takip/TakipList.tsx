@@ -6,7 +6,7 @@ import Link from "next/link";
 import { HeartPulse, ArrowRight } from "lucide-react";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
-import { langDir } from "@/lib/constants";
+import { langDir, LANG_BCP47 } from "@/lib/constants";
 
 export interface TakipRow {
   caseId: string;
@@ -34,7 +34,7 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
   const dir = langDir(lang);
 
   return (
-    <div dir={dir}>
+    <div dir={dir} lang={LANG_BCP47[lang]}>
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
           <h1 className="aura-display flex items-center gap-2 text-3xl font-medium tracking-tight text-[var(--c-ink)]">

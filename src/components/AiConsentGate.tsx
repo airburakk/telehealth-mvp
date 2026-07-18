@@ -12,7 +12,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
-import { langDir } from "@/lib/constants";
+import { langDir, LANG_BCP47 } from "@/lib/constants";
 import { AI_CONSENT_TEXT } from "@/lib/ai-consent";
 import { Sparkles, ShieldCheck, Loader2, XCircle } from "lucide-react";
 
@@ -49,7 +49,7 @@ export function AiConsentGate({ children, dest = "/vakalarim" }: { children: Rea
   if (consented) return <>{children}</>;
 
   return (
-    <div dir={langDir(lang)} className="mx-auto max-w-2xl px-5 py-10">
+    <div dir={langDir(lang)} lang={LANG_BCP47[lang]} className="mx-auto max-w-2xl px-5 py-10">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]">

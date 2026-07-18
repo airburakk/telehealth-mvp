@@ -307,7 +307,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
   }
 
   return (
-    <div dir={langDir(lang)} className="print-doc mx-auto max-w-2xl px-5 py-8">
+    <div dir={langDir(lang)} lang={LANG_BCP47[lang]} className="print-doc mx-auto max-w-2xl px-5 py-8">
       <div className="flex items-center justify-between gap-3">
         <Link href="/second-opinion/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
           <ArrowLeft size={15} /> {t(S.back)}

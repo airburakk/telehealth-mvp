@@ -5,7 +5,7 @@ import { decryptCaseFields } from "@/lib/crypto";
 import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { getCurrentUser } from "@/lib/auth";
 import { getTranslations, translateClinical } from "@/lib/i18n";
-import { countryFlag, countryName, urgencyStyle, langDir, formatDateTime } from "@/lib/constants";
+import { countryFlag, countryName, urgencyStyle, langDir, formatDateTime, LANG_BCP47 } from "@/lib/constants";
 import { type LineItem } from "@/lib/pricing";
 import { parseJourney } from "@/lib/journey";
 import { CheckCircle2, FileText, Stethoscope, Sparkles, Package, HeartPulse, Video, ArrowLeft } from "lucide-react";
@@ -147,11 +147,20 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
   const patientName = c.patientName; // decryptCaseFields zaten çözdü
 
   return (
-    <div dir={dir} className="mx-auto max-w-3xl px-5 py-10">
+    // lang ŞART (denetim #27): globals.css ar/fa fontunu yalnız :lang() ile bağlar (v6.9)
+    <div dir={dir} lang={LANG_BCP47[c.language]} className="mx-auto max-w-3xl px-5 py-10">
       <div className="flex items-center justify-between gap-3">
-        <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:text-[var(--c-accent)]">
-          <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Bakım Yolculuğum")}
-        </Link>
+        {/* Geri link rol-duyarlı (denetim #29): hasta kendi hub'ına, personel kokpite döner
+            (hasta yüzü "Bakım Yolculuğum/başvuru" · personel yüzü "vaka" — dil ayrımı karar defteri). */}
+        {isClinician ? (
+          <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:text-[var(--c-accent)]">
+            <ArrowLeft size={16} className="rtl:rotate-180" /> Vakalar
+          </Link>
+        ) : (
+          <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:text-[var(--c-accent)]">
+            <ArrowLeft size={16} className="rtl:rotate-180" /> {t("Bakım Yolculuğum")}
+          </Link>
+        )}
         {isClinician && (
           <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
             <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {t("Aciliyet")} {c.urgency}/5 · {t(u.label)}
@@ -179,7 +188,8 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
       ) : tourismInbox ? (
         // Sağlık turizmi: branş havuzu doktorlarının mesaj/teklifleri (3-seçenek yok)
         <div className="mt-4">
-          <TourismInbox caseId={c.id} branchLabel={t(branchLabel)} country={c.country} outreaches={tourismInbox} tmap={Object.fromEntries(TOURISM_INBOX_TEXTS.map((s) => [s, t(s)]))} />
+          {/* countryName (denetim #28): hastaya "KZ" değil "Kazakistan" görünür */}
+          <TourismInbox caseId={c.id} branchLabel={t(branchLabel)} country={countryName(c.country)} outreaches={tourismInbox} tmap={Object.fromEntries(TOURISM_INBOX_TEXTS.map((s) => [s, t(s)]))} />
         </div>
       ) : (
         <div className="mt-4 rounded-3xl border border-emerald-400/25 bg-emerald-500/10 p-5 flex items-start gap-3">
