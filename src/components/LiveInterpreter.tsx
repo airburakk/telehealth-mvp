@@ -69,6 +69,7 @@ export function LiveInterpreter({
   const srcRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const liveRef = useRef(false);
   const autoStartedRef = useRef(false);
+  const startAbortRef = useRef(false); // Durdur/unmount, remote-bekleme döngüsünü kırar
 
   useEffect(() => {
     (async () => {
@@ -121,8 +122,7 @@ export function LiveInterpreter({
 
   async function start() {
     setErr(""); setHeard(""); setTrans(""); setDbg({ chunks: 0, subs: 0 });
-    const remote = getRemoteStream();
-    if (!remote || remote.getAudioTracks().length === 0) { setErr("Karşı taraf henüz bağlı değil (ses yok). Önce görüşmeye katılın."); return; }
+    startAbortRef.current = false;
     setStatus("connecting");
 
     // ÖNEMLİ: oynatma context'ini tıklama anında (gesture içinde, await ÖNCESİ) oluştur + resume →
@@ -131,6 +131,25 @@ export function LiveInterpreter({
     playCtxRef.current = playCtx;
     try { await playCtx.resume(); } catch {}
     nextPlayRef.current = playCtx.currentTime;
+
+    // Karşı tarafın ses akışı henüz bağlı olmayabilir — özellikle VAD otomatik başlatmada taraflardan
+    // biri odaya erken girdiğinde. Eski davranış burada vazgeçip TEK ATIMLIK autoStart tetiğini boşa
+    // yakıyordu → geç katılan tarafın sesi hiç çevrilmeden ham iletiliyordu (RU↔TR tek-yön sahasında
+    // görüldü). Şimdi: akış gelene dek bekle (Durdur/unmount iptal eder; 90 sn'de hata durumuna düş —
+    // hata dalında manuel "Tercümeyi başlat" düğmesi de görünür, otomatik-mod göstergesinde kilitli kalmaz).
+    const waitStart = Date.now();
+    let remote = getRemoteStream();
+    while (!remote || remote.getAudioTracks().length === 0) {
+      if (startAbortRef.current) return; // Durdur/unmount — stop() durumu zaten toparladı
+      if (Date.now() - waitStart > 90_000) {
+        setErr("Karşı taraf henüz bağlı değil (ses yok). Önce görüşmeye katılın.");
+        setStatus("error");
+        teardown();
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 400));
+      remote = getRemoteStream();
+    }
 
     try {
       // Hedef dili token'a gönder → sunucu çeviri hedefini token'a kilitler (yoksa model "en"e düşer)
@@ -166,6 +185,8 @@ export function LiveInterpreter({
         config,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) as any;
+      // Bekleme/bağlanma sırasında Durdur'a basıldıysa kurulan oturumu sessizce kapat (mute'a dokunma).
+      if (startAbortRef.current) { try { session.close(); } catch {} return; }
       sessionRef.current = session;
 
       // Karşı tarafın gelen sesini yakala → 16kHz PCM → Gemini'ye akıt
@@ -200,6 +221,7 @@ export function LiveInterpreter({
   }
 
   function teardown() {
+    startAbortRef.current = true; // olası remote-bekleme döngüsünü kır
     liveRef.current = false;
     try { procRef.current?.disconnect(); } catch {}
     try { srcRef.current?.disconnect(); } catch {}
@@ -237,8 +259,9 @@ export function LiveInterpreter({
         <div className="mt-3">
           {/* KVKK açık onam giriş sırasında bir kez alınır (/onam) → burada tekrar kapı yok. */}
           {/* Otomatik mod (diller farklı): ilk konuşma algılanınca otomatik başlar → manuel düğme yerine gösterge.
-              Hata durumunda (status==="error") manuel düğme kalır (otomatik kurtarma yapılmaz). */}
-          {autoMode && status === "idle" ? (
+              Hata durumunda (status==="error") manuel düğme kalır (otomatik kurtarma yapılmaz).
+              Tek atımlık tetik TÜKETİLDİYSE (başladı/denendi/Durdur'uldu) göstergede kilitlenme — düğmeye düş. */}
+          {autoMode && status === "idle" && !autoStartedRef.current ? (
             <div className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-accent)]/10 px-3 py-2 text-sm font-medium text-[var(--c-accent)] ring-1 ring-[var(--c-accent)]/20">
               <Mic size={15} className="text-[var(--c-accent)]" /> {t("İlk konuşma algılandığında otomatik başlar…")}
             </div>
@@ -263,7 +286,8 @@ export function LiveInterpreter({
             <p className="mt-0.5 text-sm font-medium text-[var(--c-ink)]">{trans || (status === "connecting" ? t("bağlanılıyor…") : t("dinleniyor…"))}</p>
           </div>
           <div className="mt-2 flex items-center justify-between">
-            <button onClick={stop} disabled={status === "connecting"} className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] disabled:opacity-50">
+            {/* Durdur "connecting"de de aktif — remote-bekleme döngüsü kullanıcı tarafından iptal edilebilmeli */}
+            <button onClick={stop} className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]">
               {status === "connecting" ? <Loader2 size={14} className="animate-spin" /> : <Square size={14} />} {t("Durdur")}
             </button>
             <span className="inline-flex items-center gap-1 text-[10px] text-[var(--c-ink-3)]" title="tanı: gelen ses parçası · altyazı">
