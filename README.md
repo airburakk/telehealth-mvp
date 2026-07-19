@@ -342,10 +342,16 @@ Yerine iç ID (userId/caseId), olay kategorisi, hata kodu, süre/adet kovası ku
 
 ## Sonraki adımlar (backlog)
 
-Güncel yol haritası vault'ta: `Air/wiki/todo.md`. Öne çıkanlar (altyapı/hukuk gerektirir):
-gerçek ödeme + Escrow gateway (Iyzico/Stripe — şu an simülasyon) · **object storage ✅ Vercel Blob**
+Güncel yol haritası vault'ta: `Air/wiki/todo.md` + `Air/wiki/acik-isler-envanteri.md` (2026-07-19'da
+kod kanıtıyla yeniden yazıldı). Öne çıkanlar (altyapı/hukuk gerektirir):
+gerçek ödeme + Escrow gateway (Iyzico/Stripe — şu an simülasyon; **kullanıcı kararı: Ray A/şirketleşme
+netleşene dek PARK**) · **object storage ✅ Vercel Blob**
 (belgeler artık Blob'ta şifreli; token yoksa base64-in-DB fallback) · ileri E2EE fazları (Faz 0+1 ✅ at-rest/audit; Faz 2A ✅ post-op erişim daraltma + geri-alma; 2B kriptografik allowlist + Faz 3 gerçek sıfır-erişim kalan) · gerçek RFC 3161 TSA (şimdilik simüle) ·
-e-posta/SMS proaktif bildirim · veri ikametgâhı (data residency) — çok ülkeli pazar girişi için.
+**e-posta/SMS proaktif bildirim ✅ kod tarafı v6.28** (`notify.ts routePatientChannel` — hasta tercihi
+EMAIL/SMS, içeriksiz dürtü; aktivasyon = `RESEND_API_KEY` / SMS sağlayıcı anahtarı) · **canlı durum ✅
+v6.29** (3sn UI polling → Ably `live:` dürtü kanalı + 30sn güvenlik ağı; Ably yoksa eski davranış) ·
+DICOM PHI tag-strip (bilinçli park — `deidentify.ts` başlığı) · veri ikametgâhı (data residency) —
+çok ülkeli pazar girişi için.
 
 ## Güvenlik notları (demo)
 
