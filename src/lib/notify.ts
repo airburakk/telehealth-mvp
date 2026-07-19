@@ -6,6 +6,8 @@ import { db } from "./db";
 import { sendPushToRoles, sendPushToUser } from "./push";
 import { sendChannelMessage, type MessageChannel } from "./messaging";
 import { decryptField } from "./crypto";
+import { sendEmail } from "./email";
+import { SITE_URL } from "./aura-landing/seo";
 
 export interface NotifyInput {
   type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "FREECARE_MATCH" | "FREECARE_TREATMENT" | "SO_REVIEW" | "SO_REQUEST" | "SO_ASSIGNED" | "SO_OPINION" | "SO_VIDEO" | "CLINIC_OFFER" | "CLINIC_MATCH" | "CONSULT_ANSWERED" | "CONSULT_MESSAGE" | "CONSULT_VIDEO" | "ACCOUNT_VERIFIED" | "AGENCY_FILE" | "DISCHARGE_REQUEST" | "REGISTRY_REPORT" | "TOURISM_DISCLAIMER" | "TOURISM_MESSAGE" | "TOURISM_OFFER";
@@ -27,14 +29,71 @@ export async function notifyRoles(roles: string[], n: NotifyInput): Promise<void
 
 // Kişisel bildirim — vaka sahibi hasta gibi tek kullanıcıya.
 export async function notifyUser(userId: string, n: NotifyInput): Promise<void> {
+  let createdId: string | null = null;
   try {
-    await db.notification.create({
+    const created = await db.notification.create({
       data: { userId, type: n.type, title: n.title, body: n.body ?? null, href: n.href ?? null },
     });
+    createdId = created.id;
   } catch (e) {
     console.warn("[notify] bildirim yazılamadı:", e instanceof Error ? e.message : e);
   }
   await sendPushToUser(userId, { title: n.title, body: n.body, href: n.href });
+  await routePatientChannel(userId, createdId); // hasta EMAIL/SMS tercihi (dormant) — içeriksiz dürtü
+}
+
+// Hastanın intake'te seçtiği dış kanala (EMAIL/SMS) İÇERİKSİZ dürtü — routeDoctorChannel'ın hasta
+// eşleniği (dormant desen: RESEND_API_KEY / SMS anahtarı yoksa simülasyon izi, anahtar takılınca canlanır).
+// PHI kuralı: dış kanala bildirim BAŞLIĞI/GÖVDESİ dahil HİÇBİR içerik geçmez (e-posta üçüncü tarafta
+// saklanır; href yolu bile dolaylı sağlık bilgisi sızdırır) → tam jenerik "yeni bildiriminiz var" +
+// giriş bağlantısı. Bu yüzden fonksiyon NotifyInput'u parametre olarak ALMAZ (yapısal güvence).
+// Sıklık: son QUIET penceresinde kullanıcıya başka bildirim yazıldıysa atlanır (art arda olaylarda tek
+// dürtü yeter; in-app + Web Push zaten anlık gidiyor). Fire-safe: hata ana akışı bozmaz.
+const PATIENT_CHANNEL_QUIET_MS = 6 * 60 * 60 * 1000; // 6 saat
+
+async function routePatientChannel(userId: string, excludeNotificationId: string | null): Promise<void> {
+  try {
+    const u = await db.user.findUnique({
+      where: { id: userId },
+      select: { role: true, email: true, name: true, deletedAt: true, emailVerifiedAt: true, patientContactPref: true, patientPhone: true },
+    });
+    if (!u || u.role !== "PATIENT" || u.deletedAt) return;
+    const pref = u.patientContactPref;
+    if (pref !== "EMAIL" && pref !== "SMS") return; // APP/null = yalnız uygulama içi + push
+    const recent = await db.notification.count({
+      where: {
+        userId,
+        createdAt: { gt: new Date(Date.now() - PATIENT_CHANNEL_QUIET_MS) },
+        ...(excludeNotificationId ? { id: { not: excludeNotificationId } } : {}),
+      },
+    });
+    if (recent > 0) return; // yakın zamanda zaten dürtüldü — sessiz pencere
+    if (pref === "EMAIL") {
+      if (!u.emailVerifiedAt) return; // doğrulanmamış adrese işlem e-postası gönderilmez
+      const link = `${SITE_URL}/giris`;
+      await sendEmail({
+        to: u.email,
+        subject: "Yeni bildiriminiz var — AURA / You have a new notification",
+        text:
+          `Merhaba ${u.name},\n\n` +
+          `AURA hesabınızda yeni bir bildiriminiz var. Görüntülemek için giriş yapın:\n${link}\n\n` +
+          `Bu e-postayı, iletişim tercihi olarak e-postayı seçtiğiniz için alıyorsunuz.\n\n` +
+          `---\n\n` +
+          `Hello ${u.name},\n\n` +
+          `You have a new notification on your AURA account. Sign in to view it:\n${link}\n\n` +
+          `You are receiving this because you chose email as your contact preference.`,
+      });
+    } else {
+      const phone = decryptField(u.patientPhone);
+      if (!phone) return;
+      await sendChannelMessage("SMS", phone, {
+        title: "AURA",
+        body: "Yeni bildiriminiz var — hesabınıza giriş yaparak görüntüleyin. / You have a new notification — sign in to view.",
+      });
+    }
+  } catch (e) {
+    console.warn("[notify] hasta kanal yönlendirme başarısız (akış bozulmaz):", e instanceof Error ? e.message : e);
+  }
 }
 
 // Doktorun tercih ettiği ek kanala (WhatsApp/SMS — dormant/simülasyon) yönlendirme (FAZ 5).
