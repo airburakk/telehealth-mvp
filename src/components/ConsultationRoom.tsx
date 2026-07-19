@@ -118,7 +118,7 @@ export function ConsultationRoom({
   const [micOn, setMicOn] = useState(true);
   const [remoteOn, setRemoteOn] = useState(false);
   const [remoteAudioBlocked, setRemoteAudioBlocked] = useState(false); // uzak ses autoplay ile engellendi → "Sesi aç" göster
-  const [remoteMutedByInterpreter, setRemoteMutedByInterpreter] = useState(false); // tercüman canlı → uzak kasıtlı kısık
+  const [hasMicAudio, setHasMicAudio] = useState(false); // mikrofon track'i var → tercüman kartı render edilebilir (tek-sıçrama: kaynak KENDİ mikrofonu)
   const [notes, setNotes] = useState(initialNotes);
   const [saved, setSaved] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -145,7 +145,9 @@ export function ConsultationRoom({
   const recRef = useRef<AnySpeechRecognition | null>(null);
   const sttOnRef = useRef(false);
   const dictatingRef = useRef(false);
-  const firstSoundRef = useRef(false); // VAD: ilk konuşma sesi tek seferlik tetik
+  const firstSoundRef = useRef(false); // VAD: HERHANGİ taraftan ilk konuşma → transkript tetiği
+  const firstLocalSoundRef = useRef(false); // VAD: YEREL ilk konuşma → tercüman tetiği (tek-sıçrama: oturum KENDİ sesini çevirir)
+  const translationTrackRef = useRef<MediaStreamTrack | null>(null); // tercümanın çeviri track'i (pc yeniden kurulunca yeniden uygulanır)
 
   const isDoctor = selfRole === "doctor";
   const u = urgencyStyle(caseData.urgency);
@@ -248,17 +250,24 @@ export function ConsultationRoom({
 
   useEffect(() => () => { try { recRef.current?.stop(); } catch {} }, []);
 
-  // ── VAD (ses aktivitesi algılama): herhangi bir taraftan İLK konuşma sesi algılanınca AI'ı otomatik başlat ──
-  // Hem kendi mikrofonumuz (local) hem karşı tarafın akışı (remote) izlenir; RMS eşiği kısa süre aşılınca tek
-  // seferlik tetik → transkript (her durumda) + tercüme (yalnız diller farklıysa). Sessizken Gemini bağlanmaz.
+  // ── VAD (ses aktivitesi algılama): İLK konuşma sesinde AI'ları otomatik başlat ──
+  // Hem kendi mikrofonumuz (local) hem karşı tarafın akışı (remote) izlenir; RMS eşiği kısa süre aşılınca
+  // tetik. İKİ AYRI tek-atım: transkript HERHANGİ taraftan tetiklenir (davranış birebir eski); tercüman
+  // YALNIZ YEREL sesten tetiklenir — tek-sıçrama mimarisinde oturum KENDİ konuşmamı çevirir, karşının
+  // sesi benim Gemini oturumumu açmamalı. Sessizken Gemini bağlanmaz.
   useEffect(() => {
-    if (!joined || phase === "ended" || firstSoundRef.current) return;
+    // Tercüman tetiği yalnız kart render edilebiliyorken anlamlı (diller farklı + mikrofon var);
+    // değilse yalnız transkript tetiği beklenir — döngü onunla kapanır (sonsuz rAF/Analyser kalmaz).
+    const interpNeeded = langsDiffer && hasMicAudio;
+    const done = () => firstSoundRef.current && (firstLocalSoundRef.current || !interpNeeded);
+    if (!joined || phase === "ended" || done()) return;
     let cancelled = false;
     let raf = 0;
     let ctx: AudioContext | null = null;
     const attached = new WeakSet<MediaStream>();
-    const metered: { an: AnalyserNode; buf: Uint8Array<ArrayBuffer> }[] = [];
-    let hot = 0; // ardışık "ses var" frame sayısı (anlık tıkırtıyı elemek için)
+    const metered: { an: AnalyserNode; buf: Uint8Array<ArrayBuffer>; isLocal: boolean }[] = [];
+    let hotAny = 0;   // ardışık "ses var" frame sayısı — herhangi kaynak (anlık tıkırtıyı elemek için)
+    let hotLocal = 0; // ardışık "ses var" frame sayısı — yalnız yerel mikrofon
     const THRESH = 0.045; // PreConsultLobby ses metresiyle uyumlu RMS ölçeği
     const NEED = 4;       // ~4 ardışık frame ≈ gerçek konuşma başlangıcı
 
@@ -270,14 +279,14 @@ export function ConsultationRoom({
       }
       return ctx;
     };
-    const attach = (stream: MediaStream | null) => {
+    const attach = (stream: MediaStream | null, isLocal: boolean) => {
       if (!stream || attached.has(stream) || stream.getAudioTracks().length === 0) return;
       try {
         const c = ensureCtx();
         const src = c.createMediaStreamSource(stream);
         const an = c.createAnalyser(); an.fftSize = 256;
         src.connect(an);
-        metered.push({ an, buf: new Uint8Array(an.fftSize) });
+        metered.push({ an, buf: new Uint8Array(an.fftSize), isLocal });
         attached.add(stream);
       } catch {}
     };
@@ -285,22 +294,26 @@ export function ConsultationRoom({
     const tick = () => {
       if (cancelled) return;
       // Akışlar geç gelebilir (remote ontrack sonrası) → her frame lazy bağla
-      attach(localStreamRef.current);
-      attach((remoteVideoRef.current?.srcObject as MediaStream | null) ?? null);
-      let loud = false;
+      attach(localStreamRef.current, true);
+      attach((remoteVideoRef.current?.srcObject as MediaStream | null) ?? null, false);
+      let loudAny = false, loudLocal = false;
       for (const m of metered) {
         m.an.getByteTimeDomainData(m.buf);
         let sum = 0;
         for (let i = 0; i < m.buf.length; i++) { const v = (m.buf[i] - 128) / 128; sum += v * v; }
-        if (Math.sqrt(sum / m.buf.length) > THRESH) { loud = true; break; }
+        if (Math.sqrt(sum / m.buf.length) > THRESH) { loudAny = true; if (m.isLocal) loudLocal = true; }
       }
-      hot = loud ? hot + 1 : 0;
-      if (hot >= NEED) {
+      hotAny = loudAny ? hotAny + 1 : 0;
+      hotLocal = loudLocal ? hotLocal + 1 : 0;
+      if (hotAny >= NEED && !firstSoundRef.current) {
         firstSoundRef.current = true;
-        setSttOn(true);                              // transkript — Web Speech kendi VAD'iyle sessizde yazmaz
-        if (langsDiffer) setInterpAutoStart(true);   // tercüme — yalnız diller farklıysa
-        return; // tetiklendi → döngüyü bırak (cleanup ctx'i kapatır)
+        setSttOn(true); // transkript — Web Speech kendi VAD'iyle sessizde yazmaz
       }
+      if (hotLocal >= NEED && !firstLocalSoundRef.current) {
+        firstLocalSoundRef.current = true;
+        if (langsDiffer) setInterpAutoStart(true); // tercüme — yalnız diller farklıysa + YEREL ses
+      }
+      if (done()) return; // gereken tetikler tamamlandı → döngüyü bırak
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -310,7 +323,7 @@ export function ConsultationRoom({
       if (raf) cancelAnimationFrame(raf);
       ctx?.close().catch(() => {});
     };
-  }, [joined, phase, langsDiffer]);
+  }, [joined, phase, langsDiffer, hasMicAudio]);
 
   useEffect(() => {
     if (status === "ENDED" || !joined) return;
@@ -427,6 +440,7 @@ export function ConsultationRoom({
       localStreamRef.current = stream;
       setCamOn(hasVideo);
       setMicOn(hasAudio);
+      setHasMicAudio(hasAudio); // tercüman kartı yalnız mikrofon varken (tek-sıçrama: kaynak kendi sesi)
       if (!hasVideo) {
         setErrMsg(hasAudio
           ? "Bu cihazda kamera yok — sesli katıldınız; karşı tarafı görebilirsiniz."
@@ -440,6 +454,9 @@ export function ConsultationRoom({
       const pc = new RTCPeerConnection({ iceServers });
       pcRef.current = pc;
       if (stream) stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+      // Tercüman canlıyken pc yeniden kurulduysa ("Tekrar dene") çeviri track'ini yeni sender'a
+      // yeniden uygula — aksi halde UI "canlı" derken karşıya sessizce ham ses gider.
+      if (translationTrackRef.current) applyTranslationTrack(translationTrackRef.current);
       // Kamera/mik yoksa karşı tarafın yayınını alabilmek için alıcı kanal ekle
       if (!hasVideo) { try { pc.addTransceiver("video", { direction: "recvonly" }); } catch {} }
       if (!hasAudio) { try { pc.addTransceiver("audio", { direction: "recvonly" }); } catch {} }
@@ -448,7 +465,8 @@ export function ConsultationRoom({
           const el = remoteVideoRef.current;
           el.srcObject = e.streams[0];
           // Uzak sesi duyulur kıl. Autoplay politikası sesli oynatmayı taze bir jest olmadan engelleyebilir
-          // (özellikle mobil) → reddedilirse "Sesi aç" butonu göster. (LiveInterpreter sesi ayrı yoldan çalar.)
+          // (özellikle mobil) → reddedilirse "Sesi aç" butonu göster. (Tek-sıçrama mimarisinde karşının
+          // ÇEVİRİSİ de bu elementten gelir → AEC referansına girer; ayrı çalma yolu yok.)
           el.play().then(() => setRemoteAudioBlocked(false)).catch(() => setRemoteAudioBlocked(true));
         }
         setRemoteOn(true);
@@ -484,9 +502,24 @@ export function ConsultationRoom({
   }, [consultationId, selfRole, status, joined, retry]);
 
   function toggleCam() { const t = localStreamRef.current?.getVideoTracks()[0]; if (t) { t.enabled = !t.enabled; setCamOn(t.enabled); } }
+  // Not: toggleMic yalnız enabled bayrağını çevirir → tercüman canlıyken Gemini'ye de sessizlik gider
+  // (çeviri durur; kuyruktaki ≤~0.6 sn boşalır) — istenen davranış (klon yok, tek mikrofon track'i).
   function toggleMic() { const t = localStreamRef.current?.getAudioTracks()[0]; if (t) { t.enabled = !t.enabled; setMicOn(t.enabled); } }
 
-  // Uzak sesi kullanıcı jestiyle aç (autoplay reddini aşar). Tercüman canlıyken bu buton gizli kalır.
+  // DEĞİŞMEZ (tek-sıçrama): audio sender'da her an ya micTrack ya translationTrack vardır; tercüman
+  // "live" dışındaki HER duruma girişte micTrack'e dönülmüş olmalı (FAIL-OPEN). track=null → mikrofona dön.
+  // Kapalı pc'de sessiz no-op (görüşme bitmiş olabilir — idempotent); hata yutulur, ham ses zaten m-line'da.
+  function applyTranslationTrack(track: MediaStreamTrack | null) {
+    translationTrackRef.current = track;
+    const pc = pcRef.current;
+    if (!pc || pc.connectionState === "closed") return;
+    const sender = pc.getSenders().find((s) => s.track?.kind === "audio"); // çeviri track'i de audio → her iki durumda bulunur
+    const mic = localStreamRef.current?.getAudioTracks()[0] ?? null;
+    try { sender?.replaceTrack(track ?? mic)?.catch(() => {}); } catch {}
+  }
+
+  // Uzak sesi kullanıcı jestiyle aç (autoplay reddini aşar). Tek-sıçrama mimarisinde karşının çevirisi de
+  // aynı elementten gelir → bu buton çeviri sesi için de tek kurtarma yoludur.
   function enableRemoteAudio() {
     const el = remoteVideoRef.current; if (!el) return;
     el.muted = false;
@@ -604,16 +637,18 @@ export function ConsultationRoom({
     </div>
   ) : null;
 
-  const interpreterEl = joined && langsDiffer && phase !== "ended" ? (
+  // Tek-sıçrama: konuşan KENDİ mikrofonunu KARŞININ diline çevirtir (targetLang eski mimarinin TERSİ);
+  // kart yalnız mikrofon varken (hasMicAudio) — kaynak kendi sesi, mikrofonsuz izleme modunda anlamsız.
+  const interpreterEl = joined && langsDiffer && hasMicAudio && phase !== "ended" ? (
     <LiveInterpreter
       lang={uiLang}
-      targetLang={isDoctor ? "tr" : (SPEECH_LANG[caseData.language]?.split("-")[0] ?? "en")}
-      targetLabel={isDoctor ? "Türkçe" : caseData.language}
-      otherLabel={isDoctor ? caseData.language : "Türkçe"}
+      targetLang={isDoctor ? (SPEECH_LANG[caseData.language]?.split("-")[0] ?? "en") : "tr"}
+      targetLabel={isDoctor ? caseData.language : "Türkçe"}
       autoMode={langsDiffer}
       autoStart={interpAutoStart}
-      getRemoteStream={() => (remoteVideoRef.current?.srcObject as MediaStream | null) ?? null}
-      onMuteRemote={(m) => { if (remoteVideoRef.current) remoteVideoRef.current.muted = m; setRemoteMutedByInterpreter(m); }}
+      getLocalStream={() => localStreamRef.current}
+      onTranslationTrack={applyTranslationTrack}
+      patientConsentNote={!isDoctor}
     />
   ) : null;
 
@@ -756,8 +791,9 @@ export function ConsultationRoom({
           <div className="absolute inset-0 bg-[var(--c-bg-deep)]">
             {/* Uzak taraf (gerçek video) — tüm alanı doldurur */}
             <video ref={remoteVideoRef} autoPlay playsInline className={`h-full w-full object-cover ${remoteOn ? "" : "hidden"}`} />
-            {/* Uzak ses autoplay ile engellendiyse kullanıcı jestiyle aç (tercüman canlıyken gizli) */}
-            {remoteOn && remoteAudioBlocked && !remoteMutedByInterpreter && (
+            {/* Uzak ses autoplay ile engellendiyse kullanıcı jestiyle aç — tek-sıçrama mimarisinde
+                karşının ÇEVİRİSİ de bu elementten gelir, bu buton çeviri için de tek kurtarma yolu */}
+            {remoteOn && remoteAudioBlocked && (
               <button onClick={enableRemoteAudio} className="absolute left-1/2 top-14 z-20 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-[var(--c-ink)]/90 px-3 py-1.5 text-xs font-semibold text-[var(--c-bg)] shadow-lg ring-1 ring-black/5 hover:bg-white">
                 <Volume2 size={14} /> {t("Karşı tarafın sesini aç")}
               </button>

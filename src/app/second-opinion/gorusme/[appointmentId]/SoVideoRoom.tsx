@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Video, VideoOff, Mic, MicOff, PhoneOff, Wifi, WifiOff, UserRound, MessageSquareText } from "lucide-react";
+import { Video, VideoOff, Mic, MicOff, PhoneOff, Wifi, WifiOff, UserRound, MessageSquareText, Volume2 } from "lucide-react";
 import { getIceServers } from "@/lib/ice";
 import { signalFetch, signalPollDelayMs } from "@/lib/signal-poll";
 import { connectAblySignal } from "@/lib/ably-client";
@@ -54,6 +54,7 @@ const S = {
   connecting: "Bağlanıyor…",
   waitingFor: "bekleniyor…",
   you: "Siz",
+  enableAudio: "Karşı tarafın sesini aç",
   connLbl: "Bağlantı:",
   // Canlı transkript
   transcriptTitle: "Canlı Transkript",
@@ -88,6 +89,7 @@ export function SoVideoRoom({
   const [camOn, setCamOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
   const [remoteOn, setRemoteOn] = useState(false);
+  const [remoteAudioBlocked, setRemoteAudioBlocked] = useState(false); // uzak ses autoplay ile engellendi → "Sesi aç" (tek-sıçramada çeviri de bu elementten gelir — tek kurtarma yolu)
   const [connState, setConnState] = useState("");
 
   // Canlı transkript + AI tercüme (otomatik)
@@ -96,10 +98,13 @@ export function SoVideoRoom({
   const [interim, setInterim] = useState("");
   const [sttErr, setSttErr] = useState("");
   const [sttSupported, setSttSupported] = useState(true);
-  const [interpAutoStart, setInterpAutoStart] = useState(false); // VAD ilk konuşmayı algılayınca tercüme auto-start (yalnız diller farklıysa)
+  const [interpAutoStart, setInterpAutoStart] = useState(false); // VAD YEREL ilk konuşmayı algılayınca tercüme auto-start (yalnız diller farklıysa)
+  const [hasMicAudio, setHasMicAudio] = useState(false); // mikrofon var → tercüman kartı render edilebilir (tek-sıçrama: kaynak KENDİ mikrofonu)
   const recRef = useRef<AnySpeechRecognition | null>(null);
   const sttOnRef = useRef(false);
-  const firstSoundRef = useRef(false); // VAD: ilk konuşma sesi tek seferlik tetik
+  const firstSoundRef = useRef(false); // VAD: HERHANGİ taraftan ilk konuşma → transkript tetiği
+  const firstLocalSoundRef = useRef(false); // VAD: YEREL ilk konuşma → tercüman tetiği (oturum KENDİ sesini çevirir)
+  const translationTrackRef = useRef<MediaStreamTrack | null>(null); // tercümanın çeviri track'i (pc yeniden kurulunca yeniden uygulanır)
 
   const [lang, setLang] = useSoLang();
   const texts = useMemo(() => [...Object.values(S), branchLabel], [branchLabel]);
@@ -185,15 +190,22 @@ export function SoVideoRoom({
 
   useEffect(() => () => { try { recRef.current?.stop(); } catch {} }, []);
 
-  // ── VAD (ses aktivitesi algılama): herhangi bir taraftan İLK konuşma sesinde AI'ı otomatik başlat (M2 ile aynı) ──
+  // ── VAD (ses aktivitesi algılama): İLK konuşma sesinde AI'ları otomatik başlat (M2 ile aynı desen) ──
+  // İKİ AYRI tek-atım: transkript HERHANGİ taraftan; tercüman YALNIZ YEREL sesten (tek-sıçrama:
+  // oturum KENDİ konuşmamı çevirir — karşının sesi benim Gemini oturumumu açmamalı).
   useEffect(() => {
-    if (!joined || phase === "ended" || firstSoundRef.current) return;
+    // Tercüman tetiği yalnız kart render edilebiliyorken anlamlı (diller farklı + mikrofon var);
+    // değilse yalnız transkript tetiği beklenir — döngü onunla kapanır (sonsuz rAF/Analyser kalmaz).
+    const interpNeeded = langsDiffer && hasMicAudio;
+    const done = () => firstSoundRef.current && (firstLocalSoundRef.current || !interpNeeded);
+    if (!joined || phase === "ended" || done()) return;
     let cancelled = false;
     let raf = 0;
     let ctx: AudioContext | null = null;
     const attached = new WeakSet<MediaStream>();
-    const metered: { an: AnalyserNode; buf: Uint8Array<ArrayBuffer> }[] = [];
-    let hot = 0;
+    const metered: { an: AnalyserNode; buf: Uint8Array<ArrayBuffer>; isLocal: boolean }[] = [];
+    let hotAny = 0;
+    let hotLocal = 0;
     const THRESH = 0.045;
     const NEED = 4;
 
@@ -205,35 +217,39 @@ export function SoVideoRoom({
       }
       return ctx;
     };
-    const attach = (stream: MediaStream | null) => {
+    const attach = (stream: MediaStream | null, isLocal: boolean) => {
       if (!stream || attached.has(stream) || stream.getAudioTracks().length === 0) return;
       try {
         const c = ensureCtx();
         const src = c.createMediaStreamSource(stream);
         const an = c.createAnalyser(); an.fftSize = 256;
         src.connect(an);
-        metered.push({ an, buf: new Uint8Array(an.fftSize) });
+        metered.push({ an, buf: new Uint8Array(an.fftSize), isLocal });
         attached.add(stream);
       } catch {}
     };
     const tick = () => {
       if (cancelled) return;
-      attach(localStreamRef.current);
-      attach((remoteVideoRef.current?.srcObject as MediaStream | null) ?? null);
-      let loud = false;
+      attach(localStreamRef.current, true);
+      attach((remoteVideoRef.current?.srcObject as MediaStream | null) ?? null, false);
+      let loudAny = false, loudLocal = false;
       for (const m of metered) {
         m.an.getByteTimeDomainData(m.buf);
         let sum = 0;
         for (let i = 0; i < m.buf.length; i++) { const v = (m.buf[i] - 128) / 128; sum += v * v; }
-        if (Math.sqrt(sum / m.buf.length) > THRESH) { loud = true; break; }
+        if (Math.sqrt(sum / m.buf.length) > THRESH) { loudAny = true; if (m.isLocal) loudLocal = true; }
       }
-      hot = loud ? hot + 1 : 0;
-      if (hot >= NEED) {
+      hotAny = loudAny ? hotAny + 1 : 0;
+      hotLocal = loudLocal ? hotLocal + 1 : 0;
+      if (hotAny >= NEED && !firstSoundRef.current) {
         firstSoundRef.current = true;
         setSttOn(true);
-        if (langsDiffer) setInterpAutoStart(true);
-        return;
       }
+      if (hotLocal >= NEED && !firstLocalSoundRef.current) {
+        firstLocalSoundRef.current = true;
+        if (langsDiffer) setInterpAutoStart(true);
+      }
+      if (done()) return;
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -242,7 +258,7 @@ export function SoVideoRoom({
       if (raf) cancelAnimationFrame(raf);
       ctx?.close().catch(() => {});
     };
-  }, [joined, phase, langsDiffer]);
+  }, [joined, phase, langsDiffer, hasMicAudio]);
 
   useEffect(() => {
     if (!joined || ended) return;
@@ -344,6 +360,7 @@ export function SoVideoRoom({
       localStreamRef.current = stream;
       setCamOn(hasVideo);
       setMicOn(hasAudio);
+      setHasMicAudio(hasAudio); // tercüman kartı yalnız mikrofon varken (tek-sıçrama: kaynak kendi sesi)
       if (!hasVideo) setErrMsg(hasAudio ? "Kamera yok — sesli katıldınız; karşı tarafı görebilirsiniz." : `Kamera/mikrofon yok — yalnızca izleme. [${lastErr || "cihaz yok"}]`);
       if (stream && localVideoRef.current) { localVideoRef.current.srcObject = stream; localVideoRef.current.play().catch(() => {}); }
 
@@ -352,10 +369,15 @@ export function SoVideoRoom({
       const pc = new RTCPeerConnection({ iceServers });
       pcRef.current = pc;
       if (stream) stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+      // Tercüman canlıyken pc yeniden kurulduysa çeviri track'ini yeni sender'a yeniden uygula
+      // (ConsultationRoom ile aynı desen — UI "canlı" derken karşıya sessizce ham gitmesin).
+      if (translationTrackRef.current) applyTranslationTrack(translationTrackRef.current);
       if (!hasVideo) { try { pc.addTransceiver("video", { direction: "recvonly" }); } catch {} }
       if (!hasAudio) { try { pc.addTransceiver("audio", { direction: "recvonly" }); } catch {} }
       pc.ontrack = (e) => {
-        if (remoteVideoRef.current) { remoteVideoRef.current.srcObject = e.streams[0]; remoteVideoRef.current.play().catch(() => {}); }
+        // Autoplay reddi → "Sesi aç" butonu (ConsultationRoom aynası; tek-sıçramada karşının ÇEVİRİSİ
+        // de bu elementten gelir → bu kurtarma çeviri sesi için de tek yoldur).
+        if (remoteVideoRef.current) { remoteVideoRef.current.srcObject = e.streams[0]; remoteVideoRef.current.play().then(() => setRemoteAudioBlocked(false)).catch(() => setRemoteAudioBlocked(true)); }
         setRemoteOn(true);
       };
       pc.onicecandidate = (e) => { if (e.candidate) send("ice", e.candidate.toJSON()); };
@@ -386,7 +408,26 @@ export function SoVideoRoom({
   }, [joined, ended, roomId, selfRole]);
 
   function toggleCam() { const t = localStreamRef.current?.getVideoTracks()[0]; if (t) { t.enabled = !t.enabled; setCamOn(t.enabled); } }
+  // Not: toggleMic yalnız enabled bayrağını çevirir → tercüman canlıyken Gemini'ye de sessizlik gider (istenen).
   function toggleMic() { const t = localStreamRef.current?.getAudioTracks()[0]; if (t) { t.enabled = !t.enabled; setMicOn(t.enabled); } }
+
+  // Uzak sesi kullanıcı jestiyle aç (autoplay reddini aşar) — ConsultationRoom aynası.
+  function enableRemoteAudio() {
+    const el = remoteVideoRef.current; if (!el) return;
+    el.muted = false;
+    el.play().then(() => setRemoteAudioBlocked(false)).catch(() => setRemoteAudioBlocked(true));
+  }
+
+  // DEĞİŞMEZ (tek-sıçrama): audio sender'da her an ya micTrack ya translationTrack vardır; tercüman
+  // "live" dışındaki HER duruma girişte micTrack'e dönülmüş olmalı (FAIL-OPEN). track=null → mikrofona dön.
+  function applyTranslationTrack(track: MediaStreamTrack | null) {
+    translationTrackRef.current = track;
+    const pc = pcRef.current;
+    if (!pc || pc.connectionState === "closed") return;
+    const sender = pc.getSenders().find((s) => s.track?.kind === "audio");
+    const mic = localStreamRef.current?.getAudioTracks()[0] ?? null;
+    try { sender?.replaceTrack(track ?? mic)?.catch(() => {}); } catch {}
+  }
 
   async function hangUp() {
     try {
@@ -450,6 +491,12 @@ export function SoVideoRoom({
         <div className="absolute inset-0 bg-[var(--c-bg-deep)]">
           {/* Uzak taraf (gerçek video) — tüm alanı doldurur */}
           <video ref={remoteVideoRef} autoPlay playsInline className="h-full w-full object-cover" />
+          {/* Uzak ses autoplay ile engellendiyse jestle aç — çeviri de bu elementten gelir (ayna: ConsultationRoom) */}
+          {remoteOn && remoteAudioBlocked && (
+            <button onClick={enableRemoteAudio} className="absolute left-1/2 top-14 z-20 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-[var(--c-ink)]/90 px-3 py-1.5 text-xs font-semibold text-[var(--c-bg)] shadow-lg ring-1 ring-black/5 hover:bg-white">
+              <Volume2 size={14} /> {t(S.enableAudio)}
+            </button>
+          )}
           {!remoteOn && (
             <div className="absolute inset-0 grid place-items-center text-[var(--c-ink-3)]">
               <div className="text-center"><UserRound size={40} className="mx-auto" /><p className="mt-2 text-xs">{remoteName} {t(S.waitingFor)}</p></div>
@@ -488,18 +535,19 @@ export function SoVideoRoom({
             <p className="mt-2 text-xs text-[var(--c-ink-3)]">{t(S.title)}</p>
           </div>
 
-          {/* AI Canlı Tercüman (Gemini) — yalnız diller farklıysa (aynı dilde gereksiz + karşı sesi kısar);
-              ilk konuşma sesinde otomatik başlar (başlat düğmesi yok). */}
-          {langsDiffer && (
+          {/* AI Canlı Tercüman (Gemini) — tek-sıçrama: konuşan KENDİ mikrofonunu KARŞININ diline
+              çevirtir (targetLang eski mimarinin TERSİ); çeviri replaceTrack ile karşıya gider.
+              Yalnız diller farklı + mikrofon varken; ilk YEREL konuşmada otomatik başlar. */}
+          {langsDiffer && hasMicAudio && (
             <LiveInterpreter
               lang={isDoctor ? "Türkçe" : lang}
-              targetLang={isDoctor ? "tr" : (SPEECH_LANG[patientLang]?.split("-")[0] ?? "en")}
-              targetLabel={isDoctor ? "Türkçe" : patientLang}
-              otherLabel={isDoctor ? patientLang : "Türkçe"}
+              targetLang={isDoctor ? (SPEECH_LANG[patientLang]?.split("-")[0] ?? "en") : "tr"}
+              targetLabel={isDoctor ? patientLang : "Türkçe"}
               autoMode={langsDiffer}
               autoStart={interpAutoStart}
-              getRemoteStream={() => (remoteVideoRef.current?.srcObject as MediaStream | null) ?? null}
-              onMuteRemote={(m) => { if (remoteVideoRef.current) remoteVideoRef.current.muted = m; }}
+              getLocalStream={() => localStreamRef.current}
+              onTranslationTrack={applyTranslationTrack}
+              patientConsentNote={!isDoctor}
             />
           )}
 

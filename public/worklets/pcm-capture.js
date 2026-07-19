@@ -1,7 +1,7 @@
 // PCM yakalama worklet'i (v6.29.2) — ScriptProcessorNode'un düşük-gecikmeli, AYRI iş-parçacığı karşılığı.
-// Gelen ses render-quantum'larını (128 örnek) 16 kHz Int16 PCM'e indirir ve ~20 ms'lik gruplar halinde
-// ana iş parçacığına TRANSFER eder (kopyasız). Böylece eski 4096-örnek (~256 ms) blok tamponu ~20 ms'ye
-// iner + UI (React) iş parçacığı jitter'ı ortadan kalkar.
+// KENDİ mikrofon sesinin render-quantum'larını (128 örnek) 16 kHz Int16 PCM'e indirir ve ~20 ms'lik
+// gruplar halinde ana iş parçacığına TRANSFER eder (kopyasız). Böylece eski 4096-örnek (~256 ms) blok
+// tamponu ~20 ms'ye iner + UI (React) iş parçacığı jitter'ı ortadan kalkar.
 //
 // PHI: yalnız ham ses baytları taşınır (zaten görüşmenin canlı sesi); metin/transkript/log YOK.
 // Düz tarayıcı JS'idir (public/ altından HAM servis edilir; import/TS yok — addModule ile yüklenir).

@@ -5,8 +5,8 @@ import { getCurrentUser } from "@/lib/auth";
 // Mimari: ham GEMINI_API_KEY sunucuda kalır; tarayıcı yalnız kısa ömürlü token'la Gemini'ye
 // WebSocket açar (Google'ın üretim için önerdiği yöntem). Anahtar yoksa özellik sessizce kapalı.
 //
-// İSKELET AŞAMASI: token üretimi + durum hazır. Tarayıcı ses akışı (mic→Gemini→hoparlör)
-// kullanıcı onayından sonraki adımda LiveInterpreter bileşenine eklenecek.
+// Tek-sıçrama mimarisi (feat/tercuman-tek-sicrama): KONUŞAN kendi mikrofonunu KARŞININ diline
+// çevirtir (targetLang = karşının dili); çeviri sesi WebRTC replaceTrack ile karşıya gider.
 
 export const LIVE_TRANSLATE_MODEL = "gemini-3.5-live-translate-preview";
 
