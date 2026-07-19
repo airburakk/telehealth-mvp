@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLiveTick } from "@/lib/use-live-tick";
 import { Users, ClipboardCheck, HeartHandshake, Video, CircleCheck } from "lucide-react";
 import { AuraSpinner } from "@/components/PortamedLogo";
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
@@ -53,15 +54,14 @@ function WaitingInner() {
   const { t } = useT(lang, texts);
   const dir = langDir(lang);
 
-  useEffect(() => {
-    if (!caseId) return;
-    let alive = true;
-    const tick = async () => {
+  // Canlı durum (v6.28): Ably "live:free-care" dürtüsü + adaptif güvenlik-ağı (Ably yoksa eski 3sn).
+  useLiveTick(
+    "free-care",
+    async () => {
       try {
         const r = await fetch(`/api/free-care/waiting?caseId=${caseId}`);
         if (!r.ok) return;
         const d = await r.json();
-        if (!alive) return;
         if (d.status === "MATCHED" && d.consultationId) {
           router.push(`/gorusme/${d.consultationId}`);
           return;
@@ -74,11 +74,9 @@ function WaitingInner() {
       } catch {
         /* ağ hatası — sonraki tick tekrar dener */
       }
-    };
-    tick();
-    const iv = setInterval(tick, 3000);
-    return () => { alive = false; clearInterval(iv); };
-  }, [caseId, router]);
+    },
+    !!caseId,
+  );
 
   if (!caseId) {
     return <p dir={dir} lang={LANG_BCP47[lang]} className="text-sm text-[var(--c-ink-2)]">{t(S.invalid)}</p>;

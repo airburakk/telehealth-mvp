@@ -3,6 +3,7 @@
 // Bekleme havuzu türetilir: Case{freeCare,freeCareStatus:"WAITING"} ↔ Doctor{freeCareState:"AVAILABLE"}.
 import { db } from "./db";
 import { notifyUser } from "./notify";
+import { publishLiveNudge } from "./ably-server";
 
 // Etiketler istemci-güvenli ayrı dosyada (bu modül notify/push'a bağlı → client bundle'a girmemeli).
 export { FREE_CARE_STATES, DOCTOR_FC_STATES } from "./free-care-labels";
@@ -83,6 +84,7 @@ export async function pairCaseWithDoctor(caseId: string, doctorId: string): Prom
           href: `/gorusme/${result.consultationId}`,
         });
       }
+      await publishLiveNudge("free-care"); // bekleme odası + doktor konsolu anında tazelensin (v6.28)
     }
     return result;
   } catch (e) {
@@ -144,6 +146,7 @@ export async function setDoctorAvailable(doctorId: string, available: boolean): 
   } else {
     await db.doctor.update({ where: { id: doctorId }, data: { freeCareState: "OFFLINE" } });
   }
+  await publishLiveNudge("free-care"); // çevrimiçi gönüllü sayısı değişti (v6.28)
 }
 
 // Görüşme sonrası doktoru serbest bırak (IN_SESSION → OFFLINE). Sonraki hasta için tekrar "Müsait ol".
@@ -152,6 +155,7 @@ export async function releaseDoctor(doctorId: string): Promise<void> {
     where: { id: doctorId, freeCareState: "IN_SESSION" },
     data: { freeCareState: "OFFLINE" },
   });
+  await publishLiveNudge("free-care"); // doktor durumu değişti (v6.28)
 }
 
 // Bekleyen vaka sayısı (doktor konsolu göstergesi)

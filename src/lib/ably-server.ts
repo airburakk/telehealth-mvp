@@ -23,15 +23,37 @@ export function ablyConfigured(): boolean {
 
 // İstemci için kanala-özel token isteği (createTokenRequest) — YALNIZ o kanala ABONE yetkisi.
 // clientId = userId (Ably tarafında kimlik). Yayınlama sunucuda yapıldığından istemciye publish verilmez.
+// channelName TAM kanal adıdır ("sig:<id>" | "live:<topic>") — önek çağıranda kurulur (token route).
 // Döner: JSON-serileştirilebilir TokenRequest (istemci Ably.Realtime authUrl'inden alır) veya null (anahtarsız).
-export async function createAblyTokenRequest(userId: string, channelId: string): Promise<object | null> {
+export async function createAblyTokenRequest(userId: string, channelName: string): Promise<object | null> {
   const client = rest();
   if (!client) return null;
   return client.auth.createTokenRequest({
     clientId: userId,
-    capability: JSON.stringify({ [signalChannel(channelId)]: ["subscribe"] }),
+    capability: JSON.stringify({ [channelName]: ["subscribe"] }),
     ttl: 15 * 60 * 1000, // 15 dk — logout-all (JWT iptali) sonrası kanal-dinleme penceresini daraltır; SDK bitmeden authUrl'den yeniler (iptal edilmiş oturumda yenileme 401 → abonelik düşer)
   });
+}
+
+// ── Canlı-durum dürtü kanalları (v6.28) ──────────────────────────────────────────────
+// UI polling'i (bekleme odası / nöbet paneli / ücretsiz-bakım konsolu) için "şimdi yenile" dürtüsü.
+// Olay İÇERİKSİZDİR: kanala hiçbir veri/PHI çıkmaz (yalnız zaman damgası) — veri daima auth'lu API
+// fetch'iyle gelir (sinyalleşmedeki "transkript DB-only" kararıyla aynı ilke). Best-effort: Ably
+// yok/hatalıysa sessizce geçer; istemcinin güvenlik-ağı polling'i durumu yine taşır.
+export type LiveTopic = "free-care" | "duty";
+
+export function liveChannel(topic: LiveTopic): string {
+  return `live:${topic}`;
+}
+
+export async function publishLiveNudge(topic: LiveTopic): Promise<void> {
+  const client = rest();
+  if (!client) return;
+  try {
+    await client.channels.get(liveChannel(topic)).publish("nudge", { at: Date.now() });
+  } catch {
+    // yayın başarısız → istemci polling güvenlik ağı taşır
+  }
 }
 
 // Bir sinyal mesajını Ably kanalına yayınla (offer/answer/ice/bye — PHI DEĞİL). Transkript ASLA

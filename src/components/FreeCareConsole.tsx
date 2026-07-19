@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLiveTick } from "@/lib/use-live-tick";
 import { countryFlag, urgencyStyle, formatDateTime } from "@/lib/constants";
 import { FREE_CARE_STATES } from "@/lib/free-care-labels";
 import { HeartHandshake, Loader2, Power, Users, Award, Stethoscope, CheckCircle2, Activity, Radio } from "lucide-react";
@@ -42,16 +43,15 @@ export function FreeCareConsole({
   const [waiting, setWaiting] = useState(initialWaiting);
   const [busy, setBusy] = useState(false);
 
-  // Müsaitken eşleşme için poll; eşleşince görüşme odasına yönlendirir.
-  useEffect(() => {
-    if (!available) return;
-    let alive = true;
-    const tick = async () => {
+  // Müsaitken canlı durum (v6.28): Ably "live:free-care" dürtüsü + adaptif güvenlik-ağı (Ably yoksa
+  // eski 3sn) — eşleşince görüşme odasına yönlendirir.
+  useLiveTick(
+    "free-care",
+    async () => {
       try {
         const r = await fetch("/api/free-care/doctor-feed");
         if (!r.ok) return;
         const d = await r.json();
-        if (!alive) return;
         setWaiting(d.waitingCount ?? 0);
         if (d.quota) setQuota(d.quota);
         if (d.consultationId) { router.push(`/gorusme/${d.consultationId}`); return; }
@@ -59,11 +59,9 @@ export function FreeCareConsole({
       } catch {
         /* ağ hatası — sonraki tick tekrar dener */
       }
-    };
-    tick();
-    const iv = setInterval(tick, 3000);
-    return () => { alive = false; clearInterval(iv); };
-  }, [available, router]);
+    },
+    available,
+  );
 
   async function toggle(next: boolean) {
     setBusy(true);

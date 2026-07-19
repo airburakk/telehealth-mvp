@@ -38,3 +38,31 @@ export function connectAblySignal(
     live: () => connected,
   };
 }
+
+// Canlı-durum dürtü aboneliği (v6.28) — "live:<topic>" kanalındaki İÇERİKSİZ "nudge" olayını dinler.
+// Olay verisi kullanılmaz (PHI Ably'ye çıkmaz); çağıran dürtüde kendi auth'lu fetch'ini tetikler.
+// Bağlanamazsa sessizce ölür → çağıranın polling güvenlik ağı taşır; live() poll hızını ayarlar.
+export function connectLiveNudge(
+  channelName: string, onNudge: () => void,
+): { close: () => void; live: () => boolean } {
+  let client: Ably.Realtime | null = null;
+  let connected = false;
+  try {
+    client = new Ably.Realtime({
+      authUrl: `/api/realtime/ably-token?channel=${encodeURIComponent(channelName)}`,
+    });
+    const conn = client.connection;
+    conn.on("connected", () => { connected = true; });
+    conn.on("failed", () => { connected = false; });
+    conn.on("disconnected", () => { connected = false; });
+    conn.on("suspended", () => { connected = false; });
+    conn.on("closed", () => { connected = false; });
+    client.channels.get(channelName).subscribe("nudge", () => onNudge());
+  } catch {
+    connected = false;
+  }
+  return {
+    close: () => { try { client?.close(); } catch {} },
+    live: () => connected,
+  };
+}

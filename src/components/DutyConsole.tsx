@@ -3,8 +3,9 @@
 // Klinik Nöbet Konsolu (doktor, TR) — 3-seçenek kapısının doktor tarafı.
 // Branş kliniği çevrimiçi (gerçek-zaman) · İcap açık (offline randevu) · Nöbetçi (7/24 genel).
 // Çevrimiçi/Nöbetçiyken poll: Nöbetçi olarak kapılırsan görüşmeye yönlendirir; İcap açıkken gelen randevu taleplerini gösterir.
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useLiveTick } from "@/lib/use-live-tick";
 import { countryFlag, urgencyStyle, formatDateTime } from "@/lib/constants";
 import { Radio, Power, Loader2, ShieldPlus, CalendarClock, Send, Activity, Users } from "lucide-react";
 import type { DutyRequest } from "@/lib/clinical-duty";
@@ -24,25 +25,22 @@ export function DutyConsole({ initial, initialRequests }: { initial: DutyState; 
 
   const active = duty.onCall || duty.state !== "OFFLINE" || duty.sentinel;
 
-  // Çevrimiçi/İcap/Nöbetçiyken poll: eşleşme (görüşme) + gelen randevu talepleri.
-  useEffect(() => {
-    if (!active) return;
-    let alive = true;
-    const tick = async () => {
+  // Çevrimiçi/İcap/Nöbetçiyken canlı durum (v6.28): Ably "live:duty" dürtüsü + adaptif güvenlik-ağı
+  // (Ably yoksa eski 3sn) — eşleşme (görüşme) + gelen randevu talepleri.
+  useLiveTick(
+    "duty",
+    async () => {
       try {
         const r = await fetch("/api/clinical/duty");
         if (!r.ok) return;
         const d = await r.json();
-        if (!alive) return;
         if (d.consultationId) { router.push(`/gorusme/${d.consultationId}`); return; }
         if (d.state) setDuty({ state: d.state, onCall: !!d.onCall, sentinel: !!d.sentinel, branch: d.branch ?? duty.branch });
         if (Array.isArray(d.requests)) setRequests(d.requests);
       } catch { /* ağ — sonraki tick */ }
-    };
-    tick();
-    const iv = setInterval(tick, 3000);
-    return () => { alive = false; clearInterval(iv); };
-  }, [active, router, duty.branch]);
+    },
+    active,
+  );
 
   const patch = useCallback(async (body: Record<string, unknown>, key: string) => {
     setBusy(key);

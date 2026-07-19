@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
 import { getCurrentUser } from "@/lib/auth";
 import { matchForCase } from "@/lib/free-care";
+import { publishLiveNudge } from "@/lib/ably-server";
 import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField } from "@/lib/crypto";
 import { stampPatientProfile } from "@/lib/patient-journey";
@@ -54,6 +55,7 @@ export async function POST(req: Request) {
     phone: contact.phone, contactPref: contact.contactPreference,
   });
   const match = await matchForCase(created.id);
+  await publishLiveNudge("free-care"); // kuyruk uzadı → doktor konsolları waitingCount'u tazelesin (v6.28)
   return NextResponse.json(
     { caseId: created.id, consultationId: match?.consultationId ?? null },
     { status: 201 },

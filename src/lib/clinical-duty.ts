@@ -7,6 +7,7 @@ import { decryptField } from "./crypto";
 import { rankDoctorsByQuality } from "./match-score"; // CRM kalite indikatörleri (rating/ücretsiz sağlık hizmeti/icap dönüş)
 import { notifyUser, type NotifyInput } from "./notify";
 import { formatDateTime } from "./constants";
+import { publishLiveNudge } from "./ably-server";
 
 // ───────────────────────── Kapı (gate) müsaitlik kararı ─────────────────────────
 
@@ -70,6 +71,7 @@ export async function claimSentinelForCase(caseId: string): Promise<SentinelResu
           href: `/gorusme/${r.consultationId}`,
         });
       }
+      await publishLiveNudge("duty"); // kapılan Nöbetçinin konsolu görüşmeye yönlensin (v6.28)
       return r;
     }
   }
@@ -131,6 +133,7 @@ export async function requestIcapciAppointment(caseId: string): Promise<boolean>
       });
     }
   }
+  await publishLiveNudge("duty"); // İcapçı panellerinde talep listesi tazelensin (v6.28)
   return true;
 }
 
@@ -159,6 +162,7 @@ export async function offerAppointment(caseId: string, doctorId: string, propose
       href: `/triyaj/${caseId}`,
     });
   }
+  await publishLiveNudge("duty"); // talep diğer İcapçı panellerinden düşsün (v6.28)
   return "OK";
 }
 
@@ -180,6 +184,7 @@ export async function respondAppointment(caseId: string, action: "accept" | "req
         href: "/doktor",
       });
     }
+    await publishLiveNudge("duty"); // doktor panelinde talep durumu tazelensin (v6.28)
     return "CONFIRMED";
   }
 
@@ -192,6 +197,7 @@ export async function respondAppointment(caseId: string, action: "accept" | "req
       href: "/doktor",
     });
   }
+  await publishLiveNudge("duty"); // doktor panelinde talep durumu tazelensin (v6.28)
   return "CHANGE_REQUESTED";
 }
 
@@ -245,7 +251,10 @@ export async function setClinicalDuty(doctorId: string, patch: DutyPatch): Promi
     data.clinicalState = patch.clinicalState;
     if (patch.clinicalState === "ONLINE") data.clinicalAvailableAt = new Date();
   }
-  if (Object.keys(data).length) await db.doctor.update({ where: { id: doctorId }, data });
+  if (Object.keys(data).length) {
+    await db.doctor.update({ where: { id: doctorId }, data });
+    await publishLiveNudge("duty"); // nöbet/müsaitlik durumu değişti (v6.28)
+  }
 }
 
 // Görüşme sonrası doktoru serbest bırak: IN_SESSION → Nöbetçi ise ONLINE (7/24 sürer), değilse OFFLINE.
@@ -256,6 +265,7 @@ export async function releaseClinicalDoctor(doctorId: string): Promise<void> {
     where: { id: doctorId },
     data: d.sentinel ? { clinicalState: "ONLINE", clinicalAvailableAt: new Date() } : { clinicalState: "OFFLINE" },
   });
+  await publishLiveNudge("duty"); // doktor tekrar müsait/çevrimdışı (v6.28)
 }
 
 export interface DutyRequest {
