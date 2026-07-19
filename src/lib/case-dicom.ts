@@ -1,6 +1,8 @@
 // Belirli demo vakalara bağlı DICOM çalışmaları — doktor kokpitinde (vaka detayı) "Görüntüle" ile açılır.
 // Gerçek dosya depolama (S3) gelene kadar: çalışmalar public/dicom/ altında statik; vakaya kod ile eşlenir.
-// Not: caseId'ler paylaşılan Neon seed'ine göre sabittir; veritabanı yeniden seed edilirse bu eşleme güncellenmeli.
+// Dayanıklılık (2026-07-19): seed.ts DICOM'lu 4 demo vakaya SABİT id verir (demo-dicom-*) → yeniden
+// seed'de eşleme kopmaz. Eski cuid satırları üretim DB'sindeki mevcut kayıtlar için KORUNUR (prod
+// yeniden seed edilmedi); elle girilmiş prod vakalarının cuid'leri de listede yaşamaya devam eder.
 export interface DicomStudy { url: string; label: string; modality: string }
 
 const TORAKS: DicomStudy = { url: "/dicom/toraks-bt.dcm", label: "Toraks BT", modality: "CT" };
@@ -10,6 +12,12 @@ const BATIN: DicomStudy = { url: "/dicom/batin-bt.dcm", label: "Batın BT", moda
 const PELVIK: DicomStudy = { url: "/dicom/pelvik-usg.dcm", label: "Pelvik USG", modality: "US" };
 
 const BY_CASE: Record<string, DicomStudy[]> = {
+  // Sabit seed id'leri (yeniden-seed'e dayanıklı — prisma/seed.ts CASES)
+  "demo-dicom-karim-b": [TORAKS, BATIN], // Karim B. · Onkoloji — evreleme, çoklu çalışma
+  "demo-dicom-dmitry-k": [TORAKS], // Dmitry K. · Kardiyoloji
+  "demo-dicom-ahmed-m": [DIZ], // Ahmed M. · Ortopedi
+  "demo-dicom-aigerim-t": [PELVIK], // Aigerim T. · Tüp Bebek (IVF)
+  // Eski/elle girilmiş üretim kayıtları (cuid — prod yeniden seed edilmediği sürece geçerli)
   cmqfjlc380000l204t7yd7k5q: [TORAKS], // karim · Kardiyoloji
   cmpzr0k81000vuae4xi6ixjrm: [TORAKS, BATIN], // Karim B. · Onkoloji — toraks + batın (evreleme, çoklu çalışma)
   cmpzr0kfo0013uae46u686s7o: [TORAKS], // Dmitry K. · Kardiyoloji

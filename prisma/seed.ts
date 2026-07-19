@@ -40,15 +40,22 @@ const DOCTORS = [
   { name: "Filiz Aydın", title: "Doç. Dr.", branch: "Radyasyon Onkolojisi", city: "Ankara", languages: "Türkçe,Rusça", color: "#7e22ce", bio: "Modern radyoterapi (IMRT/SBRT) ve onkolojik tedavi." },
 ];
 
-const CASES = [
+const CASES: {
+  patientName: string; country: string; language: string; symptoms: string;
+  durationText: string; attachments: string; assign: boolean;
+  /** Sabit id (opsiyonel): DICOM demo eşlemesi (lib/case-dicom.ts BY_CASE) yeniden-seed'de
+      kopmasın diye — cuid yerine deterministik id yazılır. YALNIZ demo verisi; üretim akışı
+      hiçbir zaman elle id vermez. */
+  id?: string;
+}[] = [
   // ⚠️ Kulvar-metin tutarlılığı (2026-07-17, kullanıcı bulgusu): bu liste TELEHEALTH vakası üretir —
   // şikayet metinlerinde "ikinci görüş" İFADESİ kullanılmaz (İkinci Görüş AYRI kulvar/modeldir;
   // kartta "Uzaktan Sağlık" rozetiyle çelişip demoyu yanıltıyordu). SO örneği aşağıda ayrıca eklenir.
-  { patientName: "Karim B.", country: "DZ", language: "Arapça", symptoms: "Babamda akciğer kanseri şüphesi var. Biyopsi sonucu çıktı, uzman değerlendirmesi ve tedavi planı istiyoruz.", durationText: "2 ay", attachments: "akciger-BT.pdf,biyopsi-raporu.pdf", assign: false },
+  { id: "demo-dicom-karim-b", patientName: "Karim B.", country: "DZ", language: "Arapça", symptoms: "Babamda akciğer kanseri şüphesi var. Biyopsi sonucu çıktı, uzman değerlendirmesi ve tedavi planı istiyoruz.", durationText: "2 ay", attachments: "akciger-BT.pdf,biyopsi-raporu.pdf", assign: false },
   { patientName: "Olga P.", country: "RU", language: "Rusça", symptoms: "Saç dökülmesi son aylarda çok arttı, ön bölge açıldı. FUE saç ekimi düşünüyorum.", durationText: "1 yıl", attachments: "sac-fotograf.jpg", assign: false },
-  { patientName: "Aigerim T.", country: "KZ", language: "Kazakça", symptoms: "3 yıldır çocuğumuz olmuyor, tüp bebek (IVF) tedavisi araştırıyoruz. Hormon tahlillerimiz mevcut.", durationText: "3 yıl", attachments: "hormon-paneli.pdf", assign: true },
-  { patientName: "Ahmed M.", country: "LY", language: "Arapça", symptoms: "Dizimde menisküs yırtığı var, MR çektirdim. Protez gerekebilir dediler, ortopedi görüşü istiyorum.", durationText: "6 ay", attachments: "diz-MR.pdf", assign: false },
-  { patientName: "Dmitry K.", country: "RU", language: "Rusça", symptoms: "Şiddetli göğüs ağrısı, nefes darlığı ve çarpıntı şikayetim var. Tansiyonum yüksek.", durationText: "3 gün", attachments: "", assign: false },
+  { id: "demo-dicom-aigerim-t", patientName: "Aigerim T.", country: "KZ", language: "Kazakça", symptoms: "3 yıldır çocuğumuz olmuyor, tüp bebek (IVF) tedavisi araştırıyoruz. Hormon tahlillerimiz mevcut.", durationText: "3 yıl", attachments: "hormon-paneli.pdf", assign: true },
+  { id: "demo-dicom-ahmed-m", patientName: "Ahmed M.", country: "LY", language: "Arapça", symptoms: "Dizimde menisküs yırtığı var, MR çektirdim. Protez gerekebilir dediler, ortopedi görüşü istiyorum.", durationText: "6 ay", attachments: "diz-MR.pdf", assign: false },
+  { id: "demo-dicom-dmitry-k", patientName: "Dmitry K.", country: "RU", language: "Rusça", symptoms: "Şiddetli göğüs ağrısı, nefes darlığı ve çarpıntı şikayetim var. Tansiyonum yüksek.", durationText: "3 gün", attachments: "", assign: false },
 
   // ── Branş/ülke çeşitliliği için ek demo vakalar (kuyruk + hekim dizini + operasyon paneli zenginleşir) ──
   { patientName: "James W.", country: "GB", language: "İngilizce", symptoms: "Her iki gözümde yüksek miyop var, kalın gözlük kullanıyorum. Lasik lazer tedavisi ile görme kusurumdan kurtulmak istiyorum.", durationText: "2 yıl", attachments: "goz-muayene.pdf", assign: true },
@@ -165,6 +172,7 @@ async function main() {
     const matchDoctor = doctors.find((doc) => doc.branch === a.branch);
     const created = await db.case.create({
       data: {
+        ...(c.id ? { id: c.id } : {}), // sabit demo id — DICOM eşlemesi yeniden-seed'de kopmasın
         userId: patientUser?.id ?? null, // demo vakalar demo hastaya ait (hasta↔vaka sahipliği)
         patientName: c.patientName,
         country: c.country,
