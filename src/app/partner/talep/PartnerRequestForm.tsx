@@ -51,6 +51,7 @@ export function PartnerRequestForm({
   defaultBranch,
   t,
   dir,
+  langCode,
 }: {
   branches: string[];
   countries: { code: string; name: string; flag: string }[];
@@ -59,6 +60,8 @@ export function PartnerRequestForm({
   defaultBranch: string | null;
   t: FormStrings;
   dir: "rtl" | "ltr";
+  /** BCP-47 dil kodu — :lang() font bağları (v6.9; denetim #27). */
+  langCode?: string;
 }) {
   const router = useRouter();
   const [branchLimited, setBranchLimited] = useState<boolean>(!!defaultBranch);
@@ -114,7 +117,7 @@ export function PartnerRequestForm({
   }
 
   return (
-    <div dir={dir} className="mx-auto max-w-2xl px-5 py-8">
+    <div dir={dir} lang={langCode} className="mx-auto max-w-2xl px-5 py-8">
       <button onClick={() => router.push("/partner")} className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
         <ArrowLeft size={15} /> {t.back}
       </button>

@@ -7,7 +7,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { PortamedLogo } from "@/components/PortamedLogo";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/components/useT";
-import { langDir } from "@/lib/constants";
+import { langDir, LANG_BCP47 } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
 import { isImmersiveCallPath } from "@/lib/immersive-routes";
 import { LANG_CODES } from "@/lib/aura-landing/copy";
@@ -81,7 +81,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
   // (color-mix + blur), pill yerine metin sekmeleri (aktif = turkuaz), mono rol etiketi,
   // durak-noktalı giriş CTA'sı. Davranış (rol bazlı nav, logout, bildirim) DEĞİŞMEDİ.
   return (
-    <header dir={dir} className="theme-dark sticky top-0 z-30 border-b border-[var(--c-hairline)] bg-[color-mix(in_srgb,var(--c-bg)_82%,transparent)] backdrop-blur-md">
+    <header dir={dir} lang={LANG_BCP47[lang]} className="theme-dark sticky top-0 z-30 border-b border-[var(--c-hairline)] bg-[color-mix(in_srgb,var(--c-bg)_82%,transparent)] backdrop-blur-md">
       <div className="mx-auto max-w-6xl px-5 h-16 flex items-center justify-between gap-4">
         {/* Marka altyazısı ("Sağlık Turizmi & Teletıp") kullanıcı isteğiyle kaldırıldı (2026-07-12) — yalnız logo */}
         <Link href="/" className="flex items-end">

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { LANGUAGES, COUNTRIES, langDir } from "@/lib/constants";
+import { LANGUAGES, COUNTRIES, langDir, LANG_BCP47 } from "@/lib/constants";
 import { getTranslations } from "@/lib/i18n";
 import { BRANCHES } from "@/lib/triage";
 import { PartnerRequestForm } from "./PartnerRequestForm";
@@ -59,6 +59,7 @@ export default async function PartnerRequestPage() {
       defaultBranch={partner.branch}
       t={t}
       dir={langDir(lang)}
+      langCode={LANG_BCP47[lang]}
     />
   );
 }

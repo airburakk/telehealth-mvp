@@ -17,7 +17,7 @@ import { JourneyStageRail } from "@/components/JourneyStageRail";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
 import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
-import { COUNTRIES, countryName, langDir } from "@/lib/constants";
+import { COUNTRIES, countryName, langDir, LANG_BCP47 } from "@/lib/constants";
 import { BRANCHES } from "@/lib/triage";
 import { TOURISM_DISCLAIMER_TITLE, TOURISM_DISCLAIMER_BODY } from "@/lib/tourism-disclaimer";
 
@@ -139,7 +139,7 @@ function SaglikTurizmiPlannerInner() {
   // dir: fiş shell DIŞINDA render olur — RTL sarmalayıcıyı kendisi taşımalı (v6.19 fix).
   if (submitted) {
     return (
-      <div dir={langDir(lang)} className="mx-auto max-w-2xl px-5 py-12">
+      <div dir={langDir(lang)} lang={LANG_BCP47[lang]} className="mx-auto max-w-2xl px-5 py-12">
         <JourneyStageRail journey="HEALTH_TOURISM" current={2} lang={lang} />
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-300"><CheckCircle2 size={22} /></span>

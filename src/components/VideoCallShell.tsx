@@ -20,12 +20,15 @@ import type { ReactNode } from "react";
  */
 export function VideoCallShell({
   dir,
+  lang,
   statusBar,
   video,
   panel,
   panelLabel,
 }: {
   dir?: "ltr" | "rtl";
+  /** BCP-47 dil kodu (ör. "ar", "fa-IR") — :lang() font bağları için ŞART (v6.9 tuzağı; denetim #27). */
+  lang?: string;
   /** Video üstünde ince, yarı-saydam durum şeridi (bağlantı durumu / rol). Opsiyonel. */
   statusBar?: ReactNode;
   /** Full-fill video alanı — remote video + self-view + kontroller + boş/hata overlay'leri. */
@@ -38,6 +41,7 @@ export function VideoCallShell({
   return (
     <div
       dir={dir}
+      lang={lang}
       className="fixed inset-0 z-30 flex flex-col overflow-hidden bg-black"
       style={{ height: "100dvh" }}
     >

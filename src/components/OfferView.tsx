@@ -12,7 +12,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
-import { langDir, countryFlag, countryName } from "@/lib/constants";
+import { langDir, countryFlag, countryName, LANG_BCP47 } from "@/lib/constants";
 import { formatUSD, type LineItem } from "@/lib/pricing";
 import { InsuranceSummary } from "@/components/InsuranceSummary";
 import { OfferActions } from "@/components/OfferActions";
@@ -84,7 +84,7 @@ export function OfferView(p: OfferViewProps) {
   const { t } = useT(lang, texts);
 
   return (
-    <div dir={langDir(lang)} className={p.embedded ? "print-doc" : "print-doc mx-auto max-w-3xl px-5 py-8"}>
+    <div dir={langDir(lang)} lang={LANG_BCP47[lang]} className={p.embedded ? "print-doc" : "print-doc mx-auto max-w-3xl px-5 py-8"}>
       {!p.embedded && (
         <div className="print:hidden flex items-center justify-between gap-3">
           <Link href="/vakalarim" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">

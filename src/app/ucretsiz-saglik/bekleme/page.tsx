@@ -8,7 +8,7 @@ import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
 import { freeCareTrackerPhases, FREE_CARE_TRACKER_TEXTS } from "@/lib/free-care-tracker";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
-import { langDir } from "@/lib/constants";
+import { langDir, LANG_BCP47 } from "@/lib/constants";
 
 const PB_PHASE_ICON = {
   apply: <ClipboardCheck size={14} />,
@@ -81,7 +81,7 @@ function WaitingInner() {
   }, [caseId, router]);
 
   if (!caseId) {
-    return <p dir={dir} className="text-sm text-[var(--c-ink-2)]">{t(S.invalid)}</p>;
+    return <p dir={dir} lang={LANG_BCP47[lang]} className="text-sm text-[var(--c-ink-2)]">{t(S.invalid)}</p>;
   }
 
   // Faz 4: hasta sıradan çekilebilir (kapı kalktı → çıkış hakkı) — yalnız WAITING'de sunucu kabul eder.
@@ -113,7 +113,7 @@ function WaitingInner() {
   }));
 
   return (
-    <div dir={dir} className="space-y-4">
+    <div dir={dir} lang={LANG_BCP47[lang]} className="space-y-4">
       <div className="flex justify-end">
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>

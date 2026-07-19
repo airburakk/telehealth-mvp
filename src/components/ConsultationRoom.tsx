@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { urgencyStyle, langDir } from "@/lib/constants";
+import { urgencyStyle, langDir, LANG_BCP47 } from "@/lib/constants";
 import { useT } from "@/components/useT";
 import { TranslateButton } from "@/components/TranslateButton";
 import { LiveInterpreter } from "@/components/LiveInterpreter";
@@ -739,6 +739,7 @@ export function ConsultationRoom({
     <>
       <VideoCallShell
         dir={langDir(uiLang)}
+        lang={LANG_BCP47[uiLang]}
         panelLabel={isDoctor ? t("Doktor görünümü") : t("Hasta görünümü")}
         statusBar={
           <div className="flex items-center justify-between gap-2 text-xs font-medium text-white/90">

@@ -333,7 +333,7 @@ export function PreConsultLobby({
   // "Süreci Sonlandır" → hastanın ana sekmesine (/vakalarim) döner; cihaz izni hiç istenmez.
   if (!interpretOk) {
     return (
-      <div dir={dir} className="mx-auto max-w-2xl px-5 py-10">
+      <div dir={dir} lang={LANG_BCP47[lang]} className="mx-auto max-w-2xl px-5 py-10">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]">
@@ -407,7 +407,7 @@ export function PreConsultLobby({
     : "";
 
   return (
-    <div dir={dir} style={bigText ? { zoom: 1.18 } : undefined} className="mx-auto max-w-3xl px-5 py-10">
+    <div dir={dir} lang={LANG_BCP47[lang]} style={bigText ? { zoom: 1.18 } : undefined} className="mx-auto max-w-3xl px-5 py-10">
       {/* Başlık + erişilebilirlik kontrolleri */}
       <div className="flex items-start justify-between gap-3">
         <div>

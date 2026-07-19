@@ -10,7 +10,7 @@ import { getIceServers } from "@/lib/ice";
 import { signalFetch, signalPollDelayMs } from "@/lib/signal-poll";
 import { connectAblySignal } from "@/lib/ably-client";
 import { useT } from "@/components/useT";
-import { langDir } from "@/lib/constants";
+import { langDir, LANG_BCP47 } from "@/lib/constants";
 import { ConsultationChat } from "@/components/ConsultationChat";
 import { ConsultationTimer } from "@/components/ConsultationTimer";
 import { VideoCallShell } from "@/components/VideoCallShell";
@@ -253,7 +253,7 @@ export function ConsultVideoRoom({
 
   if (phase === "ended" || ended) {
     return (
-      <div dir={dir} className="mx-auto max-w-md px-5 py-20 text-center">
+      <div dir={dir} lang={LANG_BCP47[lang]} className="mx-auto max-w-md px-5 py-20 text-center">
         <PhoneOff className="mx-auto mb-3 text-[var(--c-ink-3)]" size={40} />
         <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{t(S.ended)}</h1>
         <p className="mt-2 text-sm text-[var(--c-ink-2)]">{t(S.endedSub)}</p>
@@ -264,7 +264,7 @@ export function ConsultVideoRoom({
 
   if (!joined) {
     return (
-      <div dir={dir} className="mx-auto max-w-md px-5 py-16 text-center">
+      <div dir={dir} lang={LANG_BCP47[lang]} className="mx-auto max-w-md px-5 py-16 text-center">
         <Video className="mx-auto mb-3 text-[var(--c-accent)]" size={40} />
         <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{t(S.title)}</h1>
         <p className="mt-1 text-sm text-[var(--c-ink-2)]">{t(branchLabel)} · {remoteName}</p>
@@ -277,6 +277,7 @@ export function ConsultVideoRoom({
   return (
     <VideoCallShell
       dir={dir}
+      lang={LANG_BCP47[lang]}
       panelLabel={t(S.title)}
       statusBar={
         <div className="flex items-center justify-between gap-2 text-xs font-medium text-white/90">

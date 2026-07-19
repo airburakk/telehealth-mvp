@@ -13,7 +13,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
-import { langDir } from "@/lib/constants";
+import { langDir, LANG_BCP47 } from "@/lib/constants";
 import { formatUSD, type LineItem } from "@/lib/pricing";
 import { JOURNEY_STAGES, JOURNEY_STATUS, journeyProgress, type JourneyStage } from "@/lib/journey";
 import { InsuranceSummary } from "@/components/InsuranceSummary";
@@ -89,7 +89,7 @@ export function ReservationView(p: ReservationViewProps) {
   const progress = journeyProgress(p.stages);
 
   return (
-    <div dir={langDir(lang)} className={p.embedded ? "" : "mx-auto max-w-3xl px-5 py-10"}>
+    <div dir={langDir(lang)} lang={LANG_BCP47[lang]} className={p.embedded ? "" : "mx-auto max-w-3xl px-5 py-10"}>
       {!p.embedded && (
         <div className="mb-4 flex items-center justify-end">
           <PatientLangSelect lang={lang} onChange={setLang} />

@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { requestsByPartner, type PartnerRequestView } from "@/lib/consultation-requests";
 import { newsForBranch, NEWS_KIND_LABEL, type NewsItem } from "@/lib/medical-news";
 import { getTranslations } from "@/lib/i18n";
-import { LANGUAGES, langDir } from "@/lib/constants";
+import { LANGUAGES, langDir, LANG_BCP47 } from "@/lib/constants";
 import { PartnerNewsLang } from "./PartnerNewsLang";
 import { ConsultationChat } from "@/components/ConsultationChat";
 import { VideoControls } from "@/components/VideoControls";
@@ -64,7 +64,7 @@ export default async function PartnerHome() {
   const tr: Tr = (s) => tx[s.trim()] ?? s;
 
   return (
-    <div dir={dir} className="mx-auto max-w-3xl px-5 py-8">
+    <div dir={dir} lang={LANG_BCP47[partnerLang]} className="mx-auto max-w-3xl px-5 py-8">
       <PresencePinger />
       {/* Hero — partner kimliği (ad/kurum/branş = kanonik veri, çevrilmez) */}
       <div className="rounded-3xl border border-sky-400/25 bg-sky-500/10 p-6">

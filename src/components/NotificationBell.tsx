@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Bell, Inbox, UserRound, AlertTriangle, Luggage, Scale, Eye, Stethoscope, Smartphone, Loader2, FileText, MessageSquare, Video } from "lucide-react";
 import { useT } from "@/components/useT";
 import { usePatientLang } from "@/components/PatientLocale";
-import { langDir } from "@/lib/constants";
+import { langDir, LANG_BCP47 } from "@/lib/constants";
 
 // VAPID public key → PushManager.subscribe formatı
 function urlB64ToUint8(s: string): Uint8Array {
@@ -211,7 +211,7 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
       </button>
 
       {open && (
-        <div dir={dir} className="absolute right-0 top-11 z-40 w-80 overflow-hidden rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] shadow-xl">
+        <div dir={dir} lang={LANG_BCP47[effLang]} className="absolute right-0 top-11 z-40 w-80 overflow-hidden rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] shadow-xl">
           <div className="flex items-center justify-between border-b border-[var(--c-hairline)] px-4 py-2.5">
             <span className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Bildirimler")}</span>
             {loading && <span className="text-[10px] text-[var(--c-ink-3)]">{t("yenileniyor…")}</span>}

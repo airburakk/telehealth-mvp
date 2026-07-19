@@ -5,7 +5,7 @@ import { shareState, buildSharedItems, scopeLabel, SHARE_UNLOCK_PREFIX, type Sha
 import { ShareUnlock } from "@/components/ShareUnlock";
 import { ShareLangSelect } from "@/components/ShareLangSelect";
 import { getTranslations, translateClinical } from "@/lib/i18n";
-import { LANGUAGES, langDir } from "@/lib/constants";
+import { LANGUAGES, langDir, LANG_BCP47 } from "@/lib/constants";
 import { decryptField, decryptCaseFields } from "@/lib/crypto";
 import {
   Activity, FileText, ScanLine, FlaskConical, Stethoscope,
@@ -17,10 +17,10 @@ export const maxDuration = 60; // alıcının dilinde ilk (cache'siz) çeviri ~1
 
 const KIND_ICON = { report: FileText, image: ScanLine, lab: FlaskConical, note: Stethoscope } as const;
 
-function Shell({ children, dir = "ltr" }: { children: React.ReactNode; dir?: "ltr" | "rtl" }) {
+function Shell({ children, dir = "ltr", lang }: { children: React.ReactNode; dir?: "ltr" | "rtl"; lang?: string }) {
   return (
     <div className="min-h-screen bg-[var(--c-ink)]/10">
-      <div dir={dir} className="mx-auto max-w-3xl px-4 py-8">{children}</div>
+      <div dir={dir} lang={lang} className="mx-auto max-w-3xl px-4 py-8">{children}</div>
     </div>
   );
 }
@@ -170,7 +170,7 @@ export default async function ShareViewerPage({
     : null;
 
   return (
-    <Shell dir={langDir(lang)}>
+    <Shell dir={langDir(lang)} lang={LANG_BCP47[lang]}>
       <div className="flex items-center justify-between gap-3">
         <Brand subtitle={t("Güvenli Sağlık Paylaşımı")} />
         <div className="flex items-center gap-2">

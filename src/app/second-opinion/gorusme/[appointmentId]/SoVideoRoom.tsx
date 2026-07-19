@@ -8,7 +8,7 @@ import { signalFetch, signalPollDelayMs } from "@/lib/signal-poll";
 import { connectAblySignal } from "@/lib/ably-client";
 import { useT } from "@/components/useT";
 import { useSoLang, SoLangSelect } from "@/components/SoLocale";
-import { langDir } from "@/lib/constants";
+import { langDir, LANG_BCP47 } from "@/lib/constants";
 import { PreConsultLobby } from "@/components/PreConsultLobby";
 import { PatientQuestionsPanel } from "@/components/PatientQuestionsPanel";
 import { VideoCallShell } from "@/components/VideoCallShell";
@@ -403,7 +403,7 @@ export function SoVideoRoom({
 
   if (phase === "ended" || ended) {
     return (
-      <div dir={langDir(lang)} className="mx-auto max-w-md px-5 py-20 text-center">
+      <div dir={langDir(lang)} lang={LANG_BCP47[lang]} className="mx-auto max-w-md px-5 py-20 text-center">
         <PhoneOff className="mx-auto mb-3 text-[var(--c-ink-3)]" size={40} />
         <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{t(S.ended)}</h1>
         <p className="mt-2 text-sm text-[var(--c-ink-2)]">{t(S.endedSub)}</p>
@@ -435,6 +435,7 @@ export function SoVideoRoom({
   return (
     <VideoCallShell
       dir={langDir(lang)}
+      lang={LANG_BCP47[lang]}
       panelLabel={t(S.title)}
       statusBar={
         <div className="flex items-center justify-between gap-2 text-xs font-medium text-white/90">
