@@ -66,6 +66,7 @@ export function LiveInterpreter({
   const playCtxRef = useRef<AudioContext | null>(null);
   const nextPlayRef = useRef(0);
   const procRef = useRef<ScriptProcessorNode | null>(null);
+  const workletRef = useRef<AudioWorkletNode | null>(null);
   const srcRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const liveRef = useRef(false);
   const autoStartedRef = useRef(false);
@@ -103,6 +104,11 @@ export function LiveInterpreter({
     buf.getChannelData(0).set(f32);
     const node = ctx.createBufferSource();
     node.buffer = buf; node.connect(ctx.destination);
+    // Kuyruk kayma sınırı: çevrilen ses gerçek-zamandan MAX_DRIFT'ten fazla geri kaldıysa (parçalar
+    // gerçek-zamandan hızlı birikmiş = büyüyen kuyruk) biriken gecikmeyi at, "şimdi"ye yeniden hizala.
+    // Küçük bir süreksizlik pahasına oturum boyunca ARTAN gecikmeyi engeller; kayma yoksa hiç tetiklenmez.
+    const MAX_DRIFT = 0.6; // sn
+    if (nextPlayRef.current - ctx.currentTime > MAX_DRIFT) nextPlayRef.current = ctx.currentTime + 0.03;
     const t = Math.max(ctx.currentTime + 0.03, nextPlayRef.current);
     node.start(t);
     nextPlayRef.current = t + buf.duration;
@@ -195,21 +201,45 @@ export function LiveInterpreter({
       const inRate = capCtx.sampleRate;
       const srcNode = capCtx.createMediaStreamSource(remote);
       srcRef.current = srcNode;
-      const proc = capCtx.createScriptProcessor(4096, 1, 1);
-      procRef.current = proc;
-      proc.onaudioprocess = (e) => {
+
+      // 16kHz Int16 PCM parçasını Gemini'ye gönder (worklet + ScriptProcessor yedeği ORTAK yol).
+      const sendPcm = (int16: Int16Array) => {
         if (!liveRef.current) return;
-        const input = e.inputBuffer.getChannelData(0);
-        const ratio = inRate / 16000;
-        const outLen = Math.floor(input.length / ratio);
-        const int16 = new Int16Array(outLen);
-        for (let i = 0; i < outLen; i++) { const s = Math.max(-1, Math.min(1, input[Math.floor(i * ratio)])); int16[i] = s * 0x7fff; }
-        const u8 = new Uint8Array(int16.buffer);
+        const u8 = new Uint8Array(int16.buffer, int16.byteOffset, int16.byteLength);
         let binStr = ""; for (let i = 0; i < u8.length; i++) binStr += String.fromCharCode(u8[i]);
         try { sessionRef.current?.sendRealtimeInput({ audio: { data: btoa(binStr), mimeType: "audio/pcm;rate=16000" } }); } catch {}
       };
-      const sink = capCtx.createGain(); sink.gain.value = 0;
-      srcNode.connect(proc); proc.connect(sink); sink.connect(capCtx.destination);
+
+      // AudioWorklet (modern, düşük-gecikmeli, AYRI iş parçacığı, ~20 ms gruplar). addModule await'i
+      // sırasında Durdur'a basılırsa iptal. Kurulamazsa (eski tarayıcı) ScriptProcessor yedeğine düş.
+      let usedWorklet = false;
+      try {
+        await capCtx.audioWorklet.addModule("/worklets/pcm-capture.js");
+        if (startAbortRef.current) { teardown(); return; }
+        const node = new AudioWorkletNode(capCtx, "pcm-capture");
+        workletRef.current = node;
+        node.port.onmessage = (ev) => sendPcm(new Int16Array(ev.data as ArrayBuffer));
+        const sink = capCtx.createGain(); sink.gain.value = 0;
+        srcNode.connect(node); node.connect(sink); sink.connect(capCtx.destination);
+        usedWorklet = true;
+      } catch { usedWorklet = false; }
+
+      if (!usedWorklet) {
+        // Yedek: ScriptProcessorNode (deprecated; ~256 ms tampon + ana-iş-parçacığı ama geniş uyum).
+        const proc = capCtx.createScriptProcessor(4096, 1, 1);
+        procRef.current = proc;
+        proc.onaudioprocess = (e) => {
+          if (!liveRef.current) return;
+          const input = e.inputBuffer.getChannelData(0);
+          const ratio = inRate / 16000;
+          const outLen = Math.floor(input.length / ratio);
+          const int16 = new Int16Array(outLen);
+          for (let i = 0; i < outLen; i++) { const s = Math.max(-1, Math.min(1, input[Math.floor(i * ratio)])); int16[i] = s * 0x7fff; }
+          sendPcm(int16);
+        };
+        const sink = capCtx.createGain(); sink.gain.value = 0;
+        srcNode.connect(proc); proc.connect(sink); sink.connect(capCtx.destination);
+      }
 
       onMuteRemote(true);
       liveRef.current = true;
@@ -223,12 +253,13 @@ export function LiveInterpreter({
   function teardown() {
     startAbortRef.current = true; // olası remote-bekleme döngüsünü kır
     liveRef.current = false;
+    try { workletRef.current?.disconnect(); } catch {}
     try { procRef.current?.disconnect(); } catch {}
     try { srcRef.current?.disconnect(); } catch {}
     try { capCtxRef.current?.close(); } catch {}
     try { playCtxRef.current?.close(); } catch {}
     try { sessionRef.current?.close(); } catch {}
-    procRef.current = null; srcRef.current = null; capCtxRef.current = null; playCtxRef.current = null; sessionRef.current = null;
+    workletRef.current = null; procRef.current = null; srcRef.current = null; capCtxRef.current = null; playCtxRef.current = null; sessionRef.current = null;
   }
 
   function stop() { teardown(); onMuteRemote(false); setStatus("idle"); }
