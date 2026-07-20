@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { computePackage, type PackageSelection, type Tier, type HospitalType, type RecommendedTreatment, type InsuranceLevel } from "@/lib/pricing";
+import { computePackage, computeHealthRiskMult, parseHealthDeclaration, type PackageSelection, type Tier, type HospitalType, type RecommendedTreatment, type InsuranceLevel } from "@/lib/pricing";
+import { decryptField } from "@/lib/crypto";
 import { getTryPerUsd } from "@/lib/fxrate";
 import { notifyRoles, notifyUser } from "@/lib/notify";
 import { getCurrentUser } from "@/lib/auth";
@@ -60,7 +61,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
   }
 
-  const quote = computePackage(selection, treatments, fx.rate, doctorMmssLimitUsd);
+  // Sigorta risk çarpanı: vakadaki SABİT sağlık beyanından SERVER'da hesaplanır (client'a güvenilmez) —
+  // hastanın paket ekranında gördüğü prim ile rezervasyon primi aynı girdiden türer. Beyansız = 1.0.
+  const healthRiskMult = computeHealthRiskMult(parseHealthDeclaration(decryptField(c.healthDeclaration)));
+
+  const quote = computePackage(selection, treatments, fx.rate, doctorMmssLimitUsd, healthRiskMult);
 
   const isOffer = b.mode === "offer"; // hastaya teklif (DRAFT) — onay hastada; aksi halde doğrudan Escrow
 

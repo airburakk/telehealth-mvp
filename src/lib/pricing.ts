@@ -58,6 +58,8 @@ export interface InsuranceConfig {
   r3: number;            // Katman 3 — malpraktis prim oranı (placeholder)
   targetMultiple: number; // Katman 3 — hedef teminat = operasyon tutarı × bu kat
   branchRisk: Record<string, number>; // branş etiketi substring → cerrahi risk çarpanı (eşleşmeyen = 1.0)
+  healthRisk: Record<string, number>; // hasta sağlık-beyanı kalemi → risk çarpanı (çarpımsal birleşir)
+  healthRiskCap: number; // birleşik sağlık çarpanı tavanı
 }
 export const INSURANCE_CONFIG: InsuranceConfig = {
   base: 120,
@@ -71,7 +73,57 @@ export const INSURANCE_CONFIG: InsuranceConfig = {
     "Kardiyoloji": 1.6, "Nöroşirürji": 1.6, "Nöroşirurji": 1.6,
     "Onkoloji": 1.8, "Organ": 1.8, "Nakil": 1.8,
   },
+  // Hasta sağlık beyanı çarpanları (sigorta risk formu, 2026-07-20 — kullanıcı onaylı tablo).
+  // Anahtarlar: kronik listesi triage-questions "chronic" sözlüğüyle AYNI + beyan boolean'ları
+  // (meds/smoking/majorSurgery). Çarpımsal birleşir, healthRiskCap ile tavanlanır; yalnız Katman 2/3
+  // primlerine uygulanır (Katman 1 zorunlu taban sabit). Beyansız vaka = 1.0.
+  healthRisk: {
+    "Tiroid": 1.05, "Tansiyon": 1.10, "Diyabet": 1.15, "Astım/KOAH": 1.15,
+    "Böbrek": 1.25, "Karaciğer": 1.25, "Kalp hastalığı": 1.35, "Kanser öyküsü": 1.50,
+    meds: 1.05, smoking: 1.10, majorSurgery: 1.10,
+  },
+  healthRiskCap: 2.0,
 };
+
+// Beyan formundaki kronik hastalık seçenekleri — triage-questions.ts "chronic" sorusuyla AYNI sözlük
+// ("Yok" hariç; beyanda "yok" = boş dizi). Yeni kalem eklerken İKİSİNİ ve healthRisk tablosunu birlikte güncelle.
+export const HEALTH_CHRONIC_OPTIONS = [
+  "Diyabet", "Tansiyon", "Kalp hastalığı", "Astım/KOAH", "Tiroid", "Böbrek", "Karaciğer", "Kanser öyküsü",
+] as const;
+
+// Hastanın paket ekranındaki sağlık beyanı (Case.healthDeclaration şifreli JSON'unun şekli).
+export interface HealthDeclaration {
+  chronic: string[];      // triage-questions "chronic" sözlüğünden seçimler ("Yok" = boş kabul)
+  meds: boolean;          // düzenli ilaç kullanımı
+  smoking: boolean;       // sigara
+  majorSurgery: boolean;  // son 5 yılda büyük ameliyat
+}
+
+// Çözülmüş (decrypt SONRASI) beyan JSON'unu güvenle ayıkla — tek doğrulama noktası (API + sayfa + booking).
+// Sözlük-dışı kronik etiketler ("Yok" dahil, eski/serbest veri) düşer; bozuk JSON = beyansız (null).
+export function parseHealthDeclaration(raw: string | null | undefined): HealthDeclaration | null {
+  if (!raw) return null;
+  try {
+    const p = JSON.parse(raw) as Partial<HealthDeclaration>;
+    return {
+      chronic: (Array.isArray(p.chronic) ? p.chronic : []).filter((x): x is string => typeof x === "string" && (HEALTH_CHRONIC_OPTIONS as readonly string[]).includes(x)),
+      meds: !!p.meds, smoking: !!p.smoking, majorSurgery: !!p.majorSurgery,
+    };
+  } catch { return null; }
+}
+
+// Beyandan birleşik sağlık risk çarpanı — çarpımsal, INSURANCE_CONFIG.healthRiskCap ile tavanlı.
+// null/beyansız = 1.0. Sözlükte olmayan kronik etiketi (eski/serbest veri) 1.0 sayılır.
+export function computeHealthRiskMult(decl: HealthDeclaration | null | undefined): number {
+  if (!decl) return 1.0;
+  const { healthRisk, healthRiskCap } = INSURANCE_CONFIG;
+  let m = 1.0;
+  for (const c of decl.chronic ?? []) m *= healthRisk[c] ?? 1.0;
+  if (decl.meds) m *= healthRisk.meds ?? 1.0;
+  if (decl.smoking) m *= healthRisk.smoking ?? 1.0;
+  if (decl.majorSurgery) m *= healthRisk.majorSurgery ?? 1.0;
+  return Math.min(healthRiskCap, Math.round(m * 100) / 100);
+}
 
 export function branchRiskMult(branch: string): number {
   const key = Object.keys(INSURANCE_CONFIG.branchRisk).find((k) => branch.includes(k));
@@ -94,25 +146,29 @@ export interface InsuranceQuote {
   doctorCoverage: number;  // doktor MMSS limiti (USD'ye normalize)
   gap: number;             // doktorun karşılamadığı malpraktis teminat boşluğu
   riskMult: number;        // branş risk çarpanı
+  healthMult: number;      // hasta sağlık-beyanı çarpanı (beyansız = 1.0)
 }
 
 // Saf, yan-etkisiz. coverageBaseUsd = sigorta hariç paket toplamı; treatmentTotalUsd = operasyon tutarı.
+// healthRiskMult: hastanın sağlık beyanından (computeHealthRiskMult); verilmezse 1.0 (geriye uyum).
 export function computeInsurance(opts: {
   level: InsuranceLevel;
   coverageBaseUsd: number;
   treatmentTotalUsd: number;
   branch: string;
   doctorMmssLimitUsd?: number;
+  healthRiskMult?: number;
 }): InsuranceQuote {
   const { base, r2, r3, targetMultiple } = INSURANCE_CONFIG;
   const risk = branchRiskMult(opts.branch);
+  const health = opts.healthRiskMult ?? 1.0;
   const p1 = base;
-  const p2 = opts.level >= 2 ? Math.round(opts.coverageBaseUsd * r2 * risk) : 0;
+  const p2 = opts.level >= 2 ? Math.round(opts.coverageBaseUsd * r2 * risk * health) : 0;
   const targetCoverage = Math.round(opts.treatmentTotalUsd * targetMultiple);
   const doctorCoverage = Math.max(0, Math.round(opts.doctorMmssLimitUsd ?? 0));
   const gap = Math.max(0, targetCoverage - doctorCoverage);
-  const p3 = opts.level >= 3 ? Math.round(gap * r3 * risk) : 0;
-  return { level: opts.level, p1, p2, p3, total: p1 + p2 + p3, coverageBase: Math.round(opts.coverageBaseUsd), targetCoverage, doctorCoverage, gap, riskMult: risk };
+  const p3 = opts.level >= 3 ? Math.round(gap * r3 * risk * health) : 0;
+  return { level: opts.level, p1, p2, p3, total: p1 + p2 + p3, coverageBase: Math.round(opts.coverageBaseUsd), targetCoverage, doctorCoverage, gap, riskMult: risk, healthMult: health };
 }
 
 // ₺ (KSHFT tarifesi / doktorun M5 fiyatı) → $ dönüşümü. Güncel kura göre ayarlayın (ileride env/API).
@@ -153,7 +209,7 @@ const INSURANCE_LEVEL_LABEL: Record<InsuranceLevel, string> = {
   3: "+ Malpraktis & komplikasyon teminatı",
 };
 
-export function computePackage(s: PackageSelection, treatments?: RecommendedTreatment[], rate: number = TRY_PER_USD, doctorMmssLimitUsd?: number): PackageQuote {
+export function computePackage(s: PackageSelection, treatments?: RecommendedTreatment[], rate: number = TRY_PER_USD, doctorMmssLimitUsd?: number, healthRiskMult?: number): PackageQuote {
   const hasTx = !!treatments && treatments.length > 0;
   // Tedavi kalemleri: doktorun M2'de tavsiye ettiği işlemler (₺→$, doktorun fiyatıyla, canlı kur) varsa onlar; yoksa branş taban fiyatı
   const treatmentItems: LineItem[] = hasTx
@@ -173,6 +229,7 @@ export function computePackage(s: PackageSelection, treatments?: RecommendedTrea
     treatmentTotalUsd: treatment,
     branch: s.branch,
     doctorMmssLimitUsd,
+    healthRiskMult,
   });
   const insurance = ins.total;
 

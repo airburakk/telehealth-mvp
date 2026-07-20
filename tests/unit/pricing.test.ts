@@ -5,6 +5,8 @@ import {
   effectiveInsuranceLevel,
   computeInsurance,
   computePackage,
+  computeHealthRiskMult,
+  parseHealthDeclaration,
   tryToUsd,
   formatUSD,
   type PackageSelection,
@@ -82,6 +84,59 @@ describe("computeInsurance", () => {
   });
 });
 
+// Sağlık beyanı risk çarpanı (sigorta risk formu, 2026-07-20)
+describe("computeHealthRiskMult", () => {
+  it("beyansız/boş beyan → 1.0 (nötr)", () => {
+    expect(computeHealthRiskMult(null)).toBe(1.0);
+    expect(computeHealthRiskMult(undefined)).toBe(1.0);
+    expect(computeHealthRiskMult({ chronic: [], meds: false, smoking: false, majorSurgery: false })).toBe(1.0);
+  });
+  it("tek kronik hastalık kendi çarpanını uygular", () => {
+    expect(computeHealthRiskMult({ chronic: ["Diyabet"], meds: false, smoking: false, majorSurgery: false })).toBe(1.15);
+    expect(computeHealthRiskMult({ chronic: ["Kanser öyküsü"], meds: false, smoking: false, majorSurgery: false })).toBe(1.5);
+  });
+  it("kalemler çarpımsal birleşir (yuvarlanmış)", () => {
+    // Diyabet 1.15 × Kalp 1.35 = 1.5525 → 1.55
+    expect(computeHealthRiskMult({ chronic: ["Diyabet", "Kalp hastalığı"], meds: false, smoking: false, majorSurgery: false })).toBe(1.55);
+    // sigara 1.10 × ilaç 1.05 = 1.155 → 1.16 (round half-up)
+    expect(computeHealthRiskMult({ chronic: [], meds: true, smoking: true, majorSurgery: false })).toBe(1.16);
+  });
+  it("birleşik çarpan tavanı aşamaz (cap 2.0)", () => {
+    // 1.5 × 1.35 × 1.25 × 1.1 ≈ 2.78 → 2.0
+    expect(computeHealthRiskMult({ chronic: ["Kanser öyküsü", "Kalp hastalığı", "Böbrek"], meds: false, smoking: true, majorSurgery: false })).toBe(2.0);
+  });
+  it("sözlük-dışı kronik etiketi etkisizdir (1.0)", () => {
+    expect(computeHealthRiskMult({ chronic: ["Bilinmeyen Hastalık"], meds: false, smoking: false, majorSurgery: false })).toBe(1.0);
+  });
+});
+
+describe("parseHealthDeclaration", () => {
+  it("null/bozuk JSON → null (beyansız)", () => {
+    expect(parseHealthDeclaration(null)).toBeNull();
+    expect(parseHealthDeclaration(undefined)).toBeNull();
+    expect(parseHealthDeclaration("{bozuk")).toBeNull();
+  });
+  it("sözlük-dışı ve 'Yok' etiketlerini düşürür, booleanları normalize eder", () => {
+    const d = parseHealthDeclaration(JSON.stringify({ chronic: ["Yok", "Diyabet", "Uydurma"], meds: 1, smoking: "", majorSurgery: true }));
+    expect(d).toEqual({ chronic: ["Diyabet"], meds: true, smoking: false, majorSurgery: true });
+  });
+});
+
+describe("computeInsurance — sağlık beyanı çarpanı", () => {
+  it("healthRiskMult yalnız Katman 2/3 primlerini büyütür; Katman 1 taban sabittir", () => {
+    const q = computeInsurance({ level: 3, coverageBaseUsd: 10000, treatmentTotalUsd: 5000, branch: "Kardiyoloji", doctorMmssLimitUsd: 4000, healthRiskMult: 1.5 });
+    expect(q.p1).toBe(120); // sabit
+    expect(q.p2).toBe(600); // 400 × 1.5
+    expect(q.p3).toBe(576); // 384 × 1.5
+    expect(q.healthMult).toBe(1.5);
+  });
+  it("verilmezse 1.0 — eski çağrılar birebir aynı kalır (geriye uyum)", () => {
+    const q = computeInsurance({ level: 2, coverageBaseUsd: 10000, treatmentTotalUsd: 5000, branch: "Kardiyoloji" });
+    expect(q.p2).toBe(400);
+    expect(q.healthMult).toBe(1.0);
+  });
+});
+
 describe("tryToUsd", () => {
   it("₺ → $ dönüştürür (yuvarlanmış)", () => {
     expect(tryToUsd(40000, 40)).toBe(1000);
@@ -128,6 +183,12 @@ describe("computePackage", () => {
     const q = computePackage(base, [{ code: "X", name: "Bypass", priceTRY: 40000 }], 40);
     const tx = q.items.find((i) => i.key === "tx-X");
     expect(tx?.amount).toBe(1000); // 40000 / 40
+  });
+
+  it("sağlık beyanı çarpanı sigorta primine uygulanır (paket üzerinden)", () => {
+    const q = computePackage(base, undefined, undefined, undefined, 2.0);
+    expect(q.insurance.p2).toBe(766); // 383 × 2
+    expect(q.insurance.healthMult).toBe(2.0);
   });
 });
 

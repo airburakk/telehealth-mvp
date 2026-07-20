@@ -144,7 +144,8 @@ export function encryptField(plain: string | null | undefined): string | null | 
 // Açık helper (Prisma-extension DEĞİL): her çağrı görünür/denetlenebilir.
 // inc.2c: patientName de eklendi (kimlik şifreleme). Hepsi düz-metin passthrough → KEK öncesi/şifresiz no-op.
 // FAZ 8 (2026-07-10): patientPhone eklendi (hasta iletişim — kimlik verisi, intake'lerde toplanır).
-type CaseClinical = Partial<Record<"symptoms" | "reasoning" | "extra" | "patientName" | "patientIdentifier" | "patientPhone" | "dischargeReport" | "dischargeStructured", string | null>>;
+// 2026-07-20: healthDeclaration eklendi (sigorta risk formu — özel nitelikli sağlık beyanı).
+type CaseClinical = Partial<Record<"symptoms" | "reasoning" | "extra" | "patientName" | "patientIdentifier" | "patientPhone" | "dischargeReport" | "dischargeStructured" | "healthDeclaration", string | null>>;
 export function decryptCaseFields<T extends CaseClinical>(c: T): T;
 export function decryptCaseFields<T extends CaseClinical>(c: T | null | undefined): T | null | undefined;
 export function decryptCaseFields<T extends CaseClinical>(c: T | null | undefined): T | null | undefined {
@@ -158,6 +159,7 @@ export function decryptCaseFields<T extends CaseClinical>(c: T | null | undefine
   if (out.extra != null) out.extra = decryptField(out.extra);
   if (typeof out.dischargeReport === "string") out.dischargeReport = decryptField(out.dischargeReport);
   if (typeof out.dischargeStructured === "string") out.dischargeStructured = decryptField(out.dischargeStructured);
+  if (typeof out.healthDeclaration === "string") out.healthDeclaration = decryptField(out.healthDeclaration);
   return out;
 }
 

@@ -6,7 +6,7 @@ import { decryptField } from "@/lib/crypto";
 import { countryFlag, countryName, formatDateTime } from "@/lib/constants";
 import { formatTRY } from "@/lib/procedures";
 import { PackageBuilder } from "@/components/PackageBuilder";
-import type { RecommendedTreatment } from "@/lib/pricing";
+import { computeHealthRiskMult, parseHealthDeclaration, type RecommendedTreatment } from "@/lib/pricing";
 import { getTryPerUsd } from "@/lib/fxrate";
 import { recordAccess } from "@/lib/audit";
 import { ArrowLeft, Luggage, Languages, Phone, MessageSquare, CalendarRange, Building2, Stethoscope, ShieldCheck } from "lucide-react";
@@ -35,6 +35,8 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
       patientPhone: true, contactPreference: true,
       recommendedProcedures: true, treatmentDaysMin: true, treatmentDaysMax: true,
       hospitalRegistryId: true, hospitalName: true, agencySentAt: true,
+      healthDeclaration: true, healthDeclaredAt: true, // sigorta risk çarpanı SERVER'da hesaplanır; ham beyan acenteye GEÇMEZ
+
       doctor: { select: { title: true, name: true, branch: true, mmssCoverageLimit: true, mmssCoverageCurrency: true } },
       bookings: { orderBy: { createdAt: "desc" }, take: 3, select: { id: true, status: true, total: true, currency: true, createdAt: true } },
     },
@@ -70,6 +72,10 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
 
   // Gece sayısı ön-değeri: doktorun öngördüğü sürenin üst sınırı (yoksa PackageBuilder varsayılanı)
   const initialNights = c.treatmentDaysMax != null ? Math.min(30, Math.max(1, c.treatmentDaysMax)) : undefined;
+
+  // Sigorta risk çarpanı — beyan burada (server) çözülüp yalnız SAYI olarak geçer; ham beyan acente
+  // görünümüne/bundle'ına asla serileştirilmez (veri minimizasyonu korunur).
+  const healthRiskMult = computeHealthRiskMult(parseHealthDeclaration(decryptField(c.healthDeclaration)));
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
@@ -176,6 +182,8 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
           doctorMmssLimitUsd={doctorMmssLimitUsd}
           doctorName={c.doctor ? `${c.doctor.title} ${c.doctor.name}` : undefined}
           offerOnly
+          healthRiskMult={healthRiskMult}
+          healthDeclaredAt={c.healthDeclaredAt?.toISOString() ?? null}
         />
       </div>
     </div>

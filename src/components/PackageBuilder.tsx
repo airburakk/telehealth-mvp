@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   computePackage, computeInsurance, INSURANCE_CONFIG, formatUSD, TIER_PRESETS, TRY_PER_USD,
-  type Tier, type HospitalType, type PackageSelection, type RecommendedTreatment, type InsuranceLevel,
+  HEALTH_CHRONIC_OPTIONS, computeHealthRiskMult,
+  type Tier, type HospitalType, type PackageSelection, type RecommendedTreatment, type InsuranceLevel, type HealthDeclaration,
 } from "@/lib/pricing";
 import { countryFlag, countryName } from "@/lib/constants";
 import {
   Plane, BedDouble, Building2, Languages, ShieldCheck, Minus, Plus,
-  Lock, Loader2, MessageCircle, Check, Send, FileText, ShieldPlus, Stethoscope, Info,
+  Lock, Loader2, MessageCircle, Check, Send, FileText, ShieldPlus, Stethoscope, Info, HeartPulse,
 } from "lucide-react";
 
 const TIERS: Tier[] = ["Ekonomik", "Standart", "Premium"];
@@ -36,7 +37,12 @@ export interface PackageInitial {
 
 export function PackageBuilder({
   caseId, patientName, branch, country, initial, treatments, rate = TRY_PER_USD, fxSource, fxAt, doctorMmssLimitUsd, doctorName, offerOnly = false,
-}: { caseId: string; patientName: string; branch: string; country: string; initial?: PackageInitial; treatments?: RecommendedTreatment[]; rate?: number; fxSource?: string; fxAt?: number; doctorMmssLimitUsd?: number; doctorName?: string; offerOnly?: boolean }) {
+  viewer = "staff", healthRiskMult: healthRiskMultInitial = 1, healthDecl = null, healthDeclaredAt = null,
+}: { caseId: string; patientName: string; branch: string; country: string; initial?: PackageInitial; treatments?: RecommendedTreatment[]; rate?: number; fxSource?: string; fxAt?: number; doctorMmssLimitUsd?: number; doctorName?: string; offerOnly?: boolean;
+  // Sağlık beyanı (sigorta risk formu, 2026-07-20): viewer="patient" beyan formunu açar; personel yalnız
+  // çarpan+durum rozeti görür. healthDecl HAM beyan — yalnız hasta görünümüne geçilir (sayfa tarafı filtreler).
+  viewer?: "patient" | "staff"; healthRiskMult?: number; healthDecl?: HealthDeclaration | null; healthDeclaredAt?: string | null;
+}) {
   const router = useRouter();
   const [tier, setTier] = useState<Tier>(initial?.tier ?? "Standart");
   const [hotelStars, setHotelStars] = useState<4 | 5>(initial?.hotelStars ?? 4);
@@ -50,6 +56,37 @@ export function PackageBuilder({
   const [submitting, setSubmitting] = useState<null | "offer" | "confirm">(null);
   const [sentOffer, setSentOffer] = useState<string | null>(null);
 
+  // Sağlık beyanı durumu — kaydedilince healthMult güncellenir, prim CANLI yeniden hesaplanır.
+  const [healthMult, setHealthMult] = useState(healthRiskMultInitial);
+  const [declaredAt, setDeclaredAt] = useState<string | null>(healthDeclaredAt);
+  const [declChronic, setDeclChronic] = useState<string[]>(healthDecl?.chronic ?? []);
+  const [declMeds, setDeclMeds] = useState(!!healthDecl?.meds);
+  const [declSmoking, setDeclSmoking] = useState(!!healthDecl?.smoking);
+  const [declSurgery, setDeclSurgery] = useState(!!healthDecl?.majorSurgery);
+  const [declConfirm, setDeclConfirm] = useState(false);
+  const [declSaving, setDeclSaving] = useState(false);
+  const [declEditing, setDeclEditing] = useState(false);
+  const [declError, setDeclError] = useState<string | null>(null);
+
+  async function saveDeclaration() {
+    setDeclSaving(true); setDeclError(null);
+    try {
+      const res = await fetch(`/api/cases/${caseId}/health-declaration`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chronic: declChronic, meds: declMeds, smoking: declSmoking, majorSurgery: declSurgery }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        setHealthMult(Number(data.healthMult) || computeHealthRiskMult({ chronic: declChronic, meds: declMeds, smoking: declSmoking, majorSurgery: declSurgery }));
+        setDeclaredAt(data.declaredAt ?? new Date().toISOString());
+        setDeclEditing(false); setDeclConfirm(false);
+      } else {
+        setDeclError(typeof data.error === "string" ? data.error : "Beyan kaydedilemedi. Lütfen tekrar deneyin.");
+      }
+    } catch { setDeclError("Beyan kaydedilemedi. Lütfen tekrar deneyin."); }
+    setDeclSaving(false);
+  }
+
   function applyTier(t: Tier) {
     setTier(t);
     const p = TIER_PRESETS[t];
@@ -62,13 +99,13 @@ export function PackageBuilder({
   // insuranceLevel ana sürücü; eski booleanlar geriye uyum için türetilir.
   const selection: PackageSelection = { branch, country, tier, hotelStars, hospitalType, nights, translator, insuranceLevel: insLevel, insuranceExtended: insLevel >= 2, insuranceMalpractice: insLevel >= 3 };
   const hasTx = !!treatments && treatments.length > 0;
-  const quote = useMemo(() => computePackage(selection, treatments, rate, doctorMmssLimitUsd), [tier, hotelStars, hospitalType, nights, translator, insLevel, treatments, rate, doctorMmssLimitUsd]);
+  const quote = useMemo(() => computePackage(selection, treatments, rate, doctorMmssLimitUsd, healthMult), [tier, hotelStars, hospitalType, nights, translator, insLevel, treatments, rate, doctorMmssLimitUsd, healthMult]);
 
   // Her sigorta seviyesinin primini canlı göster (kümülatif kartlar). Teminat tabanı/operasyon seçili seviyeden bağımsız.
   const treatmentTotal = quote.insurance.targetCoverage / INSURANCE_CONFIG.targetMultiple;
   const insByLevel = useMemo(
-    () => INS_LEVELS.map((lvl) => computeInsurance({ level: lvl, coverageBaseUsd: quote.insurance.coverageBase, treatmentTotalUsd: treatmentTotal, branch, doctorMmssLimitUsd })),
-    [quote.insurance.coverageBase, treatmentTotal, branch, doctorMmssLimitUsd],
+    () => INS_LEVELS.map((lvl) => computeInsurance({ level: lvl, coverageBaseUsd: quote.insurance.coverageBase, treatmentTotalUsd: treatmentTotal, branch, doctorMmssLimitUsd, healthRiskMult: healthMult })),
+    [quote.insurance.coverageBase, treatmentTotal, branch, doctorMmssLimitUsd, healthMult],
   );
 
   async function confirm() {
@@ -163,10 +200,63 @@ export function PackageBuilder({
           <Toggle icon={<Languages size={16} />} label="Tıbbi tercüman (refakatçi)" desc="Branşa hakim, hastanın dilinde" on={translator} set={setTranslator} />
         </Card>
 
+        {/* Sağlık Beyanı (sigorta risk formu, 2026-07-20) — yalnız hasta doldurur; prim canlı güncellenir */}
+        {viewer === "patient" && (
+          <Card>
+            <CardTitle icon={<HeartPulse size={15} />}>Sağlık Beyanı</CardTitle>
+            <p className="mt-1 text-xs text-[var(--c-ink-3)]">Sigorta primi, sağlık beyanınıza göre kişiselleştirilir. Beyanınız şifreli saklanır; yalnız vakanıza erişimi olan klinik ekip görebilir.</p>
+            {declaredAt && !declEditing ? (
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-3.5 py-3">
+                <span className="text-sm font-medium text-emerald-300">✓ Beyan alındı · {new Date(declaredAt).toLocaleDateString("tr-TR")}</span>
+                <button type="button" onClick={() => setDeclEditing(true)} className="shrink-0 text-xs font-semibold text-[var(--c-accent)] hover:underline">Güncelle</button>
+              </div>
+            ) : (
+              <div className="mt-3 space-y-4">
+                <div>
+                  <div className="text-sm font-medium text-[var(--c-ink)]">Bilinen kronik hastalık(lar)</div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <DeclChip label="Yok" active={declChronic.length === 0} onClick={() => setDeclChronic([])} />
+                    {HEALTH_CHRONIC_OPTIONS.map((o) => (
+                      <DeclChip key={o} label={o} active={declChronic.includes(o)}
+                        onClick={() => setDeclChronic((prev) => prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o])} />
+                    ))}
+                  </div>
+                </div>
+                <DeclYesNo label="Düzenli ilaç kullanıyor musunuz?" on={declMeds} set={setDeclMeds} />
+                <DeclYesNo label="Sigara kullanıyor musunuz?" on={declSmoking} set={setDeclSmoking} />
+                <DeclYesNo label="Son 5 yılda büyük ameliyat geçirdiniz mi?" on={declSurgery} set={setDeclSurgery} />
+                <label className="flex cursor-pointer items-start gap-2.5 text-sm text-[var(--c-ink-2)]">
+                  <input type="checkbox" checked={declConfirm} onChange={(e) => setDeclConfirm(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--c-accent)]" />
+                  Verdiğim bilgilerin doğru ve eksiksiz olduğunu beyan ederim.
+                </label>
+                {declError && <p className="text-xs text-red-400">{declError}</p>}
+                <button
+                  type="button"
+                  onClick={saveDeclaration}
+                  disabled={!declConfirm || declSaving}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] disabled:opacity-50"
+                >
+                  {declSaving ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />} Beyanı Kaydet
+                </button>
+              </div>
+            )}
+          </Card>
+        )}
+
         {/* Sigorta — 3 kademeli kümülatif teminat */}
         <Card>
           <CardTitle icon={<ShieldCheck size={15} />}>Sigorta Teminatı</CardTitle>
           <p className="mt-1 text-xs text-[var(--c-ink-3)]">Operasyonun mali büyüklüğü ve doktorun mevcut mesleki sigortası dikkate alınarak hesaplanır.</p>
+          {viewer !== "patient" && (
+            <p className="mt-1.5 text-[11px] font-medium text-[var(--c-ink-2)]">
+              {declaredAt
+                ? <>Sağlık beyanı alındı · risk çarpanı ×{healthMult.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</>
+                : <>Sağlık beyanı bekleniyor</>}
+            </p>
+          )}
+          {viewer === "patient" && !declaredAt && (
+            <p className="mt-1.5 text-[11px] text-amber-300">Sağlık beyanı doldurulmadı — primler taban çarpanla gösteriliyor.</p>
+          )}
           <div className="mt-3 space-y-2">
             {INS_LEVELS.map((lvl) => {
               const q = insByLevel[lvl - 1];
@@ -218,7 +308,7 @@ export function PackageBuilder({
             })}
           </div>
           <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
-            <Info size={13} className="mt-0.5 shrink-0" /> Primler tahminidir; bağlayıcı poliçe bedelini ve teminat şartlarını sigorta şirketi belirler.
+            <Info size={13} className="mt-0.5 shrink-0" /> Gösterilen primler endikatiftir; kesin prim ve teminat şartları sigorta şirketinin değerlendirmesiyle belirlenir. Prim, sağlık beyanına göre değişebilir.
           </p>
         </Card>
       </div>
@@ -303,6 +393,27 @@ export function PackageBuilder({
 
 function Card({ children }: { children: React.ReactNode }) {
   return <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">{children}</div>;
+}
+// Sağlık beyanı yardımcıları (sigorta risk formu, 2026-07-20)
+function DeclChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40"}`}
+    >
+      {label}
+    </button>
+  );
+}
+function DeclYesNo({ label, on, set }: { label: string; on: boolean; set: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm font-medium text-[var(--c-ink)]">{label}</span>
+      <Segment value={on ? "Evet" : "Hayır"} onChange={(v) => set(v === "Evet")} options={["Hayır", "Evet"]} />
+    </div>
+  );
 }
 function CardTitle({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) {
   return <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{icon} {children}</div>;

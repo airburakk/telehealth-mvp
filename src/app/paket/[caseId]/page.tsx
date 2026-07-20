@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { canAccessCase } from "@/lib/ownership";
+import { getCurrentUser } from "@/lib/auth";
 import { PackageBuilder, type PackageInitial } from "@/components/PackageBuilder";
-import { TIER_PRESETS, type RecommendedTreatment } from "@/lib/pricing";
+import { TIER_PRESETS, HEALTH_CHRONIC_OPTIONS, computeHealthRiskMult, parseHealthDeclaration, type RecommendedTreatment, type HealthDeclaration } from "@/lib/pricing";
 import { getTryPerUsd } from "@/lib/fxrate";
 import { decryptField } from "@/lib/crypto";
 import { ArrowLeft, Luggage } from "lucide-react";
@@ -64,6 +65,25 @@ export default async function PackagePage({
     }
   }
 
+  // Sağlık beyanı (sigorta risk formu, 2026-07-20): vaka beyanı → çarpan; hasta görünümünde form.
+  // Ham beyan yalnız HASTAYA geçer (form ön-değeri); personel/doktor yalnız çarpan+durum görür.
+  const viewer = (await getCurrentUser())?.role === "PATIENT" ? ("patient" as const) : ("staff" as const);
+  const decl = parseHealthDeclaration(decryptField(c.healthDeclaration));
+  const healthRiskMult = computeHealthRiskMult(decl);
+  // Hasta + henüz beyansız: profil hafızası (önceki vakadaki beyan) → yoksa triyaj kronik cevabı ön-doldurur.
+  let healthPrefill: HealthDeclaration | null = null;
+  if (viewer === "patient" && !decl) {
+    const u = c.userId ? await db.user.findUnique({ where: { id: c.userId }, select: { patientHealthHistory: true } }) : null;
+    healthPrefill = parseHealthDeclaration(decryptField(u?.patientHealthHistory ?? null));
+    if (!healthPrefill) {
+      try {
+        const answers = c.extra ? (JSON.parse(decryptField(c.extra) ?? "{}") as Record<string, unknown>) : {};
+        const chronic = (Array.isArray(answers.chronic) ? answers.chronic : []).filter((x): x is string => typeof x === "string" && (HEALTH_CHRONIC_OPTIONS as readonly string[]).includes(x));
+        if (chronic.length) healthPrefill = { chronic, meds: false, smoking: false, majorSurgery: false };
+      } catch { /* triyaj yanıtı çözülemedi → prefill'siz boş form */ }
+    }
+  }
+
   // Sağlık Turizmi Agent'ı teklifi URL ile gelir (ai=1) — doktor her değeri düzenleyebilir
   const s = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
   const initial: PackageInitial | undefined = s("ai") === "1" ? {
@@ -92,7 +112,7 @@ export default async function PackagePage({
       </div>
 
       <div className="mt-7">
-        <PackageBuilder caseId={c.id} patientName={decryptField(c.patientName)} branch={c.branch} country={c.country} initial={initial} treatments={treatments} rate={fx.rate} fxSource={fx.source} fxAt={fx.at} doctorMmssLimitUsd={doctorMmssLimitUsd} doctorName={doctorName} />
+        <PackageBuilder caseId={c.id} patientName={decryptField(c.patientName)} branch={c.branch} country={c.country} initial={initial} treatments={treatments} rate={fx.rate} fxSource={fx.source} fxAt={fx.at} doctorMmssLimitUsd={doctorMmssLimitUsd} doctorName={doctorName} viewer={viewer} healthRiskMult={healthRiskMult} healthDecl={viewer === "patient" ? (decl ?? healthPrefill) : null} healthDeclaredAt={c.healthDeclaredAt?.toISOString() ?? null} />
       </div>
     </div>
   );

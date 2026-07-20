@@ -31,6 +31,9 @@ model User {
   patientLanguage    String? // dil ADI (air_lang ile aynı sözlük: "Türkçe", "Arapça", ...)
   patientPhone       String? // ŞİFRELİ (enc:v1:...) — decryptField ile okunur
   patientContactPref String? // APP | SMS | EMAIL
+  // Sağlık beyanı profil hafızası (sigorta risk formu, 2026-07-20): son beyanın kopyası — sonraki
+  // vakada prefill. Özel nitelikli sağlık verisi → at-rest ŞİFRELİ JSON (encryptField).
+  patientHealthHistory String? // ŞİFRELİ JSON {chronic:string[], meds:bool, smoking:bool, majorSurgery:bool}
   // E-posta doğrulama (Auth Faz 5, v5.6 — RESEND_API_KEY yoksa DORMANT): null = doğrulanmamış YENİ
   // e-posta kaydı (girişi engellenir). Mevcut hesaplar migration'da damgalandı; dormant modda ve
   // Google girişlerinde kayıt anında damgalanır (Google e-postayı zaten doğrulamış olur).
@@ -225,6 +228,12 @@ model Case {
   // 2026-07-10 değişiklik paketi — hasta iletişim + tedavi kararı + STA iletimi + epikriz talebi
   patientPhone         String? // hasta telefonu (kimlik → at-rest şifreli, encryptField)
   contactPreference    String? // hastanın iletişim tercihi: APP | SMS | EMAIL
+  // Sağlık beyanı (sigorta risk formu, 2026-07-20): hastanın paket ekranında verdiği beyan — prim
+  // hesabına endikatif risk çarpanı olarak girer (lib/pricing computeHealthRiskMult). Vaka anına
+  // SABİT (denetlenebilirlik: prim hangi beyanla hesaplandı); profil kopyası User.patientHealthHistory.
+  // Özel nitelikli sağlık verisi → at-rest ŞİFRELİ JSON (decryptCaseFields kapsamında).
+  healthDeclaration    String? // ŞİFRELİ JSON {chronic:string[], meds:bool, smoking:bool, majorSurgery:bool}
+  healthDeclaredAt     DateTime? // beyanın verildiği/güncellendiği an (null = beyansız → çarpan 1.0)
   treatmentDaysMin     Int? // doktorun öngördüğü tedavi süresi — alt sınır (gün)
   treatmentDaysMax     Int? // üst sınır (gün); örn. 3–7 gün
   hospitalRegistryId   Int? // tedavi için seçilen hastane (RegistryHospital.id — gevşek bağ, FK yok)
