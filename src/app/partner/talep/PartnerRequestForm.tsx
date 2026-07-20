@@ -72,8 +72,10 @@ export function PartnerRequestForm({
   const [icd10Code, setIcd10] = useState<string>("");
   const [clinicalSummary, setSummary] = useState<string>("");
   const [docs, setDocs] = useState<DocItem[]>([]);
+  const [dicomConfirm, setDicomConfirm] = useState(false); // burned-in PHI beyanı (yalnız DICOM ekliyken zorunlu)
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+  const hasDicom = docs.some((d) => d.mime === "application/dicom");
 
   async function onFiles(files: FileList | null) {
     if (!files) return;
@@ -81,7 +83,14 @@ export function PartnerRequestForm({
     const next: DocItem[] = [];
     for (const f of Array.from(files).slice(0, 8)) {
       try {
-        if (f.type === "application/pdf") {
+        // DICOM: tarayıcı çoğu .dcm'de type'ı BOŞ verir → uzantıyla tanı. Data URL öneki
+        // application/dicom'a normalize edilir (API MIME'ı data URL'den okur); PHI tag-strip SUNUCUDA.
+        const isDicom = f.type === "application/dicom" || /\.dcm$/i.test(f.name);
+        if (isDicom) {
+          if (f.size > 8_000_000) { setErr(`${f.name}: ${t.errDicomBig}`); continue; }
+          const raw = await readAsDataUrl(f);
+          next.push({ label: f.name, mime: "application/dicom", dataUrl: raw.replace(/^data:[^;]*;base64,/, "data:application/dicom;base64,") });
+        } else if (f.type === "application/pdf") {
           if (f.size > 8_000_000) { setErr(`${f.name}: ${t.errPdfBig}`); continue; }
           next.push({ label: f.name, mime: "application/pdf", dataUrl: await readAsDataUrl(f) });
         } else if (/^image\/(jpeg|png|webp|gif)$/.test(f.type)) {
@@ -98,6 +107,7 @@ export function PartnerRequestForm({
 
   async function submit() {
     if (clinicalSummary.trim().length < 10) { setErr(t.errMinSummary); return; }
+    if (hasDicom && !dicomConfirm) { setErr(t.errDicomConfirm); return; }
     setSaving(true);
     setErr("");
     try {
@@ -183,17 +193,23 @@ export function PartnerRequestForm({
           <p className="mt-0.5 text-xs text-[var(--c-ink-3)]">{t.docsHelp}</p>
           <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[var(--c-hairline)] px-4 py-2.5 text-sm font-medium text-[var(--c-ink-2)] hover:border-[var(--c-indigo)] hover:bg-[var(--c-surface)]">
             <Upload size={15} /> {t.addDoc}
-            <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp,image/gif" multiple className="hidden" onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
+            <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp,image/gif,application/dicom,.dcm" multiple className="hidden" onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
           </label>
           {docs.length > 0 && (
             <ul className="mt-2 space-y-1.5">
               {docs.map((d, i) => (
                 <li key={i} className="flex items-center justify-between gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2 text-sm">
-                  <span className="inline-flex min-w-0 items-center gap-1.5 text-[var(--c-ink)]"><FileText size={14} className="shrink-0 text-[var(--c-ink-3)]" /> <span className="truncate">{d.label}</span></span>
+                  <span className="inline-flex min-w-0 items-center gap-1.5 text-[var(--c-ink)]"><FileText size={14} className="shrink-0 text-[var(--c-ink-3)]" /> <span className="truncate">{d.label}</span>{d.mime === "application/dicom" && <span className="shrink-0 rounded bg-[var(--c-ink)]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--c-ink-2)]">DICOM</span>}</span>
                   <button type="button" onClick={() => setDocs((p) => p.filter((_, j) => j !== i))} className="shrink-0 text-[var(--c-ink-3)] hover:text-red-500"><X size={15} /></button>
                 </li>
               ))}
             </ul>
+          )}
+          {hasDicom && (
+            <label className="mt-3 flex cursor-pointer items-start gap-2.5 rounded-lg border border-amber-400/25 bg-amber-500/10 px-3 py-2.5 text-xs leading-relaxed text-[var(--c-ink-2)]">
+              <input type="checkbox" checked={dicomConfirm} onChange={(e) => setDicomConfirm(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--c-indigo)]" />
+              {t.dicomConfirm}
+            </label>
           )}
         </div>
 

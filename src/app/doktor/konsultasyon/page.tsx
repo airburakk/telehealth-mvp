@@ -11,6 +11,7 @@ import { ConsultAnswerForm, type CatalogProps } from "./ConsultAnswerForm";
 import { ConsultationChat } from "@/components/ConsultationChat";
 import { VideoControls } from "@/components/VideoControls";
 import { PresencePinger } from "@/components/PresencePinger";
+import { ConsultDicomButton } from "@/components/ConsultDicomButton";
 import { Inbox, ShieldCheck, ArrowLeft, Globe, Languages, Stethoscope, Wallet, FileText, FlaskConical, AlertTriangle, Pill, Scan, MessagesSquare } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -124,12 +125,22 @@ function BranchTag({ r }: { r: ConsultReqView }) {
 }
 
 // Yüklenen belgelerin AI değerlendirmesi (tür + TR çeviri + özet + anormal bayrak + LOINC lab tablosu).
-function DocumentsBlock({ docs }: { docs: ConsultDocView[] }) {
+// DICOM belgeler (v6.32): AI değerlendirme kapsam dışı → tag-strip'li anonim dosya viewer'da açılır.
+function DocumentsBlock({ requestId, docs }: { requestId: string; docs: ConsultDocView[] }) {
   if (!docs.length) return null;
   return (
     <div className="mt-3 space-y-2">
       <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">Yüklenen belgeler (AI değerlendirme)</div>
-      {docs.map((d) => (
+      {docs.map((d) => d.mime === "application/dicom" ? (
+        <div key={d.id} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-[var(--c-ink)]">
+            <span className="inline-flex min-w-0 items-center gap-2"><FileText size={14} className="shrink-0 text-[var(--c-ink-3)]" /> <span className="truncate">{d.label}</span>
+              <span className="shrink-0 rounded-full bg-[var(--c-ink)]/15 px-2 py-0.5 text-[10px] font-semibold text-[var(--c-ink-2)]">DICOM</span></span>
+            <ConsultDicomButton requestId={requestId} docId={d.id} />
+          </div>
+          <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">Kimlik etiketleri sistemce temizlendi.</p>
+        </div>
+      ) : (
         <div key={d.id} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 p-3">
           <div className="flex items-center gap-2 text-sm font-medium text-[var(--c-ink)]">
             <FileText size={14} className="text-[var(--c-ink-3)]" /> {d.label}
@@ -206,7 +217,7 @@ function OpenCard({ r, catalog, engaged }: { r: ConsultReqView; catalog: Catalog
       {r.summaryTr && r.summaryTr !== r.clinicalSummary && (
         <details className="mt-1 text-xs text-[var(--c-ink-3)]"><summary className="cursor-pointer">Özgün metin ({r.language})</summary><p className="mt-1 whitespace-pre-wrap">{r.clinicalSummary}</p></details>
       )}
-      <DocumentsBlock docs={r.documents} />
+      <DocumentsBlock requestId={r.id} docs={r.documents} />
 
       {engaged ? (
         // Sahiplenilmiş görüşme: görüntülü öner + chat açık + nihai görüş formu

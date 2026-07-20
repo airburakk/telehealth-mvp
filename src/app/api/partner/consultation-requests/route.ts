@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { createRequestFromInput, processRequestAi, type PartnerDocInput } from "@/lib/consultation-requests";
+import { createRequestFromInput, processRequestAi, DicomRejectedError, type PartnerDocInput } from "@/lib/consultation-requests";
 import { LANGUAGES, COUNTRIES } from "@/lib/constants";
 import { BRANCHES } from "@/lib/triage";
 
@@ -11,8 +11,8 @@ const LANG_SET = new Set(LANGUAGES);
 const BRANCH_LABELS = new Set(BRANCHES.map((b) => b.label));
 const COUNTRY_NAME = new Map(COUNTRIES.map((c) => [c.code, c.name]));
 
-// Belge data URL doğrulama: yalnız PDF + yaygın görüntü (DICOM/diğer reddedilir). Boyut kabaca ~8MB.
-const ALLOWED_MIME = /^(application\/pdf|image\/(jpeg|png|webp|gif))$/;
+// Belge data URL doğrulama: PDF + yaygın görüntü + DICOM (v6.32 — sunucuda PHI tag-strip'ten geçer). ~8MB.
+const ALLOWED_MIME = /^(application\/pdf|application\/dicom|image\/(jpeg|png|webp|gif))$/;
 function parseDocs(raw: unknown): PartnerDocInput[] {
   if (!Array.isArray(raw)) return [];
   const out: PartnerDocInput[] = [];
@@ -63,17 +63,24 @@ export async function POST(req: Request) {
 
   const documents = parseDocs(b.documents);
 
-  const id = await createRequestFromInput({
-    partnerId: partner.id,
-    partnerName: `${partner.title} ${partner.name} (${COUNTRY_NAME.get(partner.country) ?? partner.country})`,
-    branchLimited,
-    branch,
-    region,
-    language,
-    urgency,
-    icd10Code,
-    clinicalSummary,
-  }, documents);
+  let id: string;
+  try {
+    id = await createRequestFromInput({
+      partnerId: partner.id,
+      partnerName: `${partner.title} ${partner.name} (${COUNTRY_NAME.get(partner.country) ?? partner.country})`,
+      branchLimited,
+      branch,
+      region,
+      language,
+      urgency,
+      icd10Code,
+      clinicalSummary,
+    }, documents);
+  } catch (e) {
+    // Fail-closed (v6.32): sıyrılamayan DICOM = talep HİÇ açılmaz; partner dosyayı düzeltip yeniden dener.
+    if (e instanceof DicomRejectedError) return NextResponse.json({ error: e.message }, { status: 400 });
+    throw e;
+  }
 
   // AI işleme: klinik özeti TR'ye çevir + her belgeyi assessDocument ile değerlendir (tür/çeviri/labs).
   // Anahtar yoksa/hata olursa talep yine de açık kalır (best-effort).

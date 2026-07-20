@@ -7,9 +7,19 @@ import { db } from "./db";
 import { encryptField, decryptField } from "./crypto";
 import { storeDocument, loadDocument } from "./storage";
 import { deidentifyCase, scrubText } from "./deidentify";
+import { deidentifyDicom } from "./dicom-deidentify";
 import { translateText, assessDocument, redactPersonNames } from "./ai-clinical";
 import { notifyUser, notifyDoctorById } from "./notify";
 import { loincForBranchLabel } from "@/data/coding";
+
+// DICOM PHI tag-strip başarısızlığı — route 400'e çevirir (fail-closed: sıyrılamayan dosya SAKLANMAZ,
+// talep hiç açılmaz). Mesaj kullanıcı onaylı (2026-07-20).
+export class DicomRejectedError extends Error {
+  constructor(label: string) {
+    super(`${label}: DICOM dosyası okunamadı veya anonimleştirilemedi; dosya kaydedilmedi.`);
+    this.name = "DicomRejectedError";
+  }
+}
 
 export const PAYMENT_PER_ANSWER = 50; // USD — yanıt başına ödeme (simüle)
 
@@ -47,6 +57,22 @@ export interface PartnerRequestInput {
 }
 
 export async function createRequestFromInput(input: PartnerRequestInput, documents: PartnerDocInput[] = []): Promise<string> {
+  // (0) DICOM PHI tag-strip — KAYIT ÖNCESİ hazırlık (v6.32): application/dicom belgelerin kimlik/kurum
+  //     etiketleri sunucuda sıyrılır (lib/dicom-deidentify; piksel verisi dokunulmaz — burned-in yazıyı
+  //     partner formda beyanla doğrular). Sıyrılamayan dosya = DicomRejectedError → HİÇBİR kayıt yazılmaz.
+  //     uidMap talep-başına paylaşılır: aynı çalışmanın çoklu dosyaları tutarlı yeni UID alır.
+  const uidMap = new Map<string, string>();
+  const prepared = documents.slice(0, 8).filter((d) => d?.dataUrl).map((d) => {
+    if (d.mime !== "application/dicom") return d;
+    try {
+      const raw = Buffer.from(d.dataUrl.replace(/^data:[^;]*;base64,/, ""), "base64");
+      const { bytes } = deidentifyDicom(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength) as ArrayBuffer, uidMap);
+      return { ...d, dataUrl: `data:application/dicom;base64,${Buffer.from(bytes).toString("base64")}` };
+    } catch {
+      throw new DicomRejectedError(d.label || "belge");
+    }
+  });
+
   // (1) Yapısal satır-içi temizlik: e-posta/TC/telefon/tarih maskelenir (deidentify.scrubText).
   const structural = scrubText(input.clinicalSummary.trim().slice(0, 5000), []);
   // (2) AI isim redaksiyonu: yapısal scrub'ın yakalayamadığı DÜZ hasta/kişi adlarını [ad] ile maskele
@@ -72,9 +98,8 @@ export async function createRequestFromInput(input: PartnerRequestInput, documen
       status: "OPEN",
     },
   });
-  // Belgeler ham (şifreli) yazılır; AI değerlendirmesi processRequestAi'da yapılır.
-  for (const d of documents.slice(0, 8)) {
-    if (!d?.dataUrl) continue;
+  // Belgeler ham (şifreli) yazılır; AI değerlendirmesi processRequestAi'da yapılır. DICOM'lar (0)'da sıyrıldı.
+  for (const d of prepared) {
     await db.consultationRequestDocument.create({
       data: { requestId: created.id, label: (d.label || "belge").slice(0, 200), mime: d.mime || "application/octet-stream", fileData: (await storeDocument(d.dataUrl, { keyPrefix: "consult-doc" })) as string }, // object storage / inline şifreli (T11)
     });
@@ -100,6 +125,7 @@ export async function processRequestAi(requestId: string): Promise<void> {
   const loincHints = loincForBranchLabel(r.branch).map((e) => ({ code: e.code, label: e.label }));
   for (const d of r.documents) {
     if (d.assessedAt) continue;
+    if (d.mime === "application/dicom") continue; // viewer-only (v6.32): radyoloji AI yorumu bilinçli kapsam dışı
     try {
       const a = await assessDocument((await loadDocument(d.fileData)) as string, { // object storage'tan (varsa) yükle + çöz (T11)
         branch: r.branch ?? "Genel",
@@ -134,6 +160,7 @@ export interface MedRec { atc?: string; name?: string; dose?: string; route?: st
 export interface ConsultDocView {
   id: string;
   label: string;
+  mime: string; // application/dicom → UI "Görüntüle (DICOM)" gösterir (v6.32)
   docType: string | null;
   aiSummary: string | null;
   aiTranslation: string | null;
@@ -171,7 +198,7 @@ type RowWithDocs = {
   recommendedImaging: string | null; medications: string | null; paymentSim: number | null;
   answeredAt: Date | null; createdAt: Date;
   // AI alanları opsiyonel: liste görünümleri (DOC_SELECT_LITE) bunları çekmez → view'da null/[] olur.
-  documents?: { id: string; label: string; docType: string | null; aiSummary?: string | null; aiTranslation?: string | null; aiFlags?: string | null; aiLabs?: string | null; assessedAt: Date | null }[];
+  documents?: { id: string; label: string; mime: string; docType: string | null; aiSummary?: string | null; aiTranslation?: string | null; aiFlags?: string | null; aiLabs?: string | null; assessedAt: Date | null }[];
 };
 
 function toView(r: RowWithDocs): ConsultReqView {
@@ -194,6 +221,7 @@ function toView(r: RowWithDocs): ConsultReqView {
     documents: (r.documents ?? []).map((d) => ({
       id: d.id,
       label: d.label,
+      mime: d.mime,
       docType: d.docType,
       aiSummary: d.aiSummary ? decryptField(d.aiSummary) : null,
       aiTranslation: d.aiTranslation ? decryptField(d.aiTranslation) : null,
@@ -207,10 +235,10 @@ function toView(r: RowWithDocs): ConsultReqView {
   };
 }
 
-const DOC_SELECT = { id: true, label: true, docType: true, aiSummary: true, aiTranslation: true, aiFlags: true, aiLabs: true, assessedAt: true } as const;
+const DOC_SELECT = { id: true, label: true, mime: true, docType: true, aiSummary: true, aiTranslation: true, aiFlags: true, aiLabs: true, assessedAt: true } as const;
 // Liste görünümleri (partner "taleplerim" + doktor "yanıtladıklarım") belge AI metinlerini
 // (aiSummary/aiTranslation/aiFlags/aiLabs) GÖSTERMEZ → yalnız sayı/tür için hafif select (şifreli blob taşınmaz).
-const DOC_SELECT_LITE = { id: true, label: true, docType: true, assessedAt: true } as const;
+const DOC_SELECT_LITE = { id: true, label: true, mime: true, docType: true, assessedAt: true } as const;
 
 // Doktorun görebileceği AÇIK talepler (genel havuz + kendi branşı) — belge AI içeriğiyle.
 export async function openRequestsForDoctor(branch: string): Promise<ConsultReqView[]> {

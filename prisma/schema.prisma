@@ -336,15 +336,18 @@ model ConsultationVideoAppointment {
 }
 
 /// M5 — Konsültasyon talebine eklenen anonim tıbbi belge + triyaj-tipi AI değerlendirme sonucu.
-/// fileData/aiSummary/aiTranslation/aiFlags at-rest şifreli (lib/crypto). DICOM kapsam dışı.
+/// fileData/aiSummary/aiTranslation/aiFlags at-rest şifreli (lib/crypto).
 /// Yanıtlayan hekim AI-çıkarımı klinik içeriği görür; ham dosya hekime gösterilmez (anonimlik).
+/// İSTİSNA — DICOM (v6.32): mime=application/dicom belgeler kayıt ÖNCESİ PHI tag-strip'ten geçer
+/// (lib/dicom-deidentify) → anonim ham dosya auth'lu /raw ucundan DicomViewer'da GÖSTERİLİR;
+/// AI değerlendirme DICOM'a uygulanmaz (viewer-only).
 model ConsultationRequestDocument {
   id            String              @id @default(cuid())
   request       ConsultationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   requestId     String
   label         String // dosya adı/etiketi
   mime          String // application/pdf | image/*
-  fileData      String // base64 data URL — at-rest şifreli; DICOM yok
+  fileData      String // base64 data URL / blob ref — at-rest şifreli; DICOM = tag-strip'li anonim dosya (v6.32)
   docType       String? // assessDocument türü (Laboratuvar/Radyoloji/Epikriz/...)
   aiSummary     String? // klinik özet (TR) — şifreli
   aiTranslation String? // belge içeriği TR çeviri — şifreli

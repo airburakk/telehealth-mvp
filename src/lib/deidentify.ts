@@ -4,8 +4,10 @@
 //   (b) metin temizliği — serbest klinik metindeki satır-içi tanımlayıcıları (TC, pasaport, e-posta, telefon, ad) maskele
 // Klinik içerik (semptom, süre, branşa özel yanıtlar, ICD-10, lab) KORUNUR — doktor görüş verebilsin diye.
 //
-// ⚠️ Bu "yapısal de-id"dir; tam KVKK/GDPR yeterliliği + DICOM PHI tag-strip ayrı faza park (todo).
-// DICOM/görüntü ekleri bu fazda havuza HİÇ aktarılmaz (attachments tamamen düşürülür).
+// ⚠️ Bu "yapısal de-id"dir; tam KVKK/GDPR yeterliliği ayrı değerlendirme konusudur.
+// DICOM PHI tag-strip v6.32'de KURULDU (lib/dicom-deidentify): partner havuz yükleme yolunda DICOM
+// kayıt öncesi sıyrılır. VAKA eklerinin (attachments) havuza aktarımı hâlâ bu fazın DIŞINDA —
+// iç vakadan havuza aktarım (Faz 3) kurulursa aynı strip motoru kullanılmalı.
 import { decryptField } from "./crypto";
 import { COUNTRIES } from "./constants";
 

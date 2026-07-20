@@ -10,6 +10,7 @@ import { PartnerNewsLang } from "./PartnerNewsLang";
 import { ConsultationChat } from "@/components/ConsultationChat";
 import { VideoControls } from "@/components/VideoControls";
 import { PresencePinger } from "@/components/PresencePinger";
+import { ConsultDicomButton } from "@/components/ConsultDicomButton";
 import { ShieldOff, Plus, Globe, Languages, Stethoscope, FileText, Clock, CheckCircle2, FlaskConical, Scan, Pill, Download, Newspaper, MessageCircle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,7 @@ const UI = {
   generalPool: "Genel havuz",
   sentSummary: "Gönderilen anonim özet:",
   docsAdded: "belge eklendi",
+  viewDicom: "Görüntüle (DICOM)",
   expertOpinion: "Uzman görüşü",
   awaitingOpinion: "Uzman görüşü bekleniyor",
   lab: "Lab",
@@ -148,7 +150,17 @@ function ReqCard({ r, tr, lang }: { r: PartnerRequestView; tr: Tr; lang: string 
       <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-[var(--c-ink-2)]"><FileText size={13} /> {tr(UI.sentSummary)}</p>
       <p className="mt-1 whitespace-pre-wrap text-sm text-[var(--c-ink)]">{r.clinicalSummary}</p>
       {r.documents.length > 0 && (
-        <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-[var(--c-ink-3)]"><FileText size={12} /> {r.documents.length} {tr(UI.docsAdded)} ({r.documents.map((d) => d.docType || "belge").join(", ")})</p>
+        <div className="mt-2">
+          <p className="inline-flex items-center gap-1.5 text-xs text-[var(--c-ink-3)]"><FileText size={12} /> {r.documents.length} {tr(UI.docsAdded)} ({r.documents.map((d) => (d.mime === "application/dicom" ? "DICOM" : d.docType || "belge")).join(", ")})</p>
+          {/* DICOM (v6.32): partner kendi yüklediği tag-strip'li dosyayı görüntüleyebilir */}
+          {r.documents.some((d) => d.mime === "application/dicom") && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {r.documents.filter((d) => d.mime === "application/dicom").map((d) => (
+                <ConsultDicomButton key={d.id} requestId={r.id} docId={d.id} label={tr(UI.viewDicom)} />
+              ))}
+            </div>
+          )}
+        </div>
       )}
       {r.status === "ANSWERED" ? (
         <div className="mt-3 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-3">
