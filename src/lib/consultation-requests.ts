@@ -11,6 +11,8 @@ import { deidentifyDicom } from "./dicom-deidentify";
 import { translateText, assessDocument, redactPersonNames } from "./ai-clinical";
 import { notifyUser, notifyDoctorById } from "./notify";
 import { loincForBranchLabel } from "@/data/coding";
+import { COUNTRIES as ALL_COUNTRIES } from "./constants";
+import { publishLiveNudge } from "./ably-server";
 
 // DICOM PHI tag-strip başarısızlığı — route 400'e çevirir (fail-closed: sıyrılamayan dosya SAKLANMAZ,
 // talep hiç açılmaz). Mesaj kullanıcı onaylı (2026-07-20).
@@ -45,8 +47,11 @@ export interface PartnerDocInput {
 }
 
 export interface PartnerRequestInput {
-  partnerId: string;
-  partnerName: string;
+  partnerId?: string | null; // partner akışı (M5 Faz 3)
+  partnerName: string; // görünen ad (iç-doktor akışında "Dr. X (Platform)")
+  requestedByDoctorId?: string | null; // İÇ VAKADAN açan platform doktoru (v6.33 Faz 3) — havuzda kendine gösterilmez
+  sourceCaseId?: string | null; // iç izlenebilirlik (yanıtlayan hekime gösterilmez)
+  summaryIsTurkish?: boolean; // özet TR yazıldıysa summaryTr çeviri ÇAĞRILMADAN doğrudan doldurulur (v6.33)
   branchLimited: boolean;
   branch?: string | null;
   region: string;
@@ -87,7 +92,9 @@ export async function createRequestFromInput(input: PartnerRequestInput, documen
   }
   const created = await db.consultationRequest.create({
     data: {
-      requestedByPartnerId: input.partnerId,
+      requestedByPartnerId: input.partnerId ?? null,
+      requestedByDoctorId: input.requestedByDoctorId ?? null,
+      sourceCaseId: input.sourceCaseId ?? null,
       requestedByName: input.partnerName,
       branch: input.branchLimited ? input.branch ?? null : null,
       region: input.region,
@@ -95,6 +102,9 @@ export async function createRequestFromInput(input: PartnerRequestInput, documen
       urgency: clampUrgency(input.urgency),
       icd10Code: input.icd10Code?.trim() || null,
       clinicalSummary: encryptField(summary),
+      // Özet TR kaynaklıysa summaryTr = redaksiyon SONRASI aynı metin — translateText hiç çağrılmaz
+      // (TR→"Türkçe" çevirisinin İngilizce'ye kayması v6.32 doğrulamasında gözlendi; kök çözüm burada).
+      summaryTr: input.summaryIsTurkish ? encryptField(summary) : null,
       status: "OPEN",
     },
   });
@@ -107,13 +117,107 @@ export async function createRequestFromInput(input: PartnerRequestInput, documen
   return created.id;
 }
 
+// ── v6.33 Faz 3: İÇ VAKADAN havuza konsültasyon ──
+// Atanan doktor vakayı kimlikten arındırıp havuza açar. Özet taslağı deidentifyCase'ten gelir,
+// doktor düzenler; düzenlenmiş metin YİNE scrub+redact'ten geçer (createRequestFromInput içinde —
+// doktor yanlışlıkla kimlik yazmış olabilir). DICOM belgeler aynı fonksiyonun kayıt-öncesi
+// tag-strip hazırlığından geçer (motor yeniden kullanımı). Özet TR → summaryTr doğrudan doldurulur.
+
+// Havuza-açma panelinin ön-dolumu: anonim özet taslağı + seçilebilir belge listesi (içerik YOK — hafif).
+export async function poolPreviewForCase(caseId: string): Promise<{ summary: string; documents: { id: string; label: string; mime: string }[] } | null> {
+  const c = await db.case.findUnique({
+    where: { id: caseId },
+    select: {
+      patientName: true, patientIdentifier: true, country: true, language: true, symptoms: true,
+      durationText: true, extra: true, branch: true, urgency: true, icd10Code: true, labResults: true,
+      documents: { where: { content: { not: null } }, select: { id: true, label: true, mimeType: true }, orderBy: { createdAt: "asc" } },
+    },
+  });
+  if (!c) return null;
+  const deid = deidentifyCase(c);
+  return {
+    summary: deid.clinicalSummary,
+    documents: c.documents.map((d) => ({ id: d.id, label: d.label, mime: d.mimeType })),
+  };
+}
+
+export interface PoolFromCaseInput {
+  caseId: string;
+  doctorId: string;
+  doctorName: string; // görünen ad → "Dr. X (Platform)" (kullanıcı onaylı etiket)
+  summary: string; // doktorun kontrol edip düzenlediği anonim özet (TR)
+  docIds: string[]; // vakaya ait CaseDocument seçimi
+}
+
+export async function createRequestFromCase(input: PoolFromCaseInput): Promise<{ id: string } | "NOT_FOUND" | "EMPTY"> {
+  const clean = (input.summary || "").trim();
+  if (clean.length < 10) return "EMPTY";
+  const c = await db.case.findUnique({
+    where: { id: input.caseId },
+    select: { id: true, country: true, language: true, branch: true, urgency: true, icd10Code: true },
+  });
+  if (!c) return "NOT_FOUND";
+
+  // Seçilen belgeler (yalnız bu vakanın içerikli satırları) → data URI. DICOM'lar createRequestFromInput'ta sıyrılır.
+  const rows = input.docIds.length
+    ? await db.caseDocument.findMany({
+        where: { caseId: input.caseId, id: { in: input.docIds.slice(0, 8) }, content: { not: null } },
+        select: { id: true, label: true, mimeType: true, content: true },
+      })
+    : [];
+  const documents: PartnerDocInput[] = [];
+  for (const d of rows) {
+    const dataUrl = await loadDocument(d.content as string);
+    if (typeof dataUrl === "string" && dataUrl.startsWith("data:")) {
+      documents.push({ label: d.label, mime: d.mimeType, dataUrl });
+    }
+  }
+
+  const region = ALL_COUNTRIES.find((x) => x.code === c.country)?.name ?? c.country;
+  const id = await createRequestFromInput({
+    partnerId: null,
+    partnerName: `${input.doctorName} (Platform)`,
+    requestedByDoctorId: input.doctorId,
+    sourceCaseId: c.id,
+    summaryIsTurkish: true,
+    branchLimited: true,
+    branch: c.branch,
+    region,
+    language: c.language,
+    urgency: c.urgency,
+    icd10Code: c.icd10Code,
+    clinicalSummary: clean,
+  }, documents);
+  return { id };
+}
+
+// Vaka sayfası "Havuz Görüşü" kartı — bu vakadan açılan talepler (durum + görüş; hafif select).
+export interface CasePoolView { id: string; status: string; branch: string | null; answerText: string | null; answeredAt: string | null; createdAt: string }
+export async function poolRequestsForCase(caseId: string): Promise<CasePoolView[]> {
+  const rows = await db.consultationRequest.findMany({
+    where: { sourceCaseId: caseId, requestedByDoctorId: { not: null } },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    select: { id: true, status: true, branch: true, answerText: true, answeredAt: true, createdAt: true },
+  });
+  return rows.map((r) => ({
+    id: r.id, status: r.status, branch: r.branch,
+    answerText: r.answerText ? decryptField(r.answerText) : null,
+    answeredAt: r.answeredAt ? r.answeredAt.toISOString() : null,
+    createdAt: r.createdAt.toISOString(),
+  }));
+}
+
 // AI işleme: klinik özeti Türkçeye çevir (yanıtlayan doktor için) + her belgeyi assessDocument ile değerlendir.
 // Triyaj analyze-docs deseni: docType + TR çeviri + özet + bayrak + LOINC labs. Hatalı belge atlanır.
 export async function processRequestAi(requestId: string): Promise<void> {
   const r = await db.consultationRequest.findUnique({ where: { id: requestId }, include: { documents: true } });
   if (!r) return;
 
-  if (!r.summaryTr) {
+  // v6.33: hasta dili Türkçe ise özet zaten TR kabul edilir → çeviri ÇAĞRILMAZ (TR→"Türkçe" çevirisinin
+  // İngilizce'ye kaydığı v6.32 doğrulamasında gözlendi; summaryTr boş kalır, UI clinicalSummary gösterir).
+  // İç-doktor akışı summaryTr'yi create anında doğrudan doldurur (summaryIsTurkish) — buraya hiç düşmez.
+  if (!r.summaryTr && r.language?.toLowerCase() !== "türkçe") {
     try {
       const tr = await translateText(decryptField(r.clinicalSummary), "Türkçe");
       if (tr) await db.consultationRequest.update({ where: { id: requestId }, data: { summaryTr: encryptField(tr) } });
@@ -241,17 +345,29 @@ const DOC_SELECT = { id: true, label: true, mime: true, docType: true, aiSummary
 const DOC_SELECT_LITE = { id: true, label: true, mime: true, docType: true, assessedAt: true } as const;
 
 // Doktorun görebileceği AÇIK talepler (genel havuz + kendi branşı) — belge AI içeriğiyle.
-export async function openRequestsForDoctor(branch: string): Promise<ConsultReqView[]> {
+// excludeDoctorId (v6.33 Faz 3): doktorun KENDİ vakasından açtığı talepler kendisine gösterilmez
+// (kendi vakasına kendisi görüş vermesin); diğer doktorlar normal görür.
+export async function openRequestsForDoctor(branch: string, excludeDoctorId?: string): Promise<ConsultReqView[]> {
   const rows = await db.consultationRequest.findMany({
-    where: { status: "OPEN", OR: [{ branch: null }, { branch }] },
+    where: {
+      status: "OPEN",
+      OR: [{ branch: null }, { branch }],
+      ...(excludeDoctorId ? { NOT: { requestedByDoctorId: excludeDoctorId } } : {}),
+    },
     orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
     include: { documents: { select: DOC_SELECT } },
   });
   return rows.map(toView);
 }
 
-export async function openCountForDoctor(branch: string): Promise<number> {
-  return db.consultationRequest.count({ where: { status: "OPEN", OR: [{ branch: null }, { branch }] } });
+export async function openCountForDoctor(branch: string, excludeDoctorId?: string): Promise<number> {
+  return db.consultationRequest.count({
+    where: {
+      status: "OPEN",
+      OR: [{ branch: null }, { branch }],
+      ...(excludeDoctorId ? { NOT: { requestedByDoctorId: excludeDoctorId } } : {}),
+    },
+  });
 }
 
 // Tek talep + belgeler (FHIR endpoint + doktor detayı). docLabs = tüm belgelerin AI labları birleşik.
@@ -311,7 +427,7 @@ export async function answerRequest(id: string, doctorId: string, input: AnswerI
   if (!clean) return "EMPTY";
   const req = await db.consultationRequest.findUnique({
     where: { id },
-    select: { status: true, language: true, requestedByPartnerId: true, branch: true, engagedByDoctorId: true },
+    select: { status: true, language: true, requestedByPartnerId: true, requestedByDoctorId: true, sourceCaseId: true, branch: true, engagedByDoctorId: true },
   });
   if (!req) return "NOT_FOUND";
   // OPEN (doğrudan yanıt) VEYA IN_DISCUSSION ama bu doktor sahiplenmişse yanıtlanabilir; başka durum/sahip → TAKEN.
@@ -371,6 +487,20 @@ export async function answerRequest(id: string, doctorId: string, input: AnswerI
       console.warn("[consult] partner bildirimi yazılamadı:", e instanceof Error ? e.message : e);
     }
   }
+  // İç vakadan açılan talep (v6.33 Faz 3): açan platform doktoruna bildirim — görüş vaka sayfasında.
+  if (req.requestedByDoctorId) {
+    try {
+      await notifyDoctorById(req.requestedByDoctorId, {
+        type: "CONSULT_ANSWERED",
+        title: "💬 Havuz görüşü hazır",
+        body: `${req.branch ?? "Genel"} · vakanız için uzman görüşü geldi`,
+        href: req.sourceCaseId ? `/doktor/vaka/${req.sourceCaseId}` : "/doktor/konsultasyon",
+      });
+    } catch (e) {
+      console.warn("[consult] iç-doktor bildirimi yazılamadı:", e instanceof Error ? e.message : e);
+    }
+  }
+  await publishLiveNudge("consult"); // açık chat/video panelleri yanıt durumunu anında çeksin (v6.33)
   return "OK";
 }
 
@@ -449,6 +579,7 @@ export async function sendMessage(requestId: string, sender: ChatSender, text: s
   } catch (e) {
     console.warn("[consult-chat] mesaj bildirimi yazılamadı:", e instanceof Error ? e.message : e);
   }
+  await publishLiveNudge("consult"); // açık chat panelleri yeni mesajı anında çeksin (v6.33)
   return "OK";
 }
 

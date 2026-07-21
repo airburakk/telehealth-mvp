@@ -148,8 +148,8 @@ export default async function DoctorPanel({
   // ── Panel 3: Ücretsiz Sağlık Hizmeti bekleyen sayısı ──
   const pbWaiting = vis.freeCare ? await waitingCount() : 0;
 
-  // ── Panel 4: açık konsültasyon talebi sayısı (genel havuz + kendi branşı) ──
-  const consultOpen = vis.consult && doctor ? await openCountForDoctor(doctor.branch) : 0;
+  // ── Panel 4: açık konsültasyon talebi sayısı (genel havuz + kendi branşı; kendi açtıkları sayılmaz — v6.33) ──
+  const consultOpen = vis.consult && doctor ? await openCountForDoctor(doctor.branch, doctor.id) : 0;
 
   // ── Sağlık Turizmi havuzu (branş bazlı, yeni talepler) ──
   const tourismPool = vis.tourism && doctor

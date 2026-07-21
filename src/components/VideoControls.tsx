@@ -3,11 +3,12 @@
 // M5 Faz 3 — konsültasyon görüntülü görüşme kontrolleri (İcapçı offer/respond).
 // Doktor "öner" → partner "kabul/ret" → SCHEDULED → her iki taraf "odaya katıl".
 // Karşı tarafın online rozeti presence'ten (poll). Partner tarafı useT ile kendi dilinde.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { Video, Loader2, Check, X, Wifi, WifiOff } from "lucide-react";
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47 } from "@/lib/constants";
+import { useLiveTick } from "@/lib/use-live-tick";
 
 interface VideoAppt {
   id: string; status: string; proposedAt: string; scheduledAt: string | null;
@@ -43,11 +44,8 @@ export function VideoControls({ requestId, role, lang = "Türkçe" }: { requestI
     } catch {}
   }, [requestId]);
 
-  useEffect(() => {
-    load();
-    const i = setInterval(load, 10_000);
-    return () => clearInterval(i);
-  }, [load]);
+  // v6.33: 10sn körlemesine polling → "live:consult" dürtüsü + güvenlik ağı (Ably yoksa 10sn birebir).
+  useLiveTick("consult", load, true, 10_000);
 
   async function act(action: string) {
     setBusy(action);

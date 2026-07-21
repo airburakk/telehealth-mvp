@@ -43,7 +43,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const redo = !!body?.redo;
 
   const docs = await db.caseDocument.findMany({
-    where: { caseId: id, content: { not: null }, ...(redo ? {} : { assessedAt: null }) },
+    // DICOM (v6.33) viewer-only: AI değerlendirme kapsam dışı (assessDocument PDF/görüntü bekler) → dışla.
+    where: { caseId: id, content: { not: null }, mimeType: { not: "application/dicom" }, ...(redo ? {} : { assessedAt: null }) },
     select: { id: true, label: true, content: true },
   });
   if (!docs.length) {

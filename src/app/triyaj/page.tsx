@@ -36,7 +36,7 @@ const STATIC_UI = [
   "Devam'a bastığınızda yapay zeka şikayetinizi analiz edip sizi doğru uzmana yönlendirir.",
   "AI sizi doğru branşa yönlendiriyor…", "Yönlendirilen branş", "Branşınız", "elle seçildi", "AI önerisi · doğru değilse değiştirin",
   "Önce şikayet adımında AI ön analizini çalıştırın; sorular branşa göre belirir.",
-  "Tıbbi belge yükleyin", "PDF, JPG, DICOM · Tahlil, radyoloji, epikriz",
+  "Tıbbi belge yükleyin", "PDF, JPG, DICOM · Tahlil, radyoloji, epikriz", "(görüntüleyicide açılır)",
   "Yüklenen dosyalar KVKK/GDPR uyumlu şifreli olarak saklanır.", "Belge yüklemek opsiyoneldir.",
   "AI Ön Analizi", "Aciliyet", "Güven",
   "Geri", "Devam", "Başvuruyu oluştur",
@@ -112,13 +112,20 @@ function downscaleImage(file: File): Promise<string> {
   });
 }
 
-// Görüntü → küçültülmüş JPEG; PDF (≤8MB) → base64; diğer (DICOM/büyük) → yalnız ad. AI yalnız içerikli olanları işler.
+// Görüntü → küçültülmüş JPEG; PDF (≤8MB) → base64; DICOM (≤8MB, v6.33) → base64 ASLIYLA saklanır
+// (kullanıcı kararı: tıbbi kaydın aslı korunur; şifreleme sunucuda, AI değerlendirme DICOM'u atlar,
+// doktor kokpit görüntüleyicisinde açılır); diğer/büyük → yalnız ad. AI yalnız içerikli PDF/görüntüyü işler.
 async function readDoc(file: File): Promise<UploadDoc> {
   const name = file.name;
   const type = file.type || "";
   try {
     if (type.startsWith("image/")) return { name, mime: "image/jpeg", dataUrl: await downscaleImage(file) };
     if (type === "application/pdf" && file.size <= DOC_MAX_BYTES) return { name, mime: "application/pdf", dataUrl: await fileToDataUrl(file) };
+    const isDicom = type === "application/dicom" || /\.dcm$/i.test(name); // tarayıcı .dcm'de type'ı boş verir
+    if (isDicom && file.size <= DOC_MAX_BYTES) {
+      const raw = await fileToDataUrl(file);
+      return { name, mime: "application/dicom", dataUrl: raw.replace(/^data:[^;]*;base64,/, "data:application/dicom;base64,") };
+    }
   } catch {
     // okuma başarısız → yalnız ad
   }
@@ -485,7 +492,7 @@ function TriyajInner() {
               <ul className="space-y-2">
                 {files.map((f, i) => (
                   <li key={i} className="flex items-center justify-between rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm">
-                    <span className="flex items-center gap-2 text-[var(--c-ink)]"><FileText size={16} className="text-[var(--c-accent)]" /> {f.name}{!f.dataUrl && <span className="text-[10px] text-[var(--c-ink-3)]">(AI analizi dışı)</span>}</span>
+                    <span className="flex items-center gap-2 text-[var(--c-ink)]"><FileText size={16} className="text-[var(--c-accent)]" /> {f.name}{f.mime === "application/dicom" && f.dataUrl ? <span className="text-[10px] text-[var(--c-ink-3)]">{t("(görüntüleyicide açılır)")}</span> : !f.dataUrl && <span className="text-[10px] text-[var(--c-ink-3)]">(AI analizi dışı)</span>}</span>
                     <button onClick={() => setFiles(files.filter((_, j) => j !== i))} className="text-[var(--c-ink-3)] hover:text-red-500"><X size={16} /></button>
                   </li>
                 ))}

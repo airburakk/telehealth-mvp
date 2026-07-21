@@ -13,6 +13,8 @@ import { DocumentAnalysis } from "@/components/DocumentAnalysis";
 import { loincForBranchLabel } from "@/data/coding";
 import { LabResultsForm } from "@/components/LabResultsForm";
 import { caseDicomStudies } from "@/lib/case-dicom";
+import { PoolConsultPanel, CasePoolAnswers } from "@/components/PoolConsultPanel";
+import { poolRequestsForCase } from "@/lib/consultation-requests";
 import { ArrowLeft, ArrowRight, FileText, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks, Lock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -50,9 +52,20 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
   const u = urgencyStyle(c.urgency);
   const st = CASE_STATUS[c.status] ?? CASE_STATUS.NEW;
   const files = c.attachments ? c.attachments.split(",").filter(Boolean) : [];
-  const caseDocs = c.documents.map((d) => ({ ...d, assessedAt: d.assessedAt ? d.assessedAt.toISOString() : null }));
-  const dicomStudies = caseDicomStudies(c.id);
+  // DICOM belgeler AI belge-analizi kartına GİRMEZ (viewer-only, v6.33) — Radyoloji kartında listelenir.
+  const caseDocs = c.documents.filter((d) => d.mimeType !== "application/dicom").map((d) => ({ ...d, assessedAt: d.assessedAt ? d.assessedAt.toISOString() : null }));
+  // DICOM (v6.33): hastanın triyajda yüklediği gerçek .dcm'ler (şifreli CaseDocument) demo çalışmalarla
+  // yan yana — auth'lu endpoint'ten mevcut görüntüleyiciye akar ("Hasta yüklemesi" rozeti).
+  const uploadedDicoms = c.documents
+    .filter((d) => d.mimeType === "application/dicom")
+    .map((d) => ({ url: `/api/cases/${c.id}/documents/${d.id}/dicom`, label: d.label, modality: "DCM", uploaded: true }));
+  const dicomStudies = [...uploadedDicoms, ...caseDicomStudies(c.id)];
   const suggested = await db.doctor.findFirst({ where: { branch: c.branch, verified: true } }); // v4.19: öneri yalnız doğrulanmış (profil linki de verified-kapılı)
+
+  // v6.33 Faz 3 — havuza açma yalnız ATANAN doktorda (kullanıcı kararı); görüş kartı klinik erişimli herkese.
+  const viewerDoctorId = user.role === "DOCTOR" ? (await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } }))?.doctorId ?? null : null;
+  const isAssignedDoctor = !!viewerDoctorId && viewerDoctorId === c.doctorId;
+  const poolItems = await poolRequestsForCase(c.id);
 
   let triageAnswers: Record<string, string> | null = null;
   try { triageAnswers = c.extra ? (JSON.parse(c.extra) as Record<string, string>) : null; } catch { triageAnswers = null; }
@@ -148,10 +161,15 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
             initial={labResults}
             loincOptions={loincForBranchLabel(c.branch)}
           />
+
+          {/* v6.33 Faz 3 — bu vakadan açılan havuz talepleri (durum + gelen uzman görüşü) */}
+          <CasePoolAnswers items={poolItems} />
         </div>
 
         {/* Sağ: aksiyon paneli */}
         <aside className="space-y-4">
+          {/* v6.33 Faz 3 — havuza açma yalnız atanan doktorda */}
+          {isAssignedDoctor && <PoolConsultPanel caseId={c.id} />}
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
             <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">Durum</div>
             <div className="mt-1 mb-4">

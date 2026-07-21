@@ -6,6 +6,7 @@ import { Bell, Inbox, UserRound, AlertTriangle, Luggage, Scale, Eye, Stethoscope
 import { useT } from "@/components/useT";
 import { usePatientLang } from "@/components/PatientLocale";
 import { langDir, LANG_BCP47 } from "@/lib/constants";
+import { useLiveTick } from "@/lib/use-live-tick";
 
 // VAPID public key → PushManager.subscribe formatı
 function urlB64ToUint8(s: string): Uint8Array {
@@ -165,11 +166,8 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
     } catch {}
   }
 
-  useEffect(() => {
-    refresh();
-    const t = setInterval(refresh, 30_000);
-    return () => clearInterval(t);
-  }, []);
+  // v6.33: 30sn körlemesine polling → "live:notify" dürtüsü + güvenlik ağı (Ably yoksa 30sn birebir).
+  useLiveTick("notify", refresh, true, 30_000);
 
   // Dış tıklamada kapat
   useEffect(() => {

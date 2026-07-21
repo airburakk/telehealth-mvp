@@ -272,7 +272,8 @@ model ConsultationRequest {
   id                 String    @id @default(cuid())
   sourceCaseId       String? // iç izlenebilirlik (hangi vakadan türetildi) — yanıtlayan hekime ASLA gösterilmez
   requestedByPartnerId String? // talebi açan Partner doktor (M5 Faz 3) — kendi taleplerini/yanıtlarını görür
-  requestedByName    String? // talebi açan Partner doktorun görünen adı (UI gösterimi)
+  requestedByDoctorId String? // talebi İÇ VAKADAN açan platform doktoru (v6.33 Faz 3) — kendi talebi havuzunda GÖSTERİLMEZ; yanıt vaka sayfasına düşer
+  requestedByName    String? // talebi açan doktorun görünen adı (UI gösterimi)
   branch             String? // null = genel havuz · dolu = yalnız bu branş hekimleri görür
   region             String // ülke/bölge (kaba bağlam; bireysel tanımlayıcı değil)
   language           String

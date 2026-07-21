@@ -11,10 +11,13 @@ import { useEffect, useRef } from "react";
 import { connectLiveNudge } from "./ably-client";
 import type { LiveTopic } from "./ably-server";
 
-const FAST_MS = 3000; // Ably yok — mevcut 3sn davranış korunur
+const FAST_MS = 3000; // Ably yok — mevcut 3sn davranış korunur (fallbackMs verilmezse)
 const SAFETY_MS = 30_000; // Ably canlı — dürtü kaçarsa bile en geç 30sn'de tazelenir
 
-export function useLiveTick(topic: LiveTopic, tick: () => void | Promise<void>, enabled: boolean): void {
+// fallbackMs (v6.33): Ably yok/kopukken kullanılacak aralık — ESKİ poller aralığı aynen verilir
+// (örn. çan 30sn · video 10sn · sohbet/status 8sn) ⇒ Ably'siz ortamda davranış BİREBİR korunur;
+// misafir kullanıcı (token alamaz) hızlandırılmış polling'e DÜŞMEZ. Verilmezse 3sn (v6.28 üçlüsü).
+export function useLiveTick(topic: LiveTopic, tick: () => void | Promise<void>, enabled: boolean, fallbackMs: number = FAST_MS): void {
   const tickRef = useRef(tick);
   tickRef.current = tick;
 
@@ -31,7 +34,7 @@ export function useLiveTick(topic: LiveTopic, tick: () => void | Promise<void>, 
         /* tick kendi hatasını yönetir — döngü sürer */
       }
       if (stopped) return;
-      timer = setTimeout(run, nudge.live() ? SAFETY_MS : FAST_MS);
+      timer = setTimeout(run, nudge.live() ? Math.max(SAFETY_MS, fallbackMs) : fallbackMs);
     };
 
     // Dürtü: bekleyen zamanlayıcıyı iptal edip HEMEN çek (run sonda zamanlayıcıyı yeniden kurar).
@@ -47,5 +50,5 @@ export function useLiveTick(topic: LiveTopic, tick: () => void | Promise<void>, 
       if (timer) clearTimeout(timer);
       nudge.close();
     };
-  }, [topic, enabled]);
+  }, [topic, enabled, fallbackMs]);
 }

@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Send, Loader2, MessagesSquare } from "lucide-react";
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47 } from "@/lib/constants";
+import { useLiveTick } from "@/lib/use-live-tick";
 
 interface Msg { id: string; mine: boolean; senderRole: "PARTNER" | "DOCTOR"; text: string; createdAt: string }
 
@@ -49,11 +50,8 @@ export function ConsultationChat({
     } catch {}
   }, [requestId]);
 
-  useEffect(() => {
-    load();
-    const i = setInterval(load, 8000);
-    return () => clearInterval(i);
-  }, [load]);
+  // v6.33: 8sn körlemesine polling → "live:consult" dürtüsü + güvenlik ağı (Ably yoksa 8sn birebir).
+  useLiveTick("consult", load, true, 8000);
 
   useEffect(() => {
     boxRef.current?.scrollTo({ top: boxRef.current.scrollHeight });

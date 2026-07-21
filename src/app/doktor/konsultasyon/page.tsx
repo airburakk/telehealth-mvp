@@ -26,7 +26,7 @@ export default async function ConsultationInboxPage() {
   if (!doctor.consultOptIn) redirect("/doktor"); // panel görünürlüğüyle tutarlı
 
   const [open, engaged, answered, stats] = await Promise.all([
-    openRequestsForDoctor(doctor.branch),
+    openRequestsForDoctor(doctor.branch, doctor.id), // kendi vakasından açtığı talepler listelenmez (v6.33)
     engagedByDoctor(doctor.id),
     answeredByDoctor(doctor.id),
     answeredStatsForDoctor(doctor.id), // kümülatif — liste take 20 ile sınırlı, reduce yanlış olurdu

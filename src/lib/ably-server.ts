@@ -40,7 +40,10 @@ export async function createAblyTokenRequest(userId: string, channelName: string
 // Olay İÇERİKSİZDİR: kanala hiçbir veri/PHI çıkmaz (yalnız zaman damgası) — veri daima auth'lu API
 // fetch'iyle gelir (sinyalleşmedeki "transkript DB-only" kararıyla aynı ilke). Best-effort: Ably
 // yok/hatalıysa sessizce geçer; istemcinin güvenlik-ağı polling'i durumu yine taşır.
-export type LiveTopic = "free-care" | "duty";
+// v6.33 ekleri: "consult" = konsültasyon havuzu olayları (mesaj/video randevu/yanıt — DOCTOR/ADMIN/PARTNER)
+// · "notify" = bildirim zili dürtüsü (auth'lu herkes; hangi kullanıcıya bildirim düştüğü kanala ÇIKMAZ —
+// her istemci kendi auth'lu /api/notifications fetch'ini yapar).
+export type LiveTopic = "free-care" | "duty" | "consult" | "notify";
 
 export function liveChannel(topic: LiveTopic): string {
   return `live:${topic}`;

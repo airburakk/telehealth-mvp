@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { COUNTRIES, countryName } from "@/lib/constants";
 import { useT } from "@/components/useT";
@@ -8,6 +8,7 @@ import { usePatientLang } from "@/components/PatientLocale";
 import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
+import { useLiveTick } from "@/lib/use-live-tick";
 import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
 import { HeartHandshake, Loader2, ArrowRight } from "lucide-react";
 import { AiConsentGate } from "@/components/AiConsentGate";
@@ -73,22 +74,19 @@ function FreeCareApplyInner() {
   const [error, setError] = useState("");
   const [online, setOnline] = useState<number | null>(null);
 
-  useEffect(() => {
-    let alive = true;
-    const tick = async () => {
-      try {
-        const r = await fetch("/api/free-care/status");
-        if (!r.ok) return;
-        const d = await r.json();
-        if (alive) setOnline(typeof d.online === "number" ? d.online : 0);
-      } catch {
-        /* sessiz — sonraki tick tekrar dener */
-      }
-    };
-    tick();
-    const iv = setInterval(tick, 8000);
-    return () => { alive = false; clearInterval(iv); };
+  // v6.33: 8sn körlemesine polling → "live:free-care" dürtüsü (availability publish'leri v6.28'den beri
+  // var) + güvenlik ağı (Ably yoksa 8sn birebir). Sayfa auth'lu (hasta başvurusu) → token alınabilir.
+  const statusTick = useCallback(async () => {
+    try {
+      const r = await fetch("/api/free-care/status");
+      if (!r.ok) return;
+      const d = await r.json();
+      setOnline(typeof d.online === "number" ? d.online : 0);
+    } catch {
+      /* sessiz — sonraki tick tekrar dener */
+    }
   }, []);
+  useLiveTick("free-care", statusTick, true, 8000);
 
   const tTexts = useMemo(() => [...STATIC_UI, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...DICTATION_TEXTS, ...(profile?.country ? [countryName(profile.country)] : [])], [profile]);
   const { t } = useT(uiLang, tTexts);

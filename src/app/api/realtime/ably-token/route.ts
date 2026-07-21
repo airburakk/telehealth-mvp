@@ -21,7 +21,9 @@ export async function GET(req: Request) {
   if (channelId.startsWith("live:")) {
     const allowed =
       channelId === "live:free-care" ||
-      (channelId === "live:duty" && ["DOCTOR", "ADMIN"].includes(user.role));
+      channelId === "live:notify" || // v6.33: bildirim zili dürtüsü — auth'lu herkes (içeriksiz)
+      (channelId === "live:duty" && ["DOCTOR", "ADMIN"].includes(user.role)) ||
+      (channelId === "live:consult" && ["DOCTOR", "ADMIN", "PARTNER"].includes(user.role)); // v6.33: havuz olayları
     if (!allowed) return NextResponse.json({ error: "Bu kanala erişim yetkiniz yok." }, { status: 403 });
     channelName = channelId;
   } else {

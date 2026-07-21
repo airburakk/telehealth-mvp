@@ -122,7 +122,9 @@ export async function POST(req: Request) {
   });
 
   // Triyajda yüklenen içerikli belgeler → CaseDocument (doktor kokpitte AI ile değerlendirir + Türkçeye çevirir).
-  // Yalnız base64 içerikli (görüntü/PDF) olanlar saklanır; DICOM/büyük dosyalar yalnız ad olarak attachments'ta kalır.
+  // Yalnız base64 içerikli olanlar saklanır; büyük dosyalar yalnız ad olarak attachments'ta kalır.
+  // DICOM (v6.33): ≤8MB .dcm ASLIYLA (kullanıcı kararı — tıbbi kayıt aslı; şifreli) saklanır; AI
+  // değerlendirme DICOM'u atlar, doktor kokpit görüntüleyicisi /api/cases/[id]/documents/[docId]/dicom'dan açar.
   type RawDoc = { label?: unknown; mimeType?: unknown; content?: unknown };
   const documents: RawDoc[] = Array.isArray(body.documents) ? body.documents : [];
   if (documents.length) {

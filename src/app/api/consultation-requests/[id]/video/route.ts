@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { offerVideo, respondVideo, completeVideo, videoForRequest, appointmentParties } from "@/lib/consultation-video";
+import { publishLiveNudge } from "@/lib/ably-server";
 
 // Faz 3 — konsültasyon görüntülü görüşme randevusu. [id] = ConsultationRequest.id.
 // GET: en güncel randevu + presence. POST: offer (doktor) / accept|decline (partner) / complete.
@@ -30,6 +31,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const proposedAt = b.proposedAt && !isNaN(Date.parse(b.proposedAt)) ? new Date(b.proposedAt) : new Date();
     const res = await offerVideo(id, doc.id, proposedAt);
     if (res !== "OK") return NextResponse.json({ error: res === "FORBIDDEN" ? "Bu talep size ait değil." : "Talep bulunamadı." }, { status: res === "FORBIDDEN" ? 403 : 404 });
+    await publishLiveNudge("consult"); // karşı tarafın video paneli teklifi anında görsün (v6.33)
     return NextResponse.json({ ok: true, video: await videoForRequest(id) });
   }
 
@@ -47,6 +49,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       const x = m[res] ?? { s: 400, e: "İşlem başarısız." };
       return NextResponse.json({ error: x.e }, { status: x.s });
     }
+    await publishLiveNudge("consult"); // teklif eden doktorun paneli kabul/red durumunu anında görsün (v6.33)
     return NextResponse.json({ ok: true, video: await videoForRequest(id) });
   }
 

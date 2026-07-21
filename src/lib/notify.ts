@@ -8,6 +8,18 @@ import { sendChannelMessage, type MessageChannel } from "./messaging";
 import { decryptField } from "./crypto";
 import { sendEmail } from "./email";
 import { SITE_URL } from "./aura-landing/seo";
+import { publishLiveNudge } from "./ably-server";
+
+// v6.33 — bildirim zili dürtüsü: her bildirim yazımında "live:notify" kanalına İÇERİKSİZ nudge
+// (kime/ne yazıldığı kanala ÇIKMAZ; her istemci kendi auth'lu fetch'ini yapar). Fan-out'ta tek dürtü
+// yeter → instance-yerel 2sn throttle (serverless örnek-başına; yeterli — güvenlik ağı polling'i var).
+let lastNotifyNudgeAt = 0;
+async function nudgeNotify(): Promise<void> {
+  const now = Date.now();
+  if (now - lastNotifyNudgeAt < 2000) return;
+  lastNotifyNudgeAt = now;
+  await publishLiveNudge("notify");
+}
 
 export interface NotifyInput {
   type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "FREECARE_MATCH" | "FREECARE_TREATMENT" | "SO_REVIEW" | "SO_REQUEST" | "SO_ASSIGNED" | "SO_OPINION" | "SO_VIDEO" | "CLINIC_OFFER" | "CLINIC_MATCH" | "CONSULT_ANSWERED" | "CONSULT_MESSAGE" | "CONSULT_VIDEO" | "ACCOUNT_VERIFIED" | "AGENCY_FILE" | "DISCHARGE_REQUEST" | "REGISTRY_REPORT" | "TOURISM_DISCLAIMER" | "TOURISM_MESSAGE" | "TOURISM_OFFER";
@@ -25,6 +37,7 @@ export async function notifyRoles(roles: string[], n: NotifyInput): Promise<void
     console.warn("[notify] bildirim yazılamadı:", e instanceof Error ? e.message : e);
   }
   await sendPushToRoles(roles, { title: n.title, body: n.body, href: n.href });
+  await nudgeNotify();
 }
 
 // Kişisel bildirim — vaka sahibi hasta gibi tek kullanıcıya.
@@ -40,6 +53,7 @@ export async function notifyUser(userId: string, n: NotifyInput): Promise<void> 
   }
   await sendPushToUser(userId, { title: n.title, body: n.body, href: n.href });
   await routePatientChannel(userId, createdId); // hasta EMAIL/SMS tercihi (dormant) — içeriksiz dürtü
+  await nudgeNotify();
 }
 
 // Hastanın intake'te seçtiği dış kanala (EMAIL/SMS) İÇERİKSİZ dürtü — routeDoctorChannel'ın hasta
@@ -138,6 +152,7 @@ export async function notifyDoctorsByBranch(branch: string, n: NotifyInput): Pro
     await Promise.all(users.map((u) => sendPushToUser(u.id, { title: n.title, body: n.body, href: n.href })));
     // Kanal tercihi olan branş doktorlarına ek kanal (FAZ 5 — dormant; simülasyonda yalnız log izi)
     await Promise.all(doctors.map((d) => routeDoctorChannel(d.id, n)));
+    await nudgeNotify();
   } catch (e) {
     console.warn("[notify] branş bildirimi yazılamadı:", e instanceof Error ? e.message : e);
   }

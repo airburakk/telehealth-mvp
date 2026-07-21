@@ -4,7 +4,7 @@ import { useState } from "react";
 import DicomViewer from "@/components/DicomViewer";
 import { ScanLine, FileImage } from "lucide-react";
 
-export interface DicomStudy { url: string; label: string; modality: string }
+export interface DicomStudy { url: string; label: string; modality: string; uploaded?: boolean } // uploaded = hastanın yüklediği gerçek dosya (v6.33)
 
 export function CaseDicom({ studies }: { studies: DicomStudy[] }) {
   const [open, setOpen] = useState(false);
@@ -22,14 +22,17 @@ export function CaseDicom({ studies }: { studies: DicomStudy[] }) {
               onClick={() => { setSrc(s.url); setOpen(true); }}
               className="flex w-full items-center justify-between gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5 text-sm text-[var(--c-ink-2)] hover:border-teal-400 hover:bg-[var(--c-accent)]/10"
             >
-              <span className="inline-flex items-center gap-2"><FileImage size={16} className="text-[var(--c-accent)]" /> {s.label}</span>
-              <span className="rounded bg-[var(--c-ink)]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--c-ink-2)]">{s.modality}</span>
+              <span className="inline-flex min-w-0 items-center gap-2"><FileImage size={16} className="shrink-0 text-[var(--c-accent)]" /> <span className="truncate">{s.label}</span></span>
+              <span className="flex shrink-0 items-center gap-1.5">
+                {s.uploaded && <span className="rounded bg-[var(--c-accent)]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--c-accent)]">Hasta yüklemesi</span>}
+                <span className="rounded bg-[var(--c-ink)]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--c-ink-2)]">{s.modality}</span>
+              </span>
             </button>
           </li>
         ))}
       </ul>
       <p className="mt-3 text-[11px] text-[var(--c-ink-3)]">
-        Görüntüleyicide: pencere/seviye (sürükle), yakınlaştır, kesit gezinme (tekerlek), renk tersle. Sıkıştırmasız BT/MR.
+        Görüntüleyicide: pencere/seviye (sürükle), yakınlaştır, kesit gezinme (tekerlek), renk tersle. Hasta yüklemeleri şifreli saklanır.
       </p>
       <DicomViewer open={open} src={src} onClose={() => setOpen(false)} />
     </div>
