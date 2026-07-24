@@ -17,6 +17,7 @@ import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS }
 import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
 import { BranchBanner } from "@/components/BranchBanner";
 import { AuraSpinner } from "@/components/PortamedLogo";
+import { readDoc, type UploadDoc } from "@/lib/read-doc";
 import type { Billing } from "@/lib/billing";
 import {
   MessageSquareText, ClipboardCheck, ListChecks, Stethoscope,
@@ -49,8 +50,10 @@ const STATIC_UI = [
   "İkinci Görüş'e geç", "Buradan devam et",
   "Eksik belgeleriniz var",
   "Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.",
-  "Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi aşağıda onaylayarak da ilerleyebilirsiniz.",
-  "Bu belgeleri görüşmeden önce ileteceğimi onaylıyorum.",
+  // DOCS_PENDING (2026-07-24, kullanıcı onaylı metinler): eksik zorunlu belgeyle oluşturulan
+  // başvuru, belgeler yüklenene kadar doktora İLETİLMEZ (aciliyet 4-5 istisna — API karar verir).
+  "Belgeleri şimdi yükleyip işaretleyebilirsiniz. Dilerseniz aşağıda onaylayarak başvurunuzu şimdi oluşturabilirsiniz; bu durumda başvurunuz, eksik belgeleriniz yüklenene kadar doktora iletilmez.",
+  "Eksik belgeleri en kısa sürede yükleyeceğimi anladım; başvurum belgeler tamamlanınca doktor havuzuna iletilecek.",
 ];
 
 interface Analysis {
@@ -73,64 +76,8 @@ const STEPS = [
   { t: "Belgeler & Gönder", icon: ClipboardCheck },
 ];
 
-// Triyajda yüklenen belge: ad + (AI'ye gönderilecek) base64 içerik. DICOM/büyük/desteklenmeyen → dataUrl null (yalnız ad).
-type UploadDoc = { name: string; mime: string; dataUrl: string | null };
-
-const DOC_MAX_BYTES = 8 * 1024 * 1024; // 8MB üstü içerik saklanmaz (yalnız ad) — base64 şişmesini sınırla
-const IMG_MAX_DIM = 1600; // görüntüler bu kenar boyutuna küçültülür (AI okunabilirliği korunur)
-
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result));
-    r.onerror = () => reject(new Error("okunamadı"));
-    r.readAsDataURL(file);
-  });
-}
-
-function downscaleImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => {
-      const img = new window.Image();
-      img.onload = () => {
-        const scale = Math.min(1, IMG_MAX_DIM / Math.max(img.width, img.height));
-        const w = Math.max(1, Math.round(img.width * scale));
-        const h = Math.max(1, Math.round(img.height * scale));
-        const canvas = document.createElement("canvas");
-        canvas.width = w; canvas.height = h;
-        const cx = canvas.getContext("2d");
-        if (!cx) return reject(new Error("canvas yok"));
-        cx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", 0.8));
-      };
-      img.onerror = () => reject(new Error("görüntü yüklenemedi"));
-      img.src = String(r.result);
-    };
-    r.onerror = () => reject(new Error("okunamadı"));
-    r.readAsDataURL(file);
-  });
-}
-
-// Görüntü → küçültülmüş JPEG; PDF (≤8MB) → base64; DICOM (≤8MB, v6.33) → base64 ASLIYLA saklanır
-// (kullanıcı kararı: tıbbi kaydın aslı korunur; şifreleme sunucuda, AI değerlendirme DICOM'u atlar,
-// doktor kokpit görüntüleyicisinde açılır); diğer/büyük → yalnız ad. AI yalnız içerikli PDF/görüntüyü işler.
-async function readDoc(file: File): Promise<UploadDoc> {
-  const name = file.name;
-  const type = file.type || "";
-  try {
-    if (type.startsWith("image/")) return { name, mime: "image/jpeg", dataUrl: await downscaleImage(file) };
-    if (type === "application/pdf" && file.size <= DOC_MAX_BYTES) return { name, mime: "application/pdf", dataUrl: await fileToDataUrl(file) };
-    const isDicom = type === "application/dicom" || /\.dcm$/i.test(name); // tarayıcı .dcm'de type'ı boş verir
-    if (isDicom && file.size <= DOC_MAX_BYTES) {
-      const raw = await fileToDataUrl(file);
-      return { name, mime: "application/dicom", dataUrl: raw.replace(/^data:[^;]*;base64,/, "data:application/dicom;base64,") };
-    }
-  } catch {
-    // okuma başarısız → yalnız ad
-  }
-  return { name, mime: type, dataUrl: null };
-}
+// Belge okuma yardımcıları lib/read-doc'a taşındı (2026-07-24, DOCS_PENDING paketi) —
+// vaka merkezindeki belge-tamamlama paneli (PendingDocsPanel) ile ortak.
 
 export default function TriyajPage() {
   // AI karşılama rıza kapısı — semptom/tanı girişinden ÖNCE. "Süreci Sonlandır" → hasta ana sekmesi.
@@ -509,14 +456,14 @@ function TriyajInner() {
                   {t("Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.")}
                 </p>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-amber-200">
-                  {t("Belgeleri şimdi yükleyip işaretleyebilir; dilerseniz görüşmeden önce ileteceğinizi aşağıda onaylayarak da ilerleyebilirsiniz.")}
+                  {t("Belgeleri şimdi yükleyip işaretleyebilirsiniz. Dilerseniz aşağıda onaylayarak başvurunuzu şimdi oluşturabilirsiniz; bu durumda başvurunuz, eksik belgeleriniz yüklenene kadar doktora iletilmez.")}
                 </p>
                 <ul className="mt-2.5 list-disc space-y-0.5 ps-5 text-[12px] font-medium text-amber-200">
                   {missingRequired.map((d) => <li key={d.key}>{t(d.label)}</li>)}
                 </ul>
                 <label className="mt-3 flex items-start gap-2 text-[13px] font-medium text-amber-100">
                   <input type="checkbox" checked={docAck} onChange={(e) => setDocAck(e.target.checked)} className="mt-0.5 accent-amber-600" />
-                  <span>{t("Bu belgeleri görüşmeden önce ileteceğimi onaylıyorum.")}</span>
+                  <span>{t("Eksik belgeleri en kısa sürede yükleyeceğimi anladım; başvurum belgeler tamamlanınca doktor havuzuna iletilecek.")}</span>
                 </label>
               </div>
             )}

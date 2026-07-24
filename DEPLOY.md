@@ -58,9 +58,11 @@ npm run db:seed             # demo veri: kullanıcılar + 30 hekim + 20 vaka + t
 > 2. Önce **Neon dev branch'te prova**: `DATABASE_URL` + `DIRECT_URL` **birlikte**
 >    `TEST_DATABASE_URL` değerine override edilerek `npx prisma migrate deploy`.
 > 3. Üretim: `npx prisma migrate status` ile bekleyen migration'ı doğrula → `npm run
->    db:migrate`. Migration SQL'ini idempotent yaz (`IF EXISTS`/`IF NOT EXISTS`) — yarıda
->    düşen migration `_prisma_migrations`'a failed kayıt bırakır ve sonraki deploy'ları kilitler
->    (kurtarma: `migrate resolve --rolled-back`).
+>    db:migrate`. Kestirme (2026-07-24): **`node scripts/apply-prod-migration.mjs`** — .env'deki
+>    `PROD_DATABASE_URL`/`PROD_DIRECT_URL` ile status+deploy'u tek komutta, kabuk-bağımsız koşar
+>    (cmd/PowerShell/bash aynı; env override elle kurulmaz). Migration SQL'ini idempotent yaz
+>    (`IF EXISTS`/`IF NOT EXISTS`) — yarıda düşen migration `_prisma_migrations`'a failed kayıt
+>    bırakır ve sonraki deploy'ları kilitler (kurtarma: `migrate resolve --rolled-back`).
 >
 > ⚠️ `prisma db push` üretimde **artık kullanılmaz** (DB'yi şemaya eşitlerken migration
 > geçmişini atlar; eski şemalı bir çalışma kopyasından koşulursa yeni index'leri düşürür).

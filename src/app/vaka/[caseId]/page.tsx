@@ -18,6 +18,8 @@ import { ConsultGate, type GateAppt } from "@/components/ConsultGate";
 import { CONSULT_GATE_TEXTS } from "@/lib/consult-gate-texts";
 import { TOURISM_INBOX_TEXTS } from "@/lib/tourism-inbox-texts";
 import { TourismInbox } from "@/components/TourismInbox";
+import { PENDING_DOCS_TEXTS } from "@/lib/pending-docs-texts";
+import { PendingDocsPanel } from "@/components/PendingDocsPanel";
 import { gateAvailability } from "@/lib/clinical-duty";
 import { OfferView } from "@/components/OfferView";
 import { ReservationView } from "@/components/ReservationView";
@@ -73,10 +75,17 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
   // branş havuzu doktorlarının mesaj/teklifleri (TourismOutreach) beklenir. Bir teklif kabul
   // edilip randevu onaylanınca her iki akışta da aynı "görüşmeye katıl" CTA'sı gösterilir.
   const isTourism = !!c.tourismPlan;
+  // Belge-bekleyen başvuru (DOCS_PENDING, 2026-07-24): doktor havuzunda DEĞİL → 3-seçenek/nöbetçi
+  // kapısı ve randevu akışı BAŞLAMAZ; hastaya belge-tamamlama paneli çizilir (aşağıda).
+  const isDocsPending = c.status === "DOCS_PENDING";
+  let pendingDocList: string[] = [];
+  if (isDocsPending) {
+    try { pendingDocList = c.pendingDocs ? (JSON.parse(c.pendingDocs) as string[]) : []; } catch { pendingDocList = []; }
+  }
   const resolved = ["IN_CONSULT", "DONE"].includes(c.status) || c.consultations.length > 0;
   let gate: { hasSentinel: boolean; hasIcapci: boolean; appointment: GateAppt | null } | null = null;
   let tourismInbox: { id: string; doctorName: string; message: string; proposedAtLabel: string | null; status: string }[] | null = null;
-  if (!resolved) {
+  if (!resolved && !isDocsPending) {
     const appt = await db.consultAppointment.findUnique({ where: { caseId } });
     if (appt && appt.status !== "CANCELLED") {
       const avail = isTourism ? { hasSentinel: false, hasIcapci: false } : await gateAvailability(c.branch);
@@ -126,7 +135,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
   // Kapı ekranı metinleri de SUNUCUDA çevrilir (2026-07-17, kullanıcı bulgusu): istemci useT'nin
   // asenkron ilk-boyama Türkçesi kapıda görünmesin — hazır harita ConsultGate'e prop gider.
   const [uiMap, clinMap] = await Promise.all([
-    getTranslations(c.language, [...STATIC_LABELS, c.branch, branchLabel, ...TALK_TRACKER_TEXTS, ...(gate ? CONSULT_GATE_TEXTS : []), ...(tourismInbox ? TOURISM_INBOX_TEXTS : [])]),
+    getTranslations(c.language, [...STATIC_LABELS, c.branch, branchLabel, ...TALK_TRACKER_TEXTS, ...(gate ? CONSULT_GATE_TEXTS : []), ...(tourismInbox ? TOURISM_INBOX_TEXTS : []), ...(isDocsPending ? [...PENDING_DOCS_TEXTS, ...pendingDocList] : [])]),
     translateClinical(c.language, [c.reasoning], c.patientName),
   ]);
   const tmap = { ...uiMap, ...clinMap };
@@ -173,7 +182,23 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
         <BranchBanner branchKey={c.branch} branchLabel={t(branchLabel)} eyebrow={t("Başvurunuz")} />
       </div>
 
-      {gate ? (
+      {isDocsPending ? (
+        // Belge-bekleyen başvuru (2026-07-24): hasta kalemleri yükleyip işaretleyince NEW'e geçer.
+        // Klinik personel (koordinatör gözetimi) panele değil nötr bilgi bandına bakar.
+        <div className="mt-4">
+          {isClinician ? (
+            <div className="rounded-3xl border border-amber-400/30 bg-amber-500/10 p-5 text-sm text-amber-200">
+              Hasta belge yüklemesi bekleniyor — başvuru, zorunlu belgeler tamamlanınca doktor havuzuna iletilecek.
+            </div>
+          ) : (
+            <PendingDocsPanel
+              caseId={c.id}
+              pendingDocs={pendingDocList}
+              tmap={Object.fromEntries([...PENDING_DOCS_TEXTS, ...pendingDocList].map((s) => [s, t(s)]))}
+            />
+          )}
+        </div>
+      ) : gate ? (
         // Kapı: branşta çevrimiçi doktor yok → 3 seçenek (veya süren randevu akışı)
         <div className="mt-4">
           <ConsultGate

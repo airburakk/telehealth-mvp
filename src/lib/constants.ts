@@ -79,6 +79,9 @@ export function countryFlag(code: string): string {
 }
 
 export const CASE_STATUS: Record<string, { label: string; color: string }> = {
+  // DOCS_PENDING (2026-07-24): eksik zorunlu belgeyle oluşturulan başvuru — doktor havuzunda DEĞİL,
+  // hasta belge yükleyince NEW'e geçer. Personel listelerinde bu rozetle görünür (operasyonel gözetim).
+  DOCS_PENDING: { label: "Belge Bekleniyor", color: "bg-amber-500/15 text-amber-200" },
   NEW: { label: "Yeni", color: "bg-blue-500/15 text-blue-200" },
   IN_REVIEW: { label: "İncelemede", color: "bg-amber-500/15 text-amber-200" },
   IN_CONSULT: { label: "Görüşmede", color: "bg-violet-500/15 text-violet-200" },

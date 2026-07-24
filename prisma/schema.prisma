@@ -225,6 +225,11 @@ model Case {
   // LOJİSTİK tercih (PHI DEĞİL, düz metin — decryptCaseFields kapsamı DIŞI); doktor PackageBuilder'ı ön-doldurur.
   // tourismPlan != null aynı zamanda "turizm vakası" ayırt edicisidir (ek boolean gereksiz).
   tourismPlan         String?
+  // Belge-bekleyen başvuru (2026-07-24, kullanıcı kararı): triyajda eksik zorunlu belgeyle (docAck)
+  // oluşturulan aciliyet ≤3 vaka status=DOCS_PENDING doğar ve doktor havuzuna DÜŞMEZ; hasta vaka
+  // merkezinde kalemleri yükleyip işaretleyince NEW'e geçer (bildirimler o anda). Bekleyen kalem
+  // ETİKETLERİNİN JSON dizisi (requiredDocs kataloğu — PHI değil, düz; branch ile aynı sınıf). null = yok.
+  pendingDocs         String?
   // 2026-07-10 değişiklik paketi — hasta iletişim + tedavi kararı + STA iletimi + epikriz talebi
   patientPhone         String? // hasta telefonu (kimlik → at-rest şifreli, encryptField)
   contactPreference    String? // hastanın iletişim tercihi: APP | SMS | EMAIL

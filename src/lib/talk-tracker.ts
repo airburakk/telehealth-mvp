@@ -27,10 +27,11 @@ const SUB = {
   inConsult: "Video görüşmeniz sürüyor",
   inReview: "Uzman doktor başvurunuzu inceliyor",
   queued: "Uzman doktor kuyruğuna eklendiniz",
+  docsPending: "Belgeleriniz bekleniyor — yüklendiğinde başvurunuz doktora iletilir",
 } as const;
 
 export interface TalkCaseState {
-  status: string; // NEW | IN_REVIEW | IN_CONSULT | DONE
+  status: string; // DOCS_PENDING | NEW | IN_REVIEW | IN_CONSULT | DONE
   bookingStatus: string | null; // ulaşılan en ileri booking durumu: CONFIRMED | DRAFT | ...
   hasRecovery: boolean; // post-op takip başladı mı
 }
@@ -58,6 +59,11 @@ export function talkTrackerPhases(s: TalkCaseState): TalkTrackerPhase[] {
   } else if (s.status === "IN_REVIEW") {
     phase = 1;
     sub = SUB.inReview;
+  } else if (s.status === "DOCS_PENDING") {
+    // Belge-bekleyen başvuru (2026-07-24): henüz doktor havuzunda değil → "Başvuru" fazı AKTİF
+    // kalır (done değil); hasta belge yükleyince NEW'e geçer ve normal kuyruğa düşer.
+    phase = 0;
+    sub = SUB.docsPending;
   } else {
     phase = 1;
     sub = SUB.queued;

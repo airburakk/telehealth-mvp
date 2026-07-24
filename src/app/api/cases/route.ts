@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { runTriage } from "@/lib/triage-llm";
-import { notifyDoctorsByBranch } from "@/lib/notify";
+import { notifyDoctorsByBranch, notifyUser } from "@/lib/notify";
 import { requireUser, requireStaff } from "@/lib/api-auth";
 import { stampPatientProfile } from "@/lib/patient-journey";
 import { parseContactFields } from "@/lib/contact-pref";
@@ -31,7 +31,9 @@ export async function GET(req: Request) {
       ? await db.doctor.findUnique({ where: { id: me.doctorId }, select: { id: true, branch: true } })
       : null;
     doctorScope = doc
-      ? { OR: [{ doctorId: doc.id }, ...(doc.branch ? [{ doctorId: null, branch: doc.branch }] : [])] }
+      ? // Branş dalı DOCS_PENDING'i DIŞLAR (2026-07-24): belge-bekleyen başvuru doktor havuzunda
+        // görünmez (koordinatör/etik/admin operasyonel gözetim için görmeye devam eder).
+        { OR: [{ doctorId: doc.id }, ...(doc.branch ? [{ doctorId: null, branch: doc.branch, status: { not: "DOCS_PENDING" } }] : [])] }
       : { id: "__none__" }; // profilsiz doktor → boş küme (var olmayan id)
   }
 
@@ -95,6 +97,15 @@ export async function POST(req: Request) {
 
   const contact = parseContactFields(body); // FAZ 8 — telefon + iletişim tercihi
 
+  // Eksik zorunlu belge beyanı (triyaj adım-2 docAck yolu): etiket listesi client'tan gelir.
+  const missingDocs: string[] = Array.isArray(body.missingDocs)
+    ? body.missingDocs.filter((d: unknown) => typeof d === "string").map((d: string) => d.slice(0, 80)).slice(0, 12)
+    : [];
+  // DOCS_PENDING (2026-07-24, kullanıcı kararı): eksik zorunlu belgeyle gelen başvuru doktor
+  // havuzuna DÜŞMEZ — hasta vaka merkezinde belgeleri tamamlayınca NEW'e geçer (pending-docs ucu).
+  // ACİL İSTİSNASI (kullanıcı kararı): aciliyet 4-5 vaka belge yüzünden BEKLETİLMEZ (klinik risk).
+  const docsPending = missingDocs.length > 0 && a.urgency < 4;
+
   const created = await db.case.create({
     data: {
       userId: user.id, // vaka sahibi = oturum kullanıcısı (hasta yalnız kendi vakalarını görür)
@@ -109,7 +120,8 @@ export async function POST(req: Request) {
       urgency: a.urgency,
       confidence: a.confidence,
       reasoning: encryptField(a.reasoning), // triyaj gerekçesi (E2EE Faz 1)
-      status: "NEW",
+      status: docsPending ? "DOCS_PENDING" : "NEW",
+      pendingDocs: docsPending ? JSON.stringify(missingDocs) : null,
       // Hasta iletişim (FAZ 8): telefon kimlik verisi → şifreli; tercih (APP|SMS|EMAIL) düz.
       patientPhone: contact.phone ? encryptField(contact.phone) : null,
       contactPreference: contact.contactPreference,
@@ -143,27 +155,37 @@ export async function POST(req: Request) {
     if (rows.length) await db.caseDocument.createMany({ data: rows });
   }
 
-  // §1/§7: yeni klinik vaka koordinatöre DEĞİL doktor kuyruğuna düşer (koordinatör yalnız M3/S3 rezervasyon).
-  // Yeni vakada henüz atanan doktor YOK → tüm doktorlara yayın yerine yalnız vakanın BRANŞINDAKİ
-  // portal doktorlarına kişisel bildirim (atama Nöbetçi/İcapçı kapınca yapılır).
-  await notifyDoctorsByBranch(a.branch, {
-    type: "NEW_CASE",
-    title: `${a.urgency >= 4 ? "🔴 " : ""}Yeni vaka`, // isim bildirime gömülmez (E2EE inc.2c) → personel kokpitte görür
-    body: `${a.branch} · aciliyet ${a.urgency}/5`,
-    href: `/doktor/vaka/${created.id}`,
-  });
-
-  // Eksik belge bildirim botu: branşa özel zorunlu belge eksikse koordinatöre bildir (operasyon takibi)
-  const missingDocs: string[] = Array.isArray(body.missingDocs)
-    ? body.missingDocs.filter((d: unknown) => typeof d === "string").map((d: string) => d.slice(0, 80)).slice(0, 12)
-    : [];
-  if (missingDocs.length) {
-    await notifyDoctorsByBranch(a.branch, {
+  if (docsPending) {
+    // DOCS_PENDING: doktor bildirimleri GÖNDERİLMEZ (vaka havuzda değil) — hasta belgeleri
+    // tamamlayınca pending-docs ucu NEW_CASE bildirimini o anda gönderir. Hastaya yol gösterici
+    // bildirim (metin kullanıcı onaylı; içerik jenerik — belge adları PHI değil ama gerek de yok).
+    await notifyUser(user.id, {
       type: "MISSING_DOCS",
-      title: `📄 Eksik belge`,
-      body: `${a.branch} · eksik: ${missingDocs.join(", ")}`,
+      title: `📄 Belgeleriniz bekleniyor`,
+      body: `Başvurunuz alındı; doktora iletilmesi için eksik belgelerinizi yükleyin.`,
+      href: `/vaka/${created.id}`,
+    });
+  } else {
+    // §1/§7: yeni klinik vaka koordinatöre DEĞİL doktor kuyruğuna düşer (koordinatör yalnız M3/S3 rezervasyon).
+    // Yeni vakada henüz atanan doktor YOK → tüm doktorlara yayın yerine yalnız vakanın BRANŞINDAKİ
+    // portal doktorlarına kişisel bildirim (atama Nöbetçi/İcapçı kapınca yapılır).
+    await notifyDoctorsByBranch(a.branch, {
+      type: "NEW_CASE",
+      title: `${a.urgency >= 4 ? "🔴 " : ""}Yeni vaka`, // isim bildirime gömülmez (E2EE inc.2c) → personel kokpitte görür
+      body: `${a.branch} · aciliyet ${a.urgency}/5`,
       href: `/doktor/vaka/${created.id}`,
     });
+
+    // Eksik belge bildirim botu: yalnız acil-istisna yolunda anlamlı (aciliyet 4-5 belge beklemeden
+    // havuza düştü → doktor eksik belgeyle geleceğini bilsin). Belge-bekleyen vakada gönderilmez.
+    if (missingDocs.length) {
+      await notifyDoctorsByBranch(a.branch, {
+        type: "MISSING_DOCS",
+        title: `📄 Eksik belge`,
+        body: `${a.branch} · eksik: ${missingDocs.join(", ")}`,
+        href: `/doktor/vaka/${created.id}`,
+      });
+    }
   }
 
   // Nav bileşimi + profil hafızası (Faz 0): journey ve iletişim/ülke/dil User'a yaz-geri
