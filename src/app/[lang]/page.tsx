@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { V2Home } from "@/components/aura/v2/home";
 import { COPY, LANG_CODES, type Lang } from "@/lib/aura-landing/copy";
 import { OG_LOCALE } from "@/lib/aura-landing/seo";
@@ -41,6 +42,10 @@ export async function generateMetadata({
   const { lang } = await params;
   const l = lang as Lang;
   const t = COPY[l];
+  // Guard (2026-07-24): dynamicParams=false'a RAĞMEN Next 16 bilinmeyen kodda (/xx)
+  // generateMetadata'yı koşuyor → COPY[l] undefined → 500 dönüyordu (v6.17'den beri
+  // gizli; v6.34 canlı doğrulamasında yakalandı). Vaat edilen davranış: 404.
+  if (!t) notFound();
   const heroLine = t.v2.hero.headline;
 
   return {
@@ -69,6 +74,7 @@ export default async function LocaleLandingPage({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
+  if (!COPY[lang as Lang]) notFound(); // generateMetadata guard'ının eşleniği (bilinmeyen kod = 404)
   // Taşıma (2026-07-16): locale rotaları da YENİ ana sayfayı render eder —
   // /tr eski landing'i gösterip "/" yenisini gösterseydi tutarsız olurdu.
   return <V2Home initialLang={lang as Lang} />;
