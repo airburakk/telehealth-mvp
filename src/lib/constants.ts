@@ -25,21 +25,25 @@ export const COUNTRIES: CountryDef[] = [
   { code: "KW", name: "Kuveyt", flag: "🇰🇼", langs: ["Arapça"] },
   { code: "IQ", name: "Irak", flag: "🇮🇶", langs: ["Arapça"] },
   { code: "IR", name: "İran", flag: "🇮🇷", langs: ["Farsça"] },
+  // Balkan genişlemesi — Bulgarca (Kiril; 2026-07-23, kullanıcı kararı: vitrin 9. dil + hasta arayüzü)
+  { code: "BG", name: "Bulgaristan", flag: "🇧🇬", langs: ["Bulgarca"] },
 ];
 
-export const LANGUAGES = ["Türkçe", "Rusça", "Azerice", "Arapça", "Farsça", "Fransızca", "İngilizce", "Almanca", "Kazakça", "Kırgızca"];
+export const LANGUAGES = ["Türkçe", "Rusça", "Azerice", "Arapça", "Farsça", "Fransızca", "İngilizce", "Almanca", "Kazakça", "Kırgızca", "Bulgarca"];
 
 // Dil adı → BCP-47 yerel kodu (tarih/sayı biçimleme için; ConsultationRoom SPEECH_LANG ile aynı küme).
 export const LANG_BCP47: Record<string, string> = {
   "Türkçe": "tr-TR", "Rusça": "ru-RU", "Azerice": "az-AZ", "Arapça": "ar-SA", "Farsça": "fa-IR",
   "Fransızca": "fr-FR", "İngilizce": "en-US", "Almanca": "de-DE", "Kazakça": "kk-KZ", "Kırgızca": "ky-KG",
+  "Bulgarca": "bg-BG",
 };
 
 // ISO 639-1 kodu ↔ dil ADI köprüsü — tek dil anahtarı `air_lang` dil ADI tutar (LANGUAGES);
-// kod-bazlı yüzeyler (landing 8 dili, public EN/TR sayfalar) bu eşlemeyle aynı anahtarı paylaşır.
+// kod-bazlı yüzeyler (landing dilleri, public EN/TR sayfalar) bu eşlemeyle aynı anahtarı paylaşır.
 export const LANG_NAME_BY_CODE: Record<string, string> = {
   tr: "Türkçe", ru: "Rusça", az: "Azerice", ar: "Arapça", fa: "Farsça",
   fr: "Fransızca", en: "İngilizce", de: "Almanca", kk: "Kazakça", ky: "Kırgızca",
+  bg: "Bulgarca",
 };
 export function langCodeFor(name?: string | null): string | undefined {
   if (!name) return undefined;

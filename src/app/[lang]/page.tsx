@@ -3,11 +3,11 @@ import { V2Home } from "@/components/aura/v2/home";
 import { COPY, LANG_CODES, type Lang } from "@/lib/aura-landing/copy";
 import { OG_LOCALE } from "@/lib/aura-landing/seo";
 
-// Locale rotaları (v6.17, backlog P1-i18n): /en /tr /de /fr /ru /ar /fa /az —
+// Locale rotaları (v6.17, backlog P1-i18n): /en /tr /de /fr /ru /ar /fa /az /bg —
 // landing'i URL dilinde SSR'lar (ilk boyama o dilde; air_lang okuması atlanır,
 // kayıtlı tercih EZİLMEZ — i18n.tsx initialLang sözleşmesi).
 //
-// ⚠️ İLK AŞAMA BİLİNÇLİ noindex + sitemap'e GİRMEZ: "/" v5.9.1'den beri 8-dil-
+// ⚠️ İLK AŞAMA BİLİNÇLİ noindex + sitemap'e GİRMEZ: "/" v5.9.1'den beri çok-dil-
 // tek-URL kanonik stratejisiyle indeksli — locale rotalarını indekslemeye açmak
 // (noindex kaldır + sitemap + "/" canonical stratejisi) SEO'yu yeniden şekillendiren
 // ayrı bir karardır ve kullanıcı onayı olmadan verilmez. Rotalar bu haliyle tam
@@ -17,7 +17,7 @@ import { OG_LOCALE } from "@/lib/aura-landing/seo";
 // robots satırı kalksın; x-default → "/" (mevcut kanonik giriş).
 //
 // dynamicParams=false ŞART: [lang] kök segmentte — sınırlanmazsa /herhangi-sey
-// bu rotaya düşer ve 404 davranışı bozulur. Yalnız 8 kod eşleşir, gerisi 404.
+// bu rotaya düşer ve 404 davranışı bozulur. Yalnız 9 kod eşleşir, gerisi 404.
 // (Statik rotalar — /giris, /v2, /vakalarim… — Next önceliğiyle zaten kazanır.)
 export const dynamicParams = false;
 
@@ -32,7 +32,7 @@ const HREFLANG = Object.fromEntries([
 
 // Metadata metinleri MEVCUT onaylı sözlükten kurulur (yeni kamu metni YOK,
 // [[public-claim-honesty]]): başlık = v2.hero.headline ("/" ile aynı konumlandırma,
-// taşıma 2026-07-16), açıklama = v2.hero.lede — ikisi de 8 dilde onaylı.
+// taşıma 2026-07-16), açıklama = v2.hero.lede — ikisi de 9 dilde onaylı.
 export async function generateMetadata({
   params,
 }: {

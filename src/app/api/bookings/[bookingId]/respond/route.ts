@@ -7,6 +7,8 @@ import { notifyRoles } from "@/lib/notify";
 // POST /api/bookings/:bookingId/respond — hasta DRAFT teklifi yanıtlar.
 // { action: "approve" | "decline" }
 //  approve → Booking CONFIRMED + escrow HELD, vaka DONE, koordinatöre bildirim
+//    Sağlık turizmi (Case.tourismPlan, 2026-07-23): onay ÖDEMESİZDİR — escrow HELD'e
+//    ÇEKİLMEZ (PENDING kalır); ödeme platform dışında, görüşmede netleşir.
 //  decline → Booking CANCELLED, koordinatöre bildirim
 export async function POST(req: Request, { params }: { params: Promise<{ bookingId: string }> }) {
   const { bookingId } = await params;
@@ -37,13 +39,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ booking
     return NextResponse.json({ ok: true, declined: true });
   }
 
-  // approve → Escrow'a al
-  await db.booking.update({ where: { id: booking.id }, data: { status: "CONFIRMED", escrowStatus: "HELD" } });
+  // approve → Escrow'a al (sağlık turizminde ödeme yok → escrowStatus PENDING kalır)
+  const isTourism = !!c.tourismPlan;
+  await db.booking.update({
+    where: { id: booking.id },
+    data: isTourism ? { status: "CONFIRMED" } : { status: "CONFIRMED", escrowStatus: "HELD" },
+  });
   await db.case.update({ where: { id: c.id }, data: { status: "DONE" } });
   await notifyRoles(["COORDINATOR"], {
     type: "BOOKING",
     title: `✅ Teklif onaylandı`,
-    body: `${booking.tier} · ${booking.branch} · ${amount} — Escrow'a alındı (simülasyon)`,
+    body: `${booking.tier} · ${booking.branch} · ${amount} — ${isTourism ? "hasta teklifi onayladı (ödeme alınmadı)" : "Escrow'a alındı (simülasyon)"}`,
     href: `/rezervasyon/${booking.id}`,
   });
   return NextResponse.json({ ok: true, bookingId: booking.id });

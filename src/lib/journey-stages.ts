@@ -9,12 +9,14 @@ export type JourneyKey = "GENERAL" | "SECOND_OPINION" | "HEALTH_TOURISM" | "FREE
 // - GENERAL: ödeme kapısı (PreConsultGate, tek ekran) sihirbazdan ÖNCE gelir →
 //   kapı ekranı stage=0, sihirbaz stage=1 (ödeme ✓ görünür, "ücret alındı" bandıyla tutarlı).
 // - SECOND_OPINION: belgeler + ödeme başvuruyla aynı oturumda (Faz 3) → tek birleşik sahne.
-// - HEALTH_TOURISM / FREE_CARE: ödeme kapısı yok (klinik-önce / gönüllü) — sahne N/A
-//   olarak kalır ki rail "ödeme yok" mesajını soluk + üstü çizili verebilsin.
+// - HEALTH_TOURISM: ödeme YOK (klinik-önce; teklif onayı ödemesizdir — 2026-07-23 kullanıcı
+//   kararı, escrow katmanı bu kulvardan kaldırıldı) → sahne düz "Onay" olarak GERÇEK adımdır.
+// - FREE_CARE: ödeme kapısı yok (gönüllü) — sahne N/A kalır ki rail "ödeme yok"
+//   mesajını soluk + üstü çizili verebilsin.
 export const JOURNEY_STAGES: Record<JourneyKey, readonly string[]> = {
   GENERAL: ["Onay & Ödeme", "Ön Bilgi", "Eşleşme", "Görüşme", "Sonuç & Takip"],
   SECOND_OPINION: ["Başvuru & Ödeme", "Eşleşme", "Görüşme", "Sonuç & Takip"],
-  HEALTH_TOURISM: ["Ön Bilgi", "Onay & Ödeme", "Eşleşme", "Görüşme", "Sonuç & Takip"],
+  HEALTH_TOURISM: ["Ön Bilgi", "Onay", "Eşleşme", "Görüşme", "Sonuç & Takip"],
   FREE_CARE: ["Ön Bilgi", "Onay & Ödeme", "Eşleşme", "Görüşme", "Sonuç & Takip"],
 };
 
@@ -22,6 +24,6 @@ export const JOURNEY_STAGES: Record<JourneyKey, readonly string[]> = {
 export const JOURNEY_SKIP_STAGES: Record<JourneyKey, readonly number[]> = {
   GENERAL: [],
   SECOND_OPINION: [],
-  HEALTH_TOURISM: [1],
+  HEALTH_TOURISM: [],
   FREE_CARE: [1],
 };

@@ -73,6 +73,7 @@ function getSpeechRecognition(): (new () => AnySpeechRecognition) | null {
 const SPEECH_LANG: Record<string, string> = {
   "Türkçe": "tr-TR", "Rusça": "ru-RU", "Arapça": "ar-SA", "Farsça": "fa-IR", "Azerice": "az-AZ",
   "İngilizce": "en-US", "Fransızca": "fr-FR", "Almanca": "de-DE", "Kazakça": "kk-KZ", "Kırgızca": "ky-KG",
+  "Bulgarca": "bg-BG",
 };
 
 // Hasta-yüzü + paylaşılan UI metinleri (TR kanonik). Doktor araçları (notlar/SOAP/tedavi) çevrilmez:

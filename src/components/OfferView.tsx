@@ -34,6 +34,8 @@ const TEXTS = [
   "Yeni bir teklif için koordinatörünüzle görüşebilirsiniz.",
   "Size özel hazırlanmış tedavi paketi teklifi",
   "Aşağıdaki paketi inceleyin. Onayladığınızda ödeme, hizmet tamamlanana dek platform Escrow güvencesinde tutulur (escrow simülasyonu — gerçek para transferi yapılmaz).",
+  // Sağlık turizmi varyantı (2026-07-23, kullanıcı onaylı): bu kulvarda ödeme/escrow katmanı yok.
+  "Aşağıdaki paketi inceleyin. Bu aşamada ödeme alınmaz; onayınız yalnızca planı kabul ettiğinizi gösterir. Ödeme ve kesin ayrıntılar görüşmenizde netleştirilir.",
   "Paket içeriği", "Paket",
   "Hastane", "Otel", "Tercüman", "Sigorta", "Seviye", "Dahil", "Yok", "gece",
   "Toplam",
@@ -72,6 +74,8 @@ export interface OfferViewProps {
   createdLabel: string;
   /** Vaka merkezinde (Faz 6) bölüm olarak gömülü: kendi kromu (geri linki + dil seçici + dış boşluk) gizlenir. */
   embedded?: boolean;
+  /** Sağlık turizmi kulvarı (Case.tourismPlan): ödeme/escrow katmanı gösterilmez — onay ödemesizdir (2026-07-23). */
+  tourism?: boolean;
 }
 
 export function OfferView(p: OfferViewProps) {
@@ -123,7 +127,9 @@ export function OfferView(p: OfferViewProps) {
           <Sparkles className="mt-0.5 shrink-0 text-violet-300" />
           <div>
             <div className="font-semibold text-violet-200">{t("Size özel hazırlanmış tedavi paketi teklifi")}</div>
-            <p className="text-sm text-violet-200/90">{t("Aşağıdaki paketi inceleyin. Onayladığınızda ödeme, hizmet tamamlanana dek platform Escrow güvencesinde tutulur (escrow simülasyonu — gerçek para transferi yapılmaz).")}</p>
+            <p className="text-sm text-violet-200/90">{p.tourism
+              ? t("Aşağıdaki paketi inceleyin. Bu aşamada ödeme alınmaz; onayınız yalnızca planı kabul ettiğinizi gösterir. Ödeme ve kesin ayrıntılar görüşmenizde netleştirilir.")
+              : t("Aşağıdaki paketi inceleyin. Onayladığınızda ödeme, hizmet tamamlanana dek platform Escrow güvencesinde tutulur (escrow simülasyonu — gerçek para transferi yapılmaz).")}</p>
           </div>
         </div>
       )}
@@ -166,8 +172,9 @@ export function OfferView(p: OfferViewProps) {
         </div>
       </div>
 
-      {/* Escrow güven görseli (teklifte PENDING — onaylanınca akış başlar) */}
-      {!p.declined && (
+      {/* Escrow güven görseli (teklifte PENDING — onaylanınca akış başlar). Sağlık turizminde
+          GÖSTERİLMEZ: bu kulvarda platformda ödeme yok (2026-07-23, kullanıcı kararı). */}
+      {!p.declined && !p.tourism && (
         <div className="mt-5">
           <EscrowMilestones status={p.escrowStatus} lang={lang} />
         </div>
@@ -198,7 +205,7 @@ export function OfferView(p: OfferViewProps) {
       {/* Aksiyonlar (taslak teklif) */}
       {!p.declined && (
         <div className="mt-6">
-          <OfferActions bookingId={p.bookingId} total={formatUSD(p.total)} lang={lang} />
+          <OfferActions bookingId={p.bookingId} total={formatUSD(p.total)} lang={lang} tourism={p.tourism} />
         </div>
       )}
 

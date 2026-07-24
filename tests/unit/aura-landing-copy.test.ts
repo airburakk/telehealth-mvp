@@ -1,4 +1,4 @@
-// aura-landing/copy — 8 dil landing sözlüğü bütünlüğü (v5.9.1, 2026-07-12).
+// aura-landing/copy — 9 dil landing sözlüğü bütünlüğü (v5.9.1, 2026-07-12; bg 2026-07-23).
 // Emekli landing-copy.test.ts'in yerini alır (PortamedLanding ölü kodla birlikte silindi);
 // aynı yapısal-asimetri korumasını CANLI aura landing sözlüğüne uygular: yeni dil eklenirken/
 // metin değişirken eksik çeviri veya dizi-boyu kayması (chapters/hiw adımları) derlemede değil
@@ -17,8 +17,8 @@ function shape(o: unknown, prefix = ""): string[] {
 }
 
 describe("aura-landing/copy", () => {
-  it("8 locale tanımlı ve COPY ile birebir örtüşür", () => {
-    expect(LANG_CODES).toEqual(["en", "tr", "de", "fr", "ru", "ar", "fa", "az"]);
+  it("9 locale tanımlı ve COPY ile birebir örtüşür", () => {
+    expect(LANG_CODES).toEqual(["en", "tr", "de", "fr", "ru", "ar", "fa", "az", "bg"]);
     expect(Object.keys(COPY).sort()).toEqual([...LANG_CODES].sort());
   });
 

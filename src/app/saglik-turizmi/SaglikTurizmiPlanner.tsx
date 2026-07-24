@@ -118,7 +118,8 @@ function SaglikTurizmiPlannerInner() {
   async function submitRequest() {
     setError(""); setSubmitting(true);
     // Öz-yeterli intake: seçilen branşta tourism-etiketli Case → branş doktor havuzu. Klinik-önce:
-    // bağlayıcı fiyat/rezervasyon YOK; doktor görüşmesi + onayı sonrası mevcut teklif/escrow zinciri.
+    // bağlayıcı fiyat/rezervasyon YOK; doktor görüşmesi + onayı sonrası teklif zinciri (bu kulvarda
+    // ödeme/escrow YOK — 2026-07-23; onay ödemesiz, ödeme görüşmede netleşir).
     try {
       const res = await fetch("/api/patient/tourism-request", {
         method: "POST", headers: { "Content-Type": "application/json" },

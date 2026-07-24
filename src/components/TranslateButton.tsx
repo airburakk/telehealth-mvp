@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { Languages, Loader2 } from "lucide-react";
+import { LANGUAGES } from "@/lib/constants";
 
-const LANGS = ["Türkçe", "Rusça", "Arapça", "Azerice", "İngilizce"];
+// Hedef dil seçenekleri = platform dil listesi (tek doğruluk noktası; 2026-07-23'e dek burada
+// bayat 5-dillik kopya vardı — sonradan eklenen diller seçicide görünmüyordu).
+const LANGS = LANGUAGES;
 
 // Yeniden kullanılabilir medikal çeviri butonu (dil seçici + sonuç).
 export function TranslateButton({ text, defaultTarget = "Türkçe", compact }: { text: string; defaultTarget?: string; compact?: boolean }) {

@@ -6,7 +6,7 @@ import { notifyDoctorById } from "@/lib/notify";
 // POST /api/tourism-outreach/:id — hasta, bir branş doktorunun sağlık turizmi teklifine yanıt verir.
 // action=accept (yalnız video teklifi): doktoru vakaya atar + ConsultAppointment CONFIRMED → hasta
 //   randevu saatinde /vaka'dan görüşmeye katılır (mevcut consult akışı). Görüşme sonrası tedavi kararı
-//   → acente → escrow zinciri aynen sürer (ilk-temas katmanı; zincir bozulmaz).
+//   → acente → teklif zinciri aynen sürer (ilk-temas katmanı; kulvar ödemesiz — escrow 2026-07-23'te kalktı).
 // action=decline: teklifi reddeder (diğer doktor teklifleri açık kalır).
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();

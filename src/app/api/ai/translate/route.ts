@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { translateText } from "@/lib/ai-clinical";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
+import { LANGUAGES } from "@/lib/constants";
 
-const LANGS = ["Türkçe", "Rusça", "Arapça", "Azerice", "İngilizce", "Fransızca", "Kazakça", "Kırgızca"];
+// Hedef dil allowlist'i = platform dil listesi (tek doğruluk noktası; 2026-07-23'e dek burada
+// bayat 8-dillik kopya vardı — Farsça/Almanca/Bulgarca allowlist dışı kalıyordu).
+const LANGS = LANGUAGES;
 
 // POST /api/ai/translate — medikal metni hedef dile çevirir (Claude)
 export async function POST(req: Request) {

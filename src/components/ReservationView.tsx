@@ -27,10 +27,13 @@ const STAGE_ICONS: Record<string, LucideIcon> = {
 const TEXTS = [
   "Paket onaylandı",
   "Tedavi paketiniz rezerve edildi; ödemeniz hizmet tamamlanana dek güvence altında tutulur (escrow simülasyonu).",
+  // Sağlık turizmi varyantı (2026-07-23, kullanıcı onaylı): bu kulvarda platformda ödeme yok.
+  "Tedavi paketiniz rezerve edildi. Bu platformda ödeme alınmamıştır; ödeme ve son ayrıntılar görüşmenizde netleştirilir.",
   "Paket",
   "Rezervasyon No",
   "Hastane", "Otel", "Tercüman", "Sigorta", "Seviye", "Dahil", "Yok", "gece",
   "Toplam (Escrow)",
+  "Toplam",
   "Yetki belgesi", "Sağlık turizmi yetki belgeli tesis (T.C. Sağlık Bakanlığı — HealthTürkiye)",
   "Ödeme Dağılımı (Split)",
   "Hasta Yolculuğu",
@@ -76,6 +79,8 @@ export interface ReservationViewProps {
   caseId: string;
   /** Vaka merkezinde (Faz 6) bölüm olarak gömülü: kendi kromu (dil seçici + dış boşluk) gizlenir. */
   embedded?: boolean;
+  /** Sağlık turizmi kulvarı (Case.tourismPlan): ödeme/escrow katmanı gösterilmez — rezervasyon ödemesizdir (2026-07-23). */
+  tourism?: boolean;
 }
 
 export function ReservationView(p: ReservationViewProps) {
@@ -101,7 +106,9 @@ export function ReservationView(p: ReservationViewProps) {
         <div>
           <h1 className="font-bold text-emerald-200">{t("Paket onaylandı")}</h1>
           <p className="mt-0.5 text-xs font-medium text-emerald-200">{p.patientName} · {p.branch}</p>
-          <p className="mt-0.5 text-sm text-emerald-200/90">{t("Tedavi paketiniz rezerve edildi; ödemeniz hizmet tamamlanana dek güvence altında tutulur (escrow simülasyonu).")}</p>
+          <p className="mt-0.5 text-sm text-emerald-200/90">{p.tourism
+            ? t("Tedavi paketiniz rezerve edildi. Bu platformda ödeme alınmamıştır; ödeme ve son ayrıntılar görüşmenizde netleştirilir.")
+            : t("Tedavi paketiniz rezerve edildi; ödemeniz hizmet tamamlanana dek güvence altında tutulur (escrow simülasyonu).")}</p>
         </div>
       </div>
 
@@ -146,7 +153,7 @@ export function ReservationView(p: ReservationViewProps) {
               ))}
             </ul>
             <div className="mt-3 flex items-end justify-between border-t border-[var(--c-hairline)] pt-3">
-              <span className="text-sm font-semibold text-[var(--c-ink)]">{t("Toplam (Escrow)")}</span>
+              <span className="text-sm font-semibold text-[var(--c-ink)]">{p.tourism ? t("Toplam") : t("Toplam (Escrow)")}</span>
               <span className="text-2xl font-bold text-[var(--c-ink)]">{formatUSD(p.total)}</span>
             </div>
           </div>
@@ -209,21 +216,24 @@ export function ReservationView(p: ReservationViewProps) {
           </div>
         </div>
 
-        {/* Sağ: Escrow güven görseli + split + aksiyonlar */}
+        {/* Sağ: Escrow güven görseli + split + aksiyonlar. Sağlık turizminde escrow bandı ve
+            ödeme dağılımı GÖSTERİLMEZ: bu kulvarda platformda ödeme yok (2026-07-23). */}
         <aside className="space-y-4">
-          <EscrowMilestones status={p.escrowStatus} lang={lang} />
+          {!p.tourism && <EscrowMilestones status={p.escrowStatus} lang={lang} />}
 
-          <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-            <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Ödeme Dağılımı (Split)")}</div>
-            <ul className="mt-3 space-y-2 text-sm">
-              {p.split.map((s) => (
-                <li key={s.key} className="flex items-center justify-between">
-                  <span className="text-[var(--c-ink-2)]">{t(s.label)}</span>
-                  <span className="font-medium text-[var(--c-ink)]">{formatUSD(s.amount)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {!p.tourism && (
+            <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
+              <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Ödeme Dağılımı (Split)")}</div>
+              <ul className="mt-3 space-y-2 text-sm">
+                {p.split.map((s) => (
+                  <li key={s.key} className="flex items-center justify-between">
+                    <span className="text-[var(--c-ink-2)]">{t(s.label)}</span>
+                    <span className="font-medium text-[var(--c-ink)]">{formatUSD(s.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <Link href={`/takip/${p.caseId}`} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
             <HeartPulse size={16} /> {t("Post-Op takibe başla")}

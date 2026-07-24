@@ -2,22 +2,24 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Loader2, Printer, X } from "lucide-react";
+import { ClipboardCheck, Lock, Loader2, Printer, X } from "lucide-react";
 import { useT } from "@/components/useT";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 // Hasta teklifi aksiyonları — onayla (Escrow), PDF/yazdır, reddet. i18n: useT (lang OfferView'dan).
 // Yazdırırken (print:hidden) bu çubuk gizlenir → temiz PDF belgesi.
+// tourism: sağlık turizmi kulvarında onay ÖDEMESİZDİR (2026-07-23) — buton escrow dili taşımaz.
 const TEXTS = [
   "Teklifi reddetmek istediğinize emin misiniz?",
   "Teklif reddedildi. Koordinatör bilgilendirildi.",
   "Teklifi onayla · Escrow güvencesiyle",
+  "Teklifi Onayla",
   "PDF / Yazdır",
   "Reddet",
   "Vazgeç",
 ];
 
-export function OfferActions({ bookingId, total, lang = "Türkçe" }: { bookingId: string; total: string; lang?: string }) {
+export function OfferActions({ bookingId, total, lang = "Türkçe", tourism = false }: { bookingId: string; total: string; lang?: string; tourism?: boolean }) {
   const router = useRouter();
   const texts = useMemo(() => TEXTS, []); // sabit referans — useT yarış dersi
   const { t } = useT(lang, texts);
@@ -51,8 +53,8 @@ export function OfferActions({ bookingId, total, lang = "Türkçe" }: { bookingI
         disabled={!!busy}
         className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
       >
-        {busy === "approve" ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
-        {t("Teklifi onayla · Escrow güvencesiyle")} ({total})
+        {busy === "approve" ? <Loader2 size={16} className="animate-spin" /> : tourism ? <ClipboardCheck size={16} /> : <Lock size={16} />}
+        {tourism ? t("Teklifi Onayla") : t("Teklifi onayla · Escrow güvencesiyle")} ({total})
       </button>
       <div className="flex gap-2">
         <button

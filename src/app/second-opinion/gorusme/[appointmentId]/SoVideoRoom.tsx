@@ -21,6 +21,7 @@ type Phase = "idle" | "connecting" | "waiting" | "connected" | "ended" | "error"
 const SPEECH_LANG: Record<string, string> = {
   "Türkçe": "tr-TR", "Rusça": "ru-RU", "Arapça": "ar-SA", "Farsça": "fa-IR", "Azerice": "az-AZ",
   "İngilizce": "en-US", "Fransızca": "fr-FR", "Almanca": "de-DE", "Kazakça": "kk-KZ", "Kırgızca": "ky-KG",
+  "Bulgarca": "bg-BG",
 };
 
 // ── Canlı transkript (Web Speech API) ──

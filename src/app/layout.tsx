@@ -15,8 +15,8 @@ import { SITE_URL } from "@/lib/aura-landing/seo";
 // Uygulama geneli tipografi — vitrin (aura-health) ile aynı aile: Inter gövde + Space Grotesk
 // display (--font-serif değişken adı tarihsel; display yuvası olarak kullanılır) + JetBrains Mono
 // mikro/durak. `subsets` YALNIZ PRELOAD'u belirler — @font-face kuralları diğer subset'leri de
-// içerir ve unicode-range ile talep üzerine iner. Inter Kiril kapsar → RU/KK/KY markalı (ölçüldü
-// 2026-07-15: gerçek Inter face'i U+400-45F'i kapsıyor). Space Grotesk Kiril kapsamaz → RU
+// içerir ve unicode-range ile talep üzerine iner. Inter Kiril kapsar → RU/KK/KY/BG markalı (ölçüldü
+// 2026-07-15: gerçek Inter face'i U+400-45F'i kapsıyor). Space Grotesk Kiril kapsamaz → RU/BG
 // başlıkları fallback (kabul; Google Fonts'ta Kiril subset'i yok).
 const sans = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-sans", display: "swap" });
 const serif = Space_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "600", "700"], variable: "--font-serif", display: "swap" });
@@ -26,7 +26,7 @@ const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext"], variable: "--font
 // kontrolsüz fallback'e bırakılmaz). Noto Sans Arabic gövde VE başlıkta kullanılır (kullanıcı kararı;
 // Space Grotesk'in Arapça muadili yok).
 //
-// `preload: false` KASITLI: 8 dilin yalnız 2'si bu fontu kullanır → Latin kullanıcıya indirilmez;
+// `preload: false` KASITLI: 9 dilin yalnız 2'si bu fontu kullanır → Latin kullanıcıya indirilmez;
 // tarayıcı yalnız Arapça glif çizilecekse çeker (ar/fa'da "loaded", diğer dillerde hiç istenmez —
 // ölçüldü). Yığına genel olarak DEĞİL, `:lang(ar)/:lang(fa)` altında bağlanır — nedeni globals.css'te
 // (next/font'un "<Aile> Fallback" face'i U+0-10FFFF kapsar ve sıralamayı iki yönlü bozar).

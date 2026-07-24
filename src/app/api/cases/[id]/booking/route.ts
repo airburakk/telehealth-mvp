@@ -90,8 +90,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       breakdown: JSON.stringify(quote.items),
       split: JSON.stringify(quote.split),
       // Teklif: hasta onayına dek emanet tutulmaz (DRAFT/PENDING); onaylanınca CONFIRMED + HELD olur.
+      // Sağlık turizmi (Case.tourismPlan, 2026-07-23): kulvar ödemesiz — hiçbir modda HELD yazılmaz.
       status: isOffer ? "DRAFT" : "CONFIRMED",
-      escrowStatus: isOffer ? "PENDING" : "HELD",
+      escrowStatus: isOffer || c.tourismPlan ? "PENDING" : "HELD",
       journeyData: JSON.stringify(defaultJourney()), // lojistik Patient Journey başlangıcı (ilk aşama aktif)
     },
   });

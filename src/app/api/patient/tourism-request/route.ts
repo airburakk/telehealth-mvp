@@ -13,7 +13,8 @@ import { TOURISM_DISCLAIMER_TITLE, TOURISM_DISCLAIMER_BODY } from "@/lib/tourism
 // İki adımlı hasta-yüzü: Ön Bilgi (kimlik + iletişim + sağlık durumu) → AI branş → Tedavi Alanı seçimi.
 // Bu uç, hastanın NİHAİ branş seçimini (branchKey) alır → forceBranchKey ile o branşta tourism-etiketli
 // Case (status NEW) → seçilen BRANŞIN DOKTOR HAVUZUNA bildirim. Doktorlar yazılı teklif/video sunar;
-// anlaşınca fiyat girer → acente dosyası → mevcut escrow zinciri. ÜCRET KAPISI YOK (klinik-önce).
+// anlaşınca fiyat girer → acente dosyası → teklif zinciri (kulvar ödemesiz; escrow katmanı
+// 2026-07-23'te kaldırıldı — onay ödemesiz, ödeme görüşmede). ÜCRET KAPISI YOK (klinik-önce).
 // tourismPlan lojistik (PHI DEĞİL, düz metin: country + branch). PHI (patientName/symptoms/reasoning)
 // at-rest şifreli (E2EE inc.2c/Faz1). Talep sonrası hastaya AURA-dışı sorumluluk reddi mesajı gider
 // (notifyUser — uygulama-içi + push canlı; SMS/e-posta kanalı dormant → aktifleşince eklenir).

@@ -282,6 +282,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
         <section id="teklif" className="mt-8 scroll-mt-6">
           <OfferView
             embedded
+            tourism={isTourism}
             hospitalName={c.hospitalName}
             hospitalAuthNo={reg?.authorizationNumber || null}
             bookingId={booking.id}
@@ -310,6 +311,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
         <section id="rezervasyon" className="mt-8 scroll-mt-6">
           <ReservationView
             embedded
+            tourism={isTourism}
             hospitalName={c.hospitalName}
             hospitalAuthNo={reg?.authorizationNumber || null}
             bookingId={booking.id}

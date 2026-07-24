@@ -19,8 +19,8 @@ import { LANGS, useLang, type Lang } from "@/lib/aura-landing/i18n";
 // dört ayrı hizmet sıralaması sayfayla çelişiyordu.
 //
 // KORUNAN: logo (AuraMark + wordmark), `aura-nav-how` nefes animasyonu, turkuaz
-// durak noktalı CTA giysisi, 8 dil anahtarı, SSR'da kapalı başlayan mobil panel.
-// t.nav.menu/close kök sözlükten yeniden kullanılır (8 dilde zaten çevrili).
+// durak noktalı CTA giysisi, 9 dil anahtarı, SSR'da kapalı başlayan mobil panel.
+// t.nav.menu/close kök sözlükten yeniden kullanılır (9 dilde zaten çevrili).
 export function V2Nav() {
   const { lang, t, setLang } = useLang();
   const [open, setOpen] = useState(false);
