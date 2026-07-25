@@ -3,6 +3,7 @@ import { purgeExpired, RETENTION_YEARS } from "@/lib/account-deletion";
 import { verifyAccessChain } from "@/lib/audit";
 import { verifyConsentChain } from "@/lib/consent";
 import { sendAlert } from "@/lib/alerts";
+import { remindPendingDocs, type RemindResult } from "@/lib/pending-docs-reminder";
 
 // GET /api/cron/purge-deleted — saklama süresi dolan klinik kayıtları GERÇEKTEN imha eder (v6.11).
 // vercel.json cron'u günde bir tetikler. registry-sync ile aynı Bearer deseni (anonim tetiklenemez).
@@ -44,6 +45,17 @@ export async function GET(req: Request) {
     // doğrulamaya geçilir (zincir ucu checkpoint'i) — bilinçli erteleme.
     const [audit, consent] = await Promise.all([verifyAccessChain(), verifyConsentChain()]);
 
+    // DOCS_PENDING hatırlatması (2026-07-24): bu rota fiilen GÜNLÜK BAKIM NÖBETİ (Vercel Hobby
+    // cron limiti 2/dolu → yeni cron açılamaz) — belge-bekleyen başvuruların hastalarına günde 1
+    // dürtü (en fazla 3; lib/pending-docs-reminder). Hatırlatma kritik değil: hata imha akışını
+    // DÜŞÜRMEZ, yalnız yanıtta raporlanır (hasta panelden her an kendisi tamamlayabilir).
+    let reminders: RemindResult | { error: string };
+    try {
+      reminders = await remindPendingDocs();
+    } catch (e) {
+      reminders = { error: e instanceof Error ? e.message.slice(0, 120) : "hatırlatma koşamadı" };
+    }
+
     return NextResponse.json({
       ok: true,
       retentionYears: RETENTION_YEARS,
@@ -52,6 +64,7 @@ export async function GET(req: Request) {
         audit: { ok: audit.ok, count: audit.count, brokenAt: audit.brokenAt, unverifiableSeals: audit.unverifiableSeals },
         consent: { ok: consent.ok, count: consent.count, brokenAt: consent.brokenAt, unverifiableSeals: consent.unverifiableSeals, purgedSeals: consent.purgedSeals },
       },
+      pendingDocsReminders: reminders,
     });
   } catch (e) {
     // Saklama-imha sözünün bekçisi sessizce düşemez (Ray C): alarm + 500 (Vercel cron log'unda görünür).
