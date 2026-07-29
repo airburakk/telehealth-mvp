@@ -5,6 +5,7 @@ import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { staffAccessClosed } from "@/lib/postop-access";
 import { loadDocument } from "@/lib/storage";
 import { recordAccess, reqMeta } from "@/lib/audit";
+import { toViewerSafeDicom } from "@/lib/dicom-pixels";
 
 // GET /api/cases/:id/documents/:docId/dicom — hastanın yüklediği DICOM'u kokpit görüntüleyicisine akıt
 // (v6.33). Dosya ASLIYLA + at-rest şifreli saklanır (kullanıcı kararı: tıbbi kayıt aslı; tag-strip
@@ -45,7 +46,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     detail: "Vaka DICOM görüntülendi (hasta yüklemesi)", ...reqMeta(req),
   });
 
-  return new NextResponse(new Uint8Array(Buffer.from(b64, "base64")), {
+  // JPEG-LS ise sunucuda çözülüp sıkıştırmasız sunulur (CSP: tarayıcıda CharLS = 'unsafe-eval').
+  const raw = Buffer.from(b64, "base64");
+  const { bytes } = await toViewerSafeDicom(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength) as ArrayBuffer);
+
+  return new NextResponse(bytes, {
     headers: {
       "Content-Type": "application/dicom",
       "Content-Disposition": `inline; filename="${encodeURIComponent(doc.label || "goruntu")}.dcm"`,

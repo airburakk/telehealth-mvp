@@ -9,7 +9,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
 import dcmjs from "dcmjs";
-import { decodePixels, maskFrames, writeUncompressed, renderPreviewPng, TS_EXPLICIT_LE } from "@/lib/dicom-pixels";
+import { decodePixels, maskFrames, writeUncompressed, renderPreviewPng, toViewerSafeDicom, TS_EXPLICIT_LE } from "@/lib/dicom-pixels";
 import { analyzeBurnIn, normalizeRects } from "@/lib/dicom-burnin";
 import { deidentifyDicomFull } from "@/lib/dicom-deidentify";
 
@@ -197,6 +197,39 @@ describe("renderPreviewPng — editör önizlemesi", () => {
     maskFrames(dec, [{ x: 0, y: 0, w: 1, h: 0.2 }]);
     const b = renderPreviewPng(dec, 0, 128).png;
     expect(Buffer.compare(Buffer.from(a), Buffer.from(b))).not.toBe(0);
+  });
+});
+
+describe("toViewerSafeDicom — CSP enforce (CharLS tarayıcıdan çıkarıldı)", () => {
+  it("JPEG-LS: sunucuda sıkıştırmasıza çevrilir (tarayıcı CharLS'e ihtiyaç duymaz)", async () => {
+    const input = read("test-jpegls.dcm");
+    const before = await decodePixels(input);
+    const { bytes, converted } = await toViewerSafeDicom(input);
+    expect(converted).toBe(true);
+
+    const after = await decodePixels(toAb(bytes));
+    expect(after.info.ts).toBe(TS_EXPLICIT_LE); // artık sıkıştırmasız
+    expect(after.info.rows).toBe(before.info.rows);
+    expect(after.info.cols).toBe(before.info.cols);
+    expect(after.info.frames).toBe(before.info.frames);
+    // Piksel içeriği KORUNUR (kayıpsız dönüşüm — klinik veri bozulmaz).
+    expect(Array.from(after.frames[0].slice(0, 64))).toEqual(Array.from(before.frames[0].slice(0, 64)));
+  });
+
+  it("diğer transfer syntax'lara DOKUNMAZ (gereksiz büyüme yok)", async () => {
+    for (const f of ["toraks-bt.dcm", "test-jpeg2000.dcm", "test-rle.dcm", "test-jpeg-baseline.dcm"]) {
+      const input = read(f);
+      const { bytes, converted } = await toViewerSafeDicom(input);
+      expect(converted).toBe(false);
+      expect(bytes.byteLength).toBe(input.byteLength); // birebir aynı dosya
+    }
+  });
+
+  it("bozuk dosyada orijinali döndürür (format dönüşümü fail-open; de-id'den bağımsız)", async () => {
+    const junk = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]).buffer;
+    const { bytes, converted } = await toViewerSafeDicom(junk);
+    expect(converted).toBe(false);
+    expect(bytes.byteLength).toBe(8);
   });
 });
 

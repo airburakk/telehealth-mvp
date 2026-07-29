@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { purgeExpired, RETENTION_YEARS } from "@/lib/account-deletion";
-import { verifyAccessChain } from "@/lib/audit";
+import { verifyAccessChain, recordAccess } from "@/lib/audit";
 import { verifyConsentChain } from "@/lib/consent";
 import { sendAlert } from "@/lib/alerts";
 import { remindPendingDocs, type RemindResult } from "@/lib/pending-docs-reminder";
@@ -55,6 +55,22 @@ export async function GET(req: Request) {
     } catch (e) {
       reminders = { error: e instanceof Error ? e.message.slice(0, 120) : "hatırlatma koşamadı" };
     }
+
+    // KALICI KOŞU İZİ (2026-07-29): Vercel Hobby'de runtime log saklama süresi 1 SAAT — cron gece
+    // koştuğu için sayaçları log'dan gözlemek fiilen imkânsızdı ("ertesi gün bak" planı çalışmıyordu).
+    // Sayaçlar audit zincirine yazılır: PHI YOK (yalnız adetler), günde 1 satır (hacim ~3,5/gün'ün
+    // yanında önemsiz). "Cron koştu mu, kaç hatırlatma gitti" sorusu artık kalıcı kayıttan yanıtlanır.
+    const rem = "error" in reminders
+      ? `hata: ${reminders.error}`
+      : `bakilan=${reminders.checked} gonderilen=${reminders.reminded} tavan=${reminders.capped} hata=${reminders.failed}`;
+    await recordAccess({
+      actor: null, // sistem koşusu
+      action: "CRON_MAINTENANCE",
+      resourceType: "SYSTEM",
+      resourceId: "purge-deleted",
+      subjectUserId: null,
+      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem}`,
+    });
 
     return NextResponse.json({
       ok: true,

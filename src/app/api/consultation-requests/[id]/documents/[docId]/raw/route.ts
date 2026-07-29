@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { loadDocument } from "@/lib/storage";
 import { recordAccess, reqMeta } from "@/lib/audit";
+import { toViewerSafeDicom } from "@/lib/dicom-pixels";
 
 // GET /api/consultation-requests/:id/documents/:docId/raw — havuz DICOM'unu görüntüleyiciye akıt (v6.32).
 // YALNIZ application/dicom belgeler için: DICOM'lar sunucuda PHI tag-strip'ten geçmiş ANONİM dosyalardır
@@ -57,7 +58,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     detail: "Havuz DICOM görüntülendi (tag-strip'li anonim dosya)", ...reqMeta(_req),
   });
 
-  return new NextResponse(new Uint8Array(bytes), {
+  // JPEG-LS ise sunucuda çözülüp sıkıştırmasız sunulur (CSP: tarayıcıda CharLS = 'unsafe-eval').
+  const { bytes: viewerBytes } = await toViewerSafeDicom(
+    bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
+  );
+
+  return new NextResponse(viewerBytes, {
     headers: {
       "Content-Type": "application/dicom",
       "Content-Disposition": `inline; filename="${encodeURIComponent(doc.label || "goruntu")}.dcm"`,

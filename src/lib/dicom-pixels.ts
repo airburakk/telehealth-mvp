@@ -355,6 +355,39 @@ export async function decodePixels(input: ArrayBuffer): Promise<DecodedPixels> {
   return { info, frames: out, wc: tagFloat(ds, "x00281050", NaN), ww: tagFloat(ds, "x00281051", NaN) };
 }
 
+// ── Tarayıcı-güvenli sunum (CSP enforce, 2026-07-29) ──
+
+/**
+ * JPEG-LS dosyalarını tarayıcıya SIKIŞTIRMASIZ verir.
+ *
+ * NEDEN: JPEG-LS'i tarayıcıda çözen CharLS/WASM glue'su embind üzerinden `Function(...)` çağırır
+ * (prod bundle'da doğrulandı) → CSP'de `'unsafe-eval'` gerektirir. XSS yüzeyini açmamak için bu
+ * codec tarayıcıdan çıkarıldı: sunucu çözer, sıkıştırmasız Part-10 olarak sunar, DicomViewer
+ * sıkıştırmasız yolu kullanır. JPEG 2000 (OpenJPEG) DOKUNULMADI — o glue kod üretmiyor
+ * (`Function("return this")` yalnız globalThis polyfill'i, modern tarayıcıda kısa devre).
+ *
+ * Fail-open (bilinçli): çözülemezse ORİJİNAL bayt döner — bu bir gizlilik değil FORMAT dönüşümüdür;
+ * de-identification kararları (fail-closed) lib/dicom-deidentify'da yaşar ve buradan bağımsızdır.
+ */
+export async function toViewerSafeDicom(
+  input: ArrayBuffer,
+): Promise<{ bytes: Uint8Array<ArrayBuffer>; converted: boolean }> {
+  let ts = "";
+  try {
+    ts = (dicomParser.parseDicom(new Uint8Array(input), { untilTag: "x00020010" }).string("x00020010") || "").trim();
+  } catch {
+    return { bytes: new Uint8Array(input), converted: false };
+  }
+  if (!TS_JPEGLS.has(ts)) return { bytes: new Uint8Array(input), converted: false };
+  try {
+    const dec = await decodePixels(input);
+    return { bytes: writeUncompressed(input, dec), converted: true };
+  } catch (e) {
+    console.warn("[dicom] JPEG-LS sunucu dönüşümü başarısız, orijinal sunuluyor:", e instanceof Error ? e.message : e);
+    return { bytes: new Uint8Array(input), converted: false };
+  }
+}
+
 // ── Maskeleme ──
 
 /** Normalize kutuyu piksel sınırlarına çevirir (taşma kırpılır, en az 1 px). */
@@ -417,7 +450,7 @@ function framesToBytes(dec: DecodedPixels): ArrayBuffer {
  * Maskelenmiş kareleri, ORİJİNAL etiketleri koruyarak sıkıştırmasız (Explicit VR LE) yeniden yazar.
  * Yalnız piksel/transfer-syntax ile ilgili etiketler güncellenir; PHI temizliği çağıran katmanın işidir.
  */
-export function writeUncompressed(input: ArrayBuffer, dec: DecodedPixels): Uint8Array {
+export function writeUncompressed(input: ArrayBuffer, dec: DecodedPixels): Uint8Array<ArrayBuffer> {
   const data = dcmjs.data.DicomMessage.readFile(input, { ignoreErrors: false });
   const dict = data.dict as Record<string, { vr: string; Value?: unknown[] }>;
 

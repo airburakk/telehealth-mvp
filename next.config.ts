@@ -18,13 +18,24 @@ const browserStub = { browser: "./src/empty-module.js" };
 // kesişim uygular — enforce'a geçerken frame-ancestors satırı tam politikanın İÇİNE taşınır).
 // Envanter: 9 ajanlı origin süpürmesi, her kalem dosya:satır kanıtlı (vault: wiki/log.md 2026-07-18).
 const isDev = process.env.NODE_ENV === "development";
-const cspReportOnly = [
+// ── TAM CSP — ENFORCE (2026-07-29; v6.25'ten beri Report-Only'deydi) ──
+// Enforce'a geçiş log izleme ile DEĞİL, KOD KANITIYLA yapıldı: Vercel Hobby'de runtime log saklama
+// süresi 1 saat + üretimde henüz gerçek kullanıcı trafiği yok → "raporları 1-2 hafta izle" planı
+// yapısal olarak çalışmıyordu. Onun yerine prod bundle'ının 80 chunk'ı `Function(...)`/`eval(...)`
+// için tarandı (minified desen dahil — `new Function` araması yanlış negatif verir):
+//   · CharLS (JPEG-LS)  → embind `Function("body", …)`, modül yüklemede ÇALIŞIR = gerçek ihlal
+//     ⇒ ÇÖZÜM: codec tarayıcıdan ÇIKARILDI, sunucu çözüyor (lib/dicom-pixels.toViewerSafeDicom)
+//   · OpenJPEG (JPEG2000) → yalnız `Function("return this")` globalThis polyfill'i (kısa devre)
+//   · React/core-js       → aynı polyfill deseni, `||` zincirinin sonunda (kısa devre)
+//   · Gemini Live         → SDK https base URL'i `wss`'e çevirir (getWebsocketBaseUrl) ⇒ connect-src'de
+//     https://generativelanguage.googleapis.com'a GEREK YOK, wss satırı yeterli.
+const cspEnforced = [
   "default-src 'self'",
   // 'unsafe-inline': Next App Router her HTML'e inline RSC/hydration script'i (self.__next_f) gömer;
-  // nonce alternatifi TÜM sayfaları dinamik render'a zorlar → statik 8-dil vitrin kararıyla çelişir.
-  // 'wasm-unsafe-eval': DICOM codec'leri tarayıcıda WASM derler (DicomViewer openjpeg/charls).
-  // ⚠️ 'unsafe-eval' PROD'A BİLİNÇLİ KONMADI: charlswasm.js glue'sunda 2 adet `new Function` var
-  // (JPEG-LS yolu) → Report-Only tam da bu ihlali ölçecek; enforce öncesi karar kalemi.
+  // nonce alternatifi TÜM sayfaları dinamik render'a zorlar → statik 9-dil vitrin kararıyla çelişir.
+  // 'wasm-unsafe-eval': JPEG 2000 (OpenJPEG) tarayıcıda WASM derler — kod ÜRETMEZ, eval'den farklıdır.
+  // ⚠️ 'unsafe-eval' ÜRETİMDE YOK ve EKLENMEMELİ: tek gerekçesi CharLS'ti, o da sunucuya taşındı.
+  //    Yeniden ihtiyaç duyulursa doğru çözüm codec'i sunucuya almaktır, eval iznini açmak değil.
   `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ""}`,
   // SSR'lanan style="" attribute'ları (~44 kullanım) + JSX <style> blokları + next/font @font-face.
   "style-src 'self' 'unsafe-inline'",
@@ -35,8 +46,7 @@ const cspReportOnly = [
   "font-src 'self'", // next/font build'de self-host eder — Google Fonts origin'i EKLEME (gereksiz genişletme)
   // Ably realtime (birincil + *.ably-realtime.com: fallback a-e, internet-up, ws-up) + Gemini Live wss.
   // TURN/STUN connect-src'ye TABİ DEĞİL (WebRTC); Vercel Blob istemciye sızmaz (/api proxy'den iner).
-  // İZLEME: https://generativelanguage.googleapis.com bilinçli DIŞARIDA (yalnız wss kanıtlı) —
-  // Report-Only raporu gösterirse enforce öncesi eklenir.
+  // https://generativelanguage.googleapis.com KASITLI YOK — SDK kanıtı için üstteki blok notuna bak.
   `connect-src 'self' wss://main.realtime.ably.net https://main.realtime.ably.net wss://*.ably-realtime.com https://*.ably-realtime.com wss://generativelanguage.googleapis.com${isDev ? " ws://localhost:* ws://127.0.0.1:*" : ""}`,
   "worker-src 'self'", // tek worker /sw.js; DICOM codec'leri worker'sız build (blob: GEREKMEZ)
   "manifest-src 'self'",
@@ -44,7 +54,10 @@ const cspReportOnly = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'", // tek native form GET /operasyon/kayit-defteri; OAuth form değil anchor+302
-  "frame-ancestors 'none'", // enforce'u ayrı başlıkta ZATEN canlı; enforce-adayı politikayla parite için burada da
+  // frame-ancestors artık YALNIZ burada: enforce'ta İKİ ayrı CSP başlığı KESİŞİM uygular; ayrı
+  // "frame-ancestors 'none'" başlığı bırakılsaydı politikalar kesişir, teşhisi zor davranış çıkardı.
+  // Clickjacking koruması aynen sürüyor (+ X-Frame-Options: DENY yedeği duruyor).
+  "frame-ancestors 'none'",
   "report-uri /api/csp-report", // legacy alıcılar
   "report-to csp-endpoint", // modern Reporting API (Reporting-Endpoints başlığı aşağıda)
 ].join("; ");
@@ -52,13 +65,13 @@ const securityHeaders = [
   // Not: HSTS preload BİLİNÇLİ eklenmedi — preload listesine girmek kalıcı taahhüt; custom domain
   // kararından sonra ayrıca değerlendirilir. max-age + includeSubDomains güvenli ve geri alınabilir.
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
-  { key: "X-Frame-Options", value: "DENY" },
-  { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+  { key: "X-Frame-Options", value: "DENY" }, // eski tarayıcı yedeği; asıl koruma CSP frame-ancestors
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=()" },
-  // Tam CSP — Report-Only (engellemez, raporlar; enforce ayrı kullanıcı kararı — üstteki blok notu).
-  { key: "Content-Security-Policy-Report-Only", value: cspReportOnly },
+  // Tam CSP — ENFORCE (2026-07-29 kullanıcı kararı). İhlaller hem ENGELLENİR hem /api/csp-report'a
+  // raporlanır. Geri alma: bu satırın key'ini "Content-Security-Policy-Report-Only" yapmak yeterli.
+  { key: "Content-Security-Policy", value: cspEnforced },
   { key: "Reporting-Endpoints", value: 'csp-endpoint="/api/csp-report"' },
 ];
 

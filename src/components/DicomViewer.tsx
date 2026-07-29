@@ -7,16 +7,25 @@ import { X, Upload, ZoomIn, ZoomOut, Maximize2, Contrast, RotateCcw, FileImage, 
 
 // Transfer sözdizimleri. Sıkıştırmasız (Little Endian) doğrudan; RLE inline (PackBits);
 // JPEG Baseline tarayıcıyla (createImageBitmap); JPEG Lossless jpeg-lossless-decoder-js ile;
-// JPEG 2000 (OpenJPEG) ve JPEG-LS (CharLS) WASM codec'leriyle çözülür (public/wasm'den yüklenir).
-// Yalnız JPEG Genişletilmiş 12-bit (.51) desteklenmiyor (ayrı libjpeg gerektirir).
+// JPEG 2000 (OpenJPEG) WASM codec'iyle çözülür (public/wasm'den yüklenir).
+//
+// ⚠️ JPEG-LS (CharLS) TARAYICIDAN ÇIKARILDI (2026-07-29, CSP enforce): CharLS glue'su embind
+// üzerinden `Function(...)` çağırır (prod bundle'da doğrulandı) → CSP `'unsafe-eval'` gerektirirdi.
+// Onun yerine SUNUCU çözüyor: DICOM sunan uçlar JPEG-LS dosyayı sıkıştırmasız Part-10'a çevirip
+// veriyor (lib/dicom-pixels.toViewerSafeDicom) → buraya hep sıkıştırmasız gelir.
+// ⚠️ Bu dosyaya JPEG-LS/CharLS yolunu GERİ EKLEME — CSP'de eval izni açmadan çalışmaz.
+// Desteklenmeyen: JPEG Genişletilmiş 12-bit (.51) — ayrı libjpeg gerektirir.
 const TS_UNCOMPRESSED = new Set(["1.2.840.10008.1.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2"]);
 const TS_RLE = "1.2.840.10008.1.2.5";
 const TS_JPEG_BASELINE = "1.2.840.10008.1.2.4.50";
 const TS_JPEG_LOSSLESS = new Set(["1.2.840.10008.1.2.4.57", "1.2.840.10008.1.2.4.70"]);
-const TS_JPEGLS = new Set(["1.2.840.10008.1.2.4.80", "1.2.840.10008.1.2.4.81"]); // CharLS (WASM)
 const TS_J2K = new Set(["1.2.840.10008.1.2.4.90", "1.2.840.10008.1.2.4.91"]);    // OpenJPEG (WASM)
 const TS_UNSUPPORTED: Record<string, string> = {
   "1.2.840.10008.1.2.4.51": "JPEG Genişletilmiş (12-bit)",
+  // JPEG-LS: sunucu dönüştürür (toViewerSafeDicom). Buraya düşmesi = dosya platform uçları
+  // DIŞINDAN açıldı (ör. kullanıcı kendi diskinden sürükledi) demektir.
+  "1.2.840.10008.1.2.4.80": "JPEG-LS (sunucudan açın)",
+  "1.2.840.10008.1.2.4.81": "JPEG-LS (sunucudan açın)",
 };
 
 interface ParsedFile {
@@ -52,7 +61,7 @@ function parseFile(name: string, buf: ArrayBuffer): ParsedFile {
   const ts = (ds.string("x00020010") || "1.2.840.10008.1.2").trim();
   const encapsulated = !TS_UNCOMPRESSED.has(ts);
   const supported = !encapsulated || ts === TS_RLE || ts === TS_JPEG_BASELINE ||
-    TS_JPEG_LOSSLESS.has(ts) || TS_JPEGLS.has(ts) || TS_J2K.has(ts);
+    TS_JPEG_LOSSLESS.has(ts) || TS_J2K.has(ts);
   if (!supported) {
     const nm = TS_UNSUPPORTED[ts] || `bu sıkıştırma (${ts})`;
     throw new Error(`${nm} için ek codec (WASM) gerekiyor — bu sürümde desteklenmiyor. Desteklenen: sıkıştırmasız, RLE, JPEG Baseline, JPEG Lossless.`);
@@ -179,7 +188,7 @@ async function decodeLossless(frame: Uint8Array, f: ParsedFile): Promise<Float32
   return out;
 }
 
-// --- WASM codec'ler: JPEG 2000 (OpenJPEG) ve JPEG-LS (CharLS) ---
+// --- WASM codec: JPEG 2000 (OpenJPEG) --- (JPEG-LS/CharLS sunucuya taşındı, dosya başlığındaki nota bak)
 // Glue dinamik import edilir, .wasm public/wasm'den (locateFile) yüklenir; modül singleton cache'lenir.
 type CSFrameInfo = { width: number; height: number; bitsPerSample: number; componentCount: number; isSigned: boolean };
 type CSDecoder = {
@@ -189,23 +198,15 @@ type CSDecoder = {
   decode(): void;
   delete?(): void;
 };
-type CSModule = { J2KDecoder?: new () => CSDecoder; JpegLSDecoder?: new () => CSDecoder };
+type CSModule = { J2KDecoder?: new () => CSDecoder };
 type CSFactory = (o: { locateFile: (p: string) => string }) => Promise<CSModule>;
 let _ojModule: Promise<CSModule> | null = null;
-let _charlsModule: Promise<CSModule> | null = null;
 function ojModule(): Promise<CSModule> {
   if (!_ojModule) _ojModule = import("@cornerstonejs/codec-openjpeg/wasmjs").then((m) => {
     const factory = (m.default as unknown as CSFactory) ?? (m as unknown as CSFactory);
     return factory({ locateFile: (p) => "/wasm/" + p });
   });
   return _ojModule;
-}
-function charlsModule(): Promise<CSModule> {
-  if (!_charlsModule) _charlsModule = import("@cornerstonejs/codec-charls/wasmjs").then((m) => {
-    const factory = (m.default as unknown as CSFactory) ?? (m as unknown as CSFactory);
-    return factory({ locateFile: (p) => "/wasm/" + p });
-  });
-  return _charlsModule;
 }
 
 // WASM decoder çıktısını (ham byte) frameInfo'ya göre Float32'ye çevir (rescale uygulanmış)
@@ -235,12 +236,6 @@ async function decodeJ2K(frame: Uint8Array, f: ParsedFile) {
   if (!m.J2KDecoder) throw new Error("JPEG 2000 codec yüklenemedi.");
   return decodeWithCS(frame, f, new m.J2KDecoder());
 }
-async function decodeJPEGLS(frame: Uint8Array, f: ParsedFile) {
-  const m = await charlsModule();
-  if (!m.JpegLSDecoder) throw new Error("JPEG-LS codec yüklenemedi.");
-  return decodeWithCS(frame, f, new m.JpegLSDecoder());
-}
-
 // Sıkıştırılmış dosyanın TÜM karelerini çöz → f.decoded; RGB'ye dönüştüyse f.samples'ı güncelle
 async function decodeAllFrames(f: ParsedFile): Promise<void> {
   const pe = f.dataSet.elements["x7fe00010"];
@@ -258,7 +253,6 @@ async function decodeAllFrames(f: ParsedFile): Promise<void> {
     if (f.ts === TS_RLE) out.push(decodeRLE(enc, f));
     else if (f.ts === TS_JPEG_BASELINE) { const r = await decodeBaseline(enc, f); out.push(r.data); samples = r.samples; }
     else if (TS_J2K.has(f.ts)) { const r = await decodeJ2K(enc, f); out.push(r.data); samples = r.samples; }
-    else if (TS_JPEGLS.has(f.ts)) { const r = await decodeJPEGLS(enc, f); out.push(r.data); samples = r.samples; }
     else out.push(await decodeLossless(enc, f));
   }
   f.decoded = out;
@@ -490,7 +484,7 @@ export default function DicomViewer({ open, onClose, src }: { open: boolean; onC
             <div className="max-w-md">
               <FileImage size={40} className="mx-auto text-[var(--c-ink-3)]" />
               <h3 className="mt-3 text-lg font-semibold text-[var(--c-ink)]">DICOM görüntüsü açın</h3>
-              <p className="mt-1 text-sm text-[var(--c-ink-2)]">Hastanın radyoloji (.dcm) dosyasını açın ya da örneklerle deneyin. Sıkıştırmasız, <b className="text-teal-400">RLE</b>, <b className="text-teal-400">JPEG Baseline</b>, <b className="text-teal-400">JPEG Lossless</b>, <b className="text-teal-400">JPEG 2000</b> ve <b className="text-teal-400">JPEG-LS</b> desteklenir. Pencere/seviye, yakınlaştırma, kaydırma ve kesit gezinme mevcuttur.</p>
+              <p className="mt-1 text-sm text-[var(--c-ink-2)]">Hastanın radyoloji (.dcm) dosyasını açın ya da örneklerle deneyin. Sıkıştırmasız, <b className="text-teal-400">RLE</b>, <b className="text-teal-400">JPEG Baseline</b>, <b className="text-teal-400">JPEG Lossless</b>, <b className="text-teal-400">JPEG 2000</b> ve <b className="text-teal-400">JPEG-LS</b> (sunucudan) desteklenir. Pencere/seviye, yakınlaştırma, kaydırma ve kesit gezinme mevcuttur.</p>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 text-xs">
                 <span className="text-[var(--c-ink-3)]">Örnekler:</span>
                 <button onClick={loadSample} className="rounded-md bg-[var(--c-ink)]/10 px-2.5 py-1 font-medium text-[var(--c-ink)] hover:bg-[var(--c-ink)]/20">Sıkıştırmasız</button>
@@ -498,7 +492,7 @@ export default function DicomViewer({ open, onClose, src }: { open: boolean; onC
                 <button onClick={() => loadUrl("/dicom/test-jpeg-lossless.dcm", "test-jpeg-lossless.dcm")} className="rounded-md bg-[var(--c-ink)]/10 px-2.5 py-1 font-medium text-[var(--c-ink)] hover:bg-[var(--c-ink)]/20">JPEG Lossless</button>
                 <button onClick={() => loadUrl("/dicom/test-jpeg-baseline.dcm", "test-jpeg-baseline.dcm")} className="rounded-md bg-[var(--c-ink)]/10 px-2.5 py-1 font-medium text-[var(--c-ink)] hover:bg-[var(--c-ink)]/20">JPEG Baseline</button>
                 <button onClick={() => loadUrl("/dicom/test-jpeg2000.dcm", "test-jpeg2000.dcm")} className="rounded-md bg-[var(--c-ink)]/10 px-2.5 py-1 font-medium text-[var(--c-ink)] hover:bg-[var(--c-ink)]/20">JPEG 2000</button>
-                <button onClick={() => loadUrl("/dicom/test-jpegls.dcm", "test-jpegls.dcm")} className="rounded-md bg-[var(--c-ink)]/10 px-2.5 py-1 font-medium text-[var(--c-ink)] hover:bg-[var(--c-ink)]/20">JPEG-LS</button>
+
               </div>
               {err && <p className="mt-3 rounded-lg bg-red-500/15 px-3 py-2 text-sm text-red-300">{err}</p>}
             </div>
