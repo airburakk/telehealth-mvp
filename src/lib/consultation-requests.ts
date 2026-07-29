@@ -7,7 +7,7 @@ import { db } from "./db";
 import { encryptField, decryptField } from "./crypto";
 import { storeDocument, loadDocument } from "./storage";
 import { deidentifyCase, scrubText } from "./deidentify";
-import { deidentifyDicom } from "./dicom-deidentify";
+import { deidentifyDicomFull } from "./dicom-deidentify";
 import { translateText, assessDocument, redactPersonNames } from "./ai-clinical";
 import { notifyUser, notifyDoctorById } from "./notify";
 import { loincForBranchLabel } from "@/data/coding";
@@ -44,6 +44,8 @@ export interface PartnerDocInput {
   label: string;
   mime: string;
   dataUrl: string; // base64 data URL
+  /** v6.37 — yükleyenin redaksiyon editöründe çizdiği burned-in maskeleri (normalize 0..1). */
+  redactRects?: unknown;
 }
 
 export interface PartnerRequestInput {
@@ -62,21 +64,28 @@ export interface PartnerRequestInput {
 }
 
 export async function createRequestFromInput(input: PartnerRequestInput, documents: PartnerDocInput[] = []): Promise<string> {
-  // (0) DICOM PHI tag-strip — KAYIT ÖNCESİ hazırlık (v6.32): application/dicom belgelerin kimlik/kurum
-  //     etiketleri sunucuda sıyrılır (lib/dicom-deidentify; piksel verisi dokunulmaz — burned-in yazıyı
-  //     partner formda beyanla doğrular). Sıyrılamayan dosya = DicomRejectedError → HİÇBİR kayıt yazılmaz.
+  // (0) DICOM de-identification — KAYIT ÖNCESİ hazırlık: kimlik/kurum ETİKETLERİ sıyrılır (v6.32) VE
+  //     görüntünün İÇİNE işlenmiş (burned-in) yazılar maskelenir (v6.37: standart kurallar + yükleyenin
+  //     editörde çizdiği kutular — lib/dicom-deidentify.deidentifyDicomFull). Kurallar SUNUCUDA
+  //     uygulanır: istemci kutu göndermese de otomatik maskeler yine çalışır.
+  //     Sıyrılamayan/maskelenemeyen dosya = DicomRejectedError → HİÇBİR kayıt yazılmaz (fail-closed).
   //     uidMap talep-başına paylaşılır: aynı çalışmanın çoklu dosyaları tutarlı yeni UID alır.
   const uidMap = new Map<string, string>();
-  const prepared = documents.slice(0, 8).filter((d) => d?.dataUrl).map((d) => {
-    if (d.mime !== "application/dicom") return d;
+  const prepared: PartnerDocInput[] = [];
+  for (const d of documents.slice(0, 8).filter((x) => x?.dataUrl)) {
+    if (d.mime !== "application/dicom") {
+      prepared.push(d);
+      continue;
+    }
     try {
       const raw = Buffer.from(d.dataUrl.replace(/^data:[^;]*;base64,/, ""), "base64");
-      const { bytes } = deidentifyDicom(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength) as ArrayBuffer, uidMap);
-      return { ...d, dataUrl: `data:application/dicom;base64,${Buffer.from(bytes).toString("base64")}` };
+      const ab = raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength) as ArrayBuffer;
+      const { bytes } = await deidentifyDicomFull(ab, uidMap, { userRects: d.redactRects });
+      prepared.push({ ...d, dataUrl: `data:application/dicom;base64,${Buffer.from(bytes).toString("base64")}` });
     } catch {
       throw new DicomRejectedError(d.label || "belge");
     }
-  });
+  }
 
   // (1) Yapısal satır-içi temizlik: e-posta/TC/telefon/tarih maskelenir (deidentify.scrubText).
   const structural = scrubText(input.clinicalSummary.trim().slice(0, 5000), []);
@@ -147,6 +156,8 @@ export interface PoolFromCaseInput {
   doctorName: string; // görünen ad → "Dr. X (Platform)" (kullanıcı onaylı etiket)
   summary: string; // doktorun kontrol edip düzenlediği anonim özet (TR)
   docIds: string[]; // vakaya ait CaseDocument seçimi
+  /** v6.37 — belge id → burned-in maskeleri (doktorun redaksiyon editöründe çizdikleri). */
+  redact?: Record<string, unknown>;
 }
 
 export async function createRequestFromCase(input: PoolFromCaseInput): Promise<{ id: string } | "NOT_FOUND" | "EMPTY"> {
@@ -169,7 +180,7 @@ export async function createRequestFromCase(input: PoolFromCaseInput): Promise<{
   for (const d of rows) {
     const dataUrl = await loadDocument(d.content as string);
     if (typeof dataUrl === "string" && dataUrl.startsWith("data:")) {
-      documents.push({ label: d.label, mime: d.mimeType, dataUrl });
+      documents.push({ label: d.label, mime: d.mimeType, dataUrl, redactRects: input.redact?.[d.id] });
     }
   }
 

@@ -56,7 +56,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   let created: { id: string };
   try {
-    const res = await createRequestFromCase({ caseId: id, doctorId: doctor.id, doctorName: `${doctor.title} ${doctor.name}`, summary, docIds });
+    // redact: { docId → kutu listesi } (v6.37 burned-in maskeleri; doğrulama lib katmanında).
+    const redact = b.redact && typeof b.redact === "object" ? (b.redact as Record<string, unknown>) : undefined;
+    const res = await createRequestFromCase({ caseId: id, doctorId: doctor.id, doctorName: `${doctor.title} ${doctor.name}`, summary, docIds, redact });
     if (res === "EMPTY") return NextResponse.json({ error: "Anonim özet en az 10 karakter olmalı." }, { status: 400 });
     if (res === "NOT_FOUND") return NextResponse.json({ error: "Bulunamadı." }, { status: 404 });
     created = res;

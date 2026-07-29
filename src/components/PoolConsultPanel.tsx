@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, Loader2, Send, X, FileText, Check } from "lucide-react";
+import { Users, Loader2, Send, X, FileText, Check, ScanEye } from "lucide-react";
+import { DicomRedactEditor, type RedactRect } from "@/components/DicomRedactEditor";
 
 // v6.33 Faz 3 — "Havuzdan görüş iste" paneli (doktor vaka kokpiti; metinler kullanıcı onaylı 2026-07-21).
 // Açılınca GET /consult-pool ile anonim özet taslağı + belge listesi gelir; doktor özeti düzenler,
 // belgeleri seçer (DICOM seçiliyse partner formundaki onaylı burned-in beyanı aynı metinle zorunlu).
+// v6.37: DICOM'lar için burned-in redaksiyon editörü — doktor görüntüdeki yazıları kutuyla kapatır;
+// maskeyi sunucu uygular (redact: { docId → kutular }). Vakadaki ASIL dosya değişmez.
 const DICOM_CONFIRM_TEXT =
-  "Yüklediğim DICOM görüntülerinin üzerinde (piksellerde) hastayı tanımlayan yazı bulunmadığını kontrol ettim. Dosya etiketlerindeki kimlik bilgileri sistem tarafından otomatik temizlenir; görüntünün içine işlenmiş yazılar temizlenmez.";
+  "Gönderdiğim DICOM görüntülerini açıp üzerlerinde hastayı tanımlayan yazı kalmadığını kontrol ettim. Dosya etiketlerindeki kimlik bilgileri ve bilinen cihaz bilgi şeritleri sistem tarafından temizlenir; görüntünün içine işlenmiş diğer yazıların kapatılması benim sorumluluğumdadır.";
 
 interface PoolDoc { id: string; label: string; mime: string }
 
@@ -20,6 +23,8 @@ export function PoolConsultPanel({ caseId }: { caseId: string }) {
   const [docs, setDocs] = useState<PoolDoc[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [dicomConfirm, setDicomConfirm] = useState(false);
+  const [redact, setRedact] = useState<Record<string, RedactRect[]>>({}); // docId → burned-in maskeleri
+  const [redactDocId, setRedactDocId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState("");
   const [done, setDone] = useState(false);
@@ -45,7 +50,13 @@ export function PoolConsultPanel({ caseId }: { caseId: string }) {
     try {
       const r = await fetch(`/api/cases/${caseId}/consult-pool`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ summary, docIds: [...selected], dicomConfirm }),
+        // redact: yalnız SEÇİLİ belgelerin kutuları gider (seçimden çıkarılanın maskesi taşınmaz).
+        body: JSON.stringify({
+          summary,
+          docIds: [...selected],
+          dicomConfirm,
+          redact: Object.fromEntries(Object.entries(redact).filter(([id, r]) => selected.has(id) && r.length)),
+        }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Gönderilemedi.");
@@ -78,7 +89,7 @@ export function PoolConsultPanel({ caseId }: { caseId: string }) {
       ) : (
         <div className="mt-3 space-y-3">
           <p className="text-xs leading-relaxed text-[var(--c-ink-3)]">
-            Vaka kimlikten arındırılarak kayıtlı uzman havuzuna açılır: ad, kimlik no ve iletişim bilgileri otomatik maskelenir; DICOM görüntülerinin kimlik etiketleri temizlenir. Göndermeden önce anonim özeti kontrol edip düzenleyebilirsiniz.
+            Vaka kimlikten arındırılarak kayıtlı uzman havuzuna açılır: ad, kimlik no ve iletişim bilgileri otomatik maskelenir; DICOM görüntülerinin kimlik etiketleri temizlenir ve bilinen cihaz bilgi şeritleri kapatılır. Göndermeden önce anonim özeti ve görüntüleri kontrol edip düzenleyebilirsiniz.
           </p>
           <div>
             <label className="text-xs font-semibold text-[var(--c-ink-2)]">Anonim klinik özet (düzenlenebilir)</label>
@@ -97,6 +108,17 @@ export function PoolConsultPanel({ caseId }: { caseId: string }) {
                         {d.mime === "application/dicom" && <span className="mt-0.5 block text-[11px] text-[var(--c-ink-3)]">Kimlik etiketleri temizlenerek gönderilir.</span>}
                       </span>
                     </label>
+                    {/* Burned-in redaksiyon yalnız SEÇİLİ DICOM'da anlamlı (gönderilmeyecek belgeye kutu çizdirmeyelim). */}
+                    {d.mime === "application/dicom" && selected.has(d.id) && (
+                      <button
+                        type="button"
+                        onClick={() => setRedactDocId(d.id)}
+                        className="mt-1.5 ml-7 inline-flex items-center gap-1.5 rounded-md border border-[var(--c-hairline)] px-2 py-1 text-[11px] font-medium text-[var(--c-ink-2)] hover:border-indigo-400/50 hover:text-indigo-300"
+                      >
+                        <ScanEye size={12} />
+                        {redact[d.id]?.length ? `${redact[d.id].length} alan gizlendi — düzenle` : "Görüntüdeki yazıları kontrol et"}
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -117,6 +139,14 @@ export function PoolConsultPanel({ caseId }: { caseId: string }) {
           >
             {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />} Havuza gönder
           </button>
+          <DicomRedactEditor
+            open={redactDocId !== null}
+            onClose={() => setRedactDocId(null)}
+            label={docs.find((d) => d.id === redactDocId)?.label ?? ""}
+            source={redactDocId ? { caseId, docId: redactDocId } : null}
+            rects={redactDocId ? redact[redactDocId] ?? [] : []}
+            onChange={(next) => setRedact((p) => ({ ...p, [redactDocId as string]: next }))}
+          />
         </div>
       )}
     </div>

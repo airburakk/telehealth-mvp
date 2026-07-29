@@ -1,15 +1,21 @@
 // DICOM PHI tag-strip (v6.32 — DICOM PS3.15 "Basic Application Level Confidentiality Profile" alt kümesi).
 // Partner konsültasyon havuzuna DICOM aktarımı ÖNCESİ sunucuda koşulur: kimlik/kurum/hekim/tarih
 // etiketleri boşaltılır, açıklama alanları scrubText'ten geçer, UID'ler yeniden üretilir, private
-// tag'ler silinir. Piksel verisine DOKUNULMAZ — görüntünün İÇİNE işlenmiş (burned-in) yazılar bu
-// katmanda TEMİZLENMEZ; yükleyen partner formda bunu ayrıca beyan eder (kullanıcı onaylı politika,
-// 2026-07-20). Bozuk/okunamayan dosya = throw → çağıran REDDEDER (fail-closed: sıyrılamayan saklanmaz).
+// tag'ler silinir. Bozuk/okunamayan dosya = throw → çağıran REDDEDER (fail-closed: sıyrılamayan saklanmaz).
+//
+// 🆕 v6.37 — PİKSEL KATMANI: görüntünün İÇİNE işlenmiş (burned-in) yazılar artık maskelenebilir
+// (deidentifyDicomFull). Bu dosyadaki tag-strip hâlâ piksele DOKUNMAZ; piksel işi lib/dicom-pixels +
+// lib/dicom-burnin katmanındadır ve tag-strip'ten ÖNCE koşar. Maskeleme "otomatik garanti" değildir:
+// standarda dayalı kurallar + yükleyenin çizdiği kutular uygulanır, beyan kutusu KALIR.
 //
 // KALAN klinik-değerli etiketler (bilinçli): PatientSex · PatientAge · Modality · BodyPartExamined ·
-// üretici/model · piksel + teknik parametreler (pencere/spacing/transfer syntax). Sıkıştırılmış piksel
-// verisi (JPEG2000/JPEG-LS vb.) opak korunur — transfer syntax değişmez, mevcut DicomViewer açar.
+// üretici/model · piksel + teknik parametreler (pencere/spacing/transfer syntax). Maskeleme YOKSA
+// sıkıştırılmış piksel verisi (JPEG2000/JPEG-LS vb.) opak korunur — transfer syntax değişmez.
+// Maskeleme VARSA dosya sıkıştırmasız yeniden yazılır (bkz. dicom-pixels.writeUncompressed).
 import dcmjs from "dcmjs";
 import { scrubText } from "./deidentify";
+import { analyzeBurnIn, normalizeRects, type BurnInAnalysis } from "./dicom-burnin";
+import { decodePixels, maskFrames, writeUncompressed, DicomPixelError, type Rect } from "./dicom-pixels";
 
 const { DicomMessage, DicomMetaDictionary } = dcmjs.data;
 
@@ -111,7 +117,12 @@ function firstString(el: { Value?: unknown[] } | undefined): string {
  * çağıran dosyayı REDDETMELİDİR (fail-closed; sıyrılamayan içerik asla saklanmaz).
  * uidMap: aynı taleple gelen çoklu dosyalar arasında Study/Series UID tutarlılığı için paylaşılabilir.
  */
-export function deidentifyDicom(input: ArrayBuffer, uidMap: Map<string, string> = new Map()): DicomDeidResult {
+export function deidentifyDicom(
+  input: ArrayBuffer,
+  uidMap: Map<string, string> = new Map(),
+  /** (0012,0063) DeidentificationMethod'a eklenecek piksel katmanı notu — şeffaflık için. */
+  pixelNote?: string,
+): DicomDeidResult {
   const data = DicomMessage.readFile(input);
   const dict = data.dict;
   const summary: DicomDeidSummary = { emptied: 0, deleted: 0, scrubbed: 0, privateRemoved: 0, uidsRegenerated: 0 };
@@ -158,5 +169,70 @@ export function deidentifyDicom(input: ArrayBuffer, uidMap: Map<string, string> 
   if (data.meta["00020003"] && newSop) data.meta["00020003"].Value = [newSop];
   if (data.meta["00020016"]) data.meta["00020016"].Value = []; // SourceApplicationEntityTitle — kurum izi
 
+  // Alıcı sisteme ne yapıldığının DICOM-standart beyanı (PS3.3 C.12.1). Etiket kimliği gerçekten
+  // kaldırıldığı için PatientIdentityRemoved=YES; piksel katmanının durumu metinde AÇIKÇA yazılır
+  // (maskeleme yapıldıysa kutu sayısı, yapılmadıysa "piksel maskesi uygulanmadı") — abartılı
+  // "tam anonim" iddiası taşımaz.
+  // ⚠️ Metin ASCII: SpecificCharacterSet (0008,0005) yazmadığımız için DICOM varsayılanı ASCII'dir;
+  // Türkçe karakter alıcı sistemde bozulur. VR=LO sınırı 64 karakter → kısa tutulur.
+  dict["00120062"] = { vr: "CS", Value: ["YES"] }; // PatientIdentityRemoved
+  dict["00120063"] = {
+    vr: "LO",
+    Value: [`AURA deid: tags; ${pixelNote ?? "no pixel mask"}`.slice(0, 64)],
+  }; // DeidentificationMethod
+
   return { bytes: new Uint8Array(data.write()), summary };
+}
+
+// ── v6.37: piksel + etiket katmanlarını birleştiren TAM de-identification ──
+
+export interface DicomFullDeidOptions {
+  /** Yükleyenin editörde çizdiği ek maskeler (normalize 0..1). Sunucu bunlara İLAVETEN kendi kurallarını uygular. */
+  userRects?: unknown;
+  /** Otomatik kuralları kapatır (yalnız testler için; üretim yollarında DAİMA açık). */
+  disableAutoMask?: boolean;
+}
+
+export interface DicomFullDeidResult extends DicomDeidResult {
+  /** Uygulanan maske sayısı (otomatik + kullanıcı). 0 = piksellere dokunulmadı. */
+  masksApplied: number;
+  /** Maskeleme nedeniyle dosya sıkıştırmasız yeniden yazıldı mı? */
+  recompressed: boolean;
+  analysis: BurnInAnalysis;
+}
+
+/**
+ * Havuza gidecek DICOM kopyasını hazırlar: (1) burned-in piksel maskeleri (standart kurallar +
+ * yükleyenin kutuları) → (2) PHI etiket temizliği. Her iki adım da FAIL-CLOSED: maskeleme istendiği
+ * hâlde piksel çözülemiyorsa THROW eder — yarı-temiz dosya asla saklanmaz.
+ *
+ * ⚠️ Kutu yoksa piksel katmanı hiç çalışmaz; dosya sıkıştırılmış hâliyle (yalnız tag-strip'li) geçer.
+ */
+export async function deidentifyDicomFull(
+  input: ArrayBuffer,
+  uidMap: Map<string, string> = new Map(),
+  opts: DicomFullDeidOptions = {},
+): Promise<DicomFullDeidResult> {
+  const analysis = analyzeBurnIn(input);
+  const userRects = normalizeRects(opts.userRects);
+  const rects: Rect[] = [...(opts.disableAutoMask ? [] : analysis.autoRects), ...userRects];
+
+  let working = input;
+  let recompressed = false;
+  if (rects.length) {
+    // Piksel çözme/yeniden yazma hatası = dosya REDDEDİLİR (maskelenemeyen görüntü havuza gitmez).
+    const dec = await decodePixels(input);
+    const touched = maskFrames(dec, rects);
+    if (!touched) throw new DicomPixelError("Maske uygulanamadı (kutular görüntü dışında).");
+    const bytes = writeUncompressed(input, dec);
+    working = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+    recompressed = true;
+  }
+
+  // ASCII (bkz. deidentifyDicom'daki karakter seti notu) — LO alanı 64 karakterle sınırlı.
+  const note = rects.length
+    ? `pixel masks ${rects.length} (auto ${analysis.autoRects.length}, manual ${userRects.length})`
+    : "no pixel mask";
+  const { bytes, summary } = deidentifyDicom(working, uidMap, note);
+  return { bytes, summary, masksApplied: rects.length, recompressed, analysis };
 }

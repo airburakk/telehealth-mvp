@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, Loader2, ShieldCheck, Upload, FileText, X } from "lucide-react";
+import { ArrowLeft, Send, Loader2, ShieldCheck, Upload, FileText, X, ScanEye } from "lucide-react";
+import { DicomRedactEditor, type RedactRect } from "@/components/DicomRedactEditor";
 import type { FormStrings } from "./page";
 
-interface DocItem { label: string; mime: string; dataUrl: string }
+// v6.37: DICOM'lar için redactRects — yükleyenin görüntü üzerinde kapattığı burned-in PHI alanları.
+// Maskeyi SUNUCU uygular (istemci yalnız koordinat gönderir); otomatik kurallar bu listeden bağımsız çalışır.
+interface DocItem { label: string; mime: string; dataUrl: string; redactRects?: RedactRect[] }
 
 // Görüntü küçültme (CheckInForm deseni): max kenar 1280px · q0.8 (belge okunabilirliği için biraz büyük).
 async function downscaleImage(file: File, max = 1280, quality = 0.8): Promise<string> {
@@ -73,6 +76,7 @@ export function PartnerRequestForm({
   const [clinicalSummary, setSummary] = useState<string>("");
   const [docs, setDocs] = useState<DocItem[]>([]);
   const [dicomConfirm, setDicomConfirm] = useState(false); // burned-in PHI beyanı (yalnız DICOM ekliyken zorunlu)
+  const [redactIdx, setRedactIdx] = useState<number | null>(null); // açık redaksiyon editörünün belge sırası
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
   const hasDicom = docs.some((d) => d.mime === "application/dicom");
@@ -198,9 +202,23 @@ export function PartnerRequestForm({
           {docs.length > 0 && (
             <ul className="mt-2 space-y-1.5">
               {docs.map((d, i) => (
-                <li key={i} className="flex items-center justify-between gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2 text-sm">
-                  <span className="inline-flex min-w-0 items-center gap-1.5 text-[var(--c-ink)]"><FileText size={14} className="shrink-0 text-[var(--c-ink-3)]" /> <span className="truncate">{d.label}</span>{d.mime === "application/dicom" && <span className="shrink-0 rounded bg-[var(--c-ink)]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--c-ink-2)]">DICOM</span>}</span>
-                  <button type="button" onClick={() => setDocs((p) => p.filter((_, j) => j !== i))} className="shrink-0 text-[var(--c-ink-3)] hover:text-red-500"><X size={15} /></button>
+                <li key={i} className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2 text-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex min-w-0 items-center gap-1.5 text-[var(--c-ink)]"><FileText size={14} className="shrink-0 text-[var(--c-ink-3)]" /> <span className="truncate">{d.label}</span>{d.mime === "application/dicom" && <span className="shrink-0 rounded bg-[var(--c-ink)]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--c-ink-2)]">DICOM</span>}</span>
+                    <button type="button" onClick={() => setDocs((p) => p.filter((_, j) => j !== i))} className="shrink-0 text-[var(--c-ink-3)] hover:text-red-500"><X size={15} /></button>
+                  </div>
+                  {/* Burned-in PHI redaksiyonu (v6.37) — yalnız DICOM'da; maskeyi sunucu uygular. */}
+                  {d.mime === "application/dicom" && (
+                    <button
+                      type="button"
+                      onClick={() => setRedactIdx(i)}
+                      className="mt-1.5 inline-flex items-center gap-1.5 rounded-md border border-[var(--c-hairline)] px-2 py-1 text-[11px] font-medium text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/50 hover:text-[var(--c-accent)]"
+                    >
+                      <ScanEye size={12} />
+                      {/* Sayı çeviri metninin DIŞINDA tutulur (AI çevirisinde placeholder düşme riski yok). */}
+                      {d.redactRects?.length ? `${d.redactRects.length} ${t.redactDone}` : t.redactOpen}
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -219,6 +237,15 @@ export function PartnerRequestForm({
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {saving ? t.submitting : t.submit}
         </button>
       </div>
+
+      <DicomRedactEditor
+        open={redactIdx !== null}
+        onClose={() => setRedactIdx(null)}
+        label={redactIdx !== null ? docs[redactIdx]?.label ?? "" : ""}
+        source={redactIdx !== null && docs[redactIdx] ? { dataUrl: docs[redactIdx].dataUrl } : null}
+        rects={redactIdx !== null ? docs[redactIdx]?.redactRects ?? [] : []}
+        onChange={(next) => setDocs((p) => p.map((d, j) => (j === redactIdx ? { ...d, redactRects: next } : d)))}
+      />
     </div>
   );
 }

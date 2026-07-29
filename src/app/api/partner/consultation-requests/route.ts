@@ -21,7 +21,8 @@ function parseDocs(raw: unknown): PartnerDocInput[] {
     const m = /^data:([^;]+);base64,/.exec(d.dataUrl);
     if (!m || !ALLOWED_MIME.test(m[1])) continue;
     if (d.dataUrl.length > 11_000_000) continue; // ~8MB base64
-    out.push({ label: typeof d.label === "string" ? d.label : "belge", mime: m[1], dataUrl: d.dataUrl });
+    // redactRects: burned-in maskeleri (v6.37) — doğrulama/kırpma lib katmanında (normalizeRects).
+    out.push({ label: typeof d.label === "string" ? d.label : "belge", mime: m[1], dataUrl: d.dataUrl, redactRects: d.redactRects });
   }
   return out;
 }

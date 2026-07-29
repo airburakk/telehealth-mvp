@@ -81,6 +81,15 @@ const nextConfig: NextConfig = {
       { source: "/trust", destination: "/guven-ve-gizlilik", permanent: true },
     ];
   },
+  // v6.37 — burned-in PHI maskeleme SUNUCUDA piksel çözer (lib/dicom-pixels): JPEG-LS/JPEG 2000 için
+  // CharLS/OpenJPEG .wasm ikilileri runtime'da fs ile okunur. Statik import olmadığından Next'in dosya
+  // izleyicisi bunları kendiliğinden bulamaz → serverless bundle'a AÇIKÇA dahil edilir.
+  // ⚠️ Bu blok silinirse sıkıştırılmış görüntülerde maskeleme üretimde fail-closed olur (dosya reddedilir).
+  outputFileTracingIncludes: {
+    "/api/dicom/redact-preview": ["./node_modules/@cornerstonejs/codec-*/dist/*.wasm"],
+    "/api/partner/consultation-requests": ["./node_modules/@cornerstonejs/codec-*/dist/*.wasm"],
+    "/api/cases/[id]/consult-pool": ["./node_modules/@cornerstonejs/codec-*/dist/*.wasm"],
+  },
   // Turbopack (Next 16 varsayılan builder)
   turbopack: {
     resolveAlias: { fs: browserStub, path: browserStub, crypto: browserStub },
