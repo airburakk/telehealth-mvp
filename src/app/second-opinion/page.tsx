@@ -2,7 +2,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { roleHome } from "@/lib/session";
 import { SecondOpinionContent } from "./SecondOpinionContent";
 
-export const metadata = { title: "Second Opinion · İkinci Görüş — AURA" };
+// Sekme başlığı Türkçeleştirildi (2026-07-31 kullanıcı kararı). Sayfa içeriği EN/TR seçiciyle
+// değişir ama metadata statiktir → tek dil seçmek gerekiyor; ürünün kanonik dili Türkçe.
+export const metadata = { title: "İkinci Görüş — AURA" };
 export const dynamic = "force-dynamic"; // kullanıcı rolüne göre CTA (getCurrentUser çerez okur)
 
 export default async function SecondOpinionPage() {

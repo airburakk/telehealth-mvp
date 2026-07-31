@@ -43,6 +43,10 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
   await test.step("Hasta giriş yapar ve triyaj sayfasını açar", async () => {
     await loginAs(page, "Hasta");
     await page.goto("/triyaj");
+    // AI açık rıza kapısı (v6.4) — semptom girişinden ÖNCE gelir; rıza verilmeden asıl akış MOUNT
+    // EDİLMEZ. Rıza kalıcıdır (idempotent), bu yüzden yalnız ilk koşuda görünür → koşullu tıklama.
+    const rizaBtn = page.getByRole("button", { name: "Açık Rızam Vardır" });
+    if (await rizaBtn.isVisible().catch(() => false)) await rizaBtn.click();
     // Triyaj her zaman önce ön-konsültasyon kapısıyla açılır (billing yokken).
     await expect(page.getByRole("heading", { name: "Uzman görüşmesi — ön bilgilendirme" })).toBeVisible();
   });

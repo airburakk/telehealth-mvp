@@ -53,8 +53,18 @@ test("İkinci Görüş: başvuru + ödeme → hasta vakalarım → koordinatör 
     await loginAs(page, "Hasta");
     await page.goto("/second-opinion/basvur");
 
+    // AI açık rıza kapısı (v6.4) — form MOUNT EDİLMEDEN önce çıkar; rıza kalıcıdır, ilk koşuda görünür.
+    const rizaBtn = page.getByRole("button", { name: "Açık Rızam Vardır" });
+    if (await rizaBtn.isVisible().catch(() => false)) await rizaBtn.click();
+
     // Form başlığı render oldu mu (SoApplyForm S.title — TR kanonik, Hasta TR olduğundan çevrilmez).
-    await expect(page.getByRole("heading", { name: "Second Opinion Ön Değerlendirme" })).toBeVisible();
+    // ⚠️ exact ŞART: rıza kapısının başlığı da "Yapay Zeka ile Ön Değerlendirme — Açık Rıza" olduğundan
+    // gevşek (substring) eşleşme rıza ekranını form sanır → yanlış-pozitif (2026-07-31'de yaşandı).
+    await expect(page.getByRole("heading", { name: "Ön Değerlendirme", exact: true })).toBeVisible();
+
+    // Branş kapısı (2026-07-31): branş <select>'i ancak "biliyorum" dalı seçilince açılır.
+    // "Bilmiyorum" dalı AI/kural motoruna gider → E2E'de deterministik olan bu dal sınanır.
+    await page.getByRole("button", { name: "Evet, biliyorum" }).click();
 
     // Branş <select> — value=key ("onkoloji"), çeviriden bağımsız. Select'i kendine özgü option'ıyla
     // içerikten hedefle (nth/DOM sırasına GÜVENME).
@@ -66,12 +76,16 @@ test("İkinci Görüş: başvuru + ödeme → hasta vakalarım → koordinatör 
     const countrySelect = page.locator("select", { has: page.locator('option[value="TR"]') });
     await countrySelect.selectOption("TR");
 
-    // Tanı / durum özeti — formdaki TEK <textarea> (comboboxlar textbox değildir). En az 10 karakter.
-    await page.getByRole("textbox").fill(diagnosis);
+    // Tanı / durum özeti — SABİT id ile hedeflenir. ⚠️ Eskiden getByRole("textbox") kullanılıyordu
+    // ("formdaki tek textarea" varsayımı); profil boşken iletişim bölümü telefon <input type=tel>
+    // eklediğinden 2 elemana çözülüp strict-mode ihlali veriyordu. id çeviriden de bağımsızdır.
+    await page.locator("#so-diagnosis").fill(diagnosis);
 
-    // Gönder — <main> içindeki TEK buton (header butonları <banner>'dadır). Metne bağlanmaz.
-    // canSubmit tüm alanlar dolunca enable olur → önce enable'ı bekle, sonra tıkla.
-    const submitBtn = page.getByRole("main").getByRole("button");
+    // Gönder — belge kapısı nedeniyle formdan DRAFT çıkılır ("Belgeleri sonra tamamla"); ödeme
+    // vaka hub'ında yapılır (aşağıdaki adım). "Öde ve gönder" burada zaten disabled'dır: onkolojide
+    // EPICRISIS+IMAGING+MEDICATION_LIST zorunlu ve testte dosya yüklenmiyor.
+    // ⚠️ Branş kapısı geldiğinden (2026-07-31) <main> artık TEK buton içermiyor → metinle hedeflenir.
+    const submitBtn = page.getByRole("main").getByRole("button", { name: /Belgeleri sonra tamamla/ });
     await expect(submitBtn).toBeEnabled();
     await submitBtn.click();
 

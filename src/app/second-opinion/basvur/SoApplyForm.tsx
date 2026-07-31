@@ -12,7 +12,7 @@ import { JourneyIntakeShell } from "@/components/JourneyIntakeShell";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
 import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
-import { Stethoscope, Clock, Video, ArrowRight, Loader2, Globe, FileText, Link2, X, CreditCard, AlertTriangle } from "lucide-react";
+import { Stethoscope, Clock, Video, ArrowRight, Loader2, Globe, FileText, Link2, X, CreditCard, AlertTriangle, Sparkles } from "lucide-react";
 import { COUNTRIES } from "@/lib/constants";
 
 const D = SO_DURATION_COPY.tr;
@@ -22,7 +22,7 @@ const MAX_FILE_CHARS = 12_000_000; // sunucu sınırıyla aynı (≈ 8.5 MB ham 
 // TR kanonik metinler — useT ile hedef dile çevrilir (cache + Claude). Türkçe'de aynen kalır.
 const S = {
   eyebrow: "İkinci Görüş",
-  title: "Second Opinion Ön Değerlendirme",
+  title: "Ön Değerlendirme",
   intro: "Mevcut tanınıza ilişkin belgelerinizi yükleyin; alanında uzman bir doktor dosyanızı bağımsız olarak değerlendirsin. Süreç yazılı bir ikinci görüş ve ardından bir video görüşmeyle tamamlanır.",
   reportLabel: D.reportLabel,
   reportValue: D.reportValue,
@@ -30,6 +30,16 @@ const S = {
   videoText: D.video,
   branchLabel: "İlgili tıbbi branş",
   branchPlaceholder: "Branş seçin…",
+  // Branşı bilmeyen hasta için kapı (2026-07-31) — triyajdaki AI branş önerisi buraya bağlanır.
+  askBranch: "İlgili tıbbi branşı biliyor musunuz?",
+  knowYes: "Evet, biliyorum",
+  knowNo: "Hayır, emin değilim",
+  suggestIntro: "Durumunuzu aşağıya yazın; uygun tıbbi branşı birlikte belirleyelim.",
+  suggestBtn: "Branşı belirle",
+  suggestedLabel: "Önerilen branş",
+  suggestNote: "Öneridir — doğru değilse değiştirebilirsiniz.",
+  confidenceLabel: "Güven",
+  errAnalyze: "Branş önerisi alınamadı. Aşağıdan kendiniz seçebilirsiniz.",
   countryLabel: "Ülkeniz",
   countryPlaceholder: "Ülke seçin…",
   langHint: "Yazılı görüş ve video görüşme bu dilde sağlanır.",
@@ -84,6 +94,12 @@ function SoApplyFormInner() {
 
   const [diagnosisSummary, setDiagnosisSummary] = useState("");
   const [branch, setBranch] = useState("");
+  // Branş kapısı (2026-07-31): hasta branşı bilmiyorsa önce durumunu yazar, branşı AI önerir.
+  // "" = henüz seçmedi (aşağıdaki alanlar açılmaz) · "yes" = kendi seçecek · "no" = öneri isteyecek.
+  const [knowsBranch, setKnowsBranch] = useState<"" | "yes" | "no">("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [suggestion, setSuggestion] = useState<{ label: string; confidence: number } | null>(null);
+  const [analyzeErr, setAnalyzeErr] = useState("");
   const [country, setCountry] = useState("");
   const [phone, setPhone] = useState(""); // FAZ 8 — hasta iletişim
   const [contactPref, setContactPref] = useState<ContactPref>("APP");
@@ -144,6 +160,33 @@ function SoApplyFormInner() {
     }
   }
 
+  // Branş önerisi — triyajın MEVCUT ucunu kullanır (yeni AI hattı yok): /api/triage/analyze
+  // oturum korumalıdır ve ANTHROPIC_API_KEY yoksa/LLM zaman aşımına uğrarsa kural motoruna düşer
+  // (lib/triage-llm.runTriage) ⇒ her koşulda bir branş döner, akış AI'a bağımlı DEĞİLDİR.
+  // Hastaya yalnız branş + güven gösterilir; aciliyet/gerekçe hasta yüzünde GİZLİ (2026-07-13 kararı).
+  // Not: tanı metni klinik içeriktir → çeviri cache'ine (useT) verilmez, yalnız bu uca gider.
+  async function suggestBranch() {
+    if (diagnosisSummary.trim().length < 10) return;
+    setAnalyzing(true);
+    setAnalyzeErr("");
+    try {
+      const res = await fetch("/api/triage/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symptoms: diagnosisSummary }),
+      });
+      const d = await res.json();
+      if (!res.ok || !d?.branchKey) throw new Error("no-branch");
+      setBranch(d.branchKey); // BRANCHES[].key — SO API'si de key doğrular (route.ts:48)
+      setSuggestion({ label: String(d.branch ?? ""), confidence: Number(d.confidence ?? 0) });
+    } catch {
+      // Fail-open: öneri alınamazsa hasta branşı kendisi seçebilsin (select yine görünür).
+      setAnalyzeErr(t(S.errAnalyze));
+      setSuggestion(null);
+    }
+    setAnalyzing(false);
+  }
+
   function attachLink(type: string) {
     setDocErr("");
     const url = linkDraft.trim();
@@ -194,6 +237,27 @@ function SoApplyFormInner() {
     router.push(`/second-opinion/vaka/${caseId}`);
   }
 
+  // Tanı/durum alanı İKİ konumda görünebilir: "branşı bilmiyorum" dalında branş kapısının içinde
+  // (önce yazılır, sonra öneri alınır), "biliyorum" dalında ise formun kendi sırasında. Aynı state,
+  // tek JSX → kopya alan/çift id olmaz (aynı anda yalnız biri render edilir).
+  const diagnosisField = (
+    <>
+      <div className="mt-5 flex items-center justify-between gap-2">
+        <label htmlFor="so-diagnosis" className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.diagLabel)}</label>
+        <DictationButton lang={lang} onAppend={(txt) => setDiagnosisSummary((v) => (v.trim() ? v.trim() + " " : "") + txt)} t={t} />
+      </div>
+      <p className="text-xs text-[var(--c-ink-2)]">{t(S.diagHint)}</p>
+      <textarea
+        id="so-diagnosis"
+        value={diagnosisSummary}
+        onChange={(e) => setDiagnosisSummary(e.target.value)}
+        rows={5}
+        placeholder={t(S.diagPh)}
+        className="mt-1.5 w-full resize-y rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2.5 text-sm text-[var(--c-ink)] focus:border-[var(--c-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--c-accent)]/30"
+      />
+    </>
+  );
+
   return (
     <JourneyIntakeShell icon={Stethoscope} eyebrow={t(S.eyebrow)} title={t(S.title)} intro={t(S.intro)} lang={lang} onLangChange={chooseLang} journey="SECOND_OPINION" stage={0}>
 
@@ -216,18 +280,71 @@ function SoApplyFormInner() {
       <div className="mt-4 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3 text-sm text-[var(--c-ink-2)]">{t(FEE_LINE)}</div>
 
       <div className="mt-6 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-        <label htmlFor="so-branch" className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.branchLabel)}</label>
-        <select
-          id="so-branch"
-          value={branch}
-          onChange={(e) => setBranch(e.target.value)}
-          className="mt-1.5 w-full rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2.5 text-sm text-[var(--c-ink)] focus:border-[var(--c-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--c-accent)]/30"
-        >
-          <option value="">{t(S.branchPlaceholder)}</option>
-          {BRANCHES.map((b) => (
-            <option key={b.key} value={b.key}>{t(b.label)}</option>
-          ))}
-        </select>
+        {/* Branş kapısı — hasta branşı biliyorsa doğrudan seçer; bilmiyorsa önce durumunu yazar,
+            branşı AI önerir (triyaj deseni). Kapı seçilmeden branş alanı açılmaz. */}
+        <fieldset>
+          <legend className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.askBranch)}</legend>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {([["yes", S.knowYes], ["no", S.knowNo]] as const).map(([val, label]) => (
+              <button
+                key={val}
+                type="button"
+                aria-pressed={knowsBranch === val}
+                onClick={() => { setKnowsBranch(val); setAnalyzeErr(""); if (val === "no") { setBranch(""); setSuggestion(null); } }}
+                className={`rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
+                  knowsBranch === val
+                    ? "border-[var(--c-accent)] bg-[var(--c-accent)]/10 text-[var(--c-ink)]"
+                    : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40"
+                }`}
+              >
+                {t(label)}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        {/* "Bilmiyorum" → durum metni burada (yukarıda), ardından öneri butonu + sonuç */}
+        {knowsBranch === "no" && (
+          <div className="mt-5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-4">
+            <p className="text-xs text-[var(--c-ink-2)]">{t(S.suggestIntro)}</p>
+            {diagnosisField}
+            <button
+              type="button"
+              onClick={suggestBranch}
+              disabled={analyzing || diagnosisSummary.trim().length < 10}
+              className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {analyzing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} {t(S.suggestBtn)}
+            </button>
+            {analyzeErr && <p className="mt-2 text-sm text-red-300">{analyzeErr}</p>}
+          </div>
+        )}
+
+        {/* Branş seçimi: "biliyorum"da doğrudan; "bilmiyorum"da öneri geldikten SONRA (düzeltilebilir) */}
+        {(knowsBranch === "yes" || (knowsBranch === "no" && (branch || analyzeErr))) && (
+          <div className="mt-5">
+            {suggestion && (
+              <div className="mb-2 flex flex-wrap items-center gap-2 rounded-xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 px-3 py-2">
+                <span className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-accent)]">{t(S.suggestedLabel)}</span>
+                <span className="rounded-lg bg-[var(--c-surface)] px-2.5 py-1 text-sm font-semibold text-[var(--c-ink)] ring-1 ring-[var(--c-hairline)]">{t(suggestion.label)}</span>
+                <span className="text-xs text-[var(--c-ink-2)]">{t(S.confidenceLabel)} %{suggestion.confidence}</span>
+                <span className="w-full text-xs text-[var(--c-ink-2)]">{t(S.suggestNote)}</span>
+              </div>
+            )}
+            <label htmlFor="so-branch" className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.branchLabel)}</label>
+            <select
+              id="so-branch"
+              value={branch}
+              onChange={(e) => { setBranch(e.target.value); setSuggestion(null); }}
+              className="mt-1.5 w-full rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2.5 text-sm text-[var(--c-ink)] focus:border-[var(--c-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--c-accent)]/30"
+            >
+              <option value="">{t(S.branchPlaceholder)}</option>
+              {BRANCHES.map((b) => (
+                <option key={b.key} value={b.key}>{t(b.label)}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {showStrip && profile ? (
           // Profil dolu → ülke + iletişim alanları yerine kompakt şerit (Faz 1)
@@ -263,19 +380,8 @@ function SoApplyFormInner() {
           <Globe size={13} className="text-[var(--c-accent)]" /> {lang} · {t(S.langHint)}
         </p>
 
-        <div className="mt-5 flex items-center justify-between gap-2">
-          <label htmlFor="so-diagnosis" className="block text-sm font-semibold text-[var(--c-ink)]">{t(S.diagLabel)}</label>
-          <DictationButton lang={lang} onAppend={(txt) => setDiagnosisSummary((v) => (v.trim() ? v.trim() + " " : "") + txt)} t={t} />
-        </div>
-        <p className="text-xs text-[var(--c-ink-2)]">{t(S.diagHint)}</p>
-        <textarea
-          id="so-diagnosis"
-          value={diagnosisSummary}
-          onChange={(e) => setDiagnosisSummary(e.target.value)}
-          rows={5}
-          placeholder={t(S.diagPh)}
-          className="mt-1.5 w-full resize-y rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2.5 text-sm text-[var(--c-ink)] focus:border-[var(--c-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--c-accent)]/30"
-        />
+        {/* "Biliyorum" dalında tanı alanı kendi sırasında; "bilmiyorum" dalında yukarıda gösterildi. */}
+        {knowsBranch !== "no" && diagnosisField}
 
         {/* Faz 3 — Belgeler formda (branş seçilince): tip tip ekle; başvuru tek oturumda incelemeye girer */}
         {specs.length > 0 && (
