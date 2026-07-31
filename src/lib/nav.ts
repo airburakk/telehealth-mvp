@@ -6,7 +6,7 @@
 // köprü Vakalarım üstündeki kulvar kartlarındadır (MyCasesList).
 import {
   Stethoscope, UserRound, HeartPulse, Scale, Users, BadgeCheck, Share2, BarChart3,
-  FolderHeart, HeartHandshake, Globe, Luggage, type LucideIcon,
+  FolderHeart, Globe, Luggage, type LucideIcon,
 } from "lucide-react";
 
 export interface NavItem {
@@ -30,7 +30,7 @@ const NAV: NavItem[] = [
   { href: "/operasyon", label: "Operasyon", icon: BarChart3, roles: ["COORDINATOR", "ADMIN"] },
   { href: "/doktor", label: "Doktor", icon: Stethoscope, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
   { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
-  { href: "/doktor/ucretsiz-saglik", label: "Ücretsiz Hizmet", icon: HeartHandshake, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
+  // "Ücretsiz Hizmet" bant linki kaldırıldı (2026-07-31, kullanıcı kararı) — rota + ana sayfa paneli durur.
   { href: "/doktor/profil", label: "Profilim", icon: BadgeCheck, roles: ["DOCTOR", "ADMIN"] },
   { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, roles: ["ETHICS", "ADMIN"] },
   { href: "/partner", label: "Partner", icon: Globe, roles: ["PARTNER", "ADMIN"] },

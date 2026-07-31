@@ -70,7 +70,8 @@ export function DutyConsole({ initial, initialRequests }: { initial: DutyState; 
       <div className="flex items-center gap-2">
         <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--c-accent)]/10 text-[var(--c-accent-stronger)]"><Activity size={20} /></span>
         <div className="min-w-0">
-          <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">Klinik Nöbet</h2>
+          {/* Pencere adı "Uzaktan Sağlık" (2026-07-31, kullanıcı kararı) — "Klinik Nöbet" aşağıda tercih bölümü başlığı */}
+          <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">Uzaktan Sağlık</h2>
           <p className="text-sm text-[var(--c-ink-2)]">Branşınız: <b className="text-[var(--c-ink)]">{duty.branch}</b> · hastalar çevrimiçi doktor yoksa size ulaşır.</p>
         </div>
         <span className="ms-auto inline-flex items-center gap-1.5 rounded-full bg-[var(--c-surface)] px-3 py-1 text-xs font-medium text-[var(--c-ink-2)] ring-1 ring-white/10">
@@ -90,7 +91,12 @@ export function DutyConsole({ initial, initialRequests }: { initial: DutyState; 
           </button>
         </div>
       ) : (
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <>
+          {/* Nöbet tercihleri bölümü — "Klinik Nöbet" (2026-07-31): 3'lü tercih düğmelerinin üstünde */}
+          <h3 className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-[var(--c-ink-2)]">
+            <ShieldPlus size={14} /> Klinik Nöbet
+          </h3>
+          <div className="mt-2 grid gap-3 sm:grid-cols-3">
           {/* Branş kliniği online */}
           <button
             onClick={() => patch({ clinicalState: online ? "OFFLINE" : "ONLINE" }, "clinical")}
@@ -129,7 +135,8 @@ export function DutyConsole({ initial, initialRequests }: { initial: DutyState; 
             </span>
             <span className="text-xs text-[var(--c-ink-2)]">{duty.sentinel ? "Genel/Dahiliye nöbeti açık" : "Kapalı"}</span>
           </button>
-        </div>
+          </div>
+        </>
       )}
 
       {active && !inSession && (

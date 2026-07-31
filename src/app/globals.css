@@ -33,6 +33,7 @@
   --lane-so: #1a2b45;
   --lane-tourism: #00655d;
   --lane-free: #a83e28;
+  --lane-consult: #4338ca; /* Konsültasyon Talebi kulvarı (2026-07-31, kullanıcı seçimi: indigo) */
   color: var(--c-ink);
   color-scheme: light;
 }
@@ -64,6 +65,7 @@
   --lane-so: #93a9e8;
   --lane-tourism: #2dd4bf;
   --lane-free: #ff9d8a;
+  --lane-consult: #a5b4fc; /* Konsültasyon Talebi kulvarı (2026-07-31) — gece açık lavanta */
   color: var(--c-ink);
   color-scheme: dark;
 }

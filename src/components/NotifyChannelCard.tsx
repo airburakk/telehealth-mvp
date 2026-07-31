@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DashboardPanel } from "@/components/DashboardPanel";
 import { Bell, MessageCircle, MessageSquareText, Loader2, Check, Save } from "lucide-react";
 
 // Doktor Ana Sayfa — bildirim kanalı tercihi (FAZ 5, 2026-07-10).
@@ -39,22 +40,21 @@ export function NotifyChannelCard({ initialChannel, initialPhone }: { initialCha
   }
 
   return (
-    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
-          <Bell size={15} /> Bildirim Tercihi
-        </div>
-        {channel !== "APP" && (
+    // Pencere kabuğu = DashboardPanel (2026-07-31): başlık/ikon düzeni diğer Ana Sayfa pencereleriyle
+    // aynı; simülasyon rozeti kanal state'ine bağlı olduğundan panel bu client bileşenin İÇİNDE kalır.
+    <DashboardPanel
+      icon={<Bell size={18} />}
+      title="Bildirim Tercihi"
+      subtitle="Vaka, talep ve rapor bildirimlerinizi hangi kanaldan almak istersiniz? Uygulama içi bildirim her durumda düşer."
+      badge={
+        channel !== "APP" ? (
           <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
             WhatsApp/SMS şimdilik simülasyon
           </span>
-        )}
-      </div>
-      <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
-        Vaka, talep ve rapor bildirimlerinizi hangi kanaldan almak istersiniz? Uygulama içi bildirim her durumda düşer.
-      </p>
-
-      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        ) : undefined
+      }
+    >
+      <div className="grid gap-2 sm:grid-cols-3">
         {CHANNELS.map((c) => {
           const Icon = c.icon;
           const active = channel === c.key;
@@ -96,6 +96,6 @@ export function NotifyChannelCard({ initialChannel, initialPhone }: { initialCha
         {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <Check size={14} /> : <Save size={14} />}
         {saved ? "Kaydedildi" : "Tercihi kaydet"}
       </button>
-    </div>
+    </DashboardPanel>
   );
 }

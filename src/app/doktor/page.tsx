@@ -9,7 +9,9 @@ import { DashboardPanel } from "@/components/DashboardPanel";
 import { dutyFeed, type DutyRequest } from "@/lib/clinical-duty";
 import { panelVisibility } from "@/lib/doctor-home";
 import { waitingCount } from "@/lib/free-care";
-import { openCountForDoctor } from "@/lib/consultation-requests";
+import { openCountForDoctor, openRowsForDoctor } from "@/lib/consultation-requests";
+import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
+import { BRANCHES } from "@/lib/triage";
 import { newsForBranch, NEWS_KIND_LABEL, type NewsItem } from "@/lib/medical-news";
 import { NotifyChannelCard } from "@/components/NotifyChannelCard";
 import { decryptField } from "@/lib/crypto";
@@ -25,15 +27,31 @@ const CASE_LIST_SELECT = {
   id: true,
   patientName: true,
   country: true,
-  language: true,
   branch: true,
   urgency: true,
   status: true,
   createdAt: true,
   attachments: true, // hasFiles rozetini besler
-  tourismPlan: true, // 🧳 turizm rozeti (Faz 2) — düz metin, decrypt gerekmez
+  tourismPlan: true, // 🧳 turizm kulvarı türetimi — düz metin, decrypt gerekmez
+  freeCare: true, // ücretsiz sağlık kulvarı türetimi (2026-07-31 birleşik liste)
   doctor: { select: { title: true, name: true } },
 } as const;
+
+// Durum noktası renkleri — hasta kartı (MyCasesList STAGE_INK) ile aynı tema-duyarlı token'lar.
+const CASE_STATUS_DOT: Record<string, string> = {
+  DOCS_PENDING: "var(--c-warning)",
+  NEW: "var(--c-info)",
+  IN_REVIEW: "var(--c-warning)",
+  IN_CONSULT: "var(--c-indigo)",
+  DONE: "var(--c-success)",
+};
+// İkinci Görüş durum noktası — doktor aksiyonu bekleyenler uyarı tonunda.
+function soStatusDot(s: string): string {
+  if (s === "ASSIGNED" || s === "AWAITING_ADDITIONAL_TESTS") return "var(--c-warning)";
+  if (s === "OPINION_DELIVERED" || s === "VIDEO_COMPLETED") return "var(--c-success)";
+  if (s.startsWith("VIDEO_")) return "var(--c-indigo)";
+  return "var(--c-info)";
+}
 
 export default async function DoctorPanel({
   searchParams,
@@ -112,19 +130,81 @@ export default async function DoctorPanel({
       take: CASE_PAGE_SIZE,
     });
   }
-  const rows: CaseRow[] = cases.map((c) => ({
-    id: c.id,
-    patientName: decryptField(c.patientName), // kimlik at-rest şifreli → çöz (E2EE inc.2c)
-    country: c.country,
-    language: c.language,
-    branch: c.branch,
-    urgency: c.urgency,
-    status: c.status,
-    createdAt: c.createdAt.toISOString(),
-    doctorName: c.doctor ? `${c.doctor.title} ${c.doctor.name}` : null,
-    hasFiles: !!c.attachments,
-    isTourism: !!c.tourismPlan,
-  }));
+  const caseRows: CaseRow[] = cases.map((c) => {
+    const st = CASE_STATUS[c.status] ?? CASE_STATUS.NEW;
+    return {
+      id: c.id,
+      lane: (c.tourismPlan ? "tourism" : c.freeCare ? "free" : "telehealth") as CaseRow["lane"], // öncelik hasta tarafıyla (vakalarim) aynı
+      href: `/doktor/vaka/${c.id}`,
+      patientName: decryptField(c.patientName), // kimlik at-rest şifreli → çöz (E2EE inc.2c)
+      country: c.country,
+      branch: c.branch,
+      urgency: c.urgency,
+      status: c.status,
+      statusLabel: st.label,
+      statusDot: CASE_STATUS_DOT[c.status] ?? "var(--c-ink-3)",
+      createdAt: c.createdAt.toISOString(),
+      doctorName: c.doctor ? `${c.doctor.title} ${c.doctor.name}` : null,
+      hasFiles: !!c.attachments,
+    };
+  });
+
+  // ── Birleşik liste (2026-07-31, kullanıcı kararı): doktor dalında İkinci Görüş + Konsültasyon
+  // satırları da kuyruğa katılır (5'li kulvar filtresi). Kendi panelleri ayrıca durur. ──
+  let soQueueRows: CaseRow[] = [];
+  if (doctor && vis.so) {
+    // Doktor SO sayfasındaki "mine" kümesinin hafif kopyası + güvenli taraf deletionLockedAt:null
+    // (silme kilidi konan dosya listeye hiç düşmez). Şifreli alan taşınmaz.
+    const soCases = await db.secondOpinionCase.findMany({
+      where: { assignedDoctorId: doctor.id, status: { notIn: ["CLOSED", "CANCELLED"] }, deletionLockedAt: null },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, branch: true, status: true, createdAt: true, patientId: true, country: true, _count: { select: { documents: true } } },
+    });
+    const soUsers = soCases.length
+      ? await db.user.findMany({ where: { id: { in: [...new Set(soCases.map((c) => c.patientId))] } }, select: { id: true, name: true } })
+      : [];
+    const soNameById = new Map(soUsers.map((u) => [u.id, u.name]));
+    soQueueRows = soCases.map((c) => ({
+      id: c.id,
+      lane: "so",
+      href: `/doktor/ikinci-gorus/${c.id}`,
+      // Claim-ÖNCESİ kimlik yok (de-id kararı 2026-07-02) — OFFERED satırda ad açılmaz
+      patientName: c.status === "OFFERED" ? "Anonim hasta" : soNameById.get(c.patientId) ?? "Hasta",
+      country: c.country,
+      branch: BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch,
+      urgency: null, // SO dosyasında aciliyet kavramı yok
+      status: c.status,
+      statusLabel: SO_STATUS_LABELS[c.status as SoStatus] ?? c.status,
+      statusDot: soStatusDot(c.status),
+      createdAt: c.createdAt.toISOString(),
+      doctorName: null,
+      hasFiles: c._count.documents > 0,
+    }));
+  }
+  let consultQueueRows: CaseRow[] = [];
+  if (doctor && vis.consult) {
+    const consultRows = await openRowsForDoctor(doctor.branch, doctor.id);
+    consultQueueRows = consultRows.map((r) => ({
+      id: r.id,
+      lane: "consult",
+      href: "/doktor/konsultasyon", // havuz tek sayfada yanıtlanır (talep-bazlı alt rota yok)
+      patientName: "Anonim talep", // havuz kimliksizdir (deidentify + scrub)
+      country: null,
+      branch: r.branch ?? "Genel",
+      urgency: r.urgency,
+      status: r.status,
+      statusLabel: "Açık talep",
+      statusDot: "var(--c-info)",
+      createdAt: r.createdAt.toISOString(),
+      doctorName: null,
+      hasFiles: r.docCount > 0,
+    }));
+  }
+  // Aciliyet önde (SO'nun aciliyetsiz satırları en alta), eş aciliyette en yeni önde — CaseQueue
+  // içindeki sıralama seçicisinin "Aciliyet" varsayılanıyla aynı kural.
+  const rows: CaseRow[] = [...caseRows, ...soQueueRows, ...consultQueueRows].sort(
+    (a, b) => (b.urgency ?? -1) - (a.urgency ?? -1) || b.createdAt.localeCompare(a.createdAt),
+  );
 
   // Nöbet konsolu beslemesi (yalnız doktor)
   let duty: { state: string; onCall: boolean; sentinel: boolean; branch: string } | null = null;
@@ -242,6 +322,20 @@ export default async function DoctorPanel({
           </DashboardPanel>
         )}
 
+        {vis.tourism && (
+          <DashboardPanel
+            icon={<Plane size={18} />}
+            title="Sağlık Turizmi"
+            subtitle={doctor?.branch ? `${doctor.branch} branşı yurtdışı hasta talepleri` : "Yurtdışı hasta talepleri"}
+            accent="var(--c-accent)"
+            badge={tourismPool > 0 ? <span className="rounded-full bg-[var(--c-accent)]/15 px-2.5 py-1 text-xs font-bold text-[var(--c-accent-stronger)]">{tourismPool} yeni talep</span> : undefined}
+          >
+            <Link href="/doktor/saglik-turizmi" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--c-accent-stronger)] hover:underline">
+              Sağlık Turizmi panelini aç <ArrowRight size={15} />
+            </Link>
+          </DashboardPanel>
+        )}
+
         {vis.freeCare && (
           <DashboardPanel
             icon={<HeartHandshake size={18} />}
@@ -251,7 +345,7 @@ export default async function DoctorPanel({
             badge={pbWaiting > 0 ? <span className="rounded-full bg-rose-500/15 px-2.5 py-1 text-xs font-bold text-rose-300">{pbWaiting} bekleyen hasta</span> : undefined}
           >
             <Link href="/doktor/ucretsiz-saglik" className="inline-flex items-center gap-1.5 text-sm font-semibold text-rose-300 hover:underline">
-              Ücretsiz hizmet konsolunu aç <ArrowRight size={15} />
+              Ücretsiz Sağlık Hizmeti panelini aç <ArrowRight size={15} />
             </Link>
           </DashboardPanel>
         )}
@@ -265,21 +359,7 @@ export default async function DoctorPanel({
             badge={consultOpen > 0 ? <span className="rounded-full bg-indigo-500/15 px-2.5 py-1 text-xs font-bold text-indigo-300">{consultOpen} açık talep</span> : undefined}
           >
             <Link href="/doktor/konsultasyon" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#6d75e0] hover:underline">
-              Konsültasyon kutusunu aç <ArrowRight size={15} />
-            </Link>
-          </DashboardPanel>
-        )}
-
-        {vis.tourism && (
-          <DashboardPanel
-            icon={<Plane size={18} />}
-            title="Sağlık Turizmi"
-            subtitle={doctor?.branch ? `${doctor.branch} branşı yurtdışı hasta talepleri` : "Yurtdışı hasta talepleri"}
-            accent="var(--c-accent)"
-            badge={tourismPool > 0 ? <span className="rounded-full bg-[var(--c-accent)]/15 px-2.5 py-1 text-xs font-bold text-[var(--c-accent-stronger)]">{tourismPool} yeni talep</span> : undefined}
-          >
-            <Link href="/doktor/saglik-turizmi" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--c-accent-stronger)] hover:underline">
-              Sağlık turizmi havuzunu aç <ArrowRight size={15} />
+              Konsültasyon panelini aç <ArrowRight size={15} />
             </Link>
           </DashboardPanel>
         )}

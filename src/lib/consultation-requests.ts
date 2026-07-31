@@ -362,8 +362,12 @@ export async function openRequestsForDoctor(branch: string, excludeDoctorId?: st
   const rows = await db.consultationRequest.findMany({
     where: {
       status: "OPEN",
-      OR: [{ branch: null }, { branch }],
-      ...(excludeDoctorId ? { NOT: { requestedByDoctorId: excludeDoctorId } } : {}),
+      AND: [
+        { OR: [{ branch: null }, { branch }] },
+        // NULL-güvenli dışlama: Prisma `NOT { alan: x }` SQL `<>`'ye çevrilir, NULL satırları da ELER —
+        // partner talepleri (requestedByDoctorId=null) havuzdan kaybolurdu. null açıkça dahil edilir.
+        ...(excludeDoctorId ? [{ OR: [{ requestedByDoctorId: null }, { NOT: { requestedByDoctorId: excludeDoctorId } }] }] : []),
+      ],
     },
     orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
     include: { documents: { select: DOC_SELECT } },
@@ -375,10 +379,41 @@ export async function openCountForDoctor(branch: string, excludeDoctorId?: strin
   return db.consultationRequest.count({
     where: {
       status: "OPEN",
-      OR: [{ branch: null }, { branch }],
-      ...(excludeDoctorId ? { NOT: { requestedByDoctorId: excludeDoctorId } } : {}),
+      AND: [
+        { OR: [{ branch: null }, { branch }] },
+        // NULL-güvenli dışlama: Prisma `NOT { alan: x }` SQL `<>`'ye çevrilir, NULL satırları da ELER —
+        // partner talepleri (requestedByDoctorId=null) havuzdan kaybolurdu. null açıkça dahil edilir.
+        ...(excludeDoctorId ? [{ OR: [{ requestedByDoctorId: null }, { NOT: { requestedByDoctorId: excludeDoctorId } }] }] : []),
+      ],
     },
   });
+}
+
+// Doktor Ana Sayfası birleşik vaka listesi satırları (2026-07-31) — openCountForDoctor ile AYNI küme,
+// yalnız hafif alanlar (şifreli özet/belge blob'u taşınmaz, decrypt yok).
+export interface ConsultListRow {
+  id: string;
+  branch: string | null;
+  urgency: number;
+  status: string;
+  createdAt: Date;
+  docCount: number;
+}
+export async function openRowsForDoctor(branch: string, excludeDoctorId?: string): Promise<ConsultListRow[]> {
+  const rows = await db.consultationRequest.findMany({
+    where: {
+      status: "OPEN",
+      AND: [
+        { OR: [{ branch: null }, { branch }] },
+        // NULL-güvenli dışlama: Prisma `NOT { alan: x }` SQL `<>`'ye çevrilir, NULL satırları da ELER —
+        // partner talepleri (requestedByDoctorId=null) havuzdan kaybolurdu. null açıkça dahil edilir.
+        ...(excludeDoctorId ? [{ OR: [{ requestedByDoctorId: null }, { NOT: { requestedByDoctorId: excludeDoctorId } }] }] : []),
+      ],
+    },
+    orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
+    select: { id: true, branch: true, urgency: true, status: true, createdAt: true, _count: { select: { documents: true } } },
+  });
+  return rows.map((r) => ({ id: r.id, branch: r.branch, urgency: r.urgency, status: r.status, createdAt: r.createdAt, docCount: r._count.documents }));
 }
 
 // Tek talep + belgeler (FHIR endpoint + doktor detayı). docLabs = tüm belgelerin AI labları birleşik.
