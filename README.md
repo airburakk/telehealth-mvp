@@ -132,6 +132,11 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
   Prisma modeli, CRM oto-atama + hoca kabul, 4 bölümlü yazılı görüş + video randevu teklifi, izole
   video oda (**AI canlı tercüme + transkript — M2 paritesi, ilk konuşma sesinde otomatik**). SLA:
   **600 USD · 5-7 iş günü · video 15 gün**. (`lib/second-opinion.ts`)
+  **Başvuruda branş kapısı (v6.43):** "İlgili tıbbi branşı biliyor musunuz?" → *biliyorum* = branş
+  seçici; *bilmiyorum* = tanı/durum alanı öne gelir + "Branşı belirle" → **triyajın mevcut ucu**
+  (`POST /api/triage/analyze`) branşı önerir (kart: branş + güven + "doğru değilse değiştirebilirsiniz")
+  ve hasta düzeltebilir. Yeni AI hattı YOK (`runTriage` LLM yoksa kural motoruna düşer ⇒ akış AI'a
+  bağımlı değil); yeni rıza da gerekmez (`AiConsentGate` bu kulvarı zaten kapsıyor).
 - **Ücretsiz Sağlık Hizmeti:** sağlığa erişimi kısıtlı hastaları gönüllü doktorlarla **ücretsiz** video görüşmede
   buluşturan akış — atomik eşleştirme, doktor konsolu + haftalık kontenjan. (`lib/free-care.ts`)
 
