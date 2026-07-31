@@ -68,8 +68,14 @@ export function DutyConsole({ initial, initialRequests }: { initial: DutyState; 
   return (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
       <div className="flex items-center gap-2">
-        {/* Ortak kulvar ikonu (2026-07-31): Uzaktan Sağlık = HeartPulse (hasta hub'ı ile aynı set) */}
-        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--c-accent)]/10 text-[var(--c-accent-stronger)]"><HeartPulse size={20} /></span>
+        {/* Ortak kulvar ikonu + rengi (2026-07-31): Uzaktan Sağlık = HeartPulse, pembe kulvar token'ı
+            (--lane-telehealth) — DashboardPanel'in %14 yumuşak-zemin deseniyle aynı. */}
+        <span
+          className="grid h-10 w-10 place-items-center rounded-2xl"
+          style={{ background: "color-mix(in srgb, var(--lane-telehealth) 14%, transparent)", color: "var(--lane-telehealth)" }}
+        >
+          <HeartPulse size={20} />
+        </span>
         <div className="min-w-0">
           {/* Pencere adı "Uzaktan Sağlık" (2026-07-31, kullanıcı kararı) — "Klinik Nöbet" aşağıda tercih bölümü başlığı */}
           <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">Uzaktan Sağlık</h2>

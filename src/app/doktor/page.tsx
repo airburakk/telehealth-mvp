@@ -317,6 +317,7 @@ export default async function DoctorPanel({
             icon={<Stethoscope size={18} />}
             title="İkinci Görüş"
             subtitle="Atanan vakalar — dosya inceleme + yazılı görüş"
+            accent="var(--lane-so)"
             badge={soCount > 0 ? <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-bold text-amber-300">{soCount} bekliyor</span> : undefined}
           >
             <Link href="/doktor/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--c-accent-stronger)] hover:underline">
@@ -330,7 +331,7 @@ export default async function DoctorPanel({
             icon={<Plane size={18} />}
             title="Sağlık Turizmi"
             subtitle={doctor?.branch ? `${doctor.branch} branşı yurtdışı hasta talepleri` : "Yurtdışı hasta talepleri"}
-            accent="var(--c-accent)"
+            accent="var(--lane-tourism)"
             badge={tourismPool > 0 ? <span className="rounded-full bg-[var(--c-accent)]/15 px-2.5 py-1 text-xs font-bold text-[var(--c-accent-stronger)]">{tourismPool} yeni talep</span> : undefined}
           >
             <Link href="/doktor/saglik-turizmi" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--c-accent-stronger)] hover:underline">
@@ -344,7 +345,7 @@ export default async function DoctorPanel({
             icon={<HeartHandshake size={18} />}
             title="Ücretsiz Sağlık Hizmeti"
             subtitle="Ücretsiz gönüllü konsültasyon"
-            accent="#fb7185"
+            accent="var(--lane-free)"
             badge={pbWaiting > 0 ? <span className="rounded-full bg-rose-500/15 px-2.5 py-1 text-xs font-bold text-rose-300">{pbWaiting} bekleyen hasta</span> : undefined}
           >
             <Link href="/doktor/ucretsiz-saglik" className="inline-flex items-center gap-1.5 text-sm font-semibold text-rose-300 hover:underline">
@@ -358,7 +359,7 @@ export default async function DoctorPanel({
             icon={<Inbox size={18} />}
             title="Konsültasyon Talepleri"
             subtitle="Partner doktorlardan anonim hasta dosyaları"
-            accent="var(--c-indigo)"
+            accent="var(--lane-consult)"
             badge={consultOpen > 0 ? <span className="rounded-full bg-indigo-500/15 px-2.5 py-1 text-xs font-bold text-indigo-300">{consultOpen} açık talep</span> : undefined}
           >
             <Link href="/doktor/konsultasyon" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#6d75e0] hover:underline">

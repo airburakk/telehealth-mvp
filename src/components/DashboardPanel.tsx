@@ -22,7 +22,12 @@ export function DashboardPanel({
     <section className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-[var(--c-ink)]" style={{ background: accent }}>
+          {/* Yumuşak zemin + accent renkli ikon (2026-07-31): düz dolgu gece açık kulvar tonlarında
+              ink ile düşük kontrast veriyordu; %14 zemin iki temada da güvenli (DutyConsole deseni). */}
+          <span
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
+            style={{ background: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent }}
+          >
             {icon}
           </span>
           <div>
