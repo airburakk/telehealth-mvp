@@ -46,7 +46,7 @@ export type SoCaseRow = {
 // color = kulvar kimlik rengi (bant/buton), ink = koyu ton (metin), on = renk üstü metin
 // (açık renklerde koyu, koyu renklerde beyaz — kontrast güvencesi).
 const LANES: Record<Lane, { name: string; color: string; ink: string; on: string }> = {
-  telehealth: { name: "Uzaktan Sağlık", color: "#2a64f5", ink: "#1a3f9e", on: "#ffffff" }, // teknolojik mavi
+  telehealth: { name: "Uzaktan Sağlık", color: "#be185d", ink: "#9d174d", on: "#ffffff" }, // pembe (v6.43 — eski mavi SO ile ayrışmıyordu)
   so: { name: "İkinci Görüş", color: "#1a2b45", ink: "#0f1a2b", on: "#ffffff" }, // derin gece mavisi
   tourism: { name: "Sağlık Turizmi", color: "#00c2b2", ink: "#00655d", on: "#00423c" }, // huzurlu turkuaz
   free: { name: "Ücretsiz Sağlık Hizmeti", color: "#ff7e67", ink: "#a83e28", on: "#5c1e10" }, // mercan turuncu
