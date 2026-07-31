@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { urgencyStyle, CASE_STATUS, countryFlag, countryName, formatDateTime } from "@/lib/constants";
 import { BranchAvatar } from "@/components/BranchAvatar";
-import { Search, ArrowRight, Inbox, ChevronDown } from "lucide-react";
+import { Search, ArrowRight, Inbox, ChevronDown, ChevronUp } from "lucide-react";
 
 // 5 kulvar (2026-07-31 birleşik liste): Case satırları (telehealth/tourism/free) + İkinci Görüş +
 // Konsültasyon Talebi. Renkler tema-duyarlı --lane-* token'larından (v6.22 renk disiplini:
@@ -124,8 +124,21 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
         <Stat label="Bekleyen" value={waiting} tone="text-blue-300" interactive={!serverFilters} active={openStat === "waiting"} onClick={() => toggleStat("waiting")} />
         <Stat label="Acil (4-5)" value={urgent} tone="text-red-300" interactive={!serverFilters} active={openStat === "urgent"} onClick={() => toggleStat("urgent")} />
       </div>
-      {!serverFilters && !listOpen && (
-        <p className="mt-3 text-xs text-[var(--c-ink-3)]">Listeyi görmek için yukarıdaki sayaçlardan birine tıklayın.</p>
+      {/* Tek-tuş aç/kapat (2026-07-31, kullanıcı isteği): tüm listeyi filtresiz açar; sayaçlar
+          ayrıca kendi stat filtresiyle açmaya devam eder. */}
+      {!serverFilters && (
+        <button
+          type="button"
+          onClick={() => setOpenStat((cur) => (cur === null ? "total" : null))}
+          aria-expanded={listOpen}
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-4 py-2.5 text-sm font-semibold text-[var(--c-ink-2)] transition hover:border-[var(--c-accent)]/40 hover:text-[var(--c-ink)]"
+        >
+          {listOpen ? (
+            <>Listeyi gizle <ChevronUp size={15} /></>
+          ) : (
+            <>Tüm eşleşen vakaları göster <ChevronDown size={15} /></>
+          )}
+        </button>
       )}
 
       {listOpen && (

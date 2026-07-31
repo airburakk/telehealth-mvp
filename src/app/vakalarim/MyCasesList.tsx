@@ -13,7 +13,7 @@ import { countryFlag, CASE_STATUS, formatDateTime, langDir, LANG_BCP47 } from "@
 import { BRANCHES } from "@/lib/triage";
 import { BranchAvatar } from "@/components/BranchAvatar";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
-import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Luggage, FileText, HandHeart, Bell, X } from "lucide-react";
+import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Plane, FileText, HeartHandshake, Bell, X } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 export type Lane = "telehealth" | "so" | "tourism" | "free";
@@ -89,11 +89,14 @@ const S = {
 } as const;
 
 // "Yeni başvuru" seçim modalı — 4 kulvar → ilgili başvuru akışı.
+// İkonlar hasta↔doktor ORTAK kulvar seti (2026-07-31, kullanıcı kararı): telehealth=HeartPulse ·
+// so=Stethoscope · tourism=Plane · free=HeartHandshake (+ doktor-yüzü consult=Inbox). Değiştirirken
+// doktor ana sayfa panelleri + DutyConsole ile birlikte güncelle.
 const LANE_PICK: { key: Lane; href: string; icon: typeof HeartPulse }[] = [
   { key: "telehealth", href: "/triyaj", icon: HeartPulse },
   { key: "so", href: "/second-opinion/basvur", icon: Stethoscope },
-  { key: "tourism", href: "/saglik-turizmi", icon: Luggage },
-  { key: "free", href: "/ucretsiz-saglik/basvur", icon: HandHeart },
+  { key: "tourism", href: "/saglik-turizmi", icon: Plane },
+  { key: "free", href: "/ucretsiz-saglik/basvur", icon: HeartHandshake },
 ];
 
 type MergedRow = { kind: "general"; createdAt: string; row: MyCaseRow } | { kind: "so"; createdAt: string; row: SoCaseRow };

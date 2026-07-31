@@ -208,27 +208,35 @@ function CorporatePanel() {
 
       <div className="mt-8 space-y-4">
         <RoleSelect label={c.roleLabel} roles={c.roles} value={role} onChange={setRole} />
-        <a
-          href={withParams(LINKS.corporateEmailLogin)}
-          className="group flex w-full items-center justify-center gap-2.5 rounded-[13px] bg-[var(--aura-accent)] px-4 py-3 text-[15px] font-semibold text-[var(--aura-bg)] transition-transform duration-200 hover:translate-y-[-1px] active:scale-[0.99]"
-        >
-          {c.continue}
-          <svg
-            aria-hidden
-            viewBox="0 0 16 16"
-            className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M2 8h10M8 3l5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </a>
+        {/* Rol seçiminden sonra hasta kapısıyla AYNI sağlayıcı kompozisyonu (2026-07-31,
+            kullanıcı kararı): Google doğrudan OAuth (intent=doctor — mevcut e-posta kendi
+            rolüyle girer), Apple/E-posta çalışan kurumsal forma. Metinler t.signin'den
+            (9 dilde hazır; corporate sözlüğüne kopyalanmaz). Rol seçimi görsel bağlam
+            olmaya devam eder — tüm roller aynı girişe gider. */}
+        <div className="space-y-3">
+          <ProviderButton href={LINKS.corporateGoogleStart} label={t.signin.google} icon={<GoogleIcon />} />
+          <ProviderButton
+            href={withParams(LINKS.corporateEmailLogin)}
+            label={t.signin.apple}
+            icon={<AppleIcon />}
+          />
+          <ProviderButton
+            href={withParams(LINKS.corporateEmailLogin)}
+            label={t.signin.email}
+            icon={<MailIcon />}
+          />
+        </div>
+      </div>
+
+      <div className="mt-6 flex items-center gap-3">
+        <span aria-hidden className="h-px flex-1 bg-[var(--aura-hairline)]" />
+        <span className="aura-mono text-[11px] text-[var(--aura-micro)]">{t.signin.or}</span>
+        <span aria-hidden className="h-px flex-1 bg-[var(--aura-hairline)]" />
       </div>
 
       <Link
         href="/"
-        className="aura-mono mt-8 text-[13px] text-[var(--aura-grey)] transition-colors duration-200 hover:text-[var(--aura-accent)]"
+        className="aura-mono mt-6 text-[13px] text-[var(--aura-grey)] transition-colors duration-200 hover:text-[var(--aura-accent)]"
       >
         {"← "}
         {c.back}

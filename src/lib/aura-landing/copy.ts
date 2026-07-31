@@ -35,6 +35,9 @@ export const LINKS = {
   freeCare: "/ucretsiz-saglik",
   corporateLogin: "/kurumsal-giris",
   corporateEmailLogin: "/kurumsal-giris/e-posta",
+  // Kurumsal kapıdan Google (2026-07-31): intent=doctor — mevcut e-posta KENDİ rolüyle girer
+  // (callback intent'i yok sayar); yeni e-posta doktor kaydı açar (/kayit ile aynı davranış).
+  corporateGoogleStart: "/api/auth/google/start?intent=doctor",
   doctorSignup: "/kayit",
 };
 

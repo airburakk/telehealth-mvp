@@ -7,7 +7,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLiveTick } from "@/lib/use-live-tick";
 import { countryFlag, urgencyStyle, formatDateTime } from "@/lib/constants";
-import { Radio, Power, Loader2, ShieldPlus, CalendarClock, Send, Activity, Users } from "lucide-react";
+import { Radio, Power, Loader2, ShieldPlus, CalendarClock, Send, HeartPulse, Users } from "lucide-react";
 import type { DutyRequest } from "@/lib/clinical-duty";
 
 interface DutyState {
@@ -68,7 +68,8 @@ export function DutyConsole({ initial, initialRequests }: { initial: DutyState; 
   return (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
       <div className="flex items-center gap-2">
-        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--c-accent)]/10 text-[var(--c-accent-stronger)]"><Activity size={20} /></span>
+        {/* Ortak kulvar ikonu (2026-07-31): Uzaktan Sağlık = HeartPulse (hasta hub'ı ile aynı set) */}
+        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--c-accent)]/10 text-[var(--c-accent-stronger)]"><HeartPulse size={20} /></span>
         <div className="min-w-0">
           {/* Pencere adı "Uzaktan Sağlık" (2026-07-31, kullanıcı kararı) — "Klinik Nöbet" aşağıda tercih bölümü başlığı */}
           <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">Uzaktan Sağlık</h2>

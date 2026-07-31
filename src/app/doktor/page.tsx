@@ -258,12 +258,7 @@ export default async function DoctorPanel({
         </div>
       )}
 
-      {/* ── Panel 1: Klinik Nöbet (DutyConsole kendi başlığını taşır) + eşleşen vakalar ── */}
-      {duty && (
-        <div className="mb-5">
-          <DutyConsole initial={duty} initialRequests={dutyRequests} />
-        </div>
-      )}
+      {/* ── Eşleşen Vakalar (2026-07-31 sıra kararı: Bildirim Tercihi → Eşleşen Vakalar → Uzaktan Sağlık) ── */}
       <DashboardPanel
         icon={<Activity size={18} />}
         title={queueTitle}
@@ -307,8 +302,16 @@ export default async function DoctorPanel({
         )}
       </DashboardPanel>
 
-      {/* ── Panel 2-4: koşullu birimler ── */}
-      <div className="mt-5 grid gap-5 sm:grid-cols-2">
+      {/* ── Uzaktan Sağlık (DutyConsole kendi başlığını taşır; 2026-07-31: Eşleşen Vakalar'ın altına indi) ── */}
+      {duty && (
+        <div className="mt-5">
+          <DutyConsole initial={duty} initialRequests={dutyRequests} />
+        </div>
+      )}
+
+      {/* ── Kulvar panelleri — TAM GENİŞLİK, alt alta (2026-07-31: sm:grid-cols-2 kaldırıldı,
+          Uzaktan Sağlık ile aynı genişlikte) ── */}
+      <div className="mt-5 grid gap-5">
         {vis.so && (
           <DashboardPanel
             icon={<Stethoscope size={18} />}
