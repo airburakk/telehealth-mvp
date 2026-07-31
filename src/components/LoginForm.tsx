@@ -8,6 +8,15 @@ import { AuraMark } from "@/components/PortamedLogo";
 // Genel e-posta/şifre giriş formu — hasta (/giris) ve kurumsal (/kurumsal-giris) ekranları
 // tarafından farklı başlık/demo/sosyal bloklarla kullanılır. `next` param davranışı korunur:
 // başarılı girişte next > data.home > "/" önceliğiyle TAM SAYFA yönlendirme (çerez proxy'e taze taşınır).
+//
+// ── "Hızlı demo girişi" bloğu GİZLİ (2026-07-31, kullanıcı kararı) ──
+// Eski tasarımdan kalan rol kısayolları (Hasta / Doktor / Koordinatör / Etik Kurul / Partner /
+// Acente + "Demo parolası: 1234") artık YALNIZCA e-posta alanına DEMO_UNLOCK_EMAIL yazıldığında
+// görünür. ⚠️ Bu bir GÖRÜNÜRLÜK kararıdır, güvenlik sınırı DEĞİLDİR: demo hesaplar ve `1234`
+// parolaları hâlâ mevcut; adresi bilen doğrudan giriş yapabilir. Kalıcı çözüm = hesapların ve bu
+// bloğun tamamen kaldırılması (wiki/todo.md'de kalem açıldı).
+const DEMO_UNLOCK_EMAIL = "airburakk@gmail.com"; // repo public; adres zaten commit author'da görünür
+
 export interface QuickAccount {
   email: string;
   label: string;
@@ -140,7 +149,7 @@ export function LoginForm({
           </button>
         </form>
 
-        {quick.length > 0 && (
+        {quick.length > 0 && email.trim().toLowerCase() === DEMO_UNLOCK_EMAIL && (
           <>
             <div className="my-4 flex items-center gap-3 text-xs text-[var(--c-ink-3)]">
               <span className="h-px flex-1 bg-[var(--c-ink)]/10" /> Hızlı demo girişi <span className="h-px flex-1 bg-[var(--c-ink)]/10" />
