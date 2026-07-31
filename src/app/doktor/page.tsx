@@ -12,10 +12,9 @@ import { waitingCount } from "@/lib/free-care";
 import { openCountForDoctor, openRowsForDoctor } from "@/lib/consultation-requests";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
 import { BRANCHES } from "@/lib/triage";
-import { newsForBranch, NEWS_KIND_LABEL, type NewsItem } from "@/lib/medical-news";
 import { NotifyChannelCard } from "@/components/NotifyChannelCard";
 import { decryptField } from "@/lib/crypto";
-import { Stethoscope, ArrowRight, Activity, HeartHandshake, Inbox, Newspaper, ChevronLeft, ChevronRight, Plane } from "lucide-react";
+import { Stethoscope, ArrowRight, Activity, HeartHandshake, Inbox, ChevronLeft, ChevronRight, Plane } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -72,10 +71,10 @@ export default async function DoctorPanel({
     redirect("/doktor/baslangic");
   }
 
-  // Pencere görünürlüğü (doktor yoksa = personel: duty[tümü] + SO[gözetim] + haberler).
+  // Pencere görünürlüğü (doktor yoksa = personel: duty[tümü] + SO[gözetim]).
   const vis = doctor
     ? panelVisibility(doctor)
-    : { duty: true as const, so: true, freeCare: false, consult: false, tourism: true as const, news: true as const };
+    : { duty: true as const, so: true, freeCare: false, consult: false, tourism: true as const };
 
   // ── Panel 1: Klinik Nöbet — yalnız bu doktorla eşleşen vakalar (personelde tümü, sayfalı) ──
   let casePage = 1;
@@ -236,9 +235,6 @@ export default async function DoctorPanel({
     ? await db.case.count({ where: { branch: doctor.branch, tourismPlan: { not: null }, status: "NEW" } })
     : 0;
 
-  // ── Panel 5: Haberler ──
-  const news = newsForBranch(doctor?.branch);
-
   const queueTitle = doctor ? "Eşleşen Vakalar" : "Vaka Kuyruğu (tüm)";
   const queueSub = doctor
     ? "Branşınızdaki açık vakalar + size atanmış görüşmeler"
@@ -369,37 +365,6 @@ export default async function DoctorPanel({
         )}
       </div>
 
-      {/* ── Panel 5: Haberler ── */}
-      <div className="mt-5">
-        <DashboardPanel
-          icon={<Newspaper size={18} />}
-          title="Haberler"
-          subtitle={doctor?.branch ? `Genel tıp gündemi + ${doctor.branch}` : "Genel tıp gündemi"}
-          accent="#34d399"
-        >
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {news.map((n) => <NewsCard key={n.id} item={n} />)}
-          </ul>
-        </DashboardPanel>
-      </div>
     </div>
-  );
-}
-
-function NewsCard({ item }: { item: NewsItem }) {
-  const kindColor: Record<string, string> = {
-    haber: "bg-sky-500/15 text-sky-300",
-    makale: "bg-violet-500/15 text-violet-300",
-    ilac: "bg-emerald-500/15 text-emerald-300",
-  };
-  return (
-    <li className="rounded-2xl border border-[var(--c-hairline)] p-4">
-      <div className="flex items-center gap-2">
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${kindColor[item.kind]}`}>{NEWS_KIND_LABEL[item.kind]}</span>
-        <span className="text-[11px] text-[var(--c-ink-3)]">{item.source}</span>
-      </div>
-      <div className="mt-1.5 text-sm font-semibold text-[var(--c-ink)]">{item.title}</div>
-      <p className="mt-1 text-xs text-[var(--c-ink-2)]">{item.summary}</p>
-    </li>
   );
 }
