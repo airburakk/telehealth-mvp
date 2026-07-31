@@ -1,0 +1,39 @@
+// Rol sabitleri — SIR İÇERMEZ, client bileşenleri güvenle import edebilir.
+//
+// ⚠️ NEDEN AYRI DOSYA (2026-07-31): bu sabitler eskiden lib/session.ts'teydi. session.ts modül
+// yüklenirken `resolveSessionSecret()` çalıştırır ve ÜRETİMDE SESSION_SECRET yoksa THROW eder.
+// Tarayıcıda o değişken doğal olarak tanımsızdır → sadece bir rol etiketi için session.ts import
+// eden bir "use client" bileşeni, ÜRETİMDE sayfayı komple çökertir (master paneli böyle kırıldı;
+// dev'de kontrol yalnız uyarı verdiği için fark edilmiyordu — bkz. [[master-account-impersonation]]).
+//
+// KURAL: client bileşeninden rol sabiti lazımsa BURADAN al, `@/lib/session`'dan DEĞİL.
+// session.ts bunları geriye uyum için yeniden dışa verir (sunucu tarafı importlar değişmedi).
+
+export const ROLES = ["PATIENT", "DOCTOR", "COORDINATOR", "ETHICS", "ADMIN", "PARTNER", "AGENCY"] as const;
+export type Role = (typeof ROLES)[number];
+
+// DB `role` kolonu şemada denetimsiz String (enum değil) — malformed/typo/gelecek değer olabilir.
+// getCurrentUser bu guard'la doğrular; tanınmayan rol otoriter kabul edilmez (fail-closed).
+export function isRole(v: unknown): v is Role {
+  return typeof v === "string" && (ROLES as readonly string[]).includes(v);
+}
+
+export const ROLE_LABELS: Record<Role, string> = {
+  PATIENT: "Hasta",
+  DOCTOR: "Doktor",
+  COORDINATOR: "Koordinatör",
+  ETHICS: "Etik Kurul",
+  ADMIN: "Yönetici",
+  PARTNER: "Partner Doktor",
+  AGENCY: "Sağlık Turizmi Acentesi",
+};
+
+export function roleHome(role: Role): string {
+  if (role === "COORDINATOR") return "/operasyon"; // S2 operasyon paneli
+  if (role === "DOCTOR") return "/doktor";
+  if (role === "ETHICS") return "/etik-kurul";
+  if (role === "PARTNER") return "/partner"; // M5 Faz 3 — Partner Doktor alanı
+  if (role === "AGENCY") return "/acente"; // S3 Sağlık Turizmi Acentesi — tedavi dosyaları kuyruğu (FAZ 4)
+  if (role === "PATIENT") return "/triyaj"; // hasta: doğrudan Branş Doktoru akışı (/basla 4'lü seçimi kaldırıldı 2026-07-12; diğer kulvarlar kendi sayfalarından)
+  return "/vakalarim"; // ADMIN vb.
+}

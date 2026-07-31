@@ -3,14 +3,12 @@ import { SignJWT, jwtVerify } from "jose";
 
 export const SESSION_COOKIE = "air_session";
 
-export const ROLES = ["PATIENT", "DOCTOR", "COORDINATOR", "ETHICS", "ADMIN", "PARTNER", "AGENCY"] as const;
-export type Role = (typeof ROLES)[number];
-
-// DB `role` kolonu şemada denetimsiz String (enum değil) — malformed/typo/gelecek değer olabilir.
-// getCurrentUser bu guard'la doğrular; tanınmayan rol otoriter kabul edilmez (fail-closed).
-export function isRole(v: unknown): v is Role {
-  return typeof v === "string" && (ROLES as readonly string[]).includes(v);
-}
+// Rol sabitleri lib/roles.ts'e taşındı (2026-07-31): SIRSIZ oldukları için client bileşenleri de
+// kullanabilsin. Buradan yeniden dışa verilir → mevcut sunucu-tarafı importlar (`@/lib/session`)
+// aynen çalışır. ⚠️ "use client" bir dosyadan ASLA bu modülü import etme; `@/lib/roles` kullan
+// (bu dosya modül yüklenirken SESSION_SECRET doğrular ve üretimde THROW eder).
+export { ROLES, isRole, ROLE_LABELS, roleHome, type Role } from "./roles";
+import type { Role } from "./roles";
 
 export interface SessionUser {
   id: string;
@@ -46,7 +44,14 @@ function resolveSessionSecret(): Uint8Array {
   }
   return new TextEncoder().encode(s);
 }
-const secret = resolveSessionSecret();
+// LAZY: modül yüklenirken DEĞİL, ilk imzalama/doğrulamada çözülür. Koruma birebir aynı (üretimde
+// zayıf sır → ilk oturum işleminde THROW), ama modülün yanlışlıkla client'a sızması sayfayı
+// çökertmez — savunma derinliği (2026-07-31 master paneli olayı).
+let _secret: Uint8Array | null = null;
+function secretKey(): Uint8Array {
+  if (!_secret) _secret = resolveSessionSecret();
+  return _secret;
+}
 
 export async function signToken(user: SessionUser): Promise<string> {
   const claims: Record<string, unknown> = { email: user.email, name: user.name, role: user.role, cv: user.cv ?? 0, sv: user.sv ?? 0 };
@@ -56,12 +61,12 @@ export async function signToken(user: SessionUser): Promise<string> {
     .setSubject(user.id)
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(secret);
+    .sign(secretKey());
 }
 
 export async function verifyToken(token: string): Promise<SessionUser | null> {
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, secretKey());
     return {
       id: String(payload.sub),
       email: String(payload.email),
@@ -74,24 +79,4 @@ export async function verifyToken(token: string): Promise<SessionUser | null> {
   } catch {
     return null;
   }
-}
-
-export const ROLE_LABELS: Record<Role, string> = {
-  PATIENT: "Hasta",
-  DOCTOR: "Doktor",
-  COORDINATOR: "Koordinatör",
-  ETHICS: "Etik Kurul",
-  ADMIN: "Yönetici",
-  PARTNER: "Partner Doktor",
-  AGENCY: "Sağlık Turizmi Acentesi",
-};
-
-export function roleHome(role: Role): string {
-  if (role === "COORDINATOR") return "/operasyon"; // S2 operasyon paneli
-  if (role === "DOCTOR") return "/doktor";
-  if (role === "ETHICS") return "/etik-kurul";
-  if (role === "PARTNER") return "/partner"; // M5 Faz 3 — Partner Doktor alanı
-  if (role === "AGENCY") return "/acente"; // S3 Sağlık Turizmi Acentesi — tedavi dosyaları kuyruğu (FAZ 4)
-  if (role === "PATIENT") return "/triyaj"; // hasta: doğrudan Branş Doktoru akışı (/basla 4'lü seçimi kaldırıldı 2026-07-12; diğer kulvarlar kendi sayfalarından)
-  return "/vakalarim"; // ADMIN vb.
 }

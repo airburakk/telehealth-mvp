@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ROLE_LABELS, ROLES, type Role } from "@/lib/session";
+// ⚠️ `@/lib/session` DEĞİL: o modül yüklenirken SESSION_SECRET doğrular ve üretimde THROW eder →
+// client bundle'ına girince sayfa komple çöker (2026-07-31'de master paneli tam olarak böyle kırıldı;
+// dev'de kontrol yalnız uyarı verdiği için görünmüyordu). Rol sabitleri sırsız modülden alınır.
+import { ROLE_LABELS, ROLES, type Role } from "@/lib/roles";
 import { ShieldCheck, Search, LogIn, Loader2, AlertTriangle, KeyRound } from "lucide-react";
 
 // Bürünme hedefi: doğrudan User, ya da (giriş hesabı olmayan) Doctor/PartnerDoctor profili
