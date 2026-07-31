@@ -4,7 +4,9 @@ import { SecondOpinionContent } from "./SecondOpinionContent";
 
 // Sekme başlığı Türkçeleştirildi (2026-07-31 kullanıcı kararı). Sayfa içeriği EN/TR seçiciyle
 // değişir ama metadata statiktir → tek dil seçmek gerekiyor; ürünün kanonik dili Türkçe.
-export const metadata = { title: "İkinci Görüş — AURA" };
+// ⚠️ Marka son ekini BURAYA YAZMA: kök layout `template: "%s · AURA"` uyguluyor (layout.tsx:40) →
+// "… — AURA" yazmak "AURA · AURA" tekrarına yol açar.
+export const metadata = { title: "İkinci Görüş" };
 export const dynamic = "force-dynamic"; // kullanıcı rolüne göre CTA (getCurrentUser çerez okur)
 
 export default async function SecondOpinionPage() {
