@@ -49,6 +49,28 @@ npx prisma migrate deploy   # migration geçmişini Neon'a uygula (taze DB'de t�
 npm run db:seed             # demo veri: kullanıcılar + 30 hekim + 20 vaka + takip + şikayet
 ```
 
+> ### ⛔ Uygulanmış migration dosyası DEĞİŞMEZDİR (2026-08-01'de iki ortamda birden yakalandı)
+>
+> Bir migration bir kez uygulandıktan sonra dosyası düzenlenirse Prisma checksum uyuşmazlığı görür:
+> `migrate dev` **dev veritabanını sıfırlamak** ister, `migrate deploy` **üretimde hata verip sonraki
+> TÜM migration'ları bloke eder**. Değişiklik gerekiyorsa **yeni** migration yaz.
+>
+> **Denetim (her prod migration'ından ÖNCE koş):**
+> ```bash
+> node scripts/check-migrations.mjs          # dev
+> node scripts/check-migrations.mjs --prod   # üretim (salt-okur)
+> ```
+> Uyuşmazlık çıkarsa: önce hedef şemanın dosyanın NİHAİ içeriğiyle uyumlu olduğunu **elle doğrula**
+> (kolon/index gerçekten var mı). Uyumluysa kayıt hizalanır:
+> ```bash
+> node scripts/fix-migration-checksum.mjs <migration_adi> --prod --yes
+> ```
+> Uyumlu DEĞİLSE checksum'ı hizalama — eksikliği gizler; eksik ifadeyi yeni migration'la uygula.
+>
+> 📌 2026-08-01 kaydı: dev'de `20260724014426_case_pending_docs`, üretimde
+> `20260711010000_registry_fingerprint_field_updates` bayattı (ikisinde de şema doğruydu, yalnız
+> muhasebe kaydı eskiydi) → hizalandı; v6.48 migration'ı bu yüzden bloke olacaktı.
+
 > **Şema yönetimi migration-tabanlıdır** (2026-07-03'ten beri; `prisma/migrations/` —
 > `20260703000000_baseline` mevcut üretim şemasını temsil eder, üretime `migrate resolve
 > --applied` ile işaretlenmiştir). **Üretime şema değişikliği akışı:**
