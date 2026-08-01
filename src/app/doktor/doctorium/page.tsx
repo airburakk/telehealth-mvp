@@ -67,7 +67,6 @@ export default async function DoctoriumPage({
 
   const congresses = active === "kongre" ? await upcomingCongresses(branches) : [];
   const followed = active === "kongre" && doctor ? await followedCongressIds(doctor.id) : new Set<string>();
-  const activeDef = DOCTORIUM_MODULES.find((m) => m.key === active)!;
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
@@ -77,12 +76,15 @@ export default async function DoctoriumPage({
 
       <div className="mt-3">
         {/* L1 lockup (kullanıcı kararı 2026-08-01): zümrüt AURA sembolü + "ium" vurgusu.
-            Negatif margin'ler sembolün viewBox nabız payını kırpar (yazıya optik bitişik). */}
-        <h1 className="aura-display flex items-center text-3xl font-medium tracking-tight text-[var(--c-ink)]">
-          <AuraMark size={36} tone="emerald" className="-ml-1.5 -mr-1" />
+            Mesafe (kullanıcı, 2. tur): gap-2.5 + sembolün doğal viewBox payı = ferah aralık —
+            DARALTMA (bitişik -mr denemesi geri alındı). -ml yalnız sol hizayı korur. */}
+        <h1 className="aura-display flex items-center gap-2.5 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
+          <AuraMark size={36} tone="emerald" className="-ml-1.5" />
           <span>Doctor<span className="doctorium-ium">ium</span></span>
         </h1>
-        <p className="mt-1 text-sm text-[var(--c-ink-2)]">{activeDef.desc}</p>
+        {/* Sabit slogan (kullanıcı seçimi 2026-08-01) — sekmeye göre değişen desc satırı kalktı
+            ("Branşınız + mevzuat…" kuru bulundu). desc alanı veri modelinde durur, burada basılmaz. */}
+        <p className="mt-1 text-sm text-[var(--c-ink-2)]">Bilim, sizin ritminizde.</p>
       </div>
 
       {/* Modül sekmeleri */}

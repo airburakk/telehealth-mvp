@@ -100,8 +100,16 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
                     active ? "font-medium text-[var(--c-accent)]" : "text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"
                   }`}
                 >
-                  <Icon size={16} />
-                  <span className="hidden sm:inline">{t(label)}</span>
+                  {Icon && <Icon size={16} />}
+                  {label === "Doctorium" ? (
+                    /* Marka yazı-lockup'ı (ikonsuz; çevrilmez): "ium" zümrüt + aura ışıma nabzı.
+                       İkon olmadığından mobilde de görünür (diğer öğeler sm+ etiket gizler). */
+                    <span className="whitespace-nowrap">
+                      Doctor<span className="doctorium-ium doctorium-ium-breathe">ium</span>
+                    </span>
+                  ) : (
+                    <span className="hidden sm:inline">{t(label)}</span>
+                  )}
                 </Link>
               );
             })}

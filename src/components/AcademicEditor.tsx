@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { GraduationCap, Save, Loader2, Check, Award, BookOpen, BadgeCheck } from "lucide-react";
+import { GraduationCap, Save, Loader2, Check, Award, ScrollText, BadgeCheck } from "lucide-react";
 
 interface Pub { title: string; venue: string; year: number }
 
@@ -82,7 +82,7 @@ export function AcademicEditor(props: {
       </div>
 
       <div className="mt-4">
-        <Field label="Yayınlar / akademik çalışmalar" icon={<BookOpen size={14} />} hint="her satır: Başlık | Dergi/Kongre | Yıl">
+        <Field label="Yayınlar / akademik çalışmalar" icon={<ScrollText size={14} />} hint="her satır: Başlık | Dergi/Kongre | Yıl">
           <textarea value={pubsText} onChange={onChange(setPubsText)} rows={3} placeholder={"Lokal ileri NSCLC'de neoadjuvan tedavi sonuçları | Türk Onkoloji Dergisi | 2021"} className={`${INPUT} resize-y`} />
         </Field>
       </div>

@@ -4,15 +4,20 @@
 // Hasta nav kararı (2026-07-03): PATIENT yalnız Vakalarım · Post Op · Paylaşımlarım görür.
 // /basla 4'lü seçimi kaldırıldı (2026-07-12): yeni başvuru doğrudan /triyaj'dan; diğer kulvarlara
 // köprü Vakalarım üstündeki kulvar kartlarındadır (MyCasesList).
+import type { ComponentType } from "react";
 import {
   Stethoscope, UserRound, HeartPulse, Scale, Users, BadgeCheck, Share2, BarChart3,
-  FolderHeart, Globe, Luggage, BookOpen, type LucideIcon,
+  FolderHeart, Globe, Luggage,
 } from "lucide-react";
+
+// İkon sözleşmesi: Header <Icon size={16}/> çağırır. OPSİYONEL — ikonsuz öğede (Doctorium)
+// Header etiketi mobilde de gösterir (yoksa mobil bantta öğe kaybolurdu: etiket sm+ gizli).
+type NavIcon = ComponentType<{ size?: number; className?: string }>;
 
 export interface NavItem {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon?: NavIcon;
   roles: string[];
 }
 
@@ -32,7 +37,9 @@ const NAV: NavItem[] = [
   { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
   // Doctorium (v6.48, 2026-08-01) — hekim bilgi portalı. Eski "Haberler" adı ve /doktor/haberler
   // rotası bırakıldı (rota 308 ile buraya yönlenir; yer imleri kırılmasın).
-  { href: "/doktor/doctorium", label: "Doctorium", icon: BookOpen, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
+  // İKONSUZ (kullanıcı kararı 2026-08-01, 2. tur): Header özel yazı-lockup basar —
+  // "Doctor" + yanıp sönen zümrüt "ium" (.doctorium-ium-breathe); sembol yalnız sayfa başlığında.
+  { href: "/doktor/doctorium", label: "Doctorium", roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
   // "Ücretsiz Hizmet" bant linki kaldırıldı (2026-07-31, kullanıcı kararı) — rota + ana sayfa paneli durur.
   { href: "/doktor/profil", label: "Profilim", icon: BadgeCheck, roles: ["DOCTOR", "ADMIN"] },
   { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, roles: ["ETHICS", "ADMIN"] },
