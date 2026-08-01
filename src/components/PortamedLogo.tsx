@@ -4,11 +4,23 @@
 // şeffaf, her zeminde çalışır). Wordmark hâlâ tema-çift PNG (aura-word-light/dark.png).
 // Açık zeminde lacivert wordmark, koyu zeminde beyaz. Landing + iç uygulama Header'ı ortak kullanır.
 
-// Sembol geometrisi — tüm AuraMark/AuraSpinner örneklerinde ortak. Gradient/filter id'leri
-// SABİT: aynı sayfada birden çok kez inline edilince çift-id oluşur ama TÜM tanımlar özdeş
-// olduğundan her url(#id) referansı geçerli (özdeş) tanıma çözülür → görsel bozulmaz.
+// Sembol geometrisi — tüm AuraMark/AuraSpinner örneklerinde ortak. Gradient id'leri TON-BAŞINA
+// SABİT: aynı sayfada aynı ton birden çok kez inline edilince çift-id oluşur ama o tonun TÜM
+// tanımları özdeş olduğundan her url(#id) referansı geçerli tanıma çözülür → görsel bozulmaz.
+// Farklı tonlar AYNI id'yi PAYLAŞAMAZ (DOM'da önce gelen tanım kazanır, sembol yanlış renge
+// boyanır) → her tonun kendi gradient id seti var. Filter'lar (salt blur, renksiz) ortak.
 // viewBox pulse'ın en geniş halini (scale 1.75) + ışıma payını kapsar (kırpılma yok).
-function AuraSymbol({ size, spin = false, className = "" }: { size: number; spin?: boolean; className?: string }) {
+
+// Ton paletleri: marka turkuazı (varsayılan) + Doctorium zümrüdü (hekim bilgi portalı alt-markası).
+// Zümrüt set turkuaz gradyanın hue-shift karşılığı; ana ton sayfadaki "ium" vurgusuyla aynı (#34d399).
+const TONES = {
+  brand: { light: "#8AE6EC", mid: "#4FD6E2", main: "#28C8D8", coreId: "auraCoreGrad", fillId: "auraFillGrad" },
+  emerald: { light: "#8beecb", mid: "#5fe3b0", main: "#34d399", coreId: "auraCoreGradEm", fillId: "auraFillGradEm" },
+} as const;
+export type AuraTone = keyof typeof TONES;
+
+function AuraSymbol({ size, spin = false, className = "", tone = "brand" }: { size: number; spin?: boolean; className?: string; tone?: AuraTone }) {
+  const t = TONES[tone];
   return (
     <svg
       width={size}
@@ -21,14 +33,14 @@ function AuraSymbol({ size, spin = false, className = "" }: { size: number; spin
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <radialGradient id="auraCoreGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#8AE6EC" />
-          <stop offset="100%" stopColor="#28C8D8" />
+        <radialGradient id={t.coreId} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={t.light} />
+          <stop offset="100%" stopColor={t.main} />
         </radialGradient>
-        <radialGradient id="auraFillGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#8AE6EC" stopOpacity=".24" />
-          <stop offset="55%" stopColor="#4FD6E2" stopOpacity=".07" />
-          <stop offset="100%" stopColor="#28C8D8" stopOpacity="0" />
+        <radialGradient id={t.fillId} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={t.light} stopOpacity=".24" />
+          <stop offset="55%" stopColor={t.mid} stopOpacity=".07" />
+          <stop offset="100%" stopColor={t.main} stopOpacity="0" />
         </radialGradient>
         <filter id="auraSoftGlow" x="-80%" y="-80%" width="260%" height="260%">
           <feGaussianBlur stdDeviation="7" result="b" />
@@ -41,34 +53,36 @@ function AuraSymbol({ size, spin = false, className = "" }: { size: number; spin
           <feGaussianBlur stdDeviation="20" />
         </filter>
       </defs>
-      <circle className="aura-sym-pulse" cx="600" cy="520" r="185" fill="url(#auraFillGrad)" filter="url(#auraWideGlow)" />
-      <circle className="aura-sym-pulse two" cx="600" cy="520" r="185" fill="url(#auraFillGrad)" filter="url(#auraWideGlow)" />
+      <circle className="aura-sym-pulse" cx="600" cy="520" r="185" fill={`url(#${t.fillId})`} filter="url(#auraWideGlow)" />
+      <circle className="aura-sym-pulse two" cx="600" cy="520" r="185" fill={`url(#${t.fillId})`} filter="url(#auraWideGlow)" />
       <g transform="translate(160 80) scale(7.3333333333)">
-        <circle cx="60" cy="60" r="22" fill="#28C8D8" fillOpacity=".16" />
+        <circle cx="60" cy="60" r="22" fill={t.main} fillOpacity=".16" />
       </g>
       <g className="aura-sym-orbit">
         <g transform="translate(160 80) scale(7.3333333333)" strokeWidth="6.5" strokeLinecap="round" fill="none">
           <g opacity=".34" filter="url(#auraSoftGlow)">
-            <path d="M60 24 A36 36 0 0 1 91 42" stroke="#28C8D8" />
-            <path d="M91 78 A36 36 0 0 1 60 96" stroke="#4FD6E2" />
-            <path d="M29 78 A36 36 0 0 1 29 42" stroke="#8AE6EC" />
+            <path d="M60 24 A36 36 0 0 1 91 42" stroke={t.main} />
+            <path d="M91 78 A36 36 0 0 1 60 96" stroke={t.mid} />
+            <path d="M29 78 A36 36 0 0 1 29 42" stroke={t.light} />
           </g>
-          <path d="M60 24 A36 36 0 0 1 91 42" stroke="#28C8D8" />
-          <path d="M91 78 A36 36 0 0 1 60 96" stroke="#4FD6E2" />
-          <path d="M29 78 A36 36 0 0 1 29 42" stroke="#8AE6EC" />
+          <path d="M60 24 A36 36 0 0 1 91 42" stroke={t.main} />
+          <path d="M91 78 A36 36 0 0 1 60 96" stroke={t.mid} />
+          <path d="M29 78 A36 36 0 0 1 29 42" stroke={t.light} />
         </g>
       </g>
       <g className="aura-sym-core">
-        <circle cx="600" cy="520" r="73.333333" fill="url(#auraCoreGrad)" filter="url(#auraSoftGlow)" />
+        <circle cx="600" cy="520" r="73.333333" fill={`url(#${t.coreId})`} filter="url(#auraSoftGlow)" />
       </g>
     </svg>
   );
 }
 
 // Yalnız sembol — animasyonlu vektörel AURA amblemi (şeffaf, her zeminde çalışır).
-export function AuraMark({ size = 26, className = "" }: { size?: number; className?: string }) {
-  return <AuraSymbol size={size} className={className} />;
+// tone="emerald" = Doctorium alt-marka rengi (varsayılan marka turkuazı).
+export function AuraMark({ size = 26, className = "", tone }: { size?: number; className?: string; tone?: AuraTone }) {
+  return <AuraSymbol size={size} className={className} tone={tone} />;
 }
+
 
 // Dönen AURA sembolü — bekleme göstergesi. Aynı vektörel amblem; yörünge belirgin
 // hızlanır (aura-sym-fast). durationMs artık YOK-sayılır (imzada geriye uyumluluk için;

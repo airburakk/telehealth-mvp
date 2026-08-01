@@ -633,6 +633,39 @@ body {
   display: block;
 }
 
+/* Doctorium "ium" vurgusu (L1 lockup) — sembolün zümrüt ana tonu; gündüz beyaz zeminde
+   kontrast için koyulaşır (logo-word tema deseninin metin karşılığı). */
+.doctorium-ium {
+  color: #047857;
+}
+.theme-dark .doctorium-ium {
+  color: #34d399;
+}
+
+/* Nav "Doctorium" yazı-lockup'ı: "ium" aura ışıma nabzı — ana sayfa aura-breathe'in
+   zümrüt + metin-ölçeği karşılığı. 🪤 Aynı EFEKT ≠ aynı DEĞER (bkz. braille dersi):
+   letterform blur'ları (14/44/90px) ~14px nav metninde dağılıp görünmez olur →
+   yarıçaplar metin boyuna göre küçültüldü. Tempo ana sayfayla aynı (2.6s). */
+.doctorium-ium-breathe {
+  animation: doctorium-ium-breathe 2.6s ease-in-out infinite;
+}
+@keyframes doctorium-ium-breathe {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px rgba(52, 211, 153, 0.7))
+      drop-shadow(0 0 6px rgba(52, 211, 153, 0.35));
+  }
+  50% {
+    filter: drop-shadow(0 0 5px rgba(52, 211, 153, 1))
+      drop-shadow(0 0 12px rgba(52, 211, 153, 0.65));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .doctorium-ium-breathe {
+    animation: none;
+  }
+}
+
 /* AURA sembolü (AuraMark/AuraSpinner) — kullanıcının animasyonlu vektörel logosu:
    yörünge halkaları döner, çekirdek nefes alır, aura nabzı dışa açılır. Şeffaf →
    her zeminde çalışır. transform-origin sembol merkezine sabit (viewBox 600,520).
