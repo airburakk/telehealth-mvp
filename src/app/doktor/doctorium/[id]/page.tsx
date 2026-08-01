@@ -23,7 +23,7 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
   const item = await articleById(id);
   if (!item) notFound();
 
-  // Akademik yayın → 2 dk klinik özet · mevzuat/sektörel/ilaç → hekim özeti + aksiyon maddeleri.
+  // Akademik yayın → 2 dk klinik özet · mevzuat/sektörel/ilaç → doktor özeti + aksiyon maddeleri.
   // İkisi de TEMBEL: ilk açılışta bir kez üretilir, sonra DB'den okunur.
   const isAcademic = item.module === "akademik";
   const summary = isAcademic ? await ensureClinicalSummary(id) : null;
@@ -101,11 +101,11 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
         </section>
       )}
 
-      {/* Mevzuat / sektörel / ilaç → hekim özeti. Kaynak metni çekilip AI ile yapılandırılır. */}
+      {/* Mevzuat / sektörel / ilaç → doktor özeti. Kaynak metni çekilip AI ile yapılandırılır. */}
       {reg?.state === "ok" && (
         <section className="mt-6 rounded-2xl border border-amber-400/25 bg-amber-500/[0.07] p-5">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-amber-300">
-            <Gavel size={16} /> Hekim özeti
+            <Gavel size={16} /> Doktor özeti
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-[var(--c-ink)]">{reg.data.summary}</p>
 

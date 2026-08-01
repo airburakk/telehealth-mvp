@@ -9,7 +9,7 @@ import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 // ölçüldü: API/RSS uçları 404). Bu yüzden arayüz "FDA (ABD)" uyarısını KALDIRAMAZ biçimde gösterir.
 // Metin ÇEVRİLMEZ: çeviri hem verinin ABD kaynaklı olduğunu gizler hem de dozaj hatası riski taşır.
 //
-// Self-auth: yalnız klinik roller. Ayrıca rate-limit (dış API'yi hekim başına makul tut).
+// Self-auth: yalnız klinik roller. Ayrıca rate-limit (dış API'yi doktor başına makul tut).
 export const dynamic = "force-dynamic";
 
 interface FdaLabel {

@@ -11,20 +11,25 @@ import {
 } from "@/lib/doctorium";
 import { branchColor, hasBranchVisual } from "@/lib/branch-visuals";
 import { BranchAvatar } from "@/components/BranchAvatar";
-import { BranchPrefsMenu } from "./BranchPrefsMenu";
-import { CongressAlertSettings, FollowButton } from "./CongressControls";
+import { DoctoriumFilters } from "./DoctoriumFilters";
+import { FollowButton } from "./CongressControls";
 import { ProspektusSearch } from "./ProspektusSearch";
 import {
-  ArrowLeft, BookOpen, ExternalLink, FlaskConical, Gavel, Info,
+  ArrowLeft, ExternalLink, FlaskConical, Gavel, Info,
   Sparkles, MapPin, X, CalendarClock, Pill, Building2,
 } from "lucide-react";
+import { AuraMark } from "@/components/PortamedLogo";
 
 export const dynamic = "force-dynamic";
+
+// Sekme başlığı "Doctorium · AURA" — kök layout template'i (%s · AURA) ekler, ELLE " · AURA" YAZMA
+// (v6.43 dersi: çift-AURA olur).
+export const metadata = { title: "Doctorium" };
 
 const MODULE_KEYS = new Set(DOCTORIUM_MODULES.map((m) => m.key));
 const VALID_SLUGS = new Set(BRANCH_OPTIONS.map((b) => b.slug));
 
-// Doctorium — hekim bilgi portalı. Modüller: Akışım (A) · Akademik (C) · Sektörel (B) · Kongre (E).
+// Doctorium — doktor bilgi portalı. Modüller: Akışım (A) · Akademik (C) · Sektörel (B) · Kongre (E).
 // Modül D (ilaç tanıtımı/e-mümessil) PARK: TİTCK tanıtım yönetmeliği hukuki görüş ister.
 export default async function DoctoriumPage({
   searchParams,
@@ -46,7 +51,7 @@ export default async function DoctoriumPage({
   const sp = await searchParams;
   const active: ModuleKey = sp.m && MODULE_KEYS.has(sp.m as ModuleKey) ? (sp.m as ModuleKey) : "akis";
   const range = RANGE_OPTIONS.some((r) => r.key === sp.d) ? (sp.d as string) : DEFAULT_RANGE;
-  // Tek-branş odağı (akış çipine tıklama): yalnız hekimin AKIŞINDAKİ branşlar seçilebilir —
+  // Tek-branş odağı (akış çipine tıklama): yalnız doktorun AKIŞINDAKİ branşlar seçilebilir —
   // rastgele slug ile başka branşın akışı URL'den açılmasın (tutarlı kişiselleştirme).
   const focus = sp.b && VALID_SLUGS.has(sp.b) && branches.includes(sp.b) ? sp.b : null;
 
@@ -71,8 +76,11 @@ export default async function DoctoriumPage({
       </Link>
 
       <div className="mt-3">
-        <h1 className="aura-display flex items-center gap-2.5 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
-          <BookOpen size={26} className="text-emerald-300" /> Doctorium
+        {/* L1 lockup (kullanıcı kararı 2026-08-01): zümrüt AURA sembolü + "ium" vurgusu.
+            Negatif margin'ler sembolün viewBox nabız payını kırpar (yazıya optik bitişik). */}
+        <h1 className="aura-display flex items-center text-3xl font-medium tracking-tight text-[var(--c-ink)]">
+          <AuraMark size={36} tone="emerald" className="-ml-1.5 -mr-1" />
+          <span>Doctor<span className="doctorium-ium">ium</span></span>
         </h1>
         <p className="mt-1 text-sm text-[var(--c-ink-2)]">{activeDef.desc}</p>
       </div>
@@ -95,81 +103,28 @@ export default async function DoctoriumPage({
         ))}
       </nav>
 
-      {/* Sekmelerin ALTINDA alt menü: branş tercihleri (yalnız DOCTOR — personelin branşı yok) */}
-      {doctor && (
-        <BranchPrefsMenu
-          options={BRANCH_OPTIONS}
-          initial={parseBranchPrefs(doctor.newsBranches)}
-          ownSlug={slugForLabel(doctor.branch)}
-        />
-      )}
+      {/* TEK filtre/tercih penceresi (v6.52): aralık · kategori · kongre alarmı · branş tercihleri.
+          Önceden ayrı satırlardaydı ve dağınık duruyordu (kullanıcı bildirimi). */}
+      <DoctoriumFilters
+        module={active}
+        showRange={active === "mevzuat" || active === "sektorel" || active === "ilac"}
+        showCategory={active === "mevzuat" || active === "sektorel"}
+        showAlerts={active === "kongre" && !!doctor}
+        rangeKey={range}
+        rangeOptions={RANGE_OPTIONS}
+        category={cat}
+        categoryOptions={SECTOR_CATEGORIES}
+        branchOptions={doctor ? BRANCH_OPTIONS : null}
+        branchInitial={parseBranchPrefs(doctor?.newsBranches)}
+        ownBranchSlug={slugForLabel(doctor?.branch)}
+        alertStart={doctor?.congressAlertDays ?? null}
+        alertDeadline={doctor?.congressDeadlineAlertDays ?? null}
+      />
 
-      {/* Mevzuat / Sektörel / İlaç: geriye-dönük aralık + (mevzuat/sektörel) kategori süzgeci */}
-      {(active === "mevzuat" || active === "sektorel" || active === "ilac") && (
-        <>
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] text-[var(--c-ink-3)]">Geriye dönük:</span>
-            {RANGE_OPTIONS.map((r) => (
-              <Link
-                key={r.key}
-                href={`/doktor/doctorium?m=${active}&d=${r.key}${cat ? `&c=${cat}` : ""}`}
-                aria-current={r.key === range ? "true" : undefined}
-                className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
-                  r.key === range
-                    ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
-                    : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
-                }`}
-              >
-                {r.label}
-              </Link>
-            ))}
-          </div>
-
-          {(active === "mevzuat" || active === "sektorel") && (
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] text-[var(--c-ink-3)]">Kategori:</span>
-              <Link
-                href={`/doktor/doctorium?m=${active}&d=${range}`}
-                aria-current={!cat ? "true" : undefined}
-                className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
-                  !cat
-                    ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
-                    : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
-                }`}
-              >
-                Tümü
-              </Link>
-              {SECTOR_CATEGORIES.map((c) => (
-                <Link
-                  key={c.key}
-                  href={`/doktor/doctorium?m=${active}&d=${range}&c=${c.key}`}
-                  aria-current={cat === c.key ? "true" : undefined}
-                  className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
-                    cat === c.key
-                      ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
-                      : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
-                  }`}
-                >
-                  {c.label}
-                </Link>
-              ))}
-            </div>
-          )}
-
-          {active === "ilac" && <ProspektusSearch />}
-        </>
-      )}
+      {active === "ilac" && <ProspektusSearch />}
 
       {active === "kongre" ? (
-        <>
-          {doctor && (
-            <CongressAlertSettings
-              startDays={doctor.congressAlertDays}
-              deadlineDays={doctor.congressDeadlineAlertDays}
-            />
-          )}
-          <CongressList rows={congresses} followed={followed} canFollow={!!doctor} />
-        </>
+        <CongressList rows={congresses} followed={followed} canFollow={!!doctor} />
       ) : (
         <>
           {/* Akışım: branş çipleri — tıklanınca YALNIZ o branş listelenir */}

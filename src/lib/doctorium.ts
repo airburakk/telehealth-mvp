@@ -1,4 +1,4 @@
-// Doctorium — hekim bilgi portalı, OKUMA katmanı (v6.48).
+// Doctorium — doktor bilgi portalı, OKUMA katmanı (v6.48).
 // Yazma/toplama tarafı: lib/doctorium-ingest.ts (günlük bakım cron'u çağırır).
 //
 // Modüller (kullanıcı kararı 2026-08-01): A akış+tercih · B sektörel/mevzuat · C akademik+AI özet ·
@@ -20,14 +20,14 @@ export interface ModuleDef {
   desc: string;
 }
 
-// Sekme sırası = hekimin günlük kullanım sıklığı varsayımı (kişisel akış önce).
+// Sekme sırası = doktorun günlük kullanım sıklığı varsayımı (kişisel akış önce).
 // v6.50: "Sektörel & Mevzuat" İKİYE ayrıldı (kullanıcı isteği) + İlaç modülü eklendi.
 // Sıra kullanıcı kararı (2026-08-01): Akışım · Akademik · Sektörel · İlaç · Kongre · Mevzuat.
 // Mevzuat EN SONDA — günlük okuma sıklığı en düşük, ihtiyaç anında bakılan referans niteliğinde.
 export const DOCTORIUM_MODULES: ModuleDef[] = [
   { key: "akis", label: "Akışım", desc: "Branşınız + mevzuat + sektör: tek akış" },
   { key: "akademik", label: "Akademik", desc: "Hakemli yayınlar — PubMed" },
-  { key: "sektorel", label: "Sektörel", desc: "Hekim hakları · yönetim · teknoloji · küresel" },
+  { key: "sektorel", label: "Sektörel", desc: "Doktor hakları · yönetim · teknoloji · küresel" },
   { key: "ilac", label: "İlaç & Cihaz", desc: "Geri çekmeler · klinik faz · prospektüs" },
   { key: "kongre", label: "Kongre Takvimi", desc: "Ulusal ve uluslararası kongreler" },
   { key: "mevzuat", label: "Mevzuat", desc: "Resmî Gazete · SUT · sağlık hukuku" },
@@ -89,8 +89,8 @@ export function normalizeBranchPrefs(input: unknown): string[] {
 }
 
 /**
- * Hekimin akışında kullanılacak branşlar: tercih ettikleri; hiç tercih girmemişse KENDİ branşı
- * (tercih ekranına girmemiş hekim boş akış görmesin). Personelde (doktor profili yok) boş = genel.
+ * Doktorun akışında kullanılacak branşlar: tercih ettikleri; hiç tercih girmemişse KENDİ branşı
+ * (tercih ekranına girmemiş doktor boş akış görmesin). Personelde (doktor profili yok) boş = genel.
  */
 export function effectiveBranches(newsBranches: string | null | undefined, ownBranchLabel: string | null | undefined): string[] {
   const prefs = parseBranchPrefs(newsBranches);
@@ -151,7 +151,7 @@ export async function personalFeed(branchSlugs: string[], limit = 30): Promise<F
     return rows.map(toFeedItem);
   }
   // v6.50 (kullanıcı isteği): akış YALNIZ akademikten ibaret değil — mevzuat, sektörel ve
-  // ilaç kalemleri branş ayrımı olmaksızın herkesin akışına girer (hepsi hekimi ilgilendirir).
+  // ilaç kalemleri branş ayrımı olmaksızın herkesin akışına girer (hepsi doktoru ilgilendirir).
   const rows = await db.newsArticle.findMany({
     where: {
       OR: [
@@ -167,7 +167,7 @@ export async function personalFeed(branchSlugs: string[], limit = 30): Promise<F
 }
 
 /**
- * TEK branşa daraltılmış akış (v6.49): hekim akışındaki branş çipine tıklayınca. Yalnız o branşın
+ * TEK branşa daraltılmış akış (v6.49): doktorun akışındaki branş çipine tıklayınca. Yalnız o branşın
  * yayınları — mevzuat DAHİL EDİLMEZ (kullanıcı bir branşa odaklanmak istiyor; mevzuat gürültü olur).
  */
 export async function singleBranchFeed(slug: string, limit = 30): Promise<FeedItem[]> {
@@ -180,7 +180,7 @@ export async function singleBranchFeed(slug: string, limit = 30): Promise<FeedIt
   return rows.map(toFeedItem);
 }
 
-// Sektörel/mevzuat zaman aralığı (v6.49, kullanıcı isteği): hekim "kaç gün geriye" görmek
+// Sektörel/mevzuat zaman aralığı (v6.49, kullanıcı isteği): doktor "kaç gün geriye" görmek
 // istediğini seçer. Değer URL'de taşınır (?d=) — paylaşılabilir, şema gerektirmez.
 export const RANGE_OPTIONS = [
   { key: "1", label: "Günlük", days: 1 },
@@ -344,7 +344,7 @@ export function parseClinicalSummary(raw: string | null): ClinicalSummary | null
 
 /**
  * Yayının 2 dakikalık Türkçe klinik özetini üretir ve kaydeder (bir kez; sonraki okumalar DB'den).
- * TEMBEL üretim: yalnız hekim yayını AÇTIĞINDA çalışır → okunmayan ~90 yayın için AI parası ödenmez.
+ * TEMBEL üretim: yalnız doktor yayını AÇTIĞINDA çalışır → okunmayan ~90 yayın için AI parası ödenmez.
  * ⚠️ Bu bir KLİNİK KARAR ARACI DEĞİLDİR; arayüz bu uyarıyı göstermek zorundadır.
  */
 export async function ensureClinicalSummary(id: string): Promise<ClinicalSummary | null> {
@@ -373,7 +373,7 @@ export async function ensureClinicalSummary(id: string): Promise<ClinicalSummary
 // Fihrist yalnız BAŞLIK verir → detay sayfası boş görünüyordu (kullanıcı bildirimi 2026-08-01).
 // Çözüm iki aşamalı ve TEMBEL (yalnız kalem açıldığında, bir kez; sonra DB'den):
 //   1) Kaynak belgenin metni çekilir → NewsArticle.summary'ye yazılır (resmî metin alıntısı)
-//   2) O metin AI ile hekim-odaklı özete çevrilir → aiSummary (özet + aksiyon + kimi etkiler)
+//   2) O metin AI ile doktor-odaklı özete çevrilir → aiSummary (özet + aksiyon + kimi etkiler)
 // PDF kaynakta metin çıkarımı YOK → özet üretilmez, arayüz bunu açıkça söyler (uydurmaz).
 
 export interface RegulationSummary {

@@ -125,7 +125,7 @@ async function main() {
   const pw = await bcrypt.hash("1234", 10);
   const USERS = [
     { email: "hasta@air.test", name: "Demo Hasta", role: "PATIENT" },
-    { email: "doktor@air.test", name: "Dr. Demo Hekim", role: "DOCTOR" },
+    { email: "doktor@air.test", name: "Dr. Demo", role: "DOCTOR" },
     { email: "koordinator@air.test", name: "Demo Koordinatör", role: "COORDINATOR" },
     { email: "kurul@air.test", name: "Kurul Üyesi", role: "ETHICS" },
     { email: "acente@air.test", name: "Demo Sağlık Turizmi Acentesi", role: "AGENCY" }, // S3 — FAZ 4 (2026-07-10)

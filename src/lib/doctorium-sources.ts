@@ -8,7 +8,7 @@
 //                       ("Sağlık Uygulama Tebliğinde Değişiklik – 29 Haziran 2026" gibi tarihli).
 //                       SGK'nın kendi sitesi duyuruları JS ile yüklüyor (statik HTML'de 0 tarih) →
 //                       SGK yerine OHSAD aktarımı kullanılır, KAYNAK OHSAD olarak yazılır.
-//   ✅ TTB            — hekim özlük hakları/ücret tarifeleri; tarihli liste.
+//   ✅ TTB            — doktor özlük hakları/ücret tarifeleri; tarihli liste.
 //   ✅ openFDA        — drug/enforcement + device/enforcement (geri çekme) · drug/label (prospektüs).
 //                       ⚠️ ABD verisi: Türkiye ruhsatı (KÜB/KT) farklı olabilir → UI'da uyarı ZORUNLU.
 //   ✅ ClinicalTrials — /api/v2/studies; faz + durum (lansman/geliştirme takibi).
@@ -54,7 +54,7 @@ function matchesKeyword(text: string, kw: string): boolean {
   return re.test(text);
 }
 
-// İnsan hekimini ilgilendirmeyen alanlar — sağlık kelimesi geçse bile DIŞLANIR
+// İnsan sağlığını ilgilendirmeyen alanlar — sağlık kelimesi geçse bile DIŞLANIR
 // (veteriner/gıda/bitki sağlığı ve enerji-maden ilanları).
 const EXCLUDE = ["veteriner", "hayvan", "gıda", "bitki", "petrol", "enerji iletim", "maden"];
 
@@ -227,7 +227,7 @@ export async function ingestOhsad(): Promise<[number, number]> {
   return [scanned, created];
 }
 
-// ── TTB (hekim özlük hakları) ───────────────────────────────────────────────
+// ── TTB (doktor özlük hakları) ───────────────────────────────────────────────
 
 export async function ingestTtb(): Promise<[number, number]> {
   const res = await fetch("https://www.ttb.org.tr/", { headers: { "User-Agent": UA }, cache: "no-store" });

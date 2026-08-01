@@ -1,6 +1,6 @@
 // Doctorium Modül E — kongre alarmı (v6.49). Günlük bakım cron'u (purge-deleted) çağırır.
 //
-// İKİ AYRI ALARM (kullanıcı isteği): hekim ikisini ayrı ayrı ayarlar, çünkü zamanlamaları farklıdır —
+// İKİ AYRI ALARM (kullanıcı isteği): doktor ikisini ayrı ayrı ayarlar, çünkü zamanlamaları farklıdır —
 //   1) "start"    → kongrenin BAŞLANGICI yaklaşıyor (Doctor.congressAlertDays)
 //   2) "deadline" → bildiri teslim / erken kayıt SON TARİHİ yaklaşıyor (Doctor.congressDeadlineAlertDays)
 //      Kongreye 2 ay varken bildiri süresi dolabilir; tek eşik ikisini de doğru yakalayamaz.
@@ -48,7 +48,7 @@ export async function remindCongressFollows(now = new Date()): Promise<CongressR
   });
   if (!follows.length) return out;
 
-  // Takip edilen kongreler + alarm tercihi olan hekimler tek seferde çekilir (N+1 yok).
+  // Takip edilen kongreler + alarm tercihi olan doktorlar tek seferde çekilir (N+1 yok).
   const doctorIds = [...new Set(follows.map((f) => f.doctorId))];
   // NOT: User modelinde `doctor` İLİŞKİSİ yok (yalnız `doctorId` skaları) → üç sorgu ayrı ayrı.
   const [congresses, users, doctors] = await Promise.all([
@@ -70,7 +70,7 @@ export async function remindCongressFollows(now = new Date()): Promise<CongressR
     const c = byCongress.get(f.congressId);
     const u = userByDoctor.get(f.doctorId);
     const pref = prefByDoctor.get(f.doctorId);
-    if (!c || !u || !pref) continue; // kongre silinmiş veya hekimin User kaydı yok
+    if (!c || !u || !pref) continue; // kongre silinmiş veya doktorun User kaydı yok
     out.checked++;
 
     const sent = parseSent(f.sentAlerts);

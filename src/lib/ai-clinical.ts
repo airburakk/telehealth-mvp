@@ -687,7 +687,7 @@ export async function assessDocument(
 // Girdi herkese açık literatür abstract'ıdır; PHI GİRMEZ (de-id/minimizasyon gerekmez).
 const ARTICLE_SUMMARY_TOOL: Anthropic.Tool = {
   name: "submit_summary",
-  description: "Yayının hekim için yapılandırılmış Türkçe klinik özeti.",
+  description: "Yayının doktor için yapılandırılmış Türkçe klinik özeti.",
   input_schema: {
     type: "object",
     properties: {
@@ -711,7 +711,7 @@ export async function summarizeArticleForClinician(
     model: MODEL,
     max_tokens: 900,
     system:
-      "Sen bir tıp editörüsün. Hakemli bir yayının abstract'ını MESLEKTEN HEKİM için Türkçe olarak yapılandırırsın. " +
+      "Sen bir tıp editörüsün. Hakemli bir yayının abstract'ını MESLEKTEN DOKTOR için Türkçe olarak yapılandırırsın. " +
       "Tıbbi terminolojiyi koru (Türkçe karşılığı yerleşik değilse özgün terimi bırak). " +
       "SADECE verilen metinde OLAN bilgiyi kullan: sayı, oran, p-değeri, sonuç UYDURMA; metinde olmayanı yazma. " +
       "Emin olmadığın alan için 'Abstract'ta belirtilmemiş' de. Yanıtı DAİMA submit_summary aracıyla ver.",
@@ -734,7 +734,7 @@ export async function summarizeArticleForClinician(
 // ⚠️ Çıktı HUKUKİ GÖRÜŞ DEĞİLDİR — arayüz bu uyarıyı göstermek zorundadır.
 const REGULATION_TOOL: Anthropic.Tool = {
   name: "submit_regulation_summary",
-  description: "Mevzuat/duyuru metninin hekim için yapılandırılmış Türkçe özeti.",
+  description: "Mevzuat/duyuru metninin doktor için yapılandırılmış Türkçe özeti.",
   input_schema: {
     type: "object",
     properties: {
@@ -742,7 +742,7 @@ const REGULATION_TOOL: Anthropic.Tool = {
       actions: {
         type: "array",
         items: { type: "string" },
-        description: "Hekimin/kliniğin atması gereken somut adımlar (0-3 madde). Metinden çıkmıyorsa BOŞ dizi.",
+        description: "Doktorun/kliniğin atması gereken somut adımlar (0-3 madde). Metinden çıkmıyorsa BOŞ dizi.",
       },
       affected: { type: "string", description: "Kimi etkiliyor (ör. 'özel hastaneler', 'tüm hekimler'). Belirsizse 'Metinde açıkça belirtilmemiş'." },
       effective: { type: "string", description: "Yürürlük tarihi/koşulu. Metinde yoksa 'Belirtilmemiş'." },
@@ -759,7 +759,7 @@ export async function summarizeRegulationForClinician(
     model: MODEL,
     max_tokens: 900,
     system:
-      "Sen sağlık mevzuatı editörüsün. Resmî Gazete/kurum duyurusu metnini HEKİM için Türkçe özetlersin. " +
+      "Sen sağlık mevzuatı editörüsün. Resmî Gazete/kurum duyurusu metnini DOKTOR için Türkçe özetlersin. " +
       "SADECE verilen metinde OLAN bilgiyi kullan: madde numarası, tarih, oran UYDURMA; metinde olmayan " +
       "yükümlülük yazma. Yorum/tavsiye verme, ne yazıldığını aktar. Emin olmadığın alanda 'Belirtilmemiş' de. " +
       "Yanıtı DAİMA submit_regulation_summary aracıyla ver.",
