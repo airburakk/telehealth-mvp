@@ -903,7 +903,10 @@ model NewsArticle {
   id            String   @id @default(cuid())
   source        String // "pubmed" | "resmi-gazete" | "titck" | ... (kaynak sistemi)
   externalId    String // pmid / rss guid — kaynak içinde benzersiz (yeniden çekimde tekrar yazılmaz)
-  module        String // "akademik" (Modül C) | "sektorel" (Modül B)
+  module        String // "akademik" | "mevzuat" | "sektorel" | "ilac" (v6.50: mevzuat/sektörel/ilaç ayrıştı)
+  /// Sektörel alt kategori (v6.50) — yalnız module="sektorel"/"mevzuat"/"ilac" için:
+  /// "mevzuat" | "sut" | "turizm" | "yonetim" | "teknoloji" | "ilac-cihaz". null = kategorisiz.
+  category      String?
   /// JSON string[] — ilgili branş SLUG'ları (lib/triage BRANCHES key'leri). Boş dizi = genel akış.
   branchSlugs   String   @default("[]")
   kind          String // makale | ilac | mevzuat | haber

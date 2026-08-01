@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   DOCTORIUM_MODULES, KIND_LABEL, RANGE_OPTIONS, DEFAULT_RANGE, rangeDays,
+  SECTOR_CATEGORIES, categoryLabel,
   effectiveBranches, personalFeed, moduleFeed, singleBranchFeed, upcomingCongresses,
   localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
   slugForLabel, type FeedItem, type ModuleKey,
@@ -12,9 +13,10 @@ import { branchColor, hasBranchVisual } from "@/lib/branch-visuals";
 import { BranchAvatar } from "@/components/BranchAvatar";
 import { BranchPrefsMenu } from "./BranchPrefsMenu";
 import { CongressAlertSettings, FollowButton } from "./CongressControls";
+import { ProspektusSearch } from "./ProspektusSearch";
 import {
   ArrowLeft, BookOpen, ExternalLink, FlaskConical, Gavel, Info,
-  Sparkles, MapPin, X, CalendarClock,
+  Sparkles, MapPin, X, CalendarClock, Pill, Building2,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +29,7 @@ const VALID_SLUGS = new Set(BRANCH_OPTIONS.map((b) => b.slug));
 export default async function DoctoriumPage({
   searchParams,
 }: {
-  searchParams: Promise<{ m?: string; d?: string; b?: string }>;
+  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
@@ -48,10 +50,14 @@ export default async function DoctoriumPage({
   // rastgele slug ile başka branşın akışı URL'den açılmasın (tutarlı kişiselleştirme).
   const focus = sp.b && VALID_SLUGS.has(sp.b) && branches.includes(sp.b) ? sp.b : null;
 
+  const cat = sp.c && SECTOR_CATEGORIES.some((x) => x.key === sp.c) ? sp.c : null;
+
   let items: FeedItem[] = [];
-  if (active === "akis") items = focus ? await singleBranchFeed(focus) : await personalFeed(branches);
+  if (active === "akis") items = focus ? await singleBranchFeed(focus) : await personalFeed(branches, 40);
   else if (active === "akademik") items = await moduleFeed("akademik", branches);
-  else if (active === "sektorel") items = await moduleFeed("sektorel", [], { days: rangeDays(range) });
+  else if (active === "mevzuat") items = await moduleFeed("mevzuat", [], { days: rangeDays(range), category: cat });
+  else if (active === "sektorel") items = await moduleFeed("sektorel", [], { days: rangeDays(range), category: cat });
+  else if (active === "ilac") items = await moduleFeed("ilac", [], { days: rangeDays(range) });
   if (items.length) items = await localizeTitles(items);
 
   const congresses = active === "kongre" ? await upcomingCongresses(branches) : [];
@@ -98,25 +104,60 @@ export default async function DoctoriumPage({
         />
       )}
 
-      {/* Sektörel: kaç gün geriye bakılacağı */}
-      {active === "sektorel" && (
-        <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] text-[var(--c-ink-3)]">Geriye dönük:</span>
-          {RANGE_OPTIONS.map((r) => (
-            <Link
-              key={r.key}
-              href={`/doktor/doctorium?m=sektorel&d=${r.key}`}
-              aria-current={r.key === range ? "true" : undefined}
-              className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
-                r.key === range
-                  ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
-                  : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
-              }`}
-            >
-              {r.label}
-            </Link>
-          ))}
-        </div>
+      {/* Mevzuat / Sektörel / İlaç: geriye-dönük aralık + (mevzuat/sektörel) kategori süzgeci */}
+      {(active === "mevzuat" || active === "sektorel" || active === "ilac") && (
+        <>
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] text-[var(--c-ink-3)]">Geriye dönük:</span>
+            {RANGE_OPTIONS.map((r) => (
+              <Link
+                key={r.key}
+                href={`/doktor/doctorium?m=${active}&d=${r.key}${cat ? `&c=${cat}` : ""}`}
+                aria-current={r.key === range ? "true" : undefined}
+                className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                  r.key === range
+                    ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
+                    : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
+                }`}
+              >
+                {r.label}
+              </Link>
+            ))}
+          </div>
+
+          {(active === "mevzuat" || active === "sektorel") && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-[var(--c-ink-3)]">Kategori:</span>
+              <Link
+                href={`/doktor/doctorium?m=${active}&d=${range}`}
+                aria-current={!cat ? "true" : undefined}
+                className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                  !cat
+                    ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
+                    : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
+                }`}
+              >
+                Tümü
+              </Link>
+              {SECTOR_CATEGORIES.map((c) => (
+                <Link
+                  key={c.key}
+                  href={`/doktor/doctorium?m=${active}&d=${range}&c=${c.key}`}
+                  aria-current={cat === c.key ? "true" : undefined}
+                  className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                    cat === c.key
+                      ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
+                      : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
+                  }`}
+                >
+                  {c.label}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {active === "ilac" && <ProspektusSearch />}
+        </>
       )}
 
       {active === "kongre" ? (
@@ -180,9 +221,13 @@ function EmptyState({ active, focus, range }: { active: ModuleKey; focus: string
   const label = RANGE_OPTIONS.find((r) => r.key === range)?.label.toLocaleLowerCase("tr-TR") ?? "";
   const msg = focus
     ? `${branchLabel(focus)} için henüz yayın toplanmadı. Akış her gece güncellenir.`
-    : active === "sektorel"
-      ? `Seçtiğiniz ${label} pencerede sağlıkla ilgili mevzuat kaydı yok. Resmî Gazete fihristi her gece taranır; daha geniş bir aralık deneyebilirsiniz.`
-      : "Henüz içerik toplanmadı. Yayın akışı her gece güncellenir.";
+    : active === "mevzuat"
+      ? `Seçtiğiniz ${label} pencerede bu kategoride mevzuat kaydı yok. Resmî Gazete + OHSAD her gece taranır; daha geniş aralık veya "Tümü" kategorisini deneyin.`
+      : active === "sektorel"
+        ? `Seçtiğiniz ${label} pencerede bu kategoride sektörel haber yok. Daha geniş bir aralık deneyebilirsiniz.`
+        : active === "ilac"
+          ? `Seçtiğiniz ${label} pencerede ilaç/cihaz kaydı yok. Geri çekme ve klinik faz akışı her gece güncellenir.`
+          : "Henüz içerik toplanmadı. Yayın akışı her gece güncellenir.";
   return (
     <p className="mt-6 flex items-start gap-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-8 text-sm text-[var(--c-ink-2)]">
       <Info size={16} className="mt-0.5 shrink-0" />
@@ -207,7 +252,10 @@ const KIND_STYLE: Record<string, string> = {
 function Cover({ item }: { item: FeedItem }) {
   const first = item.branchSlugs[0];
   const label = first ? branchLabel(first) : null;
-  const accent = item.module === "sektorel" ? "#f59e0b" : label ? branchColor(label) : "#34d399";
+  const accent = item.module === "mevzuat" ? "#f59e0b"
+    : item.module === "ilac" ? "#22d3ee"
+    : item.module === "sektorel" ? "#a78bfa"
+    : label ? branchColor(label) : "#34d399";
   return (
     <div
       aria-hidden
@@ -215,8 +263,12 @@ function Cover({ item }: { item: FeedItem }) {
       style={{ borderRight: `3px solid ${accent}` }}
     >
       <span className="absolute inset-0 opacity-[0.07]" style={{ background: accent }} />
-      {item.module === "sektorel" ? (
+      {item.module === "mevzuat" ? (
         <Gavel size={26} style={{ color: accent }} strokeWidth={1.8} />
+      ) : item.module === "ilac" ? (
+        <Pill size={26} style={{ color: accent }} strokeWidth={1.8} />
+      ) : item.module === "sektorel" ? (
+        <Building2 size={26} style={{ color: accent }} strokeWidth={1.8} />
       ) : label && hasBranchVisual(label) ? (
         <BranchAvatar branchKey={label} size={42} />
       ) : (
@@ -242,6 +294,11 @@ function ArticleCard({ item }: { item: FeedItem }) {
             <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${KIND_STYLE[item.kind] ?? KIND_STYLE.haber}`}>
               {KIND_LABEL[item.kind] ?? item.kind}
             </span>
+            {categoryLabel(item.category) && (
+              <span className="aura-mono rounded-full bg-[var(--c-surface-2)] px-2 py-0.5 text-[10px] text-[var(--c-ink-2)]">
+                {categoryLabel(item.category)}
+              </span>
+            )}
             <span className="text-[11px] text-[var(--c-ink-3)]">
               {item.sourceName} · {formatDate(item.publishedAt)}
             </span>

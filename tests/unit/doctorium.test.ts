@@ -5,8 +5,9 @@ import {
   parseBranchPrefs, normalizeBranchPrefs, effectiveBranches, branchLabel, slugForLabel,
   parseClinicalSummary, BRANCH_OPTIONS, DOCTORIUM_MODULES,
   RANGE_OPTIONS, DEFAULT_RANGE, rangeDays, normalizeAlertDays, ALERT_DAY_OPTIONS,
+  SECTOR_CATEGORIES, categoryLabel,
 } from "@/lib/doctorium";
-import { isHealthRelated } from "@/lib/doctorium-ingest";
+import { isHealthRelated, categorize, parseTurkishDate } from "@/lib/doctorium-sources";
 import { BRANCHES } from "@/lib/triage";
 
 describe("branş tercihleri", () => {
@@ -92,10 +93,30 @@ describe("Resmî Gazete sağlık filtresi (Modül B)", () => {
 });
 
 describe("modül tanımı", () => {
-  it("4 modül tanımlı ve anahtarlar benzersiz (D=ilaç PARK, kasıtlı yok)", () => {
+  it("6 modül: mevzuat/sektörel ayrı + ilaç eklendi (v6.50)", () => {
     const keys = DOCTORIUM_MODULES.map((m) => m.key);
-    expect(keys).toEqual(["akis", "akademik", "sektorel", "kongre"]);
+    expect(keys).toEqual(["akis", "akademik", "mevzuat", "sektorel", "ilac", "kongre"]);
     expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it("6 sektörel kategori tanımlı ve etiketleri çözülür", () => {
+    expect(SECTOR_CATEGORIES).toHaveLength(6);
+    for (const c of SECTOR_CATEGORIES) expect(categoryLabel(c.key)).toBe(c.label);
+    expect(categoryLabel("yok-boyle")).toBeNull();
+    expect(categoryLabel(null)).toBeNull();
+  });
+
+  it("kategori anahtarları categorize() çıktılarını KAPSAR (sessiz kayıp olmasın)", () => {
+    const keys = new Set(SECTOR_CATEGORIES.map((c) => c.key));
+    for (const t of [
+      "Sağlık Uygulama Tebliğinde Değişiklik", "Sağlık Turizmi Teşvik Kararı",
+      "Beşeri Tıbbi Ürünlerin Ruhsatlandırılması", "Kişisel Sağlık Verileri Yönetmeliği",
+      "İşyeri Hekimliği Ücret Tarifeleri", "Özel Hastaneler Yönetmeliği",
+    ]) {
+      const c = categorize(t);
+      expect(c, t).not.toBeNull();
+      expect(keys.has(c as string), `${t} -> ${c}`).toBe(true);
+    }
   });
 });
 
@@ -132,5 +153,42 @@ describe("kongre alarm eşiği", () => {
   it("seçenekler gün cinsinden artan sırada", () => {
     const d = ALERT_DAY_OPTIONS.map((o) => o.days);
     expect(d).toEqual([...d].sort((a, b) => a - b));
+  });
+});
+
+// ── v6.50: sektörel kategori ataması + tarih ayrıştırma ──
+describe("sektörel kategori ataması", () => {
+  it("SUT/geri ödeme, genel mevzuattan ÖNCE gelir (sıra kritik)", () => {
+    // "SUT Tebliğinde Değişiklik" hem 'tebliğ' hem 'sut' içerir → sut kazanmalı
+    expect(categorize("Sağlık Uygulama Tebliğinde Değişiklik Yapılmasına Dair Tebliğ")).toBe("sut");
+    expect(categorize("SGK Sağlık Hizmetleri Fiyatlandırma Komisyonu Kararı")).toBe("sut");
+    expect(categorize("Muayene Katılım Paylarına İlişkin SUT Değişikliği")).toBe("sut");
+  });
+
+  it("her kategori kendi anahtarıyla eşleşir", () => {
+    expect(categorize("Sağlık Turizmi Teşvik Kararında Değişiklik")).toBe("turizm");
+    expect(categorize("Beşeri Tıbbi Ürünlerin Ruhsatlandırılması Yönetmeliği")).toBe("ilac-cihaz");
+    expect(categorize("Kişisel Sağlık Verileri Yönetmeliğinde Değişiklik")).toBe("teknoloji");
+    expect(categorize("İşyeri Hekimliği Ücret Tarifeleri açıklandı")).toBe("yonetim");
+    expect(categorize("Özel Hastaneler Yönetmeliğinde Değişiklik")).toBe("yonetim");
+  });
+
+  it("hiçbiri tutmazsa null (zorla kategori atanmaz)", () => {
+    expect(categorize("Hava durumu raporu")).toBeNull();
+  });
+});
+
+describe("Türkçe tarih ayrıştırma (OHSAD/TTB başlıkları)", () => {
+  it("'– 29 Haziran 2026' biçimini çözer", () => {
+    const d = parseTurkishDate("Sağlık Uygulama Tebliğinde Değişiklik – 29 Haziran 2026");
+    expect(d?.toISOString().slice(0, 10)).toBe("2026-06-29");
+  });
+
+  it("noktalı biçimi çözer", () => {
+    expect(parseTurkishDate("Duyuru 01.07.2026")?.toISOString().slice(0, 10)).toBe("2026-07-01");
+  });
+
+  it("tarih yoksa null döner (bugün varsayımı çağırana bırakılır)", () => {
+    expect(parseTurkishDate("Tarihsiz bir başlık")).toBeNull();
   });
 });

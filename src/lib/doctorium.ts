@@ -11,7 +11,7 @@ import { BRANCHES } from "./triage";
 
 export const DOCTORIUM_NAME = "Doctorium";
 
-export type ModuleKey = "akis" | "akademik" | "sektorel" | "kongre";
+export type ModuleKey = "akis" | "akademik" | "mevzuat" | "sektorel" | "ilac" | "kongre";
 
 export interface ModuleDef {
   key: ModuleKey;
@@ -20,18 +20,38 @@ export interface ModuleDef {
 }
 
 // Sekme sırası = hekimin günlük kullanım sıklığı varsayımı (kişisel akış önce).
+// v6.50: "Sektörel & Mevzuat" İKİYE ayrıldı (kullanıcı isteği) + İlaç modülü eklendi.
 export const DOCTORIUM_MODULES: ModuleDef[] = [
-  { key: "akis", label: "Akışım", desc: "Seçtiğiniz branşlara göre kişiselleştirilmiş" },
+  { key: "akis", label: "Akışım", desc: "Branşınız + mevzuat + sektör: tek akış" },
   { key: "akademik", label: "Akademik", desc: "Hakemli yayınlar — PubMed" },
-  { key: "sektorel", label: "Sektörel & Mevzuat", desc: "Resmî Gazete sağlık düzenlemeleri" },
+  { key: "mevzuat", label: "Mevzuat", desc: "Resmî Gazete · SUT · sağlık hukuku" },
+  { key: "sektorel", label: "Sektörel", desc: "Hekim hakları · yönetim · teknoloji · küresel" },
+  { key: "ilac", label: "İlaç & Cihaz", desc: "Geri çekmeler · klinik faz · prospektüs" },
   { key: "kongre", label: "Kongre Takvimi", desc: "Ulusal ve uluslararası kongreler" },
 ];
+
+// Sektörel/mevzuat alt kategorileri (v6.50). Kaynak matrisi: mevzuat+sut+ilac-cihaz Resmî Gazete
+// ve OHSAD'dan, yonetim TTB/OHSAD'dan, teknoloji WHO/RG'den, turizm RG'den gelir.
+export const SECTOR_CATEGORIES: { key: string; label: string }[] = [
+  { key: "mevzuat", label: "Mevzuat & Sağlık Hukuku" },
+  { key: "sut", label: "SGK · SUT & Geri Ödeme" },
+  { key: "turizm", label: "Sağlık Turizmi & Teşvikler" },
+  { key: "yonetim", label: "Hastane & Klinik Yönetimi" },
+  { key: "teknoloji", label: "Sağlık Teknolojileri" },
+  { key: "ilac-cihaz", label: "İlaç & Tıbbi Cihaz" },
+];
+const CAT_LABEL: Record<string, string> = Object.fromEntries(SECTOR_CATEGORIES.map((c) => [c.key, c.label]));
+export function categoryLabel(k: string | null | undefined): string | null {
+  return k ? CAT_LABEL[k] ?? null : null;
+}
 
 export const KIND_LABEL: Record<string, string> = {
   makale: "Makale",
   ilac: "Klinik Çalışma",
   mevzuat: "Mevzuat",
   haber: "Haber",
+  uyari: "Geri Çekme",
+  lansman: "Klinik Faz",
 };
 
 // ── Branş tercihleri (Modül A) ──────────────────────────────────────────────
@@ -91,6 +111,7 @@ export interface FeedItem {
   doi: string | null;
   publishedAt: Date;
   branchSlugs: string[];
+  category: string | null;
   hasAiSummary: boolean;
 }
 
@@ -98,6 +119,7 @@ type Row = {
   id: string; module: string; kind: string; title: string; titleOriginal: string | null;
   summary: string; sourceName: string; authors: string | null; url: string | null;
   doi: string | null; publishedAt: Date; branchSlugs: string; aiSummary: string | null;
+  category: string | null;
 };
 
 function toFeedItem(r: Row): FeedItem {
@@ -112,7 +134,7 @@ function toFeedItem(r: Row): FeedItem {
 const ROW_SELECT = {
   id: true, module: true, kind: true, title: true, titleOriginal: true, summary: true,
   sourceName: true, authors: true, url: true, doi: true, publishedAt: true,
-  branchSlugs: true, aiSummary: true,
+  branchSlugs: true, aiSummary: true, category: true,
 } as const;
 
 /**
@@ -125,11 +147,13 @@ export async function personalFeed(branchSlugs: string[], limit = 30): Promise<F
     const rows = await db.newsArticle.findMany({ orderBy: { publishedAt: "desc" }, take: limit, select: ROW_SELECT });
     return rows.map(toFeedItem);
   }
+  // v6.50 (kullanıcı isteği): akış YALNIZ akademikten ibaret değil — mevzuat, sektörel ve
+  // ilaç kalemleri branş ayrımı olmaksızın herkesin akışına girer (hepsi hekimi ilgilendirir).
   const rows = await db.newsArticle.findMany({
     where: {
       OR: [
         ...branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } })),
-        { module: "sektorel" },
+        { module: { in: ["mevzuat", "sektorel", "ilac"] } },
       ],
     },
     orderBy: { publishedAt: "desc" },
@@ -170,14 +194,15 @@ export function rangeDays(key: string | undefined): number {
 
 /** Modül akışı (akademik/sektörel). Branş verilirse akademikte süzülür; days verilirse tarih penceresi. */
 export async function moduleFeed(
-  module: "akademik" | "sektorel",
+  module: "akademik" | "mevzuat" | "sektorel" | "ilac",
   branchSlugs: string[],
-  opts: { limit?: number; days?: number } = {},
+  opts: { limit?: number; days?: number; category?: string | null } = {},
 ): Promise<FeedItem[]> {
-  const { limit = 30, days } = opts;
+  const { limit = 40, days, category } = opts;
   const rows = await db.newsArticle.findMany({
     where: {
       module,
+      ...(category ? { category } : {}),
       ...(days ? { publishedAt: { gte: new Date(Date.now() - days * 86400000) } } : {}),
       ...(module === "akademik" && branchSlugs.length
         ? { OR: branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } })) }

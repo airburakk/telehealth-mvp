@@ -16,6 +16,10 @@
 import { db } from "./db";
 import { NEWS_QUERIES } from "./medical-news";
 import { BRANCHES } from "./triage";
+import {
+  fetchGazetteToday, ingestGazetteItems, ingestOhsad, ingestTtb,
+  ingestFdaRecalls, ingestTrials, ingestWho,
+} from "./doctorium-sources";
 
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 const UA = "Mozilla/5.0 (compatible; AuraHealth/1.0; +https://telehealth-mvp-roan.vercel.app)";
@@ -33,6 +37,8 @@ export interface IngestResult {
   pubmedNew: number;
   gazetteFetched: number;
   gazetteNew: number;
+  /** v6.50 — kaynak başına [taranan, yeni] (ohsad · ttb · fda · trials · who). */
+  sources: Record<string, [number, number]>;
   errors: string[];
 }
 
@@ -171,74 +177,6 @@ async function ingestQuery(term: string, limit: number, slugs: string[]): Promis
   return [ids.length, created];
 }
 
-// ── T.C. Resmî Gazete (Modül B) ─────────────────────────────────────────────
-
-// Fihrist başlığı bu kelimelerden birini içeriyorsa sağlıkla ilgili sayılır. Geniş tutuldu:
-// yanlış-pozitif (alakasız tebliğ) kabul edilebilir, yanlış-negatif (kaçan SUT değişikliği) değil.
-const HEALTH_KEYWORDS = [
-  "sağlık", "sağlik", "tıbbi", "tibbi", "tıp", "hekim", "doktor", "hasta", "hastane", "eczane",
-  "eczacı", "ilaç", "ilac", "sgk", "sosyal güvenlik", "sut ", "sağlık uygulama", "tedavi",
-  "ambulans", "tabip", "diş hekim", "hemşire", "medikal", "titck", "biyosidal", "aşı", "asi ",
-  "klinik", "poliklinik", "muayene", "reçete", "recete", "tıbbi cihaz", "tibbi cihaz",
-];
-
-export function isHealthRelated(title: string): boolean {
-  const t = title.toLocaleLowerCase("tr-TR");
-  return HEALTH_KEYWORDS.some((k) => t.includes(k));
-}
-
-/** Resmî Gazete günlük fihristi → sağlıkla ilgili kalemler. Dönen: [tarananToplam, yeni]. */
-async function ingestGazette(): Promise<[number, number]> {
-  const res = await fetch("https://www.resmigazete.gov.tr/", { headers: { "User-Agent": UA }, cache: "no-store" });
-  if (!res.ok) throw new Error(`Resmî Gazete HTTP ${res.status}`);
-  const html = await res.text();
-
-  // Fihrist kalemleri: <div class="fihrist-item mb-1"> … <a href="…/eskiler/YYYY/MM/YYYYMMDD-N.htm">
-  const blocks = html.split(/<div class="fihrist-item[^"]*"[^>]*>/).slice(1);
-  let scanned = 0;
-  let created = 0;
-  for (const block of blocks) {
-    const href = /href="(https:\/\/www\.resmigazete\.gov\.tr\/eskiler\/[^"]+)"/.exec(block)?.[1];
-    if (!href) continue;
-    const title = block
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&")
-      .replace(/\s+/g, " ")
-      .trim()
-      .replace(/^[–—-]\s*/, "")
-      .slice(0, 400);
-    if (!title || title.length < 15) continue;
-    scanned++;
-    if (!isHealthRelated(title)) continue;
-
-    // externalId = dosya adı (20260801-3.htm) — gün içinde benzersiz, yeniden koşuda tekrar yazmaz.
-    const externalId = href.split("/").pop() as string;
-    const dm = /(\d{4})(\d{2})(\d{2})/.exec(externalId);
-    const when = dm ? new Date(`${dm[1]}-${dm[2]}-${dm[3]}T00:00:00Z`) : new Date();
-    const exists = await db.newsArticle.findUnique({
-      where: { source_externalId: { source: "resmi-gazete", externalId } },
-      select: { id: true },
-    });
-    if (exists) continue;
-    await db.newsArticle.create({
-      data: {
-        source: "resmi-gazete",
-        externalId,
-        module: "sektorel",
-        branchSlugs: "[]", // mevzuat tüm branşları ilgilendirir
-        kind: "mevzuat",
-        title,
-        summary: "",
-        sourceName: "T.C. Resmî Gazete",
-        url: href,
-        publishedAt: when,
-      },
-    });
-    created++;
-  }
-  return [scanned, created];
-}
-
 // ── Cron girişi ─────────────────────────────────────────────────────────────
 
 /**
@@ -246,7 +184,7 @@ async function ingestGazette(): Promise<[number, number]> {
  * cron'un asıl işi (imha) zaten ayrı try/catch'te; Doctorium ingest'i kritik değildir.
  */
 export async function ingestDoctorium(): Promise<IngestResult> {
-  const out: IngestResult = { pubmedFetched: 0, pubmedNew: 0, gazetteFetched: 0, gazetteNew: 0, errors: [] };
+  const out: IngestResult = { pubmedFetched: 0, pubmedNew: 0, gazetteFetched: 0, gazetteNew: 0, sources: {}, errors: [] };
 
   // Akademik: her branş için MeSH sorgusu (sıralı + throttle — NCBI 3 istek/sn sınırı).
   for (const [label, term] of Object.entries(NEWS_QUERIES)) {
@@ -265,13 +203,31 @@ export async function ingestDoctorium(): Promise<IngestResult> {
     await sleep(NCBI_GAP_MS);
   }
 
-  // Sektörel: Resmî Gazete günlük fihristi.
+  // Mevzuat: Resmî Gazete günlük fihristi (bugün).
   try {
-    const [scanned, created] = await ingestGazette();
+    const items = await fetchGazetteToday();
+    const [scanned, created] = await ingestGazetteItems(items);
     out.gazetteFetched = scanned;
     out.gazetteNew = created;
   } catch (e) {
     out.errors.push(`resmi-gazete: ${e instanceof Error ? e.message.slice(0, 80) : "hata"}`);
+  }
+
+  // Sektörel + ilaç kaynakları (v6.50). Her biri BAĞIMSIZ try: biri bozulursa diğerleri toplar.
+  const collectors: [string, () => Promise<[number, number]>][] = [
+    ["ohsad", ingestOhsad],
+    ["ttb", ingestTtb],
+    ["fda", () => ingestFdaRecalls(10)],
+    ["trials", () => ingestTrials(10)],
+    ["who", () => ingestWho(8)],
+  ];
+  for (const [name, fn] of collectors) {
+    try {
+      out.sources[name] = await fn();
+    } catch (e) {
+      out.sources[name] = [0, 0];
+      out.errors.push(`${name}: ${e instanceof Error ? e.message.slice(0, 70) : "hata"}`);
+    }
   }
 
   return out;
