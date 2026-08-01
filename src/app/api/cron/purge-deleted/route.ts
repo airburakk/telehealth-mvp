@@ -5,6 +5,7 @@ import { verifyConsentChain } from "@/lib/consent";
 import { sendAlert } from "@/lib/alerts";
 import { remindPendingDocs, type RemindResult } from "@/lib/pending-docs-reminder";
 import { ingestDoctorium, type IngestResult } from "@/lib/doctorium-ingest";
+import { remindCongressFollows, type CongressRemindResult } from "@/lib/congress-reminder";
 
 // GET /api/cron/purge-deleted — saklama süresi dolan klinik kayıtları GERÇEKTEN imha eder (v6.11).
 // vercel.json cron'u günde bir tetikler. registry-sync ile aynı Bearer deseni (anonim tetiklenemez).
@@ -67,6 +68,15 @@ export async function GET(req: Request) {
       doctorium = { error: e instanceof Error ? e.message.slice(0, 120) : "ingest koşamadı" };
     }
 
+    // Doctorium kongre alarmı (v6.49): takip edilen kongrenin başlangıcı / bildiri-erken kayıt son
+    // tarihi hekimin seçtiği eşiğe girdiyse bildirim. Kritik değil — hata imha akışını düşürmez.
+    let congress: CongressRemindResult | { error: string };
+    try {
+      congress = await remindCongressFollows();
+    } catch (e) {
+      congress = { error: e instanceof Error ? e.message.slice(0, 120) : "kongre alarmı koşamadı" };
+    }
+
     // KALICI KOŞU İZİ (2026-07-29): Vercel Hobby'de runtime log saklama süresi 1 SAAT — cron gece
     // koştuğu için sayaçları log'dan gözlemek fiilen imkânsızdı ("ertesi gün bak" planı çalışmıyordu).
     // Sayaçlar audit zincirine yazılır: PHI YOK (yalnız adetler), günde 1 satır (hacim ~3,5/gün'ün
@@ -77,13 +87,16 @@ export async function GET(req: Request) {
     const doc = "error" in doctorium
       ? `hata: ${doctorium.error}`
       : `pubmed=${doctorium.pubmedNew}/${doctorium.pubmedFetched} rg=${doctorium.gazetteNew}/${doctorium.gazetteFetched}${doctorium.errors.length ? ` sorun=${doctorium.errors.length}` : ""}`;
+    const con = "error" in congress
+      ? `hata: ${congress.error}`
+      : `bakilan=${congress.checked} baslangic=${congress.start} sontarih=${congress.deadline} hata=${congress.failed}`;
     await recordAccess({
       actor: null, // sistem koşusu
       action: "CRON_MAINTENANCE",
       resourceType: "SYSTEM",
       resourceId: "purge-deleted",
       subjectUserId: null,
-      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc}`,
+      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · kongre ${con}`,
     });
 
     return NextResponse.json({
@@ -96,6 +109,7 @@ export async function GET(req: Request) {
       },
       pendingDocsReminders: reminders,
       doctorium,
+      congressAlerts: congress,
     });
   } catch (e) {
     // Saklama-imha sözünün bekçisi sessizce düşemez (Ray C): alarm + 500 (Vercel cron log'unda görünür).

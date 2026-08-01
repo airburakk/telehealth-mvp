@@ -3,42 +3,59 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
-  DOCTORIUM_MODULES, KIND_LABEL, effectiveBranches, personalFeed, moduleFeed,
-  upcomingCongresses, localizeTitles, branchLabel, type FeedItem, type ModuleKey,
+  DOCTORIUM_MODULES, KIND_LABEL, RANGE_OPTIONS, DEFAULT_RANGE, rangeDays,
+  effectiveBranches, personalFeed, moduleFeed, singleBranchFeed, upcomingCongresses,
+  localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
+  slugForLabel, type FeedItem, type ModuleKey,
 } from "@/lib/doctorium";
 import { branchColor, hasBranchVisual } from "@/lib/branch-visuals";
 import { BranchAvatar } from "@/components/BranchAvatar";
+import { BranchPrefsMenu } from "./BranchPrefsMenu";
+import { CongressAlertSettings, FollowButton } from "./CongressControls";
 import {
   ArrowLeft, BookOpen, ExternalLink, FlaskConical, Gavel, Info,
-  SlidersHorizontal, Sparkles, MapPin,
+  Sparkles, MapPin, X, CalendarClock,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 const MODULE_KEYS = new Set(DOCTORIUM_MODULES.map((m) => m.key));
+const VALID_SLUGS = new Set(BRANCH_OPTIONS.map((b) => b.slug));
 
-// Doctorium — hekim bilgi portalı (v6.48). Modüller: Akışım (A) · Akademik (C) · Sektörel (B) · Kongre (E).
+// Doctorium — hekim bilgi portalı. Modüller: Akışım (A) · Akademik (C) · Sektörel (B) · Kongre (E).
 // Modül D (ilaç tanıtımı/e-mümessil) PARK: TİTCK tanıtım yönetmeliği hukuki görüş ister.
-export default async function DoctoriumPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
+export default async function DoctoriumPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ m?: string; d?: string; b?: string }>;
+}) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
 
   const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
   const doctor = me?.doctorId
-    ? await db.doctor.findUnique({ where: { id: me.doctorId }, select: { branch: true, newsBranches: true } })
+    ? await db.doctor.findUnique({
+        where: { id: me.doctorId },
+        select: { id: true, branch: true, newsBranches: true, congressAlertDays: true, congressDeadlineAlertDays: true },
+      })
     : null;
   const branches = effectiveBranches(doctor?.newsBranches, doctor?.branch);
 
   const sp = await searchParams;
   const active: ModuleKey = sp.m && MODULE_KEYS.has(sp.m as ModuleKey) ? (sp.m as ModuleKey) : "akis";
+  const range = RANGE_OPTIONS.some((r) => r.key === sp.d) ? (sp.d as string) : DEFAULT_RANGE;
+  // Tek-branş odağı (akış çipine tıklama): yalnız hekimin AKIŞINDAKİ branşlar seçilebilir —
+  // rastgele slug ile başka branşın akışı URL'den açılmasın (tutarlı kişiselleştirme).
+  const focus = sp.b && VALID_SLUGS.has(sp.b) && branches.includes(sp.b) ? sp.b : null;
 
   let items: FeedItem[] = [];
-  if (active === "akis") items = await personalFeed(branches);
+  if (active === "akis") items = focus ? await singleBranchFeed(focus) : await personalFeed(branches);
   else if (active === "akademik") items = await moduleFeed("akademik", branches);
-  else if (active === "sektorel") items = await moduleFeed("sektorel", []);
+  else if (active === "sektorel") items = await moduleFeed("sektorel", [], { days: rangeDays(range) });
   if (items.length) items = await localizeTitles(items);
 
   const congresses = active === "kongre" ? await upcomingCongresses(branches) : [];
+  const followed = active === "kongre" && doctor ? await followedCongressIds(doctor.id) : new Set<string>();
   const activeDef = DOCTORIUM_MODULES.find((m) => m.key === active)!;
 
   return (
@@ -47,20 +64,11 @@ export default async function DoctoriumPage({ searchParams }: { searchParams: Pr
         <ArrowLeft size={15} /> Ana Sayfa
       </Link>
 
-      <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="aura-display flex items-center gap-2.5 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
-            <BookOpen size={26} className="text-emerald-300" /> Doctorium
-          </h1>
-          <p className="mt-1 text-sm text-[var(--c-ink-2)]">{activeDef.desc}</p>
-        </div>
-        <Link
-          href="/doktor/doctorium/tercihler"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--c-hairline)] px-3 py-2 text-xs font-semibold text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
-        >
-          <SlidersHorizontal size={14} /> Branş tercihleri
-          {branches.length > 0 && <span className="aura-mono text-[10px] text-[var(--c-ink-3)]">{branches.length}</span>}
-        </Link>
+      <div className="mt-3">
+        <h1 className="aura-display flex items-center gap-2.5 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
+          <BookOpen size={26} className="text-emerald-300" /> Doctorium
+        </h1>
+        <p className="mt-1 text-sm text-[var(--c-ink-2)]">{activeDef.desc}</p>
       </div>
 
       {/* Modül sekmeleri */}
@@ -81,40 +89,104 @@ export default async function DoctoriumPage({ searchParams }: { searchParams: Pr
         ))}
       </nav>
 
+      {/* Sekmelerin ALTINDA alt menü: branş tercihleri (yalnız DOCTOR — personelin branşı yok) */}
+      {doctor && (
+        <BranchPrefsMenu
+          options={BRANCH_OPTIONS}
+          initial={parseBranchPrefs(doctor.newsBranches)}
+          ownSlug={slugForLabel(doctor.branch)}
+        />
+      )}
+
+      {/* Sektörel: kaç gün geriye bakılacağı */}
+      {active === "sektorel" && (
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] text-[var(--c-ink-3)]">Geriye dönük:</span>
+          {RANGE_OPTIONS.map((r) => (
+            <Link
+              key={r.key}
+              href={`/doktor/doctorium?m=sektorel&d=${r.key}`}
+              aria-current={r.key === range ? "true" : undefined}
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                r.key === range
+                  ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
+                  : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
+              }`}
+            >
+              {r.label}
+            </Link>
+          ))}
+        </div>
+      )}
+
       {active === "kongre" ? (
-        <CongressList rows={congresses} />
-      ) : items.length === 0 ? (
-        <EmptyState active={active} />
+        <>
+          {doctor && (
+            <CongressAlertSettings
+              startDays={doctor.congressAlertDays}
+              deadlineDays={doctor.congressDeadlineAlertDays}
+            />
+          )}
+          <CongressList rows={congresses} followed={followed} canFollow={!!doctor} />
+        </>
       ) : (
         <>
+          {/* Akışım: branş çipleri — tıklanınca YALNIZ o branş listelenir */}
           {active === "akis" && branches.length > 0 && (
-            <p className="mt-5 flex flex-wrap items-center gap-1.5 text-[11px] text-[var(--c-ink-3)]">
-              <span>Akışınız:</span>
-              {branches.map((s) => (
-                <span key={s} className="aura-mono rounded-full px-2 py-0.5" style={{ color: branchColor(branchLabel(s)), background: `${branchColor(branchLabel(s))}1f` }}>
-                  {branchLabel(s)}
-                </span>
-              ))}
-            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-[var(--c-ink-3)]">Akışınız:</span>
+              {branches.map((s) => {
+                const on = focus === s;
+                const c = branchColor(branchLabel(s));
+                return (
+                  <Link
+                    key={s}
+                    href={on ? "/doktor/doctorium" : `/doktor/doctorium?b=${s}`}
+                    aria-current={on ? "true" : undefined}
+                    className="aura-mono inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition"
+                    style={
+                      on
+                        ? { color: c, background: `${c}2e`, boxShadow: `inset 0 0 0 1px ${c}` }
+                        : { color: c, background: `${c}14` }
+                    }
+                  >
+                    {branchLabel(s)}
+                    {on && <X size={11} />}
+                  </Link>
+                );
+              })}
+              {focus && (
+                <Link href="/doktor/doctorium" className="text-[11px] text-[var(--c-ink-3)] underline hover:text-[var(--c-ink)]">
+                  tümünü göster
+                </Link>
+              )}
+            </div>
           )}
-          <ul className="mt-5 grid gap-3">
-            {items.map((it) => <ArticleCard key={it.id} item={it} />)}
-          </ul>
+
+          {items.length === 0 ? (
+            <EmptyState active={active} focus={focus} range={range} />
+          ) : (
+            <ul className="mt-5 grid gap-3">
+              {items.map((it) => <ArticleCard key={it.id} item={it} />)}
+            </ul>
+          )}
         </>
       )}
     </div>
   );
 }
 
-function EmptyState({ active }: { active: ModuleKey }) {
-  const msg =
-    active === "sektorel"
-      ? "Henüz sağlıkla ilgili mevzuat kaydı toplanmadı. Resmî Gazete günlük fihristi her gece taranır; sağlık konulu düzenleme yayımlandığı gün burada listelenir."
+function EmptyState({ active, focus, range }: { active: ModuleKey; focus: string | null; range: string }) {
+  const label = RANGE_OPTIONS.find((r) => r.key === range)?.label.toLocaleLowerCase("tr-TR") ?? "";
+  const msg = focus
+    ? `${branchLabel(focus)} için henüz yayın toplanmadı. Akış her gece güncellenir.`
+    : active === "sektorel"
+      ? `Seçtiğiniz ${label} pencerede sağlıkla ilgili mevzuat kaydı yok. Resmî Gazete fihristi her gece taranır; daha geniş bir aralık deneyebilirsiniz.`
       : "Henüz içerik toplanmadı. Yayın akışı her gece güncellenir.";
   return (
-    <p className="mt-6 flex items-start gap-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-8 text-center text-sm text-[var(--c-ink-2)]">
+    <p className="mt-6 flex items-start gap-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-8 text-sm text-[var(--c-ink-2)]">
       <Info size={16} className="mt-0.5 shrink-0" />
-      <span className="text-left">{msg}</span>
+      <span>{msg}</span>
     </p>
   );
 }
@@ -156,7 +228,7 @@ function Cover({ item }: { item: FeedItem }) {
 
 function ArticleCard({ item }: { item: FeedItem }) {
   return (
-    <li className="overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] transition hover:border-[var(--c-hairline-strong,var(--c-hairline))]">
+    <li className="overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)]">
       <div className="flex">
         <Cover item={item} />
         <div className="min-w-0 flex-1 px-4 py-3.5">
@@ -207,10 +279,10 @@ interface CongressRow {
   url: string | null; branchSlugs: string;
 }
 
-function CongressList({ rows }: { rows: CongressRow[] }) {
+function CongressList({ rows, followed, canFollow }: { rows: CongressRow[]; followed: Set<string>; canFollow: boolean }) {
   if (!rows.length) {
     return (
-      <p className="mt-6 flex items-start gap-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-8 text-sm text-[var(--c-ink-2)]">
+      <p className="mt-5 flex items-start gap-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-8 text-sm text-[var(--c-ink-2)]">
         <Info size={16} className="mt-0.5 shrink-0" />
         <span>
           Kongre takvimi henüz boş. Dernek ve kongre siteleri makine-okunur takvim yayımlamadığı için
@@ -224,20 +296,37 @@ function CongressList({ rows }: { rows: CongressRow[] }) {
     <ul className="mt-5 grid gap-3">
       {rows.map((c) => (
         <li key={c.id} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5">
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--c-ink-3)]">
-            <span className="aura-mono rounded-full bg-sky-500/15 px-2 py-0.5 font-semibold text-sky-300">
-              {formatDate(c.startDate)}{c.endDate ? ` – ${formatDate(c.endDate)}` : ""}
-            </span>
-            {(c.city || c.country) && (
-              <span className="inline-flex items-center gap-1"><MapPin size={11} />{[c.city, c.country].filter(Boolean).join(", ")}</span>
-            )}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--c-ink-3)]">
+                <span className="aura-mono rounded-full bg-sky-500/15 px-2 py-0.5 font-semibold text-sky-300">
+                  {formatDate(c.startDate)}{c.endDate ? ` – ${formatDate(c.endDate)}` : ""}
+                </span>
+                {(c.city || c.country) && (
+                  <span className="inline-flex items-center gap-1"><MapPin size={11} />{[c.city, c.country].filter(Boolean).join(", ")}</span>
+                )}
+              </div>
+              <h3 className="mt-1.5 text-sm font-semibold text-[var(--c-ink)]">{c.title}</h3>
+              {c.organizer && <p className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">{c.organizer}</p>}
+            </div>
+            {canFollow && <FollowButton congressId={c.id} following={followed.has(c.id)} />}
           </div>
-          <h3 className="mt-1.5 text-sm font-semibold text-[var(--c-ink)]">{c.title}</h3>
-          {c.organizer && <p className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">{c.organizer}</p>}
-          <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[var(--c-ink-2)]">
-            {c.abstractDeadline && <span>Bildiri son: <strong>{formatDate(c.abstractDeadline)}</strong></span>}
-            {c.earlyBirdDeadline && <span>Erken kayıt: <strong>{formatDate(c.earlyBirdDeadline)}</strong></span>}
-          </div>
+
+          {(c.abstractDeadline || c.earlyBirdDeadline) && (
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[var(--c-ink-2)]">
+              {c.abstractDeadline && (
+                <span className="inline-flex items-center gap-1">
+                  <CalendarClock size={11} /> Bildiri son: <strong>{formatDate(c.abstractDeadline)}</strong>
+                </span>
+              )}
+              {c.earlyBirdDeadline && (
+                <span className="inline-flex items-center gap-1">
+                  <CalendarClock size={11} /> Erken kayıt: <strong>{formatDate(c.earlyBirdDeadline)}</strong>
+                </span>
+              )}
+            </div>
+          )}
+
           {c.url && (
             <a href={c.url} target="_blank" rel="noopener noreferrer nofollow"
               className="mt-2 inline-flex items-center gap-1 text-[11px] text-[var(--c-accent-stronger)] hover:underline">

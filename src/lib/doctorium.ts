@@ -139,11 +139,46 @@ export async function personalFeed(branchSlugs: string[], limit = 30): Promise<F
   return rows.map(toFeedItem);
 }
 
-/** Modül akışı (akademik/sektörel). Branş verilirse akademikte süzülür. */
-export async function moduleFeed(module: "akademik" | "sektorel", branchSlugs: string[], limit = 30): Promise<FeedItem[]> {
+/**
+ * TEK branşa daraltılmış akış (v6.49): hekim akışındaki branş çipine tıklayınca. Yalnız o branşın
+ * yayınları — mevzuat DAHİL EDİLMEZ (kullanıcı bir branşa odaklanmak istiyor; mevzuat gürültü olur).
+ */
+export async function singleBranchFeed(slug: string, limit = 30): Promise<FeedItem[]> {
+  const rows = await db.newsArticle.findMany({
+    where: { branchSlugs: { contains: `"${slug}"` } },
+    orderBy: { publishedAt: "desc" },
+    take: limit,
+    select: ROW_SELECT,
+  });
+  return rows.map(toFeedItem);
+}
+
+// Sektörel/mevzuat zaman aralığı (v6.49, kullanıcı isteği): hekim "kaç gün geriye" görmek
+// istediğini seçer. Değer URL'de taşınır (?d=) — paylaşılabilir, şema gerektirmez.
+export const RANGE_OPTIONS = [
+  { key: "1", label: "Günlük", days: 1 },
+  { key: "7", label: "Haftalık", days: 7 },
+  { key: "30", label: "Aylık", days: 30 },
+  { key: "180", label: "6 aylık", days: 180 },
+  { key: "365", label: "1 yıllık", days: 365 },
+] as const;
+export const DEFAULT_RANGE = "30";
+
+export function rangeDays(key: string | undefined): number {
+  return RANGE_OPTIONS.find((r) => r.key === key)?.days ?? 30;
+}
+
+/** Modül akışı (akademik/sektörel). Branş verilirse akademikte süzülür; days verilirse tarih penceresi. */
+export async function moduleFeed(
+  module: "akademik" | "sektorel",
+  branchSlugs: string[],
+  opts: { limit?: number; days?: number } = {},
+): Promise<FeedItem[]> {
+  const { limit = 30, days } = opts;
   const rows = await db.newsArticle.findMany({
     where: {
       module,
+      ...(days ? { publishedAt: { gte: new Date(Date.now() - days * 86400000) } } : {}),
       ...(module === "akademik" && branchSlugs.length
         ? { OR: branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } })) }
         : {}),
@@ -161,6 +196,27 @@ export async function articleById(id: string): Promise<(FeedItem & { aiSummary: 
 }
 
 // ── Kongre takvimi (Modül E) ────────────────────────────────────────────────
+
+// Alarm tercihleri (v6.49). Seçenekler gün cinsinden; UI hafta olarak da sunar (7/14/28).
+export const ALERT_DAY_OPTIONS = [
+  { days: 1, label: "1 gün önce" },
+  { days: 3, label: "3 gün önce" },
+  { days: 7, label: "1 hafta önce" },
+  { days: 14, label: "2 hafta önce" },
+  { days: 30, label: "1 ay önce" },
+] as const;
+const ALERT_DAY_SET = new Set<number>(ALERT_DAY_OPTIONS.map((o) => o.days));
+
+/** null = alarm kapalı. Listede olmayan değer de kapalı sayılır (bozuk/eski veri). */
+export function normalizeAlertDays(v: unknown): number | null {
+  const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+  return Number.isFinite(n) && ALERT_DAY_SET.has(n) ? n : null;
+}
+
+export async function followedCongressIds(doctorId: string): Promise<Set<string>> {
+  const rows = await db.congressFollow.findMany({ where: { doctorId }, select: { congressId: true } });
+  return new Set(rows.map((r) => r.congressId));
+}
 
 export async function upcomingCongresses(branchSlugs: string[], limit = 40) {
   const rows = await db.medicalCongress.findMany({

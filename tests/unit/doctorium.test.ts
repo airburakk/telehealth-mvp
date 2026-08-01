@@ -4,6 +4,7 @@ import { describe, it, expect } from "vitest";
 import {
   parseBranchPrefs, normalizeBranchPrefs, effectiveBranches, branchLabel, slugForLabel,
   parseClinicalSummary, BRANCH_OPTIONS, DOCTORIUM_MODULES,
+  RANGE_OPTIONS, DEFAULT_RANGE, rangeDays, normalizeAlertDays, ALERT_DAY_OPTIONS,
 } from "@/lib/doctorium";
 import { isHealthRelated } from "@/lib/doctorium-ingest";
 import { BRANCHES } from "@/lib/triage";
@@ -95,5 +96,41 @@ describe("modül tanımı", () => {
     const keys = DOCTORIUM_MODULES.map((m) => m.key);
     expect(keys).toEqual(["akis", "akademik", "sektorel", "kongre"]);
     expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+// ── v6.49: aralık filtresi + alarm eşiği ──
+describe("sektörel zaman aralığı", () => {
+  it("5 seçenek: günlük→1 yıllık, anahtar=gün sayısı", () => {
+    expect(RANGE_OPTIONS.map((r) => r.key)).toEqual(["1", "7", "30", "180", "365"]);
+    for (const r of RANGE_OPTIONS) expect(Number(r.key)).toBe(r.days);
+  });
+
+  it("bilinmeyen/eksik değer varsayılana (30 gün) düşer — URL kurcalanması akışı bozmaz", () => {
+    expect(rangeDays(undefined)).toBe(30);
+    expect(rangeDays("999")).toBe(30);
+    expect(rangeDays("../../etc")).toBe(30);
+    expect(rangeDays(DEFAULT_RANGE)).toBe(30);
+  });
+
+  it("geçerli değerler karşılığını verir", () => {
+    expect(rangeDays("1")).toBe(1);
+    expect(rangeDays("365")).toBe(365);
+  });
+});
+
+describe("kongre alarm eşiği", () => {
+  it("yalnız tanımlı seçenekler kabul edilir, gerisi KAPALI (null)", () => {
+    expect(normalizeAlertDays(7)).toBe(7);
+    expect(normalizeAlertDays("14")).toBe(14);
+    expect(normalizeAlertDays(5)).toBeNull(); // listede yok
+    expect(normalizeAlertDays(null)).toBeNull();
+    expect(normalizeAlertDays("abc")).toBeNull();
+    expect(normalizeAlertDays(-7)).toBeNull();
+  });
+
+  it("seçenekler gün cinsinden artan sırada", () => {
+    const d = ALERT_DAY_OPTIONS.map((o) => o.days);
+    expect(d).toEqual([...d].sort((a, b) => a - b));
   });
 });

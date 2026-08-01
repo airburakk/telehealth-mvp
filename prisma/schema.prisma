@@ -135,6 +135,12 @@ model Doctor {
   /// Doctorium (v6.48) — hekimin haber akışında görmek istediği branş SLUG'ları. JSON string[].
   /// null/boş = yalnız kendi branşı (varsayılan davranış, tercih ekranına hiç girmemiş hekim).
   newsBranches       String?
+  /// Doctorium kongre alarmı (v6.49): takip edilen kongrenin BAŞLANGICINDAN kaç gün önce
+  /// hatırlatılsın. null = alarm kapalı. Hatırlatma günlük bakım cron'unda gönderilir.
+  congressAlertDays  Int?
+  /// Doctorium kongre alarmı (v6.49): bildiri teslim / erken kayıt SON TARİHİNDEN kaç gün önce.
+  /// null = kapalı. Son tarih alarmı ayrı tutulur — kongreye 30 gün varken bildiri süresi dolabilir.
+  congressDeadlineAlertDays Int?
   // Ücretsiz Sağlık Hizmeti — anlık müsaitlik + kontenjan (gönüllü ücretsiz konsültasyon).
   freeCareState       String    @default("OFFLINE") // OFFLINE | AVAILABLE | IN_SESSION
   freeCareQuota       Int       @default(10) // dönem (takvim haftası) başına kontenjan
@@ -937,4 +943,20 @@ model MedicalCongress {
   updatedAt         DateTime  @updatedAt
 
   @@index([startDate])
+}
+
+/// Doctorium Modül E — hekimin TAKİP ettiği kongre (v6.49). Takip = alarm kapsamına girer.
+/// Ayrı tablo (Doctor'da JSON değil): cron "yaklaşan kongreyi takip eden hekimler" sorgusunu
+/// bununla kurar; JSON'da her hekimi tarayıp parse etmek gerekirdi.
+model CongressFollow {
+  id         String   @id @default(cuid())
+  doctorId   String
+  congressId String
+  /// Bu takip için gönderilmiş hatırlatma türleri (JSON string[]: "start" | "deadline") —
+  /// aynı alarmın her gün tekrar gönderilmesini önler (kolonsuz tekrar-koruması yerine açık kayıt).
+  sentAlerts String   @default("[]")
+  createdAt  DateTime @default(now())
+
+  @@unique([doctorId, congressId])
+  @@index([congressId])
 }
