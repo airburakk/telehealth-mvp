@@ -6,11 +6,15 @@ import { useRouter } from "next/navigation";
 import { BellOff, BellRing, Check, ChevronDown, Loader2, SlidersHorizontal } from "lucide-react";
 
 /**
- * Doctorium — TEK filtre/tercih penceresi (v6.52, kullanıcı isteği).
+ * Doctorium — TEK "Özelleştir" penceresi (v6.52-53, kullanıcı isteği).
  *
  * Önceden branş tercihleri, geriye-dönük aralık, kategori ve kongre alarmı sayfada AYRI AYRI
  * satırlar hâlinde duruyordu (dağınık görünüyordu). Hepsi burada tek açılır panelde toplandı;
  * kapalıyken tek satırlık özet gösterir, böylece içerik listesi öne çıkar.
+ *
+ * Modüle göre yalnız İLGİLİ bölümler gelir (v6.53: branş tercihi YALNIZ "Akışım"da — diğer
+ * sekmelerde akış branşa göre süzülmediği için orada sormak yanıltıcıydı). Hiçbir bölüm
+ * yoksa düğme de çizilmez (boş panel açılmasın).
  *
  * Aralık/kategori Link ile (sunucu filtresi, paylaşılabilir URL); branş ve alarm tercihleri
  * kalıcı ayar olduğu için API'ye yazılır.
@@ -61,6 +65,10 @@ export function DoctoriumFilters(p: Props) {
   const activeRange = p.rangeOptions.find((r) => r.key === p.rangeKey)?.label;
   const activeCat = p.categoryOptions.find((c) => c.key === p.category)?.label;
   const alertsOn = start != null || deadline != null;
+
+  // Bu modülde gösterilecek hiçbir ayar yoksa düğmeyi de çizme (ör. Akademik: aralık/kategori/
+  // alarm yok, branş tercihi de artık yalnız Akışım'da) — boş panel açılmasın.
+  const hasAnySection = p.showRange || p.showCategory || p.showAlerts || !!p.branchOptions;
 
   // Kapalı paneldeki özet: hangi ayarların etkin olduğu tek bakışta görünsün.
   const summary = [
@@ -124,6 +132,8 @@ export function DoctoriumFilters(p: Props) {
     }`;
   const sectionTitle = "text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]";
 
+  if (!hasAnySection) return null;
+
   return (
     <div className="mt-4">
       <button
@@ -133,7 +143,7 @@ export function DoctoriumFilters(p: Props) {
         className="inline-flex w-full items-center gap-2 rounded-xl border border-[var(--c-hairline)] px-3.5 py-2 text-xs font-semibold text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] sm:w-auto"
       >
         <SlidersHorizontal size={14} />
-        Filtreler ve tercihler
+        Özelleştir
         {summary && <span className="aura-mono truncate text-[10px] font-normal text-[var(--c-ink-3)]">{summary}</span>}
         {branchesDirty && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-label="kaydedilmemiş değişiklik" />}
         <ChevronDown size={14} className={`ml-auto shrink-0 transition ${open ? "rotate-180" : ""}`} />

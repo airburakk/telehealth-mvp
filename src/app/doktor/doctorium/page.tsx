@@ -103,8 +103,9 @@ export default async function DoctoriumPage({
         ))}
       </nav>
 
-      {/* TEK filtre/tercih penceresi (v6.52): aralık · kategori · kongre alarmı · branş tercihleri.
-          Önceden ayrı satırlardaydı ve dağınık duruyordu (kullanıcı bildirimi). */}
+      {/* TEK "Özelleştir" penceresi (v6.52): aralık · kategori · kongre alarmı · branş tercihleri.
+          Önceden ayrı satırlardaydı ve dağınık duruyordu (kullanıcı bildirimi).
+          Bölüm yoksa bileşen hiç çizilmez (ör. Akademik) — boş panel açılmasın. */}
       <DoctoriumFilters
         module={active}
         showRange={active === "mevzuat" || active === "sektorel" || active === "ilac"}
@@ -114,7 +115,9 @@ export default async function DoctoriumPage({
         rangeOptions={RANGE_OPTIONS}
         category={cat}
         categoryOptions={SECTOR_CATEGORIES}
-        branchOptions={doctor ? BRANCH_OPTIONS : null}
+        /* Branş tercihi YALNIZ Akışım'da (v6.53, kullanıcı kararı): diğer sekmeler branşa göre
+           süzülmüyor, orada sormak "burada da etkili" izlenimi verirdi. */
+        branchOptions={active === "akis" && doctor ? BRANCH_OPTIONS : null}
         branchInitial={parseBranchPrefs(doctor?.newsBranches)}
         ownBranchSlug={slugForLabel(doctor?.branch)}
         alertStart={doctor?.congressAlertDays ?? null}
