@@ -398,3 +398,35 @@ export async function ingestWho(limit = 8): Promise<[number, number]> {
   }
   return [items.length, created];
 }
+
+// ── Resmî metin çekme (mevzuat özeti için) ──────────────────────────────────
+
+/**
+ * Bir mevzuat/haber kaleminin KAYNAK METNİNİ çeker (v6.51).
+ * Fihrist yalnız başlık verir; özet için asıl belgeye gitmek gerekir.
+ *
+ * 🪤 Kodlama: Resmî Gazete /eskiler/ belgeleri windows-1254 (arşiv fihristiyle aynı tuzak;
+ *    UTF-8 varsayımı Türkçeyi bozar). Diğer kaynaklar (OHSAD/TTB) utf-8.
+ * ⚠️ PDF DESTEKLENMEZ: null döner — çağıran "özet çıkarılamadı" der, UYDURMAZ.
+ */
+export async function fetchDocumentText(url: string): Promise<string | null> {
+  if (/\.pdf($|\?)/i.test(url)) return null; // PDF metin çıkarımı yok (bilinçli)
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": UA }, cache: "no-store" });
+    if (!res.ok) return null;
+    const buf = await res.arrayBuffer();
+    const isGazetteArchive = /resmigazete\.gov\.tr\/eskiler\//i.test(url);
+    const html = new TextDecoder(isGazetteArchive ? "windows-1254" : "utf-8").decode(buf);
+    const body = html
+      .replace(/<(script|style|noscript)[^>]*>[\s\S]*?<\/\1>/gi, " ")
+      .replace(/<!--[\s\S]*?-->/g, " ");
+    const text = plain(body)
+      // Word/FrontPage artıkları (RG belgeleri Word'den üretiliyor): anlamsız belirteçleri at.
+      .replace(/\b(Print|Clean|false|true|MicrosoftInternetExplorer\d*|X-NONE|TR)\b/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return text.length >= 120 ? text.slice(0, 8000) : null;
+  } catch {
+    return null;
+  }
+}

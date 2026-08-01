@@ -728,3 +728,56 @@ export async function summarizeArticleForClinician(
   if (!takeaways.length) throw new Error("AI klinik özet boş döndü.");
   return { takeaways, design: clean(v.design), limits: clean(v.limits) };
 }
+
+// ── Doctorium mevzuat özeti (v6.51): resmî metin → hekim için 1 dakikalık özet ──
+// Zorlanmış tool_use. Girdi HERKESE AÇIK mevzuat metnidir (PHI yok).
+// ⚠️ Çıktı HUKUKİ GÖRÜŞ DEĞİLDİR — arayüz bu uyarıyı göstermek zorundadır.
+const REGULATION_TOOL: Anthropic.Tool = {
+  name: "submit_regulation_summary",
+  description: "Mevzuat/duyuru metninin hekim için yapılandırılmış Türkçe özeti.",
+  input_schema: {
+    type: "object",
+    properties: {
+      summary: { type: "string", description: "Düzenlemenin NE getirdiğini anlatan 2-3 cümlelik özet." },
+      actions: {
+        type: "array",
+        items: { type: "string" },
+        description: "Hekimin/kliniğin atması gereken somut adımlar (0-3 madde). Metinden çıkmıyorsa BOŞ dizi.",
+      },
+      affected: { type: "string", description: "Kimi etkiliyor (ör. 'özel hastaneler', 'tüm hekimler'). Belirsizse 'Metinde açıkça belirtilmemiş'." },
+      effective: { type: "string", description: "Yürürlük tarihi/koşulu. Metinde yoksa 'Belirtilmemiş'." },
+    },
+    required: ["summary", "actions", "affected", "effective"],
+  },
+};
+
+export async function summarizeRegulationForClinician(
+  title: string,
+  text: string,
+): Promise<{ summary: string; actions: string[]; affected: string; effective: string }> {
+  const res = await client().messages.create({
+    model: MODEL,
+    max_tokens: 900,
+    system:
+      "Sen sağlık mevzuatı editörüsün. Resmî Gazete/kurum duyurusu metnini HEKİM için Türkçe özetlersin. " +
+      "SADECE verilen metinde OLAN bilgiyi kullan: madde numarası, tarih, oran UYDURMA; metinde olmayan " +
+      "yükümlülük yazma. Yorum/tavsiye verme, ne yazıldığını aktar. Emin olmadığın alanda 'Belirtilmemiş' de. " +
+      "Yanıtı DAİMA submit_regulation_summary aracıyla ver.",
+    tools: [REGULATION_TOOL],
+    tool_choice: { type: "tool", name: "submit_regulation_summary" },
+    messages: [{ role: "user", content: `Başlık: ${title}\n\nMetin:\n${text.slice(0, 7000)}` }],
+  });
+  const block = res.content.find((b) => b.type === "tool_use");
+  if (!block || block.type !== "tool_use") throw new Error("AI mevzuat özeti üretmedi.");
+  const v = block.input as { summary?: unknown; actions?: unknown; affected?: unknown; effective?: unknown };
+  const summary = typeof v.summary === "string" ? v.summary.trim() : "";
+  if (!summary) throw new Error("AI mevzuat özeti boş döndü.");
+  return {
+    summary,
+    actions: Array.isArray(v.actions)
+      ? v.actions.filter((s): s is string => typeof s === "string" && s.trim().length > 0).slice(0, 3)
+      : [],
+    affected: clean(v.affected),
+    effective: clean(v.effective),
+  };
+}

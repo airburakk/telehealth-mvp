@@ -5,7 +5,7 @@ import {
   parseBranchPrefs, normalizeBranchPrefs, effectiveBranches, branchLabel, slugForLabel,
   parseClinicalSummary, BRANCH_OPTIONS, DOCTORIUM_MODULES,
   RANGE_OPTIONS, DEFAULT_RANGE, rangeDays, normalizeAlertDays, ALERT_DAY_OPTIONS,
-  SECTOR_CATEGORIES, categoryLabel,
+  SECTOR_CATEGORIES, categoryLabel, parseRegulationSummary,
 } from "@/lib/doctorium";
 import { isHealthRelated, categorize, parseTurkishDate } from "@/lib/doctorium-sources";
 import { BRANCHES } from "@/lib/triage";
@@ -93,9 +93,10 @@ describe("Resmî Gazete sağlık filtresi (Modül B)", () => {
 });
 
 describe("modül tanımı", () => {
-  it("6 modül: mevzuat/sektörel ayrı + ilaç eklendi (v6.50)", () => {
+  it("6 modül, mevzuat SONDA (v6.51 sıra kararı)", () => {
     const keys = DOCTORIUM_MODULES.map((m) => m.key);
-    expect(keys).toEqual(["akis", "akademik", "mevzuat", "sektorel", "ilac", "kongre"]);
+    // Sıra kullanıcı kararı (2026-08-01): mevzuat EN SONDA.
+    expect(keys).toEqual(["akis", "akademik", "sektorel", "ilac", "kongre", "mevzuat"]);
     expect(new Set(keys).size).toBe(keys.length);
   });
 
@@ -190,5 +191,32 @@ describe("Türkçe tarih ayrıştırma (OHSAD/TTB başlıkları)", () => {
 
   it("tarih yoksa null döner (bugün varsayımı çağırana bırakılır)", () => {
     expect(parseTurkishDate("Tarihsiz bir başlık")).toBeNull();
+  });
+});
+
+// ── v6.51: mevzuat özeti çözümleme ──
+describe("mevzuat özeti çözümleme", () => {
+  it("geçerli JSON yapıya dönüşür", () => {
+    const r = parseRegulationSummary('{"summary":"Yönetmelik değişti.","actions":["Poliçe güncelle"],"affected":"özel hastaneler","effective":"yayımı tarihinde"}');
+    expect(r?.summary).toBe("Yönetmelik değişti.");
+    expect(r?.actions).toEqual(["Poliçe güncelle"]);
+    expect(r?.affected).toBe("özel hastaneler");
+  });
+
+  it("özet boş/bozuksa null — yarım kart gösterilmez", () => {
+    expect(parseRegulationSummary(null)).toBeNull();
+    expect(parseRegulationSummary("{bozuk")).toBeNull();
+    expect(parseRegulationSummary('{"actions":["x"]}')).toBeNull();
+    expect(parseRegulationSummary('{"summary":"   "}')).toBeNull();
+  });
+
+  it("aksiyon maddeleri 3 ile sınırlı, metin olmayanlar elenir", () => {
+    const r = parseRegulationSummary('{"summary":"x","actions":["a","b","c","d",5],"affected":"","effective":""}');
+    expect(r?.actions).toEqual(["a", "b", "c"]);
+  });
+
+  it("aksiyon yoksa boş dizi (uydurma aksiyon üretilmez)", () => {
+    const r = parseRegulationSummary('{"summary":"x","actions":[],"affected":"","effective":""}');
+    expect(r?.actions).toEqual([]);
   });
 });

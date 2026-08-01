@@ -6,7 +6,8 @@
 // sahibi sıfatı hukuki görüş ister (wiki/todo.md Doctorium bloğu).
 import { createHash } from "crypto";
 import { db } from "./db";
-import { translateText, summarizeArticleForClinician } from "./ai-clinical";
+import { translateText, summarizeArticleForClinician, summarizeRegulationForClinician } from "./ai-clinical";
+import { fetchDocumentText } from "./doctorium-sources";
 import { BRANCHES } from "./triage";
 
 export const DOCTORIUM_NAME = "Doctorium";
@@ -21,13 +22,15 @@ export interface ModuleDef {
 
 // Sekme sırası = hekimin günlük kullanım sıklığı varsayımı (kişisel akış önce).
 // v6.50: "Sektörel & Mevzuat" İKİYE ayrıldı (kullanıcı isteği) + İlaç modülü eklendi.
+// Sıra kullanıcı kararı (2026-08-01): Akışım · Akademik · Sektörel · İlaç · Kongre · Mevzuat.
+// Mevzuat EN SONDA — günlük okuma sıklığı en düşük, ihtiyaç anında bakılan referans niteliğinde.
 export const DOCTORIUM_MODULES: ModuleDef[] = [
   { key: "akis", label: "Akışım", desc: "Branşınız + mevzuat + sektör: tek akış" },
   { key: "akademik", label: "Akademik", desc: "Hakemli yayınlar — PubMed" },
-  { key: "mevzuat", label: "Mevzuat", desc: "Resmî Gazete · SUT · sağlık hukuku" },
   { key: "sektorel", label: "Sektörel", desc: "Hekim hakları · yönetim · teknoloji · küresel" },
   { key: "ilac", label: "İlaç & Cihaz", desc: "Geri çekmeler · klinik faz · prospektüs" },
   { key: "kongre", label: "Kongre Takvimi", desc: "Ulusal ve uluslararası kongreler" },
+  { key: "mevzuat", label: "Mevzuat", desc: "Resmî Gazete · SUT · sağlık hukuku" },
 ];
 
 // Sektörel/mevzuat alt kategorileri (v6.50). Kaynak matrisi: mevzuat+sut+ilac-cihaz Resmî Gazete
@@ -362,5 +365,74 @@ export async function ensureClinicalSummary(id: string): Promise<ClinicalSummary
   } catch (e) {
     console.warn("[doctorium] klinik özet üretilemedi:", e instanceof Error ? e.message : e);
     return null;
+  }
+}
+
+// ── Mevzuat / sektörel haber özeti (v6.51) ──────────────────────────────────
+//
+// Fihrist yalnız BAŞLIK verir → detay sayfası boş görünüyordu (kullanıcı bildirimi 2026-08-01).
+// Çözüm iki aşamalı ve TEMBEL (yalnız kalem açıldığında, bir kez; sonra DB'den):
+//   1) Kaynak belgenin metni çekilir → NewsArticle.summary'ye yazılır (resmî metin alıntısı)
+//   2) O metin AI ile hekim-odaklı özete çevrilir → aiSummary (özet + aksiyon + kimi etkiler)
+// PDF kaynakta metin çıkarımı YOK → özet üretilmez, arayüz bunu açıkça söyler (uydurmaz).
+
+export interface RegulationSummary {
+  summary: string;
+  actions: string[];
+  affected: string;
+  effective: string;
+}
+
+export function parseRegulationSummary(raw: string | null): RegulationSummary | null {
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw);
+    if (!v || typeof v.summary !== "string" || !v.summary.trim()) return null;
+    return {
+      summary: v.summary,
+      actions: Array.isArray(v.actions) ? v.actions.filter((s: unknown): s is string => typeof s === "string").slice(0, 3) : [],
+      affected: typeof v.affected === "string" ? v.affected : "",
+      effective: typeof v.effective === "string" ? v.effective : "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+export type RegulationResult =
+  | { state: "ok"; data: RegulationSummary }
+  | { state: "pdf" } // kaynak PDF → metin çıkarılamaz (bilinçli sınır)
+  | { state: "unavailable" }; // kaynağa ulaşılamadı / AI kapalı
+
+export async function ensureRegulationSummary(id: string): Promise<RegulationResult> {
+  const row = await db.newsArticle.findUnique({
+    where: { id },
+    select: { aiSummary: true, summary: true, title: true, url: true, module: true },
+  });
+  if (!row) return { state: "unavailable" };
+
+  const cached = parseRegulationSummary(row.aiSummary);
+  if (cached) return { state: "ok", data: cached };
+  if (row.url && /\.pdf($|\?)/i.test(row.url)) return { state: "pdf" };
+  if (!process.env.ANTHROPIC_API_KEY) return { state: "unavailable" };
+
+  // (1) Kaynak metni: DB'de varsa onu kullan, yoksa çek ve KAYDET (bir kez indirilir).
+  let text = row.summary?.trim() ?? "";
+  if (text.length < 120) {
+    if (!row.url) return { state: "unavailable" };
+    const fetched = await fetchDocumentText(row.url);
+    if (!fetched) return { state: "unavailable" };
+    text = fetched;
+    await db.newsArticle.update({ where: { id }, data: { summary: text } });
+  }
+
+  // (2) AI özeti
+  try {
+    const s = await summarizeRegulationForClinician(row.title, text);
+    await db.newsArticle.update({ where: { id }, data: { aiSummary: JSON.stringify(s) } });
+    return { state: "ok", data: s };
+  } catch (e) {
+    console.warn("[doctorium] mevzuat özeti üretilemedi:", e instanceof Error ? e.message : e);
+    return { state: "unavailable" };
   }
 }

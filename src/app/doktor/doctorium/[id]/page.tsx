@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { articleById, ensureClinicalSummary, KIND_LABEL, branchLabel } from "@/lib/doctorium";
+import {
+  articleById, ensureClinicalSummary, ensureRegulationSummary,
+  KIND_LABEL, branchLabel, categoryLabel,
+} from "@/lib/doctorium";
 import { branchColor } from "@/lib/branch-visuals";
-import { ArrowLeft, ExternalLink, Sparkles, AlertTriangle, FlaskConical, ListChecks, ShieldQuestion } from "lucide-react";
+import {
+  ArrowLeft, ExternalLink, Sparkles, AlertTriangle, FlaskConical, ListChecks,
+  ShieldQuestion, Gavel, Users, CalendarCheck, FileText,
+} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +23,11 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
   const item = await articleById(id);
   if (!item) notFound();
 
-  const summary = await ensureClinicalSummary(id);
+  // Akademik yayın → 2 dk klinik özet · mevzuat/sektörel/ilaç → hekim özeti + aksiyon maddeleri.
+  // İkisi de TEMBEL: ilk açılışta bir kez üretilir, sonra DB'den okunur.
+  const isAcademic = item.module === "akademik";
+  const summary = isAcademic ? await ensureClinicalSummary(id) : null;
+  const reg = isAcademic ? null : await ensureRegulationSummary(id);
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
@@ -32,6 +42,11 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
             {branchLabel(s)}
           </span>
         ))}
+        {categoryLabel(item.category) && (
+          <span className="aura-mono rounded-full bg-[var(--c-surface-2)] px-2 py-0.5 text-[10px] text-[var(--c-ink-2)]">
+            {categoryLabel(item.category)}
+          </span>
+        )}
         <span className="text-[11px] text-[var(--c-ink-3)]">
           {KIND_LABEL[item.kind] ?? item.kind} · {item.sourceName} ·{" "}
           {item.publishedAt.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}
@@ -86,12 +101,77 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
         </section>
       )}
 
+      {/* Mevzuat / sektörel / ilaç → hekim özeti. Kaynak metni çekilip AI ile yapılandırılır. */}
+      {reg?.state === "ok" && (
+        <section className="mt-6 rounded-2xl border border-amber-400/25 bg-amber-500/[0.07] p-5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-amber-300">
+            <Gavel size={16} /> Hekim özeti
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-[var(--c-ink)]">{reg.data.summary}</p>
+
+          {reg.data.actions.length > 0 && (
+            <div className="mt-4">
+              <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
+                <ListChecks size={13} /> Aksiyon maddeleri
+              </h3>
+              <ul className="mt-1.5 grid gap-1.5">
+                {reg.data.actions.map((a, i) => (
+                  <li key={i} className="flex gap-2 text-sm leading-relaxed text-[var(--c-ink)]">
+                    <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                    {a}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div>
+              <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
+                <Users size={13} /> Kimi etkiliyor
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">{reg.data.affected}</p>
+            </div>
+            <div>
+              <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
+                <CalendarCheck size={13} /> Yürürlük
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">{reg.data.effective}</p>
+            </div>
+          </div>
+
+          <p className="mt-4 flex items-start gap-2 border-t border-amber-400/20 pt-3 text-[11px] leading-relaxed text-amber-200/90">
+            <AlertTriangle size={13} className="mt-px shrink-0" />
+            Bu özet yapay zekâ ile üretilmiştir ve <strong>hukuki görüş değildir</strong>. Bağlayıcı
+            olan resmî metindir; aşağıdaki kaynaktan tam metni doğrulayın.
+          </p>
+        </section>
+      )}
+
+      {reg?.state === "pdf" && (
+        <p className="mt-6 flex items-start gap-2 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5 text-xs leading-relaxed text-[var(--c-ink-2)]">
+          <FileText size={15} className="mt-px shrink-0" />
+          Bu kalemin resmî metni <strong>PDF</strong> olarak yayımlanmış; otomatik özet çıkarılmıyor.
+          Aşağıdaki bağlantıdan resmî metne ulaşabilirsiniz.
+        </p>
+      )}
+
+      {reg?.state === "unavailable" && (
+        <p className="mt-6 flex items-start gap-2 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5 text-xs leading-relaxed text-[var(--c-ink-2)]">
+          <AlertTriangle size={15} className="mt-px shrink-0" />
+          Özet şu anda üretilemedi (kaynak metne ulaşılamadı). Aşağıdaki bağlantıdan resmî metni
+          açabilirsiniz; sayfayı sonra yenilediğinizde özet oluşmuş olabilir.
+        </p>
+      )}
+
       {item.summary && (
         <section className="mt-6">
           <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
-            Özgün abstract
+            {isAcademic ? "Özgün abstract" : "Resmî metinden"}
           </h2>
-          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-[var(--c-ink-2)]">{item.summary}</p>
+          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-[var(--c-ink-2)]">
+            {isAcademic ? item.summary : item.summary.slice(0, 2500)}
+          </p>
         </section>
       )}
 
