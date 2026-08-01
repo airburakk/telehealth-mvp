@@ -25,7 +25,8 @@ export function SiteFooter() {
           <Link href="/onam/kanit" className="hover:text-[var(--c-accent)] hover:underline">Onay Kanıtım</Link>
           <Link href="/erisim-kaydi" className="hover:text-[var(--c-accent)] hover:underline">Erişim Kaydım</Link>
         </span>
-        <span>S1 Yazılım · S2 Operasyon · S3 Acenta</span>
+        {/* "S1 Yazılım · S2 Operasyon · S3 Acenta" KALDIRILDI (2026-08-01, kullanıcı kararı):
+            iç şirket yapısı kodlaması son kullanıcıya bir şey anlatmıyordu. Geri EKLEME. */}
       </div>
     </footer>
   );

@@ -115,9 +115,10 @@ export default async function DoctoriumPage({
         rangeOptions={RANGE_OPTIONS}
         category={cat}
         categoryOptions={SECTOR_CATEGORIES}
-        /* Branş tercihi YALNIZ Akışım'da (v6.53, kullanıcı kararı): diğer sekmeler branşa göre
-           süzülmüyor, orada sormak "burada da etkili" izlenimi verirdi. */
-        branchOptions={active === "akis" && doctor ? BRANCH_OPTIONS : null}
+        /* Branş tercihi YALNIZ akışa etki eden sekmelerde: Akışım + Akademik (v6.54 düzeltmesi —
+           akademik akışı da moduleFeed("akademik", branches) ile branşa göre süzülüyor, tercihi
+           oradan kaldırmak hatalıydı). Mevzuat/sektörel/ilaç/kongre branşa göre süzülmez. */
+        branchOptions={(active === "akis" || active === "akademik") && doctor ? BRANCH_OPTIONS : null}
         branchInitial={parseBranchPrefs(doctor?.newsBranches)}
         ownBranchSlug={slugForLabel(doctor?.branch)}
         alertStart={doctor?.congressAlertDays ?? null}
