@@ -22,13 +22,13 @@ describe("navItemsFor", () => {
     expect(h).toContain("/paylasimlarim");
   });
 
-  it("DOCTOR: Doktor + Post-Op + Haberler + Profilim; Ücretsiz Sağlık bant linki kalktı (2026-07-31)", () => {
-    expect(hrefs("DOCTOR")).toEqual(["/doktor", "/doktor/takip", "/doktor/haberler", "/doktor/profil"]);
+  it("DOCTOR: Doktor + Post-Op + Doctorium + Profilim; Ücretsiz Sağlık bant linki kalktı (2026-07-31)", () => {
+    expect(hrefs("DOCTOR")).toEqual(["/doktor", "/doktor/takip", "/doktor/doctorium", "/doktor/profil"]);
     expect(hrefs("DOCTOR")).not.toContain("/doktor/ucretsiz-saglik");
   });
 
-  it("COORDINATOR: Operasyon + Doktor + Post-Op + Haberler; Ücretsiz Sağlık bant linki kalktı", () => {
-    expect(hrefs("COORDINATOR")).toEqual(["/operasyon", "/doktor", "/doktor/takip", "/doktor/haberler"]);
+  it("COORDINATOR: Operasyon + Doktor + Post-Op + Doctorium; Ücretsiz Sağlık bant linki kalktı", () => {
+    expect(hrefs("COORDINATOR")).toEqual(["/operasyon", "/doktor", "/doktor/takip", "/doktor/doctorium"]);
   });
 
   it("ADMIN: hasta sekmesi kaldırma ADMIN'i etkilemez (Triyaj/Doktorlar ADMIN'de kalır)", () => {

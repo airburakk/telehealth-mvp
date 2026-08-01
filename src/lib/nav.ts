@@ -6,7 +6,7 @@
 // köprü Vakalarım üstündeki kulvar kartlarındadır (MyCasesList).
 import {
   Stethoscope, UserRound, HeartPulse, Scale, Users, BadgeCheck, Share2, BarChart3,
-  FolderHeart, Globe, Luggage, Newspaper, type LucideIcon,
+  FolderHeart, Globe, Luggage, BookOpen, type LucideIcon,
 } from "lucide-react";
 
 export interface NavItem {
@@ -30,8 +30,9 @@ const NAV: NavItem[] = [
   { href: "/operasyon", label: "Operasyon", icon: BarChart3, roles: ["COORDINATOR", "ADMIN"] },
   { href: "/doktor", label: "Doktor", icon: Stethoscope, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
   { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
-  // Haberler ana sayfa panelinden üst banda taşındı (2026-07-31, kullanıcı kararı) — /doktor/haberler.
-  { href: "/doktor/haberler", label: "Haberler", icon: Newspaper, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
+  // Doctorium (v6.48, 2026-08-01) — hekim bilgi portalı. Eski "Haberler" adı ve /doktor/haberler
+  // rotası bırakıldı (rota 308 ile buraya yönlenir; yer imleri kırılmasın).
+  { href: "/doktor/doctorium", label: "Doctorium", icon: BookOpen, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
   // "Ücretsiz Hizmet" bant linki kaldırıldı (2026-07-31, kullanıcı kararı) — rota + ana sayfa paneli durur.
   { href: "/doktor/profil", label: "Profilim", icon: BadgeCheck, roles: ["DOCTOR", "ADMIN"] },
   { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, roles: ["ETHICS", "ADMIN"] },

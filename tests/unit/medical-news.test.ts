@@ -26,11 +26,12 @@ describe("NEWS_QUERIES", () => {
   });
 });
 
-describe("newsForBranch (stub katmanı)", () => {
-  it("stub kartlar url/doi TAŞIMAZ — uydurma içerik gerçek bağlantı gibi görünmez", () => {
+describe("newsForBranch (stub katmanı — partner şeridi)", () => {
+  it("stub kartlarda url/doi ALANI YOK — uydurma içerik gerçek bağlantı gibi görünemez", () => {
+    // v6.48: alan tipten kaldırıldı (runtime kontrolü yerine derleme-zamanı garanti).
     for (const item of newsForBranch("Onkoloji")) {
-      expect(item.url ?? null, item.id).toBeNull();
-      expect(item.doi ?? null, item.id).toBeNull();
+      expect(item).not.toHaveProperty("url");
+      expect(item).not.toHaveProperty("doi");
     }
   });
 

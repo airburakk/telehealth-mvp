@@ -132,6 +132,9 @@ model Doctor {
   onboardedAt        DateTime? // ilk-giriş onboarding kapısı tamamlandı mı (null = /doktor/baslangic'a yönlendir)
   freeCareOptIn      Boolean   @default(false) // Ücretsiz Sağlık Hizmeti vakası kabul ediyor mu → Ana Sayfa penceresi görünürlüğü (anlık müsaitlik = freeCareState ayrı)
   consultOptIn       Boolean   @default(false) // Partner konsültasyon taleplerini yanıtlıyor mu → Konsültasyon Talepleri penceresi görünürlüğü (yanıt başına ödeme, simüle)
+  /// Doctorium (v6.48) — hekimin haber akışında görmek istediği branş SLUG'ları. JSON string[].
+  /// null/boş = yalnız kendi branşı (varsayılan davranış, tercih ekranına hiç girmemiş hekim).
+  newsBranches       String?
   // Ücretsiz Sağlık Hizmeti — anlık müsaitlik + kontenjan (gönüllü ücretsiz konsültasyon).
   freeCareState       String    @default("OFFLINE") // OFFLINE | AVAILABLE | IN_SESSION
   freeCareQuota       Int       @default(10) // dönem (takvim haftası) başına kontenjan
@@ -884,4 +887,54 @@ model RegistryReport {
   createdAt        DateTime @default(now())
 
   @@index([createdAt]) // rapor listesi (yeni→eski)
+}
+
+/// Doctorium — hekim bilgi portalı yayın kaydı (v6.48).
+/// Günlük bakım cron'u (purge-deleted) kaynakları tarar ve BURAYA yazar; sayfa DB'den okur
+/// (istek-anında dış API'ye gitmez → hızlı + NCBI'ya nazik + arama/filtre mümkün).
+/// İçerik HERKESE AÇIK literatür/mevzuattır — PHI DEĞİLDİR, şifrelenmez (bilinçli).
+model NewsArticle {
+  id            String   @id @default(cuid())
+  source        String // "pubmed" | "resmi-gazete" | "titck" | ... (kaynak sistemi)
+  externalId    String // pmid / rss guid — kaynak içinde benzersiz (yeniden çekimde tekrar yazılmaz)
+  module        String // "akademik" (Modül C) | "sektorel" (Modül B)
+  /// JSON string[] — ilgili branş SLUG'ları (lib/triage BRANCHES key'leri). Boş dizi = genel akış.
+  branchSlugs   String   @default("[]")
+  kind          String // makale | ilac | mevzuat | haber
+  title         String // gösterim başlığı (çevrilmişse Türkçe)
+  titleOriginal String? // özgün dildeki başlık (çeviri uygulandıysa)
+  summary       String // özet/abstract (çevrilmişse Türkçe)
+  /// AI klinik özet — JSON {takeaways: string[], design: string, limits: string}. Null = henüz üretilmedi.
+  /// ⚠️ Klinik karar aracı DEĞİL; arayüzde bu uyarı ile birlikte gösterilir.
+  aiSummary     String?
+  sourceName    String // dergi/kurum adı (JAMA · Resmî Gazete ...)
+  authors       String? // "Yılmaz A, Chen B, ve ark."
+  url           String? // kalıcı adres (DOI varsa doi.org)
+  doi           String?
+  publishedAt   DateTime
+  createdAt     DateTime @default(now())
+
+  @@unique([source, externalId]) // idempotent ingestion
+  @@index([module, publishedAt]) // modül akışı (yeni→eski)
+}
+
+/// Doctorium Modül E — medikal kongre takvimi (v6.48).
+/// Otomatik kaynak YOK (dernek/kongre siteleri makine-okunur takvim yayımlamıyor) → admin küratörlü.
+model MedicalCongress {
+  id                String    @id @default(cuid())
+  title             String
+  organizer         String? // düzenleyen dernek/kurum
+  city              String?
+  country           String    @default("TR")
+  startDate         DateTime
+  endDate           DateTime?
+  abstractDeadline  DateTime? // bildiri son teslim
+  earlyBirdDeadline DateTime? // erken kayıt son gün
+  url               String?
+  /// JSON string[] — ilgili branş slug'ları (boş = tüm branşlar).
+  branchSlugs       String    @default("[]")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([startDate])
 }

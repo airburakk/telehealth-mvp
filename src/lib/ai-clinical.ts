@@ -680,3 +680,51 @@ export async function assessDocument(
   const labs = docType === "Laboratuvar" ? sanitizeDocLabs(a.labs) : [];
   return { docType, summary: clean(a.summary), translation: clean(a.translation), flags: clean(a.flags), labs };
 }
+
+// ── Doctorium (v6.48): hakemli yayın → hekim için 2 dakikalık Türkçe klinik özet ──
+// Zorlanmış tool_use (proposePackage deseni): serbest metin JSON'undan daha güvenilir.
+// ⚠️ Çıktı KLİNİK KARAR ARACI DEĞİLDİR — arayüz bu uyarıyı göstermek zorundadır.
+// Girdi herkese açık literatür abstract'ıdır; PHI GİRMEZ (de-id/minimizasyon gerekmez).
+const ARTICLE_SUMMARY_TOOL: Anthropic.Tool = {
+  name: "submit_summary",
+  description: "Yayının hekim için yapılandırılmış Türkçe klinik özeti.",
+  input_schema: {
+    type: "object",
+    properties: {
+      takeaways: {
+        type: "array",
+        items: { type: "string" },
+        description: "3-4 madde; her biri tek cümle, klinik olarak eyleme dönük ana çıkarım.",
+      },
+      design: { type: "string", description: "Çalışma tasarımı: tip, örneklem, süre, karşılaştırma. Abstract'ta yoksa 'Abstract'ta belirtilmemiş'." },
+      limits: { type: "string", description: "Metinden anlaşılan kısıtlılıklar. Yoksa 'Abstract'ta belirtilmemiş'." },
+    },
+    required: ["takeaways", "design", "limits"],
+  },
+};
+
+export async function summarizeArticleForClinician(
+  title: string,
+  abstract: string,
+): Promise<{ takeaways: string[]; design: string; limits: string }> {
+  const res = await client().messages.create({
+    model: MODEL,
+    max_tokens: 900,
+    system:
+      "Sen bir tıp editörüsün. Hakemli bir yayının abstract'ını MESLEKTEN HEKİM için Türkçe olarak yapılandırırsın. " +
+      "Tıbbi terminolojiyi koru (Türkçe karşılığı yerleşik değilse özgün terimi bırak). " +
+      "SADECE verilen metinde OLAN bilgiyi kullan: sayı, oran, p-değeri, sonuç UYDURMA; metinde olmayanı yazma. " +
+      "Emin olmadığın alan için 'Abstract'ta belirtilmemiş' de. Yanıtı DAİMA submit_summary aracıyla ver.",
+    tools: [ARTICLE_SUMMARY_TOOL],
+    tool_choice: { type: "tool", name: "submit_summary" },
+    messages: [{ role: "user", content: `Başlık: ${title}\n\nAbstract:\n${abstract.slice(0, 6000)}` }],
+  });
+  const block = res.content.find((b) => b.type === "tool_use");
+  if (!block || block.type !== "tool_use") throw new Error("AI klinik özet üretmedi.");
+  const v = block.input as { takeaways?: unknown; design?: unknown; limits?: unknown };
+  const takeaways = Array.isArray(v.takeaways)
+    ? v.takeaways.filter((s): s is string => typeof s === "string" && s.trim().length > 0).slice(0, 4)
+    : [];
+  if (!takeaways.length) throw new Error("AI klinik özet boş döndü.");
+  return { takeaways, design: clean(v.design), limits: clean(v.limits) };
+}
