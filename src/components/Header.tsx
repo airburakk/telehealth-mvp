@@ -84,19 +84,24 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
     <header dir={dir} lang={LANG_BCP47[lang]} className="theme-dark sticky top-0 z-30 border-b border-[var(--c-hairline)] bg-[color-mix(in_srgb,var(--c-bg)_82%,transparent)] backdrop-blur-md">
       <div className="mx-auto max-w-6xl px-5 h-16 flex items-center justify-between gap-4">
         {/* Marka altyazısı ("Sağlık Turizmi & Teletıp") kullanıcı isteğiyle kaldırıldı (2026-07-12) — yalnız logo */}
-        <Link href="/" className="flex items-end">
+        {/* shrink-0: dar ekranda flex logoyu ezip wordmark'ı nav'ın altına sokuyordu
+            (mobil "menüler üst üste biniyor" bildirimi, 2026-08-01) — taşmayı nav scroll'u yönetir. */}
+        <Link href="/" className="flex shrink-0 items-end">
           <PortamedLogo size={23} />
         </Link>
 
-        <div className="flex items-center gap-1.5">
-          <nav className="flex items-center gap-1 sm:gap-4">
+        <div className="flex min-w-0 items-center gap-1.5">
+          {/* min-w-0 + overflow-x-auto: nav dar ekranda SIKIŞMAK yerine kendi içinde yatay
+              kayar (scrollbar gizli); öğeler shrink-0 ile bütün kalır. Admin'in 8+ öğeli
+              bandı ve mobilde tam metinli Doctorium bu sayede çakışmaz. */}
+          <nav className="flex min-w-0 items-center gap-1 overflow-x-auto sm:gap-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {items.map(({ href, label, icon: Icon }) => {
               const active = href === activeHref;
               return (
                 <Link
                   key={href}
                   href={href}
-                  className={`flex min-h-[44px] items-center gap-2 px-2 text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${
+                  className={`flex min-h-[44px] shrink-0 items-center gap-2 px-2 text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${
                     active ? "font-medium text-[var(--c-accent)]" : "text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"
                   }`}
                 >
@@ -118,7 +123,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
           {/* Tema anahtarı (v6.22): gece varsayılan ↔ gündüz; tercih cookie'de, misafirde de görünür */}
           <ThemeToggle initial={theme} t={t} />
           {user ? (
-            <div className="ml-1 flex items-center gap-2 border-l border-[var(--c-hairline)] ps-2">
+            <div className="ml-1 flex shrink-0 items-center gap-2 border-l border-[var(--c-hairline)] ps-2">
               <NotificationBell lang={lang} patientLangFallback={user.role === "PATIENT"} />
               <div className="hidden text-end sm:block">
                 <div className="text-sm font-medium leading-tight text-[var(--c-ink)]">{user.name}</div>
