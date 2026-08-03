@@ -20,7 +20,51 @@
 // içerik hiçbir koşulda yazılmaz.
 import { db } from "./db";
 
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AuraHealth/1.0";
+// v6.57 TEŞHİS (2026-08-03): TR kaynakları (RG/OHSAD/TTB) Vercel fra1'den erişilemiyordu —
+// OHSAD 403 = Cloudflare bot koruması (veri-merkezi IP + "AuraHealth/1.0" ekli bot-ish UA +
+// tarayıcı başlıkları yok). UA'dan eki çıkarıp gerçekçi Chrome başlıkları eklendi; 15 sn zaman
+// aşımı "asıldı mı, reddedildi mi" sorusunu ayrıştırır (redde hızlı döner, kara delik asılır).
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
+const FETCH_TIMEOUT_MS = 15_000;
+
+/** Gerçekçi tarayıcı isteği başlıkları. `referer` verilirse alt-sayfa ziyareti gibi görünür. */
+function browserHeaders(referer?: string): Record<string, string> {
+  return {
+    "User-Agent": UA,
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
+    "sec-ch-ua": '"Chromium";v="126", "Not.A/Brand";v="24", "Google Chrome";v="126"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": referer ? "same-origin" : "none",
+    "Upgrade-Insecure-Requests": "1",
+    ...(referer ? { Referer: referer } : {}),
+  };
+}
+
+/**
+ * fetch hatasının GERÇEK sebebini metne döker (v6.57). Node fetch ağ hatasında yalnız
+ * "fetch failed" der; asıl teşhis (`ECONNREFUSED`/`ETIMEDOUT`/`EPROTO`/sertifika…) `error.cause`
+ * zincirindedir — DNS çoklu IP döndürdüyse cause bir AggregateError olur, kodlar bir kat derindedir.
+ */
+export function describeFetchError(e: unknown): string {
+  if (!(e instanceof Error)) return String(e);
+  const bits: string[] = [];
+  if (e.name && e.name !== "Error") bits.push(e.name);
+  if (e.message) bits.push(e.message);
+  const dig = (c: unknown): string[] => {
+    if (!c || typeof c !== "object") return [];
+    if (c instanceof AggregateError) return c.errors.flatMap(dig);
+    const o = c as { name?: string; code?: string | number; syscall?: string; message?: string; cause?: unknown };
+    const s = [o.name, o.code, o.syscall, o.message].filter(Boolean).join(" ");
+    return [...(s ? [s] : []), ...dig(o.cause)];
+  };
+  const causes = [...new Set(dig((e as { cause?: unknown }).cause))];
+  if (causes.length) bits.push(`← ${causes.join(" ← ")}`);
+  return bits.join(" ") || "hata";
+}
 
 export type SectorCategory = "mevzuat" | "sut" | "turizm" | "yonetim" | "teknoloji" | "ilac-cihaz";
 
@@ -121,7 +165,10 @@ export async function fetchGazetteArchive(date: Date): Promise<{ title: string; 
   const m = String(date.getUTCMonth() + 1).padStart(2, "0");
   const d = String(date.getUTCDate()).padStart(2, "0");
   const base = `https://www.resmigazete.gov.tr/eskiler/${y}/${m}/`;
-  const res = await fetch(`${base}${y}${m}${d}.htm`, { headers: { "User-Agent": UA }, cache: "no-store" });
+  const res = await fetch(`${base}${y}${m}${d}.htm`, {
+    headers: browserHeaders("https://www.resmigazete.gov.tr/"), cache: "no-store",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
   if (!res.ok) return [];
   // 🪤 ARŞİV windows-1254: TextDecoder ile açıkça çöz (res.text() UTF-8 varsayar → Türkçe bozulur).
   const buf = await res.arrayBuffer();
@@ -145,8 +192,12 @@ export async function fetchGazetteArchive(date: Date): Promise<{ title: string; 
 
 /** Bugünün gazetesi (ana sayfa; utf-8 + fihrist-item düzeni). */
 export async function fetchGazetteToday(): Promise<{ title: string; url: string; id: string }[]> {
-  const res = await fetch("https://www.resmigazete.gov.tr/", { headers: { "User-Agent": UA }, cache: "no-store" });
-  if (!res.ok) return [];
+  const res = await fetch("https://www.resmigazete.gov.tr/", {
+    headers: browserHeaders(), cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  // Teşhis görünürlüğü (v6.57): sessizce [] dönmek "0 kayıt tarandı" ile "site reddetti"yi
+  // ayırt edilemez kılıyordu — HTTP hatası artık cron raporuna düşer.
+  if (!res.ok) throw new Error(`RG HTTP ${res.status}`);
   const html = await res.text();
   const out: { title: string; url: string; id: string }[] = [];
   const seen = new Set<string>();
@@ -192,7 +243,9 @@ export async function ingestGazetteItems(items: { title: string; url: string; id
  * SGK duyurularının fiilen tek makine-okunur yolu (SGK sitesi JS ile yüklüyor).
  */
 export async function ingestOhsad(): Promise<[number, number]> {
-  const res = await fetch("https://www.ohsad.org/", { headers: { "User-Agent": UA }, cache: "no-store" });
+  const res = await fetch("https://www.ohsad.org/", {
+    headers: browserHeaders(), cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
   if (!res.ok) throw new Error(`OHSAD HTTP ${res.status}`);
   const html = await res.text();
 
@@ -230,7 +283,9 @@ export async function ingestOhsad(): Promise<[number, number]> {
 // ── TTB (doktor özlük hakları) ───────────────────────────────────────────────
 
 export async function ingestTtb(): Promise<[number, number]> {
-  const res = await fetch("https://www.ttb.org.tr/", { headers: { "User-Agent": UA }, cache: "no-store" });
+  const res = await fetch("https://www.ttb.org.tr/", {
+    headers: browserHeaders(), cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
   if (!res.ok) throw new Error(`TTB HTTP ${res.status}`);
   const html = await res.text();
 
@@ -412,7 +467,11 @@ export async function ingestWho(limit = 8): Promise<[number, number]> {
 export async function fetchDocumentText(url: string): Promise<string | null> {
   if (/\.pdf($|\?)/i.test(url)) return null; // PDF metin çıkarımı yok (bilinçli)
   try {
-    const res = await fetch(url, { headers: { "User-Agent": UA }, cache: "no-store" });
+    const res = await fetch(url, {
+      // Alt-sayfa ziyareti: Referer = kaynağın kendi ana sayfası (bot korumasına doğal görünüm).
+      headers: browserHeaders(new URL(url).origin + "/"), cache: "no-store",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
     if (!res.ok) return null;
     const buf = await res.arrayBuffer();
     const isGazetteArchive = /resmigazete\.gov\.tr\/eskiler\//i.test(url);

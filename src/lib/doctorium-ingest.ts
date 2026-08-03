@@ -18,7 +18,7 @@ import { NEWS_QUERIES } from "./medical-news";
 import { BRANCHES } from "./triage";
 import {
   fetchGazetteToday, ingestGazetteItems, ingestOhsad, ingestTtb,
-  ingestFdaRecalls, ingestTrials, ingestWho,
+  ingestFdaRecalls, ingestTrials, ingestWho, describeFetchError,
 } from "./doctorium-sources";
 
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
@@ -198,7 +198,7 @@ export async function ingestDoctorium(): Promise<IngestResult> {
       out.pubmedFetched += fetched;
       out.pubmedNew += created;
     } catch (e) {
-      out.errors.push(`pubmed/${slug}: ${e instanceof Error ? e.message.slice(0, 60) : "hata"}`);
+      out.errors.push(`pubmed/${slug}: ${describeFetchError(e).slice(0, 120)}`);
     }
     await sleep(NCBI_GAP_MS);
   }
@@ -210,7 +210,9 @@ export async function ingestDoctorium(): Promise<IngestResult> {
     out.gazetteFetched = scanned;
     out.gazetteNew = created;
   } catch (e) {
-    out.errors.push(`resmi-gazete: ${e instanceof Error ? e.message.slice(0, 80) : "hata"}`);
+    // v6.57: describeFetchError `error.cause` zincirini kazır — yüzeysel "fetch failed" yerine
+    // gerçek kod (ECONNREFUSED/ETIMEDOUT/TimeoutError/EPROTO…) cron raporuna düşer.
+    out.errors.push(`resmi-gazete: ${describeFetchError(e).slice(0, 200)}`);
   }
 
   // Sektörel + ilaç kaynakları (v6.50). Her biri BAĞIMSIZ try: biri bozulursa diğerleri toplar.
@@ -226,7 +228,7 @@ export async function ingestDoctorium(): Promise<IngestResult> {
       out.sources[name] = await fn();
     } catch (e) {
       out.sources[name] = [0, 0];
-      out.errors.push(`${name}: ${e instanceof Error ? e.message.slice(0, 70) : "hata"}`);
+      out.errors.push(`${name}: ${describeFetchError(e).slice(0, 200)}`);
     }
   }
 
