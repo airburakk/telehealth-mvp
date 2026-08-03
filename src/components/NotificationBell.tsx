@@ -71,13 +71,24 @@ function timeAgo(iso: string, t: (s: string) => string): string {
 // localStorage dili (`air_lang`). Personel TR-sabit — `air_lang` artık halka açık yüzeylerden de
 // (landing/public sayfalar) yazılabildiğinden, paylaşılan tarayıcıda personel arayüzü rol kapısı
 // olmadan beklenmedik dile dönerdi.
-export function NotificationBell({ lang = "Türkçe", patientLangFallback = false }: { lang?: string; patientLangFallback?: boolean }) {
+// variant="menu-item" (2026-08-01, header hesap menüsü): zil, menü satırı görünümünde render
+// edilir (tam genişlik + etiket); panel satırın altına açılır. onUnreadChange: okunmamış sayı
+// değişince üst bileşene bildirir — Header, menü KAPALIYKEN avatar rozetinde gösterir
+// (zil menüye taşınınca bildirim görünürlüğü kaybolmasın).
+export function NotificationBell({ lang = "Türkçe", patientLangFallback = false, variant = "icon", onUnreadChange }: { lang?: string; patientLangFallback?: boolean; variant?: "icon" | "menu-item"; onUnreadChange?: (n: number) => void }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notif[]>([]);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    onUnreadChange?.(unread);
+    // onUnreadChange bilinçli olarak bağımlılık dışı: Header her render'da yeni fonksiyon
+    // referansı geçirir; yalnız sayı değişince haber vermek yeterli.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unread]);
 
   const [patientLang] = usePatientLang();
   const effLang = lang && lang !== "Türkçe" ? lang : patientLangFallback ? patientLang : "Türkçe";
@@ -199,17 +210,29 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
 
   return (
     <div ref={boxRef} className="relative">
-      <button onClick={toggle} title={t("Bildirimler")} className="relative grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-2)] hover:bg-[var(--c-ink)]/10 hover:text-[var(--c-accent)]">
-        <Bell size={18} />
-        {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
-            {unread > 9 ? "9+" : unread}
-          </span>
-        )}
-      </button>
+      {variant === "menu-item" ? (
+        <button onClick={toggle} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-start text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+          <Bell size={15} />
+          <span className="flex-1">{t("Bildirimler")}</span>
+          {unread > 0 && (
+            <span className="grid h-4 min-w-4 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </button>
+      ) : (
+        <button onClick={toggle} title={t("Bildirimler")} className="relative grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-2)] hover:bg-[var(--c-ink)]/10 hover:text-[var(--c-accent)]">
+          <Bell size={18} />
+          {unread > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </button>
+      )}
 
       {open && (
-        <div dir={dir} lang={LANG_BCP47[effLang]} className="absolute right-0 top-11 z-40 w-80 overflow-hidden rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] shadow-xl">
+        <div dir={dir} lang={LANG_BCP47[effLang]} className={`absolute z-50 w-80 overflow-hidden rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] shadow-xl ${variant === "menu-item" ? "end-0 top-full mt-1" : "right-0 top-11"}`}>
           <div className="flex items-center justify-between border-b border-[var(--c-hairline)] px-4 py-2.5">
             <span className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Bildirimler")}</span>
             {loading && <span className="text-[10px] text-[var(--c-ink-3)]">{t("yenileniyor…")}</span>}

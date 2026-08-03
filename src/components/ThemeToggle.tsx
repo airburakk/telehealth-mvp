@@ -10,7 +10,9 @@ import { Moon, Sun } from "lucide-react";
 export type ThemeName = "dark" | "light";
 export const THEME_COOKIE = "aura_theme";
 
-export function ThemeToggle({ initial, t = (s) => s }: { initial: ThemeName; t?: (s: string) => string }) {
+// asMenuItem (2026-08-01, header hesap menüsü): ikon-buton yerine tam genişlik menü satırı —
+// etiket görünür metin olur. Misafir header'ında ikon modu sürer.
+export function ThemeToggle({ initial, t = (s) => s, asMenuItem = false }: { initial: ThemeName; t?: (s: string) => string; asMenuItem?: boolean }) {
   const [theme, setTheme] = useState<ThemeName>(initial);
 
   function toggle() {
@@ -22,6 +24,15 @@ export function ThemeToggle({ initial, t = (s) => s }: { initial: ThemeName; t?:
   }
 
   const label = theme === "dark" ? t("Gündüz temasına geç") : t("Gece temasına geç");
+  if (asMenuItem)
+    return (
+      <button
+        onClick={toggle}
+        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-start text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]"
+      >
+        {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />} {label}
+      </button>
+    );
   return (
     <button
       onClick={toggle}

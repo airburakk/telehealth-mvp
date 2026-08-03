@@ -1,7 +1,13 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+
+// Tek-açık koordinasyonu (2026-08-01, kullanıcı kararı): bir panel açılınca diğerleri kapanır.
+// Paneller server-render sayfada kardeş client adaları olduğundan ortak state yerine hafif
+// CustomEvent kullanılır — sayfa yapısını değiştirmeden çalışır, masaüstünü etkilemez
+// (görünürlük CSS'te hep açık).
+const OPEN_EVENT = "aura-panel-open";
 
 // M5 — Doktor Ana Sayfası pencere kabuğu (tutarlı başlık + ikon + opsiyonel rozet/aksiyon + içerik).
 //
@@ -34,7 +40,26 @@ export function DashboardPanel({
   collapsible?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(true);
+  const uid = useId();
   const mobileHidden = collapsible && collapsed;
+
+  // Başka bir panel açıldığında kapan (tek-açık akordeon).
+  useEffect(() => {
+    if (!collapsible) return;
+    function onOther(e: Event) {
+      if ((e as CustomEvent<string>).detail !== uid) setCollapsed(true);
+    }
+    window.addEventListener(OPEN_EVENT, onOther);
+    return () => window.removeEventListener(OPEN_EVENT, onOther);
+  }, [collapsible, uid]);
+
+  function toggle() {
+    setCollapsed((c) => {
+      const next = !c;
+      if (!next) window.dispatchEvent(new CustomEvent<string>(OPEN_EVENT, { detail: uid }));
+      return next;
+    });
+  }
 
   const headLeft = (
     <>
@@ -70,7 +95,7 @@ export function DashboardPanel({
              oluşmaz). sm+'da tıklama görsel olarak etkisiz — içerik CSS ile daima açık. */
           <button
             type="button"
-            onClick={() => setCollapsed((c) => !c)}
+            onClick={toggle}
             aria-expanded={!collapsed}
             className="flex min-w-0 items-center gap-3 text-start sm:cursor-default"
           >

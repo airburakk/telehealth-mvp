@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { openRequestsForDoctor, answeredByDoctor, answeredStatsForDoctor, engagedByDoctor, PAYMENT_PER_ANSWER, type ConsultReqView, type ConsultDocView } from "@/lib/consultation-requests";
+import { openRequestsForDoctor, answeredByDoctor, engagedByDoctor, PAYMENT_PER_ANSWER, type ConsultReqView, type ConsultDocView } from "@/lib/consultation-requests";
 import { formatUSD } from "@/lib/pricing";
 import { loincForBranchLabel } from "@/data/coding";
 import { imagingForBranch } from "@/data/imaging";
@@ -12,7 +12,7 @@ import { ConsultationChat } from "@/components/ConsultationChat";
 import { VideoControls } from "@/components/VideoControls";
 import { PresencePinger } from "@/components/PresencePinger";
 import { ConsultDicomButton } from "@/components/ConsultDicomButton";
-import { Inbox, ShieldCheck, ArrowLeft, Globe, Languages, Stethoscope, Wallet, FileText, FlaskConical, AlertTriangle, Pill, Scan, MessagesSquare } from "lucide-react";
+import { Inbox, ShieldCheck, ArrowLeft, Globe, Languages, Stethoscope, FileText, FlaskConical, AlertTriangle, Pill, Scan, MessagesSquare } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -25,13 +25,13 @@ export default async function ConsultationInboxPage() {
   if (!doctor) redirect("/doktor");
   if (!doctor.consultOptIn) redirect("/doktor"); // panel görünürlüğüyle tutarlı
 
-  const [open, engaged, answered, stats] = await Promise.all([
+  // Hakediş penceresi /doktor/finans'a taşındı (2026-08-01, kullanıcı kararı) — kümülatif
+  // istatistik (answeredStatsForDoctor) artık orada, kulvar-ayrımlı dökümde gösterilir.
+  const [open, engaged, answered] = await Promise.all([
     openRequestsForDoctor(doctor.branch, doctor.id), // kendi vakasından açtığı talepler listelenmez (v6.33)
     engagedByDoctor(doctor.id),
     answeredByDoctor(doctor.id),
-    answeredStatsForDoctor(doctor.id), // kümülatif — liste take 20 ile sınırlı, reduce yanlış olurdu
   ]);
-  const totalEarned = stats.totalEarned;
 
   // Kodlu öneri katalogları (branşa göre öne çıkar) — yanıt formuna geçer.
   const catalog: CatalogProps = {
@@ -47,16 +47,9 @@ export default async function ConsultationInboxPage() {
         <ArrowLeft size={15} /> Ana Sayfa
       </Link>
 
-      <div className="mt-3 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Konsültasyon Talepleri</h1>
-          <p className="mt-1 text-sm text-[var(--c-ink-2)]">Partner doktorlardan gelen anonimleştirilmiş hasta dosyaları. Yanıt başına {formatUSD(PAYMENT_PER_ANSWER)} (simüle).</p>
-        </div>
-        <div className="shrink-0 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 text-right">
-          <div className="flex items-center justify-end gap-1.5 text-xs font-semibold text-emerald-300"><Wallet size={14} /> Hakediş</div>
-          <div className="text-lg font-bold text-emerald-300">{formatUSD(totalEarned)}</div>
-          <div className="text-[10px] text-emerald-300/80">{stats.count} yanıt</div>
-        </div>
+      <div className="mt-3">
+        <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Konsültasyon Talepleri</h1>
+        <p className="mt-1 text-sm text-[var(--c-ink-2)]">Partner doktorlardan gelen anonimleştirilmiş hasta dosyaları. Yanıt başına {formatUSD(PAYMENT_PER_ANSWER)} (simüle).</p>
       </div>
 
       {/* Mahremiyet bilgi şeridi */}
@@ -88,7 +81,8 @@ export default async function ConsultationInboxPage() {
       {/* Yanıtladıklarım */}
       {answered.length > 0 && (
         <>
-          <h2 className="aura-display mt-8 text-base font-medium tracking-tight text-[var(--c-ink)]">Yanıtladıklarım (son {answered.length} / toplam {stats.count})</h2>
+          {/* Kümülatif toplam Finans sayfasında — burada yalnız son yanıt listesi. */}
+          <h2 className="aura-display mt-8 text-base font-medium tracking-tight text-[var(--c-ink)]">Yanıtladıklarım (son {answered.length})</h2>
           <div className="mt-3 space-y-3">
             {answered.map((r) => (
               <div key={r.id} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4">

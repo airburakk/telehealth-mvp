@@ -6,7 +6,7 @@
 // köprü Vakalarım üstündeki kulvar kartlarındadır (MyCasesList).
 import type { ComponentType } from "react";
 import {
-  Stethoscope, UserRound, HeartPulse, Scale, Users, BadgeCheck, Share2, BarChart3,
+  Stethoscope, UserRound, HeartPulse, Scale, Users, Share2, BarChart3,
   FolderHeart, Globe, Luggage,
 } from "lucide-react";
 
@@ -41,7 +41,8 @@ const NAV: NavItem[] = [
   // "Doctor" + yanıp sönen zümrüt "ium" (.doctorium-ium-breathe); sembol yalnız sayfa başlığında.
   { href: "/doktor/doctorium", label: "Doctorium", roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
   // "Ücretsiz Hizmet" bant linki kaldırıldı (2026-07-31, kullanıcı kararı) — rota + ana sayfa paneli durur.
-  { href: "/doktor/profil", label: "Profilim", icon: BadgeCheck, roles: ["DOCTOR", "ADMIN"] },
+  // "Profilim" bant linki kaldırıldı (2026-08-01, kullanıcı kararı) — artık header hesap
+  // menüsünde (Header.tsx); rota /doktor/profil aynen durur.
   { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, roles: ["ETHICS", "ADMIN"] },
   { href: "/partner", label: "Partner", icon: Globe, roles: ["PARTNER", "ADMIN"] },
   { href: "/acente", label: "Tedavi Dosyaları", icon: Luggage, roles: ["AGENCY"] }, // S3 acente kuyruğu (FAZ 4)

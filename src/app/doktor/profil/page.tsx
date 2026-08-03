@@ -1,20 +1,14 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { formatUSD } from "@/lib/pricing";
-import { formatDateTime } from "@/lib/constants";
 import { branchKeyFromLabel, branchLabel, getBranchProcedures, getByCodes } from "@/lib/procedures";
 import ProcedureSelector from "@/components/ProcedureSelector";
 import { DoctorPreferences } from "@/components/DoctorPreferences";
 import { AcademicEditor } from "@/components/AcademicEditor";
-import { decryptField } from "@/lib/crypto";
-import { Star, BadgeCheck, Wallet, CalendarClock, TrendingUp, ExternalLink, Award, Users, Target } from "lucide-react";
+import { Star, BadgeCheck, CalendarClock, TrendingUp, ExternalLink, Award, Users, Target } from "lucide-react";
 import { getDoctorScorecard, type MetricKey } from "@/lib/match-score";
 
 export const dynamic = "force-dynamic";
-
-const CONSULT_FEE = 150;
-const COMMISSION = 0.2;
 
 export default async function DoctorDashboard() {
   const session = await getCurrentUser();
@@ -37,10 +31,8 @@ export default async function DoctorDashboard() {
   }
 
   const scorecard = await getDoctorScorecard(doctor.id); // CRM eşleştirme kalite kartı (şeffaflık)
-  const net = CONSULT_FEE * (1 - COMMISSION);
+  // Hakediş dökümü /doktor/finans'a taşındı (2026-08-01) — ended burada yalnız kapasite için.
   const ended = doctor.consultations.filter((c) => c.status === "ENDED");
-  const earnings = ended.map((c) => ({ id: c.id, patient: decryptField(c.case.patientName), date: c.endedAt ?? c.startedAt, net }));
-  const totalNet = earnings.reduce((a, b) => a + b.net, 0);
 
   // M5 — Yaptığım İşlemler & Fiyatlandırma (branşa göre tarife + taban/tavan fiyat)
   const branchKey = branchKeyFromLabel(doctor.branch);
@@ -167,36 +159,9 @@ export default async function DoctorDashboard() {
         />
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_300px]">
-        {/* Hakediş */}
-        <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><Wallet size={15} /> Hakediş</div>
-            <div className="text-right">
-              <div className="text-xs text-[var(--c-ink-3)]">Toplam net (komisyon sonrası)</div>
-              <div className="text-xl font-bold text-emerald-300">{formatUSD(totalNet)}</div>
-            </div>
-          </div>
-          {earnings.length === 0 ? (
-            <p className="mt-3 text-sm text-[var(--c-ink-3)]">Henüz tamamlanmış görüşme yok.</p>
-          ) : (
-            <ul className="mt-4 divide-y divide-[var(--c-hairline)]">
-              {earnings.map((e) => (
-                <li key={e.id} className="flex items-center justify-between py-2.5 text-sm">
-                  <div>
-                    <div className="font-medium text-[var(--c-ink)]">Konsültasyon · {e.patient}</div>
-                    <div className="text-xs text-[var(--c-ink-3)]">{formatDateTime(e.date)} · brüt {formatUSD(CONSULT_FEE)} · %{COMMISSION * 100} komisyon</div>
-                  </div>
-                  <span className="font-semibold text-[var(--c-ink)]">{formatUSD(e.net)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="mt-3 text-[11px] text-[var(--c-ink-3)]">Tedavi paketi payları ay sonu mutabakatında eklenir (demo).</p>
-        </div>
-
-        {/* Kapasite + müsaitlik */}
-        <aside className="space-y-4">
+      {/* Hakediş dökümü /doktor/finans sayfasına taşındı (2026-08-01, kullanıcı kararı) —
+          giriş: header hesap menüsü "Finans". Kalan üç kart yatay dizilime geçti. */}
+      <div className="mt-5 grid gap-5 sm:grid-cols-3">
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
             <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><CalendarClock size={15} /> Aylık Kapasite</div>
             <div className="mt-3">
@@ -224,7 +189,6 @@ export default async function DoctorDashboard() {
             <div className="font-semibold text-[var(--c-accent)]">Operasyonel yük sıfır</div>
             <p className="mt-1 text-xs">Organizasyon, çeviri ve lojistik platformda. Siz yalnız tıbbi görüşe odaklanın.</p>
           </div>
-        </aside>
       </div>
     </div>
   );

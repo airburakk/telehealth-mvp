@@ -22,9 +22,10 @@ describe("navItemsFor", () => {
     expect(h).toContain("/paylasimlarim");
   });
 
-  it("DOCTOR: Doktor + Post-Op + Doctorium + Profilim; Ücretsiz Sağlık bant linki kalktı (2026-07-31)", () => {
-    expect(hrefs("DOCTOR")).toEqual(["/doktor", "/doktor/takip", "/doktor/doctorium", "/doktor/profil"]);
+  it("DOCTOR: Doktor + Post-Op + Doctorium; Profilim bant linki hesap menüsüne taşındı (2026-08-01)", () => {
+    expect(hrefs("DOCTOR")).toEqual(["/doktor", "/doktor/takip", "/doktor/doctorium"]);
     expect(hrefs("DOCTOR")).not.toContain("/doktor/ucretsiz-saglik");
+    expect(hrefs("DOCTOR")).not.toContain("/doktor/profil");
   });
 
   it("COORDINATOR: Operasyon + Doktor + Post-Op + Doctorium; Ücretsiz Sağlık bant linki kalktı", () => {
