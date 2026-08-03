@@ -87,14 +87,21 @@ export async function loadDocument(
 
 /**
  * Bir belge ref'ini sil. Blob ise harici nesneyi kaldırır (best-effort — hata akışı bozmaz);
- * inline ise no-op (DB satırı silinince veri gider). Yetim Blob = kabul edilebilir küçük maliyet.
+ * inline ise no-op (DB satırı silinince veri gider).
+ *
+ * DÖNÜŞ (2026-08-03 kod incelemesi): `true` = silindi veya silinecek nesne yoktu · `false` = Blob
+ * silinemedi (yetim nesne kaldı). Eskiden `void` dönüyordu ve hatayı içeride yutuyordu; çağıran
+ * başarısızlığı ÖĞRENEMİYORDU → yasal imha cron'u silinmemiş nesneyi "imha edildi" diye sayıyordu.
+ * Fırlatmak yerine boolean: tek bozuk nesne imha batch'ini düşürmemeli, ama sessiz de kalmamalı.
  */
-export async function deleteDocument(ref: string | null | undefined): Promise<void> {
-  if (!isBlobRef(ref)) return;
+export async function deleteDocument(ref: string | null | undefined): Promise<boolean> {
+  if (!isBlobRef(ref)) return true; // silinecek harici nesne yok — başarı sayılır
   try {
     const { del } = await import("@vercel/blob");
     await del((ref as string).slice(BLOB_PREFIX.length), { token: process.env.BLOB_READ_WRITE_TOKEN });
+    return true;
   } catch (e) {
     console.warn("[storage] Blob silme hatası (yetim nesne kalabilir):", e instanceof Error ? e.message : e);
+    return false;
   }
 }

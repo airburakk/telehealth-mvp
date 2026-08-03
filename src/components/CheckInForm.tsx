@@ -57,6 +57,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
   const [checklist, setChecklist] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ severity: Severity; reasons: string[] } | null>(null);
+  const [error, setError] = useState("");
 
   // Çeviri listesi: statik UI + branş + checklist (label + seçenek değerleri) + (geldiğinde) AI gerekçeleri.
   const texts = useMemo(
@@ -82,13 +83,20 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
   async function submit() {
     setSubmitting(true);
     setResult(null);
+    setError("");
     try {
       const res = await fetch(`/api/cases/${caseId}/checkin`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pain, feverC, meds, note, photo, checklist }),
       });
-      const data = await res.json();
-      setResult({ severity: data.severity, reasons: data.reasons });
+      const data = await res.json().catch(() => ({}));
+      // Hata yanıtında `reasons` GELMEZ; eskiden doğrudan set edilip render'da `.map` çağrılıyordu →
+      // TypeError → sayfa komple çöküyordu (projede error.tsx yok). Artık hata ayrı gösterilir.
+      if (!res.ok) {
+        setError(typeof data.error === "string" ? data.error : "Kontrol gönderilemedi. Lütfen tekrar deneyin.");
+        return;
+      }
+      setResult({ severity: data.severity, reasons: Array.isArray(data.reasons) ? data.reasons : [] });
       setNote(""); setPhoto(""); setChecklist({});
       router.refresh();
     } finally {
@@ -195,6 +203,10 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
       <button onClick={submit} disabled={submitting} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-3 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-60">
         {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t("Kontrolü gönder")}
       </button>
+
+      {error && (
+        <div className="mt-4 rounded-2xl bg-red-500/10 p-3 text-sm text-red-300 ring-1 ring-red-400/25">{t(error)}</div>
+      )}
 
       {/* Sonuç */}
       {result && m && (

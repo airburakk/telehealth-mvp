@@ -171,6 +171,14 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
                 )}
               </div>
             </div>
+          ) : data.isStaff ? (
+            // Kontrol girişi HASTA BEYANIDIR (v6.61: uç hasta-only'ye daraltıldı). Personel bu sayfayı
+            // izleme amacıyla görür — form gösterilirse gönderim 403 döner. Formu hiç çizme.
+            <div className="rounded-3xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 text-center">
+              <p className="text-sm text-[var(--c-ink-2)]">
+                {t("Günlük kontrol girişini yalnızca hasta yapabilir. Bu sayfayı izleme amacıyla görüntülüyorsunuz.")}
+              </p>
+            </div>
           ) : (
             <CheckInForm caseId={data.caseId} branch={data.branch} lang={lang} />
           )}

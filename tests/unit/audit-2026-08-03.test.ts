@@ -200,6 +200,28 @@ describe("share-unlock — imzalı capability (P0-C)", () => {
   });
 });
 
+// ── Kod incelemesi bulguları (aynı gün, v6.61 SONRASI düzeltmeler) ──────────────────────────────
+// v6.61 canlıya indikten sonra 5 eksenli bir inceleme üç kusur buldu; üçü de bu commit'te kapandı.
+describe("v6.61 sonrası inceleme bulguları", () => {
+  it("post-op fotoğrafı: HTML yükü görüntü sayılmaz (altıncı yükleme yüzeyi)", () => {
+    // checkin ucu artık `detectDocumentKind(...)?.mime.startsWith("image/")` istiyor.
+    const html = dataUri("image/jpeg", [...Buffer.from("<html><script>alert(1)</script>")]);
+    const kind = detectDocumentKind(html);
+    expect(kind).toBeNull(); // → uç 415 döner
+  });
+
+  it("post-op fotoğrafı: gerçek görüntü geçer", () => {
+    const kind = detectDocumentKind(dataUri("image/png", PNG));
+    expect(kind?.mime.startsWith("image/")).toBe(true);
+  });
+
+  it("PDF post-op fotoğrafı olarak KABUL EDİLMEZ (görüntü değil)", () => {
+    // Tanınan bir tip olması yetmez; checkin ucu ayrıca image/ ön ekini şart koşar.
+    const kind = detectDocumentKind(dataUri("application/pdf", PDF));
+    expect(kind?.mime.startsWith("image/")).toBe(false);
+  });
+});
+
 // ── Harici bağlantı şeması ──────────────────────────────────────────────────────────────────────
 describe("safeExternalUrl", () => {
   it("tehlikeli şemalar elenir", () => {

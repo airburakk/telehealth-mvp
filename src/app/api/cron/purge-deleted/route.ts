@@ -41,6 +41,17 @@ export async function GET(req: Request) {
       );
     }
 
+    // Blob imhası AYRI alarm (2026-08-03 kod incelemesi): DB satırı silinip harici nesne kalırsa
+    // kullanıcıya verilen "imha edilir" sözü tutulmamış olur — ve satır gittiği için ref de kaybolur,
+    // yani yetim nesne bir daha OTOMATİK bulunamaz. Bu yüzden sessiz geçilemez.
+    if (r.failedBlobs > 0) {
+      void sendAlert(
+        "cron-purge-blob",
+        `purge-deleted — ${r.failedBlobs} Blob nesnesi SİLİNEMEDİ (yetim PHI kalmış olabilir)`,
+        `silinen blob: ${r.purgedBlobs} · DB satırları imha edildi, harici nesne kaldı → elle temizlik gerekir`,
+      );
+    }
+
     // Günlük bütünlük NÖBETİ (Ray C): iki append-only zincir (audit + onam) baştan sona doğrulanır.
     // Kırıksa verify fonksiyonları kendi alarmını düşürür; burada yalnız sayaçlar raporlanır.
     // MVP hacminde ucuz (tüm mühürlü satırlar okunur, maxDuration=300); hacim büyüyünce artımlı
@@ -96,7 +107,7 @@ export async function GET(req: Request) {
       resourceType: "SYSTEM",
       resourceId: "purge-deleted",
       subjectUserId: null,
-      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · kongre ${con}`,
+      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · kongre ${con}`,
     });
 
     return NextResponse.json({

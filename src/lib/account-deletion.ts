@@ -155,15 +155,14 @@ export async function purgeExpired(limit = 50): Promise<{ purgedCases: number; p
   // ⚠️ `deleteDocument` HELPER'I ZATEN VARDI (lib/storage.ts) ve doctor/documents rotasında
   // kullanılıyordu; imha cron'u yalnızca onu çağırmıyordu. Hesap silme ekranı kullanıcıya
   // "Süre dolduğunda otomatik olarak imha edilir" diyor → Blob'daki kopya kalırsa bu taahhüt yalan olur.
+  // ⚠️ `deleteDocument` FIRLATMAZ, boolean döner (2026-08-03 kod incelemesi): try/catch ile sarmak
+  // ölü koddu — silme başarısız olsa bile başarı sayılıyordu. Dönüş değeri okunmalı, yoksa
+  // "imha edildi" raporu doğrulanmamış bir iddia olur.
   const purgeBlobs = async (refs: (string | null)[]): Promise<void> => {
     for (const ref of refs) {
       if (!isBlobRef(ref)) continue;
-      try {
-        await deleteDocument(ref);
-        purgedBlobs++;
-      } catch {
-        failedBlobs++; // deleteDocument kendi içinde yutar; yine de savunma amaçlı sayılır
-      }
+      if (await deleteDocument(ref)) purgedBlobs++;
+      else failedBlobs++;
     }
   };
 

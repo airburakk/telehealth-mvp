@@ -7,9 +7,13 @@ import { notifyOnDutySentinels } from "@/lib/clinical-duty";
 import { isCurrentUserCasePatient } from "@/lib/ownership";
 import { recoveryClosed } from "@/lib/postop-access";
 import { encryptField } from "@/lib/crypto";
+import { detectDocumentKind } from "@/lib/document-mime";
 
 // Not-AI (Haiku) + Foto-AI (Sonnet vision) paralel çalışır; serverless varsayılan limitini aşmasın diye süre tanı.
 export const maxDuration = 30;
+
+// Post-op fotoğrafı istemcide canvas ile küçültülüp data URI olarak gönderilir; kaba üst sınır ~3 MB.
+const MAX_PHOTO_CHARS = 4_000_000;
 
 // POST /api/cases/:id/checkin — günlük iyileşme kontrolü
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -37,7 +41,22 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const feverC = Math.min(43, Math.max(34, Number(b.feverC) || 36.5));
   const meds = b.meds !== false;
   const userNote = b.note ? String(b.note) : "";
-  const photo = b.photo ? String(b.photo) : null;
+  // Post-op fotoğrafı = ALTINCI yükleme yüzeyi (2026-08-03 kod incelemesi bulgusu). v6.61 içerik-tipi
+  // kapısını 5 yüzeye bağlamıştı ama burayı atlamıştı: `photo` istemciden geldiği gibi saklanıyor ve
+  // takip ekranında hem <img src> hem <a href> olarak sunuluyordu → `data:text/html` kabul ediliyordu.
+  // (Aynı-origin değil, opak origin'e navigasyon → P0-B'den hafif; yine de aynı sınıf.)
+  // Kapı: yalnız GERÇEKTEN görüntü olan içerik geçer — tip istemci beyanından değil imzadan tespit edilir.
+  const photoRaw = b.photo ? String(b.photo) : null;
+  if (photoRaw) {
+    if (photoRaw.length > MAX_PHOTO_CHARS) {
+      return NextResponse.json({ error: "Fotoğraf çok büyük. Lütfen daha küçük bir görsel yükleyin." }, { status: 413 });
+    }
+    const kind = detectDocumentKind(photoRaw);
+    if (!kind || !kind.mime.startsWith("image/")) {
+      return NextResponse.json({ error: "Yalnızca görüntü dosyası yükleyebilirsiniz (JPEG, PNG, WEBP, GIF)." }, { status: 415 });
+    }
+  }
+  const photo = photoRaw;
   const checklistAnswers: Record<string, string> = (b.checklist && typeof b.checklist === "object") ? b.checklist : {};
 
   // Branşa özel günlük checklist → severity + özet (özet note'a eklenir; şema değişikliği yok)
