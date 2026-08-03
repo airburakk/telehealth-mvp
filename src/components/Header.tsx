@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
 import { PortamedLogo } from "@/components/PortamedLogo";
@@ -27,6 +27,20 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
   const pathname = usePathname();
   const router = useRouter();
   const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
+  // Hesap menüsü (2026-08-01, kullanıcı kararı "A"): isim/rol + Hesabım + çıkış işlemleri
+  // açılır menüye taşındı — header tek satır kalır, tema anahtarı EN SAĞA geçer.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Dış tıklamada kapat (NotificationBell deseni).
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onDown(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [menuOpen]);
 
   // Nav öğeleri rol bazlı (lib/nav.ts — tam birleşme 2026-07-12: journey daraltması kalktı,
   // hasta nav'ı herkes için aynı).
@@ -55,6 +69,9 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
   const activeHref = items
     .filter((n) => pathname === n.href || pathname.startsWith(n.href + "/"))
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+
+  // Avatar baş harfleri (hesap menüsü düğmesi) — ismin ilk iki kelimesinden.
+  const initials = user ? user.name.trim().split(/\s+/).map((w) => w[0] ?? "").slice(0, 2).join("").toUpperCase() : "";
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -120,29 +137,45 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
             })}
           </nav>
 
-          {/* Tema anahtarı (v6.22): gece varsayılan ↔ gündüz; tercih cookie'de, misafirde de görünür */}
-          <ThemeToggle initial={theme} t={t} />
           {user ? (
-            <div className="ml-1 flex shrink-0 items-center gap-2 border-l border-[var(--c-hairline)] ps-2">
+            <div className="ml-1 flex shrink-0 items-center gap-1.5 border-l border-[var(--c-hairline)] ps-2">
               <NotificationBell lang={lang} patientLangFallback={user.role === "PATIENT"} />
-              <div className="hidden text-end sm:block">
-                <div className="text-sm font-medium leading-tight text-[var(--c-ink)]">{user.name}</div>
-                {/* Mono rol etiketi — landing'in "mono durak" dili */}
-                <div className="aura-mono text-[10px] uppercase tracking-[0.18em] leading-tight text-[var(--c-ink-3)]">{t(ROLE_LABELS[user.role] ?? user.role)}</div>
+              {/* Hesap menüsü (2026-08-01, kullanıcı kararı "A"): isim/rol + Hesabım + çıkış
+                  işlemleri tek çatı altında — yıkıcı aksiyonlar (tüm cihazlardan çıkış) yanlış
+                  dokunmaya kapalı, mobilde header 3 öğeye iner (zil · hesap · tema). */}
+              <div ref={menuRef} className="relative">
+                <button
+                  onClick={() => setMenuOpen((o) => !o)}
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  title={user.name}
+                  className="grid h-9 w-9 place-items-center rounded-full bg-[var(--c-accent)]/15 text-[12px] font-bold text-[var(--c-accent)] transition-colors duration-200 hover:bg-[var(--c-accent)]/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]"
+                >
+                  {initials}
+                </button>
+                {menuOpen && (
+                  <div role="menu" className="absolute end-0 top-11 z-40 w-60 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-1.5 shadow-xl">
+                    <div className="border-b border-[var(--c-hairline)] px-3 pb-2.5 pt-2">
+                      <div className="text-sm font-medium leading-tight text-[var(--c-ink)]">{user.name}</div>
+                      {/* Mono rol etiketi — landing'in "mono durak" dili */}
+                      <div className="aura-mono mt-0.5 text-[10px] uppercase tracking-[0.18em] leading-tight text-[var(--c-ink-3)]">{t(ROLE_LABELS[user.role] ?? user.role)}</div>
+                    </div>
+                    {/* Hesap ayarları — yalnız hastada (v6.11): hesap/veri silme oradan yapılır (KVKK m.7).
+                        Personelde gizli; sayfa + API de PATIENT'a kapılı (savunma-derinliği). */}
+                    {user.role === "PATIENT" && (
+                      <Link role="menuitem" href="/hesap" onClick={() => setMenuOpen(false)} className="mt-1 flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                        <UserCog size={15} /> {t("Hesabım")}
+                      </Link>
+                    )}
+                    <button role="menuitem" onClick={() => { setMenuOpen(false); setConfirmLogoutAll(true); }} className="mt-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-start text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                      <ShieldOff size={15} /> {t("Tüm cihazlardan çıkış")}
+                    </button>
+                    <button role="menuitem" onClick={() => { setMenuOpen(false); logout(); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-start text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-red-400">
+                      <LogOut size={15} /> {t("Çıkış")}
+                    </button>
+                  </div>
+                )}
               </div>
-              {/* Hesap ayarları — yalnız hastada (v6.11): hesap/veri silme oradan yapılır (KVKK m.7).
-                  Personelde gizli; sayfa + API de PATIENT'a kapılı (savunma-derinliği). */}
-              {user.role === "PATIENT" && (
-                <Link href="/hesap" title={t("Hesabım")} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-3)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]">
-                  <UserCog size={17} />
-                </Link>
-              )}
-              <button onClick={() => setConfirmLogoutAll(true)} title={t("Tüm cihazlardan çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-3)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-red-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]">
-                <ShieldOff size={16} />
-              </button>
-              <button onClick={logout} title={t("Çıkış")} className="grid h-9 w-9 place-items-center rounded-lg text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-red-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]">
-                <LogOut size={17} />
-              </button>
             </div>
           ) : (
             // V2Nav CTA dili: turkuaz durak noktası + mono etiket
@@ -151,6 +184,9 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
               <span className="aura-mono text-[13px] transition-colors duration-200 group-hover:text-[var(--c-accent)]">{t("Giriş yap")}</span>
             </Link>
           )}
+          {/* Tema anahtarı EN SAĞDA (2026-08-01, kullanıcı kararı; v6.22 konumu süpersede) —
+              tercih cookie'de, misafirde de görünür. */}
+          <ThemeToggle initial={theme} t={t} />
         </div>
       </div>
       <ConfirmDialog

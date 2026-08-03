@@ -67,7 +67,9 @@ export function DutyConsole({ initial, initialRequests }: { initial: DutyState; 
 
   return (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-      <div className="flex items-center gap-2">
+      {/* flex-wrap (2026-08-01, mobil inceleme): durum çipi shrink etmiyor, dar ekranda
+          "Branşınız…" satırını 148px'e sıkıştırıyordu — sığmazsa çip alta sarar. */}
+      <div className="flex flex-wrap items-center gap-2">
         {/* Ortak kulvar ikonu + rengi (2026-07-31): Uzaktan Sağlık = HeartPulse, pembe kulvar token'ı
             (--lane-telehealth) — DashboardPanel'in %14 yumuşak-zemin deseniyle aynı. */}
         <span
