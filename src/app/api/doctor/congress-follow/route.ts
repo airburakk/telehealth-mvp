@@ -19,15 +19,22 @@ export async function POST(req: Request) {
 
   const b = await req.json().catch(() => ({}));
 
-  // (a) Alarm tercihleri — "alertDays" anahtarı geldiyse. null/geçersiz = alarm kapalı.
-  if ("alertDays" in b || "deadlineAlertDays" in b) {
+  // (a) Alarm tercihleri — üç AYRI eşik (v6.62, kullanıcı isteği): başlangıç · bildiri · erken
+  // kayıt. Bildiri hazırlamak haftalar sürer, erken kayıt tek işlemdir → aynı gün sayısı ikisine
+  // de doğru gelmiyordu. Eşikler her kongrenin KENDİ tarihine uygulanır (lib/congress-reminder).
+  // null/geçersiz = o alarm kapalı.
+  if ("alertDays" in b || "abstractAlertDays" in b || "earlyBirdAlertDays" in b) {
     const congressAlertDays = normalizeAlertDays(b.alertDays);
-    const congressDeadlineAlertDays = normalizeAlertDays(b.deadlineAlertDays);
-    await db.doctor.update({ where: { id: doctorId }, data: { congressAlertDays, congressDeadlineAlertDays } });
+    const congressAbstractAlertDays = normalizeAlertDays(b.abstractAlertDays);
+    const congressEarlyBirdAlertDays = normalizeAlertDays(b.earlyBirdAlertDays);
+    await db.doctor.update({
+      where: { id: doctorId },
+      data: { congressAlertDays, congressAbstractAlertDays, congressEarlyBirdAlertDays },
+    });
     // Eşik değişince önceki "gönderildi" işaretleri anlamını yitirir (hekim daha erken uyarılmak
     // isteyebilir) → sıfırla, yeni eşiğe göre yeniden değerlendirilsin.
     await db.congressFollow.updateMany({ where: { doctorId }, data: { sentAlerts: "[]" } });
-    return NextResponse.json({ ok: true, congressAlertDays, congressDeadlineAlertDays });
+    return NextResponse.json({ ok: true, congressAlertDays, congressAbstractAlertDays, congressEarlyBirdAlertDays });
   }
 
   // (b) Takip aç/kapat

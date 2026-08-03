@@ -140,7 +140,15 @@ model Doctor {
   congressAlertDays  Int?
   /// Doctorium kongre alarmı (v6.49): bildiri teslim / erken kayıt SON TARİHİNDEN kaç gün önce.
   /// null = kapalı. Son tarih alarmı ayrı tutulur — kongreye 30 gün varken bildiri süresi dolabilir.
+  /// 🔄 v6.62'de İKİYE AYRILDI (aşağıdaki iki alan). Bu alan geriye-uyum için DURUYOR: eski değer
+  /// migration'da iki yeni alana kopyalandı; yeni kod yalnız yeni alanları okur.
   congressDeadlineAlertDays Int?
+  /// v6.62: BİLDİRİ son gönderim tarihinden kaç gün önce uyarılsın. null = kapalı.
+  /// Ayrı eşik: bildiri hazırlamak haftalar sürer, erken kayıt ise tek işlemdir — aynı gün sayısı
+  /// ikisine de doğru gelmiyordu (kullanıcı isteği). Eşik her kongrenin KENDİ tarihine uygulanır.
+  congressAbstractAlertDays  Int?
+  /// v6.62: ERKEN KAYIT son tarihinden kaç gün önce uyarılsın. null = kapalı.
+  congressEarlyBirdAlertDays Int?
   // Ücretsiz Sağlık Hizmeti — anlık müsaitlik + kontenjan (gönüllü ücretsiz konsültasyon).
   freeCareState       String    @default("OFFLINE") // OFFLINE | AVAILABLE | IN_SESSION
   freeCareQuota       Int       @default(10) // dönem (takvim haftası) başına kontenjan
@@ -927,8 +935,12 @@ model NewsArticle {
   @@index([module, publishedAt]) // modül akışı (yeni→eski)
 }
 
-/// Doctorium Modül E — medikal kongre takvimi (v6.48).
-/// Otomatik kaynak YOK (dernek/kongre siteleri makine-okunur takvim yayımlamıyor) → admin küratörlü.
+/// Doctorium Modül E — medikal kongre takvimi (v6.48; v6.62'de KÜRATÖRLÜ VERİTABANI'na genişledi).
+/// Otomatik kaynak YOK (dernek/kongre siteleri makine-okunur takvim yayımlamıyor) → küratörlü:
+/// 30 branşın ulusal + uluslararası kongreleri resmî sitelerinden doğrulanarak derlendi
+/// (vault `output/kongre-veritabani-2026-08-03.md`; seed `scripts/seed-congresses.ts`).
+/// ⚠️ Bilinmeyen alan BOŞ bırakılır — kongre verisi asla tahmin edilmez (uydurma tarih = yanlış
+/// bildiri/kayıt alarmı = doktorun gerçek kaybı).
 model MedicalCongress {
   id                String    @id @default(cuid())
   title             String
@@ -945,7 +957,47 @@ model MedicalCongress {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
+  // ── v6.62 küratörlü veritabanı alanları ───────────────────────────────────
+  /// Kaynak kimliği — idempotent seed/tazeleme için. Elle girilen kayıtlarda null kalır
+  /// (bu yüzden nullable + kompozit unique: null'lar Postgres'te çakışmaz).
+  source            String?
+  externalId        String?
+  /// "ulusal" | "uluslararasi" — doktorun ilk süzdüğü eksen (v6.62 filtre).
+  scope             String    @default("ulusal")
+  /// Kaçıncı edisyon ("42.", "XXVII.") — ad ile ayrı tutulur ki yıl değişince ad bozulmasın.
+  edition           String?
+  /// "yillik" | "2-yilda-bir" | null(bilinmiyor) — tazeleme kademesi bunu kullanır.
+  frequency         String?
+  /// Mekân/otel ("Susesi Kongre Merkezi, Belek") — şehirden ayrı: doktor konaklamayı buna göre seçer.
+  venue             String?
+  /// "yuz-yuze" | "hibrit" | "online" — online ücret çok daha ucuz olabiliyor (ESC 995€ → 255€).
+  format            String?
+  /// Kongre dili + çeviri notu ("Türkçe" / "İngilizce, simultane TR çeviri").
+  language          String?
+  /// TTB-STE / CME kredi notu — TR kongrelerinin çoğu kredili, doktorun birincil karar kriteri.
+  cmeCredit         String?
+  /// Kayıt ücretleri + koşulları (serbest metin; kategori × kademe tabloları buraya düz yazılır).
+  registrationNotes String?
+  /// Ana temalar / öne çıkan başlıklar. Tam PROGRAM taşınmaz (telif + kongreden 1-2 ay önce
+  /// kesinleşir → bayat bilgi riski); doktor programa resmî siteden gider.
+  themes            String?
+  /// ⚠️ Doktora gösterilecek uyarı — ör. sahte kayıt sitesi ihbarı (ERA · IDWeek · EPA resmî
+  /// uyarı yayımlıyor). Doldurulmuşsa kartta GÖRÜNÜR şekilde basılır.
+  warning           String?
+  /// Kapak görseli — kongrenin og:image'ı SUNUCUDA indirilip Blob'a yazılır (CSP `img-src 'self'`
+  /// dış hostu engeller; ayrıca link ölmesin ve bant genişliği çalınmasın diye). Yoksa UI branş
+  /// amblemli üretilmiş kapak çizer.
+  coverImage        String?
+  /// JSON string[] — doğrulamada kullanılan kaynak URL'leri (şeffaflık: "bunu nereden biliyoruz").
+  sourceUrls        String    @default("[]")
+  /// "dogrulandi" | "kismi" — kısmi = sonraki edisyon henüz ilan edilmemiş ya da ikincil kaynak.
+  confidence        String    @default("dogrulandi")
+  /// Son doğrulama tarihi — tazeleme döngüsü ve "şu tarihte teyit edildi" ibaresi için.
+  verifiedAt        DateTime?
+
+  @@unique([source, externalId]) // idempotent seed/tazeleme (elle kayıtlarda null → çakışmaz)
   @@index([startDate])
+  @@index([scope, startDate]) // ulusal/uluslararası filtresi + tarih sıralaması
 }
 
 /// Doctorium Modül E — hekimin TAKİP ettiği kongre (v6.49). Takip = alarm kapsamına girer.

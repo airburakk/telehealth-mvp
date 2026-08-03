@@ -36,6 +36,10 @@ interface Props {
   showCategory: boolean;
   /** Kongre alarm ayarları gösterilsin mi. */
   showAlerts: boolean;
+  /** Ulusal/uluslararası kapsam filtresi gösterilsin mi (yalnız Kongre sekmesi, v6.62). */
+  showScope: boolean;
+  /** Etkin kapsam filtresi (null = tümü). */
+  scope: string | null;
   rangeKey: string;
   rangeOptions: readonly { key: string; label: string }[];
   category: string | null;
@@ -45,7 +49,9 @@ interface Props {
   branchInitial: string[];
   ownBranchSlug: string | null;
   alertStart: number | null;
-  alertDeadline: number | null;
+  /** v6.62: bildiri ve erken kayıt eşikleri AYRI (eskiden tek "deadline" idi). */
+  alertAbstract: number | null;
+  alertEarlyBird: number | null;
 }
 
 export function DoctoriumFilters(p: Props) {
@@ -59,21 +65,23 @@ export function DoctoriumFilters(p: Props) {
     branches.size !== p.branchInitial.length || [...branches].some((s) => !p.branchInitial.includes(s));
 
   const [start, setStart] = useState<number | null>(p.alertStart);
-  const [deadline, setDeadline] = useState<number | null>(p.alertDeadline);
+  const [abstractDays, setAbstractDays] = useState<number | null>(p.alertAbstract);
+  const [earlyBird, setEarlyBird] = useState<number | null>(p.alertEarlyBird);
   const [savingAlerts, setSavingAlerts] = useState(false);
 
   const activeRange = p.rangeOptions.find((r) => r.key === p.rangeKey)?.label;
   const activeCat = p.categoryOptions.find((c) => c.key === p.category)?.label;
-  const alertsOn = start != null || deadline != null;
+  const alertsOn = start != null || abstractDays != null || earlyBird != null;
 
   // Bu modülde gösterilecek hiçbir ayar yoksa düğmeyi de çizme (ör. Akademik: aralık/kategori/
-  // alarm yok, branş tercihi de artık yalnız Akışım'da) — boş panel açılmasın.
-  const hasAnySection = p.showRange || p.showCategory || p.showAlerts || !!p.branchOptions;
+  // alarm yok) — boş panel açılmasın.
+  const hasAnySection = p.showRange || p.showCategory || p.showAlerts || p.showScope || !!p.branchOptions;
 
   // Kapalı paneldeki özet: hangi ayarların etkin olduğu tek bakışta görünsün.
   const summary = [
     p.showRange && activeRange ? activeRange : null,
     p.showCategory && activeCat ? activeCat : null,
+    p.showScope ? (p.scope === "ulusal" ? "🇹🇷 ulusal" : p.scope === "uluslararasi" ? "🌍 uluslararası" : "tüm kapsam") : null,
     p.branchOptions ? `${branches.size || "kendi"} branş` : null,
     p.showAlerts ? (alertsOn ? "alarm açık" : "alarm kapalı") : null,
   ].filter(Boolean).join(" · ");
@@ -97,7 +105,11 @@ export function DoctoriumFilters(p: Props) {
     }
   }
 
-  async function saveAlerts(next: { alertDays: number | null; deadlineAlertDays: number | null }) {
+  async function saveAlerts(next: {
+    alertDays: number | null;
+    abstractAlertDays: number | null;
+    earlyBirdAlertDays: number | null;
+  }) {
     setSavingAlerts(true);
     try {
       const res = await fetch("/api/doctor/congress-follow", {
@@ -114,14 +126,18 @@ export function DoctoriumFilters(p: Props) {
     }
   }
 
-  function pickAlert(kind: "start" | "deadline", days: number | null) {
+  // v6.62: üç bağımsız eşik. Uç nokta üçünü BİRLİKTE yazdığı için değişmeyen ikisi de gönderilir
+  // (kısmi gönderim diğerlerini null'a düşürürdü — sessiz alarm kapanması).
+  function pickAlert(kind: "start" | "abstract" | "earlybird", days: number | null) {
+    const next = {
+      alertDays: kind === "start" ? days : start,
+      abstractAlertDays: kind === "abstract" ? days : abstractDays,
+      earlyBirdAlertDays: kind === "earlybird" ? days : earlyBird,
+    };
     if (kind === "start") setStart(days);
-    else setDeadline(days);
-    void saveAlerts(
-      kind === "start"
-        ? { alertDays: days, deadlineAlertDays: deadline }
-        : { alertDays: start, deadlineAlertDays: days },
-    );
+    else if (kind === "abstract") setAbstractDays(days);
+    else setEarlyBird(days);
+    void saveAlerts(next);
   }
 
   const chip = (on: boolean) =>
@@ -194,6 +210,33 @@ export function DoctoriumFilters(p: Props) {
             </section>
           )}
 
+          {p.showScope && (
+            <section>
+              <h3 className={sectionTitle}>Kapsam</h3>
+              <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
+                Ulusal kongreler Türkiye ve KKTC'de; uluslararasılar Avrupa/ABD/dünya kongreleridir.
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {(
+                  [
+                    [null, "Tümü"],
+                    ["ulusal", "🇹🇷 Ulusal"],
+                    ["uluslararasi", "🌍 Uluslararası"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <Link
+                    key={label}
+                    href={`/doktor/doctorium?m=kongre${key ? `&s=${key}` : ""}`}
+                    aria-current={p.scope === (key ?? null) ? "true" : undefined}
+                    className={chip(p.scope === (key ?? null))}
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
           {p.showAlerts && (
             <section>
               <h3 className={`${sectionTitle} flex items-center gap-1.5`}>
@@ -202,13 +245,15 @@ export function DoctoriumFilters(p: Props) {
                 {savingAlerts && <Loader2 size={11} className="animate-spin" />}
               </h3>
               <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
-                Yalnız ⭐ ile takip ettiğiniz kongreler için gönderilir.
+                Yalnız ⭐ ile takip ettiğiniz kongreler için gönderilir. Her eşik, o kongrenin
+                <strong className="font-semibold"> kendi tarihine</strong> uygulanır.
               </p>
               <div className="mt-2 grid gap-2.5">
                 {(
                   [
                     ["start", start, "Kongre başlangıcı"],
-                    ["deadline", deadline, "Bildiri / erken kayıt son tarihi"],
+                    ["abstract", abstractDays, "Bildiri son gönderim"],
+                    ["earlybird", earlyBird, "Erken kayıt son tarihi"],
                   ] as const
                 ).map(([kind, current, title]) => (
                   <div key={kind}>
@@ -243,7 +288,9 @@ export function DoctoriumFilters(p: Props) {
                 )}
               </div>
               <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
-                Boş bırakırsanız akışınız kendi branşınıza göre oluşur.
+                {p.module === "kongre"
+                  ? "Kongre takvimi bu branşlara göre süzülür. Boş bırakırsanız kendi branşınız kullanılır."
+                  : "Boş bırakırsanız akışınız kendi branşınıza göre oluşur."}
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {p.branchOptions.map((o) => {

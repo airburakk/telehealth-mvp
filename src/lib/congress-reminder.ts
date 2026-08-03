@@ -1,13 +1,20 @@
-// Doctorium Modül E — kongre alarmı (v6.49). Günlük bakım cron'u (purge-deleted) çağırır.
+// Doctorium Modül E — kongre alarmı (v6.49; v6.62'de ÜÇ EŞİĞE ayrıldı). Günlük bakım cron'u
+// (purge-deleted) çağırır.
 //
-// İKİ AYRI ALARM (kullanıcı isteği): doktor ikisini ayrı ayrı ayarlar, çünkü zamanlamaları farklıdır —
-//   1) "start"    → kongrenin BAŞLANGICI yaklaşıyor (Doctor.congressAlertDays)
-//   2) "deadline" → bildiri teslim / erken kayıt SON TARİHİ yaklaşıyor (Doctor.congressDeadlineAlertDays)
-//      Kongreye 2 ay varken bildiri süresi dolabilir; tek eşik ikisini de doğru yakalayamaz.
+// ÜÇ AYRI ALARM (kullanıcı isteği v6.62) — doktor üçünü ayrı ayrı ayarlar, zamanlamaları farklı:
+//   1) "start"     → kongrenin BAŞLANGICI yaklaşıyor        (Doctor.congressAlertDays)
+//   2) "abstract"  → BİLDİRİ son gönderim yaklaşıyor        (Doctor.congressAbstractAlertDays)
+//   3) "earlybird" → ERKEN KAYIT son tarihi yaklaşıyor      (Doctor.congressEarlyBirdAlertDays)
+// Gerekçe: bildiri hazırlamak haftalar sürer (erken uyarı ister), erken kayıt tek işlemdir
+// (kısa uyarı yeter), kongre başlangıcı ise seyahat planı içindir. v6.49'da 2+3 tek eşikteydi ve
+// "hangisi önce gelirse o" mantığıyla BİRİ gönderilince öbürü susuyordu — gerçek kayıp riski.
+// Eşikler her kongrenin KENDİ tarihine uygulanır (kongre başına tarihler farklı).
 //
 // TEKRAR KORUMASI: gönderilen alarm türü CongressFollow.sentAlerts'a yazılır → her gün yeniden
 // gönderilmez. (DOCS_PENDING hatırlatmasında bildirim kaydından türetmiştik; burada takip satırı
 // zaten var, açık kayıt daha ucuz ve okunaklı.)
+// 🔁 Geriye uyum: v6.49'un "deadline" işareti eski takiplerde duruyor olabilir; yeni türler
+// ("abstract"/"earlybird") ayrı anahtarlar olduğu için eski işaret yeni alarmları ENGELLEMEZ.
 //
 // Alarm KRİTİK DEĞİL: hata imha akışını düşürmez, cron yanıtında raporlanır.
 import { db } from "./db";
@@ -16,7 +23,8 @@ import { notifyUser } from "./notify";
 export interface CongressRemindResult {
   checked: number; // incelenen takip satırı
   start: number; // gönderilen başlangıç alarmı
-  deadline: number; // gönderilen son-tarih alarmı
+  abstract: number; // gönderilen bildiri son-tarih alarmı (v6.62)
+  earlybird: number; // gönderilen erken kayıt alarmı (v6.62)
   failed: number;
 }
 
@@ -41,7 +49,7 @@ function fmt(d: Date): string {
 }
 
 export async function remindCongressFollows(now = new Date()): Promise<CongressRemindResult> {
-  const out: CongressRemindResult = { checked: 0, start: 0, deadline: 0, failed: 0 };
+  const out: CongressRemindResult = { checked: 0, start: 0, abstract: 0, earlybird: 0, failed: 0 };
 
   const follows = await db.congressFollow.findMany({
     select: { id: true, doctorId: true, congressId: true, sentAlerts: true },
@@ -55,11 +63,17 @@ export async function remindCongressFollows(now = new Date()): Promise<CongressR
     db.medicalCongress.findMany({
       where: { id: { in: [...new Set(follows.map((f) => f.congressId))] } },
       select: { id: true, title: true, startDate: true, abstractDeadline: true, earlyBirdDeadline: true },
+      // NOT: kongre kartına derin bağlantı için id yeterli (/doktor/doctorium/kongre/[id]).
     }),
     db.user.findMany({ where: { doctorId: { in: doctorIds } }, select: { id: true, doctorId: true } }),
     db.doctor.findMany({
       where: { id: { in: doctorIds } },
-      select: { id: true, congressAlertDays: true, congressDeadlineAlertDays: true },
+      select: {
+        id: true,
+        congressAlertDays: true,
+        congressAbstractAlertDays: true,
+        congressEarlyBirdAlertDays: true,
+      },
     }),
   ]);
   const byCongress = new Map(congresses.map((c) => [c.id, c]));
@@ -75,7 +89,6 @@ export async function remindCongressFollows(now = new Date()): Promise<CongressR
 
     const sent = parseSent(f.sentAlerts);
     const startDays = pref.congressAlertDays;
-    const deadlineDays = pref.congressDeadlineAlertDays;
 
     // (1) Başlangıç alarmı — eşiğe girdiyse ve henüz gönderilmediyse. Geçmiş kongre atlanır.
     if (startDays != null && !sent.has("start")) {
@@ -96,29 +109,30 @@ export async function remindCongressFollows(now = new Date()): Promise<CongressR
       }
     }
 
-    // (2) Son tarih alarmı — bildiri teslim ve erken kayıttan hangisi ÖNCE geliyorsa o.
-    if (deadlineDays != null && !sent.has("deadline")) {
-      const candidates = [
-        { d: c.abstractDeadline, label: "Bildiri teslim" },
-        { d: c.earlyBirdDeadline, label: "Erken kayıt" },
-      ].filter((x): x is { d: Date; label: string } => !!x.d);
-      const next = candidates
-        .map((x) => ({ ...x, days: daysUntil(x.d, now) }))
-        .filter((x) => x.days >= 0 && x.days <= deadlineDays)
-        .sort((a, b) => a.days - b.days)[0];
-      if (next) {
-        try {
-          await notifyUser(u.id, {
-            type: "CONGRESS_ALERT",
-            title: "⏳ Kongre son tarihi yaklaşıyor",
-            body: `${c.title} — ${next.label} için ${next.days === 0 ? "son gün" : `${next.days} gün kaldı`} (${fmt(next.d)}).`,
-            href: "/doktor/doctorium?m=kongre",
-          });
-          sent.add("deadline");
-          out.deadline++;
-        } catch {
-          out.failed++;
-        }
+    // (2)+(3) Son tarih alarmları — v6.62: bildiri ve erken kayıt AYRI eşik, AYRI bildirim.
+    // Eskiden ikisi tek eşikteydi ve "önce gelen" gönderilince öbürü susuyordu; artık her biri
+    // kendi eşiğine göre bağımsız değerlendirilir (biri gönderildi diye diğeri kaçmaz).
+    const deadlineKinds = [
+      { key: "abstract", days: pref.congressAbstractAlertDays, date: c.abstractDeadline, label: "Bildiri son gönderim" },
+      { key: "earlybird", days: pref.congressEarlyBirdAlertDays, date: c.earlyBirdDeadline, label: "Erken kayıt" },
+    ] as const;
+
+    for (const k of deadlineKinds) {
+      if (k.days == null || !k.date || sent.has(k.key)) continue;
+      const left = daysUntil(k.date, now);
+      if (left < 0 || left > k.days) continue;
+      try {
+        await notifyUser(u.id, {
+          type: "CONGRESS_ALERT",
+          title: k.key === "abstract" ? "📝 Bildiri son tarihi yaklaşıyor" : "⏳ Erken kayıt son tarihi yaklaşıyor",
+          body: `${c.title} — ${k.label} için ${left === 0 ? "son gün" : `${left} gün kaldı`} (${fmt(k.date)}).`,
+          href: `/doktor/doctorium/kongre/${c.id}`,
+        });
+        sent.add(k.key);
+        if (k.key === "abstract") out.abstract++;
+        else out.earlybird++;
+      } catch {
+        out.failed++;
       }
     }
 

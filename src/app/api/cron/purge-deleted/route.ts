@@ -89,7 +89,7 @@ export async function GET(req: Request) {
       : `pubmed=${doctorium.pubmedNew}/${doctorium.pubmedFetched} rg=${doctorium.gazetteNew}/${doctorium.gazetteFetched}${doctorium.errors.length ? ` sorun=${doctorium.errors.length}` : ""}`;
     const con = "error" in congress
       ? `hata: ${congress.error}`
-      : `bakilan=${congress.checked} baslangic=${congress.start} sontarih=${congress.deadline} hata=${congress.failed}`;
+      : `bakilan=${congress.checked} baslangic=${congress.start} bildiri=${congress.abstract} erkenkayit=${congress.earlybird} hata=${congress.failed}`;
     await recordAccess({
       actor: null, // sistem koşusu
       action: "CRON_MAINTENANCE",

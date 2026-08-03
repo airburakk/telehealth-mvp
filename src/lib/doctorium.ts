@@ -246,18 +246,54 @@ export async function followedCongressIds(doctorId: string): Promise<Set<string>
   return new Set(rows.map((r) => r.congressId));
 }
 
-export async function upcomingCongresses(branchSlugs: string[], limit = 40) {
+/** "ulusal" | "uluslararasi" — kongre listesinin kapsam filtresi (v6.62, kullanıcı isteği). */
+export type CongressScope = "ulusal" | "uluslararasi";
+
+export function parseScope(raw?: string | null): CongressScope | null {
+  return raw === "ulusal" || raw === "uluslararasi" ? raw : null;
+}
+
+/**
+ * Yaklaşan kongreler. Branş süzgeci v6.48'den beri UYGULANIYOR ama v6.62'ye kadar arayüzde
+ * GÖRÜNMÜYORDU (Özelleştir panelinde branş bölümü kongre sekmesinde çizilmiyordu) → doktor
+ * göremediği bir filtreyle eksik liste görüyordu. Artık panelde de gösteriliyor.
+ *
+ * 🪤 Limit süzgeçten SONRA uygulanır: önce `take` deseydik, ilk 60 kayıt başka branşlardan
+ * doluyken doktorun kendi kongresi listeden düşerdi (sessiz veri kaybı).
+ */
+export async function upcomingCongresses(
+  branchSlugs: string[],
+  opts?: { scope?: CongressScope | null; limit?: number },
+) {
   const rows = await db.medicalCongress.findMany({
-    where: { startDate: { gte: new Date(Date.now() - 86400000) } }, // bugün başlayan dahil
+    where: {
+      startDate: { gte: new Date(Date.now() - 86400000) }, // bugün başlayan dahil
+      ...(opts?.scope ? { scope: opts.scope } : {}),
+    },
     orderBy: { startDate: "asc" },
-    take: limit,
   });
-  if (!branchSlugs.length) return rows;
-  // Branşsız (tüm branşlara açık) kongreler herkeste görünür.
-  return rows.filter((c) => {
-    const s = c.branchSlugs || "[]";
-    return s === "[]" || branchSlugs.some((b) => s.includes(`"${b}"`));
+  const filtered = !branchSlugs.length
+    ? rows
+    : // Branşsız (tüm branşlara açık) kongreler herkeste görünür.
+      rows.filter((c) => {
+        const s = c.branchSlugs || "[]";
+        return s === "[]" || branchSlugs.some((b) => s.includes(`"${b}"`));
+      });
+  return filtered.slice(0, opts?.limit ?? 60);
+}
+
+/** Tek kongrenin tam kaydı (detay kartı, v6.62). Bulunamazsa null. */
+export async function congressById(id: string) {
+  return db.medicalCongress.findUnique({ where: { id } });
+}
+
+/** Hekim bu kongreyi takip ediyor mu — detay sayfası için tek satırlık sorgu. */
+export async function isFollowingCongress(doctorId: string, congressId: string): Promise<boolean> {
+  const row = await db.congressFollow.findUnique({
+    where: { doctorId_congressId: { doctorId, congressId } },
+    select: { id: true },
   });
+  return !!row;
 }
 
 // ── Çeviri (okuma anında, önbellekli) ───────────────────────────────────────

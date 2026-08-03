@@ -7,7 +7,7 @@ import {
   SECTOR_CATEGORIES, categoryLabel,
   effectiveBranches, personalFeed, moduleFeed, singleBranchFeed, upcomingCongresses,
   localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
-  slugForLabel, type FeedItem, type ModuleKey,
+  slugForLabel, parseScope, type FeedItem, type ModuleKey,
 } from "@/lib/doctorium";
 import { branchColor, hasBranchVisual } from "@/lib/branch-visuals";
 import { BranchAvatar } from "@/components/BranchAvatar";
@@ -34,7 +34,7 @@ const VALID_SLUGS = new Set(BRANCH_OPTIONS.map((b) => b.slug));
 export default async function DoctoriumPage({
   searchParams,
 }: {
-  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string }>;
+  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
@@ -43,7 +43,12 @@ export default async function DoctoriumPage({
   const doctor = me?.doctorId
     ? await db.doctor.findUnique({
         where: { id: me.doctorId },
-        select: { id: true, branch: true, newsBranches: true, congressAlertDays: true, congressDeadlineAlertDays: true },
+        select: {
+          id: true, branch: true, newsBranches: true,
+          congressAlertDays: true,
+          // v6.62: bildiri ve erken kayıt eşikleri AYRI (eski congressDeadlineAlertDays okunmuyor).
+          congressAbstractAlertDays: true, congressEarlyBirdAlertDays: true,
+        },
       })
     : null;
   const branches = effectiveBranches(doctor?.newsBranches, doctor?.branch);
@@ -65,7 +70,8 @@ export default async function DoctoriumPage({
   else if (active === "ilac") items = await moduleFeed("ilac", [], { days: rangeDays(range) });
   if (items.length) items = await localizeTitles(items);
 
-  const congresses = active === "kongre" ? await upcomingCongresses(branches) : [];
+  const scope = parseScope(sp.s);
+  const congresses = active === "kongre" ? await upcomingCongresses(branches, { scope }) : [];
   const followed = active === "kongre" && doctor ? await followedCongressIds(doctor.id) : new Set<string>();
 
   return (
@@ -113,18 +119,25 @@ export default async function DoctoriumPage({
         showRange={active === "mevzuat" || active === "sektorel" || active === "ilac"}
         showCategory={active === "mevzuat" || active === "sektorel"}
         showAlerts={active === "kongre" && !!doctor}
+        showScope={active === "kongre"}
+        scope={scope}
         rangeKey={range}
         rangeOptions={RANGE_OPTIONS}
         category={cat}
         categoryOptions={SECTOR_CATEGORIES}
-        /* Branş tercihi YALNIZ akışa etki eden sekmelerde: Akışım + Akademik (v6.54 düzeltmesi —
-           akademik akışı da moduleFeed("akademik", branches) ile branşa göre süzülüyor, tercihi
-           oradan kaldırmak hatalıydı). Mevzuat/sektörel/ilaç/kongre branşa göre süzülmez. */
-        branchOptions={(active === "akis" || active === "akademik") && doctor ? BRANCH_OPTIONS : null}
+        /* Branş tercihi akışa FİİLEN etki eden sekmelerde: Akışım + Akademik + **Kongre** (v6.62
+           düzeltmesi — kongre listesi upcomingCongresses(branches) ile v6.48'den beri branşa göre
+           süzülüyordu ama seçici burada çizilmediği için doktor GÖREMEDİĞİ bir filtreyle eksik
+           liste görüyordu; eski yorum "kongre branşa göre süzülmez" diyerek koddan sapmıştı).
+           Mevzuat/sektörel/ilaç gerçekten branşa göre süzülmez. */
+        branchOptions={
+          (active === "akis" || active === "akademik" || active === "kongre") && doctor ? BRANCH_OPTIONS : null
+        }
         branchInitial={parseBranchPrefs(doctor?.newsBranches)}
         ownBranchSlug={slugForLabel(doctor?.branch)}
         alertStart={doctor?.congressAlertDays ?? null}
-        alertDeadline={doctor?.congressDeadlineAlertDays ?? null}
+        alertAbstract={doctor?.congressAbstractAlertDays ?? null}
+        alertEarlyBird={doctor?.congressEarlyBirdAlertDays ?? null}
       />
 
       {active === "ilac" && <ProspektusSearch />}
@@ -295,6 +308,7 @@ interface CongressRow {
   id: string; title: string; organizer: string | null; city: string | null; country: string;
   startDate: Date; endDate: Date | null; abstractDeadline: Date | null; earlyBirdDeadline: Date | null;
   url: string | null; branchSlugs: string;
+  scope: string; venue: string | null; warning: string | null; confidence: string;
 }
 
 function CongressList({ rows, followed, canFollow }: { rows: CongressRow[]; followed: Set<string>; canFollow: boolean }) {
@@ -303,9 +317,9 @@ function CongressList({ rows, followed, canFollow }: { rows: CongressRow[]; foll
       <p className="mt-5 flex items-start gap-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-8 text-sm text-[var(--c-ink-2)]">
         <Info size={16} className="mt-0.5 shrink-0" />
         <span>
-          Kongre takvimi henüz boş. Dernek ve kongre siteleri makine-okunur takvim yayımlamadığı için
-          bu modül <strong className="text-[var(--c-ink)]">elle küratörlüdür</strong>; kayıtlar
-          yönetici panelinden girilir (uydurma etkinlik listelenmez).
+          Seçtiğiniz branş ve kapsamda yaklaşan kongre yok. Kapsam filtresini
+          <strong className="text-[var(--c-ink)]"> Tümü</strong> yapmayı ya da Özelleştir'den branş
+          tercihlerinizi genişletmeyi deneyin.
         </span>
       </p>
     );
@@ -320,11 +334,17 @@ function CongressList({ rows, followed, canFollow }: { rows: CongressRow[]; foll
                 <span className="aura-mono rounded-full bg-sky-500/15 px-2 py-0.5 font-semibold text-sky-300">
                   {formatDate(c.startDate)}{c.endDate ? ` – ${formatDate(c.endDate)}` : ""}
                 </span>
+                {/* Kapsam rozeti: doktorun ilk baktığı ayrım (yurt içi mi, yurt dışı mı). */}
+                <span className="aura-mono rounded-full border border-[var(--c-hairline)] px-2 py-0.5">
+                  {c.scope === "uluslararasi" ? "🌍 Uluslararası" : "🇹🇷 Ulusal"}
+                </span>
                 {(c.city || c.country) && (
                   <span className="inline-flex items-center gap-1"><MapPin size={11} />{[c.city, c.country].filter(Boolean).join(", ")}</span>
                 )}
               </div>
-              <h3 className="mt-1.5 text-sm font-semibold text-[var(--c-ink)]">{c.title}</h3>
+              <h3 className="mt-1.5 text-sm font-semibold text-[var(--c-ink)]">
+                <Link href={`/doktor/doctorium/kongre/${c.id}`} className="hover:underline">{c.title}</Link>
+              </h3>
               {c.organizer && <p className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">{c.organizer}</p>}
             </div>
             {canFollow && <FollowButton congressId={c.id} following={followed.has(c.id)} />}
@@ -345,12 +365,18 @@ function CongressList({ rows, followed, canFollow }: { rows: CongressRow[]; foll
             </div>
           )}
 
-          {c.url && (
-            <a href={c.url} target="_blank" rel="noopener noreferrer nofollow"
-              className="mt-2 inline-flex items-center gap-1 text-[11px] text-[var(--c-accent-stronger)] hover:underline">
-              <ExternalLink size={12} /> Kongre sayfası
-            </a>
-          )}
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+            <Link href={`/doktor/doctorium/kongre/${c.id}`}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--c-accent-stronger)] hover:underline">
+              Kongre kartı →
+            </Link>
+            {c.url && (
+              <a href={c.url} target="_blank" rel="noopener noreferrer nofollow"
+                className="inline-flex items-center gap-1 text-[11px] text-[var(--c-ink-2)] hover:underline">
+                <ExternalLink size={12} /> Resmî site
+              </a>
+            )}
+          </div>
         </li>
       ))}
     </ul>
