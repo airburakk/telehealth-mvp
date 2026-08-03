@@ -164,17 +164,29 @@ function plain(html: string): string {
     .trim();
 }
 
-/** Tek kayıt yaz (varsa atla). Dönen: yeni mi. */
+/**
+ * Yerelden-besleme script'i için opsiyonel ayarlar (v6.59 — scripts/ingest-tr-sources.ts).
+ * Cron yolu bunları hiç vermez; davranışı birebir aynı kalır.
+ */
+export interface IngestOpts {
+  /** true → DB'ye YAZMAZ; yalnız var-mı kontrolü yapar (prova). Dönen "yeni" sayısı = yazılırdı. */
+  dryRun?: boolean;
+  /** Yeni (yazılacak/yazılan) her kalem için çağrılır — script satır satır gösterir. */
+  onItem?: (line: string) => void;
+}
+
+/** Tek kayıt yaz (varsa atla). Dönen: yeni mi. dryRun'da yazmadan "yeni olurdu" bilgisi döner. */
 async function upsertArticle(a: {
   source: string; externalId: string; module: string; category: string | null;
   kind: string; title: string; summary?: string; sourceName: string; url: string | null;
   publishedAt: Date; branchSlugs?: string;
-}): Promise<boolean> {
+}, dryRun?: boolean): Promise<boolean> {
   const exists = await db.newsArticle.findUnique({
     where: { source_externalId: { source: a.source, externalId: a.externalId } },
     select: { id: true },
   });
   if (exists) return false;
+  if (dryRun) return true;
   await db.newsArticle.create({
     data: {
       source: a.source, externalId: a.externalId, module: a.module, category: a.category,
@@ -248,7 +260,10 @@ function gazetteDate(fileId: string): Date {
 }
 
 /** Fihrist kalemlerini süz + yaz. Dönen: [taranan, yeni]. */
-export async function ingestGazetteItems(items: { title: string; url: string; id: string }[]): Promise<[number, number]> {
+export async function ingestGazetteItems(
+  items: { title: string; url: string; id: string }[],
+  opts?: IngestOpts,
+): Promise<[number, number]> {
   let created = 0;
   for (const it of items) {
     if (!isHealthRelated(it.title)) continue;
@@ -258,8 +273,11 @@ export async function ingestGazetteItems(items: { title: string; url: string; id
       source: "resmi-gazete", externalId: it.id, module: "mevzuat", category: cat,
       kind: "mevzuat", title: it.title, sourceName: "T.C. Resmî Gazete",
       url: it.url, publishedAt: gazetteDate(it.id),
-    });
-    if (isNew) created++;
+    }, opts?.dryRun);
+    if (isNew) {
+      created++;
+      opts?.onItem?.(`[RG · ${cat}] ${it.title.slice(0, 110)}`);
+    }
   }
   return [items.length, created];
 }
@@ -270,7 +288,7 @@ export async function ingestGazetteItems(items: { title: string; url: string; id
  * OHSAD ana sayfası: "Başlık – 29 Haziran 2026" biçiminde tarihli haber listesi.
  * SGK duyurularının fiilen tek makine-okunur yolu (SGK sitesi JS ile yüklüyor).
  */
-export async function ingestOhsad(): Promise<[number, number]> {
+export async function ingestOhsad(opts?: IngestOpts): Promise<[number, number]> {
   const res = await fetch("https://www.ohsad.org/", {
     headers: browserHeaders(), cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
@@ -302,8 +320,11 @@ export async function ingestOhsad(): Promise<[number, number]> {
       category: cat ?? "yonetim", kind: isLegal ? "mevzuat" : "haber",
       title: title.replace(/\s*[–-]\s*\d{1,2}\s+\p{L}+\s+\d{4}\s*$/u, "").trim(),
       sourceName: "OHSAD", url, publishedAt: published,
-    });
-    if (isNew) created++;
+    }, opts?.dryRun);
+    if (isNew) {
+      created++;
+      opts?.onItem?.(`[OHSAD · ${cat ?? "yonetim"}] ${title.slice(0, 110)}`);
+    }
   }
   return [scanned, created];
 }
