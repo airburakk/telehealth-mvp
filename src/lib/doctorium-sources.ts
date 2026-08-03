@@ -516,15 +516,25 @@ export async function ingestWho(limit = 8): Promise<[number, number]> {
 export async function fetchDocumentText(url: string): Promise<string | null> {
   if (/\.pdf($|\?)/i.test(url)) return null; // PDF metin çıkarımı yok (bilinçli)
   try {
-    const res = await fetch(url, {
-      // Alt-sayfa ziyareti: Referer = kaynağın kendi ana sayfası (bot korumasına doğal görünüm).
-      headers: browserHeaders(new URL(url).origin + "/"), cache: "no-store",
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
-    if (!res.ok) return null;
-    const buf = await res.arrayBuffer();
-    const isGazetteArchive = /resmigazete\.gov\.tr\/eskiler\//i.test(url);
-    const html = new TextDecoder(isGazetteArchive ? "windows-1254" : "utf-8").decode(buf);
+    let html: string;
+    // v6.62: TTB'nin leaf-only TLS zinciri BELGE çekimini de düşürüyordu — v6.58 özel-CA onarımı
+    // yalnız fihristteydi (ingestTtb); buradaki normal fetch Vercel'de UNABLE_TO_VERIFY_LEAF_SIGNATURE
+    // ile null dönünce sektörel TTB haberlerinin özeti hiç üretilemiyordu. Aynı istemci kullanılır.
+    if (/(^|\.)ttb\.org\.tr$/i.test(new URL(url).hostname)) {
+      const res = await httpsGetWithCa(url, TTB_INTERMEDIATE_CA);
+      if (res.status !== 200) return null;
+      html = res.body; // TTB utf-8 (windows-1254 tuzağı yalnız RG arşivi)
+    } else {
+      const res = await fetch(url, {
+        // Alt-sayfa ziyareti: Referer = kaynağın kendi ana sayfası (bot korumasına doğal görünüm).
+        headers: browserHeaders(new URL(url).origin + "/"), cache: "no-store",
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+      if (!res.ok) return null;
+      const buf = await res.arrayBuffer();
+      const isGazetteArchive = /resmigazete\.gov\.tr\/eskiler\//i.test(url);
+      html = new TextDecoder(isGazetteArchive ? "windows-1254" : "utf-8").decode(buf);
+    }
     const body = html
       .replace(/<(script|style|noscript)[^>]*>[\s\S]*?<\/\1>/gi, " ")
       .replace(/<!--[\s\S]*?-->/g, " ");

@@ -23,6 +23,12 @@
 //   npx tsx scripts/ingest-tr-sources.ts --prod --yaz     → PROD'a yaz
 //
 // İdempotent: (source, externalId) benzersiz → yeniden koşuda 0 yeni. Hiçbir şey SİLMEZ.
+//
+// v6.62 — KAYNAK METNİ DOLDURMA: fihrist yalnız başlık verir; "Doktor özeti"nin zemini olan resmî
+// metni tembel üretim (ensureRegulationSummary) kalem açılınca Vercel'den çeker — ama RG/OHSAD'a
+// Vercel erişemediği için o adım prod'da DAİMA düşüyordu (özet hiç oluşmuyordu). Bu script artık
+// yazım sonrasında boş summary'li RG/OHSAD kayıtlarının metnini YERELDEN çekip doldurur; Vercel'e
+// yalnız AI adımı kalır. İdempotent: dolu summary atlanır. PDF kalemler bilinçli doldurulmaz.
 import "dotenv/config";
 
 const args = process.argv.slice(2);
@@ -58,7 +64,7 @@ async function main() {
 
   // Dinamik import ŞART: src/lib/db, DATABASE_URL/AURA_DB_GUARD'ı MODÜL YÜKLENİRKEN okur —
   // yukarıdaki env ayarları import'tan önce bitmeliydi (statik import bu sırayı bozar).
-  const { fetchGazetteToday, fetchGazetteArchive, ingestGazetteItems, ingestOhsad, describeFetchError } =
+  const { fetchGazetteToday, fetchGazetteArchive, ingestGazetteItems, ingestOhsad, describeFetchError, fetchDocumentText } =
     await import("../src/lib/doctorium-sources");
   const { db } = await import("../src/lib/db");
 
@@ -99,6 +105,48 @@ async function main() {
     console.log(`  OHSAD: taranan ${ohsad[0]} · yeni ${ohsad[1]}`);
   } catch (e) {
     console.warn(`  ⚠ OHSAD: ${describeFetchError(e).slice(0, 160)}`);
+  }
+
+  // ── Kaynak metinleri (özet zemini) — v6.62 ─────────────────────────────────
+  console.log("\n📄 Kaynak metinleri (boş summary'li RG/OHSAD kayıtları)");
+  const TEXT_CAP = 500; // tek koşu tavanı — aşım raporlanır (sessiz kırpma yok), kalan sonraki koşuda
+  const emptyRows = await db.newsArticle.findMany({
+    where: { source: { in: ["resmi-gazete", "ohsad"] }, summary: "", url: { not: null } },
+    select: { id: true, url: true },
+    orderBy: { publishedAt: "desc" }, // taze kalemler önce dolsun — doktorun göreceği ilk sayfa
+    take: TEXT_CAP + 1,
+  });
+  const overflowed = emptyRows.length > TEXT_CAP;
+  if (overflowed) emptyRows.pop();
+  const isPdf = (u: string) => /\.pdf($|\?)/i.test(u);
+  if (DRY) {
+    const pdfCount = emptyRows.filter((r) => isPdf(r.url as string)).length;
+    console.log(`  boş ${emptyRows.length} (${pdfCount} PDF — bilinçli özetlenmez) → --yaz metinleri çekip doldurur`);
+  } else {
+    let txFilled = 0, txPdf = 0, txFail = 0, txSkip = 0;
+    // Art arda 3 hata veren kaynak o koşuda atlanır — asılı site (ör. OHSAD origin'i) kalem
+    // başına 15 sn timeout'la tüm koşuyu kilitleyemesin. Sonraki koşu yine dener (idempotent).
+    const hostFails = new Map<string, number>();
+    for (const r of emptyRows) {
+      const url = r.url as string;
+      if (isPdf(url)) { txPdf++; continue; }
+      const host = new URL(url).hostname;
+      if ((hostFails.get(host) ?? 0) >= 3) { txSkip++; continue; }
+      const text = await fetchDocumentText(url);
+      if (text) {
+        await db.newsArticle.update({ where: { id: r.id }, data: { summary: text } });
+        txFilled++;
+        hostFails.set(host, 0);
+      } else {
+        txFail++;
+        hostFails.set(host, (hostFails.get(host) ?? 0) + 1);
+      }
+      await sleep(GAP_MS);
+    }
+    console.log(
+      `  metin: dolduruldu ${txFilled} · PDF ${txPdf} · erişilemedi ${txFail} · atlandı ${txSkip}` +
+      (overflowed ? ` · ⚠ tavan ${TEXT_CAP} aşıldı — kalanlar sonraki koşuda` : ""),
+    );
   }
 
   // ── Özet ──────────────────────────────────────────────────────────────────
