@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { COUNTRIES, countryName } from "@/lib/constants";
 import { PreConsultGate, PRECONSULT_TEXTS } from "@/components/PreConsultGate";
@@ -348,12 +349,12 @@ function TriyajInner() {
                   {t("Elinizde mevcut bir tanı veya rapor var ve bunun için uzman değerlendirmesi istiyorsanız, İkinci Görüş Yolculuğu bu ihtiyaca özel yolumuzdur.")}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <a
+                  <Link
                     href="/second-opinion/basvur"
                     className="inline-flex items-center gap-2 rounded-xl bg-[var(--c-indigo)] px-5 py-2.5 text-sm font-semibold text-white transition-opacity duration-200 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-indigo)]"
                   >
                     {t("İkinci Görüş'e geç")} <ArrowRight size={16} className="rtl:rotate-180" />
-                  </a>
+                  </Link>
                   <button
                     onClick={() => setSoDismissed(true)}
                     className="inline-flex items-center rounded-xl border border-[var(--c-hairline)] px-4 py-2.5 text-sm font-medium text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)]"

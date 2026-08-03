@@ -163,6 +163,23 @@ export function decryptCaseFields<T extends CaseClinical>(c: T | null | undefine
   return out;
 }
 
+// İkinci Görüş vakasının şifreli alanları — decryptCaseFields'in SO karşılığı (2026-08-03 denetimi).
+// `diagnosisSummary` hastanın TANI ÖZETİDİR = özel nitelikli sağlık verisi; aynı modeldeki
+// `patientPhone` şifreliyken bu alan düz metin bırakılmıştı (dış denetim P1). Sızan liste ucuyla
+// (P0) birleşince veriyi doğrudan okunabilir kılıyordu.
+// ⚠️ SO vakasından okuyan YENİ bir sayfa/uç yazarken bu fonksiyondan geçir — alanı doğrudan render
+// etmek ekranda "enc:..." göstermekle sonuçlanır (sessiz bozulma).
+type SoCaseClinical = Partial<Record<"diagnosisSummary" | "patientPhone", string | null>>;
+export function decryptSoCaseFields<T extends SoCaseClinical>(c: T): T;
+export function decryptSoCaseFields<T extends SoCaseClinical>(c: T | null | undefined): T | null | undefined;
+export function decryptSoCaseFields<T extends SoCaseClinical>(c: T | null | undefined): T | null | undefined {
+  if (c == null) return c;
+  const out = { ...c };
+  if (typeof out.diagnosisSummary === "string") out.diagnosisSummary = decryptField(out.diagnosisSummary);
+  if (typeof out.patientPhone === "string") out.patientPhone = decryptField(out.patientPhone);
+  return out;
+}
+
 // Okumada çağır. "enc:" ön-eki yoksa aynen döner (eski düz satırlar / "" / null — kademeli geçiş).
 // Şifreli veri var ama KEK yoksa → patlar (anahtar kaybı sessizce yutulmasın).
 export function decryptField(stored: string): string;

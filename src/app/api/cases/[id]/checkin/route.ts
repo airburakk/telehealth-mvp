@@ -4,7 +4,7 @@ import { assessCheckIn, assessChecklist, worstSeverity } from "@/lib/postop";
 import { assessPostopNote, assessPostopPhoto } from "@/lib/ai-clinical";
 import { notifyDoctorById } from "@/lib/notify";
 import { notifyOnDutySentinels } from "@/lib/clinical-duty";
-import { canAccessCase } from "@/lib/ownership";
+import { isCurrentUserCasePatient } from "@/lib/ownership";
 import { recoveryClosed } from "@/lib/postop-access";
 import { encryptField } from "@/lib/crypto";
 
@@ -16,7 +16,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const c = await db.case.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
-  if (!(await canAccessCase(c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+  // HASTA-ONLY (2026-08-03, kullanıcı kararı): günlük kontrol hastanın KENDİ beyanıdır. Eskiden
+  // OKUMA kapısı (`canAccessCase`) kullanılıyordu → koordinatör/etik/admin ve doktor, hasta adına
+  // ağrı/ateş/not/fotoğraf kaydı oluşturabiliyordu (bkz. ownership.ts `isCasePatient` notu).
+  if (!(await isCurrentUserCasePatient(c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
 
   const recovery = await db.recovery.upsert({
     where: { caseId: c.id },

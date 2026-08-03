@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
+import { decryptField } from "@/lib/crypto"; // tanı özeti at-rest şifreli (2026-08-03)
 import { SoCasesList } from "./SoCasesList";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ export default async function SoMyCasesPage() {
     id: c.id,
     branchLabel: BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch,
     status: c.status,
-    diagnosisSummary: c.diagnosisSummary,
+    diagnosisSummary: decryptField(c.diagnosisSummary),
     createdAt: c.createdAt.toISOString(),
     hasPendingReq: c.requests.length > 0,
   }));

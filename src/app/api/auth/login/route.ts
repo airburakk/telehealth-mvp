@@ -6,6 +6,7 @@ import { patientHome } from "@/lib/patient-journey";
 import { consentedVersion } from "@/lib/consent";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 import { isEmailConfigured } from "@/lib/email";
+import { sendAlert } from "@/lib/alerts";
 
 // Sabit-zaman 401 (denetim #21): kullanıcı YOKKEN de aynı maliyette bcrypt koşturulur — yanıt süresi
 // e-postanın kayıtlı olup olmadığını sızdırmasın (hesap enumerasyonu; resend-verification'ın jenerik
@@ -25,10 +26,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "E-posta veya parola hatalı." }, { status: 401 });
   }
 
-  // E-posta doğrulama kapısı (v5.6): yalnız e-posta yapılandırılmışken ve YALNIZ doğrulanmamış
-  // yeni kayıtlarda (mevcut hesaplar migration'da damgalandı). Env kaldırılırsa kapı da kalkar
-  // (fail-open — sağlayıcı kesintisi kimseyi kilitlemesin). UI code ile "yeniden gönder" sunar.
-  if (isEmailConfigured() && !user.emailVerifiedAt) {
+  // E-posta doğrulama kapısı (v5.6): doğrulanmamış yeni kayıtlarda uygulanır (mevcut hesaplar
+  // migration'da damgalandı). UI, code ile "yeniden gönder" sunar.
+  //
+  // ÜRETİMDE ZORUNLU (2026-08-03, kullanıcı kararı — dış denetim bulgusu): eski hâli
+  // `isEmailConfigured() && …` idi, yani sağlayıcı anahtarı kaldırılırsa kapı da kalkıyordu
+  // (fail-open) → doğrulanmamış hesaplar giriş yapabilirdi. Artık üretimde kapı her hâlükârda
+  // AÇIK; yapılandırma eksikse bu bir yapılandırma HATASIDIR ve alarm üretir (kullanıcılar
+  // "doğrulama e-postası gelmiyor" diye kilitlenmesin diye sessiz kalınmaz).
+  // Geliştirmede davranış aynen korunur: e-posta yapılandırılmamışsa kapı kapalı kalır.
+  const emailGateActive = isEmailConfigured() || process.env.NODE_ENV === "production";
+  if (process.env.NODE_ENV === "production" && !isEmailConfigured()) {
+    void sendAlert(
+      "email-provider-missing",
+      "Üretimde e-posta sağlayıcısı yapılandırılmamış — doğrulama e-postası gönderilemiyor, giriş kapısı kapalı (SEV-2)",
+      "login",
+    );
+  }
+  if (emailGateActive && !user.emailVerifiedAt) {
     return NextResponse.json(
       { error: "E-posta adresiniz henüz doğrulanmadı. Gelen kutunuzu (ve spam klasörünü) kontrol edin.", code: "EMAIL_UNVERIFIED" },
       { status: 403 },

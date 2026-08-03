@@ -31,6 +31,7 @@
 // (crypto.ts:17 KMS swap noktası) purge burada "anahtar satırını sil"e dönüşebilir.
 import { db } from "./db";
 import { recordAccess } from "./audit";
+import { deleteDocument, isBlobRef } from "./storage";
 import type { SessionUser } from "./session";
 
 /**
@@ -139,19 +140,41 @@ export async function deleteAccount(actor: SessionUser, ip?: string | null, user
  * kaydı bağ-koruyan boşaltılır (satır kalır — zincir; kişisel alanlar gider).
  * Batch sınırı: cron zaman aşımına girmesin (maxDuration) — kalanı ertesi gün alınır (idempotent).
  */
-export async function purgeExpired(limit = 50): Promise<{ purgedCases: number; purgedSoCases: number; purgedUsers: number; failed: number }> {
+export async function purgeExpired(limit = 50): Promise<{ purgedCases: number; purgedSoCases: number; purgedUsers: number; failed: number; purgedBlobs: number; failedBlobs: number }> {
   const now = new Date();
   let purgedCases = 0;
   let purgedSoCases = 0;
   let purgedUsers = 0;
   let failed = 0; // tek bozuk kayıt batch'i düşürmesin; kısmi başarısızlık çağırana raporlanır (cron alarm verir)
+  let purgedBlobs = 0;
+  let failedBlobs = 0;
+
+  // Blob nesnelerini SİL — DB satırı gidince ref de gider, sonra bulunamaz (2026-08-03 denetimi P1).
+  // ÖNCE topla → satırları sil → SONRA blob'ları sil. Sıra bilinçli: blob silme başarısız olursa
+  // yetim nesne kalır (raporlanır); satır silme başarısız olursa blob'a hiç dokunulmamış olur.
+  // ⚠️ `deleteDocument` HELPER'I ZATEN VARDI (lib/storage.ts) ve doctor/documents rotasında
+  // kullanılıyordu; imha cron'u yalnızca onu çağırmıyordu. Hesap silme ekranı kullanıcıya
+  // "Süre dolduğunda otomatik olarak imha edilir" diyor → Blob'daki kopya kalırsa bu taahhüt yalan olur.
+  const purgeBlobs = async (refs: (string | null)[]): Promise<void> => {
+    for (const ref of refs) {
+      if (!isBlobRef(ref)) continue;
+      try {
+        await deleteDocument(ref);
+        purgedBlobs++;
+      } catch {
+        failedBlobs++; // deleteDocument kendi içinde yutar; yine de savunma amaçlı sayılır
+      }
+    }
+  };
 
   const cases = await db.case.findMany({ where: { purgeAfter: { lte: now } }, select: { id: true, userId: true }, take: limit });
   for (const c of cases) {
     // Bağımlı kayıtlar (FK) önce — belgeler dahil (CaseDocument içeriği at-rest şifreli; satır gidince şifreli
     // hâli de gider). Grandchild zincirleri iki aşama: ShareLink→ShareAccess ve Recovery→CheckIn
     // (CheckIn.recovery Restrict — önce silinmezse recovery.deleteMany FK ihlaliyle fırlar).
-    // ⚠️ Blob'daki nesneler ayrı temizlik gerektirir → aşağıdaki TODO.
+    const caseBlobRefs = (
+      await db.caseDocument.findMany({ where: { caseId: c.id }, select: { content: true } })
+    ).map((d) => d.content);
     try {
       await db.$transaction([
         db.shareAccess.deleteMany({ where: { shareLink: { caseId: c.id } } }),
@@ -165,6 +188,7 @@ export async function purgeExpired(limit = 50): Promise<{ purgedCases: number; p
         db.case.delete({ where: { id: c.id } }),
       ]);
       purgedCases++;
+      await purgeBlobs(caseBlobRefs); // satırlar gitti → harici nesneleri de kaldır
     } catch (e) {
       failed++;
       console.warn(`[purge] vaka imha edilemedi (${c.id}) — batch devam ediyor:`, e instanceof Error ? e.message : e);
@@ -173,6 +197,9 @@ export async function purgeExpired(limit = 50): Promise<{ purgedCases: number; p
 
   const soCases = await db.secondOpinionCase.findMany({ where: { purgeAfter: { lte: now } }, select: { id: true }, take: limit });
   for (const s of soCases) {
+    const soBlobRefs = (
+      await db.secondOpinionDocument.findMany({ where: { caseId: s.id }, select: { fileRef: true } })
+    ).map((d) => d.fileRef);
     try {
       await db.$transaction([
         db.secondOpinionDocument.deleteMany({ where: { caseId: s.id } }),
@@ -184,6 +211,7 @@ export async function purgeExpired(limit = 50): Promise<{ purgedCases: number; p
         db.secondOpinionCase.delete({ where: { id: s.id } }),
       ]);
       purgedSoCases++;
+      await purgeBlobs(soBlobRefs); // satırlar gitti → harici nesneleri de kaldır
     } catch (e) {
       failed++;
       console.warn(`[purge] ikinci görüş vakası imha edilemedi (${s.id}) — batch devam ediyor:`, e instanceof Error ? e.message : e);
@@ -219,5 +247,5 @@ export async function purgeExpired(limit = 50): Promise<{ purgedCases: number; p
 
   // AuditLog KASITLI olarak dokunulmaz: append-only hash-zinciri (satır silmek zinciri kırar +
   // doğrulanamaz kılar) ve erişim kaydı başlı başına yasal belgedir; kimlik verisi taşımaz.
-  return { purgedCases, purgedSoCases, purgedUsers, failed };
+  return { purgedCases, purgedSoCases, purgedUsers, failed, purgedBlobs, failedBlobs };
 }

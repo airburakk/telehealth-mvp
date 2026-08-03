@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
+import { decryptField } from "@/lib/crypto"; // tanı özeti at-rest şifreli (2026-08-03)
 import { ArrowLeft } from "lucide-react";
 import { SoReviewPanel } from "./SoReviewPanel";
 
@@ -52,7 +53,7 @@ export default async function SoReviewPage({ params }: { params: Promise<{ id: s
           status: c.status,
           branch: c.branch,
           branchLabel,
-          diagnosisSummary: c.diagnosisSummary,
+          diagnosisSummary: decryptField(c.diagnosisSummary),
           patientName: patient?.name ?? "Hasta",
           createdAt: c.createdAt.toISOString(),
           documents: c.documents,

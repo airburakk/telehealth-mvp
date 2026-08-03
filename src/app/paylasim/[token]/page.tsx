@@ -2,6 +2,7 @@ import { headers, cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { notifyRoles, notifyUser } from "@/lib/notify";
 import { shareState, buildSharedItems, scopeLabel, SHARE_UNLOCK_PREFIX, type SharedItem } from "@/lib/share";
+import { verifyUnlockToken } from "@/lib/share-unlock";
 import { ShareUnlock } from "@/components/ShareUnlock";
 import { ShareLangSelect } from "@/components/ShareLangSelect";
 import { getTranslations, translateClinical } from "@/lib/i18n";
@@ -89,10 +90,17 @@ export default async function ShareViewerPage({
     return <StatusScreen icon={<Clock size={26} />} title="Bağlantının süresi doldu" desc="Bu paylaşımın erişim süresi sona erdi. Lütfen hastadan yeni bir bağlantı isteyin." />;
   }
 
-  // Şifre kapısı
+  // Şifre kapısı — çerez İMZALI capability olarak doğrulanır (2026-08-03 P0). Eski hâli değerin
+  // "1" olmasına bakıyordu; parolayı bilmeyen biri o çerezi elle gönderip kapıyı aşabiliyordu.
+  // Capability shareId + passwordHash + süreye bağlıdır: başka paylaşımda kullanılamaz ve hasta
+  // parolayı değiştirirse eldeki tüm capability'ler anında geçersizleşir.
   if (link.passwordHash) {
     const ck = await cookies();
-    const unlocked = ck.get(`${SHARE_UNLOCK_PREFIX}${link.id}`)?.value === "1";
+    const unlocked = verifyUnlockToken(
+      ck.get(`${SHARE_UNLOCK_PREFIX}${link.id}`)?.value,
+      link.id,
+      link.passwordHash,
+    );
     if (!unlocked) {
       return (
         <Shell>

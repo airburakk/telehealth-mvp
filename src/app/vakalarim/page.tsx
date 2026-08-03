@@ -68,7 +68,7 @@ export default async function MyCasesPage() {
     id: c.id,
     branchLabel: BRANCHES.find((b) => b.key === c.branch)?.label ?? c.branch,
     status: c.status,
-    diagnosisSummary: c.diagnosisSummary,
+    diagnosisSummary: decryptField(c.diagnosisSummary),
     createdAt: c.createdAt.toISOString(),
     hasPendingReq: c.requests.length > 0,
   }));

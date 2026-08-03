@@ -5,6 +5,7 @@ import { encryptField, decryptField } from "@/lib/crypto";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { recordAccess, reqMeta } from "@/lib/audit";
 import { storeDocument } from "@/lib/storage";
+import { detectDocumentKind, DOC_REJECT_MESSAGE } from "@/lib/document-mime";
 import { notifyDoctorsByBranch } from "@/lib/notify";
 
 // POST /api/cases/:id/pending-docs — hasta, belge-bekleyen (DOCS_PENDING) başvurusunun eksik
@@ -55,11 +56,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "En az bir belge dosyası yüklenmelidir." }, { status: 400 });
   }
 
+  // İçerik-tipi kapısı (2026-08-03 P0): tip dosya imzasından tespit edilir, istemcinin beyanı
+  // kullanılmaz. Tanınmayan dosya açık hatayla reddedilir (zorunlu belge sessizce düşmesin).
+  const kinds = valid.map((d) => detectDocumentKind(d.content as string));
+  if (kinds.some((k) => k === null)) {
+    return NextResponse.json({ error: DOC_REJECT_MESSAGE }, { status: 415 });
+  }
   const rows = await Promise.all(
-    valid.map(async (d) => ({
+    valid.map(async (d, i) => ({
       caseId: c.id,
       label: typeof d.label === "string" ? d.label.slice(0, 200) : "belge",
-      mimeType: typeof d.mimeType === "string" ? d.mimeType.slice(0, 100) : "application/octet-stream",
+      mimeType: kinds[i]!.mime, // TESPİT EDİLEN tip saklanır
       content: await storeDocument(d.content as string, { keyPrefix: "case-doc" }),
     })),
   );

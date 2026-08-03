@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { canSoCaseBeAccessedBy } from "@/lib/ownership";
+import { isSecondOpinionPatient } from "@/lib/ownership";
 import { logSoEvent } from "@/lib/second-opinion-service";
 import { storeDocument } from "@/lib/storage";
+import { detectDocumentKind, DOC_REJECT_MESSAGE } from "@/lib/document-mime";
+import { safeExternalUrl } from "@/lib/external-url";
 
 const DOC_TYPES = ["EPICRISIS", "IMAGING", "PATHOLOGY", "MEDICATION_LIST"];
 const DELIVERY = ["FILE_UPLOAD", "EXTERNAL_LINK"];
@@ -21,7 +23,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const c = await db.secondOpinionCase.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });
-  if (!(await canSoCaseBeAccessedBy(user, c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+  // BELGE EKLEME = HASTA AKSİYONU (2026-08-03 denetimi): eskiden okuma kapısı `canSoCaseBeAccessedBy`
+  // kullanılıyordu → görüntüleme hakkı olan koordinatör/admin/atanmış doktor da "hasta belgesi"
+  // ekleyebiliyordu. Eklenebilir durumların hepsi (DRAFT / AWAITING_DOCUMENTS /
+  // AWAITING_ADDITIONAL_TESTS) hastadan belge beklenen aşamalardır ve personel arayüzünde yükleme
+  // yüzeyi YOKTUR → uç hastaya daraltıldı (check-in/şikayet ile aynı ilke: yazma ≠ okuma).
+  if (!isSecondOpinionPatient(user, c)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
   if (!ADDABLE.includes(c.status)) {
     return NextResponse.json({ error: "Bu aşamada belge eklenemez." }, { status: 409 });
   }
@@ -38,8 +45,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   let externalRef: string | null = null;
 
   if (deliveryMethod === "EXTERNAL_LINK") {
-    const url = String(body.externalRef ?? "").trim();
-    if (!/^https?:\/\/.+/i.test(url)) {
+    // Şema doğrulaması tek kaynaktan (lib/external-url): javascript:/data:/file: ve kimlik gömülü
+    // URL'ler elenir, sonuç normalize edilir. Yönlendirme ucu ayrıca yeniden doğrular.
+    const url = safeExternalUrl(String(body.externalRef ?? ""));
+    if (!url) {
       return NextResponse.json({ error: "Geçerli bir bağlantı (http/https) girin." }, { status: 400 });
     }
     externalRef = url.slice(0, 2000);
@@ -53,6 +62,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         { error: "Dosya çok büyük (~8 MB üzeri). Lütfen küçültün veya bağlantı olarak ekleyin." },
         { status: 413 },
       );
+    }
+    // İçerik-tipi kapısı (2026-08-03 P0): tip istemci beyanından DEĞİL, dosya imzasından tespit edilir;
+    // tanınmayan tür reddedilir. Aksi halde `data:text/html;...` yüklenip belgeyi açan doktorun
+    // oturumunda kod çalıştırılabiliyordu (depolanmış XSS).
+    if (!detectDocumentKind(data)) {
+      return NextResponse.json({ error: DOC_REJECT_MESSAGE }, { status: 415 });
     }
     fileRef = data;
   }

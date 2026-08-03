@@ -4,17 +4,26 @@ import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
 import { COUNTRIES, LANGUAGES } from "@/lib/constants";
 import { logSoEvent } from "@/lib/second-opinion-service";
+import { soCaseListScope } from "@/lib/ownership";
 import { parseContactFields } from "@/lib/contact-pref";
-import { encryptField } from "@/lib/crypto";
+import { encryptField, decryptSoCaseFields } from "@/lib/crypto";
 import { stampPatientProfile } from "@/lib/patient-journey";
 
-// GET /api/second-opinion/cases — hasta kendi SO vakalarını listeler (klinik personel: tümü)
+// GET /api/second-opinion/cases — SO vakalarını listeler. Kapsam ROLE GÖRE daraltılır:
+// hasta kendi vakaları · doğrulanmış doktor yalnız KENDİSİNE ATANMIŞLAR · koordinatör/etik/admin geniş ·
+// PARTNER/AGENCY/doğrulanmamış doktor → 403.
+// ⚠️ Eski hâli `where: user.role === "PATIENT" ? {…} : {}` idi: PATIENT dışı her role 100 vakanın
+// DÜZ-METİN tanı özetini veriyordu (2026-08-03 dış denetimi P0). Doktor self-signup açık olduğundan
+// bu uç internetten erişilebilirdi. Kapsam artık tek kaynaktan gelir — elle `where` KURMA.
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
 
+  const scope = await soCaseListScope(user);
+  if (!scope) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+
   const cases = await db.secondOpinionCase.findMany({
-    where: user.role === "PATIENT" ? { patientId: user.id } : {},
+    where: scope,
     orderBy: { createdAt: "desc" },
     // Personel (gözetim) dalı emniyet tavanı — hasta dalı sınırsız (kendi vakaları zaten az).
     ...(user.role === "PATIENT" ? {} : { take: 100 }),
@@ -24,7 +33,8 @@ export async function GET() {
       requests: { where: { status: "PENDING" }, select: { id: true, type: true } },
     },
   });
-  return NextResponse.json(cases);
+  // Klinik alanlar at-rest şifreli → yanıt için çöz (decryptSoCaseFields; düz-metin passthrough).
+  return NextResponse.json(cases.map((c) => decryptSoCaseFields(c)));
 }
 
 // POST /api/second-opinion/cases — yeni ikinci görüş vakası (DRAFT). KVKK açık rıza zorunlu (§8).
@@ -60,7 +70,9 @@ export async function POST(req: Request) {
     data: {
       patientId: user.id,
       branch,
-      diagnosisSummary: diagnosisSummary.slice(0, 4000),
+      // Tanı özeti = özel nitelikli sağlık verisi → at-rest şifreli (2026-08-03 denetimi P1).
+      // decryptField düz metni aynen geçirir → eski kayıtlar backfill'siz de okunmaya devam eder.
+      diagnosisSummary: encryptField(diagnosisSummary.slice(0, 4000)),
       country,
       language,
       status: "DRAFT",

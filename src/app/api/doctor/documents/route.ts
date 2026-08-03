@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { storeDocument, deleteDocument } from "@/lib/storage";
+import { detectDocumentKind, DOC_REJECT_MESSAGE } from "@/lib/document-mime";
 import { ALL_DOC_TYPES, refreshActivation } from "@/lib/doctor-activation";
 
 // Object storage (S3) henüz yok → küçük dosyalar base64 olarak DB'de (data URI). Kaba sınır ~8.5 MB.
@@ -37,7 +38,6 @@ export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   const type = String(b.type ?? "");
   const label = (b.label ? String(b.label) : "Belge").slice(0, 200);
-  const mimeType = String(b.mimeType ?? "application/octet-stream").slice(0, 100);
   const content = String(b.content ?? "");
 
   if (!ALL_DOC_TYPES.includes(type as (typeof ALL_DOC_TYPES)[number])) {
@@ -47,6 +47,11 @@ export async function POST(req: Request) {
   if (content.length > MAX_FILE_CHARS) {
     return NextResponse.json({ error: "Dosya çok büyük (~8 MB üzeri). Lütfen küçültün." }, { status: 413 });
   }
+  // İçerik-tipi kapısı (2026-08-03 P0): tip istemcinin beyanından DEĞİL dosya imzasından tespit edilir
+  // (diploma/MMSS belgeleri admin onay ekranında açılıyor → aynı depolanmış-XSS yüzeyi).
+  const kind = detectDocumentKind(content);
+  if (!kind) return NextResponse.json({ error: DOC_REJECT_MESSAGE }, { status: 415 });
+  const mimeType = kind.mime;
 
   // Zorunlu/tekil belgeler (diploma + MMSS): tek geçerli kopya tutulur → yeni yükleme eskisini değiştirir.
   if (type === "DIPLOMA" || type === "MMSS") {

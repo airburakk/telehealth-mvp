@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
 import { SO_STATUS_LABELS, isOfferExpired, type SoStatus, soBranchVariants } from "@/lib/second-opinion";
 import { scrubText } from "@/lib/deidentify";
+import { decryptField } from "@/lib/crypto"; // tanı özeti at-rest şifreli (2026-08-03)
 import { formatDateTime } from "@/lib/constants";
 import { SoAcceptButton } from "./SoAcceptButton";
 import { Stethoscope, ArrowRight, Inbox, FileText, ArrowLeft, Clock } from "lucide-react";
@@ -86,7 +87,7 @@ export default async function DoctorSoListPage() {
                           {open ? "Açık — süre doldu" : "Size atandı"}
                         </span>
                       </div>
-                      <p className="mt-1.5 line-clamp-2 text-sm text-[var(--c-ink-2)]">{scrubText(c.diagnosisSummary, [nameById[c.patientId] ?? ""])}</p>
+                      <p className="mt-1.5 line-clamp-2 text-sm text-[var(--c-ink-2)]">{scrubText(decryptField(c.diagnosisSummary), [nameById[c.patientId] ?? ""])}</p>
                       <div className="mt-1 flex items-center gap-2 text-xs text-[var(--c-ink-3)]">
                         <span className="inline-flex items-center gap-1"><FileText size={11} /> {c.documents.length} belge</span>
                         {c.assignedAt && <span className="inline-flex items-center gap-1"><Clock size={11} /> {formatDateTime(c.assignedAt)}</span>}
@@ -134,7 +135,7 @@ export default async function DoctorSoListPage() {
                         {SO_STATUS_LABELS[c.status as SoStatus] ?? c.status}
                       </span>
                     </div>
-                    <p className="mt-1.5 line-clamp-2 text-sm text-[var(--c-ink-2)]">{c.diagnosisSummary}</p>
+                    <p className="mt-1.5 line-clamp-2 text-sm text-[var(--c-ink-2)]">{decryptField(c.diagnosisSummary)}</p>
                     <div className="mt-1 flex items-center gap-2 text-xs text-[var(--c-ink-3)]">
                       <span className="inline-flex items-center gap-1"><FileText size={11} /> {c.documents.length} belge</span>
                       {c.assignedAt && <span>· atandı {formatDateTime(c.assignedAt)}</span>}

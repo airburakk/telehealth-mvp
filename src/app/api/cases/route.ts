@@ -8,6 +8,7 @@ import { stampPatientProfile } from "@/lib/patient-journey";
 import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField, decryptField } from "@/lib/crypto";
 import { storeDocument } from "@/lib/storage";
+import { detectDocumentKind, DOC_REJECT_MESSAGE } from "@/lib/document-mime";
 
 // GET /api/cases — vaka kuyruğu (filtrelenebilir + sayfalı, /denetim getChainAudit deseni)
 export async function GET(req: Request) {
@@ -28,16 +29,25 @@ export async function GET(req: Request) {
   if (user.role === "DOCTOR") {
     const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
     const doc = me?.doctorId
-      ? await db.doctor.findUnique({ where: { id: me.doctorId }, select: { id: true, branch: true } })
+      ? await db.doctor.findUnique({ where: { id: me.doctorId }, select: { id: true, branch: true, verified: true } })
       : null;
-    doctorScope = doc
+    doctorScope = doc?.verified
       ? // Branş dalı DOCS_PENDING'i DIŞLAR (2026-07-24): belge-bekleyen başvuru doktor havuzunda
         // görünmez (koordinatör/etik/admin operasyonel gözetim için görmeye devam eder).
         { OR: [{ doctorId: doc.id }, ...(doc.branch ? [{ doctorId: null, branch: doc.branch, status: { not: "DOCS_PENDING" } }] : [])] }
-      : { id: "__none__" }; // profilsiz doktor → boş küme (var olmayan id)
+      : // Profilsiz VEYA DOĞRULANMAMIŞ hekim → boş küme. `verified` kapısı 2026-08-03 denetiminde
+        // eklendi: requireStaff yalnız ROLE bakar, self-signup hesabı da DOCTOR rolündedir → onay
+        // beklemeyen hekim kendi branşındaki kuyruğu ÇÖZÜLMÜŞ hasta adıyla listeleyebiliyordu.
+        // canCaseBeAccessedBy (ownership.ts) nesne düzeyinde bu kapıyı zaten uyguluyordu; liste hizalandı.
+        { id: "__none__" };
   }
 
   const where: Prisma.CaseWhereInput = {
+    // Hesap silme kilidi (v6.11) — liste ucunun da uygulaması ŞART: kilitli vaka nesne düzeyinde
+    // HERKESE kapalıdır (canCaseBeAccessedBy'ın ilk satırı), ama liste bunu filtrelemediğinden vaka
+    // kuyrukta hasta adıyla görünmeye devam ediyordu. Hesap silme ekranındaki "doktorlar,
+    // koordinatörler ve yöneticiler dahil hiç kimse açamaz" taahhüdü ancak listede de uygulanınca doğru.
+    deletionLockedAt: null,
     ...(branch ? { branch } : {}),
     ...(status ? { status } : {}),
     ...doctorScope,
@@ -143,11 +153,17 @@ export async function POST(req: Request) {
     const valid = documents
       .filter((d) => typeof d.content === "string" && (d.content as string).startsWith("data:"))
       .slice(0, 12);
+    // İçerik-tipi kapısı (2026-08-03 P0): tip istemci beyanından DEĞİL dosya imzasından tespit edilir.
+    // Tanınmayan dosya SESSİZCE DÜŞÜRÜLMEZ — hasta belgesini yüklediğini sanmasın diye açık hata döner.
+    const kinds = valid.map((d) => detectDocumentKind(d.content as string));
+    if (kinds.some((k) => k === null)) {
+      return NextResponse.json({ error: DOC_REJECT_MESSAGE }, { status: 415 });
+    }
     const rows = await Promise.all(
-      valid.map(async (d) => ({
+      valid.map(async (d, i) => ({
         caseId: created.id,
         label: typeof d.label === "string" ? d.label.slice(0, 200) : "belge",
-        mimeType: typeof d.mimeType === "string" ? d.mimeType.slice(0, 100) : "application/octet-stream",
+        mimeType: kinds[i]!.mime, // TESPİT EDİLEN tip saklanır (istemcinin beyanı kullanılmaz)
         // Belge içeriği object storage'a (varsa) taşınır; yoksa at-rest şifreli inline (E2EE Faz 1). T11.
         content: await storeDocument(d.content as string, { keyPrefix: "case-doc" }),
       })),

@@ -75,6 +75,28 @@ export async function canAccessCase(c: CaseRef): Promise<boolean> {
   return canCaseBeAccessedBy(await getCurrentUser(), c);
 }
 
+// ── HASTA BEYANI uçları — OKUMA yetkisinden AYRI (2026-08-03 dış denetimi) ───────────────────────
+// `canAccessCase` bir OKUMA kapısıdır: koordinatör/etik/admin ve atanmış (hatta aynı branştaki
+// atanmamış) doktor true alır. Post-op check-in ve şikayet uçları bu kapıyı kullanıyordu → hasta
+// ADINA ağrı/ateş/not/fotoğraf kaydı veya Etik Kurul şikayeti OLUŞTURULABİLİYORDU.
+//
+// Bu bir ifşa değil, ATFEDİLEBİLİRLİK sorunudur: klinik kayda "hastanın beyanı" olarak giren veriyi
+// hasta dışında biri üretebiliyorsa kaydın delil değeri düşer. Kullanıcı kararı (2026-08-03):
+// bu iki uç YALNIZ hastanın kendisine açıktır — koordinatör telefonla alınan bilgiyi giremez.
+//
+// KURAL: yeni bir uç yazarken "bunu kim YAPAR" ile "bunu kim GÖRÜR" sorularını ayrı sor;
+// yazma/eylem uçlarında amaç-bazlı fonksiyon kullan, okuma kapısını ödünç alma.
+export function isCasePatient(user: SessionUser | null, c: CaseRef): boolean {
+  if (!user || user.role !== "PATIENT") return false;
+  if (deletionLocked(c)) return false; // silme kilidi her rolden önce
+  return c.userId != null && c.userId === user.id;
+}
+
+/** Oturum kullanıcısı bu vakanın HASTASI mı? (hasta-beyanı uçları için kısayol) */
+export async function isCurrentUserCasePatient(c: CaseRef): Promise<boolean> {
+  return isCasePatient(await getCurrentUser(), c);
+}
+
 // İkinci Görüş vakası sahipliği (spec §8) — TEMEL kural. PATIENT yalnız kendi vakasına; klinik
 // personel (doktor/koordinatör/etik/admin) temel düzeyde erişir; DİĞER HER ROL fail-closed reddedilir.
 // ⚠️ DOCTOR burada DARALTILMAZ (her doktora true döner) → PHI taşıyan uçlarda TEK BAŞINA KULLANMA;
@@ -115,4 +137,37 @@ export async function canSoCaseBeAccessedBy(user: SessionUser | null, c: SoCaseR
     return verified && !!doctorId && c.assignedDoctorId === doctorId;
   }
   return ownsSecondOpinionCase(user, c);
+}
+
+// ── İkinci Görüş LİSTE (koleksiyon) kapısı — canSoCaseBeAccessedBy'ın ÇOĞUL karşılığı ────────────
+// NEDEN AYRI BİR FONKSİYON: nesne-düzeyi kapı tek vakayı alır; liste ucu vaka almadan ÖNCE sorguyu
+// daraltmak zorundadır. 2026-08-03 dış denetimi, liste ucunun (`GET /api/second-opinion/cases`)
+// `where: {}` ile PATIENT dışı HER role — PARTNER, AGENCY ve DOĞRULANMAMIŞ self-signup doktor dahil —
+// 100 vakanın tanı özetini döndürdüğünü buldu. T14/T15 BOLA süpürmeleri yalnız `[id]` alt rotalarına
+// bakmıştı; koleksiyon uçları o taramanın kör noktasıydı.
+//
+// DEĞİŞMEZ KURAL: liste ucu, nesne-düzeyi kapıdan DAHA GENİŞ veri döndüremez. Yeni bir SO liste/sayım
+// sorgusu yazarken bu fonksiyonu kullan; elle `where` kurma.
+// null dönerse → çağıran 403 döndürür (fail-closed; boş liste DEĞİL — yetkisizlik ile "vakan yok" ayrı şeyler).
+export type SoListScope = { patientId?: string; assignedDoctorId?: string; deletionLockedAt: null };
+
+export async function soCaseListScope(user: SessionUser | null): Promise<SoListScope | null> {
+  if (!user) return null;
+  // Silme kilidi sorgunun İÇİNDE: kilitli vaka hiçbir listede görünmez (nesne kapısındaki
+  // `deletionLocked` erken-dönüşünün sorgu karşılığı).
+  switch (user.role) {
+    case "PATIENT":
+      return { patientId: user.id, deletionLockedAt: null };
+    case "DOCTOR": {
+      const { doctorId, verified } = await doctorContext(user);
+      if (!verified || !doctorId) return null; // doğrulanmamış/profilsiz hekim → hiçbir şey
+      return { assignedDoctorId: doctorId, deletionLockedAt: null }; // yalnız kendisine atanmışlar
+    }
+    case "COORDINATOR":
+    case "ETHICS":
+    case "ADMIN":
+      return { deletionLockedAt: null }; // operasyon/governance/yönetim → geniş (kilitliler hariç)
+    default:
+      return null; // PARTNER / AGENCY / tanınmayan → fail-closed
+  }
 }

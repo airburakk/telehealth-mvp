@@ -5,6 +5,7 @@ import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { staffAccessClosed } from "@/lib/postop-access";
 import { recordAccess, reqMeta } from "@/lib/audit";
 import { loadDocument } from "@/lib/storage";
+import { detectDocumentKind, documentResponseHeaders } from "@/lib/document-mime";
 
 // GET /api/cases/:id/documents/:docId — orijinal belge içeriği (base64 → ikili akış, tarayıcıda görüntüle).
 // Klinik personel (DOCTOR/COORDINATOR/ADMIN) + vaka sahipliği (BOLA düzeltmesi: rol tek başına yetmez,
@@ -39,12 +40,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   await recordAccess({ actor: user, action: "DOCUMENT_VIEW", resourceType: "CASE_DOCUMENT", resourceId: docId, subjectUserId: doc.case?.userId ?? null, detail: doc.label, ...reqMeta(req) });
 
   const bytes = Buffer.from(m[2], "base64");
+  // İçerik-tipi (2026-08-03 P0): eskiden `doc.mimeType` — yani YÜKLEYENİN BEYANI — `inline`
+  // döndürülüyordu → `data:text/html` yükleyen hasta, belgeyi açan doktorun oturumunda aynı origin'de
+  // kod çalıştırabiliyordu. Tip artık içerikten tespit edilir; tanınmayan içerik octet-stream +
+  // indirme olarak sunulur (denetim öncesi yüklenmiş kayıtlar için de güvenli).
+  const kind = detectDocumentKind(content!);
   return new NextResponse(new Uint8Array(bytes), {
     status: 200,
-    headers: {
-      "Content-Type": doc.mimeType || m[1] || "application/octet-stream",
-      "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(doc.label)}`,
-      "Cache-Control": "private, no-store",
-    },
+    headers: documentResponseHeaders(kind?.mime, doc.label),
   });
 }

@@ -54,7 +54,7 @@ export default async function DoctorSoDetailPage({ params }: { params: Promise<{
       // De-id özet: ad/kimlik yok; serbest metin scrub'lanır; belge yalnız TÜR olarak listelenir
       // (label serbest metin → kimlik taşıyabilir, gönderilmez).
       const patient = await db.user.findUnique({ where: { id: c.patientId }, select: { name: true } });
-      const summary = scrubText(c.diagnosisSummary, [decryptField(patient?.name ?? "") || ""]);
+      const summary = scrubText(decryptField(c.diagnosisSummary), [decryptField(patient?.name ?? "") || ""]);
       const region = c.country ? (COUNTRIES.find((x) => x.code === c.country)?.name ?? c.country) : null;
 
       return (
@@ -120,7 +120,7 @@ export default async function DoctorSoDetailPage({ params }: { params: Promise<{
           status: c.status,
           branch: c.branch,
           branchLabel,
-          diagnosisSummary: c.diagnosisSummary,
+          diagnosisSummary: decryptField(c.diagnosisSummary),
           patientName: patient?.name ?? "Hasta",
           documents: c.documents,
           requests: c.requests.map((r) => ({ id: r.id, type: r.type, description: r.description, status: r.status })),
