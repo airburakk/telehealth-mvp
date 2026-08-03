@@ -18,7 +18,10 @@
 //
 // Kazıma kırılgandır: bir kaynak bozulursa 0 kayıtla döner ve cron yanıtında görünür — uydurma
 // içerik hiçbir koşulda yazılmaz.
+import { request as httpsRequest } from "node:https";
+import { rootCertificates } from "node:tls";
 import { db } from "./db";
+import { TTB_INTERMEDIATE_CA } from "./ttb-ca";
 
 // v6.57 TEŞHİS (2026-08-03): TR kaynakları (RG/OHSAD/TTB) Vercel fra1'den erişilemiyordu —
 // OHSAD 403 = Cloudflare bot koruması (veri-merkezi IP + "AuraHealth/1.0" ekli bot-ish UA +
@@ -42,6 +45,31 @@ function browserHeaders(referer?: string): Record<string, string> {
     "Upgrade-Insecure-Requests": "1",
     ...(referer ? { Referer: referer } : {}),
   };
+}
+
+/**
+ * Eksik TLS zincirli kaynaklar için özel-CA'lı HTTPS GET (v6.58 — şimdilik yalnız TTB).
+ * `ca:` verildiğinde Node varsayılan güven deposunu KAPATIR → daima [...rootCertificates, ekstra]
+ * bileşimi verilir. fetch/undici yolu seçilmedi: global fetch'in undici'si modül olarak import
+ * edilemez, ayrı undici bağımlılığı eklemek tek kaynaklık istisna için ağır kalırdı.
+ */
+function httpsGetWithCa(url: string, extraCa: string): Promise<{ status: number; body: string }> {
+  return new Promise((resolve, reject) => {
+    const req = httpsRequest(
+      url,
+      { headers: browserHeaders(), ca: [...rootCertificates, extraCa], timeout: FETCH_TIMEOUT_MS },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on("data", (c: Buffer) => chunks.push(c));
+        res.on("end", () => resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString("utf-8") }));
+        res.on("error", reject);
+      },
+    );
+    // `timeout` boşta-kalma sayacıdır; olayında istek ELLE kapatılır (yoksa sonsuz asılır).
+    req.on("timeout", () => req.destroy(new Error(`TimeoutError: ${FETCH_TIMEOUT_MS} ms doldu`)));
+    req.on("error", reject);
+    req.end();
+  });
 }
 
 /**
@@ -283,11 +311,11 @@ export async function ingestOhsad(): Promise<[number, number]> {
 // ── TTB (doktor özlük hakları) ───────────────────────────────────────────────
 
 export async function ingestTtb(): Promise<[number, number]> {
-  const res = await fetch("https://www.ttb.org.tr/", {
-    headers: browserHeaders(), cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-  });
-  if (!res.ok) throw new Error(`TTB HTTP ${res.status}`);
-  const html = await res.text();
+  // v6.58: TTB sunucusu ara sertifikayı sunmuyor (leaf-only zincir) → normal fetch Vercel'de
+  // UNABLE_TO_VERIFY_LEAF_SIGNATURE ile düşer. Özel-CA'lı istemci zinciri tamamlar (lib/ttb-ca.ts).
+  const res = await httpsGetWithCa("https://www.ttb.org.tr/", TTB_INTERMEDIATE_CA);
+  if (res.status !== 200) throw new Error(`TTB HTTP ${res.status}`);
+  const html = res.body;
 
   let scanned = 0;
   let created = 0;
