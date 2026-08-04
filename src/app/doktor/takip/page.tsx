@@ -1,20 +1,23 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { severityMeta, painSeverity, feverSeverity, type Severity } from "@/lib/postop";
+import { type Severity } from "@/lib/postop";
 import { recoveryClosed } from "@/lib/postop-access";
-import { countryFlag, countryName, formatDateTime } from "@/lib/constants";
+import { formatDateTime } from "@/lib/constants";
 import { decryptField } from "@/lib/crypto";
-import { HeartPulse, Activity, Thermometer, ArrowRight, AlertTriangle, Inbox, Lock } from "lucide-react";
-import { CompleteRecoveryButton } from "@/components/CompleteRecoveryButton";
-import { BranchAvatar } from "@/components/BranchAvatar";
+import { Lock } from "lucide-react";
+import { RecoveryList, type ActiveRecoveryRow } from "./RecoveryList";
 
 export const dynamic = "force-dynamic";
 
 const DOCTOR_ROLES = ["DOCTOR", "COORDINATOR", "ADMIN"];
 const RANK: Record<Severity, number> = { RED: 0, WATCH: 1, NONE: 2 };
 
+// Post-Op İzleme (doktor). v6.66: aktif liste + KPI'lar client bileşene çıktı (RecoveryList) —
+// KPI sayıları tıklanır filtre oldu (doktor ana sayfası "Eşleşen Vakalar" CaseQueue deseni).
+// Bu dosyada kalanlar SUNUCU işleri: auth (DB-rol otoriter), sorgu, decryptField (PHI çözümü
+// client'a inmez — ad çözülmüş DÜZ metin olarak props'la gider, şifre anahtarı gitmez) ve
+// E2EE Faz 2A gereği salt-metadata "tamamlanan takipler" bölümü.
 export default async function RecoveryMonitor() {
   // Derinlemesine savunma (2026-07-12): proxy /doktor/* TOKEN roluyle korur; post-op takip listesi
   // hasta adı + ağrı/ateş/şiddet (ÇÖZÜLMÜŞ PHI) gösterdiğinden getCurrentUser (DB-rol otoriter) ŞART.
@@ -45,8 +48,18 @@ export default async function RecoveryMonitor() {
   // Kapanma lazy hesaplandığından (DB alanı değil) dilim in-memory: en güncel 20 tamamlanan gösterilir.
   const completed = all.filter((x) => x.closed.closed).slice(0, 20);
 
-  const redCount = active.filter((x) => x.severity === "RED").length;
-  const watchCount = active.filter((x) => x.severity === "WATCH").length;
+  // Client bileşene SERİLEŞTİRİLMİŞ satırlar: Date → ISO, PHI sunucuda çözülür.
+  const rows: ActiveRecoveryRow[] = active.map(({ r, last, severity, day, count }) => ({
+    id: r.id,
+    caseId: r.caseId,
+    branch: r.branch,
+    patientName: decryptField(r.case.patientName) ?? "",
+    country: r.case.country,
+    day,
+    count,
+    severity,
+    last: last ? { pain: last.pain, feverC: last.feverC, createdAt: last.createdAt.toISOString() } : null,
+  }));
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
@@ -54,102 +67,10 @@ export default async function RecoveryMonitor() {
           /doktor ve /vakalarim ile aynı sade display deseni. */}
       <div>
         <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Post-Op İzleme</h1>
-        <p className="mt-1 text-sm text-[var(--c-ink-2)]">Uzaktan iyileşme takibi — kırmızı bayraklı hastalar üstte.</p>
+        <p className="mt-1 text-sm text-[var(--c-ink-2)]">Uzaktan iyileşme takibi — alarm bulgulu hastalar üstte.</p>
       </div>
 
-      {/* KPI tonları tema-duyarlı token'a bağlı: gündüz temada amber-300/red-300 okunmuyordu. */}
-      <div className="mt-6 grid grid-cols-3 gap-3 sm:max-w-md">
-        <Stat label="Aktif takip" value={active.length} />
-        <Stat label="Yakın izlem" value={watchCount} tone="text-[var(--c-warning)]" />
-        <Stat label="Alarm bulgusu" value={redCount} tone="text-[var(--c-danger)]" />
-      </div>
-
-      <div className="mt-6 space-y-2.5">
-        {active.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-panel)] py-12 text-center text-[var(--c-ink-3)]">
-            <Inbox className="mx-auto mb-2" /> Aktif takipte hasta yok.
-          </div>
-        )}
-        {active.map(({ r, last, severity, day, count }) => {
-          const m = severityMeta(severity);
-          return (
-            /* VAKA KARTI ANATOMİSİ (v6.64.1, kullanıcı düzeltmesi): /vakalarim ile BİREBİR —
-               [sol: branş sembolü + branş adı] … [SAĞ: durum rozeti] · meta satırı · gövde ·
-               hairline üstünde alt şerit (kulvar etiketi + eylem).
-               Şiddet göstergesi soldaki büyük kutudan ÇIKARILDI, kartın EN SAĞINA rozet olarak
-               taşındı (kullanıcı isteği) — klinik renk korunur, hizalama bozulmaz. */
-            <article
-              key={r.id}
-              className={`group relative overflow-hidden rounded-2xl border bg-[var(--c-panel)] p-5 transition ${severity === "RED" ? "border-[var(--c-danger)]/25" : "border-[var(--c-hairline)] hover:border-[var(--c-accent)]/30"}`}
-              style={{ borderInlineStart: "3px solid var(--lane-tourism)" }}
-            >
-              {/* 45° DURUM ALANI (v6.65, kullanıcı netleştirmesi): kartın SAĞINDA — üst kenarda
-                  sağdan %15'te başlar (30→25→20→15; kullanıcı ayarı), kesik tam 45° ile sol-alta iner (alt kenardaki iz düşümü
-                  kart yüksekliğine göre kendiliğinden oluşur; skew tekniği globals .postop-slant).
-                  Alan şiddete göre boyanır: yeşil (Stabil) / sarı (Yakın izlem) / kırmızı (Alarm
-                  bulgusu); RED'de Doctorium temposuyla parlar. aria-hidden + pointer-events-none:
-                  salt dekor, içerik relative sarmalayıcıda üstte. */}
-              <span
-                aria-hidden
-                className={`postop-slant pointer-events-none absolute inset-y-0 ${severity === "RED" ? "postop-alert-aura" : "opacity-[0.15]"}`}
-                style={{ insetInlineEnd: "-320px", width: "calc(15% + 320px)", background: m.tone }}
-              />
-              <div className="relative">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <BranchAvatar branchKey={r.branch} size={24} />
-                  <span className="aura-display min-w-0 truncate text-[16px] font-medium tracking-tight text-[var(--c-ink)]">
-                    {r.branch}
-                  </span>
-                </div>
-                {/* EN SAĞ: durum/şiddet rozeti — ikon + etiket tek rozette, klinik renk m.badge'den */}
-                <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${m.badge}`}>
-                  {severity === "RED" ? <AlertTriangle size={12} /> : <HeartPulse size={12} />}
-                  {m.label}
-                </span>
-              </div>
-
-              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--c-ink-3)]">
-                <span className="font-medium text-[var(--c-ink-2)]">{decryptField(r.case.patientName)}</span>
-                <span>{countryFlag(r.case.country)} {countryName(r.case.country)}</span>
-                <span>· {day}. gün</span>
-                <span>· {count} kontrol</span>
-              </div>
-
-              {/* VİTAL KUTUCUKLARI (v6.65, kullanıcı isteği "pencere içinde pencere"): ağrı ve
-                  ateş satır-içi metinden İÇ KUTULARA çıkarıldı — kit stat deseni (mono etiket +
-                  Inter bold değer, DESIGN.md veri kuralı). Değer rengi assessCheckIn'in KENDİ
-                  eşiklerinden (painSeverity/feverSeverity — tek kaynak): normalde nötr,
-                  Yakın izlem'de sarı, Alarm'da kırmızı → doktor sapmayı kutudan okur. */}
-              {last ? (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <VitalTile icon={<Activity size={13} />} label="Ağrı" value={`${last.pain}/10`} sev={painSeverity(last.pain)} />
-                  <VitalTile icon={<Thermometer size={13} />} label="Ateş" value={`${last.feverC.toFixed(1)}°C`} sev={feverSeverity(last.feverC)} />
-                  <span className="text-xs text-[var(--c-ink-3)]">son: {formatDateTime(last.createdAt)}</span>
-                </div>
-              ) : (
-                <p className="mt-2 text-sm leading-relaxed text-[var(--c-ink-3)]">Henüz kontrol girilmedi.</p>
-              )}
-
-              <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--c-hairline)] pt-3">
-                <span className="aura-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: "var(--lane-tourism)" }}>
-                  Post-Op Takip
-                </span>
-                <div className="flex items-center gap-3">
-                  <CompleteRecoveryButton caseId={r.caseId} />
-                  <Link
-                    href={`/takip/${r.caseId}`}
-                    className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--c-accent)] transition-colors duration-200 hover:text-[var(--c-accent-2)]"
-                  >
-                    Takibi aç <ArrowRight size={13} />
-                  </Link>
-                </div>
-              </div>
-              </div>
-            </article>
-          );
-        })}
-      </div>
+      <RecoveryList rows={rows} />
 
       {/* E2EE Faz 2A — tamamlanmış takipler: klinik erişim hastaya devredildi → yalnız metadata, klinik içerik linki YOK. */}
       {completed.length > 0 && (
@@ -178,32 +99,5 @@ export default async function RecoveryMonitor() {
         </div>
       )}
     </div>
-  );
-}
-
-function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
-  return (
-    <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3.5">
-      <div className={`text-2xl font-bold ${tone ?? "text-[var(--c-ink)]"}`}>{value}</div>
-      <div className="text-xs text-[var(--c-ink-2)]">{label}</div>
-    </div>
-  );
-}
-
-/**
- * Vital kutucuğu (v6.65) — kart içinde "pencere içinde pencere": mono etiket + Inter bold değer
- * (kit stat deseni, DESIGN.md veri kuralı). Sapan değer kendi şiddet rengini alır; zemin
- * bg-surface/60 ile kartın panelinden bir kademe ayrışır (45° durum alanının üstünde okunur kalsın).
- */
-function VitalTile({ icon, label, value, sev }: { icon: React.ReactNode; label: string; value: string; sev: Severity }) {
-  const toneClass =
-    sev === "RED" ? "text-[var(--c-danger)]" : sev === "WATCH" ? "text-[var(--c-warning)]" : "text-[var(--c-ink)]";
-  return (
-    <span className="inline-flex items-center gap-2 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 px-3 py-1.5">
-      <span className="inline-flex items-center gap-1 aura-mono text-[10px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">
-        {icon} {label}
-      </span>
-      <span className={`text-sm font-bold tabular-nums ${toneClass}`}>{value}</span>
-    </span>
   );
 }
