@@ -129,6 +129,9 @@ async function main() {
     { email: "koordinator@air.test", name: "Demo Koordinatör", role: "COORDINATOR" },
     { email: "kurul@air.test", name: "Kurul Üyesi", role: "ETHICS" },
     { email: "acente@air.test", name: "Demo Sağlık Turizmi Acentesi", role: "AGENCY" }, // S3 — FAZ 4 (2026-07-10)
+    // v6.70: dev/test admin — /admin/kongre·kampanya·anket panelleri hesapsız test edilemiyordu.
+    // Prod admin'i seed'le DEĞİL scripts/create-admin.ts ile kurulur (güçlü şifre env'den, --prod korkuluklu).
+    { email: "admin@air.test", name: "Platform Yöneticisi", role: "ADMIN" },
   ];
   // emailVerifiedAt: demo hesaplar doğrulama zorunluluğundan muaf (v5.6 — RESEND_API_KEY'li taze
   // kurulumda demo girişleri kilitlenmesin; prod'daki mevcut hesapları migration damgaladı).
