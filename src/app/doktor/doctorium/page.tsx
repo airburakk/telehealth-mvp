@@ -1,7 +1,12 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import {
+  activeCampaignsFor, countImpressions, SPONSOR_CONSENT_TEXT, CATEGORY_LABEL as SPONSOR_CATEGORY_LABEL,
+  type SponsorCard,
+} from "@/lib/sponsor";
 import {
   DOCTORIUM_MODULES, KIND_LABEL, RANGE_OPTIONS, DEFAULT_RANGE, rangeDays,
   SECTOR_CATEGORIES, categoryLabel,
@@ -16,7 +21,7 @@ import { FollowButton } from "./CongressControls";
 import { ProspektusSearch } from "./ProspektusSearch";
 import {
   ArrowLeft, ExternalLink, FlaskConical, Gavel, Info,
-  Sparkles, MapPin, X, CalendarClock, Pill, Building2,
+  Sparkles, MapPin, X, CalendarClock, Pill, Building2, Megaphone,
 } from "lucide-react";
 import { AuraMark } from "@/components/PortamedLogo";
 
@@ -44,10 +49,12 @@ export default async function DoctoriumPage({
     ? await db.doctor.findUnique({
         where: { id: me.doctorId },
         select: {
-          id: true, branch: true, newsBranches: true,
+          id: true, branch: true, newsBranches: true, city: true,
           congressAlertDays: true,
           // v6.62: bildiri ve erken kayıt eşikleri AYRI (eski congressDeadlineAlertDays okunmuyor).
           congressAbstractAlertDays: true, congressEarlyBirdAlertDays: true,
+          // v6.68: sponsorlu içerik kişiselleştirme rızası (city hedefleme için birlikte okunur).
+          sponsorPersonalizationAt: true,
         },
       })
     : null;
@@ -73,6 +80,16 @@ export default async function DoctoriumPage({
   const scope = parseScope(sp.s);
   const congresses = active === "kongre" ? await upcomingCongresses(branches, { scope }) : [];
   const followed = active === "kongre" && doctor ? await followedCongressIds(doctor.id) : new Set<string>();
+
+  // v6.68 Faz 1: sponsorlu kartlar YALNIZ Akışım'da (diğer sekmeler temiz kalır) ve boş akışa
+  // basılmaz. Kişiselleştirilmiş seçim yalnız AÇIK RIZALI doktorda (sponsorPersonalizationAt);
+  // rızasız doktor + personel hedefsiz (bağlamsal) kampanya görür. Sayaç agregat (kişisiz).
+  const sponsorPersonalized = !!doctor?.sponsorPersonalizationAt;
+  const sponsorCards: SponsorCard[] =
+    active === "akis" && items.length > 0
+      ? await activeCampaignsFor({ personalized: sponsorPersonalized, branches, city: doctor?.city ?? null })
+      : [];
+  if (sponsorCards.length) await countImpressions(sponsorCards.map((c) => c.id));
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
@@ -138,6 +155,9 @@ export default async function DoctoriumPage({
         alertStart={doctor?.congressAlertDays ?? null}
         alertAbstract={doctor?.congressAbstractAlertDays ?? null}
         alertEarlyBird={doctor?.congressEarlyBirdAlertDays ?? null}
+        showSponsor={active === "akis" && !!doctor}
+        sponsorInitial={sponsorPersonalized}
+        sponsorText={SPONSOR_CONSENT_TEXT}
       />
 
       {active === "ilac" && <ProspektusSearch />}
@@ -182,7 +202,17 @@ export default async function DoctoriumPage({
             <EmptyState active={active} focus={focus} range={range} />
           ) : (
             <ul className="mt-5 grid gap-3">
-              {items.map((it) => <ArticleCard key={it.id} item={it} />)}
+              {/* Sponsorlu kart enjeksiyonu (v6.68): 1.si 2 organik karttan, 2.si 9 organikten
+                  sonra; akış kısaysa listenin sonuna düşer (frekans tavanı MAX_FEED_CARDS=2). */}
+              {items.map((it, i) => (
+                <Fragment key={it.id}>
+                  {i === 2 && sponsorCards[0] && <SponsorCardView c={sponsorCards[0]} />}
+                  {i === 9 && sponsorCards[1] && <SponsorCardView c={sponsorCards[1]} />}
+                  <ArticleCard item={it} />
+                </Fragment>
+              ))}
+              {items.length <= 2 && sponsorCards[0] && <SponsorCardView c={sponsorCards[0]} />}
+              {items.length <= 9 && sponsorCards[1] && <SponsorCardView c={sponsorCards[1]} />}
             </ul>
           )}
         </>
@@ -249,6 +279,49 @@ function Cover({ item }: { item: FeedItem }) {
         <FlaskConical size={26} style={{ color: accent }} strokeWidth={1.8} />
       )}
     </div>
+  );
+}
+
+// Sponsorlu kart (v6.68 Faz 1): organik karttan NET görsel+metinsel ayrım — kesikli amber çerçeve
+// + "Sponsorlu · <reklamveren>" mono rozet (iddia dürüstlüğü: doğal içerik görünümü verilmez;
+// çerçeve sözleşme taslağı Belge 2 md.2a). Renk disiplini korunur: amber yalnız şerit/rozet, yüzey
+// boyanmaz. Tıklama /api/sponsor/click üzerinden sayılır (agregat) → dış bağlantı rel="sponsored".
+function SponsorCardView({ c }: { c: SponsorCard }) {
+  return (
+    <li className="overflow-hidden rounded-2xl border border-dashed border-amber-400/40 bg-[var(--c-surface)]">
+      <div className="flex">
+        <div
+          aria-hidden
+          className="relative hidden w-[112px] shrink-0 items-center justify-center overflow-hidden bg-[var(--c-surface-2)] sm:flex"
+          style={{ borderRight: "3px solid #f59e0b" }}
+        >
+          <span className="absolute inset-0 opacity-[0.07]" style={{ background: "#f59e0b" }} />
+          <Megaphone size={26} style={{ color: "#f59e0b" }} strokeWidth={1.8} />
+        </div>
+        <div className="min-w-0 flex-1 px-4 py-3.5">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="aura-mono rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
+              Sponsorlu · {c.sponsor}
+            </span>
+            <span className="aura-mono rounded-full bg-[var(--c-surface-2)] px-2 py-0.5 text-[10px] text-[var(--c-ink-2)]">
+              {SPONSOR_CATEGORY_LABEL[c.category] ?? c.category}
+            </span>
+          </div>
+          <p className="mt-1.5 text-sm font-semibold leading-snug text-[var(--c-ink)]">{c.title}</p>
+          <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">{c.body}</p>
+          {c.linkUrl && (
+            <a
+              href={`/api/sponsor/click?id=${c.id}`}
+              target="_blank"
+              rel="sponsored noopener"
+              className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-300 hover:underline"
+            >
+              {c.linkLabel || "Ayrıntılar"} <ExternalLink size={11} />
+            </a>
+          )}
+        </div>
+      </div>
+    </li>
   );
 }
 

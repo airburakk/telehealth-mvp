@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BellOff, BellRing, Check, ChevronDown, Loader2, SlidersHorizontal } from "lucide-react";
+import { BellOff, BellRing, Check, ChevronDown, Loader2, Megaphone, SlidersHorizontal } from "lucide-react";
 
 /**
  * Doctorium — TEK "Özelleştir" penceresi (v6.52-53, kullanıcı isteği).
@@ -52,6 +52,12 @@ interface Props {
   /** v6.62: bildiri ve erken kayıt eşikleri AYRI (eskiden tek "deadline" idi). */
   alertAbstract: number | null;
   alertEarlyBird: number | null;
+  /** Sponsorlu içerik kişiselleştirme bölümü (v6.68 Faz 1) — yalnız Akışım + DOCTOR. */
+  showSponsor: boolean;
+  sponsorInitial: boolean;
+  /** ⚖️ TASLAK açık rıza metni — sunucudan prop olarak gelir (kanonik: lib/sponsor.ts;
+   *  client modülüne sabit gömülmez — RSC client-module veri-export tuzağından uzak dur). */
+  sponsorText: string;
 }
 
 export function DoctoriumFilters(p: Props) {
@@ -69,13 +75,17 @@ export function DoctoriumFilters(p: Props) {
   const [earlyBird, setEarlyBird] = useState<number | null>(p.alertEarlyBird);
   const [savingAlerts, setSavingAlerts] = useState(false);
 
+  const [sponsorOn, setSponsorOn] = useState(p.sponsorInitial);
+  const [savingSponsor, setSavingSponsor] = useState(false);
+
   const activeRange = p.rangeOptions.find((r) => r.key === p.rangeKey)?.label;
   const activeCat = p.categoryOptions.find((c) => c.key === p.category)?.label;
   const alertsOn = start != null || abstractDays != null || earlyBird != null;
 
   // Bu modülde gösterilecek hiçbir ayar yoksa düğmeyi de çizme (ör. Akademik: aralık/kategori/
   // alarm yok) — boş panel açılmasın.
-  const hasAnySection = p.showRange || p.showCategory || p.showAlerts || p.showScope || !!p.branchOptions;
+  const hasAnySection =
+    p.showRange || p.showCategory || p.showAlerts || p.showScope || p.showSponsor || !!p.branchOptions;
 
   // Kapalı paneldeki özet: hangi ayarların etkin olduğu tek bakışta görünsün.
   const summary = [
@@ -84,6 +94,7 @@ export function DoctoriumFilters(p: Props) {
     p.showScope ? (p.scope === "ulusal" ? "🇹🇷 ulusal" : p.scope === "uluslararasi" ? "🌍 uluslararası" : "tüm kapsam") : null,
     p.branchOptions ? `${branches.size || "kendi"} branş` : null,
     p.showAlerts ? (alertsOn ? "alarm açık" : "alarm kapalı") : null,
+    p.showSponsor ? (sponsorOn ? "sponsor: kişisel" : "sponsor: genel") : null,
   ].filter(Boolean).join(" · ");
 
   async function saveBranches() {
@@ -138,6 +149,28 @@ export function DoctoriumFilters(p: Props) {
     else if (kind === "abstract") setAbstractDays(days);
     else setEarlyBird(days);
     void saveAlerts(next);
+  }
+
+  // v6.68: kişiselleştirme AÇIK RIZASI — açarken rıza kaydı ispat zincirine yazılır (uçta
+  // fail-closed: kayıt düşmezse açılmaz), kapatınca hedefleme derhâl durur (bağlamsal kartlara
+  // düşülür; akış reklamsız OLMAZ — metinde de böyle anlatılır). Uç: /api/doctor/sponsor-consent.
+  async function toggleSponsor() {
+    const enable = !sponsorOn;
+    setSavingSponsor(true);
+    try {
+      const res = await fetch("/api/doctor/sponsor-consent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enable }),
+      });
+      if (!res.ok) throw new Error();
+      setSponsorOn(enable);
+      router.refresh();
+    } catch {
+      /* durum değişmedi */
+    } finally {
+      setSavingSponsor(false);
+    }
   }
 
   const chip = (on: boolean) =>
@@ -325,6 +358,39 @@ export function DoctoriumFilters(p: Props) {
                 </button>
                 {branchMsg && <span className="text-[11px] text-[var(--c-ink-2)]">{branchMsg}</span>}
                 <span className="ml-auto text-[10px] text-[var(--c-ink-3)]">• kendi branşınız</span>
+              </div>
+            </section>
+          )}
+
+          {p.showSponsor && (
+            <section>
+              <h3 className={`${sectionTitle} flex items-center gap-1.5`}>
+                <Megaphone size={12} className={sponsorOn ? "text-emerald-300" : ""} />
+                Sponsorlu içerik
+                {savingSponsor && <Loader2 size={11} className="animate-spin" />}
+              </h3>
+              <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
+                Akışta &quot;Sponsorlu&quot; işaretli kartlar görünür. Kişiselleştirmeyi açarsanız bu
+                kartlar branş/şehir profilinize göre seçilir; kapalıyken herkese aynı (genel)
+                kartlar gösterilir. Profil verileriniz reklamverenlere aktarılmaz.
+              </p>
+              <details className="mt-1.5">
+                <summary className="cursor-pointer text-[11px] text-[var(--c-ink-3)] underline hover:text-[var(--c-ink)]">
+                  Açık rıza metni (taslak)
+                </summary>
+                <p className="mt-1.5 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface-2)] px-3 py-2 text-[11px] leading-relaxed text-[var(--c-ink-2)]">
+                  {p.sponsorText}
+                </p>
+              </details>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <button type="button" onClick={() => { if (sponsorOn) void toggleSponsor(); }}
+                  disabled={savingSponsor} aria-pressed={!sponsorOn} className={chip(!sponsorOn)}>
+                  Genel (rızasız)
+                </button>
+                <button type="button" onClick={() => { if (!sponsorOn) void toggleSponsor(); }}
+                  disabled={savingSponsor} aria-pressed={sponsorOn} className={chip(sponsorOn)}>
+                  Kişiselleştirilmiş — açık rıza veriyorum
+                </button>
               </div>
             </section>
           )}

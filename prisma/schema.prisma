@@ -149,6 +149,11 @@ model Doctor {
   congressAbstractAlertDays  Int?
   /// v6.62: ERKEN KAYIT son tarihinden kaç gün önce uyarılsın. null = kapalı.
   congressEarlyBirdAlertDays Int?
+  /// Doctorium sponsorlu içerik KİŞİSELLEŞTİRME açık rızası (v6.68 Faz 1): dolu = rıza verildi
+  /// (verildiği an); null = yok/geri alındı → doktora yalnız hedefsiz (bağlamsal) kampanya gösterilir.
+  /// Durumun tek kaynağı bu alan; İSPAT izi ConsentRecord'da (scope SPONSOR_TARGETING — grant/revoke
+  /// ayrı satırlar, lib/sponsor.ts). Reklamverene hiçbir kişisel veri gitmez (agregat sayaç yalnız).
+  sponsorPersonalizationAt DateTime?
   // Ücretsiz Sağlık Hizmeti — anlık müsaitlik + kontenjan (gönüllü ücretsiz konsültasyon).
   freeCareState       String    @default("OFFLINE") // OFFLINE | AVAILABLE | IN_SESSION
   freeCareQuota       Int       @default(10) // dönem (takvim haftası) başına kontenjan
@@ -1016,4 +1021,33 @@ model CongressFollow {
 
   @@unique([doctorId, congressId])
   @@index([congressId])
+}
+
+/// Doctorium sponsorlu içerik kampanyası (v6.68 Faz 1) — yalnız İLAÇ-DIŞI reklamverenler.
+/// Beşeri tıbbi ürün tanıtımı BİLİNÇLİ kapsam dışı: Modül D parkı sürüyor (TİTCK tanıtım
+/// yönetmeliği + aracı sıfatı hukuki görüş ister — lib/doctorium.ts başlık notu). Kategoriye
+/// CIHAZ dahil (kullanıcı kararı 2026-08-04; Tıbbi Cihaz Satış, Reklam ve Tanıtım Yönetmeliği
+/// uyum beyanı reklamverende — çerçeve sözleşme taslağı vault output'ta).
+/// KVKK minimizasyon: kişi-bazlı gösterim logu YOK — yalnız kampanya-düzeyi agregat sayaçlar;
+/// reklamverene kullanıcı verisi gitmez. Hedefli seçim yalnız Doctor.sponsorPersonalizationAt
+/// dolu (açık rızalı) doktorlarda; rızasıza hedefsiz (bağlamsal) kampanyalar gösterilir.
+model SponsorCampaign {
+  id             String   @id @default(cuid())
+  sponsor        String // reklamveren tüzel kişi adı — kartta "Sponsorlu · <sponsor>" olarak açıkça görünür
+  category       String // KONGRE | SIGORTA | YAZILIM | CIHAZ | ISE_ALIM | DIGER (İLAÇ YOK — Faz 4 parkı)
+  title          String
+  body           String
+  linkUrl        String? // dış bağlantı; tıklama /api/sponsor/click üzerinden sayılır (rel="sponsored")
+  linkLabel      String? // düğme metni (boş = "Ayrıntılar")
+  targetBranches String? // JSON string[] branş slug — null/boş = BAĞLAMSAL kampanya (herkese, rıza gerekmez)
+  targetCities   String? // JSON string[] şehir adı — yalnız açık-rızalı doktorda uygulanır
+  startsAt       DateTime
+  endsAt         DateTime
+  status         String   @default("DRAFT") // DRAFT | ACTIVE | PAUSED | ENDED
+  impressions    Int      @default(0) // agregat render sayacı (kişisiz)
+  clicks         Int      @default(0) // agregat tıklama sayacı (kişisiz)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status, startsAt, endsAt])
 }
