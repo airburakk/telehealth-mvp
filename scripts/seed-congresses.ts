@@ -8,6 +8,12 @@
 // İDEMPOTENT: (source="curated", externalId=<slug>) benzersiz → yeniden koşuda güncelleme yapar,
 // kopya yaratmaz. Elle girilen kayıtlara (source=null) DOKUNMAZ.
 //
+// KİMLİK (v6.68): externalId YALNIZ addan üretilir (scripts/congress-id.ts) — branş kimliğe
+// GİRMEZ. v6.62-67'de `branş:ad` biçimindeydi; aynı kongre iki branştan iki AYRI satır oldu
+// (prod: AATS × 2) ve aşağıdaki "branşları birleştir" dalı hiç tetiklenmedi. Eski biçimli
+// veri üzerinde bu seed ÇALIŞMAZ (aşağıdaki bekçi) — önce göç:
+//   npx tsx scripts/fix-congress-duplicates.ts [--prod] --yaz
+//
 // GÜVENLİK: RG/OHSAD besleme aracıyla aynı korkuluk deseni —
 //   • Varsayılan DRY-RUN (yazma için --yaz)
 //   • Prod YALNIZ --prod + ayrı PROD_DATABASE_URL env'i
@@ -21,6 +27,7 @@
 import "dotenv/config";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { congressExternalId } from "./congress-id";
 
 const args = process.argv.slice(2);
 const DRY = !args.includes("--yaz");
@@ -44,17 +51,6 @@ interface Row {
   sourceUrls?: string[];
   confidence?: string;
   verifiedAt?: string | null;
-}
-
-/** Kararlı kimlik: aynı kongre yeniden seed edilince AYNI satıra düşsün (ad değişse bile). */
-function externalIdFor(r: Row): string {
-  const base = `${r.branchSlug}:${r.name}`
-    .toLocaleLowerCase("tr-TR")
-    .replace(/[ıİ]/g, "i").replace(/[şŞ]/g, "s").replace(/[ğĞ]/g, "g")
-    .replace(/[üÜ]/g, "u").replace(/[öÖ]/g, "o").replace(/[çÇ]/g, "c")
-    .replace(/[^a-z0-9:]+/g, "-")
-    .replace(/^-|-$/g, "");
-  return base.slice(0, 180);
 }
 
 function d(s?: string | null): Date | null {
@@ -83,6 +79,17 @@ async function main() {
   // Dinamik import: db.ts env'i modül yüklenirken okur (yukarıdaki ayarlar önce bitmeli).
   const { db } = await import("../src/lib/db");
 
+  // v6.68 bekçisi: eski `branş:ad` biçimli kimlik varken seed koşarsa findUnique yeni
+  // (branşsız) kimlikle hiç eşleşmez ve HER kongre yeniden yaratılırdı (mükerrer patlaması).
+  const eskiBicim = await db.medicalCongress.count({
+    where: { source: "curated", externalId: { contains: ":" } },
+  });
+  if (eskiBicim > 0) {
+    console.error(`⛔ ${eskiBicim} kayıt eski biçimli (branş önekli) externalId taşıyor — önce göç script'ini çalıştırın:`);
+    console.error(`   npx tsx scripts/fix-congress-duplicates.ts ${PROD ? "--prod " : ""}--yaz`);
+    process.exit(1);
+  }
+
   const raw = readFileSync(join(process.cwd(), "prisma", "seed-data", "congresses.json"), "utf-8");
   const rows = JSON.parse(raw) as Row[];
   console.log(`\n📚 Kaynak: ${rows.length} kongre kaydı`);
@@ -94,8 +101,9 @@ async function main() {
   const noDate = rows.filter((r) => !r.nextStart);
 
   let created = 0, updated = 0, skipped = 0;
+  const seen = new Set<string>(); // dry-run: aynı koşuda aynı kimliğe düşen 2. satır "güncelleme"dir
   for (const r of withDate) {
-    const externalId = externalIdFor(r);
+    const externalId = congressExternalId(r.name);
     const data = {
       title: `${r.edition ? `${r.edition} ` : ""}${r.name}`.trim(),
       organizer: r.organizer ?? null,
@@ -122,12 +130,15 @@ async function main() {
     });
 
     if (DRY) {
-      existing ? updated++ : created++;
+      existing || seen.has(externalId) ? updated++ : created++;
+      seen.add(externalId);
       continue;
     }
     if (existing) {
       // Aynı kongre birden çok branşta olabilir (ör. AATS = kvc + göğüs cerrahisi) → branşları
       // BİRLEŞTİR, üzerine yazma (üzerine yazmak kongreyi öbür branştan kaybettirirdi).
+      // Diğer veri alanları son işlenen satırdan gelir — çok-branşlı kongrelerin JSON satırları
+      // bu yüzden BİREBİR AYNI tutulur (congresses.json'daki multiBranchNote).
       const merged = [...new Set([...(JSON.parse(existing.branchSlugs) as string[]), r.branchSlug])];
       await db.medicalCongress.update({
         where: { id: existing.id },
