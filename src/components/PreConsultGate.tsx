@@ -1,18 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { CONSULT_FEE_USD, CONSULT_DURATION_TEXT, verifyPolicy, simulatePaymentRef, type Billing } from "@/lib/billing";
+import { CONSULT_FEE_USD, CONSULT_DURATION_TEXT, simulatePaymentRef, type Billing } from "@/lib/billing";
 import {
-  Clock, ShieldCheck, CreditCard, Wallet, Loader2, Check, BadgeCheck, Video, AlertCircle,
+  Clock, CreditCard, Wallet, Loader2, Check, Video, AlertCircle,
 } from "lucide-react";
 
-// Ön-konsültasyon kapısı — TEK EKRAN (basitleştirme Faz 2, 2026-07-12; önceki 3-fazlı sihirbaz
-// [bilgi → sigorta → poliçe/ödeme] tek yüzeye indirildi): ücret/süre bilgisi + yöntem seçimi
-// (sigorta ↔ kart) + seçilen yöntemin alanları aynı ekranda. Billing sözleşmesi DEĞİŞMEDİ.
+// Ön-konsültasyon kapısı — TEK EKRAN (basitleştirme Faz 2, 2026-07-12): ücret/süre bilgisi +
+// kart ödeme aynı yüzeyde. "Sigortam var" yöntemi 2026-08-05'te kaldırıldı (anlaşmalı sigorta
+// şirketi yok); kartla demo ödeme tek yoldur. Billing sözleşmesi: status=PAID, method=PAYMENT.
 const PRIMARY = "inline-flex items-center justify-center gap-1.5 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-50";
 const INPUT = "w-full rounded-lg border border-[var(--c-hairline)] px-3 py-2 text-sm focus:border-[var(--c-accent)] focus:outline-none";
-
-type Method = "card" | "insurance";
 
 // Kapının çevrilebilir TÜM statik metinleri — triyaj sayfası bunları useT'ye besler.
 // t() bileşende zaten uygulanıyor; ancak metnin bu listede (yani çeviri fetch'inde) olması
@@ -22,12 +20,6 @@ export const PRECONSULT_TEXTS: string[] = [
   "Görüşme ücreti", "Tek seferlik · Tier 1 ön değerlendirme", "Ortalama süre", "15–25 dk",
   "Uzman doktorla birebir video", "Şikayet ve tıbbi geçmiş değerlendirmesi",
   "Branş yönlendirmesi ve ikinci görüş", "Tedavi/paket için ön plan",
-  "Ödeme yöntemi",
-  "Kartla öde", "ödeyerek devam edin",
-  "Sigortam var", "Poliçe numarası ile kapsamı doğrulayın",
-  "Poliçe numaranızı girin; görüşme kapsamı kontrol edilsin.",
-  "Poliçe no (ör. ALZ123456)", "Poliçe numarası geçersiz görünüyor (en az 6 karakter olmalı).",
-  "Dilerseniz ödeme yaparak devam edebilirsiniz.", "Doğrula",
   "Kart bilgileri", "(demo — gerçek ödeme alınmaz)", "Kart numarası",
   "AA/YY", "öde", "Lütfen geçerli bir kart numarası girin (demo).",
   "🔒 Ödeme simülasyondur. Gerçek sürümde Iyzico/Stripe + Escrow entegrasyonu kullanılır.",
@@ -35,27 +27,9 @@ export const PRECONSULT_TEXTS: string[] = [
 
 // t: arayüz çeviri fonksiyonu (hasta arayüzü çok dilli — varsayılan kimlik/Türkçe)
 export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Billing) => void; t?: (s: string) => string }) {
-  const [method, setMethod] = useState<Method>("card");
-  const [policyNo, setPolicyNo] = useState("");
-  const [policyMsg, setPolicyMsg] = useState("");
-  const [verifying, setVerifying] = useState(false);
   const [card, setCard] = useState("");
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState("");
-
-  function verify() {
-    setPolicyMsg("");
-    setVerifying(true);
-    setTimeout(() => {
-      const res = verifyPolicy(policyNo);
-      setVerifying(false);
-      if (res.covered) {
-        onCleared({ status: "INSURED", method: "INSURANCE", fee: CONSULT_FEE_USD, policyNo: policyNo.trim(), insurer: res.insurer });
-      } else {
-        setPolicyMsg(res.message);
-      }
-    }, 900);
-  }
 
   function pay() {
     setError("");
@@ -95,63 +69,22 @@ export function PreConsultGate({ onCleared, t = (s) => s }: { onCleared: (b: Bil
         <li className="flex gap-2"><Check size={16} className="mt-0.5 shrink-0 text-emerald-500" /> {t("Tedavi/paket için ön plan")}</li>
       </ul>
 
-      {/* Yöntem seçimi — sigorta ↔ kart aynı ekranda geçişli */}
+      {/* Kart ödeme — tek yöntem */}
       <div className="mt-5">
-        <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Ödeme yöntemi")}</div>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => { setError(""); setMethod("card"); }}
-            className={`rounded-2xl border-2 p-3.5 text-start transition-colors ${method === "card" ? "border-[var(--c-accent)] bg-[var(--c-accent)]/5" : "border-[var(--c-hairline)] hover:border-[var(--c-hairline)]"}`}
-          >
-            <CreditCard size={20} className="text-[var(--c-ink)]" />
-            <div className="mt-1.5 text-sm font-semibold text-[var(--c-ink)]">{t("Kartla öde")}</div>
-            <div className="text-xs text-[var(--c-ink-2)]">${CONSULT_FEE_USD} {t("ödeyerek devam edin")}</div>
-          </button>
-          <button
-            type="button"
-            onClick={() => { setPolicyMsg(""); setMethod("insurance"); }}
-            className={`rounded-2xl border-2 p-3.5 text-start transition-colors ${method === "insurance" ? "border-[var(--c-accent)] bg-[var(--c-accent)]/5" : "border-[var(--c-hairline)] hover:border-[var(--c-hairline)]"}`}
-          >
-            <ShieldCheck size={20} className="text-[var(--c-ink)]" />
-            <div className="mt-1.5 text-sm font-semibold text-[var(--c-ink)]">{t("Sigortam var")}</div>
-            <div className="text-xs text-[var(--c-ink-2)]">{t("Poliçe numarası ile kapsamı doğrulayın")}</div>
-          </button>
+        <div className="space-y-3 rounded-2xl border border-[var(--c-hairline)] p-4">
+          <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Kart bilgileri")} <span className="font-normal text-[var(--c-ink-3)]">{t("(demo — gerçek ödeme alınmaz)")}</span></div>
+          <input value={card} onChange={(e) => setCard(e.target.value)} inputMode="numeric" placeholder={t("Kart numarası")} className={INPUT} autoFocus />
+          <div className="grid grid-cols-2 gap-3">
+            <input placeholder={t("AA/YY")} className={INPUT} />
+            <input placeholder="CVC" className={INPUT} />
+          </div>
         </div>
+        {error && <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300"><AlertCircle size={15} /> {t(error)}</div>}
+        <button onClick={pay} disabled={paying} className={`${PRIMARY} mt-4 w-full`}>
+          {paying ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />} ${CONSULT_FEE_USD} {t("öde")}
+        </button>
+        <p className="mt-2 text-[11px] text-[var(--c-ink-3)]">{t("🔒 Ödeme simülasyondur. Gerçek sürümde Iyzico/Stripe + Escrow entegrasyonu kullanılır.")}</p>
       </div>
-
-      {method === "insurance" ? (
-        <div className="mt-4">
-          <p className="text-sm text-[var(--c-ink-2)]">{t("Poliçe numaranızı girin; görüşme kapsamı kontrol edilsin.")}</p>
-          <div className="mt-2 flex items-center gap-2">
-            <input value={policyNo} onChange={(e) => setPolicyNo(e.target.value)} placeholder={t("Poliçe no (ör. ALZ123456)")} className={INPUT} autoFocus />
-            <button onClick={verify} disabled={verifying || policyNo.trim().length < 3} className={`${PRIMARY} shrink-0`}>
-              {verifying ? <Loader2 size={16} className="animate-spin" /> : <BadgeCheck size={16} />} {t("Doğrula")}
-            </button>
-          </div>
-          {policyMsg && (
-            <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
-              <AlertCircle size={15} className="mt-0.5 shrink-0" /> <span>{t(policyMsg)} {t("Dilerseniz ödeme yaparak devam edebilirsiniz.")}</span>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="mt-4">
-          <div className="space-y-3 rounded-2xl border border-[var(--c-hairline)] p-4">
-            <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Kart bilgileri")} <span className="font-normal text-[var(--c-ink-3)]">{t("(demo — gerçek ödeme alınmaz)")}</span></div>
-            <input value={card} onChange={(e) => setCard(e.target.value)} inputMode="numeric" placeholder={t("Kart numarası")} className={INPUT} autoFocus />
-            <div className="grid grid-cols-2 gap-3">
-              <input placeholder={t("AA/YY")} className={INPUT} />
-              <input placeholder="CVC" className={INPUT} />
-            </div>
-          </div>
-          {error && <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300"><AlertCircle size={15} /> {t(error)}</div>}
-          <button onClick={pay} disabled={paying} className={`${PRIMARY} mt-4 w-full`}>
-            {paying ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />} ${CONSULT_FEE_USD} {t("öde")}
-          </button>
-          <p className="mt-2 text-[11px] text-[var(--c-ink-3)]">{t("🔒 Ödeme simülasyondur. Gerçek sürümde Iyzico/Stripe + Escrow entegrasyonu kullanılır.")}</p>
-        </div>
-      )}
     </div>
   );
 }

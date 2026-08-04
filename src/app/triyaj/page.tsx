@@ -27,7 +27,7 @@ import {
 
 // Hasta arayüzü çok dilli: sihirbazın tüm statik metinleri (çeviri /api/i18n cache'inden gelir)
 const STATIC_UI = [
-  "Branş Doktoru", "Triyaj · Ön Değerlendirme", "Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.",
+  "Branş Doktoru", "Triyaj · Ön Değerlendirme", "Görüşmeye başlamadan önce ücret bilgisi ve ödeme adımı.",
   "Birkaç adımda şikayetinizi anlatın; sistem sizi doğru uzmana yönlendirsin.",
   "Şikayet", "Branş Soruları", "Belgeler & Gönder",
   "Hasta Adı (veya yakını)", "Örn. Karim B.", "Ülke",
@@ -43,7 +43,7 @@ const STATIC_UI = [
   "AI Ön Analizi", "Aciliyet", "Güven",
   "Geri", "Devam", "Başvuruyu oluştur",
   "Lütfen hasta adını girin.", "Lütfen şikayetinizi biraz daha ayrıntılı yazın.",
-  "Görüşme ücreti alındı:", "Görüşme sigortanız tarafından karşılanıyor", "Poliçe",
+  "Görüşme ücreti alındı:",
   "Acil / Hayati", "Yüksek", "Orta", "Düşük", "Rutin / Elektif",
   "Bu branş için gerekli belgeler", "opsiyonel",
   "İkinci Görüş mü arıyorsunuz?",
@@ -203,7 +203,7 @@ function TriyajInner() {
           answers: outAnswers, forceBranchKey: branchOverride || undefined,
           missingDocs: missingLabels,
           consultFee: billing?.fee, payStatus: billing?.status, payMethod: billing?.method,
-          policyNo: billing?.policyNo, payRef: billing?.payRef,
+          payRef: billing?.payRef,
         }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Hata");
@@ -215,10 +215,10 @@ function TriyajInner() {
     }
   }
 
-  // Ön-konsültasyon kapısı: ücret bilgisi + sigorta/ödeme geçilmeden triyaj başlamaz (tek ekran, Faz 2)
+  // Ön-konsültasyon kapısı: ücret bilgisi + ödeme geçilmeden triyaj başlamaz (tek ekran, Faz 2)
   if (!billing) {
     return (
-      <JourneyIntakeShell icon={Stethoscope} eyebrow={t("Branş Doktoru")} title={t("Triyaj · Ön Değerlendirme")} intro={t("Görüşmeye başlamadan önce ücret bilgisi ve sigorta/ödeme adımı.")} lang={uiLang} onLangChange={chooseLang} journey="GENERAL" stage={0}>
+      <JourneyIntakeShell icon={Stethoscope} eyebrow={t("Branş Doktoru")} title={t("Triyaj · Ön Değerlendirme")} intro={t("Görüşmeye başlamadan önce ücret bilgisi ve ödeme adımı.")} lang={uiLang} onLangChange={chooseLang} journey="GENERAL" stage={0}>
         <div className="mt-7">
           <PreConsultGate onCleared={setBilling} t={t} />
         </div>
@@ -230,9 +230,7 @@ function TriyajInner() {
     <JourneyIntakeShell icon={Stethoscope} eyebrow={t("Branş Doktoru")} title={t("Triyaj · Ön Değerlendirme")} intro={t("Birkaç adımda şikayetinizi anlatın; sistem sizi doğru uzmana yönlendirsin.")} lang={uiLang} onLangChange={chooseLang} journey="GENERAL" stage={1}>
       <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300 ring-1 ring-emerald-400/25">
         <ShieldCheck size={15} />
-        {billing.status === "INSURED"
-          ? `${t("Görüşme sigortanız tarafından karşılanıyor")} (${billing.insurer ?? "—"}) · ${t("Poliçe")} ${billing.policyNo}`
-          : `${t("Görüşme ücreti alındı:")} $${billing.fee} · Ref ${billing.payRef}`}
+        {`${t("Görüşme ücreti alındı:")} $${billing.fee} · Ref ${billing.payRef}`}
       </div>
 
       {/* Stepper — 3 adım (Faz 2) */}

@@ -1,39 +1,19 @@
-// Ön-konsültasyon ücret & sigorta kapısı (Modül 1) — saf yardımcılar
-// NOT: Ödeme SİMÜLEdir (gerçek Iyzico/Stripe API anahtarı gerektirir) ve poliçe
-// doğrulaması STUB'tır (gerçek sigorta entegrasyonu üretim sürümünde eklenecek).
+// Ön-konsültasyon ücret kapısı (Modül 1) — saf yardımcılar
+// NOT: Ödeme SİMÜLEdir (gerçek Iyzico/Stripe API anahtarı gerektirir).
+// Sigortayla ödeme yolu 2026-08-05'te kaldırıldı (anlaşmalı sigorta şirketi yok) — DB'de
+// tarihsel INSURED/policyNo kayıtları durabilir; okuma yolları düz string karşılaştırır.
 
 export const CONSULT_FEE_USD = 60; // Tier 1 ön değerlendirme görüşme ücreti
 export const CONSULT_DURATION_TEXT = "15–25 dk"; // ortalama görüşme süresi
 
-export type PayStatus = "PENDING" | "PAID" | "INSURED";
-export type PayMethod = "PAYMENT" | "INSURANCE";
+export type PayStatus = "PENDING" | "PAID";
+export type PayMethod = "PAYMENT";
 
 export interface Billing {
   status: PayStatus;
   method: PayMethod;
   fee: number;
-  policyNo?: string;
   payRef?: string;
-  insurer?: string;
-}
-
-export interface PolicyCheck {
-  covered: boolean;
-  insurer?: string;
-  message: string;
-}
-
-const INSURERS = ["Allianz", "AXA Sigorta", "Anadolu Sigorta", "Mapfre", "Gulf Insurance"];
-
-// Demo poliçe doğrulama: geçerli formatta (≥6 karakter) poliçe kapsamlı kabul edilir.
-// Gerçek sürümde sigorta şirketi API'siyle değiştirilecek.
-export function verifyPolicy(policyNoRaw: string): PolicyCheck {
-  const p = (policyNoRaw || "").replace(/\s+/g, "");
-  if (p.length < 6) {
-    return { covered: false, message: "Poliçe numarası geçersiz görünüyor (en az 6 karakter olmalı)." };
-  }
-  const insurer = INSURERS[p.length % INSURERS.length];
-  return { covered: true, insurer, message: `${insurer} poliçeniz bu görüşmeyi kapsıyor.` };
 }
 
 // Simüle ödeme referansı üretir (gerçek ödeme geçidi yerine)

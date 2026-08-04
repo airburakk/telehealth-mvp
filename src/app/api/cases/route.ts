@@ -136,9 +136,10 @@ export async function POST(req: Request) {
       patientPhone: contact.phone ? encryptField(contact.phone) : null,
       contactPreference: contact.contactPreference,
       consultFee: typeof body.consultFee === "number" ? body.consultFee : null,
-      payStatus: ["PAID", "INSURED"].includes(String(body.payStatus)) ? String(body.payStatus) : "PENDING",
+      // Sigortayla ödeme yolu kaldırıldı (2026-08-05): INSURED artık kabul edilmez; Case.policyNo
+      // kolonu yalnız tarihsel kayıtlar için şemada durur, yeni vakaya yazılmaz.
+      payStatus: String(body.payStatus) === "PAID" ? "PAID" : "PENDING",
       payMethod: body.payMethod ? String(body.payMethod) : null,
-      policyNo: body.policyNo ? String(body.policyNo).slice(0, 40) : null,
       payRef: body.payRef ? String(body.payRef).slice(0, 40) : null,
     },
   });

@@ -4,7 +4,7 @@ import { loginAs, contextAs, expectNotVisible } from "./helpers";
 // AKIŞ 1 — Hasta triyaj → vaka → doktor kokpit → görüşme odası.
 //
 // Kapsam (deterministik):
-//   1) Hasta: ön-konsültasyon ödeme kapısı (sigortasız/demo ödeme) → triyaj sihirbazı
+//   1) Hasta: ön-konsültasyon ödeme kapısı (demo kart ödemesi) → triyaj sihirbazı
 //      (Hasta → Şikayet → Branş Soruları → Belgeler → Özet) → "Başvuruyu oluştur" → sonuç sayfası.
 //   2) Doktor: yeni izole context → doktor kokpit (Vaka Kuyruğu) → vakayı ada göre bul →
 //      vaka detayı → "Görüşmeyi Başlat" → görüşme odasının (PreConsultLobby) RENDER'ı.
@@ -51,14 +51,10 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
     await expect(page.getByRole("heading", { name: "Uzman görüşmesi — ön bilgilendirme" })).toBeVisible();
   });
 
-  // ── 2) HASTA: ön-konsültasyon ödeme kapısını deterministik şekilde geç (sigortasız → demo ödeme) ──
-  await test.step("Ön-konsültasyon ödeme kapısı geçilir (sigortasız demo ödeme)", async () => {
-    // info → insurance
-    await page.getByRole("button", { name: "Devam et" }).click();
-    await expect(page.getByRole("heading", { name: "Sigorta durumu" })).toBeVisible();
-    // insurance → payment (sigortasız yol; poliçe doğrulama/sim ödeme kırılganlığını atlar)
-    await page.getByRole("button", { name: /Hayır \/ sigortasız devam/ }).click();
-    await expect(page.getByRole("heading", { name: "Ödeme", exact: true })).toBeVisible();
+  // ── 2) HASTA: ön-konsültasyon ödeme kapısını deterministik şekilde geç (demo kart ödemesi) ──
+  await test.step("Ön-konsültasyon ödeme kapısı geçilir (demo kart ödemesi)", async () => {
+    // Kapı TEK EKRAN (Faz 2, 2026-07-12) ve tek yöntem karttır (sigorta yolu 2026-08-05'te
+    // kaldırıldı) — kart formu doğrudan görünür, ara ekran/sekme yoktur.
     // Demo kart numarası (>=12 hane) → "öde". Ödeme simülasyonu setTimeout(1300) → billing set edilir.
     await page.getByPlaceholder("Kart numarası").fill("4242424242424242");
     // Buton etiketi "$<fee> öde" biçiminde → "öde" alt-metniyle eşle.
