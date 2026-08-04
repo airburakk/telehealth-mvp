@@ -610,12 +610,13 @@
   "officialUrl": "https://events.aats.org/107th-annual-meeting",
   "abstractDeadline": null,
   "earlyBirdDeadline": null,
-  "registrationNotes": "2026 edisyonu (106.) geçti. Mekan: Los Angeles Convention Center. Kalp ve göğüs cerrahisini birlikte kapsar.",
+  "registrationNotes": "2026 edisyonu (106.) geçti. Mekan: Los Angeles Convention Center. Kalp ve göğüs cerrahisini birlikte kapsayan kardiyotorasik kongre.",
   "sourceUrls": [
    "https://events.aats.org/107th-annual-meeting",
    "https://www.laconventioncenter.com/events/detail/aats-annual-mtg-2027"
   ],
-  "confidence": "dogrulandi"
+  "confidence": "dogrulandi",
+  "multiBranchNote": "gogus-cerrahisi satırıyla AYNI kongre — seed kimliği addan üretir, branchSlugs'ı birleştirir; veri alanları iki satırda BİREBİR AYNI tutulmalı (son işlenen kazanır)."
  },
  {
   "branchSlug": "gogus-cerrahisi",
@@ -677,11 +678,13 @@
   "officialUrl": "https://events.aats.org/107th-annual-meeting",
   "abstractDeadline": null,
   "earlyBirdDeadline": null,
-  "registrationNotes": "2026 edisyonu (106.) geçti. Genel göğüs cerrahisi oturumlarını da kapsayan kardiyotorasik kongre.",
+  "registrationNotes": "2026 edisyonu (106.) geçti. Mekan: Los Angeles Convention Center. Kalp ve göğüs cerrahisini birlikte kapsayan kardiyotorasik kongre.",
   "sourceUrls": [
-   "https://events.aats.org/107th-annual-meeting"
+   "https://events.aats.org/107th-annual-meeting",
+   "https://www.laconventioncenter.com/events/detail/aats-annual-mtg-2027"
   ],
-  "confidence": "dogrulandi"
+  "confidence": "dogrulandi",
+  "multiBranchNote": "kvc satırıyla AYNI kongre — seed kimliği addan üretir, branchSlugs'ı birleştirir; veri alanları iki satırda BİREBİR AYNI tutulmalı (son işlenen kazanır)."
  },
  {
   "branchSlug": "gogus-hastaliklari",
