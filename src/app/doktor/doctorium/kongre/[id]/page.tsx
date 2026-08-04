@@ -24,8 +24,9 @@ export const metadata = { title: "Kongre" };
  * PROGRAM/KONUŞMACI: tam program KOPYALANMAZ (telif + kongreden 1-2 ay önce kesinleşir, bayat
  * bilgi doktoru yanıltır) → ana temalar + resmî programa bağlantı (kullanıcı kararı 2026-08-03).
  *
- * GÖRSEL: kapak `coverImage` doluysa KENDİ origin'imizden servis edilir (og:image sunucuda
- * indirilip Blob'a yazılır) — CSP `img-src 'self' data:` dış hostu engeller. Yoksa branş amblemi.
+ * GÖRSEL: kapak `coverImage` doluysa data URI'dir (og:image yerel script'le indirilip sharp'la
+ * webp'e re-encode edilir — scripts/fetch-congress-covers.ts; CSP `img-src 'self' data:` dış
+ * hostu engeller, data: izinli). Yoksa branş amblemi.
  */
 export default async function CongressCardPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();

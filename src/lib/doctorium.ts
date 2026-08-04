@@ -271,6 +271,13 @@ export async function upcomingCongresses(
       ...(opts?.scope ? { scope: opts.scope } : {}),
     },
     orderBy: { startDate: "asc" },
+    // AÇIK select: coverImage data URI'ları (~5-20KB/kayıt) liste sorgusunu şişirmesin —
+    // kapak yalnız detay sayfasında basılır. Karta yeni alan eklerken buraya da ekle.
+    select: {
+      id: true, title: true, organizer: true, city: true, country: true,
+      startDate: true, endDate: true, abstractDeadline: true, earlyBirdDeadline: true,
+      url: true, branchSlugs: true, scope: true, venue: true, warning: true, confidence: true,
+    },
   });
   const filtered = !branchSlugs.length
     ? rows

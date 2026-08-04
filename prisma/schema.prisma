@@ -984,9 +984,11 @@ model MedicalCongress {
   /// ⚠️ Doktora gösterilecek uyarı — ör. sahte kayıt sitesi ihbarı (ERA · IDWeek · EPA resmî
   /// uyarı yayımlıyor). Doldurulmuşsa kartta GÖRÜNÜR şekilde basılır.
   warning           String?
-  /// Kapak görseli — kongrenin og:image'ı SUNUCUDA indirilip Blob'a yazılır (CSP `img-src 'self'`
-  /// dış hostu engeller; ayrıca link ölmesin ve bant genişliği çalınmasın diye). Yoksa UI branş
-  /// amblemli üretilmiş kapak çizer.
+  /// Kapak görseli — kongrenin og:image'ı yerel script'le indirilip sharp'la ~320px webp'e
+  /// YENİDEN encode edilir ve data URI olarak buraya yazılır (scripts/fetch-congress-covers.ts).
+  /// CSP `img-src 'self' data:` dış hostu engeller, data: izinli; re-encode aktif içeriği söker.
+  /// ⚠️ Data URI ~5-20KB/kayıt → LİSTE sorguları bu alanı SELECT ETMEZ (upcomingCongresses +
+  /// admin listesi açık select'li). Yoksa UI branş amblemli üretilmiş kapak çizer.
   coverImage        String?
   /// JSON string[] — doğrulamada kullanılan kaynak URL'leri (şeffaflık: "bunu nereden biliyoruz").
   sourceUrls        String    @default("[]")

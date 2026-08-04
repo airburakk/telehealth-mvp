@@ -16,7 +16,13 @@ export default async function CongressAdminPage() {
   if (!user) redirect("/");
   if (user.role !== "ADMIN") redirect("/doktor/doctorium");
 
-  const rows = await db.medicalCongress.findMany({ orderBy: { startDate: "asc" }, take: 100 });
+  // Açık select: coverImage data URI'ları admin listesine gelmesin (forma da geçmiyor).
+  const rows = await db.medicalCongress.findMany({
+    orderBy: { startDate: "asc" },
+    take: 100,
+    select: { id: true, title: true, organizer: true, city: true, country: true,
+      startDate: true, endDate: true, url: true },
+  });
   const iso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
 
   return (
