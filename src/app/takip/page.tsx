@@ -18,7 +18,13 @@ export default async function TakipHubPage() {
     select: {
       id: true,
       branch: true,
-      recovery: { select: { status: true, startedAt: true, completedAt: true } },
+      recovery: {
+        select: {
+          status: true, startedAt: true, completedAt: true,
+          // v6.65: son kontrolün şiddeti → kartın 45° durum alanı rengi (yeşil/sarı/kırmızı)
+          checkIns: { orderBy: { createdAt: "desc" }, take: 1, select: { severity: true } },
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
     take: 50,
@@ -30,6 +36,7 @@ export default async function TakipHubPage() {
     status: c.recovery?.status ?? "ACTIVE",
     startedAt: c.recovery?.startedAt.toISOString() ?? "",
     completedAt: c.recovery?.completedAt?.toISOString() ?? null,
+    severity: c.recovery?.checkIns[0]?.severity ?? "NONE", // hiç kontrol yoksa Stabil sayılır
   }));
 
   return (

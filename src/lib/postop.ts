@@ -18,6 +18,18 @@ export interface Assessment {
 const RED_KW = ["kanama", "irin", "nefes", "bilinç", "bayıl", "kötü koku", "akıntı", "dikiş açıl", "aşırı şiş", "mor", "yarıldı"];
 const WATCH_KW = ["kızar", "şişlik", "ağrı artt", "sızıntı", "hassas", "kaşıntı", "akın"];
 
+/**
+ * Tek-vital şiddet eşikleri (v6.65 — vital kutucuklarının rengi için dışa açıldı).
+ * assessCheckIn AYNI fonksiyonları kullanır → UI kutucuğu ile alarm hesabı asla ayrışamaz
+ * (eşik kopyalanıp güncellemede unutulursa kutucuk yeşilken alarm kırmızı çalar — o yüzden tek kaynak).
+ */
+export function feverSeverity(feverC: number): Severity {
+  return feverC >= 38.5 ? "RED" : feverC >= 37.8 ? "WATCH" : "NONE";
+}
+export function painSeverity(pain: number): Severity {
+  return pain >= 8 ? "RED" : pain >= 6 ? "WATCH" : "NONE";
+}
+
 export function assessCheckIn(input: CheckInInput): Assessment {
   const note = (input.note ?? "").toLocaleLowerCase("tr-TR");
   const reasons: string[] = [];
@@ -26,11 +38,13 @@ export function assessCheckIn(input: CheckInInput): Assessment {
   const redKw = RED_KW.find((k) => note.includes(k));
   const watchKw = WATCH_KW.find((k) => note.includes(k));
 
-  if (input.feverC >= 38.5) { severity = "RED"; reasons.push(`Yüksek ateş (${input.feverC.toFixed(1)}°C)`); }
-  else if (input.feverC >= 37.8) { severity = max(severity, "WATCH"); reasons.push(`Hafif ateş (${input.feverC.toFixed(1)}°C)`); }
+  const fevSev = feverSeverity(input.feverC);
+  if (fevSev === "RED") { severity = "RED"; reasons.push(`Yüksek ateş (${input.feverC.toFixed(1)}°C)`); }
+  else if (fevSev === "WATCH") { severity = max(severity, "WATCH"); reasons.push(`Hafif ateş (${input.feverC.toFixed(1)}°C)`); }
 
-  if (input.pain >= 8) { severity = "RED"; reasons.push(`Şiddetli ağrı (${input.pain}/10)`); }
-  else if (input.pain >= 6) { severity = max(severity, "WATCH"); reasons.push(`Artmış ağrı (${input.pain}/10)`); }
+  const painSev = painSeverity(input.pain);
+  if (painSev === "RED") { severity = "RED"; reasons.push(`Şiddetli ağrı (${input.pain}/10)`); }
+  else if (painSev === "WATCH") { severity = max(severity, "WATCH"); reasons.push(`Artmış ağrı (${input.pain}/10)`); }
 
   if (redKw) { severity = "RED"; reasons.push(`Kritik belirti: "${redKw}"`); }
   else if (watchKw) { severity = max(severity, "WATCH"); reasons.push(`Dikkat: "${watchKw}"`); }
@@ -93,27 +107,35 @@ export function recoveryProtocol(branch: string): Milestone[] {
 /**
  * Klinik şiddet rozeti. v6.64: sabit Tailwind tonları (red-300/amber-200/emerald-300) TEMA-DUYARLI
  * token'lara bağlandı — `--c-danger`/`--c-warning`/`--c-success` gündüz temada koyu, gece temada
- * açık değer taşır (globals.css). Sabit tonlar gündüz temada zayıf kontrast veriyor ve post-op'u
- * projenin geri kalanından görsel olarak ayırıyordu (kullanıcı bildirimi: yeknesaklık yok).
- * Semantik ayrım (kırmızı/kehribar/yeşil) aynen korunur — DESIGN.md klinik ton istisnası geçerli.
+ * açık değer taşır (globals.css). Semantik ayrım (kırmızı/kehribar/yeşil) aynen korunur.
+ *
+ * v6.65 TERMİNOLOJİ (kullanıcı isteği — tıp literatürüne hizalama):
+ *   Normal → "Stabil" · İzlemde → "Yakın izlem" · Kırmızı bayrak → "Alarm bulgusu"
+ * ("alarm bulgusu/semptomu", İngilizce "red flag"in TR klinik literatürdeki yerleşik karşılığı.)
+ * ⚠️ Triyajdaki "kırmızı bayrak" metinleri (lib/triage.ts) bu kapsamda DEĞİL — orası aciliyet
+ * gerekçe cümlesi, ayrı bağlam. `tone` alanı v6.65'te eklendi: 45° kimlik panelinin şiddet rengi
+ * (ham CSS değişkeni — Tailwind sınıfından renk çıkarılamıyor).
  */
-export function severityMeta(s: Severity): { label: string; badge: string; dot: string } {
+export function severityMeta(s: Severity): { label: string; badge: string; dot: string; tone: string } {
   if (s === "RED")
     return {
-      label: "Kırmızı bayrak",
+      label: "Alarm bulgusu",
       badge: "bg-[var(--c-danger)]/15 text-[var(--c-danger)] ring-[var(--c-danger)]/25",
       dot: "bg-[var(--c-danger)]",
+      tone: "var(--c-danger)",
     };
   if (s === "WATCH")
     return {
-      label: "İzlemde",
+      label: "Yakın izlem",
       badge: "bg-[var(--c-warning)]/15 text-[var(--c-warning)] ring-[var(--c-warning)]/25",
       dot: "bg-[var(--c-warning)]",
+      tone: "var(--c-warning)",
     };
   return {
-    label: "Normal",
+    label: "Stabil",
     badge: "bg-[var(--c-success)]/15 text-[var(--c-success)] ring-[var(--c-success)]/25",
     dot: "bg-[var(--c-success)]",
+    tone: "var(--c-success)",
   };
 }
 

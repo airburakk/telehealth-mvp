@@ -107,10 +107,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (severity === "RED") {
     // İsim VE klinik detay (vital/AI bulgusu) bildirime gömülmez (E2EE inc.2c): Notification.body
     // at-rest şifresiz + dormant kanal simülasyonu log'a düşer → gövde jenerik, detay uygulamada.
+    // v6.65 terminoloji: "kırmızı bayrak" → "alarm bulgusu" (tıp literatürü; postop.ts notu).
     const redFlag = {
       type: "RED_FLAG" as const,
-      title: `🚨 Kırmızı bayrak`,
-      body: `${c.branch} · bir hastanızda kırmızı bayrak — detay için uygulamayı açın`,
+      title: `🚨 Alarm bulgusu`,
+      body: `${c.branch} · bir hastanızda alarm bulgusu — detay için uygulamayı açın`,
       href: `/takip/${c.id}`,
     };
     // §3.4/§7: kırmızı bayrak koordinatöre DEĞİL → vakanın ATANAN tedavi eden doktoruna (Case.doctorId)

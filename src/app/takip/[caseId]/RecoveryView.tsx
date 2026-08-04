@@ -50,7 +50,7 @@ const UI = [
   "Güvenli Paylaşım",
   "Bu kayıtları kendi ülkenizdeki doktorunuzla süreli ve iptal edilebilir bir bağlantıyla paylaşın.",
   "Paylaşım Kontrol Merkezi",
-  "Kırmızı bayrak", "İzlemde", "Normal", // severityMeta etiketleri (geçmiş rozetleri)
+  "Alarm bulgusu", "Yakın izlem", "Stabil", // severityMeta etiketleri (geçmiş rozetleri; v6.65 tıp literatürü terminolojisi)
   // AI Epikriz (FAZ 3) — hasta yüzü
   "AI Epikriz / Taburcu Raporu",
   "Tedavi sürecinizin tıbbi özet raporu. Doktorunuz oluşturduğunda burada görüntülenir.",

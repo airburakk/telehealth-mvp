@@ -151,7 +151,8 @@ export default async function OperationsDashboard() {
         <Kpi icon={<Wallet size={16} />} label="Rezervasyon geliri" value={formatUSD(bookingRevenue)} sub={`${bookings.length} paket`} />
         <Kpi icon={<ShieldCheck size={16} />} label="Platform komisyonu" value={formatUSD(platformFees)} sub="Escrow %15" tone="text-emerald-300" />
         <Kpi icon={<Scale size={16} />} label="Bekleyen şikayet" value={String(pendingComplaints)} sub={refundedTotal ? `${formatUSD(refundedTotal)} iade` : "iade yok"} tone={pendingComplaints ? "text-amber-300" : undefined} />
-        <Kpi icon={<AlertTriangle size={16} />} label="Kırmızı bayrak" value={String(redFlags)} sub={`${recoveries.length} takipte`} tone={redFlags ? "text-red-300" : undefined} />
+        {/* v6.65 terminoloji: "Kırmızı bayrak" → "Alarm bulgusu" (tıp literatürü; lib/postop.ts notu) */}
+        <Kpi icon={<AlertTriangle size={16} />} label="Alarm bulgusu" value={String(redFlags)} sub={`${recoveries.length} takipte`} tone={redFlags ? "text-[var(--c-danger)]" : undefined} />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">

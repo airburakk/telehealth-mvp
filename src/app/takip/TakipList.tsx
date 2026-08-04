@@ -15,6 +15,7 @@ import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { langDir, LANG_BCP47 } from "@/lib/constants";
 import { BranchAvatar } from "@/components/BranchAvatar";
+import { severityMeta, type Severity } from "@/lib/postop";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 export interface TakipRow {
@@ -23,6 +24,8 @@ export interface TakipRow {
   status: string; // ACTIVE | COMPLETED
   startedAt: string;
   completedAt: string | null;
+  /** Son kontrolün şiddeti (NONE/WATCH/RED) — 45° durum alanının rengi (v6.65). */
+  severity: string;
 }
 
 const TEXTS = [
@@ -72,9 +75,24 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
             const done = r.status === "COMPLETED";
             return (
               <Link key={r.caseId} href={`/takip/${r.caseId}`}
-                className="group block rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 transition hover:border-[var(--c-accent)]/50"
+                className="group relative block overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 transition hover:border-[var(--c-accent)]/50"
                 /* Post-op takibi sağlık turizmi kulvarının devamıdır → kulvar şeridi turkuaz. */
                 style={{ borderInlineStart: "3px solid var(--lane-tourism)" }}>
+                {/* 45° durum alanı (v6.65, kullanıcı netleştirmesi) — doktor kartıyla aynı dil:
+                    kartın SAĞINDA, üst kenarda sağdan %15'te başlayan tam 45° kesik (30→25→20→15; kullanıcı ayarı)
+                    (.postop-slant); son kontrolün şiddetine göre yeşil/sarı/kırmızı,
+                    tamamlanmış takipte nötr. RED'de aynı alarm aurası (hastanın kendi durumu —
+                    eylem çağrısı). */}
+                <span
+                  aria-hidden
+                  className={`postop-slant pointer-events-none absolute inset-y-0 ${!done && r.severity === "RED" ? "postop-alert-aura" : "opacity-[0.15]"}`}
+                  style={{
+                    insetInlineEnd: "-320px",
+                    width: "calc(15% + 320px)",
+                    background: done ? "var(--c-ink-3)" : severityMeta(r.severity as Severity).tone,
+                  }}
+                />
+                <div className="relative">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2.5">
                     <BranchAvatar branchKey={r.branch} size={24} />
@@ -110,6 +128,7 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
                   <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--c-accent)] transition-colors duration-200 group-hover:text-[var(--c-accent-2)]">
                     {t("Takibi aç")} <ArrowRight size={13} className="rtl:rotate-180" />
                   </span>
+                </div>
                 </div>
               </Link>
             );

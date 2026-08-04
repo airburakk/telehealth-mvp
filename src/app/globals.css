@@ -666,6 +666,44 @@ body {
   }
 }
 
+/* Post-op 45° DURUM ALANI (v6.65, kullanıcı netleştirmesi): vaka kartının SAĞINDA, üst
+   kenarda sağdan %30'da başlayıp tam 45° ile sol-alta inen kesikle tanımlanan alan; şiddete
+   göre yeşil/sarı/kırmızı boyanır. Alt kenardaki iz düşümü kart yüksekliğine bağlıdır
+   (%30 + yükseklik/genişlik) — elle yüzde hesabı yerine skewX(-45deg) + transform-origin:top
+   MATEMATİKSEL kesin 45° verir; span kartın sağına 320px taşırılır, fazlası kartın
+   overflow-hidden'ıyla kırpılır (kart yüksekliği < 320px olduğu sürece sağ kenar tam dolu). */
+.postop-slant {
+  transform: skewX(-45deg);
+  transform-origin: top;
+}
+[dir="rtl"] .postop-slant {
+  transform: skewX(45deg); /* RTL'de ayna: alan başlangıç kenarında, kesik yönü simetrik */
+}
+
+/* Post-op ALARM BULGUSU aurası: durum alanı RED şiddette Doctorium "ium" nabzıyla AYNI
+   TEMPODA (2.6s) parlar. 🪤 Aynı efekt ≠ aynı değer dersi: drop-shadow yarıçapları alan
+   ölçeğine göre; renk tema-duyarlı --c-danger'dan color-mix ile türetilir. */
+.postop-alert-aura {
+  animation: postop-alert-aura 2.6s ease-in-out infinite;
+}
+@keyframes postop-alert-aura {
+  0%,
+  100% {
+    opacity: 0.14;
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c-danger) 45%, transparent));
+  }
+  50% {
+    opacity: 0.3;
+    filter: drop-shadow(0 0 16px color-mix(in srgb, var(--c-danger) 75%, transparent));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .postop-alert-aura {
+    animation: none;
+    opacity: 0.2; /* hareketsizde de alarm SEÇİLİR kalır — klinik sinyal kaybolmaz */
+  }
+}
+
 /* AURA sembolü (AuraMark/AuraSpinner) — kullanıcının animasyonlu vektörel logosu:
    yörünge halkaları döner, çekirdek nefes alır, aura nabzı dışa açılır. Şeffaf →
    her zeminde çalışır. transform-origin sembol merkezine sabit (viewBox 600,520).
