@@ -1051,3 +1051,45 @@ model SponsorCampaign {
 
   @@index([status, startsAt, endsAt])
 }
+
+/// Doctorium anketi (v6.69 Faz 2) — TEK SORULU (Doximity poll deseni; çok-sorulu Sermo tipi
+/// Faz 2b'de ayrı SurveyQuestion tablosuyla genişler — YAGNI). İki tür:
+///  - COMMUNITY: içerik rejimi — akış branş süzmesi (haber akışıyla aynı; pazarlama rızası GEREKMEZ).
+///  - SPONSORED: pazarlama rejimi — sponsorlu kart kurallarıyla aynı (hedefli seçim yalnız açık
+///    rızalı doktora; hedefsiz herkese; sponsor kimliği kartta açık).
+/// ⚠️ honorarium > 0 anket ACTIVE EDİLEMEZ (API fail-closed kilidi): ödeme/vergi kurgusu (gider
+/// pusulası ↔ SM makbuzu · GİB özelgesi · kamu hekimi) kullanıcı kararı bekliyor — kurgu yokken
+/// "ödenir" vaadi verilmez. Alan şemada hazır ki kurgu netleşince migration gerekmesin.
+/// Sonuçlar sponsora/ekrana yalnız TOPLU dağılım olarak çıkar (kimlikli tekil yanıt paylaşılmaz).
+model Survey {
+  id             String   @id @default(cuid())
+  kind           String   @default("COMMUNITY") // COMMUNITY | SPONSORED
+  sponsor        String? // SPONSORED'da zorunlu (API doğrular) — kartta "Sponsorlu · <sponsor>"
+  question       String
+  options        String // JSON string[] — 2-6 kapalı şık; serbest metin bilinçli YOK (agregat disiplin)
+  honorarium     Int? // kuruş; null/0 = ödemesiz. >0 iken ACTIVE kilidi (ödeme kurgusu parkı)
+  targetBranches String? // JSON string[] branş slug — COMMUNITY'de içerik süzmesi, SPONSORED'da rıza-şartlı hedef
+  targetCities   String? // JSON string[] — yalnız SPONSORED'da anlamlı (rıza-şartlı)
+  startsAt       DateTime
+  endsAt         DateTime
+  status         String   @default("DRAFT") // DRAFT | ACTIVE | PAUSED | ENDED
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  responses      SurveyResponse[]
+
+  @@index([status, startsAt, endsAt])
+}
+
+/// Anket yanıtı — doktor başına BİR kez (@@unique). Kimlikle saklanır ama YALNIZ mükerrer önleme +
+/// (ileride) honorarium hakedişi ispatı için; dışarıya daima agregat çıkar (lib/survey.ts).
+model SurveyResponse {
+  id          String   @id @default(cuid())
+  survey      Survey   @relation(fields: [surveyId], references: [id])
+  surveyId    String
+  doctorId    String
+  optionIndex Int // seçilen şık (options dizisinde 0-tabanlı)
+  createdAt   DateTime @default(now())
+
+  @@unique([surveyId, doctorId])
+  @@index([surveyId, optionIndex])
+}

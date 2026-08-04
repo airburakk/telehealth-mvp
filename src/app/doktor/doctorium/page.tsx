@@ -7,6 +7,8 @@ import {
   activeCampaignsFor, countImpressions, SPONSOR_CONSENT_TEXT, CATEGORY_LABEL as SPONSOR_CATEGORY_LABEL,
   type SponsorCard,
 } from "@/lib/sponsor";
+import { activeSurveysFor, doctorResponse, aggregateResults } from "@/lib/survey";
+import { SurveyCardView } from "./SurveyCard";
 import {
   DOCTORIUM_MODULES, KIND_LABEL, RANGE_OPTIONS, DEFAULT_RANGE, rangeDays,
   SECTOR_CATEGORIES, categoryLabel,
@@ -90,6 +92,23 @@ export default async function DoctoriumPage({
       ? await activeCampaignsFor({ personalized: sponsorPersonalized, branches, city: doctor?.city ?? null })
       : [];
   if (sponsorCards.length) await countImpressions(sponsorCards.map((c) => c.id));
+
+  // v6.69 Faz 2: akışta TEK anket kartı, yalnız DOCTOR'a (personel yanıtlayamaz → kart çizilmez).
+  // COMMUNITY = içerik rejimi (akış branşları, rıza şartsız) · SPONSORED = pazarlama rejimi
+  // (rıza-şartlı hedef — lib/survey.ts). Sonuç, yanıt verilmeden gösterilmez (önden sızdırma yok);
+  // yanıtlamış doktora server-render'da hazır gelir.
+  let surveyProps: Parameters<typeof SurveyCardView>[0] | null = null;
+  if (active === "akis" && doctor && items.length > 0) {
+    const [s] = await activeSurveysFor({ personalized: sponsorPersonalized, branches, city: doctor.city });
+    if (s) {
+      const myIndex = await doctorResponse(s.id, doctor.id);
+      const initialResults = myIndex != null ? await aggregateResults(s.id, s.options.length) : null;
+      surveyProps = {
+        surveyId: s.id, kind: s.kind, sponsor: s.sponsor, question: s.question,
+        options: s.options, myIndex, initialResults,
+      };
+    }
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
@@ -207,11 +226,13 @@ export default async function DoctoriumPage({
               {items.map((it, i) => (
                 <Fragment key={it.id}>
                   {i === 2 && sponsorCards[0] && <SponsorCardView c={sponsorCards[0]} />}
+                  {i === 5 && surveyProps && <SurveyCardView {...surveyProps} />}
                   {i === 9 && sponsorCards[1] && <SponsorCardView c={sponsorCards[1]} />}
                   <ArticleCard item={it} />
                 </Fragment>
               ))}
               {items.length <= 2 && sponsorCards[0] && <SponsorCardView c={sponsorCards[0]} />}
+              {items.length <= 5 && surveyProps && <SurveyCardView {...surveyProps} />}
               {items.length <= 9 && sponsorCards[1] && <SponsorCardView c={sponsorCards[1]} />}
             </ul>
           )}
