@@ -32,13 +32,9 @@ describe("navItemsFor", () => {
     expect(hrefs("COORDINATOR")).toEqual(["/operasyon", "/doktor", "/doktor/takip", "/doktor/doctorium"]);
   });
 
-  it("ADMIN: hasta sekmesi kaldırma ADMIN'i etkilemez (Triyaj/Doktorlar ADMIN'de kalır)", () => {
-    const h = hrefs("ADMIN");
-    expect(h).toContain("/triyaj");
-    expect(h).toContain("/hekimler");
-    expect(h).toContain("/vakalarim");
-    expect(h).toContain("/paylasimlarim");
-    expect(h).not.toContain("/takip"); // Post Op hub yalnız PATIENT (personel /doktor/takip kullanır)
+  it("ADMIN bandı SADE (v6.73, kullanıcı kararı): Yönetim önde + Operasyon/Doktor/Doctorium — TAM liste", () => {
+    // 11 öğe geniş ekranda bile taşıyordu; denetim kısayolları /admin "Denetim görünümleri"ne indi.
+    expect(hrefs("ADMIN")).toEqual(["/admin", "/operasyon", "/doktor", "/doktor/doctorium"]);
   });
 
   it("Yönetim dizini (/admin) YALNIZ ADMIN'de (v6.71 — bant tek öğe, paneller dizinden dağılır)", () => {

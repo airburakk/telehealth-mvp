@@ -22,19 +22,25 @@ export interface NavItem {
 }
 
 const NAV: NavItem[] = [
+  // Yönetim dizini (v6.71; v6.73 sadeleştirmesiyle bandın BAŞINA alındı — admin'in ana aracı).
+  // Paneller + denetim görünümleri /admin dizin sayfasından dağılır (kullanıcı kararı: bant
+  // büyümez, dizin büyür). Yalnız ADMIN; diğer roller bu öğeyi hiç görmez.
+  { href: "/admin", label: "Yönetim", icon: LayoutDashboard, roles: ["ADMIN"] },
   // "Bakım Yolculuğum" (v6.17, backlog P1): hasta-yüzü ad — hasta kendini "vaka"
   // olarak görmemeli. ⚠️ ROTA DEĞİŞMEDİ (/vakalarim: bookmark + dış bağlantılar);
   // klinik personel yüzeylerinde (aşağıda /doktor…) "vaka" terminolojisi KALIR
-  // (backlog: keep clinician terminology as case/vaka). Etiket ADMIN'de de bu —
-  // admin hasta yüzeyini hasta gözüyle denetler, ayrı personel sekmeleri zaten var.
-  { href: "/vakalarim", label: "Bakım Yolculuğum", icon: FolderHeart, roles: ["PATIENT", "ADMIN"] },
+  // (backlog: keep clinician terminology as case/vaka).
+  // v6.73 ADMIN bant sadeleştirmesi (kullanıcı kararı — 11 öğe geniş ekranda bile taşıyordu):
+  // ADMIN bandı = Yönetim · Operasyon · Doktor · Doctorium. Hasta/rol yüzeyi DENETİM kısayolları
+  // (Bakım Yolculuğum · Paylaşımlarım · Triyaj · Doktorlar · Post-Op · Etik Kurul · Partner)
+  // banttan çıktı ama KAYBOLMADI → /admin "Denetim görünümleri" bölümü. Rol sayfalarının kendi
+  // erişim kuralları değişmedi (ADMIN rotalara yine girebilir; yalnız bant kısayolu taşındı).
+  { href: "/vakalarim", label: "Bakım Yolculuğum", icon: FolderHeart, roles: ["PATIENT"] },
   { href: "/takip", label: "Post Op", icon: HeartPulse, roles: ["PATIENT"] },
-  { href: "/paylasimlarim", label: "Paylaşımlarım", icon: Share2, roles: ["PATIENT", "ADMIN"] },
-  { href: "/triyaj", label: "Triyaj", icon: UserRound, roles: ["ADMIN"] },
-  { href: "/hekimler", label: "Doktorlar", icon: Users, roles: ["ADMIN"] },
+  { href: "/paylasimlarim", label: "Paylaşımlarım", icon: Share2, roles: ["PATIENT"] },
   { href: "/operasyon", label: "Operasyon", icon: BarChart3, roles: ["COORDINATOR", "ADMIN"] },
   { href: "/doktor", label: "Doktor", icon: Stethoscope, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
-  { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
+  { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, roles: ["DOCTOR", "COORDINATOR"] },
   // Doctorium (v6.48, 2026-08-01) — hekim bilgi portalı. Eski "Haberler" adı ve /doktor/haberler
   // rotası bırakıldı (rota 308 ile buraya yönlenir; yer imleri kırılmasın).
   // İKONSUZ (kullanıcı kararı 2026-08-01, 2. tur): Header özel yazı-lockup basar —
@@ -43,12 +49,9 @@ const NAV: NavItem[] = [
   // "Ücretsiz Hizmet" bant linki kaldırıldı (2026-07-31, kullanıcı kararı) — rota + ana sayfa paneli durur.
   // "Profilim" bant linki kaldırıldı (2026-08-01, kullanıcı kararı) — artık header hesap
   // menüsünde (Header.tsx); rota /doktor/profil aynen durur.
-  { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, roles: ["ETHICS", "ADMIN"] },
-  { href: "/partner", label: "Partner", icon: Globe, roles: ["PARTNER", "ADMIN"] },
+  { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, roles: ["ETHICS"] },
+  { href: "/partner", label: "Partner", icon: Globe, roles: ["PARTNER"] },
   { href: "/acente", label: "Tedavi Dosyaları", icon: Luggage, roles: ["AGENCY"] }, // S3 acente kuyruğu (FAZ 4)
-  // Yönetim dizini (v6.71, kullanıcı kararı: banta TEK öğe; paneller /admin dizin sayfasından
-  // dağılır — yeni admin aracı geldikçe bant şişmez, karta eklenir). Yalnız ADMIN.
-  { href: "/admin", label: "Yönetim", icon: LayoutDashboard, roles: ["ADMIN"] },
 ];
 
 // Tam birleşme (2026-07-12, kullanıcı kararı): SO dahil tüm kulvarlar /vakalarim'da tek listede —
