@@ -248,6 +248,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/hekimler` · `/hekim/[id]` | Doktor dizini · doğrulanmış profil |
 | `/sikayet/[caseId]` · `/etik-kurul` (+`/[id]`) · `/denetim` | Şikayet · Etik Kurul liste/karar · denetim izi bütünlüğü (denetçi) |
 | `/admin/hekim-onay` | Doktor doğrulama onayı (ADMIN/Etik Kurul) — self-signup doktoru `verified:true` yapar |
+| `/admin` (+`/kampanya`, `/anket`, `/kongre`) | **Yönetim dizini (v6.71-73):** ADMIN bandı yalnız Yönetim·Operasyon (kullanıcı kararı; TAM-liste nav sözleşme testi) — 3 küratör paneli kartı + 10 "Denetim görünümü" kısayolu buradan dağılır. **Kampanya (v6.68):** Doctorium akışı sponsorlu kartları — İLAÇ-DIŞI (Modül D TİTCK parkı; kategori fail-closed, birim regresyon kilidi), hedefleme yalnız açık-rızalı hekime, kişi-bazlı log YOK (agregat sayaç). **Anket (v6.69):** topluluk/sponsorlu tek-soru anketleri — **honorarium>0 yayın KİLİDİ** (ödeme/vergi kurgusu netleşene dek). Admin hesabı self-signup'sız: `scripts/create-admin.ts` (şifre yalnız env, `--promote` korkuluğu) |
 | `/operasyon` (+`/lojistik`) | Operasyon paneli · lojistik Patient Journey takibi (S2 — koordinatör/admin) |
 | `/paylasim/[token]` · `/paylasimlarim` | Güvenli paylaşım görüntüleyici · paylaşım yönetimi |
 | `/second-opinion/*` | İkinci Görüş başvuru/vaka/görüşme akışı |
@@ -273,7 +274,8 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `notifications` · `push` | Bildirim merkezi · Web Push aboneliği |
 | `consultation-requests` · `presence` | Konsültasyon talebi yanıt/belge + **chat (`messages`)** + **video** randevu (offer/respond) · `presence/ping` (heartbeat) |
 | `doctor` · `auth` | Doktor tercihleri/akademik/işlem · oturum + **`signup`** (doktor kaydı) + **`google/{start,callback}`** (OAuth, env-gated) |
-| `admin` | `doctors/[id]/verify` — doktor doğrulama (ADMIN/Etik Kurul) |
+| `admin` | `doctors/[id]/verify` — doktor doğrulama (ADMIN/Etik Kurul) · **`sponsor`** (v6.68 kampanya CRUD — İLAÇ kategorisi reddedilir; yayınlanmış silinmez→ENDED) · **`survey`** (v6.69 anket CRUD — honorarium>0 ACTIVE edilemez, fail-closed) · `congress` (kongre küratörü) |
+| `sponsor` · `survey` | **`sponsor/click`** (v6.68 — rol kapılı tıklama sayacı → 302; URL DB'den, open-redirect yok) · **`survey/respond`** (v6.69 — DOCTOR-only tek yanıt, P2002→409, yanıtla birlikte agregat döner) · **`doctor/sponsor-consent`** (kişiselleştirme açık rızası — grant fail-closed / revoke derhâl; ConsentRecord `SPONSOR_TARGETING`/`_REVOKE` scope'ları) |
 
 ## Proje yapısı
 

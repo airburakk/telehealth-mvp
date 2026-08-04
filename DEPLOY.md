@@ -99,6 +99,20 @@ npm run db:seed             # demo veri: kullanıcılar + 30 hekim + 20 vaka + t
 > (kırık pencere saniyelere iner; düşük trafik saati seç; ters-RENAME SQL'i hazır tut).
 > Örnek: v4.21 `20260704120000_free_care_rename` (8× RENAME + index + veri UPDATE, idempotent DO-bloklu).
 
+### Prod ADMIN hesabı — `scripts/create-admin.ts` (v6.70)
+
+Admin self-signup BİLİNÇLİ yok; prod'a admin yalnız bu script'le kurulur (yerelden koşulur,
+deploy gerektirmez). Şifre YALNIZ `ADMIN_PASSWORD` env'inden okunur (arg/çıktıya asla geçmez;
+prod'da en az 12 karakter zorunlu). Var olan e-postanın rolü sessizce yükseltilmez (`--promote`
+şart). `emailVerifiedAt` damgalanır (e-posta kapısı üretimde zorunlu — v6.61):
+
+```bash
+ADMIN_PASSWORD='<güçlü-şifre>' npx tsx scripts/create-admin.ts --prod --email siz@ornek.com
+```
+
+Giriş `/kurumsal-giris` e-posta formundan; ilk girişte KVKK onamı normaldir. Admin panelleri
+`/admin` dizininden dağılır (kampanya · anket · kongre — v6.71-73).
+
 ### Cron — HealthTürkiye günlük senkronu (2026-07-10)
 
 `vercel.json` günde bir (03:00 UTC) `/api/cron/registry-sync`'i tetikler (doktor + tesis dizini
