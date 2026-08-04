@@ -41,6 +41,13 @@ describe("navItemsFor", () => {
     expect(h).not.toContain("/takip"); // Post Op hub yalnız PATIENT (personel /doktor/takip kullanır)
   });
 
+  it("Yönetim dizini (/admin) YALNIZ ADMIN'de (v6.71 — bant tek öğe, paneller dizinden dağılır)", () => {
+    expect(hrefs("ADMIN")).toContain("/admin");
+    expect(hrefs("DOCTOR")).not.toContain("/admin");
+    expect(hrefs("COORDINATOR")).not.toContain("/admin");
+    expect(hrefs("PATIENT")).not.toContain("/admin");
+  });
+
   it("ETHICS ve PARTNER: tek sekme; rol yoksa boş", () => {
     expect(hrefs("ETHICS")).toEqual(["/etik-kurul"]);
     expect(hrefs("PARTNER")).toEqual(["/partner"]);

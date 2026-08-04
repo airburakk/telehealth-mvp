@@ -7,7 +7,7 @@
 import type { ComponentType } from "react";
 import {
   Stethoscope, UserRound, HeartPulse, Scale, Users, Share2, BarChart3,
-  FolderHeart, Globe, Luggage,
+  FolderHeart, Globe, Luggage, LayoutDashboard,
 } from "lucide-react";
 
 // İkon sözleşmesi: Header <Icon size={16}/> çağırır. OPSİYONEL — ikonsuz öğede (Doctorium)
@@ -46,6 +46,9 @@ const NAV: NavItem[] = [
   { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, roles: ["ETHICS", "ADMIN"] },
   { href: "/partner", label: "Partner", icon: Globe, roles: ["PARTNER", "ADMIN"] },
   { href: "/acente", label: "Tedavi Dosyaları", icon: Luggage, roles: ["AGENCY"] }, // S3 acente kuyruğu (FAZ 4)
+  // Yönetim dizini (v6.71, kullanıcı kararı: banta TEK öğe; paneller /admin dizin sayfasından
+  // dağılır — yeni admin aracı geldikçe bant şişmez, karta eklenir). Yalnız ADMIN.
+  { href: "/admin", label: "Yönetim", icon: LayoutDashboard, roles: ["ADMIN"] },
 ];
 
 // Tam birleşme (2026-07-12, kullanıcı kararı): SO dahil tüm kulvarlar /vakalarim'da tek listede —
