@@ -35,5 +35,6 @@ export function roleHome(role: Role): string {
   if (role === "PARTNER") return "/partner"; // M5 Faz 3 — Partner Doktor alanı
   if (role === "AGENCY") return "/acente"; // S3 Sağlık Turizmi Acentesi — tedavi dosyaları kuyruğu (FAZ 4)
   if (role === "PATIENT") return "/triyaj"; // hasta: doğrudan Branş Doktoru akışı (/basla 4'lü seçimi kaldırıldı 2026-07-12; diğer kulvarlar kendi sayfalarından)
-  return "/vakalarim"; // ADMIN vb.
+  if (role === "ADMIN") return "/doktor"; // yönetici: personel gözetim inişi (/doktor isStaffOnly dalı — tüm kuyruk; eski fallback /vakalarim hasta rotasıydı)
+  return "/vakalarim"; // tanınmayan rol (isRole fail-closed olduğundan pratikte erişilmez)
 }
