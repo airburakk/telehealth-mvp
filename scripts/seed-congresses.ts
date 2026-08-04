@@ -51,6 +51,13 @@ interface Row {
   sourceUrls?: string[];
   confidence?: string;
   verifiedAt?: string | null;
+  // v6.77 alan-ayrıştırma turu (2026-08-04): resmî siteden kanıtlı değerler; kanıt yoksa alan JSON'da hiç yok.
+  format?: string | null; // "yuz-yuze" | "hibrit" | "online" (şema sözlüğü)
+  language?: string | null;
+  cmeCredit?: string | null;
+  venue?: string | null;
+  themes?: string | null; // düz metin (" · " ayraçlı) — kart {c.themes} ile basar
+  warning?: string | null;
 }
 
 function d(s?: string | null): Date | null {
@@ -118,6 +125,12 @@ async function main() {
       scope: r.scope === "uluslararasi" ? "uluslararasi" : "ulusal",
       edition: r.edition ?? null,
       frequency: r.frequency ?? null,
+      format: r.format ?? null,
+      language: r.language ?? null,
+      cmeCredit: r.cmeCredit ?? null,
+      venue: r.venue ?? null,
+      themes: r.themes ?? null,
+      warning: r.warning ?? null,
       registrationNotes: r.registrationNotes ?? null,
       sourceUrls: JSON.stringify(r.sourceUrls ?? []),
       confidence: r.confidence === "kismi" ? "kismi" : "dogrulandi",
