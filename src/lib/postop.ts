@@ -90,10 +90,31 @@ export function recoveryProtocol(branch: string): Milestone[] {
   return PROTOCOLS.find((p) => branch.includes(p.match))?.items ?? DEFAULT_PROTOCOL;
 }
 
+/**
+ * Klinik şiddet rozeti. v6.64: sabit Tailwind tonları (red-300/amber-200/emerald-300) TEMA-DUYARLI
+ * token'lara bağlandı — `--c-danger`/`--c-warning`/`--c-success` gündüz temada koyu, gece temada
+ * açık değer taşır (globals.css). Sabit tonlar gündüz temada zayıf kontrast veriyor ve post-op'u
+ * projenin geri kalanından görsel olarak ayırıyordu (kullanıcı bildirimi: yeknesaklık yok).
+ * Semantik ayrım (kırmızı/kehribar/yeşil) aynen korunur — DESIGN.md klinik ton istisnası geçerli.
+ */
 export function severityMeta(s: Severity): { label: string; badge: string; dot: string } {
-  if (s === "RED") return { label: "Kırmızı bayrak", badge: "bg-red-500/15 text-red-300 ring-red-400/25", dot: "bg-red-500" };
-  if (s === "WATCH") return { label: "İzlemde", badge: "bg-amber-500/15 text-amber-200 ring-amber-400/25", dot: "bg-amber-500" };
-  return { label: "Normal", badge: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25", dot: "bg-emerald-500" };
+  if (s === "RED")
+    return {
+      label: "Kırmızı bayrak",
+      badge: "bg-[var(--c-danger)]/15 text-[var(--c-danger)] ring-[var(--c-danger)]/25",
+      dot: "bg-[var(--c-danger)]",
+    };
+  if (s === "WATCH")
+    return {
+      label: "İzlemde",
+      badge: "bg-[var(--c-warning)]/15 text-[var(--c-warning)] ring-[var(--c-warning)]/25",
+      dot: "bg-[var(--c-warning)]",
+    };
+  return {
+    label: "Normal",
+    badge: "bg-[var(--c-success)]/15 text-[var(--c-success)] ring-[var(--c-success)]/25",
+    dot: "bg-[var(--c-success)]",
+  };
 }
 
 export function worstSeverity(...arr: Severity[]): Severity {

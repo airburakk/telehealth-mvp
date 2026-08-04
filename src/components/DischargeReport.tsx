@@ -70,9 +70,9 @@ export function DischargeReport({
   }
 
   return (
-    <div className="rounded-3xl border border-violet-400/25 bg-[var(--c-panel)] p-6 shadow-sm">
+    <div className="rounded-2xl border border-[var(--c-indigo)]/25 bg-[var(--c-panel)] p-6 shadow-sm">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-violet-300">
+        <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-indigo)]">
           <FileText size={15} /> AI Epikriz / Taburcu Raporu
         </div>
         {has && savedAt && (
@@ -90,12 +90,12 @@ export function DischargeReport({
       <button
         onClick={generate}
         disabled={busy}
-        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-violet-400/30 bg-violet-500/10 px-3 py-2 text-sm font-semibold text-violet-300 hover:bg-violet-500/15 disabled:opacity-50"
+        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--c-indigo)]/30 bg-[var(--c-indigo)]/10 px-3 py-2 text-sm font-semibold text-[var(--c-indigo)] hover:bg-[var(--c-indigo)]/15 disabled:opacity-50"
       >
         {busy ? <Loader2 size={15} className="animate-spin" /> : has ? <RefreshCw size={15} /> : <Sparkles size={15} />}
         {busy ? "Sentezleniyor…" : has ? "Yeniden oluştur" : "AI · Epikriz Oluştur"}
       </button>
-      {err && <div className="mt-1.5 text-[11px] text-red-300">{err}</div>}
+      {err && <div className="mt-1.5 text-[11px] text-[var(--c-danger)]">{err}</div>}
 
       {has && structured && (
         <>
@@ -115,12 +115,12 @@ export function DischargeReport({
               onClick={copy}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-2.5 py-1.5 text-[12px] font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
             >
-              {copied ? <Check size={13} className="text-emerald-300" /> : <Copy size={13} />} {copied ? "Kopyalandı" : "Raporu kopyala"}
+              {copied ? <Check size={13} className="text-[var(--c-success)]" /> : <Copy size={13} />} {copied ? "Kopyalandı" : "Raporu kopyala"}
             </button>
             {report && <TranslateButton text={report} defaultTarget="İngilizce" compact />}
           </div>
 
-          <div className="mt-3 flex items-start gap-2 rounded-lg bg-violet-500/10 p-2.5 text-[11px] leading-relaxed text-violet-300 ring-1 ring-violet-400/20">
+          <div className="mt-3 flex items-start gap-2 rounded-lg bg-[var(--c-indigo)]/10 p-2.5 text-[11px] leading-relaxed text-[var(--c-indigo)] ring-1 ring-[var(--c-indigo)]/20">
             <ShieldCheck size={14} className="mt-0.5 shrink-0" />
             <span>Bu rapor kaydedildi ve Güvenli Sağlık Paylaşımı&apos;nda <strong>&quot;Epikriz / Özet Rapor&quot;</strong> kapsamında hastanın yurt dışı doktoruna iletilir.</span>
           </div>

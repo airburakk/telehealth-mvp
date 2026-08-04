@@ -107,7 +107,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
   const m = result ? severityMeta(result.severity) : null;
 
   return (
-    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
+    <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
       <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">{t("Bugünkü kontrol")}</h2>
       <p className="text-sm text-[var(--c-ink-2)]">{t("Durumunuzu paylaşın; ekibiniz uzaktan izliyor.")}</p>
 
@@ -133,7 +133,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
       {/* İlaç */}
       <button onClick={() => setMeds((v) => !v)} className="mt-4 flex w-full items-center justify-between rounded-lg border border-[var(--c-hairline)] px-3 py-2.5 text-start hover:border-[var(--c-hairline)]">
         <span className="inline-flex items-center gap-2 text-sm font-medium text-[var(--c-ink)]"><Pill size={16} className="text-[var(--c-ink-2)]" /> {t("İlaçlarımı aldım")}</span>
-        <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${meds ? "bg-emerald-500" : "bg-[var(--c-ink)]/20"}`}>
+        <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${meds ? "bg-[var(--c-success)]" : "bg-[var(--c-ink)]/20"}`}>
           <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-[var(--c-panel)] shadow transition-all ${meds ? "start-[22px]" : "start-0.5"}`} />
         </span>
       </button>
@@ -205,7 +205,7 @@ export function CheckInForm({ caseId, branch, lang = "Türkçe" }: { caseId: str
       </button>
 
       {error && (
-        <div className="mt-4 rounded-2xl bg-red-500/10 p-3 text-sm text-red-300 ring-1 ring-red-400/25">{t(error)}</div>
+        <div className="mt-4 rounded-2xl bg-[var(--c-danger)]/10 p-3 text-sm text-[var(--c-danger)] ring-1 ring-[var(--c-danger)]/25">{t(error)}</div>
       )}
 
       {/* Sonuç */}

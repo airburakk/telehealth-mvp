@@ -8,6 +8,7 @@ import { countryFlag, countryName, formatDateTime } from "@/lib/constants";
 import { decryptField } from "@/lib/crypto";
 import { HeartPulse, Activity, Thermometer, ArrowRight, AlertTriangle, Inbox, Lock } from "lucide-react";
 import { CompleteRecoveryButton } from "@/components/CompleteRecoveryButton";
+import { BranchAvatar } from "@/components/BranchAvatar";
 
 export const dynamic = "force-dynamic";
 
@@ -49,18 +50,18 @@ export default async function RecoveryMonitor() {
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
-      <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><HeartPulse size={22} /></span>
-        <div>
-          <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Post-Op İzleme</h1>
-          <p className="text-sm text-[var(--c-ink-2)]">Uzaktan iyileşme takibi — kırmızı bayraklı hastalar üstte.</p>
-        </div>
+      {/* v6.64 hizalama: dolu turkuaz ikon bloğu KALDIRILDI (iç yüzeyde tekildi) — başlık
+          /doktor ve /vakalarim ile aynı sade display deseni. */}
+      <div>
+        <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Post-Op İzleme</h1>
+        <p className="mt-1 text-sm text-[var(--c-ink-2)]">Uzaktan iyileşme takibi — kırmızı bayraklı hastalar üstte.</p>
       </div>
 
+      {/* KPI tonları tema-duyarlı token'a bağlı: gündüz temada amber-300/red-300 okunmuyordu. */}
       <div className="mt-6 grid grid-cols-3 gap-3 sm:max-w-md">
         <Stat label="Aktif takip" value={active.length} />
-        <Stat label="İzlemde" value={watchCount} tone="text-amber-300" />
-        <Stat label="Kırmızı bayrak" value={redCount} tone="text-red-300" />
+        <Stat label="İzlemde" value={watchCount} tone="text-[var(--c-warning)]" />
+        <Stat label="Kırmızı bayrak" value={redCount} tone="text-[var(--c-danger)]" />
       </div>
 
       <div className="mt-6 space-y-2.5">
@@ -72,39 +73,64 @@ export default async function RecoveryMonitor() {
         {active.map(({ r, last, severity, day, count }) => {
           const m = severityMeta(severity);
           return (
-            <div
+            /* VAKA KARTI ANATOMİSİ (v6.64.1, kullanıcı düzeltmesi): /vakalarim ile BİREBİR —
+               [sol: branş sembolü + branş adı] … [SAĞ: durum rozeti] · meta satırı · gövde ·
+               hairline üstünde alt şerit (kulvar etiketi + eylem).
+               Şiddet göstergesi soldaki büyük kutudan ÇIKARILDI, kartın EN SAĞINA rozet olarak
+               taşındı (kullanıcı isteği) — klinik renk korunur, hizalama bozulmaz. */
+            <article
               key={r.id}
-              className={`group flex items-center gap-4 rounded-2xl border bg-[var(--c-panel)] p-4 transition hover:shadow-sm ${severity === "RED" ? "border-red-400/25" : "border-[var(--c-hairline)] hover:border-[var(--c-accent)]/30"}`}
+              className={`group rounded-2xl border bg-[var(--c-panel)] p-5 transition ${severity === "RED" ? "border-[var(--c-danger)]/25" : "border-[var(--c-hairline)] hover:border-[var(--c-accent)]/30"}`}
+              style={{ borderInlineStart: "3px solid var(--lane-tourism)" }}
             >
-              <Link href={`/takip/${r.caseId}`} className="flex min-w-0 flex-1 items-center gap-4">
-                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ring-1 ${m.badge}`}>
-                  {severity === "RED" ? <AlertTriangle size={20} /> : <HeartPulse size={20} />}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-[var(--c-ink)]">{decryptField(r.case.patientName)}</span>
-                    <span className="text-xs text-[var(--c-ink-3)]">{countryFlag(r.case.country)} {countryName(r.case.country)}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${m.badge}`}>{m.label}</span>
-                  </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[var(--c-ink-2)]">
-                    <span className="font-medium text-[var(--c-accent-strong)]">{r.branch}</span>
-                    <span>· {day}. gün</span>
-                    {last ? (
-                      <>
-                        <span className="inline-flex items-center gap-1"><Activity size={12} /> {last.pain}/10</span>
-                        <span className="inline-flex items-center gap-1"><Thermometer size={12} /> {last.feverC.toFixed(1)}°C</span>
-                        <span>· son: {formatDateTime(last.createdAt)}</span>
-                      </>
-                    ) : (
-                      <span className="text-[var(--c-ink-3)]">henüz kontrol yok</span>
-                    )}
-                    <span className="text-[var(--c-ink-3)]">· {count} kontrol</span>
-                  </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <BranchAvatar branchKey={r.branch} size={24} />
+                  <span className="aura-display min-w-0 truncate text-[16px] font-medium tracking-tight text-[var(--c-ink)]">
+                    {r.branch}
+                  </span>
                 </div>
-              </Link>
-              <CompleteRecoveryButton caseId={r.caseId} />
-              <ArrowRight size={18} className="hidden shrink-0 text-[var(--c-ink-3)] sm:block" />
-            </div>
+                {/* EN SAĞ: durum/şiddet rozeti — ikon + etiket tek rozette, klinik renk m.badge'den */}
+                <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${m.badge}`}>
+                  {severity === "RED" ? <AlertTriangle size={12} /> : <HeartPulse size={12} />}
+                  {m.label}
+                </span>
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--c-ink-3)]">
+                <span className="font-medium text-[var(--c-ink-2)]">{decryptField(r.case.patientName)}</span>
+                <span>{countryFlag(r.case.country)} {countryName(r.case.country)}</span>
+                <span>· {day}. gün</span>
+                <span>· {count} kontrol</span>
+              </div>
+
+              <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm leading-relaxed text-[var(--c-ink-2)]">
+                {last ? (
+                  <>
+                    <span className="inline-flex items-center gap-1"><Activity size={13} /> {last.pain}/10</span>
+                    <span className="inline-flex items-center gap-1"><Thermometer size={13} /> {last.feverC.toFixed(1)}°C</span>
+                    <span className="text-[var(--c-ink-3)]">son: {formatDateTime(last.createdAt)}</span>
+                  </>
+                ) : (
+                  <span className="text-[var(--c-ink-3)]">Henüz kontrol girilmedi.</span>
+                )}
+              </p>
+
+              <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--c-hairline)] pt-3">
+                <span className="aura-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: "var(--lane-tourism)" }}>
+                  Post-Op Takip
+                </span>
+                <div className="flex items-center gap-3">
+                  <CompleteRecoveryButton caseId={r.caseId} />
+                  <Link
+                    href={`/takip/${r.caseId}`}
+                    className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--c-accent)] transition-colors duration-200 hover:text-[var(--c-accent-2)]"
+                  >
+                    Takibi aç <ArrowRight size={13} />
+                  </Link>
+                </div>
+              </div>
+            </article>
           );
         })}
       </div>

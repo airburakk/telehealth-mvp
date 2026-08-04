@@ -12,7 +12,8 @@ import { formatDateTime, langDir, LANG_BCP47 } from "@/lib/constants";
 import { CheckInForm } from "@/components/CheckInForm";
 import { DischargeReport, type Structured } from "@/components/DischargeReport";
 import { TranslateButton } from "@/components/TranslateButton";
-import { ArrowLeft, ArrowRight, HeartPulse, CalendarCheck, Pill, Video, Thermometer, Activity, ShieldCheck, CheckCircle2, RotateCcw, FileText, Loader2, Check, AlertTriangle } from "lucide-react";
+import { BranchAvatar } from "@/components/BranchAvatar";
+import { ArrowLeft, ArrowRight, CalendarCheck, Pill, Video, Thermometer, Activity, ShieldCheck, CheckCircle2, RotateCcw, FileText, Loader2, Check, AlertTriangle } from "lucide-react";
 
 export type RecoveryCheckIn = {
   id: string;
@@ -133,8 +134,11 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>
 
+      {/* Başlık (v6.64 hizalama): dolu turkuaz ikon bloğu KALDIRILDI — iç yüzeyde başka hiçbir
+          sayfada yoktu. Yerine /vakalarim kart deseniyle aynı BranchAvatar: branş kimliği renk +
+          sembolle taşınır (kullanıcı isteği: "hasta ve doktor ana sayfasındaki boyut/renk/sembol"). */}
       <div className="mt-4 flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><HeartPulse size={22} /></span>
+        <BranchAvatar branchKey={data.branch} size={40} />
         <div>
           <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">{t("Post-Op Takip")}</h1>
           <p className="text-sm text-[var(--c-ink-2)]">{data.patientName} · {t(data.branch)} · {t("Tedavi sonrası")} <strong className="text-[var(--c-ink)]">{data.day}. {t("gün")}</strong></p>
@@ -145,8 +149,8 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
         {/* Sol: kontrol + geçmiş */}
         <div className="space-y-5">
           {data.closed ? (
-            <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-6 text-center">
-              <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-300"><CheckCircle2 size={24} /></span>
+            <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-6 text-center">
+              <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[var(--c-success)]/15 text-[var(--c-success)]"><CheckCircle2 size={24} /></span>
               <h2 className="aura-display mt-3 text-lg font-medium tracking-tight text-[var(--c-ink)]">{t("Post-op takip tamamlandı")}</h2>
               <p className="mx-auto mt-1 max-w-md text-sm text-[var(--c-ink-2)]">{t("Bu sürecin takibi tamamlandı; yeni kontrol girişi kapalıdır. Geçmiş kayıtlarınız aşağıda görüntülenmeye devam eder.")}</p>
               {/* Geri-alma (E2EE Faz 2A) — veri post-op bitince hastaya döner; hasta isterse klinik ekibe erişimi YENİDEN verir (açma hasta kararı). */}
@@ -174,7 +178,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
           ) : data.isStaff ? (
             // Kontrol girişi HASTA BEYANIDIR (v6.61: uç hasta-only'ye daraltıldı). Personel bu sayfayı
             // izleme amacıyla görür — form gösterilirse gönderim 403 döner. Formu hiç çizme.
-            <div className="rounded-3xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 text-center">
+            <div className="rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 text-center">
               <p className="text-sm text-[var(--c-ink-2)]">
                 {t("Günlük kontrol girişini yalnızca hasta yapabilir. Bu sayfayı izleme amacıyla görüntülüyorsunuz.")}
               </p>
@@ -183,7 +187,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
             <CheckInForm caseId={data.caseId} branch={data.branch} lang={lang} />
           )}
 
-          <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
+          <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
             <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">{t("Kontrol geçmişi")}</h2>
             {data.checkIns.length === 0 ? (
               <p className="mt-2 text-sm text-[var(--c-ink-3)]">{t("Henüz kontrol girilmedi.")}</p>
@@ -244,8 +248,8 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
               />
             </div>
           ) : (
-            <div className="rounded-3xl border border-violet-400/25 bg-[var(--c-panel)] p-5 shadow-sm">
-              <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-violet-300">
+            <div className="rounded-2xl border border-[var(--c-indigo)]/25 bg-[var(--c-panel)] p-5 shadow-sm">
+              <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-indigo)]">
                 <FileText size={15} /> {t("AI Epikriz / Taburcu Raporu")}
               </div>
               {data.discharge ? (
@@ -279,7 +283,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
                     <button
                       onClick={requestDischarge}
                       disabled={reqBusy}
-                      className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-violet-400/30 bg-violet-500/10 px-3 py-2 text-sm font-semibold text-violet-300 hover:bg-violet-500/15 disabled:opacity-50"
+                      className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--c-indigo)]/30 bg-[var(--c-indigo)]/10 px-3 py-2 text-sm font-semibold text-[var(--c-indigo)] hover:bg-[var(--c-indigo)]/15 disabled:opacity-50"
                     >
                       {reqBusy ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />}
                       {reqBusy ? t("İstek gönderiliyor…") : t("AI Epikriz / Taburcu Raporu iste")}
@@ -291,7 +295,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
             </div>
           )}
 
-          <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
+          <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
             <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><CalendarCheck size={15} /> {t("İyileşme Takvimi")}</div>
             <ol className="mt-3 space-y-0">
               {data.protocol.map((mst, i) => (
@@ -309,7 +313,7 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
             </ol>
           </div>
 
-          <div className="rounded-3xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-5">
+          <div className="rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-5">
             <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-accent)]"><Video size={15} /> {t("Tele-Kontrol")}</div>
             <p className="mt-1.5 text-sm text-[var(--c-ink-2)]">{t("Kritik dönüm noktalarında doktorunuzla kısa görüşme planlanır.")}</p>
             <button className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-4 py-2 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]">
@@ -317,12 +321,12 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
             </button>
           </div>
 
-          <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
+          <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
             <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><Pill size={15} /> {t("İlaç Hatırlatıcı")}</div>
             <p className="mt-1.5 text-sm text-[var(--c-ink-2)]">{t("Günlük ilaç bildirimleri açık (demo).")}</p>
           </div>
 
-          <Link href="/paylasimlarim" className="block rounded-3xl border border-[var(--c-accent)]/20 bg-[var(--c-accent)]/[0.03] p-5 transition-colors hover:bg-[var(--c-accent)]/[0.06]">
+          <Link href="/paylasimlarim" className="block rounded-2xl border border-[var(--c-accent)]/20 bg-[var(--c-accent)]/[0.03] p-5 transition-colors hover:bg-[var(--c-accent)]/[0.06]">
             <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink)]"><ShieldCheck size={15} /> {t("Güvenli Paylaşım")}</div>
             <p className="mt-1.5 text-sm text-[var(--c-ink-2)]">{t("Bu kayıtları kendi ülkenizdeki doktorunuzla süreli ve iptal edilebilir bir bağlantıyla paylaşın.")}</p>
             <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--c-ink)]">{t("Paylaşım Kontrol Merkezi")} <ArrowRight size={14} /></span>
