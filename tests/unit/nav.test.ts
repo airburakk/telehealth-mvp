@@ -32,9 +32,10 @@ describe("navItemsFor", () => {
     expect(hrefs("COORDINATOR")).toEqual(["/operasyon", "/doktor", "/doktor/takip", "/doktor/doctorium"]);
   });
 
-  it("ADMIN bandı SADE (v6.73, kullanıcı kararı): Yönetim önde + Operasyon/Doktor/Doctorium — TAM liste", () => {
-    // 11 öğe geniş ekranda bile taşıyordu; denetim kısayolları /admin "Denetim görünümleri"ne indi.
-    expect(hrefs("ADMIN")).toEqual(["/admin", "/operasyon", "/doktor", "/doktor/doctorium"]);
+  it("ADMIN bandı SADE (v6.73 iki tur, kullanıcı kararı): YALNIZ Yönetim + Operasyon — TAM liste", () => {
+    // 11 öğe geniş ekranda bile taşıyordu; TÜM denetim kısayolları (Doktor/Doctorium/Sağlık
+    // Turizmi dahil) /admin "Denetim görünümleri"ne indi.
+    expect(hrefs("ADMIN")).toEqual(["/admin", "/operasyon"]);
   });
 
   it("Yönetim dizini (/admin) YALNIZ ADMIN'de (v6.71 — bant tek öğe, paneller dizinden dağılır)", () => {

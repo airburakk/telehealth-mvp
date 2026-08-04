@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import {
   ArrowRight, BarChart2, CalendarDays, LayoutDashboard, Megaphone,
   FolderHeart, Share2, UserRound, Users, HeartPulse, Scale, Globe,
+  Stethoscope, Newspaper, Luggage,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -17,11 +18,15 @@ export const metadata = { title: "Yönetim" };
 // (kullanıcı kararı — bant büyümez, dizin büyür). Rotaların erişim kuralları DEĞİŞMEDİ;
 // bunlar yalnız kısayoldur (admin, hasta/rol yüzeylerini bu görünümlerden denetler).
 const OVERSIGHT = [
+  // v6.73 2. tur (kullanıcı): Doktor + Doctorium banttan buraya; Sağlık Turizmi (/acente) eklendi.
+  { href: "/doktor", label: "Doktor", icon: Stethoscope, note: "personel" },
+  { href: "/doktor/doctorium", label: "Doctorium", icon: Newspaper, note: "personel" },
+  { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, note: "personel" },
   { href: "/vakalarim", label: "Bakım Yolculuğum", icon: FolderHeart, note: "hasta yüzü" },
   { href: "/paylasimlarim", label: "Paylaşımlarım", icon: Share2, note: "hasta yüzü" },
   { href: "/triyaj", label: "Triyaj", icon: UserRound, note: "hasta yüzü" },
   { href: "/hekimler", label: "Doktorlar", icon: Users, note: "kamu dizini" },
-  { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, note: "personel" },
+  { href: "/acente", label: "Sağlık Turizmi", icon: Luggage, note: "acente" },
   { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, note: "kurul" },
   { href: "/partner", label: "Partner", icon: Globe, note: "iş ortağı" },
 ];

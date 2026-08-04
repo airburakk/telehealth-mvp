@@ -30,22 +30,22 @@ const NAV: NavItem[] = [
   // olarak görmemeli. ⚠️ ROTA DEĞİŞMEDİ (/vakalarim: bookmark + dış bağlantılar);
   // klinik personel yüzeylerinde (aşağıda /doktor…) "vaka" terminolojisi KALIR
   // (backlog: keep clinician terminology as case/vaka).
-  // v6.73 ADMIN bant sadeleştirmesi (kullanıcı kararı — 11 öğe geniş ekranda bile taşıyordu):
-  // ADMIN bandı = Yönetim · Operasyon · Doktor · Doctorium. Hasta/rol yüzeyi DENETİM kısayolları
-  // (Bakım Yolculuğum · Paylaşımlarım · Triyaj · Doktorlar · Post-Op · Etik Kurul · Partner)
-  // banttan çıktı ama KAYBOLMADI → /admin "Denetim görünümleri" bölümü. Rol sayfalarının kendi
-  // erişim kuralları değişmedi (ADMIN rotalara yine girebilir; yalnız bant kısayolu taşındı).
+  // v6.73 ADMIN bant sadeleştirmesi (kullanıcı kararı, iki tur — 11 öğe geniş ekranda bile
+  // taşıyordu): ADMIN bandı = YALNIZ Yönetim · Operasyon. Diğer TÜM denetim kısayolları
+  // (hasta yüzü · Doktor · Doctorium · Sağlık Turizmi · Etik Kurul · Partner …) banttan çıktı
+  // ama KAYBOLMADI → /admin "Denetim görünümleri" bölümü. Rol sayfalarının kendi erişim
+  // kuralları değişmedi (ADMIN rotalara yine girebilir; yalnız bant kısayolu taşındı).
   { href: "/vakalarim", label: "Bakım Yolculuğum", icon: FolderHeart, roles: ["PATIENT"] },
   { href: "/takip", label: "Post Op", icon: HeartPulse, roles: ["PATIENT"] },
   { href: "/paylasimlarim", label: "Paylaşımlarım", icon: Share2, roles: ["PATIENT"] },
   { href: "/operasyon", label: "Operasyon", icon: BarChart3, roles: ["COORDINATOR", "ADMIN"] },
-  { href: "/doktor", label: "Doktor", icon: Stethoscope, roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
+  { href: "/doktor", label: "Doktor", icon: Stethoscope, roles: ["DOCTOR", "COORDINATOR"] },
   { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, roles: ["DOCTOR", "COORDINATOR"] },
   // Doctorium (v6.48, 2026-08-01) — hekim bilgi portalı. Eski "Haberler" adı ve /doktor/haberler
   // rotası bırakıldı (rota 308 ile buraya yönlenir; yer imleri kırılmasın).
   // İKONSUZ (kullanıcı kararı 2026-08-01, 2. tur): Header özel yazı-lockup basar —
   // "Doctor" + yanıp sönen zümrüt "ium" (.doctorium-ium-breathe); sembol yalnız sayfa başlığında.
-  { href: "/doktor/doctorium", label: "Doctorium", roles: ["DOCTOR", "COORDINATOR", "ADMIN"] },
+  { href: "/doktor/doctorium", label: "Doctorium", roles: ["DOCTOR", "COORDINATOR"] },
   // "Ücretsiz Hizmet" bant linki kaldırıldı (2026-07-31, kullanıcı kararı) — rota + ana sayfa paneli durur.
   // "Profilim" bant linki kaldırıldı (2026-08-01, kullanıcı kararı) — artık header hesap
   // menüsünde (Header.tsx); rota /doktor/profil aynen durur.
