@@ -1,8 +1,9 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { formatDateTime } from "@/lib/constants";
-import { ClipboardList, UserRound, Building2, TrendingUp, TrendingDown, AlertTriangle, Inbox } from "lucide-react";
+import { ClipboardList, UserRound, Building2, TrendingUp, TrendingDown, AlertTriangle, Inbox, ArrowUpRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -37,9 +38,12 @@ export default async function RegistryReportPage() {
         </div>
       </div>
 
+      {/* Sayılar tıklanır (2026-08-04, kullanıcı isteği): dizinin kendisi /operasyon/kayit-defteri'nde
+          yaşar (bu sayfa yalnız günlük DEĞİŞİKLİKLERİ gösterir) → ilgili sekmeye götürür. Kayıt defteri
+          COORDINATOR+ADMIN kapılı; bu sayfayı görebilen ETHICS oraya giremez → link yalnız ADMIN'de. */}
       <div className="mt-6 grid grid-cols-2 gap-3 sm:max-w-md">
-        <Stat icon={<UserRound size={16} />} label="Kayıtlı doktor (aktif)" value={activeDoctors} />
-        <Stat icon={<Building2 size={16} />} label="Kayıtlı tesis (aktif)" value={activeHospitals} />
+        <Stat icon={<UserRound size={16} />} label="Kayıtlı doktor (aktif)" value={activeDoctors} href={user.role === "ADMIN" ? "/operasyon/kayit-defteri?tab=doktor" : undefined} />
+        <Stat icon={<Building2 size={16} />} label="Kayıtlı tesis (aktif)" value={activeHospitals} href={user.role === "ADMIN" ? "/operasyon/kayit-defteri?tab=tesis" : undefined} />
       </div>
 
       {reports.length === 0 && (
@@ -101,12 +105,22 @@ export default async function RegistryReportPage() {
   );
 }
 
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3.5">
+function Stat({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: number; href?: string }) {
+  const body = (
+    <>
       <div className="flex items-center gap-1.5 text-2xl font-bold text-[var(--c-ink)]">{icon} {value.toLocaleString("tr-TR")}</div>
-      <div className="text-xs text-[var(--c-ink-2)]">{label}</div>
-    </div>
+      <div className="flex items-center justify-between gap-1">
+        <span className="text-xs text-[var(--c-ink-2)]">{label}</span>
+        {href && <ArrowUpRight size={12} className="shrink-0 text-[var(--c-ink-3)] transition group-hover:text-[var(--c-accent)]" />}
+      </div>
+    </>
+  );
+  // href yoksa eski hâli — rol gereği link verilmeyen kart tıklanır GÖRÜNMEZ (operasyon Kpi deseni).
+  if (!href) return <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3.5">{body}</div>;
+  return (
+    <Link href={href} className="group block rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3.5 transition hover:border-[var(--c-accent)]/40 hover:shadow-sm">
+      {body}
+    </Link>
   );
 }
 

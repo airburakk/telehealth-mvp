@@ -6,7 +6,7 @@ import { countryFlag, countryName } from "@/lib/constants";
 import { formatUSD } from "@/lib/pricing";
 import {
   BarChart3, Users, Luggage, Wallet, Scale, AlertTriangle, Stethoscope,
-  TrendingUp, Filter, HeartPulse, ShieldCheck, Video, ArrowRight, BookMarked,
+  TrendingUp, Filter, HeartPulse, ShieldCheck, Video, ArrowRight, ArrowUpRight, BookMarked,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -144,15 +144,18 @@ export default async function OperationsDashboard() {
         <ArrowRight size={16} className="shrink-0 text-[var(--c-accent-stronger)]" />
       </Link>
 
-      {/* KPI kartları */}
+      {/* KPI kartları — sayılar tıklanır (2026-08-04, kullanıcı isteği): detayın yaşadığı yere
+          götürür. Bu sayfada liste olmadığından filtre değil NAVİGASYON: rota linki ya da sayfa-içi
+          bölüm (#hash). "Bekleyen şikayet" yalnız ADMIN'de link (proxy /etik-kurul'u ETHICS+ADMIN'e
+          kapar — koordinatöre kırık link gösterilmez). */}
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Kpi icon={<Users size={16} />} label="Toplam vaka" value={String(cases.length)} sub={`${urgent} yüksek aciliyet`} />
-        <Kpi icon={<Video size={16} />} label="Görüşme" value={String(consultations.length)} sub={`${consultations.filter((c) => c.status === "ACTIVE").length} aktif`} />
-        <Kpi icon={<Wallet size={16} />} label="Rezervasyon geliri" value={formatUSD(bookingRevenue)} sub={`${bookings.length} paket`} />
-        <Kpi icon={<ShieldCheck size={16} />} label="Platform komisyonu" value={formatUSD(platformFees)} sub="Escrow %15" tone="text-emerald-300" />
-        <Kpi icon={<Scale size={16} />} label="Bekleyen şikayet" value={String(pendingComplaints)} sub={refundedTotal ? `${formatUSD(refundedTotal)} iade` : "iade yok"} tone={pendingComplaints ? "text-amber-300" : undefined} />
+        <Kpi icon={<Users size={16} />} label="Toplam vaka" value={String(cases.length)} sub={`${urgent} yüksek aciliyet`} href="/doktor" />
+        <Kpi icon={<Video size={16} />} label="Görüşme" value={String(consultations.length)} sub={`${consultations.filter((c) => c.status === "ACTIVE").length} aktif`} href="#doktor-aktivite" />
+        <Kpi icon={<Wallet size={16} />} label="Rezervasyon geliri" value={formatUSD(bookingRevenue)} sub={`${bookings.length} paket`} href="/operasyon/lojistik" />
+        <Kpi icon={<ShieldCheck size={16} />} label="Platform komisyonu" value={formatUSD(platformFees)} sub="Escrow %15" tone="text-emerald-300" href="#gelir-escrow" />
+        <Kpi icon={<Scale size={16} />} label="Bekleyen şikayet" value={String(pendingComplaints)} sub={refundedTotal ? `${formatUSD(refundedTotal)} iade` : "iade yok"} tone={pendingComplaints ? "text-amber-300" : undefined} href={user.role === "ADMIN" ? "/etik-kurul" : undefined} />
         {/* v6.65 terminoloji: "Kırmızı bayrak" → "Alarm bulgusu" (tıp literatürü; lib/postop.ts notu) */}
-        <Kpi icon={<AlertTriangle size={16} />} label="Alarm bulgusu" value={String(redFlags)} sub={`${recoveries.length} takipte`} tone={redFlags ? "text-[var(--c-danger)]" : undefined} />
+        <Kpi icon={<AlertTriangle size={16} />} label="Alarm bulgusu" value={String(redFlags)} sub={`${recoveries.length} takipte`} tone={redFlags ? "text-[var(--c-danger)]" : undefined} href="/doktor/takip" />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
@@ -182,8 +185,8 @@ export default async function OperationsDashboard() {
           </div>
         </Section>
 
-        {/* Gelir & Escrow */}
-        <Section icon={<Wallet size={15} />} title="Gelir & Escrow">
+        {/* Gelir & Escrow — "Platform komisyonu" KPI'sının hash hedefi */}
+        <Section id="gelir-escrow" icon={<Wallet size={15} />} title="Gelir & Escrow">
           <div className="grid grid-cols-3 gap-2 text-center">
             <EscrowBox label="Emanette (HELD)" value={formatUSD(escrowSums.HELD)} cls="bg-amber-500/10 text-amber-300 ring-amber-400/25" />
             <EscrowBox label="Serbest (RELEASED)" value={formatUSD(escrowSums.RELEASED)} cls="bg-emerald-500/10 text-emerald-300 ring-emerald-400/25" />
@@ -244,9 +247,9 @@ export default async function OperationsDashboard() {
         </Section>
       </div>
 
-      {/* Doktor aktivite/kapasite */}
+      {/* Doktor aktivite/kapasite — "Görüşme" KPI'sının hash hedefi */}
       <div className="mt-5">
-        <Section icon={<Users size={15} />} title="Doktor Aktivitesi & Kapasite (görüşme / aylık kapasite)">
+        <Section id="doktor-aktivite" icon={<Users size={15} />} title="Doktor Aktivitesi & Kapasite (görüşme / aylık kapasite)">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {doctorRows.map((d) => {
               const pct = Math.min(100, Math.round((d.consults / Math.max(1, d.capacity)) * 100));
@@ -276,19 +279,30 @@ export default async function OperationsDashboard() {
   );
 }
 
-function Kpi({ icon, label, value, sub, tone }: { icon: React.ReactNode; label: string; value: string; sub?: string; tone?: string }) {
-  return (
-    <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3.5 shadow-sm">
-      <div className="flex items-center gap-1.5 text-xs text-[var(--c-ink-3)]">{icon} {label}</div>
+function Kpi({ icon, label, value, sub, tone, href }: { icon: React.ReactNode; label: string; value: string; sub?: string; tone?: string; href?: string }) {
+  const body = (
+    <>
+      <div className="flex items-center justify-between gap-1.5">
+        <span className="flex min-w-0 items-center gap-1.5 text-xs text-[var(--c-ink-3)]">{icon} {label}</span>
+        {href && <ArrowUpRight size={12} className="shrink-0 text-[var(--c-ink-3)] transition group-hover:text-[var(--c-accent)]" />}
+      </div>
       <div className={`mt-1 text-xl font-bold ${tone ?? "text-[var(--c-ink)]"}`}>{value}</div>
       {sub && <div className="text-[11px] text-[var(--c-ink-3)]">{sub}</div>}
-    </div>
+    </>
+  );
+  // href yoksa eski hâli (düz kutu) — rol gereği link verilmeyen kartlar tıklanır GÖRÜNMEZ.
+  if (!href) return <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3.5 shadow-sm">{body}</div>;
+  return (
+    <Link href={href} className="group block rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3.5 shadow-sm transition hover:border-[var(--c-accent)]/40 hover:shadow-md">
+      {body}
+    </Link>
   );
 }
 
-function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+function Section({ icon, title, children, id }: { icon: React.ReactNode; title: string; children: React.ReactNode; id?: string }) {
   return (
-    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
+    // scroll-mt: hash ile gelindiğinde bölüm başlığı yapışkan üst bardan payla açılır.
+    <div id={id} className="scroll-mt-24 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
       <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{icon} {title}</div>
       <div className="mt-3">{children}</div>
     </div>

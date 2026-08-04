@@ -55,7 +55,7 @@ function soStatusDot(s: string): string {
 export default async function DoctorPanel({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; branch?: string; status?: string }>;
+  searchParams: Promise<{ page?: string; branch?: string; status?: string; urgent?: string }>;
 }) {
   const user = await getCurrentUser();
   const isStaffOnly = !!user && user.role !== "DOCTOR"; // koordinatör/etik/admin → doktor profili yok, tüm kuyruk
@@ -107,20 +107,23 @@ export default async function DoctorPanel({
     // Geçerli değer kontrolü: branş mevcut listeden, durum CASE_STATUS anahtarlarından; aksi = filtresiz.
     const branchFilter = sp.branch && branchOptions.includes(sp.branch) ? sp.branch : undefined;
     const statusFilter = sp.status && sp.status in CASE_STATUS ? sp.status : undefined;
+    const urgentFilter = sp.urgent === "1"; // "Acil (4-5)" stat tıklaması (2026-08-04) — urgency>=4
     const listWhere = {
       ...(branchFilter ? { branch: branchFilter } : {}),
       ...(statusFilter ? { status: statusFilter } : {}),
+      ...(urgentFilter ? { urgency: { gte: 4 } } : {}),
     };
     // Liste + sayfalama toplamı filtreli; üst istatistikler taban (filtresiz genel bakış) kalır.
-    caseTotal = branchFilter || statusFilter ? await db.case.count({ where: listWhere }) : total;
+    caseTotal = branchFilter || statusFilter || urgentFilter ? await db.case.count({ where: listWhere }) : total;
     caseTotalPages = Math.max(1, Math.ceil(caseTotal / CASE_PAGE_SIZE));
     // İstenen sayfayı geçerli aralığa sıkıştır (0/negatif/NaN/aşırı-büyük güvenli).
     casePage = Math.min(Math.max(1, parseInt(sp.page ?? "1", 10) || 1), caseTotalPages);
     queueStats = { total, waiting, urgent }; // üst istatistikler tam kümeden (rows yalnız görünür dilim)
-    queueServerFilters = { branch: branchFilter ?? "all", status: statusFilter ?? "all", branches: branchOptions };
+    queueServerFilters = { branch: branchFilter ?? "all", status: statusFilter ?? "all", urgent: urgentFilter, branches: branchOptions };
     caseFilterQs =
       (branchFilter ? `&branch=${encodeURIComponent(branchFilter)}` : "") +
-      (statusFilter ? `&status=${encodeURIComponent(statusFilter)}` : "");
+      (statusFilter ? `&status=${encodeURIComponent(statusFilter)}` : "") +
+      (urgentFilter ? "&urgent=1" : "");
     cases = await db.case.findMany({
       where: listWhere,
       select: CASE_LIST_SELECT,

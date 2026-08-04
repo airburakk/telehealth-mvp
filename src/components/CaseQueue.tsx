@@ -51,6 +51,7 @@ export interface CaseQueueStats {
 export interface CaseQueueServerFilters {
   branch: string; // "all" veya seçili branş
   status: string; // "all" veya seçili durum
+  urgent: boolean; // "Acil (4-5)" stat filtresi — urgency>=4 SUNUCUDA uygulanır (2026-08-04)
   branches: string[]; // tam branş listesi (sunucudan, distinct)
 }
 
@@ -77,15 +78,16 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
   const branches = serverFilters ? serverFilters.branches : localBranches;
 
   // Sunucu modunda filtre değişimi → URL parametresi (page=1'e dönerek); liste sunucudan yenilenir.
-  const pushServerFilters = (nextBranch: string, nextStatus: string) => {
+  const pushServerFilters = (nextBranch: string, nextStatus: string, nextUrgent: boolean) => {
     const p = new URLSearchParams();
     p.set("page", "1");
     if (nextBranch !== "all") p.set("branch", nextBranch);
     if (nextStatus !== "all") p.set("status", nextStatus);
+    if (nextUrgent) p.set("urgent", "1");
     router.push(`${pathname}?${p.toString()}`);
   };
-  const onBranchChange = (v: string) => (serverFilters ? pushServerFilters(v, statusValue) : setBranch(v));
-  const onStatusChange = (v: string) => (serverFilters ? pushServerFilters(branchValue, v) : setStatus(v));
+  const onBranchChange = (v: string) => (serverFilters ? pushServerFilters(v, statusValue, serverFilters.urgent) : setBranch(v));
+  const onStatusChange = (v: string) => (serverFilters ? pushServerFilters(branchValue, v, serverFilters.urgent) : setStatus(v));
 
   const filtered = useMemo(() => {
     const base = rows.filter(
@@ -114,15 +116,36 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
   const urgent = stats?.urgent ?? rows.filter((r) => (r.urgency ?? 0) >= 4).length;
   const waiting = stats?.waiting ?? rows.filter((r) => r.status === "NEW").length;
 
-  const toggleStat = (key: StatKey) => setOpenStat((cur) => (cur === key ? null : key));
+  // Doktor dalı: local stat filtresi (listeyi açar). Personel dalı (2026-08-04, kullanıcı isteği):
+  // sayılar tam kümeden (server-count) geldiği için tıklama da tam kümeye döner — branş/durum
+  // SIFIRLANIP stat'ın kendi filtresi URL'e yazılır; aktifken ikinci tıklama kapatır (aynı model).
+  const toggleStat = (key: StatKey) => {
+    if (!serverFilters) {
+      setOpenStat((cur) => (cur === key ? null : key));
+      return;
+    }
+    if (key === "waiting") {
+      const on = statusValue === "NEW" && !serverFilters.urgent;
+      pushServerFilters("all", on ? "all" : "NEW", false);
+    } else if (key === "urgent") {
+      pushServerFilters("all", "all", !serverFilters.urgent);
+    } else {
+      pushServerFilters("all", "all", false); // Toplam = tüm filtreleri temizle
+    }
+  };
+  // Personel dalında aktiflik URL'den türetilir; "Toplam" vurgusuz kalır (tıklaması = temizle).
+  const statActive = serverFilters
+    ? { total: false, waiting: statusValue === "NEW" && !serverFilters.urgent, urgent: serverFilters.urgent }
+    : { total: openStat === "total", waiting: openStat === "waiting", urgent: openStat === "urgent" };
 
   return (
     <div>
-      {/* Stats — doktor dalında tıklanabilir: listeyi açar + stat'a göre filtreler */}
+      {/* Stats — iki dalda da tıklanabilir (2026-08-04): doktor dalında listeyi açar + local filtre;
+          personel dalında sunucu filtresini URL'e yazar. */}
       <div className="grid grid-cols-3 gap-3 sm:max-w-md">
-        <Stat label="Toplam vaka" value={total} interactive={!serverFilters} active={openStat === "total"} onClick={() => toggleStat("total")} />
-        <Stat label="Bekleyen" value={waiting} tone="text-blue-300" interactive={!serverFilters} active={openStat === "waiting"} onClick={() => toggleStat("waiting")} />
-        <Stat label="Acil (4-5)" value={urgent} tone="text-red-300" interactive={!serverFilters} active={openStat === "urgent"} onClick={() => toggleStat("urgent")} />
+        <Stat label="Toplam vaka" value={total} interactive active={statActive.total} onClick={() => toggleStat("total")} />
+        <Stat label="Bekleyen" value={waiting} tone="text-blue-300" interactive active={statActive.waiting} onClick={() => toggleStat("waiting")} />
+        <Stat label="Acil (4-5)" value={urgent} tone="text-red-300" interactive active={statActive.urgent} onClick={() => toggleStat("urgent")} />
       </div>
       {/* Tek-tuş aç/kapat (2026-07-31, kullanıcı isteği): tüm listeyi filtresiz açar; sayaçlar
           ayrıca kendi stat filtresiyle açmaya devam eder. */}

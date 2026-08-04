@@ -2,9 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { maskCaseId, REQUEST_TYPES, COMPLAINT_STATUS } from "@/lib/ethics";
-import { formatDateTime } from "@/lib/constants";
-import { Scale, ArrowRight, Inbox, ShieldCheck } from "lucide-react";
+import { Scale, ArrowRight, ShieldCheck } from "lucide-react";
+import { EthicsList, type ComplaintListRow } from "./EthicsList";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +35,17 @@ export default async function EthicsBoard() {
     db.doctor.count({ where: { verified: false } }),
   ]);
 
-  const rows = [...pendingRows, ...resolvedRows]; // PENDING üstte
+  // 2026-08-04: liste + stat'lar client bileşene çıktı (EthicsList) — sayılar tıklanır filtre oldu
+  // (post-op RecoveryList deseni). PENDING üstte; satır DTO'su yalnız kartın kullandığı alanları taşır.
+  const rows: ComplaintListRow[] = [...pendingRows, ...resolvedRows].map((c) => ({
+    id: c.id,
+    caseId: c.caseId,
+    status: c.status,
+    subject: c.subject,
+    requestType: c.requestType,
+    createdAt: c.createdAt.toISOString(),
+    branch: c.case.branch,
+  }));
   const pending = pendingRows.length;
 
   return (
@@ -67,53 +76,7 @@ export default async function EthicsBoard() {
         </span>
       </Link>
 
-      <div className="mt-5 grid grid-cols-3 gap-3 sm:max-w-md">
-        <Stat label="Toplam başvuru" value={total} />
-        <Stat label="Beklemede" value={pending} tone="text-amber-300" />
-        <Stat label="Karara bağlandı" value={resolved} tone="text-emerald-300" />
-      </div>
-
-      <div className="mt-6 space-y-2.5">
-        {rows.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-panel)] py-12 text-center text-[var(--c-ink-3)]">
-            <Inbox className="mx-auto mb-2" /> Başvuru yok.
-          </div>
-        )}
-        {rows.map((c) => {
-          const st = COMPLAINT_STATUS[c.status] ?? COMPLAINT_STATUS.PENDING;
-          return (
-            <Link
-              key={c.id}
-              href={`/etik-kurul/${c.id}`}
-              className={`group flex items-center gap-4 rounded-2xl border bg-[var(--c-panel)] p-4 transition hover:shadow-sm ${c.status === "PENDING" ? "border-amber-400/25" : "border-[var(--c-hairline)] hover:border-[var(--c-accent)]/30"}`}
-            >
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--c-ink)]/10 text-[var(--c-ink-2)]"><Scale size={20} /></span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm font-semibold text-[var(--c-ink)]">{maskCaseId(c.caseId)}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${st.color}`}>{st.label}</span>
-                </div>
-                <div className="mt-0.5 truncate text-sm text-[var(--c-ink-2)]">{c.subject}</div>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-[var(--c-ink-3)]">
-                  <span className="font-medium text-[var(--c-accent-strong)]">{REQUEST_TYPES[c.requestType]}</span>
-                  <span>· {c.case.branch}</span>
-                  <span>· {formatDateTime(c.createdAt)}</span>
-                </div>
-              </div>
-              <ArrowRight size={18} className="shrink-0 text-[var(--c-ink-3)] transition group-hover:translate-x-0.5 group-hover:text-[var(--c-accent-strong)]" />
-            </Link>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
-  return (
-    <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3.5">
-      <div className={`text-2xl font-bold ${tone ?? "text-[var(--c-ink)]"}`}>{value}</div>
-      <div className="text-xs text-[var(--c-ink-2)]">{label}</div>
+      <EthicsList rows={rows} total={total} pending={pending} resolved={resolved} />
     </div>
   );
 }
