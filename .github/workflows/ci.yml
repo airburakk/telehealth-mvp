@@ -62,5 +62,17 @@ jobs:
         run: npm ci
       - name: Prisma client üret
         run: npx prisma generate
+      # Şema göçü — migration'lar test DB'ye burada uygulanır. Bu adım yokken şema evrildikçe
+      # dev branch sürükleniyordu ve süit "column does not exist" ile kızarıyordu (2026-08-04
+      # tespiti: DB 9 göç gerideydi). idempotent: bekleyen göç yoksa 0 işlem.
+      # Neon: migrate havuzsuz (direct) host ister → pooled URL'den `-pooler` eki atılır
+      # (repo'daki *_DIRECT_URL çiftleriyle aynı konvansiyon).
+      # Fork PR'ında secret boş → adım atlanır (süitler zaten skipIf ile kendini atlıyor).
+      - name: Şema göçü (test DB — sürüklenme onarımı)
+        if: env.TEST_DATABASE_URL != ''
+        run: |
+          export DATABASE_URL="${TEST_DATABASE_URL/-pooler/}"
+          export DIRECT_URL="$DATABASE_URL"
+          npx prisma migrate deploy
       - name: Entegrasyon testleri (Neon dev branch)
         run: npm run test:integration
