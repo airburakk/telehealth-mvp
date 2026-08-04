@@ -65,6 +65,8 @@ npm run dev                   # http://localhost:3000
 | `npm run db:migrate` | `prisma migrate deploy` — **üretim şema değişikliği yolu** (db push değil; akış: `DEPLOY.md` Adım 2) |
 | `npx tsx scripts/enrich-profiles.ts` | profil/vaka **zenginleştirme** (idempotent backfill; yalnız boş alan: doktor procedures/markets/akademik + vaka FHIR lab/icd10/belge — silmez) |
 | `npx tsx scripts/migrate-docs-to-blob.ts [--dry-run]` | belge **object storage backfill** (mevcut base64-in-DB → Vercel Blob; idempotent; `BLOB_READ_WRITE_TOKEN`+`DATA_ENCRYPTION_KEK` gerekir) |
+| `npx tsx scripts/fix-congress-duplicates.ts [--prod] [--yaz]` | kongre **çift-kayıt göçü** (v6.75: kimlikleri branşsıza taşır + aynı ada inen kümeleri birleştirir + CongressFollow'u kalan satıra taşır; idempotent, dry-run varsayılan; prod'da koşuldu 2026-08-04: 101 kimlik + 1 birleşme) |
+| `npx tsx scripts/probe-plaintext-count.ts` | şifreleme kapsamı **salt-okur sayım** (v6.76: encrypt-existing kapsamındaki kolonlarda düz-metin kalanlar + demo/gerçek sahip ayrımı; `PROD_DATABASE_URL` açıkça şart, KEK İSTEMEZ — PHI/e-posta basmaz) |
 
 ## Roller & Giriş
 
