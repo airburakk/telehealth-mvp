@@ -5,8 +5,9 @@
 //   • Prod YALNIZ --prod + ayrı PROD_DATABASE_URL env'i; --prod'suz DATABASE_URL prod
 //     parmak izine uyuyorsa DURUR.
 //   • Şifre YALNIZ ADMIN_PASSWORD env'inden okunur — argüman/çıktı olarak ASLA geçmez/basılmaz
-//     (shell history + log sızıntısı). Prod'da zorunlu + en az 12 karakter; dev'de verilmezse
-//     demo deseni "1234" (uyarıyla).
+//     (shell history + log sızıntısı). Yalnız YENİ hesap oluştururken gerekir: prod'da zorunlu +
+//     en az 12 karakter; dev'de verilmezse demo deseni "1234" (uyarıyla). --promote şifre İSTEMEZ
+//     (şifreye dokunmaz; kontrol bilinçli olarak promote dalından SONRA koşar).
 //   • E-posta ZATEN KAYITLIYSA rol sessizce yükseltilmez (yanlış e-postaya yetki kazası) —
 //     mevcut rol raporlanır ve durulur; bilinçli yükseltme için --promote şart (şifreye dokunmaz).
 //   • emailVerifiedAt damgalanır: e-posta kapısı üretimde zorunlu (v6.61) — elle provizyonlanan
@@ -15,7 +16,7 @@
 // Kullanım:
 //   npx tsx scripts/create-admin.ts --email admin@air.test              → DEV (ADMIN_PASSWORD yoksa "1234")
 //   ADMIN_PASSWORD='...' npx tsx scripts/create-admin.ts --prod --email siz@ornek.com
-//   ADMIN_PASSWORD boş + --prod → durur. Rol yükseltme: ... --email x --promote
+//   ADMIN_PASSWORD boş + --prod → yeni hesapta durur. Rol yükseltme: ... --email x --promote (şifresiz çalışır)
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 
@@ -49,17 +50,6 @@ async function main() {
     console.log("🎯 HEDEF: DEV");
   }
 
-  let password = process.env.ADMIN_PASSWORD ?? "";
-  if (PROD) {
-    if (password.length < 12) {
-      console.error("⛔ Üretimde ADMIN_PASSWORD zorunlu ve en az 12 karakter olmalı (env ile verin).");
-      process.exit(1);
-    }
-  } else if (!password) {
-    password = "1234";
-    console.log("⚠️ ADMIN_PASSWORD verilmedi — dev demo şifresi kullanılıyor (1234).");
-  }
-
   // Dinamik import: db.ts env'i modül yüklenirken okur (yukarıdaki ayarlar önce bitmeli).
   const { db } = await import("../src/lib/db");
 
@@ -79,6 +69,19 @@ async function main() {
     await db.user.update({ where: { id: existing.id }, data: { role: "ADMIN" } });
     console.log(`✅ ${email} rolü ${existing.role} → ADMIN yükseltildi (şifre değişmedi).`);
     return;
+  }
+
+  // Şifre yalnız yeni-hesap yolunda gerekir — kontrol BİLİNÇLİ olarak existing/--promote dalından
+  // SONRA koşar: promote şifreye dokunmaz, prod'da yükseltme yaparken dolgu şifre istenmemeli.
+  let password = process.env.ADMIN_PASSWORD ?? "";
+  if (PROD) {
+    if (password.length < 12) {
+      console.error("⛔ Üretimde ADMIN_PASSWORD zorunlu ve en az 12 karakter olmalı (env ile verin).");
+      process.exit(1);
+    }
+  } else if (!password) {
+    password = "1234";
+    console.log("⚠️ ADMIN_PASSWORD verilmedi — dev demo şifresi kullanılıyor (1234).");
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
