@@ -4,8 +4,8 @@ import { loginAs, contextAs, expectNotVisible } from "./helpers";
 // AKIŞ 1 — Hasta triyaj → vaka → doktor kokpit → görüşme odası.
 //
 // Kapsam (deterministik):
-//   1) Hasta: ön-konsültasyon ödeme kapısı (demo kart ödemesi) → triyaj sihirbazı
-//      (Hasta → Şikayet → Branş Soruları → Belgeler → Özet) → "Başvuruyu oluştur" → sonuç sayfası.
+//   1) Hasta: ön-konsültasyon ödeme kapısı (demo kart ödemesi) → triyaj sihirbazı (3 adım:
+//      Hasta+Şikayet → Branş Soruları → Belgeler&Gönder) → "Başvuruyu oluştur" → sonuç sayfası.
 //   2) Doktor: yeni izole context → doktor kokpit (Vaka Kuyruğu) → vakayı ada göre bul →
 //      vaka detayı → "Görüşmeyi Başlat" → görüşme odasının (PreConsultLobby) RENDER'ı.
 //
@@ -64,18 +64,15 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
   });
 
   // ── 3) HASTA: triyaj sihirbazı (5 adım) ──
-  await test.step("Adım 0 — Hasta: ad girilir", async () => {
+  await test.step("Adım 0 — Hasta+Şikayet (birleşik ekran): ad + semptom girilir", async () => {
+    // Sihirbaz 3 adımlıdır (step 0/1/2); ad ve semptom AYNI ekrandadır — next() ikisini birlikte
+    // doğrular, "Devam" runAnalyze()'ı tetikler (AI branş belirleme, yavaş olabilir).
     await page.getByPlaceholder("Örn. Karim B.").fill(patientName);
-    await page.getByRole("button", { name: /^Devam$/ }).click();
-  });
-
-  await test.step("Adım 1 — Şikayet: semptom girilir (AI ön analizi tetiklenir)", async () => {
     await page.getByPlaceholder(/Örn\. Babamda akciğer kanseri şüphesi/).fill(symptomText);
-    // "Devam" → next() runAnalyze() çağırır (AI branş belirleme, yavaş olabilir).
     await page.getByRole("button", { name: /^Devam$/ }).click();
   });
 
-  await test.step("Adım 2 — Branş Soruları: AI branş belirlemesini bekle, ilerle", async () => {
+  await test.step("Adım 1 — Branş Soruları: AI branş belirlemesini bekle, ilerle", async () => {
     // Branş yönlendirmesi (AI/kural) tamamlanınca "Yönlendirilen branş" kartı belirir → cömert timeout.
     // AI yavaşsa/atlanırsa spinner metni ("AI sizi doğru branşa yönlendiriyor…") görünebilir; branş
     // gelene kadar bekle. Branş kartını doğrulamak zorunlu değil; asıl amaç akışın ilerlemesi.
@@ -83,23 +80,24 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
     await page.getByRole("button", { name: /^Devam$/ }).click();
   });
 
-  await test.step("Adım 3 — Belgeler: opsiyonel adım atlanır", async () => {
-    // Belge yüklemek opsiyonel → doğrudan ilerle (dosya yükleme kırılganlığından kaçın).
-    await expect(page.getByText("Belge yüklemek opsiyoneldir; bu adımı atlayabilirsiniz.")).toBeVisible();
-    await page.getByRole("button", { name: /^Devam$/ }).click();
-  });
-
-  await test.step("Adım 4 — Özet: vaka oluşturulur", async () => {
-    // Özet adımı Özet'e geçerken tekrar runAnalyze çağırır (analyzing spinner olabilir).
-    // "Başvuruyu oluştur" butonu görünür olmalı; eksik zorunlu belge onayı bu senaryoda gerekmez
-    // (belge işaretlenmedi → missingRequired branşa göre değişebilir).
-    const createBtn = page.getByRole("button", { name: "Başvuruyu oluştur" });
-    await expect(createBtn).toBeVisible({ timeout: 45_000 });
-    // LIVE-ITERATE: bazı branşlarda zorunlu belge (*) işaretlenmediğinde buton disabled kalır ve
-    // "Bu belgeleri görüşmeden önce ileteceğimi onaylıyorum." onayı gerekir. Gerekirse önce onayla:
-    if (await createBtn.isDisabled()) {
-      await page.getByText("Bu belgeleri görüşmeden önce ileteceğimi onaylıyorum.").click();
+  await test.step("Adım 2 — Belgeler & Gönder: zorunlu kalemler beyanla işaretlenir, vaka oluşturulur", async () => {
+    // Son adım (eski Belgeler+Özet birleşimi). Dosya YÜKLENMEZ (kırılganlık); bunun yerine branşın
+    // gerekli-belge kalemleri BEYAN checkbox'larıyla işaretlenir → missingRequired boşalır. Bu şart:
+    // eksik zorunlu belgeyle (docAck yolu) oluşan aciliyet ≤3 vaka DOCS_PENDING olur ve doktor
+    // kuyruğuna HİÇ düşmez (v6.35) → testin doktor yarısı kör kalırdı. İşaretleme NEW'i garantiler.
+    await expect(page.getByText("Belge yüklemek opsiyoneldir.")).toBeVisible({ timeout: 15_000 });
+    // Kalem sayısı/adı AI'ın seçtiği branşa göre değişir → ada bağlanılmaz; işaretsiz kutu
+    // kalmayana dek hepsi işaretlenir. (Amber "Eksik belgeleriniz var" paneli + docAck kutusu,
+    // kalemler tamamlanınca DOM'dan düşer — bu yüzden her turda taze locator + sessiz retry.)
+    for (let tur = 0; tur < 12; tur++) {
+      const kutu = page.locator('input[type="checkbox"]:not(:checked)').first();
+      if (!(await kutu.isVisible().catch(() => false))) break;
+      await kutu.check().catch(() => {}); // panel kalkarken detach olabilir → sonraki tur tazeler
     }
+    // NEW garantisinin kanıtı: eksik-belge paneli yok (zorunlu kalemi olmayan branşta zaten çıkmaz).
+    await expect(page.getByText("Eksik belgeleriniz var")).toBeHidden();
+    const createBtn = page.getByRole("button", { name: "Başvuruyu oluştur" });
+    await expect(createBtn).toBeEnabled({ timeout: 15_000 });
     await createBtn.click();
   });
 
@@ -108,16 +106,17 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
   // (cuid harf+rakam karışık, 10+ ardışık rakam içermez) → hem gate hem gate-siz görünümde deterministik.
   let caseRefToken = "";
 
-  await test.step("Sonuç: vaka oluştu → /triyaj/[id] + locale-bağımsız vaka-ref çıpası", async () => {
-    // submit() başarıda router.push(`/triyaj/${id}`) → sonuç sayfası.
-    await page.waitForURL(/\/triyaj\/[^/]+$/, { timeout: 30_000 });
+  await test.step("Sonuç: vaka oluştu → /vaka/[id] hub'ı + locale-bağımsız vaka-ref çıpası", async () => {
+    // submit() başarıda router.push(`/vaka/${id}`) → tek vaka merkezi (Faz 6; eski /triyaj/[id]
+    // sonuç-sayfası varsayımı bayattı).
+    await page.waitForURL(/\/vaka\/[^/]+$/, { timeout: 30_000 });
     const caseId = new URL(page.url()).pathname.split("/").pop() ?? "";
     expect(caseId.length).toBeGreaterThan(8); // cuid → id gerçekten oluştu
     caseRefToken = caseId.slice(0, 8).toUpperCase();
 
-    // Sonuç sayfası HASTA DİLİNDE (Arapça) render olur ve branşta çevrimiçi doktor yoksa "Başvurunuz
-    // oluşturuldu" başlığı yerine 3-seçenek YÖNLENDİRME kapısı (ConsultGate) çıkar. Bu yüzden ÇEVRİLEBİLİR
-    // /DURUMA-BAĞLI başlığa DEĞİL, her iki görünümde de basılan (ve çevrilmeyen) vaka-ref KODUNA assert et.
+    // Hub sayfası hasta dilinde render olabilir ve içeriği vaka durumuna göre değişir (ConsultGate
+    // vb.). Bu yüzden ÇEVRİLEBİLİR/DURUMA-BAĞLI başlığa DEĞİL, "Başvuru Özeti" kartının meta'sında
+    // basılan (ve çevrilmeyen) vaka-ref KODUNA assert et (c.id.slice(0,8).toUpperCase() — aynı biçim).
     await expect(page.getByText(caseRefToken, { exact: false }).first()).toBeVisible({ timeout: 15_000 });
     // NOT: Hasta adı sonuç kartında Arapça-bağlamda ("المريض E2E Test …") geçtiği için ada göre değil,
     // yukarıdaki URL + vaka-ref token ile doğrulandı (locale-bağımsız).
@@ -135,6 +134,9 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
   });
 
   await test.step("Yeni vaka doktor kuyruğunda görünür", async () => {
+    // v6.41: "Eşleşen Vakalar" listesi varsayılan KAPALI (collapse) — arama kutusu ancak
+    // "Tüm eşleşen vakaları göster" ile panel açılınca DOM'a gelir.
+    await doctorPage.getByRole("button", { name: /Tüm eşleşen vakaları göster/ }).click();
     // CaseQueue "Hasta ara…" kutusuyla ada göre filtrele (branş eşleşmesine bağlı kalmadan bul).
     // Placeholder TR-sabit (CaseQueue client bileşeni çeviri kullanmaz).
     await doctorPage.getByPlaceholder("Hasta ara…").fill(patientName);
