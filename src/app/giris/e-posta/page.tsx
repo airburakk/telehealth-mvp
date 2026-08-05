@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { isGoogleConfigured } from "@/lib/oauth";
+import { isGoogleConfigured, isAppleConfigured } from "@/lib/oauth";
 import { PatientLoginForm } from "@/components/PatientLoginForm";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ export default function PatientEmailLoginPage() {
     <div className="bg-[var(--c-bg)]">
       <div className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-sm flex-col justify-center px-5 py-10">
         <Suspense fallback={<div className="text-center text-sm text-[var(--c-ink-3)]">Yükleniyor…</div>}>
-          <PatientLoginForm googleEnabled={isGoogleConfigured()} />
+          <PatientLoginForm googleEnabled={isGoogleConfigured()} appleEnabled={isAppleConfigured()} />
         </Suspense>
       </div>
     </div>

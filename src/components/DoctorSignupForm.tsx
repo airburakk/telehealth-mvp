@@ -6,17 +6,15 @@ import { useSearchParams } from "next/navigation";
 import { Loader2, UserPlus, Stethoscope, MailCheck } from "lucide-react";
 import { AuraMark } from "@/components/PortamedLogo";
 import { SocialAuthButtons } from "@/components/social-auth";
+import { oauthBannerMessage } from "@/lib/oauth-banner";
 
 const TITLES = ["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."];
 
-// M5 — Doktor kayıt formu. E-posta kaydı tam çalışır; Google env varsa aktif (yoksa "Yakında");
-// Apple parked ("Yakında" — Apple Developer hesabı gerekir). Başarılı kayıt → /onam → /doktor onboarding.
-export function DoctorSignupForm({ googleEnabled, branches, languages }: { googleEnabled: boolean; branches: string[]; languages: string[] }) {
+// M5 — Doktor kayıt formu. E-posta kaydı tam çalışır; Google/Apple env varsa aktif (yoksa "Yakında").
+// Başarılı kayıt → /onam → /doktor onboarding.
+export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, languages }: { googleEnabled: boolean; appleEnabled: boolean; branches: string[]; languages: string[] }) {
   const sp = useSearchParams();
-  const oauthMsg =
-    sp.get("oauth") === "unavailable" ? "Google ile giriş henüz yapılandırılmadı (yakında)."
-    : sp.get("oauth") === "error" ? "Google ile giriş tamamlanamadı, lütfen tekrar deneyin."
-    : "";
+  const oauthMsg = oauthBannerMessage(sp.get("oauth"), sp.get("provider"), "giriş");
 
   const [name, setName] = useState("");
   const [title, setTitle] = useState("Uzm. Dr.");
@@ -88,8 +86,8 @@ export function DoctorSignupForm({ googleEnabled, branches, languages }: { googl
       <div className="rounded-[22px] border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6">
         {oauthMsg && <div className="mb-3 rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-300 ring-1 ring-amber-400/25">{oauthMsg}</div>}
 
-        {/* Sosyal kayıt/giriş — intent=doctor: yeni Google hesabı doktor olarak açılır */}
-        <SocialAuthButtons googleEnabled={googleEnabled} intent="doctor" />
+        {/* Sosyal kayıt/giriş — intent=doctor: yeni Google/Apple hesabı doktor olarak açılır */}
+        <SocialAuthButtons googleEnabled={googleEnabled} appleEnabled={appleEnabled} intent="doctor" />
 
         <div className="my-4 flex items-center gap-3 text-xs text-[var(--c-ink-3)]">
           <span className="h-px flex-1 bg-[var(--c-ink)]/10" /> veya e-posta ile <span className="h-px flex-1 bg-[var(--c-ink)]/10" />

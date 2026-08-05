@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Loader2, LogIn, type LucideIcon } from "lucide-react";
 import { AuraMark } from "@/components/PortamedLogo";
+import { oauthBannerMessage } from "@/lib/oauth-banner";
 
 // Genel e-posta/şifre giriş formu — hasta (/giris) ve kurumsal (/kurumsal-giris) ekranları
 // tarafından farklı başlık/demo/sosyal bloklarla kullanılır. `next` param davranışı korunur:
@@ -38,10 +39,7 @@ export function LoginForm({
 }) {
   const sp = useSearchParams();
   const next = sp.get("next");
-  const oauthMsg =
-    sp.get("oauth") === "unavailable" ? "Google ile giriş henüz yapılandırılmadı (yakında)."
-    : sp.get("oauth") === "error" ? "Google ile giriş tamamlanamadı, lütfen tekrar deneyin."
-    : "";
+  const oauthMsg = oauthBannerMessage(sp.get("oauth"), sp.get("provider"), "giriş");
   // E-posta doğrulama bağlantısından dönüş banner'ı (v5.6): /api/auth/verify-email ?verify= ile yönlendirir.
   const verifyMsg =
     sp.get("verify") === "ok" ? "E-posta adresiniz doğrulandı — şimdi giriş yapabilirsiniz."

@@ -96,6 +96,10 @@ export async function deleteAccount(actor: SessionUser, ip?: string | null, user
         emailVerifiedAt: null,
         emailVerifyTokenHash: null,
         emailVerifySentAt: null,
+        // Apple bağı KOPARILIR (v6.82). E-posta tombstone'a çevrildiği için Google girişi zaten
+        // silinmiş kabuğu bulamaz; appleSub ise KALICI bir kimlik → temizlenmezse kullanıcı "Apple
+        // ile devam et" dediğinde sub eşleşir ve silinmiş hesaba oturum açılırdı (silme geri alınmış olurdu).
+        appleSub: null,
         sessionVersion: { increment: 1 },
       },
     }),

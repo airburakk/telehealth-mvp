@@ -5,15 +5,15 @@ import { UserRound } from "lucide-react";
 import { LoginForm } from "@/components/LoginForm";
 import { SocialAuthButtons } from "@/components/social-auth";
 
-// Hasta girişi (/giris) — Google (intent=patient, dormant) / Apple ("Yakında") / e-posta girişi +
+// Hasta girişi (/giris) — Google + Apple (intent=patient; env yoksa "Yakında") / e-posta girişi +
 // üye olma. Kurumsal roller /kurumsal-giris'e yönlendirilir; yine de e-posta formu rol-agnostiktir
 // (personel derin linki buraya düşerse kilitlenmez).
-export function PatientLoginForm({ googleEnabled }: { googleEnabled: boolean }) {
+export function PatientLoginForm({ googleEnabled, appleEnabled }: { googleEnabled: boolean; appleEnabled: boolean }) {
   return (
     <LoginForm
       title="Hasta Girişi"
       subtitle="Sağlık yolculuğunuza güvenle devam edin"
-      social={<SocialAuthButtons googleEnabled={googleEnabled} intent="patient" />}
+      social={<SocialAuthButtons googleEnabled={googleEnabled} appleEnabled={appleEnabled} intent="patient" />}
       quick={[{ email: "hasta@air.test", label: "Hasta (demo)", icon: UserRound }]}
       footer={
         <div className="mt-4 space-y-1.5 text-center text-sm text-[var(--c-ink-2)]">

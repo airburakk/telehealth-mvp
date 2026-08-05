@@ -40,6 +40,12 @@ model User {
   emailVerifiedAt      DateTime?
   emailVerifyTokenHash String? // aktif doğrulama token'ının sha256'sı (ham token yalnız e-postadaki bağlantıda)
   emailVerifySentAt    DateTime? // son doğrulama e-postası zamanı (yeniden-gönder soğuması + 24s token TTL tabanı)
+  /// Apple ile Giriş (v6.82) — Apple'ın kalıcı kullanıcı kimliği (ID token `sub`). E-POSTA DEĞİL:
+  /// kullanıcı "E-postamı Gizle"yi seçerse bize @privaterelay.appleid.com adresi gelir ve o adres,
+  /// uygulama Apple ID'den kaldırılıp yeniden bağlanınca DEĞİŞİR → yalnız e-postaya bakan eşleme
+  /// aynı kişiye ikinci hesap açardı. `sub` opaktır, kimlik taşımaz (şifrelenmez — unique index gerekir).
+  /// ⚠️ Hesap silmede NULL'lanır (lib/account-deletion): aksi halde silinmiş kabuk, Apple girişiyle canlanırdı.
+  appleSub             String?   @unique
   // Hesap silme (v6.11 — lib/account-deletion): damgalıysa kişisel alanlar (email/name/patient*) ZATEN
   // boşaltılmış + parola çöpe atılmış + sessionVersion artırılmıştır → giriş imkânsız, kişisel veri gitmiştir.
   // ⚠️ Satır neden hemen SİLİNMİYOR: sakladığımız klinik kayıtların RIZASINI ispat eden ConsentRecord.userId

@@ -1,8 +1,8 @@
 "use client";
 
 // Sosyal giriş/kayıt bloğu — hasta ve doktor ekranlarının ortak parçası.
-// Google: env yapılandırılmışsa aktif (intent'e göre hasta/doktor hesabı açılır), yoksa "Yakında".
-// Apple: park ("Yakında" — Apple Developer hesabı gerekir). Marka ikonları lucide'de yok → inline SVG.
+// Google ve Apple (v6.82) aynı desende: env yapılandırılmışsa aktif (intent'e göre hasta/doktor
+// hesabı açılır), yoksa "Yakında" rozetli devre dışı buton. Marka ikonları lucide'de yok → inline SVG.
 
 export function GoogleIcon({ size = 16 }: { size?: number }) {
   return (
@@ -23,21 +23,60 @@ export function AppleIcon({ size = 16 }: { size?: number }) {
   );
 }
 
-export function SocialAuthButtons({ googleEnabled, intent }: { googleEnabled: boolean; intent: "patient" | "doctor" }) {
+const ACTIVE_CLS =
+  "inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--c-ink)] hover:border-[var(--c-hairline)] hover:text-[var(--c-ink)]";
+const DORMANT_CLS =
+  "inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 px-4 py-2.5 text-sm font-semibold text-[var(--c-ink-3)]";
+
+// Tek sağlayıcı düğmesi. Aktifken anchor (tam sayfa 302 — OAuth akışı fetch'le yürümez),
+// dormant'ta devre dışı buton + "Yakında" rozeti.
+function ProviderButton({
+  enabled, provider, intent, label, icon, dormantIcon, hint,
+}: {
+  enabled: boolean;
+  provider: "google" | "apple";
+  intent: "patient" | "doctor";
+  label: string;
+  icon: React.ReactNode;
+  dormantIcon: React.ReactNode;
+  hint: string;
+}) {
+  if (enabled) {
+    return (
+      <a href={`/api/auth/${provider}/start?intent=${intent}`} className={ACTIVE_CLS}>
+        {icon} {label}
+      </a>
+    );
+  }
+  return (
+    <button type="button" disabled title={hint} className={DORMANT_CLS}>
+      {dormantIcon} {label}{" "}
+      <span className="rounded-full bg-[var(--c-ink)]/10 px-1.5 py-0.5 text-[10px] font-bold uppercase">Yakında</span>
+    </button>
+  );
+}
+
+export function SocialAuthButtons({
+  googleEnabled, appleEnabled, intent,
+}: {
+  googleEnabled: boolean;
+  appleEnabled: boolean;
+  intent: "patient" | "doctor";
+}) {
   return (
     <div className="grid grid-cols-1 gap-2">
-      {googleEnabled ? (
-        <a href={`/api/auth/google/start?intent=${intent}`} className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--c-ink)] hover:border-[var(--c-hairline)] hover:text-[var(--c-ink)]">
-          <GoogleIcon /> Google ile devam et
-        </a>
-      ) : (
-        <button type="button" disabled title="Yakında — yapılandırma gerektirir" className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 px-4 py-2.5 text-sm font-semibold text-[var(--c-ink-3)]">
-          <span className="opacity-40"><GoogleIcon /></span> Google ile devam et <span className="rounded-full bg-[var(--c-ink)]/10 px-1.5 py-0.5 text-[10px] font-bold uppercase">Yakında</span>
-        </button>
-      )}
-      <button type="button" disabled title="Yakında — Apple Developer hesabı gerektirir" className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)]/60 px-4 py-2.5 text-sm font-semibold text-[var(--c-ink-3)]">
-        <AppleIcon /> Apple ile devam et <span className="rounded-full bg-[var(--c-ink)]/10 px-1.5 py-0.5 text-[10px] font-bold uppercase">Yakında</span>
-      </button>
+      <ProviderButton
+        enabled={googleEnabled} provider="google" intent={intent} label="Google ile devam et"
+        icon={<GoogleIcon />}
+        dormantIcon={<span className="opacity-40"><GoogleIcon /></span>} // çok renkli ikon dormant'ta soluklaşır
+        hint="Yakında — yapılandırma gerektirir"
+      />
+      <ProviderButton
+        enabled={appleEnabled} provider="apple" intent={intent} label="Apple ile devam et"
+        icon={<AppleIcon />}
+        dormantIcon={<AppleIcon />} // currentColor: metinle birlikte zaten soluk
+        hint="Yakında — Apple Developer hesabı gerektirir"
+      />
     </div>
   );
 }

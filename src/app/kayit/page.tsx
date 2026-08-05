@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { isGoogleConfigured } from "@/lib/oauth";
+import { isGoogleConfigured, isAppleConfigured } from "@/lib/oauth";
 import { BRANCH_LABELS } from "@/lib/procedures";
 import { LANGUAGES } from "@/lib/constants";
 import { DoctorSignupForm } from "@/components/DoctorSignupForm";
@@ -14,7 +14,7 @@ export default function SignupPage() {
   return (
     <div className="grid min-h-[calc(100vh-8rem)] place-items-center bg-[var(--c-bg)] px-5 py-10">
       <Suspense fallback={<div className="text-sm text-[var(--c-ink-3)]">Yükleniyor…</div>}>
-        <DoctorSignupForm googleEnabled={isGoogleConfigured()} branches={branches} languages={[...LANGUAGES]} />
+        <DoctorSignupForm googleEnabled={isGoogleConfigured()} appleEnabled={isAppleConfigured()} branches={branches} languages={[...LANGUAGES]} />
       </Suspense>
     </div>
   );

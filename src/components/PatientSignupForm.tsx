@@ -6,15 +6,13 @@ import { useSearchParams } from "next/navigation";
 import { Loader2, UserPlus, HeartPulse, MailCheck } from "lucide-react";
 import { AuraMark } from "@/components/PortamedLogo";
 import { SocialAuthButtons } from "@/components/social-auth";
+import { oauthBannerMessage } from "@/lib/oauth-banner";
 
-// Hasta üyelik formu (/kayit/hasta) — Google (intent=patient, dormant) / Apple ("Yakında") /
+// Hasta üyelik formu (/kayit/hasta) — Google + Apple (intent=patient; env yoksa "Yakında") /
 // e-posta kaydı. Başarılı kayıt → /onam (KVKK) → hasta ana akışı.
-export function PatientSignupForm({ googleEnabled }: { googleEnabled: boolean }) {
+export function PatientSignupForm({ googleEnabled, appleEnabled }: { googleEnabled: boolean; appleEnabled: boolean }) {
   const sp = useSearchParams();
-  const oauthMsg =
-    sp.get("oauth") === "unavailable" ? "Google ile kayıt henüz yapılandırılmadı (yakında)."
-    : sp.get("oauth") === "error" ? "Google ile kayıt tamamlanamadı, lütfen tekrar deneyin."
-    : "";
+  const oauthMsg = oauthBannerMessage(sp.get("oauth"), sp.get("provider"), "kayıt");
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -76,7 +74,7 @@ export function PatientSignupForm({ googleEnabled }: { googleEnabled: boolean })
       <div className="rounded-[22px] border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6">
         {oauthMsg && <div className="mb-3 rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-300 ring-1 ring-amber-400/25">{oauthMsg}</div>}
 
-        <SocialAuthButtons googleEnabled={googleEnabled} intent="patient" />
+        <SocialAuthButtons googleEnabled={googleEnabled} appleEnabled={appleEnabled} intent="patient" />
 
         <div className="my-4 flex items-center gap-3 text-xs text-[var(--c-ink-3)]">
           <span className="h-px flex-1 bg-[var(--c-ink)]/10" /> veya e-posta ile <span className="h-px flex-1 bg-[var(--c-ink)]/10" />
