@@ -560,6 +560,9 @@ model Complaint {
   subject     String
   description String
   requestType String // REFUND, DOCTOR_CHANGE, HOSPITAL_CHANGE, OTHER
+  // Hastanın bildirdiği ilgili/karşı taraf (v6.79) — kurulun savunma/bilgi talebi bu tarafa
+  // yönlenir (lib/system-messages resolveDefenseTarget). Kurul kimlik DEĞİL yalnız tipi görür.
+  respondentType String? // DOCTOR | AGENCY | HOSPITAL | OTHER
   evidence    String?
   status      String    @default("PENDING") // PENDING, RESOLVED
   // Kurul kararı
@@ -605,6 +608,31 @@ model Notification {
 
   @@index([role, readAt])
   @@index([userId, readAt])
+}
+
+/// Sistem mesajı (v6.79) — bildirimden farkı: İÇERİKLİ ve iş-akışına bağlı (talep→yanıt),
+/// header menüsünde kendi bölümü + /mesajlar sayfası var. İlk kullanım: etik kurulun karşı
+/// taraftan savunma/bilgi talebi (kind=DEFENSE_REQUEST). Hedefleme Notification ile aynı:
+/// rol yayını (role) VEYA kişisel (userId). body/reply at-rest ŞİFRELİ (encryptField) —
+/// subject düz metindir, bu yüzden SABİT ŞABLON + maskCaseId taşır, serbest metin girmez.
+model SystemMessage {
+  id              String    @id @default(cuid())
+  role            String? // hedef rol yayını: COORDINATOR, AGENCY, ...
+  userId          String? // kişisel hedef (ör. atanmış doktorun kullanıcı hesabı)
+  kind            String // DEFENSE_REQUEST (ileride: ANNOUNCE vb.)
+  subject         String // düz — sabit şablon + maskCaseId (PHI/serbest metin YASAK)
+  body            String // ŞİFRELİ — talep metni (decryptField ile okunur)
+  threadKey       String? // süreç bağı, ör. "complaint:<id>" — kilit/geçmiş sorguları bununla
+  needsReply      Boolean   @default(false)
+  reply           String? // ŞİFRELİ — karşı tarafın tek yanıtı
+  repliedAt       DateTime?
+  repliedByUserId String? // yanıtlayan hesap — kurul yüzüne ASLA çıkmaz (anonimlik)
+  readAt          DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([role, readAt])
+  @@index([userId, readAt])
+  @@index([threadKey]) // defenseLockState + kurul paneli geçmişi
 }
 
 /// Arayüz çeviri önbelleği — TR kaynak metin → hedef dil (Claude ile bir kez çevrilir, sonsuza dek cache)

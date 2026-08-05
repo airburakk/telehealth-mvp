@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { notifyRoles } from "@/lib/notify";
 import { isCurrentUserCasePatient } from "@/lib/ownership";
+import { RESPONDENT_TYPES } from "@/lib/ethics";
 
 // POST /api/cases/:id/complaint — Etik Kurul'a başvuru oluştur
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -18,6 +19,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!subject || !description) {
     return NextResponse.json({ error: "Konu ve açıklama zorunludur." }, { status: 400 });
   }
+  // İlgili/karşı taraf ZORUNLU (v6.79) — kurulun savunma/bilgi talebi bu tarafa yönlenir.
+  const respondentType = String(b.respondentType ?? "");
+  if (!Object.keys(RESPONDENT_TYPES).includes(respondentType)) {
+    return NextResponse.json({ error: "İlgili/karşı taraf seçimi zorunludur." }, { status: 400 });
+  }
 
   const latestBooking = await db.booking.findFirst({ where: { caseId: c.id }, orderBy: { createdAt: "desc" } });
 
@@ -28,6 +34,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       subject,
       description,
       requestType: ["REFUND", "DOCTOR_CHANGE", "HOSPITAL_CHANGE", "OTHER"].includes(b.requestType) ? b.requestType : "OTHER",
+      respondentType,
       evidence: b.evidence ? String(b.evidence) : null,
     },
   });

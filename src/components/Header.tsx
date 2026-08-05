@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
+import { SystemMessagesMenuItem } from "@/components/SystemMessagesMenuItem";
 import { PortamedLogo } from "@/components/PortamedLogo";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/components/useT";
@@ -33,6 +34,8 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
   // Zil menüye taşındı (2026-08-01, 2. tur) — okunmamış sayı avatar rozetinde yaşar
   // (NotificationBell onUnreadChange ile yukarı bildirir; bell menüde HEP mount kalır).
   const [unreadCount, setUnreadCount] = useState(0);
+  // Sistem mesajları (v6.79) — ayrı okunmamış sayaç; avatar rozeti İKİSİNİN TOPLAMINI gösterir.
+  const [msgUnread, setMsgUnread] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Dış tıklamada kapat (NotificationBell deseni).
@@ -155,9 +158,9 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
                   className="relative grid h-9 w-9 place-items-center rounded-full bg-[var(--c-accent)]/15 text-[12px] font-bold text-[var(--c-accent)] transition-colors duration-200 hover:bg-[var(--c-accent)]/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]"
                 >
                   {initials}
-                  {unreadCount > 0 && (
+                  {unreadCount + msgUnread > 0 && (
                     <span className="absolute -end-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
-                      {unreadCount > 9 ? "9+" : unreadCount}
+                      {unreadCount + msgUnread > 9 ? "9+" : unreadCount + msgUnread}
                     </span>
                   )}
                 </button>
@@ -169,6 +172,8 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
                   </div>
                   <div className="mt-1">
                     <NotificationBell lang={lang} patientLangFallback={user.role === "PATIENT"} variant="menu-item" onUnreadChange={setUnreadCount} />
+                    {/* Sistem mesajları (v6.79) — bildirimlerin hemen altı (kullanıcı kararı); satır /mesajlar'a gider */}
+                    <SystemMessagesMenuItem onUnreadChange={setMsgUnread} onNavigate={() => setMenuOpen(false)} />
                   </div>
                   {/* Profilim + Finans (2026-08-01, kullanıcı kararı, 2. tur): Profilim nav
                       bandından buraya taşındı; Finans artık profil çapası değil AYRI SAYFA. */}

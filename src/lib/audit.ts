@@ -30,7 +30,9 @@ export type AuditAction =
   | "IMPERSONATE_END" // MASTER bürünmeyi bitirdi (kendi kimliğine döndü)
   | "ACCOUNT_DELETE" // hasta hesabını sildi → kişisel veri silindi, klinik kayıt kilitlendi + imha tarihi damgalandı (v6.11)
   | "DELETION_ACCESS_DENIED" // hesap-silme kilidindeki kayda erişim denemesi reddedildi (kilit kanıtı)
-  | "RECORD_PURGE"; // saklama süresi doldu → klinik kayıt fiziken imha edildi (cron; v6.11)
+  | "RECORD_PURGE" // saklama süresi doldu → klinik kayıt fiziken imha edildi (cron; v6.11)
+  | "DEFENSE_REQUEST" // etik kurul karşı taraftan savunma/bilgi talep etti (detail: respondentType; içerik YOK — v6.79)
+  | "DEFENSE_REPLY"; // karşı taraf savunma talebine yanıt verdi (yanıt içeriği audit'e YAZILMAZ — v6.79)
 
 interface RecordInput {
   actor: SessionUser | null;

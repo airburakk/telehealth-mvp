@@ -2,12 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { decryptField } from "@/lib/crypto"; // triyaj semptom/gerekçe at-rest şifreli (E2EE Faz 1 inc.2) → çöz
-import { maskCaseId, REQUEST_TYPES, VERDICTS, ACTIONS, ESCROW_STATUS } from "@/lib/ethics";
+import { decryptField } from "@/lib/crypto"; // triyaj semptomu + savunma gövde/yanıtı at-rest şifreli → çöz
+import { maskCaseId, REQUEST_TYPES, RESPONDENT_TYPES, VERDICTS, ACTIONS, ESCROW_STATUS, DEFENSE_LOCK_DAYS } from "@/lib/ethics";
+import { computeDefenseLock } from "@/lib/system-messages";
 import { formatUSD } from "@/lib/pricing";
-import { urgencyStyle, formatDateTime } from "@/lib/constants";
+import { formatDateTime } from "@/lib/constants";
 import { DecisionForm } from "@/components/DecisionForm";
-import { ArrowLeft, Scale, FileText, Sparkles, Lock, Gavel, ShieldCheck, EyeOff } from "lucide-react";
+import { DefensePanel, type DefenseRequestView } from "@/components/DefensePanel";
+import { ArrowLeft, Scale, FileText, Lock, Gavel, ShieldCheck, EyeOff } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +17,7 @@ const ETHICS_ROLES = ["ETHICS", "ADMIN"];
 
 export default async function ComplaintDetail({ params }: { params: Promise<{ id: string }> }) {
   // Derinlemesine savunma (2026-07-12): proxy TOKEN roluyle korur; bu detay şikayet + ÇÖZÜLMÜŞ triyaj
-  // semptom/gerekçesini (decryptField) gösterdiğinden getCurrentUser (DB-rol otoriter) kapısı ŞART.
+  // semptomunu (decryptField) gösterdiğinden getCurrentUser (DB-rol otoriter) kapısı ŞART.
   // Yetkisiz → notFound (varlık sızdırmaz; detay-sayfa deseni doktor/vaka/[id] ile aynı).
   const user = await getCurrentUser();
   if (!user || !ETHICS_ROLES.includes(user.role)) notFound();
@@ -25,9 +27,27 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
   if (!c) notFound();
   const booking = c.bookingId ? await db.booking.findUnique({ where: { id: c.bookingId } }) : null;
 
-  const u = urgencyStyle(c.case.urgency);
   const resolved = c.status === "RESOLVED";
   const esc = booking ? ESCROW_STATUS[booking.escrowStatus] ?? ESCROW_STATUS.HELD : null;
+
+  // Savunma/bilgi talepleri (v6.79): şifreli gövde/yanıt SUNUCUDA çözülür; repliedByUserId
+  // BİLİNÇLİ seçilmez — kurul yanıtlayanın kimliğini hiçbir katmanda görmez (anonimlik).
+  const defenseRows = await db.systemMessage.findMany({
+    where: { threadKey: `complaint:${c.id}`, kind: "DEFENSE_REQUEST" },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, body: true, reply: true, createdAt: true, repliedAt: true, needsReply: true },
+  });
+  const horizonMs = DEFENSE_LOCK_DAYS * 24 * 60 * 60 * 1000;
+  const defenseRequests: DefenseRequestView[] = defenseRows.map((r) => ({
+    id: r.id,
+    body: decryptField(r.body),
+    reply: decryptField(r.reply),
+    createdAtText: formatDateTime(r.createdAt),
+    repliedAtText: r.repliedAt ? formatDateTime(r.repliedAt) : null,
+    deadlineText: formatDateTime(new Date(r.createdAt.getTime() + horizonMs)),
+  }));
+  const lock = computeDefenseLock(defenseRows);
+  const respondentLabel = RESPONDENT_TYPES[c.respondentType ?? ""] ?? "İlgili taraf (belirtilmemiş)";
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
@@ -58,21 +78,19 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
             {c.evidence && <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-ink)]/10 px-2.5 py-1 text-xs text-[var(--c-ink-2)]"><FileText size={13} /> {c.evidence}</div>}
           </div>
 
+          {/* Savunma/bilgi talebi (v6.79) — başvuru penceresinin hemen altında (kullanıcı kararı) */}
+          <DefensePanel complaintId={c.id} respondentLabel={respondentLabel} resolved={resolved} requests={defenseRequests} />
+
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
             <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><ShieldCheck size={15} /> Anonim Vaka Verisi</div>
+            {/* Veri minimizasyonu (2026-08-05, kullanıcı kararı): kurul karar için branş + şikayeti
+                görür; triyaj aciliyet bayrağı ve AI gerekçesi (iç değerlendirme çıktısı) gösterilmez. */}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="rounded-lg bg-[var(--c-surface)] px-2.5 py-1 text-sm font-semibold text-[var(--c-ink)] ring-1 ring-white/10">{c.case.branch}</span>
-              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
-                <span className={`h-2 w-2 rounded-full ${u.dot}`} /> Aciliyet {c.case.urgency}/5
-              </span>
             </div>
             <div className="mt-3">
               <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">Şikayet (triyaj)</div>
               <p className="mt-1 text-sm text-[var(--c-ink)]">{decryptField(c.case.symptoms)}</p>
-            </div>
-            <div className="mt-3 rounded-lg bg-[var(--c-accent)]/10 p-3 ring-1 ring-[var(--c-accent)]/20">
-              <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-accent)]"><Sparkles size={13} /> AI gerekçe</div>
-              <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">{decryptField(c.case.reasoning)}</p>
             </div>
           </div>
 
@@ -109,7 +127,7 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
               Bu başvuru karara bağlandı. Yaptırım Escrow üzerinde uygulandı.
             </div>
           ) : (
-            <DecisionForm complaintId={c.id} bookingTotal={booking?.total ?? null} />
+            <DecisionForm complaintId={c.id} bookingTotal={booking?.total ?? null} lockedUntilText={lock.locked && lock.until ? formatDateTime(lock.until) : null} />
           )}
         </aside>
       </div>

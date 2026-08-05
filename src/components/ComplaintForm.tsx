@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { REQUEST_TYPES } from "@/lib/ethics";
+import { REQUEST_TYPES, RESPONDENT_TYPES } from "@/lib/ethics";
 import { Scale, Upload, Loader2, Send, CheckCircle2, ArrowRight } from "lucide-react";
 
 export function ComplaintForm({ caseId }: { caseId: string }) {
   const [subject, setSubject] = useState("");
   const [requestType, setRequestType] = useState("REFUND");
+  // İlgili/karşı taraf (v6.79) — zorunlu, varsayılan SEÇİMSİZ: hasta bilinçli seçsin.
+  const [respondentType, setRespondentType] = useState("");
   const [description, setDescription] = useState("");
   const [evidence, setEvidence] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -20,11 +22,15 @@ export function ComplaintForm({ caseId }: { caseId: string }) {
       setError("Lütfen konu ve açıklamayı doldurun.");
       return;
     }
+    if (!respondentType) {
+      setError("Lütfen başvurunuzun ilgili/karşı tarafını seçin.");
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch(`/api/cases/${caseId}/complaint`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, requestType, description, evidence }),
+        body: JSON.stringify({ subject, requestType, respondentType, description, evidence }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Hata");
       setDone(true);
@@ -76,6 +82,25 @@ export function ComplaintForm({ caseId }: { caseId: string }) {
             {Object.entries(REQUEST_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </label>
+
+        <div>
+          <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink)]">İlgili / karşı taraf</span>
+          <p className="mb-2 text-xs text-[var(--c-ink-3)]">Kurul gerek görürse bu taraftan savunma/bilgi ister; kimliğiniz gibi karşı tarafın kimliği de kurula gösterilmez.</p>
+          {/* Açık kartlar (select değil): kapalı liste "tek seçenek var" izlenimi veriyordu — DecisionForm dersi. */}
+          <div className="grid gap-2 sm:grid-cols-2">
+            {Object.entries(RESPONDENT_TYPES).map(([k, v]) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setRespondentType(k)}
+                aria-pressed={respondentType === k}
+                className={`rounded-lg border px-3 py-2 text-start text-sm font-medium transition ${respondentType === k ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:border-[var(--c-hairline)]"}`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink)]">Açıklama</span>

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { notifyRoles, notifyUser } from "@/lib/notify";
 import { getCurrentUser } from "@/lib/auth";
+import { defenseLockState } from "@/lib/system-messages";
+import { DEFENSE_LOCK_DAYS } from "@/lib/ethics";
 
 // PATCH /api/complaints/:id — Etik Kurul kararı (yaptırım + Escrow tetikleyicisi)
 // Yetki: YALNIZ Etik Kurul (ETHICS) / yönetici — karar Escrow iadesi + rezervasyon iptali tetikler.
@@ -12,6 +14,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!["ETHICS", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Yalnız Etik Kurul karar verebilir." }, { status: 403 });
   const complaint = await db.complaint.findUnique({ where: { id } });
   if (!complaint) return NextResponse.json({ error: "Başvuru bulunamadı." }, { status: 404 });
+
+  // Savunma kilidi (v6.79): açık savunma/bilgi talebi varken karar verilemez — yanıt gelince
+  // VEYA talep tarihinden 3 gün geçince açılır. UI kilidi yetmez; sunucu tarafı da reddeder.
+  const lock = await defenseLockState(id);
+  if (lock.locked) {
+    return NextResponse.json(
+      { error: `Açık savunma/bilgi talebi var — yanıt gelmeden ya da ${DEFENSE_LOCK_DAYS} günlük süre dolmadan karar verilemez.${lock.until ? ` Kilit en geç ${lock.until.toLocaleDateString("tr-TR")} tarihinde açılır.` : ""}` },
+      { status: 409 }
+    );
+  }
 
   const b = await req.json().catch(() => ({}));
   const verdict = ["FAVOR", "PARTIAL", "REJECT"].includes(b.verdict) ? b.verdict : "REJECT";

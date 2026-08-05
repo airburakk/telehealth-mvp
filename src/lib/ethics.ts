@@ -13,6 +13,20 @@ export const REQUEST_TYPES: Record<string, string> = {
   OTHER: "Diğer / şikayet",
 };
 
+// Hastanın bildirdiği ilgili/karşı taraf (v6.79) — kurulun savunma/bilgi talebi bu tarafa
+// yönlenir (lib/system-messages). HOSPITAL/OTHER platformda hesabı olmayan taraflardır →
+// talep koordinatöre düşer (S2 operasyon iletişimi yürütür; kullanıcı kararı 2026-08-05).
+export const RESPONDENT_TYPES: Record<string, string> = {
+  DOCTOR: "Doktor",
+  AGENCY: "Sağlık turizmi acentesi",
+  HOSPITAL: "Hastane yetkilisi",
+  OTHER: "Platform / diğer",
+};
+
+// Savunma talebi karar kilidi (gün): açık talep varken kurul karar VEREMEZ — yanıt gelince
+// VEYA süre dolunca kendiliğinden açılır (zaman-bazlı hesap, cron gerektirmez).
+export const DEFENSE_LOCK_DAYS = 3;
+
 export const VERDICTS: Record<string, { label: string; color: string }> = {
   FAVOR: { label: "Hasta lehine", color: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/25" },
   PARTIAL: { label: "Kısmen kabul", color: "bg-amber-500/15 text-amber-200 ring-amber-400/25" },
