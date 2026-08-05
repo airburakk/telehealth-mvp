@@ -249,6 +249,14 @@ dormant kalır / fallback'e düşer).
   + çevrimdışı şifreli kopya). **Rotasyon aracı VAR (2026-07-17):** `scripts/rotate-kek.ts` — içerik
   çözülmeden yalnız DEK sarımı değişir; dry-run varsayılan, prod için `ALLOW_PROD_KEK_ROTATION=1` şart;
   dev tam-tur provası yapıldı. Adım adım runbook: vault `wiki/yonetisim/sir-envanteri.md` §3.1.
+  **Kurtarma/teşhis aracı VAR (2026-08-05, v6.82):** `scripts/find-kek.ts` — "escrow'daki değer
+  çalışmıyor, hangi aday bu DB'nin anahtarı?" sorusunu yanıtlar; adayları `.env` +`--file`'dan alıp
+  **base64 · hex→base64 · base64url** varyantlarını dener, kanıtı `rewrapEnvelope` ile üretir
+  (**PHI çözülmez**, sır basılmaz), `--run` ile anahtarı aynı süreçte `encrypt-existing`'e devreder.
+  ⚠️ **ÖNCE KODLAMAYI ELE:** `encrypt-existing`'in "yanlış ortamın anahtarı" mesajı iki arızayı
+  ayırt etmez — gerçekten yanlış anahtar **ile** doğru anahtarın yanlış kodlaması (64-hex geçerli
+  32 bayttır, base64 sanılınca 48 bayt → `getKek` throw → aynı catch). 2026-08-05'te bir oturum
+  bu yüzden "escrow bozuk" hükmü verdi; doğru anahtar `.env`'de duruyordu.
   ⚠️ Rotasyon sonrası **eski KEK imha edilmez, arşivlenir** (PITR/yedek restore eski sarımları getirir).
   Aynı disiplin `SESSION_SECRET` ve `TSA_SECRET` için de geçerli.
 - **Gizli anahtar envanteri:** Vercel'deki tüm env değişkenlerinin (KEK/SESSION_SECRET/TSA_SECRET/API

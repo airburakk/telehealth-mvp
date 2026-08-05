@@ -67,6 +67,7 @@ npm run dev                   # http://localhost:3000
 | `npx tsx scripts/migrate-docs-to-blob.ts [--dry-run]` | belge **object storage backfill** (mevcut base64-in-DB → Vercel Blob; idempotent; `BLOB_READ_WRITE_TOKEN`+`DATA_ENCRYPTION_KEK` gerekir) |
 | `npx tsx scripts/fix-congress-duplicates.ts [--prod] [--yaz]` | kongre **çift-kayıt göçü** (v6.75: kimlikleri branşsıza taşır + aynı ada inen kümeleri birleştirir + CongressFollow'u kalan satıra taşır; idempotent, dry-run varsayılan; prod'da koşuldu 2026-08-04: 101 kimlik + 1 birleşme) |
 | `npx tsx scripts/probe-plaintext-count.ts` | şifreleme kapsamı **salt-okur sayım** (v6.76: encrypt-existing kapsamındaki kolonlarda düz-metin kalanlar + demo/gerçek sahip ayrımı; `PROD_DATABASE_URL` açıkça şart, KEK İSTEMEZ — PHI/e-posta basmaz) |
+| `npx tsx scripts/find-kek.ts [--file <aday>] [--run [--apply]]` | **KEK kurtarma/teşhis** (v6.82: "elimdeki hangi değer bu DB'nin anahtarı?" — adayları `.env PROD_DATA_ENCRYPTION_KEK` + isteğe bağlı dosyadan toplar, **base64 · hex→base64 · base64url** varyantlarını dener; kanıt `rewrapEnvelope(s,kek,kek)` ile → **PHI ÇÖZÜLMEZ**, sır BASILMAZ; `--run` anahtarı AYNI süreçte `encrypt-existing`'e devreder → sır terminale kopyalanmaz; `PROD_DATABASE_URL` şart) |
 
 ## Roller & Giriş
 
