@@ -117,11 +117,22 @@ export function appleAuthUrl(state: string, nonce: string, redirectUri: string):
   return `${APPLE_AUTH}?${params.toString()}`;
 }
 
-// .p8 anahtarı env'de tek satıra sıkışır: satır sonları "\n" olarak kaçışlanır. Ayrıca PowerShell
-// pipe'ıyla girilen sırlara \r bulaşabiliyor (proje dersi) → ikisini de burada temizliyoruz,
-// yoksa importPKCS8 "invalid key" atar ve hata token takasında görünür (teşhisi zor).
+// .p8 anahtarını STANDART PEM'e normalize et. Canlı ders (2026-08-06): kullanıcı anahtarı Vercel'e
+// yapıştırdığında satır sonları kayboldu → importPKCS8 'TypeError: "pkcs8" must be PKCS#8 formatted
+// string' attı ve Apple'a hiç ulaşılamadı. Yapıştırma biçimini kullanıcıya dert etmek yerine
+// (find-kek "kodlama varyantı" dersinin PEM karşılığı) her varyantı kabul ediyoruz:
+//   · \n kaçışlı tek satır (eski Vercel önerisi) · gerçek çok satır · CRLF (PowerShell pipe dersi)
+//   · TEK SATIRA inmiş PEM (satır sonları yutulmuş) · BEGIN/END'siz salt base64 gövde · tırnaklı
+// Yöntem: başlık/altlık ve tüm boşlukları at → kalan saf base64 gövdeyi 64'lük satırlarla
+// standart PKCS#8 zarfına yeniden sar. Gövde bozuksa importPKCS8 yine anlamlı hata verir.
 function applePrivateKeyPem(): string {
-  return (process.env.APPLE_PRIVATE_KEY ?? "").replace(/\\n/g, "\n").replace(/\r/g, "").trim();
+  const body = (process.env.APPLE_PRIVATE_KEY ?? "")
+    .replace(/\\n/g, "\n")
+    .replace(/-----(BEGIN|END)[^-]*-----/g, "")
+    .replace(/["']/g, "")
+    .replace(/\s+/g, "");
+  const lines = body.match(/.{1,64}/g)?.join("\n") ?? "";
+  return `-----BEGIN PRIVATE KEY-----\n${lines}\n-----END PRIVATE KEY-----\n`;
 }
 
 // Apple'ın beklediği client_secret: Team ID'nin imzaladığı, Services ID'yi özne yapan kısa ömürlü JWT.

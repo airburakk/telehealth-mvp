@@ -145,6 +145,24 @@ describe("Apple — client secret JWT (ES256)", () => {
     await expect(appleClientSecret()).resolves.toBeTypeOf("string");
   });
 
+  // Canlı ders (2026-08-06): panele yapıştırırken satır sonları YUTULDU → importPKCS8
+  // 'must be PKCS#8 formatted string' attı. Normalizasyon bu üç bozuk biçimi de kabul eder.
+  it("satır sonları tamamen yutulmuş TEK SATIR PEM de çalışır (canlı yapıştırma dersi)", async () => {
+    vi.stubEnv("APPLE_PRIVATE_KEY", privatePem.replace(/\n/g, ""));
+    await expect(appleClientSecret()).resolves.toBeTypeOf("string");
+  });
+
+  it("BEGIN/END'siz salt base64 gövde de çalışır", async () => {
+    const body = privatePem.replace(/-----(BEGIN|END)[^-]*-----/g, "").replace(/\s+/g, "");
+    vi.stubEnv("APPLE_PRIVATE_KEY", body);
+    await expect(appleClientSecret()).resolves.toBeTypeOf("string");
+  });
+
+  it("tırnak içinde yapıştırılmış anahtar da çalışır", async () => {
+    vi.stubEnv("APPLE_PRIVATE_KEY", `"${privatePem}"`);
+    await expect(appleClientSecret()).resolves.toBeTypeOf("string");
+  });
+
   it("isAppleConfigured: dört anahtardan biri eksikse DORMANT", () => {
     expect(isAppleConfigured()).toBe(true);
     vi.stubEnv("APPLE_KEY_ID", "");
