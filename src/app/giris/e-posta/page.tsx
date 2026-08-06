@@ -1,21 +1,22 @@
-import { Suspense } from "react";
-import { isGoogleConfigured, isAppleConfigured } from "@/lib/oauth";
-import { PatientLoginForm } from "@/components/PatientLoginForm";
+import { permanentRedirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-// Hasta e-posta girişi — /giris vitrin kapısının "E-posta ile devam" hedefi
-// (kapı/form ayrımı 2026-07-12; önceden bu form /giris'in kendisiydi).
-// Kurumsal roller (Doktor/Koordinatör/Etik Kurul/Partner) → /kurumsal-giris/e-posta.
-// Girişten sonra hasta doğrudan Branş Doktoru akışına iner (/basla 4'lü seçimi kaldırıldı, 2026-07-12).
-export default function PatientEmailLoginPage() {
-  return (
-    <div className="bg-[var(--c-bg)]">
-      <div className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-sm flex-col justify-center px-5 py-10">
-        <Suspense fallback={<div className="text-center text-sm text-[var(--c-ink-3)]">Yükleniyor…</div>}>
-          <PatientLoginForm googleEnabled={isGoogleConfigured()} appleEnabled={isAppleConfigured()} />
-        </Suspense>
-      </div>
-    </div>
-  );
+// /giris/e-posta KALDIRILDI (2026-08-06, kullanıcı kararı) — kapı/form ayrımı Apple OAuth
+// canlanınca (v6.83) anlamsızlaştı; e-posta formu artık /giris kapısının İÇİNDE açılıyor
+// (auth-gates + GateEmailForm). Bu rota, eskiden dağıtılmış bağlantılar (doğrulama
+// e-postaları, yer imleri, dış siteler) kırılmasın diye parametre koruyarak kapıya yönlendirir.
+// ?verify/?oauth ile gelen ziyaretçide kapı formu OTOMATİK açılır, banner görünür.
+export default async function LegacyPatientEmailLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const keep = new URLSearchParams();
+  for (const [k, v] of Object.entries(sp)) {
+    if (typeof v === "string") keep.set(k, v);
+  }
+  const q = keep.toString();
+  permanentRedirect(q ? `/giris?${q}` : "/giris");
 }

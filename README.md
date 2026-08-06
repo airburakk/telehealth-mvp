@@ -72,17 +72,18 @@ npm run dev                   # http://localhost:3000
 ## Roller & Giriş
 
 Giriş **iki ekrana ayrıdır** (v4.21): **`/giris` = Hasta Girişi** · **`/kurumsal-giris`** =
-Doktor/Koordinatör/Etik Kurul/Partner/**Sağlık Turizmi Acentesi**. **Kapı/form ayrımı (v5.9.1):**
-`/giris` ve `/kurumsal-giris` artık vitrin **AURA giriş kapılarıdır** (letterform panel + yan video;
-`components/aura/auth-gates.tsx`) — Google doğrudan OAuth'a, Apple/E-posta ise **çalışan formlara**
-(`/giris/e-posta` hasta = Google `intent=patient` [env-gated] / Apple [yakında] / e-posta,
-üyelik **`/kayit/hasta`** → `POST /api/auth/signup-patient`, `lib/patient-signup`; `/kurumsal-giris/e-posta`
-= personel/acente demoları) götürür. Kapılar `?next`/`?verify`/`?oauth` parametrelerini forma iletir;
-Header/SiteFooter kromu kapılarda gizli. Doktorlar
-**`/kayit`** ile kendileri kayıt olabilir (Google [env-gated] / Apple [yakında] / e-posta; Google
-niyeti `g_oauth_intent` cookie'siyle taşınır — mevcut kullanıcıda yok sayılır). Giriş sonrası tek
-seferlik KVKK onam kapısı (`/onam`) vardır (sürümlü; `lib/consent-config.CONSENT_VERSION` artarsa
-bir kez yeniden alınır).
+Doktor/Koordinatör/Etik Kurul/Partner/**Sağlık Turizmi Acentesi**. İkisi de vitrin **AURA giriş
+kapılarıdır** (letterform panel + yan video; `components/aura/auth-gates.tsx`). **Kapı-içi form
+(v6.84, 2026-08-06 — v5.9.1 kapı/form ayrımı SÜPERSEDE):** Google ve Apple butonları **doğrudan
+OAuth** başlatır (`/api/auth/{google,apple}/start?intent=patient|doctor`); "E-posta ile devam et"
+formu **kapının içinde açar** (`components/aura/gate-email-form.tsx` — giriş + doğrulama
+yeniden-gönder + demo hızlı-giriş kilidi + üye ol linki). Eski `/giris/e-posta` ve
+`/kurumsal-giris/e-posta` rotaları **kalıcı yönlendirmedir** (parametre koruyarak kapıya). OAuth
+hata/`?verify` dönüşleri kapıya düşer ve formu otomatik açar. Hasta üyeliği **`/kayit/hasta`** →
+`POST /api/auth/signup-patient` (`lib/patient-signup`); doktorlar **`/kayit`** ile kendileri kayıt
+olabilir (Google/Apple [env-gated] / e-posta; OAuth niyeti `g_oauth_intent`/`a_oauth_intent`
+cookie'siyle taşınır — mevcut kullanıcıda yok sayılır). Giriş sonrası tek seferlik KVKK onam kapısı
+(`/onam`) vardır (sürümlü; `lib/consent-config.CONSENT_VERSION` artarsa bir kez yeniden alınır).
 
 **Hasta akışı (v5.8 basitleştirme):** `/basla` 4'lü seçim ekranı KALDIRILDI — giriş hunisi doğrudan
 **Branş Doktoru akışına** (`/triyaj`) iner; **dönen hasta** (başvurusu olan) girişte **vaka merkezine**
@@ -232,7 +233,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 
 | Rota | Açıklama |
 |------|----------|
-| `/` · `/giris` · `/giris/e-posta` · `/kurumsal-giris` · `/kurumsal-giris/e-posta` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | **AURA sinematik landing** (v5.9 — vitrinden taşındı: hero video+letterform, 4 chapter destesi, gsap+lenis; 9 dil statik `lib/aura-landing/copy.ts`, dil anahtarı `air_lang`). **Bölüm akışı (v6.8):** hero → chapters → nasıl çalışır (+AI sorumluluk notu) → doktorlar → **güven (6 ürün-kanıtlanabilir kart)** → kapanış; eski *Şeffaflık* bölümü v6.8'de Güven'e birleştirildi (`transparency.tsx` kaldırıldı — aynı iddiayı iki kez veriyordu). İddia kuralları: aşağıda "Vitrin iddia dürüstlüğü (v6.8)" · **SEO (v5.9.2):** canonical + OpenGraph/Twitter kart + 9-dil `og:locale:alternate` (tek URL — `lib/aura-landing/seo.ts`) + JSON-LD MedicalOrganization/WebSite · **hasta giriş kapısı** + **`/giris/e-posta` çalışan form** · **kurumsal giriş kapısı** (noindex) + **`/kurumsal-giris/e-posta` form** (v5.9.1 kapı/form ayrımı — kapılar `components/aura/auth-gates.tsx`) · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
+| `/` · `/giris` · `/giris/e-posta` · `/kurumsal-giris` · `/kurumsal-giris/e-posta` · `/kayit` · `/kayit/hasta` · `/onam` (+`/onam/kanit`) | **AURA sinematik landing** (v5.9 — vitrinden taşındı: hero video+letterform, 4 chapter destesi, gsap+lenis; 9 dil statik `lib/aura-landing/copy.ts`, dil anahtarı `air_lang`). **Bölüm akışı (v6.8):** hero → chapters → nasıl çalışır (+AI sorumluluk notu) → doktorlar → **güven (6 ürün-kanıtlanabilir kart)** → kapanış; eski *Şeffaflık* bölümü v6.8'de Güven'e birleştirildi (`transparency.tsx` kaldırıldı — aynı iddiayı iki kez veriyordu). İddia kuralları: aşağıda "Vitrin iddia dürüstlüğü (v6.8)" · **SEO (v5.9.2):** canonical + OpenGraph/Twitter kart + 9-dil `og:locale:alternate` (tek URL — `lib/aura-landing/seo.ts`) + JSON-LD MedicalOrganization/WebSite · **hasta + kurumsal giriş kapıları** (kapı-içi e-posta formu v6.84; `/giris/e-posta` ve `/kurumsal-giris/e-posta` → kalıcı yönlendirme; kapılar `components/aura/auth-gates.tsx` + `gate-email-form.tsx`; kurumsal noindex) · doktor kaydı · **hasta üyeliği** · KVKK onam + Onay Kanıtı |
 | `/how-it-works` | **Nasıl Çalışır rehberi** (v5.9 — vitrinden taşındı): 4 yolculuğun adım listeleri + tıkla-oynat rehber videoları + HowTo JSON-LD + OpenGraph (title template `%s · AURA`); global Header/SiteFooter bu rotada ve `/`'de gizli (sayfa kendi aura nav/footer'ını taşır). Eski vitrin aura-health.higgsfield.app tüm sayfaları buraya 301 yönlendirir |
 | `/guven-ve-gizlilik` | **Güven ve Gizlilik** (v6.12): iddia dürüstlüğü sayfası — 10 bölüm × 9 dil (`copy.ts` `trustPage`), 5'inde **"neyi iddia etmiyoruz"** kutusu + FAQPage JSON-LD (cevap gövde+sınırı birlikte taşır) + OG 9 dil; global Header/SiteFooter burada da gizli (kendi aura nav/footer'ı). **`/trust` → 308.** ⚠️ Gizlilik Politikası **değildir**. Kurallar: Güvenlik notları "Güven ve Gizlilik sayfası (v6.12)" |
 | `/v2` | **Yeni ana sayfa ÖNİZLEMESİ** (v6.14 · `components/aura/v2/{home,hero,entry-paths,nav}.tsx` · `copy.ts` `v2`, 9 dil). **noindex + sitemap'te YOK** — aynı içeriğin iki URL'de indekslenmesi `/`'nin SEO'sunu bölerdi. Canlı `/` **dokunulmadı**. **Bölümler:** nav (tek bakım mimarisi, v6.16) → hero (sahneli açılış) → entry-paths (video-arkalı 4 kart, `id="care"`) → mevcut how (`id="how"`)/doctors/trust → closing. **`/`'ye taşırken:** eski landing'e **git tag** (geri dönüş) → `app/page.tsx`→`V2Home` → `/v2`+noindex kalkar → sitemap'e girer → ⚠️ `.aura-brand` seçicileri artık landing'i de kapsar, **token/glow ölçümünü tekrarla** → ⚠️ `v2/nav.tsx` kök `aura/nav.tsx`'in yerini alır ve içindeki `/v2` hedefleri (logo · `#care` çapası) **`/` köküne döner**. Sözleşme: aşağıda "/v2 hero + entry-paths (v6.14)" + "/v2 nav (v6.16)" |

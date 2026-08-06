@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     NextResponse.redirect(
       new URL(
         intent === "patient"
-          ? `/giris/e-posta?oauth=${reason}&provider=apple`
+          ? `/giris?oauth=${reason}&provider=apple`
           : `/kayit?oauth=${reason}&provider=apple`,
         origin,
       ),
@@ -113,5 +113,5 @@ export async function POST(req: Request) {
 // geri tuşu) hata değil kayıp bir akıştır → sessizce forma dön, 500 üretme.
 export async function GET(req: Request) {
   const origin = new URL(req.url).origin;
-  return NextResponse.redirect(new URL("/giris/e-posta?oauth=error&provider=apple", origin));
+  return NextResponse.redirect(new URL("/giris?oauth=error&provider=apple", origin));
 }

@@ -4,7 +4,8 @@ import { CorporateGate } from "@/components/aura/auth-gates";
 
 // Kurumsal giriş kapısı — vitrin panelinin personel/iş-ortağı uyarlaması
 // (aura-health.higgsfield.app'ten taşındı, 2026-07-12): rol seçici (görsel
-// bağlam) + tek CTA çalışan forma (/kurumsal-giris/e-posta) götürür.
+// bağlam) + Google/Apple doğrudan OAuth (intent=doctor) + kapı-içi e-posta
+// formu (2026-08-06 — /kurumsal-giris/e-posta kaldırıldı → kalıcı yönlendirme).
 // Landing üst bandındaki "Kurumsal Giriş" butonu buraya gelir. Personel
 // kapısı arama sonuçlarından ayrık tutulur (noindex — vitrindeki karar).
 export const metadata: Metadata = {

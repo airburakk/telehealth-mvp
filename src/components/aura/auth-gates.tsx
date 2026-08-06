@@ -5,29 +5,28 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { useSearchParams } from "next/navigation";
 import { WordHeadline } from "@/components/aura/word-headline";
 import { AuraMark } from "@/components/PortamedLogo";
+import { GateEmailForm } from "@/components/aura/gate-email-form";
 import { LangProvider, useLang, langDir, LINKS, VIDEOS } from "@/lib/aura-landing/i18n";
 
-// Vitrin giriş kapıları (aura-health.higgsfield.app'ten taşındı, 2026-07-12 —
-// v5.9 taşımasında atlanmıştı; kullanıcı kararı "birebir kapı + ayrı form"):
+// Vitrin giriş kapıları (aura-health.higgsfield.app'ten taşındı, 2026-07-12).
 // SigninGate (/giris) = "AURA Sign Up" tasarımının birebir inşası — #0D0E10
 // sayfa üzerinde 22px radius panel; SOL 467px form kolonu (sembol, letterform
 // başlık, üç sağlayıcı butonu, OR ayracı, mikro yasal metin), SAĞ gece Boğaz
 // videosu. CorporateGate (/kurumsal-giris) = aynı panelin personel uyarlaması:
-// rol seçici (görsel bağlam — tüm roller aynı girişe gider) + tek birincil CTA,
-// sağda uzman/radyoloji videosu. Çalışan e-posta/demo formları alt rotalarda
-// (/giris/e-posta · /kurumsal-giris/e-posta); kapılar ?next/?verify/?oauth
-// parametrelerini forma iletir (proxy kimliksizi ?next ile kapıya düşürür).
+// rol seçici (görsel bağlam — tüm roller aynı girişe gider), sağda radyoloji videosu.
+//
+// ── Kapı/form ayrımı KALDIRILDI (2026-08-06, kullanıcı kararı) ──
+// Eski desende Apple/E-posta butonları /e-posta alt rotasındaki forma götürürdü — Apple OAuth
+// canlanınca (v6.83) bu anlamsız bir ara katmana dönüştü ("Apple ile devam" deyince e-posta
+// formuna düşülüyordu). Şimdi: Google/Apple DOĞRUDAN OAuth başlatır; "E-posta ile devam et"
+// formu kapının İÇİNDE açar (GateEmailForm). /giris/e-posta ve /kurumsal-giris/e-posta
+// kalıcı yönlendirmeye çevrildi; OAuth/verify dönüş banner'ları da artık kapıda çizilir —
+// ?oauth/?verify parametresiyle gelindiğinde form OTOMATİK açılır (banner görünür kalsın).
 
-// Kapıya gelen sistem parametrelerini form linkine taşı (banner'lar formda).
-function useForwardedParams() {
+// Sistem parametresiyle dönüş var mı? (form açık başlasın; banner GateEmailForm içinde)
+function useReturnedWithBanner(): boolean {
   const sp = useSearchParams();
-  const keep = new URLSearchParams();
-  for (const k of ["next", "verify", "oauth"]) {
-    const v = sp.get(k);
-    if (v) keep.set(k, v);
-  }
-  const q = keep.toString();
-  return (base: string) => (q ? `${base}?${q}` : base);
+  return !!(sp.get("oauth") || sp.get("verify"));
 }
 
 // Sağ panel videosu yalnız md+ yerleşiminde var (hidden md:block); dar ekranda
@@ -111,7 +110,9 @@ export function SigninGate() {
 
 function SigninPanel() {
   const { t } = useLang();
-  const withParams = useForwardedParams();
+  const returned = useReturnedWithBanner();
+  const [emailOpen, setEmailOpen] = useState(false);
+  const showForm = emailOpen || returned;
 
   return (
     <GateShell video={VIDEOS.hero}>
@@ -128,19 +129,24 @@ function SigninPanel() {
       <p className="mt-3 text-[15px] text-[var(--aura-grey)]">{t.signin.sub}</p>
 
       <div className="mt-8 space-y-3">
-        {/* Google: CANLI — ara sayfa atlanır, doğrudan OAuth başlangıcı (OAuth
-            dönüşü rol ana sayfasına iner; ?next yalnız e-posta yolunda taşınır) */}
+        {/* Google + Apple: doğrudan OAuth başlangıcı (dönüş rol ana sayfasına iner;
+            hata dönüşü ?oauth ile bu kapıya düşer ve form banner'la açılır) */}
         <ProviderButton href={LINKS.googleStart} label={t.signin.google} icon={<GoogleIcon />} />
-        <ProviderButton
-          href={withParams(LINKS.emailLogin)}
-          label={t.signin.apple}
-          icon={<AppleIcon />}
-        />
-        <ProviderButton
-          href={withParams(LINKS.emailLogin)}
+        <ProviderButton href={LINKS.appleStart} label={t.signin.apple} icon={<AppleIcon />} />
+        <ProviderToggle
+          open={showForm}
+          onClick={() => setEmailOpen((o) => !o)}
           label={t.signin.email}
           icon={<MailIcon />}
         />
+        {showForm && (
+          <GateEmailForm
+            texts={t.signin}
+            signupPrompt={t.signin.noAccount}
+            signupLabel={t.signin.signup}
+            signupHref={LINKS.platformSignup}
+          />
+        )}
       </div>
 
       <div className="mt-6 flex items-center gap-3">
@@ -186,11 +192,23 @@ export function CorporateGate() {
   );
 }
 
+// Kurumsal demo hızlı-giriş hesapları (görünürlük GateEmailForm'daki DEMO_UNLOCK kilidine bağlı;
+// eski CorporateLoginForm'dan taşındı — ikonlar kapı dilinde yok, yalnız etiket).
+const STAFF_QUICK = [
+  { email: "doktor@air.test", label: "Doktor" },
+  { email: "koordinator@air.test", label: "Koordinatör" },
+  { email: "kurul@air.test", label: "Etik Kurul" },
+  { email: "partner@air.test", label: "Partner Doktor" },
+  { email: "acente@air.test", label: "Sağlık Turizmi Acentesi" },
+];
+
 function CorporatePanel() {
   const { t } = useLang();
   const c = t.corporate;
-  const withParams = useForwardedParams();
+  const returned = useReturnedWithBanner();
   const [role, setRole] = useState(0); // roles dizisinde indeks; 0 = Doktor
+  const [emailOpen, setEmailOpen] = useState(false);
+  const showForm = emailOpen || returned;
 
   return (
     <GateShell video={VIDEOS.so}>
@@ -208,23 +226,28 @@ function CorporatePanel() {
 
       <div className="mt-8 space-y-4">
         <RoleSelect label={c.roleLabel} roles={c.roles} value={role} onChange={setRole} />
-        {/* Rol seçiminden sonra hasta kapısıyla AYNI sağlayıcı kompozisyonu (2026-07-31,
-            kullanıcı kararı): Google doğrudan OAuth (intent=doctor — mevcut e-posta kendi
-            rolüyle girer), Apple/E-posta çalışan kurumsal forma. Metinler t.signin'den
-            (9 dilde hazır; corporate sözlüğüne kopyalanmaz). Rol seçimi görsel bağlam
-            olmaya devam eder — tüm roller aynı girişe gider. */}
+        {/* Hasta kapısıyla AYNI sağlayıcı kompozisyonu: Google/Apple doğrudan OAuth
+            (intent=doctor — mevcut e-posta kendi rolüyle girer), e-posta formu kapıda
+            açılır. Metinler t.signin'den (9 dilde; corporate sözlüğüne kopyalanmaz).
+            Rol seçimi görsel bağlam olmaya devam eder — tüm roller aynı girişe gider. */}
         <div className="space-y-3">
           <ProviderButton href={LINKS.corporateGoogleStart} label={t.signin.google} icon={<GoogleIcon />} />
-          <ProviderButton
-            href={withParams(LINKS.corporateEmailLogin)}
-            label={t.signin.apple}
-            icon={<AppleIcon />}
-          />
-          <ProviderButton
-            href={withParams(LINKS.corporateEmailLogin)}
+          <ProviderButton href={LINKS.corporateAppleStart} label={t.signin.apple} icon={<AppleIcon />} />
+          <ProviderToggle
+            open={showForm}
+            onClick={() => setEmailOpen((o) => !o)}
             label={t.signin.email}
             icon={<MailIcon />}
           />
+          {showForm && (
+            <GateEmailForm
+              texts={t.signin}
+              signupPrompt={c.docPrompt}
+              signupLabel={c.docSignup}
+              signupHref={LINKS.doctorSignup}
+              quick={STAFF_QUICK}
+            />
+          )}
         </div>
       </div>
 
@@ -338,8 +361,11 @@ function RoleSelect({
   );
 }
 
-// Sağlayıcı butonu: Sign Up tasarımındaki #1E1F22 + ince beyaz kenar + 13px
-// radius dili. Hedef: platformun gerçek giriş formu (yöntem orada seçilir).
+// Sağlayıcı butonu: Sign Up tasarımındaki #1E1F22 + ince beyaz kenar + 13px radius dili.
+// Anchor (fetch değil): OAuth akışı tam sayfa 302 zinciriyle yürür.
+const PROVIDER_CLS =
+  "flex w-full items-center justify-center gap-2.5 rounded-[13px] border border-[var(--aura-hairline)] bg-[var(--aura-surface)] px-4 py-3 text-[15px] font-semibold text-[var(--aura-ink)] transition-colors duration-200 hover:border-[var(--aura-accent)]/50 active:scale-[0.99]";
+
 function ProviderButton({
   href,
   label,
@@ -350,13 +376,35 @@ function ProviderButton({
   icon: React.ReactNode;
 }) {
   return (
-    <a
-      href={href}
-      className="flex w-full items-center justify-center gap-2.5 rounded-[13px] border border-[var(--aura-hairline)] bg-[var(--aura-surface)] px-4 py-3 text-[15px] font-semibold text-[var(--aura-ink)] transition-colors duration-200 hover:border-[var(--aura-accent)]/50 active:scale-[0.99]"
-    >
+    <a href={href} className={PROVIDER_CLS}>
       {icon}
       {label}
     </a>
+  );
+}
+
+// E-posta yöntemi: sayfadan ayrılmaz, formu kapının içinde açar/kapar (2026-08-06).
+function ProviderToggle({
+  open,
+  onClick,
+  label,
+  icon,
+}: {
+  open: boolean;
+  onClick: () => void;
+  label: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      onClick={onClick}
+      className={PROVIDER_CLS + (open ? " border-[var(--aura-accent)]/50" : "")}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
 

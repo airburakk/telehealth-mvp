@@ -3,11 +3,12 @@ import type { Metadata } from "next";
 import { SigninGate } from "@/components/aura/auth-gates";
 
 // Hasta giriş kapısı — vitrin "AURA Sign Up" panelinin birebir inşası
-// (aura-health.higgsfield.app'ten taşındı, 2026-07-12; kullanıcı kararı
-// "birebir kapı + ayrı form"). Google doğrudan OAuth'a; Apple/E-posta çalışan
-// forma (/giris/e-posta) götürür. Proxy kimliksizi ?next ile buraya düşürür —
-// kapı parametreyi forma iletir. Header/SiteFooter bu rotada gizli (landing
-// deseni); panel kendi logo + "← ana sayfa" bağlantısını taşır.
+// (aura-health.higgsfield.app'ten taşındı, 2026-07-12). Kapı-içi form
+// (2026-08-06): Google/Apple doğrudan OAuth başlatır; e-posta formu kapının
+// içinde açılır (/giris/e-posta kaldırıldı → kalıcı yönlendirme). Proxy
+// kimliksizi ?next ile buraya düşürür; OAuth/verify dönüşleri formu otomatik
+// açar. Header/SiteFooter bu rotada gizli (landing deseni); panel kendi
+// logo + "← ana sayfa" bağlantısını taşır.
 export const metadata: Metadata = {
   // Kök layout şablonu "· AURA" ekler → burada marka tekrar yazılmaz
   // (eski "AURA · Sign in" sekmede "AURA · Sign in · AURA" çiftlenmesi üretiyordu — Ray D).

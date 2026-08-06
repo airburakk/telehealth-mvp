@@ -29,8 +29,9 @@ const ROUTES = [
   { path: "/how-it-works",      title: "How it works",               h1: "works",                 cta: "/kayit/hasta",            noindex: false },
   { path: "/guven-ve-gizlilik", title: "Trust",                      h1: "Trust",                 cta: "/kayit/hasta",            noindex: false },
   { path: "/for-clinicians",    title: "For clinicians",             h1: "Practice across borders", cta: "/kurumsal-giris",        noindex: false },
-  { path: "/giris",             title: "Sign in",                    h1: "Welcome",               cta: "/giris/e-posta",          noindex: false },
-  { path: "/kurumsal-giris",    title: "Corporate sign-in",          h1: "Corporate sign-in",     cta: "/kurumsal-giris/e-posta", noindex: true },
+  // Kapı-içi form (2026-08-06): /e-posta alt rotaları kaldırıldı — kapı CTA'sı doğrudan OAuth başlangıcı.
+  { path: "/giris",             title: "Sign in",                    h1: "Welcome",               cta: "/api/auth/apple/start",   noindex: false },
+  { path: "/kurumsal-giris",    title: "Corporate sign-in",          h1: "Corporate sign-in",     cta: "/api/auth/google/start",  noindex: true },
 ];
 
 function extract(re, html) {

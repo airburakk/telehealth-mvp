@@ -55,7 +55,7 @@ export function PatientSignupForm({ googleEnabled, appleEnabled }: { googleEnabl
             e-postası gönderdik. Bağlantıya tıkladıktan sonra giriş yapabilirsiniz.
           </p>
           <p className="mt-3 text-xs text-[var(--c-ink-3)]">E-posta birkaç dakika içinde gelmezse spam klasörünü kontrol edin.</p>
-          <Link href="/giris/e-posta" className="mt-5 inline-flex items-center justify-center rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
+          <Link href="/giris" className="mt-5 inline-flex items-center justify-center rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
             Giriş ekranına dön
           </Link>
         </div>
@@ -114,7 +114,7 @@ export function PatientSignupForm({ googleEnabled, appleEnabled }: { googleEnabl
       </div>
 
       <p className="mt-4 text-center text-sm text-[var(--c-ink-2)]">
-        Zaten hesabınız var mı? <Link href="/giris/e-posta" className="font-semibold text-[var(--c-accent)] hover:underline">Giriş yapın</Link>
+        Zaten hesabınız var mı? <Link href="/giris" className="font-semibold text-[var(--c-accent)] hover:underline">Giriş yapın</Link>
       </p>
     </div>
   );

@@ -11,8 +11,8 @@ export async function GET(req: Request) {
   const origin = url.origin;
   const intent = url.searchParams.get("intent") === "patient" ? "patient" : "doctor";
   if (!isGoogleConfigured()) {
-    // ?oauth banner'ı formda çizilir → /e-posta form rotası (kapı/form ayrımı 2026-07-12)
-    const back = intent === "patient" ? "/giris/e-posta?oauth=unavailable" : "/kayit?oauth=unavailable";
+    // ?oauth banner'ı kapı-içi formda çizilir (2026-08-06 — /e-posta alt rotası kaldırıldı)
+    const back = intent === "patient" ? "/giris?oauth=unavailable" : "/kayit?oauth=unavailable";
     return NextResponse.redirect(new URL(back, origin));
   }
   const state = randomBytes(16).toString("hex");

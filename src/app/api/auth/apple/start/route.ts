@@ -19,10 +19,10 @@ export async function GET(req: Request) {
   const origin = url.origin;
   const intent = url.searchParams.get("intent") === "patient" ? "patient" : "doctor";
 
-  // ?oauth banner'ı formda çizilir → /e-posta form rotası (kapı/form ayrımı 2026-07-12)
+  // ?oauth banner'ı kapı-içi formda çizilir (2026-08-06 — /e-posta alt rotası kaldırıldı)
   const back = (reason: string) =>
     intent === "patient"
-      ? `/giris/e-posta?oauth=${reason}&provider=apple`
+      ? `/giris?oauth=${reason}&provider=apple`
       : `/kayit?oauth=${reason}&provider=apple`;
 
   if (!isAppleConfigured()) return NextResponse.redirect(new URL(back("unavailable"), origin));

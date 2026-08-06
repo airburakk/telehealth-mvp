@@ -57,19 +57,24 @@ test.describe("başlık hiyerarşisi", () => {
 });
 
 test.describe("klavye-yalnız erişim", () => {
-  test("/giris: e-posta girişine Tab ile ulaşılır ve Enter çalışır", async ({ page }) => {
+  test("/giris: e-posta formu Tab + Enter ile açılır ve ilk alan odaklanır", async ({ page }) => {
     await page.goto("/giris");
     await settle(page);
-    // Fare olmadan: Tab turuyla /giris/e-posta bağlantısını bul (15 durak yeter — kapı paneli kısa).
+    // Kapı-içi form (2026-08-06): "E-posta ile devam et" artık bağlantı değil aria-expanded'lı
+    // toggle butonu — Enter formu sayfada açar, ilk alan (e-posta) otomatik odaklanır.
     let found = false;
     for (let i = 0; i < 15; i++) {
       await page.keyboard.press("Tab");
-      const href = await page.evaluate(() => (document.activeElement as HTMLAnchorElement | null)?.getAttribute?.("href"));
-      if (href === "/giris/e-posta") { found = true; break; }
+      found = await page.evaluate(() => {
+        const el = document.activeElement as HTMLButtonElement | null;
+        return el?.tagName === "BUTTON" && el.getAttribute("aria-expanded") === "false";
+      });
+      if (found) break;
     }
-    expect(found, "Tab turunda /giris/e-posta odaklanamadı").toBe(true);
+    expect(found, "Tab turunda e-posta form toggle'ı odaklanamadı").toBe(true);
     await page.keyboard.press("Enter");
-    await page.waitForURL("**/giris/e-posta", { timeout: 10_000 });
+    // Form açıldı + odak e-posta alanına taşındı (klavye kullanıcısı yazmaya hazır).
+    await expect(page.locator('input[type="email"]')).toBeFocused({ timeout: 10_000 });
   });
 
   test("/ (landing): Tab ilk duraklardan birinde gerçek bir bağlantıya ulaşır", async ({ page }) => {
