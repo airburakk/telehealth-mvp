@@ -159,28 +159,42 @@ export async function verifyAppleIdToken(idToken: string, nonce: string): Promis
     });
     // nonce: yeniden-oynatma koruması. state CSRF'i kapatır, nonce "başka bir oturumda alınmış
     // geçerli ID token"ın buraya sokulmasını kapatır — ikisi farklı saldırıya bakar, ikisi de şart.
-    if (typeof payload.nonce !== "string" || payload.nonce !== nonce) return null;
+    if (typeof payload.nonce !== "string" || payload.nonce !== nonce) {
+      console.error("[apple-auth] nonce uyuşmadı");
+      return null;
+    }
 
     const sub = typeof payload.sub === "string" ? payload.sub.trim() : "";
     const email = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
-    if (!sub || !email) return null;
+    if (!sub || !email) {
+      console.error(`[apple-auth] kimlik eksik: sub=${!!sub} email=${!!email}`);
+      return null;
+    }
 
     // Google tarafındaki kapının aynısı: e-posta hesap anahtarı olarak da kullanıldığı için
     // doğrulanmamış e-posta kabul edilemez (hesap ele geçirme yolu). Apple bu alanları bazen
     // boolean, bazen string ("true") döndürür — ikisi de kabul, gerisi RED.
     const verified = payload.email_verified;
-    if (verified !== true && verified !== "true") return null;
+    if (verified !== true && verified !== "true") {
+      console.error("[apple-auth] email_verified kapısı reddetti");
+      return null;
+    }
 
     const relayClaim = payload.is_private_email;
     const isPrivateRelay =
       relayClaim === true || relayClaim === "true" || email.endsWith(APPLE_RELAY_DOMAIN);
     return { sub, email, isPrivateRelay };
-  } catch {
+  } catch (e) {
+    // jwtVerify buraya düşer: imza/iss/aud hatası sınıf adıyla ayrışır (JWTClaimValidationFailed vb.).
+    console.error(`[apple-auth] ID token doğrulaması düştü: ${e instanceof Error ? `${e.name}: ${e.message}` : "?"}`);
     return null;
   }
 }
 
 // Authorization code → token takası → doğrulanmış kimlik. Hata/eksikte null (çağıran ?oauth=error'a döner).
+// Teşhis logları (2026-08-06): kullanıcının canlı denemesi sessizce düşünce hangi aşamanın öldüğü
+// görülemedi → aşama-bazlı console.error. ASLA-LOGLAMA kuralına (lib/alerts başlığı) uygun:
+// yalnız aşama adı + Apple'ın hata KODU + hata sınıfı; e-posta/sub/token İÇERİĞİ loglanmaz.
 export async function exchangeAppleCode(
   code: string,
   redirectUri: string,
@@ -198,11 +212,21 @@ export async function exchangeAppleCode(
         grant_type: "authorization_code",
       }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Apple hata gövdesi {error:"invalid_client"|"invalid_grant"|...} — kod PII değildir, sebeptir.
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      console.error(`[apple-auth] token takası HTTP ${res.status} error=${body.error ?? "?"}`);
+      return null;
+    }
     const token = (await res.json()) as { id_token?: string };
-    if (!token.id_token) return null;
+    if (!token.id_token) {
+      console.error("[apple-auth] token yanıtında id_token yok");
+      return null;
+    }
     return await verifyAppleIdToken(token.id_token, nonce);
-  } catch {
+  } catch (e) {
+    // appleClientSecret (importPKCS8 dahil) buraya düşer — .p8 biçim sorunu en olası aday.
+    console.error(`[apple-auth] takas istisnası: ${e instanceof Error ? `${e.name}: ${e.message}` : "?"}`);
     return null;
   }
 }

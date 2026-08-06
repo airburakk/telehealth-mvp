@@ -47,7 +47,10 @@ export async function POST(req: Request) {
   if (!isAppleConfigured()) return back("unavailable");
 
   const form = await req.formData().catch(() => null);
-  if (!form) return back("error");
+  if (!form) {
+    console.error("[apple-auth] callback: form gövdesi okunamadı");
+    return back("error");
+  }
   const str = (v: FormDataEntryValue | null) => (typeof v === "string" ? v : "");
 
   // Kullanıcı Apple ekranında vazgeçerse hata da POST ile gelir (error=user_cancelled_authorize).
@@ -56,11 +59,16 @@ export async function POST(req: Request) {
   const code = str(form.get("code"));
   const state = str(form.get("state"));
   if (!code || !state || !savedState || !nonce || state !== savedState) {
+    // Hangi parçanın eksik olduğu teşhis için kritik: cookie'ler eksikse SameSite/tarayıcı
+    // meselesi, form parçaları eksikse Apple dönüşü meselesi. Değerler LOGLANMAZ, yalnız varlık.
+    console.error(
+      `[apple-auth] callback: state doğrulaması düştü — code=${!!code} formState=${!!state} cookieState=${!!savedState} cookieNonce=${!!nonce} eşit=${!!state && state === savedState}`,
+    );
     return back("error");
   }
 
   const identity = await exchangeAppleCode(code, appleRedirectUri(origin), nonce);
-  if (!identity) return back("error");
+  if (!identity) return back("error"); // sebep exchangeAppleCode/verifyAppleIdToken içinde loglandı
 
   let user = await db.user.findFirst({ where: { appleSub: identity.sub, deletedAt: null } });
   if (!user) {
