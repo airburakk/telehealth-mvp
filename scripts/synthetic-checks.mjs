@@ -29,9 +29,11 @@ const ROUTES = [
   { path: "/how-it-works",      title: "How it works",               h1: "works",                 cta: "/kayit/hasta",            noindex: false },
   { path: "/guven-ve-gizlilik", title: "Trust",                      h1: "Trust",                 cta: "/kayit/hasta",            noindex: false },
   { path: "/for-clinicians",    title: "For clinicians",             h1: "Practice across borders", cta: "/kurumsal-giris",        noindex: false },
-  // Kapı-içi form (2026-08-06): /e-posta alt rotaları kaldırıldı — kapı CTA'sı doğrudan OAuth başlangıcı.
-  { path: "/giris",             title: "Sign in",                    h1: "Welcome",               cta: "/api/auth/apple/start",   noindex: false },
-  { path: "/kurumsal-giris",    title: "Corporate sign-in",          h1: "Corporate sign-in",     cta: "/api/auth/google/start",  noindex: true },
+  // Kapı-içi form (2026-08-06): /e-posta alt rotaları kaldırıldı — kapı CTA'sı doğrudan OAuth
+  // başlangıcı. ⚠️ Kontrol `href="<cta>"` TAM eşleşmesi yapar → query dahil yazılır
+  // (ilk sürümde ?intent'siz yazılmıştı; kapanış tırnağı eşleşmedi, iki kontrol yanlış düştü).
+  { path: "/giris",             title: "Sign in",                    h1: "Welcome",               cta: "/api/auth/apple/start?intent=patient",  noindex: false },
+  { path: "/kurumsal-giris",    title: "Corporate sign-in",          h1: "Corporate sign-in",     cta: "/api/auth/google/start?intent=doctor",  noindex: true },
 ];
 
 function extract(re, html) {
