@@ -6,6 +6,7 @@ import {
   KIND_LABEL, branchLabel, categoryLabel,
 } from "@/lib/doctorium";
 import { branchColor } from "@/lib/branch-visuals";
+import { extractKeywords, extractLawRefs } from "@/lib/hukuk-keywords";
 import {
   ArrowLeft, ExternalLink, Sparkles, AlertTriangle, FlaskConical, ListChecks,
   ShieldQuestion, Gavel, Users, CalendarCheck, FileText,
@@ -25,9 +26,12 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
 
   // Akademik yayın → 2 dk klinik özet · mevzuat/sektörel/ilaç → doktor özeti + aksiyon maddeleri.
   // İkisi de TEMBEL: ilk açılışta bir kez üretilir, sonra DB'den okunur.
+  // İçtihat (v6.86) İKİSİNE DE GİRMEZ: mevzuat özet şablonu ("yürürlük/aksiyon maddeleri") yargı
+  // kararına uymaz ve karar metni zaten tam gösterilir; AI özet bilinçli YOK (Faz 3 adayı).
   const isAcademic = item.module === "akademik";
+  const isIctihat = item.category === "ictihat";
   const summary = isAcademic ? await ensureClinicalSummary(id) : null;
-  const reg = isAcademic ? null : await ensureRegulationSummary(id);
+  const reg = isAcademic || isIctihat ? null : await ensureRegulationSummary(id);
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
@@ -164,13 +168,49 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
         </p>
       )}
 
+      {/* İçtihat etiketleri (v6.87): metinde GEÇEN kanun maddeleri + sözlük terimleri —
+          kartla aynı deterministik çıkarım; terim çipi arşivin süzülmüş listesine götürür. */}
+      {isIctihat && item.summary && (
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          {extractLawRefs(item.summary).map((l) => (
+            <span key={l} className="aura-mono rounded-full bg-[var(--c-surface-2)] px-2 py-0.5 text-[10px] text-[var(--c-ink-2)]">
+              {l}
+            </span>
+          ))}
+          {extractKeywords(item.summary).map((k) => (
+            <Link
+              key={k.key}
+              href={`/doktor/doctorium?m=mevzuat&h=ictihat&k=${k.key}`}
+              className="aura-mono rounded-full bg-rose-500/[0.08] px-2 py-0.5 text-[10px] font-semibold text-rose-300/90 hover:bg-rose-500/15"
+            >
+              {k.label}
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* İçtihat (v6.86): SPA kaynakta karara kalıcı derin link yok → dış buton yerine E./K.
+          numarasıyla resmî sistemde doğrulama yönergesi. Uyarı bandı kaldırılamaz. */}
+      {isIctihat && (
+        <p className="mt-6 flex items-start gap-2 rounded-2xl border border-rose-400/25 bg-rose-500/[0.06] px-4 py-3.5 text-[11px] leading-relaxed text-[var(--c-ink-2)]">
+          <AlertTriangle size={14} className="mt-px shrink-0 text-rose-300" />
+          <span>
+            Bu metin <strong className="text-[var(--c-ink)]">Yargıtay Karar Arama</strong>{" "}
+            (karararama.yargitay.gov.tr) kaydından alınmıştır ve <strong className="text-[var(--c-ink)]">hukuki
+            mütalaa değildir</strong>. Karara dayanmadan önce aslını, başlıktaki esas/karar
+            numarasıyla resmî sistemden doğrulayın.
+          </span>
+        </p>
+      )}
+
       {item.summary && (
         <section className="mt-6">
           <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
-            {isAcademic ? "Özgün abstract" : "Resmî metinden"}
+            {isAcademic ? "Özgün abstract" : isIctihat ? "Karar metni" : "Resmî metinden"}
           </h2>
           <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-[var(--c-ink-2)]">
-            {isAcademic ? item.summary : item.summary.slice(0, 2500)}
+            {/* İçtihat: hukuki metin kesilmez (karar bütünlüğü); diğerlerinde 2500 kr kesit. */}
+            {isAcademic || isIctihat ? item.summary : item.summary.slice(0, 2500)}
           </p>
         </section>
       )}

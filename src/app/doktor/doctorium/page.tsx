@@ -11,19 +11,20 @@ import { activeSurveysFor, doctorResponse, aggregateResults } from "@/lib/survey
 import { SurveyCardView } from "./SurveyCard";
 import {
   DOCTORIUM_MODULES, KIND_LABEL, RANGE_OPTIONS, DEFAULT_RANGE, rangeDays,
-  SECTOR_CATEGORIES, categoryLabel,
+  SECTOR_CATEGORIES, categoryLabel, LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES,
   effectiveBranches, personalFeed, moduleFeed, singleBranchFeed, upcomingCongresses,
   localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
-  slugForLabel, parseScope, type FeedItem, type ModuleKey,
+  slugForLabel, parseScope, type FeedItem, type ModuleKey, type LegalTabKey,
 } from "@/lib/doctorium";
 import { branchColor, hasBranchVisual } from "@/lib/branch-visuals";
+import { HUKUK_KEYWORDS, keywordByKey, extractKeywords, extractLawRefs, extractExcerpt } from "@/lib/hukuk-keywords";
 import { BranchAvatar } from "@/components/BranchAvatar";
 import { DoctoriumFilters } from "./DoctoriumFilters";
 import { FollowButton } from "./CongressControls";
 import { ProspektusSearch } from "./ProspektusSearch";
 import {
   ArrowLeft, ExternalLink, FlaskConical, Gavel, Info,
-  Sparkles, MapPin, X, CalendarClock, Pill, Building2, Megaphone,
+  Sparkles, MapPin, X, CalendarClock, Pill, Building2, Megaphone, Scale,
 } from "lucide-react";
 import { AuraMark } from "@/components/PortamedLogo";
 
@@ -41,7 +42,7 @@ const VALID_SLUGS = new Set(BRANCH_OPTIONS.map((b) => b.slug));
 export default async function DoctoriumPage({
   searchParams,
 }: {
-  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string }>;
+  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string; h?: string; k?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
@@ -70,11 +71,21 @@ export default async function DoctoriumPage({
   const focus = sp.b && VALID_SLUGS.has(sp.b) && branches.includes(sp.b) ? sp.b : null;
 
   const cat = sp.c && SECTOR_CATEGORIES.some((x) => x.key === sp.c) ? sp.c : null;
+  // Hukuk modülü alt-sekmesi (v6.86): ?h=mevzuat|ictihat — yalnız bu modülde anlamlı.
+  const legalTab: LegalTabKey | null = active === "mevzuat" ? parseLegalTab(sp.h) : null;
+  // İçtihat anahtar-kelime filtresi (v6.87): ?k= sözlük anahtarı; bilinmeyen değer filtresiz liste.
+  const legalKeyword = legalTab === "ictihat" ? keywordByKey(sp.k) : null;
 
   let items: FeedItem[] = [];
   if (active === "akis") items = focus ? await singleBranchFeed(focus) : await personalFeed(branches, 40);
   else if (active === "akademik") items = await moduleFeed("akademik", branches);
-  else if (active === "mevzuat") items = await moduleFeed("mevzuat", [], { days: rangeDays(range), category: cat });
+  else if (active === "mevzuat") {
+    items = legalTab === "ictihat"
+      ? // İçtihat = ARŞİV: tarih penceresi bilinçli YOK — kararlar eski tarihli (2015→bugün yayılı),
+        // 30 günlük varsayılan pencere sekmeyi daima boş gösterirdi. Sıralama karar tarihine göre.
+        await moduleFeed("mevzuat", [], { category: "ictihat", textContainsAny: legalKeyword?.patterns })
+      : await moduleFeed("mevzuat", [], { days: rangeDays(range), category: cat, excludeCategories: LEGAL_ONLY_CATEGORIES });
+  }
   else if (active === "sektorel") items = await moduleFeed("sektorel", [], { days: rangeDays(range), category: cat });
   else if (active === "ilac") items = await moduleFeed("ilac", [], { days: rangeDays(range) });
   if (items.length) items = await localizeTitles(items);
@@ -147,13 +158,67 @@ export default async function DoctoriumPage({
         ))}
       </nav>
 
+      {/* Hukuk alt-sekmeleri (v6.86, kullanıcı kararı): Mevzuat · İçtihat (Doktrin Faz 2).
+          Modül pill'lerinden bilinçli İKİNCİL görünüm (küçük, alt çizgili aktiflik) — iki nav
+          katmanı yarışmasın. Mevzuat linki h'siz: varsayılan sekme, kanonik URL tek kalsın. */}
+      {active === "mevzuat" && (
+        <nav className="mt-3.5 flex items-center gap-4 border-b border-[var(--c-hairline)]" aria-label="Hukuk bölümleri">
+          {LEGAL_TABS.map((t) => {
+            const on = legalTab === t.key;
+            return (
+              <Link
+                key={t.key}
+                href={t.key === "mevzuat" ? "/doktor/doctorium?m=mevzuat" : `/doktor/doctorium?m=mevzuat&h=${t.key}`}
+                aria-current={on ? "page" : undefined}
+                className={`-mb-px border-b-2 pb-2 text-xs font-semibold transition ${
+                  on
+                    ? "border-emerald-400 text-emerald-300"
+                    : "border-transparent text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"
+                }`}
+              >
+                {t.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
+
+      {/* İçtihat anahtar-kelime çipleri (v6.87, kullanıcı kararı): sözlük deterministik —
+          tıklanan terim kararın METNİNDE aranır (lib/hukuk-keywords.ts). URL'de taşınır (?k=),
+          paylaşılabilir. Aktif çip yeniden tıklanınca filtre kalkar (X). */}
+      {active === "mevzuat" && legalTab === "ictihat" && (
+        <div className="mt-4 flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] text-[var(--c-ink-3)]">Anahtar kelime:</span>
+          {HUKUK_KEYWORDS.map((kw) => {
+            const on = legalKeyword?.key === kw.key;
+            return (
+              <Link
+                key={kw.key}
+                href={on ? "/doktor/doctorium?m=mevzuat&h=ictihat" : `/doktor/doctorium?m=mevzuat&h=ictihat&k=${kw.key}`}
+                aria-current={on ? "true" : undefined}
+                className={`aura-mono inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                  on
+                    ? "bg-rose-500/20 text-rose-200 shadow-[inset_0_0_0_1px_#fb7185]"
+                    : "bg-rose-500/[0.08] text-rose-300/90 hover:bg-rose-500/15"
+                }`}
+              >
+                {kw.label}
+                {on && <X size={11} />}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
       {/* TEK "Özelleştir" penceresi (v6.52): aralık · kategori · kongre alarmı · branş tercihleri.
           Önceden ayrı satırlardaydı ve dağınık duruyordu (kullanıcı bildirimi).
-          Bölüm yoksa bileşen hiç çizilmez (ör. Akademik) — boş panel açılmasın. */}
+          Bölüm yoksa bileşen hiç çizilmez (ör. Akademik) — boş panel açılmasın.
+          İçtihat alt-sekmesinde aralık/kategori GİZLİ: arşiv tarih penceresiz listelenir,
+          kategoriler (SUT vb.) mevzuat kalemlerine aittir. */}
       <DoctoriumFilters
         module={active}
-        showRange={active === "mevzuat" || active === "sektorel" || active === "ilac"}
-        showCategory={active === "mevzuat" || active === "sektorel"}
+        showRange={(active === "mevzuat" && legalTab === "mevzuat") || active === "sektorel" || active === "ilac"}
+        showCategory={(active === "mevzuat" && legalTab === "mevzuat") || active === "sektorel"}
         showAlerts={active === "kongre" && !!doctor}
         showScope={active === "kongre"}
         scope={scope}
@@ -218,7 +283,7 @@ export default async function DoctoriumPage({
           )}
 
           {items.length === 0 ? (
-            <EmptyState active={active} focus={focus} range={range} />
+            <EmptyState active={active} focus={focus} range={range} legalTab={legalTab} keywordLabel={legalKeyword?.label ?? null} />
           ) : (
             <ul className="mt-5 grid gap-3">
               {/* Sponsorlu kart enjeksiyonu (v6.68): 1.si 2 organik karttan, 2.si 9 organikten
@@ -242,11 +307,15 @@ export default async function DoctoriumPage({
   );
 }
 
-function EmptyState({ active, focus, range }: { active: ModuleKey; focus: string | null; range: string }) {
+function EmptyState({ active, focus, range, legalTab, keywordLabel }: { active: ModuleKey; focus: string | null; range: string; legalTab: LegalTabKey | null; keywordLabel: string | null }) {
   const label = RANGE_OPTIONS.find((r) => r.key === range)?.label.toLocaleLowerCase("tr-TR") ?? "";
   const msg = focus
     ? `${branchLabel(focus)} için henüz yayın toplanmadı. Akış her gece güncellenir.`
-    : active === "mevzuat"
+    : active === "mevzuat" && legalTab === "ictihat" && keywordLabel
+      ? `"${keywordLabel}" terimi arşivdeki hiçbir kararın metninde geçmiyor. Çipi kapatıp tüm arşivi görebilirsiniz.`
+      : active === "mevzuat" && legalTab === "ictihat"
+      ? "İçtihat arşivi henüz yüklenmedi. Sağlık hukuku ve malpraktis konulu Yargıtay kararları toplandıkça burada listelenecek."
+      : active === "mevzuat"
       ? `Seçtiğiniz ${label} pencerede bu kategoride mevzuat kaydı yok. Resmî Gazete + OHSAD her gece taranır; daha geniş aralık veya "Tümü" kategorisini deneyin.`
       : active === "sektorel"
         ? `Seçtiğiniz ${label} pencerede bu kategoride sektörel haber yok. Daha geniş bir aralık deneyebilirsiniz.`
@@ -270,6 +339,7 @@ const KIND_STYLE: Record<string, string> = {
   ilac: "bg-emerald-500/15 text-emerald-300",
   mevzuat: "bg-amber-500/15 text-amber-300",
   haber: "bg-sky-500/15 text-sky-300",
+  ictihat: "bg-rose-500/15 text-rose-300", // v6.86 — mevzuat amber'ından ayrışsın (aynı modülde yaşarlar)
 };
 
 // Kapak koddan üretilir (dış görsel CSP'de yasak: img-src 'self' data:). Nötr yüzey + branş
@@ -277,7 +347,9 @@ const KIND_STYLE: Record<string, string> = {
 function Cover({ item }: { item: FeedItem }) {
   const first = item.branchSlugs[0];
   const label = first ? branchLabel(first) : null;
-  const accent = item.module === "mevzuat" ? "#f59e0b"
+  // İçtihat kind-bazlı ayrışır (modülü mevzuat'la ortak) — kontrol module'den ÖNCE.
+  const accent = item.kind === "ictihat" ? "#fb7185"
+    : item.module === "mevzuat" ? "#f59e0b"
     : item.module === "ilac" ? "#22d3ee"
     : item.module === "sektorel" ? "#a78bfa"
     : label ? branchColor(label) : "#34d399";
@@ -288,7 +360,9 @@ function Cover({ item }: { item: FeedItem }) {
       style={{ borderRight: `3px solid ${accent}` }}
     >
       <span className="absolute inset-0 opacity-[0.07]" style={{ background: accent }} />
-      {item.module === "mevzuat" ? (
+      {item.kind === "ictihat" ? (
+        <Scale size={26} style={{ color: accent }} strokeWidth={1.8} />
+      ) : item.module === "mevzuat" ? (
         <Gavel size={26} style={{ color: accent }} strokeWidth={1.8} />
       ) : item.module === "ilac" ? (
         <Pill size={26} style={{ color: accent }} strokeWidth={1.8} />
@@ -346,6 +420,39 @@ function SponsorCardView({ c }: { c: SponsorCard }) {
   );
 }
 
+// İçtihat kartının alt bilgisi: alıntı ("karar metninden") + kanun maddeleri + anahtar terim
+// çipleri. Tamamı item.summary'den render anında türetilir — ek kolon/sorgu yok (arşiv ~500 kayıt,
+// listede 40 kart; string taraması ucuz. Hacim büyürse ingest'te kolona alınır — bilinçli erteleme).
+function IctihatCardMeta({ summary }: { summary: string }) {
+  const excerpt = extractExcerpt(summary);
+  const laws = extractLawRefs(summary);
+  const keywords = extractKeywords(summary);
+  if (!excerpt && !laws.length && !keywords.length) return null;
+  return (
+    <div className="mt-1.5">
+      {excerpt && <p className="text-xs leading-relaxed text-[var(--c-ink-2)]">{excerpt}</p>}
+      {(laws.length > 0 || keywords.length > 0) && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          {laws.map((l) => (
+            <span key={l} className="aura-mono rounded-full bg-[var(--c-surface-2)] px-2 py-0.5 text-[10px] text-[var(--c-ink-2)]">
+              {l}
+            </span>
+          ))}
+          {keywords.map((k) => (
+            <Link
+              key={k.key}
+              href={`/doktor/doctorium?m=mevzuat&h=ictihat&k=${k.key}`}
+              className="aura-mono rounded-full bg-rose-500/[0.08] px-2 py-0.5 text-[10px] font-semibold text-rose-300/90 hover:bg-rose-500/15"
+            >
+              {k.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ArticleCard({ item }: { item: FeedItem }) {
   return (
     <li className="overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)]">
@@ -377,6 +484,11 @@ function ArticleCard({ item }: { item: FeedItem }) {
           </Link>
           {item.titleOriginal && <p className="mt-0.5 text-[11px] italic text-[var(--c-ink-3)]">{item.titleOriginal}</p>}
           {item.authors && <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">{item.authors}</p>}
+
+          {/* İçtihat kartı (v6.87): karar metninden deterministik alıntı + metinde GEÇEN kanun
+              maddeleri ve sözlük terimleri (AI yok — kullanıcı kararı). Terim çipi tıklanınca
+              arşiv o terime süzülür. */}
+          {item.kind === "ictihat" && <IctihatCardMeta summary={item.summary} />}
 
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
             {item.module === "akademik" && (

@@ -5,6 +5,7 @@ import { verifyConsentChain } from "@/lib/consent";
 import { sendAlert } from "@/lib/alerts";
 import { remindPendingDocs, type RemindResult } from "@/lib/pending-docs-reminder";
 import { ingestDoctorium, type IngestResult } from "@/lib/doctorium-ingest";
+import { ingestYargitay, type YargitayIngestResult } from "@/lib/hukuk-ingest";
 import { remindCongressFollows, type CongressRemindResult } from "@/lib/congress-reminder";
 
 // GET /api/cron/purge-deleted — saklama süresi dolan klinik kayıtları GERÇEKTEN imha eder (v6.11).
@@ -79,6 +80,18 @@ export async function GET(req: Request) {
       doctorium = { error: e instanceof Error ? e.message.slice(0, 120) : "ingest koşamadı" };
     }
 
+    // Hukuk/İçtihat toplama (v6.86): Yargıtay karar arama → NewsArticle (category=ictihat).
+    // Koşu başına metin tavanı lib içinde (MAX_DOC_FETCH_DEFAULT) — bütçe dostu; kalan `deferred`
+    // ertesi koşuda idempotent alınır. Kritik değil: hata imha akışını düşürmez, raporlanır.
+    // ⚠️ Vercel fra1 → devlet sitesi erişimi GARANTİ DEĞİL (RG dersi): burada sürekli hata
+    // görülürse yerel yol hazır → scripts/ingest-yargitay.ts (--prod --yaz).
+    let yargitay: YargitayIngestResult | { error: string };
+    try {
+      yargitay = await ingestYargitay();
+    } catch (e) {
+      yargitay = { error: e instanceof Error ? e.message.slice(0, 120) : "içtihat ingest koşamadı" };
+    }
+
     // Doctorium kongre alarmı (v6.49): takip edilen kongrenin başlangıcı / bildiri-erken kayıt son
     // tarihi hekimin seçtiği eşiğe girdiyse bildirim. Kritik değil — hata imha akışını düşürmez.
     let congress: CongressRemindResult | { error: string };
@@ -98,6 +111,9 @@ export async function GET(req: Request) {
     const doc = "error" in doctorium
       ? `hata: ${doctorium.error}`
       : `pubmed=${doctorium.pubmedNew}/${doctorium.pubmedFetched} rg=${doctorium.gazetteNew}/${doctorium.gazetteFetched}${doctorium.errors.length ? ` sorun=${doctorium.errors.length}` : ""}`;
+    const ict = "error" in yargitay
+      ? `hata: ${yargitay.error}`
+      : `yeni=${yargitay.created}/${yargitay.found}${yargitay.deferred ? ` erteli=${yargitay.deferred}` : ""}${yargitay.errors.length ? ` sorun=${yargitay.errors.length}` : ""}`;
     const con = "error" in congress
       ? `hata: ${congress.error}`
       : `bakilan=${congress.checked} baslangic=${congress.start} bildiri=${congress.abstract} erkenkayit=${congress.earlybird} hata=${congress.failed}`;
@@ -107,7 +123,7 @@ export async function GET(req: Request) {
       resourceType: "SYSTEM",
       resourceId: "purge-deleted",
       subjectUserId: null,
-      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · kongre ${con}`,
+      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · ictihat ${ict} · kongre ${con}`,
     });
 
     return NextResponse.json({
@@ -120,6 +136,7 @@ export async function GET(req: Request) {
       },
       pendingDocsReminders: reminders,
       doctorium,
+      yargitay,
       congressAlerts: congress,
     });
   } catch (e) {

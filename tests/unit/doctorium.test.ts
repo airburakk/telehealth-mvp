@@ -2,13 +2,16 @@
 // burada kişiselleştirme + veri temizliği + mevzuat filtresi kilitlenir.
 import { describe, it, expect, vi } from "vitest";
 
-// doctorium-ingest DB'ye dokunur (import zinciri); burada test edilen `pubDate` saf fonksiyondur.
-vi.mock("@/lib/db", () => ({ db: { newsArticle: {} } }));
+// doctorium-ingest DB'ye dokunur (import zinciri); saf fonksiyonların yanında moduleFeed'in
+// WHERE kurgusu da bu mock üzerinden kilitlenir (v6.87 — findMany'ye giden argüman incelenir).
+const feedFindMany = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/db", () => ({ db: { newsArticle: { findMany: feedFindMany } } }));
 import {
   parseBranchPrefs, normalizeBranchPrefs, effectiveBranches, branchLabel, slugForLabel,
   parseClinicalSummary, BRANCH_OPTIONS, DOCTORIUM_MODULES,
   RANGE_OPTIONS, DEFAULT_RANGE, rangeDays, normalizeAlertDays, ALERT_DAY_OPTIONS,
   SECTOR_CATEGORIES, categoryLabel, parseRegulationSummary,
+  LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES, KIND_LABEL, moduleFeed,
 } from "@/lib/doctorium";
 import { isHealthRelated, categorize, parseTurkishDate } from "@/lib/doctorium-sources";
 import { pubDate } from "@/lib/doctorium-ingest";
@@ -122,6 +125,70 @@ describe("modül tanımı", () => {
       expect(c, t).not.toBeNull();
       expect(keys.has(c as string), `${t} -> ${c}`).toBe(true);
     }
+  });
+});
+
+// ── v6.86: Hukuk modülü (Mevzuat · İçtihat alt-sekmeleri) ──
+describe("Hukuk modülü sözleşmesi (v6.86)", () => {
+  it('modülün kullanıcı-yüzü adı "Hukuk", iç anahtar "mevzuat" (migration\'sız dönüşüm)', () => {
+    const m = DOCTORIUM_MODULES.find((x) => x.key === "mevzuat");
+    expect(m?.label).toBe("Hukuk");
+  });
+
+  it("alt-sekmeler: mevzuat + ictihat; doktrin Faz 2'ye dek YAYINLANMAZ (boş sekme yasak)", () => {
+    expect(LEGAL_TABS.map((t) => t.key)).toEqual(["mevzuat", "ictihat"]);
+  });
+
+  it("parseLegalTab bilinmeyen/eksik değeri Mevzuat'a düşürür (URL kurcalanması akışı bozmaz)", () => {
+    expect(parseLegalTab("ictihat")).toBe("ictihat");
+    expect(parseLegalTab("mevzuat")).toBe("mevzuat");
+    expect(parseLegalTab("doktrin")).toBe("mevzuat"); // Faz 2'ye dek sekme yok
+    expect(parseLegalTab(undefined)).toBe("mevzuat");
+  });
+
+  it("İçtihat kind etiketi tanımlı; ictihat SECTOR_CATEGORIES'e SIZMAZ (sektörel filtre çipi olmasın)", () => {
+    expect(KIND_LABEL.ictihat).toBe("İçtihat");
+    expect(SECTOR_CATEGORIES.some((c) => LEGAL_ONLY_CATEGORIES.includes(c.key))).toBe(false);
+    expect(categoryLabel("ictihat")).toBeNull(); // kartta çift rozet (kind + kategori) basılmaz
+  });
+
+  it("Mevzuat alt-sekmesinin dışlama listesi içtihat+doktrini kapsar", () => {
+    expect(LEGAL_ONLY_CATEGORIES).toEqual(expect.arrayContaining(["ictihat", "doktrin"]));
+  });
+});
+
+// ── v6.87: moduleFeed WHERE kurgusu (mock findMany'ye giden argüman incelenir) ──
+describe("moduleFeed sorgu kurgusu (v6.87)", () => {
+  it("excludeCategories NULL kategorili satırı KORUR (Prisma NOT tuzağı: notIn null'ı da elerdi)", async () => {
+    feedFindMany.mockResolvedValue([]);
+    await moduleFeed("mevzuat", [], { excludeCategories: ["ictihat", "doktrin"] });
+    const where = feedFindMany.mock.calls.at(-1)![0].where;
+    expect(where.AND).toEqual([
+      { OR: [{ category: null }, { category: { notIn: ["ictihat", "doktrin"] } }] },
+    ]);
+  });
+
+  it("textContainsAny desenleri OR-contains olarak AND dizisine girer (insensitive)", async () => {
+    feedFindMany.mockResolvedValue([]);
+    await moduleFeed("mevzuat", [], { category: "ictihat", textContainsAny: ["malpraktis", "hekim hatası"] });
+    const where = feedFindMany.mock.calls.at(-1)![0].where;
+    expect(where.category).toBe("ictihat");
+    expect(where.AND).toEqual([
+      {
+        OR: [
+          { summary: { contains: "malpraktis", mode: "insensitive" } },
+          { summary: { contains: "hekim hatası", mode: "insensitive" } },
+        ],
+      },
+    ]);
+  });
+
+  it("akademikte branş OR'u ile filtre AND'i ÇAKIŞMAZ (spread'de OR anahtarı ezilme tuzağı)", async () => {
+    feedFindMany.mockResolvedValue([]);
+    await moduleFeed("akademik", ["onkoloji"], { textContainsAny: ["x"] });
+    const where = feedFindMany.mock.calls.at(-1)![0].where;
+    expect(where.OR).toEqual([{ branchSlugs: { contains: '"onkoloji"' } }]); // branş OR'u yerinde
+    expect(where.AND).toHaveLength(1); // metin filtresi ayrı eksende yaşıyor
   });
 });
 

@@ -24,14 +24,34 @@ export interface ModuleDef {
 // v6.50: "Sektörel & Mevzuat" İKİYE ayrıldı (kullanıcı isteği) + İlaç modülü eklendi.
 // Sıra kullanıcı kararı (2026-08-01): Akışım · Akademik · Sektörel · İlaç · Kongre · Mevzuat.
 // Mevzuat EN SONDA — günlük okuma sıklığı en düşük, ihtiyaç anında bakılan referans niteliğinde.
+// v6.86 (kullanıcı kararı 2026-08-06): modülün kullanıcı-yüzü adı "Hukuk" — altında Mevzuat ·
+// İçtihat (· Doktrin, Faz 2) alt-sekmeleri (LEGAL_TABS). İç anahtar "mevzuat" BİLİNÇLİ değişmedi:
+// DB'deki module değeri, akış sorguları, ingest'ler ve URL'ler kırılmasın (migration'sız dönüşüm).
 export const DOCTORIUM_MODULES: ModuleDef[] = [
   { key: "akis", label: "Akışım", desc: "Branşınız + mevzuat + sektör: tek akış" },
   { key: "akademik", label: "Akademik", desc: "Hakemli yayınlar — PubMed" },
   { key: "sektorel", label: "Sektörel", desc: "Doktor hakları · yönetim · teknoloji · küresel" },
   { key: "ilac", label: "İlaç & Cihaz", desc: "Geri çekmeler · klinik faz · prospektüs" },
   { key: "kongre", label: "Kongre Takvimi", desc: "Ulusal ve uluslararası kongreler" },
-  { key: "mevzuat", label: "Mevzuat", desc: "Resmî Gazete · SUT · sağlık hukuku" },
+  { key: "mevzuat", label: "Hukuk", desc: "Mevzuat · İçtihat — sağlık hukuku" },
 ];
+
+// Hukuk modülü alt-sekmeleri (v6.86). "doktrin" Faz 2'de eklenecek (kullanıcı kararı: DergiPark
+// link-modeli + davet-edilen-yazar birlikte) — boş sekme YAYINLANMAZ ("gerçek kaynak yoksa
+// içerik yok" ilkesi), o yüzden listede henüz yok.
+export const LEGAL_TABS = [
+  { key: "mevzuat", label: "Mevzuat" },
+  { key: "ictihat", label: "İçtihat" },
+] as const;
+export type LegalTabKey = (typeof LEGAL_TABS)[number]["key"];
+
+/** ?h= paramı → alt-sekme; bilinmeyen/eksik değer Mevzuat'a düşer (URL kurcalanması akışı bozmaz). */
+export function parseLegalTab(raw: string | undefined): LegalTabKey {
+  return LEGAL_TABS.some((t) => t.key === raw) ? (raw as LegalTabKey) : "mevzuat";
+}
+
+/** Mevzuat alt-sekmesinde İçtihat (ve ileride Doktrin) kayıtları listelenmez. */
+export const LEGAL_ONLY_CATEGORIES = ["ictihat", "doktrin"];
 
 // Sektörel/mevzuat alt kategorileri (v6.50). Kaynak matrisi: mevzuat+sut+ilac-cihaz Resmî Gazete
 // ve OHSAD'dan, yonetim TTB/OHSAD'dan, teknoloji WHO/RG'den, turizm RG'den gelir.
@@ -55,6 +75,7 @@ export const KIND_LABEL: Record<string, string> = {
   haber: "Haber",
   uyari: "Geri Çekme",
   lansman: "Klinik Faz",
+  ictihat: "İçtihat", // v6.86 — Yargıtay kararları (source: yargitay, lib/hukuk-ingest.ts)
 };
 
 // ── Branş tercihleri (Modül A) ──────────────────────────────────────────────
@@ -199,13 +220,28 @@ export function rangeDays(key: string | undefined): number {
 export async function moduleFeed(
   module: "akademik" | "mevzuat" | "sektorel" | "ilac",
   branchSlugs: string[],
-  opts: { limit?: number; days?: number; category?: string | null } = {},
+  opts: { limit?: number; days?: number; category?: string | null; excludeCategories?: string[]; textContainsAny?: string[] } = {},
 ): Promise<FeedItem[]> {
-  const { limit = 40, days, category } = opts;
+  const { limit = 40, days, category, excludeCategories, textContainsAny } = opts;
+  // v6.86/87: iki bağımsız OR ölçütü (kategori-dışlama · metin-arama) AND dizisinde toplanır —
+  // spread ile aynı objeye ikinci bir OR anahtarı yazmak öncekini SESSİZCE ezerdi.
+  const and: object[] = [];
+  // Mevzuat alt-sekmesi içtihat/doktrin kayıtlarını dışlar. `notIn` tek başına NULL kategorili
+  // satırları da ELERDİ (Prisma NOT semantiği) → null açıkça korunur.
+  if (excludeCategories?.length) {
+    and.push({ OR: [{ category: null }, { category: { notIn: excludeCategories } }] });
+  }
+  // İçtihat anahtar-kelime filtresi (v6.87): sözlük deseni metnin İÇİNDE aranır (deterministik;
+  // desenlerden herhangi biri yeter). insensitive → Postgres ILIKE; Türkçe İ/ı katlaması
+  // locale'e bağlı olduğundan desenler zaten küçük harfle tutulur (lib/hukuk-keywords.ts).
+  if (textContainsAny?.length) {
+    and.push({ OR: textContainsAny.map((p) => ({ summary: { contains: p, mode: "insensitive" as const } })) });
+  }
   const rows = await db.newsArticle.findMany({
     where: {
       module,
       ...(category ? { category } : {}),
+      ...(and.length ? { AND: and } : {}),
       ...(days ? { publishedAt: { gte: new Date(Date.now() - days * 86400000) } } : {}),
       ...(module === "akademik" && branchSlugs.length
         ? { OR: branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } })) }
