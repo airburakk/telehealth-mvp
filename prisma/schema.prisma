@@ -160,6 +160,17 @@ model Doctor {
   /// Durumun tek kaynağı bu alan; İSPAT izi ConsentRecord'da (scope SPONSOR_TARGETING — grant/revoke
   /// ayrı satırlar, lib/sponsor.ts). Reklamverene hiçbir kişisel veri gitmez (agregat sayaç yalnız).
   sponsorPersonalizationAt DateTime?
+  /// İki aşamalı giriş — AŞAMA 1 damgası (v6.87): tabip odası "Protokol Numaralı" üye yazısı
+  /// (DoctorDocument.type = CHAMBER) yüklüyse dolu → yalnız Doctorium erişimi açılır (otomatik,
+  /// admin onayı beklemez — kullanıcı kararı 2026-08-11). Klinik havuz kapısı (activatedAt) AYRI
+  /// ve DEĞİŞMEDİ. Erişim kuralı kodda: chamberLetterAt VEYA activatedAt (lib/doctor-activation.ts
+  /// hasDoctoriumAccess) — mevcut aktif doktorlar backfill'siz geçer.
+  chamberLetterAt          DateTime?
+  /// İnsan kaynakları iletişim izni (v6.87, opt-in — hizmete ŞART DEĞİL): dolu = doktor, İK
+  /// uzmanlarının kendisiyle iletişime geçmesine açık onam verdi; null = yok/geri alındı.
+  /// İSPAT izi ConsentRecord'da (scope HR_CONTACT / HR_CONTACT_REVOKE — lib/hr-consent.ts).
+  /// İK modülü henüz YOK — onam şimdiden toplanır, modül geldiğinde yalnız dolu olanlar listelenir.
+  hrContactOptInAt         DateTime?
   // Ücretsiz Sağlık Hizmeti — anlık müsaitlik + kontenjan (gönüllü ücretsiz konsültasyon).
   freeCareState       String    @default("OFFLINE") // OFFLINE | AVAILABLE | IN_SESSION
   freeCareQuota       Int       @default(10) // dönem (takvim haftası) başına kontenjan

@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { storeDocument, deleteDocument } from "@/lib/storage";
 import { detectDocumentKind, DOC_REJECT_MESSAGE } from "@/lib/document-mime";
-import { ALL_DOC_TYPES, refreshActivation } from "@/lib/doctor-activation";
+import { ALL_DOC_TYPES, refreshActivation, refreshChamberLetter } from "@/lib/doctor-activation";
 
 // Object storage (S3) henüz yok → küçük dosyalar base64 olarak DB'de (data URI). Kaba sınır ~8.5 MB.
 const MAX_FILE_CHARS = 12_000_000;
@@ -53,8 +53,8 @@ export async function POST(req: Request) {
   if (!kind) return NextResponse.json({ error: DOC_REJECT_MESSAGE }, { status: 415 });
   const mimeType = kind.mime;
 
-  // Zorunlu/tekil belgeler (diploma + MMSS): tek geçerli kopya tutulur → yeni yükleme eskisini değiştirir.
-  if (type === "DIPLOMA" || type === "MMSS") {
+  // Tekil belgeler (diploma + MMSS + tabip odası yazısı): tek geçerli kopya → yeni yükleme eskisini değiştirir.
+  if (type === "DIPLOMA" || type === "MMSS" || type === "CHAMBER") {
     const old = await db.doctorDocument.findMany({ where: { doctorId, type }, select: { content: true } });
     await Promise.all(old.map((o) => deleteDocument(o.content))); // eski Blob nesnelerini temizle (T11)
     await db.doctorDocument.deleteMany({ where: { doctorId, type } });
@@ -65,10 +65,12 @@ export async function POST(req: Request) {
     data: { doctorId, type, label, mimeType, content: stored as string },
   });
 
+  // İki kapı ayrı damgalanır: activated = Aşama 2 (klinik), doctorium = Aşama 1 (CHAMBER ∨ aktivasyon).
   const activated = await refreshActivation(doctorId);
-  // base64 yükü yanıtta geri gönderme — yalnız meta + güncel aktivasyon durumu
+  const doctorium = await refreshChamberLetter(doctorId);
+  // base64 yükü yanıtta geri gönderme — yalnız meta + güncel kapı durumları
   return NextResponse.json(
-    { id: doc.id, type: doc.type, label: doc.label, mimeType: doc.mimeType, activated },
+    { id: doc.id, type: doc.type, label: doc.label, mimeType: doc.mimeType, activated, doctorium },
     { status: 201 },
   );
 }
@@ -88,5 +90,6 @@ export async function DELETE(req: Request) {
   await db.doctorDocument.delete({ where: { id } });
   await deleteDocument(doc.content); // Blob nesnesini de kaldır (T11)
   const activated = await refreshActivation(doctorId);
-  return NextResponse.json({ ok: true, activated });
+  const doctorium = await refreshChamberLetter(doctorId); // CHAMBER silindiyse Doctorium kapısı da düşer
+  return NextResponse.json({ ok: true, activated, doctorium });
 }

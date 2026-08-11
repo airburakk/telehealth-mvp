@@ -5,6 +5,10 @@ import { db } from "@/lib/db";
 import { encryptField } from "@/lib/crypto";
 import { verifyDoctorAgainstRegistry } from "@/lib/ht-registry";
 
+// Geçerli ünvanlar — e-posta kaydı + OAuth profil-tamamlama doğrulaması ortak kullanır.
+// (Client formlardaki kopyalar ayrıdır: bu modül db import ettiğinden bundle'a giremez.)
+export const DOCTOR_TITLES = ["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."] as const;
+
 export interface DoctorSignupInput {
   name: string;
   email: string;        // benzersizlik çağıran tarafça önceden kontrol edilmeli

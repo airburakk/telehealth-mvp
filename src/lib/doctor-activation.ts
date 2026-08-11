@@ -6,9 +6,26 @@
 import { db } from "@/lib/db";
 
 // Hesap aktivasyonu için yüklenmesi ZORUNLU belge tipleri (sertifika/akademik ihtiyari).
+// ⚠️ CHAMBER buraya EKLENMEZ: tabip odası yazısı Aşama 1'in (Doctorium) belgesidir, klinik
+// aktivasyonun (Aşama 2) girdisi değildir — iki kapı birbirinden bağımsız damgalanır.
 export const REQUIRED_DOC_TYPES = ["DIPLOMA", "MMSS"] as const;
-export const ALL_DOC_TYPES = ["DIPLOMA", "MMSS", "CERTIFICATE", "ACADEMIC"] as const;
+export const ALL_DOC_TYPES = ["DIPLOMA", "MMSS", "CHAMBER", "CERTIFICATE", "ACADEMIC"] as const;
 export type DoctorDocType = (typeof ALL_DOC_TYPES)[number];
+
+// ── İki aşamalı giriş — AŞAMA 1: Doctorium kapısı (v6.87) ──────────────────────────────────────
+// Tabip odası "Protokol Numaralı" üye yazısı (CHAMBER) yüklüyse Doctor.chamberLetterAt damgalanır
+// (otomatik — admin onayı beklemez; kullanıcı kararı 2026-08-11). Doctorium erişimi damga VEYA
+// klinik aktivasyonla açılır: Aşama 2'yi tamamlamış mevcut doktorlar CHAMBER'sız da içeridedir.
+
+// Doctorium'a girebilir mi (saf — birim testlenebilir).
+export function hasDoctoriumAccess(d: { chamberLetterAt: Date | null; activatedAt: Date | null }): boolean {
+  return !!d.chamberLetterAt || !!d.activatedAt;
+}
+
+// Tabip odası yazısı yüklü mü?
+export function hasChamberLetter(docs: { type: string }[]): boolean {
+  return docs.some((x) => x.type === "CHAMBER");
+}
 
 type MmssMeta = { mmssInsurer: string | null; mmssPolicyNo: string | null; mmssCoverageLimit: number | null };
 
@@ -61,11 +78,16 @@ export function hasQualification(d: { licenseNo: string | null; specBoard: strin
   return !!(d.licenseNo && d.licenseNo.trim()) && !!(d.specBoard && d.specBoard.trim());
 }
 
-type OnboardingData = MmssMeta & { procedures: string | null; licenseNo: string | null; specBoard: string | null };
+type OnboardingData = MmssMeta & {
+  procedures: string | null; licenseNo: string | null; specBoard: string | null;
+  // v6.87 OAuth boşluğu kapatıldı: Google/Apple hesabı branch/city BOŞ açılır ("" — doctor-signup.ts);
+  // profil-tamamla ara sayfası doldurtur, burası API'den doğrudan finish'e karşı derinlik savunması.
+  branch: string; city: string;
+};
 
-// Onboarding tamamlanabilir mi: zorunlu belgeler + MMSS + ≥1 işlem + FHIR qualification.
+// Onboarding tamamlanabilir mi: zorunlu belgeler + MMSS + ≥1 işlem + FHIR qualification + kimlik (branş/şehir).
 export function canCompleteOnboarding(docs: { type: string }[], d: OnboardingData): boolean {
-  return canActivate(docs, d) && hasProcedures(d.procedures) && hasQualification(d);
+  return canActivate(docs, d) && hasProcedures(d.procedures) && hasQualification(d) && !!d.branch.trim() && !!d.city.trim();
 }
 
 // Onboarding için eksik adımlar (UI yönlendirme metni).
@@ -74,6 +96,8 @@ export function missingOnboardingSteps(docs: { type: string }[], d: OnboardingDa
   if (!hasProcedures(d.procedures)) out.push("En az bir işlem seçimi");
   if (!d.licenseNo || !d.licenseNo.trim()) out.push("Diploma / tescil no");
   if (!d.specBoard || !d.specBoard.trim()) out.push("Uzmanlık belgesi");
+  if (!d.branch.trim()) out.push("Branş bilgisi (profilinizi tamamlayın)");
+  if (!d.city.trim()) out.push("Şehir bilgisi (profilinizi tamamlayın)");
   return out;
 }
 
@@ -96,4 +120,22 @@ export async function refreshActivation(doctorId: string): Promise<boolean> {
     await db.doctor.update({ where: { id: doctorId }, data: { activatedAt: null } });
   }
   return ok;
+}
+
+// DB-yan-etkili: CHAMBER belgesinin varlığını Doctor.chamberLetterAt damgasına eşitler
+// (refreshActivation deseni — belge yükleme/silme sonrası çağrılır; yazı silinirse damga düşer).
+// Döndürür: doktorun GÜNCEL Doctorium erişimi (damga VEYA klinik aktivasyon).
+export async function refreshChamberLetter(doctorId: string): Promise<boolean> {
+  const [docs, doc] = await Promise.all([
+    db.doctorDocument.findMany({ where: { doctorId, type: "CHAMBER" }, select: { type: true } }),
+    db.doctor.findUnique({ where: { id: doctorId }, select: { chamberLetterAt: true, activatedAt: true } }),
+  ]);
+  if (!doc) return false;
+  const has = hasChamberLetter(docs);
+  if (has && !doc.chamberLetterAt) {
+    await db.doctor.update({ where: { id: doctorId }, data: { chamberLetterAt: new Date() } });
+  } else if (!has && doc.chamberLetterAt) {
+    await db.doctor.update({ where: { id: doctorId }, data: { chamberLetterAt: null } });
+  }
+  return hasDoctoriumAccess({ chamberLetterAt: has ? new Date() : null, activatedAt: doc.activatedAt });
 }

@@ -6,12 +6,26 @@ import { HeartHandshake, Stethoscope, Inbox, Loader2, ArrowRight, Check, BadgeCh
 import { DoctorDocuments, type DocMeta, type MmssInitial } from "@/components/DoctorDocuments";
 import ProcedureSelector, { type Proc } from "@/components/ProcedureSelector";
 import { AcademicEditor } from "@/components/AcademicEditor";
+import { Stage1Doctorium } from "@/components/Stage1Doctorium";
 
 interface Pub { title: string; venue: string; year: number }
 
-// M5 — İlk-giriş onboarding kapısı (client). Hesap aktifleşmesi için ZORUNLU: (1) FHIR uzmanlık &
-// işlemler — diploma/tescil no + uzmanlık belgesi + branş işlemleri & ücretleri (≥1); (2) mesleki
-// belgeler — diploma + MMSS. Sonra Ücretsiz Sağlık Hizmeti + Partner Konsültasyon opt-in toplanır. Kaydedince /doktor'a geçer.
+// İki aşamalı giriş — AŞAMA 1 blok prop'ları (v6.87): tabip odası yazısı + rızalar Stage1Doctorium'da.
+export interface Stage1Props {
+  initialChamberDoc: DocMeta | null;
+  initialAccess: boolean; // Doctorium erişimi (yazı VEYA klinik aktivasyon)
+  initialSponsor: boolean;
+  initialHr: boolean;
+  sponsorText: string;
+  hrText: string;
+  fromDoctorium: boolean;
+}
+
+// M5 — İlk-giriş onboarding kapısı (client). v6.87'den beri İKİ AŞAMALI: Aşama 1 = tabip odası
+// yazısı → yalnız Doctorium (anında, "finish" beklemez); Aşama 2 = klinik havuz — hesap
+// aktifleşmesi için ZORUNLU: (1) FHIR uzmanlık & işlemler — diploma/tescil no + uzmanlık belgesi +
+// branş işlemleri (≥1); (2) mesleki belgeler — diploma + MMSS. Sonra Ücretsiz Sağlık Hizmeti +
+// Partner Konsültasyon opt-in toplanır. Kaydedince /doktor'a geçer.
 export function OnboardingForm({
   doctorName,
   branchKey,
@@ -25,6 +39,7 @@ export function OnboardingForm({
   initialConsult,
   initialDocs,
   initialMmss,
+  stage1,
 }: {
   doctorName: string;
   branchKey: string;
@@ -41,6 +56,7 @@ export function OnboardingForm({
   initialConsult: boolean;
   initialDocs: DocMeta[];
   initialMmss: MmssInitial;
+  stage1: Stage1Props;
 }) {
   const router = useRouter();
   const [freeCare, setFreeCare] = useState(initialFreeCare);
@@ -79,13 +95,29 @@ export function OnboardingForm({
       <div className="text-center">
         <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Hoş geldiniz, {doctorName}</h1>
         <p className="mt-2 text-sm text-[var(--c-ink-2)]">
-          Doktor Ana Sayfanız tercihinize göre düzenlenir. Aşağıdaki birimlere katılmak isteyip
-          istemediğinizi seçin — dilediğiniz zaman profilinizden değiştirebilirsiniz.
+          Üyeliğiniz iki aşamalıdır: Doctorium için tabip odası yazınız yeterli; klinik havuza
+          katılmak için mesleki belgelerinizi tamamlarsınız. Tercihlerinizi dilediğiniz zaman
+          profilinizden değiştirebilirsiniz.
+        </p>
+      </div>
+
+      {/* ── AŞAMA 1 — Doctorium üyeliği: tabip odası yazısı + isteğe bağlı rızalar (v6.87) ── */}
+      <Stage1Doctorium {...stage1} />
+
+      {/* ── AŞAMA 2 — Klinik havuz üyeliği: mevcut aktivasyon gereksinimleri AYNEN ── */}
+      <div className="mt-10 border-t border-[var(--c-hairline)] pt-6">
+        <div className="flex items-center gap-2 text-sm font-bold text-[var(--c-ink)]">
+          <Stethoscope size={16} className="text-[var(--c-accent-strong)]" /> Aşama 2 — Klinik Havuz Üyeliği
+        </div>
+        <p className="mt-1 text-xs text-[var(--c-ink-2)]">
+          Uzaktan sağlık, ikinci görüş ve sağlık turizmi doktor havuzlarına katılmak için aşağıdaki
+          belgeleri ve tanımları tamamlayın. Bu aşamayı dilediğiniz zaman tamamlayabilirsiniz;
+          Doctorium erişiminiz beklemez.
         </p>
       </div>
 
       {/* ── Uzmanlık & İşlemler (FHIR) — diploma/tescil no + uzmanlık belgesi + işlem seçimi (zorunlu; ücret tedavi kararında) ── */}
-      <div className="mt-8">
+      <div className="mt-6">
         <div className="flex items-center gap-2 text-sm font-bold text-[var(--c-ink)]">
           <Stethoscope size={16} className="text-[var(--c-accent-strong)]" /> Uzmanlık & İşlemler
         </div>

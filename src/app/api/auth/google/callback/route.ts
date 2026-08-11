@@ -40,17 +40,20 @@ export async function GET(req: Request) {
   if (!info) return NextResponse.redirect(new URL(errBack, origin));
 
   let user = await db.user.findUnique({ where: { email: info.email } });
+  let newDoctor = false; // v6.87: yeni doktor önce /doktor/profil-tamamla'ya iner (bekçi zinciri)
   if (!user) {
     // Google yalnız ad/e-posta verir; parola girişi devre dışı (rastgele hash).
     const passwordHash = await hashPassword(randomBytes(24).toString("hex"));
     if (intent === "patient") {
       user = await createPatientAccount({ name: info.name, email: info.email, passwordHash });
     } else {
-      // Yeni doktor — branş/şehir/dil onboarding'de tamamlanır; verified:false (admin onayı bekler).
+      // Yeni doktor — branş/şehir/dil/telefon profil-tamamla ara sayfasında toplanır (v6.87;
+      // /doktor/baslangic bekçisi de branch/city boşken oraya atar). verified:false (admin onayı bekler).
       user = await createDoctorAccount({
         name: info.name, email: info.email, passwordHash,
         title: "Uzm. Dr.", branch: "", city: "", languages: "Türkçe",
       });
+      newDoctor = true;
     }
   }
   // Google e-postayı zaten doğrular (exchangeGoogleCode email_verified şartı) → hesap doğrulanmış
@@ -65,7 +68,10 @@ export async function GET(req: Request) {
 
   const cv = await consentedVersion(user.id);
   await createSession({ id: user.id, email: user.email, name: user.name, role: user.role as Role, cv });
-  // Faz 5: dönen hasta vaka merkezine iner (başvurusu yoksa /triyaj)
-  const home = user.role === "PATIENT" ? await patientHome(user.id) : roleHome(user.role as Role);
+  // Faz 5: dönen hasta vaka merkezine iner (başvurusu yoksa /triyaj). Yeni doktor: kimlik ara
+  // sayfası (proxy onam kapısı next'i koruyarak önce /onam'a düşürür — zincir bozulmaz).
+  const home = newDoctor
+    ? "/doktor/profil-tamamla"
+    : user.role === "PATIENT" ? await patientHome(user.id) : roleHome(user.role as Role);
   return NextResponse.redirect(new URL(home, origin));
 }

@@ -76,6 +76,7 @@ export async function POST(req: Request) {
     if (byEmail && !byEmail.deletedAt) user = byEmail;
   }
 
+  let newDoctor = false; // v6.87: yeni doktor önce /doktor/profil-tamamla'ya iner (bekçi zinciri)
   if (!user) {
     // Apple parola vermez; parola girişi devre dışı bırakılır (rastgele hash — Google deseni).
     const passwordHash = await hashPassword(randomBytes(24).toString("hex"));
@@ -84,11 +85,13 @@ export async function POST(req: Request) {
     if (intent === "patient") {
       user = await createPatientAccount({ name, email: identity.email, passwordHash });
     } else {
-      // Yeni doktor — branş/şehir/dil onboarding'de tamamlanır; verified:false (admin onayı bekler).
+      // Yeni doktor — branş/şehir/dil/telefon profil-tamamla ara sayfasında toplanır (v6.87;
+      // /doktor/baslangic bekçisi de branch/city boşken oraya atar). verified:false (admin onayı bekler).
       user = await createDoctorAccount({
         name, email: identity.email, passwordHash,
         title: "Uzm. Dr.", branch: "", city: "", languages: "Türkçe",
       });
+      newDoctor = true;
     }
   }
 
@@ -113,7 +116,10 @@ export async function POST(req: Request) {
 
   const cv = await consentedVersion(user.id);
   await createSession({ id: user.id, email: user.email, name: user.name, role: user.role as Role, cv });
-  const home = user.role === "PATIENT" ? await patientHome(user.id) : roleHome(user.role as Role);
+  // Yeni doktor: kimlik ara sayfası (proxy onam kapısı next'i koruyarak önce /onam'a düşürür).
+  const home = newDoctor
+    ? "/doktor/profil-tamamla"
+    : user.role === "PATIENT" ? await patientHome(user.id) : roleHome(user.role as Role);
   return NextResponse.redirect(new URL(home, origin), 303); // POST → GET: 303 şart, 307 POST'u taşır
 }
 
