@@ -183,6 +183,39 @@ export default async function DoctoriumPage({
         </nav>
       )}
 
+      {/* Hukuk bölümü tanıtımı (kullanıcı isteği 2026-08-11): bölümlerin ne içerdiği + nasıl
+          kullanılacağı. <details> = JS'siz aç/kapa (client bileşeni gerekmez); varsayılan KAPALI —
+          her girişte listeyi aşağı itmesin. Doktrin "hazırlanıyor" = durum bildirimi, tarihli vaat
+          değil (Faz 2 kararı verili: DergiPark link-modeli + davet-edilen-yazar birlikte). */}
+      {active === "mevzuat" && (
+        <details className="mt-3 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3 text-xs leading-relaxed text-[var(--c-ink-2)]">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[11px] font-semibold text-[var(--c-ink)] [&::-webkit-details-marker]:hidden">
+            <Info size={13} className="text-emerald-300" /> Hukuk bölümü nedir, nasıl kullanılır?
+          </summary>
+          <div className="mt-2 grid gap-1.5">
+            <p>
+              <strong className="text-[var(--c-ink)]">Mevzuat</strong>{" — "}Resmî Gazete ve sektör
+              kaynaklarından sağlığı ilgilendiren yönetmelik, tebliğ ve SUT/geri ödeme değişiklikleri.
+              Üstteki &quot;Özelleştir&quot; penceresinden kategori ve tarih aralığına göre süzebilirsiniz;
+              bir kalemi açınca doktor odaklı özet hazırlanır.
+            </p>
+            <p>
+              <strong className="text-[var(--c-ink)]">İçtihat</strong>{" — "}Yargıtay&apos;ın sağlık hukuku ve
+              malpraktis kararları (kimlikler kaynağında anonimleştirilmiştir). Anahtar kelime
+              çipleriyle arşivi süzün; her kartta karar metninden kısa alıntı, metinde geçen kanun
+              maddeleri ve ilgili terimler görünür. Kararı açınca tam metni okuyabilirsiniz. Bu
+              kayıtlar hukuki mütalaa değildir; bir karara dayanmadan önce aslını esas/karar
+              numarasıyla resmî sistemden doğrulayın.
+            </p>
+            <p>
+              <strong className="text-[var(--c-ink)]">Doktrin</strong>{" — "}sağlık hukukçularının makale
+              ve yazılarına ayrılan bölüm; içerik kaynakları hazırlanıyor, hazır olduğunda burada
+              açılacak.
+            </p>
+          </div>
+        </details>
+      )}
+
       {/* İçtihat anahtar-kelime çipleri (v6.87, kullanıcı kararı): sözlük deterministik —
           tıklanan terim kararın METNİNDE aranır (lib/hukuk-keywords.ts). URL'de taşınır (?k=),
           paylaşılabilir. Aktif çip yeniden tıklanınca filtre kalkar (X). */}
