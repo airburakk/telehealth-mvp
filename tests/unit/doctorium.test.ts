@@ -1,6 +1,9 @@
 // Doctorium — saf mantık sözleşmeleri (v6.48). Ağ/DB gerektiren yollar entegrasyon işidir;
 // burada kişiselleştirme + veri temizliği + mevzuat filtresi kilitlenir.
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// doctorium-ingest DB'ye dokunur (import zinciri); burada test edilen `pubDate` saf fonksiyondur.
+vi.mock("@/lib/db", () => ({ db: { newsArticle: {} } }));
 import {
   parseBranchPrefs, normalizeBranchPrefs, effectiveBranches, branchLabel, slugForLabel,
   parseClinicalSummary, BRANCH_OPTIONS, DOCTORIUM_MODULES,
@@ -8,6 +11,7 @@ import {
   SECTOR_CATEGORIES, categoryLabel, parseRegulationSummary,
 } from "@/lib/doctorium";
 import { isHealthRelated, categorize, parseTurkishDate } from "@/lib/doctorium-sources";
+import { pubDate } from "@/lib/doctorium-ingest";
 import { BRANCHES } from "@/lib/triage";
 
 describe("branş tercihleri", () => {
@@ -218,5 +222,42 @@ describe("mevzuat özeti çözümleme", () => {
   it("aksiyon yoksa boş dizi (uydurma aksiyon üretilmez)", () => {
     const r = parseRegulationSummary('{"summary":"x","actions":[],"affected":"","effective":""}');
     expect(r?.actions).toEqual([]);
+  });
+});
+
+// v6.85 — PubMed tarihi. Vakalar CANLI esummary çıktısından alındı (2026-08-06 ölçümü):
+// kapak tarihi gelecekte, gerçek çevrimiçi yayın epubdate'te.
+describe("PubMed yayın tarihi", () => {
+  const iso = (d: Date | null) => d?.toISOString().slice(0, 10) ?? null;
+
+  it("epubdate kapak tarihini EZER — sürekli-yayın dergisi 31 Aralık'a yığmaz", () => {
+    // PMID 42246474 (Oncoimmunology): kapak "2026 Dec 31", çevrimiçi 5 Haziran.
+    expect(iso(pubDate("2026 Dec 31", "2026/12/31 00:00", "2026 Jun 5"))).toBe("2026-06-05");
+  });
+
+  it("aylık/iki-aylık derginin gelecek sayısı da epubdate'e düşer", () => {
+    expect(iso(pubDate("2026 Dec", "2026/12/01 00:00", "2026 Jul 20"))).toBe("2026-07-20");
+    expect(iso(pubDate("2026 Sep-Oct 01", "2026/09/01 00:00", "2026 Jun 29"))).toBe("2026-06-29");
+  });
+
+  it("epubdate yoksa kapak tarihi kullanılır (geçmişteyse dokunulmaz)", () => {
+    expect(iso(pubDate("2025 Mar 14", "2025/03/14 00:00", undefined))).toBe("2025-03-14");
+    expect(iso(pubDate("2025 Mar", undefined, undefined))).toBe("2025-03-01");
+  });
+
+  it("elde yalnız gelecek tarih varsa BUGÜNE kırpılır — ileri tarih listeyi işgal edemez", () => {
+    const r = pubDate("2099 Dec 31", "2099/12/31 00:00", undefined);
+    expect(r).not.toBeNull();
+    expect(r!.getTime()).toBeLessThanOrEqual(Date.now());
+  });
+
+  it("epubdate gelecekteyse ona da güvenilmez (kırpma her yola uygulanır)", () => {
+    const r = pubDate("2099 Dec 31", undefined, "2099 Nov 1");
+    expect(r!.getTime()).toBeLessThanOrEqual(Date.now());
+  });
+
+  it("tarih yoksa null — kayıt atlanır, uydurma tarih yazılmaz", () => {
+    expect(pubDate(undefined, undefined, undefined)).toBeNull();
+    expect(pubDate("baskıda", "", "")).toBeNull();
   });
 });

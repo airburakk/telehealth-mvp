@@ -51,6 +51,7 @@ interface PubMedSummary {
   source?: string;
   pubdate?: string;
   sortpubdate?: string;
+  epubdate?: string;
   authors?: { name: string }[];
   articleids?: { idtype: string; value: string }[];
   pubtype?: string[];
@@ -71,16 +72,36 @@ const MONTHS: Record<string, string> = {
   jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06",
   jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12",
 };
-function pubDate(pubdate?: string, sortpubdate?: string): Date | null {
-  if (sortpubdate) {
-    const m = /^(\d{4})\/(\d{2})\/(\d{2})/.exec(sortpubdate);
-    if (m) return new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`);
-  }
-  const p = (pubdate ?? "").trim().split(/\s+/);
+/** "2026 Jun 5" · "2026 Dec" · "2026 Sep-Oct 01" · "2026" → Date (UTC) | null */
+function looseDate(s?: string): Date | null {
+  const p = (s ?? "").trim().split(/\s+/);
   if (!/^\d{4}$/.test(p[0] ?? "")) return null;
   const mo = MONTHS[(p[1] ?? "").slice(0, 3).toLowerCase()] ?? "01";
   const d = /^\d{1,2}$/.test(p[2] ?? "") ? (p[2] as string).padStart(2, "0") : "01";
-  return new Date(`${p[0]}-${mo}-${d}T00:00:00Z`);
+  const dt = new Date(`${p[0]}-${mo}-${d}T00:00:00Z`);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+/**
+ * ⚠️ PubMed'in `pubdate`/`sortpubdate` alanı YAYIN tarihi DEĞİL, derginin **kapak/cilt tarihidir**
+ * (cover date). Sürekli-yayın dergileri (Oncoimmunology, Gut microbes…) tüm yılı tek cilt sayar →
+ * `pubdate = "2026 Dec 31"`; aylık dergiler gelecek sayıya atar → `"2026 Dec"`. Makale aylar önce
+ * çevrimiçi çıkmış olsa da tarih GELECEKTE görünür — v6.85 öncesi akademik havuzun 74 kaydından
+ * 71'i böyleydi (58'i tam 31 Aralık'ta yığılmıştı, "en yeni" sıralaması anlamsızdı).
+ *
+ * Gerçek çevrimiçi ilk yayın tarihi `epubdate`'tir → ÖNCE o denenir. Yoksa kapak tarihine düşülür,
+ * o da gelecekteyse bugüne kırpılır: makale bugün PubMed'de erişilebilir olduğuna göre en geç bugün
+ * yayınlanmıştır — üst sınır göstermek, kapak tarihi göstermekten dürüsttür.
+ * 🪤 Kırpma nedeniyle mevcut kayıtların `publishedAt`'i ingest'te GÜNCELLENMEZ (her koşuda "bugün"e
+ * taşınıp listeyi kalıcı işgal ederdi); geçmiş kayıtların düzeltmesi `scripts/fix-pubmed-dates.ts`.
+ */
+export function pubDate(pubdate?: string, sortpubdate?: string, epubdate?: string): Date | null {
+  const m = /^(\d{4})\/(\d{2})\/(\d{2})/.exec(sortpubdate ?? "");
+  const sortDt = m ? new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`) : null;
+  const chosen = looseDate(epubdate) ?? (sortDt && !Number.isNaN(sortDt.getTime()) ? sortDt : null) ?? looseDate(pubdate);
+  if (!chosen) return null;
+  const now = new Date();
+  return chosen > now ? now : chosen;
 }
 
 // efetch XML'inden abstract (esummary abstract vermez). Parser yok — hedefli regex; başarısızlık
@@ -143,7 +164,7 @@ async function ingestQuery(term: string, limit: number, slugs: string[]): Promis
   for (const id of ids) {
     const r = sum.result[id];
     if (!r?.title) continue;
-    const when = pubDate(r.pubdate, r.sortpubdate);
+    const when = pubDate(r.pubdate, r.sortpubdate, r.epubdate);
     if (!when) continue;
     const doi = r.articleids?.find((a) => a.idtype === "doi")?.value ?? null;
     const data = {
