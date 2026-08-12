@@ -60,7 +60,8 @@ export default function SignupStagesPage() {
       {/* Aşama 2 */}
       <div className="mt-4 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6">
         <div className="flex items-center gap-2.5">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--c-ink)]/15 text-[var(--c-ink)]">
+          {/* Aşama 1 ile aynı marka rengi (kullanıcı kararı 2026-08-12) — iki aşama görsel eşit ağırlıkta */}
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]">
             <Stethoscope size={18} />
           </span>
           <div>
