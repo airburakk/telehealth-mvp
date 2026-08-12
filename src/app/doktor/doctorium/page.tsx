@@ -12,9 +12,10 @@ import { SurveyCardView } from "./SurveyCard";
 import {
   DOCTORIUM_MODULES, KIND_LABEL, RANGE_OPTIONS, DEFAULT_RANGE, rangeDays,
   SECTOR_CATEGORIES, categoryLabel, LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES,
+  CAREER_TABS, parseCareerTab, careerPathways,
   effectiveBranches, personalFeed, moduleFeed, singleBranchFeed, upcomingCongresses,
   localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
-  slugForLabel, parseScope, type FeedItem, type ModuleKey, type LegalTabKey,
+  slugForLabel, parseScope, type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey,
 } from "@/lib/doctorium";
 import { branchColor, hasBranchVisual } from "@/lib/branch-visuals";
 import { HUKUK_KEYWORDS, keywordByKey, extractKeywords, extractLawRefs, extractExcerpt } from "@/lib/hukuk-keywords";
@@ -22,6 +23,7 @@ import { BranchAvatar } from "@/components/BranchAvatar";
 import { DoctoriumFilters } from "./DoctoriumFilters";
 import { FollowButton } from "./CongressControls";
 import { ProspektusSearch } from "./ProspektusSearch";
+import { CareerDisclaimer, careerDate, COUNTRY_LABEL } from "./CareerShared";
 import {
   ArrowLeft, ExternalLink, FlaskConical, Gavel, Info,
   Sparkles, MapPin, X, CalendarClock, Pill, Building2, Megaphone, Scale, Star,
@@ -43,7 +45,7 @@ const VALID_SLUGS = new Set(BRANCH_OPTIONS.map((b) => b.slug));
 export default async function DoctoriumPage({
   searchParams,
 }: {
-  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string; h?: string; k?: string }>;
+  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string; h?: string; k?: string; t?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
@@ -94,6 +96,11 @@ export default async function DoctoriumPage({
   const scope = parseScope(sp.s);
   const congresses = active === "kongre" ? await upcomingCongresses(branches, { scope }) : [];
   const followed = active === "kongre" && doctor ? await followedCongressIds(doctor.id) : new Set<string>();
+
+  // Kariyer modülü alt-sekmesi (v6.89): ?t=yurtdisi|turkiye — yalnız bu modülde anlamlı.
+  // (?c= sektörel kategoriye, ?h= Hukuk'a, ?s= kongre kapsamına ait — param çakışması yok.)
+  const careerTab: CareerTabKey | null = active === "kariyer" ? parseCareerTab(sp.t) : null;
+  const pathways = careerTab ? await careerPathways(careerTab) : [];
 
   // v6.68 Faz 1: sponsorlu kartlar YALNIZ Akışım'da (diğer sekmeler temiz kalır) ve boş akışa
   // basılmaz. Kişiselleştirilmiş seçim yalnız AÇIK RIZALI doktorda (sponsorPersonalizationAt);
@@ -172,6 +179,40 @@ export default async function DoctoriumPage({
           </Link>
         )}
       </nav>
+
+      {/* Kariyer alt-sekmeleri (v6.89): Yurt Dışı · Türkiye. Hukuk şeridinin birebir eşleniği
+          (ikincil nav görünümü). Yurt Dışı linki t'siz: varsayılan sekme, kanonik URL tek kalsın. */}
+      {active === "kariyer" && (
+        <nav className="mt-3.5 flex items-center gap-4 border-b border-[var(--c-hairline)]" aria-label="Kariyer bölümleri">
+          {CAREER_TABS.map((t) => {
+            const on = careerTab === t.key;
+            return (
+              <Link
+                key={t.key}
+                href={t.key === "yurtdisi" ? "/doktor/doctorium?m=kariyer" : `/doktor/doctorium?m=kariyer&t=${t.key}`}
+                aria-current={on ? "page" : undefined}
+                className={`-mb-px border-b-2 pb-2 text-xs font-semibold transition ${
+                  on
+                    ? "border-emerald-400 text-emerald-300"
+                    : "border-transparent text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"
+                }`}
+              >
+                {t.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
+
+      {/* Beklenti notu (kullanıcı onaylı metin, 2026-08-11): doktor "Kariyer" görünce iş ilanı
+          bekleyebilir — bu bölümde ilan YOK. Aynı zamanda İŞKUR sınırının kullanıcıya bakan yüzü:
+          aracılık yapılmadığı burada açıkça yazılı (envanter §3). */}
+      {active === "kariyer" && (
+        <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
+          <Info size={13} className="mt-px shrink-0 text-emerald-300" />
+          Bu bölüm iş ilanı içermez; hekimlik süreçlerinin nasıl işlediğini anlatır.
+        </p>
+      )}
 
       {/* Hukuk alt-sekmeleri (v6.86, kullanıcı kararı): Mevzuat · İçtihat (Doktrin Faz 2).
           Modül pill'lerinden bilinçli İKİNCİL görünüm (küçük, alt çizgili aktiflik) — iki nav
@@ -294,7 +335,9 @@ export default async function DoctoriumPage({
 
       {active === "ilac" && <ProspektusSearch />}
 
-      {active === "kongre" ? (
+      {active === "kariyer" ? (
+        <CareerList rows={pathways} />
+      ) : active === "kongre" ? (
         <CongressList rows={congresses} followed={followed} canFollow={!!doctor} />
       ) : (
         <>
@@ -634,5 +677,93 @@ function CongressList({ rows, followed, canFollow }: { rows: CongressRow[]; foll
         </li>
       ))}
     </ul>
+  );
+}
+
+// ── Kariyer modülü (v6.89) ──────────────────────────────────────────────────
+// Ortak parçalar (uyarı · tarih biçimi · ülke etiketi) ./CareerShared'da — detay sayfası da
+// oradan okur (route dosyasından bileşen import etmek Next.js'te kırılgan olurdu).
+
+/**
+ * Süreç kartları. Her kartta "Son doğrulama" GÖRÜNÜR (bayatlık gizlenmez); confidence="kismi"
+ * kayıtlar "Teyit bekliyor" ibaresi taşır — doktor bilginin kesinlik derecesini kartta görür.
+ * ⚠️ Başvuru butonu / işveren teması YOK (İŞKUR sınırı) — kart yalnız detay sayfasına götürür.
+ */
+function CareerList({ rows }: { rows: Awaited<ReturnType<typeof careerPathways>> }) {
+  if (!rows.length) {
+    return (
+      <>
+        <p className="mt-5 rounded-2xl border border-dashed border-[var(--c-hairline)] px-4 py-6 text-center text-xs leading-relaxed text-[var(--c-ink-3)]">
+          Bu kapsamda henüz süreç kaydı yok. Kayıtlar resmî otorite kaynaklarından doğrulanarak
+          eklenir — doğrulanmamış bilgi yayımlanmaz.
+        </p>
+        <CareerDisclaimer />
+      </>
+    );
+  }
+  return (
+    <>
+      <ul className="mt-4 grid gap-3">
+        {rows.map((p) => (
+          <li
+            key={p.id}
+            className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-4 transition hover:border-emerald-400/40"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                {COUNTRY_LABEL[p.country] ?? p.country}
+              </span>
+              {p.confidence === "kismi" && (
+                <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
+                  ⚠️ Teyit bekliyor
+                </span>
+              )}
+              <span className="ml-auto text-[10px] text-[var(--c-ink-3)]">
+                Son doğrulama: {careerDate(p.verifiedAt)}
+              </span>
+            </div>
+
+            <h3 className="mt-2 text-sm font-semibold text-[var(--c-ink)]">
+              <Link href={`/doktor/doctorium/kariyer/${p.slug}`} className="hover:underline">
+                {p.title}
+              </Link>
+            </h3>
+            <p className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">{p.authority}</p>
+            <p className="mt-2 text-xs leading-relaxed text-[var(--c-ink-2)]">{p.summary}</p>
+
+            {(p.languageReq || p.examReq) && (
+              <dl className="mt-3 grid gap-1.5 text-[11px] sm:grid-cols-2">
+                {p.languageReq && (
+                  <div>
+                    <dt className="text-[var(--c-ink-3)]">Dil şartı</dt>
+                    <dd className="text-[var(--c-ink-2)]">{p.languageReq}</dd>
+                  </div>
+                )}
+                {p.examReq && (
+                  <div>
+                    <dt className="text-[var(--c-ink-3)]">Sınav</dt>
+                    <dd className="text-[var(--c-ink-2)]">{p.examReq}</dd>
+                  </div>
+                )}
+              </dl>
+            )}
+
+            {p.warning && (
+              <p className="mt-3 flex items-start gap-1.5 rounded-xl bg-amber-500/5 px-3 py-2 text-[11px] leading-relaxed text-amber-200/90">
+                <Info size={12} className="mt-0.5 shrink-0" /> {p.warning}
+              </p>
+            )}
+
+            <Link
+              href={`/doktor/doctorium/kariyer/${p.slug}`}
+              className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-300 hover:underline"
+            >
+              Adımları ve belge listesini gör <ArrowLeft size={12} className="rotate-180" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <CareerDisclaimer />
+    </>
   );
 }

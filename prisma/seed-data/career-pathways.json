@@ -1,0 +1,201 @@
+[
+  {
+    "slug": "almanya-approbation",
+    "scope": "yurtdisi",
+    "country": "DE",
+    "order": 10,
+    "title": "Almanya — Approbation (süresiz çalışma ruhsatı)",
+    "authority": "Çalışılacak eyaletin ruhsat makamı (Landesprüfungsamt / Bezirksregierung)",
+    "summary": "Almanya'da hekimlik yapmak için gereken süresiz ruhsattır. Federal tek merci yoktur: başvuru, çalışılacak eyaletin ruhsat makamına yapılır ve istenen belgeler eyalete göre değişir. Türkiye AB dışı (üçüncü ülke) sayıldığı için diploma denklik incelemesine tabidir.",
+    "steps": [
+      { "order": 1, "title": "Eyaleti ve yetkili makamı belirleyin", "detail": "Başvuru, çalışmayı planladığınız eyaletin ruhsat makamına yapılır. Yurt dışında yaşıyorsanız Federal İş Ajansı bünyesindeki ZSBA (Zentrale Servicestelle Berufsanerkennung) ücretsiz danışmanlık veriyor." },
+      { "order": 2, "title": "Belgeleri hazırlayın (apostil + yeminli tercüme)", "detail": "Diploma ve transkript apostilli ve yeminli tercümeli olmalıdır. Eyaletler ek belge isteyebilir — listeyi başvuru öncesi kendi makamınızdan doğrulayın." },
+      { "order": 3, "title": "Dil yeterliliği", "detail": "Genel Almanca B2'ye ek olarak mesleki dil sınavı FSP (Fachsprachenprüfung) istenir; hasta ve meslektaş iletişiminin yaklaşık C1 düzeyinde olduğunu gösterir." },
+      { "order": 4, "title": "Denklik incelemesi", "detail": "Diplomanız Alman tıp eğitimine eşdeğer bulunmazsa bilgi sınavı (Kenntnisprüfung) istenir. Eşdeğerlik kararı dosya bazında verilir." },
+      { "order": 5, "title": "Ruhsat kararı", "detail": "Belgeler, dil ve (gerekiyorsa) sınav tamamlandığında eyalet makamı Approbation kararını verir." }
+    ],
+    "documents": [
+      "Diploma (apostilli + yeminli tercüme)",
+      "Transkript / not durum belgesi (apostilli + yeminli tercüme)",
+      "Pasaport",
+      "İyi hal (Good Standing) belgesi",
+      "Adli sicil kaydı",
+      "Sağlık durumu belgesi",
+      "Almanca dil sertifikası (B2) + FSP sonucu"
+    ],
+    "languageReq": "Genel Almanca B2 + mesleki dil sınavı FSP (yaklaşık C1 düzeyi)",
+    "examReq": "FSP zorunlu. Diploma eşdeğer bulunmazsa ayrıca Kenntnisprüfung (bilgi sınavı).",
+    "typicalMonths": null,
+    "costNote": null,
+    "officialUrl": "https://www.anerkennung-in-deutschland.de",
+    "sourceUrls": [
+      "https://www.anerkennung-in-deutschland.de",
+      "https://www.hamburg.de/service/info/11983983/n0/",
+      "https://www.regierung.oberbayern.bayern.de/aufgaben/37198/244210/leistung/leistung_12109/index.html"
+    ],
+    "confidence": "kismi",
+    "verifiedAt": "2026-08-11",
+    "warning": "Süreç EYALETE GÖRE DEĞİŞİR — belge listesi, ücret ve sıra tek bir \"Almanya süreci\" olarak anlatılamaz. Başvuru öncesi kendi eyaletinizin ruhsat makamından teyit alın."
+  },
+  {
+    "slug": "dubai-dha",
+    "scope": "yurtdisi",
+    "country": "AE-DU",
+    "order": 20,
+    "title": "Dubai — DHA sağlık meslek lisansı",
+    "authority": "Dubai Health Authority (DHA), Health Regulation Department — Sheryan portalı",
+    "summary": "Dubai'de hekimlik yapmak için DHA lisansı gerekir. Başvurular Sheryan portalı üzerinden yapılır ve belgeler DataFlow tarafından kaynağından doğrulanır (primary source verification). Birleşik Arap Emirlikleri'nde tek bir ulusal lisans yoktur.",
+    "steps": [
+      { "order": 1, "title": "Sheryan portalında hesap açın", "detail": "DHA'nın çevrim içi lisanslama sistemi Sheryan üzerinden başvuru dosyası oluşturulur." },
+      { "order": 2, "title": "DataFlow doğrulaması (PSV)", "detail": "Diploma, deneyim ve lisans belgeleriniz DataFlow tarafından doğrudan kaynak kurumdan doğrulanır. Bu adım süreci belirleyen en uzun kalemlerden biridir." },
+      { "order": 3, "title": "Değerlendirme ve sınav", "detail": "Başvuru DHA tarafından değerlendirilir; unvan ve branşa göre lisans sınavı istenebilir." },
+      { "order": 4, "title": "Lisansın verilmesi", "detail": "Değerlendirme tamamlandığında lisans düzenlenir." }
+    ],
+    "documents": [
+      "Tanınan tıp diploması",
+      "Uzmanlık belgesi (varsa)",
+      "Mevcut çalışma/lisans belgesi",
+      "İyi hal (Good Standing) belgesi",
+      "Deneyim belgeleri (DataFlow doğrulaması için)",
+      "Pasaport"
+    ],
+    "languageReq": null,
+    "examReq": "Unvan ve branşa göre DHA lisans sınavı istenebilir.",
+    "typicalMonths": null,
+    "costNote": null,
+    "officialUrl": "https://services.dha.gov.ae/sheryan/wps/portal/home",
+    "sourceUrls": [
+      "https://services.dha.gov.ae/sheryan/wps/portal/home",
+      "https://www.dha.gov.ae/uploads/022022/FAQ%20V22022218315.pdf",
+      "https://dataflowgroup.com/organization/dubai-health-authority/"
+    ],
+    "confidence": "kismi",
+    "verifiedAt": "2026-08-11",
+    "warning": "BAE'de tek lisans yoktur: Dubai (DHA), Abu Dhabi (DOH) ve kuzey emirlikler (MOH) ayrı süreçlerdir. Bir emirlikteki lisans diğerinde otomatik geçerli değildir."
+  },
+  {
+    "slug": "suudi-scfhs",
+    "scope": "yurtdisi",
+    "country": "SA",
+    "order": 30,
+    "title": "Suudi Arabistan — SCFHS lisansı",
+    "authority": "Saudi Commission for Health Specialties (SCFHS)",
+    "summary": "Suudi Arabistan'da sağlık mesleği icrası için SCFHS lisansı gerekir. Körfez'in aksine ülke genelinde tek yetkili merci vardır. Süreç, mesleki sınıflandırma (classification) adımını içerir.",
+    "steps": [
+      { "order": 1, "title": "SCFHS portalında hesap açın", "detail": "Başvuru dosyası komisyonun kendi portalı üzerinden oluşturulur." },
+      { "order": 2, "title": "DataFlow doğrulaması", "detail": "Belgeler kaynağından doğrulanır." },
+      { "order": 3, "title": "Mesleki sınıflandırma (classification)", "detail": "Unvanınız ve deneyiminiz SCFHS kademelerine göre sınıflandırılır; bu kademe hangi statüde çalışabileceğinizi belirler." },
+      { "order": 4, "title": "Sınav (gerekiyorsa)", "detail": "Sınıflandırmaya bağlı olarak Prometric sınavı istenebilir." },
+      { "order": 5, "title": "Nihai kayıt", "detail": "Adımlar tamamlandığında kayıt ve lisans işlemi sonuçlanır." }
+    ],
+    "documents": [
+      "Tanınan tıp diploması",
+      "Uzmanlık belgesi (varsa)",
+      "Deneyim belgeleri",
+      "İyi hal (Good Standing) belgesi",
+      "Pasaport"
+    ],
+    "languageReq": null,
+    "examReq": "Sınıflandırmaya göre Prometric sınavı istenebilir.",
+    "typicalMonths": null,
+    "costNote": null,
+    "officialUrl": "https://www.scfhs.org.sa",
+    "sourceUrls": ["https://www.scfhs.org.sa"],
+    "confidence": "kismi",
+    "verifiedAt": "2026-08-11",
+    "warning": null
+  },
+  {
+    "slug": "uk-gmc",
+    "scope": "yurtdisi",
+    "country": "GB",
+    "order": 40,
+    "title": "Birleşik Krallık — GMC kaydı (uluslararası mezunlar)",
+    "authority": "General Medical Council (GMC)",
+    "summary": "Birleşik Krallık'ta hekimlik yapmak için GMC siciline kayıt gerekir. Uluslararası mezunlar için dil yeterliliği, mesleki sınav ve doğrulanmış intörnlük şartları aranır.",
+    "steps": [
+      { "order": 1, "title": "İngilizce yeterliliği", "detail": "IELTS Academic (General Training KABUL EDİLMEZ) genel 7.5 ve her bantta en az 7.0, tek oturumda; alternatif olarak OET'te tüm bileşenlerde en az B." },
+      { "order": 2, "title": "Mesleki sınav", "detail": "Uluslararası mezunlar için sınav yolu PLAB üzerinden yürümüş, UKMLA'ya geçiş süreci devam etmektedir. Başvuru öncesi hangi sınavın geçerli olduğunu GMC'nin kendi sayfasından doğrulayın." },
+      { "order": 3, "title": "İntörnlük doğrulaması", "detail": "Tam kayıt için doğrulanmış 12 aylık intörnlük (mezuniyet sonrası klinik deneyim) gerekir." },
+      { "order": 4, "title": "Başvuru ve kayıt", "detail": "GMC Online hesabı üzerinden başvuru yapılır; diploma ve iyi hal belgeleri sunulur." }
+    ],
+    "documents": [
+      "Tıp diploması",
+      "İntörnlük tamamlama belgesi (12 ay)",
+      "Kendi tabip biriminden iyi hal (Good Standing) belgesi",
+      "IELTS Academic / OET sonuç belgesi",
+      "Pasaport"
+    ],
+    "languageReq": "IELTS Academic: genel 7.5, her bantta 7.0 (tek oturumda) — VEYA OET: tüm bileşenlerde en az B. IELTS General Training kabul edilmez.",
+    "examReq": "PLAB; UKMLA'ya geçiş süreci devam ediyor — güncel durum GMC'den doğrulanmalı.",
+    "typicalMonths": null,
+    "costNote": null,
+    "officialUrl": "https://www.gmc-uk.org/registration-and-licensing/join-our-registers/registration-applications/application-guides/full-registration-for-international-medical-graduates",
+    "sourceUrls": ["https://www.gmc-uk.org/registration-and-licensing/join-our-registers/registration-applications/application-guides/full-registration-for-international-medical-graduates"],
+    "confidence": "kismi",
+    "verifiedAt": "2026-08-11",
+    "warning": "PLAB → UKMLA geçişi sürüyor. Sınav adı ve geçerlilik takvimi başvuru öncesi GMC'nin kendi sayfasından doğrulanmalıdır — yanlış sınava hazırlanmak aylık kayıp demektir."
+  },
+  {
+    "slug": "tr-docentlik",
+    "scope": "turkiye",
+    "country": "TR",
+    "order": 10,
+    "title": "Doçentlik başvurusu (Sağlık Bilimleri)",
+    "authority": "Üniversitelerarası Kurul (ÜAK)",
+    "summary": "Akademik kariyerde doçentlik, ÜAK'a yapılan başvuruyla değerlendirilir. Sağlık Bilimleri temel alanında asgari başvuru puanı 100'dür ve bunun en az 90'ı doktora veya tıpta uzmanlık sonrası çalışmalardan elde edilmelidir.",
+    "steps": [
+      { "order": 1, "title": "Puan durumunuzu hesaplayın", "detail": "Sağlık Bilimleri temel alanında asgari 100 puan; bu puanın en az 90'ı doktora / tıpta uzmanlık sonrası yapılan çalışmalardan gelmelidir. Makale sayısı tek başına belirleyici değildir — toplam puan belirleyicidir." },
+      { "order": 2, "title": "Başvuru döneminde başvurun", "detail": "Başvurular ÜAK'ın ilan ettiği dönemlerde alınır. Dönem takvimi ve alan tabloları her yıl güncellenir; güncel tabloyu ÜAK sayfasından kontrol edin." },
+      { "order": 3, "title": "Şekil incelemesi", "detail": "Başvuru, ÜAK Doçentlik Komisyonu tarafından şeklen incelenir." },
+      { "order": 4, "title": "Jüri değerlendirmesi", "detail": "Şeklen uygun bulunan her aday için ilgili bilim alanından 5 asıl ve 2 yedek profesörden oluşan doçentlik jürisi atanır." }
+    ],
+    "documents": [
+      "Doktora / tıpta uzmanlık belgesi",
+      "Yayın ve çalışma dosyası (puan tablosuna göre)",
+      "Başvuru formu (ÜAK sistemi üzerinden)"
+    ],
+    "languageReq": null,
+    "examReq": null,
+    "typicalMonths": null,
+    "costNote": null,
+    "officialUrl": "https://www.uak.gov.tr/page/docentlik-basvuru-sartlari-kLPHX",
+    "sourceUrls": ["https://www.uak.gov.tr/page/docentlik-basvuru-sartlari-kLPHX"],
+    "confidence": "dogrulandi",
+    "verifiedAt": "2026-08-11",
+    "warning": "Başvuru dönemleri ve temel alan puan tabloları her yıl güncellenir. Puan hesabınızı başvurudan önce ÜAK'ın güncel tablosuyla karşılaştırın."
+  },
+  {
+    "slug": "tr-iyi-hal-belgesi",
+    "scope": "turkiye",
+    "country": "TR",
+    "order": 20,
+    "title": "İyi Hal (Good Standing) Belgesi — yurt dışı başvurularının ön koşulu",
+    "authority": "T.C. Sağlık Bakanlığı · Türk Tabipleri Birliği (TTB)",
+    "summary": "Yurt dışında eğitim veya çalışma amacıyla başvuran sağlık meslek mensuplarına verilen, diploma tescil bilgisini ve varsa disiplin cezalarını içeren belgedir. Almanya, Körfez ve Birleşik Krallık süreçlerinin tamamında istenir.",
+    "steps": [
+      { "order": 1, "title": "Hedef ülkenin HANGİ belgeyi kabul ettiğini öğrenin", "detail": "Belge iki ayrı yerden alınabiliyor: Sağlık Bakanlığı ve Türk Tabipleri Birliği. Birçok ülke yalnızca TTB'den alınan belgeyi kabul ediyor. Yanlış kurumdan belge almak, boşa apostil masrafı ve gecikme demektir — başvurudan önce hedef ülkenin otoritesinden teyit alın." },
+      { "order": 2, "title": "Diploma tescilinizi doğrulayın", "detail": "Bakanlık yolunda belge, diploması Bakanlıkta tescilli meslek mensuplarına verilir." },
+      { "order": 3, "title": "Başvurunuzu yapın", "detail": "Sağlık Bakanlığı yolunda başvuru, Avrupa Birliği ve Dış İlişkiler Genel Müdürlüğü'ne yapılır. Güncel başvuru kanalını (dilekçe / e-Devlet) işlem öncesi kurumdan doğrulayın." },
+      { "order": 4, "title": "Apostil ve tercüme", "detail": "Belge, hedef ülkenin istediği biçimde apostilli ve yeminli tercümeli olarak sunulur." }
+    ],
+    "documents": [
+      "Diploma (tescilli)",
+      "Uzmanlık belgesi (varsa)",
+      "Kimlik / pasaport",
+      "Başvuru dilekçesi"
+    ],
+    "languageReq": null,
+    "examReq": null,
+    "typicalMonths": null,
+    "costNote": null,
+    "officialUrl": "https://erisilebilir.saglik.gov.tr/TR-77584/iyi-hal-good-standing-belgesi.html",
+    "sourceUrls": [
+      "https://erisilebilir.saglik.gov.tr/TR-77584/iyi-hal-good-standing-belgesi.html",
+      "https://www.ttb.org.tr/165yk24"
+    ],
+    "confidence": "kismi",
+    "verifiedAt": "2026-08-11",
+    "warning": "Bakanlık belgesi ile TTB belgesi HER ÜLKEDE birbirinin yerine geçmez. Hangi kurumun belgesinin kabul edildiğini hedef ülkenin sağlık otoritesinden teyit edin."
+  }
+]

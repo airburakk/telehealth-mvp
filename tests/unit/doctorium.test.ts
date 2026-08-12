@@ -1,6 +1,8 @@
 // Doctorium — saf mantık sözleşmeleri (v6.48). Ağ/DB gerektiren yollar entegrasyon işidir;
 // burada kişiselleştirme + veri temizliği + mevzuat filtresi kilitlenir.
 import { describe, it, expect, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 // doctorium-ingest DB'ye dokunur (import zinciri); saf fonksiyonların yanında moduleFeed'in
 // WHERE kurgusu da bu mock üzerinden kilitlenir (v6.87 — findMany'ye giden argüman incelenir).
@@ -12,6 +14,7 @@ import {
   RANGE_OPTIONS, DEFAULT_RANGE, rangeDays, normalizeAlertDays, ALERT_DAY_OPTIONS,
   SECTOR_CATEGORIES, categoryLabel, parseRegulationSummary,
   LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES, KIND_LABEL, moduleFeed,
+  CAREER_TABS, parseCareerTab, parseSteps, parseStringList,
 } from "@/lib/doctorium";
 import { isHealthRelated, categorize, parseTurkishDate } from "@/lib/doctorium-sources";
 import { pubDate } from "@/lib/doctorium-ingest";
@@ -100,10 +103,11 @@ describe("Resmî Gazete sağlık filtresi (Modül B)", () => {
 });
 
 describe("modül tanımı", () => {
-  it("6 modül, mevzuat SONDA (v6.51 sıra kararı)", () => {
+  it("7 modül, mevzuat SONDA (v6.51 sıra kararı · v6.89 kariyer eklendi)", () => {
     const keys = DOCTORIUM_MODULES.map((m) => m.key);
     // Sıra kullanıcı kararı (2026-08-01): mevzuat EN SONDA.
-    expect(keys).toEqual(["akis", "akademik", "sektorel", "ilac", "kongre", "mevzuat"]);
+    // v6.89: "kariyer" kongreden SONRA, hukuktan ÖNCE (kullanıcı kararı 2026-08-11).
+    expect(keys).toEqual(["akis", "akademik", "sektorel", "ilac", "kongre", "kariyer", "mevzuat"]);
     expect(new Set(keys).size).toBe(keys.length);
   });
 
@@ -292,7 +296,90 @@ describe("mevzuat özeti çözümleme", () => {
   });
 });
 
-// v6.85 — PubMed tarihi. Vakalar CANLI esummary çıktısından alındı (2026-08-06 ölçümü):
+// ── v6.89: Kariyer modülü (küratörlü denklik rehberi) ──
+describe("Kariyer modülü sözleşmesi (v6.89)", () => {
+  it("alt-sekmeler: yurtdisi + turkiye; 'İK Fırsatları' sekmesi YOK (İŞKUR izni gelmeden açılmaz)", () => {
+    expect(CAREER_TABS.map((t) => t.key)).toEqual(["yurtdisi", "turkiye"]);
+    // İş ilanı/aracılık fazı özel istihdam bürosu izni ister — izinsiz sekme açılamaz.
+    expect(CAREER_TABS.some((t) => /ilan|İK|is-firsat/i.test(t.key))).toBe(false);
+  });
+
+  it("parseCareerTab bilinmeyen/eksik değeri Yurt Dışı'na düşürür (URL kurcalanması akışı bozmaz)", () => {
+    expect(parseCareerTab("turkiye")).toBe("turkiye");
+    expect(parseCareerTab("yurtdisi")).toBe("yurtdisi");
+    expect(parseCareerTab("ik-firsatlari")).toBe("yurtdisi");
+    expect(parseCareerTab(undefined)).toBe("yurtdisi");
+    expect(parseCareerTab("../../etc")).toBe("yurtdisi");
+  });
+
+  it("parseSteps bozuk/eksik JSON'da çökmez ve adımları order'a göre sıralar", () => {
+    expect(parseSteps(null)).toEqual([]);
+    expect(parseSteps("{bozuk")).toEqual([]);
+    expect(parseSteps('{"order":1}')).toEqual([]); // dizi değil
+    const s = parseSteps('[{"order":2,"title":"b","detail":"y"},{"order":1,"title":"a","detail":"x"},{"order":3}]');
+    expect(s.map((x) => x.title)).toEqual(["a", "b"]); // eksik alanlı kayıt elenir
+  });
+
+  it("parseStringList bozuk JSON'da boş döner, metin olmayanları eler", () => {
+    expect(parseStringList(null)).toEqual([]);
+    expect(parseStringList("{bozuk")).toEqual([]);
+    expect(parseStringList('["a",5,"b",null]')).toEqual(["a", "b"]);
+  });
+});
+
+// Seed verisinin İÇERİK DÜRÜSTLÜĞÜ sözleşmesi — bu modül idari süreç anlatır, yanlış bilgi
+// hekimin gerçek kaybıdır (kaçırılan sınav, eksik belge). Kurallar burada KİLİTLENİR.
+describe("Kariyer seed verisi dürüstlük kuralları (v6.89)", () => {
+  const rows = JSON.parse(
+    readFileSync(join(process.cwd(), "prisma", "seed-data", "career-pathways.json"), "utf8"),
+  ) as Record<string, unknown>[];
+
+  it("her kayıtta resmî kaynak var ve https (kaynağı olmayan kayıt YAYINLANMAZ)", () => {
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) {
+      expect(String(r.officialUrl), String(r.slug)).toMatch(/^https:\/\//);
+    }
+  });
+
+  it("her kayıtta doğrulama tarihi var ve GELECEK değil (bayatlık gizlenmez, uydurulmaz)", () => {
+    const yarin = new Date();
+    yarin.setDate(yarin.getDate() + 1);
+    for (const r of rows) {
+      const d = new Date(String(r.verifiedAt));
+      expect(Number.isNaN(d.getTime()), String(r.slug)).toBe(false);
+      expect(d.getTime(), String(r.slug)).toBeLessThan(yarin.getTime());
+    }
+  });
+
+  it("scope ve confidence yalnız tanımlı değerler; slug tekrar etmez", () => {
+    const slugs = new Set<string>();
+    for (const r of rows) {
+      expect(["yurtdisi", "turkiye"]).toContain(r.scope);
+      expect(["dogrulandi", "kismi"]).toContain(r.confidence ?? "dogrulandi");
+      expect(slugs.has(String(r.slug)), `tekrar: ${r.slug}`).toBe(false);
+      slugs.add(String(r.slug));
+    }
+  });
+
+  it("adımsız süreç kartı yok — her kayıtta en az bir adım", () => {
+    for (const r of rows) {
+      expect(Array.isArray(r.steps), String(r.slug)).toBe(true);
+      expect((r.steps as unknown[]).length, String(r.slug)).toBeGreaterThan(0);
+    }
+  });
+
+  it("VAAT DİLİ yok — süre/kesinlik iddiası içeren ifadeler özet ve uyarıda geçmez", () => {
+    // "3-6 ayda alırsınız" gibi ifadeler yasak; süre yalnız typicalMonths alanında ve yalnız
+    // resmî kaynakta yazıyorsa durur (bugün hepsi null — hiçbiri resmî sayfadan doğrulanamadı).
+    const yasak = /\b(garanti|kesinlikle|mutlaka)\b|\bay içinde (alır|tamamlan)/i;
+    for (const r of rows) {
+      expect(yasak.test(String(r.summary)), `${r.slug} özet`).toBe(false);
+      if (r.warning) expect(yasak.test(String(r.warning)), `${r.slug} uyarı`).toBe(false);
+    }
+  });
+});
+
+// v6.85 — PubMed tarihi. Vakalar CANLI esummary çıktısından alındı (2026-08-11 ölçümü):
 // kapak tarihi gelecekte, gerçek çevrimiçi yayın epubdate'te.
 describe("PubMed yayın tarihi", () => {
   const iso = (d: Date | null) => d?.toISOString().slice(0, 10) ?? null;

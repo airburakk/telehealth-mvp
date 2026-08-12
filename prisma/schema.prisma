@@ -1194,3 +1194,60 @@ model RewardRedemption {
   @@index([status, createdAt])
   @@index([doctorId, createdAt])
 }
+
+/// Doctorium Modül F — hekim KARİYER & DENKLİK rehberi (v6.89).
+///
+/// Otomatik kaynak YOK: resmî otorite siteleri makine erişimine kapalı (2026-08-11 ölçümü —
+/// gmc-uk.org HTTP 403, anerkennung-in-deutschland.de 404; TTB/Resmî Gazete ile aynı sınıf)
+/// → MedicalCongress ile AYNI küratörlü desen: veri `prisma/seed-data/career-pathways.json`,
+/// kaynak belgesi vault `output/kariyer-denklik-veritabani-2026-08-11.md`.
+///
+/// ⚠️ Bu tablo İDARİ SÜREÇ anlatır; yanlış bilgi hekimin GERÇEK kaybıdır (kaçırılan sınav
+/// başvurusu, eksik belge, boşa apostil masrafı). Kurallar: `officialUrl` + `verifiedAt`
+/// ZORUNLU (kaynağı olmayan kayıt yazılmaz) · bilinmeyen alan BOŞ bırakılır · süre/ücret
+/// ASLA tahmin edilmez (yalnız resmî kaynakta yazan değer).
+///
+/// ⚖️ İŞ İLANI DEĞİLDİR: başvuru butonu, CV gönderimi, işveren eşleştirmesi YOKTUR. Üyelik
+/// arkasında ilan sunmak İŞKUR'a göre "aracılık" sayılır (özel istihdam bürosu izni gerekir)
+/// — o faz izin alınana dek açılmaz (envanter §3).
+model CareerPathway {
+  id            String   @id @default(cuid())
+  /// URL segmenti + seed idempotansı ("almanya-approbation").
+  slug          String   @unique
+  /// "yurtdisi" | "turkiye" — CAREER_TABS anahtarı (lib/doctorium.ts).
+  scope         String
+  /// ISO 3166 ülke/bölge kodu. ⚠️ BAE'de TEK lisans yoktur: "AE-DU" (Dubai/DHA) ile
+  /// "AE-AZ" (Abu Dhabi/DOH) AYRI süreçlerdir — tek "BAE" kaydı yanıltıcı olur.
+  country       String
+  title         String
+  /// Yetkili otorite ("Eyalet ruhsat makamı — Landesprüfungsamt").
+  authority     String
+  /// 2-3 cümle. Vaat dili YASAK ("alırsınız", "yeterlidir").
+  summary       String
+  /// JSON [{order,title,detail}] — süreç adımları.
+  steps         String   @default("[]")
+  /// JSON string[] — belge kontrol listesi.
+  documents     String   @default("[]")
+  languageReq   String? // "genel B2 + mesleki FSP (~C1)"
+  examReq       String? // "FSP; denklik yoksa Kenntnisprüfung"
+  /// ⚠️ YALNIZ resmî kaynakta yazan süre yazılır. İkincil kaynaktaki "3-6 ay" bilgisi
+  /// null bırakılır — tahmini süre, kaçırılmış plan demektir.
+  typicalMonths String?
+  costNote      String? // resmî harç varsa; yoksa null (tahmin YOK)
+  /// Resmî otorite adresi — ZORUNLU.
+  officialUrl   String
+  /// JSON string[] — doğrulamada kullanılan diğer kaynaklar ("bunu nereden biliyoruz").
+  sourceUrls    String   @default("[]")
+  /// "dogrulandi" | "kismi" — kısmi kayıt UI'da "teyit bekliyor" ibaresiyle çıkar.
+  confidence    String   @default("dogrulandi")
+  /// Son doğrulama tarihi — kullanıcıya GÖRÜNÜR ("Son doğrulama: …"); bayatlık gizlenmez.
+  verifiedAt    DateTime
+  /// ⚠️ Kartta GÖRÜNÜR uyarı — ör. "eyalete göre değişir" · "Türkiye'de uzman olsanız da bu
+  /// statüde asistan maaşı/statüsü uygulanır". Doldurulmuşsa basılır.
+  warning       String?
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([scope, order])
+}

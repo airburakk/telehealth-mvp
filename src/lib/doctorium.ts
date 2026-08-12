@@ -12,7 +12,7 @@ import { BRANCHES } from "./triage";
 
 export const DOCTORIUM_NAME = "Doctorium";
 
-export type ModuleKey = "akis" | "akademik" | "mevzuat" | "sektorel" | "ilac" | "kongre";
+export type ModuleKey = "akis" | "akademik" | "mevzuat" | "sektorel" | "ilac" | "kongre" | "kariyer";
 
 export interface ModuleDef {
   key: ModuleKey;
@@ -33,6 +33,7 @@ export const DOCTORIUM_MODULES: ModuleDef[] = [
   { key: "sektorel", label: "Sektörel", desc: "Doktor hakları · yönetim · teknoloji · küresel" },
   { key: "ilac", label: "İlaç & Cihaz", desc: "Geri çekmeler · klinik faz · prospektüs" },
   { key: "kongre", label: "Kongre Takvimi", desc: "Ulusal ve uluslararası kongreler" },
+  { key: "kariyer", label: "Kariyer", desc: "Yurt dışı denklik · akademik yükselme" },
   { key: "mevzuat", label: "Hukuk", desc: "Mevzuat · İçtihat — sağlık hukuku" },
 ];
 
@@ -52,6 +53,26 @@ export function parseLegalTab(raw: string | undefined): LegalTabKey {
 
 /** Mevzuat alt-sekmesinde İçtihat (ve ileride Doktrin) kayıtları listelenmez. */
 export const LEGAL_ONLY_CATEGORIES = ["ictihat", "doktrin"];
+
+// ── Kariyer modülü (v6.89) ──────────────────────────────────────────────────
+// Alt-sekmeler LEGAL_TABS desenini izler. "İK Fırsatları" sekmesi BİLİNÇLİ YOK:
+// iş ilanı/aracılık İŞKUR özel istihdam bürosu izni ister (üyelik arkasında ilan sunmak
+// "iş ve işçi bulmaya aracılık" sayılır) — izin alınınca bu listeye eklenir ve paralel
+// oturumun v6.87'de topladığı Doctor.hrContactOptInAt rızası ORADA kullanılır.
+// Boş sekme YAYINLANMAZ ilkesi gereği izin gelmeden sekme görünmez (envanter §3).
+export const CAREER_TABS = [
+  { key: "yurtdisi", label: "Yurt Dışı" },
+  { key: "turkiye", label: "Türkiye" },
+] as const;
+export type CareerTabKey = (typeof CAREER_TABS)[number]["key"];
+
+/**
+ * ?t= paramı → alt-sekme; bilinmeyen/eksik değer Yurt Dışı'na düşer (URL kurcalanması akışı bozmaz).
+ * ⚠️ `?c=` DEĞİL: o param sektörel kategori filtresine ait (page.tsx `cat`) — çakışırdı.
+ */
+export function parseCareerTab(raw: string | undefined): CareerTabKey {
+  return CAREER_TABS.some((t) => t.key === raw) ? (raw as CareerTabKey) : "yurtdisi";
+}
 
 // Sektörel/mevzuat alt kategorileri (v6.50). Kaynak matrisi: mevzuat+sut+ilac-cihaz Resmî Gazete
 // ve OHSAD'dan, yonetim TTB/OHSAD'dan, teknoloji WHO/RG'den, turizm RG'den gelir.
@@ -514,4 +535,61 @@ export async function ensureRegulationSummary(id: string): Promise<RegulationRes
     console.warn("[doctorium] mevzuat özeti üretilemedi:", e instanceof Error ? e.message : e);
     return { state: "unavailable" };
   }
+}
+
+// ── Kariyer rehberi sorguları (v6.89) ───────────────────────────────────────
+// Küratörlü tablo (CareerPathway); dış API YOK — resmî otorite siteleri makine erişimine kapalı.
+// Veri: prisma/seed-data/career-pathways.json + scripts/seed-career-pathways.ts.
+
+/** Süreç adımı — JSON kolonunda saklanır, UI'a çözülmüş gelir. */
+export interface CareerStep {
+  order: number;
+  title: string;
+  detail: string;
+}
+
+/** Bozuk/eski JSON akışı DÜŞÜRMESİN: çözülemeyen değer boş dizi döner (parseBranchPrefs deseni). */
+export function parseSteps(raw: string | null | undefined): CareerStep[] {
+  if (!raw) return [];
+  try {
+    const v = JSON.parse(raw);
+    if (!Array.isArray(v)) return [];
+    return v
+      .filter((s): s is CareerStep => !!s && typeof s.title === "string" && typeof s.detail === "string")
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  } catch {
+    return [];
+  }
+}
+
+/** JSON string[] kolonlarını (documents · sourceUrls) güvenle çöz. */
+export function parseStringList(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? v.filter((s): s is string => typeof s === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Alt-sekme listesi. ⚠️ steps/documents/sourceUrls SELECT EDİLMEZ — kart onları göstermez ve
+ * JSON kolonları uzundur (MedicalCongress.coverImage dersi: liste sorgusu ağır alan çekmez).
+ */
+export async function careerPathways(scope: CareerTabKey) {
+  return db.careerPathway.findMany({
+    where: { scope },
+    orderBy: [{ order: "asc" }, { title: "asc" }],
+    select: {
+      id: true, slug: true, country: true, title: true, authority: true, summary: true,
+      languageReq: true, examReq: true, typicalMonths: true,
+      confidence: true, verifiedAt: true, warning: true,
+    },
+  });
+}
+
+/** Detay sayfası — tüm alanlar (steps/documents dahil). Bulunamazsa null → sayfa notFound(). */
+export async function careerPathwayBySlug(slug: string) {
+  return db.careerPathway.findUnique({ where: { slug } });
 }
