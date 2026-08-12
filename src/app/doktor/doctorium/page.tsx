@@ -204,7 +204,7 @@ export default async function DoctoriumPage({
         </nav>
       )}
 
-      {/* Beklenti notu (kullanıcı onaylı metin, 2026-08-11): doktor "Kariyer" görünce iş ilanı
+      {/* Beklenti notu (kullanıcı onaylı metin, 2026-08-12): doktor "Kariyer" görünce iş ilanı
           bekleyebilir — bu bölümde ilan YOK. Aynı zamanda İŞKUR sınırının kullanıcıya bakan yüzü:
           aracılık yapılmadığı burada açıkça yazılı (envanter §3). */}
       {active === "kariyer" && (

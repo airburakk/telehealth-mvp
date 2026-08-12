@@ -6,7 +6,7 @@
 import { Info } from "lucide-react";
 
 /**
- * Kalıcı uyarı — liste ve detayda AYNI metin (kullanıcı onaylı, 2026-08-11).
+ * Kalıcı uyarı — liste ve detayda AYNI metin (kullanıcı onaylı, 2026-08-12).
  * ⚠️ KALDIRILAMAZ: modül idari süreç anlatır; yanlış plan hekimin gerçek kaybıdır (kaçırılan sınav
  * başvurusu, eksik belge, boşa apostil masrafı). Metin değişikliği kullanıcı onayı ister.
  */

@@ -34,7 +34,7 @@
       "https://www.regierung.oberbayern.bayern.de/aufgaben/37198/244210/leistung/leistung_12109/index.html"
     ],
     "confidence": "kismi",
-    "verifiedAt": "2026-08-11",
+    "verifiedAt": "2026-08-12",
     "warning": "Süreç EYALETE GÖRE DEĞİŞİR — belge listesi, ücret ve sıra tek bir \"Almanya süreci\" olarak anlatılamaz. Başvuru öncesi kendi eyaletinizin ruhsat makamından teyit alın."
   },
   {
@@ -70,7 +70,7 @@
       "https://dataflowgroup.com/organization/dubai-health-authority/"
     ],
     "confidence": "kismi",
-    "verifiedAt": "2026-08-11",
+    "verifiedAt": "2026-08-12",
     "warning": "BAE'de tek lisans yoktur: Dubai (DHA), Abu Dhabi (DOH) ve kuzey emirlikler (MOH) ayrı süreçlerdir. Bir emirlikteki lisans diğerinde otomatik geçerli değildir."
   },
   {
@@ -102,7 +102,7 @@
     "officialUrl": "https://www.scfhs.org.sa",
     "sourceUrls": ["https://www.scfhs.org.sa"],
     "confidence": "kismi",
-    "verifiedAt": "2026-08-11",
+    "verifiedAt": "2026-08-12",
     "warning": null
   },
   {
@@ -133,7 +133,7 @@
     "officialUrl": "https://www.gmc-uk.org/registration-and-licensing/join-our-registers/registration-applications/application-guides/full-registration-for-international-medical-graduates",
     "sourceUrls": ["https://www.gmc-uk.org/registration-and-licensing/join-our-registers/registration-applications/application-guides/full-registration-for-international-medical-graduates"],
     "confidence": "kismi",
-    "verifiedAt": "2026-08-11",
+    "verifiedAt": "2026-08-12",
     "warning": "PLAB → UKMLA geçişi sürüyor. Sınav adı ve geçerlilik takvimi başvuru öncesi GMC'nin kendi sayfasından doğrulanmalıdır — yanlış sınava hazırlanmak aylık kayıp demektir."
   },
   {
@@ -162,7 +162,7 @@
     "officialUrl": "https://www.uak.gov.tr/page/docentlik-basvuru-sartlari-kLPHX",
     "sourceUrls": ["https://www.uak.gov.tr/page/docentlik-basvuru-sartlari-kLPHX"],
     "confidence": "dogrulandi",
-    "verifiedAt": "2026-08-11",
+    "verifiedAt": "2026-08-12",
     "warning": "Başvuru dönemleri ve temel alan puan tabloları her yıl güncellenir. Puan hesabınızı başvurudan önce ÜAK'ın güncel tablosuyla karşılaştırın."
   },
   {
@@ -195,7 +195,7 @@
       "https://www.ttb.org.tr/165yk24"
     ],
     "confidence": "kismi",
-    "verifiedAt": "2026-08-11",
+    "verifiedAt": "2026-08-12",
     "warning": "Bakanlık belgesi ile TTB belgesi HER ÜLKEDE birbirinin yerine geçmez. Hangi kurumun belgesinin kabul edildiğini hedef ülkenin sağlık otoritesinden teyit edin."
   }
 ]

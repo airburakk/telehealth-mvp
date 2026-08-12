@@ -1197,10 +1197,10 @@ model RewardRedemption {
 
 /// Doctorium Modül F — hekim KARİYER & DENKLİK rehberi (v6.89).
 ///
-/// Otomatik kaynak YOK: resmî otorite siteleri makine erişimine kapalı (2026-08-11 ölçümü —
+/// Otomatik kaynak YOK: resmî otorite siteleri makine erişimine kapalı (2026-08-12 ölçümü —
 /// gmc-uk.org HTTP 403, anerkennung-in-deutschland.de 404; TTB/Resmî Gazete ile aynı sınıf)
 /// → MedicalCongress ile AYNI küratörlü desen: veri `prisma/seed-data/career-pathways.json`,
-/// kaynak belgesi vault `output/kariyer-denklik-veritabani-2026-08-11.md`.
+/// kaynak belgesi vault `output/kariyer-denklik-veritabani-2026-08-12.md`.
 ///
 /// ⚠️ Bu tablo İDARİ SÜREÇ anlatır; yanlış bilgi hekimin GERÇEK kaybıdır (kaçırılan sınav
 /// başvurusu, eksik belge, boşa apostil masrafı). Kurallar: `officialUrl` + `verifiedAt`

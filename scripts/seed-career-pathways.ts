@@ -1,8 +1,8 @@
 // Kariyer & denklik rehberi seed'i (v6.89) — kalıcı araç.
 //
 // KAYNAK: `prisma/seed-data/career-pathways.json` — resmî otorite sayfalarından derlenip
-// doğrulanmış süreçler (vault: output/kariyer-denklik-veritabani-2026-08-11.md).
-// Otomatik toplayıcı YOK (2026-08-11'de ölçüldü: gmc-uk.org HTTP 403,
+// doğrulanmış süreçler (vault: output/kariyer-denklik-veritabani-2026-08-12.md).
+// Otomatik toplayıcı YOK (2026-08-12'de ölçüldü: gmc-uk.org HTTP 403,
 // anerkennung-in-deutschland.de 404 → resmî siteler makine erişimine kapalı) → veri küratörlü,
 // MedicalCongress ile aynı desen.
 //

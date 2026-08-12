@@ -106,7 +106,7 @@ describe("modül tanımı", () => {
   it("7 modül, mevzuat SONDA (v6.51 sıra kararı · v6.89 kariyer eklendi)", () => {
     const keys = DOCTORIUM_MODULES.map((m) => m.key);
     // Sıra kullanıcı kararı (2026-08-01): mevzuat EN SONDA.
-    // v6.89: "kariyer" kongreden SONRA, hukuktan ÖNCE (kullanıcı kararı 2026-08-11).
+    // v6.89: "kariyer" kongreden SONRA, hukuktan ÖNCE (kullanıcı kararı 2026-08-12).
     expect(keys).toEqual(["akis", "akademik", "sektorel", "ilac", "kongre", "kariyer", "mevzuat"]);
     expect(new Set(keys).size).toBe(keys.length);
   });
@@ -379,7 +379,7 @@ describe("Kariyer seed verisi dürüstlük kuralları (v6.89)", () => {
   });
 });
 
-// v6.85 — PubMed tarihi. Vakalar CANLI esummary çıktısından alındı (2026-08-11 ölçümü):
+// v6.85 — PubMed tarihi. Vakalar CANLI esummary çıktısından alındı (2026-08-12 ölçümü):
 // kapak tarihi gelecekte, gerçek çevrimiçi yayın epubdate'te.
 describe("PubMed yayın tarihi", () => {
   const iso = (d: Date | null) => d?.toISOString().slice(0, 10) ?? null;

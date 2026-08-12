@@ -1,9 +1,9 @@
-// PubMed yayın tarihi ONARIMI (v6.85, 2026-08-06) — kalıcı ops aracı.
+// PubMed yayın tarihi ONARIMI (v6.85, 2026-08-11) — kalıcı ops aracı.
 //
 // NEDEN: PubMed'in `pubdate`/`sortpubdate` alanı YAYIN tarihi değil, derginin KAPAK/CİLT tarihidir
 // (cover date). Sürekli-yayın dergileri tüm yılı tek cilt sayar → `"2026 Dec 31"`; aylık dergiler
 // makaleyi gelecek sayıya yazar → `"2026 Dec"`. Makale aylar önce çevrimiçi çıkmış olsa bile tarih
-// GELECEKTE görünüyordu: 2026-08-06 ölçümünde akademik havuzun 74 kaydından 71'i gelecek tarihliydi
+// GELECEKTE görünüyordu: 2026-08-11 ölçümünde akademik havuzun 74 kaydından 71'i gelecek tarihliydi
 // (58'i tam 31 Aralık'ta yığılmıştı) → doktorun gördüğü tarih yanlış, "en yeni" sıralaması anlamsız.
 // Doğru alan `epubdate` (çevrimiçi ilk yayın). Toplayıcı v6.85'te düzeltildi (doctorium-ingest.ts
 // `pubDate`), AMA ingest mevcut kayıtların `publishedAt`'ine bilinçli DOKUNMAZ (yalnız branchSlugs
