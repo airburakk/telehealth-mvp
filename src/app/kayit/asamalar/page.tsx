@@ -24,7 +24,9 @@ export default function SignupStagesPage() {
       {/* Aşama 1 */}
       <div className="mt-8 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6">
         <div className="flex items-center gap-2.5">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]">
+          {/* Doctorium zümrüdü (kullanıcı kararı 2026-08-12) — alt-marka ana tonu #34d399 = emerald-400
+              (PortamedLogo TONES.emerald.main; nav "ium" vurgusuyla aynı) */}
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-400 text-[var(--c-bg)]">
             <BookOpenCheck size={18} />
           </span>
           <div>
@@ -60,7 +62,8 @@ export default function SignupStagesPage() {
       {/* Aşama 2 */}
       <div className="mt-4 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6">
         <div className="flex items-center gap-2.5">
-          {/* Aşama 1 ile aynı marka rengi (kullanıcı kararı 2026-08-12) — iki aşama görsel eşit ağırlıkta */}
+          {/* Marka accent'i (kullanıcı kararı 2026-08-12) — her aşama kendi alt-marka renginde:
+              Aşama 1 Doctorium zümrüdü, Aşama 2 platform turkuazı; ikisi de dolu kutu (eşit ağırlık) */}
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]">
             <Stethoscope size={18} />
           </span>
