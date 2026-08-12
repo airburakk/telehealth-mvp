@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { answerRequest, type LabRec, type ImagingRec, type MedRec } from "@/lib/consultation-requests";
 
 export const maxDuration = 60; // görüş hasta diline çevrilir (AI) → uzun sürebilir
@@ -18,9 +19,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
   const dbUser = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
-  const doctor = dbUser?.doctorId ? await db.doctor.findUnique({ where: { id: dbUser.doctorId }, select: { id: true, consultOptIn: true } }) : null;
+  const doctor = dbUser?.doctorId ? await db.doctor.findUnique({ where: { id: dbUser.doctorId }, select: { id: true, consultOptIn: true, verified: true, activatedAt: true } }) : null;
   if (!doctor) {
     return NextResponse.json({ error: "Doktor profili bağlı değil." }, { status: 400 });
+  }
+  // v6.87 Aşama 2 + doğrulama kapısı: klinik görüş + kodlu öneri üretimi vaka erişimiyle eşdeğer
+  // hassasiyette — aktivasyonsuz/doğrulanmamış doktor havuza yanıt YAZAMAZ (api-routes-need-self-auth).
+  if (!doctor.verified || !hasClinicalAccess(doctor)) {
+    return NextResponse.json({ error: "Klinik aktivasyon ve doktor doğrulaması tamamlanmadan konsültasyon yanıtlanamaz." }, { status: 403 });
   }
   if (!doctor.consultOptIn) {
     return NextResponse.json({ error: "Konsültasyon taleplerine katılım kapalı." }, { status: 403 });

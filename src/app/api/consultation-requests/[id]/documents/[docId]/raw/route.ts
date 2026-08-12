@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { loadDocument } from "@/lib/storage";
 import { recordAccess, reqMeta } from "@/lib/audit";
 import { toViewerSafeDicom } from "@/lib/dicom-pixels";
@@ -34,8 +35,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   let allowed = false;
   if (user.role === "DOCTOR") {
     const u = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
-    const doctor = u?.doctorId ? await db.doctor.findUnique({ where: { id: u.doctorId }, select: { id: true, branch: true, consultOptIn: true } }) : null;
-    if (doctor?.consultOptIn) {
+    const doctor = u?.doctorId
+      ? await db.doctor.findUnique({ where: { id: u.doctorId }, select: { id: true, branch: true, consultOptIn: true, verified: true, activatedAt: true } })
+      : null;
+    // v6.87: anonim de olsa klinik belge — aktivasyonsuz/doğrulanmamış doktora inmez (havuz uçlarıyla aynı şart).
+    if (doctor?.consultOptIn && doctor.verified && hasClinicalAccess(doctor)) {
       const inPool = r.status === "OPEN" && (r.branch == null || r.branch === doctor.branch);
       const mine = r.answeredByDoctorId === doctor.id || r.engagedByDoctorId === doctor.id;
       allowed = inPool || mine;

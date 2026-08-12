@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { BRANCHES } from "@/lib/triage";
 import { isOfferExpired, soBranchVariants } from "@/lib/second-opinion";
 import { claimSoCase } from "@/lib/second-opinion-service";
@@ -24,6 +25,11 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   // Doğrulanmamış (self-signup) hekim dosya üstlenemez — üstlense de canSoCaseBeAccessedBy her uçta
   // reddederdi → vaka erişilemez kilitlenirdi (oto-atama zaten yalnız verified'a teklif eder).
   if (!doctor.verified) return NextResponse.json({ error: "Hesabınız henüz onaylanmadı — dosya üstlenemezsiniz." }, { status: 403 });
+  // v6.87 Aşama 2 kapısı: aktivasyonsuz hekim de üstlenemez — canSoCaseBeAccessedBy artık aktivasyon
+  // şartlı; üstlenmeye izin vermek vakayı aynı şekilde erişilemez kilitlerdi (accept = erişim ön-kapısı).
+  if (!hasClinicalAccess(doctor)) {
+    return NextResponse.json({ error: "Klinik aktivasyon (Aşama 2) tamamlanmadan dosya üstlenilemez." }, { status: 403 });
+  }
 
   const c = await db.secondOpinionCase.findUnique({ where: { id } });
   if (!c) return NextResponse.json({ error: "Vaka bulunamadı." }, { status: 404 });

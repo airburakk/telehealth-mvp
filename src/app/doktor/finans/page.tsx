@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { formatUSD } from "@/lib/pricing";
 import { formatDateTime } from "@/lib/constants";
 import { decryptField } from "@/lib/crypto";
@@ -78,6 +80,9 @@ export default async function FinansPage() {
       </div>
     );
   }
+
+  // v6.87 Aşama 2 kapısı: aktivasyonsuz DOCTOR finans dökümüne giremez (ADMIN gözetimi muaf).
+  if (session?.role === "DOCTOR" && !hasClinicalAccess(doctor)) redirect("/doktor/baslangic");
 
   const [soCases, bookings, consultStats, consultLast] = await Promise.all([
     // İkinci Görüş: görüş TESLİM EDİLMİŞ vakalar (hakediş teslime bağlanır); ödeme kaydı gerçek.

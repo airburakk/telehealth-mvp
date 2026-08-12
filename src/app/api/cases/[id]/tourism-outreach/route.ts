@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { notifyUser } from "@/lib/notify";
 import { branchKeyFromLabel } from "@/lib/procedures";
 
@@ -18,11 +19,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const { id } = await params;
   const [doc, c] = await Promise.all([
-    db.doctor.findUnique({ where: { id: me.doctorId }, select: { branch: true, name: true, title: true, verified: true } }),
+    db.doctor.findUnique({ where: { id: me.doctorId }, select: { branch: true, name: true, title: true, verified: true, activatedAt: true } }),
     db.case.findUnique({ where: { id }, select: { userId: true, branch: true, tourismPlan: true } }),
   ]);
   if (!doc || !c) return NextResponse.json({ error: "Bulunamadı." }, { status: 404 });
   if (!doc.verified) return NextResponse.json({ error: "Hesabınız henüz doğrulanmadı." }, { status: 403 });
+  // v6.87 Aşama 2 kapısı: aktivasyonsuz doktor turizm havuzuna teklif GÖNDEREMEZ (sayfa kapısının API eşleniği).
+  if (!hasClinicalAccess(doc)) {
+    return NextResponse.json({ error: "Klinik aktivasyon tamamlanmadan turizm havuzuna teklif gönderilemez." }, { status: 403 });
+  }
   // Yalnız sağlık turizmi vakası (tourismPlan != null = turizm ayırt edici) + doktorun kendi branş havuzu.
   if (!c.tourismPlan) return NextResponse.json({ error: "Bu bir sağlık turizmi vakası değil." }, { status: 400 });
   if (branchKeyFromLabel(doc.branch) !== branchKeyFromLabel(c.branch)) {

@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { decryptCaseFields } from "@/lib/crypto";
 import { getCurrentUser } from "@/lib/auth";
+import { clinicalDoctorFor } from "@/lib/doctor-activation";
 import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { staffAccessClosed } from "@/lib/postop-access";
 import { countryFlag, countryName, urgencyStyle, CASE_STATUS, formatDateTime } from "@/lib/constants";
@@ -28,6 +29,10 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
   // (SO detay sayfası v4.6'da kapatılmıştı; klinik vaka sayfası eşleniği atlanmıştı).
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) notFound();
+
+  // v6.87 Aşama 2 kapısı: klinik aktivasyonu olmayan DOCTOR vaka detayına hiç inemez (ownership
+  // zaten doğrulanmamışı reddediyor; bu kapı aktive-olmamışı da klinik veri ÇEKİLMEDEN çevirir).
+  if (user.role === "DOCTOR" && !(await clinicalDoctorFor(user.id))) redirect("/doktor/baslangic");
 
   // E2EE Faz 2A — post-op erişim daraltma: takip tamamlandıysa klinik personel erişimi kapalı (hasta-only, §0.1·3).
   // Klinik veri ÇEKİLMEDEN reddet (sızma yok). Hasta kendi kayıtlarını /takip + /vakalarim'de görmeye devam eder.

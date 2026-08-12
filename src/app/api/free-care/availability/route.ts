@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { setDoctorAvailable, matchForDoctor, quotaInfo, notifyStrandedWaiters } from "@/lib/free-care";
 
 // POST /api/free-care/availability — doktor ücretsiz sağlık hizmeti müsaitliğini aç/kapa (+ops. kota); açınca eşleşme dener.
@@ -25,9 +26,13 @@ export async function POST(req: Request) {
   // 🔒 Doğrulanmamış (verified=false) doktor ücretsiz sağlık hizmeti havuzuna GİREMEZ — AVAILABLE olsaydı hasta-yüzü
   // "müsait doktor" sayacını şişirirdi; eşleşme zaten merkezde (matchForDoctor/pairCaseWithDoctor) kilitli.
   if (available) {
-    const doc = await db.doctor.findUnique({ where: { id: doctorId }, select: { verified: true } });
+    const doc = await db.doctor.findUnique({ where: { id: doctorId }, select: { verified: true, activatedAt: true } });
     if (doc?.verified !== true) {
       return NextResponse.json({ error: "Ücretsiz hizmet müsaitliği için doktor doğrulaması (admin onayı) gereklidir." }, { status: 403 });
+    }
+    // v6.87 Aşama 2 kapısı: aktivasyonsuz doktor müsaitlik AÇAMAZ (hasta-yüzü sayaç + eşleşme havuzu).
+    if (!hasClinicalAccess(doc)) {
+      return NextResponse.json({ error: "Ücretsiz hizmet müsaitliği için klinik aktivasyon (Aşama 2) gereklidir." }, { status: 403 });
     }
   }
   await setDoctorAvailable(doctorId, available);

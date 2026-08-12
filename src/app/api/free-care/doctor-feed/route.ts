@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { matchForDoctor, waitingCount, quotaInfo } from "@/lib/free-care";
 
 // GET /api/free-care/doctor-feed — doktor konsolu poll'u. AVAILABLE'ken eşleşme dener; bekleyen sayısı + kota döner.
@@ -15,6 +16,10 @@ export async function GET() {
 
   const d = await db.doctor.findUnique({ where: { id: doctorId } });
   if (!d) return NextResponse.json({ error: "Doktor bulunamadı." }, { status: 404 });
+  // v6.87 Aşama 2 kapısı: aktivasyonsuz DOCTOR konsol beslemesini çekemez (ADMIN gözetimi muaf).
+  if (user.role === "DOCTOR" && !hasClinicalAccess(d)) {
+    return NextResponse.json({ error: "Klinik aktivasyon (Aşama 2) tamamlanmadan ücretsiz hizmet konsolu kullanılamaz." }, { status: 403 });
+  }
 
   let consultationId: string | null = null;
   if (d.freeCareState === "AVAILABLE") {

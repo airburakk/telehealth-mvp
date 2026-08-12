@@ -29,18 +29,27 @@
 import { getCurrentUser } from "./auth";
 import { db } from "./db";
 import { deletionLocked } from "./account-deletion";
+import { hasClinicalAccess } from "./doctor-activation";
 import type { SessionUser } from "./session";
 
 export type CaseRef = { userId: string | null; doctorId: string | null; branch: string; deletionLockedAt: Date | null };
 
-// DOCTOR kullanıcısının hekim profili (id + doğrulama + branş). Atama eşleşmesi + doğrulama +
-// branş-daraltması kapısı için. branch boş string ("") = onboarding tamamlanmamış → fail-closed.
-async function doctorContext(user: SessionUser): Promise<{ doctorId: string | null; verified: boolean; branch: string }> {
+// DOCTOR kullanıcısının hekim profili (id + doğrulama + aktivasyon + branş). Atama eşleşmesi +
+// doğrulama + branş-daraltması kapısı için. branch boş string ("") = onboarding tamamlanmamış →
+// fail-closed. v6.87: `activated` (Aşama 2 — hasClinicalAccess) eklendi; klinik aktivasyonu
+// düşen (belge silinen) veya hiç tamamlamayan doktor vaka verisine API'den de erişemez —
+// sayfa kapılarının ownership eşleniği (iki katman bağımsız fail-closed).
+async function doctorContext(
+  user: SessionUser,
+): Promise<{ doctorId: string | null; verified: boolean; activated: boolean; branch: string }> {
   const u = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
   const doctorId = u?.doctorId ?? null;
-  if (!doctorId) return { doctorId: null, verified: false, branch: "" };
-  const d = await db.doctor.findUnique({ where: { id: doctorId }, select: { verified: true, branch: true } });
-  return { doctorId, verified: !!d?.verified, branch: d?.branch ?? "" };
+  if (!doctorId) return { doctorId: null, verified: false, activated: false, branch: "" };
+  const d = await db.doctor.findUnique({
+    where: { id: doctorId },
+    select: { verified: true, branch: true, activatedAt: true },
+  });
+  return { doctorId, verified: !!d?.verified, activated: !!d && hasClinicalAccess(d), branch: d?.branch ?? "" };
 }
 
 // Verilen kullanıcı bu vakaya erişebilir mi? (Tek doğruluk kaynağı.)
@@ -59,8 +68,8 @@ export async function canCaseBeAccessedBy(user: SessionUser | null, c: CaseRef):
     case "ADMIN":
       return true; // operasyon/governance/yönetim → geniş erişim
     case "DOCTOR": {
-      const { doctorId, verified, branch } = await doctorContext(user);
-      if (!verified || !doctorId) return false; // doğrulanmamış hekim → erişim yok
+      const { doctorId, verified, activated, branch } = await doctorContext(user);
+      if (!verified || !activated || !doctorId) return false; // doğrulanmamış VEYA aktivasyonsuz (Aşama 2'siz) hekim → erişim yok
       if (c.doctorId === doctorId) return true; // bana atanmış
       // atanmamış (kuyruk) VE kendi branşım (boş-branş → fail-closed); yabancı-branş/başka-atanmış → yok
       return c.doctorId === null && !!branch && branch === c.branch;
@@ -133,8 +142,8 @@ export async function canSoCaseBeAccessedBy(user: SessionUser | null, c: SoCaseR
   if (!user) return false;
   if (deletionLocked(c)) return false; // hesap silme kilidi — her rolden önce (bkz. canCaseBeAccessedBy)
   if (user.role === "DOCTOR") {
-    const { doctorId, verified } = await doctorContext(user);
-    return verified && !!doctorId && c.assignedDoctorId === doctorId;
+    const { doctorId, verified, activated } = await doctorContext(user);
+    return verified && activated && !!doctorId && c.assignedDoctorId === doctorId;
   }
   return ownsSecondOpinionCase(user, c);
 }
@@ -159,8 +168,8 @@ export async function soCaseListScope(user: SessionUser | null): Promise<SoListS
     case "PATIENT":
       return { patientId: user.id, deletionLockedAt: null };
     case "DOCTOR": {
-      const { doctorId, verified } = await doctorContext(user);
-      if (!verified || !doctorId) return null; // doğrulanmamış/profilsiz hekim → hiçbir şey
+      const { doctorId, verified, activated } = await doctorContext(user);
+      if (!verified || !activated || !doctorId) return null; // doğrulanmamış/aktivasyonsuz/profilsiz hekim → hiçbir şey
       return { assignedDoctorId: doctorId, deletionLockedAt: null }; // yalnız kendisine atanmışlar
     }
     case "COORDINATOR":

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { clinicalDoctorFor } from "@/lib/doctor-activation";
 import { type Severity } from "@/lib/postop";
 import { recoveryClosed } from "@/lib/postop-access";
 import { formatDateTime } from "@/lib/constants";
@@ -25,7 +26,16 @@ export default async function RecoveryMonitor() {
   if (!user) redirect("/giris?next=/doktor/takip");
   if (!DOCTOR_ROLES.includes(user.role)) redirect("/");
 
+  // v6.87 — İKİ daraltma birden (dış denetim "liste uçları kör noktası" dersi, SO soCaseListScope
+  // eşleniği): (1) Aşama 2 kapısı — aktivasyonsuz DOCTOR bu sayfayı hiç açamaz; (2) sahiplik —
+  // DOCTOR yalnız KENDİSİNE atanmış vakaların post-op'unu görür (liste, nesne-düzeyi kapıdan geniş
+  // veri döndüremez). COORDINATOR/ADMIN gözetim tam listede kalır. Silme-kilitli vaka (deletionLockedAt)
+  // hiçbir rolde listelenmez — kilit rol kontrolünden önce gelir (ownership kuralı).
+  const clin = user.role === "DOCTOR" ? await clinicalDoctorFor(user.id) : null;
+  if (user.role === "DOCTOR" && !clin) redirect("/doktor/baslangic");
+
   const recoveries = await db.recovery.findMany({
+    where: { case: { deletionLockedAt: null, ...(clin ? { doctorId: clin.doctorId } : {}) } },
     include: {
       case: { select: { patientName: true, country: true, branch: true } }, // listede yalnız kimlik+ülke+branş
       // not/foto (artık base64) bu listede gereksiz; yalnız SON kontrolün hafif scalar alanları (payload hafif kalsın)

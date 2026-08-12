@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { decryptField } from "@/lib/crypto";
 import { getCurrentUser } from "@/lib/auth";
+import { clinicalDoctorFor } from "@/lib/doctor-activation";
 import { BRANCHES } from "@/lib/triage";
 import { isOfferExpired, soBranchVariants } from "@/lib/second-opinion";
 import { scrubText } from "@/lib/deidentify";
@@ -20,6 +21,10 @@ export default async function DoctorSoDetailPage({ params }: { params: Promise<{
   const user = await getCurrentUser();
   if (!user) redirect(`/giris?next=/doktor/ikinci-gorus/${id}`);
   if (!["DOCTOR", "ADMIN"].includes(user.role)) redirect("/");
+
+  // v6.87 Aşama 2 kapısı: aktivasyonsuz DOCTOR SO detayına inemez — vaka verisi ÇEKİLMEDEN çevir
+  // (aşağıdaki claim/atama daraltmaları aynen sürer; ADMIN gözetimi muaf).
+  if (user.role === "DOCTOR" && !(await clinicalDoctorFor(user.id))) redirect("/doktor/baslangic");
 
   const c = await db.secondOpinionCase.findUnique({
     where: { id },

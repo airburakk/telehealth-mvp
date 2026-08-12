@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { BRANCHES } from "@/lib/triage";
 import { SO_STATUS_LABELS, isOfferExpired, type SoStatus, soBranchVariants } from "@/lib/second-opinion";
 import { scrubText } from "@/lib/deidentify";
@@ -23,8 +24,10 @@ export default async function DoctorSoListPage() {
   const me = isDoctor ? await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } }) : null;
   const myDoctorId = me?.doctorId ?? "__none__";
   const myDoctor = isDoctor && me?.doctorId
-    ? await db.doctor.findUnique({ where: { id: me.doctorId }, select: { branch: true } })
+    ? await db.doctor.findUnique({ where: { id: me.doctorId }, select: { branch: true, activatedAt: true } })
     : null;
+  // v6.87 Aşama 2 kapısı: profilsiz veya aktivasyonsuz DOCTOR SO paneline giremez (ADMIN gözetimi muaf).
+  if (isDoctor && (!myDoctor || !hasClinicalAccess(myDoctor))) redirect("/doktor/baslangic");
 
   // Bana atanmış/önüme düşen vakalar (OFFERED directed + ASSIGNED + diğer aktif)
   const mine = await db.secondOpinionCase.findMany({

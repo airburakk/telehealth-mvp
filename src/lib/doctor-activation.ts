@@ -27,6 +27,38 @@ export function hasChamberLetter(docs: { type: string }[]): boolean {
   return docs.some((x) => x.type === "CHAMBER");
 }
 
+// ── İki aşamalı giriş — AŞAMA 2: klinik yüzey kapısı (v6.87) ───────────────────────────────────
+// Kural (kullanıcı kararı 2026-08-11): klinik aktivasyonu (activatedAt) olmayan DOCTOR yalnız
+// Doctorium + /doktor/baslangic + /doktor/profil + /doktor/haberler'e girer; klinik yüzeyler
+// (post-op izleme, vaka detayı, havuz sayfaları, nöbet API'si) KAPALIDIR. Nöbetçi istisnası
+// DOĞALDIR: /gorusme rotası /doktor segmentinde değildir ve nöbet kapma yolları zaten
+// verified+ONLINE ister — Aşama 1 doktoru nöbetçi olamaz, nöbetçiye düşen görüşme etkilenmez.
+// ⚠️ Bu kapı hasDoctoriumAccess'in TERSİ YÖNÜDÜR: o "Doctorium'a kim girer"i, bu "Doctorium
+// dışına kim çıkar"ı yanıtlar; CHAMBER yazısı klinik yüzey AÇMAZ.
+
+// Klinik yüzeye girebilir mi (saf — birim testlenebilir).
+export function hasClinicalAccess(d: { activatedAt: Date | null }): boolean {
+  return !!d.activatedAt;
+}
+
+// DB-okur: oturum kullanıcısının KLİNİK-erişimli doktor bağlamı. null = doktor profili yok VEYA
+// Aşama 2 tamamlanmamış → sayfa redirect("/doktor/baslangic"), API 403 döndürür. COORDINATOR/
+// ADMIN gözetim rolleri bu kapıdan geçirilmez (rol muafiyeti çağıran tarafta — mevcut davranış).
+// verified de döner: PHI taşıyan akışlar (ör. İcapçı kuyruğu) ownership kuralıyla ("doğrulanmamış
+// hekim hiçbir vakaya erişemez") hizalanabilsin.
+export async function clinicalDoctorFor(
+  userId: string,
+): Promise<{ doctorId: string; branch: string; verified: boolean } | null> {
+  const u = await db.user.findUnique({ where: { id: userId }, select: { doctorId: true } });
+  if (!u?.doctorId) return null;
+  const d = await db.doctor.findUnique({
+    where: { id: u.doctorId },
+    select: { activatedAt: true, verified: true, branch: true },
+  });
+  if (!d || !hasClinicalAccess(d)) return null;
+  return { doctorId: u.doctorId, branch: d.branch, verified: d.verified };
+}
+
 type MmssMeta = { mmssInsurer: string | null; mmssPolicyNo: string | null; mmssCoverageLimit: number | null };
 
 // MMSS metadata tam mı? Teminat limiti (Katman 3 girdisi) + sigortacı + poliçe no şart.

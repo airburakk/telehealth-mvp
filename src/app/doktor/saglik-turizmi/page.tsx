@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { Plane, ArrowLeft } from "lucide-react";
 import { TourismOutreachForm } from "@/components/TourismOutreachForm";
 
@@ -15,9 +16,11 @@ export default async function DoctorTourismPoolPage() {
 
   const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
   const doctor = me?.doctorId
-    ? await db.doctor.findUnique({ where: { id: me.doctorId }, select: { id: true, branch: true } })
+    ? await db.doctor.findUnique({ where: { id: me.doctorId }, select: { id: true, branch: true, activatedAt: true } })
     : null;
   if (!doctor) redirect("/doktor");
+  // v6.87 Aşama 2 kapısı: aktivasyonsuz DOCTOR havuz sayfasına giremez (ADMIN gözetimi muaf).
+  if (user.role === "DOCTOR" && !hasClinicalAccess(doctor)) redirect("/doktor/baslangic");
 
   const cases = await db.case.findMany({
     where: { branch: doctor.branch, tourismPlan: { not: null }, status: "NEW" },

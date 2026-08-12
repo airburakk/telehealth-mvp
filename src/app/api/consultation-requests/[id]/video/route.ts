@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { offerVideo, respondVideo, completeVideo, videoForRequest, appointmentParties } from "@/lib/consultation-video";
 import { publishLiveNudge } from "@/lib/ably-server";
 
@@ -25,8 +26,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (action === "offer") {
     if (user.role !== "DOCTOR") return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
     const u = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
-    const doc = u?.doctorId ? await db.doctor.findUnique({ where: { id: u.doctorId }, select: { id: true, consultOptIn: true } }) : null;
+    const doc = u?.doctorId
+      ? await db.doctor.findUnique({ where: { id: u.doctorId }, select: { id: true, consultOptIn: true, verified: true, activatedAt: true } })
+      : null;
     if (!doc || !doc.consultOptIn) return NextResponse.json({ error: "Konsültasyon kapalı." }, { status: 403 });
+    // v6.87: video teklifi de klinik eylemdir — aktivasyonsuz/doğrulanmamış doktor veremez (answer ile aynı şart).
+    if (!doc.verified || !hasClinicalAccess(doc)) {
+      return NextResponse.json({ error: "Klinik aktivasyon ve doktor doğrulaması tamamlanmadan video teklifi verilemez." }, { status: 403 });
+    }
     // proposedAt: ISO geldiyse onu kullan, yoksa "şimdi" (anlık görüşme).
     const proposedAt = b.proposedAt && !isNaN(Date.parse(b.proposedAt)) ? new Date(b.proposedAt) : new Date();
     const res = await offerVideo(id, doc.id, proposedAt);

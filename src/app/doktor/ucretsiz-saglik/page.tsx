@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { quotaInfo, badgeStats, waitingCount } from "@/lib/free-care";
 import { FreeCareConsole, type PBCase } from "@/components/FreeCareConsole";
 import { decryptField } from "@/lib/crypto";
@@ -23,6 +25,9 @@ export default async function DoctorFreeCarePage() {
       </div>
     );
   }
+
+  // v6.87 Aşama 2 kapısı: aktivasyonsuz DOCTOR ücretsiz-hizmet konsoluna giremez (ADMIN gözetimi muaf).
+  if (session?.role === "DOCTOR" && !hasClinicalAccess(doctor)) redirect("/doktor/baslangic");
 
   const q = quotaInfo(doctor);
   const [badge, count, awaiting, recent] = await Promise.all([

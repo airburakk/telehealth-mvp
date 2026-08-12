@@ -43,7 +43,14 @@ describe("soCaseListScope — koleksiyon ucu yetkilendirmesi (P0-A)", () => {
 
   it("DOĞRULANMAMIŞ doktor hiçbir şey göremez (self-signup hesabı)", async () => {
     vi.mocked(db.user.findUnique).mockResolvedValue({ doctorId: "d1" } as never);
-    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: false, branch: "Kardiyoloji" } as never);
+    // activatedAt dolu: null'un TEK nedeni verified kalsın (v6.87 aktivasyon reddiyle maskelenmesin).
+    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: false, branch: "Kardiyoloji", activatedAt: new Date("2026-07-01") } as never);
+    expect(await soCaseListScope(user("DOCTOR"))).toBeNull();
+  });
+
+  it("AKTİVASYONSUZ (Aşama 2'siz) doktor da hiçbir şey göremez (v6.87)", async () => {
+    vi.mocked(db.user.findUnique).mockResolvedValue({ doctorId: "d1" } as never);
+    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: true, branch: "Kardiyoloji", activatedAt: null } as never);
     expect(await soCaseListScope(user("DOCTOR"))).toBeNull();
   });
 
@@ -52,9 +59,9 @@ describe("soCaseListScope — koleksiyon ucu yetkilendirmesi (P0-A)", () => {
     expect(await soCaseListScope(user("DOCTOR"))).toBeNull();
   });
 
-  it("DOĞRULANMIŞ doktor YALNIZ kendisine atanmışları görür (havuzun tamamını değil)", async () => {
+  it("DOĞRULANMIŞ+AKTİVE doktor YALNIZ kendisine atanmışları görür (havuzun tamamını değil)", async () => {
     vi.mocked(db.user.findUnique).mockResolvedValue({ doctorId: "d1" } as never);
-    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: true, branch: "Kardiyoloji" } as never);
+    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: true, branch: "Kardiyoloji", activatedAt: new Date("2026-07-01") } as never);
     expect(await soCaseListScope(user("DOCTOR"))).toEqual({ assignedDoctorId: "d1", deletionLockedAt: null });
   });
 

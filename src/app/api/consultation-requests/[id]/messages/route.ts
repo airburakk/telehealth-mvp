@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { sendMessage, messagesFor, markMessagesRead, type ChatSender, type ChatSenderRole } from "@/lib/consultation-requests";
 
 export const maxDuration = 60; // mesaj alıcı diline çevrilir (AI) → uzun sürebilir
@@ -14,8 +15,12 @@ async function resolveSender(userId: string, role: string): Promise<{ sender: Ch
   }
   if (role === "DOCTOR") {
     const u = await db.user.findUnique({ where: { id: userId }, select: { doctorId: true } });
-    const doc = u?.doctorId ? await db.doctor.findUnique({ where: { id: u.doctorId }, select: { id: true, consultOptIn: true } }) : null;
-    if (!doc || !doc.consultOptIn) return null;
+    const doc = u?.doctorId
+      ? await db.doctor.findUnique({ where: { id: u.doctorId }, select: { id: true, consultOptIn: true, verified: true, activatedAt: true } })
+      : null;
+    // v6.87: aktivasyonsuz/doğrulanmamış doktor konsültasyon thread'ine giremez (isParty zaten
+    // sahiplenene daraltıyor; bu kapı savunma-derinliği — answer/engage uçlarıyla aynı şart).
+    if (!doc || !doc.consultOptIn || !doc.verified || !hasClinicalAccess(doc)) return null;
     return { sender: { role: "DOCTOR", doctorId: doc.id }, viewer: "DOCTOR" };
   }
   return null;

@@ -32,9 +32,10 @@ describe("canCaseBeAccessedBy — hesap silme kilidi (v6.11)", () => {
     }
   });
 
-  it("kilitli vaka: ATANMIŞ doğrulanmış doktor bile erişemez", async () => {
+  it("kilitli vaka: ATANMIŞ doğrulanmış+aktive doktor bile erişemez", async () => {
     vi.mocked(db.user.findUnique).mockResolvedValue({ doctorId: "d1" } as never);
-    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: true, branch: "Kardiyoloji" } as never);
+    // activatedAt dolu: false'un TEK nedeni kilit kalsın (v6.87 aktivasyon reddiyle maskelenmesin).
+    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: true, branch: "Kardiyoloji", activatedAt: new Date("2026-07-01") } as never);
     expect(await canCaseBeAccessedBy(user("DOCTOR", "du"), LOCKED)).toBe(false);
   });
 
@@ -78,9 +79,10 @@ describe("canCaseBeAccessedBy — DOCTOR atama + doğrulama + branş-daraltması
     vi.mocked(db.doctor.findUnique).mockReset();
   });
 
+  // Doğrulanmış + KLİNİK-AKTİVE hekim (v6.87: activatedAt artık DOCTOR dalının ön şartı).
   function asVerifiedDoctor(doctorId: string, branch = "Kardiyoloji") {
     vi.mocked(db.user.findUnique).mockResolvedValue({ doctorId } as never);
-    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: true, branch } as never);
+    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: true, branch, activatedAt: new Date("2026-07-01") } as never);
   }
 
   it("doğrulanmış hekim kendisine ATANMIŞ vakaya erişir (branş fark etmez)", async () => {
@@ -110,13 +112,30 @@ describe("canCaseBeAccessedBy — DOCTOR atama + doğrulama + branş-daraltması
 
   it("DOĞRULANMAMIŞ hekim hiçbir vakaya erişemez (branş uysa bile)", async () => {
     vi.mocked(db.user.findUnique).mockResolvedValue({ doctorId: "d1" } as never);
-    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: false, branch: "Kardiyoloji" } as never);
+    // activatedAt dolu: false'un TEK nedeni verified kalsın (aktivasyon reddiyle maskelenmesin).
+    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: false, branch: "Kardiyoloji", activatedAt: new Date("2026-07-01") } as never);
     expect(await canCaseBeAccessedBy(user("DOCTOR"), { userId: "p", doctorId: "d1", branch: "Kardiyoloji", deletionLockedAt: null })).toBe(false);
+  });
+
+  it("AKTİVASYONSUZ (Aşama 2'siz) hekim hiçbir vakaya erişemez — atanmış vakada bile (v6.87)", async () => {
+    vi.mocked(db.user.findUnique).mockResolvedValue({ doctorId: "d1" } as never);
+    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: true, branch: "Kardiyoloji", activatedAt: null } as never);
+    expect(await canCaseBeAccessedBy(user("DOCTOR"), { userId: "p", doctorId: "d1", branch: "Kardiyoloji", deletionLockedAt: null })).toBe(false);
+    expect(await canCaseBeAccessedBy(user("DOCTOR"), { userId: "p", doctorId: null, branch: "Kardiyoloji", deletionLockedAt: null })).toBe(false);
   });
 
   it("hekim profili olmayan DOCTOR kullanıcı → erişim yok", async () => {
     vi.mocked(db.user.findUnique).mockResolvedValue({ doctorId: null } as never);
     expect(await canCaseBeAccessedBy(user("DOCTOR"), { userId: "p", doctorId: null, branch: "Kardiyoloji", deletionLockedAt: null })).toBe(false);
+  });
+
+  it("İkinci Görüş: aktivasyonsuz atanmış hekim erişemez; aktive+atanmış erişir (v6.87)", async () => {
+    const so = { patientId: "p", assignedDoctorId: "d1", deletionLockedAt: null };
+    vi.mocked(db.user.findUnique).mockResolvedValue({ doctorId: "d1" } as never);
+    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: true, branch: "Kardiyoloji", activatedAt: null } as never);
+    expect(await canSoCaseBeAccessedBy(user("DOCTOR"), so)).toBe(false);
+    vi.mocked(db.doctor.findUnique).mockResolvedValue({ verified: true, branch: "Kardiyoloji", activatedAt: new Date("2026-07-01") } as never);
+    expect(await canSoCaseBeAccessedBy(user("DOCTOR"), so)).toBe(true);
   });
 });
 

@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import {
   ALL_DOC_TYPES, REQUIRED_DOC_TYPES, hasDoctoriumAccess, hasChamberLetter, canActivate,
-  canCompleteOnboarding, missingOnboardingSteps,
+  canCompleteOnboarding, missingOnboardingSteps, hasClinicalAccess,
 } from "@/lib/doctor-activation";
 import { HR_CONTACT_SCOPE, HR_CONTACT_REVOKE_SCOPE } from "@/lib/hr-consent";
 import { SPONSOR_CONSENT_SCOPE, SPONSOR_REVOKE_SCOPE } from "@/lib/sponsor";
@@ -21,6 +21,25 @@ describe("Doctorium kapısı (Aşama 1): yazı VEYA klinik aktivasyon", () => {
   });
   it("klinik aktivasyon tek başına açar (mevcut aktif doktorlar CHAMBER'sız içeride)", () => {
     expect(hasDoctoriumAccess({ chamberLetterAt: null, activatedAt: D("2026-07-01") })).toBe(true);
+  });
+});
+
+describe("Klinik yüzey kapısı (Aşama 2): yalnız activatedAt açar", () => {
+  it("aktivasyonsuz doktor klinik yüzeye giremez", () => {
+    expect(hasClinicalAccess({ activatedAt: null })).toBe(false);
+  });
+  it("klinik aktivasyon açar", () => {
+    expect(hasClinicalAccess({ activatedAt: D("2026-08-11") })).toBe(true);
+  });
+  it("Aşama 1 doktoru (yalnız CHAMBER): Doctorium AÇIK, klinik yüzey KAPALI — kapılar tek yönde bağımsız", () => {
+    const stage1 = { chamberLetterAt: D("2026-08-11"), activatedAt: null };
+    expect(hasDoctoriumAccess(stage1)).toBe(true);
+    expect(hasClinicalAccess(stage1)).toBe(false);
+  });
+  it("Aşama 2 doktoru her iki kapıdan geçer (CHAMBER'sız mevcut aktif doktorlar dahil)", () => {
+    const stage2 = { chamberLetterAt: null, activatedAt: D("2026-07-01") };
+    expect(hasDoctoriumAccess(stage2)).toBe(true);
+    expect(hasClinicalAccess(stage2)).toBe(true);
   });
 });
 

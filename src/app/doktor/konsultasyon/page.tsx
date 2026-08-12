@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { openRequestsForDoctor, answeredByDoctor, engagedByDoctor, PAYMENT_PER_ANSWER, type ConsultReqView, type ConsultDocView } from "@/lib/consultation-requests";
 import { formatUSD } from "@/lib/pricing";
 import { loincForBranchLabel } from "@/data/coding";
@@ -23,6 +24,8 @@ export default async function ConsultationInboxPage() {
   const doctor = u?.doctorId ? await db.doctor.findUnique({ where: { id: u.doctorId } }) : null;
 
   if (!doctor) redirect("/doktor");
+  // v6.87 Aşama 2 kapısı: aktivasyonsuz DOCTOR konsültasyon gelen kutusuna giremez (ADMIN gözetimi muaf).
+  if (session?.role === "DOCTOR" && !hasClinicalAccess(doctor)) redirect("/doktor/baslangic");
   if (!doctor.consultOptIn) redirect("/doktor"); // panel görünürlüğüyle tutarlı
 
   // Hakediş penceresi /doktor/finans'a taşındı (2026-08-01, kullanıcı kararı) — kümülatif

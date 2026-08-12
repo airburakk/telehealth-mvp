@@ -300,11 +300,17 @@ export async function dutyFeed(doctorId: string): Promise<DutyFeed | null> {
     if (cons) consultationId = cons.id;
   }
 
-  // REQUESTED → tüm branş İcapçıları görür · CHANGE_REQUESTED → yalnız teklifi yapan doktor
-  const appts = await db.consultAppointment.findMany({
-    where: { branch: d.branch, OR: [{ status: "REQUESTED" }, { status: "CHANGE_REQUESTED", doctorId }] },
-    orderBy: { createdAt: "asc" },
-  });
+  // REQUESTED → tüm branş İcapçıları görür · CHANGE_REQUESTED → yalnız teklifi yapan doktor.
+  // v6.87: kuyruk çözülmüş PHI taşır (hasta adı + semptom) → yalnız DOĞRULANMIŞ hekime iner
+  // (ownership "doğrulanmamış hekim hiçbir vakaya erişemez" kuralının feed eşleniği). Doğrulanmamış
+  // doktor durum/toggle bilgisini görmeye devam eder, kuyruğu BOŞ alır — zaten İcapçı bildirimi de
+  // almaz (requestIcapciAppointment verified filtreli); kuyruğu görmesi baştan tutarsızdı.
+  const appts = d.verified
+    ? await db.consultAppointment.findMany({
+        where: { branch: d.branch, OR: [{ status: "REQUESTED" }, { status: "CHANGE_REQUESTED", doctorId }] },
+        orderBy: { createdAt: "asc" },
+      })
+    : [];
   const cases = appts.length
     ? await db.case.findMany({ where: { id: { in: appts.map((a) => a.caseId) } } })
     : [];
