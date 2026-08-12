@@ -24,8 +24,9 @@ import { FollowButton } from "./CongressControls";
 import { ProspektusSearch } from "./ProspektusSearch";
 import {
   ArrowLeft, ExternalLink, FlaskConical, Gavel, Info,
-  Sparkles, MapPin, X, CalendarClock, Pill, Building2, Megaphone, Scale,
+  Sparkles, MapPin, X, CalendarClock, Pill, Building2, Megaphone, Scale, Star,
 } from "lucide-react";
+import { getDoctorBalance } from "@/lib/rewards";
 import { AuraMark } from "@/components/PortamedLogo";
 
 export const dynamic = "force-dynamic";
@@ -116,10 +117,13 @@ export default async function DoctoriumPage({
       const initialResults = myIndex != null ? await aggregateResults(s.id, s.options.length) : null;
       surveyProps = {
         surveyId: s.id, kind: s.kind, sponsor: s.sponsor, question: s.question,
-        options: s.options, myIndex, initialResults,
+        options: s.options, points: s.points, myIndex, initialResults,
       };
     }
   }
+
+  // v6.88 ödül puanı — yalnız DOCTOR'da (personelin puan hesabı yok; rozet de çizilmez).
+  const myPointBalance = user.role === "DOCTOR" && doctor ? await getDoctorBalance(doctor.id) : null;
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
@@ -156,6 +160,17 @@ export default async function DoctoriumPage({
             {m.label}
           </Link>
         ))}
+        {/* Puanlarım (v6.88) — modül DEĞİL, kişisel sayfa: pill sırasının sağında ayrık durur.
+            Yalnız DOCTOR görür (personelin puan hesabı yok). Rakam = güncel bakiye (SUM ledger). */}
+        {myPointBalance != null && (
+          <Link
+            href="/doktor/doctorium/oduller"
+            className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 px-3.5 py-1.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10"
+          >
+            <Star size={13} strokeWidth={2.5} /> Puanlarım
+            <span className="aura-mono rounded-full bg-emerald-500/15 px-1.5 py-px text-[10px]">{myPointBalance}</span>
+          </Link>
+        )}
       </nav>
 
       {/* Hukuk alt-sekmeleri (v6.86, kullanıcı kararı): Mevzuat · İçtihat (Doktrin Faz 2).

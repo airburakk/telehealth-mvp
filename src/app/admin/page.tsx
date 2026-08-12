@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import {
-  ArrowRight, BarChart2, CalendarDays, LayoutDashboard, Megaphone,
+  ArrowRight, BarChart2, CalendarDays, Gift, LayoutDashboard, Megaphone,
   FolderHeart, Share2, UserRound, Users, HeartPulse, Scale, Globe,
   Stethoscope, Newspaper, Luggage,
 } from "lucide-react";
@@ -52,6 +52,13 @@ const PANELS = [
     desc: "Küratörlü kongre kayıtları — hekim takviminde görünen etkinlikleri yönet.",
     icon: CalendarDays,
     tone: "#34d399",
+  },
+  {
+    href: "/admin/oduller",
+    label: "Ödül Kataloğu",
+    desc: "Anket puanlarının ödül karşılıkları — kongre/kitap kalemleri + talep onay ve teslim kuyruğu.",
+    icon: Gift,
+    tone: "#a78bfa",
   },
 ];
 

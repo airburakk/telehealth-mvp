@@ -1113,6 +1113,7 @@ model Survey {
   question       String
   options        String // JSON string[] — 2-6 kapalı şık; serbest metin bilinçli YOK (agregat disiplin)
   honorarium     Int? // kuruş; null/0 = ödemesiz. >0 iken ACTIVE kilidi (ödeme kurgusu parkı)
+  points         Int      @default(0) // v6.88 ödül puanı — yanıt anında PointEntry'ye bir kez yazılır (0 = puansız; nakit honorarium'dan AYRI ve ondan bağımsız)
   targetBranches String? // JSON string[] branş slug — COMMUNITY'de içerik süzmesi, SPONSORED'da rıza-şartlı hedef
   targetCities   String? // JSON string[] — yalnız SPONSORED'da anlamlı (rıza-şartlı)
   startsAt       DateTime
@@ -1137,4 +1138,59 @@ model SurveyResponse {
 
   @@unique([surveyId, doctorId])
   @@index([surveyId, optionIndex])
+}
+
+/// Ödül puanı hareketi (v6.88) — bakiye KOLONU YOK: bakiye = SUM(delta), ledger tek gerçek kaynak
+/// (satır silinmez/güncellenmez; her hareket ayrı iz — audit disiplini). Kazanç: anket yanıtı
+/// (reason=SURVEY, yanıtla AYNI transaction'da). Harcama: talep ANINDA düşer (REDEEM, delta<0);
+/// ret/iptal İADE SATIRI üretir (REDEEM_REFUND, delta>0). ⚠️ Puana parasal değer ATFEDILMEZ
+/// (1 puan = ₺X eşlemesi hiçbir yüzeyde kurulmaz); ayni menfaatin vergi/657 değerlendirmesi
+/// katalog kalemi girilmeden 👤 yapılır — nakit honorarium kilidi bundan AYRI yaşar.
+model PointEntry {
+  id           String   @id @default(cuid())
+  doctorId     String
+  delta        Int // + kazanç / − harcama
+  reason       String // SURVEY | REDEEM | REDEEM_REFUND | ADJUST
+  surveyId     String? // reason=SURVEY'de dolu — @@unique "aynı anketten iki puan"ı DB seviyesinde keser
+  redemptionId String? // REDEEM / REDEEM_REFUND'da dolu
+  note         String?
+  createdAt    DateTime @default(now())
+
+  @@unique([doctorId, surveyId]) // NULL surveyId (harcama/iade satırları) Postgres'te çakışmaz
+  @@index([doctorId, createdAt])
+}
+
+/// Ödül kataloğu (v6.88) — BOŞ başlar: ilk kalem girişi ÖNCESİ ayni menfaat değerlendirmesi 👤
+/// (vergi + kamu hekimi/657; admin panelde uyarı). İLAÇ sponsorlu kalem GİRİLMEZ (Modül D parkı).
+model RewardItem {
+  id          String             @id @default(cuid())
+  kind        String // KONGRE_TR | KONGRE_INTL | KITAP
+  title       String
+  description String?
+  pointsCost  Int
+  active      Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  redemptions RewardRedemption[]
+
+  @@index([active, createdAt])
+}
+
+/// Ödül talebi (v6.88) — puan TALEP anında rezerve düşer (yarış advisory lock ile serileşir,
+/// lib/rewards.ts). İfa DAİMA insan onaylı: REQUESTED → APPROVED → FULFILLED; REJECTED/CANCELLED
+/// iade üretir. Otomatik satın alma bilinçli YOK — "vaat → ifa" arasında admin kontrolü.
+model RewardRedemption {
+  id         String     @id @default(cuid())
+  doctorId   String
+  item       RewardItem @relation(fields: [itemId], references: [id])
+  itemId     String
+  pointsCost Int // talep anı bedeli (snapshot — katalog sonradan değişse de sabit)
+  status     String     @default("REQUESTED") // REQUESTED | APPROVED | FULFILLED | REJECTED | CANCELLED
+  note       String? // doktorun notu (hedef kongre/kitap tercihi)
+  adminNote  String? // karar notu — doktora gösterilir
+  createdAt  DateTime   @default(now())
+  decidedAt  DateTime?
+
+  @@index([status, createdAt])
+  @@index([doctorId, createdAt])
 }

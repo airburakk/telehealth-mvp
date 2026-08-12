@@ -20,7 +20,7 @@ export default async function SurveyAdminPage() {
     orderBy: { createdAt: "desc" },
     take: 100,
     select: {
-      id: true, kind: true, sponsor: true, question: true, honorarium: true,
+      id: true, kind: true, sponsor: true, question: true, honorarium: true, points: true,
       startsAt: true, endsAt: true, status: true, targetBranches: true,
       _count: { select: { responses: true } },
     },
@@ -52,7 +52,7 @@ export default async function SurveyAdminPage() {
         kindLabel={SURVEY_KIND_LABEL}
         rows={rows.map((r) => ({
           id: r.id, kind: r.kind, sponsor: r.sponsor, question: r.question,
-          honorarium: r.honorarium, status: r.status, responses: r._count.responses,
+          honorarium: r.honorarium, points: r.points, status: r.status, responses: r._count.responses,
           startsAt: iso(r.startsAt), endsAt: iso(r.endsAt),
           targeted: (r.targetBranches ?? "[]") !== "[]",
         }))}

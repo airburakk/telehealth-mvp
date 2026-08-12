@@ -5,6 +5,7 @@ import { normalizeBranchPrefs } from "@/lib/doctorium";
 import {
   SURVEY_KINDS, SURVEY_STATUSES, MIN_OPTIONS, MAX_OPTIONS, canActivateSurvey,
 } from "@/lib/survey";
+import { MAX_SURVEY_POINTS } from "@/lib/rewards";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,13 @@ export async function POST(req: Request) {
   const honorariumRaw = Number.isInteger(b.honorarium) ? (b.honorarium as number) : 0;
   const honorarium = kind === "SPONSORED" && honorariumRaw > 0 ? honorariumRaw : null;
 
+  // Ödül puanı (v6.88): her iki türde serbest (kullanıcı kararı 2026-08-11 — topluluk anketi de
+  // puan taşıyabilir). Nakit honorarium kilidinden BAĞIMSIZ: puanlı anket yayınlanabilir.
+  const points = Number.isInteger(b.points) ? (b.points as number) : 0;
+  if (points < 0 || points > MAX_SURVEY_POINTS) {
+    return NextResponse.json({ error: `Puan 0-${MAX_SURVEY_POINTS} arası olmalı.` }, { status: 400 });
+  }
+
   const startsAt = parseDate(b.startsAt);
   const endsAt = parseDate(b.endsAt);
   if (!startsAt || !endsAt) return NextResponse.json({ error: "Başlangıç ve bitiş tarihi zorunlu." }, { status: 400 });
@@ -65,6 +73,7 @@ export async function POST(req: Request) {
       question,
       options: JSON.stringify(options),
       honorarium,
+      points,
       targetBranches: JSON.stringify(normalizeBranchPrefs(b.targetBranches)),
       // Şehir hedefi yalnız SPONSORED'da anlamlı (COMMUNITY içerik rejimi şehirle süzülmez).
       targetCities: JSON.stringify(kind === "SPONSORED" ? parseCityList(b.targetCities) : []),

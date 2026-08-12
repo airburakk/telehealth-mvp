@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { parseOptions, aggregateResults } from "@/lib/survey";
+import { awardSurveyPoints } from "@/lib/rewards";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
 
   const s = await db.survey.findUnique({
     where: { id: surveyId },
-    select: { status: true, startsAt: true, endsAt: true, options: true },
+    select: { status: true, startsAt: true, endsAt: true, options: true, points: true },
   });
   if (!s) return NextResponse.json({ error: "Anket bulunamadı." }, { status: 404 });
 
@@ -40,9 +41,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Geçersiz şık." }, { status: 400 });
   }
 
+  // Yanıt + puan TEK transaction (v6.88): yanıt yazılıp puan yazılamazsa eksik hakediş kalmasın.
+  // Puan idempotency'si DB'de (@@unique doctorId+surveyId — awardSurveyPoints P2002'yi yutar);
+  // yanıtın kendi P2002'si transaction'ı yanıt aşamasında patlatır → puan hiç denenmez, 409.
+  const doctorId = me.doctorId;
+  let pointsAwarded = 0;
   try {
-    await db.surveyResponse.create({
-      data: { surveyId, doctorId: me.doctorId, optionIndex },
+    pointsAwarded = await db.$transaction(async (tx) => {
+      await tx.surveyResponse.create({
+        data: { surveyId, doctorId, optionIndex },
+      });
+      return awardSurveyPoints(tx, doctorId, surveyId, s.points);
     });
   } catch (e) {
     // Aynı doktorun ikinci yanıtı: unique ihlali (iki sekme/yarış dahil) → mükerrer değil, 409.
@@ -53,5 +62,5 @@ export async function POST(req: Request) {
   }
 
   const results = await aggregateResults(surveyId, options.length);
-  return NextResponse.json({ ok: true, myIndex: optionIndex, ...results });
+  return NextResponse.json({ ok: true, myIndex: optionIndex, pointsAwarded, ...results });
 }

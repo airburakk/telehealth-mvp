@@ -31,6 +31,7 @@ export interface SurveyCard {
   sponsor: string | null;
   question: string;
   options: string[];
+  points: number; // v6.88 ödül puanı (0 = puansız — kart rozet basmaz)
 }
 
 interface VisibleRow {
@@ -92,13 +93,13 @@ export async function activeSurveysFor(opts: {
     where: { status: "ACTIVE", startsAt: { lte: now }, endsAt: { gte: now } },
     orderBy: { createdAt: "desc" },
     select: {
-      id: true, kind: true, sponsor: true, question: true, options: true,
+      id: true, kind: true, sponsor: true, question: true, options: true, points: true,
       targetBranches: true, targetCities: true,
     },
   });
   return visibleSurveys(rows, opts)
     .slice(0, MAX_FEED_SURVEYS)
-    .map((s) => ({ id: s.id, kind: s.kind, sponsor: s.sponsor, question: s.question, options: parseOptions(s.options) }));
+    .map((s) => ({ id: s.id, kind: s.kind, sponsor: s.sponsor, question: s.question, options: parseOptions(s.options), points: s.points }));
 }
 
 /** Toplu sonuç: şık başına yanıt sayısı (options uzunluğuna sıfır-dolgulu) + toplam. */

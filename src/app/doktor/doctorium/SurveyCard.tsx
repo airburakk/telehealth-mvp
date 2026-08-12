@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { BarChart2, Check, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { BarChart2, Check, Loader2, Star } from "lucide-react";
 
 // Doctorium akış içi anket kartı (v6.69 Faz 2) — tek soru, kapalı şıklar, yanıt sonrası TOPLU
 // sonuç barları (Doximity poll deneyimi). Rejim görsel dili: COMMUNITY nötr/sky "Topluluk
@@ -19,6 +20,8 @@ interface Props {
   sponsor: string | null;
   question: string;
   options: string[];
+  /** v6.88 ödül puanı (0 = puansız — rozet çizilmez, kazanım satırı gösterilmez). */
+  points: number;
   /** Doktorun mevcut yanıtı (server'dan; null = henüz yanıtlamadı). */
   myIndex: number | null;
   /** Yanıtlamışsa server-render'da hazır sonuç; yanıtlamamışsa null (sonuç önden sızdırılmaz). */
@@ -31,6 +34,9 @@ export function SurveyCardView(p: Props) {
   const [results, setResults] = useState<Results | null>(p.initialResults);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // Bu oturumda kazanılan puan (yalnız yanıt ANINDA gösterilir; sayfa yenilenince kalkar —
+  // kalıcı bakiye Puanlarım sayfasında).
+  const [awarded, setAwarded] = useState<number>(0);
 
   const sponsored = p.kind === "SPONSORED";
   const accent = sponsored ? "#f59e0b" : "#38bdf8";
@@ -49,6 +55,7 @@ export function SurveyCardView(p: Props) {
       if (!res.ok) throw new Error(j.error || "Gönderilemedi.");
       setMyIndex(j.myIndex);
       setResults({ counts: j.counts, total: j.total });
+      setAwarded(typeof j.pointsAwarded === "number" ? j.pointsAwarded : 0);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Gönderilemedi.");
     } finally {
@@ -76,6 +83,11 @@ export function SurveyCardView(p: Props) {
             ) : (
               <span className="aura-mono rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-300">
                 Topluluk anketi
+              </span>
+            )}
+            {p.points > 0 && (
+              <span className="aura-mono inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                <Star size={10} strokeWidth={2.5} /> +{p.points} puan
               </span>
             )}
             {results && (
@@ -119,6 +131,16 @@ export function SurveyCardView(p: Props) {
               </div>
             </>
           ) : (
+            <>
+            {awarded > 0 && (
+              <p className="mt-1.5 text-[11px] text-emerald-300">
+                <Star size={11} className="inline -mt-px mr-1" strokeWidth={2.5} />
+                {awarded} puan kazandınız ·{" "}
+                <Link href="/doktor/doctorium/oduller" className="underline underline-offset-2 hover:text-emerald-200">
+                  Puanlarım
+                </Link>
+              </p>
+            )}
             <div className="mt-2 grid gap-1.5">
               {p.options.map((o, i) => {
                 const n = results.counts[i] ?? 0;
@@ -142,6 +164,7 @@ export function SurveyCardView(p: Props) {
                 );
               })}
             </div>
+            </>
           )}
         </div>
       </div>

@@ -14,6 +14,7 @@ interface Row {
   sponsor: string | null;
   question: string;
   honorarium: number | null;
+  points: number;
   status: string;
   responses: number;
   startsAt: string;
@@ -44,6 +45,7 @@ export function SurveyAdmin(p: Props) {
   const [question, setQuestion] = useState("");
   const [optionsText, setOptionsText] = useState("");
   const [honorariumTl, setHonorariumTl] = useState("");
+  const [points, setPoints] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [branches, setBranches] = useState<Set<string>>(new Set());
@@ -62,6 +64,7 @@ export function SurveyAdmin(p: Props) {
           question,
           options: optionsText.split("\n").map((s) => s.trim()).filter(Boolean),
           honorarium: kind === "SPONSORED" && Number.isFinite(tl) && tl > 0 ? Math.round(tl * 100) : 0,
+          points: parseInt(points, 10) || 0,
           targetBranches: [...branches],
           startsAt, endsAt,
         }),
@@ -69,7 +72,7 @@ export function SurveyAdmin(p: Props) {
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || "Kaydedilemedi.");
       setMsg("Taslak oluşturuldu — listeden AKTİF edin.");
-      setSponsor(""); setQuestion(""); setOptionsText(""); setHonorariumTl("");
+      setSponsor(""); setQuestion(""); setOptionsText(""); setHonorariumTl(""); setPoints("");
       setStartsAt(""); setEndsAt(""); setBranches(new Set());
       router.refresh();
     } catch (e) {
@@ -157,6 +160,13 @@ export function SurveyAdmin(p: Props) {
             <textarea id="sv-options" rows={4} className={inputCls} value={optionsText}
               onChange={(e) => setOptionsText(e.target.value)} placeholder={"Evet\nHayır\nKararsızım"} />
           </div>
+          <div>
+            <label className={labelCls} htmlFor="sv-points">
+              Ödül puanı (0 = puansız) — yanıtlayan hekimin puan hesabına bir kez yazılır
+            </label>
+            <input id="sv-points" className={inputCls} value={points} inputMode="numeric"
+              onChange={(e) => setPoints(e.target.value)} placeholder="0" />
+          </div>
           {kind === "SPONSORED" && (
             <div>
               <label className={labelCls} htmlFor="sv-honorarium">
@@ -241,6 +251,11 @@ export function SurveyAdmin(p: Props) {
               {r.honorarium != null && r.honorarium > 0 && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
                   <Lock size={10} /> ₺{(r.honorarium / 100).toLocaleString("tr-TR")} — yayın kilitli
+                </span>
+              )}
+              {r.points > 0 && (
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                  +{r.points} puan
                 </span>
               )}
               <span className="text-[11px] text-[var(--c-ink-3)]">
