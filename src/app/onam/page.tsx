@@ -19,5 +19,6 @@ export default async function ConsentPage({ searchParams }: { searchParams: Prom
 
   if (await hasCurrentConsent(user.id)) redirect(dest);
 
-  return <ConsentGate isPatient={user.role === "PATIENT"} dest={dest} />;
+  // role: personel metnine rol-duyarlı kapsam maddeleri ekler (AGENCY/PARTNER/HEALTH_PRO — 2026-08-12)
+  return <ConsentGate isPatient={user.role === "PATIENT"} role={user.role} dest={dest} />;
 }

@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import {
   ArrowRight, BarChart2, CalendarDays, Gift, LayoutDashboard, Megaphone,
   FolderHeart, Share2, UserRound, Users, HeartPulse, Scale, Globe,
-  Stethoscope, Newspaper, Luggage,
+  Stethoscope, Newspaper, Luggage, UserCheck,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +32,13 @@ const OVERSIGHT = [
 ];
 
 const PANELS = [
+  {
+    href: "/admin/personel-onay",
+    label: "Personel Onayı",
+    desc: "Partner Doktor, Acente ve Sağlık Uzmanı başvuruları — yanıt + belge incele, onayla/reddet.",
+    icon: UserCheck,
+    tone: "#f472b6",
+  },
   {
     href: "/admin/kampanya",
     label: "Sponsorlu Kampanyalar",

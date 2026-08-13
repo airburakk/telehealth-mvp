@@ -50,4 +50,9 @@ describe("navItemsFor", () => {
     expect(hrefs("PARTNER")).toEqual(["/partner"]);
     expect(hrefs(null)).toEqual([]);
   });
+
+  it("AGENCY ve HEALTH_PRO: tek sekme (2026-08-12 — Sağlık Uzmanı başlangıç paneli /uzman)", () => {
+    expect(hrefs("AGENCY")).toEqual(["/acente"]);
+    expect(hrefs("HEALTH_PRO")).toEqual(["/uzman"]);
+  });
 });

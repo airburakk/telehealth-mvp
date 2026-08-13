@@ -7,6 +7,7 @@ const ETHICS_ROLES = ["ETHICS", "ADMIN"];
 const OPS_ROLES = ["COORDINATOR", "ADMIN"]; // S2 operasyon paneli
 const PARTNER_ROLES = ["PARTNER", "ADMIN"]; // M5 Faz 3 — Partner Doktor alanı (hasta DB'sine erişimi yok)
 const AGENCY_ROLES = ["AGENCY", "ADMIN"]; // S3 Sağlık Turizmi Acentesi — yalnız kısıtlı tedavi dosyaları (FAZ 4)
+const HEALTH_PRO_ROLES = ["HEALTH_PRO", "ADMIN"]; // Sağlık Uzmanı başlangıç paneli (klinik yetki yok — 2026-08-12)
 const CONSENT_PATH = "/onam";
 
 export async function proxy(req: NextRequest) {
@@ -55,6 +56,10 @@ export async function proxy(req: NextRequest) {
   if (pathname.startsWith("/acente") && !AGENCY_ROLES.includes(user.role)) {
     return NextResponse.redirect(new URL("/", req.url)); // yalnız acente (+ADMIN); sayfalar ayrıca kendi savunmasını yapar
   }
+  if (pathname.startsWith("/uzman") && !HEALTH_PRO_ROLES.includes(user.role)) {
+    return NextResponse.redirect(new URL("/", req.url)); // yalnız Sağlık Uzmanı (+ADMIN); sayfa kendi staffVerifiedAt kapısını da yapar
+  }
+  // /kayit/durum: oturum + onam yeterli (rol kapısı yok — sayfa kendi rol/doğrulama yönlendirmesini yapar)
   // MASTER paneli: env-gated + e-posta allowlist (rol DEĞİL). Bürünme oturumu (imp) master sayılmaz.
   // Kontrol inline (middleware'i auth.ts/db'ye bağlamamak için); sayfa da isMaster ile kendi savunmasını yapar.
   if (pathname.startsWith("/master")) {
@@ -90,6 +95,8 @@ export const config = {
     "/operasyon", "/operasyon/:path*",
     "/partner", "/partner/:path*",
     "/acente", "/acente/:path*",
+    "/uzman", "/uzman/:path*",
+    "/kayit/durum", // kurumsal başvuru durumu — oturum + onam kapısı (kayıt formları public kalır)
     "/master", "/master/:path*",
     "/vakalarim",
     "/hesap", // hesap ayarları / veri silme (v6.11) — sayfa ayrıca kendi PATIENT kapısını yapar

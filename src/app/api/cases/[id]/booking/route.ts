@@ -23,6 +23,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   // kendisine İLETİLMİŞ dosyada (agencySentAt) ve YALNIZ teklif modunda çalışabilir (doğrudan
   // Escrow rezervasyonu açamaz; onay hastada kalır). Diğer roller mevcut kapıdan.
   if (user.role === "AGENCY") {
+    // Kurumsal üyelik kapısı (2026-08-12): onaysız acente teklif de gönderemez (sayfa kapısının API eşleniği).
+    if (!user.staffVerified) return NextResponse.json({ error: "Hesabınız henüz doğrulanmadı." }, { status: 403 });
     if (!c.agencySentAt) return NextResponse.json({ error: "Bu dosya acenteye iletilmemiş." }, { status: 403 });
     if (b.mode !== "offer") return NextResponse.json({ error: "Acente yalnız hastaya teklif gönderebilir." }, { status: 403 });
   } else if (!(await canCaseBeAccessedBy(user, c))) {

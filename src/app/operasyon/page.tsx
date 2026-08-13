@@ -4,8 +4,9 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { countryFlag, countryName } from "@/lib/constants";
 import { formatUSD } from "@/lib/pricing";
+import { PageHeader } from "@/components/ui/PageHeader";
 import {
-  BarChart3, Users, Luggage, Wallet, Scale, AlertTriangle, Stethoscope,
+  Users, Luggage, Wallet, Scale, AlertTriangle, Stethoscope,
   TrendingUp, Filter, HeartPulse, ShieldCheck, Video, ArrowRight, ArrowUpRight, BookMarked,
 } from "lucide-react";
 
@@ -106,13 +107,12 @@ export default async function OperationsDashboard() {
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-8">
-      <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><BarChart3 size={22} /></span>
-        <div>
-          <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Operasyon Paneli</h1>
-          <p className="text-sm text-[var(--c-ink-2)]">S2 Operasyon Şirketi · canlı platform metrikleri</p>
-        </div>
-      </div>
+      {/* Aura kit taşıması (2026-08-12): başlık PageHeader'a — metrik blokları/sorgular AYNEN. */}
+      <PageHeader
+        eyebrow="S2 · Operasyon"
+        title="Operasyon Paneli"
+        sub="Canlı platform metrikleri — vaka hacmi, dönüşüm hunisi, gelir ve kapasite."
+      />
 
       <Link href="/operasyon/ikinci-gorus" className="mt-5 flex items-center gap-3 rounded-3xl border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.06] p-4 transition hover:bg-[var(--c-accent)]/[0.1]">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><Stethoscope size={18} /></span>

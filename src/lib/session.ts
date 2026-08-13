@@ -19,6 +19,9 @@ export interface SessionUser {
   sv?: number; // oturum sürümü (session version) — User.sessionVersion snapshot'ı; uyuşmazsa token iptal (JWT revocation)
   imp?: string; // MASTER impersonation: bu oturum bir master tarafından başlatıldıysa gerçek master'ın User.id'si
                 // (kimlik = bürünülen kullanıcı; imp yalnız "master'a dön" + banner + audit izi için taşınır)
+  staffVerified?: boolean; // kurumsal üyelik onayı (2026-08-12) — TOKEN'DA TAŞINMAZ; getCurrentUser her
+                           // istekte DB'den doldurur (User.staffVerifiedAt snapshot'ı). PARTNER/AGENCY/
+                           // HEALTH_PRO kapıları buna bakar (doğrulanmamış → /kayit/durum, API 403).
 }
 
 // Oturum imzalama anahtarı (T4). ÜRETİMDE eksik/zayıf/varsayılan ise BOOT DURUR (forge edilebilir

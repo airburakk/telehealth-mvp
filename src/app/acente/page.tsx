@@ -1,8 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { decryptField } from "@/lib/crypto";
-import { Luggage } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { AgencyList, type AgencyFileRow } from "./AgencyList";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +17,9 @@ export const dynamic = "force-dynamic";
 export default async function AgencyQueue() {
   const user = await getCurrentUser();
   if (!user || !["AGENCY", "ADMIN"].includes(user.role)) notFound();
+  // Kurumsal üyelik kapısı (2026-08-12): onaylanmamış acente hasta kimliği İÇEREN bu kuyruğu göremez —
+  // başvuru durumuna iner (ADMIN muaf: staffVerified yalnız AGENCY için anlamlı).
+  if (user.role === "AGENCY" && !user.staffVerified) redirect("/kayit/durum");
 
   const cases = await db.case.findMany({
     where: { agencySentAt: { not: null } },
@@ -54,13 +57,12 @@ export default async function AgencyQueue() {
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
-      <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><Luggage size={22} /></span>
-        <div>
-          <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Tedavi Dosyaları</h1>
-          <p className="text-sm text-[var(--c-ink-2)]">Doktorların ilettiği tedavi kararları — teklif hazırlayıp hastaya gönderin.</p>
-        </div>
-      </div>
+      {/* Aura kit taşıması (2026-08-12): başlık PageHeader'a — işlev/sorgular AYNEN. */}
+      <PageHeader
+        eyebrow="S3 · Sağlık Turizmi"
+        title="Tedavi Dosyaları"
+        sub="Doktorların ilettiği tedavi kararları — teklif hazırlayıp hastaya gönderin."
+      />
 
       <AgencyList rows={rows} />
 

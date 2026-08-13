@@ -3,6 +3,8 @@
 // Roller:
 //   PATIENT     → yalnız KENDİ vakası (c.userId === user.id)
 //   PARTNER     → hasta DB erişimi YOK (her zaman reddedilir)
+//   HEALTH_PRO  → klinik yetki YOK (2026-08-12 kullanıcı kararı) → `default: false` dalına düşer;
+//                 ileride yetki tanımlanırsa BURADA açık dal yazılır (sessizce genişletme yok)
 //   COORDINATOR → operasyon (lojistik/rezervasyon) → geniş
 //   ETHICS      → şikayet incelemesi (anonimleştirilmiş panel) → geniş
 //   ADMIN       → yönetim → geniş

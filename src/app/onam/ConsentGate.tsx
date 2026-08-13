@@ -40,11 +40,31 @@ const STAFF = {
   errMsg: "Bir hata oluştu, lütfen tekrar deneyin.",
 };
 
-export function ConsentGate({ isPatient, dest }: { isPatient: boolean; dest: string }) {
+// Rol-duyarlı ek maddeler (2026-08-12, ⚖️ TASLAK): genel personel metninin ÜSTÜNE, rolün gerçek
+// erişim kapsamını dürüstçe anlatan satırlar. Erişim kapsamı kodda değişirse bu metinler DE değişir
+// (+ CONSENT_VERSION artışı değerlendirilir — herkese yeniden onam).
+const STAFF_ROLE_EXTRA: Record<string, string[]> = {
+  AGENCY: [
+    "Rolünüze özgü kapsam: tedavi dosyalarında hasta kimlik ve iletişim bilgilerine erişirsiniz; bu bilgileri yalnız seyahat/konaklama organizasyonu amacıyla işler, üçüncü kişilerle paylaşmaz ve sır olarak saklarsınız. Tıbbi belge, tetkik ve klinik içeriğe erişiminiz yoktur.",
+  ],
+  PARTNER: [
+    "Rolünüze özgü kapsam: platformun hasta veritabanına erişiminiz yoktur; yönlendirdiğiniz hastaya ait bilgileri anonimleştirerek iletirsiniz ve bulunduğunuz ülkenin mesleki mevzuatına uygunluktan sorumlusunuz.",
+  ],
+  HEALTH_PRO: [
+    "Rolünüze özgü kapsam: bu aşamada klinik vaka verilerine erişiminiz bulunmaz; erişim kapsamı tanımlandığında ayrıca bilgilendirilir ve gerekli hâllerde yeniden onayınız alınır.",
+  ],
+};
+
+export function ConsentGate({ isPatient, role, dest }: { isPatient: boolean; role?: string; dest: string }) {
   const router = useRouter();
   const [patientLang, setPatientLang] = usePatientLang();
   const lang = isPatient ? patientLang : "Türkçe";
-  const C = isPatient ? PATIENT : STAFF;
+  // Referans stabil kalmalı ([[uset-unstable-texts-race]]) — rol ekleri useMemo ile bir kez kurulur.
+  const C = useMemo(() => {
+    if (isPatient) return PATIENT;
+    const extra = STAFF_ROLE_EXTRA[role ?? ""] ?? [];
+    return extra.length ? { ...STAFF, items: [...STAFF.items, ...extra] } : STAFF;
+  }, [isPatient, role]);
 
   const texts = useMemo(() => [C.title, C.intro, ...C.items, C.consent, C.draft, C.accept, C.errMsg], [C]);
   const { t } = useT(lang, texts);

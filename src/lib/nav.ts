@@ -52,6 +52,7 @@ const NAV: NavItem[] = [
   { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, roles: ["ETHICS"] },
   { href: "/partner", label: "Partner", icon: Globe, roles: ["PARTNER"] },
   { href: "/acente", label: "Tedavi Dosyaları", icon: Luggage, roles: ["AGENCY"] }, // S3 acente kuyruğu (FAZ 4)
+  { href: "/uzman", label: "Uzman Paneli", icon: UserRound, roles: ["HEALTH_PRO"] }, // Sağlık Uzmanı başlangıç (2026-08-12; klinik yetki yok)
 ];
 
 // Tam birleşme (2026-07-12, kullanıcı kararı): SO dahil tüm kulvarlar /vakalarim'da tek listede —

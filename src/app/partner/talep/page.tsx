@@ -46,6 +46,8 @@ export type FormStrings = Record<keyof typeof FORM_UI, string>;
 export default async function PartnerRequestPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/giris?next=/partner/talep");
+  // Kurumsal üyelik kapısı (2026-08-12): onaysız partner talep açamaz — başvuru durumuna iner.
+  if (session.role === "PARTNER" && !session.staffVerified) redirect("/kayit/durum");
   const u = await db.user.findUnique({ where: { id: session.id }, select: { partnerId: true } });
   const partner = u?.partnerId ? await db.partnerDoctor.findUnique({ where: { id: u.partnerId }, select: { country: true, branch: true, language: true } }) : null;
   if (!partner) redirect("/");

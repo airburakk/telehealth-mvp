@@ -52,6 +52,11 @@ model User {
   // bağı kopmasın (yasal saklama süresi boyunca "bu kaydı neden tutuyoruz"un kanıtı). Süre dolunca
   // (Case.purgeAfter) kabuk da imha edilir → o an gerçekten hiçbir şey kalmaz.
   deletedAt    DateTime?
+  // Kurumsal üyelik doğrulaması (2026-08-12): PARTNER/AGENCY/HEALTH_PRO self-signup hesapları null
+  // açılır; /admin/personel-onay insan onayı damgalar. Damgasız hesap rol paneline giremez
+  // (/kayit/durum'a iner). DOCTOR bu alana BAKMAZ (kendi üç-damga sistemi: verified/activatedAt/
+  // chamberLetterAt). Mevcut personel hesapları migration'da damgalandı (demo/seed kırılmasın).
+  staffVerifiedAt DateTime?
   createdAt    DateTime @default(now())
 
   @@index([deletedAt]) // imha cron'u: süresi dolan silinmiş hesapları tarar
@@ -102,6 +107,41 @@ model ConsentRecord {
   purgedAt    DateTime?
 
   @@unique([userId, scope, version])
+}
+
+/// Kurumsal üyelik başvurusu (2026-08-12) — PARTNER / AGENCY / HEALTH_PRO self-signup soru seti.
+/// answers KİŞİSEL VERİ taşır (ad, telefon, kurum, tescil no...) → at-rest ŞİFRELİ JSON (encryptField);
+/// çözme YALNIZ personel-onay incelemesinde (sunucuda). Kullanıcı başına TEK başvuru (@unique):
+/// REJECTED başvuru düzeltilip yeniden gönderilir (status→PENDING), yeni satır açılmaz.
+/// COORDINATOR/ETHICS başvuru almaz — yalnız davet (scripts/create-staff.ts).
+model StaffApplication {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  role             String // başvurulan rol: PARTNER | AGENCY | HEALTH_PRO
+  answers          String // ŞİFRELİ JSON — rol-config soru seti yanıtları (lib/staff-application)
+  status           String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewedByUserId String? // onay/ret veren personel (audit eşleniği AccessLog'da)
+  reviewedAt       DateTime?
+  reviewNote       String? // ret gerekçesi / onay notu — başvurana gösterilir (kişisel veri içermez)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([status, createdAt]) // personel-onay kuyruğu: PENDING'ler tarihe göre
+}
+
+/// Kurumsal başvuru belgesi — DoctorDocument deseninin eşleniği (base64 data URI, at-rest şifreli).
+/// Tip sözlüğü rol-config'te (lib/staff-application): PARTNER=LICENSE · AGENCY=TURSAB/AUTHORITY ·
+/// HEALTH_PRO=DIPLOMA. Yükleme /kayit/durum'dan (oturumlu), indirme yalnız personel-onay incelemesinde.
+model StaffDocument {
+  id            String   @id @default(cuid())
+  applicationId String
+  type          String // rol-config zorunlu belge tipi anahtarı
+  label         String // dosya adı
+  mimeType      String // application/pdf | image/jpeg | image/png | ...
+  content       String // base64 data URI — at-rest şifreli (encryptField)
+  createdAt     DateTime @default(now())
+
+  @@index([applicationId])
 }
 
 /// Platformdaki uzman hekim

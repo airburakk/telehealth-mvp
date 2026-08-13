@@ -22,6 +22,10 @@ import { LangProvider, useLang, langDir, LINKS, VIDEOS } from "@/lib/aura-landin
 // formu kapının İÇİNDE açar (GateEmailForm). /giris/e-posta ve /kurumsal-giris/e-posta
 // kalıcı yönlendirmeye çevrildi; OAuth/verify dönüş banner'ları da artık kapıda çizilir —
 // ?oauth/?verify parametresiyle gelindiğinde form OTOMATİK açılır (banner görünür kalsın).
+//
+// Üyelik daveti ("Hesabınız yok mu? Üye olun" / "Doktor musunuz? Kayıt olun") form İÇİNDEN
+// kapının kalıcı alt bölgesine taşındı (2026-08-12, kullanıcı kararı): form kapalıyken davet
+// görünmüyordu — artık sayfa açılır açılmaz "veya" ayracının altında durur (SignupPrompt).
 
 // Sistem parametresiyle dönüş var mı? (form açık başlasın; banner GateEmailForm içinde)
 function useReturnedWithBanner(): boolean {
@@ -139,14 +143,7 @@ function SigninPanel() {
           label={t.signin.email}
           icon={<MailIcon />}
         />
-        {showForm && (
-          <GateEmailForm
-            texts={t.signin}
-            signupPrompt={t.signin.noAccount}
-            signupLabel={t.signin.signup}
-            signupHref={LINKS.platformSignup}
-          />
-        )}
+        {showForm && <GateEmailForm texts={t.signin} />}
       </div>
 
       <div className="mt-6 flex items-center gap-3">
@@ -154,6 +151,12 @@ function SigninPanel() {
         <span className="aura-mono text-[11px] text-[var(--aura-micro)]">{t.signin.or}</span>
         <span aria-hidden className="h-px flex-1 bg-[var(--aura-hairline)]" />
       </div>
+
+      <SignupPrompt
+        prompt={t.signin.noAccount}
+        label={t.signin.signup}
+        href={LINKS.platformSignup}
+      />
 
       <Link
         href="/"
@@ -191,6 +194,18 @@ export function CorporateGate() {
     </LangProvider>
   );
 }
+
+// Rol-duyarlı üyelik daveti hedefleri (2026-08-12) — RoleSelect indeksleriyle paralel:
+// [Doktor, Partner Doktor, Sağlık Uzmanı, Acente Yetkilisi, Koordinatör, Etik Kurul].
+// null = başvuru YOK (Koordinatör + Etik Kurul yalnız davetle; kapıda inviteNote görünür).
+const ROLE_SIGNUP_HREFS: readonly (string | null)[] = [
+  LINKS.doctorSignup, // /kayit — mevcut doktor self-signup
+  "/kayit/partner",
+  "/kayit/saglik-uzmani",
+  "/kayit/acente",
+  null,
+  null,
+];
 
 // Kurumsal demo hızlı-giriş hesapları (görünürlük GateEmailForm'daki DEMO_UNLOCK kilidine bağlı;
 // eski CorporateLoginForm'dan taşındı — ikonlar kapı dilinde yok, yalnız etiket).
@@ -239,15 +254,7 @@ function CorporatePanel() {
             label={t.signin.email}
             icon={<MailIcon />}
           />
-          {showForm && (
-            <GateEmailForm
-              texts={t.signin}
-              signupPrompt={c.docPrompt}
-              signupLabel={c.docSignup}
-              signupHref={LINKS.doctorSignup}
-              quick={STAFF_QUICK}
-            />
-          )}
+          {showForm && <GateEmailForm texts={t.signin} quick={STAFF_QUICK} />}
         </div>
       </div>
 
@@ -256,6 +263,21 @@ function CorporatePanel() {
         <span className="aura-mono text-[11px] text-[var(--aura-micro)]">{t.signin.or}</span>
         <span aria-hidden className="h-px flex-1 bg-[var(--aura-hairline)]" />
       </div>
+
+      {/* Rol-duyarlı davet (2026-08-12): seçili role göre kayıt linki ya da davet notu.
+          role 0 = Doktor (mevcut /kayit) · 1-3 = Partner/Uzman/Acente (rolePrompts[role-1]) ·
+          4-5 = Koordinatör/Etik Kurul (başvuru yok — inviteNote). */}
+      {role === 0 ? (
+        <SignupPrompt prompt={c.docPrompt} label={c.docSignup} href={LINKS.doctorSignup} />
+      ) : ROLE_SIGNUP_HREFS[role] ? (
+        <SignupPrompt
+          prompt={c.rolePrompts[role - 1] ?? c.docPrompt}
+          label={c.roleSignup}
+          href={ROLE_SIGNUP_HREFS[role] as string}
+        />
+      ) : (
+        <p className="mt-6 text-[13px] text-[var(--aura-grey)]">{c.inviteNote}</p>
+      )}
 
       <Link
         href="/"
@@ -405,6 +427,30 @@ function ProviderToggle({
       {icon}
       {label}
     </button>
+  );
+}
+
+// Üyelik daveti: kapının kalıcı öğesi — form açık/kapalı fark etmez, sayfa yüklenir
+// yüklenmez "veya" ayracının altında görünür (2026-08-12; eskiden GateEmailForm içindeydi).
+function SignupPrompt({
+  prompt,
+  label,
+  href,
+}: {
+  prompt: string;
+  label: string;
+  href: string;
+}) {
+  return (
+    <p className="mt-6 text-[13px] text-[var(--aura-grey)]">
+      {prompt}{" "}
+      <Link
+        href={href}
+        className="font-semibold text-[var(--aura-accent)] underline-offset-2 hover:underline"
+      >
+        {label}
+      </Link>
+    </p>
   );
 }
 

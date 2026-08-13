@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { oauthBannerMessage } from "@/lib/oauth-banner";
 
@@ -26,15 +25,9 @@ export interface GateQuickAccount {
 
 export function GateEmailForm({
   texts,
-  signupPrompt,
-  signupLabel,
-  signupHref,
   quick = [],
 }: {
   texts: { emailLabel: string; passwordLabel: string; submit: string };
-  signupPrompt: string;
-  signupLabel: string;
-  signupHref: string;
   quick?: GateQuickAccount[];
 }) {
   const sp = useSearchParams();
@@ -164,13 +157,6 @@ export function GateEmailForm({
           </p>
         </div>
       )}
-
-      <p className="pt-1 text-center text-[13px] text-[var(--aura-grey)]">
-        {signupPrompt}{" "}
-        <Link href={signupHref} className="font-semibold text-[var(--aura-accent)] underline-offset-2 hover:underline">
-          {signupLabel}
-        </Link>
-      </p>
     </div>
   );
 }

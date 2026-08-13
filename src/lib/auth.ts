@@ -66,9 +66,14 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   if (!token) return null;
   const user = await verifyToken(token);
   if (!user) return null;
-  const rec = await db.user.findUnique({ where: { id: user.id }, select: { sessionVersion: true, role: true } });
+  const rec = await db.user.findUnique({
+    where: { id: user.id },
+    select: { sessionVersion: true, role: true, staffVerifiedAt: true },
+  });
   if (!rec) return null; // kullanıcı silinmiş → oturum geçersiz
   if ((user.sv ?? 0) !== rec.sessionVersion) return null; // iptal edilmiş token
   if (!isRole(rec.role)) return null; // malformed/tanınmayan DB rolü → otoriter kabul etme (fail-closed)
-  return { ...user, role: rec.role }; // DB rolü otoriter (token rolü yalnız imza taşıyıcısı)
+  // staffVerified: kurumsal üyelik kapısı (2026-08-12) — DB'den taze, token'a yazılmaz. Onay/geri-alma
+  // anında yansır (aynı PK sorgusu; ek maliyet yok). PARTNER/AGENCY/HEALTH_PRO kapıları buna bakar.
+  return { ...user, role: rec.role, staffVerified: !!rec.staffVerifiedAt }; // DB rolü otoriter (token rolü yalnız imza taşıyıcısı)
 });

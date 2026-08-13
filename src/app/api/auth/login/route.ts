@@ -53,7 +53,14 @@ export async function POST(req: Request) {
   // KVKK onam sürümünü oturuma göm → proxy DB'siz kontrol eder; onam yoksa /onam'a yönlenir.
   const cv = await consentedVersion(user.id);
   await createSession({ id: user.id, email: user.email, name: user.name, role: user.role as Role, cv });
-  // Faz 5: dönen hasta vaka merkezine iner (başvurusu yoksa /triyaj); diğer roller statik
-  const home = user.role === "PATIENT" ? await patientHome(user.id) : roleHome(user.role as Role);
+  // Faz 5: dönen hasta vaka merkezine iner (başvurusu yoksa /triyaj); diğer roller statik.
+  // Kurumsal üyelik (2026-08-12): doğrulanmamış PARTNER/AGENCY/HEALTH_PRO başvuru durumuna iner
+  // (rol sayfaları da kendi kapısında aynı yöne düşürür — yönlendirme ≠ güvenlik).
+  const staffPending =
+    ["PARTNER", "AGENCY", "HEALTH_PRO"].includes(user.role) && !user.staffVerifiedAt;
+  const home =
+    user.role === "PATIENT" ? await patientHome(user.id)
+    : staffPending ? "/kayit/durum"
+    : roleHome(user.role as Role);
   return NextResponse.json({ ok: true, role: user.role, home });
 }

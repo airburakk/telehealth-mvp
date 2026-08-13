@@ -45,6 +45,9 @@ const UI = {
 export default async function PartnerHome() {
   const session = await getCurrentUser();
   if (!session) redirect("/giris?next=/partner");
+  // Kurumsal üyelik kapısı (2026-08-12): onaysız partner (partnerId de ancak onayda bağlanır)
+  // başvuru durumuna iner — boş panele/ana sayfaya düşmez.
+  if (session.role === "PARTNER" && !session.staffVerified) redirect("/kayit/durum");
   const u = await db.user.findUnique({ where: { id: session.id }, select: { partnerId: true } });
   const partner = u?.partnerId ? await db.partnerDoctor.findUnique({ where: { id: u.partnerId } }) : null;
   if (!partner) redirect("/");

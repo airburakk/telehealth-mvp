@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { decryptField } from "@/lib/crypto";
@@ -27,6 +27,8 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
   const { caseId } = await params;
   const user = await getCurrentUser();
   if (!user || !["AGENCY", "ADMIN"].includes(user.role)) notFound();
+  // Kurumsal üyelik kapısı (2026-08-12): onaysız acente hasta kimliği içeren dosyayı açamaz.
+  if (user.role === "AGENCY" && !user.staffVerified) redirect("/kayit/durum");
 
   const c = await db.case.findUnique({
     where: { id: caseId },

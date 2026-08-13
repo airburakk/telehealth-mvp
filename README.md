@@ -75,18 +75,36 @@ npm run dev                   # http://localhost:3000
 ## Roller & Giriş
 
 Giriş **iki ekrana ayrıdır** (v4.21): **`/giris` = Hasta Girişi** · **`/kurumsal-giris`** =
-Doktor/Koordinatör/Etik Kurul/Partner/**Sağlık Turizmi Acentesi**. İkisi de vitrin **AURA giriş
-kapılarıdır** (letterform panel + yan video; `components/aura/auth-gates.tsx`). **Kapı-içi form
-(v6.84, 2026-08-06 — v5.9.1 kapı/form ayrımı SÜPERSEDE):** Google ve Apple butonları **doğrudan
-OAuth** başlatır (`/api/auth/{google,apple}/start?intent=patient|doctor`); "E-posta ile devam et"
-formu **kapının içinde açar** (`components/aura/gate-email-form.tsx` — giriş + doğrulama
-yeniden-gönder + demo hızlı-giriş kilidi + üye ol linki). Eski `/giris/e-posta` ve
-`/kurumsal-giris/e-posta` rotaları **kalıcı yönlendirmedir** (parametre koruyarak kapıya). OAuth
-hata/`?verify` dönüşleri kapıya düşer ve formu otomatik açar. Hasta üyeliği **`/kayit/hasta`** →
-`POST /api/auth/signup-patient` (`lib/patient-signup`); doktorlar **`/kayit`** ile kendileri kayıt
-olabilir (Google/Apple [env-gated] / e-posta; OAuth niyeti `g_oauth_intent`/`a_oauth_intent`
-cookie'siyle taşınır — mevcut kullanıcıda yok sayılır). Giriş sonrası tek seferlik KVKK onam kapısı
-(`/onam`) vardır (sürümlü; `lib/consent-config.CONSENT_VERSION` artarsa bir kez yeniden alınır).
+Doktor/Koordinatör/Etik Kurul/Partner/**Sağlık Turizmi Acentesi**/**Sağlık Uzmanı**. İkisi de vitrin
+**AURA giriş kapılarıdır** (letterform panel + yan video; `components/aura/auth-gates.tsx`).
+**Kapı-içi form (v6.84, 2026-08-06 — v5.9.1 kapı/form ayrımı SÜPERSEDE):** Google ve Apple butonları
+**doğrudan OAuth** başlatır (`/api/auth/{google,apple}/start?intent=patient|doctor`); "E-posta ile
+devam et" formu **kapının içinde açar** (`components/aura/gate-email-form.tsx` — giriş + doğrulama
+yeniden-gönder + demo hızlı-giriş kilidi). **Üyelik daveti kapının KALICI öğesidir (2026-08-12):**
+form kapalıyken de "veya" ayracının altında görünür; kurumsal kapıda **rol seçimine göre değişir**
+(Doktor→`/kayit` · Partner→`/kayit/partner` · Uzman→`/kayit/saglik-uzmani` · Acente→`/kayit/acente`
+· Koordinatör/Etik Kurul→"davetle katılım" notu — 9 dil `corporate.rolePrompts`). Eski
+`/giris/e-posta` ve `/kurumsal-giris/e-posta` rotaları **kalıcı yönlendirmedir** (parametre
+koruyarak kapıya). OAuth hata/`?verify` dönüşleri kapıya düşer ve formu otomatik açar. Hasta
+üyeliği **`/kayit/hasta`** → `POST /api/auth/signup-patient` (`lib/patient-signup`); doktorlar
+**`/kayit`** ile kendileri kayıt olabilir (Google/Apple [env-gated] / e-posta; OAuth niyeti
+`g_oauth_intent`/`a_oauth_intent` cookie'siyle taşınır — mevcut kullanıcıda yok sayılır). Giriş
+sonrası tek seferlik KVKK onam kapısı (`/onam`) vardır (sürümlü;
+`lib/consent-config.CONSENT_VERSION` artarsa bir kez yeniden alınır; personel metni **rol-duyarlı**
+ek maddeler taşır — AGENCY/PARTNER/HEALTH_PRO, `ConsentGate STAFF_ROLE_EXTRA`).
+
+**Kurumsal üyelik yaşam döngüsü (2026-08-12):** PARTNER / AGENCY / **HEALTH_PRO (Sağlık Uzmanı —
+yeni rol; klinik yetkisi YOK, iniş `/uzman`)** başvuruyla açılır: `/kayit/{partner,acente,saglik-uzmani}`
+rol-config soru seti (`lib/staff-application-config.ts` tek kaynak; yanıtlar **at-rest şifreli**
+`StaffApplication.answers`) + başvuru-KVKK onay kutusu (ayrı scope `STAFF_APPLICATION_KVKK`,
+hash-zincirli ConsentRecord) → hesap **yetkisiz** açılır (`User.staffVerifiedAt=null`) → `/kayit/durum`
+(belge yükleme: imza-tabanlı MIME + şifreli depo; REJECTED'te gerekçe + düzelt-yeniden-gönder) →
+**insan onayı** `/admin/personel-onay` (ETHICS/ADMIN; onay damgalar, PARTNER'da `PartnerDoctor`
+oluşturup `User.partnerId` bağlar; audit `STAFF_APP_APPROVE/REJECT` + bildirim). Kapı yaptırımı:
+`getCurrentUser` her istekte `staffVerified`'ı DB'den doldurur; `/partner` `/acente` `/uzman`
+sayfaları + acente teklif API'si doğrulanmamışı `/kayit/durum`'a düşürür. **COORDINATOR/ETHICS
+başvuru ALMAZ** — yalnız davet: `scripts/create-staff.ts` (create-admin korkulukları; hesap
+damgalı açılır). ⚖️ Soru seti/KVKK metinleri TASLAK — hukukçu onayıyla kesinleşir.
 
 **Hasta akışı (v5.8 basitleştirme):** `/basla` 4'lü seçim ekranı KALDIRILDI — giriş hunisi doğrudan
 **Branş Doktoru akışına** (`/triyaj`) iner; **dönen hasta** (başvurusu olan) girişte **vaka merkezine**
@@ -249,7 +267,9 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/vaka/[caseId]` | **Tek hasta vaka merkezi** (v5.8 F6): süreç tracker + 3-seçenek kapısı + vaka bilgisi + aktif görüşme CTA + teklif (`#teklif`) + rezervasyon (`#rezervasyon`) gömülü; eski hasta rotaları (`/triyaj/[id]` · `/teklif/[bookingId]` · `/rezervasyon/[bookingId]`) buraya kalıcı redirect |
 | `/vakalarim` · `/erisim-kaydi` | Hastanın vaka ana ekranı · erişim denetim kaydı ("verime kim erişti") |
 | `/doktor` (+`/baslangic`, `/profil-tamamla`, `/vaka/[id]`, `/takip`, `/profil`, `/ucretsiz-saglik`, `/konsultasyon`) | Doktor Ana Sayfası (pencere-tabanlı, v6.41 birleşik vaka listesi), ilk-giriş onboarding (**v6.87'den beri iki aşamalı** — Aşama 1: tabip odası yazısı → yalnız Doctorium; Aşama 2: klinik havuz), **OAuth profil-tamamlama ara sayfası** (v6.87 — Google/Apple hesabı branş/şehir boş açılır, bu ekran doldurtur), kokpit, izleme, profil, Ücretsiz Sağlık Hizmeti, klinik nöbet, Konsültasyon Talepleri kutusu |
-| `/partner` (+`/talep`) | Partner Doktor paneli (**tüm arayüz partner dilinde + RTL**, haber akışı dahil) · anonim konsültasyon talebi oluşturma (belge yükleme, hasta DB erişimi yok) |
+| `/partner` (+`/talep`) | Partner Doktor paneli (**tüm arayüz partner dilinde + RTL**, haber akışı dahil) · anonim konsültasyon talebi oluşturma (belge yükleme, hasta DB erişimi yok). **2026-08-12:** doğrulanmamış partner (staffVerifiedAt yok) `/kayit/durum`'a düşer |
+| `/kayit/{partner,acente,saglik-uzmani}` · `/kayit/durum` | **Kurumsal üyelik başvuruları (2026-08-12):** rol-config soru setli self-signup formları (public; `StaffSignupForm` tek motor) · **başvuru durumu** (oturumlu — PENDING özet+belge yükleme · REJECTED gerekçe+düzelt-yeniden-gönder; doğrulanmamış personelin iniş sayfası) |
+| `/uzman` | **Sağlık Uzmanı başlangıç paneli (2026-08-12, HEALTH_PRO):** profil özeti + dürüst erişim-kapsam kartı — klinik vaka verisi YOK (kullanıcı kararı; ownership `default:false`) |
 | `/gorusme/[id]` | WebRTC video görüşme odası (asimetrik) |
 | `/konsultasyon/gorusme/[id]` | Konsültasyon görüntülü görüşme odası (partner↔doktor, Faz 3; fallback chat) |
 | `/paket/[caseId]` · `/rezervasyon/[id]` · `/teklif/[id]` | Paket · Escrow rezervasyon · hastaya gönderilen teklif. Rezervasyon/teklif (v4.27): **escrow milestone güven görseli** (`EscrowMilestones` — "gerçek para yok/simülasyon" etiketli) + **i18n** (hasta dili, `useT`+`air_lang`+RTL; `ReservationView`/`OfferView`) + "Koordinatörle konuş" bildirimi. ⚠️ Sağlık turizmi vakasında (`tourism` prop) escrow görseli/split çizilmez, metinler ödemesiz varyant (2026-07-23) |
@@ -258,6 +278,7 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `/sikayet/[caseId]` · `/etik-kurul` (+`/[id]`) · `/denetim` | Şikayet · Etik Kurul liste/karar (+savunma/bilgi talebi paneli, v6.81) · denetim izi bütünlüğü (denetçi) |
 | `/mesajlar` | **Sistem Mesajları (v6.81)** — bildirimden ayrı, İÇERİKLİ + yanıt akışlı katman; girişli TÜM roller (herkes yalnız kendi hedefli mesajını görür); header hesap menüsünde "Sistem Mesajları" satırı (bildirimlerin altı; avatar rozeti = bildirim+mesaj toplamı); savunma talebine TEK yanıt buradan verilir |
 | `/admin/hekim-onay` | Doktor doğrulama onayı (ADMIN/Etik Kurul) — self-signup doktoru `verified:true` yapar |
+| `/admin/personel-onay` | **Kurumsal üyelik onayı (2026-08-12, ADMIN/Etik Kurul):** PARTNER/AGENCY/HEALTH_PRO başvuruları — şifreli yanıtlar sunucuda çözülür, belgeler audit'li raw uçtan açılır, Onayla (`staffVerifiedAt` + PARTNER'da PartnerDoctor bağlama) / Reddet (gerekçe başvurana) |
 | `/admin` (+`/kampanya`, `/anket`, `/kongre`) | **Yönetim dizini (v6.71-73):** ADMIN bandı yalnız Yönetim·Operasyon (kullanıcı kararı; TAM-liste nav sözleşme testi) — 3 küratör paneli kartı + 10 "Denetim görünümü" kısayolu buradan dağılır. **Kampanya (v6.68):** Doctorium akışı sponsorlu kartları — İLAÇ-DIŞI (Modül D TİTCK parkı; kategori fail-closed, birim regresyon kilidi), hedefleme yalnız açık-rızalı hekime, kişi-bazlı log YOK (agregat sayaç). **Anket (v6.69):** topluluk/sponsorlu tek-soru anketleri — **honorarium>0 yayın KİLİDİ** (ödeme/vergi kurgusu netleşene dek). Admin hesabı self-signup'sız: `scripts/create-admin.ts` (şifre yalnız env, `--promote` korkuluğu) |
 | `/operasyon` (+`/lojistik`) | Operasyon paneli · lojistik Patient Journey takibi (S2 — koordinatör/admin) |
 | `/paylasim/[token]` · `/paylasimlarim` | Güvenli paylaşım görüntüleyici · paylaşım yönetimi |
@@ -283,7 +304,8 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 | `shares` · `complaints` · `bookings` | Güvenli paylaşım · şikayet (+**`complaints/[id]/defense-request`** v6.81 — ETHICS/ADMIN savunma talebi açar; PATCH karar ucu açık talepte **409** [kilit: yanıt VEYA 3 gün]) · rezervasyon (`respond` · `journey` · `contact-coordinator` [hasta→koordinatör bildirim talebi, BOLA+rate-limit]) |
 | `notifications` · `push` · **`system-messages`** | Bildirim merkezi · Web Push aboneliği · **Sistem Mesajları (v6.81)**: GET kendi mesajların (+`?count=1` rozet sayımı; body/reply sunucuda çözülür, `repliedByUserId` yanıtlara ASLA konmaz — anonimlik) · POST okundu · **`[id]/reply`** atomik TEK yanıt (updateMany-guard → yarışta 409; kişisel mesaja yalnız hedef kullanıcı — ADMIN dahi değil) |
 | `consultation-requests` · `presence` | Konsültasyon talebi yanıt/belge + **chat (`messages`)** + **video** randevu (offer/respond) · `presence/ping` (heartbeat) |
-| `doctor` · `auth` | Doktor tercihleri/akademik/işlem · oturum + **`signup`** (doktor kaydı) + **`google/{start,callback}`** (OAuth, env-gated) |
+| `doctor` · `auth` | Doktor tercihleri/akademik/işlem · oturum + **`signup`** (doktor kaydı) + **`signup-staff`** (2026-08-12 — PARTNER/AGENCY/HEALTH_PRO başvurusu: şifreli yanıt + `STAFF_APPLICATION_KVKK` onamı + yetkisiz hesap) + **`google/{start,callback}`** (OAuth, env-gated) |
+| `staff-applications` | **Kurumsal başvuru uçları (2026-08-12):** `documents` (GET/POST — kendi başvurusuna belge; imza-tabanlı MIME + şifreli depo) · `resubmit` (REJECTED→PENDING) · `[id]/review` (ETHICS/ADMIN onay/ret + audit + bildirim) · `[id]/documents/[docId]/raw` (incelemeciye belge — audit'li, no-store) |
 | `admin` | `doctors/[id]/verify` — doktor doğrulama (ADMIN/Etik Kurul) · **`sponsor`** (v6.68 kampanya CRUD — İLAÇ kategorisi reddedilir; yayınlanmış silinmez→ENDED) · **`survey`** (v6.69 anket CRUD — honorarium>0 ACTIVE edilemez, fail-closed) · `congress` (kongre küratörü) |
 | `sponsor` · `survey` | **`sponsor/click`** (v6.68 — rol kapılı tıklama sayacı → 302; URL DB'den, open-redirect yok) · **`survey/respond`** (v6.69 — DOCTOR-only tek yanıt, P2002→409, yanıtla birlikte agregat döner) · **`doctor/sponsor-consent`** (kişiselleştirme açık rızası — grant fail-closed / revoke derhâl; ConsentRecord `SPONSOR_TARGETING`/`_REVOKE` scope'ları) · **`doctor/hr-consent`** (v6.87 — İK iletişim onamı, aynı desen; `HR_CONTACT`/`_REVOKE` + `Doctor.hrContactOptInAt`; opt-in, hizmete şart değil) · **`doctor/complete-profile`** (v6.87 — OAuth kimlik tamamlama: ad/ünvan/branş/şehir/telefon[şifreli]/dil; doğrulama e-posta kaydıyla birebir) |
 
