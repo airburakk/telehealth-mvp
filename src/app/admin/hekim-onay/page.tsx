@@ -3,11 +3,17 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { hasProcedures, hasQualification } from "@/lib/doctor-activation";
 import { VerifyButton } from "./VerifyButton";
-import { ShieldCheck, Stethoscope, MapPin, Globe, Check, X, Clock, BadgeCheck, Flag } from "lucide-react";
+import { ShieldCheck, Stethoscope, MapPin, Globe, Check, X, Clock, BadgeCheck, Flag, FileText } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 const ADMIN_ROLES = ["ETHICS", "ADMIN"]; // proxy /admin ETHICS_ROLES ile korur (doktor doğrulama onayı)
+
+// DoctorDocument.type → incelemeci yüzü Türkçe etiket (doctor-activation ALL_DOC_TYPES eşleniği).
+const DOC_TYPE_LABELS: Record<string, string> = {
+  DIPLOMA: "Diploma", MMSS: "MMSS poliçesi", CHAMBER: "Tabip odası yazısı",
+  CERTIFICATE: "Sertifika", ACADEMIC: "Akademik çalışma",
+};
 
 // M5 — Doktor doğrulama onayı (ADMIN / Etik Kurul). Self-signup doktorlar verified:false başlar;
 // burada onaylanınca public dizine + eşleştirmelere dahil olur. Proxy TOKEN roluyle korur; doğrulama
@@ -25,7 +31,8 @@ export default async function DoctorApprovalPage() {
       activatedAt: true, licenseNo: true, specBoard: true, procedures: true,
       mmssInsurer: true, mmssCoverageLimit: true, mmssCoverageCurrency: true,
       registryStatus: true, // HealthTürkiye dizin doğrulaması (FAZ 6) — NOT_FOUND ise uyarı bayrağı
-      documents: { select: { type: true } },
+      // Belge META'sı — içerik listede taşınmaz; incelemeci tek belgeyi raw uçtan açar (audit'li).
+      documents: { select: { id: true, type: true, label: true, mimeType: true, createdAt: true }, orderBy: { createdAt: "desc" } },
     },
   });
 
@@ -38,6 +45,19 @@ export default async function DoctorApprovalPage() {
           <p className="text-sm text-[var(--c-ink-2)]">Kaydolan doktorları inceleyip doğrulayın — onaylanmadan dizinde ve eşleştirmede görünmezler.</p>
         </div>
       </div>
+
+      {/* İnceleme kontrol listesi (tasarım: vault output/doktor-belge-kontrol-tasarimi-2026-08-14.md §4.2).
+          Onay = verified:true → dizin + eşleştirme; karar audit'e DOCTOR_VERIFY olarak düşer. */}
+      <details className="mt-6 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-5 py-4 text-sm text-[var(--c-ink-2)]">
+        <summary className="cursor-pointer font-semibold text-[var(--c-ink)]">İnceleme kontrol listesi (onay öncesi)</summary>
+        <ol className="mt-3 list-decimal space-y-1 pl-5">
+          <li>Belge açılıyor ve okunaklı mı? (bozuk/boş dosya → onay verme)</li>
+          <li>Tip doğru mu — içerik gerçekten diploma / MMSS poliçesi / tabip odası yazısı mı?</li>
+          <li>Belgedeki ad-soyad ↔ profil adı ↔ (varsa) HealthTürkiye kaydı eşleşiyor mu?</li>
+          <li>Diploma no ↔ beyan edilen tescil no · MMSS poliçe alanları ↔ beyan tutarlı mı?</li>
+          <li>HealthTürkiye NOT_FOUND tek başına engel değil (dizin kapsamı sınırlı) — belgeler + tabip odası yazısı ikna ediciyse takdiren onay verilebilir.</li>
+        </ol>
+      </details>
 
       {pending.length === 0 ? (
         <div className="mt-8 rounded-3xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] p-10 text-center text-sm text-[var(--c-ink-2)]">
@@ -95,6 +115,30 @@ export default async function DoctorApprovalPage() {
                   <Badge ok={qual} label={qual ? `Diploma no + uzmanlık` : "FHIR uzmanlık"} />
                   <Badge ok={proc} label={proc ? `${procCount} işlem` : "İşlem seçimi"} />
                 </div>
+
+                {/* Yüklenen belgeler — içerik raw uçtan yeni sekmede açılır (DOCTOR_DOC_VIEW audit'li).
+                    Rozetler "var/yok" der; onay kararı belge İÇERİĞİ görülerek verilir (Faz 1, 2026-08-14). */}
+                {d.documents.length > 0 && (
+                  <div className="mt-3 border-t border-[var(--c-hairline)] pt-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">Yüklenen belgeler — açarak inceleyin</div>
+                    <ul className="mt-2 space-y-1">
+                      {d.documents.map((doc) => (
+                        <li key={doc.id}>
+                          <a
+                            href={`/api/admin/doctors/${d.id}/documents/${doc.id}/raw`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-[var(--c-accent)] hover:underline"
+                          >
+                            <FileText size={14} className="shrink-0" />
+                            {DOC_TYPE_LABELS[doc.type] ?? doc.type} — {doc.label}
+                            <span className="text-xs font-normal text-[var(--c-ink-3)]">({doc.mimeType} · {doc.createdAt.toLocaleDateString("tr-TR")})</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             );
           })}
