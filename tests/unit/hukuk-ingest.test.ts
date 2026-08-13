@@ -181,6 +181,7 @@ describe("ingestYargitay", () => {
       kind: "ictihat",
       url: null, // SPA'da derin link yok — arayüz E./K. doğrulama yönergesi gösterir
       title: "Yargıtay 10. Hukuk Dairesi · E. 2021/1187, K. 2021/16741",
+      branchSlugs: "[]", // v6.93: metinde branş sinyali yok (minHits:2 kuralı) — genel
     });
     expect(data.publishedAt.toISOString()).toBe("2021-12-28T00:00:00.000Z");
     expect(data.summary).toContain("Karar gerekçesi");

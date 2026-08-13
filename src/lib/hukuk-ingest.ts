@@ -23,6 +23,7 @@
 // ⚠️ Bu dosya doctorium-ingest.ts'ten BAĞIMSIZ tutuldu (2026-08-06: o dosyada paralel oturumun
 // v6.85 çalışması sürüyordu; ayrıca kaynak/desen farkı ayrı dosyayı zaten hak ediyor).
 import { db } from "./db";
+import { extractBranches } from "./hukuk-keywords";
 
 const BASE = "https://karararama.yargitay.gov.tr";
 // 2026-08-06 saha ölçümü: GAP 1 sn iken ~18-20 istek sonrası HTTP 429 geldi → 2,5 sn'ye çekildi
@@ -280,7 +281,9 @@ export async function ingestYargitay(opts: { maxDocFetch?: number; queries?: str
           externalId: id,
           module: "mevzuat", // iç anahtar — kullanıcı yüzünde "Hukuk" (lib/doctorium.ts)
           category: "ictihat",
-          branchSlugs: "[]", // metinden branş çıkarımı bilinçli YOK (uydurma riski) — genel akış
+          // v6.93: deterministik ÇOK-BRANŞ etiketi (kullanıcı isteği 2026-08-14) — uzun karar
+          // metninde tek yan-cümle geçişi topikal değildir → minHits:2 (hukuk-keywords notu).
+          branchSlugs: JSON.stringify(extractBranches(text, { minHits: 2 })),
           kind: "ictihat",
           title: buildKararTitle(meta),
           summary: text.slice(0, SUMMARY_MAX),

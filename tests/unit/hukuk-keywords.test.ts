@@ -4,7 +4,9 @@
 import { describe, it, expect } from "vitest";
 import {
   HUKUK_KEYWORDS, keywordByKey, extractKeywords, extractLawRefs, extractExcerpt,
+  BRANCH_PATTERNS, extractBranches,
 } from "@/lib/hukuk-keywords";
+import { BRANCHES } from "@/lib/triage";
 
 const CEZA_KESIT = `12. Ceza Dairesi 2014/9296 E. , 2015/5790 K.
 "İçtihat Metni"
@@ -122,5 +124,49 @@ describe("extractExcerpt — kart alıntısı (AI'sız özet; kullanıcı karar�
       "II. UYUŞMAZLIK\nUyuşmazlık, hekim hatasına dayalı maddi ve manevi tazminat istemine ilişkindir.\nIII. GEREKÇE ...",
     );
     expect(e).toBe("Uyuşmazlık, hekim hatasına dayalı maddi ve manevi tazminat istemine ilişkindir.");
+  });
+});
+
+// ── v6.93: deterministik branş çıkarımı (çok-branş; kullanıcı isteği 2026-08-14) ──
+describe("extractBranches", () => {
+  it("SÖZLEŞME: her BRANCH_PATTERNS slug'ı triage BRANCHES'te var (çip/Akışım eşleşmesi kırılmasın)", () => {
+    const valid = new Set(BRANCHES.map((b) => b.key));
+    for (const bp of BRANCH_PATTERNS) expect(valid.has(bp.slug), bp.slug).toBe(true);
+    expect(new Set(BRANCH_PATTERNS.map((b) => b.slug)).size).toBe(BRANCH_PATTERNS.length);
+    for (const bp of BRANCH_PATTERNS) {
+      for (const p of bp.patterns) expect(p, `${bp.slug}: ${p}`).toBe(p.toLocaleLowerCase("tr-TR"));
+    }
+  });
+
+  it("bir içerik BİRDEN ÇOK branşı etkileyebilir — hepsi etiketlenir (gerçek örnek deseni)", () => {
+    const slugs = extractBranches(
+      "Çocuk Ruh Sağlığına Yönelik Tıbbi Uygulama Hataları — pediatrik hastalarda psikiyatri uygulamaları",
+    );
+    expect(slugs).toEqual(expect.arrayContaining(["psikiyatri", "cocuk-sagligi"]));
+  });
+
+  it("BÜYÜK harf tr-TR katlamayla eşleşir; kısaltma da desendir (KBB)", () => {
+    expect(extractBranches("ÜROLOJİ HEKİMLERİNİN NEFROSTOMİ DENEYİMLERİ")).toContain("uroloji");
+    expect(extractBranches("kbb uzmanının timpanoplasti ameliyatı")).toContain("kbb");
+  });
+
+  it('"tüp bebek" IVF\'tir — çocuk sağlığına SIZMAZ ("bebek" bilinçli desen değil)', () => {
+    const slugs = extractBranches("tüp bebek tedavisinde embriyo transferi ve hekim sorumluluğu");
+    expect(slugs).toContain("ivf");
+    expect(slugs).not.toContain("cocuk-sagligi");
+  });
+
+  it("minHits=2 (İçtihat kuralı): uzun metinde TEK yan-cümle geçişi topikal sayılmaz", () => {
+    const tekGecis = "Davacı tedavi sürecinde bir kez kulak burun boğaz uzmanına sevk edilmiştir. " +
+      "Dava, ameliyat sonrası bakım eksikliğine ilişkindir.";
+    expect(extractBranches(tekGecis, { minHits: 2 })).not.toContain("kbb");
+    const ikiGecis = tekGecis + " Kulak burun boğaz muayenesinde septum deviasyonu saptanmıştır.";
+    expect(extractBranches(ikiGecis, { minHits: 2 })).toContain("kbb");
+  });
+
+  it("eşleşme yoksa boş dizi (genel içerik — uydurma etiket yok) ve limit uygulanır", () => {
+    expect(extractBranches("Sağlık hukukunda arabuluculuğun usul ekonomisine katkısı")).toEqual([]);
+    const cokBrans = "onkoloji kardiyoloji ortopedi nöroşirürji üroloji dermatoloji";
+    expect(extractBranches(cokBrans, { limit: 3 })).toHaveLength(3);
   });
 });

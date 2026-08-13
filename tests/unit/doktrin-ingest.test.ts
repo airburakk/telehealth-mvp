@@ -142,8 +142,30 @@ describe("ingestDoktrin", () => {
       authors: "Hacı KARA",
       url: "https://search.trdizin.gov.tr/tr/yayin/detay/2",
       doi: null,
+      branchSlugs: "[]", // metinde branş sinyali yok — genel (uydurma etiket yok)
     });
     expect(data.publishedAt.toISOString()).toBe("2026-01-01T00:00:00.000Z");
+  });
+
+  it("branş sinyalli makale ÇOK-BRANŞ etiketi alır (v6.93 — deterministik extractBranches)", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(PAGE([
+      SRC(9, {
+        abstracts: [{
+          title: "Üroloji Hekimlerinin Malpraktis Deneyimleri",
+          abstract: "Pediatrik hastalarda ürolojik girişimler ve malpraktis iddiaları",
+          language: "TUR",
+        }],
+      }),
+    ]))));
+    dbMock.newsArticle.findMany.mockResolvedValue([]);
+    dbMock.newsArticle.create.mockResolvedValue({});
+
+    const p = ingestDoktrin({ queries: ["malpraktis"] });
+    await vi.runAllTimersAsync();
+    await p;
+
+    const slugs = JSON.parse(dbMock.newsArticle.create.mock.calls[0][0].data.branchSlugs);
+    expect(slugs).toEqual(expect.arrayContaining(["uroloji", "cocuk-sagligi"])); // pediatrik + üroloji
   });
 
   it("API'nin 200-gövdeli `error` zarfı sessiz boş liste SANILMAZ — koşu kesilir, hata raporlanır", async () => {

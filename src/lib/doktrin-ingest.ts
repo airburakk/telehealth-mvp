@@ -21,6 +21,7 @@
 // → koşu ucuz; ilk dolum bile cron bütçesine sığar. Sorgu başına yalnız İLK sayfalar taranır
 // (publicationYear-DESC — akış "yeni yayınlar" mantığıyla yaşar, tam arşiv hedeflenmez).
 import { db } from "./db";
+import { extractBranches } from "./hukuk-keywords";
 
 const BASE = "https://search.trdizin.gov.tr";
 export const GAP_MS = 800;
@@ -100,12 +101,17 @@ async function searchPage(query: string, page: number): Promise<{ total: number;
  */
 export function matchesQuery(src: TrdizinSource, query: string): boolean {
   const needle = query.toLocaleLowerCase("tr-TR");
-  for (const a of src.abstracts ?? []) {
-    const kw = Array.isArray(a.keywords) ? a.keywords.join(" ") : (a.keywords ?? "");
-    const hay = `${a.title ?? ""} ${a.abstract ?? ""} ${kw}`.toLocaleLowerCase("tr-TR");
-    if (hay.includes(needle)) return true;
-  }
-  return false;
+  return combinedText(src).toLocaleLowerCase("tr-TR").includes(needle);
+}
+
+/** Tüm dil varyantlarının başlık+özet+keywords birleşimi (ibare doğrulaması + branş çıkarımı). */
+export function combinedText(src: TrdizinSource): string {
+  return (src.abstracts ?? [])
+    .map((a) => {
+      const kw = Array.isArray(a.keywords) ? a.keywords.join(" ") : (a.keywords ?? "");
+      return `${a.title ?? ""} ${a.abstract ?? ""} ${kw}`;
+    })
+    .join(" ");
 }
 
 /** TR öncelikli başlık/özet çifti; ikisi de yoksa null (başlıksız kayıt yazılmaz — uydurma yok). */
@@ -189,7 +195,9 @@ export async function ingestDoktrin(opts: { queries?: string[]; maxPages?: numbe
           externalId: id,
           module: "mevzuat", // iç anahtar — kullanıcı yüzü "Hukuk" (lib/doctorium.ts)
           category: "doktrin",
-          branchSlugs: "[]",
+          // v6.93: deterministik ÇOK-BRANŞ etiketi — başlık+özet+keywords'te geçen branşlar
+          // (bir makale birden çok branşı etkileyebilir; kullanıcı isteği 2026-08-14).
+          branchSlugs: JSON.stringify(extractBranches(combinedText(s))),
           kind: "doktrin",
           title: ta.title,
           // TELİF sınırı: yalnız ÖZET (dizinde herkese açık metadata) — tam metin asla.

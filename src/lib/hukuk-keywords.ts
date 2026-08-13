@@ -54,6 +54,83 @@ export function extractKeywords(text: string, limit = 5): HukukKeyword[] {
   return out;
 }
 
+// ── Branş çıkarımı (v6.93, kullanıcı isteği 2026-08-14) ─────────────────────
+// İçtihat kararları ve Doktrin makaleleri metinden BRANŞLARA etiketlenir — bir içerik birden çok
+// branşı etkileyebilir (branchSlugs zaten dizi). Sözlükle aynı ilke: DETERMİNİSTİK — yalnız metinde
+// GEÇEN branş sinyali etiket olur, AI çıkarımı yok. Slug'lar lib/triage BRANCHES ile birebir
+// (branş çipleri + Akışım eşleşmesi bu slug'larla çalışır — sözleşme birim testte kilitli).
+// ⚠️ Tek başına aşırı geniş kelimeler bilinçli DESEN DEĞİL: "göz" (göz önünde), "doğum" (doğum
+// tarihi!), "kanser", "ameliyat", "bebek" ("tüp bebek" IVF'tir, pediatri değil), "enfeksiyon"
+// (her komplikasyonda geçer — uzmanlık adı "enfeksiyon hastalıkları" desendir).
+
+export interface BranchPattern {
+  slug: string; // lib/triage BRANCHES key'i
+  patterns: string[]; // küçük-harf parçalar (tr-TR katlamayla aranır)
+}
+
+export const BRANCH_PATTERNS: BranchPattern[] = [
+  { slug: "onkoloji", patterns: ["onkoloji", "onkolog", "kemoterapi"] },
+  { slug: "kardiyoloji", patterns: ["kardiyoloji", "kardiyolog", "kalp krizi", "miyokard", "anjiyografi"] },
+  { slug: "ortopedi", patterns: ["ortopedi", "ortopedik", "ortopedist", "menisküs", "eklem protezi"] },
+  { slug: "norosirurji", patterns: ["nöroşirürji", "beyin cerrahi", "beyin ameliyat", "omurga cerrahisi", "hidrosefali"] },
+  { slug: "sac-ekimi", patterns: ["saç ekimi", "saç nakli"] },
+  { slug: "estetik", patterns: ["estetik cerrahi", "estetik ameliyat", "estetik operasyon", "estetik müdahale", "rinoplasti", "burun estetiği", "meme estetiği", "liposuction", "silikon implant", "botoks"] },
+  { slug: "ivf", patterns: ["tüp bebek", "in vitro fertilizasyon", "embriyo transferi", "kısırlık tedavisi"] },
+  { slug: "dis", patterns: ["diş hekim", "diş tedavi", "diş çek", "ortodonti", "kanal tedavisi", "diş implant", "implant uygulan"] },
+  { slug: "goz", patterns: ["göz hastalık", "göz ameliyat", "göz hekimi", "göz doktoru", "oftalmoloji", "katarakt", "retina", "glokom", "lazer göz"] },
+  { slug: "genel-cerrahi", patterns: ["genel cerrahi", "apandis", "safra kesesi", "fıtık ameliyat", "tiroidektomi"] },
+  { slug: "dahiliye", patterns: ["dahiliye", "iç hastalıkları"] },
+  { slug: "noroloji", patterns: ["nöroloji", "nörolog", "epilepsi", "inme geçir", "felç"] },
+  { slug: "gastroenteroloji", patterns: ["gastroenteroloji", "endoskopi", "kolonoskopi", "gastroskopi"] },
+  { slug: "endokrinoloji", patterns: ["endokrinoloji", "diyabet", "tiroid", "guatr"] },
+  { slug: "nefroloji", patterns: ["nefroloji", "diyaliz", "böbrek yetmezliği"] },
+  { slug: "gogus-hastaliklari", patterns: ["göğüs hastalıkları", "akciğer", "astım", "koah", "tüberküloz"] },
+  { slug: "hematoloji", patterns: ["hematoloji", "lösemi", "lenfoma"] },
+  { slug: "romatoloji", patterns: ["romatoloji", "romatizma", "romatoid"] },
+  { slug: "enfeksiyon", patterns: ["enfeksiyon hastalıkları", "menenjit", "sepsis", "hastane enfeksiyonu"] },
+  { slug: "dermatoloji", patterns: ["dermatoloji", "dermatolog", "cilt hastalık"] },
+  { slug: "psikiyatri", patterns: ["psikiyatri", "psikiyatrist", "ruh sağlığı", "şizofreni"] },
+  { slug: "fizik-tedavi", patterns: ["fizik tedavi", "fiziksel tıp", "rehabilitasyon"] },
+  { slug: "cocuk-sagligi", patterns: ["çocuk sağlığı", "çocuk hastalık", "çocuk hasta", "pediatri", "pediatrik", "yenidoğan"] },
+  { slug: "uroloji", patterns: ["üroloji", "ürolojik", "ürolog", "prostat", "mesane", "nefrostomi", "böbrek taşı"] },
+  { slug: "kbb", patterns: ["kulak burun boğaz", "kbb", "bademcik", "septum deviasyonu", "timpanoplasti"] },
+  { slug: "kadin-dogum", patterns: ["kadın doğum", "kadın hastalıkları", "jinekoloji", "jinekolog", "obstetri", "sezaryen", "gebelik", "doğum eylemi"] },
+  { slug: "kvc", patterns: ["kalp ve damar cerrahisi", "kalp damar cerrah", "açık kalp", "bypass", "by-pass"] },
+  { slug: "gogus-cerrahisi", patterns: ["göğüs cerrahisi"] },
+  { slug: "organ-nakli", patterns: ["organ nakli", "böbrek nakli", "karaciğer nakli", "transplantasyon", "organ bağışı"] },
+  { slug: "radyasyon-onkolojisi", patterns: ["radyasyon onkolojisi", "radyoterapi", "ışın tedavisi"] },
+];
+
+/** Metindeki desen geçiş sayısı (örtüşmesiz). */
+function countHits(hay: string, needle: string): number {
+  let n = 0;
+  for (let i = hay.indexOf(needle); i !== -1; i = hay.indexOf(needle, i + needle.length)) n++;
+  return n;
+}
+
+/**
+ * Metinden branş etiketleri (çok-branş; sıra BRANCH_PATTERNS sırası). `minHits`: İçtihat gibi UZUN
+ * metinlerde tek yan-cümle geçişi ("KBB uzmanına sevk edildi") topikal sayılmaz → 2 istenir;
+ * Doktrin başlık+özeti kısa/odaklı olduğundan 1 yeter. Hiç eşleşme yoksa boş dizi = genel içerik.
+ */
+export function extractBranches(text: string, opts: { minHits?: number; limit?: number } = {}): string[] {
+  const { minHits = 1, limit = 4 } = opts;
+  const t = text.toLocaleLowerCase("tr-TR");
+  const out: string[] = [];
+  for (const b of BRANCH_PATTERNS) {
+    let hits = 0;
+    for (const p of b.patterns) {
+      hits += countHits(t, p);
+      if (hits >= minHits) break;
+    }
+    if (hits >= minHits) {
+      out.push(b.slug);
+      if (out.length >= limit) break;
+    }
+  }
+  return out;
+}
+
 // ── Kanun maddesi atıfları ──────────────────────────────────────────────────
 // Kararlardaki iki yaygın atıf biçimi yakalanır (2026-08-06 gerçek metin kesitlerinden):
 //   1) "6098 sayılı Türk Borçlar Kanunu'nun 49 uncu maddesi"  → TBK m.49
