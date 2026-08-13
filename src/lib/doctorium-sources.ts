@@ -4,6 +4,8 @@
 //   ✅ Resmî Gazete   — /eskiler/YYYY/MM/YYYYMMDD.htm günlük fihrist. 🪤 ARŞİV windows-1254,
 //                       ANA SAYFA utf-8 (ikisi FARKLI kodlama; UTF-8 varsayımı arşivde 93 bozuk
 //                       karakter üretip sağlık filtresini tamamen sessizleştiriyordu).
+//                       🪤 v6.94: sunucu leaf-only TLS zinciri sunar oldu (leaf CN=*.tccb.gov.tr) →
+//                       tüm RG istekleri özel-CA'lı istemciden geçer (lib/rg-ca.ts; TTB deseni).
 //   ✅ OHSAD          — özel hastaneler derneği; SUT/geri ödeme/mevzuat haberlerini derliyor
 //                       ("Sağlık Uygulama Tebliğinde Değişiklik – 29 Haziran 2026" gibi tarihli).
 //                       SGK'nın kendi sitesi duyuruları JS ile yüklüyor (statik HTML'de 0 tarih) →
@@ -22,6 +24,7 @@ import { request as httpsRequest } from "node:https";
 import { rootCertificates } from "node:tls";
 import { db } from "./db";
 import { TTB_INTERMEDIATE_CA } from "./ttb-ca";
+import { RG_INTERMEDIATE_CA } from "./rg-ca";
 
 // v6.57 TEŞHİS (2026-08-03): TR kaynakları (RG/OHSAD/TTB) Vercel fra1'den erişilemiyordu —
 // OHSAD 403 = Cloudflare bot koruması (veri-merkezi IP + "AuraHealth/1.0" ekli bot-ish UA +
@@ -48,20 +51,25 @@ function browserHeaders(referer?: string): Record<string, string> {
 }
 
 /**
- * Eksik TLS zincirli kaynaklar için özel-CA'lı HTTPS GET (v6.58 — şimdilik yalnız TTB).
+ * Eksik TLS zincirli kaynaklar için özel-CA'lı HTTPS GET (v6.58 TTB; v6.94 RG de bu yola alındı).
  * `ca:` verildiğinde Node varsayılan güven deposunu KAPATIR → daima [...rootCertificates, ekstra]
  * bileşimi verilir. fetch/undici yolu seçilmedi: global fetch'in undici'si modül olarak import
  * edilemez, ayrı undici bağımlılığı eklemek tek kaynaklık istisna için ağır kalırdı.
+ * Dönüşteki `buf` ham bayttır (RG arşivi windows-1254 → decode'u çağıran seçer); `body` utf-8
+ * kolaylığıdır. `referer` alt-sayfa ziyareti görünümü verir (browserHeaders ile aynı anlam).
  */
-function httpsGetWithCa(url: string, extraCa: string): Promise<{ status: number; body: string }> {
+function httpsGetWithCa(url: string, extraCa: string, referer?: string): Promise<{ status: number; body: string; buf: Buffer }> {
   return new Promise((resolve, reject) => {
     const req = httpsRequest(
       url,
-      { headers: browserHeaders(), ca: [...rootCertificates, extraCa], timeout: FETCH_TIMEOUT_MS },
+      { headers: browserHeaders(referer), ca: [...rootCertificates, extraCa], timeout: FETCH_TIMEOUT_MS },
       (res) => {
         const chunks: Buffer[] = [];
         res.on("data", (c: Buffer) => chunks.push(c));
-        res.on("end", () => resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString("utf-8") }));
+        res.on("end", () => {
+          const buf = Buffer.concat(chunks);
+          resolve({ status: res.statusCode ?? 0, body: buf.toString("utf-8"), buf });
+        });
         res.on("error", reject);
       },
     );
@@ -205,14 +213,11 @@ export async function fetchGazetteArchive(date: Date): Promise<{ title: string; 
   const m = String(date.getUTCMonth() + 1).padStart(2, "0");
   const d = String(date.getUTCDate()).padStart(2, "0");
   const base = `https://www.resmigazete.gov.tr/eskiler/${y}/${m}/`;
-  const res = await fetch(`${base}${y}${m}${d}.htm`, {
-    headers: browserHeaders("https://www.resmigazete.gov.tr/"), cache: "no-store",
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-  });
-  if (!res.ok) return [];
-  // 🪤 ARŞİV windows-1254: TextDecoder ile açıkça çöz (res.text() UTF-8 varsayar → Türkçe bozulur).
-  const buf = await res.arrayBuffer();
-  const html = new TextDecoder("windows-1254").decode(buf);
+  // v6.94: RG leaf-only TLS zinciri (rg-ca.ts) — normal fetch UNABLE_TO_VERIFY_LEAF_SIGNATURE ile düşer.
+  const res = await httpsGetWithCa(`${base}${y}${m}${d}.htm`, RG_INTERMEDIATE_CA, "https://www.resmigazete.gov.tr/");
+  if (res.status !== 200) return [];
+  // 🪤 ARŞİV windows-1254: ham bayttan açıkça çöz (utf-8 varsayımı Türkçeyi bozar).
+  const html = new TextDecoder("windows-1254").decode(res.buf);
 
   const out: { title: string; url: string; id: string }[] = [];
   const seen = new Set<string>();
@@ -232,13 +237,12 @@ export async function fetchGazetteArchive(date: Date): Promise<{ title: string; 
 
 /** Bugünün gazetesi (ana sayfa; utf-8 + fihrist-item düzeni). */
 export async function fetchGazetteToday(): Promise<{ title: string; url: string; id: string }[]> {
-  const res = await fetch("https://www.resmigazete.gov.tr/", {
-    headers: browserHeaders(), cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-  });
+  // v6.94: RG leaf-only TLS zinciri (rg-ca.ts) — normal fetch UNABLE_TO_VERIFY_LEAF_SIGNATURE ile düşer.
+  const res = await httpsGetWithCa("https://www.resmigazete.gov.tr/", RG_INTERMEDIATE_CA);
   // Teşhis görünürlüğü (v6.57): sessizce [] dönmek "0 kayıt tarandı" ile "site reddetti"yi
   // ayırt edilemez kılıyordu — HTTP hatası artık cron raporuna düşer.
-  if (!res.ok) throw new Error(`RG HTTP ${res.status}`);
-  const html = await res.text();
+  if (res.status !== 200) throw new Error(`RG HTTP ${res.status}`);
+  const html = res.body;
   const out: { title: string; url: string; id: string }[] = [];
   const seen = new Set<string>();
   for (const block of html.split(/<div class="fihrist-item[^"]*"[^>]*>/).slice(1)) {
@@ -520,10 +524,16 @@ export async function fetchDocumentText(url: string): Promise<string | null> {
     // v6.62: TTB'nin leaf-only TLS zinciri BELGE çekimini de düşürüyordu — v6.58 özel-CA onarımı
     // yalnız fihristteydi (ingestTtb); buradaki normal fetch Vercel'de UNABLE_TO_VERIFY_LEAF_SIGNATURE
     // ile null dönünce sektörel TTB haberlerinin özeti hiç üretilemiyordu. Aynı istemci kullanılır.
-    if (/(^|\.)ttb\.org\.tr$/i.test(new URL(url).hostname)) {
+    const host = new URL(url).hostname;
+    if (/(^|\.)ttb\.org\.tr$/i.test(host)) {
       const res = await httpsGetWithCa(url, TTB_INTERMEDIATE_CA);
       if (res.status !== 200) return null;
       html = res.body; // TTB utf-8 (windows-1254 tuzağı yalnız RG arşivi)
+    } else if (/(^|\.)resmigazete\.gov\.tr$/i.test(host)) {
+      // v6.94: RG de leaf-only zincire düştü (rg-ca.ts) — belge çekimi de özel-CA ister.
+      const res = await httpsGetWithCa(url, RG_INTERMEDIATE_CA, "https://www.resmigazete.gov.tr/");
+      if (res.status !== 200) return null;
+      html = new TextDecoder(/\/eskiler\//i.test(url) ? "windows-1254" : "utf-8").decode(res.buf);
     } else {
       const res = await fetch(url, {
         // Alt-sayfa ziyareti: Referer = kaynağın kendi ana sayfası (bot korumasına doğal görünüm).
@@ -531,9 +541,7 @@ export async function fetchDocumentText(url: string): Promise<string | null> {
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
       if (!res.ok) return null;
-      const buf = await res.arrayBuffer();
-      const isGazetteArchive = /resmigazete\.gov\.tr\/eskiler\//i.test(url);
-      html = new TextDecoder(isGazetteArchive ? "windows-1254" : "utf-8").decode(buf);
+      html = await res.text(); // kalan kaynaklar (OHSAD vb.) utf-8 — RG artık bu daldan geçmez
     }
     const body = html
       .replace(/<(script|style|noscript)[^>]*>[\s\S]*?<\/\1>/gi, " ")
