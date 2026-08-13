@@ -139,21 +139,24 @@ describe("Hukuk modülü sözleşmesi (v6.86)", () => {
     expect(m?.label).toBe("Hukuk");
   });
 
-  it("alt-sekmeler: mevzuat + ictihat; doktrin Faz 2'ye dek YAYINLANMAZ (boş sekme yasak)", () => {
-    expect(LEGAL_TABS.map((t) => t.key)).toEqual(["mevzuat", "ictihat"]);
+  it("alt-sekmeler: mevzuat + ictihat + doktrin (v6.91'de Doktrin gerçek içerikle AÇILDI)", () => {
+    expect(LEGAL_TABS.map((t) => t.key)).toEqual(["mevzuat", "ictihat", "doktrin"]);
   });
 
   it("parseLegalTab bilinmeyen/eksik değeri Mevzuat'a düşürür (URL kurcalanması akışı bozmaz)", () => {
     expect(parseLegalTab("ictihat")).toBe("ictihat");
     expect(parseLegalTab("mevzuat")).toBe("mevzuat");
-    expect(parseLegalTab("doktrin")).toBe("mevzuat"); // Faz 2'ye dek sekme yok
+    expect(parseLegalTab("doktrin")).toBe("doktrin"); // v6.91: sekme gerçek içerikle açıldı
+    expect(parseLegalTab("yok-boyle")).toBe("mevzuat");
     expect(parseLegalTab(undefined)).toBe("mevzuat");
   });
 
-  it("İçtihat kind etiketi tanımlı; ictihat SECTOR_CATEGORIES'e SIZMAZ (sektörel filtre çipi olmasın)", () => {
+  it("İçtihat/Doktrin kind etiketleri tanımlı; ikisi de SECTOR_CATEGORIES'e SIZMAZ", () => {
     expect(KIND_LABEL.ictihat).toBe("İçtihat");
+    expect(KIND_LABEL.doktrin).toBe("Doktrin");
     expect(SECTOR_CATEGORIES.some((c) => LEGAL_ONLY_CATEGORIES.includes(c.key))).toBe(false);
     expect(categoryLabel("ictihat")).toBeNull(); // kartta çift rozet (kind + kategori) basılmaz
+    expect(categoryLabel("doktrin")).toBeNull();
   });
 
   it("Mevzuat alt-sekmesinin dışlama listesi içtihat+doktrini kapsar", () => {

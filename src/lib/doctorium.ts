@@ -43,6 +43,9 @@ export const DOCTORIUM_MODULES: ModuleDef[] = [
 export const LEGAL_TABS = [
   { key: "mevzuat", label: "Mevzuat" },
   { key: "ictihat", label: "İçtihat" },
+  // v6.91 (2026-08-12): Doktrin AÇILDI — fizibilite + gerçek içerik geldi (TR-Dizin,
+  // lib/doktrin-ingest.ts). "Boş sekme yayınlanmaz" şartı sağlandı.
+  { key: "doktrin", label: "Doktrin" },
 ] as const;
 export type LegalTabKey = (typeof LEGAL_TABS)[number]["key"];
 
@@ -97,6 +100,7 @@ export const KIND_LABEL: Record<string, string> = {
   uyari: "Geri Çekme",
   lansman: "Klinik Faz",
   ictihat: "İçtihat", // v6.86 — Yargıtay kararları (source: yargitay, lib/hukuk-ingest.ts)
+  doktrin: "Doktrin", // v6.91 — TR-Dizin hakemli makaleler (source: trdizin, lib/doktrin-ingest.ts)
 };
 
 // ── Branş tercihleri (Modül A) ──────────────────────────────────────────────

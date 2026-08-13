@@ -26,12 +26,14 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
 
   // Akademik yayın → 2 dk klinik özet · mevzuat/sektörel/ilaç → doktor özeti + aksiyon maddeleri.
   // İkisi de TEMBEL: ilk açılışta bir kez üretilir, sonra DB'den okunur.
-  // İçtihat (v6.86) İKİSİNE DE GİRMEZ: mevzuat özet şablonu ("yürürlük/aksiyon maddeleri") yargı
-  // kararına uymaz ve karar metni zaten tam gösterilir; AI özet bilinçli YOK (Faz 3 adayı).
+  // İçtihat (v6.86) ve Doktrin (v6.91) İKİSİNE DE GİRMEZ: mevzuat özet şablonu ("yürürlük/aksiyon
+  // maddeleri") yargı kararına da akademik makaleye de uymaz; İçtihat'ta tam metin zaten var,
+  // Doktrin'de yalnız dizin özeti gösterilir (telif — tam metin yayıncıda).
   const isAcademic = item.module === "akademik";
   const isIctihat = item.category === "ictihat";
+  const isDoktrin = item.category === "doktrin";
   const summary = isAcademic ? await ensureClinicalSummary(id) : null;
-  const reg = isAcademic || isIctihat ? null : await ensureRegulationSummary(id);
+  const reg = isAcademic || isIctihat || isDoktrin ? null : await ensureRegulationSummary(id);
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
@@ -203,14 +205,26 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
         </p>
       )}
 
+      {/* Doktrin (v6.91): telif hatırlatması — özet dizinden, tam metin yayıncıda. */}
+      {isDoktrin && (
+        <p className="mt-6 flex items-start gap-2 rounded-2xl border border-indigo-400/25 bg-indigo-500/[0.06] px-4 py-3.5 text-[11px] leading-relaxed text-[var(--c-ink-2)]">
+          <FileText size={14} className="mt-px shrink-0 text-indigo-300" />
+          <span>
+            Aşağıdaki özet <strong className="text-[var(--c-ink)]">TR-Dizin</strong> kaydından
+            alınmıştır; makalenin tam metni telif gereği burada barındırılmaz — alttaki bağlantıdan
+            yayıncıya ulaşabilirsiniz.
+          </span>
+        </p>
+      )}
+
       {item.summary && (
         <section className="mt-6">
           <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
-            {isAcademic ? "Özgün abstract" : isIctihat ? "Karar metni" : "Resmî metinden"}
+            {isAcademic ? "Özgün abstract" : isIctihat ? "Karar metni" : isDoktrin ? "Özet (TR-Dizin)" : "Resmî metinden"}
           </h2>
           <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-[var(--c-ink-2)]">
-            {/* İçtihat: hukuki metin kesilmez (karar bütünlüğü); diğerlerinde 2500 kr kesit. */}
-            {isAcademic || isIctihat ? item.summary : item.summary.slice(0, 2500)}
+            {/* İçtihat: hukuki metin kesilmez (karar bütünlüğü); Doktrin özeti zaten kısa. */}
+            {isAcademic || isIctihat || isDoktrin ? item.summary : item.summary.slice(0, 2500)}
           </p>
         </section>
       )}

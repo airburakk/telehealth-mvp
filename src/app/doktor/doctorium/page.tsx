@@ -26,7 +26,7 @@ import { ProspektusSearch } from "./ProspektusSearch";
 import { CareerDisclaimer, careerDate, COUNTRY_LABEL } from "./CareerShared";
 import {
   ArrowLeft, ExternalLink, FlaskConical, Gavel, Info,
-  Sparkles, MapPin, X, CalendarClock, Pill, Building2, Megaphone, Scale, Star,
+  Sparkles, MapPin, X, CalendarClock, Pill, Building2, Megaphone, Scale, Star, Library,
 } from "lucide-react";
 import { getDoctorBalance } from "@/lib/rewards";
 import { AuraMark } from "@/components/PortamedLogo";
@@ -83,10 +83,12 @@ export default async function DoctoriumPage({
   if (active === "akis") items = focus ? await singleBranchFeed(focus) : await personalFeed(branches, 40);
   else if (active === "akademik") items = await moduleFeed("akademik", branches);
   else if (active === "mevzuat") {
+    // İçtihat + Doktrin = ARŞİV: tarih penceresi bilinçli YOK — kararlar/makaleler eski tarihli
+    // (dizin yıl bazlı), 30 günlük varsayılan pencere sekmeyi daima boş gösterirdi.
     items = legalTab === "ictihat"
-      ? // İçtihat = ARŞİV: tarih penceresi bilinçli YOK — kararlar eski tarihli (2015→bugün yayılı),
-        // 30 günlük varsayılan pencere sekmeyi daima boş gösterirdi. Sıralama karar tarihine göre.
-        await moduleFeed("mevzuat", [], { category: "ictihat", textContainsAny: legalKeyword?.patterns })
+      ? await moduleFeed("mevzuat", [], { category: "ictihat", textContainsAny: legalKeyword?.patterns })
+      : legalTab === "doktrin"
+      ? await moduleFeed("mevzuat", [], { category: "doktrin" })
       : await moduleFeed("mevzuat", [], { days: rangeDays(range), category: cat, excludeCategories: LEGAL_ONLY_CATEGORIES });
   }
   else if (active === "sektorel") items = await moduleFeed("sektorel", [], { days: rangeDays(range), category: cat });
@@ -214,7 +216,7 @@ export default async function DoctoriumPage({
         </p>
       )}
 
-      {/* Hukuk alt-sekmeleri (v6.86, kullanıcı kararı): Mevzuat · İçtihat (Doktrin Faz 2).
+      {/* Hukuk alt-sekmeleri (v6.86; v6.91'de Doktrin açıldı — TR-Dizin içeriğiyle).
           Modül pill'lerinden bilinçli İKİNCİL görünüm (küçük, alt çizgili aktiflik) — iki nav
           katmanı yarışmasın. Mevzuat linki h'siz: varsayılan sekme, kanonik URL tek kalsın. */}
       {active === "mevzuat" && (
@@ -241,8 +243,7 @@ export default async function DoctoriumPage({
 
       {/* Hukuk bölümü tanıtımı (kullanıcı isteği 2026-08-11): bölümlerin ne içerdiği + nasıl
           kullanılacağı. <details> = JS'siz aç/kapa (client bileşeni gerekmez); varsayılan KAPALI —
-          her girişte listeyi aşağı itmesin. Doktrin "hazırlanıyor" = durum bildirimi, tarihli vaat
-          değil (Faz 2 kararı verili: DergiPark link-modeli + davet-edilen-yazar birlikte). */}
+          her girişte listeyi aşağı itmesin. */}
       {active === "mevzuat" && (
         <details className="mt-3 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3 text-xs leading-relaxed text-[var(--c-ink-2)]">
           <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[11px] font-semibold text-[var(--c-ink)] [&::-webkit-details-marker]:hidden">
@@ -264,9 +265,10 @@ export default async function DoctoriumPage({
               numarasıyla resmî sistemden doğrulayın.
             </p>
             <p>
-              <strong className="text-[var(--c-ink)]">Doktrin</strong>{" — "}sağlık hukukçularının makale
-              ve yazılarına ayrılan bölüm; içerik kaynakları hazırlanıyor, hazır olduğunda burada
-              açılacak.
+              <strong className="text-[var(--c-ink)]">Doktrin</strong>{" — "}sağlık hukuku alanındaki
+              hakemli akademik makaleler (TR-Dizin&apos;de dizinlenen dergilerden). Kartlarda başlık,
+              yazar, dergi ve özet görünür; tam metin için karttaki bağlantıdan yayıncıya
+              gidersiniz — makalelerin tam metni telif gereği burada barındırılmaz.
             </p>
           </div>
         </details>
@@ -431,6 +433,7 @@ const KIND_STYLE: Record<string, string> = {
   mevzuat: "bg-amber-500/15 text-amber-300",
   haber: "bg-sky-500/15 text-sky-300",
   ictihat: "bg-rose-500/15 text-rose-300", // v6.86 — mevzuat amber'ından ayrışsın (aynı modülde yaşarlar)
+  doktrin: "bg-indigo-500/15 text-indigo-300", // v6.91 — akademik hukuk makalesi (TR-Dizin)
 };
 
 // Kapak koddan üretilir (dış görsel CSP'de yasak: img-src 'self' data:). Nötr yüzey + branş
@@ -438,8 +441,9 @@ const KIND_STYLE: Record<string, string> = {
 function Cover({ item }: { item: FeedItem }) {
   const first = item.branchSlugs[0];
   const label = first ? branchLabel(first) : null;
-  // İçtihat kind-bazlı ayrışır (modülü mevzuat'la ortak) — kontrol module'den ÖNCE.
+  // İçtihat/Doktrin kind-bazlı ayrışır (modülü mevzuat'la ortak) — kontrol module'den ÖNCE.
   const accent = item.kind === "ictihat" ? "#fb7185"
+    : item.kind === "doktrin" ? "#818cf8"
     : item.module === "mevzuat" ? "#f59e0b"
     : item.module === "ilac" ? "#22d3ee"
     : item.module === "sektorel" ? "#a78bfa"
@@ -453,6 +457,8 @@ function Cover({ item }: { item: FeedItem }) {
       <span className="absolute inset-0 opacity-[0.07]" style={{ background: accent }} />
       {item.kind === "ictihat" ? (
         <Scale size={26} style={{ color: accent }} strokeWidth={1.8} />
+      ) : item.kind === "doktrin" ? (
+        <Library size={26} style={{ color: accent }} strokeWidth={1.8} />
       ) : item.module === "mevzuat" ? (
         <Gavel size={26} style={{ color: accent }} strokeWidth={1.8} />
       ) : item.module === "ilac" ? (
@@ -580,6 +586,14 @@ function ArticleCard({ item }: { item: FeedItem }) {
               maddeleri ve sözlük terimleri (AI yok — kullanıcı kararı). Terim çipi tıklanınca
               arşiv o terime süzülür. */}
           {item.kind === "ictihat" && <IctihatCardMeta summary={item.summary} />}
+
+          {/* Doktrin kartı (v6.91): dizin özetinin ilk cümleleri — okuyucu makaleye karttaki
+              bağlantıdan gider (telif: tam metin barındırılmaz, "kaynağı aç" hep DOI/dizine). */}
+          {item.kind === "doktrin" && item.summary && (
+            <p className="mt-1.5 text-xs leading-relaxed text-[var(--c-ink-2)]">
+              {item.summary.length > 220 ? `${item.summary.slice(0, 219).trimEnd()}…` : item.summary}
+            </p>
+          )}
 
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
             {item.module === "akademik" && (

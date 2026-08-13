@@ -6,6 +6,7 @@ import { sendAlert } from "@/lib/alerts";
 import { remindPendingDocs, type RemindResult } from "@/lib/pending-docs-reminder";
 import { ingestDoctorium, type IngestResult } from "@/lib/doctorium-ingest";
 import { ingestYargitay, type YargitayIngestResult } from "@/lib/hukuk-ingest";
+import { ingestDoktrin, type DoktrinIngestResult } from "@/lib/doktrin-ingest";
 import { remindCongressFollows, type CongressRemindResult } from "@/lib/congress-reminder";
 
 // GET /api/cron/purge-deleted — saklama süresi dolan klinik kayıtları GERÇEKTEN imha eder (v6.11).
@@ -92,6 +93,16 @@ export async function GET(req: Request) {
       yargitay = { error: e instanceof Error ? e.message.slice(0, 120) : "içtihat ingest koşamadı" };
     }
 
+    // Doktrin toplama (v6.91): TR-Dizin hakemli makale metadata'sı → NewsArticle
+    // (category=doktrin). Tek aşamalı ve ucuz (ikinci belge isteği yok); cron'da yalnız her
+    // sorgunun İLK sayfası taranır (yeni yayınlar üstte — publicationYear-DESC). Kritik değil.
+    let doktrin: DoktrinIngestResult | { error: string };
+    try {
+      doktrin = await ingestDoktrin({ maxPages: 1 });
+    } catch (e) {
+      doktrin = { error: e instanceof Error ? e.message.slice(0, 120) : "doktrin ingest koşamadı" };
+    }
+
     // Doctorium kongre alarmı (v6.49): takip edilen kongrenin başlangıcı / bildiri-erken kayıt son
     // tarihi hekimin seçtiği eşiğe girdiyse bildirim. Kritik değil — hata imha akışını düşürmez.
     let congress: CongressRemindResult | { error: string };
@@ -114,6 +125,9 @@ export async function GET(req: Request) {
     const ict = "error" in yargitay
       ? `hata: ${yargitay.error}`
       : `yeni=${yargitay.created}/${yargitay.found}${yargitay.deferred ? ` erteli=${yargitay.deferred}` : ""}${yargitay.errors.length ? ` sorun=${yargitay.errors.length}` : ""}`;
+    const dok = "error" in doktrin
+      ? `hata: ${doktrin.error}`
+      : `yeni=${doktrin.created}/${doktrin.found}${doktrin.errors.length ? ` sorun=${doktrin.errors.length}` : ""}`;
     const con = "error" in congress
       ? `hata: ${congress.error}`
       : `bakilan=${congress.checked} baslangic=${congress.start} bildiri=${congress.abstract} erkenkayit=${congress.earlybird} hata=${congress.failed}`;
@@ -123,7 +137,7 @@ export async function GET(req: Request) {
       resourceType: "SYSTEM",
       resourceId: "purge-deleted",
       subjectUserId: null,
-      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · ictihat ${ict} · kongre ${con}`,
+      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · ictihat ${ict} · doktrin ${dok} · kongre ${con}`,
     });
 
     return NextResponse.json({
@@ -137,6 +151,7 @@ export async function GET(req: Request) {
       pendingDocsReminders: reminders,
       doctorium,
       yargitay,
+      doktrin,
       congressAlerts: congress,
     });
   } catch (e) {
