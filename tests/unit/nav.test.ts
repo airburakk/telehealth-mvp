@@ -28,6 +28,16 @@ describe("navItemsFor", () => {
     expect(hrefs("DOCTOR")).not.toContain("/doktor/profil");
   });
 
+  it("DOCTOR + student (v6.95): bant YALNIZ Doctorium — klinik sekmeler öğrenciye çizilmez", () => {
+    expect(navItemsFor("DOCTOR", { student: true }).map((n) => n.href)).toEqual(["/doktor/doctorium"]);
+  });
+
+  it("student bayrağı DOCTOR-dışı rolleri değiştirmez (yanlış pozitif daraltma yok)", () => {
+    expect(navItemsFor("COORDINATOR", { student: true }).map((n) => n.href)).toEqual(["/operasyon", "/doktor", "/doktor/takip", "/doktor/doctorium"]);
+    expect(navItemsFor("PATIENT", { student: true }).map((n) => n.href)).toEqual(["/vakalarim", "/takip", "/paylasimlarim"]);
+    expect(navItemsFor("ADMIN", { student: true }).map((n) => n.href)).toEqual(["/admin", "/operasyon"]);
+  });
+
   it("COORDINATOR: Operasyon + Doktor + Post-Op + Doctorium; Ücretsiz Sağlık bant linki kalktı", () => {
     expect(hrefs("COORDINATOR")).toEqual(["/operasyon", "/doktor", "/doktor/takip", "/doktor/doctorium"]);
   });

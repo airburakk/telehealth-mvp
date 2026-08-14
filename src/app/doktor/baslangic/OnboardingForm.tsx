@@ -10,7 +10,9 @@ import { Stage1Doctorium } from "@/components/Stage1Doctorium";
 
 interface Pub { title: string; venue: string; year: number }
 
-// İki aşamalı giriş — AŞAMA 1 blok prop'ları (v6.87): tabip odası yazısı + rızalar Stage1Doctorium'da.
+// İki aşamalı giriş — AŞAMA 1 blok prop'ları (v6.87): tabip odası yazısı + rızalar
+// Stage1Doctorium'da. (v6.95: öğrenci yolu AYRI huniye taşındı — /ogrenci + StudentStage1Card;
+// bu form yalnız hekim onboarding'idir, öğrenci hesabı buraya hiç düşmez.)
 export interface Stage1Props {
   initialChamberDoc: DocMeta | null;
   initialAccess: boolean; // Doctorium erişimi (yazı VEYA klinik aktivasyon)

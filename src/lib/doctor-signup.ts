@@ -9,6 +9,11 @@ import { verifyDoctorAgainstRegistry } from "@/lib/ht-registry";
 // (Client formlardaki kopyalar ayrıdır: bu modül db import ettiğinden bundle'a giremez.)
 export const DOCTOR_TITLES = ["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."] as const;
 
+// Öğrenci hunisi ünvanı (v6.95) — DOCTOR_TITLES'a BİLİNÇLİ eklenmez: doktor kayıt formunda
+// seçilemez; yalnız /api/auth/signup-student sabitler. Ünvan tanımlayıcıdır, kapı değildir
+// (öğrenci modu Doctor.studentTrack'ten okunur — title'a bakan kapı yazma).
+export const STUDENT_TITLE = "Tıp Öğr.";
+
 export interface DoctorSignupInput {
   name: string;
   email: string;        // benzersizlik çağıran tarafça önceden kontrol edilmeli
@@ -18,14 +23,17 @@ export interface DoctorSignupInput {
   city: string;
   languages: string;    // CSV ("Türkçe,İngilizce")
   phone?: string | null; // cep telefonu (FAZ 5) — at-rest şifreli saklanır; WA/SMS bildirim hedefi
+  studentTrack?: boolean; // v6.95 — /ogrenci hunisi: öğrenci-modu onboarding + registry atlanır
 }
 
 // Yeni doktor + bağlı kullanıcı oluşturur, oluşturulan User'ı döndürür.
 // Kayıt sonrası HealthTürkiye dizin doğrulaması (FAZ 6) fire-safe koşulur: bulunamazsa
 // Doctor.registryStatus=NOT_FOUND → /admin/hekim-onay onay kartında kırmızı uyarı bayrağı.
+// v6.95: öğrenci hesabında dizin doğrulaması ATLANIR — öğrenci hekim dizininde olmaz;
+// koşulsaydı her öğrenci hesabı yanlış NOT_FOUND bayrağıyla açılırdı.
 export async function createDoctorAccount(input: DoctorSignupInput) {
   const user = await createAccountTx(input);
-  if (user.doctorId) await verifyDoctorAgainstRegistry(user.doctorId, input.name); // hata kayıt akışını bozmaz (içeride yutulur)
+  if (user.doctorId && !input.studentTrack) await verifyDoctorAgainstRegistry(user.doctorId, input.name); // hata kayıt akışını bozmaz (içeride yutulur)
   return user;
 }
 
@@ -40,6 +48,7 @@ function createAccountTx(input: DoctorSignupInput) {
         languages: input.languages,
         phone: input.phone ? encryptField(input.phone) : null, // kişisel veri → at-rest şifreli
         verified: false, // küratörlü güven: self-signup doktor doğrulanmamış başlar
+        studentTrack: input.studentTrack ?? false, // v6.95 — öğrenci hunisi işareti (erişim açmaz)
       },
     });
     const user = await tx.user.create({

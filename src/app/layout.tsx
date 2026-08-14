@@ -77,6 +77,19 @@ export default async function RootLayout({
       headerLang = "İngilizce";
     }
   }
+  // v6.95 — öğrenci hunisi kromu (kullanıcı kararı 2026-08-14): studentTrack hesapta Header bandı
+  // yalnız Doctorium, hesap menüsünde Profilim/Finans gizli. PARTNER dil sorgusuyla aynı gerekçeyle
+  // try/catch: krom kozmetiktir, DB tökezlerse normal doktor kromuna düşer (kapılar sayfa/API'de).
+  let studentHeader = false;
+  if (user?.role === "DOCTOR") {
+    try {
+      const u = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
+      const d = u?.doctorId ? await db.doctor.findUnique({ where: { id: u.doctorId }, select: { studentTrack: true } }) : null;
+      studentHeader = !!d?.studentTrack;
+    } catch {
+      studentHeader = false;
+    }
+  }
   // Tam birleşme (2026-07-12): nav journey'ye bakmaz — hasta nav'ı herkes için aynı,
   // patientJourney sorgusu layout'tan kalktı.
   // GECE VARSAYILAN + tema anahtarı (v6.22, kullanıcı kararı): tercih aura_theme cookie'sinde —
@@ -91,7 +104,7 @@ export default async function RootLayout({
         {/* Ekran dışına çıkan sürekli dekoratif animasyonları duraklatır. Kökte: landing'in
             yanı sıra uygulama içi Header/spinner sembollerini de kapsar. Render etmez (null). */}
         <AuraAnimPause />
-        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} theme={theme} />
+        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} theme={theme} student={studentHeader} />
         {user?.imp ? <MasterBar mode="impersonating" userName={user.name} /> : isMaster(user) ? <MasterBar mode="master" /> : null}
         <main className="flex-1">{children}</main>
         <SiteFooter />

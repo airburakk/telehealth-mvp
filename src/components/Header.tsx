@@ -24,7 +24,10 @@ const ROLE_LABELS: Record<string, string> = {
   PARTNER: "Partner Doktor",
 };
 
-export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { name: string; role: string } | null; lang?: string; theme?: ThemeName }) {
+// v6.95 — student (kullanıcı kararı 2026-08-14): öğrenci hunisi hesabında bant YALNIZ Doctorium,
+// hesap menüsünde Profilim/Finans gizli, mono rol etiketi "Tıp Öğrencisi". Görsel sadeleştirme —
+// güvenlik kapısı değil (klinik rotalar/finans sayfası kendi kapılarını zaten taşır).
+export function Header({ user, lang = "Türkçe", theme = "dark", student = false }: { user: { name: string; role: string } | null; lang?: string; theme?: ThemeName; student?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
@@ -49,12 +52,12 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
   }, [menuOpen]);
 
   // Nav öğeleri rol bazlı (lib/nav.ts — tam birleşme 2026-07-12: journey daraltması kalktı,
-  // hasta nav'ı herkes için aynı).
-  const items = navItemsFor(user?.role);
+  // hasta nav'ı herkes için aynı). Öğrencide (v6.95) yalnız Doctorium.
+  const items = navItemsFor(user?.role, { student });
   // Çevrilecek metinler: görünür nav etiketleri + rol + Çıkış/Giriş.
   // lang="Türkçe" → useT no-op (kimlik). Partner gibi dil-tercihli kullanıcıda /api/i18n cache'i.
   const texts = useMemo(
-    () => ["Çıkış", "Giriş yap", "Vazgeç", "Hesabım", "Profilim", "Finans", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", "Gündüz temasına geç", "Gece temasına geç", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
+    () => ["Çıkış", "Giriş yap", "Vazgeç", "Hesabım", "Profilim", "Finans", "Tıp Öğrencisi", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", "Gündüz temasına geç", "Gece temasına geç", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
     [items, user]
   );
   const { t } = useT(lang, texts);
@@ -167,8 +170,9 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
                 <div role="menu" className={`absolute end-0 top-11 z-40 w-64 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-1.5 shadow-xl ${menuOpen ? "" : "hidden"}`}>
                   <div className="border-b border-[var(--c-hairline)] px-3 pb-2.5 pt-2">
                     <div className="text-sm font-medium leading-tight text-[var(--c-ink)]">{user.name}</div>
-                    {/* Mono rol etiketi — landing'in "mono durak" dili */}
-                    <div className="aura-mono mt-0.5 text-[10px] uppercase tracking-[0.18em] leading-tight text-[var(--c-ink-3)]">{t(ROLE_LABELS[user.role] ?? user.role)}</div>
+                    {/* Mono rol etiketi — landing'in "mono durak" dili. Öğrencide "Doktor" yazmaz:
+                        kimlik beyanı dürüst kalır (v6.95). */}
+                    <div className="aura-mono mt-0.5 text-[10px] uppercase tracking-[0.18em] leading-tight text-[var(--c-ink-3)]">{t(student ? "Tıp Öğrencisi" : ROLE_LABELS[user.role] ?? user.role)}</div>
                   </div>
                   <div className="mt-1">
                     <NotificationBell lang={lang} patientLangFallback={user.role === "PATIENT"} variant="menu-item" onUnreadChange={setUnreadCount} />
@@ -176,13 +180,16 @@ export function Header({ user, lang = "Türkçe", theme = "dark" }: { user: { na
                     <SystemMessagesMenuItem onUnreadChange={setMsgUnread} onNavigate={() => setMenuOpen(false)} />
                   </div>
                   {/* Profilim + Finans (2026-08-01, kullanıcı kararı, 2. tur): Profilim nav
-                      bandından buraya taşındı; Finans artık profil çapası değil AYRI SAYFA. */}
-                  {(user.role === "DOCTOR" || user.role === "ADMIN") && (
+                      bandından buraya taşındı; Finans artık profil çapası değil AYRI SAYFA.
+                      v6.95: öğrencide İKİSİ DE GİZLİ (kullanıcı kararı 2026-08-14) — profil
+                      hekim kimlik/işlem alanları, finans hekim hakedişleri taşır; öğrenciye
+                      kapalı yüzeyin linki çizilmez (koşullu-href). */}
+                  {(user.role === "DOCTOR" || user.role === "ADMIN") && !student && (
                     <Link role="menuitem" href="/doktor/profil" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <BadgeCheck size={15} /> {t("Profilim")}
                     </Link>
                   )}
-                  {user.role === "DOCTOR" && (
+                  {user.role === "DOCTOR" && !student && (
                     <Link role="menuitem" href="/doktor/finans" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <Wallet size={15} /> {t("Finans")}
                     </Link>

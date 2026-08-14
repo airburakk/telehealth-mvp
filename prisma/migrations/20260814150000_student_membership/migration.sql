@@ -1,0 +1,12 @@
+-- Tıp öğrencisi Doctorium üyeliği (v6.95, 2026-08-14)
+-- Üçüncü Doctorium damgası: e-Devlet öğrenci belgesi (DoctorDocument.type = STUDENT_CERT, kolon
+--   değişikliği gerektirmez — type serbest String) → Doctor.studentVerifiedAt damgalanır →
+--   yalnız Doctorium İÇERİK erişimi (haber/kongre/hukuk/kütüphane). CHAMBER deseninin eşleniği:
+--   otomatik damga, admin onayı beklemez (kullanıcı kararı 2026-08-14).
+-- Klinik kapı (activatedAt) DEĞİŞMEDİ; pazarlama yüzeyleri (sponsor kartı, anket, ödül puanı)
+--   öğrenci-sınırlı hesapta kod tarafında kapalıdır (isStudentOnly — öğrenci sağlık meslek
+--   mensubu olmadığından meslek-mensubuna-tanıtım rejimi ona uygulanamaz).
+-- Kapı kuralı kodda: chamberLetterAt VEYA activatedAt VEYA studentVerifiedAt → Doctorium
+--   (hasDoctoriumAccess); mevcut doktorlar OR sayesinde backfill'siz geçer → veri taşıma YOK.
+-- İdempotent: eski şemalı kopyadan tekrar koşulursa hata vermez (IF NOT EXISTS).
+ALTER TABLE "Doctor" ADD COLUMN IF NOT EXISTS "studentVerifiedAt" TIMESTAMP(3);

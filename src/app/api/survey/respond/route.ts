@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { parseOptions, aggregateResults } from "@/lib/survey";
 import { awardSurveyPoints } from "@/lib/rewards";
+import { isStudentOnly } from "@/lib/doctor-activation";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,15 @@ export async function POST(req: Request) {
   const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
   if (!me?.doctorId) {
     return NextResponse.json({ error: "Doktor profili bağlı değil." }, { status: 400 });
+  }
+  // v6.95: öğrenci-sınırlı üye anket yanıtlayamaz (kart zaten çizilmez — bu derinlik savunması:
+  // doğrudan API çağrısı da kapalı; anket "doktor görüşü" ürünüdür, öğrenci meslek mensubu değildir).
+  const d = await db.doctor.findUnique({
+    where: { id: me.doctorId },
+    select: { activatedAt: true, studentVerifiedAt: true },
+  });
+  if (!d || isStudentOnly(d)) {
+    return NextResponse.json({ error: "Anketler öğrenci üyelikte kapalıdır." }, { status: 403 });
   }
 
   const b = await req.json().catch(() => ({}));

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import {
   getDoctorBalance, REWARD_KIND_LABEL, REDEMPTION_STATUS_LABEL, REWARD_TERMS_TEXT,
 } from "@/lib/rewards";
+import { isStudentOnly } from "@/lib/doctor-activation";
 import { RewardCatalog } from "./RewardCatalog";
 import { ArrowLeft, Info, Star } from "lucide-react";
 
@@ -24,6 +25,13 @@ export default async function RewardsPage() {
   const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
   if (!me?.doctorId) redirect("/doktor");
   const doctorId = me.doctorId;
+  // v6.95: öğrenci-sınırlı üyeye ödül yüzeyi kapalı (rozet/link zaten çizilmez — URL ile doğrudan
+  // gelişe karşı derinlik savunması; akış sayfasına geri gönderilir).
+  const d = await db.doctor.findUnique({
+    where: { id: doctorId },
+    select: { activatedAt: true, studentVerifiedAt: true },
+  });
+  if (!d || isStudentOnly(d)) redirect("/doktor/doctorium");
 
   const [balance, items, redemptions, entries] = await Promise.all([
     getDoctorBalance(doctorId),

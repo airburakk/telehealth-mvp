@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  BookOpenCheck, Check, FileText, Landmark, Loader2, Megaphone, Trash2, Upload, UserSearch, ArrowRight, Info,
+  BookOpenCheck, Check, FileText, GraduationCap, Landmark, Loader2, Megaphone, Trash2, Upload, UserSearch, ArrowRight, Info,
 } from "lucide-react";
+// (GraduationCap: alttaki /ogrenci yönlendirme satırında kullanılır)
 import type { DocMeta } from "@/components/DoctorDocuments";
 
 // İki aşamalı giriş — AŞAMA 1 bölümü (v6.87): tabip odası "Protokol Numaralı" üye yazısı
@@ -12,6 +13,8 @@ import type { DocMeta } from "@/components/DoctorDocuments";
 // toggle ANINDA API'ye yazılır — Doctorium'a "finish"siz geçilebildiği için form-sonu kaydı olmaz).
 // Rıza TAM metinleri server page'den prop gelir: lib/sponsor.ts + lib/hr-consent.ts `db` import
 // ettiğinden client bundle'a giremez (RSC client-module dersi).
+// v6.95: öğrenci yolu AYRI huniye taşındı (/ogrenci + StudentStage1Card — kullanıcı kararı
+// 2026-08-14): bu formda öğrenci belgesi kartı YOK, yalnız /ogrenci'ye yönlendirme satırı var.
 
 const ACCEPT = "application/pdf,image/jpeg,image/png";
 
@@ -140,6 +143,15 @@ export function Stage1Doctorium({
           </div>
         </div>
       </div>
+
+      {/* v6.95 — öğrenci hunisi AYRIŞTI: bu formda öğrenci belgesi kartı yok, yalnız yönlendirme */}
+      <p className="mt-3 flex items-center gap-1.5 text-xs text-[var(--c-ink-3)]">
+        <GraduationCap size={14} className="shrink-0" />
+        Tıp öğrencisi misiniz?{" "}
+        <Link href="/ogrenci" className="font-semibold text-[var(--c-accent-stronger)] hover:underline">
+          Öğrenci üyeliğine gidin
+        </Link>
+      </p>
 
       {/* İsteğe bağlı rızalar — toggle ANINDA kaydedilir, her an geri alınabilir */}
       <div className="mt-4 space-y-4">

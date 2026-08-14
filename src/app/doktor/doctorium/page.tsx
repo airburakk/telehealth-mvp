@@ -17,6 +17,7 @@ import {
   localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
   slugForLabel, parseScope, type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey,
 } from "@/lib/doctorium";
+import { isStudentOnly } from "@/lib/doctor-activation";
 import { branchColor, hasBranchVisual } from "@/lib/branch-visuals";
 import { HUKUK_KEYWORDS, keywordByKey, extractKeywords, extractLawRefs, extractExcerpt } from "@/lib/hukuk-keywords";
 import { BranchAvatar } from "@/components/BranchAvatar";
@@ -56,6 +57,8 @@ export default async function DoctoriumPage({
         where: { id: me.doctorId },
         select: {
           id: true, branch: true, newsBranches: true, city: true,
+          // v6.95: öğrenci-sınırlı üyelik tespiti (isStudentOnly) — pazarlama yüzeyi süzgeci.
+          activatedAt: true, studentVerifiedAt: true,
           congressAlertDays: true,
           // v6.62: bildiri ve erken kayıt eşikleri AYRI (eski congressDeadlineAlertDays okunmuyor).
           congressAbstractAlertDays: true, congressEarlyBirdAlertDays: true,
@@ -104,12 +107,17 @@ export default async function DoctoriumPage({
   const careerTab: CareerTabKey | null = active === "kariyer" ? parseCareerTab(sp.t) : null;
   const pathways = careerTab ? await careerPathways(careerTab) : [];
 
+  // v6.95: öğrenci-sınırlı üye (öğrenci damgası var, klinik aktivasyon yok) pazarlama yüzeyi
+  // GÖRMEZ — sponsor kartı, anket (COMMUNITY dahil — kullanıcı kararı 2026-08-14) ve ödül puanı.
+  // Tıp öğrencisi sağlık meslek mensubu değildir; meslek-mensubuna-tanıtım rejimi ona uygulanamaz.
+  const studentOnly = !!doctor && isStudentOnly(doctor);
+
   // v6.68 Faz 1: sponsorlu kartlar YALNIZ Akışım'da (diğer sekmeler temiz kalır) ve boş akışa
   // basılmaz. Kişiselleştirilmiş seçim yalnız AÇIK RIZALI doktorda (sponsorPersonalizationAt);
   // rızasız doktor + personel hedefsiz (bağlamsal) kampanya görür. Sayaç agregat (kişisiz).
   const sponsorPersonalized = !!doctor?.sponsorPersonalizationAt;
   const sponsorCards: SponsorCard[] =
-    active === "akis" && items.length > 0
+    active === "akis" && items.length > 0 && !studentOnly
       ? await activeCampaignsFor({ personalized: sponsorPersonalized, branches, city: doctor?.city ?? null })
       : [];
   if (sponsorCards.length) await countImpressions(sponsorCards.map((c) => c.id));
@@ -119,7 +127,7 @@ export default async function DoctoriumPage({
   // (rıza-şartlı hedef — lib/survey.ts). Sonuç, yanıt verilmeden gösterilmez (önden sızdırma yok);
   // yanıtlamış doktora server-render'da hazır gelir.
   let surveyProps: Parameters<typeof SurveyCardView>[0] | null = null;
-  if (active === "akis" && doctor && items.length > 0) {
+  if (active === "akis" && doctor && items.length > 0 && !studentOnly) {
     const [s] = await activeSurveysFor({ personalized: sponsorPersonalized, branches, city: doctor.city });
     if (s) {
       const myIndex = await doctorResponse(s.id, doctor.id);
@@ -132,7 +140,9 @@ export default async function DoctoriumPage({
   }
 
   // v6.88 ödül puanı — yalnız DOCTOR'da (personelin puan hesabı yok; rozet de çizilmez).
-  const myPointBalance = user.role === "DOCTOR" && doctor ? await getDoctorBalance(doctor.id) : null;
+  // v6.95: öğrenci-sınırlı üyede de null → rozet + Ödüller bağlantısı hiç render edilmez
+  // (koşullu-href ilkesi: kapalı yüzeyin linki çizilmez).
+  const myPointBalance = user.role === "DOCTOR" && doctor && !studentOnly ? await getDoctorBalance(doctor.id) : null;
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
@@ -150,7 +160,15 @@ export default async function DoctoriumPage({
         </h1>
         {/* Sabit slogan (kullanıcı seçimi 2026-08-01) — sekmeye göre değişen desc satırı kalktı
             ("Branşınız + mevzuat…" kuru bulundu). desc alanı veri modelinde durur, burada basılmaz. */}
-        <p className="mt-1 text-sm text-[var(--c-ink-2)]">Bilim, sizin ritminizde.</p>
+        <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[var(--c-ink-2)]">
+          Bilim, sizin ritminizde.
+          {/* v6.95 — öğrenci-sınırlı üyelik etiketi: mono rozet, yüzey boyamaz (kit renk disiplini) */}
+          {studentOnly && (
+            <span className="aura-mono rounded-full border border-[var(--c-hairline)] px-2 py-px text-[10px] font-semibold uppercase tracking-wider text-[var(--c-ink-3)]">
+              Öğrenci Üyeliği
+            </span>
+          )}
+        </p>
       </div>
 
       {/* Modül sekmeleri */}

@@ -91,6 +91,15 @@ function AuraFooter() {
             <li>
               <FooterLink href={LINKS.doctorSignup} label={f.doctorSignup} />
             </li>
+            <li>
+              {/* v6.95 — tıp öğrencisi kapısı: doktor girişinden AYRI huni (kullanıcı kararı 2026-08-14) */}
+              <Link
+                href="/ogrenci"
+                className="transition-colors duration-200 hover:text-[var(--aura-accent)]"
+              >
+                {f.students}
+              </Link>
+            </li>
           </ul>
         </div>
         <div>

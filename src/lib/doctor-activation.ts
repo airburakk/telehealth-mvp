@@ -6,25 +6,56 @@
 import { db } from "@/lib/db";
 
 // Hesap aktivasyonu için yüklenmesi ZORUNLU belge tipleri (sertifika/akademik ihtiyari).
-// ⚠️ CHAMBER buraya EKLENMEZ: tabip odası yazısı Aşama 1'in (Doctorium) belgesidir, klinik
-// aktivasyonun (Aşama 2) girdisi değildir — iki kapı birbirinden bağımsız damgalanır.
+// ⚠️ CHAMBER ve STUDENT_CERT buraya EKLENMEZ: ikisi de Aşama 1'in (Doctorium) belgesidir, klinik
+// aktivasyonun (Aşama 2) girdisi değildir — kapılar birbirinden bağımsız damgalanır.
 export const REQUIRED_DOC_TYPES = ["DIPLOMA", "MMSS"] as const;
-export const ALL_DOC_TYPES = ["DIPLOMA", "MMSS", "CHAMBER", "CERTIFICATE", "ACADEMIC"] as const;
+export const ALL_DOC_TYPES = ["DIPLOMA", "MMSS", "CHAMBER", "STUDENT_CERT", "CERTIFICATE", "ACADEMIC"] as const;
 export type DoctorDocType = (typeof ALL_DOC_TYPES)[number];
 
-// ── İki aşamalı giriş — AŞAMA 1: Doctorium kapısı (v6.87) ──────────────────────────────────────
+// ── İki aşamalı giriş — AŞAMA 1: Doctorium kapısı (v6.87; öğrenci damgası v6.95) ───────────────
 // Tabip odası "Protokol Numaralı" üye yazısı (CHAMBER) yüklüyse Doctor.chamberLetterAt damgalanır
-// (otomatik — admin onayı beklemez; kullanıcı kararı 2026-08-11). Doctorium erişimi damga VEYA
-// klinik aktivasyonla açılır: Aşama 2'yi tamamlamış mevcut doktorlar CHAMBER'sız da içeridedir.
+// (otomatik — admin onayı beklemez; kullanıcı kararı 2026-08-11). v6.95: tıp öğrencisi e-Devlet
+// öğrenci belgesi (STUDENT_CERT) yükleyince Doctor.studentVerifiedAt aynı desenle damgalanır
+// (kullanıcı kararı 2026-08-14). Doctorium erişimi damgalardan biri VEYA klinik aktivasyonla açılır.
+// ⚠️ Parametre tipi ÜÇ alanı da zorunlu tutar (kasıtlı — deletionLockedAt/CaseRef deseni): çağıran
+// select'ine studentVerifiedAt eklemeyi unutursa derleme kırılır, kapı sessizce yanlış karar vermez.
 
 // Doctorium'a girebilir mi (saf — birim testlenebilir).
-export function hasDoctoriumAccess(d: { chamberLetterAt: Date | null; activatedAt: Date | null }): boolean {
-  return !!d.chamberLetterAt || !!d.activatedAt;
+export function hasDoctoriumAccess(d: {
+  chamberLetterAt: Date | null;
+  activatedAt: Date | null;
+  studentVerifiedAt: Date | null;
+}): boolean {
+  return !!d.chamberLetterAt || !!d.activatedAt || !!d.studentVerifiedAt;
 }
 
 // Tabip odası yazısı yüklü mü?
 export function hasChamberLetter(docs: { type: string }[]): boolean {
   return docs.some((x) => x.type === "CHAMBER");
+}
+
+// Öğrenci belgesi yüklü mü?
+export function hasStudentCert(docs: { type: string }[]): boolean {
+  return docs.some((x) => x.type === "STUDENT_CERT");
+}
+
+// Öğrenci-SINIRLI üye mi: öğrenci damgası var ama klinik aktivasyon yok. Pazarlama yüzeyleri
+// (sponsor kartı, anket, ödül puanı) bu üyeye KAPALIDIR — tıp öğrencisi sağlık meslek mensubu
+// değildir; meslek-mensubuna-tanıtım rejimi ona uygulanamaz (kullanıcı kararı 2026-08-14).
+// Mezuniyette diploma+MMSS ile activatedAt dolunca süzgeç kendiliğinden kalkar (damga silinmez).
+export function isStudentOnly(d: { studentVerifiedAt: Date | null; activatedAt: Date | null }): boolean {
+  return !!d.studentVerifiedAt && !d.activatedAt;
+}
+
+// Üniversite e-postası mı (destekleyici SİNYAL — kapı açmaz, arayüzde rozet olur; kanıt daima
+// STUDENT_CERT belgesidir). .edu.tr nic.tr'ce yalnız akademik kuruma verilir (güçlü sinyal);
+// .edu ABD, .ac.<cc> İngiltere/Japonya vb. Liste bilinçli dar: sinyal yanlış-pozitife kapı açmaz.
+export function isEduEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  const at = email.lastIndexOf("@");
+  if (at < 0) return false;
+  const domain = email.slice(at + 1).toLowerCase();
+  return domain.endsWith(".edu.tr") || domain.endsWith(".edu") || /\.ac\.[a-z]{2,3}$/.test(domain);
 }
 
 // ── İki aşamalı giriş — AŞAMA 2: klinik yüzey kapısı (v6.87) ───────────────────────────────────
@@ -160,7 +191,10 @@ export async function refreshActivation(doctorId: string): Promise<boolean> {
 export async function refreshChamberLetter(doctorId: string): Promise<boolean> {
   const [docs, doc] = await Promise.all([
     db.doctorDocument.findMany({ where: { doctorId, type: "CHAMBER" }, select: { type: true } }),
-    db.doctor.findUnique({ where: { id: doctorId }, select: { chamberLetterAt: true, activatedAt: true } }),
+    db.doctor.findUnique({
+      where: { id: doctorId },
+      select: { chamberLetterAt: true, activatedAt: true, studentVerifiedAt: true },
+    }),
   ]);
   if (!doc) return false;
   const has = hasChamberLetter(docs);
@@ -169,5 +203,34 @@ export async function refreshChamberLetter(doctorId: string): Promise<boolean> {
   } else if (!has && doc.chamberLetterAt) {
     await db.doctor.update({ where: { id: doctorId }, data: { chamberLetterAt: null } });
   }
-  return hasDoctoriumAccess({ chamberLetterAt: has ? new Date() : null, activatedAt: doc.activatedAt });
+  return hasDoctoriumAccess({
+    chamberLetterAt: has ? new Date() : null,
+    activatedAt: doc.activatedAt,
+    studentVerifiedAt: doc.studentVerifiedAt,
+  });
+}
+
+// DB-yan-etkili: STUDENT_CERT belgesinin varlığını Doctor.studentVerifiedAt damgasına eşitler
+// (refreshChamberLetter deseninin eşleniği — belge yükleme/silme sonrası çağrılır; belge silinirse
+// damga düşer). Döndürür: doktorun GÜNCEL Doctorium erişimi (herhangi bir damga VEYA aktivasyon).
+export async function refreshStudentCert(doctorId: string): Promise<boolean> {
+  const [docs, doc] = await Promise.all([
+    db.doctorDocument.findMany({ where: { doctorId, type: "STUDENT_CERT" }, select: { type: true } }),
+    db.doctor.findUnique({
+      where: { id: doctorId },
+      select: { chamberLetterAt: true, activatedAt: true, studentVerifiedAt: true },
+    }),
+  ]);
+  if (!doc) return false;
+  const has = hasStudentCert(docs);
+  if (has && !doc.studentVerifiedAt) {
+    await db.doctor.update({ where: { id: doctorId }, data: { studentVerifiedAt: new Date() } });
+  } else if (!has && doc.studentVerifiedAt) {
+    await db.doctor.update({ where: { id: doctorId }, data: { studentVerifiedAt: null } });
+  }
+  return hasDoctoriumAccess({
+    chamberLetterAt: doc.chamberLetterAt,
+    activatedAt: doc.activatedAt,
+    studentVerifiedAt: has ? new Date() : null,
+  });
 }

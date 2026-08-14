@@ -58,7 +58,13 @@ const NAV: NavItem[] = [
 // Tam birleşme (2026-07-12, kullanıcı kararı): SO dahil tüm kulvarlar /vakalarim'da tek listede —
 // journey-bazlı SO daraltması (Vakalarım→SO yeniden yazımı + Paylaşımlarım gizleme) kaldırıldı;
 // hasta nav'ı herkes için aynı.
-export function navItemsFor(role: string | null | undefined): NavItem[] {
+// v6.95 (kullanıcı kararı 2026-08-14): öğrenci hunisi hesabında (Doctor.studentTrack) DOCTOR
+// bandı YALNIZ Doctorium'dur — klinik yüzey sekmeleri (Doktor, Post-Op) öğrenciye çizilmez.
+// Bu görsel sadeleştirmedir, güvenlik kapısı DEĞİL: klinik rotalar zaten hasClinicalAccess'le
+// kapalı (v6.90); kapı orada kalır, bant yalnız kapalı kapının linkini göstermez (koşullu-href).
+export function navItemsFor(role: string | null | undefined, opts?: { student?: boolean }): NavItem[] {
   if (!role) return [];
-  return NAV.filter((n) => n.roles.includes(role));
+  const items = NAV.filter((n) => n.roles.includes(role));
+  if (opts?.student && role === "DOCTOR") return items.filter((n) => n.href === "/doktor/doctorium");
+  return items;
 }

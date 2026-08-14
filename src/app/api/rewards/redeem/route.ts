@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { redeemReward, transitionRedemption } from "@/lib/rewards";
+import { isStudentOnly } from "@/lib/doctor-activation";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,16 @@ export async function POST(req: Request) {
   const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
   if (!me?.doctorId) {
     return NextResponse.json({ error: "Doktor profili bağlı değil." }, { status: 400 });
+  }
+  // v6.95: öğrenci-sınırlı üye YENİ ödül talebi açamaz (puan kazanma yolu — anket — zaten kapalı;
+  // bu derinlik savunması). Mevcut talebin iptali (PATCH) bilinçli AÇIK: rezerve puan iadesi
+  // kullanıcı hakkıdır, yeni hakediş değildir.
+  const d = await db.doctor.findUnique({
+    where: { id: me.doctorId },
+    select: { activatedAt: true, studentVerifiedAt: true },
+  });
+  if (!d || isStudentOnly(d)) {
+    return NextResponse.json({ error: "Ödül puanları öğrenci üyelikte kapalıdır." }, { status: 403 });
   }
 
   const b = await req.json().catch(() => ({}));

@@ -206,6 +206,17 @@ model Doctor {
   /// ve DEĞİŞMEDİ. Erişim kuralı kodda: chamberLetterAt VEYA activatedAt (lib/doctor-activation.ts
   /// hasDoctoriumAccess) — mevcut aktif doktorlar backfill'siz geçer.
   chamberLetterAt          DateTime?
+  /// Tıp öğrencisi damgası (v6.95): e-Devlet öğrenci belgesi (DoctorDocument.type = STUDENT_CERT)
+  /// yüklüyse dolu → yalnız Doctorium İÇERİK erişimi (CHAMBER deseni — otomatik, admin onayı yok).
+  /// Klinik kapı (activatedAt) ve pazarlama yüzeyleri (sponsor/anket/ödül — isStudentOnly süzgeci)
+  /// KAPALI kalır: öğrenci sağlık meslek mensubu değildir, tanıtım rejimi ona uygulanamaz.
+  /// Mezuniyette diploma+MMSS yüklenince activatedAt dolar → süzgeç kendiliğinden kalkar.
+  studentVerifiedAt        DateTime?
+  /// Öğrenci YOLU işareti (v6.95): /ogrenci hunisinden açılan hesap true doğar — belge henüz
+  /// yüklenmemişken bile onboarding öğrenci modunda kalır (klinik belge/MMSS blokları HİÇ
+  /// gösterilmez) ve HealthTürkiye dizin doğrulaması atlanır (öğrenci dizinde olmaz — yanlış
+  /// NOT_FOUND bayrağı üretme). Erişimi AÇMAZ (kapı daima studentVerifiedAt/activatedAt).
+  studentTrack             Boolean   @default(false)
   /// İnsan kaynakları iletişim izni (v6.87, opt-in — hizmete ŞART DEĞİL): dolu = doktor, İK
   /// uzmanlarının kendisiyle iletişime geçmesine açık onam verdi; null = yok/geri alındı.
   /// İSPAT izi ConsentRecord'da (scope HR_CONTACT / HR_CONTACT_REVOKE — lib/hr-consent.ts).

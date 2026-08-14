@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { storeDocument, deleteDocument } from "@/lib/storage";
 import { detectDocumentKind, DOC_REJECT_MESSAGE } from "@/lib/document-mime";
-import { ALL_DOC_TYPES, refreshActivation, refreshChamberLetter } from "@/lib/doctor-activation";
+import { ALL_DOC_TYPES, refreshActivation, refreshChamberLetter, refreshStudentCert } from "@/lib/doctor-activation";
 
 // Object storage (S3) henüz yok → küçük dosyalar base64 olarak DB'de (data URI). Kaba sınır ~8.5 MB.
 const MAX_FILE_CHARS = 12_000_000;
@@ -48,13 +48,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Dosya çok büyük (~8 MB üzeri). Lütfen küçültün." }, { status: 413 });
   }
   // İçerik-tipi kapısı (2026-08-03 P0): tip istemcinin beyanından DEĞİL dosya imzasından tespit edilir
-  // (diploma/MMSS belgeleri admin onay ekranında açılıyor → aynı depolanmış-XSS yüzeyi).
+  // (belgeler hekim-onay incelemesinde admin/doctors/[id]/documents/[docId]/raw ucundan inline
+  // açılır [Faz 1, 2026-08-14] → depolanmış-XSS yüzeyi; bu kapı o sunumun ön şartıdır).
   const kind = detectDocumentKind(content);
   if (!kind) return NextResponse.json({ error: DOC_REJECT_MESSAGE }, { status: 415 });
   const mimeType = kind.mime;
 
-  // Tekil belgeler (diploma + MMSS + tabip odası yazısı): tek geçerli kopya → yeni yükleme eskisini değiştirir.
-  if (type === "DIPLOMA" || type === "MMSS" || type === "CHAMBER") {
+  // Tekil belgeler (diploma + MMSS + tabip odası yazısı + öğrenci belgesi): tek geçerli kopya → yeni yükleme eskisini değiştirir.
+  if (type === "DIPLOMA" || type === "MMSS" || type === "CHAMBER" || type === "STUDENT_CERT") {
     const old = await db.doctorDocument.findMany({ where: { doctorId, type }, select: { content: true } });
     await Promise.all(old.map((o) => deleteDocument(o.content))); // eski Blob nesnelerini temizle (T11)
     await db.doctorDocument.deleteMany({ where: { doctorId, type } });
@@ -65,9 +66,11 @@ export async function POST(req: Request) {
     data: { doctorId, type, label, mimeType, content: stored as string },
   });
 
-  // İki kapı ayrı damgalanır: activated = Aşama 2 (klinik), doctorium = Aşama 1 (CHAMBER ∨ aktivasyon).
+  // Kapılar ayrı damgalanır: activated = Aşama 2 (klinik), doctorium = Aşama 1 (CHAMBER ∨ öğrenci ∨
+  // aktivasyon). refreshStudentCert SON çağrılır — dönüşü her üç damganın güncel halini görür.
   const activated = await refreshActivation(doctorId);
-  const doctorium = await refreshChamberLetter(doctorId);
+  await refreshChamberLetter(doctorId);
+  const doctorium = await refreshStudentCert(doctorId);
   // base64 yükü yanıtta geri gönderme — yalnız meta + güncel kapı durumları
   return NextResponse.json(
     { id: doc.id, type: doc.type, label: doc.label, mimeType: doc.mimeType, activated, doctorium },
@@ -90,6 +93,7 @@ export async function DELETE(req: Request) {
   await db.doctorDocument.delete({ where: { id } });
   await deleteDocument(doc.content); // Blob nesnesini de kaldır (T11)
   const activated = await refreshActivation(doctorId);
-  const doctorium = await refreshChamberLetter(doctorId); // CHAMBER silindiyse Doctorium kapısı da düşer
+  await refreshChamberLetter(doctorId); // CHAMBER silindiyse damgası düşer
+  const doctorium = await refreshStudentCert(doctorId); // STUDENT_CERT silindiyse damgası düşer; dönüş üç damganın günceli
   return NextResponse.json({ ok: true, activated, doctorium });
 }
