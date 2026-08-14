@@ -101,6 +101,8 @@ export const KIND_LABEL: Record<string, string> = {
   lansman: "Klinik Faz",
   ictihat: "İçtihat", // v6.86 — Yargıtay kararları (source: yargitay, lib/hukuk-ingest.ts)
   doktrin: "Doktrin", // v6.91 — TR-Dizin hakemli makaleler (source: trdizin, lib/doktrin-ingest.ts)
+  kongre: "Kongre", // 2026-08-14 — akış kartı olarak yeni eklenen kongreler
+  kariyer: "Süreç Rehberi", // 2026-08-14 — akış kartı olarak yeni eklenen kariyer kayıtları
 };
 
 // ── Branş tercihleri (Modül A) ──────────────────────────────────────────────
@@ -187,29 +189,140 @@ const ROW_SELECT = {
 } as const;
 
 /**
- * Kişisel akış (Modül A): seçili branşların yayınları + mevzuat (mevzuat herkesi ilgilendirir).
- * Branş eşleşmesi JSON string içinde arama ile yapılır — slug'lar benzersiz ve tırnak içinde
- * arandığı için ("onkoloji" ⊄ "radyasyon-onkolojisi") yanlış eşleşme olmaz.
+ * Akış Tercihleri (Faz 2, 2026-08-14): Akışım'a hangi BÖLÜMLER girsin. Doctor.feedModules'ta
+ * JSON string[] saklanır; null/boş = TÜMÜ (tercihe hiç girmemiş hekim her bölümü görür).
+ * kongre/kariyer FeedItem değildir — seçiliyse page akışın üstünde mini blok olarak gösterir.
  */
-export async function personalFeed(branchSlugs: string[], limit = 30): Promise<FeedItem[]> {
-  if (!branchSlugs.length) {
-    const rows = await db.newsArticle.findMany({ orderBy: { publishedAt: "desc" }, take: limit, select: ROW_SELECT });
-    return rows.map(toFeedItem);
+export const FEED_MODULE_OPTIONS = [
+  { key: "akademik", label: "Akademik" },
+  { key: "sektorel", label: "Sektörel" },
+  { key: "ilac", label: "İlaç & Cihaz" },
+  { key: "kongre", label: "Kongre" },
+  { key: "kariyer", label: "Kariyer" },
+  { key: "mevzuat", label: "Hukuk" },
+] as const;
+export type FeedModuleKey = (typeof FEED_MODULE_OPTIONS)[number]["key"];
+const FEED_MODULE_KEYS = new Set(FEED_MODULE_OPTIONS.map((o) => o.key));
+
+/** Ham JSON'dan geçerli bölüm anahtarları; [] = tümü (bozuk/boş değer daraltma YARATMAZ — fail-open). */
+export function parseFeedModules(raw: string | null | undefined): FeedModuleKey[] {
+  if (!raw) return [];
+  try {
+    const v = JSON.parse(raw);
+    if (!Array.isArray(v)) return [];
+    return v.filter((s): s is FeedModuleKey => typeof s === "string" && FEED_MODULE_KEYS.has(s as FeedModuleKey));
+  } catch {
+    return [];
   }
-  // v6.50 (kullanıcı isteği): akış YALNIZ akademikten ibaret değil — mevzuat, sektörel ve
-  // ilaç kalemleri branş ayrımı olmaksızın herkesin akışına girer (hepsi doktoru ilgilendirir).
-  const rows = await db.newsArticle.findMany({
-    where: {
-      OR: [
-        ...branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } })),
-        { module: { in: ["mevzuat", "sektorel", "ilac"] } },
-      ],
-    },
-    orderBy: { publishedAt: "desc" },
-    take: limit,
-    select: ROW_SELECT,
+}
+
+const trDate = (d: Date) =>
+  d.toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+
+/** Yeni eklenen kongreler akış kartı olarak (2026-08-14): FeedItem'a dönüşür; akışa giriş
+ *  tarihi = createdAt (eklenme — startDate gelecek tarihli olduğundan akışın tepesini işgal ederdi).
+ *  Tarih/şehir/kapsam bilgisi summary satırında taşınır. Kaydedilemez (SavedArticle NewsArticle'a bağlı). */
+const CONGRESS_FEED_SELECT = {
+  id: true, title: true, organizer: true, city: true, startDate: true, endDate: true,
+  url: true, createdAt: true, scope: true,
+} as const;
+
+function congressToFeedItem(c: {
+  id: string; title: string; organizer: string | null; city: string | null;
+  startDate: Date; endDate: Date | null; url: string | null; createdAt: Date; scope: string;
+}): FeedItem {
+  return {
+    id: c.id, module: "kongre", kind: "kongre",
+    title: c.title, titleOriginal: null,
+    summary: [
+      `${trDate(c.startDate)}${c.endDate ? ` – ${trDate(c.endDate)}` : ""}`,
+      c.city,
+      c.scope === "uluslararasi" ? "🌍 Uluslararası" : "🇹🇷 Ulusal",
+    ].filter(Boolean).join(" · "),
+    sourceName: c.organizer ?? "Kongre takvimi", authors: null,
+    url: c.url, doi: null, publishedAt: c.createdAt, category: null,
+    branchSlugs: [], hasAiSummary: false,
+  };
+}
+
+async function congressFeedItems(branchSlugs: string[], take: number): Promise<FeedItem[]> {
+  const rows = await db.medicalCongress.findMany({
+    where: branchSlugs.length
+      ? { OR: [{ branchSlugs: "[]" }, ...branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } }))] }
+      : undefined,
+    orderBy: { createdAt: "desc" },
+    take,
+    select: CONGRESS_FEED_SELECT,
   });
-  return rows.map(toFeedItem);
+  return rows.map(congressToFeedItem);
+}
+
+const CAREER_FEED_SELECT = { slug: true, title: true, authority: true, summary: true, createdAt: true } as const;
+
+function careerToFeedItem(p: {
+  slug: string; title: string; authority: string; summary: string; createdAt: Date;
+}): FeedItem {
+  return {
+    id: p.slug, module: "kariyer", kind: "kariyer",
+    title: p.title, titleOriginal: null,
+    summary: p.summary,
+    sourceName: p.authority, authors: null,
+    url: null, doi: null, publishedAt: p.createdAt, category: null,
+    branchSlugs: [], hasAiSummary: false,
+  };
+}
+
+/** Yeni eklenen kariyer süreç rehberleri akış kartı olarak (2026-08-14). id = slug (detay rotası
+ *  slug'la çalışır; SavedArticle ilişkisiz düz-id deseninde slug da kimlik olabilir). */
+async function careerFeedItems(take: number): Promise<FeedItem[]> {
+  const rows = await db.careerPathway.findMany({
+    orderBy: { createdAt: "desc" },
+    take,
+    select: CAREER_FEED_SELECT,
+  });
+  return rows.map(careerToFeedItem);
+}
+
+/**
+ * Kişisel akış (Modül A) — BÖLÜM-KOTALI KARIŞIM (2026-08-14, kullanıcı bildirimi): eski tek
+ * "en yeni N" sorgusu, yoğun bölümlerin (sektörel haber) seyrek bölümleri tamamen dışarıda
+ * bırakıyordu — hukuk (hele ARŞİV tarihli içtihat/doktrin) akışa HİÇ düşmüyordu. Şimdi her
+ * seçili bölümden kendi kotası çekilir, tek listede tarihe göre birleşir; arşiv kalemleri
+ * doğal olarak dibe yakın düşer ama akışta VAR olur. Kongre/Kariyer de eklenme tarihiyle
+ * normal kart olarak girer. `modules` (Akış Tercihleri): boş = tümü.
+ * Branş eşleşmesi JSON string içinde tırnaklı arama — yanlış eşleşme olmaz (v6.50 notu).
+ */
+export async function personalFeed(branchSlugs: string[], limit = 40, modules: FeedModuleKey[] = []): Promise<FeedItem[]> {
+  const all = modules.length === 0;
+  const on = (k: FeedModuleKey) => all || modules.includes(k);
+  // Kotalar limit=40 tabanına göre ölçeklenir (akademik 14 · sektörel 8 · ilaç 6 ·
+  // hukuk 4+2+2 [mevzuat/içtihat/doktrin alt-kotaları] · kongre 3 · kariyer 3).
+  const q = (n: number) => Math.max(1, Math.round((n * limit) / 40));
+  const news = (where: object, take: number) =>
+    db.newsArticle.findMany({ where, orderBy: { publishedAt: "desc" }, take, select: ROW_SELECT })
+      .then((r) => r.map(toFeedItem));
+
+  const jobs: Promise<FeedItem[]>[] = [];
+  if (on("akademik"))
+    jobs.push(news(
+      branchSlugs.length
+        ? { module: "akademik", OR: branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } })) }
+        : { module: "akademik" },
+      q(14),
+    ));
+  if (on("sektorel")) jobs.push(news({ module: "sektorel" }, q(8)));
+  if (on("ilac")) jobs.push(news({ module: "ilac" }, q(6)));
+  if (on("mevzuat")) {
+    jobs.push(news({ module: "mevzuat", kind: "mevzuat" }, q(4)));
+    jobs.push(news({ module: "mevzuat", kind: "ictihat" }, q(2)));
+    jobs.push(news({ module: "mevzuat", kind: "doktrin" }, q(2)));
+  }
+  if (on("kongre")) jobs.push(congressFeedItems(branchSlugs, q(3)));
+  if (on("kariyer")) jobs.push(careerFeedItems(q(3)));
+
+  const merged = (await Promise.all(jobs)).flat();
+  merged.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+  return merged;
 }
 
 /**
@@ -224,6 +337,40 @@ export async function singleBranchFeed(slug: string, limit = 30): Promise<FeedIt
     select: ROW_SELECT,
   });
   return rows.map(toFeedItem);
+}
+
+/**
+ * "Kaydettiklerim" akışı (Faz 2, 2026-08-14): doktorun işaretlediği içerikler, kaydediliş
+ * sırasına göre (yeni→eski). ÜÇ KAYNAKLI (2026-08-14, 2. tur): makale/kongre/kariyer — id'ler
+ * türsüz saklanır (ilişkisiz düz-id deseni), üç tabloda aranıp birleşir. Kaynak silinmişse
+ * kayıt sessizce atlanır (kod-level join, bkz. schema).
+ */
+export async function savedFeed(doctorId: string, limit = 100): Promise<FeedItem[]> {
+  const saved = await db.savedArticle.findMany({
+    where: { doctorId },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    select: { articleId: true },
+  });
+  if (!saved.length) return [];
+  const ids = saved.map((s) => s.articleId);
+  const [articles, congresses, pathways] = await Promise.all([
+    db.newsArticle.findMany({ where: { id: { in: ids } }, select: ROW_SELECT }),
+    db.medicalCongress.findMany({ where: { id: { in: ids } }, select: CONGRESS_FEED_SELECT }),
+    db.careerPathway.findMany({ where: { slug: { in: ids } }, select: CAREER_FEED_SELECT }),
+  ]);
+  const byId = new Map<string, FeedItem>([
+    ...articles.map((r) => [r.id, toFeedItem(r)] as const),
+    ...congresses.map((c) => [c.id, congressToFeedItem(c)] as const),
+    ...pathways.map((p) => [p.slug, careerToFeedItem(p)] as const),
+  ]);
+  return saved.map((s) => byId.get(s.articleId)).filter((x): x is FeedItem => !!x);
+}
+
+/** Doktorun kayıtlı makale id'leri — kartlardaki kaydet düğmesinin başlangıç durumu. */
+export async function savedArticleIds(doctorId: string): Promise<Set<string>> {
+  const rows = await db.savedArticle.findMany({ where: { doctorId }, select: { articleId: true } });
+  return new Set(rows.map((r) => r.articleId));
 }
 
 // Sektörel/mevzuat zaman aralığı (v6.49, kullanıcı isteği): doktor "kaç gün geriye" görmek
