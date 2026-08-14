@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { hasProcedures, hasQualification } from "@/lib/doctor-activation";
 import { VerifyButton } from "./VerifyButton";
+import { DocReviewButtons } from "./DocReviewButtons";
 import { ShieldCheck, Stethoscope, MapPin, Globe, Check, X, Clock, BadgeCheck, Flag, FileText } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -30,9 +31,10 @@ export default async function DoctorApprovalPage() {
       id: true, title: true, name: true, branch: true, city: true, languages: true,
       activatedAt: true, licenseNo: true, specBoard: true, procedures: true,
       mmssInsurer: true, mmssCoverageLimit: true, mmssCoverageCurrency: true,
+      mmssValidUntil: true, // poliçe bitişi (Faz 1b) — dolu+geçmişse kırmızı rozet; boşsa rozet YOK (mevcut hekimde boş normaldir)
       registryStatus: true, // HealthTürkiye dizin doğrulaması (FAZ 6) — NOT_FOUND ise uyarı bayrağı
       // Belge META'sı — içerik listede taşınmaz; incelemeci tek belgeyi raw uçtan açar (audit'li).
-      documents: { select: { id: true, type: true, label: true, mimeType: true, createdAt: true }, orderBy: { createdAt: "desc" } },
+      documents: { select: { id: true, type: true, label: true, mimeType: true, createdAt: true, status: true, reviewNote: true }, orderBy: { createdAt: "desc" } },
     },
   });
 
@@ -112,6 +114,12 @@ export default async function DoctorApprovalPage() {
                   <Badge ok={diploma} label="Diploma" />
                   <Badge ok={mmssDoc} label="MMSS poliçesi" />
                   <Badge ok={mmssMeta} label={mmssMeta ? `MMSS ${d.mmssCoverageLimit?.toLocaleString("tr-TR")} ${d.mmssCoverageCurrency ?? ""}` : "MMSS teminat"} />
+                  {/* Poliçe bitişi (Faz 1b — ROZET-ONLY kararı: süre dolsa da sistem engellemez, göz uyarılır) */}
+                  {d.mmssValidUntil && (d.mmssValidUntil < new Date() ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-bold text-red-300 ring-1 ring-red-400/25"><Flag size={12} /> MMSS süresi dolmuş ({d.mmssValidUntil.toLocaleDateString("tr-TR")})</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300 ring-1 ring-emerald-400/25"><Check size={12} /> MMSS geçerli → {d.mmssValidUntil.toLocaleDateString("tr-TR")}</span>
+                  ))}
                   <Badge ok={qual} label={qual ? `Diploma no + uzmanlık` : "FHIR uzmanlık"} />
                   <Badge ok={proc} label={proc ? `${procCount} işlem` : "İşlem seçimi"} />
                 </div>
@@ -123,7 +131,7 @@ export default async function DoctorApprovalPage() {
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">Yüklenen belgeler — açarak inceleyin</div>
                     <ul className="mt-2 space-y-1">
                       {d.documents.map((doc) => (
-                        <li key={doc.id}>
+                        <li key={doc.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
                           <a
                             href={`/api/admin/doctors/${d.id}/documents/${doc.id}/raw`}
                             target="_blank"
@@ -134,6 +142,14 @@ export default async function DoctorApprovalPage() {
                             {DOC_TYPE_LABELS[doc.type] ?? doc.type} — {doc.label}
                             <span className="text-xs font-normal text-[var(--c-ink-3)]">({doc.mimeType} · {doc.createdAt.toLocaleDateString("tr-TR")})</span>
                           </a>
+                          {/* İnceleme durumu (Faz 2): PENDING sessiz — karar verilmemiş belgeye rozet gürültüsü yapılmaz */}
+                          {doc.status === "ACCEPTED" && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-400/25"><Check size={11} /> Uygun</span>
+                          )}
+                          {doc.status === "REJECTED" && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-[11px] font-semibold text-red-300 ring-1 ring-red-400/25" title={doc.reviewNote ?? undefined}><X size={11} /> Yetersiz{doc.reviewNote ? `: ${doc.reviewNote.slice(0, 60)}` : ""}</span>
+                          )}
+                          <DocReviewButtons doctorId={d.id} docId={doc.id} status={doc.status} />
                         </li>
                       ))}
                     </ul>

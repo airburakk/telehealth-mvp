@@ -236,6 +236,10 @@ model Doctor {
   mmssPolicyNo         String? // poliçe no (at-rest şifreli — encryptField)
   mmssCoverageLimit    Int? // teminat limiti (mmssCoverageCurrency biriminde)
   mmssCoverageCurrency String?   @default("TRY") // "TRY" | "USD" — hesapta canlı kurla USD'ye normalize edilir
+  /// Faz 1b kararları (2026-08-14 — vault output/doktor-belge-kontrol-tasarimi): ROZET-ONLY —
+  /// süre dolunca sistem ENGELLEMEZ, hekim-onay ekranı uyarı rozeti gösterir. Yalnız YENİ kayıtta
+  /// zorunlu (form alanı beklemede; /api/doctor/mmss zaten opsiyonel kabul eder); mevcut hekimde
+  /// boş kalabilir — doldurma bildirimi/yaptırımı bilinçli YOK (kullanıcı kararı).
   mmssValidUntil       DateTime? // poliçe geçerlilik bitişi
   mmssVerifiedAt       DateTime? // operasyon/admin doğrulaması (ileride; şimdilik yüklemeyle damgalanır)
   // 2026-07-10 — bildirim kanalı tercihi + HealthTürkiye kayıt doğrulaması
@@ -562,6 +566,12 @@ model DoctorDocument {
   mimeType  String // application/pdf | image/jpeg | image/png | ...
   content   String // base64 data URI — at-rest şifreli (encryptField)
   createdAt DateTime @default(now())
+  /// İnceleme durumu (Faz 2, 2026-08-14): PENDING (yüklendi, incelenmedi) | ACCEPTED | REJECTED.
+  /// Karar yalnız görünürlük+bildirim içindir — AKTİVASYONA DOKUNMAZ (refreshActivation belge
+  /// varlığına bakar; reddedilen tekil belge yenisi yüklenince zaten satırıyla değişir → PENDING).
+  status     String  @default("PENDING")
+  /// REJECTED gerekçesi (incelemeci yazar, doktora bildirimle gider). ⚖️ Şablon dili v6.91 paketinde.
+  reviewNote String?
 
   @@index([doctorId])
 }
