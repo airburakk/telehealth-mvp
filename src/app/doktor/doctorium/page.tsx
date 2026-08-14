@@ -10,27 +10,29 @@ import {
 import { activeSurveysFor, doctorResponse, aggregateResults } from "@/lib/survey";
 import { SurveyCardView } from "./SurveyCard";
 import {
-  DOCTORIUM_MODULES, KIND_LABEL, RANGE_OPTIONS, DEFAULT_RANGE, rangeDays,
-  SECTOR_CATEGORIES, categoryLabel, LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES,
+  DOCTORIUM_MODULES, RANGE_OPTIONS, DEFAULT_RANGE, rangeDays,
+  SECTOR_CATEGORIES, LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES,
   CAREER_TABS, parseCareerTab, careerPathways,
   effectiveBranches, personalFeed, moduleFeed, singleBranchFeed, upcomingCongresses,
   localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
-  slugForLabel, parseScope, type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey,
+  slugForLabel, parseScope, savedArticleIds, FEED_MODULE_OPTIONS, parseFeedModules,
+  type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey,
 } from "@/lib/doctorium";
 import { isStudentOnly } from "@/lib/doctor-activation";
-import { branchColor, hasBranchVisual } from "@/lib/branch-visuals";
-import { HUKUK_KEYWORDS, keywordByKey, extractKeywords, extractLawRefs, extractExcerpt } from "@/lib/hukuk-keywords";
-import { BranchAvatar } from "@/components/BranchAvatar";
+import { branchColor } from "@/lib/branch-visuals";
+import { HUKUK_KEYWORDS, keywordByKey } from "@/lib/hukuk-keywords";
 import { DoctoriumFilters } from "./DoctoriumFilters";
 import { FollowButton } from "./CongressControls";
 import { ProspektusSearch } from "./ProspektusSearch";
 import { CareerDisclaimer, careerDate, COUNTRY_LABEL } from "./CareerShared";
+import { ArticleCard, formatDate } from "./ArticleCard";
+import { SaveButton } from "./SaveButton";
 import {
-  ArrowLeft, ExternalLink, FlaskConical, Gavel, Info,
-  Sparkles, MapPin, X, CalendarClock, Pill, Building2, Megaphone, Scale, Star, Library,
+  ArrowLeft, ExternalLink, Info, MapPin, X, CalendarClock, Megaphone, TrendingUp,
 } from "lucide-react";
 import { getDoctorBalance } from "@/lib/rewards";
 import { AuraMark } from "@/components/PortamedLogo";
+import { DoctoriumShell } from "./DoctoriumSidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +42,30 @@ export const metadata = { title: "Doctorium" };
 
 const MODULE_KEYS = new Set(DOCTORIUM_MODULES.map((m) => m.key));
 const VALID_SLUGS = new Set(BRANCH_OPTIONS.map((b) => b.slug));
+
+// Modül üst alanı metinleri (Faz 1, kullanıcı onayı 2026-08-14). Renkler = kart kapağı (Cover) +
+// bant (DoctoriumSidebar) kimlik hex'leri; Kongre'nin kimliği "beyaz" = tema-duyarlı ink (color
+// yok → var(--c-ink)). Kariyer satırı İŞKUR sınırının dilini korur ("ilan değil").
+const MODULE_HEAD: Record<ModuleKey, { eyebrow: string; title: string; desc: string; color?: string }> = {
+  akis: { eyebrow: "AKIŞIM", title: "Sizin için seçilenler", desc: "Branşınız, bilimsel yayınlar ve sektörel gelişmeler tek akışta.", color: "#facc15" },
+  akademik: { eyebrow: "AKADEMİK", title: "Branşınızda hakemli yayınlar", desc: "PubMed'den güncel çalışmalar, kısa klinik özetlerle.", color: "#34d399" },
+  sektorel: { eyebrow: "SEKTÖREL", title: "Sağlık gündeminin nabzı", desc: "Doktor hakları, yönetim, teknoloji ve küresel gelişmeler.", color: "#a78bfa" },
+  ilac: { eyebrow: "İLAÇ & CİHAZ", title: "Geri çekmeler ve klinik fazlar", desc: "Ruhsat, geri çekme, klinik faz ve prospektüs bilgisi tek yerde.", color: "#22d3ee" },
+  kongre: { eyebrow: "KONGRE", title: "Kongre takvimi", desc: "Ulusal ve uluslararası kongreler; bildiri ve erken kayıt tarihleriyle." },
+  kariyer: { eyebrow: "KARİYER", title: "Hekimlik yollarının haritası", desc: "Yurt dışı denklik ve akademik yükselme süreçleri — ilan değil, süreç bilgisi.", color: "#60a5fa" },
+  mevzuat: { eyebrow: "HUKUK", title: "Sağlık hukuku, tek yerde", desc: "Mevzuat değişiklikleri, emsal kararlar ve hakemli doktrin.", color: "#fb7185" },
+};
+
+// Mobil grup şeridi üyelikleri (M2): BİLGİ ve MESLEĞİM grupları — DoctoriumSidebar'daki
+// gruplamanın page tarafındaki eşleniği (alt çubuk grubu seçer, şerit modülü seçer).
+const MOBILE_GROUPS: Partial<Record<ModuleKey, ModuleKey[]>> = {
+  akademik: ["akademik", "sektorel", "ilac"],
+  sektorel: ["akademik", "sektorel", "ilac"],
+  ilac: ["akademik", "sektorel", "ilac"],
+  kongre: ["kongre", "kariyer", "mevzuat"],
+  kariyer: ["kongre", "kariyer", "mevzuat"],
+  mevzuat: ["kongre", "kariyer", "mevzuat"],
+};
 
 // Doctorium — doktor bilgi portalı. Modüller: Akışım (A) · Akademik (C) · Sektörel (B) · Kongre (E).
 // Modül D (ilaç tanıtımı/e-mümessil) PARK: TİTCK tanıtım yönetmeliği hukuki görüş ister.
@@ -57,6 +83,8 @@ export default async function DoctoriumPage({
         where: { id: me.doctorId },
         select: {
           id: true, branch: true, newsBranches: true, city: true,
+          // Akış Tercihleri (Faz 2, 2026-08-14): Akışım'a hangi bölümler girsin.
+          feedModules: true,
           // v6.95: öğrenci-sınırlı üyelik tespiti (isStudentOnly) — pazarlama yüzeyi süzgeci.
           activatedAt: true, studentVerifiedAt: true,
           congressAlertDays: true,
@@ -82,8 +110,12 @@ export default async function DoctoriumPage({
   // İçtihat anahtar-kelime filtresi (v6.87): ?k= sözlük anahtarı; bilinmeyen değer filtresiz liste.
   const legalKeyword = legalTab === "ictihat" ? keywordByKey(sp.k) : null;
 
+  // Akış Tercihleri (Faz 2): [] = tümü. Kongre/Kariyer dahil her seçili bölüm akışa KART olarak
+  // girer (bölüm-kotalı karışım — lib/doctorium personalFeed).
+  const feedMods = parseFeedModules(doctor?.feedModules);
+
   let items: FeedItem[] = [];
-  if (active === "akis") items = focus ? await singleBranchFeed(focus) : await personalFeed(branches, 40);
+  if (active === "akis") items = focus ? await singleBranchFeed(focus) : await personalFeed(branches, 40, feedMods);
   else if (active === "akademik") items = await moduleFeed("akademik", branches);
   else if (active === "mevzuat") {
     // İçtihat + Doktrin = ARŞİV: tarih penceresi bilinçli YOK — kararlar/makaleler eski tarihli
@@ -139,14 +171,21 @@ export default async function DoctoriumPage({
     }
   }
 
-  // v6.88 ödül puanı — yalnız DOCTOR'da (personelin puan hesabı yok; rozet de çizilmez).
-  // v6.95: öğrenci-sınırlı üyede de null → rozet + Ödüller bağlantısı hiç render edilmez
-  // (koşullu-href ilkesi: kapalı yüzeyin linki çizilmez).
+  // v6.88 ödül puanı — yalnız DOCTOR'da; v6.95 öğrenci-sınırlıda null (koşullu-href: kapalı
+  // yüzeyin linki çizilmez). Faz 1'de banttaki rozeti de bu değer besler (Shell prop'u).
   const myPointBalance = user.role === "DOCTOR" && doctor && !studentOnly ? await getDoctorBalance(doctor.id) : null;
 
+  // Faz 2 (2026-08-14): kart "Kaydet" düğmelerinin başlangıç durumu — tek sorgu, Set.
+  // Öğrenci-sınırlı DAHİL (kaydetme içerik işlevi, pazarlama yüzeyi değil); personelde null → düğme çizilmez.
+  const isDoctor = user.role === "DOCTOR" && !!doctor;
+  const savedIds = isDoctor && doctor ? await savedArticleIds(doctor.id) : null;
+
   return (
-    <div className="mx-auto max-w-3xl px-5 py-8">
-      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
+    <DoctoriumShell active={active} balance={myPointBalance} isDoctor={isDoctor}>
+    {/* px-5 = /doktor içerik boşluğu (hiza kararı 2026-08-14): başlıklar üç sekmede aynı x'te. */}
+    <div className="max-w-3xl px-5 py-8">
+      {/* Masaüstünde dönüş banttadır (layout DoctoriumSidebar); bu link yalnız mobil için. */}
+      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)] md:hidden">
         <ArrowLeft size={15} /> Ana Sayfa
       </Link>
 
@@ -171,34 +210,51 @@ export default async function DoctoriumPage({
         </p>
       </div>
 
-      {/* Modül sekmeleri */}
-      <nav className="mt-5 flex flex-wrap gap-2" aria-label="Doctorium modülleri">
-        {DOCTORIUM_MODULES.map((m) => (
-          <Link
-            key={m.key}
-            href={`/doktor/doctorium?m=${m.key}`}
-            aria-current={m.key === active ? "page" : undefined}
-            className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
-              m.key === active
-                ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
-                : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
-            }`}
-          >
-            {m.label}
-          </Link>
-        ))}
-        {/* Puanlarım (v6.88) — modül DEĞİL, kişisel sayfa: pill sırasının sağında ayrık durur.
-            Yalnız DOCTOR görür (personelin puan hesabı yok). Rakam = güncel bakiye (SUM ledger). */}
-        {myPointBalance != null && (
-          <Link
-            href="/doktor/doctorium/oduller"
-            className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 px-3.5 py-1.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10"
-          >
-            <Star size={13} strokeWidth={2.5} /> Puanlarım
-            <span className="aura-mono rounded-full bg-emerald-500/15 px-1.5 py-px text-[10px]">{myPointBalance}</span>
-          </Link>
-        )}
-      </nav>
+      {/* Mobil grup şeridi (M2, Faz 1 — taslak v3.2): alt çubuk (layout'taki DoctoriumSidebar)
+          grubu seçer, bu şerit grubun modüllerini gezdirir; Akışım'da şerit yok. Masaüstünde
+          navigasyonu sol bant devraldı — v6.88 pill dizisi + Puanlarım pill'i Faz 1'de kalktı
+          (Puanlarım rozeti bantta yaşıyor; bakiye layout'ta hesaplanır). */}
+      {MOBILE_GROUPS[active] && (
+        <nav
+          className="mt-4 flex items-center gap-4 overflow-x-auto border-b border-[var(--c-hairline)] md:hidden"
+          aria-label="Bölüm modülleri"
+        >
+          {MOBILE_GROUPS[active].map((k) => {
+            const m = DOCTORIUM_MODULES.find((x) => x.key === k)!;
+            const on = k === active;
+            return (
+              <Link
+                key={k}
+                href={`/doktor/doctorium?m=${k}`}
+                aria-current={on ? "page" : undefined}
+                className={`-mb-px whitespace-nowrap border-b-2 pb-2 text-xs font-semibold transition ${
+                  on ? "border-emerald-400 text-emerald-300" : "border-transparent text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"
+                }`}
+              >
+                {m.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
+
+      {/* Modül üst alanı (Faz 1, taslak v3.2 — metinler kullanıcı onaylı 2026-08-14): mono etiket
+          (modül kimlik renginde) + display başlık + tek satır açıklama. 2026-08-01'de kaldırılan
+          silik "desc satırı"nın dönüşü DEĞİL — editoryal başlık bloğu, ayrı karar. */}
+      <div className="mt-6">
+        <div
+          className="aura-mono text-[10.5px] font-bold tracking-[0.16em]"
+          style={{ color: MODULE_HEAD[active].color ?? "var(--c-ink)" }}
+        >
+          {MODULE_HEAD[active].eyebrow}
+        </div>
+        {/* text-3xl = /doktor ve Post-Op h1 ölçüsü (kullanıcı düzeltmesi 2026-08-14: 2xl portal
+            dilinden küçük kalıyordu) — sahnenin asıl başlığı budur, lockup marka şapkasıdır. */}
+        <h2 className="aura-display mt-1 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
+          {MODULE_HEAD[active].title}
+        </h2>
+        <p className="mt-1 text-[13px] text-[var(--c-ink-2)]">{MODULE_HEAD[active].desc}</p>
+      </div>
 
       {/* Kariyer alt-sekmeleri (v6.89): Yurt Dışı · Türkiye. Hukuk şeridinin birebir eşleniği
           (ikincil nav görünümü). Yurt Dışı linki t'siz: varsayılan sekme, kanonik URL tek kalsın. */}
@@ -326,6 +382,9 @@ export default async function DoctoriumPage({
           kategoriler (SUT vb.) mevzuat kalemlerine aittir. */}
       <DoctoriumFilters
         module={active}
+        showFeedPrefs={active === "akis" && !!doctor}
+        feedOptions={FEED_MODULE_OPTIONS.map((o) => ({ key: o.key, label: o.label }))}
+        feedInitial={feedMods}
         showRange={(active === "mevzuat" && legalTab === "mevzuat") || active === "sektorel" || active === "ilac"}
         showCategory={(active === "mevzuat" && legalTab === "mevzuat") || active === "sektorel"}
         showAlerts={active === "kongre" && !!doctor}
@@ -356,9 +415,9 @@ export default async function DoctoriumPage({
       {active === "ilac" && <ProspektusSearch />}
 
       {active === "kariyer" ? (
-        <CareerList rows={pathways} />
+        <CareerList rows={pathways} savedIds={savedIds} />
       ) : active === "kongre" ? (
-        <CongressList rows={congresses} followed={followed} canFollow={!!doctor} />
+        <CongressList rows={congresses} followed={followed} canFollow={!!doctor} savedIds={savedIds} />
       ) : (
         <>
           {/* Akışım: branş çipleri — tıklanınca YALNIZ o branş listelenir */}
@@ -404,7 +463,7 @@ export default async function DoctoriumPage({
                   {i === 2 && sponsorCards[0] && <SponsorCardView c={sponsorCards[0]} />}
                   {i === 5 && surveyProps && <SurveyCardView {...surveyProps} />}
                   {i === 9 && sponsorCards[1] && <SponsorCardView c={sponsorCards[1]} />}
-                  <ArticleCard item={it} />
+                  <ArticleCard item={it} saved={savedIds ? savedIds.has(it.id) : null} />
                 </Fragment>
               ))}
               {items.length <= 2 && sponsorCards[0] && <SponsorCardView c={sponsorCards[0]} />}
@@ -415,6 +474,7 @@ export default async function DoctoriumPage({
         </>
       )}
     </div>
+    </DoctoriumShell>
   );
 }
 
@@ -441,56 +501,8 @@ function EmptyState({ active, focus, range, legalTab, keywordLabel }: { active: 
   );
 }
 
-function formatDate(d: Date): string {
-  return d.toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
-}
-
-const KIND_STYLE: Record<string, string> = {
-  makale: "bg-violet-500/15 text-violet-300",
-  ilac: "bg-emerald-500/15 text-emerald-300",
-  mevzuat: "bg-amber-500/15 text-amber-300",
-  haber: "bg-sky-500/15 text-sky-300",
-  ictihat: "bg-rose-500/15 text-rose-300", // v6.86 — mevzuat amber'ından ayrışsın (aynı modülde yaşarlar)
-  doktrin: "bg-indigo-500/15 text-indigo-300", // v6.91 — akademik hukuk makalesi (TR-Dizin)
-};
-
-// Kapak koddan üretilir (dış görsel CSP'de yasak: img-src 'self' data:). Nötr yüzey + branş
-// sembolü + 3px şerit → kit renk disiplini korunur (branş rengi yüzeyi boyamaz).
-function Cover({ item }: { item: FeedItem }) {
-  const first = item.branchSlugs[0];
-  const label = first ? branchLabel(first) : null;
-  // İçtihat/Doktrin kind-bazlı ayrışır (modülü mevzuat'la ortak) — kontrol module'den ÖNCE.
-  const accent = item.kind === "ictihat" ? "#fb7185"
-    : item.kind === "doktrin" ? "#818cf8"
-    : item.module === "mevzuat" ? "#f59e0b"
-    : item.module === "ilac" ? "#22d3ee"
-    : item.module === "sektorel" ? "#a78bfa"
-    : label ? branchColor(label) : "#34d399";
-  return (
-    <div
-      aria-hidden
-      className="relative hidden w-[112px] shrink-0 items-center justify-center overflow-hidden bg-[var(--c-surface-2)] sm:flex"
-      style={{ borderRight: `3px solid ${accent}` }}
-    >
-      <span className="absolute inset-0 opacity-[0.07]" style={{ background: accent }} />
-      {item.kind === "ictihat" ? (
-        <Scale size={26} style={{ color: accent }} strokeWidth={1.8} />
-      ) : item.kind === "doktrin" ? (
-        <Library size={26} style={{ color: accent }} strokeWidth={1.8} />
-      ) : item.module === "mevzuat" ? (
-        <Gavel size={26} style={{ color: accent }} strokeWidth={1.8} />
-      ) : item.module === "ilac" ? (
-        <Pill size={26} style={{ color: accent }} strokeWidth={1.8} />
-      ) : item.module === "sektorel" ? (
-        <Building2 size={26} style={{ color: accent }} strokeWidth={1.8} />
-      ) : label && hasBranchVisual(label) ? (
-        <BranchAvatar branchKey={label} size={42} />
-      ) : (
-        <FlaskConical size={26} style={{ color: accent }} strokeWidth={1.8} />
-      )}
-    </div>
-  );
-}
+// formatDate + KIND_STYLE + Cover + IctihatCardMeta + ArticleCard → ./ArticleCard.tsx'e taşındı
+// (Faz 2, 2026-08-14): Kaydettiklerim sayfası aynı kartı kullanıyor.
 
 // Sponsorlu kart (v6.68 Faz 1): organik karttan NET görsel+metinsel ayrım — kesikli amber çerçeve
 // + "Sponsorlu · <reklamveren>" mono rozet (iddia dürüstlüğü: doğal içerik görünümü verilmez;
@@ -498,137 +510,33 @@ function Cover({ item }: { item: FeedItem }) {
 // boyanmaz. Tıklama /api/sponsor/click üzerinden sayılır (agregat) → dış bağlantı rel="sponsored".
 function SponsorCardView({ c }: { c: SponsorCard }) {
   return (
-    <li className="overflow-hidden rounded-2xl border border-dashed border-amber-400/40 bg-[var(--c-surface)]">
-      <div className="flex">
-        <div
-          aria-hidden
-          className="relative hidden w-[112px] shrink-0 items-center justify-center overflow-hidden bg-[var(--c-surface-2)] sm:flex"
-          style={{ borderRight: "3px solid #f59e0b" }}
+    /* Kart standardı (2026-08-14, 4. tur — kullanıcı): sponsor kutusu TÜM ÇEVRE kalın sarı
+       (yalnız sol şerit değil). Reklam ayrımı: kalın amber çerçeve + megafon + SPONSORLU rozet. */
+    <li className="rounded-2xl border-2 border-amber-400/70 bg-[var(--c-surface)] px-4 py-3.5">
+      <div className="flex items-center gap-2">
+        <Megaphone size={16} strokeWidth={1.9} style={{ color: "#f59e0b" }} />
+        <span className="aura-mono text-[10px] font-bold tracking-[0.16em] text-amber-300">SPONSORLU</span>
+      </div>
+      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="aura-mono rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
+          Sponsorlu · {c.sponsor}
+        </span>
+        <span className="aura-mono rounded-full bg-[var(--c-surface-2)] px-2 py-0.5 text-[10px] text-[var(--c-ink-2)]">
+          {SPONSOR_CATEGORY_LABEL[c.category] ?? c.category}
+        </span>
+      </div>
+      <p className="mt-1.5 text-sm font-semibold leading-snug text-[var(--c-ink)]">{c.title}</p>
+      <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">{c.body}</p>
+      {c.linkUrl && (
+        <a
+          href={`/api/sponsor/click?id=${c.id}`}
+          target="_blank"
+          rel="sponsored noopener"
+          className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-300 hover:underline"
         >
-          <span className="absolute inset-0 opacity-[0.07]" style={{ background: "#f59e0b" }} />
-          <Megaphone size={26} style={{ color: "#f59e0b" }} strokeWidth={1.8} />
-        </div>
-        <div className="min-w-0 flex-1 px-4 py-3.5">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="aura-mono rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
-              Sponsorlu · {c.sponsor}
-            </span>
-            <span className="aura-mono rounded-full bg-[var(--c-surface-2)] px-2 py-0.5 text-[10px] text-[var(--c-ink-2)]">
-              {SPONSOR_CATEGORY_LABEL[c.category] ?? c.category}
-            </span>
-          </div>
-          <p className="mt-1.5 text-sm font-semibold leading-snug text-[var(--c-ink)]">{c.title}</p>
-          <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">{c.body}</p>
-          {c.linkUrl && (
-            <a
-              href={`/api/sponsor/click?id=${c.id}`}
-              target="_blank"
-              rel="sponsored noopener"
-              className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-300 hover:underline"
-            >
-              {c.linkLabel || "Ayrıntılar"} <ExternalLink size={11} />
-            </a>
-          )}
-        </div>
-      </div>
-    </li>
-  );
-}
-
-// İçtihat kartının alt bilgisi: alıntı ("karar metninden") + kanun maddeleri + anahtar terim
-// çipleri. Tamamı item.summary'den render anında türetilir — ek kolon/sorgu yok (arşiv ~500 kayıt,
-// listede 40 kart; string taraması ucuz. Hacim büyürse ingest'te kolona alınır — bilinçli erteleme).
-function IctihatCardMeta({ summary }: { summary: string }) {
-  const excerpt = extractExcerpt(summary);
-  const laws = extractLawRefs(summary);
-  const keywords = extractKeywords(summary);
-  if (!excerpt && !laws.length && !keywords.length) return null;
-  return (
-    <div className="mt-1.5">
-      {excerpt && <p className="text-xs leading-relaxed text-[var(--c-ink-2)]">{excerpt}</p>}
-      {(laws.length > 0 || keywords.length > 0) && (
-        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-          {laws.map((l) => (
-            <span key={l} className="aura-mono rounded-full bg-[var(--c-surface-2)] px-2 py-0.5 text-[10px] text-[var(--c-ink-2)]">
-              {l}
-            </span>
-          ))}
-          {keywords.map((k) => (
-            <Link
-              key={k.key}
-              href={`/doktor/doctorium?m=mevzuat&h=ictihat&k=${k.key}`}
-              className="aura-mono rounded-full bg-rose-500/[0.08] px-2 py-0.5 text-[10px] font-semibold text-rose-300/90 hover:bg-rose-500/15"
-            >
-              {k.label}
-            </Link>
-          ))}
-        </div>
+          {c.linkLabel || "Ayrıntılar"} <ExternalLink size={11} />
+        </a>
       )}
-    </div>
-  );
-}
-
-function ArticleCard({ item }: { item: FeedItem }) {
-  return (
-    <li className="overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)]">
-      <div className="flex">
-        <Cover item={item} />
-        <div className="min-w-0 flex-1 px-4 py-3.5">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            {item.branchSlugs.slice(0, 2).map((s) => (
-              <span key={s} className="aura-mono rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                style={{ color: branchColor(branchLabel(s)), background: `${branchColor(branchLabel(s))}1f` }}>
-                {branchLabel(s)}
-              </span>
-            ))}
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${KIND_STYLE[item.kind] ?? KIND_STYLE.haber}`}>
-              {KIND_LABEL[item.kind] ?? item.kind}
-            </span>
-            {categoryLabel(item.category) && (
-              <span className="aura-mono rounded-full bg-[var(--c-surface-2)] px-2 py-0.5 text-[10px] text-[var(--c-ink-2)]">
-                {categoryLabel(item.category)}
-              </span>
-            )}
-            <span className="text-[11px] text-[var(--c-ink-3)]">
-              {item.sourceName} · {formatDate(item.publishedAt)}
-            </span>
-          </div>
-
-          <Link href={`/doktor/doctorium/${item.id}`} className="mt-1.5 block text-sm font-semibold leading-snug text-[var(--c-ink)] hover:underline">
-            {item.title}
-          </Link>
-          {item.titleOriginal && <p className="mt-0.5 text-[11px] italic text-[var(--c-ink-3)]">{item.titleOriginal}</p>}
-          {item.authors && <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">{item.authors}</p>}
-
-          {/* İçtihat kartı (v6.87): karar metninden deterministik alıntı + metinde GEÇEN kanun
-              maddeleri ve sözlük terimleri (AI yok — kullanıcı kararı). Terim çipi tıklanınca
-              arşiv o terime süzülür. */}
-          {item.kind === "ictihat" && <IctihatCardMeta summary={item.summary} />}
-
-          {/* Doktrin kartı (v6.91): dizin özetinin ilk cümleleri — okuyucu makaleye karttaki
-              bağlantıdan gider (telif: tam metin barındırılmaz, "kaynağı aç" hep DOI/dizine). */}
-          {item.kind === "doktrin" && item.summary && (
-            <p className="mt-1.5 text-xs leading-relaxed text-[var(--c-ink-2)]">
-              {item.summary.length > 220 ? `${item.summary.slice(0, 219).trimEnd()}…` : item.summary}
-            </p>
-          )}
-
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-            {item.module === "akademik" && (
-              <Link href={`/doktor/doctorium/${item.id}`} className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-300 hover:underline">
-                <Sparkles size={12} /> {item.hasAiSummary ? "Klinik özet" : "2 dk klinik özet"}
-              </Link>
-            )}
-            {item.url && (
-              <a href={item.url} target="_blank" rel="noopener noreferrer nofollow"
-                className="inline-flex max-w-full items-center gap-1 text-[11px] text-[var(--c-accent-stronger)] hover:underline">
-                <ExternalLink size={12} className="shrink-0" />
-                <span className="aura-mono truncate">{item.doi ? `doi.org/${item.doi}` : "kaynağı aç"}</span>
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
     </li>
   );
 }
@@ -640,7 +548,7 @@ interface CongressRow {
   scope: string; venue: string | null; warning: string | null; confidence: string;
 }
 
-function CongressList({ rows, followed, canFollow }: { rows: CongressRow[]; followed: Set<string>; canFollow: boolean }) {
+function CongressList({ rows, followed, canFollow, savedIds }: { rows: CongressRow[]; followed: Set<string>; canFollow: boolean; savedIds: Set<string> | null }) {
   if (!rows.length) {
     return (
       <p className="mt-5 flex items-start gap-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-8 text-sm text-[var(--c-ink-2)]">
@@ -656,28 +564,40 @@ function CongressList({ rows, followed, canFollow }: { rows: CongressRow[]; foll
   return (
     <ul className="mt-5 grid gap-3">
       {rows.map((c) => (
-        <li key={c.id} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--c-ink-3)]">
-                <span className="aura-mono rounded-full bg-sky-500/15 px-2 py-0.5 font-semibold text-sky-300">
-                  {formatDate(c.startDate)}{c.endDate ? ` – ${formatDate(c.endDate)}` : ""}
-                </span>
-                {/* Kapsam rozeti: doktorun ilk baktığı ayrım (yurt içi mi, yurt dışı mı). */}
-                <span className="aura-mono rounded-full border border-[var(--c-hairline)] px-2 py-0.5">
-                  {c.scope === "uluslararasi" ? "🌍 Uluslararası" : "🇹🇷 Ulusal"}
-                </span>
-                {(c.city || c.country) && (
-                  <span className="inline-flex items-center gap-1"><MapPin size={11} />{[c.city, c.country].filter(Boolean).join(", ")}</span>
-                )}
-              </div>
-              <h3 className="mt-1.5 text-sm font-semibold text-[var(--c-ink)]">
-                <Link href={`/doktor/doctorium/kongre/${c.id}`} className="hover:underline">{c.title}</Link>
-              </h3>
-              {c.organizer && <p className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">{c.organizer}</p>}
-            </div>
-            {canFollow && <FollowButton congressId={c.id} following={followed.has(c.id)} />}
+        /* Kart standardı (2026-08-14): sol kenarda 3px bölüm şeridi (Kongre = tema-duyarlı ink),
+           üst satırda sembol+etiket · sağda Kaydet+Takip, altta ÇİZGİLİ aksiyon satırı. */
+        <li
+          key={c.id}
+          className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5"
+          style={{ borderInlineStart: "3px solid var(--c-ink)" }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-2">
+              <CalendarClock size={16} strokeWidth={1.9} className="text-[var(--c-ink)]" />
+              <span className="aura-mono text-[10px] font-bold tracking-[0.16em] text-[var(--c-ink)]">KONGRE</span>
+            </span>
+            <span className="flex items-center gap-1">
+              {savedIds != null && <SaveButton articleId={c.id} initialSaved={savedIds.has(c.id)} />}
+              {canFollow && <FollowButton congressId={c.id} following={followed.has(c.id)} />}
+            </span>
           </div>
+
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[var(--c-ink-3)]">
+            <span className="aura-mono rounded-full bg-sky-500/15 px-2 py-0.5 font-semibold text-sky-300">
+              {formatDate(c.startDate)}{c.endDate ? ` – ${formatDate(c.endDate)}` : ""}
+            </span>
+            {/* Kapsam rozeti: doktorun ilk baktığı ayrım (yurt içi mi, yurt dışı mı). */}
+            <span className="aura-mono rounded-full border border-[var(--c-hairline)] px-2 py-0.5">
+              {c.scope === "uluslararasi" ? "🌍 Uluslararası" : "🇹🇷 Ulusal"}
+            </span>
+            {(c.city || c.country) && (
+              <span className="inline-flex items-center gap-1"><MapPin size={11} />{[c.city, c.country].filter(Boolean).join(", ")}</span>
+            )}
+          </div>
+          <h3 className="mt-1.5 text-sm font-semibold text-[var(--c-ink)]">
+            <Link href={`/doktor/doctorium/kongre/${c.id}`} className="hover:underline">{c.title}</Link>
+          </h3>
+          {c.organizer && <p className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">{c.organizer}</p>}
 
           {(c.abstractDeadline || c.earlyBirdDeadline) && (
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[var(--c-ink-2)]">
@@ -694,7 +614,7 @@ function CongressList({ rows, followed, canFollow }: { rows: CongressRow[]; foll
             </div>
           )}
 
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-[var(--c-hairline)] pt-2.5">
             <Link href={`/doktor/doctorium/kongre/${c.id}`}
               className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--c-accent-stronger)] hover:underline">
               Kongre kartı →
@@ -721,7 +641,7 @@ function CongressList({ rows, followed, canFollow }: { rows: CongressRow[]; foll
  * kayıtlar "Teyit bekliyor" ibaresi taşır — doktor bilginin kesinlik derecesini kartta görür.
  * ⚠️ Başvuru butonu / işveren teması YOK (İŞKUR sınırı) — kart yalnız detay sayfasına götürür.
  */
-function CareerList({ rows }: { rows: Awaited<ReturnType<typeof careerPathways>> }) {
+function CareerList({ rows, savedIds }: { rows: Awaited<ReturnType<typeof careerPathways>>; savedIds: Set<string> | null }) {
   if (!rows.length) {
     return (
       <>
@@ -740,8 +660,17 @@ function CareerList({ rows }: { rows: Awaited<ReturnType<typeof careerPathways>>
           <li
             key={p.id}
             className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-4 transition hover:border-emerald-400/40"
+            style={{ borderInlineStart: "3px solid #60a5fa" }}
           >
-            <div className="flex flex-wrap items-center gap-2">
+            {/* Kart standardı (2026-08-14): sol şerit + sembol/etiket satırı · sağda Kaydet. */}
+            <div className="flex items-center justify-between gap-3">
+              <span className="flex items-center gap-2">
+                <TrendingUp size={16} strokeWidth={1.9} style={{ color: "#60a5fa" }} />
+                <span className="aura-mono text-[10px] font-bold tracking-[0.16em]" style={{ color: "#60a5fa" }}>KARİYER</span>
+              </span>
+              {savedIds != null && <SaveButton articleId={p.slug} initialSaved={savedIds.has(p.slug)} />}
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
                 {COUNTRY_LABEL[p.country] ?? p.country}
               </span>
@@ -786,12 +715,15 @@ function CareerList({ rows }: { rows: Awaited<ReturnType<typeof careerPathways>>
               </p>
             )}
 
-            <Link
-              href={`/doktor/doctorium/kariyer/${p.slug}`}
-              className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-300 hover:underline"
-            >
-              Adımları ve belge listesini gör <ArrowLeft size={12} className="rotate-180" />
-            </Link>
+            {/* Kart standardı: ÇİZGİLİ aksiyon satırı (2026-08-14). */}
+            <div className="mt-3 border-t border-[var(--c-hairline)] pt-2.5">
+              <Link
+                href={`/doktor/doctorium/kariyer/${p.slug}`}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-300 hover:underline"
+              >
+                Adımları ve belge listesini gör <ArrowLeft size={12} className="rotate-180" />
+              </Link>
+            </div>
           </li>
         ))}
       </ul>

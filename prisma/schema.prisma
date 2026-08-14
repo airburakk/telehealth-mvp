@@ -173,7 +173,10 @@ model Doctor {
   specYear        Int? // uzmanlık (belge) yılı
   certifications  String? // JSON string[] — mesleki sertifika/üyelikler
   publications    String? // JSON [{title,venue,year}] — akademik yayın/çalışmalar
-  photo           String? // profil fotoğrafı yolu (ör. /photos/pool/p07.jpg); yoksa cinsiyet-fallback (DoctorArt)
+  photo           String? // profil fotoğrafı yolu (ör. /photos/pool/p07.jpg ya da public Blob URL'i); yoksa cinsiyet-fallback (DoctorArt)
+  /// Profil tanıtım videosu (2026-08-14) — YouTube/Vimeo URL'i YA DA public Blob URL'i (client-upload).
+  /// ≤60 sn kuralı İSTEMCİDE doğrulanır (sunucu süre ölçemez — ffmpeg yok); gerçek tavan Blob 50MB sınırı.
+  introVideo      String?
   // M5 Doktor Ana Sayfa onboarding & pencere görünürlüğü (lib/doctor-home.ts)
   onboardedAt        DateTime? // ilk-giriş onboarding kapısı tamamlandı mı (null = /doktor/baslangic'a yönlendir)
   freeCareOptIn      Boolean   @default(false) // Ücretsiz Sağlık Hizmeti vakası kabul ediyor mu → Ana Sayfa penceresi görünürlüğü (anlık müsaitlik = freeCareState ayrı)
@@ -181,6 +184,10 @@ model Doctor {
   /// Doctorium (v6.48) — hekimin haber akışında görmek istediği branş SLUG'ları. JSON string[].
   /// null/boş = yalnız kendi branşı (varsayılan davranış, tercih ekranına hiç girmemiş hekim).
   newsBranches       String?
+  /// Doctorium Akış Tercihleri (Faz 2, 2026-08-14) — Akışım'a hangi BÖLÜMLER girsin. JSON string[]
+  /// ("akademik" | "sektorel" | "ilac" | "mevzuat" | "kongre" | "kariyer"). null/boş = TÜMÜ
+  /// (tercih ekranına hiç girmemiş hekim her bölümü görür — daraltma bilinçli seçimdir).
+  feedModules        String?
   /// Doctorium kongre alarmı (v6.49): takip edilen kongrenin BAŞLANGICINDAN kaç gün önce
   /// hatırlatılsın. null = alarm kapalı. Hatırlatma günlük bakım cron'unda gönderilir.
   congressAlertDays  Int?
@@ -1127,6 +1134,20 @@ model CongressFollow {
 
   @@unique([doctorId, congressId])
   @@index([congressId])
+}
+
+/// Doctorium "Kaydettiklerim" (Faz 2, 2026-08-14) — doktorun işaretlediği içerikler.
+/// CongressFollow deseninin kopyası: ilişkisiz düz id'ler + unique çift (kod-level join).
+/// Puan ÜRETMEZ (ödül ekonomisinden bilinçli ayrık — "kaydet-farm" olmasın); öğrenci-sınırlı
+/// üye de kaydedebilir (içerik işlevi, pazarlama yüzeyi değil).
+model SavedArticle {
+  id        String   @id @default(cuid())
+  doctorId  String
+  articleId String
+  createdAt DateTime @default(now())
+
+  @@unique([doctorId, articleId])
+  @@index([doctorId, createdAt]) // Kaydettiklerim listesi (yeni→eski)
 }
 
 /// Doctorium sponsorlu içerik kampanyası (v6.68 Faz 1) — yalnız İLAÇ-DIŞI reklamverenler.

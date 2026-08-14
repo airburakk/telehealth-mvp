@@ -72,7 +72,9 @@ export default async function RecoveryMonitor() {
   }));
 
   return (
-    <div className="mx-auto max-w-4xl px-5 py-10">
+    /* max-w-5xl (2026-08-14): /doktor · Post-Op · Doctorium üçlüsü AYNI genişlikte — sekme
+       geçişinde "daralıp açılma" hissi olmasın (kullanıcı kararı; eski 4xl idi). */
+    <div className="mx-auto max-w-5xl px-5 py-10">
       {/* v6.64 hizalama: dolu turkuaz ikon bloğu KALDIRILDI (iç yüzeyde tekildi) — başlık
           /doktor ve /vakalarim ile aynı sade display deseni. */}
       <div>

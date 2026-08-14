@@ -18,7 +18,8 @@ export function SiteFooter() {
   )
     return null;
   return (
-    <footer className="theme-dark border-t border-[var(--c-hairline)] bg-[var(--c-bg)] print:hidden">
+    /* Krom katmanı (2026-08-14): Header + Doctorium bandıyla aynı --c-chrome zemini — içerik alanından ayrışır. */
+    <footer className="theme-dark border-t border-[var(--c-hairline)] bg-[var(--c-chrome)] print:hidden">
       <div className="mx-auto max-w-6xl px-5 py-5 text-xs text-[var(--c-ink-3)] flex flex-wrap items-center justify-between gap-2">
         <span>AURA · MVP · Demo amaçlıdır</span>
         <span className="flex items-center gap-3">

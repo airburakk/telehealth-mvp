@@ -64,17 +64,20 @@ export function SurveyCardView(p: Props) {
   }
 
   return (
-    <li className={`overflow-hidden rounded-2xl border bg-[var(--c-surface)] ${sponsored ? "border-dashed border-amber-400/40" : "border-[var(--c-hairline)]"}`}>
-      <div className="flex">
-        <div
-          aria-hidden
-          className="relative hidden w-[112px] shrink-0 items-center justify-center overflow-hidden bg-[var(--c-surface-2)] sm:flex"
-          style={{ borderRight: `3px solid ${accent}` }}
-        >
-          <span className="absolute inset-0 opacity-[0.07]" style={{ background: accent }} />
-          <BarChart2 size={26} style={{ color: accent }} strokeWidth={1.8} />
-        </div>
-        <div className="min-w-0 flex-1 px-4 py-3.5">
+    /* Kart standardı (2026-08-14): kapak bölmesi kalktı — genel kutu politikası. Topluluk
+       anketi: sol 3px gök şeridi; SPONSORLU anket: TÜM ÇEVRE kalın sarı (reklam ayrımı,
+       sponsor kartıyla aynı dil). Üst satır: küçük sembol + tür etiketi (Post-Op deseni). */
+    <li
+      className={`rounded-2xl bg-[var(--c-surface)] px-4 py-3.5 ${sponsored ? "border-2 border-amber-400/70" : "border border-[var(--c-hairline)]"}`}
+      style={sponsored ? undefined : { borderInlineStart: `3px solid ${accent}` }}
+    >
+      <div className="flex items-center gap-2">
+        <BarChart2 size={16} strokeWidth={1.9} style={{ color: accent }} />
+        <span className="aura-mono text-[10px] font-bold tracking-[0.16em]" style={{ color: accent }}>
+          {sponsored ? "SPONSORLU ANKET" : "TOPLULUK ANKETİ"}
+        </span>
+      </div>
+      <div className="mt-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             {sponsored ? (
               <span className="aura-mono rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
@@ -166,7 +169,6 @@ export function SurveyCardView(p: Props) {
             </div>
             </>
           )}
-        </div>
       </div>
     </li>
   );

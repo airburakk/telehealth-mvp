@@ -9,7 +9,7 @@ import { branchColor } from "@/lib/branch-visuals";
 import { extractKeywords, extractLawRefs } from "@/lib/hukuk-keywords";
 import {
   ArrowLeft, ExternalLink, Sparkles, AlertTriangle, FlaskConical, ListChecks,
-  ShieldQuestion, Gavel, Users, CalendarCheck, FileText,
+  ShieldQuestion, ScrollText, Users, CalendarCheck, FileText,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -110,8 +110,10 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
       {/* Mevzuat / sektörel / ilaç → doktor özeti. Kaynak metni çekilip AI ile yapılandırılır. */}
       {reg?.state === "ok" && (
         <section className="mt-6 rounded-2xl border border-amber-400/25 bg-amber-500/[0.07] p-5">
+          {/* Çekiç kaldırıldı (2026-08-14 sembol kararı: çekiç yalnız içtihat/hüküm bağlamının) —
+              bu bölüm mevzuat/sektörel/ilaç ORTAK özeti; ScrollText = belge özeti. */}
           <h2 className="flex items-center gap-2 text-sm font-semibold text-amber-300">
-            <Gavel size={16} /> Doktor özeti
+            <ScrollText size={16} /> Doktor özeti
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-[var(--c-ink)]">{reg.data.summary}</p>
 

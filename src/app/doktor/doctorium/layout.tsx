@@ -11,6 +11,10 @@ export const dynamic = "force-dynamic";
 // → sayfa "önce belgenizi yükleyin" bandını gösterir). Segment layout'u [id] dahil TÜM alt
 // rotaları sarmaladığı için kapı tek noktadan işler; page.tsx'lerin kendi rol kontrolleri
 // (derinlik savunması) aynen durur. COORDINATOR/ADMIN gözetim erişimi mevcut davranışıyla geçer.
+//
+// ⚠️ Faz 1 bandı (DoctoriumSidebar/Shell) BURADA DEĞİL, page'lerde yaşar — layout searchParams
+// göremez; useSearchParams'lı client bant denemesi Next 16'da Suspense'te asılı kaldı ($RC
+// tamamlanma sinyali hiç gelmedi). Aktifliği bilen page, Shell'i kendisi kurar.
 export default async function DoctoriumLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");

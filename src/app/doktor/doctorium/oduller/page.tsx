@@ -7,6 +7,7 @@ import {
 } from "@/lib/rewards";
 import { isStudentOnly } from "@/lib/doctor-activation";
 import { RewardCatalog } from "./RewardCatalog";
+import { DoctoriumShell } from "../DoctoriumSidebar";
 import { ArrowLeft, Info, Star } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -59,10 +60,13 @@ export default async function RewardsPage() {
   const iso = (d: Date) => d.toISOString().slice(0, 10);
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-8">
+    <DoctoriumShell active="oduller" balance={balance} isDoctor>
+    {/* px-5 = /doktor içerik boşluğu (hiza kararı 2026-08-14): başlıklar sekmeler arasında aynı x'te. */}
+    <div className="max-w-2xl px-5 py-8">
+      {/* Masaüstünde dönüş banttadır (Faz 1); bu link yalnız mobil için. */}
       <Link
         href="/doktor/doctorium"
-        className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"
+        className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)] md:hidden"
       >
         <ArrowLeft size={15} /> Doctorium
       </Link>
@@ -127,5 +131,6 @@ export default async function RewardsPage() {
         <span>{REWARD_TERMS_TEXT}</span>
       </p>
     </div>
+    </DoctoriumShell>
   );
 }

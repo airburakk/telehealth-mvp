@@ -30,6 +30,13 @@ const ALERT_OPTIONS = [
 
 interface Props {
   module: string;
+  /** Akış Tercihleri bölümü (Faz 2, 2026-08-14) — yalnız Akışım + DOCTOR; panelin İLK sorusu. */
+  showFeedPrefs: boolean;
+  /** Seçilebilir bölümler — server'dan gelir (lib/doctorium FEED_MODULE_OPTIONS; client bu
+   *  server modülünü import EDEMEZ [db bağımlılığı] → rangeOptions gibi props'la taşınır). */
+  feedOptions: { key: string; label: string }[];
+  /** Kayıtlı tercih; [] = tümü seçili demektir. */
+  feedInitial: string[];
   /** Aralık seçicisi gösterilsin mi (mevzuat/sektörel/ilaç). */
   showRange: boolean;
   /** Kategori seçicisi gösterilsin mi (mevzuat/sektörel). */
@@ -64,6 +71,17 @@ export function DoctoriumFilters(p: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
+  // Akış Tercihleri (Faz 2): [] = tümü → başlangıçta hepsi işaretli görünür.
+  const feedAll = p.feedOptions.map((o) => o.key);
+  const [feedMods, setFeedMods] = useState<Set<string>>(
+    new Set(p.feedInitial.length ? p.feedInitial : feedAll)
+  );
+  const [savingFeed, setSavingFeed] = useState(false);
+  const [feedMsg, setFeedMsg] = useState<string | null>(null);
+  const feedInitialSet = p.feedInitial.length ? p.feedInitial : feedAll;
+  const feedDirty =
+    feedMods.size !== feedInitialSet.length || feedInitialSet.some((k) => !feedMods.has(k));
+
   const [branches, setBranches] = useState<Set<string>>(new Set(p.branchInitial));
   const [savingBranches, setSavingBranches] = useState(false);
   const [branchMsg, setBranchMsg] = useState<string | null>(null);
@@ -85,10 +103,11 @@ export function DoctoriumFilters(p: Props) {
   // Bu modülde gösterilecek hiçbir ayar yoksa düğmeyi de çizme (ör. Akademik: aralık/kategori/
   // alarm yok) — boş panel açılmasın.
   const hasAnySection =
-    p.showRange || p.showCategory || p.showAlerts || p.showScope || p.showSponsor || !!p.branchOptions;
+    p.showFeedPrefs || p.showRange || p.showCategory || p.showAlerts || p.showScope || p.showSponsor || !!p.branchOptions;
 
   // Kapalı paneldeki özet: hangi ayarların etkin olduğu tek bakışta görünsün.
   const summary = [
+    p.showFeedPrefs ? (feedMods.size === feedAll.length ? "tüm bölümler" : `${feedMods.size} bölüm`) : null,
     p.showRange && activeRange ? activeRange : null,
     p.showCategory && activeCat ? activeCat : null,
     p.showScope ? (p.scope === "ulusal" ? "🇹🇷 ulusal" : p.scope === "uluslararasi" ? "🌍 uluslararası" : "tüm kapsam") : null,
@@ -96,6 +115,25 @@ export function DoctoriumFilters(p: Props) {
     p.showAlerts ? (alertsOn ? "alarm açık" : "alarm kapalı") : null,
     p.showSponsor ? (sponsorOn ? "sponsor: kişisel" : "sponsor: genel") : null,
   ].filter(Boolean).join(" · ");
+
+  async function saveFeedModules() {
+    setSavingFeed(true);
+    setFeedMsg(null);
+    try {
+      const res = await fetch("/api/doctor/feed-modules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ modules: [...feedMods] }),
+      });
+      if (!res.ok) throw new Error();
+      setFeedMsg("Kaydedildi");
+      router.refresh();
+    } catch {
+      setFeedMsg("Kaydedilemedi");
+    } finally {
+      setSavingFeed(false);
+    }
+  }
 
   async function saveBranches() {
     setSavingBranches(true);
@@ -194,12 +232,65 @@ export function DoctoriumFilters(p: Props) {
         <SlidersHorizontal size={14} />
         Özelleştir
         {summary && <span className="aura-mono truncate text-[10px] font-normal text-[var(--c-ink-3)]">{summary}</span>}
-        {branchesDirty && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-label="kaydedilmemiş değişiklik" />}
+        {(branchesDirty || feedDirty) && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-label="kaydedilmemiş değişiklik" />}
         <ChevronDown size={14} className={`ml-auto shrink-0 transition ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
         <div className="mt-2 grid gap-5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-4">
+          {/* AKIŞ TERCİHLERİ — panelin İLK sorusu (kullanıcı kararı 2026-08-14): Akışım'a hangi
+              bölümler girsin. En az bir bölüm açık kalır (son çip kapatılamaz — boş akış anlamsız). */}
+          {p.showFeedPrefs && (
+            <section>
+              <h3 className={`${sectionTitle} flex items-center gap-1.5`}>
+                Akış tercihleri
+                {savingFeed && <Loader2 size={11} className="animate-spin" />}
+              </h3>
+              <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
+                Akışınıza hangi bölümlerin içeriği girsin? Yeni eklenen kongre ve kariyer
+                kayıtları da seçiliyse akışa kart olarak düşer.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {p.feedOptions.map((o) => {
+                  const on = feedMods.has(o.key);
+                  return (
+                    <button
+                      key={o.key}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => {
+                        setFeedMods((prev) => {
+                          const n = new Set(prev);
+                          if (n.has(o.key)) {
+                            if (n.size === 1) return n; // son bölüm kapatılamaz
+                            n.delete(o.key);
+                          } else n.add(o.key);
+                          return n;
+                        });
+                        setFeedMsg(null);
+                      }}
+                      className={`inline-flex items-center gap-1 ${chip(on)}`}
+                    >
+                      {on && <Check size={11} strokeWidth={3} />}
+                      {o.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {(feedDirty || feedMsg) && (
+                <div className="mt-3 flex items-center gap-3">
+                  {feedDirty && (
+                    <button type="button" onClick={saveFeedModules} disabled={savingFeed}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/90 px-3.5 py-1.5 text-xs font-semibold text-[#062a20] hover:bg-emerald-400 disabled:opacity-60">
+                      {savingFeed && <Loader2 size={12} className="animate-spin" />} Tercihleri kaydet
+                    </button>
+                  )}
+                  {feedMsg && <span className="text-[11px] text-[var(--c-ink-2)]">{feedMsg}</span>}
+                </div>
+              )}
+            </section>
+          )}
+
           {p.showRange && (
             <section>
               <h3 className={sectionTitle}>Geriye dönük</h3>

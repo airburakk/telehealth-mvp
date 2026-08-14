@@ -10,6 +10,10 @@
 .theme-light {
   --c-bg: #ffffff;
   --c-bg-deep: #f4f5f3;
+  /* Krom katmanı (2026-08-14, Doctorium Faz 1): Header + SiteFooter + Doctorium bandı — içerik
+     zemininden AYRIŞAN çerçeve tonu (gündüz: hafif gri-yeşil; gece: içerikten koyu). İçerik
+     "sahne" olur, krom geriye çekilir. Yeni krom yüzeyi eklerken bu token'ı kullan. */
+  --c-chrome: #eaede8;
   --c-panel: #f7f8f5;
   --c-surface: #eef1ec;
   --c-surface-2: #e6e8e2;
@@ -40,6 +44,7 @@
 .theme-dark {
   --c-bg: #0d0e10;
   --c-bg-deep: #101113;
+  --c-chrome: #08090b; /* krom katmanı — bkz. theme-light'taki açıklama */
   --c-panel: #161719;
   --c-surface: #1e1f22;
   --c-surface-2: #26272b;
@@ -128,6 +133,13 @@
 html,
 body {
   height: 100%;
+}
+
+/* Scrollbar oluğu SABİT (2026-08-14): kısa sayfalarda (Post-Op boş hâli, Sistem Mesajları,
+   Profilim…) scrollbar kaybolunca ortalı max-w blokları yatay kayıyordu — sekme geçişinde
+   "oynama" hissinin kökü. Oluk hep ayrılır; scrollbar görünse de görünmese de blok sabit durur. */
+html {
+  scrollbar-gutter: stable;
 }
 
 body {
