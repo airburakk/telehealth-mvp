@@ -3,6 +3,7 @@ import { KIND_LABEL, categoryLabel, branchLabel, type FeedItem } from "@/lib/doc
 import { branchColor } from "@/lib/branch-visuals";
 import { extractKeywords, extractLawRefs, extractExcerpt } from "@/lib/hukuk-keywords";
 import { SaveButton } from "./SaveButton";
+import { CoverArt } from "./CoverArt";
 import {
   ExternalLink, FlaskConical, Gavel, Scale, Library, Pill, Building2, Sparkles,
   CalendarClock, TrendingUp,
@@ -11,9 +12,11 @@ import {
 /**
  * Doctorium içerik kartı — STANDART düzen (kullanıcı kararları 2026-08-14, 3. tur; Post-Op
  * kartı [RecoveryList] birebir örnek):
- *   · SOL KAPAK BÖLMESİ YOK — kartın sol kenarında 3px BÖLÜM-RENGİ şeridi (borderInlineStart,
- *     Post-Op'un lane şeridi deseni). Her içerik ait olduğu bölümün rengini alır; akademikte
- *     branş rengi KULLANILMAZ — tüm akademik zümrüt (kullanıcı kararı).
+ *   · SOL KÜNYE-KAPAĞI (v6.99, kullanıcı kararı 2026-08-15 — 2026-08-14'ün "sol kapak bölmesi
+ *     yok" kararını SÜPERSEDE eder): 72px KODDAN ÜRETİLEN desen (CoverArt — fotoğraf değil,
+ *     telif yok, dış istek yok). 3px BÖLÜM-RENGİ şeridi (borderInlineStart, Post-Op lane deseni)
+ *     korunur. Her içerik ait olduğu bölümün rengini alır; akademikte branş rengi KULLANILMAZ —
+ *     tüm akademik zümrüt (kullanıcı kararı).
  *   · Üst satır: küçük BÖLÜM SEMBOLÜ başlığın yanında (Post-Op avatar deseni) + bölüm etiketi;
  *     sağda Kaydet. Sembol tür-bazlı (terazi=mevzuat · çekiç=içtihat · kütüphane=doktrin),
  *     renk bölüm-bazlı.
@@ -118,6 +121,10 @@ export function ArticleCard({ item, saved }: { item: FeedItem; saved: boolean | 
       className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5"
       style={{ borderInlineStart: `3px solid ${accent}` }}
     >
+      {/* v6.99 A-yerleşimi: sol künye-kapağı + sağda içerik sütunu (min-w-0 = taşma kırpılır). */}
+      <div className="flex items-start gap-3.5">
+        <CoverArt item={item} size="card" />
+        <div className="min-w-0 flex-1">
       {/* Üst satır — Post-Op deseni: küçük bölüm sembolü + etiket yan yana · sağda Kaydet */}
       <div className="flex items-start justify-between gap-2">
         <span className="flex items-center gap-2">
@@ -184,6 +191,8 @@ export function ArticleCard({ item, saved }: { item: FeedItem; saved: boolean | 
             <span className="aura-mono truncate">{item.doi ? `doi.org/${item.doi}` : "kaynağı aç"}</span>
           </a>
         )}
+      </div>
+        </div>
       </div>
     </li>
   );

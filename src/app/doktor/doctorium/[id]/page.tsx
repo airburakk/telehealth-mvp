@@ -7,6 +7,7 @@ import {
 } from "@/lib/doctorium";
 import { branchColor } from "@/lib/branch-visuals";
 import { extractKeywords, extractLawRefs } from "@/lib/hukuk-keywords";
+import { CoverArt } from "../CoverArt";
 import {
   ArrowLeft, ExternalLink, Sparkles, AlertTriangle, FlaskConical, ListChecks,
   ShieldQuestion, ScrollText, Users, CalendarCheck, FileText,
@@ -40,6 +41,9 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
       <Link href="/doktor/doctorium" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
         <ArrowLeft size={15} /> Doctorium
       </Link>
+
+      {/* v6.99 C-yerleşimi: üretilmiş üst bant (CoverArt — koddan desen, fotoğraf değil). */}
+      <CoverArt item={item} size="band" />
 
       <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1">
         {item.branchSlugs.map((s) => (
