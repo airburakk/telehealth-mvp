@@ -41,7 +41,11 @@ const cspEnforced = [
   "style-src 'self' 'unsafe-inline'",
   // data: → post-op foto (canvas.toDataURL) + belge önizlemeleri (readAsDataURL).
   // *.blob.vercel-storage.com → doktor profil fotoğrafı (public Blob, client-upload — 2026-08-14).
-  "img-src 'self' data: https://*.blob.vercel-storage.com",
+  // v6.99.2 haber görselleri (2026-08-16): Doctorium haber DETAYI kaynağın kendi görselini
+  // hotlink'ler — host listesi lib/doctorium-sources.ts NEWS_IMAGE_HOSTS ile SÖZLEŞMELİDİR
+  // (birim test kilitli: doctorium-filtreler.test.ts). Buraya host eklerken ORADA da ekle;
+  // genel "https:" genişletmesi BİLİNÇLİ yapılmadı (dar-CSP disiplini, v6.98 deseni).
+  "img-src 'self' data: https://*.blob.vercel-storage.com https://www.istabip.org.tr https://www.ohsad.org https://cdn.who.int https://www.who.int https://scx1.b-cdn.net https://www.ttb.org.tr https://img.medscapestatic.com",
   // blob: → DoctorVideoCard VTT altyazı track'i (createObjectURL). WebRTC srcObject CSP'ye tabi değil.
   // *.blob.vercel-storage.com → doktor tanıtım videosu (public Blob — 2026-08-14).
   "media-src 'self' blob: https://*.blob.vercel-storage.com",

@@ -1046,6 +1046,10 @@ model NewsArticle {
   authors       String? // "Yılmaz A, Chen B, ve ark."
   url           String? // kalıcı adres (DOI varsa doi.org)
   doi           String?
+  /// v6.99.2 — kaynak sayfanın kendi görseli (og:image / RSS media). YALNIZ NEWS_IMAGE_HOSTS
+  /// allowlist'inden yazılır (CSP img-src ile sözleşme testli); hotlink — görsel BARINDIRILMAZ.
+  /// null = üretilmiş kapak (CoverArt). Detay sayfasında kaynak atfıyla gösterilir.
+  imageUrl      String?
   publishedAt   DateTime
   createdAt     DateTime @default(now())
 

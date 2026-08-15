@@ -169,13 +169,15 @@ export interface FeedItem {
   branchSlugs: string[];
   category: string | null;
   hasAiSummary: boolean;
+  /** v6.99.2 — kaynağın kendi görseli (allowlist'li hotlink); null = üretilmiş kapak. */
+  imageUrl: string | null;
 }
 
 type Row = {
   id: string; module: string; kind: string; title: string; titleOriginal: string | null;
   summary: string; sourceName: string; authors: string | null; url: string | null;
   doi: string | null; publishedAt: Date; branchSlugs: string; aiSummary: string | null;
-  category: string | null;
+  category: string | null; imageUrl: string | null;
 };
 
 function toFeedItem(r: Row): FeedItem {
@@ -190,7 +192,7 @@ function toFeedItem(r: Row): FeedItem {
 const ROW_SELECT = {
   id: true, module: true, kind: true, title: true, titleOriginal: true, summary: true,
   sourceName: true, authors: true, url: true, doi: true, publishedAt: true,
-  branchSlugs: true, aiSummary: true, category: true,
+  branchSlugs: true, aiSummary: true, category: true, imageUrl: true,
 } as const;
 
 /**
@@ -246,7 +248,7 @@ function congressToFeedItem(c: {
     ].filter(Boolean).join(" · "),
     sourceName: c.organizer ?? "Kongre takvimi", authors: null,
     url: c.url, doi: null, publishedAt: c.createdAt, category: null,
-    branchSlugs: [], hasAiSummary: false,
+    branchSlugs: [], hasAiSummary: false, imageUrl: null,
   };
 }
 
@@ -273,7 +275,7 @@ function careerToFeedItem(p: {
     summary: p.summary,
     sourceName: p.authority, authors: null,
     url: null, doi: null, publishedAt: p.createdAt, category: null,
-    branchSlugs: [], hasAiSummary: false,
+    branchSlugs: [], hasAiSummary: false, imageUrl: null,
   };
 }
 

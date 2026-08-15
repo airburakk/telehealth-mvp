@@ -7,10 +7,15 @@
 //
 // Vakaların ÇOĞU canlı veriden alınmıştır (dev DB'deki 192 doktrin kaydı + kaynakların 2026-08-15
 // tarihli gerçek başlıkları) — kurgusal örnekle geçen süzgeç sahada kalıyordu.
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { scoreLegalRelevance } from "@/lib/doktrin-filter";
 import { tier1Query, tier2Query, BRANCH_JOURNALS, GENERAL_JOURNALS } from "@/lib/academic-journals";
-import { isProfessionallyRelevant, categorize, parseItoDate } from "@/lib/doctorium-sources";
+import {
+  isProfessionallyRelevant, categorize, parseItoDate,
+  NEWS_IMAGE_HOSTS, allowedImageUrl, extractOgImage,
+} from "@/lib/doctorium-sources";
 
 describe("Doktrin — hukuk alaka süzgeci (v6.99)", () => {
   it("özetteki RUTİN onam cümlesi tek başına doktrin yapmaz (kirliliğin ana kaynağı)", () => {
@@ -135,6 +140,39 @@ describe("Sektörel — mesleki alaka süzgeci (v6.99)", () => {
   it("kategori ataması: mesleki gündem yönetime karışmaz", () => {
     expect(categorize("Asistan hekimlerin nöbet ücreti düzenlemesi")).toBe("meslek");
     expect(categorize("Özel Hastaneler Yönetmeliğinde Değişiklik")).toBe("yonetim");
+  });
+});
+
+// v6.99.2 — haber görseli (kullanıcı isteği 2026-08-16): allowlist + og:image çıkarımı + CSP sözleşmesi
+describe("Haber görseli — allowlist & og:image (v6.99.2)", () => {
+  it("yalnız allowlist'li https host'lar geçer", () => {
+    expect(allowedImageUrl("https://www.istabip.org.tr/site_icerik/2026/agustos/x.png")).toBeTruthy();
+    expect(allowedImageUrl("https://cdn.who.int/media/images/y.jpg?sfvrsn=1")).toBeTruthy();
+    expect(allowedImageUrl("https://evil.example.com/x.png")).toBeNull(); // listede yok
+    expect(allowedImageUrl("http://www.ohsad.org/x.jpg")).toBeNull(); // https değil
+    expect(allowedImageUrl("not-a-url")).toBeNull();
+    expect(allowedImageUrl(null)).toBeNull();
+  });
+
+  it("og:image meta'sı iki öznitelik sırasında da çıkarılır; allowlist dışı URL yok sayılır", () => {
+    const a = `<meta property="og:image" content="https://www.ohsad.org/wp-content/uploads/2026/07/HC_manset.jpg" />`;
+    const b = `<meta content="https://cdn.who.int/media/z.jpg" property="og:image" />`;
+    const c = `<meta property="og:image" content="https://cdn.evil.com/z.jpg" />`;
+    expect(extractOgImage(a)).toContain("ohsad.org");
+    expect(extractOgImage(b)).toContain("cdn.who.int");
+    expect(extractOgImage(c)).toBeNull();
+    expect(extractOgImage("<html>görselsiz</html>")).toBeNull();
+  });
+
+  it("SÖZLEŞME: NEWS_IMAGE_HOSTS'un her host'u CSP img-src'ta listeli (next.config.ts)", () => {
+    // Allowlist ile CSP el ele değişmeli — biri güncellenip diğeri unutulursa görseller
+    // tarayıcıda sessizce engellenir (CSP ihlali konsola düşer, kullanıcı kırık görsel görür).
+    const config = readFileSync(join(process.cwd(), "next.config.ts"), "utf-8");
+    const imgSrc = /"img-src [^"]+"/.exec(config)?.[0] ?? "";
+    expect(imgSrc, "img-src satırı bulunamadı").not.toBe("");
+    for (const host of NEWS_IMAGE_HOSTS) {
+      expect(imgSrc, `CSP img-src '${host}' içermiyor — next.config.ts'i güncelle`).toContain(`https://${host}`);
+    }
   });
 });
 

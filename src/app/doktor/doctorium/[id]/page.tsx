@@ -42,8 +42,21 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
         <ArrowLeft size={15} /> Doctorium
       </Link>
 
-      {/* v6.99 C-yerleşimi: üretilmiş üst bant (CoverArt — koddan desen, fotoğraf değil). */}
-      <CoverArt item={item} size="band" />
+      {/* v6.99.2: haber detayında KAYNAĞIN KENDİ görseli (og:image/RSS media — allowlist'li
+          hotlink, barındırılmaz; kaynak atfı kaldırılamaz). Görseli olmayan içerik v6.99
+          C-yerleşimine düşer: üretilmiş üst bant (CoverArt — koddan desen, fotoğraf değil). */}
+      {item.imageUrl ? (
+        <figure className="mt-4 overflow-hidden rounded-2xl border border-[var(--c-hairline)]">
+          {/* eslint-disable-next-line @next/next/no-img-element -- dış hotlink: next/image
+              optimizasyonu görseli SUNUCUMUZDAN geçirir (kopya = telif); ham img bilinçli. */}
+          <img src={item.imageUrl} alt={`${item.sourceName} haber görseli`} className="block max-h-[320px] w-full object-cover" />
+          <figcaption className="aura-mono border-t border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-1.5 text-[10px] tracking-[0.12em] text-[var(--c-ink-3)]">
+            GÖRSEL: {item.sourceName.toUpperCase()} — KAYNAĞA AİTTİR
+          </figcaption>
+        </figure>
+      ) : (
+        <CoverArt item={item} size="band" />
+      )}
 
       <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1">
         {item.branchSlugs.map((s) => (

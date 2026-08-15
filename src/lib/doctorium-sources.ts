@@ -200,26 +200,110 @@ export interface IngestOpts {
   onItem?: (line: string) => void;
 }
 
-/** Tek kayıt yaz (varsa atla). Dönen: yeni mi. dryRun'da yazmadan "yeni olurdu" bilgisi döner. */
+/**
+ * Tek kayıt yaz (varsa atla). Dönen: yeni mi. dryRun'da yazmadan "yeni olurdu" bilgisi döner.
+ * `getImage` (v6.99.2): görsel URL'i TEMBEL üretilir — yalnız kayıt GERÇEKTEN yeniyken çağrılır
+ * (og:image çıkarımı sayfa isteği gerektirir; mevcut kayıtlar için her gece yeniden istenmesin).
+ */
 async function upsertArticle(a: {
   source: string; externalId: string; module: string; category: string | null;
   kind: string; title: string; summary?: string; sourceName: string; url: string | null;
   publishedAt: Date; branchSlugs?: string;
-}, dryRun?: boolean): Promise<boolean> {
+}, dryRun?: boolean, getImage?: () => Promise<string | null>): Promise<boolean> {
   const exists = await db.newsArticle.findUnique({
     where: { source_externalId: { source: a.source, externalId: a.externalId } },
     select: { id: true },
   });
   if (exists) return false;
   if (dryRun) return true;
+  // Görsel çıkarımı en-iyi-çaba: hata haber kaydını DÜŞÜRMEZ (görselsiz yazılır — CoverArt devrede).
+  let imageUrl: string | null = null;
+  if (getImage) {
+    try { imageUrl = await getImage(); } catch { /* görselsiz devam */ }
+  }
   await db.newsArticle.create({
     data: {
       source: a.source, externalId: a.externalId, module: a.module, category: a.category,
       kind: a.kind, title: a.title, summary: a.summary ?? "", sourceName: a.sourceName,
-      url: a.url, publishedAt: a.publishedAt, branchSlugs: a.branchSlugs ?? "[]",
+      url: a.url, publishedAt: a.publishedAt, branchSlugs: a.branchSlugs ?? "[]", imageUrl,
     },
   });
   return true;
+}
+
+// ── Haber görseli (v6.99.2 — kullanıcı isteği 2026-08-16) ───────────────────
+//
+// Haber DETAYINDA kaynağın kendi görseli gösterilir (akış kartı CoverArt kalır). Görsel
+// BARINDIRILMAZ — hotlink + kaynak atfı (telif: kopya almak lisans ister, atıflı hotlink
+// aggregator pratiğidir; nihai hukuki değerlendirme 👤). İki kaynak tipi:
+//   · RSS media etiketi (media:content/media:thumbnail/enclosure) — MedicalXpress verir.
+//   · Makale sayfasının og:image meta'sı — İTO/OHSAD/WHO/TTB/Medscape verir (2026-08-16 ölçümü).
+//
+// ⚠️ ALLOWLIST ŞART: CSP img-src YALNIZ bu host'lara açılır (next.config.ts) — listede olmayan
+// host'tan gelen URL YAZILMAZ (yazılsa da tarayıcı engeller = kırık görsel). Bu liste ile
+// next.config.ts img-src'ı sözleşme testiyle kilitlidir (tests/unit/doctorium-filtreler).
+// 🚩 img.medscapestatic.com görselleri sıklıkla AJANS (Getty — "gty-*.jpg") kaynaklı; hukuki
+// rahatsızlıkta bu satırı silmek yeter (Medscape haberleri görselsiz kalır, CoverArt devralır).
+export const NEWS_IMAGE_HOSTS: string[] = [
+  "www.istabip.org.tr",
+  "www.ohsad.org",
+  "cdn.who.int",
+  "www.who.int",
+  "scx1.b-cdn.net", // Medical Xpress RSS thumbnail CDN'i
+  "www.ttb.org.tr",
+  "img.medscapestatic.com", // 🚩 Getty riski — yukarıdaki not
+];
+
+/** URL allowlist'li bir https görseli mi? Değilse null (CSP zaten engellerdi — hiç yazma). */
+export function allowedImageUrl(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  try {
+    const u = new URL(raw.trim());
+    if (u.protocol !== "https:") return null;
+    return NEWS_IMAGE_HOSTS.includes(u.hostname) ? u.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+/** HTML'den og:image (og:image:url / name= varyantları dahil) — allowlist süzgeçli. */
+export function extractOgImage(html: string): string | null {
+  for (const m of html.matchAll(/<meta[^>]+(?:property|name)="og:image(?::url)?"[^>]+content="([^"]+)"/gi)) {
+    const ok = allowedImageUrl(plain(m[1]));
+    if (ok) return ok;
+  }
+  // content önce, property sonra yazılmış varyant (sıra garanti değil).
+  for (const m of html.matchAll(/<meta[^>]+content="([^"]+)"[^>]+(?:property|name)="og:image(?::url)?"/gi)) {
+    const ok = allowedImageUrl(plain(m[1]));
+    if (ok) return ok;
+  }
+  return null;
+}
+
+/**
+ * Makale sayfasından og:image çek (en-iyi-çaba; yalnız YENİ kayıtlar için çağrılır).
+ * TTB leaf-only TLS zinciri burada da geçerli → host'a göre özel-CA istemcisi seçilir.
+ * Medscape sınıfı için başlıksız yeniden deneme (ingestRss ile aynı ders — 2026-08-15).
+ */
+export async function fetchOgImage(articleUrl: string): Promise<string | null> {
+  try {
+    const host = new URL(articleUrl).hostname;
+    if (/(^|\.)ttb\.org\.tr$/i.test(host)) {
+      const res = await httpsGetWithCa(articleUrl, TTB_INTERMEDIATE_CA);
+      return res.status === 200 ? extractOgImage(res.body) : null;
+    }
+    let res = await fetch(articleUrl, {
+      headers: browserHeaders(new URL(articleUrl).origin + "/"),
+      cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+    if (res.status === 403 || res.status === 429) {
+      res = await fetch(articleUrl, { cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+    }
+    if (!res.ok) return null;
+    return extractOgImage(await res.text());
+  } catch {
+    return null;
+  }
 }
 
 // ── T.C. Resmî Gazete ───────────────────────────────────────────────────────
@@ -341,7 +425,8 @@ export async function ingestOhsad(opts?: IngestOpts): Promise<[number, number]> 
       category: cat ?? "yonetim", kind: isLegal ? "mevzuat" : "haber",
       title: title.replace(/\s*[–-]\s*\d{1,2}\s+\p{L}+\s+\d{4}\s*$/u, "").trim(),
       sourceName: "OHSAD", url, publishedAt: published,
-    }, opts?.dryRun);
+      // Görsel yalnız HABER kalemine (v6.99.2) — mevzuat/SUT detayı resmî metin sayfasıdır.
+    }, opts?.dryRun, isLegal ? undefined : () => fetchOgImage(url));
     if (isNew) {
       created++;
       opts?.onItem?.(`[OHSAD · ${cat ?? "yonetim"}] ${title.slice(0, 110)}`);
@@ -373,11 +458,12 @@ export async function ingestTtb(): Promise<[number, number]> {
     scanned++;
     if (!isHealthRelated(title)) continue;
     const id = url.replace(/\/$/, "").split("/").pop() as string;
+    const ttbUrl = url;
     const isNew = await upsertArticle({
       source: "ttb", externalId: id.slice(0, 180), module: "sektorel",
       category: categorize(title) ?? "yonetim", kind: "haber",
       title, sourceName: "Türk Tabipleri Birliği", url, publishedAt: new Date(),
-    });
+    }, undefined, () => fetchOgImage(ttbUrl)); // özel-CA yolu fetchOgImage içinde (v6.99.2)
     if (isNew) created++;
   }
   return [scanned, created];
@@ -519,7 +605,7 @@ export async function ingestWho(limit = 8): Promise<[number, number]> {
       kind: "haber", title: title.slice(0, 300), summary: pick("description").slice(0, 400),
       sourceName: "WHO", url: link,
       publishedAt: Number.isNaN(when.getTime()) ? new Date() : when,
-    });
+    }, undefined, () => fetchOgImage(link)); // cdn.who.int og:image (v6.99.2)
     if (isNew) created++;
   }
   return [items.length, created];
@@ -652,6 +738,9 @@ export async function ingestRss(def: RssSourceDef, opts?: IngestOpts): Promise<[
     if (!isProfessionallyRelevant(title, summary)) continue;
     const pub = pick("pubDate") || pick("published") || pick("updated") || pick("dc:date");
     const when = pub ? new Date(pub) : new Date();
+    // Görsel (v6.99.2): önce RSS'in kendi media etiketi (MedicalXpress); yoksa makale sayfasının
+    // og:image'ı (Medscape). İkisi de tembel — yalnız YENİ kayıtta koşar (upsertArticle sözleşmesi).
+    const mediaUrl = /<(?:media:content|media:thumbnail|enclosure)[^>]+url="([^"]+)"/i.exec(b)?.[1] ?? null;
     const isNew = await upsertArticle({
       source: def.source,
       externalId: link.slice(-180),
@@ -663,7 +752,7 @@ export async function ingestRss(def: RssSourceDef, opts?: IngestOpts): Promise<[
       sourceName: def.sourceName,
       url: link,
       publishedAt: Number.isNaN(when.getTime()) ? new Date() : when,
-    }, opts?.dryRun);
+    }, opts?.dryRun, async () => allowedImageUrl(mediaUrl) ?? (await fetchOgImage(link)));
     if (isNew) {
       created++;
       opts?.onItem?.(`[${def.source}] ${title.slice(0, 110)}`);
@@ -715,6 +804,7 @@ export async function ingestIstanbulTabip(opts?: IngestOpts): Promise<[number, n
     if (!title || !slug || title.length < 15) continue;
     scanned++;
     if (!isProfessionallyRelevant(title, plain(block).slice(0, 400))) continue;
+    const articleUrl = `https://www.istabip.org.tr/${slug}`;
     const isNew = await upsertArticle({
       source: "istabip",
       externalId: slug.slice(0, 180),
@@ -723,9 +813,9 @@ export async function ingestIstanbulTabip(opts?: IngestOpts): Promise<[number, n
       kind: "haber",
       title: title.slice(0, 300),
       sourceName: "İstanbul Tabip Odası",
-      url: `https://www.istabip.org.tr/${slug}`,
+      url: articleUrl,
       publishedAt: parseItoDate(block) ?? new Date(),
-    }, opts?.dryRun);
+    }, opts?.dryRun, () => fetchOgImage(articleUrl)); // görsel: haber sayfasının og:image'ı (v6.99.2)
     if (isNew) {
       created++;
       opts?.onItem?.(`[İTO] ${title.slice(0, 110)}`);
