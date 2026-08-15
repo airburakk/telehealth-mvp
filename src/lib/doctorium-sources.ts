@@ -605,7 +605,9 @@ export async function ingestWho(limit = 8): Promise<[number, number]> {
       kind: "haber", title: title.slice(0, 300), summary: pick("description").slice(0, 400),
       sourceName: "WHO", url: link,
       publishedAt: Number.isNaN(when.getTime()) ? new Date() : when,
-    }, undefined, () => fetchOgImage(link)); // cdn.who.int og:image (v6.99.2)
+    });
+    // v6.99.5: WHO og görseli toplanmaz — kurumsal jenerik görseller kalite standardının
+    // altındaydı; detay CoverArt kaynak-bandını (band-who.webp) gösterir.
     if (isNew) created++;
   }
   return [items.length, created];
@@ -692,6 +694,9 @@ export interface RssSourceDef {
   /** Sabit kategori; verilmezse başlıktan çıkarılır (categorize). */
   category?: SectorCategory;
   limit?: number;
+  /** v6.99.5 — false: bu kaynaktan görsel TOPLANMAZ (düşük kaliteli thumbnail/Getty sınıfı;
+   *  detay CoverArt kaynak-bandını gösterir). Varsayılan true. */
+  collectImages?: boolean;
 }
 
 /**
@@ -752,7 +757,7 @@ export async function ingestRss(def: RssSourceDef, opts?: IngestOpts): Promise<[
       sourceName: def.sourceName,
       url: link,
       publishedAt: Number.isNaN(when.getTime()) ? new Date() : when,
-    }, opts?.dryRun, async () => allowedImageUrl(mediaUrl) ?? (await fetchOgImage(link)));
+    }, opts?.dryRun, def.collectImages === false ? undefined : async () => allowedImageUrl(mediaUrl) ?? (await fetchOgImage(link)));
     if (isNew) {
       created++;
       opts?.onItem?.(`[${def.source}] ${title.slice(0, 110)}`);
@@ -768,8 +773,11 @@ export async function ingestRss(def: RssSourceDef, opts?: IngestOpts): Promise<[
  * "ekleyelim de dursun" mantığıyla bırakmak, cron raporunu kalıcı hatayla kirletir.
  */
 export const RSS_SOURCES: RssSourceDef[] = [
-  { source: "medscape", sourceName: "Medscape", url: "https://www.medscape.com/cx/rssfeeds/2700.xml", limit: 12 },
-  { source: "medicalxpress", sourceName: "Medical Xpress", url: "https://medicalxpress.com/rss-feed/", limit: 12 },
+  // collectImages: false (v6.99.5) — Medscape og'ları Getty ajans fotoğrafı, MedicalXpress RSS
+  // yalnız küçük thumbnail veriyor; ikisi de kalite standardının altında (kullanıcı kararı
+  // 2026-08-16) → detay CoverArt kaynak-bandını gösterir (band-*.webp).
+  { source: "medscape", sourceName: "Medscape", url: "https://www.medscape.com/cx/rssfeeds/2700.xml", limit: 12, collectImages: false },
+  { source: "medicalxpress", sourceName: "Medical Xpress", url: "https://medicalxpress.com/rss-feed/", limit: 12, collectImages: false },
 ];
 
 // ── İstanbul Tabip Odası (v6.99) ────────────────────────────────────────────

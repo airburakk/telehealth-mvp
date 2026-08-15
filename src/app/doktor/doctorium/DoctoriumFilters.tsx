@@ -452,12 +452,25 @@ export function DoctoriumFilters(p: Props) {
             <section>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className={sectionTitle}>Branş tercihleri</h3>
-                {branches.size > 0 && (
-                  <button type="button" onClick={() => { setBranches(new Set()); setBranchMsg(null); }}
-                    className="text-[11px] text-[var(--c-ink-3)] underline hover:text-[var(--c-ink)]">
-                    Temizle
-                  </button>
-                )}
+                <div className="flex items-center gap-3">
+                  {/* v6.99.5 (kullanıcı isteği 2026-08-16): tek tıkla 30 branşın tamamı —
+                      FARKLI renkte (menekşe) ki "Temizle"/kaydet yeşilinden ayrışsın. */}
+                  {branches.size < p.branchOptions.length && (
+                    <button
+                      type="button"
+                      onClick={() => { setBranches(new Set(p.branchOptions!.map((o) => o.slug))); setBranchMsg(null); }}
+                      className="rounded-full border border-violet-400/40 bg-violet-500/15 px-2.5 py-1 text-[11px] font-semibold text-violet-300 transition hover:bg-violet-500/25"
+                    >
+                      Tüm branşları seç
+                    </button>
+                  )}
+                  {branches.size > 0 && (
+                    <button type="button" onClick={() => { setBranches(new Set()); setBranchMsg(null); }}
+                      className="text-[11px] text-[var(--c-ink-3)] underline hover:text-[var(--c-ink)]">
+                      Temizle
+                    </button>
+                  )}
+                </div>
               </div>
               <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
                 {p.module === "kongre"

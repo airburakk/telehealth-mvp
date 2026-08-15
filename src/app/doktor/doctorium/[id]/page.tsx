@@ -43,9 +43,12 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
       </Link>
 
       {/* v6.99.2: haber detayında KAYNAĞIN KENDİ görseli (og:image/RSS media — allowlist'li
-          hotlink, barındırılmaz; kaynak atfı kaldırılamaz). Görseli olmayan içerik v6.99
-          C-yerleşimine düşer: üretilmiş üst bant (CoverArt — koddan desen, fotoğraf değil). */}
-      {item.imageUrl ? (
+          hotlink, barındırılmaz; kaynak atfı kaldırılamaz). Görseli olmayan içerik CoverArt
+          bandına düşer. v6.99.5 (kullanıcı kararı 2026-08-16): ULUSLARARASI kaynakların og/RSS
+          görselleri düşük kaliteydi (küçük thumbnail + Getty) → o kaynaklarda foto GÖSTERİLMEZ,
+          CoverArt kaynak-bandı devralır (SOURCE_BANDS). Ulusal kaynaklarda (İTO/OHSAD/TTB)
+          gerçek etkinlik fotoğrafları kalitelidir — foto sürer. */}
+      {item.imageUrl && !["medscape", "medicalxpress", "who"].includes(item.source) ? (
         <figure className="mt-4 overflow-hidden rounded-2xl border border-[var(--c-hairline)]">
           {/* eslint-disable-next-line @next/next/no-img-element -- dış hotlink: next/image
               optimizasyonu görseli SUNUCUMUZDAN geçirir (kopya = telif); ham img bilinçli. */}

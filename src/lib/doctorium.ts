@@ -169,6 +169,8 @@ export interface FeedItem {
   id: string;
   module: string;
   kind: string;
+  /** v6.99.5 — kaynak anahtarı ("medscape"/"istabip"/"pubmed"…); kaynak-bandı eşlemesi bununla. */
+  source: string;
   title: string;
   titleOriginal: string | null;
   summary: string;
@@ -185,7 +187,7 @@ export interface FeedItem {
 }
 
 type Row = {
-  id: string; module: string; kind: string; title: string; titleOriginal: string | null;
+  id: string; module: string; kind: string; source: string; title: string; titleOriginal: string | null;
   summary: string; sourceName: string; authors: string | null; url: string | null;
   doi: string | null; publishedAt: Date; branchSlugs: string; aiSummary: string | null;
   category: string | null; imageUrl: string | null;
@@ -201,7 +203,7 @@ function toFeedItem(r: Row): FeedItem {
 }
 
 const ROW_SELECT = {
-  id: true, module: true, kind: true, title: true, titleOriginal: true, summary: true,
+  id: true, module: true, kind: true, source: true, title: true, titleOriginal: true, summary: true,
   sourceName: true, authors: true, url: true, doi: true, publishedAt: true,
   branchSlugs: true, aiSummary: true, category: true, imageUrl: true,
 } as const;
@@ -250,7 +252,7 @@ function congressToFeedItem(c: {
   startDate: Date; endDate: Date | null; url: string | null; createdAt: Date; scope: string;
 }): FeedItem {
   return {
-    id: c.id, module: "kongre", kind: "kongre",
+    id: c.id, module: "kongre", kind: "kongre", source: "kongre",
     title: c.title, titleOriginal: null,
     summary: [
       `${trDate(c.startDate)}${c.endDate ? ` – ${trDate(c.endDate)}` : ""}`,
@@ -281,7 +283,7 @@ function careerToFeedItem(p: {
   slug: string; title: string; authority: string; summary: string; createdAt: Date;
 }): FeedItem {
   return {
-    id: p.slug, module: "kariyer", kind: "kariyer",
+    id: p.slug, module: "kariyer", kind: "kariyer", source: "kariyer",
     title: p.title, titleOriginal: null,
     summary: p.summary,
     sourceName: p.authority, authors: null,
