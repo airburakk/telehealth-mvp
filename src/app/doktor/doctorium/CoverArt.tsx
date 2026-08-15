@@ -58,6 +58,17 @@ const SOURCE_LOGOS: Record<string, { src: string; url: string; bg: string; logoH
   who: { src: "/doctorium/logo-who.svg", url: "who.int", bg: "#0d0e10", logoH: 48 },
 };
 
+/**
+ * Hukuk türü → 21:9 detay bandı (kullanıcı seçimi 2026-08-16, 2'şer varyanttan V1'ler):
+ * mevzuat = terazi + silik § + belge satırları · içtihat = tokmak + yankı halkaları.
+ * Doktrin BİLİNÇLİ yok (kullanıcı yalnız içtihat+mevzuat istedi) — kitap sembolü bandında kalır.
+ * Tema-duyarlı: light/ varyantları var (ThemedSymbol basar).
+ */
+const LEGAL_BANDS: Record<string, string> = {
+  mevzuat: "/doctorium/band-mevzuat.webp",
+  ictihat: "/doctorium/band-ictihat.webp",
+};
+
 /** Akademik + branşlı içerik → AURA branş ikonu; yoksa null (mikroskop webp fallback). */
 function branchIconOf(item: Pick<FeedItem, "module" | "branchSlugs">): { Icon: BranchIconLike; color: string } | null {
   if (item.module !== "akademik") return null;
@@ -152,8 +163,9 @@ export function CoverArt({
     );
   }
 
-  // band — detay üst bandı: kaynak logosu (uluslararası haber) > branş ikonu > modül sembolü.
+  // band — detay üst bandı: kaynak logosu > hukuk 21:9 bandı > branş ikonu > modül sembolü.
   const logo = SOURCE_LOGOS[item.source];
+  const legalBand = item.module === "mevzuat" ? LEGAL_BANDS[item.kind] : undefined;
   const c = MODULE_COLOR[item.module] ?? "var(--c-ink-3)";
   return (
     <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--c-hairline)]" aria-hidden="true">
@@ -166,6 +178,9 @@ export function CoverArt({
           /* eslint-disable-next-line @next/next/no-img-element -- kaynak logosu (nominatif
              gösterim); yerel kopya, boyut sabit — next/image katmanı gereksiz. */
           <img src={logo.src} alt={item.sourceName} style={{ height: logo.logoH }} className="w-auto" />
+        ) : legalBand ? (
+          // 21:9 bant genişliği doldurur (object-cover); tema varyantını CSS seçer.
+          <ThemedSymbol src={legalBand} className="h-[120px] w-full object-cover" />
         ) : branch ? (
           <span className={GLOW_OFF} style={{ filter: `drop-shadow(0 0 10px ${branch.color}80)` }}>
             {createElement(branch.Icon, { size: 72, color: branch.color, strokeWidth: 1.6 })}
