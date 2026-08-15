@@ -236,14 +236,19 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
         </p>
       )}
 
-      {item.summary && (
+      {/* Ham metin dökümü YALNIZ esas içeriğin kendisi olduğu türlerde (v6.99.3, kullanıcı
+          kararı 2026-08-16): İçtihat'ta karar metni, Doktrin'de dizin özeti başka yerde YOK —
+          kalırlar. Akademikteki "Özgün abstract" ve mevzuat/sektörel/ilaçtaki "Resmî metinden"
+          KALDIRILDI: AI özet (klinik özet / doktor özeti) + kaynak linki yeterli; ham döküm
+          sayfayı kalabalıklaştırıyordu. Abstract/resmî metin isteyen "Kaynağa git" ile gider. */}
+      {item.summary && (isIctihat || isDoktrin) && (
         <section className="mt-6">
           <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
-            {isAcademic ? "Özgün abstract" : isIctihat ? "Karar metni" : isDoktrin ? "Özet (TR-Dizin)" : "Resmî metinden"}
+            {isIctihat ? "Karar metni" : "Özet (TR-Dizin)"}
           </h2>
           <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-[var(--c-ink-2)]">
             {/* İçtihat: hukuki metin kesilmez (karar bütünlüğü); Doktrin özeti zaten kısa. */}
-            {isAcademic || isIctihat || isDoktrin ? item.summary : item.summary.slice(0, 2500)}
+            {item.summary}
           </p>
         </section>
       )}
