@@ -11,7 +11,7 @@ import { activeSurveysFor, doctorResponse, aggregateResults } from "@/lib/survey
 import { SurveyCardView } from "./SurveyCard";
 import {
   DOCTORIUM_MODULES, RANGE_OPTIONS, DEFAULT_RANGE, rangeDays,
-  SECTOR_CATEGORIES, LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES,
+  SECTOR_CATEGORIES, SECTOR_SOURCE_SCOPES, LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES,
   CAREER_TABS, parseCareerTab, careerPathways,
   effectiveBranches, personalFeed, moduleFeed, singleBranchFeed, upcomingCongresses,
   localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
@@ -126,7 +126,14 @@ export default async function DoctoriumPage({
       ? await moduleFeed("mevzuat", [], { category: "doktrin" })
       : await moduleFeed("mevzuat", [], { days: rangeDays(range), category: cat, excludeCategories: LEGAL_ONLY_CATEGORIES });
   }
-  else if (active === "sektorel") items = await moduleFeed("sektorel", [], { days: rangeDays(range), category: cat });
+  else if (active === "sektorel") {
+    // v6.99.3 — "Kaynak" filtresi (?s=ulusal|uluslararasi): kongre kapsamıyla aynı param/parse.
+    const srcScope = parseScope(sp.s);
+    items = await moduleFeed("sektorel", [], {
+      days: rangeDays(range), category: cat,
+      sources: srcScope ? SECTOR_SOURCE_SCOPES[srcScope] : undefined,
+    });
+  }
   else if (active === "ilac") items = await moduleFeed("ilac", [], { days: rangeDays(range) });
   if (items.length) items = await localizeTitles(items);
 
@@ -390,6 +397,9 @@ export default async function DoctoriumPage({
         showAlerts={active === "kongre" && !!doctor}
         showScope={active === "kongre"}
         scope={scope}
+        // v6.99.3 — sektörel "Kaynak" filtresi (panelin İLK bölümü; kullanıcı isteği 2026-08-16).
+        showSourceScope={active === "sektorel"}
+        sourceScope={active === "sektorel" ? parseScope(sp.s) : null}
         rangeKey={range}
         rangeOptions={RANGE_OPTIONS}
         category={cat}

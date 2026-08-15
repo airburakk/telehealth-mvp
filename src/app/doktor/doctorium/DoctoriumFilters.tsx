@@ -47,6 +47,10 @@ interface Props {
   showScope: boolean;
   /** Etkin kapsam filtresi (null = tümü). */
   scope: string | null;
+  /** v6.99.3 — Sektörel "Kaynak" filtresi (ulusal/uluslararası kaynaklar); panelin İLK bölümü. */
+  showSourceScope: boolean;
+  /** Etkin kaynak kapsamı (?s=; null = tüm kaynaklar). */
+  sourceScope: string | null;
   rangeKey: string;
   rangeOptions: readonly { key: string; label: string }[];
   category: string | null;
@@ -103,11 +107,24 @@ export function DoctoriumFilters(p: Props) {
   // Bu modülde gösterilecek hiçbir ayar yoksa düğmeyi de çizme (ör. Akademik: aralık/kategori/
   // alarm yok) — boş panel açılmasın.
   const hasAnySection =
-    p.showFeedPrefs || p.showRange || p.showCategory || p.showAlerts || p.showScope || p.showSponsor || !!p.branchOptions;
+    p.showFeedPrefs || p.showRange || p.showCategory || p.showAlerts || p.showScope ||
+    p.showSourceScope || p.showSponsor || !!p.branchOptions;
+
+  // Sektörel linklerinde üç filtre (kaynak · aralık · kategori) birbirini KORUR — biri
+  // seçilirken diğerleri sıfırlanmasın (v6.99.3).
+  const qs = (over: { s?: string | null; d?: string; c?: string | null }) => {
+    const s = over.s !== undefined ? over.s : p.sourceScope;
+    const d = over.d !== undefined ? over.d : p.rangeKey;
+    const c = over.c !== undefined ? over.c : p.category;
+    return `/doktor/doctorium?m=${p.module}&d=${d}${c ? `&c=${c}` : ""}${s ? `&s=${s}` : ""}`;
+  };
 
   // Kapalı paneldeki özet: hangi ayarların etkin olduğu tek bakışta görünsün.
   const summary = [
     p.showFeedPrefs ? (feedMods.size === feedAll.length ? "tüm bölümler" : `${feedMods.size} bölüm`) : null,
+    p.showSourceScope
+      ? (p.sourceScope === "ulusal" ? "🇹🇷 ulusal kaynak" : p.sourceScope === "uluslararasi" ? "🌍 uluslararası kaynak" : "tüm kaynaklar")
+      : null,
     p.showRange && activeRange ? activeRange : null,
     p.showCategory && activeCat ? activeCat : null,
     p.showScope ? (p.scope === "ulusal" ? "🇹🇷 ulusal" : p.scope === "uluslararasi" ? "🌍 uluslararası" : "tüm kapsam") : null,
@@ -291,6 +308,37 @@ export function DoctoriumFilters(p: Props) {
             </section>
           )}
 
+          {/* KAYNAK — sektörel panelinin İLK bölümü (kullanıcı isteği 2026-08-16): haberin
+              geldiği kaynak ekseni. Değerler kongre kapsamıyla aynı (?s=), kaynak listeleri
+              lib/doctorium SECTOR_SOURCE_SCOPES. */}
+          {p.showSourceScope && (
+            <section>
+              <h3 className={sectionTitle}>Kaynak</h3>
+              <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
+                Ulusal: TTB · OHSAD · İstanbul Tabip Odası — Uluslararası: Medscape · Medical
+                Xpress · WHO.
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {(
+                  [
+                    [null, "Tümü"],
+                    ["ulusal", "🇹🇷 Ulusal"],
+                    ["uluslararasi", "🌍 Uluslararası"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <Link
+                    key={label}
+                    href={qs({ s: key })}
+                    aria-current={p.sourceScope === (key ?? null) ? "true" : undefined}
+                    className={chip(p.sourceScope === (key ?? null))}
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
           {p.showRange && (
             <section>
               <h3 className={sectionTitle}>Geriye dönük</h3>
@@ -298,7 +346,7 @@ export function DoctoriumFilters(p: Props) {
                 {p.rangeOptions.map((r) => (
                   <Link
                     key={r.key}
-                    href={`/doktor/doctorium?m=${p.module}&d=${r.key}${p.category ? `&c=${p.category}` : ""}`}
+                    href={qs({ d: r.key })}
                     aria-current={r.key === p.rangeKey ? "true" : undefined}
                     className={chip(r.key === p.rangeKey)}
                   >
@@ -314,7 +362,7 @@ export function DoctoriumFilters(p: Props) {
               <h3 className={sectionTitle}>Kategori</h3>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 <Link
-                  href={`/doktor/doctorium?m=${p.module}&d=${p.rangeKey}`}
+                  href={qs({ c: null })}
                   aria-current={!p.category ? "true" : undefined}
                   className={chip(!p.category)}
                 >
@@ -323,7 +371,7 @@ export function DoctoriumFilters(p: Props) {
                 {p.categoryOptions.map((c) => (
                   <Link
                     key={c.key}
-                    href={`/doktor/doctorium?m=${p.module}&d=${p.rangeKey}&c=${c.key}`}
+                    href={qs({ c: c.key })}
                     aria-current={p.category === c.key ? "true" : undefined}
                     className={chip(p.category === c.key)}
                   >

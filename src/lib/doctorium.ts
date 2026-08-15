@@ -97,6 +97,17 @@ export function categoryLabel(k: string | null | undefined): string | null {
   return k ? CAT_LABEL[k] ?? null : null;
 }
 
+// ── Sektörel kaynak kapsamı (v6.99.3, kullanıcı isteği 2026-08-16) ──────────
+// Özelleştir'de "Kaynak" filtresi: Ulusal (TR kurumları) / Uluslararası. URL paramı ?s=
+// (kongre kapsamıyla AYNI değerler — parseScope paylaşılır; farklı sekmede çakışmaz).
+// ⚠️ YENİ SEKTÖREL KAYNAK EKLERKEN buraya da ekle — birim test (doctorium-filtreler)
+// ingest kaynak setiyle bu iki listenin birleşimini karşılaştırır; unutulan kaynak
+// "Tümü"nde görünüp iki filtrede de kaybolurdu (sessiz kayıp).
+export const SECTOR_SOURCE_SCOPES: Record<"ulusal" | "uluslararasi", string[]> = {
+  ulusal: ["ttb", "ohsad", "istabip"],
+  uluslararasi: ["who", "medscape", "medicalxpress"],
+};
+
 export const KIND_LABEL: Record<string, string> = {
   makale: "Makale",
   ilac: "Klinik Çalışma",
@@ -399,9 +410,9 @@ export function rangeDays(key: string | undefined): number {
 export async function moduleFeed(
   module: "akademik" | "mevzuat" | "sektorel" | "ilac",
   branchSlugs: string[],
-  opts: { limit?: number; days?: number; category?: string | null; excludeCategories?: string[]; textContainsAny?: string[] } = {},
+  opts: { limit?: number; days?: number; category?: string | null; excludeCategories?: string[]; textContainsAny?: string[]; sources?: string[] } = {},
 ): Promise<FeedItem[]> {
-  const { limit = 40, days, category, excludeCategories, textContainsAny } = opts;
+  const { limit = 40, days, category, excludeCategories, textContainsAny, sources } = opts;
   // v6.86/87: iki bağımsız OR ölçütü (kategori-dışlama · metin-arama) AND dizisinde toplanır —
   // spread ile aynı objeye ikinci bir OR anahtarı yazmak öncekini SESSİZCE ezerdi.
   const and: object[] = [];
@@ -420,6 +431,8 @@ export async function moduleFeed(
     where: {
       module,
       ...(category ? { category } : {}),
+      // v6.99.3 — sektörel "Kaynak" filtresi (ulusal/uluslararası kaynak listesi).
+      ...(sources?.length ? { source: { in: sources } } : {}),
       ...(and.length ? { AND: and } : {}),
       ...(days ? { publishedAt: { gte: new Date(Date.now() - days * 86400000) } } : {}),
       ...(module === "akademik" && branchSlugs.length

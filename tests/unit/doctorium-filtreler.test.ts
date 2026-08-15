@@ -14,8 +14,9 @@ import { scoreLegalRelevance } from "@/lib/doktrin-filter";
 import { tier1Query, tier2Query, BRANCH_JOURNALS, GENERAL_JOURNALS } from "@/lib/academic-journals";
 import {
   isProfessionallyRelevant, categorize, parseItoDate,
-  NEWS_IMAGE_HOSTS, allowedImageUrl, extractOgImage,
+  NEWS_IMAGE_HOSTS, allowedImageUrl, extractOgImage, RSS_SOURCES,
 } from "@/lib/doctorium-sources";
+import { SECTOR_SOURCE_SCOPES } from "@/lib/doctorium";
 
 describe("Doktrin — hukuk alaka süzgeci (v6.99)", () => {
   it("özetteki RUTİN onam cümlesi tek başına doktrin yapmaz (kirliliğin ana kaynağı)", () => {
@@ -172,6 +173,25 @@ describe("Haber görseli — allowlist & og:image (v6.99.2)", () => {
     expect(imgSrc, "img-src satırı bulunamadı").not.toBe("");
     for (const host of NEWS_IMAGE_HOSTS) {
       expect(imgSrc, `CSP img-src '${host}' içermiyor — next.config.ts'i güncelle`).toContain(`https://${host}`);
+    }
+  });
+});
+
+// v6.99.3 — sektörel "Kaynak" filtresi (kullanıcı isteği 2026-08-16)
+describe("Sektörel kaynak kapsamı (v6.99.3)", () => {
+  it("ulusal/uluslararası listeleri kesişmez", () => {
+    const u = new Set(SECTOR_SOURCE_SCOPES.ulusal);
+    for (const s of SECTOR_SOURCE_SCOPES.uluslararasi) expect(u.has(s), s).toBe(false);
+  });
+
+  it("SÖZLEŞME: sektörel modüle yazan HER kaynak iki listeden birinde (sessiz kayıp olmasın)", () => {
+    // Sektörel modüle yazan kaynaklar: sabit toplayıcılar (ttb/ohsad/istabip/who) + RSS_SOURCES.
+    // Yeni kaynak eklenip kapsam listesi unutulursa o kaynak "Tümü"nde görünür ama Ulusal/
+    // Uluslararası filtrelerinin İKİSİNDE de kaybolur — bu test onu yakalar.
+    const covered = new Set([...SECTOR_SOURCE_SCOPES.ulusal, ...SECTOR_SOURCE_SCOPES.uluslararasi]);
+    const sectorSources = ["ttb", "ohsad", "istabip", "who", ...RSS_SOURCES.map((s) => s.source)];
+    for (const s of sectorSources) {
+      expect(covered.has(s), `'${s}' kaynağı SECTOR_SOURCE_SCOPES'ta yok — lib/doctorium.ts'e ekle`).toBe(true);
     }
   });
 });
