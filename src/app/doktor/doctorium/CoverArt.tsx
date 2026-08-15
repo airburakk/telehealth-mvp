@@ -53,6 +53,9 @@ const SOURCE_LOGOS: Record<string, { src: string; url: string; bg: string; logoH
   medscape: { src: "/doctorium/logo-medscape.webp", url: "medscape.com/today", bg: "#ffffff", logoH: 40 },
   // MedicalXpress yazısı beyaz (koyu zemin logosu) → sembollerle aynı koyu plaka.
   medicalxpress: { src: "/doctorium/logo-medicalxpress.webp", url: "medicalxpress.com", bg: "#0d0e10", logoH: 44 },
+  // WHO — sitenin KENDİ koyu-zemin varyantı (h-logo-white.svg, who.int; kullanıcı kararı
+  // 2026-08-16 — amblem kullanımı hukukçu değerlendirmesinde). SVG = her boyutta keskin.
+  who: { src: "/doctorium/logo-who.svg", url: "who.int", bg: "#0d0e10", logoH: 48 },
 };
 
 /** Akademik + branşlı içerik → AURA branş ikonu; yoksa null (mikroskop webp fallback). */
