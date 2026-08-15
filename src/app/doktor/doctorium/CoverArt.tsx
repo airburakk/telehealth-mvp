@@ -1,5 +1,4 @@
 import { createElement } from "react";
-import { cookies } from "next/headers";
 import { Stethoscope } from "lucide-react";
 import type { FeedItem } from "@/lib/doctorium";
 import { branchColor, resolveBranchKey } from "@/lib/branch-visuals";
@@ -27,11 +26,15 @@ import { BRANCH_ICONS, type BranchIconLike } from "@/components/branch-icons";
  *
  * TEMA (v6.99.7, kullanıcı bildirimi 2026-08-16: "gündüz temasında sembollerin arkası siyah
  * kaldı"): koyu zemin webp'lerin İÇİNE gömülü olduğundan CSS ile değişmiyordu → her sembolün
- * public/doctorium/light/ altında GÜNDÜZ varyantı üretildi (zemin şeffaf + çizgiler hue
- * korunarak koyulaştırılmış); plaka rengi aura_theme cookie'sine göre seçilir (bileşen bu
- * yüzden async — layout'un tema SSR'ıyla aynı kaynak). Lucide branş ikonlarında gündüzde
- * neon drop-shadow kapatılır. İSTİSNA: logo plakaları temadan bağımsız (MedicalXpress logosu
- * beyaz yazılı = daima koyu plaka; Medscape daima beyaz plaka — logo bütünlüğü).
+ * public/doctorium/light/ altında GÜNDÜZ varyantı var (zemin şeffaf + çizgiler hue korunarak
+ * koyulaştırılmış). 🪤 İlk deneme temayı SUNUCUDA cookie'den okumuştu — YANLIŞ: ThemeToggle
+ * yalnız html class'ını (theme-dark↔theme-light) ANINDA değiştirir, RSC yeniden render olmaz →
+ * toggle sonrası görseller eski temada asılı kalıyordu. Doğru desen bu dosyada: İKİ varyant da
+ * basılır, hangisinin görüneceğine CSS karar verir ([.theme-light_&] arbitrary variant) —
+ * toggle'a JS'siz, anında uyum. Plaka da aynı yolla tema-duyarlı. Lucide branş ikonunun neon
+ * drop-shadow'u gündüzde !filter-none ile kapatılır (inline style'ı important ezer).
+ * İSTİSNA: logo plakaları temadan bağımsız (MedicalXpress logosu beyaz yazılı = daima koyu
+ * plaka; Medscape daima beyaz — logo bütünlüğü).
  */
 
 // ArticleCard MODULE_EYEBROW ile aynı hex'ler — band künye şeridinin yazı rengi.
@@ -95,7 +98,30 @@ function stampOf(item: Pick<FeedItem, "kind" | "title" | "sourceName">, max: num
   return out || words[0].slice(0, max);
 }
 
-export async function CoverArt({
+/** Sembolün gündüz varyantı yolu (public/doctorium/light/…). */
+function lightSrc(src: string): string {
+  return src.replace("/doctorium/", "/doctorium/light/");
+}
+
+/** İki tema varyantını da basar; hangisi görünür CSS seçer (toggle'a anında uyum). */
+function ThemedSymbol({ src, className }: { src: string; className: string }) {
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element -- yerel statik varlık (3-22 KB webp);
+          next/image sabit küçük kutular için ek katman getirir, kazanç yok. */}
+      <img src={src} alt="" className={`${className} [.theme-light_&]:hidden`} />
+      {/* eslint-disable-next-line @next/next/no-img-element -- yukarıdaki gerekçeyle aynı. */}
+      <img src={lightSrc(src)} alt="" className={`${className} hidden [.theme-light_&]:block`} />
+    </>
+  );
+}
+
+// Plaka: gece gömülü-sembol koyusu, gündüz açık yüzey token'ı — CSS karar verir.
+const PLATE = "bg-[#0d0e10] [.theme-light_&]:bg-[var(--c-surface-2)]";
+// Lucide ikon sarmalayıcısı: neon glow inline style'da; gündüzde important ile kapanır.
+const GLOW_OFF = "grid place-items-center [.theme-light_&]:![filter:none]";
+
+export function CoverArt({
   item,
   size,
 }: {
@@ -103,32 +129,21 @@ export async function CoverArt({
   size: "card" | "band";
 }) {
   const branch = branchIconOf(item);
-  // Gece varsayılan (v6.22) — cookie yoksa/dark ise koyu plaka + koyu-zeminli semboller.
-  const isLight = (await cookies()).get("aura_theme")?.value === "light";
-  const plate = isLight ? "var(--c-surface-2)" : "#0d0e10";
-  const sym = (i: Pick<FeedItem, "module" | "kind">) =>
-    isLight ? symbolSrc(i).replace("/doctorium/", "/doctorium/light/") : symbolSrc(i);
-  const glow = (color: string, r: number) =>
-    isLight ? undefined : { filter: `drop-shadow(0 0 ${r}px ${color}80)` };
 
   if (size === "card") {
     return (
       // Plaka tema-duyarlı; branş ikonu her iki zeminde de branş rengiyle çizilir (BranchAvatar
       // hasta tarafında aynı renkleri beyaz kutuda kullanır — gündüz kontrastı kanıtlı).
       <div
-        className="grid h-[72px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-xl"
-        style={{ background: plate }}
+        className={`grid h-[72px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-xl ${PLATE}`}
         aria-hidden="true"
       >
         {branch ? (
-          createElement(branch.Icon, {
-            size: 38, color: branch.color, strokeWidth: 1.9,
-            ...{ style: glow(branch.color, 6) },
-          })
+          <span className={GLOW_OFF} style={{ filter: `drop-shadow(0 0 6px ${branch.color}80)` }}>
+            {createElement(branch.Icon, { size: 38, color: branch.color, strokeWidth: 1.9 })}
+          </span>
         ) : (
-          /* eslint-disable-next-line @next/next/no-img-element -- yerel statik varlık; next/image
-             72px sabit kutu için ek katman getirir, kazanç yok (webp'ler 3-22 KB). */
-          <img src={sym(item)} alt="" width={72} height={72} className="block h-full w-full object-cover" />
+          <ThemedSymbol src={symbolSrc(item)} className="h-[72px] w-[72px] object-cover" />
         )}
       </div>
     );
@@ -140,22 +155,20 @@ export async function CoverArt({
   return (
     <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--c-hairline)]" aria-hidden="true">
       <div
-        className="grid h-[120px] place-items-center"
         // Logo plakası temadan bağımsız (logo bütünlüğü); sembol plakası tema-duyarlı.
-        style={{ background: logo?.bg ?? plate }}
+        className={`grid h-[120px] place-items-center ${logo ? "" : PLATE}`}
+        style={logo ? { background: logo.bg } : undefined}
       >
         {logo ? (
           /* eslint-disable-next-line @next/next/no-img-element -- kaynak logosu (nominatif
              gösterim); yerel kopya, boyut sabit — next/image katmanı gereksiz. */
           <img src={logo.src} alt={item.sourceName} style={{ height: logo.logoH }} className="w-auto" />
         ) : branch ? (
-          createElement(branch.Icon, {
-            size: 72, color: branch.color, strokeWidth: 1.6,
-            ...{ style: glow(branch.color, 10) },
-          })
+          <span className={GLOW_OFF} style={{ filter: `drop-shadow(0 0 10px ${branch.color}80)` }}>
+            {createElement(branch.Icon, { size: 72, color: branch.color, strokeWidth: 1.6 })}
+          </span>
         ) : (
-          /* eslint-disable-next-line @next/next/no-img-element -- yukarıdaki gerekçeyle aynı. */
-          <img src={sym(item)} alt="" className="block h-full w-auto" />
+          <ThemedSymbol src={symbolSrc(item)} className="h-[120px] w-auto" />
         )}
       </div>
       <div
