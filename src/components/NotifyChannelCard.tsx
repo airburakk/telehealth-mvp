@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { DashboardPanel } from "@/components/DashboardPanel";
 import { Bell, MessageCircle, MessageSquareText, Loader2, Check, Save } from "lucide-react";
 
-// Doktor Ana Sayfa — bildirim kanalı tercihi (FAZ 5, 2026-07-10).
+// Doktor bildirim kanalı tercihi (FAZ 5, 2026-07-10).
+// 2026-08-14 (kullanıcı kararı, iki revizyonla): Ana Sayfa kartı → (kısa süreli hesap menüsü
+// satırı + ayrı sayfa denemeleri) → KALICI YER: /doktor/profil bölümü, Profil Tercihleri'nin
+// üstü. Kabuk profil bölüm kalıbıdır (p-6 panel + aura-mono uppercase mini başlık — DoctorPreferences
+// ile aynı dil); form gövdesi Ana Sayfa'daki görünümüyle aynı (sm:grid-cols-3 kanal kartları).
 // Tüm doktor bildirimleri için kanal: Uygulama (varsayılan) · WhatsApp · SMS.
 // Uygulama içi bildirim + push HER ZAMAN yazılır; WhatsApp/SMS buna EK'tir ve şimdilik
 // SİMÜLASYONDUR (sağlayıcı hesabı bağlanınca gerçek gönderim başlar — lib/messaging dormant).
@@ -40,21 +43,22 @@ export function NotifyChannelCard({ initialChannel, initialPhone }: { initialCha
   }
 
   return (
-    // Pencere kabuğu = DashboardPanel (2026-07-31): başlık/ikon düzeni diğer Ana Sayfa pencereleriyle
-    // aynı; simülasyon rozeti kanal state'ine bağlı olduğundan panel bu client bileşenin İÇİNDE kalır.
-    <DashboardPanel
-      icon={<Bell size={18} />}
-      title="Bildirim Tercihi"
-      subtitle="Vaka, talep ve rapor bildirimlerinizi hangi kanaldan almak istersiniz? Uygulama içi bildirim her durumda düşer."
-      badge={
-        channel !== "APP" ? (
+    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="aura-display flex items-center gap-2 text-[17px] font-medium leading-tight tracking-tight text-[var(--c-ink)]">
+          <Bell size={17} className="text-[var(--c-accent)]" /> Bildirim Tercihi
+        </h2>
+        {channel !== "APP" && (
           <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
             WhatsApp/SMS şimdilik simülasyon
           </span>
-        ) : undefined
-      }
-    >
-      <div className="grid gap-2 sm:grid-cols-3">
+        )}
+      </div>
+      <p className="mt-1 text-xs text-[var(--c-ink-2)]">
+        Vaka, talep ve rapor bildirimlerinizi hangi kanaldan almak istersiniz? Uygulama içi bildirim her durumda düşer.
+      </p>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
         {CHANNELS.map((c) => {
           const Icon = c.icon;
           const active = channel === c.key;
@@ -96,6 +100,6 @@ export function NotifyChannelCard({ initialChannel, initialPhone }: { initialCha
         {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <Check size={14} /> : <Save size={14} />}
         {saved ? "Kaydedildi" : "Tercihi kaydet"}
       </button>
-    </DashboardPanel>
+    </div>
   );
 }

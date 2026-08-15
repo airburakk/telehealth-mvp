@@ -147,9 +147,9 @@ export default function ProcedureSelector({
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
-            <Stethoscope size={15} /> Yaptığım İşlemler
-          </div>
+          <h2 className="aura-display flex items-center gap-2 text-[17px] font-medium leading-tight tracking-tight text-[var(--c-ink)]">
+            <Stethoscope size={17} className="text-[var(--c-accent)]" /> Yaptığım İşlemler
+          </h2>
           <p className="mt-1 text-sm text-[var(--c-ink-2)]">
             <span className="font-medium text-[var(--c-accent-strong)]">{branchLabel}</span> branşındaki işlemlerden yaptıklarınızı seçin.
             İşlem ücreti burada belirlenmez — hasta görüşmesi sonrası <span className="font-medium">tedavi kararında</span>,

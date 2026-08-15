@@ -12,7 +12,6 @@ import { waitingCount } from "@/lib/free-care";
 import { openCountForDoctor, openRowsForDoctor } from "@/lib/consultation-requests";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
 import { BRANCHES } from "@/lib/triage";
-import { NotifyChannelCard } from "@/components/NotifyChannelCard";
 import { decryptField } from "@/lib/crypto";
 import { Stethoscope, ArrowRight, Activity, HeartHandshake, Inbox, ChevronLeft, ChevronRight, Plane } from "lucide-react";
 
@@ -250,14 +249,8 @@ export default async function DoctorPanel({
         <p className="mt-1 text-sm text-[var(--c-ink-2)]">Birimleriniz tercihinize göre düzenlendi.</p>
       </div>
 
-      {/* ── Bildirim kanalı tercihi (FAZ 5) — uygulama / WhatsApp / SMS (WA+SMS dormant-simülasyon) ── */}
-      {doctor && (
-        <div className="mb-5">
-          <NotifyChannelCard initialChannel={doctor.notifyChannel} initialPhone={decryptField(doctor.phone)} />
-        </div>
-      )}
-
-      {/* ── Eşleşen Vakalar (2026-07-31 sıra kararı: Bildirim Tercihi → Eşleşen Vakalar → Uzaktan Sağlık) ── */}
+      {/* ── Eşleşen Vakalar (2026-07-31 sıra kararı; Bildirim Tercihi kartı 2026-08-14'te
+          /doktor/profil sayfasına taşındı — Profil Tercihleri'nin üstündeki bölüm) ── */}
       <DashboardPanel
         icon={<Activity size={18} />}
         title={queueTitle}

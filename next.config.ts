@@ -39,15 +39,20 @@ const cspEnforced = [
   `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ""}`,
   // SSR'lanan style="" attribute'ları (~44 kullanım) + JSX <style> blokları + next/font @font-face.
   "style-src 'self' 'unsafe-inline'",
-  // data: → post-op foto (canvas.toDataURL) + belge önizlemeleri (readAsDataURL). Harici img hostu yok.
-  "img-src 'self' data:",
+  // data: → post-op foto (canvas.toDataURL) + belge önizlemeleri (readAsDataURL).
+  // *.blob.vercel-storage.com → doktor profil fotoğrafı (public Blob, client-upload — 2026-08-14).
+  "img-src 'self' data: https://*.blob.vercel-storage.com",
   // blob: → DoctorVideoCard VTT altyazı track'i (createObjectURL). WebRTC srcObject CSP'ye tabi değil.
-  "media-src 'self' blob:",
+  // *.blob.vercel-storage.com → doktor tanıtım videosu (public Blob — 2026-08-14).
+  "media-src 'self' blob: https://*.blob.vercel-storage.com",
   "font-src 'self'", // next/font build'de self-host eder — Google Fonts origin'i EKLEME (gereksiz genişletme)
   // Ably realtime (birincil + *.ably-realtime.com: fallback a-e, internet-up, ws-up) + Gemini Live wss.
-  // TURN/STUN connect-src'ye TABİ DEĞİL (WebRTC); Vercel Blob istemciye sızmaz (/api proxy'den iner).
+  // TURN/STUN connect-src'ye TABİ DEĞİL (WebRTC). KLİNİK belgeler istemciye Blob'dan İNMEZ
+  // (/api proxy — şifreli private store); İSTİSNA: profil medyası (foto/video, PHI DEĞİL)
+  // client-upload'la DOĞRUDAN Blob'a çıkar (2026-08-14) → vercel.com (token değişimi) +
+  // *.blob.vercel-storage.com (PUT/multipart) bu yüzden listede.
   // https://generativelanguage.googleapis.com KASITLI YOK — SDK kanıtı için üstteki blok notuna bak.
-  `connect-src 'self' wss://main.realtime.ably.net https://main.realtime.ably.net wss://*.ably-realtime.com https://*.ably-realtime.com wss://generativelanguage.googleapis.com${isDev ? " ws://localhost:* ws://127.0.0.1:*" : ""}`,
+  `connect-src 'self' https://vercel.com https://*.blob.vercel-storage.com wss://main.realtime.ably.net https://main.realtime.ably.net wss://*.ably-realtime.com https://*.ably-realtime.com wss://generativelanguage.googleapis.com${isDev ? " ws://localhost:* ws://127.0.0.1:*" : ""}`,
   "worker-src 'self'", // tek worker /sw.js; DICOM codec'leri worker'sız build (blob: GEREKMEZ)
   "manifest-src 'self'",
   "frame-src 'none'", // iframe sıfır; Google OAuth iframe değil tam-sayfa redirect

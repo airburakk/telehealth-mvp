@@ -51,10 +51,10 @@ export function AcademicEditor(props: {
 
   return (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-      <div className="flex flex-wrap items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
-        <GraduationCap size={15} /> Akademik & Eğitim
-        <span className="ml-1 text-[10px] font-normal normal-case text-[var(--c-ink-3)]">(boş alanlar profilde otomatik üretilir)</span>
-      </div>
+      <h2 className="aura-display flex flex-wrap items-center gap-2 text-[17px] font-medium leading-tight tracking-tight text-[var(--c-ink)]">
+        <GraduationCap size={17} className="text-[var(--c-accent)]" /> Akademik & Eğitim
+        <span className="ml-1 text-xs font-normal text-[var(--c-ink-3)]">(boş alanlar profilde otomatik üretilir)</span>
+      </h2>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <Field label="Diploma / Tescil No" icon={<BadgeCheck size={14} />} hint="FHIR Practitioner.identifier">

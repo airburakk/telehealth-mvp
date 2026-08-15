@@ -5,7 +5,9 @@ import { branchKeyFromLabel, branchLabel, getBranchProcedures, getByCodes } from
 import ProcedureSelector from "@/components/ProcedureSelector";
 import { DoctorPreferences } from "@/components/DoctorPreferences";
 import { AcademicEditor } from "@/components/AcademicEditor";
-import { Star, BadgeCheck, CalendarClock, TrendingUp, ExternalLink, Award, Users, Target } from "lucide-react";
+import { NotifyChannelCard } from "@/components/NotifyChannelCard";
+import { decryptField } from "@/lib/crypto";
+import { Star, BadgeCheck, CalendarClock, ChevronDown, TrendingUp, ExternalLink, Award, Users, Target } from "lucide-react";
 import { getDoctorScorecard, type MetricKey } from "@/lib/match-score";
 
 export const dynamic = "force-dynamic";
@@ -58,7 +60,12 @@ export default async function DoctorDashboard() {
       <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            <span className="grid h-16 w-16 place-items-center rounded-3xl text-2xl font-bold text-[var(--c-ink)]" style={{ background: doctor.color }}>{doctor.name.slice(0, 1)}</span>
+            {doctor.photo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={doctor.photo} alt="" className="h-16 w-16 shrink-0 rounded-3xl object-cover ring-1 ring-white/15" />
+            ) : (
+              <span className="grid h-16 w-16 place-items-center rounded-3xl text-2xl font-bold text-[var(--c-ink)]" style={{ background: doctor.color }}>{doctor.name.slice(0, 1)}</span>
+            )}
             <div>
               <div className="flex items-center gap-1.5">
                 <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{doctor.title} {doctor.name}</h1>
@@ -90,19 +97,28 @@ export default async function DoctorDashboard() {
         <Metric icon={<Award size={16} />} value={doctor.experienceYears != null ? `${doctor.experienceYears} yıl` : "—"} label="Deneyim" />
       </div>
 
-      {/* Eşleştirme Kalite Kartı — CRM 9-metrik skoru (Nöbetçi/İcapçı/SO önceliği); doktora şeffaf */}
+      {/* Eşleştirme Kalite Kartı — CRM 9-metrik skoru (Nöbetçi/İcapçı/SO önceliği); doktora şeffaf.
+          2026-08-14 (kullanıcı kararı): varsayılan KAPALI akordeon — kapalıyken yalnız başlık +
+          açıklama + skor görünür, metrik grid'i tıklayınca aşağı açılır. Native details/summary:
+          JS'siz, sayfa server component kalır; chevron dönüşü salt CSS (group-open). */}
       {scorecard && (
-        <div className="mt-5 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
-              <Target size={15} /> Eşleştirme Kalite Skoru
+        <details className="group mt-5 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] shadow-sm">
+          <summary className="cursor-pointer list-none p-6 [&::-webkit-details-marker]:hidden">
+            <div className="flex items-center justify-between gap-3">
+              {/* Chevron ışıması (kullanıcı kararı 2026-08-14): kapalı akordeonun aşağı uzadığını
+                  işaret eder — Doz 1 "ışıma yalnız marka anları" kuralının bilinçli istisnası;
+                  açılınca söner (group-open). globals.css'e dokunmadan salt utility. */}
+              <h2 className="aura-display flex items-center gap-2 text-[17px] font-medium leading-tight tracking-tight text-[var(--c-ink)]">
+                <Target size={17} className="text-[var(--c-accent)]" /> Eşleştirme Kalite Skoru
+                <ChevronDown size={16} className="shrink-0 animate-pulse text-[var(--c-accent)] [filter:drop-shadow(0_0_5px_var(--c-accent))] transition-transform duration-200 group-open:rotate-180 group-open:animate-none group-open:text-[var(--c-ink-3)] group-open:[filter:none]" />
+              </h2>
+              <div className="text-2xl font-bold text-[var(--c-accent-strong)]">%{Math.round(scorecard.score * 100)}</div>
             </div>
-            <div className="text-2xl font-bold text-[var(--c-accent-strong)]">%{Math.round(scorecard.score * 100)}</div>
-          </div>
-          <p className="mt-1 text-xs text-[var(--c-ink-2)]">
-            Nöbetçi, İcapçı ve İkinci Görüş eşleştirmesinde önceliğiniz bu metriklerle belirlenir. Veri biriktikçe etkisi artar; verisi olmayan metrikler skoru etkilemez.
-          </p>
-          <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
+            <p className="mt-1 text-xs text-[var(--c-ink-2)]">
+              Nöbetçi, İcapçı ve İkinci Görüş eşleştirmesinde önceliğiniz bu metriklerle belirlenir. Veri biriktikçe etkisi artar; verisi olmayan metrikler skoru etkilemez.
+            </p>
+          </summary>
+          <div className="grid gap-2.5 px-6 pb-6 sm:grid-cols-2">
             {scorecard.metrics.map((mt) => (
               <div key={mt.key} className="rounded-2xl border border-[var(--c-hairline)] p-3">
                 <div className="flex items-center justify-between text-sm">
@@ -119,10 +135,30 @@ export default async function DoctorDashboard() {
               </div>
             ))}
           </div>
-        </div>
+        </details>
       )}
 
-      {/* M5 — Yaptığım İşlemler & Fiyatlandırma */}
+      {/* Bildirim Tercihi (2026-08-14, kullanıcı kararı): Ana Sayfa kartı + hesap menüsü satırı +
+          ayrı sayfa denemelerinden sonra KALICI YER burası — Profil Tercihleri'nin üstü. */}
+      <div className="mt-5">
+        <NotifyChannelCard initialChannel={doctor.notifyChannel} initialPhone={decryptField(doctor.phone)} />
+      </div>
+
+      {/* Profil Tercihleri (2026-08-14, kullanıcı kararı — içerik tamamen değişti): Profil Resmi +
+          Video Kart + Hakkımda + Birim katılımı. Dil/pazar/kapasite düzenleme yüzeyi KALKTI
+          (veri ve API geriye-uyumla duruyor). */}
+      <div className="mt-5">
+        <DoctorPreferences
+          bio={doctor.bio}
+          photo={doctor.photo}
+          introVideo={doctor.introVideo}
+          freeCareOptIn={doctor.freeCareOptIn}
+          consultOptIn={doctor.consultOptIn}
+        />
+      </div>
+
+      {/* M5 — Yaptığım İşlemler & Fiyatlandırma (2026-08-14, kullanıcı kararı: Profil
+          Tercihleri'nin altına indi) */}
       {branchKey && (
         <div className="mt-5">
           <ProcedureSelector
@@ -134,17 +170,6 @@ export default async function DoctorDashboard() {
           />
         </div>
       )}
-
-      {/* M5 — Profil Tercihleri: hizmet dili / pazar (ülke) / aylık kapasite limiti */}
-      <div className="mt-5">
-        <DoctorPreferences
-          languages={doctor.languages.split(",").map((s) => s.trim()).filter(Boolean)}
-          markets={doctor.markets ? doctor.markets.split(",").map((s) => s.trim()).filter(Boolean) : []}
-          capacity={doctor.capacity}
-          freeCareOptIn={doctor.freeCareOptIn}
-          consultOptIn={doctor.consultOptIn}
-        />
-      </div>
 
       {/* M6 — Akademik & Eğitim (kalıcı; public profil bunları gösterir, boşsa otomatik üretir) */}
       <div className="mt-5">
