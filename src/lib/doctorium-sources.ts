@@ -102,7 +102,12 @@ export function describeFetchError(e: unknown): string {
   return bits.join(" ") || "hata";
 }
 
-export type SectorCategory = "mevzuat" | "sut" | "turizm" | "yonetim" | "teknoloji" | "ilac-cihaz";
+// v6.99 (kullanıcı isteği 2026-08-15): sektörel akış "doktorlarla ilgili" haberlerle genişledi →
+// iki yeni kategori. "meslek" = hekimin kendi mesleki gündemi (özlük, atama, şiddet, uzmanlık
+// eğitimi, oda/birlik açıklamaları); "kuresel" = uluslararası klinik/politika gündemi. Öncesinde
+// WHO haberleri "teknoloji"ye yazılıyordu — ölçüldü ve yanlış olduğu görüldü (2026-08-15).
+export type SectorCategory =
+  | "mevzuat" | "sut" | "turizm" | "yonetim" | "teknoloji" | "ilac-cihaz" | "meslek" | "kuresel";
 
 // Kategori ataması: başlık anahtar kelimeleri. Sıra ÖNEMLİ — ilk eşleşen kazanır (SUT, genel
 // "mevzuat"tan önce gelmeli ki "SUT Tebliğinde Değişiklik" mevzuata değil SUT'a düşsün).
@@ -113,8 +118,20 @@ const CATEGORY_RULES: { cat: SectorCategory; kw: string[] }[] = [
   //    ölçüldü) → yalnız ruhsatLANDIRMA (beşeri tıbbi ürün bağlamı).
   { cat: "ilac-cihaz", kw: ["ilaç", "tıbbi cihaz", "titck", "prospektüs", "ruhsatlandır", "eczane", "eczacı", "aşı", "biyosidal", "beşeri tıbbi"] },
   { cat: "teknoloji", kw: ["yapay zekâ", "yapay zeka", "dijital sağlık", "e-nabız", "teletıp", "tele-tıp", "giyilebilir", "veri güvenliği", "kişisel sağlık verileri", "kvkk"] },
-  { cat: "yonetim", kw: ["hekim hak", "özlük", "ücret tarife", "hakediş", "asistan hekim", "özel hastane", "tıp merkezi", "tıpta uzmanlık", "sağlık kuruluş"] },
-  { cat: "mevzuat", kw: ["yönetmelik", "tebliğ", "kanun", "karar", "genelge", "malpraktis", "mahkeme"] },
+  // v6.99: hekimin KENDİ mesleki gündemi — yönetim (kurum işletmesi) kategorisinden ayrıldı.
+  // Sıra önemli: "yonetim"den ÖNCE gelir ki "asistan hekim nöbeti" yönetime değil mesleğe düşsün.
+  { cat: "meslek", kw: [
+    "hekim hak", "özlük", "ücret tarife", "hakediş", "asistan hekim", "tıpta uzmanlık", "tus ",
+    "yan dal", "nöbet ücreti", "sağlıkta şiddet", "beyaz kod", "hekime şiddet", "tabip odası",
+    "tabipleri birliği", "hekim ataması", "mecburi hizmet", "istifa eden hekim", "yurt dışına giden hekim",
+    "emeklilik", "döner sermaye", "malpraktis", "mesleki sorumluluk", "denklik",
+    // İngilizce mesleki gündem (Medscape vb.)
+    "physician", "doctors", "residency", "burnout", "medical school", "workforce", "malpractice",
+  ] },
+  { cat: "yonetim", kw: ["özel hastane", "tıp merkezi", "sağlık kuruluş", "hastane yönetim", "akreditasyon", "hospital"] },
+  { cat: "mevzuat", kw: ["yönetmelik", "tebliğ", "kanun", "karar", "genelge", "mahkeme"] },
+  // En sonda: yukarıdakilere düşmeyen uluslararası klinik/politika gündemi.
+  { cat: "kuresel", kw: ["who", "dsö", "outbreak", "salgın", "pandemi", "global health", "cdc", "epidemi"] },
 ];
 
 // Türkçe SONDAN eklemeli: kök başta, ekler sonda. Bu yüzden anahtar kelime KELİME BAŞINDA
@@ -497,7 +514,8 @@ export async function ingestWho(limit = 8): Promise<[number, number]> {
     const pub = pick("pubDate");
     const when = pub ? new Date(pub) : new Date();
     const isNew = await upsertArticle({
-      source: "who", externalId: link.slice(-180), module: "sektorel", category: "teknoloji",
+      // v6.99: WHO haberleri "teknoloji" değil KÜRESEL gündemdir (kategori ayrımı 2026-08-15).
+      source: "who", externalId: link.slice(-180), module: "sektorel", category: "kuresel",
       kind: "haber", title: title.slice(0, 300), summary: pick("description").slice(0, 400),
       sourceName: "WHO", url: link,
       publishedAt: Number.isNaN(when.getTime()) ? new Date() : when,
@@ -506,6 +524,232 @@ export async function ingestWho(limit = 8): Promise<[number, number]> {
   }
   return [items.length, created];
 }
+
+// ── Mesleki alaka süzgeci (v6.99) ───────────────────────────────────────────
+//
+// Kullanıcı isteği 2026-08-15: sektörel akışa "doktorlarla ilgili" haberler eklensin. Kaynak
+// eklemek TEK BAŞINA yetmiyor — 2026-08-15 ölçümünde Türkçe sektör medyası akışlarında
+// "Ekşi mayalı ekmek uyarısı", "Omega 3 nasıl kullanılır", "Türkiye'nin En İyi 10 Saç Ekimi
+// Kliniği (2026)" gibi hasta-yüzü/SEO ve advertorial içerik vardı. Hekim akışına giren her kalem
+// MESLEKİ olmalı: klinik pratiği, mevzuatı, hakları ya da sağlık sistemini ilgilendirmeli.
+//
+// isHealthRelated'dan farkı: o "sağlıkla ilgili mi" der (Resmî Gazete gibi karışık kaynaklar
+// için, Türkçe); bu "HEKİMİ ilgilendirir mi" der ve İngilizce beslemeleri de kapsar.
+
+/** Tüketici/yaşam tarzı içeriği — hekim akışında gürültüdür. */
+const CONSUMER_PATTERNS = [
+  "nasıl zayıfla", "kilo verme", "diyet listesi", "zayıflama", "cilt bakım", "güzellik sırr",
+  "bitkisel çözüm", "doğal yöntem", "mucize", "şaşırtan", "işte o besin", "sağlıklı yaşam ipuç",
+  "burçlar", "tarifi", "yaz aylarında dikkat", "uzmanından uyarı",
+  "weight loss tip", "beauty", "horoscope", "recipe", "wellness trend", "best foods",
+];
+/**
+ * Kurum içi etkinlik/duyuru gürültüsü — 2026-08-15 İTO ölçümünde akışa "Odamızı Ziyaret Etti",
+ * "Kahvaltıda Buluştu", "Satış İlanı" gibi kalemler giriyordu. Mesleki gündem DEĞİL, iç bültendir.
+ * ⚠️ "çalıştay"/"rapor"/"sempozyum" BİLİNÇLİ yok: "Genç Hekim İntiharları Çalıştayı Raporu" gibi
+ * kalemler hekimi doğrudan ilgilendirir.
+ */
+const ORG_NOISE_PATTERNS = [
+  "ziyaret etti", "odamızı ziyaret", "kahvaltıda buluş", "yemeğine katıldık", "satış ilanı",
+  "tebrik ve dayanışma", "taziye", "nikah", "piknik", "gezisi", "turnuva", "kutlama mesajı",
+];
+
+/** Reklam/advertorial imzaları — ticari beslemelerde başlığa işlenir. */
+const PROMO_PATTERNS = [
+  "sponsorlu", "işbirliği ile", "reklam", "advertorial", "tanıtım yazısı", "iş birliğiyle",
+  "en iyi 10", "en iyi klinik", "fiyatları", "kampanya", "indirim",
+  "sponsored", "paid content", "partner content", "promoted",
+];
+/** Hekimi ilgilendiren mesleki/klinik/sistem sinyalleri (TR + EN). */
+const PROFESSIONAL_PATTERNS = [
+  // mesleki gündem
+  "hekim", "doktor", "dr.", "uzm.", "prof.", "doç.", "tabip", "asistan", "uzmanlık", "tus", "nöbet",
+  "özlük", "malpraktis", "başhekim", "atama", "görev değişimi", "il sağlık müdür", "sağlık müdürlüğ",
+  "sağlıkta şiddet", "beyaz kod", "mecburi hizmet", "döner sermaye", "denklik", "mesleki sorumluluk",
+  "physician", "doctor", "clinician", "resident", "residency", "medical school", "nurse",
+  // klinik/bilimsel
+  "klinik", "tedavi", "tanı", "kılavuz", "rehber", "endikasyon", "ameliyat", "cerrah", "ilaç",
+  "aşı", "hasta güvenliği", "yan etki", "faz 3", "klinik çalışma", "salgın", "vaka sayısı",
+  "clinical", "trial", "guideline", "treatment", "diagnosis", "surgery", "drug", "vaccine",
+  "fda", "ema", "approval", "patients", "therapy", "disease", "cancer", "outbreak", "screening",
+  // 🪤 2026-08-15: "US CDC Records More Than 2,500 Measles Cases" hiçbir desene takılmıyordu —
+  // salgın/halk sağlığı haberleri hastalık ADIYLA gelir, hastalık adı listelenemez → kurum ve
+  // epidemiyoloji sözcükleri desen olur.
+  "cdc", "who ", "epidemic", "infection", "cases", "immuniz", "vaccination", "mortality",
+  // sistem / mevzuat / ödeme
+  "sgk", "sut", "geri ödeme", "hastane", "sağlık bakanlığı", "titck", "mevzuat", "yönetmelik",
+  "hospital", "medicare", "medicaid", "insurance", "health policy", "public health",
+];
+
+/**
+ * Kalem hekim akışına girmeli mi? Reklam/tüketici içeriği kesin elenir; kalanlarda en az bir
+ * mesleki sinyal aranır. Kaynak ne olursa olsun aynı ölçüt uygulanır (kaynağa güven, süzgeci
+ * atlama gerekçesi değildir — 2026-08-15 dersi).
+ */
+export function isProfessionallyRelevant(title: string, summary = ""): boolean {
+  const t = `${title} ${summary}`.toLocaleLowerCase("tr-TR");
+  const head = title.toLocaleLowerCase("tr-TR"); // etkinlik gürültüsü BAŞLIKTAN anlaşılır
+  if (PROMO_PATTERNS.some((p) => t.includes(p))) return false;
+  if (CONSUMER_PATTERNS.some((p) => t.includes(p))) return false;
+  if (ORG_NOISE_PATTERNS.some((p) => head.includes(p))) return false;
+  return PROFESSIONAL_PATTERNS.some((p) => matchesKeyword(t, p));
+}
+
+// ── Genel RSS toplayıcı (v6.99) ─────────────────────────────────────────────
+
+export interface RssSourceDef {
+  /** DB'ye yazılan kaynak anahtarı (source) — değiştirme, idempotenci ona bağlı. */
+  source: string;
+  /** Kartta görünen kurum adı. */
+  sourceName: string;
+  url: string;
+  /** Sabit kategori; verilmezse başlıktan çıkarılır (categorize). */
+  category?: SectorCategory;
+  limit?: number;
+}
+
+/**
+ * RSS/Atom beslemesi → NewsArticle. Ayrıştırma hedefli regex'tir (proje geneli desen: parser
+ * bağımlılığı yok, başarısızlık = 0 kayıt, uydurma yok). RSS 1.0/RDF de desteklenir: NEJM gibi
+ * kaynaklar <item rdf:about> kullanır, düz `<item>` araması onları KAÇIRIR (2026-08-15 ölçümü).
+ */
+export async function ingestRss(def: RssSourceDef, opts?: IngestOpts): Promise<[number, number]> {
+  // 🪤 2026-08-15 ölçümü — OHSAD dersinin TERSİ bir sınıf: Medscape, tarayıcı UA'lı Node
+  // isteğine 403 verir, BAŞLIKSIZ isteğe 200. (curl her iki halde 200 → sorun UA değil, "tarayıcı
+  // gibi görünen ama TLS parmak izi Node olan" istemcinin tutarsızlığı.) Bu yüzden başlık seti
+  // sabit değil, İKİ AŞAMALI: önce tarayıcı başlıkları (OHSAD/Cloudflare sınıfı için gerekli),
+  // 403/429'da başlıksız yeniden dene. Kaynak davranışı değişse de kendini onarır.
+  const get = (headers: Record<string, string>) =>
+    fetch(def.url, { headers, cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+  let res = await get({
+    ...browserHeaders(new URL(def.url).origin + "/"),
+    Accept: "application/rss+xml, application/xml, text/xml, */*;q=0.8",
+  });
+  if (res.status === 403 || res.status === 429) res = await get({});
+  if (!res.ok) throw new Error(`${def.source} HTTP ${res.status}`);
+  const xml = await res.text();
+
+  const blocks = [...xml.matchAll(/<(item|entry)(?:\s[^>]*)?>([\s\S]*?)<\/\1>/gi)]
+    .map((m) => m[2])
+    .slice(0, def.limit ?? 15);
+
+  let scanned = 0;
+  let created = 0;
+  const seen = new Set<string>();
+  for (const b of blocks) {
+    const pick = (tag: string) => {
+      const m = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i").exec(b);
+      return m ? plain(m[1].replace(/<!\[CDATA\[|\]\]>/g, "")) : "";
+    };
+    const title = pick("title");
+    // Atom link'i öznitelikte taşır (<link href="...">), RSS gövdede.
+    const link = pick("link") || /<link[^>]+href="([^"]+)"/i.exec(b)?.[1] || "";
+    if (!title || !link) continue;
+    if (seen.has(link)) continue;
+    seen.add(link);
+    scanned++;
+    const summary = pick("description") || pick("summary");
+    if (!isProfessionallyRelevant(title, summary)) continue;
+    const pub = pick("pubDate") || pick("published") || pick("updated") || pick("dc:date");
+    const when = pub ? new Date(pub) : new Date();
+    const isNew = await upsertArticle({
+      source: def.source,
+      externalId: link.slice(-180),
+      module: "sektorel",
+      category: def.category ?? categorize(title) ?? "kuresel",
+      kind: "haber",
+      title: title.slice(0, 300),
+      summary: summary.slice(0, 500),
+      sourceName: def.sourceName,
+      url: link,
+      publishedAt: Number.isNaN(when.getTime()) ? new Date() : when,
+    }, opts?.dryRun);
+    if (isNew) {
+      created++;
+      opts?.onItem?.(`[${def.source}] ${title.slice(0, 110)}`);
+    }
+  }
+  return [scanned, created];
+}
+
+/**
+ * Sektörel besleme kaynakları (v6.99 — kullanıcı seçimi 2026-08-15: "mesleki + uluslararası").
+ * ⚠️ Her ad canlı ölçüldü (2026-08-15): BMJ news 403, TİTCK/SGK/YÖK/Sağlık Bakanlığı makine-okunur
+ * besleme vermiyor, TTB'nin rss.php'si 404 → listeye YALNIZ çalışanlar girdi. Ölmüş bir kaynağı
+ * "ekleyelim de dursun" mantığıyla bırakmak, cron raporunu kalıcı hatayla kirletir.
+ */
+export const RSS_SOURCES: RssSourceDef[] = [
+  { source: "medscape", sourceName: "Medscape", url: "https://www.medscape.com/cx/rssfeeds/2700.xml", limit: 12 },
+  { source: "medicalxpress", sourceName: "Medical Xpress", url: "https://medicalxpress.com/rss-feed/", limit: 12 },
+];
+
+// ── İstanbul Tabip Odası (v6.99) ────────────────────────────────────────────
+
+/**
+ * İTO haber listesi. 🪤 /haberler sayfası haberleri JS ile yükler — statik HTML'de YOKTUR
+ * (2026-08-15: sayfa 147 KB ama içinde üyelik SSS'i var). Liste, sayfanın kendi Ajax ucundan
+ * gelir: POST views/haber/gethaber.view.php {Limit} → 50 haber bloğu (HTML parça).
+ * Blok deseni: <h3 class="h5 …">başlık</h3> · özet <a href="#"> · gerçek link <a href="NNNN-slug.html">.
+ * Tarih ayrı sütunda "14 / AUĞ. / 2026" biçiminde (kısaltmalar Türkçe ve NOKTALI).
+ */
+export async function ingestIstanbulTabip(opts?: IngestOpts): Promise<[number, number]> {
+  const res = await fetch("https://www.istabip.org.tr/views/haber/gethaber.view.php", {
+    method: "POST",
+    headers: {
+      ...browserHeaders("https://www.istabip.org.tr/haberler"),
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+    body: "Limit=0",
+    cache: "no-store",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`İTO HTTP ${res.status}`);
+  const html = await res.text();
+
+  let scanned = 0;
+  let created = 0;
+  for (const block of html.split("</li>").slice(0, 30)) {
+    const title = plain(/<h3[^>]*>([\s\S]*?)<\/h3>/i.exec(block)?.[1] ?? "");
+    const slug = /href="(\d+-[^"]+\.html)"/i.exec(block)?.[1];
+    if (!title || !slug || title.length < 15) continue;
+    scanned++;
+    if (!isProfessionallyRelevant(title, plain(block).slice(0, 400))) continue;
+    const isNew = await upsertArticle({
+      source: "istabip",
+      externalId: slug.slice(0, 180),
+      module: "sektorel",
+      category: categorize(title) ?? "meslek",
+      kind: "haber",
+      title: title.slice(0, 300),
+      sourceName: "İstanbul Tabip Odası",
+      url: `https://www.istabip.org.tr/${slug}`,
+      publishedAt: parseItoDate(block) ?? new Date(),
+    }, opts?.dryRun);
+    if (isNew) {
+      created++;
+      opts?.onItem?.(`[İTO] ${title.slice(0, 110)}`);
+    }
+  }
+  return [scanned, created];
+}
+
+/** İTO tarih sütunu: gün + "AUĞ."/"OCA." gibi kısaltma + yıl. Çözülemezse null (bugüne düşer). */
+export function parseItoDate(block: string): Date | null {
+  const day = /g-font-size-50[^>]*>\s*(\d{1,2})\s*</.exec(block)?.[1];
+  const rest = [...block.matchAll(/<span class="d-block">\s*([^<]+?)\s*<\/span>/g)].map((m) => m[1]);
+  if (!day || rest.length < 2) return null;
+  const mo = TR_MONTH_ABBR[rest[0].replace(/\./g, "").toLocaleLowerCase("tr-TR")];
+  const year = /^\d{4}$/.test(rest[1]) ? rest[1] : null;
+  if (!mo || !year) return null;
+  return new Date(`${year}-${mo}-${day.padStart(2, "0")}T00:00:00Z`);
+}
+
+/** İTO'nun 3-4 harfli ay kısaltmaları (site "AUĞ." gibi yazıyor — TR_MONTHS ile eşleşmez). */
+const TR_MONTH_ABBR: Record<string, string> = {
+  oca: "01", şub: "02", sub: "02", mar: "03", nis: "04", may: "05", haz: "06",
+  tem: "07", ağu: "08", agu: "08", auğ: "08", aug: "08", eyl: "09", eki: "10", kas: "11", ara: "12",
+};
 
 // ── Resmî metin çekme (mevzuat özeti için) ──────────────────────────────────
 

@@ -15,10 +15,12 @@
 // İÇERİK PHI DEĞİLDİR (herkese açık literatür/mevzuat) → şifrelenmez, düz saklanır. Bilinçli.
 import { db } from "./db";
 import { NEWS_QUERIES } from "./medical-news";
+import { tier1Query, tier2Query } from "./academic-journals";
 import { BRANCHES } from "./triage";
 import {
   fetchGazetteToday, ingestGazetteItems, ingestOhsad, ingestTtb,
   ingestFdaRecalls, ingestTrials, ingestWho, describeFetchError,
+  ingestIstanbulTabip, ingestRss, RSS_SOURCES,
 } from "./doctorium-sources";
 
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
@@ -142,10 +144,14 @@ function authorLine(authors?: { name: string }[]): string | null {
   return authors.length > 3 ? `${names.join(", ")}, ve ark.` : names.join(", ");
 }
 
-/** Tek sorgu → NewsArticle upsert. Dönen: [çekilen, yeni]. */
+/**
+ * Tek sorgu → NewsArticle upsert. Dönen: [çekilen, yeni].
+ * ⚠️ v6.99: `term` artık TAM PubMed sorgusudur (dergi beyaz-listesi + kanıt tipi dahil —
+ * lib/academic-journals.ts kurar). Burada `hasabstract` EKLENMEZ; sorguyu kuran taraf koyar.
+ */
 async function ingestQuery(term: string, limit: number, slugs: string[]): Promise<[number, number]> {
   const search = (await eutils("esearch.fcgi", {
-    db: "pubmed", term: `(${term}) AND hasabstract`, retmax: String(limit),
+    db: "pubmed", term, retmax: String(limit),
     sort: "pub_date", datetype: "pdat", reldate: String(RELDATE_DAYS),
   })) as { esearchresult?: { idlist?: string[] } } | null;
   const ids = search?.esearchresult?.idlist ?? [];
@@ -208,16 +214,26 @@ export async function ingestDoctorium(): Promise<IngestResult> {
   const out: IngestResult = { pubmedFetched: 0, pubmedNew: 0, gazetteFetched: 0, gazetteNew: 0, sources: {}, errors: [] };
 
   // Akademik: her branş için MeSH sorgusu (sıralı + throttle — NCBI 3 istek/sn sınırı).
-  for (const [label, term] of Object.entries(NEWS_QUERIES)) {
+  // v6.99 (kullanıcı kararı 2026-08-15): "yalnız saygın medikal dergilerin hakemli araştırmaları".
+  // Katman 1 = beyaz-liste dergi + kanıt tipi; yetersiz gelirse katman 2 (dergi serbest, kanıt tipi
+  // şart) FARKI tamamlar. 2026-08-15 ölçümü: 30 branşın 29'unda katman 1 dolu (yalnız genel cerrahi
+  // 180 günde boş) — yani yedek kural istisna, kural değil.
+  for (const [label, mesh] of Object.entries(NEWS_QUERIES)) {
     const slug = LABEL_TO_SLUG[label];
     if (!slug) {
       out.errors.push(`slug bulunamadı: ${label}`);
       continue;
     }
     try {
-      const [fetched, created] = await ingestQuery(term, PER_BRANCH, [slug]);
+      const [fetched, created] = await ingestQuery(tier1Query(mesh, slug), PER_BRANCH, [slug]);
       out.pubmedFetched += fetched;
       out.pubmedNew += created;
+      if (fetched < PER_BRANCH) {
+        await sleep(NCBI_GAP_MS);
+        const [f2, c2] = await ingestQuery(tier2Query(mesh), PER_BRANCH - fetched, [slug]);
+        out.pubmedFetched += f2;
+        out.pubmedNew += c2;
+      }
     } catch (e) {
       out.errors.push(`pubmed/${slug}: ${describeFetchError(e).slice(0, 120)}`);
     }
@@ -243,6 +259,10 @@ export async function ingestDoctorium(): Promise<IngestResult> {
     ["fda", () => ingestFdaRecalls(10)],
     ["trials", () => ingestTrials(10)],
     ["who", () => ingestWho(8)],
+    // v6.99 — "doktorlarla ilgili" haber genişlemesi (kullanıcı seçimi 2026-08-15: mesleki +
+    // uluslararası). Hepsi mesleki alaka süzgecinden geçer (isProfessionallyRelevant).
+    ["istabip", ingestIstanbulTabip],
+    ...RSS_SOURCES.map((s): [string, () => Promise<[number, number]>] => [s.source, () => ingestRss(s)]),
   ];
   for (const [name, fn] of collectors) {
     try {

@@ -111,8 +111,10 @@ describe("modül tanımı", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it("6 sektörel kategori tanımlı ve etiketleri çözülür", () => {
-    expect(SECTOR_CATEGORIES).toHaveLength(6);
+  it("8 sektörel kategori tanımlı ve etiketleri çözülür", () => {
+    // v6.99 (2026-08-15): "meslek" + "kuresel" eklendi — hekimin kendi mesleki gündemi yönetimden,
+    // küresel gündem teknolojiden ayrıldı.
+    expect(SECTOR_CATEGORIES).toHaveLength(8);
     for (const c of SECTOR_CATEGORIES) expect(categoryLabel(c.key)).toBe(c.label);
     expect(categoryLabel("yok-boyle")).toBeNull();
     expect(categoryLabel(null)).toBeNull();
@@ -248,8 +250,17 @@ describe("sektörel kategori ataması", () => {
     expect(categorize("Sağlık Turizmi Teşvik Kararında Değişiklik")).toBe("turizm");
     expect(categorize("Beşeri Tıbbi Ürünlerin Ruhsatlandırılması Yönetmeliği")).toBe("ilac-cihaz");
     expect(categorize("Kişisel Sağlık Verileri Yönetmeliğinde Değişiklik")).toBe("teknoloji");
-    expect(categorize("İşyeri Hekimliği Ücret Tarifeleri açıklandı")).toBe("yonetim");
+    // v6.99: hekimin ÜCRETİ/özlüğü artık "meslek" — kurum işletmesi (hastane) "yonetim" kalır.
+    expect(categorize("İşyeri Hekimliği Ücret Tarifeleri açıklandı")).toBe("meslek");
     expect(categorize("Özel Hastaneler Yönetmeliğinde Değişiklik")).toBe("yonetim");
+  });
+
+  // v6.99 — "doktorlarla ilgili" genişleme (kullanıcı isteği 2026-08-15)
+  it("mesleki gündem 'meslek'e, uluslararası gündem 'kuresel'e düşer", () => {
+    expect(categorize("Asistan hekim nöbet ücretlerine ilişkin düzenleme")).toBe("meslek");
+    expect(categorize("Sağlıkta şiddet yasası TBMM gündeminde")).toBe("meslek");
+    expect(categorize("Physicians Working Excessive Hours More Likely to Quit")).toBe("meslek");
+    expect(categorize("WHO declares new outbreak response phase")).toBe("kuresel");
   });
 
   it("hiçbiri tutmazsa null (zorla kategori atanmaz)", () => {

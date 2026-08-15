@@ -22,6 +22,7 @@
 // (publicationYear-DESC — akış "yeni yayınlar" mantığıyla yaşar, tam arşiv hedeflenmez).
 import { db } from "./db";
 import { extractBranches } from "./hukuk-keywords";
+import { scoreLegalRelevance } from "./doktrin-filter";
 
 const BASE = "https://search.trdizin.gov.tr";
 export const GAP_MS = 800;
@@ -45,6 +46,8 @@ export const DOKTRIN_QUERIES: string[] = [
 export interface DoktrinIngestResult {
   found: number; // sorguların döndürdüğü benzersiz yayın (DB'de olanlar dahil)
   created: number;
+  /** v6.99 — hukuk alaka süzgecinin elediği aday (görünürlük: süzgeç sessizce kısmasın). */
+  rejected: number;
   errors: string[];
 }
 
@@ -114,6 +117,25 @@ export function combinedText(src: TrdizinSource): string {
     .join(" ");
 }
 
+/**
+ * Hukuk alaka ölçümünün girdisi (v6.99): TÜM dil varyantlarının başlığı/anahtar kelimesi/özeti
+ * AYRI kanallar olarak verilir — süzgeç konuma göre ağırlıklandırır (lib/doktrin-filter.ts).
+ * combinedText tek torba döndürdüğü için burada kullanılamaz: kirliliğin tamamı "özet" kanalından
+ * geliyordu, kanalları ayırmadan ölçmek sorunu görünmez kılar.
+ */
+export function legalRelevanceInput(src: TrdizinSource): {
+  title: string; abstract: string; keywords: string; journal: string;
+} {
+  const list = src.abstracts ?? [];
+  const join = (pick: (a: TrdizinAbstract) => string) => list.map(pick).filter(Boolean).join(" · ");
+  return {
+    title: join((a) => a.title ?? ""),
+    abstract: join((a) => a.abstract ?? ""),
+    keywords: join((a) => (Array.isArray(a.keywords) ? a.keywords.join(" ") : a.keywords ?? "")),
+    journal: src.journal?.name ?? "",
+  };
+}
+
 /** TR öncelikli başlık/özet çifti; ikisi de yoksa null (başlıksız kayıt yazılmaz — uydurma yok). */
 export function pickTitleAbstract(abstracts: TrdizinAbstract[] | undefined): { title: string; abstract: string } | null {
   const list = abstracts ?? [];
@@ -144,21 +166,32 @@ export async function ingestDoktrin(opts: { queries?: string[]; maxPages?: numbe
   const queries = opts.queries ?? DOKTRIN_QUERIES;
   const maxPages = opts.maxPages ?? MAX_PAGES_PER_QUERY;
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-  const out: DoktrinIngestResult = { found: 0, created: 0, errors: [] };
+  const out: DoktrinIngestResult = { found: 0, created: 0, rejected: 0, errors: [] };
 
-  // 1) Arama havuzu (Map dedupe — aynı makale birden çok sorguda çıkar). Kayıt havuza YALNIZ
-  // ibare doğrulamasından geçerse girer (matchesQuery — gevşek ES skoru güvenilmez).
+  // 1) Arama havuzu (Map dedupe — aynı makale birden çok sorguda çıkar). Kayıt havuza İKİ kapıdan
+  // geçerse girer: (a) matchesQuery — ibare gerçekten var mı (gevşek ES skoru güvenilmez),
+  // (b) v6.99 hukuk alaka süzgeci — ibare KONUM olarak anlamlı mı (özetteki rutin "onam alındı"
+  // cümlesi klinik makaleyi doktrin yapıyordu; lib/doktrin-filter.ts).
   const pool = new Map<string, TrdizinSource>();
+  const rejectedIds = new Set<string>();
+  const admit = (s: TrdizinSource, q: string) => {
+    if (s.id == null || !matchesQuery(s, q)) return;
+    const id = String(s.id);
+    if (pool.has(id)) return;
+    if (!scoreLegalRelevance(legalRelevanceInput(s)).accepted) {
+      rejectedIds.add(id); // benzersiz say: aynı makale birçok sorgudan gelir
+      return;
+    }
+    pool.set(id, s);
+  };
   for (const q of queries) {
     try {
       const first = await searchPage(q, 1);
-      for (const s of first.sources) if (s.id != null && matchesQuery(s, q)) pool.set(String(s.id), s);
+      for (const s of first.sources) admit(s, q);
       const pages = Math.min(Math.ceil(first.total / PAGE_LIMIT), maxPages);
       for (let p = 2; p <= pages; p++) {
         await sleep(GAP_MS);
-        for (const s of (await searchPage(q, p)).sources) {
-          if (s.id != null && matchesQuery(s, q)) pool.set(String(s.id), s);
-        }
+        for (const s of (await searchPage(q, p)).sources) admit(s, q);
       }
     } catch (e) {
       out.errors.push(`arama "${q}": ${short(e)}`);
@@ -167,6 +200,7 @@ export async function ingestDoktrin(opts: { queries?: string[]; maxPages?: numbe
     await sleep(GAP_MS);
   }
   out.found = pool.size;
+  out.rejected = rejectedIds.size;
   if (!pool.size) return out;
 
   // 2) DB farkı — bilinenlere yazma denenmez.

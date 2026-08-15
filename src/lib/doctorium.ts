@@ -79,13 +79,18 @@ export function parseCareerTab(raw: string | undefined): CareerTabKey {
 
 // Sektörel/mevzuat alt kategorileri (v6.50). Kaynak matrisi: mevzuat+sut+ilac-cihaz Resmî Gazete
 // ve OHSAD'dan, yonetim TTB/OHSAD'dan, teknoloji WHO/RG'den, turizm RG'den gelir.
+// v6.99 (2026-08-15): "meslek" ve "kuresel" eklendi — sektörel akış hekimin kendi mesleki
+// gündemiyle genişledi (İTO/TTB/Medscape) ve WHO/Medical Xpress içeriği "teknoloji"den ayrıldı.
+// Sıra = doktorun ilgi sıklığı varsayımı: kendi mesleği önce, küresel gündem sonda.
 export const SECTOR_CATEGORIES: { key: string; label: string }[] = [
+  { key: "meslek", label: "Hekimlik & Mesleki Gündem" },
   { key: "mevzuat", label: "Mevzuat & Sağlık Hukuku" },
   { key: "sut", label: "SGK · SUT & Geri Ödeme" },
   { key: "turizm", label: "Sağlık Turizmi & Teşvikler" },
   { key: "yonetim", label: "Hastane & Klinik Yönetimi" },
   { key: "teknoloji", label: "Sağlık Teknolojileri" },
   { key: "ilac-cihaz", label: "İlaç & Tıbbi Cihaz" },
+  { key: "kuresel", label: "Küresel Sağlık Gündemi" },
 ];
 const CAT_LABEL: Record<string, string> = Object.fromEntries(SECTOR_CATEGORIES.map((c) => [c.key, c.label]));
 export function categoryLabel(k: string | null | undefined): string | null {
