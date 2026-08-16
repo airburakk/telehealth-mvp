@@ -54,7 +54,7 @@ function soStatusDot(s: string): string {
 export default async function DoctorPanel({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; branch?: string; status?: string; urgent?: string }>;
+  searchParams: Promise<{ page?: string; branch?: string; status?: string; urgent?: string; from?: string }>;
 }) {
   const user = await getCurrentUser();
   const isStaffOnly = !!user && user.role !== "DOCTOR"; // koordinatör/etik/admin → doktor profili yok, tüm kuyruk
@@ -66,8 +66,11 @@ export default async function DoctorPanel({
   // M5 onboarding + aktivasyon kapısı: doktor henüz onboard olmadıysa VEYA zorunlu mesleki belgeleri
   // (diploma + MMSS) tamamlamadıysa (activatedAt yok) kapıya yönlendir. (baslangic sayfası ikisi de
   // tamamsa /doktor'a geri yönlendirir → sonsuz döngü yok.)
+  // ?from=doctorium (2026-08-16): Doctorium'daki Aşama-1 doktoru AURA toggle'ıyla geldi —
+  // baslangic'a aura-gecis bağlamı taşınır, sayfa "AURA'ya geçiş için Aşama 2" uyarı ekranını basar.
   if (user?.role === "DOCTOR" && doctor && (!doctor.onboardedAt || !doctor.activatedAt)) {
-    redirect("/doktor/baslangic");
+    const { from } = await searchParams;
+    redirect(`/doktor/baslangic${from === "doctorium" ? "?from=aura-gecis" : ""}`);
   }
 
   // Pencere görünürlüğü (doktor yoksa = personel: duty[tümü] + SO[gözetim]).

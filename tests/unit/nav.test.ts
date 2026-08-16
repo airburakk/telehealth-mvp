@@ -22,24 +22,26 @@ describe("navItemsFor", () => {
     expect(h).toContain("/paylasimlarim");
   });
 
-  it("DOCTOR: Doktor + Post-Op + Doctorium; Profilim bant linki hesap menüsüne taşındı (2026-08-01)", () => {
-    expect(hrefs("DOCTOR")).toEqual(["/doktor", "/doktor/takip", "/doktor/doctorium"]);
+  it("DOCTOR: Doktor + Post-Op; Doctorium bant sekmesi marka toggle'ına taşındı (2026-08-16)", () => {
+    expect(hrefs("DOCTOR")).toEqual(["/doktor", "/doktor/takip"]);
+    expect(hrefs("DOCTOR")).not.toContain("/doktor/doctorium");
     expect(hrefs("DOCTOR")).not.toContain("/doktor/ucretsiz-saglik");
     expect(hrefs("DOCTOR")).not.toContain("/doktor/profil");
   });
 
-  it("DOCTOR + student (v6.95): bant YALNIZ Doctorium — klinik sekmeler öğrenciye çizilmez", () => {
-    expect(navItemsFor("DOCTOR", { student: true }).map((n) => n.href)).toEqual(["/doktor/doctorium"]);
+  it("DOCTOR + student (v6.95 + 2026-08-16): bant BOŞ — Doctorium'a tek giriş Header toggle'ı", () => {
+    expect(navItemsFor("DOCTOR", { student: true }).map((n) => n.href)).toEqual([]);
   });
 
   it("student bayrağı DOCTOR-dışı rolleri değiştirmez (yanlış pozitif daraltma yok)", () => {
-    expect(navItemsFor("COORDINATOR", { student: true }).map((n) => n.href)).toEqual(["/operasyon", "/doktor", "/doktor/takip", "/doktor/doctorium"]);
+    expect(navItemsFor("COORDINATOR", { student: true }).map((n) => n.href)).toEqual(["/operasyon", "/doktor", "/doktor/takip"]);
     expect(navItemsFor("PATIENT", { student: true }).map((n) => n.href)).toEqual(["/vakalarim", "/takip", "/paylasimlarim"]);
     expect(navItemsFor("ADMIN", { student: true }).map((n) => n.href)).toEqual(["/admin", "/operasyon"]);
   });
 
-  it("COORDINATOR: Operasyon + Doktor + Post-Op + Doctorium; Ücretsiz Sağlık bant linki kalktı", () => {
-    expect(hrefs("COORDINATOR")).toEqual(["/operasyon", "/doktor", "/doktor/takip", "/doktor/doctorium"]);
+  it("COORDINATOR: Operasyon + Doktor + Post-Op; Doctorium sekmesi toggle'a taşındı, Ücretsiz Sağlık kalktı", () => {
+    expect(hrefs("COORDINATOR")).toEqual(["/operasyon", "/doktor", "/doktor/takip"]);
+    expect(hrefs("COORDINATOR")).not.toContain("/doktor/doctorium");
   });
 
   it("ADMIN bandı SADE (v6.73 iki tur, kullanıcı kararı): YALNIZ Yönetim + Operasyon — TAM liste", () => {

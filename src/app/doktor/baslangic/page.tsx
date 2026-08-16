@@ -6,7 +6,8 @@ import { branchKeyFromLabel, branchLabel, getBranchProcedures, getByCodes } from
 import { hasDoctoriumAccess, isEduEmail } from "@/lib/doctor-activation";
 import { SPONSOR_CONSENT_TEXT } from "@/lib/sponsor";
 import { HR_CONTACT_CONSENT_TEXT } from "@/lib/hr-consent";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, FileCheck2 } from "lucide-react";
+import { AuraMark } from "@/components/PortamedLogo";
 import { StudentStage1Card } from "@/components/StudentStage1Card";
 import { OnboardingForm } from "./OnboardingForm";
 
@@ -111,7 +112,48 @@ export default async function DoctorOnboardingPage({
   try { if (doctor.publications) { const p = JSON.parse(doctor.publications); if (Array.isArray(p)) pubs = p; } } catch { /* bozuk JSON */ }
 
   return (
-    <OnboardingForm
+    <>
+      {/* AURA'ya geçiş uyarı ekranı (kullanıcı kararı 2026-08-16): Doctorium'daki Aşama-1
+          doktoru marka toggle'ıyla AURA'ya geçmek istedi → /doktor kapısı buraya
+          ?from=aura-gecis ile yönlendirdi. Ekran Aşama-2 şartlarını (belgeler + doğrulama)
+          söyler; yükleme yeri zaten bu sayfanın formu. Belge listesi /kayit "İki aşamalı
+          üyelik" anlatımıyla birebir tutulur. */}
+      {sp.from === "aura-gecis" && (
+        <div className="mx-auto max-w-2xl px-5 pt-8">
+          <section
+            aria-label="AURA klinik erişim koşulları"
+            className="relative overflow-hidden rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5"
+          >
+            <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-[var(--c-accent)]" />
+            <div className="flex items-start gap-3 ps-1">
+              <AuraMark size={24} />
+              <div className="min-w-0">
+                <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">
+                  AURA klinik paneline geçiş için Aşama 2 gerekli
+                </h2>
+                <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink-2)]">
+                  Doctor<span className="doctorium-ium">ium</span> üyeliğiniz (Aşama 1) aktif. Vaka
+                  havuzlarının bulunduğu AURA klinik çalışma alanına geçebilmek için Aşama 2
+                  belgelerinizi yükleyip doğrulanmanız gerekir:
+                </p>
+                <ul className="mt-2.5 space-y-1.5 text-sm text-[var(--c-ink-2)]">
+                  {["Diploma", "Uzmanlık ve işlem tanımları", "MMSS poliçesi (mesleki mesuliyet sigortası)"].map((b) => (
+                    <li key={b} className="flex items-center gap-2">
+                      <FileCheck2 size={15} className="shrink-0 text-[var(--c-accent)]" aria-hidden />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2.5 text-xs leading-relaxed text-[var(--c-ink-3)]">
+                  Belgeleriniz incelenip onaylandığında klinik panel ve doktor havuzları açılır.
+                  Yüklemeyi aşağıdaki adımlardan yapabilirsiniz.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+      <OnboardingForm
       doctorName={`${doctor.title} ${doctor.name}`}
       branchKey={branchKey}
       branchLabel={branchKey ? branchLabel(branchKey) : doctor.branch}
@@ -148,5 +190,6 @@ export default async function DoctorOnboardingPage({
         fromDoctorium: sp.from === "doctorium",
       }}
     />
+    </>
   );
 }

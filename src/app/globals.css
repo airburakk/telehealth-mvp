@@ -819,6 +819,138 @@ body {
   animation-play-state: paused !important;
 }
 
+/* Header marka toggle'ı (kullanıcı kararı 2026-08-16): AURA ↔ Doctorium yan yana; aktif
+   tarafın yörüngesi belirgin döner, deaktif taraf durgun + soluk. 4.5s ara değer: 8s
+   varsayılan "dönüyor" hissi vermiyordu, 1.3s (aura-sym-fast) spinner/bekleme dilidir.
+   Durgunluk paused (none değil): reduced-motion bloğu animasyonu zaten none yaptığından
+   ek media query gerekmez — soluk/gri hâl hareket olmadığı için orada da kalır. */
+.brand-live .aura-sym-orbit {
+  animation-duration: 4.5s;
+}
+.brand-idle {
+  opacity: 0.4;
+  filter: grayscale(1);
+  transition:
+    opacity 0.2s ease,
+    filter 0.2s ease;
+}
+.brand-idle .aura-sym-orbit,
+.brand-idle .aura-sym-core,
+.brand-idle .aura-sym-pulse {
+  animation-play-state: paused;
+}
+.brand-idle:hover,
+.brand-idle:focus-visible {
+  opacity: 0.75;
+  filter: grayscale(0.4);
+}
+
+/* /doctorium tanıtım hero'su — prizma kelime dönüşü (kullanıcı seçimi 2026-08-16; fikir
+   kaynağı kullanıcının Codex taslağı). Üç yüzlü rotateX prizması: her yüz bir sıfat
+   (Yeni → Profesyonel → Kişiselleştirilmiş). IŞIMA DÖNÜŞ ANINDA (kullanıcı netleştirmesi
+   2. tur): yüz sabit dururken sönük; prizma 120° dönerken zümrüt parlar ve söner —
+   Codex taslağındaki zamanlama TERSİYDİ (sabitken ışıyordu), bilinçli çevrildi. Dönüş
+   pencereleri turn keyframe'iyle kilitli: %27–33.3 · %60.3–66.7 · %93.7–100; glow tepeleri
+   pencere ortasında (%30.2 · %63.5 · %96.8), %100'de sıfır → döngü pürüzsüz sarar.
+   translateZ(.31em) = yükseklik 1.08em'lik prizmanın yarıçapı — yüzler em'e bağlı
+   olduğundan başlık fontu her boyutta doğru döner. Reduced-motion: dönüş ve ışıma
+   kapanır, İLK yüz sabit kalır (diğer yüzler display:none — üst üste binmesin). */
+.doctorium-prism-shell {
+  display: block;
+  height: 1.08em;
+  margin: 0.08em 0 0.04em;
+  perspective: 900px;
+  /* Sol kenar çapası (kullanıcı bildirimi 2026-08-16, 3. tur): öndeki yüz translateZ ile
+     kameraya yaklaşınca merkez-origin perspektif kelimeyi her yöne ~%2.4 büyütüyor, sol
+     kenar "Hekimin"den ~7px önce başlıyordu. Origin sola alınınca büyüme sağa doğru işler —
+     üç satırın sol hizası kilitlenir. */
+  perspective-origin: 0% 50%;
+  animation: doctorium-prism-glow 12s ease-in-out infinite;
+}
+.doctorium-prism {
+  /* display:block ŞART (2026-08-16 canlı bulgu): eleman <span>; inline kutuda width/height
+     %100 YOK SAYILIR → prizma gövdesi 0px kalır, inset:0 yüzler üst kenara yığılıp metni
+     taşırır ("Yeni yeri yanlış, sırayla belirmiyor"). Codex taslağında da eksikti. */
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: doctorium-prism-turn 12s cubic-bezier(0.72, 0, 0.2, 1) infinite;
+}
+.doctorium-prism-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  color: #34d399;
+  white-space: nowrap;
+  backface-visibility: hidden;
+  transform-origin: center;
+  /* En uzun yüz ("Kişiselleştirilmiş") 72px fontta 569px doğal metin — hero sütunu 554px
+     (ölçüldü 2026-08-16): %4 küçültme nowrap taşmasını bitirir, üç yüz aynı boyda kalar.
+     🪤 Sığmayı getBoundingClientRect ile ÖLÇME: eğik/öne-itilmiş yüzün perspektif izdüşümü
+     bounding box'ı ~567px gösterip taşma sanısı verir — doğru metrik scrollWidth. */
+  font-size: 0.96em;
+}
+@media (max-width: 560px) {
+  .doctorium-prism-face {
+    /* Dar ekranda clamp tabanı 44px bile taşırıyor — Codex taslağının mobil oranı. */
+    font-size: 0.85em;
+  }
+}
+.doctorium-prism-face:nth-child(1) {
+  transform: rotateX(0deg) translateZ(0.31em);
+}
+.doctorium-prism-face:nth-child(2) {
+  transform: rotateX(120deg) translateZ(0.31em);
+}
+.doctorium-prism-face:nth-child(3) {
+  transform: rotateX(240deg) translateZ(0.31em);
+}
+@keyframes doctorium-prism-turn {
+  0%,
+  27% {
+    transform: rotateX(0deg);
+  }
+  33.333%,
+  60.333% {
+    transform: rotateX(-120deg);
+  }
+  66.666%,
+  93.666% {
+    transform: rotateX(-240deg);
+  }
+  100% {
+    transform: rotateX(-360deg);
+  }
+}
+@keyframes doctorium-prism-glow {
+  0%,
+  27%,
+  33.333%,
+  60.333%,
+  66.666%,
+  93.666%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  30.2%,
+  63.5%,
+  96.8% {
+    filter: drop-shadow(0 0 16px rgba(52, 211, 153, 0.75)) drop-shadow(0 0 30px rgba(40, 200, 216, 0.3));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .doctorium-prism-shell,
+  .doctorium-prism {
+    animation: none;
+  }
+  .doctorium-prism-face:not(:first-child) {
+    display: none;
+  }
+}
+
 /* Yazdırma: gece teması kağıtta mürekkep felaketi olur — zemin/metni açığa zorla.
    (Onam kanıtı, epikriz vb. çıktı alınan sayfalar için temel güvence.) */
 @media print {

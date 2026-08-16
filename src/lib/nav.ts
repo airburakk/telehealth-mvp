@@ -41,11 +41,10 @@ const NAV: NavItem[] = [
   { href: "/operasyon", label: "Operasyon", icon: BarChart3, roles: ["COORDINATOR", "ADMIN"] },
   { href: "/doktor", label: "Doktor", icon: Stethoscope, roles: ["DOCTOR", "COORDINATOR"] },
   { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, roles: ["DOCTOR", "COORDINATOR"] },
-  // Doctorium (v6.48, 2026-08-01) — hekim bilgi portalı. Eski "Haberler" adı ve /doktor/haberler
-  // rotası bırakıldı (rota 308 ile buraya yönlenir; yer imleri kırılmasın).
-  // İKONSUZ (kullanıcı kararı 2026-08-01, 2. tur): Header özel yazı-lockup basar —
-  // "Doctor" + yanıp sönen zümrüt "ium" (.doctorium-ium-breathe); sembol yalnız sayfa başlığında.
-  { href: "/doktor/doctorium", label: "Doctorium", roles: ["DOCTOR", "COORDINATOR"] },
+  // Doctorium bant sekmesi KALKTI (kullanıcı kararı 2026-08-16): giriş artık Header'daki
+  // AURA↔Doctorium marka toggle'ı (BrandToggle — DOCTOR/COORDINATOR'da görünür); çift giriş
+  // olmasın diye sekme kaldırıldı. Rota + /doktor/haberler 308'i aynen durur (yer imleri).
+  // Eski satır (v6.48–v6.99): { href: "/doktor/doctorium", label: "Doctorium", roles: [...] }.
   // "Ücretsiz Hizmet" bant linki kaldırıldı (2026-07-31, kullanıcı kararı) — rota + ana sayfa paneli durur.
   // "Profilim" bant linki kaldırıldı (2026-08-01, kullanıcı kararı) — artık header hesap
   // menüsünde (Header.tsx); rota /doktor/profil aynen durur.
@@ -59,12 +58,12 @@ const NAV: NavItem[] = [
 // journey-bazlı SO daraltması (Vakalarım→SO yeniden yazımı + Paylaşımlarım gizleme) kaldırıldı;
 // hasta nav'ı herkes için aynı.
 // v6.95 (kullanıcı kararı 2026-08-14): öğrenci hunisi hesabında (Doctor.studentTrack) DOCTOR
-// bandı YALNIZ Doctorium'dur — klinik yüzey sekmeleri (Doktor, Post-Op) öğrenciye çizilmez.
-// Bu görsel sadeleştirmedir, güvenlik kapısı DEĞİL: klinik rotalar zaten hasClinicalAccess'le
-// kapalı (v6.90); kapı orada kalır, bant yalnız kapalı kapının linkini göstermez (koşullu-href).
+// bandı klinik yüzey sekmelerini (Doktor, Post-Op) çizmez. Doctorium bant sekmesi 2026-08-16'da
+// herkes için kalktığından öğrenci bandı artık BOŞ — Doctorium'a tek giriş Header'daki marka
+// toggle'ı. Bu görsel sadeleştirmedir, güvenlik kapısı DEĞİL: klinik rotalar zaten
+// hasClinicalAccess'le kapalı (v6.90); kapı orada kalır, bant kapalı kapının linkini göstermez.
 export function navItemsFor(role: string | null | undefined, opts?: { student?: boolean }): NavItem[] {
   if (!role) return [];
-  const items = NAV.filter((n) => n.roles.includes(role));
-  if (opts?.student && role === "DOCTOR") return items.filter((n) => n.href === "/doktor/doctorium");
-  return items;
+  if (opts?.student && role === "DOCTOR") return [];
+  return NAV.filter((n) => n.roles.includes(role));
 }
