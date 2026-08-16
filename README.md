@@ -571,9 +571,13 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   · **`/for-clinicians`:** how-it-works sözleşmesi (indekslenir, sitemap 0.7, kendi aura nav/footer —
   Header/SiteFooter gizleme listesinde). Sözlük `v2.clinicians` **iki yüzeyi** besler (bölüm + sayfa).
   Not kutusu: doğrulama = belge incelemesi, **akreditasyon DEĞİL** (v6.8).
-  · **`/doctorium` (v6.100, 2026-08-16):** Doctorium tanıtım landing'i — for-clinicians gibi
+  · **`/doctorium` (v6.100–100.1, 2026-08-16):** Doctorium tanıtım landing'i — for-clinicians gibi
   indekslenir + sitemap 0.7 + Header gizleme listesinde, ama **V2Nav DEĞİL**: kendi üst barı/footer'ı,
-  koyu-sabit, TR-only (`components/aura/doctorium-landing.tsx`). Prizma hero (🪤 prism span'ine
+  TR-only (`components/aura/doctorium-landing.tsx`). **Almaşık koyu/açık ritim (v6.100.1 — ana
+  vitrin deseni):** çift-koyu açılış (hero+güven) → olanaklar A → hukuk K → puanlar A → öğrenci K
+  (kutu bantta dikey ortalı) → final A → footer K; açık bölümler `style={LIGHT}` (.aura-light rol
+  değerleri; zümrüt metin karşılığı #047857, by-AURA wordmark'ı bölüme duyarlı light/dark PNG;
+  CTA dolgu butonları temadan bağımsız sabit zümrüt). Prizma hero (🪤 prism span'ine
   `display:block` şart — inline'da yükseklik 0'a çöker; ışıma dönüş anında). Marka kuralları:
   "Doctorium" her metinde lockup (Doctor beyaz + ium zümrüt, D büyük; zümrüt-zeminli CTA istisna),
   "by AURA" imzasında AURA = gerçek wordmark PNG ve yalnız o tıklanır (→ `/`). Header'da

@@ -8,22 +8,46 @@ import { AuraMark } from "@/components/PortamedLogo";
 // aura-mono fontları (Space Grotesk EKLENMEDİ), gerçek AuraMark zümrüt sembol, iddia disiplini
 // (ölçülmemiş "iki dakika" iddiası ATILDI; "AI özeti işaretli" kanıtı doctorium/[id] sayfasındaki
 // yapay-zekâ uyarı kutusudur; puan≠nakit v6.88 dili; öğrenci kısıtları v6.95 dili).
-// KOYU-SABİT atmosfer: tema toggle'ına bağlanmaz (landing sözleşmesi — kendi üst barı + footer;
-// global krom Header.tsx listesiyle gizli). Tamamen server component: etkileşim yok, animasyon
-// saf CSS (globals.css .doctorium-prism-*). Tek dil TR — locale genişletmesi ayrı karar.
+// ALMAŞIK koyu/açık bölüm ritmi (kullanıcı kararı 2026-08-16, 5. tur — AURA vitrini deseni:
+// çift-koyu açılış [hero+güven] → olanaklar A → hukuk K → puanlar A → öğrenci K → final A →
+// footer K); tema toggle'ına bağlanmaz, açık bölümler style={LIGHT} ile bölüm-bazlı (landing
+// sözleşmesi — kendi üst barı + footer; global krom Header.tsx listesiyle gizli). Tamamen server
+// component: etkileşim yok, animasyon saf CSS (globals.css .doctorium-prism-*). Tek dil TR.
 
 // Codex taslağının paleti; CoverArt plaka koyusu (#0d0e10) zemin olarak korunur.
+// --dl-body: bölüm gövde grisi — açık/koyu almaşıkta (aşağıda LIGHT) yeniden bağlanır,
+// bu yüzden gövde metinleri sabit hex DEĞİL bu değişkeni kullanır.
 const PALETTE = {
   "--dl-bg": "#0d0e10",
   "--dl-panel": "#161719",
   "--dl-ink": "#f4f5f3",
   "--dl-muted": "#9da1a6",
+  "--dl-body": "#aeb2b6",
   "--dl-line": "rgba(255,255,255,.12)",
   "--dl-emerald": "#34d399",
   "--dl-rose": "#fb7185",
   "--dl-amber": "#c6a664",
   // AURA marka turkuazı — PortamedLogo TONES.brand.main ile aynı ton ("by AURA" imzası).
   "--dl-cyan": "#28C8D8",
+} as CSSProperties;
+
+// AÇIK bölüm seti (kullanıcı kararı 2026-08-16, 5. tur: "aura gibi bir bölüm siyah bir bölüm
+// beyaz"). Değerler vitrinin .aura-light rol token'larından birebir (globals.css): beyaz zemin ·
+// stone-900 ink · stone-600/500 gövde/mikro · stone-50 panel · %10 siyah hairline. Zümrüt metin
+// karşılığı #047857 = .doctorium-ium'un gündüz değeri (beyazda AA). Açık bölüme style={LIGHT}
+// vermek yeterli — içerik var(--dl-*) kullandığından otomatik uyar. Ritim AURA vitriniyle aynı:
+// çift-koyu açılış (hero + güven bandı) → olanaklar A → hukuk K → puanlar A → öğrenci K →
+// final A → footer K. CTA dolgu butonları temadan BAĞIMSIZ sabit marka zümrüdü (aşağıda).
+const LIGHT = {
+  "--dl-bg": "#ffffff",
+  "--dl-panel": "#f7f8f5",
+  "--dl-ink": "#171a18",
+  "--dl-muted": "#6b6660",
+  "--dl-body": "#57534e",
+  "--dl-line": "rgba(0,0,0,.1)",
+  "--dl-emerald": "#047857",
+  "--dl-amber": "#8a6a26",
+  "--dl-cyan": "#0d6470",
 } as CSSProperties;
 
 const FEATURES = [
@@ -90,11 +114,12 @@ function DoctoriumInline() {
   );
 }
 
-// "by AURA" imzası (kullanıcı kararı 2026-08-16, 4. tur): "by" düz beyaz metin (link DEĞİL);
-// AURA, sitenin GERÇEK wordmark PNG'sidir (PortamedLogo ile aynı varlık — koyu-zemin varyantı
-// sabit: bu landing tema-bağımsız koyu) ve yalnız O tıklanabilir → AURA vitrin ana sayfası (/).
+// "by AURA" imzası (kullanıcı kararı 2026-08-16, 4. tur): "by" düz metin (link DEĞİL); AURA,
+// sitenin GERÇEK wordmark PNG'sidir (PortamedLogo ile aynı varlıklar) ve yalnız O tıklanabilir →
+// AURA vitrin ana sayfası (/). `light`: açık bölümde lacivert wordmark varyantı (beyaz PNG
+// beyaz zeminde görünmez — PortamedLogo'nun logo-word-light/dark ayrımının bölüm karşılığı).
 // Yükseklik em-tabanlı: eyebrow/üst bar/footer hangi puntoda kullanırsa oraya ölçeklenir.
-function ByAura() {
+function ByAura({ light = false }: { light?: boolean }) {
   return (
     <span className="whitespace-nowrap">
       <span className="text-[var(--dl-ink)]">by</span>{" "}
@@ -103,7 +128,11 @@ function ByAura() {
         className="inline-block transition-opacity duration-200 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--dl-cyan)]"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/aura-word-dark.png" alt="AURA" className="inline-block h-[0.95em] w-auto align-[-0.12em]" />
+        <img
+          src={light ? "/aura-word-light.png" : "/aura-word-dark.png"}
+          alt="AURA"
+          className="inline-block h-[0.95em] w-auto align-[-0.12em]"
+        />
       </Link>
     </span>
   );
@@ -137,7 +166,7 @@ export function DoctoriumLanding() {
             </Link>
             <Link
               href="/kayit"
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[var(--dl-emerald)] px-4 text-sm font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0]"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#34d399] px-4 text-sm font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0]"
             >
               Doctorium&apos;a katıl
             </Link>
@@ -176,7 +205,7 @@ export function DoctoriumLanding() {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/kayit"
-                  className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[var(--dl-emerald)] px-6 text-base font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0]"
+                  className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#34d399] px-6 text-base font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0]"
                 >
                   Doctorium&apos;a katıl
                   <ArrowRight aria-hidden size={17} />
@@ -263,8 +292,8 @@ export function DoctoriumLanding() {
           </div>
         </section>
 
-        {/* ── Olanaklar ── */}
-        <section id="olanaklar" className="scroll-mt-20">
+        {/* ── Olanaklar — AÇIK bölüm (almaşık ritim) ── */}
+        <section id="olanaklar" style={LIGHT} className="scroll-mt-20 bg-[var(--dl-bg)] text-[var(--dl-ink)]">
           <div className="mx-auto w-full max-w-6xl px-5 py-24">
             <div className="mb-14 grid gap-8 lg:grid-cols-[.8fr_1.2fr]">
               <div>
@@ -273,7 +302,7 @@ export function DoctoriumLanding() {
                   Mesleğinizin farklı gündemleri, tek akışta.
                 </h2>
               </div>
-              <p className="max-w-[640px] self-end text-[17px] leading-relaxed text-[#aeb2b6]">
+              <p className="max-w-[640px] self-end text-[17px] leading-relaxed text-[var(--dl-body)]">
                 <DoctoriumInline /> yalnızca haber sunmaz; hekimin bilgiye ulaşma, gündemi izleme ve
                 mesleki gelişimini planlama yükünü hafifletmek için düzenlenmiştir.
               </p>
@@ -283,7 +312,7 @@ export function DoctoriumLanding() {
                 <article key={f.no} className="grid gap-4 border-b border-[var(--dl-line)] py-8 md:grid-cols-[80px_1fr_1fr] md:gap-9">
                   <span className="aura-mono text-[11px] font-semibold text-[var(--dl-emerald)]">{f.no}</span>
                   <h3 className="aura-display text-2xl font-medium tracking-tight">{f.title}</h3>
-                  <p className="text-[15px] leading-relaxed text-[#a7abb0]">
+                  <p className="text-[15px] leading-relaxed text-[var(--dl-body)]">
                     <strong className="font-semibold text-[var(--dl-ink)]">{f.lead}</strong> {f.body}
                   </p>
                 </article>
@@ -341,8 +370,8 @@ export function DoctoriumLanding() {
           </div>
         </section>
 
-        {/* ── Katılım ve puanlar ── */}
-        <section id="puanlar" className="scroll-mt-20">
+        {/* ── Katılım ve puanlar — AÇIK bölüm (almaşık ritim) ── */}
+        <section id="puanlar" style={LIGHT} className="scroll-mt-20 bg-[var(--dl-bg)] text-[var(--dl-ink)]">
           <div className="mx-auto grid w-full max-w-6xl items-center gap-14 px-5 py-24 lg:grid-cols-2">
             <div className="order-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:order-1">
               {[
@@ -366,11 +395,11 @@ export function DoctoriumLanding() {
               <h2 className="aura-display mt-3 text-[clamp(32px,4.6vw,54px)] font-medium leading-[1.04] tracking-tight">
                 Bilgiye katkınız görünür olsun.
               </h2>
-              <p className="mt-5 text-[17px] leading-relaxed text-[#aeb2b6]">
+              <p className="mt-5 text-[17px] leading-relaxed text-[var(--dl-body)]">
                 Anketlere katılın, puan hareketlerinizi görün ve açık katalogdaki mesleki faydalar
                 için talep oluşturun.
               </p>
-              <p className="mt-6 border-l-2 border-[var(--dl-amber)] pl-4 text-xs leading-relaxed text-[#777c82]">
+              <p className="mt-6 border-l-2 border-[var(--dl-amber)] pl-4 text-xs leading-relaxed text-[var(--dl-muted)]">
                 Puanlar nakit değildir ve parasal değer taşımaz. Ödül kataloğu, geçerli koşullar ve
                 uygunluk değerlendirmeleri çerçevesinde sunulur.
               </p>
@@ -378,9 +407,10 @@ export function DoctoriumLanding() {
           </div>
         </section>
 
-        {/* ── Tıp öğrencileri ── */}
+        {/* ── Tıp öğrencileri — koyu bant; kutu bantta dikey ORTALI (py-24 simetrik,
+            kullanıcı düzeltmesi 2026-08-16: üste yapışıktı) ── */}
         <section id="ogrenci" className="scroll-mt-20">
-          <div className="mx-auto w-full max-w-6xl px-5 pb-24">
+          <div className="mx-auto w-full max-w-6xl px-5 py-24">
             <div
               className="grid items-end gap-10 rounded-3xl border border-[var(--dl-line)] p-8 sm:p-12 lg:grid-cols-[1.25fr_.75fr]"
               style={{ background: "linear-gradient(120deg, rgba(52,211,153,.08), transparent 55%)" }}
@@ -409,21 +439,21 @@ export function DoctoriumLanding() {
           </div>
         </section>
 
-        {/* ── Final CTA ── */}
-        <section className="border-t border-[var(--dl-line)] py-24 text-center">
+        {/* ── Final CTA — AÇIK bölüm (almaşık kapanış; footer koyu) ── */}
+        <section style={LIGHT} className="bg-[var(--dl-bg)] py-24 text-center text-[var(--dl-ink)]">
           <div className="mx-auto w-full max-w-6xl px-5">
-            <Eyebrow caps={false}><DoctoriumInline /> <ByAura /></Eyebrow>
+            <Eyebrow caps={false}><DoctoriumInline /> <ByAura light /></Eyebrow>
             <h2 className="aura-display mx-auto mt-4 max-w-[850px] text-[clamp(36px,5.4vw,64px)] font-medium leading-[1.02] tracking-tight">
               Mesleki gündeminizi tek yerde toplayın.
             </h2>
-            <p className="mx-auto mt-5 max-w-[620px] leading-relaxed text-[#aeb2b6]">
+            <p className="mx-auto mt-5 max-w-[620px] leading-relaxed text-[var(--dl-body)]">
               Bilimsel bilgi, sektörel gelişmeler, hukuk, kariyer ve kongre takibi için{" "}
               <DoctoriumInline /> çalışma alanına katılın.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href="/kayit"
-                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[var(--dl-emerald)] px-6 text-base font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0]"
+                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#34d399] px-6 text-base font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0]"
               >
                 Hekim üyeliğine başla
                 <ArrowRight aria-hidden size={17} />
