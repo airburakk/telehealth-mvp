@@ -581,8 +581,8 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   `display:block` şart — inline'da yükseklik 0'a çöker; ışıma dönüş anında). Marka kuralları:
   "Doctorium" her metinde lockup (Doctor beyaz + ium zümrüt, D büyük; zümrüt-zeminli CTA istisna),
   "by AURA" imzasında AURA = gerçek wordmark PNG ve yalnız o tıklanır (→ `/`). Header'da
-  **AURA↔Doctorium marka toggle'ı** (DOCTOR/COORDINATOR; aktif taraf 4.5s döner, deaktif soluk;
-  nav'daki Doctorium sekmesi KALKTI) + **Doctorium odak modu** (portaldayken Doktor/Post-Op sekmeleri
+  **AURA↔Doctorium marka toggle'ı** (DOCTOR/COORDINATOR; ⚠️ **v6.103'te 2. nesle geçti — aşağıya
+  bak**; nav'daki Doctorium sekmesi KALKTI) + **Doctorium odak modu** (portaldayken Doktor/Post-Op sekmeleri
   ve menüde Profilim/Finans gizli) + Aşama-1 doktoru AURA'ya geçerken `/doktor?from=doctorium` →
   `baslangic?from=aura-gecis` Aşama-2 uyarı ekranı (belge listesi + doğrulama şartı).
   · **v6.102 (2026-08-16):** `/doctorium/giris` kapısı (DoctoriumGate, auth-gates.tsx — zümrüt dönen
@@ -594,6 +594,22 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   numaralarından türetilir; **min-genişlik 146px**, altında HİÇ çizilmez). Yerler: kapı başlığı
   (aria-hidden içinde) + landing footer marka bloğu (32px lockup ≈154px > braille 146px). Üst bar
   BİLİNÇLİ braille'siz (22px lockup 106px < 146px — "nav'a konmaz" kuralı iki markada geçerli).
+  · **v6.103 (2026-08-16) — marka toggle'ı 2. NESİL, TEK KAYAN SEMBOL** (v6.100'ün "iki logo yan
+  yana, aktif olan döner" nesli SÜPERSEDE): dönen `AuraMark` **tektir**, aktif markanın yuvasında
+  durur; toggle'da öbür yuvaya **kayar** ve rengi değişir (AURA turkuaz `brand` ↔ Doctorium zümrüt
+  `emerald`). Renk geçişi **iki ton katmanının cross-fade'i** — SVG gradyan id'leri prop-sabit
+  olduğundan CSS ile renk transition'lanamaz. Kayma ölçümlü `left` transition'ı: yuva konumları
+  `useLayoutEffect` + `ResizeObserver` ile ölçülür (AURA wordmark PNG genişliği yükleme/temaya göre
+  değişir → sabit px OLMAZ; ilk boyada `left: auto→px` atlar, bu yüzden ölçüm öncesi gizli).
+  motion-reduce'ta kayma kapalı; pasif taraf `opacity-45`. DoctoriumSidebar'da bant tepesindeki
+  lockup KALKTI (marka artık tek konumda: Header toggle'ı) — bant doğrudan zümrüt nabızla açılır.
+  · **v6.103.1 (2026-08-16) — marka adı temizliği:** `PortamedLogo.tsx` → **`AuraLogo.tsx`** (export
+  `PortamedLogo` → **`AuraLogo`**), `PortamedArt.tsx` → **`AuraArt.tsx`**; 26 dosyada import/JSX/yorum
+  süpürüldü. Projede "portamed" metni ve dosya adı **kalmadı** (`git grep -i portamed` = 0). Tek
+  bilinçli iz: `PublicLocale.tsx`'teki **`pm_locale`** localStorage anahtarı — eski tercihi
+  `air_lang`a taşıyan GÖÇ kodu, silinirse o tarayıcılarda dil seçimi sıfırlanır. 🪤 Bu rename
+  sırasında `git mv`'nin stage'i paralel oturumun commit'ine karıştı → `origin/main` bir süre
+  build-kırık kaldı (deploy ERROR); ders: rename+süpürme+commit **tek turda** bitirilir.
   · **Hero mobil kaynak:** `<source media="(max-width:767px)">` → `src720` (848KB); masaüstü 1080p
   **kullanıcı kararı, dokunma**. Save-Data → video hiç başlatılmaz. 🪤 **WebM DENENDİ ve ATILDI:**
   VP9 çıktısı (1112KB) mevcut h264 720p'den BÜYÜK — kaynak zaten agresif sıkıştırılmış; **eklemeden
