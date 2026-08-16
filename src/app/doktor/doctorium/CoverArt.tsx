@@ -61,14 +61,18 @@ const SOURCE_LOGOS: Record<string, { src: string; url: string; bg: string; logoH
 };
 
 /**
- * Hukuk türü → 21:9 detay bandı (kullanıcı seçimi 2026-08-16, 2'şer varyanttan V1'ler):
- * mevzuat = terazi + silik § + belge satırları · içtihat = tokmak + yankı halkaları.
- * Doktrin BİLİNÇLİ yok (kullanıcı yalnız içtihat+mevzuat istedi) — kitap sembolü bandında kalır.
- * Tema-duyarlı: light/ varyantları var (ThemedSymbol basar).
+ * Hukuk türü → yassı detay bandı (kullanıcı seçimi 2026-08-16; "bant boyu kısalsın" turunda
+ * letterbox kompozisyonla yeniden üretilip içeriğe kırpıldı — oranlar ~4.2-5.4:1):
+ * mevzuat = terazi + silik § + belge satırları · içtihat = tokmak + yankı halkaları ·
+ * doktrin = açık kitap + sütun. Tema-duyarlı: light/ varyantları var (ThemedSymbol basar).
+ * 🪤 Üretimde stil referansından MOTİF sızabiliyor (ilk mevzuat bandına kardiyoloji kalbi
+ * girdi) — yeni bant üretirken prompt'a "match only the STYLE not the subject" + yasaklı
+ * motif listesi yaz ve sonucu GÖZLE kontrol et.
  */
 const LEGAL_BANDS: Record<string, string> = {
   mevzuat: "/doctorium/band-mevzuat.webp",
   ictihat: "/doctorium/band-ictihat.webp",
+  doktrin: "/doctorium/band-doktrin.webp",
 };
 
 /** Akademik + branşlı içerik → AURA branş ikonu; yoksa null (mikroskop webp fallback). */
