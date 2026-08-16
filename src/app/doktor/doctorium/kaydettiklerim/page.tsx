@@ -65,7 +65,8 @@ export default async function SavedPage() {
             </span>
           </p>
         ) : (
-          <ul className="mt-5 grid gap-3">
+          <ul className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-3">
+            {/* grid-cols-[minmax(0,1fr)]: akış listesindeki taşma dersinin eşleniği (2026-08-16). */}
             {items.map((it) => (
               <ArticleCard key={it.id} item={it} saved />
             ))}

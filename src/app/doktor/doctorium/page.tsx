@@ -28,7 +28,7 @@ import { CareerDisclaimer, careerDate, COUNTRY_LABEL } from "./CareerShared";
 import { ArticleCard, formatDate } from "./ArticleCard";
 import { SaveButton } from "./SaveButton";
 import {
-  ArrowLeft, ExternalLink, Info, MapPin, X, CalendarClock, Megaphone, TrendingUp,
+  ArrowLeft, ExternalLink, Info, MapPin, X, CalendarClock, Megaphone,
 } from "lucide-react";
 import { getDoctorBalance } from "@/lib/rewards";
 import { AuraMark } from "@/components/PortamedLogo";
@@ -196,25 +196,23 @@ export default async function DoctoriumPage({
         <ArrowLeft size={15} /> Ana Sayfa
       </Link>
 
-      <div className="mt-3">
-        {/* L1 lockup (kullanıcı kararı 2026-08-01): zümrüt AURA sembolü + "ium" vurgusu.
-            Mesafe (kullanıcı, 2. tur): gap-2.5 + sembolün doğal viewBox payı = ferah aralık —
-            DARALTMA (bitişik -mr denemesi geri alındı). -ml yalnız sol hizayı korur. */}
-        <h1 className="aura-display flex items-center gap-2.5 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
-          <AuraMark size={36} tone="emerald" className="-ml-1.5" />
+      {/* Editoryal Manşet turu (2026-08-16): lockup MARKA ŞAPKASI ölçeğine indi — denetim
+          bulgusu: 30px lockup + 30px sahne başlığı aynı boyutta yarışıyordu, asıl içerik ekranın
+          yarısından sonra başlıyordu. L1 lockup kimliği (AuraMark + "ium" vurgusu, 2026-08-01)
+          KORUNUR; yalnız ölçek küçüldü, sahne başlığı (H2) tek hâkim oldu. Slogan aynı satıra. */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+        <h1 className="aura-display flex items-center gap-2 text-lg font-medium tracking-tight text-[var(--c-ink)]">
+          <AuraMark size={22} tone="emerald" className="-ml-0.5" />
           <span>Doctor<span className="doctorium-ium">ium</span></span>
         </h1>
-        {/* Sabit slogan (kullanıcı seçimi 2026-08-01) — sekmeye göre değişen desc satırı kalktı
-            ("Branşınız + mevzuat…" kuru bulundu). desc alanı veri modelinde durur, burada basılmaz. */}
-        <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[var(--c-ink-2)]">
-          Bilim, sizin ritminizde.
-          {/* v6.95 — öğrenci-sınırlı üyelik etiketi: mono rozet, yüzey boyamaz (kit renk disiplini) */}
-          {studentOnly && (
-            <span className="aura-mono rounded-full border border-[var(--c-hairline)] px-2 py-px text-[10px] font-semibold uppercase tracking-wider text-[var(--c-ink-3)]">
-              Öğrenci Üyeliği
-            </span>
-          )}
-        </p>
+        {/* Sabit slogan (kullanıcı seçimi 2026-08-01) — sekmeye göre değişen desc satırı kalktı. */}
+        <span className="text-[13px] text-[var(--c-ink-3)]">Bilim, sizin ritminizde.</span>
+        {/* v6.95 — öğrenci-sınırlı üyelik etiketi: mono rozet, yüzey boyamaz (kit renk disiplini) */}
+        {studentOnly && (
+          <span className="aura-mono rounded-full border border-[var(--c-hairline)] px-2 py-px text-[11px] font-semibold uppercase tracking-wider text-[var(--c-ink-3)]">
+            Öğrenci Üyeliği
+          </span>
+        )}
       </div>
 
       {/* Mobil grup şeridi (M2, Faz 1 — taslak v3.2): alt çubuk (layout'taki DoctoriumSidebar)
@@ -250,7 +248,7 @@ export default async function DoctoriumPage({
           silik "desc satırı"nın dönüşü DEĞİL — editoryal başlık bloğu, ayrı karar. */}
       <div className="mt-6">
         <div
-          className="aura-mono text-[10.5px] font-bold tracking-[0.16em]"
+          className="aura-mono text-[11px] font-bold tracking-[0.16em]"
           style={{ color: MODULE_HEAD[active].color ?? "var(--c-ink)" }}
         >
           {MODULE_HEAD[active].eyebrow}
@@ -465,9 +463,16 @@ export default async function DoctoriumPage({
           {items.length === 0 ? (
             <EmptyState active={active} focus={focus} range={range} legalTab={legalTab} keywordLabel={legalKeyword?.label ?? null} />
           ) : (
-            <ul className="mt-5 grid gap-3">
+            <ul className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-3">
+              {/* grid-cols-[minmax(0,1fr)] (2026-08-16 taşma dersi): örtük "auto" kolon, en geniş
+                  kartın min-content'ine BÜYÜR (grid item min-width:auto) — truncate'li nowrap
+                  metinler mobilde tüm listeyi 441px'e itiyordu. minmax(0,1fr) kolonu konteynere
+                  kilitler; kart içi max-w/truncate zinciri ancak o zaman çalışır. */}
               {/* Sponsorlu kart enjeksiyonu (v6.68): 1.si 2 organik karttan, 2.si 9 organikten
                   sonra; akış kısaysa listenin sonuna düşer (frekans tavanı MAX_FEED_CARDS=2). */}
+              {/* Kart görünümü TÜM listelerde TEK (5. tur kullanıcı kararı): Akışım'daki kart,
+                  bölüm sekmesindekiyle birebir aynı — bölüm kimliği şerit + çip + sembol taşır.
+                  (Manşet varyantı 4. turda, kart üstü modül etiketi 5. turda kaldırıldı.) */}
               {items.map((it, i) => (
                 <Fragment key={it.id}>
                   {i === 2 && sponsorCards[0] && <SponsorCardView c={sponsorCards[0]} />}
@@ -525,13 +530,13 @@ function SponsorCardView({ c }: { c: SponsorCard }) {
     <li className="rounded-2xl border-2 border-amber-400/70 bg-[var(--c-surface)] px-4 py-3.5">
       <div className="flex items-center gap-2">
         <Megaphone size={16} strokeWidth={1.9} style={{ color: "#f59e0b" }} />
-        <span className="aura-mono text-[10px] font-bold tracking-[0.16em] text-amber-300">SPONSORLU</span>
+        <span className="aura-mono text-[11px] font-bold tracking-[0.16em] text-amber-300">SPONSORLU</span>
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="aura-mono rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
+        <span className="aura-mono rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300">
           Sponsorlu · {c.sponsor}
         </span>
-        <span className="aura-mono rounded-full bg-[var(--c-surface-2)] px-2 py-0.5 text-[10px] text-[var(--c-ink-2)]">
+        <span className="aura-mono rounded-full bg-[var(--c-surface-2)] px-2 py-0.5 text-[11px] text-[var(--c-ink-2)]">
           {SPONSOR_CATEGORY_LABEL[c.category] ?? c.category}
         </span>
       </div>
@@ -572,7 +577,8 @@ function CongressList({ rows, followed, canFollow, savedIds }: { rows: CongressR
     );
   }
   return (
-    <ul className="mt-5 grid gap-3">
+    /* grid-cols-[minmax(0,1fr)]: ana listedeki taşma dersinin eşleniği (grid item min-width:auto). */
+    <ul className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-3">
       {rows.map((c) => (
         /* Kart standardı (2026-08-14): sol kenarda 3px bölüm şeridi (Kongre = tema-duyarlı ink),
            üst satırda sembol+etiket · sağda Kaydet+Takip, altta ÇİZGİLİ aksiyon satırı. */
@@ -581,30 +587,29 @@ function CongressList({ rows, followed, canFollow, savedIds }: { rows: CongressR
           className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5"
           style={{ borderInlineStart: "3px solid var(--c-ink)" }}
         >
-          <div className="flex items-center justify-between gap-3">
-            <span className="flex items-center gap-2">
-              <CalendarClock size={16} strokeWidth={1.9} className="text-[var(--c-ink)]" />
-              <span className="aura-mono text-[10px] font-bold tracking-[0.16em] text-[var(--c-ink)]">KONGRE</span>
-            </span>
-            <span className="flex items-center gap-1">
+          {/* Künye: "KONGRE" etiket tekrarı KALKTI (3. tur — sahne başlığı zaten söylüyor);
+              rozetler + sağda Kaydet/Takip tek satır, altı çizgiyle kapanır. */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-[var(--c-ink-3)]">
+              <span className="aura-mono rounded-full bg-sky-500/15 px-2 py-0.5 font-semibold text-sky-300">
+                {formatDate(c.startDate)}{c.endDate ? ` – ${formatDate(c.endDate)}` : ""}
+              </span>
+              {/* Kapsam rozeti: doktorun ilk baktığı ayrım (yurt içi mi, yurt dışı mı). */}
+              <span className="aura-mono rounded-full border border-[var(--c-hairline)] px-2 py-0.5">
+                {c.scope === "uluslararasi" ? "🌍 Uluslararası" : "🇹🇷 Ulusal"}
+              </span>
+              {(c.city || c.country) && (
+                <span className="inline-flex items-center gap-1"><MapPin size={11} />{[c.city, c.country].filter(Boolean).join(", ")}</span>
+              )}
+            </div>
+            <span className="flex shrink-0 items-center gap-1">
               {savedIds != null && <SaveButton articleId={c.id} initialSaved={savedIds.has(c.id)} />}
               {canFollow && <FollowButton congressId={c.id} following={followed.has(c.id)} />}
             </span>
           </div>
-
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[var(--c-ink-3)]">
-            <span className="aura-mono rounded-full bg-sky-500/15 px-2 py-0.5 font-semibold text-sky-300">
-              {formatDate(c.startDate)}{c.endDate ? ` – ${formatDate(c.endDate)}` : ""}
-            </span>
-            {/* Kapsam rozeti: doktorun ilk baktığı ayrım (yurt içi mi, yurt dışı mı). */}
-            <span className="aura-mono rounded-full border border-[var(--c-hairline)] px-2 py-0.5">
-              {c.scope === "uluslararasi" ? "🌍 Uluslararası" : "🇹🇷 Ulusal"}
-            </span>
-            {(c.city || c.country) && (
-              <span className="inline-flex items-center gap-1"><MapPin size={11} />{[c.city, c.country].filter(Boolean).join(", ")}</span>
-            )}
-          </div>
-          <h3 className="mt-1.5 text-sm font-semibold text-[var(--c-ink)]">
+          {/* Künye alt sınırı — ArticleCard üst çizgisinin eşleniği (kullanıcı ayarı 2026-08-16). */}
+          <div className="mt-2 border-b border-[var(--c-hairline)]" aria-hidden="true" />
+          <h3 className="mt-2.5 text-sm font-semibold text-[var(--c-ink)]">
             <Link href={`/doktor/doctorium/kongre/${c.id}`} className="hover:underline">{c.title}</Link>
           </h3>
           {c.organizer && <p className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">{c.organizer}</p>}
@@ -665,36 +670,36 @@ function CareerList({ rows, savedIds }: { rows: Awaited<ReturnType<typeof career
   }
   return (
     <>
-      <ul className="mt-4 grid gap-3">
+      {/* grid-cols-[minmax(0,1fr)]: ana listedeki taşma dersinin eşleniği. */}
+      <ul className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-3">
         {rows.map((p) => (
           <li
             key={p.id}
             className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-4 transition hover:border-emerald-400/40"
             style={{ borderInlineStart: "3px solid #60a5fa" }}
           >
-            {/* Kart standardı (2026-08-14): sol şerit + sembol/etiket satırı · sağda Kaydet. */}
-            <div className="flex items-center justify-between gap-3">
-              <span className="flex items-center gap-2">
-                <TrendingUp size={16} strokeWidth={1.9} style={{ color: "#60a5fa" }} />
-                <span className="aura-mono text-[10px] font-bold tracking-[0.16em]" style={{ color: "#60a5fa" }}>KARİYER</span>
-              </span>
+            {/* Künye: "KARİYER" etiket tekrarı KALKTI (3. tur — sahne başlığı zaten söylüyor);
+                rozetler + sağda Kaydet tek satır, altı çizgiyle kapanır. */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
+                  {COUNTRY_LABEL[p.country] ?? p.country}
+                </span>
+                {p.confidence === "kismi" && (
+                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-300">
+                    ⚠️ Teyit bekliyor
+                  </span>
+                )}
+                <span className="text-[11px] text-[var(--c-ink-3)]">
+                  Son doğrulama: {careerDate(p.verifiedAt)}
+                </span>
+              </div>
               {savedIds != null && <SaveButton articleId={p.slug} initialSaved={savedIds.has(p.slug)} />}
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
-                {COUNTRY_LABEL[p.country] ?? p.country}
-              </span>
-              {p.confidence === "kismi" && (
-                <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
-                  ⚠️ Teyit bekliyor
-                </span>
-              )}
-              <span className="ml-auto text-[10px] text-[var(--c-ink-3)]">
-                Son doğrulama: {careerDate(p.verifiedAt)}
-              </span>
-            </div>
 
-            <h3 className="mt-2 text-sm font-semibold text-[var(--c-ink)]">
+            {/* Künye alt sınırı — ArticleCard üst çizgisinin eşleniği (kullanıcı ayarı 2026-08-16). */}
+            <div className="mt-2 border-b border-[var(--c-hairline)]" aria-hidden="true" />
+            <h3 className="mt-2.5 text-sm font-semibold text-[var(--c-ink)]">
               <Link href={`/doktor/doctorium/kariyer/${p.slug}`} className="hover:underline">
                 {p.title}
               </Link>

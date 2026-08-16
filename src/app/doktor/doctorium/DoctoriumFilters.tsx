@@ -248,7 +248,9 @@ export function DoctoriumFilters(p: Props) {
       >
         <SlidersHorizontal size={14} />
         Özelleştir
-        {summary && <span className="aura-mono truncate text-[10px] font-normal text-[var(--c-ink-3)]">{summary}</span>}
+        {/* Özet mobilde GİZLİ (dar ekranda kesiliyordu — "sponsor…"); panel açılınca tüm
+            ayarlar zaten görünür. 11px = mikro tip tabanı (2026-08-16 sadeleştirme turu). */}
+        {summary && <span className="aura-mono hidden truncate text-[11px] font-normal text-[var(--c-ink-3)] sm:inline">{summary}</span>}
         {(branchesDirty || feedDirty) && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-label="kaydedilmemiş değişiklik" />}
         <ChevronDown size={14} className={`ml-auto shrink-0 transition ${open ? "rotate-180" : ""}`} />
       </button>

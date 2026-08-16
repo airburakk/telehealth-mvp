@@ -83,7 +83,10 @@ function SideItem({
       stripe = { background: fg };
     }
   }
-  const iconColor = color === "ink" ? "var(--c-ink)" : color ? color[0] : undefined;
+  // Renk diyeti (2026-08-16 bant revizyonu): modül rengi YALNIZ aktif öğede yaşar — pasif
+  // ikonlar metin rengini (currentColor) miras alır. Yedi renkli ikon sütunu bandı
+  // rengarenk yapıyordu; kit ilkesi "renk az ve anlamlı" + aktiflik böyle güçlenir.
+  const iconColor = on ? (color === "ink" ? "var(--c-ink)" : (color ?? EMERALD)[0]) : undefined;
   return (
     <Link
       href={href}
@@ -104,8 +107,10 @@ function SideItem({
 }
 
 function GroupLabel({ children }: { children: React.ReactNode }) {
+  // Hairline ayraç (2026-08-16 bant revizyonu): kart künyesindeki çizgi dilinin bant karşılığı —
+  // gruplar (BİLGİ / MESLEĞİM / KİŞİSEL) bölge olarak okunur.
   return (
-    <div className="aura-mono mt-4 mb-1 px-2.5 text-[11px] font-semibold tracking-[0.14em] text-[var(--c-ink-3)]">
+    <div className="aura-mono mt-4 mb-1 border-t border-[var(--c-hairline)] px-2.5 pt-3 text-[11px] font-semibold tracking-[0.14em] text-[var(--c-ink-3)]">
       {children}
     </div>
   );
@@ -128,12 +133,15 @@ export function DoctoriumSidebar({
         aria-label="Doctorium bölümleri"
         className="fixed bottom-0 left-0 top-16 z-20 hidden w-[212px] flex-col gap-0.5 overflow-y-auto border-r border-[var(--c-hairline)] bg-[var(--c-chrome)] px-2.5 py-4 md:flex"
       >
+        {/* Çıkış kapısı (2026-08-16 bant revizyonu): dönüş linki modül listesinden hairline ile
+            ayrılır — bant üç bölge okunur (çıkış / modüller / kişisel), kart künyesiyle aynı dil. */}
         <Link
           href="/doktor"
-          className="mb-2 flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-semibold text-[var(--c-ink-3)] hover:text-[var(--c-ink)]"
+          className="flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-semibold text-[var(--c-ink-3)] hover:text-[var(--c-ink)]"
         >
           <ArrowLeft size={16} /> Ana Sayfa
         </Link>
+        <div className="mb-2 border-b border-[var(--c-hairline)]" aria-hidden="true" />
 
         {MODULES.map((m) => {
           const header = m.group && m.group !== lastGroup ? <GroupLabel>{m.group}</GroupLabel> : null;
@@ -178,6 +186,15 @@ export function DoctoriumSidebar({
             )}
           </>
         )}
+
+        {/* Dip imza (2026-08-16 bant revizyonu): silik mini lockup — bant markalı kapanır.
+            Statik/dekoratif (link DEĞİL); lockup yazımı marka kuralına uyar (Doctor ink + ium
+            zümrüt). mt-auto: içerik kısaysa dibe iner, uzunsa akışın sonunda kalır. */}
+        <div className="mt-auto px-2.5 pb-1 pt-5" aria-hidden="true">
+          <span className="aura-display text-[13px] font-medium tracking-tight text-[var(--c-ink-3)]">
+            Doctor<span className="text-emerald-400/70">ium</span>
+          </span>
+        </div>
       </nav>
 
       {/* ── Mobil alt çubuk (M2) ── */}

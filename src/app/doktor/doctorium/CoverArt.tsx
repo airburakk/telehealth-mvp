@@ -146,9 +146,27 @@ export function CoverArt({
   size,
 }: {
   item: Pick<FeedItem, "id" | "module" | "kind" | "source" | "title" | "sourceName" | "branchSlugs">;
-  size: "card" | "band";
+  size: "card" | "band" | "thumb";
 }) {
   const branch = branchIconOf(item);
+
+  // thumb (Editoryal Manşet turu, 2026-08-16 — 2. tur kullanıcı ayarı): kart KÜNYESİNİN minyatürü.
+  // YALNIZ akademik kartlarda çizilir (branş ikonu = bilgi); webp semboller satırlarda TEKRAR
+  // ürettiği için ("aynı mor gazete × 20" duvarı) bilinçli yok — null döner, kart sembolsüz akar.
+  // 32px: künye satırına oturur, üst çizgi (künyenin alt sınırı) sembolün de altından geçer.
+  if (size === "thumb") {
+    if (!branch) return null;
+    return (
+      <div
+        className={`grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-md ${PLATE}`}
+        aria-hidden="true"
+      >
+        <span className={GLOW_OFF} style={{ filter: `drop-shadow(0 0 4px ${branch.color}80)` }}>
+          {createElement(branch.Icon, { size: 18, color: branch.color, strokeWidth: 1.9 })}
+        </span>
+      </div>
+    );
+  }
 
   if (size === "card") {
     return (
