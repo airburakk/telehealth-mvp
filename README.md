@@ -585,6 +585,15 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   nav'daki Doctorium sekmesi KALKTI) + **Doctorium odak modu** (portaldayken Doktor/Post-Op sekmeleri
   ve menüde Profilim/Finans gizli) + Aşama-1 doktoru AURA'ya geçerken `/doktor?from=doctorium` →
   `baslangic?from=aura-gecis` Aşama-2 uyarı ekranı (belge listesi + doğrulama şartı).
+  · **v6.102 (2026-08-16):** `/doctorium/giris` kapısı (DoctoriumGate, auth-gates.tsx — zümrüt dönen
+  sembol + lockup başlık + Doktor/Tıp Öğrencisi rolleri + Google/Apple/e-posta; noindex + Header
+  gizleme listesinde) · landing arka plan video zemini (`DoctoriumBgVideo`: hero koyu / final CTA
+  açık overlay; film2/film3 720p + gate2 kapı videosu). **Braille kuralı GÜNCEL:** her wordmark
+  KENDİ braille'ini TAM ALTINDA ortalı taşır (AURA ⠁⠥⠗⠁ · Doctorium ⠙⠕⠉⠞⠕⠗⠊⠥⠍) —
+  `DoctoriumBraille` (PortamedLogo.tsx; AuraBraille ile birebir geometri; hücreler nokta
+  numaralarından türetilir; **min-genişlik 146px**, altında HİÇ çizilmez). Yerler: kapı başlığı
+  (aria-hidden içinde) + landing footer marka bloğu (32px lockup ≈154px > braille 146px). Üst bar
+  BİLİNÇLİ braille'siz (22px lockup 106px < 146px — "nav'a konmaz" kuralı iki markada geçerli).
   · **Hero mobil kaynak:** `<source media="(max-width:767px)">` → `src720` (848KB); masaüstü 1080p
   **kullanıcı kararı, dokunma**. Save-Data → video hiç başlatılmaz. 🪤 **WebM DENENDİ ve ATILDI:**
   VP9 çıktısı (1112KB) mevcut h264 720p'den BÜYÜK — kaynak zaten agresif sıkıştırılmış; **eklemeden
