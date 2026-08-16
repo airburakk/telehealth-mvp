@@ -17,6 +17,7 @@ import { createSession, hashPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { recordAccess, reqMeta } from "@/lib/audit";
 import { isRole, roleHome, type Role } from "@/lib/session";
+import { patientHome } from "@/lib/patient-journey";
 import { CONSENT_VERSION } from "@/lib/consent-config";
 
 type Target = { id: string; email: string; name: string; role: string };
@@ -117,5 +118,9 @@ export async function POST(req: Request) {
     ip: meta.ip, userAgent: meta.userAgent,
   });
 
-  return NextResponse.json({ ok: true, redirect: roleHome(target.role as Role) });
+  // Hasta hedefinde gerçek giriş kuralıyla aynı iniş (2026-08-16): vakası olan hasta Bakım
+  // Yolculuğum'a (/vakalarim) iner — statik roleHome hastayı hep /triyaj'a düşürüyordu ve
+  // bürünmeyle test eden gözde "girişte yolculuğa inmiyor" olarak görünüyordu.
+  const redirect = target.role === "PATIENT" ? await patientHome(target.id) : roleHome(target.role as Role);
+  return NextResponse.json({ ok: true, redirect });
 }
