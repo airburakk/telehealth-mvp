@@ -11,8 +11,9 @@ export function SiteFooter() {
   // Giriş kapıları da tam-ekran vitrin paneli (Header ile aynı liste; /e-posta formlarında krom durur).
   // Video görüşme rotaları immersive tam-ekran → footer gizlenir (Header ile simetrik).
   // Locale rotaları (/en /tr …) da landing — Header ile simetrik (v6.17).
+  // /doctorium (2026-08-16): Doctorium tanıtım landing'i kendi footer'ını taşır — Header ile simetrik.
   if (
-    ["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/for-clinicians", "/giris", "/kurumsal-giris"].includes(pathname) ||
+    ["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/for-clinicians", "/doctorium", "/giris", "/kurumsal-giris"].includes(pathname) ||
     (LANG_CODES as readonly string[]).includes(pathname.slice(1)) ||
     isImmersiveCallPath(pathname)
   )
