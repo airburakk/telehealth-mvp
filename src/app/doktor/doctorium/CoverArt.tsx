@@ -49,13 +49,15 @@ const MODULE_COLOR: Record<string, string> = {
 
 /** Uluslararası haber kaynağı → logosu + açık URL'si (yalnız detay bandı). */
 const SOURCE_LOGOS: Record<string, { src: string; url: string; bg: string; logoH: number }> = {
+  // Yükseklikler "zoom out" turunda küçültüldü (2026-08-16 kullanıcı bildirimi: bantta
+  // logolar fazla büyük duruyordu — 40/44/48 → 28/32/34).
   // Medscape wordmark'ı siyah+mavi (açık zemin logosu) → beyaz plaka şart.
-  medscape: { src: "/doctorium/logo-medscape.webp", url: "medscape.com/today", bg: "#ffffff", logoH: 40 },
+  medscape: { src: "/doctorium/logo-medscape.webp", url: "medscape.com/today", bg: "#ffffff", logoH: 28 },
   // MedicalXpress yazısı beyaz (koyu zemin logosu) → sembollerle aynı koyu plaka.
-  medicalxpress: { src: "/doctorium/logo-medicalxpress.webp", url: "medicalxpress.com", bg: "#0d0e10", logoH: 44 },
+  medicalxpress: { src: "/doctorium/logo-medicalxpress.webp", url: "medicalxpress.com", bg: "#0d0e10", logoH: 32 },
   // WHO — sitenin KENDİ koyu-zemin varyantı (h-logo-white.svg, who.int; kullanıcı kararı
   // 2026-08-16 — amblem kullanımı hukukçu değerlendirmesinde). SVG = her boyutta keskin.
-  who: { src: "/doctorium/logo-who.svg", url: "who.int", bg: "#0d0e10", logoH: 48 },
+  who: { src: "/doctorium/logo-who.svg", url: "who.int", bg: "#0d0e10", logoH: 34 },
 };
 
 /**
@@ -171,7 +173,9 @@ export function CoverArt({
     <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--c-hairline)]" aria-hidden="true">
       <div
         // Logo plakası temadan bağımsız (logo bütünlüğü); sembol plakası tema-duyarlı.
-        className={`grid h-[120px] place-items-center ${logo ? "" : PLATE}`}
+        // Hukuk bandında sabit yükseklik YOK — kutu, 21:9 görselin kendi oranına uyar
+        // (sabit 120px overflow-hidden ile bandı kırpıyordu — "zoom" dersi).
+        className={`grid place-items-center ${legalBand ? "" : "h-[120px]"} ${logo ? "" : PLATE}`}
         style={logo ? { background: logo.bg } : undefined}
       >
         {logo ? (
@@ -179,8 +183,10 @@ export function CoverArt({
              gösterim); yerel kopya, boyut sabit — next/image katmanı gereksiz. */
           <img src={logo.src} alt={item.sourceName} style={{ height: logo.logoH }} className="w-auto" />
         ) : legalBand ? (
-          // 21:9 bant genişliği doldurur (object-cover); tema varyantını CSS seçer.
-          <ThemedSymbol src={legalBand} className="h-[120px] w-full object-cover" />
+          // 🪤 "zoom" dersi (2026-08-16): sabit 120px kutu + object-cover, 21:9 görseli ~5.6:1
+          // şeride kırpıp ortasını BÜYÜTÜYORDU (terazi/tokmak dev görünüyordu). Bant kendi
+          // oranında tam gösterilir (w-full h-auto — kutu yüksekliği görselden gelir).
+          <ThemedSymbol src={legalBand} className="w-full h-auto" />
         ) : branch ? (
           <span className={GLOW_OFF} style={{ filter: `drop-shadow(0 0 10px ${branch.color}80)` }}>
             {createElement(branch.Icon, { size: 72, color: branch.color, strokeWidth: 1.6 })}
