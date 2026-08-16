@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
 import { SystemMessagesMenuItem } from "@/components/SystemMessagesMenuItem";
@@ -24,15 +24,55 @@ const ROLE_LABELS: Record<string, string> = {
   PARTNER: "Partner Doktor",
 };
 
-// Marka toggle'ı (kullanıcı kararı 2026-08-16): DOCTOR/COORDINATOR'da (öğrenci dahil) sol üstte
-// AURA + Doctorium yan yana; bulunulan yüzeyin markası "canlı" (yörünge belirgin döner), diğeri
-// soluk+durgun. AURA → /doktor (bu rollerde vitrin değil klinik panel), Doctorium → portal.
-// Nav bandındaki eski Doctorium sekmesi kalktı — tek giriş burası (lib/nav.ts). Diğer roller
+// Marka toggle'ı — TEK KAYAN SEMBOL (kullanıcı kararı 2026-08-16, 2. nesil; ilk nesil "iki logo
+// yan yana, aktif döner"i süpersede eder): dönen AuraMark TEKTİR, aktif markanın başında durur.
+// Toggle'da sembol öbür tarafa KAYAR ve rengi değişir (AURA=turkuaz "brand" · Doctorium=zümrüt).
+// Renk geçişi iki ton katmanının cross-fade'i (SVG gradyanları prop-sabit — CSS ile renk
+// transition'lanamaz); kayma ölçümlü left transition'ı (yuva konumları useLayoutEffect +
+// ResizeObserver — AURA wordmark PNG genişliği yükleme/temaya göre değişir, sabit px olmaz;
+// ilk boyada left auto→px atlar [auto animatable değil] → SSR sonrası kayma flash'ı yok).
+// AURA → /doktor (bu rollerde vitrin değil klinik panel), Doctorium → portal. Diğer roller
 // toggle GÖRMEZ: eski tek logo (→ /) aynen. Öğrencide AURA tarafı /doktor kapısına düşer
 // (hasClinicalAccess yönlendirmesi) — bilinçli, ayrı hedef icat edilmedi.
 function BrandToggle({ doctoriumActive }: { doctoriumActive: boolean }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const slotA = useRef<HTMLSpanElement>(null); // AURA yuvası
+  const slotB = useRef<HTMLSpanElement>(null); // Doctorium yuvası
+  const [pos, setPos] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const slot = doctoriumActive ? slotB.current : slotA.current;
+      if (slot && wrapRef.current) {
+        const w = wrapRef.current.getBoundingClientRect();
+        const s = slot.getBoundingClientRect();
+        setPos(s.left - w.left);
+      }
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (wrapRef.current) ro.observe(wrapRef.current);
+    return () => ro.disconnect();
+  }, [doctoriumActive]);
+
+  const wordH = 14; // 23px sembol ölçeğinin wordmark oranı (PortamedLogo size*0.6)
   return (
-    <div className="flex shrink-0 items-center gap-2">
+    <div ref={wrapRef} className="relative flex shrink-0 items-center gap-2">
+      {/* Kayan sembol: brand-live (yörünge hep döner — tek logo daima canlı); aktiflik RENKLE
+          anlatılır. pointer-events yok — tıklama alttaki Link'lerin işi. */}
+      <span
+        aria-hidden
+        className="brand-live pointer-events-none absolute top-1/2 z-10 -translate-y-1/2 transition-[left] duration-300 ease-out motion-reduce:transition-none"
+        style={pos != null ? { left: pos } : { visibility: "hidden", left: 0 }}
+      >
+        <span className={`block transition-opacity duration-300 ${doctoriumActive ? "opacity-0" : "opacity-100"}`}>
+          <AuraMark size={23} tone="brand" />
+        </span>
+        <span className={`absolute inset-0 transition-opacity duration-300 ${doctoriumActive ? "opacity-100" : "opacity-0"}`}>
+          <AuraMark size={23} tone="emerald" />
+        </span>
+      </span>
+
       {/* Doctorium'dan AURA'ya geçiş ?from=doctorium taşır: Aşama-1 (aktivasyonsuz) doktoru
           /doktor kapısı baslangic?from=aura-gecis'e yönlendirir → Aşama-2 uyarı ekranı
           (kullanıcı kararı 2026-08-16). Aşama-2 doktorda parametre yok sayılır. */}
@@ -40,19 +80,25 @@ function BrandToggle({ doctoriumActive }: { doctoriumActive: boolean }) {
         href={doctoriumActive ? "/doktor?from=doctorium" : "/doktor"}
         aria-current={!doctoriumActive ? "page" : undefined}
         title="AURA"
-        className={`flex items-end focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumActive ? "brand-idle" : "brand-live"}`}
+        className={`flex items-center gap-1.5 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumActive ? "opacity-45 hover:opacity-80" : ""}`}
       >
-        <PortamedLogo size={23} />
+        <span ref={slotA} aria-hidden className="block h-[23px] w-[23px] shrink-0" />
+        {/* Tema-çift wordmark (PortamedLogo deseni — görünürlüğü .logo-word-* yönetir). */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- yerel marka varlığı */}
+        <img src="/aura-word-light.png" alt="AURA" className="logo-word-light" style={{ height: wordH, width: "auto" }} />
+        {/* eslint-disable-next-line @next/next/no-img-element -- yukarıdakiyle aynı */}
+        <img src="/aura-word-dark.png" alt="" aria-hidden className="logo-word-dark" style={{ height: wordH, width: "auto" }} />
       </Link>
       <span aria-hidden className="h-5 w-px shrink-0 bg-[var(--c-hairline)]" />
       <Link
         href="/doktor/doctorium"
         aria-current={doctoriumActive ? "page" : undefined}
         title="Doctorium"
-        className={`flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumActive ? "brand-live" : "brand-idle"}`}
+        aria-label="Doctorium"
+        className={`flex items-center gap-1.5 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumActive ? "" : "opacity-45 hover:opacity-80"}`}
       >
-        <AuraMark size={23} tone="emerald" />
-        {/* Yazı dar ekranda gizli, sembol kalır — sol blok mobilde iki sembole iner. */}
+        <span ref={slotB} aria-hidden className="block h-[23px] w-[23px] shrink-0" />
+        {/* Yazı dar ekranda gizli, yuva/sembol kalır — sol blok mobilde sıkı kalır. */}
         <span className="hidden whitespace-nowrap text-[15px] font-medium text-[var(--c-ink)] sm:inline">
           Doctor<span className={`doctorium-ium${doctoriumActive ? " doctorium-ium-breathe" : ""}`}>ium</span>
         </span>

@@ -5,7 +5,6 @@ import {
   ArrowLeft, Sparkles, FlaskConical, Building2, Pill, CalendarClock,
   TrendingUp, Scale, Star, BookOpen, Briefcase, Bookmark,
 } from "lucide-react";
-import { AuraMark } from "@/components/PortamedLogo";
 
 /**
  * Doctorium sol bandı + mobil alt çubuğu (Faz 1 — taslak v3.2, kullanıcı onayı 2026-08-14).
@@ -183,21 +182,15 @@ export function DoctoriumSidebar({
             banta taşındı, sahne başlığı h1 oldu. Nabız satırı bandın varlık nedenini söyler:
             burası her gece dolan CANLI bir kütüphane. Nokta statik (klinik sakinlik — animasyon
             yok); sayı yoksa satır çizilmez (boş gün sönük rozet göstermez). */}
-        {/* Ölçek (kullanıcı kararı 2026-08-16, D13): kapak hissi — lockup 21px + nabız zümrüt
-            ve 12px (silik gri yetersiz bulundu; sabah nabzı ilk bakışta çarpmalı). Zümrüt tonu
+        {/* Bant lockup'ı KALKTI (kullanıcı kararı 2026-08-16, son tur): marka Header'daki
+            AURA↔Doctorium toggle'ında yaşar — bant markasız, NABIZLA açılır. Zümrüt ton
             tema-duyarlı: gece 300, gündüz 700 (CoverArt [.theme-light_&] deseni). */}
-        <div className="px-2.5 pb-4 pt-0.5">
-          <div className="aura-display flex items-center gap-2 text-[21px] font-medium tracking-tight text-[var(--c-ink)]">
-            <AuraMark size={26} tone="emerald" className="-ml-0.5" />
-            <span>Doctor<span className="doctorium-ium">ium</span></span>
+        {totalToday != null && (
+          <div className="aura-mono flex items-center gap-1.5 px-2.5 pb-3.5 pt-0.5 text-xs font-semibold tracking-[0.14em] text-emerald-300 [.theme-light_&]:text-emerald-700">
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            BUGÜN {totalToday} YENİ
           </div>
-          {totalToday != null && (
-            <div className="aura-mono mt-2 flex items-center gap-1.5 text-xs font-semibold tracking-[0.14em] text-emerald-300 [.theme-light_&]:text-emerald-700">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              BUGÜN {totalToday} YENİ
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Çıkış kapısı (2026-08-16 bant revizyonu): dönüş linki modül listesinden hairline ile
             ayrılır — bant dört bölge okunur (kimlik / çıkış / modüller / kişisel). */}
