@@ -716,6 +716,43 @@ body {
   }
 }
 
+/* Doktor ana sayfası "Tüm eşleşen vakaları göster" çağrısı (2026-08-16, kullanıcı kararı):
+   kapalı liste kutusu + metni aura mavisiyle (--c-accent) nefes alan ışımada — Doz 1 "ışıma
+   yalnız marka anları" kuralının profil-chevron'la (v6.98) aynı sınıftaki bilinçli istisnası;
+   liste açılınca sınıf düşer, ışıma söner (koşul CaseQueue.tsx'te). 🪤 Aynı efekt ≠ aynı
+   değer: yarıçaplar ~40px'lik butona göre. Metin rengi --c-accent-strong (gündüz beyaz
+   zeminde AA kontrast; gece ışıma parlaklığı text-shadow'dan gelir). Tempo ev standardı 2.6s. */
+.queue-reveal-glow {
+  border-color: color-mix(in srgb, var(--c-accent) 60%, transparent);
+  color: var(--c-accent-strong);
+  animation: queue-reveal-glow 2.6s ease-in-out infinite;
+}
+@keyframes queue-reveal-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 8px -2px color-mix(in srgb, var(--c-accent) 45%, transparent),
+      inset 0 0 10px -4px color-mix(in srgb, var(--c-accent) 25%, transparent);
+    text-shadow: 0 0 6px color-mix(in srgb, var(--c-accent) 35%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 20px 0 color-mix(in srgb, var(--c-accent) 70%, transparent),
+      inset 0 0 16px -2px color-mix(in srgb, var(--c-accent) 40%, transparent);
+    text-shadow: 0 0 10px color-mix(in srgb, var(--c-accent) 70%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .queue-reveal-glow {
+    animation: none;
+    /* hareketsizde de çağrı SEÇİLİR kalır — sabit orta-şiddet ışıma */
+    box-shadow:
+      0 0 14px -1px color-mix(in srgb, var(--c-accent) 55%, transparent),
+      inset 0 0 12px -3px color-mix(in srgb, var(--c-accent) 30%, transparent);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--c-accent) 50%, transparent);
+  }
+}
+
 /* AURA sembolü (AuraMark/AuraSpinner) — kullanıcının animasyonlu vektörel logosu:
    yörünge halkaları döner, çekirdek nefes alır, aura nabzı dışa açılır. Şeffaf →
    her zeminde çalışır. transform-origin sembol merkezine sabit (viewBox 600,520).

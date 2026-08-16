@@ -148,13 +148,19 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
         <Stat label="Acil (4-5)" value={urgent} tone="text-red-300" interactive active={statActive.urgent} onClick={() => toggleStat("urgent")} />
       </div>
       {/* Tek-tuş aç/kapat (2026-07-31, kullanıcı isteği): tüm listeyi filtresiz açar; sayaçlar
-          ayrıca kendi stat filtresiyle açmaya devam eder. */}
+          ayrıca kendi stat filtresiyle açmaya devam eder. Kapalıyken kutu + metin aura mavisi
+          ışımayla çağırır (2026-08-16 kullanıcı kararı; .queue-reveal-glow globals.css) —
+          liste açılınca söner (v6.98 profil-chevron istisnasıyla aynı sınıf). */}
       {!serverFilters && (
         <button
           type="button"
           onClick={() => setOpenStat((cur) => (cur === null ? "total" : null))}
           aria-expanded={listOpen}
-          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-4 py-2.5 text-sm font-semibold text-[var(--c-ink-2)] transition hover:border-[var(--c-accent)]/40 hover:text-[var(--c-ink)]"
+          className={`mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border bg-[var(--c-panel)] px-4 py-2.5 text-sm font-semibold transition ${
+            listOpen
+              ? "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40 hover:text-[var(--c-ink)]"
+              : "queue-reveal-glow"
+          }`}
         >
           {listOpen ? (
             <>Listeyi gizle <ChevronUp size={15} /></>
