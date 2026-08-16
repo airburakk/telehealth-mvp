@@ -1,4 +1,4 @@
-// PortaMed landing illüstrasyonları — fotoğraf yerine marka paletinde (teal/zümrüt/fildişi/altın)
+// AURA illüstrasyonları — fotoğraf yerine marka paletinde (teal/zümrüt/fildişi/altın)
 // editorial flat SVG sanatı. Lisanssız, retina-keskin, tema ile bütün.
 // Palet: teal var(--c-accent) · teal-deep var(--c-accent-strong) · teal-bright #5FD0C7 · emerald var(--c-bg) · ivory var(--c-cream) · gold var(--c-gold)
 

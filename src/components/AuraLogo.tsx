@@ -210,7 +210,7 @@ export function DoctoriumBraille({ height = 12, className = "" }: { height?: num
 // .theme-* kuralları seçer (gündüz = lacivert light PNG, gece = beyaz dark PNG).
 // `ink` prop'u artık YOK-sayılır (geriye uyumluluk için imzada bırakıldı) — tema toggle
 // sabit prop ile çözülemezdi (eski onDark anahtarı render-zamanı sabitti).
-export function PortamedLogo({ size = 24 }: { size?: number; ink?: string }) {
+export function AuraLogo({ size = 24 }: { size?: number; ink?: string }) {
   const wordH = Math.round(size * 0.6);
   // display INLINE verilmez — görünürlüğü .logo-word-* class'ları yönetir (inline style
   // CSS kuralını ezip her iki wordmark'ı birden gösterirdi).

@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
 import { SystemMessagesMenuItem } from "@/components/SystemMessagesMenuItem";
-import { PortamedLogo, AuraMark } from "@/components/PortamedLogo";
+import { AuraLogo, AuraMark } from "@/components/AuraLogo";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47 } from "@/lib/constants";
@@ -55,7 +55,7 @@ function BrandToggle({ doctoriumActive }: { doctoriumActive: boolean }) {
     return () => ro.disconnect();
   }, [doctoriumActive]);
 
-  const wordH = 14; // 23px sembol ölçeğinin wordmark oranı (PortamedLogo size*0.6)
+  const wordH = 14; // 23px sembol ölçeğinin wordmark oranı (AuraLogo size*0.6)
   return (
     <div ref={wrapRef} className="relative flex shrink-0 items-center gap-2">
       {/* Kayan sembol: brand-live (yörünge hep döner — tek logo daima canlı); aktiflik RENKLE
@@ -83,7 +83,7 @@ function BrandToggle({ doctoriumActive }: { doctoriumActive: boolean }) {
         className={`flex items-center gap-1.5 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumActive ? "opacity-45 hover:opacity-80" : ""}`}
       >
         <span ref={slotA} aria-hidden className="block h-[23px] w-[23px] shrink-0" />
-        {/* Tema-çift wordmark (PortamedLogo deseni — görünürlüğü .logo-word-* yönetir). */}
+        {/* Tema-çift wordmark (AuraLogo deseni — görünürlüğü .logo-word-* yönetir). */}
         {/* eslint-disable-next-line @next/next/no-img-element -- yerel marka varlığı */}
         <img src="/aura-word-light.png" alt="AURA" className="logo-word-light" style={{ height: wordH, width: "auto" }} />
         {/* eslint-disable-next-line @next/next/no-img-element -- yukarıdakiyle aynı */}
@@ -205,7 +205,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
           <BrandToggle doctoriumActive={doctoriumActive} />
         ) : (
           <Link href="/" className="flex shrink-0 items-end">
-            <PortamedLogo size={23} />
+            <AuraLogo size={23} />
           </Link>
         )}
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Loader2, UserPlus, MailCheck, ShieldCheck } from "lucide-react";
-import { AuraMark } from "@/components/PortamedLogo";
+import { AuraMark } from "@/components/AuraLogo";
 import {
   type StaffField,
   type StaffRoleConfig,

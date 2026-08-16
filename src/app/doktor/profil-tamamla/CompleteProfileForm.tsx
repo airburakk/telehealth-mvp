@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Stethoscope, ArrowRight } from "lucide-react";
-import { AuraMark } from "@/components/PortamedLogo";
+import { AuraMark } from "@/components/AuraLogo";
 
 // OAuth profil-tamamlama formu (v6.87) — DoctorSignupForm'un kimlik alanlarıyla BİREBİR
 // (ad/ünvan/branş/şehir/telefon/diller; e-posta+parola YOK — OAuth hallettti). Ünvan listesi

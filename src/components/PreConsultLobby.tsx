@@ -21,8 +21,8 @@ import {
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47, VIDEO_CARD_SCRIPT } from "@/lib/constants";
 import { AI_INTERPRET_TEXT } from "@/lib/ai-consent";
-import { AuraSpinner } from "@/components/PortamedLogo";
-import { DoctorArt } from "@/components/PortamedArt";
+import { AuraSpinner } from "@/components/AuraLogo";
+import { DoctorArt } from "@/components/AuraArt";
 import { DoctorVideoCard } from "@/components/DoctorVideoCard";
 import type { DoctorCardData } from "@/lib/doctor-card";
 

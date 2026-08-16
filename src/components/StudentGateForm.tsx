@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { GraduationCap, Loader2, LogIn, MailCheck, UserPlus } from "lucide-react";
-import { AuraMark } from "@/components/PortamedLogo";
+import { AuraMark } from "@/components/AuraLogo";
 
 // v6.95 — Tıp öğrencisi kapısı (/ogrenci): giriş + kayıt TEK bileşende, doktor girişinden AYRI
 // (kullanıcı kararı 2026-08-14). Kayıt /api/auth/signup-student'a gider (ünvan/telefon/dil yok);

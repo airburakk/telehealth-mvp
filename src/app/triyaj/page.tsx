@@ -17,7 +17,7 @@ import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/compo
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
 import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
 import { BranchBanner } from "@/components/BranchBanner";
-import { AuraSpinner } from "@/components/PortamedLogo";
+import { AuraSpinner } from "@/components/AuraLogo";
 import { readDoc, type UploadDoc } from "@/lib/read-doc";
 import type { Billing } from "@/lib/billing";
 import {

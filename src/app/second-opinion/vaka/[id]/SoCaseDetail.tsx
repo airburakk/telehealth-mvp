@@ -16,7 +16,7 @@ import {
 import { langDir, LANG_BCP47, countryName, countryFlag } from "@/lib/constants";
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
 import { soTrackerPhases, SO_TRACKER_TEXTS } from "@/lib/so-tracker";
-import { DoctorArt } from "@/components/PortamedArt";
+import { DoctorArt } from "@/components/AuraArt";
 
 type DocMeta = { id: string; type: string; deliveryMethod: string; externalRef: string | null; label: string | null };
 type SoData = {

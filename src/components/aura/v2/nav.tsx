@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AuraMark } from "@/components/PortamedLogo";
+import { AuraMark } from "@/components/AuraLogo";
 import { LANGS, useLang, type Lang } from "@/lib/aura-landing/i18n";
 
 // /v2 üst bandı (v6.16) — kök nav'dan AYRI bileşen, bilerek.

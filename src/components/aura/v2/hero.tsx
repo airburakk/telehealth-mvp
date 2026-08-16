@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { AuraBraille } from "@/components/PortamedLogo";
+import { AuraBraille } from "@/components/AuraLogo";
 import { LETTERS, VIDEOS, useLang } from "@/lib/aura-landing/i18n";
 
 // /v2 hero — SAHNELİ AÇILIŞ (v6.14.4, kullanıcı kararı):

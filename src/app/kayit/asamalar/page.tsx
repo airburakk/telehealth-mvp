@@ -25,7 +25,7 @@ export default function SignupStagesPage() {
       <div className="mt-8 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6">
         <div className="flex items-center gap-2.5">
           {/* Doctorium zümrüdü (kullanıcı kararı 2026-08-12) — alt-marka ana tonu #34d399 = emerald-400
-              (PortamedLogo TONES.emerald.main; nav "ium" vurgusuyla aynı) */}
+              (AuraLogo TONES.emerald.main; nav "ium" vurgusuyla aynı) */}
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-400 text-[var(--c-bg)]">
             <BookOpenCheck size={18} />
           </span>

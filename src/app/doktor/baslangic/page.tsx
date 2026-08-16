@@ -7,7 +7,7 @@ import { hasDoctoriumAccess, isEduEmail } from "@/lib/doctor-activation";
 import { SPONSOR_CONSENT_TEXT } from "@/lib/sponsor";
 import { HR_CONTACT_CONSENT_TEXT } from "@/lib/hr-consent";
 import { GraduationCap, FileCheck2 } from "lucide-react";
-import { AuraMark } from "@/components/PortamedLogo";
+import { AuraMark } from "@/components/AuraLogo";
 import { StudentStage1Card } from "@/components/StudentStage1Card";
 import { OnboardingForm } from "./OnboardingForm";
 

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, Star, BadgeCheck, Globe, ArrowRight, Inbox } from "lucide-react";
-import { DoctorArt } from "@/components/PortamedArt";
+import { DoctorArt } from "@/components/AuraArt";
 import { avatarVariant, isFemaleName } from "@/lib/doctor-profile";
 
 export interface DoctorRow {

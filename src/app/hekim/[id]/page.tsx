@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { countryFlag, formatDateTime, VIDEO_CARD_SCRIPT } from "@/lib/constants";
 import { doctorCredentials, richBio, academicNote, generatedReviews, avatarVariant, isFemaleName } from "@/lib/doctor-profile";
 import { DoctorVideoCard } from "@/components/DoctorVideoCard";
-import { DoctorArt } from "@/components/PortamedArt";
+import { DoctorArt } from "@/components/AuraArt";
 import { BadgeCheck, Star, Globe, GraduationCap, ShieldCheck, Video, MapPin, ArrowLeft, CheckCircle2, Stethoscope, Award, Heart, Zap, Activity, type LucideIcon } from "lucide-react";
 import { getDoctorBadges } from "@/lib/match-score";
 

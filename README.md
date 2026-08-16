@@ -590,7 +590,7 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   gizleme listesinde) · landing arka plan video zemini (`DoctoriumBgVideo`: hero koyu / final CTA
   açık overlay; film2/film3 720p + gate2 kapı videosu). **Braille kuralı GÜNCEL:** her wordmark
   KENDİ braille'ini TAM ALTINDA ortalı taşır (AURA ⠁⠥⠗⠁ · Doctorium ⠙⠕⠉⠞⠕⠗⠊⠥⠍) —
-  `DoctoriumBraille` (PortamedLogo.tsx; AuraBraille ile birebir geometri; hücreler nokta
+  `DoctoriumBraille` (AuraLogo.tsx; AuraBraille ile birebir geometri; hücreler nokta
   numaralarından türetilir; **min-genişlik 146px**, altında HİÇ çizilmez). Yerler: kapı başlığı
   (aria-hidden içinde) + landing footer marka bloğu (32px lockup ≈154px > braille 146px). Üst bar
   BİLİNÇLİ braille'siz (22px lockup 106px < 146px — "nav'a konmaz" kuralı iki markada geçerli).

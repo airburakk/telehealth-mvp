@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useSearchParams } from "next/navigation";
 import { WordHeadline } from "@/components/aura/word-headline";
-import { AuraMark, DoctoriumBraille } from "@/components/PortamedLogo";
+import { AuraMark, DoctoriumBraille } from "@/components/AuraLogo";
 import { GateEmailForm } from "@/components/aura/gate-email-form";
 import { LangProvider, useLang, langDir, LINKS, VIDEOS } from "@/lib/aura-landing/i18n";
 

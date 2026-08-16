@@ -67,7 +67,7 @@ function inTri(px, py, a, b, c) {
 }
 
 function renderIcon(size) {
-  // PortamedLogo AuraMark ile aynı 100-uzay geometrisi → maskable güvenli alana ölçekli/merkezli
+  // AuraLogo AuraMark ile aynı 100-uzay geometrisi → maskable güvenli alana ölçekli/merkezli
   const f = (size / 100) * 0.80;
   const c = size / 2;
   const X = (u) => c + (u - 50) * f;

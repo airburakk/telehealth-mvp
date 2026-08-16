@@ -44,7 +44,7 @@ terazi **güven** tarafına eğiktir.
   (`layout.tsx`); gövde min 16px.
 - **Mikro / durak:** **JetBrains Mono** (`--font-mono`) — eyebrow, adım numarası (01…), istatistik
   etiketi, kart eyebrow'ları. Vitrindeki "mono durak" dilinin platform karşılığı.
-- **Logo wordmark:** görsel varlık (aura-word-*.png, PortamedLogo) — font değil.
+- **Logo wordmark:** görsel varlık (aura-word-*.png, AuraLogo) — font değil.
 - **Data / tablo:** Inter + `tabular-nums` (klinik değer/fiyat hizası).
 - **Çok dilli kapsam:** Inter **Kiril kapsar** (RU pazarı markalı) — Arapça hâlâ sistem fallback
   (bilinçli; Noto Sans Arabic yoldaş font kararı açık kalem). RTL ikon aynalaması (`[dir="rtl"]`) var.
@@ -131,7 +131,7 @@ Doz: **"Sakin Premium"** — display tipografi + mono duraklar + hairline disipl
 - Ekran başına **tek karar** (triyaj sihirbazı deseni); happy-talk/talimat metni minimum.
 - Placeholder tek başına etiket değildir; etiket alan doluyken görünür kalır.
 - Tam klavye navigasyonu + ARIA landmark; RTL (Arapça/Farsça) kök kapsayıcıda `dir="rtl"`.
-- Slow/3G bağlantıda zarif: ağır görsel yerine SVG art (PortamedArt deseni).
+- Slow/3G bağlantıda zarif: ağır görsel yerine SVG art (AuraArt deseni).
 
 ## Marka sesi (copy)
 

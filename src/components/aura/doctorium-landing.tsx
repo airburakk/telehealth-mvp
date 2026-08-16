@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { AuraMark, DoctoriumBraille } from "@/components/PortamedLogo";
+import { AuraMark, DoctoriumBraille } from "@/components/AuraLogo";
 import { DoctoriumBgVideo } from "@/components/aura/doctorium-bg-video";
 
 // /doctorium tanıtım landing'i (kullanıcı kararı 2026-08-16) — giriş yapmamış hekime/öğrenciye
@@ -30,7 +30,7 @@ const PALETTE = {
   "--dl-emerald": "#34d399",
   "--dl-rose": "#fb7185",
   "--dl-amber": "#c6a664",
-  // AURA marka turkuazı — PortamedLogo TONES.brand.main ile aynı ton ("by AURA" imzası).
+  // AURA marka turkuazı — AuraLogo TONES.brand.main ile aynı ton ("by AURA" imzası).
   "--dl-cyan": "#28C8D8",
 } as CSSProperties;
 
@@ -118,9 +118,9 @@ function DoctoriumInline() {
 }
 
 // "by AURA" imzası (kullanıcı kararı 2026-08-16, 4. tur): "by" düz metin (link DEĞİL); AURA,
-// sitenin GERÇEK wordmark PNG'sidir (PortamedLogo ile aynı varlıklar) ve yalnız O tıklanabilir →
+// sitenin GERÇEK wordmark PNG'sidir (AuraLogo ile aynı varlıklar) ve yalnız O tıklanabilir →
 // AURA vitrin ana sayfası (/). `light`: açık bölümde lacivert wordmark varyantı (beyaz PNG
-// beyaz zeminde görünmez — PortamedLogo'nun logo-word-light/dark ayrımının bölüm karşılığı).
+// beyaz zeminde görünmez — AuraLogo'nun logo-word-light/dark ayrımının bölüm karşılığı).
 // Yükseklik em-tabanlı: eyebrow/üst bar/footer hangi puntoda kullanırsa oraya ölçeklenir.
 function ByAura({ light = false }: { light?: boolean }) {
   return (

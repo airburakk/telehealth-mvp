@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { AuraMark, AuraBraille } from "@/components/PortamedLogo";
+import { AuraMark, AuraBraille } from "@/components/AuraLogo";
 import { useLang, LINKS } from "@/lib/aura-landing/i18n";
 
 // Kapanis v2: gece paneli (22px radius — Sign Up panel dili) icinde kisa
