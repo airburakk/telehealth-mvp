@@ -571,6 +571,16 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   · **`/for-clinicians`:** how-it-works sözleşmesi (indekslenir, sitemap 0.7, kendi aura nav/footer —
   Header/SiteFooter gizleme listesinde). Sözlük `v2.clinicians` **iki yüzeyi** besler (bölüm + sayfa).
   Not kutusu: doğrulama = belge incelemesi, **akreditasyon DEĞİL** (v6.8).
+  · **`/doctorium` (v6.100, 2026-08-16):** Doctorium tanıtım landing'i — for-clinicians gibi
+  indekslenir + sitemap 0.7 + Header gizleme listesinde, ama **V2Nav DEĞİL**: kendi üst barı/footer'ı,
+  koyu-sabit, TR-only (`components/aura/doctorium-landing.tsx`). Prizma hero (🪤 prism span'ine
+  `display:block` şart — inline'da yükseklik 0'a çöker; ışıma dönüş anında). Marka kuralları:
+  "Doctorium" her metinde lockup (Doctor beyaz + ium zümrüt, D büyük; zümrüt-zeminli CTA istisna),
+  "by AURA" imzasında AURA = gerçek wordmark PNG ve yalnız o tıklanır (→ `/`). Header'da
+  **AURA↔Doctorium marka toggle'ı** (DOCTOR/COORDINATOR; aktif taraf 4.5s döner, deaktif soluk;
+  nav'daki Doctorium sekmesi KALKTI) + **Doctorium odak modu** (portaldayken Doktor/Post-Op sekmeleri
+  ve menüde Profilim/Finans gizli) + Aşama-1 doktoru AURA'ya geçerken `/doktor?from=doctorium` →
+  `baslangic?from=aura-gecis` Aşama-2 uyarı ekranı (belge listesi + doğrulama şartı).
   · **Hero mobil kaynak:** `<source media="(max-width:767px)">` → `src720` (848KB); masaüstü 1080p
   **kullanıcı kararı, dokunma**. Save-Data → video hiç başlatılmaz. 🪤 **WebM DENENDİ ve ATILDI:**
   VP9 çıktısı (1112KB) mevcut h264 720p'den BÜYÜK — kaynak zaten agresif sıkıştırılmış; **eklemeden
