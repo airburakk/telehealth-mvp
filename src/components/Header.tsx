@@ -107,12 +107,12 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
 
   // AURA landing (/, /how-it-works, /guven-ve-gizlilik) kendi nav/footer'ını taşır — global krom gizlenir.
   // /doctorium (2026-08-16): Doctorium tanıtım landing'i — o da kendi üst barını taşır.
-  // Giriş kapıları (/giris, /kurumsal-giris) tam-ekran vitrin panelleridir (kendi logo +
-  // "← ana sayfa" bağlantısıyla); /e-posta form alt-rotalarında krom durur (exact match).
+  // Giriş kapıları (/giris, /kurumsal-giris, /doctorium/giris) tam-ekran vitrin panelleridir
+  // (kendi logo + "← ana sayfa" bağlantısıyla); /e-posta form alt-rotalarında krom durur (exact match).
   // Video görüşme rotaları IMMERSIVE tam-ekran (100dvh video+panel) → krom gizlenir.
   // Locale rotaları (/en /tr … — v6.17) da landing'dir: kendi nav/footer'ını taşır.
   if (
-    ["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/for-clinicians", "/doctorium", "/giris", "/kurumsal-giris"].includes(pathname) ||
+    ["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/for-clinicians", "/doctorium", "/doctorium/giris", "/giris", "/kurumsal-giris"].includes(pathname) ||
     (LANG_CODES as readonly string[]).includes(pathname.slice(1)) ||
     isImmersiveCallPath(pathname)
   )

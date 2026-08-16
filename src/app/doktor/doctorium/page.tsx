@@ -16,6 +16,7 @@ import {
   effectiveBranches, personalFeed, moduleFeed, singleBranchFeed, upcomingCongresses,
   localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
   slugForLabel, parseScope, savedArticleIds, FEED_MODULE_OPTIONS, parseFeedModules,
+  todayModuleCounts,
   type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey,
 } from "@/lib/doctorium";
 import { isStudentOnly } from "@/lib/doctor-activation";
@@ -31,7 +32,6 @@ import {
   ArrowLeft, ExternalLink, Info, MapPin, X, CalendarClock, Megaphone,
 } from "lucide-react";
 import { getDoctorBalance } from "@/lib/rewards";
-import { AuraMark } from "@/components/PortamedLogo";
 import { DoctoriumShell } from "./DoctoriumSidebar";
 
 export const dynamic = "force-dynamic";
@@ -187,8 +187,11 @@ export default async function DoctoriumPage({
   const isDoctor = user.role === "DOCTOR" && !!doctor;
   const savedIds = isDoctor && doctor ? await savedArticleIds(doctor.id) : null;
 
+  // v6.102 bant nabzı: bugün akışa düşen içerik sayıları (Shell → Sidebar).
+  const counts = await todayModuleCounts();
+
   return (
-    <DoctoriumShell active={active} balance={myPointBalance} isDoctor={isDoctor}>
+    <DoctoriumShell active={active} balance={myPointBalance} isDoctor={isDoctor} counts={counts}>
     {/* px-5 = /doktor içerik boşluğu (hiza kararı 2026-08-14): başlıklar üç sekmede aynı x'te. */}
     <div className="max-w-3xl px-5 py-8">
       {/* Masaüstünde dönüş banttadır (layout DoctoriumSidebar); bu link yalnız mobil için. */}
@@ -196,24 +199,10 @@ export default async function DoctoriumPage({
         <ArrowLeft size={15} /> Ana Sayfa
       </Link>
 
-      {/* Editoryal Manşet turu (2026-08-16): lockup MARKA ŞAPKASI ölçeğine indi — denetim
-          bulgusu: 30px lockup + 30px sahne başlığı aynı boyutta yarışıyordu, asıl içerik ekranın
-          yarısından sonra başlıyordu. L1 lockup kimliği (AuraMark + "ium" vurgusu, 2026-08-01)
-          KORUNUR; yalnız ölçek küçüldü, sahne başlığı (H2) tek hâkim oldu. Slogan aynı satıra. */}
-      <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-        <h1 className="aura-display flex items-center gap-2 text-lg font-medium tracking-tight text-[var(--c-ink)]">
-          <AuraMark size={22} tone="emerald" className="-ml-0.5" />
-          <span>Doctor<span className="doctorium-ium">ium</span></span>
-        </h1>
-        {/* Sabit slogan (kullanıcı seçimi 2026-08-01) — sekmeye göre değişen desc satırı kalktı. */}
-        <span className="text-[13px] text-[var(--c-ink-3)]">Bilim, sizin ritminizde.</span>
-        {/* v6.95 — öğrenci-sınırlı üyelik etiketi: mono rozet, yüzey boyamaz (kit renk disiplini) */}
-        {studentOnly && (
-          <span className="aura-mono rounded-full border border-[var(--c-hairline)] px-2 py-px text-[11px] font-semibold uppercase tracking-wider text-[var(--c-ink-3)]">
-            Öğrenci Üyeliği
-          </span>
-        )}
-      </div>
+      {/* v6.102 "Nabızlı Kule": sayfa içi lockup BANTA taşındı (marka tek konumda yaşar —
+          DoctoriumSidebar kimlik bloğu; 2026-08-01 L1 kimliği orada sürer). Sahne başlığı
+          artık sayfanın h1'i; öğrenci rozeti onun satırında. Slogan portal içinden kalktı
+          (landing'de yaşıyor). Mobilde marka Header'daki AURA↔Doctorium toggle'ında. */}
 
       {/* Mobil grup şeridi (M2, Faz 1 — taslak v3.2): alt çubuk (layout'taki DoctoriumSidebar)
           grubu seçer, bu şerit grubun modüllerini gezdirir; Akışım'da şerit yok. Masaüstünde
@@ -246,18 +235,24 @@ export default async function DoctoriumPage({
       {/* Modül üst alanı (Faz 1, taslak v3.2 — metinler kullanıcı onaylı 2026-08-14): mono etiket
           (modül kimlik renginde) + display başlık + tek satır açıklama. 2026-08-01'de kaldırılan
           silik "desc satırı"nın dönüşü DEĞİL — editoryal başlık bloğu, ayrı karar. */}
-      <div className="mt-6">
+      <div className="mt-5">
         <div
           className="aura-mono text-[11px] font-bold tracking-[0.16em]"
           style={{ color: MODULE_HEAD[active].color ?? "var(--c-ink)" }}
         >
           {MODULE_HEAD[active].eyebrow}
         </div>
-        {/* text-3xl = /doktor ve Post-Op h1 ölçüsü (kullanıcı düzeltmesi 2026-08-14: 2xl portal
-            dilinden küçük kalıyordu) — sahnenin asıl başlığı budur, lockup marka şapkasıdır. */}
-        <h2 className="aura-display mt-1 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
+        {/* text-3xl = /doktor ve Post-Op h1 ölçüsü. v6.102: lockup banta taşınınca sahnenin
+            asıl başlığı h1 oldu (sayfa başına tek h1 — erişilebilirlik). */}
+        <h1 className="aura-display mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
           {MODULE_HEAD[active].title}
-        </h2>
+          {/* v6.95 — öğrenci-sınırlı üyelik etiketi: mono rozet, yüzey boyamaz (kit renk disiplini) */}
+          {studentOnly && (
+            <span className="aura-mono rounded-full border border-[var(--c-hairline)] px-2 py-px text-[11px] font-semibold uppercase tracking-wider text-[var(--c-ink-3)]">
+              Öğrenci Üyeliği
+            </span>
+          )}
+        </h1>
         <p className="mt-1 text-[13px] text-[var(--c-ink-2)]">{MODULE_HEAD[active].desc}</p>
       </div>
 

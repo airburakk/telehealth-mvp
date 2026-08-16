@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { savedFeed, localizeTitles } from "@/lib/doctorium";
+import { savedFeed, localizeTitles, todayModuleCounts } from "@/lib/doctorium";
 import { isStudentOnly } from "@/lib/doctor-activation";
 import { getDoctorBalance } from "@/lib/rewards";
 import { ArticleCard } from "../ArticleCard";
@@ -36,7 +36,7 @@ export default async function SavedPage() {
   if (items.length) items = await localizeTitles(items);
 
   return (
-    <DoctoriumShell active="kaydettiklerim" balance={balance} isDoctor>
+    <DoctoriumShell active="kaydettiklerim" balance={balance} isDoctor counts={await todayModuleCounts()}>
       <div className="max-w-3xl px-5 py-8">
         {/* Masaüstünde dönüş banttadır (Faz 1); bu link yalnız mobil için. */}
         <Link

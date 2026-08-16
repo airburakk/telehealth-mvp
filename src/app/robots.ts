@@ -20,6 +20,7 @@ export default function robots(): MetadataRoute.Robots {
         "/etik-kurul",
         "/denetim",
         "/kurumsal-giris", // personel kapısı + /e-posta formu (noindex)
+        "/doctorium/giris", // Doctorium kapısı (noindex) — /doctorium LANDING indekslenir, prefix onu KAPSAMAZ
         "/vaka",
         "/vakalarim",
         "/paket",

@@ -12,7 +12,7 @@ export function SiteFooter() {
   // Video görüşme rotaları immersive tam-ekran → footer gizlenir (Header ile simetrik).
   // Locale rotaları (/en /tr …) da landing — Header ile simetrik (v6.17).
   if (
-    ["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/for-clinicians", "/giris", "/kurumsal-giris"].includes(pathname) ||
+    ["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/for-clinicians", "/giris", "/kurumsal-giris", "/doctorium/giris"].includes(pathname) ||
     (LANG_CODES as readonly string[]).includes(pathname.slice(1)) ||
     isImmersiveCallPath(pathname)
   )

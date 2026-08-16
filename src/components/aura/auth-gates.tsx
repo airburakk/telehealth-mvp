@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useSearchParams } from "next/navigation";
 import { WordHeadline } from "@/components/aura/word-headline";
-import { AuraMark } from "@/components/PortamedLogo";
+import { AuraMark, DoctoriumBraille } from "@/components/PortamedLogo";
 import { GateEmailForm } from "@/components/aura/gate-email-form";
 import { LangProvider, useLang, langDir, LINKS, VIDEOS } from "@/lib/aura-landing/i18n";
 
@@ -14,6 +14,8 @@ import { LangProvider, useLang, langDir, LINKS, VIDEOS } from "@/lib/aura-landin
 // başlık, üç sağlayıcı butonu, OR ayracı, mikro yasal metin), SAĞ gece Boğaz
 // videosu. CorporateGate (/kurumsal-giris) = aynı panelin personel uyarlaması:
 // rol seçici (görsel bağlam — tüm roller aynı girişe gider), sağda radyoloji videosu.
+// DoctoriumGate (/doctorium/giris, 2026-08-16) = aynı panelin Doctorium alt-marka
+// uyarlaması: zümrüt dönen sembol + lockup başlık + iki rol (kendi bölümüne bak).
 //
 // ── Kapı/form ayrımı KALDIRILDI (2026-08-06, kullanıcı kararı) ──
 // Eski desende Apple/E-posta butonları /e-posta alt rotasındaki forma götürürdü — Apple OAuth
@@ -292,6 +294,177 @@ function CorporatePanel() {
   );
 }
 
+// ————— Doctorium kapısı (/doctorium/giris) —————
+
+// Doctorium giriş kapısı (2026-08-16, kullanıcı onaylı tasarım): CorporatePanel'in
+// alt-marka uyarlaması. Farklar: zümrüt DÖNEN AuraMark (tone="emerald" + brand-live
+// 4.5s — header toggle diliyle aynı) · WordHeadline yerine Doctorium lockup'ı
+// (Doctor ink + ium zümrüt; marka kuralı [[doctorium-tanitim-marka]]) · lockup'ın TAM
+// ALTINDA DoctoriumBraille (kural güncellendi 2026-08-16: Braille artık iki wordmark'ta
+// da — AURA braille'i "AURA"nın, Doctorium braille'i "Doctorium"un altında; eski
+// "Braille yalnız AURA'ya" kuralı SÜPERSEDE) · iki rol (Doktor / Tıp Öğrencisi) ·
+// üyelik daveti rol-duyarlı (/kayit · /ogrenci).
+//
+// TEK DİL TR (landing kararıyla tutarlı — /doctorium lang="tr"): GateShell yerine
+// DoctoriumShell (aynı grid, lang sabit). Metinler sabit obje; copy.ts'in 9 dilli
+// signin sözlüğüne BAĞLANMAZ (Doctorium yüzeyi çok-dilli değil). ⚠️ uppercase rol
+// etiketi ("GİRİŞ ROLÜ") noktalı İ'yi lang="tr" sayesinde doğru çizer — kabuğun
+// lang'i görseldir de, kaldırma.
+//
+// Zümrüt SABİT #34d399 (= AuraMark TONES.emerald.main = landing koyu bölüm değeri):
+// kapılar gece-sabit vitrin yüzeyi (.aura-light bu ağaca girmez) → tema token'ı
+// gerekmez. OAuth kurumsal kapıyla AYNI intent=doctor başlangıçları: mevcut e-posta
+// kendi rolüyle girer; öğrenci ÜYELİĞİ yalnız /ogrenci hunisinden açılır.
+const DOCTORIUM_EMERALD = "#34d399";
+
+const DOCTORIUM = {
+  welcome: "Hoş Geldiniz",
+  sub: "Rolünüzü seçin ve size özel çalışma alanınıza giriş yapın.",
+  roleLabel: "Giriş rolü",
+  roles: ["Doktor", "Tıp Öğrencisi"],
+  or: "VEYA",
+  noAccount: "Hesabınız yok mu?",
+  signup: "Üye olun",
+  back: "Doctorium'a dön",
+  legal: "Doctorium, doğrulanmış doktor ve tıp öğrencilerine özel çalışma alanıdır.",
+  // GateEmailForm sözleşmesi + sağlayıcı etiketleri (TR signin değerleriyle birebir).
+  google: "Google ile devam et",
+  apple: "Apple ile devam et",
+  email: "E-posta ile devam et",
+  form: { emailLabel: "E-posta", passwordLabel: "Parola", submit: "Giriş yap" },
+} as const;
+
+// Rol-duyarlı üyelik hedefi — DOCTORIUM.roles indeksleriyle paralel:
+// 0 Doktor → /kayit (self-signup) · 1 Tıp Öğrencisi → /ogrenci (öğrenci hunisi).
+const DOCTORIUM_SIGNUP_HREFS: readonly string[] = [LINKS.doctorSignup, "/ogrenci"];
+
+// Doctorium'a özel kapı videosu (kullanıcı üretimi, 2026-08-16 — geçici VIDEOS.so
+// süpersede). Ad-versiyonlu "-gate2" çifti; poster kendi ilk karesinden (MAD 1.17 < 1.5
+// ölçüldü — [[video-poster-mismatch]] kuralı). Kapıya özel varlık: copy.ts VIDEOS
+// sözlüğüne taşınmadı (o sözlük hasta-vitrin videoları; tek kullanım yeri burası).
+const DOCTORIUM_VIDEO = {
+  src720: "/assets/video/v-doctorium-gate2-720.mp4",
+  poster: "/assets/video/p-doctorium-gate2.jpg",
+};
+
+export function DoctoriumGate() {
+  const returned = useReturnedWithBanner();
+  const [role, setRole] = useState(0); // DOCTORIUM.roles indeksi; 0 = Doktor
+  const [emailOpen, setEmailOpen] = useState(false);
+  const showForm = emailOpen || returned;
+
+  return (
+    <DoctoriumShell>
+      <Link href="/doctorium" aria-label="Doctorium" className="flex justify-center">
+        <AuraMark size={40} tone="emerald" className="brand-live" />
+      </Link>
+
+      {/* Lockup + karşılama tek h1'de (tek sayfa başlığı): görsel iki satır,
+          erişilebilir ad düzyazı. Lockup font-medium — landing DoctoriumWord dili
+          (WordHeadline'ın font-bold'u AURA letterform'una özgü, buraya taşınmaz). */}
+      <h1
+        aria-label="Doctorium — Hoş geldiniz"
+        className="aura-display mt-8 leading-tight tracking-tight text-[var(--aura-ink)]"
+      >
+        <span aria-hidden className="block">
+          {/* Lockup + Braille dikey grup: Braille "Doctorium" yazısının TAM ALTINDA
+              ortalı (WordHeadline'daki AURA deseninin lockup karşılığı). height=12 =
+              DoctoriumBraille min-genişlik eşiğinin (146px) tam karşılığı — küçültme,
+              eşik altı sessizce HİÇ çizmez (kasıtlı). */}
+          <span className="inline-flex flex-col items-center">
+            <span className="block text-3xl font-medium md:text-4xl">
+              Doctor<span style={{ color: DOCTORIUM_EMERALD }}>ium</span>
+            </span>
+            <DoctoriumBraille height={12} className="mt-2.5 text-[var(--aura-micro)]" />
+          </span>
+          <span className="mt-2 block text-2xl font-medium md:text-3xl">
+            {DOCTORIUM.welcome}
+          </span>
+        </span>
+      </h1>
+      <p className="mt-3 text-[15px] text-[var(--aura-grey)]">{DOCTORIUM.sub}</p>
+
+      <div className="mt-8 space-y-4">
+        <RoleSelect
+          label={DOCTORIUM.roleLabel}
+          roles={[...DOCTORIUM.roles]}
+          value={role}
+          onChange={setRole}
+        />
+        {/* Kurumsal kapıyla AYNI sağlayıcı kompozisyonu ve intent=doctor OAuth
+            başlangıçları; e-posta formu kapı içinde açılır. Rol seçimi görsel
+            bağlam — iki rol de aynı girişe gider. */}
+        <div className="space-y-3">
+          <ProviderButton href={LINKS.corporateGoogleStart} label={DOCTORIUM.google} icon={<GoogleIcon />} />
+          <ProviderButton href={LINKS.corporateAppleStart} label={DOCTORIUM.apple} icon={<AppleIcon />} />
+          <ProviderToggle
+            open={showForm}
+            onClick={() => setEmailOpen((o) => !o)}
+            label={DOCTORIUM.email}
+            icon={<MailIcon />}
+          />
+          {showForm && <GateEmailForm texts={DOCTORIUM.form} />}
+        </div>
+      </div>
+
+      <div className="mt-6 flex items-center gap-3">
+        <span aria-hidden className="h-px flex-1 bg-[var(--aura-hairline)]" />
+        <span className="aura-mono text-[11px] text-[var(--aura-micro)]">{DOCTORIUM.or}</span>
+        <span aria-hidden className="h-px flex-1 bg-[var(--aura-hairline)]" />
+      </div>
+
+      {/* Üyelik daveti ZÜMRÜT (kullanıcı kararı 2026-08-16, 2. tur — ilk turdaki
+          turkuaz süpersede): Doctorium kapısında vurgu rengi alt-markayla hizalı. */}
+      <SignupPrompt
+        prompt={DOCTORIUM.noAccount}
+        label={DOCTORIUM.signup}
+        href={DOCTORIUM_SIGNUP_HREFS[role]}
+        linkColor={DOCTORIUM_EMERALD}
+      />
+
+      <Link
+        href="/doctorium"
+        className="aura-mono mt-6 text-[13px] text-[var(--aura-grey)] transition-colors duration-200 hover:text-[var(--aura-accent)]"
+      >
+        {"← "}
+        {DOCTORIUM.back}
+      </Link>
+
+      <p className="mt-8 text-[12px] leading-relaxed text-[var(--aura-micro)]">{DOCTORIUM.legal}</p>
+    </DoctoriumShell>
+  );
+}
+
+// GateShell'in tek-dil kopyası: useLang'a bağlanmaz (provider'sız default EN
+// basardı), lang="tr" sabit — TR ltr olduğundan dir yazılmaz. Grid/video
+// sözleşmesi GateShell ile birebir; ayrıştıysa ikisini birlikte güncelle.
+function DoctoriumShell({ children }: { children: React.ReactNode }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  useGateVideo(videoRef);
+
+  return (
+    <div lang="tr" className="aura-page flex min-h-dvh items-center justify-center px-4 py-8 md:px-10">
+      <div className="grid w-full max-w-6xl overflow-hidden rounded-[22px] border border-[var(--aura-hairline)] bg-[var(--aura-panel)] md:min-h-[640px] md:grid-cols-[minmax(380px,467px)_1fr]">
+        <div className="flex flex-col justify-center px-8 py-12 text-center md:px-12">{children}</div>
+        <div className="relative hidden md:block">
+          <video
+            ref={videoRef}
+            muted
+            loop
+            playsInline
+            preload="none"
+            poster={DOCTORIUM_VIDEO.poster}
+            className="absolute inset-0 h-full w-full object-cover"
+            aria-hidden
+          >
+            <source src={DOCTORIUM_VIDEO.src720} type="video/mp4" />
+          </video>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Rol seçici: /giris buton diliyle (13px radius, #1E1F22 yüzey) açılır liste;
 // seçim yalnız görsel bağlam sağlar — tüm roller aynı kurumsal girişe gider.
 function RoleSelect({
@@ -432,20 +605,26 @@ function ProviderToggle({
 
 // Üyelik daveti: kapının kalıcı öğesi — form açık/kapalı fark etmez, sayfa yüklenir
 // yüklenmez "veya" ayracının altında görünür (2026-08-12; eskiden GateEmailForm içindeydi).
+// linkColor: varsayılan marka turkuazı (--aura-accent); Doctorium kapısı zümrüt geçer
+// (kullanıcı kararı 2026-08-16, 2. tur). Inline style bilinçli — Tailwind arbitrary
+// class'ı (`text-[${sabit}]`) statik taramada ÜRETİLMEZ, renk sessizce kaybolurdu.
 function SignupPrompt({
   prompt,
   label,
   href,
+  linkColor,
 }: {
   prompt: string;
   label: string;
   href: string;
+  linkColor?: string;
 }) {
   return (
     <p className="mt-6 text-[13px] text-[var(--aura-grey)]">
       {prompt}{" "}
       <Link
         href={href}
+        style={linkColor ? { color: linkColor } : undefined}
         className="font-semibold text-[var(--aura-accent)] underline-offset-2 hover:underline"
       >
         {label}

@@ -393,6 +393,28 @@ export async function savedArticleIds(doctorId: string): Promise<Set<string>> {
   return new Set(rows.map((r) => r.articleId));
 }
 
+/**
+ * Bant nabzı (v6.102 "Nabızlı Kule"): TR günü başından beri akışa DÜŞEN (createdAt — gece cron'un
+ * yazdığı an; publishedAt değil, kaynak tarihi eski olabilir) içerik sayısı, modül başına.
+ * Tek groupBy — Shell kuran her sayfada koşulur (force-dynamic; tablo küçük, sorgu ucuz).
+ * TR = UTC+3 sabit (Türkiye'de DST yok); gece cron ~03:00 TR'de koşar → doktor sabah "bugün
+ * N yeni" görür. Kongre/kariyer sayılmaz (küratörlü/statik veri — gece akışı yok).
+ */
+export async function todayModuleCounts(): Promise<Record<string, number>> {
+  const TR_OFFSET_MS = 3 * 3_600_000;
+  const trDayStartUtc = new Date(
+    Math.floor((Date.now() + TR_OFFSET_MS) / 86_400_000) * 86_400_000 - TR_OFFSET_MS
+  );
+  const rows = await db.newsArticle.groupBy({
+    by: ["module"],
+    where: { createdAt: { gte: trDayStartUtc } },
+    _count: { _all: true },
+  });
+  const out: Record<string, number> = {};
+  for (const r of rows) out[r.module] = r._count._all;
+  return out;
+}
+
 // Sektörel/mevzuat zaman aralığı (v6.49, kullanıcı isteği): doktor "kaç gün geriye" görmek
 // istediğini seçer. Değer URL'de taşınır (?d=) — paylaşılabilir, şema gerektirmez.
 export const RANGE_OPTIONS = [

@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { AuraMark } from "@/components/PortamedLogo";
+import { AuraMark, DoctoriumBraille } from "@/components/PortamedLogo";
+import { DoctoriumBgVideo } from "@/components/aura/doctorium-bg-video";
 
 // /doctorium tanıtım landing'i (kullanıcı kararı 2026-08-16) — giriş yapmamış hekime/öğrenciye
 // Doctorium'u anlatır. Fikir kaynağı kullanıcının Codex taslağı; kit hizası bizde: aura-display/
@@ -11,8 +12,10 @@ import { AuraMark } from "@/components/PortamedLogo";
 // ALMAŞIK koyu/açık bölüm ritmi (kullanıcı kararı 2026-08-16, 5. tur — AURA vitrini deseni:
 // çift-koyu açılış [hero+güven] → olanaklar A → hukuk K → puanlar A → öğrenci K → final A →
 // footer K); tema toggle'ına bağlanmaz, açık bölümler style={LIGHT} ile bölüm-bazlı (landing
-// sözleşmesi — kendi üst barı + footer; global krom Header.tsx listesiyle gizli). Tamamen server
-// component: etkileşim yok, animasyon saf CSS (globals.css .doctorium-prism-*). Tek dil TR.
+// sözleşmesi — kendi üst barı + footer; global krom Header.tsx listesiyle gizli). Server
+// component; tek client çocuğu DoctoriumBgVideo (arka plan video DENEMESİ, 2026-08-16 —
+// hero + olanaklar bölümlerinde, kullanıcı görsel kararı bekliyor). Animasyon saf CSS
+// (globals.css .doctorium-prism-*). Tek dil TR.
 
 // Codex taslağının paleti; CoverArt plaka koyusu (#0d0e10) zemin olarak korunur.
 // --dl-body: bölüm gövde grisi — açık/koyu almaşıkta (aşağıda LIGHT) yeniden bağlanır,
@@ -159,7 +162,7 @@ export function DoctoriumLanding() {
           </nav>
           <div className="ml-auto flex items-center gap-2.5 md:ml-0">
             <Link
-              href="/kurumsal-giris"
+              href="/doctorium/giris"
               className="hidden min-h-[44px] items-center rounded-xl border border-[var(--dl-line)] px-4 text-sm font-semibold transition-colors hover:border-[var(--dl-emerald)]/55 sm:inline-flex"
             >
               Giriş yap
@@ -176,13 +179,19 @@ export function DoctoriumLanding() {
 
       <main>
         {/* ── Hero ── */}
-        <section className="relative overflow-hidden">
+        {/* isolate: DoctoriumBgVideo -z-10 katmanları bölüm köküne gömülür (v2 hero deseni).
+            Skrim alttan koyu → üstte açılır; video koyu sahne olduğu için metin AA kalır. */}
+        <section className="relative isolate overflow-hidden">
+          <DoctoriumBgVideo overlay="linear-gradient(to top, rgba(13,14,16,.93) 0%, rgba(13,14,16,.58) 45%, rgba(13,14,16,.38) 100%)" />
           <div
             aria-hidden
             className="pointer-events-none absolute -left-40 top-24 h-[480px] w-[480px] rounded-full"
             style={{ background: "radial-gradient(circle, rgba(52,211,153,.09), transparent 68%)" }}
           />
-          <div className="mx-auto grid w-full max-w-6xl items-center gap-14 px-5 pb-20 pt-16 lg:grid-cols-[1.05fr_.95fr] lg:pb-24 lg:pt-24">
+          {/* Örnek görünüm kartı KALDIRILDI (kullanıcı kararı 2026-08-16, video denemesi
+              sonrası): arka planda film oynarken temsili kart kalabalık yapıyordu →
+              hero tek kolon metin, sağ yarı videoya açık; dikey nefes büyütüldü. */}
+          <div className="mx-auto w-full max-w-6xl px-5 pb-28 pt-20 lg:pb-40 lg:pt-32">
             <div>
               <Eyebrow caps={false}><DoctoriumInline /> <ByAura /></Eyebrow>
               <h1 className="aura-display mt-5 max-w-[820px] text-[clamp(44px,5.6vw,72px)] font-medium leading-[1.02] tracking-tight">
@@ -222,61 +231,6 @@ export function DoctoriumLanding() {
               </p>
             </div>
 
-            {/* Ürün önizleme kartı — temsili görünüm; uydurma metrik YOK, mono etiket açıkça söyler. */}
-            <div
-              aria-label="Doctorium akış örnek görünümü"
-              className="rounded-3xl border border-[var(--dl-line)] bg-[#111315] p-5 shadow-[0_40px_100px_rgba(0,0,0,.35)] lg:rotate-1"
-            >
-              <div className="flex items-center justify-between px-1 pb-4">
-                <div className="flex items-center gap-2">
-                  <AuraMark size={20} tone="emerald" />
-                  <DoctoriumWord className="text-[17px]" />
-                </div>
-                <span className="aura-mono rounded-lg border border-[var(--dl-line)] px-2.5 py-1.5 text-[9px] uppercase tracking-[0.14em] text-[var(--dl-muted)]">
-                  Örnek görünüm
-                </span>
-              </div>
-              <div className="flex gap-5 border-b border-[var(--dl-line)] px-1 text-xs">
-                <span className="border-b-2 border-[var(--dl-emerald)] pb-2.5 text-[var(--dl-ink)]">Akışım</span>
-                <span className="pb-2.5 text-[#81868c]">Akademik</span>
-                <span className="pb-2.5 text-[#81868c]">Sektörel</span>
-                <span className="pb-2.5 text-[#81868c]">Hukuk</span>
-              </div>
-              <div className="px-1 pb-2 pt-5">
-                <Eyebrow>Akışım</Eyebrow>
-                <div className="aura-display mt-1 text-xl font-medium tracking-tight">Sizin için seçilenler</div>
-              </div>
-              <article className="mt-2 rounded-xl border border-[var(--dl-line)] border-l-[3px] border-l-[var(--dl-emerald)] bg-[var(--dl-panel)] p-4">
-                <div className="aura-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--dl-emerald)]">
-                  Akademik
-                </div>
-                <h3 className="mt-1.5 text-sm font-medium leading-snug">
-                  Branşınızdan güncel bir hakemli yayın
-                </h3>
-                <p className="mt-1 text-[11px] leading-relaxed text-[#9ca1a6]">
-                  Kısa klinik özet; kaynak ve yayın tarihi kartın üzerinde, özgün makale bir tık ötede.
-                </p>
-                <div className="mt-3 flex justify-between text-[9px] text-[#737980]">
-                  <span>Hakemli kaynak</span>
-                  <span className="font-semibold text-[var(--dl-emerald)]">Özeti oku →</span>
-                </div>
-              </article>
-              <article className="mt-2.5 rounded-xl border border-[var(--dl-line)] border-l-[3px] border-l-[#a78bfa] bg-[var(--dl-panel)] p-4">
-                <div className="aura-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-[#a78bfa]">
-                  Sektörel
-                </div>
-                <h3 className="mt-1.5 text-sm font-medium leading-snug">
-                  Sağlık hizmetlerinde yeni düzenlemeler
-                </h3>
-                <p className="mt-1 text-[11px] leading-relaxed text-[#9ca1a6]">
-                  Mesleki pratiğinizi etkileyebilecek gelişmeler, kaynağı ve yayın tarihiyle birlikte.
-                </p>
-                <div className="mt-3 flex justify-between text-[9px] text-[#737980]">
-                  <span>Kaynak bağlantılı</span>
-                  <span className="font-semibold text-[var(--dl-emerald)]">İncele →</span>
-                </div>
-              </article>
-            </div>
           </div>
         </section>
 
@@ -293,7 +247,10 @@ export function DoctoriumLanding() {
         </section>
 
         {/* ── Olanaklar — AÇIK bölüm (almaşık ritim) ── */}
-        <section id="olanaklar" style={LIGHT} className="scroll-mt-20 bg-[var(--dl-bg)] text-[var(--dl-ink)]">
+        {/* Video DENEMESİ 2: açık bölümde koyu skrim kullanılamaz (almaşık ritim kararı
+            bozulmaz) → beyaz perde altında video soluk doku olarak hissedilir. */}
+        <section id="olanaklar" style={LIGHT} className="relative isolate scroll-mt-20 overflow-hidden bg-[var(--dl-bg)] text-[var(--dl-ink)]">
+          <DoctoriumBgVideo overlay="linear-gradient(to bottom, rgba(255,255,255,.94) 0%, rgba(255,255,255,.88) 100%)" />
           <div className="mx-auto w-full max-w-6xl px-5 py-24">
             <div className="mb-14 grid gap-8 lg:grid-cols-[.8fr_1.2fr]">
               <div>
@@ -469,18 +426,31 @@ export function DoctoriumLanding() {
         </section>
       </main>
 
-      <footer className="border-t border-[var(--dl-line)] py-9">
-        <div className="mx-auto flex w-full max-w-6xl flex-col justify-between gap-4 px-5 text-xs text-[#777c82] sm:flex-row">
-          <span>
-            © 2026 <DoctoriumInline /> <ByAura />
-          </span>
-          <div className="flex flex-wrap gap-6">
-            <Link href="/guven-ve-gizlilik" className="transition-colors hover:text-[var(--dl-ink)]">
-              Güven ve Gizlilik
-            </Link>
-            <Link href="/" className="transition-colors hover:text-[var(--dl-ink)]">
-              AURA&apos;ya git ↗
-            </Link>
+      <footer className="border-t border-[var(--dl-line)] py-10">
+        <div className="mx-auto w-full max-w-6xl px-5">
+          {/* Marka bloğu — AURA landing footer'ının alt-marka eşleniği (kullanıcı kararı
+              2026-08-16): Braille "Doctorium" lockup'ının TAM ALTINDA ortalı. Lockup
+              32px (≈154px) → Braille (146px) yazıdan taşmaz; üst bar bu yüzden
+              braille'siz kalır (22px lockup 106px < 146px — AURA "nav'a konmaz" kuralı). */}
+          <div className="flex items-center gap-3">
+            <AuraMark size={34} tone="emerald" />
+            <span className="inline-flex flex-col items-center">
+              <DoctoriumWord className="text-[32px] leading-none" />
+              <DoctoriumBraille height={12} className="mt-2 text-[var(--dl-muted)]" />
+            </span>
+          </div>
+          <div className="mt-6 flex flex-col justify-between gap-4 text-xs text-[#777c82] sm:flex-row">
+            <span>
+              © 2026 <DoctoriumInline /> <ByAura />
+            </span>
+            <div className="flex flex-wrap gap-6">
+              <Link href="/guven-ve-gizlilik" className="transition-colors hover:text-[var(--dl-ink)]">
+                Güven ve Gizlilik
+              </Link>
+              <Link href="/" className="transition-colors hover:text-[var(--dl-ink)]">
+                AURA&apos;ya git ↗
+              </Link>
+            </div>
           </div>
         </div>
       </footer>

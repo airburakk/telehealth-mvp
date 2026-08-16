@@ -151,6 +151,61 @@ export function AuraBraille({ height = 12, className = "" }: { height?: number; 
   );
 }
 
+// Doctorium Braille (⠙⠕⠉⠞⠕⠗⠊⠥⠍ — "doctorium", Grade 1) — AuraBraille'in alt-marka
+// eşleniği. ⚠️ MARKA KURALI GÜNCELLENDİ (kullanıcı, 2026-08-16): Braille artık iki
+// wordmark'ta da yaşar — AURA braille'i "AURA" yazısının, Doctorium braille'i
+// "Doctorium" lockup'ının TAM ALTINDA ortalı. Üst bar/nav gibi küçük yerlere KONMAZ
+// (AURA kuralıyla aynı: yeterli netlikle çizilemiyorsa hiç çizilmez). Görsel marka
+// detayıdır, erişilebilirlik kanıtı değil — [[aura-braille-under-wordmark]].
+//
+// Geometri AuraBraille ile birebir (hücre aralığı 112 · sütun/satır adımı 25 · r=7 ·
+// kenar payı 14) → iki marka yan yana geldiğinde nokta dokusu özdeş. Fark: AURA'nın
+// noktaları orijinal SVG varlığından ayıklanmış sabit liste; burada hücreler standart
+// braille nokta numaralarından türetilir (1-2-3 sol sütun, 4-5-6 sağ sütun).
+const DOCTORIUM_CELLS: ReadonlyArray<readonly number[]> = [
+  [1, 4, 5], // d
+  [1, 3, 5], // o
+  [1, 4], // c
+  [2, 3, 4, 5], // t
+  [1, 3, 5], // o
+  [1, 2, 3, 5], // r
+  [2, 4], // i
+  [1, 3, 6], // u
+  [1, 3, 4], // m
+];
+const DOCTORIUM_DOTS: ReadonlyArray<readonly [number, number]> = DOCTORIUM_CELLS.flatMap(
+  (cell, i) => cell.map((dot) => [i * 112 + (dot > 3 ? 25 : 0), ((dot - 1) % 3) * 25] as const)
+);
+// 9 hücre: son nokta x = 8×112+25 = 921; ±14 pay → viewBox 949×78 (AURA ile aynı yükseklik).
+const DOCTORIUM_VB_W = 949;
+const DOCTORIUM_VB_H = 78;
+// ⚠️ MİN-GENİŞLİK: AuraBraille'in 56px eşiğiyle AYNI nokta çapı (~2.15px) 9 hücrede
+// 146px'e denk gelir (height=12 karşılığı; 78×146 = 12×949 = 11388 → sınır TAM, kayan
+// nokta payı yok). Altında noktalar okunaksız lekeye döner → HİÇ çizilmez (AURA kuralı).
+const DOCTORIUM_BRAILLE_MIN_WIDTH = 146;
+
+// Varsayılan 12 = eşiğin tam karşılığı (146px) — AuraBraille ile aynı height ölçeği,
+// yani ikisi yan yana kullanılırsa nokta boyutları eşleşir.
+export function DoctoriumBraille({ height = 12, className = "" }: { height?: number; className?: string }) {
+  if ((height * DOCTORIUM_VB_W) / DOCTORIUM_VB_H < DOCTORIUM_BRAILLE_MIN_WIDTH) return null;
+  return (
+    <svg
+      height={height}
+      viewBox={`-14 -14 ${DOCTORIUM_VB_W} ${DOCTORIUM_VB_H}`}
+      role="img"
+      aria-label="Doctorium"
+      fill="currentColor"
+      className={className}
+      style={{ width: "auto", display: "block" }}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {DOCTORIUM_DOTS.map(([cx, cy], i) => (
+        <circle key={i} cx={cx} cy={cy} r="7" />
+      ))}
+    </svg>
+  );
+}
+
 // Tema-farkında wordmark: her iki PNG de render edilir, görünürlüğü globals.css'teki
 // .theme-* kuralları seçer (gündüz = lacivert light PNG, gece = beyaz dark PNG).
 // `ink` prop'u artık YOK-sayılır (geriye uyumluluk için imzada bırakıldı) — tema toggle

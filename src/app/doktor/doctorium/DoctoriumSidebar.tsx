@@ -5,6 +5,7 @@ import {
   ArrowLeft, Sparkles, FlaskConical, Building2, Pill, CalendarClock,
   TrendingUp, Scale, Star, BookOpen, Briefcase, Bookmark,
 } from "lucide-react";
+import { AuraMark } from "@/components/PortamedLogo";
 
 /**
  * Doctorium sol bandı + mobil alt çubuğu (Faz 1 — taslak v3.2, kullanıcı onayı 2026-08-14).
@@ -30,6 +31,23 @@ type ModuleKey = "akis" | "akademik" | "sektorel" | "ilac" | "kongre" | "kariyer
 // "tercihler" yok: /doktor/doctorium/tercihler v6.49'dan beri redirect — işlevsiz yüzeyin
 // linki çizilmez (koşullu-href ilkesi); Özelleştir paneli sayfanın içinde yaşıyor.
 export type SidebarActive = ModuleKey | "oduller" | "kaydettiklerim" | null;
+
+/** Bant nabzı (v6.102): modül → bugün akışa düşen içerik sayısı (lib/doctorium todayModuleCounts).
+ *  null = sayaç verisi yok (bant nabızsız çizilir — geriye uyumlu). */
+export type SidebarCounts = Record<string, number> | null;
+
+/** Sayaç hangi modül satırında ne gösterir — akis TOPLAM; kongre/kariyer gece akışı olmayan
+ *  küratörlü veri (sayaç yanıltıcı olurdu — bilinçli yok). */
+function countFor(key: ModuleKey, counts: SidebarCounts): number | null {
+  if (!counts) return null;
+  if (key === "akis") {
+    const t = (counts.akademik ?? 0) + (counts.sektorel ?? 0) + (counts.ilac ?? 0) + (counts.mevzuat ?? 0);
+    return t > 0 ? t : null;
+  }
+  if (key === "kongre" || key === "kariyer") return null;
+  const n = counts[key] ?? 0;
+  return n > 0 ? n : null;
+}
 
 const MODULES: {
   key: ModuleKey;
@@ -60,7 +78,7 @@ const MOBILE_TABS: { label: string; icon: typeof Sparkles; href: string; keys: M
 ];
 
 function SideItem({
-  href, on, color, icon: Icon, label, badge,
+  href, on, color, icon: Icon, label, badge, count, no,
 }: {
   href: string;
   on: boolean;
@@ -68,6 +86,12 @@ function SideItem({
   icon: typeof Sparkles;
   label: string;
   badge?: number;
+  /** Bugün-sayacı: silik mono sayı (Puanlarım'ın dolgulu rozetinden bilinçli farklı — nabız
+   *  bilgidir, çağrı değildir). null/0 çizilmez. */
+  count?: number | null;
+  /** V2 "Editoryal Numara" (deneme, 2026-08-16): verilirse ikon YERİNE landing'in mono durak
+   *  numarası basılır (01-07 — raf dili). Kişisel bölge ikonlu kalır (kişisel eşya numarasız). */
+  no?: string;
 }) {
   let cls = "text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]";
   let style: CSSProperties | undefined;
@@ -95,11 +119,31 @@ function SideItem({
       style={style}
     >
       {on && <span aria-hidden className="absolute -left-2.5 top-2 bottom-2 w-[3px] rounded-r-sm" style={stripe} />}
-      <Icon size={19} className="shrink-0" style={iconColor ? { color: iconColor } : undefined} />
+      {/* Raf işareti (kullanıcı kararı 2026-08-16, D13): numara + ikon BİRLİKTE — landing'in
+          durak numarası editoryal kimliği, ikon hızlı tanımayı taşır. İkon 17px'e indi ki
+          çift işaret satırı kalabalıklaştırmasın. Numarasız satırlar (Kişisel) yalnız ikon. */}
+      {no && (
+        <span
+          aria-hidden
+          className="aura-mono w-[20px] shrink-0 text-[11px] font-semibold tracking-wider"
+          style={iconColor ? { color: iconColor } : undefined}
+        >
+          {no}
+        </span>
+      )}
+      <Icon size={no ? 17 : 19} className="shrink-0" style={iconColor ? { color: iconColor } : undefined} />
       {label}
       {badge != null && (
         <span className="aura-mono ml-auto rounded-full bg-emerald-500/15 px-1.5 py-px text-[10px] text-emerald-300">
           {badge}
+        </span>
+      )}
+      {count != null && count > 0 && (
+        <span
+          className="aura-mono ml-auto text-[11px] font-semibold text-[var(--c-ink-3)]"
+          aria-label={`bugün ${count} yeni içerik`}
+        >
+          {count}
         </span>
       )}
     </Link>
@@ -117,14 +161,16 @@ function GroupLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function DoctoriumSidebar({
-  active, balance, isDoctor,
+  active, balance, isDoctor, counts = null,
 }: {
   active: SidebarActive;
   balance: number | null;
   /** KİŞİSEL bloğunun (Kaydettiklerim) şartı — personelde kişisel yüzey çizilmez. */
   isDoctor: boolean;
+  counts?: SidebarCounts;
 }) {
   let lastGroup: string | null = null;
+  const totalToday = countFor("akis", counts);
 
   return (
     <>
@@ -133,8 +179,28 @@ export function DoctoriumSidebar({
         aria-label="Doctorium bölümleri"
         className="fixed bottom-0 left-0 top-16 z-20 hidden w-[212px] flex-col gap-0.5 overflow-y-auto border-r border-[var(--c-hairline)] bg-[var(--c-chrome)] px-2.5 py-4 md:flex"
       >
+        {/* ── KİMLİK + NABIZ (v6.102 "Nabızlı Kule"): marka tek konumda yaşar — sayfa içi lockup
+            banta taşındı, sahne başlığı h1 oldu. Nabız satırı bandın varlık nedenini söyler:
+            burası her gece dolan CANLI bir kütüphane. Nokta statik (klinik sakinlik — animasyon
+            yok); sayı yoksa satır çizilmez (boş gün sönük rozet göstermez). */}
+        {/* Ölçek (kullanıcı kararı 2026-08-16, D13): kapak hissi — lockup 21px + nabız zümrüt
+            ve 12px (silik gri yetersiz bulundu; sabah nabzı ilk bakışta çarpmalı). Zümrüt tonu
+            tema-duyarlı: gece 300, gündüz 700 (CoverArt [.theme-light_&] deseni). */}
+        <div className="px-2.5 pb-4 pt-0.5">
+          <div className="aura-display flex items-center gap-2 text-[21px] font-medium tracking-tight text-[var(--c-ink)]">
+            <AuraMark size={26} tone="emerald" className="-ml-0.5" />
+            <span>Doctor<span className="doctorium-ium">ium</span></span>
+          </div>
+          {totalToday != null && (
+            <div className="aura-mono mt-2 flex items-center gap-1.5 text-xs font-semibold tracking-[0.14em] text-emerald-300 [.theme-light_&]:text-emerald-700">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              BUGÜN {totalToday} YENİ
+            </div>
+          )}
+        </div>
+
         {/* Çıkış kapısı (2026-08-16 bant revizyonu): dönüş linki modül listesinden hairline ile
-            ayrılır — bant üç bölge okunur (çıkış / modüller / kişisel), kart künyesiyle aynı dil. */}
+            ayrılır — bant dört bölge okunur (kimlik / çıkış / modüller / kişisel). */}
         <Link
           href="/doktor"
           className="flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-semibold text-[var(--c-ink-3)] hover:text-[var(--c-ink)]"
@@ -143,7 +209,7 @@ export function DoctoriumSidebar({
         </Link>
         <div className="mb-2 border-b border-[var(--c-hairline)]" aria-hidden="true" />
 
-        {MODULES.map((m) => {
+        {MODULES.map((m, i) => {
           const header = m.group && m.group !== lastGroup ? <GroupLabel>{m.group}</GroupLabel> : null;
           lastGroup = m.group;
           return (
@@ -154,7 +220,9 @@ export function DoctoriumSidebar({
                 on={active === m.key}
                 color={m.color}
                 icon={m.icon}
+                no={String(i + 1).padStart(2, "0")}
                 label={m.label}
+                count={countFor(m.key, counts)}
               />
             </Fragment>
           );
@@ -187,14 +255,8 @@ export function DoctoriumSidebar({
           </>
         )}
 
-        {/* Dip imza (2026-08-16 bant revizyonu): silik mini lockup — bant markalı kapanır.
-            Statik/dekoratif (link DEĞİL); lockup yazımı marka kuralına uyar (Doctor ink + ium
-            zümrüt). mt-auto: içerik kısaysa dibe iner, uzunsa akışın sonunda kalır. */}
-        <div className="mt-auto px-2.5 pb-1 pt-5" aria-hidden="true">
-          <span className="aura-display text-[13px] font-medium tracking-tight text-[var(--c-ink-3)]">
-            Doctor<span className="text-emerald-400/70">ium</span>
-          </span>
-        </div>
+        {/* Dip imza v6.102'de KALKTI: tepe kimlik bloğu geldi — marka bantta TEK konumda yaşar
+            (aynı bantta iki lockup tekrar olurdu). */}
       </nav>
 
       {/* ── Mobil alt çubuk (M2) ── */}
@@ -204,16 +266,30 @@ export function DoctoriumSidebar({
       >
         {MOBILE_TABS.map((t) => {
           const on = active != null && t.keys.includes(active as ModuleKey);
+          // Mobil nabız (kullanıcı kararı 2026-08-16, D16): günün sayısı Akışım yuvasının
+          // ikon köşesinde — uygulama-rozeti dili; masaüstü bandındaki nabzın mobil eşleniği.
+          const pulse = t.keys.includes("akis") ? totalToday : null;
           return (
             <Link
               key={t.label}
               href={t.href}
               aria-current={on ? "page" : undefined}
+              aria-label={pulse != null ? `${t.label}, bugün ${pulse} yeni içerik` : undefined}
               className={`grid min-w-[72px] justify-items-center gap-1 py-2 text-[10px] font-semibold ${
                 on ? "text-emerald-300" : "text-[var(--c-ink-3)]"
               }`}
             >
-              <t.icon size={18} />
+              <span className="relative">
+                <t.icon size={18} />
+                {pulse != null && (
+                  <span
+                    aria-hidden
+                    className="aura-mono absolute -right-3 -top-1.5 rounded-full bg-emerald-500/20 px-1 text-[10px] font-bold leading-[15px] text-emerald-300 [.theme-light_&]:bg-emerald-600/15 [.theme-light_&]:text-emerald-700"
+                  >
+                    {pulse}
+                  </span>
+                )}
+              </span>
               {t.label}
             </Link>
           );
@@ -258,11 +334,12 @@ export function DoctoriumSidebar({
  * fixed → içeriğe pb-16.
  */
 export function DoctoriumShell({
-  active, balance, isDoctor, children,
+  active, balance, isDoctor, counts = null, children,
 }: {
   active: SidebarActive;
   balance: number | null;
   isDoctor: boolean;
+  counts?: SidebarCounts;
   children: React.ReactNode;
 }) {
   return (
@@ -272,7 +349,7 @@ export function DoctoriumShell({
        hizada; dar ekranda içerik bandın altına GİRMEZ (max taban). 100vw scrollbar'ı saydığı
        için ortalamada ± scrollbar/2 (~5px) sapma olabilir — punto hizasında algılanmaz. */
     <>
-      <DoctoriumSidebar active={active} balance={balance} isDoctor={isDoctor} />
+      <DoctoriumSidebar active={active} balance={balance} isDoctor={isDoctor} counts={counts} />
       <div className="pb-16 md:pb-0 md:pl-[max(13.25rem,calc((100vw-64rem)/2))]">
         <div className="w-full max-w-5xl">{children}</div>
       </div>
