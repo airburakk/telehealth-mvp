@@ -218,33 +218,52 @@ export async function redactPersonNames(text: string): Promise<string> {
 const TRANSLATE_TOOL: Anthropic.Tool = {
   name: "submit_translations",
   description: "Verilen metinlerin çevirilerini girdiyle AYNI sıra ve sayıda döndürür.",
+  // strict: şema uyumu API tarafından ZORLANIR. Onsuz model ~40 öğelik chunk'larda diziyi
+  // JSON-string'e sarıyordu (bozuk iç kaçışlarla; parse de kurtaramıyor) → tüm chunk TR kalıyordu.
+  // Not: strict dizi UZUNLUĞUNU garanti etmez — translateBatch'teki sayı kontrolü + retry kalır.
+  strict: true,
   input_schema: {
     type: "object",
     properties: {
-      translations: { type: "array", items: { type: "string" }, description: "Girdiyle aynı sıra ve sayıda çeviri" },
+      translations: { type: "array", items: { type: "string" }, description: "Girdiyle aynı sıra ve sayıda çeviri — gerçek JSON dizisi olarak, string'e sarılmadan" },
     },
     required: ["translations"],
+    additionalProperties: false,
   },
 };
 
 export async function translateBatch(texts: string[], target: string): Promise<string[]> {
-  const res = await client().messages.create({
-    model: MODEL,
-    max_tokens: 8000,
-    system:
-      `Sen bir sağlık platformu arayüz çevirmenisin. Verilen Türkçe arayüz metinlerini ${target} diline çevir. ` +
-      "Tıbbi terminolojiyi doğru, arayüz dilini kısa ve doğal kullan. Sayıları, birimleri ve teknik adları (FUE, DHT, PET-BT, IVF, MR, BT vb.) koru. " +
-      "Her öğeye birebir karşılık ver; sırayı ve öğe sayısını DEĞİŞTİRME. Yanıtı DAİMA submit_translations aracıyla ver.",
-    tools: [TRANSLATE_TOOL],
-    tool_choice: { type: "tool", name: "submit_translations" },
-    messages: [{ role: "user", content: JSON.stringify(texts) }],
-  });
-  const block = res.content.find((b) => b.type === "tool_use");
-  if (!block || block.type !== "tool_use") throw new Error("Çeviri aracı yanıtı alınamadı.");
-  const out = (block.input as { translations?: unknown }).translations;
-  if (!Array.isArray(out)) throw new Error("Çeviri biçimi geçersiz.");
-  // Sayı uyuşmazlığında eksikler kaynak metinle doldurulur (asla kırılmaz)
-  return texts.map((s, i) => (typeof out[i] === "string" && out[i].trim() ? String(out[i]) : s));
+  // Model büyük chunk'larda (~40 öğe) translations'ı gerçek dizi yerine JSON-string'e sarabiliyor
+  // (iç tırnak kaçışları da bozuk gelebildiğinden parse her zaman kurtarmaz) ve nadiren sıra
+  // kaydırıyor. Biçim/sayı bozuksa aynı istek BİR kez tekrarlanır; ikincisi de bozuksa fırlatır →
+  // çağıran TR'ye düşer. Sayı uyuşmazlığında kısmi doldurma YAPILMAZ: kaymış hizada yanlış
+  // eşleşmiş çeviri Translation cache'ine kalıcı yazılırdı (TR göstermekten kötü).
+  let lastErr = new Error("Çeviri biçimi geçersiz.");
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const res = await client().messages.create({
+      model: MODEL,
+      max_tokens: 8000,
+      system:
+        `Sen bir sağlık platformu arayüz çevirmenisin. Verilen Türkçe arayüz metinlerini ${target} diline çevir. ` +
+        "Tıbbi terminolojiyi doğru, arayüz dilini kısa ve doğal kullan. Sayıları, birimleri ve teknik adları (FUE, DHT, PET-BT, IVF, MR, BT vb.) koru. " +
+        "Her öğeye birebir karşılık ver; sırayı ve öğe sayısını DEĞİŞTİRME. Yanıtı DAİMA submit_translations aracıyla ver; " +
+        "translations alanına gerçek bir JSON dizisi koy — diziyi tek bir metin (string) içine sarma.",
+      tools: [TRANSLATE_TOOL],
+      tool_choice: { type: "tool", name: "submit_translations" },
+      messages: [{ role: "user", content: JSON.stringify(texts) }],
+    });
+    const block = res.content.find((b) => b.type === "tool_use");
+    if (!block || block.type !== "tool_use") throw new Error("Çeviri aracı yanıtı alınamadı.");
+    let out = (block.input as { translations?: unknown }).translations;
+    if (typeof out === "string") { try { out = JSON.parse(out); } catch {} }
+    if (Array.isArray(out) && out.length === texts.length) {
+      return texts.map((s, i) => (typeof out[i] === "string" && out[i].trim() ? String(out[i]) : s));
+    }
+    lastErr = new Error(
+      Array.isArray(out) ? `Çeviri sayısı uyuşmuyor (${out.length}/${texts.length}).` : "Çeviri biçimi geçersiz."
+    );
+  }
+  throw lastErr;
 }
 
 // ── AI Epikriz / Taburcu Raporu ──
