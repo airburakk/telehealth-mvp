@@ -30,7 +30,10 @@ import { useEffect, useRef } from "react";
 // küp-içi dijitalizasyon; kullanıcının Maps/mimarizm referansları) · adliye = Çağlayan
 // (film9'dan aynen) · kongre = İSTANBUL KONGRE MERKEZİ Harbiye Oditoryumu + GLOBAL SPINE
 // CONGRESS 2026 (kullanıcı talimatı: gerçek mekân+etkinlik; C2→dijitalizasyon TEK ÇEKİM —
-// sıçrama yok; girişte önlük yok, takım elbise). 45.25 sn; ofis sekansı 4.0–9.04.
+// sıçrama yok; girişte önlük yok, takım elbise). film12 (2026-08-17): Beyazıt küp
+// planındaki okur kadrajdan çıkamadan kesiliyordu ("çocuk bir anda çekiliyor") →
+// b3→b4 geçişi 0.5 sn CROSSFADE oldu (küp küpe oturur, okur kenarda erir).
+// 45.75 sn; ofis sekansı 4.0–9.04.
 const OFFICE_SCENE_START = 4.0;
 const OFFICE_SCENE_END = 9.04;
 
@@ -102,11 +105,11 @@ export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
         loop
         playsInline
         preload="none"
-        poster="/assets/video/p-doctorium-film11.jpg"
+        poster="/assets/video/p-doctorium-film12.jpg"
         aria-hidden
         className="absolute inset-0 -z-10 h-full w-full object-cover"
       >
-        <source src="/assets/video/v-doctorium-film11-720.mp4" type="video/mp4" />
+        <source src="/assets/video/v-doctorium-film12-720.mp4" type="video/mp4" />
       </video>
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: overlay }} />
     </>
