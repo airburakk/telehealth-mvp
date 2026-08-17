@@ -6,14 +6,14 @@ import { useEffect, useRef } from "react";
 // IO ile yalnız görünürken oynat · arka plan sekmesinde mount-play reddedilir →
 // visibilitychange'te yeniden dene · Save-Data ve reduced-motion'da HİÇ başlatma
 // (preload="none" → play edilmeyen video inmez, poster kalır). Kaynak UZUN FİLM
-// (film8: 36.5 sn, 2026-08-17 üçüncü revizyon — [1] ofis sahnesi: OTURAN önlüklü/gözlüklü
-// doktor + BÜYÜK MASAÜSTÜ monitör (gözlük yansımasının 5 sn öncesi kuruldu), cam cepheli
-// modern hastane ofisi gece-şehir bokeh'iyle koridor planının dünyasında; ekranda gerçek
-// sayfa + SOL ÜSTTE BÜYÜK dönen zümrüt amblem = ışığın kaynağı [referans screenshot'ta
-// header AuraMark 3.2x büyütüldü]; [2] adliye: beğenilen adalet sarayı CEPHE dalışı
-// (court3[0:2.3]) geri geldi + koridor ABD-adliyesi araştırmasıyla yeniden [takım elbiseli
-// cübbesiz avukatlar, bankta bekleyen aileler, güvenlik görevlisi, ARŞİV tabelası] +
-// raf dijitalizasyonu. Ad-vers. film7→film8).
+// (film9: 37.3 sn, 2026-08-17 dördüncü revizyon — [1] ofis POV: doktor GÖRÜNMEZ, beyaz
+// masada gerçek ölçülü Apple seti [XDR + Mac Studio + Magic klavye/mouse], el sağ üst
+// "katıl"a tıklar → SOL ÜST logo ışır [orijinal boyutlu logo; screenshot referans];
+// [2] adliye = İSTANBUL ÇAĞLAYAN: kullanıcının 360tr C-Kapısı/Ön-Bürolar + Yandex heykel
+// referanslarından nano_banana kareleri üretildi → KULLANICI ONAYIYLA i2v 4 plan
+// [C Kapısı girişi → Themis heykelleri arası → galeri boşluğu ötesindeki duvarda ARŞİV
+// kapısı → raf dijitalizasyonu+patlama; TR baro cübbeleri + bej adliye güvenliği];
+// kurguda ~11 sn'e sıkıştırıldı [2.5+2.5+2+4]. Ad-vers. film8→film9).
 // `overlay` = üstteki okunurluk skrimi: koyu bölümde koyu gradient, açık bölümde
 // beyaz perde — çağıran bölümün temasına göre verilir. Kapsayıcı bölümde
 // `relative isolate` ŞART (-z-10 katmanları bölüm köküne gömülür).
@@ -58,11 +58,11 @@ export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
         loop
         playsInline
         preload="none"
-        poster="/assets/video/p-doctorium-film8.jpg"
+        poster="/assets/video/p-doctorium-film9.jpg"
         aria-hidden
         className="absolute inset-0 -z-10 h-full w-full object-cover"
       >
-        <source src="/assets/video/v-doctorium-film8-720.mp4" type="video/mp4" />
+        <source src="/assets/video/v-doctorium-film9-720.mp4" type="video/mp4" />
       </video>
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: overlay }} />
     </>
