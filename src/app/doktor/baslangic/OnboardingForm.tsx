@@ -288,8 +288,13 @@ export function OnboardingForm({
               <strong>otomatik</strong> açılır, diğer dördü <strong>tercihinize</strong>{" "}
               bağlıdır: <strong>İkinci Görüş</strong>,{" "}
               <strong>Sağlık Turizmi</strong>, <strong>Ücretsiz Sağlık Hizmeti</strong> ve{" "}
-              <strong>Konsültasyon Talepleri</strong> panellerini aşağıdan açıp kapatabilir,
-              kararınızı sonradan profilinizden de değiştirebilirsiniz. İkinci Görüş'te ayrıca{" "}
+              <strong>Konsültasyon Talepleri</strong> panellerini aşağıdan açıp kapatabilirsiniz.
+              {/* ⚠️ İDDİA DÜRÜSTLÜĞÜ: /doktor/profil YALNIZ freeCare + consult tercihlerini
+                  düzenletir (DoctorPreferences + preferences API). soOptIn/tourismOptIn için
+                  profil yüzeyi HENÜZ YOK → "hepsini profilden değiştirebilirsiniz" YAZILAMAZ.
+                  Yüzey eklenince bu cümle genişletilmeli (vault todo'da kalem var). */}
+              Ücretsiz Sağlık Hizmeti ve Konsültasyon tercihlerinizi sonradan{" "}
+              <strong>profilinizden</strong> de değiştirebilirsiniz. İkinci Görüş'te ayrıca{" "}
               <strong>Doçent / Profesör</strong> ünvanı aranır — ünvanınız uygun değilse o panel
               seçime kapalıdır. Paneller Aşama 2 tamamlandığında ana sayfanızda görünür.
             </p>
