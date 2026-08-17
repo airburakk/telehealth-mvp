@@ -13,7 +13,10 @@ import { useEffect, useRef } from "react";
 // referanslarından nano_banana kareleri üretildi → KULLANICI ONAYIYLA i2v 4 plan
 // [C Kapısı girişi → Themis heykelleri arası → galeri boşluğu ötesindeki duvarda ARŞİV
 // kapısı → raf dijitalizasyonu+patlama; TR baro cübbeleri + bej adliye güvenliği];
-// kurguda ~11 sn'e sıkıştırıldı [2.5+2.5+2+4]. Ad-vers. film8→film9).
+// kurguda ~11 sn'e sıkıştırıldı [2.5+2.5+2+4]. Ad-vers. film8→film9.
+// film10 (2026-08-17): ofis POV yeniden — sitedeki object-cover kırpması logo/ışımayı
+// yutuyordu; tıklama sonrası kamera EKRANA DALAR, sol üst zümrüt logo alev alıp son
+// karede kadrajın yarısını doldurur = her kırpmada görünür. Ad-vers. film9→film10).
 // `overlay` = üstteki okunurluk skrimi: koyu bölümde koyu gradient, açık bölümde
 // beyaz perde — çağıran bölümün temasına göre verilir. Kapsayıcı bölümde
 // `relative isolate` ŞART (-z-10 katmanları bölüm köküne gömülür).
@@ -58,11 +61,11 @@ export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
         loop
         playsInline
         preload="none"
-        poster="/assets/video/p-doctorium-film9.jpg"
+        poster="/assets/video/p-doctorium-film10.jpg"
         aria-hidden
         className="absolute inset-0 -z-10 h-full w-full object-cover"
       >
-        <source src="/assets/video/v-doctorium-film9-720.mp4" type="video/mp4" />
+        <source src="/assets/video/v-doctorium-film10-720.mp4" type="video/mp4" />
       </video>
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: overlay }} />
     </>
