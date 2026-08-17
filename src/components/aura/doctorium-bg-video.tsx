@@ -6,11 +6,12 @@ import { useEffect, useRef } from "react";
 // IO ile yalnız görünürken oynat · arka plan sekmesinde mount-play reddedilir →
 // visibilitychange'te yeniden dene · Save-Data ve reduced-motion'da HİÇ başlatma
 // (preload="none" → play edilmeyen video inmez, poster kalır). Kaynak UZUN FİLM
-// (film5: 29.2 sn, 2026-08-17 revizyonu — mahkeme planı FPV adliye uçuşuyla değişti
-// [dış cephe + terazili heykeller → kapıdan dalış → duruşma salonu dosyaları dijitalize;
-// 8 sn] ve kongre planı kimlik kazandı [dev ekranda "WORLD MEDICAL CONGRESS 2026" +
-// zümrüt EKG; jenerik ad BİLİNÇLİ — gerçek kongre adı marka/ilişki iddiası riski].
-// film4 kurgusunun baş/kuyruk kesimleri aynen; ad-versiyonlama film4→film5).
+// (film6: 34.3 sn, 2026-08-17 — koridor ile gözlük-yansıması arasına ARA SAHNE girdi:
+// doktor ekranda Doctorium ana sayfasını görür, zümrüt küre+yörünge amblemi ışık
+// saçarak döner, ekranda "Doctorium" yazısı [model doğru bastı]; yansıma planının
+// ışık kaynağı böylece kurulur. Önceki revizyonlar: FPV adliye 8 sn + "WORLD MEDICAL
+// CONGRESS 2026" ekranlı kongre [jenerik ad BİLİNÇLİ — gerçek kongre adı marka riski].
+// Ad-versiyonlama film5→film6).
 // `overlay` = üstteki okunurluk skrimi: koyu bölümde koyu gradient, açık bölümde
 // beyaz perde — çağıran bölümün temasına göre verilir. Kapsayıcı bölümde
 // `relative isolate` ŞART (-z-10 katmanları bölüm köküne gömülür).
@@ -55,11 +56,11 @@ export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
         loop
         playsInline
         preload="none"
-        poster="/assets/video/p-doctorium-film5.jpg"
+        poster="/assets/video/p-doctorium-film6.jpg"
         aria-hidden
         className="absolute inset-0 -z-10 h-full w-full object-cover"
       >
-        <source src="/assets/video/v-doctorium-film5-720.mp4" type="video/mp4" />
+        <source src="/assets/video/v-doctorium-film6-720.mp4" type="video/mp4" />
       </video>
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: overlay }} />
     </>
