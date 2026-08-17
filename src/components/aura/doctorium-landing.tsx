@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { AuraMark, DoctoriumBraille } from "@/components/AuraLogo";
 import { DoctoriumBgVideo } from "@/components/aura/doctorium-bg-video";
+import { DoctoriumMobileMenu } from "@/components/aura/doctorium-mobile-menu";
 
 // /doctorium tanıtım landing'i (kullanıcı kararı 2026-08-16) — giriş yapmamış hekime/öğrenciye
 // Doctorium'u anlatır. Fikir kaynağı kullanıcının Codex taslağı; kit hizası bizde: aura-display/
@@ -145,11 +146,15 @@ export function DoctoriumLanding() {
   return (
     <div lang="tr" style={PALETTE} className="min-h-dvh bg-[var(--dl-bg)] text-[var(--dl-ink)]">
       {/* ── Üst bar ── */}
+      {/* relative: mobil menü paneli (DoctoriumMobileMenu, absolute top-full) bara çapalanır.
+          Mobil düzen (kullanıcı isteği 2026-08-16): Giriş yap MOBİLDE DE görünür; bölüm
+          linkleri hamburger'e taşınır (V2Nav mobil deseni); katıl CTA'sı dar ekranda "Katıl"
+          (marka kuralının CTA istisnası — 375px'te iki düğme + hamburger ancak böyle sığar). */}
       <header className="sticky top-0 z-20 border-b border-[var(--dl-line)] bg-[color-mix(in_srgb,var(--dl-bg)_86%,transparent)] backdrop-blur-md">
-        <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center gap-6 px-5">
-          <div className="flex items-center gap-2.5">
-            <AuraMark size={30} tone="emerald" />
-            <DoctoriumWord className="text-[22px]" />
+        <div className="relative mx-auto flex h-[72px] w-full max-w-6xl items-center gap-3 px-5 sm:gap-6">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <AuraMark size={30} tone="emerald" className="shrink-0" />
+            <DoctoriumWord className="text-[19px] sm:text-[22px]" />
             <span className="aura-mono mt-1 hidden text-[10px] sm:inline">
               <ByAura />
             </span>
@@ -160,19 +165,21 @@ export function DoctoriumLanding() {
             <a href="#puanlar" className="transition-colors hover:text-[var(--dl-ink)]">Puanlar</a>
             <a href="#ogrenci" className="transition-colors hover:text-[var(--dl-ink)]">Tıp öğrencileri</a>
           </nav>
-          <div className="ml-auto flex items-center gap-2.5 md:ml-0">
+          <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-0 sm:gap-2.5">
             <Link
               href="/doctorium/giris"
-              className="hidden min-h-[44px] items-center rounded-xl border border-[var(--dl-line)] px-4 text-sm font-semibold transition-colors hover:border-[var(--dl-emerald)]/55 sm:inline-flex"
+              className="inline-flex min-h-[44px] items-center rounded-xl border border-[var(--dl-line)] px-3 text-[13px] font-semibold transition-colors hover:border-[var(--dl-emerald)]/55 sm:px-4 sm:text-sm"
             >
               Giriş yap
             </Link>
             <Link
               href="/kayit"
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#34d399] px-4 text-sm font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0]"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#34d399] px-3 text-[13px] font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0] sm:px-4 sm:text-sm"
             >
-              Doctorium&apos;a katıl
+              <span className="sm:hidden">Katıl</span>
+              <span className="hidden sm:inline">Doctorium&apos;a katıl</span>
             </Link>
+            <DoctoriumMobileMenu />
           </div>
         </div>
       </header>
