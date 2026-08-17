@@ -14,9 +14,10 @@ import { DoctoriumMobileMenu } from "@/components/aura/doctorium-mobile-menu";
 // çift-koyu açılış [hero+güven] → olanaklar A → hukuk K → puanlar A → öğrenci K → final A →
 // footer K); tema toggle'ına bağlanmaz, açık bölümler style={LIGHT} ile bölüm-bazlı (landing
 // sözleşmesi — kendi üst barı + footer; global krom Header.tsx listesiyle gizli). Server
-// component; tek client çocuğu DoctoriumBgVideo (arka plan video DENEMESİ, 2026-08-16 —
-// hero + olanaklar bölümlerinde, kullanıcı görsel kararı bekliyor). Animasyon saf CSS
-// (globals.css .doctorium-prism-*). Tek dil TR.
+// component; tek client çocuğu DoctoriumBgVideo — arka plan videosu YALNIZ HERO'da
+// (kullanıcı kararı 2026-08-16: "Tek çalışma alanı" bölümündeki ikinci video kaldırıldı;
+// hareketli zemin tek yerde kalsın). Animasyon saf CSS (globals.css .doctorium-prism-*).
+// Tek dil TR.
 
 // Codex taslağının paleti; CoverArt plaka koyusu (#0d0e10) zemin olarak korunur.
 // --dl-body: bölüm gövde grisi — açık/koyu almaşıkta (aşağıda LIGHT) yeniden bağlanır,
@@ -254,10 +255,11 @@ export function DoctoriumLanding() {
         </section>
 
         {/* ── Olanaklar — AÇIK bölüm (almaşık ritim) ── */}
-        {/* Video DENEMESİ 2: açık bölümde koyu skrim kullanılamaz (almaşık ritim kararı
-            bozulmaz) → beyaz perde altında video soluk doku olarak hissedilir. */}
-        <section id="olanaklar" style={LIGHT} className="relative isolate scroll-mt-20 overflow-hidden bg-[var(--dl-bg)] text-[var(--dl-ink)]">
-          <DoctoriumBgVideo overlay="linear-gradient(to bottom, rgba(255,255,255,.94) 0%, rgba(255,255,255,.88) 100%)" />
+        {/* ⚠️ Arka plan videosu KALDIRILDI (kullanıcı kararı 2026-08-16): "Tek çalışma alanı"
+            bölümünde video oynaması istenmiyor — hareketli zemin YALNIZ hero'da kalır. Beyaz
+            perde altındaki "soluk doku" denemesi (v6.102) böylece kapandı; video için eklenen
+            relative/isolate/overflow-hidden sınıfları da düştü (ölü stil bırakma). */}
+        <section id="olanaklar" style={LIGHT} className="scroll-mt-20 bg-[var(--dl-bg)] text-[var(--dl-ink)]">
           <div className="mx-auto w-full max-w-6xl px-5 py-24">
             <div className="mb-14 grid gap-8 lg:grid-cols-[.8fr_1.2fr]">
               <div>
