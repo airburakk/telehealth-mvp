@@ -6,10 +6,11 @@ import { useEffect, useRef } from "react";
 // IO ile yalnız görünürken oynat · arka plan sekmesinde mount-play reddedilir →
 // visibilitychange'te yeniden dene · Save-Data ve reduced-motion'da HİÇ başlatma
 // (preload="none" → play edilmeyen video inmez, poster kalır). Kaynak UZUN FİLM
-// (film4: 26.2 sn — film2'nin 4-9 sn kitap planı kesildi; film3'te dikişte 2-3 karelik
-// kitap kalıntısı vardı [kaynakta plan sınırı 8.0 değil ~9.075'miş — kare-mozaik
-// teşhisi], head2 start 9.0→9.15 çekildi. Ad-versiyonlama: film3→film4, eskiler
-// kullanıcı tarayıcısında önbellekliydi).
+// (film5: 29.2 sn, 2026-08-17 revizyonu — mahkeme planı FPV adliye uçuşuyla değişti
+// [dış cephe + terazili heykeller → kapıdan dalış → duruşma salonu dosyaları dijitalize;
+// 8 sn] ve kongre planı kimlik kazandı [dev ekranda "WORLD MEDICAL CONGRESS 2026" +
+// zümrüt EKG; jenerik ad BİLİNÇLİ — gerçek kongre adı marka/ilişki iddiası riski].
+// film4 kurgusunun baş/kuyruk kesimleri aynen; ad-versiyonlama film4→film5).
 // `overlay` = üstteki okunurluk skrimi: koyu bölümde koyu gradient, açık bölümde
 // beyaz perde — çağıran bölümün temasına göre verilir. Kapsayıcı bölümde
 // `relative isolate` ŞART (-z-10 katmanları bölüm köküne gömülür).
@@ -54,11 +55,11 @@ export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
         loop
         playsInline
         preload="none"
-        poster="/assets/video/p-doctorium-film4.jpg"
+        poster="/assets/video/p-doctorium-film5.jpg"
         aria-hidden
         className="absolute inset-0 -z-10 h-full w-full object-cover"
       >
-        <source src="/assets/video/v-doctorium-film4-720.mp4" type="video/mp4" />
+        <source src="/assets/video/v-doctorium-film5-720.mp4" type="video/mp4" />
       </video>
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: overlay }} />
     </>
