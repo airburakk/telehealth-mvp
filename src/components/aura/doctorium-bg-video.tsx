@@ -25,8 +25,14 @@ import { useEffect, useRef } from "react";
 // `overlay` = üstteki okunurluk skrimi: koyu bölümde koyu gradient, açık bölümde
 // beyaz perde — çağıran bölümün temasına göre verilir. Kapsayıcı bölümde
 // `relative isolate` ŞART (-z-10 katmanları bölüm köküne gömülür).
+// film11 (2026-08-17, kullanıcı-onaylı üç sekans yenilemesi): kütüphane = BEYAZIT DEVLET
+// KÜTÜPHANESİ (meydan cephesi + kubbeli kalem işi salon + Tabanlıoğlu cam kitap küpü +
+// küp-içi dijitalizasyon; kullanıcının Maps/mimarizm referansları) · adliye = Çağlayan
+// (film9'dan aynen) · kongre = İSTANBUL KONGRE MERKEZİ Harbiye Oditoryumu + GLOBAL SPINE
+// CONGRESS 2026 (kullanıcı talimatı: gerçek mekân+etkinlik; C2→dijitalizasyon TEK ÇEKİM —
+// sıçrama yok; girişte önlük yok, takım elbise). 45.25 sn; ofis sekansı 4.0–9.04.
 const OFFICE_SCENE_START = 4.0;
-const OFFICE_SCENE_END = 9.15;
+const OFFICE_SCENE_END = 9.04;
 
 type VideoWithFrameCallback = HTMLVideoElement & {
   requestVideoFrameCallback?: (cb: () => void) => number;
@@ -96,11 +102,11 @@ export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
         loop
         playsInline
         preload="none"
-        poster="/assets/video/p-doctorium-film9.jpg"
+        poster="/assets/video/p-doctorium-film11.jpg"
         aria-hidden
         className="absolute inset-0 -z-10 h-full w-full object-cover"
       >
-        <source src="/assets/video/v-doctorium-film9-720.mp4" type="video/mp4" />
+        <source src="/assets/video/v-doctorium-film11-720.mp4" type="video/mp4" />
       </video>
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: overlay }} />
     </>
