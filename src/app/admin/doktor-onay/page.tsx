@@ -21,7 +21,7 @@ const DOC_TYPE_LABELS: Record<string, string> = {
 // onay yetkisi kritik olduğundan getCurrentUser (DB-rol otoriter) öz-savunması ŞART (2026-07-12).
 export default async function DoctorApprovalPage() {
   const user = await getCurrentUser();
-  if (!user) redirect("/giris?next=/admin/hekim-onay");
+  if (!user) redirect("/giris?next=/admin/doktor-onay");
   if (!ADMIN_ROLES.includes(user.role)) redirect("/");
 
   const pending = await db.doctor.findMany({
@@ -31,7 +31,7 @@ export default async function DoctorApprovalPage() {
       id: true, title: true, name: true, branch: true, city: true, languages: true,
       activatedAt: true, licenseNo: true, specBoard: true, procedures: true,
       mmssInsurer: true, mmssCoverageLimit: true, mmssCoverageCurrency: true,
-      mmssValidUntil: true, // poliçe bitişi (Faz 1b) — dolu+geçmişse kırmızı rozet; boşsa rozet YOK (mevcut hekimde boş normaldir)
+      mmssValidUntil: true, // poliçe bitişi (Faz 1b) — dolu+geçmişse kırmızı rozet; boşsa rozet YOK (mevcut doktorda boş normaldir)
       registryStatus: true, // HealthTürkiye dizin doğrulaması (FAZ 6) — NOT_FOUND ise uyarı bayrağı
       // Belge META'sı — içerik listede taşınmaz; incelemeci tek belgeyi raw uçtan açar (audit'li).
       documents: { select: { id: true, type: true, label: true, mimeType: true, createdAt: true, status: true, reviewNote: true }, orderBy: { createdAt: "desc" } },

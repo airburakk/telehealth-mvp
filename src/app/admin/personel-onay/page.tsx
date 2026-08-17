@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "Personel Onayı" };
 
 const REVIEWER_ROLES = ["ETHICS", "ADMIN"];
 
-// Kurumsal üyelik başvuru onayı (2026-08-12) — /admin/hekim-onay'ın personel eşleniği.
+// Kurumsal üyelik başvuru onayı (2026-08-12) — /admin/doktor-onay'ın personel eşleniği.
 // PARTNER/AGENCY/HEALTH_PRO başvuruları: şifreli yanıtlar SUNUCUDA çözülüp incelemeciye gösterilir;
 // belgeler raw uçtan (audit'li) açılır. Onay staffVerifiedAt damgalar; ret gerekçesi başvurana gider.
 // Proxy /admin'i TOKEN roluyle korur; karar yetkisi kritik → getCurrentUser (DB-rol otoriter) ŞART.

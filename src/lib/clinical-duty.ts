@@ -301,8 +301,8 @@ export async function dutyFeed(doctorId: string): Promise<DutyFeed | null> {
   }
 
   // REQUESTED → tüm branş İcapçıları görür · CHANGE_REQUESTED → yalnız teklifi yapan doktor.
-  // v6.87: kuyruk çözülmüş PHI taşır (hasta adı + semptom) → yalnız DOĞRULANMIŞ hekime iner
-  // (ownership "doğrulanmamış hekim hiçbir vakaya erişemez" kuralının feed eşleniği). Doğrulanmamış
+  // v6.87: kuyruk çözülmüş PHI taşır (hasta adı + semptom) → yalnız DOĞRULANMIŞ doktora iner
+  // (ownership "doğrulanmamış doktor hiçbir vakaya erişemez" kuralının feed eşleniği). Doğrulanmamış
   // doktor durum/toggle bilgisini görmeye devam eder, kuyruğu BOŞ alır — zaten İcapçı bildirimi de
   // almaz (requestIcapciAppointment verified filtreli); kuyruğu görmesi baştan tutarsızdı.
   const appts = d.verified

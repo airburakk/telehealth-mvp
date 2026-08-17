@@ -101,6 +101,13 @@ const nextConfig: NextConfig = {
       // Güven ve Gizlilik sayfası (2026-07-15): kanonik rota Türkçe; /trust
       // kısa/İngilizce yolu tek kanonik URL'e toplanır (8 dil zaten tek URL'de).
       { source: "/trust", destination: "/guven-ve-gizlilik", permanent: true },
+      // Rename ("hekim" → "doktor" terim kuralı, kullanıcı kararı 2026-08-17): dizin ve profil
+      // rotaları /hekimler·/hekim/[id]'den /doktorlar·/doktorlar/[id]'ye taşındı; admin onay
+      // kuyruğu /admin/hekim-onay → /admin/doktor-onay. Eski URL'ler yer imlerinde, tarayıcı
+      // geçmişinde ve DB'deki Notification.href satırlarında yaşıyor → 308 ile korunur.
+      { source: "/hekimler", destination: "/doktorlar", permanent: true },
+      { source: "/hekim/:id", destination: "/doktorlar/:id", permanent: true },
+      { source: "/admin/hekim-onay", destination: "/admin/doktor-onay", permanent: true },
     ];
   },
   // v6.37 — burned-in PHI maskeleme SUNUCUDA piksel çözer (lib/dicom-pixels): JPEG-LS/JPEG 2000 için

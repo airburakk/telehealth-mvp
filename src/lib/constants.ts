@@ -52,7 +52,7 @@ export function langCodeFor(name?: string | null): string | undefined {
 
 // Doktor video kartviziti kanonik TR tanıtım metni — jenerik (isim/branş interpolasyonu YOK:
 // AI çevirisinde placeholder kaybı riski sıfır + tüm doktorlar aynı çeviri cache girdisini paylaşır).
-// Burada (düz-veri modülü): hem client (PreConsultLobby) hem server (hekim/[id]) import eder —
+// Burada (düz-veri modülü): hem client (PreConsultLobby) hem server (doktor/[id]) import eder —
 // "use client" modülünden veri export'u server'da client-reference'a döner (iterate edilemez).
 export const VIDEO_CARD_SCRIPT = [
   "Merhaba, hoş geldiniz.",

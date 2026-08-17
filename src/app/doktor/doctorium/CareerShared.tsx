@@ -7,7 +7,7 @@ import { Info } from "lucide-react";
 
 /**
  * Kalıcı uyarı — liste ve detayda AYNI metin (kullanıcı onaylı, 2026-08-12).
- * ⚠️ KALDIRILAMAZ: modül idari süreç anlatır; yanlış plan hekimin gerçek kaybıdır (kaçırılan sınav
+ * ⚠️ KALDIRILAMAZ: modül idari süreç anlatır; yanlış plan doktorun gerçek kaybıdır (kaçırılan sınav
  * başvurusu, eksik belge, boşa apostil masrafı). Metin değişikliği kullanıcı onayı ister.
  */
 export function CareerDisclaimer() {
@@ -30,7 +30,7 @@ export function careerDate(d: Date) {
 /**
  * Ülke/bölge etiketi.
  * ⚠️ BAE'de TEK kod yoktur: Dubai (AE-DU / DHA) ile Abu Dhabi (AE-AZ / DOH) AYRI süreçlerdir —
- * tek "BAE" etiketi hekimi yanlış otoriteye yönlendirir.
+ * tek "BAE" etiketi doktoru yanlış otoriteye yönlendirir.
  */
 export const COUNTRY_LABEL: Record<string, string> = {
   DE: "Almanya",

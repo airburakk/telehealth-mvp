@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       where: { id: doctorId },
       data: { congressAlertDays, congressAbstractAlertDays, congressEarlyBirdAlertDays },
     });
-    // Eşik değişince önceki "gönderildi" işaretleri anlamını yitirir (hekim daha erken uyarılmak
+    // Eşik değişince önceki "gönderildi" işaretleri anlamını yitirir (doktor daha erken uyarılmak
     // isteyebilir) → sıfırla, yeni eşiğe göre yeniden değerlendirilsin.
     await db.congressFollow.updateMany({ where: { doctorId }, data: { sentAlerts: "[]" } });
     return NextResponse.json({ ok: true, congressAlertDays, congressAbstractAlertDays, congressEarlyBirdAlertDays });

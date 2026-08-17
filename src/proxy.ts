@@ -44,7 +44,11 @@ export async function proxy(req: NextRequest) {
   if (pathname.startsWith("/admin") && !ETHICS_ROLES.includes(user.role)) {
     return NextResponse.redirect(new URL("/", req.url)); // doktor doğrulama onayı = ADMIN/Etik Kurul
   }
-  if (pathname.startsWith("/doktor") && !DOCTOR_ROLES.includes(user.role)) {
+  // ⚠️ SEGMENT SINIRI ŞART (2026-08-17): çıplak startsWith("/doktor") komşu rotaları da yutar —
+  // doktor dizini eski "/hekimler" yolundan /doktorlar'a taşınınca (terim kuralı) bu kontrol
+  // hasta rolünü dizinden ana sayfaya atardı. /doktorlar klinik panel DEĞİL: giriş + onam ister
+  // (aşağıdaki matcher), rol kapısı istemez. Yeni "/doktor…" rotası eklerken bu ayrımı koru.
+  if ((pathname === "/doktor" || pathname.startsWith("/doktor/")) && !DOCTOR_ROLES.includes(user.role)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
   if (pathname.startsWith("/operasyon") && !OPS_ROLES.includes(user.role)) {
@@ -80,7 +84,7 @@ export const config = {
     "/onam",
     "/triyaj", "/triyaj/:path*",
     "/vaka/:path*",
-    "/hekimler", "/hekim/:path*",
+    "/doktorlar", "/doktorlar/:path*",
     "/doktor", "/doktor/:path*",
     "/gorusme/:path*",
     "/paket/:path*",

@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { notifyUser } from "@/lib/notify";
 import { recordAccess, reqMeta } from "@/lib/audit";
 
-// POST — hekim mesleki belgesine inceleme kararı (Faz 2, 2026-08-14): ACCEPTED | REJECTED.
+// POST — doktor mesleki belgesine inceleme kararı (Faz 2, 2026-08-14): ACCEPTED | REJECTED.
 // Karar yalnız görünürlük+bildirim içindir; AKTİVASYONA DOKUNMAZ (tasarım kararı — refreshActivation
 // belge varlığına bakar, reddedilen tekil belge yenisi yüklenince satırıyla değişir → PENDING).
 // Self-auth raw ucuyla aynı: yalnız ETHICS/ADMIN, diğer herkese 404 (varlık gizlenir).

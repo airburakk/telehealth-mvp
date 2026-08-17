@@ -14,7 +14,7 @@ bu hisse hizmet eder; çelişiyorsa karar yanlıştır. Soğukkanlı, kesin, kli
 
 - **Ne:** Çok ülkeli sağlık turizmi + telehealth platformu (triyaj → görüşme → tedavi paketi →
   post-op + ikinci görüş + ücretsiz-hizmet + KVKK onam/paylaşım + FHIR).
-- **Kim için:** Uluslararası hastalar (DZ, RU, DE, KZ, KG, AZ, GB, FR…), hekimler, koordinatörler,
+- **Kim için:** Uluslararası hastalar (DZ, RU, DE, KZ, KG, AZ, GB, FR…), doktorlar, koordinatörler,
   etik kurul. Çoğu endişeli, kimi yaşlı, kimi yavaş bağlantıda, çoğu ana dili dışında okuyor.
 - **Tür:** Hibrit — kreatif-editoryal **pazarlama** (landing) + sakin **klinik uygulama** (workspace).
 

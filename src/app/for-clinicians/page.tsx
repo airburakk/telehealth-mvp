@@ -6,7 +6,7 @@ import { OG_LOCALE, OG_ALTERNATE_LOCALES } from "@/lib/aura-landing/seo";
 // indekslenir, sitemap'te, 8 dil TEK URL (dil client-side air_lang) →
 // og:locale:alternate ile işaretlenir; sayfa kendi aura nav/footer'ını taşır.
 // ⚠️ İddia disiplini (v6.8): metadata da görünür metinle aynı kurala tabi —
-// "verified" = belge incelemesi (kodda /admin/hekim-onay), akreditasyon DEĞİL.
+// "verified" = belge incelemesi (kodda /admin/doktor-onay), akreditasyon DEĞİL.
 export const metadata: Metadata = {
   title: "For clinicians", // layout template → "For clinicians · AURA"
   description:

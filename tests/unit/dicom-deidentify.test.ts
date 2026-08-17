@@ -30,7 +30,7 @@ function firstVal(el: { Value?: unknown[] } | undefined): string {
 // Strip sonrası bu etiketler ya YOK ya BOŞ olmalı (PatientName hariç — "ANONIM").
 const MUST_BE_EMPTY = [
   "00100020", "00100030", "00101040", "00102154", // hasta ID / doğum / adres / telefon
-  "00080090", "00081050", "00081070", // hekim/operatör adları
+  "00080090", "00081050", "00081070", // doktor/operatör adları
   "00080080", "00080081", "00081010", // kurum/istasyon
   "00080050", "00200010", "00181000", // accession / study id / cihaz seri
   "00080020", "00080030", // çekim tarih/saat

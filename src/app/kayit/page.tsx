@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { isGoogleConfigured, isAppleConfigured } from "@/lib/oauth";
 import { BRANCH_LABELS } from "@/lib/procedures";
-import { LANGUAGES } from "@/lib/constants";
 import { DoctorSignupForm } from "@/components/DoctorSignupForm";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +18,7 @@ export default function SignupPage() {
     <div className="grid min-h-[calc(100vh-8rem)] place-items-center bg-[var(--c-bg)] px-5 py-10">
       <div className="w-full max-w-md">
         <Suspense fallback={<div className="text-sm text-[var(--c-ink-3)]">Yükleniyor…</div>}>
-          <DoctorSignupForm googleEnabled={isGoogleConfigured()} appleEnabled={isAppleConfigured()} branches={branches} languages={[...LANGUAGES]} />
+          <DoctorSignupForm googleEnabled={isGoogleConfigured()} appleEnabled={isAppleConfigured()} branches={branches} />
         </Suspense>
 
         {/* İki aşamalı üyelik özeti (v6.87) — ayrıntı /kayit/asamalar */}
@@ -28,7 +27,7 @@ export default function SignupPage() {
           <ol className="mt-2 space-y-2 text-xs text-[var(--c-ink-2)]">
             <li>
               <strong className="text-[var(--c-ink)]">1 · Doctorium</strong> — Tabip odanızdan
-              alacağınız Protokol Numaralı üye yazısıyla hekim kimliğinizi gösterin; Doctorium&apos;daki
+              alacağınız Protokol Numaralı üye yazısıyla doktor kimliğinizi gösterin; Doctorium&apos;daki
               tüm içerik ve ücretsiz araçlara erişin.
             </li>
             <li>

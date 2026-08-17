@@ -79,11 +79,11 @@ export function parseCareerTab(raw: string | undefined): CareerTabKey {
 
 // Sektörel/mevzuat alt kategorileri (v6.50). Kaynak matrisi: mevzuat+sut+ilac-cihaz Resmî Gazete
 // ve OHSAD'dan, yonetim TTB/OHSAD'dan, teknoloji WHO/RG'den, turizm RG'den gelir.
-// v6.99 (2026-08-15): "meslek" ve "kuresel" eklendi — sektörel akış hekimin kendi mesleki
+// v6.99 (2026-08-15): "meslek" ve "kuresel" eklendi — sektörel akış doktorun kendi mesleki
 // gündemiyle genişledi (İTO/TTB/Medscape) ve WHO/Medical Xpress içeriği "teknoloji"den ayrıldı.
 // Sıra = doktorun ilgi sıklığı varsayımı: kendi mesleği önce, küresel gündem sonda.
 export const SECTOR_CATEGORIES: { key: string; label: string }[] = [
-  { key: "meslek", label: "Hekimlik & Mesleki Gündem" },
+  { key: "meslek", label: "Doktorluk & Mesleki Gündem" },
   { key: "mevzuat", label: "Mevzuat & Sağlık Hukuku" },
   { key: "sut", label: "SGK · SUT & Geri Ödeme" },
   { key: "turizm", label: "Sağlık Turizmi & Teşvikler" },
@@ -210,7 +210,7 @@ const ROW_SELECT = {
 
 /**
  * Akış Tercihleri (Faz 2, 2026-08-14): Akışım'a hangi BÖLÜMLER girsin. Doctor.feedModules'ta
- * JSON string[] saklanır; null/boş = TÜMÜ (tercihe hiç girmemiş hekim her bölümü görür).
+ * JSON string[] saklanır; null/boş = TÜMÜ (tercihe hiç girmemiş doktor her bölümü görür).
  * kongre/kariyer FeedItem değildir — seçiliyse page akışın üstünde mini blok olarak gösterir.
  */
 export const FEED_MODULE_OPTIONS = [
@@ -546,7 +546,7 @@ export async function congressById(id: string) {
   return db.medicalCongress.findUnique({ where: { id } });
 }
 
-/** Hekim bu kongreyi takip ediyor mu — detay sayfası için tek satırlık sorgu. */
+/** Doktor bu kongreyi takip ediyor mu — detay sayfası için tek satırlık sorgu. */
 export async function isFollowingCongress(doctorId: string, congressId: string): Promise<boolean> {
   const row = await db.congressFollow.findUnique({
     where: { doctorId_congressId: { doctorId, congressId } },

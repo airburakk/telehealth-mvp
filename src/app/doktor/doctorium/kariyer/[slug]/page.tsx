@@ -15,12 +15,12 @@ export const metadata = { title: "Kariyer" };
  *
  * VERİ DÜRÜSTLÜĞÜ (MedicalCongress kartıyla aynı ilke): alanlar yalnız DOLUYSA basılır; boş alan
  * "bilinmiyor" diye uydurulmaz. `typicalMonths` çoğu kayıtta BOŞTUR — resmî kaynakta yazmayan
- * süre tahmin edilmez (yanlış süre = hekimin yanlış planlaması). Doğrulama tarihi ve "teyit
+ * süre tahmin edilmez (yanlış süre = doktorun yanlış planlaması). Doğrulama tarihi ve "teyit
  * bekliyor" ibaresi kartta GÖRÜNÜR; bayatlık gizlenmez.
  *
  * ⚖️ İŞ İLANI DEĞİL: başvuru butonu, işveren teması, CV gönderimi YOKTUR — üyelik arkasında ilan
  * sunmak İŞKUR'a göre "aracılık"tır (özel istihdam bürosu izni gerekir, envanter §3). Sayfa
- * yalnız resmî kaynağa YÖNLENDİRİR; başvuru hekimin kendisi tarafından resmî otoritede yapılır.
+ * yalnız resmî kaynağa YÖNLENDİRİR; başvuru doktorun kendisi tarafından resmî otoritede yapılır.
  */
 export default async function CareerPathwayPage({ params }: { params: Promise<{ slug: string }> }) {
   const user = await getCurrentUser();

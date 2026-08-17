@@ -25,7 +25,7 @@ const OVERSIGHT = [
   { href: "/vakalarim", label: "Bakım Yolculuğum", icon: FolderHeart, note: "hasta yüzü" },
   { href: "/paylasimlarim", label: "Paylaşımlarım", icon: Share2, note: "hasta yüzü" },
   { href: "/triyaj", label: "Triyaj", icon: UserRound, note: "hasta yüzü" },
-  { href: "/hekimler", label: "Doktorlar", icon: Users, note: "kamu dizini" },
+  { href: "/doktorlar", label: "Doktorlar", icon: Users, note: "kamu dizini" },
   { href: "/acente", label: "Sağlık Turizmi", icon: Luggage, note: "acente" },
   { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, note: "kurul" },
   { href: "/partner", label: "Partner", icon: Globe, note: "iş ortağı" },
@@ -56,7 +56,7 @@ const PANELS = [
   {
     href: "/admin/kongre",
     label: "Kongre Takvimi",
-    desc: "Küratörlü kongre kayıtları — hekim takviminde görünen etkinlikleri yönet.",
+    desc: "Küratörlü kongre kayıtları — doktor takviminde görünen etkinlikleri yönet.",
     icon: CalendarDays,
     tone: "#34d399",
   },

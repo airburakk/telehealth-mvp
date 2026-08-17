@@ -40,7 +40,7 @@ export default async function SurveyAdminPage() {
       <p className="mt-3 flex items-start gap-2 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3.5 py-2.5 text-xs text-[var(--c-ink-2)]">
         <Info size={15} className="mt-px shrink-0" />
         <span>
-          Anketler hekimlerin Akışım sekmesinde tek soruluk kart olarak görünür; sonuçlar herkese
+          Anketler doktorların Akışım sekmesinde tek soruluk kart olarak görünür; sonuçlar herkese
           yalnız <strong className="text-[var(--c-ink)]">toplu dağılım</strong> olarak gösterilir.
           <strong className="text-[var(--c-ink)]"> Ücretli (honorarium&#39;lu) anket yayına alınamaz</strong> —
           ödeme/vergi kurgusu netleşene dek kilitli; ücretsiz sponsorlu yoklama yayınlanabilir.

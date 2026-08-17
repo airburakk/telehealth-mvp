@@ -46,7 +46,7 @@ Vercel otomatik deploy.
 
 ```bash
 npx prisma migrate deploy   # migration geçmişini Neon'a uygula (taze DB'de tüm şemayı kurar)
-npm run db:seed             # demo veri: kullanıcılar + 30 hekim + 20 vaka + takip + şikayet
+npm run db:seed             # demo veri: kullanıcılar + 30 doktor + 20 vaka + takip + şikayet
 ```
 
 > ### ⛔ Uygulanmış migration dosyası DEĞİŞMEZDİR (2026-08-01'de iki ortamda birden yakalandı)
@@ -283,7 +283,7 @@ Her push/deploy öncesi (sıra önemli):
    **meta/OG/JSON-LD ayrı taranır** (görünür metin yetmez) + 8 dilin HEPSİ hizalanır (EN'e bakıp
    "tutarlı" sanma). Vitrin title/h1/CTA değiştiyse `scripts/synthetic-checks.mjs` beklentileri
    de güncellenir (yoksa sentetik kontrol yanlış alarm üretir — Ray C).
-3. **Terminoloji:** hasta yüzü "başvuru" (vaka değil) · "Doktor" (Hekim değil) · "Access Care"
+3. **Terminoloji:** hasta yüzü "başvuru" (vaka değil) · "Doktor" (Doktor değil) · "Access Care"
    yalnız EN · klinik personel yüzeyinde "vaka" kalır.
 4. **Push kapsamı:** `git fetch` + `git log origin/main..HEAD` — paralel oturum commit'i taşınmıyor
    mu? Kapsam kontrolü ile push AYRI adım (zincirleme `&&` yok).

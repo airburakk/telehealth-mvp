@@ -104,7 +104,7 @@ export async function GET(req: Request) {
     }
 
     // Doctorium kongre alarmı (v6.49): takip edilen kongrenin başlangıcı / bildiri-erken kayıt son
-    // tarihi hekimin seçtiği eşiğe girdiyse bildirim. Kritik değil — hata imha akışını düşürmez.
+    // tarihi doktorun seçtiği eşiğe girdiyse bildirim. Kritik değil — hata imha akışını düşürmez.
     let congress: CongressRemindResult | { error: string };
     try {
       congress = await remindCongressFollows();

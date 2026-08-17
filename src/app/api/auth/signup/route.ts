@@ -33,9 +33,14 @@ export async function POST(req: Request) {
   // Gevşek normalizasyon: rakam/+/boşluk dışını at, 7-20 karakter değilse yok say.
   const phoneRaw = String(b.phone ?? "").replace(/[^\d+ ]/g, "").trim().slice(0, 20);
   const phone = phoneRaw.replace(/\s+/g, " ").length >= 7 ? phoneRaw : null;
-  const languages = Array.isArray(b.languages)
+  // Hizmet dilleri kayıt formundan KALDIRILDI (kullanıcı kararı 2026-08-17) → gövde artık
+  // languages taşımaz. Alan yine de kabul edilir (OAuth profil-tamamla gibi başka çağıranlar
+  // gönderebilir); boş/geçersizse VARSAYILAN Türkçe yazılır — eskiden 400 dönen zorunluluk
+  // kalktı, yoksa yeni form hiç kayıt açamazdı.
+  const picked = Array.isArray(b.languages)
     ? [...new Set((b.languages as unknown[]).filter((l): l is string => typeof l === "string" && LANG_SET.has(l)))]
     : [];
+  const languages = picked.length > 0 ? picked : ["Türkçe"];
 
   // Doğrulama
   if (name.length < 2) return NextResponse.json({ error: "Ad soyad girin." }, { status: 400 });
@@ -44,7 +49,6 @@ export async function POST(req: Request) {
   if (!TITLES.has(title)) return NextResponse.json({ error: "Geçerli bir ünvan seçin." }, { status: 400 });
   if (!BRANCH_SET.has(branch)) return NextResponse.json({ error: "Geçerli bir branş seçin." }, { status: 400 });
   if (city.length < 2) return NextResponse.json({ error: "Şehir girin." }, { status: 400 });
-  if (languages.length === 0) return NextResponse.json({ error: "En az bir hizmet dili seçin." }, { status: 400 });
 
   // E-posta benzersiz mi?
   const existing = await db.user.findUnique({ where: { email }, select: { id: true } });

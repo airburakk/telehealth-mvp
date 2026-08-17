@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   if (endDate && endDate < startDate) {
     return NextResponse.json({ error: "Bitiş tarihi başlangıçtan önce olamaz." }, { status: 400 });
   }
-  // URL yalnız http(s) — javascript: gibi şemalar hekime tıklatılacak bağlantı olarak yazılmasın.
+  // URL yalnız http(s) — javascript: gibi şemalar doktora tıklatılacak bağlantı olarak yazılmasın.
   let url: string | null = null;
   if (typeof b.url === "string" && b.url.trim()) {
     try {

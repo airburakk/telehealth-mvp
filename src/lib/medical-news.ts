@@ -2,7 +2,7 @@
 //
 //   1) STUB kartlar (GENERAL / BY_BRANCH / newsForBranch) — PARTNER sayfasının haber şeridi.
 //      ⚠️ Bu kartlar ÖRNEK içeriktir (uydurma) → gerçek makale bağlantısı ASLA verilmez.
-//      Hekim tarafı bunları KULLANMAZ; Doctorium gerçek yayın çeker (lib/doctorium).
+//      Doktor tarafı bunları KULLANMAZ; Doctorium gerçek yayın çeker (lib/doctorium).
 //
 //   2) NEWS_QUERIES — branş → PubMed MeSH sorgusu. Doctorium ingestion'ı bunu okur
 //      (lib/doctorium-ingest); PubMed istemcisi de oraya taşındı (tek yer, çift kopya yok).

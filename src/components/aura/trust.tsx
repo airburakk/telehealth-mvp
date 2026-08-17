@@ -8,7 +8,7 @@ import { useLang } from "@/lib/aura-landing/i18n";
 // hasta yorumlari (James W./Sofia M./Karim A.) + akreditasyon monogramlari
 // (JCI/ISO 9001/TURSAB/TGA/KVKK — belgeli iliski YOK, 4'u 3. taraf markasi).
 // SIMDI: yalniz URUNDE KANITLANABILIR (Tier A) 6 madde. Her maddenin kod karsiligi
-// dogrulandi (consent.ts · crypto.ts · ownership.ts · admin/hekim-onay · audit.ts ·
+// dogrulandi (consent.ts · crypto.ts · ownership.ts · admin/doktor-onay · audit.ts ·
 // booking route agencySentAt kapisi). Eski Seffaflik bolumu buraya BIRLESTIRILDI
 // (sifreleme iddiasi sayfada iki kez cikmasin) → transparency.tsx kaldirildi.
 //

@@ -7,7 +7,7 @@
 //    Nakit honorarium kilidi (canActivateSurvey) bu katmandan BAĞIMSIZ aynen yaşar.
 //  - Ayni menfaat (kongre/kitap) İFA anı = RewardRedemption FULFILLED; oraya giden her adım
 //    insan onaylı (REQUESTED → admin APPROVED → FULFILLED). Otomatik satın alma bilinçli YOK.
-//  - ⚖️ Katalog BOŞ başlar: ilk kalem girişinden ÖNCE vergi (ayni menfaat) + kamu hekimi (657)
+//  - ⚖️ Katalog BOŞ başlar: ilk kalem girişinden ÖNCE vergi (ayni menfaat) + kamu doktoru (657)
 //    değerlendirmesi kullanıcıda — admin panel bu uyarıyı kaldırılamaz biçimde gösterir.
 import { db } from "./db";
 import { Prisma } from "@prisma/client";

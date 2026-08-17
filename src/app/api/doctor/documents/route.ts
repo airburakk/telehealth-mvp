@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Dosya çok büyük (~8 MB üzeri). Lütfen küçültün." }, { status: 413 });
   }
   // İçerik-tipi kapısı (2026-08-03 P0): tip istemcinin beyanından DEĞİL dosya imzasından tespit edilir
-  // (belgeler hekim-onay incelemesinde admin/doctors/[id]/documents/[docId]/raw ucundan inline
+  // (belgeler doktor-onay incelemesinde admin/doctors/[id]/documents/[docId]/raw ucundan inline
   // açılır [Faz 1, 2026-08-14] → depolanmış-XSS yüzeyi; bu kapı o sunumun ön şartıdır).
   const kind = detectDocumentKind(content);
   if (!kind) return NextResponse.json({ error: DOC_REJECT_MESSAGE }, { status: 415 });

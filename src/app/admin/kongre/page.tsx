@@ -37,7 +37,7 @@ export default async function CongressAdminPage() {
 
       <p className="mt-3 flex items-start gap-2 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3.5 py-2.5 text-xs text-[var(--c-ink-2)]">
         <Info size={15} className="mt-px shrink-0" />
-        Buraya girdiğiniz kayıtlar hekimlerin Doctorium → Kongre Takvimi sekmesinde görünür.
+        Buraya girdiğiniz kayıtlar doktorların Doctorium → Kongre Takvimi sekmesinde görünür.
         Yalnız <strong className="text-[var(--c-ink)]">doğruladığınız</strong> etkinlikleri girin;
         kongre adresini resmî sayfasından alın.
       </p>

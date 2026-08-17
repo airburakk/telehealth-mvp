@@ -2,95 +2,38 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { GraduationCap, Loader2, LogIn, MailCheck, UserPlus } from "lucide-react";
+import { GraduationCap, MailCheck, UserPlus, Loader2 } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
 
-// v6.95 — Tıp öğrencisi kapısı (/ogrenci): giriş + kayıt TEK bileşende, doktor girişinden AYRI
-// (kullanıcı kararı 2026-08-14). Kayıt /api/auth/signup-student'a gider (ünvan/telefon/dil yok);
-// giriş ortak /api/auth/login'i kullanır (öğrenci hesabı DOCTOR rollüdür — home'a yönlenir,
-// aktivasyonsuz hesap baslangic'ın öğrenci moduna düşer). OAuth butonu BİLİNÇLİ YOK: sosyal
-// kayıt intent=doctor açar (studentTrack'siz) — öğrenci hunisi şimdilik e-posta kaydı.
+// v6.95 — Tıp öğrencisi kaydı (/ogrenci): doktor kaydından AYRI huni (kullanıcı kararı
+// 2026-08-14). Kayıt /api/auth/signup-student'a gider (ünvan/telefon/dil yok). OAuth butonu
+// BİLİNÇLİ YOK: sosyal kayıt intent=doctor açar (studentTrack'siz) — öğrenci hunisi e-posta kaydı.
+// 2026-08-17 (kullanıcı kararı): sayfa SALT KAYIT oldu — Giriş/Hesap oluştur sekmeleri ve
+// gömülü giriş formu kaldırıldı. Öğrenci hesabı DOCTOR rollüdür, girişi ortak /kurumsal-giris
+// kapısından yapar (aşağıdaki metin linki); ayrı bir öğrenci giriş yüzeyi ARTIK YOK.
 
 export function StudentGateForm({ branches }: { branches: string[] }) {
-  const [mode, setMode] = useState<"login" | "signup">("login");
-
   return (
     <div className="w-full max-w-md">
       <div className="mb-6 flex flex-col items-center text-center">
         <span className="grid h-12 w-12 place-items-center rounded-3xl bg-[var(--c-panel)] ring-1 ring-[var(--c-hairline)]"><AuraMark size={26} /></span>
         <h1 className="mt-3 flex items-center gap-1.5 font-serif text-xl font-bold tracking-tight text-[var(--c-ink)]">
-          <GraduationCap size={20} className="text-[var(--c-accent)]" /> Tıp Öğrencisi Kapısı
+          <GraduationCap size={20} className="text-[var(--c-accent)]" /> Tıp Öğrencisi Kaydı
         </h1>
         <p className="text-sm text-[var(--c-ink-2)]">Doctorium&apos;un bilgi akışına öğrenciyken katılın</p>
       </div>
 
       <div className="rounded-[22px] border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6">
-        {/* Sekmeler */}
-        <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl bg-[var(--c-surface)] p-1 text-sm font-semibold">
-          {([["login", "Giriş"], ["signup", "Hesap oluştur"]] as const).map(([k, label]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setMode(k)}
-              aria-pressed={mode === k}
-              className={`rounded-lg px-3 py-2 transition ${mode === k ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {mode === "login" ? <StudentLogin /> : <StudentSignup branches={branches} />}
+        <StudentSignup branches={branches} />
       </div>
 
       <p className="mt-4 text-center text-sm text-[var(--c-ink-2)]">
-        Hekim misiniz? <Link href="/kayit" className="font-semibold text-[var(--c-accent)] hover:underline">Doktor kaydına gidin</Link>
+        Zaten hesabınız var mı? <Link href="/kurumsal-giris" className="font-semibold text-[var(--c-accent)] hover:underline">Giriş yapın</Link>
+      </p>
+      <p className="mt-1.5 text-center text-sm text-[var(--c-ink-2)]">
+        Doktor musunuz? <Link href="/kayit" className="font-semibold text-[var(--c-accent)] hover:underline">Doktor kaydına gidin</Link>
       </p>
     </div>
-  );
-}
-
-function StudentLogin() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Giriş başarısız.");
-      // Tam sayfa yönlendirme: çerez proxy'e taze taşınır (onam + onboarding kapısına düşer).
-      window.location.assign(data.home || "/doktor/baslangic");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Giriş başarısız.");
-      setLoading(false);
-    }
-  }
-
-  return (
-    <form onSubmit={submit} className="space-y-3">
-      <Labeled label="E-posta">
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ad@universite.edu.tr" className={INPUT} required />
-      </Labeled>
-      <Labeled label="Parola">
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className={INPUT} required />
-      </Labeled>
-
-      {error && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300 ring-1 ring-red-400/25">{error}</div>}
-
-      <button type="submit" disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-60">
-        {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />} Giriş yap
-      </button>
-    </form>
   );
 }
 
@@ -181,7 +124,7 @@ function StudentSignup({ branches }: { branches: string[] }) {
 
       <p className="text-[11px] leading-relaxed text-[var(--c-ink-3)]">
         Kayıt sonrası e-Devlet&apos;ten aldığınız <strong>öğrenci belgesini</strong> yüklemeniz istenir;
-        Doctorium erişiminiz belge yüklenince açılır. Diploma, MMSS poliçesi gibi hekim belgeleri
+        Doctorium erişiminiz belge yüklenince açılır. Diploma, MMSS poliçesi gibi doktor belgeleri
         öğrenci üyelikte İSTENMEZ.
       </p>
     </form>

@@ -162,7 +162,7 @@ export function SurveyAdmin(p: Props) {
           </div>
           <div>
             <label className={labelCls} htmlFor="sv-points">
-              Ödül puanı (0 = puansız) — yanıtlayan hekimin puan hesabına bir kez yazılır
+              Ödül puanı (0 = puansız) — yanıtlayan doktorun puan hesabına bir kez yazılır
             </label>
             <input id="sv-points" className={inputCls} value={points} inputMode="numeric"
               onChange={(e) => setPoints(e.target.value)} placeholder="0" />
@@ -188,7 +188,7 @@ export function SurveyAdmin(p: Props) {
           </div>
           <div>
             <span className={labelCls}>
-              Hedef branşlar (boş = herkese; {kind === "SPONSORED" ? "hedefli sponsorlu anket YALNIZ açık-rızalı hekime gider" : "topluluk anketi akış branşına göre süzülür"})
+              Hedef branşlar (boş = herkese; {kind === "SPONSORED" ? "hedefli sponsorlu anket YALNIZ açık-rızalı doktora gider" : "topluluk anketi akış branşına göre süzülür"})
             </span>
             <div className="mt-1.5 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
               {p.branchOptions.map((o) => {

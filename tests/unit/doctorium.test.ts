@@ -38,12 +38,12 @@ describe("branş tercihleri", () => {
     expect(parseBranchPrefs('["onkoloji","yok"]')).toEqual(["onkoloji"]);
   });
 
-  it("tercih yoksa hekimin KENDİ branşına düşer (boş akış gösterilmez)", () => {
+  it("tercih yoksa doktorun KENDİ branşına düşer (boş akış gösterilmez)", () => {
     expect(effectiveBranches(null, "Onkoloji")).toEqual(["onkoloji"]);
     expect(effectiveBranches("[]", "Kardiyoloji")).toEqual(["kardiyoloji"]);
   });
 
-  it("tercih varsa kendi branşı ezilir (hekim ne seçtiyse o)", () => {
+  it("tercih varsa kendi branşı ezilir (doktor ne seçtiyse o)", () => {
     expect(effectiveBranches('["noroloji","psikiyatri"]', "Onkoloji")).toEqual(["noroloji", "psikiyatri"]);
   });
 
@@ -112,7 +112,7 @@ describe("modül tanımı", () => {
   });
 
   it("8 sektörel kategori tanımlı ve etiketleri çözülür", () => {
-    // v6.99 (2026-08-15): "meslek" + "kuresel" eklendi — hekimin kendi mesleki gündemi yönetimden,
+    // v6.99 (2026-08-15): "meslek" + "kuresel" eklendi — doktorun kendi mesleki gündemi yönetimden,
     // küresel gündem teknolojiden ayrıldı.
     expect(SECTOR_CATEGORIES).toHaveLength(8);
     for (const c of SECTOR_CATEGORIES) expect(categoryLabel(c.key)).toBe(c.label);
@@ -250,7 +250,7 @@ describe("sektörel kategori ataması", () => {
     expect(categorize("Sağlık Turizmi Teşvik Kararında Değişiklik")).toBe("turizm");
     expect(categorize("Beşeri Tıbbi Ürünlerin Ruhsatlandırılması Yönetmeliği")).toBe("ilac-cihaz");
     expect(categorize("Kişisel Sağlık Verileri Yönetmeliğinde Değişiklik")).toBe("teknoloji");
-    // v6.99: hekimin ÜCRETİ/özlüğü artık "meslek" — kurum işletmesi (hastane) "yonetim" kalır.
+    // v6.99: doktorun ÜCRETİ/özlüğü artık "meslek" — kurum işletmesi (hastane) "yonetim" kalır.
     expect(categorize("İşyeri Hekimliği Ücret Tarifeleri açıklandı")).toBe("meslek");
     expect(categorize("Özel Hastaneler Yönetmeliğinde Değişiklik")).toBe("yonetim");
   });
@@ -342,7 +342,7 @@ describe("Kariyer modülü sözleşmesi (v6.89)", () => {
 });
 
 // Seed verisinin İÇERİK DÜRÜSTLÜĞÜ sözleşmesi — bu modül idari süreç anlatır, yanlış bilgi
-// hekimin gerçek kaybıdır (kaçırılan sınav, eksik belge). Kurallar burada KİLİTLENİR.
+// doktorun gerçek kaybıdır (kaçırılan sınav, eksik belge). Kurallar burada KİLİTLENİR.
 describe("Kariyer seed verisi dürüstlük kuralları (v6.89)", () => {
   const rows = JSON.parse(
     readFileSync(join(process.cwd(), "prisma", "seed-data", "career-pathways.json"), "utf8"),

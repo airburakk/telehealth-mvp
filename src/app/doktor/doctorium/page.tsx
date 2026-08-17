@@ -52,7 +52,7 @@ const MODULE_HEAD: Record<ModuleKey, { eyebrow: string; title: string; desc: str
   sektorel: { eyebrow: "SEKTÖREL", title: "Sağlık gündeminin nabzı", desc: "Doktor hakları, yönetim, teknoloji ve küresel gelişmeler.", color: "#a78bfa" },
   ilac: { eyebrow: "İLAÇ & CİHAZ", title: "Geri çekmeler ve klinik fazlar", desc: "Ruhsat, geri çekme, klinik faz ve prospektüs bilgisi tek yerde.", color: "#22d3ee" },
   kongre: { eyebrow: "KONGRE", title: "Kongre takvimi", desc: "Ulusal ve uluslararası kongreler; bildiri ve erken kayıt tarihleriyle." },
-  kariyer: { eyebrow: "KARİYER", title: "Hekimlik yollarının haritası", desc: "Yurt dışı denklik ve akademik yükselme süreçleri — ilan değil, süreç bilgisi.", color: "#60a5fa" },
+  kariyer: { eyebrow: "KARİYER", title: "Doktorluk yollarının haritası", desc: "Yurt dışı denklik ve akademik yükselme süreçleri — ilan değil, süreç bilgisi.", color: "#60a5fa" },
   mevzuat: { eyebrow: "HUKUK", title: "Sağlık hukuku, tek yerde", desc: "Mevzuat değişiklikleri, emsal kararlar ve hakemli doktrin.", color: "#fb7185" },
 };
 
@@ -286,7 +286,7 @@ export default async function DoctoriumPage({
       {active === "kariyer" && (
         <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
           <Info size={13} className="mt-px shrink-0 text-emerald-300" />
-          Bu bölüm iş ilanı içermez; hekimlik süreçlerinin nasıl işlediğini anlatır.
+          Bu bölüm iş ilanı içermez; doktorluk süreçlerinin nasıl işlediğini anlatır.
         </p>
       )}
 

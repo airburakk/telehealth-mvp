@@ -8,11 +8,11 @@ export interface Fixture {
   patientId: string;
   otherPatientId: string;
   d1UserId: string;
-  d1DoctorId: string; // doğrulanmış hekim
+  d1DoctorId: string; // doğrulanmış doktor
   d2UserId: string;
-  d2DoctorId: string; // doğrulanmış başka hekim (çapraz-erişim testi)
+  d2DoctorId: string; // doğrulanmış başka doktor (çapraz-erişim testi)
   unverUserId: string;
-  unverDoctorId: string; // doğrulanmamış hekim
+  unverDoctorId: string; // doğrulanmamış doktor
   assignedCaseId: string; // patient'a ait, d1'e ATANMIŞ
   unassignedCaseId: string; // patient'a ait, ATANMAMIŞ (kuyruk)
   otherCaseId: string; // otherPatient'a ait

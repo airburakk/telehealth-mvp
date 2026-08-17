@@ -5,15 +5,16 @@ import { StudentGateForm } from "@/components/StudentGateForm";
 
 export const dynamic = "force-dynamic";
 
-// v6.95 — Tıp öğrencisi kapısı: vitrin footer'ından gelinen, doktor girişinden AYRI giriş+kayıt
-// sayfası (kullanıcı kararı 2026-08-14). Hekim belgeleri (diploma/MMSS/tabip odası) bu hunide
-// HİÇ görünmez; tek belge e-Devlet öğrenci belgesidir (onboarding öğrenci modu).
+// v6.95 — Tıp öğrencisi kaydı: vitrin footer'ından gelinen, doktor kaydından AYRI kayıt sayfası
+// (kullanıcı kararı 2026-08-14; 2026-08-17'de SALT KAYIT — gömülü giriş formu kaldırıldı, giriş
+// /kurumsal-giris'ten). Doktor belgeleri (diploma/MMSS/tabip odası) bu hunide HİÇ görünmez; tek
+// belge e-Devlet öğrenci belgesidir (onboarding öğrenci modu).
 // noindex: personel/üyelik kapıları arama sonuçlarından ayrık tutulur (kurumsal-giris kararıyla
 // tutarlı); indekslemeye açmak ayrı kullanıcı kararı.
 export const metadata: Metadata = {
   // Kök layout şablonu "· AURA" ekler → marka tekrarı yazılmaz.
-  title: "Tıp Öğrencileri",
-  description: "Tıp öğrencileri için Doctorium üyeliği — giriş ve kayıt.",
+  title: "Tıp Öğrencisi Kaydı",
+  description: "Tıp öğrencileri için Doctorium üyeliği — kayıt.",
   robots: { index: false, follow: false },
 };
 

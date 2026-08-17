@@ -503,7 +503,7 @@ export async function enrichHospitalDetails(limit: number, mode: "new" | "auth-b
 
 // ── Doktor kayıt doğrulaması (FAZ 6): platform doktoru HealthTürkiye dizininde var mı? ──
 // Ad-soyad normalize eşleşmesi (ünvan öneki atılır; Türkçe karakterler sadeleştirilir).
-// Sonuç Doctor.registryStatus'a yazılır → /admin/hekim-onay onay kartında bayrak olarak görünür.
+// Sonuç Doctor.registryStatus'a yazılır → /admin/doktor-onay onay kartında bayrak olarak görünür.
 // Fire-safe: hata kayıt akışını bozmaz (registry boşsa NOT_FOUND yazmak yerine null bırakılır).
 function trNorm(s: string): string {
   return s

@@ -42,10 +42,10 @@ export default async function SponsorAdminPage() {
       <p className="mt-3 flex items-start gap-2 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3.5 py-2.5 text-xs text-[var(--c-ink-2)]">
         <Info size={15} className="mt-px shrink-0" />
         <span>
-          Kartlar hekimlerin Doctorium → Akışım sekmesinde <strong className="text-[var(--c-ink)]">&quot;Sponsorlu&quot;</strong> rozetiyle
+          Kartlar doktorların Doctorium → Akışım sekmesinde <strong className="text-[var(--c-ink)]">&quot;Sponsorlu&quot;</strong> rozetiyle
           görünür. Yalnız <strong className="text-[var(--c-ink)]">ilaç-dışı</strong> reklamveren kabul edilir (ilaç tanıtımı = Modül D,
           hukuki görüş bekliyor). Kampanyayı AKTİF etmeden önce reklamveren çerçeve sözleşmesinin
-          imzalı olduğundan emin olun. Branş/şehir hedefi yalnız açık rıza vermiş hekimlere uygulanır;
+          imzalı olduğundan emin olun. Branş/şehir hedefi yalnız açık rıza vermiş doktorlara uygulanır;
           hedefsiz kampanya herkese gösterilir.
         </span>
       </p>

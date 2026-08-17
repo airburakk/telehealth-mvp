@@ -2,21 +2,14 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { isImmersiveCallPath } from "@/lib/immersive-routes";
-import { LANG_CODES } from "@/lib/aura-landing/copy";
+import { hidesGlobalChrome } from "@/lib/chrome-routes";
 
 // Global alt bilgi — AURA landing rotalarında gizli (sayfa kendi footer'ını taşır)
 export function SiteFooter() {
   const pathname = usePathname();
-  // Giriş kapıları da tam-ekran vitrin paneli (Header ile aynı liste; /e-posta formlarında krom durur).
-  // Video görüşme rotaları immersive tam-ekran → footer gizlenir (Header ile simetrik).
-  // Locale rotaları (/en /tr …) da landing — Header ile simetrik (v6.17).
-  if (
-    ["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/for-clinicians", "/giris", "/kurumsal-giris", "/doctorium/giris"].includes(pathname) ||
-    (LANG_CODES as readonly string[]).includes(pathname.slice(1)) ||
-    isImmersiveCallPath(pathname)
-  )
-    return null;
+  // Gizleme listesi lib/chrome-routes.ts'te — Header ile TEK KAYNAK (2026-08-17: kopya liste
+  // sürüklenmiş, /doctorium yalnız Header'a eklendiği için landing'de iki footer üst üste gelmişti).
+  if (hidesGlobalChrome(pathname)) return null;
   return (
     /* Krom katmanı (2026-08-14): Header + Doctorium bandıyla aynı --c-chrome zemini — içerik alanından ayrışır. */
     <footer className="theme-dark border-t border-[var(--c-hairline)] bg-[var(--c-chrome)] print:hidden">

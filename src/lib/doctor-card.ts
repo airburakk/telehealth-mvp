@@ -1,5 +1,5 @@
 // Bekleme odası doktor özet kartı — tek kaynak veri derleyici (server).
-// Atanan doktorun public profilinin (/hekim/[id]) ÖZETİNİ düz/serileştirilebilir bir objeye toplar,
+// Atanan doktorun public profilinin (/doktorlar/[id]) ÖZETİNİ düz/serileştirilebilir bir objeye toplar,
 // böylece client bileşeni (PreConsultLobby) bundle'a server-only modül çekmeden kartı çizebilir.
 // Avatar değerleri (variant/cinsiyet) burada (server'da) türetilir → A3 doktor kartının bundle-safe deseni.
 

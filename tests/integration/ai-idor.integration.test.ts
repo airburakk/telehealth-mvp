@@ -1,4 +1,4 @@
-// Entegrasyon — AI route IDOR (T3): analyze-docs çapraz-hekim → 403 (AI'ya GİTMEDEN, gerçek DB).
+// Entegrasyon — AI route IDOR (T3): analyze-docs çapraz-doktor → 403 (AI'ya GİTMEDEN, gerçek DB).
 // Sadece REDDEDİLEN yollar test edilir (403/401): bunlar canCaseBeAccessedBy'de kısa devre yapar,
 // Anthropic çağrısı OLMAZ → API anahtarı/maliyet gerekmez. 200 yolu (AI çağırır) kapsam dışı.
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";

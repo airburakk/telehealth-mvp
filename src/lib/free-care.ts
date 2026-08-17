@@ -41,7 +41,7 @@ export interface PairResult {
 }
 
 // Bir vaka ile bir doktoru ATOMİK eşleştir. Koşullu updateMany'ler optimistik kilit görevi görür:
-// aynı vakayı/hekimi kapmaya çalışan ikinci işlem count=0 alır → çift-eşleşme yarışı engellenir.
+// aynı vakayı/doktoru kapmaya çalışan ikinci işlem count=0 alır → çift-eşleşme yarışı engellenir.
 // 🔒 verified simetrisi: hasta-yüzü (matchForCase) zaten verified filtreli — MERKEZİ kapı burada da
 // zorunlu ki doğrulanmamış doktor bekleyen hastayı kapıp vakayı kilitleyemesin.
 export async function pairCaseWithDoctor(caseId: string, doctorId: string): Promise<PairResult | null> {

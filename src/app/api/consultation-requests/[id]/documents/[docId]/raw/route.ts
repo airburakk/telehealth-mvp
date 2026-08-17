@@ -9,7 +9,7 @@ import { toViewerSafeDicom } from "@/lib/dicom-pixels";
 // GET /api/consultation-requests/:id/documents/:docId/raw — havuz DICOM'unu görüntüleyiciye akıt (v6.32).
 // YALNIZ application/dicom belgeler için: DICOM'lar sunucuda PHI tag-strip'ten geçmiş ANONİM dosyalardır
 // → ham gösterim güvenli. PDF/görüntü belgeler için ham dosya İNDİRİLEMEZ (mevcut anonimlik kuralı sürer:
-// yanıtlayan hekim onları yalnız AI özet/çeviri üzerinden görür) → 404.
+// yanıtlayan doktor onları yalnız AI özet/çeviri üzerinden görür) → 404.
 // Self-auth (middleware /api'yi korumaz):
 //   DOCTOR  → consultOptIn + (talep OPEN ve genel havuz/kendi branşı) VEYA talebi yanıtlayan/etkileşen doktor
 //   PARTNER → talebi açan partner (kendi dosyası)
