@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { soEligible } from "@/lib/doctor-home";
@@ -31,6 +32,7 @@ export default async function DoctorOnboardingPage({
         where: { id: dbUser.doctorId },
         select: {
           title: true, name: true, branch: true, city: true, onboardedAt: true, activatedAt: true, freeCareOptIn: true, consultOptIn: true,
+          soOptIn: true, tourismOptIn: true, // v6.105 — İkinci Görüş + Sağlık Turizmi tercihleri
           mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true, mmssCoverageCurrency: true, mmssValidUntil: true,
           procedures: true, licenseNo: true, eduSchool: true, eduYear: true, specBoard: true, specYear: true,
           certifications: true, publications: true,
@@ -42,9 +44,9 @@ export default async function DoctorOnboardingPage({
   // Doktor profili bağlı değilse (ör. koordinatör) onboarding'in anlamı yok → panele geç.
   if (!doctor) redirect("/doktor");
 
-  // v6.95 — ÖĞRENCİ MODU (/ogrenci hunisi): hekim onboarding'i (FHIR uzmanlık, işlemler,
+  // v6.95 — ÖĞRENCİ MODU (/ogrenci hunisi): doktor onboarding'i (FHIR uzmanlık, işlemler,
   // diploma+MMSS, rızalar) HİÇ render edilmez — tek belge e-Devlet öğrenci belgesidir.
-  // Branş/city kapısından ÖNCE dallanır: öğrenci profil-tamamla (hekim soruları) sayfasına
+  // Branş/city kapısından ÖNCE dallanır: öğrenci profil-tamamla (doktor soruları) sayfasına
   // düşürülmez (kayıt formu branş+şehri zaten zorunlu topluyor).
   if (doctor.studentTrack) {
     const studentDocs = await db.doctorDocument.findMany({
@@ -111,6 +113,10 @@ export default async function DoctorOnboardingPage({
   let pubs: { title: string; venue: string; year: number }[] = [];
   try { if (doctor.publications) { const p = JSON.parse(doctor.publications); if (Array.isArray(p)) pubs = p; } } catch { /* bozuk JSON */ }
 
+  // Aktif tema (layout ile AYNI kaynak: aura_theme cookie, yoksa gece). Almaşık ritim için
+  // forma geçer — Aşama 2 bandı bunun tersine boyanır (v6.105, kullanıcı kararı 2026-08-17).
+  const theme = (await cookies()).get("aura_theme")?.value === "light" ? "light" : "dark";
+
   return (
     <>
       {/* AURA'ya geçiş uyarı ekranı (kullanıcı kararı 2026-08-16): Doctorium'daki Aşama-1
@@ -172,6 +178,8 @@ export default async function DoctorOnboardingPage({
       soOpen={soEligible(doctor.title)}
       initialFreeCare={doctor.freeCareOptIn}
       initialConsult={doctor.consultOptIn}
+      initialSo={doctor.soOptIn}
+      initialTourism={doctor.tourismOptIn}
       initialDocs={docs}
       initialMmss={{
         insurer: doctor.mmssInsurer,
@@ -189,6 +197,7 @@ export default async function DoctorOnboardingPage({
         hrText: HR_CONTACT_CONSENT_TEXT,
         fromDoctorium: sp.from === "doctorium",
       }}
+      theme={theme}
     />
     </>
   );

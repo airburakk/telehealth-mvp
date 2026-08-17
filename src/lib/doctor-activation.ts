@@ -8,7 +8,14 @@ import { db } from "@/lib/db";
 // Hesap aktivasyonu için yüklenmesi ZORUNLU belge tipleri (sertifika/akademik ihtiyari).
 // ⚠️ CHAMBER ve STUDENT_CERT buraya EKLENMEZ: ikisi de Aşama 1'in (Doctorium) belgesidir, klinik
 // aktivasyonun (Aşama 2) girdisi değildir — kapılar birbirinden bağımsız damgalanır.
-export const REQUIRED_DOC_TYPES = ["DIPLOMA", "MMSS"] as const;
+// v6.105 (kullanıcı kararı 2026-08-17): MMSS aktivasyon şartından ÇIKARILDI ("şimdilik kaldıralım")
+// → tek zorunlu mesleki belge Tıp Diploması. MMSS kartı/formu İHTİYARİ olarak DURUYOR: yükleyen
+// doktorun teminat limiti kaydedilmeye devam eder ve /paket sigorta paketini (M3 Katman 3) besler.
+// ⚠️ Bu kapı GEVŞEME'dir, sıkılaşma değil → mevcut aktif doktorlar etkilenmez (aksi yönde olsaydı
+// "Ders 1" regresyonu doğardı). Yan etki KASITLI: diploması olup MMSS'si olmadığı için bekleyen
+// doktorlar, bir sonraki refreshActivation'da aktifleşir.
+// 🔙 Geri alma: bu diziye "MMSS" eklemek + canActivate'e mmssComplete şartını geri koymak yeterli.
+export const REQUIRED_DOC_TYPES = ["DIPLOMA"] as const;
 export const ALL_DOC_TYPES = ["DIPLOMA", "MMSS", "CHAMBER", "STUDENT_CERT", "CERTIFICATE", "ACADEMIC"] as const;
 export type DoctorDocType = (typeof ALL_DOC_TYPES)[number];
 
@@ -76,7 +83,7 @@ export function hasClinicalAccess(d: { activatedAt: Date | null }): boolean {
 // Aşama 2 tamamlanmamış → sayfa redirect("/doktor/baslangic"), API 403 döndürür. COORDINATOR/
 // ADMIN gözetim rolleri bu kapıdan geçirilmez (rol muafiyeti çağıran tarafta — mevcut davranış).
 // verified de döner: PHI taşıyan akışlar (ör. İcapçı kuyruğu) ownership kuralıyla ("doğrulanmamış
-// hekim hiçbir vakaya erişemez") hizalanabilsin.
+// doktor hiçbir vakaya erişemez") hizalanabilsin.
 export async function clinicalDoctorFor(
   userId: string,
 ): Promise<{ doctorId: string; branch: string; verified: boolean } | null> {
@@ -103,18 +110,20 @@ export function hasRequiredDocs(docs: { type: string }[]): boolean {
   return REQUIRED_DOC_TYPES.every((t) => types.has(t));
 }
 
-// Hesap aktif edilebilir mi (damga atılabilir): zorunlu belgeler + MMSS metadata tam.
-export function canActivate(docs: { type: string }[], mmss: MmssMeta): boolean {
-  return hasRequiredDocs(docs) && mmssComplete(mmss);
+// Hesap aktif edilebilir mi (damga atılabilir): zorunlu belgeler.
+// v6.105: mmssComplete şartı KALKTI (MMSS ihtiyari). İmzadaki `mmss` parametresi bilinçli
+// KORUNDU — çağıranlar (refreshActivation, onboarding) değişmeden çalışsın ve şartı geri
+// koymak tek satır olsun. Kullanılmadığı için `_mmss` adıyla işaretlendi.
+export function canActivate(docs: { type: string }[], _mmss: MmssMeta): boolean {
+  return hasRequiredDocs(docs);
 }
 
 // Eksik zorunlu adımları döndür (UI'da yönlendirme metni için).
-export function missingSteps(docs: { type: string }[], mmss: MmssMeta): string[] {
+// v6.105: MMSS satırları çıkarıldı — ihtiyari bir belge "eksik zorunlu adım" olarak listelenemez.
+export function missingSteps(docs: { type: string }[], _mmss: MmssMeta): string[] {
   const types = new Set(docs.map((x) => x.type));
   const out: string[] = [];
   if (!types.has("DIPLOMA")) out.push("Tıp diploması");
-  if (!types.has("MMSS")) out.push("MMSS poliçesi");
-  if (!mmssComplete(mmss)) out.push("MMSS poliçe bilgileri (teminat limiti dahil)");
   return out;
 }
 

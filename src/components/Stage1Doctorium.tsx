@@ -92,11 +92,16 @@ export function Stage1Doctorium({
   return (
     <div className="mt-8">
       <div className="flex items-center gap-2 text-sm font-bold text-[var(--c-ink)]">
-        <BookOpenCheck size={16} className="text-[var(--c-accent-strong)]" /> Aşama 1 — Doctorium Üyeliği
+        {/* 🪤 Lockup'ı SATIR KIRMA: JSX'te "Doctor" ile <span>ium</span> arasına düşen satır
+            sonu boşluğa dönüşür ve marka "Doctor ium" diye kopuk çizilir (kullanıcı bulgusu
+            2026-08-17). Metin + span TEK satırda kalmalı; sığmıyorsa {" "}/{""} ile yönet. */}
+        <BookOpenCheck size={16} className="text-[var(--c-accent-strong)]" />
+        <span>Aşama 1 — Doctor<span className="doctorium-ium">ium</span> Üyeliği</span>
       </div>
       <p className="mt-1 text-xs text-[var(--c-ink-2)]">
-        Tabip odanızdan aldığınız <strong>Protokol Numaralı üye yazısını</strong> yükleyin; Doctorium
-        erişiminiz anında açılır — klinik belgelerinizi beklemez.
+        Tabip odanızdan aldığınız <strong>Protokol Numaralı üye yazısını</strong> yükleyin;
+        Doctor<span className="doctorium-ium">ium</span> erişiminiz anında açılır — bu aşamada
+        sizden istenen TEK belge budur, klinik belgelerinizi beklemez.
       </p>
 
       {/* Doctorium'dan yönlendirilen doktor için bağlam bandı (?from=doctorium) */}

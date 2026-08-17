@@ -18,9 +18,11 @@ export interface MmssInitial {
   policyNoSet: boolean; // poliçe no kayıtlı mı (değer şifreli → gösterilmez)
 }
 
+// v6.105: MMSS `required:false` (aktivasyon şartından çıktı — lib/doctor-activation
+// REQUIRED_DOC_TYPES; kart İHTİYARİ olarak duruyor, teminat limiti hâlâ /paket'i besler).
 const TYPES: { type: string; label: string; desc: string; required: boolean; Icon: typeof FileText }[] = [
   { type: "DIPLOMA", label: "Tıp Diploması", desc: "Diploma / tescil belgesi", required: true, Icon: GraduationCap },
-  { type: "MMSS", label: "Mesleki Mali Sorumluluk Sigortası (MMSS)", desc: "Zorunlu mesleki sorumluluk poliçesi", required: true, Icon: ShieldCheck },
+  { type: "MMSS", label: "Mesleki Mali Sorumluluk Sigortası (MMSS)", desc: "Mesleki sorumluluk poliçesi (ihtiyari)", required: false, Icon: ShieldCheck },
   { type: "CERTIFICATE", label: "Sertifikalar", desc: "Mesleki sertifika / üyelik (ihtiyari)", required: false, Icon: Award },
   { type: "ACADEMIC", label: "Akademik Çalışmalar", desc: "Yayın / akademik belge (ihtiyari)", required: false, Icon: FileText },
 ];
@@ -36,14 +38,26 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+// v6.105 (kullanıcı kararı 2026-08-17): bileşen artık BÖLÜNEBİLİR — `types` ile hangi belge
+// kartlarının çizileceği seçilir. Onboarding'de iki kez kullanılır: "Mesleki Belgeler"
+// bölümünde [DIPLOMA, MMSS], "Sertifikalar & Akademik Çalışmalar" kutusunda
+// [CERTIFICATE, ACADEMIC] — böylece dosya yükleme, ait olduğu metin alanlarının yanında durur.
+// ⚠️ Her örnek YALNIZ kendi tiplerinin belgelerini almalı (initialDocs çağıranda filtrelenir),
+// yoksa iki liste birbirinin dosyasını gösterir.
+// ⚠️ `onActivationChange` yalnız DIPLOMA taşıyan örneğe verilir; aksi hâlde ikinci örnek
+// "diploma yok → aktif değil" diye yanlış bildirir ve butonu kilitler.
 export function DoctorDocuments({
   initialDocs,
   initialMmss,
   onActivationChange,
+  types,
+  onDocsChange,
 }: {
   initialDocs: DocMeta[];
   initialMmss: MmssInitial;
   onActivationChange?: (activated: boolean) => void;
+  types?: string[]; // çizilecek belge tipleri (varsayılan: hepsi)
+  onDocsChange?: (counts: Record<string, number>) => void; // tip → yüklü dosya sayısı
 }) {
   const [docs, setDocs] = useState<DocMeta[]>(initialDocs);
   const [busy, setBusy] = useState<string | null>(null); // yüklenen/silinen tip
@@ -60,10 +74,23 @@ export function DoctorDocuments({
 
   const has = (t: string) => docs.some((d) => d.type === t);
   const mmssMetaComplete = !!insurer.trim() && coverageLimit !== "" && Number(coverageLimit) > 0 && (policyNo.trim() !== "" || initialMmss.policyNoSet) && mmssSaved;
-  const activated = has("DIPLOMA") && has("MMSS") && mmssMetaComplete;
+  // v6.105: aktivasyon artık YALNIZ diplomaya bakar (MMSS ihtiyari oldu — lib/doctor-activation
+  // REQUIRED_DOC_TYPES ile aynı kural; iki yer birbirine UYUMLU kalmalı, yoksa buton açık görünüp
+  // sunucu 409 döner).
+  const activated = has("DIPLOMA");
+  const shown = types ? TYPES.filter((t) => types.includes(t.type)) : TYPES;
 
   // activation değişimini parent'a bildir (onboarding "geç" butonu)
   useEffect(() => { onActivationChange?.(activated); }, [activated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Yüklü dosya sayılarını parent'a bildir — "sertifika yükledin ama listeye yazmadın"
+  // uyarısı (AcademicEditor) bu sayıya bakar.
+  useEffect(() => {
+    if (!onDocsChange) return;
+    const counts: Record<string, number> = {};
+    for (const d of docs) counts[d.type] = (counts[d.type] ?? 0) + 1;
+    onDocsChange(counts);
+  }, [docs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function upload(type: string, file: File | null) {
     if (!file) return;
@@ -123,7 +150,7 @@ export function DoctorDocuments({
 
   return (
     <div className="space-y-3">
-      {TYPES.map(({ type, label, desc, required, Icon }) => {
+      {shown.map(({ type, label, desc, required, Icon }) => {
         const mine = docs.filter((d) => d.type === type);
         const ok = mine.length > 0;
         return (

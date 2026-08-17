@@ -10,8 +10,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47 } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
-import { isImmersiveCallPath } from "@/lib/immersive-routes";
-import { LANG_CODES } from "@/lib/aura-landing/copy";
+import { hidesGlobalChrome } from "@/lib/chrome-routes";
 import { BadgeCheck, LogOut, ShieldOff, UserCog, Wallet } from "lucide-react";
 import { ThemeToggle, type ThemeName } from "@/components/ThemeToggle";
 
@@ -34,15 +33,26 @@ const ROLE_LABELS: Record<string, string> = {
 // AURA → /doktor (bu rollerde vitrin değil klinik panel), Doctorium → portal. Diğer roller
 // toggle GÖRMEZ: eski tek logo (→ /) aynen. Öğrencide AURA tarafı /doktor kapısına düşer
 // (hasClinicalAccess yönlendirmesi) — bilinçli, ayrı hedef icat edilmedi.
-function BrandToggle({ doctoriumActive }: { doctoriumActive: boolean }) {
+//
+// v6.105 (kullanıcı kararı 2026-08-17) — AŞAMA 1 doktoru: AURA yarısı NEREDE OLURSA OLSUN soluk
+// ve pasif çizilir (kayan sembol Doctorium yuvasında durur, zümrüt kalır). Marka kaldırılmadı,
+// SÖNDÜRÜLDÜ: kullanıcı yükseltme yolunun görünür kalmasını seçti — tıklama /doktor kapısına
+// gider, kapı `?from=aura-gecis` uyarı ekranını bastırır. `?from=doctorium` bu doktorda portal
+// dışında da taşınır; yoksa doktor sessizce boş onboarding'e düşer, neden geldiğini anlamaz.
+function BrandToggle({ doctoriumActive, stage1 }: { doctoriumActive: boolean; stage1: boolean }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const slotA = useRef<HTMLSpanElement>(null); // AURA yuvası
   const slotB = useRef<HTMLSpanElement>(null); // Doctorium yuvası
   const [pos, setPos] = useState<number | null>(null);
 
+  // Marka tarafı = sembolün durduğu/renklendiği yan. Aşama 1 doktorunda portal dışında da
+  // Doctorium tarafıdır (AURA henüz onun markası değil); `doctoriumActive` yalnız gerçek
+  // sayfa vurgusu (aria-current + ium nefesi) için ayrı kalır.
+  const doctoriumSide = doctoriumActive || stage1;
+
   useLayoutEffect(() => {
     const measure = () => {
-      const slot = doctoriumActive ? slotB.current : slotA.current;
+      const slot = doctoriumSide ? slotB.current : slotA.current;
       if (slot && wrapRef.current) {
         const w = wrapRef.current.getBoundingClientRect();
         const s = slot.getBoundingClientRect();
@@ -53,7 +63,7 @@ function BrandToggle({ doctoriumActive }: { doctoriumActive: boolean }) {
     const ro = new ResizeObserver(measure);
     if (wrapRef.current) ro.observe(wrapRef.current);
     return () => ro.disconnect();
-  }, [doctoriumActive]);
+  }, [doctoriumSide]);
 
   const wordH = 14; // 23px sembol ölçeğinin wordmark oranı (AuraLogo size*0.6)
   return (
@@ -65,10 +75,10 @@ function BrandToggle({ doctoriumActive }: { doctoriumActive: boolean }) {
         className="brand-live pointer-events-none absolute top-1/2 z-10 -translate-y-1/2 transition-[left] duration-300 ease-out motion-reduce:transition-none"
         style={pos != null ? { left: pos } : { visibility: "hidden", left: 0 }}
       >
-        <span className={`block transition-opacity duration-300 ${doctoriumActive ? "opacity-0" : "opacity-100"}`}>
+        <span className={`block transition-opacity duration-300 ${doctoriumSide ? "opacity-0" : "opacity-100"}`}>
           <AuraMark size={23} tone="brand" />
         </span>
-        <span className={`absolute inset-0 transition-opacity duration-300 ${doctoriumActive ? "opacity-100" : "opacity-0"}`}>
+        <span className={`absolute inset-0 transition-opacity duration-300 ${doctoriumSide ? "opacity-100" : "opacity-0"}`}>
           <AuraMark size={23} tone="emerald" />
         </span>
       </span>
@@ -77,10 +87,10 @@ function BrandToggle({ doctoriumActive }: { doctoriumActive: boolean }) {
           /doktor kapısı baslangic?from=aura-gecis'e yönlendirir → Aşama-2 uyarı ekranı
           (kullanıcı kararı 2026-08-16). Aşama-2 doktorda parametre yok sayılır. */}
       <Link
-        href={doctoriumActive ? "/doktor?from=doctorium" : "/doktor"}
-        aria-current={!doctoriumActive ? "page" : undefined}
-        title="AURA"
-        className={`flex items-center gap-1.5 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumActive ? "opacity-45 hover:opacity-80" : ""}`}
+        href={doctoriumSide ? "/doktor?from=doctorium" : "/doktor"}
+        aria-current={!doctoriumSide ? "page" : undefined}
+        title={stage1 ? "AURA üyeliği — Aşama 2 gerekli" : "AURA"}
+        className={`flex items-center gap-1.5 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumSide ? "opacity-45 hover:opacity-80" : ""}`}
       >
         <span ref={slotA} aria-hidden className="block h-[23px] w-[23px] shrink-0" />
         {/* Tema-çift wordmark (AuraLogo deseni — görünürlüğü .logo-word-* yönetir). */}
@@ -95,7 +105,7 @@ function BrandToggle({ doctoriumActive }: { doctoriumActive: boolean }) {
         aria-current={doctoriumActive ? "page" : undefined}
         title="Doctorium"
         aria-label="Doctorium"
-        className={`flex items-center gap-1.5 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumActive ? "" : "opacity-45 hover:opacity-80"}`}
+        className={`flex items-center gap-1.5 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumSide ? "" : "opacity-45 hover:opacity-80"}`}
       >
         <span ref={slotB} aria-hidden className="block h-[23px] w-[23px] shrink-0" />
         {/* Yazı dar ekranda gizli, yuva/sembol kalır — sol blok mobilde sıkı kalır. */}
@@ -110,7 +120,12 @@ function BrandToggle({ doctoriumActive }: { doctoriumActive: boolean }) {
 // v6.95 — student (kullanıcı kararı 2026-08-14): öğrenci hunisi hesabında bant YALNIZ Doctorium,
 // hesap menüsünde Profilim/Finans gizli, mono rol etiketi "Tıp Öğrencisi". Görsel sadeleştirme —
 // güvenlik kapısı değil (klinik rotalar/finans sayfası kendi kapılarını zaten taşır).
-export function Header({ user, lang = "Türkçe", theme = "dark", student = false }: { user: { name: string; role: string } | null; lang?: string; theme?: ThemeName; student?: boolean }) {
+// v6.105 — stage1 (kullanıcı kararı 2026-08-17): AŞAMA 1 doktoru = Doctorium üyeliği var,
+// AURA üyeliği (klinik aktivasyon) YOK. Kromu Doctorium'a aittir: bant boş, hesap menüsünde
+// Profilim/Finans yok, marka toggle'ının AURA yarısı soluk. `student` ile aynı sadeleştirme
+// ailesi; ikisi de görsel, kapı DEĞİL. Tetikleyici durum bazlı (activatedAt) → Aşama 2 biter
+// bitmez krom kendiliğinden AURA'ya döner.
+export function Header({ user, lang = "Türkçe", theme = "dark", student = false, stage1 = false }: { user: { name: string; role: string } | null; lang?: string; theme?: ThemeName; student?: boolean; stage1?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
@@ -136,7 +151,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
 
   // Nav öğeleri rol bazlı (lib/nav.ts — tam birleşme 2026-07-12: journey daraltması kalktı,
   // hasta nav'ı herkes için aynı). Öğrencide (v6.95) bant boş — Doctorium'a giriş toggle'dan.
-  const items = navItemsFor(user?.role, { student });
+  const items = navItemsFor(user?.role, { student, stage1 });
   // Doctorium odak modu (kullanıcı kararı 2026-08-16, 2. tur): portal içindeyken klinik
   // sekmeler (Doktor, Post-Op) ve hesap menüsündeki Profilim/Finans GİZLENİR — AURA tarafına
   // dönünce geri gelir. Görsel sadeleştirme; rota kapıları (hasClinicalAccess) aynen durur.
@@ -151,18 +166,9 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   const { t } = useT(lang, texts);
   const dir = langDir(lang);
 
-  // AURA landing (/, /how-it-works, /guven-ve-gizlilik) kendi nav/footer'ını taşır — global krom gizlenir.
-  // /doctorium (2026-08-16): Doctorium tanıtım landing'i — o da kendi üst barını taşır.
-  // Giriş kapıları (/giris, /kurumsal-giris, /doctorium/giris) tam-ekran vitrin panelleridir
-  // (kendi logo + "← ana sayfa" bağlantısıyla); /e-posta form alt-rotalarında krom durur (exact match).
-  // Video görüşme rotaları IMMERSIVE tam-ekran (100dvh video+panel) → krom gizlenir.
-  // Locale rotaları (/en /tr … — v6.17) da landing'dir: kendi nav/footer'ını taşır.
-  if (
-    ["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/for-clinicians", "/doctorium", "/doctorium/giris", "/giris", "/kurumsal-giris"].includes(pathname) ||
-    (LANG_CODES as readonly string[]).includes(pathname.slice(1)) ||
-    isImmersiveCallPath(pathname)
-  )
-    return null;
+  // Kendi kromunu taşıyan yüzeyler (landing'ler · giriş kapıları · locale rotaları · immersive
+  // görüşme) lib/chrome-routes.ts'te listelenir — SiteFooter ile TEK KAYNAK (2026-08-17).
+  if (hidesGlobalChrome(pathname)) return null;
 
   const activeHref = shownItems
     .filter((n) => pathname === n.href || pathname.startsWith(n.href + "/"))
@@ -202,7 +208,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
         {/* shrink-0: dar ekranda flex logoyu ezip wordmark'ı nav'ın altına sokuyordu
             (mobil "menüler üst üste biniyor" bildirimi, 2026-08-01) — taşmayı nav scroll'u yönetir. */}
         {user && ["DOCTOR", "COORDINATOR"].includes(user.role) ? (
-          <BrandToggle doctoriumActive={doctoriumActive} />
+          <BrandToggle doctoriumActive={doctoriumActive} stage1={stage1} />
         ) : (
           <Link href="/" className="flex shrink-0 items-end">
             <AuraLogo size={23} />
@@ -269,15 +275,17 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                   {/* Profilim + Finans (2026-08-01, kullanıcı kararı, 2. tur): Profilim nav
                       bandından buraya taşındı; Finans artık profil çapası değil AYRI SAYFA.
                       v6.95: öğrencide İKİSİ DE GİZLİ (kullanıcı kararı 2026-08-14) — profil
-                      hekim kimlik/işlem alanları, finans hekim hakedişleri taşır; öğrenciye
+                      doktor kimlik/işlem alanları, finans doktor hakedişleri taşır; öğrenciye
                       kapalı yüzeyin linki çizilmez (koşullu-href). Doctorium odak modunda
-                      (2026-08-16) da gizli — klinik yüzey linkleri AURA tarafında yaşar. */}
-                  {(user.role === "DOCTOR" || user.role === "ADMIN") && !student && !doctoriumActive && (
+                      (2026-08-16) da gizli — klinik yüzey linkleri AURA tarafında yaşar.
+                      v6.105 (2026-08-17): AŞAMA 1 doktorunda (stage1) da gizli — o hesabın
+                      kromu bütünüyle Doctorium'a aittir, portal içinde/dışında fark etmez. */}
+                  {(user.role === "DOCTOR" || user.role === "ADMIN") && !student && !stage1 && !doctoriumActive && (
                     <Link role="menuitem" href="/doktor/profil" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <BadgeCheck size={15} /> {t("Profilim")}
                     </Link>
                   )}
-                  {user.role === "DOCTOR" && !student && !doctoriumActive && (
+                  {user.role === "DOCTOR" && !student && !stage1 && !doctoriumActive && (
                     <Link role="menuitem" href="/doktor/finans" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <Wallet size={15} /> {t("Finans")}
                     </Link>

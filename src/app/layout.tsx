@@ -80,14 +80,23 @@ export default async function RootLayout({
   // v6.95 — öğrenci hunisi kromu (kullanıcı kararı 2026-08-14): studentTrack hesapta Header bandı
   // yalnız Doctorium, hesap menüsünde Profilim/Finans gizli. PARTNER dil sorgusuyla aynı gerekçeyle
   // try/catch: krom kozmetiktir, DB tökezlerse normal doktor kromuna düşer (kapılar sayfa/API'de).
+  // v6.105 — AŞAMA 1 kromu (kullanıcı kararı 2026-08-17): klinik aktivasyonu OLMAYAN doktor
+  // (activatedAt boş = AURA üyeliği yok) da sade Doctorium kromu görür — bant boş, hesap
+  // menüsünde Profilim/Finans yok, marka toggle'ının AURA yarısı soluk. Öğrenci kendi dalında
+  // kalır (studentTrack önce bakılır): ikisi çakışmaz, öğrenci etiketi "Doktor" yazmaz.
   let studentHeader = false;
+  let stage1Header = false;
   if (user?.role === "DOCTOR") {
     try {
       const u = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
-      const d = u?.doctorId ? await db.doctor.findUnique({ where: { id: u.doctorId }, select: { studentTrack: true } }) : null;
+      const d = u?.doctorId
+        ? await db.doctor.findUnique({ where: { id: u.doctorId }, select: { studentTrack: true, activatedAt: true } })
+        : null;
       studentHeader = !!d?.studentTrack;
+      stage1Header = !!d && !d.studentTrack && !d.activatedAt;
     } catch {
       studentHeader = false;
+      stage1Header = false;
     }
   }
   // Tam birleşme (2026-07-12): nav journey'ye bakmaz — hasta nav'ı herkes için aynı,
@@ -104,7 +113,7 @@ export default async function RootLayout({
         {/* Ekran dışına çıkan sürekli dekoratif animasyonları duraklatır. Kökte: landing'in
             yanı sıra uygulama içi Header/spinner sembollerini de kapsar. Render etmez (null). */}
         <AuraAnimPause />
-        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} theme={theme} student={studentHeader} />
+        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} theme={theme} student={studentHeader} stage1={stage1Header} />
         {user?.imp ? <MasterBar mode="impersonating" userName={user.name} /> : isMaster(user) ? <MasterBar mode="master" /> : null}
         <main className="flex-1">{children}</main>
         <SiteFooter />

@@ -11,7 +11,7 @@
 // boyanır) → her tonun kendi gradient id seti var. Filter'lar (salt blur, renksiz) ortak.
 // viewBox pulse'ın en geniş halini (scale 1.75) + ışıma payını kapsar (kırpılma yok).
 
-// Ton paletleri: marka turkuazı (varsayılan) + Doctorium zümrüdü (hekim bilgi portalı alt-markası).
+// Ton paletleri: marka turkuazı (varsayılan) + Doctorium zümrüdü (doktor bilgi portalı alt-markası).
 // Zümrüt set turkuaz gradyanın hue-shift karşılığı; ana ton sayfadaki "ium" vurgusuyla aynı (#34d399).
 const TONES = {
   brand: { light: "#8AE6EC", mid: "#4FD6E2", main: "#28C8D8", coreId: "auraCoreGrad", fillId: "auraFillGrad" },
@@ -203,6 +203,41 @@ export function DoctoriumBraille({ height = 12, className = "" }: { height?: num
         <circle key={i} cx={cx} cy={cy} r="7" />
       ))}
     </svg>
+  );
+}
+
+// Metin İÇİNDE marka olarak AURA wordmark'ı — "AURA" harfleri yazıyla değil LOGOYLA yazılır
+// (kullanıcı kararı 2026-08-17: "aurayı yazı olarak değil, logomuzu alarak yaz ve turkuaza
+// boyayalım"). Doctorium lockup'ının (Doctor + zümrüt "ium") AURA tarafındaki eşleniğidir.
+//
+// 🔑 TEKNİK: wordmark PNG'si tema-çift ve rengi dosyaya GÖMÜLÜ → doğrudan boyanamaz. PNG
+// bunun yerine CSS **maskesi** olarak kullanılır (alfa kanalı 0-255 tam ölçüldü = harf
+// şekli zaten alfada): arkasına düz renk basılır, maske harfleri keser. Böylece renk bizim
+// kontrolümüzde (varsayılan marka turkuazı #28C8D8 = TONES.brand.main) ve anti-aliasing
+// kenarları korunur. Tema-çift dosyaya gerek kalmaz — hangi zeminde olursa olsun aynı ton.
+// ⚠️ `currentColor` KULLANMA: bu marka rengidir, metin rengini miras almamalı.
+//
+// Boyut em-tabanlı: içinde bulunduğu metnin punto'suyla ölçeklenir (paragrafa gömülü marka
+// satır yüksekliğini bozmasın). 835×255 → oran 3.275; height 0.72em ≈ büyük harf yüksekliği.
+const WORDMARK_RATIO = 835 / 255;
+export function AuraWordmark({ color = TONES.brand.main, height = "0.72em", className = "" }: { color?: string; height?: string; className?: string }) {
+  const mask = {
+    WebkitMaskImage: "url(/aura-word-dark.png)",
+    maskImage: "url(/aura-word-dark.png)",
+    WebkitMaskSize: "contain",
+    maskSize: "contain",
+    WebkitMaskRepeat: "no-repeat",
+    maskRepeat: "no-repeat",
+    WebkitMaskPosition: "center",
+    maskPosition: "center",
+  } as const;
+  return (
+    <span
+      role="img"
+      aria-label="AURA"
+      className={`inline-block shrink-0 align-[-0.06em] ${className}`.trim()}
+      style={{ height, width: `calc(${height} * ${WORDMARK_RATIO})`, backgroundColor: color, ...mask }}
+    />
   );
 }
 

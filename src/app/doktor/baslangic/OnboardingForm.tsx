@@ -2,17 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { HeartHandshake, Stethoscope, Inbox, Loader2, ArrowRight, Check, BadgeCheck, Lock, ShieldAlert } from "lucide-react";
+import { HeartHandshake, Stethoscope, Inbox, Loader2, ArrowRight, Check, BadgeCheck, Lock, ShieldAlert, Award, LayoutGrid, Luggage } from "lucide-react";
 import { DoctorDocuments, type DocMeta, type MmssInitial } from "@/components/DoctorDocuments";
 import ProcedureSelector, { type Proc } from "@/components/ProcedureSelector";
-import { AcademicEditor } from "@/components/AcademicEditor";
+import { AcademicEducationBox, CertificatesBox } from "@/components/AcademicEditor";
 import { Stage1Doctorium } from "@/components/Stage1Doctorium";
+import { AuraWordmark } from "@/components/AuraLogo";
 
 interface Pub { title: string; venue: string; year: number }
 
 // İki aşamalı giriş — AŞAMA 1 blok prop'ları (v6.87): tabip odası yazısı + rızalar
 // Stage1Doctorium'da. (v6.95: öğrenci yolu AYRI huniye taşındı — /ogrenci + StudentStage1Card;
-// bu form yalnız hekim onboarding'idir, öğrenci hesabı buraya hiç düşmez.)
+// bu form yalnız doktor onboarding'idir, öğrenci hesabı buraya hiç düşmez.)
 export interface Stage1Props {
   initialChamberDoc: DocMeta | null;
   initialAccess: boolean; // Doctorium erişimi (yazı VEYA klinik aktivasyon)
@@ -39,9 +40,12 @@ export function OnboardingForm({
   soOpen,
   initialFreeCare,
   initialConsult,
+  initialSo,
+  initialTourism,
   initialDocs,
   initialMmss,
   stage1,
+  theme,
 }: {
   doctorName: string;
   branchKey: string;
@@ -53,16 +57,23 @@ export function OnboardingForm({
     licenseNo: string | null; eduSchool: string | null; eduYear: number | null;
     specBoard: string | null; specYear: number | null; certifications: string[]; publications: Pub[];
   };
-  soOpen: boolean;
+  soOpen: boolean; // ünvan kapısı (Doç./Prof.) — İkinci Görüş kartının seçilebilirliği
   initialFreeCare: boolean;
   initialConsult: boolean;
+  initialSo: boolean;
+  initialTourism: boolean;
   initialDocs: DocMeta[];
   initialMmss: MmssInitial;
   stage1: Stage1Props;
+  // Sayfanın aktif teması (aura_theme cookie) — Aşama 2 bandı bunun TERSİNE boyanır.
+  theme: "dark" | "light";
 }) {
   const router = useRouter();
   const [freeCare, setFreeCare] = useState(initialFreeCare);
   const [consult, setConsult] = useState(initialConsult);
+  // v6.105 — İkinci Görüş + Sağlık Turizmi de tercih oldu (kullanıcı kararı 2026-08-17).
+  const [so, setSo] = useState(initialSo);
+  const [tourism, setTourism] = useState(initialTourism);
   const [docsReady, setDocsReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
@@ -76,7 +87,9 @@ export function OnboardingForm({
       const r = await fetch("/api/doctor/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ freeCareOptIn: freeCare, consultOptIn: consult }),
+        // soOptIn ünvansız doktorda DAİMA false gönderilir (kart zaten devre dışı) — sunucu da
+        // ayrıca soEligible arar, yani bu yalnız temizlik, kapı değil.
+        body: JSON.stringify({ freeCareOptIn: freeCare, consultOptIn: consult, soOptIn: so && soOpen, tourismOptIn: tourism }),
       });
       const d = await r.json();
       if (!r.ok) {
@@ -92,60 +105,151 @@ export function OnboardingForm({
     }
   }
 
+  // ── ALMAŞIK RİTİM: AÇIK → KOYU → AÇIK (kullanıcı kararı 2026-08-17, 2. tur) ────────────────
+  // "Beyazla başla; Aşama 2 (AURA) siyah olsun." Ritim artık sayfa temasından BAĞIMSIZ sabittir
+  // (landing deseni): Aşama 1 açık · Aşama 2 koyu · Aşama 3 açık. Sabitleme, tema sınıfını
+  // yalnızca GEREKTİĞİNDE basarak yapılır — sayfa zaten istenen temadaysa sınıf eklenmez, böylece
+  // gereksiz kalıtım katmanı oluşmaz. `theme-*` sınıfı seçilmesinin nedeni: --c-* token'ları
+  // kalıtsaldır → bant içindeki TÜM bileşenler (panel/hairline/ink/rozet) kendiliğinden uyar,
+  // tek tek renk ezmek gerekmez. ⚠️ Bu sayfada tema toggle'ı ritmi DEĞİŞTİRMEZ (bilinçli).
+  const LIGHT_BAND = theme === "dark" ? "theme-light" : "";
+  const DARK_BAND = theme === "light" ? "theme-dark" : "";
+
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10">
-      <div className="text-center">
-        <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Hoş geldiniz, {doctorName}</h1>
-        <p className="mt-2 text-sm text-[var(--c-ink-2)]">
-          Üyeliğiniz iki aşamalıdır: Doctorium için tabip odası yazınız yeterli; klinik havuza
-          katılmak için mesleki belgelerinizi tamamlarsınız. Tercihlerinizi dilediğiniz zaman
-          profilinizden değiştirebilirsiniz.
-        </p>
-      </div>
+    <div>
+      {/* ══ BANT 1 — AÇIK: karşılama + Aşama 1 (Doctorium) ══ */}
+      <div className={`${LIGHT_BAND} bg-[var(--c-bg)]`}>
+        <div className="mx-auto max-w-2xl px-5 py-10">
+          <div className="text-center">
+            <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Hoş geldiniz, {doctorName}</h1>
+            <p className="mt-2 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-sm text-[var(--c-ink-2)]">
+              <span>Üyeliğiniz iki aşamalıdır:</span>
+              <strong>Doctor<span className="doctorium-ium">ium</span></strong>
+              <span>üyeliği için tabip odası yazınız yeterli;</span>
+              {/* AURA yazıyla değil LOGOYLA (marka turkuazı) — kullanıcı kararı 2026-08-17.
+                  1.35em: 0.78em "çok küçük kaldı" (kullanıcı, 2. tur) — logo çevresindeki
+                  metinden belirgin büyük durmalı ki marka olarak okunsun, sözcük gibi değil. */}
+              <AuraWordmark height="1.35em" />
+              <span>üyeliği için mesleki belgelerinizi tamamlarsınız.</span>
+            </p>
+            <p className="mt-1.5 text-sm text-[var(--c-ink-2)]">
+              Tercihlerinizi dilediğiniz zaman profilinizden değiştirebilirsiniz.
+            </p>
+          </div>
 
-      {/* ── AŞAMA 1 — Doctorium üyeliği: tabip odası yazısı + isteğe bağlı rızalar (v6.87) ── */}
-      <Stage1Doctorium {...stage1} />
-
-      {/* ── AŞAMA 2 — Klinik havuz üyeliği: mevcut aktivasyon gereksinimleri AYNEN ── */}
-      <div className="mt-10 border-t border-[var(--c-hairline)] pt-6">
-        <div className="flex items-center gap-2 text-sm font-bold text-[var(--c-ink)]">
-          <Stethoscope size={16} className="text-[var(--c-accent-strong)]" /> Aşama 2 — Klinik Havuz Üyeliği
+          {/* ── AŞAMA 1 — Doctorium üyeliği: tabip odası yazısı + isteğe bağlı rızalar (v6.87) ── */}
+          <Stage1Doctorium {...stage1} />
         </div>
-        <p className="mt-1 text-xs text-[var(--c-ink-2)]">
-          Uzaktan sağlık, ikinci görüş ve sağlık turizmi doktor havuzlarına katılmak için aşağıdaki
-          belgeleri ve tanımları tamamlayın. Bu aşamayı dilediğiniz zaman tamamlayabilirsiniz;
-          Doctorium erişiminiz beklemez.
+      </div>
+
+      {/* ══ BANT 2 — KOYU: Aşama 2 (AURA) ══ */}
+      <div className={`${DARK_BAND} bg-[var(--c-bg)]`}>
+        <div className="mx-auto max-w-2xl px-5 py-10">
+      {/* ── AŞAMA 2 — AURA üyeliği: mevcut aktivasyon gereksinimleri AYNEN (v6.105 ad değişimi:
+          "Klinik Havuz Üyeliği" → "AURA Üyeliği"; kullanıcı kararı 2026-08-17 — iki aşama iki
+          MARKAYA karşılık gelir: Aşama 1 = Doctorium, Aşama 2 = AURA. Kapı/koşullar DEĞİŞMEDİ) ── */}
+      <div>
+        {/* Başlık kalıbı Aşama 1 ile BİREBİR: "Aşama N — <marka> Üyeliği" (marka AURA'da logo,
+            Doctorium'da lockup). Sıra bozulursa iki aşama kardeş görünmez. */}
+        <div className="flex flex-wrap items-center gap-1.5 text-sm font-bold text-[var(--c-ink)]">
+          <span>Aşama 2 —</span>
+          <AuraWordmark height="1.05em" />
+          <span>Üyeliği</span>
+        </div>
+        <p className="mt-1.5 text-xs text-[var(--c-ink-2)]">
+          {/* Beş kulvar — Aşama 3'teki beş panelle BİREBİR aynı sıra: uzaktan sağlık · ikinci
+              görüş · sağlık turizmi · ücretsiz sağlık hizmeti · konsültasyon. Panel listesi
+              değişirse bu cümle de güncellenmeli (iki yer aynı kulvar kümesini anlatır). */}
+          Uzaktan sağlık, ikinci görüş, sağlık turizmi, ücretsiz sağlık hizmeti ve konsültasyon
+          taleplerinin bulunduğu doktor havuzlarına katılmak için aşağıdaki belgeleri ve
+          tanımları tamamlayın. Bu aşamayı
+          dilediğiniz zaman tamamlayabilirsiniz; Doctor<span className="doctorium-ium">ium</span>{" "}
+          erişiminiz beklemez.
         </p>
       </div>
 
-      {/* ── Uzmanlık & İşlemler (FHIR) — diploma/tescil no + uzmanlık belgesi + işlem seçimi (zorunlu; ücret tedavi kararında) ── */}
+      {/* ── 1. Mesleki belgeler — hesap aktivasyon kapısı. İLK SIRADA (kullanıcı kararı
+             2026-08-17: "ilk yapılması gereken o"); önceki düzende en alttaydı. ── */}
       <div className="mt-6">
         <div className="flex items-center gap-2 text-sm font-bold text-[var(--c-ink)]">
-          <Stethoscope size={16} className="text-[var(--c-accent-strong)]" /> Uzmanlık & İşlemler
+          <ShieldAlert size={16} className="text-amber-500" /> Mesleki Belgeler
         </div>
         <p className="mt-1 text-xs text-[var(--c-ink-2)]">
-          <strong>{branchLabel}</strong> branşı için diploma/tescil numaranızı, uzmanlık belgenizi ve
-          yaptığınız işlemleri tanımlayın. Bu bilgiler <strong>FHIR</strong> standardında
-          (Practitioner.identifier/qualification + ServiceRequest) saklanır ve hesabınız aktifleşmeden
-          zorunludur — en az bir işlem seçmelisiniz. İşlem ücreti burada sorulmaz; hasta görüşmesi
-          sonrasında <strong>tedavi kararı</strong> ekranında taban–tavan aralığında belirlersiniz.
+          <strong>Tıp diplomanızı</strong> yükleyin ve <strong>Akademik &amp; Eğitim</strong>{" "}
+          kutusundaki <strong>diploma/tescil numarası</strong> ile <strong>uzmanlık belgesi</strong>{" "}
+          alanlarını doldurun — bunlar olmadan hesabınız aktifleşmez ve <strong>FHIR</strong>{" "}
+          standardında (Practitioner.identifier / qualification) saklanır. MMSS poliçesi
+          ihtiyaridir; yüklerseniz teminat limitiniz hastaya sunulan sigorta paketine yansır.
         </p>
 
-        {/* FHIR qualification: diploma/tescil no + uzmanlık belgesi (AcademicEditor) */}
+        {/* Sıra kullanıcı kararıdır (2026-08-17): Tıp Diploması → Akademik & Eğitim → MMSS.
+            Araya kutu girdiği için DoctorDocuments İKİ kez çağrılır (types ile ayrılmış).
+            ⚠️ onActivationChange YALNIZ diploma örneğinde: MMSS örneğine de verilseydi
+            "diploma yok → aktif değil" deyip butonu kilitlerdi. */}
         <div className="mt-3">
-          <AcademicEditor
+          <DoctorDocuments
+            types={["DIPLOMA"]}
+            initialDocs={initialDocs.filter((d) => d.type === "DIPLOMA")}
+            initialMmss={initialMmss}
+            onActivationChange={setDocsReady}
+          />
+        </div>
+
+        <div className="mt-4">
+          <AcademicEducationBox
             licenseNo={qualification.licenseNo}
             eduSchool={qualification.eduSchool}
             eduYear={qualification.eduYear}
             specBoard={qualification.specBoard}
             specYear={qualification.specYear}
-            certifications={qualification.certifications}
-            publications={qualification.publications}
           />
         </div>
 
-        {/* Branş işlemleri + ücretlendirme (≥1 zorunlu) */}
+        {/* MMSS — ihtiyari; poliçe bilgileri formu bu örnekte render edilir (yalnız MMSS kartında). */}
         <div className="mt-4">
+          <DoctorDocuments
+            types={["MMSS"]}
+            initialDocs={initialDocs.filter((d) => d.type === "MMSS")}
+            initialMmss={initialMmss}
+          />
+        </div>
+      </div>
+
+      {/* ── 3. Sertifikalar ve Akademik Çalışmalar — tamamı ihtiyari; dosya kartları + listeler
+             tek kutuda (kullanıcı kararı 2026-08-17: eski "Akademik ve Eğitim" başlığı bu ada
+             döndü, çünkü akademik künye artık Mesleki Belgeler'in içinde yaşıyor). ── */}
+      <div className="mt-8">
+        <div className="flex items-center gap-2 text-sm font-bold text-[var(--c-ink)]">
+          <Award size={16} className="text-[var(--c-accent-strong)]" /> Sertifikalar ve Akademik Çalışmalar
+        </div>
+        <p className="mt-1 text-xs text-[var(--c-ink-2)]">
+          Mesleki sertifikalarınızı, üyeliklerinizi ve yayınlarınızı ekleyin. Bu bölümün tamamı{" "}
+          <strong>ihtiyaridir</strong> — hesabınızın aktifleşmesini etkilemez. Eklediğiniz kayıtlar
+          doktor profilinizde ve dizin sayfalarında görünür; hasta ve kurumlar için uzmanlık
+          alanınızın kanıtıdır. Her belgeyi <strong>hem dosya olarak yükleyin hem de alttaki
+          listeye yazın</strong>.
+        </p>
+        <div className="mt-3">
+          <CertificatesBox
+            certifications={qualification.certifications}
+            publications={qualification.publications}
+            initialDocs={initialDocs.filter((d) => d.type === "CERTIFICATE" || d.type === "ACADEMIC")}
+          />
+        </div>
+      </div>
+
+      {/* ── 4. Yaptığım İşlemler — branş işlemleri (≥1 zorunlu; ücret tedavi kararında) ── */}
+      <div className="mt-8">
+        <div className="flex items-center gap-2 text-sm font-bold text-[var(--c-ink)]">
+          <Stethoscope size={16} className="text-[var(--c-accent-strong)]" /> Yaptığım İşlemler
+        </div>
+        <p className="mt-1 text-xs text-[var(--c-ink-2)]">
+          <strong>{branchLabel}</strong> branşında yaptığınız işlemleri tanımlayın —{" "}
+          <strong>en az bir işlem</strong> seçmeden hesabınız aktifleşmez (FHIR ServiceRequest).
+          İşlem ücreti burada sorulmaz; hasta görüşmesi sonrasında <strong>tedavi kararı</strong>{" "}
+          ekranında taban–tavan aralığında belirlersiniz.
+        </p>
+        <div className="mt-3">
           <ProcedureSelector
             branchKey={branchKey}
             branchLabel={branchLabel}
@@ -155,67 +259,99 @@ export function OnboardingForm({
           />
         </div>
       </div>
-
-      {/* ── Zorunlu mesleki belgeler — hesap aktivasyon kapısı ── */}
-      <div className="mt-8">
-        <div className="flex items-center gap-2 text-sm font-bold text-[var(--c-ink)]">
-          <ShieldAlert size={16} className="text-amber-500" /> Mesleki Belgeler
-        </div>
-        <p className="mt-1 text-xs text-[var(--c-ink-2)]">
-          <strong>Tıp diploması</strong> ve <strong>Mesleki Mali Sorumluluk Sigortası (MMSS)</strong> poliçenizi
-          yüklemeden hesabınız aktifleşmez. Sertifika ve akademik çalışmalar ihtiyaridir.
-        </p>
-        <div className="mt-3">
-          <DoctorDocuments initialDocs={initialDocs} initialMmss={initialMmss} onActivationChange={setDocsReady} />
         </div>
       </div>
 
-      <div className="mt-8 space-y-4">
-        {/* İkinci Görüş — ünvan kapısı (seçim değil, bilgi) */}
-        <div className={`rounded-3xl border p-5 ${soOpen ? "border-[var(--c-accent)]/40 bg-[var(--c-accent)]/[0.06]" : "border-[var(--c-hairline)] bg-[var(--c-surface)]"}`}>
-          <div className="flex items-start gap-3">
-            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${soOpen ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/20 text-[var(--c-ink-3)]"}`}>
-              {soOpen ? <Stethoscope size={18} /> : <Lock size={18} />}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 text-sm font-semibold text-[var(--c-ink)]">
-                İkinci Görüş Paneli {soOpen && <BadgeCheck size={15} className="text-[var(--c-accent)]" />}
-              </div>
-              {soOpen ? (
-                <p className="mt-1 text-xs text-[var(--c-ink-2)]">
-                  Ünvanınız uygun — İkinci Görüş paneliniz <strong>otomatik açık</strong>. Tanı konmuş
-                  hastaların belgelerini inceleyip yazılı görüş ve video görüşme sunabilirsiniz.
-                </p>
-              ) : (
-                <p className="mt-1 text-xs text-[var(--c-ink-2)]">
-                  İkinci Görüş paneli yalnız <strong>Doçent / Profesör</strong> ünvanlı doktorlara açılır;
-                  hesabınızda görüntülenmeyecek.
-                </p>
-              )}
+      {/* ══ BANT 3 — AÇIK: Aşama 3 (Tercihler / Paneller) ══
+          Kullanıcı kararı 2026-08-17: dört çalışma yolu AYRI bir aşamaya çıkarıldı (önce
+          Aşama 2'nin kuyruğundaydı). Yeknesak adlandırma ŞART — hepsi "… Paneli" (kullanıcı:
+          "ikinci görüş paneli diyorsan ücretsiz sağlık hizmeti paneli, konsültasyon talepleri
+          paneli de olmalı"). İki tür kart var ve ayrım bilinçli: DURUM kartları (İkinci Görüş,
+          Sağlık Turizmi) sistemin verdiği erişimi BİLDİRİR — tıklanmaz; TERCİH kartları
+          (Ücretsiz Sağlık, Konsültasyon) opt-in'dir — açılıp kapanır. */}
+      <div className={`${LIGHT_BAND} bg-[var(--c-bg)]`}>
+        <div className="mx-auto max-w-2xl px-5 py-10">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-bold text-[var(--c-ink)]">
+              <LayoutGrid size={16} className="text-[var(--c-accent-strong)]" /> Aşama 3 — Tercihler
             </div>
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-1 gap-y-1 text-xs leading-relaxed text-[var(--c-ink-2)]">
+              {/* AURA geçen HER yerde yazı değil logo (kullanıcı kuralı 2026-08-17) */}
+              <AuraWordmark height="1.5em" />
+              <span>
+                üyeliğiniz tamamlandığında <strong>beş ayrı yolla</strong> çalışabilirsiniz ve her
+                yolun kendi paneli vardır.
+              </span>
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-[var(--c-ink-2)]">
+              <strong>Uzaktan Sağlık Paneli</strong> ana kulvarınızdır; her doktora{" "}
+              <strong>otomatik</strong> açılır, diğer dördü <strong>tercihinize</strong>{" "}
+              bağlıdır: <strong>İkinci Görüş</strong>,{" "}
+              <strong>Sağlık Turizmi</strong>, <strong>Ücretsiz Sağlık Hizmeti</strong> ve{" "}
+              <strong>Konsültasyon Talepleri</strong> panellerini aşağıdan açıp kapatabilir,
+              kararınızı sonradan profilinizden de değiştirebilirsiniz. İkinci Görüş'te ayrıca{" "}
+              <strong>Doçent / Profesör</strong> ünvanı aranır — ünvanınız uygun değilse o panel
+              seçime kapalıdır. Paneller Aşama 2 tamamlandığında ana sayfanızda görünür.
+            </p>
           </div>
-        </div>
 
-        {/* Ücretsiz Sağlık Hizmeti opt-in */}
+          <div className="mt-6 space-y-4">
+        {/* 1. Uzaktan Sağlık Paneli — ana kulvar; panelVisibility.duty DAİMA true (kapatılamaz),
+               bu yüzden tercih kartı değil DURUM kartıdır. */}
+        <StatusCard
+          open
+          icon={<Stethoscope size={18} />}
+          title="Uzaktan Sağlık Paneli"
+          openDesc={<>Ana kulvarınız — her doktora <strong>otomatik açık</strong>. Branşınıza düşen hastalarla uzaktan görüşür, tanı ve tedavi kararınızı verirsiniz.</>}
+          closedDesc={null}
+        />
+
+        {/* 2. İkinci Görüş Paneli — TERCİH + ünvan kapısı (v6.105). Ünvan uygun değilse kart
+               "ölü" gösterilir: tıklanamaz, kilit ikonlu (kullanıcı kararı 2026-08-17). Kapı
+               yalnız burada değil panelVisibility'de de aranır — arayüz tek savunma değildir. */}
+        <OptCard
+          active={so && soOpen}
+          onToggle={() => setSo((v) => !v)}
+          disabled={!soOpen}
+          icon={<BadgeCheck size={18} />}
+          title="İkinci Görüş Paneli"
+          desc={soOpen
+            ? "Tanı konmuş hastaların belgelerini inceleyip yazılı görüş ve video görüşme sunun."
+            : "Yalnız Doçent / Profesör ünvanlı doktorlara açılır — ünvanınız uygun olmadığı için seçime kapalıdır."}
+          benefit="Ünvan şartı sistemce ayrıca doğrulanır; ünvanınız değiştiğinde panel kendiliğinden seçilebilir olur."
+        />
+
+        {/* 3. Sağlık Turizmi Paneli — TERCİH (v6.105 öncesi koşulsuz açıktı). ⚠️ Sağlık turizmi
+               kulvarı ÖDEMESİZ (escrow/split yok — CLAUDE.md v6.34): ücret/escrow dili KULLANILMAZ. */}
+        <OptCard
+          active={tourism}
+          onToggle={() => setTourism((v) => !v)}
+          icon={<Luggage size={18} />}
+          title="Sağlık Turizmi Paneli"
+          desc="Yurt dışından gelen hastaların branşınıza düşen tedavi taleplerini karşılayın."
+          benefit="Tanıtım mesajı ve video randevu teklifi gönderebilir, tedavi planınızı sunabilirsiniz. Her branşa açıktır; ünvan şartı yoktur."
+        />
+
+        {/* 4. Ücretsiz Sağlık Hizmeti Paneli — tercih (opt-in) */}
         <OptCard
           active={freeCare}
           onToggle={() => setFreeCare((v) => !v)}
           icon={<HeartHandshake size={18} />}
-          title="Ücretsiz Sağlık Hizmeti — Gönüllü Konsültasyon"
+          title="Ücretsiz Sağlık Hizmeti Paneli"
           desc="Sağlığa erişimi kısıtlı hastalarla gönüllü, ücretsiz video görüşmesinde buluşun."
           benefit="Avantaj: profil itibar rozeti (“Ücretsiz Hizmet Gönüllüsü”), dizinlerde öne çıkma ve etik katkı görünürlüğü. Haftalık kontenjanı kendiniz belirlersiniz."
         />
 
-        {/* Partner Konsültasyon opt-in */}
+        {/* 5. Konsültasyon Talepleri Paneli — tercih (opt-in) */}
         <OptCard
           active={consult}
           onToggle={() => setConsult((v) => !v)}
           icon={<Inbox size={18} />}
-          title="Konsültasyon Talepleri — Partner Doktorlar"
+          title="Konsültasyon Talepleri Paneli"
           desc="Partner (yurtdışı) doktorlardan gelen, anonimleştirilmiş hasta dosyalarına görüş verin."
           benefit="Yanıtladığınız her konsültasyon talebi için ödeme alırsınız (yanıt başına; demo ortamında simüledir). Talepleri kendi branşınızla sınırlı veya genel havuzdan görebilirsiniz."
         />
-      </div>
+          </div>
 
       {err && <p className="mt-4 text-center text-sm text-red-300">{err}</p>}
 
@@ -231,7 +367,7 @@ export function OnboardingForm({
 
       {!docsReady && (
         <p className="mt-6 flex items-center justify-center gap-1.5 rounded-xl bg-amber-500/10 px-3 py-2.5 text-center text-xs font-medium text-amber-300 ring-1 ring-amber-400/20">
-          <ShieldAlert size={14} /> Hesabınızı aktifleştirmek için işlem seçimi, diploma no, uzmanlık belgesi ve tıp diploması + MMSS poliçesini (teminat limiti dahil) tamamlayın.
+          <ShieldAlert size={14} /> Hesabınızı aktifleştirmek için tıp diplomanızı yükleyin; diploma/tescil no, uzmanlık belgesi ve en az bir işlem seçimini tamamlayın.
         </p>
       )}
 
@@ -246,10 +382,53 @@ export function OnboardingForm({
       <p className="mt-3 text-center text-xs text-[var(--c-ink-3)]">
         Klinik Nöbet ve Haberler pencereleri her doktorun ana sayfasında bulunur.
       </p>
+        </div>
+      </div>
     </div>
   );
 }
 
+// DURUM kartı — sistemin verdiği panel erişimini BİLDİRİR (tıklanmaz, seçim değil).
+// OptCard'ın (tercih kartı) görsel kardeşi: aynı yuvarlaklık/ikon kutusu/tipografi, farkı
+// sağdaki onay dairesinin OLMAMASI — kullanıcı "burada bir şey seçiyorum" sanmasın diye.
+// `open=false` + `closedDesc=null` = kart hiç çizilmez (koşulsuz açık paneller için gereksiz
+// bir "kapalı" hâli uydurmamak adına; ör. Sağlık Turizmi daima açıktır).
+function StatusCard({
+  open,
+  icon,
+  title,
+  openDesc,
+  closedDesc,
+}: {
+  open: boolean;
+  icon: React.ReactNode;
+  title: string;
+  openDesc: React.ReactNode;
+  closedDesc: React.ReactNode;
+}) {
+  if (!open && !closedDesc) return null;
+  return (
+    <div className={`rounded-3xl border p-5 ${open ? "border-[var(--c-accent)]/40 bg-[var(--c-accent)]/[0.06]" : "border-[var(--c-hairline)] bg-[var(--c-surface)]"}`}>
+      <div className="flex items-start gap-3">
+        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${open ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/20 text-[var(--c-ink-3)]"}`}>
+          {open ? icon : <Lock size={18} />}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 text-sm font-semibold text-[var(--c-ink)]">
+            {title} {open && <BadgeCheck size={15} className="text-[var(--c-accent)]" />}
+          </div>
+          <p className="mt-1 text-xs text-[var(--c-ink-2)]">{open ? openDesc : closedDesc}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// TERCİH kartı — opt-in panel seçimi. `disabled=true` = "ölü kart" (v6.105): şart sağlanmadığı
+// için seçilemez (ör. ünvansız doktorda İkinci Görüş). Ölü kart GİZLENMEZ, gösterilir ama
+// tıklanamaz + kilit ikonlu — doktor panelin varlığını ve neden kapalı olduğunu görsün
+// (kullanıcı kararı: "açılamayacak şekilde sıralanacak", yani listeden çıkmasın).
+// ⚠️ `disabled` görsel/etkileşim kapısıdır; gerçek kapı panelVisibility + API'dedir.
 function OptCard({
   active,
   onToggle,
@@ -257,6 +436,7 @@ function OptCard({
   title,
   desc,
   benefit,
+  disabled = false,
 }: {
   active: boolean;
   onToggle: () => void;
@@ -264,24 +444,35 @@ function OptCard({
   title: string;
   desc: string;
   benefit: string;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
-      onClick={onToggle}
-      aria-pressed={active}
-      className={`w-full rounded-3xl border p-5 text-left transition ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)]/[0.06]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] hover:border-[var(--c-accent)]/40"}`}
+      onClick={disabled ? undefined : onToggle}
+      disabled={disabled}
+      aria-pressed={disabled ? undefined : active}
+      className={`w-full rounded-3xl border p-5 text-left transition ${
+        disabled
+          ? "cursor-not-allowed border-[var(--c-hairline)] bg-[var(--c-surface)] opacity-60"
+          : active
+            ? "border-[var(--c-accent)] bg-[var(--c-accent)]/[0.06]"
+            : "border-[var(--c-hairline)] bg-[var(--c-panel)] hover:border-[var(--c-accent)]/40"
+      }`}
     >
       <div className="flex items-start gap-3">
-        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]"}`}>
-          {icon}
+        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${active && !disabled ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]"}`}>
+          {disabled ? <Lock size={18} /> : icon}
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-semibold text-[var(--c-ink)]">{title}</span>
-            <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-transparent"}`}>
-              <Check size={14} />
-            </span>
+            {/* Ölü kartta onay dairesi hiç çizilmez — kapalı bir kutuyu işaretleyebilirmiş izlenimi vermesin */}
+            {!disabled && (
+              <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-transparent"}`}>
+                <Check size={14} />
+              </span>
+            )}
           </div>
           <p className="mt-1 text-xs text-[var(--c-ink-2)]">{desc}</p>
           <p className="mt-2 rounded-xl bg-[var(--c-surface)] px-3 py-2 text-[11px] leading-relaxed text-[var(--c-ink-2)]">{benefit}</p>

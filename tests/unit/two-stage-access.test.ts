@@ -89,15 +89,24 @@ describe("belge tipleri: CHAMBER/STUDENT_CERT kabul edilir ama Aşama 2'ye girdi
     expect(ALL_DOC_TYPES).toContain("CHAMBER");
     expect(ALL_DOC_TYPES).toContain("STUDENT_CERT");
   });
-  it("CHAMBER/STUDENT_CERT zorunlu klinik belgelerden DEĞİLDİR (Aşama 2 gereksinimleri değişmedi)", () => {
+  it("CHAMBER/STUDENT_CERT zorunlu klinik belgelerden DEĞİLDİR (Aşama 1 belgeleri Aşama 2'yi açmaz)", () => {
     expect(REQUIRED_DOC_TYPES).not.toContain("CHAMBER");
     expect(REQUIRED_DOC_TYPES).not.toContain("STUDENT_CERT");
-    expect([...REQUIRED_DOC_TYPES]).toEqual(["DIPLOMA", "MMSS"]);
+    // v6.105 (kullanıcı kararı 2026-08-17): MMSS aktivasyon şartından ÇIKTI — tek zorunlu
+    // mesleki belge Tıp Diploması. MMSS kartı/formu İHTİYARİ olarak duruyor (teminat limiti
+    // /paket sigorta paketini beslemeye devam eder). Şartı geri koymak = diziye "MMSS" eklemek.
+    expect([...REQUIRED_DOC_TYPES]).toEqual(["DIPLOMA"]);
   });
-  it("yalnız CHAMBER/STUDENT_CERT yüklü doktor klinik AKTİVE OLMAZ (MMSS metadata'sı tam olsa bile)", () => {
+  it("yalnız CHAMBER/STUDENT_CERT yüklü doktor klinik AKTİVE OLMAZ", () => {
     const fullMmss = { mmssInsurer: "X", mmssPolicyNo: "P1", mmssCoverageLimit: 1_000_000 };
     expect(canActivate([{ type: "CHAMBER" }], fullMmss)).toBe(false);
     expect(canActivate([{ type: "STUDENT_CERT" }], fullMmss)).toBe(false);
+  });
+  it("v6.105: diploma TEK BAŞINA aktive eder — MMSS hiç yokken bile (kapı gevşedi)", () => {
+    const noMmss = { mmssInsurer: null, mmssPolicyNo: null, mmssCoverageLimit: null };
+    expect(canActivate([{ type: "DIPLOMA" }], noMmss)).toBe(true);
+    // ...ama diploma YOKSA MMSS'nin tam olması kurtarmaz (zorunlu belge hâlâ zorunlu).
+    expect(canActivate([{ type: "MMSS" }], { mmssInsurer: "X", mmssPolicyNo: "P1", mmssCoverageLimit: 1_000_000 })).toBe(false);
   });
   it("hasChamberLetter/hasStudentCert yalnız kendi tipini sayar", () => {
     expect(hasChamberLetter([{ type: "DIPLOMA" }, { type: "MMSS" }])).toBe(false);

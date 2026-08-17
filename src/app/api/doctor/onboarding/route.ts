@@ -19,6 +19,13 @@ export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   const freeCareOptIn = b.freeCareOptIn === true;
   const consultOptIn = b.consultOptIn === true;
+  // v6.105 — İkinci Görüş + Sağlık Turizmi tercihleri (kullanıcı kararı 2026-08-17).
+  // ⚠️ soOptIn ünvan kapısını AŞMAZ: burada yalnız DİLEK kaydedilir; panelin açılıp açılmadığına
+  // panelVisibility'deki soEligible(title) && soOptIn karar verir. Ünvansız doktor bu alanı true
+  // gönderse bile (arayüz kartı devre dışı olsa da API'ye doğrudan istek atılabilir) panel açılmaz
+  // — kapı tek yerde, veri katmanında değil karar katmanında.
+  const soOptIn = b.soOptIn === true;
+  const tourismOptIn = b.tourismOptIn === true;
 
   // Zorunlu mesleki belgeler (diploma + MMSS) ve MMSS metadata tamamlanmadan onboarding bitirilemez
   // → hesap aktifleşmez. (Sonradan /doktor/profil'den gelen opt-in güncellemeleri bu kapıdan geçmez:
@@ -54,6 +61,8 @@ export async function POST(req: Request) {
     data: {
       freeCareOptIn,
       consultOptIn,
+      soOptIn,
+      tourismOptIn,
       onboardedAt: current?.onboardedAt ?? new Date(),
       // Belgeler tamsa aktivasyon damgasını da garanti et (refreshActivation belge API'lerinde de çalışır).
       activatedAt: current?.onboardedAt ? undefined : new Date(),

@@ -181,6 +181,13 @@ model Doctor {
   onboardedAt        DateTime? // ilk-giriş onboarding kapısı tamamlandı mı (null = /doktor/baslangic'a yönlendir)
   freeCareOptIn      Boolean   @default(false) // Ücretsiz Sağlık Hizmeti vakası kabul ediyor mu → Ana Sayfa penceresi görünürlüğü (anlık müsaitlik = freeCareState ayrı)
   consultOptIn       Boolean   @default(false) // Partner konsültasyon taleplerini yanıtlıyor mu → Konsültasyon Talepleri penceresi görünürlüğü (yanıt başına ödeme, simüle)
+  /// v6.105 (kullanıcı kararı 2026-08-17): İkinci Görüş ve Sağlık Turizmi panelleri de TERCİHE
+  /// bağlandı (önce so=ünvanla otomatik, tourism=koşulsuz açıktı). ⚠️ REGRESYON KORUMASI: varsayılan
+  /// false ama migration MEVCUT satırları true damgalar — eski doktorlar sahip oldukları paneli
+  /// kaybetmez, seçim yalnız yeni kayıtlar için anlam taşır (m5-doctor-signup "Ders 1").
+  /// soOptIn ünvan kapısını KALDIRMAZ: panel = soEligible(title) && soOptIn (iki şart birlikte).
+  soOptIn            Boolean   @default(false) // İkinci Görüş panelini istiyor mu (Doç./Prof. şartı AYRICA aranır)
+  tourismOptIn       Boolean   @default(false) // Sağlık Turizmi panelini istiyor mu (her branşa açık — ünvan şartı yok)
   /// Doctorium (v6.48) — hekimin haber akışında görmek istediği branş SLUG'ları. JSON string[].
   /// null/boş = yalnız kendi branşı (varsayılan davranış, tercih ekranına hiç girmemiş hekim).
   newsBranches       String?
