@@ -6,12 +6,12 @@ import { useEffect, useRef } from "react";
 // IO ile yalnız görünürken oynat · arka plan sekmesinde mount-play reddedilir →
 // visibilitychange'te yeniden dene · Save-Data ve reduced-motion'da HİÇ başlatma
 // (preload="none" → play edilmeyen video inmez, poster kalır). Kaynak UZUN FİLM
-// (film6: 34.3 sn, 2026-08-17 — koridor ile gözlük-yansıması arasına ARA SAHNE girdi:
-// doktor ekranda Doctorium ana sayfasını görür, zümrüt küre+yörünge amblemi ışık
-// saçarak döner, ekranda "Doctorium" yazısı [model doğru bastı]; yansıma planının
-// ışık kaynağı böylece kurulur. Önceki revizyonlar: FPV adliye 8 sn + "WORLD MEDICAL
-// CONGRESS 2026" ekranlı kongre [jenerik ad BİLİNÇLİ — gerçek kongre adı marka riski].
-// Ad-versiyonlama film5→film6).
+// (film7: 34.3 sn, 2026-08-17 ikinci revizyon — [1] ara sahne YENİDEN: doktor hiç
+// görünmez, beyaz önlüklü EL laptop kapağını açar, ekranda GERÇEK /doctorium sayfası
+// [Playwright screenshot → seedance omni_reference; gerçek lockup+AuraMark] — film6'nın
+// "kafasına göre logo"lu doktorlu sahnesi süpersede; [2] adliye YENİDEN: FPV "oyun gibi"
+// eleştirisi → insanlı gerçek adliye koridoru (cübbeli avukatlar), "ARŞİV" tabelalı kapı
+// [Ş'yi model doğru bastı], raflar dolusu dosyanın dijitalleşmesi. Ad-vers. film6→film7).
 // `overlay` = üstteki okunurluk skrimi: koyu bölümde koyu gradient, açık bölümde
 // beyaz perde — çağıran bölümün temasına göre verilir. Kapsayıcı bölümde
 // `relative isolate` ŞART (-z-10 katmanları bölüm köküne gömülür).
@@ -56,11 +56,11 @@ export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
         loop
         playsInline
         preload="none"
-        poster="/assets/video/p-doctorium-film6.jpg"
+        poster="/assets/video/p-doctorium-film7.jpg"
         aria-hidden
         className="absolute inset-0 -z-10 h-full w-full object-cover"
       >
-        <source src="/assets/video/v-doctorium-film6-720.mp4" type="video/mp4" />
+        <source src="/assets/video/v-doctorium-film7-720.mp4" type="video/mp4" />
       </video>
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: overlay }} />
     </>
