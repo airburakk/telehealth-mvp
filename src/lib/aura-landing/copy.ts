@@ -42,18 +42,25 @@ export const LINKS = {
 };
 
 export const VIDEOS = {
-  // hero v3: 15 sn; cekim koprude biter (son karede acikligin askilari ust-orta
-  // bantta = AURA letterform'uyla ortusur). Ad-versiyonlama onbellek deler.
+  // hero v5 "Dunya Uyurken" (2026-08-18): 62 sn anlatili loop — turkuaz logo
+  // intro (donen AuraMark + wordmark + braille) → hasta yolculugu (gece →
+  // AURA'ya baglanma [ekranda gercek /giris arayuzu] → doktor → gorusme →
+  // ucak-ustu gece Istanbul [v-tourism diliminden] → IGA inis → Vito transfer →
+  // "...HASTANESI" tasli modern hastane → hemsire → el sikisma → safak kontrol)
+  // → AuraMark nabzi → %100 turkuaz perde → LOOP introya dikissiz (son↔ilk kare
+  // MAD 0.75). Poster = ILK kare (turkuaz + AuraMark marka karti — logo acilisin
+  // dogal sonucu). Uretim hatti + ham kaynaklar: Desktop/Air/doctorium-video-arsivi.
+  // Ad-versiyonlama onbellek deler (v3 → v5; ayni URL'de icerik degistirilmez).
   // KAYNAK SECIMI: asset sunucusu Range desteklemedigi icin agir kaynak
   // baglamak preload hint'inden bagimsiz TAM indirme demektir → yuzeyler
   // "src720" hafif kopyayi kullanir. TEK ISTISNA landing hero'su (hero.tsx):
   // tam-genislik ana ekranda 720p gorunur kalite kaybetti → kullanici karari
-  // ile 1080p "src" kullanir. "scrub" = mobil scroll-scrub'in all-keyframe
-  // kaynagi (ffmpeg -g 1), 720p (-k720).
+  // ile 1080p "src" kullanir (v5 web kopyasi CRF21, ~19.7MB). "scrub" = mobil
+  // scroll-scrub'in all-keyframe kaynagi (ffmpeg -g 1), 720p (-k720).
   hero: {
-    src: "/assets/video/v-hero3.mp4",
-    src720: "/assets/video/v-hero3-720.mp4",
-    poster: "/assets/video/p-hero3.jpg",
+    src: "/assets/video/v-hero5.mp4",
+    src720: "/assets/video/v-hero5-720.mp4",
+    poster: "/assets/video/p-hero5.jpg",
   },
   // ⚠️ POSTERLER "2" SONEKLI (v6.14.5) — düz-adlı eski posterler (p-consult.jpg
   // ailesi) Ray E'de SİLİNDİ (2026-07-17); yeni poster daima YENİ AD alır:
