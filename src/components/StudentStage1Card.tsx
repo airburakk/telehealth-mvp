@@ -149,7 +149,7 @@ export function StudentStage1Card({
 
       {/* Mezuniyet çıkışı — öğrenci modunda kilitli kalınmaz */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-4 py-3">
-        <span className="text-xs text-[var(--c-ink-2)]">Mezun mu oldunuz? Diploma ve MMSS poliçenizle doktor üyeliğine geçin.</span>
+        <span className="text-xs text-[var(--c-ink-2)]">Mezun mu oldunuz? Diplomanızla doktor üyeliğine geçin.</span>
         <button
           type="button"
           onClick={graduate}

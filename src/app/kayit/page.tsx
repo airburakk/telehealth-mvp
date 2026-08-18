@@ -9,9 +9,9 @@ export const dynamic = "force-dynamic";
 
 // M5 — Doktor kayıt (sign up). Public (proxy matcher dışı). Hesap oluşturulunca /onam → /doktor →
 // onboarding kapısı. v6.87'den beri İKİ AŞAMALI üyelik: Aşama 1 = tabip odası Protokol Numaralı
-// üye yazısı → yalnız Doctorium; Aşama 2 = klinik belgeler (FHIR uzmanlık + işlem + diploma +
-// MMSS) → doktor havuzları. Hesap admin onayına kadar doğrulanmamış (public dizin/eşleştirme
-// kapalı). Ayrıntılı anlatım: /kayit/asamalar.
+// üye yazısı → yalnız Doctorium; Aşama 2 = klinik belgeler (FHIR uzmanlık + işlem + diploma;
+// MMSS v6.105'ten beri İHTİYARİ — lib/doctor-activation) → doktor havuzları. Hesap admin onayına
+// kadar doğrulanmamış (public dizin/eşleştirme kapalı). Ayrıntılı anlatım: /kayit/asamalar.
 export default function SignupPage() {
   const branches = Object.values(BRANCH_LABELS).sort((a, b) => a.localeCompare(b, "tr"));
   return (
@@ -31,9 +31,9 @@ export default function SignupPage() {
               tüm içerik ve ücretsiz araçlara erişin.
             </li>
             <li>
-              <strong className="text-[var(--c-ink)]">2 · Klinik Havuz</strong> — Diploma, MMSS
-              poliçesi ve işlem tanımlarınızı tamamlayın; uzaktan sağlık, ikinci görüş ve sağlık
-              turizmi doktor havuzlarına katılın.
+              <strong className="text-[var(--c-ink)]">2 · Klinik Havuz</strong> — Diploma ve işlem
+              tanımlarınızı tamamlayın; uzaktan sağlık, ikinci görüş ve sağlık turizmi doktor
+              havuzlarına katılın. MMSS poliçesi isteğe bağlıdır.
             </li>
           </ol>
           <Link href="/kayit/asamalar" className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[var(--c-accent-stronger)] hover:underline">

@@ -141,8 +141,9 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches }: { go
 
         <p className="mt-3 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
           Kayıt sonrası diploma/tescil no, uzmanlık belgesi ve yaptığınız işlemler ile
-          <strong> tıp diploması + MMSS poliçenizi</strong> yüklemeniz istenir (işlem ücretleri tedavi
-          kararında belirlenir). Hesabınız doğrulama onayına kadar doktor dizininde görünmez.
+          <strong> tıp diplomanızı</strong> yüklemeniz istenir; MMSS poliçesi isteğe bağlıdır
+          (işlem ücretleri tedavi kararında belirlenir). Hesabınız doğrulama onayına kadar doktor
+          dizininde görünmez.
         </p>
       </div>
 

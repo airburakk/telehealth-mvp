@@ -46,8 +46,8 @@ export default function StudentGatePage() {
               <ShieldOff size={14} className="mt-0.5 shrink-0 text-[var(--c-ink-3)]" />
               <span>
                 Öğrenci üyelikte <strong className="text-[var(--c-ink)]">sponsorlu içerik, anketler ve ödül puanları gösterilmez</strong>;
-                klinik yüzeyler (hasta verisi, vaka havuzları) kapalıdır. Mezun olduğunuzda diploma ve MMSS
-                poliçenizle aynı hesaptan doktor üyeliğine geçersiniz.
+                klinik yüzeyler (hasta verisi, vaka havuzları) kapalıdır. Mezun olduğunuzda
+                diplomanızla aynı hesaptan doktor üyeliğine geçersiniz.
               </span>
             </li>
           </ul>

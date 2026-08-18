@@ -2,8 +2,10 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, BookOpenCheck, Landmark, ShieldCheck, Stethoscope } from "lucide-react";
 
 // İki aşamalı doktor üyeliği açıklama sayfası (v6.87). Public (proxy matcher dışı — /kayit gibi).
-// Metinler kullanıcı onaylı (2026-08-11); iddia disiplini: "anında" = mimari gerçek (otomatik
-// damga), ölçülmemiş oran/hız iddiası YOK; dizin görünürlüğünün admin doğrulaması AÇIKÇA yazılır.
+// Metinler kullanıcı onaylı (2026-08-11; MMSS "isteğe bağlı" düzeltmesi 2026-08-18 — v6.105'te
+// aktivasyon şartından çıktı, lib/doctor-activation); iddia disiplini: "anında" = mimari gerçek
+// (otomatik damga), ölçülmemiş oran/hız iddiası YOK; dizin görünürlüğünün admin doğrulaması
+// AÇIKÇA yazılır.
 export const metadata = { title: "Doktor üyeliği nasıl çalışır?" };
 
 export default function SignupStagesPage() {
@@ -78,8 +80,9 @@ export default function SignupStagesPage() {
               <ShieldCheck size={13} /> Gereken
             </dt>
             <dd className="mt-1 text-[var(--c-ink-2)]">
-              Tıp diploması, MMSS poliçesi (poliçe bilgileriyle), diploma/tescil ve uzmanlık
-              bilgileri, en az bir işlem tanımı.
+              Tıp diploması, diploma/tescil ve uzmanlık bilgileri, en az bir işlem tanımı.
+              MMSS poliçesi <strong>isteğe bağlıdır</strong> — eklerseniz teminat bilgisi sigorta
+              paketi hesaplamalarında kullanılır.
             </dd>
           </div>
           <div>

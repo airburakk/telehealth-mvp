@@ -27,9 +27,9 @@ export async function POST(req: Request) {
   const soOptIn = b.soOptIn === true;
   const tourismOptIn = b.tourismOptIn === true;
 
-  // Zorunlu mesleki belgeler (diploma + MMSS) ve MMSS metadata tamamlanmadan onboarding bitirilemez
-  // → hesap aktifleşmez. (Sonradan /doktor/profil'den gelen opt-in güncellemeleri bu kapıdan geçmez:
-  // yalnız ilk onboarding'de, onboardedAt henüz yokken zorunlu.)
+  // Zorunlu mesleki belge (v6.105'ten beri yalnız diploma; MMSS ihtiyari) tamamlanmadan onboarding
+  // bitirilemez → hesap aktifleşmez. (Sonradan /doktor/profil'den gelen opt-in güncellemeleri bu
+  // kapıdan geçmez: yalnız ilk onboarding'de, onboardedAt henüz yokken zorunlu.)
   const current = await db.doctor.findUnique({
     where: { id: dbUser.doctorId },
     select: {
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       mmssInsurer: null, mmssPolicyNo: null, mmssCoverageLimit: null,
       procedures: null, licenseNo: null, specBoard: null, branch: "", city: "",
     };
-    // Zorunlu belgeler (diploma + MMSS) + MMSS metadata + ≥1 işlem + FHIR qualification
+    // Zorunlu belgeler (v6.105: yalnız diploma) + ≥1 işlem + FHIR qualification
     // (diploma/tescil no + uzmanlık belgesi) tamamlanmadan onboarding bitirilemez → hesap aktifleşmez.
     if (!canCompleteOnboarding(docs, data)) {
       return NextResponse.json(

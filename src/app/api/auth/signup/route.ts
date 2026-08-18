@@ -10,7 +10,7 @@ import { issueVerificationEmail } from "@/lib/email-verification";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 
 // M5 — Doktor e-posta kaydı. Hesap oluşturulur (verified:false, inaktif) → oturum açılır →
-// proxy /onam (KVKK) → /doktor → onboarding kapısı (FHIR uzmanlık + işlem + diploma + MMSS).
+// proxy /onam (KVKK) → /doktor → onboarding kapısı (FHIR uzmanlık + işlem + diploma; MMSS ihtiyari).
 const TITLES = new Set(["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."]);
 const BRANCH_SET = new Set(Object.values(BRANCH_LABELS));
 const LANG_SET = new Set(LANGUAGES);

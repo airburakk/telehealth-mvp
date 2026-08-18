@@ -5,9 +5,9 @@ import {
   FileText, ShieldCheck, GraduationCap, Award, Upload, Trash2, Loader2, Check, AlertTriangle,
 } from "lucide-react";
 
-// M5 — Doktor mesleki belge yükleme bölümü. Diploma + MMSS ZORUNLU (yüklenip MMSS bilgileri
-// tamamlanmadan hesap aktifleşmez); sertifika/akademik ihtiyari. İçerik base64 → /api/doctor/documents.
-// MMSS metadata (teminat limiti = M3 Katman 3 girdisi) → /api/doctor/mmss.
+// M5 — Doktor mesleki belge yükleme bölümü. Diploma ZORUNLU (yüklenmeden hesap aktifleşmez);
+// MMSS v6.105'ten beri İHTİYARİ (aşağıdaki TYPES notu); sertifika/akademik ihtiyari.
+// İçerik base64 → /api/doctor/documents. MMSS metadata (teminat limiti = M3 Katman 3 girdisi) → /api/doctor/mmss.
 
 export interface DocMeta { id: string; type: string; label: string; mimeType: string }
 export interface MmssInitial {

@@ -1,8 +1,8 @@
 // M5 — Doktor hesap aktivasyon kapısı.
-// Zorunlu mesleki belgeler (Tıp Diploması + Mesleki Mali Sorumluluk Sigortası/MMSS) yüklenip MMSS
-// metadata'sı (teminat limiti dahil) tamamlanmadan doktor klinik panellere erişemez. Koşul sağlanınca
-// Doctor.activatedAt damgalanır; eksilirse damga geri alınır (gate yeniden devreye girer).
-// MMSS teminat limiti aynı zamanda M3 Katman 3 malpraktis ek-prim hesabının girdisidir.
+// Zorunlu mesleki belge (v6.105'ten beri YALNIZ Tıp Diploması — aşağıdaki karar notu) yüklenmeden
+// doktor klinik panellere erişemez. Koşul sağlanınca Doctor.activatedAt damgalanır; eksilirse
+// damga geri alınır (gate yeniden devreye girer). MMSS (Mesleki Mali Sorumluluk Sigortası)
+// İHTİYARİ: yüklenirse teminat limiti M3 Katman 3 malpraktis ek-prim hesabının girdisidir.
 import { db } from "@/lib/db";
 
 // Hesap aktivasyonu için yüklenmesi ZORUNLU belge tipleri (sertifika/akademik ihtiyari).
@@ -104,7 +104,7 @@ export function mmssComplete(d: MmssMeta): boolean {
   return !!d.mmssInsurer && !!d.mmssPolicyNo && typeof d.mmssCoverageLimit === "number" && d.mmssCoverageLimit > 0;
 }
 
-// Zorunlu belge dosyaları (diploma + MMSS) yüklü mü?
+// Zorunlu belge dosyaları (REQUIRED_DOC_TYPES — v6.105'ten beri yalnız diploma) yüklü mü?
 export function hasRequiredDocs(docs: { type: string }[]): boolean {
   const types = new Set(docs.map((x) => x.type));
   return REQUIRED_DOC_TYPES.every((t) => types.has(t));
@@ -157,7 +157,7 @@ type OnboardingData = MmssMeta & {
   branch: string; city: string;
 };
 
-// Onboarding tamamlanabilir mi: zorunlu belgeler + MMSS + ≥1 işlem + FHIR qualification + kimlik (branş/şehir).
+// Onboarding tamamlanabilir mi: zorunlu belgeler + ≥1 işlem + FHIR qualification + kimlik (branş/şehir).
 export function canCompleteOnboarding(docs: { type: string }[], d: OnboardingData): boolean {
   return canActivate(docs, d) && hasProcedures(d.procedures) && hasQualification(d) && !!d.branch.trim() && !!d.city.trim();
 }
