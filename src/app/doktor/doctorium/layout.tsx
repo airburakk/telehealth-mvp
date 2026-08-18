@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { hasDoctoriumAccess } from "@/lib/doctor-activation";
+import { DoctoriumFooter } from "@/components/aura/doctorium-footer";
 
 export const dynamic = "force-dynamic";
 
@@ -31,5 +32,13 @@ export default async function DoctoriumLayout({ children }: { children: React.Re
     if (!hasDoctoriumAccess(doctor)) redirect("/doktor/baslangic?from=doctorium");
   }
 
-  return <>{children}</>;
+  // Doctorium alt bilgisi 7 alt sayfanın hepsine BURADAN iner (kullanıcı kararı 2026-08-18).
+  // Global AURA SiteFooter bu ağaçta chrome-routes.ts'teki hidesFooter() ile susturulur —
+  // ⚠️ Header SUSMAZ: Üst Raf navigasyonu (v6.109) iç portalın gezinme omurgası.
+  return (
+    <>
+      {children}
+      <DoctoriumFooter />
+    </>
+  );
 }

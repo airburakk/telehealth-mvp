@@ -1,9 +1,18 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { AuraMark, DoctoriumBraille } from "@/components/AuraLogo";
+import { AuraMark } from "@/components/AuraLogo";
 import { DoctoriumBgVideo } from "@/components/aura/doctorium-bg-video";
 import { DoctoriumMobileMenu } from "@/components/aura/doctorium-mobile-menu";
+// Marka primitifleri + koyu palet artık paylaşılan modülde (2026-08-18): footer Doctorium'un
+// TÜM yüzeylerinde render edildiği için yerel tanımlar dışa açıldı — kopya bırakılmadı.
+import {
+  DOCTORIUM_PALETTE,
+  DoctoriumInline,
+  DoctoriumWord,
+  ByAura,
+} from "@/components/aura/doctorium-brand";
+import { DoctoriumFooter } from "@/components/aura/doctorium-footer";
 
 // /doctorium tanıtım landing'i (kullanıcı kararı 2026-08-16) — giriş yapmamış doktora/öğrenciye
 // Doctorium'u anlatır. Fikir kaynağı kullanıcının Codex taslağı; kit hizası bizde: aura-display/
@@ -19,22 +28,9 @@ import { DoctoriumMobileMenu } from "@/components/aura/doctorium-mobile-menu";
 // hareketli zemin tek yerde kalsın). Animasyon saf CSS (globals.css .doctorium-prism-*).
 // Tek dil TR.
 
-// Codex taslağının paleti; CoverArt plaka koyusu (#0d0e10) zemin olarak korunur.
-// --dl-body: bölüm gövde grisi — açık/koyu almaşıkta (aşağıda LIGHT) yeniden bağlanır,
-// bu yüzden gövde metinleri sabit hex DEĞİL bu değişkeni kullanır.
-const PALETTE = {
-  "--dl-bg": "#0d0e10",
-  "--dl-panel": "#161719",
-  "--dl-ink": "#f4f5f3",
-  "--dl-muted": "#9da1a6",
-  "--dl-body": "#aeb2b6",
-  "--dl-line": "rgba(255,255,255,.12)",
-  "--dl-emerald": "#34d399",
-  "--dl-rose": "#fb7185",
-  "--dl-amber": "#c6a664",
-  // AURA marka turkuazı — AuraLogo TONES.brand.main ile aynı ton ("by AURA" imzası).
-  "--dl-cyan": "#28C8D8",
-} as CSSProperties;
+// Koyu palet (DOCTORIUM_PALETTE) doctorium-brand.tsx'e taşındı (2026-08-18) — footer landing
+// dışında da render edildiği için paletin tek kaynağı orası. LIGHT burada kalır: açık/koyu
+// bölüm almaşığı landing'e özgü, başka yüzeyde karşılığı yok.
 
 // AÇIK bölüm seti (kullanıcı kararı 2026-08-16, 5. tur: "aura gibi bir bölüm siyah bir bölüm
 // beyaz"). Değerler vitrinin .aura-light rol token'larından birebir (globals.css): beyaz zemin ·
@@ -99,53 +95,12 @@ function Eyebrow({ children, color = "var(--dl-emerald)", caps = true }: { child
   );
 }
 
-function DoctoriumWord({ className = "" }: { className?: string }) {
-  return (
-    <span className={`aura-display font-medium tracking-tight text-[var(--dl-ink)] ${className}`}>
-      Doctor<span className="text-[var(--dl-emerald)]">ium</span>
-    </span>
-  );
-}
-
-// Metin içi marka lockup'ı (kullanıcı kuralı 2026-08-16): "Doctorium" geçen her metinde
-// Doctor beyaz(ink) + ium zümrüt. İSTİSNA: zümrüt zeminli CTA butonları — orada iki tonlu
-// lockup okunmaz (zemin=ium rengi), buton metni tek ton koyu kalır.
-function DoctoriumInline() {
-  return (
-    <span className="whitespace-nowrap">
-      <span className="text-[var(--dl-ink)]">Doctor</span>
-      <span className="text-[var(--dl-emerald)]">ium</span>
-    </span>
-  );
-}
-
-// "by AURA" imzası (kullanıcı kararı 2026-08-16, 4. tur): "by" düz metin (link DEĞİL); AURA,
-// sitenin GERÇEK wordmark PNG'sidir (AuraLogo ile aynı varlıklar) ve yalnız O tıklanabilir →
-// AURA vitrin ana sayfası (/). `light`: açık bölümde lacivert wordmark varyantı (beyaz PNG
-// beyaz zeminde görünmez — AuraLogo'nun logo-word-light/dark ayrımının bölüm karşılığı).
-// Yükseklik em-tabanlı: eyebrow/üst bar/footer hangi puntoda kullanırsa oraya ölçeklenir.
-function ByAura({ light = false }: { light?: boolean }) {
-  return (
-    <span className="whitespace-nowrap">
-      <span className="text-[var(--dl-ink)]">by</span>{" "}
-      <Link
-        href="/"
-        className="inline-block transition-opacity duration-200 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--dl-cyan)]"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={light ? "/aura-word-light.png" : "/aura-word-dark.png"}
-          alt="AURA"
-          className="inline-block h-[0.95em] w-auto align-[-0.12em]"
-        />
-      </Link>
-    </span>
-  );
-}
+// DoctoriumWord / DoctoriumInline / ByAura → doctorium-brand.tsx (2026-08-18). Yorumları ve
+// marka kurallarını (iki tonlu lockup, "by" düz metin, wordmark PNG'si) o dosya taşır.
 
 export function DoctoriumLanding() {
   return (
-    <div lang="tr" style={PALETTE} className="min-h-dvh bg-[var(--dl-bg)] text-[var(--dl-ink)]">
+    <div lang="tr" style={DOCTORIUM_PALETTE} className="min-h-dvh bg-[var(--dl-bg)] text-[var(--dl-ink)]">
       {/* ── Üst bar ── */}
       {/* relative: mobil menü paneli (DoctoriumMobileMenu, absolute top-full) bara çapalanır.
           Mobil düzen (kullanıcı isteği 2026-08-16): Giriş yap MOBİLDE DE görünür; bölüm
@@ -435,34 +390,9 @@ export function DoctoriumLanding() {
         </section>
       </main>
 
-      <footer className="border-t border-[var(--dl-line)] py-10">
-        <div className="mx-auto w-full max-w-6xl px-5">
-          {/* Marka bloğu — AURA landing footer'ının alt-marka eşleniği (kullanıcı kararı
-              2026-08-16): Braille "Doctorium" lockup'ının TAM ALTINDA ortalı. Lockup
-              32px (≈154px) → Braille (146px) yazıdan taşmaz; üst bar bu yüzden
-              braille'siz kalır (22px lockup 106px < 146px — AURA "nav'a konmaz" kuralı). */}
-          <div className="flex items-center gap-3">
-            <AuraMark size={34} tone="emerald" />
-            <span className="inline-flex flex-col items-center">
-              <DoctoriumWord className="text-[32px] leading-none" />
-              <DoctoriumBraille height={12} className="mt-2 text-[var(--dl-muted)]" />
-            </span>
-          </div>
-          <div className="mt-6 flex flex-col justify-between gap-4 text-xs text-[#777c82] sm:flex-row">
-            <span>
-              © 2026 <DoctoriumInline /> <ByAura />
-            </span>
-            <div className="flex flex-wrap gap-6">
-              <Link href="/guven-ve-gizlilik" className="transition-colors hover:text-[var(--dl-ink)]">
-                Güven ve Gizlilik
-              </Link>
-              <Link href="/" className="transition-colors hover:text-[var(--dl-ink)]">
-                AURA&apos;ya git ↗
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* Footer → doctorium-footer.tsx (2026-08-18): aynı bileşen /doctorium/giris ve
+          /doktor/doctorium/* yüzeylerinde de render edilir. */}
+      <DoctoriumFooter />
     </div>
   );
 }

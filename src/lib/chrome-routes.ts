@@ -31,10 +31,29 @@ export const CHROME_FREE_ROUTES = [
   "/kurumsal-giris",
 ] as const;
 
+// Header + footer BİRLİKTE gizlenir (yukarıdaki liste).
 export function hidesGlobalChrome(pathname: string): boolean {
   return (
     (CHROME_FREE_ROUTES as readonly string[]).includes(pathname) ||
     (LANG_CODES as readonly string[]).includes(pathname.slice(1)) ||
     isImmersiveCallPath(pathname)
+  );
+}
+
+// Yalnız FOOTER gizlenen ağaçlar — sayfa kendi alt bilgisini taşır ama global Header'a
+// İHTİYACI VARDIR (2026-08-18).
+//
+// 🪤 Neden ayrı eksen: /doktor/doctorium/* iç portalı kendi DoctoriumFooter'ını segment
+// layout'undan çiziyor, dolayısıyla AURA SiteFooter'ının susması gerekti. Ama bu rotayı
+// CHROME_FREE_ROUTES'a yazmak Header'ı da düşürürdü ve v6.109 Üst Raf navigasyonu (portalın
+// TEK gezinme omurgası) yok olurdu — doktor Doctorium'a girer, çıkamazdı. Krom artık iki
+// eksende sorgulanıyor; "kendi footer'ı var ama nav'a muhtaç" yeni bir yüzey eklerken
+// rotayı BURAYA yaz, CHROME_FREE_ROUTES'a değil.
+const FOOTER_FREE_PREFIXES = ["/doktor/doctorium"] as const;
+
+export function hidesFooter(pathname: string): boolean {
+  return (
+    hidesGlobalChrome(pathname) ||
+    FOOTER_FREE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
   );
 }
