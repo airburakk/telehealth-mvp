@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { AuraWordText } from "@/components/aura/aura-word";
 import { LINKS, VIDEOS, useLang, type Copy } from "@/lib/aura-landing/i18n";
 
 // prefers-reduced-motion — SSR'da daima false (sunucu bilemez; istemci mount'ta
@@ -175,7 +176,8 @@ export function V2EntryPaths() {
           {e.headline}
         </h2>
         <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg">
-          {e.intro}
+          {/* Metin içi AURA = wordmark görseli (kullanıcı kuralı 2026-08-17). */}
+          <AuraWordText text={e.intro} />
         </p>
 
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -229,7 +231,9 @@ function EntryCard({
       <h3 className="aura-display mt-3 text-lg font-bold leading-snug tracking-tight text-[var(--aura-ink)]">
         {card.title}
       </h3>
-      <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--aura-grey)]">{card.body}</p>
+      <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--aura-grey)]">
+        <AuraWordText text={card.body} />
+      </p>
       <Link
         href={href}
         className="aura-mono mt-5 inline-flex items-center gap-1.5 text-[12px] text-[var(--aura-accent)] transition-transform duration-200 group-hover:translate-x-0.5"

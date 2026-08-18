@@ -37,7 +37,8 @@ export default async function SavedPage() {
 
   return (
     <DoctoriumShell active="kaydettiklerim" balance={balance} isDoctor counts={await todayModuleCounts()}>
-      <div className="max-w-3xl px-5 py-8">
+      {/* mx-auto (2026-08-18 Üst Raf): okuma kolonu ortalı — Akışım ile aynı düzen. */}
+      <div className="mx-auto max-w-3xl px-5 py-8">
         {/* Masaüstünde dönüş banttadır (Faz 1); bu link yalnız mobil için. */}
         <Link
           href="/doktor/doctorium"

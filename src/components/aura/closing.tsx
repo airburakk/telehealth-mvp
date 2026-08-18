@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AuraMark, AuraBraille } from "@/components/AuraLogo";
+import { AuraWordText } from "@/components/aura/aura-word";
 import { useLang, LINKS } from "@/lib/aura-landing/i18n";
 
 // Kapanis v2: gece paneli (22px radius — Sign Up panel dili) icinde kisa
@@ -66,8 +67,9 @@ function AuraFooter() {
               <AuraBraille height={12} className="mt-1.5 text-[var(--aura-micro)]" />
             </span>
           </div>
+          {/* Metin içi AURA = wordmark görseli (kullanıcı kuralı 2026-08-17). */}
           <p className="mt-4 max-w-[38ch] text-sm leading-relaxed text-[var(--aura-grey)]">
-            {t.chapters[0].body}
+            <AuraWordText text={t.chapters[0].body} />
           </p>
         </div>
         <div>
@@ -91,15 +93,10 @@ function AuraFooter() {
             <li>
               <FooterLink href={LINKS.doctorSignup} label={f.doctorSignup} />
             </li>
-            <li>
-              {/* v6.95 — tıp öğrencisi kapısı: doktor girişinden AYRI huni (kullanıcı kararı 2026-08-14) */}
-              <Link
-                href="/ogrenci"
-                className="transition-colors duration-200 hover:text-[var(--aura-accent)]"
-              >
-                {f.students}
-              </Link>
-            </li>
+            {/* Tıp öğrencisi linki KALDIRILDI (kullanıcı kararı 2026-08-17): öğrenci
+                kapısı artık Doctorium landing'inde yaşıyor (/doctorium → /ogrenci);
+                vitrin footer'ında ikinci kopyaya gerek yok. f.students sözlükte
+                duruyor (başka yüzeyler + yapı imzası). */}
           </ul>
         </div>
         <div>
@@ -136,7 +133,7 @@ function AuraFooter() {
       </div>
       <div className="border-t border-[var(--aura-hairline)]">
         <p className="aura-mono mx-auto max-w-6xl px-5 py-5 text-[11px] text-[var(--aura-micro)] md:px-8">
-          {f.legal}
+          <AuraWordText text={f.legal} />
         </p>
       </div>
     </footer>

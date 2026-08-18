@@ -29,7 +29,7 @@ export interface ModuleDef {
 // DB'deki module değeri, akış sorguları, ingest'ler ve URL'ler kırılmasın (migration'sız dönüşüm).
 export const DOCTORIUM_MODULES: ModuleDef[] = [
   { key: "akis", label: "Akışım", desc: "Branşınız + mevzuat + sektör: tek akış" },
-  { key: "akademik", label: "Akademik", desc: "Hakemli yayınlar — PubMed" },
+  { key: "akademik", label: "Akademik", desc: "Hakemli yayınlar — PubMed · Europe PMC · DOAJ" },
   { key: "sektorel", label: "Sektörel", desc: "Doktor hakları · yönetim · teknoloji · küresel" },
   { key: "ilac", label: "İlaç & Cihaz", desc: "Geri çekmeler · klinik faz · prospektüs" },
   { key: "kongre", label: "Kongre Takvimi", desc: "Ulusal ve uluslararası kongreler" },
@@ -304,6 +304,31 @@ async function careerFeedItems(take: number): Promise<FeedItem[]> {
 }
 
 /**
+ * AKIŞ ÇEŞİTLİLİK KURALI (2026-08-18, kullanıcı kararı): aynı modülden art arda en fazla
+ * `maxRun` kart. Kota sistemi bölümler ARASI dengeyi kurar ama tek tarih sıralaması, aynı
+ * güne yığılan içeriği (örn. toplu akademik ingest) yine blok hâlinde dizer — 20 akademik
+ * kart üst üste gelebilir. Bu geçiş, sırayı MÜMKÜN OLDUĞUNCA koruyarak (kararlı/greedy)
+ * kümeyi kırar: koşu limiti dolunca listenin İLERİSİNDEN farklı modülden ilk kart öne
+ * çekilir; başka modül kalmadıysa koşu serbest bırakılır (yapay boşluk üretilmez).
+ * O(n²) en kötü — akış 40 kart, maliyet önemsiz. Saf fonksiyon (birim test edilir).
+ */
+export function interleaveByModule(items: FeedItem[], maxRun = 3): FeedItem[] {
+  const out: FeedItem[] = [];
+  const rest = [...items];
+  while (rest.length) {
+    const tail = out.slice(-maxRun);
+    const runFull = tail.length === maxRun && tail.every((i) => i.module === tail[0].module);
+    let idx = 0;
+    if (runFull) {
+      const alt = rest.findIndex((i) => i.module !== tail[0].module);
+      if (alt !== -1) idx = alt;
+    }
+    out.push(rest.splice(idx, 1)[0]);
+  }
+  return out;
+}
+
+/**
  * Kişisel akış (Modül A) — BÖLÜM-KOTALI KARIŞIM (2026-08-14, kullanıcı bildirimi): eski tek
  * "en yeni N" sorgusu, yoğun bölümlerin (sektörel haber) seyrek bölümleri tamamen dışarıda
  * bırakıyordu — hukuk (hele ARŞİV tarihli içtihat/doktrin) akışa HİÇ düşmüyordu. Şimdi her
@@ -342,7 +367,8 @@ export async function personalFeed(branchSlugs: string[], limit = 40, modules: F
 
   const merged = (await Promise.all(jobs)).flat();
   merged.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
-  return merged;
+  // Çeşitlilik geçişi (2026-08-18): aynı modülden art arda en fazla 3 kart.
+  return interleaveByModule(merged, 3);
 }
 
 /**
@@ -356,7 +382,8 @@ export async function singleBranchFeed(slug: string, limit = 30): Promise<FeedIt
     take: limit,
     select: ROW_SELECT,
   });
-  return rows.map(toFeedItem);
+  // Odaklı akış da Akışım yüzeyidir — aynı çeşitlilik kuralı (art arda ≤3 aynı modül).
+  return interleaveByModule(rows.map(toFeedItem), 3);
 }
 
 /**

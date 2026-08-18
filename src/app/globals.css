@@ -130,8 +130,12 @@
   outline-offset: 2px;
 }
 
-html,
-body {
+/* ⚠️ body'ye height:100% VERME (2026-08-18 düzeltmesi): iskeleden gelen `html, body {height:100%}`
+   body'yi viewport yüksekliğine KİLİTLİYORDU — sticky Header, ebeveyni body'nin 720px kutusunda
+   hapsolup ~1 ekran scroll'dan sonra kayboluyordu (Doctorium Üst Raf main'e bağlı olduğundan
+   yapışık kalıyor, üstteki marka bandı yok oluyordu). body zaten layout'ta `min-h-full flex
+   flex-col` taşır (sticky-footer deseni) — html %100 kalır ki min-h-full çözülebilsin. */
+html {
   height: 100%;
 }
 
@@ -421,6 +425,14 @@ body {
   color: var(--aura-ink);
   background-color: var(--aura-bg);
 }
+
+/* Metin içi AURA wordmark varyant seçimi (2026-08-17, aura-word.tsx):
+   iki <img> birden render edilir; koyu bölümde beyaz (dark) varyant, .aura-light
+   kapsamında lacivert (light) varyant görünür. display:none olan ekran okuyucuya
+   da okunmaz → tek "AURA" okunur, çift okuma olmaz. */
+.aura-word-inline-light { display: none; }
+.aura-light .aura-word-inline-dark { display: none; }
+.aura-light .aura-word-inline-light { display: inline-block; }
 
 /* @layer components: utility sınıfları (px-4 gibi) aura bileşen stillerini
    ezebilsin (vitrindeki katman sözleşmesiyle aynı — HIW izle-kapağı buna dayanır). */

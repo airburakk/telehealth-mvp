@@ -22,6 +22,7 @@ import {
   ingestFdaRecalls, ingestTrials, ingestWho, describeFetchError,
   ingestIstanbulTabip, ingestRss, RSS_SOURCES,
 } from "./doctorium-sources";
+import { ingestEuropePmcAll, ingestDoajAll } from "./doctorium-academic-sources";
 
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 const UA = "Mozilla/5.0 (compatible; AuraHealth/1.0; +https://telehealth-mvp-roan.vercel.app)";
@@ -148,11 +149,18 @@ function authorLine(authors?: { name: string }[]): string | null {
  * Tek sorgu → NewsArticle upsert. Dönen: [çekilen, yeni].
  * ⚠️ v6.99: `term` artık TAM PubMed sorgusudur (dergi beyaz-listesi + kanıt tipi dahil —
  * lib/academic-journals.ts kurar). Burada `hasabstract` EKLENMEZ; sorguyu kuran taraf koyar.
+ * `reldateDays` (2026-08-18): backfill scripti pencereyi geçebilsin diye parametreleşti
+ * (scripts/backfill-doctorium-academic.ts, 365 gün); günlük koşu varsayılanı değişmedi.
  */
-async function ingestQuery(term: string, limit: number, slugs: string[]): Promise<[number, number]> {
+export async function ingestQuery(
+  term: string,
+  limit: number,
+  slugs: string[],
+  reldateDays: number = RELDATE_DAYS,
+): Promise<[number, number]> {
   const search = (await eutils("esearch.fcgi", {
     db: "pubmed", term, retmax: String(limit),
-    sort: "pub_date", datetype: "pdat", reldate: String(RELDATE_DAYS),
+    sort: "pub_date", datetype: "pdat", reldate: String(reldateDays),
   })) as { esearchresult?: { idlist?: string[] } } | null;
   const ids = search?.esearchresult?.idlist ?? [];
   if (!ids.length) return [0, 0];
@@ -262,6 +270,10 @@ export async function ingestDoctorium(): Promise<IngestResult> {
     // v6.99 — "doktorlarla ilgili" haber genişlemesi (kullanıcı seçimi 2026-08-15: mesleki +
     // uluslararası). Hepsi mesleki alaka süzgecinden geçer (isProfessionallyRelevant).
     ["istabip", ingestIstanbulTabip],
+    // Hakemli açık erişim akademik kaynaklar (2026-08-18) — PubMed'in yanına Europe PMC + DOAJ;
+    // günlük pencere küçük (21 gün × 2/branş), 1 yıllık arşiv backfill scriptiyle dolduruldu.
+    ["europepmc", () => ingestEuropePmcAll()],
+    ["doaj", () => ingestDoajAll()],
     ...RSS_SOURCES.map((s): [string, () => Promise<[number, number]>] => [s.source, () => ingestRss(s)]),
   ];
   for (const [name, fn] of collectors) {

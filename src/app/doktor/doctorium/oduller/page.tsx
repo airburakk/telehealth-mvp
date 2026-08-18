@@ -62,8 +62,8 @@ export default async function RewardsPage() {
 
   return (
     <DoctoriumShell active="oduller" balance={balance} isDoctor counts={await todayModuleCounts()}>
-    {/* px-5 = /doktor içerik boşluğu (hiza kararı 2026-08-14): başlıklar sekmeler arasında aynı x'te. */}
-    <div className="max-w-2xl px-5 py-8">
+    {/* mx-auto (2026-08-18 Üst Raf): okuma kolonu ortalı — Akışım ile aynı düzen. */}
+    <div className="mx-auto max-w-2xl px-5 py-8">
       {/* Masaüstünde dönüş banttadır (Faz 1); bu link yalnız mobil için. */}
       <Link
         href="/doktor/doctorium"

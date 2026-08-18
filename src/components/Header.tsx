@@ -11,7 +11,7 @@ import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47 } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
 import { hidesGlobalChrome } from "@/lib/chrome-routes";
-import { BadgeCheck, LogOut, ShieldOff, UserCog, Wallet } from "lucide-react";
+import { BadgeCheck, Bookmark, LogOut, ShieldOff, Star, UserCog, Wallet } from "lucide-react";
 import { ThemeToggle, type ThemeName } from "@/components/ThemeToggle";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -160,7 +160,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   // Çevrilecek metinler: görünür nav etiketleri + rol + Çıkış/Giriş.
   // lang="Türkçe" → useT no-op (kimlik). Partner gibi dil-tercihli kullanıcıda /api/i18n cache'i.
   const texts = useMemo(
-    () => ["Çıkış", "Giriş yap", "Vazgeç", "Hesabım", "Profilim", "Finans", "Tıp Öğrencisi", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", "Gündüz temasına geç", "Gece temasına geç", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
+    () => ["Çıkış", "Giriş yap", "Vazgeç", "Hesabım", "Profilim", "Finans", "Kaydettiklerim", "Puanlarım", "Tıp Öğrencisi", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", "Gündüz temasına geç", "Gece temasına geç", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
     [items, user]
   );
   const { t } = useT(lang, texts);
@@ -272,6 +272,22 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                     {/* Sistem mesajları (v6.79) — bildirimlerin hemen altı (kullanıcı kararı); satır /mesajlar'a gider */}
                     <SystemMessagesMenuItem onUnreadChange={setMsgUnread} onNavigate={() => setMenuOpen(false)} />
                   </div>
+                  {/* Doctorium kişisel köşesi (2026-08-18, kullanıcı kararı): Üst Raf'taki
+                      Kaydettiklerim/Puanlarım BURAYA taşındı — kişisel eşya profil menüsünde
+                      yaşar (Profilim/Finans deseni). Yalnız Doctorium kromunda görünür
+                      (doctoriumActive; stage1 doktorunun kromu bütünüyle Doctorium olduğundan
+                      onda her yerde). Kaydettiklerim öğrenciye AÇIK (içerik işlevi, v6.95);
+                      Puanlarım öğrencide GİZLİ (pazarlama süzgeci). */}
+                  {user.role === "DOCTOR" && (doctoriumActive || stage1) && (
+                    <Link role="menuitem" href="/doktor/doctorium/kaydettiklerim" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                      <Bookmark size={15} /> {t("Kaydettiklerim")}
+                    </Link>
+                  )}
+                  {user.role === "DOCTOR" && !student && (doctoriumActive || stage1) && (
+                    <Link role="menuitem" href="/doktor/doctorium/oduller" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                      <Star size={15} /> {t("Puanlarım")}
+                    </Link>
+                  )}
                   {/* Profilim + Finans (2026-08-01, kullanıcı kararı, 2. tur): Profilim nav
                       bandından buraya taşındı; Finans artık profil çapası değil AYRI SAYFA.
                       v6.95: öğrencide İKİSİ DE GİZLİ (kullanıcı kararı 2026-08-14) — profil

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { MessageSquareText, ClipboardCheck, Video, HeartPulse, ArrowRight, type LucideIcon } from "lucide-react";
+import { AuraWordText } from "@/components/aura/aura-word";
 import { useLang } from "@/lib/aura-landing/i18n";
 
 // Nasıl çalışır (sandwich gündüz gövdesi): 4 adımlık süreç şeridi (Anlat → AI eşleştir →
@@ -38,8 +39,14 @@ export function AuraHowItWorks() {
                   {String(i + 1).padStart(2, "0")}
                 </span>
               </div>
-              <h3 className="aura-display mt-4 text-lg font-bold text-[var(--aura-ink)]">{s.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-[var(--aura-grey)]">{s.desc}</p>
+              {/* Metin içi AURA = wordmark görseli (kullanıcı kuralı 2026-08-17):
+                  "AURA başvurunuzu hazırlar" adımındaki AURA logodaki yazımıyla çizilir. */}
+              <h3 className="aura-display mt-4 text-lg font-bold text-[var(--aura-ink)]">
+                <AuraWordText text={s.title} />
+              </h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-[var(--aura-grey)]">
+                <AuraWordText text={s.desc} />
+              </p>
             </li>
           );
         })}
@@ -48,7 +55,7 @@ export function AuraHowItWorks() {
       {/* AI sorumluluk notu (P0#5) — adımların hemen altında: AURA'nın desteklediği
           ile klinik yargının kime ait olduğunu ayırır. Sessiz ama gizlenmemiş. */}
       <p className="mx-auto mt-10 max-w-2xl text-center text-[13px] leading-relaxed text-[var(--aura-grey)]">
-        {t.howItWorks.safety}
+        <AuraWordText text={t.howItWorks.safety} />
       </p>
 
       <div className="mt-8 text-center">

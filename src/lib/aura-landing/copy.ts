@@ -190,7 +190,7 @@ export const COPY = {
     // Guven bolumu (P0 durustluk, 2026-07-15): demo metrik + uydurma yorum +
     // akreditasyon rozetleri KALDIRILDI (olculmeden/belgelenmeden iddia edilmez).
     // Yerine yalniz URUNDE KANITLANABILIR olan (Tier A) 6 madde — her birinin kod
-    // karsiligi dogrulandi: consent.ts · crypto.ts · ownership.ts · admin/hekim-onay
+    // karsiligi dogrulandi: consent.ts · crypto.ts · ownership.ts · admin/doktor-onay
     // · audit.ts · booking route agencySentAt kapisi. Yeni madde eklemeden ONCE
     // kod kanitini goster (claims framework: iddia > kanit > sahip > tarih).
     trust: {
@@ -526,7 +526,7 @@ export const COPY = {
       // /for-clinicians tam sayfasi (cta.signup → /kayit · cta.login → /kurumsal-giris).
       // KURAL [[public-claim-honesty]]: her madde KOD KANITLI:
       //   clinicians.01 (verify) → /kayit self-signup (v4.0) + verified:false →
-      //     /admin/hekim-onay; "belgeler incelenip onaylanmadan profil yayina cikmaz"
+      //     /admin/doktor-onay; "belgeler incelenip onaylanmadan profil yayina cikmaz"
       //     ZATEN onayli canli metin (bu dosyada trust items).
       //   clinicians.02 (onboarding) → FHIR-tabanli onboarding: islem/ucret + licenseNo
       //     → AcademicEditor (m5 v4.0).
@@ -573,8 +573,62 @@ export const COPY = {
         cta: {
           more: "See how AURA works for clinicians",
           signup: "Apply as a doctor",
+          // doctorLogin (2026-08-17, kullanıcı isteği): başvurunun yanında doktor
+          // girişi — hedef /doctorium/giris kapısı (Doktor/Tıp Öğrencisi rolleri).
+          doctorLogin: "Sign in as a doctor",
           login: "Staff sign-in",
         },
+      },
+
+      // ——— Doctorium köprüsü (2026-08-17, ana sayfa sadeleşmesi) ———
+      // Ana sayfada ai/accessibility/clinicians bölümlerinin yerini alan tek köprü
+      // bölüm — /doctorium landing'ine götürür. "Doctorium" marka lockup'ı SÖZLÜKTE
+      // DEĞİL bileşende çizilir (Doctor ink + ium zümrüt — doctorium-landing kuralı);
+      // burada yalnız çevrilebilir metinler durur. İddia disiplini (v6.8): sayılan
+      // özellikler (hakemli yayın, gündem, hukuk, kariyer, kongre) canlı portal
+      // modüllerinin adlarıdır — ölçülmemiş oran/süre iddiası YOK.
+      doctorium: {
+        eyebrow: "The doctor ecosystem",
+        body: "AURA's patient care network is strengthened by a professional space for doctors. Doctorium gathers peer-reviewed publications, the sector agenda, health law, career paths and congresses in a separate workspace for doctors.",
+        cardLabel: "The doctor's workspace",
+        cardTitle: "Knowledge, law and career in one place.",
+        cardBody: "Doctorium is a separate product experience from AURA's clinical screens — built on the same verification and trust foundation.",
+        cta: "Explore Doctorium",
+        // For-clinicians tanıtımı (2026-08-17, kullanıcı isteği): "bizimle
+        // çalışırsanız Doctorium'dan ne kazanırsınız" — maddeler CANLI portal
+        // modüllerinin adlarıdır (akademik akış v6.97-99 · hukuk üç ayak v6.86-93 ·
+        // kongre/kariyer · ilaç Modül D); ölçülmemiş oran/süre iddiası YOK.
+        benefitsIntro:
+          "Doctors who work with AURA also gain access to Doctorium — a professional workspace that stays with you beyond patient cases.",
+        benefits: [
+          {
+            n: "01",
+            title: "Academic feed",
+            body: "Peer-reviewed publications filtered by your specialty, with short clinical summaries linked to the original source.",
+          },
+          {
+            n: "02",
+            title: "Health law archive",
+            body: "Legislation, case law and peer-reviewed doctrine on medical practice, gathered in one place.",
+          },
+          {
+            n: "03",
+            title: "Congress and career",
+            body: "A congress calendar with submission and early-registration dates, plus career resources.",
+          },
+          {
+            n: "04",
+            title: "Sector agenda, medicines and devices",
+            body: "Professional news, and licensed-medicine information with regional validity notes.",
+          },
+        ],
+        // Düz yazı köprü (2026-08-17, kullanıcı isteği): for-clinicians'ta iddia
+        // bölümü ile Doctorium paneli ARASINDA duran tek paragraf — /doctorium
+        // landing'inin canlı özelliklerini nesir diliyle özetler (özet+kaynak,
+        // gündem, hukuk, kongre/kariyer, kişisel arşiv, isteğe bağlı anket).
+        // "Doctorium"/"AURA" kelimeleri bileşende lockup/wordmark'a çevrilir.
+        bridge:
+          "Doctorium is the workspace of every verified doctor on AURA. Follow peer-reviewed publications in your specialty through short clinical summaries, keep up with the sector agenda and health law, and manage congress dates and career paths in a single feed. Save what matters to build your own professional archive, and take part in surveys when you choose — all in a space of your own, separate from your patient cases.",
       },
     },
 
@@ -899,7 +953,7 @@ export const COPY = {
       back: "Ana sayfaya dön",
     },
     v2: {
-      // ⚠️ "Doktorlar İçin" — "Hekim" DEĞİL (v4.21 proje-geneli rename).
+      // ⚠️ "Doktorlar İçin" yazılır — "Hekimler İçin" DEĞİL (v4.21 rename; 2026-08-17 terim kuralı).
       nav: {
         care: "Bakım",
         how: "Nasıl Çalışır",
@@ -1093,8 +1147,43 @@ export const COPY = {
         cta: {
           more: "AURA doktorlar için nasıl çalışır",
           signup: "Doktor olarak başvurun",
+          doctorLogin: "Doktor olarak giriş yap",
           login: "Personel girişi",
         },
+      },
+      doctorium: {
+        eyebrow: "Doktor ekosistemi",
+        body: "AURA'nın hasta bakım ağı, doktorların mesleki bilgi ve gelişim alanıyla güçlenir. Doctorium; hakemli yayınları, sektörel gündemi, sağlık hukukunu, kariyeri ve kongreleri doktorlar için ayrı bir çalışma alanında toplar.",
+        cardLabel: "Doktorun çalışma alanı",
+        cardTitle: "Bilgi, hukuk ve kariyer tek yerde.",
+        cardBody: "Doctorium, AURA'nın klinik hizmet ekranlarından ayrı bir ürün deneyimi sunar; aynı doğrulama ve güven altyapısını paylaşır.",
+        cta: "Doctorium'u keşfet",
+        benefitsIntro:
+          "AURA ile çalışan doktorlar Doctorium'a da erişir — hasta vakalarının ötesinde sizinle kalan mesleki bir çalışma alanı.",
+        benefits: [
+          {
+            n: "01",
+            title: "Akademik akış",
+            body: "Branşınıza göre süzülmüş hakemli yayınlar; kaynağa bağlı kısa klinik özetlerle.",
+          },
+          {
+            n: "02",
+            title: "Sağlık hukuku arşivi",
+            body: "Mesleki pratiğe dair mevzuat, içtihat ve hakemli doktrin tek yerde.",
+          },
+          {
+            n: "03",
+            title: "Kongre ve kariyer",
+            body: "Bildiri ve erken kayıt tarihleriyle kongre takvimi; kariyer kaynakları.",
+          },
+          {
+            n: "04",
+            title: "Sektörel gündem, ilaç ve cihaz",
+            body: "Mesleki gündem; bölgesel geçerlilik notlarıyla ruhsatlı ilaç bilgisi.",
+          },
+        ],
+        bridge:
+          "Doctorium, AURA'daki her doğrulanmış doktorun çalışma alanıdır. Branşınızdaki hakemli yayınları kısa klinik özetlerle takip eder, sektörel gündemi ve sağlık hukukunu izler, kongre tarihlerini ve kariyer yollarını tek akışta yönetirsiniz. Önemli bulduklarınızı kaydederek kendi mesleki arşivinizi kurar, dilerseniz anketlere katılırsınız — hepsi hasta vakalarınızdan ayrı, size ait bir alanda.",
       },
     },
 
@@ -1519,8 +1608,43 @@ export const COPY = {
         cta: {
           more: "So funktioniert AURA für Ärztinnen und Ärzte",
           signup: "Als Ärztin oder Arzt bewerben",
+          doctorLogin: "Als Ärztin oder Arzt anmelden",
           login: "Anmeldung für Personal",
         },
+      },
+      doctorium: {
+        eyebrow: "Das Ökosystem für Ärzte",
+        body: "AURAs Versorgungsnetz wird durch einen professionellen Raum für Ärztinnen und Ärzte gestärkt. Doctorium bündelt begutachtete Publikationen, Branchenthemen, Gesundheitsrecht, Karrierewege und Kongresse in einem eigenen Arbeitsbereich.",
+        cardLabel: "Der Arbeitsbereich für Ärzte",
+        cardTitle: "Wissen, Recht und Karriere an einem Ort.",
+        cardBody: "Doctorium ist ein eigenes Produkterlebnis, getrennt von AURAs klinischen Oberflächen — auf derselben Verifizierungs- und Vertrauensbasis.",
+        cta: "Doctorium entdecken",
+        benefitsIntro:
+          "Ärztinnen und Ärzte, die mit AURA arbeiten, erhalten auch Zugang zu Doctorium — einem professionellen Arbeitsbereich über die Patientenfälle hinaus.",
+        benefits: [
+          {
+            n: "01",
+            title: "Akademischer Feed",
+            body: "Begutachtete Publikationen nach Fachgebiet, mit kurzen klinischen Zusammenfassungen und Quellenlink.",
+          },
+          {
+            n: "02",
+            title: "Archiv für Gesundheitsrecht",
+            body: "Gesetzgebung, Rechtsprechung und begutachtete Doktrin zur ärztlichen Praxis an einem Ort.",
+          },
+          {
+            n: "03",
+            title: "Kongresse und Karriere",
+            body: "Kongresskalender mit Einreichungs- und Frühbucherfristen sowie Karriere-Ressourcen.",
+          },
+          {
+            n: "04",
+            title: "Branchenthemen, Arzneimittel und Geräte",
+            body: "Berufsnachrichten und Informationen zu zugelassenen Arzneimitteln mit regionalen Gültigkeitshinweisen.",
+          },
+        ],
+        bridge:
+          "Doctorium ist der Arbeitsbereich jeder verifizierten Ärztin und jedes verifizierten Arztes bei AURA. Verfolgen Sie begutachtete Publikationen Ihres Fachgebiets über kurze klinische Zusammenfassungen, bleiben Sie bei Branchenthemen und Gesundheitsrecht auf dem Laufenden und verwalten Sie Kongresstermine und Karrierewege in einem Feed. Speichern Sie Wichtiges und bauen Sie so Ihr eigenes Facharchiv auf; an Umfragen nehmen Sie nur teil, wenn Sie möchten — alles in einem eigenen Bereich, getrennt von Ihren Patientenfällen.",
       },
     },
 
@@ -1944,8 +2068,43 @@ export const COPY = {
         cta: {
           more: "Comment AURA fonctionne pour les cliniciens",
           signup: "Postuler comme médecin",
+          doctorLogin: "Se connecter comme médecin",
           login: "Connexion du personnel",
         },
+      },
+      doctorium: {
+        eyebrow: "L'écosystème des médecins",
+        body: "Le réseau de soins d'AURA se renforce d'un espace professionnel dédié aux médecins. Doctorium réunit publications à comité de lecture, actualité du secteur, droit de la santé, parcours de carrière et congrès dans un espace de travail distinct.",
+        cardLabel: "L'espace de travail du médecin",
+        cardTitle: "Savoir, droit et carrière au même endroit.",
+        cardBody: "Doctorium est une expérience produit distincte des écrans cliniques d'AURA — bâtie sur la même base de vérification et de confiance.",
+        cta: "Découvrir Doctorium",
+        benefitsIntro:
+          "Les médecins qui travaillent avec AURA accèdent aussi à Doctorium — un espace de travail professionnel qui vous accompagne au-delà des dossiers patients.",
+        benefits: [
+          {
+            n: "01",
+            title: "Fil académique",
+            body: "Publications à comité de lecture filtrées par spécialité, avec de courts résumés cliniques liés à la source.",
+          },
+          {
+            n: "02",
+            title: "Archive de droit de la santé",
+            body: "Législation, jurisprudence et doctrine évaluée par les pairs sur la pratique médicale, réunies au même endroit.",
+          },
+          {
+            n: "03",
+            title: "Congrès et carrière",
+            body: "Calendrier des congrès avec dates de soumission et d'inscription anticipée, plus des ressources de carrière.",
+          },
+          {
+            n: "04",
+            title: "Actualité du secteur, médicaments et dispositifs",
+            body: "Actualités professionnelles et informations sur les médicaments autorisés, avec notes de validité régionale.",
+          },
+        ],
+        bridge:
+          "Doctorium est l'espace de travail de chaque médecin vérifié sur AURA. Suivez les publications à comité de lecture de votre spécialité grâce à de courts résumés cliniques, restez informé de l'actualité du secteur et du droit de la santé, et gérez les dates de congrès et les parcours de carrière dans un seul fil. Enregistrez ce qui compte pour constituer votre propre archive professionnelle et participez aux enquêtes si vous le souhaitez — le tout dans un espace à vous, distinct de vos dossiers patients.",
       },
     },
 
@@ -2369,8 +2528,43 @@ export const COPY = {
         cta: {
           more: "Как AURA работает для врачей",
           signup: "Подать заявку как врач",
+          doctorLogin: "Войти как врач",
           login: "Вход для персонала",
         },
+      },
+      doctorium: {
+        eyebrow: "Экосистема для врачей",
+        body: "Сеть медицинской помощи AURA усиливается профессиональным пространством для врачей. Doctorium собирает рецензируемые публикации, отраслевую повестку, медицинское право, карьерные пути и конгрессы в отдельном рабочем пространстве.",
+        cardLabel: "Рабочее пространство врача",
+        cardTitle: "Знания, право и карьера в одном месте.",
+        cardBody: "Doctorium — отдельный продукт, независимый от клинических экранов AURA, построенный на той же основе проверки и доверия.",
+        cta: "Открыть Doctorium",
+        benefitsIntro:
+          "Врачи, работающие с AURA, также получают доступ к Doctorium — профессиональному рабочему пространству, которое остаётся с вами за пределами пациентских случаев.",
+        benefits: [
+          {
+            n: "01",
+            title: "Академическая лента",
+            body: "Рецензируемые публикации по вашей специальности с краткими клиническими резюме и ссылкой на источник.",
+          },
+          {
+            n: "02",
+            title: "Архив медицинского права",
+            body: "Законодательство, судебная практика и рецензируемая доктрина о врачебной практике в одном месте.",
+          },
+          {
+            n: "03",
+            title: "Конгрессы и карьера",
+            body: "Календарь конгрессов с датами подачи тезисов и ранней регистрации, а также карьерные ресурсы.",
+          },
+          {
+            n: "04",
+            title: "Отраслевая повестка, лекарства и устройства",
+            body: "Профессиональные новости и информация о зарегистрированных препаратах с примечаниями о региональной действительности.",
+          },
+        ],
+        bridge:
+          "Doctorium — рабочее пространство каждого проверенного врача в AURA. Следите за рецензируемыми публикациями по своей специальности с краткими клиническими резюме, будьте в курсе отраслевой повестки и медицинского права, управляйте датами конгрессов и карьерными путями в одной ленте. Сохраняйте важное, формируя собственный профессиональный архив, и участвуйте в опросах по желанию — всё в отдельном пространстве, независимом от ваших пациентских случаев.",
       },
     },
 
@@ -2794,8 +2988,43 @@ export const COPY = {
         cta: {
           more: "كيف تعمل AURA للأطباء",
           signup: "قدّم كطبيب",
+          doctorLogin: "تسجيل الدخول كطبيب",
           login: "دخول الموظفين",
         },
+      },
+      doctorium: {
+        eyebrow: "منظومة الأطباء",
+        body: "تتعزز شبكة الرعاية في AURA بمساحة مهنية مخصصة للأطباء. يجمع Doctorium المنشورات المحكّمة وأجندة القطاع والقانون الصحي والمسارات المهنية والمؤتمرات في مساحة عمل مستقلة.",
+        cardLabel: "مساحة عمل الطبيب",
+        cardTitle: "المعرفة والقانون والمسار المهني في مكان واحد.",
+        cardBody: "يقدم Doctorium تجربة منتج مستقلة عن شاشات AURA السريرية — مبنية على أساس التحقق والثقة نفسه.",
+        cta: "استكشف Doctorium",
+        benefitsIntro:
+          "الأطباء الذين يعملون مع AURA يحصلون أيضًا على Doctorium — مساحة عمل مهنية ترافقكم خارج ملفات المرضى.",
+        benefits: [
+          {
+            n: "01",
+            title: "التدفق الأكاديمي",
+            body: "منشورات محكّمة بحسب تخصصكم، مع ملخصات سريرية قصيرة مرتبطة بالمصدر.",
+          },
+          {
+            n: "02",
+            title: "أرشيف القانون الصحي",
+            body: "التشريعات والأحكام القضائية والفقه المحكّم حول الممارسة الطبية في مكان واحد.",
+          },
+          {
+            n: "03",
+            title: "المؤتمرات والمسار المهني",
+            body: "تقويم المؤتمرات مع مواعيد تقديم الملخصات والتسجيل المبكر، وموارد مهنية.",
+          },
+          {
+            n: "04",
+            title: "أجندة القطاع والأدوية والأجهزة",
+            body: "أخبار مهنية ومعلومات الأدوية المرخّصة مع ملاحظات الصلاحية الإقليمية.",
+          },
+        ],
+        bridge:
+          "Doctorium هو مساحة عمل كل طبيب موثّق في AURA. تابعوا المنشورات المحكّمة في تخصصكم عبر ملخصات سريرية قصيرة، وابقوا على اطلاع على أجندة القطاع والقانون الصحي، وأديروا مواعيد المؤتمرات والمسارات المهنية في تدفق واحد. احفظوا ما يهمكم لبناء أرشيفكم المهني، وشاركوا في الاستطلاعات متى شئتم — كل ذلك في مساحة خاصة بكم، منفصلة عن ملفات مرضاكم.",
       },
     },
 
@@ -3219,8 +3448,43 @@ export const COPY = {
         cta: {
           more: "AURA برای پزشکان چگونه کار می‌کند",
           signup: "به‌عنوان پزشک درخواست دهید",
+          doctorLogin: "ورود به‌عنوان پزشک",
           login: "ورود کارکنان",
         },
+      },
+      doctorium: {
+        eyebrow: "اکوسیستم پزشکان",
+        body: "شبکه مراقبت AURA با فضایی حرفه‌ای برای پزشکان تقویت می‌شود. Doctorium انتشارات داوری‌شده، اخبار حوزه سلامت، حقوق پزشکی، مسیرهای شغلی و کنگره‌ها را در یک فضای کاری مستقل گرد هم می‌آورد.",
+        cardLabel: "فضای کاری پزشک",
+        cardTitle: "دانش، حقوق و مسیر شغلی در یک‌جا.",
+        cardBody: "Doctorium تجربه‌ای مستقل از صفحه‌های بالینی AURA است — بر پایه همان زیرساخت راستی‌آزمایی و اعتماد.",
+        cta: "کاوش در Doctorium",
+        benefitsIntro:
+          "پزشکانی که با AURA همکاری می‌کنند به Doctorium نیز دسترسی دارند — فضای کاری حرفه‌ای که فراتر از پرونده‌های بیماران با شما می‌ماند.",
+        benefits: [
+          {
+            n: "01",
+            title: "جریان آکادمیک",
+            body: "انتشارات داوری‌شده بر اساس تخصص شما، با خلاصه‌های بالینی کوتاه و پیوند به منبع.",
+          },
+          {
+            n: "02",
+            title: "آرشیو حقوق سلامت",
+            body: "قوانین، آرای قضایی و دکترین داوری‌شده درباره طبابت در یک‌جا.",
+          },
+          {
+            n: "03",
+            title: "کنگره و مسیر شغلی",
+            body: "تقویم کنگره‌ها با مهلت ارسال خلاصه و ثبت‌نام زودهنگام، همراه منابع شغلی.",
+          },
+          {
+            n: "04",
+            title: "اخبار حوزه، دارو و تجهیزات",
+            body: "اخبار حرفه‌ای و اطلاعات داروهای دارای مجوز با یادداشت‌های اعتبار منطقه‌ای.",
+          },
+        ],
+        bridge:
+          "Doctorium فضای کاری هر پزشک تأییدشده در AURA است. انتشارات داوری‌شده تخصص خود را با خلاصه‌های بالینی کوتاه دنبال کنید، از اخبار حوزه سلامت و حقوق پزشکی باخبر بمانید و تاریخ کنگره‌ها و مسیرهای شغلی را در یک جریان مدیریت کنید. مطالب مهم را ذخیره کنید تا آرشیو حرفه‌ای خود را بسازید و اگر بخواهید در نظرسنجی‌ها شرکت کنید — همه در فضایی متعلق به شما، جدا از پرونده‌های بیمارانتان.",
       },
     },
 
@@ -3645,8 +3909,43 @@ export const COPY = {
         cta: {
           more: "AURA həkimlər üçün necə işləyir",
           signup: "Həkim kimi müraciət edin",
+          doctorLogin: "Həkim kimi daxil olun",
           login: "Heyət girişi",
         },
+      },
+      doctorium: {
+        eyebrow: "Həkim ekosistemi",
+        body: "AURA-nın xəstə qayğısı şəbəkəsi həkimlər üçün peşəkar məkanla güclənir. Doctorium resenziyalı nəşrləri, sahə gündəmini, səhiyyə hüququnu, karyera yollarını və konqresləri ayrıca iş məkanında toplayır.",
+        cardLabel: "Həkimin iş məkanı",
+        cardTitle: "Bilik, hüquq və karyera bir yerdə.",
+        cardBody: "Doctorium AURA-nın klinik ekranlarından ayrı məhsul təcrübəsidir — eyni doğrulama və etibar təməli üzərində qurulub.",
+        cta: "Doctorium-u kəşf edin",
+        benefitsIntro:
+          "AURA ilə işləyən həkimlər Doctorium-a da çıxış əldə edir — xəstə işlərinin hüdudlarından kənarda sizinlə qalan peşəkar iş məkanı.",
+        benefits: [
+          {
+            n: "01",
+            title: "Akademik axın",
+            body: "İxtisasınıza görə seçilmiş resenziyalı nəşrlər; mənbəyə bağlı qısa klinik xülasələrlə.",
+          },
+          {
+            n: "02",
+            title: "Səhiyyə hüququ arxivi",
+            body: "Həkimlik praktikasına dair qanunvericilik, məhkəmə təcrübəsi və resenziyalı doktrina bir yerdə.",
+          },
+          {
+            n: "03",
+            title: "Konqres və karyera",
+            body: "Tezis və erkən qeydiyyat tarixləri ilə konqres təqvimi; karyera resursları.",
+          },
+          {
+            n: "04",
+            title: "Sahə gündəmi, dərman və cihazlar",
+            body: "Peşə xəbərləri və regional qüvvə qeydləri ilə lisenziyalı dərman məlumatı.",
+          },
+        ],
+        bridge:
+          "Doctorium AURA-dakı hər doğrulanmış həkimin iş məkanıdır. İxtisasınızdakı resenziyalı nəşrləri qısa klinik xülasələrlə izləyin, sahə gündəmindən və səhiyyə hüququndan xəbərdar olun, konqres tarixlərini və karyera yollarını tək axında idarə edin. Vacib olanları saxlayaraq öz peşəkar arxivinizi qurun, istəsəniz sorğularda iştirak edin — hamısı xəstə işlərinizdən ayrı, sizə məxsus məkanda.",
       },
     },
 
@@ -4148,8 +4447,43 @@ export const COPY = {
         cta: {
           more: "Вижте как работи AURA за лекари",
           signup: "Кандидатствайте като лекар",
+          doctorLogin: "Вход като лекар",
           login: "Вход за персонал",
         },
+      },
+      doctorium: {
+        eyebrow: "Екосистемата на лекарите",
+        body: "Мрежата за грижа на AURA се подсилва от професионално пространство за лекари. Doctorium събира рецензирани публикации, секторния дневен ред, здравното право, кариерните пътища и конгресите в отделно работно пространство.",
+        cardLabel: "Работното пространство на лекаря",
+        cardTitle: "Знание, право и кариера на едно място.",
+        cardBody: "Doctorium е отделно продуктово изживяване от клиничните екрани на AURA — изградено върху същата основа на проверка и доверие.",
+        cta: "Разгледайте Doctorium",
+        benefitsIntro:
+          "Лекарите, които работят с AURA, получават достъп и до Doctorium — професионално работно пространство, което остава с вас отвъд пациентските случаи.",
+        benefits: [
+          {
+            n: "01",
+            title: "Академичен поток",
+            body: "Рецензирани публикации според вашата специалност, с кратки клинични резюмета и връзка към източника.",
+          },
+          {
+            n: "02",
+            title: "Архив по здравно право",
+            body: "Законодателство, съдебна практика и рецензирана доктрина за лекарската практика на едно място.",
+          },
+          {
+            n: "03",
+            title: "Конгреси и кариера",
+            body: "Календар на конгресите със срокове за резюмета и ранна регистрация, плюс кариерни ресурси.",
+          },
+          {
+            n: "04",
+            title: "Секторен дневен ред, лекарства и устройства",
+            body: "Професионални новини и информация за разрешени лекарства с бележки за регионална валидност.",
+          },
+        ],
+        bridge:
+          "Doctorium е работното пространство на всеки потвърден лекар в AURA. Следете рецензираните публикации във вашата специалност чрез кратки клинични резюмета, бъдете в течение със секторния дневен ред и здравното право и управлявайте датите на конгресите и кариерните пътища в един поток. Запазвайте важното, за да изградите собствен професионален архив, и участвайте в анкети, когато пожелаете — всичко в собствено пространство, отделно от пациентските ви случаи.",
       },
     },
 
