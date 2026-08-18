@@ -50,10 +50,11 @@ export const VIDEOS = {
   // → AuraMark nabzi → %100 turkuaz perde → LOOP introya dikissiz (son↔ilk kare
   // MAD 0.75). Poster = ILK kare (turkuaz + AuraMark marka karti — logo acilisin
   // dogal sonucu). Uretim hatti + ham kaynaklar: Desktop/Air/doctorium-video-arsivi.
-  // v6 (2026-08-18): logo intro/kapanis SAG BLOKTA (CX 1420) — hero metinleri
-  // sola dayali oldugundan logo arkada kalmaz; kapanis mark'i perdeyle senkron
-  // belirir (S6y'deki yuzun ustune ciplak binmez).
-  // Ad-versiyonlama onbellek deler (v3 → v5 → v6; ayni URL'de icerik degistirilmez).
+  // v7 (2026-08-18): kapanis nabzi + turkuaz perde KALKTI (kullanici istegi) —
+  // safak sahnesi gece tonuna kararak biter, loop koyu↔koyu dikisle basa doner;
+  // intro koyu zeminden logo belirisiyle acilir (logo sag blokta, CX 1420).
+  // Poster = ILK kare = duz gece tonu #0d0e10 (sayfa zeminiyle ozdes — bilincli).
+  // Ad-versiyonlama onbellek deler (v3 → v5 → v6 → v7).
   // KAYNAK SECIMI: asset sunucusu Range desteklemedigi icin agir kaynak
   // baglamak preload hint'inden bagimsiz TAM indirme demektir → yuzeyler
   // "src720" hafif kopyayi kullanir. TEK ISTISNA landing hero'su (hero.tsx):
@@ -61,9 +62,9 @@ export const VIDEOS = {
   // ile 1080p "src" kullanir (v5 web kopyasi CRF21, ~19.7MB). "scrub" = mobil
   // scroll-scrub'in all-keyframe kaynagi (ffmpeg -g 1), 720p (-k720).
   hero: {
-    src: "/assets/video/v-hero6.mp4",
-    src720: "/assets/video/v-hero6-720.mp4",
-    poster: "/assets/video/p-hero6.jpg",
+    src: "/assets/video/v-hero7.mp4",
+    src720: "/assets/video/v-hero7-720.mp4",
+    poster: "/assets/video/p-hero7.jpg",
   },
   // ⚠️ POSTERLER "2" SONEKLI (v6.14.5) — düz-adlı eski posterler (p-consult.jpg
   // ailesi) Ray E'de SİLİNDİ (2026-07-17); yeni poster daima YENİ AD alır:
