@@ -38,32 +38,41 @@ function V2Shell() {
           (how-it-works · guven-ve-gizlilik · for-clinicians da bunu kullanır). */}
       <V2Nav />
       <main>
-        <V2Hero />
-        <V2EntryPaths />
-        {/* Sandwich gövdesi: gece bantların arasındaki gündüz şeridi (mevcut
-            landing ile aynı desen; token'lar .aura-light'ta açık değerlere geçer). */}
-        {/* AÇIK/KOYU RİTİM — SADELEŞME (2026-08-17, kullanıcı kararı; fikir
-            kaynağı Codex aura-home taslağı + doctorium-landing mimarisi):
-            ai(A) + accessibility(K) + clinicians(A) ana sayfadan ÇIKTI; yerlerine
-            TEK köprü bölüm V2Doctorium (→ /doctorium) girdi. Çift-koyu açılış +
-            katı almaşık korunur: hero(K) → entry(K) → how(A) → connected(K) →
-            doctors(A) → trust(K) → doctorium(A) → closing(K).
+        {/* AÇIK/KOYU RİTİM — KATI ALMAŞIK (2026-08-18, kullanıcı kararı).
+            Önceki dizilim: hero(K) → entry(K) → how(A) → connected(K) → doctors(A)
+            → trust(K) → doctorium(A) → closing(K) — ÇİFT-KOYU AÇILIŞ (2026-08-17) +
+            almaşık. Kullanıcı "Nasıl Çalışır" ile "Bugün neye ihtiyacınız varsa"
+            bölümlerini TAKAS etti ve entry'yi siyah sabitleyip "sonra beyaz, sonra
+            siyah" dedi → araya beyaz how girince çift-koyu açılış kendiliğinden
+            kalktı ve 4-8 arası TÜM renkler ters döndü.
+            Güncel: hero(K) → how(A) → entry(K) → connected(A) → doctors(K) →
+            trust(A) → doctorium(K) → closing(K).
+            ⚠️ Son iki bölüm bilerek arka arkaya KOYU (kullanıcı kararı 2026-08-18):
+            closing footer'ı İÇERİR; onu beyaza almak /how-it-works ·
+            /guven-ve-gizlilik · /for-clinicians ile footer rengi tutarsızlığı
+            yaratırdı (o sayfalar AuraClosing'i sarmalayıcısız kullanır). Almaşık
+            yalnız en sonda yumuşar — açılıştaki çift-koyunun kapanış eşleniği.
             ⚠️ ai/accessibility SÖZLÜKLERİ copy.ts'te duruyor (clinicians'ı
             /for-clinicians sayfası kullanmaya devam eder; yapı-imza testi
             9 dilde aynı kaldı) — bölümler yalnız BU dizilimden düştü.
             Koyu bölümler .aura-page gece token'larını miras alır (sarmalayıcısız);
-            açık bölümler tekil .aura-light sarmalanır. */}
+            açık bölümler tekil .aura-light sarmalanır.
+            🪤 V2EntryPaths zeminini SABİT bg-[var(--aura-night)] ile verir — sarmalasan
+            da koyu kalır. Bu dizilimde zaten koyu isteniyor; ileride beyaza almak
+            gerekirse bileşenin KENDİ zeminine bak, buradaki sarmalayıcı yetmez. */}
+        <V2Hero />
         <div className="aura-light bg-[var(--aura-bg)]">
           <AuraHowItWorks />
         </div>
-        <V2ConnectedCare />
+        <V2EntryPaths />
         <div className="aura-light bg-[var(--aura-bg)]">
-          <AuraDoctors />
+          <V2ConnectedCare />
         </div>
-        <AuraTrust />
+        <AuraDoctors />
         <div className="aura-light bg-[var(--aura-bg)]">
-          <V2Doctorium />
+          <AuraTrust />
         </div>
+        <V2Doctorium />
         <AuraClosing />
       </main>
     </div>

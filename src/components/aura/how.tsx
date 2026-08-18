@@ -59,12 +59,29 @@ export function AuraHowItWorks() {
       </p>
 
       <div className="mt-8 text-center">
+        {/* Kapanış CTA giysisi (kullanıcı kararı 2026-08-18): closing.tsx'teki "Doktorla
+            görüş" ve Doctorium bölümünün düğmesiyle AYNI efekt — hover'da bant yana kayar,
+            kenardaki ince şerit bandı doldurur (opacity 15), ok ileri kayar. Renk buranın
+            kendi accent'i kalır; efekt ortak, renk bölüme ait.
+            🪤 Dolgu span'i absolute: konumlanmış öğe sonraki STATIC kardeşlerin üstünde
+            çizilir → metin ve ok `relative` olmak ZORUNDA, yoksa dolgunun altında kalır.
+            🪤 hover:bg-[...]/10 KALDIRILDI: dolgu şeridi artık aynı işi yapıyor, ikisi üst
+            üste binerdi. Bu bölüm .aura-light içinde (beyaz) — accent açık tema değerini
+            alır, opacity-15 dolgu beyazda da okunur kalır. */}
         <Link
           href="/how-it-works"
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-[var(--aura-accent)]/40 px-6 py-3 text-sm font-semibold text-[var(--aura-accent-stronger)] transition-colors hover:bg-[var(--aura-accent)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aura-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--aura-bg)]"
+          className="group relative inline-flex min-h-[44px] items-center gap-2 overflow-hidden rounded-full border border-[var(--aura-accent)]/40 px-6 py-3 text-sm font-semibold text-[var(--aura-accent-stronger)] transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aura-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--aura-bg)] rtl:hover:-translate-x-1"
         >
-          {t.howItWorks.cta}
-          <ArrowRight aria-hidden size={16} className="rtl:rotate-180" />
+          <span
+            aria-hidden
+            className="absolute inset-y-0 start-0 w-1 bg-[var(--aura-accent)] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+          />
+          <span className="relative">{t.howItWorks.cta}</span>
+          <ArrowRight
+            aria-hidden
+            size={16}
+            className="relative transition-transform duration-300 group-hover:translate-x-1.5 rtl:rotate-180 rtl:group-hover:-translate-x-1.5"
+          />
         </Link>
       </div>
     </section>
