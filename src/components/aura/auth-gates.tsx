@@ -7,6 +7,7 @@ import { WordHeadline } from "@/components/aura/word-headline";
 import { AuraMark, DoctoriumBraille } from "@/components/AuraLogo";
 import { GateEmailForm } from "@/components/aura/gate-email-form";
 import { LangProvider, useLang, langDir, LINKS, VIDEOS } from "@/lib/aura-landing/i18n";
+import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
 
 // Vitrin giriş kapıları (aura-health.higgsfield.app'ten taşındı, 2026-07-12).
 // SigninGate (/giris) = "AURA Sign Up" tasarımının birebir inşası — #0D0E10
@@ -98,6 +99,9 @@ function GateShell({
           >
             <source src={video.src720} type="video/mp4" />
           </video>
+          {/* Seffaflik beyani (kullanici karari 2026-08-18): kapi paneli videosu
+              yapay zeka ile uretildi. Panel `relative` — rozet kadrajin icinde kalir. */}
+          <AiVideoNoticeBadge lang={lang} />
         </div>
       </div>
     </div>
@@ -459,6 +463,8 @@ function DoctoriumShell({ children }: { children: React.ReactNode }) {
           >
             <source src={DOCTORIUM_VIDEO.src720} type="video/mp4" />
           </video>
+          {/* Seffaflik beyani (2026-08-18). Doctorium yuzeyi tek dil TR. */}
+          <AiVideoNoticeBadge lang="tr" />
         </div>
       </div>
     </div>

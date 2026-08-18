@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { AuraBraille } from "@/components/AuraLogo";
 import { AuraWordText } from "@/components/aura/aura-word";
+import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
 import { LETTERS, VIDEOS, useLang } from "@/lib/aura-landing/i18n";
 
 // Hero — STATİK VİDEO SAHNESİ (2026-08-17, ana sayfa sadeleşmesi; kullanıcı kararı:
@@ -26,7 +27,7 @@ import { LETTERS, VIDEOS, useLang } from "@/lib/aura-landing/i18n";
 // ⚠️ Kullanıcı yeni hero videosunu hazırlayınca yalnız VIDEOS.hero kaynakları
 // değişir (copy.ts) — bu bileşen dokunulmadan kalır.
 export function V2Hero() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const h = t.v2.hero;
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -78,6 +79,10 @@ export function V2Hero() {
         <source media="(max-width: 767px)" src={VIDEOS.hero.src720} type="video/mp4" />
         <source src={VIDEOS.hero.src} type="video/mp4" />
       </video>
+      {/* Seffaflik beyani (kullanici karari 2026-08-18): hero videosu yapay zeka ile
+          uretildi. Tam ekran arka planda videonun bir "alti" yok — gorunur kalan tek
+          konum kadrajin sag-alt kosesi. */}
+      <AiVideoNoticeBadge lang={lang} />
       {/* Okunurluk skrimi: metnin olduğu ALT koyu, videonun göründüğü ÜST açık. */}
       <div
         aria-hidden

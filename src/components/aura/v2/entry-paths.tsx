@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AuraWordText } from "@/components/aura/aura-word";
+import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
 import { LINKS, VIDEOS, useLang, type Copy } from "@/lib/aura-landing/i18n";
 
 // prefers-reduced-motion — SSR'da daima false (sunucu bilemez; istemci mount'ta
@@ -60,7 +61,7 @@ const MEDIA: Record<string, { src: string; poster: string }> = {
 // düşmez ki geri gelince yeniden yüklenmesin).
 // REDUCED-MOTION: video hiç oynatılmaz, aktif kartın POSTER'ı gösterilir.
 export function V2EntryPaths() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const e = t.v2.entry;
   const [active, setActive] = useState(0);
   const reduced = useReducedMotion();
@@ -169,6 +170,10 @@ export function V2EntryPaths() {
             ucu), video ortada net görünür, alt kenar sonraki bölüme bağlanır. */}
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--aura-night)] via-transparent to-[var(--aura-night)]" />
       </div>
+      {/* Seffaflik beyani (kullanici karari 2026-08-18): kulvar videolari yapay zeka ile
+          uretildi. Video katmani aria-hidden ve -z-10 — rozet ONUN DISINDA, bolum kokunde
+          durur ki ekran okuyucudan gizlenmesin ve skrimin altinda kalmasin. */}
+      <AiVideoNoticeBadge lang={lang} />
 
       <div className="mx-auto max-w-6xl px-5 md:px-8">
         <p className="aura-mono text-sm text-[var(--aura-accent)]">/ {e.eyebrow}</p>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChapterCta, type ChapterData } from "./chapters";
 import { AuraClosing } from "./closing";
 import { AuraWordText } from "./aura-word";
+import { AiVideoNotice } from "@/components/AiVideoNotice";
 import { V2Nav } from "./v2/nav";
 import {
   HIW_VIDEOS,
@@ -205,7 +206,7 @@ function HiwGuide({
 // duraklatır; reduced-motion'da da poster kalır, açık istekle oynatma serbest.
 function GuideVideo({ videoKey, flip }: { videoKey: string; flip: boolean }) {
   const v = HIW_VIDEOS[videoKey as keyof typeof HIW_VIDEOS];
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const ref = useRef<HTMLVideoElement>(null);
   const [active, setActive] = useState(false);
 
@@ -255,6 +256,10 @@ function GuideVideo({ videoKey, flip }: { videoKey: string; flip: boolean }) {
           </span>
         </button>
       )}
+      {/* Şeffaflık beyanı (kullanıcı kararı 2026-08-18): anlatım videoları yapay zekâ ile
+          üretildi. Kart overflow-hidden olduğu için satır kartın İÇİNDE, videonun hemen
+          altında kalır — "gömülü videoda alt satır" kuralı. */}
+      <AiVideoNotice lang={lang} tone="aura" className="mt-0 px-4 py-2" />
     </div>
   );
 }

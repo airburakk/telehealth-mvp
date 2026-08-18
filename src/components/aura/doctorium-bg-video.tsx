@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
 
 // /doctorium arka plan videosu (deneme, 2026-08-16) — v2 hero sözleşmesinin taşıması:
 // IO ile yalnız görünürken oynat · arka plan sekmesinde mount-play reddedilir →
@@ -116,6 +117,8 @@ export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
         <source src="/assets/video/v-doctorium-film13-720.mp4" type="video/mp4" />
       </video>
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: overlay }} />
+      {/* Seffaflik beyani (kullanici karari 2026-08-18). Doctorium yuzeyi tek dil TR. */}
+      <AiVideoNoticeBadge lang="tr" />
     </>
   );
 }
