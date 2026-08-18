@@ -1,7 +1,10 @@
 import type { Lang } from "@/lib/aura-landing/copy";
 
-// "Yapay zeka kullanılarak üretilmiştir" — YAPAY ZEKA İLE ÜRETİLMİŞ videoların şeffaflık
+// "YZ kullanılarak üretilmiştir" — YAPAY ZEKA İLE ÜRETİLMİŞ videoların şeffaflık
 // ibaresi (kullanıcı kararı 2026-08-18). Görünür olmak ZORUNDA; dekoratif değil, beyandır.
+// Kısaltma kararı (2026-08-18): TR "Yapay zeka"→"YZ", EN "artificial intelligence"→"AI"
+// (kullanıcı isteği — ibare kadraj köşesinde kısa dursun). Diğer 7 dil açık yazımda kaldı;
+// onları da kısaltmak ayrı kullanıcı kararı.
 //
 // 🔴 NEREYE KONMAZ (yanlış beyan olur — geri ekleme):
 //   • Canlı WebRTC akışları: ConsultVideoRoom · SoVideoRoom · ConsultationRoom ·
@@ -13,12 +16,12 @@ import type { Lang } from "@/lib/aura-landing/copy";
 // Sonuncusu en kritik yer: video doktorun adından cinsiyet tahmin edilerek seçiliyor ve o
 // doktorun adıyla altyazılanıyor — hasta gerçek doktoru sandığı bir avatar izliyor.
 //
-// ⚠️ ŞAPKASIZ "zeka" (kullanıcı kararı 2026-08-18). Uygulamanın başka yerlerinde şapkalı
-// "yapay zekâ" geçiyor (doktor/doctorium/[id] AI özet uyarısı, onam metni) — onlara
-// DOKUNULMADI; bu ibarenin yazımı ayrıca kararlaştırıldı, geri şapka ekleme.
+// ⚠️ Uygulamanın başka yerlerinde açık yazım ("yapay zekâ", şapkalı) geçiyor
+// (doktor/doctorium/[id] AI özet uyarısı, onam metni) — onlara DOKUNULMADI; bu ibarenin
+// yazımı (önce şapkasız "zeka", 2026-08-18'den beri "YZ") ayrıca kararlaştırıldı.
 const NOTICE: Record<Lang, string> = {
-  tr: "Yapay zeka kullanılarak üretilmiştir",
-  en: "Created using artificial intelligence",
+  tr: "YZ kullanılarak üretilmiştir",
+  en: "Created using AI",
   de: "Mit künstlicher Intelligenz erstellt",
   fr: "Créé à l'aide de l'intelligence artificielle",
   ru: "Создано с использованием искусственного интеллекта",

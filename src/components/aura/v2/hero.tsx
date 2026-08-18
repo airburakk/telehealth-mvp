@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { ArrowRight } from "lucide-react";
 import { AuraBraille } from "@/components/AuraLogo";
 import { AuraWordText } from "@/components/aura/aura-word";
 import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
@@ -119,20 +120,47 @@ export function V2Hero() {
         <p className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg">
           <AuraWordText text={h.lede} />
         </p>
+        {/* CTA giysisi (kullanıcı kararı 2026-08-18): how/closing/doctorium-section'daki
+            ORTAK efekt buraya da — kenar şeridi hover'da bandı doldurur (opacity 15), ok
+            ileri kayar, düğme sağa ötelenir. Renk düğmeye ait: dolu primary'de şerit
+            KOYU (zemin accent — accent şerit görünmezdi, %15 koyu dolgu = hafif kararma);
+            kenarlıklı secondary'de şerit accent (closing deseni; eski hover:border-accent
+            kalktı — dolgu aynı işi yapıyor, ikisi üst üste binerdi).
+            🪤 Dolgu span'i absolute: metin ve ok `relative` olmak ZORUNDA, yoksa altında
+            kalır. rtl: varyantları ar/fa için (9 dil yayında). */}
         <div className="mt-8 flex flex-wrap items-center justify-start gap-3">
           <Link
             href="/giris"
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--aura-accent)] px-7 py-3.5 text-base font-semibold text-[var(--aura-night)] transition-transform duration-200 hover:translate-x-0.5 active:scale-[0.98]"
+            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-[var(--aura-accent)] px-7 py-3.5 text-base font-semibold text-[var(--aura-night)] transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aura-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--aura-bg)] rtl:hover:-translate-x-1"
           >
-            {h.ctaPrimary}
-            <span aria-hidden>→</span>
+            <span
+              aria-hidden
+              className="absolute inset-y-0 start-0 w-1 bg-[var(--aura-night)] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+            />
+            <span className="relative">{h.ctaPrimary}</span>
+            <ArrowRight
+              aria-hidden
+              size={18}
+              className="relative transition-transform duration-300 group-hover:translate-x-1.5 rtl:rotate-180 rtl:group-hover:-translate-x-1.5"
+            />
           </Link>
           {/* Hedef #how (v6.16): etiket "AURA nasıl çalışır?" → 4 adımlık şeride iner. */}
           <Link
             href="#how"
-            className="inline-flex items-center rounded-full border border-[var(--aura-hairline)] bg-[var(--aura-night)]/40 px-7 py-3.5 text-base font-semibold text-[var(--aura-ink)] backdrop-blur-sm transition-colors duration-200 hover:border-[var(--aura-accent)]/60"
+            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full border border-[var(--aura-hairline)] bg-[var(--aura-night)]/40 px-7 py-3.5 text-base font-semibold text-[var(--aura-ink)] backdrop-blur-sm transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aura-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--aura-bg)] rtl:hover:-translate-x-1"
           >
-            <AuraWordText text={h.ctaSecondary} />
+            <span
+              aria-hidden
+              className="absolute inset-y-0 start-0 w-1 bg-[var(--aura-accent)] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+            />
+            <span className="relative">
+              <AuraWordText text={h.ctaSecondary} />
+            </span>
+            <ArrowRight
+              aria-hidden
+              size={16}
+              className="relative text-[var(--aura-accent)] transition-transform duration-300 group-hover:translate-x-1.5 rtl:rotate-180 rtl:group-hover:-translate-x-1.5"
+            />
           </Link>
         </div>
         {/* Klinik sorumluluk mikro-metni (v6.8 dürüstlük çizgisi). */}

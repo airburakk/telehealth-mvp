@@ -38,13 +38,25 @@ export function DoctoriumWord({ className = "" }: { className?: string }) {
 }
 
 // Metin içi marka lockup'ı (kullanıcı kuralı 2026-08-16): "Doctorium" geçen her metinde
-// Doctor beyaz(ink) + ium zümrüt. İSTİSNA: zümrüt zeminli CTA butonları — orada iki tonlu
-// lockup okunmaz (zemin=ium rengi), buton metni tek ton koyu kalır.
+// Doctor beyaz(ink) + ium zümrüt. İSTİSNA: zümrüt zeminli CTA butonları — orada ium zümrüt
+// olamaz (zemin=ium rengi); CTA varyantı DoctoriumOnEmerald'dır, tek ton koyu DEĞİL.
 export function DoctoriumInline() {
   return (
     <span className="whitespace-nowrap">
       <span className="text-[var(--dl-ink)]">Doctor</span>
       <span className="text-[var(--dl-emerald)]">ium</span>
+    </span>
+  );
+}
+
+// Zümrüt DOLGULU CTA lockup'ı (kullanıcı kararı 2026-08-18): "Doctor" BEYAZ, "ium" düğme
+// metninin koyusunda kalır — iki tonlu marka vuruşu zümrüt zeminde de yaşar. Eski istisna
+// ("buton metni tek ton koyu") SÜPERSEDE. Düğmenin kalan metni ("'a katıl") bileşen DIŞINDA
+// ve düğme renginde; yalnız marka adı buradan geçer.
+export function DoctoriumOnEmerald() {
+  return (
+    <span className="whitespace-nowrap">
+      <span className="text-white">Doctor</span>ium
     </span>
   );
 }

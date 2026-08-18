@@ -9,6 +9,7 @@ import { DoctoriumMobileMenu } from "@/components/aura/doctorium-mobile-menu";
 import {
   DOCTORIUM_PALETTE,
   DoctoriumInline,
+  DoctoriumOnEmerald,
   DoctoriumWord,
   ByAura,
 } from "@/components/aura/doctorium-brand";
@@ -132,8 +133,9 @@ export function DoctoriumLanding() {
               href="/kayit"
               className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#34d399] px-3 text-[13px] font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0] sm:px-4 sm:text-sm"
             >
+              {/* Zümrüt CTA lockup'ı (2026-08-18): Doctor BEYAZ (DoctoriumOnEmerald). */}
               <span className="sm:hidden">Katıl</span>
-              <span className="hidden sm:inline">Doctorium&apos;a katıl</span>
+              <span className="hidden sm:inline"><DoctoriumOnEmerald />&apos;a katıl</span>
             </Link>
             <DoctoriumMobileMenu />
           </div>
@@ -174,19 +176,45 @@ export function DoctoriumLanding() {
                 Branşınızdaki hakemli yayınları kısa klinik özetlerle takip edin; sektörel gündemi,
                 hukuku, kongreleri ve kariyer yollarını tek yerde yönetin.
               </p>
+              {/* CTA giysisi (kullanıcı kararı 2026-08-18): AURA vitrinindeki ORTAK düğme
+                  efekti (how/closing/doctorium-section) buraya da — kenar şeridi hover'da
+                  bandı doldurur (opacity 15), ok ileri kayar, düğme sağa ötelenir. Renk
+                  düğmeye ait: zümrüt DOLU düğmede şerit koyu (#04342c → %15 kararma; eski
+                  hover:bg-[#5fe3b0] kalktı, dolgu aynı işi yapıyor); kenarlıklıda şerit
+                  emerald token'ı (LIGHT bölümde otomatik #047857'e bağlanır). rounded-xl
+                  korunur — efekt ortak, köşe dili Doctorium'un. Doctor BEYAZ (2026-08-18,
+                  DoctoriumOnEmerald) — zümrüt CTA'nın "tek ton koyu" istisnası süpersede.
+                  🪤 Dolgu span'i absolute: metin ve ok `relative` olmak ZORUNDA. */}
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/kayit"
-                  className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#34d399] px-6 text-base font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0]"
+                  className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#34d399] px-6 text-base font-semibold text-[#04342c] transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
                 >
-                  Doctorium&apos;a katıl
-                  <ArrowRight aria-hidden size={17} />
+                  <span
+                    aria-hidden
+                    className="absolute inset-y-0 start-0 w-1 bg-[#04342c] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+                  />
+                  <span className="relative"><DoctoriumOnEmerald />&apos;a katıl</span>
+                  <ArrowRight
+                    aria-hidden
+                    size={17}
+                    className="relative transition-transform duration-300 group-hover:translate-x-1.5"
+                  />
                 </Link>
                 <a
                   href="#olanaklar"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-[var(--dl-line)] px-6 text-base font-semibold transition-colors hover:border-[var(--dl-emerald)]/55"
+                  className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl border border-[var(--dl-line)] px-6 text-base font-semibold transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dl-emerald)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
                 >
-                  Neler sunuyor?
+                  <span
+                    aria-hidden
+                    className="absolute inset-y-0 start-0 w-1 bg-[var(--dl-emerald)] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+                  />
+                  <span className="relative">Neler sunuyor?</span>
+                  <ArrowRight
+                    aria-hidden
+                    size={17}
+                    className="relative text-[var(--dl-emerald)] transition-transform duration-300 group-hover:translate-x-1.5"
+                  />
                 </a>
               </div>
               <p className="mt-5 text-xs text-[#777c82]">
@@ -347,12 +375,21 @@ export function DoctoriumLanding() {
                 </p>
               </div>
               <div className="lg:text-right">
+                {/* Ortak CTA efekti (2026-08-18) — desen ve gerekçe hero CTA yorumunda. */}
                 <Link
                   href="/ogrenci"
-                  className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[var(--dl-line)] px-6 text-base font-semibold transition-colors hover:border-[var(--dl-emerald)]/55"
+                  className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl border border-[var(--dl-line)] px-6 text-base font-semibold transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dl-emerald)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
                 >
-                  Öğrenci üyeliğini incele
-                  <ArrowRight aria-hidden size={17} />
+                  <span
+                    aria-hidden
+                    className="absolute inset-y-0 start-0 w-1 bg-[var(--dl-emerald)] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+                  />
+                  <span className="relative">Öğrenci üyeliğini incele</span>
+                  <ArrowRight
+                    aria-hidden
+                    size={17}
+                    className="relative text-[var(--dl-emerald)] transition-transform duration-300 group-hover:translate-x-1.5"
+                  />
                 </Link>
                 <p className="mt-3 text-xs text-[#777c82]">Öğrenci belgesiyle doğrulama gerekir.</p>
               </div>
@@ -371,19 +408,38 @@ export function DoctoriumLanding() {
               Bilimsel bilgi, sektörel gelişmeler, hukuk, kariyer ve kongre takibi için{" "}
               <DoctoriumInline /> çalışma alanına katılın.
             </p>
+            {/* Ortak CTA efekti (2026-08-18) — desen ve gerekçe hero CTA yorumunda; bu
+                bölüm AÇIK (LIGHT): emerald token'ı #047857'e, ring-offset beyaza bağlanır. */}
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href="/kayit"
-                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#34d399] px-6 text-base font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0]"
+                className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#34d399] px-6 text-base font-semibold text-[#04342c] transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
               >
-                Doktor üyeliğine başla
-                <ArrowRight aria-hidden size={17} />
+                <span
+                  aria-hidden
+                  className="absolute inset-y-0 start-0 w-1 bg-[#04342c] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+                />
+                <span className="relative">Doktor üyeliğine başla</span>
+                <ArrowRight
+                  aria-hidden
+                  size={17}
+                  className="relative transition-transform duration-300 group-hover:translate-x-1.5"
+                />
               </Link>
               <Link
                 href="/ogrenci"
-                className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-[var(--dl-line)] px-6 text-base font-semibold transition-colors hover:border-[var(--dl-emerald)]/55"
+                className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl border border-[var(--dl-line)] px-6 text-base font-semibold transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dl-emerald)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
               >
-                Tıp öğrencisiyim
+                <span
+                  aria-hidden
+                  className="absolute inset-y-0 start-0 w-1 bg-[var(--dl-emerald)] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+                />
+                <span className="relative">Tıp öğrencisiyim</span>
+                <ArrowRight
+                  aria-hidden
+                  size={17}
+                  className="relative text-[var(--dl-emerald)] transition-transform duration-300 group-hover:translate-x-1.5"
+                />
               </Link>
             </div>
           </div>

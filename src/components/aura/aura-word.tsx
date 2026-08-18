@@ -42,13 +42,16 @@ export function AuraWordText({ text }: { text: string }) {
   const parts = text.split("AURA");
   if (parts.length === 1) return <>{text}</>;
   return (
-    <>
+    // Bölünmüş çıktı TEK span'de kalmalı: Fragment dönerse flex ebeveynde
+    // (örn. hero'daki inline-flex CTA) her parça ayrı flex item olur ve item
+    // sınırındaki boşluklar düşer → wordmark metne yapışır ("AURAnasıl çalışır").
+    <span>
       {parts.map((part, i) => (
         <Fragment key={i}>
           {i > 0 && <AuraInlineWord />}
           {part}
         </Fragment>
       ))}
-    </>
+    </span>
   );
 }
