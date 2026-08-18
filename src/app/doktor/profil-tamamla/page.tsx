@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { BRANCH_LABELS } from "@/lib/procedures";
-import { LANGUAGES } from "@/lib/constants";
 import { CompleteProfileForm } from "./CompleteProfileForm";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +25,7 @@ export default async function CompleteProfilePage({
   const doctor = me?.doctorId
     ? await db.doctor.findUnique({
         where: { id: me.doctorId },
-        select: { name: true, title: true, branch: true, city: true, languages: true },
+        select: { name: true, title: true, branch: true, city: true },
       })
     : null;
   if (!doctor) redirect("/doktor");
@@ -42,9 +41,7 @@ export default async function CompleteProfilePage({
       <CompleteProfileForm
         initialName={doctor.name}
         initialTitle={doctor.title}
-        initialLangs={doctor.languages.split(",").map((s) => s.trim()).filter(Boolean)}
         branches={branches}
-        languages={[...LANGUAGES]}
         nextHref={`/doktor/baslangic${fromQs}`}
       />
     </div>

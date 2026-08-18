@@ -7,7 +7,7 @@ import { branchKeyFromLabel, branchLabel, getBranchProcedures, getByCodes } from
 import { hasDoctoriumAccess, isEduEmail } from "@/lib/doctor-activation";
 import { SPONSOR_CONSENT_TEXT } from "@/lib/sponsor";
 import { HR_CONTACT_CONSENT_TEXT } from "@/lib/hr-consent";
-import { GraduationCap, FileCheck2 } from "lucide-react";
+import { GraduationCap, FileCheck2, ArrowRight } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
 import { StudentStage1Card } from "@/components/StudentStage1Card";
 import { OnboardingForm } from "./OnboardingForm";
@@ -77,7 +77,7 @@ export default async function DoctorOnboardingPage({
     );
   }
   // Onboard OLMUŞ ve zorunlu belgeleri tamamlamış (aktif) ise kapıyı atla. Belge eksikse (activatedAt
-  // null) burada kal — doktor diploma + MMSS yükleyip tamamlasın.
+  // null) burada kal — doktor zorunlu belgeyi (v6.105: yalnız diploma) yükleyip tamamlasın.
   if (doctor.onboardedAt && doctor.activatedAt) redirect("/doktor");
   // v6.87 OAuth bekçisi: Google/Apple hesabı branch/city BOŞ açılır — kimlik tamamlanmadan
   // onboarding anlamsız (işlem listesi branştan türer) → profil-tamamla ara sayfasına
@@ -122,10 +122,13 @@ export default async function DoctorOnboardingPage({
       {/* AURA'ya geçiş uyarı ekranı (kullanıcı kararı 2026-08-16): Doctorium'daki Aşama-1
           doktoru marka toggle'ıyla AURA'ya geçmek istedi → /doktor kapısı buraya
           ?from=aura-gecis ile yönlendirdi. Ekran Aşama-2 şartlarını (belgeler + doğrulama)
-          söyler; yükleme yeri zaten bu sayfanın formu. Belge listesi /kayit "İki aşamalı
-          üyelik" anlatımıyla birebir tutulur. */}
+          söyler; yükleme yeri zaten bu sayfanın formu. Liste yalnız ZORUNLU şartları sayar:
+          MMSS v6.105'te ihtiyarileşti → satırı 2026-08-18'de çıktı (/kayit anlatımı hâlâ MMSS
+          sayıyor — o metnin güncellenmesi ayrı iş). py-10: kutu koyu üst bölgede dikey dengeli
+          dursun (pb'siz hali alttaki açık Aşama-1 bandına yapışıyordu). Buton OnboardingForm
+          BANT 2'deki #asama-2 çapasına kaydırır. */}
       {sp.from === "aura-gecis" && (
-        <div className="mx-auto max-w-2xl px-5 pt-8">
+        <div className="mx-auto max-w-2xl px-5 py-10">
           <section
             aria-label="AURA klinik erişim koşulları"
             className="relative overflow-hidden rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5"
@@ -143,7 +146,7 @@ export default async function DoctorOnboardingPage({
                   belgelerinizi yükleyip doğrulanmanız gerekir:
                 </p>
                 <ul className="mt-2.5 space-y-1.5 text-sm text-[var(--c-ink-2)]">
-                  {["Diploma", "Uzmanlık ve işlem tanımları", "MMSS poliçesi (mesleki mesuliyet sigortası)"].map((b) => (
+                  {["Diploma", "Uzmanlık ve işlem tanımları"].map((b) => (
                     <li key={b} className="flex items-center gap-2">
                       <FileCheck2 size={15} className="shrink-0 text-[var(--c-accent)]" aria-hidden />
                       {b}
@@ -154,6 +157,12 @@ export default async function DoctorOnboardingPage({
                   Belgeleriniz incelenip onaylandığında klinik panel ve doktor havuzları açılır.
                   Yüklemeyi aşağıdaki adımlardan yapabilirsiniz.
                 </p>
+                <a
+                  href="#asama-2"
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] transition hover:bg-[var(--c-accent-strong)]"
+                >
+                  Aşama 2&apos;ye geç <ArrowRight size={15} aria-hidden />
+                </a>
               </div>
             </div>
           </section>

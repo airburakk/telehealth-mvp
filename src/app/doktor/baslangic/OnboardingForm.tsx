@@ -27,8 +27,8 @@ export interface Stage1Props {
 // M5 — İlk-giriş onboarding kapısı (client). v6.87'den beri İKİ AŞAMALI: Aşama 1 = tabip odası
 // yazısı → yalnız Doctorium (anında, "finish" beklemez); Aşama 2 = klinik havuz — hesap
 // aktifleşmesi için ZORUNLU: (1) FHIR uzmanlık & işlemler — diploma/tescil no + uzmanlık belgesi +
-// branş işlemleri (≥1); (2) mesleki belgeler — diploma + MMSS. Sonra Ücretsiz Sağlık Hizmeti +
-// Partner Konsültasyon opt-in toplanır. Kaydedince /doktor'a geçer.
+// branş işlemleri (≥1); (2) mesleki belgeler — diploma (MMSS v6.105'ten beri ihtiyari). Sonra
+// Ücretsiz Sağlık Hizmeti + Partner Konsültasyon opt-in toplanır. Kaydedince /doktor'a geçer.
 export function OnboardingForm({
   doctorName,
   branchKey,
@@ -143,7 +143,9 @@ export function OnboardingForm({
       </div>
 
       {/* ══ BANT 2 — KOYU: Aşama 2 (AURA) ══ */}
-      <div className={`${DARK_BAND} bg-[var(--c-bg)]`}>
+      {/* id="asama-2": baslangic sayfasındaki aura-gecis uyarı kutusunun "Aşama 2'ye geç"
+          butonunun çapası (scroll-mt: kayınca bant üstü ekran kenarına yapışmasın). */}
+      <div id="asama-2" className={`${DARK_BAND} scroll-mt-6 bg-[var(--c-bg)]`}>
         <div className="mx-auto max-w-2xl px-5 py-10">
       {/* ── AŞAMA 2 — AURA üyeliği: mevcut aktivasyon gereksinimleri AYNEN (v6.105 ad değişimi:
           "Klinik Havuz Üyeliği" → "AURA Üyeliği"; kullanıcı kararı 2026-08-17 — iki aşama iki

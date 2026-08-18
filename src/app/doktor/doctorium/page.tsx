@@ -20,7 +20,6 @@ import {
   type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey,
 } from "@/lib/doctorium";
 import { isStudentOnly } from "@/lib/doctor-activation";
-import { branchColor } from "@/lib/branch-visuals";
 import { HUKUK_KEYWORDS, keywordByKey } from "@/lib/hukuk-keywords";
 import { DoctoriumFilters } from "./DoctoriumFilters";
 import { FollowButton } from "./CongressControls";
@@ -48,7 +47,7 @@ const VALID_SLUGS = new Set(BRANCH_OPTIONS.map((b) => b.slug));
 // yok → var(--c-ink)). Kariyer satırı İŞKUR sınırının dilini korur ("ilan değil").
 const MODULE_HEAD: Record<ModuleKey, { eyebrow: string; title: string; desc: string; color?: string }> = {
   akis: { eyebrow: "AKIŞIM", title: "Sizin için seçilenler", desc: "Branşınız, bilimsel yayınlar ve sektörel gelişmeler tek akışta.", color: "#facc15" },
-  akademik: { eyebrow: "AKADEMİK", title: "Branşınızda hakemli yayınlar", desc: "PubMed'den güncel çalışmalar, kısa klinik özetlerle.", color: "#34d399" },
+  akademik: { eyebrow: "AKADEMİK", title: "Branşınızda hakemli yayınlar", desc: "PubMed, Europe PMC ve DOAJ'dan hakemli çalışmalar, kısa klinik özetlerle.", color: "#34d399" },
   sektorel: { eyebrow: "SEKTÖREL", title: "Sağlık gündeminin nabzı", desc: "Doktor hakları, yönetim, teknoloji ve küresel gelişmeler.", color: "#a78bfa" },
   ilac: { eyebrow: "İLAÇ & CİHAZ", title: "Geri çekmeler ve klinik fazlar", desc: "Ruhsat, geri çekme, klinik faz ve prospektüs bilgisi tek yerde.", color: "#22d3ee" },
   kongre: { eyebrow: "KONGRE", title: "Kongre takvimi", desc: "Ulusal ve uluslararası kongreler; bildiri ve erken kayıt tarihleriyle." },
@@ -100,8 +99,9 @@ export default async function DoctoriumPage({
   const sp = await searchParams;
   const active: ModuleKey = sp.m && MODULE_KEYS.has(sp.m as ModuleKey) ? (sp.m as ModuleKey) : "akis";
   const range = RANGE_OPTIONS.some((r) => r.key === sp.d) ? (sp.d as string) : DEFAULT_RANGE;
-  // Tek-branş odağı (akış çipine tıklama): yalnız doktorun AKIŞINDAKİ branşlar seçilebilir —
-  // rastgele slug ile başka branşın akışı URL'den açılmasın (tutarlı kişiselleştirme).
+  // Tek-branş odağı (?b=): çipleri üreten "Akışınız:" şeridi KALDIRILDI (kullanıcı kararı
+  // 2026-08-18 — çok branşta renk karmaşası); parametre eski/paylaşılan URL'ler için yaşar.
+  // Yalnız doktorun AKIŞINDAKİ branşlar seçilebilir (rastgele slug'la başka akış açılmasın).
   const focus = sp.b && VALID_SLUGS.has(sp.b) && branches.includes(sp.b) ? sp.b : null;
 
   const cat = sp.c && SECTOR_CATEGORIES.some((x) => x.key === sp.c) ? sp.c : null;
@@ -192,8 +192,9 @@ export default async function DoctoriumPage({
 
   return (
     <DoctoriumShell active={active} balance={myPointBalance} isDoctor={isDoctor} counts={counts}>
-    {/* px-5 = /doktor içerik boşluğu (hiza kararı 2026-08-14): başlıklar üç sekmede aynı x'te. */}
-    <div className="max-w-3xl px-5 py-8">
+    {/* mx-auto (2026-08-18 Üst Raf kararı): sol bant kalktı, okuma kolonu ORTALI dergi
+        düzeni — [id] ve kariyer/[slug] ile aynı hiza; eski sol-yaslı hiza bantla emekli. */}
+    <div className="mx-auto max-w-3xl px-5 py-8">
       {/* Masaüstünde dönüş banttadır (layout DoctoriumSidebar); bu link yalnız mobil için. */}
       <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)] md:hidden">
         <ArrowLeft size={15} /> Ana Sayfa
@@ -315,38 +316,9 @@ export default async function DoctoriumPage({
         </nav>
       )}
 
-      {/* Hukuk bölümü tanıtımı (kullanıcı isteği 2026-08-11): bölümlerin ne içerdiği + nasıl
-          kullanılacağı. <details> = JS'siz aç/kapa (client bileşeni gerekmez); varsayılan KAPALI —
-          her girişte listeyi aşağı itmesin. */}
-      {active === "mevzuat" && (
-        <details className="mt-3 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3 text-xs leading-relaxed text-[var(--c-ink-2)]">
-          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[11px] font-semibold text-[var(--c-ink)] [&::-webkit-details-marker]:hidden">
-            <Info size={13} className="text-emerald-300" /> Hukuk bölümü nedir, nasıl kullanılır?
-          </summary>
-          <div className="mt-2 grid gap-1.5">
-            <p>
-              <strong className="text-[var(--c-ink)]">Mevzuat</strong>{" — "}Resmî Gazete ve sektör
-              kaynaklarından sağlığı ilgilendiren yönetmelik, tebliğ ve SUT/geri ödeme değişiklikleri.
-              Üstteki &quot;Özelleştir&quot; penceresinden kategori ve tarih aralığına göre süzebilirsiniz;
-              bir kalemi açınca doktor odaklı özet hazırlanır.
-            </p>
-            <p>
-              <strong className="text-[var(--c-ink)]">İçtihat</strong>{" — "}Yargıtay&apos;ın sağlık hukuku ve
-              malpraktis kararları (kimlikler kaynağında anonimleştirilmiştir). Anahtar kelime
-              çipleriyle arşivi süzün; her kartta karar metninden kısa alıntı, metinde geçen kanun
-              maddeleri ve ilgili terimler görünür. Kararı açınca tam metni okuyabilirsiniz. Bu
-              kayıtlar hukuki mütalaa değildir; bir karara dayanmadan önce aslını esas/karar
-              numarasıyla resmî sistemden doğrulayın.
-            </p>
-            <p>
-              <strong className="text-[var(--c-ink)]">Doktrin</strong>{" — "}sağlık hukuku alanındaki
-              hakemli akademik makaleler (TR-Dizin&apos;de dizinlenen dergilerden). Kartlarda başlık,
-              yazar, dergi ve özet görünür; tam metin için karttaki bağlantıdan yayıncıya
-              gidersiniz — makalelerin tam metni telif gereği burada barındırılmaz.
-            </p>
-          </div>
-        </details>
-      )}
+      {/* "Hukuk bölümü nedir, nasıl kullanılır?" kutusu KALDIRILDI (kullanıcı kararı
+          2026-08-18) — 2026-08-11'de eklenen <details> tanıtımı süperseDE; içtihat
+          kartlarındaki "hukuki mütalaa değildir" uyarısı kart düzeyinde yaşamaya devam eder. */}
 
       {/* İçtihat anahtar-kelime çipleri (v6.87, kullanıcı kararı): sözlük deterministik —
           tıklanan terim kararın METNİNDE aranır (lib/hukuk-keywords.ts). URL'de taşınır (?k=),
@@ -423,38 +395,6 @@ export default async function DoctoriumPage({
         <CongressList rows={congresses} followed={followed} canFollow={!!doctor} savedIds={savedIds} />
       ) : (
         <>
-          {/* Akışım: branş çipleri — tıklanınca YALNIZ o branş listelenir */}
-          {active === "akis" && branches.length > 0 && (
-            <div className="mt-4 flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] text-[var(--c-ink-3)]">Akışınız:</span>
-              {branches.map((s) => {
-                const on = focus === s;
-                const c = branchColor(branchLabel(s));
-                return (
-                  <Link
-                    key={s}
-                    href={on ? "/doktor/doctorium" : `/doktor/doctorium?b=${s}`}
-                    aria-current={on ? "true" : undefined}
-                    className="aura-mono inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition"
-                    style={
-                      on
-                        ? { color: c, background: `${c}2e`, boxShadow: `inset 0 0 0 1px ${c}` }
-                        : { color: c, background: `${c}14` }
-                    }
-                  >
-                    {branchLabel(s)}
-                    {on && <X size={11} />}
-                  </Link>
-                );
-              })}
-              {focus && (
-                <Link href="/doktor/doctorium" className="text-[11px] text-[var(--c-ink-3)] underline hover:text-[var(--c-ink)]">
-                  tümünü göster
-                </Link>
-              )}
-            </div>
-          )}
-
           {items.length === 0 ? (
             <EmptyState active={active} focus={focus} range={range} legalTab={legalTab} keywordLabel={legalKeyword?.label ?? null} />
           ) : (

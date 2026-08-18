@@ -33,7 +33,11 @@ import { useEffect, useRef } from "react";
 // sıçrama yok; girişte önlük yok, takım elbise). film12 (2026-08-17): Beyazıt küp
 // planındaki okur kadrajdan çıkamadan kesiliyordu ("çocuk bir anda çekiliyor") →
 // b3→b4 geçişi 0.5 sn CROSSFADE oldu (küp küpe oturur, okur kenarda erir).
-// 45.75 sn; ofis sekansı 4.0–9.04.
+// film13 (2026-08-18): landing hekim→doktor çevirisi sonrası ofis sekansı YENİLENDİ —
+// ekrandaki sayfa artık "Doktorun Yeni Çalışma Alanı" (kullanıcı-onaylı kare → i2v;
+// eski dilim kare 96–215 = tam 120 kare, yenisi de 120 kare → süre/kesme noktaları
+// DEĞİŞMEDİ; kaynaklar arşivde: doctorium-home-shot2 + office-kare-doktorun-v2 +
+// scene-office4-doktorun). 45.75 sn; ofis sekansı 4.0–9.04.
 const OFFICE_SCENE_START = 4.0;
 const OFFICE_SCENE_END = 9.04;
 
@@ -105,11 +109,11 @@ export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
         loop
         playsInline
         preload="none"
-        poster="/assets/video/p-doctorium-film12.jpg"
+        poster="/assets/video/p-doctorium-film13.jpg"
         aria-hidden
         className="absolute inset-0 -z-10 h-full w-full object-cover"
       >
-        <source src="/assets/video/v-doctorium-film12-720.mp4" type="video/mp4" />
+        <source src="/assets/video/v-doctorium-film13-720.mp4" type="video/mp4" />
       </video>
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: overlay }} />
     </>

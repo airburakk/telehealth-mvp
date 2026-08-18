@@ -5,7 +5,7 @@ import { AuraMark, DoctoriumBraille } from "@/components/AuraLogo";
 import { DoctoriumBgVideo } from "@/components/aura/doctorium-bg-video";
 import { DoctoriumMobileMenu } from "@/components/aura/doctorium-mobile-menu";
 
-// /doctorium tanıtım landing'i (kullanıcı kararı 2026-08-16) — giriş yapmamış hekime/öğrenciye
+// /doctorium tanıtım landing'i (kullanıcı kararı 2026-08-16) — giriş yapmamış doktora/öğrenciye
 // Doctorium'u anlatır. Fikir kaynağı kullanıcının Codex taslağı; kit hizası bizde: aura-display/
 // aura-mono fontları (Space Grotesk EKLENMEDİ), gerçek AuraMark zümrüt sembol, iddia disiplini
 // (ölçülmemiş "iki dakika" iddiası ATILDI; "AI özeti işaretli" kanıtı doctorium/[id] sayfasındaki
@@ -203,7 +203,7 @@ export function DoctoriumLanding() {
             <div>
               <Eyebrow caps={false}><DoctoriumInline /> <ByAura /></Eyebrow>
               <h1 className="aura-display mt-5 max-w-[820px] text-[clamp(44px,5.6vw,72px)] font-medium leading-[1.02] tracking-tight">
-                <span className="block">Hekimin</span>
+                <span className="block">Doktorun</span>
                 {/* Prizma: üç sıfat sırayla döner; ekran okuyucuya tek cümle (aria-label),
                     yüzler dekoratif. Reduced-motion'da ilk yüz sabit (globals.css). */}
                 <span className="doctorium-prism-shell" role="img" aria-label="Yeni, profesyonel ve kişiselleştirilmiş">
@@ -235,7 +235,7 @@ export function DoctoriumLanding() {
                 </a>
               </div>
               <p className="mt-5 text-xs text-[#777c82]">
-                Doğrulanmış hekim ve tıp öğrencisi üyeliği — belge incelemesiyle.
+                Doğrulanmış doktor ve tıp öğrencisi üyeliği — belge incelemesiyle.
               </p>
             </div>
 
@@ -269,7 +269,7 @@ export function DoctoriumLanding() {
                 </h2>
               </div>
               <p className="max-w-[640px] self-end text-[17px] leading-relaxed text-[var(--dl-body)]">
-                <DoctoriumInline /> yalnızca haber sunmaz; hekimin bilgiye ulaşma, gündemi izleme ve
+                <DoctoriumInline /> yalnızca haber sunmaz; doktorun bilgiye ulaşma, gündemi izleme ve
                 mesleki gelişimini planlama yükünü hafifletmek için düzenlenmiştir.
               </p>
             </div>
@@ -293,14 +293,14 @@ export function DoctoriumLanding() {
             <div>
               <Eyebrow caps={false}><DoctoriumInline /> Hukuk</Eyebrow>
               <h2 className="aura-display mt-3 text-[clamp(32px,4.6vw,54px)] font-medium leading-[1.04] tracking-tight">
-                Hekimlik pratiğinin hukuki hafızası.
+                Doktorluk pratiğinin hukuki hafızası.
               </h2>
               <p className="mt-5 text-[17px] leading-relaxed text-[#aeb2b6]">
                 Mevzuat değişikliklerini, emsal kararları ve hakemli doktrini aynı çalışma alanında
                 izleyin. İçerikler bilgilendirme amacı taşır; hukuki görüş yerine geçmez.
               </p>
               <ul className="mt-7 divide-y divide-[var(--dl-line)] border-y border-[var(--dl-line)]">
-                {["Sağlık mevzuatı ve değişiklikleri", "Malpraktis ve hekim sorumluluğu içtihatları", "Hakemli sağlık hukuku makaleleri"].map((li) => (
+                {["Sağlık mevzuatı ve değişiklikleri", "Malpraktis ve doktor sorumluluğu içtihatları", "Hakemli sağlık hukuku makaleleri"].map((li) => (
                   <li key={li} className="flex gap-3 py-3 text-[15px] text-[#c7c9cc]">
                     <span aria-hidden className="text-[var(--dl-emerald)]">—</span>
                     {li}
@@ -322,12 +322,12 @@ export function DoctoriumLanding() {
                 <div className="aura-mono text-[9px] uppercase tracking-[0.14em] text-[#fda4af]">Mevzuat güncellemesi</div>
                 <h3 className="mt-1.5 text-[15px] font-medium">Sağlık hizmetleri uygulamasındaki son değişiklikler</h3>
                 <p className="mt-1 text-[11px] leading-relaxed text-[#9ca1a6]">
-                  Yayın tarihi, kaynak bağlantısı ve hekime etkisini anlatan kısa özetle.
+                  Yayın tarihi, kaynak bağlantısı ve doktora etkisini anlatan kısa özetle.
                 </p>
               </div>
               <div className="mt-3 border-l-[3px] border-[var(--dl-rose)] bg-[#131416] p-4">
                 <div className="aura-mono text-[9px] uppercase tracking-[0.14em] text-[#fda4af]">İçtihat</div>
-                <h3 className="mt-1.5 text-[15px] font-medium">Hekim sorumluluğuna ilişkin karar arşivi</h3>
+                <h3 className="mt-1.5 text-[15px] font-medium">Doktor sorumluluğuna ilişkin karar arşivi</h3>
                 <p className="mt-1 text-[11px] leading-relaxed text-[#9ca1a6]">
                   Esas ve karar bilgileriyle doğrulanabilir kaynak görünümü.
                 </p>
@@ -382,7 +382,7 @@ export function DoctoriumLanding() {
               style={{ background: "linear-gradient(120deg, rgba(52,211,153,.08), transparent 55%)" }}
             >
               <div>
-                <Eyebrow>Geleceğin hekimleri</Eyebrow>
+                <Eyebrow>Geleceğin doktorları</Eyebrow>
                 <h2 className="aura-display mt-3 text-[clamp(28px,3.6vw,42px)] font-medium leading-[1.06] tracking-tight">
                   Tıp öğrencileri için erken mesleki keşif.
                 </h2>
@@ -421,7 +421,7 @@ export function DoctoriumLanding() {
                 href="/kayit"
                 className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#34d399] px-6 text-base font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0]"
               >
-                Hekim üyeliğine başla
+                Doktor üyeliğine başla
                 <ArrowRight aria-hidden size={17} />
               </Link>
               <Link

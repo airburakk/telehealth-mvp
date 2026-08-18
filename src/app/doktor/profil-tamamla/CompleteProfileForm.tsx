@@ -5,23 +5,22 @@ import { Loader2, Stethoscope, ArrowRight } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
 
 // OAuth profil-tamamlama formu (v6.87) — DoctorSignupForm'un kimlik alanlarıyla BİREBİR
-// (ad/ünvan/branş/şehir/telefon/diller; e-posta+parola YOK — OAuth hallettti). Ünvan listesi
-// client kopyadır (lib/doctor-signup.ts db'li → bundle'a giremez; sunucu doğrulaması oradan).
+// (ad/ünvan/branş/şehir/telefon; e-posta+parola YOK — OAuth hallettti). "Hizmet dilleri" alanı
+// KALDIRILDI (kullanıcı kararı 2026-08-18, kayıt formundaki 2026-08-17 kararının eşleniği):
+// OAuth hesabı zaten "Türkçe" ile açılır, doktor dilleri sonradan tercihlerinden değiştirir.
+// Ünvan listesi client kopyadır (lib/doctor-signup.ts db'li → bundle'a giremez; sunucu
+// doğrulaması oradan).
 const TITLES = ["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."];
 
 export function CompleteProfileForm({
   initialName,
   initialTitle,
-  initialLangs,
   branches,
-  languages,
   nextHref,
 }: {
   initialName: string;
   initialTitle: string;
-  initialLangs: string[];
   branches: string[];
-  languages: string[];
   nextHref: string;
 }) {
   const [name, setName] = useState(initialName);
@@ -29,13 +28,8 @@ export function CompleteProfileForm({
   const [branch, setBranch] = useState("");
   const [city, setCity] = useState("");
   const [phone, setPhone] = useState("");
-  const [langs, setLangs] = useState<string[]>(initialLangs.length ? initialLangs : ["Türkçe"]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  function toggleLang(l: string) {
-    setLangs((prev) => (prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]));
-  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,7 +39,7 @@ export function CompleteProfileForm({
       const res = await fetch("/api/doctor/complete-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, title, branch, city, phone, languages: langs }),
+        body: JSON.stringify({ name, title, branch, city, phone }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Kaydedilemedi.");
@@ -97,17 +91,6 @@ export function CompleteProfileForm({
           <Labeled label="Cep telefonu (isteğe bağlı)">
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+90 5xx xxx xx xx" className={INPUT} />
             <span className="mt-1 block text-[11px] text-[var(--c-ink-3)]">WhatsApp/SMS bildirim kanalını seçerseniz bildirimler bu numaraya gönderilir.</span>
-          </Labeled>
-
-          <Labeled label="Hizmet dilleri">
-            <div className="flex flex-wrap gap-1.5">
-              {languages.map((l) => (
-                <button type="button" key={l} onClick={() => toggleLang(l)}
-                  className={`rounded-full border px-3 py-1.5 text-sm transition ${langs.includes(l) ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-surface)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40"}`}>
-                  {l}
-                </button>
-              ))}
-            </div>
           </Labeled>
 
           {error && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300 ring-1 ring-red-400/25">{error}</div>}
