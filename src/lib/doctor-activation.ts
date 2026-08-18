@@ -49,7 +49,8 @@ export function hasStudentCert(docs: { type: string }[]): boolean {
 // Öğrenci-SINIRLI üye mi: öğrenci damgası var ama klinik aktivasyon yok. Pazarlama yüzeyleri
 // (sponsor kartı, anket, ödül puanı) bu üyeye KAPALIDIR — tıp öğrencisi sağlık meslek mensubu
 // değildir; meslek-mensubuna-tanıtım rejimi ona uygulanamaz (kullanıcı kararı 2026-08-14).
-// Mezuniyette diploma+MMSS ile activatedAt dolunca süzgeç kendiliğinden kalkar (damga silinmez).
+// Mezuniyette zorunlu belgeler (v6.105'ten beri yalnız diploma) tamamlanıp activatedAt dolunca
+// süzgeç kendiliğinden kalkar (damga silinmez).
 export function isStudentOnly(d: { studentVerifiedAt: Date | null; activatedAt: Date | null }): boolean {
   return !!d.studentVerifiedAt && !d.activatedAt;
 }

@@ -3,8 +3,9 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 // v6.95 — Mezuniyet geçişi: öğrenci hunisinden açılmış hesabın studentTrack işaretini kapatır →
-// /doktor/baslangic normal doktor onboarding'ine (diploma+MMSS blokları) döner. Erişim/damga
-// DEĞİŞMEZ (studentVerifiedAt durur; klinik kapı yine diploma+MMSS ister — bu uç yetki AÇMAZ,
+// /doktor/baslangic normal doktor onboarding'ine (diploma + ihtiyari MMSS blokları) döner. Erişim/
+// damga DEĞİŞMEZ (studentVerifiedAt durur; klinik kapı yine zorunlu belgeyi ister [v6.105'ten beri
+// yalnız diploma] — bu uç yetki AÇMAZ,
 // yalnız onboarding modunu değiştirir). Self-auth: yalnız kendi hesabı; geri dönüşü yok (tekrar
 // öğrenci moduna dönmek gerekirse yeni karar konusu — bilinçli tek yön).
 export async function POST() {
