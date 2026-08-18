@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { AuraMark, AuraBraille } from "@/components/AuraLogo";
 import { AuraWordText } from "@/components/aura/aura-word";
-import { LangProvider, useLang, LINKS } from "@/lib/aura-landing/i18n";
+import { useEffect, useState } from "react";
+import { LangProvider, useLang, LINKS, LANG_CODES, type Lang } from "@/lib/aura-landing/i18n";
+import { langCodeFor } from "@/lib/constants";
 
 // AURA alt bilgisi — vitrin + uygulama yüzeylerinin ORTAK footer'ı (kullanıcı kararı 2026-08-18).
 //
@@ -141,16 +143,33 @@ export function AuraFooter({ accountLinks = false }: { accountLinks?: boolean })
 // Uygulama yüzeyi sarmalayıcısı: kendi LangProvider'ını kurar (vitrin kabuğu dışında context
 // yok) ve hesap şeffaflık bağlantılarını açar. SiteFooter bunu render eder.
 //
-// initialLang="tr" ZORUNLU — prop'suz LangProvider EN başlar ve yalnız air_lang varsa düzelir;
-// ilk denemede /kayit/hasta footer'ı "Patient login / Explore / Trust & Privacy" çıktı
-// (2026-08-18 tarayıcı ölçümü). Uygulama yüzeyinin KAYNAK dili Türkçe (lib/i18n.ts: "Türkçe
-// hedefte kimlik döner"), dolayısıyla footer'ın da TR olması doğru varsayılan.
-// ⚠️ Bu, footer'ı vitrinin dil seçicisinden koparır: hasta vitrinde EN seçse de uygulama
-// footer'ı TR kalır. Footer'ı uygulamanın çeviri hattına (getTranslations) bağlamak ayrı bir
-// iş — vitrin sözlüğü (COPY) ile uygulama çeviri hattı farklı sistemler.
+// Dil: air_lang (kullanıcının AÇIK seçimi, vitrin dil anahtarının yazdığı yer) → yoksa TR.
+//
+// Tarihçe (bu iki hatayı geri getirme):
+//   1. Prop'suz LangProvider EN başlar ve yalnız air_lang varsa düzelir → /kayit/hasta
+//      footer'ı "Patient login / Explore" çıkmıştı. Uygulamanın KAYNAK dili Türkçe
+//      (lib/i18n.ts: "Türkçe hedefte kimlik döner"), o yüzden fallback "tr".
+//   2. Sonra initialLang="tr" SABİTLENDİ → bu sefer Almanca seçen kullanıcıda gövde
+//      Almanca, footer Türkçe kaldı (kullanıcı bildirimi 2026-08-18). Sabit dil yanlış;
+//      doğrusu air_lang'ı okuyup ona düşmek.
+//
+// 🪤 key={lang} ZORUNLU: LangProvider dili `useState(initialLang ?? "en")` ile YALNIZ ilk
+// mount'ta okur — prop'u sonradan değiştirmek state'i güncellemez. air_lang effect'te
+// okunduğu için provider'ın remount olması gerekir.
 export function AppAuraFooter() {
+  const [lang, setLang] = useState<Lang>("tr");
+
+  useEffect(() => {
+    try {
+      const code = langCodeFor(window.localStorage.getItem("air_lang"));
+      if (code && (LANG_CODES as readonly string[]).includes(code)) setLang(code as Lang);
+    } catch {
+      // depolama engellenmiş olabilir; TR kalır
+    }
+  }, []);
+
   return (
-    <LangProvider initialLang="tr">
+    <LangProvider key={lang} initialLang={lang}>
       <AuraFooter accountLinks />
     </LangProvider>
   );

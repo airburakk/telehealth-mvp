@@ -8,7 +8,7 @@ import { SystemMessagesMenuItem } from "@/components/SystemMessagesMenuItem";
 import { AuraLogo, AuraMark } from "@/components/AuraLogo";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/components/useT";
-import { langDir, LANG_BCP47 } from "@/lib/constants";
+import { langDir, LANG_BCP47, LANGUAGES } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
 import { hidesGlobalChrome } from "@/lib/chrome-routes";
 import { BadgeCheck, Bookmark, LogOut, ShieldOff, Star, UserCog, Wallet } from "lucide-react";
@@ -160,11 +160,33 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   // Çevrilecek metinler: görünür nav etiketleri + rol + Çıkış/Giriş.
   // lang="Türkçe" → useT no-op (kimlik). Partner gibi dil-tercihli kullanıcıda /api/i18n cache'i.
   const texts = useMemo(
-    () => ["Çıkış", "Giriş yap", "Vazgeç", "Hesabım", "Profilim", "Finans", "Kaydettiklerim", "Puanlarım", "Tıp Öğrencisi", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", "Gündüz temasına geç", "Gece temasına geç", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
+    () => ["Çıkış", "Giriş yap", "Vazgeç", "Hesabım", "Profilim", "Finans", "Kaydettiklerim", "Puanlarım", "Tıp Öğrencisi", "Tüm cihazlardan çıkış", "Tüm cihazlardaki oturumlarınız kapatılacak. Devam edilsin mi?", "İşlem başarısız — oturumlar kapatılamadı. Lütfen tekrar deneyin.", "Gündüz temasına geç", "Gece temasına geç", "Sistem Mesajları", ...items.map((i) => i.label), ...(user ? [ROLE_LABELS[user.role] ?? user.role] : [])],
     [items, user]
   );
-  const { t } = useT(lang, texts);
-  const dir = langDir(lang);
+  // Krom dili: air_lang (kullanıcının AÇIK dil seçimi — vitrin dil anahtarının yazdığı yer)
+  // sunucudan gelen `lang` prop'unu EZER (kullanıcı bildirimi 2026-08-18).
+  //
+  // Neden gerekti: layout.tsx `headerLang`i YALNIZ partner doktor için ayarlıyor, herkes için
+  // varsayılan "Türkçe" → useT no-op. Sonuç: Almanca seçen hasta /giris'te gövdeyi Almanca
+  // ("Willkommen bei…") ama üst bandı Türkçe ("Giriş yap") görüyordu. Gövde air_lang'ı zaten
+  // izliyor; krom da izlemeli.
+  //
+  // Sunucuda okunamaz (localStorage) → effect'te. İlk boyama prop diliyle çizilir, ardından
+  // seçili dile geçer; kısa bir parıltı bilinçli bedel (SSR'ı client depolamasına bağlamanın
+  // alternatifi yok). air_lang YOKSA prop kazanır — partner doktorun profil dili korunur.
+  const [uiLang, setUiLang] = useState(lang);
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem("air_lang");
+      if (stored && LANGUAGES.includes(stored)) setUiLang(stored);
+      else setUiLang(lang);
+    } catch {
+      setUiLang(lang); // depolama engellenmiş — sunucu diline düş
+    }
+  }, [lang]);
+
+  const { t } = useT(uiLang, texts);
+  const dir = langDir(uiLang);
 
   // Kendi kromunu taşıyan yüzeyler (landing'ler · giriş kapıları · locale rotaları · immersive
   // görüşme) lib/chrome-routes.ts'te listelenir — SiteFooter ile TEK KAYNAK (2026-08-17).
@@ -202,7 +224,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   // (color-mix + blur), pill yerine metin sekmeleri (aktif = turkuaz), mono rol etiketi,
   // durak-noktalı giriş CTA'sı. Davranış (rol bazlı nav, logout, bildirim) DEĞİŞMEDİ.
   return (
-    <header dir={dir} lang={LANG_BCP47[lang]} className="theme-dark sticky top-0 z-30 border-b border-[var(--c-hairline)] bg-[color-mix(in_srgb,var(--c-chrome)_88%,transparent)] backdrop-blur-md">
+    <header dir={dir} lang={LANG_BCP47[uiLang]} className="theme-dark sticky top-0 z-30 border-b border-[var(--c-hairline)] bg-[color-mix(in_srgb,var(--c-chrome)_88%,transparent)] backdrop-blur-md">
       <div className="mx-auto max-w-6xl px-5 h-16 flex items-center justify-between gap-4">
         {/* Marka altyazısı ("Sağlık Turizmi & Teletıp") kullanıcı isteğiyle kaldırıldı (2026-07-12) — yalnız logo */}
         {/* shrink-0: dar ekranda flex logoyu ezip wordmark'ı nav'ın altına sokuyordu
@@ -268,9 +290,9 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                     <div className="aura-mono mt-0.5 text-[10px] uppercase tracking-[0.18em] leading-tight text-[var(--c-ink-3)]">{t(student ? "Tıp Öğrencisi" : ROLE_LABELS[user.role] ?? user.role)}</div>
                   </div>
                   <div className="mt-1">
-                    <NotificationBell lang={lang} patientLangFallback={user.role === "PATIENT"} variant="menu-item" onUnreadChange={setUnreadCount} />
+                    <NotificationBell lang={uiLang} patientLangFallback={user.role === "PATIENT"} variant="menu-item" onUnreadChange={setUnreadCount} />
                     {/* Sistem mesajları (v6.79) — bildirimlerin hemen altı (kullanıcı kararı); satır /mesajlar'a gider */}
-                    <SystemMessagesMenuItem onUnreadChange={setMsgUnread} onNavigate={() => setMenuOpen(false)} />
+                    <SystemMessagesMenuItem label={t("Sistem Mesajları")} onUnreadChange={setMsgUnread} onNavigate={() => setMenuOpen(false)} />
                   </div>
                   {/* Doctorium kişisel köşesi (2026-08-18, kullanıcı kararı): Üst Raf'taki
                       Kaydettiklerim/Puanlarım BURAYA taşındı — kişisel eşya profil menüsünde

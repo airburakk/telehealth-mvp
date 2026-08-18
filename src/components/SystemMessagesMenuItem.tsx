@@ -11,9 +11,11 @@ import { useLiveTick } from "@/lib/use-live-tick";
 // canlı dürtü "notify" kanalını bildirimlerle paylaşır (tek dürtü ikisini de tazeler).
 // onUnreadChange: Header, avatar rozetinde bildirim+mesaj TOPLAMINI gösterir (menü kapalıyken
 // görünürlük kaybolmasın — NotificationBell ile aynı sözleşme).
-export function SystemMessagesMenuItem({ onUnreadChange, onNavigate }: {
+export function SystemMessagesMenuItem({ onUnreadChange, onNavigate, label = "Sistem Mesajları" }: {
   onUnreadChange?: (n: number) => void;
   onNavigate?: () => void;
+  /** Çevrilmiş etiket (Header t() ile geçirir). Verilmezse TR — kaynak dil. */
+  label?: string;
 }) {
   const router = useRouter();
   const [unread, setUnread] = useState(0);
@@ -41,7 +43,7 @@ export function SystemMessagesMenuItem({ onUnreadChange, onNavigate }: {
       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-start text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]"
     >
       <MailQuestion size={15} />
-      <span className="flex-1">Sistem Mesajları</span>
+      <span className="flex-1">{label}</span>
       {unread > 0 && (
         <span className="grid h-4 min-w-4 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
           {unread > 9 ? "9+" : unread}
