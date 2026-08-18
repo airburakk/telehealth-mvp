@@ -84,7 +84,10 @@ export function V2Hero() {
         className="absolute inset-0 -z-10 bg-[linear-gradient(to_top,rgba(13,14,16,0.88)_0%,rgba(13,14,16,0.40)_45%,rgba(13,14,16,0.22)_100%)]"
       />
 
-      <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col items-center justify-center px-5 py-24 text-center md:px-8">
+      {/* Sola dayalı düzen (2026-08-18, kullanıcı isteği): /doctorium landing deseni —
+          içerik V2Nav'daki logoyla AYNI sol çizgiden akar (ikisi de max-w-6xl px-5
+          md:px-8). Braille marka bloğu İÇİNDE wordmark'a göre ortalı kalır (kural). */}
+      <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col items-start justify-center px-5 py-24 md:px-8">
         {/* Marka vuruşu: AURA harfleri + braille — sahnesiz, her zaman görünür. */}
         <div role="img" aria-label="AURA" className="aura-brand inline-flex flex-col items-center">
           <span className="aura-word flex select-none items-end justify-center gap-[clamp(0.7rem,3.2vw,2.5rem)]">
@@ -111,7 +114,7 @@ export function V2Hero() {
         <p className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg">
           <AuraWordText text={h.lede} />
         </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-8 flex flex-wrap items-center justify-start gap-3">
           <Link
             href="/giris"
             className="inline-flex items-center gap-2 rounded-full bg-[var(--aura-accent)] px-7 py-3.5 text-base font-semibold text-[var(--aura-night)] transition-transform duration-200 hover:translate-x-0.5 active:scale-[0.98]"
