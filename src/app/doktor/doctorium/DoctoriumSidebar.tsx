@@ -144,10 +144,12 @@ export function DoctoriumSidebar({
 
   return (
     <>
-      {/* ── Masaüstü üst rafı (Header h-16 sticky → top-16; Header z-30 altında) ── */}
+      {/* ── Masaüstü üst rafı (Header h-16 sticky → top-16; Header z-30 altında) ──
+          Zemin "Zümrüt Nefesi %8" (2026-08-19, kullanıcı seçimi): salt krom, sabit-koyu
+          Header'la kaynaşıp siyah blok okunuyordu — globals.css .doctorium-shelf-bg. */}
       <nav
         aria-label="Doctorium bölümleri"
-        className="sticky top-16 z-20 hidden border-b border-[var(--c-hairline)] bg-[color-mix(in_srgb,var(--c-chrome)_92%,transparent)] backdrop-blur-md md:block"
+        className="doctorium-shelf-bg sticky top-16 z-20 hidden border-b border-[var(--c-hairline)] backdrop-blur-md md:block"
       >
         {/* İç konteyner Header'la aynı kolon (max-w-6xl); ps-[39px] = "01 Akışım"ın METNİ
             Header'daki AURA wordmark'ının x'iyle hizalanır (kullanıcı isteği 2026-08-18:
@@ -198,10 +200,11 @@ export function DoctoriumSidebar({
         </div>
       </nav>
 
-      {/* ── Mobil alt çubuk (M2) — DOKUNULMADI ── */}
+      {/* ── Mobil alt çubuk (M2) — zemin masaüstü rafla AYNI "Zümrüt Nefesi" (aynı nav'ın
+          iki yüzü, dil bölünmez); yapı dokunulmadı ── */}
       <nav
         aria-label="Doctorium bölümleri"
-        className="fixed inset-x-0 bottom-0 z-40 flex justify-around border-t border-[var(--c-hairline)] bg-[var(--c-chrome)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        className="doctorium-shelf-bg fixed inset-x-0 bottom-0 z-40 flex justify-around border-t border-[var(--c-hairline)] pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
         {MOBILE_TABS.map((t) => {
           const on = active != null && t.keys.includes(active as ModuleKey);

@@ -21,11 +21,22 @@ import {
 // İçerik kapsamı (kullanıcı kararı 2026-08-18): landing'deki hâli — Güven ve Gizlilik +
 // AURA'ya git. ⚠️ "Onay Kanıtım"/"Erişim Kaydım" BİLİNÇLİ olarak yok; o iki bağlantı AURA
 // tarafındaki SiteFooter'da yaşamayı sürdürür (doktor /doktor'a çıktığında görür).
-export function DoctoriumFooter() {
+//
+// `portal` varyantı (2026-08-19, kullanıcı bildirimi "footer çok kalın"): iç portalda
+// (/doktor/doctorium/*) sabit koyu palet yerine TEMA-DUYARLI krom — globals.css
+// `.doctorium-footer-portal` --dl-* token'larını --c-* kromuna remap eder (gece sayfa
+// zemini #0d0e10 ile footer #0d0e10 AYNI çıkıyor, footer sınırsız "koyu blok" gibi
+// okunuyordu; gündüzde ise açık zeminde simsiyah bant duruyordu). py-10→py-7 inceltme +
+// mb-14 mobil fixed alt çubuk payı (footer çubuğun arkasında kalmasın) yalnız portalda.
+// Landing/giriş kapısı DOKUNULMADI — koyu marka footer'ı oralarda aynen yaşar.
+// `theme`: ByAura wordmark PNG seçimi (açık kromda beyaz PNG görünmez) — SSR cookie'den.
+export function DoctoriumFooter({ portal = false, theme = "dark" }: { portal?: boolean; theme?: "dark" | "light" }) {
   return (
     <footer
-      style={DOCTORIUM_PALETTE}
-      className="border-t border-[var(--dl-line)] bg-[var(--dl-bg)] py-10 text-[var(--dl-ink)] print:hidden"
+      style={portal ? undefined : DOCTORIUM_PALETTE}
+      className={`border-t border-[var(--dl-line)] bg-[var(--dl-bg)] text-[var(--dl-ink)] print:hidden ${
+        portal ? "doctorium-footer-portal mb-14 py-7 md:mb-0" : "py-10"
+      }`}
     >
       <div className="mx-auto w-full max-w-6xl px-5">
         {/* Marka bloğu — AURA landing footer'ının alt-marka eşleniği (kullanıcı kararı
@@ -39,9 +50,9 @@ export function DoctoriumFooter() {
             <DoctoriumBraille height={12} className="mt-2 text-[var(--dl-muted)]" />
           </span>
         </div>
-        <div className="mt-6 flex flex-col justify-between gap-4 text-xs text-[#777c82] sm:flex-row">
+        <div className={`mt-6 flex flex-col justify-between gap-4 text-xs sm:flex-row ${portal ? "text-[var(--dl-body)]" : "text-[#777c82]"}`}>
           <span>
-            © 2026 <DoctoriumInline /> <ByAura />
+            © 2026 <DoctoriumInline /> <ByAura light={portal && theme === "light"} />
           </span>
           <div className="flex flex-wrap gap-6">
             <Link href="/guven-ve-gizlilik" className="transition-colors hover:text-[var(--dl-ink)]">

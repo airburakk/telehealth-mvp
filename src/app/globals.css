@@ -75,6 +75,45 @@
   color-scheme: dark;
 }
 
+/* Doctorium PORTAL footer'ı (2026-08-19, kullanıcı bildirimi "footer çok kalın"):
+ * DoctoriumFooter landing'de sabit koyu DOCTORIUM_PALETTE ile yaşar; iç portalda
+ * (/doktor/doctorium/*) aynı sabit koyu, gece temasında sayfa zeminiyle (#0d0e10)
+ * BİREBİR AYNI çıkıp footer'ı sınırsız "koyu blok" gibi okutuyor, gündüzde ise açık
+ * zeminde simsiyah bant bırakıyordu. Bu blok --dl-* token'larını TEMA kromuna remap
+ * eder — footer Header/Üst Raf ile aynı katman diline geçer (gece #08090b: zeminden
+ * ayrışır ama bağırmaz; gündüz açık krom). Zümrüt/turkuaz aksanları gündüzde koyu
+ * karşılığına iner (açık zeminde #34d399 AA altı — landing'in LIGHT bölümü de #047857
+ * kullanır, doctorium-landing.tsx). */
+.doctorium-footer-portal {
+  --dl-bg: var(--c-chrome);
+  --dl-ink: var(--c-ink);
+  --dl-muted: var(--c-ink-3);
+  --dl-body: var(--c-ink-2);
+  --dl-line: var(--c-hairline);
+  --dl-emerald: #34d399;
+  --dl-cyan: #28c8d8;
+}
+.theme-light .doctorium-footer-portal {
+  --dl-emerald: #047857;
+  --dl-cyan: #0e7490;
+}
+
+/* Doctorium Üst Raf zemini — "Zümrüt Nefesi %8" (2026-08-19, kullanıcı seçimi, görsel
+ * karşılaştırma sonrası): Header sabit koyu kromda (#08090b, theme-dark sınıfı hard-coded)
+ * ve raf aynı krom tonundaydı — gece ikisi 112px kesintisiz "siyah blok" gibi kaynaşıyordu.
+ * Zemine %8 marka yeşili karışır (--c-success: gece #34d399 → ≈#0c1916 koyu orman; gündüz
+ * #15803d → yeşilimsi açık krom): raf koyu kalır ama Doctorium kimliğini taşıyan AYRI bir
+ * düzlem olur; AURA kromu nötr kalır. %92 saydamlık sticky raf altından içerik akarken
+ * backdrop-blur buğusunun çalışması için (eski color-mix davranışıyla aynı). Masaüstü raf +
+ * mobil alt çubuk BİRLİKTE kullanır (v6.109 "masa↔mobil aynı yatay model" — dil bölünmez). */
+.doctorium-shelf-bg {
+  background-color: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--c-success) 8%, var(--c-chrome)) 92%,
+    transparent
+  );
+}
+
 /* ============================================================
  * GÜNDÜZ KONTRAST GÜVENCESİ (2026-07-13, kullanıcı isteği): Gece teması için
  * yazılmış açık-ton Tailwind metin sınıfları (text-emerald-300, text-amber-200,

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { hasDoctoriumAccess } from "@/lib/doctor-activation";
@@ -35,10 +36,22 @@ export default async function DoctoriumLayout({ children }: { children: React.Re
   // Doctorium alt bilgisi 7 alt sayfanın hepsine BURADAN iner (kullanıcı kararı 2026-08-18).
   // Global AURA SiteFooter bu ağaçta chrome-routes.ts'teki hidesFooter() ile susturulur —
   // ⚠️ Header SUSMAZ: Üst Raf navigasyonu (v6.109) iç portalın gezinme omurgası.
+  //
+  // DİBE YAPIŞTIRMA (2026-08-19, kullanıcı bildirimi "footer çok yukarı çıkmış"): SiteFooter
+  // kök layout'ta `main.flex-1`in KARDEŞİ olduğu için hep dipteydi; DoctoriumFooter ise main'in
+  // İÇİNDEN geldiğinden kısa sayfada (etkinlik kartı ~1 ekran) viewport ortasında asılı
+  // kalıyordu. min-h = 100dvh − Header h-16 (4rem); MasterBar'lı nadir oturumda sayfa yalnız
+  // o kadar uzar (min-height olduğundan zararsız). Mobil fixed alt çubuk payı footer'ın kendi
+  // portal varyantında (mb-14) — Shell'in pb-16'sı yalnız children'ı kapsıyordu.
+  //
+  // Portal varyantı TEMA-DUYARLI (globals.css .doctorium-footer-portal): gece --c-chrome
+  // (#08090b) sayfa zemininden (#0d0e10) ayrışır, gündüz açık krom "siyah blok"u bitirir.
+  // ByAura wordmark PNG'sinin light/dark seçimi SSR'da cookie'den (Header'la aynı kaynak).
+  const themeCookie = (await cookies()).get("aura_theme")?.value;
   return (
-    <>
-      {children}
-      <DoctoriumFooter />
-    </>
+    <div className="flex min-h-[calc(100dvh-4rem)] flex-col">
+      <div className="flex-1">{children}</div>
+      <DoctoriumFooter portal theme={themeCookie === "light" ? "light" : "dark"} />
+    </div>
   );
 }
