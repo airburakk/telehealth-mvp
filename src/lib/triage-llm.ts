@@ -3,7 +3,7 @@
 // ANTHROPIC_API_KEY yoksa veya çağrı hata/zaman aşımı verirse kural tabanlı
 // analyzeTriage motoruna otomatik düşülür — uygulama anahtarsız da çalışır.
 import Anthropic from "@anthropic-ai/sdk";
-import { analyzeTriage, BRANCHES, type TriageInput, type TriageOutput } from "./triage";
+import { analyzeTriage, PATIENT_BRANCHES, type TriageInput, type TriageOutput } from "./triage";
 
 // Triyaj modeli — ortam değişkeniyle ayarlanabilir, böylece Vercel'den kod değişikliği
 // olmadan Haiku/Sonnet/Opus arasında geçilebilir. Triyaj HER hastada çalışır → hacim/maliyet
@@ -14,7 +14,9 @@ import { analyzeTriage, BRANCHES, type TriageInput, type TriageOutput } from "./
 // üç model de aynı kodla çalışır (effort Haiku'da, sampling parametreleri Opus'ta 400 verir).
 const MODEL = process.env.TRIAGE_MODEL || "claude-sonnet-4-6";
 
-const BRANCH_KEYS = BRANCHES.map((b) => b.key);
+// PATIENT_BRANCHES: doktor-only dallar (radyoloji · patoloji · anesteziyoloji · acil-tıp ·
+// tıbbi genetik) LLM'e hiç GÖSTERİLMEZ — enum'da yoksa model oraya yönlendiremez (v6.119).
+const BRANCH_KEYS = PATIENT_BRANCHES.map((b) => b.key);
 
 const SYSTEM = `Sen bir sağlık turizmi platformunun triyaj asistanısın. Hastanın serbest metinle yazdığı şikâyeti analiz edip onu DOĞRU TIBBİ BRANŞA yönlendirir ve ACİLİYET düzeyini belirlersin. Tanı KOYMAZSIN; yalnızca yönlendirme ve önceliklendirme yaparsın. Yanıtını DAİMA submit_triage aracıyla ver.
 
@@ -56,7 +58,7 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 export async function analyzeTriageLLM(input: TriageInput): Promise<TriageOutput> {
   const client = new Anthropic(); // ANTHROPIC_API_KEY ortam değişkeninden okunur
 
-  const forcedBranch = input.forceBranchKey ? BRANCHES.find((b) => b.key === input.forceBranchKey) : null;
+  const forcedBranch = input.forceBranchKey ? PATIENT_BRANCHES.find((b) => b.key === input.forceBranchKey) : null;
 
   const userText = [
     forcedBranch ? `Branş hasta tarafından seçildi: ${forcedBranch.label}. Branşı değiştirme; yalnızca aciliyeti ve gerekçeyi bu bağlamda belirle.` : "",
@@ -87,7 +89,7 @@ export async function analyzeTriageLLM(input: TriageInput): Promise<TriageOutput
     missingInfo?: string;
   };
 
-  const branch = forcedBranch ?? BRANCHES.find((b) => b.key === out.branchKey) ?? BRANCHES.find((b) => b.key === "dahiliye")!;
+  const branch = forcedBranch ?? PATIENT_BRANCHES.find((b) => b.key === out.branchKey) ?? PATIENT_BRANCHES.find((b) => b.key === "dahiliye")!;
   const urgency = Math.min(5, Math.max(1, Math.round(Number(out.urgency) || 3)));
   const confidence = Math.min(99, Math.max(40, Math.round(Number(out.confidence) || 70)));
   let reasoning = String(out.reasoning || `Semptom analizi → ${branch.label}.`);

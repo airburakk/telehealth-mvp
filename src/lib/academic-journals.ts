@@ -61,6 +61,13 @@ export const BRANCH_JOURNALS: Record<string, string[]> = {
   "fizik-tedavi": ["Arch Phys Med Rehabil", "J Rehabil Med", "Am J Phys Med Rehabil"],
   dis: ["J Dent Res", "J Clin Periodontol", "J Endod", "J Dent"],
   "organ-nakli": ["Am J Transplant", "Transplantation", "J Hepatol"],
+
+  // Doktor-only branşlar (v6.119) — Akademik modülü bu haritayı okur; eksikse branş boş kalır.
+  "acil-tip": ["Ann Emerg Med", "Acad Emerg Med", "Emerg Med J", "Resuscitation"],
+  radyoloji: ["Radiology", "Eur Radiol", "AJR Am J Roentgenol", "Radiographics"],
+  anesteziyoloji: ["Anesthesiology", "Br J Anaesth", "Anesth Analg", "Intensive Care Med"],
+  patoloji: ["Am J Surg Pathol", "Mod Pathol", "Histopathology", "J Pathol"],
+  "tibbi-genetik": ["Am J Hum Genet", "Genet Med", "Nat Genet", "Eur J Hum Genet"],
 };
 
 /**

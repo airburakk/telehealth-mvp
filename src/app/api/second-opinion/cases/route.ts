@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { BRANCHES } from "@/lib/triage";
+import { PATIENT_BRANCHES } from "@/lib/triage";
 import { COUNTRIES, LANGUAGES } from "@/lib/constants";
 import { logSoEvent } from "@/lib/second-opinion-service";
 import { soCaseListScope } from "@/lib/ownership";
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
   if (diagnosisSummary.length < 10) {
     return NextResponse.json({ error: "Lütfen mevcut tanınızı kısaca özetleyin (en az 10 karakter)." }, { status: 400 });
   }
-  if (!BRANCHES.some((b) => b.key === branch)) {
+  if (!PATIENT_BRANCHES.some((b) => b.key === branch)) {
     return NextResponse.json({ error: "Geçerli bir tıbbi branş seçin." }, { status: 400 });
   }
   if (!COUNTRIES.some((c) => c.code === country)) {

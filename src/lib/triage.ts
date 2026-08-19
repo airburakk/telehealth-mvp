@@ -6,6 +6,13 @@ export interface BranchDef {
   key: string;
   label: string;
   keywords: string[];
+  /// v6.119 — YALNIZ doktor yüzeyinde yaşayan branş (Doctorium kongre/akış/akademik süzgeçleri +
+  /// doktor profili). HASTA yüzeyinde GÖRÜNMEZ: triyaj, sağlık turizmi planlayıcı, ikinci görüş
+  /// başvurusu, partner konsültasyon talebi. Gerekçe: radyoloji/patoloji/anesteziyoloji konsültan
+  /// dallardır (hasta kendini oraya yönlendirmez), "Acil Tıp"ı ise telesağlıkta hastaya seçtirmek
+  /// klinik olarak YANLIŞ yönlendirmedir — acil vaka hastaneye gider, ekrana değil.
+  /// Hasta-yüzü listeler `PATIENT_BRANCHES`'ı kullanır; `BRANCHES` tam kümedir.
+  doctorOnly?: boolean;
 }
 
 export const BRANCHES: BranchDef[] = [
@@ -44,7 +51,27 @@ export const BRANCHES: BranchDef[] = [
   { key: "gogus-cerrahisi", label: "Göğüs Cerrahisi", keywords: ["akciğer ameliyat", "göğüs cerrahi", "plevra", "akciğer nodül", "toraks", "akciğer kitle ameliyat"] },
   { key: "organ-nakli", label: "Organ Nakli", keywords: ["organ nakli", "böbrek nakli", "karaciğer nakli", "transplant", "nakil", "donör", "verici", "nakil bekleme"] },
   { key: "radyasyon-onkolojisi", label: "Radyasyon Onkolojisi", keywords: ["radyoterapi", "ışın tedavi", "radyasyon onkoloji"] },
+
+  // ── Doktor-only branşlar (v6.119, 2026-08-19) ────────────────────────────────────────────
+  // Kullanıcının 30 branşlık kongre rehberi bu 5 dalı taşıyordu (raw/kongre-rehberi-30-brans-
+  // 2026-08-19.md) ama sistemde YOKTULAR. Kongreleri tanımsız bir slug'a yazmak SESSİZ kayıp
+  // demekti: `upcomingCongresses` branş süzgeci ve `parseBranchPrefs` bilinmeyen slug'ı atar →
+  // kayıt DB'de durur, hiçbir doktora görünmez, hata da vermez.
+  // keywords BOŞ + doctorOnly:true → kural motoru bunlara ASLA düşemez, hasta seçemez.
+  // ⚠️ Yeni doktor-only branş eklerken şu dört eşleniği de doldur, yoksa modül o branşta
+  //    sessizce boş kalır: BRANCH_COLORS · BRANCH_ICONS (branch-icons.tsx) ·
+  //    NEWS_QUERIES (medical-news.ts) · BRANCH_JOURNALS (academic-journals.ts).
+  { key: "acil-tip", label: "Acil Tıp", keywords: [], doctorOnly: true },
+  { key: "radyoloji", label: "Radyoloji", keywords: [], doctorOnly: true },
+  { key: "anesteziyoloji", label: "Anesteziyoloji ve Reanimasyon", keywords: [], doctorOnly: true },
+  { key: "patoloji", label: "Tıbbi Patoloji", keywords: [], doctorOnly: true },
+  { key: "tibbi-genetik", label: "Tıbbi Genetik", keywords: [], doctorOnly: true },
 ];
+
+/// Hasta yüzeyinde gösterilebilir branşlar — triyaj, sağlık turizmi planlayıcı, ikinci görüş
+/// başvurusu ve partner konsültasyon talebi BUNU kullanır (vaka yönlendirme ekseni).
+/// Doktor yüzeyi (Doctorium süzgeçleri, doktor profili, admin) tam `BRANCHES` kümesini kullanır.
+export const PATIENT_BRANCHES: BranchDef[] = BRANCHES.filter((b) => !b.doctorOnly);
 
 const RED_FLAGS_5 = ["nefes darlığı", "göğüs ağrı", "bilinç", "felç", "şiddetli kanama", "kanama", "inme", "bayıl", "39", "40 derece", "kan kus", "morar"];
 const RED_FLAGS_4 = ["ateş", "kusma", "şiddetli ağrı", "kanlı", "ani ", "yüksek tansiyon", "şişlik hızl"];
@@ -78,17 +105,21 @@ export function analyzeTriage(input: TriageInput): TriageOutput {
   let best: BranchDef | null = null;
   let bestHits = 0;
   const matched: string[] = [];
-  for (const b of BRANCHES) {
+  // PATIENT_BRANCHES: doktor-only dallar (radyoloji/patoloji/anesteziyoloji/acil-tıp/genetik)
+  // triyajın erişemeyeceği yerdedir — keywords'leri zaten boş, ama kaynak listeyi daraltmak
+  // niyeti kodda görünür kılar (ileride birine keyword eklenirse kazara yönlendirme olmaz).
+  for (const b of PATIENT_BRANCHES) {
     let hits = 0;
     for (const kw of b.keywords) {
       if (text.includes(kw)) { hits++; if (!matched.includes(kw)) matched.push(kw); }
     }
     if (hits > bestHits) { bestHits = hits; best = b; }
   }
-  if (!best) best = BRANCHES.find((b) => b.key === "dahiliye")!;
+  if (!best) best = PATIENT_BRANCHES.find((b) => b.key === "dahiliye")!;
 
-  // Hasta branşı elle seçtiyse onu sabitle (aciliyet yine aşağıda semptom/yanıtlardan hesaplanır)
-  const forced = input.forceBranchKey ? BRANCHES.find((b) => b.key === input.forceBranchKey) : null;
+  // Hasta branşı elle seçtiyse onu sabitle (aciliyet yine aşağıda semptom/yanıtlardan hesaplanır).
+  // Doktor-only slug elle POST edilse bile eşleşmez → varsayılan/semptom branşı kalır (fail-safe).
+  const forced = input.forceBranchKey ? PATIENT_BRANCHES.find((b) => b.key === input.forceBranchKey) : null;
   if (forced) best = forced;
 
   // 2) Aciliyet skoru

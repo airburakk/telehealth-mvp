@@ -18,7 +18,7 @@ import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/compo
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
 import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
 import { COUNTRIES, countryName, langDir, LANG_BCP47 } from "@/lib/constants";
-import { BRANCHES } from "@/lib/triage";
+import { PATIENT_BRANCHES } from "@/lib/triage";
 import { TOURISM_DISCLAIMER_TITLE, TOURISM_DISCLAIMER_BODY } from "@/lib/tourism-disclaimer";
 
 const TEXTS = [
@@ -59,7 +59,7 @@ export function SaglikTurizmiPlanner() {
 
 function SaglikTurizmiPlannerInner() {
   const [lang, setLang] = usePatientLang();
-  const texts = useMemo(() => [...TEXTS, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...DICTATION_TEXTS, ...BRANCHES.map((b) => b.label)], []); // sabit referans — useT yarış dersi (v3.5)
+  const texts = useMemo(() => [...TEXTS, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...DICTATION_TEXTS, ...PATIENT_BRANCHES.map((b) => b.label)], []); // sabit referans — useT yarış dersi (v3.5)
   const { t } = useT(lang, texts);
 
   const [step, setStep] = useState<0 | 1>(0);
@@ -224,7 +224,7 @@ function SaglikTurizmiPlannerInner() {
 
             <Field label={t("Tedavi Alanı")}>
               <div className="flex flex-wrap gap-2">
-                {BRANCHES.map((b) => (
+                {PATIENT_BRANCHES.map((b) => (
                   <button key={b.key} type="button" onClick={() => setBranchKey(b.key)}
                     className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${branchKey === b.key ? "border-[var(--c-accent-strong)] bg-[var(--c-accent)]/10 text-[var(--c-accent-strong)]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40"}`}>
                     {t(b.label)}

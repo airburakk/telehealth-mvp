@@ -94,4 +94,12 @@ export const NEWS_QUERIES: Record<string, string> = {
   "Fiziksel Tıp ve Rehabilitasyon": "physical therapy modalities[mh] OR rehabilitation[mh]",
   "Diş Tedavisi": "stomatognathic diseases[mh] OR dentistry[mh]",
   "Organ Nakli": "organ transplantation[mh]",
+
+  // Doktor-only branşlar (v6.119) — hasta triyajında yoklar ama Doctorium Akışım/Akademik
+  // modüllerinde doktorun branşı olabilirler; sorgu yoksa akış o branşta SESSİZCE boş kalır.
+  "Acil Tıp": "emergency medicine[mh] OR emergency treatment[mh]",
+  Radyoloji: "diagnostic imaging[mh] AND (methods[sh] OR diagnosis[sh])",
+  "Anesteziyoloji ve Reanimasyon": "anesthesia[mh] OR critical care[mh]",
+  "Tıbbi Patoloji": "pathology[mh] AND (methods[sh] OR diagnosis[sh])",
+  "Tıbbi Genetik": "genetics, medical[mh] OR genetic testing[mh]",
 };
