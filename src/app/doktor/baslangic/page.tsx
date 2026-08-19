@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { soEligible } from "@/lib/doctor-home";
 import { branchKeyFromLabel, branchLabel, getBranchProcedures, getByCodes } from "@/lib/procedures";
 import { hasDoctoriumAccess, isEduEmail } from "@/lib/doctor-activation";
+import { verifyUiVisible, layerGateEnabled } from "@/lib/doctor-verify";
 import { SPONSOR_CONSENT_TEXT } from "@/lib/sponsor";
 import { HR_CONTACT_CONSENT_TEXT } from "@/lib/hr-consent";
 import { GraduationCap, FileCheck2, ArrowRight } from "lucide-react";
@@ -37,6 +38,8 @@ export default async function DoctorOnboardingPage({
           procedures: true, licenseNo: true, eduSchool: true, eduYear: true, specBoard: true, specYear: true,
           certifications: true, publications: true,
           diplomaVerifiedAt: true, studentVerifiedAt: true, studentTrack: true, sponsorPersonalizationAt: true, hrContactOptInAt: true,
+          // v6.127 — Aşama 2 güvenlik katmanı damgaları (Güvenlik Doğrulamaları bölümü)
+          smsVerifiedAt: true, workEmailVerifiedAt: true, clinicPhoneVerifiedAt: true, clinicPhoneEstablishment: true,
         },
       })
     : null;
@@ -216,6 +219,19 @@ export default async function DoctorOnboardingPage({
         fromDoctorium: sp.from === "doctorium",
       }}
       theme={theme}
+      // v6.127 — Güvenlik Doğrulamaları: kanal aktif değilken (ve gate kapalıyken) bölüm HİÇ
+      // çizilmez (kullanıcı kararı — kod gönderemeyen kart doktoru boşuna uğraştırır).
+      security={
+        verifyUiVisible()
+          ? {
+              smsVerified: !!doctor.smsVerifiedAt,
+              workEmailVerified: !!doctor.workEmailVerifiedAt,
+              clinicPhoneVerified: !!doctor.clinicPhoneVerifiedAt,
+              clinicPhoneEstablishment: doctor.clinicPhoneEstablishment,
+              gateOn: layerGateEnabled(),
+            }
+          : null
+      }
     />
     </>
   );

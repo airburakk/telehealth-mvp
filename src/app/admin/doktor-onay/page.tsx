@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { hasProcedures, hasQualification } from "@/lib/doctor-activation";
 import { VerifyButton } from "./VerifyButton";
 import { DocReviewButtons } from "./DocReviewButtons";
+import { ClinicPhoneVerify } from "./ClinicPhoneVerify";
 import { ShieldCheck, Stethoscope, MapPin, Globe, Check, X, Clock, BadgeCheck, Flag, FileText } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,8 @@ export default async function DoctorApprovalPage() {
       mmssInsurer: true, mmssCoverageLimit: true, mmssCoverageCurrency: true,
       mmssValidUntil: true, // poliçe bitişi (Faz 1b) — dolu+geçmişse kırmızı rozet; boşsa rozet YOK (mevcut doktorda boş normaldir)
       registryStatus: true, // HealthTürkiye dizin doğrulaması (FAZ 6) — NOT_FOUND ise uyarı bayrağı
+      // v6.127 — Aşama 2 klinik telefonu teyidi (koordinatör geri-arama bloğu)
+      clinicPhoneVerifiedAt: true, clinicPhoneEstablishment: true,
       // Belge META'sı — içerik listede taşınmaz; incelemeci tek belgeyi raw uçtan açar (audit'li).
       documents: { select: { id: true, type: true, label: true, mimeType: true, createdAt: true, status: true, reviewNote: true }, orderBy: { createdAt: "desc" } },
     },
@@ -58,7 +61,7 @@ export default async function DoctorApprovalPage() {
             e-Devlet barkodlu Mezun Belgesi — barkodu okunabildiyse sistem zaten otomatik
             doğrulamıştır; elinize düşenler çoğunlukla barkodsuz fotoğraf/taramadır.)</li>
           <li>Diplomada barkod numarası varsa turkiye.gov.tr/belge-dogrulama&apos;dan elle teyit
-            edebilirsiniz (barkod + belge sahibinin T.C. kimlik no'su istenir).</li>
+            edebilirsiniz (barkod + belge sahibinin T.C. kimlik numarası istenir).</li>
           <li>Belgedeki ad-soyad ↔ profil adı ↔ (varsa) HealthTürkiye kaydı eşleşiyor mu?</li>
           <li>Diploma no ↔ beyan edilen tescil no · MMSS poliçe alanları ↔ beyan tutarlı mı?</li>
           <li>HealthTürkiye NOT_FOUND tek başına engel değil (dizin kapsamı sınırlı) — belgeler
@@ -160,6 +163,14 @@ export default async function DoctorApprovalPage() {
                     </ul>
                   </div>
                 )}
+
+                {/* v6.127 — Aşama 2 kurum bağı: klinik telefonu geri-arama teyidi (insan-işletimli).
+                    Gate'ten BAĞIMSIZ hep görünür: damgalar AURA_LAYER_GATE açılmadan ÖNCE dolmalı. */}
+                <ClinicPhoneVerify
+                  doctorId={d.id}
+                  initialVerified={!!d.clinicPhoneVerifiedAt}
+                  initialEstablishment={d.clinicPhoneEstablishment}
+                />
               </div>
             );
           })}

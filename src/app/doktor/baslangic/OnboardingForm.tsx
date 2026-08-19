@@ -8,6 +8,7 @@ import ProcedureSelector, { type Proc } from "@/components/ProcedureSelector";
 import { AcademicEducationBox, CertificatesBox } from "@/components/AcademicEditor";
 import { Stage1Doctorium, type Stage1Props } from "@/components/Stage1Doctorium";
 import { AuraWordmark } from "@/components/AuraLogo";
+import { SecurityLayersCard, type SecurityInitial } from "@/components/SecurityLayersCard";
 
 interface Pub { title: string; venue: string; year: number }
 
@@ -37,6 +38,7 @@ export function OnboardingForm({
   initialDocs,
   initialMmss,
   stage1,
+  security,
   theme,
 }: {
   doctorName: string;
@@ -57,6 +59,8 @@ export function OnboardingForm({
   initialDocs: DocMeta[];
   initialMmss: MmssInitial;
   stage1: Stage1Props;
+  // v6.127 — Güvenlik Doğrulamaları bölümü; null = ÇİZİLMEZ (kanal aktif değil + gate kapalı).
+  security: SecurityInitial | null;
   // Sayfanın aktif teması (aura_theme cookie) — Aşama 2 bandı bunun TERSİNE boyanır.
   theme: "dark" | "light";
 }) {
@@ -252,6 +256,10 @@ export function OnboardingForm({
           />
         </div>
       </div>
+
+      {/* ── Güvenlik Doğrulamaları (v6.127) — yalnız kanal aktifken/gate açıkken çizilir
+             (security=null → sunucu bölümü hiç göndermedi; kullanıcı kararı 2026-08-19). ── */}
+      {security && <SecurityLayersCard initial={security} />}
         </div>
       </div>
 

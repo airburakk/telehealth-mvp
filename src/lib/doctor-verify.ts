@@ -44,6 +44,20 @@ export function layerGateEnabled(): boolean {
   return process.env.AURA_LAYER_GATE === "1";
 }
 
+/**
+ * Doktor-yüzü "Güvenlik Doğrulamaları" bölümü GÖRÜNSÜN mü (v6.127, kullanıcı kararı):
+ * kod gönderemeyen kart doktoru boşuna uğraştırır → bölüm ancak EN AZ BİR kanal gerçekten
+ * aktifken (SMS sağlayıcısı ∨ Resend) ya da gate açıkken çizilir. Koordinatör tarafındaki
+ * klinik-telefon teyidi bundan BAĞIMSIZ hep açıktır (damgalar gate'ten önce dolmalı).
+ */
+export function verifyUiVisible(): boolean {
+  return (
+    layerGateEnabled() ||
+    !!(process.env.SMS_API_KEY && process.env.SMS_SENDER_ID) ||
+    !!process.env.RESEND_API_KEY
+  );
+}
+
 // Serbest e-posta sağlayıcıları — kurum bağı KANITLAMAZ, reddedilir. Liste bilinçli olarak yaygın
 // tüketici alan adlarıyla sınırlı: yanlış-pozitif ret (küçük klinik domain'i) istemiyoruz;
 // asıl güvence pozitif kürasyon gelince (§8.2 todo) sıkılaşır.
