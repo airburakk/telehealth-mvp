@@ -226,6 +226,22 @@ model Doctor {
   /// Klinik kapı (activatedAt) AYRIDIR: diploma + Aşama 2 katmanları (§8.2 — SMS OTP + kurum bağı;
   /// katmanlar inene dek yalnız diploma).
   diplomaVerifiedAt        DateTime?
+  // ── AŞAMA 2 güvenlik katmanları (v6.126, Doximity uyarlaması — vault §8.2; kullanıcı kararı
+  //    2026-08-19). Kapı kuralı KODDA: SMS ZORUNLU + [iş e-postası ∨ klinik telefonu] (kurum
+  //    bağından biri yeterli — lib/doctor-verify.ts hasStage2Layers). Şart yalnız
+  //    AURA_LAYER_GATE=1 iken uygulanır (dormant — kanallar aktive olmadan kapı sıkılaşmaz).
+  /// Cep telefonu SMS OTP doğrulaması (hedef: Doctor.phone — zaten at-rest şifreli).
+  smsVerifiedAt            DateTime?
+  /// Kurumsal iş e-postası (at-rest şifreli — encryptField). Serbest e-posta sağlayıcıları
+  /// REDDEDİLİR (lib/doctor-verify.ts FREE_MAIL listesi); tam kurum-alan-adı kürasyonu todo.
+  workEmail                String?
+  /// İş e-postası OTP doğrulaması.
+  workEmailVerifiedAt      DateTime?
+  /// Klinik/hastane telefonu geri-arama teyidi — İNSAN-İŞLETİMLİ: koordinatör, HealthTürkiye'deki
+  /// RESMÎ tesis numarasını arayıp doktoru teyit eder ve damgalar (audit: CLINIC_PHONE_VERIFY).
+  clinicPhoneVerifiedAt    DateTime?
+  /// Geri-aramada teyit edilen tesisin adı (HealthTürkiye kaydından; kamuya açık dizin verisi).
+  clinicPhoneEstablishment String?
   /// Tıp öğrencisi damgası (v6.95): e-Devlet öğrenci belgesi (DoctorDocument.type = STUDENT_CERT)
   /// yüklüyse dolu → yalnız Doctorium İÇERİK erişimi (CHAMBER deseni — otomatik, admin onayı yok).
   /// Klinik kapı (activatedAt) ve pazarlama yüzeyleri (sponsor/anket/ödül — isStudentOnly süzgeci)
@@ -617,6 +633,25 @@ model DoctorDocument {
   verifiedAt     DateTime?
 
   @@index([doctorId])
+}
+
+/// AŞAMA 2 doğrulama meydan okuması (v6.126) — SMS / iş e-postası OTP'si (lib/doctor-verify.ts).
+/// Kod DÜZ SAKLANMAZ: sha256(kod + satır id) hash'i tutulur; hedef (tel/e-posta) at-rest şifreli.
+/// Kanal başına TEK aktif satır (yeni başlangıç eskisini siler — DIPLOMA tekil-belge deseni).
+/// verifiedAt dolunca Doctor damgası (smsVerifiedAt/workEmailVerifiedAt) atılır; satır ispat izi
+/// olarak kalır. Süre/deneme sınırı kodda (OTP_TTL_MS · MAX_ATTEMPTS — aşımda fail-closed).
+model VerificationChallenge {
+  id         String    @id @default(cuid())
+  doctorId   String
+  channel    String // SMS | WORK_EMAIL
+  target     String // gönderilen hedef (telefon/e-posta) — at-rest şifreli (encryptField)
+  codeHash   String // sha256(kod + id) hex — ham kod hiçbir yere yazılmaz (log dahil)
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([doctorId, channel])
 }
 
 /// Post-Op iyileşme takibi (Modül 4)

@@ -121,15 +121,33 @@ export function hasAcceptedRequiredDocs(docs: { type: string; status: string }[]
   return REQUIRED_DOC_TYPES.every((t) => docs.some((d) => d.type === t && d.status === "ACCEPTED"));
 }
 
-// Hesap aktif edilebilir mi (damga atılabilir): zorunlu belgeler + ONAY.
-// 🔴 v6.119 (kullanıcı kararı 2026-08-19): belge VARLIĞI artık yetmez, ACCEPTED olması gerekir.
+/** Aşama 2 güvenlik katmanı damgaları (v6.126 — lib/doctor-verify.ts hasStage2Layers girdisi). */
+export type LayerStamps = {
+  smsVerifiedAt: Date | null;
+  workEmailVerifiedAt: Date | null;
+  clinicPhoneVerifiedAt: Date | null;
+};
+
+// Hesap aktif edilebilir mi (damga atılabilir): ONAYLI zorunlu belge (+ gate açıksa katmanlar).
+// 🔴 v6.119 (kullanıcı kararı 2026-08-19): belge VARLIĞI yetmez, ACCEPTED olması gerekir.
 // ACCEPTED iki yoldan gelir: (a) e-Devlet barkod okuması otomatik geçti (lib/edevlet-belge.ts —
 // dış istek YOK) · (b) incelemeci /admin/doktor-onay'dan onayladı. Çoğu doktor (a) ile hiç beklemez.
-// v6.105: mmssComplete şartı KALKTI (MMSS ihtiyari). İmzadaki `mmss` parametresi bilinçli
-// KORUNDU — çağıranlar değişmeden çalışsın ve şartı geri koymak tek satır olsun.
+// 🟡 v6.126: üçüncü parametre AŞAMA 2 katman kapısı (SMS zorunlu + kurum bağından biri — §8.2).
+// `layerGate.enabled=false` (AURA_LAYER_GATE kapalı, VARSAYILAN) iken v6.124 davranışı birebir
+// sürer; çağıranın parametreyi HİÇ vermemesi de aynı anlama gelir (dormant güvenli varsayılan).
+// v6.105: mmssComplete şartı KALKTI (MMSS ihtiyari). İmzadaki `mmss` parametresi bilinçli KORUNDU.
 // 🔙 Geri alma (kapıyı gevşetmek): gövdeyi `hasRequiredDocs(docs)`e çevirmek yeterli.
-export function canActivate(docs: { type: string; status: string }[], _mmss: MmssMeta): boolean {
-  return hasAcceptedRequiredDocs(docs);
+export function canActivate(
+  docs: { type: string; status: string }[],
+  _mmss: MmssMeta,
+  layerGate?: { enabled: boolean; layers: LayerStamps },
+): boolean {
+  if (!hasAcceptedRequiredDocs(docs)) return false;
+  if (layerGate?.enabled) {
+    const L = layerGate.layers;
+    return !!L.smsVerifiedAt && (!!L.workEmailVerifiedAt || !!L.clinicPhoneVerifiedAt);
+  }
+  return true;
 }
 
 // Eksik zorunlu adımları döndür (UI'da yönlendirme metni için) — VARLIK bazlı.
@@ -221,12 +239,16 @@ export async function refreshActivation(doctorId: string): Promise<boolean> {
     db.doctorDocument.findMany({ where: { doctorId }, select: { type: true, status: true } }),
     db.doctor.findUnique({
       where: { id: doctorId },
-      select: { mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true, activatedAt: true, diplomaVerifiedAt: true },
+      select: {
+        mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true, activatedAt: true, diplomaVerifiedAt: true,
+        // v6.126 — Aşama 2 katman damgaları (yalnız AURA_LAYER_GATE=1 iken karara girer)
+        smsVerifiedAt: true, workEmailVerifiedAt: true, clinicPhoneVerifiedAt: true,
+      },
     }),
   ]);
   if (!doc) return false;
   const diplomaOk = hasAcceptedRequiredDocs(docs);
-  const ok = canActivate(docs, doc);
+  const ok = canActivate(docs, doc, { enabled: process.env.AURA_LAYER_GATE === "1", layers: doc });
   const data: { activatedAt?: Date | null; diplomaVerifiedAt?: Date | null } = {};
   if (diplomaOk && !doc.diplomaVerifiedAt) data.diplomaVerifiedAt = new Date();
   else if (!diplomaOk && doc.diplomaVerifiedAt) data.diplomaVerifiedAt = null;
