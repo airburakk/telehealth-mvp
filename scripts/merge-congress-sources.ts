@@ -62,16 +62,18 @@
 //     TAMAMI varsayılan "kongre" — bilgi taşımıyor; TTB'de sempozyum/kurs/eğitim… var),
 //     daha GENİŞ branş listesi (Toraks: TTB 3 branş ↔ küratör 1).
 //   • cmeCredit'te küratörlü metin 3/5 çiftte TTB'ninkinden ZENGİN → yalnız boşsa doldurulur.
-// ⚠️ `scope` DEVREDİLMEZ. Ölçülen çatışma: Toraks kongresinde küratör "ulusal", TTB
-//    "uluslararasi" diyor. scope doktorun BİRİNCİL süzgeç ekseni ve küratör onu elle
-//    doğrulamış; akreditasyon kaydının kapsam alanı farklı bir soruyu yanıtlıyor olabilir.
-//    Otomatik ezmek yerine ÇATIŞMA olarak yüksek sesle raporlanır, karar insana bırakılır.
+//   • `scope` de TTB'den devredilir (kullanıcı kararı, 2026-08-19). Ölçülen çatışma: Toraks
+//     kongresinde küratör "ulusal", TTB "uluslararasi" diyordu. TTB akreditasyon OTORİTESİDİR
+//     ve kapsamı resmî kayıtta tutar; ayrıca üç değerli ("uluslararasi-katilimli"), küratörlü
+//     veri iki değerli → TTB daha ayrıntılı. Değişiklik SESSİZ DEĞİL, koşumda raporlanır.
+//     ⚠️ scope doktorun BİRİNCİL süzgeç eksenidir; yanlış değer kongreyi yanlış listeye taşır.
 //
 // ── KOŞUM SIRASI (önemli) ────────────────────────────────────────────────────
 //   seed-congresses.ts  →  ingest-ttb-events.ts  →  BU SCRIPT
 // Gerekçe: seed'in `data` bloğu ttbCode/eventType İÇERMEZ (çipa seed'e dayanıklıdır ✓) ama
-// branchSlugs/cmeCredit/sourceUrls İÇERİR → seed yeniden koşarsa devredilen ZENGİNLEŞTİRME
-// geri alınır (çipa kalır, süs gider). Bu script yeniden koşunca zenginleştirme geri gelir.
+// branchSlugs/cmeCredit/sourceUrls/**scope** İÇERİR → seed yeniden koşarsa devredilen
+// ZENGİNLEŞTİRME geri alınır (çipa kalır, süs gider). Bu script yeniden koşunca geri gelir;
+// scope'u ingest de çipa dalından tazeler (seed sonrası ingest tek başına da yeter).
 //
 // İDEMPOTENT: birleşmiş çiftte TTB satırı artık yoktur → ikinci koşu 0 işlem raporlar.
 // Yarım kalmış koşu (TTB satırı duruyor ama çipa yazılmış) da toparlanır: çipası başka
@@ -243,7 +245,7 @@ async function main() {
 
   // ── Rapor + uygulama ──────────────────────────────────────────────────────
   console.log(`\n═══ OTOMATİK BİRLEŞECEK: ${birlesecek.length} ═══`);
-  let tasinanTakip = 0, scopeCatismasi = 0, turDegisen = 0;
+  let tasinanTakip = 0, scopeCatismasi = 0, turDegisen = 0; // scopeCatismasi = TTB'ye çekilen kapsam sayısı
 
   for (const a of birlesecek) {
     const { sol, ttb } = a;
@@ -261,7 +263,7 @@ async function main() {
     if (sol.eventType !== ttb.eventType) turDegisen++;
     if (sol.scope !== ttb.scope) {
       scopeCatismasi++;
-      console.log(`   ⚠️ SCOPE ÇATIŞMASI: küratörlü "${sol.scope}" ↔ TTB "${ttb.scope}" — DEĞİŞTİRİLMEDİ, elle karar verin.`);
+      console.log(`   ↔ SCOPE: küratörlü "${sol.scope}" → TTB "${ttb.scope}" (TTB yetkili — akreditasyon kaydı)`);
     }
 
     // Takip taşıma: TTB satırındaki takipler kalan satıra geçer. Şemada FK/relation YOK →
@@ -303,6 +305,9 @@ async function main() {
         data: {
           ttbCode: ttb.ttbCode,
           eventType: ttb.eventType,
+          // scope TTB'den (kullanıcı kararı 2026-08-19) — akreditasyon otoritesi kapsamı
+          // resmî kayıtta tutar ve üç değerli; küratörlü veri iki değerli.
+          scope: ttb.scope,
           cmeCredit: cme,
           organizer: sol.organizer ?? ttb.organizer,
           venue: sol.venue ?? ttb.venue,
@@ -311,7 +316,6 @@ async function main() {
           verifiedAt: dogrulama.length
             ? new Date(Math.max(...dogrulama.map((d) => d.getTime())))
             : null,
-          // scope BİLİNÇLİ OLARAK YOK — çatışma yukarıda raporlanır, karar insanın.
         },
       }),
     ]);
@@ -331,7 +335,7 @@ async function main() {
     `\n${DRY ? "🔍 DRY-RUN (yazılmadı; uygulamak için --yaz)" : "✅ Uygulandı"} — ` +
     `birleşen ${birlesecek.length} · taşınan takip ${tasinanTakip} · tür düzeltilen ${turDegisen} · ` +
     `incelenecek ${incele.length}` +
-    (scopeCatismasi ? ` · ⚠️ SCOPE ÇATIŞMASI ${scopeCatismasi} (değiştirilmedi — elle karar)` : ""),
+    (scopeCatismasi ? ` · scope TTB'ye çekilen ${scopeCatismasi}` : ""),
   );
   if (!DRY && birlesecek.length) {
     console.log("↪️  Sonraki ingest koşusu bu etkinlikleri ttbCode çipasından tanıyacak (yeni satır AÇMAZ).");

@@ -399,8 +399,11 @@ async function main() {
     // migration ya da okuma yolu değişikliği gerekmez.
     // ⚠️ Sahiplenilmiş satıra YALNIZ TTB'ye ait alanlar yazılır. Küratörlü gövde (bildiri
     //    tarihi, kayıt ücreti, temalar, url, dil, kapak…) TTB'de TAMAMEN boştur; `data`yı
-    //    olduğu gibi yazmak o gövdeyi silerdi. `scope` da yazılmaz — küratörle çatıştığı
-    //    ölçüldü (Toraks: küratör "ulusal" ↔ TTB "uluslararasi") ve kararı insan verir.
+    //    olduğu gibi yazmak o gövdeyi silerdi.
+    // `scope` BURADAN tazelenir (kullanıcı kararı 2026-08-19: TTB kapsamda yetkili).
+    // Bu dal ŞART: birleştirme TTB satırını sildiği için zaten birleşmiş kayıtlarda TTB'nin
+    // scope değeri veritabanında KALMAZ — merge script'ine devir eklemek eski kayıtları
+    // düzeltmez, düzeltme yalnız buradan gelebilir.
     const sahiplenen = await db.medicalCongress.findFirst({
       where: { ttbCode: k.ttbCode, source: { not: SOURCE } },
       select: { id: true, cmeCredit: true },
@@ -410,6 +413,7 @@ async function main() {
         where: { id: sahiplenen.id },
         data: {
           eventType: k.eventType, // tür TTB'nin yetkisinde (küratörlü satırlar varsayılan "kongre")
+          scope: k.scope,         // kapsam da TTB'nin yetkisinde (üç değerli; küratörlü veri iki)
           // cmeCredit yalnız BOŞSA doldurulur: küratörlü kredi metni TTB'nin tek satırlık
           // beyanından zengin (ölçüldü — 5 çiftin 3'ünde).
           ...(sahiplenen.cmeCredit ? {} : { cmeCredit: data.cmeCredit }),
