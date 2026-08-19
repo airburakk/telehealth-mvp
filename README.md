@@ -336,7 +336,7 @@ prisma/
                             #   ShareLink/ShareAccess, Notification, ConsentRecord, AccessLog,
                             #   ConsultAppointment, CaseDocument, DoctorDocument, SecondOpinion* ×7, ...)
   seed.ts                   # demo veri (30 doktor + 20 vaka)
-scripts/                    # add-demo-cases.ts (idempotent), gen-icons.mjs, ...
+scripts/                    # add-demo-cases.ts (idempotent), gen-icons.py (PWA ikonları), ...
 public/                     # PWA manifest + ikonlar + wasm/ (DICOM codec'leri)
 ```
 
@@ -610,6 +610,27 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   `air_lang`a taşıyan GÖÇ kodu, silinirse o tarayıcılarda dil seçimi sıfırlanır. 🪤 Bu rename
   sırasında `git mv`'nin stage'i paralel oturumun commit'ine karıştı → `origin/main` bir süre
   build-kırık kaldı (deploy ERROR); ders: rename+süpürme+commit **tek turda** bitirilir.
+  · **PWA marka kabuğu (2026-08-19, `82c2b8f`) — 🚀 CANLI:** amblem 2026-07-14'te AuraMark'a
+  geçmişti ama **React ağacının DIŞINDAKİ** yüzeyler güncellenmemişti; ~2 ay boyunca çevrimdışı
+  sayfası, push bildirimi ikonu/badge'i, ana ekrana ekleme ve tarayıcı sekmesi eski camgöbeği
+  üçgen "A"yı gösterdi (favicon daha da eskiydi: 2026-06-04). `icon-192/512` · `apple-touch-icon` ·
+  `favicon.ico` (16–256px) güncel amblemden yeniden üretildi — **tek jeneratör
+  `scripts/gen-icons.py`** (AuraLogo.tsx geometrisinden; amblem oranı **kare kontrolünden**
+  geçmezse durur). Rakip jeneratörler `gen-icons.mjs` (eski üçgeni üretiyordu) + `extract-logo.py`
+  (kaynağı eski logo dosyası) SİLİNDİ. `manifest.webmanifest`: **"uçtan uca" çıkarıldı** (iddia
+  disiplini — `layout.tsx`'ten çıkarılmıştı, manifest'te kalmıştı), ad/açıklama `layout.tsx` ile
+  hizalandı, `theme_color` #101010→**#0d0e10** (viewport ile çelişiyordu), `background_color`
+  #ffffff→#0d0e10 (gece varsayılanda PWA açılış ekranı beyaz patlıyordu). OG/Twitter görseli
+  `p-hero3`→**`p-hero8`** (canlı hero v-hero8 iken paylaşım kartı eski filmin karesini
+  gösteriyordu; 5 sayfa) + beyan edilen boyut 1280×720→**1920×1080** (gerçek dosya). `offline.html`
+  gece temasına + marka turkuazı `#28c8d8`'e alındı. `global-error.tsx` renkleri **sabitlendi** —
+  bu bileşen kök layout'u ATLAR, `var(--c-*)` çözülmez, buton görünmez kalırdı.
+  🪤 **`sw.js` VERSION v4→v5 ŞART:** PRECACHE'teki dosya değişince artırılmazsa mevcut kullanıcı
+  eski kopyayı görmeye devam eder (cache adı VERSION'dan türer). Temizlik: ~74 MB süpersede varlık
+  (film2-12, v-hero3) + `.gstack/qa-reports` — hepsi önce `doctorium-video-arsivi/3-eski-surumler`'e
+  yedeklendi. 🪤 **Ölü varlık taramasında şablon dizgisi kör noktadır:** `` src={`/assets/${d.img}.jpg`} ``
+  gibi yollar basename aramasında görünmez — `doc-*.jpg` bu yüzden yanlışlıkla silinip geri alındı;
+  silmeden önce `\$\{…\}\.(jpg|png|mp4|webp|svg)` desenini ayrıca tara.
   · **Hero mobil kaynak:** `<source media="(max-width:767px)">` → `src720` (848KB); masaüstü 1080p
   **kullanıcı kararı, dokunma**. Save-Data → video hiç başlatılmaz. 🪤 **WebM DENENDİ ve ATILDI:**
   VP9 çıktısı (1112KB) mevcut h264 720p'den BÜYÜK — kaynak zaten agresif sıkıştırılmış; **eklemeden
