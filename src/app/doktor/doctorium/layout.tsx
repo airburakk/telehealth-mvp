@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
@@ -6,6 +7,18 @@ import { hasDoctoriumAccess } from "@/lib/doctor-activation";
 import { DoctoriumFooter } from "@/components/aura/doctorium-footer";
 
 export const dynamic = "force-dynamic";
+
+// Sekme ikonu: bu segment ve TÜM alt rotaları ([id] · etkinlik · kariyer · kaydettiklerim …)
+// ZÜMRÜT ikon gösterir; kök layout'un TURKUAZ varsayılanını override eder (kullanıcı kararı
+// 2026-08-19: marka renginde DOLU daire + tam siyah amblem; AURA turkuaz #28C8D8,
+// Doctorium zümrüt #34d399 — her marka kendi tonunu taşır).
+// 🪤 Dosya konvansiyonu (`icon.ico`) ÇALIŞMIYOR: kök `src/app/favicon.ico` alt segment ikonunu
+// bastırıyordu (dosya HTTP 200 servis ediliyor ama <link rel="icon"> basılmıyordu) → kök
+// favicon.ico kaldırıldı, ikonlar public/ altına alındı, bağlama metadata ile yapılıyor.
+// Üretim: `python scripts/gen-icons.py`.
+export const metadata: Metadata = {
+  icons: { icon: "/icon-doctorium.ico", apple: "/apple-touch-icon.png" },
+};
 
 // İki aşamalı giriş — AŞAMA 1 kapısı (v6.124: e-Devlet doğrulamalı diploma). Doctorium'a DOCTOR
 // rolü ancak DOĞRULANMIŞ diploması (diplomaVerifiedAt — DIPLOMA belgesi ACCEPTED) VEYA öğrenci

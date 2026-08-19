@@ -42,7 +42,13 @@ export const metadata: Metadata = {
   description:
     "Triyaj, uzman görüşü ve sağlık turizmi paketlerini birleştiren dijital sağlık platformu (MVP).",
   manifest: "/manifest.webmanifest",
-  icons: { apple: "/apple-touch-icon.png" },
+  // Sekme ikonu AÇIKÇA burada bağlanır — `src/app/favicon.ico` dosya konvansiyonu BİLİNÇLİ YOK.
+  // Sebep (2026-08-19): kök favicon.ico varken alt segmentteki `icon.ico` <link> olarak BASILMIYOR
+  // (dosya rota olarak servis ediliyor ama link kök favicon'u gösteriyor) → Doctorium yüzeyleri
+  // zümrüt ikonu alamıyordu. metadata.icons alt layout'ta override EDİLEBİLİR; kullanılan yol bu.
+  // Üretim: `python scripts/gen-icons.py`. AURA yüzeyleri = TURKUAZ dolu daire (#28C8D8) +
+  // tam siyah amblem; Doctorium yüzeyleri zümrüt alır (her marka kendi tonu).
+  icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "AURA", statusBarStyle: "default" },
 };
 
