@@ -13,7 +13,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  icons: { icon: "/icon-doctorium.ico", apple: "/apple-touch-icon.png" },
+  // 🪤 `?v=` cache-kırıcı — gerekçe kök layout.tsx'te. İkon değişince ÜÇ layout'ta birlikte artır.
+  icons: { icon: "/icon-doctorium.ico?v=2", apple: "/apple-touch-icon.png" },
 };
 
 export default function DoctoriumLayout({ children }: { children: React.ReactNode }) {

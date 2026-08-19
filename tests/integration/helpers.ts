@@ -30,8 +30,21 @@ export async function seedFixture(): Promise<Fixture> {
   const mkUser = (role: string, extra: Record<string, unknown> = {}) =>
     db.user.create({ data: { email: email(role), passwordHash: "itest-nohash", name: `${role} ${runId}`, role, ...extra } });
 
+  // 🪤 `activatedAt` HER doktora DOLU verilir — doğrulanmamış olana bile. Sebep: klinik erişim
+  // kapısı İKİ şart ister (`ownership.ts` → `!verified || !activated` ⇒ red; `activated` =
+  // `hasClinicalAccess` = `!!activatedAt`). Aktivasyon damgası eksik olsaydı:
+  //   · pozitif testler ("doğrulanmış doktor kendi branş kuyruğunu görür") YANLIŞ yere kızarırdı
+  //     — 2026-08-19'da tam bu oldu, CI 3 push boyunca kırmızı kaldı ve bypass ile geçildi;
+  //   · negatif test ("doğrulanmamış doktor erişemez") İKİ şart birden eksik olduğu için
+  //     YANLIŞ SEBEPLE yeşil kalırdı — `verified` kapısını hiç sınamazdı.
+  // Kural: yeni bir erişim şartı eklenince negatif testte o şartı DOLU ver, tek değişkeni izole et.
   const mkDoctor = (tag: string, verified: boolean) =>
-    db.doctor.create({ data: { name: `${tag} ${runId}`, title: "Op. Dr.", branch: "Kardiyoloji", city: "İstanbul", languages: "Türkçe", verified } });
+    db.doctor.create({
+      data: {
+        name: `${tag} ${runId}`, title: "Op. Dr.", branch: "Kardiyoloji", city: "İstanbul",
+        languages: "Türkçe", verified, activatedAt: new Date(),
+      },
+    });
 
   const mkCase = (userId: string | null, doctorId: string | null) =>
     db.case.create({

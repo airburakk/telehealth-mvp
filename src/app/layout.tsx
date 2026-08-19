@@ -48,7 +48,13 @@ export const metadata: Metadata = {
   // zümrüt ikonu alamıyordu. metadata.icons alt layout'ta override EDİLEBİLİR; kullanılan yol bu.
   // Üretim: `python scripts/gen-icons.py`. AURA yüzeyleri = TURKUAZ dolu daire (#28C8D8) +
   // tam siyah amblem; Doctorium yüzeyleri zümrüt alır (her marka kendi tonu).
-  icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png" },
+  // 🪤 `?v=` ŞART — dosya konvansiyonu bırakılınca kaybettiğimiz cache-kırıcının yerine geçer:
+  // Next `app/favicon.ico` konvansiyonunda URL'e içerik hash'i ekliyordu
+  // (`/favicon.ico?favicon.<hash>.ico`), metadata.icons ile bağlarken bu OTOMATİK GELMEZ.
+  // Hash olmayınca Chrome bir kez yüklediği favicon'u uzun süre yeniden istemez ve sekmede
+  // ESKİ ikon kalır (2026-08-19: Doctorium'da turkuaz görünmesinin sebebi buydu).
+  // ⚠️ İKONLARI HER DEĞİŞTİRDİĞİNDE bu sürümü ARTIR (üç layout'ta birlikte).
+  icons: { icon: "/favicon.ico?v=2", apple: "/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "AURA", statusBarStyle: "default" },
 };
 

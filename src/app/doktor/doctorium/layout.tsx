@@ -17,7 +17,8 @@ export const dynamic = "force-dynamic";
 // favicon.ico kaldırıldı, ikonlar public/ altına alındı, bağlama metadata ile yapılıyor.
 // Üretim: `python scripts/gen-icons.py`.
 export const metadata: Metadata = {
-  icons: { icon: "/icon-doctorium.ico", apple: "/apple-touch-icon.png" },
+  // 🪤 `?v=` cache-kırıcı — gerekçe kök layout.tsx'te. İkon değişince ÜÇ layout'ta birlikte artır.
+  icons: { icon: "/icon-doctorium.ico?v=2", apple: "/apple-touch-icon.png" },
 };
 
 // İki aşamalı giriş — AŞAMA 1 kapısı (v6.124: e-Devlet doğrulamalı diploma). Doctorium'a DOCTOR
