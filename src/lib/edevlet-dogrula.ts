@@ -68,15 +68,23 @@ const ORTAK_BASLIK: Record<string, string> = {
   "accept-language": "tr-TR,tr;q=0.9",
 };
 
-// ⚠️ KALİBRASYON GEREKİR: gönder butonunun `name=btn` değeri gerçek formdan teyit edilmeli.
-// Kalibre edilene dek modül zaten env ile kapalı (dormant); yanlış değer en fazla `BELIRSIZ` üretir.
+// ✅ KALİBRE EDİLDİ (2026-08-19, canlı formdan): buton değeri gerçekten "Devam Et"
+// (input[name=btn][type=submit] value niteliği tarayıcıda okundu).
 const BTN_DEGERI = "Devam Et";
 
 // Devletin "bu barkod/TC geçersiz" dediğini gösteren AÇIK negatif imzalar. Sadece bunlardan biri
 // görülürse `GECERSIZ` denir; aksi hâlde (tanımadığımız yanıt) fail-closed `BELIRSIZ`.
-// ⚠️ Bu liste de gerçek negatif yanıtla kalibre edilmeli — eksikse yalnız `BELIRSIZ`'e düşer (güvenli).
+// ✅ KALİBRE EDİLDİ (2026-08-19, canlı denemelerle — ilk iki kalıp GERÇEK yanıt metinleri):
+//   · Geçersiz barkod (aşama 1'de yeniden çizilen sayfada): "Girilen barkod numarası e-Devlet
+//     Kapısında tanımlı değildir." → `tanımlı değil`
+//   · Geçerli barkod + YANLIŞ TC: aşama 2-3 REDDETMEZ (ölçüldü — akış onaya kadar ilerliyor);
+//     ret ancak AŞAMA 4 sonuç sayfasında gelir: "Kayıt bulunmadı." (indirme düğmesi/PDF yok)
+//     → `kayıt bulunmadı`. Yanlış TC belgeye ULAŞAMIYOR (güvenlik canlı doğrulandı).
+//   ⚠️ Bu yüzden adım-2/3 imzaları erken-çıkış iyileştirmesidir, nihai karar adım 4 imzası +
+//     adım 5'in PDF olup olmamasıdır (kod her iki noktada da bakıyor).
+// Kalan kalıplar savunma derinliği (görülmemiş varyantlar) — eksik kalırsa sonuç en kötü BELIRSIZ.
 const NEGATIF_IMZA =
-  /(do[ğg]rulanamad[ıi]|bulunamad[ıi]|ge[çc]ersiz|hatal[ıi]|yanl[ıi][şs]|sistemde\s*kay[ıi]tl[ıi]\s*de[ğg]il)/i;
+  /(tan[ıi]ml[ıi]\s*de[ğg]il|kay[ıi]t\s*bulunmad[ıi]|do[ğg]rulanamad[ıi]|bulunamad[ıi]|ge[çc]ersiz|hatal[ıi]|yanl[ıi][şs]|sistemde\s*kay[ıi]tl[ıi]\s*de[ğg]il)/i;
 
 // ── Env kapısı ───────────────────────────────────────────────────────────────────────────────────
 

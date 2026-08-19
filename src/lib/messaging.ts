@@ -55,14 +55,55 @@ export async function sendChannelMessage(
         console.log(`[messaging] (simülasyon) SMS → ${maskPhone(phone)}: ${msg.title}`);
         return { sent: false, simulated: true };
       }
-      // AKTİVASYON NOKTASI: SMS sağlayıcısı (ör. Twilio/NetGSM) çağrısı (env: SMS_API_KEY, SMS_SENDER_ID)
-      console.warn("[messaging] SMS env tanımlı ama sağlayıcı çağrısı henüz bağlanmadı — simülasyona düşüldü.");
-      return { sent: false, simulated: true };
+      // ✅ SAĞLAYICI BAĞLI (v6.129): NetGSM (kullanıcı kararı 2026-08-19 — hedef kitle TR
+      // doktorları; başlık/gönderici adı yerli mevzuata uygun, TR gönderimi en ekonomik).
+      return await sendViaNetgsm(phone, msg);
     }
   } catch (e) {
     console.warn("[messaging] kanal gönderimi başarısız (akış bozulmaz):", e instanceof Error ? e.message : e);
   }
   return { sent: false, simulated: false };
+}
+
+// ── NetGSM gönderimi (v6.129) ─────────────────────────────────────────────────────────────────
+// Env sözleşmesi:
+//   SMS_API_KEY   = "kullanıcıno:şifre" (NetGSM abone no + API şifresi, iki nokta ile)
+//   SMS_SENDER_ID = NetGSM'de TESCİLLİ gönderici başlığı (tescilsiz başlıkta mesaj REDDEDİLİR)
+// NetGSM REST: POST /sms/rest/v2/send · Basic auth · JSON. Yanıtta `code` "00"/"01"/"02" başarı
+// (kuyruğa alındı), diğerleri hata (30=yetki/kimlik, 40=başlık onaysız, 20=mesaj/karakter…).
+// 🔒 Mesaj GÖVDESİ (OTP kodu) ASLA loglanmaz — yalnız maskeli numara + sağlayıcı kodu.
+// ⚠️ Fail-soft: hata `sent:false` döner ve akış bozulmaz (çağıran uygulama-içi bildirime güvenir);
+//    OTP akışında kullanıcı "kod gelmedi" derse yeniden isteyebilir (rate-limit korur).
+async function sendViaNetgsm(phone: string, msg: ChannelMessage): Promise<SendResult> {
+  const cred = (process.env.SMS_API_KEY ?? "").trim();
+  const sep = cred.indexOf(":");
+  if (sep <= 0) {
+    console.warn("[messaging] SMS_API_KEY biçimi 'kullanıcıno:şifre' olmalı — gönderim atlandı.");
+    return { sent: false, simulated: false };
+  }
+  const body = msg.body ? `${msg.title}\n${msg.body}` : msg.title;
+  const res = await fetch("https://api.netgsm.com.tr/sms/rest/v2/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${Buffer.from(cred).toString("base64")}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      msgheader: process.env.SMS_SENDER_ID,
+      messages: [{ msg: body, no: phone.replace(/\D/g, "") }],
+      encoding: "TR", // Türkçe karakter (aksi hâlde ı/ş/ğ bozulur)
+      iysfilter: "0", // İYS: ticari İLETİ DEĞİL (OTP/bilgilendirme) → filtre uygulanmaz
+    }),
+  });
+  const out = (await res.json().catch(() => null)) as { code?: string } | null;
+  const code = out?.code ?? "?";
+  const ok = res.ok && ["00", "01", "02"].includes(code);
+  if (!ok) {
+    console.warn(`[messaging] NetGSM reddetti → ${maskPhone(phone)} kod=${code} http=${res.status}`);
+    return { sent: false, simulated: false };
+  }
+  console.log(`[messaging] SMS gönderildi → ${maskPhone(phone)} (NetGSM kod=${code})`);
+  return { sent: true, simulated: false };
 }
 
 // Log'a tam numara yazma — son 2 hane açık, gerisi maskeli.

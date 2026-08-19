@@ -22,6 +22,7 @@ import { db } from "@/lib/db";
 import { encryptField, decryptField } from "@/lib/crypto";
 import { sendChannelMessage } from "@/lib/messaging";
 import { sendEmail } from "@/lib/email";
+import { workEmailTier } from "@/lib/work-email-domains";
 
 export const OTP_TTL_MS = 10 * 60 * 1000; // 10 dk
 export const MAX_ATTEMPTS = 5;
@@ -58,20 +59,14 @@ export function verifyUiVisible(): boolean {
   );
 }
 
-// Serbest e-posta sağlayıcıları — kurum bağı KANITLAMAZ, reddedilir. Liste bilinçli olarak yaygın
-// tüketici alan adlarıyla sınırlı: yanlış-pozitif ret (küçük klinik domain'i) istemiyoruz;
-// asıl güvence pozitif kürasyon gelince (§8.2 todo) sıkılaşır.
-const FREE_MAIL = new Set([
-  "gmail.com", "googlemail.com", "hotmail.com", "outlook.com", "outlook.com.tr", "live.com",
-  "yahoo.com", "yandex.com", "yandex.com.tr", "yandex.ru", "icloud.com", "me.com", "mail.ru",
-  "protonmail.com", "proton.me", "mynet.com", "gmx.com", "gmx.net", "aol.com",
-]);
-
-/** İş e-postası olarak kabul edilebilir mi (biçim + serbest-sağlayıcı reddi). */
+/**
+ * İş e-postası olarak kabul edilebilir mi (biçim + serbest-sağlayıcı reddi).
+ * v6.129: kaynak lib/work-email-domains.ts'e taşındı (pozitif kürasyon TEK yerde) — kabul kapısı
+ * yalnız RED'i eler; BILINMEYEN kademesi kabul edilir ama incelemeci rozetinde ayrışır
+ * (kapıyı tıkamayan kürasyon — modül başlığındaki üç kademeli model).
+ */
 export function isWorkEmail(email: string): boolean {
-  const m = /^[^\s@]+@([^\s@]+\.[^\s@]{2,})$/.exec(email.trim().toLowerCase());
-  if (!m) return false;
-  return !FREE_MAIL.has(m[1]);
+  return workEmailTier(email) !== "RED";
 }
 
 /** 6 haneli OTP — kriptografik rastgelelik (Math.random ASLA). */

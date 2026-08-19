@@ -5,6 +5,8 @@ import { hasProcedures, hasQualification } from "@/lib/doctor-activation";
 import { VerifyButton } from "./VerifyButton";
 import { DocReviewButtons } from "./DocReviewButtons";
 import { ClinicPhoneVerify } from "./ClinicPhoneVerify";
+import { decryptField } from "@/lib/crypto";
+import { emailDomain, workEmailTier } from "@/lib/work-email-domains";
 import { ShieldCheck, Stethoscope, MapPin, Globe, Check, X, Clock, BadgeCheck, Flag, FileText } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +38,8 @@ export default async function DoctorApprovalPage() {
       registryStatus: true, // HealthTürkiye dizin doğrulaması (FAZ 6) — NOT_FOUND ise uyarı bayrağı
       // v6.127 — Aşama 2 klinik telefonu teyidi (koordinatör geri-arama bloğu)
       clinicPhoneVerifiedAt: true, clinicPhoneEstablishment: true,
+      // v6.129 — katman damgalari + is e-postasi kurasyon rozeti (domain sifreli saklanir -> coz)
+      smsVerifiedAt: true, workEmailVerifiedAt: true, workEmail: true,
       // Belge META'sı — içerik listede taşınmaz; incelemeci tek belgeyi raw uçtan açar (audit'li).
       documents: { select: { id: true, type: true, label: true, mimeType: true, createdAt: true, status: true, reviewNote: true }, orderBy: { createdAt: "desc" } },
     },
@@ -161,6 +165,26 @@ export default async function DoctorApprovalPage() {
                         </li>
                       ))}
                     </ul>
+                  </div>
+                )}
+
+                {/* v6.129 — Aşama 2 katman damgaları + iş e-postası KÜRASYON rozeti. Yalnız damga
+                    varsa çizilir (gate-öncesi dönemde boş satır gürültüsü yapılmaz). Domain şifreli
+                    saklanır → burada çözülüp yalnız @ sonrası gösterilir (adresin tamamı değil). */}
+                {(d.smsVerifiedAt || d.workEmailVerifiedAt) && (
+                  <div className="mt-3 flex flex-wrap gap-2 border-t border-[var(--c-hairline)] pt-3">
+                    {d.smsVerifiedAt && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300 ring-1 ring-emerald-400/25"><Check size={12} /> SMS doğrulandı</span>
+                    )}
+                    {d.workEmailVerifiedAt && d.workEmail && (() => {
+                      const domain = emailDomain(decryptField(d.workEmail) ?? "") ?? "?";
+                      const tier = workEmailTier(`x@${domain}`);
+                      return tier === "KURUM" ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300 ring-1 ring-emerald-400/25" title="Alan adı kürasyon listesinde / akademik-kamu soneki"><Check size={12} /> İş e-postası: {domain} (kurum ✓)</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-300 ring-1 ring-amber-400/25" title="Serbest sağlayıcı değil ama küratörlü kurum listesinde de yok — adres sahipliği OTP ile kanıtlı, kurum niteliğini siz değerlendirin"><Flag size={12} /> İş e-postası: {domain} (kürasyon dışı)</span>
+                      );
+                    })()}
                   </div>
                 )}
 

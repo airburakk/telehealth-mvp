@@ -4,6 +4,7 @@
 // serbest-sağlayıcı reddi · OTP üretim/hash sözleşmeleri.
 import { describe, it, expect } from "vitest";
 import { hasStage2Layers, isWorkEmail, isPlausiblePhone, genOtpCode, hashOtp } from "@/lib/doctor-verify";
+import { workEmailTier, emailDomain } from "@/lib/work-email-domains";
 import { canActivate } from "@/lib/doctor-activation";
 
 const D = (s: string | null) => (s ? new Date(s) : null);
@@ -65,6 +66,34 @@ describe("isWorkEmail — serbest sağlayıcı reddi (kurum bağı kanıtı)", (
   it("büyük harf/boşluk toleransı", () => {
     expect(isWorkEmail("  Dr.Ayse@HACETTEPE.EDU.TR ")).toBe(true);
     expect(isWorkEmail(" A@GMAIL.COM ")).toBe(false);
+  });
+});
+
+describe("workEmailTier — üç kademeli kürasyon (v6.129)", () => {
+  it("akademik/kamu sonekleri KURUM", () => {
+    expect(workEmailTier("dr@hacettepe.edu.tr")).toBe("KURUM");
+    expect(workEmailTier("uzman@saglik.gov.tr")).toBe("KURUM");
+  });
+  it("küratörlü sağlık grubu + alt alan adı KURUM", () => {
+    expect(workEmailTier("a@acibadem.com.tr")).toBe("KURUM");
+    expect(workEmailTier("a@kadikoy.memorial.com.tr")).toBe("KURUM"); // alt alan
+    expect(workEmailTier("a@ttb.org.tr")).toBe("KURUM");
+  });
+  it("🪤 domain-sonu taklidi KURUM sayılmaz (nokta sınırı)", () => {
+    expect(workEmailTier("a@sahte-acibadem.com.tr.kotu.com")).toBe("BILINMEYEN");
+    expect(workEmailTier("a@sahteacibadem.com.tr")).toBe("BILINMEYEN");
+  });
+  it("serbest sağlayıcı RED · bilinmeyen kurumsal BILINMEYEN (kabul + incelemeci bayrağı)", () => {
+    expect(workEmailTier("a@gmail.com")).toBe("RED");
+    expect(workEmailTier("a@kucukklinik.com")).toBe("BILINMEYEN");
+  });
+  it("isWorkEmail yalnız RED'i eler (BILINMEYEN kapıdan geçer — tıkamayan kürasyon)", () => {
+    expect(isWorkEmail("a@kucukklinik.com")).toBe(true);
+    expect(isWorkEmail("a@gmail.com")).toBe(false);
+  });
+  it("emailDomain biçimsizde null", () => {
+    expect(emailDomain("bozuk")).toBeNull();
+    expect(emailDomain("a@acibadem.com.tr")).toBe("acibadem.com.tr");
   });
 });
 
