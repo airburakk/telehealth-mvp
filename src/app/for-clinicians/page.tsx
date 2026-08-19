@@ -21,13 +21,13 @@ export const metadata: Metadata = {
       "Cross-border patients with prepared cases. Verification before visibility, structured onboarding, and AI that drafts — never decides.",
     locale: OG_LOCALE.en,
     alternateLocale: OG_ALTERNATE_LOCALES,
-    images: [{ url: "/assets/video/p-hero3.jpg", width: 1280, height: 720, alt: "AURA" }],
+    images: [{ url: "/assets/video/p-hero8.jpg", width: 1920, height: 1080, alt: "AURA" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "AURA for clinicians",
     description: "Cross-border patients, prepared cases — the clinical decision stays yours.",
-    images: ["/assets/video/p-hero3.jpg"],
+    images: ["/assets/video/p-hero8.jpg"],
   },
 };
 

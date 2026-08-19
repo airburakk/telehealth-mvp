@@ -63,7 +63,7 @@ export async function generateMetadata({
       // alternate = TÜM dillerin locale'i − sayfanın kendisi. Hazır OG_ALTERNATE_LOCALES
       // KULLANILAMAZ: o "EN-dışı" listesi — TR sayfasında en_US alternate'ten düşerdi.
       alternateLocale: Object.values(OG_LOCALE).filter((loc) => loc !== OG_LOCALE[l]),
-      images: [{ url: "/assets/video/p-hero3.jpg", width: 1280, height: 720, alt: "AURA" }],
+      images: [{ url: "/assets/video/p-hero8.jpg", width: 1920, height: 1080, alt: "AURA" }],
     },
   };
 }

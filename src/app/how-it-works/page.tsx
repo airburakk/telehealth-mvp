@@ -21,12 +21,12 @@ export const metadata: Metadata = {
       "Telehealth visits, independent second opinions, planned health tourism and free volunteer care — how each journey works.",
     locale: OG_LOCALE.en,
     alternateLocale: OG_ALTERNATE_LOCALES,
-    images: [{ url: "/assets/video/p-hero3.jpg", width: 1280, height: 720, alt: "AURA" }],
+    images: [{ url: "/assets/video/p-hero8.jpg", width: 1920, height: 1080, alt: "AURA" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "How AURA works, step by step",
-    images: ["/assets/video/p-hero3.jpg"],
+    images: ["/assets/video/p-hero8.jpg"],
   },
 };
 

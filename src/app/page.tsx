@@ -30,14 +30,14 @@ export const metadata: Metadata = {
       "One care journey, four ways to begin: talk to a doctor, second opinion, health tourism and access care — in 9 languages.",
     locale: OG_LOCALE.en,
     alternateLocale: OG_ALTERNATE_LOCALES,
-    images: [{ url: "/assets/video/p-hero3.jpg", width: 1280, height: 720, alt: "AURA" }],
+    images: [{ url: "/assets/video/p-hero8.jpg", width: 1920, height: 1080, alt: "AURA" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "AURA — Care, without borders.",
     description:
       "Meet the right specialist and keep your care connected from first assessment to follow-up.",
-    images: ["/assets/video/p-hero3.jpg"],
+    images: ["/assets/video/p-hero8.jpg"],
   },
 };
 
