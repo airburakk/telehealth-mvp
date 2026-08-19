@@ -287,8 +287,7 @@
   "registrationNotes": "22. Ulusal Rejyonal Anestezi Kongresi (RADKON 2026) 17-19 Nisan 2026'da Fethiye/Muğla Liberty Lykia Ölüdeniz'de YAPILDI (tema: 'Rejyonal Anestezinin Perioperatif Süreçte Yarattığı Kelebek Etkisi'). 23. kongre (RADKON 2027) 2026-08-19 itibarıyla DUYURULMAMIŞTIR.",
   "sourceUrls": [
    "https://rad.org.tr/",
-   "https://rad.org.tr/kurumsal/tarihce",
-   "https://www.kongreuzmani.com/22-ulusal-rejyonal-anestezi-kongresi-radkon-2026.html"
+   "https://rad.org.tr/kurumsal/tarihce"
   ],
   "confidence": "kismi",
   "verifiedAt": "2026-08-19",
@@ -732,7 +731,7 @@
   "venue": "Grand Sapphire Resort Hotel, Yeni İskele (KKTC)",
   "themes": "Hipertansiyon yönetimi · Kalp yetersizliği · Girişimsel kardiyoloji (koroner ve yapısal girişimler) · Aritmi yönetimi · Dislipidemi ve önleyici kardiyoloji · Yapay zekâ ve dijital sağlık",
   "warning": null,
-  "multiBranchNote": "Çok branşlı kongre (kardiyoloji + dahiliye) — satırlar branchSlug DIŞINDA birebir aynı tutulur; seed son işlenen satırdan yazar."
+  "multiBranchNote": "Çok branşlı kongre (dahiliye + kardiyoloji) — satırlar branchSlug DIŞINDA birebir aynı tutulur; seed son işlenen satırdan yazar."
  },
  {
   "branchSlug": "dahiliye",
@@ -1062,7 +1061,6 @@
   "earlyBirdDeadline": null,
   "registrationNotes": "Derneğin RESMÎ sitesi doğrulandı: toid.org.tr (ICOI iş birliği; kongre alt dizinleri /YYYY_kongre/ kalıbında). Sitede en güncel içerik 35. kongre (9-10 Ocak 2026, Çırağan Palace Kempinski, İstanbul) ve bildiri özet kitabı; 36. kongre (Ocak 2027) duyurusu YOK.",
   "sourceUrls": [
-   "https://www.kongreuzmani.com/turk-oral-implantoloji-dernegi-35-uluslararasi-bilimsel-kongresi.html",
    "https://www.toid.org.tr/",
    "https://www.toid.org.tr/2025_kongre/"
   ],
@@ -1430,8 +1428,7 @@
   "sourceUrls": [
    "https://www.ekmud.org.tr/",
    "https://www.ekmud.org.tr/index.php/haberler/1551-15-turkiye-ekmud-bilimsel-kongresi-icin-tarih-belli-oldu",
-   "https://www.ekmud.org.tr/haber/524-9-turkiye-ekmud-uluslararasi-bilimsel-platformu-20-23-mayis-2021-tarihlerinde-gerceklestirilmistir",
-   "https://www.kongreuzmani.com/14-turkiye-ekmud-bilimsel-kongresi.html"
+   "https://www.ekmud.org.tr/haber/524-9-turkiye-ekmud-uluslararasi-bilimsel-platformu-20-23-mayis-2021-tarihlerinde-gerceklestirilmistir"
   ],
   "confidence": "dogrulandi",
   "verifiedAt": "2026-08-19",
@@ -1492,8 +1489,7 @@
    "https://epcd.org.tr/",
    "https://epcd.org.tr/etkinlikler/27/kongreler",
    "https://epcd.org.tr/4/haberler/",
-   "https://www.epcd.com.tr/tr",
-   "https://www.kongreuzmani.com/estetik-plastik-cerrahi-dernegi-30-ulusal-kongresi-epcd-2026.html"
+   "https://www.epcd.com.tr/tr"
   ],
   "confidence": "kismi",
   "verifiedAt": "2026-08-19",
@@ -2281,7 +2277,7 @@
    "https://www.laconventioncenter.com/events/detail/aats-annual-mtg-2027"
   ],
   "confidence": "dogrulandi",
-  "multiBranchNote": "Çok branşlı kongre (kvc + gogus-cerrahisi) — satırlar branchSlug DIŞINDA birebir aynı tutulur; seed son işlenen satırdan yazar.",
+  "multiBranchNote": "Çok branşlı kongre (gogus-cerrahisi + kvc) — satırlar branchSlug DIŞINDA birebir aynı tutulur; seed son işlenen satırdan yazar.",
   "cmeCredit": "ACCME akredite; AMA PRA Category 1 Credits (kredi sayısı henüz yayımlanmamış)",
   "venue": "Los Angeles Convention Center",
   "themes": "Erişkin kardiyak cerrahi · Torasik cerrahi · Konjenital kalp cerrahisi · Yapısal kalp hastalıkları · Perioperatif bakım · Multi-disipliner oturumlar · Bilimsel sunumlar ve olgu videoları",
@@ -2289,6 +2285,39 @@
   "format": "yuz-yuze",
   "language": "İngilizce",
   "warning": null
+ },
+ {
+  "branchSlug": "gogus-cerrahisi",
+  "name": "ISHLT Annual Meeting and Scientific Sessions",
+  "edition": "47.",
+  "organizer": "International Society for Heart and Lung Transplantation (ISHLT)",
+  "scope": "uluslararasi",
+  "frequency": "yillik",
+  "nextStart": "2027-04-14",
+  "nextEnd": "2027-04-17",
+  "city": "Sydney",
+  "country": "AU",
+  "officialUrl": "https://www.ishlt.org/annual-meeting",
+  "abstractDeadline": "2026-09-29",
+  "earlyBirdDeadline": null,
+  "registrationNotes": "Kayıtlar Aralık 2026'da açılacak. Toplantı 14-17 Nisan 2027 tarihlerinde; 13 Nisan 2027 ön-kongre (preconference) günüdür. Toplantı yalnızca yüz yüze yapılır: sanal katılım seçeneği yoktur ve bilimsel oturumlar kayda alınmaz. Sydney'e seyahat edemeyecek ekipler için yalnızca ISHLT2027'ye özel ePoster (yalnız poster) sunum seçeneği vardır; ePoster gönderenlerin kongreye kayıt olma zorunluluğu yoktur. Sözlü/poster bildiri sunacakların kayıt olması gerekir. Bildiri gönderim ücreti 25 USD (standart), ePoster için 150 USD (bildiri reddedilirse 125 USD iade edilir). Gönderim yapan herkesin sistemde güncel çıkar beyanı bulunmalıdır. Bildiri son tarihi resmî sayfada yıl yazılmadan 'Salı, 29 Eylül 23:59 ET / Çarşamba, 30 Eylül 03:59 UTC' olarak duyurulmuştur; 29 Eylül'ün Salı gününe denk geldiği yıl 2026'dır. Konaklama rezervasyonu yalnızca ISHLT'in kendi sitesi üzerinden yapılmalıdır (resmî konaklama iş ortağı: ICMSA).",
+  "sourceUrls": [
+   "https://www.ishlt.org/annual-meeting",
+   "https://www.ishlt.org/annual-meeting/other-annual-meetings/future-dates",
+   "https://www.ishlt.org/annual-meeting/science-collaboration/program/call-for-abstracts",
+   "https://www.ishlt.org/about/news-detail/2026/05/05/your-road-to-ishlt2027-in-sydney",
+   "https://www.ishlt.org/annual-meeting/booking-boston/hotels",
+   "https://www.ishlt.org/education-and-publications/resource/ishlt2026-cme-information"
+  ],
+  "confidence": "dogrulandi",
+  "verifiedAt": "2026-08-19",
+  "format": "yüz yüze",
+  "language": "İngilizce",
+  "cmeCredit": "ISHLT, ACCME akreditasyonuna sahiptir; bir önceki edisyonda (ISHLT2026) toplantı azami 24,00 AMA PRA Category 1 kredisi için tanımlanmıştı. ISHLT2027 için kredi miktarı henüz yayımlanmadı.",
+  "venue": "International Convention Centre Sydney (ICC Sydney), Sydney, NSW",
+  "themes": "İleri evre kalp yetmezliği, ileri evre akciğer yetmezliği, kalp ve akciğer transplantasyonu, mekanik dolaşım desteği (MCS), pulmoner vasküler hastalık.",
+  "warning": "ISHLT'in resmî uyarısı: kendisini 'resmî' konaklama şirketi olarak tanıtıp otellerde özel/iade edilmez fiyat sunan veya kredi kartı bilgisi isteyen aramalar dolandırıcılıktır ve ISHLT kayıt ücretini asla e-posta ile talep etmez — tüm resmî yazışmalar @ishlt.org uzantılı adreslerden gelir.",
+  "multiBranchNote": "Çok branşlı kongre (gogus-cerrahisi + organ-nakli) — satırlar branchSlug DIŞINDA birebir aynı tutulur; seed son işlenen satırdan yazar."
  },
  {
   "branchSlug": "gogus-cerrahisi",
@@ -3471,7 +3500,7 @@
   "venue": "Grand Sapphire Resort Hotel, Yeni İskele (KKTC)",
   "themes": "Hipertansiyon yönetimi · Kalp yetersizliği · Girişimsel kardiyoloji (koroner ve yapısal girişimler) · Aritmi yönetimi · Dislipidemi ve önleyici kardiyoloji · Yapay zekâ ve dijital sağlık",
   "warning": null,
-  "multiBranchNote": "Çok branşlı kongre (kardiyoloji + dahiliye) — satırlar branchSlug DIŞINDA birebir aynı tutulur; seed son işlenen satırdan yazar."
+  "multiBranchNote": "Çok branşlı kongre (dahiliye + kardiyoloji) — satırlar branchSlug DIŞINDA birebir aynı tutulur; seed son işlenen satırdan yazar."
  },
  {
   "branchSlug": "kardiyoloji",
@@ -3761,8 +3790,7 @@
   "registrationNotes": "Birleşik liste satırının İKİNCİ ayağı. Tarih iki resmî kaynakla teyitli: kongre sitesi ypcd2026.com '04-06 ARALIK 2026' ve dernek sitesi yuzplastikcerrahidernegi.org 'Sıradaki Etkinlik · Ulusal · 04–06 ARALIK 2026 · Ankara'. Mekân resmî sayfalarda belirtilmemiş — ikincil kaynaklar (kongreuzmani) Crowne Plaza Ankara diyor, TEYİT EDİLMEDİ. Kayıt ücretleri, bildiri ve erken kayıt son tarihleri resmî sayfalarda henüz yayımlanmamış (kayıt/konaklama alt sayfaları 404).",
   "sourceUrls": [
    "https://ypcd2026.com/",
-   "https://www.yuzplastikcerrahidernegi.org/",
-   "https://www.kongreuzmani.com/20-ulusal-ve-5-uluslararasi-yuz-plastik-cerrahi-dernegi-kongresi.html"
+   "https://www.yuzplastikcerrahidernegi.org/"
   ],
   "confidence": "dogrulandi",
   "verifiedAt": "2026-08-19",
@@ -3856,7 +3884,7 @@
    "https://www.laconventioncenter.com/events/detail/aats-annual-mtg-2027"
   ],
   "confidence": "dogrulandi",
-  "multiBranchNote": "Çok branşlı kongre (kvc + gogus-cerrahisi) — satırlar branchSlug DIŞINDA birebir aynı tutulur; seed son işlenen satırdan yazar.",
+  "multiBranchNote": "Çok branşlı kongre (gogus-cerrahisi + kvc) — satırlar branchSlug DIŞINDA birebir aynı tutulur; seed son işlenen satırdan yazar.",
   "cmeCredit": "ACCME akredite; AMA PRA Category 1 Credits (kredi sayısı henüz yayımlanmamış)",
   "venue": "Los Angeles Convention Center",
   "themes": "Erişkin kardiyak cerrahi · Torasik cerrahi · Konjenital kalp cerrahisi · Yapısal kalp hastalıkları · Perioperatif bakım · Multi-disipliner oturumlar · Bilimsel sunumlar ve olgu videoları",
@@ -4775,6 +4803,39 @@
   "confidence": "dogrulandi",
   "format": "yuz-yuze",
   "venue": "International Convention Centre Sydney (ICC Sydney)"
+ },
+ {
+  "branchSlug": "organ-nakli",
+  "name": "ISHLT Annual Meeting and Scientific Sessions",
+  "edition": "47.",
+  "organizer": "International Society for Heart and Lung Transplantation (ISHLT)",
+  "scope": "uluslararasi",
+  "frequency": "yillik",
+  "nextStart": "2027-04-14",
+  "nextEnd": "2027-04-17",
+  "city": "Sydney",
+  "country": "AU",
+  "officialUrl": "https://www.ishlt.org/annual-meeting",
+  "abstractDeadline": "2026-09-29",
+  "earlyBirdDeadline": null,
+  "registrationNotes": "Kayıtlar Aralık 2026'da açılacak. Toplantı 14-17 Nisan 2027 tarihlerinde; 13 Nisan 2027 ön-kongre (preconference) günüdür. Toplantı yalnızca yüz yüze yapılır: sanal katılım seçeneği yoktur ve bilimsel oturumlar kayda alınmaz. Sydney'e seyahat edemeyecek ekipler için yalnızca ISHLT2027'ye özel ePoster (yalnız poster) sunum seçeneği vardır; ePoster gönderenlerin kongreye kayıt olma zorunluluğu yoktur. Sözlü/poster bildiri sunacakların kayıt olması gerekir. Bildiri gönderim ücreti 25 USD (standart), ePoster için 150 USD (bildiri reddedilirse 125 USD iade edilir). Gönderim yapan herkesin sistemde güncel çıkar beyanı bulunmalıdır. Bildiri son tarihi resmî sayfada yıl yazılmadan 'Salı, 29 Eylül 23:59 ET / Çarşamba, 30 Eylül 03:59 UTC' olarak duyurulmuştur; 29 Eylül'ün Salı gününe denk geldiği yıl 2026'dır. Konaklama rezervasyonu yalnızca ISHLT'in kendi sitesi üzerinden yapılmalıdır (resmî konaklama iş ortağı: ICMSA).",
+  "sourceUrls": [
+   "https://www.ishlt.org/annual-meeting",
+   "https://www.ishlt.org/annual-meeting/other-annual-meetings/future-dates",
+   "https://www.ishlt.org/annual-meeting/science-collaboration/program/call-for-abstracts",
+   "https://www.ishlt.org/about/news-detail/2026/05/05/your-road-to-ishlt2027-in-sydney",
+   "https://www.ishlt.org/annual-meeting/booking-boston/hotels",
+   "https://www.ishlt.org/education-and-publications/resource/ishlt2026-cme-information"
+  ],
+  "confidence": "dogrulandi",
+  "verifiedAt": "2026-08-19",
+  "format": "yüz yüze",
+  "language": "İngilizce",
+  "cmeCredit": "ISHLT, ACCME akreditasyonuna sahiptir; bir önceki edisyonda (ISHLT2026) toplantı azami 24,00 AMA PRA Category 1 kredisi için tanımlanmıştı. ISHLT2027 için kredi miktarı henüz yayımlanmadı.",
+  "venue": "International Convention Centre Sydney (ICC Sydney), Sydney, NSW",
+  "themes": "İleri evre kalp yetmezliği, ileri evre akciğer yetmezliği, kalp ve akciğer transplantasyonu, mekanik dolaşım desteği (MCS), pulmoner vasküler hastalık.",
+  "warning": "ISHLT'in resmî uyarısı: kendisini 'resmî' konaklama şirketi olarak tanıtıp otellerde özel/iade edilmez fiyat sunan veya kredi kartı bilgisi isteyen aramalar dolandırıcılıktır ve ISHLT kayıt ücretini asla e-posta ile talep etmez — tüm resmî yazışmalar @ishlt.org uzantılı adreslerden gelir.",
+  "multiBranchNote": "Çok branşlı kongre (gogus-cerrahisi + organ-nakli) — satırlar branchSlug DIŞINDA birebir aynı tutulur; seed son işlenen satırdan yazar."
  },
  {
   "branchSlug": "organ-nakli",
@@ -5811,8 +5872,7 @@
   "earlyBirdDeadline": "2026-08-10",
   "registrationNotes": "Point Barbaros Otel; 11 Eylül 2026'da Nişantaşı Hastanesi'nde kurs günü. 1. edisyon Eylül 2025'te yapıldı — yıllık tekrarlama yeni yerleşiyor. Organizasyon Valor Kongre; bilimsel düzenleyici dernek sitede açıkça belirtilmemiş. Erken kayıt/konaklama son tarihi 10 Ağustos 2026.",
   "sourceUrls": [
-   "https://www.sacekimikongresi.org/genel-bilgiler.html",
-   "https://www.kongreuzmani.com/1-sac-ekimi-kongresi.html"
+   "https://www.sacekimikongresi.org/genel-bilgiler.html"
   ],
   "confidence": "dogrulandi",
   "language": "TR",
@@ -6036,8 +6096,7 @@
   "registrationNotes": "org tarayıcı UA ile HTTP 200; WebFetch'e 403 veriyordu). RESMÎ DAVET METNİ BİREBİR: 'Türk Üroloji Derneği tarafından, 22-25 Ekim 2026 tarihleri arasında, «35. Ulusal Üroloji Kongresi» Limak Cyprus Otel, Kuzey Kıbrıs Türk Cumhuriyeti'nde organize edilecektir.' ⚠️ ŞEHİR: resmî sitede yalnız 'Kuzey Kıbrıs Türk Cumhuriyeti' yazıyor, ŞEHİR ADI verilmemiş — şehir alanına ilçe/şehir uydurulmamalı. KAYIT: 8 Mayıs 2026 öncesi 500 EURO (+%20 KDV); 8 Mayıs 2026'dan SONRA aynı ücrete %15 geç katılım bedeli eklenir → earlyBirdDeadline = 2026-05-08 (GEÇTİ). Ücrete dahil: bilimsel programlara katılım, katılım belgesi, kongre baskılı materyalleri. DIŞ KATILIM BEDELİ: konaklamasını kongrenin resmî acentesi Figür Kongre'den almayanlar, 22-25 Ekim 2026 arası kongre merkezine giriş için kayıt ücreti DIŞINDA 750 EURO ödemek zorunda (dahil: açık büfe öğle yemeği ve içecekler, çay-kahve molaları, 09:00-18:00 ikram alanları). BİLDİRİ SON GÖNDERİM TARİHİ: 6 Eylül 2026, 23:59 (HENÜZ AÇIK). KONAKLAMA (3 gece, her şey dahil; 22 Ekim giriş – 25 Ekim çıkış): Limak Cyprus Deluxe Hotel TÜKENMİŞTİR (hem tek hem çift kişilik) · Kaya Artemis Resort Hotel tek kişilik 1.850 EURO, çift kişilik odada kişi başı 1.250 EURO (fiyata kongre merkezi ikram alanları ve shuttle transfer dahil). Program: 'State of the Art' konuşmaları, Canlı Cerrahiler, Paneller, Podyum ve Poster Oturumları. Onursal Başkan Prof. Dr. Ateş Kadıoğlu, Başkan Prof. Dr. N. Cem Sönmez. 'Uluslararası Konuşmacılar' sayfası henüz yapım aşamasında.",
   "sourceUrls": [
    "https://uroturk.org.tr/etkinlikler/10/kongre/",
-   "https://uroloji2026.org/",
-   "https://www.kongreuzmani.com/35-ulusal-uroloji-kongresi.html"
+   "https://uroloji2026.org/"
   ],
   "confidence": "kismi",
   "verifiedAt": "2026-08-19",

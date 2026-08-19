@@ -8,6 +8,11 @@
 //                Gerekçe: bu tarihler UZATILIYOR (TOD bildiri tarihini 6 Temmuz'a uzatmıştı;
 //                EAO son tarihi 12 Mayıs'a uzattı) — haftalık tarama yakalar, aylık kaçırır.
 //   🟡 BEKLEYEN — sonraki edisyonu duyurulmamış (confidence=kismi / tarihi geçmiş) → AYLIK.
+//   ⚪ TARİHSİZ — kaynakta VAR ama DB'ye hiç girmemiş (nextStart yok) → AYLIK.
+//                🪤 v6.121'de bulundu: bu kuyruk yalnız DB'den okuyordu, seed ise `startDate`
+//                zorunlu olduğu için tarihsiz satırları ATLIYOR — yani kaynaktaki 47 gerçek
+//                kongre HİÇBİR kademede görünmüyordu, kimse onlara bakmıyordu. Kuyruk artık
+//                seed KAYNAĞINI da okuyor; tarih duyurulunca kayıt DB'ye kendiliğinden girer.
 //                Dernekler duyuruyu aylar önce yapar; haftalık bakmak boşa gider.
 //   🟢 SOĞUK   — tarihi kesin, kritik tarih >90 gün → 3 AYLIK. Yer/tarih nadiren değişir.
 //   ⚫ GEÇMİŞ  — başlangıcı geçmiş → arşivlenir + bir SONRAKİ edisyon arama kuyruğuna girer
@@ -18,6 +23,8 @@
 //   npx tsx scripts/congress-refresh-queue.ts --json     → ajana verilecek makine-okunur liste
 //   npx tsx scripts/congress-refresh-queue.ts --hepsi    → kademeye bakmadan tüm kayıtlar
 import "dotenv/config";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 const args = process.argv.slice(2);
 const AS_JSON = args.includes("--json");
@@ -25,7 +32,7 @@ const ALL = args.includes("--hepsi");
 
 const DAY = 86400000;
 const HOT_WINDOW_DAYS = 90; // kritik tarihe kalan gün eşiği
-const TIER_INTERVAL_DAYS = { sicak: 7, bekleyen: 30, soguk: 90, gecmis: 30 } as const;
+const TIER_INTERVAL_DAYS = { sicak: 7, bekleyen: 30, tarihsiz: 30, soguk: 90, gecmis: 30 } as const;
 
 type Tier = keyof typeof TIER_INTERVAL_DAYS;
 
@@ -90,7 +97,31 @@ async function main() {
     }
   }
 
-  const order: Tier[] = ["sicak", "gecmis", "bekleyen", "soguk"];
+  // ── ⚪ TARİHSİZ: seed KAYNAĞINDA olup DB'ye hiç girmemiş kayıtlar ────────────────────────
+  // Bunlar `startDate` zorunlu olduğu için seed tarafından atlanır; DB'yi okuyan sorgu onları
+  // ASLA göremez. Kaynağı ayrıca okumazsak gerçek ve düzenli kongreler sessizce takipsiz kalır.
+  const kaynak = JSON.parse(
+    readFileSync(join(process.cwd(), "prisma", "seed-data", "congresses.json"), "utf-8"),
+  ) as { name: string; edition?: string | null; organizer?: string | null; officialUrl?: string | null; nextStart?: string | null; verifiedAt?: string | null }[];
+  const tarihsizGorulen = new Set<string>();
+  for (const r of kaynak) {
+    if (r.nextStart) continue;
+    const ad = `${r.edition ? `${r.edition} ` : ""}${r.name}`.trim();
+    if (tarihsizGorulen.has(ad)) continue; // çok-branşlı satırlar aynı kongredir
+    tarihsizGorulen.add(ad);
+    queue.push({
+      tier: "tarihsiz",
+      id: `kaynak:${r.name}`,
+      title: ad,
+      url: r.officialUrl ?? null,
+      organizer: r.organizer ?? null,
+      reason: "sonraki edisyon DUYURULMAMIŞ — kaynakta var, DB'de yok",
+      lastVerifiedDaysAgo: r.verifiedAt ? daysBetween(now, new Date(`${r.verifiedAt}T00:00:00Z`)) : null,
+      ask: "Sonraki edisyonun tarihi ilan edildi mi? İlan edildiyse nextStart/nextEnd + bildiri ve erken kayıt tarihleri.",
+    });
+  }
+
+  const order: Tier[] = ["sicak", "gecmis", "bekleyen", "tarihsiz", "soguk"];
   queue.sort((a, b) => order.indexOf(a.tier) - order.indexOf(b.tier));
 
   if (AS_JSON) {
@@ -99,9 +130,9 @@ async function main() {
     return;
   }
 
-  const icon: Record<Tier, string> = { sicak: "🔴", gecmis: "⚫", bekleyen: "🟡", soguk: "🟢" };
+  const icon: Record<Tier, string> = { sicak: "🔴", gecmis: "⚫", bekleyen: "🟡", tarihsiz: "⚪", soguk: "🟢" };
   const counts = order.map((t) => `${icon[t]} ${t}: ${queue.filter((q) => q.tier === t).length}`);
-  console.log(`\n📋 Tazeleme kuyruğu — ${queue.length}/${rows.length} kongre bakım istiyor`);
+  console.log(`\n📋 Tazeleme kuyruğu — ${queue.length} kayıt bakım istiyor (DB ${rows.length} · kaynakta tarihsiz ${tarihsizGorulen.size})`);
   console.log(`   ${counts.join(" · ")}\n`);
   for (const t of order) {
     const group = queue.filter((q) => q.tier === t);

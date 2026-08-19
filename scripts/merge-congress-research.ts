@@ -79,6 +79,28 @@ const ROW_KEYS: (keyof Row)[] = [
   "themes", "warning",
 ];
 
+/// Aggregator / dizin siteleri — kongre verisi için KANIT DEĞİLDİR (👤 kullanıcı kararı
+/// 2026-08-19). İpucu olarak kullanılabilirler ama `officialUrl` ya da `sourceUrls`'te
+/// KALAMAZLAR: kanıt zinciri "hangi resmî kaynaktan doğruladık" sorusunu yanıtlamalı.
+/// Bir tur temizlense bile sonraki tur ajanları aynı dizini yeniden bulabildiği için
+/// temizlik ELDE değil BURADA yapılır — her birleştirmede otomatik süzülür.
+const AGGREGATOR = [
+  "kongreuzmani.com", "10times.com", "conferenceindex.org", "waset.org",
+  "allconferencealert.", "eventbrite.", "conferencealerts.", "clocate.com",
+];
+
+function aggregatorMu(u: string): boolean {
+  return AGGREGATOR.some((d) => u.toLowerCase().includes(d));
+}
+
+/** sourceUrls'ten aggregator bağlantılarını düşür; kaç tane düştüğünü sayaca ekler. */
+function kaynaklariSuz(urls: string[] | undefined, sayac: { n: number }): string[] {
+  if (!urls?.length) return urls ?? [];
+  const temiz = urls.filter((u) => !aggregatorMu(u));
+  sayac.n += urls.length - temiz.length;
+  return temiz;
+}
+
 /** Bir satırın "veri zenginliği" — çok-branşlı çakışmada hangi sürümün kazanacağını belirler. */
 function richness(r: Row): number {
   let n = 0;
@@ -91,12 +113,17 @@ function richness(r: Row): number {
   return n;
 }
 
+const aggregatorSayac = { n: 0 };
+
 function pickRowFields(a: AgentRow): Row {
   const out = {} as Row;
   for (const k of ROW_KEYS) {
     const v = a[k];
     if (v !== undefined) (out as unknown as Record<string, unknown>)[k] = v;
   }
+  // Aggregator süzgeci — kanıt zinciri yalnız resmî kaynak taşır (👤 2026-08-19).
+  out.sourceUrls = kaynaklariSuz(out.sourceUrls, aggregatorSayac);
+  if (out.officialUrl && aggregatorMu(out.officialUrl)) out.officialUrl = null;
   return out;
 }
 
@@ -237,6 +264,7 @@ console.log(`🆕 YENİ            ${rapor.yeni.length}`);
 console.log(`♻️  GÜNCELLENEN     ${rapor.guncellenen.length}`);
 console.log(`✏️  YENİDEN ADLANDIRILAN ${rapor.yenidenAdlandirilan.length}`);
 console.log(`🔒 KİMLİK KORUNDU (yıl farkı) ${kimlikKorunan.length}`);
+console.log(`🚮 AGGREGATOR KAYNAĞI SÜZÜLDÜ    ${aggregatorSayac.n}`);
 console.log(`🤝 ÇOK-BRANŞLI EŞİTLENEN ${esitlenen.length}`);
 console.log(`😴 AJAN DOKUNMADI  ${dokunulmayan.length} (korundu)`);
 console.log(`🚫 KATEGORİ (seed dışı) ${kategoriler.length}`);
