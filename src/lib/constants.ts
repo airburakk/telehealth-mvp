@@ -31,6 +31,13 @@ export const COUNTRIES: CountryDef[] = [
 
 export const LANGUAGES = ["Türkçe", "Rusça", "Azerice", "Arapça", "Farsça", "Fransızca", "İngilizce", "Almanca", "Kazakça", "Kırgızca", "Bulgarca"];
 
+// Aynı-sekme dil senkron olayı (kullanıcı bildirimi 2026-08-19): `storage` event'i YALNIZ diğer
+// sekmelerde ateşlenir — aynı sayfadaki ikinci tüketici (Header/AppAuraFooter kromu) gövdedeki
+// seçicinin air_lang yazımını duymazdı. createLangPersistence.set() bu olayı yayınlar; kromlar
+// dinler. Sabit burada (düz-veri modülü): "use client" dosyasından veri export'u server'da
+// client-reference'a dönerdi.
+export const LANG_CHANGE_EVENT = "air:lang-change";
+
 // Dil adı → BCP-47 yerel kodu (tarih/sayı biçimleme için; ConsultationRoom SPEECH_LANG ile aynı küme).
 export const LANG_BCP47: Record<string, string> = {
   "Türkçe": "tr-TR", "Rusça": "ru-RU", "Azerice": "az-AZ", "Arapça": "ar-SA", "Farsça": "fa-IR",

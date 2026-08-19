@@ -5,7 +5,7 @@ import { AuraMark, AuraBraille } from "@/components/AuraLogo";
 import { AuraWordText } from "@/components/aura/aura-word";
 import { useEffect, useState } from "react";
 import { LangProvider, useLang, LINKS, LANG_CODES, type Lang } from "@/lib/aura-landing/i18n";
-import { langCodeFor } from "@/lib/constants";
+import { langCodeFor, LANG_CHANGE_EVENT } from "@/lib/constants";
 
 // AURA alt bilgisi — vitrin + uygulama yüzeylerinin ORTAK footer'ı (kullanıcı kararı 2026-08-18).
 //
@@ -159,13 +159,29 @@ export function AuraFooter({ accountLinks = false }: { accountLinks?: boolean })
 export function AppAuraFooter() {
   const [lang, setLang] = useState<Lang>("tr");
 
+  // Oturum İÇİNDE dil değişimi (kullanıcı bildirimi 2026-08-19): mount-tek-okuma alt bandı
+  // bayat bırakıyordu (`storage` aynı sekmede ateşlenmez). LANG_CHANGE_EVENT (aynı sekme) +
+  // storage (diğer sekmeler) dinlenir; state değişince key={lang} remount deseni yeni dille
+  // provider'ı kurar.
   useEffect(() => {
-    try {
-      const code = langCodeFor(window.localStorage.getItem("air_lang"));
-      if (code && (LANG_CODES as readonly string[]).includes(code)) setLang(code as Lang);
-    } catch {
-      // depolama engellenmiş olabilir; TR kalır
-    }
+    const read = () => {
+      try {
+        const code = langCodeFor(window.localStorage.getItem("air_lang"));
+        if (code && (LANG_CODES as readonly string[]).includes(code)) setLang(code as Lang);
+      } catch {
+        // depolama engellenmiş olabilir; TR kalır
+      }
+    };
+    read();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "air_lang") read();
+    };
+    window.addEventListener(LANG_CHANGE_EVENT, read);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(LANG_CHANGE_EVENT, read);
+      window.removeEventListener("storage", onStorage);
+    };
   }, []);
 
   return (

@@ -8,7 +8,7 @@ import { SystemMessagesMenuItem } from "@/components/SystemMessagesMenuItem";
 import { AuraLogo, AuraMark } from "@/components/AuraLogo";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/components/useT";
-import { langDir, LANG_BCP47, LANGUAGES } from "@/lib/constants";
+import { langDir, LANG_BCP47, LANGUAGES, LANG_CHANGE_EVENT } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
 import { hidesGlobalChrome } from "@/lib/chrome-routes";
 import { BadgeCheck, Bookmark, LogOut, ShieldOff, Star, UserCog, Wallet } from "lucide-react";
@@ -174,15 +174,32 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   // Sunucuda okunamaz (localStorage) → effect'te. İlk boyama prop diliyle çizilir, ardından
   // seçili dile geçer; kısa bir parıltı bilinçli bedel (SSR'ı client depolamasına bağlamanın
   // alternatifi yok). air_lang YOKSA prop kazanır — partner doktorun profil dili korunur.
+  //
+  // Oturum İÇİNDE dil değişimi (kullanıcı bildirimi 2026-08-19): mount-tek-okuma yetmiyordu —
+  // hasta gövdedeki seçiciyle dili değiştirince `storage` event'i AYNI sekmede ateşlenmediği
+  // için üst bant bayat kalıyordu. LangSelect factory'si artık LANG_CHANGE_EVENT yayınlar;
+  // burada onu (aynı sekme) + storage'ı (diğer sekmeler) dinleyip yeniden okuruz.
   const [uiLang, setUiLang] = useState(lang);
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem("air_lang");
-      if (stored && LANGUAGES.includes(stored)) setUiLang(stored);
-      else setUiLang(lang);
-    } catch {
-      setUiLang(lang); // depolama engellenmiş — sunucu diline düş
-    }
+    const read = () => {
+      try {
+        const stored = window.localStorage.getItem("air_lang");
+        if (stored && LANGUAGES.includes(stored)) setUiLang(stored);
+        else setUiLang(lang);
+      } catch {
+        setUiLang(lang); // depolama engellenmiş — sunucu diline düş
+      }
+    };
+    read();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "air_lang") read();
+    };
+    window.addEventListener(LANG_CHANGE_EVENT, read);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(LANG_CHANGE_EVENT, read);
+      window.removeEventListener("storage", onStorage);
+    };
   }, [lang]);
 
   const { t } = useT(uiLang, texts);
