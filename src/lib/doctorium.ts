@@ -649,7 +649,7 @@ export function scopeBadge(scope: string): string {
  */
 export async function upcomingCongresses(
   branchSlugs: string[],
-  opts?: { scope?: CongressScope | null; types?: EventTypeKey[] | null; limit?: number },
+  opts?: { scope?: CongressScope | null; types?: EventTypeKey[] | null; limit?: number; onlyIds?: string[] },
 ) {
   const rows = await db.medicalCongress.findMany({
     where: {
@@ -658,6 +658,11 @@ export async function upcomingCongresses(
       // types === null → "hepsi" (süzgeç yok). undefined gelirse de süzmeyiz: çağıran
       // parseEventTypes'tan geçirmediyse daraltma YAPMA — sessiz eksik liste üretmesin.
       ...(opts?.types?.length ? { eventType: { in: opts.types } } : {}),
+      // "Takip ettiklerim" yolu (kullanıcı isteği 2026-08-19): yalnız verilen id'ler.
+      // ⚠️ Çağıran bu yolda branş/tür/kapsam süzgeci GEÇİRMEZ — doktor branş dışından da
+      // takip etmiş olabilir; "takip ettim ama listede yok" sürprizi üretme. Boş dizi
+      // bilinçli boş liste döndürür (id: {in: []}).
+      ...(opts?.onlyIds ? { id: { in: opts.onlyIds } } : {}),
     },
     orderBy: { startDate: "asc" },
     // AÇIK select: coverImage data URI'ları (~5-20KB/kayıt) liste sorgusunu şişirmesin —
@@ -677,6 +682,16 @@ export async function upcomingCongresses(
         return s === "[]" || branchSlugs.some((b) => s.includes(`"${b}"`));
       });
   return filtered.slice(0, opts?.limit ?? 60);
+}
+
+/** Verilen id kümesinden YAKLAŞANLARIN sayısı — "Takip ettiklerim (N)" çip sayacı.
+ *  Takip kaydı etkinlik geçtikten sonra da durur (CongressFollow silinmez); çip listeyle
+ *  aynı sayıyı söylesin diye followed.size DEĞİL bu count kullanılır. */
+export async function upcomingCountByIds(ids: string[]): Promise<number> {
+  if (!ids.length) return 0;
+  return db.medicalCongress.count({
+    where: { id: { in: ids }, startDate: { gte: new Date(Date.now() - 86400000) } },
+  });
 }
 
 /** Tek kongrenin tam kaydı (detay kartı, v6.62). Bulunamazsa null. */

@@ -98,21 +98,64 @@
   --dl-cyan: #0e7490;
 }
 
-/* Doctorium Üst Raf zemini — "Zümrüt Nefesi %8" (2026-08-19, kullanıcı seçimi, görsel
- * karşılaştırma sonrası): Header sabit koyu kromda (#08090b, theme-dark sınıfı hard-coded)
- * ve raf aynı krom tonundaydı — gece ikisi 112px kesintisiz "siyah blok" gibi kaynaşıyordu.
- * Zemine %8 marka yeşili karışır (--c-success: gece #34d399 → ≈#0c1916 koyu orman; gündüz
- * #15803d → yeşilimsi açık krom): raf koyu kalır ama Doctorium kimliğini taşıyan AYRI bir
- * düzlem olur; AURA kromu nötr kalır. %92 saydamlık sticky raf altından içerik akarken
- * backdrop-blur buğusunun çalışması için (eski color-mix davranışıyla aynı). Masaüstü raf +
- * mobil alt çubuk BİRLİKTE kullanır (v6.109 "masa↔mobil aynı yatay model" — dil bölünmez). */
+/* Doctorium Üst Raf zemini — "DERİN ORMAN %12" (2026-08-19, kullanıcı seçimi; ilk tur
+ * "Zümrüt Nefesi %8"i doz+ton taraması SÜPERSEDE etti): Header sabit koyu kromda (#08090b,
+ * theme-dark hard-coded) ve raf aynı krom tonundaydı — gece ikisi 112px kesintisiz "siyah
+ * blok" gibi kaynaşıyordu. Zemine %12 KOYU zümrüt (#047857 — landing'in açık-bölüm zümrüdü;
+ * parlak #34d399 tabanı "renkli bant" hissi veriyordu, koyu taban yeşili doygunluktan değil
+ * DERİNLİKTEN alır) karışır: gece ≈#081614 gri-yeşil orman, gündüz yeşilimsi açık krom.
+ * Sabit hex BİLİNÇLİ (tema token'ı değil): derin-orman kimliği iki temada aynı tabandan
+ * türesin. %92 saydamlık sticky raf altından içerik akarken backdrop-blur buğusu için.
+ * Masaüstü raf + mobil alt çubuk BİRLİKTE kullanır (v6.109 "masa↔mobil aynı yatay model"). */
 .doctorium-shelf-bg {
   background-color: color-mix(
     in srgb,
-    color-mix(in srgb, var(--c-success) 8%, var(--c-chrome)) 92%,
+    color-mix(in srgb, #047857 12%, var(--c-chrome)) 92%,
     transparent
   );
+  /* Raf içi renk token'ları — raf, zeminini değiştirebilen bir BAĞLAM (Zümrüt Nefesi /
+     shelf-white); içindeki hiçbir öğe --c-* token'ını doğrudan okumaz ki varyant tek
+     sınıfla değişsin. surface-ink = aktif rozetin İÇ metni (zeminin kendi tonu). */
+  --shelf-ink: var(--c-ink);
+  --shelf-ink-2: var(--c-ink-2);
+  --shelf-hairline: var(--c-hairline);
+  --shelf-surface-ink: var(--c-chrome);
+  --shelf-dot: rgba(52, 211, 153, 0.9);
+  --shelf-pulse: #6ee7b7;
+  --shelf-pulse-hover: #a7f3d0;
 }
+/* Sekme kimlik rengi ÇİFT-TON (2026-08-19): sekme yalnız --tab-dark/--tab-light basar
+   (DoctoriumSidebar), kazananı bağlam seçer. Eski tek-hex inline style gündüz temasında
+   da gece tonunu basıyordu — gündüz-kontrast güvencesi inline'ı yakalayamaz (sınıf-seçici). */
+.doctorium-shelf-bg .shelf-tab-on { color: var(--tab-dark); }
+.doctorium-shelf-bg .shelf-tab-on .shelf-no { background: var(--tab-dark); color: var(--shelf-surface-ink); }
+.theme-light .doctorium-shelf-bg .shelf-tab-on { color: var(--tab-light); }
+.theme-light .doctorium-shelf-bg .shelf-tab-on .shelf-no { background: var(--tab-light); }
+.doctorium-shelf-bg .shelf-tab-off { color: var(--shelf-ink-2); }
+.doctorium-shelf-bg .shelf-tab-off:hover { color: var(--shelf-ink); }
+.doctorium-shelf-bg .shelf-dot { background: var(--shelf-dot); }
+.doctorium-shelf-bg .shelf-pulse { color: var(--shelf-pulse); }
+.doctorium-shelf-bg .shelf-pulse:hover { color: var(--shelf-pulse-hover); }
+.theme-light .doctorium-shelf-bg { --shelf-dot: #047857; --shelf-pulse: #047857; --shelf-pulse-hover: #059669; }
+
+/* AÇIK RAF VARYANTI — "shelf-white" (kullanıcı denemesi 2026-08-19): raf TEMA-BAĞIMSIZ açık
+   kalır ("zebra krom" — Header sabit koyu, raf açık). Ton --shelf-white-tone ile ayarlanır
+   (deneme: #f7f8f5 panel / #eaede8 kırık krom). Tüm raf-içi tonlar açık-tema değerlerine
+   SABİTLENİR (tema-duyarlı --c-* burada kullanılamaz: gece temasında ink beyaz kalırdı).
+   Sekme rengi her iki temada da LIGHT ton. Karar verilirse tek sınıf ekle/çıkar yeter. */
+.doctorium-shelf-bg.shelf-white {
+  --shelf-white-tone: #f7f8f5;
+  background-color: color-mix(in srgb, var(--shelf-white-tone) 94%, transparent);
+  --shelf-ink: #171a18;
+  --shelf-ink-2: #57534e;
+  --shelf-hairline: rgba(0, 0, 0, 0.1);
+  --shelf-surface-ink: var(--shelf-white-tone);
+  --shelf-dot: #047857;
+  --shelf-pulse: #047857;
+  --shelf-pulse-hover: #059669;
+}
+.doctorium-shelf-bg.shelf-white .shelf-tab-on { color: var(--tab-light); }
+.doctorium-shelf-bg.shelf-white .shelf-tab-on .shelf-no { background: var(--tab-light); }
 
 /* ============================================================
  * GÜNDÜZ KONTRAST GÜVENCESİ (2026-07-13, kullanıcı isteği): Gece teması için

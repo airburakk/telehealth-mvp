@@ -1210,6 +1210,27 @@ model MedicalCongress {
   @@index([eventType, startDate]) // v6.120 tür çipi + tarih sıralaması
 }
 
+/// ORTAK TAKVİM KAYDI (2026-08-19, kullanıcı kararı "ortak database"): Doctorium etkinlik
+/// takviminin ve AURA Aşama-2 nöbet/icap PLANININ tek evi. Takip edilen etkinlikler buraya
+/// KOPYALANMAZ (CongressFollow'dan türetilir — lib/calendar.ts); bu tablo nöbet (NOBET),
+/// icap (ICAP) ve kişisel (KISISEL) kayıtlar içindir. `kind` bilinçli String — yeni tür
+/// migration'sız eklenir. Başlık klinik veri değildir (nöbet planı/etkinlik adı) → şifresiz;
+/// hasta bağı taşıyan bir tür eklenecekse ALAN AÇMADAN ÖNCE şifreleme kararı verilir.
+model CalendarEntry {
+  id         String    @id @default(cuid())
+  doctorId   String
+  kind       String // ETKINLIK | NOBET | ICAP | KISISEL
+  title      String
+  startAt    DateTime
+  endAt      DateTime?
+  allDay     Boolean   @default(true)
+  /// kind=ETKINLIK bağı — MedicalCongress düz-id (CongressFollow deseni; ilişkisiz).
+  congressId String?
+  createdAt  DateTime  @default(now())
+
+  @@index([doctorId, startAt]) // ay penceresi sorgusu (lib/calendar doctorCalendarMonth)
+}
+
 /// Doctorium Modül E — hekimin TAKİP ettiği kongre (v6.49). Takip = alarm kapsamına girer.
 /// Ayrı tablo (Doctor'da JSON değil): cron "yaklaşan kongreyi takip eden hekimler" sorgusunu
 /// bununla kurar; JSON'da her hekimi tarayıp parse etmek gerekirdi.

@@ -11,7 +11,7 @@ import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47, LANGUAGES, LANG_CHANGE_EVENT } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
 import { hidesGlobalChrome } from "@/lib/chrome-routes";
-import { BadgeCheck, Bookmark, LogOut, ShieldOff, Star, UserCog, Wallet } from "lucide-react";
+import { BadgeCheck, Bookmark, CalendarDays, LogOut, ShieldOff, Star, UserCog, Wallet } from "lucide-react";
 import { ThemeToggle, type ThemeName } from "@/components/ThemeToggle";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -65,9 +65,10 @@ function BrandToggle({ doctoriumActive, stage1 }: { doctoriumActive: boolean; st
     return () => ro.disconnect();
   }, [doctoriumSide]);
 
-  const wordH = 14; // 23px sembol ölçeğinin wordmark oranı (AuraLogo size*0.6)
+  // Wordmark yüksekliği class'ta: mobil 12px / sm+ 14px (23px sembol ölçeğinin oranı).
+  // Mobil kompaktlık 2026-08-19 (kullanıcı bildirimi "toggle mobilde belli olmuyor").
   return (
-    <div ref={wrapRef} className="relative flex shrink-0 items-center gap-2">
+    <div ref={wrapRef} className="relative flex shrink-0 items-center gap-1.5 sm:gap-2">
       {/* Kayan sembol: brand-live (yörünge hep döner — tek logo daima canlı); aktiflik RENKLE
           anlatılır. pointer-events yok — tıklama alttaki Link'lerin işi. */}
       <span
@@ -93,11 +94,12 @@ function BrandToggle({ doctoriumActive, stage1 }: { doctoriumActive: boolean; st
         className={`flex items-center gap-1.5 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumSide ? "opacity-45 hover:opacity-80" : ""}`}
       >
         <span ref={slotA} aria-hidden className="block h-[23px] w-[23px] shrink-0" />
-        {/* Tema-çift wordmark (AuraLogo deseni — görünürlüğü .logo-word-* yönetir). */}
+        {/* Tema-çift wordmark (AuraLogo deseni — görünürlüğü .logo-word-* yönetir).
+            Yükseklik responsive: mobil 12px / sm+ 14px (toggle mobilde sıkı ama OKUNUR). */}
         {/* eslint-disable-next-line @next/next/no-img-element -- yerel marka varlığı */}
-        <img src="/aura-word-light.png" alt="AURA" className="logo-word-light" style={{ height: wordH, width: "auto" }} />
+        <img src="/aura-word-light.png" alt="AURA" className="logo-word-light h-3 w-auto sm:h-3.5" />
         {/* eslint-disable-next-line @next/next/no-img-element -- yukarıdakiyle aynı */}
-        <img src="/aura-word-dark.png" alt="" aria-hidden className="logo-word-dark" style={{ height: wordH, width: "auto" }} />
+        <img src="/aura-word-dark.png" alt="" aria-hidden className="logo-word-dark h-3 w-auto sm:h-3.5" />
       </Link>
       <span aria-hidden className="h-5 w-px shrink-0 bg-[var(--c-hairline)]" />
       <Link
@@ -108,8 +110,10 @@ function BrandToggle({ doctoriumActive, stage1 }: { doctoriumActive: boolean; st
         className={`flex items-center gap-1.5 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumSide ? "" : "opacity-45 hover:opacity-80"}`}
       >
         <span ref={slotB} aria-hidden className="block h-[23px] w-[23px] shrink-0" />
-        {/* Yazı dar ekranda gizli, yuva/sembol kalır — sol blok mobilde sıkı kalır. */}
-        <span className="hidden whitespace-nowrap text-[15px] font-medium text-[var(--c-ink)] sm:inline">
+        {/* Yazı MOBİLDE DE görünür (2026-08-19, kullanıcı bildirimi: "toggle mobilde
+            neredeyse hiç gözükmüyor" — eski `hidden sm:inline` yalnız 23px yuva bırakıyordu,
+            geçiş imkânının varlığı belli olmuyordu). Mobilde 13px kompakt, sm+ 15px. */}
+        <span className="whitespace-nowrap text-[13px] font-medium text-[var(--c-ink)] sm:text-[15px]">
           Doctor<span className={`doctorium-ium${doctoriumActive ? " doctorium-ium-breathe" : ""}`}>ium</span>
         </span>
       </Link>
@@ -317,6 +321,14 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                       (doctoriumActive; stage1 doktorunun kromu bütünüyle Doctorium olduğundan
                       onda her yerde). Kaydettiklerim öğrenciye AÇIK (içerik işlevi, v6.95);
                       Puanlarım öğrencide GİZLİ (pazarlama süzgeci). */}
+                  {/* Takvimim (kullanıcı isteği 2026-08-19): etkinlik takvimi — rafın 08
+                      durağının menü eşleniği. Kaydettiklerim'le aynı koşul (içerik işlevi,
+                      öğrenciye de açık; Aşama 2'de nöbet/icap planı da burada yaşayacak). */}
+                  {user.role === "DOCTOR" && (doctoriumActive || stage1) && (
+                    <Link role="menuitem" href="/doktor/doctorium/takvim" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                      <CalendarDays size={15} /> {t("Takvimim")}
+                    </Link>
+                  )}
                   {user.role === "DOCTOR" && (doctoriumActive || stage1) && (
                     <Link role="menuitem" href="/doktor/doctorium/kaydettiklerim" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <Bookmark size={15} /> {t("Kaydettiklerim")}

@@ -129,25 +129,10 @@ export default async function CongressCardPage({ params }: { params: Promise<{ i
             </Field>
           )}
           {c.language && <Field icon={<Languages size={13} />} label="Dil">{c.language}</Field>}
-          {/* TTB kaydında cmeCredit zaten "TTB akredite (KOD)" — aşağıdaki TTB alanıyla
+          {/* TTB kaydında cmeCredit zaten "TTB akredite (KOD)" — aşağıdaki TTB BÖLÜMÜYLE
               birebir aynı şeyi söylerdi. Kredi alanı KÜRATÖRLÜ kayıtların gerçek kredi
               notu içindir (ör. "EACCME 18 kredi"), o yüzden ttbCode varken çizilmez. */}
           {c.cmeCredit && !c.ttbCode && <Field icon={<ShieldCheck size={13} />} label="Kredi">{c.cmeCredit}</Field>}
-          {/* TTB akreditasyonu — kod VAR demek "TTB akredite" demek, "şu kadar kredi" DEMEZ.
-              Puan katılım süresine göre TTB kaydında oluşur (EK-1: 40 dk = 1 kredi, günde en
-              fazla 6) → burada sayı yazmayız, doktoru TTB'nin kendi kaydına gönderiririz.
-              Bkz. vault output/ste-kredilendirme-arastirmasi-2026-08-19.md §6. */}
-          {c.ttbCode && (
-            <Field icon={<ShieldCheck size={13} />} label="TTB akreditasyonu">
-              <span className="aura-mono">{c.ttbCode}</span> — TTB STE/SMG akredite etkinlik.
-              Kredi puanı katıldığınız süreye göre{" "}
-              <a href="https://kredilendirme.ttb.dr.tr/katilimci.php" target="_blank"
-                rel="noopener noreferrer nofollow" className="underline hover:text-[var(--c-ink)]">
-                TTB kaydınızda
-              </a>{" "}
-              oluşur; bu sayfa kredi tutarı bildirmez.
-            </Field>
-          )}
           {slugs.length > 0 && (
             <Field icon={<Globe size={13} />} label="İlgili branşlar">
               {slugs.map((s) => branchLabel(s) ?? s).join(" · ")}
@@ -171,6 +156,37 @@ export default async function CongressCardPage({ params }: { params: Promise<{ i
           <section className="border-t border-[var(--c-hairline)] px-5 py-4">
             <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">Ana temalar</h2>
             <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink-2)]">{c.themes}</p>
+          </section>
+        )}
+
+        {/* ── TTB STE/SMG akreditasyonu (kullanıcı isteği 2026-08-19): künyedeki satırdan kendi
+            bölümüne yükseldi — Eylemler'deki "Takvime ekle" düğme diliyle iki dış bağlantı.
+            Kredi SAYISI YAZILMAZ (EK-1: 40 dk = 1 kredi, günde ≤6 — puan katılım süresine göre
+            TTB kaydında oluşur; [[public-claim-honesty]]: ölçülmemiş sayı iddiası yok).
+            Bkz. vault output/ste-kredilendirme-arastirmasi-2026-08-19.md §6. */}
+        {c.ttbCode && (
+          <section className="border-t border-[var(--c-hairline)] px-5 py-4">
+            <h2 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
+              <ShieldCheck size={13} className="text-emerald-400" /> TTB STE/SMG Akreditasyonu
+            </h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink-2)]">
+              Bu etkinlik Türk Tabipleri Birliği STE/SMG kredilendirme sisteminde{" "}
+              <span className="aura-mono font-semibold text-[var(--c-ink)]">{c.ttbCode}</span> koduyla
+              kayıtlıdır. Kredi puanınız katıldığınız süreye göre TTB kaydınızda oluşur — bu sayfa
+              kredi tutarı bildirmez.
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <a href="https://kredilendirme.ttb.dr.tr/etkinlik_bul.php" target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] px-3.5 py-1.5 text-xs font-semibold text-[var(--c-ink-2)] hover:bg-[var(--c-surface-2)]">
+                <ExternalLink size={13} /> Etkinliğin TTB kaydı
+              </a>
+              <a href="https://kredilendirme.ttb.dr.tr/katilimci.php" target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] px-3.5 py-1.5 text-xs font-semibold text-[var(--c-ink-2)] hover:bg-[var(--c-surface-2)]">
+                <ExternalLink size={13} /> Kredi puanlarım (TTB)
+              </a>
+            </div>
           </section>
         )}
 

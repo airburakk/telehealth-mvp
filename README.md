@@ -177,6 +177,44 @@ günde en fazla 6): vault `output/ste-kredilendirme-arastirmasi-2026-08-19.md`.
 önce başvurduğu için kaydın geleceği daima seyrek (2026-01→2027-06 penceresinde yaklaşan yalnız 3
 etkinlik çıktı). Henüz cron'a bağlı değil — elle koşuluyor (Hobby cron 2/2 dolu).
 
+**v6.129 — TAKVİM + takip süzgeci + TTB bölümü + raf/mobil turu (2026-08-19, kullanıcı oturumu):**
+• **`/doktor/doctorium/takvim` — ORTAK TAKVİM** (rafın **08** durağı + Header hesap menüsü
+"Takvimim"): ay ızgarası (Pazartesi başlangıçlı, **UTC gün anahtarları** — MedicalCongress tarihleri
+UTC-fmt'li, yerel saate düşülseydi etkinlik bir gün kayardı), `?ay=YYYY-MM` gezinme + BUGÜN, gün
+tıklayınca günün listesi (`?gun=`). İçerik **OTOMATİK**: takip edilen etkinliklerin aralığı +
+**bildiri** ve **erken kayıt** son günleri kendi günlerine ayrı çiplerle düşer. ⚠️ **Takipler
+KOPYALANMAZ** — `CongressFollow`'dan TÜRETİLİR (`lib/calendar.ts`); kopya kayıt senkron borcu
+doğururdu (etkinlik tarihi değişince kopya bayatlar). **`CalendarEntry` tablosu** (migration
+`20260820010000`) nöbet/icap/kişisel kayıtların evi — **AURA Aşama-2 nöbet+icap planı AYNI tabloyu
+kullanacak** ("ortak database", kullanıcı kararı); `kind` bilinçli String (yeni tür migration'sız),
+başlık klinik veri değil → şifresiz (hasta bağı taşıyan tür eklenmeden ÖNCE şifreleme kararı verilir).
+MVP'de tabloya yazan yüzey yok, birleşim kodu açık — Aşama 2 yazmaya başlayınca görünüm kendiliğinden
+dolar. Bugünkü klinik nöbet hâlâ ANLIK toggle (`lib/clinical-duty.ts`); takvim onun planlı hâlinin
+zemini. Dış takvime aktarım (`.ics`) etkinlik kartında AYNEN duruyor — bu **iç** takvim.
+• **"Takip ettiklerim (N)" süzgeci** (`?f=takip`): etkinlik listesini takip edilenlere indirir.
+⚠️ Bu yol branş/tür/kapsam süzgeçlerinden **BAĞIMSIZ** (`upcomingCongresses` `onlyIds`) — doktor branş
+dışından da takip etmiş olabilir, "takip ettim ama listede yok" sürprizi üretilmez. Sayaç
+`followed.size` DEĞİL `upcomingCountByIds` (takip kaydı etkinlik geçince silinmiyor → çip listeyle
+aynı sayıyı söylesin). Çip takipli-yaklaşan 0 ise çizilmez; süzgeç AÇIKKEN 0'da da çizilir (yoksa
+kapatma yolu kaybolur).
+• **Etkinlik kartında TTB akreditasyonu artık AYRI BÖLÜM** (künyedeki tek satırdan yükseldi; "Takvime
+ekle" ile aynı eylem dili): kod + iki dış bağlantı (etkinliğin TTB kaydı · doktorun kredi puanları).
+🔴 Kredi SAYISI yazılmama kuralı korunur.
+• **Doctorium kromu:** mobil alt çubuk (3 grup ikonu) EMEKLİ → **mobil raf-footer** = masaüstü rafının
+birebir eşleniği (aynı 01-08 durakları, yatay kaydırma, aynı zemin; `ShelfTabs` TEK kaynak). Kayıtlı +
+Puanlarım Header menüsüne taşındı, page-içi mobil grup şeridi kalktı (çift navigasyon bitti).
+`DoctoriumShell`'in `balance`/`isDoctor` prop'ları artık okunmuyor (imza geriye-uyum için duruyor —
+çağıranlardaki `getDoctorBalance` hesabıyla birlikte ayrı temizlik turunda sökülecek).
+• **Raf zemini "DERİN ORMAN %12"** (kullanıcı seçimi; doz+ton taraması sonrası v6.125'in "Zümrüt
+Nefesi %8"ini süperseder): `color-mix(#047857 12%, --c-chrome)` — parlak zümrüt tabanı "renkli bant"
+gibi duruyordu, KOYU zümrüt tabanı yeşili derinlikten alır. **Sekme renkleri artık ÇİFT-TON**
+(`--tab-dark`/`--tab-light`; kazananı `.doctorium-shelf-bg` bağlamı seçer): eski tek-hex inline style
+gündüz temasında da gece tonunu basıyordu ve globals'ın gündüz-kontrast güvencesi **inline style'ı
+yakalayamaz** (sınıf-seçici). Raf içi tüm renkler `--shelf-*` token'ından okunur → zemin varyantı tek
+sınıfla değişir (`shelf-white` = tema-bağımsız açık raf; denendi, seçilmedi, kodda duruyor).
+• **Header mobil toggle:** "Doctorium" yazısı mobilde `hidden`di (yalnız 23px sembol kalıyordu, geçiş
+imkânı belli olmuyordu) → mobilde 13px görünür, AURA wordmark 12px'e ölçekli.
+
 | 6 | **Doktor Tanıtım** | ✅ Doktor dizini + doğrulanmış profil (**verified-kapılı** — doğrulanmamış doktor public profil alamaz), **gerçek profil fotoğrafı** (`Doctor.photo` per-doktor / cinsiyet-fallback) + **tanıtım videosu** (cinsiyete göre), yorumlar (gerçek Review; üretim-fallback **"örnek değerlendirme" etiketli**), akreditasyon (JCI — yalnız gerçek veri, uydurma varsayılan yok), **kalıcı akademik** (düzenlenebilir) |
 | 7 | **Etik Kurul** | ✅ Şikayet (**hasta ilgili/karşı tarafı beyan eder, v6.81**: Doktor/Acente/Hastane yetkilisi/Platform-diğer — zorunlu), anonimleştirilmiş (data masking) inceleme, **karşı taraftan savunma/bilgi talebi** (v6.81: kurul kimlik GÖRMEDEN talep açar → Sistem Mesajları'ndan hedefe düşer [atanmış doktora kişisel; acente rol-yayın; hastane/platform/atanmamış-doktor → koordinatör vekaleten]; **karar formu talep açıkken kilitli — yanıt VEYA 3 gün**, cron'suz zaman-bazlı, PATCH da 409 reddeder; yanıt kurula "Karşı taraf (tip)" anonim etiketiyle iner + `DEFENSE_REPLY` bildirimi; audit `DEFENSE_REQUEST/REPLY` içeriksiz), karar/yaptırım (**v6.81: Yaptırım kapalı select → 5 açık kart**; escrow'suz vakada iade kartları gri) — kurul yüzünden **AI gerekçe + aciliyet rozeti kaldırıldı** (veri minimizasyonu), **Escrow iade** tetikleyicisi |
 | — | **Tedavi Kararı → STA akışı (2026-07-10)** | ✅ Görüşme ekranında **birleşik Klinik Kodlama + Tedavi Kararı** paneli (`ClinicalDecisionPanel`): ICD-10 tanı → **"Sağlık Turizmi Planlaması" tuşu** (v6.4 — tedavi/işlem + süre + hastane planı yalnız bu tuşla açılır; basınca tanıya göre **AI işlem önerisi otomatik sıralanır**, doktor seçer; tuş öncesi plan kapalı) → **tanıya eşlenmiş işlemler** (küratörlü statik eşleme `data/icd-procedures.ts` + **AI işlem önerisi** `/api/ai/suggest-procedures`) → taban↔tavan slider ücret (onboarding artık ücret SORMAZ; doktor fiyat hafızası karar kaydında güncellenir) → **öngörülen tedavi süresi (gün aralığı)** → **hastane seçimi** (HealthTürkiye dizini) → Kaydet = dosya **Sağlık Turizmi Acentesine** iletilir (`agencySentAt` + AGENCY bildirimi). Eski "Paketi oluştur / AI Teklif hazırla / Sağlık Turizmi Paketi" düğmeleri kaldırıldı — **teklifi acente hazırlar** (`/acente`, kısıtlı dosya, `mode=offer`). **AI Epikriz post-op ekranına taşındı** (`/takip/[caseId]` personel görünümü); hasta aynı ekrandan **"Epikriz iste"** talebi açar (`dischargeRequestedAt` + doktora bildirim) |

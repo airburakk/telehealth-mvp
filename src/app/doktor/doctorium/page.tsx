@@ -14,7 +14,7 @@ import {
   SECTOR_CATEGORIES, SECTOR_SOURCE_SCOPES, LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES,
   CAREER_TABS, parseCareerTab, careerPathways,
   effectiveBranches, personalFeed, moduleFeed, singleBranchFeed, upcomingCongresses,
-  localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
+  upcomingCountByIds, localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
   slugForLabel, parseScope, parseSourceScope, scopeBadge, savedArticleIds, FEED_MODULE_OPTIONS, parseFeedModules,
   todayModuleCounts, MODULE_ALIASES, EVENT_TYPES, EVENT_TYPE_LABEL, parseEventTypes,
   type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey, type EventTypeKey,
@@ -28,7 +28,7 @@ import { CareerDisclaimer, careerDate, COUNTRY_LABEL } from "./CareerShared";
 import { ArticleCard, formatDate } from "./ArticleCard";
 import { SaveButton } from "./SaveButton";
 import {
-  ArrowLeft, ExternalLink, Info, MapPin, X, CalendarClock, Megaphone,
+  ArrowLeft, ExternalLink, Info, MapPin, Star, X, CalendarClock, Megaphone,
 } from "lucide-react";
 import { getDoctorBalance } from "@/lib/rewards";
 import { DoctoriumShell } from "./DoctoriumSidebar";
@@ -55,23 +55,16 @@ const MODULE_HEAD: Record<ModuleKey, { eyebrow: string; title: string; desc: str
   mevzuat: { eyebrow: "HUKUK", title: "Sağlık hukuku, tek yerde", desc: "Mevzuat değişiklikleri, emsal kararlar ve hakemli doktrin.", color: "#fb7185" },
 };
 
-// Mobil grup şeridi üyelikleri (M2): BİLGİ ve MESLEĞİM grupları — DoctoriumSidebar'daki
-// gruplamanın page tarafındaki eşleniği (alt çubuk grubu seçer, şerit modülü seçer).
-const MOBILE_GROUPS: Partial<Record<ModuleKey, ModuleKey[]>> = {
-  akademik: ["akademik", "sektorel", "ilac"],
-  sektorel: ["akademik", "sektorel", "ilac"],
-  ilac: ["akademik", "sektorel", "ilac"],
-  etkinlik: ["etkinlik", "kariyer", "mevzuat"],
-  kariyer: ["etkinlik", "kariyer", "mevzuat"],
-  mevzuat: ["etkinlik", "kariyer", "mevzuat"],
-};
+// (Mobil grup şeridi 2026-08-19'da kalktı: alt çubuk artık masaüstü rafının birebir eşleniği —
+// tüm modüller orada; page-içi ikinci şerit çift navigasyon olurdu. Grup kavramı rafın
+// hairline ayraçlarında yaşıyor.)
 
 // Doctorium — doktor bilgi portalı. Modüller: Akışım (A) · Akademik (C) · Sektörel (B) · Etkinlik (E).
 // Modül D (ilaç tanıtımı/e-mümessil) PARK: TİTCK tanıtım yönetmeliği hukuki görüş ister.
 export default async function DoctoriumPage({
   searchParams,
 }: {
-  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string; h?: string; k?: string; t?: string }>;
+  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string; h?: string; k?: string; t?: string; f?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
@@ -147,8 +140,24 @@ export default async function DoctoriumPage({
   // Etkinlik türü çipi (v6.120): ?t=sempozyum,kurs · ?t=hepsi · param yoksa VARSAYILAN
   // (kongre + sempozyum). Kariyer de ?t= kullanır ama farklı modülde — çakışma yok.
   const eventTypes: EventTypeKey[] | null = active === "etkinlik" ? parseEventTypes(sp.t) : null;
-  const congresses = active === "etkinlik" ? await upcomingCongresses(branches, { scope, types: eventTypes }) : [];
   const followed = active === "etkinlik" && doctor ? await followedCongressIds(doctor.id) : new Set<string>();
+  // "Takip ettiklerim" süzgeci (kullanıcı isteği 2026-08-19): ?f=takip yalnız takip edilen
+  // YAKLAŞAN etkinlikleri listeler — tür/kapsam/branş süzgeçlerinden BAĞIMSIZ (doktor branş
+  // dışından da takip etmiş olabilir; "takip ettim ama listede yok" sürprizi üretme). Takip
+  // hâlâ bir bildirim aboneliğidir (congress-reminder üç eşiği); bu süzgeç yalnız GÖRÜNÜM.
+  const followFilter = active === "etkinlik" && !!doctor && sp.f === "takip";
+  const congresses = active === "etkinlik"
+    ? followFilter
+      ? await upcomingCongresses([], { onlyIds: [...followed] })
+      : await upcomingCongresses(branches, { scope, types: eventTypes })
+    : [];
+  // Çip sayacı: süzgeç açıkken listenin kendisi; kapalıyken ayrı count (takip kaydı geçmiş
+  // etkinlikte de durur — followed.size çipte olduğundan BÜYÜK sayı gösterirdi).
+  const followedUpcoming = active === "etkinlik" && doctor && followed.size
+    ? followFilter
+      ? congresses.length
+      : await upcomingCountByIds([...followed])
+    : 0;
 
   // Kariyer modülü alt-sekmesi (v6.89): ?t=yurtdisi|turkiye — yalnız bu modülde anlamlı.
   // (?c= sektörel kategoriye, ?h= Hukuk'a, ?s= etkinlik kapsamına ait — param çakışması yok.)
@@ -214,33 +223,8 @@ export default async function DoctoriumPage({
           artık sayfanın h1'i; öğrenci rozeti onun satırında. Slogan portal içinden kalktı
           (landing'de yaşıyor). Mobilde marka Header'daki AURA↔Doctorium toggle'ında. */}
 
-      {/* Mobil grup şeridi (M2, Faz 1 — taslak v3.2): alt çubuk (layout'taki DoctoriumSidebar)
-          grubu seçer, bu şerit grubun modüllerini gezdirir; Akışım'da şerit yok. Masaüstünde
-          navigasyonu sol bant devraldı — v6.88 pill dizisi + Puanlarım pill'i Faz 1'de kalktı
-          (Puanlarım rozeti bantta yaşıyor; bakiye layout'ta hesaplanır). */}
-      {MOBILE_GROUPS[active] && (
-        <nav
-          className="mt-4 flex items-center gap-4 overflow-x-auto border-b border-[var(--c-hairline)] md:hidden"
-          aria-label="Bölüm modülleri"
-        >
-          {MOBILE_GROUPS[active].map((k) => {
-            const m = DOCTORIUM_MODULES.find((x) => x.key === k)!;
-            const on = k === active;
-            return (
-              <Link
-                key={k}
-                href={`/doktor/doctorium?m=${k}`}
-                aria-current={on ? "page" : undefined}
-                className={`-mb-px whitespace-nowrap border-b-2 pb-2 text-xs font-semibold transition ${
-                  on ? "border-emerald-400 text-emerald-300" : "border-transparent text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"
-                }`}
-              >
-                {m.label}
-              </Link>
-            );
-          })}
-        </nav>
-      )}
+      {/* Mobil grup şeridi KALKTI (2026-08-19): alt çubuk artık rafın birebir eşleniği,
+          tüm modüller orada — page-içi ikinci şerit çift navigasyon olurdu. */}
 
       {/* Modül üst alanı (Faz 1, taslak v3.2 — metinler kullanıcı onaylı 2026-08-14): mono etiket
           (modül kimlik renginde) + display başlık + tek satır açıklama. 2026-08-01'de kaldırılan
@@ -265,6 +249,31 @@ export default async function DoctoriumPage({
         </h1>
         <p className="mt-1 text-[13px] text-[var(--c-ink-2)]">{MODULE_HEAD[active].desc}</p>
       </div>
+
+      {/* "Takip ettiklerim (N)" süzgeç çipi (kullanıcı isteği 2026-08-19): İçtihat anahtar-kelime
+          çipi deseninin etkinlik eşleniği — URL'de taşınır (?f=takip), paylaşılabilir; renk dili
+          FollowButton'ın amber yıldızı. Takipli yaklaşan etkinlik 0 ise ÇİZİLMEZ (koşullu-href:
+          işlevsiz yüzeyin linki çizilmez); personel (doctor'suz) hiç görmez. İSTİSNA: süzgeç
+          AÇIKKEN çip 0'da da çizilir — yoksa aktif süzgecin kapatma yolu (X) kaybolur (takipler
+          geçmişte kalmış + elle URL senaryosu). Süzgeç açıkken çipi kapatmak tür/kapsam
+          parametrelerini de sıfırlar — takip modu zaten onlardan bağımsızdı. */}
+      {active === "etkinlik" && (followedUpcoming > 0 || followFilter) && (
+        <div className="mt-4 flex flex-wrap items-center gap-1.5">
+          <Link
+            href={followFilter ? "/doktor/doctorium?m=etkinlik" : "/doktor/doctorium?m=etkinlik&f=takip"}
+            aria-current={followFilter ? "true" : undefined}
+            className={`aura-mono inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+              followFilter
+                ? "bg-amber-500/20 text-amber-300 shadow-[inset_0_0_0_1px_#fbbf24]"
+                : "bg-amber-500/[0.08] text-amber-300/90 hover:bg-amber-500/15"
+            }`}
+          >
+            <Star size={11} className={followFilter ? "fill-amber-300" : ""} />
+            Takip ettiklerim ({followedUpcoming})
+            {followFilter && <X size={11} />}
+          </Link>
+        </div>
+      )}
 
       {/* Kariyer alt-sekmeleri (v6.89): Yurt Dışı · Türkiye. Hukuk şeridinin birebir eşleniği
           (ikincil nav görünümü). Yurt Dışı linki t'siz: varsayılan sekme, kanonik URL tek kalsın. */}
@@ -405,7 +414,7 @@ export default async function DoctoriumPage({
       {active === "kariyer" ? (
         <CareerList rows={pathways} savedIds={savedIds} />
       ) : active === "etkinlik" ? (
-        <CongressList rows={congresses} followed={followed} canFollow={!!doctor} savedIds={savedIds} />
+        <CongressList rows={congresses} followed={followed} canFollow={!!doctor} savedIds={savedIds} followedOnly={followFilter} />
       ) : (
         <>
           {items.length === 0 ? (
@@ -512,9 +521,20 @@ interface CongressRow {
   eventType: string; ttbCode: string | null;
 }
 
-function CongressList({ rows, followed, canFollow, savedIds }: { rows: CongressRow[]; followed: Set<string>; canFollow: boolean; savedIds: Set<string> | null }) {
+function CongressList({ rows, followed, canFollow, savedIds, followedOnly = false }: { rows: CongressRow[]; followed: Set<string>; canFollow: boolean; savedIds: Set<string> | null; followedOnly?: boolean }) {
   if (!rows.length) {
-    return (
+    // Takip süzgecinin kendi boş hâli: takipler geçmişte kalmış olabilir (CongressFollow
+    // silinmez) — tür/kapsam öğüdü burada yanıltıcı olurdu, süzgeç onlardan bağımsız.
+    return followedOnly ? (
+      <p className="mt-5 flex items-start gap-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-8 text-sm text-[var(--c-ink-2)]">
+        <Info size={16} className="mt-0.5 shrink-0" />
+        <span>
+          Takip ettiğiniz yaklaşan etkinlik yok. Bir etkinliği kartındaki{" "}
+          <strong className="text-[var(--c-ink)]">Takip et</strong> düğmesiyle izlemeye
+          alabilirsiniz — başlangıç, bildiri ve erken kayıt tarihleri yaklaşınca bildirim alırsınız.
+        </span>
+      </p>
+    ) : (
       <p className="mt-5 flex items-start gap-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-8 text-sm text-[var(--c-ink-2)]">
         <Info size={16} className="mt-0.5 shrink-0" />
         <span>
