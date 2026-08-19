@@ -54,10 +54,15 @@ export default async function DoctorApprovalPage() {
         <summary className="cursor-pointer font-semibold text-[var(--c-ink)]">İnceleme kontrol listesi (onay öncesi)</summary>
         <ol className="mt-3 list-decimal space-y-1 pl-5">
           <li>Belge açılıyor ve okunaklı mı? (bozuk/boş dosya → onay verme)</li>
-          <li>Tip doğru mu — içerik gerçekten diploma / MMSS poliçesi / tabip odası yazısı mı?</li>
+          <li>Tip doğru mu — içerik gerçekten diploma / MMSS poliçesi mi? (Diploma için tercih:
+            e-Devlet barkodlu Mezun Belgesi — barkodu okunabildiyse sistem zaten otomatik
+            doğrulamıştır; elinize düşenler çoğunlukla barkodsuz fotoğraf/taramadır.)</li>
+          <li>Diplomada barkod numarası varsa turkiye.gov.tr/belge-dogrulama&apos;dan elle teyit
+            edebilirsiniz (barkod + belge sahibinin T.C. kimlik no'su istenir).</li>
           <li>Belgedeki ad-soyad ↔ profil adı ↔ (varsa) HealthTürkiye kaydı eşleşiyor mu?</li>
           <li>Diploma no ↔ beyan edilen tescil no · MMSS poliçe alanları ↔ beyan tutarlı mı?</li>
-          <li>HealthTürkiye NOT_FOUND tek başına engel değil (dizin kapsamı sınırlı) — belgeler + tabip odası yazısı ikna ediciyse takdiren onay verilebilir.</li>
+          <li>HealthTürkiye NOT_FOUND tek başına engel değil (dizin kapsamı sınırlı) — belgeler
+            ikna ediciyse takdiren onay verilebilir.</li>
         </ol>
       </details>
 

@@ -1,11 +1,12 @@
-// İki aşamalı doktor girişi (v6.87) — saf mantık sözleşmeleri.
-// DB'li yollar (refreshChamberLetter, setHrContactConsent) entegrasyon işidir; burada iki kapının
-// BAĞIMSIZLIĞI kilitlenir: CHAMBER yalnız Doctorium'u açar (klinik aktivasyona girdi DEĞİL),
-// klinik aktivasyon Doctorium'u da açar (mevcut aktif doktorlar backfill'siz geçer).
-// v6.95: üçüncü Aşama 1 damgası (öğrenci belgesi) + isStudentOnly pazarlama süzgeci sözleşmeleri.
+// İki aşamalı doktor girişi — saf mantık sözleşmeleri.
+// v6.124 (kullanıcı kararı 2026-08-19): Doctorium kapısı e-DEVLET DOĞRULAMALI DİPLOMA'dır
+// (diplomaVerifiedAt) VEYA öğrenci damgası. CHAMBER (tabip odası yazısı) KAPIDAN DÜŞTÜ —
+// hasChamberLetter/refreshChamberLetter silindi, ALL_DOC_TYPES artık CHAMBER içermez.
+// Burada iki kapının BAĞIMSIZLIĞI kilitlenir: diploma doğrulaması Doctorium'u açar ama klinik
+// yüzey (activatedAt) ayrı damgadır; öğrenci damgası klinik yüzey AÇMAZ.
 import { describe, it, expect } from "vitest";
 import {
-  ALL_DOC_TYPES, REQUIRED_DOC_TYPES, hasDoctoriumAccess, hasChamberLetter, hasStudentCert,
+  ALL_DOC_TYPES, REQUIRED_DOC_TYPES, hasDoctoriumAccess, hasStudentCert,
   canActivate, canCompleteOnboarding, missingOnboardingSteps, hasClinicalAccess,
   isStudentOnly, isEduEmail,
 } from "@/lib/doctor-activation";
@@ -15,18 +16,20 @@ import { DOCTOR_TITLES, STUDENT_TITLE } from "@/lib/doctor-signup";
 
 const D = (s: string | null) => (s ? new Date(s) : null);
 
-describe("Doctorium kapısı (Aşama 1): yazı VEYA öğrenci belgesi VEYA klinik aktivasyon", () => {
-  it("üçü de yoksa kapalı", () => {
-    expect(hasDoctoriumAccess({ chamberLetterAt: null, activatedAt: null, studentVerifiedAt: null })).toBe(false);
+describe("Doctorium kapısı (Aşama 1, v6.124): doğrulanmış diploma VEYA öğrenci belgesi", () => {
+  it("ikisi de yoksa kapalı", () => {
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: null })).toBe(false);
   });
-  it("tabip odası yazısı tek başına açar (klinik belgeler beklemez)", () => {
-    expect(hasDoctoriumAccess({ chamberLetterAt: D("2026-08-11"), activatedAt: null, studentVerifiedAt: null })).toBe(true);
+  it("doğrulanmış diploma tek başına açar", () => {
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null })).toBe(true);
   });
-  it("klinik aktivasyon tek başına açar (mevcut aktif doktorlar CHAMBER'sız içeride)", () => {
-    expect(hasDoctoriumAccess({ chamberLetterAt: null, activatedAt: D("2026-07-01"), studentVerifiedAt: null })).toBe(true);
+  it("öğrenci belgesi tek başına açar (v6.95 yolu sürer)", () => {
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14") })).toBe(true);
   });
-  it("öğrenci belgesi tek başına açar (v6.95 — üçüncü damga)", () => {
-    expect(hasDoctoriumAccess({ chamberLetterAt: null, activatedAt: null, studentVerifiedAt: D("2026-08-14") })).toBe(true);
+  it("🪦 CHAMBER artık geçerli belge tipi DEĞİL (tabip odası yolu kapandı)", () => {
+    // ALL_DOC_TYPES yükleme API'sinin kabul kapısıdır — CHAMBER listede olmadığı için yeni
+    // yükleme 400 alır; tip düzeyinde de hasDoctoriumAccess chamberLetterAt kabul etmez.
+    expect(ALL_DOC_TYPES).not.toContain("CHAMBER");
   });
 });
 
@@ -37,20 +40,13 @@ describe("Klinik yüzey kapısı (Aşama 2): yalnız activatedAt açar", () => {
   it("klinik aktivasyon açar", () => {
     expect(hasClinicalAccess({ activatedAt: D("2026-08-11") })).toBe(true);
   });
-  it("Aşama 1 doktoru (yalnız CHAMBER): Doctorium AÇIK, klinik yüzey KAPALI — kapılar tek yönde bağımsız", () => {
-    const stage1 = { chamberLetterAt: D("2026-08-11"), activatedAt: null, studentVerifiedAt: null };
-    expect(hasDoctoriumAccess(stage1)).toBe(true);
-    expect(hasClinicalAccess(stage1)).toBe(false);
-  });
-  it("Aşama 2 doktoru her iki kapıdan geçer (CHAMBER'sız mevcut aktif doktorlar dahil)", () => {
-    const stage2 = { chamberLetterAt: null, activatedAt: D("2026-07-01"), studentVerifiedAt: null };
-    expect(hasDoctoriumAccess(stage2)).toBe(true);
-    expect(hasClinicalAccess(stage2)).toBe(true);
+  it("Aşama 1 doktoru (diploma doğrulı, aktivasyonsuz): Doctorium AÇIK, klinik yüzey KAPALI", () => {
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null })).toBe(true);
+    expect(hasClinicalAccess({ activatedAt: null })).toBe(false);
   });
   it("öğrenci damgası DOLUYKEN klinik yüzey yine KAPALI (yeni şartı dolu ver — negatif-test ilkesi)", () => {
-    const student = { chamberLetterAt: null, activatedAt: null, studentVerifiedAt: D("2026-08-14") };
-    expect(hasDoctoriumAccess(student)).toBe(true);
-    expect(hasClinicalAccess(student)).toBe(false);
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14") })).toBe(true);
+    expect(hasClinicalAccess({ activatedAt: null })).toBe(false);
   });
 });
 
@@ -84,22 +80,20 @@ describe("isEduEmail: akademik e-posta SİNYALİ (kapı açmaz, yalnız rozet)",
   });
 });
 
-describe("belge tipleri: CHAMBER/STUDENT_CERT kabul edilir ama Aşama 2'ye girdi DEĞİL", () => {
-  it("CHAMBER ve STUDENT_CERT geçerli belge tipidir (API kabul kapısı ALL_DOC_TYPES'tan okur)", () => {
-    expect(ALL_DOC_TYPES).toContain("CHAMBER");
+describe("belge tipleri: STUDENT_CERT kabul edilir ama Aşama 2'ye girdi DEĞİL", () => {
+  it("STUDENT_CERT geçerli belge tipidir; CHAMBER v6.124'te listeden ÇIKTI", () => {
     expect(ALL_DOC_TYPES).toContain("STUDENT_CERT");
+    expect(ALL_DOC_TYPES).not.toContain("CHAMBER");
   });
-  it("CHAMBER/STUDENT_CERT zorunlu klinik belgelerden DEĞİLDİR (Aşama 1 belgeleri Aşama 2'yi açmaz)", () => {
-    expect(REQUIRED_DOC_TYPES).not.toContain("CHAMBER");
+  it("STUDENT_CERT zorunlu klinik belgelerden DEĞİLDİR (Aşama 1 belgesi Aşama 2'yi açmaz)", () => {
     expect(REQUIRED_DOC_TYPES).not.toContain("STUDENT_CERT");
     // v6.105 (kullanıcı kararı 2026-08-17): MMSS aktivasyon şartından ÇIKTI — tek zorunlu
     // mesleki belge Tıp Diploması. MMSS kartı/formu İHTİYARİ olarak duruyor (teminat limiti
     // /paket sigorta paketini beslemeye devam eder). Şartı geri koymak = diziye "MMSS" eklemek.
     expect([...REQUIRED_DOC_TYPES]).toEqual(["DIPLOMA"]);
   });
-  it("yalnız CHAMBER/STUDENT_CERT yüklü doktor klinik AKTİVE OLMAZ", () => {
+  it("yalnız STUDENT_CERT yüklü doktor klinik AKTİVE OLMAZ", () => {
     const fullMmss = { mmssInsurer: "X", mmssPolicyNo: "P1", mmssCoverageLimit: 1_000_000 };
-    expect(canActivate([{ type: "CHAMBER", status: "ACCEPTED" }], fullMmss)).toBe(false);
     expect(canActivate([{ type: "STUDENT_CERT", status: "ACCEPTED" }], fullMmss)).toBe(false);
   });
   it("v6.105+v6.119: ONAYLI diploma tek başına aktive eder — MMSS hiç yokken bile", () => {
@@ -109,10 +103,8 @@ describe("belge tipleri: CHAMBER/STUDENT_CERT kabul edilir ama Aşama 2'ye girdi
     const fullMmss = { mmssInsurer: "X", mmssPolicyNo: "P1", mmssCoverageLimit: 1_000_000 };
     expect(canActivate([{ type: "MMSS", status: "ACCEPTED" }], fullMmss)).toBe(false);
   });
-  it("hasChamberLetter/hasStudentCert yalnız kendi tipini sayar", () => {
-    expect(hasChamberLetter([{ type: "DIPLOMA" }, { type: "MMSS" }])).toBe(false);
-    expect(hasChamberLetter([{ type: "CHAMBER" }])).toBe(true);
-    expect(hasStudentCert([{ type: "CHAMBER" }, { type: "DIPLOMA" }])).toBe(false);
+  it("hasStudentCert yalnız kendi tipini sayar", () => {
+    expect(hasStudentCert([{ type: "DIPLOMA" }, { type: "MMSS" }])).toBe(false);
     expect(hasStudentCert([{ type: "STUDENT_CERT" }])).toBe(true);
   });
 });

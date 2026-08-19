@@ -36,7 +36,7 @@ export default async function DoctorOnboardingPage({
           mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true, mmssCoverageCurrency: true, mmssValidUntil: true,
           procedures: true, licenseNo: true, eduSchool: true, eduYear: true, specBoard: true, specYear: true,
           certifications: true, publications: true,
-          chamberLetterAt: true, studentVerifiedAt: true, studentTrack: true, sponsorPersonalizationAt: true, hrContactOptInAt: true,
+          diplomaVerifiedAt: true, studentVerifiedAt: true, studentTrack: true, sponsorPersonalizationAt: true, hrContactOptInAt: true,
         },
       })
     : null;
@@ -98,10 +98,12 @@ export default async function DoctorOnboardingPage({
     },
     orderBy: { createdAt: "desc" },
   });
-  // Aşama ayrımı: CHAMBER (tabip odası yazısı) Aşama 1 kartına, kalanı Aşama 2 belge bölümüne.
-  // STUDENT_CERT de dışlanır: mezuniyet geçişi yapmış hesabın öğrenci belgesi klinik belge
-  // listesine sızmaz (öğrenci MODU yukarıda ayrı dallandı — buraya öğrenci hesabı gelmez).
-  const chamberDoc = allDocs.find((d) => d.type === "CHAMBER") ?? null;
+  // Aşama ayrımı (v6.124): DIPLOMA artık AŞAMA 1 kartında yaşar (Doctorium kapısı — e-Devlet
+  // doğrulamalı); Aşama 2 diploma İSTEMEZ (kullanıcı kararı 2026-08-19: "2'de tekrardan
+  // istemeyeceğiz"). CHAMBER tarihsel — hiçbir karta gitmez. STUDENT_CERT dışlanır: mezuniyet
+  // geçişi yapmış hesabın öğrenci belgesi klinik belge listesine sızmaz (öğrenci MODU yukarıda
+  // ayrı dallandı — buraya öğrenci hesabı gelmez).
+  const diplomaDoc = allDocs.find((d) => d.type === "DIPLOMA") ?? null;
   const docs = allDocs.filter((d) => d.type !== "CHAMBER" && d.type !== "STUDENT_CERT");
 
   // Branş işlemleri (taban/tavan) + doktorun kayıtlı seçimi (FHIR ServiceRequest/ChargeItem girdisi).
@@ -145,13 +147,15 @@ export default async function DoctorOnboardingPage({
                 <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">
                   AURA klinik paneline geçiş için Aşama 2 gerekli
                 </h2>
+                {/* v6.124: diploma Aşama 1'de doğrulandı — Aşama 2 listesi artık yalnız klinik
+                    tanımları sayar (diploma tekrar İSTENMEZ; kullanıcı kararı 2026-08-19). */}
                 <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink-2)]">
-                  Doctor<span className="doctorium-ium">ium</span> üyeliğiniz (Aşama 1) aktif. Vaka
-                  havuzlarının bulunduğu AURA klinik çalışma alanına geçebilmek için Aşama 2
-                  belgelerinizi yükleyip doğrulanmanız gerekir:
+                  Doctor<span className="doctorium-ium">ium</span> üyeliğiniz (Aşama 1) aktif —
+                  diplomanız doğrulandı. Vaka havuzlarının bulunduğu AURA klinik çalışma alanına
+                  geçebilmek için Aşama 2 tanımlarınızı tamamlamanız gerekir:
                 </p>
                 <ul className="mt-2.5 space-y-1.5 text-sm text-[var(--c-ink-2)]">
-                  {["Diploma", "Uzmanlık ve işlem tanımları"].map((b) => (
+                  {["Diploma / tescil numarası", "Uzmanlık ve işlem tanımları"].map((b) => (
                     <li key={b} className="flex items-center gap-2">
                       <FileCheck2 size={15} className="shrink-0 text-[var(--c-accent)]" aria-hidden />
                       {b}
@@ -159,8 +163,8 @@ export default async function DoctorOnboardingPage({
                   ))}
                 </ul>
                 <p className="mt-2.5 text-xs leading-relaxed text-[var(--c-ink-3)]">
-                  Belgeleriniz incelenip onaylandığında klinik panel ve doktor havuzları açılır.
-                  Yüklemeyi aşağıdaki adımlardan yapabilirsiniz.
+                  Tanımlarınız tamamlandığında klinik panel ve doktor havuzları açılır.
+                  Adımları aşağıdan yapabilirsiniz.
                 </p>
                 <a
                   href="#asama-2"
@@ -203,7 +207,7 @@ export default async function DoctorOnboardingPage({
         policyNoSet: !!doctor.mmssPolicyNo,
       }}
       stage1={{
-        initialChamberDoc: chamberDoc,
+        initialDiplomaDoc: diplomaDoc,
         initialAccess: hasDoctoriumAccess(doctor),
         initialSponsor: !!doctor.sponsorPersonalizationAt,
         initialHr: !!doctor.hrContactOptInAt,

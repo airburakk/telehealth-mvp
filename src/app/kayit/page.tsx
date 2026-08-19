@@ -8,10 +8,11 @@ import { DoctorSignupForm } from "@/components/DoctorSignupForm";
 export const dynamic = "force-dynamic";
 
 // M5 — Doktor kayıt (sign up). Public (proxy matcher dışı). Hesap oluşturulunca /onam → /doktor →
-// onboarding kapısı. v6.87'den beri İKİ AŞAMALI üyelik: Aşama 1 = tabip odası Protokol Numaralı
-// üye yazısı → yalnız Doctorium; Aşama 2 = klinik belgeler (FHIR uzmanlık + işlem + diploma;
-// MMSS v6.105'ten beri İHTİYARİ — lib/doctor-activation) → doktor havuzları. Hesap admin onayına
-// kadar doğrulanmamış (public dizin/eşleştirme kapalı). Ayrıntılı anlatım: /kayit/asamalar.
+// onboarding kapısı. İKİ AŞAMALI üyelik (v6.124): Aşama 1 = e-Devlet barkodlu diploma
+// (doğrulanınca diplomaVerifiedAt) → Doctorium; Aşama 2 = klinik tanımlar (FHIR uzmanlık + işlem;
+// diploma TEKRAR İSTENMEZ; MMSS v6.105'ten beri İHTİYARİ — lib/doctor-activation) → doktor
+// havuzları. Tabip odası yolu v6.124'te kapandı. Hesap admin onayına kadar doğrulanmamış
+// (public dizin/eşleştirme kapalı). Ayrıntılı anlatım: /kayit/asamalar.
 export default function SignupPage() {
   const branches = Object.values(BRANCH_LABELS).sort((a, b) => a.localeCompare(b, "tr"));
   return (

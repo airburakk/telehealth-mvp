@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, BookOpenCheck, Landmark, ShieldCheck, Stethoscope } from "lucide-react";
 
-// İki aşamalı doktor üyeliği açıklama sayfası (v6.87). Public (proxy matcher dışı — /kayit gibi).
-// Metinler kullanıcı onaylı (2026-08-11; MMSS "isteğe bağlı" düzeltmesi 2026-08-18 — v6.105'te
-// aktivasyon şartından çıktı, lib/doctor-activation); iddia disiplini: "anında" = mimari gerçek
-// (otomatik damga), ölçülmemiş oran/hız iddiası YOK; dizin görünürlüğünün admin doğrulaması
-// AÇIKÇA yazılır.
+// İki aşamalı doktor üyeliği açıklama sayfası (v6.87; Aşama 1 yeniden tasarımı v6.124). Public
+// (proxy matcher dışı — /kayit gibi). Metinler kullanıcı onaylı (2026-08-11; MMSS düzeltmesi
+// 2026-08-18; v6.124 e-Devlet diploma metni 2026-08-19 tasarım kararıyla — tabip odası yolu
+// KAPANDI); iddia disiplini: "anında" = mimari gerçek (barkod doğrulanınca otomatik damga),
+// ölçülmemiş oran/hız iddiası YOK; barkodsuz belgelerin insan incelemesine düştüğü AÇIKÇA yazılır.
 export const metadata = { title: "Doktor üyeliği nasıl çalışır?" };
 
 export default function SignupStagesPage() {
@@ -42,7 +42,8 @@ export default function SignupStagesPage() {
               <Landmark size={13} /> Gereken
             </dt>
             <dd className="mt-1 text-[var(--c-ink-2)]">
-              Bağlı olduğunuz tabip odasından alınmış <strong>Protokol Numaralı üye yazısı</strong> (PDF/JPG/PNG).
+              e-Devlet&apos;ten alacağınız <strong>barkodlu Mezun Belgeniz</strong> (tıp diploması, PDF).
+              Nasıl alınacağı yükleme ekranında adım adım gösterilir.
             </dd>
           </div>
           <div>
@@ -54,7 +55,8 @@ export default function SignupStagesPage() {
           </div>
         </dl>
         <p className="mt-4 rounded-xl bg-[var(--c-surface)] px-3 py-2.5 text-xs leading-relaxed text-[var(--c-ink-2)]">
-          Yazı yüklendiğinde erişiminiz otomatik açılır. Bu aşamada ayrıca iki tercih sorulur —
+          Belgenizin barkodu doğrulandığında erişiminiz anında açılır; barkodsuz (fotoğraf/tarama)
+          diplomalar insan incelemesinden geçer. Bu aşamada ayrıca iki tercih sorulur —
           ikisi de <strong>isteğe bağlıdır</strong> ve istediğiniz an değiştirilebilir: sponsorlu
           içeriğin mesleki profilinize göre kişiselleştirilmesi ile insan kaynakları uzmanlarının
           sizinle iletişime geçebilmesi.
@@ -80,9 +82,10 @@ export default function SignupStagesPage() {
               <ShieldCheck size={13} /> Gereken
             </dt>
             <dd className="mt-1 text-[var(--c-ink-2)]">
-              Tıp diploması, diploma/tescil ve uzmanlık bilgileri, en az bir işlem tanımı.
-              MMSS poliçesi <strong>isteğe bağlıdır</strong> — eklerseniz teminat bilgisi sigorta
-              paketi hesaplamalarında kullanılır.
+              Diploma/tescil ve uzmanlık bilgileri ile en az bir işlem tanımı — diplomanız
+              Aşama 1&apos;de doğrulandığı için yeniden istenmez. MMSS poliçesi{" "}
+              <strong>isteğe bağlıdır</strong> — eklerseniz teminat bilgisi sigorta paketi
+              hesaplamalarında kullanılır.
             </dd>
           </div>
           <div>

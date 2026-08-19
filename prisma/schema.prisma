@@ -214,12 +214,18 @@ model Doctor {
   /// Durumun tek kaynağı bu alan; İSPAT izi ConsentRecord'da (scope SPONSOR_TARGETING — grant/revoke
   /// ayrı satırlar, lib/sponsor.ts). Reklamverene hiçbir kişisel veri gitmez (agregat sayaç yalnız).
   sponsorPersonalizationAt DateTime?
-  /// İki aşamalı giriş — AŞAMA 1 damgası (v6.87): tabip odası "Protokol Numaralı" üye yazısı
-  /// (DoctorDocument.type = CHAMBER) yüklüyse dolu → yalnız Doctorium erişimi açılır (otomatik,
-  /// admin onayı beklemez — kullanıcı kararı 2026-08-11). Klinik havuz kapısı (activatedAt) AYRI
-  /// ve DEĞİŞMEDİ. Erişim kuralı kodda: chamberLetterAt VEYA activatedAt (lib/doctor-activation.ts
-  /// hasDoctoriumAccess) — mevcut aktif doktorlar backfill'siz geçer.
+  /// 🪦 TARİHSEL (v6.124'te KAPIDAN DÜŞTÜ — kullanıcı kararı 2026-08-19 "Yalnız e-Devlet diploma"):
+  /// v6.87-v6.123 arasında tabip odası üye yazısı (CHAMBER) Doctorium'u açıyordu. Artık
+  /// hasDoctoriumAccess bu alanı OKUMAZ; kolon eski kayıtların tarihi olarak durur, yeni CHAMBER
+  /// yüklemesi kabul edilmez (ALL_DOC_TYPES'tan çıktı). Grandfather GEREKMEDİ — prod'da gerçek
+  /// doktor yok, lansmanda kayıtlar sıfırlanacak (hafıza: prod-hesaplar-test-lansman-sifirlama).
   chamberLetterAt          DateTime?
+  /// AŞAMA 1 damgası (v6.124): DIPLOMA belgesi ACCEPTED olduğunda dolar (e-Devlet barkod okuması
+  /// otomatik VEYA incelemeci onayı — refreshActivation eşitler; belge düşer/reddedilirse damga da
+  /// düşer). Doctorium kapısının TEK doktor-yolu budur (öğrenci yolu studentVerifiedAt).
+  /// Klinik kapı (activatedAt) AYRIDIR: diploma + Aşama 2 katmanları (§8.2 — SMS OTP + kurum bağı;
+  /// katmanlar inene dek yalnız diploma).
+  diplomaVerifiedAt        DateTime?
   /// Tıp öğrencisi damgası (v6.95): e-Devlet öğrenci belgesi (DoctorDocument.type = STUDENT_CERT)
   /// yüklüyse dolu → yalnız Doctorium İÇERİK erişimi (CHAMBER deseni — otomatik, admin onayı yok).
   /// Klinik kapı (activatedAt) ve pazarlama yüzeyleri (sponsor/anket/ödül — isStudentOnly süzgeci)

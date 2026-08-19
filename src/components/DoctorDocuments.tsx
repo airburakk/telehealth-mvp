@@ -75,12 +75,17 @@ export function DoctorDocuments({
   initialDocs,
   initialMmss,
   onActivationChange,
+  onDoctoriumChange,
   types,
   onDocsChange,
 }: {
   initialDocs: DocMeta[];
   initialMmss: MmssInitial;
   onActivationChange?: (activated: boolean) => void;
+  // v6.124: yükleme/silme sonrası SUNUCUNUN döndürdüğü güncel Doctorium erişimi (Aşama 1 kapısı —
+  // doğrulanmış diploma ∨ öğrenci). Yalnız Stage1Doctorium kullanır; yerel türetme DEĞİL, sunucu
+  // kararı: otomatik doğrulama geçmezse yükleme var ama kapı kapalı — ikisi ayrışabilir.
+  onDoctoriumChange?: (doctorium: boolean) => void;
   types?: string[]; // çizilecek belge tipleri (varsayılan: hepsi)
   onDocsChange?: (counts: Record<string, number>) => void; // tip → yüklü dosya sayısı
 }) {
@@ -144,6 +149,7 @@ export function DoctorDocuments({
       ]);
       // v6.119: e-Devlet otomatik doğrulama sonucunu kartın altında göster (PHI içermez).
       if (d.edevlet) setEdevlet({ type, ok: !!d.edevlet.ok, reason: d.edevlet.reason ?? null, activated: !!d.activated });
+      onDoctoriumChange?.(!!d.doctorium); // v6.124: Aşama 1 kapısının sunucu kararı
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Hata oluştu.");
     } finally {
@@ -161,6 +167,7 @@ export function DoctorDocuments({
       setDocs((prev) => prev.filter((x) => x.id !== doc.id));
       // Silinen tipin doğrulama mesajı bayatladı — kaldır (yeni yükleme kendi mesajını getirir).
       setEdevlet((prev) => (prev?.type === doc.type ? null : prev));
+      onDoctoriumChange?.(!!d.doctorium); // v6.124: diploma silindiyse kapı kapanmış olabilir
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Hata oluştu.");
     } finally {

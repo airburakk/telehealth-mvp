@@ -6,23 +6,15 @@ import { HeartHandshake, Stethoscope, Inbox, Loader2, ArrowRight, Check, BadgeCh
 import { DoctorDocuments, type DocMeta, type MmssInitial } from "@/components/DoctorDocuments";
 import ProcedureSelector, { type Proc } from "@/components/ProcedureSelector";
 import { AcademicEducationBox, CertificatesBox } from "@/components/AcademicEditor";
-import { Stage1Doctorium } from "@/components/Stage1Doctorium";
+import { Stage1Doctorium, type Stage1Props } from "@/components/Stage1Doctorium";
 import { AuraWordmark } from "@/components/AuraLogo";
 
 interface Pub { title: string; venue: string; year: number }
 
-// İki aşamalı giriş — AŞAMA 1 blok prop'ları (v6.87): tabip odası yazısı + rızalar
-// Stage1Doctorium'da. (v6.95: öğrenci yolu AYRI huniye taşındı — /ogrenci + StudentStage1Card;
-// bu form yalnız doktor onboarding'idir, öğrenci hesabı buraya hiç düşmez.)
-export interface Stage1Props {
-  initialChamberDoc: DocMeta | null;
-  initialAccess: boolean; // Doctorium erişimi (yazı VEYA klinik aktivasyon)
-  initialSponsor: boolean;
-  initialHr: boolean;
-  sponsorText: string;
-  hrText: string;
-  fromDoctorium: boolean;
-}
+// İki aşamalı giriş — AŞAMA 1 blok prop'ları artık Stage1Doctorium'un kendi modülünden gelir
+// (v6.124: kapı e-Devlet doğrulamalı diploma; tip TEK yerde yaşasın diye buradaki kopya silindi;
+// yukarıdaki import'la kullanılır). (v6.95: öğrenci yolu AYRI huniye taşındı — /ogrenci +
+// StudentStage1Card; bu form yalnız doktor onboarding'idir, öğrenci hesabı buraya hiç düşmez.)
 
 // M5 — İlk-giriş onboarding kapısı (client). v6.87'den beri İKİ AŞAMALI: Aşama 1 = tabip odası
 // yazısı → yalnız Doctorium (anında, "finish" beklemez); Aşama 2 = klinik havuz — hesap
@@ -79,16 +71,8 @@ export function OnboardingForm({
   const [err, setErr] = useState("");
   const [missing, setMissing] = useState<string[]>([]);
 
-  // v6.119 — Diploma doğrulama hâli (onay 2026-08-19): sayfa yüklenirkenki sunucu verisinden
-  // türetilir (dönen doktor senaryosu daima taze yükleme; anlık yükleme geri bildirimi
-  // DoctorDocuments'ın kendi mesajıdır). Mantık lib/doctor-activation activationState() ile
-  // AYNI olmalı — lib db import ettiği için client'a alınamıyor, iki yer uyumlu tutulur.
-  const diplomaDocs = initialDocs.filter((d) => d.type === "DIPLOMA");
-  const diplomaState =
-    diplomaDocs.length === 0 ? "MISSING"
-    : diplomaDocs.some((d) => d.status === "ACCEPTED") ? "ACTIVE"
-    : diplomaDocs.some((d) => d.status === "REJECTED") ? "REJECTED"
-    : "PENDING_REVIEW";
+  // v6.124: v6.119'un diplomaState türetimi KALDIRILDI — diploma kartı ve durum anlatımı artık
+  // Aşama 1'de (Stage1Doctorium → DoctorDocuments rozet + e-Devlet mesajı + reviewNote).
 
   async function finish() {
     setSaving(true);
@@ -136,7 +120,7 @@ export function OnboardingForm({
             <p className="mt-2 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-sm text-[var(--c-ink-2)]">
               <span>Üyeliğiniz iki aşamalıdır:</span>
               <strong>Doctor<span className="doctorium-ium">ium</span></strong>
-              <span>üyeliği için tabip odası yazınız yeterli;</span>
+              <span>üyeliği için e-Devlet barkodlu diplomanız yeterli;</span>
               {/* AURA yazıyla değil LOGOYLA (marka turkuazı) — kullanıcı kararı 2026-08-17.
                   1.35em: 0.78em "çok küçük kaldı" (kullanıcı, 2. tur) — logo çevresindeki
                   metinden belirgin büyük durmalı ki marka olarak okunsun, sözcük gibi değil. */}
@@ -148,8 +132,10 @@ export function OnboardingForm({
             </p>
           </div>
 
-          {/* ── AŞAMA 1 — Doctorium üyeliği: tabip odası yazısı + isteğe bağlı rızalar (v6.87) ── */}
-          <Stage1Doctorium {...stage1} />
+          {/* ── AŞAMA 1 — Doctorium üyeliği (v6.124): e-Devlet doğrulamalı diploma + kılavuz +
+                 isteğe bağlı rızalar. onDiplomaChange → finish kapısı (diploma artık burada
+                 yüklendiği için docsReady'nin kaynağı bu blok). ── */}
+          <Stage1Doctorium {...stage1} onDiplomaChange={setDocsReady} />
         </div>
       </div>
 
@@ -181,55 +167,26 @@ export function OnboardingForm({
         </p>
       </div>
 
-      {/* v6.119 — Bekleme hâli (onay 2026-08-19): diploma yüklendi ama henüz doğrulanmadı →
-          doktor "neden hâlâ kapalı" diye belgesini tekrar tekrar yüklemesin; Doctorium yolu
-          (Aşama 1 tabip odası yazısı) açıkça gösterilir. Kullanıcı kararı: doğrulanamayan
-          belgeye kapı AÇILMAZ — Doctorium chamberLetterAt ile açılır. */}
-      {diplomaState === "PENDING_REVIEW" && (
-        <div className="mt-4 rounded-xl bg-amber-500/10 px-4 py-3 text-xs text-amber-300 ring-1 ring-amber-400/20">
-          <p className="flex items-center gap-1.5 font-semibold">
-            <ShieldAlert size={14} className="shrink-0" /> Diplomanız incelemede.
-          </p>
-          <p className="mt-0.5 leading-relaxed">
-            Doğrulandığında klinik panelleriniz açılacak. Doctor<span className="doctorium-ium">ium</span>&apos;a
-            şimdi girmek için <strong>Aşama 1&apos;den tabip odası üye yazınızı</strong> yükleyebilirsiniz.
-          </p>
-        </div>
-      )}
-      {diplomaState === "REJECTED" && (
-        <div className="mt-4 rounded-xl bg-red-500/10 px-4 py-3 text-xs text-red-300 ring-1 ring-red-400/25">
-          <p className="flex items-center gap-1.5 font-semibold">
-            <ShieldAlert size={14} className="shrink-0" /> Diplomanız yetersiz bulundu — lütfen yeniden yükleyin.
-          </p>
-        </div>
-      )}
+      {/* v6.124 — Diploma bekleme/ret kutuları KALDIRILDI: diploma kartı artık Aşama 1'de yaşar
+          ve DoctorDocuments oradaki rozet + e-Devlet mesajı + reviewNote ile durumu zaten anlatır.
+          (v6.119 kutularının "tabip odası yazısı" yönlendirmesi de bu tasarımla süpersede oldu.) */}
 
-      {/* ── 1. Mesleki belgeler — hesap aktivasyon kapısı. İLK SIRADA (kullanıcı kararı
-             2026-08-17: "ilk yapılması gereken o"); önceki düzende en alttaydı. ── */}
+      {/* ── 1. Klinik tanımlar — hesap aktivasyon kapısı. İLK SIRADA (kullanıcı kararı
+             2026-08-17: "ilk yapılması gereken o"). v6.124: diploma YÜKLEME kartı Aşama 1'e
+             taşındı — burada diploma tekrar İSTENMEZ (kullanıcı kararı 2026-08-19); bu bölüm
+             yalnız tescil no + uzmanlık + MMSS(ihtiyari) toplar. ── */}
       <div className="mt-6">
         <div className="flex items-center gap-2 text-sm font-bold text-[var(--c-ink)]">
-          <ShieldAlert size={16} className="text-amber-500" /> Mesleki Belgeler
+          <ShieldAlert size={16} className="text-amber-500" /> Mesleki Tanımlar
         </div>
         <p className="mt-1 text-xs text-[var(--c-ink-2)]">
-          <strong>Tıp diplomanızı</strong> yükleyin ve <strong>Akademik &amp; Eğitim</strong>{" "}
-          kutusundaki <strong>diploma/tescil numarası</strong> ile <strong>uzmanlık belgesi</strong>{" "}
+          Diplomanız Aşama 1&apos;de doğrulandı — burada yeniden istenmez.{" "}
+          <strong>Akademik &amp; Eğitim</strong> kutusundaki{" "}
+          <strong>diploma/tescil numarası</strong> ile <strong>uzmanlık belgesi</strong>{" "}
           alanlarını doldurun — bunlar olmadan hesabınız aktifleşmez ve <strong>FHIR</strong>{" "}
           standardında (Practitioner.identifier / qualification) saklanır. MMSS poliçesi
           ihtiyaridir; yüklerseniz teminat limitiniz hastaya sunulan sigorta paketine yansır.
         </p>
-
-        {/* Sıra kullanıcı kararıdır (2026-08-17): Tıp Diploması → Akademik & Eğitim → MMSS.
-            Araya kutu girdiği için DoctorDocuments İKİ kez çağrılır (types ile ayrılmış).
-            ⚠️ onActivationChange YALNIZ diploma örneğinde: MMSS örneğine de verilseydi
-            "diploma yok → aktif değil" deyip butonu kilitlerdi. */}
-        <div className="mt-3">
-          <DoctorDocuments
-            types={["DIPLOMA"]}
-            initialDocs={initialDocs.filter((d) => d.type === "DIPLOMA")}
-            initialMmss={initialMmss}
-            onActivationChange={setDocsReady}
-          />
-        </div>
 
         <div className="mt-4">
           <AcademicEducationBox
