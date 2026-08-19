@@ -16,7 +16,7 @@ import { caprazAdayBul, yapisalAnahtar, normSehir } from "../../scripts/congress
 type Satir = {
   id: string; title: string; city: string | null; startDate: Date; endDate: Date | null;
 };
-const sat = (id: string, title: string, bas: string, son?: string, city: string | null = null): Satir => ({
+const sat = (id: string, title: string, bas: string, son?: string | null, city: string | null = null): Satir => ({
   id, title, city,
   startDate: new Date(`${bas}T00:00:00Z`),
   endDate: son ? new Date(`${son}T00:00:00Z`) : null,
