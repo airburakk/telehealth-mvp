@@ -697,6 +697,21 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   yedeklendi. 🪤 **Ölü varlık taramasında şablon dizgisi kör noktadır:** `` src={`/assets/${d.img}.jpg`} ``
   gibi yollar basename aramasında görünmez — `doc-*.jpg` bu yüzden yanlışlıkla silinip geri alındı;
   silmeden önce `\$\{…\}\.(jpg|png|mp4|webp|svg)` desenini ayrıca tara.
+  · **Rotaya göre sekme ikonu (2026-08-19, `c918a1b`) — 🚀 CANLI:** favicon bulunulan markaya göre
+  değişir — **AURA turkuaz `#28C8D8`, Doctorium zümrüt `#34d399`**; ikisi de marka renginde
+  **dolu daire + tam siyah AuraMark**. Eşleme: `layout.tsx` → `/favicon.ico` ·
+  `doctorium/layout.tsx` (YENİ, yalnız metadata) ve `doktor/doctorium/layout.tsx` (mevcut
+  auth+footer layout'una yalnız `metadata` eklendi) → `/icon-doctorium.ico`. Alt rotalar segment
+  mirasıyla kapsanır. 🪤 **Dosya konvansiyonu ÇALIŞMADI:** `src/app/doctorium/icon.ico` denendi —
+  dosya rota olarak servis edildi (HTTP 200) ama Next `<link rel="icon">` BASMADI; kök
+  `src/app/favicon.ico` alt segment ikonunu bastırıyor. Çözüm: kök `favicon.ico` **silindi**,
+  ikonlar `public/` altına alındı, bağlama `metadata.icons` ile açık yapıldı (segment merge'inde
+  en derin tanım kazanır). `/favicon.ico` public'ten servis edildiği için tarayıcının otomatik
+  isteği de 200 alır. 🪤 **Dosya adı ROTAYI gösterir, rengi DEĞİL** (`icon-doctorium.ico`).
+  🪤 Görsel kurguda 6 tur denendi (beyaz daire + renkli amblem → 2 kez koyulaştırma → dolu daire +
+  beyaz amblem → + ince siyah kontur → **dolu daire + tam siyah amblem**) ve renk eşlemesi bir kez
+  takas edilip geri alındı (Doctorium'un kimliği zümrüt); gerekçeler `scripts/gen-icons.py`
+  başlığında — geri dönme. **PWA ikonları bu turda DEĞİŞMEDİ** (koyu kare + marka gradyanı).
   · **Hero mobil kaynak:** `<source media="(max-width:767px)">` → `src720` (848KB); masaüstü 1080p
   **kullanıcı kararı, dokunma**. Save-Data → video hiç başlatılmaz. 🪤 **WebM DENENDİ ve ATILDI:**
   VP9 çıktısı (1112KB) mevcut h264 720p'den BÜYÜK — kaynak zaten agresif sıkıştırılmış; **eklemeden
