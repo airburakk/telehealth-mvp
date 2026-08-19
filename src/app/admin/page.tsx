@@ -54,9 +54,9 @@ const PANELS = [
     tone: "#38bdf8",
   },
   {
-    href: "/admin/kongre",
-    label: "Kongre Takvimi",
-    desc: "Küratörlü kongre kayıtları — doktor takviminde görünen etkinlikleri yönet.",
+    href: "/admin/etkinlik",
+    label: "Etkinlik Takvimi",
+    desc: "Kongre, sempozyum ve kurs kayıtları — doktor takviminde görünen etkinlikleri yönet.",
     icon: CalendarDays,
     tone: "#34d399",
   },

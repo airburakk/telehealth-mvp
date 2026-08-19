@@ -31,7 +31,7 @@ const MODULE_ACCENT: Record<string, string> = {
   sektorel: "#a78bfa",
   ilac: "#22d3ee",
   mevzuat: "#fb7185",
-  kongre: "var(--c-ink)", // beyaz kimlik = tema-duyarlı ink (bant kararıyla aynı)
+  etkinlik: "var(--c-ink)", // beyaz kimlik = tema-duyarlı ink (bant kararıyla aynı)
   kariyer: "#60a5fa",
 };
 
@@ -42,7 +42,7 @@ export const KIND_STYLE: Record<string, string> = {
   haber: "bg-sky-500/15 text-sky-300",
   ictihat: "bg-rose-500/15 text-rose-300", // v6.86 — mevzuat amber'ından ayrışsın (aynı modülde yaşarlar)
   doktrin: "bg-indigo-500/15 text-indigo-300", // v6.91 — akademik hukuk makalesi (TR-Dizin)
-  kongre: "bg-[var(--c-surface-2)] text-[var(--c-ink-2)]", // 2026-08-14 — akış kartı
+  etkinlik: "bg-[var(--c-surface-2)] text-[var(--c-ink-2)]", // 2026-08-14 — akış kartı
   kariyer: "bg-blue-500/15 text-blue-300", // 2026-08-14 — akış kartı
 };
 
@@ -85,9 +85,9 @@ function IctihatCardMeta({ summary }: { summary: string }) {
 
 export function ArticleCard({ item, saved }: { item: FeedItem; saved: boolean | null }) {
   const accent = MODULE_ACCENT[item.module] ?? "var(--c-ink-3)";
-  // Kongre/kariyer akış kartları kendi detay rotalarına gider (kariyer'de id = slug).
+  // Etkinlik/kariyer akış kartları kendi detay rotalarına gider (kariyer'de id = slug).
   const href =
-    item.module === "kongre" ? `/doktor/doctorium/kongre/${item.id}`
+    item.module === "etkinlik" ? `/doktor/doctorium/etkinlik/${item.id}`
     : item.module === "kariyer" ? `/doktor/doctorium/kariyer/${item.id}`
     : `/doktor/doctorium/${item.id}`;
   // Çizgi-altı detay linki tür-uygun etiketle ("Detay" jeneriği bilinçli yok); akademikte bu
@@ -95,7 +95,7 @@ export function ArticleCard({ item, saved }: { item: FeedItem; saved: boolean | 
   const detailLabel =
     item.module === "akademik" ? null
     : item.kind === "ictihat" ? "Kararı oku →"
-    : item.module === "kongre" ? "Kongre kartı →"
+    : item.module === "etkinlik" ? "Etkinlik kartı →"
     : item.module === "kariyer" ? "Süreç adımları →"
     : "Devamını oku →";
   // ROZET DİYETİ: tür + tek bağlam. Branş varsa branş (kişisel akışın anlamlı ekseni),
@@ -143,8 +143,8 @@ export function ArticleCard({ item, saved }: { item: FeedItem; saved: boolean | 
       </p>
 
       {item.kind === "ictihat" && <IctihatCardMeta summary={item.summary} />}
-      {/* Doktrin: dizin özeti · Kongre: tarih/şehir/kapsam satırı · Kariyer: süreç özeti. */}
-      {["doktrin", "kongre", "kariyer"].includes(item.kind) && item.summary && (
+      {/* Doktrin: dizin özeti · Etkinlik: tür/tarih/şehir/kapsam satırı · Kariyer: süreç özeti. */}
+      {["doktrin", "etkinlik", "kariyer"].includes(item.kind) && item.summary && (
         <p className="mt-1.5 text-xs leading-relaxed text-[var(--c-ink-2)]">
           {item.summary.length > 160 ? `${item.summary.slice(0, 159).trimEnd()}…` : item.summary}
         </p>

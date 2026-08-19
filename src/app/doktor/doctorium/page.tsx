@@ -15,9 +15,9 @@ import {
   CAREER_TABS, parseCareerTab, careerPathways,
   effectiveBranches, personalFeed, moduleFeed, singleBranchFeed, upcomingCongresses,
   localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
-  slugForLabel, parseScope, savedArticleIds, FEED_MODULE_OPTIONS, parseFeedModules,
-  todayModuleCounts,
-  type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey,
+  slugForLabel, parseScope, parseSourceScope, scopeBadge, savedArticleIds, FEED_MODULE_OPTIONS, parseFeedModules,
+  todayModuleCounts, MODULE_ALIASES, EVENT_TYPES, EVENT_TYPE_LABEL, parseEventTypes,
+  type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey, type EventTypeKey,
 } from "@/lib/doctorium";
 import { isStudentOnly } from "@/lib/doctor-activation";
 import { HUKUK_KEYWORDS, keywordByKey } from "@/lib/hukuk-keywords";
@@ -43,14 +43,14 @@ const MODULE_KEYS = new Set(DOCTORIUM_MODULES.map((m) => m.key));
 const VALID_SLUGS = new Set(BRANCH_OPTIONS.map((b) => b.slug));
 
 // Modül üst alanı metinleri (Faz 1, kullanıcı onayı 2026-08-14). Renkler = kart kapağı (Cover) +
-// bant (DoctoriumSidebar) kimlik hex'leri; Kongre'nin kimliği "beyaz" = tema-duyarlı ink (color
+// bant (DoctoriumSidebar) kimlik hex'leri; Etkinlik'in kimliği "beyaz" = tema-duyarlı ink (color
 // yok → var(--c-ink)). Kariyer satırı İŞKUR sınırının dilini korur ("ilan değil").
 const MODULE_HEAD: Record<ModuleKey, { eyebrow: string; title: string; desc: string; color?: string }> = {
   akis: { eyebrow: "AKIŞIM", title: "Sizin için seçilenler", desc: "Branşınız, bilimsel yayınlar ve sektörel gelişmeler tek akışta.", color: "#facc15" },
   akademik: { eyebrow: "AKADEMİK", title: "Branşınızda hakemli yayınlar", desc: "PubMed, Europe PMC ve DOAJ'dan hakemli çalışmalar, kısa klinik özetlerle.", color: "#34d399" },
   sektorel: { eyebrow: "SEKTÖREL", title: "Sağlık gündeminin nabzı", desc: "Doktor hakları, yönetim, teknoloji ve küresel gelişmeler.", color: "#a78bfa" },
   ilac: { eyebrow: "İLAÇ & CİHAZ", title: "Geri çekmeler ve klinik fazlar", desc: "Ruhsat, geri çekme, klinik faz ve prospektüs bilgisi tek yerde.", color: "#22d3ee" },
-  kongre: { eyebrow: "KONGRE", title: "Kongre takvimi", desc: "Ulusal ve uluslararası kongreler; bildiri ve erken kayıt tarihleriyle." },
+  etkinlik: { eyebrow: "ETKİNLİK", title: "Etkinlik takvimi", desc: "Kongre, sempozyum ve kurslar; bildiri ve erken kayıt tarihleriyle." },
   kariyer: { eyebrow: "KARİYER", title: "Doktorluk yollarının haritası", desc: "Yurt dışı denklik ve akademik yükselme süreçleri — ilan değil, süreç bilgisi.", color: "#60a5fa" },
   mevzuat: { eyebrow: "HUKUK", title: "Sağlık hukuku, tek yerde", desc: "Mevzuat değişiklikleri, emsal kararlar ve hakemli doktrin.", color: "#fb7185" },
 };
@@ -61,12 +61,12 @@ const MOBILE_GROUPS: Partial<Record<ModuleKey, ModuleKey[]>> = {
   akademik: ["akademik", "sektorel", "ilac"],
   sektorel: ["akademik", "sektorel", "ilac"],
   ilac: ["akademik", "sektorel", "ilac"],
-  kongre: ["kongre", "kariyer", "mevzuat"],
-  kariyer: ["kongre", "kariyer", "mevzuat"],
-  mevzuat: ["kongre", "kariyer", "mevzuat"],
+  etkinlik: ["etkinlik", "kariyer", "mevzuat"],
+  kariyer: ["etkinlik", "kariyer", "mevzuat"],
+  mevzuat: ["etkinlik", "kariyer", "mevzuat"],
 };
 
-// Doctorium — doktor bilgi portalı. Modüller: Akışım (A) · Akademik (C) · Sektörel (B) · Kongre (E).
+// Doctorium — doktor bilgi portalı. Modüller: Akışım (A) · Akademik (C) · Sektörel (B) · Etkinlik (E).
 // Modül D (ilaç tanıtımı/e-mümessil) PARK: TİTCK tanıtım yönetmeliği hukuki görüş ister.
 export default async function DoctoriumPage({
   searchParams,
@@ -97,7 +97,12 @@ export default async function DoctoriumPage({
   const branches = effectiveBranches(doctor?.newsBranches, doctor?.branch);
 
   const sp = await searchParams;
-  const active: ModuleKey = sp.m && MODULE_KEYS.has(sp.m as ModuleKey) ? (sp.m as ModuleKey) : "akis";
+  // ?m= çözümü: geçerli anahtar → kendisi; ESKİ anahtar (kongre) → alias'tan etkinliğe; yoksa akış.
+  // Alias v6.120 rename'inin bedeli: eski yer imleri ve bildirim href'leri boş sayfa açmasın.
+  const rawModule = sp.m ?? "";
+  const active: ModuleKey = MODULE_KEYS.has(rawModule as ModuleKey)
+    ? (rawModule as ModuleKey)
+    : (MODULE_ALIASES[rawModule] ?? "akis");
   const range = RANGE_OPTIONS.some((r) => r.key === sp.d) ? (sp.d as string) : DEFAULT_RANGE;
   // Tek-branş odağı (?b=): çipleri üreten "Akışınız:" şeridi KALDIRILDI (kullanıcı kararı
   // 2026-08-18 — çok branşta renk karmaşası); parametre eski/paylaşılan URL'ler için yaşar.
@@ -127,8 +132,9 @@ export default async function DoctoriumPage({
       : await moduleFeed("mevzuat", [], { days: rangeDays(range), category: cat, excludeCategories: LEGAL_ONLY_CATEGORIES });
   }
   else if (active === "sektorel") {
-    // v6.99.3 — "Kaynak" filtresi (?s=ulusal|uluslararasi): kongre kapsamıyla aynı param/parse.
-    const srcScope = parseScope(sp.s);
+    // v6.99.3 — "Kaynak" filtresi (?s=ulusal|uluslararasi): etkinlik kapsamıyla aynı PARAM,
+    // ayrı PARSE (v6.120) — haber kaynağında "uluslararası katılımlı" diye bir şey yok.
+    const srcScope = parseSourceScope(sp.s);
     items = await moduleFeed("sektorel", [], {
       days: rangeDays(range), category: cat,
       sources: srcScope ? SECTOR_SOURCE_SCOPES[srcScope] : undefined,
@@ -138,11 +144,14 @@ export default async function DoctoriumPage({
   if (items.length) items = await localizeTitles(items);
 
   const scope = parseScope(sp.s);
-  const congresses = active === "kongre" ? await upcomingCongresses(branches, { scope }) : [];
-  const followed = active === "kongre" && doctor ? await followedCongressIds(doctor.id) : new Set<string>();
+  // Etkinlik türü çipi (v6.120): ?t=sempozyum,kurs · ?t=hepsi · param yoksa VARSAYILAN
+  // (kongre + sempozyum). Kariyer de ?t= kullanır ama farklı modülde — çakışma yok.
+  const eventTypes: EventTypeKey[] | null = active === "etkinlik" ? parseEventTypes(sp.t) : null;
+  const congresses = active === "etkinlik" ? await upcomingCongresses(branches, { scope, types: eventTypes }) : [];
+  const followed = active === "etkinlik" && doctor ? await followedCongressIds(doctor.id) : new Set<string>();
 
   // Kariyer modülü alt-sekmesi (v6.89): ?t=yurtdisi|turkiye — yalnız bu modülde anlamlı.
-  // (?c= sektörel kategoriye, ?h= Hukuk'a, ?s= kongre kapsamına ait — param çakışması yok.)
+  // (?c= sektörel kategoriye, ?h= Hukuk'a, ?s= etkinlik kapsamına ait — param çakışması yok.)
   const careerTab: CareerTabKey | null = active === "kariyer" ? parseCareerTab(sp.t) : null;
   const pathways = careerTab ? await careerPathways(careerTab) : [];
 
@@ -359,23 +368,27 @@ export default async function DoctoriumPage({
         feedInitial={feedMods}
         showRange={(active === "mevzuat" && legalTab === "mevzuat") || active === "sektorel" || active === "ilac"}
         showCategory={(active === "mevzuat" && legalTab === "mevzuat") || active === "sektorel"}
-        showAlerts={active === "kongre" && !!doctor}
-        showScope={active === "kongre"}
+        showAlerts={active === "etkinlik" && !!doctor}
+        showScope={active === "etkinlik"}
         scope={scope}
+        // v6.120 tür çipi — yalnız Etkinlik sekmesinde. null = "hepsi" seçili.
+        showEventTypes={active === "etkinlik"}
+        eventTypes={eventTypes}
+        eventTypeOptions={EVENT_TYPES.map((t) => ({ key: t.key, label: t.label }))}
         // v6.99.3 — sektörel "Kaynak" filtresi (panelin İLK bölümü; kullanıcı isteği 2026-08-16).
         showSourceScope={active === "sektorel"}
-        sourceScope={active === "sektorel" ? parseScope(sp.s) : null}
+        sourceScope={active === "sektorel" ? parseSourceScope(sp.s) : null}
         rangeKey={range}
         rangeOptions={RANGE_OPTIONS}
         category={cat}
         categoryOptions={SECTOR_CATEGORIES}
-        /* Branş tercihi akışa FİİLEN etki eden sekmelerde: Akışım + Akademik + **Kongre** (v6.62
-           düzeltmesi — kongre listesi upcomingCongresses(branches) ile v6.48'den beri branşa göre
+        /* Branş tercihi akışa FİİLEN etki eden sekmelerde: Akışım + Akademik + **Etkinlik** (v6.62
+           düzeltmesi — etkinlik listesi upcomingCongresses(branches) ile v6.48'den beri branşa göre
            süzülüyordu ama seçici burada çizilmediği için doktor GÖREMEDİĞİ bir filtreyle eksik
            liste görüyordu; eski yorum "kongre branşa göre süzülmez" diyerek koddan sapmıştı).
            Mevzuat/sektörel/ilaç gerçekten branşa göre süzülmez. */
         branchOptions={
-          (active === "akis" || active === "akademik" || active === "kongre") && doctor ? BRANCH_OPTIONS : null
+          (active === "akis" || active === "akademik" || active === "etkinlik") && doctor ? BRANCH_OPTIONS : null
         }
         branchInitial={parseBranchPrefs(doctor?.newsBranches)}
         ownBranchSlug={slugForLabel(doctor?.branch)}
@@ -391,7 +404,7 @@ export default async function DoctoriumPage({
 
       {active === "kariyer" ? (
         <CareerList rows={pathways} savedIds={savedIds} />
-      ) : active === "kongre" ? (
+      ) : active === "etkinlik" ? (
         <CongressList rows={congresses} followed={followed} canFollow={!!doctor} savedIds={savedIds} />
       ) : (
         <>
@@ -496,6 +509,7 @@ interface CongressRow {
   startDate: Date; endDate: Date | null; abstractDeadline: Date | null; earlyBirdDeadline: Date | null;
   url: string | null; branchSlugs: string;
   scope: string; venue: string | null; warning: string | null; confidence: string;
+  eventType: string; ttbCode: string | null;
 }
 
 function CongressList({ rows, followed, canFollow, savedIds }: { rows: CongressRow[]; followed: Set<string>; canFollow: boolean; savedIds: Set<string> | null }) {
@@ -504,8 +518,9 @@ function CongressList({ rows, followed, canFollow, savedIds }: { rows: CongressR
       <p className="mt-5 flex items-start gap-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-8 text-sm text-[var(--c-ink-2)]">
         <Info size={16} className="mt-0.5 shrink-0" />
         <span>
-          Seçtiğiniz branş ve kapsamda yaklaşan kongre yok. Kapsam filtresini
-          <strong className="text-[var(--c-ink)]"> Tümü</strong> yapmayı ya da Özelleştir'den branş
+          Seçtiğiniz tür, branş ve kapsamda yaklaşan etkinlik yok. Özelleştir'den
+          <strong className="text-[var(--c-ink)]"> tür</strong> seçimini genişletmeyi (kurs, eğitim,
+          çalıştay), kapsamı <strong className="text-[var(--c-ink)]">Tümü</strong> yapmayı ya da branş
           tercihlerinizi genişletmeyi deneyin.
         </span>
       </p>
@@ -515,23 +530,27 @@ function CongressList({ rows, followed, canFollow, savedIds }: { rows: CongressR
     /* grid-cols-[minmax(0,1fr)]: ana listedeki taşma dersinin eşleniği (grid item min-width:auto). */
     <ul className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-3">
       {rows.map((c) => (
-        /* Kart standardı (2026-08-14): sol kenarda 3px bölüm şeridi (Kongre = tema-duyarlı ink),
+        /* Kart standardı (2026-08-14): sol kenarda 3px bölüm şeridi (Etkinlik = tema-duyarlı ink),
            üst satırda sembol+etiket · sağda Kaydet+Takip, altta ÇİZGİLİ aksiyon satırı. */
         <li
           key={c.id}
           className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5"
           style={{ borderInlineStart: "3px solid var(--c-ink)" }}
         >
-          {/* Künye: "KONGRE" etiket tekrarı KALKTI (3. tur — sahne başlığı zaten söylüyor);
-              rozetler + sağda Kaydet/Takip tek satır, altı çizgiyle kapanır. */}
+          {/* Künye: modül adı tekrarı YOK (sahne başlığı zaten söylüyor) ama TÜR rozeti VAR —
+              sekme artık 9 tür taşıyor, "kongre mü sempozyum mu" doktorun ilk sorusu (v6.120).
+              Rozetler + sağda Kaydet/Takip tek satır, altı çizgiyle kapanır. */}
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-[var(--c-ink-3)]">
+              <span className="aura-mono rounded-full border border-[var(--c-hairline)] bg-[var(--c-surface-2)] px-2 py-0.5 font-semibold text-[var(--c-ink-2)]">
+                {EVENT_TYPE_LABEL[c.eventType] ?? "Etkinlik"}
+              </span>
               <span className="aura-mono rounded-full bg-sky-500/15 px-2 py-0.5 font-semibold text-sky-300">
                 {formatDate(c.startDate)}{c.endDate ? ` – ${formatDate(c.endDate)}` : ""}
               </span>
               {/* Kapsam rozeti: doktorun ilk baktığı ayrım (yurt içi mi, yurt dışı mı). */}
               <span className="aura-mono rounded-full border border-[var(--c-hairline)] px-2 py-0.5">
-                {c.scope === "uluslararasi" ? "🌍 Uluslararası" : "🇹🇷 Ulusal"}
+                {scopeBadge(c.scope)}
               </span>
               {(c.city || c.country) && (
                 <span className="inline-flex items-center gap-1"><MapPin size={11} />{[c.city, c.country].filter(Boolean).join(", ")}</span>
@@ -545,7 +564,7 @@ function CongressList({ rows, followed, canFollow, savedIds }: { rows: CongressR
           {/* Künye alt sınırı — ArticleCard üst çizgisinin eşleniği (kullanıcı ayarı 2026-08-16). */}
           <div className="mt-2 border-b border-[var(--c-hairline)]" aria-hidden="true" />
           <h3 className="mt-2.5 text-sm font-semibold text-[var(--c-ink)]">
-            <Link href={`/doktor/doctorium/kongre/${c.id}`} className="hover:underline">{c.title}</Link>
+            <Link href={`/doktor/doctorium/etkinlik/${c.id}`} className="hover:underline">{c.title}</Link>
           </h3>
           {c.organizer && <p className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">{c.organizer}</p>}
 
@@ -565,14 +584,24 @@ function CongressList({ rows, followed, canFollow, savedIds }: { rows: CongressR
           )}
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-[var(--c-hairline)] pt-2.5">
-            <Link href={`/doktor/doctorium/kongre/${c.id}`}
+            <Link href={`/doktor/doctorium/etkinlik/${c.id}`}
               className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--c-accent-stronger)] hover:underline">
-              Kongre kartı →
+              Etkinlik kartı →
             </Link>
             {c.url && (
               <a href={c.url} target="_blank" rel="noopener noreferrer nofollow"
                 className="inline-flex items-center gap-1 text-[11px] text-[var(--c-ink-2)] hover:underline">
                 <ExternalLink size={12} /> Resmî site
+              </a>
+            )}
+            {/* TTB akreditasyonu: kod VAR demek "akredite" demek — kaç KREDİ vereceğini
+                DEMEZ (puan katılım süresine göre TTB'de oluşur). Kart bu yüzden sayı yazmaz,
+                doktoru TTB'nin kendi kaydına gönderir. Bkz. [[public-claim-honesty]]. */}
+            {c.ttbCode && (
+              <a href={`https://kredilendirme.ttb.dr.tr/etkinlik_bul.php`} target="_blank"
+                rel="noopener noreferrer nofollow" title="TTB STE/SMG akredite etkinlik — kredi, katıldığınız süreye göre TTB kaydında oluşur"
+                className="inline-flex items-center gap-1 text-[11px] text-[var(--c-ink-2)] hover:underline">
+                <ExternalLink size={12} /> TTB akredite <span className="aura-mono">{c.ttbCode}</span>
               </a>
             )}
           </div>

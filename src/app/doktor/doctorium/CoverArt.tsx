@@ -43,7 +43,7 @@ const MODULE_COLOR: Record<string, string> = {
   sektorel: "#a78bfa",
   ilac: "#22d3ee",
   mevzuat: "#fb7185",
-  kongre: "var(--c-ink)",
+  etkinlik: "var(--c-ink)",
   kariyer: "#60a5fa",
 };
 
@@ -94,7 +94,9 @@ export function symbolSrc(item: Pick<FeedItem, "module" | "kind">): string {
     return "/doctorium/hukuk-mevzuat.webp";
   }
   if (item.module === "ilac") return "/doctorium/ilac.webp";
-  if (item.module === "kongre") return "/doctorium/kongre.webp";
+  // Görsel dosya adı "kongre.webp" KALDI (v6.120 rename'i public/ varlıklarını taşımadı —
+  // dosya adı kullanıcıya görünmez, taşımak CDN önbelleğini boşuna ısıtırdı).
+  if (item.module === "etkinlik") return "/doctorium/kongre.webp";
   if (item.module === "kariyer") return "/doctorium/kariyer.webp";
   return "/doctorium/sektorel.webp";
 }

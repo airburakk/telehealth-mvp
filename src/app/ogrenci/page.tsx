@@ -36,7 +36,7 @@ export default function StudentGatePage() {
             </li>
             <li className="flex items-start gap-2">
               <CalendarClock size={14} className="mt-0.5 shrink-0 text-[var(--c-accent)]" />
-              <span><strong className="text-[var(--c-ink)]">Kongre takvimi</strong> — bildiri ve erken kayıt tarihleriyle ulusal/uluslararası kongreler.</span>
+              <span><strong className="text-[var(--c-ink)]">Etkinlik takvimi</strong> — bildiri ve erken kayıt tarihleriyle kongre, sempozyum ve kurslar.</span>
             </li>
             <li className="flex items-start gap-2">
               <Scale size={14} className="mt-0.5 shrink-0 text-[var(--c-accent)]" />

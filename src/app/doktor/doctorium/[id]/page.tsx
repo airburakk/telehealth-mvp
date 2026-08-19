@@ -55,7 +55,7 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
     : null;
   const balance = d && me?.doctorId && !isStudentOnly(d) ? await getDoctorBalance(me.doctorId) : null;
   const shelfActive = (
-    ["akademik", "sektorel", "ilac", "kongre", "kariyer", "mevzuat"].includes(item.module)
+    ["akademik", "sektorel", "ilac", "etkinlik", "kariyer", "mevzuat"].includes(item.module)
       ? item.module
       : null
   ) as SidebarActive;

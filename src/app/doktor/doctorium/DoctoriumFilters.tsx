@@ -41,12 +41,17 @@ interface Props {
   showRange: boolean;
   /** Kategori seçicisi gösterilsin mi (mevzuat/sektörel). */
   showCategory: boolean;
-  /** Kongre alarm ayarları gösterilsin mi. */
+  /** Etkinlik alarm ayarları gösterilsin mi. */
   showAlerts: boolean;
-  /** Ulusal/uluslararası kapsam filtresi gösterilsin mi (yalnız Kongre sekmesi, v6.62). */
+  /** Kapsam filtresi gösterilsin mi (yalnız Etkinlik sekmesi, v6.62). */
   showScope: boolean;
   /** Etkin kapsam filtresi (null = tümü). */
   scope: string | null;
+  /** v6.120 — etkinlik TÜRÜ çipleri (yalnız Etkinlik sekmesi). */
+  showEventTypes: boolean;
+  /** Seçili türler; null = "hepsi" (süzgeç yok). Varsayılan sunucuda kongre+sempozyum. */
+  eventTypes: string[] | null;
+  eventTypeOptions: { key: string; label: string }[];
   /** v6.99.3 — Sektörel "Kaynak" filtresi (ulusal/uluslararası kaynaklar); panelin İLK bölümü. */
   showSourceScope: boolean;
   /** Etkin kaynak kapsamı (?s=; null = tüm kaynaklar). */
@@ -108,7 +113,7 @@ export function DoctoriumFilters(p: Props) {
   // alarm yok) — boş panel açılmasın.
   const hasAnySection =
     p.showFeedPrefs || p.showRange || p.showCategory || p.showAlerts || p.showScope ||
-    p.showSourceScope || p.showSponsor || !!p.branchOptions;
+    p.showEventTypes || p.showSourceScope || p.showSponsor || !!p.branchOptions;
 
   // Sektörel linklerinde üç filtre (kaynak · aralık · kategori) birbirini KORUR — biri
   // seçilirken diğerleri sıfırlanmasın (v6.99.3).
@@ -119,6 +124,14 @@ export function DoctoriumFilters(p: Props) {
     return `/doktor/doctorium?m=${p.module}&d=${d}${c ? `&c=${c}` : ""}${s ? `&s=${s}` : ""}`;
   };
 
+  // Etkinlik sekmesinin İKİ filtresi (tür · kapsam) birbirini KORUR — birini değiştirmek
+  // diğerini sıfırlamasın. (Sektörel'deki qs() ile aynı ders: v6.99.3'te orada öğrenildi.)
+  const eventQs = (over: { s?: string | null; t?: string | null }) => {
+    const s = over.s !== undefined ? over.s : p.scope;
+    const t = over.t !== undefined ? over.t : (p.eventTypes == null ? "hepsi" : p.eventTypes.join(","));
+    return `/doktor/doctorium?m=etkinlik${s ? `&s=${s}` : ""}${t ? `&t=${t}` : ""}`;
+  };
+
   // Kapalı paneldeki özet: hangi ayarların etkin olduğu tek bakışta görünsün.
   const summary = [
     p.showFeedPrefs ? (feedMods.size === feedAll.length ? "tüm bölümler" : `${feedMods.size} bölüm`) : null,
@@ -127,7 +140,17 @@ export function DoctoriumFilters(p: Props) {
       : null,
     p.showRange && activeRange ? activeRange : null,
     p.showCategory && activeCat ? activeCat : null,
-    p.showScope ? (p.scope === "ulusal" ? "🇹🇷 ulusal" : p.scope === "uluslararasi" ? "🌍 uluslararası" : "tüm kapsam") : null,
+    p.showEventTypes
+      ? (p.eventTypes == null ? "tüm türler" : p.eventTypes.length === 1
+          ? (p.eventTypeOptions.find((o) => o.key === p.eventTypes![0])?.label.toLocaleLowerCase("tr") ?? "1 tür")
+          : `${p.eventTypes.length} tür`)
+      : null,
+    p.showScope
+      ? (p.scope === "ulusal" ? "🇹🇷 ulusal"
+        : p.scope === "uluslararasi" ? "🌍 uluslararası"
+        : p.scope === "uluslararasi-katilimli" ? "🌍 uluslararası katılımlı"
+        : "tüm kapsam")
+      : null,
     p.branchOptions ? `${branches.size || "kendi"} branş` : null,
     p.showAlerts ? (alertsOn ? "alarm açık" : "alarm kapalı") : null,
     p.showSponsor ? (sponsorOn ? "sponsor: kişisel" : "sponsor: genel") : null,
@@ -384,23 +407,64 @@ export function DoctoriumFilters(p: Props) {
             </section>
           )}
 
+          {/* v6.120 — TÜR çipleri kapsamın ÜSTÜNDE: sekme 9 tür taşıyor, doktorun ilk daralttığı
+              eksen bu. Çoklu seçim (çipe basmak ekler/çıkarır), "Hepsi" tek tıkla süzgeci kaldırır. */}
+          {p.showEventTypes && (
+            <section>
+              <h3 className={sectionTitle}>Etkinlik türü</h3>
+              <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
+                TTB'nin akredite etkinlik türleri. Varsayılan olarak kongre ve sempozyum listelenir;
+                kurs, eğitim ve çalıştayları buradan açabilirsiniz.
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                <Link
+                  href={eventQs({ t: "hepsi" })}
+                  aria-current={p.eventTypes == null ? "true" : undefined}
+                  className={chip(p.eventTypes == null)}
+                >
+                  Hepsi
+                </Link>
+                {p.eventTypeOptions.map((o) => {
+                  const on = p.eventTypes?.includes(o.key) ?? false;
+                  // Seçili çipe basmak onu ÇIKARIR; son çip de çıkarılırsa sunucu varsayılana
+                  // döner (parseEventTypes) — liste asla boş kalmaz.
+                  const next = on
+                    ? (p.eventTypes ?? []).filter((k) => k !== o.key)
+                    : [...(p.eventTypes ?? []), o.key];
+                  return (
+                    <Link
+                      key={o.key}
+                      href={eventQs({ t: next.length ? next.join(",") : null })}
+                      aria-current={on ? "true" : undefined}
+                      className={chip(on)}
+                    >
+                      {o.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {p.showScope && (
             <section>
               <h3 className={sectionTitle}>Kapsam</h3>
               <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
-                Ulusal kongreler Türkiye ve KKTC'de; uluslararasılar Avrupa/ABD/dünya kongreleridir.
+                Ulusal etkinlikler Türkiye ve KKTC'de yapılır; "uluslararası katılımlı" da yurt
+                içindedir ama yabancı konuşmacı/katılımcı alır. Uluslararası = yurt dışı.
               </p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {(
                   [
                     [null, "Tümü"],
                     ["ulusal", "🇹🇷 Ulusal"],
+                    ["uluslararasi-katilimli", "🌍 Uluslararası katılımlı"],
                     ["uluslararasi", "🌍 Uluslararası"],
                   ] as const
                 ).map(([key, label]) => (
                   <Link
                     key={label}
-                    href={`/doktor/doctorium?m=kongre${key ? `&s=${key}` : ""}`}
+                    href={eventQs({ s: key })}
                     aria-current={p.scope === (key ?? null) ? "true" : undefined}
                     className={chip(p.scope === (key ?? null))}
                   >
@@ -415,17 +479,17 @@ export function DoctoriumFilters(p: Props) {
             <section>
               <h3 className={`${sectionTitle} flex items-center gap-1.5`}>
                 {alertsOn ? <BellRing size={12} className="text-emerald-300" /> : <BellOff size={12} />}
-                Kongre alarmı
+                Etkinlik alarmı
                 {savingAlerts && <Loader2 size={11} className="animate-spin" />}
               </h3>
               <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
-                Yalnız ⭐ ile takip ettiğiniz kongreler için gönderilir. Her eşik, o kongrenin
+                Yalnız ⭐ ile takip ettiğiniz etkinlikler için gönderilir. Her eşik, o etkinliğin
                 <strong className="font-semibold"> kendi tarihine</strong> uygulanır.
               </p>
               <div className="mt-2 grid gap-2.5">
                 {(
                   [
-                    ["start", start, "Kongre başlangıcı"],
+                    ["start", start, "Etkinlik başlangıcı"],
                     ["abstract", abstractDays, "Bildiri son gönderim"],
                     ["earlybird", earlyBird, "Erken kayıt son tarihi"],
                   ] as const
@@ -475,8 +539,8 @@ export function DoctoriumFilters(p: Props) {
                 </div>
               </div>
               <p className="mt-1 text-[11px] text-[var(--c-ink-3)]">
-                {p.module === "kongre"
-                  ? "Kongre takvimi bu branşlara göre süzülür. Boş bırakırsanız kendi branşınız kullanılır."
+                {p.module === "etkinlik"
+                  ? "Etkinlik takvimi bu branşlara göre süzülür. Boş bırakırsanız kendi branşınız kullanılır."
                   : "Boş bırakırsanız akışınız kendi branşınıza göre oluşur."}
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">

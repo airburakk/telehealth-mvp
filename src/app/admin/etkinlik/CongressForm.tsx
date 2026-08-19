@@ -7,7 +7,17 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 interface Row {
   id: string; title: string; organizer: string | null; city: string | null; country: string;
   startDate: string; endDate: string | null; url: string | null;
+  eventType: string; ttbCode: string | null;
 }
+
+/** v6.120 — TTB taksonomisi. lib/doctorium EVENT_TYPES ile aynı sıra/etiket; client bileşen
+ *  o server modülünü import edemez (db bağımlılığı) → burada elle eşlenir.
+ *  ⚠️ EVENT_TYPES değişirse burayı da güncelle (tests/unit/doctorium.test.ts sözleşmeyi tutar). */
+const EVENT_TYPE_OPTIONS = [
+  ["kongre", "Kongre"], ["sempozyum", "Sempozyum"], ["kurs", "Kurs"], ["egitim", "Eğitim"],
+  ["konferans", "Konferans"], ["calistay", "Çalıştay"], ["seminer", "Seminer"],
+  ["atolye", "Atölye Çalışması"], ["diger", "Diğer"],
+] as const;
 
 export function CongressAdmin({ rows, branchOptions }: { rows: Row[]; branchOptions: { slug: string; label: string }[] }) {
   const router = useRouter();
@@ -24,7 +34,7 @@ export function CongressAdmin({ rows, branchOptions }: { rows: Row[]; branchOpti
       title: f.get("title"), organizer: f.get("organizer"), city: f.get("city"), country: f.get("country"),
       startDate: f.get("startDate"), endDate: f.get("endDate"),
       abstractDeadline: f.get("abstractDeadline"), earlyBirdDeadline: f.get("earlyBirdDeadline"),
-      url: f.get("url"), branchSlugs: [...branches],
+      url: f.get("url"), branchSlugs: [...branches], eventType: f.get("eventType"),
     };
     try {
       const res = await fetch("/api/admin/congress", {
@@ -56,8 +66,14 @@ export function CongressAdmin({ rows, branchOptions }: { rows: Row[]; branchOpti
     <>
       <form onSubmit={submit} className="mt-6 grid gap-3 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-5">
         <div>
-          <label className={label} htmlFor="title">Kongre adı *</label>
+          <label className={label} htmlFor="title">Etkinlik adı *</label>
           <input id="title" name="title" required className={`${input} mt-1`} placeholder="27. Ulusal Kardiyoloji Kongresi" />
+        </div>
+        <div>
+          <label className={label} htmlFor="eventType">Tür *</label>
+          <select id="eventType" name="eventType" defaultValue="kongre" className={`${input} mt-1`}>
+            {EVENT_TYPE_OPTIONS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+          </select>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
@@ -65,7 +81,7 @@ export function CongressAdmin({ rows, branchOptions }: { rows: Row[]; branchOpti
             <input id="organizer" name="organizer" className={`${input} mt-1`} placeholder="Türk Kardiyoloji Derneği" />
           </div>
           <div>
-            <label className={label} htmlFor="url">Kongre adresi</label>
+            <label className={label} htmlFor="url">Etkinlik adresi</label>
             <input id="url" name="url" type="url" className={`${input} mt-1`} placeholder="https://…" />
           </div>
           <div>
@@ -118,12 +134,12 @@ export function CongressAdmin({ rows, branchOptions }: { rows: Row[]; branchOpti
         <div>
           <button type="submit" disabled={busy}
             className="inline-flex items-center gap-2 rounded-xl bg-emerald-500/90 px-4 py-2.5 text-sm font-semibold text-[#062a20] hover:bg-emerald-400 disabled:opacity-60">
-            {busy ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Kongre ekle
+            {busy ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Etkinlik ekle
           </button>
         </div>
       </form>
 
-      <h2 className="mt-8 text-sm font-semibold text-[var(--c-ink)]">Kayıtlı kongreler ({rows.length})</h2>
+      <h2 className="mt-8 text-sm font-semibold text-[var(--c-ink)]">Kayıtlı etkinlikler ({rows.length})</h2>
       {rows.length === 0 ? (
         <p className="mt-2 text-sm text-[var(--c-ink-2)]">Henüz kayıt yok.</p>
       ) : (
@@ -133,8 +149,11 @@ export function CongressAdmin({ rows, branchOptions }: { rows: Row[]; branchOpti
               <div className="min-w-0">
                 <div className="text-sm font-medium text-[var(--c-ink)]">{c.title}</div>
                 <div className="text-[11px] text-[var(--c-ink-3)]">
+                  {EVENT_TYPE_OPTIONS.find(([k]) => k === c.eventType)?.[1] ?? c.eventType} ·{" "}
                   {c.startDate}{c.endDate ? ` – ${c.endDate}` : ""} · {[c.city, c.country].filter(Boolean).join(", ")}
                   {c.organizer ? ` · ${c.organizer}` : ""}
+                  {/* TTB kaydı işaretlenir: bu satırları elle düzenlemek ingest'le çakışır. */}
+                  {c.ttbCode ? ` · TTB ${c.ttbCode}` : ""}
                 </div>
               </div>
               <button type="button" onClick={() => remove(c.id)} disabled={busy}

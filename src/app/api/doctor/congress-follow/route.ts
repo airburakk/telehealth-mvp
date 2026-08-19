@@ -41,7 +41,7 @@ export async function POST(req: Request) {
   const congressId = typeof b.congressId === "string" ? b.congressId : "";
   if (!congressId) return NextResponse.json({ error: "congressId gerekli." }, { status: 400 });
   const exists = await db.medicalCongress.findUnique({ where: { id: congressId }, select: { id: true } });
-  if (!exists) return NextResponse.json({ error: "Kongre bulunamadı." }, { status: 404 });
+  if (!exists) return NextResponse.json({ error: "Etkinlik bulunamadı." }, { status: 404 });
 
   if (b.follow === false) {
     await db.congressFollow.deleteMany({ where: { doctorId, congressId } });

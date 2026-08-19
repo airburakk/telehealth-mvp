@@ -1064,11 +1064,19 @@ model NewsArticle {
   @@index([module, publishedAt]) // modül akışı (yeni→eski)
 }
 
-/// Doctorium Modül E — medikal kongre takvimi (v6.48; v6.62'de KÜRATÖRLÜ VERİTABANI'na genişledi).
-/// Otomatik kaynak YOK (dernek/kongre siteleri makine-okunur takvim yayımlamıyor) → küratörlü:
-/// 30 branşın ulusal + uluslararası kongreleri resmî sitelerinden doğrulanarak derlendi
-/// (vault `output/kongre-veritabani-2026-08-03.md`; seed `scripts/seed-congresses.ts`).
-/// ⚠️ Bilinmeyen alan BOŞ bırakılır — kongre verisi asla tahmin edilmez (uydurma tarih = yanlış
+/// Doctorium Modül E — medikal ETKİNLİK takvimi (v6.48; v6.62 küratörlü veritabanı;
+/// v6.120'de kongre-dışı türlere açıldı — modülün kullanıcı-yüzü adı artık "Etkinlik").
+/// ⚠️ Model adı `MedicalCongress` BİLİNÇLİ değişmedi: tablo adı değişimi iki-aşamalı @map
+/// göçü ister ([[prisma-migrate-first]]) ve hiçbir kullanıcı-yüzü karşılığı yok. Yeni kod
+/// "etkinlik" der, tablo "MedicalCongress" kalır.
+/// İki kaynak bir arada yaşar; `source` değerleri AYRI olduğu için (source, externalId)
+/// unique'i ikisini çakıştırmaz — biri diğerinin kaydını asla ezmez:
+///   • Küratörlü (source="curated") — 30 branşın kongreleri resmî sitelerinden doğrulandı
+///     (vault `output/kongre-veritabani-2026-08-03.md`; seed `scripts/seed-congresses.ts`).
+///     Elle admin panelinden girilenlerde source null kalır.
+///   • TTB akredite kayıt (source="ttb-kredilendirme") — kredilendirme.ttb.dr.tr ay ay taranır
+///     (`scripts/ingest-ttb-events.ts`; vault `output/ste-kredilendirme-arastirmasi-2026-08-19.md`).
+/// ⚠️ Bilinmeyen alan BOŞ bırakılır — etkinlik verisi asla tahmin edilmez (uydurma tarih = yanlış
 /// bildiri/kayıt alarmı = doktorun gerçek kaybı).
 model MedicalCongress {
   id                String    @id @default(cuid())
@@ -1091,8 +1099,21 @@ model MedicalCongress {
   /// (bu yüzden nullable + kompozit unique: null'lar Postgres'te çakışmaz).
   source            String?
   externalId        String?
-  /// "ulusal" | "uluslararasi" — doktorun ilk süzdüğü eksen (v6.62 filtre).
+  /// "ulusal" | "uluslararasi" | "uluslararasi-katilimli" — doktorun ilk süzdüğü eksen
+  /// (v6.62 filtre; üçüncü değer v6.120'de TTB kaydından geldi: "Uluslararası Katılımlı").
   scope             String    @default("ulusal")
+
+  // ── v6.120 etkinlik türü (TTB taksonomisi) ────────────────────────────────
+  /// TTB'nin etkinlik türü, Türkçe slug olarak: kongre | sempozyum | kurs | egitim |
+  /// konferans | calistay | seminer | atolye | diger (lib/doctorium.ts EVENT_TYPES tek kaynak).
+  /// ⚠️ Tür ADDAN ÇIKARILMAZ, kaynağın kaydından okunur — TTB'de "8. Pulmoner Vasküler
+  /// Hastalıklar Kongresi" SEMPOZYUM kayıtlıdır. Küratörlü eski kayıtlar varsayılanla "kongre".
+  eventType         String    @default("kongre")
+  /// TTB akredite etkinlik kodu ("SMP34941") — otoritenin kendi kimliği, birebir saklanır.
+  /// Slug'a çevrilirken kaybolmasın diye ayrı alan; küratörlü kayıtlarda null.
+  /// ⚠️ Bu kod etkinliğin AKREDİTE olduğunu gösterir, kaç KREDİ vereceğini GÖSTERMEZ —
+  /// puan katılım süresine göre TTB'de oluşur (EK-1: 40 dk = 1 kredi, günde en fazla 6).
+  ttbCode           String?
   /// Kaçıncı edisyon ("42.", "XXVII.") — ad ile ayrı tutulur ki yıl değişince ad bozulmasın.
   edition           String?
   /// "yillik" | "2-yilda-bir" | null(bilinmiyor) — tazeleme kademesi bunu kullanır.
@@ -1103,7 +1124,11 @@ model MedicalCongress {
   format            String?
   /// Kongre dili + çeviri notu ("Türkçe" / "İngilizce, simultane TR çeviri").
   language          String?
-  /// TTB-STE / CME kredi notu — TR kongrelerinin çoğu kredili, doktorun birincil karar kriteri.
+  /// TTB-STE / CME kredi NOTU (serbest metin) — doktorun birincil karar kriteri.
+  /// ⚠️ Buraya SAYI yazılmaz. TTB akredite kayıtta "TTB akredite (SMP34941)" biçimi kullanılır;
+  /// puan katılım süresine + Kurul kararına bağlı olduğu için "X kredi" vaadi iddia olur
+  /// ([[public-claim-honesty]]). Süreyi programdan türetme de yanıltıcı: TTB programında üst ve
+  /// alt oturumlar AYRI satır → ham dakika toplamı gerçeğin kat kat üstünde.
   cmeCredit         String?
   /// Kayıt ücretleri + koşulları (serbest metin; kategori × kademe tabloları buraya düz yazılır).
   registrationNotes String?
@@ -1129,6 +1154,7 @@ model MedicalCongress {
   @@unique([source, externalId]) // idempotent seed/tazeleme (elle kayıtlarda null → çakışmaz)
   @@index([startDate])
   @@index([scope, startDate]) // ulusal/uluslararası filtresi + tarih sıralaması
+  @@index([eventType, startDate]) // v6.120 tür çipi + tarih sıralaması
 }
 
 /// Doctorium Modül E — hekimin TAKİP ettiği kongre (v6.49). Takip = alarm kapsamına girer.

@@ -20,13 +20,13 @@ import {
  * Raf dili: landing'in "01-07 durak" editoryal kimliği — mono numara + etiket (sol banttaki
  * D13 "numara+ikon" kararı bandın raf işaretiydi; yatay rafta çift işaret sıkışıklık yapar,
  * ikonlar mobil çubukta yaşamaya devam eder). Renk diyeti KORUNUR: modül rengi yalnız AKTİF
- * sekmede (2px alt şerit + renkli etiket — mobil şeridin border-b-2 deseniyle aynı). Kongre
+ * sekmede (2px alt şerit + renkli etiket — mobil şeridin border-b-2 deseniyle aynı). Etkinlik
  * kimliği "ink" = tema-duyarlı. Sağ küme: BUGÜN nabzı · Kaydettiklerim · Puanlarım (kişisel
  * köşe). "Ana Sayfa" çıkışı rafta YOK — Header'daki AURA↔Doctorium toggle'ı zaten çıkış
  * kapısı (çift navigasyon bulgusu); mobil sayfa içi dönüş linki page'lerde sürer.
  */
 
-type ModuleKey = "akis" | "akademik" | "sektorel" | "ilac" | "kongre" | "kariyer" | "mevzuat";
+type ModuleKey = "akis" | "akademik" | "sektorel" | "ilac" | "etkinlik" | "kariyer" | "mevzuat";
 // "tercihler" yok: /doktor/doctorium/tercihler v6.49'dan beri redirect — işlevsiz yüzeyin
 // linki çizilmez (koşullu-href ilkesi); Özelleştir paneli sayfanın içinde yaşıyor.
 export type SidebarActive = ModuleKey | "oduller" | "kaydettiklerim" | null;
@@ -35,7 +35,7 @@ export type SidebarActive = ModuleKey | "oduller" | "kaydettiklerim" | null;
  *  null = sayaç verisi yok (raf nabızsız çizilir — geriye uyumlu). */
 export type SidebarCounts = Record<string, number> | null;
 
-/** Sayaç hangi modül sekmesinde ne gösterir — akis TOPLAM; kongre/kariyer gece akışı olmayan
+/** Sayaç hangi modül sekmesinde ne gösterir — akis TOPLAM; etkinlik/kariyer gece akışı olmayan
  *  küratörlü veri (sayaç yanıltıcı olurdu — bilinçli yok). */
 function countFor(key: ModuleKey, counts: SidebarCounts): number | null {
   if (!counts) return null;
@@ -43,7 +43,7 @@ function countFor(key: ModuleKey, counts: SidebarCounts): number | null {
     const t = (counts.akademik ?? 0) + (counts.sektorel ?? 0) + (counts.ilac ?? 0) + (counts.mevzuat ?? 0);
     return t > 0 ? t : null;
   }
-  if (key === "kongre" || key === "kariyer") return null;
+  if (key === "etkinlik" || key === "kariyer") return null;
   const n = counts[key] ?? 0;
   return n > 0 ? n : null;
 }
@@ -60,7 +60,7 @@ const MODULES: {
   { key: "akademik", label: "Akademik", color: "#34d399", group: "BİLGİ" },
   { key: "sektorel", label: "Sektörel", color: "#a78bfa", group: "BİLGİ" },
   { key: "ilac", label: "İlaç & Cihaz", color: "#22d3ee", group: "BİLGİ" },
-  { key: "kongre", label: "Kongre", color: "ink", group: "MESLEĞİM" },
+  { key: "etkinlik", label: "Etkinlik", color: "ink", group: "MESLEĞİM" },
   { key: "kariyer", label: "Kariyer", color: "#60a5fa", group: "MESLEĞİM" },
   { key: "mevzuat", label: "Hukuk", color: "#fb7185", group: "MESLEĞİM" },
 ];
@@ -71,7 +71,7 @@ const EMERALD = "#34d399";
 const MOBILE_TABS: { label: string; icon: typeof Sparkles; href: string; keys: ModuleKey[] }[] = [
   { label: "Akışım", icon: Sparkles, href: "/doktor/doctorium", keys: ["akis"] },
   { label: "Bilgi", icon: BookOpen, href: "/doktor/doctorium?m=akademik", keys: ["akademik", "sektorel", "ilac"] },
-  { label: "Mesleğim", icon: Briefcase, href: "/doktor/doctorium?m=kongre", keys: ["kongre", "kariyer", "mevzuat"] },
+  { label: "Mesleğim", icon: Briefcase, href: "/doktor/doctorium?m=etkinlik", keys: ["etkinlik", "kariyer", "mevzuat"] },
 ];
 
 /** Raf sekmesi — NUMARA ROZETİ aktif dili (kullanıcı kararı 2026-08-18, görsel karşılaştırma

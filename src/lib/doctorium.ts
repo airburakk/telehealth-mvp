@@ -12,7 +12,15 @@ import { BRANCHES } from "./triage";
 
 export const DOCTORIUM_NAME = "Doctorium";
 
-export type ModuleKey = "akis" | "akademik" | "mevzuat" | "sektorel" | "ilac" | "kongre" | "kariyer";
+export type ModuleKey = "akis" | "akademik" | "mevzuat" | "sektorel" | "ilac" | "etkinlik" | "kariyer";
+
+/**
+ * v6.120 — "kongre" anahtarı "etkinlik" oldu (kullanıcı kararı 2026-08-19). Eski anahtar
+ * yer imlerinde, paylaşılmış bağlantılarda ve bildirim href'lerinde yaşıyor → ?m=kongre
+ * SESSİZCE etkinliğe düşer. Kaldırma tarihi yok: maliyeti bir satır, kırık bağlantının
+ * maliyeti doktorun boş sayfa görmesi.
+ */
+export const MODULE_ALIASES: Record<string, ModuleKey> = { kongre: "etkinlik" };
 
 export interface ModuleDef {
   key: ModuleKey;
@@ -27,15 +35,71 @@ export interface ModuleDef {
 // v6.86 (kullanıcı kararı 2026-08-06): modülün kullanıcı-yüzü adı "Hukuk" — altında Mevzuat ·
 // İçtihat (· Doktrin, Faz 2) alt-sekmeleri (LEGAL_TABS). İç anahtar "mevzuat" BİLİNÇLİ değişmedi:
 // DB'deki module değeri, akış sorguları, ingest'ler ve URL'ler kırılmasın (migration'sız dönüşüm).
+// v6.120 (kullanıcı kararı 2026-08-19): "Kongre Takvimi" → "Etkinlik Takvimi" ve Hukuk'un
+// aksine İÇ ANAHTAR DA değişti (kongre → etkinlik). Bedeli ödendi: rota taşındı + 308,
+// ?m=kongre alias'landı, Doctor.feedModules migration'la göç etti. Gerekçe: modül artık
+// gerçekten kongre-dışı türler taşıyor (sempozyum, kurs, kurs-dışı eğitim), anahtarın
+// "kongre" kalması kalıcı bir yanlış-adlandırma olurdu.
 export const DOCTORIUM_MODULES: ModuleDef[] = [
   { key: "akis", label: "Akışım", desc: "Branşınız + mevzuat + sektör: tek akış" },
   { key: "akademik", label: "Akademik", desc: "Hakemli yayınlar — PubMed · Europe PMC · DOAJ" },
   { key: "sektorel", label: "Sektörel", desc: "Doktor hakları · yönetim · teknoloji · küresel" },
   { key: "ilac", label: "İlaç & Cihaz", desc: "Geri çekmeler · klinik faz · prospektüs" },
-  { key: "kongre", label: "Kongre Takvimi", desc: "Ulusal ve uluslararası kongreler" },
+  { key: "etkinlik", label: "Etkinlik Takvimi", desc: "Kongre · sempozyum · kurs — TTB akredite" },
   { key: "kariyer", label: "Kariyer", desc: "Yurt dışı denklik · akademik yükselme" },
   { key: "mevzuat", label: "Hukuk", desc: "Mevzuat · İçtihat — sağlık hukuku" },
 ];
+
+// ── Etkinlik türleri (v6.120) ───────────────────────────────────────────────
+// TTB STE/SMG Akreditasyon-Kredilendirme kaydının taksonomisi. Kaynak ve sayımlar:
+// vault `output/ste-kredilendirme-arastirmasi-2026-08-19.md` §5.1 (2024-2026: 461 etkinlik).
+//
+// Saklanan değer TÜRKÇE SLUG, TTB'nin 3-harfli kodu DEĞİL: bu depoda her enum Türkçe slug
+// (ulusal · mevzuat · yuz-yuze) ve `eventType === "SMP"` okunmaz bir yabancı cisim olurdu.
+// Kaynak sadakati kaybolmuyor — TTB kodu MedicalCongress.ttbCode'da BİREBİR duruyor.
+//
+// ⚠️ Tür ADDAN ÇIKARILMAZ. TTB'de "8. Pulmoner Vasküler Hastalıklar Kongresi" SEMPOZYUM
+// kayıtlıdır; ad-tabanlı sınıflandırma sessizce yanlış etiketler.
+export const EVENT_TYPES = [
+  { key: "kongre", label: "Kongre", ttb: "KNG" },
+  { key: "sempozyum", label: "Sempozyum", ttb: "SMP" },
+  { key: "kurs", label: "Kurs", ttb: "KRS" },
+  { key: "egitim", label: "Eğitim", ttb: "EGT" },
+  { key: "konferans", label: "Konferans", ttb: "KNF" },
+  { key: "calistay", label: "Çalıştay", ttb: "CAL" },
+  { key: "seminer", label: "Seminer", ttb: "SMN" },
+  { key: "atolye", label: "Atölye Çalışması", ttb: "GRP" },
+  { key: "diger", label: "Diğer", ttb: "DGR" },
+] as const;
+export type EventTypeKey = (typeof EVENT_TYPES)[number]["key"];
+
+const EVENT_TYPE_SET = new Set<string>(EVENT_TYPES.map((t) => t.key));
+export const EVENT_TYPE_LABEL: Record<string, string> =
+  Object.fromEntries(EVENT_TYPES.map((t) => [t.key, t.label]));
+/** TTB kod öneki → slug ("SMP" → "sempozyum"). Ingest bunu kullanır. */
+export const EVENT_TYPE_BY_TTB: Record<string, EventTypeKey> =
+  Object.fromEntries(EVENT_TYPES.map((t) => [t.ttb, t.key])) as Record<string, EventTypeKey>;
+
+/**
+ * Sekme açılışında SEÇİLİ gelen türler (kullanıcı kararı 2026-08-19: "tüm türler + varsayılan
+ * süzgeç"). Kurs/eğitim veri setinin en büyük iki kovası (171 + 49) ve çoğu yerel/dar kapsamlı —
+ * hepsi açık gelseydi doktorun kongre listesi gürültüde kaybolurdu. Doktor tür çipinden açar.
+ */
+export const DEFAULT_EVENT_TYPES: EventTypeKey[] = ["kongre", "sempozyum"];
+
+/**
+ * ?t= paramından tür seçimi. "hepsi" → null (süzgeç yok). Geçerli tür yoksa VARSAYILANA döner —
+ * boş listeye düşürmek doktoru boş sekmeyle baş başa bırakırdı (fail-safe, fail-open değil:
+ * burada "açık" olan taraf varsayılan görünüm).
+ * ⚠️ ?t= Kariyer modülünde alt-sekme anlamına gelir (parseCareerTab); ikisi farklı modülde
+ * yaşadığı için çakışmaz — yeni bir modüle ?t= eklerken bunu hatırla.
+ */
+export function parseEventTypes(raw?: string | null): EventTypeKey[] | null {
+  if (raw === "hepsi") return null;
+  if (!raw) return DEFAULT_EVENT_TYPES;
+  const picked = raw.split(",").map((s) => s.trim()).filter((s) => EVENT_TYPE_SET.has(s)) as EventTypeKey[];
+  return picked.length ? picked : DEFAULT_EVENT_TYPES;
+}
 
 // Hukuk modülü alt-sekmeleri (v6.86). "doktrin" Faz 2'de eklenecek (kullanıcı kararı: DergiPark
 // link-modeli + davet-edilen-yazar birlikte) — boş sekme YAYINLANMAZ ("gerçek kaynak yoksa
@@ -108,6 +172,19 @@ export const SECTOR_SOURCE_SCOPES: Record<"ulusal" | "uluslararasi", string[]> =
   uluslararasi: ["who", "medscape", "medicalxpress"],
 };
 
+/**
+ * Sektörel "Kaynak" süzgeci (v6.99.3) ?s= parametresini Etkinlik kapsamıyla PAYLAŞIR ama
+ * değer kümesi AYNI DEĞİL: haber kaynağı ya ulusal ya uluslararasıdır — "uluslararası
+ * katılımlı" bir haber kaynağı yoktur (o, etkinliğin nerede/kimlerle yapıldığına dair bir
+ * niteliktir). v6.120'de CongressScope üçüncü değeri kazanınca bu ayrım tip hatası olarak
+ * yüzeye çıktı; ortak parseScope'u kullanmak SECTOR_SOURCE_SCOPES'ta tanımsız anahtar
+ * araması demekti (undefined sources → sessizce süzgeçsiz liste).
+ */
+export type SourceScope = "ulusal" | "uluslararasi";
+export function parseSourceScope(raw?: string | null): SourceScope | null {
+  return raw === "ulusal" || raw === "uluslararasi" ? raw : null;
+}
+
 export const KIND_LABEL: Record<string, string> = {
   makale: "Makale",
   ilac: "Klinik Çalışma",
@@ -117,7 +194,7 @@ export const KIND_LABEL: Record<string, string> = {
   lansman: "Klinik Faz",
   ictihat: "İçtihat", // v6.86 — Yargıtay kararları (source: yargitay, lib/hukuk-ingest.ts)
   doktrin: "Doktrin", // v6.91 — TR-Dizin hakemli makaleler (source: trdizin, lib/doktrin-ingest.ts)
-  kongre: "Kongre", // 2026-08-14 — akış kartı olarak yeni eklenen kongreler
+  etkinlik: "Etkinlik", // 2026-08-14 kongre olarak eklendi, v6.120'de tüm etkinlik türlerine açıldı
   kariyer: "Süreç Rehberi", // 2026-08-14 — akış kartı olarak yeni eklenen kariyer kayıtları
 };
 
@@ -211,13 +288,17 @@ const ROW_SELECT = {
 /**
  * Akış Tercihleri (Faz 2, 2026-08-14): Akışım'a hangi BÖLÜMLER girsin. Doctor.feedModules'ta
  * JSON string[] saklanır; null/boş = TÜMÜ (tercihe hiç girmemiş doktor her bölümü görür).
- * kongre/kariyer FeedItem değildir — seçiliyse page akışın üstünde mini blok olarak gösterir.
+ * etkinlik/kariyer FeedItem değildir — seçiliyse page akışın üstünde mini blok olarak gösterir.
+ *
+ * 🪤 Burası FAIL-OPEN: tanınmayan anahtar sessizce ATILIR. Bir anahtarı yeniden adlandırırken
+ * migration'la eski değeri GÖÇÜR, yoksa o bölümü seçmiş doktorlar onu hatasız kaybeder
+ * (v6.120'de kongre → etkinlik böyle taşındı: 20260819140000_etkinlik_turu_ve_modul_anahtari).
  */
 export const FEED_MODULE_OPTIONS = [
   { key: "akademik", label: "Akademik" },
   { key: "sektorel", label: "Sektörel" },
   { key: "ilac", label: "İlaç & Cihaz" },
-  { key: "kongre", label: "Kongre" },
+  { key: "etkinlik", label: "Etkinlik" },
   { key: "kariyer", label: "Kariyer" },
   { key: "mevzuat", label: "Hukuk" },
 ] as const;
@@ -244,22 +325,26 @@ const trDate = (d: Date) =>
  *  Tarih/şehir/kapsam bilgisi summary satırında taşınır. Kaydedilemez (SavedArticle NewsArticle'a bağlı). */
 const CONGRESS_FEED_SELECT = {
   id: true, title: true, organizer: true, city: true, startDate: true, endDate: true,
-  url: true, createdAt: true, scope: true,
+  url: true, createdAt: true, scope: true, eventType: true,
 } as const;
 
 function congressToFeedItem(c: {
   id: string; title: string; organizer: string | null; city: string | null;
   startDate: Date; endDate: Date | null; url: string | null; createdAt: Date; scope: string;
+  eventType: string;
 }): FeedItem {
   return {
-    id: c.id, module: "kongre", kind: "kongre", source: "kongre",
+    id: c.id, module: "etkinlik", kind: "etkinlik", source: "etkinlik",
     title: c.title, titleOriginal: null,
+    // Tür özetin BAŞINDA: akış kartının rozeti "Etkinlik" der (tek kind), asıl ayrım burada
+    // görünür. Bilinmeyen tür slug'ı ham hâliyle basılmaz — etiketi yoksa satır atlanır.
     summary: [
+      EVENT_TYPE_LABEL[c.eventType] ?? null,
       `${trDate(c.startDate)}${c.endDate ? ` – ${trDate(c.endDate)}` : ""}`,
       c.city,
-      c.scope === "uluslararasi" ? "🌍 Uluslararası" : "🇹🇷 Ulusal",
+      scopeBadge(c.scope),
     ].filter(Boolean).join(" · "),
-    sourceName: c.organizer ?? "Kongre takvimi", authors: null,
+    sourceName: c.organizer ?? "Etkinlik takvimi", authors: null,
     url: c.url, doi: null, publishedAt: c.createdAt, category: null,
     branchSlugs: [], hasAiSummary: false, imageUrl: null,
   };
@@ -267,9 +352,16 @@ function congressToFeedItem(c: {
 
 async function congressFeedItems(branchSlugs: string[], take: number): Promise<FeedItem[]> {
   const rows = await db.medicalCongress.findMany({
-    where: branchSlugs.length
-      ? { OR: [{ branchSlugs: "[]" }, ...branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } }))] }
-      : undefined,
+    where: {
+      // Akışım'daki 3 kartlık etkinlik kotası VARSAYILAN türlerle sınırlı (v6.120): TTB
+      // kaydının en büyük kovası kurs (171/461) ve çoğu yerel — süzgeçsiz bırakılsaydı
+      // Akışım'ın etkinlik köşesi kurslarla dolar, kongre hiç görünmezdi.
+      // Doktor tüm türleri Etkinlik sekmesindeki tür çipinden görür.
+      eventType: { in: DEFAULT_EVENT_TYPES },
+      ...(branchSlugs.length
+        ? { OR: [{ branchSlugs: "[]" }, ...branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } }))] }
+        : {}),
+    },
     orderBy: { createdAt: "desc" },
     take,
     select: CONGRESS_FEED_SELECT,
@@ -362,7 +454,7 @@ export async function personalFeed(branchSlugs: string[], limit = 40, modules: F
     jobs.push(news({ module: "mevzuat", kind: "ictihat" }, q(2)));
     jobs.push(news({ module: "mevzuat", kind: "doktrin" }, q(2)));
   }
-  if (on("kongre")) jobs.push(congressFeedItems(branchSlugs, q(3)));
+  if (on("etkinlik")) jobs.push(congressFeedItems(branchSlugs, q(3)));
   if (on("kariyer")) jobs.push(careerFeedItems(q(3)));
 
   const merged = (await Promise.all(jobs)).flat();
@@ -525,11 +617,26 @@ export async function followedCongressIds(doctorId: string): Promise<Set<string>
   return new Set(rows.map((r) => r.congressId));
 }
 
-/** "ulusal" | "uluslararasi" — kongre listesinin kapsam filtresi (v6.62, kullanıcı isteği). */
-export type CongressScope = "ulusal" | "uluslararasi";
+/**
+ * Etkinlik listesinin kapsam filtresi (v6.62, kullanıcı isteği).
+ * v6.120: TTB kaydı ÜÇ değer kullanıyor → "uluslararasi-katilimli" eklendi (yurt içinde yapılan
+ * ama yabancı konuşmacı/katılımcı alan etkinlik; doktor için ikisinin arası bir kategori).
+ *
+ * 🪤 "Uluslararası" çipi seçiliyken katılımlı olanlar GELMEZ (ayrı değer, ayrı çip) — kullanıcı
+ * "yurt dışına gideceğim" derken yurt içi bir toplantıyı listede görmemeli.
+ */
+export type CongressScope = "ulusal" | "uluslararasi" | "uluslararasi-katilimli";
+const SCOPE_SET = new Set<string>(["ulusal", "uluslararasi", "uluslararasi-katilimli"]);
 
 export function parseScope(raw?: string | null): CongressScope | null {
-  return raw === "ulusal" || raw === "uluslararasi" ? raw : null;
+  return raw && SCOPE_SET.has(raw) ? (raw as CongressScope) : null;
+}
+
+/** Kapsam rozeti metni — kart, detay ve akış özetinde TEK kaynak (üçü ayrı yazılmasın). */
+export function scopeBadge(scope: string): string {
+  return scope === "uluslararasi" ? "🌍 Uluslararası"
+    : scope === "uluslararasi-katilimli" ? "🌍 Uluslararası katılımlı"
+    : "🇹🇷 Ulusal";
 }
 
 /**
@@ -542,12 +649,15 @@ export function parseScope(raw?: string | null): CongressScope | null {
  */
 export async function upcomingCongresses(
   branchSlugs: string[],
-  opts?: { scope?: CongressScope | null; limit?: number },
+  opts?: { scope?: CongressScope | null; types?: EventTypeKey[] | null; limit?: number },
 ) {
   const rows = await db.medicalCongress.findMany({
     where: {
       startDate: { gte: new Date(Date.now() - 86400000) }, // bugün başlayan dahil
       ...(opts?.scope ? { scope: opts.scope } : {}),
+      // types === null → "hepsi" (süzgeç yok). undefined gelirse de süzmeyiz: çağıran
+      // parseEventTypes'tan geçirmediyse daraltma YAPMA — sessiz eksik liste üretmesin.
+      ...(opts?.types?.length ? { eventType: { in: opts.types } } : {}),
     },
     orderBy: { startDate: "asc" },
     // AÇIK select: coverImage data URI'ları (~5-20KB/kayıt) liste sorgusunu şişirmesin —
@@ -556,6 +666,7 @@ export async function upcomingCongresses(
       id: true, title: true, organizer: true, city: true, country: true,
       startDate: true, endDate: true, abstractDeadline: true, earlyBirdDeadline: true,
       url: true, branchSlugs: true, scope: true, venue: true, warning: true, confidence: true,
+      eventType: true, ttbCode: true,
     },
   });
   const filtered = !branchSlugs.length

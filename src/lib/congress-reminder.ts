@@ -1,4 +1,6 @@
-// Doctorium Modül E — kongre alarmı (v6.49; v6.62'de ÜÇ EŞİĞE ayrıldı). Günlük bakım cron'u
+// Doctorium Modül E — ETKİNLİK alarmı (v6.49 "kongre alarmı"; v6.62 ÜÇ EŞİK; v6.120'de
+// modül Etkinlik oldu — dosya/tip adları `congress*` KALDI, kullanıcı-yüzü metinler değişti).
+// Günlük bakım cron'u
 // (purge-deleted) çağırır.
 //
 // ÜÇ AYRI ALARM (kullanıcı isteği v6.62) — doktor üçünü ayrı ayrı ayarlar, zamanlamaları farklı:
@@ -63,7 +65,7 @@ export async function remindCongressFollows(now = new Date()): Promise<CongressR
     db.medicalCongress.findMany({
       where: { id: { in: [...new Set(follows.map((f) => f.congressId))] } },
       select: { id: true, title: true, startDate: true, abstractDeadline: true, earlyBirdDeadline: true },
-      // NOT: kongre kartına derin bağlantı için id yeterli (/doktor/doctorium/kongre/[id]).
+      // NOT: etkinlik kartına derin bağlantı için id yeterli (/doktor/doctorium/etkinlik/[id]).
     }),
     db.user.findMany({ where: { doctorId: { in: doctorIds } }, select: { id: true, doctorId: true } }),
     db.doctor.findMany({
@@ -97,9 +99,9 @@ export async function remindCongressFollows(now = new Date()): Promise<CongressR
         try {
           await notifyUser(u.id, {
             type: "CONGRESS_ALERT",
-            title: "📅 Takip ettiğiniz kongre yaklaşıyor",
+            title: "📅 Takip ettiğiniz etkinlik yaklaşıyor",
             body: `${c.title} — ${d === 0 ? "bugün başlıyor" : `${d} gün kaldı`} (${fmt(c.startDate)}).`,
-            href: "/doktor/doctorium?m=kongre",
+            href: "/doktor/doctorium?m=etkinlik",
           });
           sent.add("start");
           out.start++;
@@ -126,7 +128,7 @@ export async function remindCongressFollows(now = new Date()): Promise<CongressR
           type: "CONGRESS_ALERT",
           title: k.key === "abstract" ? "📝 Bildiri son tarihi yaklaşıyor" : "⏳ Erken kayıt son tarihi yaklaşıyor",
           body: `${c.title} — ${k.label} için ${left === 0 ? "son gün" : `${left} gün kaldı`} (${fmt(k.date)}).`,
-          href: `/doktor/doctorium/kongre/${c.id}`,
+          href: `/doktor/doctorium/etkinlik/${c.id}`,
         });
         sent.add(k.key);
         if (k.key === "abstract") out.abstract++;
