@@ -4,9 +4,22 @@ import { getCurrentUser } from "@/lib/auth";
 import { storeDocument, deleteDocument } from "@/lib/storage";
 import { detectDocumentKind, DOC_REJECT_MESSAGE } from "@/lib/document-mime";
 import { ALL_DOC_TYPES, refreshActivation, refreshChamberLetter, refreshStudentCert } from "@/lib/doctor-activation";
+import {
+  parseEdevletBelge, degerlendir, pdfMetniOku, onayKarari, type EdevletSonuc,
+} from "@/lib/edevlet-belge";
+import { edevletDogrula, type EdevletDogrulamaSonucu } from "@/lib/edevlet-dogrula";
+import { encryptField } from "@/lib/crypto";
+import { recordAccess, reqMeta } from "@/lib/audit";
+import { notifyUser } from "@/lib/notify";
 
 // Object storage (S3) henüz yok → küçük dosyalar base64 olarak DB'de (data URI). Kaba sınır ~8.5 MB.
 const MAX_FILE_CHARS = 12_000_000;
+
+// e-Devlet barkodlu belge otomatik doğrulaması hangi tiplerde denenir (v6.119).
+// DIPLOMA: klinik kapıyı açar (canActivate). STUDENT_CERT: barkod bağlanır ve incelemeciye sinyal
+// olur ama Doctorium öğrenci damgasının (refreshStudentCert) kapısını DEĞİŞTİRMEZ — o kapının
+// onaya bağlanması ayrı bir karardır (vault todo).
+const OTOMATIK_DOGRULANAN = new Set(["DIPLOMA", "STUDENT_CERT"]);
 
 // Oturumdaki doktorun doctorId'si (yalnız kendi belgelerine erişir — IDOR engeli).
 async function myDoctorId(userId: string): Promise<string | null> {
@@ -22,7 +35,12 @@ export async function GET() {
   if (!doctorId) return NextResponse.json({ error: "Bu hesap bir doktor profiline bağlı değil." }, { status: 400 });
   const docs = await db.doctorDocument.findMany({
     where: { doctorId },
-    select: { id: true, type: true, label: true, mimeType: true, createdAt: true },
+    // v6.119: status + verifiedSource istemciye ÇIKAR — doktor belgesinin hangi hâlde olduğunu
+    // (doğrulandı / incelemede / yetersiz) görmeli. verifyCode ÇIKMAZ (şifreli, gösterilmez).
+    select: {
+      id: true, type: true, label: true, mimeType: true, createdAt: true,
+      status: true, verifiedSource: true, reviewNote: true,
+    },
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json({ documents: docs });
@@ -61,19 +79,89 @@ export async function POST(req: Request) {
     await db.doctorDocument.deleteMany({ where: { doctorId, type } });
   }
 
+  // ── e-Devlet barkodlu belge otomatik doğrulaması (v6.119 offline + v6.120 çevrimiçi teyit) ────
+  // ⚠️ Şifrelenmiş/depolanmış hâlden ÖNCE ham `content` üzerinden çalışır (metin katmanı gerekiyor).
+  // Katman 1 (offline, dış istek YOK): tür + program + barkod + ad — lib/edevlet-belge.ts.
+  // Katman 2 (çevrimiçi, DORMANT — EDEVLET_VERIFY_ENABLED): offline geçtiyse barkod+TC devletin
+  //   doğrulama akışına sorulur ve DEVLETİN DÖNDÜRDÜĞÜ ASIL değerlendirilir (lib/edevlet-dogrula.ts;
+  //   ⚖️ hukuki zemin o dosyanın başlığında). Nihai kabul = onayKarari matrisi (birim testli).
+  // Fail-closed: şüphede kapı KAPALI → belge PENDING kalır, /admin/doktor-onay incelemesine düşer.
+  let dogrulama: EdevletSonuc | null = null;
+  let cevrim: EdevletDogrulamaSonucu | null = null;
+  if (OTOMATIK_DOGRULANAN.has(type)) {
+    const prof = await db.doctor.findUnique({ where: { id: doctorId }, select: { name: true } });
+    // 🔴 Beklenen TÜR açıkça verilir: diploma yerine öğrenci belgesi (ya da ikametgah) yüklenmesi
+    // otomatik geçemesin. Tür eşleşmezse sonuç ok:false → belge insan incelemesine düşer.
+    const beklenen = type === "STUDENT_CERT" ? ("OGRENCI" as const) : ("MEZUNIYET" as const);
+    const metin = await pdfMetniOku(content);
+    const belge = metin ? parseEdevletBelge(metin) : null;
+    dogrulama = belge
+      ? degerlendir(belge, prof?.name ?? null, beklenen)
+      : { ok: false, tanindi: false, barcode: null, reason: "PDF metin katmanı okunamadı (görsel/taranmış belge)" };
+    if (dogrulama.ok && belge) {
+      // 🔒 belge.tckn YALNIZ bu çağrıda tüketilir — DB'ye/log'a/audit'e girmez (KVKK minimizasyonu).
+      // Env kapalıyken edevletDogrula ağa dokunmadan KAPALI döner (masrafsız). TC belgede okunamadıysa
+      // istemci BELIRSIZ döner → teyit açıkken kapı açılmaz (fail-closed, onayKarari).
+      cevrim = await edevletDogrula(belge.barcode ?? "", belge.tckn ?? "", prof?.name ?? null, beklenen);
+    }
+  }
+  // Nihai otomatik kabul kararı (saf matris — tests/unit/edevlet-belge.test.ts).
+  const kabul = onayKarari(dogrulama?.ok ?? false, cevrim?.durum ?? null);
+
   const stored = await storeDocument(content, { keyPrefix: "doctor-doc" }); // object storage / inline şifreli (T11)
   const doc = await db.doctorDocument.create({
-    data: { doctorId, type, label, mimeType, content: stored as string },
+    data: {
+      doctorId, type, label, mimeType, content: stored as string,
+      // Barkod okunduysa geçmese bile saklanır — incelemeciye ipucudur. At-rest şifreli.
+      verifyCode: dogrulama?.barcode ? encryptField(dogrulama.barcode) : null,
+      // `kabul` = offline × çevrimiçi matrisi (onayKarari). Offline geçse bile çevrimiçi teyit
+      // GECERSIZ/BELIRSIZ dediyse belge PENDING kalır → insan incelemesi.
+      ...(kabul ? { status: "ACCEPTED", verifiedSource: "EDEVLET", verifiedAt: new Date() } : {}),
+    },
   });
+
+  // Denetim izi: otomatik doğrulama bir ERİŞİM KARARIDIR, zincire düşmeli.
+  // ⚠️ `reason` TC/PHI içermez (birim testle kilitli) — ham belge metni ASLA loglanmaz.
+  if (dogrulama) {
+    await recordAccess({
+      actor: user, action: "DOCTOR_DOC_AUTOVERIFY", resourceType: "DOCTOR", resourceId: doctorId,
+      subjectUserId: user.id,
+      // `tanindi=EVET sonuc=GECMEDI` = belge doğru türde ama ad tutmuyor → en şüpheli hâl, zincirde
+      // ayrıca görünür olmalı (incelemeci ve denetim bunu arar).
+      // `cevrimici`: devlet teyidinin sonucu (yoksa "-"). GECERSIZ = devlet iddiayı desteklemedi —
+      // zincirde en ağır sinyal. Her iki `reason` da TC/PHI içermez (birim testle kilitli).
+      detail: `belge=${type} sonuc=${kabul ? "GECTI" : "GECMEDI"} offline=${dogrulama.ok ? "OK" : "RET"} tanindi=${dogrulama.tanindi ? "EVET" : "HAYIR"} cevrimici=${cevrim?.durum ?? "-"} neden=${cevrim && cevrim.durum !== "KAPALI" ? cevrim.reason : dogrulama.reason}`,
+      ...reqMeta(req),
+    });
+  }
 
   // Kapılar ayrı damgalanır: activated = Aşama 2 (klinik), doctorium = Aşama 1 (CHAMBER ∨ öğrenci ∨
   // aktivasyon). refreshStudentCert SON çağrılır — dönüşü her üç damganın güncel halini görür.
   const activated = await refreshActivation(doctorId);
   await refreshChamberLetter(doctorId);
   const doctorium = await refreshStudentCert(doctorId);
+
+  // Zorunlu belge otomatik doğrulanıp hesap AÇILDIYSA müjdele (insan onayı beklemedi).
+  if (type === "DIPLOMA" && kabul && activated) {
+    await notifyUser(user.id, {
+      type: "DOCTOR_ACTIVATED",
+      title: "✅ Hesabınız aktifleşti",
+      body: "e-Devlet barkodlu belgeniz doğrulandı — klinik panelleriniz açıldı.",
+      href: "/doktor",
+    });
+  }
+
   // base64 yükü yanıtta geri gönderme — yalnız meta + güncel kapı durumları
   return NextResponse.json(
-    { id: doc.id, type: doc.type, label: doc.label, mimeType: doc.mimeType, activated, doctorium },
+    {
+      id: doc.id, type: doc.type, label: doc.label, mimeType: doc.mimeType,
+      status: doc.status, verifiedSource: doc.verifiedSource, activated, doctorium,
+      // İstemci "otomatik geçti mi, neden geçmedi" mesajını gösterir (PHI içermez).
+      // Çevrimiçi teyit koştuysa onun gerekçesi esastır (devletin cevabı > yerel okuma).
+      edevlet: dogrulama
+        ? { ok: kabul, reason: cevrim && cevrim.durum !== "KAPALI" ? cevrim.reason : dogrulama.reason }
+        : null,
+    },
     { status: 201 },
   );
 }

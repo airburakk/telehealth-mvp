@@ -90,7 +90,12 @@ export default async function DoctorOnboardingPage({
   // Yüklü mesleki belgelerin meta listesi (içerik DÖNMEZ) + MMSS metadata pre-fill.
   const allDocs = await db.doctorDocument.findMany({
     where: { doctorId: dbUser!.doctorId! },
-    select: { id: true, type: true, label: true, mimeType: true },
+    // v6.119: status/verifiedSource/reviewNote de gelir — doktor belgesinin hangi hâlde olduğunu
+    // (e-Devlet ile doğrulandı / incelemede / yetersiz) kartın üstünde görür.
+    select: {
+      id: true, type: true, label: true, mimeType: true,
+      status: true, verifiedSource: true, reviewNote: true,
+    },
     orderBy: { createdAt: "desc" },
   });
   // Aşama ayrımı: CHAMBER (tabip odası yazısı) Aşama 1 kartına, kalanı Aşama 2 belge bölümüne.

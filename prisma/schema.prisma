@@ -579,8 +579,8 @@ model CaseDocument {
   @@index([caseId])
 }
 
-/// M5 — Hekim mesleki belgesi (diploma, MMSS poliçesi, sertifika, akademik çalışma).
-/// Diploma + MMSS ZORUNLU (yüklemeden hesap aktifleşmez); sertifika/akademik ihtiyari.
+/// M5 — Doktor mesleki belgesi (diploma, MMSS poliçesi, sertifika, akademik çalışma).
+/// Diploma ZORUNLU (v6.105'ten beri MMSS İHTİYARİ); sertifika/akademik ihtiyari.
 /// İçerik base64 data URI + at-rest şifreli (CaseDocument deseni; gerçek object storage TODO).
 model DoctorDocument {
   id        String   @id @default(cuid())
@@ -592,11 +592,23 @@ model DoctorDocument {
   content   String // base64 data URI — at-rest şifreli (encryptField)
   createdAt DateTime @default(now())
   /// İnceleme durumu (Faz 2, 2026-08-14): PENDING (yüklendi, incelenmedi) | ACCEPTED | REJECTED.
-  /// Karar yalnız görünürlük+bildirim içindir — AKTİVASYONA DOKUNMAZ (refreshActivation belge
-  /// varlığına bakar; reddedilen tekil belge yenisi yüklenince zaten satırıyla değişir → PENDING).
+  /// 🔴 v6.119 (2026-08-19) — ARTIK AKTİVASYONA DOKUNUR (eski "dokunmaz" notu SÜPERSEDE):
+  /// zorunlu belge (DIPLOMA) yalnız ACCEPTED iken Doctor.activatedAt damgalanır (canActivate).
+  /// ACCEPTED iki yoldan gelir: (a) e-Devlet barkod okuması otomatik geçti · (b) incelemeci onayladı.
+  /// Yeni sürüm yüklenince satır PENDING'e döner → kapı yeniden kapanır (kasıtlı: tazelenen belge
+  /// yeniden doğrulanır).
   status     String  @default("PENDING")
   /// REJECTED gerekçesi (incelemeci yazar, doktora bildirimle gider). ⚖️ Şablon dili v6.91 paketinde.
   reviewNote String?
+  /// e-Devlet barkodlu belge doğrulaması (v6.119) — lib/edevlet-belge.ts. Barkod belgenin METİN
+  /// KATMANINDAN sunucuda okunur; turkiye.gov.tr'ye istek YAPILMAZ (hukuki karar — modül başlığı).
+  /// Kod tek başına belgeyi açmaz (resmî doğrulama ekranı ayrıca TC ister, o bizde YOK) ama yine
+  /// de at-rest şifreli (mmssPolicyNo deseni — E2EE Faz 1).
+  verifyCode     String?
+  /// Doğrulamanın KAYNAĞI: EDEVLET (barkod otomatik) | MANUAL (incelemeci) | LEGACY (v6.119 öncesi
+  /// aktif doktorların migration damgası — İNCELENMEDİ; admin ekranında ayrı rozetle görünür).
+  verifiedSource String?
+  verifiedAt     DateTime?
 
   @@index([doctorId])
 }

@@ -1,7 +1,9 @@
 // M5 — Doktor hesap aktivasyon kapısı.
-// Zorunlu mesleki belge (v6.105'ten beri YALNIZ Tıp Diploması — aşağıdaki karar notu) yüklenmeden
-// doktor klinik panellere erişemez. Koşul sağlanınca Doctor.activatedAt damgalanır; eksilirse
-// damga geri alınır (gate yeniden devreye girer). MMSS (Mesleki Mali Sorumluluk Sigortası)
+// Zorunlu mesleki belge (v6.105'ten beri YALNIZ Tıp Diploması — aşağıdaki karar notu) yüklenip
+// 🔴 DOĞRULANMADAN doktor klinik panellere erişemez (v6.119 sıkılaşması: eskiden yüklemek yeterdi).
+// Koşul sağlanınca Doctor.activatedAt damgalanır; eksilirse damga geri alınır (gate yeniden devreye
+// girer). Doğrulama iki yoldan gelir — e-Devlet barkodu otomatik (lib/edevlet-belge.ts, DIŞ İSTEK
+// YOK) veya incelemeci onayı. Tam gerekçe: vault wiki/kavramlar/doktor-kimlik-dogrulama.md. MMSS (Mesleki Mali Sorumluluk Sigortası)
 // İHTİYARİ: yüklenirse teminat limiti M3 Katman 3 malpraktis ek-prim hesabının girdisidir.
 import { db } from "@/lib/db";
 
@@ -105,27 +107,58 @@ export function mmssComplete(d: MmssMeta): boolean {
   return !!d.mmssInsurer && !!d.mmssPolicyNo && typeof d.mmssCoverageLimit === "number" && d.mmssCoverageLimit > 0;
 }
 
-// Zorunlu belge dosyaları (REQUIRED_DOC_TYPES — v6.105'ten beri yalnız diploma) yüklü mü?
+// Zorunlu belge dosyaları (REQUIRED_DOC_TYPES — v6.105'ten beri yalnız diploma) YÜKLÜ mü?
+// ⚠️ Bu VARLIK sorusudur, onay sorusu DEĞİL — onboarding'i tamamlamanın şartıdır (doktor belgesini
+// yükleyince onboarding biter; klinik kapı ayrıca ONAY ister → canActivate). İkisini karıştırma:
+// hasRequiredDocs'u klinik kapı olarak kullanmak v6.119 sıkılaşmasını sessizce geri alır.
 export function hasRequiredDocs(docs: { type: string }[]): boolean {
   const types = new Set(docs.map((x) => x.type));
   return REQUIRED_DOC_TYPES.every((t) => types.has(t));
 }
 
-// Hesap aktif edilebilir mi (damga atılabilir): zorunlu belgeler.
-// v6.105: mmssComplete şartı KALKTI (MMSS ihtiyari). İmzadaki `mmss` parametresi bilinçli
-// KORUNDU — çağıranlar (refreshActivation, onboarding) değişmeden çalışsın ve şartı geri
-// koymak tek satır olsun. Kullanılmadığı için `_mmss` adıyla işaretlendi.
-export function canActivate(docs: { type: string }[], _mmss: MmssMeta): boolean {
-  return hasRequiredDocs(docs);
+// Zorunlu belgelerin hepsi ONAYLI mı (v6.119)?
+// ⚠️ Parametre tipi `status`ü ZORUNLU tutar (kasıtlı — deletionLockedAt/CaseRef deseni): çağıran
+// select'ine status eklemeyi unutursa DERLEME KIRILIR, kapı sessizce "onaysız da geçer"e dönmez.
+export function hasAcceptedRequiredDocs(docs: { type: string; status: string }[]): boolean {
+  return REQUIRED_DOC_TYPES.every((t) => docs.some((d) => d.type === t && d.status === "ACCEPTED"));
 }
 
-// Eksik zorunlu adımları döndür (UI'da yönlendirme metni için).
+// Hesap aktif edilebilir mi (damga atılabilir): zorunlu belgeler + ONAY.
+// 🔴 v6.119 (kullanıcı kararı 2026-08-19): belge VARLIĞI artık yetmez, ACCEPTED olması gerekir.
+// ACCEPTED iki yoldan gelir: (a) e-Devlet barkod okuması otomatik geçti (lib/edevlet-belge.ts —
+// dış istek YOK) · (b) incelemeci /admin/doktor-onay'dan onayladı. Çoğu doktor (a) ile hiç beklemez.
+// v6.105: mmssComplete şartı KALKTI (MMSS ihtiyari). İmzadaki `mmss` parametresi bilinçli
+// KORUNDU — çağıranlar değişmeden çalışsın ve şartı geri koymak tek satır olsun.
+// 🔙 Geri alma (kapıyı gevşetmek): gövdeyi `hasRequiredDocs(docs)`e çevirmek yeterli.
+export function canActivate(docs: { type: string; status: string }[], _mmss: MmssMeta): boolean {
+  return hasAcceptedRequiredDocs(docs);
+}
+
+// Eksik zorunlu adımları döndür (UI'da yönlendirme metni için) — VARLIK bazlı.
 // v6.105: MMSS satırları çıkarıldı — ihtiyari bir belge "eksik zorunlu adım" olarak listelenemez.
+// ⚠️ v6.119: burası ONAY durumuna BAKMAZ (bilinçli) — "diploman eksik" ile "diploman incelemede"
+// farklı mesajlardır; ikincisi activationState() ile anlatılır, yoksa doktor yüklediği belgeyi
+// durmadan yeniden yüklemeye çalışır.
 export function missingSteps(docs: { type: string }[], _mmss: MmssMeta): string[] {
   const types = new Set(docs.map((x) => x.type));
   const out: string[] = [];
   if (!types.has("DIPLOMA")) out.push("Tıp diploması");
   return out;
+}
+
+/** Doktorun klinik aktivasyonunun UI'da anlatılacak hâli (v6.119). */
+export type ActivationState = "MISSING" | "PENDING_REVIEW" | "REJECTED" | "ACTIVE";
+
+// Zorunlu belgenin (diploma) durumundan UI mesaj hâlini türetir (saf).
+// MISSING = hiç yüklenmedi · PENDING_REVIEW = yüklendi, henüz doğrulanmadı · REJECTED = yetersiz
+// bulundu · ACTIVE = onaylı. REJECTED, PENDING'e göre ÖNCELİKLİ: doktor "inceleniyor" sanıp
+// boşuna beklememeli, yeniden yüklemesi gerektiğini görmeli.
+export function activationState(docs: { type: string; status: string }[]): ActivationState {
+  const diplomas = docs.filter((d) => d.type === "DIPLOMA");
+  if (diplomas.length === 0) return "MISSING";
+  if (diplomas.some((d) => d.status === "ACCEPTED")) return "ACTIVE";
+  if (diplomas.some((d) => d.status === "REJECTED")) return "REJECTED";
+  return "PENDING_REVIEW";
 }
 
 // ── M5 Kayıt — ilk-onboarding ek zorunlulukları (yalnız self-signup doktor ilk kez tamamlarken) ──
@@ -158,9 +191,12 @@ type OnboardingData = MmssMeta & {
   branch: string; city: string;
 };
 
-// Onboarding tamamlanabilir mi: zorunlu belgeler + ≥1 işlem + FHIR qualification + kimlik (branş/şehir).
+// Onboarding tamamlanabilir mi: zorunlu belgeler YÜKLÜ + ≥1 işlem + FHIR qualification + kimlik.
+// 🔴 v6.119: burada canActivate DEĞİL hasRequiredDocs kullanılır (bilinçli ayrım). Aksi hâlde
+// doktor, diploması insan incelemesinden geçene kadar onboarding'i BİTİREMEZ ve kayıt akışında
+// asılı kalırdı. Onboarding "belgeni yükledin mi", klinik kapı "belgen doğrulandı mı" sorar.
 export function canCompleteOnboarding(docs: { type: string }[], d: OnboardingData): boolean {
-  return canActivate(docs, d) && hasProcedures(d.procedures) && hasQualification(d) && !!d.branch.trim() && !!d.city.trim();
+  return hasRequiredDocs(docs) && hasProcedures(d.procedures) && hasQualification(d) && !!d.branch.trim() && !!d.city.trim();
 }
 
 // Onboarding için eksik adımlar (UI yönlendirme metni).
@@ -179,7 +215,8 @@ export function missingOnboardingSteps(docs: { type: string }[], d: OnboardingDa
 // Döndürür: hesap şu an aktif mi.
 export async function refreshActivation(doctorId: string): Promise<boolean> {
   const [docs, doc] = await Promise.all([
-    db.doctorDocument.findMany({ where: { doctorId }, select: { type: true } }),
+    // v6.119: status ŞART — canActivate onaylı belge ister (tip imzası bunu derlemede zorlar).
+    db.doctorDocument.findMany({ where: { doctorId }, select: { type: true, status: true } }),
     db.doctor.findUnique({
       where: { id: doctorId },
       select: { mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true, activatedAt: true },

@@ -79,6 +79,17 @@ export function OnboardingForm({
   const [err, setErr] = useState("");
   const [missing, setMissing] = useState<string[]>([]);
 
+  // v6.119 — Diploma doğrulama hâli (onay 2026-08-19): sayfa yüklenirkenki sunucu verisinden
+  // türetilir (dönen doktor senaryosu daima taze yükleme; anlık yükleme geri bildirimi
+  // DoctorDocuments'ın kendi mesajıdır). Mantık lib/doctor-activation activationState() ile
+  // AYNI olmalı — lib db import ettiği için client'a alınamıyor, iki yer uyumlu tutulur.
+  const diplomaDocs = initialDocs.filter((d) => d.type === "DIPLOMA");
+  const diplomaState =
+    diplomaDocs.length === 0 ? "MISSING"
+    : diplomaDocs.some((d) => d.status === "ACCEPTED") ? "ACTIVE"
+    : diplomaDocs.some((d) => d.status === "REJECTED") ? "REJECTED"
+    : "PENDING_REVIEW";
+
   async function finish() {
     setSaving(true);
     setErr("");
@@ -169,6 +180,29 @@ export function OnboardingForm({
           erişiminiz beklemez.
         </p>
       </div>
+
+      {/* v6.119 — Bekleme hâli (onay 2026-08-19): diploma yüklendi ama henüz doğrulanmadı →
+          doktor "neden hâlâ kapalı" diye belgesini tekrar tekrar yüklemesin; Doctorium yolu
+          (Aşama 1 tabip odası yazısı) açıkça gösterilir. Kullanıcı kararı: doğrulanamayan
+          belgeye kapı AÇILMAZ — Doctorium chamberLetterAt ile açılır. */}
+      {diplomaState === "PENDING_REVIEW" && (
+        <div className="mt-4 rounded-xl bg-amber-500/10 px-4 py-3 text-xs text-amber-300 ring-1 ring-amber-400/20">
+          <p className="flex items-center gap-1.5 font-semibold">
+            <ShieldAlert size={14} className="shrink-0" /> Diplomanız incelemede.
+          </p>
+          <p className="mt-0.5 leading-relaxed">
+            Doğrulandığında klinik panelleriniz açılacak. Doctor<span className="doctorium-ium">ium</span>&apos;a
+            şimdi girmek için <strong>Aşama 1&apos;den tabip odası üye yazınızı</strong> yükleyebilirsiniz.
+          </p>
+        </div>
+      )}
+      {diplomaState === "REJECTED" && (
+        <div className="mt-4 rounded-xl bg-red-500/10 px-4 py-3 text-xs text-red-300 ring-1 ring-red-400/25">
+          <p className="flex items-center gap-1.5 font-semibold">
+            <ShieldAlert size={14} className="shrink-0" /> Diplomanız yetersiz bulundu — lütfen yeniden yükleyin.
+          </p>
+        </div>
+      )}
 
       {/* ── 1. Mesleki belgeler — hesap aktivasyon kapısı. İLK SIRADA (kullanıcı kararı
              2026-08-17: "ilk yapılması gereken o"); önceki düzende en alttaydı. ── */}

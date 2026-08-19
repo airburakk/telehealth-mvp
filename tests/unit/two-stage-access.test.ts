@@ -99,14 +99,15 @@ describe("belge tipleri: CHAMBER/STUDENT_CERT kabul edilir ama Aşama 2'ye girdi
   });
   it("yalnız CHAMBER/STUDENT_CERT yüklü doktor klinik AKTİVE OLMAZ", () => {
     const fullMmss = { mmssInsurer: "X", mmssPolicyNo: "P1", mmssCoverageLimit: 1_000_000 };
-    expect(canActivate([{ type: "CHAMBER" }], fullMmss)).toBe(false);
-    expect(canActivate([{ type: "STUDENT_CERT" }], fullMmss)).toBe(false);
+    expect(canActivate([{ type: "CHAMBER", status: "ACCEPTED" }], fullMmss)).toBe(false);
+    expect(canActivate([{ type: "STUDENT_CERT", status: "ACCEPTED" }], fullMmss)).toBe(false);
   });
-  it("v6.105: diploma TEK BAŞINA aktive eder — MMSS hiç yokken bile (kapı gevşedi)", () => {
+  it("v6.105+v6.119: ONAYLI diploma tek başına aktive eder — MMSS hiç yokken bile", () => {
     const noMmss = { mmssInsurer: null, mmssPolicyNo: null, mmssCoverageLimit: null };
-    expect(canActivate([{ type: "DIPLOMA" }], noMmss)).toBe(true);
+    expect(canActivate([{ type: "DIPLOMA", status: "ACCEPTED" }], noMmss)).toBe(true);
     // ...ama diploma YOKSA MMSS'nin tam olması kurtarmaz (zorunlu belge hâlâ zorunlu).
-    expect(canActivate([{ type: "MMSS" }], { mmssInsurer: "X", mmssPolicyNo: "P1", mmssCoverageLimit: 1_000_000 })).toBe(false);
+    const fullMmss = { mmssInsurer: "X", mmssPolicyNo: "P1", mmssCoverageLimit: 1_000_000 };
+    expect(canActivate([{ type: "MMSS", status: "ACCEPTED" }], fullMmss)).toBe(false);
   });
   it("hasChamberLetter/hasStudentCert yalnız kendi tipini sayar", () => {
     expect(hasChamberLetter([{ type: "DIPLOMA" }, { type: "MMSS" }])).toBe(false);
