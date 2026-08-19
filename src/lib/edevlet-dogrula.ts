@@ -299,6 +299,11 @@ export async function edevletDogrula(
     return { durum: "GECERSIZ", reason: `e-Devlet aslı bu iddiayı desteklemedi — ${sonuc.reason}`, sonuc, barcode: sonuc.barcode };
   } catch (e) {
     // Zaman aşımı dahil HER hata fail-closed → BELIRSIZ (asla fırlatma, asla kapı açma).
+    // 🔎 Teşhis: EDEVLET_DEBUG=1 iken hata sınıfı log'a düşer (PHI/TC İÇERMEZ — yalnız mesaj).
+    // Üretimde kapalı: `reason` audit'e gittiği için oraya ham hata metni KOYULMAZ.
+    if (process.env.EDEVLET_DEBUG === "1") {
+      console.warn("[edevlet-dogrula] hata:", e instanceof Error ? `${e.name}: ${e.message}` : e);
+    }
     const aborted = e instanceof Error && (e.name === "AbortError" || ac.signal.aborted);
     return belirsiz(aborted ? "15 sn zaman aşımı — doğrulama tamamlanamadı" : "doğrulama sırasında ağ/işlem hatası", barkodTemiz);
   } finally {
