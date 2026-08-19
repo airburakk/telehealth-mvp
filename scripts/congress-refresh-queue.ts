@@ -49,13 +49,24 @@ async function main() {
     select: {
       id: true, title: true, url: true, startDate: true, abstractDeadline: true,
       earlyBirdDeadline: true, confidence: true, verifiedAt: true, organizer: true, scope: true,
+      branchSlugs: true,
     },
     orderBy: { startDate: "asc" },
   });
 
+  // Dernek ipucu (v6.129): kongre-özel domainler HER YIL ölür (tkdcd2026.org), dernek adresi
+  // kalıcıdır — "sonraki edisyon" araştırmasının doğru başlangıç noktası odur. Ajan artık
+  // hangi resmî siteye bakacağını tahmin etmek zorunda değil.
+  const { associationsForBranch } = await import("../src/lib/association-sources");
+  const derneklerFor = (branchSlugsJson: string): string[] => {
+    let slugs: string[] = [];
+    try { slugs = JSON.parse(branchSlugsJson || "[]"); } catch { /* bozuk JSON = ipucu yok */ }
+    return [...new Set(slugs.flatMap((s) => associationsForBranch(s).map((a) => `${a.name} — ${a.site}`)))];
+  };
+
   const queue: {
     tier: Tier; id: string; title: string; url: string | null; organizer: string | null;
-    reason: string; lastVerifiedDaysAgo: number | null; ask: string;
+    reason: string; lastVerifiedDaysAgo: number | null; ask: string; associations?: string[];
   }[] = [];
 
   for (const c of rows) {
@@ -90,9 +101,11 @@ async function main() {
     const lastVerifiedDaysAgo = c.verifiedAt ? daysBetween(now, c.verifiedAt) : null;
     const due = ALL || lastVerifiedDaysAgo === null || lastVerifiedDaysAgo >= TIER_INTERVAL_DAYS[tier];
     if (due) {
+      const dernekler = derneklerFor(c.branchSlugs);
       queue.push({
         tier, id: c.id, title: c.title, url: c.url, organizer: c.organizer,
         reason, lastVerifiedDaysAgo, ask,
+        ...(dernekler.length ? { associations: dernekler } : {}),
       });
     }
   }
@@ -102,13 +115,14 @@ async function main() {
   // ASLA göremez. Kaynağı ayrıca okumazsak gerçek ve düzenli kongreler sessizce takipsiz kalır.
   const kaynak = JSON.parse(
     readFileSync(join(process.cwd(), "prisma", "seed-data", "congresses.json"), "utf-8"),
-  ) as { name: string; edition?: string | null; organizer?: string | null; officialUrl?: string | null; nextStart?: string | null; verifiedAt?: string | null }[];
+  ) as { name: string; branchSlug?: string | null; edition?: string | null; organizer?: string | null; officialUrl?: string | null; nextStart?: string | null; verifiedAt?: string | null }[];
   const tarihsizGorulen = new Set<string>();
   for (const r of kaynak) {
     if (r.nextStart) continue;
     const ad = `${r.edition ? `${r.edition} ` : ""}${r.name}`.trim();
     if (tarihsizGorulen.has(ad)) continue; // çok-branşlı satırlar aynı kongredir
     tarihsizGorulen.add(ad);
+    const dernekler = derneklerFor(JSON.stringify(r.branchSlug ? [r.branchSlug] : []));
     queue.push({
       tier: "tarihsiz",
       id: `kaynak:${r.name}`,
@@ -118,6 +132,7 @@ async function main() {
       reason: "sonraki edisyon DUYURULMAMIŞ — kaynakta var, DB'de yok",
       lastVerifiedDaysAgo: r.verifiedAt ? daysBetween(now, new Date(`${r.verifiedAt}T00:00:00Z`)) : null,
       ask: "Sonraki edisyonun tarihi ilan edildi mi? İlan edildiyse nextStart/nextEnd + bildiri ve erken kayıt tarihleri.",
+      ...(dernekler.length ? { associations: dernekler } : {}),
     });
   }
 
@@ -142,6 +157,8 @@ async function main() {
       const age = q.lastVerifiedDaysAgo === null ? "hiç" : `${q.lastVerifiedDaysAgo}g önce`;
       console.log(`   · ${q.title.slice(0, 62)}`);
       console.log(`     ${q.reason} · son doğrulama ${age}${q.url ? ` · ${q.url}` : ""}`);
+      // Kongre-özel domain ölmüşse ajanın gideceği kalıcı adres (v6.129).
+      if (q.associations?.length) console.log(`     🏛️  dernek: ${q.associations.join(" · ")}`);
     }
     console.log("");
   }

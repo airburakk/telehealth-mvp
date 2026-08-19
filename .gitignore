@@ -56,3 +56,6 @@ next-env.d.ts
 
 # Claude Code oturum dizini (launch.json + worktree kopyalari; .env icerebilir) - repoya girmez
 .claude/
+
+# Dernek nobetcisi durum dosyasi (v6.129) - kosu ciktisi, Actions cache ile tasinir
+.association-watch-state.json

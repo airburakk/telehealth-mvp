@@ -20,7 +20,7 @@ import { BRANCHES } from "./triage";
 import {
   fetchGazetteToday, ingestGazetteItems, ingestOhsad, ingestTtb,
   ingestFdaRecalls, ingestTrials, ingestWho, describeFetchError,
-  ingestIstanbulTabip, ingestRss, RSS_SOURCES,
+  ingestIstanbulTabip, ingestRss, RSS_SOURCES, ASSOCIATION_RSS_SOURCES,
 } from "./doctorium-sources";
 import { ingestEuropePmcAll, ingestDoajAll } from "./doctorium-academic-sources";
 
@@ -275,6 +275,11 @@ export async function ingestDoctorium(): Promise<IngestResult> {
     ["europepmc", () => ingestEuropePmcAll()],
     ["doaj", () => ingestDoajAll()],
     ...RSS_SOURCES.map((s): [string, () => Promise<[number, number]>] => [s.source, () => ingestRss(s)]),
+    // Uzmanlık dernekleri (v6.129, kullanıcı isteği 2026-08-19) — doktorun KENDİ branşındaki
+    // otoritenin duyurusu. Aynı ingestRss yolu; farkı kaynak-bazlı süzgeç (isAssociationRelevant)
+    // ve branchSlugs etiketi. 2026-08-19 ölçümünde 33 dernekten yalnız 5'i RSS veriyor —
+    // kalanı haftalık nöbetçi izler (scripts/association-watch.mjs).
+    ...ASSOCIATION_RSS_SOURCES.map((s): [string, () => Promise<[number, number]>] => [s.source, () => ingestRss(s)]),
   ];
   for (const [name, fn] of collectors) {
     try {

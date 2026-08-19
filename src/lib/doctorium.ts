@@ -167,8 +167,11 @@ export function categoryLabel(k: string | null | undefined): string | null {
 // ⚠️ YENİ SEKTÖREL KAYNAK EKLERKEN buraya da ekle — birim test (doctorium-filtreler)
 // ingest kaynak setiyle bu iki listenin birleşimini karşılaştırır; unutulan kaynak
 // "Tümü"nde görünüp iki filtrede de kaybolurdu (sessiz kayıp).
+// v6.129 (2026-08-19): uzmanlık dernekleri eklendi — hepsi ULUSAL (Türkiye dernekleri).
+// Kaynak anahtarları lib/association-sources.ts ASSOCIATIONS slug'larıyla AYNI olmalı;
+// sözleşme testi (doctorium-filtreler) iki listeyi de hizada tutar.
 export const SECTOR_SOURCE_SCOPES: Record<"ulusal" | "uluslararasi", string[]> = {
-  ulusal: ["ttb", "ohsad", "istabip"],
+  ulusal: ["ttb", "ohsad", "istabip", "klimik", "tjod", "tatd", "tgd-gastro", "tgcd"],
   uluslararasi: ["who", "medscape", "medicalxpress"],
 };
 
