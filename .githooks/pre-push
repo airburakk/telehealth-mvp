@@ -1,0 +1,15 @@
+#!/bin/sh
+# PUSH ÖNCESİ ÜRETİM KAPISI (2026-08-20).
+#
+# Bu depoda `git push` = Vercel'de otomatik üretim dağıtımı. Üretimde bekleyen bir
+# migration varken kod push'lamak üretimi düşürür (2026-08-20, P2022, ~4 dk kesinti).
+# Kanca bunu ENGELLER — hatırlamaya bağlı kalmaz.
+#
+# Kurulum (depo başına bir kez):  git config core.hooksPath .githooks
+# Acil atlatma:                   SKIP_PREFLIGHT=1 git push
+#
+# ⚠️ Kanca versiyonlanabilsin diye .git/hooks yerine .githooks altında durur; bu yüzden
+#    yeni bir çalışma kopyasında yukarıdaki `git config` satırı bir kez çalıştırılmalıdır
+#    (DEPLOY.md Adım 2'de yazılı).
+
+node scripts/preflight-push.mjs || exit 1

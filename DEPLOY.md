@@ -71,6 +71,24 @@ npm run db:seed             # demo veri: kullanıcılar + 30 doktor + 20 vaka + 
 > `20260711010000_registry_fingerprint_field_updates` bayattı (ikisinde de şema doğruydu, yalnız
 > muhasebe kaydı eskiydi) → hizalandı; v6.48 migration'ı bu yüzden bloke olacaktı.
 
+> 🔴 **PUSH = ÜRETİM DAĞITIMI. Bekleyen prod migration varken kod push'lanmaz (2026-08-20).**
+> O gün v6.132 migration'ı yalnız DEV'e uygulanmışken kod push'landı; Vercel otomatik dağıttı,
+> üretim kodu var olmayan kolonu okudu → `/doktor` + `/doktor/doctorium` **P2022** ile çöktü
+> (~4 dk kesinti). Aşağıdaki "migration-önce" ifadesi **commit sırası değil, UYGULAMA sırası**
+> demektir: migration üretime uygulanmadan kod gönderilmez.
+>
+> **Korkuluk kuruldu** — artık hatırlamaya bağlı değil:
+> ```bash
+> git config core.hooksPath .githooks   # çalışma kopyası başına BİR KEZ
+> ```
+> `.githooks/pre-push` → `node scripts/preflight-push.mjs`: üretimde bekleyen migration varsa
+> **push'u durdurur** (exit 1) ve doğru sırayı yazar. Veritabanına ulaşılamazsa da durdurur
+> (fail-closed: "doğrulayamadım" ≠ "temiz"; Neon soğuk başlangıcı için bir kez yeniden dener).
+> Bilinçli atlatma: `SKIP_PREFLIGHT=1 git push`. `PROD_*` tanımlı değilse (CI, yeni geliştirici)
+> kapı kendini devre dışı bırakır.
+> 🪤 Betik hedef endpoint'i ekrana yazar — `.env`'i regex'le okumak `PROD_DATABASE_URL` satırına
+> da uyup yanlış veritabanını "temiz" gösterebilir; bu yüzden dotenv kullanılır.
+
 > **Şema yönetimi migration-tabanlıdır** (2026-07-03'ten beri; `prisma/migrations/` —
 > `20260703000000_baseline` mevcut üretim şemasını temsil eder, üretime `migrate resolve
 > --applied` ile işaretlenmiştir). **Üretime şema değişikliği akışı:**
