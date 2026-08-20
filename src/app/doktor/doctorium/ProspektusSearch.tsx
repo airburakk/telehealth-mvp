@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, Loader2, Pill, Search } from "lucide-react";
+import { AlertTriangle, ChevronDown, Loader2, Pill, Search } from "lucide-react";
 
 interface Result {
   id: string | null;
@@ -48,15 +48,6 @@ export function ProspektusSearch() {
         <Pill size={16} className="text-emerald-300" /> Dijital prospektüs araması
       </h2>
 
-      {/* Bu uyarı KALDIRILAMAZ: veri ABD ruhsatına ait; Türkiye KÜB/KT farklı olabilir. */}
-      <p className="mt-2 flex items-start gap-2 rounded-xl border border-amber-400/25 bg-amber-500/10 px-3 py-2 text-[11px] leading-relaxed text-amber-200">
-        <AlertTriangle size={14} className="mt-px shrink-0" />
-        Sonuçlar <strong>FDA (ABD) onaylı ürün bilgisidir</strong>. Türkiye ruhsatındaki Kısa Ürün
-        Bilgisi (KÜB) / Kullanma Talimatı (KT) endikasyon, doz ve uyarılar açısından FARKLI olabilir —
-        reçeteleme kararında <strong>TİTCK onaylı KÜB'ü esas alın</strong>. Metinler özgün dilinde
-        (İngilizce) gösterilir; çeviri yapılmaz.
-      </p>
-
       <form onSubmit={search} className="mt-3 flex gap-2">
         <input
           value={q}
@@ -70,6 +61,30 @@ export function ProspektusSearch() {
           {busy ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />} Ara
         </button>
       </form>
+
+      {/*
+        UYARI AÇILIR KAPANIR (kullanıcı isteği 2026-08-19) — ama KRİTİK CÜMLE DAİMA GÖRÜNÜR.
+        Bu bir güvenlik uyarısıdır: veri ABD ruhsatına ait, Türkiye KÜB/KT'si farklı olabilir.
+        Tamamen gizlenirse doktor FDA etiketine bakıp Türkiye endikasyonu sanabilir.
+        Çözüm: <summary> satırının KENDİSİ iddiayı taşır ("FDA (ABD) ürün bilgisidir"),
+        ayrıntı açılır. 🔴 Bu satırı kapanabilir hâle getirme — yalnız altındaki detay katlanır.
+        Uyarı ayrıca her SONUÇ kartında "FDA · ABD" rozetiyle tekrar eder.
+      */}
+      <details className="group mt-2 rounded-xl border border-amber-400/25 bg-amber-500/10">
+        <summary className="flex cursor-pointer list-none items-start gap-2 px-3 py-2 text-[11px] leading-relaxed text-amber-200">
+          <AlertTriangle size={14} className="mt-px shrink-0" />
+          <span className="flex-1">
+            Sonuçlar <strong>FDA (ABD) onaylı ürün bilgisidir</strong> — Türkiye ruhsatı farklı olabilir.
+          </span>
+          <ChevronDown size={14} className="mt-px shrink-0 transition-transform group-open:rotate-180" />
+        </summary>
+        <p className="px-3 pb-2.5 pl-[34px] text-[11px] leading-relaxed text-amber-200/90">
+          Türkiye ruhsatındaki Kısa Ürün Bilgisi (KÜB) / Kullanma Talimatı (KT) endikasyon, doz ve
+          uyarılar açısından FARKLI olabilir — reçeteleme kararında{" "}
+          <strong>TİTCK onaylı KÜB&apos;ü esas alın</strong>. Metinler özgün dilinde (İngilizce)
+          gösterilir; çeviri yapılmaz.
+        </p>
+      </details>
 
       {err && <p className="mt-2 text-xs text-rose-300">{err}</p>}
       {rows?.length === 0 && <p className="mt-3 text-xs text-[var(--c-ink-2)]">Bu ada ait FDA etiketi bulunamadı.</p>}

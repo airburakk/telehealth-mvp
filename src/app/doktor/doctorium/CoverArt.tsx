@@ -85,6 +85,16 @@ function branchIconOf(item: Pick<FeedItem, "module" | "branchSlugs">): { Icon: B
   return null;
 }
 
+/**
+ * CoverArt "thumb" GERÇEKTEN bir sembol çizecek mi? ArticleCard künyesi buna göre kaynak
+ * plakasını basar; ikisi birden çizilirse künye bozulur, ikisi de çizilmezse plaka kaybolur.
+ * ⚠️ Kopya mantık YAZMA: branş anahtarının resolveBranchKey ile ÇÖZÜLMESİ de şarttır
+ * (akademik + branchSlugs dolu olduğu hâlde hiçbiri çözülmeyebilir).
+ */
+export function hasThumb(item: Pick<FeedItem, "module" | "branchSlugs">): boolean {
+  return branchIconOf(item) !== null;
+}
+
 /** İçerik → sembol dosyası (branş ikonu OLMAYAN her şey). Bilinmeyen modül sektörele düşer. */
 export function symbolSrc(item: Pick<FeedItem, "module" | "kind">): string {
   if (item.module === "akademik") return "/doctorium/akademik-genel.webp";
@@ -101,23 +111,50 @@ export function symbolSrc(item: Pick<FeedItem, "module" | "kind">): string {
   return "/doctorium/sektorel.webp";
 }
 
-/** Band künye damgası: içtihatta esas no; kalanında kaynak adı (kelime sınırında kesilir). */
+/**
+ * Band künye damgası: içtihatta esas no; kalanında kaynak adı (kelime sınırında kesilir).
+ *
+ * 🔴 BÜYÜK HARFE ÇEVİRME YOK (2026-08-20, kullanıcı bildirimi + korpus ölçümü). İki hata birden
+ * vardı ve ikincisi çözümsüzdü:
+ *
+ *  1) Kesme bağlaçla bitiyordu: "Australian Journal of Psychology" → "AUSTRALIAN JOURNAL OF".
+ *     Korpusta 25 kaynakta 115 makaleyi etkiliyordu ("FRONTIERS IN", "JOURNAL OF THE",
+ *     "STEM CELL RESEARCH &"). Artık sondaki bağlaç/ilgeç atılır ve kesildiği "…" ile söylenir.
+ *
+ *  2) `toUpperCase()` Türkçe'de i→I yapıyordu: "Türk Tabipleri Birliği" → "TÜRK TABIPLERI
+ *     BIRLIĞI" (821 makale). Ama `toLocaleUpperCase("tr")` de çözüm DEĞİL: aynı kaynak anahtarı
+ *     (trdizin) hem "Klinik Psikiyatri Dergisi" hem "Turkish Journal of Urology" taşıyor —
+ *     Türkçe kural ikincisini "TURKİSH" yapardı. Dil metadatası olmadan hiçbir sezgisel ikisini
+ *     birden doğru yapamaz. Dergi/kurum adı ÖZEL İSİMDİR; PubMed, QxMD ve Semantic Scholar da
+ *     doğal yazımıyla gösterir. "Damga" hissini mono yüz + harf aralığı zaten taşıyor.
+ *     ⚠️ Buraya `uppercase` (CSS ya da JS) geri EKLEME — iki dilli korpusta daima yanlış.
+ */
+const STAMP_STOPWORDS = new Set([
+  "of", "and", "the", "for", "in", "on", "to", "with", "&", "a", "an",
+  "ve", "ile", "için", "de", "da", "veya",
+]);
+
 function stampOf(item: Pick<FeedItem, "kind" | "title" | "sourceName">, max: number): string {
   if (item.kind === "ictihat") {
     const e = /E\.\s*[\d/]+/.exec(item.title)?.[0];
-    if (e) return e.toUpperCase();
+    if (e) return e; // "E. 2025/6071" — rakam ve nokta, dönüşüm gerekmez
   }
   const name = item.sourceName.replace(/\s+/g, " ").trim();
   const abbr = /\(([^)]{2,12})\)/.exec(name)?.[1];
-  if (abbr && abbr.length <= max) return abbr.toUpperCase();
-  const words = name.toUpperCase().split(" ");
-  let out = "";
+  if (abbr && abbr.length <= max) return abbr;
+  if (name.length <= max) return name;
+
+  const words = name.split(" ");
+  const kept: string[] = [];
   for (const w of words) {
-    const next = out ? `${out} ${w}` : w;
+    const next = kept.length ? `${kept.join(" ")} ${w}` : w;
     if (next.length > max) break;
-    out = next;
+    kept.push(w);
   }
-  return out || words[0].slice(0, max);
+  // Sondaki bağlaç/ilgeçleri at — "Australian Journal of" gibi asılı kalmış damga üretmesin.
+  while (kept.length > 1 && STAMP_STOPWORDS.has(kept[kept.length - 1].toLowerCase())) kept.pop();
+  if (!kept.length) return `${name.slice(0, max - 1)}…`;
+  return `${kept.join(" ")}…`;
 }
 
 /** Sembolün gündüz varyantı yolu (public/doctorium/light/…). */
@@ -223,7 +260,8 @@ export function CoverArt({
         className="aura-mono border-t px-4 py-1.5 text-[10px] font-bold tracking-[0.16em]"
         style={{ color: c, borderColor: "var(--c-hairline)", background: "var(--c-surface)" }}
       >
-        {logo ? logo.url.toUpperCase() : stampOf(item, 26)}
+        {/* URL de büyütülmez: alan adları küçük harf yazılır (okunabilirlik + konvansiyon). */}
+        {logo ? logo.url : stampOf(item, 26)}
       </div>
     </div>
   );

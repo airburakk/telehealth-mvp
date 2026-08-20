@@ -79,7 +79,11 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
               optimizasyonu görseli SUNUCUMUZDAN geçirir (kopya = telif); ham img bilinçli. */}
           <img src={item.imageUrl} alt={`${item.sourceName} haber görseli`} className="block max-h-[320px] w-full object-cover" />
           <figcaption className="aura-mono border-t border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-1.5 text-[10px] tracking-[0.12em] text-[var(--c-ink-3)]">
-            GÖRSEL: {item.sourceName.toUpperCase()} — KAYNAĞA AİTTİR
+            {/* Kaynak adı BÜYÜTÜLMEZ (2026-08-20): `toUpperCase()` Türkçe'de i→I yapıyor
+                ("İstanbul Tabip Odası" → "TABIP"), `toLocaleUpperCase("tr")` ise İngilizce
+                dergi adlarını bozuyor ("Dentistry" → "DENTİSTRY"). İki dilli korpusta doğru
+                dönüşüm yok — özel isim doğal yazımıyla kalır. Bkz. CoverArt stampOf notu. */}
+            GÖRSEL: {item.sourceName} — KAYNAĞA AİTTİR
           </figcaption>
         </figure>
       ) : (

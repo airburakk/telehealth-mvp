@@ -101,6 +101,25 @@ export function parseEventTypes(raw?: string | null): EventTypeKey[] | null {
   return picked.length ? picked : DEFAULT_EVENT_TYPES;
 }
 
+/**
+ * Kayıtlı etkinlik TÜRÜ tercihi (v6.132 — Doctor.congressEventTypes JSON dizi).
+ * null/bozuk = tercih yok → DEFAULT_EVENT_TYPES. "hepsi" = süzgeç kapalı → null.
+ * URL parametresi (?t=) tercihi EZER: paylaşılan bağlantı beklendiği gibi açılmalı,
+ * ama kalıcı ayarı da değiştirmemeli (yalnız o görünüm için geçerli).
+ */
+export function parseEventTypePref(raw: string | null | undefined): EventTypeKey[] | null {
+  if (!raw) return DEFAULT_EVENT_TYPES;
+  if (raw === "hepsi") return null;
+  try {
+    const v = JSON.parse(raw);
+    if (!Array.isArray(v)) return DEFAULT_EVENT_TYPES;
+    const picked = v.filter((s): s is EventTypeKey => typeof s === "string" && EVENT_TYPE_SET.has(s));
+    return picked.length ? picked : DEFAULT_EVENT_TYPES;
+  } catch {
+    return DEFAULT_EVENT_TYPES;
+  }
+}
+
 // Hukuk modülü alt-sekmeleri (v6.86). "doktrin" Faz 2'de eklenecek (kullanıcı kararı: DergiPark
 // link-modeli + davet-edilen-yazar birlikte) — boş sekme YAYINLANMAZ ("gerçek kaynak yoksa
 // içerik yok" ilkesi), o yüzden listede henüz yok.
@@ -297,16 +316,73 @@ const ROW_SELECT = {
  * migration'la eski değeri GÖÇÜR, yoksa o bölümü seçmiş doktorlar onu hatasız kaybeder
  * (v6.120'de kongre → etkinlik böyle taşındı: 20260819140000_etkinlik_turu_ve_modul_anahtari).
  */
+/**
+ * Akışa hangi bölümlerin gireceği (Doctor.feedModules — JSON dizi, ŞEMA DEĞİŞMEZ).
+ *
+ * v6.132 (2026-08-20): Hukuk ÜÇE ayrıldı — tercihler sayfası mevzuat/içtihat/doktrini ayrı
+ * alt sekme olarak sunuyor ve doktor üçünü bağımsız açıp kapatabiliyor. Yeni anahtarlar
+ * `hukuk-*` önekli; ESKİ tek "mevzuat" anahtarı yalnız OKUNUR (yazılmaz) ve üçüne genişletilir
+ * — yoksa mevcut tercihi ["mevzuat"] olan doktorlar içtihat ve doktrini sessizce kaybederdi.
+ */
 export const FEED_MODULE_OPTIONS = [
   { key: "akademik", label: "Akademik" },
   { key: "sektorel", label: "Sektörel" },
   { key: "ilac", label: "İlaç & Cihaz" },
   { key: "etkinlik", label: "Etkinlik" },
   { key: "kariyer", label: "Kariyer" },
-  { key: "mevzuat", label: "Hukuk" },
+  { key: "hukuk-mevzuat", label: "Mevzuat" },
+  { key: "hukuk-ictihat", label: "İçtihat" },
+  { key: "hukuk-doktrin", label: "Doktrin" },
 ] as const;
 export type FeedModuleKey = (typeof FEED_MODULE_OPTIONS)[number]["key"];
 const FEED_MODULE_KEYS = new Set(FEED_MODULE_OPTIONS.map((o) => o.key));
+/** v6.132 ve öncesinde Hukuk tek anahtardı; okurken üç alt anahtara genişletilir. */
+const LEGACY_LEGAL_KEY = "mevzuat";
+const LEGAL_KEYS: FeedModuleKey[] = ["hukuk-mevzuat", "hukuk-ictihat", "hukuk-doktrin"];
+
+/**
+ * TERCİHLER TAKSONOMİSİ (v6.132, kullanıcı kararı 2026-08-20).
+ *
+ * Klinik/Mesleki ayrımı akış SÜZGECİ olmaktan çıkıp tercihler sayfasının omurgası oldu:
+ * taksonomi içeriği bölmüyor, AYARLARI örgütlüyor. Sol tarafta ikili ayrım, sağında üçer
+ * bölüm, Hukuk'un altında üç alt sekme.
+ *
+ * `feedKey` null ise bölümün kendisi tek anahtarla açılıp kapanmaz (Hukuk gibi — alt
+ * sekmelerinin kendi anahtarları var).
+ */
+export const PREF_GROUPS = [
+  {
+    key: "klinik",
+    label: "Klinik",
+    desc: "Hasta başındaki işinizi besleyen bilgi.",
+    sections: [
+      { key: "akademik", label: "Akademik", feedKey: "akademik" as FeedModuleKey,
+        desc: "PubMed, Europe PMC ve DOAJ'dan hakemli yayınlar.", subs: null },
+      { key: "sektorel", label: "Sektörel", feedKey: "sektorel" as FeedModuleKey,
+        desc: "Doktor hakları, yönetim, teknoloji ve küresel gündem.", subs: null },
+      { key: "ilac", label: "İlaç & Cihaz", feedKey: "ilac" as FeedModuleKey,
+        desc: "Ruhsat, geri çekme ve klinik faz duyuruları.", subs: null },
+    ],
+  },
+  {
+    key: "mesleki",
+    label: "Mesleki",
+    desc: "Mesleğinizi çevreleyen çerçeve.",
+    sections: [
+      { key: "hukuk", label: "Hukuk", feedKey: null,
+        desc: "Mevzuat değişiklikleri, emsal kararlar ve hakemli doktrin.",
+        subs: [
+          { key: "hukuk-mevzuat" as FeedModuleKey, label: "Mevzuat", desc: "Resmî Gazete ve OHSAD kayıtları." },
+          { key: "hukuk-ictihat" as FeedModuleKey, label: "İçtihat", desc: "Yargıtay kararları arşivi." },
+          { key: "hukuk-doktrin" as FeedModuleKey, label: "Doktrin", desc: "TR-Dizin hakemli hukuk makaleleri." },
+        ] },
+      { key: "etkinlik", label: "Etkinlik", feedKey: "etkinlik" as FeedModuleKey,
+        desc: "Kongre, sempozyum ve kurslar; bildiri ve kayıt tarihleri.", subs: null },
+      { key: "kariyer", label: "Kariyer", feedKey: "kariyer" as FeedModuleKey,
+        desc: "Yurt dışı denklik ve akademik yükselme süreçleri.", subs: null },
+    ],
+  },
+] as const;
 
 /** Ham JSON'dan geçerli bölüm anahtarları; [] = tümü (bozuk/boş değer daraltma YARATMAZ — fail-open). */
 export function parseFeedModules(raw: string | null | undefined): FeedModuleKey[] {
@@ -314,7 +390,14 @@ export function parseFeedModules(raw: string | null | undefined): FeedModuleKey[
   try {
     const v = JSON.parse(raw);
     if (!Array.isArray(v)) return [];
-    return v.filter((s): s is FeedModuleKey => typeof s === "string" && FEED_MODULE_KEYS.has(s as FeedModuleKey));
+    const out = v.filter(
+      (s): s is FeedModuleKey => typeof s === "string" && FEED_MODULE_KEYS.has(s as FeedModuleKey)
+    );
+    // Geriye uyum: eski tek "mevzuat" seçimi üç alt bölümün hepsini kapsıyordu.
+    if (v.includes(LEGACY_LEGAL_KEY)) {
+      for (const k of LEGAL_KEYS) if (!out.includes(k)) out.push(k);
+    }
+    return out;
   } catch {
     return [];
   }
@@ -452,11 +535,10 @@ export async function personalFeed(branchSlugs: string[], limit = 40, modules: F
     ));
   if (on("sektorel")) jobs.push(news({ module: "sektorel" }, q(8)));
   if (on("ilac")) jobs.push(news({ module: "ilac" }, q(6)));
-  if (on("mevzuat")) {
-    jobs.push(news({ module: "mevzuat", kind: "mevzuat" }, q(4)));
-    jobs.push(news({ module: "mevzuat", kind: "ictihat" }, q(2)));
-    jobs.push(news({ module: "mevzuat", kind: "doktrin" }, q(2)));
-  }
+  // Hukuk üç bağımsız alt bölüm (v6.132) — doktor tercihler sayfasından üçünü ayrı yönetir.
+  if (on("hukuk-mevzuat")) jobs.push(news({ module: "mevzuat", kind: "mevzuat" }, q(4)));
+  if (on("hukuk-ictihat")) jobs.push(news({ module: "mevzuat", kind: "ictihat" }, q(2)));
+  if (on("hukuk-doktrin")) jobs.push(news({ module: "mevzuat", kind: "doktrin" }, q(2)));
   if (on("etkinlik")) jobs.push(congressFeedItems(branchSlugs, q(3)));
   if (on("kariyer")) jobs.push(careerFeedItems(q(3)));
 
@@ -522,11 +604,18 @@ export async function savedArticleIds(doctorId: string): Promise<Set<string>> {
  * TR = UTC+3 sabit (Türkiye'de DST yok); gece cron ~03:00 TR'de koşar → doktor sabah "bugün
  * N yeni" görür. Kongre/kariyer sayılmaz (küratörlü/statik veri — gece akışı yok).
  */
-export async function todayModuleCounts(): Promise<Record<string, number>> {
+/**
+ * Türkiye gününün başlangıcı (UTC olarak). Nabız sayacı ile "yeni" süzgeci AYNI sınırı
+ * kullanmak zorundadır — biri TR gününe, diğeri sunucunun UTC gününe bakarsa sayaç "3 yeni"
+ * derken süzgeç boş liste döndürür. Sunucu UTC'de koşar, doktor TR'de yaşar.
+ */
+export function trDayStart(): Date {
   const TR_OFFSET_MS = 3 * 3_600_000;
-  const trDayStartUtc = new Date(
-    Math.floor((Date.now() + TR_OFFSET_MS) / 86_400_000) * 86_400_000 - TR_OFFSET_MS
-  );
+  return new Date(Math.floor((Date.now() + TR_OFFSET_MS) / 86_400_000) * 86_400_000 - TR_OFFSET_MS);
+}
+
+export async function todayModuleCounts(): Promise<Record<string, number>> {
+  const trDayStartUtc = trDayStart();
   const rows = await db.newsArticle.groupBy({
     by: ["module"],
     where: { createdAt: { gte: trDayStartUtc } },
@@ -556,9 +645,12 @@ export function rangeDays(key: string | undefined): number {
 export async function moduleFeed(
   module: "akademik" | "mevzuat" | "sektorel" | "ilac",
   branchSlugs: string[],
-  opts: { limit?: number; days?: number; category?: string | null; excludeCategories?: string[]; textContainsAny?: string[]; sources?: string[] } = {},
+  opts: {
+    limit?: number; days?: number; category?: string | null; excludeCategories?: string[];
+    textContainsAny?: string[]; sources?: string[]; createdSince?: Date; textQuery?: string;
+  } = {},
 ): Promise<FeedItem[]> {
-  const { limit = 40, days, category, excludeCategories, textContainsAny, sources } = opts;
+  const { limit = 40, days, category, excludeCategories, textContainsAny, sources, createdSince, textQuery } = opts;
   // v6.86/87: iki bağımsız OR ölçütü (kategori-dışlama · metin-arama) AND dizisinde toplanır —
   // spread ile aynı objeye ikinci bir OR anahtarı yazmak öncekini SESSİZCE ezerdi.
   const and: object[] = [];
@@ -573,6 +665,18 @@ export async function moduleFeed(
   if (textContainsAny?.length) {
     and.push({ OR: textContainsAny.map((p) => ({ summary: { contains: p, mode: "insensitive" as const } })) });
   }
+  // Serbest metin araması (v6.132 — içtihat arama kutusu): sözlük çiplerinden AYRI ölçüt.
+  // Çipler yalnız `summary`de arar (deterministik sözlük deseni); kullanıcının yazdığı sorgu
+  // BAŞLIKTA da aranır — "Yargıtay 3. HD" gibi künye bilgisi başlıkta yaşıyor.
+  if (textQuery && textQuery.trim().length >= 2) {
+    const q = textQuery.trim();
+    and.push({
+      OR: [
+        { title: { contains: q, mode: "insensitive" as const } },
+        { summary: { contains: q, mode: "insensitive" as const } },
+      ],
+    });
+  }
   const rows = await db.newsArticle.findMany({
     where: {
       module,
@@ -581,6 +685,10 @@ export async function moduleFeed(
       ...(sources?.length ? { source: { in: sources } } : {}),
       ...(and.length ? { AND: and } : {}),
       ...(days ? { publishedAt: { gte: new Date(Date.now() - days * 86400000) } } : {}),
+      // "Yeni" süzgeci (v6.132 — sayaç şeridinden gelinir): AKIŞA DÜŞME anı (createdAt),
+      // kaynağın yayım tarihi DEĞİL. İkisi farklı eksendir: 2019 tarihli bir Yargıtay kararı
+      // bu gece ingest edilmişse akış için YENİdir. `days` publishedAt'e bakar, bu createdAt'e.
+      ...(createdSince ? { createdAt: { gte: createdSince } } : {}),
       ...(module === "akademik" && branchSlugs.length
         ? { OR: branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } })) }
         : {}),

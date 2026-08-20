@@ -66,8 +66,11 @@ export default async function SavedPage() {
             </span>
           </p>
         ) : (
-          <ul className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-3">
-            {/* grid-cols-[minmax(0,1fr)]: akış listesindeki taşma dersinin eşleniği (2026-08-16). */}
+          <ul className="mt-5 grid grid-cols-[minmax(0,1fr)]">
+            {/* grid-cols-[minmax(0,1fr)]: akış listesindeki taşma dersinin eşleniği (2026-08-16).
+                gap YOK (sentez, 2026-08-19): ayrım öğelerin kendi üst saç çizgisinde. Burada
+                ağırlık kademesi de YOK — kaydedilenler ritimsiz, eşit ağırlıkta akar
+                (ArticleCard weight varsayılanı "min"). */}
             {items.map((it) => (
               <ArticleCard key={it.id} item={it} saved />
             ))}
