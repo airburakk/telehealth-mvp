@@ -209,6 +209,15 @@ model Doctor {
   congressAbstractAlertDays  Int?
   /// v6.62: ERKEN KAYIT son tarihinden kaç gün önce uyarılsın. null = kapalı.
   congressEarlyBirdAlertDays Int?
+  /// v6.132 (kullanıcı kararı 2026-08-20): etkinlik TÜRÜ tercihi — JSON dizi
+  /// (["kongre","sempozyum"]). null = varsayılan (kongre + sempozyum; lib/doctorium
+  /// parseEventTypes). Önceden yalnız URL'de (?t=) yaşıyordu, sekmeden çıkınca unutuluyordu;
+  /// tercihler sayfasına taşınınca KALICI olması gerekti. Boş dizi = "hepsi" DEĞİL, geçersiz —
+  /// hepsi için "hepsi" anahtarı yazılır (URL sözleşmesiyle aynı dil).
+  congressEventTypes String?
+  /// v6.132: etkinlik KAPSAM tercihi — "ulusal" | "uluslararasi" | null (tümü).
+  /// URL'deki ?s= ile aynı değerler (lib/doctorium parseScope).
+  congressScope String?
   /// Doctorium sponsorlu içerik KİŞİSELLEŞTİRME açık rızası (v6.68 Faz 1): dolu = rıza verildi
   /// (verildiği an); null = yok/geri alındı → doktora yalnız hedefsiz (bağlamsal) kampanya gösterilir.
   /// Durumun tek kaynağı bu alan; İSPAT izi ConsentRecord'da (scope SPONSOR_TARGETING — grant/revoke
