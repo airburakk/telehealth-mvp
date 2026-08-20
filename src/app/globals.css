@@ -7,29 +7,46 @@
  * Krom (bg/panel/surface/ink/hairline/accent) tema-değişken; klinik semantik
  * renkler (--c-success/danger/warning) her temada uygun tonda. Gündüz accent:
  * yeşil birincil + koyu turkuaz ikincil (kullanıcı kararı 2026-07-13). */
+/* MİNERAL GRİ GÜNDÜZ (2026-08-20, kullanıcı kararı): nötrler saf beyaz + sıcak gri-yeşilden
+ * SOĞUK MİNERAL griye geçti. Gerekçe ÖLÇÜLÜ: eski nötrler hue 96° (sarımsı-yeşil), Doctorium'un
+ * gündüz kimlik zümrüdü (#047857) hue 163° → 67° sapma. Yeni taban #EEF2F1 hue 165° = zümrütle
+ * 2° hizalı. ⚠️ Turkuazla DEĞİL zümrütle hizalı: turkuaz (#28c8d8, hue 185) AURA'nın rengidir,
+ * Doctorium'un değil — bu ayrım paletin ekseni (yanlış markaya hizalarsak portal AURA'ya kayar).
+ *
+ * 🪤 ZEMİN AÇIKLIĞI SEMANTİK RENKLERİ TAŞIR: sayfa zemini beyazdan (#fff) #EEF2F1'e inince tüm
+ * semantik tonlar AA eşiğinin ALTINA düştü (success/warning beyazda 5.02 → yeni zeminde 4.44;
+ * accent-strong 4.80 → 4.25). Bu blokta semantikler + accent + gold + lane-consult yarım kademe
+ * koyulaştırıldı: hepsi EN ZOR yüzeyde (--c-surface-2 #DFEAE9) ≥4.5 ölçüldü. Zemini ileride
+ * açarsan/koyultursan bu tonları YENİDEN ÖLÇ — nötr değişikliği asla tek başına kalmaz.
+ * Ölçüm ekseni: metin×yüzey matrisi, en zor yüzey surface-2. */
 .theme-light {
-  --c-bg: #ffffff;
-  --c-bg-deep: #f4f5f3;
+  --c-bg: #EEF2F1;
+  --c-bg-deep: #E0E7E6;
   /* Krom katmanı (2026-08-14, Doctorium Faz 1): Header + SiteFooter + Doctorium bandı — içerik
-     zemininden AYRIŞAN çerçeve tonu (gündüz: hafif gri-yeşil; gece: içerikten koyu). İçerik
-     "sahne" olur, krom geriye çekilir. Yeni krom yüzeyi eklerken bu token'ı kullan. */
-  --c-chrome: #eaede8;
-  --c-panel: #f7f8f5;
-  --c-surface: #eef1ec;
-  --c-surface-2: #e6e8e2;
-  --c-ink: #171a18;
-  --c-ink-2: #57534e;
-  --c-ink-3: #6b6660;
-  --c-hairline: rgba(0, 0, 0, 0.1);
+     zemininden AYRIŞAN çerçeve tonu (gündüz: soğuk mineral gri; gece: içerikten koyu). İçerik
+     "sahne" olur, krom geriye çekilir. Yeni krom yüzeyi eklerken bu token'ı kullan.
+     ⚠️ Doctorium Üst Rafı bu token'ı "Derin Orman %12" formülünde TABAN olarak kullanır
+     (aşağıda .doctorium-shelf-bg) → burayı değiştirince raf zemini de birlikte kayar. */
+  --c-chrome: #E7ECEB;
+  --c-panel: #FCFDFC;
+  --c-surface: #F7F9F8;
+  --c-surface-2: #DFEAE9;
+  --c-ink: #172124;
+  --c-ink-2: #526064;
+  --c-ink-3: #5A686B;
+  --c-hairline: rgba(23, 33, 36, 0.11);
+  /* accent = DEKORATİF turkuaz. Açık zeminde 1.7–2.0 kontrast → ikon/ince kenarlık/focus ring
+     OLARAK KULLANILAMAZ (WCAG 1.4.11 eşiği 3.0); yalnız dolu blok, ışıma, zemin. Metin rolü
+     accent-strong'dur. */
   --c-accent: #17919e;
-  --c-accent-strong: #127e8a;
+  --c-accent-strong: #10737e;
   --c-accent-stronger: #0d6470;
-  --c-accent-2: #0e7d8c;
+  --c-accent-2: #0d7381;
   --c-cream: #faf9f7;
-  --c-gold: #8a6414;
+  --c-gold: #876214;
   --c-indigo: #4f46e5;
-  --c-success: #15803d;
-  --c-warning: #b45309;
+  --c-success: #147839;
+  --c-warning: #a94e08;
   --c-danger: #b91c1c;
   --c-info: #1d4ed8;
   /* Kulvar kimlik vurguları (v6.22 renk disiplini) — gündüzde koyu/kontrastlı tonlar */
@@ -37,7 +54,7 @@
   --lane-so: #1a2b45;
   --lane-tourism: #00655d;
   --lane-free: #a83e28;
-  --lane-consult: #a16207; /* Konsültasyon Talebi kulvarı (2026-07-31 v2: SARI — indigo mavi kulvarlardan ayrışmıyordu) */
+  --lane-consult: #955b06; /* Konsültasyon Talebi kulvarı (2026-07-31 v2: SARI — indigo mavi kulvarlardan ayrışmıyordu; 2026-08-20 mineral zemin için koyulaştı) */
   color: var(--c-ink);
   color-scheme: light;
 }
@@ -172,12 +189,15 @@
   [class*="text-green-1"],[class*="text-green-2"],[class*="text-green-3"],
   [class*="text-teal-1"],[class*="text-teal-2"],[class*="text-teal-3"],
   [class*="text-lime-2"],[class*="text-lime-3"]) {
-  color: #15803d;
+  /* 2026-08-20 mineral gri zemin: #15803d beyazda 5.02 idi, yeni en zor yüzeyde 4.08 → AA altı.
+     Yarım kademe koyu (#147839) surface-2'de 4.52 ölçüldü. --c-success ile aynı değer. */
+  color: #147839;
 }
 .theme-light :is([class*="text-amber-1"],[class*="text-amber-2"],[class*="text-amber-3"],
   [class*="text-yellow-1"],[class*="text-yellow-2"],[class*="text-yellow-3"],
   [class*="text-orange-2"],[class*="text-orange-3"]) {
-  color: #b45309;
+  /* 2026-08-20 mineral gri zemin (bkz. yukarıdaki yeşil notu): #b45309 → #a94e08, surface-2'de 4.52. */
+  color: #a94e08;
 }
 .theme-light :is([class*="text-red-1"],[class*="text-red-2"],[class*="text-red-3"],
   [class*="text-rose-2"],[class*="text-rose-3"],
