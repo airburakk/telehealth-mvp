@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AuraMark, DoctoriumBraille } from "@/components/AuraLogo";
+import { AuraMark } from "@/components/AuraLogo";
 import {
   DOCTORIUM_PALETTE,
   DoctoriumInline,
@@ -39,16 +39,10 @@ export function DoctoriumFooter({ portal = false, theme = "dark" }: { portal?: b
       }`}
     >
       <div className="mx-auto w-full max-w-6xl px-5">
-        {/* Marka bloğu — AURA landing footer'ının alt-marka eşleniği (kullanıcı kararı
-            2026-08-16): Braille "Doctorium" lockup'ının TAM ALTINDA ortalı. Lockup
-            32px (≈154px) → Braille (146px) yazıdan taşmaz; üst bar bu yüzden
-            braille'siz kalır (22px lockup 106px < 146px — AURA "nav'a konmaz" kuralı). */}
+        {/* Marka bloğu — AURA landing footer'ının alt-marka eşleniği. */}
         <div className="flex items-center gap-3">
           <AuraMark size={34} tone="emerald" />
-          <span className="inline-flex flex-col items-center">
-            <DoctoriumWord className="text-[32px] leading-none" />
-            <DoctoriumBraille height={12} className="mt-2 text-[var(--dl-muted)]" />
-          </span>
+          <DoctoriumWord className="text-[32px] leading-none" />
         </div>
         <div className={`mt-6 flex flex-col justify-between gap-4 text-xs sm:flex-row ${portal ? "text-[var(--dl-body)]" : "text-[#777c82]"}`}>
           <span>
