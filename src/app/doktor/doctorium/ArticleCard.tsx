@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { categoryLabel, KIND_LABEL, type FeedItem } from "@/lib/doctorium";
+// ⚠️ categoryLabel/KIND_LABEL BİLİNÇLİ "@/lib/doctorium-labels"ten (değil "@/lib/doctorium"ten):
+// bu kart FeedLoadMore.tsx (client bileşen, sonsuz kaydırma) üzerinden İSTEMCİ paketine de
+// giriyor — lib/doctorium.ts `db` (Prisma) içe aktarır, oradan DEĞER import etmek build'i kırar.
+// `type FeedItem` type-only olduğu için erimede kaybolur, sorun yok.
+import { categoryLabel, KIND_LABEL } from "@/lib/doctorium-labels";
+import type { FeedItem } from "@/lib/doctorium";
 import { extractExcerpt } from "@/lib/hukuk-keywords";
 import { SaveButton } from "./SaveButton";
 import { CoverArt, hasThumb } from "./CoverArt";

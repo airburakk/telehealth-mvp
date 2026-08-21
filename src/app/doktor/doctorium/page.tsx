@@ -13,7 +13,7 @@ import {
   DOCTORIUM_MODULES, RANGE_OPTIONS, DEFAULT_RANGE, rangeDays,
   SECTOR_CATEGORIES, SECTOR_SOURCE_SCOPES, LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES,
   CAREER_TABS, parseCareerTab, careerPathways,
-  effectiveBranches, personalFeed, moduleFeed, singleBranchFeed, upcomingCongresses,
+  effectiveBranches, personalFeedPage, moduleFeed, singleBranchFeedPage, upcomingCongresses,
   upcomingCountByIds, localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
   slugForLabel, parseScope, parseSourceScope, scopeBadge, savedArticleIds, FEED_MODULE_OPTIONS, parseFeedModules,
   todayModuleCounts, MODULE_ALIASES, EVENT_TYPES, EVENT_TYPE_LABEL, parseEventTypes,
@@ -27,6 +27,7 @@ import { FollowButton } from "./CongressControls";
 import { ProspektusSearch } from "./ProspektusSearch";
 import { CareerDisclaimer, careerDate, COUNTRY_LABEL } from "./CareerShared";
 import { ArticleCard, formatDate, SourcePlate } from "./ArticleCard";
+import { FeedLoadMore } from "./FeedLoadMore";
 import { SaveButton } from "./SaveButton";
 import {
   ArrowLeft, ExternalLink, Info, MapPin, Star, X, CalendarClock, Megaphone,
@@ -127,7 +128,22 @@ export default async function DoctoriumPage({
   const since = onlyNew ? trDayStart() : undefined;
 
   let items: FeedItem[] = [];
-  if (active === "akis") items = focus ? await singleBranchFeed(focus) : await personalFeed(branches, 40, feedMods);
+  // Sonsuz kaydırma (2026-08-21, kullanıcı bildirimi "belli sayıda içerikte duruyor"): ilk parti
+  // burada basılır, `feedNextCursor` FeedLoadMore'a geçer — null ise (ilk partide zaten her şey
+  // gösterildiyse) bileşen hiç render edilmez. Yalnız Akışım'da (diğer sekmeler moduleFeed'in
+  // sabit 40 sınırında kalıyor, bkz. plan notu).
+  let feedNextCursor: string | null = null;
+  if (active === "akis") {
+    if (focus) {
+      const page = await singleBranchFeedPage(focus, 30);
+      items = page.items;
+      feedNextCursor = page.cursor ? JSON.stringify(page.cursor) : null;
+    } else {
+      const page = await personalFeedPage(branches, feedMods, {}, 40);
+      items = page.items;
+      feedNextCursor = page.done ? null : JSON.stringify(page.cursors);
+    }
+  }
   else if (active === "akademik") items = await moduleFeed("akademik", branches, { createdSince: since });
   else if (active === "mevzuat") {
     // İçtihat + Doktrin = ARŞİV: tarih penceresi bilinçli YOK — kararlar/makaleler eski tarihli
@@ -335,6 +351,21 @@ export default async function DoctoriumPage({
 
       {active === "akis" && <PulseStrip items={items} todayCounts={counts} />}
 
+      {/* Sayaç → akış geçiş ayracı (2026-08-21, kullanıcı bildirimi: "sayaçtan sonra habere
+          geçiş çok belli olmuyor"). PulseStrip'in son kartı görmezden gelinip akışın ilk kartına
+          kayabildiği tek nokta buydu — ikisi de aura-display + benzer ölçüde rakam/başlık
+          taşıyordu, aralarında hiçbir ayrım yoktu (ilk kart üst saç çizgisini de kapatıyor,
+          bkz. ArticleCard "first:border-t-0"). Kutu YOK: mevcut dile uyan mono etiket + saç
+          çizgisi — PulseStrip'in kendi "BUGÜN AKIŞA DÜŞEN" etiketiyle aynı gramer. */}
+      {active === "akis" && shown.length > 0 && (
+        <div className="mt-6 flex items-center gap-2.5" aria-hidden="true">
+          <span className="aura-mono shrink-0 text-[10px] font-bold tracking-[0.14em] text-[var(--c-ink-3)]">
+            SON EKLENENLER
+          </span>
+          <span className="h-px flex-1 bg-[var(--c-hairline)]" />
+        </div>
+      )}
+
       {/* "Takip ettiklerim (N)" süzgeç çipi (kullanıcı isteği 2026-08-19): İçtihat anahtar-kelime
           çipi deseninin etkinlik eşleniği — URL'de taşınır (?f=takip), paylaşılabilir; renk dili
           FollowButton'ın amber yıldızı. Takipli yaklaşan etkinlik 0 ise ÇİZİLMEZ (koşullu-href:
@@ -523,6 +554,11 @@ export default async function DoctoriumPage({
               {shown.length <= 2 && sponsorCards[0] && <SponsorCardView c={sponsorCards[0]} />}
               {shown.length <= 5 && surveyProps && <SurveyCardView {...surveyProps} />}
               {shown.length <= 9 && sponsorCards[1] && <SponsorCardView c={sponsorCards[1]} />}
+              {/* Sonsuz kaydırma (2026-08-21): yalnız Akışım, yalnız sunucudaki ilk parti
+                  tükenmediyse (feedNextCursor null değilse) render edilir. */}
+              {active === "akis" && feedNextCursor && (
+                <FeedLoadMore focus={focus} initialCursor={feedNextCursor} />
+              )}
             </ul>
           )}
         </>
