@@ -54,7 +54,10 @@ export const metadata: Metadata = {
   // Hash olmayınca Chrome bir kez yüklediği favicon'u uzun süre yeniden istemez ve sekmede
   // ESKİ ikon kalır (2026-08-19: Doctorium'da turkuaz görünmesinin sebebi buydu).
   // ⚠️ İKONLARI HER DEĞİŞTİRDİĞİNDE bu sürümü ARTIR (üç layout'ta birlikte).
-  icons: { icon: "/favicon.ico?v=2", apple: "/apple-touch-icon.png" },
+  // apple-touch-icon + manifest ikonları da 2026-08-21'de aynı gerekçeyle versiyonlandı
+  // (yalnız favicon/icon-doctorium'da vardı; iOS ana ekran ikonu ve push bildirimi ikonu
+  // versiyonsuz kaldığı için aynı "eski ikon takılı kalma" riskini taşıyordu).
+  icons: { icon: "/favicon.ico?v=2", apple: "/apple-touch-icon.png?v=2" },
   appleWebApp: { capable: true, title: "AURA", statusBarStyle: "default" },
 };
 

@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 // Üretim: `python scripts/gen-icons.py`.
 export const metadata: Metadata = {
   // 🪤 `?v=` cache-kırıcı — gerekçe kök layout.tsx'te. İkon değişince ÜÇ layout'ta birlikte artır.
-  icons: { icon: "/icon-doctorium.ico?v=2", apple: "/apple-touch-icon.png" },
+  icons: { icon: "/icon-doctorium.ico?v=2", apple: "/apple-touch-icon.png?v=2" },
 };
 
 // İki aşamalı giriş — AŞAMA 1 kapısı (v6.124: e-Devlet doğrulamalı diploma). Doctorium'a DOCTOR
