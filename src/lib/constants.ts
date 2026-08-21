@@ -85,6 +85,34 @@ export function countryFlag(code: string): string {
   return COUNTRIES.find((c) => c.code === code)?.flag ?? "🏳️";
 }
 
+// ── Kulvar (lane) tek kaynağı — v6.134 (2026-08-21) ──
+// Beş kulvar, üç video bileşeni: ConsultationRoom (telehealth·tourism·free) · SoVideoRoom (so) ·
+// ConsultVideoRoom (consult). Renk DAİMA --lane-* token'ından okunur (tema-duyarlı: globals.css
+// gündüz 53-57 · gece 86-90); sabit hex YAZILMAZ.
+// ⚠️ Renk disiplini (CLAUDE.md v6.22): kulvar rengi YÜZEY BOYAMAZ — yalnız 3px kenar şeridi +
+// mono etiket. Klinik semantik tonlarla (aciliyet/kırmızı bayrak) karıştırılamaz.
+// 🪤 Bu harita bugün CaseQueue.tsx · DutyConsole.tsx · MyCasesList.tsx içinde de KOPYA yaşıyor
+// (sonuncusu token yerine sabit hex tutuyor). Yeni çağıran DAİMA buradan okur; eski üçünün
+// buraya taşınması ayrı bir temizlik işidir (bilinçli olarak bu turda yapılmadı).
+export type CallLane = "telehealth" | "so" | "tourism" | "free" | "consult";
+export const CALL_LANES: Record<CallLane, { name: string; accent: string }> = {
+  telehealth: { name: "Uzaktan Sağlık", accent: "var(--lane-telehealth)" },
+  so: { name: "İkinci Görüş", accent: "var(--lane-so)" },
+  tourism: { name: "Sağlık Turizmi", accent: "var(--lane-tourism)" },
+  free: { name: "Ücretsiz Sağlık Hizmeti", accent: "var(--lane-free)" },
+  consult: { name: "Konsültasyon Talebi", accent: "var(--lane-consult)" },
+};
+
+/**
+ * Vaka kaydından kulvarı türetir. Öncelik sırası `doktor/page.tsx:141` ile BİREBİR aynıdır
+ * (turizm > ücretsiz > uzaktan) — iki yerde farklı sıra, aynı vakayı iki farklı kulvarda
+ * gösterir. SO ve konsültasyon kulvarları vakadan değil ROTADAN gelir (kendi bileşenleri sabit
+ * değer geçer).
+ */
+export function laneFromCase(c: { tourismPlan?: string | null; freeCare?: boolean | null }): CallLane {
+  return c.tourismPlan ? "tourism" : c.freeCare ? "free" : "telehealth";
+}
+
 export const CASE_STATUS: Record<string, { label: string; color: string }> = {
   // DOCS_PENDING (2026-07-24): eksik zorunlu belgeyle oluşturulan başvuru — doktor havuzunda DEĞİL,
   // hasta belge yükleyince NEW'e geçer. Personel listelerinde bu rozetle görünür (operasyonel gözetim).

@@ -11,6 +11,7 @@ import { getTryPerUsd } from "@/lib/fxrate";
 import { icd10ForBranchLabel } from "@/data/coding";
 import { ICD_PROCEDURES } from "@/data/icd-procedures";
 import { decryptField, decryptCaseFields } from "@/lib/crypto";
+import { laneFromCase } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -120,6 +121,10 @@ export default async function ConsultationPage({
       recommend={recommend}
       clinical={clinical}
       autoJoin={autoJoin}
+      // Kulvar: bu rota ÜÇ kulvara birden hizmet eder (Uzaktan Sağlık · Sağlık Turizmi ·
+      // Ücretsiz Sağlık Hizmeti). Öncelik sırası `laneFromCase` içinde tek yerde tanımlı ve
+      // doktor ana sayfasıyla aynı — iki yerde farklı sıra, aynı vakayı iki kulvarda gösterirdi.
+      lane={laneFromCase(consult.case)}
       caseData={{
         id: c.id,
         patientName: c.patientName,

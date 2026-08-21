@@ -276,6 +276,9 @@ export function ConsultVideoRoom({
 
   return (
     <VideoCallShell
+      // Kulvar kimliği (v6.134): marka rayında 3px şerit + mono etiket. Bu rota tek
+      // kulvara hizmet ediyor → sabit değer; vakadan türetilmez.
+      lane="consult"
       dir={dir}
       lang={LANG_BCP47[lang]}
       panelLabel={t(S.title)}

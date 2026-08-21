@@ -185,7 +185,16 @@
  * /opacity + hover: varyantları) hepsini tek noktadan yakalar; tek tek ~360 kullanımı
  * düzeltmek yerine kaynakta çözer. Koyu-sabit zemin (yalnız bg-black overlay'ler)
  * metin taşımadığından ters-kontrast riski yok. */
-.theme-light :is([class*="text-emerald-1"],[class*="text-emerald-2"],[class*="text-emerald-3"],
+/* ── Gece-kilitli GORUSME yuzeyi istisnasi (v6.134, 2026-08-21) ──────────────────────────────
+ * Yukaridaki gunduz remap'leri `html.theme-light`e capalidir: video gorusme kabugu kendi
+ * `.theme-dark` kapsamini ilan etse bile (VideoCallShell) bu descendant secicileri iceride
+ * uygulanmaya devam ediyordu → gunduz temali kullanicida KOYU zemin ustunde KOYU metin
+ * (olculdu 2026-08-21: --c-warning #fbbf24 yerine #a94e08 geliyordu).
+ * `:not(.aura-call *)` remap'i o yuzeyin ICINDE kapatir; kart/panel token'lari zaten gece
+ * degerlerine kilitli oldugu icin ham Tailwind pastel tonlari orada DOGRU olandir.
+ * 🪤 Yeni bir DAIMA-KOYU yuzey eklersen (tam ekran gorsel/oynatici vb.) ayni isareti ver,
+ * yoksa ayni sessiz kontrast kaybini tekrar yasarsin. */
+.theme-light :not(.aura-call *):is([class*="text-emerald-1"],[class*="text-emerald-2"],[class*="text-emerald-3"],
   [class*="text-green-1"],[class*="text-green-2"],[class*="text-green-3"],
   [class*="text-teal-1"],[class*="text-teal-2"],[class*="text-teal-3"],
   [class*="text-lime-2"],[class*="text-lime-3"]) {
@@ -193,29 +202,29 @@
      Yarım kademe koyu (#147839) surface-2'de 4.52 ölçüldü. --c-success ile aynı değer. */
   color: #147839;
 }
-.theme-light :is([class*="text-amber-1"],[class*="text-amber-2"],[class*="text-amber-3"],
+.theme-light :not(.aura-call *):is([class*="text-amber-1"],[class*="text-amber-2"],[class*="text-amber-3"],
   [class*="text-yellow-1"],[class*="text-yellow-2"],[class*="text-yellow-3"],
   [class*="text-orange-2"],[class*="text-orange-3"]) {
   /* 2026-08-20 mineral gri zemin (bkz. yukarıdaki yeşil notu): #b45309 → #a94e08, surface-2'de 4.52. */
   color: #a94e08;
 }
-.theme-light :is([class*="text-red-1"],[class*="text-red-2"],[class*="text-red-3"],
+.theme-light :not(.aura-call *):is([class*="text-red-1"],[class*="text-red-2"],[class*="text-red-3"],
   [class*="text-rose-2"],[class*="text-rose-3"],
   [class*="text-pink-2"],[class*="text-pink-3"]) {
   color: #b91c1c;
 }
-.theme-light :is([class*="text-sky-2"],[class*="text-sky-3"],
+.theme-light :not(.aura-call *):is([class*="text-sky-2"],[class*="text-sky-3"],
   [class*="text-blue-2"],[class*="text-blue-3"],
   [class*="text-cyan-2"],[class*="text-cyan-3"]) {
   color: #1d4ed8;
 }
-.theme-light :is([class*="text-indigo-2"],[class*="text-indigo-3"],
+.theme-light :not(.aura-call *):is([class*="text-indigo-2"],[class*="text-indigo-3"],
   [class*="text-violet-2"],[class*="text-violet-3"],
   [class*="text-purple-2"],[class*="text-purple-3"],
   [class*="text-fuchsia-2"],[class*="text-fuchsia-3"]) {
   color: #4338ca;
 }
-.theme-light :is([class*="text-slate-2"],[class*="text-slate-3"],
+.theme-light :not(.aura-call *):is([class*="text-slate-2"],[class*="text-slate-3"],
   [class*="text-gray-2"],[class*="text-gray-3"],
   [class*="text-zinc-2"],[class*="text-zinc-3"],
   [class*="text-neutral-2"],[class*="text-neutral-3"],
