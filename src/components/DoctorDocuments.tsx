@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   FileText, ShieldCheck, GraduationCap, Award, Upload, Trash2, Loader2, Check, AlertTriangle,
 } from "lucide-react";
+import { statusRozet } from "@/lib/doc-status";
 
 // M5 — Doktor mesleki belge yükleme bölümü. Diploma ZORUNLU (yüklenmeden hesap aktifleşmez);
 // MMSS v6.105'ten beri İHTİYARİ (aşağıdaki TYPES notu); sertifika/akademik ihtiyari.
@@ -37,22 +38,8 @@ const TYPES: { type: string; label: string; desc: string; required: boolean; Ico
 
 const ACCEPT = "application/pdf,image/jpeg,image/png";
 
-// v6.119 — Belge satırı durum rozeti (status × verifiedSource → metin + ton; onay 2026-08-19).
-// LEGACY bilinçli NÖTR ve "Kayıtlı" ("Onaylandı" DEĞİL): backfill'lenen belgeler gerçekten
-// incelenmedi — emerald yanlış güven telkin ederdi. "İncelemede" yalnız kapı tutan tiplerde
-// (DIPLOMA/STUDENT_CERT) gösterilir: ihtiyari belgede PENDING varsayılan hâldir, bir inceleme
-// kuyruğu vaadi değildir. ACCEPTED/REJECTED ise her tipte gösterilir (gerçek inceleme sonucu).
-function statusRozet(d: DocMeta): { text: string; cls: string } | null {
-  if (!d.status) return null;
-  if (d.status === "ACCEPTED") {
-    if (d.verifiedSource === "LEGACY") return { text: "Kayıtlı", cls: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)]" };
-    if (d.verifiedSource === "EDEVLET") return { text: "e-Devlet ile doğrulandı", cls: "bg-emerald-500/15 text-emerald-300" };
-    return { text: "Onaylandı", cls: "bg-emerald-500/15 text-emerald-300" };
-  }
-  if (d.status === "REJECTED") return { text: "Yeniden yükleyin", cls: "bg-red-500/15 text-red-300" };
-  if (d.type === "DIPLOMA" || d.type === "STUDENT_CERT") return { text: "İncelemede", cls: "bg-amber-500/15 text-amber-300" };
-  return null;
-}
+// v6.119 — Belge satırı durum rozeti → lib/doc-status.ts'e taşındı (2026-08-23; landing V2 de
+// aynı kaynaktan temsilî rozet çizer). Kural ve tonlar orada.
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

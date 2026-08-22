@@ -15,7 +15,8 @@ import { AxeBuilder } from "@axe-core/playwright";
 
 // Halka açık, auth'suz sayfalar (sentetik kontrol listesinin a11y-uygun alt kümesi;
 // /tr /ar aynı bileşeni SSR'ladığından axe'te tekrar taranmaz — RTL testi ayrık).
-const PUBLIC_PAGES = ["/", "/giris", "/kurumsal-giris", "/guven-ve-gizlilik", "/how-it-works", "/for-clinicians"];
+// /doctorium (2026-08-23, landing V2): Doctorium yüzeyi ilk kez a11y taramasında — tek dil TR, kendi kromu.
+const PUBLIC_PAGES = ["/", "/giris", "/kurumsal-giris", "/guven-ve-gizlilik", "/how-it-works", "/for-clinicians", "/doctorium"];
 
 // GSAP/hydration otursun diye kısa nefes — networkidle KULLANILMAZ (landing videoları
 // preload=none + izleme istekleri networkidle'ı asılı bırakabilir).

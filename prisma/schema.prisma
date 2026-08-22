@@ -1270,6 +1270,22 @@ model SavedArticle {
   @@index([doctorId, createdAt]) // Kaydettiklerim listesi (yeni→eski)
 }
 
+/// Doctorium landing analytics — GÜNLÜK AGREGAT sayaç (2026-08-23, DOCV2-010; kullanıcı kararı
+/// "first-party agregat"). Satır = (olay adı, yer, gün) üçlüsü + sayı. Kimlik, çerez, IP, UA,
+/// oturum, URL, tercih/sorgu metni YOK — kişisel veri işlenmediği için anonim ziyaretçiden onam
+/// istenmez. Yazan tek yer: src/app/api/landing-event/route.ts (allowlist'li upsert).
+/// lib/audit.ts zincirine GİRMEZ (yüksek-frekanslı mekanik olay — audit.ts başlık kuralı).
+model LandingEvent {
+  id        String   @id @default(cuid())
+  name      String
+  placement String
+  day       DateTime @db.Date
+  count     Int      @default(0)
+
+  @@unique([name, placement, day])
+  @@index([day])
+}
+
 /// Doctorium sponsorlu içerik kampanyası (v6.68 Faz 1) — yalnız İLAÇ-DIŞI reklamverenler.
 /// Beşeri tıbbi ürün tanıtımı BİLİNÇLİ kapsam dışı: Modül D parkı sürüyor (TİTCK tanıtım
 /// yönetmeliği + aracı sıfatı hukuki görüş ister — lib/doctorium.ts başlık notu). Kategoriye

@@ -129,13 +129,22 @@ export function ArticleCard({
   item,
   saved,
   weight = "min",
+  hrefFor,
 }: {
   item: FeedItem;
   saved: boolean | null;
   weight?: CardWeight;
+  /**
+   * Başlık bağlantısı override'ı (2026-08-23, landing V2): /doctorium tanıtım sayfası bu kartı
+   * anonim ziyaretçiye gösterir; varsayılan /doktor/doctorium/... hedefi proxy'de HASTA kapısına
+   * (/giris) düşerdi. Landing `() => Doctorium giriş kapısı` verir; portal çağrıları prop'u
+   * geçmez → davranış aynen. Kartın kendisi hâlâ salt-okunur, auth bağımlılığı yok.
+   */
+  hrefFor?: (item: FeedItem) => string;
 }) {
-  const href =
-    item.module === "etkinlik" ? `/doktor/doctorium/etkinlik/${item.id}`
+  const href = hrefFor
+    ? hrefFor(item)
+    : item.module === "etkinlik" ? `/doktor/doctorium/etkinlik/${item.id}`
     : item.module === "kariyer" ? `/doktor/doctorium/kariyer/${item.id}`
     : `/doktor/doctorium/${item.id}`;
 

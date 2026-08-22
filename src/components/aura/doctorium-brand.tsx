@@ -49,14 +49,17 @@ export function DoctoriumInline() {
   );
 }
 
-// Zümrüt DOLGULU CTA lockup'ı (kullanıcı kararı 2026-08-18): "Doctor" BEYAZ, "ium" düğme
-// metninin koyusunda kalır — iki tonlu marka vuruşu zümrüt zeminde de yaşar. Eski istisna
-// ("buton metni tek ton koyu") SÜPERSEDE. Düğmenin kalan metni ("'a katıl") bileşen DIŞINDA
-// ve düğme renginde; yalnız marka adı buradan geçer.
+// Zümrüt DOLGULU CTA lockup'ı — v6.136 (2026-08-23, kullanıcı kararı; axe bulgusu): dolgu
+// KOYU ZÜMRÜT `#065f46` (axe ölçümü: #047857'de nane 4.27 — AA altı), "Doctor" BEYAZ (~7:1),
+// "ium" NANE `#a7f3d0` (~5.7:1), düğmenin kalan metni beyaz. Eski (2026-08-18) parlak #34d399
+// dolgu + beyaz Doctor 1.92:1 ile AA altındaydı (v1'de de aynıydı, v1 hiç taranmamıştı). İki tonlu
+// marka vuruşu korunur. Çağıranların dolgusu DOCTORIUM_CTA_FILL ile hizalanır — parlak zümrüt
+// üstünde bu bileşen KULLANILMAZ.
+export const DOCTORIUM_CTA_FILL = "bg-[#065f46] text-white hover:bg-[#064e3b]";
 export function DoctoriumOnEmerald() {
   return (
     <span className="whitespace-nowrap">
-      <span className="text-white">Doctor</span>ium
+      <span className="text-white">Doctor</span><span className="text-[#a7f3d0]">ium</span>
     </span>
   );
 }

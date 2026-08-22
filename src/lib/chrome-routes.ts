@@ -26,6 +26,9 @@ export const CHROME_FREE_ROUTES = [
   "/guven-ve-gizlilik",
   "/for-clinicians",
   "/doctorium",
+  // v1 yedeği (2026-08-23): V2 landing'e geçişte eski landing'in noindex karşılaştırma kopyası —
+  // aynı bileşen, aynı kendi-kromu sözleşmesi. V2 kesinleşince bu satır bileşenle birlikte kalkar.
+  "/doctorium-v1",
   "/doctorium/giris",
   "/giris",
   "/kurumsal-giris",

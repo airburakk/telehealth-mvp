@@ -1,0 +1,27 @@
+// Doctorium landing V2 — CTA hedefleri TEK KAYNAK (2026-08-23). Copy dosyasında rota yazılmaz.
+//
+// 🔴 Giriş hedefi `/doctorium/giris?next=...`: proxy anonim kullanıcıyı HASTA kapısına (/giris)
+// atar (src/proxy.ts:18-22); landing'den gelen doktor/öğrenci yanlış kapıya düşmesin diye
+// Doctorium kapısı açıkça hedeflenir. `next` yalnız e-posta yolunda korunur (gate-email-form.tsx);
+// OAuth başlangıçları bugün `next`'i kaybeder — bilinen sınır, ayrı iş.
+export const LANDING_ROUTES = {
+  /** Ana CTA — doktor kaydı. */
+  signup: "/kayit",
+  /** Tıp öğrencisi kaydı. */
+  student: "/ogrenci",
+  /** Giriş — Doctorium kapısı; başarıda portala döner. */
+  login: "/doctorium/giris?next=/doktor/doctorium",
+  /** İç portal (girişli). */
+  portal: "/doktor/doctorium",
+  trust: "/guven-ve-gizlilik",
+  aura: "/",
+} as const;
+
+/** Sayfa içi çapalar — header nav + mobil menü + sticky CTA aynı listeyi okur. */
+export const LANDING_ANCHORS = [
+  { id: "nasil", label: "Nasıl çalışır" },
+  { id: "akademik", label: "Akademik" },
+  { id: "hukuk", label: "Sağlık Hukuku" },
+  { id: "kongre", label: "Kongreler" },
+  { id: "guven", label: "Güven" },
+] as const;

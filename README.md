@@ -642,7 +642,25 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   · **`/for-clinicians`:** how-it-works sözleşmesi (indekslenir, sitemap 0.7, kendi aura nav/footer —
   Header/SiteFooter gizleme listesinde). Sözlük `v2.clinicians` **iki yüzeyi** besler (bölüm + sayfa).
   Not kutusu: doğrulama = belge incelemesi, **akreditasyon DEĞİL** (v6.8).
-  · **`/doctorium` (v6.100–100.1, 2026-08-16):** Doctorium tanıtım landing'i — for-clinicians gibi
+  · **`/doctorium` V2 (v6.136, 2026-08-23 — kullanıcının 7 parçalık "Landing Page V2" paketi):** anlatı
+  "modül kataloğu"ndan **"her doktor kendi Doctorium'unu oluşturur"** kategorisine geçti (marka → ürün
+  "daha fazla bilgi değil, sizin için doğru bilgi" → günlük "bugün sizin için"; AI hero'da geçmez).
+  Kod: `src/lib/doctorium-landing/` — **capability registry** (`capabilities.ts`: verified/partial/
+  unsupported; yalnız verified+partial render; EMA/TİTCK/ilgi alanı/kaynak seçimi/ülke/sıklık/AI
+  provenance `unsupported` → metinde GEÇMEZ) · typed copy `content.ts` (`{Doctorium}` → lockup; bölüm
+  `requires`) · `routes.ts` (giriş CTA'sı `/doctorium/giris?next=/doktor/doctorium` — proxy anonimi hasta
+  kapısına atar) · `landing-feed.ts` (gerçek `personalFeedPage` + 10 dk memo + fixture yedeği; anonim
+  `GET /api/doctorium/landing-feed` allowlist+rate-limit) · `why.ts` (kuraldan türetilmiş "Neden
+  görüyorum?"). Bileşenler `components/aura/doctorium-v2/` — 14 bölüm; **`ProductFrame`** = `--c-*`
+  tema-takipli gerçek ürün penceresi içinde GERÇEK bileşenler (`ArticleCard` `hrefFor` · çıkarılan
+  `LegalSearchBox` [`demo` prop] · `CongressList` · `AcademicSummaryBlock` · `lib/doc-status.ts`
+  `statusRozet`) — sahte dashboard YOK. Analytics **first-party agregat** (`LandingEvent` günlük sayaç,
+  `POST /api/landing-event`; kimlik/IP/UA/URL/tercih YOK → onam gerekmez). **v1 yedeği:** tag
+  `doctorium-landing-v1-son` + `/doctorium-v1` (noindex; V2 kesinleşince rota+`doctorium-landing.tsx`
+  birlikte kalkar). **CTA kontrastı (kullanıcı kararı):** dolgu `#065f46`, Doctor BEYAZ + ium NANE
+  `#a7f3d0` (`DoctoriumOnEmerald` tek kaynak; eski #34d399+beyaz 1.92:1 AA altıydı). Sözleşme testi
+  `tests/unit/doctorium-landing-registry.test.ts`; `/doctorium` artık sentetik kontrol + a11y e2e'de.
+  · **`/doctorium` v1 (v6.100–100.1, 2026-08-16 — ARTIK `/doctorium-v1`):** Doctorium tanıtım landing'i — for-clinicians gibi
   indekslenir + sitemap 0.7 + Header gizleme listesinde, ama **V2Nav DEĞİL**: kendi üst barı/footer'ı,
   TR-only (`components/aura/doctorium-landing.tsx`). **Almaşık koyu/açık ritim (v6.100.1 — ana
   vitrin deseni):** çift-koyu açılış (hero+güven) → olanaklar A → hukuk K → puanlar A → öğrenci K
@@ -659,12 +677,10 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   · **v6.102 (2026-08-16):** `/doctorium/giris` kapısı (DoctoriumGate, auth-gates.tsx — zümrüt dönen
   sembol + lockup başlık + Doktor/Tıp Öğrencisi rolleri + Google/Apple/e-posta; noindex + Header
   gizleme listesinde) · landing arka plan video zemini (`DoctoriumBgVideo`: hero koyu / final CTA
-  açık overlay; film2/film3 720p + gate2 kapı videosu). **Braille kuralı GÜNCEL:** her wordmark
-  KENDİ braille'ini TAM ALTINDA ortalı taşır (AURA ⠁⠥⠗⠁ · Doctorium ⠙⠕⠉⠞⠕⠗⠊⠥⠍) —
-  `DoctoriumBraille` (AuraLogo.tsx; AuraBraille ile birebir geometri; hücreler nokta
-  numaralarından türetilir; **min-genişlik 146px**, altında HİÇ çizilmez). Yerler: kapı başlığı
-  (aria-hidden içinde) + landing footer marka bloğu (32px lockup ≈154px > braille 146px). Üst bar
-  BİLİNÇLİ braille'siz (22px lockup 106px < 146px — "nav'a konmaz" kuralı iki markada geçerli).
+  açık overlay; film2/film3 720p + gate2 kapı videosu). **Braille — Doctorium'da KALDIRILDI
+  (2026-08-21, `add6409`, kullanıcı kararı):** `DoctoriumBraille` bileşeni ve ⠙⠕⠉⠞⠕⠗⠊⠥⠍
+  dizesi koddan silindi; kapı başlığı ve landing footer'ı braille'siz. AURA tarafındaki
+  `AuraBraille` (⠁⠥⠗⠁, AuraLogo.tsx) DURUYOR. Doctorium'a braille geri EKLENMEZ.
   · **v6.103 (2026-08-16) — marka toggle'ı 2. NESİL, TEK KAYAN SEMBOL** (v6.100'ün "iki logo yan
   yana, aktif olan döner" nesli SÜPERSEDE): dönen `AuraMark` **tektir**, aktif markanın yuvasında
   durur; toggle'da öbür yuvaya **kayar** ve rengi değişir (AURA turkuaz `brand` ↔ Doctorium zümrüt

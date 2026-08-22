@@ -131,9 +131,9 @@ export function DoctoriumLanding() {
             </Link>
             <Link
               href="/kayit"
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#34d399] px-3 text-[13px] font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0] sm:px-4 sm:text-sm"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#065f46] px-3 text-[13px] font-semibold text-white transition-colors hover:bg-[#064e3b] sm:px-4 sm:text-sm"
             >
-              {/* Zümrüt CTA lockup'ı (2026-08-18): Doctor BEYAZ (DoctoriumOnEmerald). */}
+              {/* Zümrüt CTA lockup'ı: Doctor BEYAZ + ium nane, koyu-zümrüt dolgu (v6.136 kontrast kararı). */}
               <span className="sm:hidden">Katıl</span>
               <span className="hidden sm:inline"><DoctoriumOnEmerald />&apos;a katıl</span>
             </Link>
@@ -188,11 +188,11 @@ export function DoctoriumLanding() {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/kayit"
-                  className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#34d399] px-6 text-base font-semibold text-[#04342c] transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
+                  className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#065f46] px-6 text-base font-semibold text-white transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
                 >
                   <span
                     aria-hidden
-                    className="absolute inset-y-0 start-0 w-1 bg-[#04342c] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+                    className="absolute inset-y-0 start-0 w-1 bg-[#022c22] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
                   />
                   <span className="relative"><DoctoriumOnEmerald />&apos;a katıl</span>
                   <ArrowRight
@@ -413,11 +413,11 @@ export function DoctoriumLanding() {
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href="/kayit"
-                className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#34d399] px-6 text-base font-semibold text-[#04342c] transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
+                className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#065f46] px-6 text-base font-semibold text-white transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
               >
                 <span
                   aria-hidden
-                  className="absolute inset-y-0 start-0 w-1 bg-[#04342c] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+                  className="absolute inset-y-0 start-0 w-1 bg-[#022c22] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
                 />
                 <span className="relative">Doktor üyeliğine başla</span>
                 <ArrowRight
