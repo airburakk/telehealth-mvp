@@ -35,7 +35,7 @@ export function HeroSection({ sample }: { sample: LandingSample }) {
             )}
             {secondary && (
               <CtaLink href={secondary.to as string} event="how_it_works_click" placement="hero">
-                <Rich text={secondary.label} /> <span aria-hidden>↓</span>
+                <Rich text={secondary.label} />
               </CtaLink>
             )}
           </div>
