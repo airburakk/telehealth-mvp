@@ -10,6 +10,25 @@ import type { ClinicalSummary } from "@/lib/doctorium";
 // [id]/page.tsx prop geçmez). Landing V2 `disclaimer={false}` verir — kullanıcı kararı 2026-08-23:
 // uyarı metinleri REVİZE EDİLECEK, tanıtım sayfası eski hâlini sergilemesin. "Yapay zekâ ile
 // üretildi" İŞARETİ compact başlıkta sürer (registry academic.ai_flag kanıtı bozulmaz).
+function DesignAndLimits({ summary }: { summary: ClinicalSummary }) {
+  return (
+    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div>
+        <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
+          <FlaskConical size={13} /> Çalışma tasarımı
+        </h3>
+        <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">{summary.design}</p>
+      </div>
+      <div>
+        <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
+          <ShieldQuestion size={13} /> Kısıtlılıklar
+        </h3>
+        <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">{summary.limits}</p>
+      </div>
+    </div>
+  );
+}
+
 export function AcademicSummaryBlock({
   summary, compact = false, disclaimer = true,
 }: { summary: ClinicalSummary; compact?: boolean; disclaimer?: boolean }) {
@@ -24,7 +43,9 @@ export function AcademicSummaryBlock({
           <ListChecks size={13} /> Ana çıkarımlar
         </h3>
         <ul className="mt-1.5 grid gap-1.5">
-          {summary.takeaways.map((t, i) => (
+          {/* compact (landing): en fazla 3 çıkarım — inceleme notu 2026-08-23 "landing'de 2-3
+              çıkarım + devamını gör"; portal tam liste. */}
+          {(compact ? summary.takeaways.slice(0, 3) : summary.takeaways).map((t, i) => (
             <li key={i} className="flex gap-2 text-sm leading-relaxed text-[var(--c-ink)]">
               <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
               {t}
@@ -33,20 +54,18 @@ export function AcademicSummaryBlock({
         </ul>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div>
-          <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
-            <FlaskConical size={13} /> Çalışma tasarımı
-          </h3>
-          <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">{summary.design}</p>
-        </div>
-        <div>
-          <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
-            <ShieldQuestion size={13} /> Kısıtlılıklar
-          </h3>
-          <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">{summary.limits}</p>
-        </div>
-      </div>
+      {compact ? (
+        /* Tasarım + kısıtlılıklar katlanır (native details — klavye/ekran okuyucu uyumlu, JS yok). */
+        <details className="group mt-3">
+          <summary className="cursor-pointer list-none text-[12px] font-semibold text-emerald-300 hover:underline">
+            <span className="group-open:hidden">Devamını gör — çalışma tasarımı ve kısıtlılıklar</span>
+            <span className="hidden group-open:inline">Daha az göster</span>
+          </summary>
+          <DesignAndLimits summary={summary} />
+        </details>
+      ) : (
+        <DesignAndLimits summary={summary} />
+      )}
 
       {disclaimer && (
         <p className="mt-4 flex items-start gap-2 border-t border-emerald-400/20 pt-3 text-[11px] leading-relaxed text-amber-200/90">

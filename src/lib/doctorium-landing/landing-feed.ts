@@ -82,8 +82,9 @@ export async function landingFeedSample(branch: string, modules: LandingModuleKe
   let value: LandingSample;
   try {
     const page = await personalFeedPage([branch], modules as FeedModuleKey[], {}, limit);
-    const items = page.items.length ? await localizeTitles(page.items) : page.items;
-    if (!items.length) throw new Error("boş akış");
+    const localized = page.items.length ? await localizeTitles(page.items) : page.items;
+    if (!localized.length) throw new Error("boş akış");
+    const items = branchFirst(localized, branch);
     const todayByModule = await todayCounts(branch, modules);
     value = {
       branch, modules, items, todayByModule,
@@ -175,12 +176,26 @@ export async function landingProofSample(branch: string): Promise<LandingProof> 
   return value;
 }
 
-/** "Bugün sizin için" 2×2 — her ana bölümden bir kart (akademik · ilaç · hukuk · etkinlik). */
-export function pickOnePerModule(items: FeedItem[]): FeedItem[] {
-  const want = ["akademik", "ilac", "mevzuat", "etkinlik"];
+/**
+ * Branşla eşleşen kartlar ÖNE (inceleme notu 2026-08-23: "ilk dört kart kişiselleştirmenin etkisini
+ * dramatik kanıtlasın; branştan bağımsız içerik aşağıda kalsın"). Kararlı bölümleme — iki grubun
+ * kendi içindeki interleave sırası korunur. Akış kuralı DEĞİŞMEZ (portal aynı); yalnız landing dizilimi.
+ */
+export function branchFirst<T extends Pick<FeedItem, "branchSlugs">>(items: T[], branch: string): T[] {
+  const hit: T[] = [];
+  const rest: T[] = [];
+  for (const i of items) (i.branchSlugs.includes(branch) ? hit : rest).push(i);
+  return [...hit, ...rest];
+}
+
+/** "Bugün sizin için" 2×2 — her ana bölümden bir kart (akademik · etkinlik · ilaç · hukuk); bölüm
+ *  içinde branşla eşleşen kart tercih edilir, eşleşenler ilk sırada. */
+export function pickOnePerModule(items: FeedItem[], branch?: string): FeedItem[] {
+  const want = ["akademik", "etkinlik", "ilac", "mevzuat"];
   const out: FeedItem[] = [];
   for (const m of want) {
-    const hit = items.find((i) => i.module === m);
+    const pool = items.filter((i) => i.module === m);
+    const hit = (branch && pool.find((i) => i.branchSlugs.includes(branch))) || pool[0];
     if (hit) out.push(hit);
   }
   // Eksik bölümü sıradaki farklı kartla doldur (4'e tamamla; tekrar yok).
@@ -188,5 +203,5 @@ export function pickOnePerModule(items: FeedItem[]): FeedItem[] {
     if (out.length >= 4) break;
     if (!out.includes(i)) out.push(i);
   }
-  return out;
+  return branch ? branchFirst(out, branch) : out;
 }

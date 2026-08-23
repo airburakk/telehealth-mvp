@@ -10,7 +10,7 @@ import { LandingSection, Note, SectionHead } from "../primitives";
 // "Neden görüyorum?". Sayı yalnız gerçek sayımdan; yoksa yazılmaz.
 export function TodaySection({ sample }: { sample: LandingSample }) {
   const copy = section("today");
-  const four = pickOnePerModule(sample.items);
+  const four = pickOnePerModule(sample.items, sample.branch);
   const n = sample.todayTotal;
   return (
     <LandingSection copy={copy}>

@@ -18,6 +18,21 @@ export interface CongressRow {
   eventType: string; ttbCode: string | null;
 }
 
+/** Son tarih satırı: gelecekteyse "Etiket: <tarih>", geçtiyse "Geçti-etiketi · tarih" soluk. */
+function Deadline({ label, passedLabel, at }: { label: string; passedLabel: string; at: Date }) {
+  // Gün sonuna kadar geçerli sayılır (MedicalCongress tarihleri UTC gün başı; son gün dahil).
+  const passed = at.getTime() + 86_400_000 <= Date.now();
+  return passed ? (
+    <span className="inline-flex items-center gap-1 text-[var(--c-ink-3)]">
+      <CalendarClock size={11} /> {passedLabel} <span aria-hidden>·</span> {formatDate(at)}
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1">
+      <CalendarClock size={11} /> {label}: <strong>{formatDate(at)}</strong>
+    </span>
+  );
+}
+
 export function CongressList({
   rows, followed, canFollow, savedIds, followedOnly = false, hrefFor,
 }: {
@@ -100,16 +115,11 @@ export function CongressList({
 
           {(c.abstractDeadline || c.earlyBirdDeadline) && (
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-[var(--c-ink-2)]">
-              {c.abstractDeadline && (
-                <span className="inline-flex items-center gap-1">
-                  <CalendarClock size={11} /> Bildiri son: <strong>{formatDate(c.abstractDeadline)}</strong>
-                </span>
-              )}
-              {c.earlyBirdDeadline && (
-                <span className="inline-flex items-center gap-1">
-                  <CalendarClock size={11} /> Erken kayıt: <strong>{formatDate(c.earlyBirdDeadline)}</strong>
-                </span>
-              )}
+              {/* Geçmiş son tarih DURUM olarak yazılır (inceleme notu 2026-08-23): "Mayıs'taki erken
+                  kayıt tarihi Ağustos'ta hâlâ gösteriliyor, kullanıcı zihinsel hesap yapıyor". Tarih
+                  yine görünür (kanıt), ama ifade "sona erdi/doldu" + soluk ton. Sınır UTC gün sonu. */}
+              {c.abstractDeadline && <Deadline label="Bildiri son" passedLabel="Bildiri süresi doldu" at={c.abstractDeadline} />}
+              {c.earlyBirdDeadline && <Deadline label="Erken kayıt" passedLabel="Erken kayıt sona erdi" at={c.earlyBirdDeadline} />}
             </div>
           )}
 

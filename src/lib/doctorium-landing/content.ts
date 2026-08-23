@@ -60,7 +60,7 @@ export const DIFFERENCE_ROWS = [
   { portal: "Herkese benzer akış", doctorium: "Size göre şekillenen akış" },
   { portal: "Platform seçer", doctorium: "Siz seçersiniz" },
   { portal: "İçerik akışı", doctorium: "Çalışma alanı" },
-  { portal: "Çok içerik", doctorium: "Seçtiğiniz bölümlerin içeriği" },
+  { portal: "Daha fazla içerik", doctorium: "Sizin için doğru içerik" }, // manifesto callback'i (inceleme notu 2026-08-23)
   { portal: "Genel gündem", doctorium: "Kişisel profesyonel gündem" },
 ] as const;
 
@@ -132,7 +132,9 @@ export const SECTIONS: readonly SectionCopy[] = [
     theme: "dark",
     requires: ["regulatory.fda", "regulatory.trials", "regulatory.rg", "regulatory.ohsad"],
     eyebrow: "İlaç & Regülasyon",
-    title: "Takip ettiğiniz kaynaklardaki gelişmeleri tek tek aramayın.",
+    // İnceleme notu 2026-08-23 "takip etmeyi seçtiğiniz kaynaklardaki…" → KAYNAK seçimi üründe yok
+    // (registry prefs.sources unsupported); dürüst eşdeğer = BÖLÜM seçimi (verified).
+    title: "Seçtiğiniz bölümlerdeki gelişmeleri tek tek aramayın.",
     body: "Geri çekme duyuruları, klinik faz kayıtları ve sağlık mevzuatı aynı akışta. Her kartta kaynak ve tarih; prospektüs bilgisine arama ile ulaşırsınız.",
     note: "Prospektüs verisi openFDA kaynaklıdır (ABD); bölgesel geçerlilik notu kartta görünür kalır.",
   },
