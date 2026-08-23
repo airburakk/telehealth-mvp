@@ -15,7 +15,14 @@ const TITLES = ["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."];
 // "Hizmet dilleri" alanı KALDIRILDI (kullanıcı kararı 2026-08-17): kayıt formu kısaldı; hesap
 // varsayılan olarak Türkçe hizmet diliyle açılır (API tarafı), doktor dilleri sonradan
 // profilinden düzenler. Geri eklerken önce o kararı teyit et.
-export function DoctorSignupForm({ googleEnabled, appleEnabled, branches }: { googleEnabled: boolean; appleEnabled: boolean; branches: string[] }) {
+//
+// brand="doctorium" (ayrışma 2026-08-24, Faz B): /doctorium/kayit sarmalayıcısı aynı formu
+// Doctorium markasıyla kullanır — zümrüt küre, AURA'sız alt başlık, giriş linkleri Doctorium
+// kapısına. Vurgu RENKLERİ prop'la değil sarmalayıcı sayfanın --c-accent* ezmesiyle değişir
+// (SocialAuthButtons dahil tek noktadan). API/akış birebir aynı — ayrışan yalnız görünüm.
+export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, brand }: { googleEnabled: boolean; appleEnabled: boolean; branches: string[]; brand?: "doctorium" }) {
+  const doctorium = brand === "doctorium";
+  const gateHref = doctorium ? "/doctorium/giris" : "/kurumsal-giris";
   const sp = useSearchParams();
   const oauthMsg = oauthBannerMessage(sp.get("oauth"), sp.get("provider"), "giriş");
 
@@ -61,12 +68,12 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches }: { go
           <h1 className="mt-4 font-serif text-lg font-bold text-[var(--c-ink)]">Doğrulama bağlantısı gönderildi</h1>
           <p className="mt-2 text-sm text-[var(--c-ink-2)]">
             <span className="font-medium text-[var(--c-ink)]">{email}</span> adresine bir doğrulama
-            e-postası gönderdik. Bağlantıya tıkladıktan sonra kurumsal girişten oturum açıp
-            onboarding adımlarını tamamlayabilirsiniz.
+            e-postası gönderdik. Bağlantıya tıkladıktan sonra {doctorium ? "Doctorium girişinden" : "kurumsal girişten"} oturum
+            açıp adımları tamamlayabilirsiniz.
           </p>
           <p className="mt-3 text-xs text-[var(--c-ink-3)]">E-posta birkaç dakika içinde gelmezse spam klasörünü kontrol edin.</p>
-          <Link href="/kurumsal-giris" className="mt-5 inline-flex items-center justify-center rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
-            Kurumsal girişe dön
+          <Link href={gateHref} className="mt-5 inline-flex items-center justify-center rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
+            {doctorium ? "Doctorium girişine dön" : "Kurumsal girişe dön"}
           </Link>
         </div>
       </div>
@@ -76,9 +83,9 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches }: { go
   return (
     <div className="w-full max-w-md">
       <div className="mb-6 flex flex-col items-center text-center">
-        <span className="grid h-12 w-12 place-items-center rounded-3xl bg-[var(--c-panel)] ring-1 ring-[var(--c-hairline)]"><AuraMark size={26} /></span>
+        <span className="grid h-12 w-12 place-items-center rounded-3xl bg-[var(--c-panel)] ring-1 ring-[var(--c-hairline)]"><AuraMark size={26} tone={doctorium ? "emerald" : undefined} /></span>
         <h1 className="mt-3 flex items-center gap-1.5 font-serif text-xl font-bold tracking-tight text-[var(--c-ink)]"><Stethoscope size={20} className="text-[var(--c-accent)]" /> Doktor Kaydı</h1>
-        <p className="text-sm text-[var(--c-ink-2)]">AURA ağına katılın — birkaç adımda profilinizi oluşturun</p>
+        <p className="text-sm text-[var(--c-ink-2)]">{doctorium ? "Doctorium'unuzu oluşturun — birkaç adımda profilinizi tamamlayın" : "AURA ağına katılın — birkaç adımda profilinizi oluşturun"}</p>
       </div>
 
       <div className="rounded-[22px] border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6">
@@ -148,7 +155,7 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches }: { go
       </div>
 
       <p className="mt-4 text-center text-sm text-[var(--c-ink-2)]">
-        Zaten hesabınız var mı? <Link href="/kurumsal-giris" className="font-semibold text-[var(--c-accent)] hover:underline">Giriş yapın</Link>
+        Zaten hesabınız var mı? <Link href={gateHref} className="font-semibold text-[var(--c-accent)] hover:underline">Giriş yapın</Link>
       </p>
     </div>
   );

@@ -61,7 +61,9 @@ function AuraSymbol({
     .filter(Boolean)
     .join(" ");
   return (
-    <span role="img" aria-label="AURA" className={cls} style={{ width: size, height: size }}>
+    // Erişilebilir ad TONE'a bağlı (ayrışma 2026-08-24): zümrüt küre Doctorium'un sembolüdür —
+    // ekran okuyucu Doctorium yüzeyinde "AURA" duymamalı (görsel ayrışma aria'da da geçerli).
+    <span role="img" aria-label={tone === "emerald" ? "Doctorium" : "AURA"} className={cls} style={{ width: size, height: size }}>
       <span aria-hidden className="aura-sphere-img" style={{ backgroundImage: `url(${src})` }} />
     </span>
   );

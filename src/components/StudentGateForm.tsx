@@ -19,11 +19,15 @@ import { universitiesFor, type StudentDepartment } from "@/lib/universities";
 // eşleşmezse sunucu kaydı reddeder — eşleşmeyen üniversite/e-posta kombinasyonuyla hesap hiç
 // AÇILMAZ. lib/universities.ts client-safe (db bağımlılığı yok) — doğrudan import edilir.
 
-export function StudentGateForm({ branches }: { branches: string[] }) {
+// brand="doctorium" (ayrışma 2026-08-24, Faz B): /doctorium/ogrenci sarmalayıcısı aynı formu
+// Doctorium markasıyla kullanır — zümrüt küre, giriş/doktor-kaydı linkleri Doctorium rotalarına.
+// Vurgu renkleri sarmalayıcı sayfanın --c-accent* ezmesinden gelir; API/akış birebir aynı.
+export function StudentGateForm({ branches, brand }: { branches: string[]; brand?: "doctorium" }) {
+  const doctorium = brand === "doctorium";
   return (
     <div className="w-full max-w-md">
       <div className="mb-6 flex flex-col items-center text-center">
-        <span className="grid h-12 w-12 place-items-center rounded-3xl bg-[var(--c-panel)] ring-1 ring-[var(--c-hairline)]"><AuraMark size={26} /></span>
+        <span className="grid h-12 w-12 place-items-center rounded-3xl bg-[var(--c-panel)] ring-1 ring-[var(--c-hairline)]"><AuraMark size={26} tone={doctorium ? "emerald" : undefined} /></span>
         <h1 className="mt-3 flex items-center gap-1.5 font-serif text-xl font-bold tracking-tight text-[var(--c-ink)]">
           <GraduationCap size={20} className="text-[var(--c-accent)]" /> Tıp Öğrencisi Kaydı
         </h1>
@@ -35,10 +39,10 @@ export function StudentGateForm({ branches }: { branches: string[] }) {
       </div>
 
       <p className="mt-4 text-center text-sm text-[var(--c-ink-2)]">
-        Zaten hesabınız var mı? <Link href="/kurumsal-giris" className="font-semibold text-[var(--c-accent)] hover:underline">Giriş yapın</Link>
+        Zaten hesabınız var mı? <Link href={doctorium ? "/doctorium/giris" : "/kurumsal-giris"} className="font-semibold text-[var(--c-accent)] hover:underline">Giriş yapın</Link>
       </p>
       <p className="mt-1.5 text-center text-sm text-[var(--c-ink-2)]">
-        Doktor musunuz? <Link href="/kayit" className="font-semibold text-[var(--c-accent)] hover:underline">Doktor kaydına gidin</Link>
+        Doktor musunuz? <Link href={doctorium ? "/doctorium/kayit" : "/kayit"} className="font-semibold text-[var(--c-accent)] hover:underline">Doktor kaydına gidin</Link>
       </p>
     </div>
   );

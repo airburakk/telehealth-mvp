@@ -344,9 +344,10 @@ const DOCTORIUM = {
   form: { emailLabel: "E-posta", passwordLabel: "Parola", submit: "Giriş yap" },
 } as const;
 
-// Rol-duyarlı üyelik hedefi — DOCTORIUM.roles indeksleriyle paralel:
-// 0 Doktor → /kayit (self-signup) · 1 Tıp Öğrencisi → /ogrenci (öğrenci hunisi).
-const DOCTORIUM_SIGNUP_HREFS: readonly string[] = [LINKS.doctorSignup, "/ogrenci"];
+// Rol-duyarlı üyelik hedefi — DOCTORIUM.roles indeksleriyle paralel (ayrışma Faz B 2026-08-24:
+// AURA kromlu /kayit + /ogrenci yerine Doctorium kabuklu sarmalayıcılar):
+// 0 Doktor → /doctorium/kayit · 1 Tıp Öğrencisi → /doctorium/ogrenci.
+const DOCTORIUM_SIGNUP_HREFS: readonly string[] = ["/doctorium/kayit", "/doctorium/ogrenci"];
 
 // Doctorium'a özel kapı videosu (kullanıcı üretimi, 2026-08-16 — geçici VIDEOS.so
 // süpersede). Ad-versiyonlu "-gate2" çifti; poster kendi ilk karesinden (MAD 1.17 < 1.5

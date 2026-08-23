@@ -20,6 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry("/guven-ve-gizlilik", 0.8, "monthly"), // Güven ve Gizlilik (kanonik; /trust → 301)
     entry("/for-clinicians", 0.7, "monthly"), // doktor-yüzü vitrin (v6.17)
     entry("/doctorium", 0.7, "monthly"), // Doctorium tanıtım landing'i (2026-08-16)
+    entry("/doctorium/kayit", 0.6, "monthly"), // Doctorium doktor kaydı (ayrışma Faz B, 2026-08-24)
     entry("/giris", 0.7, "monthly"), // hasta giriş kapısı (public)
     entry("/kayit/hasta", 0.7, "monthly"), // hasta üyeliği
     entry("/kayit", 0.6, "monthly"), // doktor kaydı

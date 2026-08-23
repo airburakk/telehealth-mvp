@@ -30,8 +30,9 @@ const ROUTES = [
   { path: "/guven-ve-gizlilik", title: "Trust",                      h1: "Trust",                 cta: "/kayit/hasta",            noindex: false },
   { path: "/for-clinicians",    title: "For clinicians",             h1: "Practice across borders", cta: "/kurumsal-giris",        noindex: false },
   // Doctorium landing V2 (2026-08-23): h1 "Her doktor kendi Doctorium'unu oluşturur." (lockup
-  // span'leri extract'ta soyulur). CTA = doktor kaydı. Metin bilinçli değişirse burayı da güncelle.
-  { path: "/doctorium",         title: "Doctorium",                  h1: "Her doktor kendi",      cta: "/kayit",                  noindex: false },
+  // span'leri extract'ta soyulur). CTA = doktor kaydı — ayrışma Faz B (2026-08-24) ile Doctorium
+  // kabuklu /doctorium/kayit. Metin bilinçli değişirse burayı da güncelle.
+  { path: "/doctorium",         title: "Doctorium",                  h1: "Her doktor kendi",      cta: "/doctorium/kayit",        noindex: false },
   // Kapı-içi form (2026-08-06): /e-posta alt rotaları kaldırıldı — kapı CTA'sı doğrudan OAuth
   // başlangıcı. ⚠️ Kontrol `href="<cta>"` TAM eşleşmesi yapar → query dahil yazılır
   // (ilk sürümde ?intent'siz yazılmıştı; kapanış tırnağı eşleşmedi, iki kontrol yanlış düştü).
