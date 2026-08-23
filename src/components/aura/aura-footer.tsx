@@ -30,9 +30,8 @@ export function AuraFooter({ accountLinks = false }: { accountLinks?: boolean })
     <footer className="border-t border-[var(--aura-hairline)] bg-[var(--aura-bg)] print:hidden">
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[2fr_1fr_1fr] md:px-8">
         <div>
-          {/* Tam lockup (kullanıcı kararı 2026-08-23): küre + AURA + GLOBAL CARE + braille
-              (braille GLOBAL CARE'in altında, ortalı — [[aura-braille-under-wordmark]]
-              kural güncellemesi). H=30 → küre 80px, wordmark 156px, alt yazı 9,7px. */}
+          {/* Tam lockup (kullanıcı kararı 2026-08-23): küre + AURA + GLOBAL CARE (braille v6.138'de
+              site genelinden kaldırıldı). H=30 → küre 80px, wordmark 156px, alt yazı 9,7px. */}
           <AuraLockup wordHeight={30} />
 
           {/* Metin içi AURA = wordmark görseli (kullanıcı kuralı 2026-08-17). */}

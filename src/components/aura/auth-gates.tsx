@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useSearchParams } from "next/navigation";
 import { WordHeadline } from "@/components/aura/word-headline";
-import { AuraMark, AuraLockup } from "@/components/AuraLogo";
 import { GateEmailForm } from "@/components/aura/gate-email-form";
 import { LangProvider, useLang, langDir, LINKS, VIDEOS } from "@/lib/aura-landing/i18n";
 import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
@@ -126,17 +125,14 @@ function SigninPanel() {
 
   return (
     <GateShell video={VIDEOS.hero}>
-      {/* Tam lockup (kullanıcı kararı 2026-08-23): küre + AURA + GLOBAL CARE + braille.
-          Braille burada lockup'ta (GLOBAL CARE altında) → WordHeadline'ın braille'i KAPALI
-          (bir kapıda iki braille olmaz). H=28 → küre 74px, wordmark 146px. */}
-      <Link href="/" aria-label="AURA" className="flex justify-center">
-        <AuraLockup wordHeight={28} />
-      </Link>
+      {/* Kapı LOGOSUZ ve AURA bir kez (kullanıcı kararı 2026-08-23, v6.138): üstteki sembol/lockup
+          kaldırıldı; "GLOBAL CARE" başlıktaki AURA'nın altında (WordHeadline globalCare). */}
       <WordHeadline
         word={t.signin.word}
         wordBefore={t.signin.wordBefore}
         wordAfter={t.signin.wordAfter}
         lineAfter={t.signin.lineAfter}
+        globalCare
       />
       <p className="mt-3 text-[15px] text-[var(--aura-grey)]">{t.signin.sub}</p>
 
@@ -235,15 +231,13 @@ function CorporatePanel() {
 
   return (
     <GateShell video={VIDEOS.so}>
-      {/* Hasta kapısıyla aynı lockup (braille lockup'ta; WordHeadline braille'siz). */}
-      <Link href="/" aria-label="AURA" className="flex justify-center">
-        <AuraLockup wordHeight={28} />
-      </Link>
+      {/* Hasta kapısıyla aynı: logosuz, GLOBAL CARE başlıktaki AURA'nın altında. */}
       <WordHeadline
         word={c.word}
         wordBefore={c.wordBefore}
         wordAfter={c.wordAfter}
         lineAfter={c.lineAfter}
+        globalCare
       />
       <p className="mt-3 text-[15px] text-[var(--aura-grey)]">{c.sub}</p>
 
@@ -359,9 +353,8 @@ export function DoctoriumGate() {
 
   return (
     <DoctoriumShell>
-      <Link href="/doctorium" aria-label="Doctorium" className="flex justify-center">
-        <AuraMark size={40} tone="emerald" className="brand-live" />
-      </Link>
+      {/* v6.138 (kullanıcı kararı 2026-08-23): tüm giriş ekranları LOGOSUZ — üstteki zümrüt
+          küre kaldırıldı; yalnız başlık (Doctorium lockup) + form. */}
 
       {/* Lockup + karşılama tek h1'de (tek sayfa başlığı): görsel iki satır,
           erişilebilir ad düzyazı. Lockup font-medium — landing DoctoriumWord dili

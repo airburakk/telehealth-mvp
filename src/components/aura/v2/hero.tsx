@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { ArrowRight } from "lucide-react";
-import { AuraBraille, AuraWordSvg } from "@/components/AuraLogo";
+import { AuraWordSvg } from "@/components/AuraLogo";
 import { AuraWordText } from "@/components/aura/aura-word";
 import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
 import { VIDEOS, useLang } from "@/lib/aura-landing/i18n";
@@ -92,17 +92,16 @@ export function V2Hero() {
 
       {/* Sola dayalı düzen (2026-08-18, kullanıcı isteği): /doctorium landing deseni —
           içerik V2Nav'daki logoyla AYNI sol çizgiden akar (ikisi de max-w-6xl px-5
-          md:px-8). Braille marka bloğu İÇİNDE wordmark'a göre ortalı kalır (kural). */}
+          md:px-8). */}
       <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col items-start justify-center px-5 py-24 md:px-8">
-        {/* Marka vuruşu: AURA harfleri + braille — sahnesiz, her zaman görünür. */}
+        {/* Marka vuruşu: AURA wordmark'ı — sahnesiz, her zaman görünür. */}
         <div role="img" aria-label="AURA" className="aura-brand inline-flex flex-col items-center">
           {/* v6.137: harf dilimleri (137px PNG, 9rem'de pikselleşiyordu) → vektör wordmark.
               Harf aralığı artık wordmark'ın kendi doğal takibi (marka seti v2 ile aynı). */}
           <span className="aura-word flex select-none items-end justify-center">
             <AuraWordSvg decorative className="h-[clamp(3rem,12vw,9rem)] w-auto" />
           </span>
-          {/* Alt sınır 12: AuraBraille height<12'de HİÇ çizmez. */}
-          <AuraBraille height={24} className="aura-braille mt-4 text-[var(--aura-ink)]" />
+          {/* v6.138: Braille site genelinden kaldırıldı (kullanıcı kararı 2026-08-23). */}
         </div>
 
         <p className="aura-mono mt-12 text-sm text-[var(--aura-accent)]">/ {h.eyebrow}</p>

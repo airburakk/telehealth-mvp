@@ -697,6 +697,15 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   `air_lang`a taşıyan GÖÇ kodu, silinirse o tarayıcılarda dil seçimi sıfırlanır. 🪤 Bu rename
   sırasında `git mv`'nin stage'i paralel oturumun commit'ine karıştı → `origin/main` bir süre
   build-kırık kaldı (deploy ERROR); ders: rename+süpürme+commit **tek turda** bitirilir.
+  · **Braille kaldırıldı + giriş ekranları logosuz (2026-08-23, v6.138):** kullanıcı kararı
+  "Braille'i kaldırıyoruz" → `AuraBraille` bileşeni, `.aura-braille` CSS'i ve `aura-breathe-braille`
+  keyframe'i SİLİNDİ (hero, footer lockup, kapılar braille'siz; geri eklenmez). Güven bölümündeki
+  "AURA altındaki Braille görsel marka öğesidir" cümlesi **9 dilde** kaldırıldı (olmayan öğe hakkında
+  beyan kalmasın — iddia disiplini). Giriş ekranları: üstteki küre/lockup kaldırıldı, AURA bir kez
+  yazılır — "GLOBAL CARE" başlıktaki AURA'nın altında (`WordHeadline globalCare` → `GlobalCareLine`,
+  wordmark kutusuna hizalı); `/doctorium/giris`'teki zümrüt küre de kalktı. 🪤 em tuzağı:
+  `font-size`'daki em ebeveyne, `margin`daki em elemanın KENDİ puntosuna göre çözülür → em modunda üst
+  boşluk `.2016/.323 = 0.624em` (ilk denemede GLOBAL CARE AURA'ya yapıştı; Playwright ile 6,4px ölçüldü).
   · **Marka seti v2 — küre + vektör wordmark (2026-08-23, v6.137):** sembol artık kullanıcının
   **holografik küresi** (`AuraMark`/`AuraSpinner`; 4,6MB kaynak GIF → paketin SVG renk filtresi
   karelere pişirilip `hqdn3d` ile temizlenerek **alfa kanallı WebP** 160px 352KB / 240px 717KB,

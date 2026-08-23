@@ -127,59 +127,9 @@ export function AuraWordSvg({
   );
 }
 
-// AURA Braille (⠁⠥⠗⠁) — kullanıcının logosundaki dokunsal marka detayı. Nokta
-// koordinatları orijinal SVG'den (translate(17,0) uygulanmış). fill=currentColor →
-// kullanıldığı yerin metin rengini alır (tema-uyumlu: gece açık, gündüz koyu).
-// viewBox noktaları r=7 payıyla sarar.
-//
-// ⚠️ MARKA KURALI (kullanıcı, 2026-07-14; 2026-08-23 güncelleme): Braille DAİMA "AURA"
-// wordmark BLOĞUNUN altında, ortalı yerleştirilir — sembolün altında veya tek başına ASLA.
-// Tam lockup'ta (AuraLockup) blok = AURA + GLOBAL CARE; braille GLOBAL CARE'in altında
-// (kullanıcı kararı 2026-08-23). Küçük yerlerde (nav) okunmaz → hiç konmaz.
-// Detay: [[aura-braille-under-wordmark]].
-//
-// ⚠️ MİN-GENİŞLİK (v6.9): height*4.67 < 56px ise AuraBraille null döner — "yeterli
-// netlikle çizilemiyorsa kaldır" kuralı kodda zorunlu. height=12 → 56px tam sınır.
-const BRAILLE_DOTS: ReadonlyArray<readonly [number, number]> = [
-  [415, 1178],
-  [527, 1178],
-  [527, 1228],
-  [552, 1228],
-  [639, 1178],
-  [639, 1203],
-  [639, 1228],
-  [664, 1203],
-  [751, 1178],
-];
-// Braille viewBox'ı 364×78 → çizilen genişlik = height × 364/78 (≈ 4.67 kat).
-const BRAILLE_VB_W = 364;
-const BRAILLE_VB_H = 78;
-// 56px = giriş kapılarındaki boyut → nokta çapı ~2.15px, noktalar ayırt edilebilir. Altında
-// Braille okunaksız lekeye döner → HİÇ çizilmez. Ölçüldü 2026-07-15: nokta çapı ≈ genişlik × 0.0385.
-const BRAILLE_MIN_WIDTH = 56;
-
-// Varsayılan 12 = eşiğin tam karşılığı (56px): parametresiz <AuraBraille /> çizer.
-export function AuraBraille({ height = 12, className = "" }: { height?: number; className?: string }) {
-  // Çarpma BÖLMEDEN önce: height=12 tam sınırdadır ve `h*(364/78)` yuvarlamasıyla
-  // 55.999… verip Braille'i sessizce yok edebilirdi.
-  if ((height * BRAILLE_VB_W) / BRAILLE_VB_H < BRAILLE_MIN_WIDTH) return null;
-  return (
-    <svg
-      height={height}
-      viewBox={`401 1164 ${BRAILLE_VB_W} ${BRAILLE_VB_H}`}
-      role="img"
-      aria-label="AURA"
-      fill="currentColor"
-      className={className}
-      style={{ width: "auto", display: "block" }}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {BRAILLE_DOTS.map(([cx, cy], i) => (
-        <circle key={i} cx={cx} cy={cy} r="7" />
-      ))}
-    </svg>
-  );
-}
+// (v6.138, 2026-08-23 — kullanıcı kararı: Braille ⠁⠥⠗⠁ SİTE GENELİNDEN KALDIRILDI. `AuraBraille`
+// bileşeni, nokta geometrisi ve "wordmark'ın tam altında" marka kuralı silindi; geri EKLENMEZ.
+// Tarihçe: [[aura-braille-under-wordmark]].)
 
 // Metin İÇİNDE marka olarak AURA wordmark'ı — "AURA" harfleri yazıyla değil LOGOYLA yazılır
 // (kullanıcı kararı 2026-08-17). Doctorium lockup'ının AURA tarafındaki eşleniğidir.
@@ -210,7 +160,8 @@ export function AuraLogo({ size = 24 }: { size?: number; ink?: string }) {
 }
 
 // ─────────────────────────── Tam lockup ───────────────────────────
-// Küre + AURA + "GLOBAL CARE" (+ braille). Kullanıcı kararı 2026-08-23: footer + giriş kapıları.
+// Küre + AURA + "GLOBAL CARE". Kullanıcı kararı 2026-08-23: footer'da. (Giriş kapılarında
+// KULLANILMAZ — v6.138: kapılar logosuz, GLOBAL CARE orada WordHeadline'ın AURA'sının altında.)
 // Birim H = AURA harf yüksekliği (px). Oranlar ÖLÇÜLDÜ (tahmin değil):
 //   • küre 2.65H, küre↔yazı boşluğu .39H — paketin kendi aura-logo.css'i (236px küre ↔ 470px wordmark)
 //   • GLOBAL CARE harf yüksekliği .235H, AURA→GLOBAL CARE boşluğu .215H — kullanıcının referans
@@ -219,18 +170,48 @@ export function AuraLogo({ size = 24 }: { size?: number; ink?: string }) {
 //   • harfler wordmark kutusuna (ilk A'nın sol bacağı ↔ son A'nın sağ bacağı) space-between ile
 //     yayılır; GLOBAL ile CARE arasında .85em ek boşluk
 //   • küre, AURA + GLOBAL CARE bloğunun TOPLAM yüksekliğine göre dikey ortalanır
-// Braille GLOBAL CARE'in altında, ortalı (kural güncellemesi 2026-08-23). Braille 56px eşiğini
-// H≥12 her zaman geçer (wordmark genişliği 5.216H).
 // Renk: wordmark + alt yazı `--aura-ink` (landing/kapı token'ı) → koyu yüzeyde beyaz.
-const GLOBAL_CARE = ["G", "L", "O", "B", "A", "L", "C", "A", "R", "E"] as const;
+// GLOBAL CARE alt yazısı tek kaynak: `GlobalCareLine` (WordHeadline de kullanır).
+export const GLOBAL_CARE = ["G", "L", "O", "B", "A", "L", "C", "A", "R", "E"] as const;
+
+// "GLOBAL CARE" satırı — wordmark kutusunun TAM genişliğine yayılır (flex-col ebeveynde
+// stretch). `wordHeight` = AURA harf yüksekliği; px sayı ya da CSS uzunluğu (em) olabilir.
+// Oranlar referanstan: font .323H (cap .235H), üst boşluk .2016H (= .215H − U taşması .0134H).
+// Stil INLINE: Turbopack'in kısmi CSS önbelleği yeni sınıfı dev'de düşürebiliyor.
+export function GlobalCareLine({ wordHeight, color = "var(--aura-ink)" }: { wordHeight: number | string; color?: string }) {
+  const px = typeof wordHeight === "number";
+  // 🪤 em tuzağı: `font-size`'daki em EBEVEYNİN puntosuna, `margin`daki em elemanın KENDİ
+  // puntosuna göre çözülür. Bu yüzden em modunda üst boşluk alt yazının kendi em'iyle verilir:
+  // .2016H / .323H = 0.624em (ölçüldü — aksi hâlde boşluk ~3× küçük çıkıp AURA'ya yapışıyordu).
+  return (
+    <span
+      aria-hidden
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        lineHeight: 0.727,
+        fontWeight: 500,
+        whiteSpace: "nowrap",
+        color,
+        fontSize: px ? wordHeight * 0.323 : `calc(${wordHeight} * 0.323)`,
+        marginTop: px ? wordHeight * 0.2016 : "0.624em",
+      }}
+    >
+      {GLOBAL_CARE.map((ch, i) => (
+        <span key={i} className={i === 6 ? "ml-[.85em]" : undefined}>
+          {ch}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export function AuraLockup({
   wordHeight = 32,
-  braille = true,
   tone,
   className = "",
 }: {
   wordHeight?: number;
-  braille?: boolean;
   tone?: AuraTone;
   className?: string;
 }) {
@@ -245,29 +226,7 @@ export function AuraLockup({
       <AuraMark size={Math.round(H * 2.65)} tone={tone} />
       <span aria-hidden className="inline-flex flex-col items-stretch">
         <AuraWordSvg decorative fill="var(--aura-ink)" style={{ height: H * 1.0134, width: H * 5.216 }} />
-        {/* Stil INLINE (globals'a değil): lockup geometrisi zaten inline; ayrıca Turbopack'in kısmi
-            CSS önbelleği yeni eklenen sınıfı dev'de sessizce düşürebiliyor ([[turbopack-css-partial-cache]]). */}
-        <span
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            lineHeight: 0.727,
-            fontWeight: 500,
-            whiteSpace: "nowrap",
-            color: "var(--aura-ink)",
-            marginTop: H * 0.2016,
-            fontSize: H * 0.323,
-          }}
-        >
-          {GLOBAL_CARE.map((ch, i) => (
-            <span key={i} className={i === 6 ? "ml-[.85em]" : undefined}>
-              {ch}
-            </span>
-          ))}
-        </span>
-        {braille && (
-          <AuraBraille height={Math.max(12, Math.round(H * 0.42))} className="mt-2 self-center text-[var(--aura-micro)]" />
-        )}
+        <GlobalCareLine wordHeight={H} />
       </span>
     </span>
   );
