@@ -54,17 +54,6 @@ export function isStudentOnly(d: { studentVerifiedAt: Date | null; activatedAt: 
   return !!d.studentVerifiedAt && !d.activatedAt;
 }
 
-// Üniversite e-postası mı (destekleyici SİNYAL — kapı açmaz, arayüzde rozet olur; kanıt daima
-// STUDENT_CERT belgesidir). .edu.tr nic.tr'ce yalnız akademik kuruma verilir (güçlü sinyal);
-// .edu ABD, .ac.<cc> İngiltere/Japonya vb. Liste bilinçli dar: sinyal yanlış-pozitife kapı açmaz.
-export function isEduEmail(email: string | null | undefined): boolean {
-  if (!email) return false;
-  const at = email.lastIndexOf("@");
-  if (at < 0) return false;
-  const domain = email.slice(at + 1).toLowerCase();
-  return domain.endsWith(".edu.tr") || domain.endsWith(".edu") || /\.ac\.[a-z]{2,3}$/.test(domain);
-}
-
 // ── İki aşamalı giriş — AŞAMA 2: klinik yüzey kapısı (v6.87) ───────────────────────────────────
 // Kural (kullanıcı kararı 2026-08-11): klinik aktivasyonu (activatedAt) olmayan DOCTOR yalnız
 // Doctorium + /doktor/baslangic + /doktor/profil + /doktor/haberler'e girer; klinik yüzeyler

@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { soEligible } from "@/lib/doctor-home";
 import { branchKeyFromLabel, branchLabel, getBranchProcedures, getByCodes } from "@/lib/procedures";
-import { hasDoctoriumAccess, isEduEmail } from "@/lib/doctor-activation";
+import { hasDoctoriumAccess } from "@/lib/doctor-activation";
 import { verifyUiVisible, layerGateEnabled } from "@/lib/doctor-verify";
 import { SPONSOR_CONSENT_TEXT } from "@/lib/sponsor";
 import { HR_CONTACT_CONSENT_TEXT } from "@/lib/hr-consent";
