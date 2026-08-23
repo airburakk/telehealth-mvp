@@ -108,11 +108,10 @@
   --dl-body: var(--c-ink-2);
   --dl-line: var(--c-hairline);
   --dl-emerald: #34d399;
-  --dl-cyan: #28c8d8;
+  /* --dl-cyan remap'i 2026-08-24 ayrışmasında kalktı — tek tüketicisi footer'daki ByAura idi. */
 }
 .theme-light .doctorium-footer-portal {
   --dl-emerald: #047857;
-  --dl-cyan: #0e7490;
 }
 
 /* Doctorium landing V2 ÜRÜN ÇERÇEVESİ — MOBİL metadata punto kademesi (pre-freeze polish 7,

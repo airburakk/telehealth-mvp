@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AuraMark } from "@/components/AuraLogo";
-import { DoctoriumWord, ByAura } from "@/components/aura/doctorium-brand";
+import { DoctoriumWord } from "@/components/aura/doctorium-brand";
 import { DoctoriumMobileMenu } from "@/components/aura/doctorium-mobile-menu";
 import { LANDING_ANCHORS, LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
 import { MobileMenuTracked } from "./MobileMenuTracked";
@@ -33,7 +33,7 @@ export function LandingHeader() {
           <AuraMark size={28} tone="emerald" className="shrink-0" />
           <DoctoriumWord className="text-[18px] md:text-[22px]" />
         </Link>
-        <span className="aura-mono mt-1 hidden text-[10px] md:inline"><ByAura /></span>
+        {/* "by AURA" imzası 2026-08-24 ayrışmasında kalktı — Doctorium bağımsız marka. */}
         <nav aria-label="Bölümler" className="ml-auto hidden items-center gap-6 text-sm text-[#c7c9cc] lg:flex">
           {LANDING_ANCHORS.map((a) => (
             <a key={a.id} href={`#${a.id}`} className="transition-colors hover:text-[var(--dl-ink)]">{a.label}</a>

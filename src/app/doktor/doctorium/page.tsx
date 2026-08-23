@@ -37,9 +37,9 @@ import { DoctoriumShell } from "./DoctoriumSidebar";
 
 export const dynamic = "force-dynamic";
 
-// Sekme başlığı "Doctorium · AURA" — kök layout template'i (%s · AURA) ekler, ELLE " · AURA" YAZMA
-// (v6.43 dersi: çift-AURA olur).
-export const metadata = { title: "Doctorium" };
+// Ayrışma (2026-08-24): sekme yalın "Doctorium". 🪤 absolute ŞART — segmentin page'i KENDİ
+// layout'unun şablonunu almaz (şablon yalnız ALT segmentlere; düz title köke kaçıp "· AURA" alır).
+export const metadata = { title: { absolute: "Doctorium" } };
 
 const MODULE_KEYS = new Set(DOCTORIUM_MODULES.map((m) => m.key));
 

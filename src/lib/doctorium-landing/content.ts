@@ -231,10 +231,10 @@ export function section(id: SectionId): SectionCopy {
 
 /** Metadata — görünür metinle AYNI iddia disiplinine tabi (meta/OG ayrı taranır). */
 export const LANDING_META = {
-  title: "Doctorium", // kök layout "%s · AURA" ekler — elle yazma (v6.43 dersi)
+  title: "Doctorium", // ayrışma 2026-08-24: sekme yalın "Doctorium" (page.tsx title.absolute)
   description:
     "Her doktor kendi Doctorium'unu oluşturur: branşınıza ve seçtiğiniz bölümlere göre şekillenen kişisel profesyonel çalışma alanı — hakemli yayın özetleri, ilaç ve cihaz, sağlık hukuku, kongre takvimi. Doğrulanmış doktor ve tıp öğrencisi üyeliği.",
-  ogTitle: "Doctorium by AURA — Her doktor kendi Doctorium'unu oluşturur",
+  ogTitle: "Doctorium — Her doktor kendi Doctorium'unu oluşturur",
   ogDescription:
     "Doktorun kişisel profesyonel çalışma alanı: seçtiğiniz branş ve bölümlere göre kurulan akış; akademik, ilaç ve cihaz, sağlık hukuku, kongre.",
 } as const;

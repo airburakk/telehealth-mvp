@@ -13,6 +13,12 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  // Ayrışma (2026-08-24): sekme başlığı kök şablonun "%s · AURA"sını EZER — Doctorium
+  // yüzeylerinde AURA adı geçmez. appleWebApp adı da Doctorium (ana ekrana ekleme).
+  // 🪤 `default` YETMEZ: çocuk default'u KÖKÜN şablonuna yerleştirilir — üst şablonu yalnız
+  // `absolute` iptal eder; template alt sayfalara (giris "Giriş · Doctorium") uygulanır.
+  title: { absolute: "Doctorium", template: "%s · Doctorium" },
+  appleWebApp: { capable: true, title: "Doctorium", statusBarStyle: "default" },
   // 🪤 `?v=` cache-kırıcı — gerekçe kök layout.tsx'te. İkon değişince ÜÇ layout'ta birlikte artır.
   icons: { icon: "/icon-doctorium.ico?v=3", apple: "/apple-touch-icon.png?v=3" },
 };

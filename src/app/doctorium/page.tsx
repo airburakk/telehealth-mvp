@@ -13,13 +13,15 @@ import { SITE_URL } from "@/lib/aura-landing/seo";
 export const revalidate = 600;
 
 export const metadata: Metadata = {
-  title: LANDING_META.title, // kök layout "%s · AURA" ekler — ELLE " · AURA" YAZMA (v6.43 dersi)
+  // Ayrışma (2026-08-24): segment layout'u "%s · Doctorium" şablonu uygular — landing'in kendisi
+  // yalın "Doctorium" kalsın diye absolute ("Doctorium · Doctorium" tekrarı olmasın).
+  title: { absolute: "Doctorium" },
   description: LANDING_META.description,
   alternates: { canonical: "/doctorium" },
   openGraph: {
     type: "website",
     url: "/doctorium",
-    siteName: "AURA",
+    siteName: "Doctorium",
     title: LANDING_META.ogTitle,
     description: LANDING_META.ogDescription,
     locale: "tr_TR",
@@ -32,7 +34,8 @@ export const metadata: Metadata = {
 };
 
 // JSON-LD — MODÜL-DÜZEYİ sabit (kullanıcı girdisi girmez; structured-data.tsx sözleşmesi).
-// Yalnız WebPage + isPartOf WebSite; rating/medical/aggregate şeması YOK (kanıtsız iddia).
+// Yalnız WebPage; rating/medical/aggregate şeması YOK (kanıtsız iddia). isPartOf AURA
+// WebSite'ı 2026-08-24 ayrışmasında kaldırıldı (marka bağımsız konumlanır).
 const JSON_LD = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "WebPage",
@@ -40,7 +43,6 @@ const JSON_LD = JSON.stringify({
   url: `${SITE_URL}/doctorium`,
   inLanguage: "tr-TR",
   description: LANDING_META.description,
-  isPartOf: { "@type": "WebSite", name: "AURA", url: SITE_URL },
 });
 
 export default function DoctoriumLandingPage() {

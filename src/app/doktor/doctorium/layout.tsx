@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { hasDoctoriumAccess } from "@/lib/doctor-activation";
@@ -17,6 +16,12 @@ export const dynamic = "force-dynamic";
 // favicon.ico kaldırıldı, ikonlar public/ altına alındı, bağlama metadata ile yapılıyor.
 // Üretim: `python scripts/gen-icons.py`.
 export const metadata: Metadata = {
+  // Ayrışma (2026-08-24): sekme başlığı kök şablonun "%s · AURA"sını EZER — Doctorium
+  // yüzeylerinde AURA adı geçmez. appleWebApp adı da Doctorium (ana ekrana ekleme).
+  // 🪤 `default` YETMEZ: çocuk default'u KÖKÜN şablonuna yerleştirilir ("Doctorium · AURA"
+  // ölçüldü) — üst şablonu yalnız `absolute` iptal eder; template alt sayfalara uygulanır.
+  title: { absolute: "Doctorium", template: "%s · Doctorium" },
+  appleWebApp: { capable: true, title: "Doctorium", statusBarStyle: "default" },
   // 🪤 `?v=` cache-kırıcı — gerekçe kök layout.tsx'te. İkon değişince ÜÇ layout'ta birlikte artır.
   icons: { icon: "/icon-doctorium.ico?v=3", apple: "/apple-touch-icon.png?v=3" },
 };
@@ -61,12 +66,11 @@ export default async function DoctoriumLayout({ children }: { children: React.Re
   //
   // Portal varyantı TEMA-DUYARLI (globals.css .doctorium-footer-portal): gece --c-chrome
   // (#08090b) sayfa zemininden (#0d0e10) ayrışır, gündüz açık krom "siyah blok"u bitirir.
-  // ByAura wordmark PNG'sinin light/dark seçimi SSR'da cookie'den (Header'la aynı kaynak).
-  const themeCookie = (await cookies()).get("aura_theme")?.value;
+  // (theme prop'u 2026-08-24 ayrışmasında kalktı — tek işlevi ByAura wordmark renk seçimiydi.)
   return (
     <div className="flex min-h-[calc(100dvh-4rem)] flex-col">
       <div className="flex-1">{children}</div>
-      <DoctoriumFooter portal theme={themeCookie === "light" ? "light" : "dark"} />
+      <DoctoriumFooter portal />
     </div>
   );
 }

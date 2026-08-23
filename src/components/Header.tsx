@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
 import { SystemMessagesMenuItem } from "@/components/SystemMessagesMenuItem";
-import { AuraLogo, AuraMark, AuraWordSvg } from "@/components/AuraLogo";
+import { AuraLogo, AuraMark } from "@/components/AuraLogo";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47, LANGUAGES, LANG_CHANGE_EVENT } from "@/lib/constants";
@@ -23,99 +23,30 @@ const ROLE_LABELS: Record<string, string> = {
   PARTNER: "Partner Doktor",
 };
 
-// Marka toggle'ı — TEK KAYAN SEMBOL (kullanıcı kararı 2026-08-16, 2. nesil; ilk nesil "iki logo
-// yan yana, aktif döner"i süpersede eder): dönen AuraMark TEKTİR, aktif markanın başında durur.
-// Toggle'da sembol öbür tarafa KAYAR ve rengi değişir (AURA=turkuaz "brand" · Doctorium=zümrüt).
-// Renk geçişi iki ton katmanının cross-fade'i (SVG gradyanları prop-sabit — CSS ile renk
-// transition'lanamaz); kayma ölçümlü left transition'ı (yuva konumları useLayoutEffect +
-// ResizeObserver — AURA wordmark PNG genişliği yükleme/temaya göre değişir, sabit px olmaz;
-// ilk boyada left auto→px atlar [auto animatable değil] → SSR sonrası kayma flash'ı yok).
-// AURA → /doktor (bu rollerde vitrin değil klinik panel), Doctorium → portal. Diğer roller
-// toggle GÖRMEZ: eski tek logo (→ /) aynen. Öğrencide AURA tarafı /doktor kapısına düşer
-// (hasClinicalAccess yönlendirmesi) — bilinçli, ayrı hedef icat edilmedi.
-//
-// v6.105 (kullanıcı kararı 2026-08-17) — AŞAMA 1 doktoru: AURA yarısı NEREDE OLURSA OLSUN soluk
-// ve pasif çizilir (kayan sembol Doctorium yuvasında durur, zümrüt kalır). Marka kaldırılmadı,
-// SÖNDÜRÜLDÜ: kullanıcı yükseltme yolunun görünür kalmasını seçti — tıklama /doktor kapısına
-// gider, kapı `?from=aura-gecis` uyarı ekranını bastırır. `?from=doctorium` bu doktorda portal
-// dışında da taşınır; yoksa doktor sessizce boş onboarding'e düşer, neden geldiğini anlamaz.
-function BrandToggle({ doctoriumActive, stage1 }: { doctoriumActive: boolean; stage1: boolean }) {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const slotA = useRef<HTMLSpanElement>(null); // AURA yuvası
-  const slotB = useRef<HTMLSpanElement>(null); // Doctorium yuvası
-  const [pos, setPos] = useState<number | null>(null);
-
-  // Marka tarafı = sembolün durduğu/renklendiği yan. Aşama 1 doktorunda portal dışında da
-  // Doctorium tarafıdır (AURA henüz onun markası değil); `doctoriumActive` yalnız gerçek
-  // sayfa vurgusu (aria-current + ium nefesi) için ayrı kalır.
-  const doctoriumSide = doctoriumActive || stage1;
-
-  useLayoutEffect(() => {
-    const measure = () => {
-      const slot = doctoriumSide ? slotB.current : slotA.current;
-      if (slot && wrapRef.current) {
-        const w = wrapRef.current.getBoundingClientRect();
-        const s = slot.getBoundingClientRect();
-        setPos(s.left - w.left);
-      }
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    if (wrapRef.current) ro.observe(wrapRef.current);
-    return () => ro.disconnect();
-  }, [doctoriumSide]);
-
-  // Wordmark yüksekliği class'ta: mobil 12px / sm+ 14px (23px sembol ölçeğinin oranı).
-  // Mobil kompaktlık 2026-08-19 (kullanıcı bildirimi "toggle mobilde belli olmuyor").
+// AURA↔Doctorium ayrışması (kullanıcı kararı 2026-08-24): eski BrandToggle (tek kayan sembollü
+// çift marka, v6.103) KALDIRILDI — Doctorium ayrı ürün olarak konumlandı, kromda iki marka yan
+// yana yaşamaz. Doctorium kromunda (portal içi veya Aşama-1 hesabı) TEK marka: zümrüt küre +
+// Doctorium lockup'ı (→ portal ana sayfası). AURA kromunda DOCTOR/COORDINATOR eski toggle'ın
+// AURA hedefini korur: AuraLogo → /doktor (vitrin değil klinik panel). Aşama-2'ye geçiş daveti
+// header'dan kalktı — o akış bütünüyle AURA tarafında yaşar (/doktor/baslangic).
+// Geri-birleştirme el kitabı: vault [[aura-doctorium-baglanti-sistemi]].
+function DoctoriumBrand({ doctoriumActive }: { doctoriumActive: boolean }) {
   return (
-    <div ref={wrapRef} className="relative flex shrink-0 items-center gap-1.5 sm:gap-2">
-      {/* Kayan sembol: brand-live (yörünge hep döner — tek logo daima canlı); aktiflik RENKLE
-          anlatılır. pointer-events yok — tıklama alttaki Link'lerin işi. */}
-      <span
-        aria-hidden
-        className="brand-live pointer-events-none absolute top-1/2 z-10 -translate-y-1/2 transition-[left] duration-300 ease-out motion-reduce:transition-none"
-        style={pos != null ? { left: pos } : { visibility: "hidden", left: 0 }}
-      >
-        <span className={`block transition-opacity duration-300 ${doctoriumSide ? "opacity-0" : "opacity-100"}`}>
-          <AuraMark size={23} tone="brand" />
-        </span>
-        <span className={`absolute inset-0 transition-opacity duration-300 ${doctoriumSide ? "opacity-100" : "opacity-0"}`}>
-          <AuraMark size={23} tone="emerald" />
-        </span>
+    <Link
+      href="/doktor/doctorium"
+      aria-current={doctoriumActive ? "page" : undefined}
+      title="Doctorium"
+      aria-label="Doctorium"
+      className="flex shrink-0 items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] sm:gap-2"
+    >
+      <span aria-hidden className="brand-live block">
+        <AuraMark size={23} tone="emerald" />
       </span>
-
-      {/* Doctorium'dan AURA'ya geçiş ?from=doctorium taşır: Aşama-1 (aktivasyonsuz) doktoru
-          /doktor kapısı baslangic?from=aura-gecis'e yönlendirir → Aşama-2 uyarı ekranı
-          (kullanıcı kararı 2026-08-16). Aşama-2 doktorda parametre yok sayılır. */}
-      <Link
-        href={doctoriumSide ? "/doktor?from=doctorium" : "/doktor"}
-        aria-current={!doctoriumSide ? "page" : undefined}
-        title={stage1 ? "AURA üyeliği — Aşama 2 gerekli" : "AURA"}
-        className={`flex items-center gap-1.5 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumSide ? "opacity-45 hover:opacity-80" : ""}`}
-      >
-        <span ref={slotA} aria-hidden className="block h-[23px] w-[23px] shrink-0" />
-        {/* Tema-farkında wordmark (v6.137: vektör; rengi globals.css `.logo-word` — gündüz
-            lacivert, gece beyaz). Eski 12/14px PNG-canvas = 7.5/8.8px harf kutusu (görsel
-            boyut korundu; toggle mobilde sıkı ama OKUNUR). */}
-        <AuraWordSvg className="logo-word h-[7.5px] w-auto sm:h-[8.8px]" />
-      </Link>
-      <span aria-hidden className="h-5 w-px shrink-0 bg-[var(--c-hairline)]" />
-      <Link
-        href="/doktor/doctorium"
-        aria-current={doctoriumActive ? "page" : undefined}
-        title="Doctorium"
-        aria-label="Doctorium"
-        className={`flex items-center gap-1.5 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumSide ? "" : "opacity-45 hover:opacity-80"}`}
-      >
-        <span ref={slotB} aria-hidden className="block h-[23px] w-[23px] shrink-0" />
-        {/* Yazı MOBİLDE DE görünür (2026-08-19, kullanıcı bildirimi: "toggle mobilde
-            neredeyse hiç gözükmüyor" — eski `hidden sm:inline` yalnız 23px yuva bırakıyordu,
-            geçiş imkânının varlığı belli olmuyordu). Mobilde 13px kompakt, sm+ 15px. */}
-        <span className="whitespace-nowrap text-[13px] font-medium text-[var(--c-ink)] sm:text-[15px]">
-          Doctor<span className={`doctorium-ium${doctoriumActive ? " doctorium-ium-breathe" : ""}`}>ium</span>
-        </span>
-      </Link>
-    </div>
+      {/* Yazı MOBİLDE DE görünür (2026-08-19 bildirimi mirası): mobilde 13px, sm+ 15px. */}
+      <span className="whitespace-nowrap text-[13px] font-medium text-[var(--c-ink)] sm:text-[15px]">
+        Doctor<span className={`doctorium-ium${doctoriumActive ? " doctorium-ium-breathe" : ""}`}>ium</span>
+      </span>
+    </Link>
   );
 }
 
@@ -158,7 +89,11 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   // sekmeler (Doktor, Post-Op) ve hesap menüsündeki Profilim/Finans GİZLENİR — AURA tarafına
   // dönünce geri gelir. Görsel sadeleştirme; rota kapıları (hasClinicalAccess) aynen durur.
   const doctoriumActive = pathname.startsWith("/doktor/doctorium");
-  const shownItems = doctoriumActive ? items.filter((n) => n.href !== "/doktor" && n.href !== "/doktor/takip") : items;
+  // Doctorium kromu = portal içi VEYA Aşama-1 hesabı (kromu bütünüyle Doctorium'a ait, v6.105).
+  // Ayrışma sonrası (2026-08-24) bu bayrak marka bloğunu ve bildirim scope'unu da seçer.
+  const doctoriumSide = doctoriumActive || stage1;
+  // Odak modunda klinik sekmeler + Doctorium sekmesi gizli (marka bloğu zaten portala gider).
+  const shownItems = doctoriumActive ? items.filter((n) => n.href !== "/doktor" && n.href !== "/doktor/takip" && n.href !== "/doktor/doctorium") : items;
   // Çevrilecek metinler: görünür nav etiketleri + rol + Çıkış/Giriş.
   // lang="Türkçe" → useT no-op (kimlik). Partner gibi dil-tercihli kullanıcıda /api/i18n cache'i.
   const texts = useMemo(
@@ -218,6 +153,10 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   // Avatar baş harfleri (hesap menüsü düğmesi) — ismin ilk iki kelimesinden.
   const initials = user ? user.name.trim().split(/\s+/).map((w) => w[0] ?? "").slice(0, 2).join("").toUpperCase() : "";
 
+  // Rozet: Doctorium kromunda yalnız scope'lu bildirim sayısı — msgUnread AURA yüzeyinin
+  // sayacıdır ve Sistem Mesajları öğesi orada unmount olduğundan bayat kalabilir (2026-08-24).
+  const badgeCount = doctoriumSide ? unreadCount : unreadCount + msgUnread;
+
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/giris");
@@ -249,7 +188,14 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
         {/* shrink-0: dar ekranda flex logoyu ezip wordmark'ı nav'ın altına sokuyordu
             (mobil "menüler üst üste biniyor" bildirimi, 2026-08-01) — taşmayı nav scroll'u yönetir. */}
         {user && ["DOCTOR", "COORDINATOR"].includes(user.role) ? (
-          <BrandToggle doctoriumActive={doctoriumActive} stage1={stage1} />
+          doctoriumSide ? (
+            <DoctoriumBrand doctoriumActive={doctoriumActive} />
+          ) : (
+            // AURA kromunda logo klinik panele gider (eski toggle'ın AURA hedefi — vitrin değil).
+            <Link href="/doktor" className="flex shrink-0 items-end" aria-label="AURA">
+              <AuraLogo size={23} />
+            </Link>
+          )
         ) : (
           <Link href="/" className="flex shrink-0 items-end">
             <AuraLogo size={23} />
@@ -272,9 +218,9 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                   }`}
                 >
                   {Icon && <Icon size={16} />}
-                  {/* Doctorium yazı-lockup dalı kalktı (2026-08-16): sekme banttan çıktı,
-                      lockup artık BrandToggle'da yaşıyor. */}
-                  <span className="hidden sm:inline">{t(label)}</span>
+                  {/* İkonsuz öğe (Doctorium sekmesi) mobilde de etiket gösterir — yoksa bantta
+                      hiç görünmezdi (ikon yok + etiket sm+ gizli). */}
+                  <span className={Icon ? "hidden sm:inline" : ""}>{t(label)}</span>
                 </Link>
               );
             })}
@@ -295,9 +241,9 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                   className="relative grid h-9 w-9 place-items-center rounded-full bg-[var(--c-accent)]/15 text-[12px] font-bold text-[var(--c-accent)] transition-colors duration-200 hover:bg-[var(--c-accent)]/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]"
                 >
                   {initials}
-                  {unreadCount + msgUnread > 0 && (
+                  {badgeCount > 0 && (
                     <span className="absolute -end-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
-                      {unreadCount + msgUnread > 9 ? "9+" : unreadCount + msgUnread}
+                      {badgeCount > 9 ? "9+" : badgeCount}
                     </span>
                   )}
                 </button>
@@ -309,9 +255,15 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                     <div className="aura-mono mt-0.5 text-[10px] uppercase tracking-[0.18em] leading-tight text-[var(--c-ink-3)]">{t(student ? "Tıp Öğrencisi" : ROLE_LABELS[user.role] ?? user.role)}</div>
                   </div>
                   <div className="mt-1">
-                    <NotificationBell lang={uiLang} patientLangFallback={user.role === "PATIENT"} variant="menu-item" onUnreadChange={setUnreadCount} />
-                    {/* Sistem mesajları (v6.79) — bildirimlerin hemen altı (kullanıcı kararı); satır /mesajlar'a gider */}
-                    <SystemMessagesMenuItem label={t("Sistem Mesajları")} onUnreadChange={setMsgUnread} onNavigate={() => setMenuOpen(false)} />
+                    {/* Ayrışma (2026-08-24): Doctorium kromunda zil yalnız Doctorium bildirimlerini
+                        (CONGRESS_ALERT) gösterir — klinik (AURA) bildirimleri görünmez, "tümünü
+                        okundu" da onlara dokunmaz. Bell HEP mount kalır (rozet beslemesi). */}
+                    <NotificationBell lang={uiLang} patientLangFallback={user.role === "PATIENT"} variant="menu-item" scope={doctoriumSide ? "doctorium" : undefined} onUnreadChange={setUnreadCount} />
+                    {/* Sistem mesajları (v6.79) — bildirimlerin hemen altı; satır /mesajlar'a gider.
+                        Doctorium kromunda GİZLİ (klinik/hesap mesajları AURA yüzeyidir). */}
+                    {!doctoriumSide && (
+                      <SystemMessagesMenuItem label={t("Sistem Mesajları")} onUnreadChange={setMsgUnread} onNavigate={() => setMenuOpen(false)} />
+                    )}
                   </div>
                   {/* Doctorium kişisel köşesi (2026-08-18, kullanıcı kararı): Üst Raf'taki
                       Kaydettiklerim/Puanlarım BURAYA taşındı — kişisel eşya profil menüsünde

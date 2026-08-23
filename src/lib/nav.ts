@@ -41,10 +41,11 @@ const NAV: NavItem[] = [
   { href: "/operasyon", label: "Operasyon", icon: BarChart3, roles: ["COORDINATOR", "ADMIN"] },
   { href: "/doktor", label: "Doktor", icon: Stethoscope, roles: ["DOCTOR", "COORDINATOR"] },
   { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, roles: ["DOCTOR", "COORDINATOR"] },
-  // Doctorium bant sekmesi KALKTI (kullanıcı kararı 2026-08-16): giriş artık Header'daki
-  // AURA↔Doctorium marka toggle'ı (BrandToggle — DOCTOR/COORDINATOR'da görünür); çift giriş
-  // olmasın diye sekme kaldırıldı. Rota + /doktor/haberler 308'i aynen durur (yer imleri).
-  // Eski satır (v6.48–v6.99): { href: "/doktor/doctorium", label: "Doctorium", roles: [...] }.
+  // Doctorium bant sekmesi GERİ GELDİ (AURA↔Doctorium ayrışması 2026-08-24): BrandToggle
+  // kaldırılınca AURA kromundaki doktorun Doctorium'a tek giriş yolu bu sekme oldu (2026-08-16'da
+  // toggle lehine kalkmıştı). Doctorium kromunda Header bu sekmeyi GİZLER (marka bloğu zaten
+  // portala gider — çift giriş olmasın); Aşama-1/öğrenci hesabında bant zaten boş, marka yeter.
+  { href: "/doktor/doctorium", label: "Doctorium", roles: ["DOCTOR", "COORDINATOR"] },
   // "Ücretsiz Hizmet" bant linki kaldırıldı (2026-07-31, kullanıcı kararı) — rota + ana sayfa paneli durur.
   // "Profilim" bant linki kaldırıldı (2026-08-01, kullanıcı kararı) — artık header hesap
   // menüsünde (Header.tsx); rota /doktor/profil aynen durur.
