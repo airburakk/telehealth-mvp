@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
-  activeCampaignsFor, countImpressions, SPONSOR_CONSENT_TEXT, CATEGORY_LABEL as SPONSOR_CATEGORY_LABEL,
+  activeCampaignsFor, countImpressions, CATEGORY_LABEL as SPONSOR_CATEGORY_LABEL,
   type SponsorCard,
 } from "@/lib/sponsor";
 import { activeSurveysFor, doctorResponse, aggregateResults } from "@/lib/survey";
@@ -14,15 +14,14 @@ import {
   SECTOR_CATEGORIES, SECTOR_SOURCE_SCOPES, LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES,
   CAREER_TABS, parseCareerTab, careerPathways,
   effectiveBranches, personalFeedPage, moduleFeed, singleBranchFeedPage, upcomingCongresses,
-  upcomingCountByIds, localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
-  slugForLabel, parseScope, parseSourceScope, savedArticleIds, FEED_MODULE_OPTIONS, parseFeedModules,
-  todayModuleCounts, MODULE_ALIASES, EVENT_TYPES, parseEventTypes,
-  trDayStart, parseEventTypePref,
+  upcomingCountByIds, localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS,
+  parseScope, parseSourceScope, savedArticleIds, parseFeedModules,
+  todayModuleCounts, MODULE_ALIASES, parseEventTypes,
+  trDayStart, parseEventTypePref, parseViewPrefs,
   type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey, type EventTypeKey,
 } from "@/lib/doctorium";
 import { isStudentOnly } from "@/lib/doctor-activation";
 import { keywordByKey } from "@/lib/hukuk-keywords";
-import { DoctoriumFilters } from "./DoctoriumFilters";
 import { LegalSearchBox } from "./LegalSearchBox";
 import { CongressList } from "./CongressList";
 import { ProspektusSearch } from "./ProspektusSearch";
@@ -88,12 +87,16 @@ export default async function DoctoriumPage({
           congressAbstractAlertDays: true, congressEarlyBirdAlertDays: true,
           // v6.132 — etkinlik tür/kapsam TERCİHİ (URL parametresi yoksa bunlar uygulanır).
           congressEventTypes: true, congressScope: true,
+          // v6.142 — Sektörel/İlaç & Cihaz/Mevzuat GÖRÜNÜM süzgeçleri TERCİHİ (aynı sözleşme).
+          doctoriumViewPrefs: true,
           // v6.68: sponsorlu içerik kişiselleştirme rızası (city hedefleme için birlikte okunur).
           sponsorPersonalizationAt: true,
         },
       })
     : null;
   const branches = effectiveBranches(doctor?.newsBranches, doctor?.branch);
+  // v6.142 — bkz. lib/doctorium parseViewPrefs (aşağıda range/cat/srcScope'ta kullanılır).
+  const viewPrefs = parseViewPrefs(doctor?.doctoriumViewPrefs);
 
   const sp = await searchParams;
   // ?m= çözümü: geçerli anahtar → kendisi; ESKİ anahtar (kongre) → alias'tan etkinliğe; yoksa akış.
@@ -102,7 +105,14 @@ export default async function DoctoriumPage({
   const active: ModuleKey = MODULE_KEYS.has(rawModule as ModuleKey)
     ? (rawModule as ModuleKey)
     : (MODULE_ALIASES[rawModule] ?? "akis");
-  const range = RANGE_OPTIONS.some((r) => r.key === sp.d) ? (sp.d as string) : DEFAULT_RANGE;
+  // v6.142 — GÖRÜNÜM süzgeci TERCİH ilişkisi (aşağıdaki scope/eventTypes'la AYNI sözleşme):
+  // URL parametresi kayıtlı tercihi yalnız bu GÖRÜNÜM için ezer, kalıcı tercihi DEĞİŞTİRMEZ.
+  const persistedRange =
+    active === "sektorel" ? viewPrefs.sektorel.range
+    : active === "ilac" ? viewPrefs.ilac.range
+    : active === "mevzuat" ? viewPrefs.mevzuat.range
+    : DEFAULT_RANGE;
+  const range = sp.d && RANGE_OPTIONS.some((r) => r.key === sp.d) ? sp.d : persistedRange;
   // Tek-branş odağı (?b=): çipleri üreten "Akışınız:" şeridi KALDIRILDI (kullanıcı kararı
   // 2026-08-18 — çok branşta renk karmaşası); parametre eski/paylaşılan URL'ler için yaşar.
   // Yalnız doktorun AKIŞINDAKİ branşlar seçilebilir (rastgele slug'la başka akış açılmasın).
@@ -114,7 +124,11 @@ export default async function DoctoriumPage({
   // İçtihat serbest metin araması (v6.132): kutu içinden gelir, URL'de taşınır (?q=).
   const legalQuery = sp.q?.trim().slice(0, 80) || null;
 
-  const cat = sp.c && SECTOR_CATEGORIES.some((x) => x.key === sp.c) ? sp.c : null;
+  const persistedCategory =
+    active === "sektorel" ? viewPrefs.sektorel.category
+    : active === "mevzuat" ? viewPrefs.mevzuat.category
+    : null;
+  const cat = sp.c && SECTOR_CATEGORIES.some((x) => x.key === sp.c) ? sp.c : persistedCategory;
   // Hukuk modülü alt-sekmesi (v6.86): ?h=mevzuat|ictihat — yalnız bu modülde anlamlı.
   const legalTab: LegalTabKey | null = active === "mevzuat" ? parseLegalTab(sp.h) : null;
   // İçtihat anahtar-kelime filtresi (v6.87): ?k= sözlük anahtarı; bilinmeyen değer filtresiz liste.
@@ -169,7 +183,8 @@ export default async function DoctoriumPage({
   else if (active === "sektorel") {
     // v6.99.3 — "Kaynak" filtresi (?s=ulusal|uluslararasi): etkinlik kapsamıyla aynı PARAM,
     // ayrı PARSE (v6.120) — haber kaynağında "uluslararası katılımlı" diye bir şey yok.
-    const srcScope = parseSourceScope(sp.s);
+    // v6.142: param yoksa kayıtlı tercih (scope/eventTypes'la aynı sözleşme).
+    const srcScope = sp.s !== undefined ? parseSourceScope(sp.s) : viewPrefs.sektorel.source;
     items = await moduleFeed("sektorel", [], {
       days: rangeDays(range), category: cat,
       sources: srcScope ? SECTOR_SOURCE_SCOPES[srcScope] : undefined,
@@ -462,54 +477,13 @@ export default async function DoctoriumPage({
         <LegalSearchBox tab={legalTab} query={legalQuery} activeKeyword={legalKeyword?.key ?? null} />
       )}
 
-      {/* TEK "Özelleştir" penceresi (v6.52): aralık · kategori · kongre alarmı · branş tercihleri.
-          Önceden ayrı satırlardaydı ve dağınık duruyordu (kullanıcı bildirimi).
-          Bölüm yoksa bileşen hiç çizilmez (ör. Akademik) — boş panel açılmasın.
-          İçtihat alt-sekmesinde aralık/kategori GİZLİ: arşiv tarih penceresiz listelenir,
-          kategoriler (SUT vb.) mevzuat kalemlerine aittir. */}
-      {/* ⚠️ KALICI TERCİHLER BURADAN ÇIKTI (v6.132, 2026-08-20) — hepsi
-          /doktor/doctorium/tercihler sayfasında yaşıyor: akış bölümleri, branş tercihleri,
-          etkinlik alarmları, sponsor rızası. Bu panel artık YALNIZ görünüm süzgeci taşır
-          (aralık · kategori · kaynak kapsamı · etkinlik türü/kapsamı) — yani "bu sekmede ne
-          görüyorum". Aynı ayarın iki ekranda yaşamaması v6.49 dersinin gereği.
-          🔴 showFeedPrefs / branchOptions / showAlerts / showSponsor prop'larını burada tekrar
-          AÇMA: tercihler sayfasıyla çift kaynak olur ve zamanla sürüklenir. */}
-      <DoctoriumFilters
-        module={active}
-        showFeedPrefs={false}
-        feedOptions={FEED_MODULE_OPTIONS.map((o) => ({ key: o.key, label: o.label }))}
-        feedInitial={feedMods}
-        showRange={(active === "mevzuat" && legalTab === "mevzuat") || active === "sektorel" || active === "ilac"}
-        showCategory={(active === "mevzuat" && legalTab === "mevzuat") || active === "sektorel"}
-        showAlerts={false}
-        showScope={active === "etkinlik"}
-        scope={scope}
-        // v6.120 tür çipi — yalnız Etkinlik sekmesinde. null = "hepsi" seçili.
-        showEventTypes={active === "etkinlik"}
-        eventTypes={eventTypes}
-        eventTypeOptions={EVENT_TYPES.map((t) => ({ key: t.key, label: t.label }))}
-        // v6.99.3 — sektörel "Kaynak" filtresi (panelin İLK bölümü; kullanıcı isteği 2026-08-16).
-        showSourceScope={active === "sektorel"}
-        sourceScope={active === "sektorel" ? parseSourceScope(sp.s) : null}
-        rangeKey={range}
-        rangeOptions={RANGE_OPTIONS}
-        category={cat}
-        categoryOptions={SECTOR_CATEGORIES}
-        /* Branş tercihi akışa FİİLEN etki eden sekmelerde: Akışım + Akademik + **Etkinlik** (v6.62
-           düzeltmesi — etkinlik listesi upcomingCongresses(branches) ile v6.48'den beri branşa göre
-           süzülüyordu ama seçici burada çizilmediği için doktor GÖREMEDİĞİ bir filtreyle eksik
-           liste görüyordu; eski yorum "kongre branşa göre süzülmez" diyerek koddan sapmıştı).
-           Mevzuat/sektörel/ilaç gerçekten branşa göre süzülmez. */
-        branchOptions={null}
-        branchInitial={parseBranchPrefs(doctor?.newsBranches)}
-        ownBranchSlug={slugForLabel(doctor?.branch)}
-        alertStart={doctor?.congressAlertDays ?? null}
-        alertAbstract={doctor?.congressAbstractAlertDays ?? null}
-        alertEarlyBird={doctor?.congressEarlyBirdAlertDays ?? null}
-        showSponsor={false}
-        sponsorInitial={sponsorPersonalized}
-        sponsorText={SPONSOR_CONSENT_TEXT}
-      />
+      {/* Sekme içi "Özelleştir" paneli KALDIRILDI (v6.142, kullanıcı kararı 2026-08-23):
+          sektörel/ilaç/etkinlik/mevzuat'ta AYNI adı taşıyan İKİ ayrı kontrol duruyordu — üstteki
+          başlık düğmesi (/tercihler, kalıcı) ve burada geçici bir görünüm paneli (DoctoriumFilters,
+          şimdi silindi). Kaynak/Geriye dönük/Kategori/Etkinlik türü/Kapsam artık HEPSİ /tercihler'de
+          kalıcı tercih (lib/doctorium parseViewPrefs + PreferencesBoard.tsx); yukarıdaki
+          range/cat/srcScope ve scope/eventTypes hâlâ URL parametresiyle (?d=/?c=/?s=/?t=) o GÖRÜNÜM
+          için ezilebilir — kalıcı tercihi DEĞİŞTİRMEZ (paylaşılan bağlantı beklendiği gibi açılır). */}
 
       {active === "ilac" && <ProspektusSearch />}
 

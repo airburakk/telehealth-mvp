@@ -9,6 +9,12 @@ import { db } from "./db";
 import { translateText, summarizeArticleForClinician, summarizeRegulationForClinician } from "./ai-clinical";
 import { fetchDocumentText } from "./doctorium-sources";
 import { BRANCHES } from "./triage";
+// SECTOR_CATEGORIES aşağıda hem RE-EXPORT edilir (dış çağıranlar için) hem burada parseViewPrefs
+// (v6.142) İÇİNDE kullanılır — `export {X} from "Y"` yalnız re-export'tur, bu dosyada X'i yerel
+// bir bağlayıcı YAPMAZ (SECTOR_CATEGORIES.some(...) sessizce ReferenceError verip try/catch'e
+// düşüyordu — 2026-08-23 birim testinde yakalandı). Ayrı yerel import şart; aşağıdaki
+// `export {...} from` satırıyla ÇAKIŞMAZ (o yalnız re-export kaydı, yerel binding yaratmaz).
+import { SECTOR_CATEGORIES } from "./doctorium-labels";
 
 export const DOCTORIUM_NAME = "Doctorium";
 
@@ -764,6 +770,63 @@ export const DEFAULT_RANGE = "30";
 
 export function rangeDays(key: string | undefined): number {
   return RANGE_OPTIONS.find((r) => r.key === key)?.days ?? 30;
+}
+
+// ── Doctorium görünüm süzgeçleri — kalıcı varsayılan (v6.142, kullanıcı kararı 2026-08-23) ──
+// Sektörel/İlaç & Cihaz/Mevzuat'ın Kaynak/Geriye-dönük/Kategori süzgeçleri artık Doctor satırında
+// kalıcı (Doctor.doctoriumViewPrefs, TEK JSON kolon). Etkinlik türü/kapsamının v6.132'de aldığı
+// yolu izler: URL parametresi (?s=/?d=/?c=) tercihi yalnız o GÖRÜNÜM için ezer, kalıcı tercihi
+// DEĞİŞTİRMEZ (bkz. page.tsx `sp.d !== undefined ? ... : viewPrefs...`, parseEventTypePref'le
+// AYNI sözleşme). Sekme içi "Özelleştir" paneli (DoctoriumFilters.tsx) bu yüzden silindi —
+// tek düzenleme yeri /doktor/doctorium/tercihler (PreferencesBoard.tsx).
+export interface SectorViewPrefs { source: SourceScope | null; range: string; category: string | null }
+export interface PharmaViewPrefs { range: string }
+export interface LegalViewPrefs { range: string; category: string | null }
+export interface DoctoriumViewPrefs {
+  sektorel: SectorViewPrefs;
+  ilac: PharmaViewPrefs;
+  mevzuat: LegalViewPrefs;
+}
+const DEFAULT_VIEW_PREFS: DoctoriumViewPrefs = {
+  sektorel: { source: null, range: DEFAULT_RANGE, category: null },
+  ilac: { range: DEFAULT_RANGE },
+  mevzuat: { range: DEFAULT_RANGE, category: null },
+};
+// <string> ZORUNLU: RANGE_OPTIONS `as const` olduğundan .map(r=>r.key) literal union'ı korur
+// (Set<"1"|"7"|"30"|"180"|"365">) — sonra .has(v) çalışma-zamanı string'iyle çağrılınca tsc
+// reddeder (route.ts'de build'de yakalandı; vitest tip kontrolü yapmadığından burada kaçmıştı).
+const RANGE_KEY_SET = new Set<string>(RANGE_OPTIONS.map((r) => r.key));
+
+/**
+ * Saklanan JSON'u güvenle çöz (parseBranchPrefs/parseEventTypePref'le aynı savunma deseni):
+ * bozuk/eski/kısmi veri akışı düşürmesin — her alan KENDİ varsayılanına tek tek düşer, tüm
+ * nesne birden sıfırlanmaz (ör. sektörel.source bozuksa sektörel.range yine de okunur).
+ */
+export function parseViewPrefs(raw: string | null | undefined): DoctoriumViewPrefs {
+  if (!raw) return DEFAULT_VIEW_PREFS;
+  try {
+    const v = JSON.parse(raw);
+    if (!v || typeof v !== "object") return DEFAULT_VIEW_PREFS;
+    const sek = (v.sektorel ?? {}) as Record<string, unknown>;
+    const il = (v.ilac ?? {}) as Record<string, unknown>;
+    const mv = (v.mevzuat ?? {}) as Record<string, unknown>;
+    return {
+      sektorel: {
+        source: parseSourceScope(typeof sek.s === "string" ? sek.s : null),
+        range: typeof sek.d === "string" && RANGE_KEY_SET.has(sek.d) ? sek.d : DEFAULT_RANGE,
+        category: typeof sek.c === "string" && SECTOR_CATEGORIES.some((c) => c.key === sek.c) ? sek.c : null,
+      },
+      ilac: {
+        range: typeof il.d === "string" && RANGE_KEY_SET.has(il.d) ? il.d : DEFAULT_RANGE,
+      },
+      mevzuat: {
+        range: typeof mv.d === "string" && RANGE_KEY_SET.has(mv.d) ? mv.d : DEFAULT_RANGE,
+        category: typeof mv.c === "string" && SECTOR_CATEGORIES.some((c) => c.key === mv.c) ? mv.c : null,
+      },
+    };
+  } catch {
+    return DEFAULT_VIEW_PREFS;
+  }
 }
 
 /** Modül akışı (akademik/sektörel). Branş verilirse akademikte süzülür; days verilirse tarih penceresi. */

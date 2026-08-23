@@ -19,9 +19,15 @@ import { Check, ChevronDown, Loader2, Megaphone } from "lucide-react";
  * ⚠️ Taksonomi lib/doctorium PREF_GROUPS'ta da var (sunucu tarafı). Bu bileşen CLIENT
  * olduğu için oradan import EDEMEZ (db bağımlılığı) — yapı burada tekrar edilir.
  * İkisini BİRLİKTE güncelle. Bkz. [[rsc-client-module-data-export]].
+ *
+ * v6.142 (kullanıcı kararı 2026-08-23): Sektörel/İlaç & Cihaz/Hukuk'un GÖRÜNÜM süzgeçleri
+ * (Kaynak/Geriye dönük/Kategori) buraya taşındı — sekme içindeki ayrı "Özelleştir" paneli
+ * (DoctoriumFilters.tsx) silindi. Etkinlik türü/kapsamıyla AYNI kalıcılık modeli: anında
+ * yazılır (immediate, debounce YOK — tek radyo seçim, çok-tıklamalı liste değil), API
+ * `/api/doctor/view-filters` (module başına TEK POST, üç alan birlikte — pickAlert deseni).
  */
 
-type Extra = "brans" | "hukuk" | "etkinlik" | null;
+type Extra = "brans" | "hukuk" | "etkinlik" | "sektorel" | "ilac" | null;
 type Section = { key: string; nm: string; desc: string; feedKey: string | null; extra: Extra };
 type Group = { key: string; nm: string; desc: string; sections: Section[] };
 
@@ -31,9 +37,9 @@ const GROUPS: Group[] = [
     sections: [
       { key: "akademik", nm: "Akademik", feedKey: "akademik", extra: "brans",
         desc: "PubMed, Europe PMC ve DOAJ'dan hakemli yayınlar; branş seçiminize göre süzülür." },
-      { key: "sektorel", nm: "Sektörel", feedKey: "sektorel", extra: null,
+      { key: "sektorel", nm: "Sektörel", feedKey: "sektorel", extra: "sektorel",
         desc: "Doktor hakları, sağlık yönetimi, teknoloji ve küresel gündem." },
-      { key: "ilac", nm: "İlaç & Cihaz", feedKey: "ilac", extra: null,
+      { key: "ilac", nm: "İlaç & Cihaz", feedKey: "ilac", extra: "ilac",
         desc: "Ruhsat ve geri çekme duyuruları, klinik faz sonuçları, dijital prospektüs." },
     ],
   },
@@ -61,9 +67,22 @@ const ALERTS = [
   { days: 7, label: "1 hafta" }, { days: 14, label: "2 hafta" }, { days: 30, label: "1 ay" },
 ];
 
+// Sektörel "Kaynak" — SourceScope tam olarak İKİ değer taşır (lib/doctorium parseSourceScope):
+// haber kaynağı ya ulusal ya uluslararasıdır, "katılımlı" bir haber kaynağı olmaz.
 const SCOPES = [
   { key: "", label: "Tümü" },
   { key: "ulusal", label: "Ulusal" },
+  { key: "uluslararasi", label: "Uluslararası" },
+];
+
+// Etkinlik "Kapsam" — CongressScope ÜÇ değer taşır (lib/doctorium parseScope): SCOPES'tan farklı
+// küme. 🔴 v6.142 ÖNCESİ bu üçüncü değer (uluslararası katılımlı) yalnız artık silinen sekme-içi
+// panelde seçilebiliyordu; PreferencesBoard'un SCOPES'u hep eksikti (v6.132'den beri) — panel
+// silinince erişilemez OLURDU. Burada tamamlanıyor.
+const EVENT_SCOPES = [
+  { key: "", label: "Tümü" },
+  { key: "ulusal", label: "Ulusal" },
+  { key: "uluslararasi-katilimli", label: "Uluslararası katılımlı" },
   { key: "uluslararasi", label: "Uluslararası" },
 ];
 
@@ -83,6 +102,12 @@ interface Props {
   /** null = varsayılan (kongre + sempozyum); "hepsi" = tür süzgeci kapalı. */
   eventTypesInitial: string[] | null;
   scopeInitial: string | null;
+  /** v6.142 — Sektörel/İlaç & Cihaz/Hukuk GÖRÜNÜM süzgeçleri (Kaynak/Geriye dönük/Kategori). */
+  rangeOptions: { key: string; label: string }[];
+  categoryOptions: { key: string; label: string }[];
+  sectorInitial: { source: string | null; range: string; category: string | null };
+  pharmaInitial: { range: string };
+  legalViewInitial: { range: string; category: string | null };
   showSponsor: boolean;
   sponsorInitial: boolean;
   sponsorText: string;
@@ -113,6 +138,22 @@ export function PreferencesBoard(p: Props) {
   const [sponsor, setSponsor] = useState(p.sponsorInitial);
   const [spSt, setSpSt] = useState<Status>({ state: "idle" });
 
+  // v6.142 — Sektörel/İlaç & Cihaz/Hukuk GÖRÜNÜM süzgeçleri. Tekli radyo seçim (branş/tür gibi
+  // çok-tıklamalı liste DEĞİL) → debounce yok, her tıklama anında yazılır (alertler/kapsamla
+  // aynı gerekçe: son tıklamayı beklemenin bir maliyeti yok, ara durumu göstermenin faydası var).
+  const [sector, setSector] = useState({
+    source: p.sectorInitial.source ?? "", range: p.sectorInitial.range, category: p.sectorInitial.category ?? "",
+  });
+  const [secSt, setSecSt] = useState<Status>({ state: "idle" });
+
+  const [pharma, setPharma] = useState({ range: p.pharmaInitial.range });
+  const [phSt, setPhSt] = useState<Status>({ state: "idle" });
+
+  const [legalView, setLegalView] = useState({
+    range: p.legalViewInitial.range, category: p.legalViewInitial.category ?? "",
+  });
+  const [lvSt, setLvSt] = useState<Status>({ state: "idle" });
+
   async function post(url: string, body: unknown, set: (s: Status) => void) {
     set({ state: "saving" });
     try {
@@ -126,6 +167,25 @@ export function PreferencesBoard(p: Props) {
     } catch (e) {
       set({ state: "error", msg: e instanceof Error ? e.message : "Kaydedilemedi." });
     }
+  }
+
+  // Modülün ÜÇ (ya da bir) alanı HER yazımda BİRLİKTE gönderilir — sunucu (view-filters route)
+  // yalnız o modülün alt-nesnesini değiştirir, diğer iki modülün tercihi dokunulmadan kalır.
+  function saveSector(next: typeof sector) {
+    setSector(next);
+    void post("/api/doctor/view-filters", {
+      module: "sektorel", source: next.source || null, range: next.range, category: next.category || null,
+    }, setSecSt);
+  }
+  function savePharma(next: typeof pharma) {
+    setPharma(next);
+    void post("/api/doctor/view-filters", { module: "ilac", range: next.range }, setPhSt);
+  }
+  function saveLegalView(next: typeof legalView) {
+    setLegalView(next);
+    void post("/api/doctor/view-filters", {
+      module: "mevzuat", range: next.range, category: next.category || null,
+    }, setLvSt);
   }
 
   function toggleFeed(key: string) {
@@ -169,6 +229,9 @@ export function PreferencesBoard(p: Props) {
     ...p.branchOptions.filter((b) => b.slug !== p.ownBranchSlug)
       .sort((a, b) => a.label.localeCompare(b.label, "tr")),
   ];
+  // "Tümü" + p.categoryOptions — sektörel VE mevzuat aynı kategori sözlüğünü paylaşır
+  // (lib/doctorium-labels SECTOR_CATEGORIES), yalnız kayıtlı tercihleri ayrı.
+  const categoryItems = [{ key: "", label: "Tümü" }, ...p.categoryOptions];
 
   return (
     <div className="mt-8">
@@ -238,6 +301,34 @@ export function PreferencesBoard(p: Props) {
                         </Block>
                       )}
 
+                      {s.extra === "sektorel" && (
+                        <>
+                          <Block title="Kaynak" hint="Ulusal: TTB · OHSAD · İstanbul Tabip Odası — Uluslararası: Medscape · Medical Xpress · WHO.">
+                            <RadioChips items={SCOPES} value={sector.source}
+                              onChange={(source) => saveSector({ ...sector, source })} />
+                          </Block>
+                          <Block title="Geriye dönük" hint="Akışta varsayılan olarak açılacak zaman penceresi.">
+                            <RadioChips items={p.rangeOptions} value={sector.range}
+                              onChange={(range) => saveSector({ ...sector, range })} />
+                          </Block>
+                          <Block title="Kategori" hint="Sektörel akışın varsayılan konu süzgeci.">
+                            <RadioChips items={categoryItems} value={sector.category}
+                              onChange={(category) => saveSector({ ...sector, category })} />
+                          </Block>
+                          <StatusLine status={secSt} idle="Sekmeden geçici olarak farklı bir görünüm seçmek bu varsayılanı değiştirmez" />
+                        </>
+                      )}
+
+                      {s.extra === "ilac" && (
+                        <>
+                          <Block title="Geriye dönük" hint="Akışta varsayılan olarak açılacak zaman penceresi.">
+                            <RadioChips items={p.rangeOptions} value={pharma.range}
+                              onChange={(range) => savePharma({ range })} />
+                          </Block>
+                          <StatusLine status={phSt} idle="Sekmeden geçici olarak farklı bir görünüm seçmek bu varsayılanı değiştirmez" />
+                        </>
+                      )}
+
                       {s.extra === "hukuk" && (
                         <div className="grid gap-3.5">
                           {HUKUK_SUBS.map((x) => (
@@ -250,6 +341,20 @@ export function PreferencesBoard(p: Props) {
                             </div>
                           ))}
                           <StatusLine status={feedSt} idle="Üçü bağımsız — biri kapalıyken diğerleri akışta kalır" />
+
+                          {/* Mevzuat GÖRÜNÜM süzgeci — yalnız Mevzuat alt-kaynağına ait (v6.142).
+                              İçtihat + Doktrin bilinçli tarih penceresiz (arşiv; bkz. page.tsx). */}
+                          <div className="mt-1 border-t border-[var(--c-hairline)] pt-3.5">
+                            <Block title="Mevzuat görünümü" hint="İçtihat ve Doktrin arşiv olduğu için tarih penceresi taşımaz — bu ayar yalnız Mevzuat alt-kaynağına uygulanır.">
+                              <RadioChips items={p.rangeOptions} value={legalView.range}
+                                onChange={(range) => saveLegalView({ ...legalView, range })} />
+                              <div className="mt-3">
+                                <RadioChips items={categoryItems} value={legalView.category}
+                                  onChange={(category) => saveLegalView({ ...legalView, category })} />
+                              </div>
+                            </Block>
+                            <StatusLine status={lvSt} idle="Sekmeden geçici olarak farklı bir görünüm seçmek bu varsayılanı değiştirmez" />
+                          </div>
                         </div>
                       )}
 
@@ -269,23 +374,7 @@ export function PreferencesBoard(p: Props) {
                             />
                           </Block>
                           <Block title="Kapsam" hint="Yurt içi ve yurt dışı etkinlikler.">
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                              {SCOPES.map((sc) => (
-                                <button
-                                  key={sc.key || "tumu"}
-                                  type="button"
-                                  onClick={() => setScope(sc.key)}
-                                  aria-pressed={scope === sc.key}
-                                  className={`rounded-full px-3 py-1 text-[12px] font-medium transition ${
-                                    scope === sc.key
-                                      ? "bg-emerald-500/15 text-emerald-300 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.35)]"
-                                      : "bg-[var(--c-surface)] text-[var(--c-ink-3)] hover:text-[var(--c-ink)]"
-                                  }`}
-                                >
-                                  {sc.label}
-                                </button>
-                              ))}
-                            </div>
+                            <RadioChips items={EVENT_SCOPES} value={scope} onChange={setScope} />
                           </Block>
                           <Block title="Hatırlatma eşikleri"
                             hint="Takip ettiğiniz etkinlikler için üç ayrı eşik; kapalı bırakılan eşikte bildirim gönderilmez.">
@@ -420,6 +509,32 @@ function Chips({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/** Tekli seçim (radyo) çip sırası — Chips'in çoklu-seçim `Set`iyle karışmasın diye ayrı: Kapsam,
+ *  Kaynak, Geriye dönük, Kategori hep "tam olarak bir seçenek" ister. Boş anahtar ("") "Tümü". */
+function RadioChips({
+  items, value, onChange,
+}: { items: { key: string; label: string }[]; value: string; onChange: (k: string) => void }) {
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {items.map((it) => (
+        <button
+          key={it.key || "tumu"}
+          type="button"
+          onClick={() => onChange(it.key)}
+          aria-pressed={value === it.key}
+          className={`rounded-full px-3 py-1 text-[12px] font-medium transition ${
+            value === it.key
+              ? "bg-emerald-500/15 text-emerald-300 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.35)]"
+              : "bg-[var(--c-surface)] text-[var(--c-ink-3)] hover:text-[var(--c-ink)]"
+          }`}
+        >
+          {it.label}
+        </button>
+      ))}
     </div>
   );
 }

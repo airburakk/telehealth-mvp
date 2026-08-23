@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Star } from "lucide-react";
 
-// v6.52: alarm ayarları TEK filtre penceresine (DoctoriumFilters) taşındı; burada yalnız
-// kongre kartındaki takip düğmesi kaldı.
+// v6.52: alarm ayarları TEK filtre penceresine taşınmıştı; v6.142'de o pencere de (DoctoriumFilters)
+// silindi — tümü artık /doktor/doctorium/tercihler'de. Burada yalnız kongre kartındaki takip
+// düğmesi kaldı.
 
 // Tek kongre için takip aç/kapat düğmesi.
 export function FollowButton({ congressId, following }: { congressId: string; following: boolean }) {
