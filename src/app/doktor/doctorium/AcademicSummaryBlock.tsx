@@ -43,15 +43,12 @@ export function AcademicSummaryBlock({
           <ListChecks size={13} /> Ana çıkarımlar
         </h3>
         <ul className="mt-1.5 grid gap-1.5">
-          {/* compact (landing): en fazla 3 çıkarım — inceleme notu 2026-08-23 "landing'de 2-3
-              çıkarım + devamını gör"; portal tam liste. */}
-          {(compact ? summary.takeaways.slice(0, 3) : summary.takeaways).map((t, i) => (
-            /* compact + mobil: 3. çıkarım gizli (QA mobil P1 "ilk iki çıkarım"); masaüstünde 3. */
-            <li key={i} className={`flex gap-2 text-sm leading-relaxed text-[var(--c-ink)] ${compact && i === 2 ? "max-sm:hidden" : ""}`}>
+          {/* compact (landing): 2 çıkarım — pre-freeze polish 2026-08-23 ("2 kısa ana çıkarım +
+              devamını gör"; ilk çıkarım tam[5 satır], ikinci kısaltılmış[3 satır] mobilde); portal tam liste. */}
+          {(compact ? summary.takeaways.slice(0, 2) : summary.takeaways).map((t, i) => (
+            <li key={i} className="flex gap-2 text-sm leading-relaxed text-[var(--c-ink)]">
               <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
-              {/* compact: mobilde ~5 görsel satır (QA pre-freeze 4): amaç makaleyi okutmak değil,
-                  özetleme biçimini göstermek. Tam metin portalda. */}
-              <span className={compact ? "max-sm:line-clamp-5" : ""}>{t}</span>
+              <span className={compact ? (i === 0 ? "max-sm:line-clamp-5" : "max-sm:line-clamp-3") : ""}>{t}</span>
             </li>
           ))}
         </ul>

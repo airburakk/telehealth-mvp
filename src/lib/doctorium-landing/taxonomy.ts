@@ -20,7 +20,7 @@ export function isLandingBranch(slug: string): boolean {
 export const LANDING_MODULES = [
   { key: "akademik", label: "Akademik" },
   { key: "sektorel", label: "Sektörel" },
-  { key: "ilac", label: "İlaç & Cihaz" },
+  { key: "ilac", label: "İlaç & Regülasyon" },
   { key: "etkinlik", label: "Etkinlik" },
   { key: "kariyer", label: "Kariyer" },
   { key: "hukuk-mevzuat", label: "Mevzuat" },

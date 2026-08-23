@@ -15,7 +15,8 @@ export function ProductFrame({
 }: { title: ReactNode; meta?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <div
-      className={`min-w-0 overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-bg)] text-[var(--c-ink)] shadow-[0_1px_0_rgba(0,0,0,.04)] ${className}`}
+      // .dl-product-frame: globals.css mobil metadata punto kademesi (pre-freeze polish 7)
+      className={`dl-product-frame min-w-0 overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-bg)] text-[var(--c-ink)] shadow-[0_1px_0_rgba(0,0,0,.04)] ${className}`}
     >
       <div className="flex items-center justify-between gap-3 border-b border-[var(--c-hairline)] bg-[var(--c-chrome)] px-4 py-2.5">
         <div className="flex min-w-0 items-center gap-2">

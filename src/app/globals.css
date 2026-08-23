@@ -115,6 +115,19 @@
   --dl-cyan: #0e7490;
 }
 
+/* Doctorium landing V2 ÜRÜN ÇERÇEVESİ — MOBİL metadata punto kademesi (pre-freeze polish 7,
+ * kullanıcı QA 2026-08-23: "Neden görüyorum?, kaynak/tarih satırları ve mono etiketler 360px'te
+ * güven bilgisinden çok mikro-yazıya dönüşüyor"). Ürün bileşenleri (ArticleCard/CongressList)
+ * DEĞİŞMEZ — portal puntoları aynen; yalnız landing çerçevesi içinde, yalnız <640px'te bir
+ * kademe yukarı. Seçiciler kartın utility sınıflarına dayanır (kart sözleşmesi değişirse burası
+ * etkisiz kalır, bozmaz). */
+@media (max-width: 639px) {
+  .dl-product-frame .aura-mono { font-size: 12px; }
+  .dl-product-frame [class*="text-[12.5px]"] { font-size: 13.5px; }
+  .dl-product-frame [class*="text-[12px]"] { font-size: 13px; }
+  .dl-product-frame [class*="text-[13.5px]"] { font-size: 14.5px; }
+}
+
 /* Doctorium Üst Raf zemini — "DERİN ORMAN %12" (2026-08-19, kullanıcı seçimi; ilk tur
  * "Zümrüt Nefesi %8"i doz+ton taraması SÜPERSEDE etti): Header sabit koyu kromda (#08090b,
  * theme-dark hard-coded) ve raf aynı krom tonundaydı — gece ikisi 112px kesintisiz "siyah

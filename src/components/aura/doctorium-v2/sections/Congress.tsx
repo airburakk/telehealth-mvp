@@ -20,8 +20,20 @@ export function CongressSection({ proof, branch }: { proof: LandingProof["congre
         </div>
         <ProductFrame title="Etkinlik" meta={landingBranchLabel(branch)}>
           {proof.rows.length ? (
+            /* Pre-freeze polish (2026-08-23, kullanıcı): önizleme 2 etkinlik; kalanı disclosure. */
             <div className="-mt-4">
-              <CongressList rows={proof.rows} followed={new Set()} canFollow={false} savedIds={null} hrefFor={() => LANDING_ROUTES.login} />
+              <CongressList rows={proof.rows.slice(0, 2)} followed={new Set()} canFollow={false} savedIds={null} hrefFor={() => LANDING_ROUTES.login} />
+              {proof.rows.length > 2 && (
+                <details className="group mt-1 border-t border-[var(--c-hairline)] pt-3">
+                  <summary className="cursor-pointer list-none text-[12px] font-semibold text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
+                    <span className="group-open:hidden">Daha fazlasını gör ({proof.rows.length - 2})</span>
+                    <span className="hidden group-open:inline">Daha az göster</span>
+                  </summary>
+                  <div className="-mt-4">
+                    <CongressList rows={proof.rows.slice(2)} followed={new Set()} canFollow={false} savedIds={null} hrefFor={() => LANDING_ROUTES.login} />
+                  </div>
+                </details>
+              )}
             </div>
           ) : (
             <p className="py-6 text-center text-sm text-[var(--c-ink-2)]">Yaklaşan etkinlik listesi şu an boş; takvim her gece güncellenir.</p>

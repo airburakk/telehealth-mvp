@@ -38,8 +38,20 @@ export function LegalSection({ proof, branch }: { proof: LandingProof["legal"]; 
             })}
           </div>
           <LegalSearchBox tab="ictihat" query={proof.query} activeKeyword={proof.keyword} demo={{ href: LANDING_ROUTES.login }} />
+          {/* Pre-freeze polish (2026-08-23, kullanıcı): landing önizlemesi 2 sonuç; kalanı disclosure. */}
           <div className="mt-3">
-            <FeedPreview items={proof.items} branch={branch} why={false} max={3} />
+            <FeedPreview items={proof.items} branch={branch} why={false} max={2} />
+            {proof.items.length > 2 && (
+              <details className="group mt-1 border-t border-[var(--c-hairline)] pt-3">
+                <summary className="cursor-pointer list-none text-[12px] font-semibold text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
+                  <span className="group-open:hidden">Daha fazlasını gör ({proof.items.length - 2})</span>
+                  <span className="hidden group-open:inline">Daha az göster</span>
+                </summary>
+                <div className="mt-2">
+                  <FeedPreview items={proof.items.slice(2)} branch={branch} why={false} />
+                </div>
+              </details>
+            )}
           </div>
         </ProductFrame>
       </div>

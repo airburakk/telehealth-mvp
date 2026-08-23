@@ -50,7 +50,9 @@ export const DOCTORIUM_MODULES: ModuleDef[] = [
   { key: "akis", label: "Akışım", desc: "Branşınız + mevzuat + sektör: tek akış" },
   { key: "akademik", label: "Akademik", desc: "Hakemli yayınlar — PubMed · Europe PMC · DOAJ" },
   { key: "sektorel", label: "Sektörel", desc: "Doktor hakları · yönetim · teknoloji · küresel" },
-  { key: "ilac", label: "İlaç & Cihaz", desc: "Geri çekmeler · klinik faz · prospektüs" },
+  // v6.146 (2026-08-23, kullanıcı kararı — ÜRÜN-GENELİ taksonomi): "İlaç & Cihaz" → "İlaç & Regülasyon";
+  // "ilaç ve cihaz gelişmeleri" açıklama metninde kalır. Anahtar `ilac` DEĞİŞMEZ (URL/DB/tercih).
+  { key: "ilac", label: "İlaç & Regülasyon", desc: "Geri çekmeler · klinik faz · prospektüs" },
   { key: "etkinlik", label: "Etkinlik Takvimi", desc: "Kongre · sempozyum · kurs — TTB akredite" },
   { key: "kariyer", label: "Kariyer", desc: "Yurt dışı denklik · akademik yükselme" },
   { key: "mevzuat", label: "Hukuk", desc: "Mevzuat · İçtihat — sağlık hukuku" },
@@ -314,7 +316,7 @@ const ROW_SELECT = {
 export const FEED_MODULE_OPTIONS = [
   { key: "akademik", label: "Akademik" },
   { key: "sektorel", label: "Sektörel" },
-  { key: "ilac", label: "İlaç & Cihaz" },
+  { key: "ilac", label: "İlaç & Regülasyon" },
   { key: "etkinlik", label: "Etkinlik" },
   { key: "kariyer", label: "Kariyer" },
   { key: "hukuk-mevzuat", label: "Mevzuat" },
@@ -347,7 +349,7 @@ export const PREF_GROUPS = [
         desc: "PubMed, Europe PMC ve DOAJ'dan hakemli yayınlar.", subs: null },
       { key: "sektorel", label: "Sektörel", feedKey: "sektorel" as FeedModuleKey,
         desc: "Doktor hakları, yönetim, teknoloji ve küresel gündem.", subs: null },
-      { key: "ilac", label: "İlaç & Cihaz", feedKey: "ilac" as FeedModuleKey,
+      { key: "ilac", label: "İlaç & Regülasyon", feedKey: "ilac" as FeedModuleKey,
         desc: "Ruhsat, geri çekme ve klinik faz duyuruları.", subs: null },
     ],
   },
