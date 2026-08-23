@@ -38,6 +38,7 @@ export default async function DoctorOnboardingPage({
           procedures: true, licenseNo: true, eduSchool: true, eduYear: true, specBoard: true, specYear: true,
           certifications: true, publications: true,
           diplomaVerifiedAt: true, studentVerifiedAt: true, studentTrack: true, sponsorPersonalizationAt: true, hrContactOptInAt: true,
+          studentUniversity: true, studentDepartment: true, // v6.143 — StudentStage1Card'ın e-posta doğrulama durumu için
           // v6.127 — Aşama 2 güvenlik katmanı damgaları (Güvenlik Doğrulamaları bölümü)
           smsVerifiedAt: true, workEmailVerifiedAt: true, clinicPhoneVerifiedAt: true, clinicPhoneEstablishment: true,
         },
@@ -48,15 +49,12 @@ export default async function DoctorOnboardingPage({
   if (!doctor) redirect("/doktor");
 
   // v6.95 — ÖĞRENCİ MODU (/ogrenci hunisi): doktor onboarding'i (FHIR uzmanlık, işlemler,
-  // diploma+MMSS, rızalar) HİÇ render edilmez — tek belge e-Devlet öğrenci belgesidir.
-  // Branş/city kapısından ÖNCE dallanır: öğrenci profil-tamamla (doktor soruları) sayfasına
-  // düşürülmez (kayıt formu branş+şehri zaten zorunlu topluyor).
+  // diploma+MMSS, rızalar) HİÇ render edilmez. Branş/city kapısından ÖNCE dallanır: öğrenci
+  // profil-tamamla (doktor soruları) sayfasına düşürülmez (kayıt formu branş+şehri zaten
+  // zorunlu topluyor). v6.143: kapı artık belge değil — kayıtta seçilen üniversite e-postasının
+  // tıklama-doğrulaması (bkz. api/auth/signup-student + verify-student-email); bu sayfa yalnız
+  // o doğrulamanın DURUMUNU gösterir (belge yükleme YOK).
   if (doctor.studentTrack) {
-    const studentDocs = await db.doctorDocument.findMany({
-      where: { doctorId: dbUser!.doctorId!, type: "STUDENT_CERT" },
-      select: { id: true, type: true, label: true, mimeType: true },
-      orderBy: { createdAt: "desc" },
-    });
     return (
       <div className="mx-auto max-w-2xl px-5 py-10">
         <div className="mb-6 flex flex-col items-center text-center">
@@ -67,13 +65,14 @@ export default async function DoctorOnboardingPage({
             Hoş geldiniz, {doctor.name}
           </h1>
           <p className="mt-1 max-w-md text-sm text-[var(--c-ink-2)]">
-            Öğrenci belgenizi yükleyin; Doctorium&apos;un haber, kongre, hukuk ve kütüphane
+            Üniversite e-postanızı doğrulayın; Doctorium&apos;un haber, kongre, hukuk ve kütüphane
             içerikleri anında açılsın.
           </p>
         </div>
         <StudentStage1Card
-          initialStudentDoc={studentDocs[0] ?? null}
-          eduEmail={isEduEmail(user.email)}
+          email={user.email}
+          university={doctor.studentUniversity}
+          department={doctor.studentDepartment}
           initialAccess={hasDoctoriumAccess(doctor)}
         />
       </div>

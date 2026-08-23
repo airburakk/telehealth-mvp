@@ -1,4 +1,4 @@
-import { GraduationCap, FileText } from "lucide-react";
+import { GraduationCap, Mail } from "lucide-react";
 import { section } from "@/lib/doctorium-landing/content";
 import { LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
 import { statusRozet } from "@/lib/doc-status";
@@ -9,10 +9,14 @@ import { LandingSection, SectionHead } from "../primitives";
 // PROFESYONEL ALAN (belge §10): "yüz duvarı" YOK, gerçek kişi verisi YOK — doğrulama rozetleri
 // ürünün gerçek kuralından (lib/doc-status.ts statusRozet) TEMSİLÎ satırlarla çizilir; başlık
 // bunu açıkça söyler. Doktor/öğrenci ayrımı ürün kurallarıyla birebir (sponsor/anket/ödül kapalı).
+// v6.143: üçüncü satır artık BELGE değil — öğrenci kapısı üniversite (.edu.tr) e-postası tıklama-
+// doğrulamasıdır (lib/universities.ts + api/auth/verify-student-email). statusRozet belge-şekilli
+// (DocStatusInput) olduğundan bu satıra uymuyor; rozet doğrudan burada verilir (diğer iki satır
+// gerçek belge kuralından — statusRozet — çizilmeye devam eder, drift'e karşı tek kaynak).
 const ROWS = [
-  { Icon: GraduationCap, label: "Tıp Diploması", sub: "Doktor üyeliği — e-Devlet barkodlu mezun belgesi", doc: { type: "DIPLOMA", status: "ACCEPTED", verifiedSource: "EDEVLET" } },
-  { Icon: GraduationCap, label: "Tıp Diploması", sub: "Doktor üyeliği — belge incelemesi", doc: { type: "DIPLOMA", status: "PENDING", verifiedSource: null } },
-  { Icon: FileText, label: "Öğrenci Belgesi", sub: "Tıp öğrencisi üyeliği — pazarlama yüzeyleri kapalı", doc: { type: "STUDENT_CERT", status: "ACCEPTED", verifiedSource: "MANUAL" } },
+  { Icon: GraduationCap, label: "Tıp Diploması", sub: "Doktor üyeliği — e-Devlet barkodlu mezun belgesi", doc: { type: "DIPLOMA", status: "ACCEPTED", verifiedSource: "EDEVLET" } as const, badge: null },
+  { Icon: GraduationCap, label: "Tıp Diploması", sub: "Doktor üyeliği — belge incelemesi", doc: { type: "DIPLOMA", status: "PENDING", verifiedSource: null } as const, badge: null },
+  { Icon: Mail, label: "Üniversite E-postası", sub: "Tıp/Diş Hekimliği öğrencisi üyeliği — pazarlama yüzeyleri kapalı", doc: null, badge: { text: "Doğrulandı", cls: "bg-emerald-500/15 text-emerald-300" } },
 ] as const;
 
 export function IdentitySection() {
@@ -32,7 +36,7 @@ export function IdentitySection() {
         <ProductFrame title="Belgelerim" meta="temsilî görünüm">
           <ul className="grid grid-cols-[minmax(0,1fr)]">
             {ROWS.map((r, i) => {
-              const badge = statusRozet(r.doc);
+              const badge = r.doc ? statusRozet(r.doc) : r.badge;
               return (
                 <li key={i} className="flex items-center justify-between gap-3 border-t border-[var(--c-hairline)] py-3.5 first:border-t-0 first:pt-1">
                   <div className="flex min-w-0 items-center gap-3">

@@ -261,12 +261,27 @@ model Doctor {
   clinicPhoneVerifiedAt    DateTime?
   /// Geri-aramada teyit edilen tesisin adı (HealthTürkiye kaydından; kamuya açık dizin verisi).
   clinicPhoneEstablishment String?
-  /// Tıp öğrencisi damgası (v6.95): e-Devlet öğrenci belgesi (DoctorDocument.type = STUDENT_CERT)
-  /// yüklüyse dolu → yalnız Doctorium İÇERİK erişimi (CHAMBER deseni — otomatik, admin onayı yok).
-  /// Klinik kapı (activatedAt) ve pazarlama yüzeyleri (sponsor/anket/ödül — isStudentOnly süzgeci)
-  /// KAPALI kalır: öğrenci sağlık meslek mensubu değildir, tanıtım rejimi ona uygulanamaz.
-  /// Mezuniyette diploma+MMSS yüklenince activatedAt dolar → süzgeç kendiliğinden kalkar.
+  /// Tıp/Diş Hekimliği öğrencisi damgası (v6.95; **v6.147'de MEKANİZMA DEĞİŞTİ** — kullanıcı
+  /// kararı): eskiden STUDENT_CERT belgesi yüklenince dolardı (barkod sonucu hiç okunmuyordu —
+  /// gerçek güvenlik sağlamıyordu, bkz. wiki/kavramlar/doktor-kimlik-dogrulama.md). Artık kurumsal
+  /// (.edu.tr) e-postanın tıklama-doğrulamasıyla dolar (api/auth/verify-student-email) — ÖNCESİNDE
+  /// signup-student route'u studentUniversity/studentDepartment'ı UNIVERSITIES listesindeki bilinen
+  /// uzantıyla eşleştirmiş olmalı. Dolu → yalnız Doctorium İÇERİK erişimi. Klinik kapı (activatedAt)
+  /// ve pazarlama yüzeyleri (sponsor/anket/ödül — isStudentOnly süzgeci) KAPALI kalır: öğrenci
+  /// sağlık meslek mensubu değildir, tanıtım rejimi ona uygulanamaz. Mezuniyette diploma+MMSS
+  /// yüklenince activatedAt dolar → süzgeç kendiliğinden kalkar.
   studentVerifiedAt        DateTime?
+  /// v6.147 — öğrencinin kayıtta beyan ettiği üniversite (lib/universities.ts UNIVERSITIES'ten,
+  /// resmî ad) + bölüm ("tip" | "dis-hekimligi"). Yalnız KAYIT ANINDA yazılır (sonradan
+  /// düzenlenemez); domain eşleşmesi signup-student route'unda ZATEN doğrulanmış olarak buraya
+  /// düşer — bu iki alan aynı zamanda "domain kontrolünden geçti" kanıtıdır.
+  studentUniversity        String?
+  studentDepartment        String?
+  /// v6.147 — öğrenci e-postası doğrulama token'ı (email-verification.ts ile AYNI desen, ayrı
+  /// alan çifti: bu güvenlik-kritik kapı genel hesap-doğrulamasının dormant-bypass'ından İZOLE).
+  /// Ham token yalnız e-postadaki bağlantıda; DB'de yalnız sha256 hash'i.
+  studentVerifyTokenHash   String?
+  studentVerifySentAt      DateTime?
   /// Öğrenci YOLU işareti (v6.95): /ogrenci hunisinden açılan hesap true doğar — belge henüz
   /// yüklenmemişken bile onboarding öğrenci modunda kalır (klinik belge/MMSS blokları HİÇ
   /// gösterilmez) ve HealthTürkiye dizin doğrulaması atlanır (öğrenci dizinde olmaz — yanlış

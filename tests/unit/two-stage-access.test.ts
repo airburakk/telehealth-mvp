@@ -2,13 +2,17 @@
 // v6.124 (kullanıcı kararı 2026-08-19): Doctorium kapısı e-DEVLET DOĞRULAMALI DİPLOMA'dır
 // (diplomaVerifiedAt) VEYA öğrenci damgası. CHAMBER (tabip odası yazısı) KAPIDAN DÜŞTÜ —
 // hasChamberLetter/refreshChamberLetter silindi, ALL_DOC_TYPES artık CHAMBER içermez.
+// v6.147 (kullanıcı kararı 2026-08-23): öğrenci damgasının MEKANİZMASI değişti (STUDENT_CERT
+// belgesi → üniversite e-postası tıklama-doğrulaması, bkz. lib/universities.ts +
+// api/auth/verify-student-email) ama hasDoctoriumAccess FORMÜLÜ aynı — hasStudentCert/isEduEmail
+// silindi, ALL_DOC_TYPES artık STUDENT_CERT içermez.
 // Burada iki kapının BAĞIMSIZLIĞI kilitlenir: diploma doğrulaması Doctorium'u açar ama klinik
 // yüzey (activatedAt) ayrı damgadır; öğrenci damgası klinik yüzey AÇMAZ.
 import { describe, it, expect } from "vitest";
 import {
-  ALL_DOC_TYPES, REQUIRED_DOC_TYPES, hasDoctoriumAccess, hasStudentCert,
+  ALL_DOC_TYPES, REQUIRED_DOC_TYPES, hasDoctoriumAccess,
   canActivate, canCompleteOnboarding, missingOnboardingSteps, hasClinicalAccess,
-  isStudentOnly, isEduEmail,
+  isStudentOnly,
 } from "@/lib/doctor-activation";
 import { HR_CONTACT_SCOPE, HR_CONTACT_REVOKE_SCOPE } from "@/lib/hr-consent";
 import { SPONSOR_CONSENT_SCOPE, SPONSOR_REVOKE_SCOPE } from "@/lib/sponsor";
@@ -63,38 +67,10 @@ describe("Öğrenci üyeliği (v6.95): isStudentOnly pazarlama süzgeci", () => 
   });
 });
 
-describe("isEduEmail: akademik e-posta SİNYALİ (kapı açmaz, yalnız rozet)", () => {
-  it("akademik uzantılar tanınır (.edu.tr alt-domain dahil, .edu, .ac.<cc>)", () => {
-    expect(isEduEmail("ogrenci@istanbul.edu.tr")).toBe(true);
-    expect(isEduEmail("ali@std.medipol.edu.tr")).toBe(true);
-    expect(isEduEmail("student@harvard.edu")).toBe(true);
-    expect(isEduEmail("s.jones@ucl.ac.uk")).toBe(true);
-  });
-  it("akademik olmayan / bozuk girdi reddedilir", () => {
-    expect(isEduEmail("kisi@gmail.com")).toBe(false);
-    expect(isEduEmail("kisi@edu.example.com")).toBe(false); // "edu" domain ortasında — uzantı değil
-    expect(isEduEmail("adres-at-yok.edu.tr")).toBe(false);
-    expect(isEduEmail("")).toBe(false);
-    expect(isEduEmail(null)).toBe(false);
-    expect(isEduEmail(undefined)).toBe(false);
-  });
-});
-
-describe("belge tipleri: STUDENT_CERT kabul edilir ama Aşama 2'ye girdi DEĞİL", () => {
-  it("STUDENT_CERT geçerli belge tipidir; CHAMBER v6.124'te listeden ÇIKTI", () => {
-    expect(ALL_DOC_TYPES).toContain("STUDENT_CERT");
+describe("belge tipleri: DIPLOMA tek zorunlu/kapı-tutan belge (v6.147: STUDENT_CERT de CHAMBER de listede DEĞİL)", () => {
+  it("STUDENT_CERT ve CHAMBER artık geçerli belge tipi DEĞİL — ikisi de ayrı yollarla kapıdan düştü", () => {
+    expect(ALL_DOC_TYPES).not.toContain("STUDENT_CERT");
     expect(ALL_DOC_TYPES).not.toContain("CHAMBER");
-  });
-  it("STUDENT_CERT zorunlu klinik belgelerden DEĞİLDİR (Aşama 1 belgesi Aşama 2'yi açmaz)", () => {
-    expect(REQUIRED_DOC_TYPES).not.toContain("STUDENT_CERT");
-    // v6.105 (kullanıcı kararı 2026-08-17): MMSS aktivasyon şartından ÇIKTI — tek zorunlu
-    // mesleki belge Tıp Diploması. MMSS kartı/formu İHTİYARİ olarak duruyor (teminat limiti
-    // /paket sigorta paketini beslemeye devam eder). Şartı geri koymak = diziye "MMSS" eklemek.
-    expect([...REQUIRED_DOC_TYPES]).toEqual(["DIPLOMA"]);
-  });
-  it("yalnız STUDENT_CERT yüklü doktor klinik AKTİVE OLMAZ", () => {
-    const fullMmss = { mmssInsurer: "X", mmssPolicyNo: "P1", mmssCoverageLimit: 1_000_000 };
-    expect(canActivate([{ type: "STUDENT_CERT", status: "ACCEPTED" }], fullMmss)).toBe(false);
   });
   it("v6.105+v6.119: ONAYLI diploma tek başına aktive eder — MMSS hiç yokken bile", () => {
     const noMmss = { mmssInsurer: null, mmssPolicyNo: null, mmssCoverageLimit: null };
@@ -103,9 +79,10 @@ describe("belge tipleri: STUDENT_CERT kabul edilir ama Aşama 2'ye girdi DEĞİL
     const fullMmss = { mmssInsurer: "X", mmssPolicyNo: "P1", mmssCoverageLimit: 1_000_000 };
     expect(canActivate([{ type: "MMSS", status: "ACCEPTED" }], fullMmss)).toBe(false);
   });
-  it("hasStudentCert yalnız kendi tipini sayar", () => {
-    expect(hasStudentCert([{ type: "DIPLOMA" }, { type: "MMSS" }])).toBe(false);
-    expect(hasStudentCert([{ type: "STUDENT_CERT" }])).toBe(true);
+  it("v6.105 (kullanıcı kararı 2026-08-17): tek zorunlu mesleki belge Tıp Diploması", () => {
+    // MMSS aktivasyon şartından ÇIKTI — kartı/formu İHTİYARİ olarak duruyor (teminat limiti
+    // /paket sigorta paketini beslemeye devam eder). Şartı geri koymak = diziye "MMSS" eklemek.
+    expect([...REQUIRED_DOC_TYPES]).toEqual(["DIPLOMA"]);
   });
 });
 

@@ -4,9 +4,10 @@
 // istemci/sunucu fark etmez.
 //
 // LEGACY bilinçli NÖTR ve "Kayıtlı" ("Onaylandı" DEĞİL): backfill'lenen belgeler gerçekten
-// incelenmedi — emerald yanlış güven telkin ederdi. "İncelemede" yalnız kapı tutan tiplerde
-// (DIPLOMA/STUDENT_CERT) gösterilir: ihtiyari belgede PENDING varsayılan hâldir, bir inceleme
-// kuyruğu vaadi değildir. ACCEPTED/REJECTED ise her tipte gösterilir (gerçek inceleme sonucu).
+// incelenmedi — emerald yanlış güven telkin ederdi. "İncelemede" yalnız kapı tutan tipte (DIPLOMA)
+// gösterilir: ihtiyari belgede PENDING varsayılan hâldir, bir inceleme kuyruğu vaadi değildir.
+// ACCEPTED/REJECTED ise her tipte gösterilir (gerçek inceleme sonucu). (v6.143: STUDENT_CERT
+// belge olmaktan çıktı — öğrenci kapısı artık üniversite e-postası, bkz. lib/universities.ts.)
 export interface DocStatusInput {
   type: string;
   status?: string | null; // PENDING | ACCEPTED | REJECTED
@@ -21,6 +22,6 @@ export function statusRozet(d: DocStatusInput): { text: string; cls: string } | 
     return { text: "Onaylandı", cls: "bg-emerald-500/15 text-emerald-300" };
   }
   if (d.status === "REJECTED") return { text: "Yeniden yükleyin", cls: "bg-red-500/15 text-red-300" };
-  if (d.type === "DIPLOMA" || d.type === "STUDENT_CERT") return { text: "İncelemede", cls: "bg-amber-500/15 text-amber-300" };
+  if (d.type === "DIPLOMA") return { text: "İncelemede", cls: "bg-amber-500/15 text-amber-300" };
   return null;
 }

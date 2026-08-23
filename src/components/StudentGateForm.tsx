@@ -1,16 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { GraduationCap, MailCheck, UserPlus, Loader2 } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
+import { universitiesFor, type StudentDepartment } from "@/lib/universities";
 
-// v6.95 — Tıp öğrencisi kaydı (/ogrenci): doktor kaydından AYRI huni (kullanıcı kararı
-// 2026-08-14). Kayıt /api/auth/signup-student'a gider (ünvan/telefon/dil yok). OAuth butonu
+// v6.95 — Tıp/Diş Hekimliği öğrencisi kaydı (/ogrenci): doktor kaydından AYRI huni (kullanıcı
+// kararı 2026-08-14). Kayıt /api/auth/signup-student'a gider (ünvan/telefon/dil yok). OAuth butonu
 // BİLİNÇLİ YOK: sosyal kayıt intent=doctor açar (studentTrack'siz) — öğrenci hunisi e-posta kaydı.
 // 2026-08-17 (kullanıcı kararı): sayfa SALT KAYIT oldu — Giriş/Hesap oluştur sekmeleri ve
 // gömülü giriş formu kaldırıldı. Öğrenci hesabı DOCTOR rollüdür, girişi ortak /kurumsal-giris
 // kapısından yapar (aşağıdaki metin linki); ayrı bir öğrenci giriş yüzeyi ARTIK YOK.
+//
+// v6.147 (kullanıcı kararı 2026-08-23) — GÜVENLİK KONTROLÜ DEĞİŞTİ: eskiden kayıt sonrası bir
+// belge yüklenirdi (STUDENT_CERT — hiç gerçek doğrulama yapmıyordu). Artık Bölüm+Üniversite
+// BURADA seçilir, girilen e-posta lib/universities.ts UNIVERSITIES'teki bilinen uzantıyla
+// eşleşmezse sunucu kaydı reddeder — eşleşmeyen üniversite/e-posta kombinasyonuyla hesap hiç
+// AÇILMAZ. lib/universities.ts client-safe (db bağımlılığı yok) — doğrudan import edilir.
 
 export function StudentGateForm({ branches }: { branches: string[] }) {
   return (
@@ -39,6 +46,8 @@ export function StudentGateForm({ branches }: { branches: string[] }) {
 
 function StudentSignup({ branches }: { branches: string[] }) {
   const [name, setName] = useState("");
+  const [department, setDepartment] = useState<StudentDepartment | "">("");
+  const [university, setUniversity] = useState("");
   const [branch, setBranch] = useState("");
   const [city, setCity] = useState("");
   const [email, setEmail] = useState("");
@@ -47,6 +56,10 @@ function StudentSignup({ branches }: { branches: string[] }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [verifySent, setVerifySent] = useState(false);
+
+  // Üniversite seçenekleri bölüme göre süzülür — dişçilik seçiliyse yalnız Diş Hekimliği olan
+  // üniversiteler görünür (yanlış bölüm+üniversite kombinasyonu formda hiç kurulamaz).
+  const universities = useMemo(() => (department ? universitiesFor(department) : []), [department]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -57,11 +70,11 @@ function StudentSignup({ branches }: { branches: string[] }) {
       const res = await fetch("/api/auth/signup-student", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, branch, city, email, password }),
+        body: JSON.stringify({ name, department, university, branch, city, email, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Kayıt başarısız.");
-      if (data.needsVerification) { setVerifySent(true); return; }
+      if (data.needsStudentVerification) { setVerifySent(true); return; }
       window.location.assign(data.home || "/doktor/baslangic");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kayıt başarısız.");
@@ -76,7 +89,8 @@ function StudentSignup({ branches }: { branches: string[] }) {
         <h2 className="mt-4 font-serif text-lg font-bold text-[var(--c-ink)]">Doğrulama bağlantısı gönderildi</h2>
         <p className="mt-2 text-sm text-[var(--c-ink-2)]">
           <span className="font-medium text-[var(--c-ink)]">{email}</span> adresine bir doğrulama
-          e-postası gönderdik. Bağlantıya tıkladıktan sonra bu sayfadan giriş yapabilirsiniz.
+          bağlantısı gönderdik. Tıkladığınız anda Doctorium erişiminiz açılır; bu sayfadan giriş
+          yapabilirsiniz.
         </p>
       </div>
     );
@@ -86,6 +100,35 @@ function StudentSignup({ branches }: { branches: string[] }) {
     <form onSubmit={submit} className="space-y-3">
       <Labeled label="Ad soyad">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ayşe Yılmaz" className={INPUT} required />
+      </Labeled>
+
+      <Labeled label="Bölüm">
+        <div className="grid grid-cols-2 gap-2">
+          {(
+            [["tip", "Tıp"], ["dis-hekimligi", "Diş Hekimliği"]] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={department === key}
+              onClick={() => { setDepartment(key); setUniversity(""); }}
+              className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                department === key
+                  ? "border-[var(--c-accent)] bg-[var(--c-accent)]/10 text-[var(--c-accent-stronger)]"
+                  : "border-[var(--c-hairline)] bg-[var(--c-surface)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/50"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </Labeled>
+
+      <Labeled label="Üniversite">
+        <select value={university} onChange={(e) => setUniversity(e.target.value)} className={INPUT} required disabled={!department}>
+          <option value="" disabled>{department ? "Seçin…" : "Önce bölümünüzü seçin"}</option>
+          {universities.map((u) => <option key={u.name} value={u.name}>{u.name}</option>)}
+        </select>
       </Labeled>
 
       <div className="grid grid-cols-2 gap-3">
@@ -100,10 +143,11 @@ function StudentSignup({ branches }: { branches: string[] }) {
         </Labeled>
       </div>
 
-      <Labeled label="E-posta">
+      <Labeled label="Üniversite e-postanız">
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ad@universite.edu.tr" className={INPUT} required />
         <span className="mt-1 block text-[11px] text-[var(--c-ink-3)]">
-          Üniversite e-postanızla (.edu.tr) kaydolursanız profilinizde üniversite rozeti görünür — zorunlu değildir.
+          Seçtiğiniz üniversitenin size verdiği kurumsal (...edu.tr) e-postayla kaydolun — kayıt
+          bunu kontrol eder, doğrulama bağlantısı da buraya gider.
         </span>
       </Labeled>
 
@@ -123,9 +167,9 @@ function StudentSignup({ branches }: { branches: string[] }) {
       </button>
 
       <p className="text-[11px] leading-relaxed text-[var(--c-ink-3)]">
-        Kayıt sonrası e-Devlet&apos;ten aldığınız <strong>öğrenci belgesini</strong> yüklemeniz istenir;
-        Doctorium erişiminiz belge yüklenince açılır. Diploma, MMSS poliçesi gibi doktor belgeleri
-        öğrenci üyelikte İSTENMEZ.
+        Kayıt, üniversite e-postanızın seçtiğiniz kuruma ait olduğunu kontrol eder; Doctorium
+        erişiminiz e-postanızdaki bağlantıyı tıkladığınız anda açılır. Diploma, MMSS poliçesi gibi
+        doktor belgeleri öğrenci üyelikte İSTENMEZ.
       </p>
     </form>
   );
