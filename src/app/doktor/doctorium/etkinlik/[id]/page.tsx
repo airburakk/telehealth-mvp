@@ -7,7 +7,7 @@ import { BranchAvatar } from "@/components/BranchAvatar";
 import { hasBranchVisual } from "@/lib/branch-visuals";
 import { FollowButton } from "../../CongressControls";
 import {
-  ArrowLeft, AlertTriangle, Building2, CalendarClock, CalendarDays, ExternalLink,
+  ArrowLeft, AlertTriangle, Building2, CalendarDays, ExternalLink,
   Globe, Languages, MapPin, Presentation, ShieldCheck, Ticket, Video,
 } from "lucide-react";
 
@@ -92,7 +92,7 @@ export default async function CongressCardPage({ params }: { params: Promise<{ i
           </div>
           {doctorId && (
             <div className="ml-auto self-start">
-              <FollowButton congressId={c.id} following={following} />
+              <FollowButton key={String(following)} congressId={c.id} following={following} />
             </div>
           )}
         </div>
@@ -198,11 +198,13 @@ export default async function CongressCardPage({ params }: { params: Promise<{ i
               <ExternalLink size={13} /> Resmî siteye git
             </a>
           )}
-          {/* Takvime ekle: .ics'i KENDİMİZ üretiyoruz (dış servis yok, PHI yok). */}
-          <a href={`/api/doctor/congress-ics?id=${c.id}`}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] px-3.5 py-1.5 text-xs font-semibold text-[var(--c-ink-2)] hover:bg-[var(--c-surface-2)]">
-            <CalendarClock size={13} /> Takvime ekle (.ics)
-          </a>
+          {/* Takvime ekle (v6.143): .ics indirmesi yerine Doctorium'un KENDİ takvimine ekler —
+              CongressFollow'u açar, /doktor/doctorium/takvim takipten türediği için etkinlik
+              oraya kendiliğinden düşer (kullanıcı bildirimi: iki ayrı "takvim" kafa karıştırıyordu).
+              doctorId'siz personel (COORDINATOR/ADMIN) takip edemez — üstteki chip'le aynı kapı. */}
+          {doctorId && (
+            <FollowButton key={String(following)} congressId={c.id} following={following} variant="action" />
+          )}
         </div>
 
         {/* ── Şeffaflık: bu bilgi nereden geliyor, ne zaman doğrulandı ── */}

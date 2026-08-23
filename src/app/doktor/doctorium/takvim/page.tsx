@@ -195,12 +195,6 @@ export default async function TakvimPage({
             </span>
           </p>
         )}
-
-        {/* Aşama 2 dürüst notu: nöbet/icap planı bu takvime GELECEKTE işlenecek — şimdiden
-            vaat eden bir arayüz çizilmez (boş sekme/soluk düğme yok; iddia dürüstlüğü). */}
-        <p className="mt-4 text-[11px] text-[var(--c-ink-3)]">
-          Etkinlik ayrıntısındaki &quot;Takvime ekle (.ics)&quot; ile kaydı telefon/masaüstü takviminize de aktarabilirsiniz.
-        </p>
       </div>
     </DoctoriumShell>
   );

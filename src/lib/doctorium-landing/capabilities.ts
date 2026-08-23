@@ -121,7 +121,7 @@ export const CAPABILITIES: readonly Capability[] = [
   cap("congress.deadlines", "verified", ["prisma/schema.prisma:1143 abstractDeadline/earlyBirdDeadline"], ["Bildiri ve erken kayıt son günleri"]),
   cap("congress.follow", "verified", ["prisma/schema.prisma:1246 CongressFollow", "src/app/api/doctor/congress-follow/route.ts:79"], ["Takip et (girişli)"]),
   cap("congress.save", "verified", ["prisma/schema.prisma:1263 SavedArticle", "src/app/api/doctorium/save/route.ts"], ["Kaydet (girişli)"]),
-  cap("congress.calendar", "verified", ["src/app/doktor/doctorium/takvim/page.tsx", "src/lib/calendar.ts:65"], ["Takvim görünümü + .ics"]),
+  cap("congress.calendar", "verified", ["src/app/doktor/doctorium/takvim/page.tsx", "src/lib/calendar.ts:65"], ["Takvim görünümü — takip edilen etkinlikler kendiliğinden düşer"]),
   cap("identity.diploma_edevlet", "verified",
     ["src/lib/edevlet-belge.ts", "src/lib/doctor-activation.ts:252 diplomaVerifiedAt"],
     ["Doktor üyeliği diploma belgesiyle açılır: e-Devlet barkodlu mezun belgesi veya inceleme"],
