@@ -697,6 +697,24 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   `air_lang`a taşıyan GÖÇ kodu, silinirse o tarayıcılarda dil seçimi sıfırlanır. 🪤 Bu rename
   sırasında `git mv`'nin stage'i paralel oturumun commit'ine karıştı → `origin/main` bir süre
   build-kırık kaldı (deploy ERROR); ders: rename+süpürme+commit **tek turda** bitirilir.
+  · **Marka seti v2 — küre + vektör wordmark (2026-08-23, v6.137):** sembol artık kullanıcının
+  **holografik küresi** (`AuraMark`/`AuraSpinner`; 4,6MB kaynak GIF → paketin SVG renk filtresi
+  karelere pişirilip `hqdn3d` ile temizlenerek **alfa kanallı WebP** 160px 352KB / 240px 717KB,
+  `public/brand/`; Doctorium = aynı karelerin hue −30° kaydırması, hedef "ium" #34d399). Küre
+  **koyu disk** (#0d0e10) üstünde çizilir → açık zeminde yıkanmaz, koyuda görünmez; nabız/hâle
+  paketin `aura-logo.css`'inden CSS'e taşındı (`.aura-sphere`); reduced-motion'da statik PNG'ye
+  düşer. Wordmark **vektör** (`AuraWordSvg`, 742B, HQ PNG'den ÖLÇÜLEREK kurulan 4 yol; IoU 0,976;
+  R gövdesiz, U kâsesi elips, yatay 56/dikey 61px) — PNG çifti, maske ve **137px harf dilimleri**
+  (`assets/letters`, hero'da pikselleşiyordu) SİLİNDİ; tüm "AURA" yazımları (nav, header, hero,
+  kapılar, how/trust, ByAura, metin içi) tek kaynaktan. **Tam lockup `AuraLockup`** (küre + AURA +
+  GLOBAL CARE + braille; oranlar ölçülü: küre 2.65H, GLOBAL CARE .235H/.215H, harfler A-bacak
+  hizasında) footer + /giris + /kurumsal-giris'te; braille artık GLOBAL CARE'in altında (kural
+  güncellemesi). Favicon **A · koyu disk + küre** (`favicon.ico` turkuaz / `icon-doctorium.ico`
+  zümrüt, 16–128), apple-touch + PWA 192/512 **B · yuvarlatılmış kare** (maskable %80) —
+  `scripts/gen-icons.py` küreden üretir; `?v=2→3` (3 layout + manifest + sw), `sw.js` VERSION
+  **v6→v7**. JSON-LD logo → `/icon-512.png?v=3`. 🪤 Turbopack kısmi CSS önbelleği yeni `.sınıf`ı
+  dev'de düşürdü → lockup alt yazı stili INLINE. 🪤 Next 16 ikinci `next dev`'i reddeder (kilit);
+  paralel oturumun sunucusu aynı ağacı HMR ile servis eder — doğrulama Playwright ile oradan.
   · **PWA marka kabuğu (2026-08-19, `82c2b8f`) — 🚀 CANLI:** amblem 2026-07-14'te AuraMark'a
   geçmişti ama **React ağacının DIŞINDAKİ** yüzeyler güncellenmemişti; ~2 ay boyunca çevrimdışı
   sayfası, push bildirimi ikonu/badge'i, ana ekrana ekleme ve tarayıcı sekmesi eski camgöbeği

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AuraMark, AuraBraille } from "@/components/AuraLogo";
+import { AuraLockup } from "@/components/AuraLogo";
 import { AuraWordText } from "@/components/aura/aura-word";
 import { useEffect, useState } from "react";
 import { LangProvider, useLang, LINKS, LANG_CODES, type Lang } from "@/lib/aura-landing/i18n";
@@ -30,18 +30,11 @@ export function AuraFooter({ accountLinks = false }: { accountLinks?: boolean })
     <footer className="border-t border-[var(--aura-hairline)] bg-[var(--aura-bg)] print:hidden">
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[2fr_1fr_1fr] md:px-8">
         <div>
-          {/* Braille "AURA" wordmark'ın TAM ALTINDA, ortalı hizalı (marka kuralı:
-              Braille daima AURA yazısının altında — [[aura-braille-under-wordmark]]). */}
-          <div className="flex items-center gap-2.5">
-            <AuraMark size={36} />
-            <span className="inline-flex flex-col items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/aura-word-dark.png" alt="AURA" className="h-4 w-auto" />
-              {/* height=12 → 56px: AuraBraille min-genişlik eşiği (56px). Daha küçüğü
-                  eşiğin altına düşer ve Braille hiç çizilmez → küçültme. */}
-              <AuraBraille height={12} className="mt-1.5 text-[var(--aura-micro)]" />
-            </span>
-          </div>
+          {/* Tam lockup (kullanıcı kararı 2026-08-23): küre + AURA + GLOBAL CARE + braille
+              (braille GLOBAL CARE'in altında, ortalı — [[aura-braille-under-wordmark]]
+              kural güncellemesi). H=30 → küre 80px, wordmark 156px, alt yazı 9,7px. */}
+          <AuraLockup wordHeight={30} />
+
           {/* Metin içi AURA = wordmark görseli (kullanıcı kuralı 2026-08-17). */}
           <p className="mt-4 max-w-[38ch] text-sm leading-relaxed text-[var(--aura-grey)]">
             <AuraWordText text={t.chapters[0].body} />

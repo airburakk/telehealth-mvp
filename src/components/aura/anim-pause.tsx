@@ -14,7 +14,10 @@ import { useEffect } from "react";
 //
 // Duraklatma `animation-play-state: paused` ile — animasyon kaldırılmaz, dondurulur:
 // geri görünür olunca kaldığı kareden sürer (yeniden başlatma zıplaması olmaz).
-const SELECTOR = ".aura-sym-orbit, .aura-sym-core, .aura-sym-pulse, .aura-word";
+// v6.137: sembol artık .aura-sphere (küre; nabız/hâle pseudo-eleman + .aura-sphere-img).
+// Sınıf KÖKE uygulanır; CSS `.aura-anim-paused` kuralı alt katmanlara yayar. (Animasyonlu
+// WebP'nin kendisi CSS ile durdurulamaz — tarayıcı ekran dışı animasyonlu görseli zaten kısar.)
+const SELECTOR = ".aura-sphere, .aura-word";
 const PAUSED = "aura-anim-paused";
 
 export function AuraAnimPause() {

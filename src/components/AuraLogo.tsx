@@ -1,94 +1,130 @@
-// AURA logosu — kullanıcının GERÇEK logosu. Sembol artık animasyonlu VEKTÖREL inline SVG
-// (kullanıcının AURA_logo_animated_web_braille_white_v3.svg dosyasından ayıklandı: yörünge
-// halkaları + nefes alan çekirdek + aura nabzı; beyaz zemin/wordmark/braille çıkarıldı →
-// şeffaf, her zeminde çalışır). Wordmark hâlâ tema-çift PNG (aura-word-light/dark.png).
-// Açık zeminde lacivert wordmark, koyu zeminde beyaz. Landing + iç uygulama Header'ı ortak kullanır.
+// AURA marka primitifleri — TEK KAYNAK. v6.137 (2026-08-23, kullanıcı kararı): marka seti v2.
+//
+// ── Sembol = HOLOGRAFİK KÜRE (eski "çekirdek + 3 yay" AuraMark SÜPERSEDE) ──
+// Kullanıcının marka seti v2'deki hareketli küre. Kaynak 4,6MB GIF'ti; paketin canlıda uyguladığı
+// SVG renk filtresi (hueRotate 276° + lüminans→alfa) karelere PİŞİRİLDİ, gürültü giderildi ve
+// alfa kanallı animasyonlu WebP'ye indirildi (160px 352KB / 240px 717KB — public/brand/).
+// Zümrüt (Doctorium) varyantı AYNI karelerin yalnız hue'su −30° kaydırılmış hâli (S/V/alfa
+// birebir); hedef sitedeki "ium" rengi #34d399 (ölçülen 158,0° / hedef 158,1°).
+// Üretim hattı ve tuzakları: hafıza [[gif-alfa-webp-kucultme]].
+//
+// 🔑 KOYU DİSK (kullanıcı kararı 2026-08-23): küre her zaman #0d0e10 dairesel zemin üstünde
+// çizilir. Koyu yüzeylerde görünmez (zeminle aynı), AÇIK zeminlerde (landing açık bölümleri,
+// gündüz teması) küreyi yıkanmaktan korur — favicon'la aynı kurgu. Tema algılama YOK → hata yok.
+//
+// Nabız/hâle katmanları paketin aura-logo.css'inden birebir (::before yayılım + ::after iç
+// parlama, CSS'te .aura-sphere). Bekleme göstergesi (AuraSpinner) aynı küre, nabız 1,3s.
+// Reduced-motion: CSS küreyi STATİK PNG'ye çevirir (animasyonlu WebP CSS ile durdurulamaz).
+//
+// 🪤 AuraMark/AuraSpinner HOOK'SUZDUR (v6.7): server component'lerde kullanılır; ekran-dışı
+// duraklatma dışarıdan (anim-pause.tsx, .aura-sphere seçicisi) uygulanır.
+//
+// ── Wordmark = VEKTÖR (PNG çifti ve harf dilimleri SÜPERSEDE) ──
+// Kullanıcı bildirimi 2026-08-23: "AURA yazısında pikselleşme var" — hero/kapı letterform'u
+// 137×142px harf dilimlerinden (public/assets/letters) büyütülüyordu. Wordmark 3340px HQ PNG'den
+// TARANMADI, ÖLÇÜLÜP geometrik olarak kuruldu (A bacakları 23,25°, tepe düz kesik; yatay çizgi
+// 56/dikey 61px optik fark; U kâsesi yatay ELİPS; R gövdesiz — üst çubuk → elips kâse → 36,25°
+// bacak; ikinci A ilkinden 3px dar, ayrı fit). Doğrulama: yol komutları rasterize edilip HQ
+// maskeyle karşılaştırıldı, IoU 0,976 (kalan ~0,5px kıymık). Detay: [[aura-wordmark-svg-geometri]].
+// viewBox = TAM HARF SINIRI (sol = ilk A'nın sol bacağı, sağ = son A'nın sağ bacağı, üst = tepe,
+// alt = U'nun 8px optik taşması) → GLOBAL CARE alt yazısı kutunun kendisiyle hizalanır.
 
-// Sembol geometrisi — tüm AuraMark/AuraSpinner örneklerinde ortak. Gradient id'leri TON-BAŞINA
-// SABİT: aynı sayfada aynı ton birden çok kez inline edilince çift-id oluşur ama o tonun TÜM
-// tanımları özdeş olduğundan her url(#id) referansı geçerli tanıma çözülür → görsel bozulmaz.
-// Farklı tonlar AYNI id'yi PAYLAŞAMAZ (DOM'da önce gelen tanım kazanır, sembol yanlış renge
-// boyanır) → her tonun kendi gradient id seti var. Filter'lar (salt blur, renksiz) ortak.
-// viewBox pulse'ın en geniş halini (scale 1.75) + ışıma payını kapsar (kırpılma yok).
-
-// Ton paletleri: marka turkuazı (varsayılan) + Doctorium zümrüdü (doktor bilgi portalı alt-markası).
-// Zümrüt set turkuaz gradyanın hue-shift karşılığı; ana ton sayfadaki "ium" vurgusuyla aynı (#34d399).
+// ─────────────────────────── Ton paletleri ───────────────────────────
+// Marka turkuazı (varsayılan) + Doctorium zümrüdü. Ana tonlar sayfa vurgularıyla aynı
+// (#28C8D8 = --c-accent / --aura-accent; #34d399 = "ium").
 const TONES = {
-  brand: { light: "#8AE6EC", mid: "#4FD6E2", main: "#28C8D8", coreId: "auraCoreGrad", fillId: "auraFillGrad" },
-  emerald: { light: "#8beecb", mid: "#5fe3b0", main: "#34d399", coreId: "auraCoreGradEm", fillId: "auraFillGradEm" },
+  brand: { light: "#8AE6EC", mid: "#4FD6E2", main: "#28C8D8" },
+  emerald: { light: "#8beecb", mid: "#5fe3b0", main: "#34d399" },
 } as const;
 export type AuraTone = keyof typeof TONES;
 
-function AuraSymbol({ size, spin = false, className = "", tone = "brand" }: { size: number; spin?: boolean; className?: string; tone?: AuraTone }) {
-  const t = TONES[tone];
+// Küre varlıkları (public/brand). ≤80px CSS → 160px dosya (2× DPR'de yeterli, küre zaten
+// yumuşak); üstü → 240px. Statik PNG'ler reduced-motion (CSS) + favicon üretimi (scripts/gen-icons.py).
+const SPHERE = {
+  brand: { s160: "/brand/aura-sphere-160.webp", s240: "/brand/aura-sphere-240.webp" },
+  emerald: { s160: "/brand/doctorium-sphere-160.webp", s240: "/brand/doctorium-sphere-240.webp" },
+} as const;
+
+function AuraSymbol({
+  size,
+  spin = false,
+  className = "",
+  tone = "brand",
+}: {
+  size: number;
+  spin?: boolean;
+  className?: string;
+  tone?: AuraTone;
+}) {
+  const src = size > 80 ? SPHERE[tone].s240 : SPHERE[tone].s160;
+  const cls = ["aura-sphere", tone === "emerald" ? "em" : "", spin ? "aura-sphere-fast" : "", className]
+    .filter(Boolean)
+    .join(" ");
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="236 156 728 728"
-      role="img"
-      aria-label="AURA"
-      className={`${spin ? "aura-sym-fast " : ""}${className}`.trim()}
-      style={{ display: "block", overflow: "visible" }}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <radialGradient id={t.coreId} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={t.light} />
-          <stop offset="100%" stopColor={t.main} />
-        </radialGradient>
-        <radialGradient id={t.fillId} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={t.light} stopOpacity=".24" />
-          <stop offset="55%" stopColor={t.mid} stopOpacity=".07" />
-          <stop offset="100%" stopColor={t.main} stopOpacity="0" />
-        </radialGradient>
-        <filter id="auraSoftGlow" x="-80%" y="-80%" width="260%" height="260%">
-          <feGaussianBlur stdDeviation="7" result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <filter id="auraWideGlow" x="-120%" y="-120%" width="340%" height="340%">
-          <feGaussianBlur stdDeviation="20" />
-        </filter>
-      </defs>
-      <circle className="aura-sym-pulse" cx="600" cy="520" r="185" fill={`url(#${t.fillId})`} filter="url(#auraWideGlow)" />
-      <circle className="aura-sym-pulse two" cx="600" cy="520" r="185" fill={`url(#${t.fillId})`} filter="url(#auraWideGlow)" />
-      <g transform="translate(160 80) scale(7.3333333333)">
-        <circle cx="60" cy="60" r="22" fill={t.main} fillOpacity=".16" />
-      </g>
-      <g className="aura-sym-orbit">
-        <g transform="translate(160 80) scale(7.3333333333)" strokeWidth="6.5" strokeLinecap="round" fill="none">
-          <g opacity=".34" filter="url(#auraSoftGlow)">
-            <path d="M60 24 A36 36 0 0 1 91 42" stroke={t.main} />
-            <path d="M91 78 A36 36 0 0 1 60 96" stroke={t.mid} />
-            <path d="M29 78 A36 36 0 0 1 29 42" stroke={t.light} />
-          </g>
-          <path d="M60 24 A36 36 0 0 1 91 42" stroke={t.main} />
-          <path d="M91 78 A36 36 0 0 1 60 96" stroke={t.mid} />
-          <path d="M29 78 A36 36 0 0 1 29 42" stroke={t.light} />
-        </g>
-      </g>
-      <g className="aura-sym-core">
-        <circle cx="600" cy="520" r="73.333333" fill={`url(#${t.coreId})`} filter="url(#auraSoftGlow)" />
-      </g>
-    </svg>
+    <span role="img" aria-label="AURA" className={cls} style={{ width: size, height: size }}>
+      <span aria-hidden className="aura-sphere-img" style={{ backgroundImage: `url(${src})` }} />
+    </span>
   );
 }
 
-// Yalnız sembol — animasyonlu vektörel AURA amblemi (şeffaf, her zeminde çalışır).
+// Yalnız sembol — hareketli küre (koyu disk üstünde; her zeminde çalışır).
 // tone="emerald" = Doctorium alt-marka rengi (varsayılan marka turkuazı).
 export function AuraMark({ size = 26, className = "", tone }: { size?: number; className?: string; tone?: AuraTone }) {
   return <AuraSymbol size={size} className={className} tone={tone} />;
 }
 
-
-// Dönen AURA sembolü — bekleme göstergesi. Aynı vektörel amblem; yörünge belirgin
-// hızlanır (aura-sym-fast). durationMs artık YOK-sayılır (imzada geriye uyumluluk için;
-// hız CSS'te .aura-sym-fast ile sabit) — eski PNG animate-spin yaklaşımının yerini aldı.
+// Bekleme göstergesi — aynı küre, nabız/hâle 1,3s (kullanıcı kararı 2026-08-23: tek amblem).
+// durationMs YOK-sayılır (imzada geriye uyumluluk; hız CSS'te .aura-sphere-fast).
 export function AuraSpinner({ size = 48, className = "" }: { size?: number; durationMs?: number; className?: string }) {
   return <AuraSymbol size={size} spin className={className} />;
+}
+
+// ─────────────────────────── Wordmark (vektör) ───────────────────────────
+// viewBox tam harf sınırı: 3112.9 × 604.8 (harf yüksekliği 596.8 + U taşması 8). Oran 5.147.
+export const AURA_WORD_VIEWBOX = "125.8 215.6 3112.9 604.8";
+export const AURA_WORD_RATIO = 3112.9 / 604.8;
+// Eski PNG (835×255, harfler 158px) ile aynı GÖRSEL boyutu korumak için: eski "canvas
+// yüksekliği" → yeni svg yüksekliği çarpanı = (158/255) × (604.8/596.8) = 0.628. Çağıranlar
+// eski PNG yüksekliklerini veriyorsa bu çarpanla geçir (AuraWordmark/AuraLogo böyle yapar).
+export const AURA_WORD_FROM_PNG_HEIGHT = 0.628;
+const AURA_WORD_PATHS = [
+  "M382.1 215.6 L455.9 215.6 L714.5 812.4 L645.6 812.4 L418.7 282.0 L193.5 812.4 L125.8 812.4 Z",
+  "M1043.2 215.6 L1103.5 215.6 L1103.5 595.5 A180.5 168.0 0 0 0 1464.5 595.5 L1464.5 215.6 L1527.5 215.6 L1527.5 606.0 A242.1 214.4 0 0 1 1043.2 606.0 Z",
+  "M1876.0 215.6 L2156.2 215.6 A190.7 189.7 0 0 1 2281.9 548.0 Q2254.2 572.1 2184.1 594.0 L2344.9 812.4 L2265.3 812.4 L2067.7 542.5 L2168.0 542.5 Q2187.8 539.2 2212.3 526.0 A125.3 134.5 0 0 0 2156.1 271.3 L1900.0 271.3 Z",
+  "M2909.7 215.6 L2981.3 215.6 L3238.7 812.4 L3169.0 812.4 L2944.9 285.9 L2722.8 812.4 L2653.3 812.4 Z",
+] as const;
+
+// Ham wordmark SVG'si. Boyut: className/style ile YÜKSEKLİK ver, genişlik orandan gelir
+// (aspect-ratio inline → `w-auto` her bağlamda doğru). Renk: `fill` (CSS değişkeni olabilir,
+// style.fill'e gider). decorative=true → aria-hidden (yanında görünür "AURA" metni/etiketi varsa).
+export function AuraWordSvg({
+  className = "",
+  style,
+  fill = "currentColor",
+  label = "AURA",
+  decorative = false,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+  fill?: string;
+  label?: string;
+  decorative?: boolean;
+}) {
+  return (
+    <svg
+      viewBox={AURA_WORD_VIEWBOX}
+      className={className}
+      style={{ display: "block", aspectRatio: "3112.9 / 604.8", fill, ...style }}
+      role={decorative ? undefined : "img"}
+      aria-label={decorative ? undefined : label}
+      aria-hidden={decorative || undefined}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {AURA_WORD_PATHS.map((d) => (
+        <path key={d.slice(0, 12)} d={d} />
+      ))}
+    </svg>
+  );
 }
 
 // AURA Braille (⠁⠥⠗⠁) — kullanıcının logosundaki dokunsal marka detayı. Nokta
@@ -96,16 +132,14 @@ export function AuraSpinner({ size = 48, className = "" }: { size?: number; dura
 // kullanıldığı yerin metin rengini alır (tema-uyumlu: gece açık, gündüz koyu).
 // viewBox noktaları r=7 payıyla sarar.
 //
-// ⚠️ MARKA KURALI (kullanıcı, 2026-07-14): Braille DAİMA "AURA" yazısının (wordmark
-// PNG veya WordHeadline letterform) **TAM ALTINDA, hizalı** yerleştirilir — sembolün
-// altında veya tek başına ASLA. Yeni bir yere Braille eklerken orada bir "AURA" yazısı
-// olmalı ve Braille onun altına ortalanmalı. Küçük yerlerde (nav) okunmaz → hiç konmaz.
-// Mevcut yerler: landing footer (closing.tsx, wordmark altı) + giriş kapıları
-// (word-headline.tsx braille prop, letterform altı). Detay: [[aura-braille-under-wordmark]].
+// ⚠️ MARKA KURALI (kullanıcı, 2026-07-14; 2026-08-23 güncelleme): Braille DAİMA "AURA"
+// wordmark BLOĞUNUN altında, ortalı yerleştirilir — sembolün altında veya tek başına ASLA.
+// Tam lockup'ta (AuraLockup) blok = AURA + GLOBAL CARE; braille GLOBAL CARE'in altında
+// (kullanıcı kararı 2026-08-23). Küçük yerlerde (nav) okunmaz → hiç konmaz.
+// Detay: [[aura-braille-under-wordmark]].
 //
 // ⚠️ MİN-GENİŞLİK (v6.9): height*4.67 < 56px ise AuraBraille null döner — "yeterli
-// netlikle çizilemiyorsa kaldır" kuralı artık kodda zorunlu, yorumla değil. İkisi de
-// height=12 (56px) kullanır; küçültmek Braille'i sessizce YOK EDER (kasıtlı).
+// netlikle çizilemiyorsa kaldır" kuralı kodda zorunlu. height=12 → 56px tam sınır.
 const BRAILLE_DOTS: ReadonlyArray<readonly [number, number]> = [
   [415, 1178],
   [527, 1178],
@@ -120,18 +154,14 @@ const BRAILLE_DOTS: ReadonlyArray<readonly [number, number]> = [
 // Braille viewBox'ı 364×78 → çizilen genişlik = height × 364/78 (≈ 4.67 kat).
 const BRAILLE_VB_W = 364;
 const BRAILLE_VB_H = 78;
-// ⚠️ MİN-GENİŞLİK EŞİĞİ (marka kuralı: "yeterli boşluk ve netlikle çizilemiyorsa Braille
-// kaldırılır"). 56px = giriş kapılarındaki mevcut boyut → nokta çapı ~2.15px, noktalar
-// birbirinden ayırt edilebilir. Altında Braille okunaksız lekeye döner → HİÇ çizilmez
-// (bozuk çizmektense yok say). Ölçüldü 2026-07-15: nokta çapı ≈ genişlik × 0.0385.
+// 56px = giriş kapılarındaki boyut → nokta çapı ~2.15px, noktalar ayırt edilebilir. Altında
+// Braille okunaksız lekeye döner → HİÇ çizilmez. Ölçüldü 2026-07-15: nokta çapı ≈ genişlik × 0.0385.
 const BRAILLE_MIN_WIDTH = 56;
 
 // Varsayılan 12 = eşiğin tam karşılığı (56px): parametresiz <AuraBraille /> çizer.
-// (Eski varsayılan 11 → 51.3px, eşiğin ALTINDA kalıp sessizce hiçbir şey çizmezdi.)
 export function AuraBraille({ height = 12, className = "" }: { height?: number; className?: string }) {
-  // Eşiğin altındaki her çağrı sessizce boş döner — çağıranın koşul yazması gerekmez.
-  // Çarpma BÖLMEDEN önce: height=12 tam sınırdadır (12×364/78 = 56) ve `h*(364/78)`
-  // kayan-nokta yuvarlamasıyla 55.999… verip Braille'i sessizce yok edebilirdi.
+  // Çarpma BÖLMEDEN önce: height=12 tam sınırdadır ve `h*(364/78)` yuvarlamasıyla
+  // 55.999… verip Braille'i sessizce yok edebilirdi.
   if ((height * BRAILLE_VB_W) / BRAILLE_VB_H < BRAILLE_MIN_WIDTH) return null;
   return (
     <svg
@@ -152,56 +182,93 @@ export function AuraBraille({ height = 12, className = "" }: { height?: number; 
 }
 
 // Metin İÇİNDE marka olarak AURA wordmark'ı — "AURA" harfleri yazıyla değil LOGOYLA yazılır
-// (kullanıcı kararı 2026-08-17: "aurayı yazı olarak değil, logomuzu alarak yaz ve turkuaza
-// boyayalım"). Doctorium lockup'ının (Doctor + zümrüt "ium") AURA tarafındaki eşleniğidir.
-//
-// 🔑 TEKNİK: wordmark PNG'si tema-çift ve rengi dosyaya GÖMÜLÜ → doğrudan boyanamaz. PNG
-// bunun yerine CSS **maskesi** olarak kullanılır (alfa kanalı 0-255 tam ölçüldü = harf
-// şekli zaten alfada): arkasına düz renk basılır, maske harfleri keser. Böylece renk bizim
-// kontrolümüzde (varsayılan marka turkuazı #28C8D8 = TONES.brand.main) ve anti-aliasing
-// kenarları korunur. Tema-çift dosyaya gerek kalmaz — hangi zeminde olursa olsun aynı ton.
+// (kullanıcı kararı 2026-08-17). Doctorium lockup'ının AURA tarafındaki eşleniğidir.
+// Artık vektör: renk doğrudan fill (varsayılan marka turkuazı #28C8D8 = TONES.brand.main).
 // ⚠️ `currentColor` KULLANMA: bu marka rengidir, metin rengini miras almamalı.
-//
-// Boyut em-tabanlı: içinde bulunduğu metnin punto'suyla ölçeklenir (paragrafa gömülü marka
-// satır yüksekliğini bozmasın). 835×255 → oran 3.275; height 0.72em ≈ büyük harf yüksekliği.
-const WORDMARK_RATIO = 835 / 255;
+// `height` eski PNG-canvas sözleşmesiyle (0.72em varsayılan) — görsel boyut DEĞİŞMEDİ.
 export function AuraWordmark({ color = TONES.brand.main, height = "0.72em", className = "" }: { color?: string; height?: string; className?: string }) {
-  const mask = {
-    WebkitMaskImage: "url(/aura-word-dark.png)",
-    maskImage: "url(/aura-word-dark.png)",
-    WebkitMaskSize: "contain",
-    maskSize: "contain",
-    WebkitMaskRepeat: "no-repeat",
-    maskRepeat: "no-repeat",
-    WebkitMaskPosition: "center",
-    maskPosition: "center",
-  } as const;
+  const h = `calc(${height} * ${AURA_WORD_FROM_PNG_HEIGHT})`;
   return (
-    <span
-      role="img"
-      aria-label="AURA"
-      className={`inline-block shrink-0 align-[-0.06em] ${className}`.trim()}
-      style={{ height, width: `calc(${height} * ${WORDMARK_RATIO})`, backgroundColor: color, ...mask }}
+    <AuraWordSvg
+      fill={color}
+      className={`inline-block shrink-0 align-[-0.02em] ${className}`.trim()}
+      style={{ display: "inline-block", height: h, width: `calc(${h} * ${AURA_WORD_RATIO})` }}
     />
   );
 }
 
-// Tema-farkında wordmark: her iki PNG de render edilir, görünürlüğü globals.css'teki
-// .theme-* kuralları seçer (gündüz = lacivert light PNG, gece = beyaz dark PNG).
-// `ink` prop'u artık YOK-sayılır (geriye uyumluluk için imzada bırakıldı) — tema toggle
-// sabit prop ile çözülemezdi (eski onDark anahtarı render-zamanı sabitti).
+// Tema-farkında logo: küre + wordmark. Wordmark rengi globals.css `.logo-word` kuralıyla
+// (gündüz lacivert, gece beyaz — .theme-dark). `ink` prop'u YOK-sayılır (geriye uyumluluk).
 export function AuraLogo({ size = 24 }: { size?: number; ink?: string }) {
-  const wordH = Math.round(size * 0.6);
-  // display INLINE verilmez — görünürlüğü .logo-word-* class'ları yönetir (inline style
-  // CSS kuralını ezip her iki wordmark'ı birden gösterirdi).
-  const wStyle = { height: wordH, width: "auto", marginLeft: Math.round(size * 0.3) } as const;
+  const wordH = Math.round(size * 0.6 * AURA_WORD_FROM_PNG_HEIGHT * 10) / 10;
   return (
     <span className="inline-flex items-center" style={{ lineHeight: 1 }}>
       <AuraMark size={size} />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/aura-word-light.png" alt="AURA" className="logo-word-light" height={wordH} style={wStyle} />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/aura-word-dark.png" alt="" aria-hidden className="logo-word-dark" height={wordH} style={wStyle} />
+      <AuraWordSvg className="logo-word" style={{ height: wordH, marginLeft: Math.round(size * 0.3) }} />
+    </span>
+  );
+}
+
+// ─────────────────────────── Tam lockup ───────────────────────────
+// Küre + AURA + "GLOBAL CARE" (+ braille). Kullanıcı kararı 2026-08-23: footer + giriş kapıları.
+// Birim H = AURA harf yüksekliği (px). Oranlar ÖLÇÜLDÜ (tahmin değil):
+//   • küre 2.65H, küre↔yazı boşluğu .39H — paketin kendi aura-logo.css'i (236px küre ↔ 470px wordmark)
+//   • GLOBAL CARE harf yüksekliği .235H, AURA→GLOBAL CARE boşluğu .215H — kullanıcının referans
+//     görselinden; Inter cap-height .727 → font-size .323H, line-height .727 (kutu = harf yüksekliği),
+//     margin .215H − taşma payı (U'nun 8px'i = .0134H) = .2016H
+//   • harfler wordmark kutusuna (ilk A'nın sol bacağı ↔ son A'nın sağ bacağı) space-between ile
+//     yayılır; GLOBAL ile CARE arasında .85em ek boşluk
+//   • küre, AURA + GLOBAL CARE bloğunun TOPLAM yüksekliğine göre dikey ortalanır
+// Braille GLOBAL CARE'in altında, ortalı (kural güncellemesi 2026-08-23). Braille 56px eşiğini
+// H≥12 her zaman geçer (wordmark genişliği 5.216H).
+// Renk: wordmark + alt yazı `--aura-ink` (landing/kapı token'ı) → koyu yüzeyde beyaz.
+const GLOBAL_CARE = ["G", "L", "O", "B", "A", "L", "C", "A", "R", "E"] as const;
+export function AuraLockup({
+  wordHeight = 32,
+  braille = true,
+  tone,
+  className = "",
+}: {
+  wordHeight?: number;
+  braille?: boolean;
+  tone?: AuraTone;
+  className?: string;
+}) {
+  const H = wordHeight;
+  return (
+    <span
+      role="img"
+      aria-label="AURA Global Care"
+      className={`aura-lockup inline-flex items-center ${className}`.trim()}
+      style={{ gap: Math.round(H * 0.39) }}
+    >
+      <AuraMark size={Math.round(H * 2.65)} tone={tone} />
+      <span aria-hidden className="inline-flex flex-col items-stretch">
+        <AuraWordSvg decorative fill="var(--aura-ink)" style={{ height: H * 1.0134, width: H * 5.216 }} />
+        {/* Stil INLINE (globals'a değil): lockup geometrisi zaten inline; ayrıca Turbopack'in kısmi
+            CSS önbelleği yeni eklenen sınıfı dev'de sessizce düşürebiliyor ([[turbopack-css-partial-cache]]). */}
+        <span
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            lineHeight: 0.727,
+            fontWeight: 500,
+            whiteSpace: "nowrap",
+            color: "var(--aura-ink)",
+            marginTop: H * 0.2016,
+            fontSize: H * 0.323,
+          }}
+        >
+          {GLOBAL_CARE.map((ch, i) => (
+            <span key={i} className={i === 6 ? "ml-[.85em]" : undefined}>
+              {ch}
+            </span>
+          ))}
+        </span>
+        {braille && (
+          <AuraBraille height={Math.max(12, Math.round(H * 0.42))} className="mt-2 self-center text-[var(--aura-micro)]" />
+        )}
+      </span>
     </span>
   );
 }

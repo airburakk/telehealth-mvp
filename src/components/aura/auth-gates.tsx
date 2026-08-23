@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useSearchParams } from "next/navigation";
 import { WordHeadline } from "@/components/aura/word-headline";
-import { AuraMark } from "@/components/AuraLogo";
+import { AuraMark, AuraLockup } from "@/components/AuraLogo";
 import { GateEmailForm } from "@/components/aura/gate-email-form";
 import { LangProvider, useLang, langDir, LINKS, VIDEOS } from "@/lib/aura-landing/i18n";
 import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
@@ -126,15 +126,17 @@ function SigninPanel() {
 
   return (
     <GateShell video={VIDEOS.hero}>
+      {/* Tam lockup (kullanıcı kararı 2026-08-23): küre + AURA + GLOBAL CARE + braille.
+          Braille burada lockup'ta (GLOBAL CARE altında) → WordHeadline'ın braille'i KAPALI
+          (bir kapıda iki braille olmaz). H=28 → küre 74px, wordmark 146px. */}
       <Link href="/" aria-label="AURA" className="flex justify-center">
-        <AuraMark size={40} />
+        <AuraLockup wordHeight={28} />
       </Link>
       <WordHeadline
         word={t.signin.word}
         wordBefore={t.signin.wordBefore}
         wordAfter={t.signin.wordAfter}
         lineAfter={t.signin.lineAfter}
-        braille
       />
       <p className="mt-3 text-[15px] text-[var(--aura-grey)]">{t.signin.sub}</p>
 
@@ -233,15 +235,15 @@ function CorporatePanel() {
 
   return (
     <GateShell video={VIDEOS.so}>
+      {/* Hasta kapısıyla aynı lockup (braille lockup'ta; WordHeadline braille'siz). */}
       <Link href="/" aria-label="AURA" className="flex justify-center">
-        <AuraMark size={40} />
+        <AuraLockup wordHeight={28} />
       </Link>
       <WordHeadline
         word={c.word}
         wordBefore={c.wordBefore}
         wordAfter={c.wordAfter}
         lineAfter={c.lineAfter}
-        braille
       />
       <p className="mt-3 text-[15px] text-[var(--aura-grey)]">{c.sub}</p>
 

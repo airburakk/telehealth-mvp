@@ -10,15 +10,15 @@ export const dynamic = "force-dynamic";
 
 // Sekme ikonu: bu segment ve TÜM alt rotaları ([id] · etkinlik · kariyer · kaydettiklerim …)
 // ZÜMRÜT ikon gösterir; kök layout'un TURKUAZ varsayılanını override eder (kullanıcı kararı
-// 2026-08-19: marka renginde DOLU daire + tam siyah amblem; AURA turkuaz #28C8D8,
-// Doctorium zümrüt #34d399 — her marka kendi tonunu taşır).
+// 2026-08-23, v6.137: KOYU DİSK + holografik küre; AURA turkuaz küre, Doctorium zümrüt küre
+// (hue −30°) — her marka kendi tonunu taşır; 2026-08-19 "dolu daire + siyah amblem" süpersede).
 // 🪤 Dosya konvansiyonu (`icon.ico`) ÇALIŞMIYOR: kök `src/app/favicon.ico` alt segment ikonunu
 // bastırıyordu (dosya HTTP 200 servis ediliyor ama <link rel="icon"> basılmıyordu) → kök
 // favicon.ico kaldırıldı, ikonlar public/ altına alındı, bağlama metadata ile yapılıyor.
 // Üretim: `python scripts/gen-icons.py`.
 export const metadata: Metadata = {
   // 🪤 `?v=` cache-kırıcı — gerekçe kök layout.tsx'te. İkon değişince ÜÇ layout'ta birlikte artır.
-  icons: { icon: "/icon-doctorium.ico?v=2", apple: "/apple-touch-icon.png?v=2" },
+  icons: { icon: "/icon-doctorium.ico?v=3", apple: "/apple-touch-icon.png?v=3" },
 };
 
 // İki aşamalı giriş — AŞAMA 1 kapısı (v6.124: e-Devlet doğrulamalı diploma). Doctorium'a DOCTOR

@@ -57,7 +57,8 @@ export const metadata: Metadata = {
   // apple-touch-icon + manifest ikonları da 2026-08-21'de aynı gerekçeyle versiyonlandı
   // (yalnız favicon/icon-doctorium'da vardı; iOS ana ekran ikonu ve push bildirimi ikonu
   // versiyonsuz kaldığı için aynı "eski ikon takılı kalma" riskini taşıyordu).
-  icons: { icon: "/favicon.ico?v=2", apple: "/apple-touch-icon.png?v=2" },
+  // v=3 (2026-08-23, v6.137): marka seti v2 — küre favicon (koyu disk) + PWA kare ikonları.
+  icons: { icon: "/favicon.ico?v=3", apple: "/apple-touch-icon.png?v=3" },
   appleWebApp: { capable: true, title: "AURA", statusBarStyle: "default" },
 };
 

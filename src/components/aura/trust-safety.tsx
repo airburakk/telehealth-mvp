@@ -3,7 +3,8 @@
 import { AuraClosing } from "./closing";
 import { AuraWordText } from "./aura-word";
 import { V2Nav } from "./v2/nav";
-import { LETTERS, LangProvider, langDir, useLang, type Copy } from "@/lib/aura-landing/i18n";
+import { LangProvider, langDir, useLang, type Copy } from "@/lib/aura-landing/i18n";
+import { AuraWordSvg } from "@/components/AuraLogo";
 
 type Section = Copy["trustPage"]["sections"][number];
 
@@ -59,15 +60,7 @@ function TrustHero() {
         <span aria-hidden className="block">
           {p.wordBefore && <span className="block">{p.wordBefore}</span>}
           <span className="aura-word mt-3 flex items-end gap-[0.14em]">
-            {LETTERS.map((letter) => (
-              <img
-                key={letter}
-                src={`/assets/letters/${letter}.png`}
-                alt=""
-                draggable={false}
-                className="h-[0.9em] w-auto"
-              />
-            ))}
+            <AuraWordSvg decorative className="h-[0.9em] w-auto" />
             {p.wordAfter && <span className="ml-1">{p.wordAfter}</span>}
           </span>
           {p.lineAfter && <span className="mt-3 block">{p.lineAfter}</span>}

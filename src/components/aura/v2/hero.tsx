@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { ArrowRight } from "lucide-react";
-import { AuraBraille } from "@/components/AuraLogo";
+import { AuraBraille, AuraWordSvg } from "@/components/AuraLogo";
 import { AuraWordText } from "@/components/aura/aura-word";
 import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
-import { LETTERS, VIDEOS, useLang } from "@/lib/aura-landing/i18n";
+import { VIDEOS, useLang } from "@/lib/aura-landing/i18n";
 
 // Hero — STATİK VİDEO SAHNESİ (2026-08-17, ana sayfa sadeleşmesi; kullanıcı kararı:
 // "doctorium'daki gibi bir video hazırlayacağız").
@@ -96,17 +96,10 @@ export function V2Hero() {
       <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col items-start justify-center px-5 py-24 md:px-8">
         {/* Marka vuruşu: AURA harfleri + braille — sahnesiz, her zaman görünür. */}
         <div role="img" aria-label="AURA" className="aura-brand inline-flex flex-col items-center">
-          <span className="aura-word flex select-none items-end justify-center gap-[clamp(0.7rem,3.2vw,2.5rem)]">
-            {LETTERS.map((letter) => (
-              <img
-                key={letter}
-                src={`/assets/letters/${letter}.png`}
-                alt=""
-                aria-hidden
-                draggable={false}
-                className="h-[clamp(3rem,12vw,9rem)] w-auto"
-              />
-            ))}
+          {/* v6.137: harf dilimleri (137px PNG, 9rem'de pikselleşiyordu) → vektör wordmark.
+              Harf aralığı artık wordmark'ın kendi doğal takibi (marka seti v2 ile aynı). */}
+          <span className="aura-word flex select-none items-end justify-center">
+            <AuraWordSvg decorative className="h-[clamp(3rem,12vw,9rem)] w-auto" />
           </span>
           {/* Alt sınır 12: AuraBraille height<12'de HİÇ çizmez. */}
           <AuraBraille height={24} className="aura-braille mt-4 text-[var(--aura-ink)]" />

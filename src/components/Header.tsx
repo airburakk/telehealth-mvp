@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
 import { SystemMessagesMenuItem } from "@/components/SystemMessagesMenuItem";
-import { AuraLogo, AuraMark } from "@/components/AuraLogo";
+import { AuraLogo, AuraMark, AuraWordSvg } from "@/components/AuraLogo";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47, LANGUAGES, LANG_CHANGE_EVENT } from "@/lib/constants";
@@ -94,12 +94,10 @@ function BrandToggle({ doctoriumActive, stage1 }: { doctoriumActive: boolean; st
         className={`flex items-center gap-1.5 transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${doctoriumSide ? "opacity-45 hover:opacity-80" : ""}`}
       >
         <span ref={slotA} aria-hidden className="block h-[23px] w-[23px] shrink-0" />
-        {/* Tema-çift wordmark (AuraLogo deseni — görünürlüğü .logo-word-* yönetir).
-            Yükseklik responsive: mobil 12px / sm+ 14px (toggle mobilde sıkı ama OKUNUR). */}
-        {/* eslint-disable-next-line @next/next/no-img-element -- yerel marka varlığı */}
-        <img src="/aura-word-light.png" alt="AURA" className="logo-word-light h-3 w-auto sm:h-3.5" />
-        {/* eslint-disable-next-line @next/next/no-img-element -- yukarıdakiyle aynı */}
-        <img src="/aura-word-dark.png" alt="" aria-hidden className="logo-word-dark h-3 w-auto sm:h-3.5" />
+        {/* Tema-farkında wordmark (v6.137: vektör; rengi globals.css `.logo-word` — gündüz
+            lacivert, gece beyaz). Eski 12/14px PNG-canvas = 7.5/8.8px harf kutusu (görsel
+            boyut korundu; toggle mobilde sıkı ama OKUNUR). */}
+        <AuraWordSvg className="logo-word h-[7.5px] w-auto sm:h-[8.8px]" />
       </Link>
       <span aria-hidden className="h-5 w-px shrink-0 bg-[var(--c-hairline)]" />
       <Link

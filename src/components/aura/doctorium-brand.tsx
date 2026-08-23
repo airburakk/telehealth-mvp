@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import { AuraWordSvg } from "@/components/AuraLogo";
 
 // Doctorium marka primitifleri — TEK KAYNAK (2026-08-18).
 //
@@ -65,10 +66,12 @@ export function DoctoriumOnEmerald() {
 }
 
 // "by AURA" imzası (kullanıcı kararı 2026-08-16, 4. tur): "by" düz metin (link DEĞİL); AURA,
-// sitenin GERÇEK wordmark PNG'sidir (AuraLogo ile aynı varlıklar) ve yalnız O tıklanabilir →
-// AURA vitrin ana sayfası (/). `light`: açık bölümde lacivert wordmark varyantı (beyaz PNG
-// beyaz zeminde görünmez — AuraLogo'nun logo-word-light/dark ayrımının bölüm karşılığı).
+// sitenin GERÇEK wordmark'ıdır (AuraLogo ile aynı vektör) ve yalnız O tıklanabilir →
+// AURA vitrin ana sayfası (/). `light`: açık bölümde lacivert (beyaz wordmark beyaz zeminde
+// görünmez — AuraLogo'nun .logo-word tema ayrımının bölüm karşılığı).
+// v6.137: PNG → vektör (AuraWordSvg); görsel boyut korundu (0.95em canvas ≈ 0.6em harf kutusu).
 // Yükseklik em-tabanlı: eyebrow/üst bar/footer hangi puntoda kullanırsa oraya ölçeklenir.
+const BY_AURA_NAVY = "#08366f"; // eski aura-word-light.png'nin ölçülen rengi (8,54,111)
 export function ByAura({ light = false }: { light?: boolean }) {
   return (
     <span className="whitespace-nowrap">
@@ -77,11 +80,10 @@ export function ByAura({ light = false }: { light?: boolean }) {
         href="/"
         className="inline-block transition-opacity duration-200 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--dl-cyan)]"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={light ? "/aura-word-light.png" : "/aura-word-dark.png"}
-          alt="AURA"
-          className="inline-block h-[0.95em] w-auto align-[-0.12em]"
+        <AuraWordSvg
+          fill={light ? BY_AURA_NAVY : "var(--dl-ink)"}
+          className="inline-block h-[0.6em] w-auto align-[-0.02em]"
+          style={{ display: "inline-block" }}
         />
       </Link>
     </span>

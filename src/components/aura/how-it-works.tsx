@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { ChapterCta, type ChapterData } from "./chapters";
 import { AuraClosing } from "./closing";
 import { AuraWordText } from "./aura-word";
+import { AuraWordSvg } from "@/components/AuraLogo";
 import { AiVideoNotice } from "@/components/AiVideoNotice";
 import { V2Nav } from "./v2/nav";
 import {
   HIW_VIDEOS,
-  LETTERS,
   LangProvider,
   langDir,
   useLang,
@@ -63,15 +63,7 @@ function HiwHero() {
         <span aria-hidden className="block">
           {h.wordBefore && <span className="block">{h.wordBefore}</span>}
           <span className="aura-word mt-3 flex items-end gap-[0.14em]">
-            {LETTERS.map((letter) => (
-              <img
-                key={letter}
-                src={`/assets/letters/${letter}.png`}
-                alt=""
-                draggable={false}
-                className="h-[0.9em] w-auto"
-              />
-            ))}
+            <AuraWordSvg decorative className="h-[0.9em] w-auto" />
             {h.wordAfter && <span className="ml-1">{h.wordAfter}</span>}
           </span>
           {h.lineAfter && <span className="mt-3 block">{h.lineAfter}</span>}

@@ -1,9 +1,9 @@
 // Doctorium (halka açık landing + /doctorium/giris) — yalnız SEKME İKONUNU zümrüde çevirir.
 // Görsel/yapısal hiçbir katman eklemez: children'ı olduğu gibi geçirir.
 //
-// Kullanıcı kararı 2026-08-19: sekme ikonu = marka renginde DOLU daire + tam siyah amblem;
-// AURA yüzeylerinde TURKUAZ (#28C8D8), Doctorium yüzeylerinde ZÜMRÜT (#34d399) — her marka
-// kendi tonunu taşır (ara turda takas denendi, Doctorium'un kimliği zümrüt olduğu için geri alındı).
+// Kullanıcı kararı 2026-08-23 (v6.137, marka seti v2): sekme ikonu = KOYU DİSK + holografik
+// KÜRE; AURA yüzeylerinde TURKUAZ küre, Doctorium yüzeylerinde ZÜMRÜT küre (hue −30°) — her
+// marka kendi tonunu taşır (2026-08-19'daki "dolu renkli daire + siyah amblem" süpersede).
 //
 // 🪤 Neden dosya konvansiyonu (`icon.ico`) DEĞİL: denendi, dosya rota olarak servis edildi
 // (HTTP 200) ama Next `<link rel="icon">` basmadı — kök `src/app/favicon.ico` onu bastırıyordu.
@@ -14,7 +14,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   // 🪤 `?v=` cache-kırıcı — gerekçe kök layout.tsx'te. İkon değişince ÜÇ layout'ta birlikte artır.
-  icons: { icon: "/icon-doctorium.ico?v=2", apple: "/apple-touch-icon.png?v=2" },
+  icons: { icon: "/icon-doctorium.ico?v=3", apple: "/apple-touch-icon.png?v=3" },
 };
 
 export default function DoctoriumLayout({ children }: { children: React.ReactNode }) {

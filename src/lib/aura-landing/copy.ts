@@ -127,9 +127,8 @@ export const HIW_VIDEOS = {
   },
 };
 
-// AURA logo letterform dilimleri (yatayda siki kirpilmis "-t" kesimler) —
-// hero ve giris basliklari ayni kaynagi kullanir.
-export const LETTERS = ["aura-a1-t", "aura-u-t", "aura-r-t", "aura-a2-t"];
+// (v6.137: LETTERS harf-dilimi listesi KALDIRILDI — hero/kapı letterform'u artık vektör
+// wordmark (AuraWordSvg); public/assets/letters silindi.)
 
 export const COPY = {
   en: {
