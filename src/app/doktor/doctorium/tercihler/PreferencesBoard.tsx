@@ -39,7 +39,7 @@ const GROUPS: Group[] = [
         desc: "PubMed, Europe PMC ve DOAJ'dan hakemli yayınlar; branş seçiminize göre süzülür." },
       { key: "sektorel", nm: "Sektörel", feedKey: "sektorel", extra: "sektorel",
         desc: "Doktor hakları, sağlık yönetimi, teknoloji ve küresel gündem." },
-      { key: "ilac", nm: "İlaç & Regülasyon", feedKey: "ilac", extra: "ilac",
+      { key: "ilac", nm: "İlaç & Cihaz", feedKey: "ilac", extra: "ilac",
         desc: "Ruhsat ve geri çekme duyuruları, klinik faz sonuçları, dijital prospektüs." },
     ],
   },

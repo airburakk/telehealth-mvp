@@ -12,7 +12,7 @@ export function RegulatorySection({ sample }: { sample: LandingSample }) {
   return (
     <LandingSection copy={copy}>
       <div className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[1.1fr_.9fr] lg:gap-16">
-        <ProductFrame className="order-2 lg:order-1" title="İlaç & Regülasyon · Mevzuat" meta={sample.source === "fixture" ? "örnek içerik" : "kaynak + tarih"}>
+        <ProductFrame className="order-2 lg:order-1" title="İlaç & Cihaz · Mevzuat" meta={sample.source === "fixture" ? "örnek içerik" : "kaynak + tarih"}>
           <ul className="mb-2 flex flex-wrap gap-1.5 border-b border-[var(--c-hairline)] pb-3" aria-label="İzlenen kaynaklar">
             {REGULATORY_SOURCES.map((s) => (
               <li key={s} className="aura-mono rounded-full border border-[var(--c-hairline)] px-2.5 py-1 text-[11px] text-[var(--c-ink-2)]">{s}</li>

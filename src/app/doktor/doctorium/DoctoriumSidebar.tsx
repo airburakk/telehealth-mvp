@@ -65,7 +65,7 @@ const MODULES: {
   { key: "akis", label: "Akışım", color: { dark: "#facc15", light: "#8a6414" }, group: null },
   { key: "akademik", label: "Akademik", color: { dark: "#34d399", light: "#047857" }, group: "BİLGİ" },
   { key: "sektorel", label: "Sektörel", color: { dark: "#a78bfa", light: "#5b4b9e" }, group: "BİLGİ" },
-  { key: "ilac", label: "İlaç & Regülasyon", color: { dark: "#22d3ee", light: "#0e7d8c" }, group: "BİLGİ" },
+  { key: "ilac", label: "İlaç & Cihaz", color: { dark: "#22d3ee", light: "#0e7d8c" }, group: "BİLGİ" },
   { key: "etkinlik", label: "Etkinlik", color: "ink", group: "MESLEĞİM" },
   { key: "kariyer", label: "Kariyer", color: { dark: "#60a5fa", light: "#2d5c9e" }, group: "MESLEĞİM" },
   { key: "mevzuat", label: "Hukuk", color: { dark: "#fb7185", light: "#a83e50" }, group: "MESLEĞİM" },
