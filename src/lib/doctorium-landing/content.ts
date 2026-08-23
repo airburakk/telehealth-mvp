@@ -44,12 +44,14 @@ export interface SectionCopy {
   ctas?: readonly Cta[];
 }
 
-export const HERO_PROOF_LINE = ["Akademik", "İlaç & Regülasyon", "Sağlık Hukuku", "Kongre & Mesleki Gelişim"] as const;
+// Terminoloji (QA P2, 2026-08-23): ana kategori adları ÜRÜN taksonomisiyle aynı — "İlaç & Cihaz"
+// (FEED_MODULE_OPTIONS / portal MODULE_HEAD); "regülasyon/düzenleyici" yalnız açıklama metninde.
+export const HERO_PROOF_LINE = ["Akademik", "İlaç & Cihaz", "Sağlık Hukuku", "Kongre & Mesleki Gelişim"] as const;
 
 /** Problem bölümü — yalnız GERÇEKTEN izlenen kaynaklar (registry: regulatory, legal, congress.db anahtarları). */
 export const PROBLEM_SOURCES = [
   { k: "Akademik", sources: "PubMed · Europe PMC · DOAJ" },
-  { k: "Regülasyon", sources: "openFDA · ClinicalTrials.gov · Resmî Gazete" },
+  { k: "İlaç & Cihaz", sources: "openFDA · ClinicalTrials.gov · Resmî Gazete" },
   { k: "Hukuk", sources: "Resmî Gazete · Yargıtay · TR-Dizin" },
   { k: "Kongre", sources: "TTB kredilendirme · uzmanlık dernekleri" },
 ] as const;
@@ -131,11 +133,11 @@ export const SECTIONS: readonly SectionCopy[] = [
     id: "regulatory",
     theme: "dark",
     requires: ["regulatory.fda", "regulatory.trials", "regulatory.rg", "regulatory.ohsad"],
-    eyebrow: "İlaç & Regülasyon",
+    eyebrow: "İlaç & Cihaz", // ürün taksonomisiyle aynı ad (QA P2 terminoloji)
     // İnceleme notu 2026-08-23 "takip etmeyi seçtiğiniz kaynaklardaki…" → KAYNAK seçimi üründe yok
     // (registry prefs.sources unsupported); dürüst eşdeğer = BÖLÜM seçimi (verified).
     title: "Seçtiğiniz bölümlerdeki gelişmeleri tek tek aramayın.",
-    body: "Geri çekme duyuruları, klinik faz kayıtları ve sağlık mevzuatı aynı akışta. Her kartta kaynak ve tarih; prospektüs bilgisine arama ile ulaşırsınız.",
+    body: "Düzenleyici gelişmeler tek akışta: geri çekme duyuruları, klinik faz kayıtları ve sağlık mevzuatı. Her kartta kaynak ve tarih; prospektüs bilgisine arama ile ulaşırsınız.",
     note: "Prospektüs verisi openFDA kaynaklıdır (ABD); bölgesel geçerlilik notu kartta görünür kalır.",
   },
   {
@@ -230,8 +232,8 @@ export function section(id: SectionId): SectionCopy {
 export const LANDING_META = {
   title: "Doctorium", // kök layout "%s · AURA" ekler — elle yazma (v6.43 dersi)
   description:
-    "Her doktor kendi Doctorium'unu oluşturur: branşınıza ve seçtiğiniz bölümlere göre şekillenen kişisel profesyonel çalışma alanı — hakemli yayın özetleri, ilaç ve regülasyon, sağlık hukuku, kongre takvimi. Doğrulanmış doktor ve tıp öğrencisi üyeliği.",
+    "Her doktor kendi Doctorium'unu oluşturur: branşınıza ve seçtiğiniz bölümlere göre şekillenen kişisel profesyonel çalışma alanı — hakemli yayın özetleri, ilaç ve cihaz, sağlık hukuku, kongre takvimi. Doğrulanmış doktor ve tıp öğrencisi üyeliği.",
   ogTitle: "Doctorium by AURA — Her doktor kendi Doctorium'unu oluşturur",
   ogDescription:
-    "Doktorun kişisel profesyonel çalışma alanı: seçtiğiniz branş ve bölümlere göre kurulan akış; akademik, ilaç ve regülasyon, sağlık hukuku, kongre.",
+    "Doktorun kişisel profesyonel çalışma alanı: seçtiğiniz branş ve bölümlere göre kurulan akış; akademik, ilaç ve cihaz, sağlık hukuku, kongre.",
 } as const;
