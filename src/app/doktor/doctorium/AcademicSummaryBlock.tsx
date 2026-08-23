@@ -46,7 +46,8 @@ export function AcademicSummaryBlock({
           {/* compact (landing): en fazla 3 çıkarım — inceleme notu 2026-08-23 "landing'de 2-3
               çıkarım + devamını gör"; portal tam liste. */}
           {(compact ? summary.takeaways.slice(0, 3) : summary.takeaways).map((t, i) => (
-            <li key={i} className="flex gap-2 text-sm leading-relaxed text-[var(--c-ink)]">
+            /* compact + mobil: 3. çıkarım gizli (QA mobil P1 "ilk iki çıkarım"); masaüstünde 3. */
+            <li key={i} className={`flex gap-2 text-sm leading-relaxed text-[var(--c-ink)] ${compact && i === 2 ? "max-sm:hidden" : ""}`}>
               <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
               {t}
             </li>

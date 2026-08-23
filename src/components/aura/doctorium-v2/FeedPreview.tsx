@@ -24,8 +24,10 @@ export function FeedPreview({
             <ArticleCard item={item} saved={null} weight={weight} hrefFor={() => LANDING_ROUTES.login} />
           </ul>
           {why && (
-            <p className="aura-mono -mt-2 pb-3 text-[10.5px] tracking-[0.04em] text-[var(--c-ink-3)]">
-              <span className="text-[var(--c-ink-2)]">Neden görüyorum?</span> {whyShown(item, [branch], landingBranchLabel).line}
+            /* Metadata seviyesi (QA DESK-08/mobil P1: "kalsın ama daha küçük ve muted") — soluklaştırma
+               BOYUT + ink-3 ile (6.1:1); opacity-75 denendi → 3.91:1 axe ihlali, kaldırıldı. */
+            <p className="aura-mono -mt-2 pb-3 text-[10px] tracking-[0.03em] text-[var(--c-ink-3)]">
+              Neden görüyorum? {whyShown(item, [branch], landingBranchLabel).line}
             </p>
           )}
         </li>

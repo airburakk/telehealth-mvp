@@ -10,7 +10,9 @@ export function ManifestoSection() {
     <LandingSection copy={copy} className="border-y border-[var(--dl-line)]">
       <div className="mx-auto max-w-[900px] py-6 text-center">
         <h2 className="aura-display text-[clamp(40px,7vw,88px)] font-medium leading-[0.98] tracking-tight">
-          <span className="block text-[var(--dl-muted)]">{a}.</span>
+          {/* Aradaki {" "}: blok span'lar arasında metin düğümü yoksa textContent "değil.Sizin" olur
+              (QA semantik bulgusu); görsel düzen CSS'te, semantik boşluk DOM'da. */}
+          <span className="block text-[var(--dl-muted)]">{a}.</span>{" "}
           <span className="mt-3 block">{b}</span>
         </h2>
         {copy.body && (

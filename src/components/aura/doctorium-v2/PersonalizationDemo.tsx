@@ -5,6 +5,7 @@ import type { LandingSample } from "@/lib/doctorium-landing/landing-feed";
 import {
   LANDING_BRANCHES, LANDING_MODULES, landingBranchLabel, type LandingModuleKey,
 } from "@/lib/doctorium-landing/taxonomy";
+import { pickOnePerModule } from "@/lib/doctorium-landing/pick";
 import { FeedPreview } from "./FeedPreview";
 import { ProductFrame } from "./ProductFrame";
 import { track } from "./track";
@@ -119,7 +120,8 @@ export function PersonalizationDemo({ initial }: { initial: LandingSample }) {
           title="Akışım"
           meta={sample.source === "fixture" ? `${landingBranchLabel(branch)} · örnek içerik` : landingBranchLabel(branch)}
         >
-          <FeedPreview items={sample.items} branch={branch} max={4} why />
+          {/* QA DESK-07: en fazla 3 güçlü kart, tür çeşitliliğiyle; branş-eşleşmeli olanlar önde. */}
+          <FeedPreview items={pickOnePerModule(sample.items, branch, 3)} branch={branch} why />
         </ProductFrame>
       </div>
       <p aria-live="polite" className="sr-only">{live}</p>

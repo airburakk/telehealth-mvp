@@ -2,6 +2,7 @@ import { section, HERO_PROOF_LINE } from "@/lib/doctorium-landing/content";
 import { LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
 import { DEFAULT_DEMO_MODULES, FEED_MODULE_LABEL, landingBranchLabel } from "@/lib/doctorium-landing/taxonomy";
 import type { LandingSample } from "@/lib/doctorium-landing/landing-feed";
+import { pickOnePerModule } from "@/lib/doctorium-landing/pick";
 import { CtaLink } from "../CtaLink";
 import { FeedPreview } from "../FeedPreview";
 import { ProductFrame } from "../ProductFrame";
@@ -84,7 +85,9 @@ function HeroPreview({ sample }: { sample: LandingSample }) {
         })}
       </ul>
       <div className="mt-2">
-        <FeedPreview items={sample.items} branch={sample.branch} max={2} why={false} />
+        {/* QA DESK-02: ilk görünümde TÜR çeşitliliği (akademik · etkinlik/hukuk · regülasyon) —
+            birbirinin benzeri iki ClinicalTrials kartı üst üste gelmesin; 3 kart (mobilde de kısa). */}
+        <FeedPreview items={pickOnePerModule(sample.items, sample.branch, 3)} branch={sample.branch} why={false} />
       </div>
     </ProductFrame>
   );

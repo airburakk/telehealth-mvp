@@ -80,7 +80,11 @@ export function ByAura({ light = false }: { light?: boolean }) {
         href="/"
         className="inline-block transition-opacity duration-200 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--dl-cyan)]"
       >
+        {/* Erişilebilir ad METİN olarak (sr-only) — SVG dekoratif. QA bulgusu 2026-08-23: metin
+            çıkarımı "Doctorium by" diye yarım okuyordu (aria-label'ı her araç okumaz). */}
+        <span className="sr-only">AURA</span>
         <AuraWordSvg
+          decorative
           fill={light ? BY_AURA_NAVY : "var(--dl-ink)"}
           className="inline-block h-[0.6em] w-auto align-[-0.02em]"
           style={{ display: "inline-block" }}

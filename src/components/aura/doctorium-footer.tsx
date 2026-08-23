@@ -2,7 +2,6 @@ import Link from "next/link";
 import { AuraMark } from "@/components/AuraLogo";
 import {
   DOCTORIUM_PALETTE,
-  DoctoriumInline,
   DoctoriumWord,
   ByAura,
 } from "@/components/aura/doctorium-brand";
@@ -46,7 +45,8 @@ export function DoctoriumFooter({ portal = false, theme = "dark" }: { portal?: b
         </div>
         <div className={`mt-6 flex flex-col justify-between gap-4 text-xs sm:flex-row ${portal ? "text-[var(--dl-body)]" : "text-[#777c82]"}`}>
           <span>
-            © 2026 <DoctoriumInline /> <ByAura light={portal && theme === "light"} />
+            {/* Akan metinde marka tek düğüm (v6.140; lockup yalnız üstteki wordmark'ta). */}
+            © 2026 Doctorium <ByAura light={portal && theme === "light"} />
           </span>
           <div className="flex flex-wrap gap-6">
             <Link href="/guven-ve-gizlilik" className="transition-colors hover:text-[var(--dl-ink)]">

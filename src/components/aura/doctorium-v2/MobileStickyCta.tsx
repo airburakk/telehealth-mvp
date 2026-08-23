@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { DoctoriumOnEmerald } from "@/components/aura/doctorium-brand";
 import { LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
 import { track } from "./track";
 
@@ -45,7 +44,7 @@ export function MobileStickyCta() {
         onClick={() => track("create_doctorium_click", "sticky")}
         className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#065f46] text-[15px] font-semibold text-white"
       >
-        <span><DoctoriumOnEmerald />&apos;unu oluştur</span>
+        <span>Doctorium&apos;unu oluştur</span>
         <span aria-hidden>→</span>
       </Link>
     </div>

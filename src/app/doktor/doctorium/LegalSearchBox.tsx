@@ -109,7 +109,9 @@ export function LegalSearchBox({
             </span>
           </summary>
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-            {HUKUK_KEYWORDS.map((kw) => {
+            {/* demo (landing): ilk 6 çip + "Tüm örnekler (N)" → giriş (QA DESK-12: 16 çip demoyu
+                ağırlaştırıyordu). Portalda TAM sözlük. */}
+            {(demo ? HUKUK_KEYWORDS.slice(0, 6) : HUKUK_KEYWORDS).map((kw) => {
               const on = activeKeyword === kw.key;
               const q = query ? `&q=${encodeURIComponent(query)}` : "";
               const href = demo ? demo.href : on ? `${base}${q}` : `${base}&k=${kw.key}${q}`;
@@ -129,6 +131,11 @@ export function LegalSearchBox({
                 </Link>
               );
             })}
+            {demo && HUKUK_KEYWORDS.length > 6 && (
+              <Link href={demo.href} className="aura-mono inline-flex items-center rounded-full border border-[var(--c-hairline)] px-2.5 py-1 text-[11px] font-semibold text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
+                Tüm örnekler ({HUKUK_KEYWORDS.length}) →
+              </Link>
+            )}
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
             Anahtar kelime, kararın <strong>metninde</strong> deterministik olarak aranır; arama

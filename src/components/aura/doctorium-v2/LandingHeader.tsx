@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AuraMark } from "@/components/AuraLogo";
-import { DoctoriumOnEmerald, DoctoriumWord, ByAura } from "@/components/aura/doctorium-brand";
+import { DoctoriumWord, ByAura } from "@/components/aura/doctorium-brand";
 import { DoctoriumMobileMenu } from "@/components/aura/doctorium-mobile-menu";
 import { LANDING_ANCHORS, LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
 import { MobileMenuTracked } from "./MobileMenuTracked";
@@ -40,7 +40,7 @@ export function LandingHeader() {
             className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#065f46] px-3 text-[13px] font-semibold text-white transition-colors hover:bg-[#064e3b] sm:px-4 sm:text-sm"
           >
             <span className="sm:hidden">Oluştur</span>
-            <span className="hidden sm:inline"><DoctoriumOnEmerald />&apos;unu oluştur</span>
+            <span className="hidden sm:inline">Doctorium&apos;unu oluştur</span>
           </Link>
           <MobileMenuTracked>
             <DoctoriumMobileMenu sections={LANDING_ANCHORS.map((a) => ({ href: `#${a.id}`, label: a.label }))} />

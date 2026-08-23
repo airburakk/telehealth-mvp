@@ -1,5 +1,4 @@
 import { section, DIFFERENCE_ROWS } from "@/lib/doctorium-landing/content";
-import { DoctoriumInline } from "@/components/aura/doctorium-brand";
 import { LandingSection, SectionHead } from "../primitives";
 import { Rich } from "../rich-text";
 
@@ -15,7 +14,7 @@ export function DifferenceSection() {
           <thead>
             <tr className="aura-mono text-[11px] uppercase tracking-[0.16em] text-[var(--dl-muted)]">
               <th scope="col" className="border-b border-[var(--dl-line)] py-3 pr-4 font-semibold">Genel profesyonel portal</th>
-              <th scope="col" className="border-b border-[var(--dl-line)] py-3 pl-4 font-semibold text-[var(--dl-emerald)]"><DoctoriumInline /></th>
+              <th scope="col" className="border-b border-[var(--dl-line)] py-3 pl-4 font-semibold text-[var(--dl-emerald)]">Doctorium</th>
             </tr>
           </thead>
           <tbody>

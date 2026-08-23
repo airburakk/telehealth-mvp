@@ -19,6 +19,7 @@ import { keywordByKey } from "@/lib/hukuk-keywords";
 import type { CongressRow } from "@/app/doktor/doctorium/CongressList";
 import { db } from "@/lib/db";
 import { FIXTURE_FEED, FIXTURE_LEGAL, FIXTURE_SUMMARY } from "./fixtures";
+import { branchFirst } from "./pick";
 import { isLandingBranch, isLandingModule, LANDING_MODULES, type LandingModuleKey } from "./taxonomy";
 
 export interface LandingSample {
@@ -176,32 +177,5 @@ export async function landingProofSample(branch: string): Promise<LandingProof> 
   return value;
 }
 
-/**
- * Branşla eşleşen kartlar ÖNE (inceleme notu 2026-08-23: "ilk dört kart kişiselleştirmenin etkisini
- * dramatik kanıtlasın; branştan bağımsız içerik aşağıda kalsın"). Kararlı bölümleme — iki grubun
- * kendi içindeki interleave sırası korunur. Akış kuralı DEĞİŞMEZ (portal aynı); yalnız landing dizilimi.
- */
-export function branchFirst<T extends Pick<FeedItem, "branchSlugs">>(items: T[], branch: string): T[] {
-  const hit: T[] = [];
-  const rest: T[] = [];
-  for (const i of items) (i.branchSlugs.includes(branch) ? hit : rest).push(i);
-  return [...hit, ...rest];
-}
-
-/** "Bugün sizin için" 2×2 — her ana bölümden bir kart (akademik · etkinlik · ilaç · hukuk); bölüm
- *  içinde branşla eşleşen kart tercih edilir, eşleşenler ilk sırada. */
-export function pickOnePerModule(items: FeedItem[], branch?: string): FeedItem[] {
-  const want = ["akademik", "etkinlik", "ilac", "mevzuat"];
-  const out: FeedItem[] = [];
-  for (const m of want) {
-    const pool = items.filter((i) => i.module === m);
-    const hit = (branch && pool.find((i) => i.branchSlugs.includes(branch))) || pool[0];
-    if (hit) out.push(hit);
-  }
-  // Eksik bölümü sıradaki farklı kartla doldur (4'e tamamla; tekrar yok).
-  for (const i of items) {
-    if (out.length >= 4) break;
-    if (!out.includes(i)) out.push(i);
-  }
-  return branch ? branchFirst(out, branch) : out;
-}
+// Kart seçim yardımcıları → ./pick.ts (saf; istemci demo da kullanır). Sunucu çağıranlar için re-export.
+export { branchFirst, pickOnePerModule } from "./pick";

@@ -1,23 +1,12 @@
-import { Fragment } from "react";
-import { DoctoriumInline, DoctoriumOnEmerald } from "@/components/aura/doctorium-brand";
-
-// "{Doctorium}" yer tutucusunu marka lockup'ına çevirir (content.ts sözleşmesi). Marka kuralı:
-// "Doctorium" geçen HER metinde Doctor ink + ium zümrüt; zümrüt zeminli CTA'da Doctor BEYAZ
-// (DoctoriumOnEmerald). 🪤 Çıktı TEK inline span'e sarılır — flex ebeveynde parçalar ayrı item
-// olup aradaki boşluk düşerdi ([[aura-wordtext-flex-bosluk]]).
-export function Rich({ text, onEmerald = false }: { text: string; onEmerald?: boolean }) {
-  const parts = text.split("{Doctorium}");
-  if (parts.length === 1) return <>{text}</>;
-  return (
-    <span>
-      {parts.map((p, i) => (
-        <Fragment key={i}>
-          {i > 0 && (onEmerald ? <DoctoriumOnEmerald /> : <DoctoriumInline />)}
-          {p}
-        </Fragment>
-      ))}
-    </span>
-  );
+// "{Doctorium}" yer tutucusu → DÜZ "Doctorium" metni (content.ts sözleşmesi).
+//
+// v6.140 (2026-08-23, kullanıcı kararı — QA-01/P0 marka tutarlılığı): iki tonlu lockup YALNIZ logoda
+// (header/footer `DoctoriumWord`); akan metinde (h1, bölüm başlıkları, notlar, CTA etiketleri) marka
+// TEK METİN DÜĞÜMÜ olarak yazılır — "Doctor"+"ium" span'larına bölünmez. Eski `DoctoriumInline`/
+// `DoctoriumOnEmerald` çağrıları V2'de kalktı (v1 landing'de sürer; o sayfa dondurulmuş).
+// `onEmerald` prop'u geriye uyum için kabul edilir, etkisizdir (CTA metni zaten düğme renginde).
+export function Rich({ text }: { text: string; onEmerald?: boolean }) {
+  return <>{plain(text)}</>;
 }
 
 /** Düz metin (aria-label, title gibi yerler için) — yer tutucu marka adına çevrilir. */
