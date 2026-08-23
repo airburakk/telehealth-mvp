@@ -14,6 +14,14 @@ export function isGoogleConfigured(): boolean {
   return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 }
 
+// Açık-yönlendirme koruması: start rotaları `?next=` ile gelen hedefi callback'e taşımak için
+// cookie'ye yazar; bu hedef state/nonce gibi CSRF'e karşı korunmaz (yalnız cookie'de saklanır) →
+// tek site-içi göreli yol kabul edilir. "//host" biçimi REDDEDİLİR (tarayıcı bunu protokol-göreli
+// farklı bir origin sayar — `//evil.com` gibi bir next kabul edilseydi açık yönlendirme olurdu).
+export function isSafeNextPath(next: string | undefined | null): next is string {
+  return !!next && next.startsWith("/") && !next.startsWith("//");
+}
+
 // İstek origin'inden callback URI türet (yerel + Vercel origin uyumlu — Google Console'a bu eklenir).
 export function googleRedirectUri(origin: string): string {
   return `${origin}/api/auth/google/callback`;

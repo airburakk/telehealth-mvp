@@ -35,6 +35,14 @@ function useReturnedWithBanner(): boolean {
   return !!(sp.get("oauth") || sp.get("verify"));
 }
 
+// Kapının kendi ?next'ini OAuth başlangıcına taşır — e-posta formu next'i zaten okuyordu
+// (GateEmailForm), Google/Apple butonları statik LINKS.*Start'a gidip bunu KAYBEDİYORDU
+// (bilinen sınır, doctorium-landing/routes.ts notu). Start rotası next'i cookie'ye yazar,
+// callback mevcut kullanıcıyı oraya döndürür (yeni hesap yine profil-tamamla'dan geçer).
+function withNext(href: string, next: string | null): string {
+  return next ? `${href}${href.includes("?") ? "&" : "?"}next=${encodeURIComponent(next)}` : href;
+}
+
 // Sağ panel videosu yalnız md+ yerleşiminde var (hidden md:block); dar ekranda
 // play() gizli videoyu boşuna indirtir (preload="none" ancak oynatma başlamazsa
 // veri tasarrufu sağlar) — görünmeyecekse hiç başlatma. Arka plan sekmesinde
@@ -120,6 +128,8 @@ export function SigninGate() {
 function SigninPanel() {
   const { t } = useLang();
   const returned = useReturnedWithBanner();
+  const sp = useSearchParams();
+  const next = sp.get("next");
   const [emailOpen, setEmailOpen] = useState(false);
   const showForm = emailOpen || returned;
 
@@ -137,10 +147,10 @@ function SigninPanel() {
       <p className="mt-3 text-[15px] text-[var(--aura-grey)]">{t.signin.sub}</p>
 
       <div className="mt-8 space-y-3">
-        {/* Google + Apple: doğrudan OAuth başlangıcı (dönüş rol ana sayfasına iner;
+        {/* Google + Apple: doğrudan OAuth başlangıcı (?next varsa mevcut kullanıcı oraya döner;
             hata dönüşü ?oauth ile bu kapıya düşer ve form banner'la açılır) */}
-        <ProviderButton href={LINKS.googleStart} label={t.signin.google} icon={<GoogleIcon />} />
-        <ProviderButton href={LINKS.appleStart} label={t.signin.apple} icon={<AppleIcon />} />
+        <ProviderButton href={withNext(LINKS.googleStart, next)} label={t.signin.google} icon={<GoogleIcon />} />
+        <ProviderButton href={withNext(LINKS.appleStart, next)} label={t.signin.apple} icon={<AppleIcon />} />
         <ProviderToggle
           open={showForm}
           onClick={() => setEmailOpen((o) => !o)}
@@ -225,6 +235,8 @@ function CorporatePanel() {
   const { t } = useLang();
   const c = t.corporate;
   const returned = useReturnedWithBanner();
+  const sp = useSearchParams();
+  const next = sp.get("next");
   const [role, setRole] = useState(0); // roles dizisinde indeks; 0 = Doktor
   const [emailOpen, setEmailOpen] = useState(false);
   const showForm = emailOpen || returned;
@@ -248,8 +260,8 @@ function CorporatePanel() {
             açılır. Metinler t.signin'den (9 dilde; corporate sözlüğüne kopyalanmaz).
             Rol seçimi görsel bağlam olmaya devam eder — tüm roller aynı girişe gider. */}
         <div className="space-y-3">
-          <ProviderButton href={LINKS.corporateGoogleStart} label={t.signin.google} icon={<GoogleIcon />} />
-          <ProviderButton href={LINKS.corporateAppleStart} label={t.signin.apple} icon={<AppleIcon />} />
+          <ProviderButton href={withNext(LINKS.corporateGoogleStart, next)} label={t.signin.google} icon={<GoogleIcon />} />
+          <ProviderButton href={withNext(LINKS.corporateAppleStart, next)} label={t.signin.apple} icon={<AppleIcon />} />
           <ProviderToggle
             open={showForm}
             onClick={() => setEmailOpen((o) => !o)}
@@ -347,6 +359,8 @@ const DOCTORIUM_VIDEO = {
 
 export function DoctoriumGate() {
   const returned = useReturnedWithBanner();
+  const sp = useSearchParams();
+  const next = sp.get("next"); // landing "Giriş yap" → ?next=/doktor/doctorium (mevcut doktor portala döner)
   const [role, setRole] = useState(0); // DOCTORIUM.roles indeksi; 0 = Doktor
   const [emailOpen, setEmailOpen] = useState(false);
   const showForm = emailOpen || returned;
@@ -385,8 +399,8 @@ export function DoctoriumGate() {
             başlangıçları; e-posta formu kapı içinde açılır. Rol seçimi görsel
             bağlam — iki rol de aynı girişe gider. */}
         <div className="space-y-3">
-          <ProviderButton href={LINKS.corporateGoogleStart} label={DOCTORIUM.google} icon={<GoogleIcon />} />
-          <ProviderButton href={LINKS.corporateAppleStart} label={DOCTORIUM.apple} icon={<AppleIcon />} />
+          <ProviderButton href={withNext(LINKS.corporateGoogleStart, next)} label={DOCTORIUM.google} icon={<GoogleIcon />} />
+          <ProviderButton href={withNext(LINKS.corporateAppleStart, next)} label={DOCTORIUM.apple} icon={<AppleIcon />} />
           <ProviderToggle
             open={showForm}
             onClick={() => setEmailOpen((o) => !o)}

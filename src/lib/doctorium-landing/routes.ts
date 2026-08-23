@@ -2,8 +2,8 @@
 //
 // 🔴 Giriş hedefi `/doctorium/giris?next=...`: proxy anonim kullanıcıyı HASTA kapısına (/giris)
 // atar (src/proxy.ts:18-22); landing'den gelen doktor/öğrenci yanlış kapıya düşmesin diye
-// Doctorium kapısı açıkça hedeflenir. `next` yalnız e-posta yolunda korunur (gate-email-form.tsx);
-// OAuth başlangıçları bugün `next`'i kaybeder — bilinen sınır, ayrı iş.
+// Doctorium kapısı açıkça hedeflenir. `next` e-posta yolunda (gate-email-form.tsx) VE Google/Apple
+// OAuth yolunda (auth-gates.tsx withNext → start rotası cookie'ye yazar → callback okur) korunur.
 export const LANDING_ROUTES = {
   /** Ana CTA — doktor kaydı. */
   signup: "/kayit",

@@ -6,7 +6,7 @@ import { createSession, hashPassword } from "@/lib/auth";
 import { roleHome, type Role } from "@/lib/session";
 import { patientHome } from "@/lib/patient-journey";
 import { consentedVersion } from "@/lib/consent";
-import { isAppleConfigured, exchangeAppleCode, appleRedirectUri, appleDisplayName } from "@/lib/oauth";
+import { isAppleConfigured, exchangeAppleCode, appleRedirectUri, appleDisplayName, isSafeNextPath } from "@/lib/oauth";
 import { createDoctorAccount } from "@/lib/doctor-signup";
 import { createPatientAccount } from "@/lib/patient-signup";
 
@@ -26,9 +26,11 @@ export async function POST(req: Request) {
   const intent = c.get("a_oauth_intent")?.value === "patient" ? "patient" : "doctor";
   const savedState = c.get("a_oauth_state")?.value;
   const nonce = c.get("a_oauth_nonce")?.value;
+  const next = c.get("a_oauth_next")?.value;
   c.delete("a_oauth_intent");
   c.delete("a_oauth_state");
   c.delete("a_oauth_nonce");
+  c.delete("a_oauth_next");
 
   // ⚠️ 303 ŞART: bu bir POST handler'ı ve NextResponse.redirect varsayılanı 307'dir — 307 metodu
   // KORUR, yani tarayıcı hedef sayfaya da POST eder ve kullanıcı 405 görür. Google callback'inde
@@ -116,9 +118,11 @@ export async function POST(req: Request) {
 
   const cv = await consentedVersion(user.id);
   await createSession({ id: user.id, email: user.email, name: user.name, role: user.role as Role, cv });
-  // Yeni doktor: kimlik ara sayfası (proxy onam kapısı next'i koruyarak önce /onam'a düşürür).
+  // Yeni doktor: kimlik ara sayfası (proxy onam kapısı next'i koruyarak önce /onam'a düşürür),
+  // next varsa bile — kimlik eksikken hedef sayfaya düşürmek onboarding'i atlatırdı.
   const home = newDoctor
     ? "/doktor/profil-tamamla"
+    : isSafeNextPath(next) ? next
     : user.role === "PATIENT" ? await patientHome(user.id) : roleHome(user.role as Role);
   return NextResponse.redirect(new URL(home, origin), 303); // POST → GET: 303 şart, 307 POST'u taşır
 }

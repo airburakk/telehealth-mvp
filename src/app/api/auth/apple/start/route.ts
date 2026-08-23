@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
-import { isAppleConfigured, appleAuthUrl, appleRedirectUri } from "@/lib/oauth";
+import { isAppleConfigured, appleAuthUrl, appleRedirectUri, isSafeNextPath } from "@/lib/oauth";
 
-// GET /api/auth/apple/start?intent=patient|doctor — "Apple ile devam et" akışını başlatır.
+// GET /api/auth/apple/start?intent=patient|doctor&next=/hedef — "Apple ile devam et" akışını
+// başlatır. next: Google start'ının eşleniği (mevcut kullanıcı girişte döneceği sayfa).
 // Google start rotasının eşleniği (state + intent cookie → sağlayıcıya 302), iki farkla:
 //
 //  · NONCE eklenir: Apple kimliği ID token içinde döndürür; nonce o token'ın BU akışa ait olduğunu
@@ -34,6 +35,8 @@ export async function GET(req: Request) {
   c.set("a_oauth_state", state, opts);
   c.set("a_oauth_nonce", nonce, opts);
   c.set("a_oauth_intent", intent, opts); // yeni hesabın rolünü belirler (callback okur)
+  const next = url.searchParams.get("next");
+  if (isSafeNextPath(next)) c.set("a_oauth_next", next, opts);
 
   return NextResponse.redirect(appleAuthUrl(state, nonce, appleRedirectUri(origin)));
 }
