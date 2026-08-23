@@ -1,5 +1,6 @@
 import { section } from "@/lib/doctorium-landing/content";
 import type { LandingProof } from "@/lib/doctorium-landing/landing-feed";
+import { journalShort } from "@/lib/doctorium-landing/journal-short";
 import { AcademicSummaryBlock } from "@/app/doktor/doctorium/AcademicSummaryBlock";
 import { FeedPreview } from "../FeedPreview";
 import { ProductFrame } from "../ProductFrame";
@@ -20,7 +21,7 @@ export function AcademicSection({ proof, branch }: { proof: LandingProof["academ
           <SectionHead copy={copy} />
           {copy.note && <Note text={copy.note} className="mt-8" />}
         </div>
-        <ProductFrame title="Akademik" meta={proof.source === "fixture" ? "örnek içerik" : proof.item.sourceName}>
+        <ProductFrame title="Akademik" meta={proof.source === "fixture" ? "örnek içerik" : (journalShort(proof.item.sourceName) ?? proof.item.sourceName)}>
           <FeedPreview items={[proof.item]} branch={branch} weight="mid" why={false} />
           <div className="mt-2">
             <AcademicSummaryBlock summary={proof.summary} compact disclaimer={false} />

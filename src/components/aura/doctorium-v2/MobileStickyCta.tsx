@@ -19,13 +19,15 @@ export function MobileStickyCta() {
     let heroVisible = true;
     let finalVisible = false;
     const update = () => setShow(!heroVisible && !finalVisible);
+    // threshold 0 (QA pre-freeze 6): hero TAMAMEN viewport'tan çıkınca görün (tek piksel görünürken
+    // bile gizli); final CTA'nın herhangi bir parçası görünür olunca gizle.
     const io = new IntersectionObserver((entries) => {
       for (const en of entries) {
         if (en.target === hero) heroVisible = en.isIntersecting;
         if (en.target === final) finalVisible = en.isIntersecting;
       }
       update();
-    }, { threshold: 0.1 });
+    }, { threshold: 0 });
     io.observe(hero);
     io.observe(final);
     return () => io.disconnect();

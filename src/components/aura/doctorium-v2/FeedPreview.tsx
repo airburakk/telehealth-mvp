@@ -3,6 +3,7 @@ import { ArticleCard, type CardWeight } from "@/app/doktor/doctorium/ArticleCard
 import { whyShown } from "@/lib/doctorium-landing/why";
 import { landingBranchLabel } from "@/lib/doctorium-landing/taxonomy";
 import { LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
+import { journalShort } from "@/lib/doctorium-landing/journal-short";
 
 // Gerçek ArticleCard listesi — landing varyantı (çift-yönlü güvenli: sunucu ve istemci).
 // · saved={null} → Kaydet düğmesi çizilmez (anonim; koşullu-href ilkesi).
@@ -21,7 +22,7 @@ export function FeedPreview({
       {list.map((item) => (
         <li key={item.id} className="min-w-0">
           <ul className="grid grid-cols-[minmax(0,1fr)]">
-            <ArticleCard item={item} saved={null} weight={weight} hrefFor={() => LANDING_ROUTES.login} />
+            <ArticleCard item={item} saved={null} weight={weight} hrefFor={() => LANDING_ROUTES.login} sourceShort={journalShort(item.sourceName)} />
           </ul>
           {why && (
             /* Metadata seviyesi (QA DESK-08/mobil P1: "kalsın ama daha küçük ve muted") — soluklaştırma

@@ -21,7 +21,8 @@ export function LandingSection({
       id={copy.anchor ?? copy.id}
       data-section={copy.id}
       style={THEME_STYLE[copy.theme]}
-      className={`scroll-mt-20 bg-[var(--dl-bg)] text-[var(--dl-ink)] ${className}`}
+      // scroll-mt: masaüstü sticky header 72px + pay (mobilde header statik; değer zararsız).
+      className={`scroll-mt-4 bg-[var(--dl-bg)] text-[var(--dl-ink)] md:scroll-mt-24 ${className}`}
     >
       <div className={`mx-auto w-full max-w-6xl px-5 ${padded ? "py-20 lg:py-28" : ""}`}>{children}</div>
     </section>

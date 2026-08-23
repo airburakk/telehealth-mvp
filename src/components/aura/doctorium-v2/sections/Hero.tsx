@@ -39,7 +39,8 @@ export function HeroSection({ sample }: { sample: LandingSample }) {
               </CtaLink>
             )}
           </div>
-          {copy.note && <p className="mt-5 text-xs text-[#777c82]">{copy.note}</p>}
+          {/* Güven satırı — kontrast bir kademe yukarı (QA pre-freeze 5): #777c82 4.3:1 → --dl-muted 6.5:1 */}
+          {copy.note && <p className="mt-5 text-xs text-[var(--dl-muted)]">{copy.note}</p>}
           <p className="aura-mono mt-10 flex flex-wrap gap-x-3 gap-y-1 text-[11px] tracking-[0.08em] text-[#9da1a6]">
             {HERO_PROOF_LINE.map((p, i) => (
               <span key={p} className="inline-flex items-center gap-3">

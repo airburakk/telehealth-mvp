@@ -22,7 +22,7 @@ export function ProductFrame({
           <AuraMark size={16} tone="emerald" className="shrink-0" />
           <span className="aura-mono truncate text-[11px] font-semibold tracking-[0.12em] text-[var(--c-ink-2)]">{title}</span>
         </div>
-        {meta && <span className="aura-mono shrink-0 text-[11px] text-[var(--c-ink-3)]">{meta}</span>}
+        {meta && <span className="aura-mono max-w-[55%] truncate text-[11px] text-[var(--c-ink-3)]">{meta}</span>}
       </div>
       <div className="px-4 py-3">{children}</div>
     </div>

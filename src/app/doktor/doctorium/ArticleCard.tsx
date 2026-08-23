@@ -130,6 +130,7 @@ export function ArticleCard({
   saved,
   weight = "min",
   hrefFor,
+  sourceShort,
 }: {
   item: FeedItem;
   saved: boolean | null;
@@ -141,6 +142,12 @@ export function ArticleCard({
    * geçmez → davranış aynen. Kartın kendisi hâlâ salt-okunur, auth bağımlılığı yok.
    */
   hrefFor?: (item: FeedItem) => string;
+  /**
+   * Künyede KISA yayın adı (2026-08-23, landing V2 QA): dar kartta tam dergi adı sıkışıyordu.
+   * Verilirse görünür metin kısa ad, tam ad `title` + sr-only (erişilebilirlik korunur). Portal
+   * prop'u geçmez → tam ad, davranış aynen.
+   */
+  sourceShort?: string | null;
 }) {
   const href = hrefFor
     ? hrefFor(item)
@@ -173,8 +180,15 @@ export function ArticleCard({
           <CoverArt item={item} size="thumb" />
           <PlateFallback item={item} />
           <div className="min-w-0">
-            <div className="truncate text-[13.5px] font-semibold leading-[1.3] text-[var(--c-ink)]">
-              {item.sourceName}
+            <div className="truncate text-[13.5px] font-semibold leading-[1.3] text-[var(--c-ink)]" title={sourceShort ? item.sourceName : undefined}>
+              {sourceShort ? (
+                <>
+                  <span aria-hidden="true">{sourceShort}</span>
+                  <span className="sr-only">{item.sourceName}</span>
+                </>
+              ) : (
+                item.sourceName
+              )}
             </div>
             <div className="mt-px flex flex-wrap items-center gap-x-1.5 text-[12.5px] text-[var(--c-ink-3)]">
               {/* Tür etiketi künyenin İLK öğesi: göz kaynağı okuduktan sonra "bu ne" sorusunu

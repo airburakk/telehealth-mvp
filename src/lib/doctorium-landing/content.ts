@@ -51,7 +51,7 @@ export const HERO_PROOF_LINE = ["Akademik", "İlaç & Cihaz", "Sağlık Hukuku",
 /** Problem bölümü — yalnız GERÇEKTEN izlenen kaynaklar (registry: regulatory, legal, congress.db anahtarları). */
 export const PROBLEM_SOURCES = [
   { k: "Akademik", sources: "PubMed · Europe PMC · DOAJ" },
-  { k: "İlaç & Cihaz", sources: "openFDA · ClinicalTrials.gov · Resmî Gazete" },
+  { k: "İlaç & Cihaz", sources: "İlaç, cihaz ve düzenleyici gelişmeler — openFDA · ClinicalTrials.gov · Resmî Gazete" },
   { k: "Hukuk", sources: "Resmî Gazete · Yargıtay · TR-Dizin" },
   { k: "Kongre", sources: "TTB kredilendirme · uzmanlık dernekleri" },
 ] as const;
@@ -137,7 +137,7 @@ export const SECTIONS: readonly SectionCopy[] = [
     // İnceleme notu 2026-08-23 "takip etmeyi seçtiğiniz kaynaklardaki…" → KAYNAK seçimi üründe yok
     // (registry prefs.sources unsupported); dürüst eşdeğer = BÖLÜM seçimi (verified).
     title: "Seçtiğiniz bölümlerdeki gelişmeleri tek tek aramayın.",
-    body: "Düzenleyici gelişmeler tek akışta: geri çekme duyuruları, klinik faz kayıtları ve sağlık mevzuatı. Her kartta kaynak ve tarih; prospektüs bilgisine arama ile ulaşırsınız.",
+    body: "İlaç, cihaz ve düzenleyici gelişmeler tek akışta: geri çekme duyuruları, klinik faz kayıtları ve sağlık mevzuatı. Her kartta kaynak ve tarih; prospektüs bilgisine arama ile ulaşırsınız.",
     note: "Prospektüs verisi openFDA kaynaklıdır (ABD); bölgesel geçerlilik notu kartta görünür kalır.",
   },
   {
