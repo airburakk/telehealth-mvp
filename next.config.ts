@@ -125,10 +125,17 @@ const nextConfig: NextConfig = {
     // dek kalıcı işaretlenmez). AURA deploy'undaki kalıcı rename redirect'leri her iki projede
     // de zararsızdır ama Doctorium'da ilgili rotalar zaten AURA'ya gittiğinden erişilmez.
     if (IS_DOCTORIUM_DEPLOY) {
-      return AURA_ONLY_PREFIXES.flatMap((p) => [
-        { source: p, destination: `${AURA_CANONICAL_URL}${p}`, permanent: false },
-        { source: `${p}/:path*`, destination: `${AURA_CANONICAL_URL}${p}/:path*`, permanent: false },
-      ]);
+      return [
+        // Kanonik host = doctorium.tr (kullanıcı kararı 2026-08-24; iki gerçek domain alındı).
+        // com.tr + www varyantları kalıcı (308) tek köke toplanır — SEO tek kanonik; SSL/alias
+        // üçünde de Vercel'de. NEXT_PUBLIC_SITE_URL de https://doctorium.tr.
+        { source: "/:path*", has: [{ type: "host" as const, value: "doctorium.com.tr" }], destination: "https://doctorium.tr/:path*", permanent: true },
+        { source: "/:path*", has: [{ type: "host" as const, value: "www.doctorium.tr" }], destination: "https://doctorium.tr/:path*", permanent: true },
+        ...AURA_ONLY_PREFIXES.flatMap((p) => [
+          { source: p, destination: `${AURA_CANONICAL_URL}${p}`, permanent: false },
+          { source: `${p}/:path*`, destination: `${AURA_CANONICAL_URL}${p}/:path*`, permanent: false },
+        ]),
+      ];
     }
     return [
       { source: "/pro-bono", destination: "/ucretsiz-saglik", permanent: true },
