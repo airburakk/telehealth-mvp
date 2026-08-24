@@ -435,6 +435,26 @@ katman kapısı: SMS OTP + kurum bağı şartı — DORMANT, açmadan önce kana
 **Vercel** (serverless) + **Neon Postgres** üzerinde canlı. GitHub `airburakk/telehealth-mvp`
 (`main`) → Vercel otomatik deploy. Adım adım kılavuz: [`DEPLOY.md`](./DEPLOY.md).
 
+### İki marka, iki Vercel projesi (AURA↔Doctorium ayrışması Faz A — 2026-08-24, v6.152)
+
+Aynı repo **iki** Vercel projesine bağlıdır; her `main` push'u ikisini de deploy eder:
+
+| Proje | BRAND_MODE | Davranış |
+|---|---|---|
+| `telehealth-mvp` (AURA) | *(tanımsız)* | Bugüne kadarki her şey birebir — hasta vitrini, klinik paneller, cron'lar |
+| `doctorium` | `doctorium` | Kök `/` → Doctorium landing'e rewrite; AURA vitrin/hasta/giriş/kayıt/locale rotaları AURA kanoniğine **307** (`next.config.ts AURA_ONLY_PREFIXES`); sitemap yalnız Doctorium; **cron'lar no-op** (çift koşum kesilir — `CRON_SECRET` bu projeye bilinçle SET EDİLMEZ) |
+
+- **DB ORTAK** (tek Neon): içerik boru hattı, hesap modeli ve Aşama-2 geçişi tek yerde;
+  geri-birleştirme = doctorium projesini silmek. Mimari kaydı vault'ta
+  (`wiki/kavramlar/aura-doctorium-baglanti-sistemi.md` + teknik ayrışma planı).
+- `SITE_URL` proje-başına `NEXT_PUBLIC_SITE_URL` env'iyle çözülür (yalnız sunucu tarafında
+  okunur — client bundle'a inline bağımlılığı yok); AURA'da env tanımsız → eski sabit.
+- `/doktor` ağacı + `/onam` Doctorium projesinde de yaşar (kayıt akışının onam + diploma
+  adımları); klinik rotaların asıl kapısı sunucu tarafındadır (rol + `hasClinicalAccess`).
+- Doctorium projesinde Google/Apple env'leri bilinçle boş → butonlar "Yakında"; yeni domain
+  OAuth konsollarına eklenince açılır. Yerel Doctorium provası:
+  `BRAND_MODE=doctorium npx next build && BRAND_MODE=doctorium npx next start`.
+
 ## Gözlemlenebilirlik (Faz 5 Ray C, 2026-07-16)
 
 İki katman + bir bağlayıcı kural:
