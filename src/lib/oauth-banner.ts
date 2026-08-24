@@ -19,6 +19,8 @@ export function oauthBannerMessage(
       return `${p} ile ${action} tamamlanamadı, lütfen tekrar deneyin.`;
     case "cancelled": // kullanıcı sağlayıcının onay ekranında vazgeçti — hata değil
       return `${p} ile ${action} iptal edildi.`;
+    case "role": // Ayrışma (2026-08-24): Doctorium deploy'unda hasta hesabı içeri alınmaz
+      return `Bu ${p} kimliği bir hasta hesabına bağlı. Doctorium, doktor ve tıp öğrencilerine özel bir çalışma alanıdır — hasta girişi için AURA'yı kullanın.`;
     default:
       return "";
   }

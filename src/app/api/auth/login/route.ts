@@ -7,6 +7,7 @@ import { consentedVersion } from "@/lib/consent";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 import { isEmailConfigured } from "@/lib/email";
 import { sendAlert } from "@/lib/alerts";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 
 // Sabit-zaman 401 (denetim #21): kullanıcı YOKKEN de aynı maliyette bcrypt koşturulur — yanıt süresi
 // e-postanın kayıtlı olup olmadığını sızdırmasın (hesap enumerasyonu; resend-verification'ın jenerik
@@ -46,6 +47,16 @@ export async function POST(req: Request) {
   if (emailGateActive && !user.emailVerifiedAt) {
     return NextResponse.json(
       { error: "E-posta adresiniz henüz doğrulanmadı. Gelen kutunuzu (ve spam klasörünü) kontrol edin.", code: "EMAIL_UNVERIFIED" },
+      { status: 403 },
+    );
+  }
+
+  // Ayrışma (2026-08-24, kullanıcı bulgusu "Apple girişi AURA'ya attı" ailesi): Doctorium
+  // deploy'unda HASTA hesabı oturum açamaz — hasta rotaları burada AURA'ya 307'lendiğinden
+  // kullanıcı sessizce başka markaya savruluyordu. Oturum YAZILMAZ, net mesaj döner.
+  if (IS_DOCTORIUM_DEPLOY && user.role === "PATIENT") {
+    return NextResponse.json(
+      { error: "Bu hesap bir hasta hesabı. Doctorium, doktor ve tıp öğrencilerine özel bir çalışma alanıdır — hasta girişi için AURA'yı kullanın." },
       { status: 403 },
     );
   }

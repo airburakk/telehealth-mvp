@@ -7,6 +7,7 @@ import { roleHome, type Role } from "@/lib/session";
 import { patientHome } from "@/lib/patient-journey";
 import { consentedVersion } from "@/lib/consent";
 import { isAppleConfigured, exchangeAppleCode, appleRedirectUri, appleDisplayName, isSafeNextPath } from "@/lib/oauth";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 import { createDoctorAccount } from "@/lib/doctor-signup";
 import { createPatientAccount } from "@/lib/patient-signup";
 
@@ -35,16 +36,11 @@ export async function POST(req: Request) {
   // ⚠️ 303 ŞART: bu bir POST handler'ı ve NextResponse.redirect varsayılanı 307'dir — 307 metodu
   // KORUR, yani tarayıcı hedef sayfaya da POST eder ve kullanıcı 405 görür. Google callback'inde
   // bu tuzak görünmez (oraya gelen istek zaten GET). Buradaki HER redirect 303 olmalı.
+  // Ayrışma (2026-08-24): Doctorium deploy'unda dönüş kapısı /doctorium/giris — /kayit burada
+  // AURA'ya 307'lenir, banner hiç görünmezdi.
+  const gate = intent === "patient" ? "/giris" : IS_DOCTORIUM_DEPLOY ? "/doctorium/giris" : "/kayit";
   const back = (reason: string) =>
-    NextResponse.redirect(
-      new URL(
-        intent === "patient"
-          ? `/giris?oauth=${reason}&provider=apple`
-          : `/kayit?oauth=${reason}&provider=apple`,
-        origin,
-      ),
-      303,
-    );
+    NextResponse.redirect(new URL(`${gate}?oauth=${reason}&provider=apple`, origin), 303);
 
   if (!isAppleConfigured()) return back("unavailable");
 
@@ -115,6 +111,12 @@ export async function POST(req: Request) {
       return back("error");
     }
   }
+
+  // Ayrışma korkuluğu (2026-08-24, kullanıcı bulgusu: "Apple ile giriş beni AURA'ya attı"):
+  // Doctorium deploy'unda bu kimlik bir HASTA hesabına bağlıysa oturum AÇILMAZ — eski davranış
+  // hastayı patientHome'a (triyaj/vakalarım) yönlendiriyor, o rotalar da AURA'ya 307'lenip
+  // kullanıcıyı sessizce başka markaya savuruyordu. Kapıya net "role" mesajıyla dönülür.
+  if (IS_DOCTORIUM_DEPLOY && user.role === "PATIENT") return back("role");
 
   const cv = await consentedVersion(user.id);
   await createSession({ id: user.id, email: user.email, name: user.name, role: user.role as Role, cv });
