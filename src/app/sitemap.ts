@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/aura-landing/seo";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 
 // XML sitemap (v5.9.1) — yalnız HALKA AÇIK, indekslenebilir rotalar. Auth-kapılı paneller
 // (proxy matcher: /triyaj, /vaka, /doktor, /operasyon, /admin, /acente, /partner, /etik-kurul,
@@ -13,6 +14,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: number,
     changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]
   ) => ({ url: `${SITE_URL}${path}`, lastModified: now, changeFrequency, priority });
+
+  // Doctorium deploy'u (Faz A, 2026-08-24): sitemap yalnız Doctorium'un halka açık yüzeyleri —
+  // AURA rotaları bu projede zaten AURA köküne 307 döner, sitemap'te anılmaz. SITE_URL burada
+  // Doctorium projesinin kendi kökü (NEXT_PUBLIC_SITE_URL).
+  if (IS_DOCTORIUM_DEPLOY) {
+    return [
+      entry("/doctorium", 1.0, "weekly"), // kök "/" da buraya rewrite — kanonik tek URL
+      entry("/doctorium/kayit", 0.8, "monthly"),
+    ];
+  }
 
   return [
     entry("/", 1.0, "weekly"),
