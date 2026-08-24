@@ -8,6 +8,12 @@
 // (todo'daki üretim-öncesi temizlik) testler ayakta kalır.
 import { Page, Browser, BrowserContext, expect } from "@playwright/test";
 
+// Halka açık, auth'suz vitrin sayfaları — salt-okur smoke paketlerinin (erisilebilirlik + mobil)
+// ORTAK listesi; iki dosya ayrı kopya tutup sürüklenmesin diye burada yaşar (test dosyaları
+// birbirini import EDEMEZ — test() kayıtları import anında ikinci kez çalışır).
+// Yeni halka açık rota eklenince buraya eklenir; /doctorium (2026-08-23, landing V2) tek dil TR.
+export const PUBLIC_PAGES = ["/", "/giris", "/kurumsal-giris", "/guven-ve-gizlilik", "/how-it-works", "/for-clinicians", "/doctorium"] as const;
+
 export type DemoRole = "Hasta" | "Doktor" | "Koordinatör" | "Etik Kurul" | "Partner Doktor";
 
 // Rol → seed'li demo hesabı (prisma/seed.ts ile birebir).
