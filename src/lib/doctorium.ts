@@ -539,8 +539,16 @@ interface RawModuleResult { key: FeedModuleKey; items: FeedItem[]; requested: nu
  * birleştirilmemiş/interleave edilmemiş) çünkü her modülün "nereden devam" cursor'ı kendi
  * dizisinin SON öğesinden çıkar (bkz. cursorsFrom).
  */
+/** Akışım sorgu seçenekleri (2026-08-24): sekme sorgusu (moduleFeed) tercihi uygularken Akışım
+ *  uygulamıyordu — "ulusal'a çektim ama akışta uluslararası haber var" (kullanıcı bildirimi).
+ *  · sektorelSources: sektörel kaynağı daralt (SECTOR_SOURCE_SCOPES listesi).
+ *  · createdSince: "yalnız yeni" (?n=1) — bugün AKIŞA DÜŞEN kayıtlar (createdAt; sayaçla aynı
+ *    eksen). Etkinlik/Kariyer bu modda SORGULANMAZ: küratörlü veridir, gece akışı yoktur ve
+ *    sayaç (todayModuleCounts) onları hiç saymaz — sayının vaadiyle listenin içeriği örtüşmeli. */
+export type PersonalFeedOpts = { sektorelSources?: string[]; createdSince?: Date };
+
 async function personalFeedRaw(
-  branchSlugs: string[], modules: FeedModuleKey[], limit: number, cursors?: FeedCursors,
+  branchSlugs: string[], modules: FeedModuleKey[], limit: number, cursors?: FeedCursors, opts?: PersonalFeedOpts,
 ): Promise<RawModuleResult[]> {
   const all = modules.length === 0;
   // `cursors[k] === null` = bu modül önceki bir turda tükendi, BİR DAHA SORGULANMAZ (bkz.
@@ -560,6 +568,9 @@ async function personalFeedRaw(
       where: {
         AND: [
           where,
+          // "Yalnız yeni" (?n=1): akışa düşme anı — moduleFeed'deki createdSince ile aynı eksen
+          // (createdAt, publishedAt DEĞİL; 2019 tarihli karar bu gece ingest edildiyse YENİdir).
+          ...(opts?.createdSince ? [{ createdAt: { gte: opts.createdSince } }] : []),
           ...(before
             ? [{ OR: [{ publishedAt: { lt: before.at } }, { AND: [{ publishedAt: before.at }, { id: { lt: before.id } }] }] }]
             : []),
@@ -584,15 +595,22 @@ async function personalFeedRaw(
         : { module: "akademik" },
       q(14),
     ));
-  if (on("sektorel")) jobs.push(news("sektorel", { module: "sektorel" }, q(8)));
+  // Kaynak kapsamı tercihi (2026-08-24): sekmedeki "Kaynak: Ulusal/Uluslararası" süzgeci akışa
+  // da işler — moduleFeed'deki `source: { in }` ile aynı sözleşme (SECTOR_SOURCE_SCOPES).
+  if (on("sektorel"))
+    jobs.push(news("sektorel",
+      { module: "sektorel", ...(opts?.sektorelSources?.length ? { source: { in: opts.sektorelSources } } : {}) },
+      q(8),
+    ));
   if (on("ilac")) jobs.push(news("ilac", { module: "ilac" }, q(6)));
   // Hukuk üç bağımsız alt bölüm (v6.132) — doktor tercihler sayfasından üçünü ayrı yönetir.
   if (on("hukuk-mevzuat")) jobs.push(news("hukuk-mevzuat", { module: "mevzuat", kind: "mevzuat" }, q(4)));
   if (on("hukuk-ictihat")) jobs.push(news("hukuk-ictihat", { module: "mevzuat", kind: "ictihat" }, q(2)));
   if (on("hukuk-doktrin")) jobs.push(news("hukuk-doktrin", { module: "mevzuat", kind: "doktrin" }, q(2)));
-  if (on("etkinlik"))
+  // Etkinlik/Kariyer "yalnız yeni" modunda sorgulanmaz — gerekçe PersonalFeedOpts yorumunda.
+  if (on("etkinlik") && !opts?.createdSince)
     jobs.push(congressFeedItems(branchSlugs, q(3), cur("etkinlik")).then((items) => ({ key: "etkinlik", items, requested: q(3) })));
-  if (on("kariyer"))
+  if (on("kariyer") && !opts?.createdSince)
     jobs.push(careerFeedItems(q(3), cur("kariyer")).then((items) => ({ key: "kariyer", items, requested: q(3) })));
 
   return Promise.all(jobs);
@@ -641,9 +659,9 @@ export async function personalFeed(branchSlugs: string[], limit = 40, modules: F
  * işaretçisini taşıdığı için bu sızıntıyı yapısal olarak imkânsız kılar.
  */
 export async function personalFeedPage(
-  branchSlugs: string[], modules: FeedModuleKey[], cursors: FeedCursors, limit = 40,
+  branchSlugs: string[], modules: FeedModuleKey[], cursors: FeedCursors, limit = 40, opts?: PersonalFeedOpts,
 ): Promise<{ items: FeedItem[]; cursors: FeedCursors; done: boolean }> {
-  const raw = await personalFeedRaw(branchSlugs, modules, limit, cursors);
+  const raw = await personalFeedRaw(branchSlugs, modules, limit, cursors, opts);
   const merged = raw.flatMap((r) => r.items);
   merged.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
   // Çeşitlilik geçişi (2026-08-18): aynı modülden art arda en fazla 3 kart.
@@ -654,6 +672,10 @@ export async function personalFeedPage(
   // önce eski (null'lar dahil), sonra yeni (bu turda sorgulananların taze durumu) olmalı ki
   // tükenmiş modül canlanıp baştan sorgulanmasın.
   const nextCursors: FeedCursors = { ...cursors, ...cursorsFrom(raw) };
+  // "Yalnız yeni" modunda hiç sorgulanmayan Etkinlik/Kariyer AÇIKÇA null'lanır (TÜKENDİ) —
+  // yoksa `done` asla true olmaz ve sonsuz kaydırma boş sayfaları sonsuza dek çekerdi
+  // ("üç hâl" dersinin devamı: anahtar yok = "henüz sorgulanmadı" diye okunur).
+  if (opts?.createdSince) { nextCursors.etkinlik = null; nextCursors.kariyer = null; }
   const allModules: FeedModuleKey[] = modules.length ? modules : FEED_MODULE_OPTIONS.map((o) => o.key);
   const done = allModules.every((k) => nextCursors[k] === null);
   return { items, cursors: nextCursors, done };

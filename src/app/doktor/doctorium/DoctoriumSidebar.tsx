@@ -186,12 +186,15 @@ export function DoctoriumSidebar({
           <ShelfTabs active={active} counts={counts} />
 
           {/* Sağ küme: yalnız nabız (kullanıcı kararı 2026-08-18, 2. tur) — Kaydettiklerim ve
-              Puanlarım Header profil menüsünde. Nabız TIKLANABİLİR (3. tur): Akışım'a götürür. */}
+              Puanlarım Header profil menüsünde. Nabız TIKLANABİLİR (3. tur): 2026-08-24'ten beri
+              Akışım'ın YALNIZ-YENİ görünümüne (?n=1) götürür — düz Akışım "sayıya tıkladım ama
+              yenileri göremedim" olarak okunuyordu (kullanıcı bildirimi; nabız zaten yalnız
+              bugün yeni varken çizilir → süzgeçli hedef hiçbir durumda boş vaat değil). */}
           <div className="ml-auto flex shrink-0 items-center pl-4">
             {totalToday != null && (
               <Link
-                href="/doktor/doctorium"
-                aria-label={`bugün ${totalToday} yeni içerik — Akışım'a git`}
+                href="/doktor/doctorium?n=1"
+                aria-label={`bugün ${totalToday} yeni içerik — yalnızca yenileri gör`}
                 className="shelf-pulse aura-mono hidden items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] transition-colors lg:flex"
               >
                 <span aria-hidden className="shelf-dot h-1.5 w-1.5 rounded-full" />

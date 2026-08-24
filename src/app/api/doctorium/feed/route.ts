@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 import { hasDoctoriumAccess } from "@/lib/doctor-activation";
 import {
   BRANCH_OPTIONS, effectiveBranches, parseFeedModules, personalFeedPage, singleBranchFeedPage,
-  localizeTitles, savedArticleIds, type FeedCursors, type FeedModuleKey,
+  localizeTitles, savedArticleIds, parseViewPrefs, trDayStart, SECTOR_SOURCE_SCOPES,
+  type FeedCursors, type FeedModuleKey, type PersonalFeedOpts,
 } from "@/lib/doctorium";
 
 // Doctorium Akışım — sonsuz kaydırma "sonraki sayfa" (2026-08-21). Middleware /api'yi KORUMAZ —
@@ -25,13 +26,14 @@ export async function GET(req: Request) {
   let branches: string[] = [];
   let feedMods: FeedModuleKey[] = [];
   let doctorId: string | null = null;
+  let sektorelSources: string[] | undefined;
   if (user.role === "DOCTOR") {
     const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
     const doctor = me?.doctorId
       ? await db.doctor.findUnique({
           where: { id: me.doctorId },
           select: {
-            id: true, branch: true, newsBranches: true, feedModules: true,
+            id: true, branch: true, newsBranches: true, feedModules: true, doctoriumViewPrefs: true,
             diplomaVerifiedAt: true, studentVerifiedAt: true,
           },
         })
@@ -42,6 +44,10 @@ export async function GET(req: Request) {
     branches = effectiveBranches(doctor.newsBranches, doctor.branch);
     feedMods = parseFeedModules(doctor.feedModules);
     doctorId = doctor.id;
+    // 2026-08-24 — sayfa 2+ da kaynak tercihini uygular (page.tsx ilk partiyle AYNI süzgeç;
+    // taşınmazsa doktor kaydırdıkça süzgeçsiz kayıtlar karışırdı).
+    const srcScope = parseViewPrefs(doctor.doctoriumViewPrefs).sektorel.source;
+    sektorelSources = srcScope ? SECTOR_SOURCE_SCOPES[srcScope] : undefined;
   }
   // COORDINATOR/ADMIN branches=[]/feedMods=[] (tümü) ile devam eder — page.tsx'te doctor=null
   // olduğunda personalFeed(branches=[], ...) aynı şekilde çağrılıyor (gözetim erişimi).
@@ -63,10 +69,15 @@ export async function GET(req: Request) {
   }
 
   try {
+    // "Yalnız yeni" (?n=1): sayfa görünümüyle aynı sınır (trDayStart) — FeedLoadMore taşır.
+    const opts: PersonalFeedOpts = {
+      sektorelSources,
+      createdSince: url.searchParams.get("n") === "1" ? trDayStart() : undefined,
+    };
     const page = focus
       ? await singleBranchFeedPage(focus, 30, JSON.parse(cursorParam) as { at: string; id: string })
           .then((p) => ({ items: p.items, nextCursor: p.cursor ? JSON.stringify(p.cursor) : null }))
-      : await personalFeedPage(branches, feedMods, JSON.parse(cursorParam) as FeedCursors, 40)
+      : await personalFeedPage(branches, feedMods, JSON.parse(cursorParam) as FeedCursors, 40, opts)
           .then((p) => ({ items: p.items, nextCursor: p.done ? null : JSON.stringify(p.cursors) }));
 
     const items = page.items.length ? await localizeTitles(page.items) : page.items;

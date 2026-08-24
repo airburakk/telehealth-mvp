@@ -119,8 +119,10 @@ export default async function DoctoriumPage({
   const focus = sp.b && VALID_SLUGS.has(sp.b) && branches.includes(sp.b) ? sp.b : null;
 
   // "Yeni" süzgeci (v6.132): sayaç şeridinden gelinir — bu gece akışa DÜŞEN kayıtlar
-  // (createdAt), kaynağın yayım tarihi değil. Akışım'da anlamsız (orada zaten karışım var).
-  const onlyNew = active !== "akis" && sp.n === "1";
+  // (createdAt), kaynağın yayım tarihi değil. 2026-08-24: Akışım da destekler (raf nabzı
+  // "BUGÜN N YENİ" artık ?n=1 ile gelir — kullanıcı bildirimi: sayaç tıklaması yalnız yeniler
+  // yerine düz sekmeye götürüyordu). Tek-branş odağında (?b=) anlamsız — akış dalında elenir.
+  const onlyNew = sp.n === "1";
   // İçtihat serbest metin araması (v6.132): kutu içinden gelir, URL'de taşınır (?q=).
   const legalQuery = sp.q?.trim().slice(0, 80) || null;
 
@@ -153,7 +155,12 @@ export default async function DoctoriumPage({
       items = page.items;
       feedNextCursor = page.cursor ? JSON.stringify(page.cursor) : null;
     } else {
-      const page = await personalFeedPage(branches, feedMods, {}, 40);
+      // 2026-08-24 — Akışım da tercihleri uygular (kullanıcı bildirimi: "ulusal'a çektim ama
+      // akışta uluslararası haber var"): sektörel kaynak kapsamı + "yalnız yeni" (?n=1).
+      const page = await personalFeedPage(branches, feedMods, {}, 40, {
+        sektorelSources: viewPrefs.sektorel.source ? SECTOR_SOURCE_SCOPES[viewPrefs.sektorel.source] : undefined,
+        createdSince: since,
+      });
       items = page.items;
       feedNextCursor = page.done ? null : JSON.stringify(page.cursors);
     }
@@ -354,7 +361,7 @@ export default async function DoctoriumPage({
       {onlyNew && (
         <div className="mt-4">
           <Link
-            href={`/doktor/doctorium?m=${active}`}
+            href={active === "akis" ? "/doktor/doctorium" : `/doktor/doctorium?m=${active}`}
             className="aura-mono inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.4)] hover:bg-emerald-500/25"
           >
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
@@ -531,7 +538,7 @@ export default async function DoctoriumPage({
               {/* Sonsuz kaydırma (2026-08-21): yalnız Akışım, yalnız sunucudaki ilk parti
                   tükenmediyse (feedNextCursor null değilse) render edilir. */}
               {active === "akis" && feedNextCursor && (
-                <FeedLoadMore focus={focus} initialCursor={feedNextCursor} />
+                <FeedLoadMore focus={focus} initialCursor={feedNextCursor} onlyNew={onlyNew && !focus} />
               )}
             </ul>
           )}

@@ -22,7 +22,9 @@ import type { FeedItem } from "@/lib/doctorium";
 
 type FeedItemJSON = Omit<FeedItem, "publishedAt"> & { publishedAt: string; saved: boolean | null };
 
-export function FeedLoadMore({ focus, initialCursor }: { focus: string | null; initialCursor: string }) {
+// `onlyNew` (2026-08-24): sayfa "yalnız yeni" (?n=1) görünümündeyse sonraki sayfalar da aynı
+// süzgeçle çekilmeli — parametre taşınmazsa 2. sayfadan itibaren eski kayıtlar karışırdı.
+export function FeedLoadMore({ focus, initialCursor, onlyNew = false }: { focus: string | null; initialCursor: string; onlyNew?: boolean }) {
   const [items, setItems] = useState<FeedItemJSON[]>([]);
   const [cursor, setCursor] = useState<string | null>(initialCursor);
   const [loading, setLoading] = useState(false);
@@ -63,6 +65,7 @@ export function FeedLoadMore({ focus, initialCursor }: { focus: string | null; i
     try {
       const qs = new URLSearchParams({ cursor: c });
       if (focus) qs.set("focus", focus);
+      if (onlyNew) qs.set("n", "1");
       const res = await fetch(`/api/doctorium/feed?${qs.toString()}`);
       if (!res.ok) throw new Error(String(res.status));
       const data: { items: FeedItemJSON[]; nextCursor: string | null } = await res.json();
