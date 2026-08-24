@@ -15,7 +15,7 @@ import { tier1Query, tier2Query, BRANCH_JOURNALS, GENERAL_JOURNALS } from "@/lib
 import {
   isProfessionallyRelevant, categorize, parseItoDate,
   NEWS_IMAGE_HOSTS, allowedImageUrl, extractOgImage, RSS_SOURCES,
-  isAssociationRelevant, ASSOCIATION_RSS_SOURCES,
+  isAssociationRelevant, ASSOCIATION_RSS_SOURCES, SGK_RELAY,
 } from "@/lib/doctorium-sources";
 import { SECTOR_SOURCE_SCOPES } from "@/lib/doctorium";
 import { ASSOCIATIONS, watchUrl } from "@/lib/association-sources";
@@ -192,10 +192,28 @@ describe("Sektörel kaynak kapsamı (v6.99.3)", () => {
     // Yeni kaynak eklenip kapsam listesi unutulursa o kaynak "Tümü"nde görünür ama Ulusal/
     // Uluslararası filtrelerinin İKİSİNDE de kaybolur — bu test onu yakalar.
     const covered = new Set([...SECTOR_SOURCE_SCOPES.ulusal, ...SECTOR_SOURCE_SCOPES.uluslararasi]);
-    const sectorSources = ["ttb", "ohsad", "istabip", "who", ...RSS_SOURCES.map((s) => s.source)];
+    const sectorSources = ["ttb", "ohsad", "sgk", "istabip", "who", ...RSS_SOURCES.map((s) => s.source)];
     for (const s of sectorSources) {
       expect(covered.has(s), `'${s}' kaynağı SECTOR_SOURCE_SCOPES'ta yok — lib/doctorium.ts'e ekle`).toBe(true);
     }
+  });
+
+  // 2026-08-24 — SGK doğrudan kaynağa bağlandı; OHSAD'ın SGK aktarımları SGK_RELAY ile süzülür.
+  // Süzgeç gevşerse aynı duyuru iki kaynaktan düşer (kullanıcının çakışma-önleme kararı bozulur).
+  it("SGK_RELAY: OHSAD'ın SGK aktarımlarını yakalar, kendi haberlerini bırakır", () => {
+    const relay = [
+      "SGK Genel Yazısı: Fatura Eki Belgelerin Elektronik Ortamda Gönderilmesi",
+      "Sosyal Güvenlik Kurumu Sağlık Uygulama Tebliğinde Değişiklik Yapılmasına Dair Tebliğ",
+      "Sağlık Uygulama Tebliğinde Değişiklik – 29 Haziran 2026",
+      "Bedeli Ödenecek İlaçlar Listesinde Yapılan Düzenlemeler",
+    ];
+    for (const t of relay) expect(SGK_RELAY.test(t.toLocaleLowerCase("tr-TR")), t).toBe(true);
+    const own = [
+      "Özel Hastaneler Yönetmeliğinde Değişiklik",
+      "Sağlık Bakanlığı ile Buluşma Gerçekleşti",
+      "Şehir Hastanelerinde Kapasite Artışı",
+    ];
+    for (const t of own) expect(SGK_RELAY.test(t.toLocaleLowerCase("tr-TR")), t).toBe(false);
   });
 
   // v6.129 — dernek beslemeleri de sektörel modüle yazıyor; aynı sessiz-kayıp riski onlarda da var.

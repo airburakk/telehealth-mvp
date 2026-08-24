@@ -8,15 +8,20 @@
 //                       tüm RG istekleri özel-CA'lı istemciden geçer (lib/rg-ca.ts; TTB deseni).
 //   ✅ OHSAD          — özel hastaneler derneği; SUT/geri ödeme/mevzuat haberlerini derliyor
 //                       ("Sağlık Uygulama Tebliğinde Değişiklik – 29 Haziran 2026" gibi tarihli).
-//                       SGK'nın kendi sitesi duyuruları JS ile yüklüyor (statik HTML'de 0 tarih) →
-//                       SGK yerine OHSAD aktarımı kullanılır, KAYNAK OHSAD olarak yazılır.
+//                       🔄 2026-08-24: SGK-aktarımı kalemleri artık SÜZÜLÜR (SGK_RELAY) — SGK
+//                       doğrudan kaynağa bağlandı, aynı duyuru iki kaynaktan düşmesin.
+//   ✅ SGK (GSS GM)   — 2026-08-24'te YENİDEN ölçüldü: v3 site /Duyuru/Index'i SUNUCUDA basıyor
+//                       (2026-08-01 "JS ile yükleniyor" hükmü ESKİ siteye aitti). Kart: tarih
+//                       rozeti + başlık + yayımcı birim; detay slug'ı damgalı (idempotent id).
+//                       YALNIZ Genel Sağlık Sigortası GM duyuruları alınır (kullanıcı kararı).
 //   ✅ TTB            — doktor özlük hakları/ücret tarifeleri; tarihli liste.
 //   ✅ openFDA        — drug/enforcement + device/enforcement (geri çekme) · drug/label (prospektüs).
 //                       ⚠️ ABD verisi: Türkiye ruhsatı (KÜB/KT) farklı olabilir → UI'da uyarı ZORUNLU.
 //   ✅ ClinicalTrials — /api/v2/studies; faz + durum (lansman/geliştirme takibi).
 //   ✅ WHO            — rss-feeds/news-english.xml.
-//   ❌ EMA · TİTCK · SGK · AA/İHA — makine-okunur besleme YOK (EMA/TİTCK uçları 404, SGK JS,
-//      ajanslar ticari abonelik). Bu kaynaklardan "varmış gibi" içerik ÜRETİLMEZ.
+//   ❌ EMA · TİTCK · AA/İHA — makine-okunur besleme YOK (EMA/TİTCK uçları 404, ajanslar
+//      ticari abonelik). Bu kaynaklardan "varmış gibi" içerik ÜRETİLMEZ. (SGK 2026-08-24'te
+//      bu listeden çıktı — yukarıdaki ✅ satırı.)
 //
 // Kazıma kırılgandır: bir kaynak bozulursa 0 kayıtla döner ve cron yanıtında görünür — uydurma
 // içerik hiçbir koşulda yazılmaz.
@@ -411,6 +416,10 @@ export async function ingestOhsad(opts?: IngestOpts): Promise<[number, number]> 
     seen.add(url);
     scanned++;
     if (!isHealthRelated(title)) continue;
+    // SGK-aktarım süzgeci (kullanıcı kararı 2026-08-24): SGK/GSS duyuruları artık DOĞRUDAN
+    // kaynağından geliyor (ingestSgkGss) — OHSAD'ın aktarımını da yazmak aynı duyuruyu iki
+    // kaynaktan düşürürdü. SUT / "Bedeli Ödenecek İlaçlar" serileri de SGK'nın kendi yayınıdır.
+    if (SGK_RELAY.test(title.toLocaleLowerCase("tr-TR"))) continue;
     // Başlık sonundaki "– 29 Haziran 2026" tarihini yakala; yoksa bugün.
     const published = parseTurkishDate(title) ?? new Date();
     // URL yolu benzersiz kimlik (slug).
@@ -430,6 +439,71 @@ export async function ingestOhsad(opts?: IngestOpts): Promise<[number, number]> 
     if (isNew) {
       created++;
       opts?.onItem?.(`[OHSAD · ${cat ?? "yonetim"}] ${title.slice(0, 110)}`);
+    }
+  }
+  return [scanned, created];
+}
+
+// ── SGK — Genel Sağlık Sigortası GM duyuruları (kullanıcı kararı 2026-08-24) ─
+
+// OHSAD döngüsündeki aktarım süzgeci: bu desenler SGK'nın kendi yayın alanı (küçük-harf tr-TR
+// ile test edilir). "Sağlık Uygulama Tebliğ" köküne dikkat: OHSAD başlıkları çekimli gelir.
+// Export yalnız birim test için (doctorium-filtreler — süzgecin gevşemesi sessiz çift-kayıt üretir).
+export const SGK_RELAY = /\bsgk\b|sosyal güvenlik kurumu|sağlık uygulama tebliğ|bedeli ödenecek ilaç/;
+
+/**
+ * SGK v3 duyuru sayfası SUNUCUDA render edilir (2026-08-24 ölçümü; 2026-08-01 "JS" hükmü eski
+ * siteye aitti). YALNIZ Genel Sağlık Sigortası GM duyuruları alınır: önce ana sayfa menüsünden
+ * birimin kendi liste sayfası bulunur (slug DAMGALI ve değişebilir → her koşuda taze çözülür,
+ * kendini onarır), bulunamazsa ana listedeki kartlar birim etiketiyle süzülür. Kalemler
+ * "haberler kısmı"na yazılır (module sektorel — kullanıcı kararı); kategori başlıktan, GSS'nin
+ * doğal varsayılanı "sut" (geri ödeme ekseni). Görsel çekilmez (gov.tr og:image allowlist'te
+ * yok) — CoverArt üretilmiş kapak devrede.
+ */
+export async function ingestSgkGss(opts?: IngestOpts): Promise<[number, number]> {
+  const base = "https://www.sgk.gov.tr";
+  const main = await fetch(`${base}/Duyuru/Index`, {
+    headers: browserHeaders(), cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (!main.ok) throw new Error(`SGK HTTP ${main.status}`);
+  let html = await main.text();
+
+  // Menüden GSS liste sayfası; düşerse ana liste + birim-etiketi süzgeciyle devam (fail-soft).
+  let unitPage = false;
+  const gssHref = /href="(\/duyuru\/index\/GENEL-SAGLIK-SIGORTASI-GENEL-MUDURLUGU-[^"]+)"/.exec(html)?.[1];
+  if (gssHref) {
+    try {
+      const res = await fetch(base + gssHref, {
+        headers: browserHeaders(`${base}/Duyuru/Index`), cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+      if (res.ok) { html = await res.text(); unitPage = true; }
+    } catch { /* ana listeyle devam */ }
+  }
+
+  let scanned = 0;
+  let created = 0;
+  for (const m of html.matchAll(/<a\b[^>]*href="(\/duyuru\/detay\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/gi)) {
+    const inner = m[2];
+    const title = plain(/class="announcement-title[^"]*"[^>]*>([\s\S]*?)<\/div>/.exec(inner)?.[1] ?? "");
+    if (title.length < 10) continue;
+    scanned++;
+    // Birim etiketi karttaki .announcement-link satırında; GSS sayfasındaysak süzgeç gerekmez.
+    const unit = plain(/class="announcement-link[^"]*"[^>]*>([\s\S]*?)<\/div>/.exec(inner)?.[1] ?? "");
+    if (!unitPage && !unit.toLocaleLowerCase("tr-TR").includes("genel sağlık sigortası")) continue;
+    // Tarih rozeti üç ayrı düğümde (21 / Ağustos / 2026) — parseTurkishDate'in beklediği biçime dizilir.
+    const day = /class="date-day[^"]*"[^>]*>\s*(\d{1,2})/.exec(inner)?.[1];
+    const month = plain(/class="date-month[^"]*"[^>]*>([\s\S]*?)<\/div>/.exec(inner)?.[1] ?? "");
+    const year = /class="date-year[^"]*"[^>]*>\s*(\d{4})/.exec(inner)?.[1];
+    const published = (day && month && year ? parseTurkishDate(`${day} ${month} ${year}`) : null) ?? new Date();
+    const id = m[1].replace(/\/$/, "").split("/").pop() as string; // damgalı slug — idempotent
+    const isNew = await upsertArticle({
+      source: "sgk", externalId: id, module: "sektorel",
+      category: categorize(title) ?? "sut", kind: "haber",
+      title, sourceName: "SGK", url: base + m[1], publishedAt: published,
+    }, opts?.dryRun);
+    if (isNew) {
+      created++;
+      opts?.onItem?.(`[SGK · ${categorize(title) ?? "sut"}] ${title.slice(0, 110)}`);
     }
   }
   return [scanned, created];

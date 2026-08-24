@@ -303,7 +303,7 @@ export function PreferencesBoard(p: Props) {
 
                       {s.extra === "sektorel" && (
                         <>
-                          <Block title="Kaynak" hint="Ulusal: TTB · OHSAD · İstanbul Tabip Odası — Uluslararası: Medscape · Medical Xpress · WHO.">
+                          <Block title="Kaynak" hint="Ulusal: TTB · OHSAD · SGK · İstanbul Tabip Odası — Uluslararası: Medscape · Medical Xpress · WHO.">
                             <RadioChips items={SCOPES} value={sector.source}
                               onChange={(source) => saveSector({ ...sector, source })} />
                           </Block>

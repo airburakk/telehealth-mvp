@@ -18,7 +18,7 @@ import { NEWS_QUERIES } from "./medical-news";
 import { tier1Query, tier2Query } from "./academic-journals";
 import { BRANCHES } from "./triage";
 import {
-  fetchGazetteToday, ingestGazetteItems, ingestOhsad, ingestTtb,
+  fetchGazetteToday, ingestGazetteItems, ingestOhsad, ingestSgkGss, ingestTtb,
   ingestFdaRecalls, ingestTrials, ingestWho, describeFetchError,
   ingestIstanbulTabip, ingestRss, RSS_SOURCES, ASSOCIATION_RSS_SOURCES,
 } from "./doctorium-sources";
@@ -263,6 +263,9 @@ export async function ingestDoctorium(): Promise<IngestResult> {
   // Sektörel + ilaç kaynakları (v6.50). Her biri BAĞIMSIZ try: biri bozulursa diğerleri toplar.
   const collectors: [string, () => Promise<[number, number]>][] = [
     ["ohsad", ingestOhsad],
+    // SGK GSS GM duyuruları (kullanıcı kararı 2026-08-24) — OHSAD'ın SGK aktarımı aynı kararla
+    // süzülüyor (doctorium-sources SGK_RELAY): tek duyuru tek kaynaktan.
+    ["sgk", ingestSgkGss],
     ["ttb", ingestTtb],
     ["fda", () => ingestFdaRecalls(10)],
     ["trials", () => ingestTrials(10)],

@@ -189,8 +189,9 @@ export { SECTOR_CATEGORIES, categoryLabel } from "./doctorium-labels";
 // v6.129 (2026-08-19): uzmanlık dernekleri eklendi — hepsi ULUSAL (Türkiye dernekleri).
 // Kaynak anahtarları lib/association-sources.ts ASSOCIATIONS slug'larıyla AYNI olmalı;
 // sözleşme testi (doctorium-filtreler) iki listeyi de hizada tutar.
+// 2026-08-24: "sgk" eklendi (GSS GM duyuruları doğrudan kaynaktan — ingestSgkGss).
 export const SECTOR_SOURCE_SCOPES: Record<"ulusal" | "uluslararasi", string[]> = {
-  ulusal: ["ttb", "ohsad", "istabip", "klimik", "tjod", "tatd", "tgd-gastro", "tgcd"],
+  ulusal: ["ttb", "ohsad", "sgk", "istabip", "klimik", "tjod", "tatd", "tgd-gastro", "tgcd"],
   uluslararasi: ["who", "medscape", "medicalxpress"],
 };
 
