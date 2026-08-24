@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Loader2, Megaphone } from "lucide-react";
+import { Check, ChevronDown, Loader2, Megaphone, Newspaper } from "lucide-react";
 
 /**
  * Akış Tercihleri panosu — T1 KATLANIR LİSTE (v6.132, kullanıcı seçimi 2026-08-20).
@@ -111,7 +111,17 @@ interface Props {
   showSponsor: boolean;
   sponsorInitial: boolean;
   sponsorText: string;
+  /** Doctorium Post günlük özet kanalı (2026-08-24): null = kapalı · "app" · "email". */
+  digestInitial: string | null;
 }
+
+// Doctorium Post kanal seçenekleri — "" = kapalı (API'ye null gider). E-posta, altyapı
+// (Resend) aktifleşene dek dormant'tır ama tercih ŞİMDİDEN kaydedilir (lib/email.ts deseni).
+const DIGEST_CHANNELS = [
+  { key: "", label: "Kapalı" },
+  { key: "app", label: "Uygulama içi" },
+  { key: "email", label: "E-posta" },
+];
 
 type Status = { state: "idle" | "saving" | "saved" | "error"; msg?: string };
 
@@ -137,6 +147,10 @@ export function PreferencesBoard(p: Props) {
 
   const [sponsor, setSponsor] = useState(p.sponsorInitial);
   const [spSt, setSpSt] = useState<Status>({ state: "idle" });
+
+  // Doctorium Post — tekli radyo seçim → anında yazılır (görünüm süzgeçleriyle aynı gerekçe).
+  const [digest, setDigest] = useState(p.digestInitial ?? "");
+  const [dgSt, setDgSt] = useState<Status>({ state: "idle" });
 
   // v6.142 — Sektörel/İlaç & Cihaz/Hukuk GÖRÜNÜM süzgeçleri. Tekli radyo seçim (branş/tür gibi
   // çok-tıklamalı liste DEĞİL) → debounce yok, her tıklama anında yazılır (alertler/kapsamla
@@ -405,6 +419,41 @@ export function PreferencesBoard(p: Props) {
           </section>
         );
       })}
+
+      {/* Doctorium Post — günlük özet aboneliği (2026-08-24). İkili grubun DIŞINDA: içerik
+          tercihi değil, TESLİMAT tercihi (akışa ne girer değil, derlenen özet nereye gelir).
+          ⚖️ Varsayılan KAPALI — abonelik açık seçimdir (opt-in); e-postadaki tek-tık çıkış
+          bu tercihi null'a çeker. Tasarım: vault doctorium-gunluk-ozet-tasarimi-2026-08-24.md */}
+      <section className="mt-9 border-t border-[var(--c-hairline)] pt-6">
+        <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[var(--c-ink)]">
+          <Newspaper size={15} className="text-emerald-300" /> Doctorium Post — günlük özet
+        </h2>
+        <p className="mt-2 max-w-[70ch] text-[12.5px] leading-relaxed text-[var(--c-ink-2)]">
+          Her sabah, akış tercihlerinize göre derlenen kişisel bir özet: gece akışınıza düşen
+          başlıklar bölüm bölüm tek sayfada toplanır. İçeriği olmayan sakin günlerde özet
+          gönderilmez. Sponsorlu içerik ve anketler özete girmez.
+        </p>
+        <div className="mt-3">
+          <RadioChips
+            items={DIGEST_CHANNELS}
+            value={digest}
+            onChange={(key) => {
+              setDigest(key);
+              void post("/api/doctor/digest", { channel: key || null }, setDgSt);
+            }}
+          />
+          <StatusLine
+            status={dgSt}
+            idle={
+              digest === "email"
+                ? "E-posta + uygulama içi bildirim — e-postadaki bağlantıyla tek tıkla çıkabilirsiniz"
+                : digest === "app"
+                  ? "Uygulama içi bildirim — özet hazır olunca zilinize düşer"
+                  : "Kapalı — özet hazırlanmaz"
+            }
+          />
+        </div>
+      </section>
 
       {/* Sponsorlu içerik rızası — ikili grubun DIŞINDA: içerik tercihi değil, RIZA kaydı. */}
       {p.showSponsor && (

@@ -9,6 +9,7 @@ import { ingestYargitay, type YargitayIngestResult } from "@/lib/hukuk-ingest";
 import { ingestDoktrin, type DoktrinIngestResult } from "@/lib/doktrin-ingest";
 import { remindCongressFollows, type CongressRemindResult } from "@/lib/congress-reminder";
 import { ingestTtbEvents, type TtbEventsResult } from "@/lib/ttb-events";
+import { runDailyDigests, type DigestRunResult } from "@/lib/daily-digest";
 
 // GET /api/cron/purge-deleted — saklama süresi dolan klinik kayıtları GERÇEKTEN imha eder (v6.11).
 // vercel.json cron'u günde bir tetikler. registry-sync ile aynı Bearer deseni (anonim tetiklenemez).
@@ -141,6 +142,18 @@ export async function GET(req: Request) {
       ttbEvents = { skipped: true }; // haftalık kontenjan — bugün sırası değil
     }
 
+    // Doctorium Post (2026-08-24): abone doktorlara günlük özet baskısı. BİLİNÇLİ SIRA — ingest
+    // adımlarından (doctorium/yargitay/doktrin) SONRA koşar ki baskı o gecenin içeriğini görsün;
+    // cron 06:30 TR'de koştuğu için "sabah gazetesi" zamanlaması kendiliğinden oturur (tasarım:
+    // vault output/doctorium-gunluk-ozet-tasarimi-2026-08-24.md §3). Kritik değil: hata imha
+    // akışını düşürmez; doktor+gün idempotensi lib içinde (yeniden koşum ikinci baskı üretmez).
+    let digest: DigestRunResult | { error: string };
+    try {
+      digest = await runDailyDigests();
+    } catch (e) {
+      digest = { error: e instanceof Error ? e.message.slice(0, 120) : "günlük özet koşamadı" };
+    }
+
     // KALICI KOŞU İZİ (2026-07-29): Vercel Hobby'de runtime log saklama süresi 1 SAAT — cron gece
     // koştuğu için sayaçları log'dan gözlemek fiilen imkânsızdı ("ertesi gün bak" planı çalışmıyordu).
     // Sayaçlar audit zincirine yazılır: PHI YOK (yalnız adetler), günde 1 satır (hacim ~3,5/gün'ün
@@ -165,13 +178,16 @@ export async function GET(req: Request) {
       : "error" in ttbEvents
         ? `hata: ${ttbEvents.error}`
         : `yeni=${ttbEvents.created} guncel=${ttbEvents.updated} devir=${ttbEvents.adopted}/${ttbEvents.found}${ttbEvents.warnings.length ? ` sorun=${ttbEvents.warnings.length}` : ""}`;
+    const pst = "error" in digest
+      ? `hata: ${digest.error}`
+      : `abone=${digest.checked} baski=${digest.produced} eposta=${digest.emailed}${digest.emailSimulated ? `(sim=${digest.emailSimulated})` : ""} bos=${digest.skippedEmpty} tekrar=${digest.skippedDone} hata=${digest.failed}`;
     await recordAccess({
       actor: null, // sistem koşusu
       action: "CRON_MAINTENANCE",
       resourceType: "SYSTEM",
       resourceId: "purge-deleted",
       subjectUserId: null,
-      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · ictihat ${ict} · doktrin ${dok} · kongre ${con} · ttb ${ttb}`,
+      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · ictihat ${ict} · doktrin ${dok} · kongre ${con} · ttb ${ttb} · post ${pst}`,
     });
 
     return NextResponse.json({
@@ -188,6 +204,7 @@ export async function GET(req: Request) {
       doktrin,
       congressAlerts: congress,
       ttbEvents,
+      dailyDigest: digest,
     });
   } catch (e) {
     // Saklama-imha sözünün bekçisi sessizce düşemez (Ray C): alarm + 500 (Vercel cron log'unda görünür).

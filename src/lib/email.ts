@@ -15,6 +15,9 @@ export interface EmailMessage {
   subject: string;
   text: string;
   html?: string;
+  /** Ek SMTP başlıkları — ör. Doctorium Post bülteninin RFC 8058 List-Unsubscribe çifti
+   *  (Gmail/Yahoo tek-tık çıkış şartı). Resend API `headers` alanını olduğu gibi taşır. */
+  headers?: Record<string, string>;
 }
 
 export interface EmailSendResult {
@@ -45,6 +48,7 @@ export async function sendEmail(msg: EmailMessage): Promise<EmailSendResult> {
         subject: msg.subject,
         text: msg.text,
         ...(msg.html ? { html: msg.html } : {}),
+        ...(msg.headers ? { headers: msg.headers } : {}),
       }),
       signal: AbortSignal.timeout(10_000),
     });

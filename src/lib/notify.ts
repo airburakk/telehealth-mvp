@@ -22,7 +22,7 @@ async function nudgeNotify(): Promise<void> {
 }
 
 export interface NotifyInput {
-  type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "FREECARE_MATCH" | "FREECARE_TREATMENT" | "SO_REVIEW" | "SO_REQUEST" | "SO_ASSIGNED" | "SO_OPINION" | "SO_VIDEO" | "CLINIC_OFFER" | "CLINIC_MATCH" | "CONSULT_ANSWERED" | "CONSULT_MESSAGE" | "CONSULT_VIDEO" | "ACCOUNT_VERIFIED" | "AGENCY_FILE" | "DISCHARGE_REQUEST" | "REGISTRY_REPORT" | "TOURISM_DISCLAIMER" | "TOURISM_MESSAGE" | "TOURISM_OFFER" | "CONGRESS_ALERT" | "DEFENSE_REPLY" | "STAFF_APPLICATION" | "DOC_REJECTED" | "DOCTOR_ACTIVATED";
+  type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "FREECARE_MATCH" | "FREECARE_TREATMENT" | "SO_REVIEW" | "SO_REQUEST" | "SO_ASSIGNED" | "SO_OPINION" | "SO_VIDEO" | "CLINIC_OFFER" | "CLINIC_MATCH" | "CONSULT_ANSWERED" | "CONSULT_MESSAGE" | "CONSULT_VIDEO" | "ACCOUNT_VERIFIED" | "AGENCY_FILE" | "DISCHARGE_REQUEST" | "REGISTRY_REPORT" | "TOURISM_DISCLAIMER" | "TOURISM_MESSAGE" | "TOURISM_OFFER" | "CONGRESS_ALERT" | "DAILY_DIGEST" | "DEFENSE_REPLY" | "STAFF_APPLICATION" | "DOC_REJECTED" | "DOCTOR_ACTIVATED";
   title: string;
   body?: string;
   href?: string;
@@ -31,7 +31,7 @@ export interface NotifyInput {
 // AURA↔Doctorium ayrışması (2026-08-24): Doctorium kromunda YALNIZ bu tipler gösterilir —
 // kalan tüm tipler AURA klinik yüzeyinin bildirimleridir. Yeni Doctorium bildirimi eklerken
 // tipi buraya da yaz; aksi hâlde portal zilinde hiç görünmez (fail-closed).
-export const DOCTORIUM_NOTIFICATION_TYPES = ["CONGRESS_ALERT"] as const;
+export const DOCTORIUM_NOTIFICATION_TYPES = ["CONGRESS_ALERT", "DAILY_DIGEST"] as const;
 
 export async function notifyRoles(roles: string[], n: NotifyInput): Promise<void> {
   try {

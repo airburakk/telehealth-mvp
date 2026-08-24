@@ -228,6 +228,13 @@ model Doctor {
   /// URL parametresi (?s=/?d=/?c=) tercihi yalnız o GÖRÜNÜM için ezer, kalıcı tercihi
   /// DEĞİŞTİRMEZ (v6.132'nin congressEventTypes/congressScope sözleşmesiyle aynı).
   doctoriumViewPrefs String?
+  /// Doctorium Post — günlük özet aboneliği (2026-08-24): null = kapalı (varsayılan; abonelik
+  /// AÇIK SEÇİMDİR — ⚖️ ETK/İYS değerlendirmesi bu opt-in'e dayanır, varsayılanı açma) ·
+  /// "app" = uygulama içi bildirim · "email" = e-posta + uygulama içi. E-posta kanalı Resend
+  /// dormant'ken de seçilebilir (kayıt tutulur, gönderim simüle edilir — lib/email.ts deseni).
+  /// E-postadaki tek-tık çıkış (RFC 8058) bu alanı null'a çeker (lib/daily-digest.ts).
+  digestChannel String?
+  dailyDigests  DailyDigest[]
   /// Doctorium sponsorlu içerik KİŞİSELLEŞTİRME açık rızası (v6.68 Faz 1): dolu = rıza verildi
   /// (verildiği an); null = yok/geri alındı → doktora yalnız hedefsiz (bağlamsal) kampanya gösterilir.
   /// Durumun tek kaynağı bu alan; İSPAT izi ConsentRecord'da (scope SPONSOR_TARGETING — grant/revoke
@@ -1149,6 +1156,26 @@ model NewsArticle {
 
   @@unique([source, externalId]) // idempotent ingestion
   @@index([module, publishedAt]) // modül akışı (yeni→eski)
+}
+
+/// Doctorium Post (2026-08-24) — doktor başına GÜNLÜK ÖZET kaydı ("sabah gazetesi").
+/// Satır = o doktora o TR günü üretilen baskı; itemsJson öğe ANLIK GÖRÜNTÜSÜ taşır ki
+/// (a) e-posta ile web görünümü aynı kalsın (gün içi yeni ingest baskıyı değiştirmez),
+/// (b) "son baskıdan beri" penceresi (createdAt) kalıcı bir ize dayansın, (c) arşiv
+/// ("dünkü Post") bedavaya gelsin. İçerik PHI DEĞİL (haber/mevzuat metadata'sı) — şifresiz.
+/// Boş gün = satır YOK (0 içerikli baskı üretilmez; boş gazete gönderilmez — tasarım kararı).
+model DailyDigest {
+  id        String    @id @default(cuid())
+  doctor    Doctor    @relation(fields: [doctorId], references: [id])
+  doctorId  String
+  day       String // TR günü "YYYY-MM-DD" — doktor+gün idempotens anahtarı (cron yeniden koşarsa ikinci baskı çıkmaz)
+  itemsJson String // DigestSection[] anlık görüntüsü (lib/daily-digest.ts — id/başlık/kaynak/url/kısa özet)
+  itemCount Int
+  emailedAt DateTime? // e-posta GERÇEKTEN gönderildiyse (kanal=email + Resend canlı; simülasyonda null kalır)
+  createdAt DateTime  @default(now())
+
+  @@unique([doctorId, day])
+  @@index([doctorId, createdAt])
 }
 
 /// Doctorium Modül E — medikal ETKİNLİK takvimi (v6.48; v6.62 küratörlü veritabanı;

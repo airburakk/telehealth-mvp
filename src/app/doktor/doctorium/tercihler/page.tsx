@@ -55,6 +55,7 @@ export default async function TercihlerPage() {
       // v6.142 — Sektörel/İlaç & Cihaz/Mevzuat GÖRÜNÜM süzgeçleri (aynı sözleşme).
       doctoriumViewPrefs: true,
       sponsorPersonalizationAt: true,
+      digestChannel: true, // Doctorium Post günlük özet aboneliği (2026-08-24)
     },
   });
   if (!doctor) redirect("/doktor");
@@ -108,6 +109,7 @@ export default async function TercihlerPage() {
           showSponsor={!studentOnly}
           sponsorInitial={!!doctor.sponsorPersonalizationAt}
           sponsorText={SPONSOR_CONSENT_TEXT}
+          digestInitial={doctor.digestChannel}
         />
       </div>
     </DoctoriumShell>
