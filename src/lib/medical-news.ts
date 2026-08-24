@@ -2,7 +2,7 @@
 //
 //   1) STUB kartlar (GENERAL / BY_BRANCH / newsForBranch) — PARTNER sayfasının haber şeridi.
 //      ⚠️ Bu kartlar ÖRNEK içeriktir (uydurma) → gerçek makale bağlantısı ASLA verilmez.
-//      Hekim tarafı bunları KULLANMAZ; Doctorium gerçek yayın çeker (lib/doctorium).
+//      Doktor tarafı bunları KULLANMAZ; Doctorium gerçek yayın çeker (lib/doctorium).
 //
 //   2) NEWS_QUERIES — branş → PubMed MeSH sorgusu. Doctorium ingestion'ı bunu okur
 //      (lib/doctorium-ingest); PubMed istemcisi de oraya taşındı (tek yer, çift kopya yok).
@@ -94,4 +94,12 @@ export const NEWS_QUERIES: Record<string, string> = {
   "Fiziksel Tıp ve Rehabilitasyon": "physical therapy modalities[mh] OR rehabilitation[mh]",
   "Diş Tedavisi": "stomatognathic diseases[mh] OR dentistry[mh]",
   "Organ Nakli": "organ transplantation[mh]",
+
+  // Doktor-only branşlar (v6.119) — hasta triyajında yoklar ama Doctorium Akışım/Akademik
+  // modüllerinde doktorun branşı olabilirler; sorgu yoksa akış o branşta SESSİZCE boş kalır.
+  "Acil Tıp": "emergency medicine[mh] OR emergency treatment[mh]",
+  Radyoloji: "diagnostic imaging[mh] AND (methods[sh] OR diagnosis[sh])",
+  "Anesteziyoloji ve Reanimasyon": "anesthesia[mh] OR critical care[mh]",
+  "Tıbbi Patoloji": "pathology[mh] AND (methods[sh] OR diagnosis[sh])",
+  "Tıbbi Genetik": "genetics, medical[mh] OR genetic testing[mh]",
 };

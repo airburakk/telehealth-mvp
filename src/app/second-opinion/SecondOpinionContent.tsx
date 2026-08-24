@@ -80,7 +80,7 @@ export function SecondOpinionContent({ canApply = true, staffHref = null }: { ca
             {C.staffCta} <ArrowRight size={17} />
           </Link>
         )}
-        <Link href="/hekimler" className="inline-flex items-center gap-2 rounded-full border border-[var(--c-hairline)] px-6 py-3 text-[15px] font-semibold text-[var(--c-ink)] hover:border-[var(--c-hairline)]">
+        <Link href="/doktorlar" className="inline-flex items-center gap-2 rounded-full border border-[var(--c-hairline)] px-6 py-3 text-[15px] font-semibold text-[var(--c-ink)] hover:border-[var(--c-hairline)]">
           {C.seeDoctors}
         </Link>
       </div>

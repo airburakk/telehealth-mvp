@@ -1,0 +1,5 @@
+# Git kancaları LF olarak checkout edilmeli (2026-08-20).
+# Windows'ta autocrlf kabuk betiğini CRLF'e çevirirse `/bin/sh^M: bad interpreter` hatası
+# verir ve pre-push kapısı SESSİZCE çalışmaz hale gelir — korkuluğun en kötü kırılma biçimi.
+.githooks/* text eol=lf
+*.sh        text eol=lf

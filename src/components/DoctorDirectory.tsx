@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, Star, BadgeCheck, Globe, ArrowRight, Inbox } from "lucide-react";
-import { DoctorArt } from "@/components/PortamedArt";
+import { DoctorArt } from "@/components/AuraArt";
 import { avatarVariant, isFemaleName } from "@/lib/doctor-profile";
 
 export interface DoctorRow {
@@ -51,7 +51,7 @@ export function DoctorDirectory({ doctors }: { doctors: DoctorRow[] }) {
           </div>
         )}
         {filtered.map((d) => (
-          <Link key={d.id} href={`/hekim/${d.id}`} className="group rounded-[22px] border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 transition hover:border-[var(--c-accent)]/40">
+          <Link key={d.id} href={`/doktorlar/${d.id}`} className="group rounded-[22px] border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 transition hover:border-[var(--c-accent)]/40">
             <div className="flex items-start gap-3">
               <span className="h-12 w-12 shrink-0 overflow-hidden rounded-full ring-1 ring-white/15"><DoctorArt i={avatarVariant(d.name)} female={isFemaleName(d.name)} photo={d.photo} /></span>
               <div className="min-w-0 flex-1">

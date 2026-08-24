@@ -1,6 +1,6 @@
 // Branş görsel kimliği — her tıbbi branşın rengi + (üretilen) sembol/banner varlıkları.
 // Renkler semantik (kalp=kırmızı, onkoloji=mor, nöro=indigo…) + koyu tema (var(--c-bg) zemin) üzerinde
-// okunur orta-parlak tonlar; anahtarlar lib/triage BRANCHES.key ile birebir aynı (30 branş).
+// okunur orta-parlak tonlar; anahtarlar lib/triage BRANCHES.key ile birebir aynı (35 branş; son 5’i doctorOnly).
 // Sembol + banner görselleri Higgsfield ile üretilip public/branches/ altına düşer (Faz C).
 import { BRANCHES } from "./triage";
 
@@ -35,6 +35,13 @@ export const BRANCH_COLORS: Record<string, string> = {
   "gogus-cerrahisi": "#8B5CF6",     // menekşe — göğüs cerrahisi
   "organ-nakli": "#059669",         // koyu zümrüt — organ nakli/yaşam
   "radyasyon-onkolojisi": "#D946EF",// magenta-mor — radyasyon onkolojisi
+
+  // ── Doktor-only branşlar (v6.119) — hasta yüzünde görünmez, Doctorium'da yaşar ──
+  "acil-tip": "#FACC15",            // sarı — aciliyet/uyarı (renk çemberinde boş olan tek aile)
+  radyoloji: "#94A3B8",             // slate — görüntüleme grisi
+  anesteziyoloji: "#818CF8",        // indigo-400 — sedasyon/uyku
+  patoloji: "#BE185D",              // koyu füşya — H&E boyama
+  "tibbi-genetik": "#15803D",       // orman yeşili — kalıtım
 };
 
 // AURA turkuaz vurgusu — branş bilinmiyorsa/eşleşmiyorsa nötr geri düşüş.

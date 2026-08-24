@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AuraMark } from "@/components/PortamedLogo";
+import { AuraMark } from "@/components/AuraLogo";
 
 // Aura UI kiti — boş durum: kitteki tek "marka anı" (Doz 1 sözleşmesi gereği ışıma yok,
 // yalnız AURA sembolü + display tipografi). Braille BURADA KULLANILMAZ — marka kuralı:

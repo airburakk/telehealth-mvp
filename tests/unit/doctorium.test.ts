@@ -15,6 +15,7 @@ import {
   SECTOR_CATEGORIES, categoryLabel, parseRegulationSummary,
   LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES, KIND_LABEL, moduleFeed,
   CAREER_TABS, parseCareerTab, parseSteps, parseStringList,
+  MODULE_ALIASES, EVENT_TYPES, EVENT_TYPE_BY_TTB, parseEventTypes, parseScope, scopeBadge,
 } from "@/lib/doctorium";
 import { isHealthRelated, categorize, parseTurkishDate } from "@/lib/doctorium-sources";
 import { pubDate } from "@/lib/doctorium-ingest";
@@ -38,12 +39,12 @@ describe("branş tercihleri", () => {
     expect(parseBranchPrefs('["onkoloji","yok"]')).toEqual(["onkoloji"]);
   });
 
-  it("tercih yoksa hekimin KENDİ branşına düşer (boş akış gösterilmez)", () => {
+  it("tercih yoksa doktorun KENDİ branşına düşer (boş akış gösterilmez)", () => {
     expect(effectiveBranches(null, "Onkoloji")).toEqual(["onkoloji"]);
     expect(effectiveBranches("[]", "Kardiyoloji")).toEqual(["kardiyoloji"]);
   });
 
-  it("tercih varsa kendi branşı ezilir (hekim ne seçtiyse o)", () => {
+  it("tercih varsa kendi branşı ezilir (doktor ne seçtiyse o)", () => {
     expect(effectiveBranches('["noroloji","psikiyatri"]', "Onkoloji")).toEqual(["noroloji", "psikiyatri"]);
   });
 
@@ -106,13 +107,54 @@ describe("modül tanımı", () => {
   it("7 modül, mevzuat SONDA (v6.51 sıra kararı · v6.89 kariyer eklendi)", () => {
     const keys = DOCTORIUM_MODULES.map((m) => m.key);
     // Sıra kullanıcı kararı (2026-08-01): mevzuat EN SONDA.
-    // v6.89: "kariyer" kongreden SONRA, hukuktan ÖNCE (kullanıcı kararı 2026-08-12).
-    expect(keys).toEqual(["akis", "akademik", "sektorel", "ilac", "kongre", "kariyer", "mevzuat"]);
+    // v6.89: "kariyer" etkinlikten SONRA, hukuktan ÖNCE (kullanıcı kararı 2026-08-12).
+    // v6.120: "kongre" anahtarı "etkinlik" oldu (kullanıcı kararı 2026-08-19) — sıra korundu.
+    expect(keys).toEqual(["akis", "akademik", "sektorel", "ilac", "etkinlik", "kariyer", "mevzuat"]);
     expect(new Set(keys).size).toBe(keys.length);
   });
 
+  it("eski ?m=kongre anahtarı etkinliğe alias'lanır (v6.120 — yer imleri kırılmasın)", () => {
+    expect(MODULE_ALIASES.kongre).toBe("etkinlik");
+    // Alias yalnız ESKİ anahtarlar içindir: geçerli bir modül anahtarını gölgelememeli.
+    const keys = new Set(DOCTORIUM_MODULES.map((m) => m.key));
+    for (const eski of Object.keys(MODULE_ALIASES)) expect(keys.has(eski as never)).toBe(false);
+  });
+});
+
+describe("etkinlik türleri (v6.120 — TTB taksonomisi)", () => {
+  it("9 tür, TTB kod önekleri ve slug'lar tekil", () => {
+    expect(EVENT_TYPES).toHaveLength(9);
+    expect(new Set(EVENT_TYPES.map((t) => t.key)).size).toBe(9);
+    expect(new Set(EVENT_TYPES.map((t) => t.ttb)).size).toBe(9);
+    // TTB kaydındaki kod önekleri (vault output/ste-kredilendirme-arastirmasi-2026-08-19.md §5.1).
+    expect(EVENT_TYPE_BY_TTB.SMP).toBe("sempozyum");
+    expect(EVENT_TYPE_BY_TTB.KNG).toBe("kongre");
+    expect(EVENT_TYPE_BY_TTB.GRP).toBe("atolye");
+  });
+
+  it("varsayılan süzgeç kongre + sempozyum; ?t=hepsi süzgeci kaldırır", () => {
+    expect(parseEventTypes(undefined)).toEqual(["kongre", "sempozyum"]);
+    expect(parseEventTypes("hepsi")).toBeNull();
+    expect(parseEventTypes("sempozyum,kurs")).toEqual(["sempozyum", "kurs"]);
+  });
+
+  it("bozuk/bilinmeyen tür VARSAYILANA döner — liste asla boş kalmaz", () => {
+    // Fail-safe: URL kurcalanınca doktor boş sekme değil, varsayılan görünüm görür.
+    expect(parseEventTypes("uydurma")).toEqual(["kongre", "sempozyum"]);
+    expect(parseEventTypes("uydurma,sempozyum")).toEqual(["sempozyum"]);
+  });
+});
+
+describe("kapsam (v6.120 — üçüncü değer)", () => {
+  it("uluslararası KATILIMLI ayrı bir kapsamdır, uluslararası ile karışmaz", () => {
+    expect(parseScope("uluslararasi-katilimli")).toBe("uluslararasi-katilimli");
+    expect(scopeBadge("uluslararasi-katilimli")).toContain("katılımlı");
+    expect(scopeBadge("uluslararasi")).not.toContain("katılımlı");
+    expect(parseScope("uydurma")).toBeNull();
+  });
+
   it("8 sektörel kategori tanımlı ve etiketleri çözülür", () => {
-    // v6.99 (2026-08-15): "meslek" + "kuresel" eklendi — hekimin kendi mesleki gündemi yönetimden,
+    // v6.99 (2026-08-15): "meslek" + "kuresel" eklendi — doktorun kendi mesleki gündemi yönetimden,
     // küresel gündem teknolojiden ayrıldı.
     expect(SECTOR_CATEGORIES).toHaveLength(8);
     for (const c of SECTOR_CATEGORIES) expect(categoryLabel(c.key)).toBe(c.label);
@@ -250,7 +292,7 @@ describe("sektörel kategori ataması", () => {
     expect(categorize("Sağlık Turizmi Teşvik Kararında Değişiklik")).toBe("turizm");
     expect(categorize("Beşeri Tıbbi Ürünlerin Ruhsatlandırılması Yönetmeliği")).toBe("ilac-cihaz");
     expect(categorize("Kişisel Sağlık Verileri Yönetmeliğinde Değişiklik")).toBe("teknoloji");
-    // v6.99: hekimin ÜCRETİ/özlüğü artık "meslek" — kurum işletmesi (hastane) "yonetim" kalır.
+    // v6.99: doktorun ÜCRETİ/özlüğü artık "meslek" — kurum işletmesi (hastane) "yonetim" kalır.
     expect(categorize("İşyeri Hekimliği Ücret Tarifeleri açıklandı")).toBe("meslek");
     expect(categorize("Özel Hastaneler Yönetmeliğinde Değişiklik")).toBe("yonetim");
   });
@@ -342,7 +384,7 @@ describe("Kariyer modülü sözleşmesi (v6.89)", () => {
 });
 
 // Seed verisinin İÇERİK DÜRÜSTLÜĞÜ sözleşmesi — bu modül idari süreç anlatır, yanlış bilgi
-// hekimin gerçek kaybıdır (kaçırılan sınav, eksik belge). Kurallar burada KİLİTLENİR.
+// doktorun gerçek kaybıdır (kaçırılan sınav, eksik belge). Kurallar burada KİLİTLENİR.
 describe("Kariyer seed verisi dürüstlük kuralları (v6.89)", () => {
   const rows = JSON.parse(
     readFileSync(join(process.cwd(), "prisma", "seed-data", "career-pathways.json"), "utf8"),

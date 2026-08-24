@@ -12,7 +12,15 @@ import { BRANCHES } from "./triage";
 
 export const DOCTORIUM_NAME = "Doctorium";
 
-export type ModuleKey = "akis" | "akademik" | "mevzuat" | "sektorel" | "ilac" | "kongre" | "kariyer";
+export type ModuleKey = "akis" | "akademik" | "mevzuat" | "sektorel" | "ilac" | "etkinlik" | "kariyer";
+
+/**
+ * v6.120 — "kongre" anahtarı "etkinlik" oldu (kullanıcı kararı 2026-08-19). Eski anahtar
+ * yer imlerinde, paylaşılmış bağlantılarda ve bildirim href'lerinde yaşıyor → ?m=kongre
+ * SESSİZCE etkinliğe düşer. Kaldırma tarihi yok: maliyeti bir satır, kırık bağlantının
+ * maliyeti doktorun boş sayfa görmesi.
+ */
+export const MODULE_ALIASES: Record<string, ModuleKey> = { kongre: "etkinlik" };
 
 export interface ModuleDef {
   key: ModuleKey;
@@ -27,15 +35,90 @@ export interface ModuleDef {
 // v6.86 (kullanıcı kararı 2026-08-06): modülün kullanıcı-yüzü adı "Hukuk" — altında Mevzuat ·
 // İçtihat (· Doktrin, Faz 2) alt-sekmeleri (LEGAL_TABS). İç anahtar "mevzuat" BİLİNÇLİ değişmedi:
 // DB'deki module değeri, akış sorguları, ingest'ler ve URL'ler kırılmasın (migration'sız dönüşüm).
+// v6.120 (kullanıcı kararı 2026-08-19): "Kongre Takvimi" → "Etkinlik Takvimi" ve Hukuk'un
+// aksine İÇ ANAHTAR DA değişti (kongre → etkinlik). Bedeli ödendi: rota taşındı + 308,
+// ?m=kongre alias'landı, Doctor.feedModules migration'la göç etti. Gerekçe: modül artık
+// gerçekten kongre-dışı türler taşıyor (sempozyum, kurs, kurs-dışı eğitim), anahtarın
+// "kongre" kalması kalıcı bir yanlış-adlandırma olurdu.
 export const DOCTORIUM_MODULES: ModuleDef[] = [
   { key: "akis", label: "Akışım", desc: "Branşınız + mevzuat + sektör: tek akış" },
-  { key: "akademik", label: "Akademik", desc: "Hakemli yayınlar — PubMed" },
+  { key: "akademik", label: "Akademik", desc: "Hakemli yayınlar — PubMed · Europe PMC · DOAJ" },
   { key: "sektorel", label: "Sektörel", desc: "Doktor hakları · yönetim · teknoloji · küresel" },
   { key: "ilac", label: "İlaç & Cihaz", desc: "Geri çekmeler · klinik faz · prospektüs" },
-  { key: "kongre", label: "Kongre Takvimi", desc: "Ulusal ve uluslararası kongreler" },
+  { key: "etkinlik", label: "Etkinlik Takvimi", desc: "Kongre · sempozyum · kurs — TTB akredite" },
   { key: "kariyer", label: "Kariyer", desc: "Yurt dışı denklik · akademik yükselme" },
   { key: "mevzuat", label: "Hukuk", desc: "Mevzuat · İçtihat — sağlık hukuku" },
 ];
+
+// ── Etkinlik türleri (v6.120) ───────────────────────────────────────────────
+// TTB STE/SMG Akreditasyon-Kredilendirme kaydının taksonomisi. Kaynak ve sayımlar:
+// vault `output/ste-kredilendirme-arastirmasi-2026-08-19.md` §5.1 (2024-2026: 461 etkinlik).
+//
+// Saklanan değer TÜRKÇE SLUG, TTB'nin 3-harfli kodu DEĞİL: bu depoda her enum Türkçe slug
+// (ulusal · mevzuat · yuz-yuze) ve `eventType === "SMP"` okunmaz bir yabancı cisim olurdu.
+// Kaynak sadakati kaybolmuyor — TTB kodu MedicalCongress.ttbCode'da BİREBİR duruyor.
+//
+// ⚠️ Tür ADDAN ÇIKARILMAZ. TTB'de "8. Pulmoner Vasküler Hastalıklar Kongresi" SEMPOZYUM
+// kayıtlıdır; ad-tabanlı sınıflandırma sessizce yanlış etiketler.
+export const EVENT_TYPES = [
+  { key: "kongre", label: "Kongre", ttb: "KNG" },
+  { key: "sempozyum", label: "Sempozyum", ttb: "SMP" },
+  { key: "kurs", label: "Kurs", ttb: "KRS" },
+  { key: "egitim", label: "Eğitim", ttb: "EGT" },
+  { key: "konferans", label: "Konferans", ttb: "KNF" },
+  { key: "calistay", label: "Çalıştay", ttb: "CAL" },
+  { key: "seminer", label: "Seminer", ttb: "SMN" },
+  { key: "atolye", label: "Atölye Çalışması", ttb: "GRP" },
+  { key: "diger", label: "Diğer", ttb: "DGR" },
+] as const;
+export type EventTypeKey = (typeof EVENT_TYPES)[number]["key"];
+
+const EVENT_TYPE_SET = new Set<string>(EVENT_TYPES.map((t) => t.key));
+export const EVENT_TYPE_LABEL: Record<string, string> =
+  Object.fromEntries(EVENT_TYPES.map((t) => [t.key, t.label]));
+/** TTB kod öneki → slug ("SMP" → "sempozyum"). Ingest bunu kullanır. */
+export const EVENT_TYPE_BY_TTB: Record<string, EventTypeKey> =
+  Object.fromEntries(EVENT_TYPES.map((t) => [t.ttb, t.key])) as Record<string, EventTypeKey>;
+
+/**
+ * Sekme açılışında SEÇİLİ gelen türler (kullanıcı kararı 2026-08-19: "tüm türler + varsayılan
+ * süzgeç"). Kurs/eğitim veri setinin en büyük iki kovası (171 + 49) ve çoğu yerel/dar kapsamlı —
+ * hepsi açık gelseydi doktorun kongre listesi gürültüde kaybolurdu. Doktor tür çipinden açar.
+ */
+export const DEFAULT_EVENT_TYPES: EventTypeKey[] = ["kongre", "sempozyum"];
+
+/**
+ * ?t= paramından tür seçimi. "hepsi" → null (süzgeç yok). Geçerli tür yoksa VARSAYILANA döner —
+ * boş listeye düşürmek doktoru boş sekmeyle baş başa bırakırdı (fail-safe, fail-open değil:
+ * burada "açık" olan taraf varsayılan görünüm).
+ * ⚠️ ?t= Kariyer modülünde alt-sekme anlamına gelir (parseCareerTab); ikisi farklı modülde
+ * yaşadığı için çakışmaz — yeni bir modüle ?t= eklerken bunu hatırla.
+ */
+export function parseEventTypes(raw?: string | null): EventTypeKey[] | null {
+  if (raw === "hepsi") return null;
+  if (!raw) return DEFAULT_EVENT_TYPES;
+  const picked = raw.split(",").map((s) => s.trim()).filter((s) => EVENT_TYPE_SET.has(s)) as EventTypeKey[];
+  return picked.length ? picked : DEFAULT_EVENT_TYPES;
+}
+
+/**
+ * Kayıtlı etkinlik TÜRÜ tercihi (v6.132 — Doctor.congressEventTypes JSON dizi).
+ * null/bozuk = tercih yok → DEFAULT_EVENT_TYPES. "hepsi" = süzgeç kapalı → null.
+ * URL parametresi (?t=) tercihi EZER: paylaşılan bağlantı beklendiği gibi açılmalı,
+ * ama kalıcı ayarı da değiştirmemeli (yalnız o görünüm için geçerli).
+ */
+export function parseEventTypePref(raw: string | null | undefined): EventTypeKey[] | null {
+  if (!raw) return DEFAULT_EVENT_TYPES;
+  if (raw === "hepsi") return null;
+  try {
+    const v = JSON.parse(raw);
+    if (!Array.isArray(v)) return DEFAULT_EVENT_TYPES;
+    const picked = v.filter((s): s is EventTypeKey => typeof s === "string" && EVENT_TYPE_SET.has(s));
+    return picked.length ? picked : DEFAULT_EVENT_TYPES;
+  } catch {
+    return DEFAULT_EVENT_TYPES;
+  }
+}
 
 // Hukuk modülü alt-sekmeleri (v6.86). "doktrin" Faz 2'de eklenecek (kullanıcı kararı: DergiPark
 // link-modeli + davet-edilen-yazar birlikte) — boş sekme YAYINLANMAZ ("gerçek kaynak yoksa
@@ -79,11 +162,11 @@ export function parseCareerTab(raw: string | undefined): CareerTabKey {
 
 // Sektörel/mevzuat alt kategorileri (v6.50). Kaynak matrisi: mevzuat+sut+ilac-cihaz Resmî Gazete
 // ve OHSAD'dan, yonetim TTB/OHSAD'dan, teknoloji WHO/RG'den, turizm RG'den gelir.
-// v6.99 (2026-08-15): "meslek" ve "kuresel" eklendi — sektörel akış hekimin kendi mesleki
+// v6.99 (2026-08-15): "meslek" ve "kuresel" eklendi — sektörel akış doktorun kendi mesleki
 // gündemiyle genişledi (İTO/TTB/Medscape) ve WHO/Medical Xpress içeriği "teknoloji"den ayrıldı.
 // Sıra = doktorun ilgi sıklığı varsayımı: kendi mesleği önce, küresel gündem sonda.
 export const SECTOR_CATEGORIES: { key: string; label: string }[] = [
-  { key: "meslek", label: "Hekimlik & Mesleki Gündem" },
+  { key: "meslek", label: "Doktorluk & Mesleki Gündem" },
   { key: "mevzuat", label: "Mevzuat & Sağlık Hukuku" },
   { key: "sut", label: "SGK · SUT & Geri Ödeme" },
   { key: "turizm", label: "Sağlık Turizmi & Teşvikler" },
@@ -103,10 +186,26 @@ export function categoryLabel(k: string | null | undefined): string | null {
 // ⚠️ YENİ SEKTÖREL KAYNAK EKLERKEN buraya da ekle — birim test (doctorium-filtreler)
 // ingest kaynak setiyle bu iki listenin birleşimini karşılaştırır; unutulan kaynak
 // "Tümü"nde görünüp iki filtrede de kaybolurdu (sessiz kayıp).
+// v6.129 (2026-08-19): uzmanlık dernekleri eklendi — hepsi ULUSAL (Türkiye dernekleri).
+// Kaynak anahtarları lib/association-sources.ts ASSOCIATIONS slug'larıyla AYNI olmalı;
+// sözleşme testi (doctorium-filtreler) iki listeyi de hizada tutar.
 export const SECTOR_SOURCE_SCOPES: Record<"ulusal" | "uluslararasi", string[]> = {
-  ulusal: ["ttb", "ohsad", "istabip"],
+  ulusal: ["ttb", "ohsad", "istabip", "klimik", "tjod", "tatd", "tgd-gastro", "tgcd"],
   uluslararasi: ["who", "medscape", "medicalxpress"],
 };
+
+/**
+ * Sektörel "Kaynak" süzgeci (v6.99.3) ?s= parametresini Etkinlik kapsamıyla PAYLAŞIR ama
+ * değer kümesi AYNI DEĞİL: haber kaynağı ya ulusal ya uluslararasıdır — "uluslararası
+ * katılımlı" bir haber kaynağı yoktur (o, etkinliğin nerede/kimlerle yapıldığına dair bir
+ * niteliktir). v6.120'de CongressScope üçüncü değeri kazanınca bu ayrım tip hatası olarak
+ * yüzeye çıktı; ortak parseScope'u kullanmak SECTOR_SOURCE_SCOPES'ta tanımsız anahtar
+ * araması demekti (undefined sources → sessizce süzgeçsiz liste).
+ */
+export type SourceScope = "ulusal" | "uluslararasi";
+export function parseSourceScope(raw?: string | null): SourceScope | null {
+  return raw === "ulusal" || raw === "uluslararasi" ? raw : null;
+}
 
 export const KIND_LABEL: Record<string, string> = {
   makale: "Makale",
@@ -117,7 +216,7 @@ export const KIND_LABEL: Record<string, string> = {
   lansman: "Klinik Faz",
   ictihat: "İçtihat", // v6.86 — Yargıtay kararları (source: yargitay, lib/hukuk-ingest.ts)
   doktrin: "Doktrin", // v6.91 — TR-Dizin hakemli makaleler (source: trdizin, lib/doktrin-ingest.ts)
-  kongre: "Kongre", // 2026-08-14 — akış kartı olarak yeni eklenen kongreler
+  etkinlik: "Etkinlik", // 2026-08-14 kongre olarak eklendi, v6.120'de tüm etkinlik türlerine açıldı
   kariyer: "Süreç Rehberi", // 2026-08-14 — akış kartı olarak yeni eklenen kariyer kayıtları
 };
 
@@ -210,19 +309,80 @@ const ROW_SELECT = {
 
 /**
  * Akış Tercihleri (Faz 2, 2026-08-14): Akışım'a hangi BÖLÜMLER girsin. Doctor.feedModules'ta
- * JSON string[] saklanır; null/boş = TÜMÜ (tercihe hiç girmemiş hekim her bölümü görür).
- * kongre/kariyer FeedItem değildir — seçiliyse page akışın üstünde mini blok olarak gösterir.
+ * JSON string[] saklanır; null/boş = TÜMÜ (tercihe hiç girmemiş doktor her bölümü görür).
+ * etkinlik/kariyer FeedItem değildir — seçiliyse page akışın üstünde mini blok olarak gösterir.
+ *
+ * 🪤 Burası FAIL-OPEN: tanınmayan anahtar sessizce ATILIR. Bir anahtarı yeniden adlandırırken
+ * migration'la eski değeri GÖÇÜR, yoksa o bölümü seçmiş doktorlar onu hatasız kaybeder
+ * (v6.120'de kongre → etkinlik böyle taşındı: 20260819140000_etkinlik_turu_ve_modul_anahtari).
+ */
+/**
+ * Akışa hangi bölümlerin gireceği (Doctor.feedModules — JSON dizi, ŞEMA DEĞİŞMEZ).
+ *
+ * v6.132 (2026-08-20): Hukuk ÜÇE ayrıldı — tercihler sayfası mevzuat/içtihat/doktrini ayrı
+ * alt sekme olarak sunuyor ve doktor üçünü bağımsız açıp kapatabiliyor. Yeni anahtarlar
+ * `hukuk-*` önekli; ESKİ tek "mevzuat" anahtarı yalnız OKUNUR (yazılmaz) ve üçüne genişletilir
+ * — yoksa mevcut tercihi ["mevzuat"] olan doktorlar içtihat ve doktrini sessizce kaybederdi.
  */
 export const FEED_MODULE_OPTIONS = [
   { key: "akademik", label: "Akademik" },
   { key: "sektorel", label: "Sektörel" },
   { key: "ilac", label: "İlaç & Cihaz" },
-  { key: "kongre", label: "Kongre" },
+  { key: "etkinlik", label: "Etkinlik" },
   { key: "kariyer", label: "Kariyer" },
-  { key: "mevzuat", label: "Hukuk" },
+  { key: "hukuk-mevzuat", label: "Mevzuat" },
+  { key: "hukuk-ictihat", label: "İçtihat" },
+  { key: "hukuk-doktrin", label: "Doktrin" },
 ] as const;
 export type FeedModuleKey = (typeof FEED_MODULE_OPTIONS)[number]["key"];
 const FEED_MODULE_KEYS = new Set(FEED_MODULE_OPTIONS.map((o) => o.key));
+/** v6.132 ve öncesinde Hukuk tek anahtardı; okurken üç alt anahtara genişletilir. */
+const LEGACY_LEGAL_KEY = "mevzuat";
+const LEGAL_KEYS: FeedModuleKey[] = ["hukuk-mevzuat", "hukuk-ictihat", "hukuk-doktrin"];
+
+/**
+ * TERCİHLER TAKSONOMİSİ (v6.132, kullanıcı kararı 2026-08-20).
+ *
+ * Klinik/Mesleki ayrımı akış SÜZGECİ olmaktan çıkıp tercihler sayfasının omurgası oldu:
+ * taksonomi içeriği bölmüyor, AYARLARI örgütlüyor. Sol tarafta ikili ayrım, sağında üçer
+ * bölüm, Hukuk'un altında üç alt sekme.
+ *
+ * `feedKey` null ise bölümün kendisi tek anahtarla açılıp kapanmaz (Hukuk gibi — alt
+ * sekmelerinin kendi anahtarları var).
+ */
+export const PREF_GROUPS = [
+  {
+    key: "klinik",
+    label: "Klinik",
+    desc: "Hasta başındaki işinizi besleyen bilgi.",
+    sections: [
+      { key: "akademik", label: "Akademik", feedKey: "akademik" as FeedModuleKey,
+        desc: "PubMed, Europe PMC ve DOAJ'dan hakemli yayınlar.", subs: null },
+      { key: "sektorel", label: "Sektörel", feedKey: "sektorel" as FeedModuleKey,
+        desc: "Doktor hakları, yönetim, teknoloji ve küresel gündem.", subs: null },
+      { key: "ilac", label: "İlaç & Cihaz", feedKey: "ilac" as FeedModuleKey,
+        desc: "Ruhsat, geri çekme ve klinik faz duyuruları.", subs: null },
+    ],
+  },
+  {
+    key: "mesleki",
+    label: "Mesleki",
+    desc: "Mesleğinizi çevreleyen çerçeve.",
+    sections: [
+      { key: "hukuk", label: "Hukuk", feedKey: null,
+        desc: "Mevzuat değişiklikleri, emsal kararlar ve hakemli doktrin.",
+        subs: [
+          { key: "hukuk-mevzuat" as FeedModuleKey, label: "Mevzuat", desc: "Resmî Gazete ve OHSAD kayıtları." },
+          { key: "hukuk-ictihat" as FeedModuleKey, label: "İçtihat", desc: "Yargıtay kararları arşivi." },
+          { key: "hukuk-doktrin" as FeedModuleKey, label: "Doktrin", desc: "TR-Dizin hakemli hukuk makaleleri." },
+        ] },
+      { key: "etkinlik", label: "Etkinlik", feedKey: "etkinlik" as FeedModuleKey,
+        desc: "Kongre, sempozyum ve kurslar; bildiri ve kayıt tarihleri.", subs: null },
+      { key: "kariyer", label: "Kariyer", feedKey: "kariyer" as FeedModuleKey,
+        desc: "Yurt dışı denklik ve akademik yükselme süreçleri.", subs: null },
+    ],
+  },
+] as const;
 
 /** Ham JSON'dan geçerli bölüm anahtarları; [] = tümü (bozuk/boş değer daraltma YARATMAZ — fail-open). */
 export function parseFeedModules(raw: string | null | undefined): FeedModuleKey[] {
@@ -230,7 +390,14 @@ export function parseFeedModules(raw: string | null | undefined): FeedModuleKey[
   try {
     const v = JSON.parse(raw);
     if (!Array.isArray(v)) return [];
-    return v.filter((s): s is FeedModuleKey => typeof s === "string" && FEED_MODULE_KEYS.has(s as FeedModuleKey));
+    const out = v.filter(
+      (s): s is FeedModuleKey => typeof s === "string" && FEED_MODULE_KEYS.has(s as FeedModuleKey)
+    );
+    // Geriye uyum: eski tek "mevzuat" seçimi üç alt bölümün hepsini kapsıyordu.
+    if (v.includes(LEGACY_LEGAL_KEY)) {
+      for (const k of LEGAL_KEYS) if (!out.includes(k)) out.push(k);
+    }
+    return out;
   } catch {
     return [];
   }
@@ -244,22 +411,26 @@ const trDate = (d: Date) =>
  *  Tarih/şehir/kapsam bilgisi summary satırında taşınır. Kaydedilemez (SavedArticle NewsArticle'a bağlı). */
 const CONGRESS_FEED_SELECT = {
   id: true, title: true, organizer: true, city: true, startDate: true, endDate: true,
-  url: true, createdAt: true, scope: true,
+  url: true, createdAt: true, scope: true, eventType: true,
 } as const;
 
 function congressToFeedItem(c: {
   id: string; title: string; organizer: string | null; city: string | null;
   startDate: Date; endDate: Date | null; url: string | null; createdAt: Date; scope: string;
+  eventType: string;
 }): FeedItem {
   return {
-    id: c.id, module: "kongre", kind: "kongre", source: "kongre",
+    id: c.id, module: "etkinlik", kind: "etkinlik", source: "etkinlik",
     title: c.title, titleOriginal: null,
+    // Tür özetin BAŞINDA: akış kartının rozeti "Etkinlik" der (tek kind), asıl ayrım burada
+    // görünür. Bilinmeyen tür slug'ı ham hâliyle basılmaz — etiketi yoksa satır atlanır.
     summary: [
+      EVENT_TYPE_LABEL[c.eventType] ?? null,
       `${trDate(c.startDate)}${c.endDate ? ` – ${trDate(c.endDate)}` : ""}`,
       c.city,
-      c.scope === "uluslararasi" ? "🌍 Uluslararası" : "🇹🇷 Ulusal",
+      scopeBadge(c.scope),
     ].filter(Boolean).join(" · "),
-    sourceName: c.organizer ?? "Kongre takvimi", authors: null,
+    sourceName: c.organizer ?? "Etkinlik takvimi", authors: null,
     url: c.url, doi: null, publishedAt: c.createdAt, category: null,
     branchSlugs: [], hasAiSummary: false, imageUrl: null,
   };
@@ -267,9 +438,16 @@ function congressToFeedItem(c: {
 
 async function congressFeedItems(branchSlugs: string[], take: number): Promise<FeedItem[]> {
   const rows = await db.medicalCongress.findMany({
-    where: branchSlugs.length
-      ? { OR: [{ branchSlugs: "[]" }, ...branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } }))] }
-      : undefined,
+    where: {
+      // Akışım'daki 3 kartlık etkinlik kotası VARSAYILAN türlerle sınırlı (v6.120): TTB
+      // kaydının en büyük kovası kurs (171/461) ve çoğu yerel — süzgeçsiz bırakılsaydı
+      // Akışım'ın etkinlik köşesi kurslarla dolar, kongre hiç görünmezdi.
+      // Doktor tüm türleri Etkinlik sekmesindeki tür çipinden görür.
+      eventType: { in: DEFAULT_EVENT_TYPES },
+      ...(branchSlugs.length
+        ? { OR: [{ branchSlugs: "[]" }, ...branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } }))] }
+        : {}),
+    },
     orderBy: { createdAt: "desc" },
     take,
     select: CONGRESS_FEED_SELECT,
@@ -304,6 +482,31 @@ async function careerFeedItems(take: number): Promise<FeedItem[]> {
 }
 
 /**
+ * AKIŞ ÇEŞİTLİLİK KURALI (2026-08-18, kullanıcı kararı): aynı modülden art arda en fazla
+ * `maxRun` kart. Kota sistemi bölümler ARASI dengeyi kurar ama tek tarih sıralaması, aynı
+ * güne yığılan içeriği (örn. toplu akademik ingest) yine blok hâlinde dizer — 20 akademik
+ * kart üst üste gelebilir. Bu geçiş, sırayı MÜMKÜN OLDUĞUNCA koruyarak (kararlı/greedy)
+ * kümeyi kırar: koşu limiti dolunca listenin İLERİSİNDEN farklı modülden ilk kart öne
+ * çekilir; başka modül kalmadıysa koşu serbest bırakılır (yapay boşluk üretilmez).
+ * O(n²) en kötü — akış 40 kart, maliyet önemsiz. Saf fonksiyon (birim test edilir).
+ */
+export function interleaveByModule(items: FeedItem[], maxRun = 3): FeedItem[] {
+  const out: FeedItem[] = [];
+  const rest = [...items];
+  while (rest.length) {
+    const tail = out.slice(-maxRun);
+    const runFull = tail.length === maxRun && tail.every((i) => i.module === tail[0].module);
+    let idx = 0;
+    if (runFull) {
+      const alt = rest.findIndex((i) => i.module !== tail[0].module);
+      if (alt !== -1) idx = alt;
+    }
+    out.push(rest.splice(idx, 1)[0]);
+  }
+  return out;
+}
+
+/**
  * Kişisel akış (Modül A) — BÖLÜM-KOTALI KARIŞIM (2026-08-14, kullanıcı bildirimi): eski tek
  * "en yeni N" sorgusu, yoğun bölümlerin (sektörel haber) seyrek bölümleri tamamen dışarıda
  * bırakıyordu — hukuk (hele ARŞİV tarihli içtihat/doktrin) akışa HİÇ düşmüyordu. Şimdi her
@@ -332,17 +535,17 @@ export async function personalFeed(branchSlugs: string[], limit = 40, modules: F
     ));
   if (on("sektorel")) jobs.push(news({ module: "sektorel" }, q(8)));
   if (on("ilac")) jobs.push(news({ module: "ilac" }, q(6)));
-  if (on("mevzuat")) {
-    jobs.push(news({ module: "mevzuat", kind: "mevzuat" }, q(4)));
-    jobs.push(news({ module: "mevzuat", kind: "ictihat" }, q(2)));
-    jobs.push(news({ module: "mevzuat", kind: "doktrin" }, q(2)));
-  }
-  if (on("kongre")) jobs.push(congressFeedItems(branchSlugs, q(3)));
+  // Hukuk üç bağımsız alt bölüm (v6.132) — doktor tercihler sayfasından üçünü ayrı yönetir.
+  if (on("hukuk-mevzuat")) jobs.push(news({ module: "mevzuat", kind: "mevzuat" }, q(4)));
+  if (on("hukuk-ictihat")) jobs.push(news({ module: "mevzuat", kind: "ictihat" }, q(2)));
+  if (on("hukuk-doktrin")) jobs.push(news({ module: "mevzuat", kind: "doktrin" }, q(2)));
+  if (on("etkinlik")) jobs.push(congressFeedItems(branchSlugs, q(3)));
   if (on("kariyer")) jobs.push(careerFeedItems(q(3)));
 
   const merged = (await Promise.all(jobs)).flat();
   merged.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
-  return merged;
+  // Çeşitlilik geçişi (2026-08-18): aynı modülden art arda en fazla 3 kart.
+  return interleaveByModule(merged, 3);
 }
 
 /**
@@ -356,7 +559,8 @@ export async function singleBranchFeed(slug: string, limit = 30): Promise<FeedIt
     take: limit,
     select: ROW_SELECT,
   });
-  return rows.map(toFeedItem);
+  // Odaklı akış da Akışım yüzeyidir — aynı çeşitlilik kuralı (art arda ≤3 aynı modül).
+  return interleaveByModule(rows.map(toFeedItem), 3);
 }
 
 /**
@@ -393,6 +597,35 @@ export async function savedArticleIds(doctorId: string): Promise<Set<string>> {
   return new Set(rows.map((r) => r.articleId));
 }
 
+/**
+ * Bant nabzı (v6.102 "Nabızlı Kule"): TR günü başından beri akışa DÜŞEN (createdAt — gece cron'un
+ * yazdığı an; publishedAt değil, kaynak tarihi eski olabilir) içerik sayısı, modül başına.
+ * Tek groupBy — Shell kuran her sayfada koşulur (force-dynamic; tablo küçük, sorgu ucuz).
+ * TR = UTC+3 sabit (Türkiye'de DST yok); gece cron ~03:00 TR'de koşar → doktor sabah "bugün
+ * N yeni" görür. Kongre/kariyer sayılmaz (küratörlü/statik veri — gece akışı yok).
+ */
+/**
+ * Türkiye gününün başlangıcı (UTC olarak). Nabız sayacı ile "yeni" süzgeci AYNI sınırı
+ * kullanmak zorundadır — biri TR gününe, diğeri sunucunun UTC gününe bakarsa sayaç "3 yeni"
+ * derken süzgeç boş liste döndürür. Sunucu UTC'de koşar, doktor TR'de yaşar.
+ */
+export function trDayStart(): Date {
+  const TR_OFFSET_MS = 3 * 3_600_000;
+  return new Date(Math.floor((Date.now() + TR_OFFSET_MS) / 86_400_000) * 86_400_000 - TR_OFFSET_MS);
+}
+
+export async function todayModuleCounts(): Promise<Record<string, number>> {
+  const trDayStartUtc = trDayStart();
+  const rows = await db.newsArticle.groupBy({
+    by: ["module"],
+    where: { createdAt: { gte: trDayStartUtc } },
+    _count: { _all: true },
+  });
+  const out: Record<string, number> = {};
+  for (const r of rows) out[r.module] = r._count._all;
+  return out;
+}
+
 // Sektörel/mevzuat zaman aralığı (v6.49, kullanıcı isteği): doktor "kaç gün geriye" görmek
 // istediğini seçer. Değer URL'de taşınır (?d=) — paylaşılabilir, şema gerektirmez.
 export const RANGE_OPTIONS = [
@@ -412,9 +645,12 @@ export function rangeDays(key: string | undefined): number {
 export async function moduleFeed(
   module: "akademik" | "mevzuat" | "sektorel" | "ilac",
   branchSlugs: string[],
-  opts: { limit?: number; days?: number; category?: string | null; excludeCategories?: string[]; textContainsAny?: string[]; sources?: string[] } = {},
+  opts: {
+    limit?: number; days?: number; category?: string | null; excludeCategories?: string[];
+    textContainsAny?: string[]; sources?: string[]; createdSince?: Date; textQuery?: string;
+  } = {},
 ): Promise<FeedItem[]> {
-  const { limit = 40, days, category, excludeCategories, textContainsAny, sources } = opts;
+  const { limit = 40, days, category, excludeCategories, textContainsAny, sources, createdSince, textQuery } = opts;
   // v6.86/87: iki bağımsız OR ölçütü (kategori-dışlama · metin-arama) AND dizisinde toplanır —
   // spread ile aynı objeye ikinci bir OR anahtarı yazmak öncekini SESSİZCE ezerdi.
   const and: object[] = [];
@@ -429,6 +665,18 @@ export async function moduleFeed(
   if (textContainsAny?.length) {
     and.push({ OR: textContainsAny.map((p) => ({ summary: { contains: p, mode: "insensitive" as const } })) });
   }
+  // Serbest metin araması (v6.132 — içtihat arama kutusu): sözlük çiplerinden AYRI ölçüt.
+  // Çipler yalnız `summary`de arar (deterministik sözlük deseni); kullanıcının yazdığı sorgu
+  // BAŞLIKTA da aranır — "Yargıtay 3. HD" gibi künye bilgisi başlıkta yaşıyor.
+  if (textQuery && textQuery.trim().length >= 2) {
+    const q = textQuery.trim();
+    and.push({
+      OR: [
+        { title: { contains: q, mode: "insensitive" as const } },
+        { summary: { contains: q, mode: "insensitive" as const } },
+      ],
+    });
+  }
   const rows = await db.newsArticle.findMany({
     where: {
       module,
@@ -437,6 +685,10 @@ export async function moduleFeed(
       ...(sources?.length ? { source: { in: sources } } : {}),
       ...(and.length ? { AND: and } : {}),
       ...(days ? { publishedAt: { gte: new Date(Date.now() - days * 86400000) } } : {}),
+      // "Yeni" süzgeci (v6.132 — sayaç şeridinden gelinir): AKIŞA DÜŞME anı (createdAt),
+      // kaynağın yayım tarihi DEĞİL. İkisi farklı eksendir: 2019 tarihli bir Yargıtay kararı
+      // bu gece ingest edilmişse akış için YENİdir. `days` publishedAt'e bakar, bu createdAt'e.
+      ...(createdSince ? { createdAt: { gte: createdSince } } : {}),
       ...(module === "akademik" && branchSlugs.length
         ? { OR: branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } })) }
         : {}),
@@ -476,11 +728,26 @@ export async function followedCongressIds(doctorId: string): Promise<Set<string>
   return new Set(rows.map((r) => r.congressId));
 }
 
-/** "ulusal" | "uluslararasi" — kongre listesinin kapsam filtresi (v6.62, kullanıcı isteği). */
-export type CongressScope = "ulusal" | "uluslararasi";
+/**
+ * Etkinlik listesinin kapsam filtresi (v6.62, kullanıcı isteği).
+ * v6.120: TTB kaydı ÜÇ değer kullanıyor → "uluslararasi-katilimli" eklendi (yurt içinde yapılan
+ * ama yabancı konuşmacı/katılımcı alan etkinlik; doktor için ikisinin arası bir kategori).
+ *
+ * 🪤 "Uluslararası" çipi seçiliyken katılımlı olanlar GELMEZ (ayrı değer, ayrı çip) — kullanıcı
+ * "yurt dışına gideceğim" derken yurt içi bir toplantıyı listede görmemeli.
+ */
+export type CongressScope = "ulusal" | "uluslararasi" | "uluslararasi-katilimli";
+const SCOPE_SET = new Set<string>(["ulusal", "uluslararasi", "uluslararasi-katilimli"]);
 
 export function parseScope(raw?: string | null): CongressScope | null {
-  return raw === "ulusal" || raw === "uluslararasi" ? raw : null;
+  return raw && SCOPE_SET.has(raw) ? (raw as CongressScope) : null;
+}
+
+/** Kapsam rozeti metni — kart, detay ve akış özetinde TEK kaynak (üçü ayrı yazılmasın). */
+export function scopeBadge(scope: string): string {
+  return scope === "uluslararasi" ? "🌍 Uluslararası"
+    : scope === "uluslararasi-katilimli" ? "🌍 Uluslararası katılımlı"
+    : "🇹🇷 Ulusal";
 }
 
 /**
@@ -493,12 +760,20 @@ export function parseScope(raw?: string | null): CongressScope | null {
  */
 export async function upcomingCongresses(
   branchSlugs: string[],
-  opts?: { scope?: CongressScope | null; limit?: number },
+  opts?: { scope?: CongressScope | null; types?: EventTypeKey[] | null; limit?: number; onlyIds?: string[] },
 ) {
   const rows = await db.medicalCongress.findMany({
     where: {
       startDate: { gte: new Date(Date.now() - 86400000) }, // bugün başlayan dahil
       ...(opts?.scope ? { scope: opts.scope } : {}),
+      // types === null → "hepsi" (süzgeç yok). undefined gelirse de süzmeyiz: çağıran
+      // parseEventTypes'tan geçirmediyse daraltma YAPMA — sessiz eksik liste üretmesin.
+      ...(opts?.types?.length ? { eventType: { in: opts.types } } : {}),
+      // "Takip ettiklerim" yolu (kullanıcı isteği 2026-08-19): yalnız verilen id'ler.
+      // ⚠️ Çağıran bu yolda branş/tür/kapsam süzgeci GEÇİRMEZ — doktor branş dışından da
+      // takip etmiş olabilir; "takip ettim ama listede yok" sürprizi üretme. Boş dizi
+      // bilinçli boş liste döndürür (id: {in: []}).
+      ...(opts?.onlyIds ? { id: { in: opts.onlyIds } } : {}),
     },
     orderBy: { startDate: "asc" },
     // AÇIK select: coverImage data URI'ları (~5-20KB/kayıt) liste sorgusunu şişirmesin —
@@ -507,6 +782,7 @@ export async function upcomingCongresses(
       id: true, title: true, organizer: true, city: true, country: true,
       startDate: true, endDate: true, abstractDeadline: true, earlyBirdDeadline: true,
       url: true, branchSlugs: true, scope: true, venue: true, warning: true, confidence: true,
+      eventType: true, ttbCode: true,
     },
   });
   const filtered = !branchSlugs.length
@@ -519,12 +795,22 @@ export async function upcomingCongresses(
   return filtered.slice(0, opts?.limit ?? 60);
 }
 
+/** Verilen id kümesinden YAKLAŞANLARIN sayısı — "Takip ettiklerim (N)" çip sayacı.
+ *  Takip kaydı etkinlik geçtikten sonra da durur (CongressFollow silinmez); çip listeyle
+ *  aynı sayıyı söylesin diye followed.size DEĞİL bu count kullanılır. */
+export async function upcomingCountByIds(ids: string[]): Promise<number> {
+  if (!ids.length) return 0;
+  return db.medicalCongress.count({
+    where: { id: { in: ids }, startDate: { gte: new Date(Date.now() - 86400000) } },
+  });
+}
+
 /** Tek kongrenin tam kaydı (detay kartı, v6.62). Bulunamazsa null. */
 export async function congressById(id: string) {
   return db.medicalCongress.findUnique({ where: { id } });
 }
 
-/** Hekim bu kongreyi takip ediyor mu — detay sayfası için tek satırlık sorgu. */
+/** Doktor bu kongreyi takip ediyor mu — detay sayfası için tek satırlık sorgu. */
 export async function isFollowingCongress(doctorId: string, congressId: string): Promise<boolean> {
   const row = await db.congressFollow.findUnique({
     where: { doctorId_congressId: { doctorId, congressId } },

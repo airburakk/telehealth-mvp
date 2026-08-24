@@ -1,264 +1,246 @@
-import { Fragment } from "react";
-import type { CSSProperties } from "react";
+import { Fragment, type CSSProperties } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft, Sparkles, FlaskConical, Building2, Pill, CalendarClock,
-  TrendingUp, Scale, Star, BookOpen, Briefcase, Bookmark,
-} from "lucide-react";
 
 /**
- * Doctorium sol bandı + mobil alt çubuğu (Faz 1 — taslak v3.2, kullanıcı onayı 2026-08-14).
+ * Doctorium ÜST RAFI + MOBİL RAF-FOOTER (2026-08-18 Üst Raf kararı; 2026-08-19 mobil devrimi).
  *
- * SERVER component (bilinçli): ilk deneme layout'ta useSearchParams'lı client banttı — Next 16'da
- * layout içindeki Suspense boundary'nin $RC tamamlanma sinyali hiç gelmedi, bant `div[hidden]`
- * (S:0) içinde asılı kaldı. Aktifliği ZATEN bilen page'ler `active` prop'uyla verir; Suspense,
- * useSearchParams ve hydration bağımlılığı kökten yok — aktif şerit SSR ilk boyada gelir.
- * Sarmalayıcı düzen DoctoriumShell'dedir; page'ler içeriklerini Shell'e sarar.
+ * SOL BANT KALKTI (v6.109): 212px'lik kalıcı `fixed` sütun kompozisyonu sola yığıyordu; yerine
+ * header altında sticky YATAY modül rafı. Teşhis + alternatifler: vault
+ * output/doctorium-sol-bant-alternatif-tasarim-2026-08-18.md.
  *
- * Masaüstü (md+): sol dikey bant — Ana Sayfa dönüşü, gruplu modüller (BİLGİ / MESLEĞİM; grup
- * başlıkları TIKLANMAZ), kişisel blok (Puanlarım · Tercihler). Mobil: alt sekme çubuğu (M2) —
- * Akışım · Bilgi · Mesleğim (+ Puanlarım); grup yuvası grubun İLK modülüne gider, modül şeridi
- * page tarafında ?m= üzerinden görünür.
+ * MOBİL RAF-FOOTER (kullanıcı kararı 2026-08-19): eski 3-grup ikonlu alt çubuk ("app tab"
+ * dili) emekli — mobil alt çubuk artık masaüstü rafının BİREBİR eşleniği: yatay kaydırmalı
+ * 01-08 durakları, mono numara + etiket + zümrüt nokta, aynı zemin. Kayıtlı + Puanlarım
+ * yuvaları Header hesap menüsüne taşındı (masaüstüyle simetri — v6.109 orada başlatmıştı);
+ * page'lerdeki mobil grup şeridi de kalktı (çift navigasyon olmaz). "BUGÜN N YENİ" nabzının
+ * mobil eşleniği Akışım sekmesindeki rozet.
  *
- * Renk disiplini (kit): modül rengi YÜZEY BOYAMAZ — aktif öğe 3px sol şerit + %10 dolgu + renkli
- * metin (kart kapağı [Cover] deseninin bant karşılığı; hex'ler page.tsx Cover ile birebir).
- * Kongre kimliği "beyaz" = tema-duyarlı ink (gece beyaz, gündüz koyu — sabit #fff gündüzde
- * görünmez olurdu). Akışım türsüz karışım → nötr, aktifken marka zümrüdü. URL şeması değişmez.
+ * SERVER component (bilinçli — v6.101 dersi AYNEN): aktifliği bilen page `active` prop'uyla
+ * verir; Suspense/useSearchParams/hydration bağımlılığı yok, aktif şerit SSR ilk boyada gelir.
+ *
+ * RENK MİMARİSİ (2026-08-19, "beyaz raf" denemesiyle kurulan çift-ton): sekme kimlik renkleri
+ * artık {dark, light} ÇİFTİ — eski tek hex gündüz temasında da gece tonunu basıyordu (globals
+ * gündüz-kontrast güvencesi yalnız Tailwind SINIFLARINI yakalar, inline style'ı yakalamaz).
+ * Seçimi CSS yapar: sekme yalnız --tab-dark/--tab-light değişkenlerini basar; hangisinin
+ * kazandığı raf bağlamının işi (globals.css "Doctorium raf renk bağlamı" bloğu). Zemin
+ * varyantları da orada: varsayılan "Derin Orman %12" (kullanıcı seçimi 2026-08-19, doz+ton
+ * taraması sonrası); `shelf-white` sınıfı tema-BAĞIMSIZ açık raf ("zebra krom" — denendi,
+ * seçilmedi ama tek sınıfla açılabilir durur). Raf içi TÜM renkler --shelf-* token'larından
+ * okunur ki varyant tek sınıfla değişsin.
  */
 
-type ModuleKey = "akis" | "akademik" | "sektorel" | "ilac" | "kongre" | "kariyer" | "mevzuat";
+type ModuleKey = "akis" | "akademik" | "sektorel" | "ilac" | "etkinlik" | "kariyer" | "mevzuat";
 // "tercihler" yok: /doktor/doctorium/tercihler v6.49'dan beri redirect — işlevsiz yüzeyin
 // linki çizilmez (koşullu-href ilkesi); Özelleştir paneli sayfanın içinde yaşıyor.
-export type SidebarActive = ModuleKey | "oduller" | "kaydettiklerim" | null;
+export type SidebarActive = ModuleKey | "takvim" | "oduller" | "kaydettiklerim" | null;
 
+/** Raf nabzı (v6.102): modül → bugün akışa düşen içerik sayısı (lib/doctorium todayModuleCounts).
+ *  null = sayaç verisi yok (raf nabızsız çizilir — geriye uyumlu). */
+export type SidebarCounts = Record<string, number> | null;
+
+/** Sayaç hangi modül sekmesinde ne gösterir — akis TOPLAM; etkinlik/kariyer gece akışı olmayan
+ *  küratörlü veri (sayaç yanıltıcı olurdu — bilinçli yok). */
+function countFor(key: ModuleKey, counts: SidebarCounts): number | null {
+  if (!counts) return null;
+  if (key === "akis") {
+    const t = (counts.akademik ?? 0) + (counts.sektorel ?? 0) + (counts.ilac ?? 0) + (counts.mevzuat ?? 0);
+    return t > 0 ? t : null;
+  }
+  if (key === "etkinlik" || key === "kariyer") return null;
+  const n = counts[key] ?? 0;
+  return n > 0 ? n : null;
+}
+
+/** Modül kimlik renkleri — {dark: gece tonu, light: açık zemin karşılığı}. Gündüz tonları
+ *  mevcut token ailesinden (gold/accent-2 akrabalığı; raf-zemin karşılaştırma turu 2026-08-19).
+ *  null = nötr (aktifken zümrüt çifti). Etkinlik "ink" = tema-duyarlı var(--c-ink) — açık raf
+ *  varyantında globals --shelf-ink onu koyuya sabitler. */
 const MODULES: {
   key: ModuleKey;
   label: string;
-  icon: typeof Sparkles;
-  /** [metin/şerit hex, %10 dolgu rgba] · "ink" = tema-duyarlı beyaz/koyu · null = nötr (aktifken zümrüt). */
-  color: [string, string] | "ink" | null;
+  color: { dark: string; light: string } | "ink" | null;
   group: "BİLGİ" | "MESLEĞİM" | null;
 }[] = [
-  // Akışım sarı (kullanıcı kararı 2026-08-14): kıvılcım/parıltı çağrışımı. Amber (#f59e0b)
-  // ticaretin işareti olarak ayrı durur — bu sarı (yellow-400) ondan bir ton açık/parlak.
-  { key: "akis", label: "Akışım", icon: Sparkles, color: ["#facc15", "rgba(250,204,21,.10)"], group: null },
-  { key: "akademik", label: "Akademik", icon: FlaskConical, color: ["#34d399", "rgba(52,211,153,.10)"], group: "BİLGİ" },
-  { key: "sektorel", label: "Sektörel", icon: Building2, color: ["#a78bfa", "rgba(167,139,250,.10)"], group: "BİLGİ" },
-  { key: "ilac", label: "İlaç & Cihaz", icon: Pill, color: ["#22d3ee", "rgba(34,211,238,.10)"], group: "BİLGİ" },
-  { key: "kongre", label: "Kongre", icon: CalendarClock, color: "ink", group: "MESLEĞİM" },
-  { key: "kariyer", label: "Kariyer", icon: TrendingUp, color: ["#60a5fa", "rgba(96,165,250,.10)"], group: "MESLEĞİM" },
-  { key: "mevzuat", label: "Hukuk", icon: Scale, color: ["#fb7185", "rgba(251,113,133,.10)"], group: "MESLEĞİM" },
+  // Akışım sarı (kullanıcı kararı 2026-08-14): kıvılcım çağrışımı; gündüzü --c-gold ailesi.
+  { key: "akis", label: "Akışım", color: { dark: "#facc15", light: "#8a6414" }, group: null },
+  { key: "akademik", label: "Akademik", color: { dark: "#34d399", light: "#047857" }, group: "BİLGİ" },
+  { key: "sektorel", label: "Sektörel", color: { dark: "#a78bfa", light: "#5b4b9e" }, group: "BİLGİ" },
+  { key: "ilac", label: "İlaç & Cihaz", color: { dark: "#22d3ee", light: "#0e7d8c" }, group: "BİLGİ" },
+  { key: "etkinlik", label: "Etkinlik", color: "ink", group: "MESLEĞİM" },
+  { key: "kariyer", label: "Kariyer", color: { dark: "#60a5fa", light: "#2d5c9e" }, group: "MESLEĞİM" },
+  { key: "mevzuat", label: "Hukuk", color: { dark: "#fb7185", light: "#a83e50" }, group: "MESLEĞİM" },
 ];
 
-const EMERALD: [string, string] = ["#34d399", "rgba(16,185,129,.10)"];
+const EMERALD = { dark: "#34d399", light: "#047857" };
 
-/** Mobil alt çubuk yuvaları — grup yuvası grubun ilk modülüne götürür. */
-const MOBILE_TABS: { label: string; icon: typeof Sparkles; href: string; keys: ModuleKey[] }[] = [
-  { label: "Akışım", icon: Sparkles, href: "/doktor/doctorium", keys: ["akis"] },
-  { label: "Bilgi", icon: BookOpen, href: "/doktor/doctorium?m=akademik", keys: ["akademik", "sektorel", "ilac"] },
-  { label: "Mesleğim", icon: Briefcase, href: "/doktor/doctorium?m=kongre", keys: ["kongre", "kariyer", "mevzuat"] },
-];
+/** Takvim durağı (kullanıcı kararı 2026-08-19): modül DEĞİL ayrı ROTA — raf yine de taşır
+ *  (08; kimliği marka zümrüdü). Aşama 2'de nöbet/icap planı da bu sayfada yaşayacak. */
+const TAKVIM = { href: "/doktor/doctorium/takvim", label: "Takvim", color: EMERALD };
 
-function SideItem({
-  href, on, color, icon: Icon, label, badge,
+/** Raf sekmesi — NUMARA ROZETİ aktif dili (kullanıcı kararı 2026-08-18): aktifken mono durak
+ *  numarası kimlik renginde DOLGULU rozete döner + etiket renklenir. Renk seçimi CSS'te:
+ *  --tab-dark/--tab-light burada basılır, kazananı raf bağlamı belirler (globals.css).
+ *  Rozet metni var(--shelf-surface-ink) = zeminin kendi tonu (iki temada + açık varyantta
+ *  kontrast). Aktiflik renk + rozet DOLGUSUYLA işaretlenir, yalnız renkle değil. */
+function ShelfTab({
+  href, on, color, label, no, count,
 }: {
   href: string;
   on: boolean;
-  color: [string, string] | "ink" | null;
-  icon: typeof Sparkles;
+  color: { dark: string; light: string } | "ink" | null;
   label: string;
-  badge?: number;
+  no: string;
+  count?: number | null;
 }) {
-  let cls = "text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]";
-  let style: CSSProperties | undefined;
-  let stripe: CSSProperties | undefined;
-  if (on) {
-    if (color === "ink") {
-      cls = "bg-[var(--c-surface)] text-[var(--c-ink)]";
-      stripe = { background: "var(--c-ink)" };
-    } else {
-      const [fg, bg] = color ?? EMERALD;
-      cls = "";
-      style = { color: fg, background: bg };
-      stripe = { background: fg };
-    }
-  }
-  const iconColor = color === "ink" ? "var(--c-ink)" : color ? color[0] : undefined;
+  const pair = color === "ink" ? null : (color ?? EMERALD);
+  const vars = {
+    "--tab-dark": pair ? pair.dark : "var(--shelf-ink)",
+    "--tab-light": pair ? pair.light : "var(--shelf-ink)",
+  } as CSSProperties;
   return (
     <Link
       href={href}
       aria-current={on ? "page" : undefined}
-      className={`relative flex h-11 items-center gap-2.5 rounded-lg px-2.5 text-[15px] font-semibold transition ${cls}`}
-      style={style}
+      style={vars}
+      className={`shelf-tab flex h-12 shrink-0 items-center gap-1.5 px-2.5 text-[13px] font-semibold transition-colors ${
+        on ? "shelf-tab-on" : "shelf-tab-off"
+      }`}
     >
-      {on && <span aria-hidden className="absolute -left-2.5 top-2 bottom-2 w-[3px] rounded-r-sm" style={stripe} />}
-      <Icon size={19} className="shrink-0" style={iconColor ? { color: iconColor } : undefined} />
+      <span
+        aria-hidden
+        className={`shelf-no aura-mono text-[10px] font-semibold tracking-wider ${on ? "rounded-[5px] px-1 py-px" : "opacity-80"}`}
+      >
+        {no}
+      </span>
       {label}
-      {badge != null && (
-        <span className="aura-mono ml-auto rounded-full bg-emerald-500/15 px-1.5 py-px text-[10px] text-emerald-300">
-          {badge}
-        </span>
+      {/* Yeni-içerik işareti = NOKTA (kullanıcı kararı 2026-08-18, 3. tur): "bugün bu modülde
+          yeni var" bilgisini minik zümrüt nokta taşır; TOPLAM sayı nabızda yaşar. aria-label
+          sayıyı okumaya devam eder. Aktif sekmede nokta çizilmez (işaret gürültü olur). */}
+      {!on && count != null && count > 0 && (
+        <span
+          role="img"
+          aria-label={`bugün ${count} yeni içerik`}
+          className="shelf-dot mb-2 h-1.5 w-1.5 shrink-0 self-center rounded-full"
+        />
       )}
     </Link>
   );
 }
 
-function GroupLabel({ children }: { children: React.ReactNode }) {
+/** Küme ayracı — grup ADLARI kaldırıldı (kullanıcı kararı 2026-08-18): kümeler yalnız
+ *  hairline dikmeyle ayrılır. */
+function ShelfGroup() {
+  return <span aria-hidden className="mx-1.5 h-5 w-px shrink-0 bg-[var(--shelf-hairline)]" />;
+}
+
+/** Rafın sekme dizisi — masaüstü ve mobil raf-footer AYNI diziyi çizer (tek kaynak; iki
+ *  markup'ın ayrışması v6.109-öncesi çift-liste driftine geri dönüş olurdu). */
+function ShelfTabs({ active, counts }: { active: SidebarActive; counts: SidebarCounts }) {
+  let lastGroup: string | null = null;
   return (
-    <div className="aura-mono mt-4 mb-1 px-2.5 text-[11px] font-semibold tracking-[0.14em] text-[var(--c-ink-3)]">
-      {children}
-    </div>
+    <>
+      {MODULES.map((m, i) => {
+        const header = m.group && m.group !== lastGroup ? <ShelfGroup /> : null;
+        lastGroup = m.group;
+        return (
+          <Fragment key={m.key}>
+            {header}
+            <ShelfTab
+              href={m.key === "akis" ? "/doktor/doctorium" : `/doktor/doctorium?m=${m.key}`}
+              on={active === m.key}
+              color={m.color}
+              label={m.label}
+              no={String(i + 1).padStart(2, "0")}
+              count={countFor(m.key, counts)}
+            />
+          </Fragment>
+        );
+      })}
+      <ShelfGroup />
+      <ShelfTab href={TAKVIM.href} on={active === "takvim"} color={TAKVIM.color} label={TAKVIM.label} no="08" />
+    </>
   );
 }
 
 export function DoctoriumSidebar({
-  active, balance, isDoctor,
+  active, counts = null,
 }: {
   active: SidebarActive;
-  balance: number | null;
-  /** KİŞİSEL bloğunun (Kaydettiklerim) şartı — personelde kişisel yüzey çizilmez. */
-  isDoctor: boolean;
+  counts?: SidebarCounts;
 }) {
-  let lastGroup: string | null = null;
+  const totalToday = countFor("akis", counts);
 
   return (
     <>
-      {/* ── Masaüstü sol bant (Header h-16 → top-16) ── */}
+      {/* ── Masaüstü üst rafı (Header h-16 sticky → top-16; Header z-30 altında) ──
+          Zemin "Derin Orman %12" (kullanıcı seçimi 2026-08-19) — globals.css
+          .doctorium-shelf-bg; açık varyant için yanına `shelf-white` eklenir. */}
       <nav
         aria-label="Doctorium bölümleri"
-        className="fixed bottom-0 left-0 top-16 z-20 hidden w-[212px] flex-col gap-0.5 overflow-y-auto border-r border-[var(--c-hairline)] bg-[var(--c-chrome)] px-2.5 py-4 md:flex"
+        className="doctorium-shelf-bg sticky top-16 z-20 hidden border-b border-[var(--shelf-hairline)] backdrop-blur-md md:block"
       >
-        <Link
-          href="/doktor"
-          className="mb-2 flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-semibold text-[var(--c-ink-3)] hover:text-[var(--c-ink)]"
-        >
-          <ArrowLeft size={16} /> Ana Sayfa
-        </Link>
+        {/* İç konteyner Header'la aynı kolon (max-w-6xl); ps-[39px] = "01 Akışım"ın METNİ
+            Header'daki AURA wordmark'ının x'iyle hizalanır (kullanıcı isteği 2026-08-18).
+            Dar masaüstünde raf yatay kayar. */}
+        <div className="mx-auto flex h-12 max-w-6xl items-center gap-0.5 overflow-x-auto pe-5 ps-[39px]">
+          <ShelfTabs active={active} counts={counts} />
 
-        {MODULES.map((m) => {
-          const header = m.group && m.group !== lastGroup ? <GroupLabel>{m.group}</GroupLabel> : null;
-          lastGroup = m.group;
-          return (
-            <Fragment key={m.key}>
-              {header}
-              <SideItem
-                href={m.key === "akis" ? "/doktor/doctorium" : `/doktor/doctorium?m=${m.key}`}
-                on={active === m.key}
-                color={m.color}
-                icon={m.icon}
-                label={m.label}
-              />
-            </Fragment>
-          );
-        })}
-
-        {(isDoctor || balance != null) && (
-          <>
-            <GroupLabel>KİŞİSEL</GroupLabel>
-            {/* Kaydettiklerim İLK sırada (kullanıcı kararı 2026-08-14, Faz 2). Öğrenci-sınırlı
-                üye de görür (içerik işlevi); Puanlarım yalnız bakiyesi olanda (pazarlama süzgeci). */}
-            {isDoctor && (
-              <SideItem
-                href="/doktor/doctorium/kaydettiklerim"
-                on={active === "kaydettiklerim"}
-                color={null}
-                icon={Bookmark}
-                label="Kaydettiklerim"
-              />
+          {/* Sağ küme: yalnız nabız (kullanıcı kararı 2026-08-18, 2. tur) — Kaydettiklerim ve
+              Puanlarım Header profil menüsünde. Nabız TIKLANABİLİR (3. tur): Akışım'a götürür. */}
+          <div className="ml-auto flex shrink-0 items-center pl-4">
+            {totalToday != null && (
+              <Link
+                href="/doktor/doctorium"
+                aria-label={`bugün ${totalToday} yeni içerik — Akışım'a git`}
+                className="shelf-pulse aura-mono hidden items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] transition-colors lg:flex"
+              >
+                <span aria-hidden className="shelf-dot h-1.5 w-1.5 rounded-full" />
+                {/* 99+ tavanı (2026-08-18): backfill günlerinde üç hane absürtleşiyor. */}
+                BUGÜN {totalToday > 99 ? "99+" : totalToday} YENİ
+              </Link>
             )}
-            {balance != null && (
-              <SideItem
-                href="/doktor/doctorium/oduller"
-                on={active === "oduller"}
-                color={null}
-                icon={Star}
-                label="Puanlarım"
-                badge={balance}
-              />
-            )}
-          </>
-        )}
+          </div>
+        </div>
       </nav>
 
-      {/* ── Mobil alt çubuk (M2) ── */}
+      {/* ── Mobil RAF-FOOTER (kullanıcı kararı 2026-08-19) — masaüstü rafının alt-kenar
+          eşleniği: aynı duraklar, aynı zemin, yatay kaydırma. Akışım'daki nokta "bugün yeni
+          var"ı taşır (rozetli sayı Header zil + Akışım nabzında yaşar). Kayıtlı/Puanlarım
+          yuvaları Header hesap menüsüne taşındı — çubuk salt modül gezinmesi. */}
       <nav
         aria-label="Doctorium bölümleri"
-        className="fixed inset-x-0 bottom-0 z-40 flex justify-around border-t border-[var(--c-hairline)] bg-[var(--c-chrome)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        className="doctorium-shelf-bg fixed inset-x-0 bottom-0 z-40 border-t border-[var(--shelf-hairline)] pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
-        {MOBILE_TABS.map((t) => {
-          const on = active != null && t.keys.includes(active as ModuleKey);
-          return (
-            <Link
-              key={t.label}
-              href={t.href}
-              aria-current={on ? "page" : undefined}
-              className={`grid min-w-[72px] justify-items-center gap-1 py-2 text-[10px] font-semibold ${
-                on ? "text-emerald-300" : "text-[var(--c-ink-3)]"
-              }`}
-            >
-              <t.icon size={18} />
-              {t.label}
-            </Link>
-          );
-        })}
-        {isDoctor && (
-          <Link
-            href="/doktor/doctorium/kaydettiklerim"
-            aria-current={active === "kaydettiklerim" ? "page" : undefined}
-            className={`grid min-w-[64px] justify-items-center gap-1 py-2 text-[10px] font-semibold ${
-              active === "kaydettiklerim" ? "text-emerald-300" : "text-[var(--c-ink-3)]"
-            }`}
-          >
-            <Bookmark size={18} />
-            Kayıtlı
-          </Link>
-        )}
-        {balance != null && (
-          <Link
-            href="/doktor/doctorium/oduller"
-            aria-current={active === "oduller" ? "page" : undefined}
-            className={`grid min-w-[64px] justify-items-center gap-1 py-2 text-[10px] font-semibold ${
-              active === "oduller" ? "text-emerald-300" : "text-[var(--c-ink-3)]"
-            }`}
-          >
-            <Star size={18} />
-            Puanlarım
-          </Link>
-        )}
+        <div className="flex h-12 items-center gap-0.5 overflow-x-auto px-3">
+          <ShelfTabs active={active} counts={counts} />
+        </div>
       </nav>
     </>
   );
 }
 
 /**
- * Doctorium çalışma alanı kabuğu: bant + içerik düzeni. Page'ler içeriklerini buna sarar
- * (layout DEĞİL — layout searchParams göremez, aktifliği page bilir).
+ * Doctorium çalışma alanı kabuğu: üst raf + ORTALI okuma düzeni. Page'ler içeriklerini buna
+ * sarar (layout DEĞİL — layout searchParams göremez, aktifliği page bilir).
  *
- * Düzen (kullanıcı kararı 2026-08-14, 3. tur): PORTAL DİLİ — blok max-w-5xl ortalı; /doktor da
- * 5xl, Post-Op da 5xl'e çekildi → üç sekme arasında geçişte genişlik ZIPLAMAZ. Bant bloğun
- * solunda, içerik sola yaslı (mx-auto'suz) → bant+içerik bitişik tek gövde ("havada bant" olmaz;
- * tam-genişlik kenar-bant denemesi portal düzenini bozduğu için geri alındı). Mobilde alt çubuk
- * fixed → içeriğe pb-16.
+ * `balance`/`isDoctor` prop'ları mobil çubuğun eski Kayıtlı/Puanlarım yuvaları içindi
+ * (2026-08-19'da Header menüsüne taşındılar) — imza, beş çağıran page'i tek turda kırmamak
+ * için KORUNDU, değerler artık okunmuyor. Çağıranlardaki getDoctorBalance hesabıyla birlikte
+ * ayrı bir temizlik turunda sökülecek (todo).
  */
 export function DoctoriumShell({
-  active, balance, isDoctor, children,
+  active, counts = null, children,
 }: {
   active: SidebarActive;
-  balance: number | null;
-  isDoctor: boolean;
+  balance?: number | null;
+  isDoctor?: boolean;
+  counts?: SidebarCounts;
   children: React.ReactNode;
 }) {
   return (
-    /* Düzen (kullanıcı kararı 2026-08-14, 5. tur): bant viewport SOLUNA SABİT (fixed); içerik
-       ise /doktor'un ortalı 5xl konteyner konumunda başlar — sol boşluk = max(bant payı 212px,
-       viewport-ortalama). Geniş ekranda Doctorium başlığı /doktor · Post-Op başlıklarıyla AYNI
-       hizada; dar ekranda içerik bandın altına GİRMEZ (max taban). 100vw scrollbar'ı saydığı
-       için ortalamada ± scrollbar/2 (~5px) sapma olabilir — punto hizasında algılanmaz. */
     <>
-      <DoctoriumSidebar active={active} balance={balance} isDoctor={isDoctor} />
-      <div className="pb-16 md:pb-0 md:pl-[max(13.25rem,calc((100vw-64rem)/2))]">
-        <div className="w-full max-w-5xl">{children}</div>
-      </div>
+      <DoctoriumSidebar active={active} counts={counts} />
+      <div className="pb-14 md:pb-0">{children}</div>
     </>
   );
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { COUNTRIES, countryName } from "@/lib/constants";
 import { PreConsultGate, PRECONSULT_TEXTS } from "@/components/PreConsultGate";
-import { BRANCHES } from "@/lib/triage";
+import { PATIENT_BRANCHES } from "@/lib/triage";
 import { DynamicTriageQuestions } from "@/components/DynamicTriageQuestions";
 import { questionTexts } from "@/lib/triage-questions";
 import { requiredDocs } from "@/lib/required-docs";
@@ -17,7 +17,7 @@ import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/compo
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
 import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
 import { BranchBanner } from "@/components/BranchBanner";
-import { AuraSpinner } from "@/components/PortamedLogo";
+import { AuraSpinner } from "@/components/AuraLogo";
 import { readDoc, type UploadDoc } from "@/lib/read-doc";
 import type { Billing } from "@/lib/billing";
 import {
@@ -158,7 +158,7 @@ function TriyajInner() {
   function chooseLang(l: string) { setLangLocked(true); setUiLang(l); } // açık seçim → ülke-önerisi kilitlenir
   const showStrip = profileComplete(profile, "full") && !editProfile;
   const tTexts = useMemo(
-    () => [...STATIC_UI, ...PRECONSULT_TEXTS, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...DICTATION_TEXTS, ...(profile?.country ? [countryName(profile.country)] : []), ...BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
+    () => [...STATIC_UI, ...PRECONSULT_TEXTS, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...DICTATION_TEXTS, ...(profile?.country ? [countryName(profile.country)] : []), ...PATIENT_BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
     [effectiveBranch, analysis?.reasoning, profile]
   );
   const { t } = useT(uiLang, tTexts);
@@ -366,7 +366,7 @@ function TriyajInner() {
               <>
                 <BranchBanner
                   branchKey={effectiveBranch}
-                  branchLabel={t(BRANCHES.find((b) => b.key === effectiveBranch)?.label ?? effectiveBranch)}
+                  branchLabel={t(PATIENT_BRANCHES.find((b) => b.key === effectiveBranch)?.label ?? effectiveBranch)}
                   eyebrow={t("Branşınız")}
                 />
                 <div className="rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-3">
@@ -377,7 +377,7 @@ function TriyajInner() {
                       onChange={(e) => setBranchOverride(e.target.value)}
                       className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-2.5 py-1.5 text-sm font-medium text-[var(--c-ink)] outline-none focus:border-[var(--c-accent)]"
                     >
-                      {BRANCHES.map((b) => <option key={b.key} value={b.key}>{t(b.label)}</option>)}
+                      {PATIENT_BRANCHES.map((b) => <option key={b.key} value={b.key}>{t(b.label)}</option>)}
                     </select>
                     {branchOverride
                       ? <span className="text-xs text-[var(--c-ink-2)]">{t("elle seçildi")}</span>

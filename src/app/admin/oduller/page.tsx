@@ -12,7 +12,7 @@ export const metadata = { title: "Ödül Kataloğu" };
 
 // Ödül kataloğu + talep kuyruğu küratör paneli (v6.88) — /admin/kampanya deseni.
 // ⚖️ KALEM GİRİŞİ = VAAT BAŞLANGICI: kongre/kitap AYNİ MENFAATTİR — vergi (arızi kazanç/stopaj)
-// + kamu hekimi (657 hediye/ek-menfaat) değerlendirmesi yapılmadan kalem YAYINLAMAYIN (bilgi
+// + kamu doktoru (657 hediye/ek-menfaat) değerlendirmesi yapılmadan kalem YAYINLAMAYIN (bilgi
 // kutusu). Puana parasal değer atfeden metin hiçbir yüzeyde kurulmaz. İLAÇ sponsorlu kalem YOK.
 export default async function RewardAdminPage() {
   const user = await getCurrentUser();
@@ -41,7 +41,7 @@ export default async function RewardAdminPage() {
     }),
   ]);
 
-  // Talep sahibi hekim adları (teslimat için) — tek sorguda toplu okunur.
+  // Talep sahibi doktor adları (teslimat için) — tek sorguda toplu okunur.
   const doctorIds = [...new Set(redemptions.map((r) => r.doctorId))];
   const doctors = doctorIds.length
     ? await db.doctor.findMany({
@@ -65,9 +65,9 @@ export default async function RewardAdminPage() {
       <p className="mt-3 flex items-start gap-2 rounded-xl border border-amber-400/30 bg-amber-500/5 px-3.5 py-2.5 text-xs text-[var(--c-ink-2)]">
         <Info size={15} className="mt-px shrink-0 text-amber-300" />
         <span>
-          Katalog kalemi girmek hekime <strong className="text-[var(--c-ink)]">ödül vaadi başlatır</strong>. Kongre
+          Katalog kalemi girmek doktora <strong className="text-[var(--c-ink)]">ödül vaadi başlatır</strong>. Kongre
           katılımı ve kitap <strong className="text-[var(--c-ink)]">ayni menfaattir</strong>: vergi (arızi kazanç /
-          stopaj / GİB özelgesi) ve <strong className="text-[var(--c-ink)]">kamu hekimi (657)</strong> değerlendirmesi
+          stopaj / GİB özelgesi) ve <strong className="text-[var(--c-ink)]">kamu doktoru (657)</strong> değerlendirmesi
           tamamlanmadan kalem yayınlamayın. Puana parasal değer atfeden ifade kullanmayın
           (&quot;1 puan = ₺X&quot; yasak). İlaç firması sponsorlu kalem girilmez. Teslim (FULFILLED) işareti
           yalnız ifa GERÇEKLEŞTİKTEN sonra konur.
@@ -87,7 +87,7 @@ export default async function RewardAdminPage() {
             id: r.id, status: r.status, pointsCost: r.pointsCost, note: r.note,
             adminNote: r.adminNote, createdAt: iso(r.createdAt),
             itemTitle: r.item.title, itemKind: r.item.kind,
-            doctorLabel: d ? `${d.title} ${d.name} · ${d.city}` : "Hekim kaydı bulunamadı",
+            doctorLabel: d ? `${d.title} ${d.name} · ${d.city}` : "Doktor kaydı bulunamadı",
           };
         })}
       />

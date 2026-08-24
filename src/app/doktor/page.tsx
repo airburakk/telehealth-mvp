@@ -63,9 +63,9 @@ export default async function DoctorPanel({
   const me = user ? await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } }) : null;
   const doctor = me?.doctorId ? await db.doctor.findUnique({ where: { id: me.doctorId } }) : null;
 
-  // M5 onboarding + aktivasyon kapısı: doktor henüz onboard olmadıysa VEYA zorunlu mesleki belgeleri
-  // (diploma + MMSS) tamamlamadıysa (activatedAt yok) kapıya yönlendir. (baslangic sayfası ikisi de
-  // tamamsa /doktor'a geri yönlendirir → sonsuz döngü yok.)
+  // M5 onboarding + aktivasyon kapısı: doktor henüz onboard olmadıysa VEYA zorunlu mesleki belgeyi
+  // (v6.105'ten beri yalnız diploma) tamamlamadıysa (activatedAt yok) kapıya yönlendir. (baslangic
+  // sayfası ikisi de tamamsa /doktor'a geri yönlendirir → sonsuz döngü yok.)
   // ?from=doctorium (2026-08-16): Doctorium'daki Aşama-1 doktoru AURA toggle'ıyla geldi —
   // baslangic'a aura-gecis bağlamı taşınır, sayfa "AURA'ya geçiş için Aşama 2" uyarı ekranını basar.
   if (user?.role === "DOCTOR" && doctor && (!doctor.onboardedAt || !doctor.activatedAt)) {

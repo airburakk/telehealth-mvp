@@ -161,13 +161,13 @@ export function RewardAdmin(p: Props) {
               </span>
             </div>
             <p className="mt-1 text-xs text-[var(--c-ink-2)]">{r.doctorLabel}</p>
-            {r.note && <p className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">Hekim notu: {r.note}</p>}
+            {r.note && <p className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">Doktor notu: {r.note}</p>}
 
             {rejectId === r.id ? (
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 <input
                   className={`${inputCls} max-w-xs`}
-                  placeholder="Ret gerekçesi (hekime gösterilir)"
+                  placeholder="Ret gerekçesi (doktora gösterilir)"
                   value={rejectNote}
                   onChange={(e) => setRejectNote(e.target.value)}
                 />
@@ -257,7 +257,7 @@ export function RewardAdmin(p: Props) {
             </div>
           </div>
           <div>
-            <label className={labelCls} htmlFor="rw-title">Başlık (hekim kartında görünür)</label>
+            <label className={labelCls} htmlFor="rw-title">Başlık (doktor kartında görünür)</label>
             <input id="rw-title" className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)}
               placeholder="Örn. TTB kredili yurt içi kongre katılım desteği" />
           </div>
@@ -284,7 +284,7 @@ export function RewardAdmin(p: Props) {
       <ul className="mt-4 grid gap-2.5">
         {p.items.length === 0 && (
           <li className="rounded-xl border border-dashed border-[var(--c-hairline)] px-4 py-6 text-center text-xs text-[var(--c-ink-3)]">
-            Katalog boş — hekimler &quot;Ödül kataloğu yakında&quot; görür, puanlar birikmeye devam eder.
+            Katalog boş — doktorlar &quot;Ödül kataloğu yakında&quot; görür, puanlar birikmeye devam eder.
           </li>
         )}
         {p.items.map((it) => (

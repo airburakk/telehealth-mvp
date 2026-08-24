@@ -1,14 +1,15 @@
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
-// Kongre takvim dosyası (.ics) — v6.62, kullanıcı isteği "takvime ekle".
+// Etkinlik takvim dosyası (.ics) — v6.62 "kongre takvimi", v6.120'de Etkinlik oldu
+// (rota adı /api/doctor/congress-ics KALDI — istemci sözleşmesi, kullanıcıya görünmez).
 //
 // Dış servis YOK: RFC 5545 metnini kendimiz üretiyoruz (Google Calendar linki kullanmak
-// kongre bilgisini üçüncü tarafa taşırdı; ayrıca doktorun Outlook/Apple kullanımını dışlardı).
-// PHI YOK — içerik tamamen kamuya açık kongre bilgisi.
+// etkinlik bilgisini üçüncü tarafa taşırdı; ayrıca doktorun Outlook/Apple kullanımını dışlardı).
+// PHI YOK — içerik tamamen kamuya açık etkinlik bilgisi.
 //
 // Self-auth: middleware /api'yi korumaz → rota kendi kapısını kurar (personel + doktor okuyabilir;
-// kongre verisi hassas değil ama uç noktayı anonim taramaya açmayız).
+// etkinlik verisi hassas değil ama uç noktayı anonim taramaya açmayız).
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,7 @@ export async function GET(req: Request) {
 
   const id = new URL(req.url).searchParams.get("id") ?? "";
   const c = id ? await db.medicalCongress.findUnique({ where: { id } }) : null;
-  if (!c) return new Response("Kongre bulunamadı.", { status: 404 });
+  if (!c) return new Response("Etkinlik bulunamadı.", { status: 404 });
 
   // Bitiş yoksa tek günlük kabul edilir. DTEND hariç olduğu için daima +1 gün.
   const end = new Date((c.endDate ?? c.startDate).getTime() + 86400000);
@@ -63,7 +64,7 @@ export async function GET(req: Request) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//AURA//Doctorium Kongre//TR",
+    "PRODID:-//AURA//Doctorium Etkinlik//TR",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

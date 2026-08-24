@@ -7,7 +7,7 @@
 //    hedefli anket YALNIZ açık rızalı doktora; hedefsiz (bağlamsal) herkese.
 //
 // ⚠️ HONORARIUM KİLİDİ: honorarium > 0 anket ACTIVE EDİLEMEZ (canActivateSurvey; API fail-closed).
-// Ödeme/vergi kurgusu (gider pusulası ↔ SM makbuzu · GİB özelgesi · kamu hekimi · TİTCK değer
+// Ödeme/vergi kurgusu (gider pusulası ↔ SM makbuzu · GİB özelgesi · kamu doktoru · TİTCK değer
 // aktarımı) kullanıcı kararı bekliyor — kurgu yokken doktora "ödenir" vaadi verilmez.
 // Sonuç daima AGREGAT çıkar: kimlikli tekil yanıt hiçbir yüzeye/sponsora verilmez.
 import { db } from "./db";

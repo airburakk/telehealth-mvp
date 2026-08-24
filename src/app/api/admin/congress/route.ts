@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { normalizeBranchPrefs } from "@/lib/doctorium";
+import { normalizeBranchPrefs, EVENT_TYPES } from "@/lib/doctorium";
 
-// Doctorium Modül E — kongre kaydı yönetimi (v6.48). Otomatik kaynak YOK (dernek/kongre siteleri
-// makine-okunur takvim yayımlamıyor) → ADMIN küratörlü. Self-auth: middleware /api'yi korumaz.
+// Doctorium Modül E — ETKİNLİK kaydı yönetimi (v6.48 "kongre"; v6.120'de tüm türlere açıldı).
+// ADMIN küratörlü giriş; TTB akredite kayıtlar ayrıca scripts/ingest-ttb-events.ts ile gelir.
+// Self-auth: middleware /api'yi korumaz → rota kendi kapısını kurar.
+
+const EVENT_TYPE_KEYS = new Set<string>(EVENT_TYPES.map((t) => t.key));
 function parseDate(v: unknown): Date | null {
   if (typeof v !== "string" || !v.trim()) return null;
   const d = new Date(`${v}T00:00:00Z`);
@@ -18,14 +21,17 @@ export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   const title = typeof b.title === "string" ? b.title.trim().slice(0, 300) : "";
   const startDate = parseDate(b.startDate);
-  if (title.length < 3) return NextResponse.json({ error: "Kongre adı en az 3 karakter olmalı." }, { status: 400 });
+  if (title.length < 3) return NextResponse.json({ error: "Etkinlik adı en az 3 karakter olmalı." }, { status: 400 });
+  // Tür allowlist'li: bilinmeyen slug yazılırsa kayıt HİÇBİR tür çipinde görünmez (sessiz kayıp).
+  const eventType = typeof b.eventType === "string" && EVENT_TYPE_KEYS.has(b.eventType) ? b.eventType : null;
+  if (!eventType) return NextResponse.json({ error: "Geçerli bir etkinlik türü seçin." }, { status: 400 });
   if (!startDate) return NextResponse.json({ error: "Geçerli bir başlangıç tarihi girin." }, { status: 400 });
 
   const endDate = parseDate(b.endDate);
   if (endDate && endDate < startDate) {
     return NextResponse.json({ error: "Bitiş tarihi başlangıçtan önce olamaz." }, { status: 400 });
   }
-  // URL yalnız http(s) — javascript: gibi şemalar hekime tıklatılacak bağlantı olarak yazılmasın.
+  // URL yalnız http(s) — javascript: gibi şemalar doktora tıklatılacak bağlantı olarak yazılmasın.
   let url: string | null = null;
   if (typeof b.url === "string" && b.url.trim()) {
     try {
@@ -48,6 +54,7 @@ export async function POST(req: Request) {
       abstractDeadline: parseDate(b.abstractDeadline),
       earlyBirdDeadline: parseDate(b.earlyBirdDeadline),
       url,
+      eventType,
       branchSlugs: JSON.stringify(normalizeBranchPrefs(b.branchSlugs)),
     },
     select: { id: true },

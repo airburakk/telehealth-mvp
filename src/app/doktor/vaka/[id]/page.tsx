@@ -199,7 +199,7 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
               </div>
             )}
             {(c.doctor ?? suggested) && (
-              <Link href={`/hekim/${(c.doctor ?? suggested)!.id}`} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[var(--c-accent)] hover:underline">
+              <Link href={`/doktorlar/${(c.doctor ?? suggested)!.id}`} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[var(--c-accent)] hover:underline">
                 Doktor profilini gör <ArrowRight size={13} />
               </Link>
             )}

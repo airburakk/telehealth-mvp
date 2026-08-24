@@ -42,7 +42,7 @@ describe.skipIf(!TEST_DB)("entegrasyon: GET /api/cases yetki (gerçek dev DB)", 
   });
 });
 
-describe.skipIf(!TEST_DB)("entegrasyon: canCaseBeAccessedBy atama matrisi (gerçek hekim/vaka satırları)", () => {
+describe.skipIf(!TEST_DB)("entegrasyon: canCaseBeAccessedBy atama matrisi (gerçek doktor/vaka satırları)", () => {
   let f: Fixture;
   beforeAll(async () => { f = await seedFixture(); });
   afterAll(async () => { if (f) await cleanupFixture(f); });
@@ -52,21 +52,21 @@ describe.skipIf(!TEST_DB)("entegrasyon: canCaseBeAccessedBy atama matrisi (gerç
     expect(await canCaseBeAccessedBy(u(f.patientId, "PATIENT"), { userId: f.otherPatientId, doctorId: null, branch: FIXTURE_BRANCH, deletionLockedAt: null })).toBe(false);
   });
 
-  it("doğrulanmış hekim: kendisine ATANMIŞ + ATANMAMIŞ (kendi branşı kuyruk) → true", async () => {
+  it("doğrulanmış doktor: kendisine ATANMIŞ + ATANMAMIŞ (kendi branşı kuyruk) → true", async () => {
     expect(await canCaseBeAccessedBy(u(f.d1UserId, "DOCTOR"), { userId: f.patientId, doctorId: f.d1DoctorId, branch: FIXTURE_BRANCH, deletionLockedAt: null })).toBe(true);
     expect(await canCaseBeAccessedBy(u(f.d1UserId, "DOCTOR"), { userId: f.patientId, doctorId: null, branch: FIXTURE_BRANCH, deletionLockedAt: null })).toBe(true);
   });
 
-  it("BRANŞ-DARALTMASI: doğrulanmış hekim atanmamış YABANCI branş vakasına erişemez", async () => {
+  it("BRANŞ-DARALTMASI: doğrulanmış doktor atanmamış YABANCI branş vakasına erişemez", async () => {
     // d1 branşı Kardiyoloji → atanmamış Onkoloji vakası branş uyuşmazlığından reddedilir (savunma-derinliği)
     expect(await canCaseBeAccessedBy(u(f.d1UserId, "DOCTOR"), { userId: f.patientId, doctorId: null, branch: "Onkoloji", deletionLockedAt: null })).toBe(false);
   });
 
-  it("ÇAPRAZ-HEKİM: başka hekime atanmış vaka → false (IDOR engeli)", async () => {
+  it("ÇAPRAZ-HEKİM: başka doktora atanmış vaka → false (IDOR engeli)", async () => {
     expect(await canCaseBeAccessedBy(u(f.d2UserId, "DOCTOR"), { userId: f.patientId, doctorId: f.d1DoctorId, branch: FIXTURE_BRANCH, deletionLockedAt: null })).toBe(false);
   });
 
-  it("DOĞRULANMAMIŞ hekim → hiçbir vakaya erişemez (atanmamış dahil)", async () => {
+  it("DOĞRULANMAMIŞ doktor → hiçbir vakaya erişemez (atanmamış dahil)", async () => {
     expect(await canCaseBeAccessedBy(u(f.unverUserId, "DOCTOR"), { userId: f.patientId, doctorId: null, branch: FIXTURE_BRANCH, deletionLockedAt: null })).toBe(false);
     expect(await canCaseBeAccessedBy(u(f.unverUserId, "DOCTOR"), { userId: f.patientId, doctorId: f.unverDoctorId, branch: FIXTURE_BRANCH, deletionLockedAt: null })).toBe(false);
   });

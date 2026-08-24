@@ -1,37 +1,44 @@
 // M5 — Doktor hesap aktivasyon kapısı.
-// Zorunlu mesleki belgeler (Tıp Diploması + Mesleki Mali Sorumluluk Sigortası/MMSS) yüklenip MMSS
-// metadata'sı (teminat limiti dahil) tamamlanmadan doktor klinik panellere erişemez. Koşul sağlanınca
-// Doctor.activatedAt damgalanır; eksilirse damga geri alınır (gate yeniden devreye girer).
-// MMSS teminat limiti aynı zamanda M3 Katman 3 malpraktis ek-prim hesabının girdisidir.
+// Zorunlu mesleki belge (v6.105'ten beri YALNIZ Tıp Diploması — aşağıdaki karar notu) yüklenip
+// 🔴 DOĞRULANMADAN doktor klinik panellere erişemez (v6.119 sıkılaşması: eskiden yüklemek yeterdi).
+// Koşul sağlanınca Doctor.activatedAt damgalanır; eksilirse damga geri alınır (gate yeniden devreye
+// girer). Doğrulama iki yoldan gelir — e-Devlet barkodu otomatik (lib/edevlet-belge.ts, DIŞ İSTEK
+// YOK) veya incelemeci onayı. Tam gerekçe: vault wiki/kavramlar/doktor-kimlik-dogrulama.md. MMSS (Mesleki Mali Sorumluluk Sigortası)
+// İHTİYARİ: yüklenirse teminat limiti M3 Katman 3 malpraktis ek-prim hesabının girdisidir.
 import { db } from "@/lib/db";
 
 // Hesap aktivasyonu için yüklenmesi ZORUNLU belge tipleri (sertifika/akademik ihtiyari).
-// ⚠️ CHAMBER ve STUDENT_CERT buraya EKLENMEZ: ikisi de Aşama 1'in (Doctorium) belgesidir, klinik
-// aktivasyonun (Aşama 2) girdisi değildir — kapılar birbirinden bağımsız damgalanır.
-export const REQUIRED_DOC_TYPES = ["DIPLOMA", "MMSS"] as const;
-export const ALL_DOC_TYPES = ["DIPLOMA", "MMSS", "CHAMBER", "STUDENT_CERT", "CERTIFICATE", "ACADEMIC"] as const;
+// ⚠️ STUDENT_CERT buraya EKLENMEZ: Aşama 1'in (Doctorium) öğrenci belgesidir, klinik aktivasyonun
+// (Aşama 2) girdisi değildir — kapılar birbirinden bağımsız damgalanır.
+// 🪦 CHAMBER v6.124'te LİSTEDEN ÇIKTI (kullanıcı kararı 2026-08-19 "Yalnız e-Devlet diploma"):
+// tabip odası yazısı artık ne yüklenebilir ne Doctorium açar; eski satırlar tarihsel kayıttır.
+// v6.105 (kullanıcı kararı 2026-08-17): MMSS aktivasyon şartından ÇIKARILDI ("şimdilik kaldıralım")
+// → tek zorunlu mesleki belge Tıp Diploması. MMSS kartı/formu İHTİYARİ olarak DURUYOR: yükleyen
+// doktorun teminat limiti kaydedilmeye devam eder ve /paket sigorta paketini (M3 Katman 3) besler.
+// ⚠️ Bu kapı GEVŞEME'dir, sıkılaşma değil → mevcut aktif doktorlar etkilenmez (aksi yönde olsaydı
+// "Ders 1" regresyonu doğardı). Yan etki KASITLI: diploması olup MMSS'si olmadığı için bekleyen
+// doktorlar, bir sonraki refreshActivation'da aktifleşir.
+// 🔙 Geri alma: bu diziye "MMSS" eklemek + canActivate'e mmssComplete şartını geri koymak yeterli.
+export const REQUIRED_DOC_TYPES = ["DIPLOMA"] as const;
+export const ALL_DOC_TYPES = ["DIPLOMA", "MMSS", "STUDENT_CERT", "CERTIFICATE", "ACADEMIC"] as const;
 export type DoctorDocType = (typeof ALL_DOC_TYPES)[number];
 
-// ── İki aşamalı giriş — AŞAMA 1: Doctorium kapısı (v6.87; öğrenci damgası v6.95) ───────────────
-// Tabip odası "Protokol Numaralı" üye yazısı (CHAMBER) yüklüyse Doctor.chamberLetterAt damgalanır
-// (otomatik — admin onayı beklemez; kullanıcı kararı 2026-08-11). v6.95: tıp öğrencisi e-Devlet
-// öğrenci belgesi (STUDENT_CERT) yükleyince Doctor.studentVerifiedAt aynı desenle damgalanır
-// (kullanıcı kararı 2026-08-14). Doctorium erişimi damgalardan biri VEYA klinik aktivasyonla açılır.
-// ⚠️ Parametre tipi ÜÇ alanı da zorunlu tutar (kasıtlı — deletionLockedAt/CaseRef deseni): çağıran
-// select'ine studentVerifiedAt eklemeyi unutursa derleme kırılır, kapı sessizce yanlış karar vermez.
+// ── İki aşamalı giriş — AŞAMA 1: Doctorium kapısı (v6.124 yeniden tasarım) ─────────────────────
+// 🔴 v6.124 (kullanıcı kararı 2026-08-19, Doximity araştırması sonrası): Doctorium'un TEK doktor
+// yolu e-DEVLET DOĞRULAMALI DİPLOMA'dır — DIPLOMA belgesi ACCEPTED olunca Doctor.diplomaVerifiedAt
+// damgalanır (refreshActivation eşitler). Tabip odası yazısı (CHAMBER/chamberLetterAt) KAPIDAN
+// DÜŞTÜ; v6.87-123 arası kuralın tarihi schema.prisma'daki kolon yorumundadır. Öğrenci yolu
+// (studentVerifiedAt, v6.95) AYNEN sürer. activatedAt kapıda ayrıca OKUNMAZ: klinik aktivasyon
+// zaten ACCEPTED diploma ister → activatedAt ⊂ diplomaVerifiedAt (migration backfill'i kurdu).
+// ⚠️ Parametre tipi İKİ alanı da zorunlu tutar (kasıtlı — deletionLockedAt/CaseRef deseni): çağıran
+// select'ine alan eklemeyi unutursa derleme kırılır, kapı sessizce yanlış karar vermez.
 
 // Doctorium'a girebilir mi (saf — birim testlenebilir).
 export function hasDoctoriumAccess(d: {
-  chamberLetterAt: Date | null;
-  activatedAt: Date | null;
+  diplomaVerifiedAt: Date | null;
   studentVerifiedAt: Date | null;
 }): boolean {
-  return !!d.chamberLetterAt || !!d.activatedAt || !!d.studentVerifiedAt;
-}
-
-// Tabip odası yazısı yüklü mü?
-export function hasChamberLetter(docs: { type: string }[]): boolean {
-  return docs.some((x) => x.type === "CHAMBER");
+  return !!d.diplomaVerifiedAt || !!d.studentVerifiedAt;
 }
 
 // Öğrenci belgesi yüklü mü?
@@ -42,7 +49,8 @@ export function hasStudentCert(docs: { type: string }[]): boolean {
 // Öğrenci-SINIRLI üye mi: öğrenci damgası var ama klinik aktivasyon yok. Pazarlama yüzeyleri
 // (sponsor kartı, anket, ödül puanı) bu üyeye KAPALIDIR — tıp öğrencisi sağlık meslek mensubu
 // değildir; meslek-mensubuna-tanıtım rejimi ona uygulanamaz (kullanıcı kararı 2026-08-14).
-// Mezuniyette diploma+MMSS ile activatedAt dolunca süzgeç kendiliğinden kalkar (damga silinmez).
+// Mezuniyette zorunlu belgeler (v6.105'ten beri yalnız diploma) tamamlanıp activatedAt dolunca
+// süzgeç kendiliğinden kalkar (damga silinmez).
 export function isStudentOnly(d: { studentVerifiedAt: Date | null; activatedAt: Date | null }): boolean {
   return !!d.studentVerifiedAt && !d.activatedAt;
 }
@@ -76,7 +84,7 @@ export function hasClinicalAccess(d: { activatedAt: Date | null }): boolean {
 // Aşama 2 tamamlanmamış → sayfa redirect("/doktor/baslangic"), API 403 döndürür. COORDINATOR/
 // ADMIN gözetim rolleri bu kapıdan geçirilmez (rol muafiyeti çağıran tarafta — mevcut davranış).
 // verified de döner: PHI taşıyan akışlar (ör. İcapçı kuyruğu) ownership kuralıyla ("doğrulanmamış
-// hekim hiçbir vakaya erişemez") hizalanabilsin.
+// doktor hiçbir vakaya erişemez") hizalanabilsin.
 export async function clinicalDoctorFor(
   userId: string,
 ): Promise<{ doctorId: string; branch: string; verified: boolean } | null> {
@@ -97,25 +105,76 @@ export function mmssComplete(d: MmssMeta): boolean {
   return !!d.mmssInsurer && !!d.mmssPolicyNo && typeof d.mmssCoverageLimit === "number" && d.mmssCoverageLimit > 0;
 }
 
-// Zorunlu belge dosyaları (diploma + MMSS) yüklü mü?
+// Zorunlu belge dosyaları (REQUIRED_DOC_TYPES — v6.105'ten beri yalnız diploma) YÜKLÜ mü?
+// ⚠️ Bu VARLIK sorusudur, onay sorusu DEĞİL — onboarding'i tamamlamanın şartıdır (doktor belgesini
+// yükleyince onboarding biter; klinik kapı ayrıca ONAY ister → canActivate). İkisini karıştırma:
+// hasRequiredDocs'u klinik kapı olarak kullanmak v6.119 sıkılaşmasını sessizce geri alır.
 export function hasRequiredDocs(docs: { type: string }[]): boolean {
   const types = new Set(docs.map((x) => x.type));
   return REQUIRED_DOC_TYPES.every((t) => types.has(t));
 }
 
-// Hesap aktif edilebilir mi (damga atılabilir): zorunlu belgeler + MMSS metadata tam.
-export function canActivate(docs: { type: string }[], mmss: MmssMeta): boolean {
-  return hasRequiredDocs(docs) && mmssComplete(mmss);
+// Zorunlu belgelerin hepsi ONAYLI mı (v6.119)?
+// ⚠️ Parametre tipi `status`ü ZORUNLU tutar (kasıtlı — deletionLockedAt/CaseRef deseni): çağıran
+// select'ine status eklemeyi unutursa DERLEME KIRILIR, kapı sessizce "onaysız da geçer"e dönmez.
+export function hasAcceptedRequiredDocs(docs: { type: string; status: string }[]): boolean {
+  return REQUIRED_DOC_TYPES.every((t) => docs.some((d) => d.type === t && d.status === "ACCEPTED"));
 }
 
-// Eksik zorunlu adımları döndür (UI'da yönlendirme metni için).
-export function missingSteps(docs: { type: string }[], mmss: MmssMeta): string[] {
+/** Aşama 2 güvenlik katmanı damgaları (v6.126 — lib/doctor-verify.ts hasStage2Layers girdisi). */
+export type LayerStamps = {
+  smsVerifiedAt: Date | null;
+  workEmailVerifiedAt: Date | null;
+  clinicPhoneVerifiedAt: Date | null;
+};
+
+// Hesap aktif edilebilir mi (damga atılabilir): ONAYLI zorunlu belge (+ gate açıksa katmanlar).
+// 🔴 v6.119 (kullanıcı kararı 2026-08-19): belge VARLIĞI yetmez, ACCEPTED olması gerekir.
+// ACCEPTED iki yoldan gelir: (a) e-Devlet barkod okuması otomatik geçti (lib/edevlet-belge.ts —
+// dış istek YOK) · (b) incelemeci /admin/doktor-onay'dan onayladı. Çoğu doktor (a) ile hiç beklemez.
+// 🟡 v6.126: üçüncü parametre AŞAMA 2 katman kapısı (SMS zorunlu + kurum bağından biri — §8.2).
+// `layerGate.enabled=false` (AURA_LAYER_GATE kapalı, VARSAYILAN) iken v6.124 davranışı birebir
+// sürer; çağıranın parametreyi HİÇ vermemesi de aynı anlama gelir (dormant güvenli varsayılan).
+// v6.105: mmssComplete şartı KALKTI (MMSS ihtiyari). İmzadaki `mmss` parametresi bilinçli KORUNDU.
+// 🔙 Geri alma (kapıyı gevşetmek): gövdeyi `hasRequiredDocs(docs)`e çevirmek yeterli.
+export function canActivate(
+  docs: { type: string; status: string }[],
+  _mmss: MmssMeta,
+  layerGate?: { enabled: boolean; layers: LayerStamps },
+): boolean {
+  if (!hasAcceptedRequiredDocs(docs)) return false;
+  if (layerGate?.enabled) {
+    const L = layerGate.layers;
+    return !!L.smsVerifiedAt && (!!L.workEmailVerifiedAt || !!L.clinicPhoneVerifiedAt);
+  }
+  return true;
+}
+
+// Eksik zorunlu adımları döndür (UI'da yönlendirme metni için) — VARLIK bazlı.
+// v6.105: MMSS satırları çıkarıldı — ihtiyari bir belge "eksik zorunlu adım" olarak listelenemez.
+// ⚠️ v6.119: burası ONAY durumuna BAKMAZ (bilinçli) — "diploman eksik" ile "diploman incelemede"
+// farklı mesajlardır; ikincisi activationState() ile anlatılır, yoksa doktor yüklediği belgeyi
+// durmadan yeniden yüklemeye çalışır.
+export function missingSteps(docs: { type: string }[], _mmss: MmssMeta): string[] {
   const types = new Set(docs.map((x) => x.type));
   const out: string[] = [];
   if (!types.has("DIPLOMA")) out.push("Tıp diploması");
-  if (!types.has("MMSS")) out.push("MMSS poliçesi");
-  if (!mmssComplete(mmss)) out.push("MMSS poliçe bilgileri (teminat limiti dahil)");
   return out;
+}
+
+/** Doktorun klinik aktivasyonunun UI'da anlatılacak hâli (v6.119). */
+export type ActivationState = "MISSING" | "PENDING_REVIEW" | "REJECTED" | "ACTIVE";
+
+// Zorunlu belgenin (diploma) durumundan UI mesaj hâlini türetir (saf).
+// MISSING = hiç yüklenmedi · PENDING_REVIEW = yüklendi, henüz doğrulanmadı · REJECTED = yetersiz
+// bulundu · ACTIVE = onaylı. REJECTED, PENDING'e göre ÖNCELİKLİ: doktor "inceleniyor" sanıp
+// boşuna beklememeli, yeniden yüklemesi gerektiğini görmeli.
+export function activationState(docs: { type: string; status: string }[]): ActivationState {
+  const diplomas = docs.filter((d) => d.type === "DIPLOMA");
+  if (diplomas.length === 0) return "MISSING";
+  if (diplomas.some((d) => d.status === "ACCEPTED")) return "ACTIVE";
+  if (diplomas.some((d) => d.status === "REJECTED")) return "REJECTED";
+  return "PENDING_REVIEW";
 }
 
 // ── M5 Kayıt — ilk-onboarding ek zorunlulukları (yalnız self-signup doktor ilk kez tamamlarken) ──
@@ -148,9 +207,12 @@ type OnboardingData = MmssMeta & {
   branch: string; city: string;
 };
 
-// Onboarding tamamlanabilir mi: zorunlu belgeler + MMSS + ≥1 işlem + FHIR qualification + kimlik (branş/şehir).
+// Onboarding tamamlanabilir mi: zorunlu belgeler YÜKLÜ + ≥1 işlem + FHIR qualification + kimlik.
+// 🔴 v6.119: burada canActivate DEĞİL hasRequiredDocs kullanılır (bilinçli ayrım). Aksi hâlde
+// doktor, diploması insan incelemesinden geçene kadar onboarding'i BİTİREMEZ ve kayıt akışında
+// asılı kalırdı. Onboarding "belgeni yükledin mi", klinik kapı "belgen doğrulandı mı" sorar.
 export function canCompleteOnboarding(docs: { type: string }[], d: OnboardingData): boolean {
-  return canActivate(docs, d) && hasProcedures(d.procedures) && hasQualification(d) && !!d.branch.trim() && !!d.city.trim();
+  return hasRequiredDocs(docs) && hasProcedures(d.procedures) && hasQualification(d) && !!d.branch.trim() && !!d.city.trim();
 }
 
 // Onboarding için eksik adımlar (UI yönlendirme metni).
@@ -164,61 +226,54 @@ export function missingOnboardingSteps(docs: { type: string }[], d: OnboardingDa
   return out;
 }
 
-// DB-yan-etkili: belgeler + MMSS metadata'sını okuyup activatedAt damgasını eşitler.
-// Belge yükleme / silme / MMSS kaydı sonrası çağrılır. Aktif olabiliyorsa damga atar, olamıyorsa kaldırır.
-// Döndürür: hesap şu an aktif mi.
+// DB-yan-etkili: belgeleri okuyup İKİ damgayı eşitler (v6.124):
+//   diplomaVerifiedAt — DIPLOMA ACCEPTED (Aşama 1 / Doctorium kapısı)
+//   activatedAt       — canActivate (Aşama 2 / klinik; bugün = aynı koşul, §8.2 katmanları inince
+//                        SMS OTP + kurum bağı da eklenecek — o gün YALNIZ canActivate değişir)
+// Belge yükleme / silme / inceleme kararı sonrası çağrılır. Koşul sağlanınca damga atar,
+// bozulunca kaldırır. Döndürür: hesap şu an KLİNİK-aktif mi (Doctorium durumu refreshStudentCert
+// dönüşünden okunur — mevcut çağıran sözleşmesi).
 export async function refreshActivation(doctorId: string): Promise<boolean> {
   const [docs, doc] = await Promise.all([
-    db.doctorDocument.findMany({ where: { doctorId }, select: { type: true } }),
+    // v6.119: status ŞART — canActivate onaylı belge ister (tip imzası bunu derlemede zorlar).
+    db.doctorDocument.findMany({ where: { doctorId }, select: { type: true, status: true } }),
     db.doctor.findUnique({
       where: { id: doctorId },
-      select: { mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true, activatedAt: true },
+      select: {
+        mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true, activatedAt: true, diplomaVerifiedAt: true,
+        // v6.126 — Aşama 2 katman damgaları (yalnız AURA_LAYER_GATE=1 iken karara girer)
+        smsVerifiedAt: true, workEmailVerifiedAt: true, clinicPhoneVerifiedAt: true,
+      },
     }),
   ]);
   if (!doc) return false;
-  const ok = canActivate(docs, doc);
-  if (ok && !doc.activatedAt) {
-    await db.doctor.update({ where: { id: doctorId }, data: { activatedAt: new Date() } });
-  } else if (!ok && doc.activatedAt) {
-    await db.doctor.update({ where: { id: doctorId }, data: { activatedAt: null } });
+  const diplomaOk = hasAcceptedRequiredDocs(docs);
+  const ok = canActivate(docs, doc, { enabled: process.env.AURA_LAYER_GATE === "1", layers: doc });
+  const data: { activatedAt?: Date | null; diplomaVerifiedAt?: Date | null } = {};
+  if (diplomaOk && !doc.diplomaVerifiedAt) data.diplomaVerifiedAt = new Date();
+  else if (!diplomaOk && doc.diplomaVerifiedAt) data.diplomaVerifiedAt = null;
+  if (ok && !doc.activatedAt) data.activatedAt = new Date();
+  else if (!ok && doc.activatedAt) data.activatedAt = null;
+  if (Object.keys(data).length > 0) {
+    await db.doctor.update({ where: { id: doctorId }, data });
   }
   return ok;
 }
 
-// DB-yan-etkili: CHAMBER belgesinin varlığını Doctor.chamberLetterAt damgasına eşitler
-// (refreshActivation deseni — belge yükleme/silme sonrası çağrılır; yazı silinirse damga düşer).
-// Döndürür: doktorun GÜNCEL Doctorium erişimi (damga VEYA klinik aktivasyon).
-export async function refreshChamberLetter(doctorId: string): Promise<boolean> {
-  const [docs, doc] = await Promise.all([
-    db.doctorDocument.findMany({ where: { doctorId, type: "CHAMBER" }, select: { type: true } }),
-    db.doctor.findUnique({
-      where: { id: doctorId },
-      select: { chamberLetterAt: true, activatedAt: true, studentVerifiedAt: true },
-    }),
-  ]);
-  if (!doc) return false;
-  const has = hasChamberLetter(docs);
-  if (has && !doc.chamberLetterAt) {
-    await db.doctor.update({ where: { id: doctorId }, data: { chamberLetterAt: new Date() } });
-  } else if (!has && doc.chamberLetterAt) {
-    await db.doctor.update({ where: { id: doctorId }, data: { chamberLetterAt: null } });
-  }
-  return hasDoctoriumAccess({
-    chamberLetterAt: has ? new Date() : null,
-    activatedAt: doc.activatedAt,
-    studentVerifiedAt: doc.studentVerifiedAt,
-  });
-}
+// 🪦 refreshChamberLetter v6.124'te SİLİNDİ (CHAMBER kapıdan düştü — dosya başındaki karar notu).
+// chamberLetterAt kolonu tarihsel; hiçbir akış artık onu damgalamaz/okumaz.
 
 // DB-yan-etkili: STUDENT_CERT belgesinin varlığını Doctor.studentVerifiedAt damgasına eşitler
-// (refreshChamberLetter deseninin eşleniği — belge yükleme/silme sonrası çağrılır; belge silinirse
-// damga düşer). Döndürür: doktorun GÜNCEL Doctorium erişimi (herhangi bir damga VEYA aktivasyon).
+// (refreshActivation deseni — belge yükleme/silme sonrası çağrılır; belge silinirse damga düşer).
+// Döndürür: doktorun GÜNCEL Doctorium erişimi (diploma doğrulaması VEYA öğrenci damgası).
+// ⚠️ refreshActivation'dan SONRA çağrılmalı (mevcut sözleşme) — diplomaVerifiedAt'in güncel
+// hâlini okur; önce çağrılırsa bir tur bayat karar döndürür.
 export async function refreshStudentCert(doctorId: string): Promise<boolean> {
   const [docs, doc] = await Promise.all([
     db.doctorDocument.findMany({ where: { doctorId, type: "STUDENT_CERT" }, select: { type: true } }),
     db.doctor.findUnique({
       where: { id: doctorId },
-      select: { chamberLetterAt: true, activatedAt: true, studentVerifiedAt: true },
+      select: { diplomaVerifiedAt: true, studentVerifiedAt: true },
     }),
   ]);
   if (!doc) return false;
@@ -229,8 +284,7 @@ export async function refreshStudentCert(doctorId: string): Promise<boolean> {
     await db.doctor.update({ where: { id: doctorId }, data: { studentVerifiedAt: null } });
   }
   return hasDoctoriumAccess({
-    chamberLetterAt: doc.chamberLetterAt,
-    activatedAt: doc.activatedAt,
+    diplomaVerifiedAt: doc.diplomaVerifiedAt,
     studentVerifiedAt: has ? new Date() : null,
   });
 }

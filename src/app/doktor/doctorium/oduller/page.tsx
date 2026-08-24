@@ -6,6 +6,7 @@ import {
   getDoctorBalance, REWARD_KIND_LABEL, REDEMPTION_STATUS_LABEL, REWARD_TERMS_TEXT,
 } from "@/lib/rewards";
 import { isStudentOnly } from "@/lib/doctor-activation";
+import { todayModuleCounts } from "@/lib/doctorium";
 import { RewardCatalog } from "./RewardCatalog";
 import { DoctoriumShell } from "../DoctoriumSidebar";
 import { ArrowLeft, Info, Star } from "lucide-react";
@@ -60,9 +61,9 @@ export default async function RewardsPage() {
   const iso = (d: Date) => d.toISOString().slice(0, 10);
 
   return (
-    <DoctoriumShell active="oduller" balance={balance} isDoctor>
-    {/* px-5 = /doktor içerik boşluğu (hiza kararı 2026-08-14): başlıklar sekmeler arasında aynı x'te. */}
-    <div className="max-w-2xl px-5 py-8">
+    <DoctoriumShell active="oduller" balance={balance} isDoctor counts={await todayModuleCounts()}>
+    {/* mx-auto (2026-08-18 Üst Raf): okuma kolonu ortalı — Akışım ile aynı düzen. */}
+    <div className="mx-auto max-w-2xl px-5 py-8">
       {/* Masaüstünde dönüş banttadır (Faz 1); bu link yalnız mobil için. */}
       <Link
         href="/doktor/doctorium"

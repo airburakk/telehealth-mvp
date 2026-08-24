@@ -675,12 +675,46 @@ const PROFESSIONAL_PATTERNS = [
  * atlama gerekçesi değildir — 2026-08-15 dersi).
  */
 export function isProfessionallyRelevant(title: string, summary = ""): boolean {
+  if (isNoiseContent(title, summary)) return false;
+  const t = `${title} ${summary}`.toLocaleLowerCase("tr-TR");
+  return PROFESSIONAL_PATTERNS.some((p) => matchesKeyword(t, p));
+}
+
+/**
+ * Negatif elekler (reklam · tüketici · iç-bülten) — kaynak ne olursa olsun İSTİSNASIZ uygulanır.
+ * v6.129'da isProfessionallyRelevant'tan ayrıştı: uzmanlık derneği beslemeleri (aşağıda
+ * ASSOCIATION_RSS_SOURCES) POZİTİF sinyal şartından muaftır ama bu eleklerden ASLA muaf değil.
+ */
+export function isNoiseContent(title: string, summary = ""): boolean {
   const t = `${title} ${summary}`.toLocaleLowerCase("tr-TR");
   const head = title.toLocaleLowerCase("tr-TR"); // etkinlik gürültüsü BAŞLIKTAN anlaşılır
-  if (PROMO_PATTERNS.some((p) => t.includes(p))) return false;
-  if (CONSUMER_PATTERNS.some((p) => t.includes(p))) return false;
-  if (ORG_NOISE_PATTERNS.some((p) => head.includes(p))) return false;
-  return PROFESSIONAL_PATTERNS.some((p) => matchesKeyword(t, p));
+  if (PROMO_PATTERNS.some((p) => t.includes(p))) return true;
+  if (CONSUMER_PATTERNS.some((p) => t.includes(p))) return true;
+  return ORG_NOISE_PATTERNS.some((p) => head.includes(p));
+}
+
+/**
+ * Uzmanlık derneği beslemesine ÖZEL ek gürültü (v6.129, 2026-08-19 ölçümü). Dernek akışlarında
+ * "Kutlama; Sn. Doç. Dr. X" (TATD) · "Başkanın Yeni Yıl Mesajı" (TGD) gibi kalemler POZİTİF
+ * mesleki desen taşıdığı için ("doç.", "başkan") genel süzgeçten sızıyordu — tören/iç-bülten
+ * sınıfıdır, doktorun akışında değeri yok.
+ * ⚠️ ORG_NOISE_PATTERNS'e EKLENMEDİ (bilinçli): bu sözcükler genel sağlık medyasında meşru
+ * haber başlığı olabilir ("… salgınında 12 vefat"), yalnız dernek duyurusunda tören anlamına gelir.
+ */
+const ASSOC_NOISE_PATTERNS = [
+  "kutlama", "tebrik", "taziye", "vefat", "başsağlığı", "anma töreni", "yeni yıl mesaj",
+  "bayram mesaj", "yönetim kurulu belirlendi", "seçim sonuç", "genel kurul duyuru",
+];
+
+/**
+ * Dernek kalemi akışa girmeli mi? POZİTİF sinyal ARANMAZ — kaynağın kendisi mesleki otoritedir
+ * (kurumun kendi uzmanlık alanında yayımladığı duyuru tanımı gereği o branşın gündemi). Yalnız
+ * negatif elekler + tören sınıfı uygulanır.
+ */
+export function isAssociationRelevant(title: string, summary = ""): boolean {
+  if (isNoiseContent(title, summary)) return false;
+  const head = title.toLocaleLowerCase("tr-TR");
+  return !ASSOC_NOISE_PATTERNS.some((p) => head.includes(p));
 }
 
 // ── Genel RSS toplayıcı (v6.99) ─────────────────────────────────────────────
@@ -697,6 +731,22 @@ export interface RssSourceDef {
   /** v6.99.5 — false: bu kaynaktan görsel TOPLANMAZ (düşük kaliteli thumbnail/Getty sınıfı;
    *  detay CoverArt kaynak-bandını gösterir). Varsayılan true. */
   collectImages?: boolean;
+  /** v6.129 — bu beslemenin kalemleri hangi branşlara yazılacak (NewsArticle.branchSlugs).
+   *  Uzmanlık derneği beslemeleri branşa BAĞLIDIR; genel medya kaynaklarında boş kalır. */
+  branchSlugs?: string[];
+  /**
+   * v6.129 — kalem süzgeci. Varsayılan `isProfessionallyRelevant` (genel medya: pozitif mesleki
+   * sinyal ŞART). Uzmanlık dernekleri `isAssociationRelevant` kullanır: kaynağın kendisi mesleki
+   * otorite olduğu için pozitif sinyal aranmaz, yalnız gürültü elenir.
+   */
+  filter?: (title: string, summary: string) => boolean;
+  /**
+   * v6.129 — beslemenin KENDİ `<category>` etiketiyle dışlama (küçük/büyük harf duyarsız).
+   * 🔑 Kaynağın kendi sınıflandırması başlık tahmininden GÜVENİLİRDİR: TGCD feed'i hem dernek
+   * duyurusu hem HASTA bilgilendirme yazısı yayımlıyor ("Akalazya Nedir?") ve ikisini
+   * `Haberler` / `Halk Sağlığı` diye kendisi ayırıyor. Desen uydurmak yerine o etiketi okuruz.
+   */
+  excludeCategories?: string[];
 }
 
 /**
@@ -740,7 +790,13 @@ export async function ingestRss(def: RssSourceDef, opts?: IngestOpts): Promise<[
     seen.add(link);
     scanned++;
     const summary = pick("description") || pick("summary");
-    if (!isProfessionallyRelevant(title, summary)) continue;
+    if (!(def.filter ?? isProfessionallyRelevant)(title, summary)) continue;
+    // Beslemenin kendi kategorisiyle dışlama (v6.129) — kaynağın beyanı, bizim tahminimiz değil.
+    if (def.excludeCategories?.length) {
+      const cats = [...b.matchAll(/<category[^>]*>([\s\S]*?)<\/category>/gi)]
+        .map((m) => plain(m[1].replace(/<!\[CDATA\[|\]\]>/g, "")).toLocaleLowerCase("tr-TR"));
+      if (def.excludeCategories.some((x) => cats.includes(x.toLocaleLowerCase("tr-TR")))) continue;
+    }
     const pub = pick("pubDate") || pick("published") || pick("updated") || pick("dc:date");
     const when = pub ? new Date(pub) : new Date();
     // Görsel (v6.99.2): önce RSS'in kendi media etiketi (MedicalXpress); yoksa makale sayfasının
@@ -757,6 +813,7 @@ export async function ingestRss(def: RssSourceDef, opts?: IngestOpts): Promise<[
       sourceName: def.sourceName,
       url: link,
       publishedAt: Number.isNaN(when.getTime()) ? new Date() : when,
+      branchSlugs: def.branchSlugs?.length ? JSON.stringify(def.branchSlugs) : undefined,
     }, opts?.dryRun, def.collectImages === false ? undefined : async () => allowedImageUrl(mediaUrl) ?? (await fetchOgImage(link)));
     if (isNew) {
       created++;
@@ -778,6 +835,39 @@ export const RSS_SOURCES: RssSourceDef[] = [
   // 2026-08-16) → detay CoverArt kaynak-bandını gösterir (band-*.webp).
   { source: "medscape", sourceName: "Medscape", url: "https://www.medscape.com/cx/rssfeeds/2700.xml", limit: 12, collectImages: false },
   { source: "medicalxpress", sourceName: "Medical Xpress", url: "https://medicalxpress.com/rss-feed/", limit: 12, collectImages: false },
+];
+
+// ── Uzmanlık dernekleri (v6.129, kullanıcı isteği 2026-08-19) ───────────────
+//
+// Kullanıcının 30 branşlık dernek rehberi sisteme İKİ ayrı yolla girer:
+//   1. BU LİSTE (ASSOCIATION_RSS_SOURCES) — RSS/Atom yayımlayan dernekler; günlük ingest'te
+//      sektörel akışa "meslek" kategorisi + branş etiketiyle düşer.
+//   2. lib/association-sources.ts — 30 derneğin TAMAMI (RSS'i olmayanlar dahil): haftalık
+//      GitHub Actions nöbetçisi ve kongre tazeleme kuyruğu oradan beslenir.
+//
+// 🪤 2026-08-19 CANLI ÖLÇÜM — 33 dernek domaini tarandı (autodiscovery + 7 yaygın yol):
+// yalnız 5'i geçerli besleme veriyor. Ölçülen gerçek, tahmin değil; ölmüş/eksik bir feed'i
+// "ekleyelim de dursun" diye listeye koymak cron raporunu kalıcı hatayla kirletir (v6.99 dersi).
+//   ❌ Feed YOK (28): tkd · toraks · solunum · noroloji · atuder · turkpediatri · millipediatri ·
+//      turkcer · totbid · uroloji · todnet · kbb · tihud · kanser · turkdermatoloji · psikiyatri ·
+//      turkrad · tard · turknorosirurji · plastikcerrahi · tftr · temd · romatoloji · thd ·
+//      nefroloji · tkdcd · turkpath · tibbigenetik
+//   ⚠️ uroloji.org.tr ve tibbigenetikturkiye.org TLS zinciri EKSİK sunuyor
+//      (UNABLE_TO_VERIFY_LEAF_SIGNATURE) — nöbetçi bunu ayrı raporlar (TTB/RG emsali:
+//      lib/ttb-ca.ts · lib/rg-ca.ts; gerekirse aynı özel-CA yolu kurulur).
+//
+// Kategori "meslek": dernek duyurusu doktorun kendi mesleki gündemidir (SECTOR_CATEGORIES).
+// Görsel toplanmaz — dernek sayfalarının og'ları çoğunlukla logo/afiş (CoverArt daha iyi).
+export const ASSOCIATION_RSS_SOURCES: RssSourceDef[] = [
+  { source: "klimik", sourceName: "KLİMİK Derneği", url: "https://www.klimik.org.tr/feed/", branchSlugs: ["enfeksiyon"], limit: 10, category: "meslek", collectImages: false, filter: isAssociationRelevant },
+  { source: "tjod", sourceName: "Türk Jinekoloji ve Obstetrik Derneği", url: "https://www.tjod.org/feed/", branchSlugs: ["kadin-dogum"], limit: 10, category: "meslek", collectImages: false, filter: isAssociationRelevant },
+  { source: "tatd", sourceName: "Türkiye Acil Tıp Derneği", url: "https://tatd.org.tr/feed/", branchSlugs: ["acil-tip"], limit: 10, category: "meslek", collectImages: false, filter: isAssociationRelevant },
+  { source: "tgd-gastro", sourceName: "Türk Gastroenteroloji Derneği", url: "https://tgd.org.tr/feed/", branchSlugs: ["gastroenteroloji"], limit: 10, category: "meslek", collectImages: false, filter: isAssociationRelevant },
+  // 🪤 TGCD beslemesi dernek duyurusu ile HASTA bilgilendirme yazısını bir arada yayımlıyor
+  //    ("Akalazya Nedir?", "Kapalı Akciğer Ameliyatları") — ikisini kendi kategorisiyle ayırıyor.
+  //    Başlık deseni uydurmak yerine kaynağın BEYANI okunur (2026-08-19 ölçümü: 10 kalemin 5'i
+  //    "Halk Sağlığı"). Doktorun akışında hasta-eğitim içeriğinin yeri yok.
+  { source: "tgcd", sourceName: "Türk Göğüs Cerrahisi Derneği", url: "https://tgcd.org.tr/feed/", branchSlugs: ["gogus-cerrahisi"], limit: 12, category: "meslek", collectImages: false, filter: isAssociationRelevant, excludeCategories: ["Halk Sağlığı"] },
 ];
 
 // ── İstanbul Tabip Odası (v6.99) ────────────────────────────────────────────

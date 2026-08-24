@@ -64,7 +64,7 @@ export const STAFF_ROLE_CONFIGS: Record<StaffSignupRole, StaffRoleConfig> = {
     role: "PARTNER",
     slug: "partner",
     title: "Partner Doktor Başvurusu",
-    sub: "Yurt dışından hasta yönlendiren ortak hekim — platform hasta veritabanına erişmez, anonimleştirilmiş konsültasyon talebi açar.",
+    sub: "Yurt dışından hasta yönlendiren ortak doktor — platform hasta veritabanına erişmez, anonimleştirilmiş konsültasyon talebi açar.",
     nameKey: "name",
     fields: [
       { key: "name", label: "Ad soyad", type: "text", required: true, placeholder: "Dr. Elena Petrova", maxLen: 120 },
@@ -72,10 +72,10 @@ export const STAFF_ROLE_CONFIGS: Record<StaffSignupRole, StaffRoleConfig> = {
       { key: "country", label: "Ülke", type: "text", required: true, placeholder: "Almanya", hint: "Mesleğinizi icra ettiğiniz ülke", maxLen: 60 },
       { key: "institution", label: "Kurum / klinik", type: "text", required: true, placeholder: "Charité Berlin", maxLen: 160 },
       { key: "branch", label: "Ana branş", type: "text", required: true, placeholder: "Kardiyoloji", maxLen: 80 },
-      { key: "licenseNo", label: "Tescil / lisans numarası", type: "text", required: true, hint: "Ülkenizdeki hekimlik tescil numaranız — doğrulamada kullanılır", maxLen: 60 },
+      { key: "licenseNo", label: "Tescil / lisans numarası", type: "text", required: true, hint: "Ülkenizdeki doktorluk tescil numaranız — doğrulamada kullanılır", maxLen: 60 },
       { key: "phone", label: "Telefon", type: "tel", required: false, placeholder: "+49 ...", maxLen: 20 },
     ],
-    docs: [{ type: "LICENSE", label: "Hekimlik tescil / diploma belgesi (bulunduğunuz ülke)" }],
+    docs: [{ type: "LICENSE", label: "Doktorluk tescil / diploma belgesi (bulunduğunuz ülke)" }],
   },
   AGENCY: {
     role: "AGENCY",

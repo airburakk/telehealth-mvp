@@ -1,14 +1,14 @@
 {
-  "name": "AURA — Sağlık Turizmi & Teletıp",
+  "name": "AURA Health",
   "short_name": "AURA",
-  "description": "Triyaj, uzman görüşü ve sağlık turizmi paketlerini birleştiren uçtan uca dijital sağlık platformu.",
+  "description": "Triyaj, uzman görüşü ve sağlık turizmi paketlerini birleştiren dijital sağlık platformu (MVP).",
   "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#101010",
+  "background_color": "#0d0e10",
+  "theme_color": "#0d0e10",
   "lang": "tr",
   "categories": ["health", "medical"],
   "icons": [

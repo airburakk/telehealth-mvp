@@ -16,7 +16,7 @@ function parseDate(v: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-// URL yalnız http(s) — javascript: gibi şemalar hekime tıklatılacak bağlantı olarak yazılmasın
+// URL yalnız http(s) — javascript: gibi şemalar doktora tıklatılacak bağlantı olarak yazılmasın
 // (/api/admin/congress ile aynı kural; click ucu bu doğrulanmış değeri 302'ler).
 function parseHttpUrl(v: unknown): { ok: true; url: string | null } | { ok: false } {
   if (typeof v !== "string" || !v.trim()) return { ok: true, url: null };

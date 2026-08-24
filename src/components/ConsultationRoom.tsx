@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { urgencyStyle, langDir, LANG_BCP47 } from "@/lib/constants";
+import { urgencyStyle, langDir, LANG_BCP47, type CallLane } from "@/lib/constants";
 import { useT } from "@/components/useT";
 import { TranslateButton } from "@/components/TranslateButton";
 import { LiveInterpreter } from "@/components/LiveInterpreter";
@@ -17,7 +17,7 @@ import { connectAblySignal } from "@/lib/ably-client";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Camera, Sparkles, FileText,
   Save, Check, Pill, FlaskConical, Stethoscope, AlertTriangle, Languages, Loader2,
-  Copy, Wifi, WifiOff, UserRound, MessageSquareText, FileImage, Volume2,
+  Copy, Wifi, WifiOff, UserRound, MessageSquareText, FileImage, Volume2, ChevronDown,
 } from "lucide-react";
 
 interface CaseData {
@@ -101,11 +101,16 @@ const UI = [
 
 export function ConsultationRoom({
   consultationId, selfRole, status, initialNotes, doctor, caseData, recommend, clinical, autoJoin = false, storageKey,
+  lane = "telehealth",
 }: {
   consultationId: string; selfRole: "doctor" | "patient"; status: string;
   initialNotes: string; doctor: DoctorData; caseData: CaseData; recommend?: RecommendData; clinical?: ClinicalData;
   autoJoin?: boolean; // Görüşme Öncesi Oda (lobi) sonrası: kendi "katıl" ekranını atla → doğrudan bağlan
   storageKey?: string; // Hasta "doktora sorular" notu localStorage anahtarı (lobi ile aynı) — bkz. PatientQuestionsPanel
+  // Bu bileşen ÜÇ kulvara birden hizmet eder (Uzaktan Sağlık · Sağlık Turizmi · Ücretsiz Sağlık
+  // Hizmeti) — kulvar sunucuda vakadan türetilir (`laneFromCase`), marka rayında 3px şerit +
+  // mono etiket olarak görünür. Varsayılan "telehealth": eski çağıran kırılmaz.
+  lane?: CallLane;
 }) {
   const router = useRouter();
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -132,6 +137,12 @@ export function ConsultationRoom({
   const [startTime, setStartTime] = useState<number | null>(null); // video ilk bağlandığı an (süre tüpü)
   const [soapBusy, setSoapBusy] = useState(false);
   const [soapErr, setSoapErr] = useState("");
+  // "Yazım evresi" (v6.134, kullanıcı kararı 2026-08-21): görüşmenin sonunda doktor SOAP'a basınca
+  // transkript KÜÇÜLÜR ve Görüşme Notları onun yerine geçer. Panel dar (400px) kaldığı için iki
+  // panelin yan yana durması denenmedi — aynı yuvayı SIRAYLA kullanırlar.
+  // Geri dönüşlü: doktor küçülmüş transkript başlığına basıp yeniden açabilir (SOAP taslağını
+  // kaynağıyla karşılaştırmak isteyebilir — tek yönlü kapatmak klinik olarak yanlış olurdu).
+  const [writeUp, setWriteUp] = useState(false);
 
   // Canlı transkript + sesli not (dikte)
   const [transcript, setTranscript] = useState<TLine[]>([]);
@@ -541,7 +552,7 @@ export function ConsultationRoom({
       const r = await fetch(`/api/ai/soap`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notes, caseId: caseData.id }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "SOAP oluşturulamadı.");
-      setNotes(d.soap); setSaved(false);
+      setNotes(d.soap); setSaved(false); setWriteUp(true);
     } catch (e) { setSoapErr(e instanceof Error ? e.message : "Hata."); }
     finally { setSoapBusy(false); }
   }
@@ -556,7 +567,7 @@ export function ConsultationRoom({
       const r = await fetch(`/api/ai/soap`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notes: merged, caseId: caseData.id, source: "transcript" }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Transkriptten SOAP oluşturulamadı.");
-      setNotes(d.soap); setSaved(false);
+      setNotes(d.soap); setSaved(false); setWriteUp(true);
     } catch (e) { setSoapErr(e instanceof Error ? e.message : "Hata."); }
     finally { setTxBusy(false); }
   }
@@ -588,35 +599,53 @@ export function ConsultationRoom({
     : phase === "connecting" ? t("Kamera açılıyor…")
     : phase === "ended" ? t("Görüşme sona erdi") : t("Hata");
 
-  // ── Panel parçaları (immersive VideoCallShell düzeni, 2026-07-13) ──
-  // Hasta: video full + [görüşme notları] · Doktor: video full + [ÜST script+hasta bilgi · ALT tanı+tedavi]
-  const caseInfoCard = (
-    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="aura-display text-lg font-medium tracking-tight text-[var(--c-ink)]">{caseData.patientName}</h2>
-        {/* Aciliyet yalnız doktora (2026-07-13, kullanıcı isteği) — hasta video odasında görmez */}
-        {isDoctor && (
-          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
-            <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {caseData.urgency}/5
-          </span>
-        )}
-      </div>
-      <div className="mt-1 flex items-center gap-2 text-sm">
-        <Stethoscope size={14} className="text-[var(--c-accent-strong)]" />
-        <span className="font-medium text-[var(--c-accent-strong)]">{t(caseData.branch)}</span>
-      </div>
-      <div className="mt-3">
-        <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">{t("Şikayet")}</div>
-        <p className="mt-1 text-sm text-[var(--c-ink)]">{caseData.symptoms}</p>
-        {isDoctor && <TranslateButton text={caseData.symptoms} defaultTarget="Türkçe" />}
-      </div>
-      {/* AI özeti kartı kaldırıldı (2026-07-14, kullanıcı isteği) — doktor triyaj gerekçesini görmez. */}
-      {!isDoctor && (
-        <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-500/10 p-3 text-sm text-emerald-200 ring-1 ring-emerald-400/20">
-          <UserRound size={15} /> {doctor.title} {doctor.name} {t("ile görüşüyorsunuz")}
+  // ── Panel parçaları (VideoCallShell üç-bölge düzeni, v6.134 2026-08-21) ──
+  // ÜST identity (sabit) · ORTA panel (scroll) · ALT actions (sabit ray).
+  //
+  // ⚠️ Hastanın "genel bilgi" kartı KALDIRILDI (2026-08-21, kullanıcı isteği): hasta kendi adını,
+  // kendi branşını ve kendi şikayetini geri okuyordu. Kartın hastaya yarayan TEK parçası
+  // "… ile görüşüyorsunuz" şeridiydi → silinmedi, ÜST kimlik bölgesine taşındı (aşağıda
+  // identityEl). Hasta "kiminle konuşuyorum" güvencesini kaybetmez, kart yığınını kazanmaz.
+
+  // ÜST — kimlik şeridi. Doktorda: hasta künyesi + aciliyet. Hastada: karşısındaki doktor.
+  const identityEl = isDoctor ? (
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <h2 className="aura-display truncate text-lg font-medium tracking-tight text-[var(--c-ink)]">{caseData.patientName}</h2>
+        <div className="mt-0.5 flex items-center gap-1.5 text-sm">
+          <Stethoscope size={13} className="shrink-0 text-[var(--c-accent-strong)]" />
+          <span className="truncate font-medium text-[var(--c-accent-strong)]">{t(caseData.branch)}</span>
         </div>
-      )}
-      {caseData.files.length > 0 && isDoctor && (
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        {/* Aciliyet yalnız doktora (2026-07-13, kullanıcı isteği) — hasta video odasında görmez */}
+        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
+          <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {caseData.urgency}/5
+        </span>
+      </div>
+    </div>
+  ) : (
+    <div className="flex items-center gap-2.5">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--c-accent)]/12 text-[var(--c-accent)] ring-1 ring-[var(--c-accent)]/25">
+        <UserRound size={17} />
+      </span>
+      <div className="min-w-0">
+        <div className="truncate text-sm font-semibold text-[var(--c-ink)]">{doctor.title} {doctor.name}</div>
+        <div className="aura-mono truncate text-[10px] uppercase tracking-[0.18em] text-[var(--c-ink-3)]">
+          {t("ile görüşüyorsunuz")}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ORTA — vaka ayrıntısı: YALNIZ doktor. (Şikayet + belgeler; künye artık identityEl'de.)
+  const caseDetailEl = isDoctor ? (
+    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
+      <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">{t("Şikayet")}</div>
+      <p className="mt-1 text-sm text-[var(--c-ink)]">{caseData.symptoms}</p>
+      <TranslateButton text={caseData.symptoms} defaultTarget="Türkçe" />
+      {/* AI özeti kartı kaldırıldı (2026-07-14, kullanıcı isteği) — doktor triyaj gerekçesini görmez. */}
+      {caseData.files.length > 0 && (
         <div className="mt-3">
           <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">Belgeler</div>
           <ul className="mt-1.5 space-y-1">
@@ -625,7 +654,7 @@ export function ConsultationRoom({
         </div>
       )}
     </div>
-  );
+  ) : null;
 
   const inviteEl = isDoctor ? (
     <div className="flex items-center justify-between gap-2 rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-3 landscape:border-white/15 landscape:bg-white/10">
@@ -653,19 +682,39 @@ export function ConsultationRoom({
     />
   ) : null;
 
+  // Yazım evresi YALNIZ doktoru ilgilendirir (hastada transkript kahraman kalır).
+  const transcriptShrunk = isDoctor && writeUp;
+
   const transcriptEl = (joined || transcript.length > 0) ? (
-    <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
+    // Hastada transkript KAHRAMAN: orta bölgenin kalan yüksekliğini doldurur (yoksa panelin
+    // yarısı boş kalıyordu). Doktorda sabit yükseklikte kalır — orada transkript, notlar ve
+    // tanı-tedavi arasında yer paylaşılır.
+    <div className={`rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm ${isDoctor ? "" : "flex min-h-0 flex-1 flex-col"}`}>
       <div className="flex items-center justify-between gap-2">
+        {/* Yazım evresinde başlığın kendisi AÇMA düğmesidir (transkript küçülmüş durumda) —
+            SOAP taslağını kaynağıyla karşılaştırmak tek tık uzakta kalır. */}
+        {transcriptShrunk ? (
+          <button
+            onClick={() => setWriteUp(false)}
+            aria-expanded={false}
+            className="flex min-w-0 flex-1 items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)] hover:text-[var(--c-ink-2)]"
+          >
+            <MessageSquareText size={14} /> <span className="truncate">{t("Canlı Transkript")}</span>
+            <span className="tabular-nums">· {transcript.length}</span>
+            <ChevronDown size={14} className="shrink-0" />
+          </button>
+        ) : (
         <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">
           <MessageSquareText size={14} /> {t("Canlı Transkript")}
           {sttOn && <span className="ms-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />}
         </div>
-        {!sttSupported ? (
+        )}
+        {transcriptShrunk ? null : !sttSupported ? (
           <span className="text-[11px] text-[var(--c-ink-3)]">{t("Tarayıcı desteklemiyor — Chrome/Edge önerilir")}</span>
         ) : sttOn ? (
           <button
             onClick={() => { setSttErr(""); setSttOn(false); }}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/30 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-medium text-red-300 hover:bg-red-500/15"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/30 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-medium text-[var(--c-danger)] hover:bg-red-500/15"
           >
             <Mic size={13} /> {t("Durdur")}
           </button>
@@ -675,8 +724,8 @@ export function ConsultationRoom({
           </span>
         )}
       </div>
-      {sttErr && <div className="mt-1 text-[11px] text-red-300">{t(sttErr)}</div>}
-      <div className="mt-2 max-h-44 space-y-1 overflow-y-auto">
+      {sttErr && !transcriptShrunk && <div className="mt-1 text-[11px] text-[var(--c-danger)]">{t(sttErr)}</div>}
+      <div className={`mt-2 space-y-1 overflow-y-auto ${transcriptShrunk ? "hidden" : isDoctor ? "max-h-44" : "min-h-0 flex-1"}`}>
         {transcript.length === 0 && !interim && (
           <p className="text-xs text-[var(--c-ink-3)]">
             {t("Konuşma başlayınca otomatik yazıya dökülür; karşı tarafın konuşması da gelir.")}
@@ -685,7 +734,7 @@ export function ConsultationRoom({
         )}
         {transcript.map((l, i) => (
           <p key={i} className="text-sm leading-snug text-[var(--c-ink)]">
-            <span className={`font-semibold ${l.who === "doctor" ? "text-[var(--c-accent-strong)]" : "text-emerald-300"}`}>
+            <span className={`font-semibold ${l.who === "doctor" ? "text-[var(--c-accent-strong)]" : "text-[var(--c-success)]"}`}>
               {l.who === "doctor" ? t("Doktor") : t("Hasta")}:
             </span>{" "}
             {l.text}
@@ -700,16 +749,19 @@ export function ConsultationRoom({
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">Görüşme Notları</div>
-        {saved ? <span className="inline-flex items-center gap-1 text-[11px] text-emerald-300"><Check size={13} /> kaydedildi</span> : <span className="text-[11px] text-amber-300">kaydedilmedi</span>}
+        {/* Kayıt durumu ALT AKSİYON RAYINDA tek yerde okunur (v6.134) — burada kopyası yok:
+            iki rozet, hangisinin güncel olduğu sorusunu doğuruyordu. */}
       </div>
-      <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-[var(--c-hairline)] p-2.5 text-sm outline-none focus:border-[var(--c-accent)]" />
+      {/* Yazım evresinde (SOAP'a basıldı) not alanı transkriptin boşalttığı yeri alır: 6 → 16 satır.
+          Taslak SOAP metni uzundur; 6 satırlık kutuda doktor kendi belgesini pencereden okur. */}
+      <textarea value={notes} onChange={(e) => { setNotes(e.target.value); setSaved(false); }} rows={writeUp ? 16 : 6} placeholder="Görüşme sırasında dağınık not alın; AI ile SOAP'a dönüştürün…" className="mt-2 w-full resize-none rounded-lg border border-[var(--c-hairline)] p-2.5 text-sm outline-none focus:border-[var(--c-accent)]" />
 
       <div className="mt-2 grid grid-cols-2 gap-2">
         <button
           onClick={generateSoapFromTranscript}
           disabled={txBusy || !transcript.length}
           title={!transcript.length ? "Önce Canlı Transkript'i başlatın" : "Görüşme transkriptinden SOAP taslağı"}
-          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-violet-400/30 bg-violet-500/10 px-2 py-2 text-[12px] font-semibold text-violet-300 hover:bg-violet-500/15 disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-violet-400/30 bg-violet-500/10 px-2 py-2 text-[12px] font-semibold text-[var(--c-indigo)] hover:bg-violet-500/15 disabled:opacity-50"
         >
           {txBusy ? <Loader2 size={13} className="animate-spin" /> : <MessageSquareText size={13} />} Transkriptten taslak
         </button>
@@ -717,13 +769,13 @@ export function ConsultationRoom({
           onClick={() => { setSttErr(""); setDictating((v) => !v); }}
           disabled={!sttSupported}
           title="Konuşarak nota ekleyin"
-          className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[12px] font-semibold disabled:opacity-50 ${dictating ? "border-red-400/30 bg-red-500/10 text-red-300 hover:bg-red-500/15" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-white/65 hover:bg-[var(--c-surface)]"}`}
+          className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[12px] font-semibold disabled:opacity-50 ${dictating ? "border-red-400/30 bg-red-500/10 text-[var(--c-danger)] hover:bg-red-500/15" : "border-[var(--c-hairline)] bg-[var(--c-panel)] text-white/65 hover:bg-[var(--c-surface)]"}`}
         >
           <Mic size={13} /> {dictating ? "Dikteyi kapat" : "Sesli not"}
         </button>
       </div>
       {dictating && (
-        <p className="mt-1 text-[11px] font-medium text-amber-300">
+        <p className="mt-1 text-[11px] font-medium text-[var(--c-warning)]">
           🎤 Dikte açık — konuştuklarınız nota eklenir{interim ? `: "${interim}…"` : "."}
         </p>
       )}
@@ -731,17 +783,14 @@ export function ConsultationRoom({
       <button onClick={generateSoap} disabled={soapBusy || !notes.trim()} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/10 px-3 py-2 text-sm font-semibold text-[var(--c-accent)] hover:bg-[var(--c-accent)]/15 disabled:opacity-50">
         {soapBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} AI · SOAP&apos;a dönüştür
       </button>
-      {soapErr && <div className="mt-1 text-[11px] text-red-300">{soapErr}</div>}
-      <button onClick={saveNotes} disabled={saving || saved} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--c-accent)] px-3 py-2 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-50">
-        {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Notu kaydet
-      </button>
+      {soapErr && <div className="mt-1 text-[11px] text-[var(--c-danger)]">{soapErr}</div>}
+      {/* "Notu kaydet" ve "Radyoloji (DICOM)" buradan ALT AKSİYON RAYINA taşındı (v6.134) —
+          scroll'un dibinde kaybolmasınlar; kopya bırakılmadı (iki kaydet düğmesi = iki doğru yer
+          yanılsaması). */}
       <div className="mt-3 grid grid-cols-2 gap-2">
         <QuickAction icon={<Pill size={14} />}>Reçete</QuickAction>
         <QuickAction icon={<FlaskConical size={14} />}>Lab iste</QuickAction>
       </div>
-      <button onClick={() => setShowDicom(true)} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm font-semibold text-[var(--c-ink)] hover:bg-[var(--c-surface)]">
-        <FileImage size={15} /> Radyoloji (DICOM) görüntüleyici
-      </button>
     </div>
   ) : null;
 
@@ -767,8 +816,36 @@ export function ConsultationRoom({
     />
   ) : null;
 
-  const patientQuestionsEl = !isDoctor && storageKey ? (
-    <PatientQuestionsPanel storageKey={storageKey} lang={uiLang} />
+  // ── ALT SABİT RAY ──
+  // Hasta: "Doktora sorularım" alt tabaka olarak rayın İÇİNDE yaşar — kapalıyken tek satır,
+  // açılınca yukarı doğru büyür (ray shrink-0, orta scroll alanı kısalır). Hastanın görüşme
+  // sırasında en çok ihtiyaç duyduğu şey scroll'un dibinde kalmaz.
+  // Doktor: kaydet + DICOM daima erişilebilir; kayıt durumu aynı rayda okunur.
+  const actionsEl = isDoctor ? (
+    <div className="flex items-center gap-2">
+      <span className="min-w-0 flex-1 truncate text-[11px]">
+        {saved
+          ? <span className="inline-flex items-center gap-1 text-[var(--c-success)]"><Check size={12} /> kaydedildi</span>
+          : <span className="text-[var(--c-warning)]">kaydedilmedi</span>}
+      </span>
+      <button
+        onClick={() => setShowDicom(true)}
+        title="Radyoloji (DICOM) görüntüleyici"
+        aria-label="Radyoloji (DICOM) görüntüleyici"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]"
+      >
+        <FileImage size={17} />
+      </button>
+      <button
+        onClick={saveNotes}
+        disabled={saving || saved}
+        className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--c-accent)] px-4 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-50"
+      >
+        {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Notu kaydet
+      </button>
+    </div>
+  ) : storageKey ? (
+    <PatientQuestionsPanel storageKey={storageKey} lang={uiLang} variant="sheet" />
   ) : null;
 
   return (
@@ -776,12 +853,17 @@ export function ConsultationRoom({
       <VideoCallShell
         dir={langDir(uiLang)}
         lang={LANG_BCP47[uiLang]}
+        lane={lane}
         panelLabel={isDoctor ? t("Doktor görünümü") : t("Hasta görünümü")}
+        identity={identityEl}
+        actions={actionsEl}
         statusBar={
-          <div className="flex items-center justify-between gap-2 text-xs font-medium text-white/90">
-            <span className="inline-flex items-center gap-2">
-              <span className={`inline-flex h-2.5 w-2.5 rounded-full ${phase === "connected" ? "bg-emerald-400" : phase === "ended" || phase === "error" ? "bg-white/40" : "bg-amber-400 animate-pulse"}`} />
-              {statusLabel} · {isDoctor ? t("Doktor görünümü") : t("Hasta görünümü")}{connState ? ` · ${connState}` : ""}
+          <div className="flex items-center justify-end gap-2 text-xs font-medium text-white/90">
+            <span className="inline-flex min-w-0 items-center gap-2">
+              <span className={`inline-flex h-2.5 w-2.5 shrink-0 rounded-full ${phase === "connected" ? "bg-emerald-400" : phase === "ended" || phase === "error" ? "bg-white/40" : "bg-amber-400 animate-pulse"}`} />
+              {/* Dar ekranda METİN gizlenir, renkli durum noktası kalır: rayda yer sıkışınca
+                  kısalan taraf durum künyesidir — kulvar KİMLİĞİ değil (bkz. VideoCallShell). */}
+              <span className="hidden truncate sm:inline">{statusLabel} · {isDoctor ? t("Doktor görünümü") : t("Hasta görünümü")}{connState ? ` · ${connState}` : ""}</span>
             </span>
             <span className="hidden items-center gap-1.5 rounded-full bg-black/35 px-3 py-1 sm:inline-flex">
               {phase === "connected" ? <Wifi size={13} /> : <WifiOff size={13} />} {t("Gerçek WebRTC (P2P)")}
@@ -812,7 +894,7 @@ export function ConsultationRoom({
                   </div>
                 ) : phase === "error" ? (
                   <div>
-                    <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-amber-500/20 text-amber-300"><AlertTriangle size={28} /></span>
+                    <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-amber-500/20 text-[var(--c-warning)]"><AlertTriangle size={28} /></span>
                     <p className="mx-auto mt-3 max-w-xs text-sm text-[var(--c-ink)]">{errMsg ? t(errMsg) : t("Kamera/mikrofona erişilemedi.")}</p>
                     <p className="mx-auto mt-1 max-w-xs text-xs text-[var(--c-ink-2)]">{t("Adres çubuğundaki kilit/kamera simgesine dokunup Kamera ve Mikrofon'a \"İzin ver\" deyin, sonra tekrar deneyin.")}</p>
                     <button onClick={() => { setErrMsg(""); setPhase("connecting"); setRetry((r) => r + 1); }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-[var(--c-ink)]/10 px-5 py-2.5 text-sm font-semibold text-[var(--c-ink)] ring-1 ring-white/15 hover:bg-[var(--c-ink)]/20">
@@ -855,32 +937,34 @@ export function ConsultationRoom({
             )}
 
             {/* Hata mesajı — video üzerinde toast (kontrollerin üstünde) */}
-            {errMsg && <div className="absolute inset-x-4 bottom-20 z-20 mx-auto max-w-md rounded-lg bg-amber-500/15 px-3 py-2 text-center text-sm text-amber-200 ring-1 ring-amber-400/25 backdrop-blur">{t(errMsg)}</div>}
+            {errMsg && <div className="absolute inset-x-4 bottom-20 z-20 mx-auto max-w-md rounded-lg bg-amber-500/15 px-3 py-2 text-center text-sm text-[var(--c-warning)] ring-1 ring-amber-400/25 backdrop-blur">{t(errMsg)}</div>}
           </div>
         }
         panel={
           isDoctor ? (
             <>
-              {/* ── ÜST: Hasta bilgileri + script (transkript) ── */}
               {startTime !== null && <ConsultationTimer startTime={startTime} active={phase !== "ended"} />}
-              {caseInfoCard}
+              {caseDetailEl}
               {inviteEl}
               {interpreterEl}
+              {/* Transkript ve notlar AYNI YUVAYI SIRAYLA kullanır (kullanıcı kararı 2026-08-21,
+                  yan yana düzen geri alındı): görüşme boyunca transkript açık, sonunda doktor
+                  SOAP'a basınca transkript küçülür ve not alanı onun yerini alır. Panel dar
+                  (400px) kaldığı için iki sütun sıkışıyordu. */}
               {transcriptEl}
-              {/* ── ALT: Tanı & Tedavi ── (yatayda koyu cam zemin → açık başlık) */}
+              {notesEl}
+              {/* ── Tanı & Tedavi ── (yatayda koyu cam zemin → açık başlık) */}
               <div className="mt-1 flex items-center gap-1.5 border-t border-[var(--c-hairline)] pt-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)] landscape:border-white/15 landscape:text-white/80">
                 <Stethoscope size={12} /> {t("Tanı & Tedavi")}
               </div>
-              {notesEl}
               {clinicalEl}
             </>
           ) : (
             <>
-              {/* Hasta: görüşme notları — bilgi + çeviri + transkript + doktora sorular */}
-              {caseInfoCard}
+              {/* Hasta: çeviri + transkript. Kendi künye kartı KALDIRILDI (2026-08-21);
+                  doktor kimliği üst identity bölgesinde, sorular alt sabit rayda. */}
               {interpreterEl}
               {transcriptEl}
-              {patientQuestionsEl}
             </>
           )
         }

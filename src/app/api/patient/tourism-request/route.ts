@@ -6,7 +6,7 @@ import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField } from "@/lib/crypto";
 import { notifyDoctorsByBranch, notifyUser } from "@/lib/notify";
 import { stampPatientProfile } from "@/lib/patient-journey";
-import { BRANCHES } from "@/lib/triage";
+import { PATIENT_BRANCHES } from "@/lib/triage";
 import { TOURISM_DISCLAIMER_TITLE, TOURISM_DISCLAIMER_BODY } from "@/lib/tourism-disclaimer";
 
 // POST /api/patient/tourism-request — Sağlık Turizmi öz-yeterli intake (2026-07-12 yeniden tasarım).
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   const contact = parseContactFields(body); // FAZ 8 — telefon + iletişim tercihi
   const country = String(body.country ?? "TR");
   // Hastanın Tedavi Alanı adımında seçtiği NİHAİ branş (AI önerisi ön-seçili gelir, hasta değiştirebilir).
-  const branchKey = BRANCHES.some((b) => b.key === String(body.branchKey)) ? String(body.branchKey) : undefined;
+  const branchKey = PATIENT_BRANCHES.some((b) => b.key === String(body.branchKey)) ? String(body.branchKey) : undefined;
 
   // Aciliyet/gerekçe LLM'den; branş HASTANIN seçimiyle kilitli (forceBranchKey) → doktor kuyruğu
   // doctor.branch === case.branch TAM eşleşmesi hasta niyetiyle hizalı.

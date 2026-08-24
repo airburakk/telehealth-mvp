@@ -1,6 +1,7 @@
 "use client";
 
 import { AuraClosing } from "./closing";
+import { AuraWordText } from "./aura-word";
 import { V2Nav } from "./v2/nav";
 import { LETTERS, LangProvider, langDir, useLang, type Copy } from "@/lib/aura-landing/i18n";
 
@@ -72,8 +73,10 @@ function TrustHero() {
           {p.lineAfter && <span className="mt-3 block">{p.lineAfter}</span>}
         </span>
       </h1>
+      {/* Metin içi AURA = wordmark görseli (kullanıcı kuralı 2026-08-17) —
+          hero'nun "AURA" dilimleri zaten letterform; gövde metinleri de kurala girer. */}
       <p className="mt-6 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg">
-        {p.sub}
+        <AuraWordText text={p.sub} />
       </p>
     </section>
   );
@@ -115,13 +118,13 @@ function TrustCard({ section }: { section: Section }) {
         {section.title}
       </h2>
       <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--aura-grey)] md:text-base">
-        {section.body}
+        <AuraWordText text={section.body} />
       </p>
 
       {/* 02 — AI destegi ile klinik yargi ayrimi (howItWorks.safety ile ayni sinir). */}
       {section.key === "consent" && (
         <p className="mt-4 max-w-3xl border-s-2 border-[var(--aura-accent)]/60 ps-4 text-sm leading-relaxed text-[var(--aura-ink)] md:text-base">
-          {p.aiEmphasis}
+          <AuraWordText text={p.aiEmphasis} />
         </p>
       )}
 
@@ -134,7 +137,9 @@ function TrustCard({ section }: { section: Section }) {
               className="flex gap-2.5 text-sm leading-relaxed text-[var(--aura-grey)] md:text-base"
             >
               <span aria-hidden className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-[var(--aura-accent)]" />
-              <span>{item}</span>
+              <span>
+                <AuraWordText text={item} />
+              </span>
             </li>
           ))}
         </ul>
@@ -146,7 +151,9 @@ function TrustCard({ section }: { section: Section }) {
           <p className="aura-mono text-[12px] uppercase tracking-wider text-[var(--aura-accent)]">
             {section.note.label}
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--aura-ink)]">{section.note.text}</p>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--aura-ink)]">
+            <AuraWordText text={section.note.text} />
+          </p>
         </div>
       )}
     </article>

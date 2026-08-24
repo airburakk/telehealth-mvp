@@ -5,11 +5,19 @@ import {
   FileText, ShieldCheck, GraduationCap, Award, Upload, Trash2, Loader2, Check, AlertTriangle,
 } from "lucide-react";
 
-// M5 — Doktor mesleki belge yükleme bölümü. Diploma + MMSS ZORUNLU (yüklenip MMSS bilgileri
-// tamamlanmadan hesap aktifleşmez); sertifika/akademik ihtiyari. İçerik base64 → /api/doctor/documents.
-// MMSS metadata (teminat limiti = M3 Katman 3 girdisi) → /api/doctor/mmss.
+// M5 — Doktor mesleki belge yükleme bölümü. Diploma ZORUNLU (yüklenmeden hesap aktifleşmez);
+// MMSS v6.105'ten beri İHTİYARİ (aşağıdaki TYPES notu); sertifika/akademik ihtiyari.
+// İçerik base64 → /api/doctor/documents. MMSS metadata (teminat limiti = M3 Katman 3 girdisi) → /api/doctor/mmss.
 
-export interface DocMeta { id: string; type: string; label: string; mimeType: string }
+// v6.119: doğrulama alanları İHTİYARİ (`?`) — kapı SUNUCUDA (canActivate) tutulur, buradakiler
+// yalnız GÖSTERİM içindir. Zorunlu yapmak Stage1Doctorium/StudentStage1Card/AcademicEditor gibi
+// yalnız dosya listeleyen çağıranları kozmetik bir alan uğruna kırardı.
+export interface DocMeta {
+  id: string; type: string; label: string; mimeType: string;
+  status?: string; // PENDING | ACCEPTED | REJECTED
+  verifiedSource?: string | null; // EDEVLET | MANUAL | LEGACY
+  reviewNote?: string | null; // REJECTED gerekçesi
+}
 export interface MmssInitial {
   insurer: string | null;
   coverageLimit: number | null;
@@ -18,14 +26,33 @@ export interface MmssInitial {
   policyNoSet: boolean; // poliçe no kayıtlı mı (değer şifreli → gösterilmez)
 }
 
+// v6.105: MMSS `required:false` (aktivasyon şartından çıktı — lib/doctor-activation
+// REQUIRED_DOC_TYPES; kart İHTİYARİ olarak duruyor, teminat limiti hâlâ /paket'i besler).
 const TYPES: { type: string; label: string; desc: string; required: boolean; Icon: typeof FileText }[] = [
   { type: "DIPLOMA", label: "Tıp Diploması", desc: "Diploma / tescil belgesi", required: true, Icon: GraduationCap },
-  { type: "MMSS", label: "Mesleki Mali Sorumluluk Sigortası (MMSS)", desc: "Zorunlu mesleki sorumluluk poliçesi", required: true, Icon: ShieldCheck },
+  { type: "MMSS", label: "Mesleki Mali Sorumluluk Sigortası (MMSS)", desc: "Mesleki sorumluluk poliçesi (ihtiyari)", required: false, Icon: ShieldCheck },
   { type: "CERTIFICATE", label: "Sertifikalar", desc: "Mesleki sertifika / üyelik (ihtiyari)", required: false, Icon: Award },
   { type: "ACADEMIC", label: "Akademik Çalışmalar", desc: "Yayın / akademik belge (ihtiyari)", required: false, Icon: FileText },
 ];
 
 const ACCEPT = "application/pdf,image/jpeg,image/png";
+
+// v6.119 — Belge satırı durum rozeti (status × verifiedSource → metin + ton; onay 2026-08-19).
+// LEGACY bilinçli NÖTR ve "Kayıtlı" ("Onaylandı" DEĞİL): backfill'lenen belgeler gerçekten
+// incelenmedi — emerald yanlış güven telkin ederdi. "İncelemede" yalnız kapı tutan tiplerde
+// (DIPLOMA/STUDENT_CERT) gösterilir: ihtiyari belgede PENDING varsayılan hâldir, bir inceleme
+// kuyruğu vaadi değildir. ACCEPTED/REJECTED ise her tipte gösterilir (gerçek inceleme sonucu).
+function statusRozet(d: DocMeta): { text: string; cls: string } | null {
+  if (!d.status) return null;
+  if (d.status === "ACCEPTED") {
+    if (d.verifiedSource === "LEGACY") return { text: "Kayıtlı", cls: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)]" };
+    if (d.verifiedSource === "EDEVLET") return { text: "e-Devlet ile doğrulandı", cls: "bg-emerald-500/15 text-emerald-300" };
+    return { text: "Onaylandı", cls: "bg-emerald-500/15 text-emerald-300" };
+  }
+  if (d.status === "REJECTED") return { text: "Yeniden yükleyin", cls: "bg-red-500/15 text-red-300" };
+  if (d.type === "DIPLOMA" || d.type === "STUDENT_CERT") return { text: "İncelemede", cls: "bg-amber-500/15 text-amber-300" };
+  return null;
+}
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -36,18 +63,38 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+// v6.105 (kullanıcı kararı 2026-08-17): bileşen artık BÖLÜNEBİLİR — `types` ile hangi belge
+// kartlarının çizileceği seçilir. Onboarding'de iki kez kullanılır: "Mesleki Belgeler"
+// bölümünde [DIPLOMA, MMSS], "Sertifikalar & Akademik Çalışmalar" kutusunda
+// [CERTIFICATE, ACADEMIC] — böylece dosya yükleme, ait olduğu metin alanlarının yanında durur.
+// ⚠️ Her örnek YALNIZ kendi tiplerinin belgelerini almalı (initialDocs çağıranda filtrelenir),
+// yoksa iki liste birbirinin dosyasını gösterir.
+// ⚠️ `onActivationChange` yalnız DIPLOMA taşıyan örneğe verilir; aksi hâlde ikinci örnek
+// "diploma yok → aktif değil" diye yanlış bildirir ve butonu kilitler.
 export function DoctorDocuments({
   initialDocs,
   initialMmss,
   onActivationChange,
+  onDoctoriumChange,
+  types,
+  onDocsChange,
 }: {
   initialDocs: DocMeta[];
   initialMmss: MmssInitial;
   onActivationChange?: (activated: boolean) => void;
+  // v6.124: yükleme/silme sonrası SUNUCUNUN döndürdüğü güncel Doctorium erişimi (Aşama 1 kapısı —
+  // doğrulanmış diploma ∨ öğrenci). Yalnız Stage1Doctorium kullanır; yerel türetme DEĞİL, sunucu
+  // kararı: otomatik doğrulama geçmezse yükleme var ama kapı kapalı — ikisi ayrışabilir.
+  onDoctoriumChange?: (doctorium: boolean) => void;
+  types?: string[]; // çizilecek belge tipleri (varsayılan: hepsi)
+  onDocsChange?: (counts: Record<string, number>) => void; // tip → yüklü dosya sayısı
 }) {
   const [docs, setDocs] = useState<DocMeta[]>(initialDocs);
   const [busy, setBusy] = useState<string | null>(null); // yüklenen/silinen tip
   const [err, setErr] = useState("");
+  // v6.119: son yüklemenin e-Devlet otomatik doğrulama sonucu (yalnız o kartın altında gösterilir).
+  // reason PHI içermez (sunucu garantisi); activated = bu yükleme hesabı açtı mı (mesaj seçimi).
+  const [edevlet, setEdevlet] = useState<{ type: string; ok: boolean; reason: string | null; activated: boolean } | null>(null);
 
   // MMSS metadata formu
   const [insurer, setInsurer] = useState(initialMmss.insurer ?? "");
@@ -60,10 +107,27 @@ export function DoctorDocuments({
 
   const has = (t: string) => docs.some((d) => d.type === t);
   const mmssMetaComplete = !!insurer.trim() && coverageLimit !== "" && Number(coverageLimit) > 0 && (policyNo.trim() !== "" || initialMmss.policyNoSet) && mmssSaved;
-  const activated = has("DIPLOMA") && has("MMSS") && mmssMetaComplete;
+  // v6.105: aktivasyon artık YALNIZ diplomaya bakar (MMSS ihtiyari oldu — lib/doctor-activation
+  // REQUIRED_DOC_TYPES ile aynı kural; iki yer birbirine UYUMLU kalmalı, yoksa buton açık görünüp
+  // sunucu 409 döner).
+  // ⚠️ AD YANILTICI OLMASIN (v6.119): bu bayrak "ONBOARDING TAMAMLANABİLİR Mİ" demektir, "hesap
+  // klinik olarak aktif mi" DEMEZ. Sunucu tarafında onboarding kapısı hâlâ belge VARLIĞINA bakar
+  // (canCompleteOnboarding → hasRequiredDocs); klinik kapı ayrıca ONAY ister (canActivate). İkisi
+  // bilinçli ayrıdır — burayı status'e bağlarsak doktor, belgesi doğrulanana dek kayıtta asılı kalır.
+  const activated = has("DIPLOMA");
+  const shown = types ? TYPES.filter((t) => types.includes(t.type)) : TYPES;
 
   // activation değişimini parent'a bildir (onboarding "geç" butonu)
   useEffect(() => { onActivationChange?.(activated); }, [activated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Yüklü dosya sayılarını parent'a bildir — "sertifika yükledin ama listeye yazmadın"
+  // uyarısı (AcademicEditor) bu sayıya bakar.
+  useEffect(() => {
+    if (!onDocsChange) return;
+    const counts: Record<string, number> = {};
+    for (const d of docs) counts[d.type] = (counts[d.type] ?? 0) + 1;
+    onDocsChange(counts);
+  }, [docs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function upload(type: string, file: File | null) {
     if (!file) return;
@@ -79,7 +143,13 @@ export function DoctorDocuments({
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Yüklenemedi.");
       // zorunlu/tekil tip eskisini değiştirir → aynı tipi listeden çıkar, yenisini ekle
-      setDocs((prev) => [{ id: d.id, type: d.type, label: d.label, mimeType: d.mimeType }, ...prev.filter((x) => !(x.type === type && (type === "DIPLOMA" || type === "MMSS")))]);
+      setDocs((prev) => [
+        { id: d.id, type: d.type, label: d.label, mimeType: d.mimeType, status: d.status, verifiedSource: d.verifiedSource },
+        ...prev.filter((x) => !(x.type === type && (type === "DIPLOMA" || type === "MMSS"))),
+      ]);
+      // v6.119: e-Devlet otomatik doğrulama sonucunu kartın altında göster (PHI içermez).
+      if (d.edevlet) setEdevlet({ type, ok: !!d.edevlet.ok, reason: d.edevlet.reason ?? null, activated: !!d.activated });
+      onDoctoriumChange?.(!!d.doctorium); // v6.124: Aşama 1 kapısının sunucu kararı
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Hata oluştu.");
     } finally {
@@ -95,6 +165,9 @@ export function DoctorDocuments({
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Silinemedi.");
       setDocs((prev) => prev.filter((x) => x.id !== doc.id));
+      // Silinen tipin doğrulama mesajı bayatladı — kaldır (yeni yükleme kendi mesajını getirir).
+      setEdevlet((prev) => (prev?.type === doc.type ? null : prev));
+      onDoctoriumChange?.(!!d.doctorium); // v6.124: diploma silindiyse kapı kapanmış olabilir
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Hata oluştu.");
     } finally {
@@ -123,7 +196,7 @@ export function DoctorDocuments({
 
   return (
     <div className="space-y-3">
-      {TYPES.map(({ type, label, desc, required, Icon }) => {
+      {shown.map(({ type, label, desc, required, Icon }) => {
         const mine = docs.filter((d) => d.type === type);
         const ok = mine.length > 0;
         return (
@@ -142,21 +215,41 @@ export function DoctorDocuments({
                   )}
                 </div>
                 <p className="mt-0.5 text-xs text-[var(--c-ink-2)]">{desc}</p>
+                {/* v6.119 — e-Devlet ipucu (onay 2026-08-19): barkodlu PDF çevrimdışı okunup
+                    otomatik doğrulanır; "anında" yalnız bu okumayı anlatır, lisans iddiası YOK. */}
+                {type === "DIPLOMA" && (
+                  <p className="mt-1 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
+                    e-Devlet&apos;ten aldığınız <strong>barkodlu PDF&apos;i</strong> yükleyin — anında doğrulanır.
+                    Yol: e-Devlet → Yükseköğretim Mezun Belgesi Sorgulama → <strong>Barkodlu Belge Oluştur</strong>.
+                  </p>
+                )}
 
                 {/* Yüklü belgeler */}
                 {mine.length > 0 && (
                   <ul className="mt-2 space-y-1">
-                    {mine.map((d) => (
-                      <li key={d.id} className="flex items-center justify-between gap-2 rounded-lg bg-[var(--c-panel)] px-3 py-1.5 text-xs ring-1 ring-[var(--c-hairline)]">
-                        <span className="flex min-w-0 items-center gap-1.5 text-[var(--c-ink-2)]">
-                          <FileText size={13} className="shrink-0 text-[var(--c-ink-3)]" />
-                          <span className="truncate">{d.label}</span>
-                        </span>
-                        <button onClick={() => remove(d)} disabled={busy === type} className="shrink-0 text-[var(--c-ink-3)] hover:text-red-300 disabled:opacity-50" aria-label="Kaldır">
-                          <Trash2 size={14} />
-                        </button>
-                      </li>
-                    ))}
+                    {mine.map((d) => {
+                      const rozet = statusRozet(d);
+                      return (
+                        <li key={d.id} className="rounded-lg bg-[var(--c-panel)] px-3 py-1.5 text-xs ring-1 ring-[var(--c-hairline)]">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="flex min-w-0 items-center gap-1.5 text-[var(--c-ink-2)]">
+                              <FileText size={13} className="shrink-0 text-[var(--c-ink-3)]" />
+                              <span className="truncate">{d.label}</span>
+                              {rozet && (
+                                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${rozet.cls}`}>{rozet.text}</span>
+                              )}
+                            </span>
+                            <button onClick={() => remove(d)} disabled={busy === type} className="shrink-0 text-[var(--c-ink-3)] hover:text-red-300 disabled:opacity-50" aria-label="Kaldır">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                          {/* İnceleme notu yalnız RET'te gösterilir — doktor neyi düzelteceğini görsün. */}
+                          {d.status === "REJECTED" && d.reviewNote && (
+                            <p className="mt-1 text-[11px] text-red-300/90">İnceleme notu: {d.reviewNote}</p>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
 
@@ -168,6 +261,26 @@ export function DoctorDocuments({
                     onChange={(e) => { upload(type, e.target.files?.[0] ?? null); e.target.value = ""; }} />
                 </label>
                 <span className="ml-2 text-[10px] text-[var(--c-ink-3)]">PDF / JPG / PNG · ~8 MB'a kadar</span>
+
+                {/* v6.119 — Yükleme sonrası e-Devlet otomatik doğrulama sonucu (onay 2026-08-19).
+                    Yalnız SON yüklemenin kartında; reason sunucudan gelir ve PHI içermez.
+                    "Hesabınız açıldı" yalnız diploma yüklemesi gerçekten aktivasyonla döndüyse. */}
+                {edevlet?.type === type &&
+                  (edevlet.ok ? (
+                    <p className="mt-2 flex items-center gap-1.5 rounded-xl bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 ring-1 ring-emerald-400/20">
+                      <Check size={14} className="shrink-0" />
+                      {type === "DIPLOMA" && edevlet.activated
+                        ? "e-Devlet doğrulaması başarılı — hesabınız açıldı."
+                        : "Belgeniz e-Devlet ile doğrulandı."}
+                    </p>
+                  ) : (
+                    <div className="mt-2 rounded-xl bg-amber-500/10 px-3 py-2 text-xs text-amber-300 ring-1 ring-amber-400/20">
+                      <p className="flex items-center gap-1.5 font-medium">
+                        <AlertTriangle size={14} className="shrink-0" /> Otomatik doğrulanamadı — belgeniz incelemeye alındı.
+                      </p>
+                      {edevlet.reason && <p className="mt-0.5 text-[11px] text-amber-300/80">{edevlet.reason}</p>}
+                    </div>
+                  ))}
               </div>
             </div>
 

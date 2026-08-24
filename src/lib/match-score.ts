@@ -332,7 +332,7 @@ export async function getDoctorScorecard(doctorId: string): Promise<DoctorScorec
   return { score: doctorMatchScore(m), metrics: metricBreakdown(m).map((p) => ({ ...p, raw: raw[p.key] })) };
 }
 
-// ── Herkese-açık profil (/hekim/[id]) güven rozetleri — EŞİK geçen olumlu metrikler ──
+// ── Herkese-açık profil (/doktorlar/[id]) güven rozetleri — EŞİK geçen olumlu metrikler ──
 // ⚠️ Ham skor / sıralama / iptal sayısı GÖSTERİLMEZ (içsel CRM metriği + rakip-hassas); yalnız hastaya
 // anlamlı, olumlu güven sinyalleri rozet olarak. Eşik altı/verisiz metrik → rozet yok (yanlış-pozitif yok).
 export interface DoctorBadge { key: MetricKey; label: string; desc: string }

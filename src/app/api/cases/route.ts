@@ -35,9 +35,9 @@ export async function GET(req: Request) {
       ? // Branş dalı DOCS_PENDING'i DIŞLAR (2026-07-24): belge-bekleyen başvuru doktor havuzunda
         // görünmez (koordinatör/etik/admin operasyonel gözetim için görmeye devam eder).
         { OR: [{ doctorId: doc.id }, ...(doc.branch ? [{ doctorId: null, branch: doc.branch, status: { not: "DOCS_PENDING" } }] : [])] }
-      : // Profilsiz VEYA DOĞRULANMAMIŞ hekim → boş küme. `verified` kapısı 2026-08-03 denetiminde
+      : // Profilsiz VEYA DOĞRULANMAMIŞ doktor → boş küme. `verified` kapısı 2026-08-03 denetiminde
         // eklendi: requireStaff yalnız ROLE bakar, self-signup hesabı da DOCTOR rolündedir → onay
-        // beklemeyen hekim kendi branşındaki kuyruğu ÇÖZÜLMÜŞ hasta adıyla listeleyebiliyordu.
+        // beklemeyen doktor kendi branşındaki kuyruğu ÇÖZÜLMÜŞ hasta adıyla listeleyebiliyordu.
         // canCaseBeAccessedBy (ownership.ts) nesne düzeyinde bu kapıyı zaten uyguluyordu; liste hizalandı.
         { id: "__none__" };
   }

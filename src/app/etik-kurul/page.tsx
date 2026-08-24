@@ -64,7 +64,7 @@ export default async function EthicsBoard() {
       </div>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        <Link href="/admin/hekim-onay" className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 transition hover:border-[var(--c-accent)]/40 hover:shadow-sm">
+        <Link href="/admin/doktor-onay" className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-4 transition hover:border-[var(--c-accent)]/40 hover:shadow-sm">
           <span className="flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-500/10 text-emerald-300"><ShieldCheck size={18} /></span>
             <span>

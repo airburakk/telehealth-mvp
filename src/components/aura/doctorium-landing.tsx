@@ -1,9 +1,21 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { AuraMark } from "@/components/PortamedLogo";
+import { AuraMark } from "@/components/AuraLogo";
+import { DoctoriumBgVideo } from "@/components/aura/doctorium-bg-video";
+import { DoctoriumMobileMenu } from "@/components/aura/doctorium-mobile-menu";
+// Marka primitifleri + koyu palet artık paylaşılan modülde (2026-08-18): footer Doctorium'un
+// TÜM yüzeylerinde render edildiği için yerel tanımlar dışa açıldı — kopya bırakılmadı.
+import {
+  DOCTORIUM_PALETTE,
+  DoctoriumInline,
+  DoctoriumOnEmerald,
+  DoctoriumWord,
+  ByAura,
+} from "@/components/aura/doctorium-brand";
+import { DoctoriumFooter } from "@/components/aura/doctorium-footer";
 
-// /doctorium tanıtım landing'i (kullanıcı kararı 2026-08-16) — giriş yapmamış hekime/öğrenciye
+// /doctorium tanıtım landing'i (kullanıcı kararı 2026-08-16) — giriş yapmamış doktora/öğrenciye
 // Doctorium'u anlatır. Fikir kaynağı kullanıcının Codex taslağı; kit hizası bizde: aura-display/
 // aura-mono fontları (Space Grotesk EKLENMEDİ), gerçek AuraMark zümrüt sembol, iddia disiplini
 // (ölçülmemiş "iki dakika" iddiası ATILDI; "AI özeti işaretli" kanıtı doctorium/[id] sayfasındaki
@@ -11,25 +23,15 @@ import { AuraMark } from "@/components/PortamedLogo";
 // ALMAŞIK koyu/açık bölüm ritmi (kullanıcı kararı 2026-08-16, 5. tur — AURA vitrini deseni:
 // çift-koyu açılış [hero+güven] → olanaklar A → hukuk K → puanlar A → öğrenci K → final A →
 // footer K); tema toggle'ına bağlanmaz, açık bölümler style={LIGHT} ile bölüm-bazlı (landing
-// sözleşmesi — kendi üst barı + footer; global krom Header.tsx listesiyle gizli). Tamamen server
-// component: etkileşim yok, animasyon saf CSS (globals.css .doctorium-prism-*). Tek dil TR.
+// sözleşmesi — kendi üst barı + footer; global krom Header.tsx listesiyle gizli). Server
+// component; tek client çocuğu DoctoriumBgVideo — arka plan videosu YALNIZ HERO'da
+// (kullanıcı kararı 2026-08-16: "Tek çalışma alanı" bölümündeki ikinci video kaldırıldı;
+// hareketli zemin tek yerde kalsın). Animasyon saf CSS (globals.css .doctorium-prism-*).
+// Tek dil TR.
 
-// Codex taslağının paleti; CoverArt plaka koyusu (#0d0e10) zemin olarak korunur.
-// --dl-body: bölüm gövde grisi — açık/koyu almaşıkta (aşağıda LIGHT) yeniden bağlanır,
-// bu yüzden gövde metinleri sabit hex DEĞİL bu değişkeni kullanır.
-const PALETTE = {
-  "--dl-bg": "#0d0e10",
-  "--dl-panel": "#161719",
-  "--dl-ink": "#f4f5f3",
-  "--dl-muted": "#9da1a6",
-  "--dl-body": "#aeb2b6",
-  "--dl-line": "rgba(255,255,255,.12)",
-  "--dl-emerald": "#34d399",
-  "--dl-rose": "#fb7185",
-  "--dl-amber": "#c6a664",
-  // AURA marka turkuazı — PortamedLogo TONES.brand.main ile aynı ton ("by AURA" imzası).
-  "--dl-cyan": "#28C8D8",
-} as CSSProperties;
+// Koyu palet (DOCTORIUM_PALETTE) doctorium-brand.tsx'e taşındı (2026-08-18) — footer landing
+// dışında da render edildiği için paletin tek kaynağı orası. LIGHT burada kalır: açık/koyu
+// bölüm almaşığı landing'e özgü, başka yüzeyde karşılığı yok.
 
 // AÇIK bölüm seti (kullanıcı kararı 2026-08-16, 5. tur: "aura gibi bir bölüm siyah bir bölüm
 // beyaz"). Değerler vitrinin .aura-light rol token'larından birebir (globals.css): beyaz zemin ·
@@ -94,59 +96,22 @@ function Eyebrow({ children, color = "var(--dl-emerald)", caps = true }: { child
   );
 }
 
-function DoctoriumWord({ className = "" }: { className?: string }) {
-  return (
-    <span className={`aura-display font-medium tracking-tight text-[var(--dl-ink)] ${className}`}>
-      Doctor<span className="text-[var(--dl-emerald)]">ium</span>
-    </span>
-  );
-}
-
-// Metin içi marka lockup'ı (kullanıcı kuralı 2026-08-16): "Doctorium" geçen her metinde
-// Doctor beyaz(ink) + ium zümrüt. İSTİSNA: zümrüt zeminli CTA butonları — orada iki tonlu
-// lockup okunmaz (zemin=ium rengi), buton metni tek ton koyu kalır.
-function DoctoriumInline() {
-  return (
-    <span className="whitespace-nowrap">
-      <span className="text-[var(--dl-ink)]">Doctor</span>
-      <span className="text-[var(--dl-emerald)]">ium</span>
-    </span>
-  );
-}
-
-// "by AURA" imzası (kullanıcı kararı 2026-08-16, 4. tur): "by" düz metin (link DEĞİL); AURA,
-// sitenin GERÇEK wordmark PNG'sidir (PortamedLogo ile aynı varlıklar) ve yalnız O tıklanabilir →
-// AURA vitrin ana sayfası (/). `light`: açık bölümde lacivert wordmark varyantı (beyaz PNG
-// beyaz zeminde görünmez — PortamedLogo'nun logo-word-light/dark ayrımının bölüm karşılığı).
-// Yükseklik em-tabanlı: eyebrow/üst bar/footer hangi puntoda kullanırsa oraya ölçeklenir.
-function ByAura({ light = false }: { light?: boolean }) {
-  return (
-    <span className="whitespace-nowrap">
-      <span className="text-[var(--dl-ink)]">by</span>{" "}
-      <Link
-        href="/"
-        className="inline-block transition-opacity duration-200 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--dl-cyan)]"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={light ? "/aura-word-light.png" : "/aura-word-dark.png"}
-          alt="AURA"
-          className="inline-block h-[0.95em] w-auto align-[-0.12em]"
-        />
-      </Link>
-    </span>
-  );
-}
+// DoctoriumWord / DoctoriumInline / ByAura → doctorium-brand.tsx (2026-08-18). Yorumları ve
+// marka kurallarını (iki tonlu lockup, "by" düz metin, wordmark PNG'si) o dosya taşır.
 
 export function DoctoriumLanding() {
   return (
-    <div lang="tr" style={PALETTE} className="min-h-dvh bg-[var(--dl-bg)] text-[var(--dl-ink)]">
+    <div lang="tr" style={DOCTORIUM_PALETTE} className="min-h-dvh bg-[var(--dl-bg)] text-[var(--dl-ink)]">
       {/* ── Üst bar ── */}
+      {/* relative: mobil menü paneli (DoctoriumMobileMenu, absolute top-full) bara çapalanır.
+          Mobil düzen (kullanıcı isteği 2026-08-16): Giriş yap MOBİLDE DE görünür; bölüm
+          linkleri hamburger'e taşınır (V2Nav mobil deseni); katıl CTA'sı dar ekranda "Katıl"
+          (marka kuralının CTA istisnası — 375px'te iki düğme + hamburger ancak böyle sığar). */}
       <header className="sticky top-0 z-20 border-b border-[var(--dl-line)] bg-[color-mix(in_srgb,var(--dl-bg)_86%,transparent)] backdrop-blur-md">
-        <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center gap-6 px-5">
-          <div className="flex items-center gap-2.5">
-            <AuraMark size={30} tone="emerald" />
-            <DoctoriumWord className="text-[22px]" />
+        <div className="relative mx-auto flex h-[72px] w-full max-w-6xl items-center gap-3 px-5 sm:gap-6">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <AuraMark size={30} tone="emerald" className="shrink-0" />
+            <DoctoriumWord className="text-[19px] sm:text-[22px]" />
             <span className="aura-mono mt-1 hidden text-[10px] sm:inline">
               <ByAura />
             </span>
@@ -157,36 +122,45 @@ export function DoctoriumLanding() {
             <a href="#puanlar" className="transition-colors hover:text-[var(--dl-ink)]">Puanlar</a>
             <a href="#ogrenci" className="transition-colors hover:text-[var(--dl-ink)]">Tıp öğrencileri</a>
           </nav>
-          <div className="ml-auto flex items-center gap-2.5 md:ml-0">
+          <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-0 sm:gap-2.5">
             <Link
-              href="/kurumsal-giris"
-              className="hidden min-h-[44px] items-center rounded-xl border border-[var(--dl-line)] px-4 text-sm font-semibold transition-colors hover:border-[var(--dl-emerald)]/55 sm:inline-flex"
+              href="/doctorium/giris"
+              className="inline-flex min-h-[44px] items-center rounded-xl border border-[var(--dl-line)] px-3 text-[13px] font-semibold transition-colors hover:border-[var(--dl-emerald)]/55 sm:px-4 sm:text-sm"
             >
               Giriş yap
             </Link>
             <Link
               href="/kayit"
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#34d399] px-4 text-sm font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0]"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#34d399] px-3 text-[13px] font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0] sm:px-4 sm:text-sm"
             >
-              Doctorium&apos;a katıl
+              {/* Zümrüt CTA lockup'ı (2026-08-18): Doctor BEYAZ (DoctoriumOnEmerald). */}
+              <span className="sm:hidden">Katıl</span>
+              <span className="hidden sm:inline"><DoctoriumOnEmerald />&apos;a katıl</span>
             </Link>
+            <DoctoriumMobileMenu />
           </div>
         </div>
       </header>
 
       <main>
         {/* ── Hero ── */}
-        <section className="relative overflow-hidden">
+        {/* isolate: DoctoriumBgVideo -z-10 katmanları bölüm köküne gömülür (v2 hero deseni).
+            Skrim alttan koyu → üstte açılır; video koyu sahne olduğu için metin AA kalır. */}
+        <section className="relative isolate overflow-hidden">
+          <DoctoriumBgVideo overlay="linear-gradient(to top, rgba(13,14,16,.93) 0%, rgba(13,14,16,.58) 45%, rgba(13,14,16,.38) 100%)" />
           <div
             aria-hidden
             className="pointer-events-none absolute -left-40 top-24 h-[480px] w-[480px] rounded-full"
             style={{ background: "radial-gradient(circle, rgba(52,211,153,.09), transparent 68%)" }}
           />
-          <div className="mx-auto grid w-full max-w-6xl items-center gap-14 px-5 pb-20 pt-16 lg:grid-cols-[1.05fr_.95fr] lg:pb-24 lg:pt-24">
+          {/* Örnek görünüm kartı KALDIRILDI (kullanıcı kararı 2026-08-16, video denemesi
+              sonrası): arka planda film oynarken temsili kart kalabalık yapıyordu →
+              hero tek kolon metin, sağ yarı videoya açık; dikey nefes büyütüldü. */}
+          <div className="mx-auto w-full max-w-6xl px-5 pb-28 pt-20 lg:pb-40 lg:pt-32">
             <div>
               <Eyebrow caps={false}><DoctoriumInline /> <ByAura /></Eyebrow>
               <h1 className="aura-display mt-5 max-w-[820px] text-[clamp(44px,5.6vw,72px)] font-medium leading-[1.02] tracking-tight">
-                <span className="block">Hekimin</span>
+                <span className="block">Doktorun</span>
                 {/* Prizma: üç sıfat sırayla döner; ekran okuyucuya tek cümle (aria-label),
                     yüzler dekoratif. Reduced-motion'da ilk yüz sabit (globals.css). */}
                 <span className="doctorium-prism-shell" role="img" aria-label="Yeni, profesyonel ve kişiselleştirilmiş">
@@ -202,81 +176,52 @@ export function DoctoriumLanding() {
                 Branşınızdaki hakemli yayınları kısa klinik özetlerle takip edin; sektörel gündemi,
                 hukuku, kongreleri ve kariyer yollarını tek yerde yönetin.
               </p>
+              {/* CTA giysisi (kullanıcı kararı 2026-08-18): AURA vitrinindeki ORTAK düğme
+                  efekti (how/closing/doctorium-section) buraya da — kenar şeridi hover'da
+                  bandı doldurur (opacity 15), ok ileri kayar, düğme sağa ötelenir. Renk
+                  düğmeye ait: zümrüt DOLU düğmede şerit koyu (#04342c → %15 kararma; eski
+                  hover:bg-[#5fe3b0] kalktı, dolgu aynı işi yapıyor); kenarlıklıda şerit
+                  emerald token'ı (LIGHT bölümde otomatik #047857'e bağlanır). rounded-xl
+                  korunur — efekt ortak, köşe dili Doctorium'un. Doctor BEYAZ (2026-08-18,
+                  DoctoriumOnEmerald) — zümrüt CTA'nın "tek ton koyu" istisnası süpersede.
+                  🪤 Dolgu span'i absolute: metin ve ok `relative` olmak ZORUNDA. */}
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/kayit"
-                  className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#34d399] px-6 text-base font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0]"
+                  className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#34d399] px-6 text-base font-semibold text-[#04342c] transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
                 >
-                  Doctorium&apos;a katıl
-                  <ArrowRight aria-hidden size={17} />
+                  <span
+                    aria-hidden
+                    className="absolute inset-y-0 start-0 w-1 bg-[#04342c] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+                  />
+                  <span className="relative"><DoctoriumOnEmerald />&apos;a katıl</span>
+                  <ArrowRight
+                    aria-hidden
+                    size={17}
+                    className="relative transition-transform duration-300 group-hover:translate-x-1.5"
+                  />
                 </Link>
                 <a
                   href="#olanaklar"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-[var(--dl-line)] px-6 text-base font-semibold transition-colors hover:border-[var(--dl-emerald)]/55"
+                  className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl border border-[var(--dl-line)] px-6 text-base font-semibold transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dl-emerald)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
                 >
-                  Neler sunuyor?
+                  <span
+                    aria-hidden
+                    className="absolute inset-y-0 start-0 w-1 bg-[var(--dl-emerald)] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+                  />
+                  <span className="relative">Neler sunuyor?</span>
+                  <ArrowRight
+                    aria-hidden
+                    size={17}
+                    className="relative text-[var(--dl-emerald)] transition-transform duration-300 group-hover:translate-x-1.5"
+                  />
                 </a>
               </div>
               <p className="mt-5 text-xs text-[#777c82]">
-                Doğrulanmış hekim ve tıp öğrencisi üyeliği — belge incelemesiyle.
+                Doğrulanmış doktor ve tıp öğrencisi üyeliği — belge incelemesiyle.
               </p>
             </div>
 
-            {/* Ürün önizleme kartı — temsili görünüm; uydurma metrik YOK, mono etiket açıkça söyler. */}
-            <div
-              aria-label="Doctorium akış örnek görünümü"
-              className="rounded-3xl border border-[var(--dl-line)] bg-[#111315] p-5 shadow-[0_40px_100px_rgba(0,0,0,.35)] lg:rotate-1"
-            >
-              <div className="flex items-center justify-between px-1 pb-4">
-                <div className="flex items-center gap-2">
-                  <AuraMark size={20} tone="emerald" />
-                  <DoctoriumWord className="text-[17px]" />
-                </div>
-                <span className="aura-mono rounded-lg border border-[var(--dl-line)] px-2.5 py-1.5 text-[9px] uppercase tracking-[0.14em] text-[var(--dl-muted)]">
-                  Örnek görünüm
-                </span>
-              </div>
-              <div className="flex gap-5 border-b border-[var(--dl-line)] px-1 text-xs">
-                <span className="border-b-2 border-[var(--dl-emerald)] pb-2.5 text-[var(--dl-ink)]">Akışım</span>
-                <span className="pb-2.5 text-[#81868c]">Akademik</span>
-                <span className="pb-2.5 text-[#81868c]">Sektörel</span>
-                <span className="pb-2.5 text-[#81868c]">Hukuk</span>
-              </div>
-              <div className="px-1 pb-2 pt-5">
-                <Eyebrow>Akışım</Eyebrow>
-                <div className="aura-display mt-1 text-xl font-medium tracking-tight">Sizin için seçilenler</div>
-              </div>
-              <article className="mt-2 rounded-xl border border-[var(--dl-line)] border-l-[3px] border-l-[var(--dl-emerald)] bg-[var(--dl-panel)] p-4">
-                <div className="aura-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--dl-emerald)]">
-                  Akademik
-                </div>
-                <h3 className="mt-1.5 text-sm font-medium leading-snug">
-                  Branşınızdan güncel bir hakemli yayın
-                </h3>
-                <p className="mt-1 text-[11px] leading-relaxed text-[#9ca1a6]">
-                  Kısa klinik özet; kaynak ve yayın tarihi kartın üzerinde, özgün makale bir tık ötede.
-                </p>
-                <div className="mt-3 flex justify-between text-[9px] text-[#737980]">
-                  <span>Hakemli kaynak</span>
-                  <span className="font-semibold text-[var(--dl-emerald)]">Özeti oku →</span>
-                </div>
-              </article>
-              <article className="mt-2.5 rounded-xl border border-[var(--dl-line)] border-l-[3px] border-l-[#a78bfa] bg-[var(--dl-panel)] p-4">
-                <div className="aura-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-[#a78bfa]">
-                  Sektörel
-                </div>
-                <h3 className="mt-1.5 text-sm font-medium leading-snug">
-                  Sağlık hizmetlerinde yeni düzenlemeler
-                </h3>
-                <p className="mt-1 text-[11px] leading-relaxed text-[#9ca1a6]">
-                  Mesleki pratiğinizi etkileyebilecek gelişmeler, kaynağı ve yayın tarihiyle birlikte.
-                </p>
-                <div className="mt-3 flex justify-between text-[9px] text-[#737980]">
-                  <span>Kaynak bağlantılı</span>
-                  <span className="font-semibold text-[var(--dl-emerald)]">İncele →</span>
-                </div>
-              </article>
-            </div>
           </div>
         </section>
 
@@ -293,6 +238,10 @@ export function DoctoriumLanding() {
         </section>
 
         {/* ── Olanaklar — AÇIK bölüm (almaşık ritim) ── */}
+        {/* ⚠️ Arka plan videosu KALDIRILDI (kullanıcı kararı 2026-08-16): "Tek çalışma alanı"
+            bölümünde video oynaması istenmiyor — hareketli zemin YALNIZ hero'da kalır. Beyaz
+            perde altındaki "soluk doku" denemesi (v6.102) böylece kapandı; video için eklenen
+            relative/isolate/overflow-hidden sınıfları da düştü (ölü stil bırakma). */}
         <section id="olanaklar" style={LIGHT} className="scroll-mt-20 bg-[var(--dl-bg)] text-[var(--dl-ink)]">
           <div className="mx-auto w-full max-w-6xl px-5 py-24">
             <div className="mb-14 grid gap-8 lg:grid-cols-[.8fr_1.2fr]">
@@ -303,7 +252,7 @@ export function DoctoriumLanding() {
                 </h2>
               </div>
               <p className="max-w-[640px] self-end text-[17px] leading-relaxed text-[var(--dl-body)]">
-                <DoctoriumInline /> yalnızca haber sunmaz; hekimin bilgiye ulaşma, gündemi izleme ve
+                <DoctoriumInline /> yalnızca haber sunmaz; doktorun bilgiye ulaşma, gündemi izleme ve
                 mesleki gelişimini planlama yükünü hafifletmek için düzenlenmiştir.
               </p>
             </div>
@@ -327,14 +276,14 @@ export function DoctoriumLanding() {
             <div>
               <Eyebrow caps={false}><DoctoriumInline /> Hukuk</Eyebrow>
               <h2 className="aura-display mt-3 text-[clamp(32px,4.6vw,54px)] font-medium leading-[1.04] tracking-tight">
-                Hekimlik pratiğinin hukuki hafızası.
+                Doktorluk pratiğinin hukuki hafızası.
               </h2>
               <p className="mt-5 text-[17px] leading-relaxed text-[#aeb2b6]">
                 Mevzuat değişikliklerini, emsal kararları ve hakemli doktrini aynı çalışma alanında
                 izleyin. İçerikler bilgilendirme amacı taşır; hukuki görüş yerine geçmez.
               </p>
               <ul className="mt-7 divide-y divide-[var(--dl-line)] border-y border-[var(--dl-line)]">
-                {["Sağlık mevzuatı ve değişiklikleri", "Malpraktis ve hekim sorumluluğu içtihatları", "Hakemli sağlık hukuku makaleleri"].map((li) => (
+                {["Sağlık mevzuatı ve değişiklikleri", "Malpraktis ve doktor sorumluluğu içtihatları", "Hakemli sağlık hukuku makaleleri"].map((li) => (
                   <li key={li} className="flex gap-3 py-3 text-[15px] text-[#c7c9cc]">
                     <span aria-hidden className="text-[var(--dl-emerald)]">—</span>
                     {li}
@@ -356,12 +305,12 @@ export function DoctoriumLanding() {
                 <div className="aura-mono text-[9px] uppercase tracking-[0.14em] text-[#fda4af]">Mevzuat güncellemesi</div>
                 <h3 className="mt-1.5 text-[15px] font-medium">Sağlık hizmetleri uygulamasındaki son değişiklikler</h3>
                 <p className="mt-1 text-[11px] leading-relaxed text-[#9ca1a6]">
-                  Yayın tarihi, kaynak bağlantısı ve hekime etkisini anlatan kısa özetle.
+                  Yayın tarihi, kaynak bağlantısı ve doktora etkisini anlatan kısa özetle.
                 </p>
               </div>
               <div className="mt-3 border-l-[3px] border-[var(--dl-rose)] bg-[#131416] p-4">
                 <div className="aura-mono text-[9px] uppercase tracking-[0.14em] text-[#fda4af]">İçtihat</div>
-                <h3 className="mt-1.5 text-[15px] font-medium">Hekim sorumluluğuna ilişkin karar arşivi</h3>
+                <h3 className="mt-1.5 text-[15px] font-medium">Doktor sorumluluğuna ilişkin karar arşivi</h3>
                 <p className="mt-1 text-[11px] leading-relaxed text-[#9ca1a6]">
                   Esas ve karar bilgileriyle doğrulanabilir kaynak görünümü.
                 </p>
@@ -416,7 +365,7 @@ export function DoctoriumLanding() {
               style={{ background: "linear-gradient(120deg, rgba(52,211,153,.08), transparent 55%)" }}
             >
               <div>
-                <Eyebrow>Geleceğin hekimleri</Eyebrow>
+                <Eyebrow>Geleceğin doktorları</Eyebrow>
                 <h2 className="aura-display mt-3 text-[clamp(28px,3.6vw,42px)] font-medium leading-[1.06] tracking-tight">
                   Tıp öğrencileri için erken mesleki keşif.
                 </h2>
@@ -426,12 +375,21 @@ export function DoctoriumLanding() {
                 </p>
               </div>
               <div className="lg:text-right">
+                {/* Ortak CTA efekti (2026-08-18) — desen ve gerekçe hero CTA yorumunda. */}
                 <Link
                   href="/ogrenci"
-                  className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[var(--dl-line)] px-6 text-base font-semibold transition-colors hover:border-[var(--dl-emerald)]/55"
+                  className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl border border-[var(--dl-line)] px-6 text-base font-semibold transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dl-emerald)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
                 >
-                  Öğrenci üyeliğini incele
-                  <ArrowRight aria-hidden size={17} />
+                  <span
+                    aria-hidden
+                    className="absolute inset-y-0 start-0 w-1 bg-[var(--dl-emerald)] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+                  />
+                  <span className="relative">Öğrenci üyeliğini incele</span>
+                  <ArrowRight
+                    aria-hidden
+                    size={17}
+                    className="relative text-[var(--dl-emerald)] transition-transform duration-300 group-hover:translate-x-1.5"
+                  />
                 </Link>
                 <p className="mt-3 text-xs text-[#777c82]">Öğrenci belgesiyle doğrulama gerekir.</p>
               </div>
@@ -450,40 +408,47 @@ export function DoctoriumLanding() {
               Bilimsel bilgi, sektörel gelişmeler, hukuk, kariyer ve kongre takibi için{" "}
               <DoctoriumInline /> çalışma alanına katılın.
             </p>
+            {/* Ortak CTA efekti (2026-08-18) — desen ve gerekçe hero CTA yorumunda; bu
+                bölüm AÇIK (LIGHT): emerald token'ı #047857'e, ring-offset beyaza bağlanır. */}
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href="/kayit"
-                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#34d399] px-6 text-base font-semibold text-[#04342c] transition-colors hover:bg-[#5fe3b0]"
+                className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#34d399] px-6 text-base font-semibold text-[#04342c] transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
               >
-                Hekim üyeliğine başla
-                <ArrowRight aria-hidden size={17} />
+                <span
+                  aria-hidden
+                  className="absolute inset-y-0 start-0 w-1 bg-[#04342c] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+                />
+                <span className="relative">Doktor üyeliğine başla</span>
+                <ArrowRight
+                  aria-hidden
+                  size={17}
+                  className="relative transition-transform duration-300 group-hover:translate-x-1.5"
+                />
               </Link>
               <Link
                 href="/ogrenci"
-                className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-[var(--dl-line)] px-6 text-base font-semibold transition-colors hover:border-[var(--dl-emerald)]/55"
+                className="group relative inline-flex min-h-[48px] items-center justify-center gap-2 overflow-hidden rounded-xl border border-[var(--dl-line)] px-6 text-base font-semibold transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dl-emerald)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dl-bg)]"
               >
-                Tıp öğrencisiyim
+                <span
+                  aria-hidden
+                  className="absolute inset-y-0 start-0 w-1 bg-[var(--dl-emerald)] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+                />
+                <span className="relative">Tıp öğrencisiyim</span>
+                <ArrowRight
+                  aria-hidden
+                  size={17}
+                  className="relative text-[var(--dl-emerald)] transition-transform duration-300 group-hover:translate-x-1.5"
+                />
               </Link>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-[var(--dl-line)] py-9">
-        <div className="mx-auto flex w-full max-w-6xl flex-col justify-between gap-4 px-5 text-xs text-[#777c82] sm:flex-row">
-          <span>
-            © 2026 <DoctoriumInline /> <ByAura />
-          </span>
-          <div className="flex flex-wrap gap-6">
-            <Link href="/guven-ve-gizlilik" className="transition-colors hover:text-[var(--dl-ink)]">
-              Güven ve Gizlilik
-            </Link>
-            <Link href="/" className="transition-colors hover:text-[var(--dl-ink)]">
-              AURA&apos;ya git ↗
-            </Link>
-          </div>
-        </div>
-      </footer>
+      {/* Footer → doctorium-footer.tsx (2026-08-18): aynı bileşen /doctorium/giris ve
+          /doktor/doctorium/* yüzeylerinde de render edilir. */}
+      <DoctoriumFooter />
     </div>
   );
 }

@@ -19,10 +19,17 @@ export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   const freeCareOptIn = b.freeCareOptIn === true;
   const consultOptIn = b.consultOptIn === true;
+  // v6.105 — İkinci Görüş + Sağlık Turizmi tercihleri (kullanıcı kararı 2026-08-17).
+  // ⚠️ soOptIn ünvan kapısını AŞMAZ: burada yalnız DİLEK kaydedilir; panelin açılıp açılmadığına
+  // panelVisibility'deki soEligible(title) && soOptIn karar verir. Ünvansız doktor bu alanı true
+  // gönderse bile (arayüz kartı devre dışı olsa da API'ye doğrudan istek atılabilir) panel açılmaz
+  // — kapı tek yerde, veri katmanında değil karar katmanında.
+  const soOptIn = b.soOptIn === true;
+  const tourismOptIn = b.tourismOptIn === true;
 
-  // Zorunlu mesleki belgeler (diploma + MMSS) ve MMSS metadata tamamlanmadan onboarding bitirilemez
-  // → hesap aktifleşmez. (Sonradan /doktor/profil'den gelen opt-in güncellemeleri bu kapıdan geçmez:
-  // yalnız ilk onboarding'de, onboardedAt henüz yokken zorunlu.)
+  // Zorunlu mesleki belge (v6.105'ten beri yalnız diploma; MMSS ihtiyari) tamamlanmadan onboarding
+  // bitirilemez → hesap aktifleşmez. (Sonradan /doktor/profil'den gelen opt-in güncellemeleri bu
+  // kapıdan geçmez: yalnız ilk onboarding'de, onboardedAt henüz yokken zorunlu.)
   const current = await db.doctor.findUnique({
     where: { id: dbUser.doctorId },
     select: {
@@ -37,7 +44,7 @@ export async function POST(req: Request) {
       mmssInsurer: null, mmssPolicyNo: null, mmssCoverageLimit: null,
       procedures: null, licenseNo: null, specBoard: null, branch: "", city: "",
     };
-    // Zorunlu belgeler (diploma + MMSS) + MMSS metadata + ≥1 işlem + FHIR qualification
+    // Zorunlu belgeler (v6.105: yalnız diploma) + ≥1 işlem + FHIR qualification
     // (diploma/tescil no + uzmanlık belgesi) tamamlanmadan onboarding bitirilemez → hesap aktifleşmez.
     if (!canCompleteOnboarding(docs, data)) {
       return NextResponse.json(
@@ -54,6 +61,8 @@ export async function POST(req: Request) {
     data: {
       freeCareOptIn,
       consultOptIn,
+      soOptIn,
+      tourismOptIn,
       onboardedAt: current?.onboardedAt ?? new Date(),
       // Belgeler tamsa aktivasyon damgasını da garanti et (refreshActivation belge API'lerinde de çalışır).
       activatedAt: current?.onboardedAt ? undefined : new Date(),

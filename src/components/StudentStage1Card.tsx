@@ -6,7 +6,7 @@ import { ArrowRight, Check, FileText, GraduationCap, Loader2, Trash2, Upload } f
 import type { DocMeta } from "@/components/DoctorDocuments";
 
 // v6.95 — Tıp öğrencisi onboarding kartı (/doktor/baslangic öğrenci modu). Stage1Doctorium'un
-// öğrenci eşleniği ama BİLİNÇLİ AYRI bileşen: öğrenci hunisinde hekim belgeleri (diploma/MMSS/
+// öğrenci eşleniği ama BİLİNÇLİ AYRI bileşen: öğrenci hunisinde doktor belgeleri (diploma/MMSS/
 // tabip odası) ve rıza kartları HİÇ render edilmez (kullanıcı kararı 2026-08-14). Tek belge:
 // e-Devlet öğrenci belgesi (STUDENT_CERT) → yükleme anında Doctorium içerik erişimi açılır.
 // "Mezun oldum" düğmesi studentTrack'i kapatır → sayfa yenilenince normal doktor onboarding'i
@@ -149,7 +149,7 @@ export function StudentStage1Card({
 
       {/* Mezuniyet çıkışı — öğrenci modunda kilitli kalınmaz */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-4 py-3">
-        <span className="text-xs text-[var(--c-ink-2)]">Mezun mu oldunuz? Diploma ve MMSS poliçenizle doktor üyeliğine geçin.</span>
+        <span className="text-xs text-[var(--c-ink-2)]">Mezun mu oldunuz? Diplomanızla doktor üyeliğine geçin.</span>
         <button
           type="button"
           onClick={graduate}

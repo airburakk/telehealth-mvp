@@ -10,6 +10,7 @@
 // Sessiz otomatik döngü (kartvizit hissi) + tam kontroller (kullanıcı sesli izleyebilir/durdurabilir).
 import { useEffect, useRef, useState } from "react";
 import { LANG_BCP47 } from "@/lib/constants";
+import { AiVideoNotice } from "@/components/AiVideoNotice";
 // Kanonik tanıtım metni VIDEO_CARD_SCRIPT @/lib/constants'tadır (server+client ortak import;
 // "use client" modülünden veri export'u server component'te client-reference'a döner).
 
@@ -103,6 +104,7 @@ export function DoctorVideoCard({
   const srclang = (lang && LANG_BCP47[lang]?.split("-")[0]) || "tr";
 
   return (
+    <>
     <div className="dvc">
       <video
         ref={videoRef}
@@ -140,5 +142,11 @@ export function DoctorVideoCard({
         @media (prefers-reduced-motion: reduce) { .dvc-badge i { animation: none; } }
       `}</style>
     </div>
+    {/* Şeffaflık beyanı (kullanıcı kararı 2026-08-18): bu kartvizit videosu doktorun kendi
+        çekimi DEĞİL — ada göre seçilen, yapay zekâ ile üretilmiş bir avatar. Hastanın gerçek
+        doktoru izlediğini sanma ihtimali gerçek olduğu için ibare kartın altında, kadraj
+        dışında ve DAİMA görünür durur (video kontrolleriyle örtüşmez). */}
+    <AiVideoNotice lang={lang} />
+    </>
   );
 }

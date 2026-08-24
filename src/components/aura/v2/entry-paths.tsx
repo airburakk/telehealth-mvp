@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { AuraWordText } from "@/components/aura/aura-word";
+import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
 import { LINKS, VIDEOS, useLang, type Copy } from "@/lib/aura-landing/i18n";
 
 // prefers-reduced-motion — SSR'da daima false (sunucu bilemez; istemci mount'ta
@@ -59,7 +61,7 @@ const MEDIA: Record<string, { src: string; poster: string }> = {
 // düşmez ki geri gelince yeniden yüklenmesin).
 // REDUCED-MOTION: video hiç oynatılmaz, aktif kartın POSTER'ı gösterilir.
 export function V2EntryPaths() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const e = t.v2.entry;
   const [active, setActive] = useState(0);
   const reduced = useReducedMotion();
@@ -168,6 +170,10 @@ export function V2EntryPaths() {
             ucu), video ortada net görünür, alt kenar sonraki bölüme bağlanır. */}
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--aura-night)] via-transparent to-[var(--aura-night)]" />
       </div>
+      {/* Seffaflik beyani (kullanici karari 2026-08-18): kulvar videolari yapay zeka ile
+          uretildi. Video katmani aria-hidden ve -z-10 — rozet ONUN DISINDA, bolum kokunde
+          durur ki ekran okuyucudan gizlenmesin ve skrimin altinda kalmasin. */}
+      <AiVideoNoticeBadge lang={lang} />
 
       <div className="mx-auto max-w-6xl px-5 md:px-8">
         <p className="aura-mono text-sm text-[var(--aura-accent)]">/ {e.eyebrow}</p>
@@ -175,7 +181,8 @@ export function V2EntryPaths() {
           {e.headline}
         </h2>
         <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg">
-          {e.intro}
+          {/* Metin içi AURA = wordmark görseli (kullanıcı kuralı 2026-08-17). */}
+          <AuraWordText text={e.intro} />
         </p>
 
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -229,7 +236,9 @@ function EntryCard({
       <h3 className="aura-display mt-3 text-lg font-bold leading-snug tracking-tight text-[var(--aura-ink)]">
         {card.title}
       </h3>
-      <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--aura-grey)]">{card.body}</p>
+      <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--aura-grey)]">
+        <AuraWordText text={card.body} />
+      </p>
       <Link
         href={href}
         className="aura-mono mt-5 inline-flex items-center gap-1.5 text-[12px] text-[var(--aura-accent)] transition-transform duration-200 group-hover:translate-x-0.5"

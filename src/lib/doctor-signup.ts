@@ -28,8 +28,8 @@ export interface DoctorSignupInput {
 
 // Yeni doktor + bağlı kullanıcı oluşturur, oluşturulan User'ı döndürür.
 // Kayıt sonrası HealthTürkiye dizin doğrulaması (FAZ 6) fire-safe koşulur: bulunamazsa
-// Doctor.registryStatus=NOT_FOUND → /admin/hekim-onay onay kartında kırmızı uyarı bayrağı.
-// v6.95: öğrenci hesabında dizin doğrulaması ATLANIR — öğrenci hekim dizininde olmaz;
+// Doctor.registryStatus=NOT_FOUND → /admin/doktor-onay onay kartında kırmızı uyarı bayrağı.
+// v6.95: öğrenci hesabında dizin doğrulaması ATLANIR — öğrenci doktor dizininde olmaz;
 // koşulsaydı her öğrenci hesabı yanlış NOT_FOUND bayrağıyla açılırdı.
 export async function createDoctorAccount(input: DoctorSignupInput) {
   const user = await createAccountTx(input);

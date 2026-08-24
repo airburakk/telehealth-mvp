@@ -21,8 +21,8 @@ import {
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47, VIDEO_CARD_SCRIPT } from "@/lib/constants";
 import { AI_INTERPRET_TEXT } from "@/lib/ai-consent";
-import { AuraSpinner } from "@/components/PortamedLogo";
-import { DoctorArt } from "@/components/PortamedArt";
+import { AuraSpinner } from "@/components/AuraLogo";
+import { DoctorArt } from "@/components/AuraArt";
 import { DoctorVideoCard } from "@/components/DoctorVideoCard";
 import type { DoctorCardData } from "@/lib/doctor-card";
 
@@ -546,7 +546,7 @@ export function PreConsultLobby({
 
               {/* public profil verified-kapılı (v4.19) — doğrulanmamış doktorda 404'e götüren link gösterme */}
               {doctorCard.verified && (
-                <a href={`/hekim/${doctorCard.id}`} target="_blank" rel="noopener noreferrer"
+                <a href={`/doktorlar/${doctorCard.id}`} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-xs font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]">
                   <ExternalLink size={13} /> {t(TX.fullProfile)}
                 </a>
@@ -725,7 +725,7 @@ export function PreConsultLobby({
   );
 }
 
-// Doktor kartı güven rozeti ikonları (match-score MetricKey ile hizalı; /hekim/[id] ile aynı semantik).
+// Doktor kartı güven rozeti ikonları (match-score MetricKey ile hizalı; /doktorlar/[id] ile aynı semantik).
 const BADGE_ICON: Record<string, LucideIcon> = {
   rating: Star, volume: Award, freeCare: Heart, responsiveness: Zap, reliability: ShieldCheck, recency: Activity,
 };

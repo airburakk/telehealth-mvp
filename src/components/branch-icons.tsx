@@ -4,12 +4,13 @@
 // component'te client-reference üretir (hafıza: rsc-client-module-data-export); paylaşılan
 // sabit bu yüzden direktifsiz dosyada yaşar. Lucide ikonları her iki tarafta da render edilir.
 //
-// Eşleme anlam-bazlı ve 30 branşta BENZERSİZ (2026-07-14 revizyonu: Bone/Scissors/Sparkles/
+// Eşleme anlam-bazlı ve 35 branşta BENZERSİZ (2026-07-14 revizyonu: Bone/Scissors/Sparkles/
 // Baby/Droplet/Brain/HeartPulse tekrarları ayrıştırıldı → sıfır çakışma); eşleşmeyen
 // Stethoscope'a düşer. Diş: lucide'de diş ikonu yok → çizim diliyle uyumlu özel SVG.
 import {
   HeartPulse, Heart, Brain, BrainCog, PersonStanding, Hand, Slice, ScanHeart,
   Dna, Venus, Crown, ScanFace, Layers, HandHeart, MessageCircleHeart, Utensils,
+  Siren, Radiation, Syringe, Microscope, GitBranch,
   Atom, Filter, Droplets, Droplet, Eye, Ear, Baby, Activity, Stethoscope,
   Wind, Bug, Ribbon, Zap, type LucideIcon,
 } from "lucide-react";
@@ -36,7 +37,7 @@ export function ToothIcon({ size = 24, color = "currentColor", strokeWidth = 2 }
   );
 }
 
-/** Branş KEY (lib/triage BRANCHES.key) → ikon. 30 branş, hepsi benzersiz. */
+/** Branş KEY (lib/triage BRANCHES.key) → ikon. 35 branş, hepsi benzersiz. */
 export const BRANCH_ICONS: Record<string, BranchIconLike> = {
   kardiyoloji: HeartPulse, kvc: Heart, "organ-nakli": HandHeart,
   onkoloji: Ribbon, "radyasyon-onkolojisi": Zap, hematoloji: Droplet,
@@ -49,4 +50,8 @@ export const BRANCH_ICONS: Record<string, BranchIconLike> = {
   dahiliye: Stethoscope, endokrinoloji: Atom, gastroenteroloji: Utensils,
   nefroloji: Filter, uroloji: Droplets,
   "gogus-hastaliklari": Wind, enfeksiyon: Bug,
+
+  // Doktor-only branslar (v6.119) — doctorOnly:true, hasta yuzunde gorunmez.
+  "acil-tip": Siren, radyoloji: Radiation, anesteziyoloji: Syringe,
+  patoloji: Microscope, "tibbi-genetik": GitBranch,
 };

@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ChapterCta, type ChapterData } from "./chapters";
 import { AuraClosing } from "./closing";
+import { AuraWordText } from "./aura-word";
+import { AiVideoNotice } from "@/components/AiVideoNotice";
 import { V2Nav } from "./v2/nav";
 import {
   HIW_VIDEOS,
@@ -163,8 +165,11 @@ function HiwGuide({
           <h2 className="aura-display mt-4 text-3xl font-bold leading-none tracking-tighter text-[var(--aura-ink)] md:text-5xl">
             {ch.title}
           </h2>
+          {/* Metin içi AURA = wordmark görseli (kullanıcı kuralı 2026-08-17):
+              chapter gövdeleri ("AURA başvurunuzu hazırlar…") ve rehber adımları
+              ("AURA'ya girin" vb.) düz yazı AURA taşıyabiliyor. */}
           <p className="mt-4 max-w-md text-base leading-relaxed text-[var(--aura-grey)]">
-            {ch.body}
+            <AuraWordText text={ch.body} />
           </p>
           <ol className="mt-8 space-y-5">
             {g.steps.map((s, si) => (
@@ -176,8 +181,12 @@ function HiwGuide({
                   {String(si + 1).padStart(2, "0")}
                 </span>
                 <div>
-                  <p className="text-[15px] font-semibold text-[var(--aura-ink)]">{s.t}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-[var(--aura-grey)]">{s.d}</p>
+                  <p className="text-[15px] font-semibold text-[var(--aura-ink)]">
+                    <AuraWordText text={s.t} />
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-[var(--aura-grey)]">
+                    <AuraWordText text={s.d} />
+                  </p>
                 </div>
               </li>
             ))}
@@ -197,7 +206,7 @@ function HiwGuide({
 // duraklatır; reduced-motion'da da poster kalır, açık istekle oynatma serbest.
 function GuideVideo({ videoKey, flip }: { videoKey: string; flip: boolean }) {
   const v = HIW_VIDEOS[videoKey as keyof typeof HIW_VIDEOS];
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const ref = useRef<HTMLVideoElement>(null);
   const [active, setActive] = useState(false);
 
@@ -247,6 +256,10 @@ function GuideVideo({ videoKey, flip }: { videoKey: string; flip: boolean }) {
           </span>
         </button>
       )}
+      {/* Şeffaflık beyanı (kullanıcı kararı 2026-08-18): anlatım videoları yapay zekâ ile
+          üretildi. Kart overflow-hidden olduğu için satır kartın İÇİNDE, videonun hemen
+          altında kalır — "gömülü videoda alt satır" kuralı. */}
+      <AiVideoNotice lang={lang} tone="aura" className="mt-0 px-4 py-2" />
     </div>
   );
 }

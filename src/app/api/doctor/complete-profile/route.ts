@@ -13,7 +13,7 @@ const BRANCH_SET = new Set(Object.values(BRANCH_LABELS));
 const LANG_SET = new Set(LANGUAGES);
 
 // POST /api/doctor/complete-profile — OAuth (Google/Apple) ile açılan doktor hesabının eksik
-// kimliği: ad/ünvan/branş/şehir/telefon/diller (v6.87). OAuth'tan yalnız ad+e-posta gelir;
+// kimliği: ad/ünvan/branş/şehir/telefon (v6.87). OAuth'tan yalnız ad+e-posta gelir;
 // hesap branch:"" city:"" ile açılır (doctor-signup.ts) → /doktor/profil-tamamla bu uca yazar.
 // Doğrulama kuralları e-posta kaydıyla (api/auth/signup) BİREBİR — iki yol aynı veri setine yakınsar.
 // Self-auth: yalnız DOCTOR + kendi Doctor kaydı (BOLA yüzeyi yok). Telefon at-rest şifreli.
@@ -34,6 +34,11 @@ export async function POST(req: Request) {
   const city = String(b.city ?? "").trim().slice(0, 80);
   const phoneRaw = String(b.phone ?? "").replace(/[^\d+ ]/g, "").trim().slice(0, 20);
   const phone = phoneRaw.replace(/\s+/g, " ").length >= 7 ? phoneRaw : null;
+  // Hizmet dilleri profil-tamamla formundan KALDIRILDI (kullanıcı kararı 2026-08-18; kayıt
+  // formundaki 2026-08-17 kararıyla aynı gerekçe) → gövde artık languages taşımaz. Alan yine de
+  // kabul edilir (eski açık sekmedeki form gönderebilir); boş/geçersizse hesabın mevcut değeri
+  // KORUNUR — OAuth açılışı zaten "Türkçe" yazar, doktor sonradan tercihlerinden değiştirir.
+  // Eskiden 400 dönen zorunluluk kalktı, yoksa yeni form profili hiç tamamlayamazdı.
   const languages = Array.isArray(b.languages)
     ? [...new Set((b.languages as unknown[]).filter((l): l is string => typeof l === "string" && LANG_SET.has(l)))]
     : [];
@@ -42,7 +47,6 @@ export async function POST(req: Request) {
   if (!TITLE_SET.has(title)) return NextResponse.json({ error: "Geçerli bir ünvan seçin." }, { status: 400 });
   if (!BRANCH_SET.has(branch)) return NextResponse.json({ error: "Geçerli bir branş seçin." }, { status: 400 });
   if (city.length < 2) return NextResponse.json({ error: "Şehir girin." }, { status: 400 });
-  if (languages.length === 0) return NextResponse.json({ error: "En az bir hizmet dili seçin." }, { status: 400 });
 
   // Ad hem Doctor hem User'da yaşar (oturum/panel User.name okur) — atomik güncelle.
   // Telefon boş bırakıldıysa mevcut değer KORUNUR (silme değil "girmedi" anlamı; OAuth yolunda zaten null).
@@ -51,7 +55,7 @@ export async function POST(req: Request) {
       where: { id: me.doctorId! },
       data: {
         name, title, branch, city,
-        languages: languages.join(","),
+        ...(languages.length > 0 ? { languages: languages.join(",") } : {}),
         ...(phone ? { phone: encryptField(phone) } : {}),
       },
     });

@@ -3,7 +3,7 @@ import { SITE_URL } from "@/lib/aura-landing/seo";
 
 // XML sitemap (v5.9.1) — yalnız HALKA AÇIK, indekslenebilir rotalar. Auth-kapılı paneller
 // (proxy matcher: /triyaj, /vaka, /doktor, /operasyon, /admin, /acente, /partner, /etik-kurul,
-// /denetim, /hekimler, /second-opinion/*, /ucretsiz-saglik/basvur… ) DAHİL DEĞİL; /kurumsal-giris
+// /denetim, /doktorlar, /second-opinion/*, /ucretsiz-saglik/basvur… ) DAHİL DEĞİL; /kurumsal-giris
 // bilinçli noindex (personel kapısı) → dışarıda. Landing 8 dil tek URL (dil client-side) → dil
 // başına ayrı giriş yok; hreflang yerine og:locale:alternate kullanılır ([[seo]]).
 export default function sitemap(): MetadataRoute.Sitemap {

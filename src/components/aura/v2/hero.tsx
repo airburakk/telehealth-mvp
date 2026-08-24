@@ -2,38 +2,42 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { AuraBraille } from "@/components/PortamedLogo";
+import { ArrowRight } from "lucide-react";
+import { AuraBraille } from "@/components/AuraLogo";
+import { AuraWordText } from "@/components/aura/aura-word";
+import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
 import { LETTERS, VIDEOS, useLang } from "@/lib/aura-landing/i18n";
 
-// /v2 hero — SAHNELİ AÇILIŞ (v6.14.4, kullanıcı kararı):
-// "başta yalnızca AURA ve braille olsun, aşağıya kaydırdıkça yazılar gelsin ama
-//  hâlâ hero'da kalalım; tüm yazılar geldikten sonra bir sonraki sahneye geçelim"
-// ⇒ ScrollTrigger PIN + SCRUB: hero ekranda sabitlenir, scroll ilerledikçe metin
-// parçaları sırayla belirir; timeline bitince pin çözülür ve sayfa akar.
+// Hero — STATİK VİDEO SAHNESİ (2026-08-17, ana sayfa sadeleşmesi; kullanıcı kararı:
+// "doctorium'daki gibi bir video hazırlayacağız").
 //
-// ⚠️ BİLİNÇLİ ÇELİŞKİ: wireframe "Avoid scroll-jacking" diyor; bu desen tam
-// olarak odur. Kullanıcı kararı (2026-07-16) — gerekçe: hero "çok kalabalık"tı,
-// marka vuruşu metin yığınında kayboluyordu. Zararı a11y kollarıyla sınırlandı:
+// v6.14.4'ün GSAP pin+scrub sahneli açılışı SÜPERSEDE: doctorium-landing hero deseni
+// benimsenip scroll-jacking tamamen kalktı — gsap bağımlılığı bu dosyadan çıktı,
+// tüm metin SSR'da görünür (fail-open tartışması da bitti: gizlenen bir şey yok).
+// Wireframe'in "Avoid scroll-jacking" ilkesine geri dönülmüş oldu.
 //
-// A11Y/SEO SÖZLEŞMESİ (bozma):
-//  · reduced-motion → pin/scrub HİÇ kurulmaz, tüm metin görünür, normal scroll.
-//  · Metinler SSR'da DOM'da ve okunur; gizleme yalnız mount SONRASI gsap.set ile
-//    (JS yoksa/hata alırsa içerik görünür kalır — fail-open, SEO güvenli).
-//  · Pin sırasında klavye Tab çalışır; hero zaten ekranda olduğu için focus
-//    kaybolmaz. Metin parçaları opacity ile gelir, DOM'dan çıkmaz.
+// KORUNANLAR (bozma):
+//  · AURA harf lockup'ı + braille (marka kuralı [[aura-braille-under-wordmark]]:
+//    wordmark braille'ini TAM ALTINDA taşır).
+//  · Video sözleşmesi: IO ile görünürken oyna + arka-plan sekme yaması + Save-Data
+//    ve reduced-motion'da hiç başlatma (preload="none" → inmez, poster kalır).
+//  · Metinler v2.hero sözlüğünden (9 dil) — h1/CTA değişmedi ⇒ synthetic-checks
+//    beklentileri ("Care, without borders" + /giris CTA'sı) yeşil kalır.
+//  · Skrim: alt koyu → üst açık (düz perde YAPMA — "video boğuluyor" geri bildirimi).
+//
+// ⚠️ Kullanıcı yeni hero videosunu hazırlayınca yalnız VIDEOS.hero kaynakları
+// değişir (copy.ts) — bu bileşen dokunulmadan kalır.
 export function V2Hero() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const h = t.v2.hero;
   const videoRef = useRef<HTMLVideoElement>(null);
-  const sectionRef = useRef<HTMLElement>(null);
 
   // Video: mevcut landing hero'suyla aynı sözleşme (IO + arka-plan sekme yaması).
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    // Save-Data (v6.17): veri tasarrufu isteginde video hic baslatilmaz
-    // (preload="none" → play edilmeyen video inmez, poster kalir). Kok hero ile ayni.
+    // Save-Data: veri tasarrufu isteğinde video hiç başlatılmaz.
     if (
       "connection" in navigator &&
       (navigator as { connection?: { saveData?: boolean } }).connection?.saveData === true
@@ -60,60 +64,8 @@ export function V2Hero() {
     };
   }, []);
 
-  // Sahneli açılış: pin + scrub timeline.
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const section = sectionRef.current;
-    if (!section) return;
-
-    let ctx: { revert: () => void } | undefined;
-    let cancelled = false;
-
-    void (async () => {
-      const [gsapMod, stMod] = await Promise.all([import("gsap"), import("gsap/ScrollTrigger")]);
-      if (cancelled) return;
-      const gsap = gsapMod.gsap;
-      gsap.registerPlugin(stMod.ScrollTrigger);
-
-      ctx = gsap.context(() => {
-        const steps = gsap.utils.toArray<HTMLElement>("[data-hero-step]");
-        // Mount SONRASI gizle → SSR/JS-siz durumda metin görünür kalır.
-        gsap.set(steps, { opacity: 0, y: 20 });
-
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: section,
-            start: "top top",
-            // ⚠️ TOPLAM pin süresi — adım BAŞINA değil (v6.14.6).
-            // v6.14.4'te `adım×55+40` yazmıştım = ~315vh ≈ ekranın 3 katı →
-            // kullanıcı: "scroll jacking çok olmuş, bir kez scroll yaptığımda
-            // direkt yazılar gelsin; mobilde 3 kez kaydırmam gerekiyor".
-            // v6.14.7: stagger sıfırlandı (kullanıcı: "tek yeter") → tüm metin
-            // TEK hamlede gelir ⇒ pin de kısaldı: 55% → 30% (~1 kaydırma).
-            // Adım sayısı artarsa burayı ÇARPMA.
-            end: "+=30%",
-            pin: true,
-            pinSpacing: true,
-            scrub: 0.4, // düşük = kaydırmaya çevik yanıt (0.8 gecikmeli hissettiriyordu)
-            anticipatePin: 1,
-            invalidateOnRefresh: true,
-          },
-        });
-        // Kullanıcı kararı (v6.14.7): stagger YOK — eyebrow/h1/lede/CTA/not
-        // hepsi AYNI ANDA belirir. Sıralı akış "bir kez scroll = yazılar gelsin"
-        // isteğini geciktiriyordu. Geri eklenecekse pin süresini de büyüt.
-        tl.to(steps, { opacity: 1, y: 0, duration: 1, ease: "power2.out" });
-      }, section);
-    })();
-
-    return () => {
-      cancelled = true;
-      ctx?.revert();
-    };
-  }, [t]);
-
   return (
-    <section ref={sectionRef} id="top" className="relative isolate min-h-dvh overflow-hidden">
+    <section id="top" className="relative isolate min-h-dvh overflow-hidden">
       <video
         ref={videoRef}
         muted
@@ -124,21 +76,25 @@ export function V2Hero() {
         aria-hidden
         className="absolute inset-0 -z-10 h-full w-full object-cover"
       >
-        {/* Mobil kaynak (v6.17): telefonda src720 (848KB), masaustunde 1080p
-            kullanici karari korunur — gerekce kok hero.tsx'te. */}
+        {/* Mobil kaynak (v6.17): telefonda src720 (848KB), masaüstünde 1080p. */}
         <source media="(max-width: 767px)" src={VIDEOS.hero.src720} type="video/mp4" />
         <source src={VIDEOS.hero.src} type="video/mp4" />
       </video>
-      {/* Okunurluk skrimi: metnin olduğu ALT koyu, videonun göründüğü ÜST açık.
-          Düz perdeye çevirme — v6.14'te öyleydi, "video boğuluyor" geri bildirimi. */}
+      {/* Seffaflik beyani (kullanici karari 2026-08-18): hero videosu yapay zeka ile
+          uretildi. Tam ekran arka planda videonun bir "alti" yok — gorunur kalan tek
+          konum kadrajin sag-alt kosesi. */}
+      <AiVideoNoticeBadge lang={lang} />
+      {/* Okunurluk skrimi: metnin olduğu ALT koyu, videonun göründüğü ÜST açık. */}
       <div
         aria-hidden
         className="absolute inset-0 -z-10 bg-[linear-gradient(to_top,rgba(13,14,16,0.88)_0%,rgba(13,14,16,0.40)_45%,rgba(13,14,16,0.22)_100%)]"
       />
 
-      <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col items-center justify-center px-5 py-24 text-center md:px-8">
-        {/* SAHNE 0 — açılışta YALNIZ bunlar görünür (kullanıcı: "başta yalnızca
-            AURA ve braille olsun"). data-hero-step YOK: hiç gizlenmez. */}
+      {/* Sola dayalı düzen (2026-08-18, kullanıcı isteği): /doctorium landing deseni —
+          içerik V2Nav'daki logoyla AYNI sol çizgiden akar (ikisi de max-w-6xl px-5
+          md:px-8). Braille marka bloğu İÇİNDE wordmark'a göre ortalı kalır (kural). */}
+      <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col items-start justify-center px-5 py-24 md:px-8">
+        {/* Marka vuruşu: AURA harfleri + braille — sahnesiz, her zaman görünür. */}
         <div role="img" aria-label="AURA" className="aura-brand inline-flex flex-col items-center">
           <span className="aura-word flex select-none items-end justify-center gap-[clamp(0.7rem,3.2vw,2.5rem)]">
             {LETTERS.map((letter) => (
@@ -148,52 +104,68 @@ export function V2Hero() {
                 alt=""
                 aria-hidden
                 draggable={false}
-                className="h-[clamp(3.5rem,15vw,12rem)] w-auto"
+                className="h-[clamp(3rem,12vw,9rem)] w-auto"
               />
             ))}
           </span>
-          {/* height=30 → 140px. Alt sınır 12: AuraBraille height<12'de HİÇ çizmez. */}
-          <AuraBraille height={30} className="aura-braille mt-5 text-[var(--aura-ink)]" />
+          {/* Alt sınır 12: AuraBraille height<12'de HİÇ çizmez. */}
+          <AuraBraille height={24} className="aura-braille mt-4 text-[var(--aura-ink)]" />
         </div>
 
-        {/* SAHNE 1..n — scroll ilerledikçe sırayla belirir. */}
-        <p data-hero-step className="aura-mono mt-14 text-sm text-[var(--aura-accent)]">
-          / {h.eyebrow}
-        </p>
-        <h1
-          data-hero-step
-          className="aura-display mt-5 max-w-4xl text-4xl font-bold leading-[1.05] tracking-tighter text-[var(--aura-ink)] md:text-6xl"
-        >
+        <p className="aura-mono mt-12 text-sm text-[var(--aura-accent)]">/ {h.eyebrow}</p>
+        <h1 className="aura-display mt-5 max-w-4xl text-4xl font-bold leading-[1.05] tracking-tighter text-[var(--aura-ink)] md:text-6xl">
           {h.headline}
         </h1>
-        <p
-          data-hero-step
-          className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg"
-        >
-          {h.lede}
+        {/* Metin içi AURA = wordmark görseli (kullanıcı kuralı 2026-08-17, aura-word.tsx). */}
+        <p className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg">
+          <AuraWordText text={h.lede} />
         </p>
-        <div data-hero-step className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        {/* CTA giysisi (kullanıcı kararı 2026-08-18): how/closing/doctorium-section'daki
+            ORTAK efekt buraya da — kenar şeridi hover'da bandı doldurur (opacity 15), ok
+            ileri kayar, düğme sağa ötelenir. Renk düğmeye ait: dolu primary'de şerit
+            KOYU (zemin accent — accent şerit görünmezdi, %15 koyu dolgu = hafif kararma);
+            kenarlıklı secondary'de şerit accent (closing deseni; eski hover:border-accent
+            kalktı — dolgu aynı işi yapıyor, ikisi üst üste binerdi).
+            🪤 Dolgu span'i absolute: metin ve ok `relative` olmak ZORUNDA, yoksa altında
+            kalır. rtl: varyantları ar/fa için (9 dil yayında). */}
+        <div className="mt-8 flex flex-wrap items-center justify-start gap-3">
           <Link
             href="/giris"
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--aura-accent)] px-7 py-3.5 text-base font-semibold text-[var(--aura-night)] transition-transform duration-200 hover:translate-x-0.5 active:scale-[0.98]"
+            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-[var(--aura-accent)] px-7 py-3.5 text-base font-semibold text-[var(--aura-night)] transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aura-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--aura-bg)] rtl:hover:-translate-x-1"
           >
-            {h.ctaPrimary}
-            <span aria-hidden>→</span>
+            <span
+              aria-hidden
+              className="absolute inset-y-0 start-0 w-1 bg-[var(--aura-night)] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+            />
+            <span className="relative">{h.ctaPrimary}</span>
+            <ArrowRight
+              aria-hidden
+              size={18}
+              className="relative transition-transform duration-300 group-hover:translate-x-1.5 rtl:rotate-180 rtl:group-hover:-translate-x-1.5"
+            />
           </Link>
-          {/* Hedef #how (v6.16 düzeltmesi): etiket "AURA nasıl çalışır?" diyor →
-              4 adımlık "nasıl çalışır" şeridine iner. Önce #care'e (dört giriş
-              kapısı) gidiyordu = etiketle hedef çelişiyordu. #care'e giden yol
-              kapanmadı: nav'ın "Bakım" sekmesi ve doğal kaydırma sırası aynı. */}
+          {/* Hedef #how (v6.16): etiket "AURA nasıl çalışır?" → 4 adımlık şeride iner. */}
           <Link
             href="#how"
-            className="inline-flex items-center rounded-full border border-[var(--aura-hairline)] bg-[var(--aura-night)]/40 px-7 py-3.5 text-base font-semibold text-[var(--aura-ink)] backdrop-blur-sm transition-colors duration-200 hover:border-[var(--aura-accent)]/60"
+            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full border border-[var(--aura-hairline)] bg-[var(--aura-night)]/40 px-7 py-3.5 text-base font-semibold text-[var(--aura-ink)] backdrop-blur-sm transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aura-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--aura-bg)] rtl:hover:-translate-x-1"
           >
-            {h.ctaSecondary}
+            <span
+              aria-hidden
+              className="absolute inset-y-0 start-0 w-1 bg-[var(--aura-accent)] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
+            />
+            <span className="relative">
+              <AuraWordText text={h.ctaSecondary} />
+            </span>
+            <ArrowRight
+              aria-hidden
+              size={16}
+              className="relative text-[var(--aura-accent)] transition-transform duration-300 group-hover:translate-x-1.5 rtl:rotate-180 rtl:group-hover:-translate-x-1.5"
+            />
           </Link>
         </div>
-        {/* Klinik sorumluluk mikro-metni (v6.8 dürüstlük çizgisi) — son sahne. */}
-        <p data-hero-step className="mt-7 max-w-xl text-[13px] leading-relaxed text-[var(--aura-micro)]">
-          {h.safety}
+        {/* Klinik sorumluluk mikro-metni (v6.8 dürüstlük çizgisi). */}
+        <p className="mt-7 max-w-xl text-[13px] leading-relaxed text-[var(--aura-micro)]">
+          <AuraWordText text={h.safety} />
         </p>
       </div>
     </section>

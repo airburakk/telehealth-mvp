@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BRANCHES } from "@/lib/triage";
+import { PATIENT_BRANCHES } from "@/lib/triage";
 import { SO_DURATION_COPY, SO_FEE_USD } from "@/lib/second-opinion";
 import { secondOpinionDocSpecs, type SoDeliveryMethod } from "@/data/second-opinion-docs";
 import { useT } from "@/components/useT";
@@ -138,7 +138,7 @@ function SoApplyFormInner() {
   const showStrip = profileComplete(profile, "full") && !editProfile;
 
   const texts = useMemo(
-    () => [...Object.values(S), FEE_LINE, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...DICTATION_TEXTS, ...BRANCHES.map((b) => b.label), ...COUNTRIES.map((c) => c.name), ...specs.map((s) => s.label)],
+    () => [...Object.values(S), FEE_LINE, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...DICTATION_TEXTS, ...PATIENT_BRANCHES.map((b) => b.label), ...COUNTRIES.map((c) => c.name), ...specs.map((s) => s.label)],
     [specs],
   );
   const { t } = useT(lang, texts);
@@ -177,7 +177,7 @@ function SoApplyFormInner() {
       });
       const d = await res.json();
       if (!res.ok || !d?.branchKey) throw new Error("no-branch");
-      setBranch(d.branchKey); // BRANCHES[].key — SO API'si de key doğrular (route.ts:48)
+      setBranch(d.branchKey); // PATIENT_BRANCHES[].key — SO API'si de key doğrular (route.ts:48)
       setSuggestion({ label: String(d.branch ?? ""), confidence: Number(d.confidence ?? 0) });
     } catch {
       // Fail-open: öneri alınamazsa hasta branşı kendisi seçebilsin (select yine görünür).
@@ -339,7 +339,7 @@ function SoApplyFormInner() {
               className="mt-1.5 w-full rounded-xl border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2.5 text-sm text-[var(--c-ink)] focus:border-[var(--c-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--c-accent)]/30"
             >
               <option value="">{t(S.branchPlaceholder)}</option>
-              {BRANCHES.map((b) => (
+              {PATIENT_BRANCHES.map((b) => (
                 <option key={b.key} value={b.key}>{t(b.label)}</option>
               ))}
             </select>

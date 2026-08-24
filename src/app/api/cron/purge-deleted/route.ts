@@ -8,6 +8,7 @@ import { ingestDoctorium, type IngestResult } from "@/lib/doctorium-ingest";
 import { ingestYargitay, type YargitayIngestResult } from "@/lib/hukuk-ingest";
 import { ingestDoktrin, type DoktrinIngestResult } from "@/lib/doktrin-ingest";
 import { remindCongressFollows, type CongressRemindResult } from "@/lib/congress-reminder";
+import { ingestTtbEvents, type TtbEventsResult } from "@/lib/ttb-events";
 
 // GET /api/cron/purge-deleted — saklama süresi dolan klinik kayıtları GERÇEKTEN imha eder (v6.11).
 // vercel.json cron'u günde bir tetikler. registry-sync ile aynı Bearer deseni (anonim tetiklenemez).
@@ -104,12 +105,35 @@ export async function GET(req: Request) {
     }
 
     // Doctorium kongre alarmı (v6.49): takip edilen kongrenin başlangıcı / bildiri-erken kayıt son
-    // tarihi hekimin seçtiği eşiğe girdiyse bildirim. Kritik değil — hata imha akışını düşürmez.
+    // tarihi doktorun seçtiği eşiğe girdiyse bildirim. Kritik değil — hata imha akışını düşürmez.
     let congress: CongressRemindResult | { error: string };
     try {
       congress = await remindCongressFollows();
     } catch (e) {
       congress = { error: e instanceof Error ? e.message.slice(0, 120) : "kongre alarmı koşamadı" };
+    }
+
+    // TTB akredite etkinlik taraması (v6.129) — HAFTALIK kontenjan (yalnız Pazartesi koşar):
+    // düzenleyiciler etkinlikten en az 30 gün önce başvurduğu için kayıt SEYREK akar (v6.120
+    // ölçümü); her gün taramak hem israf hem kaynağa saygısızlık. Pencere cron'da DAR tutulur
+    // (geçmiş 1 ay + gelecek 13 ay — yeni başvurular hep yakın gelecekte); tam/geri dönük tarama
+    // CLI işidir (scripts/ingest-ttb-events.ts). Kritik değil: hata imha akışını düşürmez.
+    // ⚠️ Kaynaklar arası birleştirme (merge-congress-sources.ts) BİLİNÇLİ cron'da değil — satır
+    // silen araç insan gözetiminde kalır. Raporda `created` yüksekse elle merge koşulur.
+    let ttbEvents: TtbEventsResult | { skipped: true } | { error: string };
+    if (new Date().getUTCDay() === 1) {
+      try {
+        const now = new Date();
+        const ym = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+        ttbEvents = await ingestTtbEvents({
+          fromYm: ym(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1))),
+          toYm: ym(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 13, 1))),
+        });
+      } catch (e) {
+        ttbEvents = { error: e instanceof Error ? e.message.slice(0, 120) : "TTB taraması koşamadı" };
+      }
+    } else {
+      ttbEvents = { skipped: true }; // haftalık kontenjan — bugün sırası değil
     }
 
     // KALICI KOŞU İZİ (2026-07-29): Vercel Hobby'de runtime log saklama süresi 1 SAAT — cron gece
@@ -131,13 +155,18 @@ export async function GET(req: Request) {
     const con = "error" in congress
       ? `hata: ${congress.error}`
       : `bakilan=${congress.checked} baslangic=${congress.start} bildiri=${congress.abstract} erkenkayit=${congress.earlybird} hata=${congress.failed}`;
+    const ttb = "skipped" in ttbEvents
+      ? "atlandi(haftalik)"
+      : "error" in ttbEvents
+        ? `hata: ${ttbEvents.error}`
+        : `yeni=${ttbEvents.created} guncel=${ttbEvents.updated} devir=${ttbEvents.adopted}/${ttbEvents.found}${ttbEvents.warnings.length ? ` sorun=${ttbEvents.warnings.length}` : ""}`;
     await recordAccess({
       actor: null, // sistem koşusu
       action: "CRON_MAINTENANCE",
       resourceType: "SYSTEM",
       resourceId: "purge-deleted",
       subjectUserId: null,
-      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · ictihat ${ict} · doktrin ${dok} · kongre ${con}`,
+      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · ictihat ${ict} · doktrin ${dok} · kongre ${con} · ttb ${ttb}`,
     });
 
     return NextResponse.json({
@@ -153,6 +182,7 @@ export async function GET(req: Request) {
       yargitay,
       doktrin,
       congressAlerts: congress,
+      ttbEvents,
     });
   } catch (e) {
     // Saklama-imha sözünün bekçisi sessizce düşemez (Ray C): alarm + 500 (Vercel cron log'unda görünür).

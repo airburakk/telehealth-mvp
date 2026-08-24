@@ -24,7 +24,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const u = await db.user.findFirst({ where: { doctorId: id }, select: { id: true } });
   await recordAccess({
     actor: user, action: "DOCTOR_VERIFY", resourceType: "DOCTOR", resourceId: id,
-    subjectUserId: u?.id ?? null, detail: "hekim doğrulama onayı (verified:true)", ...reqMeta(req),
+    subjectUserId: u?.id ?? null, detail: "doktor doğrulama onayı (verified:true)", ...reqMeta(req),
   });
 
   // Doktora bildirim (kullanıcı hesabı varsa).

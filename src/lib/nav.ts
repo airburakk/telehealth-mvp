@@ -62,8 +62,13 @@ const NAV: NavItem[] = [
 // herkes için kalktığından öğrenci bandı artık BOŞ — Doctorium'a tek giriş Header'daki marka
 // toggle'ı. Bu görsel sadeleştirmedir, güvenlik kapısı DEĞİL: klinik rotalar zaten
 // hasClinicalAccess'le kapalı (v6.90); kapı orada kalır, bant kapalı kapının linkini göstermez.
-export function navItemsFor(role: string | null | undefined, opts?: { student?: boolean }): NavItem[] {
+// v6.105 (kullanıcı kararı 2026-08-17): AŞAMA 1 doktoru (Doctorium üyeliği var, AURA üyeliği yok
+// = Doctor.activatedAt boş) da klinik sekmeleri (Doktor, Post-Op) GÖRMEZ. Tetikleyici kaynak
+// DEĞİL durumdur: aktivasyon damgası dolar dolmaz bant kendiliğinden açılır, ek kolon gerekmez.
+// DOCTOR bandındaki TEK öğeler bu ikisi olduğundan sonuç öğrencidekiyle aynı: bant BOŞ.
+// Yine görsel sadeleştirme, güvenlik kapısı DEĞİL — rota kapısı hasClinicalAccess'te (v6.90).
+export function navItemsFor(role: string | null | undefined, opts?: { student?: boolean; stage1?: boolean }): NavItem[] {
   if (!role) return [];
-  if (opts?.student && role === "DOCTOR") return [];
+  if ((opts?.student || opts?.stage1) && role === "DOCTOR") return [];
   return NAV.filter((n) => n.roles.includes(role));
 }

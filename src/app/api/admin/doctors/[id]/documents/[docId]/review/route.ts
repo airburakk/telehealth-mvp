@@ -3,10 +3,14 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { notifyUser } from "@/lib/notify";
 import { recordAccess, reqMeta } from "@/lib/audit";
+import { refreshActivation } from "@/lib/doctor-activation";
 
-// POST — hekim mesleki belgesine inceleme kararı (Faz 2, 2026-08-14): ACCEPTED | REJECTED.
-// Karar yalnız görünürlük+bildirim içindir; AKTİVASYONA DOKUNMAZ (tasarım kararı — refreshActivation
-// belge varlığına bakar, reddedilen tekil belge yenisi yüklenince satırıyla değişir → PENDING).
+// POST — doktor mesleki belgesine inceleme kararı (Faz 2, 2026-08-14): ACCEPTED | REJECTED.
+// 🔴 v6.119 (2026-08-19) — KARAR ARTIK AKTİVASYONU BELİRLER (eski "dokunmaz" notu SÜPERSEDE):
+// zorunlu belge (DIPLOMA) ACCEPTED olunca Doctor.activatedAt damgalanır ve klinik yüzeyler açılır;
+// REJECTED olunca damga düşer ve kapanır. Bu yüzden karardan sonra refreshActivation ZORUNLU —
+// çağrılmazsa DB, kapı kuralıyla çelişen bayat bir durumda kalır.
+// Otomatik yol (e-Devlet barkodu) belgeyi zaten ACCEPTED doğurur; burası onun yakalayamadıklarıdır.
 // Self-auth raw ucuyla aynı: yalnız ETHICS/ADMIN, diğer herkese 404 (varlık gizlenir).
 const REVIEWER_ROLES = ["ETHICS", "ADMIN"];
 const DOC_TYPE_TR: Record<string, string> = {
@@ -39,8 +43,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   await db.doctorDocument.update({
     where: { id: docId },
-    data: { status, reviewNote: status === "REJECTED" ? note : null },
+    data: {
+      status,
+      reviewNote: status === "REJECTED" ? note : null,
+      // v6.119: kaynak MANUAL — otomatik (EDEVLET) ve migration (LEGACY) damgalarından ayrı durur ki
+      // admin ekranı "kim/ne onayladı"yı dürüstçe gösterebilsin. Ret hâlinde damga TEMİZLENİR.
+      verifiedSource: status === "ACCEPTED" ? "MANUAL" : null,
+      verifiedAt: status === "ACCEPTED" ? new Date() : null,
+    },
   });
+
+  // 🔴 Kararı kapıya yansıt (v6.119). Zorunlu belge onaylandıysa hesap açılır, reddedildiyse kapanır.
+  const activated = await refreshActivation(id);
 
   // Denetim izi — gerekçe metni audit detail'ine KOYULMAZ (asla-loglama disiplini; içerik reviewNote'ta).
   const u = await db.user.findFirst({ where: { doctorId: id }, select: { id: true } });
@@ -49,7 +63,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     subjectUserId: u?.id ?? null, detail: `belge=${doc.type}:${doc.label.slice(0, 80)} karar=${status}`, ...reqMeta(req),
   });
 
-  // Yalnız REJECTED bildirir (ACCEPTED sessiz — nihai müjde zaten verify bildirimi).
+  // v6.119: ACCEPTED artık SESSİZ DEĞİL — onay hesabı fiilen açtıysa doktor bunu öğrenmeli
+  // (eskiden karar erişimi etkilemediği için sessizdi; artık etkiliyor).
+  if (status === "ACCEPTED" && activated && u) {
+    await notifyUser(u.id, {
+      type: "DOCTOR_ACTIVATED",
+      title: "✅ Hesabınız aktifleşti",
+      body: "Mesleki belgeniz doğrulandı — klinik panelleriniz açıldı.",
+      href: "/doktor",
+    });
+  }
+
   // ⚖️ Bildirim dili TASLAK — nihai şablon v6.91 hukuk paketiyle onaylanacak.
   if (status === "REJECTED" && u) {
     const typeTr = DOC_TYPE_TR[doc.type] ?? doc.type;
@@ -61,5 +85,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     });
   }
 
-  return NextResponse.json({ ok: true, status });
+  // `activated` dönüyor: incelemeci kararının kapıya yansıyıp yansımadığını ekranda görsün.
+  return NextResponse.json({ ok: true, status, activated });
 }

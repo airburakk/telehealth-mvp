@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Loader2, UserPlus, Stethoscope, MailCheck } from "lucide-react";
-import { AuraMark } from "@/components/PortamedLogo";
+import { AuraMark } from "@/components/AuraLogo";
 import { SocialAuthButtons } from "@/components/social-auth";
 import { oauthBannerMessage } from "@/lib/oauth-banner";
 
@@ -12,7 +12,10 @@ const TITLES = ["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."];
 
 // M5 — Doktor kayıt formu. E-posta kaydı tam çalışır; Google/Apple env varsa aktif (yoksa "Yakında").
 // Başarılı kayıt → /onam → /doktor onboarding.
-export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, languages }: { googleEnabled: boolean; appleEnabled: boolean; branches: string[]; languages: string[] }) {
+// "Hizmet dilleri" alanı KALDIRILDI (kullanıcı kararı 2026-08-17): kayıt formu kısaldı; hesap
+// varsayılan olarak Türkçe hizmet diliyle açılır (API tarafı), doktor dilleri sonradan
+// profilinden düzenler. Geri eklerken önce o kararı teyit et.
+export function DoctorSignupForm({ googleEnabled, appleEnabled, branches }: { googleEnabled: boolean; appleEnabled: boolean; branches: string[] }) {
   const sp = useSearchParams();
   const oauthMsg = oauthBannerMessage(sp.get("oauth"), sp.get("provider"), "giriş");
 
@@ -21,17 +24,12 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, langua
   const [branch, setBranch] = useState("");
   const [city, setCity] = useState("");
   const [phone, setPhone] = useState(""); // FAZ 5 — WhatsApp/SMS bildirim kanalı hedefi (opsiyonel)
-  const [langs, setLangs] = useState<string[]>(["Türkçe"]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [verifySent, setVerifySent] = useState(false); // v5.6: e-posta doğrulama etkinse kayıt oturum açmaz
-
-  function toggleLang(l: string) {
-    setLangs((prev) => (prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]));
-  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,7 +40,7 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, langua
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, title, branch, city, phone, languages: langs, email, password }),
+        body: JSON.stringify({ name, title, branch, city, phone, email, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Kayıt başarısız.");
@@ -121,17 +119,6 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, langua
             <span className="mt-1 block text-[11px] text-[var(--c-ink-3)]">WhatsApp/SMS bildirim kanalını seçerseniz bildirimler bu numaraya gönderilir.</span>
           </Labeled>
 
-          <Labeled label="Hizmet dilleri">
-            <div className="flex flex-wrap gap-1.5">
-              {languages.map((l) => (
-                <button type="button" key={l} onClick={() => toggleLang(l)}
-                  className={`rounded-full border px-3 py-1.5 text-sm transition ${langs.includes(l) ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]" : "border-[var(--c-hairline)] bg-[var(--c-surface)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]/40"}`}>
-                  {l}
-                </button>
-              ))}
-            </div>
-          </Labeled>
-
           <Labeled label="E-posta">
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ayse@klinik.com" className={INPUT} required />
           </Labeled>
@@ -154,8 +141,9 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, langua
 
         <p className="mt-3 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
           Kayıt sonrası diploma/tescil no, uzmanlık belgesi ve yaptığınız işlemler ile
-          <strong> tıp diploması + MMSS poliçenizi</strong> yüklemeniz istenir (işlem ücretleri tedavi
-          kararında belirlenir). Hesabınız doğrulama onayına kadar doktor dizininde görünmez.
+          <strong> tıp diplomanızı</strong> yüklemeniz istenir; MMSS poliçesi isteğe bağlıdır
+          (işlem ücretleri tedavi kararında belirlenir). Hesabınız doğrulama onayına kadar doktor
+          dizininde görünmez.
         </p>
       </div>
 

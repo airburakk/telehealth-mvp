@@ -6,7 +6,7 @@ import { REWARD_KINDS, MAX_SURVEY_POINTS } from "@/lib/rewards";
 export const dynamic = "force-dynamic";
 
 // Ödül kataloğu yönetimi (v6.88) — ADMIN küratörlü, self-auth (/api/admin/survey deseni).
-// ⚖️ Kalem GİRİŞİ = vaat başlangıcı: ayni menfaat (vergi) + kamu hekimi (657) değerlendirmesi
+// ⚖️ Kalem GİRİŞİ = vaat başlangıcı: ayni menfaat (vergi) + kamu doktoru (657) değerlendirmesi
 // kullanıcıda — panel uyarı kutusu bunu her kalem formunda gösterir. İLAÇ sponsorlu kalem YOK.
 
 export async function POST(req: Request) {

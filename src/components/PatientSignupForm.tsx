@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Loader2, UserPlus, HeartPulse, MailCheck } from "lucide-react";
-import { AuraMark } from "@/components/PortamedLogo";
+import { AuraMark } from "@/components/AuraLogo";
 import { SocialAuthButtons } from "@/components/social-auth";
 import { oauthBannerMessage } from "@/lib/oauth-banner";
 

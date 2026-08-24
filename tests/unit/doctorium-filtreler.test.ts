@@ -15,8 +15,11 @@ import { tier1Query, tier2Query, BRANCH_JOURNALS, GENERAL_JOURNALS } from "@/lib
 import {
   isProfessionallyRelevant, categorize, parseItoDate,
   NEWS_IMAGE_HOSTS, allowedImageUrl, extractOgImage, RSS_SOURCES,
+  isAssociationRelevant, ASSOCIATION_RSS_SOURCES,
 } from "@/lib/doctorium-sources";
 import { SECTOR_SOURCE_SCOPES } from "@/lib/doctorium";
+import { ASSOCIATIONS, watchUrl } from "@/lib/association-sources";
+import { BRANCHES } from "@/lib/triage";
 
 describe("Doktrin — hukuk alaka süzgeci (v6.99)", () => {
   it("özetteki RUTİN onam cümlesi tek başına doktrin yapmaz (kirliliğin ana kaynağı)", () => {
@@ -193,6 +196,98 @@ describe("Sektörel kaynak kapsamı (v6.99.3)", () => {
     for (const s of sectorSources) {
       expect(covered.has(s), `'${s}' kaynağı SECTOR_SOURCE_SCOPES'ta yok — lib/doctorium.ts'e ekle`).toBe(true);
     }
+  });
+
+  // v6.129 — dernek beslemeleri de sektörel modüle yazıyor; aynı sessiz-kayıp riski onlarda da var.
+  it("SÖZLEŞME: her dernek RSS kaynağı da kapsam listesinde", () => {
+    const covered = new Set([...SECTOR_SOURCE_SCOPES.ulusal, ...SECTOR_SOURCE_SCOPES.uluslararasi]);
+    for (const s of ASSOCIATION_RSS_SOURCES) {
+      expect(covered.has(s.source), `'${s.source}' derneği SECTOR_SOURCE_SCOPES'ta yok`).toBe(true);
+    }
+  });
+});
+
+// ── Uzmanlık dernekleri (v6.129, kullanıcı isteği 2026-08-19) ───────────────
+describe("Uzmanlık derneği kaynakları (v6.129)", () => {
+  it("SÖZLEŞME: her dernek RSS kaynağı ASSOCIATIONS kaydıyla eşleşir (slug + adres)", () => {
+    // İki liste ayrı dosyada yaşıyor: biri ingest'i (doctorium-sources), diğeri nöbetçiyi
+    // (association-sources) besliyor. Slug ya da adres sürüklenirse ingest bir kaynaktan,
+    // nöbetçi BAŞKA bir adresten okur ve kimse fark etmez — bu test o sürüklenmeyi kilitler.
+    const byslug = new Map(ASSOCIATIONS.map((a) => [a.slug, a]));
+    for (const s of ASSOCIATION_RSS_SOURCES) {
+      const a = byslug.get(s.source);
+      expect(a, `'${s.source}' ASSOCIATIONS listesinde yok`).toBeDefined();
+      expect(a!.rss, `'${s.source}' ASSOCIATIONS'ta rss alanı boş`).toBe(s.url);
+    }
+  });
+
+  it("SÖZLEŞME: rss alanı dolu her dernek ingest listesinde (aksi halde besleme sessizce okunmaz)", () => {
+    const ingested = new Set(ASSOCIATION_RSS_SOURCES.map((s) => s.source));
+    for (const a of ASSOCIATIONS.filter((x) => x.rss)) {
+      expect(ingested.has(a.slug), `'${a.slug}' RSS veriyor ama ASSOCIATION_RSS_SOURCES'ta yok`).toBe(true);
+    }
+  });
+
+  it("SÖZLEŞME: her derneğin branchSlug'ı gerçek bir branş (uydurma slug = sessiz kayıp)", () => {
+    // Bilinmeyen slug derleme hatası VERMEZ; kayıt DB'ye yazılır ama hiçbir doktora görünmez.
+    const valid = new Set(BRANCHES.map((b) => b.key));
+    for (const a of ASSOCIATIONS) {
+      expect(valid.has(a.branchSlug), `'${a.slug}' branşı '${a.branchSlug}' — lib/triage'da yok`).toBe(true);
+    }
+    for (const s of ASSOCIATION_RSS_SOURCES) {
+      for (const b of s.branchSlugs ?? []) {
+        expect(valid.has(b), `'${s.source}' branşı '${b}' — lib/triage'da yok`).toBe(true);
+      }
+    }
+  });
+
+  it("slug'lar benzersiz (kaynak anahtarı = DB idempotenci)", () => {
+    const seen = new Set<string>();
+    for (const a of ASSOCIATIONS) {
+      expect(seen.has(a.slug), `yinelenen slug: ${a.slug}`).toBe(false);
+      seen.add(a.slug);
+    }
+  });
+
+  it("watchUrl duyuru yolunu birleştirir, yoksa köke düşer", () => {
+    expect(watchUrl({ slug: "x", name: "X", branchSlug: "kardiyoloji", site: "https://a.tr", newsPath: "/duyurular" }))
+      .toBe("https://a.tr/duyurular");
+    expect(watchUrl({ slug: "x", name: "X", branchSlug: "kardiyoloji", site: "https://a.tr" }))
+      .toBe("https://a.tr/");
+  });
+});
+
+describe("Dernek içerik süzgeci (v6.129)", () => {
+  it("dernek kalemi POZİTİF mesleki desen aramaz — kaynak zaten mesleki otorite", () => {
+    // 2026-08-19 canlı ölçümünden: hiçbir PROFESSIONAL_PATTERNS anahtarına takılmayan ama
+    // doktoru doğrudan ilgilendiren gerçek başlıklar. Genel süzgeç bunları ELERDİ.
+    expect(isProfessionallyRelevant("TGD-Marseille-Avrupa EUS Bursu Yeni Dönem Başvuruları Açıldı!..")).toBe(false);
+    expect(isAssociationRelevant("TGD-Marseille-Avrupa EUS Bursu Yeni Dönem Başvuruları Açıldı!..")).toBe(true);
+    expect(isAssociationRelevant("7. Göğüs Cerrahisi Okulu / 15-17 Mayıs 2026")).toBe(true);
+  });
+
+  it("tören/iç-bülten kalemleri elenir (mesleki desen taşısalar bile)", () => {
+    // "Kutlama; Sn. Doç. Dr. X" — "doç." pozitif desendir, genel süzgeç bunu KABUL ederdi.
+    expect(isProfessionallyRelevant("Kutlama; Sn. Doç. Dr. Dilber Üçöz Kocaşaban")).toBe(true);
+    expect(isAssociationRelevant("Kutlama; Sn. Doç. Dr. Dilber Üçöz Kocaşaban")).toBe(false);
+    expect(isAssociationRelevant("Başkanın Yeni Yıl Mesajı")).toBe(false);
+    expect(isAssociationRelevant("Türk Gastroenteroloji Derneği 2025–2027 Dönemi Yönetim Kurulu Belirlendi")).toBe(false);
+  });
+
+  it("reklam/tüketici eleği dernek kaynağında da GEÇERLİ (muafiyet yok)", () => {
+    expect(isAssociationRelevant("Türkiye'nin En İyi 10 Saç Ekimi Kliniği (2026)")).toBe(false);
+    expect(isAssociationRelevant("Sponsorlu içerik: yeni cihaz tanıtımı")).toBe(false);
+    expect(isAssociationRelevant("Kilo verme rehberi")).toBe(false);
+  });
+
+  it("SÖZLEŞME: TGCD'de hasta-eğitim kategorisi dışlanır (kaynağın kendi beyanı)", () => {
+    // 2026-08-19 ölçümü: TGCD feed'i dernek duyurusu ile hasta bilgilendirme yazısını bir arada
+    // yayımlıyor ve kendi <category> etiketiyle ayırıyor. Bu dışlama düşerse "Akalazya Nedir?"
+    // doktorun mesleki akışına girer — başlık deseniyle yakalanamaz (klinik terim taşıyor).
+    const tgcd = ASSOCIATION_RSS_SOURCES.find((s) => s.source === "tgcd");
+    expect(tgcd?.excludeCategories).toContain("Halk Sağlığı");
+    // Süzgeç tek başına yetmez — testin gerekçesi bu: başlık MESLEKİ görünüyor.
+    expect(isAssociationRelevant("Akalazya Nedir?")).toBe(true);
   });
 });
 

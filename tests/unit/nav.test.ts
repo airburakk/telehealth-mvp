@@ -13,7 +13,7 @@ describe("navItemsFor", () => {
     expect(h).toEqual(["/vakalarim", "/takip", "/paylasimlarim"]);
     expect(h).not.toContain("/triyaj");
     expect(h).not.toContain("/ucretsiz-saglik/basvur");
-    expect(h).not.toContain("/hekimler");
+    expect(h).not.toContain("/doktorlar");
   });
 
   it("PATIENT: SO daraltması yok — Vakalarım daima /vakalarim, Paylaşımlarım daima görünür (tam birleşme)", () => {
@@ -31,6 +31,23 @@ describe("navItemsFor", () => {
 
   it("DOCTOR + student (v6.95 + 2026-08-16): bant BOŞ — Doctorium'a tek giriş Header toggle'ı", () => {
     expect(navItemsFor("DOCTOR", { student: true }).map((n) => n.href)).toEqual([]);
+  });
+
+  it("DOCTOR + stage1 (v6.105, kullanıcı kararı 2026-08-17): AŞAMA 1 doktorunun bandı BOŞ — Doktor + Post-Op çizilmez", () => {
+    const h = navItemsFor("DOCTOR", { stage1: true }).map((n) => n.href);
+    expect(h).toEqual([]);
+    expect(h).not.toContain("/doktor");
+    expect(h).not.toContain("/doktor/takip");
+  });
+
+  it("stage1 bayrağı DOCTOR-dışı rolleri değiştirmez (koordinatör gözetimi daralmaz)", () => {
+    expect(navItemsFor("COORDINATOR", { stage1: true }).map((n) => n.href)).toEqual(["/operasyon", "/doktor", "/doktor/takip"]);
+    expect(navItemsFor("PATIENT", { stage1: true }).map((n) => n.href)).toEqual(["/vakalarim", "/takip", "/paylasimlarim"]);
+    expect(navItemsFor("ADMIN", { stage1: true }).map((n) => n.href)).toEqual(["/admin", "/operasyon"]);
+  });
+
+  it("stage1=false DOCTOR (AURA üyeliği tam) bandını AYNEN görür — daraltma durum bazlı, kalıcı değil", () => {
+    expect(navItemsFor("DOCTOR", { stage1: false }).map((n) => n.href)).toEqual(["/doktor", "/doktor/takip"]);
   });
 
   it("student bayrağı DOCTOR-dışı rolleri değiştirmez (yanlış pozitif daraltma yok)", () => {

@@ -13,13 +13,16 @@ export default function robots(): MetadataRoute.Robots {
         "/api/",
         "/admin",
         "/operasyon",
+        // ⚠️ robots.txt prefix eşleşmesi segment-agnostiktir: "/doktor" satırı doktor dizinini
+        // (/doktorlar · /doktorlar/[id] — 2026-08-17 rename'i; eski yollar "/hekimler"·"/hekim") DA
+        // kapsar. İkisi de oturum-kapılı olduğundan istenen davranış; ayrı satır gerekmez.
         "/doktor",
-        "/hekim",
         "/acente",
         "/partner",
         "/etik-kurul",
         "/denetim",
         "/kurumsal-giris", // personel kapısı + /e-posta formu (noindex)
+        "/doctorium/giris", // Doctorium kapısı (noindex) — /doctorium LANDING indekslenir, prefix onu KAPSAMAZ
         "/vaka",
         "/vakalarim",
         "/paket",

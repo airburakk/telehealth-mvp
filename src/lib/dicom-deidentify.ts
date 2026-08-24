@@ -1,5 +1,5 @@
 // DICOM PHI tag-strip (v6.32 — DICOM PS3.15 "Basic Application Level Confidentiality Profile" alt kümesi).
-// Partner konsültasyon havuzuna DICOM aktarımı ÖNCESİ sunucuda koşulur: kimlik/kurum/hekim/tarih
+// Partner konsültasyon havuzuna DICOM aktarımı ÖNCESİ sunucuda koşulur: kimlik/kurum/doktorlar/tarih
 // etiketleri boşaltılır, açıklama alanları scrubText'ten geçer, UID'ler yeniden üretilir, private
 // tag'ler silinir. Bozuk/okunamayan dosya = throw → çağıran REDDEDER (fail-closed: sıyrılamayan saklanmaz).
 //
@@ -35,7 +35,7 @@ const EMPTY_TAGS: readonly string[] = [
   "00101081", // BranchOfService
   "00102150", // CountryOfResidence (talep metnindeki kaba bölge yeter)
   "00102152", // RegionOfResidence
-  // Hekim / operatör adları
+  // Doktor / operatör adları
   "00080090", // ReferringPhysicianName
   "00080092", // ReferringPhysicianAddress
   "00080094", // ReferringPhysicianTelephoneNumbers

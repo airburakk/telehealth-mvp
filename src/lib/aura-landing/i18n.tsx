@@ -14,8 +14,8 @@ import { COPY, LANG_CODES, type Copy, type Lang } from "./copy";
 // VIDEOS, LINKS...) ./copy'de "use client"sız durur — server sayfalar
 // (JSON-LD) oradan import eder. Bu modül yalnız context/hook katmanıdır.
 //
-// Kalıcılık PLATFORM anahtarıyla: `air_lang` dil ADI tutar (hasta yüzeyleri
-// ve PortamedLanding ile ortak) — vitrindeki `aura_lang` kod-anahtarı yerine.
+// Kalıcılık PLATFORM anahtarıyla: `air_lang` dil ADI tutar (hasta yüzeyleriyle
+// ortak) — vitrindeki `aura_lang` kod-anahtarı yerine.
 // Landing'de olmayan dil (Kazakça/Kırgızca) → görüntü EN'e düşer, anahtar ezilmez.
 
 export * from "./copy";
@@ -54,8 +54,8 @@ export function LangProvider({
 
   // Kök <html> dir/lang'a DOKUNULMAZ (birleşik uygulamada diğer sayfalara
   // sızardı) — RTL/lang landing'in kendi konteynerine uygulanır
-  // (AuraLanding: <div dir={langDir(lang)} lang={lang}> — PortamedLanding
-  // deseni; flex/grid akışları konteyner dir'iyle de aynalanır).
+  // (AuraLanding: <div dir={langDir(lang)} lang={lang}> — eski landing'den
+  // devralınan desen; flex/grid akışları konteyner dir'iyle de aynalanır).
   const setLang = (l: Lang) => {
     setLangState(l);
     try {

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { savedFeed, localizeTitles } from "@/lib/doctorium";
+import { savedFeed, localizeTitles, todayModuleCounts } from "@/lib/doctorium";
 import { isStudentOnly } from "@/lib/doctor-activation";
 import { getDoctorBalance } from "@/lib/rewards";
 import { ArticleCard } from "../ArticleCard";
@@ -36,8 +36,9 @@ export default async function SavedPage() {
   if (items.length) items = await localizeTitles(items);
 
   return (
-    <DoctoriumShell active="kaydettiklerim" balance={balance} isDoctor>
-      <div className="max-w-3xl px-5 py-8">
+    <DoctoriumShell active="kaydettiklerim" balance={balance} isDoctor counts={await todayModuleCounts()}>
+      {/* mx-auto (2026-08-18 Üst Raf): okuma kolonu ortalı — Akışım ile aynı düzen. */}
+      <div className="mx-auto max-w-3xl px-5 py-8">
         {/* Masaüstünde dönüş banttadır (Faz 1); bu link yalnız mobil için. */}
         <Link
           href="/doktor/doctorium"
@@ -65,7 +66,11 @@ export default async function SavedPage() {
             </span>
           </p>
         ) : (
-          <ul className="mt-5 grid gap-3">
+          <ul className="mt-5 grid grid-cols-[minmax(0,1fr)]">
+            {/* grid-cols-[minmax(0,1fr)]: akış listesindeki taşma dersinin eşleniği (2026-08-16).
+                gap YOK (sentez, 2026-08-19): ayrım öğelerin kendi üst saç çizgisinde. Burada
+                ağırlık kademesi de YOK — kaydedilenler ritimsiz, eşit ağırlıkta akar
+                (ArticleCard weight varsayılanı "min"). */}
             {items.map((it) => (
               <ArticleCard key={it.id} item={it} saved />
             ))}

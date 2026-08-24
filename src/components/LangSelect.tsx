@@ -5,22 +5,44 @@
 // bir yolda seçtiği dili diğer yolda da bulur.) Çeviri: useT/`/api/i18n`/Translation cache.
 import { useEffect, useState } from "react";
 import { Globe } from "lucide-react";
-import { LANGUAGES } from "@/lib/constants";
+import { LANGUAGES, LANG_CHANGE_EVENT } from "@/lib/constants";
 
 // localStorage-kalıcı dil hook'u üretir. Aynı anahtar → tüm ekranlar aynı dili paylaşır.
 // Dönen fonksiyon adı "use…" ile başlar → hook kurallarına uyar; bileşen üstünde çağrılır.
+//
+// Aynı-sekme senkronu (kullanıcı bildirimi 2026-08-19): her tüketici KENDİ state'ini tutar ve
+// `storage` event'i aynı sekmede ATEŞLENMEZ — gövdedeki seçici dili değiştirince Header/Footer
+// kromu bayat kalıyordu. set() artık LANG_CHANGE_EVENT yayınlar; hook hem onu (aynı sekme) hem
+// storage'ı (diğer sekmeler) dinleyip yeniden okur. read idempotent → yayın döngüsü yok.
 export function createLangPersistence(key: string, fallback = "Türkçe") {
   return function useLang(): [string, (l: string) => void] {
     const [lang, setLang] = useState(fallback);
     useEffect(() => {
-      try {
-        const v = localStorage.getItem(key);
-        if (v && LANGUAGES.includes(v)) setLang(v);
-      } catch {}
+      const read = () => {
+        try {
+          const v = localStorage.getItem(key);
+          if (v && LANGUAGES.includes(v)) setLang(v);
+        } catch {}
+      };
+      read();
+      const onLocal = (e: Event) => {
+        const d = (e as CustomEvent<{ key?: string }>).detail;
+        if (!d?.key || d.key === key) read();
+      };
+      const onStorage = (e: StorageEvent) => {
+        if (e.key === key) read();
+      };
+      window.addEventListener(LANG_CHANGE_EVENT, onLocal);
+      window.addEventListener("storage", onStorage);
+      return () => {
+        window.removeEventListener(LANG_CHANGE_EVENT, onLocal);
+        window.removeEventListener("storage", onStorage);
+      };
     }, []);
     function set(l: string) {
       setLang(l);
       try { localStorage.setItem(key, l); } catch {}
+      try { window.dispatchEvent(new CustomEvent(LANG_CHANGE_EVENT, { detail: { key } })); } catch {}
     }
     return [lang, set];
   };

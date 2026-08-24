@@ -373,7 +373,7 @@ export function LiveInterpreter({
         </div>
         {/* "canlı" rozeti ancak çeviri track'i FİİLEN sender'dayken (attached) — UI iletimi doğrulasın,
             çift kapı geçilmeden "canlı" gösterip kullanıcıyı yanıltmasın */}
-        {status === "live" && attached && <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-300"><span className="h-2 w-2 animate-pulse rounded-full bg-red-500" /> {t("canlı")}</span>}
+        {status === "live" && attached && <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--c-danger)]"><span className="h-2 w-2 animate-pulse rounded-full bg-red-500" /> {t("canlı")}</span>}
       </div>
 
       <p className="mt-2 text-xs leading-relaxed text-[var(--c-ink-2)]">
@@ -383,7 +383,7 @@ export function LiveInterpreter({
       {status === "checking" && <div className="mt-3 inline-flex items-center gap-2 text-xs text-[var(--c-ink-3)]"><Loader2 size={13} className="animate-spin" /> {t("kontrol ediliyor…")}</div>}
 
       {status === "disabled" && (
-        <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-500/10 p-2.5 text-[11px] leading-relaxed text-amber-300 ring-1 ring-amber-400/20">
+        <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-500/10 p-2.5 text-[11px] leading-relaxed text-[var(--c-warning)] ring-1 ring-amber-400/20">
           <KeyRound size={13} className="mt-0.5 shrink-0" /> <span>{t("Devre dışı —")} <code className="rounded bg-amber-500/15 px-1">GEMINI_API_KEY</code> {t("gerekli.")}</span>
         </div>
       )}
@@ -408,7 +408,7 @@ export function LiveInterpreter({
           )}
           <p className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-[var(--c-ink-3)]"><Headphones size={11} /> {t("kulaklık önerilir (hoparlör sesi çeviriye karışabilir)")}</p>
           <p className="mt-1 flex items-start gap-1 text-[10px] leading-relaxed text-[var(--c-ink-3)]"><ShieldCheck size={11} className="mt-0.5 shrink-0 text-[var(--c-accent)]" /> {t(patientConsentNote ? "Ses, girişte verdiğiniz KVKK açık onamı kapsamında yalnızca gerçek zamanlı çeviri için işlenir." : "Ses yalnızca gerçek zamanlı çeviri için işlenir.")}</p>
-          {err && <p className="mt-1 flex items-start gap-1 text-[11px] text-red-300"><AlertTriangle size={12} className="mt-0.5 shrink-0" /> {t(err)}</p>}
+          {err && <p className="mt-1 flex items-start gap-1 text-[11px] text-[var(--c-danger)]"><AlertTriangle size={12} className="mt-0.5 shrink-0" /> {t(err)}</p>}
         </div>
       )}
 

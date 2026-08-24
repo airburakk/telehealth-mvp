@@ -1,5 +1,5 @@
 import { LETTERS } from "@/lib/aura-landing/copy";
-import { AuraBraille } from "@/components/PortamedLogo";
+import { AuraBraille } from "@/components/AuraLogo";
 
 // Letterform başlık (giriş/kurumsal kapı panel kolonu) — vitrinden taşındı
 // (2026-07-12, v5.9 taşımasında atlanmıştı): "AURA" kelimesi metin yerine

@@ -172,7 +172,7 @@ export function SponsorAdmin(p: Props) {
             </div>
           </div>
           <div>
-            <span className={labelCls}>Hedef branşlar (boş = herkese/bağlamsal; hedef YALNIZ açık-rızalı hekime uygulanır)</span>
+            <span className={labelCls}>Hedef branşlar (boş = herkese/bağlamsal; hedef YALNIZ açık-rızalı doktora uygulanır)</span>
             <div className="mt-1.5 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
               {p.branchOptions.map((o) => {
                 const on = branches.has(o.slug);

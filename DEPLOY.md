@@ -46,7 +46,7 @@ Vercel otomatik deploy.
 
 ```bash
 npx prisma migrate deploy   # migration geçmişini Neon'a uygula (taze DB'de tüm şemayı kurar)
-npm run db:seed             # demo veri: kullanıcılar + 30 hekim + 20 vaka + takip + şikayet
+npm run db:seed             # demo veri: kullanıcılar + 30 doktor + 20 vaka + takip + şikayet
 ```
 
 > ### ⛔ Uygulanmış migration dosyası DEĞİŞMEZDİR (2026-08-01'de iki ortamda birden yakalandı)
@@ -70,6 +70,24 @@ npm run db:seed             # demo veri: kullanıcılar + 30 hekim + 20 vaka + t
 > 📌 2026-08-01 kaydı: dev'de `20260724014426_case_pending_docs`, üretimde
 > `20260711010000_registry_fingerprint_field_updates` bayattı (ikisinde de şema doğruydu, yalnız
 > muhasebe kaydı eskiydi) → hizalandı; v6.48 migration'ı bu yüzden bloke olacaktı.
+
+> 🔴 **PUSH = ÜRETİM DAĞITIMI. Bekleyen prod migration varken kod push'lanmaz (2026-08-20).**
+> O gün v6.132 migration'ı yalnız DEV'e uygulanmışken kod push'landı; Vercel otomatik dağıttı,
+> üretim kodu var olmayan kolonu okudu → `/doktor` + `/doktor/doctorium` **P2022** ile çöktü
+> (~4 dk kesinti). Aşağıdaki "migration-önce" ifadesi **commit sırası değil, UYGULAMA sırası**
+> demektir: migration üretime uygulanmadan kod gönderilmez.
+>
+> **Korkuluk kuruldu** — artık hatırlamaya bağlı değil:
+> ```bash
+> git config core.hooksPath .githooks   # çalışma kopyası başına BİR KEZ
+> ```
+> `.githooks/pre-push` → `node scripts/preflight-push.mjs`: üretimde bekleyen migration varsa
+> **push'u durdurur** (exit 1) ve doğru sırayı yazar. Veritabanına ulaşılamazsa da durdurur
+> (fail-closed: "doğrulayamadım" ≠ "temiz"; Neon soğuk başlangıcı için bir kez yeniden dener).
+> Bilinçli atlatma: `SKIP_PREFLIGHT=1 git push`. `PROD_*` tanımlı değilse (CI, yeni geliştirici)
+> kapı kendini devre dışı bırakır.
+> 🪤 Betik hedef endpoint'i ekrana yazar — `.env`'i regex'le okumak `PROD_DATABASE_URL` satırına
+> da uyup yanlış veritabanını "temiz" gösterebilir; bu yüzden dotenv kullanılır.
 
 > **Şema yönetimi migration-tabanlıdır** (2026-07-03'ten beri; `prisma/migrations/` —
 > `20260703000000_baseline` mevcut üretim şemasını temsil eder, üretime `migrate resolve
@@ -283,7 +301,7 @@ Her push/deploy öncesi (sıra önemli):
    **meta/OG/JSON-LD ayrı taranır** (görünür metin yetmez) + 8 dilin HEPSİ hizalanır (EN'e bakıp
    "tutarlı" sanma). Vitrin title/h1/CTA değiştiyse `scripts/synthetic-checks.mjs` beklentileri
    de güncellenir (yoksa sentetik kontrol yanlış alarm üretir — Ray C).
-3. **Terminoloji:** hasta yüzü "başvuru" (vaka değil) · "Doktor" (Hekim değil) · "Access Care"
+3. **Terminoloji:** hasta yüzü "başvuru" (vaka değil) · "Doktor" (Doktor değil) · "Access Care"
    yalnız EN · klinik personel yüzeyinde "vaka" kalır.
 4. **Push kapsamı:** `git fetch` + `git log origin/main..HEAD` — paralel oturum commit'i taşınmıyor
    mu? Kapsam kontrolü ile push AYRI adım (zincirleme `&&` yok).

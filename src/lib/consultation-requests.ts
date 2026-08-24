@@ -52,7 +52,7 @@ export interface PartnerRequestInput {
   partnerId?: string | null; // partner akışı (M5 Faz 3)
   partnerName: string; // görünen ad (iç-doktor akışında "Dr. X (Platform)")
   requestedByDoctorId?: string | null; // İÇ VAKADAN açan platform doktoru (v6.33 Faz 3) — havuzda kendine gösterilmez
-  sourceCaseId?: string | null; // iç izlenebilirlik (yanıtlayan hekime gösterilmez)
+  sourceCaseId?: string | null; // iç izlenebilirlik (yanıtlayan doktora gösterilmez)
   summaryIsTurkish?: boolean; // özet TR yazıldıysa summaryTr çeviri ÇAĞRILMADAN doğrudan doldurulur (v6.33)
   branchLimited: boolean;
   branch?: string | null;

@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { db } from "@/lib/db";
 import {
   articleById, ensureClinicalSummary, ensureRegulationSummary,
-  KIND_LABEL, branchLabel, categoryLabel,
+  KIND_LABEL, branchLabel, categoryLabel, todayModuleCounts,
 } from "@/lib/doctorium";
+import { isStudentOnly } from "@/lib/doctor-activation";
+import { getDoctorBalance } from "@/lib/rewards";
+import { DoctoriumShell, type SidebarActive } from "../DoctoriumSidebar";
 import { branchColor } from "@/lib/branch-visuals";
 import { extractKeywords, extractLawRefs } from "@/lib/hukuk-keywords";
 import { CoverArt } from "../CoverArt";
@@ -36,7 +40,28 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
   const summary = isAcademic ? await ensureClinicalSummary(id) : null;
   const reg = isAcademic || isIctihat || isDoktrin ? null : await ensureRegulationSummary(id);
 
+  // Üst raf detayda da SABİT (kullanıcı isteği 2026-08-18): içeriğe girince raf kaybolup
+  // bağlam kopuyordu. Aktif sekme = içeriğin modülü (yol işareti). Raf props'ları
+  // kaydettiklerim/page.tsx ile aynı sözleşme; personelde (COORDINATOR/ADMIN) kişisel köşe yok.
+  const me =
+    user.role === "DOCTOR"
+      ? await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } })
+      : null;
+  const d = me?.doctorId
+    ? await db.doctor.findUnique({
+        where: { id: me.doctorId },
+        select: { activatedAt: true, studentVerifiedAt: true },
+      })
+    : null;
+  const balance = d && me?.doctorId && !isStudentOnly(d) ? await getDoctorBalance(me.doctorId) : null;
+  const shelfActive = (
+    ["akademik", "sektorel", "ilac", "etkinlik", "kariyer", "mevzuat"].includes(item.module)
+      ? item.module
+      : null
+  ) as SidebarActive;
+
   return (
+    <DoctoriumShell active={shelfActive} balance={balance} isDoctor={!!me?.doctorId} counts={await todayModuleCounts()}>
     <div className="mx-auto max-w-2xl px-5 py-8">
       <Link href="/doktor/doctorium" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
         <ArrowLeft size={15} /> Doctorium
@@ -54,7 +79,11 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
               optimizasyonu görseli SUNUCUMUZDAN geçirir (kopya = telif); ham img bilinçli. */}
           <img src={item.imageUrl} alt={`${item.sourceName} haber görseli`} className="block max-h-[320px] w-full object-cover" />
           <figcaption className="aura-mono border-t border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-1.5 text-[10px] tracking-[0.12em] text-[var(--c-ink-3)]">
-            GÖRSEL: {item.sourceName.toUpperCase()} — KAYNAĞA AİTTİR
+            {/* Kaynak adı BÜYÜTÜLMEZ (2026-08-20): `toUpperCase()` Türkçe'de i→I yapıyor
+                ("İstanbul Tabip Odası" → "TABIP"), `toLocaleUpperCase("tr")` ise İngilizce
+                dergi adlarını bozuyor ("Dentistry" → "DENTİSTRY"). İki dilli korpusta doğru
+                dönüşüm yok — özel isim doğal yazımıyla kalır. Bkz. CoverArt stampOf notu. */}
+            GÖRSEL: {item.sourceName} — KAYNAĞA AİTTİR
           </figcaption>
         </figure>
       ) : (
@@ -264,5 +293,6 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
         </a>
       )}
     </div>
+    </DoctoriumShell>
   );
 }

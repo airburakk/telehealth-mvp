@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { LANGUAGES, COUNTRIES, langDir, LANG_BCP47 } from "@/lib/constants";
 import { getTranslations } from "@/lib/i18n";
-import { BRANCHES } from "@/lib/triage";
+import { PATIENT_BRANCHES } from "@/lib/triage";
 import { PartnerRequestForm } from "./PartnerRequestForm";
 
 export const dynamic = "force-dynamic";
@@ -59,7 +59,7 @@ export default async function PartnerRequestPage() {
 
   return (
     <PartnerRequestForm
-      branches={BRANCHES.map((b) => b.label)}
+      branches={PATIENT_BRANCHES.map((b) => b.label)}
       countries={COUNTRIES.map((c) => ({ code: c.code, name: c.name, flag: c.flag }))}
       languages={LANGUAGES}
       defaultCountry={partner.country}

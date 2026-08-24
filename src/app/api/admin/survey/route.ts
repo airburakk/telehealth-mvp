@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 // Doctorium anket yönetimi (v6.69 Faz 2) — ADMIN küratörlü, self-auth (/api/admin/sponsor deseni).
 // ⚠️ HONORARIUM KİLİDİ (fail-closed): honorarium > 0 anket ACTIVE EDİLEMEZ — ödeme/vergi kurgusu
-// (👤 gider pusulası ↔ SM makbuzu · GİB özelgesi · kamu hekimi) netleşmeden "ödenir" vaadi yok.
+// (👤 gider pusulası ↔ SM makbuzu · GİB özelgesi · kamu doktoru) netleşmeden "ödenir" vaadi yok.
 
 function parseDate(v: unknown): Date | null {
   if (typeof v !== "string" || !v.trim()) return null;

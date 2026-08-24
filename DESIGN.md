@@ -14,7 +14,7 @@ bu hisse hizmet eder; çelişiyorsa karar yanlıştır. Soğukkanlı, kesin, kli
 
 - **Ne:** Çok ülkeli sağlık turizmi + telehealth platformu (triyaj → görüşme → tedavi paketi →
   post-op + ikinci görüş + ücretsiz-hizmet + KVKK onam/paylaşım + FHIR).
-- **Kim için:** Uluslararası hastalar (DZ, RU, DE, KZ, KG, AZ, GB, FR…), hekimler, koordinatörler,
+- **Kim için:** Uluslararası hastalar (DZ, RU, DE, KZ, KG, AZ, GB, FR…), doktorlar, koordinatörler,
   etik kurul. Çoğu endişeli, kimi yaşlı, kimi yavaş bağlantıda, çoğu ana dili dışında okuyor.
 - **Tür:** Hibrit — kreatif-editoryal **pazarlama** (landing) + sakin **klinik uygulama** (workspace).
 
@@ -44,7 +44,7 @@ terazi **güven** tarafına eğiktir.
   (`layout.tsx`); gövde min 16px.
 - **Mikro / durak:** **JetBrains Mono** (`--font-mono`) — eyebrow, adım numarası (01…), istatistik
   etiketi, kart eyebrow'ları. Vitrindeki "mono durak" dilinin platform karşılığı.
-- **Logo wordmark:** görsel varlık (aura-word-*.png, PortamedLogo) — font değil.
+- **Logo wordmark:** görsel varlık (aura-word-*.png, AuraLogo) — font değil.
 - **Data / tablo:** Inter + `tabular-nums` (klinik değer/fiyat hizası).
 - **Çok dilli kapsam:** Inter **Kiril kapsar** (RU pazarı markalı) — Arapça hâlâ sistem fallback
   (bilinçli; Noto Sans Arabic yoldaş font kararı açık kalem). RTL ikon aynalaması (`[dir="rtl"]`) var.
@@ -131,7 +131,7 @@ Doz: **"Sakin Premium"** — display tipografi + mono duraklar + hairline disipl
 - Ekran başına **tek karar** (triyaj sihirbazı deseni); happy-talk/talimat metni minimum.
 - Placeholder tek başına etiket değildir; etiket alan doluyken görünür kalır.
 - Tam klavye navigasyonu + ARIA landmark; RTL (Arapça/Farsça) kök kapsayıcıda `dir="rtl"`.
-- Slow/3G bağlantıda zarif: ağır görsel yerine SVG art (PortamedArt deseni).
+- Slow/3G bağlantıda zarif: ağır görsel yerine SVG art (AuraArt deseni).
 
 ## Marka sesi (copy)
 
@@ -156,4 +156,6 @@ tıbbi veride gereksiz animasyon.
 | 2026-07-11 | **Faz B+C:** iç paneller (hasta+personel) marka-hizalı koyu — deterministik sınıf haritası (~2.6k dönüşüm, 100+ dosya + lib rozet haritaları), globals.css gece + print koruması | Tek commit: body zemini iki yüzeyi birden çevirir, ara durum kırık olurdu |
 | 2026-07-17 | **Aura UI kiti (Doz 1 Sakin Premium):** iç yüzey landing tipografi diline — kit bileşenleri + display/mono sözleşmesi + Header V2Nav dili | Kullanıcı kararı ("tam kit"); /kit-onizleme canlı doz karşılaştırmasıyla seçildi; klinik semantik + data-bold istisnaları korundu |
 | 2026-07-17 | **v6.22 GECE VARSAYILAN + renk disiplini:** iç yüzey gece paletiyle açılır (v6.1 gündüz-varsayılan kararını süpersede eder); kulvar rengi yüzey boyamaz — 3px kenar şeridi + mono etiket (gece-güvenli açık tonlar, LANE_ACCENT); hasta kartı "cam kutu" → sakin nötr panel | Kullanıcı bulgusu ("landing premium, içerisi eski nesil") + /palet-onizleme 4-varyant canlı karşılaştırması; gündüz tokenları toggle için saklı |
+| 2026-08-21 | **v6.134 Görüşme yüzeyi yeniden tasarımı (karma A+B):** iskelet KENDİ marka rayını taşır (AuraMark + AuraWordmark + kulvar 3px şerit + mono künye) · yüzey GECE-KİLİTLİ (`theme-dark`+`aura-call`, kullanıcı temasından bağımsız) · panel üç bölge (kimlik sabit / orta scroll / alt aksiyon rayı) · panel genişliği HER ROLDE 400px (520px denemesi kullanıcı kararıyla geri alındı — video alanından çalıyordu) · hastanın vaka künye kartı KALDIRILDI · doktorda SOAP'a basılınca transkript küçülüp yerini Görüşme Notları'na bırakır (geri dönüşlü) | Kullanıcı bulgusu ("ekranın AURA ile ilgisi yok" + "hasta kendi bilgisini geri okuyor"); immersive rotalar global Header'ı gizlediği için marka kromu kaybolmuştu. İki maket yönü (Sessiz Cam · Konsültasyon Masası) üretilip karşılaştırıldı, kullanıcı karmayı seçti. Doktordaki "transkript+not aynı anda görünmüyor" bedeli genişlikle değil SIRAYLA ödendi (yazım evresi). |
+| 2026-08-21 | **Gündüz pastel remap'ine `:not(.aura-call *)` istisnası** (globals.css) | Remap seçicileri `html.theme-light`e çapalı; iç içe `theme-dark` onları geri almıyordu → gündüz temalı kullanıcıda görüşme panelinde koyu-üstüne-koyu metin (ölçüldü: `--c-warning` yerine `#a94e08`). ⚠️ Yeni DAİMA-KOYU yüzey eklenirse aynı işaret verilmeli. |
 | (açık) | Arapça yoldaş font (Noto Sans Arabic) **veya** bilinçli sistem fallback | Inter Kiril'i kapattı; AR hâlâ markasız fallback'te |

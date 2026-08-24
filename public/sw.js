@@ -4,7 +4,10 @@
 //   • Sayfa gezinmesi  → network-first; ağ yoksa /offline.html
 //   • /_next/static/*  → cache-first (içerik hash'li, değişmez) + ikonlar
 //   • push             → tarayıcı kapalıyken bildirim göster; tıklayınca ilgili sayfa
-const VERSION = "air-pwa-v4";
+// 🪤 PRECACHE'teki bir dosyayı DEĞİŞTİRİRSEN VERSION'ı da artır: cache adı VERSION'dan türer,
+// activate yalnız adı farklı olan eski cache'leri siler. Artırmazsan mevcut kullanıcı eski
+// kopyayı görmeye devam eder (v5, 2026-08-19: amblem + offline.html gece teması + manifest).
+const VERSION = "air-pwa-v5";
 const PRECACHE = ["/offline.html", "/icon-192.png", "/icon-512.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

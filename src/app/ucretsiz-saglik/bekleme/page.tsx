@@ -4,7 +4,7 @@ import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLiveTick } from "@/lib/use-live-tick";
 import { Users, ClipboardCheck, HeartHandshake, Video, CircleCheck } from "lucide-react";
-import { AuraSpinner } from "@/components/PortamedLogo";
+import { AuraSpinner } from "@/components/AuraLogo";
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
 import { freeCareTrackerPhases, FREE_CARE_TRACKER_TEXTS } from "@/lib/free-care-tracker";
 import { useT } from "@/components/useT";

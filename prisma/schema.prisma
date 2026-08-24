@@ -181,6 +181,13 @@ model Doctor {
   onboardedAt        DateTime? // ilk-giriş onboarding kapısı tamamlandı mı (null = /doktor/baslangic'a yönlendir)
   freeCareOptIn      Boolean   @default(false) // Ücretsiz Sağlık Hizmeti vakası kabul ediyor mu → Ana Sayfa penceresi görünürlüğü (anlık müsaitlik = freeCareState ayrı)
   consultOptIn       Boolean   @default(false) // Partner konsültasyon taleplerini yanıtlıyor mu → Konsültasyon Talepleri penceresi görünürlüğü (yanıt başına ödeme, simüle)
+  /// v6.105 (kullanıcı kararı 2026-08-17): İkinci Görüş ve Sağlık Turizmi panelleri de TERCİHE
+  /// bağlandı (önce so=ünvanla otomatik, tourism=koşulsuz açıktı). ⚠️ REGRESYON KORUMASI: varsayılan
+  /// false ama migration MEVCUT satırları true damgalar — eski doktorlar sahip oldukları paneli
+  /// kaybetmez, seçim yalnız yeni kayıtlar için anlam taşır (m5-doctor-signup "Ders 1").
+  /// soOptIn ünvan kapısını KALDIRMAZ: panel = soEligible(title) && soOptIn (iki şart birlikte).
+  soOptIn            Boolean   @default(false) // İkinci Görüş panelini istiyor mu (Doç./Prof. şartı AYRICA aranır)
+  tourismOptIn       Boolean   @default(false) // Sağlık Turizmi panelini istiyor mu (her branşa açık — ünvan şartı yok)
   /// Doctorium (v6.48) — hekimin haber akışında görmek istediği branş SLUG'ları. JSON string[].
   /// null/boş = yalnız kendi branşı (varsayılan davranış, tercih ekranına hiç girmemiş hekim).
   newsBranches       String?
@@ -202,17 +209,48 @@ model Doctor {
   congressAbstractAlertDays  Int?
   /// v6.62: ERKEN KAYIT son tarihinden kaç gün önce uyarılsın. null = kapalı.
   congressEarlyBirdAlertDays Int?
+  /// v6.132 (kullanıcı kararı 2026-08-20): etkinlik TÜRÜ tercihi — JSON dizi
+  /// (["kongre","sempozyum"]). null = varsayılan (kongre + sempozyum; lib/doctorium
+  /// parseEventTypes). Önceden yalnız URL'de (?t=) yaşıyordu, sekmeden çıkınca unutuluyordu;
+  /// tercihler sayfasına taşınınca KALICI olması gerekti. Boş dizi = "hepsi" DEĞİL, geçersiz —
+  /// hepsi için "hepsi" anahtarı yazılır (URL sözleşmesiyle aynı dil).
+  congressEventTypes String?
+  /// v6.132: etkinlik KAPSAM tercihi — "ulusal" | "uluslararasi" | null (tümü).
+  /// URL'deki ?s= ile aynı değerler (lib/doctorium parseScope).
+  congressScope String?
   /// Doctorium sponsorlu içerik KİŞİSELLEŞTİRME açık rızası (v6.68 Faz 1): dolu = rıza verildi
   /// (verildiği an); null = yok/geri alındı → doktora yalnız hedefsiz (bağlamsal) kampanya gösterilir.
   /// Durumun tek kaynağı bu alan; İSPAT izi ConsentRecord'da (scope SPONSOR_TARGETING — grant/revoke
   /// ayrı satırlar, lib/sponsor.ts). Reklamverene hiçbir kişisel veri gitmez (agregat sayaç yalnız).
   sponsorPersonalizationAt DateTime?
-  /// İki aşamalı giriş — AŞAMA 1 damgası (v6.87): tabip odası "Protokol Numaralı" üye yazısı
-  /// (DoctorDocument.type = CHAMBER) yüklüyse dolu → yalnız Doctorium erişimi açılır (otomatik,
-  /// admin onayı beklemez — kullanıcı kararı 2026-08-11). Klinik havuz kapısı (activatedAt) AYRI
-  /// ve DEĞİŞMEDİ. Erişim kuralı kodda: chamberLetterAt VEYA activatedAt (lib/doctor-activation.ts
-  /// hasDoctoriumAccess) — mevcut aktif doktorlar backfill'siz geçer.
+  /// 🪦 TARİHSEL (v6.124'te KAPIDAN DÜŞTÜ — kullanıcı kararı 2026-08-19 "Yalnız e-Devlet diploma"):
+  /// v6.87-v6.123 arasında tabip odası üye yazısı (CHAMBER) Doctorium'u açıyordu. Artık
+  /// hasDoctoriumAccess bu alanı OKUMAZ; kolon eski kayıtların tarihi olarak durur, yeni CHAMBER
+  /// yüklemesi kabul edilmez (ALL_DOC_TYPES'tan çıktı). Grandfather GEREKMEDİ — prod'da gerçek
+  /// doktor yok, lansmanda kayıtlar sıfırlanacak (hafıza: prod-hesaplar-test-lansman-sifirlama).
   chamberLetterAt          DateTime?
+  /// AŞAMA 1 damgası (v6.124): DIPLOMA belgesi ACCEPTED olduğunda dolar (e-Devlet barkod okuması
+  /// otomatik VEYA incelemeci onayı — refreshActivation eşitler; belge düşer/reddedilirse damga da
+  /// düşer). Doctorium kapısının TEK doktor-yolu budur (öğrenci yolu studentVerifiedAt).
+  /// Klinik kapı (activatedAt) AYRIDIR: diploma + Aşama 2 katmanları (§8.2 — SMS OTP + kurum bağı;
+  /// katmanlar inene dek yalnız diploma).
+  diplomaVerifiedAt        DateTime?
+  // ── AŞAMA 2 güvenlik katmanları (v6.126, Doximity uyarlaması — vault §8.2; kullanıcı kararı
+  //    2026-08-19). Kapı kuralı KODDA: SMS ZORUNLU + [iş e-postası ∨ klinik telefonu] (kurum
+  //    bağından biri yeterli — lib/doctor-verify.ts hasStage2Layers). Şart yalnız
+  //    AURA_LAYER_GATE=1 iken uygulanır (dormant — kanallar aktive olmadan kapı sıkılaşmaz).
+  /// Cep telefonu SMS OTP doğrulaması (hedef: Doctor.phone — zaten at-rest şifreli).
+  smsVerifiedAt            DateTime?
+  /// Kurumsal iş e-postası (at-rest şifreli — encryptField). Serbest e-posta sağlayıcıları
+  /// REDDEDİLİR (lib/doctor-verify.ts FREE_MAIL listesi); tam kurum-alan-adı kürasyonu todo.
+  workEmail                String?
+  /// İş e-postası OTP doğrulaması.
+  workEmailVerifiedAt      DateTime?
+  /// Klinik/hastane telefonu geri-arama teyidi — İNSAN-İŞLETİMLİ: koordinatör, HealthTürkiye'deki
+  /// RESMÎ tesis numarasını arayıp doktoru teyit eder ve damgalar (audit: CLINIC_PHONE_VERIFY).
+  clinicPhoneVerifiedAt    DateTime?
+  /// Geri-aramada teyit edilen tesisin adı (HealthTürkiye kaydından; kamuya açık dizin verisi).
+  clinicPhoneEstablishment String?
   /// Tıp öğrencisi damgası (v6.95): e-Devlet öğrenci belgesi (DoctorDocument.type = STUDENT_CERT)
   /// yüklüyse dolu → yalnız Doctorium İÇERİK erişimi (CHAMBER deseni — otomatik, admin onayı yok).
   /// Klinik kapı (activatedAt) ve pazarlama yüzeyleri (sponsor/anket/ödül — isStudentOnly süzgeci)
@@ -572,8 +610,8 @@ model CaseDocument {
   @@index([caseId])
 }
 
-/// M5 — Hekim mesleki belgesi (diploma, MMSS poliçesi, sertifika, akademik çalışma).
-/// Diploma + MMSS ZORUNLU (yüklemeden hesap aktifleşmez); sertifika/akademik ihtiyari.
+/// M5 — Doktor mesleki belgesi (diploma, MMSS poliçesi, sertifika, akademik çalışma).
+/// Diploma ZORUNLU (v6.105'ten beri MMSS İHTİYARİ); sertifika/akademik ihtiyari.
 /// İçerik base64 data URI + at-rest şifreli (CaseDocument deseni; gerçek object storage TODO).
 model DoctorDocument {
   id        String   @id @default(cuid())
@@ -585,13 +623,44 @@ model DoctorDocument {
   content   String // base64 data URI — at-rest şifreli (encryptField)
   createdAt DateTime @default(now())
   /// İnceleme durumu (Faz 2, 2026-08-14): PENDING (yüklendi, incelenmedi) | ACCEPTED | REJECTED.
-  /// Karar yalnız görünürlük+bildirim içindir — AKTİVASYONA DOKUNMAZ (refreshActivation belge
-  /// varlığına bakar; reddedilen tekil belge yenisi yüklenince zaten satırıyla değişir → PENDING).
+  /// 🔴 v6.119 (2026-08-19) — ARTIK AKTİVASYONA DOKUNUR (eski "dokunmaz" notu SÜPERSEDE):
+  /// zorunlu belge (DIPLOMA) yalnız ACCEPTED iken Doctor.activatedAt damgalanır (canActivate).
+  /// ACCEPTED iki yoldan gelir: (a) e-Devlet barkod okuması otomatik geçti · (b) incelemeci onayladı.
+  /// Yeni sürüm yüklenince satır PENDING'e döner → kapı yeniden kapanır (kasıtlı: tazelenen belge
+  /// yeniden doğrulanır).
   status     String  @default("PENDING")
   /// REJECTED gerekçesi (incelemeci yazar, doktora bildirimle gider). ⚖️ Şablon dili v6.91 paketinde.
   reviewNote String?
+  /// e-Devlet barkodlu belge doğrulaması (v6.119) — lib/edevlet-belge.ts. Barkod belgenin METİN
+  /// KATMANINDAN sunucuda okunur; turkiye.gov.tr'ye istek YAPILMAZ (hukuki karar — modül başlığı).
+  /// Kod tek başına belgeyi açmaz (resmî doğrulama ekranı ayrıca TC ister, o bizde YOK) ama yine
+  /// de at-rest şifreli (mmssPolicyNo deseni — E2EE Faz 1).
+  verifyCode     String?
+  /// Doğrulamanın KAYNAĞI: EDEVLET (barkod otomatik) | MANUAL (incelemeci) | LEGACY (v6.119 öncesi
+  /// aktif doktorların migration damgası — İNCELENMEDİ; admin ekranında ayrı rozetle görünür).
+  verifiedSource String?
+  verifiedAt     DateTime?
 
   @@index([doctorId])
+}
+
+/// AŞAMA 2 doğrulama meydan okuması (v6.126) — SMS / iş e-postası OTP'si (lib/doctor-verify.ts).
+/// Kod DÜZ SAKLANMAZ: sha256(kod + satır id) hash'i tutulur; hedef (tel/e-posta) at-rest şifreli.
+/// Kanal başına TEK aktif satır (yeni başlangıç eskisini siler — DIPLOMA tekil-belge deseni).
+/// verifiedAt dolunca Doctor damgası (smsVerifiedAt/workEmailVerifiedAt) atılır; satır ispat izi
+/// olarak kalır. Süre/deneme sınırı kodda (OTP_TTL_MS · MAX_ATTEMPTS — aşımda fail-closed).
+model VerificationChallenge {
+  id         String    @id @default(cuid())
+  doctorId   String
+  channel    String // SMS | WORK_EMAIL
+  target     String // gönderilen hedef (telefon/e-posta) — at-rest şifreli (encryptField)
+  codeHash   String // sha256(kod + id) hex — ham kod hiçbir yere yazılmaz (log dahil)
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([doctorId, channel])
 }
 
 /// Post-Op iyileşme takibi (Modül 4)
@@ -1057,11 +1126,19 @@ model NewsArticle {
   @@index([module, publishedAt]) // modül akışı (yeni→eski)
 }
 
-/// Doctorium Modül E — medikal kongre takvimi (v6.48; v6.62'de KÜRATÖRLÜ VERİTABANI'na genişledi).
-/// Otomatik kaynak YOK (dernek/kongre siteleri makine-okunur takvim yayımlamıyor) → küratörlü:
-/// 30 branşın ulusal + uluslararası kongreleri resmî sitelerinden doğrulanarak derlendi
-/// (vault `output/kongre-veritabani-2026-08-03.md`; seed `scripts/seed-congresses.ts`).
-/// ⚠️ Bilinmeyen alan BOŞ bırakılır — kongre verisi asla tahmin edilmez (uydurma tarih = yanlış
+/// Doctorium Modül E — medikal ETKİNLİK takvimi (v6.48; v6.62 küratörlü veritabanı;
+/// v6.120'de kongre-dışı türlere açıldı — modülün kullanıcı-yüzü adı artık "Etkinlik").
+/// ⚠️ Model adı `MedicalCongress` BİLİNÇLİ değişmedi: tablo adı değişimi iki-aşamalı @map
+/// göçü ister ([[prisma-migrate-first]]) ve hiçbir kullanıcı-yüzü karşılığı yok. Yeni kod
+/// "etkinlik" der, tablo "MedicalCongress" kalır.
+/// İki kaynak bir arada yaşar; `source` değerleri AYRI olduğu için (source, externalId)
+/// unique'i ikisini çakıştırmaz — biri diğerinin kaydını asla ezmez:
+///   • Küratörlü (source="curated") — 30 branşın kongreleri resmî sitelerinden doğrulandı
+///     (vault `output/kongre-veritabani-2026-08-03.md`; seed `scripts/seed-congresses.ts`).
+///     Elle admin panelinden girilenlerde source null kalır.
+///   • TTB akredite kayıt (source="ttb-kredilendirme") — kredilendirme.ttb.dr.tr ay ay taranır
+///     (`scripts/ingest-ttb-events.ts`; vault `output/ste-kredilendirme-arastirmasi-2026-08-19.md`).
+/// ⚠️ Bilinmeyen alan BOŞ bırakılır — etkinlik verisi asla tahmin edilmez (uydurma tarih = yanlış
 /// bildiri/kayıt alarmı = doktorun gerçek kaybı).
 model MedicalCongress {
   id                String    @id @default(cuid())
@@ -1084,8 +1161,21 @@ model MedicalCongress {
   /// (bu yüzden nullable + kompozit unique: null'lar Postgres'te çakışmaz).
   source            String?
   externalId        String?
-  /// "ulusal" | "uluslararasi" — doktorun ilk süzdüğü eksen (v6.62 filtre).
+  /// "ulusal" | "uluslararasi" | "uluslararasi-katilimli" — doktorun ilk süzdüğü eksen
+  /// (v6.62 filtre; üçüncü değer v6.120'de TTB kaydından geldi: "Uluslararası Katılımlı").
   scope             String    @default("ulusal")
+
+  // ── v6.120 etkinlik türü (TTB taksonomisi) ────────────────────────────────
+  /// TTB'nin etkinlik türü, Türkçe slug olarak: kongre | sempozyum | kurs | egitim |
+  /// konferans | calistay | seminer | atolye | diger (lib/doctorium.ts EVENT_TYPES tek kaynak).
+  /// ⚠️ Tür ADDAN ÇIKARILMAZ, kaynağın kaydından okunur — TTB'de "8. Pulmoner Vasküler
+  /// Hastalıklar Kongresi" SEMPOZYUM kayıtlıdır. Küratörlü eski kayıtlar varsayılanla "kongre".
+  eventType         String    @default("kongre")
+  /// TTB akredite etkinlik kodu ("SMP34941") — otoritenin kendi kimliği, birebir saklanır.
+  /// Slug'a çevrilirken kaybolmasın diye ayrı alan; küratörlü kayıtlarda null.
+  /// ⚠️ Bu kod etkinliğin AKREDİTE olduğunu gösterir, kaç KREDİ vereceğini GÖSTERMEZ —
+  /// puan katılım süresine göre TTB'de oluşur (EK-1: 40 dk = 1 kredi, günde en fazla 6).
+  ttbCode           String?
   /// Kaçıncı edisyon ("42.", "XXVII.") — ad ile ayrı tutulur ki yıl değişince ad bozulmasın.
   edition           String?
   /// "yillik" | "2-yilda-bir" | null(bilinmiyor) — tazeleme kademesi bunu kullanır.
@@ -1096,7 +1186,11 @@ model MedicalCongress {
   format            String?
   /// Kongre dili + çeviri notu ("Türkçe" / "İngilizce, simultane TR çeviri").
   language          String?
-  /// TTB-STE / CME kredi notu — TR kongrelerinin çoğu kredili, doktorun birincil karar kriteri.
+  /// TTB-STE / CME kredi NOTU (serbest metin) — doktorun birincil karar kriteri.
+  /// ⚠️ Buraya SAYI yazılmaz. TTB akredite kayıtta "TTB akredite (SMP34941)" biçimi kullanılır;
+  /// puan katılım süresine + Kurul kararına bağlı olduğu için "X kredi" vaadi iddia olur
+  /// ([[public-claim-honesty]]). Süreyi programdan türetme de yanıltıcı: TTB programında üst ve
+  /// alt oturumlar AYRI satır → ham dakika toplamı gerçeğin kat kat üstünde.
   cmeCredit         String?
   /// Kayıt ücretleri + koşulları (serbest metin; kategori × kademe tabloları buraya düz yazılır).
   registrationNotes String?
@@ -1122,6 +1216,28 @@ model MedicalCongress {
   @@unique([source, externalId]) // idempotent seed/tazeleme (elle kayıtlarda null → çakışmaz)
   @@index([startDate])
   @@index([scope, startDate]) // ulusal/uluslararası filtresi + tarih sıralaması
+  @@index([eventType, startDate]) // v6.120 tür çipi + tarih sıralaması
+}
+
+/// ORTAK TAKVİM KAYDI (2026-08-19, kullanıcı kararı "ortak database"): Doctorium etkinlik
+/// takviminin ve AURA Aşama-2 nöbet/icap PLANININ tek evi. Takip edilen etkinlikler buraya
+/// KOPYALANMAZ (CongressFollow'dan türetilir — lib/calendar.ts); bu tablo nöbet (NOBET),
+/// icap (ICAP) ve kişisel (KISISEL) kayıtlar içindir. `kind` bilinçli String — yeni tür
+/// migration'sız eklenir. Başlık klinik veri değildir (nöbet planı/etkinlik adı) → şifresiz;
+/// hasta bağı taşıyan bir tür eklenecekse ALAN AÇMADAN ÖNCE şifreleme kararı verilir.
+model CalendarEntry {
+  id         String    @id @default(cuid())
+  doctorId   String
+  kind       String // ETKINLIK | NOBET | ICAP | KISISEL
+  title      String
+  startAt    DateTime
+  endAt      DateTime?
+  allDay     Boolean   @default(true)
+  /// kind=ETKINLIK bağı — MedicalCongress düz-id (CongressFollow deseni; ilişkisiz).
+  congressId String?
+  createdAt  DateTime  @default(now())
+
+  @@index([doctorId, startAt]) // ay penceresi sorgusu (lib/calendar doctorCalendarMonth)
 }
 
 /// Doctorium Modül E — hekimin TAKİP ettiği kongre (v6.49). Takip = alarm kapsamına girer.

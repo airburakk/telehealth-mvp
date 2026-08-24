@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Scale, Route, Stethoscope, type LucideIcon } from "lucide-react";
+import { AuraWordText } from "@/components/aura/aura-word";
 import { useLang, type Copy } from "@/lib/aura-landing/i18n";
 
 // /v2 FAZ 2 (v6.16) — "iddia bölümü" iskeleti: AI sorumluluğu + Erişilebilirlik.
@@ -56,8 +57,10 @@ export function V2ClaimSection({
         >
           {copy.headline}
         </Heading>
+        {/* Metin içi AURA = wordmark görseli (kullanıcı kuralı 2026-08-17, aura-word.tsx) —
+            iskelet ortak olduğundan / (connected) ve /for-clinicians birlikte kapsanır. */}
         <p className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg">
-          {copy.intro}
+          <AuraWordText text={copy.intro} />
         </p>
       </div>
 
@@ -70,9 +73,11 @@ export function V2ClaimSection({
               {item.n}
             </span>
             <h3 className="aura-display mt-3 text-lg font-bold text-[var(--aura-ink)]">
-              {item.title}
+              <AuraWordText text={item.title} />
             </h3>
-            <p className="mt-2 text-sm leading-relaxed text-[var(--aura-grey)]">{item.body}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--aura-grey)]">
+              <AuraWordText text={item.body} />
+            </p>
           </li>
         ))}
       </ol>
@@ -91,7 +96,9 @@ export function V2ClaimSection({
             <p className="aura-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--aura-micro)]">
               {copy.note.label}
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-[var(--aura-grey)]">{copy.note.text}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--aura-grey)]">
+              <AuraWordText text={copy.note.text} />
+            </p>
           </div>
         </div>
       </div>

@@ -1,0 +1,64 @@
+# Uzmanlık derneği nöbetçisi (v6.129, 2026-08-19) — 30 derneğin duyuru sayfasını haftalık izler
+# ve DEĞİŞENLERİ raporlar. Veri ÇIKARMAZ, veritabanına YAZMAZ (scripts/association-watch.mjs
+# başlığındaki gerekçe: 30 farklı HTML'den otomatik tarih çıkarmak "asla uydurma" ilkesini çiğner).
+#
+# Zamanlayıcı neden burada: Vercel Hobby cron limiti 2/2 dolu (registry-sync + purge-deleted) ve
+# bu iş zaten günlük değil HAFTALIK — dernekler duyuruyu aylar önce yapar. GitHub Actions mevcut
+# CI yüzeyi (yeni tedarikçi yok) ve secret GEREKMEZ: yalnız halka açık sayfalar GET'lenir.
+# Emsal: synthetic.yml (Faz 5 Ray C).
+#
+# Durum taşıması: nöbetçi "geçen hafta neydi" bilgisini .association-watch-state.json'da tutar.
+# Actions koşucusu her seferinde temiz başladığı için dosya CACHE ile taşınır. Cache kaybolursa
+# koşu "İLK KOŞU: temel alındı" der ve o hafta değişiklik raporlamaz — yanlış alarm üretmez,
+# yalnız bir hafta sinyal gecikir (kabul edilebilir; kaynak veri haftalık ritimde değişiyor).
+name: Dernek nöbetçisi
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # her Pazartesi 06:17 UTC (yoğun saat dışı — kurum sitelerine nezaket)
+  workflow_dispatch: {} # elle tetikleme: Actions sekmesi → Dernek nöbetçisi → Run workflow
+
+concurrency:
+  group: association-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Durum dosyası haftadan haftaya taşınır. restore-keys ile en son kayıt bulunur
+      # (anahtar run_id içerdiği için her koşu YENİ cache yazar — Actions cache'i değişmez).
+      - name: Önceki nöbet durumunu geri yükle
+        uses: actions/cache/restore@v4
+        with:
+          path: .association-watch-state.json
+          key: association-watch-state-${{ github.run_id }}
+          restore-keys: |
+            association-watch-state-
+
+      # Script bağımlılıksız (yalnız Node yerleşikleri) → npm ci gerekmez, koşu ~1 dk.
+      - name: Dernek duyuru sayfalarını tara
+        run: node scripts/association-watch.mjs | tee watch-report.txt
+
+      - name: Nöbet durumunu kaydet
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .association-watch-state.json
+          key: association-watch-state-${{ github.run_id }}
+
+      # Rapor iş özetine yazılır: Actions sekmesinde koşuyu açan kişi doğrudan görür
+      # (ayrı bildirim kanalı kurmadan). Değişiklik bulmak "başarı"dır → koşu YEŞİL kalır.
+      - name: Raporu iş özetine yaz
+        if: always()
+        run: |
+          echo '## Dernek nöbetçisi raporu' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat watch-report.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

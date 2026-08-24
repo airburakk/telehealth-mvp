@@ -8,19 +8,19 @@
 //   COORDINATOR → operasyon (lojistik/rezervasyon) → geniş
 //   ETHICS      → şikayet incelemesi (anonimleştirilmiş panel) → geniş
 //   ADMIN       → yönetim → geniş
-//   DOCTOR      → yalnız DOĞRULANMIŞ hekim VE (vaka kendisine atanmış: c.doctorId === doctor.id
+//   DOCTOR      → yalnız DOĞRULANMIŞ doktor VE (vaka kendisine atanmış: c.doctorId === doctor.id
 //                 VEYA vaka atanmamış: c.doctorId === null VE vaka KENDİ BRANŞINDA → kuyruktan
-//                 üstlenebilsin). Başka hekime ATANMIŞ vakayı VE yabancı-branş atanmamış vakayı
-//                 OKUYAMAZ. Doğrulanmamış (self-signup) hekim hiçbir vakaya erişemez.
+//                 üstlenebilsin). Başka doktora ATANMIŞ vakayı VE yabancı-branş atanmamış vakayı
+//                 OKUYAMAZ. Doğrulanmamış (self-signup) doktor hiçbir vakaya erişemez.
 //
-// Branş-daraltması (2026-07-03): atanmamış (kuyruk) vaka artık yalnız hekimin KENDİ branşındaki
+// Branş-daraltması (2026-07-03): atanmamış (kuyruk) vaka artık yalnız doktorun KENDİ branşındaki
 // vakalara açık — kokpit UI'ı (doktor/page.tsx) v3.0'dan beri bu davranıştaydı, ownership/API katmanı
 // hizalandı (savunma-derinliği; caseId bilen doktor yabancı-branş atanmamış vakanın PHI'sine erişemez).
 // Nöbetçi/İcapçı/Ücretsiz-hizmet akışları ETKİLENMEZ: erişimleri hasta-tetikli (PATIENT dalı, branşsız) veya
-// atomik atama-sonrası (c.doctorId set → "bana atanmış" dalı). Boş-branşlı hekim (Google-yolu onboarding
+// atomik atama-sonrası (c.doctorId set → "bana atanmış" dalı). Boş-branşlı doktor (Google-yolu onboarding
 // tamamlanmamış) atanmamış vakalardan bilinçli fail-closed kesilir.
 //
-// Not: DOCTOR kararı hekim profili + doğrulama gerektirir → DB lookup → fonksiyon ASYNC. Senkron
+// Not: DOCTOR kararı doktor profili + doğrulama gerektirir → DB lookup → fonksiyon ASYNC. Senkron
 // `ownsCase` bilerek KALDIRILDI (bir çağrı yerinde `await` unutmak fail-open yaratırdı). CaseRef.doctorId
 // VE CaseRef.branch ZORUNLU: seçmeyen sorgu derlemede hata verir → fail-open yerine compile-error.
 //
@@ -36,7 +36,7 @@ import type { SessionUser } from "./session";
 
 export type CaseRef = { userId: string | null; doctorId: string | null; branch: string; deletionLockedAt: Date | null };
 
-// DOCTOR kullanıcısının hekim profili (id + doğrulama + aktivasyon + branş). Atama eşleşmesi +
+// DOCTOR kullanıcısının doktor profili (id + doğrulama + aktivasyon + branş). Atama eşleşmesi +
 // doğrulama + branş-daraltması kapısı için. branch boş string ("") = onboarding tamamlanmamış →
 // fail-closed. v6.87: `activated` (Aşama 2 — hasClinicalAccess) eklendi; klinik aktivasyonu
 // düşen (belge silinen) veya hiç tamamlamayan doktor vaka verisine API'den de erişemez —
@@ -71,7 +71,7 @@ export async function canCaseBeAccessedBy(user: SessionUser | null, c: CaseRef):
       return true; // operasyon/governance/yönetim → geniş erişim
     case "DOCTOR": {
       const { doctorId, verified, activated, branch } = await doctorContext(user);
-      if (!verified || !activated || !doctorId) return false; // doğrulanmamış VEYA aktivasyonsuz (Aşama 2'siz) hekim → erişim yok
+      if (!verified || !activated || !doctorId) return false; // doğrulanmamış VEYA aktivasyonsuz (Aşama 2'siz) doktor → erişim yok
       if (c.doctorId === doctorId) return true; // bana atanmış
       // atanmamış (kuyruk) VE kendi branşım (boş-branş → fail-closed); yabancı-branş/başka-atanmış → yok
       return c.doctorId === null && !!branch && branch === c.branch;
@@ -134,7 +134,7 @@ export function isSecondOpinionPatient(user: SessionUser | null, c: { patientId:
 }
 
 // İkinci Görüş vakası — DOKTOR-daraltmalı erişim (opinion route'undaki desenin tek-kaynak hali):
-// DOCTOR yalnız DOĞRULANMIŞ hekim VE vaka KENDİSİNE atanmışsa (c.assignedDoctorId === doctorId) erişir.
+// DOCTOR yalnız DOĞRULANMIŞ doktor VE vaka KENDİSİNE atanmışsa (c.assignedDoctorId === doctorId) erişir.
 // Atanmamış SO vakasına doktor erişemez — önce üstlenmeli/atanmalı (accept=claim veya koordinatör assign);
 // üstlenince assignedDoctorId set olur → erişim açılır. Diğer roller temel kurala (ownsSecondOpinionCase)
 // tabidir. assignedDoctorId ZORUNLU → seçmeyen sorgu derlemede patlar.
@@ -171,7 +171,7 @@ export async function soCaseListScope(user: SessionUser | null): Promise<SoListS
       return { patientId: user.id, deletionLockedAt: null };
     case "DOCTOR": {
       const { doctorId, verified, activated } = await doctorContext(user);
-      if (!verified || !activated || !doctorId) return null; // doğrulanmamış/aktivasyonsuz/profilsiz hekim → hiçbir şey
+      if (!verified || !activated || !doctorId) return null; // doğrulanmamış/aktivasyonsuz/profilsiz doktor → hiçbir şey
       return { assignedDoctorId: doctorId, deletionLockedAt: null }; // yalnız kendisine atanmışlar
     }
     case "COORDINATOR":
