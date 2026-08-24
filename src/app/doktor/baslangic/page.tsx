@@ -12,6 +12,7 @@ import { GraduationCap, FileCheck2, ArrowRight } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
 import { StudentStage1Card } from "@/components/StudentStage1Card";
 import { OnboardingForm } from "./OnboardingForm";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -136,7 +137,9 @@ export default async function DoctorOnboardingPage({
           sayıyor — o metnin güncellenmesi ayrı iş). py-10: kutu koyu üst bölgede dikey dengeli
           dursun (pb'siz hali alttaki açık Aşama-1 bandına yapışıyordu). Buton OnboardingForm
           BANT 2'deki #asama-2 çapasına kaydırır. */}
-      {sp.from === "aura-gecis" && (
+      {/* Ayrışma (2026-08-24): Doctorium deploy'unda AURA-geçiş uyarı kutusu çizilmez —
+          #asama-2 çapası da o deploy'da yok (BANT 2 gizli). */}
+      {!IS_DOCTORIUM_DEPLOY && sp.from === "aura-gecis" && (
         <div className="mx-auto max-w-2xl px-5 py-10">
           <section
             aria-label="AURA klinik erişim koşulları"
@@ -231,6 +234,8 @@ export default async function DoctorOnboardingPage({
             }
           : null
       }
+      // Ayrışma (2026-08-24): Doctorium deploy'unda yalnız Aşama 1 — AURA bantları çizilmez.
+      doctoriumOnly={IS_DOCTORIUM_DEPLOY}
     />
     </>
   );
