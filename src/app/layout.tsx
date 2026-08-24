@@ -11,6 +11,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { isMaster } from "@/lib/master";
 import { db } from "@/lib/db";
 import { SITE_URL } from "@/lib/aura-landing/seo";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 
 // Uygulama geneli tipografi — vitrin (aura-health) ile aynı aile: Inter gövde + Space Grotesk
 // display (--font-serif değişken adı tarihsel; display yuvası olarak kullanılır) + JetBrains Mono
@@ -129,7 +130,7 @@ export default async function RootLayout({
         {/* Ekran dışına çıkan sürekli dekoratif animasyonları duraklatır. Kökte: landing'in
             yanı sıra uygulama içi Header/spinner sembollerini de kapsar. Render etmez (null). */}
         <AuraAnimPause />
-        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} theme={theme} student={studentHeader} stage1={stage1Header} />
+        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} theme={theme} student={studentHeader} stage1={stage1Header} doctoriumDeploy={IS_DOCTORIUM_DEPLOY} />
         {user?.imp ? <MasterBar mode="impersonating" userName={user.name} /> : isMaster(user) ? <MasterBar mode="master" /> : null}
         <main className="flex-1">{children}</main>
         <SiteFooter />

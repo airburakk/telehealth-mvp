@@ -58,7 +58,9 @@ function DoctoriumBrand({ doctoriumActive }: { doctoriumActive: boolean }) {
 // Profilim/Finans yok, marka toggle'ının AURA yarısı soluk. `student` ile aynı sadeleştirme
 // ailesi; ikisi de görsel, kapı DEĞİL. Tetikleyici durum bazlı (activatedAt) → Aşama 2 biter
 // bitmez krom kendiliğinden AURA'ya döner.
-export function Header({ user, lang = "Türkçe", theme = "dark", student = false, stage1 = false }: { user: { name: string; role: string } | null; lang?: string; theme?: ThemeName; student?: boolean; stage1?: boolean }) {
+// doctoriumDeploy (ayrışma 2026-08-24): doctorium.tr deploy'unda /giris AURA'ya 307'lenir —
+// çıkış hedefi bu bayrakla Doctorium kapısına döner (kök layout BRAND_MODE'dan geçirir).
+export function Header({ user, lang = "Türkçe", theme = "dark", student = false, stage1 = false, doctoriumDeploy = false }: { user: { name: string; role: string } | null; lang?: string; theme?: ThemeName; student?: boolean; stage1?: boolean; doctoriumDeploy?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
@@ -157,9 +159,15 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   // sayacıdır ve Sistem Mesajları öğesi orada unmount olduğundan bayat kalabilir (2026-08-24).
   const badgeCount = doctoriumSide ? unreadCount : unreadCount + msgUnread;
 
+  // Çıkış hedefi markaya duyarlı (kullanıcı bildirimi 2026-08-24: "Doctorium'dan çıkınca AURA
+  // giriş ekranına düşüyor"): Doctorium deploy'unda /giris AURA'ya 307'lendiğinden ORADA daima
+  // Doctorium kapısı; AURA deploy'unda ise Doctorium kromundaki (portal/Aşama-1) kullanıcı da
+  // kendi kapısına döner — diğer herkes eski /giris davranışında.
+  const logoutTarget = doctoriumDeploy || doctoriumSide ? "/doctorium/giris" : "/giris";
+
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/giris");
+    router.push(logoutTarget);
     router.refresh();
   }
 
@@ -174,7 +182,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
       return;
     }
     setConfirmLogoutAll(false);
-    router.push("/giris");
+    router.push(logoutTarget);
     router.refresh();
   }
 
