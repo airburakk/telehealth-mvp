@@ -45,8 +45,11 @@ export function AuraDoctors() {
           {t.doctors.list.map((d) => {
             const brand = DOC_BRAND[d.img] ?? DOC_FALLBACK;
             const Icon = brand.Icon;
-            // Branş adı beyaz sandwich zemininde okunsun diye branş renginin koyu tonu (AA).
-            const fieldInk = `color-mix(in srgb, ${brand.color}, #000 26%)`;
+            // Branş adı GECE zemininde okunsun diye branş renginin AÇIK tonu (beyaza %35 →
+            // 5 renk de #161719 panelde 6.5+ kontrast). ⚠️ Formül zemine bağlı: bölüm v4'te
+            // beyaz sandwich'teydi ve siyaha karıştırılıyordu; koyu ritme geçince 5 etiket de
+            // AA altına düştü (axe serious, 2026-08-24). Bölüm zemini değişirse burayı da çevir.
+            const fieldInk = `color-mix(in srgb, ${brand.color}, #fff 35%)`;
             return (
               <article
                 key={d.img}
