@@ -6,9 +6,16 @@
 //   • push             → tarayıcı kapalıyken bildirim göster; tıklayınca ilgili sayfa
 // 🪤 PRECACHE'teki bir dosyayı DEĞİŞTİRİRSEN VERSION'ı da artır: cache adı VERSION'dan türer,
 // activate yalnız adı farklı olan eski cache'leri siler. Artırmazsan mevcut kullanıcı eski
-// kopyayı görmeye devam eder (v5, 2026-08-19: amblem + offline.html gece teması + manifest).
-const VERSION = "air-pwa-v5";
-const PRECACHE = ["/offline.html", "/icon-192.png", "/icon-512.png", "/manifest.webmanifest"];
+// kopyayı görmeye devam eder (v5, 2026-08-19: amblem + offline.html gece teması + manifest;
+// v6, 2026-08-21: icon-192/icon-512 URL'lerine `?v=2` cache-kırıcı eklendi — push bildirimi
+// ikonu ve manifest ikonu, favicon gibi tarayıcının inatçı ikon önbelleğine takılıyordu;
+// v7, 2026-08-23: marka seti v2 — küre ikonları, `?v=3`).
+const VERSION = "air-pwa-v7";
+const PRECACHE = ["/offline.html", "/icon-192.png?v=3", "/icon-512.png?v=3", "/manifest.webmanifest"];
+// cacheable-kontrolü pathname üzerinden yapılıyor (query'siz) — PRECACHE artık query'li URL
+// taşıdığı için ayrı bir pathname kümesi lazım, yoksa `PRECACHE.includes(url.pathname)` hiç
+// eşleşmez ve ikonlar cache-first yoldan sessizce düşer.
+const PRECACHE_PATHS = new Set(PRECACHE.map((u) => new URL(u, self.location.origin).pathname));
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -42,7 +49,7 @@ self.addEventListener("fetch", (event) => {
   // Hash'li statikler + ikonlar: önce önbellek, yoksa ağdan al ve sakla
   const cacheable =
     url.pathname.startsWith("/_next/static/") ||
-    PRECACHE.includes(url.pathname);
+    PRECACHE_PATHS.has(url.pathname);
   if (cacheable) {
     event.respondWith(
       caches.match(req).then(
@@ -68,8 +75,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || "",
-      icon: "/icon-192.png",
-      badge: "/icon-192.png",
+      icon: "/icon-192.png?v=3",
+      badge: "/icon-192.png?v=3",
       lang: "tr",
       data: { href: data.href || "/" },
     })

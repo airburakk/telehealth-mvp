@@ -9,6 +9,12 @@ import { db } from "./db";
 import { translateText, summarizeArticleForClinician, summarizeRegulationForClinician } from "./ai-clinical";
 import { fetchDocumentText } from "./doctorium-sources";
 import { BRANCHES } from "./triage";
+// SECTOR_CATEGORIES aşağıda hem RE-EXPORT edilir (dış çağıranlar için) hem burada parseViewPrefs
+// (v6.142) İÇİNDE kullanılır — `export {X} from "Y"` yalnız re-export'tur, bu dosyada X'i yerel
+// bir bağlayıcı YAPMAZ (SECTOR_CATEGORIES.some(...) sessizce ReferenceError verip try/catch'e
+// düşüyordu — 2026-08-23 birim testinde yakalandı). Ayrı yerel import şart; aşağıdaki
+// `export {...} from` satırıyla ÇAKIŞMAZ (o yalnız re-export kaydı, yerel binding yaratmaz).
+import { SECTOR_CATEGORIES } from "./doctorium-labels";
 
 export const DOCTORIUM_NAME = "Doctorium";
 
@@ -44,6 +50,9 @@ export const DOCTORIUM_MODULES: ModuleDef[] = [
   { key: "akis", label: "Akışım", desc: "Branşınız + mevzuat + sektör: tek akış" },
   { key: "akademik", label: "Akademik", desc: "Hakemli yayınlar — PubMed · Europe PMC · DOAJ" },
   { key: "sektorel", label: "Sektörel", desc: "Doktor hakları · yönetim · teknoloji · küresel" },
+  // 🔒 NİHAİ taksonomi (2026-08-24, kullanıcı — üçüncü ve SON dönüş; v6.146 "Regülasyon" süpersede):
+  // kategori adı ÜRÜN-GENELİ "İlaç & Cihaz"; "regülasyon/düzenleyici" yalnız açıklama/içerik türü
+  // seviyesinde. Anahtar `ilac` DEĞİŞMEZ. Yeniden adlandırma isteği gelirse bu notu hatırlat.
   { key: "ilac", label: "İlaç & Cihaz", desc: "Geri çekmeler · klinik faz · prospektüs" },
   { key: "etkinlik", label: "Etkinlik Takvimi", desc: "Kongre · sempozyum · kurs — TTB akredite" },
   { key: "kariyer", label: "Kariyer", desc: "Yurt dışı denklik · akademik yükselme" },
@@ -165,20 +174,11 @@ export function parseCareerTab(raw: string | undefined): CareerTabKey {
 // v6.99 (2026-08-15): "meslek" ve "kuresel" eklendi — sektörel akış doktorun kendi mesleki
 // gündemiyle genişledi (İTO/TTB/Medscape) ve WHO/Medical Xpress içeriği "teknoloji"den ayrıldı.
 // Sıra = doktorun ilgi sıklığı varsayımı: kendi mesleği önce, küresel gündem sonda.
-export const SECTOR_CATEGORIES: { key: string; label: string }[] = [
-  { key: "meslek", label: "Doktorluk & Mesleki Gündem" },
-  { key: "mevzuat", label: "Mevzuat & Sağlık Hukuku" },
-  { key: "sut", label: "SGK · SUT & Geri Ödeme" },
-  { key: "turizm", label: "Sağlık Turizmi & Teşvikler" },
-  { key: "yonetim", label: "Hastane & Klinik Yönetimi" },
-  { key: "teknoloji", label: "Sağlık Teknolojileri" },
-  { key: "ilac-cihaz", label: "İlaç & Tıbbi Cihaz" },
-  { key: "kuresel", label: "Küresel Sağlık Gündemi" },
-];
-const CAT_LABEL: Record<string, string> = Object.fromEntries(SECTOR_CATEGORIES.map((c) => [c.key, c.label]));
-export function categoryLabel(k: string | null | undefined): string | null {
-  return k ? CAT_LABEL[k] ?? null : null;
-}
+// SECTOR_CATEGORIES/categoryLabel istemci-güvenli lib/doctorium-labels.ts'e taşındı (2026-08-21,
+// sonsuz kaydırma FeedLoadMore.tsx client bileşeninin ArticleCard üzerinden ihtiyaç duyması —
+// buradan değer import etmek bu dosyanın `db` bağımlılığını istemci paketine sokardı). Tek
+// kaynak orada; burası aynı adlarla re-export eder, davranış ve mevcut import'lar değişmez.
+export { SECTOR_CATEGORIES, categoryLabel } from "./doctorium-labels";
 
 // ── Sektörel kaynak kapsamı (v6.99.3, kullanıcı isteği 2026-08-16) ──────────
 // Özelleştir'de "Kaynak" filtresi: Ulusal (TR kurumları) / Uluslararası. URL paramı ?s=
@@ -189,8 +189,9 @@ export function categoryLabel(k: string | null | undefined): string | null {
 // v6.129 (2026-08-19): uzmanlık dernekleri eklendi — hepsi ULUSAL (Türkiye dernekleri).
 // Kaynak anahtarları lib/association-sources.ts ASSOCIATIONS slug'larıyla AYNI olmalı;
 // sözleşme testi (doctorium-filtreler) iki listeyi de hizada tutar.
+// 2026-08-24: "sgk" eklendi (GSS GM duyuruları doğrudan kaynaktan — ingestSgkGss).
 export const SECTOR_SOURCE_SCOPES: Record<"ulusal" | "uluslararasi", string[]> = {
-  ulusal: ["ttb", "ohsad", "istabip", "klimik", "tjod", "tatd", "tgd-gastro", "tgcd"],
+  ulusal: ["ttb", "ohsad", "sgk", "istabip", "klimik", "tjod", "tatd", "tgd-gastro", "tgcd"],
   uluslararasi: ["who", "medscape", "medicalxpress"],
 };
 
@@ -207,18 +208,8 @@ export function parseSourceScope(raw?: string | null): SourceScope | null {
   return raw === "ulusal" || raw === "uluslararasi" ? raw : null;
 }
 
-export const KIND_LABEL: Record<string, string> = {
-  makale: "Makale",
-  ilac: "Klinik Çalışma",
-  mevzuat: "Mevzuat",
-  haber: "Haber",
-  uyari: "Geri Çekme",
-  lansman: "Klinik Faz",
-  ictihat: "İçtihat", // v6.86 — Yargıtay kararları (source: yargitay, lib/hukuk-ingest.ts)
-  doktrin: "Doktrin", // v6.91 — TR-Dizin hakemli makaleler (source: trdizin, lib/doktrin-ingest.ts)
-  etkinlik: "Etkinlik", // 2026-08-14 kongre olarak eklendi, v6.120'de tüm etkinlik türlerine açıldı
-  kariyer: "Süreç Rehberi", // 2026-08-14 — akış kartı olarak yeni eklenen kariyer kayıtları
-};
+// KIND_LABEL de aynı gerekçeyle lib/doctorium-labels.ts'e taşındı (yukarıdaki not).
+export { KIND_LABEL } from "./doctorium-labels";
 
 // ── Branş tercihleri (Modül A) ──────────────────────────────────────────────
 
@@ -436,7 +427,12 @@ function congressToFeedItem(c: {
   };
 }
 
-async function congressFeedItems(branchSlugs: string[], take: number): Promise<FeedItem[]> {
+/** Sonsuz kaydırma cursor'ı — bir sonraki sayfanın "buradan öncesi" sınırı. Yalnız tarih ile
+ *  tekilleştirme YETMEZ (gece toplu ingest aynı createdAt/publishedAt'i paylaşabilir); id de
+ *  eklenir ki eşit tarihli kayıtlarda ne kayıt tekrarlansın ne de atlansın. */
+interface FeedCursor { at: Date; id: string }
+
+async function congressFeedItems(branchSlugs: string[], take: number, before?: FeedCursor): Promise<FeedItem[]> {
   const rows = await db.medicalCongress.findMany({
     where: {
       // Akışım'daki 3 kartlık etkinlik kotası VARSAYILAN türlerle sınırlı (v6.120): TTB
@@ -447,8 +443,13 @@ async function congressFeedItems(branchSlugs: string[], take: number): Promise<F
       ...(branchSlugs.length
         ? { OR: [{ branchSlugs: "[]" }, ...branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } }))] }
         : {}),
+      ...(before ? { AND: [{ OR: [{ createdAt: { lt: before.at } }, { AND: [{ createdAt: before.at }, { id: { lt: before.id } }] }] }] } : {}),
     },
-    orderBy: { createdAt: "desc" },
+    // İkincil sıralama anahtarı (id) — bkz. personalFeedRaw'daki news() yorum bloğu: yalnız
+    // createdAt'e göre sıralamak eşit tarihli satırlarda deterministik değildir, cursor'ın
+    // id tie-break'i o zaman gerçek bir sınır olmaktan çıkar (React "duplicate key" hatası
+    // canlı DOM'da yakalandı, 2026-08-21).
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take,
     select: CONGRESS_FEED_SELECT,
   });
@@ -472,9 +473,16 @@ function careerToFeedItem(p: {
 
 /** Yeni eklenen kariyer süreç rehberleri akış kartı olarak (2026-08-14). id = slug (detay rotası
  *  slug'la çalışır; SavedArticle ilişkisiz düz-id deseninde slug da kimlik olabilir). */
-async function careerFeedItems(take: number): Promise<FeedItem[]> {
+async function careerFeedItems(take: number, before?: FeedCursor): Promise<FeedItem[]> {
   const rows = await db.careerPathway.findMany({
-    orderBy: { createdAt: "desc" },
+    // FeedItem.id kariyer kartlarında slug'tır (id kolonu değil — bkz. careerToFeedItem: `id:
+    // p.slug`), o yüzden cursor tie-break'i de slug üzerinden: depolanan cursor.id ile tutarlı
+    // kalmalı. İkincil sıralama anahtarı aynı gerekçeyle (bkz. news()/congressFeedItems yorumu):
+    // yalnız createdAt'e göre sıralamak eşit tarihlilerde deterministik değildir.
+    where: before
+      ? { OR: [{ createdAt: { lt: before.at } }, { AND: [{ createdAt: before.at }, { slug: { lt: before.id } }] }] }
+      : undefined,
+    orderBy: [{ createdAt: "desc" }, { slug: "desc" }],
     take,
     select: CAREER_FEED_SELECT,
   });
@@ -507,6 +515,124 @@ export function interleaveByModule(items: FeedItem[], maxRun = 3): FeedItem[] {
 }
 
 /**
+ * Sonsuz kaydırma cursor'ları — modül anahtarı başına "buradan öncesi" işaretçisi. İstemciye
+ * JSON olarak gider ve olduğu gibi geri gelir (opak) — bkz. personalFeedPage yorum bloğu.
+ *
+ * ÜÇ HÂL, İKİ ANLAM DEĞİL (2026-08-21 canlı testte yakalanan hata): bir modülün anahtarı
+ * YOK/undefined ile null AYNI ŞEY DEĞİLDİR.
+ *   · anahtar YOK  → bu modül henüz hiç sorgulanmadı (yalnız ilk sayfada, cursors={}'ta olur).
+ *   · {at, id}     → buradan devam et.
+ *   · null         → TÜKENDİ, bir daha ASLA sorgulama.
+ * İlk sürüm tükenen modülü cursor listesinden SİLİYORDU (undefined'a geri düşürüyordu) —
+ * personalFeedRaw'daki `on()` kapısı yalnız KULLANICI TERCİHİNE bakıyor, cursor'a bakmıyordu,
+ * yani "anahtar yok" onun için de "henüz sorgulanmadı" demekti: tükenmiş modül birkaç turda bir
+ * BAŞTAN sorgulanıp aynı kartları tekrar tekrar döndürüyordu (React "duplicate key" hatası +
+ * DOM'da tekrarlanan href'ler olarak yakalandı). `null` sentinel'i bu iki hâli ayırır.
+ */
+export type FeedCursors = Partial<Record<FeedModuleKey, { at: string; id: string } | null>>;
+
+interface RawModuleResult { key: FeedModuleKey; items: FeedItem[]; requested: number }
+
+/**
+ * Kişisel akış — HAM sorgu katmanı. `personalFeed` (ilk sayfa) ve `personalFeedPage` (sonsuz
+ * kaydırma sonraki sayfalar) bu fonksiyonu PAYLAŞIR — mantık tek yerde yaşar, iki çağıran
+ * farklı `cursors` girdisiyle aynı sorguları çalıştırır. Modül başına ayrı dizi döner (henüz
+ * birleştirilmemiş/interleave edilmemiş) çünkü her modülün "nereden devam" cursor'ı kendi
+ * dizisinin SON öğesinden çıkar (bkz. cursorsFrom).
+ */
+/** Akışım sorgu seçenekleri (2026-08-24): sekme sorgusu (moduleFeed) tercihi uygularken Akışım
+ *  uygulamıyordu — "ulusal'a çektim ama akışta uluslararası haber var" (kullanıcı bildirimi).
+ *  · sektorelSources: sektörel kaynağı daralt (SECTOR_SOURCE_SCOPES listesi).
+ *  · createdSince: "yalnız yeni" (?n=1) — bugün AKIŞA DÜŞEN kayıtlar (createdAt; sayaçla aynı
+ *    eksen). Etkinlik/Kariyer bu modda SORGULANMAZ: küratörlü veridir, gece akışı yoktur ve
+ *    sayaç (todayModuleCounts) onları hiç saymaz — sayının vaadiyle listenin içeriği örtüşmeli. */
+export type PersonalFeedOpts = { sektorelSources?: string[]; createdSince?: Date };
+
+async function personalFeedRaw(
+  branchSlugs: string[], modules: FeedModuleKey[], limit: number, cursors?: FeedCursors, opts?: PersonalFeedOpts,
+): Promise<RawModuleResult[]> {
+  const all = modules.length === 0;
+  // `cursors[k] === null` = bu modül önceki bir turda tükendi, BİR DAHA SORGULANMAZ (bkz.
+  // FeedCursors yorumu). Kullanıcı tercihi (all/modules) bunun ÜSTÜNE değil YANINA eklenir —
+  // ikisi de "hayır" derse modül dışarıda kalır.
+  const on = (k: FeedModuleKey) => (all || modules.includes(k)) && cursors?.[k] !== null;
+  // Kotalar limit=40 tabanına göre ölçeklenir (akademik 14 · sektörel 8 · ilaç 6 ·
+  // hukuk 4+2+2 [mevzuat/içtihat/doktrin alt-kotaları] · kongre 3 · kariyer 3).
+  const q = (n: number) => Math.max(1, Math.round((n * limit) / 40));
+  const cur = (k: FeedModuleKey): FeedCursor | undefined => {
+    const c = cursors?.[k];
+    return c ? { at: new Date(c.at), id: c.id } : undefined;
+  };
+  const news = (key: FeedModuleKey, where: object, take: number): Promise<RawModuleResult> => {
+    const before = cur(key);
+    return db.newsArticle.findMany({
+      where: {
+        AND: [
+          where,
+          // "Yalnız yeni" (?n=1): akışa düşme anı — moduleFeed'deki createdSince ile aynı eksen
+          // (createdAt, publishedAt DEĞİL; 2019 tarihli karar bu gece ingest edildiyse YENİdir).
+          ...(opts?.createdSince ? [{ createdAt: { gte: opts.createdSince } }] : []),
+          ...(before
+            ? [{ OR: [{ publishedAt: { lt: before.at } }, { AND: [{ publishedAt: before.at }, { id: { lt: before.id } }] }] }]
+            : []),
+        ],
+      },
+      // ⚠️ İKİNCİL SIRALAMA ANAHTARI (id) ŞART — canlı DOM'da yakalandı (2026-08-21, React
+      // "duplicate key" konsol hatası): yalnız publishedAt'e göre sıralamak, aynı publishedAt'i
+      // paylaşan satırlarda (gece toplu ingest'i aynı tarihi verir) VERİTABANI SIRASINI garanti
+      // etmez — sayfa 1'in "son satırı" (cursor) her çağrıda farklı bir satır olabilir, cursor'ın
+      // id tie-break'i bu belirsizlikle örtüşmeyince aynı satır iki sayfada birden çıkar. id'yi
+      // ikincil anahtar yapmak sıralamayı DETERMİNİSTİK kılar; cursor'daki `id: { lt }` şartı
+      // artık gerçekten "bu sayfada gösterilmemiş" anlamına gelir.
+      orderBy: [{ publishedAt: "desc" }, { id: "desc" }], take, select: ROW_SELECT,
+    }).then((r) => ({ key, items: r.map(toFeedItem), requested: take }));
+  };
+
+  const jobs: Promise<RawModuleResult>[] = [];
+  if (on("akademik"))
+    jobs.push(news("akademik",
+      branchSlugs.length
+        ? { module: "akademik", OR: branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } })) }
+        : { module: "akademik" },
+      q(14),
+    ));
+  // Kaynak kapsamı tercihi (2026-08-24): sekmedeki "Kaynak: Ulusal/Uluslararası" süzgeci akışa
+  // da işler — moduleFeed'deki `source: { in }` ile aynı sözleşme (SECTOR_SOURCE_SCOPES).
+  if (on("sektorel"))
+    jobs.push(news("sektorel",
+      { module: "sektorel", ...(opts?.sektorelSources?.length ? { source: { in: opts.sektorelSources } } : {}) },
+      q(8),
+    ));
+  if (on("ilac")) jobs.push(news("ilac", { module: "ilac" }, q(6)));
+  // Hukuk üç bağımsız alt bölüm (v6.132) — doktor tercihler sayfasından üçünü ayrı yönetir.
+  if (on("hukuk-mevzuat")) jobs.push(news("hukuk-mevzuat", { module: "mevzuat", kind: "mevzuat" }, q(4)));
+  if (on("hukuk-ictihat")) jobs.push(news("hukuk-ictihat", { module: "mevzuat", kind: "ictihat" }, q(2)));
+  if (on("hukuk-doktrin")) jobs.push(news("hukuk-doktrin", { module: "mevzuat", kind: "doktrin" }, q(2)));
+  // Etkinlik/Kariyer "yalnız yeni" modunda sorgulanmaz — gerekçe PersonalFeedOpts yorumunda.
+  if (on("etkinlik") && !opts?.createdSince)
+    jobs.push(congressFeedItems(branchSlugs, q(3), cur("etkinlik")).then((items) => ({ key: "etkinlik", items, requested: q(3) })));
+  if (on("kariyer") && !opts?.createdSince)
+    jobs.push(careerFeedItems(q(3), cur("kariyer")).then((items) => ({ key: "kariyer", items, requested: q(3) })));
+
+  return Promise.all(jobs);
+}
+
+/** Bu turda SORGULANAN modüllerin yeni cursor'ları. İstenenden AZ döndüren modül tükenmiştir —
+ *  `null` yazılır (bkz. FeedCursors: anahtarı SİLMEK "henüz sorgulanmadı"ya geri düşürürdü, bir
+ *  sonraki tur o modülü baştan sorgulardı). Bu turda hiç SORGULANMAYAN modüller (zaten önceden
+ *  null'lanmış olanlar — `on()` onları jobs'a hiç eklemedi) burada YOKTUR; çağıran (personalFeedPage)
+ *  bu sonucu ESKİ cursors'ın ÜSTÜNE yazar ki onların null'ı korunsun. */
+function cursorsFrom(raw: RawModuleResult[]): FeedCursors {
+  const out: FeedCursors = {};
+  for (const r of raw) {
+    out[r.key] = r.items.length < r.requested
+      ? null
+      : { at: r.items[r.items.length - 1].publishedAt.toISOString(), id: r.items[r.items.length - 1].id };
+  }
+  return out;
+}
+
+/**
  * Kişisel akış (Modül A) — BÖLÜM-KOTALI KARIŞIM (2026-08-14, kullanıcı bildirimi): eski tek
  * "en yeni N" sorgusu, yoğun bölümlerin (sektörel haber) seyrek bölümleri tamamen dışarıda
  * bırakıyordu — hukuk (hele ARŞİV tarihli içtihat/doktrin) akışa HİÇ düşmüyordu. Şimdi her
@@ -516,36 +642,44 @@ export function interleaveByModule(items: FeedItem[], maxRun = 3): FeedItem[] {
  * Branş eşleşmesi JSON string içinde tırnaklı arama — yanlış eşleşme olmaz (v6.50 notu).
  */
 export async function personalFeed(branchSlugs: string[], limit = 40, modules: FeedModuleKey[] = []): Promise<FeedItem[]> {
-  const all = modules.length === 0;
-  const on = (k: FeedModuleKey) => all || modules.includes(k);
-  // Kotalar limit=40 tabanına göre ölçeklenir (akademik 14 · sektörel 8 · ilaç 6 ·
-  // hukuk 4+2+2 [mevzuat/içtihat/doktrin alt-kotaları] · kongre 3 · kariyer 3).
-  const q = (n: number) => Math.max(1, Math.round((n * limit) / 40));
-  const news = (where: object, take: number) =>
-    db.newsArticle.findMany({ where, orderBy: { publishedAt: "desc" }, take, select: ROW_SELECT })
-      .then((r) => r.map(toFeedItem));
+  return (await personalFeedPage(branchSlugs, modules, {}, limit)).items;
+}
 
-  const jobs: Promise<FeedItem[]>[] = [];
-  if (on("akademik"))
-    jobs.push(news(
-      branchSlugs.length
-        ? { module: "akademik", OR: branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } })) }
-        : { module: "akademik" },
-      q(14),
-    ));
-  if (on("sektorel")) jobs.push(news({ module: "sektorel" }, q(8)));
-  if (on("ilac")) jobs.push(news({ module: "ilac" }, q(6)));
-  // Hukuk üç bağımsız alt bölüm (v6.132) — doktor tercihler sayfasından üçünü ayrı yönetir.
-  if (on("hukuk-mevzuat")) jobs.push(news({ module: "mevzuat", kind: "mevzuat" }, q(4)));
-  if (on("hukuk-ictihat")) jobs.push(news({ module: "mevzuat", kind: "ictihat" }, q(2)));
-  if (on("hukuk-doktrin")) jobs.push(news({ module: "mevzuat", kind: "doktrin" }, q(2)));
-  if (on("etkinlik")) jobs.push(congressFeedItems(branchSlugs, q(3)));
-  if (on("kariyer")) jobs.push(careerFeedItems(q(3)));
-
-  const merged = (await Promise.all(jobs)).flat();
+/**
+ * Sonsuz kaydırma — sayfa 2 ve sonrası (2026-08-21, kullanıcı bildirimi: "belli sayıda içerikte
+ * duruyor, aşağı kaydırma devam etmiyor"). `personalFeed` ile AYNI ham sorgu katmanını
+ * (personalFeedRaw) paylaşır, tek fark `cursors` girdisi.
+ *
+ * ⚠️ Cursor MODÜL BAŞINA — tek/global bir "ekrandaki son kartın tarihi" cursor'ı YANLIŞ olurdu:
+ * interleaveByModule çeşitlilik için sırayı karıştırıyor (aynı modülden art arda en fazla 3),
+ * yani ekranda görünen SON kart, aslında o sayfada çekilen en eski kayıt olmayabilir — bir modül
+ * tükenmeden önce başka bir modülün daha eski kartı öne çekilmiş olabilir. Global cursor
+ * kullansaydık bu durumda bir sonraki sayfa öne çekilen o kartın tarihinden devam eder ve
+ * ARADA KALAN kayıtları (aynı modülün henüz gösterilmemiş ama cursor'dan daha yeni kartları)
+ * asla göstermezdi — sessiz veri kaybı. Modül başına cursor, her modülün kendi "nereden devam"
+ * işaretçisini taşıdığı için bu sızıntıyı yapısal olarak imkânsız kılar.
+ */
+export async function personalFeedPage(
+  branchSlugs: string[], modules: FeedModuleKey[], cursors: FeedCursors, limit = 40, opts?: PersonalFeedOpts,
+): Promise<{ items: FeedItem[]; cursors: FeedCursors; done: boolean }> {
+  const raw = await personalFeedRaw(branchSlugs, modules, limit, cursors, opts);
+  const merged = raw.flatMap((r) => r.items);
   merged.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
   // Çeşitlilik geçişi (2026-08-18): aynı modülden art arda en fazla 3 kart.
-  return interleaveByModule(merged, 3);
+  const items = interleaveByModule(merged, 3);
+  // ⚠️ ESKİ cursors'ın ÜSTÜNE yaz, YERİNE değil (2026-08-21 canlı hata — bkz. FeedCursors/
+  // cursorsFrom yorumları): bu turda `on()` tarafından zaten dışlanan (önceden null'lanmış)
+  // modüller `raw`'da hiç yok — cursorsFrom onlar için bir şey döndürmez. Spread sırası
+  // önce eski (null'lar dahil), sonra yeni (bu turda sorgulananların taze durumu) olmalı ki
+  // tükenmiş modül canlanıp baştan sorgulanmasın.
+  const nextCursors: FeedCursors = { ...cursors, ...cursorsFrom(raw) };
+  // "Yalnız yeni" modunda hiç sorgulanmayan Etkinlik/Kariyer AÇIKÇA null'lanır (TÜKENDİ) —
+  // yoksa `done` asla true olmaz ve sonsuz kaydırma boş sayfaları sonsuza dek çekerdi
+  // ("üç hâl" dersinin devamı: anahtar yok = "henüz sorgulanmadı" diye okunur).
+  if (opts?.createdSince) { nextCursors.etkinlik = null; nextCursors.kariyer = null; }
+  const allModules: FeedModuleKey[] = modules.length ? modules : FEED_MODULE_OPTIONS.map((o) => o.key);
+  const done = allModules.every((k) => nextCursors[k] === null);
+  return { items, cursors: nextCursors, done };
 }
 
 /**
@@ -553,14 +687,37 @@ export async function personalFeed(branchSlugs: string[], limit = 40, modules: F
  * yayınları — mevzuat DAHİL EDİLMEZ (kullanıcı bir branşa odaklanmak istiyor; mevzuat gürültü olur).
  */
 export async function singleBranchFeed(slug: string, limit = 30): Promise<FeedItem[]> {
+  return (await singleBranchFeedPage(slug, limit)).items;
+}
+
+/** Sonsuz kaydırma — tek branş görünümü sayfa 2+. Tek sorgu olduğu için (personalFeedPage'in
+ *  aksine) modül başına cursor GEREKMEZ: parti tek bir `publishedAt desc` sıralamasından geliyor,
+ *  bu partinin gerçek en-eski satırı `rows`un HAM son elemanıdır — interleave sonrası dizide
+ *  (ekranda görünen sırada) o satır başka bir yere kaymış olabilir, cursor'ı HAM diziden almak
+ *  şart (bkz. personalFeedPage'deki global-cursor uyarısı, aynı tuzağın tek-sorgulu hâli). */
+export async function singleBranchFeedPage(
+  slug: string, limit = 30, before?: { at: string; id: string },
+): Promise<{ items: FeedItem[]; cursor: { at: string; id: string } | null }> {
+  const cur = before ? { at: new Date(before.at), id: before.id } : undefined;
   const rows = await db.newsArticle.findMany({
-    where: { branchSlugs: { contains: `"${slug}"` } },
-    orderBy: { publishedAt: "desc" },
+    where: {
+      AND: [
+        { branchSlugs: { contains: `"${slug}"` } },
+        ...(cur
+          ? [{ OR: [{ publishedAt: { lt: cur.at } }, { AND: [{ publishedAt: cur.at }, { id: { lt: cur.id } }] }] }]
+          : []),
+      ],
+    },
+    // İkincil sıralama anahtarı (id) — bkz. personalFeedRaw'daki news() yorum bloğu: aynı gerekçe.
+    orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
     take: limit,
     select: ROW_SELECT,
   });
+  const cursor = rows.length === limit
+    ? { at: rows[rows.length - 1].publishedAt.toISOString(), id: rows[rows.length - 1].id }
+    : null;
   // Odaklı akış da Akışım yüzeyidir — aynı çeşitlilik kuralı (art arda ≤3 aynı modül).
-  return interleaveByModule(rows.map(toFeedItem), 3);
+  return { items: interleaveByModule(rows.map(toFeedItem), 3), cursor };
 }
 
 /**
@@ -639,6 +796,63 @@ export const DEFAULT_RANGE = "30";
 
 export function rangeDays(key: string | undefined): number {
   return RANGE_OPTIONS.find((r) => r.key === key)?.days ?? 30;
+}
+
+// ── Doctorium görünüm süzgeçleri — kalıcı varsayılan (v6.142, kullanıcı kararı 2026-08-23) ──
+// Sektörel/İlaç & Cihaz/Mevzuat'ın Kaynak/Geriye-dönük/Kategori süzgeçleri artık Doctor satırında
+// kalıcı (Doctor.doctoriumViewPrefs, TEK JSON kolon). Etkinlik türü/kapsamının v6.132'de aldığı
+// yolu izler: URL parametresi (?s=/?d=/?c=) tercihi yalnız o GÖRÜNÜM için ezer, kalıcı tercihi
+// DEĞİŞTİRMEZ (bkz. page.tsx `sp.d !== undefined ? ... : viewPrefs...`, parseEventTypePref'le
+// AYNI sözleşme). Sekme içi "Özelleştir" paneli (DoctoriumFilters.tsx) bu yüzden silindi —
+// tek düzenleme yeri /doktor/doctorium/tercihler (PreferencesBoard.tsx).
+export interface SectorViewPrefs { source: SourceScope | null; range: string; category: string | null }
+export interface PharmaViewPrefs { range: string }
+export interface LegalViewPrefs { range: string; category: string | null }
+export interface DoctoriumViewPrefs {
+  sektorel: SectorViewPrefs;
+  ilac: PharmaViewPrefs;
+  mevzuat: LegalViewPrefs;
+}
+const DEFAULT_VIEW_PREFS: DoctoriumViewPrefs = {
+  sektorel: { source: null, range: DEFAULT_RANGE, category: null },
+  ilac: { range: DEFAULT_RANGE },
+  mevzuat: { range: DEFAULT_RANGE, category: null },
+};
+// <string> ZORUNLU: RANGE_OPTIONS `as const` olduğundan .map(r=>r.key) literal union'ı korur
+// (Set<"1"|"7"|"30"|"180"|"365">) — sonra .has(v) çalışma-zamanı string'iyle çağrılınca tsc
+// reddeder (route.ts'de build'de yakalandı; vitest tip kontrolü yapmadığından burada kaçmıştı).
+const RANGE_KEY_SET = new Set<string>(RANGE_OPTIONS.map((r) => r.key));
+
+/**
+ * Saklanan JSON'u güvenle çöz (parseBranchPrefs/parseEventTypePref'le aynı savunma deseni):
+ * bozuk/eski/kısmi veri akışı düşürmesin — her alan KENDİ varsayılanına tek tek düşer, tüm
+ * nesne birden sıfırlanmaz (ör. sektörel.source bozuksa sektörel.range yine de okunur).
+ */
+export function parseViewPrefs(raw: string | null | undefined): DoctoriumViewPrefs {
+  if (!raw) return DEFAULT_VIEW_PREFS;
+  try {
+    const v = JSON.parse(raw);
+    if (!v || typeof v !== "object") return DEFAULT_VIEW_PREFS;
+    const sek = (v.sektorel ?? {}) as Record<string, unknown>;
+    const il = (v.ilac ?? {}) as Record<string, unknown>;
+    const mv = (v.mevzuat ?? {}) as Record<string, unknown>;
+    return {
+      sektorel: {
+        source: parseSourceScope(typeof sek.s === "string" ? sek.s : null),
+        range: typeof sek.d === "string" && RANGE_KEY_SET.has(sek.d) ? sek.d : DEFAULT_RANGE,
+        category: typeof sek.c === "string" && SECTOR_CATEGORIES.some((c) => c.key === sek.c) ? sek.c : null,
+      },
+      ilac: {
+        range: typeof il.d === "string" && RANGE_KEY_SET.has(il.d) ? il.d : DEFAULT_RANGE,
+      },
+      mevzuat: {
+        range: typeof mv.d === "string" && RANGE_KEY_SET.has(mv.d) ? mv.d : DEFAULT_RANGE,
+        category: typeof mv.c === "string" && SECTOR_CATEGORIES.some((c) => c.key === mv.c) ? mv.c : null,
+      },
+    };
+  } catch {
+    return DEFAULT_VIEW_PREFS;
+  }
 }
 
 /** Modül akışı (akademik/sektörel). Branş verilirse akademikte süzülür; days verilirse tarih penceresi. */

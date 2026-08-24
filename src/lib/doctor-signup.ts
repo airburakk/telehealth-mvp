@@ -12,7 +12,12 @@ export const DOCTOR_TITLES = ["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."] a
 // Öğrenci hunisi ünvanı (v6.95) — DOCTOR_TITLES'a BİLİNÇLİ eklenmez: doktor kayıt formunda
 // seçilemez; yalnız /api/auth/signup-student sabitler. Ünvan tanımlayıcıdır, kapı değildir
 // (öğrenci modu Doctor.studentTrack'ten okunur — title'a bakan kapı yazma).
-export const STUDENT_TITLE = "Tıp Öğr.";
+// v6.147: bölüme göre türetilir — eskiden HERKESE "Tıp Öğr." yazılıyordu (department alanı yoktu),
+// diş hekimliği öğrencisi için yanlıştı. studentDepartment eklenince bedavaya düzeltildi.
+export const STUDENT_TITLE = "Tıp Öğr."; // geriye uyum: department bilinmeyen eski çağıranlar
+export function studentTitleFor(department: "tip" | "dis-hekimligi"): string {
+  return department === "dis-hekimligi" ? "Diş Hek. Öğr." : "Tıp Öğr.";
+}
 
 export interface DoctorSignupInput {
   name: string;
@@ -24,6 +29,10 @@ export interface DoctorSignupInput {
   languages: string;    // CSV ("Türkçe,İngilizce")
   phone?: string | null; // cep telefonu (FAZ 5) — at-rest şifreli saklanır; WA/SMS bildirim hedefi
   studentTrack?: boolean; // v6.95 — /ogrenci hunisi: öğrenci-modu onboarding + registry atlanır
+  // v6.147 — öğrenci üniversite e-postası doğrulaması: kayıtta beyan edilen (ve domainMatches'ten
+  // ZATEN geçmiş) üniversite/bölüm. Yalnız studentTrack:true'da anlamlı; doktor kaydında boş kalır.
+  studentUniversity?: string | null;
+  studentDepartment?: string | null;
 }
 
 // Yeni doktor + bağlı kullanıcı oluşturur, oluşturulan User'ı döndürür.
@@ -49,6 +58,8 @@ function createAccountTx(input: DoctorSignupInput) {
         phone: input.phone ? encryptField(input.phone) : null, // kişisel veri → at-rest şifreli
         verified: false, // küratörlü güven: self-signup doktor doğrulanmamış başlar
         studentTrack: input.studentTrack ?? false, // v6.95 — öğrenci hunisi işareti (erişim açmaz)
+        studentUniversity: input.studentUniversity ?? null,
+        studentDepartment: input.studentDepartment ?? null,
       },
     });
     const user = await tx.user.create({

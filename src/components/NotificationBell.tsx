@@ -75,7 +75,10 @@ function timeAgo(iso: string, t: (s: string) => string): string {
 // edilir (tam genişlik + etiket); panel satırın altına açılır. onUnreadChange: okunmamış sayı
 // değişince üst bileşene bildirir — Header, menü KAPALIYKEN avatar rozetinde gösterir
 // (zil menüye taşınınca bildirim görünürlüğü kaybolmasın).
-export function NotificationBell({ lang = "Türkçe", patientLangFallback = false, variant = "icon", onUnreadChange }: { lang?: string; patientLangFallback?: boolean; variant?: "icon" | "menu-item"; onUnreadChange?: (n: number) => void }) {
+// scope="doctorium" (AURA↔Doctorium ayrışması 2026-08-24): zil yalnız Doctorium bildirimlerini
+// (CONGRESS_ALERT) çeker ve "tümünü okundu" da yalnız onlara dokunur — klinik (AURA) bildirimleri
+// Doctorium kromunda görünmez, okunmuşluğu da değişmez. Scope'suz = eski davranış (her şey).
+export function NotificationBell({ lang = "Türkçe", patientLangFallback = false, variant = "icon", scope, onUnreadChange }: { lang?: string; patientLangFallback?: boolean; variant?: "icon" | "menu-item"; scope?: "doctorium"; onUnreadChange?: (n: number) => void }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notif[]>([]);
@@ -167,9 +170,11 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
     }
   }
 
+  const apiUrl = scope === "doctorium" ? "/api/notifications?scope=doctorium" : "/api/notifications";
+
   async function refresh() {
     try {
-      const r = await fetch("/api/notifications");
+      const r = await fetch(apiUrl);
       if (!r.ok) return;
       const d = await r.json();
       setItems(d.items ?? []);
@@ -198,7 +203,7 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
       await refresh();
       setLoading(false);
       if (unread > 0) {
-        try { await fetch("/api/notifications", { method: "POST" }); setUnread(0); } catch {}
+        try { await fetch(apiUrl, { method: "POST" }); setUnread(0); } catch {}
       }
     }
   }

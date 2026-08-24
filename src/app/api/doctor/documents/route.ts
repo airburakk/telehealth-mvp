@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { storeDocument, deleteDocument } from "@/lib/storage";
 import { detectDocumentKind, DOC_REJECT_MESSAGE } from "@/lib/document-mime";
-import { ALL_DOC_TYPES, refreshActivation, refreshStudentCert } from "@/lib/doctor-activation";
+import { ALL_DOC_TYPES, refreshActivation, hasDoctoriumAccess } from "@/lib/doctor-activation";
 import {
   parseEdevletBelge, degerlendir, pdfMetniOku, onayKarari, type EdevletSonuc,
 } from "@/lib/edevlet-belge";
@@ -16,15 +16,23 @@ import { notifyUser } from "@/lib/notify";
 const MAX_FILE_CHARS = 12_000_000;
 
 // e-Devlet barkodlu belge otomatik doğrulaması hangi tiplerde denenir (v6.119).
-// DIPLOMA: klinik kapıyı açar (canActivate). STUDENT_CERT: barkod bağlanır ve incelemeciye sinyal
-// olur ama Doctorium öğrenci damgasının (refreshStudentCert) kapısını DEĞİŞTİRMEZ — o kapının
-// onaya bağlanması ayrı bir karardır (vault todo).
-const OTOMATIK_DOGRULANAN = new Set(["DIPLOMA", "STUDENT_CERT"]);
+// DIPLOMA: klinik kapıyı açar (canActivate). v6.143: STUDENT_CERT bu uçtan TAMAMEN kaldırıldı —
+// öğrenci kapısı artık burada değil, üniversite e-postası doğrulaması (lib/universities.ts +
+// api/auth/verify-student-email).
+const OTOMATIK_DOGRULANAN = new Set(["DIPLOMA"]);
 
 // Oturumdaki doktorun doctorId'si (yalnız kendi belgelerine erişir — IDOR engeli).
 async function myDoctorId(userId: string): Promise<string | null> {
   const u = await db.user.findUnique({ where: { id: userId }, select: { doctorId: true } });
   return u?.doctorId ?? null;
+}
+
+// Güncel Doctorium erişimi (v6.143: bu uçtan yalnız diploma tarafı değişebilir — STUDENT_CERT
+// kalktığından studentVerifiedAt bu route'ta hiç dokunulmaz, yine de taze okunur — tek doğruluk
+// kaynağı hasDoctoriumAccess).
+async function currentDoctoriumAccess(doctorId: string): Promise<boolean> {
+  const d = await db.doctor.findUnique({ where: { id: doctorId }, select: { diplomaVerifiedAt: true, studentVerifiedAt: true } });
+  return hasDoctoriumAccess(d ?? { diplomaVerifiedAt: null, studentVerifiedAt: null });
 }
 
 // GET /api/doctor/documents — kendi belgelerinin meta listesi (içerik DÖNMEZ).
@@ -72,8 +80,8 @@ export async function POST(req: Request) {
   if (!kind) return NextResponse.json({ error: DOC_REJECT_MESSAGE }, { status: 415 });
   const mimeType = kind.mime;
 
-  // Tekil belgeler (diploma + MMSS + tabip odası yazısı + öğrenci belgesi): tek geçerli kopya → yeni yükleme eskisini değiştirir.
-  if (type === "DIPLOMA" || type === "MMSS" || type === "STUDENT_CERT") {
+  // Tekil belgeler (diploma + MMSS): tek geçerli kopya → yeni yükleme eskisini değiştirir.
+  if (type === "DIPLOMA" || type === "MMSS") {
     const old = await db.doctorDocument.findMany({ where: { doctorId, type }, select: { content: true } });
     await Promise.all(old.map((o) => deleteDocument(o.content))); // eski Blob nesnelerini temizle (T11)
     await db.doctorDocument.deleteMany({ where: { doctorId, type } });
@@ -90,9 +98,10 @@ export async function POST(req: Request) {
   let cevrim: EdevletDogrulamaSonucu | null = null;
   if (OTOMATIK_DOGRULANAN.has(type)) {
     const prof = await db.doctor.findUnique({ where: { id: doctorId }, select: { name: true } });
-    // 🔴 Beklenen TÜR açıkça verilir: diploma yerine öğrenci belgesi (ya da ikametgah) yüklenmesi
+    // 🔴 Beklenen TÜR açıkça verilir: diploma yerine başka bir belge (ör. ikametgah) yüklenmesi
     // otomatik geçemesin. Tür eşleşmezse sonuç ok:false → belge insan incelemesine düşer.
-    const beklenen = type === "STUDENT_CERT" ? ("OGRENCI" as const) : ("MEZUNIYET" as const);
+    // (v6.143: bu uçtan yalnız DIPLOMA geçer — "OGRENCI" dalı STUDENT_CERT'le birlikte kalktı.)
+    const beklenen = "MEZUNIYET" as const;
     const metin = await pdfMetniOku(content);
     const belge = metin ? parseEdevletBelge(metin) : null;
     dogrulama = belge
@@ -136,10 +145,9 @@ export async function POST(req: Request) {
   }
 
   // Kapılar ayrı damgalanır (v6.124): activated = Aşama 2 (klinik) · doctorium = Aşama 1
-  // (DOĞRULANMIŞ diploma ∨ öğrenci). refreshStudentCert SON çağrılır — refreshActivation'ın
-  // taze diplomaVerifiedAt damgasını okuyarak güncel Doctorium kararını döndürür.
+  // (DOĞRULANMIŞ diploma ∨ öğrenci — v6.143: öğrenci tarafı artık bu uçtan hiç etkilenmez).
   const activated = await refreshActivation(doctorId);
-  const doctorium = await refreshStudentCert(doctorId);
+  const doctorium = await currentDoctoriumAccess(doctorId);
 
   // Zorunlu belge otomatik doğrulanıp hesap AÇILDIYSA müjdele (insan onayı beklemedi).
   if (type === "DIPLOMA" && kabul && activated) {
@@ -181,6 +189,6 @@ export async function DELETE(req: Request) {
   await db.doctorDocument.delete({ where: { id } });
   await deleteDocument(doc.content); // Blob nesnesini de kaldır (T11)
   const activated = await refreshActivation(doctorId); // DIPLOMA silindiyse diplomaVerifiedAt+activatedAt düşer
-  const doctorium = await refreshStudentCert(doctorId); // STUDENT_CERT silindiyse damgası düşer; dönüş güncel Doctorium kararı
+  const doctorium = await currentDoctoriumAccess(doctorId); // v6.143: STUDENT_CERT yok artık — yalnız diploma tarafı değişebilir
   return NextResponse.json({ ok: true, activated, doctorium });
 }

@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { categoryLabel, KIND_LABEL, type FeedItem } from "@/lib/doctorium";
+// ⚠️ categoryLabel/KIND_LABEL BİLİNÇLİ "@/lib/doctorium-labels"ten (değil "@/lib/doctorium"ten):
+// bu kart FeedLoadMore.tsx (client bileşen, sonsuz kaydırma) üzerinden İSTEMCİ paketine de
+// giriyor — lib/doctorium.ts `db` (Prisma) içe aktarır, oradan DEĞER import etmek build'i kırar.
+// `type FeedItem` type-only olduğu için erimede kaybolur, sorun yok.
+import { categoryLabel, KIND_LABEL } from "@/lib/doctorium-labels";
+import type { FeedItem } from "@/lib/doctorium";
 import { extractExcerpt } from "@/lib/hukuk-keywords";
 import { SaveButton } from "./SaveButton";
 import { CoverArt, hasThumb } from "./CoverArt";
@@ -124,13 +129,29 @@ export function ArticleCard({
   item,
   saved,
   weight = "min",
+  hrefFor,
+  sourceShort,
 }: {
   item: FeedItem;
   saved: boolean | null;
   weight?: CardWeight;
+  /**
+   * Başlık bağlantısı override'ı (2026-08-23, landing V2): /doctorium tanıtım sayfası bu kartı
+   * anonim ziyaretçiye gösterir; varsayılan /doktor/doctorium/... hedefi proxy'de HASTA kapısına
+   * (/giris) düşerdi. Landing `() => Doctorium giriş kapısı` verir; portal çağrıları prop'u
+   * geçmez → davranış aynen. Kartın kendisi hâlâ salt-okunur, auth bağımlılığı yok.
+   */
+  hrefFor?: (item: FeedItem) => string;
+  /**
+   * Künyede KISA yayın adı (2026-08-23, landing V2 QA): dar kartta tam dergi adı sıkışıyordu.
+   * Verilirse görünür metin kısa ad, tam ad `title` + sr-only (erişilebilirlik korunur). Portal
+   * prop'u geçmez → tam ad, davranış aynen.
+   */
+  sourceShort?: string | null;
 }) {
-  const href =
-    item.module === "etkinlik" ? `/doktor/doctorium/etkinlik/${item.id}`
+  const href = hrefFor
+    ? hrefFor(item)
+    : item.module === "etkinlik" ? `/doktor/doctorium/etkinlik/${item.id}`
     : item.module === "kariyer" ? `/doktor/doctorium/kariyer/${item.id}`
     : `/doktor/doctorium/${item.id}`;
 
@@ -159,8 +180,15 @@ export function ArticleCard({
           <CoverArt item={item} size="thumb" />
           <PlateFallback item={item} />
           <div className="min-w-0">
-            <div className="truncate text-[13.5px] font-semibold leading-[1.3] text-[var(--c-ink)]">
-              {item.sourceName}
+            <div className="truncate text-[13.5px] font-semibold leading-[1.3] text-[var(--c-ink)]" title={sourceShort ? item.sourceName : undefined}>
+              {sourceShort ? (
+                <>
+                  <span aria-hidden="true">{sourceShort}</span>
+                  <span className="sr-only">{item.sourceName}</span>
+                </>
+              ) : (
+                item.sourceName
+              )}
             </div>
             <div className="mt-px flex flex-wrap items-center gap-x-1.5 text-[12.5px] text-[var(--c-ink-3)]">
               {/* Tür etiketi künyenin İLK öğesi: göz kaynağı okuduktan sonra "bu ne" sorusunu

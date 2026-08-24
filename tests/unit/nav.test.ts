@@ -22,14 +22,13 @@ describe("navItemsFor", () => {
     expect(h).toContain("/paylasimlarim");
   });
 
-  it("DOCTOR: Doktor + Post-Op; Doctorium bant sekmesi marka toggle'ına taşındı (2026-08-16)", () => {
-    expect(hrefs("DOCTOR")).toEqual(["/doktor", "/doktor/takip"]);
-    expect(hrefs("DOCTOR")).not.toContain("/doktor/doctorium");
+  it("DOCTOR: Doktor + Post-Op + Doctorium (ayrışma 2026-08-24: toggle kalktı, sekme geri geldi)", () => {
+    expect(hrefs("DOCTOR")).toEqual(["/doktor", "/doktor/takip", "/doktor/doctorium"]);
     expect(hrefs("DOCTOR")).not.toContain("/doktor/ucretsiz-saglik");
     expect(hrefs("DOCTOR")).not.toContain("/doktor/profil");
   });
 
-  it("DOCTOR + student (v6.95 + 2026-08-16): bant BOŞ — Doctorium'a tek giriş Header toggle'ı", () => {
+  it("DOCTOR + student (v6.95): bant BOŞ — Doctorium'a giriş Header'daki marka bloğundan", () => {
     expect(navItemsFor("DOCTOR", { student: true }).map((n) => n.href)).toEqual([]);
   });
 
@@ -41,24 +40,23 @@ describe("navItemsFor", () => {
   });
 
   it("stage1 bayrağı DOCTOR-dışı rolleri değiştirmez (koordinatör gözetimi daralmaz)", () => {
-    expect(navItemsFor("COORDINATOR", { stage1: true }).map((n) => n.href)).toEqual(["/operasyon", "/doktor", "/doktor/takip"]);
+    expect(navItemsFor("COORDINATOR", { stage1: true }).map((n) => n.href)).toEqual(["/operasyon", "/doktor", "/doktor/takip", "/doktor/doctorium"]);
     expect(navItemsFor("PATIENT", { stage1: true }).map((n) => n.href)).toEqual(["/vakalarim", "/takip", "/paylasimlarim"]);
     expect(navItemsFor("ADMIN", { stage1: true }).map((n) => n.href)).toEqual(["/admin", "/operasyon"]);
   });
 
   it("stage1=false DOCTOR (AURA üyeliği tam) bandını AYNEN görür — daraltma durum bazlı, kalıcı değil", () => {
-    expect(navItemsFor("DOCTOR", { stage1: false }).map((n) => n.href)).toEqual(["/doktor", "/doktor/takip"]);
+    expect(navItemsFor("DOCTOR", { stage1: false }).map((n) => n.href)).toEqual(["/doktor", "/doktor/takip", "/doktor/doctorium"]);
   });
 
   it("student bayrağı DOCTOR-dışı rolleri değiştirmez (yanlış pozitif daraltma yok)", () => {
-    expect(navItemsFor("COORDINATOR", { student: true }).map((n) => n.href)).toEqual(["/operasyon", "/doktor", "/doktor/takip"]);
+    expect(navItemsFor("COORDINATOR", { student: true }).map((n) => n.href)).toEqual(["/operasyon", "/doktor", "/doktor/takip", "/doktor/doctorium"]);
     expect(navItemsFor("PATIENT", { student: true }).map((n) => n.href)).toEqual(["/vakalarim", "/takip", "/paylasimlarim"]);
     expect(navItemsFor("ADMIN", { student: true }).map((n) => n.href)).toEqual(["/admin", "/operasyon"]);
   });
 
-  it("COORDINATOR: Operasyon + Doktor + Post-Op; Doctorium sekmesi toggle'a taşındı, Ücretsiz Sağlık kalktı", () => {
-    expect(hrefs("COORDINATOR")).toEqual(["/operasyon", "/doktor", "/doktor/takip"]);
-    expect(hrefs("COORDINATOR")).not.toContain("/doktor/doctorium");
+  it("COORDINATOR: Operasyon + Doktor + Post-Op + Doctorium (ayrışma 2026-08-24); Ücretsiz Sağlık kalktı", () => {
+    expect(hrefs("COORDINATOR")).toEqual(["/operasyon", "/doktor", "/doktor/takip", "/doktor/doctorium"]);
   });
 
   it("ADMIN bandı SADE (v6.73 iki tur, kullanıcı kararı): YALNIZ Yönetim + Operasyon — TAM liste", () => {

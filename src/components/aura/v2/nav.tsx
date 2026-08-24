@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AuraMark } from "@/components/AuraLogo";
+import { AuraMark, AuraWordSvg } from "@/components/AuraLogo";
 import { LANGS, useLang, type Lang } from "@/lib/aura-landing/i18n";
 
 // /v2 üst bandı (v6.16) — kök nav'dan AYRI bileşen, bilerek.
@@ -45,7 +45,9 @@ export function V2Nav() {
             (/#care) ki her sayfadan çalışsın (kök nav'ın eski sözleşmesiyle aynı). */}
         <Link href="/" className="flex items-center gap-2.5" aria-label="AURA">
           <AuraMark size={32} />
-          <img src="/assets/aura-word-dark.png" alt="AURA" className="h-4 w-auto" />
+          {/* v6.137: PNG → vektör; eski h-4 (16px canvas) = 10px harf kutusu. Beyaz sabit:
+              V2Nav yalnız koyu vitrin kromunda yaşar. */}
+          <AuraWordSvg fill="#f4f5f3" className="h-[10px] w-auto" />
         </Link>
 
         <div className="hidden items-center gap-6 lg:flex">

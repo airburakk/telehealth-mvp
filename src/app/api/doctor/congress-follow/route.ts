@@ -4,7 +4,12 @@ import { getCurrentUser } from "@/lib/auth";
 import { normalizeAlertDays, EVENT_TYPES } from "@/lib/doctorium";
 
 const EVENT_TYPE_KEYS = new Set<string>(EVENT_TYPES.map((t) => t.key));
-const SCOPE_KEYS = new Set(["ulusal", "uluslararasi"]);
+// 🔴 v6.142 düzeltmesi: "uluslararasi-katilimli" eksikti (lib/doctorium CongressScope üç değer
+// taşır, parseScope üçünü de tanır — burası v6.132'den beri yalnız ikisini biliyordu). Sekme içi
+// panel silinene dek bu hiç fark edilmedi: eski UI o üçüncü değeri hiç GÖNDERMİYORDU. Şimdi
+// PreferencesBoard'un "Uluslararası katılımlı" çipi gönderiyor — eksik kalsaydı seçim sessizce
+// null'a (Tümü) düşerdi ("Kaydedildi" yazar ama yanlış değer kaydedilirdi).
+const SCOPE_KEYS = new Set(["ulusal", "uluslararasi", "uluslararasi-katilimli"]);
 
 /**
  * Etkinlik türü tercihi (v6.132). Dönüş sözleşmesi ÜÇ DEĞERLİ:

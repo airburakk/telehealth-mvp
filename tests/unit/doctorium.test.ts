@@ -16,6 +16,7 @@ import {
   LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES, KIND_LABEL, moduleFeed,
   CAREER_TABS, parseCareerTab, parseSteps, parseStringList,
   MODULE_ALIASES, EVENT_TYPES, EVENT_TYPE_BY_TTB, parseEventTypes, parseScope, scopeBadge,
+  parseViewPrefs,
 } from "@/lib/doctorium";
 import { isHealthRelated, categorize, parseTurkishDate } from "@/lib/doctorium-sources";
 import { pubDate } from "@/lib/doctorium-ingest";
@@ -260,6 +261,48 @@ describe("sektörel zaman aralığı", () => {
   it("geçerli değerler karşılığını verir", () => {
     expect(rangeDays("1")).toBe(1);
     expect(rangeDays("365")).toBe(365);
+  });
+});
+
+// v6.142 — Sektörel/İlaç & Cihaz/Mevzuat GÖRÜNÜM süzgeçleri kalıcı tercihi (sekme içi
+// "Özelleştir" paneli silindi, hepsi /tercihler'de). parseEventTypePref'le AYNI savunma
+// deseni: bozuk/eksik/kısmi veri düşürmesin, HER alan kendi varsayılanına tek tek düşer.
+describe("Doctorium görünüm süzgeci tercihi (v6.142)", () => {
+  it("boş/eksik/bozuk veri tam varsayılana düşer", () => {
+    for (const raw of [null, undefined, "", "{bozuk json", "[]", "42"]) {
+      expect(parseViewPrefs(raw)).toEqual({
+        sektorel: { source: null, range: DEFAULT_RANGE, category: null },
+        ilac: { range: DEFAULT_RANGE },
+        mevzuat: { range: DEFAULT_RANGE, category: null },
+      });
+    }
+  });
+
+  it("geçerli değerler modül modül okunur", () => {
+    const raw = JSON.stringify({
+      sektorel: { s: "uluslararasi", d: "7", c: "sut" },
+      ilac: { d: "180" },
+      mevzuat: { d: "365", c: "ilac-cihaz" },
+    });
+    expect(parseViewPrefs(raw)).toEqual({
+      sektorel: { source: "uluslararasi", range: "7", category: "sut" },
+      ilac: { range: "180" },
+      mevzuat: { range: "365", category: "ilac-cihaz" },
+    });
+  });
+
+  it("bir modüldeki geçersiz alan yalnız KENDİSİ varsayılana düşer — kardeş alanlar okunur", () => {
+    // sektörel.source uydurma ("global") ama range/category geçerli — üçü birden sıfırlanmaz.
+    const raw = JSON.stringify({ sektorel: { s: "global", d: "7", c: "sut" } });
+    expect(parseViewPrefs(raw).sektorel).toEqual({ source: null, range: "7", category: "sut" });
+  });
+
+  it("eksik modül anahtarı o modülü tam varsayılana düşürür, DİĞERLERİNİ etkilemez", () => {
+    const raw = JSON.stringify({ ilac: { d: "1" } });
+    const v = parseViewPrefs(raw);
+    expect(v.ilac).toEqual({ range: "1" });
+    expect(v.sektorel).toEqual({ source: null, range: DEFAULT_RANGE, category: null });
+    expect(v.mevzuat).toEqual({ range: DEFAULT_RANGE, category: null });
   });
 });
 

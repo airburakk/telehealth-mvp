@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import { AuraWordSvg } from "@/components/AuraLogo";
 
 // Doctorium marka primitifleri — TEK KAYNAK (2026-08-18).
 //
@@ -49,23 +50,28 @@ export function DoctoriumInline() {
   );
 }
 
-// Zümrüt DOLGULU CTA lockup'ı (kullanıcı kararı 2026-08-18): "Doctor" BEYAZ, "ium" düğme
-// metninin koyusunda kalır — iki tonlu marka vuruşu zümrüt zeminde de yaşar. Eski istisna
-// ("buton metni tek ton koyu") SÜPERSEDE. Düğmenin kalan metni ("'a katıl") bileşen DIŞINDA
-// ve düğme renginde; yalnız marka adı buradan geçer.
+// Zümrüt DOLGULU CTA lockup'ı — v6.136 (2026-08-23, kullanıcı kararı; axe bulgusu): dolgu
+// KOYU ZÜMRÜT `#065f46` (axe ölçümü: #047857'de nane 4.27 — AA altı), "Doctor" BEYAZ (~7:1),
+// "ium" NANE `#a7f3d0` (~5.7:1), düğmenin kalan metni beyaz. Eski (2026-08-18) parlak #34d399
+// dolgu + beyaz Doctor 1.92:1 ile AA altındaydı (v1'de de aynıydı, v1 hiç taranmamıştı). İki tonlu
+// marka vuruşu korunur. Çağıranların dolgusu DOCTORIUM_CTA_FILL ile hizalanır — parlak zümrüt
+// üstünde bu bileşen KULLANILMAZ.
+export const DOCTORIUM_CTA_FILL = "bg-[#065f46] text-white hover:bg-[#064e3b]";
 export function DoctoriumOnEmerald() {
   return (
     <span className="whitespace-nowrap">
-      <span className="text-white">Doctor</span>ium
+      <span className="text-white">Doctor</span><span className="text-[#a7f3d0]">ium</span>
     </span>
   );
 }
 
 // "by AURA" imzası (kullanıcı kararı 2026-08-16, 4. tur): "by" düz metin (link DEĞİL); AURA,
-// sitenin GERÇEK wordmark PNG'sidir (AuraLogo ile aynı varlıklar) ve yalnız O tıklanabilir →
-// AURA vitrin ana sayfası (/). `light`: açık bölümde lacivert wordmark varyantı (beyaz PNG
-// beyaz zeminde görünmez — AuraLogo'nun logo-word-light/dark ayrımının bölüm karşılığı).
+// sitenin GERÇEK wordmark'ıdır (AuraLogo ile aynı vektör) ve yalnız O tıklanabilir →
+// AURA vitrin ana sayfası (/). `light`: açık bölümde lacivert (beyaz wordmark beyaz zeminde
+// görünmez — AuraLogo'nun .logo-word tema ayrımının bölüm karşılığı).
+// v6.137: PNG → vektör (AuraWordSvg); görsel boyut korundu (0.95em canvas ≈ 0.6em harf kutusu).
 // Yükseklik em-tabanlı: eyebrow/üst bar/footer hangi puntoda kullanırsa oraya ölçeklenir.
+const BY_AURA_NAVY = "#08366f"; // eski aura-word-light.png'nin ölçülen rengi (8,54,111)
 export function ByAura({ light = false }: { light?: boolean }) {
   return (
     <span className="whitespace-nowrap">
@@ -74,11 +80,14 @@ export function ByAura({ light = false }: { light?: boolean }) {
         href="/"
         className="inline-block transition-opacity duration-200 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--dl-cyan)]"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={light ? "/aura-word-light.png" : "/aura-word-dark.png"}
-          alt="AURA"
-          className="inline-block h-[0.95em] w-auto align-[-0.12em]"
+        {/* Erişilebilir ad METİN olarak (sr-only) — SVG dekoratif. QA bulgusu 2026-08-23: metin
+            çıkarımı "Doctorium by" diye yarım okuyordu (aria-label'ı her araç okumaz). */}
+        <span className="sr-only">AURA</span>
+        <AuraWordSvg
+          decorative
+          fill={light ? BY_AURA_NAVY : "var(--dl-ink)"}
+          className="inline-block h-[0.6em] w-auto align-[-0.02em]"
+          style={{ display: "inline-block" }}
         />
       </Link>
     </span>

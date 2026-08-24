@@ -84,15 +84,59 @@ const securityHeaders = [
   { key: "Reporting-Endpoints", value: 'csp-endpoint="/api/csp-report"' },
 ];
 
+// ── AURA↔Doctorium ayrışması Faz A (2026-08-24) — İKİ VERCEL PROJESİ, AYNI REPO ──
+// Doctorium projesi BRAND_MODE=doctorium ile build alır: kökü Doctorium landing'e rewrite eder,
+// AURA vitrin/hasta yüzeylerini AURA'nın kanonik köküne yönlendirir. AURA projesinde BRAND_MODE
+// tanımsız → bu iki liste BOŞ döner, davranış birebir eski hali. Uygulama-içi eş sabitler
+// src/lib/brand.ts'te (config '@' alias'ını çözemediği için değerler burada tekrarlanır —
+// değiştirirken İKİSİNİ birlikte güncelle).
+const IS_DOCTORIUM_DEPLOY = process.env.BRAND_MODE === "doctorium";
+const AURA_CANONICAL_URL = "https://telehealth-mvp-roan.vercel.app";
+// AURA'ya devredilen yüzeyler: vitrin + hasta hunisi + AURA giriş/kayıt + locale kökleri.
+// ⚠️ /doktor ağacı ile /onam BİLİNÇLİ listede DEĞİL: Doctorium kayıt akışı (onam → baslangic
+// diploma yüklemesi) ve portal bu projede yaşar; klinik rotaların asıl kapısı zaten rol +
+// hasClinicalAccess (sunucu tarafı). Locale listesi lib/aura-landing/copy.ts LANG_CODES ile
+// SÖZLEŞMELİ — dil eklenince buraya da yaz.
+const AURA_ONLY_PREFIXES = [
+  "/giris", "/kurumsal-giris", "/kayit", "/ogrenci",
+  "/triyaj", "/vaka", "/vakalarim", "/takip", "/paylasimlarim", "/paylasim",
+  "/paket", "/teklif", "/rezervasyon", "/sikayet", "/gorusme", "/hesap", "/erisim-kaydi",
+  "/second-opinion", "/ucretsiz-saglik", "/saglik-turizmi", "/doktorlar", "/konsultasyon",
+  "/how-it-works", "/v2", "/for-clinicians", "/guven-ve-gizlilik", "/trust",
+  "/en", "/tr", "/ru", "/ar", "/fa", "/az", "/de", "/fr", "/bg",
+];
+
 const nextConfig: NextConfig = {
   // Sürüm parmak izini gizle (X-Powered-By: Next.js başlığı — 2026-07-18 denetimi P3).
   poweredByHeader: false,
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // Doctorium deploy'unda kök = Doctorium landing (URL çubuğu temiz kalır; sayfanın canonical'ı
+  // /doctorium — tek kanonik korunur). AURA deploy'unda boş.
+  async rewrites() {
+    if (!IS_DOCTORIUM_DEPLOY) return [];
+    return { beforeFiles: [{ source: "/", destination: "/doctorium" }], afterFiles: [], fallback: [] };
+  },
   // Rename (Pro Bono → Ücretsiz Sağlık Hizmeti): eski sayfa URL'leri — tarayıcı geçmişi,
   // yer imleri ve DB'deki Notification.href satırları kırılmasın (redirect'ler proxy'den ÖNCE koşar).
   async redirects() {
+    // Doctorium deploy'u: AURA yüzeyleri kanonik AURA köküne (307 — domain kararı netleşene
+    // dek kalıcı işaretlenmez). AURA deploy'undaki kalıcı rename redirect'leri her iki projede
+    // de zararsızdır ama Doctorium'da ilgili rotalar zaten AURA'ya gittiğinden erişilmez.
+    if (IS_DOCTORIUM_DEPLOY) {
+      return [
+        // Kanonik host = doctorium.tr (kullanıcı kararı 2026-08-24; iki gerçek domain alındı).
+        // com.tr + www varyantları kalıcı (308) tek köke toplanır — SEO tek kanonik; SSL/alias
+        // üçünde de Vercel'de. NEXT_PUBLIC_SITE_URL de https://doctorium.tr.
+        { source: "/:path*", has: [{ type: "host" as const, value: "doctorium.com.tr" }], destination: "https://doctorium.tr/:path*", permanent: true },
+        { source: "/:path*", has: [{ type: "host" as const, value: "www.doctorium.tr" }], destination: "https://doctorium.tr/:path*", permanent: true },
+        ...AURA_ONLY_PREFIXES.flatMap((p) => [
+          { source: p, destination: `${AURA_CANONICAL_URL}${p}`, permanent: false },
+          { source: `${p}/:path*`, destination: `${AURA_CANONICAL_URL}${p}/:path*`, permanent: false },
+        ]),
+      ];
+    }
     return [
       { source: "/pro-bono", destination: "/ucretsiz-saglik", permanent: true },
       { source: "/pro-bono/basvur", destination: "/ucretsiz-saglik/basvur", permanent: true },

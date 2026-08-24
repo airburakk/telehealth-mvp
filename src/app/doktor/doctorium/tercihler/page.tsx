@@ -8,6 +8,7 @@ import { getDoctorBalance } from "@/lib/rewards";
 import {
   BRANCH_OPTIONS, parseBranchPrefs, parseFeedModules, slugForLabel,
   todayModuleCounts, EVENT_TYPES, parseEventTypePref,
+  RANGE_OPTIONS, SECTOR_CATEGORIES, parseViewPrefs,
 } from "@/lib/doctorium";
 import { SPONSOR_CONSENT_TEXT } from "@/lib/sponsor";
 import { DoctoriumShell } from "../DoctoriumSidebar";
@@ -17,16 +18,20 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Akış Tercihleri" };
 
 /**
- * AKIŞ TERCİHLERİ — tek ayar sayfası (v6.132, kullanıcı kararı 2026-08-20).
+ * AKIŞ TERCİHLERİ — tek ayar sayfası (v6.132, kullanıcı kararı 2026-08-20; v6.142'de GENİŞLEDİ).
  *
  * 🔄 SÜPERSEDE: bu rota v6.49'dan beri `/doktor/doctorium`e YÖNLENDİREN bir iskeletti (o gün
- * tercihler sekme-altı panele taşınmıştı). Karar geri alındı ama farklı bir gerekçeyle: panel
- * hem GÖRÜNÜM süzgeçlerini (bu sekmede ne görüyorum) hem KALICI tercihleri (akışım nasıl
- * kurulu) taşıyordu ve ikisi karışıyordu. Artık ayrım net:
- *   · Sekme içindeki "Özelleştir" paneli → yalnız görünüm süzgeçleri (aralık, kategori, tür).
- *   · Bu sayfa → yalnız KALICI tercihler (hangi bölümler akışa girer, branşlar, alarmlar, rıza).
- * v6.49'un "iki ayrı tercih ekranı sürüklenir" endişesi bu ayrımla karşılanıyor: aynı ayar
- * iki yerde YAŞAMIYOR.
+ * tercihler sekme-altı panele taşınmıştı). v6.132'de karar geri alındı ama farklı bir gerekçeyle:
+ * panel hem GÖRÜNÜM süzgeçlerini (bu sekmede ne görüyorum) hem KALICI tercihleri (akışım nasıl
+ * kurulu) taşıyordu ve ikisi karışıyordu — ayrım çizildi: sekme içi panel yalnız görünüm süzgeci,
+ * bu sayfa yalnız kalıcı tercih.
+ *
+ * 🔄 SÜPERSEDE #2 (v6.142, kullanıcı kararı 2026-08-23): "iki ekran" ayrımının KENDİSİ döküntü
+ * üretti — sektörel/ilaç/etkinlik/mevzuat sekmelerinde AYNI ADLA ("Özelleştir") iki farklı kontrol
+ * duruyordu. Çözüm ayrımı derinleştirmek değil KALDIRMAK oldu: sekme içi panel (DoctoriumFilters.tsx)
+ * tamamen silindi; Kaynak/Geriye dönük/Kategori de etkinlik türü/kapsamının zaten izlediği modele
+ * geçti — kalıcı Doctor satırı (parseViewPrefs) + URL parametresi yalnız o görünüm için ezer.
+ * Artık TEK ekran, TEK "Özelleştir" düğmesi her sekmede aynı yere (buraya) götürür.
  *
  * Erişim: segment layout'u zaten DOCTOR/COORDINATOR/ADMIN kapısını uyguluyor; burada ayrıca
  * doktor profili şartı var (tercihler Doctor satırına yazılır — personelin branşı/alarmı yok).
@@ -47,6 +52,8 @@ export default async function TercihlerPage() {
       activatedAt: true, studentVerifiedAt: true,
       congressAlertDays: true, congressAbstractAlertDays: true, congressEarlyBirdAlertDays: true,
       congressEventTypes: true, congressScope: true,
+      // v6.142 — Sektörel/İlaç & Cihaz/Mevzuat GÖRÜNÜM süzgeçleri (aynı sözleşme).
+      doctoriumViewPrefs: true,
       sponsorPersonalizationAt: true,
     },
   });
@@ -55,6 +62,7 @@ export default async function TercihlerPage() {
   // v6.95: öğrenci-sınırlı üye pazarlama yüzeyi görmez → sponsorlu içerik rızası da sorulmaz.
   const studentOnly = isStudentOnly(doctor);
   const balance = studentOnly ? null : await getDoctorBalance(me.doctorId);
+  const viewPrefs = parseViewPrefs(doctor.doctoriumViewPrefs);
 
   return (
     <DoctoriumShell active={null} balance={balance} isDoctor counts={await todayModuleCounts()}>
@@ -92,6 +100,11 @@ export default async function TercihlerPage() {
           eventTypeOptions={EVENT_TYPES.map((t) => ({ key: t.key, label: t.label }))}
           eventTypesInitial={parseEventTypePref(doctor.congressEventTypes)}
           scopeInitial={doctor.congressScope}
+          rangeOptions={RANGE_OPTIONS.map((r) => ({ key: r.key, label: r.label }))}
+          categoryOptions={SECTOR_CATEGORIES}
+          sectorInitial={viewPrefs.sektorel}
+          pharmaInitial={viewPrefs.ilac}
+          legalViewInitial={viewPrefs.mevzuat}
           showSponsor={!studentOnly}
           sponsorInitial={!!doctor.sponsorPersonalizationAt}
           sponsorText={SPONSOR_CONSENT_TEXT}

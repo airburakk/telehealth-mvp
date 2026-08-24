@@ -4,9 +4,12 @@
 import { LANG_CODES, type Lang } from "./copy";
 
 // Kanonik site kökü — metadataBase + canonical + OpenGraph + sitemap/robots'un TEK kaynağı.
-// Domain taşınırsa (aurahealth.clinic) yalnız burası değişir. Saf sabit (db/auth ağacına
-// dokunmaz — sitemap.ts/robots.ts bunu güvenle import eder).
-export const SITE_URL = "https://telehealth-mvp-roan.vercel.app";
+// Saf sabit ağaç (db/auth'a dokunmaz — sitemap.ts/robots.ts bunu güvenle import eder).
+// Ayrışma Faz A (2026-08-24): iki Vercel projesi aynı repodan build alır — Doctorium projesi
+// NEXT_PUBLIC_SITE_URL ile kendi kökünü verir (OG/canonical/sitemap doğru host'u gösterir);
+// AURA projesinde env tanımsız → fallback = eski davranış BİREBİR. Fallback değeri
+// lib/brand.ts AURA_CANONICAL_URL ile aynıdır (oraya da bak). Domain taşınırsa ikisi birlikte.
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://telehealth-mvp-roan.vercel.app";
 
 // Landing Lang kodu → OpenGraph locale (dil_ÜLKE). Pazar hedefine göre bölge seçimi:
 // ar→SA, fa→IR, az→AZ (RTL/MENA genişlemesi ile hizalı) · bg→BG (Balkan, 2026-07-23).

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useSearchParams } from "next/navigation";
 import { WordHeadline } from "@/components/aura/word-headline";
-import { AuraMark, DoctoriumBraille } from "@/components/AuraLogo";
 import { GateEmailForm } from "@/components/aura/gate-email-form";
 import { LangProvider, useLang, langDir, LINKS, VIDEOS } from "@/lib/aura-landing/i18n";
 import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
@@ -34,6 +33,14 @@ import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
 function useReturnedWithBanner(): boolean {
   const sp = useSearchParams();
   return !!(sp.get("oauth") || sp.get("verify"));
+}
+
+// Kapının kendi ?next'ini OAuth başlangıcına taşır — e-posta formu next'i zaten okuyordu
+// (GateEmailForm), Google/Apple butonları statik LINKS.*Start'a gidip bunu KAYBEDİYORDU
+// (bilinen sınır, doctorium-landing/routes.ts notu). Start rotası next'i cookie'ye yazar,
+// callback mevcut kullanıcıyı oraya döndürür (yeni hesap yine profil-tamamla'dan geçer).
+function withNext(href: string, next: string | null): string {
+  return next ? `${href}${href.includes("?") ? "&" : "?"}next=${encodeURIComponent(next)}` : href;
 }
 
 // Sağ panel videosu yalnız md+ yerleşiminde var (hidden md:block); dar ekranda
@@ -121,28 +128,29 @@ export function SigninGate() {
 function SigninPanel() {
   const { t } = useLang();
   const returned = useReturnedWithBanner();
+  const sp = useSearchParams();
+  const next = sp.get("next");
   const [emailOpen, setEmailOpen] = useState(false);
   const showForm = emailOpen || returned;
 
   return (
     <GateShell video={VIDEOS.hero}>
-      <Link href="/" aria-label="AURA" className="flex justify-center">
-        <AuraMark size={40} />
-      </Link>
+      {/* Kapı LOGOSUZ ve AURA bir kez (kullanıcı kararı 2026-08-23, v6.138): üstteki sembol/lockup
+          kaldırıldı; "GLOBAL CARE" başlıktaki AURA'nın altında (WordHeadline globalCare). */}
       <WordHeadline
         word={t.signin.word}
         wordBefore={t.signin.wordBefore}
         wordAfter={t.signin.wordAfter}
         lineAfter={t.signin.lineAfter}
-        braille
+        globalCare
       />
       <p className="mt-3 text-[15px] text-[var(--aura-grey)]">{t.signin.sub}</p>
 
       <div className="mt-8 space-y-3">
-        {/* Google + Apple: doğrudan OAuth başlangıcı (dönüş rol ana sayfasına iner;
+        {/* Google + Apple: doğrudan OAuth başlangıcı (?next varsa mevcut kullanıcı oraya döner;
             hata dönüşü ?oauth ile bu kapıya düşer ve form banner'la açılır) */}
-        <ProviderButton href={LINKS.googleStart} label={t.signin.google} icon={<GoogleIcon />} />
-        <ProviderButton href={LINKS.appleStart} label={t.signin.apple} icon={<AppleIcon />} />
+        <ProviderButton href={withNext(LINKS.googleStart, next)} label={t.signin.google} icon={<GoogleIcon />} />
+        <ProviderButton href={withNext(LINKS.appleStart, next)} label={t.signin.apple} icon={<AppleIcon />} />
         <ProviderToggle
           open={showForm}
           onClick={() => setEmailOpen((o) => !o)}
@@ -227,21 +235,21 @@ function CorporatePanel() {
   const { t } = useLang();
   const c = t.corporate;
   const returned = useReturnedWithBanner();
+  const sp = useSearchParams();
+  const next = sp.get("next");
   const [role, setRole] = useState(0); // roles dizisinde indeks; 0 = Doktor
   const [emailOpen, setEmailOpen] = useState(false);
   const showForm = emailOpen || returned;
 
   return (
     <GateShell video={VIDEOS.so}>
-      <Link href="/" aria-label="AURA" className="flex justify-center">
-        <AuraMark size={40} />
-      </Link>
+      {/* Hasta kapısıyla aynı: logosuz, GLOBAL CARE başlıktaki AURA'nın altında. */}
       <WordHeadline
         word={c.word}
         wordBefore={c.wordBefore}
         wordAfter={c.wordAfter}
         lineAfter={c.lineAfter}
-        braille
+        globalCare
       />
       <p className="mt-3 text-[15px] text-[var(--aura-grey)]">{c.sub}</p>
 
@@ -252,8 +260,8 @@ function CorporatePanel() {
             açılır. Metinler t.signin'den (9 dilde; corporate sözlüğüne kopyalanmaz).
             Rol seçimi görsel bağlam olmaya devam eder — tüm roller aynı girişe gider. */}
         <div className="space-y-3">
-          <ProviderButton href={LINKS.corporateGoogleStart} label={t.signin.google} icon={<GoogleIcon />} />
-          <ProviderButton href={LINKS.corporateAppleStart} label={t.signin.apple} icon={<AppleIcon />} />
+          <ProviderButton href={withNext(LINKS.corporateGoogleStart, next)} label={t.signin.google} icon={<GoogleIcon />} />
+          <ProviderButton href={withNext(LINKS.corporateAppleStart, next)} label={t.signin.apple} icon={<AppleIcon />} />
           <ProviderToggle
             open={showForm}
             onClick={() => setEmailOpen((o) => !o)}
@@ -303,10 +311,8 @@ function CorporatePanel() {
 // Doctorium giriş kapısı (2026-08-16, kullanıcı onaylı tasarım): CorporatePanel'in
 // alt-marka uyarlaması. Farklar: zümrüt DÖNEN AuraMark (tone="emerald" + brand-live
 // 4.5s — header toggle diliyle aynı) · WordHeadline yerine Doctorium lockup'ı
-// (Doctor ink + ium zümrüt; marka kuralı [[doctorium-tanitim-marka]]) · lockup'ın TAM
-// ALTINDA DoctoriumBraille (kural güncellendi 2026-08-16: Braille artık iki wordmark'ta
-// da — AURA braille'i "AURA"nın, Doctorium braille'i "Doctorium"un altında; eski
-// "Braille yalnız AURA'ya" kuralı SÜPERSEDE) · iki rol (Doktor / Tıp Öğrencisi) ·
+// (Doctor ink + ium zümrüt; marka kuralı [[doctorium-tanitim-marka]]) · Braille
+// KALDIRILDI (2026-08-21, kullanıcı kararı) · iki rol (Doktor / Tıp Öğrencisi) ·
 // üyelik daveti rol-duyarlı (/kayit · /ogrenci).
 //
 // TEK DİL TR (landing kararıyla tutarlı — /doctorium lang="tr"): GateShell yerine
@@ -338,9 +344,10 @@ const DOCTORIUM = {
   form: { emailLabel: "E-posta", passwordLabel: "Parola", submit: "Giriş yap" },
 } as const;
 
-// Rol-duyarlı üyelik hedefi — DOCTORIUM.roles indeksleriyle paralel:
-// 0 Doktor → /kayit (self-signup) · 1 Tıp Öğrencisi → /ogrenci (öğrenci hunisi).
-const DOCTORIUM_SIGNUP_HREFS: readonly string[] = [LINKS.doctorSignup, "/ogrenci"];
+// Rol-duyarlı üyelik hedefi — DOCTORIUM.roles indeksleriyle paralel (ayrışma Faz B 2026-08-24:
+// AURA kromlu /kayit + /ogrenci yerine Doctorium kabuklu sarmalayıcılar):
+// 0 Doktor → /doctorium/kayit · 1 Tıp Öğrencisi → /doctorium/ogrenci.
+const DOCTORIUM_SIGNUP_HREFS: readonly string[] = ["/doctorium/kayit", "/doctorium/ogrenci"];
 
 // Doctorium'a özel kapı videosu (kullanıcı üretimi, 2026-08-16 — geçici VIDEOS.so
 // süpersede). Ad-versiyonlu "-gate2" çifti; poster kendi ilk karesinden (MAD 1.17 < 1.5
@@ -353,15 +360,16 @@ const DOCTORIUM_VIDEO = {
 
 export function DoctoriumGate() {
   const returned = useReturnedWithBanner();
+  const sp = useSearchParams();
+  const next = sp.get("next"); // landing "Giriş yap" → ?next=/doktor/doctorium (mevcut doktor portala döner)
   const [role, setRole] = useState(0); // DOCTORIUM.roles indeksi; 0 = Doktor
   const [emailOpen, setEmailOpen] = useState(false);
   const showForm = emailOpen || returned;
 
   return (
     <DoctoriumShell>
-      <Link href="/doctorium" aria-label="Doctorium" className="flex justify-center">
-        <AuraMark size={40} tone="emerald" className="brand-live" />
-      </Link>
+      {/* v6.138 (kullanıcı kararı 2026-08-23): tüm giriş ekranları LOGOSUZ — üstteki zümrüt
+          küre kaldırıldı; yalnız başlık (Doctorium lockup) + form. */}
 
       {/* Lockup + karşılama tek h1'de (tek sayfa başlığı): görsel iki satır,
           erişilebilir ad düzyazı. Lockup font-medium — landing DoctoriumWord dili
@@ -371,15 +379,8 @@ export function DoctoriumGate() {
         className="aura-display mt-8 leading-tight tracking-tight text-[var(--aura-ink)]"
       >
         <span aria-hidden className="block">
-          {/* Lockup + Braille dikey grup: Braille "Doctorium" yazısının TAM ALTINDA
-              ortalı (WordHeadline'daki AURA deseninin lockup karşılığı). height=12 =
-              DoctoriumBraille min-genişlik eşiğinin (146px) tam karşılığı — küçültme,
-              eşik altı sessizce HİÇ çizmez (kasıtlı). */}
-          <span className="inline-flex flex-col items-center">
-            <span className="block text-3xl font-medium md:text-4xl">
-              Doctor<span style={{ color: DOCTORIUM_EMERALD }}>ium</span>
-            </span>
-            <DoctoriumBraille height={12} className="mt-2.5 text-[var(--aura-micro)]" />
+          <span className="block text-3xl font-medium md:text-4xl">
+            Doctor<span style={{ color: DOCTORIUM_EMERALD }}>ium</span>
           </span>
           <span className="mt-2 block text-2xl font-medium md:text-3xl">
             {DOCTORIUM.welcome}
@@ -399,8 +400,8 @@ export function DoctoriumGate() {
             başlangıçları; e-posta formu kapı içinde açılır. Rol seçimi görsel
             bağlam — iki rol de aynı girişe gider. */}
         <div className="space-y-3">
-          <ProviderButton href={LINKS.corporateGoogleStart} label={DOCTORIUM.google} icon={<GoogleIcon />} />
-          <ProviderButton href={LINKS.corporateAppleStart} label={DOCTORIUM.apple} icon={<AppleIcon />} />
+          <ProviderButton href={withNext(LINKS.corporateGoogleStart, next)} label={DOCTORIUM.google} icon={<GoogleIcon />} />
+          <ProviderButton href={withNext(LINKS.corporateAppleStart, next)} label={DOCTORIUM.apple} icon={<AppleIcon />} />
           <ProviderToggle
             open={showForm}
             onClick={() => setEmailOpen((o) => !o)}

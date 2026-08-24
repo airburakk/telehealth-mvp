@@ -40,6 +40,7 @@ export function OnboardingForm({
   stage1,
   security,
   theme,
+  doctoriumOnly = false,
 }: {
   doctorName: string;
   branchKey: string;
@@ -63,6 +64,10 @@ export function OnboardingForm({
   security: SecurityInitial | null;
   // Sayfanın aktif teması (aura_theme cookie) — Aşama 2 bandı bunun TERSİNE boyanır.
   theme: "dark" | "light";
+  // Ayrışma (2026-08-24): Doctorium deploy'unda sayfa YALNIZ Aşama 1'i gösterir — "iki aşamalı"
+  // girişi, Aşama 2 (AURA) ve Aşama 3 bantları çizilmez (kullanıcı bulgusu: başlangıçta AURA
+  // anlatımı kaldı). Client bileşeni BRAND_MODE'u göremez → server page prop'la geçirir.
+  doctoriumOnly?: boolean;
 }) {
   const router = useRouter();
   const [freeCare, setFreeCare] = useState(initialFreeCare);
@@ -121,16 +126,25 @@ export function OnboardingForm({
         <div className="mx-auto max-w-2xl px-5 py-10">
           <div className="text-center">
             <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">Hoş geldiniz, {doctorName}</h1>
-            <p className="mt-2 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-sm text-[var(--c-ink-2)]">
-              <span>Üyeliğiniz iki aşamalıdır:</span>
-              <strong>Doctor<span className="doctorium-ium">ium</span></strong>
-              <span>üyeliği için e-Devlet barkodlu diplomanız yeterli;</span>
-              {/* AURA yazıyla değil LOGOYLA (marka turkuazı) — kullanıcı kararı 2026-08-17.
-                  1.35em: 0.78em "çok küçük kaldı" (kullanıcı, 2. tur) — logo çevresindeki
-                  metinden belirgin büyük durmalı ki marka olarak okunsun, sözcük gibi değil. */}
-              <AuraWordmark height="1.35em" />
-              <span>üyeliği için mesleki belgelerinizi tamamlarsınız.</span>
-            </p>
+            {doctoriumOnly ? (
+              /* Ayrışma (2026-08-24): Doctorium deploy'unda AURA/iki-aşama anlatımı YOK —
+                 tek cümle, tek marka. */
+              <p className="mt-2 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-sm text-[var(--c-ink-2)]">
+                <strong>Doctor<span className="doctorium-ium">ium</span></strong>
+                <span>üyeliğiniz için e-Devlet barkodlu diplomanızı doğrulamanız yeterli.</span>
+              </p>
+            ) : (
+              <p className="mt-2 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-sm text-[var(--c-ink-2)]">
+                <span>Üyeliğiniz iki aşamalıdır:</span>
+                <strong>Doctor<span className="doctorium-ium">ium</span></strong>
+                <span>üyeliği için e-Devlet barkodlu diplomanız yeterli;</span>
+                {/* AURA yazıyla değil LOGOYLA (marka turkuazı) — kullanıcı kararı 2026-08-17.
+                    1.35em: 0.78em "çok küçük kaldı" (kullanıcı, 2. tur) — logo çevresindeki
+                    metinden belirgin büyük durmalı ki marka olarak okunsun, sözcük gibi değil. */}
+                <AuraWordmark height="1.35em" />
+                <span>üyeliği için mesleki belgelerinizi tamamlarsınız.</span>
+              </p>
+            )}
             <p className="mt-1.5 text-sm text-[var(--c-ink-2)]">
               Tercihlerinizi dilediğiniz zaman profilinizden değiştirebilirsiniz.
             </p>
@@ -143,9 +157,10 @@ export function OnboardingForm({
         </div>
       </div>
 
-      {/* ══ BANT 2 — KOYU: Aşama 2 (AURA) ══ */}
+      {/* ══ BANT 2 — KOYU: Aşama 2 (AURA) ══ — Doctorium deploy'unda ÇİZİLMEZ (ayrışma 2026-08-24) */}
       {/* id="asama-2": baslangic sayfasındaki aura-gecis uyarı kutusunun "Aşama 2'ye geç"
           butonunun çapası (scroll-mt: kayınca bant üstü ekran kenarına yapışmasın). */}
+      {!doctoriumOnly && (
       <div id="asama-2" className={`${DARK_BAND} scroll-mt-6 bg-[var(--c-bg)]`}>
         <div className="mx-auto max-w-2xl px-5 py-10">
       {/* ── AŞAMA 2 — AURA üyeliği: mevcut aktivasyon gereksinimleri AYNEN (v6.105 ad değişimi:
@@ -262,14 +277,16 @@ export function OnboardingForm({
       {security && <SecurityLayersCard initial={security} />}
         </div>
       </div>
+      )}
 
-      {/* ══ BANT 3 — AÇIK: Aşama 3 (Tercihler / Paneller) ══
+      {/* ══ BANT 3 — AÇIK: Aşama 3 (Tercihler / Paneller) ══ — Doctorium deploy'unda ÇİZİLMEZ
           Kullanıcı kararı 2026-08-17: dört çalışma yolu AYRI bir aşamaya çıkarıldı (önce
           Aşama 2'nin kuyruğundaydı). Yeknesak adlandırma ŞART — hepsi "… Paneli" (kullanıcı:
           "ikinci görüş paneli diyorsan ücretsiz sağlık hizmeti paneli, konsültasyon talepleri
           paneli de olmalı"). İki tür kart var ve ayrım bilinçli: DURUM kartları (İkinci Görüş,
           Sağlık Turizmi) sistemin verdiği erişimi BİLDİRİR — tıklanmaz; TERCİH kartları
           (Ücretsiz Sağlık, Konsültasyon) opt-in'dir — açılıp kapanır. */}
+      {!doctoriumOnly && (
       <div className={`${LIGHT_BAND} bg-[var(--c-bg)]`}>
         <div className="mx-auto max-w-2xl px-5 py-10">
           <div>
@@ -390,6 +407,7 @@ export function OnboardingForm({
       </p>
         </div>
       </div>
+      )}
     </div>
   );
 }

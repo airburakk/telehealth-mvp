@@ -50,7 +50,8 @@ const LD_JSON = JSON.stringify({
       "@type": "MedicalOrganization",
       name: "AURA",
       url: SITE,
-      logo: `${SITE}/assets/aura-symbol.png`,
+      // v6.137: marka seti v2 — küre ikonu (koyu kare, 512px; eski aura-symbol.png silindi).
+      logo: `${SITE}/icon-512.png?v=3`,
       description:
         "A multilingual digital care platform connecting case preparation, specialist consultation, treatment planning and follow-up across borders.",
       areaServed: "Türkiye",

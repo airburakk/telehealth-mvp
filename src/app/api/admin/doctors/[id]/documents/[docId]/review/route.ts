@@ -13,9 +13,10 @@ import { refreshActivation } from "@/lib/doctor-activation";
 // Otomatik yol (e-Devlet barkodu) belgeyi zaten ACCEPTED doğurur; burası onun yakalayamadıklarıdır.
 // Self-auth raw ucuyla aynı: yalnız ETHICS/ADMIN, diğer herkese 404 (varlık gizlenir).
 const REVIEWER_ROLES = ["ETHICS", "ADMIN"];
+// v6.143: STUDENT_CERT çıktı — öğrenci kapısı artık belge incelemesi değil (üniversite e-postası).
 const DOC_TYPE_TR: Record<string, string> = {
   DIPLOMA: "Diploma", MMSS: "MMSS poliçesi", CHAMBER: "Tabip odası yazısı",
-  STUDENT_CERT: "Öğrenci belgesi", CERTIFICATE: "Sertifika", ACADEMIC: "Akademik çalışma",
+  CERTIFICATE: "Sertifika", ACADEMIC: "Akademik çalışma",
 };
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string; docId: string }> }) {

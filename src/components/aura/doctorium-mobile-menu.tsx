@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 // kapalı başlar); renkler landing'in --dl-* değişkenlerinden — tema toggle'ına değil bölüm
 // paletine bağlı (landing sözleşmesi). Panel yalnız BÖLÜM ÇAPALARINI taşır: Giriş yap + katıl
 // düğmeleri mobilde barda görünür (bu isteğin asıl maddesi) — panelde tekrarlanmaz.
+// v1 landing'in çapaları — varsayılan (geriye uyum). V2 landing kendi listesini `sections`
+// prop'uyla verir (2026-08-23); bileşen iki sürümde de aynı.
 const SECTIONS = [
   { href: "#olanaklar", label: "Olanaklar" },
   { href: "#hukuk", label: "Hukuk" },
@@ -15,9 +17,20 @@ const SECTIONS = [
   { href: "#ogrenci", label: "Tıp öğrencileri" },
 ];
 
-export function DoctoriumMobileMenu() {
+export function DoctoriumMobileMenu({
+  sections = SECTIONS,
+  onOpen,
+  breakpoint = "md",
+}: {
+  sections?: readonly { href: string; label: string }[];
+  /** V2: menü açılınca analytics (mobile_menu_open) — v1 vermez. */
+  onOpen?: () => void;
+  /** Hamburger'in gizlendiği eşik: v1 "md" (768+), V2 "lg" (1024+ — tablet de menüden gezinir). */
+  breakpoint?: "md" | "lg";
+} = {}) {
   const [open, setOpen] = useState(false);
   const menuId = "doctorium-nav-menu";
+  const hide = breakpoint === "lg" ? "lg:hidden" : "md:hidden";
 
   // Escape paneli kapatır (V2Nav deseni — klavye kullanıcısı panele hapsolmasın).
   useEffect(() => {
@@ -36,8 +49,8 @@ export function DoctoriumMobileMenu() {
         aria-label={open ? "Menüyü kapat" : "Menü"}
         aria-expanded={open}
         aria-controls={menuId}
-        onClick={() => setOpen((o) => !o)}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[var(--dl-line)] text-[var(--dl-ink)] transition-colors duration-200 active:scale-[0.96] md:hidden"
+        onClick={() => setOpen((o) => { if (!o) onOpen?.(); return !o; })}
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--dl-line)] text-[var(--dl-ink)] transition-colors duration-200 active:scale-[0.96] md:h-11 md:w-11 ${hide}`}
       >
         <svg aria-hidden viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
           {open ? <path d="m3.5 3.5 9 9M12.5 3.5l-9 9" /> : <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11" />}
@@ -47,10 +60,10 @@ export function DoctoriumMobileMenu() {
       {open && (
         <div
           id={menuId}
-          className="absolute inset-x-0 top-full border-b border-t border-[var(--dl-line)] bg-[color-mix(in_srgb,var(--dl-bg)_94%,transparent)] px-5 pb-4 pt-2 backdrop-blur-md md:hidden"
+          className={`absolute inset-x-0 top-full z-30 border-b border-t border-[var(--dl-line)] bg-[color-mix(in_srgb,var(--dl-bg)_94%,transparent)] px-5 pb-4 pt-2 backdrop-blur-md ${hide}`}
         >
           <nav aria-label="Bölümler" className="flex flex-col gap-1">
-            {SECTIONS.map((s) => (
+            {sections.map((s) => (
               <a
                 key={s.href}
                 href={s.href}

@@ -26,7 +26,15 @@ export const CHROME_FREE_ROUTES = [
   "/guven-ve-gizlilik",
   "/for-clinicians",
   "/doctorium",
+  // v1 yedeği (2026-08-23): V2 landing'e geçişte eski landing'in noindex karşılaştırma kopyası —
+  // aynı bileşen, aynı kendi-kromu sözleşmesi. V2 kesinleşince bu satır bileşenle birlikte kalkar.
+  "/doctorium-v1",
   "/doctorium/giris",
+  // Doctorium kayıt yüzeyleri (ayrışma Faz B, 2026-08-24): kendi koyu kabuğunu taşır
+  // (DoctoriumSignupShell) — AURA Header/SiteFooter girmez. AURA'nın /kayit + /ogrenci'si
+  // listede DEĞİL (onlar AURA kromuyla yaşamaya devam eder).
+  "/doctorium/kayit",
+  "/doctorium/ogrenci",
   "/giris",
   "/kurumsal-giris",
 ] as const;

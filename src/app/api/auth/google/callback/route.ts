@@ -6,7 +6,8 @@ import { createSession, hashPassword } from "@/lib/auth";
 import { roleHome, type Role } from "@/lib/session";
 import { patientHome } from "@/lib/patient-journey";
 import { consentedVersion } from "@/lib/consent";
-import { isGoogleConfigured, exchangeGoogleCode, googleRedirectUri } from "@/lib/oauth";
+import { isGoogleConfigured, exchangeGoogleCode, googleRedirectUri, isSafeNextPath } from "@/lib/oauth";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 import { createDoctorAccount } from "@/lib/doctor-signup";
 import { createPatientAccount } from "@/lib/patient-signup";
 
@@ -19,13 +20,17 @@ export async function GET(req: Request) {
 
   const c = await cookies();
   const intent = c.get("g_oauth_intent")?.value === "patient" ? "patient" : "doctor";
+  const next = c.get("g_oauth_next")?.value;
   c.delete("g_oauth_intent");
-  // ?oauth banner'ı kapı-içi formda çizilir (2026-08-06 — /e-posta alt rotası kaldırıldı)
-  const errBack = intent === "patient" ? "/giris?oauth=error" : "/kayit?oauth=error";
+  c.delete("g_oauth_next");
+  // ?oauth banner'ı kapı-içi formda çizilir (2026-08-06 — /e-posta alt rotası kaldırıldı).
+  // Ayrışma (2026-08-24): Doctorium deploy'unda dönüş kapısı /doctorium/giris — /kayit burada
+  // AURA'ya 307'lenir, banner hiç görünmezdi.
+  const gate = intent === "patient" ? "/giris" : IS_DOCTORIUM_DEPLOY ? "/doctorium/giris" : "/kayit";
+  const errBack = `${gate}?oauth=error&provider=google`;
 
   if (!isGoogleConfigured()) {
-    const back = intent === "patient" ? "/giris?oauth=unavailable" : "/kayit?oauth=unavailable";
-    return NextResponse.redirect(new URL(back, origin));
+    return NextResponse.redirect(new URL(`${gate}?oauth=unavailable&provider=google`, origin));
   }
 
   const code = url.searchParams.get("code");
@@ -66,12 +71,21 @@ export async function GET(req: Request) {
     });
   }
 
+  // Ayrışma korkuluğu (2026-08-24): Doctorium deploy'unda HASTA hesabına oturum açılmaz —
+  // patientHome rotaları burada AURA'ya 307'lenip kullanıcıyı sessizce marka değiştirtiyordu.
+  if (IS_DOCTORIUM_DEPLOY && user.role === "PATIENT") {
+    return NextResponse.redirect(new URL(`${gate}?oauth=role&provider=google`, origin));
+  }
+
   const cv = await consentedVersion(user.id);
   await createSession({ id: user.id, email: user.email, name: user.name, role: user.role as Role, cv });
   // Faz 5: dönen hasta vaka merkezine iner (başvurusu yoksa /triyaj). Yeni doktor: kimlik ara
-  // sayfası (proxy onam kapısı next'i koruyarak önce /onam'a düşürür — zincir bozulmaz).
+  // sayfası (proxy onam kapısı next'i koruyarak önce /onam'a düşürür — zincir bozulmaz). Yeni
+  // doktor DAİMA profil-tamamla'ya iner (next varsa bile) — kimlik eksikken hedef sayfaya
+  // düşürmek onboarding'i atlatırdı; next mevcut kullanıcı için geçerli.
   const home = newDoctor
     ? "/doktor/profil-tamamla"
+    : isSafeNextPath(next) ? next
     : user.role === "PATIENT" ? await patientHome(user.id) : roleHome(user.role as Role);
   return NextResponse.redirect(new URL(home, origin));
 }

@@ -127,9 +127,8 @@ export const HIW_VIDEOS = {
   },
 };
 
-// AURA logo letterform dilimleri (yatayda siki kirpilmis "-t" kesimler) —
-// hero ve giris basliklari ayni kaynagi kullanir.
-export const LETTERS = ["aura-a1-t", "aura-u-t", "aura-r-t", "aura-a2-t"];
+// (v6.137: LETTERS harf-dilimi listesi KALDIRILDI — hero/kapı letterform'u artık vektör
+// wordmark (AuraWordSvg); public/assets/letters silindi.)
 
 export const COPY = {
   en: {
@@ -404,8 +403,8 @@ export const COPY = {
       // ⚠️ BOLUME GIRMEYENLER (kasitli — iddia edemedigimiz icin):
       //   · Sesle dikte: KULLANICI KARARI (2026-07-16) — yalnzi 3 hasta formunda
       //     (triyaj/SO/turizm), TUM yuzeylerde degil ⇒ landing'de genel vaat YANILTICI olurdu.
-      //   · Braille: GORSEL marka ogesi — Braille cihazi/ekran okuyucu destegi DEGIL. note'ta
-      //     acikca reddediliyor ([[aura-braille-under-wordmark]] marka kurali, a11y kaniti DEGIL).
+      //   · Braille: v6.138'de (2026-08-23) site genelinden KALDIRILDI — note'taki "gorsel marka
+      //     ogesi" cumlesi 9 dilde silindi (artik olmayan bir oge hakkinda beyan kalmasin).
       //   · WCAG: bagimsiz denetim YOK ⇒ uyumluluk beyani YOK (note'ta).
       // 🪤 Yeni madde eklerken: once KOD KANITI bul, sonra yaz. Kanitlanamayan madde GIRMEZ.
       // Yapisal not: items UNIFORM ({key,n,title,body}) + note ({label,text}) — 8 dilin yapi
@@ -477,7 +476,7 @@ export const COPY = {
         ],
         note: {
           label: "What we don't claim",
-          text: "We make no WCAG conformance claim — we have not been independently audited. The Braille mark beneath the AURA wordmark is a visual brand element; it does not mean Braille device or screen-reader support.",
+          text: "We make no WCAG conformance claim — we have not been independently audited.",
         },
       },
 
@@ -1083,7 +1082,7 @@ export const COPY = {
         ],
         note: {
           label: "Neyi iddia etmiyoruz",
-          text: "WCAG uyumluluk beyanımız yok — bağımsız erişilebilirlik denetiminden geçmedik. AURA yazısının altındaki Braille işareti görsel bir marka öğesidir; Braille cihazı veya ekran okuyucu desteği anlamına gelmez.",
+          text: "WCAG uyumluluk beyanımız yok — bağımsız erişilebilirlik denetiminden geçmedik.",
         },
       },
       connected: {
@@ -1544,7 +1543,7 @@ export const COPY = {
         ],
         note: {
           label: "Was wir nicht behaupten",
-          text: "Wir erheben keinen Anspruch auf WCAG-Konformität — wir wurden nicht unabhängig geprüft. Das Braille-Zeichen unter dem AURA-Schriftzug ist ein visuelles Markenelement; es bedeutet keine Unterstützung für Braillezeilen oder Screenreader.",
+          text: "Wir erheben keinen Anspruch auf WCAG-Konformität — wir wurden nicht unabhängig geprüft.",
         },
       },
       connected: {
@@ -2004,7 +2003,7 @@ export const COPY = {
         ],
         note: {
           label: "Ce que nous ne prétendons pas",
-          text: "Nous ne revendiquons aucune conformité WCAG — nous n'avons pas fait l'objet d'un audit indépendant. Le signe braille sous le logotype AURA est un élément visuel de marque ; il ne signifie pas la prise en charge des plages braille ou des lecteurs d'écran.",
+          text: "Nous ne revendiquons aucune conformité WCAG — nous n'avons pas fait l'objet d'un audit indépendant.",
         },
       },
       connected: {
@@ -2464,7 +2463,7 @@ export const COPY = {
         ],
         note: {
           label: "Чего мы не утверждаем",
-          text: "Мы не заявляем о соответствии WCAG — независимого аудита мы не проходили. Знак Брайля под логотипом AURA — визуальный элемент бренда; он не означает поддержку брайлевских дисплеев или программ чтения с экрана.",
+          text: "Мы не заявляем о соответствии WCAG — независимого аудита мы не проходили.",
         },
       },
       connected: {
@@ -2924,7 +2923,7 @@ export const COPY = {
         ],
         note: {
           label: "ما لا ندّعيه",
-          text: "لا ندّعي مطابقة WCAG — لم نخضع لتدقيق مستقل. وعلامة برايل أسفل شعار AURA عنصر بصري للعلامة التجارية؛ وهي لا تعني دعم أجهزة برايل أو قارئات الشاشة.",
+          text: "لا ندّعي مطابقة WCAG — لم نخضع لتدقيق مستقل.",
         },
       },
       connected: {
@@ -3384,7 +3383,7 @@ export const COPY = {
         ],
         note: {
           label: "آنچه ادعا نمی‌کنیم",
-          text: "ما ادعای انطباق با WCAG نداریم — ممیزی مستقل نشده‌ایم. نشان بریل زیر نشان‌واژهٔ AURA یک عنصر بصری برند است؛ به معنای پشتیبانی از نمایشگر بریل یا صفحه‌خوان نیست.",
+          text: "ما ادعای انطباق با WCAG نداریم — ممیزی مستقل نشده‌ایم.",
         },
       },
       connected: {
@@ -3845,7 +3844,7 @@ export const COPY = {
         ],
         note: {
           label: "İddia etmədiklərimiz",
-          text: "WCAG uyğunluğu iddiamız yoxdur — müstəqil auditdən keçməmişik. AURA sözünün altındakı Brayl işarəsi vizual bir brend elementidir; Brayl cihazı və ya ekran oxuyucu dəstəyi demək deyil.",
+          text: "WCAG uyğunluğu iddiamız yoxdur — müstəqil auditdən keçməmişik.",
         },
       },
       connected: {
@@ -4383,7 +4382,7 @@ export const COPY = {
         ],
         note: {
           label: "Какво не твърдим",
-          text: "Не претендираме за съответствие с WCAG — не сме преминали независим одит. Брайловият знак под надписа AURA е визуален елемент на марката; той не означава поддръжка на брайлови устройства или екранни четци.",
+          text: "Не претендираме за съответствие с WCAG — не сме преминали независим одит.",
         },
       },
       connected: {

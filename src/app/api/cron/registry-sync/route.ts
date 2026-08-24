@@ -12,6 +12,10 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  // Ayrışma Faz A (2026-08-24): cron'lar YALNIZ AURA projesinde koşar (ortak DB, çift senkron olmasın).
+  if (process.env.BRAND_MODE === "doctorium") {
+    return NextResponse.json({ skipped: "doctorium-deploy — senkron cron'u AURA projesinde koşar" });
+  }
   const secret = process.env.CRON_SECRET;
   if (!secret) {
     return NextResponse.json({ error: "CRON_SECRET tanımlı değil — cron devre dışı." }, { status: 503 });

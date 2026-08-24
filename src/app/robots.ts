@@ -23,6 +23,7 @@ export default function robots(): MetadataRoute.Robots {
         "/denetim",
         "/kurumsal-giris", // personel kapısı + /e-posta formu (noindex)
         "/doctorium/giris", // Doctorium kapısı (noindex) — /doctorium LANDING indekslenir, prefix onu KAPSAMAZ
+        "/doctorium-v1", // eski landing'in karşılaştırma yedeği (2026-08-23, noindex) — iki landing indekslenmesin
         "/vaka",
         "/vakalarim",
         "/paket",

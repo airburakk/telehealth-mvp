@@ -10,8 +10,8 @@ import { DoctoriumFooter } from "@/components/aura/doctorium-footer";
 // gereği noindex (giriş kapıları arama sonuçlarından ayrık — vitrindeki karar).
 // Tek dil TR (landing kararıyla tutarlı).
 export const metadata: Metadata = {
-  // Kök layout şablonu "· AURA" ekler → marka tekrarı yazılmaz (Ray D title-çifti düzeltmesi).
-  title: "Doctorium giriş",
+  // Segment şablonu "%s · Doctorium" ekler (ayrışma 2026-08-24) → marka tekrarı yazılmaz.
+  title: "Giriş",
   description: "Doğrulanmış doktor ve tıp öğrencileri için Doctorium çalışma alanı girişi.",
   robots: { index: false, follow: false },
 };

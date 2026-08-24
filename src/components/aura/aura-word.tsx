@@ -1,38 +1,30 @@
 import { Fragment } from "react";
+import { AuraWordSvg } from "@/components/AuraLogo";
 
 // Metin içi AURA wordmark kuralı (kullanıcı kararı 2026-08-17, ana sayfa):
 // "AURA" geçen her görünür metinde kelime düz yazıyla DEĞİL, logodaki yazımıyla
-// (gerçek wordmark PNG'si) geçer — doctorium-landing'deki ByAura deseninin
-// site-geneli eşleniği. Kullanım: <AuraWordText text={t...} /> — metni "AURA"
-// geçişlerinden böler, araya wordmark görselini dizer; "AURA'nın" gibi ekler
-// bölmeden sonra düz metin olarak kalır (görsel + "'nın").
+// (gerçek wordmark) geçer — doctorium-landing'deki ByAura deseninin site-geneli
+// eşleniği. Kullanım: <AuraWordText text={t...} /> — metni "AURA" geçişlerinden
+// böler, araya wordmark'ı dizer; "AURA'nın" gibi ekler bölmeden sonra düz metin
+// olarak kalır (görsel + "'nın").
 //
-// AÇIK/KOYU otomatik: iki varyant birden render edilir, hangisinin görüneceğini
-// globals.css seçer (.aura-light kapsamında light varyant). Böylece bileşene
-// tema prop'u taşınmaz — almaşık ritimde bölüm nereye taşınırsa taşınsın doğru
-// varyant görünür (display:none olan ekran okuyucuya da okunmaz → çift okuma yok).
+// v6.137 (2026-08-23): PNG çifti (dark/light) yerine VEKTÖR wordmark (AuraWordSvg).
+// AÇIK/KOYU otomatik: tek eleman, rengi globals.css `.aura-word-inline` seçer
+// (varsayılan beyaz; `.aura-light` kapsamında lacivert) — bileşene tema prop'u
+// taşınmaz, almaşık ritimde bölüm nereye taşınırsa taşınsın doğru renk.
 //
-// Boyut ByAura sözleşmesiyle aynı: h-[0.95em] + align-[-0.12em] — kullanıldığı
-// puntoya em ile ölçeklenir.
+// Boyut ByAura sözleşmesiyle aynı görsel büyüklük: eski h-[0.95em] PNG-canvas →
+// vektörde h-[0.6em] (harf sınırına kırpık viewBox; çarpan AURA_WORD_FROM_PNG_HEIGHT).
+// align: A tabanı kutunun 1,3% üstünde (U taşması) → -0.02em ≈ metin taban çizgisi.
 //
 // ⚠️ Braille kuralı ([[aura-braille-under-wordmark]]) BURAYA UYGULANMAZ: kural
-// marka lockup'ları (logo sunumu) içindir; metin içi geçişler doctorium'daki
-// ByAura emsalinde de braille'siz. Footer'daki bağımsız lockup braille taşımaya
-// devam eder.
+// marka lockup'ları (logo sunumu) içindir; metin içi geçişler braille'siz.
 export function AuraInlineWord({ className = "" }: { className?: string }) {
   return (
     <span className={`whitespace-nowrap ${className}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/aura-word-dark.png"
-        alt="AURA"
-        className="aura-word-inline-dark inline-block h-[0.95em] w-auto align-[-0.12em]"
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/aura-word-light.png"
-        alt="AURA"
-        className="aura-word-inline-light inline-block h-[0.95em] w-auto align-[-0.12em]"
+      <AuraWordSvg
+        className="aura-word-inline inline-block h-[0.6em] w-auto align-[-0.02em]"
+        style={{ display: "inline-block" }}
       />
     </span>
   );

@@ -23,5 +23,11 @@ export default defineConfig({
     // WebRTC/video akışları: getUserMedia otomatik izin + sahte cihaz (izin diyaloğunda asılmaz).
     launchOptions: { args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] },
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    // Masaüstü: akış + a11y testleri. mobil.e2e.ts'i KOŞMAZ (o paket mobil projeye ait).
+    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: "**/mobil.e2e.ts" },
+    // Mobil (2026-08-24): YALNIZ salt-okur mobil smoke paketi. Akış testleri burada koşulmaz —
+    // DB'ye yazan testler iki projede iki kez yazardı (fullyParallel:false bunu çözmez).
+    { name: "mobil", use: { ...devices["Pixel 7"] }, testMatch: "**/mobil.e2e.ts" },
+  ],
 });

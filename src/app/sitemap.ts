@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/aura-landing/seo";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 
 // XML sitemap (v5.9.1) — yalnız HALKA AÇIK, indekslenebilir rotalar. Auth-kapılı paneller
 // (proxy matcher: /triyaj, /vaka, /doktor, /operasyon, /admin, /acente, /partner, /etik-kurul,
@@ -14,12 +15,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]
   ) => ({ url: `${SITE_URL}${path}`, lastModified: now, changeFrequency, priority });
 
+  // Doctorium deploy'u (Faz A, 2026-08-24): sitemap yalnız Doctorium'un halka açık yüzeyleri —
+  // AURA rotaları bu projede zaten AURA köküne 307 döner, sitemap'te anılmaz. SITE_URL burada
+  // Doctorium projesinin kendi kökü (NEXT_PUBLIC_SITE_URL).
+  if (IS_DOCTORIUM_DEPLOY) {
+    return [
+      entry("/doctorium", 1.0, "weekly"), // kök "/" da buraya rewrite — kanonik tek URL
+      entry("/doctorium/kayit", 0.8, "monthly"),
+    ];
+  }
+
   return [
     entry("/", 1.0, "weekly"),
     entry("/how-it-works", 0.9, "monthly"),
     entry("/guven-ve-gizlilik", 0.8, "monthly"), // Güven ve Gizlilik (kanonik; /trust → 301)
     entry("/for-clinicians", 0.7, "monthly"), // doktor-yüzü vitrin (v6.17)
     entry("/doctorium", 0.7, "monthly"), // Doctorium tanıtım landing'i (2026-08-16)
+    entry("/doctorium/kayit", 0.6, "monthly"), // Doctorium doktor kaydı (ayrışma Faz B, 2026-08-24)
     entry("/giris", 0.7, "monthly"), // hasta giriş kapısı (public)
     entry("/kayit/hasta", 0.7, "monthly"), // hasta üyeliği
     entry("/kayit", 0.6, "monthly"), // doktor kaydı

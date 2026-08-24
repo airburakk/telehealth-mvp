@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { hasDoctoriumAccess } from "@/lib/doctor-activation";
@@ -10,15 +9,21 @@ export const dynamic = "force-dynamic";
 
 // Sekme ikonu: bu segment ve TÜM alt rotaları ([id] · etkinlik · kariyer · kaydettiklerim …)
 // ZÜMRÜT ikon gösterir; kök layout'un TURKUAZ varsayılanını override eder (kullanıcı kararı
-// 2026-08-19: marka renginde DOLU daire + tam siyah amblem; AURA turkuaz #28C8D8,
-// Doctorium zümrüt #34d399 — her marka kendi tonunu taşır).
+// 2026-08-23, v6.137: KOYU DİSK + holografik küre; AURA turkuaz küre, Doctorium zümrüt küre
+// (hue −30°) — her marka kendi tonunu taşır; 2026-08-19 "dolu daire + siyah amblem" süpersede).
 // 🪤 Dosya konvansiyonu (`icon.ico`) ÇALIŞMIYOR: kök `src/app/favicon.ico` alt segment ikonunu
 // bastırıyordu (dosya HTTP 200 servis ediliyor ama <link rel="icon"> basılmıyordu) → kök
 // favicon.ico kaldırıldı, ikonlar public/ altına alındı, bağlama metadata ile yapılıyor.
 // Üretim: `python scripts/gen-icons.py`.
 export const metadata: Metadata = {
+  // Ayrışma (2026-08-24): sekme başlığı kök şablonun "%s · AURA"sını EZER — Doctorium
+  // yüzeylerinde AURA adı geçmez. appleWebApp adı da Doctorium (ana ekrana ekleme).
+  // 🪤 `default` YETMEZ: çocuk default'u KÖKÜN şablonuna yerleştirilir ("Doctorium · AURA"
+  // ölçüldü) — üst şablonu yalnız `absolute` iptal eder; template alt sayfalara uygulanır.
+  title: { absolute: "Doctorium", template: "%s · Doctorium" },
+  appleWebApp: { capable: true, title: "Doctorium", statusBarStyle: "default" },
   // 🪤 `?v=` cache-kırıcı — gerekçe kök layout.tsx'te. İkon değişince ÜÇ layout'ta birlikte artır.
-  icons: { icon: "/icon-doctorium.ico?v=2", apple: "/apple-touch-icon.png" },
+  icons: { icon: "/icon-doctorium.ico?v=3", apple: "/apple-touch-icon.png?v=3" },
 };
 
 // İki aşamalı giriş — AŞAMA 1 kapısı (v6.124: e-Devlet doğrulamalı diploma). Doctorium'a DOCTOR
@@ -61,12 +66,11 @@ export default async function DoctoriumLayout({ children }: { children: React.Re
   //
   // Portal varyantı TEMA-DUYARLI (globals.css .doctorium-footer-portal): gece --c-chrome
   // (#08090b) sayfa zemininden (#0d0e10) ayrışır, gündüz açık krom "siyah blok"u bitirir.
-  // ByAura wordmark PNG'sinin light/dark seçimi SSR'da cookie'den (Header'la aynı kaynak).
-  const themeCookie = (await cookies()).get("aura_theme")?.value;
+  // (theme prop'u 2026-08-24 ayrışmasında kalktı — tek işlevi ByAura wordmark renk seçimiydi.)
   return (
     <div className="flex min-h-[calc(100dvh-4rem)] flex-col">
       <div className="flex-1">{children}</div>
-      <DoctoriumFooter portal theme={themeCookie === "light" ? "light" : "dark"} />
+      <DoctoriumFooter portal />
     </div>
   );
 }

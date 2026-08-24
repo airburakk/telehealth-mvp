@@ -12,10 +12,9 @@
 // Arapça/TR doğrulaması SSR'lı locale rotaları (/ar, /tr) üzerinden yapılır.
 import { test, expect, type Page } from "@playwright/test";
 import { AxeBuilder } from "@axe-core/playwright";
-
-// Halka açık, auth'suz sayfalar (sentetik kontrol listesinin a11y-uygun alt kümesi;
-// /tr /ar aynı bileşeni SSR'ladığından axe'te tekrar taranmaz — RTL testi ayrık).
-const PUBLIC_PAGES = ["/", "/giris", "/kurumsal-giris", "/guven-ve-gizlilik", "/how-it-works", "/for-clinicians"];
+// Liste helpers'ta yaşar (mobil.e2e.ts ile ortak). a11y notu: sentetik kontrol listesinin
+// a11y-uygun alt kümesidir; /tr /ar aynı bileşeni SSR'ladığından axe'te tekrar taranmaz — RTL testi ayrık.
+import { PUBLIC_PAGES } from "./helpers";
 
 // GSAP/hydration otursun diye kısa nefes — networkidle KULLANILMAZ (landing videoları
 // preload=none + izleme istekleri networkidle'ı asılı bırakabilir).

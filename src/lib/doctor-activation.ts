@@ -8,8 +8,9 @@
 import { db } from "@/lib/db";
 
 // Hesap aktivasyonu için yüklenmesi ZORUNLU belge tipleri (sertifika/akademik ihtiyari).
-// ⚠️ STUDENT_CERT buraya EKLENMEZ: Aşama 1'in (Doctorium) öğrenci belgesidir, klinik aktivasyonun
-// (Aşama 2) girdisi değildir — kapılar birbirinden bağımsız damgalanır.
+// 🪦 STUDENT_CERT v6.147'de LİSTEDEN ÇIKTI (kullanıcı kararı 2026-08-23 — dosya sonundaki not):
+// öğrenci kapısı artık belge değil üniversite e-postası doğrulaması; barkod eşleştirmesi hiç
+// gerçek bir kapı OLMAMIŞTI (sonuç okunmuyordu), o yüzden yedek olarak da bırakılmadı.
 // 🪦 CHAMBER v6.124'te LİSTEDEN ÇIKTI (kullanıcı kararı 2026-08-19 "Yalnız e-Devlet diploma"):
 // tabip odası yazısı artık ne yüklenebilir ne Doctorium açar; eski satırlar tarihsel kayıttır.
 // v6.105 (kullanıcı kararı 2026-08-17): MMSS aktivasyon şartından ÇIKARILDI ("şimdilik kaldıralım")
@@ -20,7 +21,7 @@ import { db } from "@/lib/db";
 // doktorlar, bir sonraki refreshActivation'da aktifleşir.
 // 🔙 Geri alma: bu diziye "MMSS" eklemek + canActivate'e mmssComplete şartını geri koymak yeterli.
 export const REQUIRED_DOC_TYPES = ["DIPLOMA"] as const;
-export const ALL_DOC_TYPES = ["DIPLOMA", "MMSS", "STUDENT_CERT", "CERTIFICATE", "ACADEMIC"] as const;
+export const ALL_DOC_TYPES = ["DIPLOMA", "MMSS", "CERTIFICATE", "ACADEMIC"] as const;
 export type DoctorDocType = (typeof ALL_DOC_TYPES)[number];
 
 // ── İki aşamalı giriş — AŞAMA 1: Doctorium kapısı (v6.124 yeniden tasarım) ─────────────────────
@@ -28,8 +29,11 @@ export type DoctorDocType = (typeof ALL_DOC_TYPES)[number];
 // yolu e-DEVLET DOĞRULAMALI DİPLOMA'dır — DIPLOMA belgesi ACCEPTED olunca Doctor.diplomaVerifiedAt
 // damgalanır (refreshActivation eşitler). Tabip odası yazısı (CHAMBER/chamberLetterAt) KAPIDAN
 // DÜŞTÜ; v6.87-123 arası kuralın tarihi schema.prisma'daki kolon yorumundadır. Öğrenci yolu
-// (studentVerifiedAt, v6.95) AYNEN sürer. activatedAt kapıda ayrıca OKUNMAZ: klinik aktivasyon
-// zaten ACCEPTED diploma ister → activatedAt ⊂ diplomaVerifiedAt (migration backfill'i kurdu).
+// (studentVerifiedAt, v6.95) AYNEN sürer — yalnız NE damgaladığı v6.147'de değişti: eskiden
+// STUDENT_CERT belgesi (barkod sonucu okunmuyordu, gerçek kapı değildi), artık üniversite
+// e-postası tıklama-doğrulaması (api/auth/verify-student-email, lib/universities.ts).
+// activatedAt kapıda ayrıca OKUNMAZ: klinik aktivasyon zaten ACCEPTED diploma ister →
+// activatedAt ⊂ diplomaVerifiedAt (migration backfill'i kurdu).
 // ⚠️ Parametre tipi İKİ alanı da zorunlu tutar (kasıtlı — deletionLockedAt/CaseRef deseni): çağıran
 // select'ine alan eklemeyi unutursa derleme kırılır, kapı sessizce yanlış karar vermez.
 
@@ -41,11 +45,6 @@ export function hasDoctoriumAccess(d: {
   return !!d.diplomaVerifiedAt || !!d.studentVerifiedAt;
 }
 
-// Öğrenci belgesi yüklü mü?
-export function hasStudentCert(docs: { type: string }[]): boolean {
-  return docs.some((x) => x.type === "STUDENT_CERT");
-}
-
 // Öğrenci-SINIRLI üye mi: öğrenci damgası var ama klinik aktivasyon yok. Pazarlama yüzeyleri
 // (sponsor kartı, anket, ödül puanı) bu üyeye KAPALIDIR — tıp öğrencisi sağlık meslek mensubu
 // değildir; meslek-mensubuna-tanıtım rejimi ona uygulanamaz (kullanıcı kararı 2026-08-14).
@@ -53,17 +52,6 @@ export function hasStudentCert(docs: { type: string }[]): boolean {
 // süzgeç kendiliğinden kalkar (damga silinmez).
 export function isStudentOnly(d: { studentVerifiedAt: Date | null; activatedAt: Date | null }): boolean {
   return !!d.studentVerifiedAt && !d.activatedAt;
-}
-
-// Üniversite e-postası mı (destekleyici SİNYAL — kapı açmaz, arayüzde rozet olur; kanıt daima
-// STUDENT_CERT belgesidir). .edu.tr nic.tr'ce yalnız akademik kuruma verilir (güçlü sinyal);
-// .edu ABD, .ac.<cc> İngiltere/Japonya vb. Liste bilinçli dar: sinyal yanlış-pozitife kapı açmaz.
-export function isEduEmail(email: string | null | undefined): boolean {
-  if (!email) return false;
-  const at = email.lastIndexOf("@");
-  if (at < 0) return false;
-  const domain = email.slice(at + 1).toLowerCase();
-  return domain.endsWith(".edu.tr") || domain.endsWith(".edu") || /\.ac\.[a-z]{2,3}$/.test(domain);
 }
 
 // ── İki aşamalı giriş — AŞAMA 2: klinik yüzey kapısı (v6.87) ───────────────────────────────────
@@ -231,8 +219,9 @@ export function missingOnboardingSteps(docs: { type: string }[], d: OnboardingDa
 //   activatedAt       — canActivate (Aşama 2 / klinik; bugün = aynı koşul, §8.2 katmanları inince
 //                        SMS OTP + kurum bağı da eklenecek — o gün YALNIZ canActivate değişir)
 // Belge yükleme / silme / inceleme kararı sonrası çağrılır. Koşul sağlanınca damga atar,
-// bozulunca kaldırır. Döndürür: hesap şu an KLİNİK-aktif mi (Doctorium durumu refreshStudentCert
-// dönüşünden okunur — mevcut çağıran sözleşmesi).
+// bozulunca kaldırır. Döndürür: hesap şu an KLİNİK-aktif mi (canActivate sonucu). Doctorium
+// erişimi ayrı okunur — v6.147'den beri diplomaVerifiedAt ∨ studentVerifiedAt'i doğrudan
+// hasDoctoriumAccess'le hesapla (çağıran örneği: api/doctor/documents/route.ts currentDoctoriumAccess).
 export async function refreshActivation(doctorId: string): Promise<boolean> {
   const [docs, doc] = await Promise.all([
     // v6.119: status ŞART — canActivate onaylı belge ister (tip imzası bunu derlemede zorlar).
@@ -263,28 +252,8 @@ export async function refreshActivation(doctorId: string): Promise<boolean> {
 // 🪦 refreshChamberLetter v6.124'te SİLİNDİ (CHAMBER kapıdan düştü — dosya başındaki karar notu).
 // chamberLetterAt kolonu tarihsel; hiçbir akış artık onu damgalamaz/okumaz.
 
-// DB-yan-etkili: STUDENT_CERT belgesinin varlığını Doctor.studentVerifiedAt damgasına eşitler
-// (refreshActivation deseni — belge yükleme/silme sonrası çağrılır; belge silinirse damga düşer).
-// Döndürür: doktorun GÜNCEL Doctorium erişimi (diploma doğrulaması VEYA öğrenci damgası).
-// ⚠️ refreshActivation'dan SONRA çağrılmalı (mevcut sözleşme) — diplomaVerifiedAt'in güncel
-// hâlini okur; önce çağrılırsa bir tur bayat karar döndürür.
-export async function refreshStudentCert(doctorId: string): Promise<boolean> {
-  const [docs, doc] = await Promise.all([
-    db.doctorDocument.findMany({ where: { doctorId, type: "STUDENT_CERT" }, select: { type: true } }),
-    db.doctor.findUnique({
-      where: { id: doctorId },
-      select: { diplomaVerifiedAt: true, studentVerifiedAt: true },
-    }),
-  ]);
-  if (!doc) return false;
-  const has = hasStudentCert(docs);
-  if (has && !doc.studentVerifiedAt) {
-    await db.doctor.update({ where: { id: doctorId }, data: { studentVerifiedAt: new Date() } });
-  } else if (!has && doc.studentVerifiedAt) {
-    await db.doctor.update({ where: { id: doctorId }, data: { studentVerifiedAt: null } });
-  }
-  return hasDoctoriumAccess({
-    diplomaVerifiedAt: doc.diplomaVerifiedAt,
-    studentVerifiedAt: has ? new Date() : null,
-  });
-}
+// 🪦 hasStudentCert/refreshStudentCert v6.147'de SİLİNDİ (kullanıcı kararı 2026-08-23): belge
+// varlığına bakan bu kapı barkod/onay sonucunu hiç okumuyordu (admin reddi bile erişimi kapatmıyordu)
+// — gerçek bir güvenlik kontrolü değildi. Yerini üniversite e-postası tıklama-doğrulaması aldı;
+// Doctor.studentVerifiedAt artık api/auth/verify-student-email'de doğrudan damgalanır (bkz.
+// lib/universities.ts + o route). Prod'da STUDENT_CERT belgesi 0'dı — backfill gerekmedi.

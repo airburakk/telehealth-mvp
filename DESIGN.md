@@ -44,7 +44,10 @@ terazi **güven** tarafına eğiktir.
   (`layout.tsx`); gövde min 16px.
 - **Mikro / durak:** **JetBrains Mono** (`--font-mono`) — eyebrow, adım numarası (01…), istatistik
   etiketi, kart eyebrow'ları. Vitrindeki "mono durak" dilinin platform karşılığı.
-- **Logo wordmark:** görsel varlık (aura-word-*.png, AuraLogo) — font değil.
+- **Logo wordmark:** VEKTÖR (`AuraWordSvg`, `AuraLogo.tsx`; v6.137 — ölçülerek kurulmuş 4 yol, viewBox
+  tam harf sınırı) — font değil, PNG de değil. Sembol = holografik **küre** (`AuraMark`, animasyonlu
+  WebP `public/brand/` + CSS nabız; koyu disk üstünde, her zeminde). Tam lockup `AuraLockup`
+  (küre + AURA + GLOBAL CARE + braille) footer ve giriş kapılarında.
 - **Data / tablo:** Inter + `tabular-nums` (klinik değer/fiyat hizası).
 - **Çok dilli kapsam:** Inter **Kiril kapsar** (RU pazarı markalı) — Arapça hâlâ sistem fallback
   (bilinçli; Noto Sans Arabic yoldaş font kararı açık kalem). RTL ikon aynalaması (`[dir="rtl"]`) var.

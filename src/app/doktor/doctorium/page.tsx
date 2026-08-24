@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
-  activeCampaignsFor, countImpressions, SPONSOR_CONSENT_TEXT, CATEGORY_LABEL as SPONSOR_CATEGORY_LABEL,
+  activeCampaignsFor, countImpressions, CATEGORY_LABEL as SPONSOR_CATEGORY_LABEL,
   type SponsorCard,
 } from "@/lib/sponsor";
 import { activeSurveysFor, doctorResponse, aggregateResults } from "@/lib/survey";
@@ -13,33 +13,33 @@ import {
   DOCTORIUM_MODULES, RANGE_OPTIONS, DEFAULT_RANGE, rangeDays,
   SECTOR_CATEGORIES, SECTOR_SOURCE_SCOPES, LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES,
   CAREER_TABS, parseCareerTab, careerPathways,
-  effectiveBranches, personalFeed, moduleFeed, singleBranchFeed, upcomingCongresses,
-  upcomingCountByIds, localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS, parseBranchPrefs,
-  slugForLabel, parseScope, parseSourceScope, scopeBadge, savedArticleIds, FEED_MODULE_OPTIONS, parseFeedModules,
-  todayModuleCounts, MODULE_ALIASES, EVENT_TYPES, EVENT_TYPE_LABEL, parseEventTypes,
-  trDayStart, parseEventTypePref,
+  effectiveBranches, personalFeedPage, moduleFeed, singleBranchFeedPage, upcomingCongresses,
+  upcomingCountByIds, localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS,
+  parseScope, parseSourceScope, savedArticleIds, parseFeedModules,
+  todayModuleCounts, MODULE_ALIASES, parseEventTypes,
+  trDayStart, parseEventTypePref, parseViewPrefs,
   type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey, type EventTypeKey,
 } from "@/lib/doctorium";
 import { isStudentOnly } from "@/lib/doctor-activation";
-import { HUKUK_KEYWORDS, keywordByKey } from "@/lib/hukuk-keywords";
-import { DoctoriumFilters } from "./DoctoriumFilters";
-import { FollowButton } from "./CongressControls";
+import { keywordByKey } from "@/lib/hukuk-keywords";
+import { LegalSearchBox } from "./LegalSearchBox";
+import { CongressList } from "./CongressList";
 import { ProspektusSearch } from "./ProspektusSearch";
 import { CareerDisclaimer, careerDate, COUNTRY_LABEL } from "./CareerShared";
-import { ArticleCard, formatDate, SourcePlate } from "./ArticleCard";
+import { ArticleCard, SourcePlate } from "./ArticleCard";
+import { FeedLoadMore } from "./FeedLoadMore";
 import { SaveButton } from "./SaveButton";
 import {
-  ArrowLeft, ExternalLink, Info, MapPin, Star, X, CalendarClock, Megaphone,
-  Scale, Search, ChevronRight, SlidersHorizontal,
+  ArrowLeft, ExternalLink, Info, Star, X, Megaphone, SlidersHorizontal,
 } from "lucide-react";
 import { getDoctorBalance } from "@/lib/rewards";
 import { DoctoriumShell } from "./DoctoriumSidebar";
 
 export const dynamic = "force-dynamic";
 
-// Sekme başlığı "Doctorium · AURA" — kök layout template'i (%s · AURA) ekler, ELLE " · AURA" YAZMA
-// (v6.43 dersi: çift-AURA olur).
-export const metadata = { title: "Doctorium" };
+// Ayrışma (2026-08-24): sekme yalın "Doctorium". 🪤 absolute ŞART — segmentin page'i KENDİ
+// layout'unun şablonunu almaz (şablon yalnız ALT segmentlere; düz title köke kaçıp "· AURA" alır).
+export const metadata = { title: { absolute: "Doctorium" } };
 
 const MODULE_KEYS = new Set(DOCTORIUM_MODULES.map((m) => m.key));
 
@@ -87,12 +87,16 @@ export default async function DoctoriumPage({
           congressAbstractAlertDays: true, congressEarlyBirdAlertDays: true,
           // v6.132 — etkinlik tür/kapsam TERCİHİ (URL parametresi yoksa bunlar uygulanır).
           congressEventTypes: true, congressScope: true,
+          // v6.142 — Sektörel/İlaç & Cihaz/Mevzuat GÖRÜNÜM süzgeçleri TERCİHİ (aynı sözleşme).
+          doctoriumViewPrefs: true,
           // v6.68: sponsorlu içerik kişiselleştirme rızası (city hedefleme için birlikte okunur).
           sponsorPersonalizationAt: true,
         },
       })
     : null;
   const branches = effectiveBranches(doctor?.newsBranches, doctor?.branch);
+  // v6.142 — bkz. lib/doctorium parseViewPrefs (aşağıda range/cat/srcScope'ta kullanılır).
+  const viewPrefs = parseViewPrefs(doctor?.doctoriumViewPrefs);
 
   const sp = await searchParams;
   // ?m= çözümü: geçerli anahtar → kendisi; ESKİ anahtar (kongre) → alias'tan etkinliğe; yoksa akış.
@@ -101,19 +105,32 @@ export default async function DoctoriumPage({
   const active: ModuleKey = MODULE_KEYS.has(rawModule as ModuleKey)
     ? (rawModule as ModuleKey)
     : (MODULE_ALIASES[rawModule] ?? "akis");
-  const range = RANGE_OPTIONS.some((r) => r.key === sp.d) ? (sp.d as string) : DEFAULT_RANGE;
+  // v6.142 — GÖRÜNÜM süzgeci TERCİH ilişkisi (aşağıdaki scope/eventTypes'la AYNI sözleşme):
+  // URL parametresi kayıtlı tercihi yalnız bu GÖRÜNÜM için ezer, kalıcı tercihi DEĞİŞTİRMEZ.
+  const persistedRange =
+    active === "sektorel" ? viewPrefs.sektorel.range
+    : active === "ilac" ? viewPrefs.ilac.range
+    : active === "mevzuat" ? viewPrefs.mevzuat.range
+    : DEFAULT_RANGE;
+  const range = sp.d && RANGE_OPTIONS.some((r) => r.key === sp.d) ? sp.d : persistedRange;
   // Tek-branş odağı (?b=): çipleri üreten "Akışınız:" şeridi KALDIRILDI (kullanıcı kararı
   // 2026-08-18 — çok branşta renk karmaşası); parametre eski/paylaşılan URL'ler için yaşar.
   // Yalnız doktorun AKIŞINDAKİ branşlar seçilebilir (rastgele slug'la başka akış açılmasın).
   const focus = sp.b && VALID_SLUGS.has(sp.b) && branches.includes(sp.b) ? sp.b : null;
 
   // "Yeni" süzgeci (v6.132): sayaç şeridinden gelinir — bu gece akışa DÜŞEN kayıtlar
-  // (createdAt), kaynağın yayım tarihi değil. Akışım'da anlamsız (orada zaten karışım var).
-  const onlyNew = active !== "akis" && sp.n === "1";
+  // (createdAt), kaynağın yayım tarihi değil. 2026-08-24: Akışım da destekler (raf nabzı
+  // "BUGÜN N YENİ" artık ?n=1 ile gelir — kullanıcı bildirimi: sayaç tıklaması yalnız yeniler
+  // yerine düz sekmeye götürüyordu). Tek-branş odağında (?b=) anlamsız — akış dalında elenir.
+  const onlyNew = sp.n === "1";
   // İçtihat serbest metin araması (v6.132): kutu içinden gelir, URL'de taşınır (?q=).
   const legalQuery = sp.q?.trim().slice(0, 80) || null;
 
-  const cat = sp.c && SECTOR_CATEGORIES.some((x) => x.key === sp.c) ? sp.c : null;
+  const persistedCategory =
+    active === "sektorel" ? viewPrefs.sektorel.category
+    : active === "mevzuat" ? viewPrefs.mevzuat.category
+    : null;
+  const cat = sp.c && SECTOR_CATEGORIES.some((x) => x.key === sp.c) ? sp.c : persistedCategory;
   // Hukuk modülü alt-sekmesi (v6.86): ?h=mevzuat|ictihat — yalnız bu modülde anlamlı.
   const legalTab: LegalTabKey | null = active === "mevzuat" ? parseLegalTab(sp.h) : null;
   // İçtihat anahtar-kelime filtresi (v6.87): ?k= sözlük anahtarı; bilinmeyen değer filtresiz liste.
@@ -127,7 +144,27 @@ export default async function DoctoriumPage({
   const since = onlyNew ? trDayStart() : undefined;
 
   let items: FeedItem[] = [];
-  if (active === "akis") items = focus ? await singleBranchFeed(focus) : await personalFeed(branches, 40, feedMods);
+  // Sonsuz kaydırma (2026-08-21, kullanıcı bildirimi "belli sayıda içerikte duruyor"): ilk parti
+  // burada basılır, `feedNextCursor` FeedLoadMore'a geçer — null ise (ilk partide zaten her şey
+  // gösterildiyse) bileşen hiç render edilmez. Yalnız Akışım'da (diğer sekmeler moduleFeed'in
+  // sabit 40 sınırında kalıyor, bkz. plan notu).
+  let feedNextCursor: string | null = null;
+  if (active === "akis") {
+    if (focus) {
+      const page = await singleBranchFeedPage(focus, 30);
+      items = page.items;
+      feedNextCursor = page.cursor ? JSON.stringify(page.cursor) : null;
+    } else {
+      // 2026-08-24 — Akışım da tercihleri uygular (kullanıcı bildirimi: "ulusal'a çektim ama
+      // akışta uluslararası haber var"): sektörel kaynak kapsamı + "yalnız yeni" (?n=1).
+      const page = await personalFeedPage(branches, feedMods, {}, 40, {
+        sektorelSources: viewPrefs.sektorel.source ? SECTOR_SOURCE_SCOPES[viewPrefs.sektorel.source] : undefined,
+        createdSince: since,
+      });
+      items = page.items;
+      feedNextCursor = page.done ? null : JSON.stringify(page.cursors);
+    }
+  }
   else if (active === "akademik") items = await moduleFeed("akademik", branches, { createdSince: since });
   else if (active === "mevzuat") {
     // İçtihat + Doktrin = ARŞİV: tarih penceresi bilinçli YOK — kararlar/makaleler eski tarihli
@@ -153,7 +190,8 @@ export default async function DoctoriumPage({
   else if (active === "sektorel") {
     // v6.99.3 — "Kaynak" filtresi (?s=ulusal|uluslararasi): etkinlik kapsamıyla aynı PARAM,
     // ayrı PARSE (v6.120) — haber kaynağında "uluslararası katılımlı" diye bir şey yok.
-    const srcScope = parseSourceScope(sp.s);
+    // v6.142: param yoksa kayıtlı tercih (scope/eventTypes'la aynı sözleşme).
+    const srcScope = sp.s !== undefined ? parseSourceScope(sp.s) : viewPrefs.sektorel.source;
     items = await moduleFeed("sektorel", [], {
       days: rangeDays(range), category: cat,
       sources: srcScope ? SECTOR_SOURCE_SCOPES[srcScope] : undefined,
@@ -323,7 +361,7 @@ export default async function DoctoriumPage({
       {onlyNew && (
         <div className="mt-4">
           <Link
-            href={`/doktor/doctorium?m=${active}`}
+            href={active === "akis" ? "/doktor/doctorium" : `/doktor/doctorium?m=${active}`}
             className="aura-mono inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.4)] hover:bg-emerald-500/25"
           >
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
@@ -334,6 +372,21 @@ export default async function DoctoriumPage({
       )}
 
       {active === "akis" && <PulseStrip items={items} todayCounts={counts} />}
+
+      {/* Sayaç → akış geçiş ayracı (2026-08-21, kullanıcı bildirimi: "sayaçtan sonra habere
+          geçiş çok belli olmuyor"). PulseStrip'in son kartı görmezden gelinip akışın ilk kartına
+          kayabildiği tek nokta buydu — ikisi de aura-display + benzer ölçüde rakam/başlık
+          taşıyordu, aralarında hiçbir ayrım yoktu (ilk kart üst saç çizgisini de kapatıyor,
+          bkz. ArticleCard "first:border-t-0"). Kutu YOK: mevcut dile uyan mono etiket + saç
+          çizgisi — PulseStrip'in kendi "BUGÜN AKIŞA DÜŞEN" etiketiyle aynı gramer. */}
+      {active === "akis" && shown.length > 0 && (
+        <div className="mt-6 flex items-center gap-2.5" aria-hidden="true">
+          <span className="aura-mono shrink-0 text-[10px] font-bold tracking-[0.14em] text-[var(--c-ink-3)]">
+            SON EKLENENLER
+          </span>
+          <span className="h-px flex-1 bg-[var(--c-hairline)]" />
+        </div>
+      )}
 
       {/* "Takip ettiklerim (N)" süzgeç çipi (kullanıcı isteği 2026-08-19): İçtihat anahtar-kelime
           çipi deseninin etkinlik eşleniği — URL'de taşınır (?f=takip), paylaşılabilir; renk dili
@@ -431,54 +484,13 @@ export default async function DoctoriumPage({
         <LegalSearchBox tab={legalTab} query={legalQuery} activeKeyword={legalKeyword?.key ?? null} />
       )}
 
-      {/* TEK "Özelleştir" penceresi (v6.52): aralık · kategori · kongre alarmı · branş tercihleri.
-          Önceden ayrı satırlardaydı ve dağınık duruyordu (kullanıcı bildirimi).
-          Bölüm yoksa bileşen hiç çizilmez (ör. Akademik) — boş panel açılmasın.
-          İçtihat alt-sekmesinde aralık/kategori GİZLİ: arşiv tarih penceresiz listelenir,
-          kategoriler (SUT vb.) mevzuat kalemlerine aittir. */}
-      {/* ⚠️ KALICI TERCİHLER BURADAN ÇIKTI (v6.132, 2026-08-20) — hepsi
-          /doktor/doctorium/tercihler sayfasında yaşıyor: akış bölümleri, branş tercihleri,
-          etkinlik alarmları, sponsor rızası. Bu panel artık YALNIZ görünüm süzgeci taşır
-          (aralık · kategori · kaynak kapsamı · etkinlik türü/kapsamı) — yani "bu sekmede ne
-          görüyorum". Aynı ayarın iki ekranda yaşamaması v6.49 dersinin gereği.
-          🔴 showFeedPrefs / branchOptions / showAlerts / showSponsor prop'larını burada tekrar
-          AÇMA: tercihler sayfasıyla çift kaynak olur ve zamanla sürüklenir. */}
-      <DoctoriumFilters
-        module={active}
-        showFeedPrefs={false}
-        feedOptions={FEED_MODULE_OPTIONS.map((o) => ({ key: o.key, label: o.label }))}
-        feedInitial={feedMods}
-        showRange={(active === "mevzuat" && legalTab === "mevzuat") || active === "sektorel" || active === "ilac"}
-        showCategory={(active === "mevzuat" && legalTab === "mevzuat") || active === "sektorel"}
-        showAlerts={false}
-        showScope={active === "etkinlik"}
-        scope={scope}
-        // v6.120 tür çipi — yalnız Etkinlik sekmesinde. null = "hepsi" seçili.
-        showEventTypes={active === "etkinlik"}
-        eventTypes={eventTypes}
-        eventTypeOptions={EVENT_TYPES.map((t) => ({ key: t.key, label: t.label }))}
-        // v6.99.3 — sektörel "Kaynak" filtresi (panelin İLK bölümü; kullanıcı isteği 2026-08-16).
-        showSourceScope={active === "sektorel"}
-        sourceScope={active === "sektorel" ? parseSourceScope(sp.s) : null}
-        rangeKey={range}
-        rangeOptions={RANGE_OPTIONS}
-        category={cat}
-        categoryOptions={SECTOR_CATEGORIES}
-        /* Branş tercihi akışa FİİLEN etki eden sekmelerde: Akışım + Akademik + **Etkinlik** (v6.62
-           düzeltmesi — etkinlik listesi upcomingCongresses(branches) ile v6.48'den beri branşa göre
-           süzülüyordu ama seçici burada çizilmediği için doktor GÖREMEDİĞİ bir filtreyle eksik
-           liste görüyordu; eski yorum "kongre branşa göre süzülmez" diyerek koddan sapmıştı).
-           Mevzuat/sektörel/ilaç gerçekten branşa göre süzülmez. */
-        branchOptions={null}
-        branchInitial={parseBranchPrefs(doctor?.newsBranches)}
-        ownBranchSlug={slugForLabel(doctor?.branch)}
-        alertStart={doctor?.congressAlertDays ?? null}
-        alertAbstract={doctor?.congressAbstractAlertDays ?? null}
-        alertEarlyBird={doctor?.congressEarlyBirdAlertDays ?? null}
-        showSponsor={false}
-        sponsorInitial={sponsorPersonalized}
-        sponsorText={SPONSOR_CONSENT_TEXT}
-      />
+      {/* Sekme içi "Özelleştir" paneli KALDIRILDI (v6.142, kullanıcı kararı 2026-08-23):
+          sektörel/ilaç/etkinlik/mevzuat'ta AYNI adı taşıyan İKİ ayrı kontrol duruyordu — üstteki
+          başlık düğmesi (/tercihler, kalıcı) ve burada geçici bir görünüm paneli (DoctoriumFilters,
+          şimdi silindi). Kaynak/Geriye dönük/Kategori/Etkinlik türü/Kapsam artık HEPSİ /tercihler'de
+          kalıcı tercih (lib/doctorium parseViewPrefs + PreferencesBoard.tsx); yukarıdaki
+          range/cat/srcScope ve scope/eventTypes hâlâ URL parametresiyle (?d=/?c=/?s=/?t=) o GÖRÜNÜM
+          için ezilebilir — kalıcı tercihi DEĞİŞTİRMEZ (paylaşılan bağlantı beklendiği gibi açılır). */}
 
       {active === "ilac" && <ProspektusSearch />}
 
@@ -523,6 +535,11 @@ export default async function DoctoriumPage({
               {shown.length <= 2 && sponsorCards[0] && <SponsorCardView c={sponsorCards[0]} />}
               {shown.length <= 5 && surveyProps && <SurveyCardView {...surveyProps} />}
               {shown.length <= 9 && sponsorCards[1] && <SponsorCardView c={sponsorCards[1]} />}
+              {/* Sonsuz kaydırma (2026-08-21): yalnız Akışım, yalnız sunucudaki ilk parti
+                  tükenmediyse (feedNextCursor null değilse) render edilir. */}
+              {active === "akis" && feedNextCursor && (
+                <FeedLoadMore focus={focus} initialCursor={feedNextCursor} onlyNew={onlyNew && !focus} />
+              )}
             </ul>
           )}
         </>
@@ -602,120 +619,7 @@ function PulseStrip({ items, todayCounts }: { items: FeedItem[]; todayCounts: Re
   );
 }
 
-/** Hukuk alt-sekmesi başına arama kutusu metinleri — üçü aynı kutuyu paylaşır, dili değişir. */
-const LEGAL_BOX: Record<LegalTabKey, { title: string; placeholder: string; hint: string }> = {
-  mevzuat: {
-    title: "Mevzuatta ara",
-    placeholder: "Tebliğ, yönetmelik adı veya metinde geçen ifade",
-    hint: "Resmî Gazete ve OHSAD kayıtlarının başlığında ve özetinde arar.",
-  },
-  ictihat: {
-    title: "İçtihat arşivinde ara",
-    placeholder: "Daire, esas no veya karar metninde geçen ifade",
-    hint: "Kararın başlığında ve metninde arar; anahtar kelime çipleriyle birlikte kullanılabilir.",
-  },
-  doktrin: {
-    title: "Doktrinde ara",
-    placeholder: "Makale başlığı, yazar veya konu",
-    hint: "TR-Dizin kayıtlarının başlığında ve dizin özetinde arar.",
-  },
-};
-
-/**
- * Hukuk arama kutusu (v6.132). Sunucu bileşeni: arama düz bir GET formu, JavaScript
- * gerektirmez ve sonuç URL'de taşınır (paylaşılabilir, geri tuşu çalışır).
- *
- * Örnek anahtar kelimeler <details> içinde ve YALNIZ içtihatta: sözlük kararlara göre kurulmuş
- * (tazminat, aydınlatılmış onam, komplikasyon…), mevzuat ve doktrinde karşılığı yok. Onlarda
- * boş bir açılır bölüm yerine ne aradığını söyleyen tek satır ipucu durur.
- *
- * ⚠️ İki süzgeç AYRI eksendir: sözlük çipi (?k=) kararın METNİNDE deterministik desen arar;
- * arama kutusu (?q=) başlıkta VE metinde serbest arar. Aynı anda kullanılabilirler.
- */
-function LegalSearchBox({
-  tab, query, activeKeyword,
-}: { tab: LegalTabKey; query: string | null; activeKeyword: string | null }) {
-  const t = LEGAL_BOX[tab];
-  // Kanonik URL: varsayılan sekme (mevzuat) h parametresi TAŞIMAZ — mevcut link disiplini.
-  const base = tab === "mevzuat" ? "/doktor/doctorium?m=mevzuat" : `/doktor/doctorium?m=mevzuat&h=${tab}`;
-  const clearHref = activeKeyword ? `${base}&k=${activeKeyword}` : base;
-
-  return (
-    <section className="mt-4 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-4">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]">
-        <Scale size={16} className="text-rose-300" /> {t.title}
-      </h2>
-
-      <form action="/doktor/doctorium" method="get" className="mt-3 flex gap-2">
-        <input type="hidden" name="m" value="mevzuat" />
-        {tab !== "mevzuat" && <input type="hidden" name="h" value={tab} />}
-        {activeKeyword && <input type="hidden" name="k" value={activeKeyword} />}
-        <input
-          name="q"
-          defaultValue={query ?? ""}
-          placeholder={t.placeholder}
-          aria-label={t.title}
-          className="min-w-0 flex-1 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface-2)] px-3 py-2 text-sm text-[var(--c-ink)] outline-none focus:border-rose-400/50"
-        />
-        <button
-          type="submit"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-rose-500/85 px-3.5 py-2 text-sm font-semibold text-[#2a0610] hover:bg-rose-400"
-        >
-          <Search size={15} /> Ara
-        </button>
-      </form>
-
-      {query && (
-        <p className="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-[var(--c-ink-2)]">
-          <span>
-            &ldquo;<strong className="text-[var(--c-ink)]">{query}</strong>&rdquo; için sonuçlar
-          </span>
-          <Link href={clearHref} className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-300 hover:underline">
-            <X size={11} /> aramayı temizle
-          </Link>
-        </p>
-      )}
-
-      {tab === "ictihat" ? (
-        <details className="group mt-3">
-          <summary className="cursor-pointer list-none text-[12px] font-semibold text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
-            <span className="inline-flex items-center gap-1.5">
-              <ChevronRight size={13} className="transition-transform group-open:rotate-90" />
-              Örnek anahtar kelimeler
-            </span>
-          </summary>
-          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-            {HUKUK_KEYWORDS.map((kw) => {
-              const on = activeKeyword === kw.key;
-              const q = query ? `&q=${encodeURIComponent(query)}` : "";
-              return (
-                <Link
-                  key={kw.key}
-                  href={on ? `${base}${q}` : `${base}&k=${kw.key}${q}`}
-                  aria-current={on ? "true" : undefined}
-                  className={`aura-mono inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
-                    on
-                      ? "bg-rose-500/20 text-rose-200 shadow-[inset_0_0_0_1px_#fb7185]"
-                      : "bg-rose-500/[0.08] text-rose-300/90 hover:bg-rose-500/15"
-                  }`}
-                >
-                  {kw.label}
-                  {on && <X size={11} />}
-                </Link>
-              );
-            })}
-          </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
-            Anahtar kelime, kararın <strong>metninde</strong> deterministik olarak aranır; arama
-            kutusu ise başlıkta ve metinde serbest arar. İkisi birlikte kullanılabilir.
-          </p>
-        </details>
-      ) : (
-        <p className="mt-2.5 text-[11px] leading-relaxed text-[var(--c-ink-3)]">{t.hint}</p>
-      )}
-    </section>
-  );
-}
+// LEGAL_BOX + LegalSearchBox → ./LegalSearchBox.tsx (2026-08-23; landing V2 demo modunda da kullanır).
 
 function EmptyState({ active, focus, range, legalTab, keywordLabel }: { active: ModuleKey; focus: string | null; range: string; legalTab: LegalTabKey | null; keywordLabel: string | null }) {
   const label = RANGE_OPTIONS.find((r) => r.key === range)?.label.toLocaleLowerCase("tr-TR") ?? "";
@@ -780,130 +684,7 @@ function SponsorCardView({ c }: { c: SponsorCard }) {
   );
 }
 
-interface CongressRow {
-  id: string; title: string; organizer: string | null; city: string | null; country: string;
-  startDate: Date; endDate: Date | null; abstractDeadline: Date | null; earlyBirdDeadline: Date | null;
-  url: string | null; branchSlugs: string;
-  scope: string; venue: string | null; warning: string | null; confidence: string;
-  eventType: string; ttbCode: string | null;
-}
-
-function CongressList({ rows, followed, canFollow, savedIds, followedOnly = false }: { rows: CongressRow[]; followed: Set<string>; canFollow: boolean; savedIds: Set<string> | null; followedOnly?: boolean }) {
-  if (!rows.length) {
-    // Takip süzgecinin kendi boş hâli: takipler geçmişte kalmış olabilir (CongressFollow
-    // silinmez) — tür/kapsam öğüdü burada yanıltıcı olurdu, süzgeç onlardan bağımsız.
-    return followedOnly ? (
-      <p className="mt-5 flex items-start gap-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-8 text-sm text-[var(--c-ink-2)]">
-        <Info size={16} className="mt-0.5 shrink-0" />
-        <span>
-          Takip ettiğiniz yaklaşan etkinlik yok. Bir etkinliği kartındaki{" "}
-          <strong className="text-[var(--c-ink)]">Takip et</strong> düğmesiyle izlemeye
-          alabilirsiniz — başlangıç, bildiri ve erken kayıt tarihleri yaklaşınca bildirim alırsınız.
-        </span>
-      </p>
-    ) : (
-      <p className="mt-5 flex items-start gap-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-8 text-sm text-[var(--c-ink-2)]">
-        <Info size={16} className="mt-0.5 shrink-0" />
-        <span>
-          Seçtiğiniz tür, branş ve kapsamda yaklaşan etkinlik yok. Özelleştir'den
-          <strong className="text-[var(--c-ink)]"> tür</strong> seçimini genişletmeyi (kurs, eğitim,
-          çalıştay), kapsamı <strong className="text-[var(--c-ink)]">Tümü</strong> yapmayı ya da branş
-          tercihlerinizi genişletmeyi deneyin.
-        </span>
-      </p>
-    );
-  }
-  return (
-    /* grid-cols-[minmax(0,1fr)]: ana listedeki taşma dersinin eşleniği (grid item min-width:auto). */
-    <ul className="mt-5 grid grid-cols-[minmax(0,1fr)]">
-      {rows.map((c) => (
-        /* Kart standardı (2026-08-14): sol kenarda 3px bölüm şeridi (Etkinlik = tema-duyarlı ink),
-           üst satırda sembol+etiket · sağda Kaydet+Takip, altta ÇİZGİLİ aksiyon satırı. */
-        /* Kutu KALKTI (sentez, 2026-08-19): ArticleCard ile aynı gramer — plaka + künye,
-           display başlık, öğeler arası tek saç çizgi. Etkinliğe özgü bilgi (bildiri/erken
-           kayıt tarihleri, TTB kodu) kalır; onlar çip değil, karar veren veridir. */
-        <li key={c.id} className="min-w-0 border-t border-[var(--c-hairline)] py-[17px] first:border-t-0 first:pt-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <SourcePlate name={c.organizer || "Etkinlik"} />
-              <div className="min-w-0">
-                <div className="truncate text-[13.5px] font-semibold leading-[1.3] text-[var(--c-ink)]">
-                  {c.organizer || "Etkinlik"}
-                </div>
-                <div className="mt-px flex flex-wrap items-center gap-x-1.5 text-[12.5px] text-[var(--c-ink-3)]">
-                  {/* Tür etiketi: sekme 9 tür taşıyor, "kongre mü sempozyum mu" ilk soru (v6.120). */}
-                  <span className="aura-mono text-[11px] font-semibold tracking-[0.06em] text-cyan-300">
-                    {(EVENT_TYPE_LABEL[c.eventType] ?? "Etkinlik").toLocaleUpperCase("tr-TR")}
-                  </span>
-                  <span aria-hidden="true">·</span>
-                  <span>{formatDate(c.startDate)}{c.endDate ? ` – ${formatDate(c.endDate)}` : ""}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{scopeBadge(c.scope)}</span>
-                  {(c.city || c.country) && (
-                    <>
-                      <span aria-hidden="true">·</span>
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin size={11} />{[c.city, c.country].filter(Boolean).join(", ")}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-            <span className="flex shrink-0 items-center gap-1">
-              {savedIds != null && <SaveButton articleId={c.id} initialSaved={savedIds.has(c.id)} />}
-              {canFollow && <FollowButton congressId={c.id} following={followed.has(c.id)} />}
-            </span>
-          </div>
-
-          <Link
-            href={`/doktor/doctorium/etkinlik/${c.id}`}
-            className="aura-display mt-2.5 block text-[17px] font-semibold leading-[1.32] tracking-[-0.018em] text-[var(--c-ink)] hover:underline hover:underline-offset-[3px]"
-          >
-            {c.title}
-          </Link>
-
-          {(c.abstractDeadline || c.earlyBirdDeadline) && (
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-[var(--c-ink-2)]">
-              {c.abstractDeadline && (
-                <span className="inline-flex items-center gap-1">
-                  <CalendarClock size={11} /> Bildiri son: <strong>{formatDate(c.abstractDeadline)}</strong>
-                </span>
-              )}
-              {c.earlyBirdDeadline && (
-                <span className="inline-flex items-center gap-1">
-                  <CalendarClock size={11} /> Erken kayıt: <strong>{formatDate(c.earlyBirdDeadline)}</strong>
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Dış bağlantılar çizgisiz, künye tonunda — aksiyon SATIRI değil, meta kuyruğu. */}
-          {(c.url || c.ttbCode) && (
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[var(--c-ink-3)]">
-              {c.url && (
-                <a href={c.url} target="_blank" rel="noopener noreferrer nofollow"
-                  className="inline-flex items-center gap-1 hover:text-[var(--c-ink-2)] hover:underline">
-                  <ExternalLink size={11} /> Resmî site
-                </a>
-              )}
-              {/* TTB akreditasyonu: kod VAR demek "akredite" demek — kaç KREDİ vereceğini
-                  DEMEZ (puan katılım süresine göre TTB'de oluşur). Sayı yazılmaz, doktor
-                  TTB'nin kendi kaydına gönderilir. Bkz. [[public-claim-honesty]]. */}
-              {c.ttbCode && (
-                <a href="https://kredilendirme.ttb.dr.tr/etkinlik_bul.php" target="_blank"
-                  rel="noopener noreferrer nofollow" title="TTB STE/SMG akredite etkinlik — kredi, katıldığınız süreye göre TTB kaydında oluşur"
-                  className="inline-flex items-center gap-1 hover:text-[var(--c-ink-2)] hover:underline">
-                  <ExternalLink size={11} /> TTB akredite <span className="aura-mono">{c.ttbCode}</span>
-                </a>
-              )}
-            </div>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
-}
+// CongressRow + CongressList → ./CongressList.tsx (2026-08-23; landing V2 salt-okunur kullanır).
 
 // ── Kariyer modülü (v6.89) ──────────────────────────────────────────────────
 // Ortak parçalar (uyarı · tarih biçimi · ülke etiketi) ./CareerShared'da — detay sayfası da
