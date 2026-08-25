@@ -144,7 +144,10 @@ export default async function OzetPage({
                       >
                         {it.title}
                       </Link>
-                      <div className="aura-mono mt-1 text-[10.5px] tracking-wider text-[var(--c-ink-3)] uppercase">
+                      {/* Kaynak adı BÜYÜTÜLMEZ (2026-08-25): dili karışık (JAMA · Resmî Gazete) —
+                          lang="tr" altında CSS uppercase İngilizce adlarda noktalı İ üretir
+                          ("CİRCULATİON"). Bölüm başlıkları Türkçe olduğu için uppercase kalabilir. */}
+                      <div className="aura-mono mt-1 text-[10.5px] tracking-wider text-[var(--c-ink-3)]">
                         {it.sourceName}
                       </div>
                       {it.summary && (

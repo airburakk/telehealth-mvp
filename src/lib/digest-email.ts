@@ -5,6 +5,11 @@
 //    masthead dahil her şey TİPOGRAFİK. Web görünümü (/doktor/doctorium/ozet) zengin hâli taşır.
 //  · Inline CSS + tablo düzeni — istemci CSS desteği dar; web-font yok, sistem serif yığını
 //    (Georgia/Times) gazete sesine zaten uygun.
+//  · 🔴 `text-transform:uppercase` KULLANILMAZ (2026-08-25 görsel provası dersi): CSS büyütme
+//    belgenin diline bakar — e-postada lang yoktur → Türkçe metin yanlış büyür ("Cihaz"→"CIHAZ",
+//    "Ekim"→"EKIM"); lang="tr" varsa bu kez İngilizce kaynak adları bozulur ("CİRCULATİON").
+//    Türkçe sabit metinler sunucuda toLocaleUpperCase("tr") ile büyütülür; kaynak adları (dili
+//    karışık: JAMA · Resmî Gazete) HİÇ büyütülmez, olduğu gibi dizilir.
 //  · Koyu mod istemciye bırakılır (renkler nötr; zorlamalı dark-hack yok).
 //  · Hedef boyut ≪100KB (Gmail ~102KB'de kırpar).
 //
@@ -47,13 +52,13 @@ const EMERALD = "#0c7a5b";
 export function renderDigestEmailHtml(a: DigestEmailArgs): string {
   const sectionsHtml = a.sections.map((s) => `
     <tr><td style="padding:26px 0 0;">
-      <div style="font-family:${SANS};font-size:11px;font-weight:700;letter-spacing:2.5px;color:${EMERALD};text-transform:uppercase;border-bottom:1px solid ${HAIR};padding-bottom:6px;">${esc(s.label)}</div>
+      <div style="font-family:${SANS};font-size:11px;font-weight:700;letter-spacing:2.5px;color:${EMERALD};border-bottom:1px solid ${HAIR};padding-bottom:6px;">${esc(s.label.toLocaleUpperCase("tr"))}</div>
       ${s.items.map((it) => {
         const href = it.url ? esc(it.url) : `${esc(a.portalUrl.replace(/\/ozet$/, ""))}/${esc(it.id)}`;
         return `
       <div style="padding:14px 0 2px;">
         <a href="${href}" style="font-family:${SERIF};font-size:17px;line-height:1.35;font-weight:700;color:${INK};text-decoration:none;">${esc(it.title)}</a>
-        <div style="font-family:${SANS};font-size:11px;letter-spacing:0.6px;color:${INK3};padding-top:4px;text-transform:uppercase;">${esc(it.sourceName)}</div>
+        <div style="font-family:${SANS};font-size:11px;letter-spacing:0.6px;color:${INK3};padding-top:4px;">${esc(it.sourceName)}</div>
         <div style="font-family:${SERIF};font-size:13.5px;line-height:1.55;color:${INK2};padding-top:5px;">${esc(it.summary)}</div>
       </div>`;
       }).join("")}
@@ -69,7 +74,7 @@ export function renderDigestEmailHtml(a: DigestEmailArgs): string {
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
   <tr><td align="center" style="border-bottom:3px double ${INK};padding-bottom:14px;">
     <div style="font-family:${SERIF};font-size:34px;font-weight:700;letter-spacing:5px;color:${INK};">DOCTORIUM <span style="color:${EMERALD};">POST</span></div>
-    <div style="font-family:${SANS};font-size:11px;letter-spacing:1.8px;color:${INK3};padding-top:6px;text-transform:uppercase;">${esc(dateLine(a.day))} · Kişisel sabah özetiniz</div>
+    <div style="font-family:${SANS};font-size:11px;letter-spacing:1.8px;color:${INK3};padding-top:6px;">${esc(`${dateLine(a.day)} · Kişisel sabah özetiniz`.toLocaleUpperCase("tr"))}</div>
   </td></tr>
   <tr><td style="font-family:${SERIF};font-size:14px;color:${INK2};padding:18px 0 0;">Günaydın ${esc(a.doctorName)}, akış tercihlerinize göre derlenen bugünkü başlıklar:</td></tr>
   ${sectionsHtml}

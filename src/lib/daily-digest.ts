@@ -31,8 +31,10 @@ export const DIGEST_NAME = "Doctorium Post";
 
 export const DIGEST_PATH = "/doktor/doctorium/ozet";
 
-/** Bölüm başına başlık tavanı — gazete yoğunluğu + Gmail ~102KB clipping payı (tasarım §4). */
-export const MAX_PER_SECTION = 5;
+/** İlgi alanı (bölüm) başına başlık tavanı — 🔒 kullanıcı kuralı (2026-08-25): seçilen HER ilgi
+ *  alanından EN FAZLA 2 içerik; 1 alan seçen 2, 6 alan seçen 12 başlık görür. Gazete boyu doktorun
+ *  kendi seçiminin aynasıdır (v6.159'daki 5'lik tavanı süpersede eder). */
+export const MAX_PER_SECTION = 2;
 
 /** Özet kısaltma tavanı (karakter) — telif çizgisi "kısa özet + link" (tam metin taşınmaz). */
 const SUMMARY_MAX = 220;
@@ -63,14 +65,18 @@ export interface DigestSnapshot {
   overflow: number;
 }
 
-/** Gazete bölüm sırası (tasarım §4). FeedItem.module=mevzuat kind ile ikiye ayrılır:
- *  kind=mevzuat → Mevzuat · kind=ictihat/doktrin → Hukuk. */
+/** Gazete bölümleri = tercihlerdeki İLGİ ALANLARI birebir (2026-08-25 — kullanıcı kuralı
+ *  "alan başına 2" ancak böyle tutar: v6.159'un birleşik "Hukuk" bölümü İçtihat+Doktrin'i tek
+ *  tavana sıkıştırıyordu; iki alan seçen doktor 4 yerine 2 görürdü). Altı içerik alanı = tercihler
+ *  sayfasındaki altı akış anahtarı (etkinlik/kariyer akış içeriği değildir, baskıya girmez).
+ *  FeedItem.module=mevzuat üç alana kind ile ayrılır. Hukuk ailesi sonda ve bir arada. */
 const SECTIONS: { key: string; label: string; match: (it: FeedItem) => boolean }[] = [
   { key: "akademik", label: "Akademik", match: (it) => it.module === "akademik" },
   { key: "ilac", label: "İlaç & Cihaz", match: (it) => it.module === "ilac" },
-  { key: "mevzuat", label: "Mevzuat", match: (it) => it.module === "mevzuat" && it.kind === "mevzuat" },
   { key: "sektorel", label: "Sektörel", match: (it) => it.module === "sektorel" },
-  { key: "hukuk", label: "Hukuk", match: (it) => it.module === "mevzuat" && it.kind !== "mevzuat" },
+  { key: "mevzuat", label: "Mevzuat", match: (it) => it.module === "mevzuat" && it.kind === "mevzuat" },
+  { key: "ictihat", label: "İçtihat", match: (it) => it.module === "mevzuat" && it.kind === "ictihat" },
+  { key: "doktrin", label: "Doktrin", match: (it) => it.module === "mevzuat" && it.kind === "doktrin" },
 ];
 
 /** Özet metnini tek satıra indirip kelime sınırında kısaltır (telif: kısa özet + link). */

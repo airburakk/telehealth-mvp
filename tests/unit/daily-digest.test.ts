@@ -48,7 +48,7 @@ describe("trimSummary — telif çizgisi (kısa özet)", () => {
 });
 
 describe("buildDigestSections — gazete bölümleme", () => {
-  it("bölümler tasarım sırasında; mevzuat kind ile Mevzuat/Hukuk'a ayrışır", () => {
+  it("bölümler = tercihlerdeki 6 ilgi alanı; mevzuat kind ile Mevzuat/İçtihat/Doktrin'e ayrışır", () => {
     const { sections } = buildDigestSections([
       item({ id: "s1", module: "sektorel" }),
       item({ id: "h1", module: "mevzuat", kind: "ictihat" }),
@@ -57,9 +57,27 @@ describe("buildDigestSections — gazete bölümleme", () => {
       item({ id: "a1", module: "akademik" }),
       item({ id: "h2", module: "mevzuat", kind: "doktrin" }),
     ]);
-    expect(sections.map((s) => s.key)).toEqual(["akademik", "ilac", "mevzuat", "sektorel", "hukuk"]);
-    expect(sections.find((s) => s.key === "hukuk")!.items.map((i) => i.id)).toEqual(["h1", "h2"]);
+    expect(sections.map((s) => s.key)).toEqual(["akademik", "ilac", "sektorel", "mevzuat", "ictihat", "doktrin"]);
+    expect(sections.find((s) => s.key === "ictihat")!.items.map((i) => i.id)).toEqual(["h1"]);
+    expect(sections.find((s) => s.key === "doktrin")!.items.map((i) => i.id)).toEqual(["h2"]);
     expect(sections.find((s) => s.key === "mevzuat")!.items.map((i) => i.id)).toEqual(["m1"]);
+  });
+
+  it("🔒 alan başına 2 kuralı (2026-08-25): 1 alan → 2, 6 alan → 12 başlık", () => {
+    expect(MAX_PER_SECTION).toBe(2);
+    const one = buildDigestSections(Array.from({ length: 7 }, (_, i) => item({ id: `a${i}` })));
+    expect(one.sections.reduce((n, s) => n + s.items.length, 0)).toBe(2);
+    const all = buildDigestSections([
+      ...Array.from({ length: 3 }, (_, i) => item({ id: `a${i}`, module: "akademik" })),
+      ...Array.from({ length: 3 }, (_, i) => item({ id: `i${i}`, module: "ilac" })),
+      ...Array.from({ length: 3 }, (_, i) => item({ id: `s${i}`, module: "sektorel" })),
+      ...Array.from({ length: 3 }, (_, i) => item({ id: `m${i}`, module: "mevzuat", kind: "mevzuat" })),
+      ...Array.from({ length: 3 }, (_, i) => item({ id: `c${i}`, module: "mevzuat", kind: "ictihat" })),
+      ...Array.from({ length: 3 }, (_, i) => item({ id: `d${i}`, module: "mevzuat", kind: "doktrin" })),
+    ]);
+    expect(all.sections).toHaveLength(6);
+    expect(all.sections.reduce((n, s) => n + s.items.length, 0)).toBe(12);
+    expect(all.overflow).toBe(6);
   });
 
   it("bölüm tavanı uygulanır, taşan sayısı overflow'a yazılır; boş bölüm listelenmez", () => {
@@ -121,13 +139,18 @@ describe("e-posta baskısı (digest-email)", () => {
   it("HTML: masthead + bölüm + çıkış linki var; başlık HTML'i KAÇIRILIR; görsel yok", () => {
     const html = renderDigestEmailHtml(args);
     expect(html).toContain("DOCTORIUM");
-    expect(html).toContain("Akademik");
+    expect(html).toContain("AKADEMİK"); // bölüm etiketi sunucuda tr-locale ile büyür (noktalı İ doğru)
     // URL href'te HTML-kaçırılmış durur (& → &amp;) — doğru davranış budur.
     expect(html).toContain("https://site.test/api/digest/unsubscribe?d=dr1&amp;t=tok");
     expect(html).toContain("&lt;script&gt;"); // XSS kaçırma — ham <script> gömülmez
     expect(html).not.toContain('<script>alert');
     expect(html).not.toContain("<img"); // tipografik gazete — e-postada görsel bilinçli YOK (tasarım §5.2)
-    expect(html).toContain("Pazartesi, 24 Ağustos 2026");
+    // 🔒 İ dersi (2026-08-25): CSS büyütme yasak — Türkçe metin sunucuda tr-locale ile büyür,
+    // İngilizce kaynak adı olduğu gibi kalır ("JAMA & Lancet" bozulmaz, "CİRCULATİON" sınıfı hata olmaz).
+    expect(html).not.toContain("text-transform");
+    expect(html).toContain("KİŞİSEL SABAH ÖZETİNİZ");
+    expect(html).toContain("JAMA &amp; Lancet");
+    expect(html).toContain("PAZARTESİ, 24 AĞUSTOS 2026");
     expect(html).toContain("3 başlık daha");
   });
 
