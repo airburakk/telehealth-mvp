@@ -548,6 +548,20 @@ interface RawModuleResult { key: FeedModuleKey; items: FeedItem[]; requested: nu
  *    sayaç (todayModuleCounts) onları hiç saymaz — sayının vaadiyle listenin içeriği örtüşmeli. */
 export type PersonalFeedOpts = { sektorelSources?: string[]; createdSince?: Date };
 
+/** Sayaç modül odağı (?fm= — v6.161, kullanıcı bildirimi ÜÇÜNCÜ kez: "rakama tıklayınca yalnız
+ *  o içerikleri göreyim, sekmeyi değil"): PulseStrip rakamları artık SEKMEYE değil Akışım'ın
+ *  modüle süzülmüş hâline gider. Anahtarlar PulseStrip'in saydığı FeedItem.module uzayı; hukuk
+ *  ailesi personalFeed'de ÜÇ ayrı tercih anahtarı olduğundan eşlemeyle açılır. page.tsx + feed
+ *  API aynı eşlemeyi kullanır (sonsuz kaydırma sayfa 2+ süzgeci kaybetmesin). */
+export const FM_TO_MODULES: Record<string, FeedModuleKey[]> = {
+  akademik: ["akademik"],
+  sektorel: ["sektorel"],
+  ilac: ["ilac"],
+  mevzuat: ["hukuk-mevzuat", "hukuk-ictihat", "hukuk-doktrin"],
+  etkinlik: ["etkinlik"],
+  kariyer: ["kariyer"],
+};
+
 async function personalFeedRaw(
   branchSlugs: string[], modules: FeedModuleKey[], limit: number, cursors?: FeedCursors, opts?: PersonalFeedOpts,
 ): Promise<RawModuleResult[]> {

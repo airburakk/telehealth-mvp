@@ -17,7 +17,7 @@ import {
   upcomingCountByIds, localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS,
   parseScope, parseSourceScope, savedArticleIds, parseFeedModules,
   todayModuleCounts, MODULE_ALIASES, parseEventTypes,
-  trDayStart, parseEventTypePref, parseViewPrefs,
+  trDayStart, parseEventTypePref, parseViewPrefs, FM_TO_MODULES,
   type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey, type EventTypeKey,
 } from "@/lib/doctorium";
 import { isStudentOnly } from "@/lib/doctor-activation";
@@ -67,7 +67,7 @@ const MODULE_HEAD: Record<ModuleKey, { eyebrow: string; title: string; desc: str
 export default async function DoctoriumPage({
   searchParams,
 }: {
-  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string; h?: string; k?: string; t?: string; f?: string; l?: string; n?: string; q?: string }>;
+  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string; h?: string; k?: string; t?: string; f?: string; l?: string; n?: string; q?: string; fm?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
@@ -120,9 +120,14 @@ export default async function DoctoriumPage({
 
   // "Yeni" süzgeci (v6.132): sayaç şeridinden gelinir — bu gece akışa DÜŞEN kayıtlar
   // (createdAt), kaynağın yayım tarihi değil. 2026-08-24: Akışım da destekler (raf nabzı
-  // "BUGÜN N YENİ" artık ?n=1 ile gelir — kullanıcı bildirimi: sayaç tıklaması yalnız yeniler
-  // yerine düz sekmeye götürüyordu). Tek-branş odağında (?b=) anlamsız — akış dalında elenir.
-  const onlyNew = sp.n === "1";
+  // "BUGÜN N YENİ" artık ?n=1 ile gelir). Etkinlik/Kariyer SEKMELERİ bu süzgeci UYGULAMAZ
+  // (kongre listesi "yaklaşan etkinlik"tir, akış değil) → orada true olsaydı çip çizilir ama
+  // liste süzülmezdi (yanıltıcı). Tek-branş odağında (?b=) anlamsız — akış dalında elenir.
+  const onlyNew = sp.n === "1" && active !== "etkinlik" && active !== "kariyer";
+  // Sayaç modül odağı (?fm= — v6.161, kullanıcı bildirimi ÜÇÜNCÜ kez): PulseStrip rakamına
+  // tıklamak artık SEKMEYE göndermez — Akışım'ı o modüle süzer ("2 etkinlik"e tıklayan yalnız
+  // o 2 etkinlik kartını görür). Yalnız Akışım'da ve branş odağı yokken anlamlı.
+  const fm = active === "akis" && !focus && sp.fm && FM_TO_MODULES[sp.fm] ? sp.fm : null;
   // İçtihat serbest metin araması (v6.132): kutu içinden gelir, URL'de taşınır (?q=).
   const legalQuery = sp.q?.trim().slice(0, 80) || null;
 
@@ -157,7 +162,9 @@ export default async function DoctoriumPage({
     } else {
       // 2026-08-24 — Akışım da tercihleri uygular (kullanıcı bildirimi: "ulusal'a çektim ama
       // akışta uluslararası haber var"): sektörel kaynak kapsamı + "yalnız yeni" (?n=1).
-      const page = await personalFeedPage(branches, feedMods, {}, 40, {
+      // v6.161 — ?fm= sayaç odağı: modül listesi tercih yerine TEK modüle (hukukta üçlü aile)
+      // daralır; sonsuz kaydırma aynı daraltmayla sürer (FeedLoadMore ?fm taşır).
+      const page = await personalFeedPage(branches, fm ? FM_TO_MODULES[fm] : feedMods, {}, 40, {
         sektorelSources: viewPrefs.sektorel.source ? SECTOR_SOURCE_SCOPES[viewPrefs.sektorel.source] : undefined,
         createdSince: since,
       });
@@ -358,16 +365,34 @@ export default async function DoctoriumPage({
       {/* "Yeni" süzgeci açıkken kapatma yolu GÖRÜNÜR olmalı (aktif süzgeç çipi deseni —
           içtihat anahtar kelimesi ve "Takip ettiklerim" ile aynı dil). Yoksa doktor kısa
           listeyi "içerik bitmiş" sanır. */}
-      {onlyNew && (
-        <div className="mt-4">
-          <Link
-            href={active === "akis" ? "/doktor/doctorium" : `/doktor/doctorium?m=${active}`}
-            className="aura-mono inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.4)] hover:bg-emerald-500/25"
-          >
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
-            Yalnızca bugün eklenenler
-            <X size={11} />
-          </Link>
+      {/* v6.161: iki bağımsız süzgeç çipi — her çip YALNIZ kendi parametresini kapatır, diğerini
+          korur (sayaçtan "3 yeni haber"e gelen doktor n çipini kapatınca haber odağında kalır). */}
+      {(onlyNew || fm) && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {fm && (
+            <Link
+              href={onlyNew ? "/doktor/doctorium?n=1" : "/doktor/doctorium"}
+              className="aura-mono inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.4)] hover:bg-emerald-500/25"
+            >
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+              Yalnız {PULSE_LABEL.find((p) => p.key === fm)?.label ?? fm}
+              <X size={11} />
+            </Link>
+          )}
+          {onlyNew && (
+            <Link
+              href={
+                active !== "akis" ? `/doktor/doctorium?m=${active}`
+                : fm ? `/doktor/doctorium?fm=${fm}`
+                : "/doktor/doctorium"
+              }
+              className="aura-mono inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.4)] hover:bg-emerald-500/25"
+            >
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+              Yalnızca bugün eklenenler
+              <X size={11} />
+            </Link>
+          )}
         </div>
       )}
 
@@ -538,7 +563,7 @@ export default async function DoctoriumPage({
               {/* Sonsuz kaydırma (2026-08-21): yalnız Akışım, yalnız sunucudaki ilk parti
                   tükenmediyse (feedNextCursor null değilse) render edilir. */}
               {active === "akis" && feedNextCursor && (
-                <FeedLoadMore focus={focus} initialCursor={feedNextCursor} onlyNew={onlyNew && !focus} />
+                <FeedLoadMore focus={focus} initialCursor={feedNextCursor} onlyNew={onlyNew && !focus} feedModule={fm} />
               )}
             </ul>
           )}
@@ -572,11 +597,15 @@ const PULSE_LABEL: { key: string; label: string }[] = [
 ];
 
 function PulseStrip({ items, todayCounts }: { items: FeedItem[]; todayCounts: Record<string, number> }) {
-  // İKİ DURUM, tek bileşen (kullanıcı isteği 2026-08-19 "tıklayınca yalnızca yenilere gitsin"):
-  //  · BUGÜN YENİ varsa → gece ingest'inin getirdiği sayılar; tıklama `?n=1` ile o modülün
-  //    YALNIZCA yeni kayıtlarına götürür (createdAt sınırı sayaçla aynı: trDayStart).
-  //  · Hiç yeni yoksa → akışın bileşimi; tıklama süzgeçsiz modüle götürür. Şerit KAYBOLMAZ
-  //    (ilk sürümün hatası buydu: ingest koşmamışsa sayaç yok oluyordu).
+  // İKİ DURUM, tek bileşen. 🔄 v6.161 (kullanıcı bildirimi ÜÇÜNCÜ kez — "rakama tıklayınca
+  // yalnız o içerikleri göreyim, sekmeyi değil"): tıklama artık HİÇBİR modda sekmeye gitmez,
+  // Akışım'ı ?fm= ile o modüle süzer. Bu, v6.132'nin "bileşim modunda süzgeçsiz modüle götür"
+  // kararını SÜPERSEDE eder — etkinlik/kariyer sayıları yalnız bileşim modunda var olabildiği
+  // (todayModuleCounts onları saymaz) için o tasarımda daima tam sekmeye düşülüyordu.
+  //  · BUGÜN YENİ varsa → sayılar gece ingest'inden; tıklama ?fm=X&n=1 (createdAt sınırı
+  //    sayaçla aynı: trDayStart) — yalnız o modülün BUGÜNKÜ kartları.
+  //  · Hiç yeni yoksa → akışın bileşimi; tıklama ?fm=X — akıştaki o modül kartları. Şerit
+  //    KAYBOLMAZ (ilk sürümün hatası buydu: ingest koşmamışsa sayaç yok oluyordu).
   const todayTotal = Object.values(todayCounts).reduce((a, b) => a + b, 0);
   const fresh = todayTotal > 0;
   const by = new Map<string, number>();
@@ -602,7 +631,7 @@ function PulseStrip({ items, todayCounts }: { items: FeedItem[]; todayCounts: Re
         {rows.map((r) => (
           <Link
             key={r.key}
-            href={fresh ? `/doktor/doctorium?m=${r.key}&n=1` : `/doktor/doctorium?m=${r.key}`}
+            href={fresh ? `/doktor/doctorium?fm=${r.key}&n=1` : `/doktor/doctorium?fm=${r.key}`}
             className="group flex items-baseline gap-1.5"
             title={fresh ? `${r.label}: bugün eklenen ${r.n} kayıt` : `${r.label}: akışında ${r.n} kayıt`}
           >

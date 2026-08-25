@@ -17,7 +17,7 @@ import {
   NEWS_IMAGE_HOSTS, allowedImageUrl, extractOgImage, RSS_SOURCES,
   isAssociationRelevant, ASSOCIATION_RSS_SOURCES, SGK_RELAY,
 } from "@/lib/doctorium-sources";
-import { SECTOR_SOURCE_SCOPES } from "@/lib/doctorium";
+import { SECTOR_SOURCE_SCOPES, FM_TO_MODULES, FEED_MODULE_OPTIONS } from "@/lib/doctorium";
 import { ASSOCIATIONS, watchUrl } from "@/lib/association-sources";
 import { BRANCHES } from "@/lib/triage";
 
@@ -196,6 +196,22 @@ describe("Sektörel kaynak kapsamı (v6.99.3)", () => {
     for (const s of sectorSources) {
       expect(covered.has(s), `'${s}' kaynağı SECTOR_SOURCE_SCOPES'ta yok — lib/doctorium.ts'e ekle`).toBe(true);
     }
+  });
+
+  // v6.161 — sayaç modül odağı (?fm=): PulseStrip'in 6 anahtarı geçerli akış modüllerine açılır.
+  // Eşleme bozulursa sayaç tıklaması sessizce süzgeçsiz akışa düşer (kullanıcının 3 kez
+  // bildirdiği "rakam sekmeye götürüyor" sınıfına geri dönüş) — bu test onu kilitler.
+  it("SÖZLEŞME: FM_TO_MODULES anahtarları sayaç kümesi, değerleri geçerli akış modülleri", () => {
+    expect(Object.keys(FM_TO_MODULES).sort()).toEqual(
+      ["akademik", "etkinlik", "ilac", "kariyer", "mevzuat", "sektorel"]
+    );
+    const valid = new Set(FEED_MODULE_OPTIONS.map((o) => o.key));
+    for (const [k, mods] of Object.entries(FM_TO_MODULES)) {
+      expect(mods.length, k).toBeGreaterThan(0);
+      for (const m of mods) expect(valid.has(m), `${k} → ${m}`).toBe(true);
+    }
+    // Hukuk ailesi üç tercih anahtarının ÜÇÜNÜ de açmalı (tek anahtar İçtihat/Doktrin'i düşürür).
+    expect(FM_TO_MODULES.mevzuat).toEqual(["hukuk-mevzuat", "hukuk-ictihat", "hukuk-doktrin"]);
   });
 
   // 2026-08-24 — SGK doğrudan kaynağa bağlandı; OHSAD'ın SGK aktarımları SGK_RELAY ile süzülür.

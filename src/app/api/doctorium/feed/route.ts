@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { hasDoctoriumAccess } from "@/lib/doctor-activation";
 import {
   BRANCH_OPTIONS, effectiveBranches, parseFeedModules, personalFeedPage, singleBranchFeedPage,
-  localizeTitles, savedArticleIds, parseViewPrefs, trDayStart, SECTOR_SOURCE_SCOPES,
+  localizeTitles, savedArticleIds, parseViewPrefs, trDayStart, SECTOR_SOURCE_SCOPES, FM_TO_MODULES,
   type FeedCursors, type FeedModuleKey, type PersonalFeedOpts,
 } from "@/lib/doctorium";
 
@@ -74,10 +74,14 @@ export async function GET(req: Request) {
       sektorelSources,
       createdSince: url.searchParams.get("n") === "1" ? trDayStart() : undefined,
     };
+    // Sayaç modül odağı (?fm= — v6.161): page.tsx ile aynı eşleme; geçersiz değer sessizce
+    // tercih listesine düşer (paylaşılan bozuk URL akışı kırmasın).
+    const fmParam = url.searchParams.get("fm");
+    const modules = fmParam && FM_TO_MODULES[fmParam] ? FM_TO_MODULES[fmParam] : feedMods;
     const page = focus
       ? await singleBranchFeedPage(focus, 30, JSON.parse(cursorParam) as { at: string; id: string })
           .then((p) => ({ items: p.items, nextCursor: p.cursor ? JSON.stringify(p.cursor) : null }))
-      : await personalFeedPage(branches, feedMods, JSON.parse(cursorParam) as FeedCursors, 40, opts)
+      : await personalFeedPage(branches, modules, JSON.parse(cursorParam) as FeedCursors, 40, opts)
           .then((p) => ({ items: p.items, nextCursor: p.done ? null : JSON.stringify(p.cursors) }));
 
     const items = page.items.length ? await localizeTitles(page.items) : page.items;
