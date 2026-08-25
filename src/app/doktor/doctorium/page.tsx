@@ -17,7 +17,7 @@ import {
   upcomingCountByIds, localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS,
   parseScope, parseSourceScope, savedArticleIds, parseFeedModules,
   todayModuleCounts, MODULE_ALIASES, parseEventTypes,
-  trDayStart, parseEventTypePref, parseViewPrefs, FM_TO_MODULES,
+  trDayStart, parseEventTypePref, parseViewPrefs, FM_TO_MODULES, PULSE_LABELS,
   type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey, type EventTypeKey,
 } from "@/lib/doctorium";
 import { isStudentOnly } from "@/lib/doctor-activation";
@@ -587,25 +587,21 @@ export default async function DoctoriumPage({
  * refleksiyle geliyor; sakin tek kolonlu koyu ekran ilk saniyede "içerik az" okunabiliyor.
  * Çözüm koyu temayı bırakmak değil, yoğunluğu SAYIYLA vermek.
  */
-const PULSE_LABEL: { key: string; label: string }[] = [
-  { key: "akademik", label: "makale" },
-  { key: "mevzuat", label: "hukuk" },
-  { key: "sektorel", label: "haber" },
-  { key: "ilac", label: "ilaç ve cihaz" },
-  { key: "etkinlik", label: "etkinlik" },
-  { key: "kariyer", label: "rehber" },
-];
+// v6.162: etiketler lib PULSE_LABELS'tan (sayac sayfasıyla ortak); sıra sözlüğün ekleme sırası.
+const PULSE_LABEL: { key: string; label: string }[] =
+  Object.entries(PULSE_LABELS).map(([key, label]) => ({ key, label }));
 
 function PulseStrip({ items, todayCounts }: { items: FeedItem[]; todayCounts: Record<string, number> }) {
-  // İKİ DURUM, tek bileşen. 🔄 v6.161 (kullanıcı bildirimi ÜÇÜNCÜ kez — "rakama tıklayınca
-  // yalnız o içerikleri göreyim, sekmeyi değil"): tıklama artık HİÇBİR modda sekmeye gitmez,
-  // Akışım'ı ?fm= ile o modüle süzer. Bu, v6.132'nin "bileşim modunda süzgeçsiz modüle götür"
-  // kararını SÜPERSEDE eder — etkinlik/kariyer sayıları yalnız bileşim modunda var olabildiği
-  // (todayModuleCounts onları saymaz) için o tasarımda daima tam sekmeye düşülüyordu.
-  //  · BUGÜN YENİ varsa → sayılar gece ingest'inden; tıklama ?fm=X&n=1 (createdAt sınırı
-  //    sayaçla aynı: trDayStart) — yalnız o modülün BUGÜNKÜ kartları.
-  //  · Hiç yeni yoksa → akışın bileşimi; tıklama ?fm=X — akıştaki o modül kartları. Şerit
-  //    KAYBOLMAZ (ilk sürümün hatası buydu: ingest koşmamışsa sayaç yok oluyordu).
+  // İKİ DURUM, tek bileşen. 🔄 v6.162 (kullanıcı isteğinin NİHAİ biçimi, dördüncü tur:
+  // "sayaçta neye tıklarsam AYRI BİR SAYFADA sadece tıkladığım sayıdaki içeriği göster"):
+  // rakam artık /doktor/doctorium/sayac sayfasını açar — o sayfa YALNIZ sayılan içerikleri
+  // listeler (v6.161'in ?fm= yerinde-süzmesi ve v6.132'nin "sekmeye götür"ü SÜPERSEDE;
+  // ?fm= paylaşılabilir-URL altyapısı olarak yaşar).
+  //  · BUGÜN YENİ varsa → sayılar gece ingest'inden; /sayac?m=X&n=1 (createdAt sınırı
+  //    sayaçla aynı: trDayStart) — yalnız o modülün BUGÜNKÜ kayıtları.
+  //  · Hiç yeni yoksa → akışın bileşimi; /sayac?m=X — akışın ilk partisindeki o modül
+  //    kartlarının aynısı. Şerit KAYBOLMAZ (ilk sürümün hatası buydu: ingest koşmamışsa
+  //    sayaç yok oluyordu).
   const todayTotal = Object.values(todayCounts).reduce((a, b) => a + b, 0);
   const fresh = todayTotal > 0;
   const by = new Map<string, number>();
@@ -631,7 +627,7 @@ function PulseStrip({ items, todayCounts }: { items: FeedItem[]; todayCounts: Re
         {rows.map((r) => (
           <Link
             key={r.key}
-            href={fresh ? `/doktor/doctorium?fm=${r.key}&n=1` : `/doktor/doctorium?fm=${r.key}`}
+            href={fresh ? `/doktor/doctorium/sayac?m=${r.key}&n=1` : `/doktor/doctorium/sayac?m=${r.key}`}
             className="group flex items-baseline gap-1.5"
             title={fresh ? `${r.label}: bugün eklenen ${r.n} kayıt` : `${r.label}: akışında ${r.n} kayıt`}
           >

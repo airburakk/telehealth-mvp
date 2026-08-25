@@ -562,6 +562,17 @@ export const FM_TO_MODULES: Record<string, FeedModuleKey[]> = {
   kariyer: ["kariyer"],
 };
 
+/** Sayaç satır etiketleri — PulseStrip (page.tsx) ve /doktor/doctorium/sayac sayfası aynı
+ *  sözlükten okur (v6.162; iki kopya sürüklenmesin). Sıra = şeritteki görünüm sırası. */
+export const PULSE_LABELS: Record<string, string> = {
+  akademik: "makale",
+  mevzuat: "hukuk",
+  sektorel: "haber",
+  ilac: "ilaç ve cihaz",
+  etkinlik: "etkinlik",
+  kariyer: "rehber",
+};
+
 async function personalFeedRaw(
   branchSlugs: string[], modules: FeedModuleKey[], limit: number, cursors?: FeedCursors, opts?: PersonalFeedOpts,
 ): Promise<RawModuleResult[]> {

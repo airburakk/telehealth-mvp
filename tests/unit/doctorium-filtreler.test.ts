@@ -17,7 +17,7 @@ import {
   NEWS_IMAGE_HOSTS, allowedImageUrl, extractOgImage, RSS_SOURCES,
   isAssociationRelevant, ASSOCIATION_RSS_SOURCES, SGK_RELAY,
 } from "@/lib/doctorium-sources";
-import { SECTOR_SOURCE_SCOPES, FM_TO_MODULES, FEED_MODULE_OPTIONS } from "@/lib/doctorium";
+import { SECTOR_SOURCE_SCOPES, FM_TO_MODULES, FEED_MODULE_OPTIONS, PULSE_LABELS } from "@/lib/doctorium";
 import { ASSOCIATIONS, watchUrl } from "@/lib/association-sources";
 import { BRANCHES } from "@/lib/triage";
 
@@ -212,6 +212,9 @@ describe("Sektörel kaynak kapsamı (v6.99.3)", () => {
     }
     // Hukuk ailesi üç tercih anahtarının ÜÇÜNÜ de açmalı (tek anahtar İçtihat/Doktrin'i düşürür).
     expect(FM_TO_MODULES.mevzuat).toEqual(["hukuk-mevzuat", "hukuk-ictihat", "hukuk-doktrin"]);
+    // v6.162 — sayaç etiketi sözlüğü aynı anahtar kümesini taşımalı: eksik anahtar, PulseStrip
+    // satırını ve /sayac başlığını etiketsiz bırakır.
+    expect(Object.keys(PULSE_LABELS).sort()).toEqual(Object.keys(FM_TO_MODULES).sort());
   });
 
   // 2026-08-24 — SGK doğrudan kaynağa bağlandı; OHSAD'ın SGK aktarımları SGK_RELAY ile süzülür.
