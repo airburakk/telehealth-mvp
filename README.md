@@ -242,6 +242,19 @@ imkânı belli olmuyordu) → mobilde 13px görünür, AURA wordmark 12px'e öl�
 
 ### Kesişen yetenekler
 
+- **Doctorium Post — günlük özet gazetesi (v6.159-160, 2026-08-25):** abone doktora her sabah
+  (bakım cron'u 06:30 TR, ingest adımlarından SONRA) akış tercihlerine göre derlenen kişisel özet.
+  🔒 **Alan başına 2 kuralı:** seçilen her ilgi alanından en fazla 2 başlık (1 alan→2, 6 alan→12;
+  bölümler tercihlerdeki 6 içerik alanıyla birebir: Akademik · İlaç & Cihaz · Sektörel · Mevzuat ·
+  İçtihat · Doktrin). Baskı `DailyDigest` ANLIK GÖRÜNTÜSÜ (doktor+gün unique — e-posta ↔ web aynı
+  baskı; boş gün = baskı YOK; sponsorlu içerik/anket GİRMEZ). Abonelik `/doktor/doctorium/tercihler`
+  "Doctorium Post" bölümünden (null=kapalı VARSAYILAN — ⚖️ opt-in · `app` · `email`); gazete sayfası
+  `/doktor/doctorium/ozet` (7 günlük arşiv şeridi). E-posta: tipografik/görselsiz şablon
+  (`lib/digest-email.ts` — 🔴 `text-transform:uppercase` YASAK: büyütme belge diline bağlı, Türkçe
+  sabitler sunucuda `toLocaleUpperCase("tr")`, kaynak adları büyütülmez) + RFC 8058 tek-tık çıkış
+  (`List-Unsubscribe(-Post)` başlıkları; çıkış audit'li, kanalı null'a çeker). Resend dormant'ken
+  simülasyon; doğrulanmamış adrese gönderilmez. Motor: `lib/daily-digest.ts` (pencere = son
+  baskıdan beri, 72 saat tavan). Tasarım: vault `output/doctorium-gunluk-ozet-tasarimi-2026-08-24.md`.
 - **i18n (8+ dil) + RTL:** tüm hasta yüzeyleri çevrilir (Arapça/Farsça RTL dâhil); `Translation`
   cache + `lib/i18n.ts` + `/api/i18n` + `useT`. Klinik veri **TR kanonik** (doktor/AI etkilenmez).
   **Klinik/PHI serbest-metin** (epikriz/SOAP/uzman görüşü/talep açıklaması) hastaya çevrilirken ayrı
@@ -375,6 +388,7 @@ imkânı belli olmuyordu) → mobilde 13px görünür, AURA wordmark 12px'e öl�
 | `free-care` | `apply`/`waiting`/`availability`/`doctor-feed`/`outcome`/`status` |
 | `shares` · `complaints` · `bookings` | Güvenli paylaşım · şikayet (+**`complaints/[id]/defense-request`** v6.81 — ETHICS/ADMIN savunma talebi açar; PATCH karar ucu açık talepte **409** [kilit: yanıt VEYA 3 gün]) · rezervasyon (`respond` · `journey` · `contact-coordinator` [hasta→koordinatör bildirim talebi, BOLA+rate-limit]) |
 | `notifications` · `push` · **`system-messages`** | Bildirim merkezi · Web Push aboneliği · **Sistem Mesajları (v6.81)**: GET kendi mesajların (+`?count=1` rozet sayımı; body/reply sunucuda çözülür, `repliedByUserId` yanıtlara ASLA konmaz — anonimlik) · POST okundu · **`[id]/reply`** atomik TEK yanıt (updateMany-guard → yarışta 409; kişisel mesaja yalnız hedef kullanıcı — ADMIN dahi değil) |
+| `digest` · `doctor/digest` | **Doctorium Post (v6.159):** `digest/unsubscribe` — e-posta tek-tık çıkış (GET=onay sayfası [istemci link ön-yüklemesi işlem YAPMAZ] · POST=RFC 8058; HMAC token'lı, oturumsuz, audit'li `DIGEST_UNSUBSCRIBE`) · `doctor/digest` — abonelik kanalı tercihi (null/app/email; self-auth, feed-modules deseni) |
 | `consultation-requests` · `presence` | Konsültasyon talebi yanıt/belge + **chat (`messages`)** + **video** randevu (offer/respond) · `presence/ping` (heartbeat) |
 | `doctor` · `auth` | Doktor tercihleri/akademik/işlem · oturum + **`signup`** (doktor kaydı) + **`signup-staff`** (2026-08-12 — PARTNER/AGENCY/HEALTH_PRO başvurusu: şifreli yanıt + `STAFF_APPLICATION_KVKK` onamı + yetkisiz hesap) + **`google/{start,callback}`** (OAuth, env-gated) |
 | `staff-applications` | **Kurumsal başvuru uçları (2026-08-12):** `documents` (GET/POST — kendi başvurusuna belge; imza-tabanlı MIME + şifreli depo) · `resubmit` (REJECTED→PENDING) · `[id]/review` (ETHICS/ADMIN onay/ret + audit + bildirim) · `[id]/documents/[docId]/raw` (incelemeciye belge — audit'li, no-store) |
