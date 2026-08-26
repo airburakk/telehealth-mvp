@@ -864,7 +864,14 @@ body {
   flex: 0 0 auto;
   border-radius: 50%;
   overflow: hidden;
-  background: #0d0e10;
+  /* Kenar işbölümü (2026-08-26 pikselleşme düzeltmesi + sıkma turu — gerekçe AuraLogo.tsx
+     SPHERE): -v2 kareler TAM OPAK (alfa kanalı yok = 144 karede halka kodlama bedeli yok;
+     499→404KB) ve kesik-ışık erimesi + disk RENGİ karelerin RGB'sinde bake'li. Dış kenarın
+     AA'sı buradaki mask'ta: %92-99 bandı 28px elemanda ~1px yumuşak geçiş verir ve DÜZ disk
+     kenarını eritir (ilk mask denemesi bunun altındaki kesik ışıklar yüzünden yetmiyordu).
+     Eski `background:#0d0e10` gereksiz: köşeler dahil kare zaten disk rengiyle dolu. */
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 92%, transparent 99%);
+  mask-image: radial-gradient(circle closest-side, #000 92%, transparent 99%);
 }
 .aura-sphere-img {
   position: absolute;
@@ -963,10 +970,10 @@ body {
     transform: scale(1.8);
   }
   .aura-sphere-img {
-    background-image: url("/brand/aura-sphere-still.png") !important;
+    background-image: url("/brand/aura-sphere-still-v2.png") !important;
   }
   .aura-sphere.em .aura-sphere-img {
-    background-image: url("/brand/doctorium-sphere-still.png") !important;
+    background-image: url("/brand/doctorium-sphere-still-v2.png") !important;
   }
 }
 

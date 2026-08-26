@@ -40,9 +40,14 @@ export type AuraTone = keyof typeof TONES;
 
 // Küre varlıkları (public/brand). ≤80px CSS → 160px dosya (2× DPR'de yeterli, küre zaten
 // yumuşak); üstü → 240px. Statik PNG'ler reduced-motion (CSS) + favicon üretimi (scripts/gen-icons.py).
+// -v2 (2026-08-26, kullanıcı: "kürenin etrafında pikselleşme"): kaynak kareler OPAKTI ve parlak
+// ışıklar kare kenarında KESİKTİ — CSS dairesi kesikleri disk kenarında tırtık gösteriyordu.
+// Karelere disk (#0d0e10) + çift smoothstep kenar bake edildi (içerik %90-97'de diske erir,
+// disk %95.5-99'da şeffafa erir) → CSS background/mask'a gerek kalmadı, kenar AA'sı dosyada.
+// Üretim: tek seferlik Pillow geçişi (bu oturum); eski adlar cache kırmak için -v2'ye taşındı.
 const SPHERE = {
-  brand: { s160: "/brand/aura-sphere-160.webp", s240: "/brand/aura-sphere-240.webp" },
-  emerald: { s160: "/brand/doctorium-sphere-160.webp", s240: "/brand/doctorium-sphere-240.webp" },
+  brand: { s160: "/brand/aura-sphere-160-v2.webp", s240: "/brand/aura-sphere-240-v2.webp" },
+  emerald: { s160: "/brand/doctorium-sphere-160-v2.webp", s240: "/brand/doctorium-sphere-240-v2.webp" },
 } as const;
 
 function AuraSymbol({
