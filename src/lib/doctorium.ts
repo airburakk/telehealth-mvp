@@ -429,8 +429,14 @@ function congressToFeedItem(c: {
 
 /** Sonsuz kaydırma cursor'ı — bir sonraki sayfanın "buradan öncesi" sınırı. Yalnız tarih ile
  *  tekilleştirme YETMEZ (gece toplu ingest aynı createdAt/publishedAt'i paylaşabilir); id de
- *  eklenir ki eşit tarihli kayıtlarda ne kayıt tekrarlansın ne de atlansın. */
-interface FeedCursor { at: Date; id: string }
+ *  eklenir ki eşit tarihli kayıtlarda ne kayıt tekrarlansın ne de atlansın.
+ *  `excludeIds` (2026-08-26 — sektörel resmi-kaynak boost): ilk sayfada normal sıralamanın
+ *  DIŞINDAN eklenen kartların ID'leri. Boost edilen eski-tarihli kayıt cursor eşiğinin
+ *  GERİSİNDE kalabilir (`at`'ten daha eski) — bu durumda 2. sayfanın normal `publishedAt < at`
+ *  sorgusu onu YİNE yakalar (duplicate). `excludeIds` bunu bir sonraki sayfada da hariç tutar;
+ *  ondan sonraki sayfalar zaten cursor'ın doğal ilerlemesiyle güvenlidir (aynı kayıt tekil id
+ *  olduğundan bir daha karşılaşılmaz), o yüzden yalnız İLK sayfanın cursor'ında taşınır. */
+interface FeedCursor { at: Date; id: string; excludeIds?: string[] }
 
 async function congressFeedItems(branchSlugs: string[], take: number, before?: FeedCursor): Promise<FeedItem[]> {
   const rows = await db.medicalCongress.findMany({
@@ -529,9 +535,26 @@ export function interleaveByModule(items: FeedItem[], maxRun = 3): FeedItem[] {
  * BAŞTAN sorgulanıp aynı kartları tekrar tekrar döndürüyordu (React "duplicate key" hatası +
  * DOM'da tekrarlanan href'ler olarak yakalandı). `null` sentinel'i bu iki hâli ayırır.
  */
-export type FeedCursors = Partial<Record<FeedModuleKey, { at: string; id: string } | null>>;
+export type FeedCursors = Partial<Record<FeedModuleKey, { at: string; id: string; excludeIds?: string[] } | null>>;
 
-interface RawModuleResult { key: FeedModuleKey; items: FeedItem[]; requested: number }
+interface RawModuleResult {
+  key: FeedModuleKey;
+  items: FeedItem[];
+  requested: number;
+  /** Boost'lu sorgularda (bkz. sektorelWithOfficialBoost) cursor'ın gerçek "tükendi mi + nereden
+   *  devam" bilgisini taşır. Boost edilen kayıtlar `items`'ın SONUNA düşebilir (eski tarihli) ama
+   *  ayrı bir "kanaldan" geldikleri için normal akışın ilerlemesini etkilememeli — aksi hâlde
+   *  cursor onlara göre kurulur ve 2. sayfa ARADAKİ kayıtları atlar (sessiz veri kaybı, bkz.
+   *  personalFeedPage'deki global-cursor uyarısıyla aynı tuzak). Yoksa `items`'ın kendisinden
+   *  hesaplanır (eski/varsayılan davranış). */
+  cursorAnchor?: { exhausted: boolean; last?: { publishedAt: Date; id: string } };
+  /** `FeedCursor.excludeIds` ile aynı kavram — bir sonraki cursor'a AYNEN taşınır (bkz. o
+   *  yorum). Yalnız boost'un ilk ürettiği turda DEĞİL, o kayıtların tarihi cursor'ın "geçtiği"
+   *  noktaya ulaşana kadar HER sayfada gerekir — `news()` de `before.excludeIds`'i buraya
+   *  kopyalayarak zincirler (aksi hâlde yalnız 1 sayfa sonra korumasız kalır ve official kayıt
+   *  cursor eşiğini geçtiğinde tekrar görünür — 2026-08-26 canlı testte sayfa 5/15'te yakalandı). */
+  excludeIds?: string[];
+}
 
 /**
  * Kişisel akış — HAM sorgu katmanı. `personalFeed` (ilk sayfa) ve `personalFeedPage` (sonsuz
@@ -573,6 +596,59 @@ export const PULSE_LABELS: Record<string, string> = {
   kariyer: "rehber",
 };
 
+// Resmi/düşük-hacimli ulusal kaynaklar (SGK/TTB/OHSAD) günlük onlarca haber üreten kaynaklarla
+// (medicalxpress/medscape) aynı "en yeni N" havuzunda yarışamıyor — 2026-08-26 SGK backfill
+// sonrası ölçüldü: 344 kayıtlık sektörel havuzda SGK'nın en yeni kaydı bile #114. sırada, Akışım'ı
+// yeniden açan doktor 15 "daha fazla yükle" turu atmadan hiç görmüyordu. Bkz. sektorelWithOfficialBoost.
+const OFFICIAL_SEKTOREL_SOURCES = ["sgk", "ttb", "ohsad"];
+
+/**
+ * Sektörel kotasının bir kısmını (ilk sayfada, resmi kaynak başına EN FAZLA 1 kart) resmi
+ * kaynaklara garantiler — geri kalanı normal "en yeni" sorgusu doldurur. ⚠️ Kaynak-BAŞINA ayrı
+ * sorgu şart: tek bir "en yeni N" sorgusuyla üç kaynağı birlikte seçmek, güncelleme sıklığı
+ * yüksek olanın (ör. OHSAD) düşük sıklıklı olanı (SGK) her seferinde boost'tan dışlamasına yol
+ * açar — 2026-08-26 canlı ölçümde ilk denemede boost hep OHSAD'a düştü, SGK hiç iyileşmedi.
+ * Cursor'ı KASITLI OLARAK yalnızca "rest" sorgusundan hesaplar (bkz. RawModuleResult.cursorAnchor
+ * yorumu): boost edilen eski-tarihli resmi kayıtlar cursor'ı geriye çekerse, 2. sayfa rest
+ * havuzunun ARADAKİ (boost'tan daha yeni ama ilk sayfanın rest kısmından daha eski) kayıtlarını
+ * atlardı — sessiz veri kaybı. Bu yüzden yalnızca cursor YOKKEN (ilk sayfa) çağrılır; sonraki
+ * turlar normal `news()`'e döner.
+ */
+async function sektorelWithOfficialBoost(where: object, take: number): Promise<RawModuleResult> {
+  const perSource = await Promise.all(
+    OFFICIAL_SEKTOREL_SOURCES.map((source) =>
+      db.newsArticle.findMany({
+        where: { ...where, source },
+        orderBy: [{ publishedAt: "desc" }, { id: "desc" }], take: 1, select: ROW_SELECT,
+      }),
+    ),
+  );
+  const official = perSource.flat().slice(0, take);
+  const officialIds = official.map((r) => r.id);
+  const restTake = take - official.length;
+  const rest = restTake > 0
+    ? await db.newsArticle.findMany({
+        where: { ...where, id: { notIn: officialIds } },
+        orderBy: [{ publishedAt: "desc" }, { id: "desc" }], take: restTake, select: ROW_SELECT,
+      })
+    : [];
+  const exhausted = rest.length < restTake;
+  return {
+    key: "sektorel",
+    items: [...official, ...rest].map(toFeedItem),
+    requested: take,
+    cursorAnchor: {
+      exhausted,
+      last: rest.length ? { publishedAt: rest[rest.length - 1].publishedAt, id: rest[rest.length - 1].id } : undefined,
+    },
+    // Tükenmediyse sonraki sayfalar gelecek — official'in ID'lerini taşı ki eski-tarihli boost
+    // kaydı (cursor eşiğinin gerisinde kalırsa) cursor onu "geçtiğinde" TEKRAR gelmesin (bkz.
+    // RawModuleResult.excludeIds). `news()` bunu her sayfada zincirler. Tükendiyse cursor zaten
+    // null olacak, taşımaya gerek yok.
+    excludeIds: exhausted ? undefined : officialIds,
+  };
+}
+
 async function personalFeedRaw(
   branchSlugs: string[], modules: FeedModuleKey[], limit: number, cursors?: FeedCursors, opts?: PersonalFeedOpts,
 ): Promise<RawModuleResult[]> {
@@ -586,7 +662,7 @@ async function personalFeedRaw(
   const q = (n: number) => Math.max(1, Math.round((n * limit) / 40));
   const cur = (k: FeedModuleKey): FeedCursor | undefined => {
     const c = cursors?.[k];
-    return c ? { at: new Date(c.at), id: c.id } : undefined;
+    return c ? { at: new Date(c.at), id: c.id, excludeIds: c.excludeIds } : undefined;
   };
   const news = (key: FeedModuleKey, where: object, take: number): Promise<RawModuleResult> => {
     const before = cur(key);
@@ -597,6 +673,9 @@ async function personalFeedRaw(
           // "Yalnız yeni" (?n=1): akışa düşme anı — moduleFeed'deki createdSince ile aynı eksen
           // (createdAt, publishedAt DEĞİL; 2019 tarihli karar bu gece ingest edildiyse YENİdir).
           ...(opts?.createdSince ? [{ createdAt: { gte: opts.createdSince } }] : []),
+          // İlk sayfada boost edilen kartlar (bkz. FeedCursor.excludeIds) — cursor eşiğinin
+          // gerisinde kalsalar bile 2. sayfada TEKRAR gelmesinler.
+          ...(before?.excludeIds?.length ? [{ id: { notIn: before.excludeIds } }] : []),
           ...(before
             ? [{ OR: [{ publishedAt: { lt: before.at } }, { AND: [{ publishedAt: before.at }, { id: { lt: before.id } }] }] }]
             : []),
@@ -610,7 +689,7 @@ async function personalFeedRaw(
       // ikincil anahtar yapmak sıralamayı DETERMİNİSTİK kılar; cursor'daki `id: { lt }` şartı
       // artık gerçekten "bu sayfada gösterilmemiş" anlamına gelir.
       orderBy: [{ publishedAt: "desc" }, { id: "desc" }], take, select: ROW_SELECT,
-    }).then((r) => ({ key, items: r.map(toFeedItem), requested: take }));
+    }).then((r) => ({ key, items: r.map(toFeedItem), requested: take, excludeIds: before?.excludeIds }));
   };
 
   const jobs: Promise<RawModuleResult>[] = [];
@@ -623,11 +702,20 @@ async function personalFeedRaw(
     ));
   // Kaynak kapsamı tercihi (2026-08-24): sekmedeki "Kaynak: Ulusal/Uluslararası" süzgeci akışa
   // da işler — moduleFeed'deki `source: { in }` ile aynı sözleşme (SECTOR_SOURCE_SCOPES).
-  if (on("sektorel"))
-    jobs.push(news("sektorel",
-      { module: "sektorel", ...(opts?.sektorelSources?.length ? { source: { in: opts.sektorelSources } } : {}) },
-      q(8),
-    ));
+  if (on("sektorel")) {
+    const sektorelWhere = { module: "sektorel", ...(opts?.sektorelSources?.length ? { source: { in: opts.sektorelSources } } : {}) };
+    const sektorelTake = q(8);
+    // Resmi-kaynak payı (2026-08-26) yalnız İLK sayfada (cursor yok) + "yalnız yeni" modunda
+    // DEĞİL (o mod zaten createdAt eksenli, boost anlamsız) + seçili kaynak kapsamı resmi
+    // kaynakları dışlamıyorsa uygulanır.
+    const officialInScope = !opts?.sektorelSources?.length
+      || opts.sektorelSources.some((s) => OFFICIAL_SEKTOREL_SOURCES.includes(s));
+    jobs.push(
+      !cur("sektorel") && !opts?.createdSince && officialInScope
+        ? sektorelWithOfficialBoost(sektorelWhere, sektorelTake)
+        : news("sektorel", sektorelWhere, sektorelTake),
+    );
+  }
   if (on("ilac")) jobs.push(news("ilac", { module: "ilac" }, q(6)));
   // Hukuk üç bağımsız alt bölüm (v6.132) — doktor tercihler sayfasından üçünü ayrı yönetir.
   if (on("hukuk-mevzuat")) jobs.push(news("hukuk-mevzuat", { module: "mevzuat", kind: "mevzuat" }, q(4)));
@@ -650,9 +738,17 @@ async function personalFeedRaw(
 function cursorsFrom(raw: RawModuleResult[]): FeedCursors {
   const out: FeedCursors = {};
   for (const r of raw) {
-    out[r.key] = r.items.length < r.requested
-      ? null
-      : { at: r.items[r.items.length - 1].publishedAt.toISOString(), id: r.items[r.items.length - 1].id };
+    const exhausted = r.cursorAnchor ? r.cursorAnchor.exhausted || !r.cursorAnchor.last : r.items.length < r.requested;
+    if (exhausted) { out[r.key] = null; continue; }
+    const last = r.cursorAnchor?.last
+      ?? { publishedAt: r.items[r.items.length - 1].publishedAt, id: r.items[r.items.length - 1].id };
+    out[r.key] = {
+      at: last.publishedAt.toISOString(), id: last.id,
+      // `excludeIds` zincirlenir (bkz. RawModuleResult.excludeIds yorumu): boost'un ürettiği
+      // eski-tarihli kayıtlar cursor eşiğinin GERİSİNDE kalabildiği sürece HER sayfada taşınmalı,
+      // yoksa 1 sayfa sonra korumasız kalıp o kayıt cursor'ı geçtiğinde tekrar görünür.
+      ...(r.excludeIds?.length ? { excludeIds: r.excludeIds } : {}),
+    };
   }
   return out;
 }
