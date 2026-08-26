@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { DoctoriumLandingV2 } from "@/components/aura/doctorium-v2/DoctoriumLandingV2";
+import { DoctoriumLandingV3 } from "@/components/aura/doctorium-v3/DoctoriumLandingV3";
 import { StructuredData } from "@/components/aura/structured-data";
 import { LANDING_META } from "@/lib/doctorium-landing/content";
 import { SITE_URL } from "@/lib/aura-landing/seo";
 
-// /doctorium — Doctorium tanıtım landing'i V2 (2026-08-23). v1 → /doctorium-v1 (noindex) +
-// tag doctorium-landing-v1-son. Sözleşme aynen: indekslenir, sitemap'te, kendi kromu.
+// /doctorium — Doctorium tanıtım landing'i V3 (2026-08-26, modernizasyon turu: zebra yok,
+// Inter tek aile, film13 hero, Framer Motion). v2 → /doctorium-v2 (noindex) + tag
+// doctorium-landing-v2-son; v1 → /doctorium-v1 + tag doctorium-landing-v1-son.
+// Sözleşme aynen: indekslenir, sitemap'te, kendi kromu.
 // ⚠️ İddia disiplini: görünür metin + metadata + JSON-LD aynı kurala tabi (ölçülmemiş süre/oran
 // YOK; "doğrulanmış" = belge incelemesi; EMA/TİTCK yok; "hekim" yok) — content.ts + registry testi.
 // Veri: sayfa DB'den örnek akış okur (ISR 10 dk) — tazelik yeterli, DB yükü sınırlı; DB
@@ -49,7 +51,7 @@ export default function DoctoriumLandingPage() {
   return (
     <>
       <StructuredData json={JSON_LD} />
-      <DoctoriumLandingV2 />
+      <DoctoriumLandingV3 />
     </>
   );
 }

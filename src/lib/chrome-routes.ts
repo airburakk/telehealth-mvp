@@ -29,6 +29,9 @@ export const CHROME_FREE_ROUTES = [
   // v1 yedeği (2026-08-23): V2 landing'e geçişte eski landing'in noindex karşılaştırma kopyası —
   // aynı bileşen, aynı kendi-kromu sözleşmesi. V2 kesinleşince bu satır bileşenle birlikte kalkar.
   "/doctorium-v1",
+  // v2 yedeği (2026-08-26): V3 landing'e geçişte v2'nin noindex karşılaştırma kopyası —
+  // v1 yedeğiyle aynı sözleşme. V3 kesinleşince bu satır rotayla birlikte kalkar.
+  "/doctorium-v2",
   "/doctorium/giris",
   // Doctorium kayıt yüzeyleri (ayrışma Faz B, 2026-08-24): kendi koyu kabuğunu taşır
   // (DoctoriumSignupShell) — AURA Header/SiteFooter girmez. AURA'nın /kayit + /ogrenci'si
