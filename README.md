@@ -679,7 +679,20 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   · **`/for-clinicians`:** how-it-works sözleşmesi (indekslenir, sitemap 0.7, kendi aura nav/footer —
   Header/SiteFooter gizleme listesinde). Sözlük `v2.clinicians` **iki yüzeyi** besler (bölüm + sayfa).
   Not kutusu: doğrulama = belge incelemesi, **akreditasyon DEĞİL** (v6.8).
-  · **`/doctorium` V2 (v6.136, 2026-08-23 — kullanıcının 7 parçalık "Landing Page V2" paketi):** anlatı
+  · **`/doctorium` V3 (v6.166→168, 2026-08-26 — "Apple estetiği" modernizasyon turu; V2'yi süpersede):**
+  bileşenler `components/aura/doctorium-v3/` — **zebra YOK**: 14 bölüm + header + footer tek açık
+  zemin (`V3_LIGHT` #fbfbfa; manifesto açık-panel bandı; koyu kutular yalnız `ProductFrame` ürün
+  pencereleri) · **hero film13 video-zeminli** (v1 `DoctoriumBgVideo` aynen; yeni video kullanıcıdan
+  gelince takas — Hero.tsx yorumu) · tipografi **Inter tek aile** (`DoctoriumWordV3` wordmark Inter
+  semibold cv11/ss01; aura-display/mono v3 yüzeyinde yok, ürün pencereleri hariç) · Framer Motion
+  bölüm girişleri (`FadeInUp` 400ms, reduced-motion destekli) · düğme dili **A · Yükselme**
+  (`ui/button.tsx` cva + v3 `CtaLink`; 🪤 primary'de `var(--dl-emerald)` KULLANMA — koyu bölümde
+  nane çözülür, AA düşer) · "Bugün sizin için" yuvası = **Doctorium Post tanıtımı**. ⚠️ `content.ts`
+  v2 arşiviyle PAYLAŞIMLI → v3'e özel metin bölüm dosyasında LOKAL (Post/Identity/FinalCta).
+  Registry/veri/analytics sözleşmeleri V2'den aynen devralındı (aşağıda). **v2 yedeği:** tag
+  `doctorium-landing-v2-son` + `/doctorium-v2` (noindex; V3 kesinleşince rota kalkar — paylaşılan
+  bileşenler ayrıştırılarak). Küre marka görselleri `-v2` (kenar bake'li, `public/brand/`).
+  · **`/doctorium` V2 — ARŞİV `/doctorium-v2` (v6.136, 2026-08-23 — kullanıcının 7 parçalık "Landing Page V2" paketi):** anlatı
   "modül kataloğu"ndan **"her doktor kendi Doctorium'unu oluşturur"** kategorisine geçti (marka → ürün
   "daha fazla bilgi değil, sizin için doğru bilgi" → günlük "bugün sizin için"; AI hero'da geçmez).
   Kod: `src/lib/doctorium-landing/` — **capability registry** (`capabilities.ts`: verified/partial/
