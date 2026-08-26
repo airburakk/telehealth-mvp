@@ -460,7 +460,7 @@ export const SGK_RELAY = /\bsgk\b|sosyal güvenlik kurumu|sağlık uygulama tebl
  * doğal varsayılanı "sut" (geri ödeme ekseni). Görsel çekilmez (gov.tr og:image allowlist'te
  * yok) — CoverArt üretilmiş kapak devrede.
  */
-export async function ingestSgkGss(opts?: IngestOpts): Promise<[number, number]> {
+export async function ingestSgkGss(opts?: IngestOpts & { page?: number }): Promise<[number, number]> {
   const base = "https://www.sgk.gov.tr";
   const main = await fetch(`${base}/Duyuru/Index`, {
     headers: browserHeaders(), cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
@@ -473,7 +473,11 @@ export async function ingestSgkGss(opts?: IngestOpts): Promise<[number, number]>
   const gssHref = /href="(\/duyuru\/index\/GENEL-SAGLIK-SIGORTASI-GENEL-MUDURLUGU-[^"]+)"/.exec(html)?.[1];
   if (gssHref) {
     try {
-      const res = await fetch(base + gssHref, {
+      // opts.page (backfill, 2026-08-25 — scripts/ingest-tr-sources.ts): GSS birim sayfası
+      // ?page=N ile geriye sayfalanır (10 duyuru/sayfa, canlı ölçüm). Günlük cron page vermez
+      // → ilk sayfa (en güncel 10 duyuru) — davranış değişmedi.
+      const pageQs = opts?.page ? `?page=${opts.page}` : "";
+      const res = await fetch(base + gssHref + pageQs, {
         headers: browserHeaders(`${base}/Duyuru/Index`), cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
       if (res.ok) { html = await res.text(); unitPage = true; }

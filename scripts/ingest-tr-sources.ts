@@ -1,4 +1,5 @@
-// TR kaynakları YERELDEN besleme — Resmî Gazete + OHSAD (v6.59, 2026-08-03) — kalıcı araç.
+// TR kaynakları YERELDEN besleme — Resmî Gazete + OHSAD + SGK GSS GM (v6.59, 2026-08-03;
+// SGK 2026-08-25'te eklendi) — kalıcı araç.
 //
 // NEDEN: v6.57 teşhis turu kanıtladı — RG'ye Vercel fra1'den TCP bağlantısı hiç kurulamıyor
 // (veri-merkezi IP aralığı sessizce DROP ediliyor), OHSAD ise Cloudflare IP-itibar korumasına
@@ -16,13 +17,19 @@
 //     (kamuya açık mevzuat/haber), şifreleme katmanına hiç girmez.
 //
 // Kullanım:
-//   npx tsx scripts/ingest-tr-sources.ts                  → DEV, dry-run, RG son 7 gün + OHSAD
+//   npx tsx scripts/ingest-tr-sources.ts                  → DEV, dry-run, RG son 7 gün + OHSAD + SGK 7 sayfa
 //   npx tsx scripts/ingest-tr-sources.ts --gun=30         → RG arşiv derinliği 30 gün
+//   npx tsx scripts/ingest-tr-sources.ts --sgk-sayfa=10   → SGK GSS GM geriye 10 sayfa (varsayılan 7)
 //   npx tsx scripts/ingest-tr-sources.ts --yaz            → DEV'e gerçekten yaz
 //   npx tsx scripts/ingest-tr-sources.ts --prod           → PROD'a karşı dry-run (salt okuma)
 //   npx tsx scripts/ingest-tr-sources.ts --prod --yaz     → PROD'a yaz
 //
 // İdempotent: (source, externalId) benzersiz → yeniden koşuda 0 yeni. Hiçbir şey SİLMEZ.
+//
+// SGK GSS GM (2026-08-25 eklendi): birim sayfası ?page=N ile geriye sayfalanır, 10 duyuru/sayfa
+// (canlı ölçüm 2026-08-25: page=1 Ağustos-Temmuz · page=5 Mart-Şubat sonu · page=6 Şubat-Ocak) →
+// varsayılan 7 sayfa ~7-8 ay kapsar (6 aylık istek için güvenlik payı; idempotent olduğundan
+// fazlası zarar vermez). `ingestSgkGss` normal cron çağrısında (page verilmez) davranış AYNI.
 //
 // v6.62 — KAYNAK METNİ DOLDURMA: fihrist yalnız başlık verir; "Doktor özeti"nin zemini olan resmî
 // metni tembel üretim (ensureRegulationSummary) kalem açılınca Vercel'den çeker — ama RG/OHSAD'a
@@ -35,6 +42,7 @@ const args = process.argv.slice(2);
 const DRY = !args.includes("--yaz");
 const PROD = args.includes("--prod");
 const DAYS = Math.min(1100, Math.max(0, Number(args.find((a) => a.startsWith("--gun="))?.slice(6)) || 7));
+const SGK_PAGES = Math.min(60, Math.max(0, Number(args.find((a) => a.startsWith("--sgk-sayfa="))?.slice(12)) || 7));
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const GAP_MS = 250; // RG arşivine ~4 istek/sn (kurum sitesini yormamak için)
@@ -64,7 +72,7 @@ async function main() {
 
   // Dinamik import ŞART: src/lib/db, DATABASE_URL/AURA_DB_GUARD'ı MODÜL YÜKLENİRKEN okur —
   // yukarıdaki env ayarları import'tan önce bitmeliydi (statik import bu sırayı bozar).
-  const { fetchGazetteToday, fetchGazetteArchive, ingestGazetteItems, ingestOhsad, describeFetchError, fetchDocumentText } =
+  const { fetchGazetteToday, fetchGazetteArchive, ingestGazetteItems, ingestOhsad, ingestSgkGss, describeFetchError, fetchDocumentText } =
     await import("../src/lib/doctorium-sources");
   const { db } = await import("../src/lib/db");
 
@@ -106,6 +114,29 @@ async function main() {
   } catch (e) {
     console.warn(`  ⚠ OHSAD: ${describeFetchError(e).slice(0, 160)}`);
   }
+
+  // ── SGK (GSS GM) — geriye dönük sayfalama (backfill, 2026-08-25) ───────────
+  // Günlük cron yalnız ilk sayfayı görür (en güncel 10 duyuru); SGK 2026-08-24'te canlıya
+  // çıktığı için geçmiş kayıtlar hiç toplanmamıştı. Sayfa 0 kart dönerse (GSS birim sayfası
+  // bulunamadı — slug damgası kırıldı ya da site değişti) döngü durur, sessizce boş geçilmez.
+  console.log(`\n🏛️ SGK GSS GM (geriye ${SGK_PAGES} sayfa × 10 duyuru)`);
+  let sgkScanned = 0, sgkNew = 0, sgkFail = 0;
+  for (let p = 1; p <= SGK_PAGES; p++) {
+    try {
+      const [s, c] = await ingestSgkGss({ page: p, dryRun: DRY, onItem });
+      sgkScanned += s;
+      sgkNew += c;
+      if (s === 0) {
+        console.warn(`  ⚠ sayfa ${p}: 0 kart (GSS birim sayfası bulunamadı olabilir) — durduruluyor`);
+        break;
+      }
+    } catch (e) {
+      sgkFail++;
+      console.warn(`  ⚠ sayfa ${p}: ${describeFetchError(e).slice(0, 160)}`);
+    }
+    await sleep(GAP_MS);
+  }
+  console.log(`  SGK: taranan ${sgkScanned} · yeni ${sgkNew} · hata ${sgkFail}`);
 
   // ── Kaynak metinleri (özet zemini) — v6.62 ─────────────────────────────────
   console.log("\n📄 Kaynak metinleri (boş summary'li RG/OHSAD kayıtları)");
@@ -150,12 +181,13 @@ async function main() {
   }
 
   // ── Özet ──────────────────────────────────────────────────────────────────
-  const [rgTotal, ohsadTotal] = await Promise.all([
+  const [rgTotal, ohsadTotal, sgkTotal] = await Promise.all([
     db.newsArticle.count({ where: { source: "resmi-gazete" } }),
     db.newsArticle.count({ where: { source: "ohsad" } }),
+    db.newsArticle.count({ where: { source: "sgk" } }),
   ]);
   console.log(`\n${DRY ? "🔍 DRY-RUN — yazılan yok." : "✅ Yazma tamamlandı."}`);
-  console.log(`Hedef DB'de toplam: resmi-gazete=${rgTotal} · ohsad=${ohsadTotal}`);
+  console.log(`Hedef DB'de toplam: resmi-gazete=${rgTotal} · ohsad=${ohsadTotal} · sgk=${sgkTotal}`);
   await db.$disconnect();
 }
 
