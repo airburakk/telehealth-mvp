@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { DoctoriumGate } from "@/components/aura/auth-gates";
-import { DoctoriumFooter } from "@/components/aura/doctorium-footer";
+import { LandingFooterV3 } from "@/components/aura/doctorium-v3/Footer";
 
 // Doctorium giriş kapısı (2026-08-16, kullanıcı onaylı tasarım) — /kurumsal-giris
 // panelinin Doctorium alt-marka uyarlaması: zümrüt dönen AuraMark + Doctorium
@@ -20,12 +20,14 @@ export default function DoctoriumGatePage() {
   // useSearchParams (kapıdaki ?next/?oauth iletimi) Suspense sınırı ister.
   // Footer Suspense'in DIŞINDA: kapı verisi beklerken de alt bilgi çizilir (2026-08-18 —
   // bu sayfa Doctorium'un footer'ı hiç olmayan tek yüzeyiydi).
+  // v3 hizalama (2026-08-26): kapı açık yüzeye döndü — fallback da aura-light (koyu flash
+  // olmasın), alt bilgi v3 landing footer'ı (açık; koyu DoctoriumFooter v2 arşiv + portalda sürer).
   return (
     <>
-      <Suspense fallback={<div className="aura-page min-h-dvh" aria-hidden />}>
+      <Suspense fallback={<div className="aura-page aura-light min-h-dvh" aria-hidden />}>
         <DoctoriumGate />
       </Suspense>
-      <DoctoriumFooter />
+      <LandingFooterV3 />
     </>
   );
 }

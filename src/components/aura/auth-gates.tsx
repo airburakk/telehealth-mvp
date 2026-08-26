@@ -321,11 +321,12 @@ function CorporatePanel() {
 // etiketi ("GİRİŞ ROLÜ") noktalı İ'yi lang="tr" sayesinde doğru çizer — kabuğun
 // lang'i görseldir de, kaldırma.
 //
-// Zümrüt SABİT #34d399 (= AuraMark TONES.emerald.main = landing koyu bölüm değeri):
-// kapılar gece-sabit vitrin yüzeyi (.aura-light bu ağaca girmez) → tema token'ı
-// gerekmez. OAuth kurumsal kapıyla AYNI intent=doctor başlangıçları: mevcut e-posta
-// kendi rolüyle girer; öğrenci ÜYELİĞİ yalnız /ogrenci hunisinden açılır.
-const DOCTORIUM_EMERALD = "#34d399";
+// Zümrüt SABİT #047857 (v3 hizalama 2026-08-26: kapı AÇIK yüzeye döndü — DoctoriumShell
+// `.aura-light` + zümrüt ezme; eski gece değeri #34d399 açık zeminde AA altıydı, landing
+// açık bölümlerinin --dl-emerald'ıyla aynı ton kullanılır). OAuth kurumsal kapıyla AYNI
+// intent=doctor başlangıçları: mevcut e-posta kendi rolüyle girer; öğrenci ÜYELİĞİ yalnız
+// /ogrenci hunisinden açılır.
+const DOCTORIUM_EMERALD = "#047857";
 
 const DOCTORIUM = {
   welcome: "Hoş Geldiniz",
@@ -372,14 +373,14 @@ export function DoctoriumGate() {
           küre kaldırıldı; yalnız başlık (Doctorium lockup) + form. */}
 
       {/* Lockup + karşılama tek h1'de (tek sayfa başlığı): görsel iki satır,
-          erişilebilir ad düzyazı. Lockup font-medium — landing DoctoriumWord dili
-          (WordHeadline'ın font-bold'u AURA letterform'una özgü, buraya taşınmaz). */}
+          erişilebilir ad düzyazı. v3 hizalama (2026-08-26): aura-display (Space Grotesk)
+          yerine Inter — lockup DoctoriumWordV3 diliyle semibold, karşılama medium. */}
       <h1
         aria-label="Doctorium — Hoş geldiniz"
-        className="aura-display mt-8 leading-tight tracking-tight text-[var(--aura-ink)]"
+        className="mt-8 leading-tight tracking-[-0.02em] text-[var(--aura-ink)]"
       >
         <span aria-hidden className="block">
-          <span className="block text-3xl font-medium md:text-4xl">
+          <span className="block text-3xl font-semibold md:text-4xl" style={{ fontFeatureSettings: '"cv11", "ss01"' }}>
             Doctor<span style={{ color: DOCTORIUM_EMERALD }}>ium</span>
           </span>
           <span className="mt-2 block text-2xl font-medium md:text-3xl">
@@ -414,7 +415,8 @@ export function DoctoriumGate() {
 
       <div className="mt-6 flex items-center gap-3">
         <span aria-hidden className="h-px flex-1 bg-[var(--aura-hairline)]" />
-        <span className="aura-mono text-[11px] text-[var(--aura-micro)]">{DOCTORIUM.or}</span>
+        {/* v3: mono yerine Inter (küçük ayraç etiketi) */}
+        <span className="text-[11px] font-semibold tracking-[0.08em] text-[var(--aura-micro)]">{DOCTORIUM.or}</span>
         <span aria-hidden className="h-px flex-1 bg-[var(--aura-hairline)]" />
       </div>
 
@@ -429,7 +431,7 @@ export function DoctoriumGate() {
 
       <Link
         href="/doctorium"
-        className="aura-mono mt-6 text-[13px] text-[var(--aura-grey)] transition-colors duration-200 hover:text-[var(--aura-accent)]"
+        className="mt-6 text-[13px] text-[var(--aura-grey)] transition-colors duration-200 hover:text-[var(--aura-accent)]"
       >
         {"← "}
         {DOCTORIUM.back}
@@ -448,7 +450,15 @@ function DoctoriumShell({ children }: { children: React.ReactNode }) {
   useGateVideo(videoRef);
 
   return (
-    <div lang="tr" className="aura-page flex min-h-dvh items-center justify-center px-4 py-8 md:px-10">
+    // v3 hizalama (2026-08-26): kapı AÇIK — `.aura-light` rol token'larını gündüze çevirir
+    // (panel/surface/hairline/ink; RoleSelect + ProviderButton token'lı olduğundan otomatik).
+    // Vurgu turkuaz kalmasın diye zümrüt-AA ezmesi style'da. Sağ kolondaki kapı videosu koyu
+    // sinematik kalır — v3'ün "koyu blok = içerik penceresi" sözleşmesiyle tutarlı.
+    <div
+      lang="tr"
+      style={{ "--aura-accent": "#047857", "--aura-accent-stronger": "#065f46" } as React.CSSProperties}
+      className="aura-page aura-light flex min-h-dvh items-center justify-center px-4 py-8 md:px-10"
+    >
       <div className="grid w-full max-w-6xl overflow-hidden rounded-[22px] border border-[var(--aura-hairline)] bg-[var(--aura-panel)] md:min-h-[640px] md:grid-cols-[minmax(380px,467px)_1fr]">
         <div className="flex flex-col justify-center px-8 py-12 text-center md:px-12">{children}</div>
         <div className="relative hidden md:block">
