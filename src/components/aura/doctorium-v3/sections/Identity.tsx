@@ -16,7 +16,15 @@ const ROWS = [
 ] as const;
 
 export function IdentitySection() {
-  const copy = section("identity");
+  // Gövde v3-lokal kullanıcı metni (2026-08-26; content.ts v2 arşiviyle paylaşımlı, orada değişmez).
+  // Eski metindeki "öğrenci belgesiyle" ifadesi v6.147 sonrası BAYATTI (belge yolu kalktı →
+  // üniversite e-postası doğrulaması); yeni metin ürün gerçeğiyle birebir. Tırnaklar tipografik
+  // ("…") — düz " react/no-unescaped-entities lint'ine takılır. Sponsor/anket/ödül-kapalı bilgisi
+  // metinden düştü ama sağdaki kartın üçüncü satırında yaşamaya devam ediyor.
+  const copy = {
+    ...section("identity"),
+    body: "Doktor üyeliği, e-Devlet barkodlu “Mezun Belgesi”, Tıp öğrencisi üyeliği “üniversite e-postası doğrulaması” ile onaylanır.",
+  };
   const student = copy.ctas?.find((c) => c.to === "student");
   return (
     <LandingSection copy={copy}>

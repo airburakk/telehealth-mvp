@@ -20,7 +20,9 @@ const POST_COPY = {
   eyebrow: "Doctorium Post",
   title: "Güne kendi gazetenizle başlayın.",
   lead: "Seçtiğiniz ilgi alanlarındaki gelişmeler her sabah tek baskıda derlenir: Doctorium Post.",
-  body: "Alan başına en fazla iki başlık — bir alan seçen iki, altı alan seçen on iki başlık görür. Gazetenizin boyu sizin seçiminizin aynasıdır.",
+  // Kullanıcı metni 2026-08-26 ("alan başına iki başlık" sayı detayı kalktı; kural — MAX_PER_SECTION —
+  // üründe aynen sürer, yalnız tanıtım dili sadeleşti).
+  body: "Gazetenizin uzunluğu ve içeriği tamamıyla sizin elinizde, size özel.",
   note: "İsteğe bağlı e-posta baskısı tercihlerden açılır; yeni içerik olmayan gün baskı çıkmaz. Sponsorlu içerik ve anketler Post'a girmez.",
 } as const;
 

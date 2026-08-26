@@ -35,8 +35,13 @@ export function FinalCtaSection() {
             )}
           </div>
           {student && (
+            // Kullanıcı metni 2026-08-26 (v3-lokal — content.ts v2 arşiviyle paylaşımlı, label
+            // orada değişmez): altı çizisiz; "Tıp Öğrencisi Üyeliği" logo zümrüdü (--dl-emerald =
+            // wordmark "ium" ile aynı token; açık bölümde #047857, AA).
             <p className="mt-6 text-[13px] text-[var(--dl-muted)]">
-              <Link href={LANDING_ROUTES.student} className="underline-offset-4 hover:text-[var(--dl-ink)] hover:underline">{student.label}</Link>
+              <Link href={LANDING_ROUTES.student}>
+                Tıp öğrencisi misiniz? <span className="text-[var(--dl-emerald)]">Tıp Öğrencisi Üyeliği</span>
+              </Link>
             </p>
           )}
         </div>
