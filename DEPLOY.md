@@ -306,7 +306,8 @@ Her push/deploy öncesi (sıra önemli):
 4. **Push kapsamı:** `git fetch` + `git log origin/main..HEAD` — paralel oturum commit'i taşınmıyor
    mu? Kapsam kontrolü ile push AYRI adım (zincirleme `&&` yok).
 5. **Deploy sonrası:** Vercel state READY + doğru SHA · prod smoke: `node scripts/synthetic-checks.mjs`
-   (8 rota durum/title/h1/CTA/noindex + TLS + asset — eski elle 200 listesi bunun alt kümesi) +
+   (2026-08-25'ten beri AURA 9 rota + Doctorium.tr 1 rota + 3 marka-korkuluğu redirect kontrolü —
+   durum/title/h1/CTA/noindex + TLS + asset; eski elle 200 listesi bunun alt kümesi) +
    ayrıca `/v2` `/trust` 308 ve `X-Vercel-Id: fra1::fra1` teyidi · değişen metin canlıda örneklenir
    (korumalı rota deploy-sinyali YAPILMAZ). Sürekli nöbet zaten GitHub Actions'ta (~30 dk,
    `.github/workflows/synthetic.yml`; düşen koşu e-posta bildirir).
