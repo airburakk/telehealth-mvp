@@ -1,53 +1,24 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
 
-// /doctorium arka plan videosu (deneme, 2026-08-16) — v2 hero sözleşmesinin taşıması:
-// IO ile yalnız görünürken oynat · arka plan sekmesinde mount-play reddedilir →
-// visibilitychange'te yeniden dene · Save-Data ve reduced-motion'da HİÇ başlatma
-// (preload="none" → play edilmeyen video inmez, poster kalır). Kaynak UZUN FİLM
-// (film9: 37.3 sn, 2026-08-17 dördüncü revizyon — [1] ofis POV: doktor GÖRÜNMEZ, beyaz
-// masada gerçek ölçülü Apple seti [XDR + Mac Studio + Magic klavye/mouse], el sağ üst
-// "katıl"a tıklar → SOL ÜST logo ışır [orijinal boyutlu logo; screenshot referans];
-// [2] adliye = İSTANBUL ÇAĞLAYAN: kullanıcının 360tr C-Kapısı/Ön-Bürolar + Yandex heykel
-// referanslarından nano_banana kareleri üretildi → KULLANICI ONAYIYLA i2v 4 plan
-// [C Kapısı girişi → Themis heykelleri arası → galeri boşluğu ötesindeki duvarda ARŞİV
-// kapısı → raf dijitalizasyonu+patlama; TR baro cübbeleri + bej adliye güvenliği];
-// kurguda ~11 sn'e sıkıştırıldı [2.5+2.5+2+4]. Ad-vers. film8→film9.
-// film10 DENENDİ ve GERİ ALINDI (kullanıcı 2026-08-17: "onayladığım versiyon okeydi,
-// videoyu değiştirmeden çöz") — kaynak film9'da KALDI; logo-kırpılma sorunu KODLA çözüldü:
-// aşağıdaki kare-senkron anchor. object-cover, bölüm 16:9'dan GENİŞ olduğunda videoyu
-// DİKEYde kırpar ve ofis sahnesinde sayfanın üst bandını (nav + zümrüt logo) yutuyordu.
-// Çözüm: yalnız ofis sekansı süresince (film9 zaman ekseni 4.0–9.15 sn) objectPosition
-// "center top" — anchor değişimleri tam sahne KESME anlarına denk gelir, sıçrama
-// algılanmaz. Zamanlama kare-senkron requestVideoFrameCallback ile (destek yoksa
-// timeupdate ~4Hz kaba fallback). ⚠️ Film yeniden kurgulanırsa bu aralık da güncellenir.
-// `overlay` = üstteki okunurluk skrimi: koyu bölümde koyu gradient, açık bölümde
-// beyaz perde — çağıran bölümün temasına göre verilir. Kapsayıcı bölümde
-// `relative isolate` ŞART (-z-10 katmanları bölüm köküne gömülür).
-// film11 (2026-08-17, kullanıcı-onaylı üç sekans yenilemesi): kütüphane = BEYAZIT DEVLET
-// KÜTÜPHANESİ (meydan cephesi + kubbeli kalem işi salon + Tabanlıoğlu cam kitap küpü +
-// küp-içi dijitalizasyon; kullanıcının Maps/mimarizm referansları) · adliye = Çağlayan
-// (film9'dan aynen) · kongre = İSTANBUL KONGRE MERKEZİ Harbiye Oditoryumu + GLOBAL SPINE
-// CONGRESS 2026 (kullanıcı talimatı: gerçek mekân+etkinlik; C2→dijitalizasyon TEK ÇEKİM —
-// sıçrama yok; girişte önlük yok, takım elbise). film12 (2026-08-17): Beyazıt küp
-// planındaki okur kadrajdan çıkamadan kesiliyordu ("çocuk bir anda çekiliyor") →
-// b3→b4 geçişi 0.5 sn CROSSFADE oldu (küp küpe oturur, okur kenarda erir).
-// film13 (2026-08-18): landing hekim→doktor çevirisi sonrası ofis sekansı YENİLENDİ —
-// ekrandaki sayfa artık "Doktorun Yeni Çalışma Alanı" (kullanıcı-onaylı kare → i2v;
-// eski dilim kare 96–215 = tam 120 kare, yenisi de 120 kare → süre/kesme noktaları
-// DEĞİŞMEDİ; kaynaklar arşivde: doctorium-home-shot2 + office-kare-doktorun-v2 +
-// scene-office4-doktorun). 45.75 sn; ofis sekansı 4.0–9.04.
-const OFFICE_SCENE_START = 4.0;
-const OFFICE_SCENE_END = 9.04;
-
-type VideoWithFrameCallback = HTMLVideoElement & {
-  requestVideoFrameCallback?: (cb: () => void) => number;
-};
-
+// /doctorium arka plan videosu — v2 hero sözleşmesinin taşıması: IO ile yalnız
+// görünürken oynat · arka plan sekmesinde mount-play reddedilir → visibilitychange'te
+// yeniden dene · Save-Data ve reduced-motion'da HİÇ başlatma (preload="none" → play
+// edilmeyen video inmez, poster kalır). `overlay` = üstteki okunurluk skrimi: koyu
+// bölümde koyu gradient, açık bölümde beyaz perde — çağıran bölümün temasına göre
+// verilir. Kapsayıcı bölümde `relative isolate` ŞART (-z-10 katmanları bölüm köküne
+// gömülür). Film geçmişi (film8→film13, sahne-anchor tuzakları dahil): git geçmişi.
+//
+// film14 (2026-08-27, kullanıcı onaylı marka filmi — VO+müzik dahil, 44.15sn): film13'ün
+// yerini aldı. Önceki sahne-anchor hack'i (belirli bir zaman aralığında objectPosition
+// değiştirme) film13'e ÖZGÜYDÜ, film14'te yok — kaldırıldı. Otomatik oynatma tarayıcı
+// kuralı gereği DAİMA sessiz başlar (`muted` olmadan autoplay reddedilir); film14
+// anlatım+müzik taşıdığı için kullanıcı SES AÇ/KAPA düğmesiyle sesi kendi açar.
 export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [soundOn, setSoundOn] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -74,33 +45,19 @@ export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
     };
     document.addEventListener("visibilitychange", onVis);
 
-    // Ofis sekansında üst-anchor (logo bandı korunur); kesme anlarında değişir.
-    let disposed = false;
-    const applyAnchor = () => {
-      const t = video.currentTime;
-      const inOffice = t >= OFFICE_SCENE_START && t < OFFICE_SCENE_END;
-      const want = inOffice ? "center top" : "center center";
-      if (video.style.objectPosition !== want) video.style.objectPosition = want;
-    };
-    const v = video as VideoWithFrameCallback;
-    if (typeof v.requestVideoFrameCallback === "function") {
-      const loop = () => {
-        if (disposed) return;
-        applyAnchor();
-        v.requestVideoFrameCallback!(loop);
-      };
-      v.requestVideoFrameCallback(loop);
-    } else {
-      video.addEventListener("timeupdate", applyAnchor);
-    }
-
     return () => {
-      disposed = true;
-      video.removeEventListener("timeupdate", applyAnchor);
       io.disconnect();
       document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
+
+  const toggleSound = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const next = video.muted;
+    video.muted = !next;
+    setSoundOn(video.muted === false);
+  };
 
   return (
     <>
@@ -110,13 +67,34 @@ export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
         loop
         playsInline
         preload="none"
-        poster="/assets/video/p-doctorium-film13.jpg"
+        poster="/assets/video/p-doctorium-film14.jpg"
         aria-hidden
         className="absolute inset-0 -z-10 h-full w-full object-cover"
       >
-        <source src="/assets/video/v-doctorium-film13-720.mp4" type="video/mp4" />
+        <source src="/assets/video/v-doctorium-film14-720.mp4" type="video/mp4" />
       </video>
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: overlay }} />
+      <button
+        type="button"
+        onClick={toggleSound}
+        aria-label={soundOn ? "Sesi kapat" : "Sesi aç"}
+        className="absolute bottom-3 left-3 z-10 flex items-center gap-2 rounded-full border border-white/15 bg-black/55 px-3.5 py-2 text-[12px] font-medium text-white backdrop-blur-sm transition hover:bg-black/70"
+      >
+        {soundOn ? (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none" />
+            <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+            <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+          </svg>
+        ) : (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none" />
+            <line x1="23" y1="9" x2="17" y2="15" />
+            <line x1="17" y1="9" x2="23" y2="15" />
+          </svg>
+        )}
+        {soundOn ? "Sesi kapat" : "Sesi aç"}
+      </button>
       {/* Seffaflik beyani (kullanici karari 2026-08-18). Doctorium yuzeyi tek dil TR. */}
       <AiVideoNoticeBadge lang="tr" />
     </>
