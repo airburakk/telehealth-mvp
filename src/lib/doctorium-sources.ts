@@ -395,44 +395,71 @@ export async function ingestGazetteItems(
 // ── OHSAD (SUT / geri ödeme / mevzuat aktarımı) ─────────────────────────────
 
 /**
- * OHSAD ana sayfası: "Başlık – 29 Haziran 2026" biçiminde tarihli haber listesi.
- * SGK duyurularının fiilen tek makine-okunur yolu (SGK sitesi JS ile yüklüyor).
+ * OHSAD — MANŞET kategorisinin RSS beslemesi (kullanıcı kararı 2026-08-26).
+ *
+ * Eski yol ana sayfa HTML taramaydı ve link-avcısı regex KATEGORİ SAYFASINI da haber sanıp
+ * kaydetti (canlıda ölçüldü: "Manşet <ilk haberin başlığı>" birleşik başlıklı, özeti site nav
+ * menüsü olan kayıt — kullanıcı "aynı haber iki kere" olarak gördü). WordPress kategori feed'i
+ * (https://www.ohsad.org/category/manset/feed/ — 2026-08-26 ölçümü: HTTP 200, 10 item) yalnız
+ * gerçek haber kalemlerini verir: başlık/link/pubDate/description temiz.
+ *
+ * Bilinçli korunanlar / değişenler:
+ *  · externalId ESKİ formülle (URL slug'ı) — source_externalId idempotensi: eski yolun yazdığı
+ *    gerçek haber feed'de tekrar görülünce YENİ kayıt AÇILMAZ. Formülü DEĞİŞTİRME.
+ *  · SGK_RELAY süzgeci aynen (SGK/GSS duyuruları doğrudan kaynağından — ingestSgkGss; OHSAD
+ *    aktarımını da yazmak aynı duyuruyu iki kaynaktan düşürürdü, kullanıcı kararı 2026-08-24).
+ *  · isHealthRelated süzgeci KALDIRILDI: manşet derneğin kendi editoryal seçimidir
+ *    (isAssociationRelevant sınıfı gerekçe — kaynak otoriteyken pozitif sinyal aranmaz).
+ *  · categorize→modül ataması aynen (mevzuat/SUT → Mevzuat modülü; kategorisiz haber
+ *    sektörel/yönetim — 2026-08-01 dersi).
+ *  · summary artık feed description'ından (eskiden boş kalıp sonradan sayfadan dolduruluyordu
+ *    ve nav-menüsü çöpü toplayabiliyordu).
  */
 export async function ingestOhsad(opts?: IngestOpts): Promise<[number, number]> {
-  const res = await fetch("https://www.ohsad.org/", {
-    headers: browserHeaders(), cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  const FEED = "https://www.ohsad.org/category/manset/feed/";
+  // İki aşamalı başlık (ingestRss deseni): önce tarayıcı başlıkları (OHSAD Cloudflare sınıfı),
+  // 403/429'da başlıksız yeniden dene — kaynak davranışı değişse de kendini onarır.
+  const get = (headers: Record<string, string>) =>
+    fetch(FEED, { headers, cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+  let res = await get({
+    ...browserHeaders("https://www.ohsad.org/"),
+    Accept: "application/rss+xml, application/xml, text/xml, */*;q=0.8",
   });
+  if (res.status === 403 || res.status === 429) res = await get({});
   if (!res.ok) throw new Error(`OHSAD HTTP ${res.status}`);
-  const html = await res.text();
+  const xml = await res.text();
 
   let scanned = 0;
   let created = 0;
   const seen = new Set<string>();
-  for (const m of html.matchAll(/<a[^>]+href="(https?:\/\/(?:www\.)?ohsad\.org\/[^"]+)"[^>]*>([\s\S]{10,400}?)<\/a>/gi)) {
-    const url = m[1];
-    const title = plain(m[2]);
-    if (title.length < 25 || title.length > 300) continue;
+  for (const it of xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)) {
+    const b = it[1];
+    const pick = (tag: string) => {
+      const m = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i").exec(b);
+      return m ? plain(m[1].replace(/<!\[CDATA\[|\]\]>/g, "")) : "";
+    };
+    const rawTitle = pick("title");
+    const url = pick("link");
+    if (!rawTitle || !url) continue;
     if (seen.has(url)) continue;
     seen.add(url);
     scanned++;
-    if (!isHealthRelated(title)) continue;
-    // SGK-aktarım süzgeci (kullanıcı kararı 2026-08-24): SGK/GSS duyuruları artık DOĞRUDAN
-    // kaynağından geliyor (ingestSgkGss) — OHSAD'ın aktarımını da yazmak aynı duyuruyu iki
-    // kaynaktan düşürürdü. SUT / "Bedeli Ödenecek İlaçlar" serileri de SGK'nın kendi yayınıdır.
-    if (SGK_RELAY.test(title.toLocaleLowerCase("tr-TR"))) continue;
-    // Başlık sonundaki "– 29 Haziran 2026" tarihini yakala; yoksa bugün.
-    const published = parseTurkishDate(title) ?? new Date();
-    // URL yolu benzersiz kimlik (slug).
+    if (SGK_RELAY.test(rawTitle.toLocaleLowerCase("tr-TR"))) continue;
+    // Başlık sonundaki tarih kuyruğu temizliği — iki biçim de görülür: "– 29 Haziran 2026"
+    // (sözel, eski liste) ve "– 04.07.2026" (rakamsal — 2026-08-26 dry-run'ında feed'de ölçüldü).
+    // İdempotensi başlığa değil URL slug'ına bağlı; temizlik güvenli.
+    const title = rawTitle.replace(/\s*[–-]\s*(?:\d{1,2}\s+\p{L}+\s+\d{4}|\d{1,2}[./]\d{1,2}[./]\d{4})\s*$/u, "").trim();
+    const pub = pick("pubDate");
+    const when = pub ? new Date(pub) : null;
+    const published = when && !Number.isNaN(when.getTime()) ? when : (parseTurkishDate(rawTitle) ?? new Date());
+    // URL yolu benzersiz kimlik (slug) — eski formülle birebir aynı.
     const id = url.replace(/\/$/, "").split("/").pop() as string;
-    // Modül ataması: YALNIZ düzenleme niteliğindeki kalemler (mevzuat/SUT) Mevzuat modülüne girer.
-    // Kategorisiz OHSAD haberi (ör. "Sağlık Bakanlığı ile Buluşma") sektörel/yönetim sayılır —
-    // varsayılanı "mevzuat" yapmak dernek etkinliklerini mevzuat listesine dolduruyordu (2026-08-01).
     const cat = categorize(title);
     const isLegal = cat === "mevzuat" || cat === "sut";
     const isNew = await upsertArticle({
       source: "ohsad", externalId: id, module: isLegal ? "mevzuat" : "sektorel",
       category: cat ?? "yonetim", kind: isLegal ? "mevzuat" : "haber",
-      title: title.replace(/\s*[–-]\s*\d{1,2}\s+\p{L}+\s+\d{4}\s*$/u, "").trim(),
+      title, summary: pick("description").slice(0, 500),
       sourceName: "OHSAD", url, publishedAt: published,
       // Görsel yalnız HABER kalemine (v6.99.2) — mevzuat/SUT detayı resmî metin sayfasıdır.
     }, opts?.dryRun, isLegal ? undefined : () => fetchOgImage(url));
