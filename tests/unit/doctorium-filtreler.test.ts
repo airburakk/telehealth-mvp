@@ -11,7 +11,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { scoreLegalRelevance } from "@/lib/doktrin-filter";
-import { tier1Query, tier2Query, BRANCH_JOURNALS, GENERAL_JOURNALS } from "@/lib/academic-journals";
+import {
+  tier1Query, tier2Query, BRANCH_JOURNALS, GENERAL_JOURNALS,
+  PUBMED_HUMAN_FILTER, isNonHumanAcademic, lccNonMedicine,
+} from "@/lib/academic-journals";
 import {
   isProfessionallyRelevant, categorize, parseItoDate,
   NEWS_IMAGE_HOSTS, allowedImageUrl, extractOgImage, RSS_SOURCES,
@@ -111,6 +114,52 @@ describe("Akademik — seçkin dergi + kanıt düzeyi (v6.99)", () => {
       expect(list.length, slug).toBeGreaterThan(0);
       expect(new Set(list).size, slug).toBe(list.length);
     }
+  });
+});
+
+// 2026-08-26 — akademik akışa "Journal of Integrative Agriculture"dan buzağı ishali makalesi
+// sızdı (DOAJ, serbest-metin eşleşme, "Gastroenteroloji" etiketiyle). Bu blok insan-tıbbı
+// kısıtının sözleşmesidir; vakaların ilki GERÇEK sızıntı kaydıdır.
+describe("Akademik — insan tıbbı kısıtı (2026-08-26)", () => {
+  it("PubMed sorgularının İKİSİ de gecikme-güvenli insan süzgecini taşır", () => {
+    // humans[mh] TEK BAŞINA olmaz: MeSH indekslemesi gecikir, taze kayıtlar sessizce elenirdi.
+    expect(PUBMED_HUMAN_FILTER).toBe("NOT (animals[mh] NOT humans[mh])");
+    expect(tier1Query("gastrointestinal diseases[mh]", "gastroenteroloji")).toContain("(animals[mh] NOT humans[mh])");
+    expect(tier2Query("gastrointestinal diseases[mh]")).toContain("(animals[mh] NOT humans[mh])");
+  });
+
+  it("GERÇEK sızıntı vakası dışlanır — dergi adı VE başlık bağımsız yakalar", () => {
+    const title = "Current insights into neonatal calf diarrheal etiology and the therapeutic role of probiotics";
+    expect(isNonHumanAcademic("Journal of Integrative Agriculture", title)).toBe(true);
+    expect(isNonHumanAcademic("Journal of Integrative Agriculture", "nötr başlık")).toBe(true); // dergi tek başına
+    expect(isNonHumanAcademic("PLOS ONE", title)).toBe(true); // başlık tek başına (genel dergi senaryosu)
+  });
+
+  it("veteriner dergisi nötr başlıkla da dışlanır (Europe PMC'nin tek savunması bu bekçi)", () => {
+    expect(isNonHumanAcademic("Frontiers in Veterinary Science", "Probiotic supplementation and gut microbiota")).toBe(true);
+    expect(isNonHumanAcademic("Journal of Dairy Science", "Rotavirus prevalence study")).toBe(true);
+    expect(isNonHumanAcademic("Animals", "Diarrhea management approaches")).toBe(true);
+  });
+
+  it("insan tıbbı içeriği GEÇER — translasyonel araştırma dahil (bilinçli dar desen)", () => {
+    expect(isNonHumanAcademic("Gastroenterology", "Probiotics in pediatric acute gastroenteritis: a meta-analysis")).toBe(false);
+    // Fare modeli = insan tıbbı translasyonel çalışması; "mouse/rat" desende BİLİNÇLİ yok.
+    expect(isNonHumanAcademic("Nature Medicine", "A mouse model of ulcerative colitis reveals epithelial repair pathways")).toBe(false);
+    // Ksenotransplantasyon organ-nakli branşının gerçek içeriği; "porcine/pig" desende BİLİNÇLİ yok.
+    expect(isNonHumanAcademic("N Engl J Med", "Porcine kidney xenotransplantation: first-in-human outcomes")).toBe(false);
+    // "GOAT" = Galveston Orientation and Amnesia Test (insan TBI ölçeği) — tekil "goat" desende yok.
+    expect(isNonHumanAcademic("J Neurotrauma", "Validity of the GOAT in traumatic brain injury")).toBe(false);
+    // "Implantology" \bplant\b'e takılmamalı (kelime sınırı).
+    expect(isNonHumanAcademic("Journal of Oral Implantology", "Dental implant osseointegration")).toBe(false);
+  });
+
+  it("DOAJ LCC kodu: tıp 'R' sınıfı geçer, tarım 'S' düşer, kod yoksa karar verilmez", () => {
+    expect(lccNonMedicine(["S1-972"])).toBe(true); // sızıntı kaydının gerçek kodu (Agriculture)
+    expect(lccNonMedicine(["QC310.15-319"])).toBe(true); // kimya (2026-08-26 canlı örneklemden)
+    expect(lccNonMedicine(["RC799-869"])).toBe(false); // gastroenteroloji
+    expect(lccNonMedicine(["R"])).toBe(false); // genel tıp
+    expect(lccNonMedicine(["S1-972", "RC799-869"])).toBe(false); // karma sınıflama → tıp varsa geçer
+    expect(lccNonMedicine([])).toBe(false); // bilgi yok → isNonHumanAcademic tek bekçi kalır
   });
 });
 

@@ -85,13 +85,62 @@ export const EVIDENCE_TYPES: string[] = [
 /** Kanıt taşımayan yayın tipleri — beyaz-liste dergilerinde bunlar akışın çoğunluğunu oluşturur. */
 export const EXCLUDED_TYPES: string[] = ["editorial", "letter", "comment", "news", "biography", "retracted publication"];
 
+// ── İnsan tıbbı kısıtı (2026-08-26) ─────────────────────────────────────────
+//
+// SORUN: akademik akışa "Journal of Integrative Agriculture"dan buzağı ishali makalesi düştü
+// (DOAJ, serbest-metin "gastrointestinal diseases" eşleşmesi — DOAJ TÜM disiplinleri indeksler).
+// Hattın hiçbir katmanında insan-tıbbı ölçütü yoktu. Üç katmanlı savunma:
+//
+//   1) PubMed: sorguya PUBMED_HUMAN_FILTER — `humans[mh]` TEK BAŞINA kullanılMAZ (MeSH indekslemesi
+//      haftalar gecikir; taze kayıtlar sessizce elenirdi). `NOT (animals[mh] NOT humans[mh])`
+//      yalnız "hayvan-işaretli ve insan-işaretsiz" kayıtları düşürür; indekslenmemişler geçer.
+//   2) DOAJ: LCC konu kodu (lccNonMedicine) — tıp = "R" sınıfı; tarım/veterinerlik = "S"/"SF".
+//      ⚠️ API wildcard'ı REDDEDİYOR ("disallowed Lucene features", 2026-08-26 ölçümü) → süzgeç
+//      sorguda değil, dönen kaydın verisi üstünde.
+//   3) Tüm kaynaklar: dergi adı + başlık bekçisi (isNonHumanAcademic). Europe PMC'nin TEK savunması
+//      bu: `MESH:` alanı güvenilmez (2026-08-26 ölçümü: MESH:"Neoplasms" yalnız ~63 bin kayıt —
+//      alan patlatılmamış/kısmi; sorgu-düzeyi MeSH süzgeci sessizce işlevsiz kalıyor).
+//
+// 🪤 Başlık deseni BİLİNÇLİ dar: yalnız çiftlik/hayvancılık terimleri. "mouse/rat/porcine" YOK —
+// fare modeli ve domuz ksenotransplantasyonu İNSAN tıbbı literatürüdür (organ-nakli branşının
+// gerçek içeriği); genişletmeden önce translasyonel araştırmayı kurutmadığını ölç. "goats" yalnız
+// çoğul: tekil "goat" büyük/küçük harf duyarsız modda GOAT ölçeğini (Galveston Orientation and
+// Amnesia Test — insan TBI değerlendirmesi) yakalardı.
+
+/** PubMed sorgu eki — gecikme-güvenli insan süzgeci (tier1 + tier2'ye eklenir). */
+export const PUBMED_HUMAN_FILTER = "NOT (animals[mh] NOT humans[mh])";
+
+/** Veteriner/tarım/hayvan bilimi DERGİ adları (insan tıbbı dergisinde geçmeyen kelimeler). */
+export const NONHUMAN_JOURNAL_RE =
+  /veterinar|agricultur|\banimal|livestock|\bdairy\b|poultry|aquacult|zoonos|zoolog|entomolog|botan|\bplant\b|\bcrop\b|fisher(y|ies)|wildlife|\bavian\b/i;
+
+/** Çiftlik/hayvancılık BAŞLIK terimleri — genel dergideki (PLOS ONE vb.) hayvancılık çalışması için. */
+export const NONHUMAN_TITLE_RE =
+  /\b(calf|calves|bovine|cattle|heifers?|dairy cows?|piglets?|weanlings?|sows|broilers?|poultry|laying hens?|ewes?|lambs?|goats|caprine|equine|foals?|mares?|canine|feline|veterinary|aquaculture|tilapia|salmonids?|honey ?bees?)\b/i;
+
+/** İnsan tıbbı DIŞI akademik içerik mi? (dergi adı VEYA başlık yakalarsa dışla — fail-closed değil,
+ *  desen-bazlı: yakalanmayan kayıt geçer; DOAJ'da LCC kodu ek katmandır.) */
+export function isNonHumanAcademic(journal: string | null | undefined, title: string): boolean {
+  return NONHUMAN_JOURNAL_RE.test(journal ?? "") || NONHUMAN_TITLE_RE.test(title);
+}
+
+/**
+ * DOAJ LCC konu kodları tıp DIŞINI mı gösteriyor? Tıp = LCC "R" sınıfı (RC dahiliye, RD cerrahi,
+ * RJ pediatri…). Kod hiç yoksa karar VERİLMEZ (false) — o durumda isNonHumanAcademic tek bekçidir.
+ */
+export function lccNonMedicine(codes: string[]): boolean {
+  return codes.length > 0 && !codes.some((c) => c.trim().toUpperCase().startsWith("R"));
+}
+
 function orGroup(values: string[], field: string): string {
   return `(${values.map((v) => `"${v}"[${field}]`).join(" OR ")})`;
 }
 
 /**
- * Katman 1 sorgusu: MeSH + beyaz-liste dergi + kanıt tipi (− kanıtsız tipler).
+ * Katman 1 sorgusu: MeSH + beyaz-liste dergi + kanıt tipi (− kanıtsız tipler − hayvan-only).
  * Branşın kendi listesi yoksa yalnız genel dergiler kullanılır (liste hiç boş kalmaz).
+ * 🪤 join(" AND ") NOT'lu öğelerde " AND NOT " üretir → replaceAll ŞART (iki NOT öğesi var;
+ * tekil replace ikincisini kaçırır ve PubMed "AND NOT"u kabul etse de sözleşme testi kırılır).
  */
 export function tier1Query(mesh: string, branchSlug: string): string {
   const journals = [...new Set([...(BRANCH_JOURNALS[branchSlug] ?? []), ...GENERAL_JOURNALS])];
@@ -101,14 +150,15 @@ export function tier1Query(mesh: string, branchSlug: string): string {
     orGroup(journals, "ta"),
     orGroup(EVIDENCE_TYPES, "pt"),
     `NOT ${orGroup(EXCLUDED_TYPES, "pt")}`,
-  ].join(" AND ").replace(" AND NOT ", " NOT ");
+    PUBMED_HUMAN_FILTER,
+  ].join(" AND ").replaceAll(" AND NOT ", " NOT ");
 }
 
 /** Katman 2 (yedek): dergi serbest, kanıt tipi şart — niş branşta akış kurumasın. */
 export function tier2Query(mesh: string): string {
-  return [`(${mesh})`, "hasabstract", orGroup(EVIDENCE_TYPES, "pt"), `NOT ${orGroup(EXCLUDED_TYPES, "pt")}`]
+  return [`(${mesh})`, "hasabstract", orGroup(EVIDENCE_TYPES, "pt"), `NOT ${orGroup(EXCLUDED_TYPES, "pt")}`, PUBMED_HUMAN_FILTER]
     .join(" AND ")
-    .replace(" AND NOT ", " NOT ");
+    .replaceAll(" AND NOT ", " NOT ");
 }
 
 // NOT: "bu kayıt beyaz-listeden mi geldi" sorusuna bakan bir yardımcı BİLİNÇLİ yok. PubMed

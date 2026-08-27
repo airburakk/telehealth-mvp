@@ -20,6 +20,7 @@
 // akademik kayıtlarda zaten jenerik/branş bandı çizer — pubmed ile aynı yol).
 import { db } from "./db";
 import { NEWS_QUERIES } from "./medical-news";
+import { isNonHumanAcademic, lccNonMedicine } from "./academic-journals";
 import { BRANCHES } from "./triage";
 
 const UA = "Mozilla/5.0 (compatible; AuraHealth/1.0; +https://telehealth-mvp-roan.vercel.app)";
@@ -123,12 +124,15 @@ async function epmcBranch(mesh: string, slug: string, opts: AcademicIngestOpts):
   const to = new Date();
   const from = new Date(to.getTime() - opts.days * 86400_000);
   // SRC:MED|PMC = hakemli indeks kayıtları (PPR/preprint bu kümede YOK). resultType=core → abstract.
+  // ⚠️ İnsan-tıbbı kısıtı SORGUDA DEĞİL: Europe PMC'nin MESH: alanı güvenilmez (patlatılmamış/kısmi
+  // — MESH:"Neoplasms" ~63 bin kayıt, 2026-08-26 ölçümü) → süzgeç aşağıda kayıt-üstü (isNonHumanAcademic).
+  // pageSize 3× perBranch: süzgeç kayıt düşürebilir, oluşturma perBranch'te durur.
   const query = `(${meshToKeywords(mesh)}) AND OPEN_ACCESS:Y AND HAS_ABSTRACT:Y AND (SRC:MED OR SRC:PMC) AND FIRST_PDATE:[${iso(from)} TO ${iso(to)}]`;
   const qs = new URLSearchParams({
     query,
     format: "json",
     resultType: "core",
-    pageSize: String(opts.perBranch),
+    pageSize: String(opts.perBranch * 3),
     sort: "P_PDATE_D desc",
   });
   const res = await fetch(`https://www.ebi.ac.uk/europepmc/webservices/rest/search?${qs}`, {
@@ -141,7 +145,10 @@ async function epmcBranch(mesh: string, slug: string, opts: AcademicIngestOpts):
 
   let created = 0;
   for (const r of results) {
+    if (created >= opts.perBranch) break;
     if (!r.title || !r.abstractText || !r.firstPublicationDate) continue;
+    // İnsan tıbbı DIŞI (veteriner/tarım dergisi ya da hayvancılık başlığı) → alınmaz.
+    if (isNonHumanAcademic(r.journalTitle, r.title)) continue;
     const when = new Date(`${r.firstPublicationDate}T00:00:00Z`);
     if (Number.isNaN(when.getTime())) continue;
     const doi = r.doi ?? null;
@@ -176,14 +183,19 @@ interface DoajResult {
     author?: { name?: string }[];
     identifier?: { type?: string; id?: string }[];
     link?: { type?: string; url?: string }[];
+    /** Derginin LCC konu sınıflaması (DOAJ dergiden makaleye kalıtır) — insan-tıbbı süzgecinin dayanağı. */
+    subject?: { scheme?: string; code?: string; term?: string }[];
   };
 }
 
 async function doajBranch(mesh: string, slug: string, opts: AcademicIngestOpts): Promise<[number, number]> {
   const cutoff = new Date(Date.now() - opts.days * 86400_000);
   const query = encodeURIComponent(meshToKeywords(mesh));
+  // pageSize 3× perBranch: insan-tıbbı süzgeci kayıt düşürebilir (DOAJ TÜM disiplinleri indeksler —
+  // tarım/mühendislik dergileri serbest-metin sorguyla eşleşir); oluşturma perBranch'te durur.
+  // ⚠️ Süzgeç sorguya konamaz: DOAJ API'si wildcard'ı reddediyor ("disallowed Lucene features").
   const res = await fetch(
-    `https://doaj.org/api/search/articles/${query}?pageSize=${opts.perBranch}&sort=${encodeURIComponent("created_date:desc")}`,
+    `https://doaj.org/api/search/articles/${query}?pageSize=${opts.perBranch * 3}&sort=${encodeURIComponent("created_date:desc")}`,
     { headers: { "user-agent": UA }, cache: "no-store" },
   );
   if (!res.ok) throw new Error(`doaj HTTP ${res.status}`);
@@ -192,8 +204,18 @@ async function doajBranch(mesh: string, slug: string, opts: AcademicIngestOpts):
 
   let created = 0;
   for (const r of results) {
+    if (created >= opts.perBranch) break;
     const b = r.bibjson;
     if (!b?.title || !b.abstract) continue; // özetsiz kayıt alınmaz (hakemli özetli sözleşme)
+    // İnsan tıbbı kısıtı (2026-08-26 — "Journal of Integrative Agriculture" sızıntısı sonrası):
+    // 1) LCC konu kodu tıp ("R") DIŞINI gösteriyorsa alınmaz (bu makale "S1-972 · Agriculture" idi);
+    // 2) kod yoksa/yetmezse dergi adı + başlık bekçisi.
+    const lcc = (b.subject ?? [])
+      .filter((s) => (s.scheme ?? "").toUpperCase() === "LCC")
+      .map((s) => s.code ?? "")
+      .filter(Boolean);
+    if (lccNonMedicine(lcc)) continue;
+    if (isNonHumanAcademic(b.journal?.title, b.title)) continue;
     const when = b.year
       ? new Date(`${b.year}-${(b.month ?? "1").padStart(2, "0")}-01T00:00:00Z`)
       : r.created_date

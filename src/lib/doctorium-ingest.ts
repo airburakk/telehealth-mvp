@@ -15,7 +15,7 @@
 // İÇERİK PHI DEĞİLDİR (herkese açık literatür/mevzuat) → şifrelenmez, düz saklanır. Bilinçli.
 import { db } from "./db";
 import { NEWS_QUERIES } from "./medical-news";
-import { tier1Query, tier2Query } from "./academic-journals";
+import { tier1Query, tier2Query, isNonHumanAcademic } from "./academic-journals";
 import { BRANCHES } from "./triage";
 import {
   fetchGazetteToday, ingestGazetteItems, ingestOhsad, ingestSgkGss, ingestTtb,
@@ -178,6 +178,9 @@ export async function ingestQuery(
   for (const id of ids) {
     const r = sum.result[id];
     if (!r?.title) continue;
+    // Sorgudaki PUBMED_HUMAN_FILTER yalnız MeSH'lenmiş kayıtları eler; henüz indekslenmemiş taze
+    // veteriner dergisi kaydı (tier2 dergi-serbesttir) buradan yakalanır (2026-08-26).
+    if (isNonHumanAcademic(r.fulljournalname || r.source, r.title)) continue;
     const when = pubDate(r.pubdate, r.sortpubdate, r.epubdate);
     if (!when) continue;
     const doi = r.articleids?.find((a) => a.idtype === "doi")?.value ?? null;
