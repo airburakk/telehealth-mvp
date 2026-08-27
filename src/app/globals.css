@@ -92,6 +92,34 @@
   color-scheme: dark;
 }
 
+/* DOCTORIUM ÜRÜN KAPSAMI — V3 landing tasarım dili (2026-08-27, kullanıcı kararı: "landing
+ * page'e yaptığımız değişiklikleri tüm siteye yap"). /doktor/doctorium/* artık DAİMA V3'ün
+ * açık paletinde (kullanıcının tema tercihinden BAĞIMSIZ — Doctorium kendi markası, AURA'nın
+ * gece-varsayılan kararı onu bağlamaz). `.theme-light` İLE BİRLİKTE uygulanır (bkz. layout.tsx):
+ * o sınıf yukarıdaki gündüz-kontrast remap'lerini (satır ~209) ve zaten-ölçülmüş semantik/aksan
+ * tonları devreye sokar; bu blok yalnız NÖTR tuvali (bg/surface/ink/hairline) V3'ün "kırık beyaz"
+ * değerlerine çeker — accent/success/warning/danger/lane token'larına DOKUNMAZ (AA ölçümü
+ * korunur, bkz. .theme-light bloğu). Yazı tipi de buradan Inter'e tekilleşir (V3: "hiyerarşi
+ * yalnız ağırlıkla" — aura-display/aura-mono class'ları var kalır, yalnız font-family değişir).
+ * 🪤 Yeni nötr token eklersen (--c-panel gibi) buraya da ekle, yoksa o öğe AURA'nın mineral
+ * grisinde kalır ve V3 ile birleşmez. */
+.doctorium-scope {
+  --c-bg: #fbfbfa;
+  --c-bg-deep: #f3f3f1;
+  --c-chrome: #f3f3f1;
+  --c-panel: #ffffff;
+  --c-surface: #ffffff;
+  --c-surface-2: #f3f3f1;
+  --c-ink: #18181b;
+  --c-ink-2: #4b4b48;
+  --c-ink-3: #6b6b68;
+  --c-hairline: rgba(24, 24, 27, 0.08);
+  color: var(--c-ink);
+  color-scheme: light;
+  --aura-font-display: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --aura-font-mono: var(--font-sans), ui-monospace, monospace;
+}
+
 /* Doctorium PORTAL footer'ı (2026-08-19, kullanıcı bildirimi "footer çok kalın"):
  * DoctoriumFooter landing'de sabit koyu DOCTORIUM_PALETTE ile yaşar; iç portalda
  * (/doktor/doctorium/*) aynı sabit koyu, gece temasında sayfa zeminiyle (#0d0e10)

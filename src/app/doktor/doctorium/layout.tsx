@@ -68,7 +68,11 @@ export default async function DoctoriumLayout({ children }: { children: React.Re
   // (#08090b) sayfa zemininden (#0d0e10) ayrışır, gündüz açık krom "siyah blok"u bitirir.
   // (theme prop'u 2026-08-24 ayrışmasında kalktı — tek işlevi ByAura wordmark renk seçimiydi.)
   return (
-    <div className="flex min-h-[calc(100dvh-4rem)] flex-col">
+    // theme-light + doctorium-scope (2026-08-27, kullanıcı kararı — bkz. globals.css):
+    // Doctorium ürün yüzeyi artık DAİMA V3'ün açık paletinde, kullanıcının AURA tema
+    // tercihinden bağımsız. theme-light zaten-ölçülmüş gündüz remap/aksan/semantik
+    // tonlarını devreye sokar; doctorium-scope yalnız nötr tuvali V3'e çeker.
+    <div className="theme-light doctorium-scope flex min-h-[calc(100dvh-4rem)] flex-col bg-[var(--c-bg)] text-[var(--c-ink)]">
       <div className="flex-1">{children}</div>
       <DoctoriumFooter portal />
     </div>

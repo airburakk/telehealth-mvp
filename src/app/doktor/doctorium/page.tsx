@@ -26,6 +26,7 @@ import { LegalSearchBox } from "./LegalSearchBox";
 import { CongressList } from "./CongressList";
 import { ProspektusSearch } from "./ProspektusSearch";
 import { CareerDisclaimer, careerDate, COUNTRY_LABEL } from "./CareerShared";
+import { ButtonLink } from "./Button";
 import { ArticleCard, SourcePlate } from "./ArticleCard";
 import { FeedLoadMore } from "./FeedLoadMore";
 import { SaveButton } from "./SaveButton";
@@ -348,12 +349,9 @@ export default async function DoctoriumPage({
             )}
           </h1>
           {isDoctor && (
-            <Link
-              href="/doktor/doctorium/tercihler"
-              className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-2.5 text-[14px] font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
-            >
+            <ButtonLink href="/doktor/doctorium/tercihler" variant="secondary" size="sm" className="shrink-0">
               <SlidersHorizontal size={16} /> Özelleştir
-            </Link>
+            </ButtonLink>
           )}
         </div>
         <p className="mt-1.5 text-[13px] text-[var(--c-ink-2)]">{MODULE_HEAD[active].desc}</p>
