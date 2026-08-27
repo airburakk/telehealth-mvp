@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { DOCTORIUM_PALETTE } from "@/components/aura/doctorium-brand";
-import type { SectionCopy } from "@/lib/doctorium-landing/content";
+import { chapterNo, type SectionCopy } from "@/lib/doctorium-landing/content";
 import { Rich } from "../doctorium-v2/rich-text";
 import { V3_LIGHT } from "./palette";
 import { v3Theme } from "./theme";
@@ -15,22 +15,33 @@ import { v3Theme } from "./theme";
 const THEME_STYLE = { light: V3_LIGHT, dark: DOCTORIUM_PALETTE } as const;
 
 export function LandingSection({
-  copy, children, className = "", padded = true, tone = "bg",
-}: { copy: SectionCopy; children: ReactNode; className?: string; padded?: boolean; tone?: "bg" | "panel" }) {
+  copy, children, className = "", padded = true, tone,
+}: { copy: SectionCopy; children: ReactNode; className?: string; padded?: boolean; tone?: "bg" | "panel" | "alt" }) {
   const theme = v3Theme(copy.id);
+  const no = chapterNo(copy.id);
   // 🪤 tone için iki bg-* class'ı YAN YANA yazma (Tailwind'de kazanan class sırası değil stylesheet
   // sırasıdır) — tek class koşullu seçilir. "panel" = zebra'sız dünyada vurgu bandı (koyu yerine
-  // bir ton gri; yalnız manifesto gibi tekil duraklarda).
-  const bg = tone === "panel" ? "bg-[var(--dl-panel)]" : "bg-[var(--dl-bg)]";
+  // bir ton gri; yalnız manifesto gibi tekil duraklarda, EXPLICIT verilir). Verilmezse (2026-08-27,
+  // "bölümler ayrışmıyor" bulgusu) çift numaraya göre bg/--dl-alt OTOMATİK alternans — --dl-panel'le
+  // KARIŞTIRMA: o kart/rozet zemini, bu yalnız bölüm zebrası (bkz. palette.ts).
+  const autoAlt = Number(no) % 2 === 0;
+  const resolvedTone = tone ?? (autoAlt ? "alt" : "bg");
+  const bg = resolvedTone === "panel" ? "bg-[var(--dl-panel)]" : resolvedTone === "alt" ? "bg-[var(--dl-alt)]" : "bg-[var(--dl-bg)]";
   return (
     <section
       id={copy.anchor ?? copy.id}
       data-section={copy.id}
       data-v3-theme={theme}
       style={THEME_STYLE[theme]}
-      className={`scroll-mt-4 ${bg} text-[var(--dl-ink)] md:scroll-mt-24 ${className}`}
+      className={`scroll-mt-4 border-t border-[var(--dl-line)] ${bg} text-[var(--dl-ink)] md:scroll-mt-24 ${className}`}
     >
-      <div className={`mx-auto w-full max-w-6xl px-5 ${padded ? "py-20 lg:py-28" : ""}`}>{children}</div>
+      <div className={`mx-auto w-full max-w-6xl px-5 ${padded ? "py-20 lg:py-28" : ""}`}>
+        <div aria-hidden className="mb-5 flex items-center gap-2.5">
+          <span className="text-[12px] font-bold tracking-[0.06em] text-[var(--dl-emerald)]">{no}</span>
+          <span className="h-px w-7 bg-[var(--dl-emerald)] opacity-40" />
+        </div>
+        {children}
+      </div>
     </section>
   );
 }

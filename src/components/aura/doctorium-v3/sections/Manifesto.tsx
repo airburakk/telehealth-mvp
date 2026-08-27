@@ -9,7 +9,7 @@ export function ManifestoSection() {
   const copy = section("manifesto");
   const [a, b] = copy.title.split(". ");
   return (
-    <LandingSection copy={copy} tone="panel" className="border-y border-[var(--dl-line)]">
+    <LandingSection copy={copy} tone="panel" className="border-b border-[var(--dl-line)]">
       <FadeInUp>
         <div className="mx-auto max-w-[900px] py-6 text-center">
           <h2 className="text-[clamp(40px,7vw,88px)] font-medium leading-[1.02] tracking-[-0.03em]">

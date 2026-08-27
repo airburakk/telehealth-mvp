@@ -229,6 +229,15 @@ export function section(id: SectionId): SectionCopy {
   return s;
 }
 
+// "hero" HARİÇ (video-zeminli, LandingSection kullanmaz) sıradaki bölüm no'su — 01, 02, ... Bölüm
+// ayrım rozeti için (2026-08-27, kullanıcı bulgusu: "sayfaların ayrımı belli olmuyor" — zebra
+// v3'te kapalı, SECTIONS sırasından türeyen numara bölüm sınırını görsel olarak işaretler).
+const NON_HERO_IDS = SECTIONS.filter((s) => s.id !== "hero").map((s) => s.id);
+export function chapterNo(id: SectionId): string {
+  const i = NON_HERO_IDS.indexOf(id);
+  return String(i + 1).padStart(2, "0");
+}
+
 /** Metadata — görünür metinle AYNI iddia disiplinine tabi (meta/OG ayrı taranır). */
 export const LANDING_META = {
   title: "Doctorium", // ayrışma 2026-08-24: sekme yalın "Doctorium" (page.tsx title.absolute)
