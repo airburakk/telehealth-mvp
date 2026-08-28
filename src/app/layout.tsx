@@ -1,15 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { cookies } from "next/headers";
 import { Space_Grotesk, Inter, JetBrains_Mono, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { PwaRegister } from "@/components/PwaRegister";
-import { MasterBar } from "@/components/MasterBar";
 import { AuraAnimPause } from "@/components/aura/anim-pause";
-import { getCurrentUser } from "@/lib/auth";
-import { isMaster } from "@/lib/master";
-import { db } from "@/lib/db";
+import { AppChrome } from "@/components/AppChrome";
 import { SITE_URL } from "@/lib/aura-landing/seo";
 import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 
@@ -20,8 +15,13 @@ import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 // 2026-07-15: gerçek Inter face'i U+400-45F'i kapsıyor). Space Grotesk Kiril kapsamaz → RU/BG
 // başlıkları fallback (kabul; Google Fonts'ta Kiril subset'i yok).
 const sans = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-sans", display: "swap" });
-const serif = Space_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "600", "700"], variable: "--font-serif", display: "swap" });
-const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-mono", display: "swap" });
+// preload:false (2026-08-28 denetimi): Doctorium landing (above-the-fold/LCP en kritik yüzey)
+// yalnız Inter kullanır — Space Grotesk/JetBrains Mono orada hiç referanslanmadığı halde (yalnız
+// AURA'nın iç form sayfalarında geçer) root layout ortak olduğu için ikisi de preload ediliyordu
+// (6 WOFF2'nin 5'i). Arabic'teki aynı desen: preload:false → tarayıcı yalnız gerçek kullanım
+// anında (@font-face tetiklenince) çeker; above-the-fold artık yalnız Inter'i bekler.
+const serif = Space_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "600", "700"], variable: "--font-serif", display: "swap", preload: false });
+const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-mono", display: "swap", preload: false });
 // Arapça/Farsça (v6.9): Inter/Space Grotesk/JetBrains Mono'nun HİÇBİRİ Arap alfabesini kapsamıyordu
 // → ar/fa denetimsiz sistem fallback'indeydi (tasarım sistemi kuralı: öncelikli RTL pazarları
 // kontrolsüz fallback'e bırakılmaz). Noto Sans Arabic gövde VE başlıkta kullanılır (kullanıcı kararı;
@@ -67,71 +67,33 @@ export const viewport: Viewport = {
   themeColor: "#0d0e10", // gece varsayılanı (v6.22) — mobil tarayıcı kromu zeminle uyumlu
 };
 
-export default async function RootLayout({
+// no-flash tema script'i (2026-08-28, P0-3 denetimi) — kök layout artık `cookies()` ÇAĞIRMAZ:
+// Next.js'te route ağacının HERHANGİ bir yerinde cookies()/headers() kullanılması TÜM ağacı
+// dynamic'e zorluyordu (`/doctorium` sayfasındaki `export const revalidate = 600` bu yüzden
+// etkisizdi — canlıda `cache-control: private, no-cache, no-store` ölçüldü). SSR'de sabit
+// theme-dark yazılır; bu senkron <head> script'i (render-blocking, body parse edilmeden önce
+// çalışır) cookie'yi CLIENT'ta okuyup gerekirse class'ı theme-light'a çevirir — FOUC yok.
+// Cookie adı ("aura_theme") ThemeToggle.tsx'teki THEME_COOKIE ile birebir aynı tutulmalı — o
+// dosya "use client" olduğundan sabitini buraya import ETMİYORUZ (client-module veri exportu
+// server component'te sorunlu; bkz. hafıza [[rsc-client-module-data-export]]), string'i burada
+// tekrarlıyoruz. Kullanıcı/oturum bilgisi de aynı gerekçeyle client-side'a taşındı: AppChrome.tsx
+// mount'ta /api/auth/me'yi çeker — Header zaten yalnız kozmetik, güvenlik kapısı orada değil.
+const NO_FLASH_THEME_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|; )aura_theme=([^;]*)/);if(m&&decodeURIComponent(m[1])==="light"){document.documentElement.classList.remove("theme-dark");document.documentElement.classList.add("theme-light");}}catch(e){}})();`;
+
+export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // Kök layout HER sayfada (vitrin dahil) çalışır → oturum okuması DB'ye gider. DB erişilemezse
-  // (Neon scale-to-zero uyanması / kesinti) buradan fırlayan hata TÜM siteyi error.tsx'e düşürürdü:
-  // statik landing bile 500 verirdi (2026-07-15, digest 2661872092). Hata yutulur ve misafir kabuk
-  // çizilir. FAIL-CLOSED yöndedir: user=null EN AZ yetkidir, oturum "kurtarılmaz" — korunan
-  // sayfa/API kendi getCurrentUser/requireUser kapısında yine reddeder. getCurrentUser'ın sv/rol
-  // doğrulaması KASTEN atlanmaz (token'dan devam etmek iptal edilmiş oturumu geçirir = fail-open).
-  let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
-  try {
-    user = await getCurrentUser();
-  } catch {
-    user = null;
-  }
-  // Partner doktorun global Header'ı kendi dilinde (diğer roller Türkçe — useT no-op).
-  let headerLang = "Türkçe";
-  if (user?.role === "PARTNER") {
-    // Aynı gerekçe: dil tercihi kozmetiktir, kabuğu düşürmemeli (havuz tükenmesi vb.).
-    try {
-      const u = await db.user.findUnique({ where: { id: user.id }, select: { partnerId: true } });
-      const p = u?.partnerId ? await db.partnerDoctor.findUnique({ where: { id: u.partnerId }, select: { language: true } }) : null;
-      headerLang = p?.language || "İngilizce";
-    } catch {
-      headerLang = "İngilizce";
-    }
-  }
-  // v6.95 — öğrenci hunisi kromu (kullanıcı kararı 2026-08-14): studentTrack hesapta Header bandı
-  // yalnız Doctorium, hesap menüsünde Profilim/Finans gizli. PARTNER dil sorgusuyla aynı gerekçeyle
-  // try/catch: krom kozmetiktir, DB tökezlerse normal doktor kromuna düşer (kapılar sayfa/API'de).
-  // v6.105 — AŞAMA 1 kromu (kullanıcı kararı 2026-08-17): klinik aktivasyonu OLMAYAN doktor
-  // (activatedAt boş = AURA üyeliği yok) da sade Doctorium kromu görür — bant boş, hesap
-  // menüsünde Profilim/Finans yok, marka toggle'ının AURA yarısı soluk. Öğrenci kendi dalında
-  // kalır (studentTrack önce bakılır): ikisi çakışmaz, öğrenci etiketi "Doktor" yazmaz.
-  let studentHeader = false;
-  let stage1Header = false;
-  if (user?.role === "DOCTOR") {
-    try {
-      const u = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
-      const d = u?.doctorId
-        ? await db.doctor.findUnique({ where: { id: u.doctorId }, select: { studentTrack: true, activatedAt: true } })
-        : null;
-      studentHeader = !!d?.studentTrack;
-      stage1Header = !!d && !d.studentTrack && !d.activatedAt;
-    } catch {
-      studentHeader = false;
-      stage1Header = false;
-    }
-  }
-  // Tam birleşme (2026-07-12): nav journey'ye bakmaz — hasta nav'ı herkes için aynı,
-  // patientJourney sorgusu layout'tan kalktı.
-  // GECE VARSAYILAN + tema anahtarı (v6.22, kullanıcı kararı): tercih aura_theme cookie'sinde —
-  // SSR ilk boyamada doğru temayı basar (FOUC yok). Cookie yoksa gece. Landing kendi
-  // .aura-* token'larında, tema sınıfından bağımsız.
-  const themeCookie = (await cookies()).get("aura_theme")?.value;
-  const theme = themeCookie === "light" ? "light" : "dark";
   return (
-    <html lang="tr" className={`theme-${theme} h-full antialiased ${sans.variable} ${serif.variable} ${mono.variable} ${arabic.variable}`}>
+    <html lang="tr" className={`theme-dark h-full antialiased ${sans.variable} ${serif.variable} ${mono.variable} ${arabic.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: NO_FLASH_THEME_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <PwaRegister />
         {/* Ekran dışına çıkan sürekli dekoratif animasyonları duraklatır. Kökte: landing'in
             yanı sıra uygulama içi Header/spinner sembollerini de kapsar. Render etmez (null). */}
         <AuraAnimPause />
-        <Header user={user ? { name: user.name, role: user.role } : null} lang={headerLang} theme={theme} student={studentHeader} stage1={stage1Header} doctoriumDeploy={IS_DOCTORIUM_DEPLOY} />
-        {user?.imp ? <MasterBar mode="impersonating" userName={user.name} /> : isMaster(user) ? <MasterBar mode="master" /> : null}
+        <AppChrome doctoriumDeploy={IS_DOCTORIUM_DEPLOY} />
         <main className="flex-1">{children}</main>
         <SiteFooter />
       </body>

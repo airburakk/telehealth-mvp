@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { isGoogleConfigured, isAppleConfigured } from "@/lib/oauth";
@@ -27,9 +26,9 @@ export default function DoctoriumSignupPage() {
   const branches = Object.values(BRANCH_LABELS).sort((a, b) => a.localeCompare(b, "tr"));
   return (
     <DoctoriumSignupShell>
-      <Suspense fallback={<div className="text-sm text-[var(--c-ink-3)]">Yükleniyor…</div>}>
-        <DoctorSignupForm googleEnabled={isGoogleConfigured()} appleEnabled={isAppleConfigured()} branches={branches} brand="doctorium" />
-      </Suspense>
+      {/* Suspense YOK (2026-08-28 denetimi): bkz. src/app/kayit/page.tsx aynı not — sayfa zaten
+          force-dynamic, streaming DOM-taşıma mekanizması headless/arka-plan sekmelerde takılıyordu. */}
+      <DoctorSignupForm googleEnabled={isGoogleConfigured()} appleEnabled={isAppleConfigured()} branches={branches} brand="doctorium" />
 
       {/* Üyelik adımları — yalnız Doctorium anlatısı (AURA/havuz dili yok). */}
       <div className="mt-6 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5">

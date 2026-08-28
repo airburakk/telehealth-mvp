@@ -147,10 +147,9 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, brand 
         </form>
 
         <p className="mt-3 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
-          Kayıt sonrası diploma/tescil no, uzmanlık belgesi ve yaptığınız işlemler ile
-          <strong> tıp diplomanızı</strong> yüklemeniz istenir; MMSS poliçesi isteğe bağlıdır
-          (işlem ücretleri tedavi kararında belirlenir). Hesabınız doğrulama onayına kadar doktor
-          dizininde görünmez.
+          {doctorium
+            ? "Kayıt sonrası e-Devlet barkodlu mezun belgenizle doktor kimliğiniz doğrulanır. Hesabınız onay sonrası Doctorium'da aktif olur."
+            : "Kayıt sonrası e-Devlet barkodlu mezun belgenizle doktor kimliğiniz doğrulanır; uzaktan sağlık, ikinci görüş ve sağlık turizmi hizmeti vermek isterseniz uzmanlık/işlem tanımlarınızı ayrıca tamamlarsınız (MMSS poliçesi isteğe bağlıdır). Hesabınız doğrulama onayına kadar doktor dizininde görünmez."}
         </p>
       </div>
 

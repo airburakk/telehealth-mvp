@@ -4,7 +4,6 @@ import { DoctoriumBgVideo } from "@/components/aura/doctorium-bg-video";
 import { section, HERO_PROOF_LINE } from "@/lib/doctorium-landing/content";
 import { LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
 import { Rich } from "../rich-text";
-import { FadeInUp } from "../motion";
 import { Eyebrow } from "../primitives";
 import { buttonVariants } from "../ui/button";
 
@@ -33,7 +32,7 @@ export function HeroSection() {
     >
       <DoctoriumBgVideo overlay="linear-gradient(to top, rgba(13,14,16,.93) 0%, rgba(13,14,16,.58) 45%, rgba(13,14,16,.38) 100%)" />
       <div className="mx-auto w-full max-w-6xl px-5 pb-28 pt-20 lg:pb-40 lg:pt-32">
-        <FadeInUp>
+        <>
           {copy.eyebrow && <Eyebrow>{copy.eyebrow}</Eyebrow>}
           <h1 className="mt-5 max-w-[820px] text-[clamp(42px,5.6vw,72px)] font-medium leading-[1.05] tracking-[-0.03em]">
             <Rich text={copy.title} />
@@ -62,7 +61,7 @@ export function HeroSection() {
               </span>
             ))}
           </p>
-        </FadeInUp>
+        </>
       </div>
     </section>
   );
