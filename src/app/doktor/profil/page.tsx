@@ -152,8 +152,11 @@ export default async function DoctorDashboard() {
           bio={doctor.bio}
           photo={doctor.photo}
           introVideo={doctor.introVideo}
+          title={doctor.title}
           freeCareOptIn={doctor.freeCareOptIn}
           consultOptIn={doctor.consultOptIn}
+          soOptIn={doctor.soOptIn}
+          tourismOptIn={doctor.tourismOptIn}
         />
       </div>
 

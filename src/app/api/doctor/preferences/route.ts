@@ -56,6 +56,13 @@ export async function POST(req: Request) {
   // ── M5 — birim katılımı opt-in'leri (yalnız boolean geldiyse) ──
   if (typeof b.freeCareOptIn === "boolean") data.freeCareOptIn = b.freeCareOptIn;
   if (typeof b.consultOptIn === "boolean") data.consultOptIn = b.consultOptIn;
+  // v6.105'ten beri onboarding'de toplanan İkinci Görüş + Sağlık Turizmi tercihleri artık
+  // buradan da güncellenebilir (2026-08-28 — profil yüzeyi eksikti, onboarding metni bunu
+  // önceden itiraf ediyordu). ⚠️ soEligible(title) kapısı BURADA aranmaz — onboarding route'uyla
+  // aynı ilke: kapı tek yerde, panelVisibility() karar katmanında (src/lib/doctor-home.ts); veri
+  // katmanı yalnız DİLEĞİ yazar. İstemci zaten ünvansız doktorda toggle'ı disabled render eder.
+  if (typeof b.soOptIn === "boolean") data.soOptIn = b.soOptIn;
+  if (typeof b.tourismOptIn === "boolean") data.tourismOptIn = b.tourismOptIn;
 
   // ── Yeni yüzey (2026-08-14): Hakkımda + profil medyası ──
   if (b.bio !== undefined) {

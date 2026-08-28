@@ -3,7 +3,8 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
-import { UserRound, ImagePlus, Clapperboard, PenLine, Link2, Save, Loader2, Check, HeartHandshake, Inbox, X } from "lucide-react";
+import { UserRound, ImagePlus, Clapperboard, PenLine, Link2, Save, Loader2, Check, HeartHandshake, Inbox, BadgeCheck, Luggage, X } from "lucide-react";
+import { soEligible } from "@/lib/doctor-home";
 
 // Doktorun profil tercihleri — 2026-08-14 (kullanıcı kararı) İÇERİK TAMAMEN DEĞİŞTİ:
 // dil/pazar/kapasite alanları ÇIKTI (veri+API geriye-uyumla duruyor; düzenleme yüzeyi yok),
@@ -32,12 +33,16 @@ function isPlayableUrl(u: string) {
   return u.includes(".blob.vercel-storage.com/") || /\.(mp4|webm|mov)(\?|$)/i.test(u);
 }
 
-export function DoctorPreferences({ bio, photo, introVideo, freeCareOptIn, consultOptIn }: {
+export function DoctorPreferences({ bio, photo, introVideo, title, freeCareOptIn, consultOptIn, soOptIn, tourismOptIn }: {
   bio: string | null;
   photo: string | null;
   introVideo: string | null;
+  /** İkinci Görüş ünvan kapısı için (soEligible) — panelVisibility ile AYNI kural, bkz. lib/doctor-home. */
+  title: string | null;
   freeCareOptIn: boolean;
   consultOptIn: boolean;
+  soOptIn: boolean;
+  tourismOptIn: boolean;
 }) {
   const router = useRouter();
   const [bioText, setBioText] = useState(bio ?? "");
@@ -45,6 +50,8 @@ export function DoctorPreferences({ bio, photo, introVideo, freeCareOptIn, consu
   const [videoUrl, setVideoUrl] = useState(introVideo ?? "");
   const [pb, setPb] = useState<boolean>(freeCareOptIn);
   const [cs, setCs] = useState<boolean>(consultOptIn);
+  const [so, setSo] = useState<boolean>(soOptIn);
+  const [tourism, setTourism] = useState<boolean>(tourismOptIn);
   const [phBusy, setPhBusy] = useState(false);
   const [vidBusy, setVidBusy] = useState(false);
   const [mediaErr, setMediaErr] = useState("");
@@ -53,13 +60,16 @@ export function DoctorPreferences({ bio, photo, introVideo, freeCareOptIn, consu
   const [err, setErr] = useState("");
   const photoInput = useRef<HTMLInputElement>(null);
   const videoInput = useRef<HTMLInputElement>(null);
+  const soOpen = soEligible(title); // ünvan kapısı (Doç./Prof.) — onboarding kartıyla aynı kural
 
   const dirty =
     bioText.trim() !== (bio ?? "") ||
     photoUrl !== (photo ?? "") ||
     videoUrl.trim() !== (introVideo ?? "") ||
     pb !== freeCareOptIn ||
-    cs !== consultOptIn;
+    cs !== consultOptIn ||
+    so !== soOptIn ||
+    tourism !== tourismOptIn;
 
   async function uploadFile(file: File, kind: "photo" | "video") {
     const ext = (file.name.split(".").pop() || (kind === "photo" ? "jpg" : "mp4")).toLowerCase().slice(0, 5);
@@ -109,6 +119,10 @@ export function DoctorPreferences({ bio, photo, introVideo, freeCareOptIn, consu
           introVideo: videoUrl.trim() || null,
           freeCareOptIn: pb,
           consultOptIn: cs,
+          // Onboarding formuyla AYNI savunma: ünvansız doktor toggle'ı disabled görse de (kart
+          // tıklanamaz) API'ye doğrudan true gönderilmez — kapı arayüzde tek savunma değildir.
+          soOptIn: so && soOpen,
+          tourismOptIn: tourism,
         }),
       });
       const d = await r.json();
@@ -237,6 +251,27 @@ export function DoctorPreferences({ bio, photo, introVideo, freeCareOptIn, consu
             title="Konsültasyon Talepleri — Partner doktorlar"
             desc="Anonim hasta dosyalarına görüş verirsiniz; yanıt başına ödeme (simüle)."
           />
+          {/* İkinci Görüş — ünvan kapısı VE tercih (v6.105). Ünvan uygun değilse kart "ölü"
+              (tıklanamaz) — onboarding kartıyla birebir aynı desen/metin. */}
+          <OptToggle
+            active={so && soOpen}
+            onToggle={() => { setSo((v) => !v); setSaved(false); }}
+            disabled={!soOpen}
+            icon={<BadgeCheck size={16} />}
+            title="İkinci Görüş Paneli"
+            desc={soOpen
+              ? "Tanı konmuş hastaların belgelerini inceleyip yazılı görüş ve video görüşme sunarsınız."
+              : "Yalnız Doçent / Profesör ünvanlı doktorlara açılır — ünvanınız uygun olmadığı için seçime kapalıdır."}
+          />
+          {/* Sağlık Turizmi — ünvan şartı YOK, tüm doktorlara açık (v6.105). ⚠️ Turizm kulvarı
+              ÖDEMESİZ (escrow/split yok) — ücret dili KULLANILMAZ, onboarding kartıyla tutarlı. */}
+          <OptToggle
+            active={tourism}
+            onToggle={() => { setTourism((v) => !v); setSaved(false); }}
+            icon={<Luggage size={16} />}
+            title="Sağlık Turizmi Paneli"
+            desc="Yurt dışından gelen hastaların branşınıza düşen tedavi taleplerini karşılarsınız."
+          />
         </div>
       </div>
 
@@ -254,13 +289,14 @@ export function DoctorPreferences({ bio, photo, introVideo, freeCareOptIn, consu
   );
 }
 
-function OptToggle({ active, onToggle, icon, title, desc }: { active: boolean; onToggle: () => void; icon: React.ReactNode; title: string; desc: string }) {
+function OptToggle({ active, onToggle, disabled, icon, title, desc }: { active: boolean; onToggle: () => void; disabled?: boolean; icon: React.ReactNode; title: string; desc: string }) {
   return (
     <button
       type="button"
       onClick={onToggle}
+      disabled={disabled}
       aria-pressed={active}
-      className={`flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition ${active ? "border-[var(--c-accent)] bg-[var(--c-accent)]/[0.06]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] hover:border-[var(--c-accent)]/40"}`}
+      className={`flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition ${disabled ? "cursor-not-allowed border-[var(--c-hairline)] bg-[var(--c-panel)] opacity-60" : active ? "border-[var(--c-accent)] bg-[var(--c-accent)]/[0.06]" : "border-[var(--c-hairline)] bg-[var(--c-panel)] hover:border-[var(--c-accent)]/40"}`}
     >
       <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "bg-[var(--c-ink)]/10 text-[var(--c-ink-3)]"}`}>{icon}</span>
       <span className="min-w-0 flex-1">
