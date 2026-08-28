@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import {
   ArrowRight, BarChart2, CalendarDays, Gift, LayoutDashboard, Megaphone,
   FolderHeart, Share2, UserRound, Users, HeartPulse, Scale, Globe,
-  Stethoscope, Newspaper, Luggage, UserCheck,
+  Stethoscope, Newspaper, Luggage, UserCheck, MousePointerClick,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +66,13 @@ const PANELS = [
     desc: "Anket puanlarının ödül karşılıkları — kongre/kitap kalemleri + talep onay ve teslim kuyruğu.",
     icon: Gift,
     tone: "#a78bfa",
+  },
+  {
+    href: "/admin/landing-analitik",
+    label: "Landing Analitiği",
+    desc: "Doctorium vitrini tıklama/görüntülenme sayaçları — first-party agregat, kimliksiz.",
+    icon: MousePointerClick,
+    tone: "#2dd4bf",
   },
 ];
 
