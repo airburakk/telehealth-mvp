@@ -720,8 +720,11 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   nane çözülür, AA düşer) · "Bugün sizin için" yuvası = **Doctorium Post tanıtımı**. ⚠️ `content.ts`
   v2 arşiviyle PAYLAŞIMLI → v3'e özel metin bölüm dosyasında LOKAL (Post/Identity/FinalCta).
   Registry/veri/analytics sözleşmeleri V2'den aynen devralındı (aşağıda). **v2 yedeği:** tag
-  `doctorium-landing-v2-son` + `/doctorium-v2` (noindex; V3 kesinleşince rota kalkar — paylaşılan
-  bileşenler ayrıştırılarak). Küre marka görselleri `-v2` (kenar bake'li, `public/brand/`).
+  `doctorium-landing-v2-son` + `/doctorium-v2` (noindex). **Kaldırıldı (`596c43b`, 2026-08-28):**
+  V3'ün font geçişi doğrulanınca paylaşılan bileşenler (`ProductFrame`/`FeedPreview`/
+  `PersonalizationDemo`/vb., 8 dosya) `doctorium-v3/`'e taşındı, `/doctorium-v1` + `/doctorium-v2`
+  rotaları silindi — geri dönüş yalnız git tag'lerle (`doctorium-landing-v1-son` /
+  `doctorium-landing-v2-son`). Küre marka görselleri `-v2` (kenar bake'li, `public/brand/`).
   · **`/doctorium` V2 — ARŞİV `/doctorium-v2` (v6.136, 2026-08-23 — kullanıcının 7 parçalık "Landing Page V2" paketi):** anlatı
   "modül kataloğu"ndan **"her doktor kendi Doctorium'unu oluşturur"** kategorisine geçti (marka → ürün
   "daha fazla bilgi değil, sizin için doğru bilgi" → günlük "bugün sizin için"; AI hero'da geçmez).
@@ -736,8 +739,8 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   `LegalSearchBox` [`demo` prop] · `CongressList` · `AcademicSummaryBlock` · `lib/doc-status.ts`
   `statusRozet`) — sahte dashboard YOK. Analytics **first-party agregat** (`LandingEvent` günlük sayaç,
   `POST /api/landing-event`; kimlik/IP/UA/URL/tercih YOK → onam gerekmez). **v1 yedeği:** tag
-  `doctorium-landing-v1-son` + `/doctorium-v1` (noindex; V2 kesinleşince rota+`doctorium-landing.tsx`
-  birlikte kalkar). **CTA kontrastı (kullanıcı kararı):** dolgu `#065f46`, Doctor BEYAZ + ium NANE
+  `doctorium-landing-v1-son` + `/doctorium-v1` (noindex; **kaldırıldı `596c43b`**, 2026-08-28 —
+  rota+`doctorium-landing.tsx` birlikte kalktı, izole+tek bağımlıydı). **CTA kontrastı (kullanıcı kararı):** dolgu `#065f46`, Doctor BEYAZ + ium NANE
   `#a7f3d0` (`DoctoriumOnEmerald` tek kaynak; eski #34d399+beyaz 1.92:1 AA altıydı). Sözleşme testi
   `tests/unit/doctorium-landing-registry.test.ts`; `/doctorium` artık sentetik kontrol + a11y e2e'de.
   · **`/doctorium` v1 (v6.100–100.1, 2026-08-16 — ARTIK `/doctorium-v1`):** Doctorium tanıtım landing'i — for-clinicians gibi
