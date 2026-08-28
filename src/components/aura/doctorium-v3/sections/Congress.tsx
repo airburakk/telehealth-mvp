@@ -16,7 +16,7 @@ export function CongressSection({ proof, branch }: { proof: LandingProof["congre
           <SectionHead copy={copy} />
           {copy.note && <Note text={copy.note} className="mt-8" />}
         </FadeInUp>
-        <ProductFrame title="Etkinlik" meta={landingBranchLabel(branch)}>
+        <ProductFrame className="theme-light doctorium-scope" title="Etkinlik" meta={landingBranchLabel(branch)}>
           {proof.rows.length ? (
             <div className="-mt-4">
               <CongressList rows={proof.rows.slice(0, 2)} followed={new Set()} canFollow={false} savedIds={null} hrefFor={() => LANDING_ROUTES.login} />

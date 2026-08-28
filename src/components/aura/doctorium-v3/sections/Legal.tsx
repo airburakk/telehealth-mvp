@@ -17,7 +17,7 @@ export function LegalSection({ proof, branch }: { proof: LandingProof["legal"]; 
           <SectionHead copy={copy} />
           {copy.note && <Note text={copy.note} className="mt-8" />}
         </FadeInUp>
-        <ProductFrame title="Hukuk" meta={proof.source === "fixture" ? "örnek içerik" : "gerçek arşiv"}>
+        <ProductFrame className="theme-light doctorium-scope" title="Hukuk" meta={proof.source === "fixture" ? "örnek içerik" : "gerçek arşiv"}>
           <div role="tablist" aria-label="Hukuk bölümleri" className="flex gap-1 border-b border-[var(--c-hairline)]">
             {LEGAL_TABS.map((t) => {
               const on = t.key === "ictihat";

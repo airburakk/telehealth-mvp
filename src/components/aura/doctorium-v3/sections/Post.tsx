@@ -50,7 +50,7 @@ export function PostSection({ sample }: { sample: LandingSample }) {
           <Note text={POST_COPY.note} className="mt-8" />
         </FadeInUp>
         <FadeInUp delay={0.08}>
-          <ProductFrame title="Doctorium Post" meta="örnek baskı">
+          <ProductFrame className="theme-light doctorium-scope" title="Doctorium Post" meta="örnek baskı">
             {/* Masthead — /doktor/doctorium/ozet ile aynı gazete sesi (çift alt çizgi, POST zümrüt) */}
             <div className="border-b-[3px] border-double border-[var(--c-ink)] pb-3 text-center">
               <div className="aura-display text-[24px] font-bold tracking-[0.14em] text-[var(--c-ink)]">

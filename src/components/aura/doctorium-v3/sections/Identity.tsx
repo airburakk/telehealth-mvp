@@ -37,7 +37,7 @@ export function IdentitySection() {
             </div>
           )}
         </FadeInUp>
-        <ProductFrame title="Belgelerim" meta="temsilî görünüm">
+        <ProductFrame className="theme-light doctorium-scope" title="Belgelerim" meta="temsilî görünüm">
           <ul className="grid grid-cols-[minmax(0,1fr)]">
             {ROWS.map((r, i) => {
               const badge = r.doc ? statusRozet(r.doc) : r.badge;
