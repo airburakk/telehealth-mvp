@@ -52,8 +52,18 @@ const AURA_ROUTES = [
 // rewrite'ıyla /doctorium içeriğini sunar (URL temiz kalır, canonical tek); beklenti AURA_ROUTES'taki
 // /doctorium ile AYNI sayfa komponenti olduğu için birebir aynı (2026-08-25 canlı kalibrasyonu: curl
 // ile doğrulandı, title/h1/CTA aşağıdakiyle eşleşti).
+//
+// /doctorium/giris + /doctorium/kayit (2026-08-28 eklendi): next.config AURA_ONLY_PREFIXES'te
+// BARE "/giris"/"/kayit" var ama bu iki iç-içe rota YOK → marka korkuluğuna takılmadan doctorium.tr'de
+// CANLI kalıyorlar — doktor kaydı/girişi zincirinin doctorium.tr üzerindeki tek fiili giriş noktaları
+// (landing "Doctorium'unu oluştur"/"Giriş yap" CTA'ları buraya gelir). Şimdiye dek hiç izlenmiyorlardı;
+// "Doctorium önden sürülüyor" önceliğiyle doğrudan ilişkili (kod-doğrulanmış: DOM'dan title/h1/cta,
+// 2026-08-28). /giris noindex (kapı sözleşmesi — bkz. AURA /giris·/kurumsal-giris aynı desen);
+// /kayit indexlenir (page.tsx `alternates.canonical` bilinçli SEO-hedef).
 const DOCTORIUM_ROUTES = [
-  { path: "/", title: "Doctorium", h1: "Her doktor kendi", cta: "/doctorium/kayit", noindex: false },
+  { path: "/",                title: "Doctorium",     h1: "Her doktor kendi", cta: "/doctorium/kayit",                        noindex: false },
+  { path: "/doctorium/giris", title: "Giriş",          h1: "Hoş Geldiniz",     cta: "/api/auth/google/start?intent=doctor",    noindex: true },
+  { path: "/doctorium/kayit", title: "Kayıt",          h1: "Doktor Kaydı",     cta: "/api/auth/google/start?intent=doctor",    noindex: false },
 ];
 
 // Marka korkuluğu (next.config.ts AURA_ONLY_PREFIXES + domain-canonicalization): kimlik/hasta
