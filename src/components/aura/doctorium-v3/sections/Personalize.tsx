@@ -25,7 +25,7 @@ export function PersonalizeSection({ sample }: { sample: LandingSample }) {
           </ol>
           {copy.note && <Note text={copy.note} className="mt-8" />}
         </FadeInUp>
-        <PersonalizationDemo initial={sample} />
+        <PersonalizationDemo initial={sample} frameClassName="theme-light doctorium-scope" />
       </div>
     </LandingSection>
   );

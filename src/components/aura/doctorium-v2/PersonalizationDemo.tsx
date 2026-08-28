@@ -22,7 +22,9 @@ function revive(raw: LandingSample): Sample {
   return { ...raw, items: raw.items.map((i) => ({ ...i, publishedAt: new Date(i.publishedAt) })) };
 }
 
-export function PersonalizationDemo({ initial }: { initial: LandingSample }) {
+export function PersonalizationDemo({
+  initial, frameClassName,
+}: { initial: LandingSample; frameClassName?: string }) {
   const [branch, setBranch] = useState(initial.branch);
   const [modules, setModules] = useState<LandingModuleKey[]>(initial.modules);
   const [sample, setSample] = useState<Sample>(initial);
@@ -117,6 +119,7 @@ export function PersonalizationDemo({ initial }: { initial: LandingSample }) {
 
       <div aria-busy={loading} className={loading ? "opacity-60 transition-opacity duration-200" : "transition-opacity duration-200"}>
         <ProductFrame
+          className={frameClassName}
           title="Akışım"
           meta={sample.source === "fixture" ? `${landingBranchLabel(branch)} · örnek içerik` : landingBranchLabel(branch)}
         >
