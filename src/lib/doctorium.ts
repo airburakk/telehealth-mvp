@@ -496,23 +496,45 @@ async function careerFeedItems(take: number, before?: FeedCursor): Promise<FeedI
 }
 
 /**
- * AKIŞ ÇEŞİTLİLİK KURALI (2026-08-18, kullanıcı kararı): aynı modülden art arda en fazla
- * `maxRun` kart. Kota sistemi bölümler ARASI dengeyi kurar ama tek tarih sıralaması, aynı
- * güne yığılan içeriği (örn. toplu akademik ingest) yine blok hâlinde dizer — 20 akademik
- * kart üst üste gelebilir. Bu geçiş, sırayı MÜMKÜN OLDUĞUNCA koruyarak (kararlı/greedy)
- * kümeyi kırar: koşu limiti dolunca listenin İLERİSİNDEN farklı modülden ilk kart öne
- * çekilir; başka modül kalmadıysa koşu serbest bırakılır (yapay boşluk üretilmez).
+ * AKIŞ ÇEŞİTLİLİK KURALI (2026-08-18, kullanıcı kararı; 2026-08-28 KAYNAK düzeyine genişledi):
+ * aynı modülden art arda en fazla `maxRun`, AYNI ZAMANDA aynı kaynaktan (`item.source`) art
+ * arda en fazla `maxSourceRun` kart. Kota sistemi bölümler ARASI dengeyi kurar ama tek tarih
+ * sıralaması, aynı güne yığılan içeriği (örn. toplu akademik ingest ya da tek yayıncının o
+ * gün attığı çok sayıda haber) yine blok hâlinde dizer — 20 akademik kart ya da modül-limiti
+ * İÇİNDE kalan ama hep AYNI KAYNAKTAN 3 "sektörel" kart üst üste gelebilir (canlıda gözlendi,
+ * 2026-08-20). Bu geçiş, sırayı MÜMKÜN OLDUĞUNCA koruyarak (kararlı/greedy) kümeyi kırar: iki
+ * koşudan biri (modül ya da kaynak) dolunca listenin İLERİSİNDEN, mümkünse o modülü VE o
+ * kaynağı BİRDEN kıran ilk kart öne çekilir; öyle bir kart yoksa yalnız modülü kıran karta
+ * (modül kuralı önceliklidir, kaynak katmanı onu geçersiz kılmaz), o da yoksa yalnız kaynağı
+ * kıran karta düşülür; hiçbiri kalmadıysa koşu serbest bırakılır (yapay boşluk üretilmez —
+ * aynı ilke, artık iki eksende). `maxSourceRun` varsayılanı `maxRun`dır; iki
+ * mevcut çağıran (personalFeedPage · sonsuz kaydırma) üçüncü parametre geçmediği için davranış
+ * SESSİZCE değişmez, yalnız artık kaynak eksenini de kapsar.
  * O(n²) en kötü — akış 40 kart, maliyet önemsiz. Saf fonksiyon (birim test edilir).
  */
-export function interleaveByModule(items: FeedItem[], maxRun = 3): FeedItem[] {
+export function interleaveByModule(items: FeedItem[], maxRun = 3, maxSourceRun = maxRun): FeedItem[] {
   const out: FeedItem[] = [];
   const rest = [...items];
   while (rest.length) {
-    const tail = out.slice(-maxRun);
-    const runFull = tail.length === maxRun && tail.every((i) => i.module === tail[0].module);
+    const moduleTail = out.slice(-maxRun);
+    const blockedModule = moduleTail.length === maxRun && moduleTail.every((i) => i.module === moduleTail[0].module)
+      ? moduleTail[0].module
+      : null;
+    const sourceTail = out.slice(-maxSourceRun);
+    const blockedSource = sourceTail.length === maxSourceRun && sourceTail.every((i) => i.source === sourceTail[0].source)
+      ? sourceTail[0].source
+      : null;
     let idx = 0;
-    if (runFull) {
-      const alt = rest.findIndex((i) => i.module !== tail[0].module);
+    if (blockedModule !== null || blockedSource !== null) {
+      // Aşamalı arama, TEK "ikisi birden" koşulu DEĞİL: kalan kartların tamamı aynı kaynaktan
+      // olabilir (ör. tek yayıncının o günkü toplu ingest'i) — o durumda "modülü VE kaynağı
+      // birden kıran kart" hiç yoktur; tek koşullu bir AND bunu -1 döndürüp modül kuralını da
+      // SESSİZCE devre dışı bırakırdı (2026-08-28, birim testiyle yakalandı — tüm test
+      // fixture'ları tek kaynak kullanıyordu). Modül kuralı 2026-08-18'den beri var ve
+      // önceliklidir: kaynak katmanı onu asla geçersiz kılmaz, yalnız üstüne ekler.
+      let alt = rest.findIndex((i) => i.module !== blockedModule && i.source !== blockedSource);
+      if (alt === -1 && blockedModule !== null) alt = rest.findIndex((i) => i.module !== blockedModule);
+      if (alt === -1 && blockedSource !== null) alt = rest.findIndex((i) => i.source !== blockedSource);
       if (alt !== -1) idx = alt;
     }
     out.push(rest.splice(idx, 1)[0]);
