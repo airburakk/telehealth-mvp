@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { decryptField } from "@/lib/crypto"; // triyaj semptomu + savunma gövde/yanıtı at-rest şifreli → çöz
+import { decryptField } from "@/lib/crypto"; // triyaj semptomu + şikayet metni (subject/description/evidence/rationale) + savunma gövde/yanıtı at-rest şifreli → çöz
 import { maskCaseId, REQUEST_TYPES, RESPONDENT_TYPES, VERDICTS, ACTIONS, ESCROW_STATUS, DEFENSE_LOCK_DAYS } from "@/lib/ethics";
 import { computeDefenseLock } from "@/lib/system-messages";
 import { formatUSD } from "@/lib/pricing";
@@ -73,9 +73,9 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
         <div className="space-y-5">
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
             <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><FileText size={15} /> Başvuru</div>
-            <h2 className="aura-display mt-2 text-lg font-medium tracking-tight text-[var(--c-ink)]">{c.subject}</h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink)]">{c.description}</p>
-            {c.evidence && <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-ink)]/10 px-2.5 py-1 text-xs text-[var(--c-ink-2)]"><FileText size={13} /> {c.evidence}</div>}
+            <h2 className="aura-display mt-2 text-lg font-medium tracking-tight text-[var(--c-ink)]">{decryptField(c.subject)}</h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink)]">{decryptField(c.description)}</p>
+            {c.evidence && <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-ink)]/10 px-2.5 py-1 text-xs text-[var(--c-ink-2)]"><FileText size={13} /> {decryptField(c.evidence)}</div>}
           </div>
 
           {/* Savunma/bilgi talebi (v6.79) — başvuru penceresinin hemen altında (kullanıcı kararı) */}
@@ -103,7 +103,7 @@ export default async function ComplaintDetail({ params }: { params: Promise<{ id
                 {c.action && <span className="rounded-lg bg-[var(--c-panel)] px-2.5 py-1 text-xs font-medium text-[var(--c-ink)] ring-1 ring-white/10">{ACTIONS[c.action]}</span>}
                 {c.refundAmount ? <span className="rounded-lg bg-[var(--c-accent)]/15 px-2.5 py-1 text-xs font-semibold text-[var(--c-accent)]">İade: {formatUSD(c.refundAmount)}</span> : null}
               </div>
-              {c.rationale && <p className="mt-3 text-sm leading-relaxed text-[var(--c-ink)]">{c.rationale}</p>}
+              {c.rationale && <p className="mt-3 text-sm leading-relaxed text-[var(--c-ink)]">{decryptField(c.rationale)}</p>}
               <div className="mt-3 text-xs text-[var(--c-ink-2)]">İmza: <strong className="text-[var(--c-ink)]">{c.decidedBy}</strong> · {c.decidedAt ? formatDateTime(c.decidedAt) : ""}</div>
             </div>
           )}

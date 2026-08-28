@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { notifyRoles } from "@/lib/notify";
 import { isCurrentUserCasePatient } from "@/lib/ownership";
 import { RESPONDENT_TYPES } from "@/lib/ethics";
+import { encryptField } from "@/lib/crypto";
 
 // POST /api/cases/:id/complaint — Etik Kurul'a başvuru oluştur
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -27,15 +28,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const latestBooking = await db.booking.findFirst({ where: { caseId: c.id }, orderBy: { createdAt: "desc" } });
 
+  // Şikayet metni (subject/description/evidence) at-rest ŞİFRELİ (2026-08-28 — savunma gövde/yanıtı
+  // ile aynı korumaya kavuştu; tutarlılık borcuydu). encryptField idempotent/kademeli-geçişli:
+  // eski düz-metin satırlar decryptField'de "enc:" öneki olmadığından aynen döner — backfill şart değil.
   const complaint = await db.complaint.create({
     data: {
       caseId: c.id,
       bookingId: latestBooking?.id ?? null,
-      subject,
-      description,
+      subject: encryptField(subject),
+      description: encryptField(description),
       requestType: ["REFUND", "DOCTOR_CHANGE", "HOSPITAL_CHANGE", "OTHER"].includes(b.requestType) ? b.requestType : "OTHER",
       respondentType,
-      evidence: b.evidence ? String(b.evidence) : null,
+      evidence: b.evidence ? encryptField(String(b.evidence)) : null,
     },
   });
 

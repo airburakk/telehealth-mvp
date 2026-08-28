@@ -4,6 +4,7 @@ import { notifyRoles, notifyUser } from "@/lib/notify";
 import { getCurrentUser } from "@/lib/auth";
 import { defenseLockState } from "@/lib/system-messages";
 import { DEFENSE_LOCK_DAYS } from "@/lib/ethics";
+import { encryptField } from "@/lib/crypto";
 
 // PATCH /api/complaints/:id — Etik Kurul kararı (yaptırım + Escrow tetikleyicisi)
 // Yetki: YALNIZ Etik Kurul (ETHICS) / yönetici — karar Escrow iadesi + rezervasyon iptali tetikler.
@@ -42,9 +43,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
+  // rationale at-rest ŞİFRELİ (2026-08-28 — subject/description/evidence ile aynı turda; kurulun
+  // karar gerekçesi de vaka bağlamına atıfta bulunabilir). Yerel `rationale` değişkeni bilinçli
+  // düz metin kalır — aşağıdaki bildirim gövdesi (satır ~54) ondan üretilir.
   const updated = await db.complaint.update({
     where: { id },
-    data: { status: "RESOLVED", verdict, action, refundAmount, rationale, decidedBy, decidedAt: new Date() },
+    data: { status: "RESOLVED", verdict, action, refundAmount, rationale: encryptField(rationale), decidedBy, decidedAt: new Date() },
   });
 
   const verdictLabel = verdict === "FAVOR" ? "lehinize sonuçlandı" : verdict === "PARTIAL" ? "kısmen kabul edildi" : "reddedildi";

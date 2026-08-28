@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { decryptField } from "@/lib/crypto";
 import { ArrowRight, ShieldCheck, UserCheck } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EthicsList, type ComplaintListRow } from "./EthicsList";
@@ -43,7 +44,7 @@ export default async function EthicsBoard() {
     id: c.id,
     caseId: c.caseId,
     status: c.status,
-    subject: c.subject,
+    subject: decryptField(c.subject),
     requestType: c.requestType,
     createdAt: c.createdAt.toISOString(),
     branch: c.case.branch,
