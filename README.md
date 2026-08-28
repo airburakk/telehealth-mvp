@@ -73,6 +73,7 @@ npm run dev                   # http://localhost:3000
 | `npx tsx scripts/probe-plaintext-count.ts` | şifreleme kapsamı **salt-okur sayım** (v6.76: encrypt-existing kapsamındaki kolonlarda düz-metin kalanlar + demo/gerçek sahip ayrımı; `PROD_DATABASE_URL` açıkça şart, KEK İSTEMEZ — PHI/e-posta basmaz) |
 | `npx tsx scripts/find-kek.ts [--file <aday>] [--run [--apply]]` | **KEK kurtarma/teşhis** (v6.82: "elimdeki hangi değer bu DB'nin anahtarı?" — adayları `.env PROD_DATA_ENCRYPTION_KEK` + isteğe bağlı dosyadan toplar, **base64 · hex→base64 · base64url** varyantlarını dener; kanıt `rewrapEnvelope(s,kek,kek)` ile → **PHI ÇÖZÜLMEZ**, sır BASILMAZ; `--run` anahtarı AYNI süreçte `encrypt-existing`'e devreder → sır terminale kopyalanmaz; `PROD_DATABASE_URL` şart) |
 | `npx tsx scripts/fix-pubmed-dates.ts [--prod] [--yaz]` | **PubMed yayın tarihi onarımı** (v6.85: PubMed'in `pubdate`/`sortpubdate` alanı derginin KAPAK tarihidir — sürekli-yayın dergileri makaleyi "31 Aralık"a, aylık dergiler gelecek sayıya yazar; gerçek tarih `epubdate`. Mevcut `NewsArticle` kayıtlarını esummary'den yeniden hesaplar, toplayıcının KENDİ `pubDate()`'iyle [tek doğruluk kaynağı]. Dry-run varsayılan · dokunulan tek alan `publishedAt` · idempotent · 2026-08-12'de koşuldu — dev 74/74, **prod 95/95** [gelecek tarihli 92→0]) |
+| `npx tsx scripts/temizle-nonhuman-akademik.ts [--prod] [--yaz] [--lcc-atla]` | **Akademik havuz insan-tıbbı temizliği** (2026-08-26: DOAJ'dan "Journal of Integrative Agriculture" — buzağı ishali makalesi — Gastroenteroloji etiketiyle sızmıştı; hattın hiçbir katmanında insan-tıbbı ölçütü yoktu, bkz. `lib/academic-journals.ts` `isNonHumanAcademic`/`lccNonMedicine`/`PUBMED_HUMAN_FILTER`). `module="akademik"` kayıtlarını toplayıcının KENDİ süzgeç fonksiyonlarıyla tarar — dergi/başlık deseni (tüm kaynaklar) + LCC konu kodu (yalnız DOAJ, ek API isteğiyle). Dry-run varsayılan · dokunulan tek tablo `NewsArticle` [silme] · idempotent · 2026-08-26'da koşuldu — dev 36/1065, prod 5/368 silindi. `--lcc-atla` yalnız desen kademesini çalıştırır (DOAJ API'sine gitmez, hızlı) |
 | `npx tsx scripts/seed-career-pathways.ts [--prod] [--yaz]` | **Kariyer/denklik rehberi seed'i** (v6.89: `prisma/seed-data/career-pathways.json` → `CareerPathway`; kaynak belgesi vault `output/kariyer-denklik-veritabani-2026-08-12.md`). **FAIL-CLOSED doğrulayıcı** — `officialUrl` https şartı · gelecek tarihli `verifiedAt` reddi · adımsız kayıt reddi · scope/confidence allowlist; **bir kayıt düşerse HİÇBİR ŞEY yazılmaz** (kaynaksız/şüpheli süreç bilgisi doktoru yanlış plana sokar). Dry-run varsayılan · idempotent (slug upsert) · 2026-08-12'de dev+prod 6/6 |
 | `npx tsx scripts/ingest-yargitay.ts [--yaz] [--prod] [--limit=N]` | **Yargıtay içtihat dolumu** (v6.86): karararama.yargitay.gov.tr → `NewsArticle` (`category=ictihat`; kamuya açık, kaynağında anonim yargı kararları — PHI yok). Dry-run varsayılan; prod yalnız `--prod`+`PROD_DATABASE_URL`. ⚠️ Kaynağın **belge ucunda oturum kotası** (~17-31 belge/koşu) + IP hız freni (HTTP 429 / `FMTY=ERROR`) var → **dilimli koş**: aralıklarla tekrar, idempotent devam; fren görünce 10-15 dk bekle. Cron zaten günde 2 sorguluk rotasyonla ~20 karar alır (`queriesForToday`) — script tam listeyi hızlandırmak içindir |
 | `npx tsx scripts/ingest-doktrin.ts [--yaz] [--prod]` | **Doktrin (TR-Dizin) dolumu/tazeleme** (v6.92): hakemli makale metadata'sı → `NewsArticle` (`category=doktrin`). Tek aşamalı ve ucuz (ikinci belge isteği yok); dry-run lib ile AYNI `matchesQuery` ibare süzgecini koşar ("ES sonucu N · ibare-doğrulanan M" raporlar). TELİF: yalnız başlık+yazar+özet+link |
@@ -335,6 +336,35 @@ imkânı belli olmuyordu) → mobilde 13px görünür, AURA wordmark 12px'e öl�
   vector). Yerleşim: triyaj bandı + `/vaka/[id]` banner + `/vakalarim` amblemleri (genel + İkinci Görüş).
   **`resolveBranchKey`** kritik köprü: `Case.branch` (LABEL) ile triyaj `effectiveBranch` (KEY) farkını tek
   noktada normalize eder (hem key hem label kabul eder). (`lib/branch-visuals.ts`)
+
+## Doctorium — ayrı ürün
+
+AURA hastaya bakan telehealth platformuyken **Doctorium doktora bakan ayrı bir üründür**: profesyonel
+içerik akışı, topluluk ve kariyer aracı. Aynı repoda büyüdü ama artık kendi markası, kendi vitrini
+(`/doctorium`, canonik `doctorium.tr`) ve kendi Vercel projesi var — mekanik detay aşağıda **Deploy →
+İki marka, iki Vercel projesi**'nde. Modül gerçeği (`lib/doctorium.ts` `ModuleKey`, kullanıcı kararı
+2026-08-01):
+
+- **Akış + tercih** — kişiselleştirilmiş haber/mevzuat/akademik akış, branş+ilgi alanı filtreleri.
+- **Sektörel / mevzuat** — Resmî Gazete + hukuk/içtihat/doktrin arama (özet+link, telif gereği tam metin yok).
+- **Akademik + AI özet** — literatür taraması, Claude ile klinisyen-diline özet.
+- **Etkinlik/kongre** — TTB akredite etkinlik ingest'i + elle kongre veritabanı + takvim + dernek kaynakları/nöbetçi.
+- **Doctorium Post** — abone doktora günlük özet gazetesi (cron; opt-in kanal, e-posta/app).
+- **Puanlar + ödüller** — anket katılımı puan kazandırır → ödül kataloğuna (kongre/kitap) dönüşür
+  (**puan≠nakit**; honorarium'lu anket hukuki netleşene dek yayın kilitli). Sponsorlu içerik
+  (ilaç-dışı reklamveren) ayrı bir gelir kalemi, `/admin/kampanya`'dan yönetilir.
+- **Kariyer** — Modül D gibi PARK: **İŞKUR özel istihdam bürosu izni** olmadan ilan/aracılık fazı açılmaz (mevzuat gereği).
+- Modül D (ilaç tanıtımı/e-mümessil) BİLİNÇLİ PARK — TİTCK tanıtım yönetmeliği + ruhsat sahibi sıfatı hukuki görüş ister.
+
+**AURA ile ilişki:** hesap/DB ortak, ama erişim iki aşamalı (`lib/doctor-activation.ts`) — diploma
+e-Devlet ile doğrulanan doktor önce yalnız Doctorium'a girer (`activatedAt` boş: Doctorium +
+`/doktor/baslangic` + `/doktor/profil` + `/doktor/haberler`; klinik yüzeyler KAPALI). Aşama 2'de
+(`activatedAt` set, `hasClinicalAccess` açılır) AURA'nın klinik yüzeyleri (post-op izleme, vaka
+havuzu, nöbet) erişilir hale gelir. Yani Doctorium AURA'nın "önce kapısı" değil — kendi başına
+yeterli bir ürün; AURA üyeliği onun üstüne eklenen bir katman.
+
+Rotalar için bkz. aşağıdaki **Rotalar** tablosu; sürüm geçmişi (V3 landing, marka ayrışması fazları,
+monetizasyon) için `Air/wiki/changelog.md` ve bu dosyanın alt kısmındaki tarihli notlar.
 
 ## Rotalar
 
