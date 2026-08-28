@@ -125,6 +125,21 @@ function metaRef(item: FeedItem): { text: string; mono: boolean } | null {
  *  o kaynakların og/RSS görselleri düşük kaliteydi) — detay sayfasındaki aynı allowlist. */
 const NO_IMAGE_SOURCES = new Set(["medscape", "medicalxpress", "who"]);
 
+/**
+ * Başlık/özet metni İngilizce mi? — WCAG 3.1.2 (Impeccable audit P3, 2026-08-28): NEJM/BMJ/
+ * ClinicalTrials.gov gibi kaynakların başlığı/özeti BİLİNÇLİ çevrilmeden orijinal dilinde
+ * gösteriliyor (ingest sözleşmesi), ama `FeedItem`'da öğe-başına dil alanı YOK — DOAJ gibi
+ * kaynaklar "makale" kind'inde bile Türkçe dergi döndürebiliyor, `item.kind`/`item.source`'tan
+ * güvenilir çıkarım yapılamaz. Bunun yerine: Türkçeye özgü altı harf (ç ğ ı İ ö ş ü ve büyükleri)
+ * sıradan bir Türkçe cümlede neredeyse kaçınılmaz geçer; YOKLUKLARI (+ yeterli uzunluk, kısa
+ * kod/rakamları yanlış işaretlememek için) güvenli bir İngilizce sinyalidir. Yanlış-negatif
+ * (işaretsiz kalan İngilizce metin) bugünküyle aynı; yanlış-pozitif (Türkçe metne "en" denmesi)
+ * bu altı harf olmadan pratikte imkânsıza yakın.
+ */
+function looksEnglish(text: string): boolean {
+  return text.length >= 20 && !/[çÇğĞıİöÖşŞüÜ]/.test(text);
+}
+
 export function ArticleCard({
   item,
   saved,
@@ -247,6 +262,7 @@ export function ArticleCard({
       {/* ── BAŞLIK: ağırlık kademeli display tipografi */}
       <Link
         href={href}
+        lang={looksEnglish(item.title) ? "en" : undefined}
         className={`aura-display block text-[var(--c-ink)] hover:underline hover:underline-offset-[3px] ${TITLE_CLASS[weight]}`}
       >
         {item.title}
@@ -259,11 +275,15 @@ export function ArticleCard({
       {summary && (
         excerpt ? (
           // Karar alıntısı: sol ince çizgiyle işaretlenir (blok alıntı dili), kutu değil.
-          <p className="mt-2 border-l-2 border-[var(--c-hairline)] pl-3 text-[14px] leading-relaxed text-[var(--c-ink-2)]">
+          <p
+            lang={looksEnglish(excerpt) ? "en" : undefined}
+            className="mt-2 border-l-2 border-[var(--c-hairline)] pl-3 text-[14px] leading-relaxed text-[var(--c-ink-2)]"
+          >
             {excerpt}
           </p>
         ) : (
           <p
+            lang={looksEnglish(summary) ? "en" : undefined}
             className={`mt-2 leading-relaxed text-[var(--c-ink-2)] ${
               weight === "lead" ? "text-[14.5px]" : "text-[13.5px]"
             }`}

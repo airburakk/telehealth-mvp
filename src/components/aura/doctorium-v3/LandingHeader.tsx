@@ -23,7 +23,12 @@ export function LandingHeader() {
       >
         Ana içeriğe geç
       </a>
-      <div className="relative mx-auto flex h-14 w-full max-w-6xl items-center gap-3 px-4 md:h-[72px] md:px-5 sm:gap-6">
+      {/* flex-wrap + min-h (h yerine) ŞART: nav+Giriş+CTA tek satırda viewport kırılımına
+          (md/lg) bağlı, İÇERİK genişliğine değil — metin %200 büyütüldüğünde (OS/AT metin
+          ölçekleme, viewport aynı kalır) satır taşıyordu. min-h normal tek-satır boyunu
+          AYNEN korur (içerik sığdığında hiçbir görsel fark yok); yalnız sığmadığında 2.
+          satıra döker (Impeccable audit P2, 2026-08-28). */}
+      <div className="relative mx-auto flex min-h-14 w-full max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 md:min-h-[72px] md:px-5 sm:gap-x-6">
         <Link href="/doctorium" className="flex min-w-0 items-center gap-2 md:gap-2.5" aria-label="Doctorium ana sayfa">
           <AuraMark size={28} tone="emerald" className="shrink-0" />
           <DoctoriumWordV3 className="text-[18px] md:text-[22px]" />

@@ -9,9 +9,10 @@ import { Eyebrow } from "../primitives";
 import { buttonVariants } from "../ui/button";
 
 // V3 Hero — VİDEO ZEMİNLİ (kullanıcı 2026-08-26: "bundan önce kullandığımız hero videosunu
-// arkaya yerleştir"): v1 landing'in film13 arka planı (DoctoriumBgVideo — IO'da oynat,
-// Save-Data/reduced-motion'da poster, ofis sekansı üst-anchor, AI şeffaflık rozeti dahil)
-// v1'in skrimiyle birebir taşındı. v1 kararı da taşındı: video oynarken sağda ürün kartı
+// arkaya yerleştir"): v1 landing'in arka plan videosu (DoctoriumBgVideo — IO'da oynat,
+// Save-Data/reduced-motion'da poster, AI şeffaflık rozeti dahil; video kaynağı film13'ten
+// film14'e geçti — bkz. doctorium-bg-video.tsx üstü, 2026-08-27) v1'in skrimiyle birebir
+// taşındı. v1 kararı da taşındı: video oynarken sağda ürün kartı
 // KALABALIKTI → tek kolon metin, sağ yarı videoya açık ("Bugün sizin için" önizlemesi zaten
 // Today bölümünde). Video koyu sahne olduğundan bu bölüm DOCTORIUM_PALETTE ile koyu-metin
 // dünyasında yaşar — sayfanın kalan 13 bölümü açık; zemin düz koyu DEĞİL, filmdir.

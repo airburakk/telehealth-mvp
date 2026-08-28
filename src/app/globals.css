@@ -506,7 +506,6 @@ body {
   --aura-duration-panel: 360ms;
   --aura-duration-brand: 2400ms;
   --aura-ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --aura-ease-emphasized: cubic-bezier(0.2, 0, 0, 1.2);
 
   /* Ölçü */
   --aura-content-sm: 42rem;
