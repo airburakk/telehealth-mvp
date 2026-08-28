@@ -5,8 +5,9 @@ import { LANDING_META } from "@/lib/doctorium-landing/content";
 import { SITE_URL } from "@/lib/aura-landing/seo";
 
 // /doctorium — Doctorium tanıtım landing'i V3 (2026-08-26, modernizasyon turu: zebra yok,
-// Inter tek aile, film13 hero, Framer Motion). v2 → /doctorium-v2 (noindex) + tag
-// doctorium-landing-v2-son; v1 → /doctorium-v1 + tag doctorium-landing-v1-son.
+// Inter tek aile, film13 hero, Framer Motion). Karşılaştırma yedeği rotaları (v1/v2) V3
+// kesinleşince kaldırıldı (2026-08-28); geri dönüş git tag'leriyle mümkün:
+// doctorium-landing-v1-son · doctorium-landing-v2-son.
 // Sözleşme aynen: indekslenir, sitemap'te, kendi kromu.
 // ⚠️ İddia disiplini: görünür metin + metadata + JSON-LD aynı kurala tabi (ölçülmemiş süre/oran
 // YOK; "doğrulanmış" = belge incelemesi; EMA/TİTCK yok; "hekim" yok) — content.ts + registry testi.

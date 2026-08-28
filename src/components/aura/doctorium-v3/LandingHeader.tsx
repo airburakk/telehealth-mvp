@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AuraMark } from "@/components/AuraLogo";
 import { DoctoriumMobileMenu } from "@/components/aura/doctorium-mobile-menu";
 import { LANDING_ANCHORS, LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
-import { MobileMenuTracked } from "../doctorium-v2/MobileMenuTracked";
+import { MobileMenuTracked } from "./MobileMenuTracked";
 import { DoctoriumWordV3 } from "./brand";
 
 // V3 üst bar — AÇIK tema (kullanıcı 2026-08-26: hero da açık, koyu blok kalmadı → header kendi

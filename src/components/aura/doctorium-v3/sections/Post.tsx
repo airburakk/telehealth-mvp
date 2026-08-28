@@ -1,7 +1,7 @@
 import { section } from "@/lib/doctorium-landing/content";
 import type { LandingSample } from "@/lib/doctorium-landing/landing-feed";
 import { FEED_MODULE_LABEL, type LandingModuleKey } from "@/lib/doctorium-landing/taxonomy";
-import { ProductFrame } from "../../doctorium-v2/ProductFrame";
+import { ProductFrame } from "../ProductFrame";
 import { FadeInUp } from "../motion";
 import { LandingSection, Note } from "../primitives";
 

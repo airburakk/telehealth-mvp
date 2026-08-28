@@ -3,7 +3,7 @@ import type { LandingProof } from "@/lib/doctorium-landing/landing-feed";
 import { LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
 import { landingBranchLabel } from "@/lib/doctorium-landing/taxonomy";
 import { CongressList } from "@/app/doktor/doctorium/CongressList";
-import { ProductFrame } from "../../doctorium-v2/ProductFrame";
+import { ProductFrame } from "../ProductFrame";
 import { FadeInUp } from "../motion";
 import { LandingSection, Note, SectionHead } from "../primitives";
 

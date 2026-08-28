@@ -3,7 +3,7 @@ import { section } from "@/lib/doctorium-landing/content";
 import { LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
 import { statusRozet } from "@/lib/doc-status";
 import { CtaLink } from "../CtaLink";
-import { ProductFrame } from "../../doctorium-v2/ProductFrame";
+import { ProductFrame } from "../ProductFrame";
 import { FadeInUp } from "../motion";
 import { LandingSection, SectionHead } from "../primitives";
 

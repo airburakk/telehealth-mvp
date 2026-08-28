@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { DOCTORIUM_PALETTE } from "@/components/aura/doctorium-brand";
 import { chapterNo, type SectionCopy } from "@/lib/doctorium-landing/content";
-import { Rich } from "../doctorium-v2/rich-text";
+import { Rich } from "./rich-text";
 import { V3_LIGHT } from "./palette";
 import { v3Theme } from "./theme";
 

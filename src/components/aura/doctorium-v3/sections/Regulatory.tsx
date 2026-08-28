@@ -1,7 +1,7 @@
 import { section, REGULATORY_SOURCES } from "@/lib/doctorium-landing/content";
 import type { LandingSample } from "@/lib/doctorium-landing/landing-feed";
-import { FeedPreview } from "../../doctorium-v2/FeedPreview";
-import { ProductFrame } from "../../doctorium-v2/ProductFrame";
+import { FeedPreview } from "../FeedPreview";
+import { ProductFrame } from "../ProductFrame";
 import { FadeInUp } from "../motion";
 import { LandingSection, Note, SectionHead } from "../primitives";
 

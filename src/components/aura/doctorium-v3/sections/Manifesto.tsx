@@ -1,5 +1,5 @@
 import { section } from "@/lib/doctorium-landing/content";
-import { Rich } from "../../doctorium-v2/rich-text";
+import { Rich } from "../rich-text";
 import { FadeInUp } from "../motion";
 import { LandingSection } from "../primitives";
 

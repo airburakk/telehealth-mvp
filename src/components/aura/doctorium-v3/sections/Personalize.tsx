@@ -1,6 +1,6 @@
 import { section } from "@/lib/doctorium-landing/content";
 import type { LandingSample } from "@/lib/doctorium-landing/landing-feed";
-import { PersonalizationDemo } from "../../doctorium-v2/PersonalizationDemo";
+import { PersonalizationDemo } from "../PersonalizationDemo";
 import { FadeInUp } from "../motion";
 import { LandingSection, Note, SectionHead } from "../primitives";
 

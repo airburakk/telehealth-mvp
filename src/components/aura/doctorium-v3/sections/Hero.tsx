@@ -3,7 +3,7 @@ import { DOCTORIUM_PALETTE } from "@/components/aura/doctorium-brand";
 import { DoctoriumBgVideo } from "@/components/aura/doctorium-bg-video";
 import { section, HERO_PROOF_LINE } from "@/lib/doctorium-landing/content";
 import { LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
-import { Rich } from "../../doctorium-v2/rich-text";
+import { Rich } from "../rich-text";
 import { FadeInUp } from "../motion";
 import { Eyebrow } from "../primitives";
 import { buttonVariants } from "../ui/button";

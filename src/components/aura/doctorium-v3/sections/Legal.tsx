@@ -3,8 +3,8 @@ import type { LandingProof } from "@/lib/doctorium-landing/landing-feed";
 import { LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
 import { LEGAL_TABS } from "@/lib/doctorium";
 import { LegalSearchBox } from "@/app/doktor/doctorium/LegalSearchBox";
-import { FeedPreview } from "../../doctorium-v2/FeedPreview";
-import { ProductFrame } from "../../doctorium-v2/ProductFrame";
+import { FeedPreview } from "../FeedPreview";
+import { ProductFrame } from "../ProductFrame";
 import { FadeInUp } from "../motion";
 import { LandingSection, Note, SectionHead } from "../primitives";
 

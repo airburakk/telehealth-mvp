@@ -2,7 +2,7 @@ import Link from "next/link";
 import { section } from "@/lib/doctorium-landing/content";
 import { LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
 import { CtaLink } from "../CtaLink";
-import { Rich } from "../../doctorium-v2/rich-text";
+import { Rich } from "../rich-text";
 import { FadeInUp } from "../motion";
 import { Eyebrow, LandingSection } from "../primitives";
 
