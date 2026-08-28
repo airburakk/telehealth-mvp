@@ -13,8 +13,7 @@ import { hidesGlobalChrome, CHROME_FREE_ROUTES } from "@/lib/chrome-routes";
 
 describe("hidesGlobalChrome", () => {
   it("landing rotalarında krom gizlenir — /doctorium DAHİL (çift footer regresyonu)", () => {
-    // /doctorium-v1 (2026-08-23): V2 geçişinde eski landing'in noindex yedeği — aynı bileşen, aynı sözleşme.
-    for (const p of ["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/for-clinicians", "/doctorium", "/doctorium-v1"]) {
+    for (const p of ["/", "/v2", "/how-it-works", "/guven-ve-gizlilik", "/for-clinicians", "/doctorium"]) {
       expect(hidesGlobalChrome(p), p).toBe(true);
     }
   });
