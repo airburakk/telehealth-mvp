@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifyToken } from "@/lib/session";
 import { CONSENT_VERSION } from "@/lib/consent-config";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
+import { usesDoctoriumBrand } from "@/lib/chrome-routes";
 
 const DOCTOR_ROLES = ["DOCTOR", "COORDINATOR", "ADMIN"];
 const ETHICS_ROLES = ["ETHICS", "ADMIN"];
@@ -16,7 +18,15 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (!user) {
-    const url = new URL("/giris", req.url);
+    // Giriş kapısı MARKA-DUYARLI (2026-08-29, canlı doğrulamada ölçüldü). Burası koşulsuz
+    // "/giris"e yönlendiriyordu — AURA'nın HASTA kapısı. /giris AURA_ONLY_PREFIXES'te olduğu
+    // için Doctorium deploy'unda zincir şuydu:
+    //   doctorium.tr/admin → doctorium.tr/giris → telehealth-mvp-roan.vercel.app/giris
+    // yani oturumu düşen Doctorium kullanıcısı hem BAŞKA MARKAYA hem YANLIŞ KAPIYA (hasta
+    // girişi) savruluyordu. Doctorium doktor/öğrenci ürünüdür; kapısı /doctorium/giris'tir.
+    const doctoriumSurface =
+      IS_DOCTORIUM_DEPLOY || usesDoctoriumBrand(pathname) || pathname.startsWith("/doktor/doctorium");
+    const url = new URL(doctoriumSurface ? "/doctorium/giris" : "/giris", req.url);
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
