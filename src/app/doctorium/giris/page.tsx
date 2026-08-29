@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { DoctoriumGate } from "@/components/aura/auth-gates";
 import { LandingFooterV3 } from "@/components/aura/doctorium-v3/Footer";
 
+export const dynamic = "force-dynamic";
+
 // Doctorium giriş kapısı (2026-08-16, kullanıcı onaylı tasarım) — /kurumsal-giris
 // panelinin Doctorium alt-marka uyarlaması: zümrüt dönen AuraMark + Doctorium
 // lockup başlığı + iki rol (Doktor / Tıp Öğrencisi) + Google/Apple/e-posta girişi.
@@ -22,6 +24,7 @@ export default function DoctoriumGatePage() {
   // bu sayfa Doctorium'un footer'ı hiç olmayan tek yüzeyiydi).
   // v3 hizalama (2026-08-26): kapı açık yüzeye döndü — fallback da aura-light (koyu flash
   // olmasın), alt bilgi v3 landing footer'ı (açık; koyu DoctoriumFooter v2 arşiv + portalda sürer).
+  // force-dynamic ZORUNLU (2026-08-28 denetimi) — bkz. src/app/giris/page.tsx aynı not.
   return (
     <>
       <Suspense fallback={<div className="aura-page aura-light min-h-dvh" aria-hidden />}>
