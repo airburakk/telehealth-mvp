@@ -712,8 +712,11 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   · **`/doctorium` V3 (v6.166→168, 2026-08-26 — "Apple estetiği" modernizasyon turu; V2'yi süpersede):**
   bileşenler `components/aura/doctorium-v3/` — **zebra YOK**: 14 bölüm + header + footer tek açık
   zemin (`V3_LIGHT` #fbfbfa; manifesto açık-panel bandı; koyu kutular yalnız `ProductFrame` ürün
-  pencereleri) · **hero film13 video-zeminli** (v1 `DoctoriumBgVideo` aynen; yeni video kullanıcıdan
-  gelince takas — Hero.tsx yorumu) · tipografi **Inter tek aile** (`DoctoriumWordV3` wordmark Inter
+  pencereleri) · **hero film14 video-zeminli** (v1 `DoctoriumBgVideo` aynen; film13→film14
+  `f809013` 2026-08-27 — kullanıcı onaylı marka filmi, VO+müzik taşır) · **ses aç/kapa düğmesi sağ
+  altta** (v6.182; v6.180'de kaldırılmıştı, kullanıcı geri istedi — `bottom-12`, AI şeffaflık
+  rozetinin ÜSTÜNE istiflenir; yalnız video mount edildiyse render edilir → mobilde yok; autoplay
+  politikası gereği video daima sessiz başlar) · tipografi **Inter tek aile** (`DoctoriumWordV3` wordmark Inter
   semibold cv11/ss01; aura-display/mono v3 yüzeyinde yok, ürün pencereleri hariç) · Framer Motion
   bölüm girişleri (`FadeInUp` 400ms, reduced-motion destekli) · düğme dili **A · Yükselme**
   (`ui/button.tsx` cva + v3 `CtaLink`; 🪤 primary'de `var(--dl-emerald)` KULLANMA — koyu bölümde
