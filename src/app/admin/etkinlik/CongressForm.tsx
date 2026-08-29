@@ -120,7 +120,7 @@ export function CongressAdmin({ rows, branchOptions }: { rows: Row[]; branchOpti
                   key={b.slug}
                   type="button"
                   aria-pressed={on}
-                  onClick={() => setBranches((p) => { const n = new Set(p); n.has(b.slug) ? n.delete(b.slug) : n.add(b.slug); return n; })}
+                  onClick={() => setBranches((p) => { const n = new Set(p); if (n.has(b.slug)) n.delete(b.slug); else n.add(b.slug); return n; })}
                   className={`rounded-full border px-2.5 py-1 text-[11px] ${on ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300" : "border-[var(--c-hairline)] text-[var(--c-ink-2)]"}`}
                 >
                   {b.label}
