@@ -57,7 +57,7 @@ npm run dev                   # http://localhost:3000
 | `npm run dev` | Geliştirme sunucusu |
 | `npm run build` | `prisma generate && next build` |
 | `npm run start` | Üretim sunucusu |
-| `npm run lint` | ESLint |
+| `npm run lint` | ESLint — **v6.183'ten beri 0 uyarı bekler** (React Compiler kuralları `error`; istisna = gerekçeli `eslint-disable-next-line`, bkz. `eslint.config.mjs`) |
 | `npm test` | **Birim testleri** (vitest — saf mantık, DB yok; pricing/journey/deidentify/crypto/ownership/rate-limit[Upstash mock+fail-open]/postop/storage/ai-minimize/chain-seal/session-sv) |
 | `npm run test:integration` | **Entegrasyon testleri** (gerçek DB — `TEST_DATABASE_URL` Neon dev branch gerekir; yoksa atlanır, bkz. `tests/integration/README.md`) |
 | `npm run test:e2e` | **E2E testleri** (Playwright — 3 demo-kritik akış + erişilebilirlik smoke paketi [salt-okur: axe · tek-h1 · klavye · reduced-motion · RTL; WCAG İDDİASI DEĞİL] + **`mobil` projesi** [v6.154, salt-okur: halka açık sayfalar + `/ar` yatay taşma @360/@390 + `/doctorium` mobil header sözleşmesi; yalnız `mobil.e2e.ts`, akış testleri mobilde koşulmaz]; Ray B2'den beri normal `npm run dev` sunucusu yeterli, bkz. `tests/e2e/README.md`) |

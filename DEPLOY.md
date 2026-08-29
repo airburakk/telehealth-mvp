@@ -231,10 +231,25 @@ dormant kalır / fallback'e düşer).
 
 ## Doğrulama
 
-- **CI kapısı (P0 #4):** `.github/workflows/ci.yml` her push/PR'da `prisma generate` + `tsc --noEmit`
-  + `npm test` (birim, DB'siz) + `npm run lint` çalıştırır. Entegrasyon/E2E secret (`TEST_DATABASE_URL`)
-  eklenince açılır (workflow'da yorumlu). **Öneri:** GitHub branch protection ile CI yeşil olmadan
-  main'e merge/deploy engellensin (Vercel bozuk build'i zaten durdurur ama testleri/tsc'yi durdurmaz).
+- **CI kapısı (P0 #4):** `.github/workflows/ci.yml` **iki job** koşar (her push/PR'da):
+  `verify` = `prisma generate` + `tsc --noEmit` + `npm test` (birim, DB'siz) + `npm run lint` ·
+  `entegrasyon` = gerçek **Neon dev branch**'e karşı (`secrets.TEST_DATABASE_URL` EKLENDİ, job
+  AKTİF — eski "workflow'da yorumlu" notu 2026-08-29'da bayatlamıştı).
+  🪤 **`entegrasyon` job'ı `P1001: Can't reach database server` ile düşebilir** — Neon test
+  branch'i geçici erişilemez olduğunda testler hiç koşmadan `prisma migrate deploy` adımında
+  patlar (`verify` yeşil kalır). Kodla ilgisi yoktur; `gh run rerun <id> --failed` ile geçer.
+  ⚠️ **`npm run lint` 2026-08-29'dan (v6.183) beri SIFIR uyarı bekler:** React Compiler kuralları
+  (`set-state-in-effect` · `purity` · `immutability` · `refs` · `preserve-manual-memoization`) ve
+  `react/no-unescaped-entities` artık `error` seviyesinde — geçici `warn` override'ı kaldırıldı.
+  Bilinçli istisna gerekiyorsa **gerekçesiyle** `eslint-disable-next-line` yazılır (bkz.
+  `eslint.config.mjs` blok yorumu).
+- ⚠️ **Branch protection BYPASS EDİLİYOR (ölçüldü, 2026-08-29):** `main`'e her doğrudan push'ta
+  GitHub `Bypassed rule violations … 2 of 2 required status checks are expected` döndürüyor —
+  yani iki zorunlu kontrol TANIMLI ama doğrudan push onları atlıyor ve push başarılı *görünüyor*.
+  Sonuç: **CI kırmızıyken deploy canlıya çıkabilir** (bu tam olarak 2026-08-29'da yaşandı).
+  Kapatmak için "Do not allow bypassing the above settings" açılmalı — bu `main`'e doğrudan
+  push'u da kapatır (PR akışı gerekir), o yüzden karar **lansmana bağlandı** (bkz. vault
+  `wiki/todo.md` + hafıza `prod-hesaplar-test-lansman-sifirlama`).
 - **Deploy öncesi (elle):** `npm test` (birim — DB yok) + `npx tsc --noEmit` + `npm run build` → hepsi EXIT 0.
   Entegrasyon (`npm run test:integration`) + E2E (`npm run test:e2e`) için ayrı **Neon dev branch**
   (`TEST_DATABASE_URL`) gerekir; prod'a karşı **çalıştırma** (yerel `.env` üretim Neon'a bağlı) —
