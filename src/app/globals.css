@@ -104,6 +104,28 @@
  * 🪤 Yeni nötr token eklersen (--c-panel gibi) buraya da ekle, yoksa o öğe AURA'nın mineral
  * grisinde kalır ve V3 ile birleşmez. */
 .doctorium-scope {
+  color: var(--c-ink);
+  /* Tipografi TEMA-BAĞIMSIZ: Doctorium'un kimliği her iki temada Inter'de tekilleşir
+   * (V3: "hiyerarşi yalnız ağırlıkla") — aura-display/aura-mono class'ları var kalır,
+   * yalnız font-family değişir. */
+  --aura-font-display: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --aura-font-mono: var(--font-sans), ui-monospace, monospace;
+}
+
+/* Nötr tuval YALNIZ GÜNDÜZ'de V3'ün "kırık beyaz"ına çekilir (v6.184, kullanıcı kararı
+ * 2026-08-29: "gece temasını Doctorium'a geri getir" — 2026-08-27'nin "DAİMA açık palet"
+ * kararı SÜPERSEDE). Gece'de bu blok hiç eşleşmez → AURA'nın gece nötrleri (v6.22 "Sakin
+ * Premium") aynen geçerli olur; Doctorium'un gece kimliği tipografi + aksanlarda yaşar,
+ * ayrı bir koyu palet tanımlamak gerekmez (raf ve portal footer'ı zaten tema-duyarlı:
+ * .doctorium-shelf-bg / .doctorium-footer-portal blokları).
+ * İKİ SEÇİCİ ŞART:
+ *   • `.theme-light.doctorium-scope`  → landing'in ürün pencereleri (ProductFrame) iki
+ *     sınıfı AYNI elemanda taşır; onlar tema-bağımsız SABİT açık kalmalı.
+ *   • `.theme-light .doctorium-scope` → portal, temayı kök <html>'den alır (layout.tsx).
+ * 🪤 Yeni nötr token eklersen (--c-panel gibi) buraya ekle, yoksa o öğe gündüzde AURA'nın
+ * mineral grisinde kalır ve V3 ile birleşmez. */
+.theme-light.doctorium-scope,
+.theme-light .doctorium-scope {
   --c-bg: #fbfbfa;
   --c-bg-deep: #f3f3f1;
   --c-chrome: #f3f3f1;
@@ -116,8 +138,6 @@
   --c-hairline: rgba(24, 24, 27, 0.08);
   color: var(--c-ink);
   color-scheme: light;
-  --aura-font-display: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-  --aura-font-mono: var(--font-sans), ui-monospace, monospace;
 }
 
 /* Doctorium PORTAL footer'ı (2026-08-19, kullanıcı bildirimi "footer çok kalın"):
