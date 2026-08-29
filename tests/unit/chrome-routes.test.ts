@@ -9,7 +9,7 @@
 // ⚠️ Yeni tam-ekran yüzey eklerken buraya da bir satır ekle: kromun gizlendiğini iddia eden
 // her rota burada kanıtlanır, "landing sözleşmesi" sözlü gelenek olarak kalmaz.
 import { describe, it, expect } from "vitest";
-import { hidesGlobalChrome, CHROME_FREE_ROUTES } from "@/lib/chrome-routes";
+import { hidesGlobalChrome, hidesFooter, usesDoctoriumBrand, CHROME_FREE_ROUTES } from "@/lib/chrome-routes";
 
 describe("hidesGlobalChrome", () => {
   it("landing rotalarında krom gizlenir — /doctorium DAHİL (çift footer regresyonu)", () => {
@@ -51,5 +51,39 @@ describe("hidesGlobalChrome", () => {
 
   it("liste tek kaynaktır — /doctorium listede kayıtlı", () => {
     expect(CHROME_FREE_ROUTES).toContain("/doctorium");
+  });
+});
+
+// Yönetim dizini (2026-08-29): /admin ağacının TAMAMI Doctorium kromundadır — Doctorium
+// ağacında olmadığı hâlde Doctorium markasıyla çizilir. Üç eksen birden devrededir ve
+// karıştırılmaları kolaydır: footer SUSAR (app/admin/layout.tsx DoctoriumFooter'ı çizer),
+// Header DURUR (yönetici gezinmeye muhtaç — CHROME_FREE_ROUTES'a yazılsaydı nav da düşerdi),
+// marka bloğu Doctorium olur.
+//
+// Kullanıcı bulgusu buydu: portaldan "Yönetim"e tıklayınca AURA kromuna düşülüyordu.
+describe("Doctorium kromlu yönetim dizini — /admin ağacı", () => {
+  it("global krom DÜŞMEZ: Header durur (nav'a muhtaç)", () => {
+    for (const p of ["/admin", "/admin/uyeler", "/admin/kampanya"]) {
+      expect(hidesGlobalChrome(p), p).toBe(false);
+    }
+  });
+
+  it("AURA footer'ı TÜM /admin ağacında susar (çift footer önlemi)", () => {
+    for (const p of ["/admin", "/admin/uyeler", "/admin/landing-analitik", "/admin/kampanya"]) {
+      expect(hidesFooter(p), p).toBe(true);
+    }
+  });
+
+  it("marka bloğu TÜM /admin ağacında Doctorium olur", () => {
+    for (const p of ["/admin", "/admin/uyeler", "/admin/landing-analitik", "/admin/kampanya"]) {
+      expect(usesDoctoriumBrand(p), p).toBe(true);
+    }
+  });
+
+  it("AURA yüzeyleri etkilenmez — marka da footer da yerinde kalır", () => {
+    for (const p of ["/doktor", "/operasyon", "/vakalarim", "/acente"]) {
+      expect(usesDoctoriumBrand(p), p).toBe(false);
+      expect(hidesFooter(p), p).toBe(false);
+    }
   });
 });

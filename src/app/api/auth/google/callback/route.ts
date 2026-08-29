@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
 import { db } from "@/lib/db";
 import { createSession, hashPassword } from "@/lib/auth";
-import { roleHome, type Role } from "@/lib/session";
+import { brandRoleHome, type Role } from "@/lib/session";
 import { patientHome } from "@/lib/patient-journey";
 import { consentedVersion } from "@/lib/consent";
 import { isGoogleConfigured, exchangeGoogleCode, googleRedirectUri, isSafeNextPath } from "@/lib/oauth";
@@ -86,6 +86,6 @@ export async function GET(req: Request) {
   const home = newDoctor
     ? "/doktor/profil-tamamla"
     : isSafeNextPath(next) ? next
-    : user.role === "PATIENT" ? await patientHome(user.id) : roleHome(user.role as Role);
+    : user.role === "PATIENT" ? await patientHome(user.id) : brandRoleHome(user.role as Role);
   return NextResponse.redirect(new URL(home, origin));
 }

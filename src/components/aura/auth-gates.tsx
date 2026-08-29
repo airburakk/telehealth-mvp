@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { useSearchParams } from "next/navigation";
 import { WordHeadline } from "@/components/aura/word-headline";
 import { GateEmailForm } from "@/components/aura/gate-email-form";
+import { DOCTORIUM_HOME } from "@/lib/roles";
 import { LangProvider, useLang, langDir, LINKS, VIDEOS } from "@/lib/aura-landing/i18n";
 import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
 
@@ -362,7 +363,13 @@ const DOCTORIUM_VIDEO = {
 export function DoctoriumGate() {
   const returned = useReturnedWithBanner();
   const sp = useSearchParams();
-  const next = sp.get("next"); // landing "Giriş yap" → ?next=/doktor/doctorium (mevcut doktor portala döner)
+  // landing "Giriş yap" → ?next=/doktor/doctorium (mevcut doktor portala döner).
+  // ⚠️ 2026-08-29 (kullanıcı bulgusu "Doctorium girişinden girdiğimde AURA bandı geliyor"):
+  // ?next YALNIZ o bağlantıdan gelinince vardı. Kapıya doğrudan gidildiğinde (yer imi, adres
+  // çubuğu, e-posta linki) parametre boştu ve giriş data.home'a düşüyordu — roleHome markayı
+  // bilmediği için doktor da yönetici de AURA klinik paneline iniyordu. Kapının kendi hedefi
+  // artık varsayılan: Doctorium kapısından girenin varış yeri Doctorium'dur.
+  const next = sp.get("next") ?? DOCTORIUM_HOME;
   const [role, setRole] = useState(0); // DOCTORIUM.roles indeksi; 0 = Doktor
   const [emailOpen, setEmailOpen] = useState(false);
   const showForm = emailOpen || returned;
@@ -409,7 +416,7 @@ export function DoctoriumGate() {
             label={DOCTORIUM.email}
             icon={<MailIcon />}
           />
-          {showForm && <GateEmailForm texts={DOCTORIUM.form} />}
+          {showForm && <GateEmailForm texts={DOCTORIUM.form} fallbackNext={DOCTORIUM_HOME} />}
         </div>
       </div>
 

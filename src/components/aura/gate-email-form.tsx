@@ -26,9 +26,16 @@ export interface GateQuickAccount {
 export function GateEmailForm({
   texts,
   quick = [],
+  fallbackNext,
 }: {
   texts: { emailLabel: string; passwordLabel: string; submit: string };
   quick?: GateQuickAccount[];
+  // Kapının kendi varsayılan hedefi (2026-08-29, kullanıcı bulgusu: "Doctorium girişinden
+  // girdiğimde AURA bandı geliyor"). URL'de ?next YOKKEN — yer imi, doğrudan adres, e-posta
+  // linki — data.home devreye giriyordu ve o markayı bilmez (roleHome saf bir rol→rota
+  // tablosudur). Öncelik: ?next (kullanıcının açık isteği) > fallbackNext (hangi kapıdan
+  // girdiği) > data.home (rolün genel ana sayfası).
+  fallbackNext?: string;
 }) {
   const sp = useSearchParams();
   const next = sp.get("next");
@@ -69,7 +76,7 @@ export function GateEmailForm({
         if (data.code === "EMAIL_UNVERIFIED") setNeedsVerify(true);
         throw new Error(data.error || "Giriş başarısız.");
       }
-      window.location.assign(next || data.home || "/");
+      window.location.assign(next || fallbackNext || data.home || "/");
       return;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Giriş başarısız.");

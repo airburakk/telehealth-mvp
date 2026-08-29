@@ -7,7 +7,7 @@ export const SESSION_COOKIE = "air_session";
 // kullanabilsin. Buradan yeniden dışa verilir → mevcut sunucu-tarafı importlar (`@/lib/session`)
 // aynen çalışır. ⚠️ "use client" bir dosyadan ASLA bu modülü import etme; `@/lib/roles` kullan
 // (bu dosya modül yüklenirken SESSION_SECRET doğrular ve üretimde THROW eder).
-export { ROLES, isRole, ROLE_LABELS, roleHome, type Role } from "./roles";
+export { ROLES, isRole, ROLE_LABELS, roleHome, brandRoleHome, type Role } from "./roles";
 import type { Role } from "./roles";
 
 export interface SessionUser {

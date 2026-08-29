@@ -54,11 +54,35 @@ export function hidesGlobalChrome(pathname: string): boolean {
 // TEK gezinme omurgası) yok olurdu — doktor Doctorium'a girer, çıkamazdı. Krom artık iki
 // eksende sorgulanıyor; "kendi footer'ı var ama nav'a muhtaç" yeni bir yüzey eklerken
 // rotayı BURAYA yaz, CHROME_FREE_ROUTES'a değil.
-const FOOTER_FREE_PREFIXES = ["/doktor/doctorium"] as const;
+// /admin (2026-08-29, 2. tur): yönetim dizininin TAMAMI Doctorium kromundadır — panellerin
+// çoğu zaten Doctorium işidir (kampanya · anket · etkinlik · ödüller · landing-analitik · üye
+// analitiği) ve yönetici portaldan "Yönetim"e tıkladığında AURA'ya düşüyordu (kullanıcı bulgusu).
+// Footer'ı app/admin/layout.tsx çizer → global AURA footer'ı burada susar.
+const FOOTER_FREE_PREFIXES = ["/doktor/doctorium", "/admin"] as const;
 
 export function hidesFooter(pathname: string): boolean {
   return (
     hidesGlobalChrome(pathname) ||
     FOOTER_FREE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+  );
+}
+
+// Doctorium MARKASIYLA çizilen ama Doctorium ağacında OLMAYAN yüzeyler (2026-08-29).
+//
+// 🪤 Neden ayrı bir eksen gerekti: Header'ın marka bloğu iki şeye bakar — rota
+// (/doktor/doctorium) ve hesap aşaması (stage1) — ve bu soruyu YALNIZ DOCTOR/COORDINATOR
+// rolünde sorar. Yönetici yüzeyi her iki eksenin de dışında kaldığı için /admin altındaki
+// Doctorium panelleri AURA logosuyla çiziliyordu. Bu liste rolden bağımsız olarak "bu rota
+// Doctorium'a aittir" der.
+//
+// Kapsam (kullanıcı kararı 2026-08-29, 2. tur): /admin ağacının TAMAMI. İlk turda yalnız
+// /admin/uyeler alınmıştı; yönetici portaldan "Yönetim"e tıklayınca AURA logosuna düşüyordu
+// ("Management ve Operation'a tıkladığın anda Aura'ya dönüyor"). Yönetim dizini artık
+// Doctorium'un yönetim yüzeyidir — AURA'ya özgü paneller oradan çıkarıldı.
+const DOCTORIUM_BRAND_ROUTES = ["/admin"] as const;
+
+export function usesDoctoriumBrand(pathname: string): boolean {
+  return (DOCTORIUM_BRAND_ROUTES as readonly string[]).some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
 }

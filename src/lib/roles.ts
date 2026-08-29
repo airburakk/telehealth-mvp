@@ -8,6 +8,10 @@
 //
 // KURAL: client bileşeninden rol sabiti lazımsa BURADAN al, `@/lib/session`'dan DEĞİL.
 // session.ts bunları geriye uyum için yeniden dışa verir (sunucu tarafı importlar değişmedi).
+//
+// brand.ts de bu dosya gibi SAF bir sabit modüldür (throw etmez, db/auth ağacına dokunmaz) —
+// yukarıdaki "client güvenle import edebilir" sözleşmesi korunur. Yalnız brandRoleHome() kullanır.
+import { IS_DOCTORIUM_DEPLOY } from "./brand";
 
 export const ROLES = ["PATIENT", "DOCTOR", "COORDINATOR", "ETHICS", "ADMIN", "PARTNER", "AGENCY", "HEALTH_PRO"] as const;
 export type Role = (typeof ROLES)[number];
@@ -51,4 +55,30 @@ export function roleHome(role: Role): string {
   if (role === "PATIENT") return "/triyaj"; // hasta: doğrudan Branş Doktoru akışı (/basla 4'lü seçimi kaldırıldı 2026-07-12; diğer kulvarlar kendi sayfalarından)
   if (role === "ADMIN") return "/doktor"; // yönetici: personel gözetim inişi (/doktor isStaffOnly dalı — tüm kuyruk; eski fallback /vakalarim hasta rotasıydı)
   return "/vakalarim"; // tanınmayan rol (isRole fail-closed olduğundan pratikte erişilmez)
+}
+
+// Marka-duyarlı iniş (2026-08-29, kullanıcı bulgusu: "Doctorium'dan giriş yapıyorum AURA'ya
+// dönüyor" — adres doctorium.tr'de kalıyor, gelen sayfa AURA klinik paneli oluyordu).
+//
+// 🪤 Ayrışmanın (2026-08-24) atladığı nokta: giriş kapısı, hasta reddi ve OAuth DÖNÜŞ url'i
+// marka-duyarlı yapılmıştı, ama VARIŞ hedefi yapılmamıştı. roleHome() saf bir rol→rota
+// tablosudur ve markayı bilmez → Doctorium deploy'unda doktor /doktor'a iniyordu. Portal'a
+// dönüş yalnız ?next=/doktor/doctorium taşıyan bağlantıdan gelenlerde çalışıyordu; doğrudan
+// giriş kapısına gidildiğinde (yer imi, e-posta linki, OAuth turu) parametre yoktu.
+//
+// ⚠️ SERVER-ONLY: IS_DOCTORIUM_DEPLOY, NEXT_PUBLIC_ olmayan BRAND_MODE'u okur → client
+// bileşeninde DAİMA false döner (sessizce AURA davranışına düşer, hata vermez). Yalnız route
+// handler / server component içinden çağır; client'ta hedef gerekiyorsa prop'la geçir.
+export const DOCTORIUM_HOME = "/doktor/doctorium";
+
+// Doctorium portalına inebilen roller: doktor/öğrenci kendi hesabıyla, ADMIN ve COORDINATOR
+// gözetim erişimiyle (bkz. doktor/doctorium/layout.tsx kapı notu — "COORDINATOR/ADMIN gözetim
+// erişimi mevcut davranışıyla geçer"). ETHICS/PARTNER/AGENCY/HEALTH_PRO portalın dışındadır →
+// kendi panellerine iner. PATIENT Doctorium deploy'unda girişte zaten reddedilir (403).
+const DOCTORIUM_ROLES: readonly Role[] = ["DOCTOR", "ADMIN", "COORDINATOR"];
+
+export function brandRoleHome(role: Role): string {
+  // Tıp öğrencisi de DOCTOR rolündedir (studentTrack) — ikisi de Doctorium'a aittir.
+  if (IS_DOCTORIUM_DEPLOY && DOCTORIUM_ROLES.includes(role)) return DOCTORIUM_HOME;
+  return roleHome(role);
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkPassword, createSession } from "@/lib/auth";
-import { roleHome, type Role } from "@/lib/session";
+import { brandRoleHome, type Role } from "@/lib/session";
 import { patientHome } from "@/lib/patient-journey";
 import { consentedVersion } from "@/lib/consent";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
@@ -72,6 +72,6 @@ export async function POST(req: Request) {
   const home =
     user.role === "PATIENT" ? await patientHome(user.id)
     : staffPending ? "/kayit/durum"
-    : roleHome(user.role as Role);
+    : brandRoleHome(user.role as Role);
   return NextResponse.json({ ok: true, role: user.role, home });
 }

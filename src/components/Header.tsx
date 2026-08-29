@@ -10,7 +10,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47, LANGUAGES, LANG_CHANGE_EVENT } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
-import { hidesGlobalChrome } from "@/lib/chrome-routes";
+import { hidesGlobalChrome, usesDoctoriumBrand } from "@/lib/chrome-routes";
 import { BadgeCheck, Bookmark, CalendarDays, LogOut, ShieldOff, Star, UserCog, Wallet } from "lucide-react";
 import { ThemeToggle, type ThemeName } from "@/components/ThemeToggle";
 
@@ -94,8 +94,27 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   // Doctorium kromu = portal içi VEYA Aşama-1 hesabı (kromu bütünüyle Doctorium'a ait, v6.105).
   // Ayrışma sonrası (2026-08-24) bu bayrak marka bloğunu ve bildirim scope'unu da seçer.
   const doctoriumSide = doctoriumActive || stage1;
+  // Rota-bazlı marka istisnası (2026-08-29): Doctorium'a ait olduğu hâlde Doctorium ağacında
+  // olmayan yüzeyler (bugün: /admin/uyeler). YALNIZ logoyu etkiler — doctoriumSide'a katılmaz,
+  // yani bildirim scope'u/çıkış hedefi/odak modu yöneticide AURA davranışında kalır.
+  const brandRoute = usesDoctoriumBrand(pathname);
+  const showDoctoriumBrand = doctoriumSide || brandRoute;
   // Odak modunda klinik sekmeler + Doctorium sekmesi gizli (marka bloğu zaten portala gider).
-  const shownItems = doctoriumActive ? items.filter((n) => n.href !== "/doktor" && n.href !== "/doktor/takip" && n.href !== "/doktor/doctorium") : items;
+  // Operasyon (S2 AURA operasyon paneli) Doctorium kromunun TAMAMINDA gizlidir — kullanıcı
+  // kararı 2026-08-29: "bu operation'ın Doctorium ile hiç alakası yok". Yalnız bant kısayolu
+  // düşer; /operasyon rotasının erişim kuralları DEĞİŞMEZ (AURA kromunda yerinde durur).
+  // 🪤 Ternary KORUNUYOR (koşulsuz .filter() çağrısı React Compiler'ın
+  // preserve-manual-memoization kuralını kırıyor: aşağıdaki useMemo'nun `items` bağımlılığını
+  // "sonradan değişebilir" sayıp bileşenin tamamının optimizasyonunu atlıyor). Filtre yalnız
+  // gerçekten daraltma varken kurulur; hiçbir daraltma yoksa `items` referansı aynen geçer.
+  const shownItems =
+    doctoriumActive || showDoctoriumBrand
+      ? items.filter((n) => {
+          if (doctoriumActive && ["/doktor", "/doktor/takip", "/doktor/doctorium"].includes(n.href)) return false;
+          if (showDoctoriumBrand && n.href === "/operasyon") return false;
+          return true;
+        })
+      : items;
   // Çevrilecek metinler: görünür nav etiketleri + rol + Çıkış/Giriş.
   // lang="Türkçe" → useT no-op (kimlik). Partner gibi dil-tercihli kullanıcıda /api/i18n cache'i.
   const texts = useMemo(
@@ -195,8 +214,13 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
         {/* Marka altyazısı ("Sağlık Turizmi & Teletıp") kullanıcı isteğiyle kaldırıldı (2026-07-12) — yalnız logo */}
         {/* shrink-0: dar ekranda flex logoyu ezip wordmark'ı nav'ın altına sokuyordu
             (mobil "menüler üst üste biniyor" bildirimi, 2026-08-01) — taşmayı nav scroll'u yönetir. */}
-        {user && ["DOCTOR", "COORDINATOR"].includes(user.role) ? (
-          doctoriumSide ? (
+        {/* ADMIN listeye 2026-08-29'da eklendi (kullanıcı bulgusu: "header'da AURA, footer'da
+            Doctorium"). Yönetici /doktor/doctorium portalının İÇİNDEYKEN bile AURA logosu
+            görüyordu — footer segment layout'tan Doctorium geldiği için sayfa iki markalı
+            çıkıyordu. Marka bloğu artık rotayı da dinliyor; ADMIN'in AURA kromundaki logo
+            hedefi /doktor olur (roleHome(ADMIN) ile aynı yer — eskiden kök "/" idi). */}
+        {user && (["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role) || brandRoute) ? (
+          showDoctoriumBrand ? (
             <DoctoriumBrand doctoriumActive={doctoriumActive} />
           ) : (
             // AURA kromunda logo klinik panele gider (eski toggle'ın AURA hedefi — vitrin değil).

@@ -3,8 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import {
   ArrowRight, BarChart2, CalendarDays, Gift, LayoutDashboard, Megaphone,
-  FolderHeart, Share2, UserRound, Users, HeartPulse, Scale, Globe,
-  Stethoscope, Newspaper, Luggage, UserCheck, MousePointerClick,
+  MousePointerClick, TrendingUp,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -14,31 +13,21 @@ export const dynamic = "force-dynamic";
 // /master BİLİNÇLİ listelenmez (env-dormant üç katmanlı kapı — keşfedilebilirlik artırılmaz).
 export const metadata = { title: "Yönetim" };
 
-// v6.73 bant sadeleştirmesi: ADMIN üst bandından çıkan denetim kısayolları buraya indi
-// (kullanıcı kararı — bant büyümez, dizin büyür). Rotaların erişim kuralları DEĞİŞMEDİ;
-// bunlar yalnız kısayoldur (admin, hasta/rol yüzeylerini bu görünümlerden denetler).
-const OVERSIGHT = [
-  // v6.73 2. tur (kullanıcı): Doktor + Doctorium banttan buraya; Sağlık Turizmi (/acente) eklendi.
-  { href: "/doktor", label: "Doktor", icon: Stethoscope, note: "personel" },
-  { href: "/doktor/doctorium", label: "Doctorium", icon: Newspaper, note: "personel" },
-  { href: "/doktor/takip", label: "Post-Op", icon: HeartPulse, note: "personel" },
-  { href: "/vakalarim", label: "Bakım Yolculuğum", icon: FolderHeart, note: "hasta yüzü" },
-  { href: "/paylasimlarim", label: "Paylaşımlarım", icon: Share2, note: "hasta yüzü" },
-  { href: "/triyaj", label: "Triyaj", icon: UserRound, note: "hasta yüzü" },
-  { href: "/doktorlar", label: "Doktorlar", icon: Users, note: "kamu dizini" },
-  { href: "/acente", label: "Sağlık Turizmi", icon: Luggage, note: "acente" },
-  { href: "/etik-kurul", label: "Etik Kurul", icon: Scale, note: "kurul" },
-  { href: "/partner", label: "Partner", icon: Globe, note: "iş ortağı" },
-];
+// ── AURA ayıklaması (kullanıcı kararı 2026-08-29) ──────────────────────────────────────────
+// Bu dizin artık DOCTORIUM'un yönetim yüzeyidir (app/admin/layout.tsx Doctorium kromunu çizer).
+// Kullanıcı bildirimi: "Yönetim ve Operasyon'a tıkladığın anda AURA'ya dönüyor … bunlara
+// tıklandığında artık AURA görmek istemiyorum."
+//
+// Buradan ÇIKARILANLAR — ikisi de AURA yüzeyine götürüyordu:
+//   · "Personel Onayı" kartı (/admin/personel-onay) — Partner/Acente/Sağlık Uzmanı başvuruları;
+//     Doctorium'un doktor+öğrenci üyeliğiyle ilgisi yok (kullanıcı adıyla işaret etti).
+//   · OVERSIGHT bloğu — /doktor · /vakalarim · /triyaj · /acente · /etik-kurul · /partner gibi
+//     10 AURA denetim kısayolu; tıklanınca kaçınılmaz olarak AURA kromu açılıyordu.
+// ⚠️ ROTALAR SİLİNMEDİ, yalnız bu dizinden düştüler: /admin/personel-onay ve saydığım yüzeyler
+// doğrudan URL ile çalışmaya devam eder, erişim kuralları değişmedi. Geri istenirse bu commit'ten
+// PANELS kartı + OVERSIGHT dizisi ve ilgili lucide ikonları geri alınır.
 
 const PANELS = [
-  {
-    href: "/admin/personel-onay",
-    label: "Personel Onayı",
-    desc: "Partner Doktor, Acente ve Sağlık Uzmanı başvuruları — yanıt + belge incele, onayla/reddet.",
-    icon: UserCheck,
-    tone: "#f472b6",
-  },
   {
     href: "/admin/kampanya",
     label: "Sponsorlu Kampanyalar",
@@ -66,6 +55,13 @@ const PANELS = [
     desc: "Anket puanlarının ödül karşılıkları — kongre/kitap kalemleri + talep onay ve teslim kuyruğu.",
     icon: Gift,
     tone: "#a78bfa",
+  },
+  {
+    href: "/admin/uyeler",
+    label: "Üye Analitiği",
+    desc: "Doctorium üye tabanı — kaç doktor/öğrenci geldi ve ne zaman; doğrulama durumu, şehir, branş ve üniversite dağılımı.",
+    icon: TrendingUp,
+    tone: "#818cf8",
   },
   {
     href: "/admin/landing-analitik",
@@ -112,26 +108,9 @@ export default async function AdminIndexPage() {
         ))}
       </ul>
 
-      <h2 className="aura-mono mt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--c-ink-3)]">
-        Denetim görünümleri
-      </h2>
-      <p className="mt-1 text-xs text-[var(--c-ink-2)]">
-        Hasta ve rol yüzeylerini denetlemek için kısayollar — üst banttan buraya taşındı.
-      </p>
-      <ul className="mt-3 grid gap-1.5 sm:grid-cols-2">
-        {OVERSIGHT.map((o) => (
-          <li key={o.href}>
-            <Link
-              href={o.href}
-              className="flex items-center gap-2.5 rounded-xl border border-[var(--c-hairline)] px-3 py-2 text-sm text-[var(--c-ink-2)] transition hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]"
-            >
-              <o.icon size={15} className="shrink-0 text-[var(--c-ink-3)]" />
-              <span className="min-w-0 flex-1 truncate">{o.label}</span>
-              <span className="aura-mono shrink-0 text-[10px] text-[var(--c-ink-3)]">{o.note}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {/* "Denetim görünümleri" bloğu 2026-08-29'da kaldırıldı — dosya başındaki AURA ayıklaması
+          notuna bakın. On kısayolun tamamı AURA yüzeylerine gidiyordu; rotalar duruyor, yalnız
+          bu dizinden düştüler. Doctorium portalına dönüş için üstteki marka bloğu kullanılır. */}
     </div>
   );
 }
