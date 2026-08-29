@@ -311,7 +311,7 @@ export function OnboardingForm({
                   /doktor/profil'den değiştirilebilir (DoctorPreferences + preferences API,
                   soOptIn/tourismOptIn eklendi) — önceki uyarı ("profil yüzeyi HENÜZ YOK")
                   buradaydı, kod kanıtıyla kapandı. */}
-              Bu dört tercihi sonradan <strong>profilinizden</strong> de değiştirebilirsiniz. İkinci Görüş'te ayrıca{" "}
+              Bu dört tercihi sonradan <strong>profilinizden</strong> de değiştirebilirsiniz. İkinci Görüş’te ayrıca{" "}
               <strong>Doçent / Profesör</strong> ünvanı aranır — ünvanınız uygun değilse o panel
               seçime kapalıdır. Paneller Aşama 2 tamamlandığında ana sayfanızda görünür.
             </p>

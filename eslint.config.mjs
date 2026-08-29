@@ -13,6 +13,24 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // `_` öneki = "bilerek kullanılmıyor" (yerleşik TS/ESLint konvansiyonu). Kod tabanında imza
+  // korunurken kullanılmayan parametreler (`missingSteps(docs, _mmss)`), prop'tan bilinçli
+  // atlananlar (`caseId: _caseId`) ve rest-destructuring ile alan çıkarma
+  // (`({ targetBranches: _tb, ...card }) => card`) bu şekilde işaretlenir. Satır satır
+  // eslint-disable yerine konvansiyon TEK yerde tanınır — kural `error` seviyesinde kalır.
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+    },
+  },
   // eslint-config-next@16 React Compiler kurallarını hata→UYARI. Bu kurallar (set-state-in-effect,
   // purity, immutability, refs, preserve-manual-memoization) yeni ve `error` seviyesinde geliyor;
   // mevcut kod tabanı henüz tam uyumlu değil (26 ihlal). Kör devre-dışı DEĞİL — uyarı olarak görünür

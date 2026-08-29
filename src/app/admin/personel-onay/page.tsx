@@ -79,7 +79,6 @@ export default async function StaffApprovalPage() {
             const applicant = userById.get(app.userId);
             const answers = readStaffAnswers(app.answers);
             const appDocs = docsByApp.get(app.id) ?? [];
-            const uploadedTypes = new Set(appDocs.map((d) => d.type));
             return (
               <AuraPanel
                 key={app.id}

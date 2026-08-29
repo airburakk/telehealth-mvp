@@ -6,7 +6,7 @@
 // köprü Vakalarım üstündeki kulvar kartlarındadır (MyCasesList).
 import type { ComponentType } from "react";
 import {
-  Stethoscope, UserRound, HeartPulse, Scale, Users, Share2, BarChart3,
+  Stethoscope, UserRound, HeartPulse, Scale, Share2, BarChart3,
   FolderHeart, Globe, Luggage, LayoutDashboard,
 } from "lucide-react";
 

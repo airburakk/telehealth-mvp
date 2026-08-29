@@ -57,7 +57,6 @@ export default async function DoctorPanel({
   searchParams: Promise<{ page?: string; branch?: string; status?: string; urgent?: string; from?: string }>;
 }) {
   const user = await getCurrentUser();
-  const isStaffOnly = !!user && user.role !== "DOCTOR"; // koordinatör/etik/admin → doktor profili yok, tüm kuyruk
 
   // Bağlı doktor profili
   const me = user ? await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } }) : null;

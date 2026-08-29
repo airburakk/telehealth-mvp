@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { transitionRedemption, REDEMPTION_STATUSES, type RedemptionStatus } from "@/lib/rewards";
 

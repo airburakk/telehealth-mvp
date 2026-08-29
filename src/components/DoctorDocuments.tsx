@@ -93,7 +93,6 @@ export function DoctorDocuments({
   const [savingMmss, setSavingMmss] = useState(false);
 
   const has = (t: string) => docs.some((d) => d.type === t);
-  const mmssMetaComplete = !!insurer.trim() && coverageLimit !== "" && Number(coverageLimit) > 0 && (policyNo.trim() !== "" || initialMmss.policyNoSet) && mmssSaved;
   // v6.105: aktivasyon artık YALNIZ diplomaya bakar (MMSS ihtiyari oldu — lib/doctor-activation
   // REQUIRED_DOC_TYPES ile aynı kural; iki yer birbirine UYUMLU kalmalı, yoksa buton açık görünüp
   // sunucu 409 döner).
@@ -247,7 +246,7 @@ export function DoctorDocuments({
                   <input type="file" accept={ACCEPT} className="hidden" disabled={busy === type}
                     onChange={(e) => { upload(type, e.target.files?.[0] ?? null); e.target.value = ""; }} />
                 </label>
-                <span className="ml-2 text-[10px] text-[var(--c-ink-3)]">PDF / JPG / PNG · ~8 MB'a kadar</span>
+                <span className="ml-2 text-[10px] text-[var(--c-ink-3)]">PDF / JPG / PNG · ~8 MB’a kadar</span>
 
                 {/* v6.119 — Yükleme sonrası e-Devlet otomatik doğrulama sonucu (onay 2026-08-19).
                     Yalnız SON yüklemenin kartında; reason sunucudan gelir ve PHI içermez.

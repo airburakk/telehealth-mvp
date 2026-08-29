@@ -2,7 +2,6 @@
 // TEK KAYNAK: ücret, süreler ve hasta-yüzü süre metni buradan beslenir (spec §11/§12.3).
 // Boundary spec §4 (state machine). İADE POLİTİKASI PARK (§9.1) → ödeme sonrası iptal
 // bilinçli olarak modellenmedi; iptal yalnız ödeme öncesi (DRAFT / AWAITING_PAYMENT).
-import { secondOpinionDocSpecs, type SoDocType } from "@/data/second-opinion-docs";
 import { BRANCHES } from "@/lib/triage";
 
 // SO vakası branşı BRANCHES.key ("onkoloji") saklar; Doctor.branch etiket ("Onkoloji") tutar.

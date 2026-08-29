@@ -8,7 +8,7 @@
 // reddi mesajı gider (iletişim tercihi üzerinden; lib/tourism-disclaimer). Fiyat önizlemesi/paket
 // seviyesi/konaklama tamamen kaldırıldı — kesin plan ve fiyat DAİMA görüşme sonrası (klinik-önce).
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plane, Stethoscope, ClipboardList, ArrowRight, ArrowLeft, Loader2, ShieldAlert, CheckCircle2, Sparkles } from "lucide-react";
+import { Plane, ArrowRight, ArrowLeft, Loader2, ShieldAlert, CheckCircle2, Sparkles } from "lucide-react";
 import { useT } from "@/components/useT";
 import { AiConsentGate } from "@/components/AiConsentGate";
 import { usePatientLang } from "@/components/PatientLocale";
@@ -17,7 +17,7 @@ import { JourneyStageRail } from "@/components/JourneyStageRail";
 import { ContactPrefFields, CONTACT_PREF_TEXTS, type ContactPref } from "@/components/ContactPrefFields";
 import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS } from "@/components/ProfilePrefill";
 import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
-import { COUNTRIES, countryName, langDir, LANG_BCP47 } from "@/lib/constants";
+import { COUNTRIES, langDir, LANG_BCP47 } from "@/lib/constants";
 import { PATIENT_BRANCHES } from "@/lib/triage";
 import { TOURISM_DISCLAIMER_TITLE, TOURISM_DISCLAIMER_BODY } from "@/lib/tourism-disclaimer";
 

@@ -60,6 +60,10 @@ export function AuraDoctors() {
                 <div className="relative h-64 overflow-hidden">
                   {/* Portre dekoratif: isim + branş zaten altında metin olarak
                       okunur → alt boş (ekran okuyucuda çift okumayı önler). */}
+                  {/* eslint-disable-next-line @next/next/no-img-element -- yerel statik varlık
+                      (/assets/*.jpg), sabit kart boyutu (w-60 × h-64) ve lazy-load: viewport
+                      altındaki yatay listede LCP adayı değil. Proje genelinde next/image
+                      KULLANILMIYOR (bkz. CoverArt/ArticleCard'daki aynı gerekçeli disable'lar). */}
                   <img
                     src={`/assets/${d.img}.jpg`}
                     alt=""

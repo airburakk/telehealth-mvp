@@ -25,7 +25,6 @@ import {
 import { ingestEuropePmcAll, ingestDoajAll } from "./doctorium-academic-sources";
 
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
-const UA = "Mozilla/5.0 (compatible; AuraHealth/1.0; +https://telehealth-mvp-roan.vercel.app)";
 const RELDATE_DAYS = 180; // son 6 ay — günlük koşuda taze havuz yeter
 const PER_BRANCH = 3; // branş başına yayın (30 branş × 3 = ~90 kayıt/gün üst sınırı)
 const NCBI_GAP_MS = 400; // anahtarsız NCBI sınırı 3 istek/sn — altında kal
