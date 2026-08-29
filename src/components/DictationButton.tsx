@@ -65,6 +65,7 @@ export function DictationButton({
   const [err, setErr] = useState("");
   const recRef = useRef<SpeechRec | null>(null);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da SpeechRecognition yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
   useEffect(() => { setSupported(!!getRecognition()); }, []);
   // Unmount olurken dinlemeyi kes — mikrofon/oturum sızıntısı olmasın.
   useEffect(() => () => { try { recRef.current?.abort(); } catch {} }, []);

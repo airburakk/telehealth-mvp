@@ -80,6 +80,7 @@ export function ConsultVideoRoom({
   const dir = langDir(lang);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- durum geçişinde bir kez; `startTime === null` koşulu yeniden tetiklenmeyi keser.
     if (phase === "connected" && startTime === null) setStartTime(Date.now()); // aynı oturumda sıfırlanmaz
   }, [phase, startTime]);
 

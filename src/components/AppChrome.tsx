@@ -25,6 +25,7 @@ export function AppChrome({ doctoriumDeploy }: { doctoriumDeploy: boolean }) {
   const [theme, setTheme] = useState<ThemeName>("dark");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da document (tema sınıfı) yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
     setTheme(document.documentElement.classList.contains("theme-light") ? "light" : "dark");
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : { user: null }))

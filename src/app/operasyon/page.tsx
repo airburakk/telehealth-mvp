@@ -83,6 +83,7 @@ export default async function OperationsDashboard() {
   const dayFmt = new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "short", timeZone: "Europe/Istanbul" });
   const days: { key: string; label: string; count: number }[] = [];
   for (let i = 13; i >= 0; i--) {
+    // eslint-disable-next-line react-hooks/purity -- server component; "şu an" her istekte yeniden hesaplanır, hydration eşleşmesi aranmaz.
     const d = new Date(Date.now() - i * 86_400_000);
     days.push({ key: dayFmt.format(d), label: dayFmt.format(d), count: 0 });
   }

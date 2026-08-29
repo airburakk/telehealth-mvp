@@ -36,6 +36,7 @@ export function LabResultsForm({
   // bunları mevcut düzenlemeleri KORUYARAK forma ekle (var olanı ezme; aynı analiti çift ekleme).
   const initialKey = JSON.stringify(initial.map((r) => [r.loinc ?? "", r.name ?? "", r.value ?? "", r.aiSuggested ? 1 : 0]));
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- router.refresh sonrası gelen AI satırlarını mevcut düzenlemeleri KORUYARAK birleştirir (functional update; ezme/çift ekleme yok).
     setRows((prev) => {
       const have = new Set(prev.map(labKey));
       const additions = initial

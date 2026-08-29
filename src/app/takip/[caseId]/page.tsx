@@ -30,6 +30,7 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
   const closed = recoveryClosed(recovery);
   if (closed.closed && user && user.role !== "PATIENT") notFound();
 
+  // eslint-disable-next-line react-hooks/purity -- server component; "şu an" her istekte yeniden hesaplanır, hydration eşleşmesi aranmaz.
   const day = Math.max(1, Math.floor((Date.now() - new Date(recovery.startedAt).getTime()) / 86400000) + 1);
 
   // FAZ 3 (2026-07-10): AI Epikriz görüşme ekranından buraya taşındı — personel üretir/görür,

@@ -34,6 +34,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
   const dbReviews = await db.review.findMany({ where: { doctorId: d.id }, orderBy: { createdAt: "desc" } });
   // generated: false = gerçek DB yorumu ("Doğrulanmış" çipi yalnız bunlarda); true = üretilmiş örnek içerik.
   const reviews = dbReviews.length
+    // eslint-disable-next-line react-hooks/purity -- server component; "şu an" her istekte yeniden hesaplanır, hydration eşleşmesi aranmaz.
     ? dbReviews.map((r) => ({ author: r.author, country: r.country, stars: r.stars, text: r.text, daysAgo: Math.max(1, Math.round((Date.now() - r.createdAt.getTime()) / 86400000)), generated: false }))
     : generatedReviews(d);
   const bioText = richBio(d, d.bio);
@@ -123,6 +124,7 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
                   </div>
                   <div className="mt-1"><Stars value={r.stars} /></div>
                   <p className="mt-1.5 text-sm text-[var(--c-ink-2)]">{r.text}</p>
+                  {/* eslint-disable-next-line react-hooks/purity -- server component; "şu an" her istekte yeniden hesaplanır, hydration eşleşmesi aranmaz. */}
                   <div className="mt-1 text-[11px] text-[var(--c-ink-3)]">{formatDateTime(new Date(Date.now() - r.daysAgo * 86400000))}</div>
                 </li>
               ))}

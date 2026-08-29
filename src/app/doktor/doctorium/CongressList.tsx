@@ -21,6 +21,7 @@ export interface CongressRow {
 /** Son tarih satırı: gelecekteyse "Etiket: <tarih>", geçtiyse "Geçti-etiketi · tarih" soluk. */
 function Deadline({ label, passedLabel, at }: { label: string; passedLabel: string; at: Date }) {
   // Gün sonuna kadar geçerli sayılır (MedicalCongress tarihleri UTC gün başı; son gün dahil).
+  // eslint-disable-next-line react-hooks/purity -- server component; "şu an" her istekte yeniden hesaplanır, hydration eşleşmesi aranmaz.
   const passed = at.getTime() + 86_400_000 <= Date.now();
   return passed ? (
     <span className="inline-flex items-center gap-1 text-[var(--c-ink-3)]">

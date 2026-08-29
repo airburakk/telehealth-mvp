@@ -13,6 +13,7 @@ export default function NotFound() {
   // SSR/prerender'da navigator yok → önce TR render edilir, dil istemcide
   // useEffect ile seçilir (hydration uyuşmazlığı olmasın diye).
   const [lang, setLang] = useState("tr");
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da navigator yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
   useEffect(() => setLang(pickLang(navigator)), []);
   const t = ERROR_I18N[lang];
 

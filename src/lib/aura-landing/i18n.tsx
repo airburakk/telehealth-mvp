@@ -45,6 +45,7 @@ export function LangProvider({
     try {
       const code = langCodeFor(window.localStorage.getItem("air_lang"));
       if (code && (LANG_CODES as string[]).includes(code)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da localStorage yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
         setLangState(code as Lang);
       }
     } catch {

@@ -144,12 +144,14 @@ function TriyajInner() {
   // Arayüz dili — hasta dil seçince otomatik eşitlenir; üstteki seçiciden de değiştirilebilir.
   const [uiLang, setUiLang] = usePatientLang(); // önceki yüzeylerde seçilen dil (air_lang) taşınır
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da localStorage yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
     try { if (localStorage.getItem("air_lang")) setLangLocked(true); } catch {}
   }, []);
   useEffect(() => {
     if (!profile || seededRef.current) return;
     seededRef.current = true;
     setPatientName((v) => v || profile.name);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- profil verisi geldiğinde formu BİR KEZ doldurur — seededRef guard'ı tekrarı keser, kullanıcının yazdığını ezmez.
     if (profile.country) setCountry(profile.country);
     if (profile.phone) setPhone(profile.phone);
     if (profile.contactPref) setContactPref(profile.contactPref);
@@ -157,7 +159,12 @@ function TriyajInner() {
   }, [profile, setUiLang]);
   function chooseLang(l: string) { setLangLocked(true); setUiLang(l); } // açık seçim → ülke-önerisi kilitlenir
   const showStrip = profileComplete(profile, "full") && !editProfile;
+  // ⚠️ Bu elle memoizasyon KALMALI: useT'ye giden `texts` dizisi her render'da yeni referans
+  // olursa çeviri döngüye girer (bkz. useT unstable-texts yarışı). React Compiler bu memo'yu
+  // koruyamadığını bildiriyor ("Compilation Skipped") — yani bileşeni optimize etmiyor; davranış
+  // değişmez, elle memo görevini sürdürür. Kaldırmak/otomatiğe bırakmak REGRESYON olur.
   const tTexts = useMemo(
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
     () => [...STATIC_UI, ...PRECONSULT_TEXTS, ...CONTACT_PREF_TEXTS, ...PROFILE_STRIP_TEXTS, ...DICTATION_TEXTS, ...(profile?.country ? [countryName(profile.country)] : []), ...PATIENT_BRANCHES.map((b) => b.label), ...(effectiveBranch ? [...questionTexts(effectiveBranch), ...requiredDocs(effectiveBranch).map((d) => d.label)] : []), ...(analysis?.reasoning ? [analysis.reasoning] : [])],
     [effectiveBranch, analysis?.reasoning, profile]
   );

@@ -77,6 +77,7 @@ export function DicomRedactEditor({
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- durum geçişinde bir kez; `open` koşulu yeniden tetiklenmeyi keser.
       setFrame(0);
       load(0);
     } else {

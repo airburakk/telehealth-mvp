@@ -124,11 +124,13 @@ function SoApplyFormInner() {
   const [langLocked, setLangLocked] = useState(false);
   const seededRef = useRef(false);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da localStorage yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
     try { if (localStorage.getItem("air_lang")) setLangLocked(true); } catch {}
   }, []);
   useEffect(() => {
     if (!profile || seededRef.current) return;
     seededRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- profil verisi geldiğinde formu BİR KEZ doldurur — seededRef guard'ı tekrarı keser, kullanıcının yazdığını ezmez.
     if (profile.country) setCountry(profile.country);
     if (profile.phone) setPhone(profile.phone);
     if (profile.contactPref) setContactPref(profile.contactPref);

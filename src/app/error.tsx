@@ -22,6 +22,7 @@ export default function ErrorBoundary({
   const router = useRouter();
   // SSR/prerender'da navigator yok → önce TR, dil istemcide useEffect ile seçilir.
   const [lang, setLang] = useState("tr");
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da navigator yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
   useEffect(() => setLang(pickLang(navigator)), []);
   const t = ERROR_I18N[lang];
 

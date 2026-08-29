@@ -48,6 +48,7 @@ export default async function RecoveryMonitor() {
   const all = recoveries.map((r) => {
     const last = r.checkIns[0];
     const severity = (last?.severity as Severity) ?? "NONE";
+    // eslint-disable-next-line react-hooks/purity -- server component; "şu an" her istekte yeniden hesaplanır, hydration eşleşmesi aranmaz.
     const day = Math.max(1, Math.floor((Date.now() - new Date(r.startedAt).getTime()) / 86400000) + 1);
     // E2EE Faz 2A — tamamlanmış (manuel COMPLETED veya otomatik süre+tampon) takiplerde personel erişimi kapalı.
     const closed = recoveryClosed(r);

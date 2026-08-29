@@ -116,6 +116,7 @@ export function SoVideoRoom({
   const myLang = isDoctor ? "tr-TR" : (SPEECH_LANG[patientLang] ?? "tr-TR");
   const langsDiffer = patientLang !== "Türkçe";
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da SpeechRecognition yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
   useEffect(() => { setSttSupported(!!getSpeechRecognition()); }, []);
 
   // Sinyalleşme taraf-token'ı (P1) — ilk yetkiden sonra sunucu DB'siz doğrular; signalFetch yönetir.
@@ -146,6 +147,7 @@ export function SoVideoRoom({
     const want = sttOn && joined && phase !== "ended";
     if (want && !recRef.current) {
       const Ctor = getSpeechRecognition();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- tarayıcı yeteneği çalışma anında öğrenilir (render'da bilinemez) — yoksa geri düşüş.
       if (!Ctor) { setSttSupported(false); setSttOn(false); return; }
       const rec = new Ctor();
       rec.lang = myLang;
@@ -406,7 +408,7 @@ export function SoVideoRoom({
     })();
 
     return shutdown; // unmount'ta da aynı teardown (bye ile tekilleştirildi)
-  }, [joined, ended, roomId, selfRole]);
+  }, [joined, ended, roomId, selfRole, isDoctor]);
 
   function toggleCam() { const t = localStreamRef.current?.getVideoTracks()[0]; if (t) { t.enabled = !t.enabled; setCamOn(t.enabled); } }
   // Not: toggleMic yalnız enabled bayrağını çevirir → tercüman canlıyken Gemini'ye de sessizlik gider (istenen).

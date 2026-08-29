@@ -136,12 +136,13 @@ function ShelfGroup() {
 /** Rafın sekme dizisi — masaüstü ve mobil raf-footer AYNI diziyi çizer (tek kaynak; iki
  *  markup'ın ayrışması v6.109-öncesi çift-liste driftine geri dönüş olurdu). */
 function ShelfTabs({ active, counts }: { active: SidebarActive; counts: SidebarCounts }) {
-  let lastGroup: string | null = null;
   return (
     <>
       {MODULES.map((m, i) => {
-        const header = m.group && m.group !== lastGroup ? <ShelfGroup /> : null;
-        lastGroup = m.group;
+        // Grup başlığı yalnız grup DEĞİŞTİĞİNDE çizilir. Önceki modülün grubuna bakılır —
+        // render sırasında `lastGroup` değişkenini mutasyona uğratmak yerine (aynı sonuç,
+        // ama saf: React Compiler render'da yeniden atamayı reddediyor).
+        const header = m.group && m.group !== MODULES[i - 1]?.group ? <ShelfGroup /> : null;
         return (
           <Fragment key={m.key}>
             {header}

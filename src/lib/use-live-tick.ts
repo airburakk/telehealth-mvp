@@ -19,6 +19,10 @@ const SAFETY_MS = 30_000; // Ably canlı — dürtü kaçarsa bile en geç 30sn'
 // misafir kullanıcı (token alamaz) hızlandırılmış polling'e DÜŞMEZ. Verilmezse 3sn (v6.28 üçlüsü).
 export function useLiveTick(topic: LiveTopic, tick: () => void | Promise<void>, enabled: boolean, fallbackMs: number = FAST_MS): void {
   const tickRef = useRef(tick);
+  // "latest ref" deseni: uzun ömürlü timer ve Ably aboneliği bayat closure çağırmasın diye
+  // `tick` her render'da tazelenir. Effect'e taşımak sıralama yarışı doğurur (abonelik effect'i
+  // önce koşarsa bir tur eski tick'i yakalar).
+  // eslint-disable-next-line react-hooks/refs
   tickRef.current = tick;
 
   useEffect(() => {

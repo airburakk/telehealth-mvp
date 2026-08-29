@@ -31,21 +31,18 @@ const eslintConfig = defineConfig([
       ],
     },
   },
-  // eslint-config-next@16 React Compiler kurallarını hata→UYARI. Bu kurallar (set-state-in-effect,
-  // purity, immutability, refs, preserve-manual-memoization) yeni ve `error` seviyesinde geliyor;
-  // mevcut kod tabanı henüz tam uyumlu değil (26 ihlal). Kör devre-dışı DEĞİL — uyarı olarak görünür
-  // kalır (kademeli benimseme), ama CI lint kapısını her koşumda EXIT 1'e boğmaz (P0 #4 kapısı çalışsın).
-  // TODO: ihlalleri kademeli düzelt → tekrar `error`e çek.
-  {
-    rules: {
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/purity": "warn",
-      "react-hooks/immutability": "warn",
-      "react-hooks/refs": "warn",
-      "react-hooks/preserve-manual-memoization": "warn",
-      "react/no-unescaped-entities": "warn",
-    },
-  },
+  // ✅ TODO KAPANDI (v6.183): React Compiler kuralları (set-state-in-effect · purity ·
+  // immutability · refs · preserve-manual-memoization) ve react/no-unescaped-entities artık
+  // eslint-config-next@16 VARSAYILANINDA — yani `error`. Geçici `warn` override'ı KALDIRILDI.
+  //
+  // Neden kaldırılabildi: 59 uyarının tamamı kapatıldı — 18'i gerçek temizlik (ölü kod, tipografik
+  // kesme işareti, img gerekçesi), 3'ü gerçek düzeltme (PackageBuilder eksik dep = fiyat bayatlama
+  // hatası · DoctoriumSidebar render-içi mutasyon · iki WebRTC odasında isDoctor dep'i), kalanı
+  // satır bazlı GEREKÇELİ disable (her biri neden o desenin doğru olduğunu yazar).
+  //
+  // Neden `warn`a dönülmemeli: eski override 26 ihlalle konmuştu, ölçülmeden 38'e çıkmıştı —
+  // uyarı seviyesi ihlallerin sessizce birikmesine izin veriyor. `error` ile yeni ihlal CI lint
+  // kapısını kırar; bilinçli istisna gerekiyorsa gerekçesiyle disable yazılır.
 ]);
 
 export default eslintConfig;

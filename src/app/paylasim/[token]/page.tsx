@@ -115,6 +115,7 @@ export default async function ShareViewerPage({
 
   // Erişimi denetim izine kaydet (audit + hasta bildirimi) — 30 sn içindeki tekrarları birleştir
   const last = await db.shareAccess.findFirst({ where: { shareLinkId: link.id }, orderBy: { createdAt: "desc" } });
+  // eslint-disable-next-line react-hooks/purity -- server component; "şu an" her istekte yeniden hesaplanır, hydration eşleşmesi aranmaz.
   if (!last || Date.now() - last.createdAt.getTime() > 30_000) {
     const h = await headers();
     const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || null;

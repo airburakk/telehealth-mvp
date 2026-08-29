@@ -45,7 +45,9 @@ export default async function CongressCardPage({ params }: { params: Promise<{ i
   const coverSlug = slugs.find((s) => hasBranchVisual(s)) ?? null;
   const sources = safeSlugs(c.sourceUrls);
 
+  // eslint-disable-next-line react-hooks/purity -- server component; "şu an" her istekte yeniden hesaplanır, hydration eşleşmesi aranmaz.
   const isPast = c.startDate.getTime() < Date.now() - 86400000;
+  // eslint-disable-next-line react-hooks/purity -- server component; "şu an" her istekte yeniden hesaplanır, hydration eşleşmesi aranmaz.
   const days = Math.round((c.startDate.getTime() - Date.now()) / 86400000);
 
   return (

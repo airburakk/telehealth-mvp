@@ -98,6 +98,9 @@ export function DoctorVideoCard({
   // <track> metadata sonrası eklendiğinde bazı tarayıcılar default'u otomatik göstermez → modu zorla.
   useEffect(() => {
     const tracks = videoRef.current?.textTracks;
+    // TextTrack bir DOM nesnesi (React değeri değil); `mode` yazımı tarayıcı API'sinin kendi
+    // sözleşmesi — effect içinde, idempotent.
+    // eslint-disable-next-line react-hooks/immutability
     if (vttUrl && tracks && tracks.length > 0) tracks[0].mode = "showing";
   }, [vttUrl]);
 

@@ -198,6 +198,7 @@ function StepRail({ step, t }: { step: number; t: T }) {
 export function ShareManager({ cases, links, lang }: { cases: CaseOpt[]; links: LinkData[]; lang: string }) {
   const router = useRouter();
   const [origin, setOrigin] = useState("");
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da window.location yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
   useEffect(() => setOrigin(window.location.origin), []);
 
   // texts: ST + lib/share label'ları (SCOPES label/desc + DURATIONS label). MEMOIZE — yoksa her render

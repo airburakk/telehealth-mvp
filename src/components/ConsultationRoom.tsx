@@ -173,11 +173,13 @@ export function ConsultationRoom({
   const texts = useMemo(() => [...UI, caseData.branch], [caseData.branch]);
   const { t } = useT(uiLang, texts);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da SpeechRecognition yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
   useEffect(() => { setSttSupported(!!getSpeechRecognition()); }, []);
 
   // Süre tüpü: doktor görüşmeye girer girmez başlar (karşı tarafın bağlanmasını beklemez).
   // Bir kez set edilir; ağ kopup yeniden bağlansa/yenilense bile aynı oturumda sıfırlanmaz.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- durum geçişinde bir kez; `startTime === null` koşulu yeniden tetiklenmeyi keser.
     if (isDoctor && joined && startTime === null) setStartTime(Date.now());
   }, [isDoctor, joined, startTime]);
 
@@ -215,6 +217,7 @@ export function ConsultationRoom({
     const want = (sttOn || dictating) && joined && phase !== "ended";
     if (want && !recRef.current) {
       const Ctor = getSpeechRecognition();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- tarayıcı yeteneği çalışma anında öğrenilir (render'da bilinemez) — yoksa geri düşüş.
       if (!Ctor) { setSttSupported(false); setSttOn(false); setDictating(false); return; }
       const rec = new Ctor();
       rec.lang = myLang;
@@ -511,7 +514,7 @@ export function ConsultationRoom({
     })();
 
     return shutdown; // unmount'ta da aynı teardown (bye ile tekilleştirildi)
-  }, [consultationId, selfRole, status, joined, retry]);
+  }, [consultationId, selfRole, isDoctor, status, joined, retry]);
 
   function toggleCam() { const t = localStreamRef.current?.getVideoTracks()[0]; if (t) { t.enabled = !t.enabled; setCamOn(t.enabled); } }
   // Not: toggleMic yalnız enabled bayrağını çevirir → tercüman canlıyken Gemini'ye de sessizlik gider

@@ -15,6 +15,7 @@ export function usePublicLocale(): [Locale, (l: Locale) => void] {
   useEffect(() => {
     try {
       const airName = localStorage.getItem("air_lang");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da localStorage yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
       if (airName) { setLocale(langCodeFor(airName) === "tr" ? "tr" : "en"); return; }
       const saved = localStorage.getItem("pm_locale");
       if (saved === "tr" || saved === "en") {

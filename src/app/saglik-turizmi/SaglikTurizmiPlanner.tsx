@@ -83,6 +83,7 @@ function SaglikTurizmiPlannerInner() {
   useEffect(() => {
     if (!profile || seededRef.current) return;
     seededRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- profil verisi geldiğinde formu BİR KEZ doldurur — seededRef guard'ı tekrarı keser, kullanıcının yazdığını ezmez.
     if (profile.name) setPatientName(profile.name);
     if (profile.country && COUNTRIES.some((c) => c.code === profile.country)) setCountry(profile.country);
     if (profile.phone) setPhone(profile.phone);

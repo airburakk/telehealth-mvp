@@ -97,9 +97,18 @@ export function PackageBuilder({
   }
 
   // insuranceLevel ana sürücü; eski booleanlar geriye uyum için türetilir.
-  const selection: PackageSelection = { branch, country, tier, hotelStars, hospitalType, nights, translator, insuranceLevel: insLevel, insuranceExtended: insLevel >= 2, insuranceMalpractice: insLevel >= 3 };
+  // ⚠️ selection MEMOIZE (v6.183): computePackage `s.branch`i tedavi taban fiyatında
+  // (treatmentBase) ve `s.country`yi uçuş kaleminde (FLIGHT_BY_COUNTRY) kullanır — ikisi de
+  // quote'un eski bağımlılık listesinde YOKTU, yani branş/ülke değişince fiyat bayat kalıyordu.
+  // Kardeş memo (insByLevel) `branch`i zaten dep'e almıştı; tutarsızlık buradaydı. Nesneyi
+  // memoize edip quote'u ona bağlamak hem eksik bağımlılığı kapatır hem memoizasyonu korur
+  // (ham nesne dep verilseydi her render yeni referans → memo tamamen ölürdü).
+  const selection: PackageSelection = useMemo(
+    () => ({ branch, country, tier, hotelStars, hospitalType, nights, translator, insuranceLevel: insLevel, insuranceExtended: insLevel >= 2, insuranceMalpractice: insLevel >= 3 }),
+    [branch, country, tier, hotelStars, hospitalType, nights, translator, insLevel],
+  );
   const hasTx = !!treatments && treatments.length > 0;
-  const quote = useMemo(() => computePackage(selection, treatments, rate, doctorMmssLimitUsd, healthMult), [tier, hotelStars, hospitalType, nights, translator, insLevel, treatments, rate, doctorMmssLimitUsd, healthMult]);
+  const quote = useMemo(() => computePackage(selection, treatments, rate, doctorMmssLimitUsd, healthMult), [selection, treatments, rate, doctorMmssLimitUsd, healthMult]);
 
   // Her sigorta seviyesinin primini canlı göster (kümülatif kartlar). Teminat tabanı/operasyon seçili seviyeden bağımsız.
   const treatmentTotal = quote.insurance.targetCoverage / INSURANCE_CONFIG.targetMultiple;

@@ -43,6 +43,7 @@ export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
       "connection" in navigator &&
       (navigator as { connection?: { saveData?: boolean } }).connection?.saveData === true;
     if (narrow || reduceMotion || saveData) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da matchMedia yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
     setShowVideo(true);
   }, []);
 
