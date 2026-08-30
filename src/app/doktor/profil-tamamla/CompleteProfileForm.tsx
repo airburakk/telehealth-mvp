@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, Stethoscope, ArrowRight } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
+import { CitySelect } from "@/components/CitySelect";
 
 // OAuth profil-tamamlama formu (v6.87) — DoctorSignupForm'un kimlik alanlarıyla BİREBİR
 // (ad/ünvan/branş/şehir/telefon; e-posta+parola YOK — OAuth hallettti). "Hizmet dilleri" alanı
@@ -85,7 +86,7 @@ export function CompleteProfileForm({
           </div>
 
           <Labeled label="Şehir">
-            <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="İstanbul" className={INPUT} required />
+            <CitySelect value={city} onChange={setCity} className={INPUT} />
           </Labeled>
 
           <Labeled label="Cep telefonu (isteğe bağlı)">

@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Loader2, UserPlus, Stethoscope, MailCheck } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
 import { SocialAuthButtons } from "@/components/social-auth";
+import { CitySelect } from "@/components/CitySelect";
 import { oauthBannerMessage } from "@/lib/oauth-banner";
 
 const TITLES = ["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."];
@@ -118,7 +119,7 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, brand 
           </div>
 
           <Labeled label="Şehir">
-            <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="İstanbul" className={INPUT} required />
+            <CitySelect value={city} onChange={setCity} className={INPUT} />
           </Labeled>
 
           <Labeled label="Cep telefonu (isteğe bağlı)">

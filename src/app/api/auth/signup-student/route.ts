@@ -8,6 +8,7 @@ import { BRANCH_LABELS } from "@/lib/procedures";
 import { isEmailConfigured, sendEmail } from "@/lib/email";
 import { hashVerifyToken } from "@/lib/email-verification";
 import { universitiesFor, domainMatches, type StudentDepartment } from "@/lib/universities";
+import { isAllowedCity } from "@/lib/cities";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 
 // v6.95 — Tıp/Diş Hekimliği öğrencisi kaydı (/ogrenci hunisi). signup(doktor) rotasının
@@ -45,7 +46,9 @@ export async function POST(req: Request) {
   if (!EMAIL_RE.test(email)) return NextResponse.json({ error: "Geçerli bir e-posta girin." }, { status: 400 });
   if (password.length < 8) return NextResponse.json({ error: "Parola en az 8 karakter olmalı." }, { status: 400 });
   if (!BRANCH_SET.has(branch)) return NextResponse.json({ error: "İlgilendiğiniz branşı seçin." }, { status: 400 });
-  if (city.length < 2) return NextResponse.json({ error: "Üniversitenizin şehrini girin." }, { status: 400 });
+  // Kapalı liste (2026-08-30): üniversite şehri de listeden seçilir (TR 81 il + KKTC + yurt dışı —
+  // rosterde KKTC/AZ/MK kampüsleri var, salt-81 liste onları bloke ederdi; bkz. lib/cities.ts).
+  if (!isAllowedCity(city)) return NextResponse.json({ error: "Üniversitenizin şehrini listeden seçin." }, { status: 400 });
   if (!DEPARTMENTS.has(department)) return NextResponse.json({ error: "Bölümünüzü seçin (Tıp / Diş Hekimliği)." }, { status: 400 });
   if (!universitiesFor(department).some((u) => u.name === university)) {
     return NextResponse.json({ error: "Üniversitenizi listeden seçin." }, { status: 400 });

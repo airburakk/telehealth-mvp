@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { GraduationCap, MailCheck, UserPlus, Loader2 } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
+import { CitySelect } from "@/components/CitySelect";
 import { universitiesFor, type StudentDepartment } from "@/lib/universities";
 
 // v6.95 — Tıp/Diş Hekimliği öğrencisi kaydı (/ogrenci): doktor kaydından AYRI huni (kullanıcı
@@ -143,7 +144,7 @@ function StudentSignup({ branches }: { branches: string[] }) {
           </select>
         </Labeled>
         <Labeled label="Üniversite şehri">
-          <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="İstanbul" className={INPUT} required />
+          <CitySelect value={city} onChange={setCity} className={INPUT} />
         </Labeled>
       </div>
 

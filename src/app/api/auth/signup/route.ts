@@ -5,6 +5,7 @@ import { consentedVersion } from "@/lib/consent";
 import { createDoctorAccount } from "@/lib/doctor-signup";
 import { BRANCH_LABELS } from "@/lib/procedures";
 import { LANGUAGES } from "@/lib/constants";
+import { isAllowedCity } from "@/lib/cities";
 import { isEmailConfigured } from "@/lib/email";
 import { issueVerificationEmail } from "@/lib/email-verification";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
@@ -48,7 +49,9 @@ export async function POST(req: Request) {
   if (password.length < 8) return NextResponse.json({ error: "Parola en az 8 karakter olmalı." }, { status: 400 });
   if (!TITLES.has(title)) return NextResponse.json({ error: "Geçerli bir ünvan seçin." }, { status: 400 });
   if (!BRANCH_SET.has(branch)) return NextResponse.json({ error: "Geçerli bir branş seçin." }, { status: 400 });
-  if (city.length < 2) return NextResponse.json({ error: "Şehir girin." }, { status: 400 });
+  // Kapalı liste (2026-08-30): form CitySelect gönderir; serbest metin curl'la da yazılamasın —
+  // kaynak kirliliği ("İstanbul"/"Istanbul") /admin/uyeler dağılımını yanıltıyordu.
+  if (!isAllowedCity(city)) return NextResponse.json({ error: "Şehri listeden seçin." }, { status: 400 });
 
   // E-posta benzersiz mi?
   const existing = await db.user.findUnique({ where: { email }, select: { id: true } });
