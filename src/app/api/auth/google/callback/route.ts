@@ -10,6 +10,8 @@ import { isGoogleConfigured, exchangeGoogleCode, googleRedirectUri, isSafeNextPa
 import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 import { createDoctorAccount } from "@/lib/doctor-signup";
 import { createPatientAccount } from "@/lib/patient-signup";
+import { reqMeta } from "@/lib/audit";
+import { recordLogin } from "@/lib/login-activity";
 
 // GET /api/auth/google/callback — Google dönüşü. State (CSRF) doğrula → kod takası → email/ad.
 // Mevcut kullanıcı → giriş (mevcut rol; intent YOK SAYILIR — rol karışması olmaz). Yeni →
@@ -78,7 +80,11 @@ export async function GET(req: Request) {
   }
 
   const cv = await consentedVersion(user.id);
-  await createSession({ id: user.id, email: user.email, name: user.name, role: user.role as Role, cv });
+  const session = { id: user.id, email: user.email, name: user.name, role: user.role as Role, cv };
+  await createSession(session);
+  // Giriş etkinliği (v6.184) — "Hesabım"daki liste yöntemi de gösterir (parola | google | apple).
+  const meta = reqMeta(req);
+  await recordLogin(session, "google", meta.ip, meta.userAgent);
   // Faz 5: dönen hasta vaka merkezine iner (başvurusu yoksa /triyaj). Yeni doktor: kimlik ara
   // sayfası (proxy onam kapısı next'i koruyarak önce /onam'a düşürür — zincir bozulmaz). Yeni
   // doktor DAİMA profil-tamamla'ya iner (next varsa bile) — kimlik eksikken hedef sayfaya

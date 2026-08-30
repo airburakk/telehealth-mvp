@@ -22,18 +22,39 @@ const D = (s: string | null) => (s ? new Date(s) : null);
 
 describe("Doctorium kapısı (Aşama 1, v6.124): doğrulanmış diploma VEYA öğrenci belgesi", () => {
   it("ikisi de yoksa kapalı", () => {
-    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: null })).toBe(false);
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: null, doctoriumOptOutAt: null })).toBe(false);
   });
   it("doğrulanmış diploma tek başına açar", () => {
-    expect(hasDoctoriumAccess({ diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null })).toBe(true);
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: null })).toBe(true);
   });
   it("öğrenci belgesi tek başına açar (v6.95 yolu sürer)", () => {
-    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14") })).toBe(true);
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14"), doctoriumOptOutAt: null })).toBe(true);
   });
   it("🪦 CHAMBER artık geçerli belge tipi DEĞİL (tabip odası yolu kapandı)", () => {
     // ALL_DOC_TYPES yükleme API'sinin kabul kapısıdır — CHAMBER listede olmadığı için yeni
     // yükleme 400 alır; tip düzeyinde de hasDoctoriumAccess chamberLetterAt kabul etmez.
     expect(ALL_DOC_TYPES).not.toContain("CHAMBER");
+  });
+});
+
+// v6.184 — üyelikten çıkış (kullanıcı kararı 2026-08-29): AURA klinik hesabı da olan doktor
+// Doctorium üyeliğinden çıkabilir; hesabı kapanmaz. Damganın kapıyı TEK BAŞINA kapatması şart,
+// çünkü diplomaVerifiedAt çıkışta SİLİNMEZ (klinik tarafın da dayanağıdır).
+describe("Doctorium üyelikten çıkış (v6.184): doctoriumOptOutAt kapıyı kapatır", () => {
+  it("doğrulanmış diploma VARKEN bile çıkış damgası kapıyı kapatır", () => {
+    expect(hasDoctoriumAccess({
+      diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: D("2026-08-29"),
+    })).toBe(false);
+  });
+  it("öğrenci damgası VARKEN bile çıkış damgası kapıyı kapatır", () => {
+    expect(hasDoctoriumAccess({
+      diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14"), doctoriumOptOutAt: D("2026-08-29"),
+    })).toBe(false);
+  });
+  it("çıkış damgası null'lanınca (yeniden üyelik) kapı geri açılır", () => {
+    expect(hasDoctoriumAccess({
+      diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: null,
+    })).toBe(true);
   });
 });
 
@@ -45,11 +66,11 @@ describe("Klinik yüzey kapısı (Aşama 2): yalnız activatedAt açar", () => {
     expect(hasClinicalAccess({ activatedAt: D("2026-08-11") })).toBe(true);
   });
   it("Aşama 1 doktoru (diploma doğrulı, aktivasyonsuz): Doctorium AÇIK, klinik yüzey KAPALI", () => {
-    expect(hasDoctoriumAccess({ diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null })).toBe(true);
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: null })).toBe(true);
     expect(hasClinicalAccess({ activatedAt: null })).toBe(false);
   });
   it("öğrenci damgası DOLUYKEN klinik yüzey yine KAPALI (yeni şartı dolu ver — negatif-test ilkesi)", () => {
-    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14") })).toBe(true);
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14"), doctoriumOptOutAt: null })).toBe(true);
     expect(hasClinicalAccess({ activatedAt: null })).toBe(false);
   });
 });

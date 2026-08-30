@@ -31,8 +31,8 @@ async function myDoctorId(userId: string): Promise<string | null> {
 // kalktığından studentVerifiedAt bu route'ta hiç dokunulmaz, yine de taze okunur — tek doğruluk
 // kaynağı hasDoctoriumAccess).
 async function currentDoctoriumAccess(doctorId: string): Promise<boolean> {
-  const d = await db.doctor.findUnique({ where: { id: doctorId }, select: { diplomaVerifiedAt: true, studentVerifiedAt: true } });
-  return hasDoctoriumAccess(d ?? { diplomaVerifiedAt: null, studentVerifiedAt: null });
+  const d = await db.doctor.findUnique({ where: { id: doctorId }, select: { diplomaVerifiedAt: true, studentVerifiedAt: true, doctoriumOptOutAt: true } });
+  return hasDoctoriumAccess(d ?? { diplomaVerifiedAt: null, studentVerifiedAt: null, doctoriumOptOutAt: null });
 }
 
 // GET /api/doctor/documents — kendi belgelerinin meta listesi (içerik DÖNMEZ).

@@ -34,14 +34,21 @@ export type DoctorDocType = (typeof ALL_DOC_TYPES)[number];
 // e-postası tıklama-doğrulaması (api/auth/verify-student-email, lib/universities.ts).
 // activatedAt kapıda ayrıca OKUNMAZ: klinik aktivasyon zaten ACCEPTED diploma ister →
 // activatedAt ⊂ diplomaVerifiedAt (migration backfill'i kurdu).
-// ⚠️ Parametre tipi İKİ alanı da zorunlu tutar (kasıtlı — deletionLockedAt/CaseRef deseni): çağıran
+// ⚠️ Parametre tipi ÜÇ alanı da zorunlu tutar (kasıtlı — deletionLockedAt/CaseRef deseni): çağıran
 // select'ine alan eklemeyi unutursa derleme kırılır, kapı sessizce yanlış karar vermez.
 
 // Doctorium'a girebilir mi (saf — birim testlenebilir).
+//
+// v6.184 — doctoriumOptOutAt ÖNCE bakılır: AURA klinik hesabı da olan (Aşama 2) doktor Doctorium
+// üyeliğinden çıkabilir ve o damga bu kapıyı tek başına kapatmalıdır. diplomaVerifiedAt üyelikten
+// çıkışta SİLİNMEZ (klinik tarafın da dayanağıdır) → yalnız iki damgaya bakan eski formül, çıkan
+// üyeyi içeride tutardı.
 export function hasDoctoriumAccess(d: {
   diplomaVerifiedAt: Date | null;
   studentVerifiedAt: Date | null;
+  doctoriumOptOutAt: Date | null;
 }): boolean {
+  if (d.doctoriumOptOutAt) return false;
   return !!d.diplomaVerifiedAt || !!d.studentVerifiedAt;
 }
 

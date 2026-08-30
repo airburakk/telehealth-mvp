@@ -65,6 +65,7 @@ export async function POST(req: Request) {
     title: studentTitleFor(department), branch, city,
     languages: "Türkçe", phone: null,
     studentTrack: true, studentUniversity: university, studentDepartment: department,
+    passwordSet: true,
   });
 
   // Genel hesap e-postası: dormant'ta diğer TÜM kayıt yollarıyla AYNI davranış (auto-stamp,

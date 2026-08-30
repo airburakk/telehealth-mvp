@@ -32,7 +32,16 @@ export type AuditAction =
   | "DELETION_ACCESS_DENIED" // hesap-silme kilidindeki kayda erişim denemesi reddedildi (kilit kanıtı)
   | "RECORD_PURGE" // saklama süresi doldu → klinik kayıt fiziken imha edildi (cron; v6.11)
   | "DEFENSE_REQUEST" // etik kurul karşı taraftan savunma/bilgi talep etti (detail: respondentType; içerik YOK — v6.79)
-  | "DEFENSE_REPLY"; // karşı taraf savunma talebine yanıt verdi (yanıt içeriği audit'e YAZILMAZ — v6.79)
+  | "DEFENSE_REPLY" // karşı taraf savunma talebine yanıt verdi (yanıt içeriği audit'e YAZILMAZ — v6.79)
+  // ── Hesap güvenliği (v6.184 — Doctorium "Hesabım") ────────────────────────────────────────
+  // LOGIN, "Giriş etkinliği" listesinin TEK kaynağıdır: oturumlar JWT'de yaşıyor (DB'de Session
+  // tablosu yok, iptal tek sayaçla — lib/auth sessionVersion), dolayısıyla "şu an açık oturumlar"
+  // ÜRETİLEMEZ. Kullanıcıya gösterilen şey açık oturum değil GİRİŞ KAYDIDIR; arayüz de bunu
+  // aynen böyle söyler. detail = giriş yöntemi (parola | google | apple).
+  | "LOGIN"
+  | "PASSWORD_CHANGE" // parola değiştirildi/belirlendi → tüm oturumlar düşürüldü (parola audit'e YAZILMAZ)
+  | "DOCTORIUM_LEAVE" // Aşama 2 doktoru Doctorium üyeliğinden çıktı — hesap açık kaldı, katman silindi
+  | "DOCTORIUM_ACCOUNT_CLOSE"; // yalnız-Doctorium üyesi hesabını kapattı → hesap + üyelik verisi silindi
 
 interface RecordInput {
   actor: SessionUser | null;

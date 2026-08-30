@@ -8,6 +8,8 @@ import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 import { isEmailConfigured } from "@/lib/email";
 import { sendAlert } from "@/lib/alerts";
 import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
+import { reqMeta } from "@/lib/audit";
+import { recordLogin } from "@/lib/login-activity";
 
 // Sabit-zaman 401 (denetim #21): kullanıcı YOKKEN de aynı maliyette bcrypt koşturulur — yanıt süresi
 // e-postanın kayıtlı olup olmadığını sızdırmasın (hesap enumerasyonu; resend-verification'ın jenerik
@@ -63,7 +65,13 @@ export async function POST(req: Request) {
 
   // KVKK onam sürümünü oturuma göm → proxy DB'siz kontrol eder; onam yoksa /onam'a yönlenir.
   const cv = await consentedVersion(user.id);
-  await createSession({ id: user.id, email: user.email, name: user.name, role: user.role as Role, cv });
+  const session = { id: user.id, email: user.email, name: user.name, role: user.role as Role, cv };
+  await createSession(session);
+  // Giriş etkinliği (v6.184): "Hesabım → Giriş etkinliği" listesinin kaynağı. Oturum çerezi
+  // YAZILDIKTAN SONRA — başarısız denemeler bu listeye düşmez. recordAccess fail-safe olduğu için
+  // await edilmesi girişi riske atmaz.
+  const meta = reqMeta(req);
+  await recordLogin(session, "parola", meta.ip, meta.userAgent);
   // Faz 5: dönen hasta vaka merkezine iner (başvurusu yoksa /triyaj); diğer roller statik.
   // Kurumsal üyelik (2026-08-12): doğrulanmamış PARTNER/AGENCY/HEALTH_PRO başvuru durumuna iner
   // (rol sayfaları da kendi kapısında aynı yöne düşürür — yönlendirme ≠ güvenlik).

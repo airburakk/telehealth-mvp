@@ -57,6 +57,12 @@ model User {
   // (/kayit/durum'a iner). DOCTOR bu alana BAKMAZ (kendi üç-damga sistemi: verified/activatedAt/
   // chamberLetterAt). Mevcut personel hesapları migration'da damgalandı (demo/seed kırılmasın).
   staffVerifiedAt DateTime?
+  /// Kullanıcının BİLDİĞİ bir parola belirlenmiş mi (v6.184 — Doctorium "Hesabım").
+  /// Google/Apple ile açılan hesaplara rastgele gölge-hash yazılır (auth callback'leri); o hash
+  /// hiçbir parolayla eşleşmez ve kullanıcı onu bilmez. Bu alan olmadan "mevcut şifrenizi girin"
+  /// formu OAuth üyesine geçilemez bir kapı gösterirdi. Dolu = parola değiştirme formu; null =
+  /// "parola belirle" yolu. Parola belirlendiğinde/değiştirildiğinde damgalanır.
+  passwordSetAt DateTime?
   createdAt    DateTime @default(now())
 
   @@index([deletedAt]) // imha cron'u: süresi dolan silinmiş hesapları tarar
@@ -278,6 +284,13 @@ model Doctor {
   /// sağlık meslek mensubu değildir, tanıtım rejimi ona uygulanamaz. Mezuniyette diploma+MMSS
   /// yüklenince activatedAt dolar → süzgeç kendiliğinden kalkar.
   studentVerifiedAt        DateTime?
+  /// Doctorium üyeliğinden çıkış damgası (v6.184 — "Hesabım" bölümü, kullanıcı kararı 2026-08-29).
+  /// AURA klinik hesabı da olan (Aşama 2) doktor üyelikten çıkarsa hesabı KAPANMAZ: yalnız
+  /// Doctorium katmanı (kaydettikleri/takip/takvim/puan/tercih) silinir ve erişim kapanır.
+  /// Ayrı damga şart — diplomaVerifiedAt/studentVerifiedAt üyelikten çıkışta silinmez (diploma
+  /// doğrulaması klinik tarafın da dayanağıdır), dolayısıyla hasDoctoriumAccess tek başına
+  /// kapanmazdı. Yeniden üye olunca null'lanır.
+  doctoriumOptOutAt        DateTime?
   /// v6.147 — öğrencinin kayıtta beyan ettiği üniversite (lib/universities.ts UNIVERSITIES'ten,
   /// resmî ad) + bölüm ("tip" | "dis-hekimligi"). Yalnız KAYIT ANINDA yazılır (sonradan
   /// düzenlenemez); domain eşleşmesi signup-student route'unda ZATEN doğrulanmış olarak buraya

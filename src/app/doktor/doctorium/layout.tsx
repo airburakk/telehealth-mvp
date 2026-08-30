@@ -46,7 +46,7 @@ export default async function DoctoriumLayout({ children }: { children: React.Re
     const doctor = me?.doctorId
       ? await db.doctor.findUnique({
           where: { id: me.doctorId },
-          select: { diplomaVerifiedAt: true, studentVerifiedAt: true },
+          select: { diplomaVerifiedAt: true, studentVerifiedAt: true, doctoriumOptOutAt: true },
         })
       : null;
     if (!doctor) redirect("/doktor"); // doktor profili bağlı değil — genel panel davranışına bırak

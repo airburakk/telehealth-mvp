@@ -10,6 +10,8 @@ import { isAppleConfigured, exchangeAppleCode, appleRedirectUri, appleDisplayNam
 import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 import { createDoctorAccount } from "@/lib/doctor-signup";
 import { createPatientAccount } from "@/lib/patient-signup";
+import { reqMeta } from "@/lib/audit";
+import { recordLogin } from "@/lib/login-activity";
 
 // POST /api/auth/apple/callback — Apple dönüşü. ⚠️ GET DEĞİL: `scope=name email` istendiğinde Apple
 // `response_mode=form_post` zorunlu kılar, yani kod bize form gövdesiyle POST edilir (bkz. start rotası).
@@ -119,7 +121,11 @@ export async function POST(req: Request) {
   if (IS_DOCTORIUM_DEPLOY && user.role === "PATIENT") return back("role");
 
   const cv = await consentedVersion(user.id);
-  await createSession({ id: user.id, email: user.email, name: user.name, role: user.role as Role, cv });
+  const session = { id: user.id, email: user.email, name: user.name, role: user.role as Role, cv };
+  await createSession(session);
+  // Giriş etkinliği (v6.184) — "Hesabım"daki liste yöntemi de gösterir (parola | google | apple).
+  const meta = reqMeta(req);
+  await recordLogin(session, "apple", meta.ip, meta.userAgent);
   // Yeni doktor: kimlik ara sayfası (proxy onam kapısı next'i koruyarak önce /onam'a düşürür),
   // next varsa bile — kimlik eksikken hedef sayfaya düşürmek onboarding'i atlatırdı.
   const home = newDoctor

@@ -33,6 +33,10 @@ export interface DoctorSignupInput {
   // ZATEN geçmiş) üniversite/bölüm. Yalnız studentTrack:true'da anlamlı; doktor kaydında boş kalır.
   studentUniversity?: string | null;
   studentDepartment?: string | null;
+  // v6.184 — parolayı KULLANICI mı belirledi? Yalnız e-posta+parola kayıt yolları true geçer;
+  // Google/Apple çağrıları GEÇMEZ (onların passwordHash'i rastgele gölge hash'tir, kullanıcı onu
+  // bilmez). "Hesabım → Şifre" paneli bu ayrıma bakarak doğru formu çizer (değiştir / belirle).
+  passwordSet?: boolean;
 }
 
 // Yeni doktor + bağlı kullanıcı oluşturur, oluşturulan User'ı döndürür.
@@ -67,6 +71,7 @@ function createAccountTx(input: DoctorSignupInput) {
         name: input.name,
         email: input.email,
         passwordHash: input.passwordHash,
+        passwordSetAt: input.passwordSet ? new Date() : null, // v6.184 — OAuth gölge hash'i damgalanmaz
         role: "DOCTOR",
         doctorId: doctor.id,
       },

@@ -34,7 +34,7 @@ export async function GET(req: Request) {
           where: { id: me.doctorId },
           select: {
             id: true, branch: true, newsBranches: true, feedModules: true, doctoriumViewPrefs: true,
-            diplomaVerifiedAt: true, studentVerifiedAt: true,
+            diplomaVerifiedAt: true, studentVerifiedAt: true, doctoriumOptOutAt: true,
           },
         })
       : null;

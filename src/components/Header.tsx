@@ -346,6 +346,16 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                       <UserCog size={15} /> {t("Hesabım")}
                     </Link>
                   )}
+                  {/* Doctorium hesap yüzeyi (v6.184): /hesap HASTAYA özeldir (KVKK silme akışı) ve
+                      Doctorium deploy'unda AURA'ya 307'lenir — doktorun hiçbir hesap sayfası yoktu.
+                      Ayrı rota, ayrı kapsam: üyelik bilgileri + parola + giriş etkinliği + üyelik
+                      kapatma. Aynı yerde yaşar (tema anahtarının hemen üstü) — hesap ayarlarının
+                      menüdeki yeri marka değiştirince kaymaz. */}
+                  {user.role === "DOCTOR" && (doctoriumActive || stage1) && (
+                    <Link role="menuitem" href="/doktor/doctorium/hesap" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                      <UserCog size={15} /> {t("Hesabım")}
+                    </Link>
+                  )}
                   <ThemeToggle initial={theme} t={t} asMenuItem />
                   <div className="mt-1 border-t border-[var(--c-hairline)] pt-1">
                     <button role="menuitem" onClick={() => { setMenuOpen(false); setConfirmLogoutAll(true); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-start text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">

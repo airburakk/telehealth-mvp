@@ -38,7 +38,7 @@ export default async function DoctorOnboardingPage({
           mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true, mmssCoverageCurrency: true, mmssValidUntil: true,
           procedures: true, licenseNo: true, eduSchool: true, eduYear: true, specBoard: true, specYear: true,
           certifications: true, publications: true,
-          diplomaVerifiedAt: true, studentVerifiedAt: true, studentTrack: true, sponsorPersonalizationAt: true, hrContactOptInAt: true,
+          diplomaVerifiedAt: true, studentVerifiedAt: true, doctoriumOptOutAt: true, studentTrack: true, sponsorPersonalizationAt: true, hrContactOptInAt: true,
           studentUniversity: true, studentDepartment: true, // v6.143 — StudentStage1Card'ın e-posta doğrulama durumu için
           // v6.127 — Aşama 2 güvenlik katmanı damgaları (Güvenlik Doğrulamaları bölümü)
           smsVerifiedAt: true, workEmailVerifiedAt: true, clinicPhoneVerifiedAt: true, clinicPhoneEstablishment: true,

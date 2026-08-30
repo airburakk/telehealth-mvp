@@ -55,7 +55,7 @@ export async function POST(req: Request) {
   if (existing) return NextResponse.json({ error: "Bu e-posta zaten kayıtlı. Giriş yapın." }, { status: 409 });
 
   const passwordHash = await hashPassword(password);
-  const user = await createDoctorAccount({ name, email, passwordHash, title, branch, city, languages: languages.join(","), phone });
+  const user = await createDoctorAccount({ name, email, passwordHash, title, branch, city, languages: languages.join(","), phone, passwordSet: true });
 
   // E-posta doğrulama (v5.6): yapılandırılmışsa oturum AÇILMAZ — doğrulama bağlantısı gönderilir,
   // giriş doğrulama sonrasına kalır. Dormant'ken (RESEND_API_KEY yok) hesap kayıt anında doğrulanmış
