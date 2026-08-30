@@ -37,10 +37,10 @@ describe("Doctorium kapısı (Aşama 1, v6.124): doğrulanmış diploma VEYA ö�
   });
 });
 
-// v6.184 — üyelikten çıkış (kullanıcı kararı 2026-08-29): AURA klinik hesabı da olan doktor
+// v6.187 — üyelikten çıkış (kullanıcı kararı 2026-08-29): AURA klinik hesabı da olan doktor
 // Doctorium üyeliğinden çıkabilir; hesabı kapanmaz. Damganın kapıyı TEK BAŞINA kapatması şart,
 // çünkü diplomaVerifiedAt çıkışta SİLİNMEZ (klinik tarafın da dayanağıdır).
-describe("Doctorium üyelikten çıkış (v6.184): doctoriumOptOutAt kapıyı kapatır", () => {
+describe("Doctorium üyelikten çıkış (v6.187): doctoriumOptOutAt kapıyı kapatır", () => {
   it("doğrulanmış diploma VARKEN bile çıkış damgası kapıyı kapatır", () => {
     expect(hasDoctoriumAccess({
       diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: D("2026-08-29"),

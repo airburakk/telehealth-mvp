@@ -6,7 +6,7 @@ import { AlertTriangle, TriangleAlert, X } from "lucide-react";
 import { AuraPanel } from "@/components/ui/AuraPanel";
 import { AuraButton } from "@/components/ui/AuraButton";
 
-// Üyelik kapatma paneli (v6.184) — İKİ VARYANT, hangisinin çizileceğini SUNUCU söyler:
+// Üyelik kapatma paneli (v6.187) — İKİ VARYANT, hangisinin çizileceğini SUNUCU söyler:
 //
 //   · mode="close" → yalnız Doctorium üyeliği olan hesap (Aşama 1 doktoru / tıp öğrencisi).
 //     Hesap dahil her şey o anda silinir. Onay kelimesi: KAPAT.

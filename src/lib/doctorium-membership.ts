@@ -1,4 +1,4 @@
-// Doctorium üyeliği — kapatma ve üyelikten çıkış (v6.184, kullanıcı kararı 2026-08-29).
+// Doctorium üyeliği — kapatma ve üyelikten çıkış (v6.187, kullanıcı kararı 2026-08-29).
 //
 // ⚖️ DOCTORIUM'DA KLİNİK KATMAN YOKTUR. Bu üründe hasta, vaka ve klinik görüş bulunmaz; üyenin
 // verisi yalnız (a) kayıtta verdiği bilgiler, (b) doktorda mezun belgesi / öğrencide üniversite

@@ -363,6 +363,20 @@ e-Devlet ile doğrulanan doktor önce yalnız Doctorium'a girer (`activatedAt` b
 havuzu, nöbet) erişilir hale gelir. Yani Doctorium AURA'nın "önce kapısı" değil — kendi başına
 yeterli bir ürün; AURA üyeliği onun üstüne eklenen bir katman.
 
+**Hesabım — `/doktor/doctorium/hesap` (v6.187, 2026-08-29):** üyenin kendi hesap yüzeyi; header hesap
+menüsünde (tema anahtarının üstü, `doctoriumActive || stage1` koşullu). Dört panel: üyelik bilgileri
+(salt okunur; öğrencide üniversite/bölüm varyantı) · **parola** (değiştir; `User.passwordSetAt` null
+ise "belirle" — OAuth hesabının gölge hash'i kullanıcı tarafından bilinmez; başarıda tüm oturumlar
+düşer, bu cihaz taze token alır) · **giriş etkinliği** (`AccessLog` `LOGIN` kayıtları — ⚠️ AÇIK OTURUM
+LİSTESİ DEĞİL: oturum JWT claim'i, Session tablosu yok; arayüz bunu açıkça söyler) · **üyeliği kapat /
+Doctorium'dan çık**. Kapatma yolu klinik bağ ÖLÇÜLEREK seçilir (`countClinicalTies`, fail-closed):
+bağ yoksa hesap dahil her şey o anda silinir (Doctorium'da saklanacak klinik kayıt yok — AURA'nın
+"kilitle + saklama süresi" modeli buraya uygulanmaz); bağ varsa yalnız Doctorium katmanı silinir +
+`Doctor.doctoriumOptOutAt` damgalanır, hesap ve AURA erişimi sürer.
+⚖️ **Tamamlanmış işlem geri alınmaz** (kullanıcı kararı 2026-08-29): anket yanıtları ve ödül
+kullanımları SİLİNMEZ — `Doctor`'a FK olmadıkları için `doctorId` yetim kalır, yani anonimleşir.
+Puanlar ileriye dönük hak olduğu için silinir ve geri yüklenmez; arayüz bunu kapatmadan önce uyarır.
+
 Rotalar için bkz. aşağıdaki **Rotalar** tablosu; sürüm geçmişi (V3 landing, marka ayrışması fazları,
 monetizasyon) için `Air/wiki/changelog.md` ve bu dosyanın alt kısmındaki tarihli notlar.
 
@@ -419,6 +433,7 @@ monetizasyon) için `Air/wiki/changelog.md` ve bu dosyanın alt kısmındaki tar
 | `shares` · `complaints` · `bookings` | Güvenli paylaşım · şikayet (+**`complaints/[id]/defense-request`** v6.81 — ETHICS/ADMIN savunma talebi açar; PATCH karar ucu açık talepte **409** [kilit: yanıt VEYA 3 gün]) · rezervasyon (`respond` · `journey` · `contact-coordinator` [hasta→koordinatör bildirim talebi, BOLA+rate-limit]) |
 | `notifications` · `push` · **`system-messages`** | Bildirim merkezi · Web Push aboneliği · **Sistem Mesajları (v6.81)**: GET kendi mesajların (+`?count=1` rozet sayımı; body/reply sunucuda çözülür, `repliedByUserId` yanıtlara ASLA konmaz — anonimlik) · POST okundu · **`[id]/reply`** atomik TEK yanıt (updateMany-guard → yarışta 409; kişisel mesaja yalnız hedef kullanıcı — ADMIN dahi değil) |
 | `digest` · `doctor/digest` | **Doctorium Post (v6.159):** `digest/unsubscribe` — e-posta tek-tık çıkış (GET=onay sayfası [istemci link ön-yüklemesi işlem YAPMAZ] · POST=RFC 8058; HMAC token'lı, oturumsuz, audit'li `DIGEST_UNSUBSCRIBE`) · `doctor/digest` — abonelik kanalı tercihi (null/app/email; self-auth, feed-modules deseni) |
+| `account` · `doctorium/membership` | **Hesabım (v6.187):** `account/password` — parola değiştir/belirle (mod `User.passwordSetAt`; başarıda `revokeUserSessions` + bu cihaza taze oturum [iptal ÖNCE, mint SONRA]; bürünmede 403; 5/saat limit — `current` doğrulaması bir parola oracle'ıdır; 🚫 parola audit'e YAZILMAZ) · `doctorium/membership` — `intent:"close"` (hesap dahil siler, oturumu sonlandırır) veya `"leave"` (yalnız Doctorium katmanı + `doctoriumOptOutAt`). Onay kelimesi zorunlu (KAPAT/ÇIK); `close` isteği klinik bağ varsa **409 CLINICAL_TIES** ile reddedilir (sessizce `leave`e çevrilmez) |
 | `consultation-requests` · `presence` | Konsültasyon talebi yanıt/belge + **chat (`messages`)** + **video** randevu (offer/respond) · `presence/ping` (heartbeat) |
 | `doctor` · `auth` | Doktor tercihleri/akademik/işlem · oturum + **`signup`** (doktor kaydı) + **`signup-staff`** (2026-08-12 — PARTNER/AGENCY/HEALTH_PRO başvurusu: şifreli yanıt + `STAFF_APPLICATION_KVKK` onamı + yetkisiz hesap) + **`google/{start,callback}`** (OAuth, env-gated) |
 | `staff-applications` | **Kurumsal başvuru uçları (2026-08-12):** `documents` (GET/POST — kendi başvurusuna belge; imza-tabanlı MIME + şifreli depo) · `resubmit` (REJECTED→PENDING) · `[id]/review` (ETHICS/ADMIN onay/ret + audit + bildirim) · `[id]/documents/[docId]/raw` (incelemeciye belge — audit'li, no-store) |

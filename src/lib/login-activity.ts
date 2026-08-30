@@ -1,4 +1,4 @@
-// Giriş etkinliği (v6.184 — Doctorium "Hesabım").
+// Giriş etkinliği (v6.187 — Doctorium "Hesabım").
 //
 // 🔴 NE OLMADIĞI ÖNEMLİ: bu modül "açık oturumlar" listesi ÜRETMEZ ve üretemez. Oturum bu sistemde
 // bir DB satırı değil, JWT içindeki `sv` claim'idir (lib/auth); iptal tek bir sayaçla toptan yapılır

@@ -123,7 +123,7 @@ export async function POST(req: Request) {
   const cv = await consentedVersion(user.id);
   const session = { id: user.id, email: user.email, name: user.name, role: user.role as Role, cv };
   await createSession(session);
-  // Giriş etkinliği (v6.184) — "Hesabım"daki liste yöntemi de gösterir (parola | google | apple).
+  // Giriş etkinliği (v6.187) — "Hesabım"daki liste yöntemi de gösterir (parola | google | apple).
   const meta = reqMeta(req);
   await recordLogin(session, "apple", meta.ip, meta.userAgent);
   // Yeni doktor: kimlik ara sayfası (proxy onam kapısı next'i koruyarak önce /onam'a düşürür),

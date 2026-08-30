@@ -6,7 +6,7 @@ import { ShieldOff } from "lucide-react";
 import { AuraButton } from "@/components/ui/AuraButton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
-// "Tüm cihazlardan çıkış" — Header hesap menüsündeki eylemin panel karşılığı (v6.184).
+// "Tüm cihazlardan çıkış" — Header hesap menüsündeki eylemin panel karşılığı (v6.187).
 // Aynı uca gider (/api/auth/logout-all → User.sessionVersion++): dolaşımdaki TÜM token'lar bayatlar,
 // bu cihazın çerezi de silinir. Giriş etkinliği panelinin altında yaşar çünkü listede tanınmayan bir
 // giriş görmenin doğal karşılığı budur.

@@ -82,7 +82,7 @@ export async function GET(req: Request) {
   const cv = await consentedVersion(user.id);
   const session = { id: user.id, email: user.email, name: user.name, role: user.role as Role, cv };
   await createSession(session);
-  // Giriş etkinliği (v6.184) — "Hesabım"daki liste yöntemi de gösterir (parola | google | apple).
+  // Giriş etkinliği (v6.187) — "Hesabım"daki liste yöntemi de gösterir (parola | google | apple).
   const meta = reqMeta(req);
   await recordLogin(session, "google", meta.ip, meta.userAgent);
   // Faz 5: dönen hasta vaka merkezine iner (başvurusu yoksa /triyaj). Yeni doktor: kimlik ara

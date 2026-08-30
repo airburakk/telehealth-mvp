@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Hesabım" };
 
 /**
- * HESABIM — Doctorium üyelik ve güvenlik sayfası (v6.184, kullanıcı kararı 2026-08-29).
+ * HESABIM — Doctorium üyelik ve güvenlik sayfası (v6.187, kullanıcı kararı 2026-08-29).
  *
  * ⚖️ KAPSAM: Doctorium'da klinik katman YOKTUR (hasta/vaka/görüş yok). Bu sayfa yalnız ÜYELİK
  * verisini yönetir. AURA'daki /hesap sayfası HASTAYA özeldir (KVKK silme akışı) ve Doctorium

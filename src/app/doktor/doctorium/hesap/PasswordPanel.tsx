@@ -5,7 +5,7 @@ import { KeyRound, ShieldCheck } from "lucide-react";
 import { AuraPanel } from "@/components/ui/AuraPanel";
 import { AuraButton } from "@/components/ui/AuraButton";
 
-// Şifre paneli (v6.184) — İKİ MOD, tek bileşen:
+// Şifre paneli (v6.187) — İKİ MOD, tek bileşen:
 //   · hasPassword=true  → "değiştir": mevcut parola sorulur.
 //   · hasPassword=false → "belirle": hesap Google/Apple ile açılmış, kullanıcının bildiği bir
 //     parola yok (gölge hash) → mevcut parola SORULMAZ. Sağlayıcı girişi çalışmaya devam eder.

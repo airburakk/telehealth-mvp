@@ -346,7 +346,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                       <UserCog size={15} /> {t("Hesabım")}
                     </Link>
                   )}
-                  {/* Doctorium hesap yüzeyi (v6.184): /hesap HASTAYA özeldir (KVKK silme akışı) ve
+                  {/* Doctorium hesap yüzeyi (v6.187): /hesap HASTAYA özeldir (KVKK silme akışı) ve
                       Doctorium deploy'unda AURA'ya 307'lenir — doktorun hiçbir hesap sayfası yoktu.
                       Ayrı rota, ayrı kapsam: üyelik bilgileri + parola + giriş etkinliği + üyelik
                       kapatma. Aynı yerde yaşar (tema anahtarının hemen üstü) — hesap ayarlarının

@@ -1,7 +1,7 @@
 // POST /api/account/password — parolayı değiştir veya (OAuth hesabında) ilk kez belirle.
 // body: { current?: string, next: string }
 //
-// İKİ MOD, TEK UÇ — ayrımı User.passwordSetAt yapar (v6.184):
+// İKİ MOD, TEK UÇ — ayrımı User.passwordSetAt yapar (v6.187):
 //   · passwordSetAt DOLU  → kullanıcının bildiği bir parola var → `current` ZORUNLU ve doğrulanır.
 //   · passwordSetAt NULL  → hesap Google/Apple ile açılmış, passwordHash rastgele gölge hash → o
 //     parolayı kimse bilmiyor, sormak anlamsız. `current` istenmez; kullanıcı parolasını belirler.

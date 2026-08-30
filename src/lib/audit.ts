@@ -33,7 +33,7 @@ export type AuditAction =
   | "RECORD_PURGE" // saklama süresi doldu → klinik kayıt fiziken imha edildi (cron; v6.11)
   | "DEFENSE_REQUEST" // etik kurul karşı taraftan savunma/bilgi talep etti (detail: respondentType; içerik YOK — v6.79)
   | "DEFENSE_REPLY" // karşı taraf savunma talebine yanıt verdi (yanıt içeriği audit'e YAZILMAZ — v6.79)
-  // ── Hesap güvenliği (v6.184 — Doctorium "Hesabım") ────────────────────────────────────────
+  // ── Hesap güvenliği (v6.187 — Doctorium "Hesabım") ────────────────────────────────────────
   // LOGIN, "Giriş etkinliği" listesinin TEK kaynağıdır: oturumlar JWT'de yaşıyor (DB'de Session
   // tablosu yok, iptal tek sayaçla — lib/auth sessionVersion), dolayısıyla "şu an açık oturumlar"
   // ÜRETİLEMEZ. Kullanıcıya gösterilen şey açık oturum değil GİRİŞ KAYDIDIR; arayüz de bunu

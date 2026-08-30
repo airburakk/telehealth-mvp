@@ -39,7 +39,7 @@ export type DoctorDocType = (typeof ALL_DOC_TYPES)[number];
 
 // Doctorium'a girebilir mi (saf — birim testlenebilir).
 //
-// v6.184 — doctoriumOptOutAt ÖNCE bakılır: AURA klinik hesabı da olan (Aşama 2) doktor Doctorium
+// v6.187 — doctoriumOptOutAt ÖNCE bakılır: AURA klinik hesabı da olan (Aşama 2) doktor Doctorium
 // üyeliğinden çıkabilir ve o damga bu kapıyı tek başına kapatmalıdır. diplomaVerifiedAt üyelikten
 // çıkışta SİLİNMEZ (klinik tarafın da dayanağıdır) → yalnız iki damgaya bakan eski formül, çıkan
 // üyeyi içeride tutardı.

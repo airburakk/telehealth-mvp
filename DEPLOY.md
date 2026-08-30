@@ -104,6 +104,16 @@ npm run db:seed             # demo veri: kullanıcılar + 30 doktor + 20 vaka + 
 >    (`IF EXISTS`/`IF NOT EXISTS`) — yarıda düşen migration `_prisma_migrations`'a failed kayıt
 >    bırakır ve sonraki deploy'ları kilitler (kurtarma: `migrate resolve --rolled-back`).
 >
+> 🪤 **"env override elle kurulmaz" bir öneri DEĞİL — elle kurulan override ÇALIŞMAZ** (2026-08-29'da
+> v6.187 sırasında ölçüldü). `DATABASE_URL=<prod> npx prisma migrate deploy` de, `export DATABASE_URL=…`
+> de işe yaramaz: Prisma CLI `.env`'i kendi yükler ve süreç ortamındaki değeri EZER. Komut **dev'e**
+> gider, exit 0 döner ve **"No pending migrations to apply."** yazar — yani başarı gibi görünen bir
+> yanlış hedef. Bu çıktıya güvenip push edilseydi kod, kolonu olmayan üretime çıkardı.
+> Doğru yollar: `node scripts/apply-prod-migration.mjs` (birincil) veya URL'i bayrakla alan
+> `npx prisma db execute --url "<prod>" --file <migration.sql>` (bayrak `.env`'i ezer).
+> **Doğrulama Prisma'nın raporuna değil veritabanına sorulur:** `information_schema.columns`'ta kolonu
+> ara — `migrate deploy` çıktısındaki host satırı da hedefi ele verir, okumadan geçme.
+>
 > ⚠️ `prisma db push` üretimde **artık kullanılmaz** (DB'yi şemaya eşitlerken migration
 > geçmişini atlar; eski şemalı bir çalışma kopyasından koşulursa yeni index'leri düşürür).
 > `db push` yalnız Neon dev/test branch'lerinde hızlı deneme için kabul edilebilir.

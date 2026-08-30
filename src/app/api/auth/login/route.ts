@@ -67,7 +67,7 @@ export async function POST(req: Request) {
   const cv = await consentedVersion(user.id);
   const session = { id: user.id, email: user.email, name: user.name, role: user.role as Role, cv };
   await createSession(session);
-  // Giriş etkinliği (v6.184): "Hesabım → Giriş etkinliği" listesinin kaynağı. Oturum çerezi
+  // Giriş etkinliği (v6.187): "Hesabım → Giriş etkinliği" listesinin kaynağı. Oturum çerezi
   // YAZILDIKTAN SONRA — başarısız denemeler bu listeye düşmez. recordAccess fail-safe olduğu için
   // await edilmesi girişi riske atmaz.
   const meta = reqMeta(req);

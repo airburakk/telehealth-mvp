@@ -1,4 +1,4 @@
-// Doctorium "Hesabım" — saf mantık sözleşmeleri (v6.184, kullanıcı kararı 2026-08-29).
+// Doctorium "Hesabım" — saf mantık sözleşmeleri (v6.187, kullanıcı kararı 2026-08-29).
 //
 // Burada kilitlenen iki şey:
 //   1) Klinik bağ korkuluğu — tam hesap kapatmanın FAIL-CLOSED kapısı. Aşama 1 doktorunda ve
@@ -10,7 +10,7 @@ import { describe, it, expect } from "vitest";
 import { hasClinicalTies } from "@/lib/doctorium-membership";
 import { describeUserAgent } from "@/lib/login-activity";
 
-describe("Klinik bağ korkuluğu (v6.184): tam kapatma fail-closed", () => {
+describe("Klinik bağ korkuluğu (v6.187): tam kapatma fail-closed", () => {
   it("bağ yoksa kapatma yolu açık", () => {
     expect(hasClinicalTies({ cases: 0, consultations: 0, reviews: 0 })).toBe(false);
   });
