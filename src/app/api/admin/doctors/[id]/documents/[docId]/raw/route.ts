@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { loadDocument } from "@/lib/storage";
+import { loadDocument, isPurgedRef } from "@/lib/storage";
 import { recordAccess, reqMeta } from "@/lib/audit";
 
 // Doktor mesleki belgesini (diploma/MMSS/tabip odası yazısı/sertifika) incelemeciye akıt
@@ -23,6 +23,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     select: { id: true, doctorId: true, type: true, label: true, mimeType: true, content: true },
   });
   if (!doc || doc.doctorId !== id) return NextResponse.json({ error: "Bulunamadı." }, { status: 404 });
+
+  // KVKK minimizasyonu (2026-08-30): doğrulama sonrası imha edilen belgenin dosyası yok — 410,
+  // 500 değil (incelemeci "sistem hatası" sanmasın; karar meta'sı listede zaten görünür).
+  if (isPurgedRef(doc.content)) {
+    return NextResponse.json(
+      { error: "Belge dosyası, doğrulama sonrası KVKK minimizasyonu gereği imha edildi (yalnız doğrulama kaydı saklanır)." },
+      { status: 410 },
+    );
+  }
 
   const dataUri = await loadDocument(doc.content);
   const b64 = typeof dataUri === "string" ? dataUri.replace(/^data:[^;]*;base64,/, "") : "";

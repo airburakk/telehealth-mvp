@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { notifyUser } from "@/lib/notify";
 import { recordAccess, reqMeta } from "@/lib/audit";
 import { refreshActivation } from "@/lib/doctor-activation";
+import { purgeDocContent, PURGE_DOC_TYPES } from "@/lib/doc-purge";
+import { isPurgedRef } from "@/lib/storage";
 
 // POST — doktor mesleki belgesine inceleme kararı (Faz 2, 2026-08-14): ACCEPTED | REJECTED.
 // 🔴 v6.119 (2026-08-19) — KARAR ARTIK AKTİVASYONU BELİRLER (eski "dokunmaz" notu SÜPERSEDE):
@@ -28,7 +30,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const doc = await db.doctorDocument.findUnique({
     where: { id: docId },
-    select: { id: true, doctorId: true, type: true, label: true },
+    select: { id: true, doctorId: true, type: true, label: true, content: true },
   });
   if (!doc || doc.doctorId !== id) return NextResponse.json({ error: "Bulunamadı." }, { status: 404 });
 
@@ -56,6 +58,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   // 🔴 Kararı kapıya yansıt (v6.119). Zorunlu belge onaylandıysa hesap açılır, reddedildiyse kapanır.
   const activated = await refreshActivation(id);
+
+  // KVKK minimizasyonu (2026-08-30): onaylanan diploma dosyası ANINDA imha edilir — karar
+  // (status/verifiedAt/MANUAL) + audit izi kalır, dosya kalmaz. Blob silinemezse satıra
+  // DOKUNULMAZ (ref kaybolursa yetim nesne bulunamaz) — günlük süpürme ertesi koşuda telafi
+  // eder (lib/doc-purge.sweepDoctorDocuments). REJECTED: saklama penceresi de süpürmede.
+  if (status === "ACCEPTED" && PURGE_DOC_TYPES.includes(doc.type) && !isPurgedRef(doc.content)) {
+    await purgeDocContent(doc, "DOGRULAMA_ONAYI", user);
+  }
 
   // Denetim izi — gerekçe metni audit detail'ine KOYULMAZ (asla-loglama disiplini; içerik reviewNote'ta).
   const u = await db.user.findFirst({ where: { doctorId: id }, select: { id: true } });

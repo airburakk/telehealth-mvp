@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { storeDocument, deleteDocument } from "@/lib/storage";
+import { storeDocument, deleteDocument, purgedRef } from "@/lib/storage";
 import { detectDocumentKind, DOC_REJECT_MESSAGE } from "@/lib/document-mime";
 import { ALL_DOC_TYPES, refreshActivation, hasDoctoriumAccess } from "@/lib/doctor-activation";
 import {
@@ -117,7 +117,11 @@ export async function POST(req: Request) {
   // Nihai otomatik kabul kararı (saf matris — tests/unit/edevlet-belge.test.ts).
   const kabul = onayKarari(dogrulama?.ok ?? false, cevrim?.durum ?? null);
 
-  const stored = await storeDocument(content, { keyPrefix: "doctor-doc" }); // object storage / inline şifreli (T11)
+  // KVKK minimizasyonu (2026-08-30): otomatik doğrulama ANINDA geçtiyse belge dosyası HİÇ
+  // depolanmaz — kolona doğrudan imha sentinel'i yazılır (lib/doc-purge kuralı). Karar +
+  // şifreli barkod (verifyCode) kalır; belge e-Devlet'ten her an yeniden doğrulanabilir.
+  // Geçmeyen belge incelemeci için saklanır (PENDING) — imhası inceleme kararına bağlı.
+  const stored = kabul ? purgedRef() : await storeDocument(content, { keyPrefix: "doctor-doc" }); // object storage / inline şifreli (T11)
   const doc = await db.doctorDocument.create({
     data: {
       doctorId, type, label, mimeType, content: stored as string,
@@ -140,6 +144,16 @@ export async function POST(req: Request) {
       // `cevrimici`: devlet teyidinin sonucu (yoksa "-"). GECERSIZ = devlet iddiayı desteklemedi —
       // zincirde en ağır sinyal. Her iki `reason` da TC/PHI içermez (birim testle kilitli).
       detail: `belge=${type} sonuc=${kabul ? "GECTI" : "GECMEDI"} offline=${dogrulama.ok ? "OK" : "RET"} tanindi=${dogrulama.tanindi ? "EVET" : "HAYIR"} cevrimici=${cevrim?.durum ?? "-"} neden=${cevrim && cevrim.durum !== "KAPALI" ? cevrim.reason : dogrulama.reason}`,
+      ...reqMeta(req),
+    });
+  }
+
+  // İmha izi (2026-08-30): dosyanın depolanMAdığı da zincire düşer — "neyin ne zaman silindiği"
+  // sorusu kalıcı kayıttan yanıtlanır (dosya içeriği/PHI audit'e girmez). depolama=HIC = anında yol.
+  if (kabul) {
+    await recordAccess({
+      actor: user, action: "DOCTOR_DOC_PURGE", resourceType: "DOCTOR", resourceId: doctorId,
+      subjectUserId: user.id, detail: `belge=${type} docId=${doc.id} neden=DOGRULAMA_ONAYI depolama=HIC`,
       ...reqMeta(req),
     });
   }

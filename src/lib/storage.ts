@@ -19,6 +19,24 @@ import { randomUUID } from "crypto";
 
 const BLOB_PREFIX = "blob:v1:";
 
+// KVKK minimizasyonu (2026-08-30, kullanıcı/hukukçu kararı): doğrulama sonrası İMHA EDİLEN belgenin
+// kolonuna yazılan sentinel — "purged:v1:<ISO-tarih>". Ref biçimi ailesinin 4. üyesi (blob/enc/data);
+// şema DEĞİŞMEZ, imha tarihi sentinel'de, tam kayıt audit zincirinde (DOCTOR_DOC_PURGE).
+const PURGED_PREFIX = "purged:v1:";
+
+/** Ref, imha edilmiş bir belgeyi mi işaret ediyor? (dosya yok — yalnız imha tarihi) */
+export function isPurgedRef(ref: string | null | undefined): boolean {
+  return typeof ref === "string" && ref.startsWith(PURGED_PREFIX);
+}
+
+/** İmha sentinel'i üret (content kolonuna yazılır). */
+export function purgedRef(when: Date = new Date()): string {
+  return `${PURGED_PREFIX}${when.toISOString()}`;
+}
+
+/** Sorgu filtreleri için önek (ör. Prisma `NOT: { content: { startsWith } }`). */
+export { PURGED_PREFIX };
+
 // Blob erişim modeli — PHI için VARSAYILAN "private" (blob herkese açık DEĞİL, okuma token ister =
 // defense-in-depth + ciphertext). Store public yapılandırıldıysa BLOB_ACCESS="public" ile geç.
 const BLOB_ACCESS: "public" | "private" = process.env.BLOB_ACCESS === "public" ? "public" : "private";
@@ -70,6 +88,9 @@ export async function loadDocument(
   opts: { encrypt?: boolean } = {},
 ): Promise<string | null> {
   if (ref == null) return null;
+  // İmha edilmiş belge: dosya YOK — null döner (çağıran 410/uygun mesajla ayırt etmek istiyorsa
+  // isPurgedRef ile ÖNCE kontrol etmeli; buradaki null yalnız güvenli varsayılandır).
+  if (isPurgedRef(ref)) return null;
   const decrypt = opts.encrypt ?? true;
 
   if (isBlobRef(ref)) {

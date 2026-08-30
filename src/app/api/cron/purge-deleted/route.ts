@@ -10,6 +10,7 @@ import { ingestDoktrin, type DoktrinIngestResult } from "@/lib/doktrin-ingest";
 import { remindCongressFollows, type CongressRemindResult } from "@/lib/congress-reminder";
 import { ingestTtbEvents, type TtbEventsResult } from "@/lib/ttb-events";
 import { runDailyDigests, type DigestRunResult } from "@/lib/daily-digest";
+import { sweepDoctorDocuments, type DocSweepResult } from "@/lib/doc-purge";
 
 // GET /api/cron/purge-deleted — saklama süresi dolan klinik kayıtları GERÇEKTEN imha eder (v6.11).
 // vercel.json cron'u günde bir tetikler. registry-sync ile aynı Bearer deseni (anonim tetiklenemez).
@@ -154,6 +155,26 @@ export async function GET(req: Request) {
       digest = { error: e instanceof Error ? e.message.slice(0, 120) : "günlük özet koşamadı" };
     }
 
+    // Doktor belge imhası (2026-08-30, KVKK minimizasyonu — lib/doc-purge): doğrulanmış
+    // diplomaların dosyaları (mevcut kayıtlar dahil — backfill kendiliğinden) + saklama süresi
+    // dolan reddedilmişler. Anında-imha yollarının Blob kaçaklarını da bu süpürme telafi eder.
+    // Kritik değil: hata imha akışını düşürmez, raporlanır.
+    let docSweep: DocSweepResult | { error: string };
+    try {
+      docSweep = await sweepDoctorDocuments();
+    } catch (e) {
+      docSweep = { error: e instanceof Error ? e.message.slice(0, 120) : "belge süpürmesi koşamadı" };
+    }
+    // Blob silinemedi = imha sözü tutulamadı ve satır dokunulmadan bekliyor — sessiz geçilemez
+    // (ertesi koşu yeniden dener ama alarm düşer; purge-deleted failedBlobs deseniyle aynı).
+    if (!("error" in docSweep) && docSweep.blobFailed > 0) {
+      void sendAlert(
+        "cron-doc-purge-blob",
+        `belge süpürmesi — ${docSweep.blobFailed} diploma Blob'u SİLİNEMEDİ (satırlar bekletildi, yarın yeniden denenir)`,
+        `imha edilen: ${docSweep.swept}`,
+      );
+    }
+
     // KALICI KOŞU İZİ (2026-07-29): Vercel Hobby'de runtime log saklama süresi 1 SAAT — cron gece
     // koştuğu için sayaçları log'dan gözlemek fiilen imkânsızdı ("ertesi gün bak" planı çalışmıyordu).
     // Sayaçlar audit zincirine yazılır: PHI YOK (yalnız adetler), günde 1 satır (hacim ~3,5/gün'ün
@@ -181,13 +202,16 @@ export async function GET(req: Request) {
     const pst = "error" in digest
       ? `hata: ${digest.error}`
       : `abone=${digest.checked} baski=${digest.produced} eposta=${digest.emailed}${digest.emailSimulated ? `(sim=${digest.emailSimulated})` : ""} bos=${digest.skippedEmpty} tekrar=${digest.skippedDone} hata=${digest.failed}`;
+    const bel = "error" in docSweep
+      ? `hata: ${docSweep.error}`
+      : `imha=${docSweep.swept} blobHata=${docSweep.blobFailed}`;
     await recordAccess({
       actor: null, // sistem koşusu
       action: "CRON_MAINTENANCE",
       resourceType: "SYSTEM",
       resourceId: "purge-deleted",
       subjectUserId: null,
-      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · ictihat ${ict} · doktrin ${dok} · kongre ${con} · ttb ${ttb} · post ${pst}`,
+      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · ictihat ${ict} · doktrin ${dok} · kongre ${con} · ttb ${ttb} · post ${pst} · belgeimha ${bel}`,
     });
 
     return NextResponse.json({
@@ -205,6 +229,7 @@ export async function GET(req: Request) {
       congressAlerts: congress,
       ttbEvents,
       dailyDigest: digest,
+      docSweep,
     });
   } catch (e) {
     // Saklama-imha sözünün bekçisi sessizce düşemez (Ray C): alarm + 500 (Vercel cron log'unda görünür).
