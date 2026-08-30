@@ -60,9 +60,14 @@ const AURA_ROUTES = [
 // "Doctorium önden sürülüyor" önceliğiyle doğrudan ilişkili (kod-doğrulanmış: DOM'dan title/h1/cta,
 // 2026-08-28). /giris noindex (kapı sözleşmesi — bkz. AURA /giris·/kurumsal-giris aynı desen);
 // /kayit indexlenir (page.tsx `alternates.canonical` bilinçli SEO-hedef).
+// /doctorium/giris CTA'sı v6.185'ten (6181d7f) beri ?next taşır: DoctoriumGate `sp.get("next")
+// ?? DOCTORIUM_HOME` varsayılanıyla OAuth başlangıcına daima next=/doktor/doctorium ekler —
+// Doctorium kapısından girenin varışı Doctorium'dur (marka garantisi). Parametre düşerse/saparsa
+// doktor yine AURA paneline iner; tam eşleşme bu garantiyi de denetler. ⚠️ Ham HTML'de arama
+// yapıldığı için `&` React'in kaçırdığı biçimde `&amp;` yazılır (kayit sayfası next'siz kalır).
 const DOCTORIUM_ROUTES = [
   { path: "/",                title: "Doctorium",     h1: "Her doktor kendi", cta: "/doctorium/kayit",                        noindex: false },
-  { path: "/doctorium/giris", title: "Giriş",          h1: "Hoş Geldiniz",     cta: "/api/auth/google/start?intent=doctor",    noindex: true },
+  { path: "/doctorium/giris", title: "Giriş",          h1: "Hoş Geldiniz",     cta: "/api/auth/google/start?intent=doctor&amp;next=%2Fdoktor%2Fdoctorium", noindex: true },
   { path: "/doctorium/kayit", title: "Kayıt",          h1: "Doktor Kaydı",     cta: "/api/auth/google/start?intent=doctor",    noindex: false },
 ];
 
