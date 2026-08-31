@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { oauthBannerMessage } from "@/lib/oauth-banner";
 
@@ -28,7 +29,9 @@ export function GateEmailForm({
   quick = [],
   fallbackNext,
 }: {
-  texts: { emailLabel: string; passwordLabel: string; submit: string };
+  // `forgot` ZORUNLU (opsiyonel değil): opsiyonel olsaydı bir dil bloğu unutulduğunda bağlantı
+  // o dilde SESSİZCE kaybolurdu — parola kurtarmanın kaybolması fark edilmesi zor bir arızadır.
+  texts: { emailLabel: string; passwordLabel: string; submit: string; forgot: string };
   quick?: GateQuickAccount[];
   // Kapının kendi varsayılan hedefi (2026-08-29, kullanıcı bulgusu: "Doctorium girişinden
   // girdiğimde AURA bandı geliyor"). URL'de ?next YOKKEN — yer imi, doğrudan adres, e-posta
@@ -122,6 +125,13 @@ export function GateEmailForm({
           <span className="aura-mono mb-1.5 block text-[11px] uppercase tracking-widest text-[var(--aura-micro)]">{texts.passwordLabel}</span>
           <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputCls} />
         </label>
+        {/* Parola kurtarma (v6.194) — form ORTAK olduğu için bu bağlantı üç kapıda birden çıkar
+            (/giris · /kurumsal-giris · /doctorium/giris). Hedef sayfa marka-nötrdür. */}
+        <div className="text-right">
+          <Link href="/sifremi-unuttum" className="text-[13px] text-[var(--aura-grey)] underline-offset-2 hover:text-[var(--aura-ink)] hover:underline">
+            {texts.forgot}
+          </Link>
+        </div>
         {error && (
           <div className="rounded-[13px] bg-red-500/10 px-4 py-2.5 text-[13px] text-red-300 ring-1 ring-red-400/25">{error}</div>
         )}

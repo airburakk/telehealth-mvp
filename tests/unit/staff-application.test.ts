@@ -105,10 +105,20 @@ describe("validateStaffAnswers", () => {
     expect(r.ok).toBe(false);
   });
 
+  // ⚠️ Örnek alan `city` İDİ; v6.194'te şehir KAPALI LİSTEYE geçince ("A".repeat(500) artık
+  // geçerli bir seçenek değil) bu test kırıldı. Testin NİYETİ hâlâ doğru — kırpma serbest metinde
+  // çalışmalı — yalnız örneği bayatlamıştı: hâlâ serbest metin olan `institution` (maxLen 160)
+  // kullanılıyor. Kapalı listenin kendi denetimi alttaki testte ayrıca kilitli.
   it("maxLen aşımı kırpılır (hata değil)", () => {
-    const r = validateStaffAnswers(config, { ...valid, city: "A".repeat(500) });
+    const r = validateStaffAnswers(config, { ...valid, institution: "A".repeat(500) });
     expect(r.ok).toBe(true);
-    if (r.ok) expect((r.answers.city as string).length).toBeLessThanOrEqual(80);
+    if (r.ok) expect((r.answers.institution as string).length).toBeLessThanOrEqual(160);
+  });
+
+  it("şehir artık kapalı liste: liste dışı değer REDDEDİLİR (v6.194)", () => {
+    expect(validateStaffAnswers(config, { ...valid, city: "Istanbul" }).ok).toBe(false); // ASCII I
+    expect(validateStaffAnswers(config, { ...valid, city: "Uydurma Şehir" }).ok).toBe(false);
+    expect(validateStaffAnswers(config, { ...valid, city: "Lefkoşa" }).ok).toBe(true); // KKTC kapsamda
   });
 
   it("string olmayan girdiler güvenle yok sayılır (opsiyonel) / reddedilir (zorunlu)", () => {

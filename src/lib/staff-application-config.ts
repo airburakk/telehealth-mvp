@@ -10,6 +10,8 @@
 // Yeni rol/soru eklerken YALNIZ bu dosya + (gerekirse) migration değişir.
 
 import { STAFF_SIGNUP_ROLES, type StaffSignupRole } from "@/lib/roles";
+// cities.ts saf veridir (db/sır YOK) → bu client-güvenli config'e girmesi sorun değil.
+import { CITY_OPTIONS } from "@/lib/cities";
 
 export { STAFF_SIGNUP_ROLES, type StaffSignupRole };
 
@@ -110,7 +112,10 @@ export const STAFF_ROLE_CONFIGS: Record<StaffSignupRole, StaffRoleConfig> = {
       { key: "profession", label: "Meslek", type: "select", required: true, options: HEALTH_PRO_PROFESSIONS },
       { key: "licenseNo", label: "Diploma / tescil numarası", type: "text", required: true, maxLen: 60 },
       { key: "institution", label: "Çalıştığınız kurum", type: "text", required: false, maxLen: 160 },
-      { key: "city", label: "Şehir", type: "text", required: true, placeholder: "İstanbul", maxLen: 80 },
+      // Kapalı liste (v6.194) — v6.189 üç kayıt formunu kapatmıştı, başvuru formu dışarıda kalmıştı.
+      // `select` seçmek tek başına SUNUCU korumasını da getirir: staff-application.ts alan
+      // doğrulayıcısı `f.options.includes(...)` denetimini ZATEN yapıyor (uç değişikliği gerekmez).
+      { key: "city", label: "Şehir", type: "select", required: true, options: CITY_OPTIONS },
       { key: "phone", label: "Telefon", type: "tel", required: false, placeholder: "+90 5xx ...", maxLen: 20 },
     ],
     docs: [{ type: "DIPLOMA", label: "Diploma / meslek belgesi" }],

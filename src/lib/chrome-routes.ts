@@ -34,6 +34,12 @@ export const CHROME_FREE_ROUTES = [
   "/doctorium/ogrenci",
   "/giris",
   "/kurumsal-giris",
+  // Parola kurtarma yüzeyleri (v6.194) — kapılarla aynı sınıf: kendi panelini taşıyan tam-ekran
+  // kimlik yüzeyi. ⚠️ Krom GİZLENMESİ marka gereği de ZORUNLU: bu iki rota AURA_ONLY_PREFIXES'te
+  // değil (kurtarma her iki markanın üyesine de lazım) → doctorium.tr'de de servis edilir ve
+  // AURA Header/SiteFooter çizilseydi Doctorium yüzeyine AURA izi düşerdi.
+  "/sifremi-unuttum",
+  "/sifre-sifirla",
 ] as const;
 
 // Header + footer BİRLİKTE gizlenir (yukarıdaki liste).

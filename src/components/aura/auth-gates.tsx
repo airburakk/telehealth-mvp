@@ -343,7 +343,9 @@ const DOCTORIUM = {
   google: "Google ile devam et",
   apple: "Apple ile devam et",
   email: "E-posta ile devam et",
-  form: { emailLabel: "E-posta", passwordLabel: "Parola", submit: "Giriş yap" },
+  // Doctorium kapısı metinlerini COPY'den DEĞİL buradan alır (tek dil: Türkçe) — `forgot`
+  // zorunlu prop olduğu için burada da tanımlanmak ZORUNDA; tsc bunu 2026-08-31'de yakaladı.
+  form: { emailLabel: "E-posta", passwordLabel: "Parola", submit: "Giriş yap", forgot: "Parolamı unuttum" },
 } as const;
 
 // Rol-duyarlı üyelik hedefi — DOCTORIUM.roles indeksleriyle paralel (ayrışma Faz B 2026-08-24:

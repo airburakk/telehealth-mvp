@@ -40,6 +40,11 @@ model User {
   emailVerifiedAt      DateTime?
   emailVerifyTokenHash String? // aktif doğrulama token'ının sha256'sı (ham token yalnız e-postadaki bağlantıda)
   emailVerifySentAt    DateTime? // son doğrulama e-postası zamanı (yeniden-gönder soğuması + 24s token TTL tabanı)
+  /// Parola sıfırlama (v6.194) — "şifremi unuttum" akışı. Doğrulama alanlarıyla AYNI desen ama
+  /// AYRI kolonlar: iki akışın TTL'i (24s ↔ 1s) ve anlamı farklı; tek kolonu paylaşsalardı
+  /// doğrulama bağlantısı sıfırlama bağlantısını sessizce geçersizleştirirdi.
+  passwordResetTokenHash String? // aktif sıfırlama token'ının sha256'sı (ham token yalnız e-postada)
+  passwordResetSentAt    DateTime? // son sıfırlama e-postası (1 saat TTL tabanı + yeniden-gönder soğuması)
   /// Apple ile Giriş (v6.82) — Apple'ın kalıcı kullanıcı kimliği (ID token `sub`). E-POSTA DEĞİL:
   /// kullanıcı "E-postamı Gizle"yi seçerse bize @privaterelay.appleid.com adresi gelir ve o adres,
   /// uygulama Apple ID'den kaldırılıp yeniden bağlanınca DEĞİŞİR → yalnız e-postaya bakan eşleme

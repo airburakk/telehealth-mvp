@@ -41,7 +41,8 @@ export type AuditAction =
   | "LOGIN"
   | "PASSWORD_CHANGE" // parola değiştirildi/belirlendi → tüm oturumlar düşürüldü (parola audit'e YAZILMAZ)
   | "DOCTORIUM_LEAVE" // Aşama 2 doktoru Doctorium üyeliğinden çıktı — hesap açık kaldı, katman silindi
-  | "DOCTORIUM_ACCOUNT_CLOSE"; // yalnız-Doctorium üyesi hesabını kapattı → hesap + üyelik verisi silindi
+  | "DOCTORIUM_ACCOUNT_CLOSE" // yalnız-Doctorium üyesi hesabını kapattı → hesap + üyelik verisi silindi
+  | "PASSWORD_RESET"; // parola e-posta bağlantısıyla sıfırlandı — oturum AÇILMAZ, tüm oturumlar düşer
 
 interface RecordInput {
   actor: SessionUser | null;

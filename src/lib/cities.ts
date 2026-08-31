@@ -38,7 +38,16 @@ export const KKTC_CITIES = ["Gazimağusa", "Girne", "Güzelyurt", "İskele", "Le
 // Tek kaçış seçeneği: yurt dışında çalışan doktor / yurt dışı kampüs öğrencisi (AZ/KG/MK).
 export const CITY_ABROAD = "Yurt dışı";
 
-const ALLOWED = new Set<string>([...TR_PROVINCES, ...KKTC_CITIES, CITY_ABROAD]);
+/**
+ * Düz (gruplandırılmamış) tam liste — optgroup desteklemeyen genel `select` üreticileri için
+ * (ör. kurumsal başvuru formu: `staff-application-config.ts` alanları tek düzey `options` alır).
+ * Sıra anlamlıdır: 81 il → KKTC → Yurt dışı; grup etiketi olmadan da okunabilir kalsın.
+ * ⚠️ Değerler CitySelect'inkiyle BİREBİR aynıdır (KKTC girdilerine "(KKTC)" gibi ek YAPILMAZ):
+ * aynı şehir iki formda farklı yazılırsa kapalı listenin var olma sebebi ortadan kalkar.
+ */
+export const CITY_OPTIONS: readonly string[] = [...TR_PROVINCES, ...KKTC_CITIES, CITY_ABROAD];
+
+const ALLOWED = new Set<string>(CITY_OPTIONS);
 
 /**
  * Sunucu doğrulaması: değer kapalı listedeki KANONİK yazımlardan biri mi?
