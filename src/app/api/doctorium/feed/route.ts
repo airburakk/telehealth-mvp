@@ -13,10 +13,16 @@ import {
 // savunması. DOCTOR rolü hasDoctoriumAccess (Aşama 1: doğrulanmış diploma veya öğrenci belgesi)
 // ister; COORDINATOR/ADMIN gözetim erişimiyle geçer (layout.tsx'teki dal aynen).
 //
-// `cursor` OPAK: istemci page.tsx'te ilk sayfayla gelen cursor'ı olduğu gibi saklar, her istekte
-// geri gönderir, yanıttaki `nextCursor`'ı bir sonraki isteğe taşır — içeriğini hiç ayrıştırmaz
-// (personalFeedPage modül-başına cursor / singleBranchFeedPage tek cursor döndürür, biçim
-// çağırana göre değişir; JSON.stringify ile sarmalanmış opak string bu farkı gizler).
+// `cursor` OPAK: çağıran gelen cursor'ı olduğu gibi geri gönderir, yanıttaki `nextCursor`'ı bir
+// sonraki isteğe taşır — içeriğini hiç ayrıştırmaz (personalFeedPage modül-başına cursor /
+// singleBranchFeedPage tek cursor döndürür, biçim çağırana göre değişir; JSON.stringify ile
+// sarmalanmış opak string bu farkı gizler).
+//
+// ⚠️ v6.192'den beri BU UCU ARAYÜZ ÇAĞIRMIYOR: sonsuz kaydırma kalktı, Akışım sayfaları artık
+// sunucuda render ediliyor (page.tsx + FeedPager; imleç ?imlec= ile URL'de taşınır). Uç bilinçli
+// KORUNDU — kimlik/erişim kapısı sayfayla aynı ve aynı sayfalama sözleşmesini programatik olarak
+// sunar. Çağıranı kalmadığına karar verilirse silinmesi ayrı bir iştir: lib/doctorium-landing/
+// capabilities.ts `feed.personal` kaydı bu dosyayı KANIT olarak gösterir, önce o güncellenmeli.
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) {

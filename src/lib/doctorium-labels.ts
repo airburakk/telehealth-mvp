@@ -1,10 +1,12 @@
 // Doctorium içerik künyesi — İSTEMCİ-GÜVENLİ etiket sabitleri (2026-08-21).
 //
 // lib/doctorium.ts `db` (Prisma) içe aktaran bir SUNUCU modülüdür. SECTOR_CATEGORIES/
-// categoryLabel/KIND_LABEL saf veri olduğu hâlde o dosyada yaşıyordu; sonsuz kaydırma "daha
-// fazla yükle" istemci bileşeni (FeedLoadMore.tsx → ArticleCard.tsx) bu etiketlere ihtiyaç
-// duyunca, lib/doctorium.ts'ten DEĞER import etmek db'yi (ve crypto/ai-clinical/doctorium-sources
-// zincirini) istemci paketine sokup build'i kırardı. Bu üç sabit tek gerçek kaynak olarak
+// categoryLabel/KIND_LABEL saf veri olduğu hâlde o dosyada yaşıyordu; sonsuz kaydırmanın "daha
+// fazla yükle" istemci bileşeni (o gün FeedLoadMore.tsx → ArticleCard.tsx; bileşen v6.192'de
+// sıralı sayfalamayla KALKTI) bu etiketlere ihtiyaç duyunca, lib/doctorium.ts'ten DEĞER import
+// etmek db'yi (ve crypto/ai-clinical/doctorium-sources zincirini) istemci paketine sokup build'i
+// kırardı. Ayrım bugün de gerekli: etiketlere ihtiyaç duyan YENİ bir istemci bileşeni aynı
+// duvara toslardı. Bu üç sabit tek gerçek kaynak olarak
 // buraya taşındı; lib/doctorium.ts aynı adlarla RE-EXPORT eder (davranış değişmez, mevcut
 // `@/lib/doctorium` import'ları kırılmaz).
 export const SECTOR_CATEGORIES: { key: string; label: string }[] = [

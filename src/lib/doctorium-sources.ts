@@ -452,7 +452,12 @@ export async function ingestOhsad(opts?: IngestOpts): Promise<[number, number]> 
     const description = pick("description");
     // OHSAD manşeti mesleki otorite olsa da bayram/kutlama gibi kurum içi bülten kalemleri
     // Doctorium akışına girmez. Pozitif mesleki sinyal aranmaz; yalnız ortak negatif elek uygulanır.
-    if (isNoiseContent(title, description)) continue;
+    // ⚠️ Elek YALNIZ BAŞLIĞA uygulanır (özet BİLİNÇLİ olarak geçilmez): isNoiseContent özet
+    // verildiğinde PROMO/CONSUMER desenlerini gövdede de arar ve "fiyatları" · "kampanya" ·
+    // "indirim" gibi sözcükler bir SUT/mevzuat duyurusunun GÖVDESİNDE meşru geçer — o kalem
+    // sessizce düşer ve düştüğü hiçbir yerde görünmez. Hedeflenen gürültü (kutlama/tören)
+    // zaten başlıktan anlaşılır; ORG_NOISE_PATTERNS de yalnız başlıkta çalışır.
+    if (isNoiseContent(title)) continue;
     const pub = pick("pubDate");
     const when = pub ? new Date(pub) : null;
     const published = when && !Number.isNaN(when.getTime()) ? when : (parseTurkishDate(rawTitle) ?? new Date());

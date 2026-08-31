@@ -14,11 +14,12 @@ import {
   SECTOR_CATEGORIES, SECTOR_SOURCE_SCOPES, LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES,
   CAREER_TABS, parseCareerTab, careerPathways,
   effectiveBranches, personalFeedPage, moduleFeed, singleBranchFeedPage, upcomingCongresses,
+  encodeFeedCursor, decodeFeedCursor,
   upcomingCountByIds, localizeTitles, branchLabel, followedCongressIds, BRANCH_OPTIONS,
   parseScope, parseSourceScope, savedArticleIds, parseFeedModules,
   todayModuleCounts, MODULE_ALIASES, parseEventTypes,
   trDayStart, parseEventTypePref, parseViewPrefs, FM_TO_MODULES, PULSE_LABELS,
-  type FeedItem, type ModuleKey, type LegalTabKey, type CareerTabKey, type EventTypeKey,
+  type FeedItem, type FeedCursors, type ModuleKey, type LegalTabKey, type CareerTabKey, type EventTypeKey,
 } from "@/lib/doctorium";
 import { isStudentOnly } from "@/lib/doctor-activation";
 import { keywordByKey } from "@/lib/hukuk-keywords";
@@ -28,7 +29,7 @@ import { ProspektusSearch } from "./ProspektusSearch";
 import { CareerDisclaimer, careerDate, COUNTRY_LABEL } from "./CareerShared";
 import { ButtonLink } from "./Button";
 import { ArticleCard, SourcePlate } from "./ArticleCard";
-import { FeedLoadMore } from "./FeedLoadMore";
+import { FeedPager } from "./FeedPager";
 import { SaveButton } from "./SaveButton";
 import {
   ArrowLeft, ExternalLink, Info, Star, X, Megaphone, SlidersHorizontal,
@@ -41,6 +42,10 @@ export const dynamic = "force-dynamic";
 // Ayrışma (2026-08-24): sekme yalın "Doctorium". 🪤 absolute ŞART — segmentin page'i KENDİ
 // layout'unun şablonunu almaz (şablon yalnız ALT segmentlere; düz title köke kaçıp "· AURA" alır).
 export const metadata = { title: { absolute: "Doctorium" } };
+
+// Akışım sayfa boyu (v6.192, kullanıcı kararı 2026-08-31: "40 mesaj ile sınırla"). Tek branş
+// odağı da buna çekildi (eskiden 30) — "sayfa 40 kalem" kuralı tek ve açıklanabilir olsun.
+const FEED_PAGE_SIZE = 40;
 
 const MODULE_KEYS = new Set(DOCTORIUM_MODULES.map((m) => m.key));
 
@@ -68,7 +73,8 @@ const MODULE_HEAD: Record<ModuleKey, { eyebrow: string; title: string; desc: str
 export default async function DoctoriumPage({
   searchParams,
 }: {
-  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string; h?: string; k?: string; t?: string; f?: string; l?: string; n?: string; q?: string; fm?: string }>;
+  // sayfa/imlec/onceki: Akışım sıralı sayfalaması (v6.192) — bkz. FeedPager.
+  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string; h?: string; k?: string; t?: string; f?: string; l?: string; n?: string; q?: string; fm?: string; sayfa?: string; imlec?: string; onceki?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
@@ -150,27 +156,41 @@ export default async function DoctoriumPage({
   const since = onlyNew ? trDayStart() : undefined;
 
   let items: FeedItem[] = [];
-  // Sonsuz kaydırma (2026-08-21, kullanıcı bildirimi "belli sayıda içerikte duruyor"): ilk parti
-  // burada basılır, `feedNextCursor` FeedLoadMore'a geçer — null ise (ilk partide zaten her şey
-  // gösterildiyse) bileşen hiç render edilmez. Yalnız Akışım'da (diğer sekmeler moduleFeed'in
-  // sabit 40 sınırında kalıyor, bkz. plan notu).
+  // SIRALI SAYFALAMA (v6.192, kullanıcı kararı 2026-08-31) — 2026-08-21'in sonsuz kaydırması
+  // KALDIRILDI: sayfa FEED_PAGE_SIZE kalemle sınırlı, devamı altta sayfa numarasıyla gezilir.
+  // Her sayfa sunucuda kendi imleciyle render edilir (?sayfa= + ?imlec=), yani paylaşılabilir
+  // ve tarayıcı geri düğmesiyle uyumlu. Neden numaralı ATLAMA yok: FeedPager başlık yorumu.
+  // Yalnız Akışım sayfalanır — diğer sekmeler moduleFeed'in tek partisinde kalır.
+  //
+  // ⚠️ İmleç ÇÖZÜLEMEZSE (bozuk/paylaşılmış URL) ilk sayfaya düşülür VE sayfa numarası 1'e
+  // çekilir: "SAYFA 5" yazıp ilk sayfanın içeriğini göstermek sessiz bir yalan olurdu.
+  const requestedPage = Math.min(Math.max(Math.trunc(Number(sp.sayfa)) || 1, 1), 500);
+  const feedCursor = decodeFeedCursor(sp.imlec);
+  const feedPageNo = feedCursor ? requestedPage : 1;
+  const currentCursorParam = feedCursor && typeof sp.imlec === "string" ? sp.imlec : null;
+  const prevCursorParam = decodeFeedCursor(sp.onceki) && typeof sp.onceki === "string" ? sp.onceki : null;
   let feedNextCursor: string | null = null;
   if (active === "akis") {
     if (focus) {
-      const page = await singleBranchFeedPage(focus, 30);
+      // Tek branş odağı da 40'a çekildi (kullanıcı kararı): "sayfa 40 kalem" kuralı tek olsun.
+      const before = feedCursor as { at: string; id: string } | null;
+      const page = await singleBranchFeedPage(
+        focus, FEED_PAGE_SIZE,
+        before && typeof before.at === "string" && typeof before.id === "string" ? before : undefined,
+      );
       items = page.items;
-      feedNextCursor = page.cursor ? JSON.stringify(page.cursor) : null;
+      feedNextCursor = page.cursor ? encodeFeedCursor(page.cursor) : null;
     } else {
       // 2026-08-24 — Akışım da tercihleri uygular (kullanıcı bildirimi: "ulusal'a çektim ama
       // akışta uluslararası haber var"): sektörel kaynak kapsamı + "yalnız yeni" (?n=1).
       // v6.161 — ?fm= sayaç odağı: modül listesi tercih yerine TEK modüle (hukukta üçlü aile)
-      // daralır; sonsuz kaydırma aynı daraltmayla sürer (FeedLoadMore ?fm taşır).
-      const page = await personalFeedPage(branches, fm ? FM_TO_MODULES[fm] : feedMods, {}, 40, {
+      // daralır; sayfalama aynı daraltmayla sürer (FeedPager tüm süzgeç parametrelerini taşır).
+      const page = await personalFeedPage(branches, fm ? FM_TO_MODULES[fm] : feedMods, (feedCursor ?? {}) as FeedCursors, FEED_PAGE_SIZE, {
         sektorelSources: viewPrefs.sektorel.source ? SECTOR_SOURCE_SCOPES[viewPrefs.sektorel.source] : undefined,
         createdSince: since,
       });
       items = page.items;
-      feedNextCursor = page.done ? null : JSON.stringify(page.cursors);
+      feedNextCursor = page.done ? null : encodeFeedCursor(page.cursors);
     }
   }
   else if (active === "akademik") items = await moduleFeed("akademik", branches, { createdSince: since });
@@ -558,10 +578,17 @@ export default async function DoctoriumPage({
               {shown.length <= 2 && sponsorCards[0] && <SponsorCardView c={sponsorCards[0]} />}
               {shown.length <= 5 && surveyProps && <SurveyCardView {...surveyProps} />}
               {shown.length <= 9 && sponsorCards[1] && <SponsorCardView c={sponsorCards[1]} />}
-              {/* Sonsuz kaydırma (2026-08-21): yalnız Akışım, yalnız sunucudaki ilk parti
-                  tükenmediyse (feedNextCursor null değilse) render edilir. */}
-              {active === "akis" && feedNextCursor && (
-                <FeedLoadMore focus={focus} initialCursor={feedNextCursor} onlyNew={onlyNew && !focus} feedModule={fm} />
+              {/* Sıralı sayfalama (v6.192): yalnız Akışım. Sonsuz kaydırmanın aksine sayfanın
+                  SONU da anlamlı bir durumdur — devam yoksa "AKIŞIN SONU" yazar, ilk sayfada
+                  bile çubuk çizilir ki kullanıcı listenin bittiğini bilsin. */}
+              {active === "akis" && (feedNextCursor || feedPageNo > 1) && (
+                <FeedPager
+                  sp={sp}
+                  page={feedPageNo}
+                  nextCursor={feedNextCursor}
+                  currentCursor={currentCursorParam}
+                  prevCursor={prevCursorParam}
+                />
               )}
             </ul>
           )}

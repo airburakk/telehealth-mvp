@@ -175,8 +175,9 @@ export function parseCareerTab(raw: string | undefined): CareerTabKey {
 // gündemiyle genişledi (İTO/TTB/Medscape) ve WHO/Medical Xpress içeriği "teknoloji"den ayrıldı.
 // Sıra = doktorun ilgi sıklığı varsayımı: kendi mesleği önce, küresel gündem sonda.
 // SECTOR_CATEGORIES/categoryLabel istemci-güvenli lib/doctorium-labels.ts'e taşındı (2026-08-21,
-// sonsuz kaydırma FeedLoadMore.tsx client bileşeninin ArticleCard üzerinden ihtiyaç duyması —
-// buradan değer import etmek bu dosyanın `db` bağımlılığını istemci paketine sokardı). Tek
+// sonsuz kaydırmanın client bileşeninin ArticleCard üzerinden ihtiyaç duyması — o bileşen
+// v6.192'de kalktı ama kural sürüyor: buradan değer import etmek bu dosyanın `db` bağımlılığını
+// istemci paketine sokar). Tek
 // kaynak orada; burası aynı adlarla re-export eder, davranış ve mevcut import'lar değişmez.
 export { SECTOR_CATEGORIES, categoryLabel } from "./doctorium-labels";
 
@@ -702,6 +703,23 @@ async function sektorelWithOfficialBoost(where: object, take: number): Promise<R
   };
 }
 
+/**
+ * Modül kotaları — TOPLAMI SAYFA BOYUDUR (kullanıcı kararı 2026-08-31: "40 mesaj ile sınırla").
+ * Sıra = doktorun ilgi sıklığı varsayımı: akademik ağırlıklı, kariyer/kongre ince.
+ *
+ * ⚠️ Bir kotayı değiştirirsen TOPLAMI KORU — `FEED_QUOTA_TOTAL` sözleşme testiyle 40'a kilitli
+ * (tests/unit/doctorium.test.ts). Kota eklemek/artırmak sayfayı sessizce şişirir; ekranda 40'ta
+ * KIRPMAK ise çözüm DEĞİL: imleçler çekilen satırlardan türer, gösterilmeyen kalem sonraki
+ * sayfada da gelmez — modül-başına imleç mimarisinin önlemek için kurulduğu sessiz veri kaybı.
+ */
+const FEED_QUOTAS = {
+  akademik: 13, sektorel: 7, ilac: 6,
+  "hukuk-mevzuat": 4, "hukuk-ictihat": 2, "hukuk-doktrin": 2,
+  etkinlik: 3, kariyer: 3,
+} as const;
+
+export const FEED_QUOTA_TOTAL: number = Object.values(FEED_QUOTAS).reduce((a, b) => a + b, 0);
+
 async function personalFeedRaw(
   branchSlugs: string[], modules: FeedModuleKey[], limit: number, cursors?: FeedCursors, opts?: PersonalFeedOpts,
 ): Promise<RawModuleResult[]> {
@@ -710,8 +728,7 @@ async function personalFeedRaw(
   // FeedCursors yorumu). Kullanıcı tercihi (all/modules) bunun ÜSTÜNE değil YANINA eklenir —
   // ikisi de "hayır" derse modül dışarıda kalır.
   const on = (k: FeedModuleKey) => (all || modules.includes(k)) && cursors?.[k] !== null;
-  // Kotalar limit=40 tabanına göre ölçeklenir (akademik 14 · sektörel 8 · ilaç 6 ·
-  // hukuk 4+2+2 [mevzuat/içtihat/doktrin alt-kotaları] · kongre 3 · kariyer 3).
+  // Kotalar FEED_QUOTAS'tan gelir ve limit=40 tabanına göre ölçeklenir.
   const q = (n: number) => Math.max(1, Math.round((n * limit) / 40));
   const cur = (k: FeedModuleKey): FeedCursor | undefined => {
     const c = cursors?.[k];
@@ -751,13 +768,13 @@ async function personalFeedRaw(
       branchSlugs.length
         ? { module: "akademik", OR: branchSlugs.map((s) => ({ branchSlugs: { contains: `"${s}"` } })) }
         : { module: "akademik" },
-      q(14),
+      q(FEED_QUOTAS.akademik),
     ));
   // Kaynak kapsamı tercihi (2026-08-24): sekmedeki "Kaynak: Ulusal/Uluslararası" süzgeci akışa
   // da işler — moduleFeed'deki `source: { in }` ile aynı sözleşme (SECTOR_SOURCE_SCOPES).
   if (on("sektorel")) {
     const sektorelWhere = { module: "sektorel", ...(opts?.sektorelSources?.length ? { source: { in: opts.sektorelSources } } : {}) };
-    const sektorelTake = q(8);
+    const sektorelTake = q(FEED_QUOTAS.sektorel);
     // Resmi-kaynak payı (2026-08-26) yalnız İLK sayfada (cursor yok) + "yalnız yeni" modunda
     // DEĞİL (o mod zaten createdAt eksenli, boost anlamsız) + seçili kaynak kapsamı resmi
     // kaynakları dışlamıyorsa uygulanır.
@@ -769,16 +786,16 @@ async function personalFeedRaw(
         : news("sektorel", sektorelWhere, sektorelTake),
     );
   }
-  if (on("ilac")) jobs.push(news("ilac", { module: "ilac" }, q(6)));
+  if (on("ilac")) jobs.push(news("ilac", { module: "ilac" }, q(FEED_QUOTAS.ilac)));
   // Hukuk üç bağımsız alt bölüm (v6.132) — doktor tercihler sayfasından üçünü ayrı yönetir.
-  if (on("hukuk-mevzuat")) jobs.push(news("hukuk-mevzuat", { module: "mevzuat", kind: "mevzuat" }, q(4)));
-  if (on("hukuk-ictihat")) jobs.push(news("hukuk-ictihat", { module: "mevzuat", kind: "ictihat" }, q(2)));
-  if (on("hukuk-doktrin")) jobs.push(news("hukuk-doktrin", { module: "mevzuat", kind: "doktrin" }, q(2)));
+  if (on("hukuk-mevzuat")) jobs.push(news("hukuk-mevzuat", { module: "mevzuat", kind: "mevzuat" }, q(FEED_QUOTAS["hukuk-mevzuat"])));
+  if (on("hukuk-ictihat")) jobs.push(news("hukuk-ictihat", { module: "mevzuat", kind: "ictihat" }, q(FEED_QUOTAS["hukuk-ictihat"])));
+  if (on("hukuk-doktrin")) jobs.push(news("hukuk-doktrin", { module: "mevzuat", kind: "doktrin" }, q(FEED_QUOTAS["hukuk-doktrin"])));
   // Etkinlik/Kariyer "yalnız yeni" modunda sorgulanmaz — gerekçe PersonalFeedOpts yorumunda.
   if (on("etkinlik") && !opts?.createdSince)
-    jobs.push(congressFeedItems(branchSlugs, q(3), cur("etkinlik")).then((items) => ({ key: "etkinlik", items, requested: q(3) })));
+    jobs.push(congressFeedItems(branchSlugs, q(FEED_QUOTAS.etkinlik), cur("etkinlik")).then((items) => ({ key: "etkinlik", items, requested: q(FEED_QUOTAS.etkinlik) })));
   if (on("kariyer") && !opts?.createdSince)
-    jobs.push(careerFeedItems(q(3), cur("kariyer")).then((items) => ({ key: "kariyer", items, requested: q(3) })));
+    jobs.push(careerFeedItems(q(FEED_QUOTAS.kariyer), cur("kariyer")).then((items) => ({ key: "kariyer", items, requested: q(FEED_QUOTAS.kariyer) })));
 
   return Promise.all(jobs);
 }
@@ -833,6 +850,33 @@ export async function personalFeed(branchSlugs: string[], limit = 40, modules: F
  * asla göstermezdi — sessiz veri kaybı. Modül başına cursor, her modülün kendi "nereden devam"
  * işaretçisini taşıdığı için bu sızıntıyı yapısal olarak imkânsız kılar.
  */
+/**
+ * Akış sayfalama imleci URL'de taşınır (v6.192 — sonsuz kaydırma yerine sıralı sayfalama).
+ * base64url: ham JSON querystring'de hem okunaksız hem kırılgandır (süslü parantez/tırnak
+ * yüzdelenir); opak dize aynı zamanda "elle kurcalanacak alan değil" sinyalidir.
+ *
+ * ⚠️ Değer KULLANICI GİRDİSİDİR (paylaşılan/kırpılmış URL, elle düzenleme): bozuk imleç sayfayı
+ * DÜŞÜRMEZ — decode `null` döner, çağıran ilk sayfaya düşer. Uzunluk freni, base64 çözümünü
+ * devasa girdiyle meşgul etmeyi engeller.
+ */
+export function encodeFeedCursor(value: object): string {
+  return Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
+}
+
+export function decodeFeedCursor(raw: string | string[] | undefined | null): Record<string, unknown> | null {
+  if (typeof raw !== "string" || raw.length === 0 || raw.length > 4096) return null;
+  try {
+    const parsed: unknown = JSON.parse(Buffer.from(raw, "base64url").toString("utf8"));
+    // Dizi/skaler REDDEDİLİR: hem personalFeedPage (modül→imleç) hem singleBranchFeedPage
+    // ({at,id}) NESNE bekler; yanlış biçim sorguya sızarsa hata çalışma anında çıkar.
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function personalFeedPage(
   branchSlugs: string[], modules: FeedModuleKey[], cursors: FeedCursors, limit = 40, opts?: PersonalFeedOpts,
 ): Promise<{ items: FeedItem[]; cursors: FeedCursors; done: boolean }> {

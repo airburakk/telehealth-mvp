@@ -1,7 +1,9 @@
 import Link from "next/link";
 // ⚠️ categoryLabel/KIND_LABEL BİLİNÇLİ "@/lib/doctorium-labels"ten (değil "@/lib/doctorium"ten):
-// bu kart FeedLoadMore.tsx (client bileşen, sonsuz kaydırma) üzerinden İSTEMCİ paketine de
-// giriyor — lib/doctorium.ts `db` (Prisma) içe aktarır, oradan DEĞER import etmek build'i kırar.
+// lib/doctorium.ts `db` (Prisma) içe aktarır; oradan DEĞER import etmek, kart bir istemci
+// bileşenine girdiği anda build'i kırar. v6.192'ye kadar tam da öyleydi (sonsuz kaydırmanın
+// client bileşeni bu kartı çiziyordu); o bileşen sıralı sayfalamayla kalktı ve kart bugün yalnız
+// sunucuda çiziliyor — ayrım YİNE DE korunuyor, bu import yönü her iki hâlde de güvenli.
 // `type FeedItem` type-only olduğu için erimede kaybolur, sorun yok.
 import { categoryLabel, KIND_LABEL } from "@/lib/doctorium-labels";
 import type { FeedItem } from "@/lib/doctorium";

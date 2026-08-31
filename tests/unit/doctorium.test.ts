@@ -16,7 +16,7 @@ import {
   LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES, KIND_LABEL, moduleFeed,
   CAREER_TABS, parseCareerTab, parseSteps, parseStringList,
   MODULE_ALIASES, EVENT_TYPES, EVENT_TYPE_BY_TTB, parseEventTypes, parseScope, scopeBadge,
-  parseViewPrefs, decodeFeedText,
+  parseViewPrefs, decodeFeedText, encodeFeedCursor, decodeFeedCursor, FEED_QUOTA_TOTAL,
 } from "@/lib/doctorium";
 import { isHealthRelated, categorize, parseTurkishDate } from "@/lib/doctorium-sources";
 import { pubDate } from "@/lib/doctorium-ingest";
@@ -35,6 +35,31 @@ describe("akış metni temizliği", () => {
 
   // SIRA SÖZLEŞMESİ: `&amp;` en sonda çözülmeli. Kural listenin başına taşınırsa tek kademe
   // kodlanmış metin iki kademe çözülür ve bu üç bekleyiş birden kırılır (bkz. decodeFeedText notu).
+  it("SAYFA BOYU SÖZLEŞMESİ: modül kotalarının toplamı tam 40 (kullanıcı kararı 2026-08-31)", () => {
+    // Kota eklemek/artırmak sayfayı sessizce şişirir; ekranda kırpmak ise veri kaybı olurdu
+    // (imleçler çekilen satırlardan türer). Sınır bu yüzden KOTA TOPLAMINDA tutulur.
+    expect(FEED_QUOTA_TOTAL).toBe(40);
+  });
+
+  it("SAYFALAMA İMLECİ: tur-gidiş-dönüş korunur, BOZUK girdi sayfayı düşürmez", () => {
+    // İmleç URL'den gelir = kullanıcı girdisidir. Sözleşme: geçerliyse aynen geri gelir,
+    // geçersizse null (çağıran ilk sayfaya düşer) — hiçbir hâlde istisna fırlatmaz.
+    const cursors = { akademik: { at: "2026-08-31T00:00:00.000Z", id: "abc" }, mevzuat: null };
+    expect(decodeFeedCursor(encodeFeedCursor(cursors))).toEqual(cursors);
+    expect(decodeFeedCursor(encodeFeedCursor({ at: "2026-08-31T00:00:00.000Z", id: "x1" })))
+      .toEqual({ at: "2026-08-31T00:00:00.000Z", id: "x1" });
+
+    expect(decodeFeedCursor(undefined)).toBeNull();
+    expect(decodeFeedCursor("")).toBeNull();
+    expect(decodeFeedCursor("bu-base64-degil!!")).toBeNull();
+    expect(decodeFeedCursor(Buffer.from("{bozuk json").toString("base64url"))).toBeNull();
+    // Dizi ve skaler REDDEDİLİR: sorguya sızarsa hata çalışma anında çıkardı.
+    expect(decodeFeedCursor(Buffer.from('["a"]').toString("base64url"))).toBeNull();
+    expect(decodeFeedCursor(Buffer.from('"düz-metin"').toString("base64url"))).toBeNull();
+    // Uzunluk freni: devasa girdiyle base64 çözümü meşgul edilmez.
+    expect(decodeFeedCursor("A".repeat(5000))).toBeNull();
+  });
+
   it("tek kademe çözer — kaynağın kaçırdığı varlık düz metin olarak KALIR", () => {
     expect(decodeFeedText("eşik &amp;#x2009; değeri")).toBe("eşik &#x2009; değeri");
     expect(decodeFeedText("&amp;lt;script&amp;gt;")).toBe("&lt;script&gt;");

@@ -192,6 +192,17 @@ describe("Sektörel — mesleki alaka süzgeci (v6.99)", () => {
     expect(isNoiseContent("15 Temmuz Demokrasi ve Milli Birlik Günü Kutlu Olsun")).toBe(true);
   });
 
+  // ⚠️ ÖZET GEÇMENİN BEDELİ — ingestOhsad bu yüzden isNoiseContent'e SUMMARY VERMEZ (2026-08-31).
+  // Fonksiyonun sözleşmesi doğru: özet verilirse PROMO/CONSUMER desenlerini gövdede de arar
+  // (dernek yolu bunu bilerek kullanır). Ama OHSAD'ın gövdesi mevzuat metnidir: "fiyatları" ·
+  // "kampanya" · "indirim" orada MEŞRU geçer ve kalem sessizce düşerdi — düştüğü de hiçbir yerde
+  // görünmez. Bu test o farkı kanıtlar: aynı başlık, özet geçilince eleniyor.
+  it("mevzuat gövdesindeki ticari sözcük başlığı gürültü YAPMAZ (OHSAD özet geçmez)", () => {
+    const title = "SUT güncellemesi: tıbbi malzeme geri ödeme listesi yayımlandı";
+    expect(isNoiseContent(title)).toBe(false);
+    expect(isNoiseContent(title, "Yeni fiyatları ve indirim oranları ekte duyurulmuştur.")).toBe(true);
+  });
+
   it("kategori ataması: mesleki gündem yönetime karışmaz", () => {
     expect(categorize("Asistan hekimlerin nöbet ücreti düzenlemesi")).toBe("meslek");
     expect(categorize("Özel Hastaneler Yönetmeliğinde Değişiklik")).toBe("yonetim");
