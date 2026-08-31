@@ -18,7 +18,7 @@ import {
 import {
   isProfessionallyRelevant, categorize, parseItoDate,
   NEWS_IMAGE_HOSTS, allowedImageUrl, extractOgImage, RSS_SOURCES,
-  isAssociationRelevant, ASSOCIATION_RSS_SOURCES, SGK_RELAY,
+  isAssociationRelevant, isNoiseContent, ASSOCIATION_RSS_SOURCES, SGK_RELAY,
 } from "@/lib/doctorium-sources";
 import { SECTOR_SOURCE_SCOPES, FM_TO_MODULES, FEED_MODULE_OPTIONS, PULSE_LABELS } from "@/lib/doctorium";
 import { ASSOCIATIONS, watchUrl } from "@/lib/association-sources";
@@ -188,6 +188,8 @@ describe("Sektörel — mesleki alaka süzgeci (v6.99)", () => {
   it("kurum içi etkinlik duyurusu akışa girmez (iç bülten gürültüsü)", () => {
     expect(isProfessionallyRelevant("LÖSEV Odamızı Ziyaret Etti")).toBe(false);
     expect(isProfessionallyRelevant("İstanbul Tabip Odası'ndan Satış İlanı")).toBe(false);
+    expect(isNoiseContent("30 Ağustos Zafer Bayramı Kutlu Olsun")).toBe(true);
+    expect(isNoiseContent("15 Temmuz Demokrasi ve Milli Birlik Günü Kutlu Olsun")).toBe(true);
   });
 
   it("kategori ataması: mesleki gündem yönetime karışmaz", () => {

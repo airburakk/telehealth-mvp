@@ -283,13 +283,44 @@ type Row = {
   category: string | null; imageUrl: string | null;
 };
 
+/** PubMed/XML kaynaklarından kalan named ve numeric HTML varlıklarını güvenli düz metne çevirir. */
+export function decodeFeedText(value: string): string {
+  const codePoint = (match: string, raw: string, radix: number) => {
+    const n = Number.parseInt(raw, radix);
+    return Number.isInteger(n) && n >= 0 && n <= 0x10ffff && !(n >= 0xd800 && n <= 0xdfff)
+      ? String.fromCodePoint(n)
+      : match;
+  };
+  // ⚠️ SIRA YÜK TAŞIR: `&amp;` EN SONDA çözülür. Başta çözülürse tek kademe kodlanmış metin İKİ
+  // KADEME çözülür — kaynağın bilinçli olarak kaçırdığı dizi kaybolur: "&amp;#x2009;" önce
+  // "&#x2009;" olur, sonra alttaki sayısal kural onu ince boşluğa çevirirdi (doğrusu: düz metin
+  // olarak "&#x2009;" kalmalı). Aynı tuzak "&amp;lt;script&amp;gt;" → "<script>" üretiyordu.
+  // Sona alındığında ara sonuçta "&" hiç oluşmadığı için sonraki kurallar onu yakalayamaz.
+  return value
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#x([0-9a-f]+);/gi, (match, hex: string) => codePoint(match, hex, 16))
+    .replace(/&#(\d+);/g, (match, decimal: string) => codePoint(match, decimal, 10))
+    .replace(/&amp;/gi, "&");
+}
+
 function toFeedItem(r: Row): FeedItem {
   let slugs: string[] = [];
   try {
     const v = JSON.parse(r.branchSlugs);
     if (Array.isArray(v)) slugs = v.filter((s): s is string => typeof s === "string");
   } catch { /* bozuk JSON = branşsız göster */ }
-  return { ...r, branchSlugs: slugs, hasAiSummary: !!r.aiSummary };
+  return {
+    ...r,
+    title: decodeFeedText(r.title),
+    titleOriginal: r.titleOriginal ? decodeFeedText(r.titleOriginal) : null,
+    summary: decodeFeedText(r.summary),
+    branchSlugs: slugs,
+    hasAiSummary: !!r.aiSummary,
+  };
 }
 
 const ROW_SELECT = {

@@ -50,7 +50,7 @@ export function DoctoriumMobileMenu({
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((o) => { if (!o) onOpen?.(); return !o; })}
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--dl-line)] text-[var(--dl-ink)] transition-colors duration-200 active:scale-[0.96] md:h-11 md:w-11 ${hide}`}
+        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[var(--dl-line)] text-[var(--dl-ink)] transition-colors duration-200 active:scale-[0.96] ${hide}`}
       >
         <svg aria-hidden viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
           {open ? <path d="m3.5 3.5 9 9M12.5 3.5l-9 9" /> : <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11" />}

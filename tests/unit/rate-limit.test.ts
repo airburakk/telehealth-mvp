@@ -10,7 +10,13 @@ vi.mock("next/server", () => ({
   },
 }));
 
-import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
+import { HOUR_MS, rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
+
+describe("süre birimi korkuluğu", () => {
+  it("bir saat milisaniye cinsinden tanımlıdır", () => {
+    expect(HOUR_MS).toBe(3_600_000);
+  });
+});
 
 describe("rateLimit (in-memory yol — env'siz)", () => {
   it("limit içinde ok, limit aşılınca reddeder", async () => {

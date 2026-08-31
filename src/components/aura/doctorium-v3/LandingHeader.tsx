@@ -49,7 +49,7 @@ export function LandingHeader() {
           </Link>
           <Link
             href={LANDING_ROUTES.signup}
-            className="inline-flex min-h-[40px] items-center gap-2 rounded-xl bg-[#065f46] px-3 text-[13px] font-semibold text-white transition-[transform,box-shadow,background-color] duration-250 ease-[cubic-bezier(.32,.72,0,1)] hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-8px_rgba(6,95,70,.38),0_3px_8px_-3px_rgba(6,95,70,.25)] active:translate-y-0 active:scale-[.98] active:bg-[#054d39] active:shadow-[0_2px_6px_-2px_rgba(6,95,70,.3)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-none md:min-h-[44px] md:px-4 md:text-sm"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#065f46] px-3 text-[13px] font-semibold text-white transition-[transform,box-shadow,background-color] duration-250 ease-[cubic-bezier(.32,.72,0,1)] hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-8px_rgba(6,95,70,.38),0_3px_8px_-3px_rgba(6,95,70,.25)] active:translate-y-0 active:scale-[.98] active:bg-[#054d39] active:shadow-[0_2px_6px_-2px_rgba(6,95,70,.3)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-none md:px-4 md:text-sm"
           >
             <span className="md:hidden">Oluştur</span>
             <span className="hidden md:inline">Doctorium&apos;unu oluştur</span>

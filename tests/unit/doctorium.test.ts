@@ -16,11 +16,31 @@ import {
   LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES, KIND_LABEL, moduleFeed,
   CAREER_TABS, parseCareerTab, parseSteps, parseStringList,
   MODULE_ALIASES, EVENT_TYPES, EVENT_TYPE_BY_TTB, parseEventTypes, parseScope, scopeBadge,
-  parseViewPrefs,
+  parseViewPrefs, decodeFeedText,
 } from "@/lib/doctorium";
 import { isHealthRelated, categorize, parseTurkishDate } from "@/lib/doctorium-sources";
 import { pubDate } from "@/lib/doctorium-ingest";
 import { BRANCHES } from "@/lib/triage";
+
+describe("akış metni temizliği", () => {
+  it("PubMed XML numeric ve named varlıklarını kullanıcı metnine çevirir", () => {
+    expect(decodeFeedText("P&#x2009;=&#x2009;.03 &amp; risk &#215; 2"))
+      .toBe("P = .03 & risk × 2");
+  });
+
+  it("geçersiz Unicode kod noktası akışı düşürmez", () => {
+    expect(decodeFeedText("ölçüm &#x110000;"))
+      .toBe("ölçüm &#x110000;");
+  });
+
+  // SIRA SÖZLEŞMESİ: `&amp;` en sonda çözülmeli. Kural listenin başına taşınırsa tek kademe
+  // kodlanmış metin iki kademe çözülür ve bu üç bekleyiş birden kırılır (bkz. decodeFeedText notu).
+  it("tek kademe çözer — kaynağın kaçırdığı varlık düz metin olarak KALIR", () => {
+    expect(decodeFeedText("eşik &amp;#x2009; değeri")).toBe("eşik &#x2009; değeri");
+    expect(decodeFeedText("&amp;lt;script&amp;gt;")).toBe("&lt;script&gt;");
+    expect(decodeFeedText("A &amp;amp; B")).toBe("A &amp; B");
+  });
+});
 
 describe("branş tercihleri", () => {
   it("bilinmeyen slug elenir, tekrar temizlenir", () => {

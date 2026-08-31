@@ -64,4 +64,24 @@ describe("pickSocialDigest: teaser seçkisi", () => {
     ], rot);
     expect(items.map((i) => i.stream)).toEqual(["mevzuat", "ictihat", "doktrin"]);
   });
+
+  // Bu uç NewsArticle satırını DOĞRUDAN okur (web akışının toFeedItem dönüşümü yok) → varlık
+  // temizliği burada ayrıca yapılmalı, yoksa "&#x2009;" sosyal medya gönderisine ham gider.
+  it("XML varlıkları çözülür — ham '&#x...' sosyal gönderiye sızmaz", () => {
+    const items = pickSocialDigest([
+      art({ title: "P&#x2009;&lt;&#x2009;.001 &amp; etki", summary: "Risk &#215; 2 azaldı." }),
+    ], rot);
+    // Beklenti KAÇIŞ DİZİSİYLE yazılır: &#x2009; ince boşluktur (U+2009), normal boşlukla
+    // yazılırsa test görsel olarak doğru görünüp başarısız olur — ayırt edilemez.
+    expect(items[0].title).toBe("P\u2009<\u2009.001 & etki");
+    expect(items[0].summary).toBe("Risk × 2 azaldı.");
+  });
+
+  it("çözme KIRPMADAN önce olur — 160 karakter bütçesi gerçek harfleri sayar", () => {
+    // Ham hâlde 8 karakter olan "&#x2009;" çözülünce 1 karaktere iner. Kırpma önce yapılsaydı
+    // bütçe varlık koduyla dolar, metin erken kesilir ve kuyrukta yarım varlık kalabilirdi.
+    const items = pickSocialDigest([art({ summary: `${"a".repeat(150)}&#x2009;${"b".repeat(20)}` })], rot);
+    expect(items[0].summary).not.toContain("&#x");
+    expect(items[0].summary.startsWith("a".repeat(150))).toBe(true);
+  });
 });

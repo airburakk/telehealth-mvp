@@ -14,6 +14,7 @@
 //  · Kişisel veri YOK: NewsArticle metadata'sı; sponsor/anket bu tablodan zaten geçmez.
 import { BRANCHES } from "./triage";
 import { trimSummary } from "./daily-digest";
+import { decodeFeedText } from "./doctorium";
 
 type Branch = (typeof BRANCHES)[number];
 
@@ -89,9 +90,13 @@ export function pickSocialDigest(articles: SocialArticle[], rotation: Branch): S
     items.push({
       stream: s.key,
       streamLabel: s.label,
-      title: picked.title,
+      // Varlık temizliği BURADA da gerekli: bu uç NewsArticle satırını doğrudan okur, web akışının
+      // toFeedItem dönüşümünden geçmez — decode olmadan "&#x2009;" sosyal medya gönderisine ham
+      // giderdi. Kırpmadan ÖNCE çözülür: 160 karakterlik bütçe gerçek harfleri saymalı ve kırpma
+      // bir varlığı ortadan bölmemeli ("… &#x20" gibi bozuk kuyruk).
+      title: decodeFeedText(picked.title),
       sourceName: picked.sourceName,
-      summary: trimSummary(picked.summary, 160),
+      summary: trimSummary(decodeFeedText(picked.summary), 160),
       url: picked.url,
       publishedAt: picked.publishedAt.toISOString(),
       branch,

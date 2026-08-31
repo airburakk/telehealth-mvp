@@ -7,6 +7,9 @@ import { Redis } from "@upstash/redis";
 
 type Verdict = { ok: boolean; retryAfter: number };
 
+/** Süre birimi korkuluğu: rateLimit üçüncü argümanı milisaniyedir. */
+export const HOUR_MS = 60 * 60_000;
+
 // ── Upstash istemcisi (REST; anahtar yoksa null → dormant, in-memory çalışır) ──
 // Env adları: Upstash console/Vercel Marketplace = UPSTASH_REDIS_REST_*; eski Vercel KV = KV_REST_API_*.
 const restUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;

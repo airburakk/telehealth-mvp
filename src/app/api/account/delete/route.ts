@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/api-auth";
 import { reqMeta } from "@/lib/audit";
-import { rateLimit } from "@/lib/rate-limit";
+import { HOUR_MS, rateLimit } from "@/lib/rate-limit";
 import { deleteAccount, RETENTION_YEARS } from "@/lib/account-deletion";
 
 // POST /api/account/delete — hasta kendi hesabını ve kişisel verilerini siler (KVKK m.7 / GDPR m.17).
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   if (error) return error;
 
   // Yıkıcı + geri dönüşsüz → dar limit (kaza/otomasyon tekrarına karşı; idempotent olsa da).
-  const limited = await rateLimit(`account-delete:${user.id}`, 3, 60 * 60);
+  const limited = await rateLimit(`account-delete:${user.id}`, 3, HOUR_MS);
   if (!limited.ok) return NextResponse.json({ error: "Çok fazla deneme. Lütfen sonra tekrar deneyin." }, { status: 429 });
 
   if (user.role !== "PATIENT") {

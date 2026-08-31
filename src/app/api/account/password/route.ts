@@ -20,7 +20,7 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/api-auth";
 import { checkPassword, hashPassword, createSession, revokeUserSessions } from "@/lib/auth";
 import { recordAccess, reqMeta } from "@/lib/audit";
-import { rateLimit } from "@/lib/rate-limit";
+import { HOUR_MS, rateLimit } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email";
 import type { Role } from "@/lib/session";
 
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
   // Deneme freni: `current` doğrulaması bir parola oracle'ıdır (oturum çalınmış senaryosunda
   // saldırgan mevcut parolayı buradan brute-force edebilirdi).
-  const limited = await rateLimit(`password-change:${user.id}`, 5, 60 * 60);
+  const limited = await rateLimit(`password-change:${user.id}`, 5, HOUR_MS);
   if (!limited.ok) {
     return NextResponse.json({ error: "Çok fazla deneme. Lütfen bir süre sonra tekrar deneyin." }, { status: 429 });
   }

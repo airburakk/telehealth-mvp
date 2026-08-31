@@ -449,6 +449,10 @@ export async function ingestOhsad(opts?: IngestOpts): Promise<[number, number]> 
     // (sözel, eski liste) ve "– 04.07.2026" (rakamsal — 2026-08-26 dry-run'ında feed'de ölçüldü).
     // İdempotensi başlığa değil URL slug'ına bağlı; temizlik güvenli.
     const title = rawTitle.replace(/\s*[–-]\s*(?:\d{1,2}\s+\p{L}+\s+\d{4}|\d{1,2}[./]\d{1,2}[./]\d{4})\s*$/u, "").trim();
+    const description = pick("description");
+    // OHSAD manşeti mesleki otorite olsa da bayram/kutlama gibi kurum içi bülten kalemleri
+    // Doctorium akışına girmez. Pozitif mesleki sinyal aranmaz; yalnız ortak negatif elek uygulanır.
+    if (isNoiseContent(title, description)) continue;
     const pub = pick("pubDate");
     const when = pub ? new Date(pub) : null;
     const published = when && !Number.isNaN(when.getTime()) ? when : (parseTurkishDate(rawTitle) ?? new Date());
@@ -459,7 +463,7 @@ export async function ingestOhsad(opts?: IngestOpts): Promise<[number, number]> 
     const isNew = await upsertArticle({
       source: "ohsad", externalId: id, module: isLegal ? "mevzuat" : "sektorel",
       category: cat ?? "yonetim", kind: isLegal ? "mevzuat" : "haber",
-      title, summary: pick("description").slice(0, 500),
+      title, summary: description.slice(0, 500),
       sourceName: "OHSAD", url, publishedAt: published,
       // Görsel yalnız HABER kalemine (v6.99.2) — mevzuat/SUT detayı resmî metin sayfasıdır.
     }, opts?.dryRun, isLegal ? undefined : () => fetchOgImage(url));
@@ -745,6 +749,7 @@ const CONSUMER_PATTERNS = [
 const ORG_NOISE_PATTERNS = [
   "ziyaret etti", "odamızı ziyaret", "kahvaltıda buluş", "yemeğine katıldık", "satış ilanı",
   "tebrik ve dayanışma", "taziye", "nikah", "piknik", "gezisi", "turnuva", "kutlama mesajı",
+  "kutlu olsun",
 ];
 
 /** Reklam/advertorial imzaları — ticari beslemelerde başlığa işlenir. */
