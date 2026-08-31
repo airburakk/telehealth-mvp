@@ -75,7 +75,10 @@ const cap = (
 
 export const CAPABILITIES: readonly Capability[] = [
   cap("feed.personal", "verified",
-    ["src/lib/doctorium.ts:634 personalFeedPage", "src/lib/doctorium.ts:491 interleaveByModule", "src/app/api/doctorium/feed/route.ts:19"],
+    // v6.193: üçüncü kanıt `src/app/api/doctorium/feed/route.ts` idi — o uç SİLİNDİ (sonsuz
+    // kaydırma v6.192'de sıralı sayfalamaya döndü, ucun çağıranı kalmadı). Kanıt, akışın
+    // gerçekten sunulduğu yere taşındı; iddia ("branş ve bölümlere göre kurulur") değişmedi.
+    ["src/lib/doctorium.ts personalFeedPage", "src/lib/doctorium.ts interleaveByModule", "src/app/doktor/doctorium/page.tsx akış sekmesi"],
     ["Akışınız seçtiğiniz branş ve bölümlere göre kurulur", "Bugün eklenen içerik sayısı (gerçek sayım)"],
     ["algoritma sizi tanır", "size özel sıralama", "ilgi skoru"]),
   cap("feed.why", "partial",

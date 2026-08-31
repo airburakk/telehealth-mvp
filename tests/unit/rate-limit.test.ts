@@ -10,11 +10,70 @@ vi.mock("next/server", () => ({
   },
 }));
 
+import { readFileSync, readdirSync, statSync } from "fs";
+import { join } from "path";
+
 import { HOUR_MS, rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 
 describe("süre birimi korkuluğu", () => {
   it("bir saat milisaniye cinsinden tanımlıdır", () => {
     expect(HOUR_MS).toBe(3_600_000);
+  });
+});
+
+// ── ÇAĞRI YERİ NÖBETİ (2026-08-31) ───────────────────────────────────────────
+// GERÇEK OLAY: üç hassas uç (parola değiştirme · hesap silme · Doctorium üyelik kapatma)
+// `rateLimit(key, n, 60 * 60)` yazıyordu. Üçüncü argüman MİLİSANİYEDİR → pencere 3,6 SANİYE
+// oldu; "saatte 5 deneme" sanılan koruma pratikte sıfırdı. Parola ucunun kendi yorumu o yüzeyi
+// "parola oracle'ı" diye tanımlıyor — oturum çalınmış senaryoda mevcut parola sınırsız denenirdi.
+//
+// İlk düzeltme yalnız HOUR_MS sabitinin DEĞERİNİ kilitliyordu; rotalardan biri yarın tekrar
+// `60 * 60` yazsa test yine geçerdi. Bu nöbet SINIFI kapatır: kaynaktaki HER rateLimit çağrısının
+// pencere argümanı milisaniye-biçimli olmalı. tsc yakalayamaz (ikisi de `number`).
+const SRC = join(process.cwd(), "src");
+
+function walk(dir: string, out: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) walk(p, out);
+    else if (/\.(ts|tsx)$/.test(name)) out.push(p);
+  }
+  return out;
+}
+
+/** Pencere ifadesi milisaniye-biçimli mi? Kabul edilenler: HOUR_MS · `_000` ayraçlı sayı ·
+ *  `* 1000` çarpanı · doğrudan ≥1000 sayı. Geri kalan her şey saniye şüphesidir. */
+function msShaped(expr: string): boolean {
+  const e = expr.trim();
+  if (e === "HOUR_MS") return true;
+  if (/\d_000\b/.test(e)) return true;
+  if (/\*\s*1000\b/.test(e)) return true;
+  const n = Number(e);
+  return Number.isFinite(n) && n >= 1000;
+}
+
+describe("rateLimit çağrı yerleri — pencere birimi sözleşmesi", () => {
+  // Çağrılar tek satırda ve iç içe en fazla bir parantez (clientIp(req)) taşıyor; pencere
+  // SON argüman olduğu için son virgülden sonrası alınır (hiçbir pencere ifadesi virgül içermez).
+  const calls: { file: string; window: string }[] = [];
+  for (const file of walk(SRC)) {
+    if (file.endsWith(join("lib", "rate-limit.ts"))) continue; // tanımın kendisi
+    const src = readFileSync(file, "utf8");
+    for (const m of src.matchAll(/rateLimit\(([^()]*(?:\([^()]*\)[^()]*)*)\)/g)) {
+      const args = m[1].split(",");
+      if (args.length < 3) continue; // rateLimit tanımı/tipi gibi eşleşmeler
+      calls.push({ file, window: args[args.length - 1] });
+    }
+  }
+
+  it("nöbetin kendisi çalışıyor — kaynakta çağrı bulunuyor", () => {
+    // Regex bozulur ya da çağrılar başka biçime geçerse test SESSİZCE yeşil kalmasın.
+    expect(calls.length).toBeGreaterThan(15);
+  });
+
+  it("her pencere argümanı milisaniye-biçimli (saniye yazımı YASAK)", () => {
+    const bad = calls.filter((c) => !msShaped(c.window));
+    expect(bad.map((c) => `${c.file.replace(SRC, "src")} → ${c.window.trim()}`)).toEqual([]);
   });
 });
 
