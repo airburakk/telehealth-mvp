@@ -15,7 +15,7 @@
 // PHI: baskı içeriği haber/mevzuat metadata'sıdır — PHI DEĞİL; e-postaya içerik gömmek bu
 // yüzden serbesttir (hasta dürtülerinin "içeriksiz e-posta" kuralı BURAYA uygulanmaz; o kural
 // klinik bildirimler içindir — lib/notify.ts routePatientChannel).
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { db } from "./db";
 import {
   effectiveBranches, parseFeedModules, personalFeedPage, trDayStart,
@@ -123,26 +123,42 @@ export function trDayString(d: Date = trDayStart()): string {
 }
 
 // ── Tek-tık e-posta çıkışı (RFC 8058) ────────────────────────────────────────────────────────
-// Token = HMAC(doctorId) — oturum gerektirmez (e-posta istemcisi çıplak POST atar; RFC 8058).
-// SESSION_SECRET boot'ta hard-fail (T4) → burada hep tanımlıdır. Çıkış digestChannel'ı null'a
+// Oturum gerektirmez (e-posta istemcisi çıplak POST atar; RFC 8058). Çıkış digestChannel'ı null'a
 // çeker (TAM kapanış — tasarım §5.2 kararı: "e-postayı kes ama uygulamada dürt" sürprizi olmasın;
 // doktor tercihler sayfasından istediği an yeniden açar).
+//
+// 🔄 v6.198 — TOKEN ARTIK TÜRETİLMİYOR, DOKTOR SATIRINDA DURUYOR (`Doctor.digestUnsubToken`).
+// Önce `HMAC(SESSION_SECRET, doctorId)` idi; bülten AURA projesinden gönderilip bağlantı
+// doctorium.tr'de doğrulandığı için iki Vercel projesinin sırrının AYNI olmasını gerektiriyordu.
+// 2026-09-02'de ÖLÇÜLDÜ: sırlar FARKLI → çıkış bağlantısı 403 verirdi. Veritabanı iki marka
+// arasında zaten ORTAK olduğundan token'ı oraya taşımak bu bağımlılığı tamamen kaldırır.
 
-export function digestUnsubToken(doctorId: string): string {
-  return createHmac("sha256", process.env.SESSION_SECRET ?? "")
-    .update(`digest-unsub:${doctorId}`)
-    .digest("hex")
-    .slice(0, 32);
-}
-
-export function verifyDigestUnsubToken(doctorId: string, token: string): boolean {
-  const expected = digestUnsubToken(doctorId);
-  if (token.length !== expected.length) return false;
+/** Sabit-zamanlı token karşılaştırması (saf — birim testlenebilir). Saklı token yoksa DAİMA false. */
+export function unsubTokensMatch(stored: string | null, given: string): boolean {
+  if (!stored || !given || stored.length !== given.length) return false;
   try {
-    return timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+    return timingSafeEqual(Buffer.from(stored), Buffer.from(given));
   } catch {
     return false;
   }
+}
+
+/**
+ * Doktorun kalıcı çıkış anahtarını döndürür; yoksa üretip SAKLAR (tembel).
+ * Kalıcıdır — yeniden üretilseydi daha önce gönderilmiş e-postalardaki bağlantılar ölürdü.
+ */
+export async function ensureDigestUnsubToken(doctorId: string, existing: string | null): Promise<string> {
+  if (existing) return existing;
+  const token = randomBytes(24).toString("hex");
+  await db.doctor.update({ where: { id: doctorId }, data: { digestUnsubToken: token } });
+  return token;
+}
+
+/** Çıkış bağlantısının doğrulanması — DB'deki tokenla karşılaştırır (oturum aranmaz). */
+export async function verifyDigestUnsubToken(doctorId: string, token: string): Promise<boolean> {
+  if (!doctorId || !token) return false;
+  const d = await db.doctor.findUnique({ where: { id: doctorId }, select: { digestUnsubToken: true } });
+  return unsubTokensMatch(d?.digestUnsubToken ?? null, token);
 }
 
 /**
@@ -157,15 +173,16 @@ export function verifyDigestUnsubToken(doctorId: string, token: string): boolean
  * `AURA_ONLY_PREFIXES`te değil — `/doktor/doctorium/ozet` Doctorium giriş kapısına 307'ler,
  * `/api/digest/unsubscribe` 403 (parametresiz) döner; ikisi de AURA'ya YÖNLENMEZ.
  *
- * ⚠️ ÇIKIŞ TOKEN'I SIR PARİTESİ İSTER: token `SESSION_SECRET` ile HMAC'lenir; bağlantı AURA
- * projesinde üretilip doctorium.tr'de doğrulanacağı için **iki Vercel projesinde SESSION_SECRET
- * AYNI olmalıdır**. Farklıysa "abonelikten çık" bağlantısı 403 verir — ki bu yalnız kırık bir
- * bağlantı değil, Gmail/Yahoo toplu-gönderici şartının da ihlalidir. Resend açılmadan önce teyit et.
+ * ✅ SIR PARİTESİ ARTIK GEREKMİYOR (v6.198): çıkış token'ı `SESSION_SECRET`ten türetilmiyor,
+ * doktor satırında duruyor (`Doctor.digestUnsubToken`) ve veritabanı iki marka arasında ORTAK.
+ * Bir zamanlar gerekiyordu ve 2026-09-02 ölçümünde sırların FARKLI olduğu görüldü — bağımlılık
+ * kaldırılmasaydı ilk bültenin çıkış bağlantısı 403 verecekti.
  */
 const DIGEST_LINK_BASE = DOCTORIUM_CANONICAL_URL;
 
-export function digestUnsubUrl(doctorId: string): string {
-  return `${DIGEST_LINK_BASE}/api/digest/unsubscribe?d=${encodeURIComponent(doctorId)}&t=${digestUnsubToken(doctorId)}`;
+/** Token ÇAĞIRANDAN gelir (ensureDigestUnsubToken) — bu fonksiyon saf kalsın diye DB okumaz. */
+export function digestUnsubUrl(doctorId: string, token: string): string {
+  return `${DIGEST_LINK_BASE}/api/digest/unsubscribe?d=${encodeURIComponent(doctorId)}&t=${encodeURIComponent(token)}`;
 }
 
 // ── Günlük koşu ──────────────────────────────────────────────────────────────────────────────
@@ -187,7 +204,8 @@ export async function runDailyDigests(): Promise<DigestRunResult> {
   };
   const subscribers = await db.doctor.findMany({
     where: { digestChannel: { in: ["app", "email"] } },
-    select: { id: true, name: true, branch: true, newsBranches: true, feedModules: true, digestChannel: true },
+    // digestUnsubToken (v6.198): çıkış anahtarı satırda durur; yoksa e-posta basılırken üretilir.
+    select: { id: true, name: true, branch: true, newsBranches: true, feedModules: true, digestChannel: true, digestUnsubToken: true },
   });
   res.checked = subscribers.length;
   if (!subscribers.length) return res;
@@ -240,7 +258,8 @@ export async function runDailyDigests(): Promise<DigestRunResult> {
           select: { email: true, emailVerifiedAt: true },
         });
         if (u?.email && u.emailVerifiedAt) {
-          const unsubUrl = digestUnsubUrl(d.id);
+          // Anahtar YALNIZ e-posta gerçekten basılırken üretilir (app-only aboneye yazma yapılmaz).
+          const unsubUrl = digestUnsubUrl(d.id, await ensureDigestUnsubToken(d.id, d.digestUnsubToken));
           const args = {
             doctorName: d.name,
             day,

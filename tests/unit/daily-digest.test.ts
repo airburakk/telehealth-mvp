@@ -5,7 +5,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const dbMock = vi.hoisted(() => ({
-  doctor: { findMany: vi.fn() },
+  // `update` v6.198'de gerekti: e-posta basılırken çıkış anahtarı yoksa tembel üretilip SAKLANIR
+  // (ensureDigestUnsubToken). Mock'ta yoksa koşucu "baskı üretilemedi" diye sessizce düşer.
+  doctor: { findMany: vi.fn(), update: vi.fn() },
   dailyDigest: { findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
   user: { findFirst: vi.fn() },
   newsArticle: { findMany: vi.fn() },
@@ -18,7 +20,7 @@ vi.mock("@/lib/email", () => ({ sendEmail: sendEmailMock }));
 
 import {
   buildDigestSections, trimSummary, trDayString, formatTrDate,
-  digestUnsubToken, verifyDigestUnsubToken, digestUnsubUrl,
+  unsubTokensMatch, digestUnsubUrl,
   runDailyDigests, MAX_PER_SECTION,
 } from "@/lib/daily-digest";
 import { renderDigestEmailHtml, renderDigestEmailText } from "@/lib/digest-email";
@@ -104,25 +106,36 @@ describe("gün/tarih yardımcıları", () => {
 });
 
 describe("tek-tık çıkış token'ı (RFC 8058)", () => {
-  beforeEach(() => { process.env.SESSION_SECRET = "test-secret-uzun-ve-sabit"; });
-  it("aynı doktor için doğrulanır, başka doktor/tahrif reddedilir", () => {
-    const t = digestUnsubToken("dr1");
-    expect(verifyDigestUnsubToken("dr1", t)).toBe(true);
-    expect(verifyDigestUnsubToken("dr2", t)).toBe(false);
-    expect(verifyDigestUnsubToken("dr1", t.slice(0, -1) + (t.endsWith("a") ? "b" : "a"))).toBe(false);
-    expect(verifyDigestUnsubToken("dr1", "")).toBe(false);
+  // v6.198 — token artık SESSION_SECRET'ten TÜRETİLMİYOR, doktor satırında duruyor. Sebep ölçüldü:
+  // bülten AURA projesinden gönderilir, bağlantı doctorium.tr'de doğrulanır ve iki projenin
+  // SESSION_SECRET'i FARKLI (2026-09-02). DB iki marka arasında ortak olduğu için bağımlılık kalktı.
+  // Burada DB'ye dokunmayan SAF karşılaştırıcı test edilir; DB yolu entegrasyon katmanının işi.
+  const T = "a".repeat(48);
+
+  it("aynı token doğrulanır; tahrif/kısa/boş REDDEDİLİR", () => {
+    expect(unsubTokensMatch(T, T)).toBe(true);
+    expect(unsubTokensMatch(T, T.slice(0, -1) + "b")).toBe(false);
+    expect(unsubTokensMatch(T, T.slice(0, -1))).toBe(false); // uzunluk farkı
+    expect(unsubTokensMatch(T, "")).toBe(false);
   });
-  it("çıkış URL'i doğru uca gider ve token taşır", () => {
-    const u = digestUnsubUrl("dr1");
+
+  it("SAKLI TOKEN YOKSA daima reddedilir (henüz bülten gitmemiş doktor)", () => {
+    // Kritik: null'ı boş dizeyle eşleştiren bir gevşeme, token'sız her doktoru çıkışa açardı.
+    expect(unsubTokensMatch(null, T)).toBe(false);
+    expect(unsubTokensMatch(null, "")).toBe(false);
+  });
+
+  it("çıkış URL'i doğru uca gider ve VERİLEN token'ı taşır", () => {
+    const u = digestUnsubUrl("dr1", T);
     expect(u).toContain("/api/digest/unsubscribe?d=dr1&t=");
-    expect(u).toContain(digestUnsubToken("dr1"));
+    expect(u).toContain(T);
   });
 
   // v6.197 — MARKA TABANI SÖZLEŞMESİ. Bülten AURA projesinden gönderilir (cron orada koşar) ve
   // taban SITE_URL kalsaydı Doctorium markalı e-postanın bağlantıları AURA host'una giderdi.
   // Bu test tabanı kilitler: biri "tutarlılık" gerekçesiyle SITE_URL'e döndürürse burada kırılır.
   it("bülten bağlantıları DOCTORIUM host'una gider (AURA host'una DEĞİL)", () => {
-    const u = digestUnsubUrl("dr1");
+    const u = digestUnsubUrl("dr1", T);
     expect(u.startsWith("https://doctorium.tr/")).toBe(true);
     expect(u).not.toContain("telehealth-mvp-roan.vercel.app");
   });

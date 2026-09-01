@@ -12,7 +12,9 @@ import { verifyDigestUnsubToken, DIGEST_NAME } from "@/lib/daily-digest";
 //    tarayıcıları linkleri ön-yükler (prefetch); GET'te işlem yapmak kazara çıkışa yol açar.
 //    GET onay sayfası döndürür, asıl işlem sayfadaki formun POST'uyla olur.
 //
-// Auth = token (HMAC(doctorId), lib/daily-digest.ts) — oturum ARANMAZ (e-posta istemcisi
+// Auth = token (`Doctor.digestUnsubToken` — v6.198'den beri DB'de SAKLI, türetilmiş DEĞİL: bülten
+// AURA projesinden gönderilir ama bağlantı doctorium.tr'de doğrulanır ve iki projenin
+// SESSION_SECRET'i FARKLI ölçüldü; DB ortak olduğu için token oraya taşındı) — oturum ARANMAZ (e-posta istemcisi
 // çerezsiz POST atar; RFC 8058 böyle çalışır). Token doktora özel ve tahmin edilemez;
 // yanlış token 403. Çıkış audit zincirine yazılır (⚖️ işlem tarihi ispatı).
 
@@ -43,7 +45,7 @@ async function unsubscribe(doctorId: string): Promise<boolean> {
 export async function POST(req: Request) {
   const p = checkParams(new URL(req.url));
   if (!p) return NextResponse.json({ error: "Eksik parametre." }, { status: 400 });
-  if (!verifyDigestUnsubToken(p.doctorId, p.token)) {
+  if (!(await verifyDigestUnsubToken(p.doctorId, p.token))) {
     return NextResponse.json({ error: "Geçersiz bağlantı." }, { status: 403 });
   }
   const ok = await unsubscribe(p.doctorId);
@@ -54,7 +56,7 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const p = checkParams(url);
-  const valid = p ? verifyDigestUnsubToken(p.doctorId, p.token) : false;
+  const valid = p ? await verifyDigestUnsubToken(p.doctorId, p.token) : false;
   const html = valid
     ? `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${DIGEST_NAME} — Abonelikten çık</title></head>
 <body style="margin:0;font-family:Georgia,serif;background:#f4f6f5;color:#1a1d1c;display:flex;min-height:100vh;align-items:center;justify-content:center;">

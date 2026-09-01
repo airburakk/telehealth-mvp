@@ -245,6 +245,15 @@ model Doctor {
   /// dormant'ken de seçilebilir (kayıt tutulur, gönderim simüle edilir — lib/email.ts deseni).
   /// E-postadaki tek-tık çıkış (RFC 8058) bu alanı null'a çeker (lib/daily-digest.ts).
   digestChannel String?
+  /// Post bülteni tek-tık çıkış anahtarı (v6.198) — doktor başına RASTGELE, İLK bültende üretilip
+  /// kalıcı saklanır (eski e-postalardaki bağlantılar çalışmaya devam etsin).
+  /// ⚠️ NEDEN DB'DE, TÜRETİLMİŞ DEĞİL: token önce SESSION_SECRET'lı HMAC'ti; bülten AURA
+  /// projesinden gönderilip bağlantı doctorium.tr'de doğrulandığı için iki Vercel projesinin
+  /// sırrının aynı olmasını gerektiriyordu. 2026-09-02'de ÖLÇÜLDÜ: sırlar FARKLI (AURA'da açılan
+  /// oturum çerezi doctorium.tr'de doğrulanmıyor) → çıkış bağlantısı 403 verirdi. Veritabanı iki
+  /// marka arasında ZATEN ORTAK olduğu için token'ı buraya taşımak env paritesi ihtiyacını
+  /// tamamen kaldırır.
+  digestUnsubToken String?
   dailyDigests  DailyDigest[]
   /// Doctorium sponsorlu içerik KİŞİSELLEŞTİRME açık rızası (v6.68 Faz 1): dolu = rıza verildi
   /// (verildiği an); null = yok/geri alındı → doktora yalnız hedefsiz (bağlamsal) kampanya gösterilir.

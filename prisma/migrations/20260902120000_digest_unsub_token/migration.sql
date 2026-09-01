@@ -1,0 +1,23 @@
+-- v6.198 — Post bülteni tek-tık çıkış token'ı DB'ye taşındı (kullanıcı kararı 2026-09-02).
+--
+-- SORUN (ölçülerek bulundu, varsayılmadı): çıkış token'ı `SESSION_SECRET` ile HMAC'leniyordu.
+-- Bülten AURA projesinden gönderilir (cron `api/cron/purge-deleted` içinde; Doctorium deploy'unda
+-- BRAND_MODE ile no-op) ama bağlantı — v6.197'den beri, doğru olarak — doctorium.tr'ye gider.
+-- Yani token BİR projede üretilip DİĞERİNDE doğrulanacaktı.
+--
+-- 2026-09-02 ampirik ölçüm: AURA host'unda açılan oturum çerezi doctorium.tr'de DOĞRULANMIYOR
+-- (hem PATIENT hem DOCTOR hesabıyla tekrarlandı; JWT'de issuer/audience bağı yok, dolayısıyla
+-- tek açıklama sır farkı). Sonuç: "abonelikten çık" bağlantısı 403 verirdi — kırık bağlantıdan
+-- öte, Gmail/Yahoo toplu-gönderici şartının ihlali.
+--
+-- ÇÖZÜM: token artık türetilmiyor, DOKTOR SATIRINDA duruyor. Veritabanı iki marka arasında ZATEN
+-- ORTAKTIR (2026-08-24 ayrışma kararı) → env paritesi ihtiyacı tamamen kalkar. Hangi proje
+-- gönderirse göndersin, hangi host doğrularsa doğrulasın aynı satırı okur.
+--
+-- TEK KOLON, NULLABLE, BACKFILL YOK: token İLK bülten baskısında tembel üretilir
+-- (ensureDigestUnsubToken) ve kalıcı kalır — eski e-postalardaki bağlantılar çalışmaya devam etsin.
+-- Bugüne dek HİÇ bülten gönderilmedi (Resend dormant), dolayısıyla geriye dönük uyumluluk yükü YOK.
+--
+-- Idempotent: aynı migration iki kez koşarsa (Neon dev branch provası + üretim) patlamaz.
+
+ALTER TABLE "Doctor" ADD COLUMN IF NOT EXISTS "digestUnsubToken" TEXT;
