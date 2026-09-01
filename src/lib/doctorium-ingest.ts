@@ -23,6 +23,7 @@ import {
   ingestIstanbulTabip, ingestRss, RSS_SOURCES, ASSOCIATION_RSS_SOURCES,
 } from "./doctorium-sources";
 import { ingestEuropePmcAll, ingestDoajAll } from "./doctorium-academic-sources";
+import { translateTitlesTr } from "./translate-news";
 
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 const RELDATE_DAYS = 180; // son 6 ay — günlük koşuda taze havuz yeter
@@ -174,6 +175,13 @@ export async function ingestQuery(
   const abstracts = await fetchAbstracts(ids);
 
   let created = 0;
+  // İki faz (2026-08-31): önce yeni-kayıt adayları toplanır, başlıklar TOPLU Türkçeye çevrilir
+  // (lib/translate-news — fail-open), sonra create edilir. Mevcut kayıtta yalnız branş merge
+  // yapılır (çeviri yeniden denenmez; birikmişler scripts/translate-titles-backfill.ts işi).
+  const adaylar: { id: string; data: {
+    module: string; branchSlugs: string; kind: string; title: string; summary: string;
+    sourceName: string; authors: string | null; url: string; doi: string | null; publishedAt: Date;
+  } }[] = [];
   for (const id of ids) {
     const r = sum.result[id];
     if (!r?.title) continue;
@@ -207,7 +215,17 @@ export async function ingestQuery(
         await db.newsArticle.update({ where: { id: existing.id }, data: { branchSlugs: JSON.stringify(merged) } });
       }
     } else {
-      await db.newsArticle.create({ data: { source: "pubmed", externalId: id, ...data } });
+      adaylar.push({ id, data });
+    }
+  }
+  if (adaylar.length) {
+    const ceviriler = await translateTitlesTr(adaylar.map((a) => a.data.title));
+    for (let i = 0; i < adaylar.length; i++) {
+      const a = adaylar[i];
+      const tr = ceviriler[i];
+      // Çeviri geldiyse: title=Türkçe, titleOriginal=özgün. Gelmediyse eski davranış (İngilizce kalır).
+      const data = tr ? { ...a.data, title: tr, titleOriginal: a.data.title } : a.data;
+      await db.newsArticle.create({ data: { source: "pubmed", externalId: a.id, ...data } });
       created++;
     }
   }

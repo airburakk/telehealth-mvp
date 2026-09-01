@@ -22,6 +22,7 @@ import { db } from "./db";
 import { NEWS_QUERIES } from "./medical-news";
 import { isNonHumanAcademic, lccNonMedicine } from "./academic-journals";
 import { BRANCHES } from "./triage";
+import { translateTitlesTr } from "./translate-news";
 
 const UA = "Mozilla/5.0 (compatible; AuraHealth/1.0; +https://telehealth-mvp-roan.vercel.app)";
 const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(BRANCHES.map((b) => [b.label, b.key]));
@@ -94,8 +95,12 @@ async function upsertArticle(
     }
     return false;
   }
+  // Başlık çevirisi (2026-08-31, lib/translate-news — fail-open): yeni akademik kayıt Türkçe
+  // başlıkla doğar (title=Türkçe, titleOriginal=özgün); çeviri gelmezse özgün başlıkla (eski davranış).
+  const [tr] = await translateTitlesTr([data.title]);
+  const kayit = tr ? { ...data, title: tr, titleOriginal: data.title } : data;
   await db.newsArticle.create({
-    data: { source, externalId, module: "akademik", branchSlugs: JSON.stringify(slugs), ...data },
+    data: { source, externalId, module: "akademik", branchSlugs: JSON.stringify(slugs), ...kayit },
   });
   return true;
 }
