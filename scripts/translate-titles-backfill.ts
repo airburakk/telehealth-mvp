@@ -27,9 +27,11 @@ async function main() {
   const { db } = await import("../src/lib/db");
   const { translateTitlesTr } = await import("../src/lib/translate-news");
 
-  const toplam = await db.newsArticle.count({ where: { module: "akademik", titleOriginal: null } });
+  // Kapsam: akademik + ilaç (2026-09-02'de genişledi — openFDA/ClinicalTrials da İngilizce doğuyordu).
+  const kapsam = { module: { in: ["akademik", "ilac"] }, titleOriginal: null };
+  const toplam = await db.newsArticle.count({ where: kapsam });
   const rows = await db.newsArticle.findMany({
-    where: { module: "akademik", titleOriginal: null },
+    where: kapsam,
     select: { id: true, title: true },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: limit,

@@ -30,6 +30,7 @@ import { rootCertificates } from "node:tls";
 import { db } from "./db";
 import { TTB_INTERMEDIATE_CA } from "./ttb-ca";
 import { RG_INTERMEDIATE_CA } from "./rg-ca";
+import { translateTitlesTr } from "./translate-news";
 
 // v6.57 TEŞHİS (2026-08-03): TR kaynakları (RG/OHSAD/TTB) Vercel fra1'den erişilemiyordu —
 // OHSAD 403 = Cloudflare bot koruması (veri-merkezi IP + "AuraHealth/1.0" ekli bot-ish UA +
@@ -226,10 +227,20 @@ async function upsertArticle(a: {
   if (getImage) {
     try { imageUrl = await getImage(); } catch { /* görselsiz devam */ }
   }
+  // Başlık çevirisi (2026-09-02, kullanıcı kararı: "bültende İngilizce olmasın") — YALNIZ ilaç
+  // modülü: openFDA/ClinicalTrials başlıkları İngilizce doğar (akademik hat: doctorium-ingest).
+  // Sektörel RSS kaynakları BİLİNÇLİ dışarıda — ayrı karar ister (hacim + kaynak tonu farklı).
+  // Fail-open (lib/translate-news): çeviri gelmezse özgün başlıkla yazılır.
+  let title = a.title;
+  let titleOriginal: string | null = null;
+  if (a.module === "ilac") {
+    const [tr] = await translateTitlesTr([a.title]);
+    if (tr) { title = tr; titleOriginal = a.title; }
+  }
   await db.newsArticle.create({
     data: {
       source: a.source, externalId: a.externalId, module: a.module, category: a.category,
-      kind: a.kind, title: a.title, summary: a.summary ?? "", sourceName: a.sourceName,
+      kind: a.kind, title, titleOriginal, summary: a.summary ?? "", sourceName: a.sourceName,
       url: a.url, publishedAt: a.publishedAt, branchSlugs: a.branchSlugs ?? "[]", imageUrl,
     },
   });
