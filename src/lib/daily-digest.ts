@@ -23,7 +23,7 @@ import {
 } from "./doctorium";
 import { notifyDoctorById } from "./notify";
 import { sendEmail } from "./email";
-import { SITE_URL } from "./aura-landing/seo";
+import { DOCTORIUM_CANONICAL_URL } from "./brand";
 import { renderDigestEmailHtml, renderDigestEmailText } from "./digest-email";
 
 /** Ürün-yüzü adı (kullanıcı kararı 2026-08-24). Tek nokta — masthead/bildirim/tercih hep buradan. */
@@ -145,8 +145,27 @@ export function verifyDigestUnsubToken(doctorId: string, token: string): boolean
   }
 }
 
+/**
+ * Bülten bağlantılarının TABANI — `SITE_URL` DEĞİL, Doctorium'un kanonik kökü (v6.197).
+ *
+ * NEDEN: bu cron AURA projesinde koşar (Doctorium deploy'unda `BRAND_MODE` ile no-op) ve
+ * `SITE_URL` orada `telehealth-mvp-roan.vercel.app`tır. Taban SITE_URL kalsaydı **Doctorium
+ * markalı bültenin** portal ve abonelikten-çıkış bağlantıları AURA host'una giderdi — okuyucu
+ * başka bir markanın alan adına düşerdi. Bültenin markası gönderen projeye göre değişmez.
+ *
+ * İki hedef de doctorium.tr'de GERÇEKTEN servis edilir (ölçüldü 2026-09-02): `/doktor` ve `/api`
+ * `AURA_ONLY_PREFIXES`te değil — `/doktor/doctorium/ozet` Doctorium giriş kapısına 307'ler,
+ * `/api/digest/unsubscribe` 403 (parametresiz) döner; ikisi de AURA'ya YÖNLENMEZ.
+ *
+ * ⚠️ ÇIKIŞ TOKEN'I SIR PARİTESİ İSTER: token `SESSION_SECRET` ile HMAC'lenir; bağlantı AURA
+ * projesinde üretilip doctorium.tr'de doğrulanacağı için **iki Vercel projesinde SESSION_SECRET
+ * AYNI olmalıdır**. Farklıysa "abonelikten çık" bağlantısı 403 verir — ki bu yalnız kırık bir
+ * bağlantı değil, Gmail/Yahoo toplu-gönderici şartının da ihlalidir. Resend açılmadan önce teyit et.
+ */
+const DIGEST_LINK_BASE = DOCTORIUM_CANONICAL_URL;
+
 export function digestUnsubUrl(doctorId: string): string {
-  return `${SITE_URL}/api/digest/unsubscribe?d=${encodeURIComponent(doctorId)}&t=${digestUnsubToken(doctorId)}`;
+  return `${DIGEST_LINK_BASE}/api/digest/unsubscribe?d=${encodeURIComponent(doctorId)}&t=${digestUnsubToken(doctorId)}`;
 }
 
 // ── Günlük koşu ──────────────────────────────────────────────────────────────────────────────
@@ -227,7 +246,7 @@ export async function runDailyDigests(): Promise<DigestRunResult> {
             day,
             sections: snapshot.sections,
             overflow: snapshot.overflow,
-            portalUrl: `${SITE_URL}${DIGEST_PATH}`,
+            portalUrl: `${DIGEST_LINK_BASE}${DIGEST_PATH}`,
             unsubUrl,
           };
           const sent = await sendEmail({

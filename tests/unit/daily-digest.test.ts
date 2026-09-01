@@ -117,6 +117,15 @@ describe("tek-tık çıkış token'ı (RFC 8058)", () => {
     expect(u).toContain("/api/digest/unsubscribe?d=dr1&t=");
     expect(u).toContain(digestUnsubToken("dr1"));
   });
+
+  // v6.197 — MARKA TABANI SÖZLEŞMESİ. Bülten AURA projesinden gönderilir (cron orada koşar) ve
+  // taban SITE_URL kalsaydı Doctorium markalı e-postanın bağlantıları AURA host'una giderdi.
+  // Bu test tabanı kilitler: biri "tutarlılık" gerekçesiyle SITE_URL'e döndürürse burada kırılır.
+  it("bülten bağlantıları DOCTORIUM host'una gider (AURA host'una DEĞİL)", () => {
+    const u = digestUnsubUrl("dr1");
+    expect(u.startsWith("https://doctorium.tr/")).toBe(true);
+    expect(u).not.toContain("telehealth-mvp-roan.vercel.app");
+  });
 });
 
 describe("e-posta baskısı (digest-email)", () => {
