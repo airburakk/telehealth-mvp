@@ -38,7 +38,15 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   // Sekme başlığı sadeleştirildi (2026-07-12, kullanıcı kararı): üst banttaki yalın-logo diliyle hizalı.
   // Sayfalar kendi title'ını verebilir; landing/how-it-works zengin başlık taşır.
-  title: { default: "AURA Health", template: "%s · AURA" },
+  // ⚠️ MARKA-DUYARLI ŞABLON (v6.195): Doctorium deploy'unda KÖK şablon da Doctorium olmalı.
+  // /doctorium ve /admin ağaçları kendi şablonlarını taşıdığı için sorun uzun süre görünmedi;
+  // KÖK seviyeye paylaşımlı bir rota eklenince (v6.194 /sifremi-unuttum) doctorium.tr'de sekme
+  // "Parolamı unuttum · AURA" oldu — gövde temizken META'dan sızan marka izi (vitrin kuralı:
+  // "görünür metin yetmez, meta/OG ayrı tara"). Kökü düzeltmek gelecekteki paylaşımlı rotaları da
+  // kapsar; sayfa-başına `absolute` yamalamak aynı hatayı her yeni rotada tekrarlatırdı.
+  title: IS_DOCTORIUM_DEPLOY
+    ? { default: "Doctorium", template: "%s · Doctorium" }
+    : { default: "AURA Health", template: "%s · AURA" },
   // "uçtan uca" bilinçli YOK (vitrin iddia disiplini v6.8/v6.18 — ana sayfayla hizalı; kullanıcı onayı 2026-07-18).
   description:
     "Triyaj, uzman görüşü ve sağlık turizmi paketlerini birleştiren dijital sağlık platformu (MVP).",
@@ -60,7 +68,9 @@ export const metadata: Metadata = {
   // versiyonsuz kaldığı için aynı "eski ikon takılı kalma" riskini taşıyordu).
   // v=3 (2026-08-23, v6.137): marka seti v2 — küre favicon (koyu disk) + PWA kare ikonları.
   icons: { icon: "/favicon.ico?v=3", apple: "/apple-touch-icon.png?v=3" },
-  appleWebApp: { capable: true, title: "AURA", statusBarStyle: "default" },
+  // iOS ana ekran adı da marka-duyarlı (aynı sızıntı ekseni: Doctorium'a eklenen kısayol
+  // "AURA" adıyla kaydediliyordu).
+  appleWebApp: { capable: true, title: IS_DOCTORIUM_DEPLOY ? "Doctorium" : "AURA", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
