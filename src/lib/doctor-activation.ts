@@ -75,6 +75,22 @@ export function hasClinicalAccess(d: { activatedAt: Date | null }): boolean {
   return !!d.activatedAt;
 }
 
+// ── Admin onayı (verified) DİPLOMA ŞARTINA BAĞLI (v6.196, kullanıcı kararı 2026-09-02) ─────────
+//
+// GERÇEK BULGU (prod ölçümü 2026-09-02): 16 doktor profilinden 13'ü admin onaylıydı ama yalnız
+// 11'inin diploması doğrulanmıştı → 2 hesap "onaylı ama diplomasız". `verified` doktoru HASTA
+// HAVUZUNA çıkarır (dizin + eşleştirme); diploması doğrulanmamış birinin oraya çıkabilmesi
+// özen yükümlülüğü açısından savunulamaz.
+//
+// ⚠️ İki eksen BİLİNÇLİ olarak ayrı kalıyor — bu kapı onları BİRLEŞTİRMEZ, SIRALAR:
+//   · diplomaVerifiedAt = kimlik/yeterlilik kanıtı (e-Devlet barkodlu mezun belgesi doğrulandı)
+//   · verified          = admin'in "hasta havuzuna çıkabilir" kararı (takdir hâlâ admin'de)
+// Yani diploma onayı verified'ı OTOMATİK yapmaz; sadece ön koşuludur. Admin diploması doğrulanmış
+// birini yine de onaylamayabilir.
+export function canAdminVerifyDoctor(d: { diplomaVerifiedAt: Date | null }): boolean {
+  return !!d.diplomaVerifiedAt;
+}
+
 // DB-okur: oturum kullanıcısının KLİNİK-erişimli doktor bağlamı. null = doktor profili yok VEYA
 // Aşama 2 tamamlanmamış → sayfa redirect("/doktor/baslangic"), API 403 döndürür. COORDINATOR/
 // ADMIN gözetim rolleri bu kapıdan geçirilmez (rol muafiyeti çağıran tarafta — mevcut davranış).

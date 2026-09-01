@@ -12,7 +12,7 @@ import { describe, it, expect } from "vitest";
 import {
   ALL_DOC_TYPES, REQUIRED_DOC_TYPES, hasDoctoriumAccess,
   canActivate, canCompleteOnboarding, missingOnboardingSteps, hasClinicalAccess,
-  isStudentOnly,
+  isStudentOnly, canAdminVerifyDoctor,
 } from "@/lib/doctor-activation";
 import { HR_CONTACT_SCOPE, HR_CONTACT_REVOKE_SCOPE } from "@/lib/hr-consent";
 import { SPONSOR_CONSENT_SCOPE, SPONSOR_REVOKE_SCOPE } from "@/lib/sponsor";
@@ -55,6 +55,22 @@ describe("Doctorium üyelikten çıkış (v6.187): doctoriumOptOutAt kapıyı ka
     expect(hasDoctoriumAccess({
       diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: null,
     })).toBe(true);
+  });
+});
+
+describe("Admin onayı (verified) diploma şartına bağlı — v6.196", () => {
+  // GERÇEK BULGU (prod ölçümü 2026-09-02): 13 admin onaylı / 11 diploma doğrulanmış → 2 hesap
+  // "onaylı ama diplomasız". verified doktoru HASTA HAVUZUNA çıkarır; bu kapı o yolu kapatır.
+  it("diploması doğrulanmamış doktor onaylanamaz", () => {
+    expect(canAdminVerifyDoctor({ diplomaVerifiedAt: null })).toBe(false);
+  });
+  it("diploma damgası varsa onay MÜMKÜN olur (otomatik DEĞİL — takdir admin'de kalır)", () => {
+    expect(canAdminVerifyDoctor({ diplomaVerifiedAt: D("2026-09-02") })).toBe(true);
+  });
+  it("kapı YALNIZ diplomaya bakar: klinik aktivasyon onun yerine GEÇMEZ", () => {
+    // activatedAt ⊂ diplomaVerifiedAt olsa da bu fonksiyon aktivasyonu okumaz; birinin diğerinin
+    // yerine geçtiğini varsayan bir gelecek değişiklik burada kırılsın.
+    expect(canAdminVerifyDoctor({ diplomaVerifiedAt: null } as { diplomaVerifiedAt: Date | null })).toBe(false);
   });
 });
 

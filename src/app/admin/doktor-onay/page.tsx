@@ -33,6 +33,9 @@ export default async function DoctorApprovalPage() {
     select: {
       id: true, title: true, name: true, branch: true, city: true, languages: true,
       activatedAt: true, licenseNo: true, specBoard: true, procedures: true,
+      // v6.196 — onayın ÖN KOŞULU: diploma damgası yoksa "Doğrula" düğmesi devre dışı kalır
+      // (asıl kapı api/admin/doctors/[id]/verify). Seçilmezse düğme koşulu sessizce false olurdu.
+      diplomaVerifiedAt: true,
       mmssInsurer: true, mmssCoverageLimit: true, mmssCoverageCurrency: true,
       mmssValidUntil: true, // poliçe bitişi (Faz 1b) — dolu+geçmişse kırmızı rozet; boşsa rozet YOK (mevcut doktorda boş normaldir)
       registryStatus: true, // HealthTürkiye dizin doğrulaması (FAZ 6) — NOT_FOUND ise uyarı bayrağı
@@ -117,7 +120,7 @@ export default async function DoctorApprovalPage() {
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-full bg-[var(--c-ink)]/10 px-2.5 py-1 text-xs font-medium text-[var(--c-ink-2)]" title="Dizin henüz senkronlanmadığı için kontrol yapılamadı">HealthTürkiye: kontrol edilmedi</span>
                     )}
-                    <VerifyButton doctorId={d.id} />
+                    <VerifyButton doctorId={d.id} diplomaVerified={!!d.diplomaVerifiedAt} />
                   </div>
                 </div>
 

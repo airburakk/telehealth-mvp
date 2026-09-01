@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { notifyUser } from "@/lib/notify";
 import { recordAccess, reqMeta } from "@/lib/audit";
+import { canAdminVerifyDoctor } from "@/lib/doctor-activation";
 
 // POST /api/admin/doctors/[id]/verify — ADMIN / Etik Kurul doktoru doğrular (self-signup onayı).
 // verified:true → doktor public dizinde görünür + eşleştirmelere dahil olur. Doktora bildirim gider.
@@ -15,9 +16,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
   const { id } = await params;
-  const doctor = await db.doctor.findUnique({ where: { id }, select: { id: true, verified: true } });
+  const doctor = await db.doctor.findUnique({
+    where: { id },
+    select: { id: true, verified: true, diplomaVerifiedAt: true },
+  });
   if (!doctor) return NextResponse.json({ error: "Doktor bulunamadı." }, { status: 404 });
   if (doctor.verified) return NextResponse.json({ ok: true, alreadyVerified: true });
+
+  // DİPLOMA KAPISI (v6.196) — kapı BURADA, arayüzde değil: düğmeyi gizlemek yeterli olsaydı
+  // doğrudan POST atan biri (ya da düğmeyi bir sonraki turda geri getiren bir UI değişikliği)
+  // onayı yine geçirirdi. Arayüzdeki devre-dışı düğme bunun İKİNCİ katmanı, tek katmanı değil.
+  if (!canAdminVerifyDoctor(doctor)) {
+    return NextResponse.json(
+      {
+        error:
+          "Diploması doğrulanmamış doktor onaylanamaz. Önce e-Devlet barkodlu mezun belgesini " +
+          "inceleyip DIPLOMA belgesini KABUL edin (diploma damgası oluşur), sonra bu onayı verin.",
+      },
+      { status: 409 },
+    );
+  }
 
   await db.doctor.update({ where: { id }, data: { verified: true } });
 
