@@ -123,9 +123,9 @@ export default async function DoctorOnboardingPage({
   let pubs: { title: string; venue: string; year: number }[] = [];
   try { if (doctor.publications) { const p = JSON.parse(doctor.publications); if (Array.isArray(p)) pubs = p; } } catch { /* bozuk JSON */ }
 
-  // Aktif tema (layout ile AYNI kaynak: aura_theme cookie, yoksa gece). Almaşık ritim için
+  // Aktif tema (layout ile AYNI kaynak: theme cookie, yoksa gece). Almaşık ritim için
   // forma geçer — Aşama 2 bandı bunun tersine boyanır (v6.105, kullanıcı kararı 2026-08-17).
-  const theme = (await cookies()).get("aura_theme")?.value === "light" ? "light" : "dark";
+  const theme = (await cookies()).get("theme")?.value === "light" ? "light" : "dark";
 
   return (
     <>

@@ -62,7 +62,7 @@ export function OnboardingForm({
   stage1: Stage1Props;
   // v6.127 — Güvenlik Doğrulamaları bölümü; null = ÇİZİLMEZ (kanal aktif değil + gate kapalı).
   security: SecurityInitial | null;
-  // Sayfanın aktif teması (aura_theme cookie) — Aşama 2 bandı bunun TERSİNE boyanır.
+  // Sayfanın aktif teması (theme cookie) — Aşama 2 bandı bunun TERSİNE boyanır.
   theme: "dark" | "light";
   // Ayrışma (2026-08-24): Doctorium deploy'unda sayfa YALNIZ Aşama 1'i gösterir — "iki aşamalı"
   // girişi, Aşama 2 (AURA) ve Aşama 3 bantları çizilmez (kullanıcı bulgusu: başlangıçta AURA

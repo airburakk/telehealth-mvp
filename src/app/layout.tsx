@@ -89,12 +89,12 @@ export const viewport: Viewport = {
 // etkisizdi — canlıda `cache-control: private, no-cache, no-store` ölçüldü). SSR'de sabit
 // theme-dark yazılır; bu senkron <head> script'i (render-blocking, body parse edilmeden önce
 // çalışır) cookie'yi CLIENT'ta okuyup gerekirse class'ı theme-light'a çevirir — FOUC yok.
-// Cookie adı ("aura_theme") ThemeToggle.tsx'teki THEME_COOKIE ile birebir aynı tutulmalı — o
+// Cookie adı ("theme") ThemeToggle.tsx'teki THEME_COOKIE ile birebir aynı tutulmalı — o
 // dosya "use client" olduğundan sabitini buraya import ETMİYORUZ (client-module veri exportu
 // server component'te sorunlu; bkz. hafıza [[rsc-client-module-data-export]]), string'i burada
 // tekrarlıyoruz. Kullanıcı/oturum bilgisi de aynı gerekçeyle client-side'a taşındı: AppChrome.tsx
 // mount'ta /api/auth/me'yi çeker — Header zaten yalnız kozmetik, güvenlik kapısı orada değil.
-const NO_FLASH_THEME_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|; )aura_theme=([^;]*)/);if(m&&decodeURIComponent(m[1])==="light"){document.documentElement.classList.remove("theme-dark");document.documentElement.classList.add("theme-light");}}catch(e){}})();`;
+const NO_FLASH_THEME_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|; )theme=([^;]*)/);if(m&&decodeURIComponent(m[1])==="light"){document.documentElement.classList.remove("theme-dark");document.documentElement.classList.add("theme-light");}}catch(e){}})();`;
 
 export default function RootLayout({
   children,

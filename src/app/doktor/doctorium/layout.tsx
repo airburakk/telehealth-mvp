@@ -71,7 +71,7 @@ export default async function DoctoriumLayout({ children }: { children: React.Re
     // doctorium-scope (tema-duyarlı, v6.184 — kullanıcı kararı 2026-08-29): sabit
     // `theme-light` KALKTI, Doctorium portalı gece/gündüz toggle'ını yeniden dinliyor
     // (2026-08-27'nin "DAİMA açık palet" kararı süpersede edildi). Tema kök <html>'den
-    // gelir (Header'daki ThemeToggle → `aura_theme` cookie); doctorium-scope gündüzde
+    // gelir (Header'daki ThemeToggle → `theme` cookie); doctorium-scope gündüzde
     // nötr tuvali V3'ün kırık beyazına çeker, gecede AURA'nın gece nötrleri geçerlidir.
     // Marka kimliği her iki temada tipografiden (Inter) sürer — bkz. globals.css.
     <div className="doctorium-scope flex min-h-[calc(100dvh-4rem)] flex-col bg-[var(--c-bg)] text-[var(--c-ink)]">

@@ -1,14 +1,16 @@
 "use client";
 
 // Tema anahtarı (v6.22, kullanıcı isteği) — iç yüzey GECE varsayılan; hasta isterse gündüze
-// geçer. Tercih COOKIE'de (aura_theme): kök layout ilk boyamada doğru temayı SSR'lar →
+// geçer. Tercih COOKIE'de (theme): kök layout ilk boyamada doğru temayı SSR'lar →
 // localStorage'lı çözümlerin açılış parlaması (FOUC) yok. Landing etkilenmez (kendi
 // .aura-* token'ları; Header zaten landing rotalarında gizli).
 import { useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
 export type ThemeName = "dark" | "light";
-export const THEME_COOKIE = "aura_theme";
+// Marka-nötr ad (2026-09-02): eski "aura_theme" Doctorium yüzeyinde AURA izi taşıyordu.
+// ⚠️ layout.tsx'teki NO_FLASH_THEME_SCRIPT bu adı STRING olarak tekrarlar — ikisi birlikte değişir.
+export const THEME_COOKIE = "theme";
 
 // asMenuItem (2026-08-01, header hesap menüsü): ikon-buton yerine tam genişlik menü satırı —
 // etiket görünür metin olur. Misafir header'ında ikon modu sürer.

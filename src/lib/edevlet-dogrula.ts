@@ -8,7 +8,10 @@
 // (`pdfMetniOku → parseEdevletBelge → degerlendir`) geçirilir; karar orada verilir, burada yeniden
 // icat edilmez.
 //
-// 🟡 DURUM: DORMANT (uykuda). `EDEVLET_VERIFY_ENABLED` açık değilse ağa HİÇ dokunmaz, `KAPALI` döner.
+// 🟢 DURUM: env-KAPILI, üretimde AÇIK — AURA projesi 2026-08-19, doctorium projesi 2026-09-02.
+//    ⚠️ Vercel projeleri env DEVRALMAZ: 08-24 ayrışmasında doctorium'a taşınmamıştı → doctorium.tr
+//    diplomayı bir süre yalnız biçimsel kontrolle kabul etti. Bu yorum üretim durumunu KANITLAMAZ;
+//    ölçüm `npx vercel env ls production` (iki proje ayrı). Açık değilse ağa HİÇ dokunmaz, `KAPALI` döner.
 //    §5'teki akış gerçek formdan çıkarıldı, ama form ALAN DEĞERLERİ (özellikle `btn`, `token`
 //    input adı, negatif-yanıt metinleri) gerçek bir koşuyla KALİBRE EDİLMEDEN "çalışıyor" DENMEZ —
 //    tıpkı `edevlet-belge.ts`'teki desenlerin gerçek belgeyle kalibre edilmesi gibi. Kalibrasyonsuz

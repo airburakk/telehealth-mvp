@@ -1,7 +1,10 @@
 // Oturum token mantığı — edge-güvenli (yalnız jose, next/headers YOK)
 import { SignJWT, jwtVerify } from "jose";
 
-export const SESSION_COOKIE = "air_session";
+// Marka-nötr ad (2026-09-02, kullanıcı kararı): eski "air_session" Doctorium yüzeyinde AURA izi
+// taşıyordu. Çerezler zaten alan adı bazında ayrı olduğundan markaya göre adlandırmaya gerek yok.
+// ⚠️ Ad değişikliği mevcut TÜM oturumları düşürür — lansman öncesi bilinçli olarak yapıldı.
+export const SESSION_COOKIE = "session";
 
 // Rol sabitleri lib/roles.ts'e taşındı (2026-07-31): SIRSIZ oldukları için client bileşenleri de
 // kullanabilsin. Buradan yeniden dışa verilir → mevcut sunucu-tarafı importlar (`@/lib/session`)
