@@ -13,7 +13,7 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  // Ortak kapı (v6.204): Doctorium deploy'unda no-op (ortak DB, çift senkron olmasın) + CRON_SECRET Bearer.
+  // Ortak kapı (v6.205): Doctorium deploy'unda no-op (ortak DB, çift senkron olmasın) + CRON_SECRET Bearer.
   const gate = cronGate(req, "registry-sync");
   if (gate) return gate;
 

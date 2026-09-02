@@ -7,7 +7,7 @@ import { ingestDoctorium } from "@/lib/doctorium-ingest";
 // GET /api/cron/ingest-doctorium — Doctorium içerik toplama: akademik (PubMed/Europe PMC/DOAJ) +
 // haber/sektörel/ilaç kaynakları → NewsArticle (lib/doctorium-ingest).
 //
-// v6.204 (2026-09-02): purge-deleted bakım nöbetinden AYRILDI (kullanıcı kararı "bölelim" — Vercel
+// v6.205 (2026-09-02): purge-deleted bakım nöbetinden AYRILDI (kullanıcı kararı "bölelim" — Vercel
 // planı Pro, cron kısıtı kalktı). Kendi 300 sn bütçesi var; eskiden on iş tek bütçeyi paylaşıyordu.
 // 02:00 UTC = 05:00 TR: Post baskısı (daily-digest, 06:30 TR) bu koşunun içeriğini görsün diye ÖNCE.
 // ⚠️ RG/OHSAD/SGK Vercel fra1'den erişilemez (v6.57 teşhisi) — o kaynaklar elle senkronla gelir

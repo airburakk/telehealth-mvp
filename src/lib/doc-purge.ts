@@ -77,7 +77,7 @@ export interface DocSweepResult {
 }
 
 /**
- * Günlük süpürme (purge-deleted cron'unda — imha/bütünlük ailesi; v6.204'te nöbet bölündü, bu iş imha ailesinde kaldı):
+ * Günlük süpürme (purge-deleted cron'unda — imha/bütünlük ailesi; v6.205'te nöbet bölündü, bu iş imha ailesinde kaldı):
  * doğrulanmış diplomaların dosyalarını (mevcut/LEGACY kayıtlar dahil — backfill) ve saklama süresi
  * dolan reddedilmişleri imha eder. Doğrulama ANINDA yapılan imhaların kaçağını da yakalar
  * (ör. inceleme onayında Blob silinememişse). Batch sınırlı — kalan ertesi güne (idempotent).

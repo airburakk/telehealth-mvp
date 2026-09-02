@@ -8,7 +8,7 @@ import { remindCongressFollows, type CongressRemindResult } from "@/lib/congress
 // GET /api/cron/daily-digest — doktora bildirim ailesi: Doctorium Post günlük özet baskısı
 // (v6.159, "sabah gazetesi") + etkinlik/kongre alarmı (v6.49/v6.62 üç eşik).
 //
-// v6.204 (2026-09-02): purge-deleted bakım nöbetinden AYRILDI (kullanıcı kararı "bölelim"; plan Pro).
+// v6.205 (2026-09-02): purge-deleted bakım nöbetinden AYRILDI (kullanıcı kararı "bölelim"; plan Pro).
 // 03:30 UTC = 06:30 TR — "sabah gazetesi" zamanlaması KORUNDU. BİLİNÇLİ SIRA artık rota içi değil
 // zamanlamayla: içerik cron'ları (ingest-doctorium 05:00 · ingest-hukuk 05:20 TR, kendi 300 sn
 // bütçeleriyle) bu koşudan önce biter → baskı o gecenin içeriğini görür (lib/cron-guard

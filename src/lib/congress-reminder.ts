@@ -1,6 +1,6 @@
 // Doctorium Modül E — ETKİNLİK alarmı (v6.49 "kongre alarmı"; v6.62 ÜÇ EŞİK; v6.120'de
 // modül Etkinlik oldu — dosya/tip adları `congress*` KALDI, kullanıcı-yüzü metinler değişti).
-// daily-digest cron'u (06:30 TR; v6.204'e kadar purge-deleted bakım nöbeti) çağırır.
+// daily-digest cron'u (06:30 TR; v6.205'e kadar purge-deleted bakım nöbeti) çağırır.
 //
 // ÜÇ AYRI ALARM (kullanıcı isteği v6.62) — doktor üçünü ayrı ayrı ayarlar, zamanlamaları farklı:
 //   1) "start"     → kongrenin BAŞLANGICI yaklaşıyor        (Doctor.congressAlertDays)

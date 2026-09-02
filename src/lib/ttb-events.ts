@@ -2,7 +2,7 @@
 //
 // NEDEN LIB'E TAŞINDI: TTB kaydına düzenleyiciler etkinlikten en az 30 gün önce başvuruyor →
 // kayıt tek seferlik dolumla değil PERİYODİK taramayla güncel kalır (v6.120 dersi). Tarama ingest-hukuk
-// cron'unda (05:20 TR, v6.204; öncesinde purge-deleted nöbeti) HAFTALIK kontenjanla koşar (yalnız Pazartesi)
+// cron'unda (05:20 TR, v6.205; öncesinde purge-deleted nöbeti) HAFTALIK kontenjanla koşar (yalnız Pazartesi)
 // — o rota bu modülü statik import eder. CLI script'i (dry-run/--prod
 // korkuluklarıyla) ince kabuk olarak yaşamaya devam eder ve bu çekirdeği env kurulumundan SONRA
 // dinamik import eder (db.ts bağlantıyı modül yüklenirken okur — hukuk-ingest ile aynı desen).

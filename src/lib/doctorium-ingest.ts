@@ -1,6 +1,6 @@
 // Doctorium — içerik toplama (ingestion) katmanı, v6.48.
 //
-// MİMARİ: ingest-doctorium cron'u (05:00 TR — v6.204'te purge-deleted nöbetinden ayrıldı, kendi 300 sn
+// MİMARİ: ingest-doctorium cron'u (05:00 TR — v6.205'te purge-deleted nöbetinden ayrıldı, kendi 300 sn
 // bütçesi) burayı çağırır; kaynaklar taranıp `NewsArticle` tablosuna YAZILIR.
 // Doktor sayfayı açtığında dış API'ye GİDİLMEZ, DB'den okunur (hız + NCBI'ya nezaket + filtre/arama).
 //

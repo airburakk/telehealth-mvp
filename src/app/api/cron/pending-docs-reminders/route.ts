@@ -8,7 +8,7 @@ import { remindPendingDocs } from "@/lib/pending-docs-reminder";
 // başvurunun hastasına günde 1 dürtü, en fazla 3 (lib/pending-docs-reminder; durum MISSING_DOCS
 // bildirim kayıtlarından türetilir, kolonsuz).
 //
-// v6.204 (2026-09-02): purge-deleted bakım nöbetinden AYRILDI (kullanıcı kararı "bölelim"; plan Pro)
+// v6.205 (2026-09-02): purge-deleted bakım nöbetinden AYRILDI (kullanıcı kararı "bölelim"; plan Pro)
 // ve saati DEĞİŞTİ: 07:00 UTC = 10:00 TR — eskiden 06:30 TR'de gidiyordu; hasta bildirimi/e-postayı
 // çalışma saatinde görsün (kullanıcı kararı). Hatırlatma kritik değil: hasta panelden her an kendisi
 // tamamlayabilir; ama cron sessiz düşemez (alarm + 500).

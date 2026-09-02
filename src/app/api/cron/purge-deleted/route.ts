@@ -10,7 +10,7 @@ import { sweepDoctorDocuments, type DocSweepResult } from "@/lib/doc-purge";
 // kayıtları GERÇEKTEN imha eder; iki append-only zinciri (audit + onam) doğrular; audit zincirinin
 // günlük kök damgasını mühürler (v6.200); doktor belge (diploma) süpürmesini koşar (v6.188).
 //
-// v6.204 (2026-09-02): bu rota Temmuz–Ağustos boyunca "GÜNLÜK BAKIM NÖBETİ"ydi — Hobby planının
+// v6.205 (2026-09-02): bu rota Temmuz–Ağustos boyunca "GÜNLÜK BAKIM NÖBETİ"ydi — Hobby planının
 // cron kısıtı yüzünden on iş buraya bindirilmişti. Plan Pro; kullanıcı kararıyla ("bölelim") altı
 // cron'a ayrıldı: içerik → ingest-doctorium + ingest-hukuk (05:00/05:20 TR) · doktora bildirim →
 // daily-digest (06:30 TR) · hasta hatırlatması → pending-docs-reminders (10:00 TR). Burada yalnız

@@ -1,4 +1,4 @@
-// Cron ortak kapısı (v6.204) — sözleşme: Doctorium deploy'unda no-op · sırsız 503 · yanlış Bearer 401 ·
+// Cron ortak kapısı (v6.205) — sözleşme: Doctorium deploy'unda no-op · sırsız 503 · yanlış Bearer 401 ·
 // doğru Bearer geçer. Bakım nöbeti altı cron'a bölünürken korkuluk tek dosyaya alındı; bu test onu
 // kilitler (bir rota kapıyı atlarsa cron-routes.test yakalar, kapının kendisi burada).
 import { describe, it, expect, afterEach, vi } from "vitest";

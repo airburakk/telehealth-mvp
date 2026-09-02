@@ -9,7 +9,7 @@ import { ingestTtbEvents, type TtbEventsResult } from "@/lib/ttb-events";
 // GET /api/cron/ingest-hukuk — hukuk + etkinlik içerik hattı: Yargıtay içtihat (v6.86) · TR-Dizin
 // doktrin (v6.91) · TTB akredite etkinlik taraması (v6.129, HAFTALIK — yalnız Pazartesi).
 //
-// v6.204 (2026-09-02): purge-deleted bakım nöbetinden AYRILDI (kullanıcı kararı "bölelim"; plan Pro).
+// v6.205 (2026-09-02): purge-deleted bakım nöbetinden AYRILDI (kullanıcı kararı "bölelim"; plan Pro).
 // 02:20 UTC = 05:20 TR — ingest-doctorium'dan 20 dk sonra, Post baskısından (06:30 TR) önce biter.
 // Üç iş birbirinden BAĞIMSIZ: biri düşerse diğerleri koşar; düşen alarmla görünür, koşu 200 döner
 // (kısmi başarı). Yargıtay: koşu başına metin tavanı lib içinde (MAX_DOC_FETCH_DEFAULT), kalan
