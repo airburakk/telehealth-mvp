@@ -135,8 +135,9 @@ Demo kullanıcıları (parola `1234`; hasta demo `/giris`'te, personel demoları
 | Partner Doktor | `partner@air.test` | **Partner paneli** — yurtdışı ortak doktor; hasta DB erişimi YOK, uzaktan hizmet YOK; yalnız anonim **konsültasyon talebi** açar |
 | Sağlık Turizmi Acentesi | `acente@air.test` | **Acente paneli (S3, `/acente`)** — doktorun ilettiği tedavi dosyaları (KISITLI: kimlik/iletişim + işlem/ücret/süre/hastane; tıbbi belge ASLA) → hastaya paket **teklifi** hazırlar (`mode=offer`; doğrudan Escrow yetkisi yok) |
 
-Rol bazlı erişim `src/proxy.ts` (Next 16 proxy konvansiyonu) ile zorlanır. Yetkisiz erişim `/giris`'e, yanlış rol ana
-sayfaya, onamsız oturum `/onam`'a yönlendirilir. Parolalar `bcrypt` ile hash'lenir; `.env`
+Rol bazlı erişim `src/proxy.ts` (Next 16 proxy konvansiyonu) ile zorlanır. Yetkisiz erişim `/giris`'e, yanlış rol
+kullanıcının **kendi marka-duyarlı ana sayfasına** (`deniedRoleHome`, v6.203 — eskiden köke atıyordu;
+Doctorium deploy'unda kök = landing), onamsız oturum `/onam`'a yönlendirilir. Parolalar `bcrypt` ile hash'lenir; `.env`
 içinde `SESSION_SECRET` tanımlı olmalıdır.
 
 ## Modüller (canlı)
