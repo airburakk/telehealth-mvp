@@ -31,6 +31,7 @@ import { db } from "./db";
 import { TTB_INTERMEDIATE_CA } from "./ttb-ca";
 import { RG_INTERMEDIATE_CA } from "./rg-ca";
 import { translateTitlesTr } from "./translate-news";
+import { needsTitleTranslation } from "./news-language";
 
 // v6.57 TEŞHİS (2026-08-03): TR kaynakları (RG/OHSAD/TTB) Vercel fra1'den erişilemiyordu —
 // OHSAD 403 = Cloudflare bot koruması (veri-merkezi IP + "AuraHealth/1.0" ekli bot-ish UA +
@@ -227,13 +228,14 @@ async function upsertArticle(a: {
   if (getImage) {
     try { imageUrl = await getImage(); } catch { /* görselsiz devam */ }
   }
-  // Başlık çevirisi (2026-09-02, kullanıcı kararı: "bültende İngilizce olmasın") — YALNIZ ilaç
-  // modülü: openFDA/ClinicalTrials başlıkları İngilizce doğar (akademik hat: doctorium-ingest).
-  // Sektörel RSS kaynakları BİLİNÇLİ dışarıda — ayrı karar ister (hacim + kaynak tonu farklı).
-  // Fail-open (lib/translate-news): çeviri gelmezse özgün başlıkla yazılır.
+  // Başlık çevirisi (2026-09-02, kullanıcı kararı: "bültende İngilizce olmasın") — kapsam tek
+  // yerde: lib/news-language.needsTitleTranslation = ilaç modülü (openFDA/ClinicalTrials İngilizce
+  // doğar; akademik hat: doctorium-ingest) + İngilizce sektörel kaynaklar (Medscape/Medical Xpress/
+  // WHO — 2026-09-02 akşam kararıyla eklendi, önce bilinçli dışarıdaydı). Türkçe doğan kaynaklar
+  // geçmez. Fail-open (lib/translate-news): çeviri gelmezse özgün başlıkla yazılır.
   let title = a.title;
   let titleOriginal: string | null = null;
-  if (a.module === "ilac") {
+  if (needsTitleTranslation(a)) {
     const [tr] = await translateTitlesTr([a.title]);
     if (tr) { title = tr; titleOriginal = a.title; }
   }
@@ -352,20 +354,43 @@ export async function fetchGazetteArchive(date: Date): Promise<{ title: string; 
   return out;
 }
 
-/** Bugünün gazetesi (ana sayfa; utf-8 + fihrist-item düzeni). */
-export async function fetchGazetteToday(): Promise<{ title: string; url: string; id: string }[]> {
-  // v6.94: RG leaf-only TLS zinciri (rg-ca.ts) — normal fetch UNABLE_TO_VERIFY_LEAF_SIGNATURE ile düşer.
-  const res = await httpsGetWithCa("https://www.resmigazete.gov.tr/", RG_INTERMEDIATE_CA);
-  // Teşhis görünürlüğü (v6.57): sessizce [] dönmek "0 kayıt tarandı" ile "site reddetti"yi
-  // ayırt edilemez kılıyordu — HTTP hatası artık cron raporuna düşer.
-  if (res.status !== 200) throw new Error(`RG HTTP ${res.status}`);
-  const html = res.body;
+/**
+ * RG ana sayfa BÖLÜM başlıkları — fihrist kalemine YAPIŞAN artık (2026-09-02 ölçümü: sabah
+ * bülteninde "…Dair Yönetmelik İLÂN BÖLÜMÜ"). Ayrıştırıcı düzeltildi (bağlantı metni esas); bu
+ * temizlik iki iş görür: (a) RG işaretlemesi değişirse ikinci savunma hattı, (b) eski kayıtların
+ * onarımı (scripts/ingest-tr-sources.ts "başlık onarımı" adımı). Yalnız SONEK olarak sökülür —
+ * başlığın ortasındaki "Bölümü" kelimesine dokunulmaz.
+ */
+const GAZETTE_SECTION_SUFFIX = /\s*(?:YÜRÜTME VE İDARE BÖLÜMÜ|YARGI BÖLÜMÜ|İLÂN BÖLÜMÜ|İLAN BÖLÜMÜ)\s*$/u;
+/** Sayfa altı tanıtım metni — fihristin SON kalemine yapışıyordu (aynı ölçüm). */
+const GAZETTE_FOOTER_NOISE = /\s*Resm[îi] Gazete'nin kurumsal mobil uygulaması[\s\S]*$/u;
+
+export function stripGazetteSectionSuffix(title: string): string {
+  let t = title.replace(GAZETTE_FOOTER_NOISE, "");
+  // Bölüm + alt bölüm üst üste yapışabilir — doyana dek sök (küçük sabit tavan, sonsuz döngü yok).
+  for (let i = 0; i < 3; i++) {
+    const next = t.replace(GAZETTE_SECTION_SUFFIX, "");
+    if (next === t) break;
+    t = next;
+  }
+  return t.trim();
+}
+
+/**
+ * Ana sayfa HTML'ini fihrist kalemlerine ayrıştırır — SAF (birim testli: resmi-gazete-fihrist).
+ * 🪤 Başlık YALNIZ `<a>` içinden okunur: blok bir SONRAKİ fihrist kalemine kadar uzanır ve arada
+ * kalan bölüm başlığı (`card-title` — "İLÂN BÖLÜMÜ") ya da sayfa altı metni önceki sürümde
+ * başlığa yapışıyordu (2026-09-02, bültende görüldü). Arşiv yolu (fetchGazetteArchive) zaten
+ * bağlantı metnini okuduğu için temizdi.
+ */
+export function parseGazetteTodayHtml(html: string): { title: string; url: string; id: string }[] {
   const out: { title: string; url: string; id: string }[] = [];
   const seen = new Set<string>();
   for (const block of html.split(/<div class="fihrist-item[^"]*"[^>]*>/).slice(1)) {
     const href = /href="(https:\/\/www\.resmigazete\.gov\.tr\/eskiler\/[^"]+)"/.exec(block)?.[1];
     if (!href) continue;
-    const title = plain(block).replace(/^[–—\-]+\s*/, "").slice(0, 400);
+    const anchor = /<a[^>]*>([\s\S]*?)<\/a>/i.exec(block)?.[1] ?? "";
+    const title = stripGazetteSectionSuffix(plain(anchor).replace(/^[–—\-]+\s*/, "")).slice(0, 400);
     if (title.length < 15) continue;
     const id = href.split("/").pop() as string;
     if (seen.has(id)) continue;
@@ -373,6 +398,16 @@ export async function fetchGazetteToday(): Promise<{ title: string; url: string;
     out.push({ title, url: href, id });
   }
   return out;
+}
+
+/** Bugünün gazetesi (ana sayfa; utf-8 + fihrist-item düzeni). */
+export async function fetchGazetteToday(): Promise<{ title: string; url: string; id: string }[]> {
+  // v6.94: RG leaf-only TLS zinciri (rg-ca.ts) — normal fetch UNABLE_TO_VERIFY_LEAF_SIGNATURE ile düşer.
+  const res = await httpsGetWithCa("https://www.resmigazete.gov.tr/", RG_INTERMEDIATE_CA);
+  // Teşhis görünürlüğü (v6.57): sessizce [] dönmek "0 kayıt tarandı" ile "site reddetti"yi
+  // ayırt edilemez kılıyordu — HTTP hatası artık cron raporuna düşer.
+  if (res.status !== 200) throw new Error(`RG HTTP ${res.status}`);
+  return parseGazetteTodayHtml(res.body);
 }
 
 function gazetteDate(fileId: string): Date {

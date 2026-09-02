@@ -12,9 +12,13 @@
 //  · Determinizm: aynı gün aynı çıktı (rotasyon gün etiketinden türetilir; sıralama ikincil id'li).
 //  · Telif çizgisi Post'la aynı: başlık + kaynak + kısa özet + link — tam metin taşınmaz.
 //  · Kişisel veri YOK: NewsArticle metadata'sı; sponsor/anket bu tablodan zaten geçmez.
+//  · Sektörelde YERLİ kaynak önceliği (2026-09-02, kullanıcı kararı): pencerede Türkçe doğan
+//    kaynak varsa çevrilmiş uluslararası haberden önce seçilir (lib/news-language); yerli
+//    yoksa en taze yabancı kalır — akış boş düşmez.
 import { BRANCHES } from "./triage";
 import { trimSummary } from "./daily-digest";
 import { decodeFeedText } from "./doctorium";
+import { isNativeTurkishSource } from "./news-language";
 
 type Branch = (typeof BRANCHES)[number];
 
@@ -25,6 +29,8 @@ export const SOCIAL_WINDOW_MS = 48 * 3_600_000;
 /** Seçkiye giren makale alanları (route select'iyle bire bir). */
 export interface SocialArticle {
   id: string;
+  /** NewsArticle.source anahtarı — yerli/yabancı ayrımı (lib/news-language). */
+  source: string;
   module: string;
   kind: string;
   title: string;
@@ -86,6 +92,12 @@ export function pickSocialDigest(articles: SocialArticle[], rotation: Branch): S
         picked = branded;
         branch = { key: rotation.key, label: rotation.label };
       }
+    }
+    if (s.key === "sektorel") {
+      // Yerli kaynak önceliği (2026-09-02): TTB/İTO/OHSAD/SGK/dernek kalemi varsa Medscape/Medical
+      // Xpress/WHO'dan (artık çevrilmiş olsalar da) önce gelir; yerli yoksa en taze yabancı kalır.
+      const native = pool.find((a) => isNativeTurkishSource(a.source));
+      if (native) picked = native;
     }
     items.push({
       stream: s.key,

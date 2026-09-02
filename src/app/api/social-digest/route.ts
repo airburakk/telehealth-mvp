@@ -33,7 +33,7 @@ export async function GET(req: Request) {
   const articles = await db.newsArticle.findMany({
     where: { createdAt: { gte: new Date(Date.now() - SOCIAL_WINDOW_MS) } },
     select: {
-      id: true, module: true, kind: true, title: true, sourceName: true,
+      id: true, source: true, module: true, kind: true, title: true, sourceName: true,
       summary: true, url: true, branchSlugs: true, publishedAt: true,
     },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],

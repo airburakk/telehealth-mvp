@@ -10,7 +10,7 @@ import { rotationBranchFor, pickSocialDigest, type SocialArticle } from "@/lib/s
 import { BRANCHES } from "@/lib/triage";
 
 const art = (over: Partial<SocialArticle>): SocialArticle => ({
-  id: "a1", module: "akademik", kind: "makale", title: "Başlık", sourceName: "JAMA",
+  id: "a1", source: "pubmed", module: "akademik", kind: "makale", title: "Başlık", sourceName: "JAMA",
   summary: "Özet metni.", url: "https://doi.org/x", branchSlugs: "[]",
   publishedAt: new Date("2026-08-30T06:00:00Z"), ...over,
 });
@@ -54,6 +54,18 @@ describe("pickSocialDigest: teaser seçkisi", () => {
     const items = pickSocialDigest([art({ id: "genel", branchSlugs: '["onkoloji"]' })], rot);
     expect(items[0].stream).toBe("akademik");
     expect(items[0].branch).toBeNull();
+  });
+
+  it("sektörelde yerli kaynak, daha taze yabancı haberden önce gelir; yerli yoksa yabancı kalır", () => {
+    const yabanci = art({ id: "ms", module: "sektorel", kind: "haber", source: "medscape", title: "Çevrilmiş Medscape haberi" });
+    const yerli = art({ id: "ttb", module: "sektorel", kind: "haber", source: "ttb", title: "TTB duyurusu" });
+    // yalnız yabancı → akış boş düşmez, yabancı kalır
+    expect(pickSocialDigest([yabanci], rot)[0].title).toBe("Çevrilmiş Medscape haberi");
+    // yabancı daha taze (dizide önce) olsa da yerli seçilir
+    expect(pickSocialDigest([yabanci, yerli], rot)[0].title).toBe("TTB duyurusu");
+    // önceliğin akademik/ilaç akışlarına etkisi yok
+    const ilac = pickSocialDigest([art({ id: "i", module: "ilac", kind: "ilac", source: "clinicaltrials", title: "Faz 3" })], rot);
+    expect(ilac[0].title).toBe("Faz 3");
   });
 
   it("mevzuat ailesi kind ile üç akışa ayrılır", () => {

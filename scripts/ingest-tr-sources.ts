@@ -72,7 +72,7 @@ async function main() {
 
   // Dinamik import ŞART: src/lib/db, DATABASE_URL/AURA_DB_GUARD'ı MODÜL YÜKLENİRKEN okur —
   // yukarıdaki env ayarları import'tan önce bitmeliydi (statik import bu sırayı bozar).
-  const { fetchGazetteToday, fetchGazetteArchive, ingestGazetteItems, ingestOhsad, ingestSgkGss, describeFetchError, fetchDocumentText } =
+  const { fetchGazetteToday, fetchGazetteArchive, ingestGazetteItems, ingestOhsad, ingestSgkGss, describeFetchError, fetchDocumentText, stripGazetteSectionSuffix } =
     await import("../src/lib/doctorium-sources");
   const { db } = await import("../src/lib/db");
 
@@ -104,6 +104,28 @@ async function main() {
     await sleep(GAP_MS);
   }
   console.log(`  RG: taranan ${rgScanned} · yeni ${rgNew} · boş gün ${rgEmpty} · hata ${rgFail}`);
+
+  // ── RG başlık onarımı (2026-09-02) ─────────────────────────────────────────
+  // Ana sayfa ayrıştırıcısı bölüm başlığını ("İLÂN BÖLÜMÜ") ve sayfa altı tanıtım metnini
+  // başlığa yapıştırıyordu (sabah bülteninde görüldü); ayrıştırıcı düzeltildi, ESKİ kayıtlar burada
+  // onarılır. İdempotent: temiz başlık değişmez, onarılan bir daha eşleşmez. Yalnız RG satırları.
+  const suspects = await db.newsArticle.findMany({
+    where: {
+      source: "resmi-gazete",
+      OR: [{ title: { contains: "BÖLÜMÜ" } }, { title: { contains: "kurumsal mobil uygulaması" } }],
+    },
+    select: { id: true, title: true },
+  });
+  const repairs = suspects
+    .map((r) => ({ id: r.id, before: r.title, after: stripGazetteSectionSuffix(r.title) }))
+    .filter((r) => r.after !== r.before && r.after.length >= 15);
+  for (const r of repairs) {
+    console.log(`  ${DRY ? "→ onarılırdı" : "✎ onarıldı  "} [RG] …${r.before.slice(-70)}  ⇒  …${r.after.slice(-45)}`);
+  }
+  if (!DRY) {
+    for (const r of repairs) await db.newsArticle.update({ where: { id: r.id }, data: { title: r.after } });
+  }
+  console.log(`  başlık onarımı: şüpheli ${suspects.length} · onarım ${repairs.length}`);
 
   // ── OHSAD ─────────────────────────────────────────────────────────────────
   console.log("\n🏥 OHSAD");
