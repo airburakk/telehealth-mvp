@@ -1187,7 +1187,11 @@ model NewsArticle {
   kind          String // makale | ilac | mevzuat | haber
   title         String // gösterim başlığı (çevrilmişse Türkçe)
   titleOriginal String? // özgün dildeki başlık (çeviri uygulandıysa)
-  summary       String // özet/abstract (çevrilmişse Türkçe)
+  summary       String // özet/abstract — gösterim metni (çeviri cron'undan geçtiyse Türkçe GİRİŞ, ~700 kar. — v6.206)
+  /// v6.206 — özgün dildeki özet TAM metni (giriş çevirisi uygulandıysa). NULL = henüz api/cron/translate-news'ten
+  /// geçmedi (Türkçe doğan kaynaklar hiç seçilmez → NULL kalır). AI özetleri (ensureClinicalSummary /
+  /// ensureRegulationSummary) kaynak metin olarak BUNU (varsa) okur — çevrilmiş kesik girişten üretilmesin.
+  summaryOriginal String?
   /// AI klinik özet — JSON {takeaways: string[], design: string, limits: string}. Null = henüz üretilmedi.
   /// ⚠️ Klinik karar aracı DEĞİL; arayüzde bu uyarı ile birlikte gösterilir.
   aiSummary     String?

@@ -46,6 +46,7 @@ export function errText(e: unknown, fallback: string): string {
 export const CRON_SCHEDULES: Record<string, string> = {
   "/api/cron/ingest-doctorium": "0 2 * * *",         // 05:00 TR — akademik + haber (PubMed/EPMC/DOAJ/RSS/…)
   "/api/cron/ingest-hukuk": "20 2 * * *",            // 05:20 TR — Yargıtay + Doktrin + TTB (Pazartesi)
+  "/api/cron/translate-news": "40 2 * * *",          // 05:40 TR — özet GİRİŞİ çevirisi (ingest bitmiş olur; baskıdan önce) — v6.206
   "/api/cron/registry-sync": "0 3 * * *",            // 06:00 TR — HealthTürkiye dizini (değişmedi)
   "/api/cron/purge-deleted": "30 3 * * *",           // 06:30 TR — KVKK imha + zincirler + günlük damga + diploma süpürmesi
   "/api/cron/daily-digest": "30 3 * * *",            // 06:30 TR — Doctorium Post + etkinlik alarmı

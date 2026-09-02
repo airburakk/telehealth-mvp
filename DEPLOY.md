@@ -170,6 +170,7 @@ ortak DB'de çift koşum olmasın) — iki korkuluk tek yerde: `cronGate()`.
 |---|---|---|
 | 02:00 → 05:00 | `/api/cron/ingest-doctorium` | akademik + haber/sektörel/ilaç içerik toplama (kendi 300 sn bütçesi) |
 | 02:20 → 05:20 | `/api/cron/ingest-hukuk` | Yargıtay içtihat · TR-Dizin doktrin · TTB etkinlik (yalnız Pazartesi) |
+| 02:40 → 05:40 | `/api/cron/translate-news` | özet GİRİŞİ çevirisi (v6.206) — akademik/ilaç/İngilizce sektörel kayıtlarda `summary`=Türkçe (~700 kar., cümle sınırı), `summaryOriginal`=özgün; yeni→eski, birikmişi gecelik bütçeyle (240 sn) kendisi kapatır — PROD backfill script'i gerekmez; elle prova `?budget=<sn>` |
 | 03:00 → 06:00 | `/api/cron/registry-sync` | HealthTürkiye dizini (değişmedi) |
 | 03:30 → 06:30 | `/api/cron/purge-deleted` | KVKK imha · audit+onam zinciri doğrulama · günlük kök damgası · diploma süpürmesi |
 | 03:30 → 06:30 | `/api/cron/daily-digest` | Doctorium Post baskısı · etkinlik/kongre alarmı |

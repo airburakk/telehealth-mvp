@@ -1,31 +1,46 @@
-// Akademik başlık çevirisi (2026-08-31, kullanıcı kararı: "bültende İngilizce başlık olmasın").
+// Haber ÇEVİRİ hattı — başlık (2026-08-31) + özet GİRİŞİ (v6.206, 2026-09-02 gece).
 //
-// KÖK SORUN: şemadaki `NewsArticle.titleOriginal` alanı v6.48'den beri duruyordu ama HİÇBİR kod
-// doldurmuyordu — "çevrilmişse Türkçe" tasarım niyeti kodda karşılıksızdı; PubMed/EPMC/DOAJ
-// başlıkları İngilizce yazılıyordu. Bu modül o hattı kurar: ingest, create'ten önce başlıkları
-// TOPLU çevirir → title=Türkçe, titleOriginal=özgün. Portal + Post + sosyal bülten birden düzelir.
+// KÖK SORUN (başlık, 2026-08-31, kullanıcı kararı "bültende İngilizce başlık olmasın"): şemadaki
+// `NewsArticle.titleOriginal` alanı v6.48'den beri duruyordu ama HİÇBİR kod doldurmuyordu — "çevrilmişse
+// Türkçe" tasarım niyeti kodda karşılıksızdı; PubMed/EPMC/DOAJ başlıkları İngilizce yazılıyordu. Bu modül
+// o hattı kurar: ingest, create'ten önce başlıkları TOPLU çevirir → title=Türkçe, titleOriginal=özgün.
+// Portal + Post + sosyal bülten birden düzelir.
 //
-// FAIL-OPEN: anahtar yoksa / API hata verirse / yanıt hizasızsa null döner ve çağıran ORİJİNAL
-// başlığı yazar — çeviri hattı içerik boru hattını ASLA kurutamaz (ingest disipliniyle aynı).
-// Eşleşme güvenliği: model N başlığa N çeviri döndürmezse batch'in TAMAMI null sayılır —
-// kaymış hizayla yanlış başlık basmaktansa İngilizce kalması yeğdir (alignTranslations, birim testli).
-// İçerik PHI DEĞİLDİR (açık literatür başlığı) — AI'a gitmesi serbest (asla-loglama gerekmez).
+// ÖZET GİRİŞİ (v6.206 — kullanıcı bildirimi 2026-09-02 gece: "özet yok, sadece başlıklar çevrilmiş"):
+// başlık çevrildikten sonra abstract / briefSummary / RSS açıklaması İngilizce kalıyor; akış kartı, Post ve
+// sosyal bülten ona aynen basıyordu (canlıda: Türkçe başlık altında "Talquetamab, a bispecific antibody…").
+// Özet çevirisi ingest'in İÇİNDE DEĞİL, ayrı cron'dadır (api/cron/translate-news → lib/translate-summaries):
+// abstract çıktısı başlığın ~20 katı; 30 branş × ek istek ingest'in 300 sn bütçesini taşırır ve o günün
+// kalan branşları sessizce düşerdi. Yalnız özetin GİRİŞİ çevrilir (summaryLead — ~700 karakter, cümle
+// sınırında): hiçbir yüzey 220 karakterden fazlasını göstermiyor (kart 210/130 · Post 220 · bülten 160).
+// Özgün tam metin `summaryOriginal`'da kalır; AI özetleri (ensureClinicalSummary / ensureRegulationSummary)
+// kaynak olarak ONU okur.
+//
+// FAIL-OPEN: anahtar yoksa / API hata verirse / yanıt hizasızsa çeviri gelmez ve çağıran ÖZGÜN metni
+// yazar ya da yerinde bırakır — çeviri hattı içerik boru hattını ASLA kurutamaz (ingest disipliniyle aynı).
+// Eşleşme güvenliği: model N metne N çeviri döndürmezse PARÇANIN tamamı düşer — kaymış hizayla yanlış metin
+// basmaktansa İngilizce kalması yeğdir (alignTranslations, birim testli).
+// İçerik PHI DEĞİLDİR (açık literatür/haber metni) — AI'a gitmesi serbest (asla-loglama gerekmez).
 import Anthropic from "@anthropic-ai/sdk";
 
 // Basit yüksek-hacim iş: düşük efor yeterli (çeviri başına ~2 sn, gece cron'unda koşar).
 const MODEL = "claude-opus-5";
-const CHUNK = 20; // istek başına başlık — tek istekte tüm gece toplu, hiza riski küçük tutulur
+const TITLE_CHUNK = 20; // istek başına başlık — tek istekte tüm gece toplu, hiza riski küçük tutulur
+// Özet girişi başlığın ~5 katı (≤ ~800 kar.) → küçük parça: istek ~30 sn'de biter, hiza bozulursa düşen küme küçük.
+const SUMMARY_CHUNK = 8;
+/** Çevrilen özet GİRİŞİ üst sınırı (karakter) — summaryLead cümle sınırında keser. */
+export const SUMMARY_LEAD_MAX = 700;
 
 const TRANSLATE_TOOL: Anthropic.Tool = {
   name: "submit_translations",
-  description: "Verilen makale başlıklarının Türkçe çevirilerini, AYNI SIRADA ve AYNI SAYIDA döndürür.",
+  description: "Verilen metinlerin Türkçe çevirilerini, AYNI SIRADA ve AYNI SAYIDA döndürür.",
   input_schema: {
     type: "object",
     properties: {
       translations: {
         type: "array",
         items: { type: "string" },
-        description: "Türkçe başlıklar — girişle birebir aynı sıra ve sayıda",
+        description: "Türkçe metinler — girişle birebir aynı sıra ve sayıda",
       },
     },
     required: ["translations"],
@@ -35,6 +50,19 @@ const TRANSLATE_TOOL: Anthropic.Tool = {
   // sarabiliyor — strict şema doğrulaması bunu keser.
   strict: true,
 } as Anthropic.Tool;
+
+const TITLE_SYSTEM =
+  "Sen tıbbi literatür çevirmenisin. Verilen makale başlıklarını Türkçeye çevirirsin. " +
+  "Kurallar: tıbbi terminolojiyi Türkçe tıp dilinde karşıla; yerleşik kısaltmaları (DNA, mRNA, COVID-19, MR, BT vb.) aynen bırak; " +
+  "başlık formatını koru (cümleye çevirme, açıklama ekleme, UYDURMA yok); başlık zaten Türkçeyse AYNEN döndür. " +
+  "Yanıtı DAİMA submit_translations aracıyla, girişle aynı sıra ve sayıda ver.";
+
+const SUMMARY_SYSTEM =
+  "Sen tıbbi literatür çevirmenisin. Verilen makale/haber özeti GİRİŞLERİNİ Türkçeye çevirirsin. " +
+  "Kurallar: tıbbi terminolojiyi Türkçe tıp dilinde karşıla; yerleşik kısaltmaları (DNA, mRNA, COVID-19, MR, BT, HR, OR vb.) ve sayısal değerleri aynen bırak; " +
+  "yapılandırılmış özet etiketlerini (BACKGROUND/METHODS/RESULTS/CONCLUSIONS) Türkçe karşılıklarıyla (ARKA PLAN/YÖNTEM/BULGULAR/SONUÇ) koru; " +
+  "metin bir özetin kesilmiş baş kısmı olabilir — kesik yeri TAMAMLAMA, açıklama ya da yorum EKLEME, UYDURMA yok; " +
+  "metin zaten Türkçeyse AYNEN döndür. Yanıtı DAİMA submit_translations aracıyla, girişle aynı sıra ve sayıda ver.";
 
 /**
  * Model yanıtını giriş listesine SAF hizalar (birim testli):
@@ -56,39 +84,81 @@ export function alignTranslations(titles: string[], out: unknown): (string | nul
 }
 
 /**
- * Başlıkları Türkçeye çevirir; sonuç dizisi girişle aynı uzunluktadır (başarısız öğe null).
- * ANTHROPIC_API_KEY yoksa ağa hiç çıkmadan null'lar döner (dormant — masrafsız).
+ * Özet GİRİŞİ: metnin ilk `max` karakteri, SON TAM CÜMLEDE kesilir (sınırın yarısından erken bir cümle
+ * sonu sayılmaz — tek kelimelik giriş olmasın); cümle sonu yoksa kelime sınırında kesilir ve "…" eklenir.
+ * Cümle sonu = . ! ? (+ isteğe bağlı kapanış tırnağı/parantez) ardından boşluk → "0.5" / "p<0.05" bölünmez;
+ * "e.g. " gibi kısaltma noktası mükemmel ayrışmaz (giriş metni için kabul edilen sınır). Birim testli.
  */
-export async function translateTitlesTr(titles: string[]): Promise<(string | null)[]> {
-  if (!titles.length) return [];
-  if (!process.env.ANTHROPIC_API_KEY) return titles.map(() => null);
+export function summaryLead(text: string, max = SUMMARY_LEAD_MAX): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (flat.length <= max) return flat;
+  const cut = flat.slice(0, max);
+  let end = -1;
+  const re = /[.!?]["')\]]?\s/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(cut))) end = m.index + m[0].length - 1; // noktalama (+tırnak) dahil, boşluk hariç
+  if (end >= max * 0.5) return cut.slice(0, end).trimEnd();
+  const sp = cut.lastIndexOf(" ");
+  return `${cut.slice(0, sp > max * 0.6 ? sp : max).trimEnd()}…`;
+}
+
+/**
+ * Ortak toplu çevirici. Dönen dizi girişle aynı uzunluktadır:
+ *   string    → çeviri
+ *   null      → TEKİL düşüş (boş yanıt / girişle aynı metin = zaten Türkçe) — öğe "işlendi" sayılabilir
+ *   undefined → PARÇA düştü (API hatası / sayı uyuşmazlığı / anahtar yok) — öğeye dokunulmadı, tekrar denenebilir
+ * Ayrım özet cron'u için gerekir (lib/translate-summaries): API hatasında satır işaretlenmez, sonraki gece yeniden.
+ */
+async function translateBatchTr(
+  texts: string[],
+  cfg: { system: string; chunk: number; maxTokens: number; sep: string },
+): Promise<(string | null | undefined)[]> {
+  if (!texts.length) return [];
+  if (!process.env.ANTHROPIC_API_KEY) return texts.map(() => undefined); // dormant — ağa hiç çıkmaz, masrafsız
   const client = new Anthropic();
-  const out: (string | null)[] = [];
-  for (let i = 0; i < titles.length; i += CHUNK) {
-    const grup = titles.slice(i, i + CHUNK);
+  const out: (string | null | undefined)[] = [];
+  for (let i = 0; i < texts.length; i += cfg.chunk) {
+    const grup = texts.slice(i, i + cfg.chunk);
     try {
       const res = await client.messages.create({
         model: MODEL,
-        max_tokens: 4096,
+        max_tokens: cfg.maxTokens,
         output_config: { effort: "low" },
-        system:
-          "Sen tıbbi literatür çevirmenisin. Verilen makale başlıklarını Türkçeye çevirirsin. " +
-          "Kurallar: tıbbi terminolojiyi Türkçe tıp dilinde karşıla; yerleşik kısaltmaları (DNA, mRNA, COVID-19, MR, BT vb.) aynen bırak; " +
-          "başlık formatını koru (cümleye çevirme, açıklama ekleme, UYDURMA yok); başlık zaten Türkçeyse AYNEN döndür. " +
-          "Yanıtı DAİMA submit_translations aracıyla, girişle aynı sıra ve sayıda ver.",
+        system: cfg.system,
         tools: [TRANSLATE_TOOL],
         tool_choice: { type: "tool", name: "submit_translations" },
         messages: [{
           role: "user",
-          content: grup.map((t, n) => `${n + 1}. ${t}`).join("\n"),
+          content: grup.map((t, n) => `${n + 1}. ${t}`).join(cfg.sep),
         }],
       });
       const block = res.content.find((b) => b.type === "tool_use");
       const raw = block && block.type === "tool_use" ? (block.input as { translations?: unknown }).translations : null;
+      if (!Array.isArray(raw) || raw.length !== grup.length) {
+        out.push(...grup.map(() => undefined)); // hiza yok → parça düştü (kaymış hiza asla yayılmaz)
+        continue;
+      }
       out.push(...alignTranslations(grup, raw));
     } catch {
-      out.push(...grup.map(() => null)); // fail-open: bu grup İngilizce kalır, boru hattı sürer
+      out.push(...grup.map(() => undefined)); // fail-open: bu parça özgün dilde kalır, boru hattı sürer
     }
   }
   return out;
+}
+
+/**
+ * Başlıkları Türkçeye çevirir; sonuç dizisi girişle aynı uzunluktadır (başarısız öğe null).
+ * ANTHROPIC_API_KEY yoksa ağa hiç çıkmadan null'lar döner (dormant — masrafsız).
+ */
+export async function translateTitlesTr(titles: string[]): Promise<(string | null)[]> {
+  const out = await translateBatchTr(titles, { system: TITLE_SYSTEM, chunk: TITLE_CHUNK, maxTokens: 4096, sep: "\n" });
+  return out.map((t) => t ?? null);
+}
+
+/**
+ * Özet GİRİŞLERİNİ (summaryLead çıktısı) Türkçeye çevirir. Üçlü sonuç (string / null / undefined) —
+ * bkz. translateBatchTr; çağıran (lib/translate-summaries) null'u "işlendi", undefined'ı "sonra yeniden" sayar.
+ */
+export async function translateSummariesTr(leads: string[]): Promise<(string | null | undefined)[]> {
+  return translateBatchTr(leads, { system: SUMMARY_SYSTEM, chunk: SUMMARY_CHUNK, maxTokens: 8192, sep: "\n\n" });
 }

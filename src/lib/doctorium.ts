@@ -1351,16 +1351,18 @@ export function parseClinicalSummary(raw: string | null): ClinicalSummary | null
 export async function ensureClinicalSummary(id: string): Promise<ClinicalSummary | null> {
   const row = await db.newsArticle.findUnique({
     where: { id },
-    select: { aiSummary: true, title: true, summary: true, module: true },
+    select: { aiSummary: true, title: true, summary: true, summaryOriginal: true, module: true },
   });
   if (!row) return null;
   const existing = parseClinicalSummary(row.aiSummary);
   if (existing) return existing;
   // Abstract'ı olmayan kalemde (ör. mevzuat başlığı) üretilecek bir şey yok — uydurma YAPILMAZ.
-  if (row.module !== "akademik" || !row.summary || !process.env.ANTHROPIC_API_KEY) return null;
+  // v6.206: `summary` çeviri cron'undan geçtiyse kısa Türkçe GİRİŞTİR — klinik özet ÖZGÜN tam abstract'tan üretilir.
+  const abstract = row.summaryOriginal ?? row.summary;
+  if (row.module !== "akademik" || !abstract || !process.env.ANTHROPIC_API_KEY) return null;
 
   try {
-    const s = await summarizeArticleForClinician(row.title, row.summary);
+    const s = await summarizeArticleForClinician(row.title, abstract);
     await db.newsArticle.update({ where: { id }, data: { aiSummary: JSON.stringify(s) } });
     return s;
   } catch (e) {
@@ -1408,7 +1410,7 @@ export type RegulationResult =
 export async function ensureRegulationSummary(id: string): Promise<RegulationResult> {
   const row = await db.newsArticle.findUnique({
     where: { id },
-    select: { aiSummary: true, summary: true, title: true, url: true, module: true },
+    select: { aiSummary: true, summary: true, summaryOriginal: true, title: true, url: true, module: true },
   });
   if (!row) return { state: "unavailable" };
 
@@ -1418,13 +1420,19 @@ export async function ensureRegulationSummary(id: string): Promise<RegulationRes
   if (!process.env.ANTHROPIC_API_KEY) return { state: "unavailable" };
 
   // (1) Kaynak metni: DB'de varsa onu kullan, yoksa çek ve KAYDET (bir kez indirilir).
-  let text = row.summary?.trim() ?? "";
+  // v6.206: özet çeviri cron'undan geçtiyse `summary` kısa Türkçe GİRİŞTİR → kaynak metin özgün alandan
+  // okunur; çekilen sayfa metni de Türkçe girişi EZMEZ, özgün alana yazılır. Çevrilmemiş satırda eski
+  // davranış (summary'ye yaz) sürer — cron sonra o metnin girişini çevirir.
+  let text = (row.summaryOriginal ?? row.summary)?.trim() ?? "";
   if (text.length < 120) {
     if (!row.url) return { state: "unavailable" };
     const fetched = await fetchDocumentText(row.url);
     if (!fetched) return { state: "unavailable" };
     text = fetched;
-    await db.newsArticle.update({ where: { id }, data: { summary: text } });
+    await db.newsArticle.update({
+      where: { id },
+      data: row.summaryOriginal === null ? { summary: text } : { summaryOriginal: text },
+    });
   }
 
   // (2) AI özeti

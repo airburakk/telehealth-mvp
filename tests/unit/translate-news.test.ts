@@ -4,7 +4,7 @@
 // sayıda çeviri döndürmezse batch'in tamamı düşer (kaymış hiza asla yayılmaz); tekil bozukluklar
 // (boş string, girişle aynı metin) yalnız o öğeyi düşürür.
 import { describe, it, expect } from "vitest";
-import { alignTranslations } from "@/lib/translate-news";
+import { alignTranslations, summaryLead } from "@/lib/translate-news";
 
 const T = ["Alpha study", "Beta trial"];
 
@@ -33,5 +33,32 @@ describe("alignTranslations: hiza güvenliği", () => {
     expect(alignTranslations(T, ["1. Alfa çalışması", "2) Beta denemesi"])).toEqual(["Alfa çalışması", "Beta denemesi"]);
     // ikinci öğede "1." öneki o öğenin numarası DEĞİL → korunur
     expect(alignTranslations(T, ["1. Alfa", "1. Tip Diyabet"])).toEqual(["Alfa", "1. Tip Diyabet"]);
+  });
+});
+
+// v6.206 — özet GİRİŞİ kesimi: çevrilen metin cümle sınırında biter; sayı/kısaltma noktası sınır sayılmaz.
+describe("summaryLead: özet girişi kesimi", () => {
+  it("sınırın altındaki metin aynen geçer (boşluklar normalize)", () => {
+    expect(summaryLead("  Kısa   özet.\n", 100)).toBe("Kısa özet.");
+  });
+  it("uzun metin SON TAM cümlede kesilir — üç nokta eklenmez (cümle bütün)", () => {
+    const t = "Birinci cümle burada. İkinci cümle de burada. Üçüncü cümle çok uzun ve sınırı aşar.";
+    expect(summaryLead(t, 50)).toBe("Birinci cümle burada. İkinci cümle de burada.");
+  });
+  it("cümle sınırı yoksa kelime sınırında kesilir ve … eklenir", () => {
+    const t = "Bu cümlede hiç nokta yok ve kelimeler uzayıp gidiyor sonuna kadar";
+    expect(summaryLead(t, 30)).toBe("Bu cümlede hiç nokta yok ve…");
+  });
+  it("cümle sınırı çok erkense (sınırın yarısından önce) kelime kesimi tercih edilir", () => {
+    const t = "Kısa. Sonra noktasız uzun bir metin gelir ve sınırı aşar";
+    expect(summaryLead(t, 40)).toBe("Kısa. Sonra noktasız uzun bir metin…");
+  });
+  it("kapanış tırnağı cümle sonuna dahil edilir", () => {
+    const t = 'He said "Done." Then more text follows here.';
+    expect(summaryLead(t, 30)).toBe('He said "Done."');
+  });
+  it("ondalık sayı noktası cümle sınırı DEĞİLDİR (0.5 bölünmez)", () => {
+    const t = "Oran 0.5 idi ve sonra devam eden uzun bir cümle geldi burada";
+    expect(summaryLead(t, 30)).toBe("Oran 0.5 idi ve sonra devam…");
   });
 });

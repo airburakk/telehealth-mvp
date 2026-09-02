@@ -4,7 +4,7 @@
 //   1) vercel.json crons ↔ lib/cron-guard CRON_SCHEDULES BİREBİR (yol + zamanlama). Biri değişip
 //      öteki unutulursa cron ya hiç tetiklenmez ya da belge yalan söyler.
 //   2) Her cron yolunun rota dosyası var, ortak kapıyı (cronGate) kullanır ve maxDuration bildirir.
-//   3) SIRA: içerik cron'ları (ingest-*) Post baskısından (daily-digest) ÖNCE biter — "sabah gazetesi"
+//   3) SIRA: içerik cron'ları (ingest-* ve v6.206 translate-news) Post baskısından (daily-digest) ÖNCE biter — "sabah gazetesi"
 //      o gecenin içeriğini görsün. Eskiden bu sıra tek rota içindeydi; artık zamanlamayla korunur.
 //   4) Doctorium deploy'unda çift koşum olmasın: her rota kapıdan geçer (BRAND_MODE no-op).
 import { readFileSync, existsSync } from "node:fs";
@@ -23,10 +23,10 @@ function minuteOfDay(schedule: string): number {
 }
 
 describe("vercel.json ↔ CRON_SCHEDULES", () => {
-  it("yol ve zamanlama birebir aynı (altı cron)", () => {
+  it("yol ve zamanlama birebir aynı (yedi cron)", () => {
     const fromVercel = Object.fromEntries(vercel.crons.map((c) => [c.path, c.schedule]));
     expect(fromVercel).toEqual(CRON_SCHEDULES);
-    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(6);
+    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(7);
   });
 
   it("her cron yolunun rota dosyası var, cronGate kullanır, maxDuration bildirir", () => {
@@ -43,11 +43,18 @@ describe("vercel.json ↔ CRON_SCHEDULES", () => {
 
   it("SIRA: içerik cron'ları Post baskısından (daily-digest) önce biter", () => {
     const digest = minuteOfDay(CRON_SCHEDULES["/api/cron/daily-digest"]);
-    for (const p of ["/api/cron/ingest-doctorium", "/api/cron/ingest-hukuk"]) {
+    for (const p of ["/api/cron/ingest-doctorium", "/api/cron/ingest-hukuk", "/api/cron/translate-news"]) {
       const t = minuteOfDay(CRON_SCHEDULES[p]);
       // Her içerik cron'unun bütçesi 300 sn; baskıdan en az 30 dk önce başlamalı ki bitmiş olsun.
       expect(digest - t, `${p} baskıya çok yakın (${t} → ${digest})`).toBeGreaterThanOrEqual(30);
     }
+  });
+
+  it("SIRA: özet çevirisi (translate-news) içerik toplama bittikten SONRA başlar (v6.206)", () => {
+    // ingest-doctorium bütçesi 300 sn → çeviri en az 10 dk sonra başlamalı ki o gecenin kayıtlarını görsün.
+    const ingest = minuteOfDay(CRON_SCHEDULES["/api/cron/ingest-doctorium"]);
+    const ceviri = minuteOfDay(CRON_SCHEDULES["/api/cron/translate-news"]);
+    expect(ceviri - ingest).toBeGreaterThanOrEqual(10);
   });
 
   it("hasta hatırlatması insanca saatte (08:00–18:00 TR) — kullanıcı kararı 10:00 TR", () => {
