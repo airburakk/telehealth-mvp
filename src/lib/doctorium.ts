@@ -1297,9 +1297,15 @@ async function translateToTurkish(texts: string[]): Promise<Record<string, strin
   return map;
 }
 
-/** Liste görünümü için başlıkları TR'ye çevir (özet listede kısaltıldığı için yalnız başlık çevrilir). */
+/**
+ * Liste görünümü için başlıkları TR'ye çevir (özet listede kısaltıldığı için yalnız başlık çevrilir).
+ * `titleOriginal` doluysa ingest-time'da (lib/translate-news) ZATEN çevrilmiş demektir — tekrar
+ * denemek hem gereksiz LLM çağrısı hem de zaten-Türkçe metni ikinci kez "çevirtme" riski taşır
+ * (2026-09-02: canlıda gözlemlendi — backfill'i tamamlanmış bir NEJM başlığı yine de bu yoldan
+ * geçip numaralandırma artığı kazanmıştı).
+ */
 export async function localizeTitles(items: FeedItem[]): Promise<FeedItem[]> {
-  const needs = items.filter((i) => i.module === "akademik").map((i) => i.title);
+  const needs = items.filter((i) => i.module === "akademik" && !i.titleOriginal).map((i) => i.title);
   if (!needs.length) return items;
   const tx = await translateToTurkish(needs);
   return items.map((i) => {
