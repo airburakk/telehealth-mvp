@@ -1,8 +1,8 @@
 // TTB akredite etkinlik ingest ÇEKİRDEĞİ (v6.129) — scripts/ingest-ttb-events.ts'ten çıkarıldı.
 //
 // NEDEN LIB'E TAŞINDI: TTB kaydına düzenleyiciler etkinlikten en az 30 gün önce başvuruyor →
-// kayıt tek seferlik dolumla değil PERİYODİK taramayla güncel kalır (v6.120 dersi). Vercel Hobby
-// cron 2/2 dolu olduğu için tarama, günlük bakım nöbetine (purge-deleted rotası) HAFTALIK
+// kayıt tek seferlik dolumla değil PERİYODİK taramayla güncel kalır (v6.120 dersi). Hobby döneminde Vercel
+// cron 2/2 dolu olduğu için tarama (plan 2026-09-02'den beri Pro; desen korunuyor), günlük bakım nöbetine (purge-deleted rotası) HAFTALIK
 // kontenjanla bindirildi — o rota bu modülü statik import eder. CLI script'i (dry-run/--prod
 // korkuluklarıyla) ince kabuk olarak yaşamaya devam eder ve bu çekirdeği env kurulumundan SONRA
 // dinamik import eder (db.ts bağlantıyı modül yüklenirken okur — hukuk-ingest ile aynı desen).

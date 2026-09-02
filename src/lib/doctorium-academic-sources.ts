@@ -273,7 +273,7 @@ async function runAllBranches(
   return [scanned, created];
 }
 
-/** Günlük cron varsayılanları küçük tutar (Hobby maxDuration bütçesi); backfill opts geçer. */
+/** Günlük cron varsayılanları küçük tutar (bakım nöbetinin maxDuration bütçesi); backfill opts geçer. */
 export const ingestEuropePmcAll = (opts: AcademicIngestOpts = { days: 21, perBranch: 2 }) =>
   runAllBranches(epmcBranch, opts, 250);
 

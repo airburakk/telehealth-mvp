@@ -20,7 +20,7 @@ const browserStub = { browser: "./src/empty-module.js" };
 const isDev = process.env.NODE_ENV === "development";
 // ── TAM CSP — ENFORCE (2026-07-29; v6.25'ten beri Report-Only'deydi) ──
 // Enforce'a geçiş log izleme ile DEĞİL, KOD KANITIYLA yapıldı: Vercel Hobby'de runtime log saklama
-// süresi 1 saat + üretimde henüz gerçek kullanıcı trafiği yok → "raporları 1-2 hafta izle" planı
+// süresi 1 saat (2026-09-02'den beri Pro: 1 gün — karar yine kod kanıtına dayanır) + üretimde henüz gerçek kullanıcı trafiği yok → "raporları 1-2 hafta izle" planı
 // yapısal olarak çalışmıyordu. Onun yerine prod bundle'ının 80 chunk'ı `Function(...)`/`eval(...)`
 // için tarandı (minified desen dahil — `new Function` araması yanlış negatif verir):
 //   · CharLS (JPEG-LS)  → embind `Function("body", …)`, modül yüklemede ÇALIŞIR = gerçek ihlal

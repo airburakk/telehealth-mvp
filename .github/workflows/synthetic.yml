@@ -1,8 +1,9 @@
 # Sentetik rota kontrolleri (Faz 5 Ray C, 2026-07-16) — üretimi DIŞARIDAN, gerçek kullanıcı
 # perspektifinden denetler (Vercel tümden çökse bile bu koşucu ayakta kalır ve yakalar).
 #
-# Zamanlayıcı neden burada: Vercel Hobby planında cron limiti 2 ve ikisi de dolu (registry-sync +
-# purge-deleted); Hobby cron'ları zaten günde 1 hassasiyetinde. GitHub Actions mevcut CI yüzeyi
+# Zamanlayıcı neden burada: kurulduğunda (2026-07) Vercel Hobby planında cron limiti 2 ve ikisi de
+# doluydu (registry-sync + purge-deleted); Hobby cron'ları günde 1 hassasiyetindeydi. Plan 2026-09-02'den
+# beri Pro; GH Actions yine de Vercel'den BAĞIMSIZ koşucu olduğu için bilinçli korunuyor. GitHub Actions mevcut CI yüzeyi
 # (yeni tedarikçi yok) ve secret GEREKMEZ — yalnız halka açık rotalar GET'lenir.
 #
 # Bildirim: koşu BAŞARISIZ olunca GitHub, zamanlanmış workflow'un son değiştiricisine otomatik

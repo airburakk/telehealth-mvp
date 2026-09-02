@@ -177,7 +177,7 @@ olduğu için süreden türetmek de yanıltıcı olurdu. Dayanak + kredi kuralla
 günde en fazla 6): vault `output/ste-kredilendirme-arastirmasi-2026-08-19.md`.
 🪤 **İngest periyodik koşmalı, tek seferlik dolum DEĞİL:** düzenleyiciler etkinlikten en az 30 gün
 önce başvurduğu için kaydın geleceği daima seyrek (2026-01→2027-06 penceresinde yaklaşan yalnız 3
-etkinlik çıktı). Henüz cron'a bağlı değil — elle koşuluyor (Hobby cron 2/2 dolu).
+etkinlik çıktı). Henüz cron'a bağlı değil — elle koşuluyor (Hobby döneminde cron 2/2 doluydu; plan 2026-09-02'den beri Pro, bağlamak artık mümkün — karar ayrı).
 
 **v6.129 — TAKVİM + takip süzgeci + TTB bölümü + raf/mobil turu (2026-08-19, kullanıcı oturumu):**
 • **`/doktor/doctorium/takvim` — ORTAK TAKVİM** (rafın **08** durağı + Header hesap menüsü
@@ -524,7 +524,7 @@ Aynı repo **iki** Vercel projesine bağlıdır; her `main` push'u ikisini de de
 - **Sentetik rota kontrolleri** — `.github/workflows/synthetic.yml` ~30 dk'da bir
   `scripts/synthetic-checks.mjs` koşturur (8 halka açık rota: durum · süre · title · h1 · kritik CTA ·
   noindex beklentisi + TLS sertifika bitimi + statik asset). Zamanlayıcı GitHub Actions'ta çünkü
-  Vercel Hobby cron limiti (2) dolu; koşu düşünce GitHub otomatik e-posta atar. Elle koşu:
+  kurulduğunda Vercel Hobby cron limiti doluydu (plan 2026-09-02'den beri Pro; GH Actions, Vercel'den bağımsız koşucu olarak bilinçli korunuyor); koşu düşünce GitHub otomatik e-posta atar. Elle koşu:
   `node scripts/synthetic-checks.mjs` (`--base=` ile yerel/preview'a yöneltilebilir). Vitrin
   metni bilinçli değişirse script'teki beklentiler de güncellenir.
 - **Kod-içi kritik alarmlar** — `src/lib/alerts.ts` (`sendAlert`): consent yazım hatası

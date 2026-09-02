@@ -2,7 +2,7 @@
 # ve DEĞİŞENLERİ raporlar. Veri ÇIKARMAZ, veritabanına YAZMAZ (scripts/association-watch.mjs
 # başlığındaki gerekçe: 30 farklı HTML'den otomatik tarih çıkarmak "asla uydurma" ilkesini çiğner).
 #
-# Zamanlayıcı neden burada: Vercel Hobby cron limiti 2/2 dolu (registry-sync + purge-deleted) ve
+# Zamanlayıcı neden burada: kurulduğunda Vercel Hobby cron limiti 2/2 doluydu (plan 2026-09-02'den beri Pro) ve
 # bu iş zaten günlük değil HAFTALIK — dernekler duyuruyu aylar önce yapar. GitHub Actions mevcut
 # CI yüzeyi (yeni tedarikçi yok) ve secret GEREKMEZ: yalnız halka açık sayfalar GET'lenir.
 # Emsal: synthetic.yml (Faz 5 Ray C).

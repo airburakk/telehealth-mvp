@@ -38,7 +38,7 @@ export async function resolveDefenseTarget(respondentType: string | null, caseDo
 }
 
 // Saf kilit hesabı (birim-test edilebilir): yanıtsız VE süresi dolmamış talep varsa kilitli.
-// Süre dolunca kendiliğinden açılır — cron GEREKMEZ (Hobby cron 2/2 dolu; bilinçli tasarım).
+// Süre dolunca kendiliğinden açılır — cron GEREKMEZ (cron'suz bilinçli tasarım; Hobby döneminde cron da açılamazdı).
 export function computeDefenseLock(
   requests: { createdAt: Date; repliedAt: Date | null }[],
   now: Date = new Date()

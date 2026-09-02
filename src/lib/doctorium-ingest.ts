@@ -1,7 +1,7 @@
 // Doctorium — içerik toplama (ingestion) katmanı, v6.48.
 //
-// MİMARİ: Günlük bakım cron'u (purge-deleted rotası — Vercel Hobby cron limiti 2/2 DOLU, yeni
-// zamanlanmış iş açılamaz) burayı çağırır; kaynaklar taranıp `NewsArticle` tablosuna YAZILIR.
+// MİMARİ: Günlük bakım cron'u (purge-deleted rotası — Hobby döneminde cron limiti 2/2 doluydu; plan
+// 2026-09-02'den beri Pro, ayrı cron açılabilir — tek nöbet deseni bilinçli korunuyor) burayı çağırır; kaynaklar taranıp `NewsArticle` tablosuna YAZILIR.
 // Doktor sayfayı açtığında dış API'ye GİDİLMEZ, DB'den okunur (hız + NCBI'ya nezaket + filtre/arama).
 //
 // KAYNAKLAR:

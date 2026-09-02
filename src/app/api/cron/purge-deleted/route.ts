@@ -74,8 +74,8 @@ export async function GET(req: Request) {
       verifyAccessChain(), verifyConsentChain(), sealDailyChainAnchor(),
     ]);
 
-    // DOCS_PENDING hatırlatması (2026-07-24): bu rota fiilen GÜNLÜK BAKIM NÖBETİ (Vercel Hobby
-    // cron limiti 2/dolu → yeni cron açılamaz) — belge-bekleyen başvuruların hastalarına günde 1
+    // DOCS_PENDING hatırlatması (2026-07-24): bu rota fiilen GÜNLÜK BAKIM NÖBETİ (Hobby döneminde
+    // cron limiti 2/dolu → yeni cron açılamıyordu; plan 2026-09-02'den beri Pro — tek nöbet deseni bilinçli korunuyor) — belge-bekleyen başvuruların hastalarına günde 1
     // dürtü (en fazla 3; lib/pending-docs-reminder). Hatırlatma kritik değil: hata imha akışını
     // DÜŞÜRMEZ, yalnız yanıtta raporlanır (hasta panelden her an kendisi tamamlayabilir).
     let reminders: RemindResult | { error: string };
@@ -86,7 +86,7 @@ export async function GET(req: Request) {
     }
 
     // Doctorium içerik toplama (2026-08-01, v6.48): PubMed 30 branş + Resmî Gazete fihristi →
-    // NewsArticle. Aynı gerekçe: Hobby cron 2/2 dolu, bu rota fiilen günlük bakım nöbeti.
+    // NewsArticle. Aynı gerekçe (Hobby dönemi; plan artık Pro): bu rota fiilen günlük bakım nöbeti, bölmek ayrı karar.
     // Kritik DEĞİL: hatası imha akışını düşürmez, yalnız raporlanır (portal bir gün bayat kalır).
     let doctorium: IngestResult | { error: string };
     try {
@@ -181,7 +181,7 @@ export async function GET(req: Request) {
       );
     }
 
-    // KALICI KOŞU İZİ (2026-07-29): Vercel Hobby'de runtime log saklama süresi 1 SAAT — cron gece
+    // KALICI KOŞU İZİ (2026-07-29): Vercel Hobby'de runtime log saklama süresi 1 SAAT idi (Pro'da 1 gün; plan 2026-09-02'den beri Pro) — cron gece
     // koştuğu için sayaçları log'dan gözlemek fiilen imkânsızdı ("ertesi gün bak" planı çalışmıyordu).
     // Sayaçlar audit zincirine yazılır: PHI YOK (yalnız adetler), günde 1 satır (hacim ~3,5/gün'ün
     // yanında önemsiz). "Cron koştu mu, kaç hatırlatma gitti" sorusu artık kalıcı kayıttan yanıtlanır.

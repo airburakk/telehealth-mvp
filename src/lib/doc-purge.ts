@@ -77,7 +77,7 @@ export interface DocSweepResult {
 }
 
 /**
- * Günlük süpürme (purge-deleted bakım nöbetine biner — Hobby cron 2/2 dolu, yeni cron açılamaz):
+ * Günlük süpürme (purge-deleted bakım nöbetine biner — Hobby döneminde cron 2/2 doluydu; plan 2026-09-02'den beri Pro, desen korunuyor):
  * doğrulanmış diplomaların dosyalarını (mevcut/LEGACY kayıtlar dahil — backfill) ve saklama süresi
  * dolan reddedilmişleri imha eder. Doğrulama ANINDA yapılan imhaların kaçağını da yakalar
  * (ör. inceleme onayında Blob silinememişse). Batch sınırlı — kalan ertesi güne (idempotent).
