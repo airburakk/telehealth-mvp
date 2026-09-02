@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { hidesFooter } from "@/lib/chrome-routes";
 import { AppAuraFooter } from "@/components/aura/aura-footer";
+import { DoctoriumFooter } from "@/components/aura/doctorium-footer";
 
 // Global alt bilgi — uygulama (giriş yapılmış) yüzeylerinin footer'ı.
 //
@@ -20,8 +21,12 @@ import { AppAuraFooter } from "@/components/aura/aura-footer";
 //
 // Gizleme ekseni hidesFooter(): landing rotaları (kendi footer'ını taşır) + /doktor/doctorium
 // ağacı (DoctoriumFooter'ı segment layout'undan çizer). Header ayrı eksende — orada durur.
-export function SiteFooter() {
+export function SiteFooter({ doctoriumDeploy = false }: { doctoriumDeploy?: boolean }) {
   const pathname = usePathname();
   if (hidesFooter(pathname)) return null;
-  return <AppAuraFooter />;
+  // Doctorium deploy'unda kalan fallback yüzeyler (404/hata + AURA_ONLY_PREFIXES'te olmayan
+  // paylaşımlı rotalar) AURA değil Doctorium markalı footer alır — AURA yüzeyleri zaten
+  // auraglobalcare.com'a redirect'lendiği için bu deploy'da AURA footer'ının yeri yok.
+  // Bayrak kök layout'tan gelir (BRAND_MODE); AppChrome/Header ile aynı desen.
+  return doctoriumDeploy ? <DoctoriumFooter /> : <AppAuraFooter />;
 }

@@ -98,7 +98,11 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   // olmayan yüzeyler (bugün: /admin/uyeler). YALNIZ logoyu etkiler — doctoriumSide'a katılmaz,
   // yani bildirim scope'u/çıkış hedefi/odak modu yöneticide AURA davranışında kalır.
   const brandRoute = usesDoctoriumBrand(pathname);
-  const showDoctoriumBrand = doctoriumSide || brandRoute;
+  // Deploy-bazlı marka istisnası (T2, ayrışma tamamlayıcı): doctorium.tr deploy'unda AURA
+  // yüzeyleri auraglobalcare.com'a redirect'lendiği için bu deploy'da kalan HER yüzey (404/hata
+  // + paylaşımlı kimlik-dışı rotalar) Doctorium'dur → logo daima zümrüt. brandRoute gibi YALNIZ
+  // logoyu etkiler — doctoriumSide'a katılmaz (odak modu/scope/çıkış hedefi route-bazlı kalır).
+  const showDoctoriumBrand = doctoriumSide || brandRoute || doctoriumDeploy;
   // Odak modunda klinik sekmeler + Doctorium sekmesi gizli (marka bloğu zaten portala gider).
   // Operasyon (S2 AURA operasyon paneli) Doctorium kromunun TAMAMINDA gizlidir — kullanıcı
   // kararı 2026-08-29: "bu operation'ın Doctorium ile hiç alakası yok". Yalnız bant kısayolu

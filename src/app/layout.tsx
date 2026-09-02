@@ -105,7 +105,7 @@ export default function RootLayout({
         <AuraAnimPause />
         <AppChrome doctoriumDeploy={IS_DOCTORIUM_DEPLOY} />
         <main className="flex-1">{children}</main>
-        <SiteFooter />
+        <SiteFooter doctoriumDeploy={IS_DOCTORIUM_DEPLOY} />
       </body>
     </html>
   );
