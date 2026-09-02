@@ -177,7 +177,7 @@ olduğu için süreden türetmek de yanıltıcı olurdu. Dayanak + kredi kuralla
 günde en fazla 6): vault `output/ste-kredilendirme-arastirmasi-2026-08-19.md`.
 🪤 **İngest periyodik koşmalı, tek seferlik dolum DEĞİL:** düzenleyiciler etkinlikten en az 30 gün
 önce başvurduğu için kaydın geleceği daima seyrek (2026-01→2027-06 penceresinde yaklaşan yalnız 3
-etkinlik çıktı). Henüz cron'a bağlı değil — elle koşuluyor (v6.204 cron düzeninde de ayrı iş olarak açılmadı; bağlamak istenirse `lib/cron-guard CRON_SCHEDULES` + vercel.json'a yeni satır).
+etkinlik çıktı). Henüz cron'a bağlı değil — elle koşuluyor (v6.205 cron düzeninde de ayrı iş olarak açılmadı; bağlamak istenirse `lib/cron-guard CRON_SCHEDULES` + vercel.json'a yeni satır).
 
 **v6.129 — TAKVİM + takip süzgeci + TTB bölümü + raf/mobil turu (2026-08-19, kullanıcı oturumu):**
 • **`/doktor/doctorium/takvim` — ORTAK TAKVİM** (rafın **08** durağı + Header hesap menüsü
@@ -245,7 +245,7 @@ imkânı belli olmuyordu) → mobilde 13px görünür, AURA wordmark 12px'e öl�
 ### Kesişen yetenekler
 
 - **Doctorium Post — günlük özet gazetesi (v6.159-160, 2026-08-25):** abone doktora her sabah
-  (`daily-digest` cron'u 06:30 TR — içerik cron'ları 05:00/05:20 TR'de ve özet çevirisi 05:40 TR'de önce biter, v6.204 · v6.206) akış tercihlerine göre derlenen kişisel özet.
+  (`daily-digest` cron'u 06:30 TR — içerik cron'ları 05:00/05:20 TR'de ve özet çevirisi 05:40 TR'de önce biter, v6.205 · v6.206) akış tercihlerine göre derlenen kişisel özet.
   🔒 **Alan başına 2 kuralı:** seçilen her ilgi alanından en fazla 2 başlık (1 alan→2, 6 alan→12;
   bölümler tercihlerdeki 6 içerik alanıyla birebir: Akademik · İlaç & Cihaz · Sektörel · Mevzuat ·
   İçtihat · Doktrin). Baskı `DailyDigest` ANLIK GÖRÜNTÜSÜ (doktor+gün unique — e-posta ↔ web aynı

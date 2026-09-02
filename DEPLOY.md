@@ -157,7 +157,7 @@ SSR JSON'undan; buildId koşu başında anasayfadan çözülür): günde 40 tesi
 koşulur (2026-07-10'da ~4.600 tesis dolduruldu); `authorizationNumber` kolon backfill'i için
 `npx tsx scripts/registry-enrich.ts auth` (v5.2'de koşuldu).
 
-### Cron düzeni — altı cron (v6.204, 2026-09-02)
+### Cron düzeni — yedi cron (v6.205 bölünme · v6.206 `translate-news`, 2026-09-02/03)
 
 Temmuz–Ağustos boyunca (Vercel Hobby cron kısıtı) on iş tek "bakım nöbeti"ne (`purge-deleted`)
 bindirilmişti; plan Pro'ya geçince kullanıcı kararıyla bölündü. Tek doğruluk kaynağı
@@ -183,7 +183,7 @@ elle tetikleme: `curl -H "Authorization: Bearer $CRON_SECRET" <site>/api/cron/<a
 
 `vercel.json` günde bir (03:30 UTC) `/api/cron/purge-deleted`'i tetikler. Aynı `CRON_SECRET` Bearer
 deseni (registry-sync ile ortak; yoksa uç 503, site etkilenmez). Batch: 50 kayıt/gün — kalanı ertesi
-gün alınır (idempotent; yalnız `purgeAfter <= now`). v6.204'ten beri bu rota YALNIZ imha/bütünlük
+gün alınır (idempotent; yalnız `purgeAfter <= now`). v6.205'ten beri bu rota YALNIZ imha/bütünlük
 ailesidir (içerik, baskı ve hatırlatma kendi cron'larında — yukarıdaki tablo).
 
 **Bu cron silme akışının SÖZÜNÜ TUTAN parçasıdır.** Hasta hesabını sildiğinde klinik kayıt yasal

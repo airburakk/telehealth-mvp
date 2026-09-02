@@ -1,4 +1,4 @@
-// Cron düzeni SÖZLEŞMESİ (v6.204, 2026-09-02 — bakım nöbeti altı cron'a bölündü, kullanıcı kararı).
+// Cron düzeni SÖZLEŞMESİ (v6.205, 2026-09-02 — bakım nöbeti altı cron'a bölündü, kullanıcı kararı; v6.206 translate-news ile yedi).
 //
 // Kilitlenenler:
 //   1) vercel.json crons ↔ lib/cron-guard CRON_SCHEDULES BİREBİR (yol + zamanlama). Biri değişip

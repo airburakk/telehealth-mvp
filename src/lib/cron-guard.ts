@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
-// Cron rotalarının ORTAK KAPISI (v6.204, 2026-09-02) — bakım nöbeti altı cron'a bölünürken
+// Cron rotalarının ORTAK KAPISI (v6.205, 2026-09-02) — bakım nöbeti altı cron'a bölünürken (v6.206: yedinci, translate-news)
 // (kullanıcı kararı "bölelim"; Vercel planı Pro, cron kısıtı kalktı) iki korkuluk tek yere alındı:
 //
 //  1) Ayrışma Faz A (2026-08-24): vercel.json cron'ları HER İKİ Vercel projesinde de kayıt olur
