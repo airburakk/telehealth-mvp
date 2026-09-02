@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   title: { absolute: "Yönetim · Doctorium", template: "%s · Doctorium" },
   // Sekme ikonu da Doctorium (zümrüt küre) — kökün turkuaz varsayılanını ezer.
   // ⚠️ İkon sürümü değişince ÜÇ layout'ta birlikte artır (kök · doktor/doctorium · burası).
-  icons: { icon: "/icon-doctorium.ico?v=3", apple: "/apple-touch-icon.png?v=3" },
+  icons: { icon: "/icon-doctorium.ico?v=3", apple: "/apple-touch-icon-doctorium.png?v=1" }, // iOS ikonu da zümrüt (Faz E, 2026-09-03)
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

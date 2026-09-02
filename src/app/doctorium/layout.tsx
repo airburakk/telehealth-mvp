@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: { absolute: "Doctorium", template: "%s · Doctorium" },
   appleWebApp: { capable: true, title: "Doctorium", statusBarStyle: "default" },
   // 🪤 `?v=` cache-kırıcı — gerekçe kök layout.tsx'te. İkon değişince ÜÇ layout'ta birlikte artır.
-  icons: { icon: "/icon-doctorium.ico?v=3", apple: "/apple-touch-icon.png?v=3" },
+  icons: { icon: "/icon-doctorium.ico?v=3", apple: "/apple-touch-icon-doctorium.png?v=1" }, // iOS ikonu da zümrüt (Faz E, 2026-09-03)
 };
 
 export default function DoctoriumLayout({ children }: { children: React.ReactNode }) {

@@ -10,6 +10,7 @@
 #     public/icon-doctorium.ico   → ZÜMRÜT  (Doctorium yüzeyleri)
 #   PWA / iOS (B · koyu YUVARLATILMIŞ KARE + küre):
 #     public/apple-touch-icon.png (180) · public/icon-192.png · public/icon-512.png
+#     Doctorium (Faz E, 2026-09-03): public/apple-touch-icon-doctorium.png (180) · icon-doctorium-192.png · icon-doctorium-512.png
 #
 # ── Neden bu script var ──
 # İkonlar React ağacının DIŞINDA: ne derleyici ne test onları görür. 2026-08-19'da ~2 ay eski
@@ -160,6 +161,14 @@ def main() -> None:
     on_square(turq, 192, PWA_SCALE).save(PUBLIC / "icon-192.png")
     on_square(turq, 512, PWA_SCALE).save(PUBLIC / "icon-512.png")
     for n in ("apple-touch-icon.png", "icon-192.png", "icon-512.png"):
+        print("yazıldı:", (PUBLIC / n).relative_to(ROOT))
+    # Doctorium PWA/iOS ikonları (Faz E, 2026-09-03): aynı B kalıbı (koyu yuvarlatılmış kare + küre),
+    # ZÜMRÜT küre. doctorium.tr manifest'i ve push bildirimi bunları kullanır (app/manifest.ts, sw.js);
+    # eskiden AURA turkuazı paylaşılıyordu (marka sızıntısı — teknik ayrışma planı Faz E).
+    on_square(em, 180, SQUARE_SCALE).save(PUBLIC / "apple-touch-icon-doctorium.png")
+    on_square(em, 192, PWA_SCALE).save(PUBLIC / "icon-doctorium-192.png")
+    on_square(em, 512, PWA_SCALE).save(PUBLIC / "icon-doctorium-512.png")
+    for n in ("apple-touch-icon-doctorium.png", "icon-doctorium-192.png", "icon-doctorium-512.png"):
         print("yazıldı:", (PUBLIC / n).relative_to(ROOT))
 
 

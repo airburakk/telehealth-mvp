@@ -10,8 +10,16 @@
 // v6, 2026-08-21: icon-192/icon-512 URL'lerine `?v=2` cache-kırıcı eklendi — push bildirimi
 // ikonu ve manifest ikonu, favicon gibi tarayıcının inatçı ikon önbelleğine takılıyordu;
 // v7, 2026-08-23: marka seti v2 — küre ikonları, `?v=3`).
-const VERSION = "air-pwa-v7";
-const PRECACHE = ["/offline.html", "/icon-192.png?v=3", "/icon-512.png?v=3", "/manifest.webmanifest"];
+// v8 (2026-09-03, Faz E): push bildirimi ikonu/adı HOST'a göre marka (sw'de env yok; origin markadır —
+// doctorium.tr / doctorium-*.vercel.app "doctorium" içerir, AURA host'ları içermez) + zümrüt ikonlar PRECACHE'te.
+const VERSION = "air-pwa-v8";
+const PRECACHE = [
+  "/offline.html", "/manifest.webmanifest",
+  "/icon-192.png?v=3", "/icon-512.png?v=3",
+  "/icon-doctorium-192.png?v=1", "/icon-doctorium-512.png?v=1",
+];
+const IS_DOCTORIUM_HOST = self.location.hostname.includes("doctorium");
+const BRAND_ICON = IS_DOCTORIUM_HOST ? "/icon-doctorium-192.png?v=1" : "/icon-192.png?v=3";
 // cacheable-kontrolü pathname üzerinden yapılıyor (query'siz) — PRECACHE artık query'li URL
 // taşıdığı için ayrı bir pathname kümesi lazım, yoksa `PRECACHE.includes(url.pathname)` hiç
 // eşleşmez ve ikonlar cache-first yoldan sessizce düşer.
@@ -71,12 +79,12 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch {}
-  const title = data.title || "AURA";
+  const title = data.title || (IS_DOCTORIUM_HOST ? "Doctorium" : "AURA");
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || "",
-      icon: "/icon-192.png?v=3",
-      badge: "/icon-192.png?v=3",
+      icon: BRAND_ICON,
+      badge: BRAND_ICON,
       lang: "tr",
       data: { href: data.href || "/" },
     })

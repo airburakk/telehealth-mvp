@@ -828,6 +828,13 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   **v6→v7**. JSON-LD logo → `/icon-512.png?v=3`. 🪤 Turbopack kısmi CSS önbelleği yeni `.sınıf`ı
   dev'de düşürdü → lockup alt yazı stili INLINE. 🪤 Next 16 ikinci `next dev`'i reddeder (kilit);
   paralel oturumun sunucusu aynı ağacı HMR ile servis eder — doğrulama Playwright ile oradan.
+  · **PWA manifest + iOS/push ikonu MARKA-DUYARLI (Faz E, 2026-09-03, v6.207):** doctorium.tr'nin manifest'i
+  "AURA Health" adı ve turkuaz ikonla sunuluyordu (QA 02.09 sızıntı ailesi). Statik `public/manifest.webmanifest`
+  SİLİNDİ → `src/app/manifest.ts` BRAND_MODE'a göre Doctorium/AURA manifest'i üretir (build-time, force-static;
+  Doctorium açıklaması `LANDING_META` ile tek kaynak). Doctorium ikon seti `apple-touch-icon-doctorium.png` ·
+  `icon-doctorium-192/512.png` (`gen-icons.py`, zümrüt küre + aynı B kalıbı, `?v=1`); kök layout ikonları deploy'a,
+  üç Doctorium layout'unun iOS ikonu zümrüte; `sw.js` **v8** push ikonu/adı HOST'a göre (sw'de env yok).
+  Sözleşme testi `tests/unit/pwa-brand.test.ts` (statik manifest geri gelirse / ikon eksikse kırılır).
   · **PWA marka kabuğu (2026-08-19, `82c2b8f`) — 🚀 CANLI:** amblem 2026-07-14'te AuraMark'a
   geçmişti ama **React ağacının DIŞINDAKİ** yüzeyler güncellenmemişti; ~2 ay boyunca çevrimdışı
   sayfası, push bildirimi ikonu/badge'i, ana ekrana ekleme ve tarayıcı sekmesi eski camgöbeği

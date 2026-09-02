@@ -73,7 +73,12 @@ export const metadata: Metadata = {
   // (yalnız favicon/icon-doctorium'da vardı; iOS ana ekran ikonu ve push bildirimi ikonu
   // versiyonsuz kaldığı için aynı "eski ikon takılı kalma" riskini taşıyordu).
   // v=3 (2026-08-23, v6.137): marka seti v2 — küre favicon (koyu disk) + PWA kare ikonları.
-  icons: { icon: "/favicon.ico?v=3", apple: "/apple-touch-icon.png?v=3" },
+  // Faz E (2026-09-03): kök ikonlar da deploy'a göre — Doctorium deploy'unda fallback yüzeyler (404/hata,
+  // paylaşımlı rotalar) turkuaz favicon/iOS ikonu almasın. Doctorium seti `?v=1` (gen-icons.py, zümrüt küre).
+  icons: {
+    icon: IS_DOCTORIUM_DEPLOY ? "/icon-doctorium.ico?v=3" : "/favicon.ico?v=3",
+    apple: IS_DOCTORIUM_DEPLOY ? "/apple-touch-icon-doctorium.png?v=1" : "/apple-touch-icon.png?v=3",
+  },
   // iOS ana ekran adı da marka-duyarlı (aynı sızıntı ekseni: Doctorium'a eklenen kısayol
   // "AURA" adıyla kaydediliyordu).
   appleWebApp: { capable: true, title: IS_DOCTORIUM_DEPLOY ? "Doctorium" : "AURA", statusBarStyle: "default" },
