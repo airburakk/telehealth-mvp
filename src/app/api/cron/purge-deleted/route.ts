@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { purgeExpired, RETENTION_YEARS } from "@/lib/account-deletion";
-import { verifyAccessChain, recordAccess } from "@/lib/audit";
+import { verifyAccessChain, recordAccess, sealDailyChainAnchor } from "@/lib/audit";
 import { verifyConsentChain } from "@/lib/consent";
 import { sendAlert } from "@/lib/alerts";
 import { remindPendingDocs, type RemindResult } from "@/lib/pending-docs-reminder";
@@ -66,7 +66,13 @@ export async function GET(req: Request) {
     // Kırıksa verify fonksiyonları kendi alarmını düşürür; burada yalnız sayaçlar raporlanır.
     // MVP hacminde ucuz (tüm mühürlü satırlar okunur, maxDuration=300); hacim büyüyünce artımlı
     // doğrulamaya geçilir (zincir ucu checkpoint'i) — bilinçli erteleme.
-    const [audit, consent] = await Promise.all([verifyAccessChain(), verifyConsentChain()]);
+    //
+    // Günlük kök damgası (TSA mimarisi, 2026-09-02): audit zinciri artık satır başına değil günde 1
+    // kez damgalanır (sealDailyChainAnchor) — bu SATIRDAN SONRA eklenen kayıtlar (ör. bu cron'un
+    // kendi CRON_MAINTENANCE satırı) yarının anchor'ına kalır, bilinçli erteleme.
+    const [audit, consent, anchor] = await Promise.all([
+      verifyAccessChain(), verifyConsentChain(), sealDailyChainAnchor(),
+    ]);
 
     // DOCS_PENDING hatırlatması (2026-07-24): bu rota fiilen GÜNLÜK BAKIM NÖBETİ (Vercel Hobby
     // cron limiti 2/dolu → yeni cron açılamaz) — belge-bekleyen başvuruların hastalarına günde 1
@@ -211,7 +217,7 @@ export async function GET(req: Request) {
       resourceType: "SYSTEM",
       resourceId: "purge-deleted",
       subjectUserId: null,
-      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · hatirlatma ${rem} · doctorium ${doc} · ictihat ${ict} · doktrin ${dok} · kongre ${con} · ttb ${ttb} · post ${pst} · belgeimha ${bel}`,
+      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · gunluk-damga ${anchor.sealed ? `${anchor.day} (${anchor.entryCount} satir)` : `atlandi: ${anchor.reason}`} · hatirlatma ${rem} · doctorium ${doc} · ictihat ${ict} · doktrin ${dok} · kongre ${con} · ttb ${ttb} · post ${pst} · belgeimha ${bel}`,
     });
 
     return NextResponse.json({
@@ -219,9 +225,10 @@ export async function GET(req: Request) {
       retentionYears: RETENTION_YEARS,
       ...r,
       chains: {
-        audit: { ok: audit.ok, count: audit.count, brokenAt: audit.brokenAt, unverifiableSeals: audit.unverifiableSeals },
+        audit: { ok: audit.ok, count: audit.count, brokenAt: audit.brokenAt, unverifiableSeals: audit.unverifiableSeals, lastAnchorAt: audit.lastAnchorAt },
         consent: { ok: consent.ok, count: consent.count, brokenAt: consent.brokenAt, unverifiableSeals: consent.unverifiableSeals, purgedSeals: consent.purgedSeals },
       },
+      dailyAnchor: anchor,
       pendingDocsReminders: reminders,
       doctorium,
       yargitay,

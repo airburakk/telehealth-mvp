@@ -1056,6 +1056,27 @@ model AccessLog {
   @@index([createdAt, id]) // zincir tip sorgusu (her append, advisory-lock altında) + verify tam yürüyüş + denetim sayfalaması
 }
 
+/// Audit zincirinin GÜNLÜK KÖK DAMGASI (TSA mimari değişikliği, 2026-09-02 — output/tsa-saglayici-karsilastirma-2026-08-19.md §0).
+/// AccessLog artık satır başına damga taşımaz (42 çağrı noktası × gerçek TSA = maliyet+gecikme); bunun yerine
+/// zincirin ucu günde 1 kez damgalanır — hash-zinciri zaten değiştirilemez olduğu için bir noktanın damgalanması
+/// ondan ÖNCEKİ tüm satırların da o tarihte var olduğunu ispatlar (Merkle-tarzı toplu damga).
+/// throughCreatedAt/throughLogId = bu anchor'ın kapsadığı zincirin son noktası (satır→anchor eşlemesi bunlarla kurulur).
+model AuditChainAnchor {
+  id               String   @id @default(cuid())
+  day              DateTime // o günün UTC 00:00'ı (upsert anahtarı — aynı gün içinde tekrar koşu ucu günceller)
+  lastEntryHash    String // damgalanan an itibarıyla zincirin ucu (AccessLog.entryHash)
+  throughCreatedAt DateTime // kapsanan son AccessLog satırının createdAt'i (satır→anchor eşlemesi)
+  throughLogId     String // kapsanan son AccessLog satırının id'si (createdAt eşitliğinde ayraç)
+  entryCount       Int // o ana kadar toplam mühürlü satır (rapor/debug)
+  tsAuthority      String // zaman damgası otoritesi (şimdilik SIMULATED-LOCAL)
+  tsTime           DateTime // TSA'nın güvenilir zamanı
+  tsToken          String // imzalı zaman damgası token'ı (lastEntryHash üzerinde)
+  createdAt        DateTime @default(now())
+
+  @@unique([day])
+  @@index([throughCreatedAt])
+}
+
 /// HealthTürkiye (healthturkiye.gov.tr) doktor kayıt defteri — günlük senkron (2026-07-10).
 /// Kaynak: web-api.healthturkiye.gov.tr/api/v1/doctor/search (sayfalı; ~10.000 kayıt). PHI DEĞİL —
 /// kamuya açık resmi dizin (şifreleme yok). Soft-delete: kaynaktan kalkan kayıt removedAt damgalanır

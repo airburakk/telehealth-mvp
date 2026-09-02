@@ -162,6 +162,12 @@ const CHAIN_LOCK_B = 0x4454; // 'DT'
 // yapılır → eşzamanlı yazımlar sıraya girer, zincir ÇATALLANMAZ. xact-lock işlem sonunda otomatik bırakılır
 // (transaction-pooling/Neon-PgBouncer güvenli; session-lock sızabilirdi). Çok-örnekli Vercel serverless'te
 // in-process mutex yetmez (örnekler arası çatal) → kilit DB seviyesinde olmalı.
+//
+// TSA MİMARİSİ (2026-09-02 — output/tsa-saglayici-karsilastirma-2026-08-19.md §0): satır başına
+// zaman damgası YOK — 42 çağrı noktasının her biri gerçek TSA'ya bağlandığında ağ gecikmesi + kontör
+// maliyeti doğururdu. Hash-zinciri (prevHash→entryHash, asıl kurcalama koruması) DEĞİŞMEDİ; damga artık
+// günde 1 kez zincirin ucuna atılır (sealDailyChainAnchor, cron). Bir noktanın damgalanması hash-zinciri
+// gereği ONDAN ÖNCEKİ tüm satırların da o tarihte var olduğunu ispatlar — Merkle-tarzı toplu damga.
 export async function recordAccess(input: RecordInput): Promise<void> {
   try {
     await db.$transaction(async (tx) => {
@@ -188,7 +194,6 @@ export async function recordAccess(input: RecordInput): Promise<void> {
         createdAt,
         prevHash,
       });
-      const ts = getTimestampToken(entryHash);
       await tx.accessLog.create({
         data: {
           actorId: input.actor?.id ?? null,
@@ -203,9 +208,8 @@ export async function recordAccess(input: RecordInput): Promise<void> {
           createdAt,
           prevHash,
           entryHash,
-          tsAuthority: ts.authority,
-          tsTime: ts.time,
-          tsToken: ts.token,
+          // tsAuthority/tsTime/tsToken bilerek NULL: bu satır günlük anchor tarafından kapsanacak
+          // (verifyRow — kendi damgası olmayan satırlar kapsayan AuditChainAnchor'a bakar).
         },
       });
     });
@@ -220,6 +224,67 @@ export async function recordAccess(input: RecordInput): Promise<void> {
       `action=${input.action} — ${e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200)}`,
     );
   }
+}
+
+// ── Günlük kök damgası (TSA mimarisi — bkz. recordAccess yorumu) ────────────────────────────────────
+export interface DailyAnchorResult {
+  sealed: boolean;
+  day: string | null; // "YYYY-MM-DD" (UTC)
+  entryCount: number;
+  reason?: string; // sealed:false ise (ör. zincir henüz boş)
+}
+
+// Zincirin GÜNCEL ucunu bugünün damgasıyla mühürler. Cron'dan (purge-deleted, günlük bakım nöbeti)
+// günde 1 kez çağrılır; upsert olduğu için aynı gün içinde tekrar çağrılırsa en güncel ucu yakalar
+// (idempotent — ikinci koşum ilkini bozmaz, yalnız günceller).
+export async function sealDailyChainAnchor(): Promise<DailyAnchorResult> {
+  const tip = await db.accessLog.findFirst({
+    where: { entryHash: { not: null } },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: { entryHash: true, createdAt: true, id: true },
+  });
+  if (!tip?.entryHash) {
+    return { sealed: false, day: null, entryCount: 0, reason: "zincirde mühürlü satır yok" };
+  }
+  const entryCount = await db.accessLog.count({ where: { entryHash: { not: null } } });
+  const now = new Date();
+  const day = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const ts = getTimestampToken(tip.entryHash);
+  await db.auditChainAnchor.upsert({
+    where: { day },
+    create: {
+      day, lastEntryHash: tip.entryHash, throughCreatedAt: tip.createdAt, throughLogId: tip.id,
+      entryCount, tsAuthority: ts.authority, tsTime: ts.time, tsToken: ts.token,
+    },
+    update: {
+      lastEntryHash: tip.entryHash, throughCreatedAt: tip.createdAt, throughLogId: tip.id,
+      entryCount, tsAuthority: ts.authority, tsTime: ts.time, tsToken: ts.token,
+    },
+  });
+  return { sealed: true, day: day.toISOString().slice(0, 10), entryCount };
+}
+
+type ChainAnchorLite = {
+  lastEntryHash: string; throughCreatedAt: Date; throughLogId: string;
+  tsAuthority: string; tsTime: Date; tsToken: string;
+};
+
+// Anchor listesi throughCreatedAt ARTAN sıralı gelmeli — ilk eşleşen = bu satırı kapsayan EN ERKEN anchor.
+async function listAnchorsAsc(): Promise<ChainAnchorLite[]> {
+  return db.auditChainAnchor.findMany({
+    orderBy: { throughCreatedAt: "asc" },
+    select: { lastEntryHash: true, throughCreatedAt: true, throughLogId: true, tsAuthority: true, tsTime: true, tsToken: true },
+  });
+}
+
+function findCoveringAnchor(row: { createdAt: Date; id: string }, anchors: ChainAnchorLite[]): ChainAnchorLite | null {
+  for (const a of anchors) {
+    const covers =
+      a.throughCreatedAt.getTime() > row.createdAt.getTime() ||
+      (a.throughCreatedAt.getTime() === row.createdAt.getTime() && a.throughLogId >= row.id);
+    if (covers) return a;
+  }
+  return null; // henüz hiçbir anchor bu satırı kapsamıyor (bugünün cron'u henüz koşmadı)
 }
 
 export interface AccessLogEntry {
@@ -239,39 +304,68 @@ export interface AccessLogEntry {
 // Tek bir kaydın doğrulaması: mührü alanlarından yeniden hesaplanan + zaman damgası geçerli mi?
 // (getAccessLog hasta-yüzü + getChainAudit denetçi-yüzü paylaşır.)
 // entryHashValid: true/false kesin karar; null = mühürsüz eski kayıt VEYA başka ortamın anahtarı.
+//
+// Zaman damgası İKİ kademeli (geriye-uyumlu köprü, v1/v2 mühür geçişiyle aynı desen): satırın KENDİ
+// tsTime/tsToken'ı varsa (TSA mimarisi öncesi yazılmış eski satır) o kullanılır; yoksa (yeni satır)
+// kapsayan günlük AuditChainAnchor'a bakılır — henüz hiçbir anchor kapsamıyorsa null (bugünün cron'u
+// henüz koşmadı; "damgasız" değil "henüz damgalanmadı" — UI'da gri/karar verilemez).
 type VerifiableRow = {
   actorId: string | null; actorRole: string | null; action: string; resourceType: string;
   resourceId: string; subjectUserId: string | null; detail: string | null; ip: string | null;
   userAgent: string | null; createdAt: Date; prevHash: string | null; entryHash: string | null;
-  tsTime: Date | null; tsToken: string | null;
+  id: string; tsTime: Date | null; tsToken: string | null;
 };
-function verifyRow(r: VerifiableRow): { entryHashValid: boolean | null; timestampValid: boolean | null } {
+function verifyRow(
+  r: VerifiableRow,
+  anchors: ChainAnchorLite[],
+): { entryHashValid: boolean | null; timestampValid: boolean | null; displayTsAuthority: string | null; displayTsTime: Date | null } {
   const entryHashValid = sealVerdict(r);
-  const timestampValid =
-    r.entryHash && r.tsTime && r.tsToken ? verifyTimestampToken(r.entryHash, r.tsTime, r.tsToken) : null;
-  return { entryHashValid, timestampValid };
+  if (!r.entryHash) {
+    return { entryHashValid, timestampValid: null, displayTsAuthority: null, displayTsTime: null };
+  }
+  if (r.tsTime && r.tsToken) {
+    return {
+      entryHashValid,
+      timestampValid: verifyTimestampToken(r.entryHash, r.tsTime, r.tsToken),
+      displayTsAuthority: null, // çağıran zaten satırın kendi tsAuthority'sini biliyor
+      displayTsTime: r.tsTime,
+    };
+  }
+  const anchor = findCoveringAnchor(r, anchors);
+  const timestampValid = anchor ? verifyTimestampToken(anchor.lastEntryHash, anchor.tsTime, anchor.tsToken) : null;
+  return {
+    entryHashValid, timestampValid,
+    displayTsAuthority: anchor?.tsAuthority ?? null,
+    displayTsTime: anchor?.tsTime ?? null,
+  };
 }
 
 // Bir veri-sahibi hastanın erişim kaydı — "verime kim, ne zaman, neye erişti" + giriş-başına doğrulama.
 export async function getAccessLog(subjectUserId: string, viewerId?: string): Promise<AccessLogEntry[]> {
-  const rows = await db.accessLog.findMany({
-    where: { subjectUserId },
-    orderBy: { createdAt: "desc" },
-    take: 200,
+  const [rows, anchors] = await Promise.all([
+    db.accessLog.findMany({
+      where: { subjectUserId },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    }),
+    listAnchorsAsc(),
+  ]);
+  return rows.map((r) => {
+    const v = verifyRow(r, anchors);
+    return {
+      id: r.id,
+      actorRole: r.actorRole,
+      actorIsYou: !!viewerId && r.actorId === viewerId,
+      action: r.action,
+      resourceType: r.resourceType,
+      resourceId: r.resourceId,
+      detail: r.detail,
+      createdAt: r.createdAt.toISOString(),
+      tsAuthority: r.tsAuthority ?? v.displayTsAuthority,
+      tsTime: r.tsTime?.toISOString() ?? v.displayTsTime?.toISOString() ?? null,
+      verification: { entryHashValid: v.entryHashValid, timestampValid: v.timestampValid },
+    };
   });
-  return rows.map((r) => ({
-    id: r.id,
-    actorRole: r.actorRole,
-    actorIsYou: !!viewerId && r.actorId === viewerId,
-    action: r.action,
-    resourceType: r.resourceType,
-    resourceId: r.resourceId,
-    detail: r.detail,
-    createdAt: r.createdAt.toISOString(),
-    tsAuthority: r.tsAuthority,
-    tsTime: r.tsTime?.toISOString() ?? null,
-    verification: verifyRow(r),
-  }));
 }
 
 // Global zincir bütünlüğü (denetçi) — her kaydın mührü + prevHash bağı tutuyor mu (silme/araya-ekleme tespiti).
@@ -292,15 +386,18 @@ export interface ChainIntegrity {
   v1Count: number;
   v2Count: number;
   unsealedCount: number;
+  lastAnchorAt: string | null; // en son günlük kök damgasının TSA zamanı (ISO) — null = henüz hiç anchor yok
 }
 export async function verifyAccessChain(): Promise<ChainIntegrity> {
-  const [rows, unsealedCount] = await Promise.all([
+  const [rows, unsealedCount, lastAnchor] = await Promise.all([
     db.accessLog.findMany({
       where: { entryHash: { not: null } },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     }),
     db.accessLog.count({ where: { entryHash: null } }),
+    db.auditChainAnchor.findFirst({ orderBy: { throughCreatedAt: "desc" }, select: { tsTime: true } }),
   ]);
+  const lastAnchorAt = lastAnchor?.tsTime.toISOString() ?? null;
   let prev = "GENESIS";
   let unverifiableSeals = 0;
   let v1Count = 0;
@@ -309,7 +406,7 @@ export async function verifyAccessChain(): Promise<ChainIntegrity> {
   // Kırık zincir = kurcalama/veri kaybı şüphesi → alarm (Ray C — purge-deleted cron'u günlük nöbette koşturur).
   const fail = (id: string) => {
     void sendAlert("audit-chain", "Audit zinciri bütünlük doğrulaması BAŞARISIZ", `brokenAt=${id}`);
-    return { ok: false, count: rows.length, brokenAt: id, unverifiableSeals, v1Count, v2Count, unsealedCount };
+    return { ok: false, count: rows.length, brokenAt: id, unverifiableSeals, v1Count, v2Count, unsealedCount, lastAnchorAt };
   };
   for (const r of rows) {
     if (r.prevHash !== prev) return fail(r.id);
@@ -325,7 +422,7 @@ export async function verifyAccessChain(): Promise<ChainIntegrity> {
     if (verdict === null) unverifiableSeals++; // unknown-key: bağ denetlendi, mühür bu ortamda doğrulanamadı
     prev = r.entryHash!;
   }
-  return { ok: true, count: rows.length, brokenAt: null, unverifiableSeals, v1Count, v2Count, unsealedCount };
+  return { ok: true, count: rows.length, brokenAt: null, unverifiableSeals, v1Count, v2Count, unsealedCount, lastAnchorAt };
 }
 
 // Denetçi (ADMIN / Etik Kurul) görünümü için tek bir kayıt — küresel zincirin metadata'sı (klinik içerik YOK).
@@ -370,27 +467,33 @@ export async function getChainAudit(opts: { page?: number; pageSize?: number } =
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   // İstenen sayfayı geçerli aralığa sıkıştır (0/negatif/NaN/aşırı-büyük güvenli → her zaman dolu veya son sayfa).
   const page = Math.min(Math.max(1, Math.floor(opts.page || 1)), totalPages);
-  const rows = await db.accessLog.findMany({
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    skip: (page - 1) * pageSize,
-    take: pageSize,
+  const [rows, anchors] = await Promise.all([
+    db.accessLog.findMany({
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    listAnchorsAsc(),
+  ]);
+  const entries: ChainEntry[] = rows.map((r) => {
+    const v = verifyRow(r, anchors);
+    return {
+      id: r.id,
+      createdAt: r.createdAt.toISOString(),
+      actorRole: r.actorRole,
+      actorId: r.actorId,
+      action: r.action,
+      resourceType: r.resourceType,
+      resourceId: r.resourceId,
+      subjectUserId: r.subjectUserId,
+      detail: r.detail,
+      ip: r.ip,
+      prevHash: r.prevHash,
+      entryHash: r.entryHash,
+      tsAuthority: r.tsAuthority ?? v.displayTsAuthority,
+      tsTime: r.tsTime?.toISOString() ?? v.displayTsTime?.toISOString() ?? null,
+      verification: { entryHashValid: v.entryHashValid, timestampValid: v.timestampValid },
+    };
   });
-  const entries: ChainEntry[] = rows.map((r) => ({
-    id: r.id,
-    createdAt: r.createdAt.toISOString(),
-    actorRole: r.actorRole,
-    actorId: r.actorId,
-    action: r.action,
-    resourceType: r.resourceType,
-    resourceId: r.resourceId,
-    subjectUserId: r.subjectUserId,
-    detail: r.detail,
-    ip: r.ip,
-    prevHash: r.prevHash,
-    entryHash: r.entryHash,
-    tsAuthority: r.tsAuthority,
-    tsTime: r.tsTime?.toISOString() ?? null,
-    verification: verifyRow(r),
-  }));
   return { integrity, entries, total, page, pageSize, totalPages };
 }
