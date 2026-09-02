@@ -1,7 +1,7 @@
 # Vercel'e Deploy Kılavuzu
 
 Bu uygulama **Vercel** (Next.js) + **Neon Postgres** üzerinde **canlıda** çalışır:
-**https://telehealth-mvp-roan.vercel.app** · GitHub `airburakk/telehealth-mvp` (`main`) →
+**https://auraglobalcare.com** (kanonik, v6.201; eski `telehealth-mvp-roan.vercel.app` host'u da açık) · GitHub `airburakk/telehealth-mvp` (`main`) →
 Vercel otomatik deploy.
 
 > **Durum:** kurulum tamamlandı. Şema zaten `postgresql` (`prisma/schema.prisma`); yerel ve
