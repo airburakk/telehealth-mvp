@@ -25,7 +25,7 @@ const TIMEOUT_MS = 30_000;
 const SLOW_MS = 8_000; // Neon uyanması + soğuk fonksiyon ilk isteği yavaşlatabilir → yavaşlık raporlanır ama düşürmez
 const CERT_MIN_DAYS = 14;
 
-const AURA_BASE = "https://telehealth-mvp-roan.vercel.app";
+const AURA_BASE = "https://auraglobalcare.com";
 const DOCTORIUM_BASE = "https://doctorium.tr";
 
 // title/h1/cta = HAM HTML'de aranan alt dize (büyük/küçük duyarsız). h1: null = bu rotada h1 denetlenmez.

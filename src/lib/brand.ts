@@ -15,7 +15,7 @@ export const IS_DOCTORIUM_DEPLOY = process.env.BRAND_MODE === "doctorium";
 
 // AURA'nın kanonik kökü — Doctorium deploy'undaki redirect hedefi. seo.ts SITE_URL fallback'i ile
 // aynı değer; next.config.ts kendi kopyasını taşır (config '@' alias'ını çözemez — yorumla bağlı).
-export const AURA_CANONICAL_URL = "https://telehealth-mvp-roan.vercel.app";
+export const AURA_CANONICAL_URL = "https://auraglobalcare.com";
 
 // Doctorium'un kanonik kökü (com.tr + www buraya 308'lenir). MARKA-SABİT bir taban gereken
 // yerler içindir — en önemlisi **Doctorium Post bülteni**: bülten AURA projesinden gönderilir

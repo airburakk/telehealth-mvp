@@ -91,7 +91,7 @@ const securityHeaders = [
 // src/lib/brand.ts'te (config '@' alias'ını çözemediği için değerler burada tekrarlanır —
 // değiştirirken İKİSİNİ birlikte güncelle).
 const IS_DOCTORIUM_DEPLOY = process.env.BRAND_MODE === "doctorium";
-const AURA_CANONICAL_URL = "https://telehealth-mvp-roan.vercel.app";
+const AURA_CANONICAL_URL = "https://auraglobalcare.com";
 // AURA'ya devredilen yüzeyler: vitrin + hasta hunisi + AURA giriş/kayıt + locale kökleri.
 // ⚠️ /doktor ağacı ile /onam BİLİNÇLİ listede DEĞİL: Doctorium kayıt akışı (onam → baslangic
 // diploma yüklemesi) ve portal bu projede yaşar; klinik rotaların asıl kapısı zaten rol +
