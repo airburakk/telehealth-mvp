@@ -218,20 +218,19 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
         {/* Marka altyazısı ("Sağlık Turizmi & Teletıp") kullanıcı isteğiyle kaldırıldı (2026-07-12) — yalnız logo */}
         {/* shrink-0: dar ekranda flex logoyu ezip wordmark'ı nav'ın altına sokuyordu
             (mobil "menüler üst üste biniyor" bildirimi, 2026-08-01) — taşmayı nav scroll'u yönetir. */}
-        {/* ADMIN listeye 2026-08-29'da eklendi (kullanıcı bulgusu: "header'da AURA, footer'da
-            Doctorium"). Yönetici /doktor/doctorium portalının İÇİNDEYKEN bile AURA logosu
-            görüyordu — footer segment layout'tan Doctorium geldiği için sayfa iki markalı
-            çıkıyordu. Marka bloğu artık rotayı da dinliyor; ADMIN'in AURA kromundaki logo
-            hedefi /doktor olur (roleHome(ADMIN) ile aynı yer — eskiden kök "/" idi). */}
-        {user && (["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role) || brandRoute) ? (
-          showDoctoriumBrand ? (
-            <DoctoriumBrand doctoriumActive={doctoriumActive} />
-          ) : (
-            // AURA kromunda logo klinik panele gider (eski toggle'ın AURA hedefi — vitrin değil).
-            <Link href="/doktor" className="flex shrink-0 items-end" aria-label="AURA">
-              <AuraLogo size={23} />
-            </Link>
-          )
+        {/* Marka bloğu (ADMIN 2026-08-29 + T2 deploy-bazlı, 2026-09-02): showDoctoriumBrand EN
+            ÜSTTE değerlendirilir — doctoriumSide / brandRoute(/admin) / doctoriumDeploy'un
+            herhangi biri Doctorium logosu çizer. Böylece doctorium.tr deploy'unda GİRİŞ-YAPMAMIŞ
+            fallback yüzeyler de (404/hata) Doctorium markasını alır: footer düzeldi ama header
+            burada user==null olduğundan varsayılan AuraLogo'ya düşüyordu (canlı bulgu). AURA
+            kromunda doktor/koord/admin logosu klinik panele (/doktor) gider; herkes eski kök "/". */}
+        {showDoctoriumBrand ? (
+          <DoctoriumBrand doctoriumActive={doctoriumActive} />
+        ) : user && (["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role) || brandRoute) ? (
+          // AURA kromunda logo klinik panele gider (eski toggle'ın AURA hedefi — vitrin değil).
+          <Link href="/doktor" className="flex shrink-0 items-end" aria-label="AURA">
+            <AuraLogo size={23} />
+          </Link>
         ) : (
           <Link href="/" className="flex shrink-0 items-end">
             <AuraLogo size={23} />
