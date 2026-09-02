@@ -234,7 +234,7 @@ export interface DailyAnchorResult {
   reason?: string; // sealed:false ise (ör. zincir henüz boş)
 }
 
-// Zincirin GÜNCEL ucunu bugünün damgasıyla mühürler. Cron'dan (purge-deleted, günlük bakım nöbeti)
+// Zincirin GÜNCEL ucunu bugünün damgasıyla mühürler. Cron'dan (purge-deleted — imha/bütünlük cron'u, 06:30 TR)
 // günde 1 kez çağrılır; upsert olduğu için aynı gün içinde tekrar çağrılırsa en güncel ucu yakalar
 // (idempotent — ikinci koşum ilkini bozmaz, yalnız günceller).
 export async function sealDailyChainAnchor(): Promise<DailyAnchorResult> {

@@ -1,7 +1,8 @@
 // Doctorium Post — günlük özet ("sabah gazetesi") üretimi (2026-08-24).
 // Tasarım: vault output/doctorium-gunluk-ozet-tasarimi-2026-08-24.md.
 //
-// Akış: günlük bakım cron'u (06:30 TR) ingest adımlarından SONRA runDailyDigests()'i çağırır →
+// Akış: daily-digest cron'u (06:30 TR; v6.204 — içerik cron'ları 05:00/05:20 TR'de ÖNCE biter, sıra
+// zamanlamayla korunur, cron-routes sözleşme testi kilitler) runDailyDigests()'i çağırır →
 // abone (Doctor.digestChannel dolu) her doktor için kişisel akıştan (personalFeedPage —
 // Özelleştir tercihleri + createdSince) o günkü baskı derlenir → DailyDigest satırı (anlık
 // görüntü) + uygulama içi bildirim → kanal "email" ise Resend'e teslim (dormant'ken simülasyon).

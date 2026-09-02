@@ -154,7 +154,7 @@ export async function verifyConsentChain(): Promise<{
   let v2Count = 0;
   let sawV2 = false;
   // Kırık zincir = kurcalama/veri kaybı şüphesi → denetçi görünümüne ek olarak alarm da düşer
-  // (Ray C — sayfayı kimse açmasa da purge-deleted cron'u günlük nöbette bunu koşturur).
+  // (Ray C — sayfayı kimse açmasa da purge-deleted cron'u [imha/bütünlük, 06:30 TR] her gün bunu koşturur).
   const fail = (id: string) => {
     void sendAlert("consent-chain", "Onam zinciri bütünlük doğrulaması BAŞARISIZ", `brokenAt=${id}`);
     return { ok: false, count: rows.length, brokenAt: id, unverifiableSeals, purgedSeals, v1Count, v2Count, unsealedCount };

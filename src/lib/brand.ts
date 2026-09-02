@@ -19,7 +19,7 @@ export const AURA_CANONICAL_URL = "https://auraglobalcare.com";
 
 // Doctorium'un kanonik kökü (com.tr + www buraya 308'lenir). MARKA-SABİT bir taban gereken
 // yerler içindir — en önemlisi **Doctorium Post bülteni**: bülten AURA projesinden gönderilir
-// (cron `api/cron/purge-deleted` içinde; Doctorium projesinde BRAND_MODE ile no-op) ve linklerini
+// (cron `api/cron/daily-digest`, v6.204; Doctorium projesinde BRAND_MODE ile no-op) ve linklerini
 // SITE_URL'den kursaydı, Doctorium markalı e-postanın portal ve abonelikten-çıkış bağlantıları
 // AURA host'una giderdi. Gönderen PROJE değişse bile bültenin markası değişmez → taban sabit.
 // ⚠️ `SITE_URL` (NEXT_PUBLIC_SITE_URL) ile KARIŞTIRMA: o "bu deploy kendini nerede sanıyor"u

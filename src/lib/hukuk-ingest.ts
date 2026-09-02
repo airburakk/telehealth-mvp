@@ -16,7 +16,7 @@
 //     GAP_MS bekleme + ilk hatada koşuyu kesme (kalan ertesi koşuya; idempotent devam).
 //   • GET /getDokuman?id= karar TAM metnini JSON içinde HTML olarak döndürür.
 //
-// Cron bütçesi: purge-deleted (günlük bakım nöbeti) çağırır; koşu başına en fazla
+// Cron bütçesi: ingest-hukuk cron'u (05:20 TR; v6.204'e kadar purge-deleted nöbeti) çağırır; koşu başına en fazla
 // MAX_DOC_FETCH_DEFAULT yeni kararın metni çekilir (maxDuration'ı yeni işle zorlamamak için).
 // İlk dolum (~yüzlerce metin) cron'a SIĞMAZ → scripts/ingest-yargitay.ts yerelden koşulur.
 //

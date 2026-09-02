@@ -1,8 +1,18 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "regions": ["fra1"],
+  "regions": [
+    "fra1"
+  ],
   "crons": [
+    {
+      "path": "/api/cron/ingest-doctorium",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/ingest-hukuk",
+      "schedule": "20 2 * * *"
+    },
     {
       "path": "/api/cron/registry-sync",
       "schedule": "0 3 * * *"
@@ -10,6 +20,14 @@
     {
       "path": "/api/cron/purge-deleted",
       "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/daily-digest",
+      "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/pending-docs-reminders",
+      "schedule": "0 7 * * *"
     }
   ]
 }

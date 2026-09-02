@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runRegistrySync, enrichHospitalDetails } from "@/lib/ht-registry";
 import { sendAlert } from "@/lib/alerts";
+import { cronGate } from "@/lib/cron-guard";
 
 // GET /api/cron/registry-sync — HealthTürkiye günlük senkronu (FAZ 6, 2026-07-10).
 // vercel.json cron'u günde bir tetikler (03:00 UTC ≈ 06:00 İstanbul; Vercel, CRON_SECRET env'i
@@ -12,17 +13,9 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  // Ayrışma Faz A (2026-08-24): cron'lar YALNIZ AURA projesinde koşar (ortak DB, çift senkron olmasın).
-  if (process.env.BRAND_MODE === "doctorium") {
-    return NextResponse.json({ skipped: "doctorium-deploy — senkron cron'u AURA projesinde koşar" });
-  }
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json({ error: "CRON_SECRET tanımlı değil — cron devre dışı." }, { status: 503 });
-  }
-  if (req.headers.get("authorization") !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
-  }
+  // Ortak kapı (v6.204): Doctorium deploy'unda no-op (ortak DB, çift senkron olmasın) + CRON_SECRET Bearer.
+  const gate = cronGate(req, "registry-sync");
+  if (gate) return gate;
 
   let s: Awaited<ReturnType<typeof runRegistrySync>>;
   try {

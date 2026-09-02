@@ -3,17 +3,18 @@ import { purgeExpired, RETENTION_YEARS } from "@/lib/account-deletion";
 import { verifyAccessChain, recordAccess, sealDailyChainAnchor } from "@/lib/audit";
 import { verifyConsentChain } from "@/lib/consent";
 import { sendAlert } from "@/lib/alerts";
-import { remindPendingDocs, type RemindResult } from "@/lib/pending-docs-reminder";
-import { ingestDoctorium, type IngestResult } from "@/lib/doctorium-ingest";
-import { ingestYargitay, type YargitayIngestResult } from "@/lib/hukuk-ingest";
-import { ingestDoktrin, type DoktrinIngestResult } from "@/lib/doktrin-ingest";
-import { remindCongressFollows, type CongressRemindResult } from "@/lib/congress-reminder";
-import { ingestTtbEvents, type TtbEventsResult } from "@/lib/ttb-events";
-import { runDailyDigests, type DigestRunResult } from "@/lib/daily-digest";
+import { cronGate, errText } from "@/lib/cron-guard";
 import { sweepDoctorDocuments, type DocSweepResult } from "@/lib/doc-purge";
 
-// GET /api/cron/purge-deleted — saklama süresi dolan klinik kayıtları GERÇEKTEN imha eder (v6.11).
-// vercel.json cron'u günde bir tetikler. registry-sync ile aynı Bearer deseni (anonim tetiklenemez).
+// GET /api/cron/purge-deleted — İMHA + BÜTÜNLÜK ailesi (v6.11): saklama süresi dolan klinik
+// kayıtları GERÇEKTEN imha eder; iki append-only zinciri (audit + onam) doğrular; audit zincirinin
+// günlük kök damgasını mühürler (v6.200); doktor belge (diploma) süpürmesini koşar (v6.188).
+//
+// v6.204 (2026-09-02): bu rota Temmuz–Ağustos boyunca "GÜNLÜK BAKIM NÖBETİ"ydi — Hobby planının
+// cron kısıtı yüzünden on iş buraya bindirilmişti. Plan Pro; kullanıcı kararıyla ("bölelim") altı
+// cron'a ayrıldı: içerik → ingest-doctorium + ingest-hukuk (05:00/05:20 TR) · doktora bildirim →
+// daily-digest (06:30 TR) · hasta hatırlatması → pending-docs-reminders (10:00 TR). Burada yalnız
+// imha/bütünlük kaldı (06:30 TR). Ortak kapı (BRAND_MODE no-op + CRON_SECRET) lib/cron-guard.
 //
 // Bu uç, silme akışının SÖZÜNÜ TUTAN parçasıdır: hasta hesabını sildiğinde klinik kayıt yasal
 // yükümlülük gereği saklanır ama kilitlenir; süre (RETENTION_YEARS) dolunca burası kaydı fiziken siler.
@@ -25,18 +26,8 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  // Ayrışma Faz A (2026-08-24): vercel.json cron'ları HER İKİ projede de kayıt olur — bakım
-  // cron'u YALNIZ AURA projesinde koşar (ortak DB'de çift koşum/çift hatırlatma olmasın).
-  if (process.env.BRAND_MODE === "doctorium") {
-    return NextResponse.json({ skipped: "doctorium-deploy — bakım cron'u AURA projesinde koşar" });
-  }
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json({ error: "CRON_SECRET tanımlı değil — cron devre dışı." }, { status: 503 });
-  }
-  if (req.headers.get("authorization") !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
-  }
+  const gate = cronGate(req, "purge-deleted");
+  if (gate) return gate;
 
   try {
     const r = await purgeExpired();
@@ -69,107 +60,20 @@ export async function GET(req: Request) {
     //
     // Günlük kök damgası (TSA mimarisi, 2026-09-02): audit zinciri artık satır başına değil günde 1
     // kez damgalanır (sealDailyChainAnchor) — bu SATIRDAN SONRA eklenen kayıtlar (ör. bu cron'un
-    // kendi CRON_MAINTENANCE satırı) yarının anchor'ına kalır, bilinçli erteleme.
+    // kendi CRON_MAINTENANCE satırı, diğer cron'ların izleri) yarının anchor'ına kalır, bilinçli erteleme.
     const [audit, consent, anchor] = await Promise.all([
       verifyAccessChain(), verifyConsentChain(), sealDailyChainAnchor(),
     ]);
 
-    // DOCS_PENDING hatırlatması (2026-07-24): bu rota fiilen GÜNLÜK BAKIM NÖBETİ (Hobby döneminde
-    // cron limiti 2/dolu → yeni cron açılamıyordu; plan 2026-09-02'den beri Pro — tek nöbet deseni bilinçli korunuyor) — belge-bekleyen başvuruların hastalarına günde 1
-    // dürtü (en fazla 3; lib/pending-docs-reminder). Hatırlatma kritik değil: hata imha akışını
-    // DÜŞÜRMEZ, yalnız yanıtta raporlanır (hasta panelden her an kendisi tamamlayabilir).
-    let reminders: RemindResult | { error: string };
-    try {
-      reminders = await remindPendingDocs();
-    } catch (e) {
-      reminders = { error: e instanceof Error ? e.message.slice(0, 120) : "hatırlatma koşamadı" };
-    }
-
-    // Doctorium içerik toplama (2026-08-01, v6.48): PubMed 30 branş + Resmî Gazete fihristi →
-    // NewsArticle. Aynı gerekçe (Hobby dönemi; plan artık Pro): bu rota fiilen günlük bakım nöbeti, bölmek ayrı karar.
-    // Kritik DEĞİL: hatası imha akışını düşürmez, yalnız raporlanır (portal bir gün bayat kalır).
-    let doctorium: IngestResult | { error: string };
-    try {
-      doctorium = await ingestDoctorium();
-    } catch (e) {
-      doctorium = { error: e instanceof Error ? e.message.slice(0, 120) : "ingest koşamadı" };
-    }
-
-    // Hukuk/İçtihat toplama (v6.86): Yargıtay karar arama → NewsArticle (category=ictihat).
-    // Koşu başına metin tavanı lib içinde (MAX_DOC_FETCH_DEFAULT) — bütçe dostu; kalan `deferred`
-    // ertesi koşuda idempotent alınır. Kritik değil: hata imha akışını düşürmez, raporlanır.
-    // ⚠️ Vercel fra1 → devlet sitesi erişimi GARANTİ DEĞİL (RG dersi): burada sürekli hata
-    // görülürse yerel yol hazır → scripts/ingest-yargitay.ts (--prod --yaz).
-    let yargitay: YargitayIngestResult | { error: string };
-    try {
-      yargitay = await ingestYargitay();
-    } catch (e) {
-      yargitay = { error: e instanceof Error ? e.message.slice(0, 120) : "içtihat ingest koşamadı" };
-    }
-
-    // Doktrin toplama (v6.91): TR-Dizin hakemli makale metadata'sı → NewsArticle
-    // (category=doktrin). Tek aşamalı ve ucuz (ikinci belge isteği yok); cron'da yalnız her
-    // sorgunun İLK sayfası taranır (yeni yayınlar üstte — publicationYear-DESC). Kritik değil.
-    let doktrin: DoktrinIngestResult | { error: string };
-    try {
-      doktrin = await ingestDoktrin({ maxPages: 1 });
-    } catch (e) {
-      doktrin = { error: e instanceof Error ? e.message.slice(0, 120) : "doktrin ingest koşamadı" };
-    }
-
-    // Doctorium kongre alarmı (v6.49): takip edilen kongrenin başlangıcı / bildiri-erken kayıt son
-    // tarihi doktorun seçtiği eşiğe girdiyse bildirim. Kritik değil — hata imha akışını düşürmez.
-    let congress: CongressRemindResult | { error: string };
-    try {
-      congress = await remindCongressFollows();
-    } catch (e) {
-      congress = { error: e instanceof Error ? e.message.slice(0, 120) : "kongre alarmı koşamadı" };
-    }
-
-    // TTB akredite etkinlik taraması (v6.129) — HAFTALIK kontenjan (yalnız Pazartesi koşar):
-    // düzenleyiciler etkinlikten en az 30 gün önce başvurduğu için kayıt SEYREK akar (v6.120
-    // ölçümü); her gün taramak hem israf hem kaynağa saygısızlık. Pencere cron'da DAR tutulur
-    // (geçmiş 1 ay + gelecek 13 ay — yeni başvurular hep yakın gelecekte); tam/geri dönük tarama
-    // CLI işidir (scripts/ingest-ttb-events.ts). Kritik değil: hata imha akışını düşürmez.
-    // ⚠️ Kaynaklar arası birleştirme (merge-congress-sources.ts) BİLİNÇLİ cron'da değil — satır
-    // silen araç insan gözetiminde kalır. Raporda `created` yüksekse elle merge koşulur.
-    let ttbEvents: TtbEventsResult | { skipped: true } | { error: string };
-    if (new Date().getUTCDay() === 1) {
-      try {
-        const now = new Date();
-        const ym = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-        ttbEvents = await ingestTtbEvents({
-          fromYm: ym(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1))),
-          toYm: ym(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 13, 1))),
-        });
-      } catch (e) {
-        ttbEvents = { error: e instanceof Error ? e.message.slice(0, 120) : "TTB taraması koşamadı" };
-      }
-    } else {
-      ttbEvents = { skipped: true }; // haftalık kontenjan — bugün sırası değil
-    }
-
-    // Doctorium Post (2026-08-24): abone doktorlara günlük özet baskısı. BİLİNÇLİ SIRA — ingest
-    // adımlarından (doctorium/yargitay/doktrin) SONRA koşar ki baskı o gecenin içeriğini görsün;
-    // cron 06:30 TR'de koştuğu için "sabah gazetesi" zamanlaması kendiliğinden oturur (tasarım:
-    // vault output/doctorium-gunluk-ozet-tasarimi-2026-08-24.md §3). Kritik değil: hata imha
-    // akışını düşürmez; doktor+gün idempotensi lib içinde (yeniden koşum ikinci baskı üretmez).
-    let digest: DigestRunResult | { error: string };
-    try {
-      digest = await runDailyDigests();
-    } catch (e) {
-      digest = { error: e instanceof Error ? e.message.slice(0, 120) : "günlük özet koşamadı" };
-    }
-
     // Doktor belge imhası (2026-08-30, KVKK minimizasyonu — lib/doc-purge): doğrulanmış
     // diplomaların dosyaları (mevcut kayıtlar dahil — backfill kendiliğinden) + saklama süresi
     // dolan reddedilmişler. Anında-imha yollarının Blob kaçaklarını da bu süpürme telafi eder.
-    // Kritik değil: hata imha akışını düşürmez, raporlanır.
+    // Kritik değil: hata imha akışını düşürmez, raporlanır. İmha ailesinden olduğu için BURADA kaldı.
     let docSweep: DocSweepResult | { error: string };
     try {
       docSweep = await sweepDoctorDocuments();
     } catch (e) {
-      docSweep = { error: e instanceof Error ? e.message.slice(0, 120) : "belge süpürmesi koşamadı" };
+      docSweep = { error: errText(e, "belge süpürmesi koşamadı") };
     }
     // Blob silinemedi = imha sözü tutulamadı ve satır dokunulmadan bekliyor — sessiz geçilemez
     // (ertesi koşu yeniden dener ama alarm düşer; purge-deleted failedBlobs deseniyle aynı).
@@ -181,33 +85,9 @@ export async function GET(req: Request) {
       );
     }
 
-    // KALICI KOŞU İZİ (2026-07-29): Vercel Hobby'de runtime log saklama süresi 1 SAAT idi (Pro'da 1 gün; plan 2026-09-02'den beri Pro) — cron gece
-    // koştuğu için sayaçları log'dan gözlemek fiilen imkânsızdı ("ertesi gün bak" planı çalışmıyordu).
-    // Sayaçlar audit zincirine yazılır: PHI YOK (yalnız adetler), günde 1 satır (hacim ~3,5/gün'ün
-    // yanında önemsiz). "Cron koştu mu, kaç hatırlatma gitti" sorusu artık kalıcı kayıttan yanıtlanır.
-    const rem = "error" in reminders
-      ? `hata: ${reminders.error}`
-      : `bakilan=${reminders.checked} gonderilen=${reminders.reminded} tavan=${reminders.capped} hata=${reminders.failed}`;
-    const doc = "error" in doctorium
-      ? `hata: ${doctorium.error}`
-      : `pubmed=${doctorium.pubmedNew}/${doctorium.pubmedFetched} rg=${doctorium.gazetteNew}/${doctorium.gazetteFetched}${doctorium.errors.length ? ` sorun=${doctorium.errors.length}` : ""}`;
-    const ict = "error" in yargitay
-      ? `hata: ${yargitay.error}`
-      : `yeni=${yargitay.created}/${yargitay.found}${yargitay.deferred ? ` erteli=${yargitay.deferred}` : ""}${yargitay.errors.length ? ` sorun=${yargitay.errors.length}` : ""}`;
-    const dok = "error" in doktrin
-      ? `hata: ${doktrin.error}`
-      : `yeni=${doktrin.created}/${doktrin.found}${doktrin.errors.length ? ` sorun=${doktrin.errors.length}` : ""}`;
-    const con = "error" in congress
-      ? `hata: ${congress.error}`
-      : `bakilan=${congress.checked} baslangic=${congress.start} bildiri=${congress.abstract} erkenkayit=${congress.earlybird} hata=${congress.failed}`;
-    const ttb = "skipped" in ttbEvents
-      ? "atlandi(haftalik)"
-      : "error" in ttbEvents
-        ? `hata: ${ttbEvents.error}`
-        : `yeni=${ttbEvents.created} guncel=${ttbEvents.updated} devir=${ttbEvents.adopted}/${ttbEvents.found}${ttbEvents.warnings.length ? ` sorun=${ttbEvents.warnings.length}` : ""}`;
-    const pst = "error" in digest
-      ? `hata: ${digest.error}`
-      : `abone=${digest.checked} baski=${digest.produced} eposta=${digest.emailed}${digest.emailSimulated ? `(sim=${digest.emailSimulated})` : ""} bos=${digest.skippedEmpty} tekrar=${digest.skippedDone} hata=${digest.failed}`;
+    // KALICI KOŞU İZİ (2026-07-29): runtime log kısa ömürlü (o dönem Hobby 1 saat, Pro 1 gün) — cron
+    // gece koştuğu için sayaçları log'dan gözlemek güvenilmezdi. Sayaçlar audit zincirine yazılır:
+    // PHI YOK (yalnız adetler), günde 1 satır. "Cron koştu mu" sorusu kalıcı kayıttan yanıtlanır.
     const bel = "error" in docSweep
       ? `hata: ${docSweep.error}`
       : `imha=${docSweep.swept} blobHata=${docSweep.blobFailed}`;
@@ -217,7 +97,7 @@ export async function GET(req: Request) {
       resourceType: "SYSTEM",
       resourceId: "purge-deleted",
       subjectUserId: null,
-      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · gunluk-damga ${anchor.sealed ? `${anchor.day} (${anchor.entryCount} satir)` : `atlandi: ${anchor.reason}`} · hatirlatma ${rem} · doctorium ${doc} · ictihat ${ict} · doktrin ${dok} · kongre ${con} · ttb ${ttb} · post ${pst} · belgeimha ${bel}`,
+      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · gunluk-damga ${anchor.sealed ? `${anchor.day} (${anchor.entryCount} satir)` : `atlandi: ${anchor.reason}`} · belgeimha ${bel}`,
     });
 
     return NextResponse.json({
@@ -229,13 +109,6 @@ export async function GET(req: Request) {
         consent: { ok: consent.ok, count: consent.count, brokenAt: consent.brokenAt, unverifiableSeals: consent.unverifiableSeals, purgedSeals: consent.purgedSeals },
       },
       dailyAnchor: anchor,
-      pendingDocsReminders: reminders,
-      doctorium,
-      yargitay,
-      doktrin,
-      congressAlerts: congress,
-      ttbEvents,
-      dailyDigest: digest,
       docSweep,
     });
   } catch (e) {
@@ -243,7 +116,7 @@ export async function GET(req: Request) {
     void sendAlert(
       "cron-purge",
       "purge-deleted cron BAŞARISIZ — saklama süresi dolan kayıtların imhası koşmadı",
-      e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200),
+      errText(e, String(e).slice(0, 200)),
     );
     return NextResponse.json({ error: "purge-deleted başarısız." }, { status: 500 });
   }

@@ -2,7 +2,8 @@ import { db } from "@/lib/db";
 import { notifyUser } from "@/lib/notify";
 
 // DOCS_PENDING hatırlatması (2026-07-24, kullanıcı kararı: günde 1 × en fazla 3) — belge-bekleyen
-// başvurunun hastasına periyodik dürtü. Günlük bakım cron'undan (purge-deleted, ~06:30 TR) çağrılır.
+// başvurunun hastasına periyodik dürtü. pending-docs-reminders cron'undan (10:00 TR — v6.204; eskiden
+// purge-deleted nöbetinde 06:30 TR'de gidiyordu, kullanıcı kararıyla insanca saate alındı) çağrılır.
 // Son-hatırlatma durumu AYRI kolon tutmaz: hastanın /vaka/<id> href'li MISSING_DOCS bildirimleri
 // zaten kayıt — en yenisinin yaşı pencereyi, toplam sayısı tavanı verir (migration'sız, tek kaynak).
 // İlk bildirim vaka oluşturmada atılır → toplam tavan = 1 ilk + REMINDER_CAP hatırlatma.

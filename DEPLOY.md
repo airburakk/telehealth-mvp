@@ -157,11 +157,33 @@ SSR JSON'undan; buildId koşu başında anasayfadan çözülür): günde 40 tesi
 koşulur (2026-07-10'da ~4.600 tesis dolduruldu); `authorizationNumber` kolon backfill'i için
 `npx tsx scripts/registry-enrich.ts auth` (v5.2'de koşuldu).
 
+### Cron düzeni — altı cron (v6.204, 2026-09-02)
+
+Temmuz–Ağustos boyunca (Vercel Hobby cron kısıtı) on iş tek "bakım nöbeti"ne (`purge-deleted`)
+bindirilmişti; plan Pro'ya geçince kullanıcı kararıyla bölündü. Tek doğruluk kaynağı
+`src/lib/cron-guard.ts CRON_SCHEDULES` ↔ `vercel.json` (sözleşme testi `tests/unit/cron-routes.test.ts`
+birebir eşliği, rota dosyalarının varlığını ve içerik→baskı SIRASINI kilitler). Hepsi aynı
+`CRON_SECRET` Bearer'ını ister ve **Doctorium deploy'unda no-op** kalır (`BRAND_MODE=doctorium`;
+ortak DB'de çift koşum olmasın) — iki korkuluk tek yerde: `cronGate()`.
+
+| Saat (UTC → TR) | Rota | İş |
+|---|---|---|
+| 02:00 → 05:00 | `/api/cron/ingest-doctorium` | akademik + haber/sektörel/ilaç içerik toplama (kendi 300 sn bütçesi) |
+| 02:20 → 05:20 | `/api/cron/ingest-hukuk` | Yargıtay içtihat · TR-Dizin doktrin · TTB etkinlik (yalnız Pazartesi) |
+| 03:00 → 06:00 | `/api/cron/registry-sync` | HealthTürkiye dizini (değişmedi) |
+| 03:30 → 06:30 | `/api/cron/purge-deleted` | KVKK imha · audit+onam zinciri doğrulama · günlük kök damgası · diploma süpürmesi |
+| 03:30 → 06:30 | `/api/cron/daily-digest` | Doctorium Post baskısı · etkinlik/kongre alarmı |
+| 07:00 → 10:00 | `/api/cron/pending-docs-reminders` | DOCS_PENDING hasta hatırlatması (insanca saat — kullanıcı kararı) |
+
+Her cron kendi `CRON_MAINTENANCE` audit satırını (PHI yok, yalnız sayaçlar) ve kendi alarmını yazar;
+elle tetikleme: `curl -H "Authorization: Bearer $CRON_SECRET" <site>/api/cron/<ad>`.
+
 ### Cron — saklama süresi dolan kayıtların imhası (v6.11, 2026-07-15)
 
 `vercel.json` günde bir (03:30 UTC) `/api/cron/purge-deleted`'i tetikler. Aynı `CRON_SECRET` Bearer
 deseni (registry-sync ile ortak; yoksa uç 503, site etkilenmez). Batch: 50 kayıt/gün — kalanı ertesi
-gün alınır (idempotent; yalnız `purgeAfter <= now`).
+gün alınır (idempotent; yalnız `purgeAfter <= now`). v6.204'ten beri bu rota YALNIZ imha/bütünlük
+ailesidir (içerik, baskı ve hatırlatma kendi cron'larında — yukarıdaki tablo).
 
 **Bu cron silme akışının SÖZÜNÜ TUTAN parçasıdır.** Hasta hesabını sildiğinde klinik kayıt yasal
 yükümlülük gereği saklanır ama erişime kapanır (`deletionLockedAt`); `RETENTION_YEARS` (**20**,
