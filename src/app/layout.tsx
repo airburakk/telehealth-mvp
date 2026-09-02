@@ -7,6 +7,7 @@ import { AuraAnimPause } from "@/components/aura/anim-pause";
 import { AppChrome } from "@/components/AppChrome";
 import { SITE_URL } from "@/lib/aura-landing/seo";
 import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
+import { LANDING_META } from "@/lib/doctorium-landing/content";
 
 // Uygulama geneli tipografi — vitrin (aura-health) ile aynı aile: Inter gövde + Space Grotesk
 // display (--font-serif değişken adı tarihsel; display yuvası olarak kullanılır) + JetBrains Mono
@@ -48,8 +49,13 @@ export const metadata: Metadata = {
     ? { default: "Doctorium", template: "%s · Doctorium" }
     : { default: "AURA Health", template: "%s · AURA" },
   // "uçtan uca" bilinçli YOK (vitrin iddia disiplini v6.8/v6.18 — ana sayfayla hizalı; kullanıcı onayı 2026-07-18).
-  description:
-    "Triyaj, uzman görüşü ve sağlık turizmi paketlerini birleştiren dijital sağlık platformu (MVP).",
+  // Marka-duyarlı (T2 takip, 2026-09-02): kök description da title gibi deploy'a göre seçilir.
+  // Doctorium deploy'unda AURA'ya devredilmeyen fallback yüzeyler (404/hata + paylaşımlı rotalar)
+  // kök description'ı miras alır — AURA'nın "sağlık turizmi" metni Doctorium meta'sına sızıyordu
+  // (title zaten switch'liydi, description unutulmuştu). Landing'in claim-onaylı metniyle tek kaynak.
+  description: IS_DOCTORIUM_DEPLOY
+    ? LANDING_META.description
+    : "Triyaj, uzman görüşü ve sağlık turizmi paketlerini birleştiren dijital sağlık platformu (MVP).",
   manifest: "/manifest.webmanifest",
   // Sekme ikonu AÇIKÇA burada bağlanır — `src/app/favicon.ico` dosya konvansiyonu BİLİNÇLİ YOK.
   // Sebep (2026-08-19): kök favicon.ico varken alt segmentteki `icon.ico` <link> olarak BASILMIYOR
