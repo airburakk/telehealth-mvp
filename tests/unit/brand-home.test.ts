@@ -68,3 +68,50 @@ describe("brandRoleHome", () => {
     expect(brandRoleHome("DOCTOR")).toBe("/doktor/doctorium");
   });
 });
+
+describe("deniedRoleHome — rol kapısında reddedilen kullanıcının inişi (v6.203, QA ISSUE-A2)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  it("Doctorium deploy'unda /admin'e giden doktor PORTALA iner, landing'e değil", async () => {
+    const { deniedRoleHome } = await loadRoles("doctorium");
+    expect(deniedRoleHome("DOCTOR")).toBe("/doktor/doctorium");
+  });
+
+  it("AURA deploy'unda rolün kendi ana sayfasına iner (kök değil)", async () => {
+    const { deniedRoleHome } = await loadRoles("");
+    expect(deniedRoleHome("DOCTOR")).toBe("/doktor");
+    expect(deniedRoleHome("PATIENT")).toBe("/triyaj");
+    expect(deniedRoleHome("PARTNER")).toBe("/partner");
+  });
+
+  it("tanınmayan rol köke iner (fail-closed — eski davranış korunur)", async () => {
+    const { deniedRoleHome } = await loadRoles("doctorium");
+    expect(deniedRoleHome("SUPERUSER")).toBe("/");
+    expect(deniedRoleHome(undefined)).toBe("/");
+  });
+
+  it("iniş hedefi o rolün GEÇEBİLDİĞİ bir kapıdır — yönlendirme döngüsü olmaz (iki deploy)", async () => {
+    // proxy.ts rol kapıları (2026-09-02): /doktor → DOCTOR/COORDINATOR/ADMIN · /operasyon →
+    // COORDINATOR/ADMIN · /partner → PARTNER/ADMIN · /acente → AGENCY/ADMIN · /uzman →
+    // HEALTH_PRO/ADMIN · /etik-kurul → ETHICS/ADMIN. Kapı listesi değişirse burası da güncellenir.
+    const gates: Record<string, string[]> = {
+      "/doktor": ["DOCTOR", "COORDINATOR", "ADMIN"],
+      "/operasyon": ["COORDINATOR", "ADMIN"],
+      "/partner": ["PARTNER", "ADMIN"],
+      "/acente": ["AGENCY", "ADMIN"],
+      "/uzman": ["HEALTH_PRO", "ADMIN"],
+      "/etik-kurul": ["ETHICS", "ADMIN"],
+    };
+    for (const mode of ["doctorium", ""]) {
+      const { deniedRoleHome } = await loadRoles(mode);
+      for (const role of ["DOCTOR", "COORDINATOR", "ADMIN", "PARTNER", "AGENCY", "HEALTH_PRO", "ETHICS"] as const) {
+        const home = deniedRoleHome(role);
+        const gate = Object.keys(gates).find((p) => home === p || home.startsWith(`${p}/`));
+        if (gate) expect(gates[gate], `${mode || "aura"}: ${role} → ${home}`).toContain(role);
+      }
+    }
+  });
+});

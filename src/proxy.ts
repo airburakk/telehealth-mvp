@@ -3,6 +3,7 @@ import { SESSION_COOKIE, verifyToken } from "@/lib/session";
 import { CONSENT_VERSION } from "@/lib/consent-config";
 import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 import { usesDoctoriumBrand } from "@/lib/chrome-routes";
+import { deniedRoleHome } from "@/lib/roles";
 
 const DOCTOR_ROLES = ["DOCTOR", "COORDINATOR", "ADMIN"];
 const ETHICS_ROLES = ["ETHICS", "ADMIN"];
@@ -45,33 +46,35 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Yanlış rol → kullanıcının KENDİ marka-duyarlı ana sayfası (v6.203, QA ISSUE-A2). Eskiden
+  // köke ("/") atıyordu; Doctorium deploy'unda kök = landing, doktor vitrine düşüyordu.
   if (pathname.startsWith("/etik-kurul") && !ETHICS_ROLES.includes(user.role)) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL(deniedRoleHome(user.role), req.url));
   }
   if (pathname.startsWith("/denetim") && !ETHICS_ROLES.includes(user.role)) {
-    return NextResponse.redirect(new URL("/", req.url)); // denetim izi bütünlüğü = denetçi (ADMIN/Etik Kurul)
+    return NextResponse.redirect(new URL(deniedRoleHome(user.role), req.url)); // denetim izi bütünlüğü = denetçi (ADMIN/Etik Kurul)
   }
   if (pathname.startsWith("/admin") && !ETHICS_ROLES.includes(user.role)) {
-    return NextResponse.redirect(new URL("/", req.url)); // doktor doğrulama onayı = ADMIN/Etik Kurul
+    return NextResponse.redirect(new URL(deniedRoleHome(user.role), req.url)); // doktor doğrulama onayı = ADMIN/Etik Kurul
   }
   // ⚠️ SEGMENT SINIRI ŞART (2026-08-17): çıplak startsWith("/doktor") komşu rotaları da yutar —
   // doktor dizini eski "/hekimler" yolundan /doktorlar'a taşınınca (terim kuralı) bu kontrol
   // hasta rolünü dizinden ana sayfaya atardı. /doktorlar klinik panel DEĞİL: giriş + onam ister
   // (aşağıdaki matcher), rol kapısı istemez. Yeni "/doktor…" rotası eklerken bu ayrımı koru.
   if ((pathname === "/doktor" || pathname.startsWith("/doktor/")) && !DOCTOR_ROLES.includes(user.role)) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL(deniedRoleHome(user.role), req.url));
   }
   if (pathname.startsWith("/operasyon") && !OPS_ROLES.includes(user.role)) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL(deniedRoleHome(user.role), req.url));
   }
   if (pathname.startsWith("/partner") && !PARTNER_ROLES.includes(user.role)) {
-    return NextResponse.redirect(new URL("/", req.url)); // yalnız Partner Doktor (+ADMIN); doktor/hasta giremez
+    return NextResponse.redirect(new URL(deniedRoleHome(user.role), req.url)); // yalnız Partner Doktor (+ADMIN); doktor/hasta giremez
   }
   if (pathname.startsWith("/acente") && !AGENCY_ROLES.includes(user.role)) {
-    return NextResponse.redirect(new URL("/", req.url)); // yalnız acente (+ADMIN); sayfalar ayrıca kendi savunmasını yapar
+    return NextResponse.redirect(new URL(deniedRoleHome(user.role), req.url)); // yalnız acente (+ADMIN); sayfalar ayrıca kendi savunmasını yapar
   }
   if (pathname.startsWith("/uzman") && !HEALTH_PRO_ROLES.includes(user.role)) {
-    return NextResponse.redirect(new URL("/", req.url)); // yalnız Sağlık Uzmanı (+ADMIN); sayfa kendi staffVerifiedAt kapısını da yapar
+    return NextResponse.redirect(new URL(deniedRoleHome(user.role), req.url)); // yalnız Sağlık Uzmanı (+ADMIN); sayfa kendi staffVerifiedAt kapısını da yapar
   }
   // /kayit/durum: oturum + onam yeterli (rol kapısı yok — sayfa kendi rol/doğrulama yönlendirmesini yapar)
   // MASTER paneli: env-gated + e-posta allowlist (rol DEĞİL). Bürünme oturumu (imp) master sayılmaz.
@@ -81,7 +84,7 @@ export async function proxy(req: NextRequest) {
     const allow = (process.env.MASTER_ACCOUNT_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
     const email = (user.email ?? "").toLowerCase();
     if (!enabled || user.imp || !allow.includes(email)) {
-      return NextResponse.redirect(new URL("/", req.url));
+      return NextResponse.redirect(new URL(deniedRoleHome(user.role), req.url));
     }
   }
   // /gorusme: giriş yeterli (hasta + doktor görüşmeye katılabilir)

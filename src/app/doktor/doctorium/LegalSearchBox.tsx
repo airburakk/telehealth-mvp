@@ -37,13 +37,17 @@ export const LEGAL_BOX: Record<LegalTabKey, { title: string; placeholder: string
 };
 
 export function LegalSearchBox({
-  tab, query, activeKeyword, demo,
+  tab, query, activeKeyword, demo, resultCount, resultCap,
 }: {
   tab: LegalTabKey;
   query: string | null;
   activeKeyword: string | null;
   /** Landing demo modu: tüm hedefler giriş kapısına; açık "giriş yapınca arar" ipucu. */
   demo?: { href: string };
+  /** Sonuç sayacı (v6.203, QA A3): sayfanın listelediği kalem sayısı; `resultCap`a dayandıysa "N+"
+   *  yazılır (moduleFeed tavanı — liste kesilmiş olabilir, tam sayı gibi sunulmaz). Demo modunda yok. */
+  resultCount?: number;
+  resultCap?: number;
 }) {
   const t = LEGAL_BOX[tab];
   // Kanonik URL: varsayılan sekme (mevzuat) h parametresi TAŞIMAZ — mevcut link disiplini.
@@ -87,7 +91,17 @@ export function LegalSearchBox({
       {query && !demo && (
         <p className="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-[var(--c-ink-2)]">
           <span>
-            &ldquo;<strong className="text-[var(--c-ink)]">{query}</strong>&rdquo; için sonuçlar
+            &ldquo;<strong className="text-[var(--c-ink)]">{query}</strong>&rdquo; için{" "}
+            {typeof resultCount === "number" ? (
+              <>
+                <strong className="text-[var(--c-ink)]">
+                  {resultCap && resultCount >= resultCap ? `${resultCap}+` : resultCount}
+                </strong>{" "}
+                sonuç
+              </>
+            ) : (
+              "sonuçlar"
+            )}
           </span>
           <Link href={clearHref} className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-300 hover:underline">
             <X size={11} /> aramayı temizle

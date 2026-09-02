@@ -1074,6 +1074,10 @@ export function parseViewPrefs(raw: string | null | undefined): DoctoriumViewPre
 }
 
 /** Modül akışı (akademik/sektörel). Branş verilirse akademikte süzülür; days verilirse tarih penceresi. */
+/** Modül sekmesi listesinin tavanı (moduleFeed varsayılan `limit`). Sayfa bu sabite bakarak arama
+ *  sayacında "N+" yazar (v6.203, QA A3) — tavana dayanan liste tam sayı gibi sunulmasın. */
+export const MODULE_FEED_LIMIT = 40;
+
 export async function moduleFeed(
   module: "akademik" | "mevzuat" | "sektorel" | "ilac",
   branchSlugs: string[],
@@ -1082,7 +1086,7 @@ export async function moduleFeed(
     textContainsAny?: string[]; sources?: string[]; createdSince?: Date; textQuery?: string;
   } = {},
 ): Promise<FeedItem[]> {
-  const { limit = 40, days, category, excludeCategories, textContainsAny, sources, createdSince, textQuery } = opts;
+  const { limit = MODULE_FEED_LIMIT, days, category, excludeCategories, textContainsAny, sources, createdSince, textQuery } = opts;
   // v6.86/87: iki bağımsız OR ölçütü (kategori-dışlama · metin-arama) AND dizisinde toplanır —
   // spread ile aynı objeye ikinci bir OR anahtarı yazmak öncekini SESSİZCE ezerdi.
   const and: object[] = [];

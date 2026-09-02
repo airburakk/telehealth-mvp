@@ -100,8 +100,9 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, brand 
         </div>
 
         <form onSubmit={submit} className="space-y-3">
+          {/* autoComplete (v6.203, QA ISSUE-004): giriş formuyla tutarlı — parola yöneticisi/otomatik doldurma alanları tanısın. */}
           <Labeled label="Ad soyad">
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Dr. Ayşe Yılmaz" className={INPUT} required />
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Dr. Ayşe Yılmaz" className={INPUT} required autoComplete="name" />
           </Labeled>
 
           <div className="grid grid-cols-2 gap-3">
@@ -123,20 +124,20 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, brand 
           </Labeled>
 
           <Labeled label="Cep telefonu (isteğe bağlı)">
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+90 5xx xxx xx xx" className={INPUT} />
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+90 5xx xxx xx xx" className={INPUT} autoComplete="tel" />
             <span className="mt-1 block text-[11px] text-[var(--c-ink-3)]">WhatsApp/SMS bildirim kanalını seçerseniz bildirimler bu numaraya gönderilir.</span>
           </Labeled>
 
           <Labeled label="E-posta">
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ayse@klinik.com" className={INPUT} required />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ayse@klinik.com" className={INPUT} required autoComplete="email" />
           </Labeled>
 
           <div className="grid grid-cols-2 gap-3">
             <Labeled label="Parola">
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="en az 8 karakter" className={INPUT} required minLength={8} />
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="en az 8 karakter" className={INPUT} required minLength={8} autoComplete="new-password" />
             </Labeled>
             <Labeled label="Parola (tekrar)">
-              <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} placeholder="••••••••" className={INPUT} required minLength={8} />
+              <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} placeholder="••••••••" className={INPUT} required minLength={8} autoComplete="new-password" />
             </Labeled>
           </div>
 

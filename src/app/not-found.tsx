@@ -25,7 +25,8 @@ export default function NotFound() {
         <p className="mt-2 text-sm leading-relaxed text-[var(--c-ink-2)]">{t.notFoundDesc}</p>
         <Link
           href="/"
-          className="mt-6 inline-flex items-center justify-center rounded-lg bg-[var(--c-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]"
+          // CTA marka token'ından (v6.203): Doctorium deploy'unda zümrüt, AURA'da turkuaz — bkz. globals.css --c-cta.
+          className="mt-6 inline-flex items-center justify-center rounded-lg bg-[var(--c-cta)] px-5 py-2.5 text-sm font-semibold text-[var(--c-cta-ink)] hover:bg-[var(--c-cta-strong)]"
         >
           {t.home}
         </Link>

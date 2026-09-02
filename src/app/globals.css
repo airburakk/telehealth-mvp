@@ -1188,3 +1188,20 @@ body {
     overflow: visible !important;
   }
 }
+
+/* ── Marka-duyarlı CTA token'ı (v6.203, QA ISSUE-001 / Design D-2 kalıntısı) ─────────────────
+ * not-found/error sayfaları "use client" → BRAND_MODE'u okuyamaz; marka kök layout'tan
+ * <body data-brand> ile iner. --c-cta varsayılanı AURA aksanı (tema-duyarlı --c-accent),
+ * Doctorium gövdesinde zümrüt (#047857 = V3 --dl-emerald; hover #065f46; metin beyaz — 5.3:1 AA).
+ * Yalnız fallback yüzeyleri kullanır; portal ve landing kendi düğme sınıflarını taşır.
+ * Nöbet: tests/unit/error-pages-brand.test.ts. */
+:root {
+  --c-cta: var(--c-accent);
+  --c-cta-strong: var(--c-accent-strong);
+  --c-cta-ink: var(--c-bg);
+}
+body[data-brand="doctorium"] {
+  --c-cta: #047857;
+  --c-cta-strong: #065f46;
+  --c-cta-ink: #ffffff;
+}

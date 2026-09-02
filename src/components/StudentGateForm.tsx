@@ -5,7 +5,7 @@ import Link from "next/link";
 import { GraduationCap, MailCheck, UserPlus, Loader2 } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
 import { CitySelect } from "@/components/CitySelect";
-import { universitiesFor, type StudentDepartment } from "@/lib/universities";
+import { universitiesFor, domainMatches, type StudentDepartment } from "@/lib/universities";
 
 // v6.95 — Tıp/Diş Hekimliği öğrencisi kaydı (/ogrenci): doktor kaydından AYRI huni (kullanıcı
 // kararı 2026-08-14). Kayıt /api/auth/signup-student'a gider (ünvan/telefon/dil yok). OAuth butonu
@@ -65,11 +65,22 @@ function StudentSignup({ branches }: { branches: string[] }) {
   // Üniversite seçenekleri bölüme göre süzülür — dişçilik seçiliyse yalnız Diş Hekimliği olan
   // üniversiteler görünür (yanlış bölüm+üniversite kombinasyonu formda hiç kurulamaz).
   const universities = useMemo(() => (department ? universitiesFor(department) : []), [department]);
+  // İstemci ön-doğrulaması (v6.203, QA ISSUE-005): sunucu kuralının (signup-student → domainMatches)
+  // AYNI fonksiyonu; kullanıcı alan adını yazar yazmaz uyarı görür, gereksiz round-trip yok. Sunucu
+  // kontrolü KALIR (savunma derinliği) — burası yalnız anlık geri bildirim. Uyarı, "@" sonrası bir
+  // nokta yazıldığında başlar (yarım adreste titremesin).
+  const selectedUni = useMemo(() => universities.find((u) => u.name === university) ?? null, [universities, university]);
+  const typedDomain = email.includes("@") && email.slice(email.lastIndexOf("@") + 1).includes(".");
+  const emailDomainMismatch = Boolean(selectedUni && typedDomain && !domainMatches(email, university));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (password !== password2) { setError("Parolalar eşleşmiyor."); return; }
+    if (selectedUni && !domainMatches(email, university)) {
+      setError(`Girdiğiniz e-posta "${university}" için beklenen öğrenci uzantısıyla eşleşmiyor (beklenen: ${selectedUni.domains.map((d) => `@${d}`).join(", ")}).`);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/auth/signup-student", {
@@ -104,7 +115,8 @@ function StudentSignup({ branches }: { branches: string[] }) {
   return (
     <form onSubmit={submit} className="space-y-3">
       <Labeled label="Ad soyad">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ayşe Yılmaz" className={INPUT} required />
+        {/* autoComplete (v6.203, QA ISSUE-004): giriş formuyla tutarlı. */}
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ayşe Yılmaz" className={INPUT} required autoComplete="name" />
       </Labeled>
 
       <Labeled label="Bölüm">
@@ -149,19 +161,29 @@ function StudentSignup({ branches }: { branches: string[] }) {
       </div>
 
       <Labeled label="Üniversite e-postanız">
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ad@universite.edu.tr" className={INPUT} required />
-        <span className="mt-1 block text-[11px] text-[var(--c-ink-3)]">
-          Seçtiğiniz üniversitenin size verdiği kurumsal (...edu.tr) e-postayla kaydolun — kayıt
-          bunu kontrol eder, doğrulama bağlantısı da buraya gider.
-        </span>
+        <input
+          type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ad@universite.edu.tr"
+          className={INPUT} required autoComplete="email" aria-invalid={emailDomainMismatch || undefined}
+        />
+        {emailDomainMismatch && selectedUni ? (
+          <span className="mt-1 block text-[11px] text-red-300" role="alert">
+            Bu adres &ldquo;{selectedUni.name}&rdquo; için beklenen öğrenci uzantısıyla eşleşmiyor — beklenen:{" "}
+            <strong>{selectedUni.domains.map((d) => `@${d}`).join(" · ")}</strong>. Alt alan adları da kabul edilir.
+          </span>
+        ) : (
+          <span className="mt-1 block text-[11px] text-[var(--c-ink-3)]">
+            Seçtiğiniz üniversitenin size verdiği kurumsal (...edu.tr) e-postayla kaydolun — kayıt
+            bunu kontrol eder, doğrulama bağlantısı da buraya gider.
+          </span>
+        )}
       </Labeled>
 
       <div className="grid grid-cols-2 gap-3">
         <Labeled label="Parola">
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="en az 8 karakter" className={INPUT} required minLength={8} />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="en az 8 karakter" className={INPUT} required minLength={8} autoComplete="new-password" />
         </Labeled>
         <Labeled label="Parola (tekrar)">
-          <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} placeholder="••••••••" className={INPUT} required minLength={8} />
+          <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} placeholder="••••••••" className={INPUT} required minLength={8} autoComplete="new-password" />
         </Labeled>
       </div>
 

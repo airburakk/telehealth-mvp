@@ -20,6 +20,7 @@ import {
   todayModuleCounts, MODULE_ALIASES, parseEventTypes,
   trDayStart, parseEventTypePref, parseViewPrefs, FM_TO_MODULES, PULSE_LABELS,
   type FeedItem, type FeedCursors, type ModuleKey, type LegalTabKey, type CareerTabKey, type EventTypeKey,
+  MODULE_FEED_LIMIT,
 } from "@/lib/doctorium";
 import { isStudentOnly } from "@/lib/doctor-activation";
 import { keywordByKey } from "@/lib/hukuk-keywords";
@@ -524,7 +525,10 @@ export default async function DoctoriumPage({
           AÇILIR KAPANIR bölümde. Prospektüs kutusuyla aynı desen — arşiv yüzeyleri aynı
           dili konuşur. */}
       {active === "mevzuat" && legalTab && (
-        <LegalSearchBox tab={legalTab} query={legalQuery} activeKeyword={legalKeyword?.key ?? null} />
+        <LegalSearchBox
+          tab={legalTab} query={legalQuery} activeKeyword={legalKeyword?.key ?? null}
+          resultCount={legalQuery ? items.length : undefined} resultCap={MODULE_FEED_LIMIT}
+        />
       )}
 
       {/* Sekme içi "Özelleştir" paneli KALDIRILDI (v6.142, kullanıcı kararı 2026-08-23):

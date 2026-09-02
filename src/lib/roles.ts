@@ -82,3 +82,12 @@ export function brandRoleHome(role: Role): string {
   if (IS_DOCTORIUM_DEPLOY && DOCTORIUM_ROLES.includes(role)) return DOCTORIUM_HOME;
   return roleHome(role);
 }
+
+// Rol kapısında REDDEDİLEN kullanıcının inişi (v6.203, QA ISSUE-A2): proxy yanlış rolü köke ("/")
+// atıyordu — Doctorium deploy'unda kök = pazarlama landing'i, yani /admin'e giden doktor "yetkiniz
+// yok" yerine vitrine düşüyordu. Doğru hedef kullanıcının KENDİ marka-duyarlı ana sayfasıdır.
+// Tanınmayan rol (isRole fail-closed) köke iner — eski davranış korunur. Döngü güvenliği birim
+// testli: her rolün inişi o rolün geçebildiği bir kapıdır (brand-home.test).
+export function deniedRoleHome(role: unknown): string {
+  return isRole(role) ? brandRoleHome(role) : "/";
+}

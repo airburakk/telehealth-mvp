@@ -104,7 +104,9 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: NO_FLASH_THEME_SCRIPT }} />
       </head>
-      <body className="min-h-full flex flex-col">
+      {/* data-brand (v6.203): "use client" fallback sayfaları (404/hata) BRAND_MODE'u okuyamaz —
+          marka CSS token'ına (--c-cta, globals.css) bu öznitelikten iner. */}
+      <body className="min-h-full flex flex-col" data-brand={IS_DOCTORIUM_DEPLOY ? "doctorium" : "aura"}>
         <PwaRegister />
         {/* Ekran dışına çıkan sürekli dekoratif animasyonları duraklatır. Kökte: landing'in
             yanı sıra uygulama içi Header/spinner sembollerini de kapsar. Render etmez (null). */}
