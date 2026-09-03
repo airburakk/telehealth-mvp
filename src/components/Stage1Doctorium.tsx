@@ -186,6 +186,10 @@ function ConsentCard({
           <details className="mt-2">
             <summary className="cursor-pointer text-[11px] font-medium text-[var(--c-ink-3)] hover:text-[var(--c-ink-2)]">Metnin tamamı</summary>
             <p className="mt-1.5 rounded-xl bg-[var(--c-surface)] px-3 py-2 text-[11px] leading-relaxed text-[var(--c-ink-2)]">{fullText}</p>
+            {/* v6.211: aydınlatma ile rıza ayrı işlemlerdir — kutunun yanında aydınlatmaya erişim (belge 08 §2.3). */}
+            <p className="mt-1.5 text-[11px] text-[var(--c-ink-3)]">
+              Ayrıntılı bilgi: <a href="/doctorium/aydinlatma" target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-[var(--c-ink-2)]">Aydınlatma Metni</a>
+            </p>
           </details>
           {err && <p className="mt-1.5 text-xs text-red-300">{err}</p>}
         </div>

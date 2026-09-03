@@ -97,6 +97,12 @@ export function OnboardingForm({
       });
       const d = await r.json();
       if (!r.ok) {
+        // v6.211: klinik onam eksik (Doctorium'dan gelen doktor) → onam kapısına git, onam sonrası buraya dön.
+        // Tam sayfa yönlendirme: /api/consent oturum çerezini yeniden imzalar, proxy taze cv görmeli.
+        if (d.code === "CLINICAL_CONSENT_REQUIRED") {
+          window.location.assign("/onam?scope=clinical&next=/doktor/baslangic");
+          return;
+        }
         // 409: eksik zorunlu adımlar (işlem · diploma no · uzmanlık belgesi · belgeler) → listele
         if (Array.isArray(d.missing)) setMissing(d.missing as string[]);
         throw new Error(d.error || "Kaydedilemedi.");

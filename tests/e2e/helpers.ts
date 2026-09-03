@@ -48,6 +48,9 @@ export async function loginAs(page: Page, role: DemoRole): Promise<void> {
   // Korumalı bir sayfaya giderek oturumu doğrula + onam kapısını tetikle.
   await page.goto("/vakalarim");
   if (page.url().includes("/onam")) {
+    // v6.211: kapı iki varyant — hasta/personel tek kutu (ConsentGate), doktor/öğrenci iki kutu
+    // (DoctoriumConsentGate: aydınlatma okudum + sözleşmeyi kabul). Hepsini işaretle, sonra onayla.
+    for (const cb of await page.getByRole("checkbox").all()) await cb.check();
     await page.getByRole("button", { name: /Onaylıyorum ve devam et/i }).click();
     await page.waitForURL((url) => !url.pathname.startsWith("/onam"), { timeout: 15_000 });
     sessionCookies.set(role, await page.context().cookies()); // onam sonrası tazelenen çerez (cv claim)

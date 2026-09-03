@@ -395,10 +395,27 @@ kurulana dek metinlerde **"Doctorium platform işleticisi"** ifadesi kullanılı
 VERBİS vault Kılavuz §8 kimlik tablosundan tek geçişte doldurulur (`_kimlik-doldur.py`) ve kesitler
 yeniden üretilir. ⚖️ **Kural:** kişisel veri işleyen yeni bir modül eklendiğinde vault'taki işleme
 envanteri (17) + aydınlatma (01) + saklama politikası (05) birlikte güncellenir, kesit yeniden üretilir.
-Sıradaki paketler: **1b** onam mimarisi (`DOCTORIUM_KVKK` · `DOCTORIUM_TERMS` · `DOCTORIUM_DIPLOMA_BEYAN`
-kapsamları, ekran = hash), **1c** temizlik (tabip odası kalıntıları + migration, ret penceresi 180→90 gün,
-öğrenci doğum tarihi, ret bildirimi şablonu), **2** saklama kuralları (terk edilmiş hesap, audit IP/cihaz
-boşaltma, başvuru kütüğü + platform içi form).
+**Onam mimarisi — Seçenek A + C (v6.211, 👤 karar 03.09.2026, vault belge 15 §7):** Doctorium'dan kayıt olan
+doktor/öğrenci telesağlık metnini (`GENERAL_KVKK`) DEĞİL, Doctorium setini onaylar — `DOCTORIUM_KVKK`
+(belge 01) + `DOCTORIUM_TERMS` (belge 02), her ikisi v1; **ekran = hash** (onam ekranı `lib/doctorium-legal`
+metnini LegalMarkdown ile gösterir, sunucu aynı string'i hash'ler). Tek kaynak `lib/doctorium-consent.ts`:
+`requiredConsentScopes(role, aşama)` (PATIENT/personel → GENERAL · Aşama 1 doktor/öğrenci → Doctorium seti ·
+Aşama 2 doktor → GENERAL + Doctorium · Doctorium'dan çıkan → GENERAL), `gateConsentVersion` (JWT `cv`: set
+tamsa CONSENT_VERSION, değilse 0 — proxy kuralı DEĞİŞMEDİ; login/OAuth/signup bunu yazar), `missingConsentScopes`
+(/onam DB-taze karar: `DoctoriumConsentGate` · `ConsentGate clinical` · `ConsentResign` [set tam, JWT eski →
+kayıtsız yeniden imza; proxy↔/onam döngüsü kapanır]). **Klinik aktivasyon `GENERAL_KVKK` onamına bağlı:**
+`refreshActivation` onamsız `activatedAt` yazmaz; onboarding "bitir" 409 `CLINICAL_CONSENT_REQUIRED` → form
+`/onam?scope=clinical`'a gider (ConsentGate + `STAFF_ROLE_EXTRA.DOCTOR` maddesi), `/api/consent` kaydı sonra
+`refreshActivation` çağırır. Mevcut aktif doktorlar etkilenmez (damga korunur); Doctorium seti olmayan her
+doktor ilk girişte Doctorium metnini onaylar (👤 yeniden onay kararı). **Diploma beyanı** (belge 11 §B, 6 madde):
+`DoctorDocuments` DIPLOMA kartında kutu işaretlenmeden dosya seçilemez; `POST /api/doctor/documents`
+`declaration:true` ister ve belge işlenmeden ÖNCE `DOCTORIUM_DIPLOMA_BEYAN` kaydını yazar (her yükleme ayrı
+satır, fail-closed). `/api/consent` gövdesi `kind`: general | doctorium | resign. **Onay Kanıtı** `/onam/kanit`
+kapsam sekmeli (`?scope=`; her kapsam kendi kanonik metniyle "metin eşleşmesi" ölçer — `canonicalTextFor`).
+E2E helper'ı kapıdaki tüm kutuları işaretler (`tests/e2e/helpers.ts`).
+Sıradaki paketler: **1c** temizlik (tabip odası kalıntıları + migration, ret penceresi 180→90 gün, öğrenci doğum
+tarihi, ret bildirimi şablonu), **2** saklama kuralları (terk edilmiş hesap, audit IP/cihaz boşaltma, başvuru
+kütüğü + platform içi form).
 
 Rotalar için bkz. aşağıdaki **Rotalar** tablosu; sürüm geçmişi (V3 landing, marka ayrışması fazları,
 monetizasyon) için `Air/wiki/changelog.md` ve bu dosyanın alt kısmındaki tarihli notlar.

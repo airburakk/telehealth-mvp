@@ -53,9 +53,15 @@ const STAFF_ROLE_EXTRA: Record<string, string[]> = {
   HEALTH_PRO: [
     "Rolünüze özgü kapsam: bu aşamada klinik vaka verilerine erişiminiz bulunmaz; erişim kapsamı tanımlandığında ayrıca bilgilendirilir ve gerekli hâllerde yeniden onayınız alınır.",
   ],
+  // v6.211 (onam mimarisi A + C, 👤 15 §7/4): DOCTOR bu kapıyı yalnız AŞAMA 2 klinik aktivasyonunda görür
+  // (Doctorium üyeliğinin kendi aydınlatması ayrı kapsamda alınmıştır). Madde, klinik erişimin sınırını ve
+  // iki kapsamın ayrılığını söyler. ⚖️ Telesağlık metinleri gibi taslak rejimindedir (draft satırı).
+  DOCTOR: [
+    "Rolünüze özgü kapsam: klinik aktivasyonla birlikte yalnız size atanan veya kabul ettiğiniz vakaların (triyaj, görüşme, post-op takip) özel nitelikli sağlık verilerine erişirsiniz; bu erişim vaka bazlıdır ve erişim kayıt zincirine yazılır. Doctorium üyeliğiniz bu onamdan bağımsızdır: Doctorium'da hasta verisi işlenmez ve o üyelik ayrı aydınlatma ile düzenlenmiştir.",
+  ],
 };
 
-export function ConsentGate({ isPatient, role, dest }: { isPatient: boolean; role?: string; dest: string }) {
+export function ConsentGate({ isPatient, role, dest, clinical = false }: { isPatient: boolean; role?: string; dest: string; clinical?: boolean }) {
   const router = useRouter();
   const [patientLang, setPatientLang] = usePatientLang();
   const lang = isPatient ? patientLang : "Türkçe";
@@ -97,6 +103,13 @@ export function ConsentGate({ isPatient, role, dest }: { isPatient: boolean; rol
         {isPatient && <PatientLangSelect lang={patientLang} onChange={setPatientLang} />}
       </div>
 
+      {clinical && (
+        <p className="mt-4 rounded-2xl border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.08] px-4 py-3 text-[13px] leading-relaxed text-[var(--c-ink)]">
+          <strong>Aşama 2 — klinik aktivasyon.</strong> Doctorium üyeliğiniz için verdiğiniz onam yeterlidir; klinik
+          yüzeylere (vaka havuzu, görüşme, post-op takip) geçebilmeniz için hasta verisi kapsamındaki bu aydınlatmayı
+          da onaylamanız gerekir. Onaylamazsanız Doctorium&apos;u aynı şekilde kullanmaya devam edersiniz.
+        </p>
+      )}
       <p className="mt-5 text-sm leading-relaxed text-[var(--c-ink-2)]">{t(C.intro)}</p>
 
       <ul className="mt-4 space-y-2.5">

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hashPassword, createSession } from "@/lib/auth";
-import { consentedVersion } from "@/lib/consent";
+import { gateConsentVersion } from "@/lib/doctorium-consent";
 import { createDoctorAccount } from "@/lib/doctor-signup";
 import { BRANCH_LABELS } from "@/lib/procedures";
 import { LANGUAGES } from "@/lib/constants";
@@ -69,8 +69,9 @@ export async function POST(req: Request) {
   }
   await db.user.update({ where: { id: user.id }, data: { emailVerifiedAt: new Date() } });
 
-  // Yeni hesap: henüz onam yok (cv=0) → proxy /onam'a yönlendirir, sonra /doktor → onboarding kapısı.
-  const cv = await consentedVersion(user.id);
+  // Yeni hesap: henüz onam yok (cv=0) → proxy /onam'a yönlendirir (v6.211: DOCTOR için Doctorium seti —
+  // aydınlatma + üyelik sözleşmesi), sonra /doktor → onboarding kapısı.
+  const cv = await gateConsentVersion(user.id, "DOCTOR");
   await createSession({ id: user.id, email: user.email, name: user.name, role: "DOCTOR", cv });
 
   return NextResponse.json({ ok: true, home: "/doktor" });

@@ -5,6 +5,7 @@ import {
   FileText, ShieldCheck, GraduationCap, Award, Upload, Trash2, Loader2, Check, AlertTriangle,
 } from "lucide-react";
 import { statusRozet } from "@/lib/doc-status";
+import { DIPLOMA_BEYAN_ITEMS } from "@/lib/doctorium-legal/diploma-beyan"; // v6.211 diploma beyanı (saf sabit)
 
 // M5 — Doktor mesleki belge yükleme bölümü. Diploma ZORUNLU (yüklenmeden hesap aktifleşmez);
 // MMSS v6.105'ten beri İHTİYARİ (aşağıdaki TYPES notu); sertifika/akademik ihtiyari.
@@ -79,6 +80,9 @@ export function DoctorDocuments({
   const [docs, setDocs] = useState<DocMeta[]>(initialDocs);
   const [busy, setBusy] = useState<string | null>(null); // yüklenen/silinen tip
   const [err, setErr] = useState("");
+  // v6.211 — diploma beyanı (vault belge 11 §B, 👤 03.09.2026): kutu işaretlenmeden dosya seçilemez;
+  // sunucu da beyansız DIPLOMA yüklemesini 400 ile reddeder ve beyanı zincire yazar (ekran = hash).
+  const [declared, setDeclared] = useState(false);
   // v6.119: son yüklemenin e-Devlet otomatik doğrulama sonucu (yalnız o kartın altında gösterilir).
   // reason PHI içermez (sunucu garantisi); activated = bu yükleme hesabı açtı mı (mesaj seçimi).
   const [edevlet, setEdevlet] = useState<{ type: string; ok: boolean; reason: string | null; activated: boolean } | null>(null);
@@ -124,7 +128,10 @@ export function DoctorDocuments({
       const r = await fetch("/api/doctor/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, label: file.name, mimeType: file.type || "application/octet-stream", content }),
+        body: JSON.stringify({
+          type, label: file.name, mimeType: file.type || "application/octet-stream", content,
+          ...(type === "DIPLOMA" ? { declaration: declared } : {}),
+        }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Yüklenemedi.");
@@ -239,11 +246,33 @@ export function DoctorDocuments({
                   </ul>
                 )}
 
+                {/* v6.211 — Mesleki kimlik doğrulama beyanı (yalnız diploma; ekranda gösterilen 6 madde =
+                    ConsentRecord'a hash'lenen metin). Kutu işaretlenmeden dosya seçici açılmaz. */}
+                {type === "DIPLOMA" && (
+                  <div className="mt-2 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5">
+                    <label className="flex cursor-pointer items-start gap-2 text-[12px] leading-relaxed text-[var(--c-ink)]">
+                      <input type="checkbox" checked={declared} onChange={(e) => setDeclared(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--c-accent)]" />
+                      <span>Aşağıdaki <strong>mesleki kimlik doğrulama beyanını</strong> okudum ve kabul ediyorum.</span>
+                    </label>
+                    <details className="mt-1.5 text-[11px] text-[var(--c-ink-3)]">
+                      <summary className="cursor-pointer select-none underline-offset-2 hover:underline">Beyan metni (6 madde)</summary>
+                      <ol className="mt-1.5 list-decimal space-y-1 pl-4 leading-relaxed text-[var(--c-ink-2)]">
+                        {DIPLOMA_BEYAN_ITEMS.map((t, i) => <li key={i}>{t}</li>)}
+                      </ol>
+                      <p className="mt-1.5">
+                        Ayrıntı: <a href="/doctorium/aydinlatma" target="_blank" rel="noopener" className="underline underline-offset-2">Aydınlatma Metni</a>
+                      </p>
+                    </details>
+                  </div>
+                )}
+
                 {/* Yükleme butonu */}
-                <label className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-1.5 text-xs font-medium text-[var(--c-ink-2)] hover:border-[var(--c-accent)] hover:text-[var(--c-accent-stronger)]">
+                <label className={`mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-1.5 text-xs font-medium text-[var(--c-ink-2)] ${
+                  type === "DIPLOMA" && !declared ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:border-[var(--c-accent)] hover:text-[var(--c-accent-stronger)]"
+                }`}>
                   {busy === type ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
                   {ok && (type === "DIPLOMA" || type === "MMSS") ? "Değiştir" : "Dosya yükle"}
-                  <input type="file" accept={ACCEPT} className="hidden" disabled={busy === type}
+                  <input type="file" accept={ACCEPT} className="hidden" disabled={busy === type || (type === "DIPLOMA" && !declared)}
                     onChange={(e) => { upload(type, e.target.files?.[0] ?? null); e.target.value = ""; }} />
                 </label>
                 <span className="ml-2 text-[10px] text-[var(--c-ink-3)]">PDF / JPG / PNG · ~8 MB’a kadar</span>

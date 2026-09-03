@@ -11,6 +11,7 @@ import { edevletDogrula, type EdevletDogrulamaSonucu } from "@/lib/edevlet-dogru
 import { encryptField } from "@/lib/crypto";
 import { recordAccess, reqMeta } from "@/lib/audit";
 import { notifyUser } from "@/lib/notify";
+import { recordDiplomaDeclaration } from "@/lib/doctorium-consent";
 
 // Object storage (S3) henüz yok → küçük dosyalar base64 olarak DB'de (data URI). Kaba sınır ~8.5 MB.
 const MAX_FILE_CHARS = 12_000_000;
@@ -79,6 +80,17 @@ export async function POST(req: Request) {
   const kind = detectDocumentKind(content);
   if (!kind) return NextResponse.json({ error: DOC_REJECT_MESSAGE }, { status: 415 });
   const mimeType = kind.mime;
+
+  // v6.211 — diploma beyanı (vault belge 11 §B, 👤 03.09.2026): kutu işaretlenmeden yükleme kabul edilmez;
+  // beyan, belge işlenmeden ÖNCE onam zincirine yazılır (scope DOCTORIUM_DIPLOMA_BEYAN, her yükleme ayrı
+  // satır). Fail-closed: zincir yazımı hata verirse yükleme yapılmaz (recordConsent throw eder → 500).
+  if (type === "DIPLOMA") {
+    if (b.declaration !== true) {
+      return NextResponse.json({ error: "Mesleki kimlik doğrulama beyanını onaylayın." }, { status: 400 });
+    }
+    const meta = reqMeta(req);
+    await recordDiplomaDeclaration(user.id, meta.ip, meta.userAgent);
+  }
 
   // Tekil belgeler (diploma + MMSS): tek geçerli kopya → yeni yükleme eskisini değiştirir.
   if (type === "DIPLOMA" || type === "MMSS") {

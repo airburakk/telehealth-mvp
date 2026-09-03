@@ -6,6 +6,7 @@
 // YOK) veya incelemeci onayı. Tam gerekçe: vault wiki/kavramlar/doktor-kimlik-dogrulama.md. MMSS (Mesleki Mali Sorumluluk Sigortası)
 // İHTİYARİ: yüklenirse teminat limiti M3 Katman 3 malpraktis ek-prim hesabının girdisidir.
 import { db } from "@/lib/db";
+import { hasCurrentConsent } from "@/lib/consent"; // v6.211: klinik aktivasyon GENERAL_KVKK onamına bağlı
 
 // Hesap aktivasyonu için yüklenmesi ZORUNLU belge tipleri (sertifika/akademik ihtiyari).
 // 🪦 STUDENT_CERT v6.147'de LİSTEDEN ÇIKTI (kullanıcı kararı 2026-08-23 — dosya sonundaki not):
@@ -260,7 +261,16 @@ export async function refreshActivation(doctorId: string): Promise<boolean> {
   ]);
   if (!doc) return false;
   const diplomaOk = hasAcceptedRequiredDocs(docs);
-  const ok = canActivate(docs, doc, { enabled: process.env.AURA_LAYER_GATE === "1", layers: doc });
+  let ok = canActivate(docs, doc, { enabled: process.env.AURA_LAYER_GATE === "1", layers: doc });
+  // v6.211 (onam mimarisi A + C, 👤 03.09.2026): KLİNİK aktivasyon (activatedAt) hasta-verisi kapsamlı
+  // GENERAL_KVKK onamına BAĞLIDIR — Doctorium doktoru yalnız Doctorium metnini onayladığından, klinik
+  // onam olmadan activatedAt yazılmaz (Doctorium erişimi diplomaVerifiedAt ile ayrı ve etkilenmez).
+  // Onam /onam?scope=clinical'da alınır (onboarding "bitir" 409 ile oraya gönderir); /api/consent kayıt
+  // sonrası bu fonksiyonu yeniden çağırır. Mevcut aktif doktorlar: onam zaten var → damga korunur.
+  if (ok && !doc.activatedAt) {
+    const u = await db.user.findFirst({ where: { doctorId }, select: { id: true } });
+    if (!u || !(await hasCurrentConsent(u.id))) ok = false;
+  }
   const data: { activatedAt?: Date | null; diplomaVerifiedAt?: Date | null } = {};
   if (diplomaOk && !doc.diplomaVerifiedAt) data.diplomaVerifiedAt = new Date();
   else if (!diplomaOk && doc.diplomaVerifiedAt) data.diplomaVerifiedAt = null;

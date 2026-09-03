@@ -209,14 +209,21 @@ export interface ConsentProof {
 }
 
 // Kullanıcının en güncel onam kaydı için "Onay Kanıtı" — bağımsız doğrulanabilir ispat verisi.
-export async function getConsentProof(userId: string): Promise<ConsentProof | null> {
+// v6.211: kapsam parametreli — Doctorium kapsamları (DOCTORIUM_KVKK/TERMS/DIPLOMA_BEYAN) için kanonik
+// metin ve güncel sürüm çağırandan gelir (lib/doctorium-consent canonicalTextFor); varsayılan GENERAL_KVKK.
+export async function getConsentProof(
+  userId: string,
+  opts?: { scope?: string; canonicalText?: string; currentVersion?: number },
+): Promise<ConsentProof | null> {
+  const scope = opts?.scope ?? CONSENT_SCOPE;
+  const currentVersion = opts?.currentVersion ?? CONSENT_VERSION;
   const rec = await db.consentRecord.findFirst({
-    where: { userId, scope: CONSENT_SCOPE },
+    where: { userId, scope },
     orderBy: { version: "desc" },
   });
   if (!rec) return null;
 
-  const canonicalTextHash = sha256(CONSENT_TEXT);
+  const canonicalTextHash = sha256(opts?.canonicalText ?? CONSENT_TEXT);
   const hasProofLayer = !!rec.entryHash;
 
   let entryHashValid: boolean | null = null;
@@ -231,10 +238,11 @@ export async function getConsentProof(userId: string): Promise<ConsentProof | nu
     ? verifyTimestampToken(rec.entryHash, rec.tsTime, rec.tsToken)
     : null;
 
-  const textHashMatches = rec.version === CONSENT_VERSION ? rec.textHash === canonicalTextHash : null;
+  // currentVersion 0 = sürümsüz kova (diploma beyanı gibi sayaç-versiyonlu): eşleşme her kayıtta ölçülür.
+  const textHashMatches = currentVersion === 0 || rec.version === currentVersion ? rec.textHash === canonicalTextHash : null;
 
   return {
-    userId: rec.userId, scope: rec.scope, version: rec.version, currentVersion: CONSENT_VERSION,
+    userId: rec.userId, scope: rec.scope, version: rec.version, currentVersion,
     grantedAt: rec.grantedAt.toISOString(), ip: rec.ip, userAgent: rec.userAgent, channel: rec.channel,
     textHash: rec.textHash, canonicalTextHash, prevHash: rec.prevHash, entryHash: rec.entryHash,
     tsAuthority: rec.tsAuthority, tsTime: rec.tsTime?.toISOString() ?? null, tsToken: rec.tsToken,

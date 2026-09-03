@@ -462,6 +462,10 @@ export function PreferencesBoard(p: Props) {
             <Megaphone size={15} className="text-amber-300" /> Sponsorlu içerik kişiselleştirmesi
           </h2>
           <p className="mt-2 max-w-[70ch] text-[12.5px] leading-relaxed text-[var(--c-ink-2)]">{p.sponsorText}</p>
+          {/* v6.211 (belge 08 §2.3): rıza kutusunun yanında aydınlatmaya erişim — aydınlatma ile rıza ayrı işlemlerdir. */}
+          <p className="mt-1 text-[11.5px] text-[var(--c-ink-3)]">
+            Ayrıntılı bilgi: <a href="/doctorium/aydinlatma" target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-[var(--c-ink-2)]">Aydınlatma Metni</a>
+          </p>
           <div className="mt-3 flex items-start gap-3.5">
             <Switch
               on={sponsor}

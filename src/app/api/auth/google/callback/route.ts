@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { createSession, hashPassword } from "@/lib/auth";
 import { brandRoleHome, type Role } from "@/lib/session";
 import { patientHome } from "@/lib/patient-journey";
-import { consentedVersion } from "@/lib/consent";
+import { gateConsentVersion } from "@/lib/doctorium-consent";
 import { isGoogleConfigured, exchangeGoogleCode, googleRedirectUri, isSafeNextPath } from "@/lib/oauth";
 import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 import { createDoctorAccount } from "@/lib/doctor-signup";
@@ -79,7 +79,7 @@ export async function GET(req: Request) {
     return NextResponse.redirect(new URL(`${gate}?oauth=role&provider=google`, origin));
   }
 
-  const cv = await consentedVersion(user.id);
+  const cv = await gateConsentVersion(user.id, user.role); // v6.211: rol/aşamaya göre gerekli onam seti
   const session = { id: user.id, email: user.email, name: user.name, role: user.role as Role, cv };
   await createSession(session);
   // Giriş etkinliği (v6.187) — "Hesabım"daki liste yöntemi de gösterir (parola | google | apple).

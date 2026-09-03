@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db";
 import { hashPassword, createSession } from "@/lib/auth";
-import { consentedVersion } from "@/lib/consent";
+import { gateConsentVersion } from "@/lib/doctorium-consent";
 import { createDoctorAccount, studentTitleFor } from "@/lib/doctor-signup";
 import { BRANCH_LABELS } from "@/lib/procedures";
 import { isEmailConfigured, sendEmail } from "@/lib/email";
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
     html: `<p>Merhaba ${escapeHtml(name)},</p><p>Doctorium öğrenci üyeliğinizi etkinleştirmek için üniversite e-postanızı doğrulayın:</p><p><a href="${link}">E-postamı doğrula</a></p><p style="font-size:12px;color:#64748b">Bağlantı 24 saat geçerlidir.</p>`,
   });
 
-  const cv = await consentedVersion(user.id);
+  const cv = await gateConsentVersion(user.id, "DOCTOR"); // v6.211: öğrenci de Doctorium setini (+ öğrenci eki) onaylar
   await createSession({ id: user.id, email: user.email, name: user.name, role: "DOCTOR", cv });
 
   return NextResponse.json({ ok: true, home: "/doktor/baslangic", needsStudentVerification: true });

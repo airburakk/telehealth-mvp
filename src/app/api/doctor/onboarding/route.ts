@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { canCompleteOnboarding, missingOnboardingSteps } from "@/lib/doctor-activation";
+import { hasCurrentConsent } from "@/lib/consent";
 
 // POST /api/doctor/onboarding — M5 ilk-giriş onboarding kapısı + sonradan opt-in güncelleme.
 // Doktor, Ücretsiz Sağlık Hizmeti ve Partner Konsültasyon taleplerine katılıp katılmayacağını seçer.
@@ -49,6 +50,16 @@ export async function POST(req: Request) {
     if (!canCompleteOnboarding(docs, data)) {
       return NextResponse.json(
         { error: "Hesabınızı aktifleştirmek için zorunlu adımları tamamlayın.", missing: missingOnboardingSteps(docs, data) },
+        { status: 409 },
+      );
+    }
+    // v6.211 (onam mimarisi A + C, 👤 03.09.2026): klinik aktivasyon (activatedAt) hasta-verisi kapsamlı
+    // GENERAL_KVKK onamına bağlı — Doctorium'dan gelen doktor yalnız Doctorium metnini onaylamıştır.
+    // Onam yoksa "bitir" 409 + code döner; form /onam?scope=clinical'a gönderir, onam sonrası geri gelir.
+    // (refreshActivation aynı şartı taşır → belge API'leri de onamsız activatedAt yazmaz.)
+    if (!(await hasCurrentConsent(user.id))) {
+      return NextResponse.json(
+        { error: "Klinik yüzeylere geçmeden önce hasta verisi kapsamındaki aydınlatmayı onaylamanız gerekir.", code: "CLINICAL_CONSENT_REQUIRED" },
         { status: 409 },
       );
     }

@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { checkPassword, createSession } from "@/lib/auth";
 import { brandRoleHome, type Role } from "@/lib/session";
 import { patientHome } from "@/lib/patient-journey";
-import { consentedVersion } from "@/lib/consent";
+import { gateConsentVersion } from "@/lib/doctorium-consent";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 import { isEmailConfigured } from "@/lib/email";
 import { sendAlert } from "@/lib/alerts";
@@ -64,7 +64,8 @@ export async function POST(req: Request) {
   }
 
   // KVKK onam sürümünü oturuma göm → proxy DB'siz kontrol eder; onam yoksa /onam'a yönlenir.
-  const cv = await consentedVersion(user.id);
+  // v6.211: rol/aşamaya göre GEREKLİ set (DOCTOR → Doctorium seti; hasta/personel → GENERAL) — lib/doctorium-consent.
+  const cv = await gateConsentVersion(user.id, user.role);
   const session = { id: user.id, email: user.email, name: user.name, role: user.role as Role, cv };
   await createSession(session);
   // Giriş etkinliği (v6.187): "Hesabım → Giriş etkinliği" listesinin kaynağı. Oturum çerezi

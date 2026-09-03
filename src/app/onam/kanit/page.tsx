@@ -6,7 +6,18 @@
 import { useEffect, useState } from "react";
 import { ShieldCheck, ShieldAlert, Printer, Loader2, Fingerprint, Clock, Link2, FileText } from "lucide-react";
 
+// v6.211: kapsam sekmeleri — telesağlık (GENERAL_KVKK) · Doctorium aydınlatma · Doctorium sözleşme · diploma
+// beyanı. Kaydı olmayan kapsam "kayıt yok" gösterir; "metin eşleşmesi" her kapsamın kendi kanonik metnine
+// göre ölçülür (lib/doctorium-consent canonicalTextFor — ekran = hash kararının doğrulaması).
+const SCOPES: { key: string; label: string }[] = [
+  { key: "GENERAL_KVKK", label: "Telesağlık (KVKK)" },
+  { key: "DOCTORIUM_KVKK", label: "Doctorium aydınlatma" },
+  { key: "DOCTORIUM_TERMS", label: "Doctorium sözleşme" },
+  { key: "DOCTORIUM_DIPLOMA_BEYAN", label: "Diploma beyanı" },
+];
+
 interface Proof {
+  title?: string;
   userId: string; scope: string; version: number; currentVersion: number;
   grantedAt: string; ip: string | null; userAgent: string | null; channel: string;
   textHash: string | null; canonicalTextHash: string; prevHash: string | null; entryHash: string | null;
@@ -17,9 +28,12 @@ interface Proof {
 export default function ConsentProofPage() {
   const [proof, setProof] = useState<Proof | null>(null);
   const [state, setState] = useState<"loading" | "ok" | "none" | "auth">("loading");
+  const [scope, setScope] = useState<string>(SCOPES[0].key);
 
+  // "loading" durumu sekme tıklamasında (olay içinde) set edilir — effect gövdesinde senkron setState
+  // React Compiler kuralına takılır (v6.183 lint rejimi); effect yalnız fetch'i başlatır.
   useEffect(() => {
-    fetch("/api/consent/proof")
+    fetch(`/api/consent/proof?scope=${encodeURIComponent(scope)}`)
       .then(async (r) => {
         if (r.status === 401) { setState("auth"); return; }
         if (r.status === 404) { setState("none"); return; }
@@ -28,16 +42,36 @@ export default function ConsentProofPage() {
         setState("ok");
       })
       .catch(() => setState("none"));
-  }, []);
+  }, [scope]);
 
-  if (state === "loading") {
-    return <div className="mx-auto max-w-2xl px-5 py-16 text-center text-[var(--c-ink-3)]"><Loader2 className="mx-auto animate-spin" /> Onay kanıtı yükleniyor…</div>;
-  }
+  const tabs = (
+    <div className="print:hidden mb-5 flex flex-wrap gap-2" role="tablist" aria-label="Onam kapsamı">
+      {SCOPES.map((s) => (
+        <button
+          key={s.key}
+          role="tab"
+          aria-selected={scope === s.key}
+          onClick={() => { if (s.key !== scope) { setState("loading"); setScope(s.key); } }}
+          className={`rounded-full border px-3 py-1 text-[12px] transition-colors ${
+            scope === s.key
+              ? "border-[var(--c-accent)] bg-[var(--c-accent)] text-[var(--c-bg)]"
+              : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)]"
+          }`}
+        >
+          {s.label}
+        </button>
+      ))}
+    </div>
+  );
+
   if (state === "auth") {
     return <div className="mx-auto max-w-2xl px-5 py-16 text-center text-[var(--c-ink-2)]">Onay kanıtınızı görmek için giriş yapın.</div>;
   }
+  if (state === "loading") {
+    return <div className="mx-auto max-w-2xl px-5 py-10">{tabs}<div className="py-6 text-center text-[var(--c-ink-3)]"><Loader2 className="mx-auto animate-spin" /> Onay kanıtı yükleniyor…</div></div>;
+  }
   if (state === "none" || !proof) {
-    return <div className="mx-auto max-w-2xl px-5 py-16 text-center text-[var(--c-ink-2)]">Henüz bir onay kaydınız yok.</div>;
+    return <div className="mx-auto max-w-2xl px-5 py-10">{tabs}<div className="py-6 text-center text-[var(--c-ink-2)]">Bu kapsamda henüz bir onay kaydınız yok.</div></div>;
   }
 
   const v = proof.verification;
@@ -48,6 +82,7 @@ export default function ConsentProofPage() {
 
   return (
     <div className="print-doc mx-auto max-w-2xl px-5 py-10">
+      {tabs}
       <div className={`rounded-3xl border p-5 flex items-start gap-3 ${allValid ? "border-emerald-400/25 bg-emerald-500/10" : "border-amber-400/25 bg-amber-500/10"}`}>
         {allValid ? <ShieldCheck className="mt-0.5 shrink-0 text-emerald-300" /> : <ShieldAlert className="mt-0.5 shrink-0 text-amber-300" />}
         <div>
@@ -69,7 +104,11 @@ export default function ConsentProofPage() {
       </div>
 
       <div className="mt-6 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm space-y-4">
-        <Row icon={<FileText size={14} />} k="Onaylanan metin" v={`KVKK Aydınlatma & Açık Rıza · Sürüm ${proof.version}${proof.version !== proof.currentVersion ? ` (güncel: ${proof.currentVersion})` : ""}`} />
+        <Row
+          icon={<FileText size={14} />}
+          k="Onaylanan metin"
+          v={`${proof.title ?? "KVKK Aydınlatma & Açık Rıza"} · ${proof.currentVersion === 0 ? `Kayıt #${proof.version}` : `Sürüm ${proof.version}${proof.version !== proof.currentVersion ? ` (güncel: ${proof.currentVersion})` : ""}`}`}
+        />
         <Row icon={<Fingerprint size={14} />} k="Metin hash (SHA-256)" v={proof.textHash ?? "—"} mono />
         <Row icon={<Clock size={14} />} k="Onay zamanı" v={fmt(proof.grantedAt)} />
         <Row icon={<Clock size={14} />} k="Zaman damgası (TSA)" v={proof.tsTime ? `${fmt(proof.tsTime)} · ${proof.tsAuthority ?? ""}` : "—"} />
