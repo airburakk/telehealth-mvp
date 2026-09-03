@@ -54,7 +54,7 @@ export function PostSection({ sample }: { sample: LandingSample }) {
             {/* Masthead — /doktor/doctorium/ozet ile aynı gazete sesi (çift alt çizgi, POST zümrüt) */}
             <div className="border-b-[3px] border-double border-[var(--c-ink)] pb-3 text-center">
               <div className="aura-display text-[24px] font-bold tracking-[0.14em] text-[var(--c-ink)]">
-                DOCTORIUM.TR <span className="text-emerald-400">POST</span>
+                DOCTORIUM <span className="text-emerald-400">POST</span>
               </div>
               <div className="aura-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-[var(--c-ink-3)]">
                 Kişisel sabah özetiniz{total > 0 ? ` · ${total} başlık` : ""}

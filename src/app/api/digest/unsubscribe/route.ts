@@ -61,7 +61,7 @@ export async function GET(req: Request) {
     ? `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${DIGEST_NAME} — Abonelikten çık</title></head>
 <body style="margin:0;font-family:Georgia,serif;background:#f4f6f5;color:#1a1d1c;display:flex;min-height:100vh;align-items:center;justify-content:center;">
 <div style="max-width:420px;padding:36px 28px;background:#fff;border:1px solid #d9dedb;border-radius:12px;text-align:center;">
-<div style="font-size:22px;font-weight:700;letter-spacing:3px;">DOCTORIUM.TR <span style="color:#0c7a5b;">POST</span></div>
+<div style="font-size:22px;font-weight:700;letter-spacing:3px;">DOCTORIUM <span style="color:#0c7a5b;">POST</span></div>
 <p style="font-size:14.5px;line-height:1.6;color:#4a524f;margin:18px 0 22px;">Günlük özet e-postalarını almayı bırakmak istediğinizden emin misiniz? Aboneliği daha sonra Akış Tercihleri sayfanızdan yeniden açabilirsiniz.</p>
 <form method="post" action="${url.pathname}?d=${encodeURIComponent(p!.doctorId)}&amp;t=${encodeURIComponent(p!.token)}">
 <button type="submit" style="font-family:inherit;font-size:14px;font-weight:600;color:#fff;background:#0c7a5b;border:0;border-radius:8px;padding:10px 22px;cursor:pointer;">Abonelikten çık</button>

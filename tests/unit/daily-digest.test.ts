@@ -178,7 +178,7 @@ describe("e-posta baskısı (digest-email)", () => {
 
   it("düz metin: başlık + kaynak + çıkış URL'i taşır", () => {
     const text = renderDigestEmailText(args);
-    expect(text).toContain("DOCTORIUM.TR POST");
+    expect(text).toContain("DOCTORIUM POST");
     expect(text).toContain("(JAMA & Lancet)");
     expect(text).toContain(args.unsubUrl);
   });

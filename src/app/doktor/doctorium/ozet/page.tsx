@@ -72,7 +72,7 @@ export default async function OzetPage({
         {/* Masthead — tipografik gazete başlığı (e-posta baskısıyla aynı ses) */}
         <header className="mt-6 border-b-[3px] border-double border-[var(--c-ink)] pb-4 text-center">
           <h1 className="aura-display text-[34px] font-bold tracking-[0.14em] text-[var(--c-ink)]">
-            DOCTORIUM.TR <span className="text-emerald-400">POST</span>
+            DOCTORIUM <span className="text-emerald-400">POST</span>
           </h1>
           <p className="aura-mono mt-1.5 text-[11px] tracking-[0.16em] text-[var(--c-ink-3)] uppercase">
             {current ? formatTrDate(current.day) : "Kişisel sabah özetiniz"}
