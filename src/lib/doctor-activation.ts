@@ -12,8 +12,6 @@ import { hasCurrentConsent } from "@/lib/consent"; // v6.211: klinik aktivasyon 
 // 🪦 STUDENT_CERT v6.147'de LİSTEDEN ÇIKTI (kullanıcı kararı 2026-08-23 — dosya sonundaki not):
 // öğrenci kapısı artık belge değil üniversite e-postası doğrulaması; barkod eşleştirmesi hiç
 // gerçek bir kapı OLMAMIŞTI (sonuç okunmuyordu), o yüzden yedek olarak da bırakılmadı.
-// 🪦 CHAMBER v6.124'te LİSTEDEN ÇIKTI (kullanıcı kararı 2026-08-19 "Yalnız e-Devlet diploma"):
-// tabip odası yazısı artık ne yüklenebilir ne Doctorium açar; eski satırlar tarihsel kayıttır.
 // v6.105 (kullanıcı kararı 2026-08-17): MMSS aktivasyon şartından ÇIKARILDI ("şimdilik kaldıralım")
 // → tek zorunlu mesleki belge Tıp Diploması. MMSS kartı/formu İHTİYARİ olarak DURUYOR: yükleyen
 // doktorun teminat limiti kaydedilmeye devam eder ve /paket sigorta paketini (M3 Katman 3) besler.
@@ -28,8 +26,7 @@ export type DoctorDocType = (typeof ALL_DOC_TYPES)[number];
 // ── İki aşamalı giriş — AŞAMA 1: Doctorium kapısı (v6.124 yeniden tasarım) ─────────────────────
 // 🔴 v6.124 (kullanıcı kararı 2026-08-19, Doximity araştırması sonrası): Doctorium'un TEK doktor
 // yolu e-DEVLET DOĞRULAMALI DİPLOMA'dır — DIPLOMA belgesi ACCEPTED olunca Doctor.diplomaVerifiedAt
-// damgalanır (refreshActivation eşitler). Tabip odası yazısı (CHAMBER/chamberLetterAt) KAPIDAN
-// DÜŞTÜ; v6.87-123 arası kuralın tarihi schema.prisma'daki kolon yorumundadır. Öğrenci yolu
+// damgalanır (refreshActivation eşitler). Öğrenci yolu
 // (studentVerifiedAt, v6.95) AYNEN sürer — yalnız NE damgaladığı v6.147'de değişti: eskiden
 // STUDENT_CERT belgesi (barkod sonucu okunmuyordu, gerçek kapı değildi), artık üniversite
 // e-postası tıklama-doğrulaması (api/auth/verify-student-email, lib/universities.ts).
@@ -69,7 +66,7 @@ export function isStudentOnly(d: { studentVerifiedAt: Date | null; activatedAt: 
 // DOĞALDIR: /gorusme rotası /doktor segmentinde değildir ve nöbet kapma yolları zaten
 // verified+ONLINE ister — Aşama 1 doktoru nöbetçi olamaz, nöbetçiye düşen görüşme etkilenmez.
 // ⚠️ Bu kapı hasDoctoriumAccess'in TERSİ YÖNÜDÜR: o "Doctorium'a kim girer"i, bu "Doctorium
-// dışına kim çıkar"ı yanıtlar; CHAMBER yazısı klinik yüzey AÇMAZ.
+// dışına kim çıkar"ı yanıtlar; Doctorium erişimi klinik yüzey AÇMAZ.
 
 // Klinik yüzeye girebilir mi (saf — birim testlenebilir).
 export function hasClinicalAccess(d: { activatedAt: Date | null }): boolean {
@@ -281,9 +278,6 @@ export async function refreshActivation(doctorId: string): Promise<boolean> {
   }
   return ok;
 }
-
-// 🪦 refreshChamberLetter v6.124'te SİLİNDİ (CHAMBER kapıdan düştü — dosya başındaki karar notu).
-// chamberLetterAt kolonu tarihsel; hiçbir akış artık onu damgalamaz/okumaz.
 
 // 🪦 hasStudentCert/refreshStudentCert v6.147'de SİLİNDİ (kullanıcı kararı 2026-08-23): belge
 // varlığına bakan bu kapı barkod/onay sonucunu hiç okumuyordu (admin reddi bile erişimi kapatmıyordu)

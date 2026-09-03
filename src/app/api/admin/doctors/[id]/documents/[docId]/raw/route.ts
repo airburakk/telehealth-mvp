@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { loadDocument, isPurgedRef } from "@/lib/storage";
 import { recordAccess, reqMeta } from "@/lib/audit";
 
-// Doktor mesleki belgesini (diploma/MMSS/tabip odası yazısı/sertifika) incelemeciye akıt
+// Doktor mesleki belgesini (diploma/MMSS/sertifika) incelemeciye akıt
 // (2026-08-14, doktor belge kontrolü Faz 1) — staff-applications raw ucu deseni.
 // Self-auth: YALNIZ ETHICS/ADMIN (doktor-onay incelemesi). İçerik imza-tabanlı MIME kapısından
 // geçmiş (yüklemede detectDocumentKind) → saklanan mimeType ile inline sunum güvenli; yine de

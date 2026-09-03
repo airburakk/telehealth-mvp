@@ -3,7 +3,7 @@
 // Kilitlenenler:
 //   1) Kapsam: yalnız DIPLOMA (kullanıcı kararı — MMSS/CERTIFICATE/ACADEMIC AURA kulvarının işi).
 //   2) ACCEPTED → dosya silinir (verifiedSource fark etmez: EDEVLET/MANUAL/LEGACY — backfill bu
-//      kuraldan doğar); PENDING → incelemeci için durur; REJECTED → 180 günlük ispat penceresi.
+//      kuraldan doğar); PENDING → incelemeci için durur; REJECTED → 90 günlük ispat penceresi (v6.212, 👤 03.09.2026).
 //   3) İdempotens: zaten imha edilmiş satır bir daha seçilmez.
 import { describe, it, expect } from "vitest";
 import { shouldPurgeDoc, REJECTED_RETENTION_DAYS, PURGE_DOC_TYPES } from "@/lib/doc-purge";
@@ -43,6 +43,9 @@ describe("shouldPurgeDoc: imha karar matrisi", () => {
   });
   it("PENDING durur — incelemeci dosyayı görmeli", () => {
     expect(shouldPurgeDoc(doc({ status: "PENDING" }), NOW)).toBe(false);
+  });
+  it("pencere 90 gün — 👤 03.09.2026 (belge 11 §C.3); 180'e dönüş bilinçli karar ister", () => {
+    expect(REJECTED_RETENTION_DAYS).toBe(90);
   });
   it("REJECTED ispat penceresi içinde durur, penceresi dolunca silinir", () => {
     expect(shouldPurgeDoc(doc({ status: "REJECTED", createdAt: daysAgo(REJECTED_RETENTION_DAYS - 1) }), NOW)).toBe(false);

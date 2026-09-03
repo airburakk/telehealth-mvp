@@ -1,7 +1,6 @@
 // İki aşamalı doktor girişi — saf mantık sözleşmeleri.
 // v6.124 (kullanıcı kararı 2026-08-19): Doctorium kapısı e-DEVLET DOĞRULAMALI DİPLOMA'dır
-// (diplomaVerifiedAt) VEYA öğrenci damgası. CHAMBER (tabip odası yazısı) KAPIDAN DÜŞTÜ —
-// hasChamberLetter/refreshChamberLetter silindi, ALL_DOC_TYPES artık CHAMBER içermez.
+// (diplomaVerifiedAt) VEYA öğrenci damgası.
 // v6.147 (kullanıcı kararı 2026-08-23): öğrenci damgasının MEKANİZMASI değişti (STUDENT_CERT
 // belgesi → üniversite e-postası tıklama-doğrulaması, bkz. lib/universities.ts +
 // api/auth/verify-student-email) ama hasDoctoriumAccess FORMÜLÜ aynı — hasStudentCert/isEduEmail
@@ -29,11 +28,6 @@ describe("Doctorium kapısı (Aşama 1, v6.124): doğrulanmış diploma VEYA ö�
   });
   it("öğrenci belgesi tek başına açar (v6.95 yolu sürer)", () => {
     expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14"), doctoriumOptOutAt: null })).toBe(true);
-  });
-  it("🪦 CHAMBER artık geçerli belge tipi DEĞİL (tabip odası yolu kapandı)", () => {
-    // ALL_DOC_TYPES yükleme API'sinin kabul kapısıdır — CHAMBER listede olmadığı için yeni
-    // yükleme 400 alır; tip düzeyinde de hasDoctoriumAccess chamberLetterAt kabul etmez.
-    expect(ALL_DOC_TYPES).not.toContain("CHAMBER");
   });
 });
 
@@ -104,10 +98,10 @@ describe("Öğrenci üyeliği (v6.95): isStudentOnly pazarlama süzgeci", () => 
   });
 });
 
-describe("belge tipleri: DIPLOMA tek zorunlu/kapı-tutan belge (v6.147: STUDENT_CERT de CHAMBER de listede DEĞİL)", () => {
-  it("STUDENT_CERT ve CHAMBER artık geçerli belge tipi DEĞİL — ikisi de ayrı yollarla kapıdan düştü", () => {
-    expect(ALL_DOC_TYPES).not.toContain("STUDENT_CERT");
-    expect(ALL_DOC_TYPES).not.toContain("CHAMBER");
+describe("belge tipleri: DIPLOMA tek zorunlu/kapı-tutan belge", () => {
+  it("kabul edilen belge tipleri KAPALI liste (v6.147 STUDENT_CERT çıktı; v6.212 liste bire bir kilitli)", () => {
+    // ALL_DOC_TYPES yükleme API'sinin kabul kapısıdır — listede olmayan tip 400 alır.
+    expect([...ALL_DOC_TYPES]).toEqual(["DIPLOMA", "MMSS", "CERTIFICATE", "ACADEMIC"]);
   });
   it("v6.105+v6.119: ONAYLI diploma tek başına aktive eder — MMSS hiç yokken bile", () => {
     const noMmss = { mmssInsurer: null, mmssPolicyNo: null, mmssCoverageLimit: null };

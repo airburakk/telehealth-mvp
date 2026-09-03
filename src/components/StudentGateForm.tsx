@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { hasReachedAge, maxBirthDateFor, MIN_STUDENT_AGE } from "@/lib/student-age";
 import Link from "next/link";
 import { GraduationCap, MailCheck, UserPlus, Loader2 } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
@@ -23,6 +24,11 @@ import { universitiesFor, domainMatches, type StudentDepartment } from "@/lib/un
 // brand="doctorium" (ayrışma 2026-08-24, Faz B): /doctorium/ogrenci sarmalayıcısı aynı formu
 // Doctorium markasıyla kullanır — zümrüt küre, giriş/doktor-kaydı linkleri Doctorium rotalarına.
 // Vurgu renkleri sarmalayıcı sayfanın --c-accent* ezmesinden gelir; API/akış birebir aynı.
+// v6.212 — tarih seçicinin üst sınırı (bugün 18 yaşını dolduran en genç doğum günü). Modül yüklenirken bir
+// kez hesaplanır: render'da `new Date()` React Compiler purity kuralına takılır; gece yarısı sapması
+// önemsizdir, asıl kapı sunucudadır (signup-student).
+const MAX_BIRTH_DATE = maxBirthDateFor(MIN_STUDENT_AGE);
+
 export function StudentGateForm({ branches, brand }: { branches: string[]; brand?: "doctorium" }) {
   const doctorium = brand === "doctorium";
   return (
@@ -51,6 +57,7 @@ export function StudentGateForm({ branches, brand }: { branches: string[]; brand
 
 function StudentSignup({ branches }: { branches: string[] }) {
   const [name, setName] = useState("");
+  const [birthDate, setBirthDate] = useState(""); // yalnız yaş kapısı — sunucuda da saklanmaz
   const [department, setDepartment] = useState<StudentDepartment | "">("");
   const [university, setUniversity] = useState("");
   const [branch, setBranch] = useState("");
@@ -77,6 +84,10 @@ function StudentSignup({ branches }: { branches: string[] }) {
     e.preventDefault();
     setError("");
     if (password !== password2) { setError("Parolalar eşleşmiyor."); return; }
+    if (!hasReachedAge(birthDate, MIN_STUDENT_AGE)) {
+      setError(`Öğrenci üyeliği için ${MIN_STUDENT_AGE} yaşını doldurmuş olmanız gerekir; ${MIN_STUDENT_AGE} yaşını doldurduğunuzda yeniden başvurabilirsiniz.`);
+      return;
+    }
     if (selectedUni && !domainMatches(email, university)) {
       setError(`Girdiğiniz e-posta "${university}" için beklenen öğrenci uzantısıyla eşleşmiyor (beklenen: ${selectedUni.domains.map((d) => `@${d}`).join(", ")}).`);
       return;
@@ -86,7 +97,7 @@ function StudentSignup({ branches }: { branches: string[] }) {
       const res = await fetch("/api/auth/signup-student", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, department, university, branch, city, email, password }),
+        body: JSON.stringify({ name, department, university, branch, city, email, password, birthDate }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Kayıt başarısız.");
@@ -117,6 +128,17 @@ function StudentSignup({ branches }: { branches: string[] }) {
       <Labeled label="Ad soyad">
         {/* autoComplete (v6.203, QA ISSUE-004): giriş formuyla tutarlı. */}
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ayşe Yılmaz" className={INPUT} required autoComplete="name" />
+      </Labeled>
+
+      <Labeled label="Doğum tarihi">
+        <input
+          type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} max={MAX_BIRTH_DATE}
+          className={INPUT} required autoComplete="bday"
+        />
+        <span className="mt-1 block text-[11px] text-[var(--c-ink-3)]">
+          Öğrenci üyeliği için {MIN_STUDENT_AGE} yaşını doldurmuş olmanız gerekir. Tarih saklanmaz; yalnız kayıt
+          anında kontrol edilir.
+        </span>
       </Labeled>
 
       <Labeled label="Bölüm">

@@ -29,8 +29,7 @@ export const metadata: Metadata = {
 // İki aşamalı giriş — AŞAMA 1 kapısı (v6.124: e-Devlet doğrulamalı diploma). Doctorium'a DOCTOR
 // rolü ancak DOĞRULANMIŞ diploması (diplomaVerifiedAt — DIPLOMA belgesi ACCEPTED) VEYA öğrenci
 // belgesi (studentVerifiedAt) varsa girer; yoksa onboarding'e yönlendirilir (?from=doctorium
-// → sayfa "önce belgenizi yükleyin" bandını gösterir). Tabip odası yazısı v6.124'te kapıdan
-// düştü (kullanıcı kararı 2026-08-19). Segment layout'u [id] dahil TÜM alt
+// → sayfa "önce belgenizi yükleyin" bandını gösterir). Segment layout'u [id] dahil TÜM alt
 // rotaları sarmaladığı için kapı tek noktadan işler; page.tsx'lerin kendi rol kontrolleri
 // (derinlik savunması) aynen durur. COORDINATOR/ADMIN gözetim erişimi mevcut davranışıyla geçer.
 //

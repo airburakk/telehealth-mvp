@@ -17,7 +17,7 @@ import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 export const dynamic = "force-dynamic";
 
 // M5 — Doktor ilk-giriş onboarding kapısı. onboardedAt damgalıysa Ana Sayfa'ya geçer (bir daha
-// gösterilmez). v6.87: İKİ AŞAMALI — Aşama 1 (tabip odası yazısı → Doctorium) + Aşama 2 (klinik).
+// gösterilmez). v6.87: İKİ AŞAMALI — Aşama 1 (e-Devlet doğrulamalı diploma → Doctorium) + Aşama 2 (klinik).
 // Rıza TAM metinleri buradan prop geçer (lib'ler db'li → client'a import edilemez).
 export default async function DoctorOnboardingPage({
   searchParams,
@@ -103,11 +103,11 @@ export default async function DoctorOnboardingPage({
   });
   // Aşama ayrımı (v6.124): DIPLOMA artık AŞAMA 1 kartında yaşar (Doctorium kapısı — e-Devlet
   // doğrulamalı); Aşama 2 diploma İSTEMEZ (kullanıcı kararı 2026-08-19: "2'de tekrardan
-  // istemeyeceğiz"). CHAMBER tarihsel — hiçbir karta gitmez. STUDENT_CERT dışlanır: mezuniyet
+  // istemeyeceğiz"). STUDENT_CERT dışlanır: mezuniyet
   // geçişi yapmış hesabın öğrenci belgesi klinik belge listesine sızmaz (öğrenci MODU yukarıda
   // ayrı dallandı — buraya öğrenci hesabı gelmez).
   const diplomaDoc = allDocs.find((d) => d.type === "DIPLOMA") ?? null;
-  const docs = allDocs.filter((d) => d.type !== "CHAMBER" && d.type !== "STUDENT_CERT");
+  const docs = allDocs.filter((d) => d.type !== "STUDENT_CERT");
 
   // Branş işlemleri (taban/tavan) + doktorun kayıtlı seçimi (FHIR ServiceRequest/ChargeItem girdisi).
   const branchKey = branchKeyFromLabel(doctor.branch) ?? "";

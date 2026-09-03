@@ -15,7 +15,7 @@ const ADMIN_ROLES = ["ETHICS", "ADMIN"]; // proxy /admin ETHICS_ROLES ile korur 
 
 // DoctorDocument.type → incelemeci yüzü Türkçe etiket (doctor-activation ALL_DOC_TYPES eşleniği).
 const DOC_TYPE_LABELS: Record<string, string> = {
-  DIPLOMA: "Diploma", MMSS: "MMSS poliçesi", CHAMBER: "Tabip odası yazısı",
+  DIPLOMA: "Diploma", MMSS: "MMSS poliçesi",
   CERTIFICATE: "Sertifika", ACADEMIC: "Akademik çalışma",
 };
 

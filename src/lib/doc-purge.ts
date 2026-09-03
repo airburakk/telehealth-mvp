@@ -19,8 +19,8 @@ import { deleteDocument, isPurgedRef, purgedRef, PURGED_PREFIX } from "./storage
 import { recordAccess } from "./audit";
 import type { SessionUser } from "./session";
 
-/** Reddedilen belgenin itiraz/ispat saklama penceresi (gün). */
-export const REJECTED_RETENTION_DAYS = 180;
+/** Reddedilen belgenin itiraz/ispat saklama penceresi (gün) — 👤 03.09.2026 (belge 11 §C.3 / 05 §3.3): 180 → 90. */
+export const REJECTED_RETENTION_DAYS = 90;
 
 /** İmha kapsamındaki belge tipleri — yalnız Doctorium zorunlu belgesi. */
 export const PURGE_DOC_TYPES = ["DIPLOMA"];
@@ -30,7 +30,7 @@ export const PURGE_DOC_TYPES = ["DIPLOMA"];
  *  - Zaten imha edilmişse hayır (idempotens).
  *  - ACCEPTED → evet (LEGACY damgalılar dahil — backfill bu kuralla kendiliğinden olur).
  *  - REJECTED → yükleme tarihinden itibaren saklama penceresi dolduysa evet. (Şemada karar tarihi
- *    kolonu yok; createdAt üst sınırdır — pencere en geç "yükleme + 180 gün"de kapanır, bu da
+ *    kolonu yok; createdAt üst sınırdır — pencere en geç "yükleme + 90 gün"de kapanır, bu da
  *    minimizasyon lehine olan yorumdur.)
  */
 export function shouldPurgeDoc(

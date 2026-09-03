@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 // v6.95 — Tıp öğrencisi kaydı: vitrin footer'ından gelinen, doktor kaydından AYRI kayıt sayfası
 // (kullanıcı kararı 2026-08-14; 2026-08-17'de SALT KAYIT — gömülü giriş formu kaldırıldı, giriş
-// /kurumsal-giris'ten). Doktor belgeleri (diploma/MMSS/tabip odası) bu hunide HİÇ görünmez; tek
+// /kurumsal-giris'ten). Doktor belgeleri (diploma/MMSS) bu hunide HİÇ görünmez; tek
 // belge e-Devlet öğrenci belgesidir (onboarding öğrenci modu).
 // noindex: personel/üyelik kapıları arama sonuçlarından ayrık tutulur (kurumsal-giris kararıyla
 // tutarlı); indekslemeye açmak ayrı kullanıcı kararı.

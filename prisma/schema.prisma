@@ -59,8 +59,8 @@ model User {
   deletedAt    DateTime?
   // Kurumsal üyelik doğrulaması (2026-08-12): PARTNER/AGENCY/HEALTH_PRO self-signup hesapları null
   // açılır; /admin/personel-onay insan onayı damgalar. Damgasız hesap rol paneline giremez
-  // (/kayit/durum'a iner). DOCTOR bu alana BAKMAZ (kendi üç-damga sistemi: verified/activatedAt/
-  // chamberLetterAt). Mevcut personel hesapları migration'da damgalandı (demo/seed kırılmasın).
+  // (/kayit/durum'a iner). DOCTOR bu alana BAKMAZ (kendi damga sistemi: verified/diplomaVerifiedAt/
+  // activatedAt). Mevcut personel hesapları migration'da damgalandı (demo/seed kırılmasın).
   staffVerifiedAt DateTime?
   /// Kullanıcının BİLDİĞİ bir parola belirlenmiş mi (v6.187 — Doctorium "Hesabım").
   /// Google/Apple ile açılan hesaplara rastgele gölge-hash yazılır (auth callback'leri); o hash
@@ -260,12 +260,6 @@ model Doctor {
   /// Durumun tek kaynağı bu alan; İSPAT izi ConsentRecord'da (scope SPONSOR_TARGETING — grant/revoke
   /// ayrı satırlar, lib/sponsor.ts). Reklamverene hiçbir kişisel veri gitmez (agregat sayaç yalnız).
   sponsorPersonalizationAt DateTime?
-  /// 🪦 TARİHSEL (v6.124'te KAPIDAN DÜŞTÜ — kullanıcı kararı 2026-08-19 "Yalnız e-Devlet diploma"):
-  /// v6.87-v6.123 arasında tabip odası üye yazısı (CHAMBER) Doctorium'u açıyordu. Artık
-  /// hasDoctoriumAccess bu alanı OKUMAZ; kolon eski kayıtların tarihi olarak durur, yeni CHAMBER
-  /// yüklemesi kabul edilmez (ALL_DOC_TYPES'tan çıktı). Grandfather GEREKMEDİ — prod'da gerçek
-  /// doktor yok, lansmanda kayıtlar sıfırlanacak (hafıza: prod-hesaplar-test-lansman-sifirlama).
-  chamberLetterAt          DateTime?
   /// AŞAMA 1 damgası (v6.124): DIPLOMA belgesi ACCEPTED olduğunda dolar (e-Devlet barkod okuması
   /// otomatik VEYA incelemeci onayı — refreshActivation eşitler; belge düşer/reddedilirse damga da
   /// düşer). Doctorium kapısının TEK doktor-yolu budur (öğrenci yolu studentVerifiedAt).
@@ -688,7 +682,8 @@ model DoctorDocument {
   /// Yeni sürüm yüklenince satır PENDING'e döner → kapı yeniden kapanır (kasıtlı: tazelenen belge
   /// yeniden doğrulanır).
   status     String  @default("PENDING")
-  /// REJECTED gerekçesi (incelemeci yazar, doktora bildirimle gider). ⚖️ Şablon dili v6.91 paketinde.
+  /// REJECTED gerekçesi (incelemeci yazar, doktora bildirimle gider). DIPLOMA ret şablonu NİHAİ (belge 11 §C.4,
+  /// v6.212); klinik belge tipleri (MMSS/CERTIFICATE/ACADEMIC) AURA hukuk paketiyle.
   reviewNote String?
   /// e-Devlet barkodlu belge doğrulaması (v6.119) — lib/edevlet-belge.ts. Barkod belgenin METİN
   /// KATMANINDAN sunucuda okunur; turkiye.gov.tr'ye istek YAPILMAZ (hukuki karar — modül başlığı).

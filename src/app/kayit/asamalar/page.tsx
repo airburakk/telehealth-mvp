@@ -3,8 +3,7 @@ import { ArrowLeft, ArrowRight, BookOpenCheck, Landmark, ShieldCheck, Stethoscop
 
 // İki aşamalı doktor üyeliği açıklama sayfası (v6.87; Aşama 1 yeniden tasarımı v6.124). Public
 // (proxy matcher dışı — /kayit gibi). Metinler kullanıcı onaylı (2026-08-11; MMSS düzeltmesi
-// 2026-08-18; v6.124 e-Devlet diploma metni 2026-08-19 tasarım kararıyla — tabip odası yolu
-// KAPANDI); iddia disiplini: "anında" = mimari gerçek (barkod doğrulanınca otomatik damga),
+// 2026-08-18; v6.124 e-Devlet diploma metni 2026-08-19 tasarım kararıyla); iddia disiplini: "anında" = mimari gerçek (barkod doğrulanınca otomatik damga),
 // ölçülmemiş oran/hız iddiası YOK; barkodsuz belgelerin insan incelemesine düştüğü AÇIKÇA yazılır.
 export const metadata = { title: "Doktor üyeliği nasıl çalışır?" };
 

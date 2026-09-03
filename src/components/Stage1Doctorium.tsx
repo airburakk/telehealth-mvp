@@ -9,8 +9,7 @@ import { DoctorDocuments, type DocMeta } from "@/components/DoctorDocuments";
 import { EdevletKilavuz } from "@/components/EdevletKilavuz";
 
 // İki aşamalı giriş — AŞAMA 1 bölümü (v6.124 yeniden tasarım; kullanıcı kararı 2026-08-19):
-// Doctorium kapısı artık e-DEVLET DOĞRULAMALI DİPLOMA'dır — tabip odası yazısı (CHAMBER) kapıdan
-// ve bu formdan KALKTI (v6.87-123 tarihi lib/doctor-activation.ts + schema notlarında). Diploma
+// Doctorium kapısı e-DEVLET DOĞRULAMALI DİPLOMA'dır (tek doktor yolu; öğrenci yolu ayrı). Diploma
 // kartı DoctorDocuments'ın onaylı v6.122 arayüzüyle (durum rozetleri + e-Devlet sonucu mesajı)
 // çizilir; altında EdevletKilavuz (belge nasıl alınır — tıkla-aç). Erişim durumu SUNUCU kararından
 // (POST/DELETE dönüşündeki `doctorium`) güncellenir. İki İSTEĞE BAĞLI rıza (sponsor + İK) aynen:

@@ -6,6 +6,7 @@ import { recordAccess, reqMeta } from "@/lib/audit";
 import { refreshActivation } from "@/lib/doctor-activation";
 import { purgeDocContent, PURGE_DOC_TYPES } from "@/lib/doc-purge";
 import { isPurgedRef } from "@/lib/storage";
+import { DOCTORIUM_LEGAL_CONTACT } from "@/lib/doctorium-legal";
 
 // POST — doktor mesleki belgesine inceleme kararı (Faz 2, 2026-08-14): ACCEPTED | REJECTED.
 // 🔴 v6.119 (2026-08-19) — KARAR ARTIK AKTİVASYONU BELİRLER (eski "dokunmaz" notu SÜPERSEDE):
@@ -17,7 +18,7 @@ import { isPurgedRef } from "@/lib/storage";
 const REVIEWER_ROLES = ["ETHICS", "ADMIN"];
 // v6.143: STUDENT_CERT çıktı — öğrenci kapısı artık belge incelemesi değil (üniversite e-postası).
 const DOC_TYPE_TR: Record<string, string> = {
-  DIPLOMA: "Diploma", MMSS: "MMSS poliçesi", CHAMBER: "Tabip odası yazısı",
+  DIPLOMA: "Diploma", MMSS: "MMSS poliçesi",
   CERTIFICATE: "Sertifika", ACADEMIC: "Akademik çalışma",
 };
 
@@ -85,13 +86,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     });
   }
 
-  // ⚖️ Bildirim dili TASLAK — nihai şablon v6.91 hukuk paketiyle onaylanacak.
+  // Ret bildirimi — DIPLOMA (Doctorium kimlik doğrulama) şablonu NİHAİ (belge 11 §C.4, 👤 03.09.2026):
+  // gerekçe + yeniden yükleme + 15 gün içinde bilgi@ adresine itiraz (gerekçeli yanıt 30 gün).
+  // Klinik belge tipleri (MMSS/CERTIFICATE/ACADEMIC) AURA kulvarıdır — itiraz kanalı AURA hukuk
+  // paketiyle belirlenecek; o cümle onlara eklenmez (yanlış markaya yönlendirme olmasın).
   if (status === "REJECTED" && u) {
     const typeTr = DOC_TYPE_TR[doc.type] ?? doc.type;
+    const appeal = doc.type === "DIPLOMA"
+      ? ` Karara 15 gün içinde ${DOCTORIUM_LEGAL_CONTACT} adresine yazarak itiraz edebilirsiniz; gerekçeli yanıt 30 gün içinde verilir.`
+      : "";
     await notifyUser(u.id, {
       type: "DOC_REJECTED",
-      title: "📄 Belgeniz yeniden yükleme bekliyor",
-      body: `${typeTr} belgeniz incelemede yetersiz bulundu: ${note} — Lütfen güncel/okunaklı belgeyi yeniden yükleyin.`,
+      title: "📄 Belgeniz kabul edilmedi — yeniden yükleyebilirsiniz",
+      body: `${typeTr} belgeniz incelemede kabul edilmedi. Gerekçe: ${note}. Güncel ve okunaklı belgeyi yeniden yükleyebilirsiniz.${appeal}`,
       href: "/doktor/baslangic",
     });
   }

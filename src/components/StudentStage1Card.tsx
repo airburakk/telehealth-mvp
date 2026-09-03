@@ -6,7 +6,7 @@ import { ArrowRight, Check, GraduationCap, Loader2, Mail } from "lucide-react";
 
 // v6.95 — Tıp/Diş Hekimliği öğrencisi onboarding kartı (/doktor/baslangic öğrenci modu).
 // Stage1Doctorium'un öğrenci eşleniği ama BİLİNÇLİ AYRI bileşen: öğrenci hunisinde doktor
-// belgeleri (diploma/MMSS/tabip odası) ve rıza kartları HİÇ render edilmez (kullanıcı kararı
+// belgeleri (diploma/MMSS) ve rıza kartları HİÇ render edilmez (kullanıcı kararı
 // 2026-08-14). "Mezun oldum" düğmesi studentTrack'i kapatır → sayfa yenilenince normal doktor
 // onboarding'i (diploma+MMSS blokları) açılır; öğrenci damgası ve geçmişi korunur.
 //

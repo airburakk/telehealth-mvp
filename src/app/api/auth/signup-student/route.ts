@@ -10,6 +10,7 @@ import { hashVerifyToken } from "@/lib/email-verification";
 import { universitiesFor, domainMatches, type StudentDepartment } from "@/lib/universities";
 import { isAllowedCity } from "@/lib/cities";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
+import { hasReachedAge, MIN_STUDENT_AGE } from "@/lib/student-age";
 
 // v6.95 — Tıp/Diş Hekimliği öğrencisi kaydı (/ogrenci hunisi). signup(doktor) rotasının
 // SADELEŞMİŞ eşleniği: ünvan/telefon/hizmet dili SORULMAZ (öğrenci hizmet vermez — title bölüme
@@ -24,6 +25,9 @@ import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 // bağlantısı gönderilir; Doctor.studentVerifiedAt YALNIZ o bağlantı tıklanınca damgalanır
 // (api/auth/verify-student-email) — ⚠️ Genel hesap e-postası (User.emailVerifiedAt) gibi dormant'ta
 // OTOMATİK BYPASS EDİLMEZ; edilseydi bu güvenlik düzeltmesinin bütün amacı boşa çıkardı.
+//
+// v6.212 (belge 07 §A.1, 👤 03.09.2026): 18 yaş altı öğrenci KABUL EDİLMEZ — doğum tarihi beyanı yalnız
+// burada hesaplanır, SAKLANMAZ ve loglanmaz (KVKK minimizasyonu; envanterde yeni veri kategorisi yok).
 const BRANCH_SET = new Set(Object.values(BRANCH_LABELS));
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DEPARTMENTS = new Set<StudentDepartment>(["tip", "dis-hekimligi"]);
@@ -41,6 +45,7 @@ export async function POST(req: Request) {
   const city = String(b.city ?? "").trim().slice(0, 80);
   const department = String(b.department ?? "") as StudentDepartment;
   const university = String(b.university ?? "").trim();
+  const birthDate = String(b.birthDate ?? "").trim(); // yalnız yaş kapısı için — persist EDİLMEZ
 
   if (name.length < 2) return NextResponse.json({ error: "Ad soyad girin." }, { status: 400 });
   if (!EMAIL_RE.test(email)) return NextResponse.json({ error: "Geçerli bir e-posta girin." }, { status: 400 });
@@ -50,6 +55,13 @@ export async function POST(req: Request) {
   // rosterde KKTC/AZ/MK kampüsleri var, salt-81 liste onları bloke ederdi; bkz. lib/cities.ts).
   if (!isAllowedCity(city)) return NextResponse.json({ error: "Üniversitenizin şehrini listeden seçin." }, { status: 400 });
   if (!DEPARTMENTS.has(department)) return NextResponse.json({ error: "Bölümünüzü seçin (Tıp / Diş Hekimliği)." }, { status: 400 });
+  // Fail-closed yaş kapısı: eksik/biçimsiz tarih de reddedilir (lib/student-age — saf, birim testli).
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return NextResponse.json({ error: "Doğum tarihinizi girin." }, { status: 400 });
+  if (!hasReachedAge(birthDate, MIN_STUDENT_AGE)) {
+    return NextResponse.json({
+      error: `Öğrenci üyeliği için ${MIN_STUDENT_AGE} yaşını doldurmuş olmanız gerekir. ${MIN_STUDENT_AGE} yaşını doldurduğunuzda yeniden başvurabilirsiniz.`,
+    }, { status: 400 });
+  }
   if (!universitiesFor(department).some((u) => u.name === university)) {
     return NextResponse.json({ error: "Üniversitenizi listeden seçin." }, { status: 400 });
   }

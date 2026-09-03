@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 // onboarding kapısı. İKİ AŞAMALI üyelik (v6.124): Aşama 1 = e-Devlet barkodlu diploma
 // (doğrulanınca diplomaVerifiedAt) → Doctorium; Aşama 2 = klinik tanımlar (FHIR uzmanlık + işlem;
 // diploma TEKRAR İSTENMEZ; MMSS v6.105'ten beri İHTİYARİ — lib/doctor-activation) → doktor
-// havuzları. Tabip odası yolu v6.124'te kapandı. Hesap admin onayına kadar doğrulanmamış
+// havuzları. Hesap admin onayına kadar doğrulanmamış
 // (public dizin/eşleştirme kapalı). Ayrıntılı anlatım: /kayit/asamalar.
 export default function SignupPage() {
   const branches = Object.values(BRANCH_LABELS).sort((a, b) => a.localeCompare(b, "tr"));

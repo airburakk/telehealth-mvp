@@ -17,8 +17,8 @@ interface Pub { title: string; venue: string; year: number }
 // yukarıdaki import'la kullanılır). (v6.95: öğrenci yolu AYRI huniye taşındı — /ogrenci +
 // StudentStage1Card; bu form yalnız doktor onboarding'idir, öğrenci hesabı buraya hiç düşmez.)
 
-// M5 — İlk-giriş onboarding kapısı (client). v6.87'den beri İKİ AŞAMALI: Aşama 1 = tabip odası
-// yazısı → yalnız Doctorium (anında, "finish" beklemez); Aşama 2 = klinik havuz — hesap
+// M5 — İlk-giriş onboarding kapısı (client). v6.87'den beri İKİ AŞAMALI: Aşama 1 = e-Devlet
+// doğrulamalı diploma → yalnız Doctorium (anında, "finish" beklemez); Aşama 2 = klinik havuz — hesap
 // aktifleşmesi için ZORUNLU: (1) FHIR uzmanlık & işlemler — diploma/tescil no + uzmanlık belgesi +
 // branş işlemleri (≥1); (2) mesleki belgeler — diploma (MMSS v6.105'ten beri ihtiyari). Sonra
 // Ücretsiz Sağlık Hizmeti + Partner Konsültasyon opt-in toplanır. Kaydedince /doktor'a geçer.
@@ -194,7 +194,7 @@ export function OnboardingForm({
 
       {/* v6.124 — Diploma bekleme/ret kutuları KALDIRILDI: diploma kartı artık Aşama 1'de yaşar
           ve DoctorDocuments oradaki rozet + e-Devlet mesajı + reviewNote ile durumu zaten anlatır.
-          (v6.119 kutularının "tabip odası yazısı" yönlendirmesi de bu tasarımla süpersede oldu.) */}
+          (v6.119 kutularının yönlendirmesi de bu tasarımla süpersede oldu.) */}
 
       {/* ── 1. Klinik tanımlar — hesap aktivasyon kapısı. İLK SIRADA (kullanıcı kararı
              2026-08-17: "ilk yapılması gereken o"). v6.124: diploma YÜKLEME kartı Aşama 1'e
