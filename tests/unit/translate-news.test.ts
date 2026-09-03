@@ -63,7 +63,7 @@ describe("summaryLead: özet girişi kesimi", () => {
   });
 });
 
-// v6.208 — KİMLİKLİ hizalama (özet): PROD'da model 8 girişe 7 çeviri döndürüyordu (`hiza:7/8`) ve konumsal
+// v6.209 — KİMLİKLİ hizalama (özet): PROD'da model 8 girişe 7 çeviri döndürüyordu (`hiza:7/8`) ve konumsal
 // kural parçanın tamamını düşürüyordu. Kimlikle yalnız eksik öğe düşer; kaymış hiza yine imkânsızdır (n esas).
 describe("alignById: kimlikli hizalama", () => {
   const IN = ["Alpha study", "Beta trial", "Gamma review"];

@@ -52,7 +52,7 @@ const TRANSLATE_TOOL: Anthropic.Tool = {
 } as Anthropic.Tool;
 
 /**
- * Özet çevirisi için KİMLİKLİ araç (v6.208): model her çeviriyi {n, tr} döndürür; hizalama konuma değil n'ye
+ * Özet çevirisi için KİMLİKLİ araç (v6.209): model her çeviriyi {n, tr} döndürür; hizalama konuma değil n'ye
  * göre yapılır (alignById). 2026-09-03 PROD ölçümü: parçaların ~%10'unda model 8 girişe 7 çeviri döndürdü
  * (`hiza:7/8`) ve konumsal kural parçanın TAMAMINI düşürüyordu — kimlikle yalnız eksik öğe düşer.
  */
@@ -115,7 +115,7 @@ export function alignTranslations(titles: string[], out: unknown): (string | nul
 }
 
 /**
- * KİMLİKLİ hizalama (özet, v6.208): model {n, tr} öğeleri döndürür. Sonuç girişle aynı uzunlukta:
+ * KİMLİKLİ hizalama (özet, v6.209): model {n, tr} öğeleri döndürür. Sonuç girişle aynı uzunlukta:
  *  - n eksik → o öğe undefined (yalnız o satır sonraki koşuya kalır; parça düşmez)
  *  - yinelenen n → ilki; aralık dışı / bozuk öğe → yok sayılır
  *  - boş çeviri / girişle aynı metin → null (zaten Türkçe → "işlendi")
@@ -167,7 +167,7 @@ async function translateBatchTr(
   texts: string[],
   cfg: {
     system: string; chunk: number; maxTokens: number; sep: string;
-    /** "konum" = translations: string[] (başlık) · "kimlik" = {n, tr}[] (özet, v6.208). */
+    /** "konum" = translations: string[] (başlık) · "kimlik" = {n, tr}[] (özet, v6.209). */
     mode: "konum" | "kimlik";
     onFail?: (reason: string) => void;
   },

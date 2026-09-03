@@ -14,7 +14,7 @@
 // İşaretleme sözleşmesi (summaryOriginal = "işlendi" damgası — news-language.summaryTranslationWhere ile birlikte):
 //   çeviri geldi (string)     → summary = Türkçe giriş, summaryOriginal = özgün TAM metin
 //   tekil düşüş (null)        → summaryOriginal = summary (model aynı metni döndürdü = zaten Türkçe; tekrar seçilmesin)
-//   düştü (undefined)         → DOKUNULMAZ (API hatası / red = parça; v6.208 kimlikli hizalamada eksik n = yalnız
+//   düştü (undefined)         → DOKUNULMAZ (API hatası / red = parça; v6.209 kimlikli hizalamada eksik n = yalnız
 //                               o öğe; sonraki koşuda yeniden) — fail-open
 import { db } from "./db";
 import { summaryTranslationWhere } from "./news-language";
