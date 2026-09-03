@@ -30,6 +30,8 @@ export interface SummaryTranslationResult {
   failed: number;
   /** Koşu sonunda hâlâ bekleyen satır (birikmiş göstergesi — audit satırına yazılır). */
   remaining: number;
+  /** Düşen parçaların neden sayacı — "stop:refusal" / "hiza:N/M" / "api:429" … (PHI yok; audit `neden=`). */
+  failReasons: Record<string, number>;
   /** Dormant sebebi (anahtar yok) — hata DEĞİL. */
   skipped?: string;
 }
@@ -41,7 +43,7 @@ export async function translateSummaryBacklog(opts: { budgetMs: number; now?: ()
   const now = opts.now ?? Date.now;
   const started = now();
   const where = summaryTranslationWhere();
-  const res: SummaryTranslationResult = { scanned: 0, translated: 0, identical: 0, failed: 0, remaining: 0 };
+  const res: SummaryTranslationResult = { scanned: 0, translated: 0, identical: 0, failed: 0, remaining: 0, failReasons: {} };
   if (!process.env.ANTHROPIC_API_KEY) {
     res.skipped = "ANTHROPIC_API_KEY yok — özet çevirisi dormant";
     res.remaining = await db.newsArticle.count({ where });
@@ -56,7 +58,10 @@ export async function translateSummaryBacklog(opts: { budgetMs: number; now?: ()
   for (let i = 0; i < rows.length; i += BATCH) {
     if (now() - started > opts.budgetMs) break; // bütçe: parça sınırında durulur, yarım parça yazılmaz
     const grup = rows.slice(i, i + BATCH);
-    const out = await translateSummariesTr(grup.map((r) => summaryLead(r.summary)));
+    const out = await translateSummariesTr(
+      grup.map((r) => summaryLead(r.summary)),
+      (neden) => { res.failReasons[neden] = (res.failReasons[neden] ?? 0) + 1; },
+    );
     for (let k = 0; k < grup.length; k++) {
       res.scanned++;
       const tr = out[k];

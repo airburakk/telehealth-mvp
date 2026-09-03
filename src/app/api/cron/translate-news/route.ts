@@ -15,6 +15,12 @@ export const dynamic = "force-dynamic";
 
 const DEFAULT_BUDGET_S = 240;
 
+/** Düşen parça nedenleri (PHI yok): " neden=stop:refusal×2,api:429×1" — boşsa "". */
+function nedenler(fr: Record<string, number>): string {
+  const e = Object.entries(fr);
+  return e.length ? ` neden=${e.map(([k, v]) => `${k}×${v}`).join(",")}` : "";
+}
+
 export async function GET(req: Request) {
   const gate = cronGate(req, "translate-news");
   if (gate) return gate;
@@ -31,11 +37,11 @@ export async function GET(req: Request) {
       resourceType: "SYSTEM",
       resourceId: "translate-news",
       subjectUserId: null,
-      detail: r.skipped ?? `ozet=${r.translated}/${r.scanned} ayni=${r.identical} hata=${r.failed} kalan=${r.remaining}`,
+      detail: r.skipped ?? `ozet=${r.translated}/${r.scanned} ayni=${r.identical} hata=${r.failed} kalan=${r.remaining}${nedenler(r.failReasons)}`,
     });
     // Anahtar var, satır var, HİÇBİRİ çevrilemedi → alarm (satırlar sonraki koşuya kalır; 500 değil — fail-open).
     if (r.failed > 0 && r.translated === 0 && r.identical === 0) {
-      void sendAlert("cron-translate-news", "translate-news cron: hiçbir özet çevrilemedi", `hata=${r.failed} kalan=${r.remaining}`);
+      void sendAlert("cron-translate-news", "translate-news cron: hiçbir özet çevrilemedi", `hata=${r.failed} kalan=${r.remaining}${nedenler(r.failReasons)}`);
     }
     return NextResponse.json({ ok: true, budgetS, ...r });
   } catch (e) {

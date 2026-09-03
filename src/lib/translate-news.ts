@@ -111,7 +111,7 @@ export function summaryLead(text: string, max = SUMMARY_LEAD_MAX): string {
  */
 async function translateBatchTr(
   texts: string[],
-  cfg: { system: string; chunk: number; maxTokens: number; sep: string },
+  cfg: { system: string; chunk: number; maxTokens: number; sep: string; onFail?: (reason: string) => void },
 ): Promise<(string | null | undefined)[]> {
   if (!texts.length) return [];
   if (!process.env.ANTHROPIC_API_KEY) return texts.map(() => undefined); // dormant — ağa hiç çıkmaz, masrafsız
@@ -135,12 +135,20 @@ async function translateBatchTr(
       const block = res.content.find((b) => b.type === "tool_use");
       const raw = block && block.type === "tool_use" ? (block.input as { translations?: unknown }).translations : null;
       if (!Array.isArray(raw) || raw.length !== grup.length) {
+        // Neden sayacı (PHI yok, yalnız kod): "stop:refusal" = Opus 5 güvenlik sınıflandırıcısı reddetti (araç
+        // bloğu gelmez) · "hiza:N/M" = model sayıyı tutturamadı. 2026-09-03 PROD ilk koşularında parçaların
+        // ~%30'u düşüyordu (DEV provasında 0) — nedeni ayırt etmeden çözüm seçilemez (refusal → fallbacks;
+        // hiza → parça küçült; api → hız/yük).
+        cfg.onFail?.(!block ? `stop:${res.stop_reason ?? "?"}` : `hiza:${Array.isArray(raw) ? raw.length : "-"}/${grup.length}`);
         out.push(...grup.map(() => undefined)); // hiza yok → parça düştü (kaymış hiza asla yayılmaz)
         continue;
       }
       out.push(...alignTranslations(grup, raw));
-    } catch {
-      out.push(...grup.map(() => undefined)); // fail-open: bu parça özgün dilde kalır, boru hattı sürer
+    } catch (e) {
+      // "api:<HTTP durum | hata adı>" — 429/529 vb. (SDK 2 kez denedikten sonra). Fail-open: parça özgün dilde kalır.
+      const st = (e as { status?: number }).status;
+      cfg.onFail?.(`api:${st ?? (e instanceof Error ? e.name : "?")}`);
+      out.push(...grup.map(() => undefined));
     }
   }
   return out;
@@ -159,6 +167,9 @@ export async function translateTitlesTr(titles: string[]): Promise<(string | nul
  * Özet GİRİŞLERİNİ (summaryLead çıktısı) Türkçeye çevirir. Üçlü sonuç (string / null / undefined) —
  * bkz. translateBatchTr; çağıran (lib/translate-summaries) null'u "işlendi", undefined'ı "sonra yeniden" sayar.
  */
-export async function translateSummariesTr(leads: string[]): Promise<(string | null | undefined)[]> {
-  return translateBatchTr(leads, { system: SUMMARY_SYSTEM, chunk: SUMMARY_CHUNK, maxTokens: 8192, sep: "\n\n" });
+export async function translateSummariesTr(
+  leads: string[],
+  onFail?: (reason: string) => void,
+): Promise<(string | null | undefined)[]> {
+  return translateBatchTr(leads, { system: SUMMARY_SYSTEM, chunk: SUMMARY_CHUNK, maxTokens: 8192, sep: "\n\n", onFail });
 }
