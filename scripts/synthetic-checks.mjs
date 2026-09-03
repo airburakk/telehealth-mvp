@@ -8,7 +8,8 @@
 //   rota başına  → HTTP durum · yanıt süresi · <title> · birincil başlık (h1) · kritik CTA href'i ·
 //                  noindex beklentisi (locale KAPALI kararı + personel kapısı BURADA kodlANIR;
 //                  kök rotalarda kazara noindex de aynı kontrolle yakalanır)
-//   küresel      → TLS sertifika bitimine kalan gün (<14 = hata) · /_next statik asset erişilebilirliği
+//   küresel      → TLS sertifika bitimine kalan gün (<14 = hata) · /_next statik asset erişilebilirliği ·
+//                  PWA manifest marka-doğruluğu (name + ikon seti — host'lar arası marka sızıntısını yakalar)
 //   yalnız varsayılan (çoklu-hedef) modda → marka-korkuluğu redirect'leri: doctorium.tr'deki AURA-only
 //                  yüzeyler (next.config AURA_ONLY_PREFIXES) gerçekten AURA'ya gidiyor mu + com.tr/www
 //                  doctorium.tr'ye toplanıyor mu (kimlik/hasta yüzeyleri Doctorium'da YAŞAMAMALI).
@@ -79,13 +80,18 @@ const DOCTORIUM_REDIRECTS = [
   { base: "https://www.doctorium.tr", path: "/", status: 308, locationStartsWith: `${DOCTORIUM_BASE}/` },
 ];
 
+// PWA manifest beklentileri (Faz E, v6.207 `app/manifest.ts` — BRAND_MODE'a göre üretilir, [[pwa-kabugu-marka-suruklenmesi]]).
+// iconPrefix `?v=` sürüm querystring'inden ÖNCEsi (ikon güncellemesinde sürüm artar, bu kontrolü kırmasın).
+const AURA_MANIFEST = { name: "AURA Health", iconPrefix: "/icon-192.png" };
+const DOCTORIUM_MANIFEST = { name: "Doctorium", iconPrefix: "/icon-doctorium-192.png" };
+
 // --base= verilirse (yerel/preview elle koşum) TEK hedef, AURA rota setiyle — mevcut DEPLOY.md akışı
 // değişmez. Verilmezse (workflow varsayılanı) AURA + Doctorium ikisi de + marka-korkuluğu redirect'leri.
 const TARGETS = explicitBase
-  ? [{ name: "custom", base: explicitBase, routes: AURA_ROUTES }]
+  ? [{ name: "custom", base: explicitBase, routes: AURA_ROUTES, manifest: AURA_MANIFEST }]
   : [
-      { name: "AURA", base: AURA_BASE, routes: AURA_ROUTES },
-      { name: "Doctorium", base: DOCTORIUM_BASE, routes: DOCTORIUM_ROUTES },
+      { name: "AURA", base: AURA_BASE, routes: AURA_ROUTES, manifest: AURA_MANIFEST },
+      { name: "Doctorium", base: DOCTORIUM_BASE, routes: DOCTORIUM_ROUTES, manifest: DOCTORIUM_MANIFEST },
     ];
 
 function extract(re, html) {
@@ -165,6 +171,23 @@ function certDaysLeft(host) {
   });
 }
 
+// PWA manifest marka-doğruluğu: name + ikon seti host'a uygun mu (ör. Doctorium'un AURA ikonuyla
+// sunulması gibi bir sızıntıyı yakalar — bkz. pwa-kabugu-marka-suruklenmesi 2026-08-19 olayı).
+async function checkManifest(base, expected) {
+  try {
+    const res = await fetch(base + "/manifest.webmanifest", { signal: AbortSignal.timeout(TIMEOUT_MS) });
+    if (res.status !== 200) return `durum ${res.status} (200 beklenir)`;
+    const json = await res.json();
+    const problems = [];
+    if (json.name !== expected.name) problems.push(`name "${json.name}" ("${expected.name}" beklenir)`);
+    const icons = (json.icons ?? []).map((i) => i.src);
+    if (!icons.some((s) => s.startsWith(expected.iconPrefix))) problems.push(`ikon "${expected.iconPrefix}" ile başlayan yok (marka sızıntısı riski)`);
+    return problems.length ? problems.join(" · ") : null;
+  } catch (e) {
+    return `manifest kontrolü başarısız: ${e?.name ?? e}`;
+  }
+}
+
 // Ana sayfanın referansladığı ilk /_next/static asset'i gerçekten sunuluyor mu (asset erişilebilirliği).
 async function checkAsset(base) {
   try {
@@ -216,6 +239,10 @@ for (const t of TARGETS) {
   const assetProblem = await checkAsset(t.base);
   console.log(` ${assetProblem ? "✗" : "✓"} statik asset ${assetProblem ? "— " + assetProblem : "erişilebilir"}`);
   if (assetProblem) failures.push(`${t.name} ${assetProblem}`);
+
+  const manifestProblem = await checkManifest(t.base, t.manifest);
+  console.log(` ${manifestProblem ? "✗" : "✓"} PWA manifest ${manifestProblem ? "— " + manifestProblem : "marka-doğru"}`);
+  if (manifestProblem) failures.push(`${t.name} manifest: ${manifestProblem}`);
 }
 
 // Yalnız varsayılan (çoklu-hedef) modda: marka-korkuluğu redirect kontrolleri (tek hedef elle
