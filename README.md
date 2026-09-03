@@ -378,6 +378,28 @@ bağ yoksa hesap dahil her şey o anda silinir (Doctorium'da saklanacak klinik k
 kullanımları SİLİNMEZ — `Doctor`'a FK olmadıkları için `doctorId` yetim kalır, yani anonimleşir.
 Puanlar ileriye dönük hak olduğu için silinir ve geri yüklenmez; arayüz bunu kapatmadan önce uyarır.
 
+**Hukuki belgeler — `/doctorium/{aydinlatma,kosullar,cerez,icerik-politikasi,kvkk-basvuru}` (v6.210, 2026-09-03):**
+Doctorium'un yayımlanan beş hukuki metni (KVKK aydınlatma · üyelik sözleşmesi · çerez · içerik/telif +
+bildir-kaldır · KVKK m.11 başvuru usulü). **Tek kaynak `lib/doctorium-legal/`**: `index.ts` kayıt (slug/rota/
+başlık/sürüm 1.0), `texts/*.ts` yayın kesitleri (vault `output/doctorium-hukuki-belgeler/` 20 belgelik NİHAİ
+setin 01/02/03/04/06 numaralı belgelerinden `kesit` script'iyle üretilir — elle düzenlenmez, kaynak vault'tur),
+`markdown.ts` saf ayrıştırıcı (bağımlılıksız; tablo/liste/blockquote/bağlantı; React düğümü basar, HTML
+enjeksiyonu yok), `anket-kosullari.ts` (anket kartındaki "Katılım koşulları"). Sayfalar
+`components/aura/doctorium-legal/` (LegalShell açık kabuk + LandingFooterV3; AURA kromu girmez —
+`chrome-routes` CHROME_FREE_ROUTES'ta, birim testle bağlı), canonical DAİMA `doctorium.tr`, Doctorium
+deploy sitemap'inde; AURA sitemap'ine bilinçli girmez. Footer bağlantı satırı iki footer'da da
+`LEGAL_LINKS`'ten çizilir. Canlı rıza/koşul sabitleri de aynı setle NİHAİ oldu: `lib/sponsor.ts`
+(08), `lib/hr-consent.ts` (09; yürürlük İŞKUR izniyle), `lib/rewards.ts` REWARD_TERMS_ITEMS (10; vergi
+maddesi mali müşavir görüşüne kadar kataloğu kapalı tutar) — "(TASLAK)" ibareleri kalktı. Tüzel kişilik
+kurulana dek metinlerde **"Doctorium platform işleticisi"** ifadesi kullanılır; unvan/adres/MERSİS/KEP/
+VERBİS vault Kılavuz §8 kimlik tablosundan tek geçişte doldurulur (`_kimlik-doldur.py`) ve kesitler
+yeniden üretilir. ⚖️ **Kural:** kişisel veri işleyen yeni bir modül eklendiğinde vault'taki işleme
+envanteri (17) + aydınlatma (01) + saklama politikası (05) birlikte güncellenir, kesit yeniden üretilir.
+Sıradaki paketler: **1b** onam mimarisi (`DOCTORIUM_KVKK` · `DOCTORIUM_TERMS` · `DOCTORIUM_DIPLOMA_BEYAN`
+kapsamları, ekran = hash), **1c** temizlik (tabip odası kalıntıları + migration, ret penceresi 180→90 gün,
+öğrenci doğum tarihi, ret bildirimi şablonu), **2** saklama kuralları (terk edilmiş hesap, audit IP/cihaz
+boşaltma, başvuru kütüğü + platform içi form).
+
 Rotalar için bkz. aşağıdaki **Rotalar** tablosu; sürüm geçmişi (V3 landing, marka ayrışması fazları,
 monetizasyon) için `Air/wiki/changelog.md` ve bu dosyanın alt kısmındaki tarihli notlar.
 
@@ -390,6 +412,7 @@ monetizasyon) için `Air/wiki/changelog.md` ve bu dosyanın alt kısmındaki tar
 | `/guven-ve-gizlilik` | **Güven ve Gizlilik** (v6.12): iddia dürüstlüğü sayfası — 10 bölüm × 9 dil (`copy.ts` `trustPage`), 5'inde **"neyi iddia etmiyoruz"** kutusu + FAQPage JSON-LD (cevap gövde+sınırı birlikte taşır) + OG 9 dil; global Header/SiteFooter burada da gizli (kendi aura nav/footer'ı). **`/trust` → 308.** ⚠️ Gizlilik Politikası **değildir**. Kurallar: Güvenlik notları "Güven ve Gizlilik sayfası (v6.12)" |
 | `/v2` | **Yeni ana sayfa ÖNİZLEMESİ** (v6.14 · `components/aura/v2/{home,hero,entry-paths,nav}.tsx` · `copy.ts` `v2`, 9 dil). **noindex + sitemap'te YOK** — aynı içeriğin iki URL'de indekslenmesi `/`'nin SEO'sunu bölerdi. Canlı `/` **dokunulmadı**. **Bölümler:** nav (tek bakım mimarisi, v6.16) → hero (sahneli açılış) → entry-paths (video-arkalı 4 kart, `id="care"`) → mevcut how (`id="how"`)/doctors/trust → closing. **`/`'ye taşırken:** eski landing'e **git tag** (geri dönüş) → `app/page.tsx`→`V2Home` → `/v2`+noindex kalkar → sitemap'e girer → ⚠️ `.aura-brand` seçicileri artık landing'i de kapsar, **token/glow ölçümünü tekrarla** → ⚠️ `v2/nav.tsx` kök `aura/nav.tsx`'in yerini alır ve içindeki `/v2` hedefleri (logo · `#care` çapası) **`/` köküne döner**. Sözleşme: aşağıda "/v2 hero + entry-paths (v6.14)" + "/v2 nav (v6.16)" |
 | `/sitemap.xml` · `/robots.txt` | **SEO altyapısı (v5.9.2 · v6.12):** `app/sitemap.ts` yalnız 8 halka açık rota (/, /how-it-works, **/guven-ve-gizlilik**, /giris, /kayit, /kayit/hasta, /second-opinion, /ucretsiz-saglik) · `app/robots.ts` hassas panel/API disallow + sitemap referansı. `SITE_URL` tek kaynak `lib/aura-landing/seo.ts` (domain taşınırsa tek nokta) |
+| `/doctorium/aydinlatma` · `/doctorium/kosullar` · `/doctorium/cerez` · `/doctorium/icerik-politikasi` · `/doctorium/kvkk-basvuru` | **Doctorium hukuki belgeleri (v6.210, 2026-09-03)** — tek kaynak `lib/doctorium-legal/` (bkz. "Doctorium — ayrı ürün → Hukuki belgeler"); açık kabuk (`LegalShell`), AURA kromu yok, canonical `doctorium.tr`, Doctorium sitemap'inde. Platform içi KVKK başvuru formu Paket 2'de — o güne dek metin `bilgi@doctorium.tr`'ye yönlendirir |
 | `/basla` | KALDIRILDI (v5.8) — eski linkler için `/triyaj`'a kalıcı redirect |
 | `/sifremi-unuttum` · `/sifre-sifirla` | **Parola kurtarma (v6.194)** — sistemde HİÇ yoktu (parola *değiştirme* oturum ister; unutan üye kilitleniyordu). İstek → e-postadaki tek kullanımlık bağlantı (1 saat) → yeni parola. **MARKA-NÖTR ve LOGOSUZ:** iki deploy'da da aynı rotadan servis edilir, `chrome-routes`'ta (yoksa doctorium.tr'de AURA Header/Footer çizilirdi). "Parolamı unuttum" bağlantısı ORTAK `GateEmailForm`'da → üç kapıda birden çıkar, metin **9 dilde** ve prop ZORUNLU (opsiyonel olsaydı bir dilde sessizce kaybolurdu). noindex |
 | `/saglik-turizmi` | **Sağlık Turizmi hasta-yüzü planlama** (v4.24-25): tercih (branş/ülke/seviye/gece) + endikatif paket önizlemesi (`computePackage`) + öz-yeterli "Talep Oluştur" → `POST /api/patient/tourism-request` (runTriage → tourism-etiketli Case, `Case.tourismPlan` JSON; doktor `/paket` PackageBuilder ön-değeri + kokpit 🧳 rozeti). Klinik-önce: bağlayıcı fiyat/rezervasyon daima doktor onayı sonrası (simüle/park; USHAŞ yetki belgesi + TÜRSAB hukuki zemini vault'ta belgeli) |

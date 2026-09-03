@@ -36,13 +36,22 @@ export const POINT_REASONS = ["SURVEY", "REDEEM", "REDEEM_REFUND", "ADJUST"] as 
 // Anket başına girilebilecek puan tavanı (admin formu + API — yanlışlıkla 5000 girilmesin).
 export const MAX_SURVEY_POINTS = 1000;
 
-// ⚖️ HUKUKİ TASLAK — program koşulları; nihai metin kullanıcı (avukat) kontrolünden geçecek.
-// Doktor yüzünde ödül modülünde daima görünür (kaldırılamaz — vitrin iddia dürüstlüğü disiplini).
-export const REWARD_TERMS_TEXT =
-  "Puanlar parasal değer taşımaz, nakde çevrilemez, devredilemez ve mirasa/hacze konu olmaz. " +
-  "Ödül kataloğu, puan bedelleri ve talep onayı platformun takdirindedir; talepler insan onayına " +
-  "tabidir ve mevzuat gereği (kamu görevlisi statüsü dahil) reddedilebilir. Program önceden " +
-  "duyurularak değiştirilebilir veya sonlandırılabilir; birikmiş puanlar kazanılmış hak doğurmaz. (TASLAK)";
+// ⚖️ NİHAİ program koşulları (v6.210, 👤 avukat kararı 03.09.2026) — kanonik kaynak: vault
+// output/doctorium-hukuki-belgeler/10-puan-odul-program-kosullari.md §3.1 (7 madde). Doktor yüzünde
+// ödül modülünde daima görünür (kaldırılamaz — vitrin iddia dürüstlüğü disiplini). Madde 5 (vergi)
+// mali müşavir görüşüne kadar ⏸️ PARK: metin yer tutucu taşımaz, kataloğun o güne dek KAPALI kaldığını
+// söyler (yönetim paneli de kataloğu boş tutar). Madde 4'teki "puan iadesi" kodla uyumludur
+// (REDEEM_REFUND: ret/iptalde otomatik). Tek-string REWARD_TERMS_TEXT geriye uyum içindir (testler).
+export const REWARD_TERMS_ITEMS: readonly string[] = [
+  "Puanların niteliği: Puanlar, Doctorium'a katılımınızı gösteren platform içi göstergelerdir; parasal değer taşımaz, nakde çevrilemez, devredilemez, mirasa ve hacze konu olmaz. Puan biriktirmek kazanılmış hak doğurmaz.",
+  "Puan kazanma: Puan kazandıran işlemler ve puan değerleri Ödüller sayfasında ilan edilir; bu değerler ileriye etkili olarak değiştirilebilir ve daha önce kazanılmış puanları etkilemez.",
+  "Ödül talebi: Katalogdaki bir ödül için talepte bulunabilirsiniz; talep anındaki puan bedeli sabitlenir. Talepler otomatik karşılanmaz, her talep insan değerlendirmesine tabidir ve 10 iş günü içinde sonuçlandırılır.",
+  "Reddedilebilecek hâller: Talebiniz; mevzuata aykırılık (kamu görevlisi statünüzden doğan kısıtlar dâhil), programın kötüye kullanımı veya ödülün temin edilememesi hâllerinde gerekçesi bildirilerek reddedilebilir. Reddedilen talepte puanlarınız iade edilir.",
+  "Vergi: Ödül tesliminden doğabilecek vergisel yükümlülüklere ilişkin esaslar, ödül kataloğu açılmadan önce bu koşullara eklenir; katalog o güne kadar kapalıdır.",
+  "Kamu görevlisi katılımcı: Kamu kurumunda görevliyseniz, ödül kabulünün tabi olduğunuz mevzuata uygunluğunu değerlendirmek sizin sorumluluğunuzdadır.",
+  "Programın değiştirilmesi veya sona ermesi: Program önceden duyurularak değiştirilebilir veya sonlandırılabilir. Sonlandırma hâlinde birikmiş puanlarınızı kullanmanız için en az 60 gün süre tanınır.",
+];
+export const REWARD_TERMS_TEXT = REWARD_TERMS_ITEMS.map((t, i) => `${i + 1}. ${t}`).join(" ");
 
 // ── Saf fonksiyonlar (birim testlenebilir — DB'siz) ─────────────────────────────────────────────
 

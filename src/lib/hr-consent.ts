@@ -15,10 +15,15 @@ import { recordConsent, consentedVersion } from "./consent";
 export const HR_CONTACT_SCOPE = "HR_CONTACT";
 export const HR_CONTACT_REVOKE_SCOPE = "HR_CONTACT_REVOKE";
 
-// ⚖️ HUKUKİ TASLAK — nihai metin kullanıcı (avukat) kontrolünden geçecek; ESASLI değişiklikte
-// metin güncellenir (metin sürümü textHash ile ispatlanır — sponsor.ts notuyla aynı kural).
-export const HR_CONTACT_CONSENT_TEXT = `Sağlık kuruluşları ve insan kaynakları uzmanlarının, platformdaki mesleki profilim (ad-soyad, branş, şehir) üzerinden iş ve kariyer fırsatları hakkında benimle iletişime geçmesine AÇIK ONAM veriyorum. Bu iznin hizmet şartı olmadığını, vermediğimde veya geri aldığımda platformu aynı şekilde kullanmaya devam edeceğimi, iznimi her an geri alabileceğimi ve iletişim tercihimin insan kaynakları modülü devreye girene kadar yalnız kayıt altında tutulacağını anladım. (TASLAK)`;
-export const HR_CONTACT_REVOKE_TEXT = `İnsan kaynakları uzmanlarının benimle iletişime geçmesi için verdiğim açık onamı geri alıyorum. (TASLAK)`;
+// ⚖️ NİHAİ metin (v6.210, 👤 avukat kararı 03.09.2026) — kanonik kaynak: vault
+// output/doctorium-hukuki-belgeler/09-acik-riza-kariyer-ik-iletisimi.md §3. Değişiklikler: "onam" →
+// KVKK terimi "açık rıza" · aktarım modeli KARARLAŞTIRILDI: profil (ad-soyad, branş, şehir) yalnız
+// platformda doğrulanmış işveren üyeye görünür kılınır, iletişim PLATFORM İÇİ mesajla, iletişim bilgisi
+// aktarılmaz · geri alma yolu "Tercihler" · geri almanın geçmişe etkili olmayabileceği dürüstçe yazıldı ·
+// "(TASLAK)" kalktı. Modül İŞKUR izniyle açılırken bu metinle rıza YENİDEN alınır (bugünkü kayıtlar
+// yalnız kayıt) — metin sürümü textHash ile ispatlanır (sponsor.ts notuyla aynı kural).
+export const HR_CONTACT_CONSENT_TEXT = `Doctorium'da doğrulanmış işveren üyelerin (sağlık kuruluşları ve bunların insan kaynakları yetkilileri), iş ve kariyer fırsatları hakkında benimle iletişime geçebilmesi amacıyla; mesleki profilimdeki ad-soyad, uzmanlık branşı ve şehir bilgilerimin bu üyelere platform üzerinden görünür kılınmasına açık rıza veriyorum. İletişimin yalnız platform içi mesaj yoluyla kurulacağını; e-posta adresimin, telefon numaramın ve diğer iletişim bilgilerimin işverene aktarılmayacağını biliyorum. Bu rızanın hizmet şartı olmadığını; vermediğimde veya geri aldığımda Doctorium'u aynı şekilde kullanmaya devam edeceğimi biliyorum. Rızamı Tercihler sayfasından her an geri alabileceğimi; geri aldığımda yeni iletişim taleplerinin durdurulacağını, ancak daha önce iletilmiş bilgilerin geri alınmasının mümkün olmayabileceğini anladım. Kariyer modülü henüz kullanıma açılmamıştır; rızam, modül açılıncaya kadar yalnız kayıt altında tutulur ve hiçbir aktarım yapılmaz.`;
+export const HR_CONTACT_REVOKE_TEXT = `Kariyer ve insan kaynakları iletişimi için verdiğim açık rızayı geri alıyorum.`;
 
 /**
  * İK iletişim iznini aç/kapat — durum Doctor.hrContactOptInAt, ispat ConsentRecord.

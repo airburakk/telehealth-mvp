@@ -86,8 +86,12 @@ describe("Sabit sözleşmeler", () => {
   it("anket-başı puan tavanı makul aralıkta", () => {
     expect(MAX_SURVEY_POINTS).toBeGreaterThan(0);
   });
-  it("koşul metni parasal-değersizliği ve takdiri açıkça söyler (TASLAK etiketli)", () => {
+  it("koşul metni NİHAİ (v6.210): parasal-değersizlik + puan iadesi + kapalı katalog; TASLAK ibaresi YOK", () => {
     expect(REWARD_TERMS_TEXT).toContain("parasal değer taşımaz");
-    expect(REWARD_TERMS_TEXT).toContain("(TASLAK)");
+    expect(REWARD_TERMS_TEXT).toContain("kazanılmış hak doğurmaz");
+    expect(REWARD_TERMS_TEXT).toContain("puanlarınız iade edilir"); // kodla uyum: REDEEM_REFUND
+    expect(REWARD_TERMS_TEXT).toContain("katalog o güne kadar kapalıdır"); // madde 5 ⏸️ park — yer tutucu değil, dürüst cümle
+    expect(REWARD_TERMS_TEXT).not.toContain("(TASLAK)");
+    expect(REWARD_TERMS_TEXT).not.toMatch(/\[[A-ZİŞĞÜÖÇ ]+\]/); // "[MALİ MÜŞAVİR …]" gibi yer tutucu canlıya SIZMAZ
   });
 });

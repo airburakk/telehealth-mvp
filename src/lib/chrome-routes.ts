@@ -32,6 +32,15 @@ export const CHROME_FREE_ROUTES = [
   // listede DEĞİL (onlar AURA kromuyla yaşamaya devam eder).
   "/doctorium/kayit",
   "/doctorium/ogrenci",
+  // Doctorium hukuki belgeleri (v6.210, 2026-09-03): LegalShell kendi açık kabuğunu + LandingFooterV3'ü
+  // taşır; AURA Header/SiteFooter girmez (marka ayrışması). Liste lib/doctorium-legal LEGAL_PATHS ile
+  // birim testle bağlıdır (tests/unit/doctorium-legal.test.ts) — oraya belge ekleyen buraya da ekler.
+  // Buradan doctorium-legal import EDİLMEZ: bu modül proxy/Header'a giriyor, metin gövdeleri bundle'a girmesin.
+  "/doctorium/aydinlatma",
+  "/doctorium/kosullar",
+  "/doctorium/cerez",
+  "/doctorium/icerik-politikasi",
+  "/doctorium/kvkk-basvuru",
   "/giris",
   "/kurumsal-giris",
   // Parola kurtarma yüzeyleri (v6.194) — kapılarla aynı sınıf: kendi panelini taşıyan tam-ekran

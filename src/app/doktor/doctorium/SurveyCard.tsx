@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BarChart2, Check, Loader2, Star } from "lucide-react";
+import { SURVEY_TERMS_ITEMS } from "@/lib/doctorium-legal/anket-kosullari";
 
 // Doctorium akış içi anket kartı (v6.69 Faz 2) — tek soru, kapalı şıklar, yanıt sonrası TOPLU
 // sonuç barları (Doximity poll deneyimi). Rejim görsel dili: COMMUNITY nötr/sky "Topluluk
@@ -169,6 +170,15 @@ export function SurveyCardView(p: Props) {
             </div>
             </>
           )}
+
+          {/* ⚖️ Katılım koşulları (v6.210, 2026-09-03 — vault belge 12 §1+§3, 👤 nihai): her ankette
+              görünür, açılır-kapanır; kaynak lib/doctorium-legal/anket-kosullari (saf sabit). */}
+          <details className="mt-2.5 text-[11px] text-[var(--c-ink-3)]">
+            <summary className="cursor-pointer select-none underline-offset-2 hover:underline">Katılım koşulları</summary>
+            <ol className="mt-1.5 list-decimal space-y-1 pl-4 leading-relaxed">
+              {SURVEY_TERMS_ITEMS.map((t, i) => <li key={i}>{t}</li>)}
+            </ol>
+          </details>
       </div>
     </li>
   );

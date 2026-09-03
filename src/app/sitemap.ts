@@ -22,6 +22,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     return [
       entry("/doctorium", 1.0, "weekly"), // kök "/" da buraya rewrite — kanonik tek URL
       entry("/doctorium/kayit", 0.8, "monthly"),
+      // Hukuki belgeler (v6.210, 2026-09-03) — canonical doctorium.tr; AURA sitemap'ine BİLİNÇLİ girmez
+      // (AURA host'unda da servis edilir ama belgenin markası Doctorium'dur, çift indeks olmasın).
+      entry("/doctorium/aydinlatma", 0.5, "yearly"),
+      entry("/doctorium/kosullar", 0.5, "yearly"),
+      entry("/doctorium/cerez", 0.4, "yearly"),
+      entry("/doctorium/icerik-politikasi", 0.4, "yearly"),
+      entry("/doctorium/kvkk-basvuru", 0.4, "yearly"),
     ];
   }
 

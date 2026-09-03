@@ -18,11 +18,15 @@ import { recordConsent, consentedVersion } from "./consent";
 export const SPONSOR_CONSENT_SCOPE = "SPONSOR_TARGETING";
 export const SPONSOR_REVOKE_SCOPE = "SPONSOR_TARGETING_REVOKE";
 
-// ⚖️ HUKUKİ TASLAK — kanonik metin: vault output/doctorium-hukuki-taslaklar-2026-08-04.md Belge 1B.
-// Nihai metin kullanıcı (avukat) kontrolünden geçecek; ESASLI değişiklikte metin güncellenir
-// (version kova-içi satır sayacı olduğundan metin sürümü textHash ile ispatlanır, sabitle değil).
-export const SPONSOR_CONSENT_TEXT = `Doctorium'da bana gösterilen sponsorlu içeriğin mesleki profilime (branş, şehir, pazar, akış tercihlerim) göre kişiselleştirilmesi amacıyla bu verilerimin işlenmesine AÇIK RIZA veriyorum. Rızamı Özelleştir panelinden her an geri alabileceğimi, geri aldığımda sponsorlu içeriğin kişiselleştirmesiz (herkese aynı) biçimde gösterilmeye devam edeceğini, profil verilerimin reklamverenlere aktarılmayacağını anladım. (TASLAK)`;
-export const SPONSOR_REVOKE_TEXT = `Kişiselleştirilmiş sponsorlu içerik için verdiğim açık rızayı geri alıyorum. (TASLAK)`;
+// ⚖️ NİHAİ metin (v6.210, 👤 avukat kararı 03.09.2026) — kanonik kaynak: vault
+// output/doctorium-hukuki-belgeler/08-acik-riza-sponsorlu-icerik.md §3. Değişiklikler: "(TASLAK)"
+// kalktı · panel adı "Tercihler" (arayüzle aynı) · "pazar" ÇIKTI (kod ölçümü: hedefleme yalnız
+// targetBranches × effectiveBranches [takip edilen branşlar, yoksa kendi branşı] ve targetCities ×
+// şehir — rıza metni fiilen işlenmeyen veriyi sayamaz) · "hizmet şartı değildir" + "derhâl durur"
+// eklendi. Kapsam DARALDIĞI için mevcut rızalar yenilenmez (karar); eski kayıtlar kendi textHash'iyle
+// ispatlı kalır (version kova-içi satır sayacı — metin sürümü hash'le ispatlanır, sabitle değil).
+export const SPONSOR_CONSENT_TEXT = `Doctorium'da bana gösterilen sponsorlu içeriğin, mesleki profilimdeki uzmanlık branşım, Doctorium'da takip ettiğim branşlar ve şehrim kullanılarak kişiselleştirilmesi amacıyla bu verilerimin işlenmesine açık rıza veriyorum. Bu rızanın hizmet şartı olmadığını; vermediğimde veya geri aldığımda Doctorium'u aynı şekilde kullanmaya devam edeceğimi, sponsorlu içeriğin bu hâlde kişiselleştirilmeden (tüm üyelere aynı biçimde) gösterileceğini biliyorum. Rızamı Tercihler sayfasından her an geri alabileceğimi, geri aldığımda kişiselleştirmenin derhâl duracağını; profil verilerimin reklamverenlere aktarılmayacağını, reklamverene yalnız kimliksiz ve toplulaştırılmış sayıların raporlanacağını anladım.`;
+export const SPONSOR_REVOKE_TEXT = `Kişiselleştirilmiş sponsorlu içerik için verdiğim açık rızayı geri alıyorum. Bu andan itibaren sponsorlu içeriğin kişiselleştirilmeden gösterileceğini, geri alma işleminin kayıt altına alınacağını biliyorum.`;
 
 // ── Kampanya sabitleri ──────────────────────────────────────────────────────────────────────────
 // İLAÇ kategorisi BİLİNÇLİ YOK (Faz 4 parkı). CIHAZ ✅ kullanıcı kararı 2026-08-04 (uyum beyanı

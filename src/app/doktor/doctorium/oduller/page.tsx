@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
-  getDoctorBalance, REWARD_KIND_LABEL, REDEMPTION_STATUS_LABEL, REWARD_TERMS_TEXT,
+  getDoctorBalance, REWARD_KIND_LABEL, REDEMPTION_STATUS_LABEL, REWARD_TERMS_ITEMS,
 } from "@/lib/rewards";
 import { isStudentOnly } from "@/lib/doctor-activation";
 import { todayModuleCounts } from "@/lib/doctorium";
@@ -126,11 +126,17 @@ export default async function RewardsPage() {
         ))}
       </ul>
 
-      {/* ⚖️ Program koşulları (TASLAK) — kaldırılamaz bilgilendirme */}
-      <p className="mt-6 flex items-start gap-2 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3.5 py-2.5 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
+      {/* ⚖️ Program koşulları — NİHAİ (v6.210, 2026-09-03; vault belge 10 §3.1, 👤 karar) — kaldırılamaz
+          bilgilendirme; madde 5 (vergi) mali müşavir görüşüne kadar kataloğun kapalı olduğunu söyler. */}
+      <div className="mt-6 flex items-start gap-2 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3.5 py-2.5 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
         <Info size={14} className="mt-px shrink-0" />
-        <span>{REWARD_TERMS_TEXT}</span>
-      </p>
+        <div>
+          <div className="font-semibold text-[var(--c-ink-2)]">Puan ve Ödül Programı Koşulları</div>
+          <ol className="mt-1 list-decimal space-y-1 pl-4">
+            {REWARD_TERMS_ITEMS.map((t, i) => <li key={i}>{t}</li>)}
+          </ol>
+        </div>
+      </div>
     </div>
     </DoctoriumShell>
   );

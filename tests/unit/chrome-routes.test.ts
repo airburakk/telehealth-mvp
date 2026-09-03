@@ -52,6 +52,12 @@ describe("hidesGlobalChrome", () => {
   it("liste tek kaynaktır — /doctorium listede kayıtlı", () => {
     expect(CHROME_FREE_ROUTES).toContain("/doctorium");
   });
+
+  it("Doctorium hukuki belgeleri (v6.210) kendi kabuğunu taşır → krom gizlenir", () => {
+    for (const p of ["/doctorium/aydinlatma", "/doctorium/kosullar", "/doctorium/cerez", "/doctorium/icerik-politikasi", "/doctorium/kvkk-basvuru"]) {
+      expect(hidesGlobalChrome(p), p).toBe(true);
+    }
+  });
 });
 
 // Yönetim dizini (2026-08-29): /admin ağacının TAMAMI Doctorium kromundadır — Doctorium

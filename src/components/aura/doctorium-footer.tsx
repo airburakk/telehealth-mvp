@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AuraMark } from "@/components/AuraLogo";
 import { DOCTORIUM_PALETTE, DoctoriumWord } from "@/components/aura/doctorium-brand";
+import { LEGAL_LINKS } from "@/lib/doctorium-legal";
 
 // Doctorium alt bilgisi — Doctorium'un TÜM yüzeylerinde ortak (kullanıcı kararı 2026-08-18).
 //
@@ -35,7 +36,16 @@ export function DoctoriumFooter({ portal = false }: { portal?: boolean }) {
           <AuraMark size={34} tone="emerald" />
           <DoctoriumWord className="text-[32px] leading-none" />
         </Link>
-        <div className={`mt-6 text-xs ${portal ? "text-[var(--dl-body)]" : "text-[#777c82]"}`}>
+        {/* Hukuki belgeler (v6.210, 2026-09-03) — tek kaynak lib/doctorium-legal LEGAL_LINKS; landing
+            V3 footer'ı aynı satırı çizer. Portalda tema-duyarlı (--dl-body remap), kapılarda sabit koyu. */}
+        <nav aria-label="Hukuki belgeler" className={`mt-6 flex flex-wrap gap-x-4 gap-y-1.5 text-xs ${portal ? "text-[var(--dl-body)]" : "text-[#9da1a6]"}`}>
+          {LEGAL_LINKS.map((l) => (
+            <Link key={l.href} href={l.href} className="transition-colors hover:text-[var(--dl-emerald)]">
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+        <div className={`mt-4 text-xs ${portal ? "text-[var(--dl-body)]" : "text-[#777c82]"}`}>
           <span>© 2026 Doctorium</span>
         </div>
       </div>
