@@ -68,10 +68,17 @@ export function AcademicSummaryBlock({
       )}
 
       {disclaimer && (
+        // ⚠️ flex + gap içinde ikon DIŞINDAKİ metin TEK span'e sarılı olmalı: serbest metin +
+        // <strong> karışımı flex'in DOĞRUDAN çocuğu olursa her metin parçası (2 text node +
+        // strong) AYRI flex item sayılır ve `gap` aralarına da girer — kelime boşluğu yerine
+        // ~30px'lik yapay kopukluklar oluşur, metin "3 ayrı parça" gibi görünür (2026-09-04
+        // kullanıcı bildirimi; hafıza [[aura-wordtext-flex-bosluk]] ile aynı sınıf hata).
         <p className="mt-4 flex items-start gap-2 border-t border-emerald-400/20 pt-3 text-[11px] leading-relaxed text-amber-200/90">
           <AlertTriangle size={13} className="mt-px shrink-0" />
-          Bu özet yapay zekâ ile üretilmiştir ve <strong>klinik karar aracı değildir</strong>. Hasta
-          bakımına ilişkin her karardan önce yayının tam metnini kendiniz değerlendirin.
+          <span>
+            Bu özet yapay zekâ ile üretilmiştir ve <strong>klinik karar aracı değildir</strong>. Hasta
+            bakımına ilişkin her karardan önce yayının tam metnini kendiniz değerlendirin.
+          </span>
         </p>
       )}
     </section>
