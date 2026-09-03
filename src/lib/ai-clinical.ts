@@ -719,8 +719,13 @@ const ARTICLE_SUMMARY_TOOL: Anthropic.Tool = {
       limits: { type: "string", description: "Metinden anlaşılan kısıtlılıklar. Yoksa 'Abstract'ta belirtilmemiş'." },
     },
     required: ["takeaways", "design", "limits"],
+    additionalProperties: false,
   },
-};
+  // strict: şema uyumu API tarafından ZORLANIR (TRANSLATE_TOOL dersi, satır ~221) — onsuz model
+  // `takeaways` dizisini bazen JSON-string'e sarıyor, `Array.isArray` false döner, "boş döndü"
+  // hatasıyla özet sessizce üretilmez (2026-09-03: gerçek bir makalede canlıda gözlemlendi).
+  strict: true,
+} as Anthropic.Tool;
 
 export async function summarizeArticleForClinician(
   title: string,
@@ -767,8 +772,12 @@ const REGULATION_TOOL: Anthropic.Tool = {
       effective: { type: "string", description: "Yürürlük tarihi/koşulu. Metinde yoksa 'Belirtilmemiş'." },
     },
     required: ["summary", "actions", "affected", "effective"],
+    additionalProperties: false,
   },
-};
+  // strict: ARTICLE_SUMMARY_TOOL ile aynı gerekçe — `actions` dizisi zorlanmış tool_use'da
+  // JSON-string'e sarılabilir; şema uyumu API'de garanti edilsin.
+  strict: true,
+} as Anthropic.Tool;
 
 export async function summarizeRegulationForClinician(
   title: string,
