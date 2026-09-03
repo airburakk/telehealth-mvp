@@ -73,7 +73,7 @@ export function renderDigestEmailHtml(a: DigestEmailArgs): string {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:18px 12px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
   <tr><td align="center" style="border-bottom:3px double ${INK};padding-bottom:14px;">
-    <div style="font-family:${SERIF};font-size:34px;font-weight:700;letter-spacing:5px;color:${INK};">DOCTORIUM <span style="color:${EMERALD};">POST</span></div>
+    <div style="font-family:${SERIF};font-size:34px;font-weight:700;letter-spacing:5px;color:${INK};">DOCTORIUM.TR <span style="color:${EMERALD};">POST</span></div>
     <div style="font-family:${SANS};font-size:11px;letter-spacing:1.8px;color:${INK3};padding-top:6px;">${esc(`${dateLine(a.day)} · Kişisel sabah özetiniz`.toLocaleUpperCase("tr"))}</div>
   </td></tr>
   <tr><td style="font-family:${SERIF};font-size:14px;color:${INK2};padding:18px 0 0;">Günaydın ${esc(a.doctorName)}, akış tercihlerinize göre derlenen bugünkü başlıklar:</td></tr>
@@ -92,7 +92,7 @@ export function renderDigestEmailHtml(a: DigestEmailArgs): string {
 
 export function renderDigestEmailText(a: DigestEmailArgs): string {
   const lines: string[] = [
-    `DOCTORIUM POST — ${dateLine(a.day)}`,
+    `DOCTORIUM.TR POST — ${dateLine(a.day)}`,
     `Günaydın ${a.doctorName}, akış tercihlerinize göre derlenen bugünkü başlıklar:`,
     "",
   ];
