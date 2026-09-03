@@ -51,6 +51,37 @@ const TRANSLATE_TOOL: Anthropic.Tool = {
   strict: true,
 } as Anthropic.Tool;
 
+/**
+ * Özet çevirisi için KİMLİKLİ araç (v6.208): model her çeviriyi {n, tr} döndürür; hizalama konuma değil n'ye
+ * göre yapılır (alignById). 2026-09-03 PROD ölçümü: parçaların ~%10'unda model 8 girişe 7 çeviri döndürdü
+ * (`hiza:7/8`) ve konumsal kural parçanın TAMAMINI düşürüyordu — kimlikle yalnız eksik öğe düşer.
+ */
+const TRANSLATE_BY_ID_TOOL: Anthropic.Tool = {
+  name: "submit_translations",
+  description: "Verilen numaralı metinlerin Türkçe çevirilerini, HER BİRİ kendi numarasıyla (n) döndürür.",
+  input_schema: {
+    type: "object",
+    properties: {
+      translations: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            n: { type: "integer", description: "girişteki sıra numarası (1'den başlar)" },
+            tr: { type: "string", description: "o girişin Türkçe çevirisi" },
+          },
+          required: ["n", "tr"],
+          additionalProperties: false,
+        },
+        description: "Her giriş için bir öğe — numara girişle birebir",
+      },
+    },
+    required: ["translations"],
+    additionalProperties: false,
+  },
+  strict: true,
+} as Anthropic.Tool;
+
 const TITLE_SYSTEM =
   "Sen tıbbi literatür çevirmenisin. Verilen makale başlıklarını Türkçeye çevirirsin. " +
   "Kurallar: tıbbi terminolojiyi Türkçe tıp dilinde karşıla; yerleşik kısaltmaları (DNA, mRNA, COVID-19, MR, BT vb.) aynen bırak; " +
@@ -62,7 +93,7 @@ const SUMMARY_SYSTEM =
   "Kurallar: tıbbi terminolojiyi Türkçe tıp dilinde karşıla; yerleşik kısaltmaları (DNA, mRNA, COVID-19, MR, BT, HR, OR vb.) ve sayısal değerleri aynen bırak; " +
   "yapılandırılmış özet etiketlerini (BACKGROUND/METHODS/RESULTS/CONCLUSIONS) Türkçe karşılıklarıyla (ARKA PLAN/YÖNTEM/BULGULAR/SONUÇ) koru; " +
   "metin bir özetin kesilmiş baş kısmı olabilir — kesik yeri TAMAMLAMA, açıklama ya da yorum EKLEME, UYDURMA yok; " +
-  "metin zaten Türkçeyse AYNEN döndür. Yanıtı DAİMA submit_translations aracıyla, girişle aynı sıra ve sayıda ver.";
+  "metin zaten Türkçeyse AYNEN döndür. Yanıtı DAİMA submit_translations aracıyla ver: HER giriş için bir öğe, n = girişin numarası.";
 
 /**
  * Model yanıtını giriş listesine SAF hizalar (birim testli):
@@ -81,6 +112,29 @@ export function alignTranslations(titles: string[], out: unknown): (string | nul
     if (!s || s === titles[i].trim()) return null;
     return s;
   });
+}
+
+/**
+ * KİMLİKLİ hizalama (özet, v6.208): model {n, tr} öğeleri döndürür. Sonuç girişle aynı uzunlukta:
+ *  - n eksik → o öğe undefined (yalnız o satır sonraki koşuya kalır; parça düşmez)
+ *  - yinelenen n → ilki; aralık dışı / bozuk öğe → yok sayılır
+ *  - boş çeviri / girişle aynı metin → null (zaten Türkçe → "işlendi")
+ *  - dizi değilse (string-sarma dahil) → tümü undefined
+ */
+export function alignById(inputs: string[], out: unknown): (string | null | undefined)[] {
+  const res: (string | null | undefined)[] = inputs.map(() => undefined);
+  if (!Array.isArray(out)) return res;
+  for (const item of out) {
+    if (!item || typeof item !== "object") continue;
+    const { n, tr } = item as { n?: unknown; tr?: unknown };
+    if (typeof n !== "number" || !Number.isInteger(n) || n < 1 || n > inputs.length) continue;
+    const i = n - 1;
+    if (res[i] !== undefined) continue;
+    let s = typeof tr === "string" ? tr.replace(/\s+/g, " ").trim() : "";
+    s = s.replace(new RegExp(`^${n}[.)]\\s+`), ""); // sızan numara (alignTranslations ile aynı kural)
+    res[i] = !s || s === inputs[i].trim() ? null : s;
+  }
+  return res;
 }
 
 /**
@@ -111,7 +165,12 @@ export function summaryLead(text: string, max = SUMMARY_LEAD_MAX): string {
  */
 async function translateBatchTr(
   texts: string[],
-  cfg: { system: string; chunk: number; maxTokens: number; sep: string; onFail?: (reason: string) => void },
+  cfg: {
+    system: string; chunk: number; maxTokens: number; sep: string;
+    /** "konum" = translations: string[] (başlık) · "kimlik" = {n, tr}[] (özet, v6.208). */
+    mode: "konum" | "kimlik";
+    onFail?: (reason: string) => void;
+  },
 ): Promise<(string | null | undefined)[]> {
   if (!texts.length) return [];
   if (!process.env.ANTHROPIC_API_KEY) return texts.map(() => undefined); // dormant — ağa hiç çıkmaz, masrafsız
@@ -125,7 +184,7 @@ async function translateBatchTr(
         max_tokens: cfg.maxTokens,
         output_config: { effort: "low" },
         system: cfg.system,
-        tools: [TRANSLATE_TOOL],
+        tools: [cfg.mode === "kimlik" ? TRANSLATE_BY_ID_TOOL : TRANSLATE_TOOL],
         tool_choice: { type: "tool", name: "submit_translations" },
         messages: [{
           role: "user",
@@ -134,6 +193,14 @@ async function translateBatchTr(
       });
       const block = res.content.find((b) => b.type === "tool_use");
       const raw = block && block.type === "tool_use" ? (block.input as { translations?: unknown }).translations : null;
+      if (cfg.mode === "kimlik") {
+        if (!block) { cfg.onFail?.(`stop:${res.stop_reason ?? "?"}`); out.push(...grup.map(() => undefined)); continue; }
+        const hizali = alignById(grup, raw);
+        const eksik = hizali.filter((v) => v === undefined).length;
+        if (eksik) cfg.onFail?.(`eksik:${eksik}/${grup.length}`); // yalnız eksik öğeler düşer, parça sürer
+        out.push(...hizali);
+        continue;
+      }
       if (!Array.isArray(raw) || raw.length !== grup.length) {
         // Neden sayacı (PHI yok, yalnız kod): "stop:refusal" = Opus 5 güvenlik sınıflandırıcısı reddetti (araç
         // bloğu gelmez) · "hiza:N/M" = model sayıyı tutturamadı. 2026-09-03 PROD ilk koşularında parçaların
@@ -159,7 +226,7 @@ async function translateBatchTr(
  * ANTHROPIC_API_KEY yoksa ağa hiç çıkmadan null'lar döner (dormant — masrafsız).
  */
 export async function translateTitlesTr(titles: string[]): Promise<(string | null)[]> {
-  const out = await translateBatchTr(titles, { system: TITLE_SYSTEM, chunk: TITLE_CHUNK, maxTokens: 4096, sep: "\n" });
+  const out = await translateBatchTr(titles, { system: TITLE_SYSTEM, chunk: TITLE_CHUNK, maxTokens: 4096, sep: "\n", mode: "konum" });
   return out.map((t) => t ?? null);
 }
 
@@ -171,5 +238,5 @@ export async function translateSummariesTr(
   leads: string[],
   onFail?: (reason: string) => void,
 ): Promise<(string | null | undefined)[]> {
-  return translateBatchTr(leads, { system: SUMMARY_SYSTEM, chunk: SUMMARY_CHUNK, maxTokens: 8192, sep: "\n\n", onFail });
+  return translateBatchTr(leads, { system: SUMMARY_SYSTEM, chunk: SUMMARY_CHUNK, maxTokens: 8192, sep: "\n\n", mode: "kimlik", onFail });
 }
