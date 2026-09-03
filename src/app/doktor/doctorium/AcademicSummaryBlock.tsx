@@ -76,8 +76,9 @@ export function AcademicSummaryBlock({
         <p className="mt-4 flex items-start gap-2 border-t border-emerald-400/20 pt-3 text-[11px] leading-relaxed text-amber-200/90">
           <AlertTriangle size={13} className="mt-px shrink-0" />
           <span>
-            Bu özet yapay zekâ ile üretilmiştir ve <strong>klinik karar aracı değildir</strong>. Hasta
-            bakımına ilişkin her karardan önce yayının tam metnini kendiniz değerlendirin.
+            Bu özet, Yapay Zekâ ile üretilmiştir ve <strong>KLİNİK KARAR ARACI DEĞİLDİR</strong>.
+            Aşağıdaki link üzerinden orijinal metne ulaşabilir; gerekli akademik ve mesleki
+            incelemenizi gerçekleştirebilirsiniz.
           </span>
         </p>
       )}
