@@ -302,6 +302,23 @@ export function PreferencesBoard(p: Props) {
                       {s.extra === "brans" && (
                         <Block title="Branş tercihleri"
                           hint={`Yayın akışınız bu branşlara göre süzülür; seçim etkinlik takviminde de geçerlidir. Hiçbiri seçili değilse profilinizdeki branş${ownLabel ? ` (${ownLabel})` : ""} kullanılır.`}>
+                          <div className="mt-2 flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setBranches(new Set(branchSorted.map((b) => b.slug)))}
+                              className="aura-mono text-[10.5px] font-semibold tracking-wider text-emerald-300 hover:text-emerald-200"
+                            >
+                              HEPSİNİ SEÇ
+                            </button>
+                            <span className="text-[var(--c-ink-3)]" aria-hidden="true">·</span>
+                            <button
+                              type="button"
+                              onClick={() => setBranches(new Set())}
+                              className="aura-mono text-[10.5px] font-semibold tracking-wider text-[var(--c-ink-3)] hover:text-[var(--c-ink)]"
+                            >
+                              HEPSİNİ TEMİZLE
+                            </button>
+                          </div>
                           <Chips
                             items={branchSorted.map((b) => ({ key: b.slug, label: b.label, tag: b.slug === p.ownBranchSlug ? "KENDİ" : undefined }))}
                             selected={branches}

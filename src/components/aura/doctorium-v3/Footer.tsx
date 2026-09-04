@@ -3,6 +3,7 @@ import { AuraMark } from "@/components/AuraLogo";
 import { DoctoriumWordV3 } from "./brand";
 import { V3_LIGHT } from "./palette";
 import { LEGAL_LINKS } from "@/lib/doctorium-legal";
+import { DoctoriumSocialLinks } from "@/components/aura/doctorium-social-links";
 
 // V3 landing footer'ı — AÇIK zeminde aynı marka lockup'ı (kullanıcı: zebra tamamen kalksın →
 // sayfa dibi de açık; tek koyu blok hero). İçerik ortak DoctoriumFooter ile birebir (lockup +
@@ -26,8 +27,9 @@ export function LandingFooterV3() {
             </Link>
           ))}
         </nav>
-        <div className="mt-4 text-xs text-[var(--dl-muted)]">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-x-5 gap-y-3 text-xs text-[var(--dl-muted)]">
           <span>© 2026 Doctorium</span>
+          <DoctoriumSocialLinks className="text-[var(--dl-muted)]" />
         </div>
       </div>
     </footer>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AuraMark } from "@/components/AuraLogo";
 import { DOCTORIUM_PALETTE, DoctoriumWord } from "@/components/aura/doctorium-brand";
+import { DoctoriumSocialLinks } from "@/components/aura/doctorium-social-links";
 import { LEGAL_LINKS } from "@/lib/doctorium-legal";
 
 // Doctorium alt bilgisi — Doctorium'un TÜM yüzeylerinde ortak (kullanıcı kararı 2026-08-18).
@@ -45,8 +46,9 @@ export function DoctoriumFooter({ portal = false }: { portal?: boolean }) {
             </Link>
           ))}
         </nav>
-        <div className={`mt-4 text-xs ${portal ? "text-[var(--dl-body)]" : "text-[#777c82]"}`}>
+        <div className={`mt-4 flex flex-wrap items-center justify-between gap-x-5 gap-y-3 text-xs ${portal ? "text-[var(--dl-body)]" : "text-[#777c82]"}`}>
           <span>© 2026 Doctorium</span>
+          <DoctoriumSocialLinks className={portal ? "text-[var(--dl-body)]" : "text-[#9da1a6]"} />
         </div>
       </div>
     </footer>
