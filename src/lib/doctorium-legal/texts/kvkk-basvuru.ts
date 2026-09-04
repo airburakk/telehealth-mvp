@@ -1,4 +1,4 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/06-veri-sahibi-basvuru-usul-esaslari.md (Sürüm 1.0 · 03.09.2026, 👤 nihai).
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/06-veri-sahibi-basvuru-usul-esaslari.md (Sürüm 1.1 · 04.09.2026 — revizyon turu 1, 👤 nihai).
 // Elle düzenleme: kaynak .md → vault; buradaki metin yayın kesitidir (iç notlar/karar bölümleri yok).
 // Kimlik alanları (unvan/adres/MERSİS/KEP/VERBİS) tüzel kişilik kurulunca doldurulur (Kılavuz §8).
 export const KVKK_BASVURU_MD = `## 1. Haklarınız

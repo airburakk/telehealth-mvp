@@ -61,15 +61,15 @@ describe("decideConsentScreen — /onam ekran kararı", () => {
 });
 
 describe("kapsam sürümleri ve kanonik metinler", () => {
-  it("Doctorium seti v1; GENERAL CONSENT_VERSION", () => {
-    expect(DOCTORIUM_CONSENT_VERSION).toBe(1);
-    expect(scopeVersion(DOCTORIUM_KVKK_SCOPE)).toBe(1);
-    expect(scopeVersion(DOCTORIUM_TERMS_SCOPE)).toBe(1);
+  it("Doctorium seti v2 (Sürüm 1.1 — 04.09.2026 revizyon turu 1); GENERAL CONSENT_VERSION", () => {
+    expect(DOCTORIUM_CONSENT_VERSION).toBe(2);
+    expect(scopeVersion(DOCTORIUM_KVKK_SCOPE)).toBe(2);
+    expect(scopeVersion(DOCTORIUM_TERMS_SCOPE)).toBe(2);
     expect(scopeVersion(CONSENT_SCOPE)).toBe(CONSENT_VERSION);
   });
   it("canonicalTextFor: ekran = hash — kapsamın metni yayın kesitiyle birebir aynı nesne", () => {
-    expect(canonicalTextFor(DOCTORIUM_KVKK_SCOPE)).toMatchObject({ text: AYDINLATMA_MD, version: 1 });
-    expect(canonicalTextFor(DOCTORIUM_TERMS_SCOPE)).toMatchObject({ text: KOSULLAR_MD, version: 1 });
+    expect(canonicalTextFor(DOCTORIUM_KVKK_SCOPE)).toMatchObject({ text: AYDINLATMA_MD, version: 2 });
+    expect(canonicalTextFor(DOCTORIUM_TERMS_SCOPE)).toMatchObject({ text: KOSULLAR_MD, version: 2 });
     expect(canonicalTextFor(DOCTORIUM_DIPLOMA_BEYAN_SCOPE)).toMatchObject({ text: DIPLOMA_BEYAN_TEXT, version: 0 });
     expect(canonicalTextFor(CONSENT_SCOPE)?.version).toBe(CONSENT_VERSION);
     expect(canonicalTextFor("YOK")).toBeNull();

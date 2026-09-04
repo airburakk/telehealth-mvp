@@ -1,4 +1,4 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/01-kvkk-aydinlatma-metni.md (Sürüm 1.0 · 03.09.2026, 👤 nihai).
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/01-kvkk-aydinlatma-metni.md (Sürüm 1.1 · 04.09.2026 — revizyon turu 1, 👤 nihai).
 // Elle düzenleme: kaynak .md → vault; buradaki metin yayın kesitidir (iç notlar/karar bölümleri yok).
 // Kimlik alanları (unvan/adres/MERSİS/KEP/VERBİS) tüzel kişilik kurulunca doldurulur (Kılavuz §8).
 export const AYDINLATMA_MD = `## 1. Veri Sorumlusu
@@ -25,8 +25,7 @@ Sunulan işlevler:
 - puan ve ödül programı
 
 > **Doctorium'da hasta verisi, vaka dosyası, klinik kayıt veya sağlık hizmeti sunumu
-> BULUNMAZ.** Bu faaliyetler, aynı veri sorumlusunun işlettiği telesağlık platformunun konusudur ve
-> **ayrı aydınlatmaya** tabidir; bu metin yalnız Doctorium üyeliğini kapsar.
+> BULUNMAZ.**
 
 ---
 
@@ -83,7 +82,7 @@ doğrulanmasına ilişkin kayıt. → ayrıntı: Tıp Öğrencisi Üyeliği Ek M
 | Amaç | Hukuki sebep |
 |---|---|
 | Üyelik, kimlik doğrulama, içerik sunumu, tercih yönetimi (1-4) | **m.5/2-c** — sözleşmenin kurulması ve ifası |
-| Bülten ve etkinlik hatırlatması (5-6) | **m.5/2-c** *(abonelik talebiniz üzerine)* — ayrıca ticari elektronik ileti niteliği doğarsa 6563 kapsamında ayrı onay: bkz. §11 |
+| Bülten ve etkinlik hatırlatması (5-6) | **m.5/2-c** *(abonelik talebiniz üzerine)* — ayrıca ticari elektronik ileti niteliği doğarsa 6563 kapsamında ayrı onay: bkz. madde 11 |
 | Anket, puan/ödül (7-8) | **m.5/2-c** — katılım talebiniz üzerine kurulan ilişki |
 | Sponsorlu içerik yayını ve toplulaştırılmış ölçüm (9) | **m.5/2-f** — meşru menfaat *(kimliğe bağlı gösterim kaydı tutulmaz)* |
 | Kişiselleştirilmiş sponsorlu içerik (10) | **m.5/1 — açık rıza** |

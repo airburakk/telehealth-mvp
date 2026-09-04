@@ -1,7 +1,7 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/02-uyelik-sozlesmesi-kullanim-kosullari.md (Sürüm 1.0 · 03.09.2026, 👤 nihai).
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/02-uyelik-sozlesmesi-kullanim-kosullari.md (Sürüm 1.1 · 04.09.2026 — revizyon turu 1, 👤 nihai).
 // Elle düzenleme: kaynak .md → vault; buradaki metin yayın kesitidir (iç notlar/karar bölümleri yok).
 // Kimlik alanları (unvan/adres/MERSİS/KEP/VERBİS) tüzel kişilik kurulunca doldurulur (Kılavuz §8).
-export const KOSULLAR_MD = `## 1. Taraflar ve konu
+export const KOSULLAR_MD = `## 1. TARAFLAR VE KONU
 
 **1.1.** İşbu sözleşme, **Doctorium platform işleticisi** ("**Platform**") ile
 Doctorium'a üye olan gerçek kişi ("**Üye**") arasında, Üye'nin Doctorium'a erişimi ve kullanımına
@@ -9,9 +9,11 @@ ilişkin şartları düzenler.
 
 **1.2.** Üye, kayıt sırasında bu sözleşmeyi onaylamakla hükümlerini kabul etmiş sayılır.
 
+**1.3.** Platform ve Üye, işbu sözleşmede bundan böyle ayrı ayrı "**Taraf**" ve birlikte "**Taraflar**" olarak anılacaktır.
+
 ---
 
-## 2. Tanımlar
+## 2. TANIMLAR
 
 | Terim | Anlamı |
 |---|---|
@@ -24,7 +26,7 @@ ilişkin şartları düzenler.
 
 ---
 
-## 3. Üyelik şartları ve doğrulama
+## 3. ÜYELİK ŞARTLARI VE DOĞRULAMA
 
 **3.1.** Doctorium **kapalı bir platformdur**; üyelik yalnız aşağıdaki kişilere açıktır:
    a) Türkiye'deki bir tıp fakültesinden mezun olup tıp doktoru unvanına sahip kişiler,
@@ -38,7 +40,7 @@ kaydolur. Öğrenci üyeliğinin kapsamı ve sınırları ayrıca düzenlenmişt
 → Tıp Öğrencisi Üyeliği Ek Metni (öğrenci kayıt akışında gösterilir)
 
 **3.4.** Üye, doğrulamaya esas beyan ve belgelerin **doğru, güncel ve kendisine ait** olduğunu
-taahhüt eder. Gerçeğe aykırı beyan, §10 uyarınca üyeliğin sona erdirilmesi sebebidir.
+taahhüt eder. Gerçeğe aykırı beyan, madde 10 uyarınca üyeliğin sona erdirilmesi sebebidir.
 
 **3.5.** Üyelik **kişiseldir**; hesap bilgileri üçüncü kişilerle paylaşılamaz, devredilemez.
 
@@ -48,7 +50,7 @@ ileride başka doğrulama yolları açabilir; açıldığında bu madde güncell
 
 ---
 
-## 4. Hizmetin niteliği ve sınırları
+## 4. HİZMETİN NİTELİĞİ VE SINIRLARI
 
 **4.1. Bilgi hizmeti.** Doctorium, mesleki bilgiye erişimi kolaylaştıran bir **derleme ve
 sunum** hizmetidir.
@@ -78,7 +80,7 @@ teknik zorunluluk hâllerinde geçici kesinti yaşanabilir.
 
 ---
 
-## 5. Ücret
+## 5. ÜCRET
 
 **5.1.** Doctorium üyeliği Üye için **ücretsizdir.**
 
@@ -92,7 +94,7 @@ işlemi niteliği taşımaz.
 
 ---
 
-## 6. Üyenin yükümlülükleri
+## 6. ÜYENİN YÜKÜMLÜLÜKLERİ
 
 Üye:
    a) Platformu yalnız **mesleki bilgilenme** amacıyla kullanır;
@@ -106,7 +108,7 @@ işlemi niteliği taşımaz.
 
 ---
 
-## 7. Sponsorlu içerik ve anketler
+## 7. SPONSORLU İÇERİK VE ANKETLER
 
 **7.1.** Sponsorlu içerik, tarafsız içerikten **ayırt edilebilir biçimde** "Sponsorlu" etiketi ve
 sponsor kimliği ile yayımlanır; doğal içerik görünümü verilmez.
@@ -123,7 +125,7 @@ olmaksızın Doctorium'da yayımlanmaz.
 
 ---
 
-## 8. Puan ve ödül programı
+## 8. PUAN VE ÖDÜL PROGRAMI
 
 Platform, katılımı teşvik amacıyla puan verebilir. **Puanlar parasal değer taşımaz, nakde
 çevrilemez ve kazanılmış hak doğurmaz.** Program koşulları ayrıca düzenlenmiştir.
@@ -131,7 +133,7 @@ Platform, katılımı teşvik amacıyla puan verebilir. **Puanlar parasal değer
 
 ---
 
-## 9. Fikri mülkiyet
+## 9. FİKRİ MÜLKİYET
 
 **9.1.** Platformun tasarımı, yazılımı, markası, logosu ve Platform tarafından üretilen özgün
 içerik (derleme, özet, sınıflandırma) üzerindeki haklar Platform'a aittir.
@@ -143,14 +145,14 @@ münhasır olmayan** bir kullanım hakkı tanınır.
 
 ---
 
-## 10. Üyeliğin askıya alınması ve sona ermesi
+## 10. ÜYELİĞİN ASKIYA ALINMASI VE SONA ERMESİ
 
 **10.1.** Üye, üyeliğini dilediği zaman **hesap silme** yoluyla sona erdirebilir. Silme talebi
 üzerine kişisel verileri, saklama politikasında belirtilen istisnalar dışında silinir.
 
 **10.2.** Platform, aşağıdaki hâllerde üyeliği **askıya alabilir veya sona erdirebilir**:
    a) Gerçeğe aykırı beyan veya sahte belge ile doğrulama,
-   b) §6'daki yükümlülüklerin ihlali,
+   b) Madde 6'daki yükümlülüklerin ihlali,
    c) Platform güvenliğine yönelik girişim,
    d) Mesleki kimliğin geçerliliğini yitirmesi.
 
@@ -162,9 +164,9 @@ yeniden açmaz.
 
 ---
 
-## 11. Sorumluluğun sınırı
+## 11. SORUMLULUĞUN SINIRI
 
-**11.1.** Platform, §4'te belirtilen bilgi hizmetinin niteliği gereği, içeriğe dayanılarak
+**11.1.** Platform, madde 4'te belirtilen bilgi hizmetinin niteliği gereği, içeriğe dayanılarak
 verilen klinik veya hukuki kararlardan sorumlu değildir.
 
 **11.2.** Platform, üçüncü kişi kaynaklarına yapılan yönlendirmelerde hedef içerikten sorumlu
@@ -180,14 +182,14 @@ doğruluğu ve mevzuata uygunluğu Reklamverene aittir.
 
 ---
 
-## 12. Kişisel verilerin korunması
+## 12. KİŞİSEL VERİLERİN KORUNMASI
 
 Üye'nin kişisel verilerinin işlenmesine ilişkin esaslar **Aydınlatma Metni**'nde düzenlenmiştir.
 → [Aydınlatma Metni](/doctorium/aydinlatma)
 
 ---
 
-## 13. Değişiklikler
+## 13. DEĞİŞİKLİKLER
 
 **13.1.** Platform bu sözleşmeyi güncelleyebilir. **Esaslı değişiklikler** yürürlüğe girmeden
 önce Üye'ye bildirilir.
@@ -196,7 +198,7 @@ doğruluğu ve mevzuata uygunluğu Reklamverene aittir.
 
 ---
 
-## 14. Uygulanacak hukuk ve yetki
+## 14. UYGULANACAK HUKUK VE YETKİ
 
 **14.1.** Bu sözleşmeye **Türk hukuku** uygulanır.
 
@@ -204,7 +206,7 @@ doğruluğu ve mevzuata uygunluğu Reklamverene aittir.
 
 ---
 
-## 15. Yürürlük
+## 15. YÜRÜRLÜK
 
 Üye'nin elektronik ortamda onay vermesiyle yürürlüğe girer. Onay kaydı, onaylanan metnin özeti
 (hash) ile birlikte zaman damgalı olarak saklanır.

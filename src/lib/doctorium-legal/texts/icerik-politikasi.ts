@@ -1,4 +1,4 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/04-icerik-kaynak-telif-politikasi.md (Sürüm 1.0 · 03.09.2026, 👤 nihai).
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/04-icerik-kaynak-telif-politikasi.md (Sürüm 1.1 · 04.09.2026 — revizyon turu 1, 👤 nihai).
 // Elle düzenleme: kaynak .md → vault; buradaki metin yayın kesitidir (iç notlar/karar bölümleri yok).
 // Kimlik alanları (unvan/adres/MERSİS/KEP/VERBİS) tüzel kişilik kurulunca doldurulur (Kılavuz §8).
 export const ICERIK_POLITIKASI_MD = `## 1. Yaklaşımımız
@@ -23,7 +23,7 @@ Eserleri Kanunu m.31** kapsamında serbesttir. Her kayıtta karar mercii, esas v
 ile tarih belirtilir.
 
 Kararlar kaynağında anonimleştirilmiş olarak yayımlanır. Buna rağmen bir kararda kişisel veri
-bulunduğunu tespit ederseniz, §4'teki kanaldan bildirmeniz hâlinde ilgili kayıt **yayından
+bulunduğunu tespit ederseniz, madde 4'teki kanaldan bildirmeniz hâlinde ilgili kayıt **yayından
 kaldırılır.**
 
 ### 2.2 Akademik yayınlar
