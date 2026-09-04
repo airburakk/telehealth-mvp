@@ -182,7 +182,7 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
             )}
             {item.module === "ilac" && (
               <span>
-                Bu özet yapay zeka ile üretilmiştir ve <strong>klinik karar aracı değildir</strong>.
+                Bu özet yapay zeka ile üretilmiştir ve <strong>KLİNİK KARAR ARACI DEĞİLDİR</strong>.
                 Aşağıdaki link üzerinden orijinal metne ulaşabilirsiniz; gerekli akademik ve mesleki
                 incelemelerinizi gerçekleştirebilirsiniz.
               </span>
