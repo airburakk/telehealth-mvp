@@ -10,10 +10,21 @@
 // layout'u ATLAR, dolayısıyla token'lar tanımsız kalabilir — var() çözülmeyince zemin şeffaf,
 // buton görünmez olurdu (2026-08-19'da bulundu: yorum "inline style" diyordu ama değerler
 // token'a bağlıydı). Değerler gece temasının sabit karşılığı: --c-bg #0d0e10 · --c-panel
-// #161719 · --c-ink #f4f5f3 · --c-accent #28c8d8. Token değişirse burası ELLE güncellenir.
+// #161719 · --c-ink #f4f5f3 (nötr, iki markada da aynı). CTA butonu marka-duyarlı — aşağıdaki
+// NEXT_PUBLIC_SITE_URL bloğuna bak. Nötr token değişirse burası ELLE güncellenir.
 
 import { useEffect, useState } from "react";
 import { ERROR_I18N, errDir, pickLang } from "@/lib/error-i18n";
+
+// Marka-duyarlı CTA (T2 global-error dokunuşu, 2026-09-04): bu bileşen kök layout'u ATLADIĞI için
+// <body data-brand> / --c-cta token'ına erişemez (globals.css yüklenmemiş olabilir). Marka BUILD-TIME
+// NEXT_PUBLIC_SITE_URL'den çıkarılır (Doctorium deploy = doctorium.tr; AURA = auraglobalcare.com).
+// Doctorium: zümrüt #047857 + beyaz metin (globals.css --c-cta ile AYNI, 5.3:1 AA); AURA: turkuaz
+// #28c8d8 + koyu (eski davranış). Sabit inline değer → SSR ve client aynı, renk flash'ı yok.
+// ⚠️ --c-cta değişirse burayı da güncelle (bu bileşen token okuyamaz).
+const IS_DOCTORIUM_CTA = (process.env.NEXT_PUBLIC_SITE_URL ?? "").includes("doctorium");
+const CTA_BG = IS_DOCTORIUM_CTA ? "#047857" : "#28c8d8";
+const CTA_INK = IS_DOCTORIUM_CTA ? "#ffffff" : "#0d0e10";
 
 export default function GlobalError({ error }: { error: Error & { digest?: string }; reset: () => void }) {
   // SSR'da navigator yok → önce TR, dil istemcide useEffect ile seçilir.
@@ -57,8 +68,8 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
               marginTop: 24,
               border: "none",
               borderRadius: 8,
-              background: "#28c8d8",
-              color: "#0d0e10",
+              background: CTA_BG,
+              color: CTA_INK,
               padding: "10px 20px",
               fontSize: 14,
               fontWeight: 600,
