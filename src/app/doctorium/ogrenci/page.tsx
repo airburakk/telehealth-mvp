@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { BRANCH_LABELS } from "@/lib/procedures";
 import { StudentGateForm } from "@/components/StudentGateForm";
 import { DoctoriumSignupShell } from "@/components/aura/doctorium-signup-shell";
@@ -22,6 +23,20 @@ export default function DoctoriumStudentPage() {
   return (
     <DoctoriumSignupShell>
       <StudentGateForm branches={branches} brand="doctorium" />
+
+      {/* KVKK aydınlatma-toplama-anı + sözleşme onayı (2026-09-04) — kayit/page.tsx ile AYNI satır.
+          Açık rıza /onam'da; bu satır bilgilendirme (sözleşme/çerez KABUL, aydınlatma BİLGİLENDİRME).
+          ⚠️ Metin değişirse kayit/page.tsx ile birlikte güncelle. */}
+      <p className="mt-3 text-center text-xs leading-relaxed text-[var(--c-ink-3)]">
+        Hesap oluşturarak{" "}
+        <Link href="/doctorium/kosullar" className="text-[var(--c-accent)] hover:underline">Üyelik Sözleşmesi</Link>
+        {" "}ve{" "}
+        <Link href="/doctorium/cerez" className="text-[var(--c-accent)] hover:underline">Çerez Politikası</Link>
+        &apos;nı kabul eder,{" "}
+        <Link href="/doctorium/aydinlatma" className="text-[var(--c-accent)] hover:underline">Aydınlatma Metni</Link>
+        {" "}kapsamında kişisel verilerinizin işlenmesi hakkında bilgilendirildiğinizi onaylarsınız.
+      </p>
+
       <StudentScopeCard />
     </DoctoriumSignupShell>
   );

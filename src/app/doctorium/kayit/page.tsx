@@ -30,6 +30,20 @@ export default function DoctoriumSignupPage() {
           force-dynamic, streaming DOM-taşıma mekanizması headless/arka-plan sekmelerde takılıyordu. */}
       <DoctorSignupForm googleEnabled={isGoogleConfigured()} appleEnabled={isAppleConfigured()} branches={branches} brand="doctorium" />
 
+      {/* KVKK aydınlatma-toplama-anı + sözleşme onayı (2026-09-04): submit'in hemen altında görünür
+          inline bilgilendirme (footer linkleri yeterli değildi — QA bulgusu). Açık rıza AYRICA
+          /onam'da alınır; bu satır yalnız bilgilendirmedir — sözleşme/çerez KABUL, aydınlatma
+          BİLGİLENDİRME (metne KABUL edilmez). ⚠️ Hukuki metin: değişirse ogrenci/page.tsx ile birlikte güncelle. */}
+      <p className="mt-3 text-center text-xs leading-relaxed text-[var(--c-ink-3)]">
+        Hesap oluşturarak{" "}
+        <Link href="/doctorium/kosullar" className="text-[var(--c-accent)] hover:underline">Üyelik Sözleşmesi</Link>
+        {" "}ve{" "}
+        <Link href="/doctorium/cerez" className="text-[var(--c-accent)] hover:underline">Çerez Politikası</Link>
+        &apos;nı kabul eder,{" "}
+        <Link href="/doctorium/aydinlatma" className="text-[var(--c-accent)] hover:underline">Aydınlatma Metni</Link>
+        {" "}kapsamında kişisel verilerinizin işlenmesi hakkında bilgilendirildiğinizi onaylarsınız.
+      </p>
+
       {/* Üyelik adımları — yalnız Doctorium anlatısı (AURA/havuz dili yok). */}
       <div className="mt-6 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5">
         <div className="text-sm font-semibold text-[var(--c-ink)]">Üyelik nasıl işler?</div>
