@@ -123,7 +123,7 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
           {/* Çekiç kaldırıldı (2026-08-14 sembol kararı: çekiç yalnız içtihat/hüküm bağlamının) —
               bu bölüm mevzuat/sektörel/ilaç ORTAK özeti; ScrollText = belge özeti. */}
           <h2 className="flex items-center gap-2 text-sm font-semibold text-amber-300">
-            <ScrollText size={16} /> Doktor özeti
+            <ScrollText size={16} /> YZ özeti
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-[var(--c-ink)]">{reg.data.summary}</p>
 
@@ -158,10 +158,16 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
             </div>
           </div>
 
+          {/* ⚠️ flex + gap içinde ikon DIŞINDAKİ metin TEK span'e sarılı olmalı — sarılmazsa serbest
+              metin + <strong> karışımı ayrı flex item sayılır ve `gap` aralarına da girer, metin
+              "parçalı" görünür (AcademicSummaryBlock.tsx'teki aynı tuzak, 2026-09-04 dersi). */}
           <p className="mt-4 flex items-start gap-2 border-t border-amber-400/20 pt-3 text-[11px] leading-relaxed text-amber-200/90">
             <AlertTriangle size={13} className="mt-px shrink-0" />
-            Bu özet yapay zekâ ile üretilmiştir ve <strong>hukuki görüş değildir</strong>. Bağlayıcı
-            olan resmî metindir; aşağıdaki kaynaktan tam metni doğrulayın.
+            <span>
+              Bu özet yapay zeka ile üretilmiştir. <strong>HUKUKİ GÖRÜŞ DEĞİLDİR.</strong> Aşağıdaki
+              link üzerinden orijinal metne ulaşabilirsiniz. Bağlayıcı olan resmi metindir; gerekli
+              akademik ve mesleki incelemenizi orijinal metin üzerinden yapabilirsiniz.
+            </span>
           </p>
         </section>
       )}

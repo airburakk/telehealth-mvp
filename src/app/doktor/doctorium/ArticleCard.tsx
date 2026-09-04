@@ -235,12 +235,15 @@ export function ArticleCard({
                   )}
                 </>
               )}
-              {/* Klinik özet İŞARETİ — rakip bir çağrı değil, bilgi. Özet detay sayfasında. */}
+              {/* AI özeti İŞARETİ — rakip bir çağrı değil, bilgi. Özet detay sayfasında. Etiket
+                  module'e göre değişir (kullanıcı kararı 2026-09-04): akademikte "Klinik özet"
+                  (2 dk klinik özet bloğuna işaret eder), mevzuat/sektörel/ilaçta "YZ özeti"
+                  ("Doktor özeti" başlığı da aynı kararla YZ özeti'ne çekildi, [id]/page.tsx). */}
               {item.hasAiSummary && (
                 <>
                   <span aria-hidden="true">·</span>
                   <span className="aura-mono inline-flex items-center gap-1 text-[11px] text-emerald-300">
-                    <Sparkles size={10} aria-hidden="true" /> Klinik özet
+                    <Sparkles size={10} aria-hidden="true" /> {item.module === "akademik" ? "Klinik özet" : "YZ özeti"}
                   </span>
                 </>
               )}
