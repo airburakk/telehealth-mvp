@@ -161,22 +161,44 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
           {/* ⚠️ flex + gap içinde ikon DIŞINDAKİ metin TEK span'e sarılı olmalı — sarılmazsa serbest
               metin + <strong> karışımı ayrı flex item sayılır ve `gap` aralarına da girer, metin
               "parçalı" görünür (AcademicSummaryBlock.tsx'teki aynı tuzak, 2026-09-04 dersi). */}
+          {/* Uyarı metni module'e göre değişir (kullanıcı kararı 2026-09-04): mevzuat "hukuki
+              görüş", sektörel nötr (ne hukuki ne klinik), ilaç "klinik karar aracı". Her dal TEK
+              span — flex item sayısı hep 2 (ikon + aktif span) kalır, gap tuzağı oluşmaz. */}
           <p className="mt-4 flex items-start gap-2 border-t border-amber-400/20 pt-3 text-[11px] leading-relaxed text-amber-200/90">
             <AlertTriangle size={13} className="mt-px shrink-0" />
-            <span>
-              Bu özet yapay zeka ile üretilmiştir. <strong>HUKUKİ GÖRÜŞ DEĞİLDİR.</strong> Aşağıdaki
-              link üzerinden orijinal metne ulaşabilirsiniz. Bağlayıcı olan resmi metindir; gerekli
-              akademik ve mesleki incelemenizi orijinal metin üzerinden yapabilirsiniz.
-            </span>
+            {item.module === "mevzuat" && (
+              <span>
+                Bu özet yapay zeka ile üretilmiştir. <strong>HUKUKİ GÖRÜŞ DEĞİLDİR.</strong> Aşağıdaki
+                link üzerinden orijinal metne ulaşabilirsiniz. Bağlayıcı olan resmi metindir; gerekli
+                akademik ve mesleki incelemenizi orijinal metin üzerinden yapabilirsiniz.
+              </span>
+            )}
+            {item.module === "sektorel" && (
+              <span>
+                Bu özet yapay zeka ile üretilmiştir. Aşağıdaki link üzerinden orijinal metne
+                ulaşabilirsiniz. Bağlayıcı olan orijinal metindir. Gerekli akademik ve mesleki
+                incelemenizi orijinal metin üzerinden yapabilirsiniz.
+              </span>
+            )}
+            {item.module === "ilac" && (
+              <span>
+                Bu özet yapay zeka ile üretilmiştir ve <strong>klinik karar aracı değildir</strong>.
+                Aşağıdaki link üzerinden orijinal metne ulaşabilirsiniz; gerekli akademik ve mesleki
+                incelemelerinizi gerçekleştirebilirsiniz.
+              </span>
+            )}
           </p>
         </section>
       )}
 
       {reg?.state === "pdf" && (
+        // ⚠️ flex-gap tuzağı (2026-09-04 dersi): ikon dışı içerik TEK span'e sarılı olmalı.
         <p className="mt-6 flex items-start gap-2 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5 text-xs leading-relaxed text-[var(--c-ink-2)]">
           <FileText size={15} className="mt-px shrink-0" />
-          Bu kalemin resmî metni <strong>PDF</strong> olarak yayımlanmış; otomatik özet çıkarılmıyor.
-          Aşağıdaki bağlantıdan resmî metne ulaşabilirsiniz.
+          <span>
+            Bu kalemin resmî metni <strong>PDF</strong> olarak yayımlanmış; otomatik özet
+            çıkarılmıyor. Aşağıdaki bağlantıdan resmî metne ulaşabilirsiniz.
+          </span>
         </p>
       )}
 

@@ -37,11 +37,14 @@ export default async function CongressAdminPage() {
         <CalendarDays size={22} className="text-emerald-300" /> Etkinlik takvimi yönetimi
       </h1>
 
+      {/* ⚠️ flex-gap tuzağı (2026-09-04 dersi): ikon dışı içerik TEK span'e sarılı olmalı. */}
       <p className="mt-3 flex items-start gap-2 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3.5 py-2.5 text-xs text-[var(--c-ink-2)]">
         <Info size={15} className="mt-px shrink-0" />
-        Buraya girdiğiniz kayıtlar doktorların Doctorium → Etkinlik Takvimi sekmesinde görünür.
-        Yalnız <strong className="text-[var(--c-ink)]">doğruladığınız</strong> etkinlikleri girin;
-        etkinlik adresini resmî sayfasından alın.
+        <span>
+          Buraya girdiğiniz kayıtlar doktorların Doctorium → Etkinlik Takvimi sekmesinde görünür.
+          Yalnız <strong className="text-[var(--c-ink)]">doğruladığınız</strong> etkinlikleri girin;
+          etkinlik adresini resmî sayfasından alın.
+        </span>
       </p>
 
       <CongressAdmin
