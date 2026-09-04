@@ -14,6 +14,10 @@
       "schedule": "20 2 * * *"
     },
     {
+      "path": "/api/cron/ingest-dernekler",
+      "schedule": "35 2 * * *"
+    },
+    {
       "path": "/api/cron/translate-news",
       "schedule": "40 2 * * *"
     },

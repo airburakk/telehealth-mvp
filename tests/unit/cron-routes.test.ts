@@ -1,4 +1,4 @@
-// Cron düzeni SÖZLEŞMESİ (v6.205, 2026-09-02 — bakım nöbeti altı cron'a bölündü, kullanıcı kararı; v6.206 translate-news ile yedi).
+// Cron düzeni SÖZLEŞMESİ (v6.205, 2026-09-02 — bakım nöbeti altı cron'a bölündü, kullanıcı kararı; v6.206 translate-news ile yedi; 2026-09-04 ingest-dernekler ile sekiz).
 //
 // Kilitlenenler:
 //   1) vercel.json crons ↔ lib/cron-guard CRON_SCHEDULES BİREBİR (yol + zamanlama). Biri değişip
@@ -23,10 +23,10 @@ function minuteOfDay(schedule: string): number {
 }
 
 describe("vercel.json ↔ CRON_SCHEDULES", () => {
-  it("yol ve zamanlama birebir aynı (yedi cron)", () => {
+  it("yol ve zamanlama birebir aynı (sekiz cron)", () => {
     const fromVercel = Object.fromEntries(vercel.crons.map((c) => [c.path, c.schedule]));
     expect(fromVercel).toEqual(CRON_SCHEDULES);
-    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(7);
+    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(8);
   });
 
   it("her cron yolunun rota dosyası var, cronGate kullanır, maxDuration bildirir", () => {
@@ -43,7 +43,7 @@ describe("vercel.json ↔ CRON_SCHEDULES", () => {
 
   it("SIRA: içerik cron'ları Post baskısından (daily-digest) önce biter", () => {
     const digest = minuteOfDay(CRON_SCHEDULES["/api/cron/daily-digest"]);
-    for (const p of ["/api/cron/ingest-doctorium", "/api/cron/ingest-hukuk", "/api/cron/translate-news"]) {
+    for (const p of ["/api/cron/ingest-doctorium", "/api/cron/ingest-hukuk", "/api/cron/ingest-dernekler", "/api/cron/translate-news"]) {
       const t = minuteOfDay(CRON_SCHEDULES[p]);
       // Her içerik cron'unun bütçesi 300 sn; baskıdan en az 30 dk önce başlamalı ki bitmiş olsun.
       expect(digest - t, `${p} baskıya çok yakın (${t} → ${digest})`).toBeGreaterThanOrEqual(30);

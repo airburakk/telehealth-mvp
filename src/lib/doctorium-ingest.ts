@@ -298,11 +298,13 @@ export async function ingestDoctorium(): Promise<IngestResult> {
     ["europepmc", () => ingestEuropePmcAll()],
     ["doaj", () => ingestDoajAll()],
     ...RSS_SOURCES.map((s): [string, () => Promise<[number, number]>] => [s.source, () => ingestRss(s)]),
-    // Uzmanlık dernekleri (v6.129, kullanıcı isteği 2026-08-19) — doktorun KENDİ branşındaki
-    // otoritenin duyurusu. Aynı ingestRss yolu; farkı kaynak-bazlı süzgeç (isAssociationRelevant)
-    // ve branchSlugs etiketi. 2026-08-19 ölçümünde 33 dernekten yalnız 5'i RSS veriyor —
-    // kalanı haftalık nöbetçi izler (scripts/association-watch.mjs).
-    ...ASSOCIATION_RSS_SOURCES.map((s): [string, () => Promise<[number, number]>] => [s.source, () => ingestRss(s)]),
+    // Uzmanlık dernekleri (2026-09-04'ten beri) BURADA DEĞİL — ayrı cron `ingest-dernekler`
+    // (bkz. aşağıdaki ingestDernekler). Neden: bu fonksiyon (23 branş × pubmed/epmc/doaj + RG + 9
+    // sabit kaynak + 2 RSS ≈ 84 sıralı istek) tek başına 300 sn bütçesinin kenarında geziniyordu;
+    // 2026-09-04'te dış kaynaklardan biri normalden yavaş yanıtladı, route 300. saniyede Vercel
+    // tarafından KESİLDİ (504) — dernekler sıraya hiç giremeden. Kesinti SESSİZDİ: fonksiyon
+    // zorla durdurulduğu için audit/alarm hiç yazılamadı. Ayrıştırma, ana ingest'in yükünü azaltıp
+    // derneklere HER ZAMAN kendi bütçesini garanti eder.
   ];
   for (const [name, fn] of collectors) {
     try {
@@ -313,5 +315,32 @@ export async function ingestDoctorium(): Promise<IngestResult> {
     }
   }
 
+  return out;
+}
+
+export interface DernekIngestResult {
+  /** kaynak → [taranan, yeni]. */
+  sources: Record<string, [number, number]>;
+  errors: string[];
+}
+
+/**
+ * Uzmanlık dernekleri — ingestDoctorium'dan AYRI cron (2026-09-04). Kök neden: 23 branş × 3
+ * akademik kaynak + RG + 9 sabit + 2 RSS ≈ 84 sıralı istek tek başına 300 sn'nin kenarında
+ * geziniyordu; dış kaynaklardan biri normalden yavaş yanıtlayınca dernekler sıraya hiç giremeden
+ * route Vercel tarafından kesildi (504, sessiz — audit/alarm yazılamadı). 5 kaynak (2026-08-19
+ * ölçümü: 33 dernekten yalnız bunlar RSS veriyor; kalanı haftalık nöbetçi izler,
+ * scripts/association-watch.mjs) küçük bir bütçeyle bile rahatça sığar.
+ */
+export async function ingestDernekler(): Promise<DernekIngestResult> {
+  const out: DernekIngestResult = { sources: {}, errors: [] };
+  for (const s of ASSOCIATION_RSS_SOURCES) {
+    try {
+      out.sources[s.source] = await ingestRss(s);
+    } catch (e) {
+      out.sources[s.source] = [0, 0];
+      out.errors.push(`${s.source}: ${describeFetchError(e).slice(0, 200)}`);
+    }
+  }
   return out;
 }

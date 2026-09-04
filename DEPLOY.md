@@ -157,7 +157,7 @@ SSR JSON'undan; buildId koşu başında anasayfadan çözülür): günde 40 tesi
 koşulur (2026-07-10'da ~4.600 tesis dolduruldu); `authorizationNumber` kolon backfill'i için
 `npx tsx scripts/registry-enrich.ts auth` (v5.2'de koşuldu).
 
-### Cron düzeni — yedi cron (v6.205 bölünme · v6.206 `translate-news`, 2026-09-02/03)
+### Cron düzeni — sekiz cron (v6.205 bölünme · v6.206 `translate-news` · 2026-09-04 `ingest-dernekler`)
 
 Temmuz–Ağustos boyunca (Vercel Hobby cron kısıtı) on iş tek "bakım nöbeti"ne (`purge-deleted`)
 bindirilmişti; plan Pro'ya geçince kullanıcı kararıyla bölündü. Tek doğruluk kaynağı
@@ -170,6 +170,7 @@ ortak DB'de çift koşum olmasın) — iki korkuluk tek yerde: `cronGate()`.
 |---|---|---|
 | 02:00 → 05:00 | `/api/cron/ingest-doctorium` | akademik + haber/sektörel/ilaç içerik toplama (kendi 300 sn bütçesi) |
 | 02:20 → 05:20 | `/api/cron/ingest-hukuk` | Yargıtay içtihat · TR-Dizin doktrin · TTB etkinlik (yalnız Pazartesi) |
+| 02:35 → 05:35 | `/api/cron/ingest-dernekler` | uzmanlık dernekleri RSS'i (klimik/tjod/tatd/tgd-gastro/tgcd) — 2026-09-04'te `ingest-doctorium`'dan ayrıldı: ana ingest 84 sıralı istekle 300 sn bütçesinin kenarındaydı, dış kaynak yavaşlayınca dernekler sıraya hiç giremeden route sessizce (504) kesiliyordu; kendi 60 sn bütçesi her zaman yeter |
 | 02:40 → 05:40 | `/api/cron/translate-news` | özet GİRİŞİ çevirisi (v6.206) — akademik/ilaç/İngilizce sektörel kayıtlarda `summary`=Türkçe (~700 kar., cümle sınırı), `summaryOriginal`=özgün; yeni→eski, birikmişi gecelik bütçeyle (240 sn) kendisi kapatır — PROD backfill script'i gerekmez; elle prova `?budget=<sn>` |
 | 03:00 → 06:00 | `/api/cron/registry-sync` | HealthTürkiye dizini (değişmedi) |
 | 03:30 → 06:30 | `/api/cron/purge-deleted` | KVKK imha · audit+onam zinciri doğrulama · günlük kök damgası · diploma süpürmesi |
