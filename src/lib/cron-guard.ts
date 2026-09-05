@@ -44,10 +44,12 @@ export function errText(e: unknown, fallback: string): string {
  * "sabah gazetesi" o gecenin içeriğini görsün; hasta hatırlatması insanca saatte (10:00 TR).
  */
 export const CRON_SCHEDULES: Record<string, string> = {
-  "/api/cron/ingest-doctorium": "0 2 * * *",         // 05:00 TR — akademik + haber (PubMed/EPMC/DOAJ/RSS/…)
+  "/api/cron/ingest-doctorium": "0 2 * * *",         // 05:00 TR — akademik (PubMed) + RG + sabit kaynaklar/RSS (maxDuration 800, 2026-09-05)
   "/api/cron/ingest-hukuk": "20 2 * * *",            // 05:20 TR — Yargıtay + Doktrin + TTB (Pazartesi)
   "/api/cron/ingest-dernekler": "35 2 * * *",        // 05:35 TR — uzmanlık dernekleri RSS'i (2026-09-04: ingest-doctorium'un 300 sn sınırından ayrıldı)
   "/api/cron/translate-news": "40 2 * * *",          // 05:40 TR — özet GİRİŞİ çevirisi (ingest bitmiş olur; baskıdan önce) — v6.206
+  "/api/cron/ingest-europepmc": "44 2 * * *",        // 05:44 TR — Europe PMC (2026-09-05: ingest-doctorium'dan ayrıldı, dernek ayrışması tek başına yetmemişti)
+  "/api/cron/ingest-doaj": "47 2 * * *",             // 05:47 TR — DOAJ (2026-09-05: aynı ayrışma; kaynağın kendisi yavaş, maxDuration 800)
   "/api/cron/registry-sync": "0 3 * * *",            // 06:00 TR — HealthTürkiye dizini (değişmedi)
   "/api/cron/purge-deleted": "30 3 * * *",           // 06:30 TR — KVKK imha + zincirler + günlük damga + diploma süpürmesi
   "/api/cron/daily-digest": "30 3 * * *",            // 06:30 TR — Doctorium Post + etkinlik alarmı

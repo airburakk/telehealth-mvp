@@ -22,7 +22,6 @@ import {
   ingestFdaRecalls, ingestTrials, ingestWho, describeFetchError,
   ingestIstanbulTabip, ingestRss, RSS_SOURCES, ASSOCIATION_RSS_SOURCES,
 } from "./doctorium-sources";
-import { ingestEuropePmcAll, ingestDoajAll } from "./doctorium-academic-sources";
 import { translateTitlesTr } from "./translate-news";
 
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
@@ -293,10 +292,6 @@ export async function ingestDoctorium(): Promise<IngestResult> {
     // v6.99 — "doktorlarla ilgili" haber genişlemesi (kullanıcı seçimi 2026-08-15: mesleki +
     // uluslararası). Hepsi mesleki alaka süzgecinden geçer (isProfessionallyRelevant).
     ["istabip", ingestIstanbulTabip],
-    // Hakemli açık erişim akademik kaynaklar (2026-08-18) — PubMed'in yanına Europe PMC + DOAJ;
-    // günlük pencere küçük (21 gün × 2/branş), 1 yıllık arşiv backfill scriptiyle dolduruldu.
-    ["europepmc", () => ingestEuropePmcAll()],
-    ["doaj", () => ingestDoajAll()],
     ...RSS_SOURCES.map((s): [string, () => Promise<[number, number]>] => [s.source, () => ingestRss(s)]),
     // Uzmanlık dernekleri (2026-09-04'ten beri) BURADA DEĞİL — ayrı cron `ingest-dernekler`
     // (bkz. aşağıdaki ingestDernekler). Neden: bu fonksiyon (23 branş × pubmed/epmc/doaj + RG + 9
@@ -305,6 +300,15 @@ export async function ingestDoctorium(): Promise<IngestResult> {
     // tarafından KESİLDİ (504) — dernekler sıraya hiç giremeden. Kesinti SESSİZDİ: fonksiyon
     // zorla durdurulduğu için audit/alarm hiç yazılamadı. Ayrıştırma, ana ingest'in yükünü azaltıp
     // derneklere HER ZAMAN kendi bütçesini garanti eder.
+    //
+    // 2026-09-05: Europe PMC + DOAJ da BURADAN ÇIKARILDI (ayrı cron'lar `ingest-europepmc` +
+    // `ingest-doaj`). Dernek ayrışması YETMEMİŞTİ — 5 Eylül'de route yine 300 sn'de kesildi
+    // (Vercel error log: "Task timed out after 300 seconds", 02:00:58 UTC). DEV'de gerçek network
+    // koşullarında ölçüldü (scripts DEĞİL, tek seferlik ölçüm — bkz. changelog): GENEL TOPLAM 1009 sn
+    // (35 branş × PubMed 263s + RG + 9 sabit kaynak/RSS ~170s + EuropePMC 112s + **DOAJ 466s**).
+    // DOAJ TEK BAŞINA istek başına ~13 sn (35 branş × sıralı sorgu) — kaynağın kendisi yavaş, sıralamayla
+    // ilgisi yok. Ayrıştırmadan sonra bu fonksiyon ~430 sn'ye iner (maxDuration 300→800 ile rahat sığar);
+    // EuropePMC (112s) ve DOAJ (466s) kendi cron'larında maxDuration=800 ile ayrı ayrı çalışır.
   ];
   for (const [name, fn] of collectors) {
     try {

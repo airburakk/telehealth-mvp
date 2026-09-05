@@ -1,4 +1,4 @@
-// Cron düzeni SÖZLEŞMESİ (v6.205, 2026-09-02 — bakım nöbeti altı cron'a bölündü, kullanıcı kararı; v6.206 translate-news ile yedi; 2026-09-04 ingest-dernekler ile sekiz; 2026-09-05 trial-sweep ile dokuz).
+// Cron düzeni SÖZLEŞMESİ (v6.205, 2026-09-02 — bakım nöbeti altı cron'a bölündü, kullanıcı kararı; v6.206 translate-news ile yedi; 2026-09-04 ingest-dernekler ile sekiz; 2026-09-05 trial-sweep ile dokuz; 2026-09-05 ingest-europepmc + ingest-doaj ile onbir).
 //
 // Kilitlenenler:
 //   1) vercel.json crons ↔ lib/cron-guard CRON_SCHEDULES BİREBİR (yol + zamanlama). Biri değişip
@@ -6,6 +6,9 @@
 //   2) Her cron yolunun rota dosyası var, ortak kapıyı (cronGate) kullanır ve maxDuration bildirir.
 //   3) SIRA: içerik cron'ları (ingest-* ve v6.206 translate-news) Post baskısından (daily-digest) ÖNCE biter — "sabah gazetesi"
 //      o gecenin içeriğini görsün. Eskiden bu sıra tek rota içindeydi; artık zamanlamayla korunur.
+//      ⚠️ Bütçe TEK-TİP DEĞİL (2026-09-05): çoğu içerik cron'u 300 sn, ama ingest-doctorium/ingest-doaj
+//      800 sn (DEV ölçümü PubMed/DOAJ'ın gerçek süresini aşınca yükseltildi) — ≥30dk kuralı yine de
+//      geçerli bir alt sınır (800 sn ≈ 13.3 dk, 30 dk pay rahat yeterli).
 //   4) Doctorium deploy'unda çift koşum olmasın: her rota kapıdan geçer (BRAND_MODE no-op).
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -23,10 +26,10 @@ function minuteOfDay(schedule: string): number {
 }
 
 describe("vercel.json ↔ CRON_SCHEDULES", () => {
-  it("yol ve zamanlama birebir aynı (dokuz cron)", () => {
+  it("yol ve zamanlama birebir aynı (onbir cron)", () => {
     const fromVercel = Object.fromEntries(vercel.crons.map((c) => [c.path, c.schedule]));
     expect(fromVercel).toEqual(CRON_SCHEDULES);
-    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(9);
+    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(11);
   });
 
   it("her cron yolunun rota dosyası var, cronGate kullanır, maxDuration bildirir", () => {
@@ -43,9 +46,13 @@ describe("vercel.json ↔ CRON_SCHEDULES", () => {
 
   it("SIRA: içerik cron'ları Post baskısından (daily-digest) önce biter", () => {
     const digest = minuteOfDay(CRON_SCHEDULES["/api/cron/daily-digest"]);
-    for (const p of ["/api/cron/ingest-doctorium", "/api/cron/ingest-hukuk", "/api/cron/ingest-dernekler", "/api/cron/translate-news"]) {
+    for (const p of [
+      "/api/cron/ingest-doctorium", "/api/cron/ingest-hukuk", "/api/cron/ingest-dernekler",
+      "/api/cron/translate-news", "/api/cron/ingest-europepmc", "/api/cron/ingest-doaj",
+    ]) {
       const t = minuteOfDay(CRON_SCHEDULES[p]);
-      // Her içerik cron'unun bütçesi 300 sn; baskıdan en az 30 dk önce başlamalı ki bitmiş olsun.
+      // Her içerik cron'unun bütçesi en az 300 sn (ingest-doctorium/ingest-doaj 800 sn); baskıdan
+      // en az 30 dk önce BAŞLAMALI ki 800 sn'lik (≈13.3 dk) en kötü ihtimalde bile bitmiş olsun.
       expect(digest - t, `${p} baskıya çok yakın (${t} → ${digest})`).toBeGreaterThanOrEqual(30);
     }
   });

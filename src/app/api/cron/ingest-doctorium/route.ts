@@ -8,11 +8,16 @@ import { ingestDoctorium } from "@/lib/doctorium-ingest";
 // haber/sektörel/ilaç kaynakları → NewsArticle (lib/doctorium-ingest).
 //
 // v6.205 (2026-09-02): purge-deleted bakım nöbetinden AYRILDI (kullanıcı kararı "bölelim" — Vercel
-// planı Pro, cron kısıtı kalktı). Kendi 300 sn bütçesi var; eskiden on iş tek bütçeyi paylaşıyordu.
+// planı Pro, cron kısıtı kalktı). Kendi bütçesi var; eskiden on iş tek bütçeyi paylaşıyordu.
 // 02:00 UTC = 05:00 TR: Post baskısı (daily-digest, 06:30 TR) bu koşunun içeriğini görsün diye ÖNCE.
 // ⚠️ RG/OHSAD/SGK Vercel fra1'den erişilemez (v6.57 teşhisi) — o kaynaklar elle senkronla gelir
 // (scripts/ingest-tr-sources.ts); bu cron'da hata sayacına düşer, koşuyu düşürmez.
-export const maxDuration = 300;
+//
+// 🔴 2026-09-05: 300→800 sn (dernek ayrışması TEK BAŞINA yetmemişti — 5 Eylül'de route yine 300 sn'de
+// kesildi). DEV ölçümü: Europe PMC + DOAJ çıkarılınca bu fonksiyon ~430 sn sürüyor (35 branş × PubMed
+// en büyük pay ~263s) — 800 sn Pro/Enterprise'da GA sınır (beta değil), rahat güvenlik payı bırakır.
+// EuropePMC/DOAJ artık ayrı cron'larda (`ingest-europepmc` · `ingest-doaj`) — bkz. lib/doctorium-ingest.ts.
+export const maxDuration = 800;
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {

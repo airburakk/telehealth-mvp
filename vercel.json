@@ -22,6 +22,14 @@
       "schedule": "40 2 * * *"
     },
     {
+      "path": "/api/cron/ingest-europepmc",
+      "schedule": "44 2 * * *"
+    },
+    {
+      "path": "/api/cron/ingest-doaj",
+      "schedule": "47 2 * * *"
+    },
+    {
       "path": "/api/cron/registry-sync",
       "schedule": "0 3 * * *"
     },
