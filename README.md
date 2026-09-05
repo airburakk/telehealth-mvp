@@ -179,6 +179,20 @@ Sürüm 1.2 (02 madde 2 "Deneme Erişimi", 3.2 a–d, 10.2-e; 01 madde 3.1/6/8),
 `tests/unit/edu-tus-data.test` resmî alan adı allowlist'i + İŞKUR dili). Sonraki fazlar (E2 kalıcı model + hatırlatma · T2
 kontenjan/taban puan): vault `output/doctorium-veri-fazlari-plani-2026-09-05.md`.
 
+**TUS veri katmanı (v6.246–v6.248, 2026-09-05/06 — 🚀 CANLI):** üç kaynak, tek ilke — **onaysız veri hiçbir yüzeyde görünmez**
+(kayıt defterlerinde 👤 `approvedAt`), tahmin/simülasyon/tavsiye YOK, her grafik altında kaynak + "tercih tavsiyesi değildir".
+**K1 ÖSYM yerleştirme:** `scripts/tus-ingest.ts` (kalıcı; "Yerleştirme Sonuçlarına İlişkin Sayısal Bilgiler" sayfası → en küçük/en
+büyük puan PDF'i; 🪤 `dokuman.osym.gov.tr` Referer yoksa 200 + "Erişim Engellendi" HTML) → `lib/tus-normalize` (üç PDF düzeni) →
+`src/data/tus/<yıl>-<dönem>.json` + `summary.json` → `lib/tus-data TUS_SNAPSHOTS` (10 dönem 2021/2→2026/1 onaylı) →
+`TusPlacementSection` + `tus/TusCharts` (**Recharts 3**, client-only `TusChartsLoader ssr:false`). **K3 rehberler:** `lib/tus-guides`
+(8 rehber, yalnız ÖSYM kılavuzu özeti, kılavuz madde ref'li; `/doktor/doctorium/tus/rehber/[slug]`; onaysız/bilinmeyen 404).
+**K4 künye dizini:** `lib/tus-resources` (4 hazırlık kurumu + 9 kaynak; ad/kurum/resmî site/biçim — fiyat/puan/sıralama/öneri YOK,
+"sponsorlu değil, tanıtım değil"). **K5 YÖK Atlas:** `scripts/yok-atlas-ingest.ts` (`POST /api/tercih-kilavuz/search` gövde `{}` → tüm
+programlar tek JSON ~87 MB, repo dışı; 🪤 sorgu parametresi 418) → `src/data/yok/tip-programlari-<yıl>.json` (242 Tıp programı) →
+`lib/yok-normalize` + `lib/yok-data YOK_SNAPSHOTS` → `TusYokSection` + `tus/YokCharts` (giriş kontenjanı ↔ TUS GENEL kontenjanı ·
+kurum türü · il · başarı sırası + süzgeçli tablo). Yeni dönem ekleme: `npx tsx scripts/tus-ingest.ts --periods 2026-2` → kayıt
+defterine satır → 👤 onay; testler `tus-*.test` · `yok-*.test` (kaynak allowlist, yasak dil, defter ↔ dosya).
+
 **Etkinlik modülü (v6.120, 2026-08-19) — "Kongre" sekmesi ETKİNLİK oldu + TTB akredite türler:**
 kullanıcı kararı tam rename (etiket + rota + iç anahtar). Modül anahtarı `kongre` → `etkinlik`;
 `?m=kongre` **alias'lı** (`MODULE_ALIASES`) ve `/doktor/doctorium/kongre/[id]` **308** ile taşındı —
