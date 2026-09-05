@@ -9,6 +9,8 @@ import { gateConsentVersion } from "@/lib/doctorium-consent";
 import { isGoogleConfigured, exchangeGoogleCode, googleRedirectUri, isSafeNextPath } from "@/lib/oauth";
 import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 import { createDoctorAccount } from "@/lib/doctor-signup";
+import { isTrialEnabled } from "@/lib/doctorium-trial-flag";
+import { TRIAL_TITLE } from "@/lib/doctorium-tiers";
 import { createPatientAccount } from "@/lib/patient-signup";
 import { reqMeta } from "@/lib/audit";
 import { recordLogin } from "@/lib/login-activity";
@@ -58,7 +60,8 @@ export async function GET(req: Request) {
       // /doktor/baslangic bekçisi de branch/city boşken oraya atar). verified:false (admin onayı bekler).
       user = await createDoctorAccount({
         name: info.name, email: info.email, passwordHash,
-        title: "Uzm. Dr.", branch: "", city: "", languages: "Türkçe",
+        // Deneme (2026-09-05): bayrak açıkken dürüst varsayılan "Dr." — uzmanlık iddiası doğrulama sonrası doktorun kendi girişidir.
+        title: isTrialEnabled() ? TRIAL_TITLE : "Uzm. Dr.", branch: "", city: "", languages: "Türkçe",
       });
       newDoctor = true;
     }

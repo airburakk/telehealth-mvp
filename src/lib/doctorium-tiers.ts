@@ -25,9 +25,9 @@ export interface TierStamps {
   diplomaVerifiedAt: Date | null;
   studentVerifiedAt: Date | null;
   doctoriumOptOutAt: Date | null;
-  /** Deneme bitişi. Faz A1'de isteğe bağlı (kolon henüz yok); migration (A2) sonrası ZORUNLU olur —
-   *  o gün unutulan `select` derlemede patlar, kapı sessizce yanlış karar vermez (deletionLockedAt deseni). */
-  trialEndsAt?: Date | null;
+  /** Deneme bitişi — A2 migration'ı (v6.234) sonrası ZORUNLU alan: unutulan `select` derlemede patlar,
+   *  kapı sessizce yanlış karar vermez (deletionLockedAt/CaseRef deseni). null = deneme yolu değil. */
+  trialEndsAt: Date | null;
 }
 
 /** Katman çözücü — saf. `now` dışarıdan gelir (test edilebilirlik + render saflığı). */
@@ -35,7 +35,7 @@ export function doctoriumAudience(d: TierStamps, now: Date): DoctoriumAudience {
   if (d.doctoriumOptOutAt) return "NONE";
   if (d.diplomaVerifiedAt) return "VERIFIED";
   if (d.studentVerifiedAt) return "STUDENT";
-  const ends = d.trialEndsAt ?? null;
+  const ends = d.trialEndsAt;
   if (ends) return ends.getTime() > now.getTime() ? "TRIAL" : "LOCKED";
   return "NONE";
 }

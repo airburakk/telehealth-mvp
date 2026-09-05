@@ -11,18 +11,22 @@ import { CitySelect } from "@/components/CitySelect";
 // OAuth hesabı zaten "Türkçe" ile açılır, doktor dilleri sonradan tercihlerinden değiştirir.
 // Ünvan listesi client kopyadır (lib/doctor-signup.ts db'li → bundle'a giremez; sunucu
 // doğrulaması oradan).
-const TITLES = ["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."];
+const TITLES = ["Dr.", "Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."]; // "Dr." 2026-09-05 (deneme varsayılanı; lib/doctor-signup ile birebir)
 
 export function CompleteProfileForm({
   initialName,
   initialTitle,
   branches,
   nextHref,
+  compact = false,
 }: {
   initialName: string;
   initialTitle: string;
   branches: string[];
   nextHref: string;
+  /** Doctorium deploy'u (üç katman, 2026-09-05): deneme üyesi yalnız BRANŞ + ŞEHİR verir — ünvan
+   *  (varsayılan kalır) ve telefon alanları çizilmez; API aynı, doğrulama aynı. */
+  compact?: boolean;
 }) {
   const [name, setName] = useState(initialName);
   const [title, setTitle] = useState(TITLES.includes(initialTitle) ? initialTitle : "Uzm. Dr.");
@@ -60,8 +64,9 @@ export function CompleteProfileForm({
           <Stethoscope size={20} className="text-[var(--c-accent)]" /> Profilinizi tamamlayın
         </h1>
         <p className="text-sm text-[var(--c-ink-2)]">
-          Google/Apple hesabınızdan yalnız ad ve e-posta alınır — branş ve şehir bilgileriniz vaka
-          eşleştirmesi ve Doctorium akışınız için gereklidir.
+          {compact
+            ? "Google/Apple hesabınızdan yalnız ad ve e-posta alınır — Doctorium akışınızın kurulması için branş ve şehrinizi seçin."
+            : "Google/Apple hesabınızdan yalnız ad ve e-posta alınır — branş ve şehir bilgileriniz vaka eşleştirmesi ve Doctorium akışınız için gereklidir."}
         </p>
       </div>
 
@@ -71,12 +76,14 @@ export function CompleteProfileForm({
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Dr. Ayşe Yılmaz" className={INPUT} required />
           </Labeled>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Labeled label="Ünvan">
-              <select value={title} onChange={(e) => setTitle(e.target.value)} className={INPUT}>
-                {TITLES.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </Labeled>
+          <div className={compact ? "grid gap-3" : "grid grid-cols-2 gap-3"}>
+            {!compact && (
+              <Labeled label="Ünvan">
+                <select value={title} onChange={(e) => setTitle(e.target.value)} className={INPUT}>
+                  {TITLES.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </Labeled>
+            )}
             <Labeled label="Branş">
               <select value={branch} onChange={(e) => setBranch(e.target.value)} className={INPUT} required>
                 <option value="" disabled>Seçin…</option>
@@ -89,10 +96,12 @@ export function CompleteProfileForm({
             <CitySelect value={city} onChange={setCity} className={INPUT} />
           </Labeled>
 
-          <Labeled label="Cep telefonu (isteğe bağlı)">
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+90 5xx xxx xx xx" className={INPUT} />
-            <span className="mt-1 block text-[11px] text-[var(--c-ink-3)]">WhatsApp/SMS bildirim kanalını seçerseniz bildirimler bu numaraya gönderilir.</span>
-          </Labeled>
+          {!compact && (
+            <Labeled label="Cep telefonu (isteğe bağlı)">
+              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+90 5xx xxx xx xx" className={INPUT} />
+              <span className="mt-1 block text-[11px] text-[var(--c-ink-3)]">WhatsApp/SMS bildirim kanalını seçerseniz bildirimler bu numaraya gönderilir.</span>
+            </Labeled>
+          )}
 
           {error && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300 ring-1 ring-red-400/25">{error}</div>}
 

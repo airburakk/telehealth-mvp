@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   const doctor = me?.doctorId
     ? await db.doctor.findUnique({
         where: { id: me.doctorId },
-        select: { id: true, diplomaVerifiedAt: true, studentVerifiedAt: true, doctoriumOptOutAt: true },
+        select: { id: true, diplomaVerifiedAt: true, studentVerifiedAt: true, doctoriumOptOutAt: true, trialEndsAt: true },
       })
     : null;
   if (!doctor || !hasDoctoriumAccess(doctor)) {

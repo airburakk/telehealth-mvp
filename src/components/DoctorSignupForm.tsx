@@ -9,7 +9,7 @@ import { SocialAuthButtons } from "@/components/social-auth";
 import { CitySelect } from "@/components/CitySelect";
 import { oauthBannerMessage } from "@/lib/oauth-banner";
 
-const TITLES = ["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."];
+const TITLES = ["Dr.", "Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."]; // "Dr." 2026-09-05 (pratisyen; lib/doctor-signup ile birebir)
 
 // M5 — Doktor kayıt formu. E-posta kaydı tam çalışır; Google/Apple env varsa aktif (yoksa "Yakında").
 // Başarılı kayıt → /onam → /doktor onboarding.

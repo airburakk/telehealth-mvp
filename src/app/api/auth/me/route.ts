@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { isMaster } from "@/lib/master";
 import { db } from "@/lib/db";
+import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
 
 // Header/MasterBar'ın kozmetik kullanıcı gösterimi (2026-08-28, P0-3 denetimi) — bu mantık
 // eskiden kök layout.tsx'te SSR'de çalışıyordu; `cookies()` kullandığı için TÜM SİTEYİ dynamic'e
@@ -48,11 +49,27 @@ export async function GET() {
     }
   }
 
+  // Üç katman (2026-09-05): Header'ın deneme rozeti (+ B1 öğrenci kancası) — kozmetik, kapı değil.
+  let audience: string | null = null;
+  let trial: { daysLeft: number; endsAtLabel: string } | null = null;
+  if (user.role === "DOCTOR") {
+    try {
+      const ctx = await currentDoctoriumAudience();
+      audience = ctx?.audience ?? null;
+      trial = ctx?.trial ? { daysLeft: ctx.trial.daysLeft, endsAtLabel: ctx.trial.endsAtLabel } : null;
+    } catch {
+      audience = null;
+      trial = null;
+    }
+  }
+
   return NextResponse.json({
     user: { name: user.name, role: user.role },
     lang,
     student,
     stage1,
+    audience,
+    trial,
     imp: !!user.imp,
     isMaster: isMaster(user),
   });

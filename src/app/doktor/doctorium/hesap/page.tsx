@@ -5,6 +5,7 @@ import { ArrowLeft, BadgeCheck, Info } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
+import { audienceLabel } from "@/lib/doctorium-tiers";
 import { countClinicalTies, hasClinicalTies } from "@/lib/doctorium-membership";
 import { recentLogins, describeUserAgent } from "@/lib/login-activity";
 import { AuraPanel } from "@/components/ui/AuraPanel";
@@ -72,7 +73,7 @@ export default async function DoctoriumAccountPage() {
   const hereId = logins.find((l) => l.device === hereDevice && l.ip === hereIp)?.id ?? null;
 
   const methodLabel = (m: string) =>
-    m === "google" ? "Google" : m === "apple" ? "Apple" : "Parola";
+    m === "google" ? "Google" : m === "apple" ? "Apple" : m === "baglanti" ? "E-posta bağlantısı" : "Parola";
   const fmt = (d: Date) =>
     d.toLocaleString("tr-TR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
@@ -140,7 +141,14 @@ export default async function DoctoriumAccountPage() {
                     )
                   }
                 />
-                <Field k="Üyelik türü" v="Doktor" />
+                <Field
+                  k="Üyelik türü"
+                  v={
+                    audienceCtx?.audience === "TRIAL" && audienceCtx.trial
+                      ? `${audienceLabel("TRIAL")} · ${audienceCtx.trial.daysLeft} gün kaldı (bitiş ${audienceCtx.trial.endsAtLabel})`
+                      : audienceLabel(audienceCtx?.audience ?? "NONE")
+                  }
+                />
               </>
             )}
           </div>

@@ -4,10 +4,15 @@
 import { db } from "@/lib/db";
 import { encryptField } from "@/lib/crypto";
 import { verifyDoctorAgainstRegistry } from "@/lib/ht-registry";
+import { isTrialEnabled } from "@/lib/doctorium-trial-flag";
+import { trialWindow } from "@/lib/doctorium-tiers";
 
 // Geçerli ünvanlar — e-posta kaydı + OAuth profil-tamamlama doğrulaması ortak kullanır.
 // (Client formlardaki kopyalar ayrıdır: bu modül db import ettiğinden bundle'a giremez.)
-export const DOCTOR_TITLES = ["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."] as const;
+// "Dr." (2026-09-05, üç katman): pratisyen doktor için zaten eksikti; deneme kaydının dürüst varsayılanı
+// (TRIAL_TITLE — doğrulanmamış üyeye uzmanlık iddiası yazılmaz). Client kopyaları: DoctorSignupForm ·
+// CompleteProfileForm; sunucu doğrulaması api/auth/signup + api/doctor/complete-profile.
+export const DOCTOR_TITLES = ["Dr.", "Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."] as const;
 
 // Öğrenci hunisi ünvanı (v6.95) — DOCTOR_TITLES'a BİLİNÇLİ eklenmez: doktor kayıt formunda
 // seçilemez; yalnız /api/auth/signup-student sabitler. Ünvan tanımlayıcıdır, kapı değildir
@@ -64,6 +69,11 @@ function createAccountTx(input: DoctorSignupInput) {
         studentTrack: input.studentTrack ?? false, // v6.95 — öğrenci hunisi işareti (erişim açmaz)
         studentUniversity: input.studentUniversity ?? null,
         studentDepartment: input.studentDepartment ?? null,
+        // DENEME penceresi (üç katman, 👤 2026-09-05): bayrak açıkken öğrenci-dışı HER yeni doktor hesabı
+        // (e-posta kaydı · Google/Apple · deneme rotası — TEK nokta) 30 günlük damga alır. Öğrenci hesabı
+        // kendi kapısını (üniversite e-postası) kullanır, deneme damgası ALMAZ. Bayrak kapalıyken null →
+        // eski davranış (diploma doğrulanmadan Doctorium kapalı).
+        ...(input.studentTrack || !isTrialEnabled() ? {} : trialWindow(new Date())),
       },
     });
     const user = await tx.user.create({

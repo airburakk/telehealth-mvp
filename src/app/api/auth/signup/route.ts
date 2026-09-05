@@ -12,7 +12,7 @@ import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 
 // M5 — Doktor e-posta kaydı. Hesap oluşturulur (verified:false, inaktif) → oturum açılır →
 // proxy /onam (KVKK) → /doktor → onboarding kapısı (FHIR uzmanlık + işlem + diploma; MMSS ihtiyari).
-const TITLES = new Set(["Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."]);
+const TITLES = new Set(["Dr.", "Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."]); // "Dr." 2026-09-05 — lib/doctor-signup DOCTOR_TITLES ile birebir
 const BRANCH_SET = new Set(Object.values(BRANCH_LABELS));
 const LANG_SET = new Set(LANGUAGES);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { hasDoctoriumAccess } from "@/lib/doctor-activation";
+import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
+import { hasPortalAccess } from "@/lib/doctorium-tiers";
 import { DoctoriumFooter } from "@/components/aura/doctorium-footer";
 
 export const dynamic = "force-dynamic";
@@ -40,17 +40,18 @@ export default async function DoctoriumLayout({ children }: { children: React.Re
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
 
+  // Üç katman (2026-09-05): kitle TEK sözcüden (currentDoctoriumAudience — istek-önbellekli; page/Shell
+  // aynı sorguyu paylaşır). LOCKED (deneme bitti, doğrulama yok) → kilit ekranı (?trial=ended: bant +
+  // hesabı kapatma); NONE → eski onboarding yönlendirmesi. `data-audience` niteliği öğrenci paleti /
+  // rozet kancasıdır (Faz B1): CSS token remap'i bileşenlere dokunmadan buradan okur.
+  const ctx = await currentDoctoriumAudience();
   if (user.role === "DOCTOR") {
-    const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
-    const doctor = me?.doctorId
-      ? await db.doctor.findUnique({
-          where: { id: me.doctorId },
-          select: { diplomaVerifiedAt: true, studentVerifiedAt: true, doctoriumOptOutAt: true },
-        })
-      : null;
-    if (!doctor) redirect("/doktor"); // doktor profili bağlı değil — genel panel davranışına bırak
-    if (!hasDoctoriumAccess(doctor)) redirect("/doktor/baslangic?from=doctorium");
+    if (!ctx?.doctorId) redirect("/doktor"); // doktor profili bağlı değil — genel panel davranışına bırak
+    if (ctx.audience === "LOCKED") redirect("/doktor/baslangic?from=doctorium&trial=ended");
+    if (!ctx.audience || !hasPortalAccess(ctx.audience)) redirect("/doktor/baslangic?from=doctorium");
   }
+  const audienceAttr =
+    ctx?.audience === "STUDENT" ? "student" : ctx?.audience === "TRIAL" ? "trial" : ctx?.audience === "VERIFIED" ? "verified" : undefined;
 
   // Doctorium alt bilgisi 7 alt sayfanın hepsine BURADAN iner (kullanıcı kararı 2026-08-18).
   // Global AURA SiteFooter bu ağaçta chrome-routes.ts'teki hidesFooter() ile susturulur —
@@ -73,7 +74,7 @@ export default async function DoctoriumLayout({ children }: { children: React.Re
     // gelir (Header'daki ThemeToggle → `theme` cookie); doctorium-scope gündüzde
     // nötr tuvali V3'ün kırık beyazına çeker, gecede AURA'nın gece nötrleri geçerlidir.
     // Marka kimliği her iki temada tipografiden (Inter) sürer — bkz. globals.css.
-    <div className="doctorium-scope flex min-h-[calc(100dvh-4rem)] flex-col bg-[var(--c-bg)] text-[var(--c-ink)]">
+    <div data-audience={audienceAttr} className="doctorium-scope flex min-h-[calc(100dvh-4rem)] flex-col bg-[var(--c-bg)] text-[var(--c-ink)]">
       <div className="flex-1">{children}</div>
       <DoctoriumFooter portal />
     </div>

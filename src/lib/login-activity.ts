@@ -14,7 +14,8 @@ import { db } from "./db";
 import { recordAccess } from "./audit";
 import type { SessionUser } from "./session";
 
-export type LoginMethod = "parola" | "google" | "apple";
+// "baglanti" (2026-09-05, üç katman): parolasız giriş bağlantısı (api/auth/verify-login-link).
+export type LoginMethod = "parola" | "google" | "apple" | "baglanti";
 
 /**
  * Girişi zincire yaz. Çağıran YERİ önemli: oturum çerezi yazıldıktan SONRA çağrılmalı ki başarısız

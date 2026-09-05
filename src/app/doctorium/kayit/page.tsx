@@ -4,6 +4,9 @@ import { isGoogleConfigured, isAppleConfigured } from "@/lib/oauth";
 import { BRANCH_LABELS } from "@/lib/procedures";
 import { DoctorSignupForm } from "@/components/DoctorSignupForm";
 import { DoctoriumSignupShell } from "@/components/aura/doctorium-signup-shell";
+import { TrialSignupForm } from "@/components/TrialSignupForm";
+import { isTrialEnabled } from "@/lib/doctorium-trial-flag";
+import { TRIAL_PROMISE_PARAGRAPHS, TRIAL_STEPS } from "@/lib/doctorium-trial-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -22,13 +25,22 @@ export const metadata: Metadata = {
   alternates: { canonical: "/doctorium/kayit" },
 };
 
-export default function DoctoriumSignupPage() {
+// Üç katman (2026-09-05): DOCTORIUM_TRIAL_ENABLED=1 iken PAROLASIZ deneme formu (ad soyad · e-posta · branş ·
+// şehir → giriş bağlantısı); `?klasik=1` parolalı eski formu açar (e-posta kanalı dormant uyarısının kaçış
+// yolu — kamuya bağlantı VERİLMEZ, parolasız yol kullanıcı kararıdır). Bayrak kapalıyken eski form aynen.
+export default async function DoctoriumSignupPage({ searchParams }: { searchParams: Promise<{ klasik?: string }> }) {
+  const sp = await searchParams;
+  const trial = isTrialEnabled() && sp.klasik !== "1";
   const branches = Object.values(BRANCH_LABELS).sort((a, b) => a.localeCompare(b, "tr"));
   return (
     <DoctoriumSignupShell>
       {/* Suspense YOK (2026-08-28 denetimi): bkz. src/app/kayit/page.tsx aynı not — sayfa zaten
           force-dynamic, streaming DOM-taşıma mekanizması headless/arka-plan sekmelerde takılıyordu. */}
-      <DoctorSignupForm googleEnabled={isGoogleConfigured()} appleEnabled={isAppleConfigured()} branches={branches} brand="doctorium" />
+      {trial ? (
+        <TrialSignupForm googleEnabled={isGoogleConfigured()} appleEnabled={isAppleConfigured()} branches={branches} />
+      ) : (
+        <DoctorSignupForm googleEnabled={isGoogleConfigured()} appleEnabled={isAppleConfigured()} branches={branches} brand="doctorium" />
+      )}
 
       {/* KVKK aydınlatma-toplama-anı + sözleşme onayı (2026-09-04): submit'in hemen altında görünür
           inline bilgilendirme (footer linkleri yeterli değildi — QA bulgusu). Açık rıza AYRICA
@@ -44,23 +56,37 @@ export default function DoctoriumSignupPage() {
         {" "}kapsamında kişisel verilerinizin işlenmesi hakkında bilgilendirildiğinizi onaylarsınız.
       </p>
 
-      {/* Üyelik adımları — yalnız Doctorium anlatısı (AURA/havuz dili yok). */}
+      {/* Üyelik adımları — yalnız Doctorium anlatısı (AURA/havuz dili yok). Deneme modunda §2b kanonik metin
+          (👤 05.09.2026; tek kaynak lib/doctorium-trial-copy — kopya metin YOK) + üç adım; klasik modda eski üç adım. */}
       <div className="mt-6 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5">
         <div className="text-sm font-semibold text-[var(--c-ink)]">Üyelik nasıl işler?</div>
-        <ol className="mt-2 space-y-2 text-xs text-[var(--c-ink-2)]">
-          <li>
-            <strong className="text-[var(--c-ink)]">1 · Hesabınızı oluşturun</strong> — ad, branş
-            ve e-posta ile birkaç dakikada.
-          </li>
-          <li>
-            <strong className="text-[var(--c-ink)]">2 · Doktor kimliğinizi doğrulayın</strong> —
-            e-Devlet barkodlu mezun belgenizle diplomanız doğrulanır.
-          </li>
-          <li>
-            <strong className="text-[var(--c-ink)]">3 · Doctorium&apos;unuz hazır</strong> — branşınıza
-            göre kurulan akış, sağlık hukuku ve etkinlik takvimi sizi bekler.
-          </li>
-        </ol>
+        {trial ? (
+          <>
+            <div className="mt-2 space-y-2 text-xs leading-relaxed text-[var(--c-ink-2)]">
+              {TRIAL_PROMISE_PARAGRAPHS.map((p) => <p key={p.slice(0, 32)}>{p}</p>)}
+            </div>
+            <ol className="mt-3 space-y-2 border-t border-[var(--c-hairline)] pt-3 text-xs text-[var(--c-ink-2)]">
+              {TRIAL_STEPS.map((s) => (
+                <li key={s.title}><strong className="text-[var(--c-ink)]">{s.title}</strong> — {s.body}</li>
+              ))}
+            </ol>
+          </>
+        ) : (
+          <ol className="mt-2 space-y-2 text-xs text-[var(--c-ink-2)]">
+            <li>
+              <strong className="text-[var(--c-ink)]">1 · Hesabınızı oluşturun</strong> — ad, branş
+              ve e-posta ile birkaç dakikada.
+            </li>
+            <li>
+              <strong className="text-[var(--c-ink)]">2 · Doktor kimliğinizi doğrulayın</strong> —
+              e-Devlet barkodlu mezun belgenizle diplomanız doğrulanır.
+            </li>
+            <li>
+              <strong className="text-[var(--c-ink)]">3 · Doctorium&apos;unuz hazır</strong> — branşınıza
+              göre kurulan akış, sağlık hukuku ve etkinlik takvimi sizi bekler.
+            </li>
+          </ol>
+        )}
       </div>
 
       <p className="mt-4 text-center text-sm text-[var(--c-ink-2)]">

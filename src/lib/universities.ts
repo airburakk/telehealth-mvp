@@ -199,3 +199,18 @@ export function domainMatches(email: string, universityName: string): boolean {
     return emailDomain === dl || emailDomain.endsWith(`.${dl}`);
   });
 }
+
+/** E-posta, listedeki HERHANGİ bir üniversitenin uzantısıyla eşleşiyor mu? Deneme kayıt formunda
+ *  YUMUŞAK ipucu (öğrenci yolunu hatırlatır) — kapı DEĞİL (👤 2026-09-05); saf, client-güvenli. */
+export function isKnownUniversityEmail(email: string): boolean {
+  const at = email.lastIndexOf("@");
+  if (at < 0) return false;
+  const emailDomain = email.slice(at + 1).toLowerCase().trim();
+  if (!emailDomain) return false;
+  return UNIVERSITIES.some((u) =>
+    u.domains.some((d) => {
+      const dl = d.toLowerCase();
+      return emailDomain === dl || emailDomain.endsWith(`.${dl}`);
+    }),
+  );
+}

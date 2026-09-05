@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { DoctorDocuments, type DocMeta } from "@/components/DoctorDocuments";
 import { EdevletKilavuz } from "@/components/EdevletKilavuz";
+import { MembershipPanel } from "@/app/doktor/doctorium/hesap/MembershipPanel";
+import { TRIAL_LOCKED_NOTE, TRIAL_LOCKED_TITLE } from "@/lib/doctorium-trial-copy";
 
 // İki aşamalı giriş — AŞAMA 1 bölümü (v6.124 yeniden tasarım; kullanıcı kararı 2026-08-19):
 // Doctorium kapısı e-DEVLET DOĞRULAMALI DİPLOMA'dır (tek doktor yolu; öğrenci yolu ayrı). Diploma
@@ -24,6 +26,10 @@ export interface Stage1Props {
   sponsorText: string;
   hrText: string;
   fromDoctorium: boolean;
+  /** Deneme süresi dolmuş (LOCKED) yönlendirmesi (?trial=ended, 2026-09-05): kilit bandı + hesabı kapatma. */
+  trialEnded?: boolean;
+  /** Öğrenci yolu bağlantısı — Doctorium deploy'unda /doctorium/ogrenci (client env göremez, sunucu geçirir). */
+  studentHref?: string;
 }
 
 export function Stage1Doctorium({
@@ -34,6 +40,8 @@ export function Stage1Doctorium({
   sponsorText,
   hrText,
   fromDoctorium,
+  trialEnded = false,
+  studentHref = "/ogrenci",
   onDiplomaChange,
 }: Stage1Props & {
   // Diploma dosyası var mı (onboarding finish kapısının girdisi — OnboardingForm docsReady).
@@ -56,8 +64,18 @@ export function Stage1Doctorium({
         aşamada sizden istenen TEK belge budur, klinik tanımlarınızı beklemez.
       </p>
 
+      {/* Deneme süresi dolmuş (LOCKED, 2026-09-05): kilit bandı — süre YALNIZ doğrulama içindi, ücret
+          istenmez (§2b, tek kaynak lib/doctorium-trial-copy). Erişim açılınca (belge doğrulandı) bant düşer. */}
+      {trialEnded && !access && (
+        <div className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2.5 text-xs text-amber-300 ring-1 ring-amber-400/20">
+          <p className="flex items-center gap-1.5 font-semibold">
+            <Info size={14} className="shrink-0" /> {TRIAL_LOCKED_TITLE} — Doctorium&apos;a devam etmek için e-Devlet barkodlu mezun belgenizi doğrulayın.
+          </p>
+          <p className="mt-1 text-[11px] leading-relaxed text-amber-200/80">{TRIAL_LOCKED_NOTE}</p>
+        </div>
+      )}
       {/* Doctorium'dan yönlendirilen doktor için bağlam bandı (?from=doctorium) */}
-      {fromDoctorium && !access && (
+      {fromDoctorium && !trialEnded && !access && (
         <p className="mt-3 flex items-center gap-1.5 rounded-xl bg-amber-500/10 px-3 py-2.5 text-xs font-medium text-amber-300 ring-1 ring-amber-400/20">
           <Info size={14} className="shrink-0" /> Doctorium&apos;a erişmek için Aşama 1&apos;i tamamlayın: e-Devlet barkodlu diplomanızı yükleyin.
         </p>
@@ -82,10 +100,18 @@ export function Stage1Doctorium({
       <p className="mt-3 flex items-center gap-1.5 text-xs text-[var(--c-ink-3)]">
         <GraduationCap size={14} className="shrink-0" />
         Tıp öğrencisi misiniz?{" "}
-        <Link href="/ogrenci" className="font-semibold text-[var(--c-accent-stronger)] hover:underline">
+        <Link href={studentHref} className="font-semibold text-[var(--c-accent-stronger)] hover:underline">
           Öğrenci üyeliğine gidin
         </Link>
       </p>
+
+      {/* Kilitli deneme üyesi portala (Hesabım) giremez — KVKK silme hakkı buradan kullanılır (2026-09-05). */}
+      {trialEnded && !access && (
+        <details className="mt-4 rounded-xl border border-[var(--c-hairline)] px-3 py-2">
+          <summary className="cursor-pointer text-xs font-semibold text-[var(--c-ink-2)]">Doğrulama yapmayacağım — hesabımı kapat</summary>
+          <div className="mt-3"><MembershipPanel mode="close" /></div>
+        </details>
+      )}
 
       {/* İsteğe bağlı rızalar — toggle ANINDA kaydedilir, her an geri alınabilir */}
       <div className="mt-4 space-y-4">

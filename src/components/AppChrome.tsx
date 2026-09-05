@@ -12,6 +12,8 @@ interface MeResponse {
   stage1?: boolean;
   imp?: boolean;
   isMaster?: boolean;
+  audience?: string | null; // üç katman (2026-09-05): B1 öğrenci kancası için
+  trial?: { daysLeft: number; endsAtLabel: string } | null; // Header deneme rozeti
 }
 
 // Header/MasterBar sarmalayıcısı (2026-08-28, P0-3) — kök layout artık `cookies()` çağırmadığı
@@ -35,7 +37,7 @@ export function AppChrome({ doctoriumDeploy }: { doctoriumDeploy: boolean }) {
 
   return (
     <>
-      <Header user={me.user} lang={me.lang} theme={theme} student={me.student} stage1={me.stage1} doctoriumDeploy={doctoriumDeploy} />
+      <Header user={me.user} lang={me.lang} theme={theme} student={me.student} stage1={me.stage1} doctoriumDeploy={doctoriumDeploy} trial={me.trial ?? null} />
       {me.imp ? (
         <MasterBar mode="impersonating" userName={me.user?.name} />
       ) : me.isMaster ? (

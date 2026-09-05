@@ -22,13 +22,13 @@ const D = (s: string | null) => (s ? new Date(s) : null);
 
 describe("Doctorium kapısı (Aşama 1, v6.124): doğrulanmış diploma VEYA öğrenci belgesi", () => {
   it("ikisi de yoksa kapalı", () => {
-    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: null, doctoriumOptOutAt: null })).toBe(false);
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: null, doctoriumOptOutAt: null, trialEndsAt: null })).toBe(false);
   });
   it("doğrulanmış diploma tek başına açar", () => {
-    expect(hasDoctoriumAccess({ diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: null })).toBe(true);
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: null, trialEndsAt: null })).toBe(true);
   });
   it("öğrenci belgesi tek başına açar (v6.95 yolu sürer)", () => {
-    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14"), doctoriumOptOutAt: null })).toBe(true);
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14"), doctoriumOptOutAt: null, trialEndsAt: null })).toBe(true);
   });
 });
 
@@ -38,17 +38,17 @@ describe("Doctorium kapısı (Aşama 1, v6.124): doğrulanmış diploma VEYA ö�
 describe("Doctorium üyelikten çıkış (v6.187): doctoriumOptOutAt kapıyı kapatır", () => {
   it("doğrulanmış diploma VARKEN bile çıkış damgası kapıyı kapatır", () => {
     expect(hasDoctoriumAccess({
-      diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: D("2026-08-29"),
+      diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: D("2026-08-29"), trialEndsAt: null,
     })).toBe(false);
   });
   it("öğrenci damgası VARKEN bile çıkış damgası kapıyı kapatır", () => {
     expect(hasDoctoriumAccess({
-      diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14"), doctoriumOptOutAt: D("2026-08-29"),
+      diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14"), doctoriumOptOutAt: D("2026-08-29"), trialEndsAt: null,
     })).toBe(false);
   });
   it("çıkış damgası null'lanınca (yeniden üyelik) kapı geri açılır", () => {
     expect(hasDoctoriumAccess({
-      diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: null,
+      diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: null, trialEndsAt: null,
     })).toBe(true);
   });
 });
@@ -77,11 +77,11 @@ describe("Klinik yüzey kapısı (Aşama 2): yalnız activatedAt açar", () => {
     expect(hasClinicalAccess({ activatedAt: D("2026-08-11") })).toBe(true);
   });
   it("Aşama 1 doktoru (diploma doğrulı, aktivasyonsuz): Doctorium AÇIK, klinik yüzey KAPALI", () => {
-    expect(hasDoctoriumAccess({ diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: null })).toBe(true);
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: D("2026-08-19"), studentVerifiedAt: null, doctoriumOptOutAt: null, trialEndsAt: null })).toBe(true);
     expect(hasClinicalAccess({ activatedAt: null })).toBe(false);
   });
   it("öğrenci damgası DOLUYKEN klinik yüzey yine KAPALI (yeni şartı dolu ver — negatif-test ilkesi)", () => {
-    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14"), doctoriumOptOutAt: null })).toBe(true);
+    expect(hasDoctoriumAccess({ diplomaVerifiedAt: null, studentVerifiedAt: D("2026-08-14"), doctoriumOptOutAt: null, trialEndsAt: null })).toBe(true);
     expect(hasClinicalAccess({ activatedAt: null })).toBe(false);
   });
 });
@@ -163,7 +163,7 @@ describe("Deneme katmanı (2026-09-05): trialEndsAt kapıyı süreli açar", () 
   const DAY = 24 * 60 * 60 * 1000;
   const later = new Date(NOW.getTime() + 10 * DAY);
   const earlier = new Date(NOW.getTime() - DAY);
-  const base = { diplomaVerifiedAt: null, studentVerifiedAt: null, doctoriumOptOutAt: null };
+  const base = { diplomaVerifiedAt: null, studentVerifiedAt: null, doctoriumOptOutAt: null, trialEndsAt: null };
 
   it("bitişi gelecekte deneme → AÇIK", () => {
     expect(hasDoctoriumAccess({ ...base, trialEndsAt: later }, NOW)).toBe(true);
@@ -177,12 +177,12 @@ describe("Deneme katmanı (2026-09-05): trialEndsAt kapıyı süreli açar", () 
   it("üyelikten çıkış süren denemeyi de kapatır", () => {
     expect(hasDoctoriumAccess({ ...base, doctoriumOptOutAt: D("2026-09-04"), trialEndsAt: later }, NOW)).toBe(false);
   });
-  it("trialEndsAt vermeyen eski çağıran derlenir ve eski formülle aynı sonucu alır", () => {
+  it("trialEndsAt null → eski formülle aynı sonuç (diploma ∨ öğrenci; alan A2 sonrası zorunlu)", () => {
     expect(hasDoctoriumAccess(base, NOW)).toBe(false);
     expect(hasDoctoriumAccess({ ...base, diplomaVerifiedAt: D("2026-08-19") }, NOW)).toBe(true);
   });
   it("bilinçli kenar: eski öğrenci + doğrulanmış diploma, klinik aktivasyon yok → isStudentOnly true (eski) ama kitle VERIFIED", () => {
-    const d = { diplomaVerifiedAt: D("2027-07-01"), studentVerifiedAt: D("2026-08-14"), doctoriumOptOutAt: null, activatedAt: null };
+    const d = { diplomaVerifiedAt: D("2027-07-01"), studentVerifiedAt: D("2026-08-14"), doctoriumOptOutAt: null, trialEndsAt: null, activatedAt: null };
     expect(isStudentOnly(d)).toBe(true);
     expect(doctoriumAudience(d, NOW)).toBe("VERIFIED");
     expect(audienceFlags(doctoriumAudience(d, NOW)).canSeeSponsored).toBe(true);

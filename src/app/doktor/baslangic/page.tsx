@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 export default async function DoctorOnboardingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; trial?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/giris?next=/doktor/baslangic");
@@ -38,7 +38,7 @@ export default async function DoctorOnboardingPage({
           mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true, mmssCoverageCurrency: true, mmssValidUntil: true,
           procedures: true, licenseNo: true, eduSchool: true, eduYear: true, specBoard: true, specYear: true,
           certifications: true, publications: true,
-          diplomaVerifiedAt: true, studentVerifiedAt: true, doctoriumOptOutAt: true, studentTrack: true, sponsorPersonalizationAt: true, hrContactOptInAt: true,
+          diplomaVerifiedAt: true, studentVerifiedAt: true, doctoriumOptOutAt: true, trialEndsAt: true, studentTrack: true, sponsorPersonalizationAt: true, hrContactOptInAt: true,
           studentUniversity: true, studentDepartment: true, // v6.143 — StudentStage1Card'ın e-posta doğrulama durumu için
           // v6.127 — Aşama 2 güvenlik katmanı damgaları (Güvenlik Doğrulamaları bölümü)
           smsVerifiedAt: true, workEmailVerifiedAt: true, clinicPhoneVerifiedAt: true, clinicPhoneEstablishment: true,
@@ -219,6 +219,9 @@ export default async function DoctorOnboardingPage({
         sponsorText: SPONSOR_CONSENT_TEXT,
         hrText: HR_CONTACT_CONSENT_TEXT,
         fromDoctorium: sp.from === "doctorium",
+        // Üç katman (2026-09-05): deneme süresi dolmuş üye portaldan buraya iner — kilit bandı + hesabı kapatma.
+        trialEnded: sp.trial === "ended",
+        studentHref: IS_DOCTORIUM_DEPLOY ? "/doctorium/ogrenci" : "/ogrenci",
       }}
       theme={theme}
       // v6.127 — Güvenlik Doğrulamaları: kanal aktif değilken (ve gate kapalıyken) bölüm HİÇ

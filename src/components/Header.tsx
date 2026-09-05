@@ -11,8 +11,9 @@ import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47, LANGUAGES, LANG_CHANGE_EVENT } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
 import { hidesGlobalChrome, usesDoctoriumBrand } from "@/lib/chrome-routes";
-import { BadgeCheck, Bookmark, CalendarDays, LogOut, ShieldOff, Star, UserCog, Wallet } from "lucide-react";
+import { BadgeCheck, Bookmark, CalendarDays, Hourglass, LogOut, ShieldOff, Star, UserCog, Wallet } from "lucide-react";
 import { ThemeToggle, type ThemeName } from "@/components/ThemeToggle";
+import { trialBadgeLabel, trialBadgeShort, trialBadgeTitle } from "@/lib/doctorium-trial-copy";
 
 const ROLE_LABELS: Record<string, string> = {
   PATIENT: "Hasta",
@@ -50,6 +51,27 @@ function DoctoriumBrand({ doctoriumActive }: { doctoriumActive: boolean }) {
   );
 }
 
+// Deneme rozeti (üç katman, 👤 2026-09-05: FOOTER DEĞİL Header): marka bloğunun hemen yanında, kalan gün
+// sayısı + doğrulamaya götüren bağlantı. Veri /api/auth/me'den hazır gelir (sayı + tr-TR tarih etiketi) —
+// render'da saat/tarih hesabı YOK (React Compiler purity). ≤7 gün: --c-gold mürekkebi + ikon (yalnız
+// renkle işaretlenmez). Tooltip §2b kısa cümlesini taşır: süre yalnız doğrulama içindir, ücretli üyeliğe dönüşmez.
+function TrialBadge({ daysLeft, endsAtLabel }: { daysLeft: number; endsAtLabel: string }) {
+  const urgent = daysLeft <= 7;
+  return (
+    <Link
+      href="/doktor/baslangic?from=doctorium"
+      title={trialBadgeTitle(endsAtLabel)}
+      aria-label={`Deneme üyeliği, ${daysLeft} gün kaldı — doğrulamaya git`}
+      className="aura-mono ml-2 inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--c-hairline)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors duration-200 hover:border-[var(--c-accent)]"
+      style={{ color: urgent ? "var(--c-gold)" : "var(--c-ink-3)" }}
+    >
+      <Hourglass size={11} aria-hidden />
+      <span className="hidden sm:inline">{trialBadgeLabel(daysLeft)}</span>
+      <span className="sm:hidden">{trialBadgeShort(daysLeft)}</span>
+    </Link>
+  );
+}
+
 // v6.95 — student (kullanıcı kararı 2026-08-14): öğrenci hunisi hesabında bant YALNIZ Doctorium,
 // hesap menüsünde Profilim/Finans gizli, mono rol etiketi "Tıp Öğrencisi". Görsel sadeleştirme —
 // güvenlik kapısı değil (klinik rotalar/finans sayfası kendi kapılarını zaten taşır).
@@ -60,7 +82,7 @@ function DoctoriumBrand({ doctoriumActive }: { doctoriumActive: boolean }) {
 // bitmez krom kendiliğinden AURA'ya döner.
 // doctoriumDeploy (ayrışma 2026-08-24): doctorium.tr deploy'unda /giris AURA'ya 307'lenir —
 // çıkış hedefi bu bayrakla Doctorium kapısına döner (kök layout BRAND_MODE'dan geçirir).
-export function Header({ user, lang = "Türkçe", theme = "dark", student = false, stage1 = false, doctoriumDeploy = false }: { user: { name: string; role: string } | null; lang?: string; theme?: ThemeName; student?: boolean; stage1?: boolean; doctoriumDeploy?: boolean }) {
+export function Header({ user, lang = "Türkçe", theme = "dark", student = false, stage1 = false, doctoriumDeploy = false, trial = null }: { user: { name: string; role: string } | null; lang?: string; theme?: ThemeName; student?: boolean; stage1?: boolean; doctoriumDeploy?: boolean; trial?: { daysLeft: number; endsAtLabel: string } | null }) {
   const pathname = usePathname();
   const router = useRouter();
   const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
@@ -225,7 +247,10 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
             burada user==null olduğundan varsayılan AuraLogo'ya düşüyordu (canlı bulgu). AURA
             kromunda doktor/koord/admin logosu klinik panele (/doktor) gider; herkes eski kök "/". */}
         {showDoctoriumBrand ? (
-          <DoctoriumBrand doctoriumActive={doctoriumActive} />
+          <>
+            <DoctoriumBrand doctoriumActive={doctoriumActive} />
+            {trial && <TrialBadge daysLeft={trial.daysLeft} endsAtLabel={trial.endsAtLabel} />}
+          </>
         ) : user && (["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role) || brandRoute) ? (
           // AURA kromunda logo klinik panele gider (eski toggle'ın AURA hedefi — vitrin değil).
           <Link href="/doktor" className="flex shrink-0 items-end" aria-label="AURA">

@@ -15,13 +15,9 @@ import {
   type AudienceFlags, type DoctoriumAudience,
 } from "@/lib/doctorium-tiers";
 
-/** Deneme üyeliği bayrağı — 🔴 İKİ Vercel projesine AYRI girilir (BRAND_MODE dersi, .env.example).
- *  Yalnız ÜÇ yerde okunur: hesap oluşturmada damga · /doctorium/kayit form seçimi · POST
- *  /api/auth/signup-trial. Çözücü/kapı/rozet/cron damga-güdümlüdür (bayrak kapansa da başlamış
- *  denemeler biter ve imha edilir). */
-export function isTrialEnabled(): boolean {
-  return process.env.DOCTORIUM_TRIAL_ENABLED === "1";
-}
+// Bayrak env'i TEK yerden okunur (lib/doctorium-trial-flag — db/auth ağacına dokunmayan saf modül,
+// doctor-signup gibi oturumsuz kütüphaneler oradan import eder); buradan yeniden dışa açılır.
+export { isTrialEnabled } from "@/lib/doctorium-trial-flag";
 
 export interface TrialContext {
   endsAt: Date;
@@ -50,12 +46,12 @@ const STAFF_FLAGS: AudienceFlags = {
   showsTrialBadge: false,
 };
 
-// A2 migration'ı `trialEndsAt` kolonunu getirince bu select'e eklenir ve TierStamps'te alan
-// ZORUNLU yapılır (doctorium-tiers.ts notu) — o gün derleyici eksik select'leri listeler.
+// Katman select'i — TierStamps ile birebir (trialEndsAt A2 migration'ıyla geldi, alan ZORUNLU).
 const TIER_SELECT = {
   diplomaVerifiedAt: true,
   studentVerifiedAt: true,
   doctoriumOptOutAt: true,
+  trialEndsAt: true,
 } as const;
 
 function trialContextFor(audience: DoctoriumAudience, endsAt: Date | null, now: Date): TrialContext | null {
@@ -79,12 +75,11 @@ export const currentDoctoriumAudience = cache(async (): Promise<AudienceContext 
   }
   const now = new Date();
   const audience = doctoriumAudience(d, now);
-  const trialEndsAt: Date | null = null; // A2 sonrası: d.trialEndsAt
   return {
     role: "DOCTOR",
     doctorId: me?.doctorId ?? null,
     audience,
     flags: audienceFlags(audience),
-    trial: trialContextFor(audience, trialEndsAt, now),
+    trial: trialContextFor(audience, d.trialEndsAt, now),
   };
 });

@@ -21,8 +21,8 @@ describe("doctoriumAudience — öncelik tablosu (optOut > diploma > öğrenci >
   it("hiç damga yok → NONE", () => {
     expect(doctoriumAudience(none, NOW)).toBe("NONE");
   });
-  it("trialEndsAt alanı hiç verilmezse (A1: kolon yok) null sayılır", () => {
-    expect(doctoriumAudience({ diplomaVerifiedAt: null, studentVerifiedAt: null, doctoriumOptOutAt: null }, NOW)).toBe("NONE");
+  it("dört alan da null → NONE (trialEndsAt A2 migration'ı sonrası ZORUNLU alan — eksik select derlemede patlar)", () => {
+    expect(doctoriumAudience({ ...none }, NOW)).toBe("NONE");
   });
   it("doğrulanmış diploma → VERIFIED", () => {
     expect(doctoriumAudience({ ...none, diplomaVerifiedAt: D("2026-08-19") }, NOW)).toBe("VERIFIED");
