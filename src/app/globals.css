@@ -215,6 +215,22 @@
 .doctorium-shelf-bg .shelf-pulse:hover { color: var(--shelf-pulse-hover); }
 .theme-light .doctorium-shelf-bg { --shelf-dot: #047857; --shelf-pulse: #047857; --shelf-pulse-hover: #059669; }
 
+/* ÖĞRENCİ PALETİ KANCASI (üç katman Faz B1, 2026-09-05): portal sarmalayıcısı (doktor/doctorium layout) ve Header,
+   öğrenci oturumunda `data-audience="student"` taşır. Renk kararı 👤 mockup sonrası (Faz B2) — BUGÜN değerler marka
+   zümrüdüyle AYNI → görünür fark YOK. B2'de yalnız bu iki blok değişir; bileşenlere dokunulmaz (token disiplini:
+   --dl-emerald / --shelf-* / --c-accent tüketicileri buradan okur). 🪤 Turbopack kısmi CSS önbelleği: yeni blok
+   dev'de görünmezse .next silinir ([[turbopack-css-partial-cache]]). */
+.doctorium-scope[data-audience="student"],
+header[data-audience="student"] {
+  --audience-accent: #34d399;
+  --audience-accent-strong: #059669;
+}
+.theme-light .doctorium-scope[data-audience="student"],
+.theme-light header[data-audience="student"] {
+  --audience-accent: #047857;
+  --audience-accent-strong: #065f46;
+}
+
 /* AÇIK RAF VARYANTI — "shelf-white" (kullanıcı denemesi 2026-08-19): raf TEMA-BAĞIMSIZ açık
    kalır ("zebra krom" — Header sabit koyu, raf açık). Ton --shelf-white-tone ile ayarlanır
    (deneme: #f7f8f5 panel / #eaede8 kırık krom). Tüm raf-içi tonlar açık-tema değerlerine

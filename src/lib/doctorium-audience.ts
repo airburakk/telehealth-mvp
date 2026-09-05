@@ -14,6 +14,7 @@ import {
   audienceFlags, doctoriumAudience, formatTrialEndsAt, trialDaysLeft,
   type AudienceFlags, type DoctoriumAudience,
 } from "@/lib/doctorium-tiers";
+import { parseViewPrefs, type DoctoriumViewPrefs } from "@/lib/doctorium";
 
 // Bayrak env'i TEK yerden okunur (lib/doctorium-trial-flag — db/auth ağacına dokunmayan saf modül,
 // doctor-signup gibi oturumsuz kütüphaneler oradan import eder); buradan yeniden dışa açılır.
@@ -58,6 +59,15 @@ function trialContextFor(audience: DoctoriumAudience, endsAt: Date | null, now: 
   if (audience !== "TRIAL" || !endsAt) return null;
   return { endsAt, daysLeft: trialDaysLeft(endsAt, now), endsAtLabel: formatTrialEndsAt(endsAt) };
 }
+
+/** Oturum doktorunun GÖRÜNÜM tercihleri (Doctor.doctoriumViewPrefs; Faz B1: raf "TUS sekmesini göster" anahtarı
+ *  buradan okunur). Doktor profili yoksa (personel) varsayılanlar. İstek-önbellekli — Shell her sayfada çağırır. */
+export const currentDoctorViewPrefs = cache(async (): Promise<DoctoriumViewPrefs> => {
+  const ctx = await currentDoctoriumAudience();
+  if (!ctx?.doctorId) return parseViewPrefs(null);
+  const d = await db.doctor.findUnique({ where: { id: ctx.doctorId }, select: { doctoriumViewPrefs: true } });
+  return parseViewPrefs(d?.doctoriumViewPrefs ?? null);
+});
 
 /** Oturum kullanıcısının Doctorium kitle bağlamı. null = oturum yok. */
 export const currentDoctoriumAudience = cache(async (): Promise<AudienceContext | null> => {

@@ -14,6 +14,7 @@ import { hidesGlobalChrome, usesDoctoriumBrand } from "@/lib/chrome-routes";
 import { BadgeCheck, Bookmark, CalendarDays, Hourglass, LogOut, ShieldOff, Star, UserCog, Wallet } from "lucide-react";
 import { ThemeToggle, type ThemeName } from "@/components/ThemeToggle";
 import { trialBadgeLabel, trialBadgeShort, trialBadgeTitle } from "@/lib/doctorium-trial-copy";
+import { audienceFlags, type DoctoriumAudience } from "@/lib/doctorium-tiers";
 
 const ROLE_LABELS: Record<string, string> = {
   PATIENT: "Hasta",
@@ -82,7 +83,7 @@ function TrialBadge({ daysLeft, endsAtLabel }: { daysLeft: number; endsAtLabel: 
 // bitmez krom kendiliğinden AURA'ya döner.
 // doctoriumDeploy (ayrışma 2026-08-24): doctorium.tr deploy'unda /giris AURA'ya 307'lenir —
 // çıkış hedefi bu bayrakla Doctorium kapısına döner (kök layout BRAND_MODE'dan geçirir).
-export function Header({ user, lang = "Türkçe", theme = "dark", student = false, stage1 = false, doctoriumDeploy = false, trial = null }: { user: { name: string; role: string } | null; lang?: string; theme?: ThemeName; student?: boolean; stage1?: boolean; doctoriumDeploy?: boolean; trial?: { daysLeft: number; endsAtLabel: string } | null }) {
+export function Header({ user, lang = "Türkçe", theme = "dark", student = false, stage1 = false, doctoriumDeploy = false, trial = null, audience = null }: { user: { name: string; role: string } | null; lang?: string; theme?: ThemeName; student?: boolean; stage1?: boolean; doctoriumDeploy?: boolean; trial?: { daysLeft: number; endsAtLabel: string } | null; audience?: string | null }) {
   const pathname = usePathname();
   const router = useRouter();
   const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
@@ -116,6 +117,11 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   // Doctorium kromu = portal içi VEYA Aşama-1 hesabı (kromu bütünüyle Doctorium'a ait, v6.105).
   // Ayrışma sonrası (2026-08-24) bu bayrak marka bloğunu ve bildirim scope'unu da seçer.
   const doctoriumSide = doctoriumActive || stage1;
+  // Üç katman (Faz B1, 2026-09-05): pazarlama yüzeyi linki ("Puanlarım") kitle bayrağından — öğrenci VE deneme üyesinde
+  // gizli (eski `student` bayrağı deneme doktorunu göremezdi). Bilinmeyen/boş kitle → NONE → kapalı (fail-closed).
+  // `data-audience` header'a da basılır: öğrenci paleti kancası (globals.css) sarmalayıcı dışındaki kromu da kapsar.
+  const canRedeem = audienceFlags((audience ?? "NONE") as DoctoriumAudience).canRedeem;
+  const audienceAttr = audience === "STUDENT" ? "student" : undefined;
   // Rota-bazlı marka istisnası (2026-08-29): Doctorium'a ait olduğu hâlde Doctorium ağacında
   // olmayan yüzeyler (bugün: /admin/uyeler). YALNIZ logoyu etkiler — doctoriumSide'a katılmaz,
   // yani bildirim scope'u/çıkış hedefi/odak modu yöneticide AURA davranışında kalır.
@@ -235,7 +241,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   // (color-mix + blur), pill yerine metin sekmeleri (aktif = turkuaz), mono rol etiketi,
   // durak-noktalı giriş CTA'sı. Davranış (rol bazlı nav, logout, bildirim) DEĞİŞMEDİ.
   return (
-    <header dir={dir} lang={LANG_BCP47[uiLang]} className="theme-dark sticky top-0 z-30 border-b border-[var(--c-hairline)] bg-[color-mix(in_srgb,var(--c-chrome)_88%,transparent)] backdrop-blur-md">
+    <header dir={dir} lang={LANG_BCP47[uiLang]} data-audience={audienceAttr} className="theme-dark sticky top-0 z-30 border-b border-[var(--c-hairline)] bg-[color-mix(in_srgb,var(--c-chrome)_88%,transparent)] backdrop-blur-md">
       <div className="mx-auto max-w-6xl px-5 h-16 flex items-center justify-between gap-4">
         {/* Marka altyazısı ("Sağlık Turizmi & Teletıp") kullanıcı isteğiyle kaldırıldı (2026-07-12) — yalnız logo */}
         {/* shrink-0: dar ekranda flex logoyu ezip wordmark'ı nav'ın altına sokuyordu
@@ -344,7 +350,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                       <Bookmark size={15} /> {t("Kaydettiklerim")}
                     </Link>
                   )}
-                  {user.role === "DOCTOR" && !student && (doctoriumActive || stage1) && (
+                  {user.role === "DOCTOR" && canRedeem && (doctoriumActive || stage1) && (
                     <Link role="menuitem" href="/doktor/doctorium/oduller" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <Star size={15} /> {t("Puanlarım")}
                     </Link>

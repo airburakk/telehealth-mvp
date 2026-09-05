@@ -106,6 +106,8 @@ export default async function TercihlerPage() {
           pharmaInitial={viewPrefs.ilac}
           legalViewInitial={viewPrefs.mevzuat}
           showSponsor={canSeeSponsored}
+          showTusToggle={audienceCtx?.audience !== "STUDENT"}
+          tusInitial={viewPrefs.showTus}
           sponsorInitial={!!doctor.sponsorPersonalizationAt}
           sponsorText={SPONSOR_CONSENT_TEXT}
           digestInitial={doctor.digestChannel}

@@ -30,10 +30,14 @@ export const DOCTORIUM_PALETTE = {
   "--dl-cyan": "#28C8D8",
 } as CSSProperties;
 
-export function DoctoriumWord({ className = "" }: { className?: string }) {
+// `suffix` (üç katman Faz B1, 2026-09-05): öğrenci yüzeyi logo eki KANCASI ("EDU"/"STU" — 👤 mockup sonrası B2'de
+// geçilir; bugün hiçbir çağıran vermez → görünür fark yok). Marka kelimesi tek sabitte: lib/doctorium-tiers
+// DOCTORIUM_STUDENT_SUFFIX. Biçim yer tutucu — B2 tasarım kararına göre değişir.
+export function DoctoriumWord({ className = "", suffix }: { className?: string; suffix?: string }) {
   return (
     <span className={`aura-display font-medium tracking-tight text-[var(--dl-ink)] ${className}`}>
       Doctor<span className="text-[var(--dl-emerald)]">ium</span>
+      {suffix && <span className="ml-[0.28em] align-baseline text-[0.62em] font-semibold tracking-[0.12em] text-[var(--dl-emerald)]">{suffix}</span>}
     </span>
   );
 }

@@ -111,6 +111,9 @@ interface Props {
   showSponsor: boolean;
   sponsorInitial: boolean;
   sponsorText: string;
+  /** Faz B1 (2026-09-05): doktor rafında TUS sekmesi anahtarı — öğrencide çizilmez (sekme zaten daima açık). */
+  showTusToggle: boolean;
+  tusInitial: boolean;
   /** Doctorium Post günlük özet kanalı (2026-08-24): null = kapalı · "app" · "email". */
   digestInitial: string | null;
 }
@@ -167,6 +170,10 @@ export function PreferencesBoard(p: Props) {
     range: p.legalViewInitial.range, category: p.legalViewInitial.category ?? "",
   });
   const [lvSt, setLvSt] = useState<Status>({ state: "idle" });
+
+  // Faz B1 — raf sekmesi anahtarı (TUS): görünürlük tercihi, anında yazılır (view-filters module "tus").
+  const [tus, setTus] = useState(p.tusInitial);
+  const [tusSt, setTusSt] = useState<Status>({ state: "idle" });
 
   async function post(url: string, body: unknown, set: (s: Status) => void) {
     set({ state: "saving" });
@@ -471,6 +478,33 @@ export function PreferencesBoard(p: Props) {
           />
         </div>
       </section>
+
+      {/* Raf sekmeleri (üç katman Faz B1, 2026-09-05): TUS öğrencide daima açık; doktor/deneme buradan açar —
+          rapor §2 "kapalı, gizli değil" (mentor olacak asistan tek anahtarla). Doğrudan URL zaten serbest. */}
+      {p.showTusToggle && (
+        <section className="mt-9 border-t border-[var(--c-hairline)] pt-6">
+          <h2 className="text-[15px] font-semibold text-[var(--c-ink)]">Raf sekmeleri</h2>
+          <p className="mt-2 max-w-[70ch] text-[12.5px] leading-relaxed text-[var(--c-ink-2)]">
+            TUS bölümü tıp öğrencisi yüzeyidir; uzmanlık eğitimine hazırlananları takip etmek ya da mentorluk
+            için rafınıza ekleyebilirsiniz. Akışınızı etkilemez.
+          </p>
+          <div className="mt-3 flex items-start gap-3.5">
+            <Switch
+              on={tus}
+              onChange={() => {
+                const next = !tus;
+                setTus(next);
+                void post("/api/doctor/view-filters", { module: "tus", show: next }, setTusSt);
+              }}
+              label="TUS sekmesini rafta göster"
+            />
+            <div>
+              <div className="text-[13.5px] font-medium text-[var(--c-ink)]">TUS sekmesini rafta göster</div>
+              <StatusLine status={tusSt} idle={tus ? "Açık — raf 09. durak TUS" : "Kapalı — sekme çizilmez, sayfa adresle açılabilir"} />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Sponsorlu içerik rızası — ikili grubun DIŞINDA: içerik tercihi değil, RIZA kaydı. */}
       {p.showSponsor && (

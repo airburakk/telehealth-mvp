@@ -319,6 +319,7 @@ describe("Doctorium görünüm süzgeci tercihi (v6.142)", () => {
         sektorel: { source: null, range: DEFAULT_RANGE, category: null },
         ilac: { range: DEFAULT_RANGE },
         mevzuat: { range: DEFAULT_RANGE, category: null },
+        showTus: false, // Faz B1 (2026-09-05): raf TUS sekmesi tercihi — varsayılan kapalı
       });
     }
   });
@@ -333,7 +334,14 @@ describe("Doctorium görünüm süzgeci tercihi (v6.142)", () => {
       sektorel: { source: "uluslararasi", range: "7", category: "sut" },
       ilac: { range: "180" },
       mevzuat: { range: "365", category: "ilac-cihaz" },
+      showTus: false,
     });
+  });
+
+  it("Faz B1: TUS sekmesi anahtarı yalnız {tus:{show:true}} ile açılır; başka her değer kapalı", () => {
+    expect(parseViewPrefs(JSON.stringify({ tus: { show: true } })).showTus).toBe(true);
+    expect(parseViewPrefs(JSON.stringify({ tus: { show: "true" } })).showTus).toBe(false);
+    expect(parseViewPrefs(JSON.stringify({ tus: {} })).showTus).toBe(false);
   });
 
   it("bir modüldeki geçersiz alan yalnız KENDİSİ varsayılana düşer — kardeş alanlar okunur", () => {

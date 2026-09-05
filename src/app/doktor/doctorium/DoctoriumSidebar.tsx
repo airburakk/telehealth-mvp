@@ -1,5 +1,7 @@
 import { Fragment, type CSSProperties } from "react";
 import Link from "next/link";
+import { currentDoctoriumAudience, currentDoctorViewPrefs } from "@/lib/doctorium-audience";
+import { shelfTabsFor, type ShelfColor, type ShelfModuleKey, type ShelfTabDef } from "@/lib/doctorium-shelf";
 
 /**
  * Doctorium ÜST RAFI + MOBİL RAF-FOOTER (2026-08-18 Üst Raf kararı; 2026-08-19 mobil devrimi).
@@ -18,6 +20,12 @@ import Link from "next/link";
  * SERVER component (bilinçli — v6.101 dersi AYNEN): aktifliği bilen page `active` prop'uyla
  * verir; Suspense/useSearchParams/hydration bağımlılığı yok, aktif şerit SSR ilk boyada gelir.
  *
+ * KİTLEYE GÖRE SEKME (üç katman Faz B1, kullanıcı kararı 2026-09-05): sekme dizisi artık
+ * lib/doctorium-shelf `shelfTabsFor(kitle, tercih)` — öğrenci +TUS +Kariyer EDU (09/10); doktor
+ * Özelleştir'den TUS'u açabilir ("kapalı, gizli değil"). Shell kitleyi ve tercihi istek-önbellekli
+ * sunucu çözücülerden okur (lib/doctorium-audience) → 11 çağıran page DEĞİŞMEDİ. Eski MODULES/TAKVIM
+ * dizileri (kitle-kör) bu dosyadan lib/doctorium-shelf'e taşındı; renkler/anahtarlar birebir.
+ *
  * RENK MİMARİSİ (2026-08-19, "beyaz raf" denemesiyle kurulan çift-ton): sekme kimlik renkleri
  * artık {dark, light} ÇİFTİ — eski tek hex gündüz temasında da gece tonunu basıyordu (globals
  * gündüz-kontrast güvencesi yalnız Tailwind SINIFLARINI yakalar, inline style'ı yakalamaz).
@@ -29,19 +37,18 @@ import Link from "next/link";
  * okunur ki varyant tek sınıfla değişsin.
  */
 
-type ModuleKey = "akis" | "akademik" | "sektorel" | "ilac" | "etkinlik" | "kariyer" | "mevzuat";
 // "tercihler" yok: /doktor/doctorium/tercihler v6.49'dan beri redirect — işlevsiz yüzeyin
 // linki çizilmez (koşullu-href ilkesi); Özelleştir paneli sayfanın içinde yaşıyor.
-export type SidebarActive = ModuleKey | "takvim" | "oduller" | "kaydettiklerim" | null;
+export type SidebarActive = ShelfModuleKey | "takvim" | "oduller" | "kaydettiklerim" | "tus" | "kariyer-edu" | null;
 
 /** Raf nabzı (v6.102): modül → bugün akışa düşen içerik sayısı (lib/doctorium todayModuleCounts).
  *  null = sayaç verisi yok (raf nabızsız çizilir — geriye uyumlu). */
 export type SidebarCounts = Record<string, number> | null;
 
 /** Sayaç hangi modül sekmesinde ne gösterir — akis TOPLAM; etkinlik/kariyer gece akışı olmayan
- *  küratörlü veri (sayaç yanıltıcı olurdu — bilinçli yok). */
-function countFor(key: ModuleKey, counts: SidebarCounts): number | null {
-  if (!counts) return null;
+ *  küratörlü veri (sayaç yanıltıcı olurdu — bilinçli yok). Rota-sekmelerde (module null) sayaç yok. */
+function countFor(key: ShelfModuleKey | null, counts: SidebarCounts): number | null {
+  if (!key || !counts) return null;
   if (key === "akis") {
     const t = (counts.akademik ?? 0) + (counts.sektorel ?? 0) + (counts.ilac ?? 0) + (counts.mevzuat ?? 0);
     return t > 0 ? t : null;
@@ -51,31 +58,7 @@ function countFor(key: ModuleKey, counts: SidebarCounts): number | null {
   return n > 0 ? n : null;
 }
 
-/** Modül kimlik renkleri — {dark: gece tonu, light: açık zemin karşılığı}. Gündüz tonları
- *  mevcut token ailesinden (gold/accent-2 akrabalığı; raf-zemin karşılaştırma turu 2026-08-19).
- *  null = nötr (aktifken zümrüt çifti). Etkinlik "ink" = tema-duyarlı var(--c-ink) — açık raf
- *  varyantında globals --shelf-ink onu koyuya sabitler. */
-const MODULES: {
-  key: ModuleKey;
-  label: string;
-  color: { dark: string; light: string } | "ink" | null;
-  group: "BİLGİ" | "MESLEĞİM" | null;
-}[] = [
-  // Akışım sarı (kullanıcı kararı 2026-08-14): kıvılcım çağrışımı; gündüzü --c-gold ailesi.
-  { key: "akis", label: "Akışım", color: { dark: "#facc15", light: "#8a6414" }, group: null },
-  { key: "akademik", label: "Akademik", color: { dark: "#34d399", light: "#047857" }, group: "BİLGİ" },
-  { key: "sektorel", label: "Sektörel", color: { dark: "#a78bfa", light: "#5b4b9e" }, group: "BİLGİ" },
-  { key: "ilac", label: "İlaç & Cihaz", color: { dark: "#22d3ee", light: "#0e7d8c" }, group: "BİLGİ" },
-  { key: "etkinlik", label: "Etkinlik", color: "ink", group: "MESLEĞİM" },
-  { key: "kariyer", label: "Kariyer", color: { dark: "#60a5fa", light: "#2d5c9e" }, group: "MESLEĞİM" },
-  { key: "mevzuat", label: "Hukuk", color: { dark: "#fb7185", light: "#a83e50" }, group: "MESLEĞİM" },
-];
-
 const EMERALD = { dark: "#34d399", light: "#047857" };
-
-/** Takvim durağı (kullanıcı kararı 2026-08-19): modül DEĞİL ayrı ROTA — raf yine de taşır
- *  (08; kimliği marka zümrüdü). Aşama 2'de nöbet/icap planı da bu sayfada yaşayacak. */
-const TAKVIM = { href: "/doktor/doctorium/takvim", label: "Takvim", color: EMERALD };
 
 /** Raf sekmesi — NUMARA ROZETİ aktif dili (kullanıcı kararı 2026-08-18): aktifken mono durak
  *  numarası kimlik renginde DOLGULU rozete döner + etiket renklenir. Renk seçimi CSS'te:
@@ -87,7 +70,7 @@ function ShelfTab({
 }: {
   href: string;
   on: boolean;
-  color: { dark: string; light: string } | "ink" | null;
+  color: ShelfColor;
   label: string;
   no: string;
   count?: number | null;
@@ -134,40 +117,39 @@ function ShelfGroup() {
 }
 
 /** Rafın sekme dizisi — masaüstü ve mobil raf-footer AYNI diziyi çizer (tek kaynak; iki
- *  markup'ın ayrışması v6.109-öncesi çift-liste driftine geri dönüş olurdu). */
-function ShelfTabs({ active, counts }: { active: SidebarActive; counts: SidebarCounts }) {
+ *  markup'ın ayrışması v6.109-öncesi çift-liste driftine geri dönüş olurdu). Ayraç, grup
+ *  DEĞİŞTİĞİNDE çizilir (Akışım→Akademik · İlaç→Etkinlik · Hukuk→Takvim · Takvim→TUS). */
+function ShelfTabs({ active, counts, tabs }: { active: SidebarActive; counts: SidebarCounts; tabs: readonly ShelfTabDef[] }) {
   return (
     <>
-      {MODULES.map((m, i) => {
-        // Grup başlığı yalnız grup DEĞİŞTİĞİNDE çizilir. Önceki modülün grubuna bakılır —
-        // render sırasında `lastGroup` değişkenini mutasyona uğratmak yerine (aynı sonuç,
-        // ama saf: React Compiler render'da yeniden atamayı reddediyor).
-        const header = m.group && m.group !== MODULES[i - 1]?.group ? <ShelfGroup /> : null;
+      {tabs.map((t, i) => {
+        // Önceki sekmenin grubuna bakılır — render sırasında `lastGroup` değişkenini mutasyona
+        // uğratmak yerine (aynı sonuç, ama saf: React Compiler render'da yeniden atamayı reddediyor).
+        const header = i > 0 && t.group !== tabs[i - 1].group ? <ShelfGroup /> : null;
         return (
-          <Fragment key={m.key}>
+          <Fragment key={t.key}>
             {header}
             <ShelfTab
-              href={m.key === "akis" ? "/doktor/doctorium" : `/doktor/doctorium?m=${m.key}`}
-              on={active === m.key}
-              color={m.color}
-              label={m.label}
+              href={t.href}
+              on={active === t.key}
+              color={t.color}
+              label={t.label}
               no={String(i + 1).padStart(2, "0")}
-              count={countFor(m.key, counts)}
+              count={countFor(t.module, counts)}
             />
           </Fragment>
         );
       })}
-      <ShelfGroup />
-      <ShelfTab href={TAKVIM.href} on={active === "takvim"} color={TAKVIM.color} label={TAKVIM.label} no="08" />
     </>
   );
 }
 
 export function DoctoriumSidebar({
-  active, counts = null,
+  active, counts = null, tabs,
 }: {
   active: SidebarActive;
   counts?: SidebarCounts;
+  tabs: readonly ShelfTabDef[];
 }) {
   const totalToday = countFor("akis", counts);
 
@@ -184,7 +166,7 @@ export function DoctoriumSidebar({
             Header'daki AURA wordmark'ının x'iyle hizalanır (kullanıcı isteği 2026-08-18).
             Dar masaüstünde raf yatay kayar. */}
         <div className="mx-auto flex h-12 max-w-6xl items-center gap-0.5 overflow-x-auto pe-5 ps-[39px]">
-          <ShelfTabs active={active} counts={counts} />
+          <ShelfTabs active={active} counts={counts} tabs={tabs} />
 
           {/* Sağ küme: yalnız nabız (kullanıcı kararı 2026-08-18, 2. tur) — Kaydettiklerim ve
               Puanlarım Header profil menüsünde. Nabız TIKLANABİLİR (3. tur): 2026-08-24'ten beri
@@ -216,7 +198,7 @@ export function DoctoriumSidebar({
         className="doctorium-shelf-bg fixed inset-x-0 bottom-0 z-40 border-t border-[var(--shelf-hairline)] pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
         <div className="flex h-12 items-center gap-0.5 overflow-x-auto px-3">
-          <ShelfTabs active={active} counts={counts} />
+          <ShelfTabs active={active} counts={counts} tabs={tabs} />
         </div>
       </nav>
     </>
@@ -230,17 +212,22 @@ export function DoctoriumSidebar({
  * `balance`/`isDoctor` prop'ları 2026-09-05'te SÖKÜLDÜ: mobil çubuğun eski Kayıtlı/Puanlarım
  * yuvaları 2026-08-19'da Header menüsüne taşınmıştı; çağıranlardaki getDoctorBalance hesapları da
  * kalktı (puan bakiyesi yalnız /oduller sayfasında okunur).
+ *
+ * ASYNC (üç katman Faz B1): kitle + görünüm tercihi istek-önbellekli çözücülerden okunur
+ * (layout/page/Shell aynı sorguları paylaşır) → raf kitleye göre kurulur; çağıranlar değişmez.
  */
-export function DoctoriumShell({
+export async function DoctoriumShell({
   active, counts = null, children,
 }: {
   active: SidebarActive;
   counts?: SidebarCounts;
   children: React.ReactNode;
 }) {
+  const [ctx, prefs] = await Promise.all([currentDoctoriumAudience(), currentDoctorViewPrefs()]);
+  const tabs = shelfTabsFor(ctx?.audience ?? null, { showTus: prefs.showTus });
   return (
     <>
-      <DoctoriumSidebar active={active} counts={counts} />
+      <DoctoriumSidebar active={active} counts={counts} tabs={tabs} />
       <div className="pb-14 md:pb-0">{children}</div>
     </>
   );

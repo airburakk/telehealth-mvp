@@ -37,7 +37,7 @@ export function AppChrome({ doctoriumDeploy }: { doctoriumDeploy: boolean }) {
 
   return (
     <>
-      <Header user={me.user} lang={me.lang} theme={theme} student={me.student} stage1={me.stage1} doctoriumDeploy={doctoriumDeploy} trial={me.trial ?? null} />
+      <Header user={me.user} lang={me.lang} theme={theme} student={me.student} stage1={me.stage1} doctoriumDeploy={doctoriumDeploy} trial={me.trial ?? null} audience={me.audience ?? null} />
       {me.imp ? (
         <MasterBar mode="impersonating" userName={me.user?.name} />
       ) : me.isMaster ? (

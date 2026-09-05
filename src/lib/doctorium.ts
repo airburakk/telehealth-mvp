@@ -1030,11 +1030,14 @@ export interface DoctoriumViewPrefs {
   sektorel: SectorViewPrefs;
   ilac: PharmaViewPrefs;
   mevzuat: LegalViewPrefs;
+  /** Üç katman Faz B1 (2026-09-05): doktor rafında TUS sekmesi (öğrencide daima açık; rapor §2 "kapalı, gizli değil"). */
+  showTus: boolean;
 }
 const DEFAULT_VIEW_PREFS: DoctoriumViewPrefs = {
   sektorel: { source: null, range: DEFAULT_RANGE, category: null },
   ilac: { range: DEFAULT_RANGE },
   mevzuat: { range: DEFAULT_RANGE, category: null },
+  showTus: false,
 };
 // <string> ZORUNLU: RANGE_OPTIONS `as const` olduğundan .map(r=>r.key) literal union'ı korur
 // (Set<"1"|"7"|"30"|"180"|"365">) — sonra .has(v) çalışma-zamanı string'iyle çağrılınca tsc
@@ -1054,6 +1057,7 @@ export function parseViewPrefs(raw: string | null | undefined): DoctoriumViewPre
     const sek = (v.sektorel ?? {}) as Record<string, unknown>;
     const il = (v.ilac ?? {}) as Record<string, unknown>;
     const mv = (v.mevzuat ?? {}) as Record<string, unknown>;
+    const tus = (v.tus ?? {}) as Record<string, unknown>;
     return {
       sektorel: {
         source: parseSourceScope(typeof sek.s === "string" ? sek.s : null),
@@ -1067,6 +1071,7 @@ export function parseViewPrefs(raw: string | null | undefined): DoctoriumViewPre
         range: typeof mv.d === "string" && RANGE_KEY_SET.has(mv.d) ? mv.d : DEFAULT_RANGE,
         category: typeof mv.c === "string" && SECTOR_CATEGORIES.some((c) => c.key === mv.c) ? mv.c : null,
       },
+      showTus: tus.show === true,
     };
   } catch {
     return DEFAULT_VIEW_PREFS;

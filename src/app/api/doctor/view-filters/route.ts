@@ -7,7 +7,7 @@ import { RANGE_OPTIONS, DEFAULT_RANGE, SECTOR_CATEGORIES } from "@/lib/doctorium
 // (Set<"1"|"7"|"30"|"180"|"365">) — sonra .has(v) çalışma-zamanı string'iyle çağrılınca reddedilir.
 const RANGE_KEYS = new Set<string>(RANGE_OPTIONS.map((r) => r.key));
 const CATEGORY_KEYS = new Set(SECTOR_CATEGORIES.map((c) => c.key));
-const MODULE_KEYS = new Set(["sektorel", "ilac", "mevzuat"]);
+const MODULE_KEYS = new Set(["sektorel", "ilac", "mevzuat", "tus"]); // "tus" (Faz B1): raf sekmesi anahtarı {show}
 
 function normRange(v: unknown): string {
   return typeof v === "string" && RANGE_KEYS.has(v) ? v : DEFAULT_RANGE;
@@ -56,6 +56,9 @@ export async function POST(req: Request) {
     prefs.sektorel = { s: normSource(b.source), d: normRange(b.range), c: normCategory(b.category) };
   } else if (moduleKey === "ilac") {
     prefs.ilac = { d: normRange(b.range) };
+  } else if (moduleKey === "tus") {
+    // Faz B1 (2026-09-05): doktor rafında TUS sekmesi — içerik süzgeci değil, yalnız görünürlük anahtarı.
+    prefs.tus = { show: b.show === true };
   } else {
     prefs.mevzuat = { d: normRange(b.range), c: normCategory(b.category) };
   }
