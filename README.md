@@ -868,6 +868,15 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   **v6→v7**. JSON-LD logo → `/icon-512.png?v=3`. 🪤 Turbopack kısmi CSS önbelleği yeni `.sınıf`ı
   dev'de düşürdü → lockup alt yazı stili INLINE. 🪤 Next 16 ikinci `next dev`'i reddeder (kilit);
   paralel oturumun sunucusu aynı ağacı HMR ile servis eder — doğrulama Playwright ile oradan.
+  · **Öğrenci lockup'ı (üç katmanlı üyelik Faz B2 — logo, v6.239 / commit `071851d`, 2026-09-05):** kitle
+  `STUDENT` olan hesapta Header marka bloğu küre+wordmark yerine **"Doctorium STUDENT" ışık-telli lockup**
+  görselini çizer (`Header.tsx` `DoctoriumBrand({student})`; `public/brand/doctorium-student-lockup-{dark,light}-{720,1440}.webp`,
+  alfa; küre ≈ 28 px; header her temada `theme-dark` krom → yalnız gece varlığı bağlı, gündüz varlığı
+  tema-duyarlı yüzeyler için hazır). Sekme başlığı `generateMetadata` ile "Doctorium Student"
+  (`doktor/doctorium/layout.tsx` + `page.tsx` — page'in `absolute` başlığı layout şablonunu ezer, ikisi de
+  kitleye duyarlı). Favicon bilinçli DEĞİŞMEDİ (16 px'te üç harf okunmaz). Görsel, Higgsfield fikri (Nano
+  "ışık telleri") + GERÇEK marka küresi (4K kare, header bake reçetesi, disk K=0,90) + birleşim inpaint ile
+  üretildi; kaynak ve scriptler vault marka arşivinde (`doctorium-marka-arsivi/edu-stu-mockup-2026-09-05/`).
   · **PWA manifest + iOS/push ikonu MARKA-DUYARLI (Faz E, 2026-09-03, v6.207):** doctorium.tr'nin manifest'i
   "AURA Health" adı ve turkuaz ikonla sunuluyordu (QA 02.09 sızıntı ailesi). Statik `public/manifest.webmanifest`
   SİLİNDİ → `src/app/manifest.ts` BRAND_MODE'a göre Doctorium/AURA manifest'i üretir (build-time, force-static;
