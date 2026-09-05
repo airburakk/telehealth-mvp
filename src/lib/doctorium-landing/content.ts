@@ -71,10 +71,13 @@ export const SECTIONS: readonly SectionCopy[] = [
   {
     id: "hero",
     theme: "dark",
-    requires: ["feed.personal"],
+    // 2026-09-05 (kullanıcı kararı, rapor §1.1): "ücretsiz" iddiası hero lead'inin sonunda — kayıt defteri
+    // membership.free (kanıt: 02 Üyelik Sözleşmesi madde 5.1 + üye tarafında ödeme kodu yok). Mutlak "ömür boyu"
+    // dili YASAK (madde 5.2 ileride ücretli hizmet hakkını saklı tutar).
+    requires: ["feed.personal", "membership.free"],
     eyebrow: "Doktorlar için kişisel profesyonel çalışma alanı",
     title: "Her doktor kendi {Doctorium}'unu oluşturur.",
-    lead: "Branşınıza ve takip etmek istediğiniz profesyonel gündeme göre şekillenen kişisel çalışma alanınız.",
+    lead: "Branşınıza ve takip etmek istediğiniz profesyonel gündeme göre şekillenen kişisel çalışma alanınız. Doktorlar ve tıp öğrencileri için ücretsiz.",
     note: "Doğrulanmış doktor ve tıp öğrencisi üyeliği — belge incelemesiyle.",
     ctas: [
       { label: "{Doctorium}'unu oluştur", to: "signup", primary: true },
@@ -167,7 +170,8 @@ export const SECTIONS: readonly SectionCopy[] = [
     requires: ["identity.diploma_edevlet", "identity.student_cert", "identity.badge_ui"],
     eyebrow: "Profesyonel alan",
     title: "Profesyonel alanın değeri, kimin içeride olduğuyla başlar.",
-    body: "Doktor üyeliği diploma belgesiyle açılır: e-Devlet barkodlu mezun belgesi veya inceleme. Tıp öğrencisi üyeliği öğrenci belgesiyle; öğrenci üyelikte sponsorlu içerik, anket ve ödül özellikleri kapalıdır.",
+    // 2026-09-05 düzeltme: öğrenci kapısı v6.147'den beri üniversite e-postası doğrulaması — "öğrenci belgesiyle" yanlıştı.
+    body: "Doktor üyeliği diploma belgesiyle açılır: e-Devlet barkodlu mezun belgesi veya inceleme. Tıp öğrencisi üyeliği üniversitesinin kurumsal e-posta adresiyle (.edu.tr) açılır; öğrenci üyelikte sponsorlu içerik, anket ve ödül özellikleri kapalıdır.",
     ctas: [{ label: "Öğrenci üyeliğini incele", to: "student" }],
   },
   {

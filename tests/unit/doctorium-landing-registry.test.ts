@@ -46,6 +46,23 @@ describe("registry", () => {
       expect(capability(id).status, id).toBe("unsupported");
     }
   });
+
+  // 2026-09-05 (kullanıcı kararı, rapor §1.1): "ücretsiz" iddiası hero lead'inde; kanıt 02 madde 5.1 + ödeme kodu yok.
+  it("membership.free verified; hero ona bağlı ve lead 'ücretsiz' der; mutlak dil yasak listede", () => {
+    const c = capability("membership.free");
+    expect(c.status).toBe("verified");
+    expect(c.prohibitedClaims).toContain("ömür boyu ücretsiz");
+    const hero = SECTIONS.find((s) => s.id === "hero")!;
+    expect(hero.requires).toContain("membership.free");
+    expect(hero.lead ?? "").toContain("Doktorlar ve tıp öğrencileri için ücretsiz.");
+  });
+
+  // 2026-09-05 düzeltme: öğrenci kapısı üniversite e-postasıdır (v6.147) — "öğrenci belgesiyle" iddiası yasaklandı.
+  it("identity.student_cert iddiası e-posta doğrulamasını söyler; 'öğrenci belgesi' hiçbir metinde geçmez", () => {
+    expect(capability("identity.student_cert").allowedClaims[0]).toContain("kurumsal e-posta");
+    const identity = SECTIONS.find((s) => s.id === "identity")!;
+    expect(identity.body ?? "").toContain(".edu.tr");
+  });
 });
 
 describe("içerik ↔ registry", () => {

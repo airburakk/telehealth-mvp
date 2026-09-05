@@ -58,6 +58,7 @@ export type CapabilityId =
   | "identity.diploma_edevlet"
   | "identity.student_cert"
   | "identity.badge_ui"
+  | "membership.free"
   | "transparency.source_meta"
   | "transparency.ai_provenance"
   | "analytics.aggregate";
@@ -129,13 +130,23 @@ export const CAPABILITIES: readonly Capability[] = [
     ["src/lib/edevlet-belge.ts", "src/lib/doctor-activation.ts:252 diplomaVerifiedAt"],
     ["Doktor üyeliği diploma belgesiyle açılır: e-Devlet barkodlu mezun belgesi veya inceleme"],
     ["akredite", "yalnızca doktorlar"]),
+  // v6.147: öğrenci kapısı belge DEĞİL üniversite e-postası tıklama-doğrulaması; 2026-09-05'te iddia buna
+  // hizalandı ("öğrenci belgesiyle" yasak kalıba alındı). Pazarlama yüzeyi kapalılığı: doctorium-tiers STUDENT.
   cap("identity.student_cert", "verified",
-    ["src/lib/doctor-activation.ts:282 studentVerifiedAt"],
-    ["Tıp öğrencisi üyeliği öğrenci belgesiyle; sponsorlu içerik, anket ve ödül kapalı"]),
+    ["src/app/api/auth/verify-student-email/route.ts studentVerifiedAt", "src/lib/universities.ts domainMatches (.edu.tr allowlist)", "src/lib/doctorium-tiers.ts audienceFlags(STUDENT)"],
+    ["Tıp öğrencisi üyeliği üniversitesinin kurumsal e-posta adresiyle (.edu.tr) açılır; sponsorlu içerik, anket ve ödül kapalı"],
+    ["öğrenci belgesi"]),
   cap("identity.badge_ui", "partial",
     ["src/components/DoctorDocuments.tsx:45 statusRozet (onboarding)"],
     ["Temsilî doğrulama rozeti (statik)"],
     ["gerçek profil", "üye listesi"]),
+  // Üyelik ÜCRETSİZ (2026-09-05, kullanıcı kararı — rapor §1.1): kanıt = hukuki metin + üye tarafında ödeme/abonelik
+  // yolunun bulunmaması (gelir modeli SponsorCampaign). 02 madde 5.2 ileride ücretli HİZMET hakkını saklı tuttuğu için
+  // mutlak "her zaman / ömür boyu / asla ücret" dili YASAK — yalnız bugünkü durum yazılır.
+  cap("membership.free", "verified",
+    ["src/lib/doctorium-legal/texts/kosullar.ts madde 5.1 'Doctorium üyeliği Üye için ücretsizdir'", "üye tarafında ödeme/abonelik kodu yok — gelir SponsorCampaign (prisma/schema.prisma)"],
+    ["Doktorlar ve tıp öğrencileri için ücretsiz"],
+    ["ömür boyu ücretsiz", "her zaman ücretsiz", "asla ücret", "sonsuza dek ücretsiz"]),
   cap("transparency.source_meta", "verified",
     ["src/app/doktor/doctorium/ArticleCard.tsx:161-211 künye"],
     ["Her kartta kaynak adı, yayın tarihi ve özgün bağlantı"],
