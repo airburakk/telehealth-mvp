@@ -1,4 +1,4 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/01-kvkk-aydinlatma-metni.md (Sürüm 1.1 · 04.09.2026 — revizyon turu 1, 👤 nihai).
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/01-kvkk-aydinlatma-metni.md (Sürüm 1.2 · 05.09.2026 — revizyon turu 2 [deneme erişimi], 👤 nihai).
 // Elle düzenleme: kaynak .md → vault; buradaki metin yayın kesitidir (iç notlar/karar bölümleri yok).
 // Kimlik alanları (unvan/adres/MERSİS/KEP/VERBİS) tüzel kişilik kurulunca doldurulur (Kılavuz §8).
 export const AYDINLATMA_MD = `## 1. Veri Sorumlusu
@@ -35,8 +35,8 @@ Sunulan işlevler:
 
 | Kategori | Veriler |
 |---|---|
-| **Kayıt sırasında istenen** | Ad-soyad, ünvan, uzmanlık branşı, şehir, e-posta adresi ve **isteğe bağlı** cep telefonu numarası |
-| **Hesap güvenliği** | Parolanız — **açık hâliyle saklanmaz**, yalnız geri döndürülemez özeti tutulur |
+| **Kayıt sırasında istenen** | Ad-soyad, ünvan, uzmanlık branşı, şehir, e-posta adresi ve **isteğe bağlı** cep telefonu numarası. Deneme Erişimi kaydında yalnız ad-soyad, uzmanlık branşı, şehir ve e-posta adresi istenir |
+| **Hesap güvenliği** | Parolanız — **açık hâliyle saklanmaz**, yalnız geri döndürülemez özeti tutulur. Parolasız girişte e-posta adresinize gönderilen tek kullanımlık bağlantının özeti tutulur; 20 dakika geçerlidir, kullanıldığında silinir |
 | **Doğrulama** | **Doğrulama başarılıysa yüklediğiniz belge saklanmaz** — dosya hiç depolanmaz, yerine imha kaydı yazılır. Saklanan yalnız doğrulama kararı, zamanı ve şifreli barkod numarasıdır. **T.C. kimlik numaranız** yalnız sorgu anında kullanılır, hiçbir yerde tutulmaz. Belge yalnız otomatik doğrulama sonuç vermediğinde, **insan incelemesi için geçici olarak** saklanır → ayrıntı: doğrulama ekranındaki aydınlatma metni |
 | **Kullanım tercihleri** | Takip edilen branşlar, açık akış modülleri, görünüm tercihleri, kongre bildirim tercihleri (etkinlik türü, kapsam, hatırlatma günleri) |
 | **Etkileşim** | Kaydedilen içerikler, anket yanıtları, puan hareketleri, ödül talepleri ve talep notları |
@@ -101,7 +101,8 @@ Veriler; kayıt formu, profil düzenleme ekranları, tercih panelleri, e-Devlet 
 üniversite e-postası doğrulaması, platform içi etkileşimleriniz (kaydetme, anket yanıtı, ödül
 talebi) ve otomatik sistem kayıtları (giriş/erişim logları) yoluyla **elektronik ortamda**
 toplanır. Google veya Apple hesabınızla giriş yapmayı seçerseniz, ilgili sağlayıcıdan yalnız
-kimlik doğrulama için gereken asgari bilgi (kimlik tanımlayıcısı ve e-posta) alınır.
+kimlik doğrulama için gereken asgari bilgi (kimlik tanımlayıcısı ve e-posta) alınır. Deneme Erişimi'nde
+parola belirlenmez; giriş, e-posta adresinize gönderilen tek kullanımlık bağlantıyla yapılır.
 
 ---
 
@@ -132,6 +133,8 @@ gönderilmez**. Yurt dışında yerleşik sağlayıcılara aktarım, KVKK m.9'da
 | Veri | Süre |
 |---|---|
 | Üyelik, profil, tercihler, kaydedilen içerikler, doğrulama kaydı | Üyelik süresince; hesabınızı kapattığınızda **derhâl silinir**. Üç yıl boyunca giriş yapılmayan hesap, 30 gün önce bildirim yapılarak silinir |
+| Doğrulanmamış Deneme Erişimi hesabı | Deneme süresi **30 gün**; süre sonunda doğrulama yapılmamışsa erişim kapanır ve hesap, bitimden itibaren **90 gün** içinde (silmeden **30 gün önce** bildirim yapılarak) silinir |
+| Parolasız giriş bağlantısı (tek kullanımlık, yalnız özet) | **20 dakika**; kullanıldığında derhâl silinir |
 | İncelemeye düşen mesleki belge | Kabulde karar anında imha; rette yüklemeden itibaren en geç **90 gün**; başarılı otomatik doğrulamada belge hiç saklanmaz |
 | Anket yanıtları | Hesap kapatmada **anonimleştirilir**; katılım bedeli ödenen ankette hakediş kaydı **10 yıl** |
 | Puanlar / ifa edilmiş ödül talepleri | Puanlar hesap kapatmada silinir; ödül talepleri anonim olarak **10 yıl** (mali mevzuat) |

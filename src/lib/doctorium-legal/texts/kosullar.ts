@@ -1,4 +1,4 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/02-uyelik-sozlesmesi-kullanim-kosullari.md (Sürüm 1.1 · 04.09.2026 — revizyon turu 1, 👤 nihai).
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/02-uyelik-sozlesmesi-kullanim-kosullari.md (Sürüm 1.2 · 05.09.2026 — revizyon turu 2 [deneme erişimi], 👤 nihai).
 // Elle düzenleme: kaynak .md → vault; buradaki metin yayın kesitidir (iç notlar/karar bölümleri yok).
 // Kimlik alanları (unvan/adres/MERSİS/KEP/VERBİS) tüzel kişilik kurulunca doldurulur (Kılavuz §8).
 export const KOSULLAR_MD = `## 1. TARAFLAR VE KONU
@@ -20,6 +20,7 @@ ilişkin şartları düzenler.
 | **Doctorium** | Doğrulanmış doktorlara ve tıp öğrencilerine açık mesleki çalışma alanı |
 | **Doktor Üye** | Mesleki kimliği e-Devlet mezun belgesi ile doğrulanmış hekim |
 | **Öğrenci Üye** | Üniversite e-postası doğrulanmış tıp fakültesi öğrencisi |
+| **Deneme Erişimi** | Doktor adayına, mesleki kimlik doğrulaması tamamlanmadan önce yalnız doğrulamayı tamamlaması için tanınan, en fazla 30 günlük sınırlı erişim (madde 3.2) |
 | **İçerik** | Platformda sunulan haber, akademik yayın özeti, mevzuat, içtihat, doktrin künyesi, prospektüs bilgisi, kongre ve etkinlik kaydı |
 | **Sponsorlu İçerik** | "Sponsorlu" etiketiyle yayımlanan, bedeli karşılığı yer verilen içerik |
 | **Puan** | Platform içi, parasal değeri bulunmayan katılım göstergesi |
@@ -32,8 +33,18 @@ ilişkin şartları düzenler.
    a) Türkiye'deki bir tıp fakültesinden mezun olup tıp doktoru unvanına sahip kişiler,
    b) Tıp fakültesi öğrencileri.
 
-**3.2. Doktor Üye doğrulaması.** Üye, mesleki kimliğini e-Devlet üzerinden alınan **barkodlu
-mezun belgesi** ile doğrular. Doğrulama tamamlanmadan içerik erişimi açılmaz.
+**3.2. Doktor Üye doğrulaması ve deneme erişimi.**
+   a) Doktor Üye, mesleki kimliğini e-Devlet üzerinden alınan **barkodlu mezun belgesi** ile doğrular.
+   b) Platform, doğrulama tamamlanmadan önce doktor adayına kayıt tarihinden itibaren **30 gün** süreli bir
+      **Deneme Erişimi** tanıyabilir. Deneme Erişimi yalnız doğrulamanın tamamlanması için verilir; bu süre
+      içinde sponsorlu içerik, anket, puan ve ödül programı kapalıdır (madde 7 ve 8 uygulanmaz). Deneme
+      Erişimi **ücretli bir üyeliğe dönüşmez** ve Üye'den ödeme bilgisi istenmez (madde 5).
+   c) Deneme süresinin sonunda doğrulama tamamlanmamışsa içerik erişimi kapanır; doğrulama tamamlandığında
+      yeniden açılır. Doğrulama yapılmayan hesap, sürenin bitiminden itibaren **90 gün** içinde silinir;
+      silmeden en az **30 gün** önce kayıtlı e-posta adresine bildirim yapılır.
+   d) Deneme Erişimi kaydında ad-soyad, e-posta adresi, uzmanlık branşı ve şehir bilgisi istenir; giriş,
+      e-posta adresine gönderilen tek kullanımlık bağlantı ya da Google/Apple hesabıyla yapılır. Madde
+      3.4'teki doğruluk yükümü Deneme Erişimi için de geçerlidir.
 
 **3.3. Öğrenci Üye doğrulaması.** Üye, üniversitesine ait e-posta adresinin doğrulanmasıyla
 kaydolur. Öğrenci üyeliğinin kapsamı ve sınırları ayrıca düzenlenmiştir.
@@ -154,7 +165,9 @@ münhasır olmayan** bir kullanım hakkı tanınır.
    a) Gerçeğe aykırı beyan veya sahte belge ile doğrulama,
    b) Madde 6'daki yükümlülüklerin ihlali,
    c) Platform güvenliğine yönelik girişim,
-   d) Mesleki kimliğin geçerliliğini yitirmesi.
+   d) Mesleki kimliğin geçerliliğini yitirmesi,
+   e) Deneme Erişimi süresinin doğrulama tamamlanmadan sona ermesi (madde 3.2-c; bu hâlde erişim kapanır ve
+      hesap 90 gün içinde silinir).
 
 **10.3.** Askıya alma veya sona erdirme kararı Üye'ye **gerekçesiyle birlikte** bildirilir. Üye,
 kararın bildiriminden itibaren **15 gün** içinde **bilgi@doctorium.tr** adresine itiraz edebilir. İtiraz, veri
