@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, CalendarDays, ExternalLink, Info } from "lucide-react";
 import { TUS_EXAM_PERIODS, TUS_OFFICIAL_LINKS } from "@/lib/tus";
-import { EDU_KIND_LABEL, EDU_OPPORTUNITIES } from "@/lib/edu-opportunities";
+import { EDU_KIND_LABEL, approvedEduOpportunities, eduCountryLabel } from "@/lib/edu-opportunities";
+import { formatIsoDayTr } from "@/lib/iso-day";
 import { AuraPanel } from "@/components/ui/AuraPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AuraButtonLink } from "@/components/ui/AuraButton";
@@ -55,31 +56,42 @@ export function TusPeriodsPanel({ className = "" }: { className?: string }) {
       />
     );
   }
+  // Yeni dönem üstte; başvuru penceresi yalnız takvimden çekilen dönemlerde dolu. Tarihler UTC ekseninde Türkçe.
+  const rows = [...TUS_EXAM_PERIODS].reverse();
+  const verified = rows.map((p) => p.verifiedAt).sort().at(-1);
   return (
-    <AuraPanel title="Sınav dönemleri" meta="KAYNAKLI" className={className}>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-[11px] uppercase tracking-wider text-[var(--c-ink-3)]">
-            <th className="py-2">Dönem</th><th className="py-2">Sınav</th><th className="py-2">Sonuç</th><th className="py-2">Kaynak</th>
-          </tr>
-        </thead>
-        <tbody>
-          {TUS_EXAM_PERIODS.map((p) => (
-            <tr key={`${p.year}-${p.term}`} className="border-t border-[var(--c-hairline)] text-[var(--c-ink-2)]">
-              <td className="py-2 font-medium text-[var(--c-ink)]">{p.year} · {p.term}. dönem</td>
-              <td className="py-2">{p.examDate ?? "—"}</td>
-              <td className="py-2">{p.resultDate ?? "—"}</td>
-              <td className="py-2"><a href={p.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">ÖSYM</a></td>
+    <AuraPanel title="Sınav dönemleri" meta="ÖSYM · KAYNAKLI" className={className}>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-wider text-[var(--c-ink-3)]">
+              <th className="py-2 pr-3">Dönem</th><th className="py-2 pr-3">Başvuru</th><th className="py-2 pr-3">Sınav</th><th className="py-2 pr-3">Sonuç</th><th className="py-2">Kaynak</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((p) => (
+              <tr key={`${p.year}-${p.term}`} className="border-t border-[var(--c-hairline)] text-[var(--c-ink-2)]">
+                <td className="py-2 pr-3 font-medium whitespace-nowrap text-[var(--c-ink)]">{p.year}-TUS {p.term}. Dönem</td>
+                <td className="py-2 pr-3 whitespace-nowrap">{p.applicationStart && p.applicationEnd ? `${formatIsoDayTr(p.applicationStart)} – ${formatIsoDayTr(p.applicationEnd)}` : "—"}</td>
+                <td className="py-2 pr-3 whitespace-nowrap">{p.examDate ? formatIsoDayTr(p.examDate) : "—"}</td>
+                <td className="py-2 pr-3 whitespace-nowrap">{p.resultDate ? formatIsoDayTr(p.resultDate) : "—"}</td>
+                <td className="py-2"><a href={p.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-[var(--c-accent)]">ÖSYM duyurusu</a></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
+        Tarihler ÖSYM&apos;nin kendi duyuru ve sınav takvimi sayfalarından alınır{verified ? `; son doğrulama ${formatIsoDayTr(verified)}` : ""}. Bağlayıcı olan ÖSYM&apos;nin yayımladığı güncel metindir.
+      </p>
     </AuraPanel>
   );
 }
 
 export function EduOpportunitiesPanel({ className = "" }: { className?: string }) {
-  if (EDU_OPPORTUNITIES.length === 0) {
+  // Yalnız 👤 onaylı satırlar (approvedAt) — onaysız veri hiçbir yüzeyde görünmez; liste boşsa dürüst "hazırlanıyor".
+  const rows = approvedEduOpportunities();
+  if (rows.length === 0) {
     return (
       <EmptyState
         className={className}
@@ -92,16 +104,31 @@ export function EduOpportunitiesPanel({ className = "" }: { className?: string }
     );
   }
   return (
-    <AuraPanel title="Yaklaşan son başvurular" meta="KAYNAKLI" className={className}>
+    <AuraPanel title="Fırsat takvimi" meta={`KAYNAKLI · ${rows.length}`} className={className}>
       <ul className="divide-y divide-[var(--c-hairline)]">
-        {EDU_OPPORTUNITIES.map((o) => (
-          <li key={o.id} className="py-3">
-            <div className="aura-mono text-[10px] uppercase tracking-wider text-[var(--c-ink-3)]">{EDU_KIND_LABEL[o.kind]} · son başvuru {o.deadline}</div>
-            <a href={o.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-0.5 block text-[15px] font-semibold text-[var(--c-ink)] hover:text-[var(--c-accent)]">{o.title}</a>
-            <p className="mt-1 text-[13px] text-[var(--c-ink-2)]">{o.organizer}{o.country ? ` · ${o.country}` : ""} — {o.eligibility}</p>
+        {rows.map((o) => (
+          <li key={o.id} className="py-3.5">
+            <div className="aura-mono flex flex-wrap items-center gap-x-2 text-[10px] uppercase tracking-wider text-[var(--c-ink-3)]">
+              <span className="text-[var(--c-accent)]">{EDU_KIND_LABEL[o.kind]}</span>
+              <span aria-hidden>·</span>
+              <span>{eduCountryLabel(o.country)}</span>
+              <span aria-hidden>·</span>
+              {o.deadline ? (
+                <span className="text-[var(--c-ink-2)]">son başvuru {formatIsoDayTr(o.deadline)}</span>
+              ) : (
+                <span className="normal-case tracking-normal">{o.deadlineNote}</span>
+              )}
+            </div>
+            <a href={o.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--c-ink)] hover:text-[var(--c-accent)]">
+              {o.title} <ExternalLink size={13} aria-hidden />
+            </a>
+            <p className="mt-1 text-[13px] leading-relaxed text-[var(--c-ink-2)]"><span className="font-medium text-[var(--c-ink)]">{o.organizer}</span> — {o.eligibility}</p>
           </li>
         ))}
       </ul>
+      <p className="mt-3 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
+        Başvuru daima kurumun kendi sayfasında yapılır; tarih ve şartlar kurum duyurularıyla değişebilir. Bu liste ilan değil, süreç bilgisidir.
+      </p>
     </AuraPanel>
   );
 }

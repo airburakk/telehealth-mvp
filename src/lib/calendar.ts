@@ -16,11 +16,12 @@
 // yoksa gece yarısı kayması etkinliği bir gün ileri/geri gösterir.
 import { db } from "./db";
 import { followedCongressIds } from "./doctorium";
+import { tusCalendarItems } from "./tus";
 
 export interface CalendarItem {
   /** Liste key'i — kaynak+id+tür (aynı etkinlik 3 türde görünebilir). */
   key: string;
-  kind: "etkinlik" | "bildiri" | "erken-kayit" | "nobet" | "icap" | "kisisel";
+  kind: "etkinlik" | "bildiri" | "erken-kayit" | "nobet" | "icap" | "kisisel" | "tus";
   title: string;
   /** Detay bağlantısı (etkinlik kartı vb.); kişisel/nöbet kayıtlarında olmayabilir. */
   href?: string;
@@ -37,6 +38,8 @@ export const CAL_KIND_LABEL: Record<CalendarItem["kind"], string> = {
   nobet: "Nöbet",
   icap: "İcap nöbeti",
   kisisel: "Kişisel",
+  // T1 (2026-09-05): TUS başvuru/sınav/sonuç günleri — öğrencide daima, doktorda Özelleştir "Kariyer içinde TUS" açıksa.
+  tus: "TUS",
 };
 
 /** UTC gün anahtarı. */
@@ -62,7 +65,9 @@ export function monthWindow(year: number, month: number): { start: Date; end: Da
  * Doktorun bir aylık takvimi. Ay penceresiyle KESİŞEN her öğe döner (aralık taşanlar dahil —
  * ızgara kırpar). Sıralama: başlangıç günü, sonra tür (etkinlik > son tarihler).
  */
-export async function doctorCalendarMonth(doctorId: string, year: number, month: number): Promise<CalendarItem[]> {
+export async function doctorCalendarMonth(
+  doctorId: string, year: number, month: number, opts: { includeTus?: boolean } = {},
+): Promise<CalendarItem[]> {
   const { start, end } = monthWindow(year, month);
   const followed = await followedCongressIds(doctorId);
   const items: CalendarItem[] = [];
@@ -116,6 +121,10 @@ export async function doctorCalendarMonth(doctorId: string, year: number, month:
     const kind = e.kind === "NOBET" ? "nobet" : e.kind === "ICAP" ? "icap" : "kisisel";
     items.push({ key: `ce-${e.id}`, kind, title: e.title, start: dayKey(e.startAt), end: dayKey(e.endAt ?? e.startAt) });
   }
+
+  // T1 (2026-09-05): TUS dönem tablosundan (lib/tus, ÖSYM kaynaklı) başvuru aralığı + sınav + sonuç günleri. Pencere
+  // [start, end) — end ayın ilk günü (dışlayıcı); tus.ts de aynı yarı-açık aralığı kullanır.
+  if (opts.includeTus) items.push(...tusCalendarItems(dayKey(start), dayKey(end)));
 
   return items;
 }

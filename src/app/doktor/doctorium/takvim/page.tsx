@@ -6,6 +6,7 @@ import {
   doctorCalendarMonth, parseMonth, monthWindow, dayKey, CAL_KIND_LABEL, type CalendarItem,
 } from "@/lib/calendar";
 import { DoctoriumShell } from "../DoctoriumSidebar";
+import { currentDoctoriumAudience, currentDoctorViewPrefs } from "@/lib/doctorium-audience";
 import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Info, Star } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,10 @@ export default async function TakvimPage({
   const sp = await searchParams;
   const { year, month } = parseMonth(sp.ay);
   const { start, end } = monthWindow(year, month);
-  const items = doctorId ? await doctorCalendarMonth(doctorId, year, month) : [];
+  // T1 (2026-09-05): TUS günleri öğrencide daima, doktorda Özelleştir → "Kariyer içinde TUS bölümünü göster" açıksa.
+  const [audienceCtx, viewPrefs] = await Promise.all([currentDoctoriumAudience(), currentDoctorViewPrefs()]);
+  const includeTus = audienceCtx?.audience === "STUDENT" || viewPrefs.showTus;
+  const items = doctorId ? await doctorCalendarMonth(doctorId, year, month, { includeTus }) : [];
 
   // Gün → öğe haritası (çok günlü etkinlik kapsadığı HER güne yazılır; ızgara ay içini çizer).
   const byDay = new Map<string, CalendarItem[]>();
@@ -209,6 +213,8 @@ const KIND_CHIP: Record<CalendarItem["kind"], string> = {
   nobet: "bg-rose-500/15 text-rose-300",
   icap: "bg-amber-500/15 text-amber-300",
   kisisel: "bg-[var(--c-surface-2)] text-[var(--c-ink-2)]",
+  // TUS: kitle aksanı (öğrencide koral, doktorda zümrüt) — sabit hex yok (B3 token disiplini).
+  tus: "bg-[var(--c-accent)]/15 text-[var(--c-accent)]",
 };
 
 function endOfMonth(year: number, month: number): Date {
