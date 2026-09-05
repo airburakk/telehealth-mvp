@@ -1,7 +1,8 @@
 // Doctorium üst rafı — kitleye göre sekme SÖZLEŞMESİ (üç katman Faz B1, 2026-09-05). nav.test.ts deseni: TAM liste
 // `.toEqual([...])` — yanlışlıkla eklenen ya da düşen sekme burada kırılır.
 import { describe, it, expect } from "vitest";
-import { shelfTabsFor, MODULE_TABS, TAKVIM_TAB, TUS_TAB, KARIYER_EDU_TAB } from "@/lib/doctorium-shelf";
+import { readFileSync } from "node:fs";
+import { shelfTabsFor, MODULE_TABS, TAKVIM_TAB, TUS_TAB, KARIYER_EDU_TAB, SHELF_EMERALD, STUDENT_LANE } from "@/lib/doctorium-shelf";
 import type { DoctoriumAudience } from "@/lib/doctorium-tiers";
 
 const hrefs = (a: DoctoriumAudience | null, showTus = false) => shelfTabsFor(a, { showTus }).map((t) => t.href);
@@ -47,6 +48,23 @@ describe("sekme tanımları", () => {
     expect(TAKVIM_TAB.module).toBeNull();
     expect(TUS_TAB.group).toBe("EDU");
     expect(KARIYER_EDU_TAB.group).toBe("EDU");
+  });
+  it("EDU sekmeleri öğrenci kulvarı KORALINDA (👤 karar 2026-09-05, Faz B2); Takvim marka zümrüdünde kaldı", () => {
+    expect(STUDENT_LANE).toEqual({ dark: "#fb923c", light: "#9a3412" });
+    expect(TUS_TAB.color).toEqual(STUDENT_LANE);
+    expect(KARIYER_EDU_TAB.color).toEqual(STUDENT_LANE);
+    expect(TAKVIM_TAB.color).toEqual(SHELF_EMERALD);
+  });
+  it("globals.css öğrenci bloğu aynı aileden okur (TS ↔ CSS sözleşmesi: gece birebir, gündüz raf kademesi)", () => {
+    const css = readFileSync("src/app/globals.css", "utf8");
+    const start = css.indexOf('.doctorium-scope[data-audience="student"]');
+    expect(start).toBeGreaterThan(-1);
+    const block = css.slice(start, css.indexOf("/* AÇIK RAF VARYANTI", start));
+    expect(block).toContain(`--audience-accent: ${STUDENT_LANE.dark};`);
+    expect(block).toContain("--audience-accent: #c2410c;");
+    expect(block).toContain(`--shelf-pulse: ${STUDENT_LANE.light};`);
+    // Header kromu daima theme-dark → gündüz değeri header'a yazılmaz (koyu kromda koyu koral AA altı kalırdı)
+    expect(block).not.toContain('.theme-light header[data-audience="student"]');
   });
   it("küme ayracı yerleri değişmedi: Akışım→Akademik, İlaç→Etkinlik, Hukuk→Takvim, Takvim→TUS", () => {
     const tabs = shelfTabsFor("STUDENT", { showTus: false });

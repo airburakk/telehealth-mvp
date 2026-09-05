@@ -29,6 +29,12 @@ export interface ShelfTabDef {
 
 export const SHELF_EMERALD = { dark: "#34d399", light: "#047857" } as const;
 
+/** Öğrenci kulvarı — KORAL TURUNCU (👤 karar 2026-09-05, Faz B2; adaylar A koral · B filiz · C fuşya). EDU sekmelerinin
+ *  kimliği; yüzey token'ları globals.css `[data-audience="student"]` bloğunda aynı aileden okur (gece #fb923c birebir;
+ *  gündüz rafta bir kademe koyu #9a3412 — sıcak raf zemininde #c2410c 3.95:1 AA altı kalıyordu, #9a3412 5.6:1).
+ *  Doktor tercihle TUS'u açarsa sekme yine koral gelir: kulvar rengi kitleye değil sekmeye aittir (Hukuk gülü gibi). */
+export const STUDENT_LANE = { dark: "#fb923c", light: "#9a3412" } as const;
+
 /** Modül sekmeleri — kimlik renkleri kullanıcı kararlarıyla (2026-08-14/19) sabit; ?m= anahtarları DB module değerleriyle aynı. */
 export const MODULE_TABS: readonly ShelfTabDef[] = [
   // Akışım sarı (kullanıcı kararı 2026-08-14): kıvılcım çağrışımı; gündüzü --c-gold ailesi.
@@ -45,10 +51,10 @@ export const MODULE_TABS: readonly ShelfTabDef[] = [
 export const TAKVIM_TAB: ShelfTabDef = { key: "takvim", href: "/doktor/doctorium/takvim", label: "Takvim", color: SHELF_EMERALD, group: null, module: null };
 
 /** TUS — öğrenci yüzeyi (rapor §3); doktorda tercihle açılır. Veri hattı gelene dek dürüst iskelet sayfa (lib/tus). */
-export const TUS_TAB: ShelfTabDef = { key: "tus", href: "/doktor/doctorium/tus", label: "TUS", color: SHELF_EMERALD, group: "EDU", module: null };
+export const TUS_TAB: ShelfTabDef = { key: "tus", href: "/doktor/doctorium/tus", label: "TUS", color: STUDENT_LANE, group: "EDU", module: null };
 
 /** Kariyer EDU — staj/değişim/burs takvimi (rapor §7); YALNIZ öğrenci (ilan değil, süreç bilgisi — İŞKUR sınırı). */
-export const KARIYER_EDU_TAB: ShelfTabDef = { key: "kariyer-edu", href: "/doktor/doctorium/kariyer-edu", label: "Kariyer EDU", color: SHELF_EMERALD, group: "EDU", module: null };
+export const KARIYER_EDU_TAB: ShelfTabDef = { key: "kariyer-edu", href: "/doktor/doctorium/kariyer-edu", label: "Kariyer EDU", color: STUDENT_LANE, group: "EDU", module: null };
 
 /** Kitleye (ve doktor tercihine) göre raf sekmeleri. Personel (audience null) doktor rafını görür. */
 export function shelfTabsFor(audience: DoctoriumAudience | null, prefs: { showTus: boolean }): ShelfTabDef[] {

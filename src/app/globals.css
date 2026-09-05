@@ -215,20 +215,47 @@
 .doctorium-shelf-bg .shelf-pulse:hover { color: var(--shelf-pulse-hover); }
 .theme-light .doctorium-shelf-bg { --shelf-dot: #047857; --shelf-pulse: #047857; --shelf-pulse-hover: #059669; }
 
-/* ÖĞRENCİ PALETİ KANCASI (üç katman Faz B1, 2026-09-05): portal sarmalayıcısı (doktor/doctorium layout) ve Header,
-   öğrenci oturumunda `data-audience="student"` taşır. Renk kararı 👤 mockup sonrası (Faz B2) — BUGÜN değerler marka
-   zümrüdüyle AYNI → görünür fark YOK. B2'de yalnız bu iki blok değişir; bileşenlere dokunulmaz (token disiplini:
-   --dl-emerald / --shelf-* / --c-accent tüketicileri buradan okur). 🪤 Turbopack kısmi CSS önbelleği: yeni blok
-   dev'de görünmezse .next silinir ([[turbopack-css-partial-cache]]). */
+/* ÖĞRENCİ PALETİ — KORAL TURUNCU (üç katman Faz B2, 👤 karar 2026-09-05; adaylar A koral · B filiz · C fuşya).
+   Portal sarmalayıcısı (doktor/doctorium layout) ve Header, öğrenci oturumunda `data-audience="student"` taşır; bu
+   blok YALNIZ o kapsamda aksan token'larını korala çevirir. İLKE — LOGO SABİT, YÜZEY AKSANI DEĞİŞİR: küre / wordmark /
+   "ium" / ışık telleri (Header lockup'ı public/brand/doctorium-student-lockup-*, footer --dl-emerald, .doctorium-ium)
+   marka zümrüdünde KALIR; koral = öğrenci kulvarının rengi → kit eyebrow/bağlantı/düğme (--c-accent*), Header aktif
+   bağlantı/avatar, raf zemini "KOR %12" + yeni-içerik noktası/nabız, EDU sekmeleri (lib/doctorium-shelf STUDENT_LANE),
+   "Öğrenci Üyeliği" rozeti. Sabit Tailwind zümrüt sınıfları (text-emerald-300 vb. — Akademik kimliği, AI özet paneli,
+   çipler) BİLİNÇLİ dokunulmadı: marka öğesi sayılır. Header kromu DAİMA theme-dark (Header.tsx) → header yalnız gece
+   değerlerini alır, .theme-light eşi ona yazılmaz (yazılsaydı koyu kromda koyu koral ≈3.2:1 çıkardı).
+   Kontrast (hesap 2026-09-05): gece #fb923c/#0d0e10 8.5:1 · gündüz #c2410c/#fbfbfa 5.0:1 · düğme metni #fbfbfa/#c2410c
+   5.0:1 · strong kademeleri AURA deseniyle aynı yönde (hover koyulaşır: gece #f97316 6.9:1, gündüz #9a3412 7.1:1).
+   🪤 Turbopack kısmi CSS önbelleği: blok dev'de görünmezse .next silinir ([[turbopack-css-partial-cache]]). */
 .doctorium-scope[data-audience="student"],
 header[data-audience="student"] {
-  --audience-accent: #34d399;
-  --audience-accent-strong: #059669;
+  --audience-accent: #fb923c;
+  --audience-accent-strong: #f97316;
+  --audience-accent-stronger: #ea580c;
+  --c-accent: var(--audience-accent);
+  --c-accent-strong: var(--audience-accent-strong);
+  --c-accent-stronger: var(--audience-accent-stronger);
 }
-.theme-light .doctorium-scope[data-audience="student"],
-.theme-light header[data-audience="student"] {
-  --audience-accent: #047857;
-  --audience-accent-strong: #065f46;
+.theme-light .doctorium-scope[data-audience="student"] {
+  --audience-accent: #c2410c;
+  --audience-accent-strong: #9a3412;
+  --audience-accent-stronger: #7c2d12;
+}
+/* Raf: "DERİN ORMAN %12"in öğrenci karşılığı "KOR %12" — aynı %12 doz, taban KOYU koral (#c2410c; parlak #fb923c tabanı
+   "renkli bant" olurdu — derin-orman dersi): gece ≈#1e100b sıcak kömür, gündüz ≈#edded6 sıcak açık krom. Nokta/nabız
+   token'ları .doctorium-shelf-bg'nin KENDİ üstünde tanımlı → kapsam düzeyi yetmez, raf seçicisiyle yeniden yazılır.
+   Gündüz rafta metin bir kademe koyu (#9a3412 — 5.6:1; #c2410c sıcak zeminde 3.95:1 AA altı kalıyordu); nokta metin
+   değil, #c2410c kalır. Aktif EDU sekmesi aynı gerekçeyle STUDENT_LANE.light = #9a3412 (lib/doctorium-shelf). */
+.doctorium-scope[data-audience="student"] .doctorium-shelf-bg {
+  background-color: color-mix(in srgb, color-mix(in srgb, #c2410c 12%, var(--c-chrome)) 92%, transparent);
+  --shelf-dot: rgba(251, 146, 60, 0.9);
+  --shelf-pulse: #fdba74;
+  --shelf-pulse-hover: #fed7aa;
+}
+.theme-light .doctorium-scope[data-audience="student"] .doctorium-shelf-bg {
+  --shelf-dot: #c2410c;
+  --shelf-pulse: #9a3412;
+  --shelf-pulse-hover: #7c2d12;
 }
 
 /* AÇIK RAF VARYANTI — "shelf-white" (kullanıcı denemesi 2026-08-19): raf TEMA-BAĞIMSIZ açık

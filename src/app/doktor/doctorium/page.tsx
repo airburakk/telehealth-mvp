@@ -364,9 +364,10 @@ export default async function DoctoriumPage({
         <div className="mt-1 flex flex-wrap items-start justify-between gap-x-5 gap-y-3">
           <h1 className="aura-display flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
             {MODULE_HEAD[active].title}
-            {/* v6.95 — öğrenci-sınırlı üyelik etiketi: mono rozet, yüzey boyamaz (kit renk disiplini) */}
+            {/* v6.95 — öğrenci-sınırlı üyelik etiketi: mono rozet, yüzey boyamaz (kit renk disiplini). Faz B2: rengi
+                kitle aksanından (--c-accent → öğrenci kapsamında koral, globals.css) — kenar %40 saydam, metin tam aksan. */}
             {audienceCtx?.audience === "STUDENT" && (
-              <span className="aura-mono rounded-full border border-[var(--c-hairline)] px-2 py-px text-[11px] font-semibold uppercase tracking-wider text-[var(--c-ink-3)]">
+              <span className="aura-mono rounded-full border border-[var(--c-accent)]/40 px-2 py-px text-[11px] font-semibold uppercase tracking-wider text-[var(--c-accent)]">
                 Öğrenci Üyeliği
               </span>
             )}
