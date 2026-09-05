@@ -56,7 +56,12 @@ const cspEnforced = [
   // client-upload'la DOĞRUDAN Blob'a çıkar (2026-08-14) → vercel.com (token değişimi) +
   // *.blob.vercel-storage.com (PUT/multipart) bu yüzden listede.
   // https://generativelanguage.googleapis.com KASITLI YOK — SDK kanıtı için üstteki blok notuna bak.
-  `connect-src 'self' https://vercel.com https://*.blob.vercel-storage.com wss://main.realtime.ably.net https://main.realtime.ably.net wss://*.ably-realtime.com https://*.ably-realtime.com wss://generativelanguage.googleapis.com${isDev ? " ws://localhost:* ws://127.0.0.1:*" : ""}`,
+  // isDev: ws://localhost + ws://127.0.0.1'e ek olarak şema-geneli "ws:" de var — LAN IP'sinden
+  // (ör. telefondan http://192.168.x.x:3000 ile) test ederken HMR websocket'i (webpack-hmr) o IP'ye
+  // bağlanır; host-spesifik iki girişten hiçbiri bunu kapsamaz, CSP reddedince HMR client'ı sürekli
+  // "bağlan→başarısız→yeniden dene" döngüsüne girer (2026-09-04 ölçüldü: IP üzerinden hiçbir tıklama
+  // çalışmıyordu, sayfa hiç kararlı hydrate olamıyordu). Yalnız dev'de — üretimde bu satır hiç yok.
+  `connect-src 'self' https://vercel.com https://*.blob.vercel-storage.com wss://main.realtime.ably.net https://main.realtime.ably.net wss://*.ably-realtime.com https://*.ably-realtime.com wss://generativelanguage.googleapis.com${isDev ? " ws://localhost:* ws://127.0.0.1:* ws:" : ""}`,
   "worker-src 'self'", // tek worker /sw.js; DICOM codec'leri worker'sız build (blob: GEREKMEZ)
   "manifest-src 'self'",
   "frame-src 'none'", // iframe sıfır; Google OAuth iframe değil tam-sayfa redirect
@@ -109,6 +114,12 @@ const AURA_ONLY_PREFIXES = [
 const nextConfig: NextConfig = {
   // Sürüm parmak izini gizle (X-Powered-By: Next.js başlığı — 2026-07-18 denetimi P3).
   poweredByHeader: false,
+  // LAN IP'sinden (telefondan http://192.168.68.54:3000 gibi) dev sunucuya bağlanırken Next.js
+  // dev-server'ın kendi origin denetimi HMR websocket bağlantısını (webpack-hmr) sunucu tarafında
+  // reddediyordu (2026-09-04 ölçüldü: WebSocket close code 1006 — CSP değil, sunucu reddi; CSP
+  // connect-src zaten "ws:" ile açıktı ama fark etmedi). ⚠️ IP değişirse (farklı ağ/bilgisayar)
+  // burayı güncelle — yalnız dev'de etkili, production build'i etkilemez.
+  allowedDevOrigins: ["192.168.68.54"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
