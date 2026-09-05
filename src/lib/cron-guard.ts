@@ -50,6 +50,7 @@ export const CRON_SCHEDULES: Record<string, string> = {
   "/api/cron/translate-news": "40 2 * * *",          // 05:40 TR — özet GİRİŞİ çevirisi (ingest bitmiş olur; baskıdan önce) — v6.206
   "/api/cron/ingest-europepmc": "44 2 * * *",        // 05:44 TR — Europe PMC (2026-09-05: ingest-doctorium'dan ayrıldı, dernek ayrışması tek başına yetmemişti)
   "/api/cron/ingest-doaj": "47 2 * * *",             // 05:47 TR — DOAJ (2026-09-05: aynı ayrışma; kaynağın kendisi yavaş, maxDuration 800)
+  "/api/cron/generate-ai-summaries": "56 2 * * *",   // 05:56 TR — AI özetinin PROAKTİF üretimi (2026-09-05: tembel üretim daily-digest'i özetsiz besliyordu; tüm ingest'ler bittikten SONRA, Post'tan ÖNCE)
   "/api/cron/registry-sync": "0 3 * * *",            // 06:00 TR — HealthTürkiye dizini (değişmedi)
   "/api/cron/purge-deleted": "30 3 * * *",           // 06:30 TR — KVKK imha + zincirler + günlük damga + diploma süpürmesi
   "/api/cron/daily-digest": "30 3 * * *",            // 06:30 TR — Doctorium Post + etkinlik alarmı

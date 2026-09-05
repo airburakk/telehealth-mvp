@@ -53,74 +53,60 @@ async function main() {
   }
   // db/doctorium importu DATABASE_URL ayarından SONRA (guard + Prisma client modül yüklenirken env okur).
   const { db } = await import("../src/lib/db");
-  const { ensureClinicalSummary, ensureRegulationSummary } = await import("../src/lib/doctorium");
+  const { generatePendingAiSummaries } = await import("../src/lib/doctorium");
 
-  const rows = await db.newsArticle.findMany({
-    where: {
-      aiSummary: null,
-      OR: [
-        { module: "akademik" },
-        { module: "ilac" },
-        { module: "sektorel" },
-        { module: "mevzuat", category: { notIn: ["ictihat", "doktrin"] } },
-      ],
-    },
-    select: { id: true, module: true },
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    take: Number.isFinite(LIMIT) ? LIMIT : undefined,
-  });
-
-  console.log(
-    `${PROD ? "PROD" : "dev"} DB · aday: ${rows.length}${Number.isFinite(LIMIT) ? ` (limit ${LIMIT})` : ""} · ` +
-      `mod: ${WRITE ? "ÜRETİM" : "DRY-RUN"} · eşzamanlılık: ${CONCURRENCY}`,
-  );
-  if (!rows.length) {
-    console.log("aday yok — kapsamdaki tüm kayıtlarda aiSummary zaten dolu.");
-    await db.$disconnect();
-    return;
-  }
   if (!WRITE) {
-    const byModule = new Map<string, number>();
-    for (const r of rows) byModule.set(r.module, (byModule.get(r.module) ?? 0) + 1);
-    console.log("modül dağılımı:", Object.fromEntries(byModule));
-    console.log("(dry-run: hiçbir AI çağrısı yapılmadı; --yaz ile üretilir)");
+    // Dry-run: bu script'e özel — yalnız modül dağılımını gösterir, AI çağrısı yapmaz.
+    const rows = await db.newsArticle.findMany({
+      where: {
+        aiSummary: null,
+        OR: [
+          { module: "akademik" },
+          { module: "ilac" },
+          { module: "sektorel" },
+          { module: "mevzuat", category: { notIn: ["ictihat", "doktrin"] } },
+        ],
+      },
+      select: { module: true },
+      take: Number.isFinite(LIMIT) ? LIMIT : undefined,
+    });
+    console.log(
+      `${PROD ? "PROD" : "dev"} DB · aday: ${rows.length}${Number.isFinite(LIMIT) ? ` (limit ${LIMIT})` : ""} · ` +
+        `mod: DRY-RUN · eşzamanlılık: ${CONCURRENCY}`,
+    );
+    if (!rows.length) {
+      console.log("aday yok — kapsamdaki tüm kayıtlarda aiSummary zaten dolu.");
+    } else {
+      const byModule = new Map<string, number>();
+      for (const r of rows) byModule.set(r.module, (byModule.get(r.module) ?? 0) + 1);
+      console.log("modül dağılımı:", Object.fromEntries(byModule));
+      console.log("(dry-run: hiçbir AI çağrısı yapılmadı; --yaz ile üretilir)");
+    }
     await db.$disconnect();
     return;
   }
 
-  let basarili = 0;
-  let atlandiVeyaHata = 0;
-  let islenen = 0;
+  console.log(`${PROD ? "PROD" : "dev"} DB · mod: ÜRETİM · eşzamanlılık: ${CONCURRENCY}`);
   const basla = Date.now();
-
-  async function isle(r: { id: string; module: string }): Promise<void> {
-    try {
-      if (r.module === "akademik") {
-        const s = await ensureClinicalSummary(r.id);
-        if (s) basarili++;
-        else atlandiVeyaHata++;
-      } else {
-        const s = await ensureRegulationSummary(r.id);
-        if (s.state === "ok") basarili++;
-        else atlandiVeyaHata++;
+  // Ortak gövde: generatePendingAiSummaries (lib/doctorium.ts) — cron `generate-ai-summaries`
+  // İLE PAYLAŞILIR (2026-09-05'ten beri bu iş her sabah otomatik de koşuyor; script elle
+  // prova/limit/eşzamanlılık ayarlamak istendiğinde kullanılır).
+  const sonuc = await generatePendingAiSummaries({
+    concurrency: CONCURRENCY,
+    limit: Number.isFinite(LIMIT) ? LIMIT : undefined,
+    onProgress: (islenen, toplam, basarili, hata) => {
+      if (islenen % 25 === 0 || islenen === toplam) {
+        const sn = Math.round((Date.now() - basla) / 1000);
+        console.log(`  ${islenen}/${toplam} işlendi — ${basarili} başarılı · ${hata} atlandı/hata · ${sn} sn`);
       }
-    } catch (e) {
-      atlandiVeyaHata++;
-      console.warn(`  hata [${r.module}] ${r.id}: ${e instanceof Error ? e.message : String(e)}`);
-    }
-    islenen++;
-    if (islenen % 25 === 0 || islenen === rows.length) {
-      const sn = Math.round((Date.now() - basla) / 1000);
-      console.log(`  ${islenen}/${rows.length} işlendi — ${basarili} başarılı · ${atlandiVeyaHata} atlandı/hata · ${sn} sn`);
-    }
-  }
-
-  for (let i = 0; i < rows.length; i += CONCURRENCY) {
-    await Promise.all(rows.slice(i, i + CONCURRENCY).map(isle));
-  }
-
+    },
+  });
   const toplamSn = Math.round((Date.now() - basla) / 1000);
-  console.log(`\nbitti — toplam ${rows.length} · başarılı ${basarili} · atlandı/hata ${atlandiVeyaHata} · süre ${toplamSn} sn`);
+  if (!sonuc.toplam) {
+    console.log("aday yok — kapsamdaki tüm kayıtlarda aiSummary zaten dolu.");
+  } else {
+    console.log(`\nbitti — toplam ${sonuc.toplam} · başarılı ${sonuc.basarili} · atlandı/hata ${sonuc.hata} · süre ${toplamSn} sn`);
+  }
   await db.$disconnect();
 }
 

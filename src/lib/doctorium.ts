@@ -1451,6 +1451,68 @@ export async function ensureRegulationSummary(id: string): Promise<RegulationRes
   }
 }
 
+// ── Bekleyen AI özetlerinin PROAKTİF üretimi (2026-09-05) ───────────────────
+// Kullanıcı kararı: TEMBEL üretim (yalnız doktor sayfayı AÇTIĞINDA) günlük bültenin/Doctorium
+// Post'un o sabahki içeriği ÖZETSİZ göstermesine yol açıyordu — henüz kimse tıklamamış oluyordu.
+// Bu fonksiyon cron `generate-ai-summaries`'in (ingest'ler + translate-news bittikten sonra,
+// daily-digest'ten ÖNCE) gövdesidir; scripts/backfill-ai-summaries.ts İLE PAYLAŞILIR (kod tekrarı
+// yok, AYNI ensureClinicalSummary/ensureRegulationSummary kod yolu).
+export interface AiSummaryBatchResult {
+  toplam: number;
+  basarili: number;
+  hata: number;
+}
+
+export async function generatePendingAiSummaries(opts: {
+  concurrency?: number;
+  limit?: number;
+  onProgress?: (islenen: number, toplam: number, basarili: number, hata: number) => void;
+} = {}): Promise<AiSummaryBatchResult> {
+  const { concurrency = 5, limit, onProgress } = opts;
+  const rows = await db.newsArticle.findMany({
+    where: {
+      aiSummary: null,
+      OR: [
+        { module: "akademik" },
+        { module: "ilac" },
+        { module: "sektorel" },
+        { module: "mevzuat", category: { notIn: ["ictihat", "doktrin"] } },
+      ],
+    },
+    select: { id: true, module: true },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: limit,
+  });
+
+  let basarili = 0;
+  let hata = 0;
+  let islenen = 0;
+
+  async function isle(r: { id: string; module: string }): Promise<void> {
+    try {
+      if (r.module === "akademik") {
+        const s = await ensureClinicalSummary(r.id);
+        if (s) basarili++;
+        else hata++;
+      } else {
+        const s = await ensureRegulationSummary(r.id);
+        if (s.state === "ok") basarili++;
+        else hata++;
+      }
+    } catch {
+      hata++;
+    }
+    islenen++;
+    onProgress?.(islenen, rows.length, basarili, hata);
+  }
+
+  for (let i = 0; i < rows.length; i += concurrency) {
+    await Promise.all(rows.slice(i, i + concurrency).map(isle));
+  }
+
+  return { toplam: rows.length, basarili, hata };
+}
+
 // ── Kariyer rehberi sorguları (v6.89) ───────────────────────────────────────
 // Küratörlü tablo (CareerPathway); dış API YOK — resmî otorite siteleri makine erişimine kapalı.
 // Veri: prisma/seed-data/career-pathways.json + scripts/seed-career-pathways.ts.

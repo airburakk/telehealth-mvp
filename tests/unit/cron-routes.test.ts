@@ -1,4 +1,4 @@
-// Cron düzeni SÖZLEŞMESİ (v6.205, 2026-09-02 — bakım nöbeti altı cron'a bölündü, kullanıcı kararı; v6.206 translate-news ile yedi; 2026-09-04 ingest-dernekler ile sekiz; 2026-09-05 trial-sweep ile dokuz; 2026-09-05 ingest-europepmc + ingest-doaj ile onbir).
+// Cron düzeni SÖZLEŞMESİ (v6.205, 2026-09-02 — bakım nöbeti altı cron'a bölündü, kullanıcı kararı; v6.206 translate-news ile yedi; 2026-09-04 ingest-dernekler ile sekiz; 2026-09-05 trial-sweep ile dokuz; 2026-09-05 ingest-europepmc + ingest-doaj ile onbir; 2026-09-05 generate-ai-summaries ile oniki).
 //
 // Kilitlenenler:
 //   1) vercel.json crons ↔ lib/cron-guard CRON_SCHEDULES BİREBİR (yol + zamanlama). Biri değişip
@@ -26,10 +26,10 @@ function minuteOfDay(schedule: string): number {
 }
 
 describe("vercel.json ↔ CRON_SCHEDULES", () => {
-  it("yol ve zamanlama birebir aynı (onbir cron)", () => {
+  it("yol ve zamanlama birebir aynı (oniki cron)", () => {
     const fromVercel = Object.fromEntries(vercel.crons.map((c) => [c.path, c.schedule]));
     expect(fromVercel).toEqual(CRON_SCHEDULES);
-    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(11);
+    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(12);
   });
 
   it("her cron yolunun rota dosyası var, cronGate kullanır, maxDuration bildirir", () => {
@@ -49,10 +49,12 @@ describe("vercel.json ↔ CRON_SCHEDULES", () => {
     for (const p of [
       "/api/cron/ingest-doctorium", "/api/cron/ingest-hukuk", "/api/cron/ingest-dernekler",
       "/api/cron/translate-news", "/api/cron/ingest-europepmc", "/api/cron/ingest-doaj",
+      "/api/cron/generate-ai-summaries",
     ]) {
       const t = minuteOfDay(CRON_SCHEDULES[p]);
-      // Her içerik cron'unun bütçesi en az 300 sn (ingest-doctorium/ingest-doaj 800 sn); baskıdan
-      // en az 30 dk önce BAŞLAMALI ki 800 sn'lik (≈13.3 dk) en kötü ihtimalde bile bitmiş olsun.
+      // Her içerik cron'unun bütçesi en az 300 sn (ingest-doctorium/ingest-doaj/generate-ai-summaries
+      // 800 sn); baskıdan en az 30 dk önce BAŞLAMALI ki 800 sn'lik (≈13.3 dk) en kötü ihtimalde bile
+      // bitmiş olsun.
       expect(digest - t, `${p} baskıya çok yakın (${t} → ${digest})`).toBeGreaterThanOrEqual(30);
     }
   });
@@ -62,6 +64,19 @@ describe("vercel.json ↔ CRON_SCHEDULES", () => {
     const ingest = minuteOfDay(CRON_SCHEDULES["/api/cron/ingest-doctorium"]);
     const ceviri = minuteOfDay(CRON_SCHEDULES["/api/cron/translate-news"]);
     expect(ceviri - ingest).toBeGreaterThanOrEqual(10);
+  });
+
+  it("SIRA: AI özeti PROAKTİF üretimi (generate-ai-summaries) TÜM ingest'lerden SONRA başlar (2026-09-05)", () => {
+    // daily-digest'in o sabahki içeriği özetli görmesi için: özet üretimi son ingest'ten (ingest-doaj)
+    // sonra, Post baskısından önce çalışmalı — kullanıcı bildirimi: "günlük bültenler ve Doctorium
+    // Post'lar yanlış üretiliyor" (tembel üretim nedeniyle özetsiz kalıyordu).
+    const sonIngest = Math.max(
+      ...["/api/cron/ingest-doctorium", "/api/cron/ingest-hukuk", "/api/cron/ingest-dernekler",
+        "/api/cron/translate-news", "/api/cron/ingest-europepmc", "/api/cron/ingest-doaj"]
+        .map((p) => minuteOfDay(CRON_SCHEDULES[p])),
+    );
+    const ozet = minuteOfDay(CRON_SCHEDULES["/api/cron/generate-ai-summaries"]);
+    expect(ozet).toBeGreaterThan(sonIngest);
   });
 
   it("hasta hatırlatması insanca saatte (08:00–18:00 TR) — kullanıcı kararı 10:00 TR", () => {

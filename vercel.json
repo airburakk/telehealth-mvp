@@ -30,6 +30,10 @@
       "schedule": "47 2 * * *"
     },
     {
+      "path": "/api/cron/generate-ai-summaries",
+      "schedule": "56 2 * * *"
+    },
+    {
       "path": "/api/cron/registry-sync",
       "schedule": "0 3 * * *"
     },
