@@ -1,10 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { careerPathwayBySlug, parseSteps, parseStringList, todayModuleCounts } from "@/lib/doctorium";
-import { isStudentOnly } from "@/lib/doctor-activation";
-import { getDoctorBalance } from "@/lib/rewards";
 import { DoctoriumShell } from "../../DoctoriumSidebar";
 import { CareerDisclaimer, careerDate } from "../../CareerShared";
 import {
@@ -38,22 +35,11 @@ export default async function CareerPathwayPage({ params }: { params: Promise<{ 
   const documents = parseStringList(p.documents);
   const sources = parseStringList(p.sourceUrls);
 
-  // Üst raf detayda da SABİT (kullanıcı isteği 2026-08-18) — aktif sekme Kariyer;
-  // props sözleşmesi kaydettiklerim/[id] ile aynı.
-  const me =
-    user.role === "DOCTOR"
-      ? await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } })
-      : null;
-  const d = me?.doctorId
-    ? await db.doctor.findUnique({
-        where: { id: me.doctorId },
-        select: { activatedAt: true, studentVerifiedAt: true },
-      })
-    : null;
-  const balance = d && me?.doctorId && !isStudentOnly(d) ? await getDoctorBalance(me.doctorId) : null;
+  // Üst raf detayda da SABİT (kullanıcı isteği 2026-08-18) — aktif sekme Kariyer. (Eski puan
+  // rozeti hesabı 2026-09-05'te kalktı — Shell'in balance/isDoctor prop'ları söküldü.)
 
   return (
-    <DoctoriumShell active="kariyer" balance={balance} isDoctor={!!me?.doctorId} counts={await todayModuleCounts()}>
+    <DoctoriumShell active="kariyer" counts={await todayModuleCounts()}>
     <div className="mx-auto max-w-3xl px-5 py-8">
       <Link
         href={`/doktor/doctorium?m=kariyer${p.scope === "turkiye" ? "&t=turkiye" : ""}`}

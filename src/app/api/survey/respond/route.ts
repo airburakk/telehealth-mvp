@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { parseOptions, aggregateResults } from "@/lib/survey";
 import { awardSurveyPoints } from "@/lib/rewards";
-import { isStudentOnly } from "@/lib/doctor-activation";
+import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
 
 export const dynamic = "force-dynamic";
 
@@ -21,14 +21,13 @@ export async function POST(req: Request) {
   if (!me?.doctorId) {
     return NextResponse.json({ error: "Doktor profili bağlı değil." }, { status: 400 });
   }
-  // v6.95: öğrenci-sınırlı üye anket yanıtlayamaz (kart zaten çizilmez — bu derinlik savunması:
-  // doğrudan API çağrısı da kapalı; anket "doktor görüşü" ürünüdür, öğrenci meslek mensubu değildir).
-  const d = await db.doctor.findUnique({
-    where: { id: me.doctorId },
-    select: { activatedAt: true, studentVerifiedAt: true },
-  });
-  if (!d || isStudentOnly(d)) {
-    return NextResponse.json({ error: "Anketler öğrenci üyelikte kapalıdır." }, { status: 403 });
+  // Anket yalnız DOĞRULANMIŞ doktora açık (2026-09-05 üç katman): öğrenci ve deneme üyesinde kart
+  // zaten çizilmez — bu derinlik savunması doğrudan API çağrısını da kapatır. Anket "doktor görüşü"
+  // ürünüdür; doğrulanmamış kişi meslek mensubu sayılamaz. Puan hakedişinin TEK yolu bu rota
+  // olduğundan "puan kazanma süreci başlamaz" kuralı da burada kilitlenir (awardSurveyPoints aynı işlemde).
+  const audienceCtx = await currentDoctoriumAudience();
+  if (!audienceCtx?.flags.canSeeSurveys) {
+    return NextResponse.json({ error: "Anketler bu üyelikte kapalıdır." }, { status: 403 });
   }
 
   const b = await req.json().catch(() => ({}));

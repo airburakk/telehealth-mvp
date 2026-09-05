@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
 import { setSponsorPersonalization } from "@/lib/sponsor";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,12 @@ export async function POST(req: Request) {
   const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
   if (!me?.doctorId) {
     return NextResponse.json({ error: "Doktor profili bağlı değil." }, { status: 400 });
+  }
+  // 2026-09-05 (üç katman): kişiselleştirme rızası yalnız sponsorlu içerik GÖREN üyeye anlamlıdır —
+  // öğrenci ve deneme üyesinde UI anahtarı çizilmez; doğrudan API çağrısı da burada kapanır.
+  const audienceCtx = await currentDoctoriumAudience();
+  if (!audienceCtx?.flags.canSeeSponsored) {
+    return NextResponse.json({ error: "Sponsorlu içerik bu üyelikte kapalıdır." }, { status: 403 });
   }
 
   const body = await req.json().catch(() => ({}));

@@ -3,8 +3,6 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { savedFeed, localizeTitles, todayModuleCounts } from "@/lib/doctorium";
-import { isStudentOnly } from "@/lib/doctor-activation";
-import { getDoctorBalance } from "@/lib/rewards";
 import { ArticleCard } from "../ArticleCard";
 import { DoctoriumShell } from "../DoctoriumSidebar";
 import { ArrowLeft, Bookmark, Info } from "lucide-react";
@@ -25,18 +23,11 @@ export default async function SavedPage() {
   if (!me?.doctorId) redirect("/doktor");
   const doctorId = me.doctorId;
 
-  const d = await db.doctor.findUnique({
-    where: { id: doctorId },
-    select: { activatedAt: true, studentVerifiedAt: true },
-  });
-  // Puan rozeti bant için: öğrenci-sınırlıda null (pazarlama süzgeci) — sayfa erişimini KISITLAMAZ.
-  const balance = d && !isStudentOnly(d) ? await getDoctorBalance(doctorId) : null;
-
   let items = await savedFeed(doctorId);
   if (items.length) items = await localizeTitles(items);
 
   return (
-    <DoctoriumShell active="kaydettiklerim" balance={balance} isDoctor counts={await todayModuleCounts()}>
+    <DoctoriumShell active="kaydettiklerim" counts={await todayModuleCounts()}>
       {/* mx-auto (2026-08-18 Üst Raf): okuma kolonu ortalı — Akışım ile aynı düzen. */}
       <div className="mx-auto max-w-3xl px-5 py-8">
         {/* Masaüstünde dönüş banttadır (Faz 1); bu link yalnız mobil için. */}

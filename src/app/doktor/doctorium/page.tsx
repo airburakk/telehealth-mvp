@@ -22,7 +22,8 @@ import {
   type FeedItem, type FeedCursors, type ModuleKey, type LegalTabKey, type CareerTabKey, type EventTypeKey,
   MODULE_FEED_LIMIT,
 } from "@/lib/doctorium";
-import { isStudentOnly } from "@/lib/doctor-activation";
+import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
+import { audienceFlags } from "@/lib/doctorium-tiers";
 import { keywordByKey } from "@/lib/hukuk-keywords";
 import { LegalSearchBox } from "./LegalSearchBox";
 import { CongressList } from "./CongressList";
@@ -35,7 +36,6 @@ import { SaveButton } from "./SaveButton";
 import {
   ArrowLeft, ExternalLink, Info, Star, X, Megaphone, SlidersHorizontal,
 } from "lucide-react";
-import { getDoctorBalance } from "@/lib/rewards";
 import { DoctoriumShell } from "./DoctoriumSidebar";
 
 export const dynamic = "force-dynamic";
@@ -88,8 +88,6 @@ export default async function DoctoriumPage({
           id: true, branch: true, newsBranches: true, city: true,
           // Akış Tercihleri (Faz 2, 2026-08-14): Akışım'a hangi bölümler girsin.
           feedModules: true,
-          // v6.95: öğrenci-sınırlı üyelik tespiti (isStudentOnly) — pazarlama yüzeyi süzgeci.
-          activatedAt: true, studentVerifiedAt: true,
           congressAlertDays: true,
           // v6.62: bildiri ve erken kayıt eşikleri AYRI (eski congressDeadlineAlertDays okunmuyor).
           congressAbstractAlertDays: true, congressEarlyBirdAlertDays: true,
@@ -282,17 +280,19 @@ export default async function DoctoriumPage({
   const careerTab: CareerTabKey | null = active === "kariyer" ? parseCareerTab(sp.t) : null;
   const pathways = careerTab ? await careerPathways(careerTab) : [];
 
-  // v6.95: öğrenci-sınırlı üye (öğrenci damgası var, klinik aktivasyon yok) pazarlama yüzeyi
-  // GÖRMEZ — sponsor kartı, anket (COMMUNITY dahil — kullanıcı kararı 2026-08-14) ve ödül puanı.
-  // Tıp öğrencisi sağlık meslek mensubu değildir; meslek-mensubuna-tanıtım rejimi ona uygulanamaz.
-  const studentOnly = !!doctor && isStudentOnly(doctor);
+  // Kitle bayrakları (2026-09-05, üç katman — lib/doctorium-tiers.ts): pazarlama yüzeyleri (sponsor
+  // kartı, anket — COMMUNITY dahil, kullanıcı kararı 2026-08-14 — ve ödül puanı) YALNIZ doğrulanmış
+  // doktora açık; tıp öğrencisi ve deneme üyesi sağlık meslek mensubu sayılamaz. Personel (doktor
+  // profili yok) kampanyayı bağlamsal görür — eski davranış. Tek sözcü: currentDoctoriumAudience.
+  const audienceCtx = await currentDoctoriumAudience();
+  const flags = audienceCtx?.flags ?? audienceFlags("NONE");
 
   // v6.68 Faz 1: sponsorlu kartlar YALNIZ Akışım'da (diğer sekmeler temiz kalır) ve boş akışa
   // basılmaz. Kişiselleştirilmiş seçim yalnız AÇIK RIZALI doktorda (sponsorPersonalizationAt);
   // rızasız doktor + personel hedefsiz (bağlamsal) kampanya görür. Sayaç agregat (kişisiz).
   const sponsorPersonalized = !!doctor?.sponsorPersonalizationAt;
   const sponsorCards: SponsorCard[] =
-    active === "akis" && items.length > 0 && !studentOnly
+    active === "akis" && items.length > 0 && flags.canSeeSponsored
       ? await activeCampaignsFor({ personalized: sponsorPersonalized, branches, city: doctor?.city ?? null })
       : [];
   if (sponsorCards.length) await countImpressions(sponsorCards.map((c) => c.id));
@@ -302,7 +302,7 @@ export default async function DoctoriumPage({
   // (rıza-şartlı hedef — lib/survey.ts). Sonuç, yanıt verilmeden gösterilmez (önden sızdırma yok);
   // yanıtlamış doktora server-render'da hazır gelir.
   let surveyProps: Parameters<typeof SurveyCardView>[0] | null = null;
-  if (active === "akis" && doctor && items.length > 0 && !studentOnly) {
+  if (active === "akis" && doctor && items.length > 0 && flags.canSeeSurveys) {
     const [s] = await activeSurveysFor({ personalized: sponsorPersonalized, branches, city: doctor.city });
     if (s) {
       const myIndex = await doctorResponse(s.id, doctor.id);
@@ -314,10 +314,6 @@ export default async function DoctoriumPage({
     }
   }
 
-  // v6.88 ödül puanı — yalnız DOCTOR'da; v6.95 öğrenci-sınırlıda null (koşullu-href: kapalı
-  // yüzeyin linki çizilmez). Faz 1'de banttaki rozeti de bu değer besler (Shell prop'u).
-  const myPointBalance = user.role === "DOCTOR" && doctor && !studentOnly ? await getDoctorBalance(doctor.id) : null;
-
   // Faz 2 (2026-08-14): kart "Kaydet" düğmelerinin başlangıç durumu — tek sorgu, Set.
   // Öğrenci-sınırlı DAHİL (kaydetme içerik işlevi, pazarlama yüzeyi değil); personelde null → düğme çizilmez.
   const isDoctor = user.role === "DOCTOR" && !!doctor;
@@ -327,7 +323,7 @@ export default async function DoctoriumPage({
   const counts = await todayModuleCounts();
 
   return (
-    <DoctoriumShell active={active} balance={myPointBalance} isDoctor={isDoctor} counts={counts}>
+    <DoctoriumShell active={active} counts={counts}>
     {/* mx-auto (2026-08-18 Üst Raf kararı): sol bant kalktı, okuma kolonu ORTALI dergi
         düzeni — [id] ve kariyer/[slug] ile aynı hiza; eski sol-yaslı hiza bantla emekli. */}
     <div className="mx-auto max-w-3xl px-5 py-8">
@@ -363,7 +359,7 @@ export default async function DoctoriumPage({
           <h1 className="aura-display flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
             {MODULE_HEAD[active].title}
             {/* v6.95 — öğrenci-sınırlı üyelik etiketi: mono rozet, yüzey boyamaz (kit renk disiplini) */}
-            {studentOnly && (
+            {audienceCtx?.audience === "STUDENT" && (
               <span className="aura-mono rounded-full border border-[var(--c-hairline)] px-2 py-px text-[11px] font-semibold uppercase tracking-wider text-[var(--c-ink-3)]">
                 Öğrenci Üyeliği
               </span>

@@ -12,6 +12,7 @@ import {
   ALL_DOC_TYPES, REQUIRED_DOC_TYPES, hasDoctoriumAccess,
   canActivate, canCompleteOnboarding, missingOnboardingSteps, hasClinicalAccess,
   isStudentOnly, canAdminVerifyDoctor,
+  doctoriumAudience, audienceFlags,
 } from "@/lib/doctor-activation";
 import { HR_CONTACT_SCOPE, HR_CONTACT_REVOKE_SCOPE } from "@/lib/hr-consent";
 import { SPONSOR_CONSENT_SCOPE, SPONSOR_REVOKE_SCOPE } from "@/lib/sponsor";
@@ -151,5 +152,39 @@ describe("İK onam scope sözleşmesi (ConsentRecord kova ayrımı)", () => {
   it("İK scope'ları sponsor scope'larıyla ÇAKIŞMAZ (yanlış kovaya yazım = ispat karışması)", () => {
     const all = [HR_CONTACT_SCOPE, HR_CONTACT_REVOKE_SCOPE, SPONSOR_CONSENT_SCOPE, SPONSOR_REVOKE_SCOPE];
     expect(new Set(all).size).toBe(all.length);
+  });
+});
+
+// 2026-09-05 — ÜÇ KATMAN (deneme · doğrulanmış · öğrenci): hasDoctoriumAccess artık lib/doctorium-tiers
+// çözücüsüne delege eder; deneme penceresi (trialEndsAt) kapıyı SÜRELİ açar. Tam matris
+// tests/unit/doctorium-tiers.test.ts'te; burada yalnız kapı sözleşmesi ve eski/yeni süzgeç farkı kilitlenir.
+describe("Deneme katmanı (2026-09-05): trialEndsAt kapıyı süreli açar", () => {
+  const NOW = new Date("2026-09-05T09:00:00.000Z");
+  const DAY = 24 * 60 * 60 * 1000;
+  const later = new Date(NOW.getTime() + 10 * DAY);
+  const earlier = new Date(NOW.getTime() - DAY);
+  const base = { diplomaVerifiedAt: null, studentVerifiedAt: null, doctoriumOptOutAt: null };
+
+  it("bitişi gelecekte deneme → AÇIK", () => {
+    expect(hasDoctoriumAccess({ ...base, trialEndsAt: later }, NOW)).toBe(true);
+  });
+  it("bitişi geçmiş deneme (LOCKED) → KAPALI", () => {
+    expect(hasDoctoriumAccess({ ...base, trialEndsAt: earlier }, NOW)).toBe(false);
+  });
+  it("diploma doğrulanınca bitmiş deneme kapıyı kapatamaz (VERIFIED baskın)", () => {
+    expect(hasDoctoriumAccess({ ...base, diplomaVerifiedAt: D("2026-09-01"), trialEndsAt: earlier }, NOW)).toBe(true);
+  });
+  it("üyelikten çıkış süren denemeyi de kapatır", () => {
+    expect(hasDoctoriumAccess({ ...base, doctoriumOptOutAt: D("2026-09-04"), trialEndsAt: later }, NOW)).toBe(false);
+  });
+  it("trialEndsAt vermeyen eski çağıran derlenir ve eski formülle aynı sonucu alır", () => {
+    expect(hasDoctoriumAccess(base, NOW)).toBe(false);
+    expect(hasDoctoriumAccess({ ...base, diplomaVerifiedAt: D("2026-08-19") }, NOW)).toBe(true);
+  });
+  it("bilinçli kenar: eski öğrenci + doğrulanmış diploma, klinik aktivasyon yok → isStudentOnly true (eski) ama kitle VERIFIED", () => {
+    const d = { diplomaVerifiedAt: D("2027-07-01"), studentVerifiedAt: D("2026-08-14"), doctoriumOptOutAt: null, activatedAt: null };
+    expect(isStudentOnly(d)).toBe(true);
+    expect(doctoriumAudience(d, NOW)).toBe("VERIFIED");
+    expect(audienceFlags(doctoriumAudience(d, NOW)).canSeeSponsored).toBe(true);
   });
 });

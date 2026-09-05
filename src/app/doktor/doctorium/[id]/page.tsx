@@ -1,13 +1,10 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { db } from "@/lib/db";
 import {
   articleById, ensureClinicalSummary, ensureRegulationSummary,
   KIND_LABEL, branchLabel, categoryLabel, todayModuleCounts,
 } from "@/lib/doctorium";
-import { isStudentOnly } from "@/lib/doctor-activation";
-import { getDoctorBalance } from "@/lib/rewards";
 import { DoctoriumShell, type SidebarActive } from "../DoctoriumSidebar";
 import { branchColor } from "@/lib/branch-visuals";
 import { extractKeywords, extractLawRefs } from "@/lib/hukuk-keywords";
@@ -42,19 +39,8 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
   const reg = isAcademic || isIctihat || isDoktrin ? null : await ensureRegulationSummary(id);
 
   // Üst raf detayda da SABİT (kullanıcı isteği 2026-08-18): içeriğe girince raf kaybolup
-  // bağlam kopuyordu. Aktif sekme = içeriğin modülü (yol işareti). Raf props'ları
-  // kaydettiklerim/page.tsx ile aynı sözleşme; personelde (COORDINATOR/ADMIN) kişisel köşe yok.
-  const me =
-    user.role === "DOCTOR"
-      ? await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } })
-      : null;
-  const d = me?.doctorId
-    ? await db.doctor.findUnique({
-        where: { id: me.doctorId },
-        select: { activatedAt: true, studentVerifiedAt: true },
-      })
-    : null;
-  const balance = d && me?.doctorId && !isStudentOnly(d) ? await getDoctorBalance(me.doctorId) : null;
+  // bağlam kopuyordu. Aktif sekme = içeriğin modülü (yol işareti). (Eski puan rozeti hesabı
+  // 2026-09-05'te kalktı — Shell'in balance/isDoctor prop'ları söküldü.)
   const shelfActive = (
     ["akademik", "sektorel", "ilac", "etkinlik", "kariyer", "mevzuat"].includes(item.module)
       ? item.module
@@ -62,7 +48,7 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
   ) as SidebarActive;
 
   return (
-    <DoctoriumShell active={shelfActive} balance={balance} isDoctor={!!me?.doctorId} counts={await todayModuleCounts()}>
+    <DoctoriumShell active={shelfActive} counts={await todayModuleCounts()}>
     <div className="mx-auto max-w-2xl px-5 py-8">
       <Link href="/doktor/doctorium" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
         <ArrowLeft size={15} /> Doctorium

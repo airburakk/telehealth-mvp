@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,13 @@ export async function GET(req: Request) {
 
   const id = new URL(req.url).searchParams.get("id") ?? "";
   const home = new URL("/doktor/doctorium", req.url);
+  // 2026-09-05 (üç katman): sponsorlu kart öğrenci ve deneme üyesine ÇİZİLMEZ — kartı görmeyen kişinin
+  // bilinen bir kampanya kimliğiyle sayaç şişirmesi/yönlendirme alması da kapanır. Sayaç ARTIRILMADAN
+  // portala dönülür (kampanya analitiği kirlenmesin). Gözetim rolleri bağlamsal kartı görür (eski davranış).
+  if (user.role === "DOCTOR") {
+    const audienceCtx = await currentDoctoriumAudience();
+    if (!audienceCtx?.flags.canSeeSponsored) return NextResponse.redirect(home);
+  }
   if (!id) return NextResponse.redirect(home);
 
   const row = await db.sponsorCampaign.findUnique({

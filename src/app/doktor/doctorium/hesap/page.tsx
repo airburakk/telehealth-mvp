@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, BadgeCheck, Info } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { isStudentOnly } from "@/lib/doctor-activation";
+import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
 import { countClinicalTies, hasClinicalTies } from "@/lib/doctorium-membership";
 import { recentLogins, describeUserAgent } from "@/lib/login-activity";
 import { AuraPanel } from "@/components/ui/AuraPanel";
@@ -53,7 +53,9 @@ export default async function DoctoriumAccountPage() {
   });
   if (!doctor) redirect("/doktor/doctorium");
 
-  const student = isStudentOnly(doctor);
+  // Katman (2026-09-05 üç katman): öğrenci yüzeyi tek sözcüden okunur (isStudentOnly süpersede).
+  const audienceCtx = await currentDoctoriumAudience();
+  const student = audienceCtx?.audience === "STUDENT";
   // Kapatma varyantı: klinik bağ varsa hesap Doctorium'un tek başına kapatabileceği bir hesap
   // değildir → yalnız üyelikten çıkış sunulur. Sunucu tarafında ÖLÇÜLÜR, varsayılmaz.
   const ties = await countClinicalTies(me.doctorId);

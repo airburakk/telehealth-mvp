@@ -3,8 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { isStudentOnly } from "@/lib/doctor-activation";
-import { getDoctorBalance } from "@/lib/rewards";
+import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
 import {
   BRANCH_OPTIONS, parseBranchPrefs, parseFeedModules, slugForLabel,
   todayModuleCounts, EVENT_TYPES, parseEventTypePref,
@@ -49,7 +48,6 @@ export default async function TercihlerPage() {
     where: { id: me.doctorId },
     select: {
       branch: true, newsBranches: true, feedModules: true,
-      activatedAt: true, studentVerifiedAt: true,
       congressAlertDays: true, congressAbstractAlertDays: true, congressEarlyBirdAlertDays: true,
       congressEventTypes: true, congressScope: true,
       // v6.142 — Sektörel/İlaç & Cihaz/Mevzuat GÖRÜNÜM süzgeçleri (aynı sözleşme).
@@ -60,13 +58,14 @@ export default async function TercihlerPage() {
   });
   if (!doctor) redirect("/doktor");
 
-  // v6.95: öğrenci-sınırlı üye pazarlama yüzeyi görmez → sponsorlu içerik rızası da sorulmaz.
-  const studentOnly = isStudentOnly(doctor);
-  const balance = studentOnly ? null : await getDoctorBalance(me.doctorId);
+  // Sponsorlu içerik rızası yalnız o yüzeyi GÖREN üyeye sorulur: doğrulanmış doktor. Öğrenci ve
+  // deneme üyesinde kapalı (2026-09-05 üç katman; tek sözcü lib/doctorium-audience).
+  const audienceCtx = await currentDoctoriumAudience();
+  const canSeeSponsored = audienceCtx?.flags.canSeeSponsored ?? false;
   const viewPrefs = parseViewPrefs(doctor.doctoriumViewPrefs);
 
   return (
-    <DoctoriumShell active={null} balance={balance} isDoctor counts={await todayModuleCounts()}>
+    <DoctoriumShell active={null} counts={await todayModuleCounts()}>
       <div className="mx-auto max-w-4xl px-5 py-8">
         <Link
           href="/doktor/doctorium"
@@ -106,7 +105,7 @@ export default async function TercihlerPage() {
           sectorInitial={viewPrefs.sektorel}
           pharmaInitial={viewPrefs.ilac}
           legalViewInitial={viewPrefs.mevzuat}
-          showSponsor={!studentOnly}
+          showSponsor={canSeeSponsored}
           sponsorInitial={!!doctor.sponsorPersonalizationAt}
           sponsorText={SPONSOR_CONSENT_TEXT}
           digestInitial={doctor.digestChannel}

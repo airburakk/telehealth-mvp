@@ -7,6 +7,10 @@
 // İHTİYARİ: yüklenirse teminat limiti M3 Katman 3 malpraktis ek-prim hesabının girdisidir.
 import { db } from "@/lib/db";
 import { hasCurrentConsent } from "@/lib/consent"; // v6.211: klinik aktivasyon GENERAL_KVKK onamına bağlı
+import { doctoriumAudience, hasPortalAccess, type TierStamps } from "@/lib/doctorium-tiers";
+// Üç katman (2026-09-05): kitle kararı lib/doctorium-tiers.ts'te yaşar; çağıranlar tek import noktasından okusun.
+export { doctoriumAudience, audienceFlags, hasPortalAccess, audienceLabel } from "@/lib/doctorium-tiers";
+export type { DoctoriumAudience, AudienceFlags, TierStamps } from "@/lib/doctorium-tiers";
 
 // Hesap aktivasyonu için yüklenmesi ZORUNLU belge tipleri (sertifika/akademik ihtiyari).
 // 🪦 STUDENT_CERT v6.147'de LİSTEDEN ÇIKTI (kullanıcı kararı 2026-08-23 — dosya sonundaki not):
@@ -41,20 +45,23 @@ export type DoctorDocType = (typeof ALL_DOC_TYPES)[number];
 // üyeliğinden çıkabilir ve o damga bu kapıyı tek başına kapatmalıdır. diplomaVerifiedAt üyelikten
 // çıkışta SİLİNMEZ (klinik tarafın da dayanağıdır) → yalnız iki damgaya bakan eski formül, çıkan
 // üyeyi içeride tutardı.
-export function hasDoctoriumAccess(d: {
-  diplomaVerifiedAt: Date | null;
-  studentVerifiedAt: Date | null;
-  doctoriumOptOutAt: Date | null;
-}): boolean {
-  if (d.doctoriumOptOutAt) return false;
-  return !!d.diplomaVerifiedAt || !!d.studentVerifiedAt;
+//
+// ÜÇ KATMAN (2026-09-05, kullanıcı kararı): karar lib/doctorium-tiers.ts çözücüsüne delege edildi —
+// DENEME üyesi (trialEndsAt gelecekte) de girer; süresi dolmuş deneme (LOCKED) girmez. İmza geriye
+// uyumlu: trialEndsAt A1'de isteğe bağlı, A2 migration'ı sonrası ZORUNLU olur (unutulan select derlemede
+// patlar). `now` test için parametre; varsayılan yalnız sunucu çağrılarında kullanılır.
+export function hasDoctoriumAccess(d: TierStamps, now: Date = new Date()): boolean {
+  return hasPortalAccess(doctoriumAudience(d, now));
 }
 
-// Öğrenci-SINIRLI üye mi: öğrenci damgası var ama klinik aktivasyon yok. Pazarlama yüzeyleri
-// (sponsor kartı, anket, ödül puanı) bu üyeye KAPALIDIR — tıp öğrencisi sağlık meslek mensubu
-// değildir; meslek-mensubuna-tanıtım rejimi ona uygulanamaz (kullanıcı kararı 2026-08-14).
-// Mezuniyette zorunlu belgeler (v6.105'ten beri yalnız diploma) tamamlanıp activatedAt dolunca
-// süzgeç kendiliğinden kalkar (damga silinmez).
+// Öğrenci-SINIRLI üye mi: öğrenci damgası var ama klinik aktivasyon yok.
+// 🪦 SÜPERSEDE (2026-09-05, üç katman): pazarlama yüzeyi süzgeci artık lib/doctorium-tiers.ts
+// `audienceFlags(doctoriumAudience(...))` — 11 sayfa/route çağıranı + 2 kapısız API tek sözcüye
+// bağlandı, bu fonksiyonun çağıranı KALMADI. Yalnız sözleşme testi (two-stage-access.test) için
+// duruyor; yeni kod BUNU KULLANMAZ. Eski gerekçe tiers'ta sürer: tıp öğrencisi (ve doğrulanmamış
+// deneme üyesi) sağlık meslek mensubu değildir; meslek-mensubuna-tanıtım rejimi uygulanamaz
+// (kullanıcı kararı 2026-08-14). Bilinçli fark: eski formül activatedAt'e bakardı, yeni model
+// diplomaVerifiedAt'e bakar (diploması doğrulanmış eski öğrenci = VERIFIED).
 export function isStudentOnly(d: { studentVerifiedAt: Date | null; activatedAt: Date | null }): boolean {
   return !!d.studentVerifiedAt && !d.activatedAt;
 }

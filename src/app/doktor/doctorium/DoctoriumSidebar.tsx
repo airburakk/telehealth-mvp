@@ -227,17 +227,14 @@ export function DoctoriumSidebar({
  * Doctorium çalışma alanı kabuğu: üst raf + ORTALI okuma düzeni. Page'ler içeriklerini buna
  * sarar (layout DEĞİL — layout searchParams göremez, aktifliği page bilir).
  *
- * `balance`/`isDoctor` prop'ları mobil çubuğun eski Kayıtlı/Puanlarım yuvaları içindi
- * (2026-08-19'da Header menüsüne taşındılar) — imza, beş çağıran page'i tek turda kırmamak
- * için KORUNDU, değerler artık okunmuyor. Çağıranlardaki getDoctorBalance hesabıyla birlikte
- * ayrı bir temizlik turunda sökülecek (todo).
+ * `balance`/`isDoctor` prop'ları 2026-09-05'te SÖKÜLDÜ: mobil çubuğun eski Kayıtlı/Puanlarım
+ * yuvaları 2026-08-19'da Header menüsüne taşınmıştı; çağıranlardaki getDoctorBalance hesapları da
+ * kalktı (puan bakiyesi yalnız /oduller sayfasında okunur).
  */
 export function DoctoriumShell({
   active, counts = null, children,
 }: {
   active: SidebarActive;
-  balance?: number | null;
-  isDoctor?: boolean;
   counts?: SidebarCounts;
   children: React.ReactNode;
 }) {

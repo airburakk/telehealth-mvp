@@ -3,8 +3,6 @@ import Link from "next/link";
 import { ArrowLeft, Newspaper, Settings2 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getDoctorBalance } from "@/lib/rewards";
-import { isStudentOnly } from "@/lib/doctor-activation";
 import { todayModuleCounts } from "@/lib/doctorium";
 import { DIGEST_NAME, formatTrDate, type DigestSnapshot } from "@/lib/daily-digest";
 import { DoctoriumShell } from "../DoctoriumSidebar";
@@ -35,10 +33,9 @@ export default async function OzetPage({
 
   const doctor = await db.doctor.findUnique({
     where: { id: me.doctorId },
-    select: { digestChannel: true, activatedAt: true, studentVerifiedAt: true },
+    select: { digestChannel: true },
   });
   if (!doctor) redirect("/doktor");
-  const balance = isStudentOnly(doctor) ? null : await getDoctorBalance(me.doctorId);
 
   const sp = await searchParams;
   const recent = await db.dailyDigest.findMany({
@@ -60,7 +57,7 @@ export default async function OzetPage({
   }
 
   return (
-    <DoctoriumShell active={null} balance={balance} isDoctor counts={await todayModuleCounts()}>
+    <DoctoriumShell active={null} counts={await todayModuleCounts()}>
       <div className="mx-auto max-w-3xl px-5 py-8">
         <Link
           href="/doktor/doctorium"

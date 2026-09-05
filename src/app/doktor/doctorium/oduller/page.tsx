@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import {
   getDoctorBalance, REWARD_KIND_LABEL, REDEMPTION_STATUS_LABEL, REWARD_TERMS_ITEMS,
 } from "@/lib/rewards";
-import { isStudentOnly } from "@/lib/doctor-activation";
+import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
 import { todayModuleCounts } from "@/lib/doctorium";
 import { RewardCatalog } from "./RewardCatalog";
 import { DoctoriumShell } from "../DoctoriumSidebar";
@@ -27,13 +27,10 @@ export default async function RewardsPage() {
   const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
   if (!me?.doctorId) redirect("/doktor");
   const doctorId = me.doctorId;
-  // v6.95: öğrenci-sınırlı üyeye ödül yüzeyi kapalı (rozet/link zaten çizilmez — URL ile doğrudan
-  // gelişe karşı derinlik savunması; akış sayfasına geri gönderilir).
-  const d = await db.doctor.findUnique({
-    where: { id: doctorId },
-    select: { activatedAt: true, studentVerifiedAt: true },
-  });
-  if (!d || isStudentOnly(d)) redirect("/doktor/doctorium");
+  // Ödül yüzeyi yalnız DOĞRULANMIŞ doktora açık — öğrenci ve deneme üyesinde kapalı (2026-09-05 üç
+  // katman; rozet/link zaten çizilmez, bu URL ile doğrudan gelişe karşı derinlik savunması).
+  const audienceCtx = await currentDoctoriumAudience();
+  if (!audienceCtx?.flags.canRedeem) redirect("/doktor/doctorium");
 
   const [balance, items, redemptions, entries] = await Promise.all([
     getDoctorBalance(doctorId),
@@ -61,7 +58,7 @@ export default async function RewardsPage() {
   const iso = (d: Date) => d.toISOString().slice(0, 10);
 
   return (
-    <DoctoriumShell active="oduller" balance={balance} isDoctor counts={await todayModuleCounts()}>
+    <DoctoriumShell active="oduller" counts={await todayModuleCounts()}>
     {/* mx-auto (2026-08-18 Üst Raf): okuma kolonu ortalı — Akışım ile aynı düzen. */}
     <div className="mx-auto max-w-2xl px-5 py-8">
       {/* Masaüstünde dönüş banttadır (Faz 1); bu link yalnız mobil için. */}
