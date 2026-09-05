@@ -5,44 +5,39 @@ import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
 
 // /doctorium arka plan videosu — v2 hero sözleşmesinin taşıması: IO ile yalnız
 // görünürken oynat · arka plan sekmesinde mount-play reddedilir → visibilitychange'te
-// yeniden dene · mobil/Save-Data/reduced-motion'da video HİÇ MOUNT EDİLMEZ (yalnız
-// statik poster gösterilir — DOM'da <source> bile yok, "preload=none" güvencesinden
-// daha güçlü: hiçbir istek gitmez). `overlay` = üstteki okunurluk skrimi: koyu
-// bölümde koyu gradient, açık bölümde beyaz perde — çağıran bölümün temasına göre
-// verilir. Kapsayıcı bölümde `relative isolate` ŞART (-z-10 katmanları bölüm köküne
-// gömülür). Film geçmişi (film8→film13, sahne-anchor tuzakları dahil): git geçmişi.
+// yeniden dene · Save-Data/reduced-motion'da video HİÇ MOUNT EDİLMEZ (yalnız statik
+// poster gösterilir — DOM'da <source> bile yok, "preload=none" güvencesinden daha
+// güçlü: hiçbir istek gitmez). `overlay` = üstteki okunurluk skrimi: koyu bölümde
+// koyu gradient, açık bölümde beyaz perde — çağıran bölümün temasına göre verilir.
+// Kapsayıcı bölümde `relative isolate` ŞART (-z-10 katmanları bölüm köküne gömülür).
+// Film geçmişi (film8→film13, sahne-anchor tuzakları dahil): git geçmişi.
 //
 // film14 (2026-08-27, kullanıcı onaylı marka filmi — VO+müzik dahil, 44.15sn): film13'ün
 // yerini aldı. Önceki sahne-anchor hack'i (belirli bir zaman aralığında objectPosition
 // değiştirme) film13'e ÖZGÜYDÜ, film14'te yok — kaldırıldı.
 //
-// 2026-08-28 denetimi: "Sesi aç" düğmesi kaldırılmıştı (mobilde AI-rozeti/sticky-CTA ile
-// yarışıyordu). Aynı turda mobil/reduced-motion/save-data'da video mount edilmeyip poster'a
-// düşme + object-position eklendi (poster'daki küre/wordmark odağı dikeyde ~%38 — FOCAL).
-//
-// 2026-08-29 (kullanıcı kararı): düğme GERİ GELDİ, bu kez SAĞ ALTTA. Denetimin itirazı iki
-// yönden karşılandı: (a) düğme yalnız video gerçekten mount edildiğinde render edilir →
-// mobilde/reduced-motion'da hiç yok, sticky-CTA ile yarışma ihtimali ortadan kalktı;
-// (b) AI şeffaflık rozeti de sağ-alt köşede (bottom-3 right-3) olduğu için düğme onun
-// ÜSTÜNE istiflenir (bottom-12) — köşede tek dikey yığın, çakışma yok. Rozetin konumu
-// BEYAN olduğu için dokunulmadı; kayacak olan düğmedir.
-//
-// `muted` React'e bırakıldı (muted={!soundOn}), imperative `video.muted = …` DEĞİL: prop
-// sabit true iken DOM'u elle değiştirmek React'in bir sonraki render'ıyla sessizce geri
-// alınabilir. Autoplay sözleşmesi korunur — soundOn başlangıçta false → ilk mount muted.
+// 2026-09-04 (kullanıcı kararı): mobil kısıtı kaldırıldı — poster (filmin açılış karesi,
+// "Doctorium" yazısı+slogan içerir) donuk zemin olarak mobilde tek başına kötü duruyordu;
+// video akışta bu kare hızla geçip ürüne akar. Mobilde de aynı 720p kaynak açılır (ayrı
+// mobil dosya YOK — tek kaynak, Save-Data/reduced-motion güvencesi hâlâ geçerli). 480p+sesli
+// deneme (2.15MB) telefonda kalite olarak yetersiz bulundu, 720p+sesli (4.7MB) kalıcı kaldı.
+// Mobilde "hiç oynamıyor" sorunu ayrı bir kökten çıkmıştı — Next.js dev server'ın
+// allowedDevOrigins kısıtı LAN IP'sinden gelen HMR bağlantısını reddediyordu (next.config.ts),
+// video koduyla ilgisi yoktu. Sesi aç/kapa düğmesi bu turda bir kez kaldırılıp (kullanıcı:
+// "orası sade olsun"), video mobilde de dinlenir hâle gelince GERİ istendi — `muted` artık
+// `soundOn` state'ine bağlı.
 export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showVideo, setShowVideo] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
 
-  // Karar: mobil (dar ekran) ya da reduced-motion ya da save-data → video hiç mount edilmez.
+  // Karar: reduced-motion ya da save-data → video hiç mount edilmez (mobil kısıtı kalktı).
   useEffect(() => {
-    const narrow = window.matchMedia("(max-width: 767px)").matches;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const saveData =
       "connection" in navigator &&
       (navigator as { connection?: { saveData?: boolean } }).connection?.saveData === true;
-    if (narrow || reduceMotion || saveData) return;
+    if (reduceMotion || saveData) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da matchMedia yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
     setShowVideo(true);
   }, []);
@@ -77,10 +72,11 @@ export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
       {showVideo ? (
         <video
           ref={videoRef}
+          autoPlay
           muted={!soundOn}
           loop
           playsInline
-          preload="none"
+          preload="auto"
           poster={POSTER}
           aria-hidden
           className="absolute inset-0 -z-10 h-full w-full object-cover"
