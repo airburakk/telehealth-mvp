@@ -90,7 +90,7 @@ export default async function CareerPathwayPage({ params }: { params: Promise<{ 
       {steps.length > 0 && (
         <section className="mt-6">
           <h2 className="flex items-center gap-1.5 text-sm font-semibold text-[var(--c-ink)]">
-            <ListChecks size={15} className="text-emerald-300" /> Adımlar
+            <ListChecks size={15} className="text-[var(--c-accent)]" /> Adımlar
           </h2>
           <ol className="mt-3 grid gap-3">
             {steps.map((s, i) => (
@@ -99,7 +99,7 @@ export default async function CareerPathwayPage({ params }: { params: Promise<{ 
                 className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-4"
               >
                 <div className="flex items-baseline gap-2">
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-300">
+                  <span className="rounded-full bg-[var(--c-accent)]/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-[var(--c-accent)]">
                     {i + 1}
                   </span>
                   <h3 className="text-sm font-semibold text-[var(--c-ink)]">{s.title}</h3>
@@ -114,12 +114,12 @@ export default async function CareerPathwayPage({ params }: { params: Promise<{ 
       {documents.length > 0 && (
         <section className="mt-6">
           <h2 className="flex items-center gap-1.5 text-sm font-semibold text-[var(--c-ink)]">
-            <FileText size={15} className="text-emerald-300" /> Gerekli belgeler
+            <FileText size={15} className="text-[var(--c-accent)]" /> Gerekli belgeler
           </h2>
           <ul className="mt-3 grid gap-1.5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-4">
             {documents.map((d) => (
               <li key={d} className="flex items-start gap-2 text-xs leading-relaxed text-[var(--c-ink-2)]">
-                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-emerald-400/70" /> {d}
+                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-[var(--c-accent)]/70" /> {d}
               </li>
             ))}
           </ul>
@@ -132,13 +132,13 @@ export default async function CareerPathwayPage({ params }: { params: Promise<{ 
 
       <section className="mt-6">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-[var(--c-ink)]">
-          <ShieldCheck size={15} className="text-emerald-300" /> Resmî kaynak
+          <ShieldCheck size={15} className="text-[var(--c-accent)]" /> Resmî kaynak
         </h2>
         <a
           href={p.officialUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-2 inline-flex items-center gap-1.5 break-all text-xs font-semibold text-emerald-300 hover:underline"
+          className="mt-2 inline-flex items-center gap-1.5 break-all text-xs font-semibold text-[var(--c-accent)] hover:underline"
         >
           {p.officialUrl} <ExternalLink size={12} className="shrink-0" />
         </a>

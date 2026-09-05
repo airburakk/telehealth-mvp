@@ -72,7 +72,7 @@ export default async function TakvimPage({
         </Link>
 
         <div className="mt-5">
-          <div className="aura-mono text-[11px] font-bold tracking-[0.16em] text-emerald-400">TAKVİM</div>
+          <div className="aura-mono text-[11px] font-bold tracking-[0.16em] text-[var(--c-accent)]">TAKVİM</div>
           <h1 className="aura-display mt-1 text-3xl font-medium tracking-tight text-[var(--c-ink)]">Takvimim</h1>
           <p className="mt-1 text-[13px] text-[var(--c-ink-2)]">
             Takip ettiğiniz etkinlikler, bildiri ve erken kayıt son tarihleriyle — kendiliğinden.
@@ -133,7 +133,7 @@ export default async function TakvimPage({
                 >
                   <span
                     className={`grid h-5 w-5 place-items-center rounded-full text-[11px] font-semibold ${
-                      isToday ? "bg-emerald-500/90 text-[#062a20]" : "text-[var(--c-ink-2)]"
+                      isToday ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-[var(--c-ink-2)]"
                     }`}
                   >
                     {i + 1}

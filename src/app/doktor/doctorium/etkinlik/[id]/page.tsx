@@ -169,7 +169,7 @@ export default async function CongressCardPage({ params }: { params: Promise<{ i
         {c.ttbCode && (
           <section className="border-t border-[var(--c-hairline)] px-5 py-4">
             <h2 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
-              <ShieldCheck size={13} className="text-emerald-400" /> TTB STE/SMG Akreditasyonu
+              <ShieldCheck size={13} className="text-[var(--c-success)]" /> TTB STE/SMG Akreditasyonu
             </h2>
             <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink-2)]">
               Bu etkinlik Türk Tabipleri Birliği STE/SMG kredilendirme sisteminde{" "}
@@ -196,7 +196,7 @@ export default async function CongressCardPage({ params }: { params: Promise<{ i
         <div className="flex flex-wrap items-center gap-2 border-t border-[var(--c-hairline)] px-5 py-4">
           {c.url && (
             <a href={c.url} target="_blank" rel="noopener noreferrer nofollow"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/90 px-3.5 py-1.5 text-xs font-semibold text-[#062a20] hover:bg-emerald-400">
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-accent)] px-3.5 py-1.5 text-xs font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
               <ExternalLink size={13} /> Resmî siteye git
             </a>
           )}

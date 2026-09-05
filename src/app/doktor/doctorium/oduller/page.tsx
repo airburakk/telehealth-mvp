@@ -70,7 +70,7 @@ export default async function RewardsPage() {
       </Link>
 
       <h1 className="aura-display mt-3 flex items-center gap-2.5 text-2xl font-medium tracking-tight text-[var(--c-ink)]">
-        <Star size={22} className="text-emerald-300" /> Puanlarım
+        <Star size={22} className="text-[var(--c-accent)]" /> Puanlarım
       </h1>
 
       {/* Bakiye — stat/KPI: Inter bold, kit üstünde (Aura kit disiplini) */}
@@ -115,7 +115,7 @@ export default async function RewardsPage() {
             </span>
             <span className="flex items-center gap-3">
               <span className="aura-mono text-[10px] text-[var(--c-ink-3)]">{iso(e.createdAt)}</span>
-              <span className={`aura-mono font-semibold tabular-nums ${e.delta >= 0 ? "text-emerald-300" : "text-[var(--c-ink-2)]"}`}>
+              <span className={`aura-mono font-semibold tabular-nums ${e.delta >= 0 ? "text-[var(--c-success)]" : "text-[var(--c-ink-2)]"}`}>
                 {e.delta >= 0 ? `+${e.delta}` : e.delta}
               </span>
             </span>

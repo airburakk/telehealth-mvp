@@ -41,7 +41,7 @@ export default async function SavedPage() {
         <div className="mt-3 md:mt-0">
           <div className="aura-mono text-[10.5px] font-bold tracking-[0.16em] text-[var(--c-ink)]">KİŞİSEL</div>
           <h1 className="aura-display mt-1 flex items-center gap-2.5 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
-            <Bookmark size={24} className="text-emerald-300" /> Kaydettiklerim
+            <Bookmark size={24} className="text-[var(--c-accent)]" /> Kaydettiklerim
           </h1>
           <p className="mt-1 text-[13px] text-[var(--c-ink-2)]">
             İşaretlediğiniz içerikler burada — akış aksa da kaybolmaz.

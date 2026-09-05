@@ -171,7 +171,7 @@ export function PreferencesBoard(p: Props) {
   });
   const [lvSt, setLvSt] = useState<Status>({ state: "idle" });
 
-  // Faz B1 — raf sekmesi anahtarı (TUS): görünürlük tercihi, anında yazılır (view-filters module "tus").
+  // Faz B1→B3 — Kariyer içinde TUS bölümü anahtarı: görünürlük tercihi, anında yazılır (view-filters module "tus").
   const [tus, setTus] = useState(p.tusInitial);
   const [tusSt, setTusSt] = useState<Status>({ state: "idle" });
 
@@ -262,7 +262,7 @@ export function PreferencesBoard(p: Props) {
         const live = keys.filter((k) => feed.has(k)).length;
         return (
           <section key={g.key} className="mt-9 first:mt-0">
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b-2 border-emerald-400/70 pb-2">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b-2 border-[var(--c-accent)]/70 pb-2">
               <h2 className="aura-display text-[19px] font-semibold tracking-tight text-[var(--c-ink)]">{g.nm}</h2>
               <p className="flex-1 text-[13px] text-[var(--c-ink-3)]">{g.desc}</p>
               <span className="aura-mono text-[11px] text-[var(--c-ink-3)]">{live}/{keys.length} açık</span>
@@ -283,7 +283,7 @@ export function PreferencesBoard(p: Props) {
                       <span
                         aria-hidden="true"
                         className={`mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full ${
-                          on ? "bg-emerald-400" : "bg-[var(--c-ink-3)]"
+                          on ? "bg-[var(--c-accent)]" : "bg-[var(--c-ink-3)]"
                         }`}
                       />
                     )}
@@ -295,7 +295,7 @@ export function PreferencesBoard(p: Props) {
                           type="button"
                           onClick={() => setOpen(isOpen ? null : s.key)}
                           aria-expanded={isOpen}
-                          className="aura-mono mt-2 inline-flex items-center gap-1 text-[10.5px] font-semibold tracking-wider text-emerald-300 hover:text-emerald-200"
+                          className="aura-mono mt-2 inline-flex items-center gap-1 text-[10.5px] font-semibold tracking-wider text-[var(--c-accent)] hover:text-[var(--c-ink)]"
                         >
                           {isOpen ? "AYARLARI GİZLE" : "AYARLARI GÖSTER"}
                           <ChevronDown size={12} className={isOpen ? "rotate-180" : ""} />
@@ -313,7 +313,7 @@ export function PreferencesBoard(p: Props) {
                             <button
                               type="button"
                               onClick={() => setBranches(new Set(branchSorted.map((b) => b.slug)))}
-                              className="aura-mono text-[10.5px] font-semibold tracking-wider text-emerald-300 hover:text-emerald-200"
+                              className="aura-mono text-[10.5px] font-semibold tracking-wider text-[var(--c-accent)] hover:text-[var(--c-ink)]"
                             >
                               HEPSİNİ SEÇ
                             </button>
@@ -424,7 +424,7 @@ export function PreferencesBoard(p: Props) {
                                   <select
                                     value={alerts[kind]}
                                     onChange={(e) => setAlerts({ ...alerts, [kind]: Number(e.target.value) })}
-                                    className="mt-1 w-full rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-2.5 py-1.5 text-[12.5px] text-[var(--c-ink)] outline-none focus:border-emerald-400/50"
+                                    className="mt-1 w-full rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-2.5 py-1.5 text-[12.5px] text-[var(--c-ink)] outline-none focus:border-[var(--c-accent)]/50"
                                   >
                                     {ALERTS.map((o) => <option key={o.days} value={o.days}>{o.label}</option>)}
                                   </select>
@@ -450,7 +450,7 @@ export function PreferencesBoard(p: Props) {
           bu tercihi null'a çeker. Tasarım: vault doctorium-gunluk-ozet-tasarimi-2026-08-24.md */}
       <section className="mt-9 border-t border-[var(--c-hairline)] pt-6">
         <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[var(--c-ink)]">
-          <Newspaper size={15} className="text-emerald-300" /> Doctorium Post — günlük özet
+          <Newspaper size={15} className="text-[var(--c-accent)]" /> Doctorium Post — günlük özet
         </h2>
         <p className="mt-2 max-w-[70ch] text-[12.5px] leading-relaxed text-[var(--c-ink-2)]">
           Her sabah, akış tercihlerinize göre derlenen kişisel bir özet: gece akışınıza düşen
@@ -479,14 +479,15 @@ export function PreferencesBoard(p: Props) {
         </div>
       </section>
 
-      {/* Raf sekmeleri (üç katman Faz B1, 2026-09-05): TUS öğrencide daima açık; doktor/deneme buradan açar —
-          rapor §2 "kapalı, gizli değil" (mentor olacak asistan tek anahtarla). Doğrudan URL zaten serbest. */}
+      {/* Kariyer bölümleri (üç katman Faz B1→B3, 2026-09-05): TUS öğrencide Kariyer sekmesinin içinde daima açık; doktor/
+          deneme buradan Kariyer'in içine ekler — rapor §2 "kapalı, gizli değil". Rafa sekme EKLENMEZ (kullanıcı kararı:
+          "ekstra bir şey açılmasın"); doğrudan URL (/doktor/doctorium/tus) zaten serbest. */}
       {p.showTusToggle && (
         <section className="mt-9 border-t border-[var(--c-hairline)] pt-6">
-          <h2 className="text-[15px] font-semibold text-[var(--c-ink)]">Raf sekmeleri</h2>
+          <h2 className="text-[15px] font-semibold text-[var(--c-ink)]">Kariyer bölümleri</h2>
           <p className="mt-2 max-w-[70ch] text-[12.5px] leading-relaxed text-[var(--c-ink-2)]">
-            TUS bölümü tıp öğrencisi yüzeyidir; uzmanlık eğitimine hazırlananları takip etmek ya da mentorluk
-            için rafınıza ekleyebilirsiniz. Akışınızı etkilemez.
+            TUS bölümü tıp öğrencisi yüzeyidir; uzmanlık sınavına hazırlanıyorsanız ya da mentorluk için Kariyer
+            sekmenizin içinde açabilirsiniz. Rafa yeni sekme eklemez, akışınızı etkilemez.
           </p>
           <div className="mt-3 flex items-start gap-3.5">
             <Switch
@@ -496,11 +497,11 @@ export function PreferencesBoard(p: Props) {
                 setTus(next);
                 void post("/api/doctor/view-filters", { module: "tus", show: next }, setTusSt);
               }}
-              label="TUS sekmesini rafta göster"
+              label="Kariyer içinde TUS bölümünü göster"
             />
             <div>
-              <div className="text-[13.5px] font-medium text-[var(--c-ink)]">TUS sekmesini rafta göster</div>
-              <StatusLine status={tusSt} idle={tus ? "Açık — raf 09. durak TUS" : "Kapalı — sekme çizilmez, sayfa adresle açılabilir"} />
+              <div className="text-[13.5px] font-medium text-[var(--c-ink)]">Kariyer içinde TUS bölümünü göster</div>
+              <StatusLine status={tusSt} idle={tus ? "Açık — Kariyer sekmesinde TUS bölümü" : "Kapalı — bölüm çizilmez, sayfa adresle açılabilir"} />
             </div>
           </div>
         </section>
@@ -558,7 +559,7 @@ function Switch({
         on
           ? c === "amber"
             ? "border-amber-400/45 bg-amber-500/15"
-            : "border-emerald-400/45 bg-emerald-500/15"
+            : "border-[var(--c-accent)]/45 bg-[var(--c-accent)]/15"
           : "border-[var(--c-hairline)] bg-[var(--c-surface-2)]"
       }`}
     >
@@ -566,7 +567,7 @@ function Switch({
         aria-hidden="true"
         className={`absolute top-[2px] left-[2px] h-4 w-4 rounded-full transition-transform ${
           on
-            ? `translate-x-4 ${c === "amber" ? "bg-amber-300" : "bg-emerald-400"}`
+            ? `translate-x-4 ${c === "amber" ? "bg-amber-300" : "bg-[var(--c-accent)]"}`
             : "bg-[var(--c-ink-3)]"
         }`}
       />
@@ -603,7 +604,7 @@ function Chips({
             aria-pressed={on}
             className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium transition ${
               on
-                ? "bg-emerald-500/15 text-emerald-300 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.35)]"
+                ? "bg-[var(--c-accent)]/15 text-[var(--c-accent)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--c-accent)_35%,transparent)]"
                 : "bg-[var(--c-surface)] text-[var(--c-ink-3)] hover:text-[var(--c-ink)]"
             }`}
           >
@@ -632,7 +633,7 @@ function RadioChips({
           aria-pressed={value === it.key}
           className={`rounded-full px-3 py-1 text-[12px] font-medium transition ${
             value === it.key
-              ? "bg-emerald-500/15 text-emerald-300 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.35)]"
+              ? "bg-[var(--c-accent)]/15 text-[var(--c-accent)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--c-accent)_35%,transparent)]"
               : "bg-[var(--c-surface)] text-[var(--c-ink-3)] hover:text-[var(--c-ink)]"
           }`}
         >
@@ -649,7 +650,7 @@ function StatusLine({ status, idle }: { status: Status; idle: string }) {
       <Loader2 size={11} className="animate-spin" /> Kaydediliyor…</p>;
   }
   if (status.state === "saved") {
-    return <p className="mt-2 inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-emerald-300">
+    return <p className="mt-2 inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--c-accent)]">
       <Check size={11} /> Kaydedildi</p>;
   }
   if (status.state === "error") return <p className="mt-2 text-[11.5px] text-rose-300">{status.msg}</p>;

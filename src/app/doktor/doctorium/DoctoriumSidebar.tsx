@@ -1,6 +1,6 @@
 import { Fragment, type CSSProperties } from "react";
 import Link from "next/link";
-import { currentDoctoriumAudience, currentDoctorViewPrefs } from "@/lib/doctorium-audience";
+import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
 import { shelfTabsFor, type ShelfColor, type ShelfModuleKey, type ShelfTabDef } from "@/lib/doctorium-shelf";
 
 /**
@@ -20,11 +20,12 @@ import { shelfTabsFor, type ShelfColor, type ShelfModuleKey, type ShelfTabDef } 
  * SERVER component (bilinçli — v6.101 dersi AYNEN): aktifliği bilen page `active` prop'uyla
  * verir; Suspense/useSearchParams/hydration bağımlılığı yok, aktif şerit SSR ilk boyada gelir.
  *
- * KİTLEYE GÖRE SEKME (üç katman Faz B1, kullanıcı kararı 2026-09-05): sekme dizisi artık
- * lib/doctorium-shelf `shelfTabsFor(kitle, tercih)` — öğrenci +TUS +Kariyer EDU (09/10); doktor
- * Özelleştir'den TUS'u açabilir ("kapalı, gizli değil"). Shell kitleyi ve tercihi istek-önbellekli
- * sunucu çözücülerden okur (lib/doctorium-audience) → 11 çağıran page DEĞİŞMEDİ. Eski MODULES/TAKVIM
- * dizileri (kitle-kör) bu dosyadan lib/doctorium-shelf'e taşındı; renkler/anahtarlar birebir.
+ * KİTLEYE GÖRE SEKME (üç katman Faz B1 → B3 revizyonu, kullanıcı kararı 2026-09-05): sekme dizisi
+ * lib/doctorium-shelf `shelfTabsFor(kitle)` — raf HER KİTLEDE aynı 8 durak (Takvim en sonda); öğrenciye
+ * ekstra sekme AÇILMAZ, TUS + Kariyer EDU Kariyer sekmesinin İÇİNDE yaşar (page.tsx StudentCareerHub /
+ * DoctorTusSection). Kitle yalnız Kariyer sekmesinin kimlik rengini değiştirir (öğrencide koral). Shell
+ * kitleyi istek-önbellekli çözücüden okur (lib/doctorium-audience) → 11 çağıran page DEĞİŞMEDİ. Eski
+ * MODULES/TAKVIM dizileri (kitle-kör) bu dosyadan lib/doctorium-shelf'e taşındı; renkler/anahtarlar birebir.
  *
  * RENK MİMARİSİ (2026-08-19, "beyaz raf" denemesiyle kurulan çift-ton): sekme kimlik renkleri
  * artık {dark, light} ÇİFTİ — eski tek hex gündüz temasında da gece tonunu basıyordu (globals
@@ -39,7 +40,7 @@ import { shelfTabsFor, type ShelfColor, type ShelfModuleKey, type ShelfTabDef } 
 
 // "tercihler" yok: /doktor/doctorium/tercihler v6.49'dan beri redirect — işlevsiz yüzeyin
 // linki çizilmez (koşullu-href ilkesi); Özelleştir paneli sayfanın içinde yaşıyor.
-export type SidebarActive = ShelfModuleKey | "takvim" | "oduller" | "kaydettiklerim" | "tus" | "kariyer-edu" | null;
+export type SidebarActive = ShelfModuleKey | "takvim" | "oduller" | "kaydettiklerim" | null;
 
 /** Raf nabzı (v6.102): modül → bugün akışa düşen içerik sayısı (lib/doctorium todayModuleCounts).
  *  null = sayaç verisi yok (raf nabızsız çizilir — geriye uyumlu). */
@@ -118,7 +119,7 @@ function ShelfGroup() {
 
 /** Rafın sekme dizisi — masaüstü ve mobil raf-footer AYNI diziyi çizer (tek kaynak; iki
  *  markup'ın ayrışması v6.109-öncesi çift-liste driftine geri dönüş olurdu). Ayraç, grup
- *  DEĞİŞTİĞİNDE çizilir (Akışım→Akademik · İlaç→Etkinlik · Hukuk→Takvim · Takvim→TUS). */
+ *  DEĞİŞTİĞİNDE çizilir (Akışım→Akademik · İlaç→Etkinlik · Hukuk→Takvim). */
 function ShelfTabs({ active, counts, tabs }: { active: SidebarActive; counts: SidebarCounts; tabs: readonly ShelfTabDef[] }) {
   return (
     <>
@@ -213,8 +214,8 @@ export function DoctoriumSidebar({
  * yuvaları 2026-08-19'da Header menüsüne taşınmıştı; çağıranlardaki getDoctorBalance hesapları da
  * kalktı (puan bakiyesi yalnız /oduller sayfasında okunur).
  *
- * ASYNC (üç katman Faz B1): kitle + görünüm tercihi istek-önbellekli çözücülerden okunur
- * (layout/page/Shell aynı sorguları paylaşır) → raf kitleye göre kurulur; çağıranlar değişmez.
+ * ASYNC (üç katman Faz B1): kitle istek-önbellekli çözücüden okunur (layout/page/Shell aynı sorguyu
+ * paylaşır) → Kariyer sekmesinin rengi kitleye göre; çağıranlar değişmez.
  */
 export async function DoctoriumShell({
   active, counts = null, children,
@@ -223,8 +224,8 @@ export async function DoctoriumShell({
   counts?: SidebarCounts;
   children: React.ReactNode;
 }) {
-  const [ctx, prefs] = await Promise.all([currentDoctoriumAudience(), currentDoctorViewPrefs()]);
-  const tabs = shelfTabsFor(ctx?.audience ?? null, { showTus: prefs.showTus });
+  const ctx = await currentDoctoriumAudience();
+  const tabs = shelfTabsFor(ctx?.audience ?? null);
   return (
     <>
       <DoctoriumSidebar active={active} counts={counts} tabs={tabs} />

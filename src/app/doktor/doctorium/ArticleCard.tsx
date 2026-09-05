@@ -242,7 +242,7 @@ export function ArticleCard({
               {item.hasAiSummary && (
                 <>
                   <span aria-hidden="true">·</span>
-                  <span className="aura-mono inline-flex items-center gap-1 text-[11px] text-emerald-300">
+                  <span className="aura-mono inline-flex items-center gap-1 text-[11px] text-[var(--c-accent)]">
                     <Sparkles size={10} aria-hidden="true" /> {item.module === "akademik" ? "Klinik özet" : "YZ özeti"}
                   </span>
                 </>

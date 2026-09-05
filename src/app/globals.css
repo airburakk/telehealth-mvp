@@ -105,6 +105,16 @@
  * grisinde kalır ve V3 ile birleşmez. */
 .doctorium-scope {
   color: var(--c-ink);
+  /* DOCTORIUM AKSANI (tam koral yüzey, kullanıcı isteği 2026-09-05 akşam): portalın eski sabit Tailwind zümrüt sınıfları
+     (text-emerald-300 / bg-emerald-500/15 / border-emerald-400 …) --c-accent token'ına taşındı; kit bileşenleri
+     (PageHeader/AuraButton/InfoField) de aynı token'ı okur. Doktorda MARKA ZÜMRÜDÜ (#34d399 = "ium", raf, Akademik
+     kimliği — eski emerald-300 metni bir kademe doygunlaştı, bilinçli), öğrenci kapsamı aşağıdaki
+     [data-audience="student"] bloğuyla korala çevirir. Kademeler AURA deseniyle aynı yönde: strong = hover (koyulaşır),
+     stronger = bağlantı/vurgu. Zümrütte KALANLAR: modül/kulvar kimlik renkleri (Akademik, Takvim, kart kapağı, Post
+     mastheadı) ve semantik başarı tonu --c-success (TTB akreditasyonu, "Doğrulandı", puan artışı, FULFILLED). */
+  --c-accent: #34d399;
+  --c-accent-strong: #10b981;
+  --c-accent-stronger: #059669;
   /* Tipografi TEMA-BAĞIMSIZ: Doctorium'un kimliği her iki temada Inter'de tekilleşir
    * (V3: "hiyerarşi yalnız ağırlıkla") — aura-display/aura-mono class'ları var kalır,
    * yalnız font-family değişir. */
@@ -136,6 +146,11 @@
   --c-ink-2: #4b4b48;
   --c-ink-3: #6b6b68;
   --c-hairline: rgba(24, 24, 27, 0.08);
+  /* Gündüz aksanı = V3 landing'in açık-bölüm zümrüdü (#047857, kırık beyazda 5.5:1); eski gündüz-kontrast remap'i
+     text-emerald-300'ü #147839'a çekiyordu — token'a geçişle bu yüzey de marka tonuna oturdu. */
+  --c-accent: #047857;
+  --c-accent-strong: #065f46;
+  --c-accent-stronger: #064e3b;
   color: var(--c-ink);
   color-scheme: light;
 }
@@ -221,8 +236,9 @@
    "ium" / ışık telleri (Header lockup'ı public/brand/doctorium-student-lockup-*, footer --dl-emerald, .doctorium-ium)
    marka zümrüdünde KALIR; koral = öğrenci kulvarının rengi → kit eyebrow/bağlantı/düğme (--c-accent*), Header aktif
    bağlantı/avatar, raf zemini "KOR %12" + yeni-içerik noktası/nabız, EDU sekmeleri (lib/doctorium-shelf STUDENT_LANE),
-   "Öğrenci Üyeliği" rozeti. Sabit Tailwind zümrüt sınıfları (text-emerald-300 vb. — Akademik kimliği, AI özet paneli,
-   çipler) BİLİNÇLİ dokunulmadı: marka öğesi sayılır. Header kromu DAİMA theme-dark (Header.tsx) → header yalnız gece
+   "Öğrenci Üyeliği" rozeti. Aynı gün akşam (tam koral yüzey): portalın sabit Tailwind zümrüt sınıfları da --c-accent
+   token'ına taşındı (bkz. .doctorium-scope aksan bloğu) → AI özet paneli, çipler, alt-sekme çizgileri, düğmeler, anahtarlar
+   öğrencide koral; zümrütte yalnız kimlik renkleri + --c-success kalır. Header kromu DAİMA theme-dark (Header.tsx) → header yalnız gece
    değerlerini alır, .theme-light eşi ona yazılmaz (yazılsaydı koyu kromda koyu koral ≈3.2:1 çıkardı).
    Kontrast (hesap 2026-09-05): gece #fb923c/#0d0e10 8.5:1 · gündüz #c2410c/#fbfbfa 5.0:1 · düğme metni #fbfbfa/#c2410c
    5.0:1 · strong kademeleri AURA deseniyle aynı yönde (hover koyulaşır: gece #f97316 6.9:1, gündüz #9a3412 7.1:1).

@@ -47,7 +47,7 @@ function pagerHref(sp: SearchParams, next: { sayfa?: number; imlec?: string; onc
 }
 
 const LINK_CLS =
-  "aura-mono inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-2 text-[11px] font-semibold tracking-[0.12em] text-[var(--c-ink-2)] transition-colors hover:border-emerald-400/60 hover:text-emerald-300";
+  "aura-mono inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-2 text-[11px] font-semibold tracking-[0.12em] text-[var(--c-ink-2)] transition-colors hover:border-[var(--c-accent)]/60 hover:text-[var(--c-accent)]";
 
 export function FeedPager({
   sp,

@@ -90,7 +90,7 @@ export function SurveyCardView(p: Props) {
               </span>
             )}
             {p.points > 0 && (
-              <span className="aura-mono inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+              <span className="aura-mono inline-flex items-center gap-1 rounded-full bg-[var(--c-accent)]/15 px-2 py-0.5 text-[10px] font-semibold text-[var(--c-accent)]">
                 <Star size={10} strokeWidth={2.5} /> +{p.points} puan
               </span>
             )}
@@ -112,11 +112,11 @@ export function SurveyCardView(p: Props) {
                     onClick={() => setPicked(i)}
                     className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-xs transition ${
                       picked === i
-                        ? "border-emerald-400/40 bg-emerald-500/10 text-[var(--c-ink)]"
+                        ? "border-[var(--c-accent)]/40 bg-[var(--c-accent)]/10 text-[var(--c-ink)]"
                         : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface-2)]"
                     }`}
                   >
-                    <span className={`h-3 w-3 shrink-0 rounded-full border ${picked === i ? "border-emerald-300 bg-emerald-400" : "border-[var(--c-ink-3)]"}`} />
+                    <span className={`h-3 w-3 shrink-0 rounded-full border ${picked === i ? "border-[var(--c-accent)] bg-[var(--c-accent)]" : "border-[var(--c-ink-3)]"}`} />
                     {o}
                   </button>
                 ))}
@@ -126,7 +126,7 @@ export function SurveyCardView(p: Props) {
                   type="button"
                   onClick={submit}
                   disabled={picked == null || saving}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/90 px-3.5 py-1.5 text-xs font-semibold text-[#062a20] hover:bg-emerald-400 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-accent)] px-3.5 py-1.5 text-xs font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-50"
                 >
                   {saving && <Loader2 size={12} className="animate-spin" />} Yanıtla
                 </button>
@@ -137,10 +137,10 @@ export function SurveyCardView(p: Props) {
           ) : (
             <>
             {awarded > 0 && (
-              <p className="mt-1.5 text-[11px] text-emerald-300">
+              <p className="mt-1.5 text-[11px] text-[var(--c-accent)]">
                 <Star size={11} className="inline -mt-px mr-1" strokeWidth={2.5} />
                 {awarded} puan kazandınız ·{" "}
-                <Link href="/doktor/doctorium/oduller" className="underline underline-offset-2 hover:text-emerald-200">
+                <Link href="/doktor/doctorium/oduller" className="underline underline-offset-2 hover:text-[var(--c-ink)]">
                   Puanlarım
                 </Link>
               </p>
@@ -159,7 +159,7 @@ export function SurveyCardView(p: Props) {
                     />
                     <span className="relative flex items-center justify-between gap-2 text-xs">
                       <span className={`flex items-center gap-1.5 ${mine ? "font-semibold text-[var(--c-ink)]" : "text-[var(--c-ink-2)]"}`}>
-                        {mine && <Check size={12} className="text-emerald-300" strokeWidth={3} />}
+                        {mine && <Check size={12} className="text-[var(--c-accent)]" strokeWidth={3} />}
                         {o}
                       </span>
                       <span className="aura-mono shrink-0 text-[10px] text-[var(--c-ink-3)]">%{pct}</span>

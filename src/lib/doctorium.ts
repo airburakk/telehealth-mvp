@@ -1030,7 +1030,7 @@ export interface DoctoriumViewPrefs {
   sektorel: SectorViewPrefs;
   ilac: PharmaViewPrefs;
   mevzuat: LegalViewPrefs;
-  /** Üç katman Faz B1 (2026-09-05): doktor rafında TUS sekmesi (öğrencide daima açık; rapor §2 "kapalı, gizli değil"). */
+  /** Üç katman Faz B1→B3 (2026-09-05): doktorun Kariyer sekmesinde TUS bölümü (öğrencide daima açık; rapor §2 "kapalı, gizli değil"). */
   showTus: boolean;
 }
 const DEFAULT_VIEW_PREFS: DoctoriumViewPrefs = {

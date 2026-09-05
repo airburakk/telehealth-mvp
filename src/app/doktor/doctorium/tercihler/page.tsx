@@ -75,7 +75,7 @@ export default async function TercihlerPage() {
         </Link>
 
         <div className="mt-5">
-          <div className="aura-mono text-[11px] font-bold tracking-[0.16em] text-emerald-300">
+          <div className="aura-mono text-[11px] font-bold tracking-[0.16em] text-[var(--c-accent)]">
             AKIŞ TERCİHLERİ
           </div>
           <h1 className="aura-display mt-1 text-3xl font-medium tracking-tight text-[var(--c-ink)]">

@@ -44,7 +44,7 @@ const KIND_ICON: Record<string, typeof MapPin> = {
 const STATUS_TONE: Record<string, string> = {
   REQUESTED: "bg-amber-500/15 text-amber-300",
   APPROVED: "bg-sky-500/15 text-sky-300",
-  FULFILLED: "bg-emerald-500/15 text-emerald-300",
+  FULFILLED: "bg-[var(--c-success)]/15 text-[var(--c-success)]",
   REJECTED: "bg-red-500/15 text-red-300",
   CANCELLED: "bg-[var(--c-surface-2)] text-[var(--c-ink-3)]",
 };
@@ -113,11 +113,11 @@ export function RewardCatalog(p: Props) {
             return (
               <li key={it.id} className="flex flex-col rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5">
                 <div className="flex items-center gap-2">
-                  <Icon size={15} className="shrink-0 text-emerald-300" />
+                  <Icon size={15} className="shrink-0 text-[var(--c-accent)]" />
                   <span className="aura-mono text-[10px] font-semibold text-[var(--c-ink-3)]">
                     {p.kindLabel[it.kind] ?? it.kind}
                   </span>
-                  <span className="aura-mono ml-auto shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-emerald-300">
+                  <span className="aura-mono ml-auto shrink-0 rounded-full bg-[var(--c-accent)]/15 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--c-accent)]">
                     {it.pointsCost} puan
                   </span>
                 </div>
@@ -130,7 +130,7 @@ export function RewardCatalog(p: Props) {
                         type="button"
                         onClick={() => redeem(it.id)}
                         disabled={busyId === it.id}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/90 px-3 py-1.5 text-xs font-semibold text-[#062a20] hover:bg-emerald-400 disabled:opacity-60"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--c-accent)] px-3 py-1.5 text-xs font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-60"
                       >
                         {busyId === it.id && <Loader2 size={12} className="animate-spin" />}
                         {it.pointsCost} puanla talebi onayla
@@ -149,7 +149,7 @@ export function RewardCatalog(p: Props) {
                       onClick={() => setConfirmId(it.id)}
                       disabled={!affordable}
                       title={affordable ? undefined : "Puanınız henüz yeterli değil"}
-                      className="rounded-lg border border-emerald-400/40 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:border-[var(--c-hairline)] disabled:text-[var(--c-ink-3)]"
+                      className="rounded-lg border border-[var(--c-accent)]/40 px-3 py-1.5 text-xs font-semibold text-[var(--c-accent)] transition hover:bg-[var(--c-accent)]/10 disabled:cursor-not-allowed disabled:border-[var(--c-hairline)] disabled:text-[var(--c-ink-3)]"
                     >
                       Talep et
                     </button>

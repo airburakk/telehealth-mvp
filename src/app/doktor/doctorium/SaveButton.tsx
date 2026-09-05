@@ -41,7 +41,7 @@ export function SaveButton({ articleId, initialSaved }: { articleId: string; ini
       title={saved ? "Kaydedildi — kaldırmak için tıklayın" : "Kaydet"}
       className={`-mr-1 -mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg transition ${
         saved
-          ? "text-emerald-300 hover:bg-emerald-500/10"
+          ? "text-[var(--c-accent)] hover:bg-[var(--c-accent)]/10"
           : "text-[var(--c-ink-3)] hover:bg-[var(--c-surface-2)] hover:text-[var(--c-ink)]"
       }`}
     >

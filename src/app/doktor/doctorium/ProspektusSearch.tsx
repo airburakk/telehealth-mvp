@@ -45,7 +45,7 @@ export function ProspektusSearch() {
   return (
     <section className="mt-5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-4">
       <h2 className="flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]">
-        <Pill size={16} className="text-emerald-300" /> Dijital prospektüs araması
+        <Pill size={16} className="text-[var(--c-accent)]" /> Dijital prospektüs araması
       </h2>
 
       <form onSubmit={search} className="mt-3 flex gap-2">
@@ -54,10 +54,10 @@ export function ProspektusSearch() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="Etken madde veya marka adı (ör. metformin)"
           aria-label="İlaç adı"
-          className="min-w-0 flex-1 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface-2)] px-3 py-2 text-sm text-[var(--c-ink)] outline-none focus:border-emerald-400/50"
+          className="min-w-0 flex-1 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface-2)] px-3 py-2 text-sm text-[var(--c-ink)] outline-none focus:border-[var(--c-accent)]/50"
         />
         <button type="submit" disabled={busy || q.trim().length < 2}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-emerald-500/90 px-3.5 py-2 text-sm font-semibold text-[#062a20] hover:bg-emerald-400 disabled:opacity-60">
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--c-accent)] px-3.5 py-2 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:opacity-60">
           {busy ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />} Ara
         </button>
       </form>

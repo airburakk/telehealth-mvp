@@ -1,38 +1,40 @@
-// Doctorium ÜST RAFI — sekme dizisinin TEK KAYNAĞI (üç katman Faz B1, kullanıcı kararı 2026-09-05). SAF modül
-// (db/React yok; DoctoriumSidebar + birim testi okur). Eskiden MODULES/TAKVIM dizileri DoctoriumSidebar.tsx içinde
-// kitle-körüydü; artık raf KİTLEYE göre kurulur:
-//   · VERIFIED / TRIAL / personel → 7 modül + Takvim (bugünkü raf); Özelleştir'de "TUS sekmesini göster" açılırsa + TUS
-//     (rapor §2: doktor tarafında TUS "kapalı, gizli değil" — mentor olacak asistan tek anahtarla açar; doğrudan URL serbest).
-//   · STUDENT → 7 modül + Takvim + TUS + Kariyer EDU (öğrenci yüzeyleri; audienceFlags.showsStudentSurfaces).
-// Sekme numaraları dizideki sıradan üretilir (Takvim 08 korunur; TUS 09, Kariyer EDU 10). Küme ayracı, grup DEĞİŞTİĞİNDE
-// çizilir (eski "grup başlığı + Takvim önünde açık ayraç" davranışıyla birebir aynı yerlere düşer).
+// Doctorium ÜST RAFI — sekme dizisinin TEK KAYNAĞI (üç katman Faz B1, 2026-09-05; B3 revizyonu aynı gün akşam,
+// kullanıcı kararı: "kariyer akışını öğrenciye gösterme; Kariyer EDU ve TUS'u Kariyer'in içine koy — ekstra sekme
+// açılmasın, en sonda yine Takvim olsun"). SAF modül (db/React yok; DoctoriumSidebar + birim testi okur).
+//
+//   · Raf HER KİTLEDE AYNI 8 durak: 7 modül + Takvim (08, en sonda). Öğrenciye ekstra sekme AÇILMAZ.
+//   · TUS ve Kariyer EDU, Kariyer sekmesinin İÇİNDE yaşar: öğrencide sahnenin kendisi (page.tsx StudentCareerHub —
+//     doktorun denklik/yükselme yol haritası öğrenciye çizilmez), doktorda Özelleştir anahtarıyla yol haritasının altında
+//     TUS bölümü (DoctorTusSection; rapor §2 "kapalı, gizli değil"). /tus ve /kariyer-edu rotaları AYRINTI sayfası olarak
+//     sürer (raf durağı değil; DoctoriumShell active="kariyer").
+//   · Kitle yalnız Kariyer sekmesinin KİMLİK RENGİNİ değiştirir: öğrencide koral (STUDENT_LANE — öğrenci kulvarı),
+//     doktorda mavi. Sekme numaraları dizideki sıradan üretilir; küme ayracı grup DEĞİŞTİĞİNDE çizilir.
 //
 // RENK: sekme kimlik renkleri {dark, light} çifti (raf renk bağlamı, globals.css); "ink" = tema-duyarlı mürekkep;
-// null = nötr (aktifken zümrüt çifti). TUS/Kariyer EDU kimlik rengi 👤 mockup kararına (B2) kadar ZÜMRÜT çifti —
-// yüzey boyamaz, tek satırdan değişir.
+// null = nötr (aktifken zümrüt çifti).
 import type { DoctoriumAudience } from "./doctorium-tiers";
 
 export type ShelfModuleKey = "akis" | "akademik" | "sektorel" | "ilac" | "etkinlik" | "kariyer" | "mevzuat";
 export type ShelfColor = { dark: string; light: string } | "ink" | null;
-export type ShelfGroupKey = "BİLGİ" | "MESLEĞİM" | "EDU" | null;
+export type ShelfGroupKey = "BİLGİ" | "MESLEĞİM" | null;
 
 export interface ShelfTabDef {
-  /** Aktiflik anahtarı — SidebarActive ile aynı sözlük ("akis" · "takvim" · "tus" …). */
+  /** Aktiflik anahtarı — SidebarActive ile aynı sözlük ("akis" · "takvim" …). */
   key: string;
   href: string;
   label: string;
   color: ShelfColor;
   group: ShelfGroupKey;
-  /** Nabız sayacı için modül anahtarı; rota-sekmelerde (Takvim/TUS/Kariyer EDU) null. */
+  /** Nabız sayacı için modül anahtarı; rota-sekmede (Takvim) null. */
   module: ShelfModuleKey | null;
 }
 
 export const SHELF_EMERALD = { dark: "#34d399", light: "#047857" } as const;
 
-/** Öğrenci kulvarı — KORAL TURUNCU (👤 karar 2026-09-05, Faz B2; adaylar A koral · B filiz · C fuşya). EDU sekmelerinin
- *  kimliği; yüzey token'ları globals.css `[data-audience="student"]` bloğunda aynı aileden okur (gece #fb923c birebir;
- *  gündüz rafta bir kademe koyu #9a3412 — sıcak raf zemininde #c2410c 3.95:1 AA altı kalıyordu, #9a3412 5.6:1).
- *  Doktor tercihle TUS'u açarsa sekme yine koral gelir: kulvar rengi kitleye değil sekmeye aittir (Hukuk gülü gibi). */
+/** Öğrenci kulvarı — KORAL TURUNCU (👤 karar 2026-09-05, Faz B2; adaylar A koral · B filiz · C fuşya). B3'te bu çift
+ *  öğrencinin KARİYER sekmesine bağlanır (EDU içerikleri orada); yüzey token'ları globals.css `[data-audience="student"]`
+ *  bloğunda aynı aileden okur (gece #fb923c birebir; gündüz rafta bir kademe koyu #9a3412 — sıcak raf zemininde #c2410c
+ *  3.95:1 AA altı kalıyordu, #9a3412 5.6:1). */
 export const STUDENT_LANE = { dark: "#fb923c", light: "#9a3412" } as const;
 
 /** Modül sekmeleri — kimlik renkleri kullanıcı kararlarıyla (2026-08-14/19) sabit; ?m= anahtarları DB module değerleriyle aynı. */
@@ -47,19 +49,12 @@ export const MODULE_TABS: readonly ShelfTabDef[] = [
   { key: "mevzuat", href: "/doktor/doctorium?m=mevzuat", label: "Hukuk", color: { dark: "#fb7185", light: "#a83e50" }, group: "MESLEĞİM", module: "mevzuat" },
 ];
 
-/** Takvim durağı (kullanıcı kararı 2026-08-19): modül DEĞİL ayrı ROTA — raf yine de taşır (08; kimliği marka zümrüdü). */
+/** Takvim durağı (kullanıcı kararı 2026-08-19): modül DEĞİL ayrı ROTA — raf yine de taşır (08, EN SONDA; kimliği marka zümrüdü). */
 export const TAKVIM_TAB: ShelfTabDef = { key: "takvim", href: "/doktor/doctorium/takvim", label: "Takvim", color: SHELF_EMERALD, group: null, module: null };
 
-/** TUS — öğrenci yüzeyi (rapor §3); doktorda tercihle açılır. Veri hattı gelene dek dürüst iskelet sayfa (lib/tus). */
-export const TUS_TAB: ShelfTabDef = { key: "tus", href: "/doktor/doctorium/tus", label: "TUS", color: STUDENT_LANE, group: "EDU", module: null };
-
-/** Kariyer EDU — staj/değişim/burs takvimi (rapor §7); YALNIZ öğrenci (ilan değil, süreç bilgisi — İŞKUR sınırı). */
-export const KARIYER_EDU_TAB: ShelfTabDef = { key: "kariyer-edu", href: "/doktor/doctorium/kariyer-edu", label: "Kariyer EDU", color: STUDENT_LANE, group: "EDU", module: null };
-
-/** Kitleye (ve doktor tercihine) göre raf sekmeleri. Personel (audience null) doktor rafını görür. */
-export function shelfTabsFor(audience: DoctoriumAudience | null, prefs: { showTus: boolean }): ShelfTabDef[] {
+/** Kitleye göre raf: dizi HERKESTE aynı; öğrencide Kariyer sekmesi öğrenci kulvarı rengini alır. Personel (null) doktor rafı. */
+export function shelfTabsFor(audience: DoctoriumAudience | null): ShelfTabDef[] {
   const base = [...MODULE_TABS, TAKVIM_TAB];
-  if (audience === "STUDENT") return [...base, TUS_TAB, KARIYER_EDU_TAB];
-  if (prefs.showTus) return [...base, TUS_TAB];
-  return base;
+  if (audience !== "STUDENT") return base;
+  return base.map((t) => (t.key === "kariyer" ? { ...t, color: STUDENT_LANE } : t));
 }

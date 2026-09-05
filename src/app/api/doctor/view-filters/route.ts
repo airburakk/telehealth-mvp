@@ -57,7 +57,7 @@ export async function POST(req: Request) {
   } else if (moduleKey === "ilac") {
     prefs.ilac = { d: normRange(b.range) };
   } else if (moduleKey === "tus") {
-    // Faz B1 (2026-09-05): doktor rafında TUS sekmesi — içerik süzgeci değil, yalnız görünürlük anahtarı.
+    // Faz B1→B3 (2026-09-05): doktorun Kariyer sekmesinde TUS bölümü — içerik süzgeci değil, yalnız görünürlük anahtarı.
     prefs.tus = { show: b.show === true };
   } else {
     prefs.mevzuat = { d: normRange(b.range), c: normCategory(b.category) };

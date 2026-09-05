@@ -88,7 +88,7 @@ export default async function DoctoriumAccountPage() {
         </Link>
 
         <div className="mt-5">
-          <div className="aura-mono text-[11px] font-bold tracking-[0.16em] text-emerald-300">
+          <div className="aura-mono text-[11px] font-bold tracking-[0.16em] text-[var(--c-accent)]">
             HESABIM
           </div>
           <h1 className="aura-display mt-1 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
@@ -239,7 +239,7 @@ function Field({ k, v }: { k: string; v: React.ReactNode }) {
 function Verified({ at }: { at: Date }) {
   return (
     <span className="inline-flex flex-wrap items-center gap-2">
-      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-px aura-mono text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-300">
+      <span className="inline-flex items-center gap-1 rounded-full border border-[var(--c-success)]/30 bg-[var(--c-success)]/10 px-2 py-px aura-mono text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--c-success)]">
         <BadgeCheck size={11} /> Doğrulandı
       </span>
       <span className="aura-mono text-[12px] text-[var(--c-ink-3)]">

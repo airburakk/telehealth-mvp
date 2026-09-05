@@ -86,7 +86,7 @@ export default async function OzetPage({
                 href={r.day === recent[0].day ? "/doktor/doctorium/ozet" : `/doktor/doctorium/ozet?d=${r.day}`}
                 className={`aura-mono rounded-full border px-2.5 py-1 text-[10.5px] tracking-wider ${
                   current?.day === r.day
-                    ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-300"
+                    ? "border-[var(--c-accent)]/50 bg-[var(--c-accent)]/10 text-[var(--c-accent)]"
                     : "border-[var(--c-hairline)] text-[var(--c-ink-3)] hover:text-[var(--c-ink)]"
                 }`}
               >
@@ -118,7 +118,7 @@ export default async function OzetPage({
                 </p>
                 <Link
                   href="/doktor/doctorium/tercihler"
-                  className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/45 bg-emerald-500/10 px-3.5 py-2 text-[13px] font-semibold text-emerald-300 hover:bg-emerald-500/15"
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-accent)]/45 bg-[var(--c-accent)]/10 px-3.5 py-2 text-[13px] font-semibold text-[var(--c-accent)] hover:bg-[var(--c-accent)]/15"
                 >
                   <Settings2 size={14} /> Akış Tercihleri&apos;ne git
                 </Link>
@@ -129,7 +129,7 @@ export default async function OzetPage({
           <article className="mt-2">
             {snapshot.sections.map((s) => (
               <section key={s.key} className="mt-8">
-                <h2 className="aura-mono border-b border-[var(--c-hairline)] pb-1.5 text-[11px] font-bold tracking-[0.22em] text-emerald-300 uppercase">
+                <h2 className="aura-mono border-b border-[var(--c-hairline)] pb-1.5 text-[11px] font-bold tracking-[0.22em] text-[var(--c-accent)] uppercase">
                   {s.label}
                 </h2>
                 <div>
@@ -160,7 +160,7 @@ export default async function OzetPage({
               <p className="mt-8 text-center">
                 <Link
                   href="/doktor/doctorium?n=1"
-                  className="text-[13.5px] font-semibold text-emerald-300 hover:text-emerald-200"
+                  className="text-[13.5px] font-semibold text-[var(--c-accent)] hover:text-[var(--c-ink)]"
                 >
                   Bu baskıya sığmayan {snapshot.overflow} başlık daha akışınızda →
                 </Link>
@@ -170,7 +170,7 @@ export default async function OzetPage({
             <footer className="mt-10 border-t border-[var(--c-hairline)] pt-4 text-center">
               <p className="text-[11.5px] leading-relaxed text-[var(--c-ink-3)]">
                 Bu baskı akış tercihlerinize göre derlendi · sponsorlu içerik ve anketler baskıya
-                girmez · <Link href="/doktor/doctorium/tercihler" className="text-emerald-300/90 hover:text-emerald-200">tercihleri yönet</Link>
+                girmez · <Link href="/doktor/doctorium/tercihler" className="text-[var(--c-accent)]/90 hover:text-[var(--c-ink)]">tercihleri yönet</Link>
               </p>
             </footer>
           </article>

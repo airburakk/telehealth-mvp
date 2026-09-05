@@ -38,6 +38,7 @@ import {
   ArrowLeft, ExternalLink, Info, Star, X, Megaphone, SlidersHorizontal,
 } from "lucide-react";
 import { DoctoriumShell } from "./DoctoriumSidebar";
+import { DoctorTusSection, StudentCareerHub } from "./CareerEduSections";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +70,15 @@ const MODULE_HEAD: Record<ModuleKey, { eyebrow: string; title: string; desc: str
   etkinlik: { eyebrow: "ETKİNLİK", title: "Etkinlik takvimi", desc: "Kongre, sempozyum ve kurslar; bildiri ve erken kayıt tarihleriyle." },
   kariyer: { eyebrow: "KARİYER", title: "Doktorluk yollarının haritası", desc: "Yurt dışı denklik ve akademik yükselme süreçleri — ilan değil, süreç bilgisi.", color: "#60a5fa" },
   mevzuat: { eyebrow: "HUKUK", title: "Sağlık hukuku, tek yerde", desc: "Mevzuat değişiklikleri, emsal kararlar ve hakemli doktrin.", color: "#fb7185" },
+};
+// Öğrencinin Kariyer sahnesi (üç katman B3, kullanıcı kararı 2026-09-05 akşam): doktorun kariyer akışı (denklik/yükselme
+// yol haritası, Yurt Dışı · Türkiye alt-sekmeleri) öğrenciye GÖSTERİLMEZ; aynı sekmede Kariyer EDU + TUS yaşar
+// (CareerEduSections). Renk kitle aksanı: öğrenci kapsamında koral (globals.css). İŞKUR dili ("ilan değil") korunur.
+const STUDENT_CAREER_HEAD: (typeof MODULE_HEAD)[ModuleKey] = {
+  eyebrow: "KARİYER",
+  title: "Staj, değişim, burs ve TUS",
+  desc: "Fakülte dışı fırsatların takvimi ve Tıpta Uzmanlık Sınavı'nın resmî verisi — ilan değil, süreç bilgisi.",
+  color: "var(--c-accent)",
 };
 
 // (Mobil grup şeridi 2026-08-19'da kalktı: alt çubuk artık masaüstü rafının birebir eşleniği —
@@ -281,17 +291,21 @@ export default async function DoctoriumPage({
       : await upcomingCountByIds([...followed])
     : 0;
 
-  // Kariyer modülü alt-sekmesi (v6.89): ?t=yurtdisi|turkiye — yalnız bu modülde anlamlı.
-  // (?c= sektörel kategoriye, ?h= Hukuk'a, ?s= etkinlik kapsamına ait — param çakışması yok.)
-  const careerTab: CareerTabKey | null = active === "kariyer" ? parseCareerTab(sp.t) : null;
-  const pathways = careerTab ? await careerPathways(careerTab) : [];
-
   // Kitle bayrakları (2026-09-05, üç katman — lib/doctorium-tiers.ts): pazarlama yüzeyleri (sponsor
   // kartı, anket — COMMUNITY dahil, kullanıcı kararı 2026-08-14 — ve ödül puanı) YALNIZ doğrulanmış
   // doktora açık; tıp öğrencisi ve deneme üyesi sağlık meslek mensubu sayılamaz. Personel (doktor
   // profili yok) kampanyayı bağlamsal görür — eski davranış. Tek sözcü: currentDoctoriumAudience.
   const audienceCtx = await currentDoctoriumAudience();
   const flags = audienceCtx?.flags ?? audienceFlags("NONE");
+  // Öğrencinin Kariyer sahnesi (B3, kullanıcı kararı 2026-09-05): doktorun kariyer akışı (yol haritası + Yurt Dışı ·
+  // Türkiye alt-sekmeleri + "ilan içermez" notu) öğrenciye ÇEKİLMEZ ve ÇİZİLMEZ; yerine Kariyer EDU + TUS hub'ı.
+  const isStudent = audienceCtx?.audience === "STUDENT";
+  const head = active === "kariyer" && isStudent ? STUDENT_CAREER_HEAD : MODULE_HEAD[active];
+
+  // Kariyer modülü alt-sekmesi (v6.89): ?t=yurtdisi|turkiye — yalnız bu modülde (ve doktor sahnesinde) anlamlı.
+  // (?c= sektörel kategoriye, ?h= Hukuk'a, ?s= etkinlik kapsamına ait — param çakışması yok.)
+  const careerTab: CareerTabKey | null = active === "kariyer" && !isStudent ? parseCareerTab(sp.t) : null;
+  const pathways = careerTab ? await careerPathways(careerTab) : [];
 
   // v6.68 Faz 1: sponsorlu kartlar YALNIZ Akışım'da (diğer sekmeler temiz kalır) ve boş akışa
   // basılmaz. Kişiselleştirilmiş seçim yalnız AÇIK RIZALI doktorda (sponsorPersonalizationAt);
@@ -352,9 +366,9 @@ export default async function DoctoriumPage({
       <div className="mt-5">
         <div
           className="aura-mono text-[11px] font-bold tracking-[0.16em]"
-          style={{ color: MODULE_HEAD[active].color ?? "var(--c-ink)" }}
+          style={{ color: head.color ?? "var(--c-ink)" }}
         >
-          {MODULE_HEAD[active].eyebrow}
+          {head.eyebrow}
         </div>
         {/* text-3xl = /doktor ve Post-Op h1 ölçüsü. v6.102: lockup banta taşınınca sahnenin
             asıl başlığı h1 oldu (sayfa başına tek h1 — erişilebilirlik). */}
@@ -363,7 +377,7 @@ export default async function DoctoriumPage({
             çizilir — personelin yazacağı tercih yok (koşullu-href ilkesi). */}
         <div className="mt-1 flex flex-wrap items-start justify-between gap-x-5 gap-y-3">
           <h1 className="aura-display flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
-            {MODULE_HEAD[active].title}
+            {head.title}
             {/* v6.95 — öğrenci-sınırlı üyelik etiketi: mono rozet, yüzey boyamaz (kit renk disiplini). Faz B2: rengi
                 kitle aksanından (--c-accent → öğrenci kapsamında koral, globals.css) — kenar %40 saydam, metin tam aksan. */}
             {audienceCtx?.audience === "STUDENT" && (
@@ -378,7 +392,7 @@ export default async function DoctoriumPage({
             </ButtonLink>
           )}
         </div>
-        <p className="mt-1.5 text-[13px] text-[var(--c-ink-2)]">{MODULE_HEAD[active].desc}</p>
+        <p className="mt-1.5 text-[13px] text-[var(--c-ink-2)]">{head.desc}</p>
       </div>
 
       {/* Sayaç + kulvar — yalnız Akışım'da. İkisi birlikte çalışır: sayaç "ne kadar var"ı,
@@ -394,9 +408,9 @@ export default async function DoctoriumPage({
           {fm && (
             <Link
               href={onlyNew ? "/doktor/doctorium?n=1" : "/doktor/doctorium"}
-              className="aura-mono inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.4)] hover:bg-emerald-500/25"
+              className="aura-mono inline-flex items-center gap-1.5 rounded-full bg-[var(--c-accent)]/15 px-2.5 py-1 text-[11px] font-semibold text-[var(--c-accent)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--c-accent)_40%,transparent)] hover:bg-[var(--c-accent)]/25"
             >
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--c-accent)]" aria-hidden="true" />
               Yalnız {PULSE_LABEL.find((p) => p.key === fm)?.label ?? fm}
               <X size={11} />
             </Link>
@@ -408,9 +422,9 @@ export default async function DoctoriumPage({
                 : fm ? `/doktor/doctorium?fm=${fm}`
                 : "/doktor/doctorium"
               }
-              className="aura-mono inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.4)] hover:bg-emerald-500/25"
+              className="aura-mono inline-flex items-center gap-1.5 rounded-full bg-[var(--c-accent)]/15 px-2.5 py-1 text-[11px] font-semibold text-[var(--c-accent)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--c-accent)_40%,transparent)] hover:bg-[var(--c-accent)]/25"
             >
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--c-accent)]" aria-hidden="true" />
               Yalnızca bugün eklenenler
               <X size={11} />
             </Link>
@@ -462,7 +476,7 @@ export default async function DoctoriumPage({
 
       {/* Kariyer alt-sekmeleri (v6.89): Yurt Dışı · Türkiye. Hukuk şeridinin birebir eşleniği
           (ikincil nav görünümü). Yurt Dışı linki t'siz: varsayılan sekme, kanonik URL tek kalsın. */}
-      {active === "kariyer" && (
+      {active === "kariyer" && !isStudent && (
         <nav className="mt-3.5 flex items-center gap-4 border-b border-[var(--c-hairline)]" aria-label="Kariyer bölümleri">
           {CAREER_TABS.map((t) => {
             const on = careerTab === t.key;
@@ -473,7 +487,7 @@ export default async function DoctoriumPage({
                 aria-current={on ? "page" : undefined}
                 className={`-mb-px border-b-2 pb-2 text-xs font-semibold transition ${
                   on
-                    ? "border-emerald-400 text-emerald-300"
+                    ? "border-[var(--c-accent)] text-[var(--c-accent)]"
                     : "border-transparent text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"
                 }`}
               >
@@ -487,9 +501,9 @@ export default async function DoctoriumPage({
       {/* Beklenti notu (kullanıcı onaylı metin, 2026-08-12): doktor "Kariyer" görünce iş ilanı
           bekleyebilir — bu bölümde ilan YOK. Aynı zamanda İŞKUR sınırının kullanıcıya bakan yüzü:
           aracılık yapılmadığı burada açıkça yazılı (envanter §3). */}
-      {active === "kariyer" && (
+      {active === "kariyer" && !isStudent && (
         <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
-          <Info size={13} className="mt-px shrink-0 text-emerald-300" />
+          <Info size={13} className="mt-px shrink-0 text-[var(--c-accent)]" />
           Bu bölüm iş ilanı içermez; doktorluk süreçlerinin nasıl işlediğini anlatır.
         </p>
       )}
@@ -508,7 +522,7 @@ export default async function DoctoriumPage({
                 aria-current={on ? "page" : undefined}
                 className={`-mb-px border-b-2 pb-2 text-xs font-semibold transition ${
                   on
-                    ? "border-emerald-400 text-emerald-300"
+                    ? "border-[var(--c-accent)] text-[var(--c-accent)]"
                     : "border-transparent text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"
                 }`}
               >
@@ -545,7 +559,15 @@ export default async function DoctoriumPage({
       {active === "ilac" && <ProspektusSearch />}
 
       {active === "kariyer" ? (
-        <CareerList rows={pathways} savedIds={savedIds} />
+        isStudent ? (
+          <StudentCareerHub />
+        ) : (
+          <>
+            <CareerList rows={pathways} savedIds={savedIds} />
+            {/* Doktor tercihi (Özelleştir → "Kariyer içinde TUS bölümünü göster"): B1'in raf sekmesi B3'te buraya indi. */}
+            {isDoctor && viewPrefs.showTus && <DoctorTusSection />}
+          </>
+        )
       ) : active === "etkinlik" ? (
         <CongressList rows={congresses} followed={followed} canFollow={!!doctor} savedIds={savedIds} followedOnly={followFilter} />
       ) : (
@@ -651,8 +673,8 @@ function PulseStrip({ items, todayCounts }: { items: FeedItem[]; todayCounts: Re
     // Çerçeve KALKTI (kullanıcı kararı 2026-08-20): kutu, kart dilinden kutuları kaldırma
     // kararıyla çelişiyordu — sayaç da artık boşlukla ayrılıyor.
     <div className="mt-4">
-      <div className="aura-mono flex items-center gap-1.5 text-[10px] font-bold tracking-[0.14em] text-emerald-300">
-        {fresh && <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />}
+      <div className="aura-mono flex items-center gap-1.5 text-[10px] font-bold tracking-[0.14em] text-[var(--c-accent)]">
+        {fresh && <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--c-accent)]" aria-hidden="true" />}
         {fresh ? "BUGÜN AKIŞA DÜŞEN" : "AKIŞINDA"}
       </div>
       <div className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-2">
@@ -663,7 +685,7 @@ function PulseStrip({ items, todayCounts }: { items: FeedItem[]; todayCounts: Re
             className="group flex items-baseline gap-1.5"
             title={fresh ? `${r.label}: bugün eklenen ${r.n} kayıt` : `${r.label}: akışında ${r.n} kayıt`}
           >
-            <span className="aura-display text-[22px] font-semibold leading-none tracking-tight tabular-nums text-[var(--c-ink)] transition-colors group-hover:text-emerald-300">
+            <span className="aura-display text-[22px] font-semibold leading-none tracking-tight tabular-nums text-[var(--c-ink)] transition-colors group-hover:text-[var(--c-accent)]">
               {r.n}
             </span>
             <span className="text-[13px] text-[var(--c-ink-3)] transition-colors group-hover:text-[var(--c-ink-2)]">
@@ -832,7 +854,7 @@ function CareerList({ rows, savedIds }: { rows: Awaited<ReturnType<typeof career
                 link yalnız ne bulunacağını söylediği için meta tonunda kuyrukta kalır. */}
             <Link
               href={`/doktor/doctorium/kariyer/${p.slug}`}
-              className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-emerald-300 hover:underline"
+              className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--c-accent)] hover:underline"
             >
               Adımları ve belge listesini gör <ArrowLeft size={11} className="rotate-180" />
             </Link>
