@@ -6,6 +6,7 @@ import { DoctoriumShell } from "../DoctoriumSidebar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { KARIYER_HREF, TusOfficialLinksPanel, TusPeriodsPanel, TusPlacementSection } from "../CareerEduSections";
 import { TusGuidesPanel, TusResourcesPanel } from "../TusGuideResourcePanels";
+import { YokTipSection } from "../TusYokSection";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "TUS" };
@@ -21,6 +22,8 @@ export const metadata = { title: "TUS" };
  * onaysız dönem görünmez. Paneller CareerEduSections'ta hub ile PAYLAŞILIR — temsilî sayı / uydurma tarih / tahmin YOK.
  * K3/K4 (2026-09-05): Rehberler = ÖSYM kılavuzu bölüm özetleri (lib/tus-guides, ayrıntı /tus/rehber/[slug]); Kaynakça + kurs dizini =
  * tarafsız künye (lib/tus-resources; fiyat/puan/öneri yok, alfabetik, #kaynakca). İkisi de 👤 approvedAt ile görünür.
+ * K5 (2026-09-05): Tıp fakülteleri = YÖK Atlas Tercih Sihirbazı verisi (lib/yok-data, 👤 approvedAt; scripts/yok-atlas-ingest.ts) — KPI +
+ * Recharts (giriş kontenjanı ↔ TUS GENEL kontenjanı, kurum türü, il, başarı sırası) + program tablosu (#yok). Tahmin/tavsiye YOK.
  */
 export default async function TusPage() {
   const user = await getCurrentUser();
@@ -37,10 +40,11 @@ export default async function TusPage() {
           className="mt-5"
           eyebrow="KARİYER · TUS"
           title="Tıpta Uzmanlık Sınavı"
-          sub="Kamuya açık ÖSYM verisinin (sınav takvimi, kontenjanlar, taban puanlar, boş kalan kontenjanlar) tek yerden okunabilir hâli. Veri yayına alınmadan önce kaynak ve tarihle doğrulanır."
+          sub="Kamuya açık ÖSYM ve YÖK verisinin (sınav takvimi, kontenjanlar, taban puanlar, boş kalan kontenjanlar, tıp fakülteleri) tek yerden okunabilir hâli. Veri yayına alınmadan önce kaynak ve tarihle doğrulanır."
         />
 
         <TusPlacementSection className="mt-6" />
+        <YokTipSection className="mt-6" />
         <TusGuidesPanel className="mt-6" />
         <TusOfficialLinksPanel className="mt-6" />
         <TusPeriodsPanel className="mt-6" />

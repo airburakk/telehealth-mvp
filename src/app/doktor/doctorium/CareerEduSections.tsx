@@ -7,6 +7,7 @@ import { approvedTusSummaries, tusBranches } from "@/lib/tus-data";
 import { TUS_INSTITUTION_LABEL } from "@/lib/tus-normalize";
 import TusChartsLoader from "./tus/TusChartsLoader";
 import { TusGuidesPanel, TusResourcesPanel } from "./TusGuideResourcePanels";
+import { YokTipSection } from "./TusYokSection";
 import { AuraPanel } from "@/components/ui/AuraPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AuraButtonLink } from "@/components/ui/AuraButton";
@@ -23,7 +24,7 @@ import { AuraButtonLink } from "@/components/ui/AuraButton";
  * ⚖️ İlan DEĞİL, süreç bilgisi (İŞKUR sınırı): CareerDisclaimer dilinin öğrenci karşılığı hub'ın ilk satırında.
  * DÜRÜST İSKELET: TUS verisi (ÖSYM) ve fırsat takvimi boş başlar (lib/tus · lib/edu-opportunities) — grafik/uydurma satır YOK.
  * K3/K4 (2026-09-05): rehberler (ÖSYM kılavuzu özetleri) + kaynakça/kurs dizini (tarafsız künye) TusGuideResourcePanels'ta;
- * hub'da compact, /doktor/doctorium/tus sayfasında tam. Onaysız kayıt görünmez.
+ * hub'da compact, /doktor/doctorium/tus sayfasında tam. Onaysız kayıt görünmez. K5 (YÖK Atlas Tıp fakülteleri) TusYokSection'da — aynı desen.
  */
 
 export const KARIYER_HREF = "/doktor/doctorium?m=kariyer";
@@ -219,6 +220,7 @@ export function StudentCareerHub() {
       <section>
         <SectionHead eyebrow="TUS" title="Tıpta Uzmanlık Sınavı" href={TUS_HREF} />
         <TusPlacementSection className="mt-4" compact />
+        <YokTipSection className="mt-4" compact />
         <TusGuidesPanel className="mt-4" compact />
         <TusOfficialLinksPanel className="mt-4" />
         <TusPeriodsPanel className="mt-4" />
@@ -236,6 +238,7 @@ export function DoctorTusSection() {
       <p className="mt-2 max-w-[70ch] text-[12.5px] leading-relaxed text-[var(--c-ink-2)]">
         Bu bölümü Özelleştir&apos;den açtınız — uzmanlık sınavına hazırlananlar ve mentorlar için resmî kaynaklar ve sınav dönemleri.
       </p>
+      <YokTipSection className="mt-4" compact />
       <TusGuidesPanel className="mt-4" compact />
       <TusOfficialLinksPanel className="mt-4" />
       <TusPeriodsPanel className="mt-4" />
