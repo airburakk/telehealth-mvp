@@ -29,9 +29,11 @@
 // 🔴 PUAN BAKİYESİ: PointEntry satırları silinir → getDoctorBalance (lib/rewards) toplamı 0 döner.
 //    Yeniden üye olan kişiye puanlar YÜKLENMEZ; arayüz bunu kapatmadan önce açıkça uyarır. Ayrı
 //    "sıfırlama" koduna gerek yoktur — bakiye zaten satırlardan türetiliyor.
+import type { Prisma } from "@prisma/client";
 import { db } from "./db";
 import { recordAccess } from "./audit";
 import type { SessionUser } from "./session";
+import { LOCKED_PURGE_DAYS } from "./doctorium-tiers";
 
 /** Doctor satırına foreign key ile bağlı KLİNİK kayıtlar (AURA tarafı). */
 export type ClinicalTies = { cases: number; consultations: number; reviews: number };
@@ -142,6 +144,54 @@ export async function leaveDoctorium(
   return counts;
 }
 
+/**
+ * Tam kapatmanın İŞLEM GÖVDESİ — closeDoctoriumAccount (üye kendisi) ve purgeTrialAccount (cron) ORTAK kullanır.
+ * Sıra: Doctorium katmanı → belgeler → bildirimler → onam (bağ-koruyan boşaltma) → Doctor → User.
+ */
+async function closeAccountRows(tx: Prisma.TransactionClient, userId: string, doctorId: string, now: Date): Promise<LayerCounts> {
+  const c = await purgeLayer(tx, doctorId);
+  // Mezun belgesi + diğer yüklemeler: kişisel veri, at-rest şifreli olsa da saklama gerekçesi üyelikle birlikte biter.
+  await tx.doctorDocument.deleteMany({ where: { doctorId } });
+  await tx.notification.deleteMany({ where: { userId } });
+  // Onam: satır kalır (zincir halkası), kişisel alanlar boşaltılır.
+  await tx.consentRecord.updateMany({
+    where: { userId, purgedAt: null },
+    data: { ip: null, userAgent: null, purgedAt: now },
+  });
+  await tx.doctor.delete({ where: { id: doctorId } });
+  await tx.user.delete({ where: { id: userId } });
+  return c;
+}
+
+export type TrialPurgeResult = "purged" | "skipped-ties" | "skipped-docs";
+
+/**
+ * DENEME İMHASI (üç katman Faz A4, kullanıcı kararı 2026-09-05) — trial-sweep cron'u çağırır: deneme süresi bitmiş,
+ * LOCKED_PURGE_DAYS geçmiş, imha bildirimi gitmiş ve DOĞRULAMA YAPILMAMIŞ hesap. Karar (tarih/bildirim) lib/doctorium-tiers
+ * shouldPurgeLockedTrial'da; burası yalnız FAIL-CLOSED korkuluklar + aynı kapatma gövdesi:
+ *   · klinik bağ varsa (Aşama 1 hesabında beklenmez) → atla — Doctorium başkasının klinik kaydına karar vermez;
+ *   · İNCELEMEDE (PENDING) belgesi varsa → atla — kişi belge yükledi, incelemeci karar vermedi; kullanıcının fiili bekletilir.
+ * Audit: DOCTORIUM_TRIAL_PURGE (actor null — cron; özne silinen hesap, cuid yetim → anonim).
+ */
+export async function purgeTrialAccount(userId: string, doctorId: string): Promise<TrialPurgeResult> {
+  const ties = await countClinicalTies(doctorId);
+  if (hasClinicalTies(ties)) return "skipped-ties";
+  const pending = await db.doctorDocument.count({ where: { doctorId, status: "PENDING" } });
+  if (pending > 0) return "skipped-docs";
+
+  const now = new Date();
+  const counts = await db.$transaction((tx) => closeAccountRows(tx, userId, doctorId, now));
+  await recordAccess({
+    actor: null,
+    action: "DOCTORIUM_TRIAL_PURGE",
+    resourceType: "User",
+    resourceId: userId,
+    subjectUserId: userId,
+    detail: `deneme süresi + ${LOCKED_PURGE_DAYS} günlük saklama süresi doldu, doğrulama yapılmadı; hesap ve üyelik verisi silindi (silinen: ${counts.saved} kayıt, ${counts.follows} takip, ${counts.points} puan hareketi, ${counts.digests} özet)`,
+  });
+  return "purged";
+}
+
 export type CloseResult =
   | { ok: true; counts: LayerCounts }
   | { ok: false; reason: "CLINICAL_TIES"; ties: ClinicalTies }
@@ -174,21 +224,7 @@ export async function closeDoctoriumAccount(
   if (hasClinicalTies(ties)) return { ok: false, reason: "CLINICAL_TIES", ties };
 
   const now = new Date();
-  const counts = await db.$transaction(async (tx) => {
-    const c = await purgeLayer(tx, doctorId);
-    // Mezun belgesi + diğer yüklemeler: kişisel veri, at-rest şifreli olsa da saklama gerekçesi
-    // üyelikle birlikte biter.
-    await tx.doctorDocument.deleteMany({ where: { doctorId } });
-    await tx.notification.deleteMany({ where: { userId: actor.id } });
-    // Onam: satır kalır (zincir halkası), kişisel alanlar boşaltılır.
-    await tx.consentRecord.updateMany({
-      where: { userId: actor.id, purgedAt: null },
-      data: { ip: null, userAgent: null, purgedAt: now },
-    });
-    await tx.doctor.delete({ where: { id: doctorId } });
-    await tx.user.delete({ where: { id: actor.id } });
-    return c;
-  });
+  const counts = await db.$transaction((tx) => closeAccountRows(tx, actor.id, doctorId, now));
 
   // Zincire mühürle — "sildim" iddiasının ispatı kalmalı. Kişisel veri gitti; kayıt yalnız id+eylem
   // taşır. actor artık silinmiş bir kullanıcıyı gösterir: cuid yetim olduğu için anonimdir.

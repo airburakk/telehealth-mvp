@@ -168,11 +168,31 @@ export function dueTrialAlerts(p: { endsAt: Date; sent: ReadonlySet<string>; now
   return { send, markSent };
 }
 
-/** İmha kararı — FAIL-CLOSED: süre dolmuş olsa da imha bildirimi gitmemişse SİLİNMEZ (bir sonraki
- *  koşumda bildirim gider, imha ondan sonraki koşuma kalır). */
+/** İmha bildiriminin GÖNDERİLDİĞİ GÜN işareti — "purge-notice@YYYY-MM-DD" (sweep, bildirimi gönderdiği turda
+ *  "purge-notice" anahtarının yanına bunu da yazar). İmha, bildirimden en az TRIAL_PURGE_NOTICE_DAYS sonra. */
+export const PURGE_NOTICE_DATE_PREFIX = "purge-notice@";
+export function purgeNoticeMarker(now: Date): string {
+  return PURGE_NOTICE_DATE_PREFIX + now.toISOString().slice(0, 10);
+}
+export function purgeNoticeSentAt(sent: ReadonlySet<string>): Date | null {
+  for (const k of sent) {
+    if (!k.startsWith(PURGE_NOTICE_DATE_PREFIX)) continue;
+    const d = new Date(`${k.slice(PURGE_NOTICE_DATE_PREFIX.length)}T00:00:00.000Z`);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  return null;
+}
+
+/** İmha kararı — FAIL-CLOSED: (1) bitimden LOCKED_PURGE_DAYS geçmiş, (2) imha bildirimi GÖNDERİLMİŞ ve (3) bildirim
+ *  günü biliniyorsa üzerinden en az TRIAL_PURGE_NOTICE_DAYS geçmiş olmalı (cron uzun süre koşmadıysa bildirim geç
+ *  gider; kişiye yine 30 gün tanınır). Bildirimsiz ASLA silinmez — bir sonraki koşumda bildirim gider, imha sonraya kalır. */
 export function shouldPurgeLockedTrial(p: { endsAt: Date; sent: ReadonlySet<string>; now: Date }): boolean {
   const purgeAt = p.endsAt.getTime() + LOCKED_PURGE_DAYS * DAY_MS;
-  return p.now.getTime() >= purgeAt && p.sent.has("purge-notice");
+  if (p.now.getTime() < purgeAt) return false;
+  if (!p.sent.has("purge-notice")) return false;
+  const noticeAt = purgeNoticeSentAt(p.sent);
+  if (noticeAt && p.now.getTime() - noticeAt.getTime() < TRIAL_PURGE_NOTICE_DAYS * DAY_MS) return false;
+  return true;
 }
 
 /** Bitiş tarihi etiketi — tr-TR, Türkiye saati (sunucuda hesaplanır, bileşene metin iner). */

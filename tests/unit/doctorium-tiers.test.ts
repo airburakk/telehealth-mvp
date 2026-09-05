@@ -8,6 +8,7 @@ import {
   TRIAL_TITLE, DOCTORIUM_STUDENT_SUFFIX,
   trialWindow, trialDaysLeft, dueTrialAlerts, shouldPurgeLockedTrial,
   parseTrialAlerts, serializeTrialAlerts, formatTrialEndsAt,
+  purgeNoticeMarker, purgeNoticeSentAt,
   type DoctoriumAudience,
 } from "@/lib/doctorium-tiers";
 
@@ -181,6 +182,18 @@ describe("shouldPurgeLockedTrial — FAIL-CLOSED imha", () => {
   });
   it("bildirim gitmiş + 90 gün dolmuş → silinir", () => {
     expect(shouldPurgeLockedTrial({ endsAt: ends, sent: new Set(["ended", "purge-notice"]), now: plusDays(ends, 90) })).toBe(true);
+  });
+  it("bildirim GEÇ gittiyse (gün işareti) üzerinden 30 gün geçmeden silinmez — kişiye 30 gün tanınır", () => {
+    const late = plusDays(ends, 85); // cron 25 gün gecikti, bildirim +85. günde gitti
+    const sent = new Set(["ended", "purge-notice", purgeNoticeMarker(late)]);
+    expect(shouldPurgeLockedTrial({ endsAt: ends, sent, now: plusDays(ends, 90) })).toBe(false);
+    expect(shouldPurgeLockedTrial({ endsAt: ends, sent, now: plusDays(ends, 114) })).toBe(false);
+    expect(shouldPurgeLockedTrial({ endsAt: ends, sent, now: plusDays(ends, 115) })).toBe(true);
+  });
+  it("gün işareti okunur; bozuk/eksik işaret null", () => {
+    expect(purgeNoticeSentAt(new Set(["purge-notice", purgeNoticeMarker(NOW)]))?.toISOString().slice(0, 10)).toBe("2026-09-05");
+    expect(purgeNoticeSentAt(new Set(["purge-notice@bozuk"]))).toBeNull();
+    expect(purgeNoticeSentAt(new Set(["purge-notice"]))).toBeNull();
   });
 });
 

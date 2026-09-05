@@ -1,4 +1,4 @@
-// Cron düzeni SÖZLEŞMESİ (v6.205, 2026-09-02 — bakım nöbeti altı cron'a bölündü, kullanıcı kararı; v6.206 translate-news ile yedi; 2026-09-04 ingest-dernekler ile sekiz).
+// Cron düzeni SÖZLEŞMESİ (v6.205, 2026-09-02 — bakım nöbeti altı cron'a bölündü, kullanıcı kararı; v6.206 translate-news ile yedi; 2026-09-04 ingest-dernekler ile sekiz; 2026-09-05 trial-sweep ile dokuz).
 //
 // Kilitlenenler:
 //   1) vercel.json crons ↔ lib/cron-guard CRON_SCHEDULES BİREBİR (yol + zamanlama). Biri değişip
@@ -23,10 +23,10 @@ function minuteOfDay(schedule: string): number {
 }
 
 describe("vercel.json ↔ CRON_SCHEDULES", () => {
-  it("yol ve zamanlama birebir aynı (sekiz cron)", () => {
+  it("yol ve zamanlama birebir aynı (dokuz cron)", () => {
     const fromVercel = Object.fromEntries(vercel.crons.map((c) => [c.path, c.schedule]));
     expect(fromVercel).toEqual(CRON_SCHEDULES);
-    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(8);
+    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(9);
   });
 
   it("her cron yolunun rota dosyası var, cronGate kullanır, maxDuration bildirir", () => {
@@ -59,6 +59,12 @@ describe("vercel.json ↔ CRON_SCHEDULES", () => {
 
   it("hasta hatırlatması insanca saatte (08:00–18:00 TR) — kullanıcı kararı 10:00 TR", () => {
     const t = minuteOfDay(CRON_SCHEDULES["/api/cron/pending-docs-reminders"]) + 3 * 60; // UTC → TR
+    expect(t).toBeGreaterThanOrEqual(8 * 60);
+    expect(t).toBeLessThanOrEqual(18 * 60);
+  });
+
+  it("deneme süpürmesi (trial-sweep) insanca saatte (08:00–18:00 TR) — doktora e-posta gönderir (2026-09-05)", () => {
+    const t = minuteOfDay(CRON_SCHEDULES["/api/cron/trial-sweep"]) + 3 * 60;
     expect(t).toBeGreaterThanOrEqual(8 * 60);
     expect(t).toBeLessThanOrEqual(18 * 60);
   });
