@@ -32,7 +32,45 @@ const ROLE_LABELS: Record<string, string> = {
 // AURA hedefini korur: AuraLogo → /doktor (vitrin değil klinik panel). Aşama-2'ye geçiş daveti
 // header'dan kalktı — o akış bütünüyle AURA tarafında yaşar (/doktor/baslangic).
 // Geri-birleştirme el kitabı: vault [[aura-doctorium-baglanti-sistemi]].
-function DoctoriumBrand({ doctoriumActive }: { doctoriumActive: boolean }) {
+// Öğrenci lockup'ı (üç katman Faz B2, 2026-09-05 — kullanıcı seçimi mockup turlarından sonra): kitle STUDENT
+// olan hesapta küre+wordmark yerine "Doctorium STUDENT" ışık-telli lockup görseli. Kaynak: Higgsfield master 11
+// (tel/tipografi) + GERÇEK marka küresi (4K kare, header bake reçetesi, disk K=0,90); üretim hattı vault
+// `doctorium-marka-arsivi/edu-stu-mockup-2026-09-05/student-lockup/` (pipeline.py → sphere_swap.py → junction_fix.py).
+// Header her temada `theme-dark` krom taşıdığı için YALNIZ gece varlığı bağlanır (gündüz varyantı public/brand'de
+// hazır, tema-duyarlı yüzeyler için). Küre ≈ 28 px (AuraMark 23'ten büyük — 23'te STUDENT satırı eriyordu, ölçek
+// merdiveni mockup 8). `?v=` cache-kırıcı: görsel değişince artır (gen-icons.py dersi).
+const STUDENT_LOCKUP = {
+  src: "/brand/doctorium-student-lockup-dark-720.webp?v=1",
+  srcSet: "/brand/doctorium-student-lockup-dark-720.webp?v=1 720w, /brand/doctorium-student-lockup-dark-1440.webp?v=1 1440w",
+  sizes: "(min-width: 640px) 100px, 86px",
+  width: 720,
+  height: 268,
+} as const;
+
+function DoctoriumBrand({ doctoriumActive, student = false }: { doctoriumActive: boolean; student?: boolean }) {
+  if (student) {
+    return (
+      <Link
+        href="/doktor/doctorium"
+        aria-current={doctoriumActive ? "page" : undefined}
+        title="Doctorium Student"
+        aria-label="Doctorium Student"
+        className="flex shrink-0 items-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element -- yerel statik alfa webp (60/150 KB); next/image projede kullanılmıyor (CoverArt emsali). */}
+        <img
+          src={STUDENT_LOCKUP.src}
+          srcSet={STUDENT_LOCKUP.srcSet}
+          sizes={STUDENT_LOCKUP.sizes}
+          width={STUDENT_LOCKUP.width}
+          height={STUDENT_LOCKUP.height}
+          alt=""
+          decoding="async"
+          className="block h-8 w-auto sm:h-[37px]"
+        />
+      </Link>
+    );
+  }
   return (
     <Link
       href="/doktor/doctorium"
@@ -254,7 +292,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
             kromunda doktor/koord/admin logosu klinik panele (/doktor) gider; herkes eski kök "/". */}
         {showDoctoriumBrand ? (
           <>
-            <DoctoriumBrand doctoriumActive={doctoriumActive} />
+            <DoctoriumBrand doctoriumActive={doctoriumActive} student={audience === "STUDENT"} />
             {trial && <TrialBadge daysLeft={trial.daysLeft} endsAtLabel={trial.endsAtLabel} />}
           </>
         ) : user && (["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role) || brandRoute) ? (

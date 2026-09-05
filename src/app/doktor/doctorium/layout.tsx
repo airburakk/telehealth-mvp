@@ -15,16 +15,23 @@ export const dynamic = "force-dynamic";
 // bastırıyordu (dosya HTTP 200 servis ediliyor ama <link rel="icon"> basılmıyordu) → kök
 // favicon.ico kaldırıldı, ikonlar public/ altına alındı, bağlama metadata ile yapılıyor.
 // Üretim: `python scripts/gen-icons.py`.
-export const metadata: Metadata = {
-  // Ayrışma (2026-08-24): sekme başlığı kök şablonun "%s · AURA"sını EZER — Doctorium
-  // yüzeylerinde AURA adı geçmez. appleWebApp adı da Doctorium (ana ekrana ekleme).
-  // 🪤 `default` YETMEZ: çocuk default'u KÖKÜN şablonuna yerleştirilir ("Doctorium · AURA"
-  // ölçüldü) — üst şablonu yalnız `absolute` iptal eder; template alt sayfalara uygulanır.
-  title: { absolute: "Doctorium", template: "%s · Doctorium" },
-  appleWebApp: { capable: true, title: "Doctorium", statusBarStyle: "default" },
-  // 🪤 `?v=` cache-kırıcı — gerekçe kök layout.tsx'te. İkon değişince ÜÇ layout'ta birlikte artır.
-  icons: { icon: "/icon-doctorium.ico?v=3", apple: "/apple-touch-icon-doctorium.png?v=1" }, // iOS ikonu da zümrüt (Faz E, 2026-09-03)
-};
+// Üç katman Faz B2 (2026-09-05, kullanıcı kararı): öğrenci hesabında sekme başlığı "Doctorium Student"
+// (header'daki lockup ile aynı ad). Kitle istek-önbellekli çözücüden (currentDoctoriumAudience — layout gövdesiyle
+// aynı sorgu, ikinci DB gidişi yok). Çözücü hata verirse Doctorium'a düşer (fail-open: başlık kritik değil).
+export async function generateMetadata(): Promise<Metadata> {
+  const ctx = await currentDoctoriumAudience().catch(() => null);
+  const brandName = ctx?.audience === "STUDENT" ? "Doctorium Student" : "Doctorium";
+  return {
+    // Ayrışma (2026-08-24): sekme başlığı kök şablonun "%s · AURA"sını EZER — Doctorium
+    // yüzeylerinde AURA adı geçmez. appleWebApp adı da Doctorium (ana ekrana ekleme).
+    // 🪤 `default` YETMEZ: çocuk default'u KÖKÜN şablonuna yerleştirilir ("Doctorium · AURA"
+    // ölçüldü) — üst şablonu yalnız `absolute` iptal eder; template alt sayfalara uygulanır.
+    title: { absolute: brandName, template: `%s · ${brandName}` },
+    appleWebApp: { capable: true, title: brandName, statusBarStyle: "default" },
+    // 🪤 `?v=` cache-kırıcı — gerekçe kök layout.tsx'te. İkon değişince ÜÇ layout'ta birlikte artır.
+    icons: { icon: "/icon-doctorium.ico?v=3", apple: "/apple-touch-icon-doctorium.png?v=1" }, // iOS ikonu da zümrüt (Faz E, 2026-09-03)
+  };
+}
 
 // İki aşamalı giriş — AŞAMA 1 kapısı (v6.124: e-Devlet doğrulamalı diploma). Doctorium'a DOCTOR
 // rolü ancak DOĞRULANMIŞ diploması (diplomaVerifiedAt — DIPLOMA belgesi ACCEPTED) VEYA öğrenci

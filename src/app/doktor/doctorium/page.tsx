@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -42,7 +43,12 @@ export const dynamic = "force-dynamic";
 
 // Ayrışma (2026-08-24): sekme yalın "Doctorium". 🪤 absolute ŞART — segmentin page'i KENDİ
 // layout'unun şablonunu almaz (şablon yalnız ALT segmentlere; düz title köke kaçıp "· AURA" alır).
-export const metadata = { title: { absolute: "Doctorium" } };
+// Üç katman Faz B2 (2026-09-05): öğrenci hesabında "Doctorium Student" (layout.tsx ile aynı kural; kitle
+// istek-önbellekli — page gövdesiyle aynı sorgu). Çözücü hata verirse "Doctorium"a düşer.
+export async function generateMetadata(): Promise<Metadata> {
+  const ctx = await currentDoctoriumAudience().catch(() => null);
+  return { title: { absolute: ctx?.audience === "STUDENT" ? "Doctorium Student" : "Doctorium" } };
+}
 
 // Akışım sayfa boyu (v6.192, kullanıcı kararı 2026-08-31: "40 mesaj ile sınırla"). Tek branş
 // odağı da buna çekildi (eskiden 30) — "sayfa 40 kalem" kuralı tek ve açıklanabilir olsun.
