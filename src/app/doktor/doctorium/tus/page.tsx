@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { DoctoriumShell } from "../DoctoriumSidebar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { KARIYER_HREF, TusOfficialLinksPanel, TusPeriodsPanel, TusPlacementSection } from "../CareerEduSections";
+import { TusGuidesPanel, TusResourcesPanel } from "../TusGuideResourcePanels";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "TUS" };
@@ -18,6 +19,8 @@ export const metadata = { title: "TUS" };
  * VERİ (K1, 2026-09-05): ÖSYM "En Küçük ve En Büyük Puanlar" PDF'leri scripts/tus-ingest.ts ile dönem dönem çekilir (src/data/tus),
  * lib/tus-data TUS_SNAPSHOTS'ta 👤 approvedAt dolu dönemler TusPlacementSection'da KPI + Recharts grafikleriyle gösterilir;
  * onaysız dönem görünmez. Paneller CareerEduSections'ta hub ile PAYLAŞILIR — temsilî sayı / uydurma tarih / tahmin YOK.
+ * K3/K4 (2026-09-05): Rehberler = ÖSYM kılavuzu bölüm özetleri (lib/tus-guides, ayrıntı /tus/rehber/[slug]); Kaynakça + kurs dizini =
+ * tarafsız künye (lib/tus-resources; fiyat/puan/öneri yok, alfabetik, #kaynakca). İkisi de 👤 approvedAt ile görünür.
  */
 export default async function TusPage() {
   const user = await getCurrentUser();
@@ -38,8 +41,10 @@ export default async function TusPage() {
         />
 
         <TusPlacementSection className="mt-6" />
+        <TusGuidesPanel className="mt-6" />
         <TusOfficialLinksPanel className="mt-6" />
         <TusPeriodsPanel className="mt-6" />
+        <TusResourcesPanel className="mt-6" />
       </div>
     </DoctoriumShell>
   );
