@@ -37,12 +37,14 @@ const ROLE_LABELS: Record<string, string> = {
 // (tel/tipografi) + GERÇEK marka küresi (4K kare, header bake reçetesi, disk K=0,90); üretim hattı vault
 // `doctorium-marka-arsivi/edu-stu-mockup-2026-09-05/student-lockup/` (pipeline.py → sphere_swap.py → junction_fix.py).
 // Header her temada `theme-dark` krom taşıdığı için YALNIZ gece varlığı bağlanır (gündüz varyantı public/brand'de
-// hazır, tema-duyarlı yüzeyler için). Küre ≈ 28 px (AuraMark 23'ten büyük — 23'te STUDENT satırı eriyordu, ölçek
-// merdiveni mockup 8). `?v=` cache-kırıcı: görsel değişince artır (gen-icons.py dersi).
+// hazır, tema-duyarlı yüzeyler için). Ölçek 👤 2026-09-05 (Faz B2 ölçek tahtası: 37 · 44 · 48 px · küre+wordmark+rozet):
+// masaüstü 48 px (sm:h-12) — 37 px'te "STUDENT" satırı ≈3,9 px'e iniyordu (kaynakta lockup yüksekliğinin %10,7'si),
+// 48 px'te ≈5,1 px / "Doctorium" ≈13 px / küre ≈39 px; header 64 px içinde 8 px pay. Mobil 32 px (h-8) değişmedi.
+// `sizes` bu genişliklerle uyumlu (48 px → 129 px, 32 px → 86 px). `?v=` cache-kırıcı: görsel değişince artır (gen-icons.py dersi).
 const STUDENT_LOCKUP = {
   src: "/brand/doctorium-student-lockup-dark-720.webp?v=1",
   srcSet: "/brand/doctorium-student-lockup-dark-720.webp?v=1 720w, /brand/doctorium-student-lockup-dark-1440.webp?v=1 1440w",
-  sizes: "(min-width: 640px) 100px, 86px",
+  sizes: "(min-width: 640px) 129px, 86px",
   width: 720,
   height: 268,
 } as const;
@@ -66,7 +68,7 @@ function DoctoriumBrand({ doctoriumActive, student = false }: { doctoriumActive:
           height={STUDENT_LOCKUP.height}
           alt=""
           decoding="async"
-          className="block h-8 w-auto sm:h-[37px]"
+          className="block h-8 w-auto sm:h-12"
         />
       </Link>
     );
