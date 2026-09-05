@@ -45,6 +45,11 @@ model User {
   /// doğrulama bağlantısı sıfırlama bağlantısını sessizce geçersizleştirirdi.
   passwordResetTokenHash String? // aktif sıfırlama token'ının sha256'sı (ham token yalnız e-postada)
   passwordResetSentAt    DateTime? // son sıfırlama e-postası (1 saat TTL tabanı + yeniden-gönder soğuması)
+  /// Parolasız GİRİŞ BAĞLANTISI (Doctorium deneme üyeliği, 2026-09-05 — plan frolicking-knitting-globe A2/A3).
+  /// Doğrulama/sıfırlama alanlarıyla AYNI desen, AYRI kolonlar (TTL 20 dk). Bağlantı yalnız passwordSetAt=null
+  /// hesaplara oturum açar: parolalı hesapta posta kutusu anında erişim OLMAZ (reset-password kararıyla tutarlı).
+  loginTokenHash   String? // aktif giriş bağlantısı token'ının sha256'sı (ham token yalnız e-postadaki bağlantıda)
+  loginTokenSentAt DateTime? // son bağlantı e-postası (20 dk TTL tabanı + yeniden-gönder soğuması)
   /// Apple ile Giriş (v6.82) — Apple'ın kalıcı kullanıcı kimliği (ID token `sub`). E-POSTA DEĞİL:
   /// kullanıcı "E-postamı Gizle"yi seçerse bize @privaterelay.appleid.com adresi gelir ve o adres,
   /// uygulama Apple ID'den kaldırılıp yeniden bağlanınca DEĞİŞİR → yalnız e-postaya bakan eşleme
@@ -299,6 +304,17 @@ model Doctor {
   /// doğrulaması klinik tarafın da dayanağıdır), dolayısıyla hasDoctoriumAccess tek başına
   /// kapanmazdı. Yeniden üye olunca null'lanır.
   doctoriumOptOutAt        DateTime?
+  /// DENEME ÜYELİĞİ (üç katman, kullanıcı kararı 2026-09-05 — lib/doctorium-tiers.ts): hesap açılırken
+  /// (DOCTORIUM_TRIAL_ENABLED=1 ve öğrenci-dışı) ikisi birlikte dolar; süre TRIAL_DAYS=30. Katman çözücüsü
+  /// trialEndsAt>now → TRIAL (içerik açık, pazarlama yüzeyleri kapalı), ≤now → LOCKED (portal kapalı, kilit ekranı).
+  /// Diploma doğrulanınca VERIFIED baskındır; damgalar SİLİNMEZ (tarihsel iz). Doğrulanmayan hesap bitimden
+  /// LOCKED_PURGE_DAYS=90 gün sonra, 30 gün önce bildirimle silinir (trial-sweep cron). null = deneme yolu değil.
+  trialStartedAt           DateTime?
+  trialEndsAt              DateTime?
+  /// Gönderilen deneme uyarıları — JSON string[]: "7" | "3" | "1" | "ended" | "purge-notice"
+  /// (CongressFollow.sentAlerts deseni: açık kayıt, bildirim satırından türetmeye göre daha okunaklı). İmha
+  /// FAIL-CLOSED: "purge-notice" burada yoksa süre dolsa da silinmez (lib/doctorium-tiers shouldPurgeLockedTrial).
+  trialAlertsSent          String?
   /// v6.147 — öğrencinin kayıtta beyan ettiği üniversite (lib/universities.ts UNIVERSITIES'ten,
   /// resmî ad) + bölüm ("tip" | "dis-hekimligi"). Yalnız KAYIT ANINDA yazılır (sonradan
   /// düzenlenemez); domain eşleşmesi signup-student route'unda ZATEN doğrulanmış olarak buraya
@@ -361,6 +377,8 @@ model Doctor {
   reviews         Review[]
   documents       DoctorDocument[]
   createdAt       DateTime       @default(now())
+
+  @@index([trialEndsAt]) // trial-sweep cron taraması: bitişi dolmuş/yaklaşan denemeler (2026-09-05)
 }
 
 /// Doğrulanmış hasta yorumu (Modül 6)
