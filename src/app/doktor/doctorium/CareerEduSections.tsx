@@ -3,6 +3,9 @@ import { ArrowRight, CalendarDays, ExternalLink, Info } from "lucide-react";
 import { TUS_EXAM_PERIODS, TUS_OFFICIAL_LINKS } from "@/lib/tus";
 import { EDU_KIND_LABEL, approvedEduOpportunities, eduCountryLabel } from "@/lib/edu-opportunities";
 import { formatIsoDayTr } from "@/lib/iso-day";
+import { approvedTusSummaries, tusBranches } from "@/lib/tus-data";
+import { TUS_INSTITUTION_LABEL } from "@/lib/tus-normalize";
+import TusChartsLoader from "./tus/TusChartsLoader";
 import { AuraPanel } from "@/components/ui/AuraPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AuraButtonLink } from "@/components/ui/AuraButton";
@@ -133,6 +136,56 @@ export function EduOpportunitiesPanel({ className = "" }: { className?: string }
   );
 }
 
+/**
+ * TUS yerleştirme verisi (K1, 2026-09-05): onaylı dönem özetleri (lib/tus-data) → KPI şeridi (son dönem) + Recharts grafikleri
+ * (client, dinamik). Onaylı dönem yoksa dürüst "hazırlanıyor". `compact` (Kariyer hub'ı): yalnız KPI + ayrıntı bağlantısı.
+ */
+export function TusPlacementSection({ className = "", compact = false }: { className?: string; compact?: boolean }) {
+  const periods = approvedTusSummaries();
+  if (periods.length === 0) {
+    return (
+      <EmptyState
+        className={className}
+        title="Kontenjan ve taban puan verisi hazırlanıyor"
+        sub="ÖSYM'nin yerleştirme tabloları (en küçük/en büyük puanlar) dönem dönem doğrulanıp onaylandığında branş bazlı eğilimler burada görünecek."
+      />
+    );
+  }
+  const last = periods[periods.length - 1];
+  const g = last.totals.general;
+  const kpis = [
+    { k: "Kontenjan (GENEL)", v: g.quota }, { k: "Yerleşen", v: g.placed }, { k: "Boş kalan", v: g.vacant },
+    { k: "Yerleşme oranı", v: g.quota ? `%${Math.round((g.placed / g.quota) * 1000) / 10}` : "—" },
+  ];
+  return (
+    <AuraPanel title="Yerleştirme verisi" meta={`ÖSYM · ${periods.length} DÖNEM`} className={className}>
+      <div className="aura-mono text-[11px] uppercase tracking-wider text-[var(--c-ink-3)]">{last.year}-TUS {last.term}. Dönem · son dönem</div>
+      <dl className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {kpis.map((x) => (
+          <div key={x.k} className="rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5">
+            <dt className="text-[11px] text-[var(--c-ink-3)]">{x.k}</dt>
+            <dd className="aura-display mt-0.5 text-xl font-semibold tabular-nums text-[var(--c-ink)]">{typeof x.v === "number" ? x.v.toLocaleString("tr-TR") : x.v}</dd>
+          </div>
+        ))}
+      </dl>
+      {compact ? (
+        <p className="mt-3 text-[12px] text-[var(--c-ink-2)]">
+          Branş bazlı taban puan eğilimi, kurum türüne göre yerleşme ve puan dağılımı grafikleri TUS sayfasında —{" "}
+          <Link href={TUS_HREF} className="font-semibold text-[var(--c-accent)] hover:underline">Ayrıntı</Link>.
+        </p>
+      ) : (
+        <div className="mt-5">
+          <TusChartsLoader periods={periods} branches={tusBranches(periods)} institutionLabels={TUS_INSTITUTION_LABEL} initialBranch="İÇ HASTALIKLARI" />
+        </div>
+      )}
+      <p className="mt-3 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
+        Sayılar ÖSYM&apos;nin dönem tablolarından alınır (kaynak bağlantıları TUS sayfasında); GENEL kontenjan esas alınır, yabancı uyruklu
+        kontenjan ayrı tutulur. Geçmiş veridir; tercih tavsiyesi değildir.
+      </p>
+    </AuraPanel>
+  );
+}
+
 /** Bölüm başı: mono etiket (kitle aksanı) + h2 + ayrıntı bağlantısı. Sahne h1'i page.tsx'te — burada yalnız h2. */
 function SectionHead({ eyebrow, title, href }: { eyebrow: string; title: string; href: string }) {
   return (
@@ -162,6 +215,7 @@ export function StudentCareerHub() {
       </section>
       <section>
         <SectionHead eyebrow="TUS" title="Tıpta Uzmanlık Sınavı" href={TUS_HREF} />
+        <TusPlacementSection className="mt-4" compact />
         <TusOfficialLinksPanel className="mt-4" />
         <TusPeriodsPanel className="mt-4" />
       </section>

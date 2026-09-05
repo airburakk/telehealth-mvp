@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { DoctoriumShell } from "../DoctoriumSidebar";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { KARIYER_HREF, TusOfficialLinksPanel, TusPeriodsPanel } from "../CareerEduSections";
+import { KARIYER_HREF, TusOfficialLinksPanel, TusPeriodsPanel, TusPlacementSection } from "../CareerEduSections";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "TUS" };
@@ -15,8 +15,9 @@ export const metadata = { title: "TUS" };
  * DoctorTusSection); bu sayfa oradan "Ayrıntı" bağlantısıyla açılır, rafta Kariyer aktif kalır. Doğrudan URL herkese
  * serbest ("kapalı, gizli değil"; kapı segment layout'unun Doctorium kapısıdır).
  *
- * DÜRÜST İSKELET: veri hattı (ÖSYM açık verisi → doğrulama → dönem-bazlı snapshot → grafikler, simülatör) AYRI plandadır.
- * Paneller CareerEduSections'ta hub ile PAYLAŞILIR — grafik / temsilî sayı / uydurma tarih YOK.
+ * VERİ (K1, 2026-09-05): ÖSYM "En Küçük ve En Büyük Puanlar" PDF'leri scripts/tus-ingest.ts ile dönem dönem çekilir (src/data/tus),
+ * lib/tus-data TUS_SNAPSHOTS'ta 👤 approvedAt dolu dönemler TusPlacementSection'da KPI + Recharts grafikleriyle gösterilir;
+ * onaysız dönem görünmez. Paneller CareerEduSections'ta hub ile PAYLAŞILIR — temsilî sayı / uydurma tarih / tahmin YOK.
  */
 export default async function TusPage() {
   const user = await getCurrentUser();
@@ -36,6 +37,7 @@ export default async function TusPage() {
           sub="Kamuya açık ÖSYM verisinin (sınav takvimi, kontenjanlar, taban puanlar, boş kalan kontenjanlar) tek yerden okunabilir hâli. Veri yayına alınmadan önce kaynak ve tarihle doğrulanır."
         />
 
+        <TusPlacementSection className="mt-6" />
         <TusOfficialLinksPanel className="mt-6" />
         <TusPeriodsPanel className="mt-6" />
       </div>
