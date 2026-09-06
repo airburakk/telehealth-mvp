@@ -35,7 +35,7 @@ export const SHELF_EMERALD = { dark: "#34d399", light: "#047857" } as const;
  *  öğrencinin KARİYER sekmesine bağlanır (EDU içerikleri orada); yüzey token'ları globals.css `[data-audience="student"]`
  *  bloğunda aynı aileden okur (gece #fb923c birebir; gündüz rafta bir kademe koyu #9a3412 — sıcak raf zemininde #c2410c
  *  3.95:1 AA altı kalıyordu, #9a3412 5.6:1). */
-export const STUDENT_LANE = { dark: "#fb923c", light: "#9a3412" } as const;
+export const STUDENT_LANE = { dark: "#fb923c", light: "#ea580c" } as const; // 🔄 2026-09-06 gündüz #9a3412 → #ea580c (👤 koral canlanması)
 
 /** Modül sekmeleri — kimlik renkleri kullanıcı kararlarıyla (2026-08-14/19) sabit; ?m= anahtarları DB module değerleriyle aynı. */
 export const MODULE_TABS: readonly ShelfTabDef[] = [

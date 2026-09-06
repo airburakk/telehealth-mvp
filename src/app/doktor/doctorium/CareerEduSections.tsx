@@ -174,7 +174,7 @@ export function TusPlacementSection({ className = "", compact = false }: { class
       </dl>
       {compact ? (
         <p className="mt-3 text-[12px] text-[var(--c-ink-2)]">
-          Branş bazlı taban puan eğilimi, kurum türüne göre yerleşme ve puan dağılımı grafikleri TUS sayfasında —{" "}
+          Branş bazlı taban puan eğilimi, kurum türüne göre yerleşme ve puan dağılımı grafikleri ile branş × dönem kurum tablosu (ek yerleştirme dâhil) TUS sayfasında —{" "}
           <Link href={TUS_HREF} className="font-semibold text-[var(--c-accent)] hover:underline">Ayrıntı</Link>.
         </p>
       ) : (

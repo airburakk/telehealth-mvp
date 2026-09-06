@@ -115,6 +115,9 @@
   --c-accent: #34d399;
   --c-accent-strong: #10b981;
   --c-accent-stronger: #059669;
+  /* Dolgu aksanı (grafik çubuğu/çizgisi, geniş renk alanları): varsayılan metin aksanıyla aynı; öğrenci gündüzünde
+     metin okunabilirlik için bir ton koyu kalırken dolgular gecenin canlı koralını alır (👤 2026-09-06). */
+  --c-accent-fill: var(--c-accent);
   /* Tipografi TEMA-BAĞIMSIZ: Doctorium'un kimliği her iki temada Inter'de tekilleşir
    * (V3: "hiyerarşi yalnız ağırlıkla") — aura-display/aura-mono class'ları var kalır,
    * yalnız font-family değişir. */
@@ -240,8 +243,9 @@
    token'ına taşındı (bkz. .doctorium-scope aksan bloğu) → AI özet paneli, çipler, alt-sekme çizgileri, düğmeler, anahtarlar
    öğrencide koral; zümrütte yalnız kimlik renkleri + --c-success kalır. Header kromu DAİMA theme-dark (Header.tsx) → header yalnız gece
    değerlerini alır, .theme-light eşi ona yazılmaz (yazılsaydı koyu kromda koyu koral ≈3.2:1 çıkardı).
-   Kontrast (hesap 2026-09-05): gece #fb923c/#0d0e10 8.5:1 · gündüz #c2410c/#fbfbfa 5.0:1 · düğme metni #fbfbfa/#c2410c
-   5.0:1 · strong kademeleri AURA deseniyle aynı yönde (hover koyulaşır: gece #f97316 6.9:1, gündüz #9a3412 7.1:1).
+   Kontrast (hesap 2026-09-05): gece #fb923c/#0d0e10 8.5:1. 🔄 GÜNDÜZ 2026-09-06 (👤 "kiremit tonu soluk, gecenin rengini istiyorum"):
+   metin aksanı #ea580c (beyazda 3.4:1 — kalın/büyük etiketlerde okunur, bilinçli tercih), hover #c2410c, vurgu #9a3412;
+   DOLGULAR (--c-accent-fill: grafik, bant, lockup) gece koralı #fb923c — gündüzde de aynı canlı renk.
    🪤 Turbopack kısmi CSS önbelleği: blok dev'de görünmezse .next silinir ([[turbopack-css-partial-cache]]). */
 .doctorium-scope[data-audience="student"],
 header[data-audience="student"] {
@@ -251,17 +255,18 @@ header[data-audience="student"] {
   --c-accent: var(--audience-accent);
   --c-accent-strong: var(--audience-accent-strong);
   --c-accent-stronger: var(--audience-accent-stronger);
+  --c-accent-fill: #fb923c;
 }
 .theme-light .doctorium-scope[data-audience="student"] {
-  --audience-accent: #c2410c;
-  --audience-accent-strong: #9a3412;
-  --audience-accent-stronger: #7c2d12;
+  --audience-accent: #ea580c;
+  --audience-accent-strong: #c2410c;
+  --audience-accent-stronger: #9a3412;
+  --c-accent-fill: #fb923c;
 }
-/* Raf: "DERİN ORMAN %12"in öğrenci karşılığı "KOR %12" — aynı %12 doz, taban KOYU koral (#c2410c; parlak #fb923c tabanı
-   "renkli bant" olurdu — derin-orman dersi): gece ≈#1e100b sıcak kömür, gündüz ≈#edded6 sıcak açık krom. Nokta/nabız
+/* Raf: gece "KOR %12" — "DERİN ORMAN %12"in öğrenci karşılığı, taban koyu koral (#c2410c) → ≈#1e100b sıcak kömür. Nokta/nabız
    token'ları .doctorium-shelf-bg'nin KENDİ üstünde tanımlı → kapsam düzeyi yetmez, raf seçicisiyle yeniden yazılır.
-   Gündüz rafta metin bir kademe koyu (#9a3412 — 5.6:1; #c2410c sıcak zeminde 3.95:1 AA altı kalıyordu); nokta metin
-   değil, #c2410c kalır. Aktif EDU sekmesi aynı gerekçeyle STUDENT_LANE.light = #9a3412 (lib/doctorium-shelf). */
+   🔄 GÜNDÜZ 2026-09-06 (👤 "header altı bant soluk"): %12 peach yerine DOYGUN koral bant — gece koralı #fb923c %28 dozda açık krom
+   üstüne; nokta #fb923c, nabız/aktif sekme metni #ea580c (STUDENT_LANE.light), hover #c2410c. */
 .doctorium-scope[data-audience="student"] .doctorium-shelf-bg {
   background-color: color-mix(in srgb, color-mix(in srgb, #c2410c 12%, var(--c-chrome)) 92%, transparent);
   --shelf-dot: rgba(251, 146, 60, 0.9);
@@ -269,9 +274,10 @@ header[data-audience="student"] {
   --shelf-pulse-hover: #fed7aa;
 }
 .theme-light .doctorium-scope[data-audience="student"] .doctorium-shelf-bg {
-  --shelf-dot: #c2410c;
-  --shelf-pulse: #9a3412;
-  --shelf-pulse-hover: #7c2d12;
+  background-color: color-mix(in srgb, color-mix(in srgb, #fb923c 28%, var(--c-chrome)) 94%, transparent);
+  --shelf-dot: #fb923c;
+  --shelf-pulse: #ea580c;
+  --shelf-pulse-hover: #c2410c;
 }
 
 /* ÖĞRENCİ LOCKUP — U4 (👤 2026-09-06, mockup turları 9→11): Header'da küre + "Doctorium" wordmark'ı üstte, altında ince köşeli

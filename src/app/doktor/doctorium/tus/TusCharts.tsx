@@ -20,7 +20,8 @@ export interface TusChartsProps {
 }
 
 // Boş kontenjan = nötr gri (--c-ink-3): --c-warning gündüz temasında (#a94e08) koral aksana çok yakın çıkıyordu (prova 2026-09-05).
-const ACCENT = "var(--c-accent)"; const WARN = "var(--c-ink-3)"; const INK3 = "var(--c-ink-3)"; const INK2 = "var(--c-ink-2)"; const HAIR = "var(--c-hairline)";
+// Dolgu aksanı --c-accent-fill: öğrenci gündüzünde gece koralı, aksi hâlde --c-accent (globals.css, 2026-09-06).
+const ACCENT = "var(--c-accent-fill)"; const WARN = "var(--c-ink-3)"; const INK3 = "var(--c-ink-3)"; const INK2 = "var(--c-ink-2)"; const HAIR = "var(--c-hairline)";
 const label = (p: { year: number; term: number }) => `${p.year}/${p.term}`;
 const fmt = (n: number | null | undefined) => (n == null ? "—" : n.toLocaleString("tr-TR", { maximumFractionDigits: 2 }));
 

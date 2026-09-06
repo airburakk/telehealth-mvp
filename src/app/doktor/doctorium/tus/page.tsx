@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { KARIYER_HREF, TusOfficialLinksPanel, TusPeriodsPanel, TusPlacementSection } from "../CareerEduSections";
 import { TusGuidesPanel, TusResourcesPanel } from "../TusGuideResourcePanels";
 import { YokTipSection } from "../TusYokSection";
+import { TusInstitutionsSection } from "../TusInstitutionsSection";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "TUS" };
@@ -24,8 +25,10 @@ export const metadata = { title: "TUS" };
  * tarafsız künye (lib/tus-resources; fiyat/puan/öneri yok, alfabetik, #kaynakca). İkisi de 👤 approvedAt ile görünür.
  * K5 (2026-09-05): Tıp fakülteleri = YÖK Atlas Tercih Sihirbazı verisi (lib/yok-data, 👤 approvedAt; scripts/yok-atlas-ingest.ts) — KPI +
  * Recharts (giriş kontenjanı ↔ TUS GENEL kontenjanı, kurum türü, il, başarı sırası) + program tablosu (#yok). Tahmin/tavsiye YOK.
+ * K2 (2026-09-06): Kurumlar = branş × dönem kurum tablosu (`TusInstitutionsSection`, süzgeçler URL sorgusunda: brans · donem · tur · kt · q ·
+ * sirala; #kurumlar) + son 3 dönem en küçük puan eğilimi + ek yerleştirme sütunu (lib/tus-data TUS_EK_SNAPSHOTS, 👤 approvedAt).
  */
-export default async function TusPage() {
+export default async function TusPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
 
@@ -44,6 +47,7 @@ export default async function TusPage() {
         />
 
         <TusPlacementSection className="mt-6" />
+        <TusInstitutionsSection sp={await searchParams} className="mt-6" />
         <YokTipSection className="mt-6" />
         <TusGuidesPanel className="mt-6" />
         <TusOfficialLinksPanel className="mt-6" />

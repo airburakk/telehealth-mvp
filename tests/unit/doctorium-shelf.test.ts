@@ -54,7 +54,7 @@ describe("sekme tanımları", () => {
     expect(all.some((t) => /\/tus|kariyer-edu/.test(t.href))).toBe(false);
   });
   it("STUDENT_LANE koral çifti (👤 karar 2026-09-05, Faz B2); Takvim marka zümrüdünde", () => {
-    expect(STUDENT_LANE).toEqual({ dark: "#fb923c", light: "#9a3412" });
+    expect(STUDENT_LANE).toEqual({ dark: "#fb923c", light: "#ea580c" });
     expect(TAKVIM_TAB.color).toEqual(SHELF_EMERALD);
   });
   it("globals.css: Doctorium kapsam aksanı ZÜMRÜT, öğrenci bloğu KORAL — TS ↔ CSS sözleşmesi", () => {
@@ -66,7 +66,9 @@ describe("sekme tanımları", () => {
     expect(start).toBeGreaterThan(-1);
     const block = css.slice(start, css.indexOf("/* AÇIK RAF VARYANTI", start));
     expect(block).toContain(`--audience-accent: ${STUDENT_LANE.dark};`);
-    expect(block).toContain("--audience-accent: #c2410c;");
+    expect(block).toContain("--audience-accent: #ea580c;");
+    expect(block).toContain("--c-accent-fill: #fb923c;"); // dolgular iki temada da gece koralı (👤 2026-09-06)
+    expect(block).toContain("#fb923c 28%"); // gündüz raf bandı doygun (%12 peach süpersede)
     expect(block).toContain(`--shelf-pulse: ${STUDENT_LANE.light};`);
     // Header kromu daima theme-dark → gündüz değeri header'a yazılmaz (koyu kromda koyu koral AA altı kalırdı)
     expect(block).not.toContain('.theme-light header[data-audience="student"]');

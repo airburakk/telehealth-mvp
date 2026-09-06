@@ -21,7 +21,8 @@ export interface YokChartsProps {
   typeLabels: Record<YokUniType, string>;
 }
 
-const ACCENT = "var(--c-accent)"; const INK2 = "var(--c-ink-2)"; const INK3 = "var(--c-ink-3)"; const HAIR = "var(--c-hairline)";
+// Dolgu aksanı --c-accent-fill: öğrenci gündüzünde gece koralı, aksi hâlde --c-accent (globals.css, 2026-09-06).
+const ACCENT = "var(--c-accent-fill)"; const INK2 = "var(--c-ink-2)"; const INK3 = "var(--c-ink-3)"; const HAIR = "var(--c-hairline)";
 const tooltipStyle = { backgroundColor: "var(--c-panel)", border: "1px solid var(--c-hairline)", borderRadius: 10, color: "var(--c-ink)", fontSize: 12 };
 const axisTick = { fill: INK2, fontSize: 11 };
 const fmt = (n: number | null | undefined) => (n == null ? "—" : n.toLocaleString("tr-TR", { maximumFractionDigits: 2 }));
@@ -207,7 +208,7 @@ export default function YokCharts({ summary, rows, tusQuotaByYear, graduatesByYe
 
       <p className="text-[11px] leading-relaxed text-[var(--c-ink-3)]">
         Kaynak: YÖK Atlas Tercih Sihirbazı (kontenjan ve koşullar {summary.year}-YKS Yükseköğretim Programları ve Kontenjanları Kılavuzu&apos;ndan; taban puan ve
-        başarı sırası {summary.year} YKS yerleştirme sonuçları; önceki yıllar aynı kaynağın geçmiş alanları; öğretim üyesi = profesör + doçent + doktor öğretim
+        başarı sırası {summary.year}{" "}YKS yerleştirme sonuçları; önceki yıllar aynı kaynağın geçmiş alanları; öğretim üyesi = profesör + doçent + doktor öğretim
         üyesi, YÖK Atlas beyanı). Mezun sayıları YÖKSİS İstatistik Tablo 12&apos;den (önlisans ve lisans düzeyindeki mezunlar, akademik birimlere göre; yalnız adı
         &ldquo;Tıp Fakültesi&rdquo; olan birimler; yıl = öğretim yılının ikinci yılı). TUS GENEL kontenjanı ÖSYM yerleştirme tablolarından (yıl = iki dönem toplamı; eksik
         dönem işaretlenir). Tıp eğitimi altı yıldır; giriş kontenjanı, mezun sayısı ve TUS kontenjanı aynı kişileri anlatmaz. Sayılar geçmiş ve resmî veridir;
