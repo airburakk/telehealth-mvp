@@ -169,7 +169,8 @@ belge varsa atlar). Metin TEK kaynak `lib/doctorium-trial-copy.ts` (👤 kanonik
 üyeliğe dönüşmez**, ödeme bilgisi istenmez). **Öğrenci yüzeyi:** raf HERKESTE aynı 8 durak (Takvim en sonda); öğrencide Kariyer
 sekmesi koral ve sahnesi `CareerEduSections StudentCareerHub` = **Kariyer EDU + TUS** (doktorun yol haritası çizilmez); doktor
 Özelleştir → "Kariyer içinde TUS bölümünü göster" (`viewPrefs.showTus`); `/doktor/doctorium/tus` ve `/kariyer-edu` ayrıntı
-sayfaları; Header "Doctorium STUDENT" lockup'ı 48 px (`public/brand/doctorium-student-lockup-*.webp`). **Renk (v6.242):**
+sayfaları; Header öğrenci lockup'ı **"Doctorium [ STUDENT ]"** gerçek metin (U4, v6.251: küre 28 px + Inter 600 wordmark +
+altında koral parantezli STUDENT; `.dsl-*` globals.css; v6.239 webp varlığı kaldırıldı). **Renk (v6.242):**
 `.doctorium-scope` aksanı `--c-accent` = marka zümrüdü, öğrenci kapsamı `[data-audience="student"]` KORAL (gece #fb923c · gündüz
 #c2410c; raf "KOR %12") — portalda sabit `text-emerald-*` yazılmaz; semantik başarı `--c-success`. **Hukuk (v6.243):** belge seti
 Sürüm 1.2 (02 madde 2 "Deneme Erişimi", 3.2 a–d, 10.2-e; 01 madde 3.1/6/8), `DOCTORIUM_LEGAL_VERSION` 1.2 · 5 Eylül 2026,
@@ -909,15 +910,16 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   **v6→v7**. JSON-LD logo → `/icon-512.png?v=3`. 🪤 Turbopack kısmi CSS önbelleği yeni `.sınıf`ı
   dev'de düşürdü → lockup alt yazı stili INLINE. 🪤 Next 16 ikinci `next dev`'i reddeder (kilit);
   paralel oturumun sunucusu aynı ağacı HMR ile servis eder — doğrulama Playwright ile oradan.
-  · **Öğrenci lockup'ı (üç katmanlı üyelik Faz B2 — logo, v6.239 / commit `071851d`, 2026-09-05):** kitle
-  `STUDENT` olan hesapta Header marka bloğu küre+wordmark yerine **"Doctorium STUDENT" ışık-telli lockup**
-  görselini çizer (`Header.tsx` `DoctoriumBrand({student})`; `public/brand/doctorium-student-lockup-{dark,light}-{720,1440}.webp`,
-  alfa; küre ≈ 28 px; header her temada `theme-dark` krom → yalnız gece varlığı bağlı, gündüz varlığı
-  tema-duyarlı yüzeyler için hazır). Sekme başlığı `generateMetadata` ile "Doctorium Student"
-  (`doktor/doctorium/layout.tsx` + `page.tsx` — page'in `absolute` başlığı layout şablonunu ezer, ikisi de
-  kitleye duyarlı). Favicon bilinçli DEĞİŞMEDİ (16 px'te üç harf okunmaz). Görsel, Higgsfield fikri (Nano
-  "ışık telleri") + GERÇEK marka küresi (4K kare, header bake reçetesi, disk K=0,90) + birleşim inpaint ile
-  üretildi; kaynak ve scriptler vault marka arşivinde (`doctorium-marka-arsivi/edu-stu-mockup-2026-09-05/`).
+  · **Öğrenci lockup'ı (üç katmanlı üyelik Faz B2 — logo; v6.251 U4, 2026-09-06 — v6.239'un ışık-telli webp
+  görselini SÜPERSEDE etti):** kitle `STUDENT` olan hesapta Header marka bloğu küre (28 px) + **"Doctorium"** wordmark'ı
+  (Inter 600, −0,02em) + altında ince köşeli parantez içinde **koral "STUDENT"** (Inter 900, 0,4em) çizer — görsel varlık
+  değil gerçek metin (`Header.tsx` `DoctoriumBrand({student})`, stiller `.dsl-*` `globals.css` öğrenci paleti bloğunda).
+  Parantezlerin dış kenarı wordmark'ın MÜREKKEP sınırına hizalı (canvas ölçümü: D sol 0,0625em · m sağ 0,0366em; `.dsl-st`
+  kendi puntosu 0,4em olduğundan `/0,4` ile çevrilir — em tuzağı); renk `--audience-accent` (header kromu daima gece →
+  #fb923c). Sekme başlığı `generateMetadata` ile "Doctorium Student" (`doktor/doctorium/layout.tsx` + `page.tsx` — page'in
+  `absolute` başlığı layout şablonunu ezer, ikisi de kitleye duyarlı). Favicon bilinçli DEĞİŞMEDİ (16 px'te üç harf okunmaz).
+  Mockup turları + kaynak HTML: vault `doctorium-marka-arsivi/edu-stu-mockup-2026-09-05/` (sheet9→11, U4). LinkedIn kapak
+  slaytı 3 de aynı lockup'la yenilendi (`linkedin_kapak_seti.py`, `doctorium-student-lockup-u4-beyaz-2x.png`).
   · **PWA manifest + iOS/push ikonu MARKA-DUYARLI (Faz E, 2026-09-03, v6.207):** doctorium.tr'nin manifest'i
   "AURA Health" adı ve turkuaz ikonla sunuluyordu (QA 02.09 sızıntı ailesi). Statik `public/manifest.webmanifest`
   SİLİNDİ → `src/app/manifest.ts` BRAND_MODE'a göre Doctorium/AURA manifest'i üretir (build-time, force-static;

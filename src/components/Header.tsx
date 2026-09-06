@@ -32,23 +32,12 @@ const ROLE_LABELS: Record<string, string> = {
 // AURA hedefini korur: AuraLogo → /doktor (vitrin değil klinik panel). Aşama-2'ye geçiş daveti
 // header'dan kalktı — o akış bütünüyle AURA tarafında yaşar (/doktor/baslangic).
 // Geri-birleştirme el kitabı: vault [[aura-doctorium-baglanti-sistemi]].
-// Öğrenci lockup'ı (üç katman Faz B2, 2026-09-05 — kullanıcı seçimi mockup turlarından sonra): kitle STUDENT
-// olan hesapta küre+wordmark yerine "Doctorium STUDENT" ışık-telli lockup görseli. Kaynak: Higgsfield master 11
-// (tel/tipografi) + GERÇEK marka küresi (4K kare, header bake reçetesi, disk K=0,90); üretim hattı vault
-// `doctorium-marka-arsivi/edu-stu-mockup-2026-09-05/student-lockup/` (pipeline.py → sphere_swap.py → junction_fix.py).
-// Header her temada `theme-dark` krom taşıdığı için YALNIZ gece varlığı bağlanır (gündüz varyantı public/brand'de
-// hazır, tema-duyarlı yüzeyler için). Ölçek 👤 2026-09-05 (Faz B2 ölçek tahtası: 37 · 44 · 48 px · küre+wordmark+rozet):
-// masaüstü 48 px (sm:h-12) — 37 px'te "STUDENT" satırı ≈3,9 px'e iniyordu (kaynakta lockup yüksekliğinin %10,7'si),
-// 48 px'te ≈5,1 px / "Doctorium" ≈13 px / küre ≈39 px; header 64 px içinde 8 px pay. Mobil 32 px (h-8) değişmedi.
-// `sizes` bu genişliklerle uyumlu (48 px → 129 px, 32 px → 86 px). `?v=` cache-kırıcı: görsel değişince artır (gen-icons.py dersi).
-const STUDENT_LOCKUP = {
-  src: "/brand/doctorium-student-lockup-dark-720.webp?v=1",
-  srcSet: "/brand/doctorium-student-lockup-dark-720.webp?v=1 720w, /brand/doctorium-student-lockup-dark-1440.webp?v=1 1440w",
-  sizes: "(min-width: 640px) 129px, 86px",
-  width: 720,
-  height: 268,
-} as const;
-
+// Öğrenci lockup'ı — U4 (üç katman Faz B2; 👤 2026-09-06, mockup turları 9→11 sonrası): kitle STUDENT olan hesapta
+// küre + "Doctorium" wordmark'ı üstte, altında ince köşeli parantez içinde KORAL "STUDENT". Görsel varlık DEĞİL, gerçek
+// metin (v6.239'un ışık-telli webp lockup'ı SÜPERSEDE — public/brand'den kaldırıldı): tema/ölçek kendiliğinden doğru,
+// renk öğrenci aksan token'ından (--audience-accent; header kromu daima gece → #fb923c). Parantezlerin dış kenarı
+// wordmark'ın MÜREKKEP sınırına oturur (Inter 600 −0,02em ölçümü) — stil `.dsl-*` (globals.css, öğrenci paleti bloğu).
+// Ölçek: küre 28 px; wordmark mobil 14 px / sm+ 17 px → STUDENT satırı 5,6 / 6,8 px (Inter 900, okunur), toplam ≈29 px.
 function DoctoriumBrand({ doctoriumActive, student = false }: { doctoriumActive: boolean; student?: boolean }) {
   if (student) {
     return (
@@ -57,19 +46,22 @@ function DoctoriumBrand({ doctoriumActive, student = false }: { doctoriumActive:
         aria-current={doctoriumActive ? "page" : undefined}
         title="Doctorium Student"
         aria-label="Doctorium Student"
-        className="flex shrink-0 items-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]"
+        className="flex shrink-0 items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] sm:gap-2.5"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element -- yerel statik alfa webp (60/150 KB); next/image projede kullanılmıyor (CoverArt emsali). */}
-        <img
-          src={STUDENT_LOCKUP.src}
-          srcSet={STUDENT_LOCKUP.srcSet}
-          sizes={STUDENT_LOCKUP.sizes}
-          width={STUDENT_LOCKUP.width}
-          height={STUDENT_LOCKUP.height}
-          alt=""
-          decoding="async"
-          className="block h-8 w-auto sm:h-12"
-        />
+        <span aria-hidden className="brand-live block">
+          <AuraMark size={28} tone="emerald" />
+        </span>
+        {/* Marka sözcüğü çevrilmez; erişilebilir ad Link'in aria-label'ında (aria-hidden istif). */}
+        <span aria-hidden className="dsl text-[14px] sm:text-[17px]">
+          <span className="dsl-wm">
+            Doctor<span className="doctorium-ium">ium</span>
+          </span>
+          <span className="dsl-st">
+            <span className="dsl-br" />
+            <span className="dsl-txt">STUDENT</span>
+            <span className="dsl-br dsl-br-r" />
+          </span>
+        </span>
       </Link>
     );
   }
