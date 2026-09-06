@@ -1,13 +1,13 @@
-import type { SVGProps } from "react";
+import type { ComponentType, SVGProps } from "react";
 
 // Doctorium sosyal hesapları — TEK KAYNAK (2026-09-04, kullanıcı isteği). Instagram + X canlı
 // hesaplarla doğrulandı: @doctoriumtr / @Doctoriumtr — marka İngilizce yazımını korur (Doctorium,
-// "Doktorium" DEĞİL; "doktor" yazım refleksiyle karışmasın). LinkedIn şirket sayfası henüz açılış
-// aşamasında — yalnız logo gösterilir, link YOK (kullanıcı kararı: sayfa tamamlanınca bilgi
-// verilecek). Sayfa açılınca üçüncü kayıt SOCIAL_LINKS'e eklenir, LinkedinIcon <span> yerine <a> olur.
+// "Doktorium" DEĞİL; "doktor" yazım refleksiyle karışmasın). LinkedIn şirket sayfası 2026-09-06'da
+// açıldı (kullanıcı verdi: linkedin.com/company/doctoriumtr).
 export const DOCTORIUM_SOCIAL_LINKS: readonly { key: string; label: string; href: string }[] = [
   { key: "instagram", label: "Instagram'da Doctorium", href: "https://www.instagram.com/doctoriumtr/" },
   { key: "x", label: "X'te Doctorium", href: "https://x.com/doctoriumtr" },
+  { key: "linkedin", label: "LinkedIn'de Doctorium", href: "https://www.linkedin.com/company/doctoriumtr/" },
 ];
 
 // Üçü de aynı dilde çizilir (yuvarlatılmış kare çerçeve + 1.75 stroke + currentColor) — sitenin
@@ -54,28 +54,32 @@ function LinkedinIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+const SOCIAL_ICONS: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
+  instagram: InstagramIcon,
+  x: XIcon,
+  linkedin: LinkedinIcon,
+};
+
 /** Doctorium footer sosyal ikon satırı — TÜM Doctorium footer'larının tek kaynağı (ortak
  *  DoctoriumFooter + landing V3 footer'ı, ikisi de bunu import eder — bkz. [[doctorium-footer.tsx]]). */
 export function DoctoriumSocialLinks({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-3.5 ${className}`}>
-      {DOCTORIUM_SOCIAL_LINKS.map((s) => (
-        <a
-          key={s.key}
-          href={s.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={s.label}
-          className="transition-colors hover:text-[var(--dl-emerald)]"
-        >
-          {s.key === "instagram" ? <InstagramIcon /> : <XIcon />}
-        </a>
-      ))}
-      {/* LinkedIn — link yok, yalnız logo (bkz. dosya başı not). Dekoratif: tıklanamaz bir
-          simgeyi ekran okuyucuya duyurmanın faydası yok → aria-hidden. */}
-      <span aria-hidden="true" className="opacity-45">
-        <LinkedinIcon />
-      </span>
+      {DOCTORIUM_SOCIAL_LINKS.map((s) => {
+        const Icon = SOCIAL_ICONS[s.key];
+        return (
+          <a
+            key={s.key}
+            href={s.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={s.label}
+            className="transition-colors hover:text-[var(--dl-emerald)]"
+          >
+            <Icon />
+          </a>
+        );
+      })}
     </div>
   );
 }
