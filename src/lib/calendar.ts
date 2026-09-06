@@ -21,7 +21,7 @@ import { tusCalendarItems } from "./tus";
 export interface CalendarItem {
   /** Liste key'i — kaynak+id+tür (aynı etkinlik 3 türde görünebilir). */
   key: string;
-  kind: "etkinlik" | "bildiri" | "erken-kayit" | "nobet" | "icap" | "kisisel" | "tus";
+  kind: "etkinlik" | "bildiri" | "erken-kayit" | "nobet" | "icap" | "kisisel" | "tus" | "edu-son-tarih";
   title: string;
   /** Detay bağlantısı (etkinlik kartı vb.); kişisel/nöbet kayıtlarında olmayabilir. */
   href?: string;
@@ -40,6 +40,8 @@ export const CAL_KIND_LABEL: Record<CalendarItem["kind"], string> = {
   kisisel: "Kişisel",
   // T1 (2026-09-05): TUS başvuru/sınav/sonuç günleri — öğrencide daima, doktorda Özelleştir "Kariyer içinde TUS" açıksa.
   tus: "TUS",
+  // E2 (2026-09-06): Kariyer EDU son başvuruları — öğrencide onaylı fırsatların HEPSİ (👤 karar); hatırlatma yalnız takip edilene.
+  "edu-son-tarih": "Son başvuru (Kariyer EDU)",
 };
 
 /** UTC gün anahtarı. */
@@ -66,7 +68,7 @@ export function monthWindow(year: number, month: number): { start: Date; end: Da
  * ızgara kırpar). Sıralama: başlangıç günü, sonra tür (etkinlik > son tarihler).
  */
 export async function doctorCalendarMonth(
-  doctorId: string, year: number, month: number, opts: { includeTus?: boolean } = {},
+  doctorId: string, year: number, month: number, opts: { includeTus?: boolean; includeEdu?: boolean } = {},
 ): Promise<CalendarItem[]> {
   const { start, end } = monthWindow(year, month);
   const followed = await followedCongressIds(doctorId);
@@ -125,6 +127,17 @@ export async function doctorCalendarMonth(
   // T1 (2026-09-05): TUS dönem tablosundan (lib/tus, ÖSYM kaynaklı) başvuru aralığı + sınav + sonuç günleri. Pencere
   // [start, end) — end ayın ilk günü (dışlayıcı); tus.ts de aynı yarı-açık aralığı kullanır.
   if (opts.includeTus) items.push(...tusCalendarItems(dayKey(start), dayKey(end)));
+  if (opts.includeEdu) {
+    const edu = await db.eduOpportunity.findMany({
+      where: { approvedAt: { not: null }, deadline: { gte: start, lte: end } },
+      select: { id: true, title: true, deadline: true },
+    });
+    for (const o of edu) {
+      if (!o.deadline) continue;
+      const k = dayKey(o.deadline);
+      items.push({ key: `edu-${o.id}`, kind: "edu-son-tarih", title: o.title, href: `/doktor/doctorium/kariyer-edu#edu-${o.id}`, start: k, end: k });
+    }
+  }
 
   return items;
 }

@@ -78,12 +78,13 @@ export type LayerCounts = {
  * null girdiyi zaten varsayılan olarak yorumluyor. Böylece varsayılanlar tek yerde tanımlı kalır.
  */
 async function purgeLayer(
-  tx: Pick<typeof db, "savedArticle" | "congressFollow" | "pointEntry" | "dailyDigest" | "doctor">,
+  tx: Pick<typeof db, "savedArticle" | "congressFollow" | "eduOpportunityFollow" | "pointEntry" | "dailyDigest" | "doctor">,
   doctorId: string,
 ): Promise<LayerCounts> {
-  const [saved, follows, points, digests] = await Promise.all([
+  const [saved, follows, eduFollows, points, digests] = await Promise.all([
     tx.savedArticle.deleteMany({ where: { doctorId } }),
     tx.congressFollow.deleteMany({ where: { doctorId } }),
+    tx.eduOpportunityFollow.deleteMany({ where: { doctorId } }), // E2 (2026-09-06): Kariyer EDU takipleri de üyelikle gider
     tx.pointEntry.deleteMany({ where: { doctorId } }),
     tx.dailyDigest.deleteMany({ where: { doctorId } }),
   ]);
@@ -107,7 +108,7 @@ async function purgeLayer(
   });
   return {
     saved: saved.count,
-    follows: follows.count,
+    follows: follows.count + eduFollows.count,
     points: points.count,
     digests: digests.count,
   };

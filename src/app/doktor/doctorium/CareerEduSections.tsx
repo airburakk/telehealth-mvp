@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { ArrowRight, CalendarDays, ExternalLink, Info } from "lucide-react";
 import { TUS_EXAM_PERIODS, TUS_OFFICIAL_LINKS } from "@/lib/tus";
-import { EDU_KIND_LABEL, approvedEduOpportunities, eduCountryLabel } from "@/lib/edu-opportunities";
+import { EDU_KIND_LABEL, eduCountryLabel } from "@/lib/edu-opportunities";
+import { followedEduOpportunityIds, listApprovedEduOpportunities } from "@/lib/edu-store";
+import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
+import EduFollowButton from "./EduFollowButton";
 import { formatIsoDayTr } from "@/lib/iso-day";
 import { approvedTusSummaries, tusBranches } from "@/lib/tus-data";
 import { TUS_INSTITUTION_LABEL } from "@/lib/tus-normalize";
@@ -95,9 +98,12 @@ export function TusPeriodsPanel({ className = "" }: { className?: string }) {
   );
 }
 
-export function EduOpportunitiesPanel({ className = "" }: { className?: string }) {
-  // Yalnız 👤 onaylı satırlar (approvedAt) — onaysız veri hiçbir yüzeyde görünmez; liste boşsa dürüst "hazırlanıyor".
-  const rows = approvedEduOpportunities();
+export async function EduOpportunitiesPanel({ className = "" }: { className?: string }) {
+  // E2 (2026-09-06): KALICI MODEL — onaylı satırlar DB'den (lib/edu-store; approvedAt null görünmez). Öğrenci "Takip et" → son başvuru
+  // 7/3/1 gün kala bildirim + e-posta (lib/edu-reminder, daily-digest); tüm tarihli fırsatlar öğrenci Takvim'inde (👤 karar).
+  const [rows, ctx] = await Promise.all([listApprovedEduOpportunities(), currentDoctoriumAudience()]);
+  const canFollow = !!ctx?.doctorId && ctx.flags.showsStudentSurfaces;
+  const followed = canFollow ? await followedEduOpportunityIds(ctx?.doctorId as string) : new Set<string>();
   if (rows.length === 0) {
     return (
       <EmptyState
@@ -111,30 +117,36 @@ export function EduOpportunitiesPanel({ className = "" }: { className?: string }
     );
   }
   return (
-    <AuraPanel title="Fırsat takvimi" meta={`KAYNAKLI · ${rows.length}`} className={className}>
+    <AuraPanel title="Fırsat takvimi" meta={`KAYNAKLI · ${rows.length}${canFollow && followed.size ? ` · TAKİP ${followed.size}` : ""}`} className={className}>
       <ul className="divide-y divide-[var(--c-hairline)]">
         {rows.map((o) => (
-          <li key={o.id} className="py-3.5">
-            <div className="aura-mono flex flex-wrap items-center gap-x-2 text-[10px] uppercase tracking-wider text-[var(--c-ink-3)]">
-              <span className="text-[var(--c-accent)]">{EDU_KIND_LABEL[o.kind]}</span>
-              <span aria-hidden>·</span>
-              <span>{eduCountryLabel(o.country)}</span>
-              <span aria-hidden>·</span>
-              {o.deadline ? (
-                <span className="text-[var(--c-ink-2)]">son başvuru {formatIsoDayTr(o.deadline)}</span>
-              ) : (
-                <span className="normal-case tracking-normal">{o.deadlineNote}</span>
-              )}
+          <li key={o.id} id={`edu-${o.id}`} className="py-3.5">
+            <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+              <div className="min-w-0 flex-1">
+                <div className="aura-mono flex flex-wrap items-center gap-x-2 text-[10px] uppercase tracking-wider text-[var(--c-ink-3)]">
+                  <span className="text-[var(--c-accent)]">{EDU_KIND_LABEL[o.kind]}</span>
+                  <span aria-hidden>·</span>
+                  <span>{eduCountryLabel(o.country)}</span>
+                  <span aria-hidden>·</span>
+                  {o.deadline ? (
+                    <span className="text-[var(--c-ink-2)]">son başvuru {formatIsoDayTr(o.deadline)}</span>
+                  ) : (
+                    <span className="normal-case tracking-normal">{o.deadlineNote}</span>
+                  )}
+                </div>
+                <a href={o.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--c-ink)] hover:text-[var(--c-accent)]">
+                  {o.title} <ExternalLink size={13} aria-hidden />
+                </a>
+                <p className="mt-1 text-[13px] leading-relaxed text-[var(--c-ink-2)]"><span className="font-medium text-[var(--c-ink)]">{o.organizer}</span> — {o.eligibility}</p>
+              </div>
+              {canFollow && o.deadline && <EduFollowButton opportunityId={o.id} following={followed.has(o.id)} />}
             </div>
-            <a href={o.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--c-ink)] hover:text-[var(--c-accent)]">
-              {o.title} <ExternalLink size={13} aria-hidden />
-            </a>
-            <p className="mt-1 text-[13px] leading-relaxed text-[var(--c-ink-2)]"><span className="font-medium text-[var(--c-ink)]">{o.organizer}</span> — {o.eligibility}</p>
           </li>
         ))}
       </ul>
       <p className="mt-3 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
         Başvuru daima kurumun kendi sayfasında yapılır; tarih ve şartlar kurum duyurularıyla değişebilir. Bu liste ilan değil, süreç bilgisidir.
+        {canFollow && <> Takip ettiğiniz fırsatın son başvurusu 7, 3 ve 1 gün kala bildirim ve e-postayla hatırlatılır; tarihli fırsatların hepsi Takvim&apos;inizde görünür.</>}
       </p>
     </AuraPanel>
   );

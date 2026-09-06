@@ -43,7 +43,8 @@ export default async function TakvimPage({
   // T1 (2026-09-05): TUS günleri öğrencide daima, doktorda Özelleştir → "Kariyer içinde TUS bölümünü göster" açıksa.
   const [audienceCtx, viewPrefs] = await Promise.all([currentDoctoriumAudience(), currentDoctorViewPrefs()]);
   const includeTus = audienceCtx?.audience === "STUDENT" || viewPrefs.showTus;
-  const items = doctorId ? await doctorCalendarMonth(doctorId, year, month, { includeTus }) : [];
+  const includeEdu = audienceCtx?.audience === "STUDENT"; // E2: Kariyer EDU son başvuruları (öğrenci yüzeyi)
+  const items = doctorId ? await doctorCalendarMonth(doctorId, year, month, { includeTus, includeEdu }) : [];
 
   // Gün → öğe haritası (çok günlü etkinlik kapsadığı HER güne yazılır; ızgara ay içini çizer).
   const byDay = new Map<string, CalendarItem[]>();
@@ -215,6 +216,7 @@ const KIND_CHIP: Record<CalendarItem["kind"], string> = {
   kisisel: "bg-[var(--c-surface-2)] text-[var(--c-ink-2)]",
   // TUS: kitle aksanı (öğrencide koral, doktorda zümrüt) — sabit hex yok (B3 token disiplini).
   tus: "bg-[var(--c-accent)]/15 text-[var(--c-accent)]",
+  "edu-son-tarih": "bg-[var(--c-accent)]/15 text-[var(--c-accent)]",
 };
 
 function endOfMonth(year: number, month: number): Date {

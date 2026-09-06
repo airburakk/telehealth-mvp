@@ -68,8 +68,9 @@ describe("sekme tanımları", () => {
     expect(block).toContain(`--audience-accent: ${STUDENT_LANE.dark};`);
     expect(block).toContain("--audience-accent: #ea580c;");
     expect(block).toContain("--c-accent-fill: #fb923c;"); // dolgular iki temada da gece koralı (👤 2026-09-06)
-    expect(block).toContain("#fb923c 28%"); // gündüz raf bandı doygun (%12 peach süpersede)
-    expect(block).toContain(`--shelf-pulse: ${STUDENT_LANE.light};`);
+    expect(block).toContain("#1e100b 94%"); // gündüz raf bandı KOYU (👤 pano B, 2026-09-06 akşam; %28 koral süpersede)
+    expect(block).toContain(".doctorium-shelf-bg .shelf-tab-on { color: var(--tab-dark); }");
+    expect(block).toContain("--shelf-pulse: #fdba74;"); // gündüz KOYU bantta açık nabız (👤 pano B); STUDENT_LANE.light bantta kullanılmaz
     // Header kromu daima theme-dark → gündüz değeri header'a yazılmaz (koyu kromda koyu koral AA altı kalırdı)
     expect(block).not.toContain('.theme-light header[data-audience="student"]');
   });

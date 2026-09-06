@@ -265,20 +265,29 @@ header[data-audience="student"] {
 }
 /* Raf: gece "KOR %12" — "DERİN ORMAN %12"in öğrenci karşılığı, taban koyu koral (#c2410c) → ≈#1e100b sıcak kömür. Nokta/nabız
    token'ları .doctorium-shelf-bg'nin KENDİ üstünde tanımlı → kapsam düzeyi yetmez, raf seçicisiyle yeniden yazılır.
-   🔄 GÜNDÜZ 2026-09-06 (👤 "header altı bant soluk"): %12 peach yerine DOYGUN koral bant — gece koralı #fb923c %28 dozda açık krom
-   üstüne; nokta #fb923c, nabız/aktif sekme metni #ea580c (STUDENT_LANE.light), hover #c2410c. */
+   🔄 GÜNDÜZ 2026-09-06: önce %28 koral bant denendi (👤 beğenmedi), akşam pano seçimi B → aşağıdaki KOYU bant. STUDENT_LANE.light (#ea580c)
+   artık bantta kullanılmaz (tab-dark kazanır), ileride açık zeminli bir bağlam için tutulur. */
 .doctorium-scope[data-audience="student"] .doctorium-shelf-bg {
   background-color: color-mix(in srgb, color-mix(in srgb, #c2410c 12%, var(--c-chrome)) 92%, transparent);
   --shelf-dot: rgba(251, 146, 60, 0.9);
   --shelf-pulse: #fdba74;
   --shelf-pulse-hover: #fed7aa;
 }
+/* 🔄 2026-09-06 akşam (👤 pano seçimi B — %28 koral bant da beğenilmedi): gündüzde de raf HEADER İLE BÜTÜN KOYU — gece KOR bandının aynısı
+   (#1e100b sıcak kömür); metinler açık, aktif sekme/rozet gece (tab-dark) değerlerini alır (gündüz tonları koyu zeminde okunmaz). Mobil alt
+   çubuk aynı sınıfı taşır → o da koyu. */
 .theme-light .doctorium-scope[data-audience="student"] .doctorium-shelf-bg {
-  background-color: color-mix(in srgb, color-mix(in srgb, #fb923c 28%, var(--c-chrome)) 94%, transparent);
+  background-color: color-mix(in srgb, #1e100b 94%, transparent);
+  --shelf-ink: #fbfbfa;
+  --shelf-ink-2: rgba(251, 251, 250, 0.68);
+  --shelf-hairline: rgba(255, 255, 255, 0.12);
+  --shelf-surface-ink: #1e100b;
   --shelf-dot: #fb923c;
-  --shelf-pulse: #ea580c;
-  --shelf-pulse-hover: #c2410c;
+  --shelf-pulse: #fdba74;
+  --shelf-pulse-hover: #fed7aa;
 }
+.theme-light .doctorium-scope[data-audience="student"] .doctorium-shelf-bg .shelf-tab-on { color: var(--tab-dark); }
+.theme-light .doctorium-scope[data-audience="student"] .doctorium-shelf-bg .shelf-tab-on .shelf-no { background: var(--tab-dark); }
 
 /* ÖĞRENCİ LOCKUP — U4 (👤 2026-09-06, mockup turları 9→11): Header'da küre + "Doctorium" wordmark'ı üstte, altında ince köşeli
    parantez içinde koral "STUDENT". Görsel varlık DEĞİL gerçek metin (v6.239 webp lockup'ı süpersede). Parantezlerin DIŞ kenarı

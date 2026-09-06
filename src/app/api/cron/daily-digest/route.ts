@@ -4,6 +4,7 @@ import { recordAccess } from "@/lib/audit";
 import { sendAlert } from "@/lib/alerts";
 import { runDailyDigests, type DigestRunResult } from "@/lib/daily-digest";
 import { remindCongressFollows, type CongressRemindResult } from "@/lib/congress-reminder";
+import { remindEduFollows, type EduRemindResult } from "@/lib/edu-reminder";
 
 // GET /api/cron/daily-digest — doktora bildirim ailesi: Doctorium Post günlük özet baskısı
 // (v6.159, "sabah gazetesi") + etkinlik/kongre alarmı (v6.49/v6.62 üç eşik).
@@ -40,12 +41,22 @@ export async function GET(req: Request) {
     failures.push(`etkinlik: ${congress.error}`);
   }
 
+  // E2 (2026-09-06): Kariyer EDU son başvuru hatırlatması — aynı sabah koşusu, yeni cron YOK (plan B.2).
+  let edu: EduRemindResult | { error: string };
+  try {
+    edu = await remindEduFollows();
+  } catch (e) {
+    edu = { error: errText(e, "Kariyer EDU hatırlatması koşamadı") };
+    failures.push(`edu: ${edu.error}`);
+  }
+
   const pst = "error" in digest
     ? `hata: ${digest.error}`
     : `abone=${digest.checked} baski=${digest.produced} eposta=${digest.emailed}${digest.emailSimulated ? `(sim=${digest.emailSimulated})` : ""} bos=${digest.skippedEmpty} tekrar=${digest.skippedDone} hata=${digest.failed}`;
   const con = "error" in congress
     ? `hata: ${congress.error}`
     : `bakilan=${congress.checked} baslangic=${congress.start} bildiri=${congress.abstract} erkenkayit=${congress.earlybird} hata=${congress.failed}`;
+  const eduS = "error" in edu ? `hata: ${edu.error}` : `bakilan=${edu.checked} gonderilen=${edu.sent} eposta=${edu.emailed} hata=${edu.failed}`;
 
   await recordAccess({
     actor: null,
@@ -53,12 +64,12 @@ export async function GET(req: Request) {
     resourceType: "SYSTEM",
     resourceId: "daily-digest",
     subjectUserId: null,
-    detail: `post ${pst} · etkinlik ${con}`,
+    detail: `post ${pst} · etkinlik ${con} · edu ${eduS}`,
   });
 
   if (failures.length) {
     void sendAlert("cron-daily-digest", `daily-digest — ${failures.length} iş koşamadı`, failures.join(" | ").slice(0, 400));
   }
 
-  return NextResponse.json({ ok: failures.length === 0, dailyDigest: digest, congressAlerts: congress });
+  return NextResponse.json({ ok: failures.length === 0, dailyDigest: digest, congressAlerts: congress, eduAlerts: edu });
 }

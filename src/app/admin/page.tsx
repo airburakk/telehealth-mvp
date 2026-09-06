@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import {
   ArrowRight, BarChart2, CalendarDays, Gift, LayoutDashboard, Megaphone,
-  MousePointerClick, TrendingUp,
+  MousePointerClick, TrendingUp, GraduationCap
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +48,13 @@ const PANELS = [
     desc: "Kongre, sempozyum ve kurs kayıtları — doktor takviminde görünen etkinlikleri yönet.",
     icon: CalendarDays,
     tone: "#34d399",
+  },
+  {
+    href: "/admin/kariyer-edu",
+    label: "Kariyer EDU",
+    desc: "Tıp öğrencileri için staj, değişim ve burs fırsatları — kaynaklı kayıt gir, onayla; son başvurular öğrenci takvimine düşer.",
+    icon: GraduationCap,
+    tone: "#fb923c",
   },
   {
     href: "/admin/oduller",

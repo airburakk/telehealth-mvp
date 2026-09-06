@@ -1586,3 +1586,43 @@ model CareerPathway {
 
   @@index([scope, order])
 }
+
+/// ── Kariyer EDU (E2, 2026-09-06) ─────────────────────────────────────────────────────────────
+/// Staj / değişim / burs FIRSATI — süreç bilgisi (ilan DEĞİL; İŞKUR sınırı). E1'in 13 statik kaydı
+/// scripts/seed-edu-opportunities.ts ile buraya taşınır (id = statik slug); admin /admin/kariyer-edu yeni
+/// kayıt girer (cuid). approvedAt NULL → hiçbir yüzeyde görünmez (👤 kapısı; TUS/YÖK defterleriyle aynı sözleşme).
+model EduOpportunity {
+  id           String    @id @default(cuid())
+  /// staj | degisim | burs (lib/edu-opportunities EduOpportunityKind)
+  kind         String
+  title        String
+  organizer    String
+  /// ISO ülke kodu; null = çok ülkeli program
+  country      String?
+  /// Son başvuru (UTC gün). null → deadlineNote zorunlu; takvime düşmez, hatırlatma üretmez.
+  deadline     DateTime?
+  deadlineNote String?
+  startsAt     String?
+  /// Şartların KISA özeti — kaynak metin kopyalanmaz.
+  eligibility  String
+  sourceUrl    String
+  verifiedAt   DateTime
+  approvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([approvedAt, deadline])
+}
+
+/// Öğrencinin fırsat takibi — CongressFollow aynası (ilişkisiz düz id'ler + unique çift; kod-level join).
+/// sentAlerts JSON string[] ("7" | "3" | "1"): aynı eşiğin her gün yeniden gönderilmesini önler (lib/edu-reminder).
+model EduOpportunityFollow {
+  id            String   @id @default(cuid())
+  doctorId      String
+  opportunityId String
+  sentAlerts    String   @default("[]")
+  createdAt     DateTime @default(now())
+
+  @@unique([doctorId, opportunityId])
+  @@index([opportunityId])
+}
