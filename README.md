@@ -172,12 +172,15 @@ sekmesi koral ve sahnesi `CareerEduSections StudentCareerHub` = **Kariyer EDU + 
 sayfaları; Header öğrenci lockup'ı **"Doctorium [ STUDENT ]"** gerçek metin (U4, v6.251: küre 28 px + Inter 600 wordmark +
 altında koral parantezli STUDENT; `.dsl-*` globals.css; v6.239 webp varlığı kaldırıldı). **Renk (v6.242):**
 `.doctorium-scope` aksanı `--c-accent` = marka zümrüdü, öğrenci kapsamı `[data-audience="student"]` KORAL (gece #fb923c; gündüz metin
-#ea580c + dolgu `--c-accent-fill` #fb923c, raf bandı koral %28 — 👤 2026-09-06, v6.253; eski gündüz #c2410c / "KOR %12" süpersede) — portalda
+#ea580c + dolgu `--c-accent-fill` #fb923c; **raf bandı gündüzde de KOYU** `#1e100b` + koral sekme — 👤 pano B v6.255; %28 koral ve "KOR %12" süpersede) — portalda
 sabit `text-emerald-*` yazılmaz; semantik başarı `--c-success`. **Hukuk (v6.243):** belge seti
 Sürüm 1.2 (02 madde 2 "Deneme Erişimi", 3.2 a–d, 10.2-e; 01 madde 3.1/6/8), `DOCTORIUM_LEGAL_VERSION` 1.2 · 5 Eylül 2026,
 `DOCTORIUM_CONSENT_VERSION` 2→3 (mevcut Doctorium üyeleri ilk girişte bir kez yeniden onaylar). **Veri (v6.245):** `lib/tus`
 `TUS_EXAM_PERIODS` 2024/1→2026/2 (ÖSYM duyuruları kaynaklı, `verifiedAt`) + Takvim `kind:"tus"` (`tusCalendarItems`);
-`lib/edu-opportunities` 13 fırsat (`approvedAt` null = hiçbir yüzeyde GÖRÜNMEZ; `deadlineNote` dönemsel kayıt takvime düşmez;
+`lib/edu-opportunities` 13 fırsat — **E2 (v6.255, 2026-09-06): KALICI MODEL** `EduOpportunity` + `EduOpportunityFollow` (migration `20260906090000`;
+statik liste = seed kaynağı, `scripts/seed-edu-opportunities.ts [--prod]`); yüzeyler `lib/edu-store`'dan okur; öğrenci "Takip et"
+(`POST /api/doctor/edu-follow`) → Takvim `edu-son-tarih` (onaylı hepsi) + 7/3/1 gün kala `EDU_DEADLINE` bildirimi ve e-posta (`lib/edu-reminder`,
+`daily-digest` içinde); küratör paneli `/admin/kariyer-edu` (+ `/api/admin/edu-opportunity`). (`approvedAt` null = hiçbir yüzeyde GÖRÜNMEZ; `deadlineNote` dönemsel kayıt takvime düşmez;
 `tests/unit/edu-tus-data.test` resmî alan adı allowlist'i + İŞKUR dili). Sonraki fazlar (E2 kalıcı model + hatırlatma · T2
 kontenjan/taban puan): vault `output/doctorium-veri-fazlari-plani-2026-09-05.md`.
 
