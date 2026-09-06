@@ -190,7 +190,10 @@ büyük puan PDF'i; 🪤 `dokuman.osym.gov.tr` Referer yoksa 200 + "Erişim Enge
 "sponsorlu değil, tanıtım değil"). **K5 YÖK Atlas:** `scripts/yok-atlas-ingest.ts` (`POST /api/tercih-kilavuz/search` gövde `{}` → tüm
 programlar tek JSON ~87 MB, repo dışı; 🪤 sorgu parametresi 418) → `src/data/yok/tip-programlari-<yıl>.json` (242 Tıp programı) →
 `lib/yok-normalize` + `lib/yok-data YOK_SNAPSHOTS` → `TusYokSection` + `tus/YokCharts` (giriş kontenjanı ↔ TUS GENEL kontenjanı ·
-kurum türü · il · başarı sırası + süzgeçli tablo). Yeni dönem ekleme: `npx tsx scripts/tus-ingest.ts --periods 2026-2` → kayıt
+kurum türü · il · başarı sırası + süzgeçli tablo). **K5(a) YÖKSİS mezunları:** `scripts/yoksis-mezun-ingest.mjs` (Playwright; ZK widget olayları,
+`zAu.cmd0.download` yaması, sayfa içi SheetJS — istatistik.yok.gov.tr'de JSON API yok) → Tablo 12'den yalnız "TIP FAKÜLTESİ" birimleri →
+`src/data/yok/mezun-tip-<yıl>.json` ×7 → `lib/yok-mezun YOK_MEZUN_SNAPSHOTS` → "Tıp mezunu" serisi + mezun kartı + KPI (🪤 sayfa yılı ≠
+mezun yılı; eski dosyalarda ek İLÇE sütunu → sütunlar başlıktan). Yeni dönem ekleme: `npx tsx scripts/tus-ingest.ts --periods 2026-2` → kayıt
 defterine satır → 👤 onay; testler `tus-*.test` · `yok-*.test` (kaynak allowlist, yasak dil, defter ↔ dosya).
 
 **Etkinlik modülü (v6.120, 2026-08-19) — "Kongre" sekmesi ETKİNLİK oldu + TTB akredite türler:**
