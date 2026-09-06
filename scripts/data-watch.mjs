@@ -153,15 +153,21 @@ async function checkYoksis() {
 async function checkLinks() {
   const urls = new Set();
   for (const f of ["src/lib/tus-resources.ts", "src/lib/tus.ts", "src/lib/tus-guides.ts"]) for (const m of rd(f).matchAll(/https:\/\/[^"'\s)]+/g)) urls.add(m[0]);
-  let bad = 0;
+  let bad = 0; const unreachable = [];
   for (const url of urls) {
     const wantBody = url.includes("dokuman.osym.gov.tr"); // yalnız "Erişim Engellendi" sayfası için gövde gerekir
-    const r = await get(url, { referer: "https://www.osym.gov.tr/", accept: url.endsWith(".pdf") ? "application/pdf,*/*" : undefined, timeout: 30000, body: wantBody });
+    const opts = { referer: "https://www.osym.gov.tr/", accept: url.endsWith(".pdf") ? "application/pdf,*/*" : undefined, timeout: 30000, body: wantBody };
+    let r = await get(url, opts);
+    if (r.status === 0) { await new Promise((res) => setTimeout(res, 3000)); r = await get(url, opts); }
+    // 🪤 Ağ düzeyi hata (status 0: DNS/TLS/bağlantı) GitHub koşucusundan coğrafi engel olabilir — 2026-09-06 ilk koşumda tustime.com ve
+    // resmigazete.gov.tr ABD koşucusundan "fetch failed", yerelden 200. Bu yüzden status 0 UYARI değil BİLGİ; kırık = HTTP ≥ 400 / engel / slug kayması.
+    if (r.status === 0) { unreachable.push(`${url} (${r.error})`); continue; }
     const blocked = url.includes("dokuman.osym.gov.tr") && /Erişim Engellendi/i.test(r.text);
     const redirectHome = r.status >= 300 && r.status < 400 && url.includes("osym.gov.tr");
-    if (r.status === 0 || r.status >= 400 || blocked || redirectHome) { bad++; note("uyari", "Bağlantı", `${url} → ${r.status || r.error}${blocked ? " (Erişim Engellendi)" : ""}${redirectHome ? " (ana sayfaya yönlendirme = slug değişmiş)" : ""}`); }
+    if (r.status >= 400 || blocked || redirectHome) { bad++; note("uyari", "Bağlantı", `${url} → ${r.status}${blocked ? " (Erişim Engellendi)" : ""}${redirectHome ? " (ana sayfaya yönlendirme = slug değişmiş)" : ""}`); }
   }
-  if (!bad) note("bilgi", "Bağlantı", `${urls.size} künye/kaynak bağlantısı erişilebilir.`);
+  if (unreachable.length) note("bilgi", "Bağlantı", `${unreachable.length} bağlantıya koşucudan ulaşılamadı (coğrafi engel olabilir; yerelde \`node scripts/data-watch.mjs\` ile doğrula): ${unreachable.join(" · ")}`);
+  if (!bad) note("bilgi", "Bağlantı", `${urls.size - unreachable.length} künye/kaynak bağlantısı erişilebilir${bad ? "" : ", kırık yok"}.`);
 }
 
 // ── 7) Kariyer EDU seed listesi ───────────────────────────────────────────────────────────────────────────────────
