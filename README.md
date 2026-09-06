@@ -204,6 +204,7 @@ mezun yılı; eski dosyalarda ek İLÇE sütunu → sütunlar başlıktan). **K2
 `--c-accent-fill` token'ı (grafik/bant dolgusu; öğrencide iki temada #fb923c), gündüz metin aksanı #ea580c, raf bandı koral %28.
 Yeni dönem ekleme: `npx tsx scripts/tus-ingest.ts --periods 2026-2` (ve ek yerleştirme çıkınca `--kind ek --periods 2026-2`) → kayıt
 defterine satır → 👤 onay; testler `tus-*.test` · `yok-*.test` (kaynak allowlist, yasak dil, defter ↔ dosya).
+**📡 Veri nöbetçisi (v6.256, 2026-09-06):** `.github/workflows/data-watch.yml` her Pazartesi 08:37 TR `node scripts/data-watch.mjs --apply` koşar (saf yardımcılar `scripts/data-watch-lib.mjs`, test `data-watch.test`): ÖSYM sıradaki 2 dönem (yerleştirme + ek + kılavuz slug'ları) · YÖK Atlas API (yeni yıl / kontenjan kayması) · YÖKSİS menüsü (`yoksis-mezun-ingest.mjs --list`, Playwright) · 18 künye/kaynak bağlantısı · Kariyer EDU seed bayatlığı. Yeni kaynak → ingest + kayıt defterine `approvedAt: null` satırı (yüzeyde GÖRÜNMEZ) → `data-watch/<tarih>` dalı + PR; salt sinyaller tek açık issue'ya. Onay = PR'da tarihi doldur + merge. Elle: `node scripts/data-watch.mjs` (yalnız kontrol, ~20 sn) · `--apply` · `--json`. 🪤 ÖSYM ana sayfası gzip akışını bitirmiyor → `Accept-Encoding: identity`, bağlantı kontrolü gövdesiz; `tus-ingest --periods <yeni>` listede olmayan dönemi slug'dan türetir.
 
 **Etkinlik modülü (v6.120, 2026-08-19) — "Kongre" sekmesi ETKİNLİK oldu + TTB akredite türler:**
 kullanıcı kararı tam rename (etiket + rota + iç anahtar). Modül anahtarı `kongre` → `etkinlik`;

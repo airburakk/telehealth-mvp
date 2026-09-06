@@ -22,6 +22,7 @@ const OUT_DIR = join(process.cwd(), "src", "data", "yok");
 
 function arg(name) { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : undefined; }
 const pages = (arg("--pages") ?? "2025-2026").split(",").map((s) => s.trim()).filter(Boolean);
+const LIST_ONLY = process.argv.includes("--list"); // veri nöbetçisi: yalnız menüdeki "Öğretim Yılı" etiketlerini bas
 const rawDir = arg("--raw-dir");
 const headful = process.argv.includes("--headful");
 
@@ -32,6 +33,19 @@ await page.goto(SITE, { waitUntil: "networkidle" });
 await page.waitForFunction(() => typeof window.zk !== "undefined" && window.zk.Widget && window.zAu);
 await page.addScriptTag({ url: SHEETJS });
 await page.waitForFunction(() => typeof window.XLSX !== "undefined");
+
+if (LIST_ONLY) {
+  const labels = await page.evaluate(() => {
+    const kids = (w) => { const out = []; for (let c = w && w.firstChild; c; c = c.nextSibling) out.push(c); return out; };
+    const out = [];
+    const walk = (w, d) => { if (!w || d > 5) return; if (w.className === "zul.menu.Menuitem" && w.getLabel) out.push(w.getLabel().trim()); if (w.className === "zul.menu.Menu" && w.menupopup) kids(w.menupopup).forEach((c) => walk(c, d + 1)); else kids(w).forEach((c) => walk(c, d + 1)); };
+    for (const el of document.querySelectorAll(".z-menubar")) walk(window.zk.Widget.$(el), 0);
+    return out.filter((l) => /\d{4}-\d{4} Öğretim Yılı/.test(l));
+  });
+  console.log(labels.join("\n"));
+  await browser.close();
+  process.exit(0);
+}
 
 // ZK menü ağacından etikete göre Menuitem bul ve sunucuya onClick gönder.
 async function clickMenuItem(label) {

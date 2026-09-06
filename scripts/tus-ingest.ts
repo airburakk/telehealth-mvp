@@ -74,14 +74,22 @@ async function main() {
   const kind = arg("--kind") === "ek" ? "ek" : "main"; const list = kind === "ek" ? EK_PERIODS : PERIODS; const prefix = kind === "ek" ? "ek-" : "";
   const { extractText, getDocumentProxy } = await import("unpdf");
   mkdirSync(OUT, { recursive: true }); if (rawDir) mkdirSync(rawDir, { recursive: true });
-  const selected = list.filter((p) => !only.length || only.includes(p.key));
+  // Listede olmayan anahtar (ör. veri nöbetçisinin bulduğu yeni dönem) → slug ÖSYM deseninden türetilir; PDF sayfadan çözülür (yedek yok).
+  const derive = (key: string) => { const m = /^(\d{4})-([12])$/.exec(key); if (!m) throw new Error(`geçersiz dönem: ${key}`); const y = Number(m[1]), t = Number(m[2]) as 1 | 2;
+    return { key, year: y, term: t, page: `https://www.osym.gov.tr/${y}tus-${t}-donem-${kind === "ek" ? "ek-" : ""}yerlestirme-sonuclarina-iliskin-sayisal-bilgiler`, pdfFallback: "" }; };
+  const selected = only.length ? only.map((k) => list.find((p) => p.key === k) ?? derive(k)) : list;
   const report: string[] = [];
-  for (const p of selected) {
+  for (let p of selected) {
     const rawPath = rawDir ? join(rawDir, `${prefix}minmax-${p.key}.pdf`) : null;
     let pdfUrl = p.pdfFallback; let buf: Uint8Array;
     if (noFetch && rawPath && existsSync(rawPath)) buf = new Uint8Array(readFileSync(rawPath));
     else {
       try { const html = await fetchText(p.page, "https://www.osym.gov.tr/"); pdfUrl = resolvePdfUrl(html) ?? p.pdfFallback; } catch { /* yedek adres */ }
+      if (!pdfUrl && kind === "ek") { // 🪤 2025/1·2026/1 slug varyantı
+        const alt = p.page.replace("-ek-yerlestirme-sonuclarina-iliskin-sayisal-bilgiler", "-ek-yerlestirme-sonuclarina-iliskin-en-buyuk-ve-en-kucuk-puanlar-genelyabanci-uyruklu");
+        try { const html = await fetchText(alt, "https://www.osym.gov.tr/"); pdfUrl = resolvePdfUrl(html) ?? ""; if (pdfUrl) p = { ...p, page: alt }; } catch { /* yok */ }
+      }
+      if (!pdfUrl) throw new Error(`${p.key}: sayfadan PDF çözülemedi ve yedek adres yok (${p.page})`);
       buf = await fetchPdf(pdfUrl, p.page);
       if (rawPath) writeFileSync(rawPath, buf);
     }

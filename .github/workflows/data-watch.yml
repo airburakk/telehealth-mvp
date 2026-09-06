@@ -1,0 +1,79 @@
+# Veri nöbetçisi (2026-09-06) — TUS/YÖK veri kaynaklarını HAFTALIK kontrol eder; yeni dönem/yıl bulursa ingest'i koşar ve
+# kayıt defterine `approvedAt: null` satırıyla (👤 onay kapısı korunur — yüzeyde GÖRÜNMEZ) bir PR açar; salt sinyal bulgular
+# (yeni kılavuz, kırık bağlantı, veri kayması, bayat EDU kaydı) tek bir açık issue'ya yazılır.
+# Emsal: association-watch.yml (dernek nöbetçisi) — aynı gerekçe: haftalık ritim, Vercel'den bağımsız, halka açık kaynaklar.
+# Playwright yalnız YÖKSİS menüsü (ZK arayüzü) için gerekir; chromium kurulumu ~1 dk.
+name: Veri nöbetçisi
+
+on:
+  schedule:
+    - cron: "37 5 * * 1" # her Pazartesi 05:37 UTC (08:37 TR) — dernek nöbetçisinden 40 dk önce
+  workflow_dispatch: {} # elle: Actions → Veri nöbetçisi → Run workflow
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: data-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Bağımlılıklar
+        run: npm ci
+      - name: Playwright chromium (YÖKSİS menüsü için)
+        run: npx playwright install --with-deps chromium
+
+      - name: Kaynakları kontrol et ve yeni veriyi çek (--apply)
+        run: node scripts/data-watch.mjs --apply | tee watch-report.txt
+
+      - name: Raporu iş özetine yaz
+        if: always()
+        run: |
+          echo '## 📡 Veri nöbetçisi raporu' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat watch-report.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # Yeni veri dosyası + defter satırı varsa → dal + PR (approvedAt: null; onay = PR'da tarihi doldur + merge).
+      - name: Değişiklik varsa PR aç
+        run: |
+          node -e "const f=require('./data-watch-findings.json'); process.exit(f.changes.length ? 0 : 3)" && HAS=1 || HAS=0
+          if [ "$HAS" = "1" ]; then
+            BR="data-watch/$(date -u +%Y-%m-%d)"
+            git config user.name "veri-nobetcisi[bot]"
+            git config user.email "veri-nobetcisi@users.noreply.github.com"
+            git checkout -B "$BR"
+            git add src/data src/lib/tus-data.ts src/lib/yok-data.ts src/lib/yok-mezun.ts
+            git commit -m "data(watch): veri nöbetçisi $(date -u +%Y-%m-%d) — yeni kaynak çekildi (approvedAt: null, 👤 onay bekliyor)"
+            git push -f origin "$BR"
+            BODY="$(printf '📡 Veri nöbetçisi yeni kaynak buldu ve çekti. **Yüzeyde görünmez** — onay için kayıt defterindeki `approvedAt: null` satırını tarihle doldurun, CI yeşilse merge edin.\n\n```\n%s\n```\n' "$(cat watch-report.txt)")"
+            gh pr create --base main --head "$BR" --title "📡 Veri nöbetçisi: yeni TUS/YÖK verisi ($(date -u +%Y-%m-%d)) — onay bekliyor" --body "$BODY" 2>/dev/null || gh pr edit "$BR" --body "$BODY"
+          else
+            echo "değişen dosya yok — PR açılmadı"
+          fi
+
+      # Salt sinyal bulgular (yeni kılavuz, kırık bağlantı, kayma, bayat EDU) → tek açık issue'ya yorum (yoksa oluştur).
+      - name: Uyarılar varsa issue'ya yaz
+        run: |
+          node -e "const f=require('./data-watch-findings.json'); process.exit((f.uyari.length || f.yeni.length) ? 0 : 3)" && HAS=1 || HAS=0
+          if [ "$HAS" = "1" ]; then
+            TITLE="📡 Veri nöbetçisi — TUS/YÖK kaynak uyarıları"
+            NUM=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number // empty')
+            BODY="$(printf '### Koşum %s\n\n```\n%s\n```\n' "$(date -u +%Y-%m-%d)" "$(cat watch-report.txt)")"
+            if [ -n "$NUM" ]; then gh issue comment "$NUM" --body "$BODY"; else gh issue create --title "$TITLE" --body "$BODY" --label "veri-nobetcisi" 2>/dev/null || gh issue create --title "$TITLE" --body "$BODY"; fi
+          else
+            echo "uyarı yok — issue güncellenmedi"
+          fi

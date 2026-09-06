@@ -59,3 +59,5 @@ next-env.d.ts
 
 # Dernek nobetcisi durum dosyasi (v6.129) - kosu ciktisi, Actions cache ile tasinir
 .association-watch-state.json
+# veri nöbetçisi koşum çıktısı (scripts/data-watch.mjs) — workflow okur, repoya girmez
+data-watch-findings.json
