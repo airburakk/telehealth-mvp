@@ -1,4 +1,5 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/07-ogrenci-uyeligi-ek-metni.md §A (Sürüm 1.0 · 03.09.2026, 👤 nihai).
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/07-ogrenci-uyeligi-ek-metni.md §A
+// (Sürüm 1.3 · 06.09.2026 — revizyon turu 3 [Kariyer/TUS kapsamı eklendi], 👤 nihai).
 // Öğrenci kayıt akışında Doctorium aydınlatmasıyla birlikte gösterilir (ayrı onay kaydı yok — aydınlatma niteliğinde, Kılavuz §2).
 // Elle düzenleme: kaynak .md → vault; script ile yeniden üretilir.
 export const OGRENCI_EKI_MD = `## 1. Öğrenci üyeliği nedir
@@ -28,6 +29,7 @@ kurum nezdinde teyidi anlamına gelmez.
 
 **Erişebildikleriniz:**
 - Mesleki bilgi akışı (haber, akademik yayın özetleri, mevzuat, içtihat, doktrin künyeleri)
+- Kariyer sekmesi (TUS dönem ve yerleştirme verileri, resmî kılavuz özetleri; staj, değişim ve burs fırsatları takvimi)
 - Kongre veritabanı, takvim ve etkinlik bilgileri
 - İçerik kaydetme ve kişisel akış tercihleri
 
