@@ -171,8 +171,9 @@ sekmesi koral ve sahnesi `CareerEduSections StudentCareerHub` = **Kariyer EDU + 
 Özelleştir → "Kariyer içinde TUS bölümünü göster" (`viewPrefs.showTus`); `/doktor/doctorium/tus` ve `/kariyer-edu` ayrıntı
 sayfaları; Header öğrenci lockup'ı **"Doctorium [ STUDENT ]"** gerçek metin (U4, v6.251: küre 28 px + Inter 600 wordmark +
 altında koral parantezli STUDENT; `.dsl-*` globals.css; v6.239 webp varlığı kaldırıldı). **Renk (v6.242):**
-`.doctorium-scope` aksanı `--c-accent` = marka zümrüdü, öğrenci kapsamı `[data-audience="student"]` KORAL (gece #fb923c · gündüz
-#c2410c; raf "KOR %12") — portalda sabit `text-emerald-*` yazılmaz; semantik başarı `--c-success`. **Hukuk (v6.243):** belge seti
+`.doctorium-scope` aksanı `--c-accent` = marka zümrüdü, öğrenci kapsamı `[data-audience="student"]` KORAL (gece #fb923c; gündüz metin
+#ea580c + dolgu `--c-accent-fill` #fb923c, raf bandı koral %28 — 👤 2026-09-06, v6.253; eski gündüz #c2410c / "KOR %12" süpersede) — portalda
+sabit `text-emerald-*` yazılmaz; semantik başarı `--c-success`. **Hukuk (v6.243):** belge seti
 Sürüm 1.2 (02 madde 2 "Deneme Erişimi", 3.2 a–d, 10.2-e; 01 madde 3.1/6/8), `DOCTORIUM_LEGAL_VERSION` 1.2 · 5 Eylül 2026,
 `DOCTORIUM_CONSENT_VERSION` 2→3 (mevcut Doctorium üyeleri ilk girişte bir kez yeniden onaylar). **Veri (v6.245):** `lib/tus`
 `TUS_EXAM_PERIODS` 2024/1→2026/2 (ÖSYM duyuruları kaynaklı, `verifiedAt`) + Takvim `kind:"tus"` (`tusCalendarItems`);
@@ -194,7 +195,11 @@ programlar tek JSON ~87 MB, repo dışı; 🪤 sorgu parametresi 418) → `src/d
 kurum türü · il · başarı sırası + süzgeçli tablo). **K5(a) YÖKSİS mezunları:** `scripts/yoksis-mezun-ingest.mjs` (Playwright; ZK widget olayları,
 `zAu.cmd0.download` yaması, sayfa içi SheetJS — istatistik.yok.gov.tr'de JSON API yok) → Tablo 12'den yalnız "TIP FAKÜLTESİ" birimleri →
 `src/data/yok/mezun-tip-<yıl>.json` ×7 → `lib/yok-mezun YOK_MEZUN_SNAPSHOTS` → "Tıp mezunu" serisi + mezun kartı + KPI (🪤 sayfa yılı ≠
-mezun yılı; eski dosyalarda ek İLÇE sütunu → sütunlar başlıktan). Yeni dönem ekleme: `npx tsx scripts/tus-ingest.ts --periods 2026-2` → kayıt
+mezun yılı; eski dosyalarda ek İLÇE sütunu → sütunlar başlıktan). **K2 kurum tablosu (v6.253):** `scripts/tus-ingest.ts --kind ek` → `src/data/tus/ek-<dönem>.json`
+×10 (ÖSYM ek yerleştirme min/max; `lib/tus-data TUS_EK_SNAPSHOTS`) · `lib/tus-institutions` (branş × dönem kurum satırları, son 3 dönem eğilimi, ek eşlemesi) ·
+`TusInstitutionsSection` (RSC; süzgeçler URL sorgusunda `brans·donem·tur·kt·q·sirala`, `#kurumlar`). **Öğrenci gündüz paleti (2026-09-06):**
+`--c-accent-fill` token'ı (grafik/bant dolgusu; öğrencide iki temada #fb923c), gündüz metin aksanı #ea580c, raf bandı koral %28.
+Yeni dönem ekleme: `npx tsx scripts/tus-ingest.ts --periods 2026-2` (ve ek yerleştirme çıkınca `--kind ek --periods 2026-2`) → kayıt
 defterine satır → 👤 onay; testler `tus-*.test` · `yok-*.test` (kaynak allowlist, yasak dil, defter ↔ dosya).
 
 **Etkinlik modülü (v6.120, 2026-08-19) — "Kongre" sekmesi ETKİNLİK oldu + TTB akredite türler:**
