@@ -16,6 +16,8 @@ export interface YokChartsProps {
   summary: YokTipSummary;
   rows: YokRowLite[];
   tusQuotaByYear: { year: number; quota: number; partial: boolean }[];
+  /** YÖKSİS Tablo 12 — Tıp fakültesi mezunları, öğretim yılına göre (year = öğretim yılının ikinci yılı); onaylı yıllar. */
+  graduatesByYear: { year: number; gradYear: string; graduates: number; male: number; female: number; faculties: number }[];
   typeLabels: Record<YokUniType, string>;
 }
 
@@ -38,20 +40,22 @@ function Card({ title, sub, children, tall = false }: { title: string; sub: stri
   );
 }
 
-export default function YokCharts({ summary, rows, tusQuotaByYear, typeLabels }: YokChartsProps) {
+export default function YokCharts({ summary, rows, tusQuotaByYear, graduatesByYear, typeLabels }: YokChartsProps) {
   const [type, setType] = useState<"ALL" | YokUniType>("ALL");
   const [city, setCity] = useState("ALL");
   const [q, setQ] = useState("");
 
   const years = useMemo(() => {
-    const ys = new Set<number>([...summary.quotaByYear.map((x) => x.year), ...tusQuotaByYear.map((x) => x.year)]);
+    const ys = new Set<number>([...summary.quotaByYear.map((x) => x.year), ...tusQuotaByYear.map((x) => x.year), ...graduatesByYear.map((x) => x.year)]);
     return [...ys].sort((a, b) => a - b).map((year) => ({
       name: String(year),
       yks: summary.quotaByYear.find((x) => x.year === year)?.quota ?? null,
       tus: tusQuotaByYear.find((x) => x.year === year)?.quota ?? null,
       tusPartial: tusQuotaByYear.find((x) => x.year === year)?.partial ?? false,
+      mezun: graduatesByYear.find((x) => x.year === year)?.graduates ?? null,
     }));
-  }, [summary, tusQuotaByYear]);
+  }, [summary, tusQuotaByYear, graduatesByYear]);
+  const gradSeries = graduatesByYear.map((g) => ({ name: g.gradYear, erkek: g.male, kadin: g.female, fakulte: g.faculties }));
   const byType = summary.byType.map((t) => ({ name: typeLabels[t.type], kontenjan: t.quota, yerlesen: t.placed, program: t.programs }));
   const byCity = summary.byCity.map((c) => ({ name: c.city === "Diğer" ? "Diğer" : c.city, kontenjan: c.quota, program: c.programs }));
   const rankHist = RANK_BUCKETS.map((b, i) => {
@@ -75,7 +79,7 @@ export default function YokCharts({ summary, rows, tusQuotaByYear, typeLabels }:
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
-        <Card title="Tıp giriş kontenjanı ve TUS GENEL kontenjanı" sub="YKS Tıp programı kontenjanı (sütun) ile ÖSYM TUS GENEL kontenjanı (çizgi; yıl = iki dönem toplamı), yıllara göre. Ölçek karşılaştırması; aynı kişiler değildir.">
+        <Card title="Tıp giriş kontenjanı, Tıp mezunu ve TUS GENEL kontenjanı" sub="YKS Tıp kontenjanı (sütun), YÖKSİS Tıp fakültesi mezunu (kesikli çizgi; öğretim yılının ikinci yılı) ve ÖSYM TUS GENEL kontenjanı (çizgi; yıl = iki dönem toplamı). Ölçek karşılaştırması; aynı kişiler değildir.">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={years} margin={{ top: 8, right: 12, left: -4, bottom: 0 }}>
               <CartesianGrid stroke={HAIR} vertical={false} />
@@ -84,10 +88,26 @@ export default function YokCharts({ summary, rows, tusQuotaByYear, typeLabels }:
               <Tooltip contentStyle={tooltipStyle} formatter={(v, n, item) => { const p = (item as { payload?: { tusPartial?: boolean } }).payload; return n === "TUS GENEL kontenjanı" && p?.tusPartial ? `${fmt(typeof v === "number" ? v : null)} (yalnız 1. dönem)` : fmt(typeof v === "number" ? v : null); }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="yks" name="YKS Tıp kontenjanı" fill={ACCENT} radius={[4, 4, 0, 0]} />
+              <Line type="monotone" dataKey="mezun" name="Tıp mezunu (YÖKSİS)" stroke={ACCENT} strokeWidth={2} strokeDasharray="5 4" dot={{ r: 3 }} connectNulls />
               <Line type="monotone" dataKey="tus" name="TUS GENEL kontenjanı" stroke={INK2} strokeWidth={2} dot={{ r: 3 }} connectNulls />
             </ComposedChart>
           </ResponsiveContainer>
         </Card>
+        {gradSeries.length > 0 && (
+          <Card title="Tıp fakültesi mezunları" sub="YÖKSİS Tablo 12 — öğretim yılına göre mezun sayısı, kadın/erkek yığın (fakülte sayısı araç ipucunda).">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={gradSeries} margin={{ top: 8, right: 12, left: -4, bottom: 0 }}>
+                <CartesianGrid stroke={HAIR} vertical={false} />
+                <XAxis dataKey="name" tick={{ ...axisTick, fontSize: 10 }} tickLine={false} axisLine={{ stroke: HAIR }} />
+                <YAxis tick={axisTick} tickLine={false} axisLine={false} width={52} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v, n, item) => `${fmt(typeof v === "number" ? v : null)} · ${(item as { payload?: { fakulte?: number } }).payload?.fakulte ?? "—"} fakülte`} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="kadin" name="Kadın" stackId="m" fill={ACCENT} />
+                <Bar dataKey="erkek" name="Erkek" stackId="m" fill={INK3} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        )}
         <Card title="Kurum türüne göre kontenjan ve yerleşen" sub={`${summary.year} YKS — devlet, vakıf, KKTC ve yurt dışı programları.`}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={byType} margin={{ top: 8, right: 12, left: -4, bottom: 0 }}>
@@ -188,9 +208,10 @@ export default function YokCharts({ summary, rows, tusQuotaByYear, typeLabels }:
       <p className="text-[11px] leading-relaxed text-[var(--c-ink-3)]">
         Kaynak: YÖK Atlas Tercih Sihirbazı (kontenjan ve koşullar {summary.year}-YKS Yükseköğretim Programları ve Kontenjanları Kılavuzu&apos;ndan; taban puan ve
         başarı sırası {summary.year} YKS yerleştirme sonuçları; önceki yıllar aynı kaynağın geçmiş alanları; öğretim üyesi = profesör + doçent + doktor öğretim
-        üyesi, YÖK Atlas beyanı). TUS GENEL kontenjanı ÖSYM yerleştirme tablolarından (yıl = iki dönem toplamı; eksik dönem işaretlenir). Tıp eğitimi altı
-        yıldır; giriş kontenjanı ile TUS kontenjanı aynı kişileri anlatmaz. Sayılar geçmiş ve resmî veridir; tahmin değildir, tercih tavsiyesi değildir; nihai
-        kontrol ÖSYM kılavuzundan yapılır.
+        üyesi, YÖK Atlas beyanı). Mezun sayıları YÖKSİS İstatistik Tablo 12&apos;den (önlisans ve lisans düzeyindeki mezunlar, akademik birimlere göre; yalnız adı
+        &ldquo;Tıp Fakültesi&rdquo; olan birimler; yıl = öğretim yılının ikinci yılı). TUS GENEL kontenjanı ÖSYM yerleştirme tablolarından (yıl = iki dönem toplamı; eksik
+        dönem işaretlenir). Tıp eğitimi altı yıldır; giriş kontenjanı, mezun sayısı ve TUS kontenjanı aynı kişileri anlatmaz. Sayılar geçmiş ve resmî veridir;
+        tahmin değildir, tercih tavsiyesi değildir; nihai kontrol ÖSYM kılavuzundan yapılır.
       </p>
     </div>
   );

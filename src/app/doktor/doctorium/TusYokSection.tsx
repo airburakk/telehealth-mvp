@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { latestApprovedYok, toRowLite } from "@/lib/yok-data";
+import { approvedTipGraduates, latestApprovedMezunMeta } from "@/lib/yok-mezun";
 import { YOK_UNI_TYPE_LABEL } from "@/lib/yok-normalize";
 import { approvedTusSummaries, type TusPeriodSummaryWithSource } from "@/lib/tus-data";
 import { formatIsoDayTr } from "@/lib/iso-day";
@@ -35,13 +36,18 @@ export function YokTipSection({ className = "", compact = false }: { className?:
     );
   }
   const s = snap.summary;
+  // K5(a): YÖKSİS Tablo 12 mezunları (onaylı yıllar; yoksa seri boş, KPI çizilmez — uydurma yok).
+  const grads = approvedTipGraduates();
+  const lastGrad = grads.length ? grads[grads.length - 1] : null;
+  const mezunMeta = latestApprovedMezunMeta();
   const kpis = [
     { k: "Program", v: s.programs }, { k: "Fakülte", v: s.faculties }, { k: `Kontenjan (${s.year})`, v: s.totals.quota },
     { k: "Yerleşen", v: s.totals.placed }, { k: "Akredite (TEPDAD)", v: s.accredited },
+    ...(lastGrad ? [{ k: `Tıp mezunu (${lastGrad.gradYear})`, v: lastGrad.graduates }] : []),
   ];
   return (
-    <AuraPanel title={<span id="yok">Tıp fakülteleri</span>} meta={`YÖK ATLAS · ${s.year}`} className={className}>
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+    <AuraPanel title={<span id="yok">Tıp fakülteleri</span>} meta={`YÖK ATLAS · ${s.year}${lastGrad ? " · YÖKSİS MEZUN" : ""}`} className={className}>
+      <dl className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${kpis.length > 5 ? "lg:grid-cols-6" : "lg:grid-cols-5"}`}>
         {kpis.map((x) => (
           <div key={x.k} className="rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5">
             <dt className="text-[11px] text-[var(--c-ink-3)]">{x.k}</dt>
@@ -51,7 +57,7 @@ export function YokTipSection({ className = "", compact = false }: { className?:
       </dl>
       {compact ? (
         <p className="mt-3 text-[12px] text-[var(--c-ink-2)]">
-          Giriş kontenjanı ile TUS kontenjanının yıllara göre karşılaştırması, kurum türü ve il dağılımı, başarı sırası dağılımı ve {s.programs} programlık tablo
+          Giriş kontenjanı{lastGrad ? ", Tıp mezunu" : ""} ve TUS kontenjanının yıllara göre karşılaştırması, kurum türü ve il dağılımı, başarı sırası dağılımı ve {s.programs} programlık tablo
           TUS sayfasında — <Link href={YOK_ANCHOR} className="font-semibold text-[var(--c-accent)] hover:underline">Ayrıntı</Link>.
         </p>
       ) : (
@@ -60,6 +66,7 @@ export function YokTipSection({ className = "", compact = false }: { className?:
             summary={s}
             rows={snap.rows.map(toRowLite)}
             tusQuotaByYear={tusGeneralQuotaByYear(approvedTusSummaries())}
+            graduatesByYear={grads.map((g) => ({ year: g.endYear, gradYear: g.gradYear, graduates: g.graduates, male: g.male, female: g.female, faculties: g.faculties }))}
             typeLabels={YOK_UNI_TYPE_LABEL}
           />
         </div>
@@ -69,7 +76,17 @@ export function YokTipSection({ className = "", compact = false }: { className?:
         <a href={snap.meta.sourcePage} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 underline-offset-2 hover:underline">
           YÖK Atlas — Tercih Sihirbazı <ExternalLink size={11} aria-hidden />
         </a>{" "}
-        ({s.year}-YKS kılavuzu ve {s.year} yerleştirme sonuçları); çekim {formatIsoDayTr(snap.meta.fetchedAt)}. Resmî ve geçmiş veridir; tercih tavsiyesi değildir.
+        ({s.year}-YKS kılavuzu ve {s.year} yerleştirme sonuçları); çekim {formatIsoDayTr(snap.meta.fetchedAt)}.
+        {mezunMeta && (
+          <>
+            {" "}Mezun sayıları:{" "}
+            <a href={mezunMeta.sourcePage} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 underline-offset-2 hover:underline">
+              YÖKSİS İstatistik — Tablo 12 <ExternalLink size={11} aria-hidden />
+            </a>{" "}
+            ({grads[0]?.gradYear} → {mezunMeta.gradYear}; yalnız adı &ldquo;Tıp Fakültesi&rdquo; olan birimler); çekim {formatIsoDayTr(mezunMeta.fetchedAt)}.
+          </>
+        )}{" "}
+        Resmî ve geçmiş veridir; tercih tavsiyesi değildir.
       </p>
     </AuraPanel>
   );
