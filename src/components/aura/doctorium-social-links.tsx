@@ -60,9 +60,28 @@ const SOCIAL_ICONS: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   linkedin: LinkedinIcon,
 };
 
+// Varsayılan ikon rengi: sabit marka zümrüdü (dl-emerald) — giriş kapıları + landing V3'te
+// kullanılır, kimlik/logo öğeleri gibi HER İKİ kitlede de sabit kalır (globals.css
+// .doctorium-footer-portal yorumu: "footer --dl-emerald marka zümrüdünde KALIR").
+const FIXED_ICON_CLASS = "transition-colors hover:text-[var(--dl-emerald)]";
+// Portal (audience-aware) rengi: --c-accent — .doctorium-scope[data-audience="student"] onu
+// korala çevirir, doktorda zümrüt kalır (bkz. globals.css "ÖĞRENCİ PALETİ" bloğu). Bu yüzden
+// yalnız DoctoriumFooter'ın `portal` sarmalayıcısının İÇİNDE (data-audience kapsamında) anlamlı —
+// giriş/landing'de kitle bilgisi yok, o yüzden onlara TAŞINMAZ.
+const AUDIENCE_ICON_CLASS = "text-[var(--c-accent)] transition-colors hover:text-[var(--c-accent-strong)]";
+
 /** Doctorium footer sosyal ikon satırı — TÜM Doctorium footer'larının tek kaynağı (ortak
- *  DoctoriumFooter + landing V3 footer'ı, ikisi de bunu import eder — bkz. [[doctorium-footer.tsx]]). */
-export function DoctoriumSocialLinks({ className = "" }: { className?: string }) {
+ *  DoctoriumFooter + landing V3 footer'ı, ikisi de bunu import eder — bkz. [[doctorium-footer.tsx]]).
+ *  `audienceAware`: yalnız portal'dan `true` geçilir (kullanıcı isteği 2026-09-06 — "doktorda
+ *  zümrüt, studentte koral"); giriş/landing varsayılanı korur. */
+export function DoctoriumSocialLinks({
+  className = "",
+  audienceAware = false,
+}: {
+  className?: string;
+  audienceAware?: boolean;
+}) {
+  const iconClass = audienceAware ? AUDIENCE_ICON_CLASS : FIXED_ICON_CLASS;
   return (
     <div className={`flex items-center gap-3.5 ${className}`}>
       {DOCTORIUM_SOCIAL_LINKS.map((s) => {
@@ -74,7 +93,7 @@ export function DoctoriumSocialLinks({ className = "" }: { className?: string })
             target="_blank"
             rel="noopener noreferrer"
             aria-label={s.label}
-            className="transition-colors hover:text-[var(--dl-emerald)]"
+            className={iconClass}
           >
             <Icon />
           </a>
