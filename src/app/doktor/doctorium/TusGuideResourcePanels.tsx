@@ -16,7 +16,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
  * Renk: sabit hex yok; kitle aksanı token'ı (--c-accent).
  */
 export const TUS_REHBER_HREF = (slug: string) => `/doktor/doctorium/tus/rehber/${slug}`;
-export const TUS_RESOURCES_ANCHOR = "/doktor/doctorium/tus#kaynakca";
+export const TUS_RESOURCES_ANCHOR = "/doktor/doctorium/tus?bolum=rehberler#kaynakca"; // kaynakça Rehberler bölümünde (2026-09-06)
 
 export function TusGuidesPanel({ className = "", compact = false }: { className?: string; compact?: boolean }) {
   const guides = approvedTusGuides();

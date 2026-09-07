@@ -167,9 +167,13 @@ hesabı `trialWindow` damgası alır (`Doctor.trialStartedAt/trialEndsAt/trialAl
 dâhil) · `trial-sweep` cron 10:20 TR (7/3/1 hatırlatma · bitti · +60 g imha bildirimi · +90 g fail-closed imha, klinik bağ/bekleyen
 belge varsa atlar). Metin TEK kaynak `lib/doctorium-trial-copy.ts` (👤 kanonik: deneme yalnız doğrulama içindir, **ücretli
 üyeliğe dönüşmez**, ödeme bilgisi istenmez). **Öğrenci yüzeyi:** raf HERKESTE aynı 8 durak (Takvim en sonda); öğrencide Kariyer
-sekmesi koral ve sahnesi `CareerEduSections StudentCareerHub` = **Kariyer EDU + TUS** (doktorun yol haritası çizilmez); doktor
-Özelleştir → "Kariyer içinde TUS bölümünü göster" (`viewPrefs.showTus`); `/doktor/doctorium/tus` ve `/kariyer-edu` ayrıntı
-sayfaları; Header öğrenci lockup'ı **"Doctorium [ STUDENT ]"** gerçek metin (U4, v6.251: küre 28 px + Inter 600 wordmark +
+sekmesi koral (doktorun yol haritası çizilmez). **Kariyer bölümleme (v6.257, 2026-09-06 — Hukuk deseni):** öğrencide 1. kademe çubuk
+**Fırsatlar | TUS** (`CareerSubnav.StudentCareerSubnav`, `lib/doctorium STUDENT_CAREER_TABS`; Fırsatlar = `?m=kariyer` + tür çipleri
+`?tur=staj|degisim|burs`, `EduOpportunitiesPanel kind`), TUS ayrı rota `/doktor/doctorium/tus` ve orada 2. kademe **`?bolum=veriler|rehberler|donemler`**
+(`lib/tus TUS_SECTIONS` · `TusSections.TusSectionBody`; Veriler = yerleştirme + kurumlar + tıp fakülteleri, Rehberler = kılavuz özetleri + resmî
+kaynaklar + kaynakça, Sınav dönemleri = tablo + Takvim). Başlık "Staj, Değişim Programları, Burs ve TUS" (👤). Doktor Özelleştir →
+"Kariyer içinde TUS bölümünü göster" (`viewPrefs.showTus`; kısa: KPI + üç bölüm kartı); `/kariyer-edu` → Fırsatlar'a yönlendirme
+(eski bağlantılar); Header öğrenci lockup'ı **"Doctorium [ STUDENT ]"** gerçek metin (U4, v6.251: küre 28 px + Inter 600 wordmark +
 altında koral parantezli STUDENT; `.dsl-*` globals.css; v6.239 webp varlığı kaldırıldı). **Renk (v6.242):**
 `.doctorium-scope` aksanı `--c-accent` = marka zümrüdü, öğrenci kapsamı `[data-audience="student"]` KORAL (gece #fb923c; gündüz metin
 #ea580c + dolgu `--c-accent-fill` #fb923c; **raf bandı gündüzde de KOYU** `#1e100b` + koral sekme — 👤 pano B v6.255; %28 koral ve "KOR %12" süpersede) — portalda

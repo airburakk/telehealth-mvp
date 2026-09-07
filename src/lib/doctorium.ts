@@ -169,6 +169,17 @@ export function parseCareerTab(raw: string | undefined): CareerTabKey {
   return CAREER_TABS.some((t) => t.key === raw) ? (raw as CareerTabKey) : "yurtdisi";
 }
 
+// ÖĞRENCİNİN Kariyer alt-sekmeleri (2026-09-06, kullanıcı kararı: "Kariyer çok karmaşık — Hukuk'taki gibi böl: bir tarafta staj,
+// değişim programları ve burslar, diğer tarafta TUS"). Doktorun CAREER_TABS'ı (Yurt Dışı · Türkiye) öğrenciye çizilmez; bu ikili
+// çizilir. Fırsatlar akış sayfasında (?m=kariyer; tür çipleri ?tur=), TUS AYRI ROTADIR (/doktor/doctorium/tus — kurum tablosunun
+// süzgeçleri o URL'de yaşar, akış sayfasının parametreleriyle çakışmasın) ve orada ?bolum= ile üçe bölünür (lib/tus TUS_SECTIONS).
+// Çubuk iki sayfada da çizilir (CareerSubnav.StudentCareerSubnav) — öğrenci tek bölümde iki sekme görür.
+export const STUDENT_CAREER_TABS = [
+  { key: "firsatlar", label: "Fırsatlar", href: "/doktor/doctorium?m=kariyer" },
+  { key: "tus", label: "TUS", href: "/doktor/doctorium/tus" },
+] as const;
+export type StudentCareerTabKey = (typeof STUDENT_CAREER_TABS)[number]["key"];
+
 // Sektörel/mevzuat alt kategorileri (v6.50). Kaynak matrisi: mevzuat+sut+ilac-cihaz Resmî Gazete
 // ve OHSAD'dan, yonetim TTB/OHSAD'dan, teknoloji WHO/RG'den, turizm RG'den gelir.
 // v6.99 (2026-08-15): "meslek" ve "kuresel" eklendi — sektörel akış doktorun kendi mesleki

@@ -135,7 +135,7 @@ export async function doctorCalendarMonth(
     for (const o of edu) {
       if (!o.deadline) continue;
       const k = dayKey(o.deadline);
-      items.push({ key: `edu-${o.id}`, kind: "edu-son-tarih", title: o.title, href: `/doktor/doctorium/kariyer-edu#edu-${o.id}`, start: k, end: k });
+      items.push({ key: `edu-${o.id}`, kind: "edu-son-tarih", title: o.title, href: `/doktor/doctorium?m=kariyer#edu-${o.id}`, start: k, end: k });
     }
   }
 

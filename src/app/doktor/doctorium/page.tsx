@@ -39,6 +39,8 @@ import {
 } from "lucide-react";
 import { DoctoriumShell } from "./DoctoriumSidebar";
 import { DoctorTusSection, StudentCareerHub } from "./CareerEduSections";
+import { StudentCareerSubnav } from "./CareerSubnav";
+import { parseEduKind } from "@/lib/edu-opportunities";
 
 export const dynamic = "force-dynamic";
 
@@ -74,9 +76,11 @@ const MODULE_HEAD: Record<ModuleKey, { eyebrow: string; title: string; desc: str
 // Öğrencinin Kariyer sahnesi (üç katman B3, kullanıcı kararı 2026-09-05 akşam): doktorun kariyer akışı (denklik/yükselme
 // yol haritası, Yurt Dışı · Türkiye alt-sekmeleri) öğrenciye GÖSTERİLMEZ; aynı sekmede Kariyer EDU + TUS yaşar
 // (CareerEduSections). Renk kitle aksanı: öğrenci kapsamında koral (globals.css). İŞKUR dili ("ilan değil") korunur.
+// 2026-09-06 bölümleme (kullanıcı: "Kariyer çok karmaşık — Hukuk'taki gibi böl"): sahnede 1. kademe çubuk Fırsatlar | TUS
+// (CareerSubnav; TUS ayrı rota, orada ?bolum= ile üçe bölünür); Fırsatlar'da tür çipleri ?tur=staj|degisim|burs.
 const STUDENT_CAREER_HEAD: (typeof MODULE_HEAD)[ModuleKey] = {
   eyebrow: "KARİYER",
-  title: "Staj, değişim, burs ve TUS",
+  title: "Staj, Değişim Programları, Burs ve TUS", // 👤 2026-09-06: büyük harfli adlar (Değişim Programları · Burs)
   desc: "Fakülte dışı fırsatların takvimi ve Tıpta Uzmanlık Sınavı'nın resmî verisi — ilan değil, süreç bilgisi.",
   color: "var(--c-accent)",
 };
@@ -91,7 +95,7 @@ export default async function DoctoriumPage({
   searchParams,
 }: {
   // sayfa/imlec/onceki: Akışım sıralı sayfalaması (v6.192) — bkz. FeedPager.
-  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string; h?: string; k?: string; t?: string; f?: string; l?: string; n?: string; q?: string; fm?: string; sayfa?: string; imlec?: string; onceki?: string }>;
+  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string; h?: string; k?: string; t?: string; f?: string; l?: string; n?: string; q?: string; fm?: string; sayfa?: string; imlec?: string; onceki?: string; tur?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
@@ -306,6 +310,8 @@ export default async function DoctoriumPage({
   // (?c= sektörel kategoriye, ?h= Hukuk'a, ?s= etkinlik kapsamına ait — param çakışması yok.)
   const careerTab: CareerTabKey | null = active === "kariyer" && !isStudent ? parseCareerTab(sp.t) : null;
   const pathways = careerTab ? await careerPathways(careerTab) : [];
+  // Öğrenci Fırsatlar sekmesi tür süzgeci (2026-09-06): ?tur= yalnız bu sahnede okunur (/tus'taki ?tur= kurum türüdür — ayrı sayfa).
+  const eduKind = active === "kariyer" && isStudent ? parseEduKind(sp.tur) : null;
 
   // v6.68 Faz 1: sponsorlu kartlar YALNIZ Akışım'da (diğer sekmeler temiz kalır) ve boş akışa
   // basılmaz. Kişiselleştirilmiş seçim yalnız AÇIK RIZALI doktorda (sponsorPersonalizationAt);
@@ -374,9 +380,12 @@ export default async function DoctoriumPage({
             asıl başlığı h1 oldu (sayfa başına tek h1 — erişilebilirlik). */}
         {/* Başlık + ÖZELLEŞTİR düğmesi tek satırda (kullanıcı isteği 2026-08-20): tercihler
             artık ayrı sayfa, girişi de sahne başlığının yanında duruyor. Yalnız DOCTOR'a
-            çizilir — personelin yazacağı tercih yok (koşullu-href ilkesi). */}
+            çizilir — personelin yazacağı tercih yok (koşullu-href ilkesi).
+            2026-09-06 (👤): uzun başlıkta ("Staj, Değişim Programları, Burs ve TUS") düğme satır altına sarıyordu →
+            h1 `flex-1 basis-[26rem]`: masaüstünde kalan genişliği alır (rozet gerekirse başlığın altına iner, düğme
+            sağda kalır); dar ekranda taban 26 rem sığmayınca düğme yine alta iner — mobil davranış değişmedi. */}
         <div className="mt-1 flex flex-wrap items-start justify-between gap-x-5 gap-y-3">
-          <h1 className="aura-display flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
+          <h1 className="aura-display flex min-w-0 flex-1 basis-[26rem] flex-wrap items-center gap-x-2.5 gap-y-1 text-3xl font-medium tracking-tight text-[var(--c-ink)]">
             {head.title}
             {/* v6.95 — öğrenci-sınırlı üyelik etiketi: mono rozet, yüzey boyamaz (kit renk disiplini). Faz B2: rengi
                 kitle aksanından (--c-accent → öğrenci kapsamında koral, globals.css) — kenar %40 saydam, metin tam aksan. */}
@@ -498,6 +507,10 @@ export default async function DoctoriumPage({
         </nav>
       )}
 
+      {/* Öğrenci Kariyer alt-sekmeleri (2026-09-06, kullanıcı kararı "Hukuk'taki gibi böl"): Fırsatlar | TUS. Fırsatlar bu
+          sahne, TUS ayrı rota (/doktor/doctorium/tus) — çubuk orada da aynı (CareerSubnav). */}
+      {active === "kariyer" && isStudent && <StudentCareerSubnav active="firsatlar" />}
+
       {/* Beklenti notu (kullanıcı onaylı metin, 2026-08-12): doktor "Kariyer" görünce iş ilanı
           bekleyebilir — bu bölümde ilan YOK. Aynı zamanda İŞKUR sınırının kullanıcıya bakan yüzü:
           aracılık yapılmadığı burada açıkça yazılı (envanter §3). */}
@@ -560,7 +573,7 @@ export default async function DoctoriumPage({
 
       {active === "kariyer" ? (
         isStudent ? (
-          <StudentCareerHub />
+          <StudentCareerHub kind={eduKind} />
         ) : (
           <>
             <CareerList rows={pathways} savedIds={savedIds} />

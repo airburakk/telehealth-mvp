@@ -14,7 +14,7 @@ import {
   RANGE_OPTIONS, DEFAULT_RANGE, rangeDays, normalizeAlertDays, ALERT_DAY_OPTIONS,
   SECTOR_CATEGORIES, categoryLabel, parseRegulationSummary,
   LEGAL_TABS, parseLegalTab, LEGAL_ONLY_CATEGORIES, KIND_LABEL, moduleFeed,
-  CAREER_TABS, parseCareerTab, parseSteps, parseStringList,
+  CAREER_TABS, parseCareerTab, STUDENT_CAREER_TABS, parseSteps, parseStringList,
   MODULE_ALIASES, EVENT_TYPES, EVENT_TYPE_BY_TTB, parseEventTypes, parseScope, scopeBadge,
   parseViewPrefs, decodeFeedText, encodeFeedCursor, decodeFeedCursor, FEED_QUOTA_TOTAL,
 } from "@/lib/doctorium";
@@ -231,6 +231,11 @@ describe("Hukuk modülü sözleşmesi (v6.86)", () => {
 
   it("alt-sekmeler: mevzuat + ictihat + doktrin (v6.91'de Doktrin gerçek içerikle AÇILDI)", () => {
     expect(LEGAL_TABS.map((t) => t.key)).toEqual(["mevzuat", "ictihat", "doktrin"]);
+  });
+
+  it("öğrenci Kariyer çubuğu (2026-09-06 bölümleme): Fırsatlar | TUS — doktorun Yurt Dışı · Türkiye'sinden ayrı sözlük", () => {
+    expect(STUDENT_CAREER_TABS.map((t) => t.key)).toEqual(["firsatlar", "tus"]);
+    expect(CAREER_TABS.map((t) => t.key)).toEqual(["yurtdisi", "turkiye"]);
   });
 
   it("parseLegalTab bilinmeyen/eksik değeri Mevzuat'a düşürür (URL kurcalanması akışı bozmaz)", () => {

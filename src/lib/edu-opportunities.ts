@@ -21,6 +21,13 @@ export const EDU_KIND_LABEL: Record<EduOpportunityKind, string> = {
   degisim: "Değişim programı",
   burs: "Burs / destek",
 };
+/** Süzgeç çipi sırası (Fırsatlar sekmesi, 2026-09-06): Hepsi · Staj · Değişim · Burs. */
+export const EDU_KINDS = ["staj", "degisim", "burs"] as const satisfies readonly EduOpportunityKind[];
+export const EDU_KIND_SHORT: Record<EduOpportunityKind, string> = { staj: "Staj", degisim: "Değişim Programları", burs: "Burs" }; // 👤 2026-09-06 adlandırma
+/** ?tur= paramı → tür; bilinmeyen/eksik değer süzgeçsiz (null = Hepsi). Akış sayfasında yalnız Kariyer (öğrenci) sahnesinde okunur. */
+export function parseEduKind(raw: string | undefined): EduOpportunityKind | null {
+  return (EDU_KINDS as readonly string[]).includes(raw ?? "") ? (raw as EduOpportunityKind) : null;
+}
 
 const COUNTRY: Record<string, string> = { TR: "Türkiye", US: "ABD", CH: "İsviçre", DE: "Almanya" };
 /** ISO ülke kodu → Türkçe ad; null = çok ülkeli program. */

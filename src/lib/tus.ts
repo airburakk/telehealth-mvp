@@ -51,6 +51,20 @@ export interface TusCalendarItem { key: string; kind: "tus"; title: string; href
 
 export const TUS_HREF = "/doktor/doctorium/tus";
 
+// TUS SAYFASININ BÖLÜMLERİ (2026-09-06, kullanıcı kararı: "Kariyer çok karmaşık, Hukuk'taki gibi böl; TUS'u da veriler · rehberler ·
+// sınav dönemleri diye ayır"). ?bolum= paramı yalnız /tus rotasında anlamlı; bilinmeyen değer Veriler'e düşer (URL kurcalanması akışı
+// bozmaz — parseLegalTab deseni). Varsayılan bölümün URL'si bolum'suz kalır (kanonik URL tek).
+export const TUS_SECTIONS = [
+  { key: "veriler", label: "Veriler", desc: "Yerleştirme verisi, branş × dönem kurum tablosu ve tıp fakülteleri — ÖSYM ve YÖK kaynaklı, onaylı dönemler." },
+  { key: "rehberler", label: "Rehberler", desc: "ÖSYM kılavuzunun bölüm özetleri, resmî kaynaklar ve tarafsız kaynakça/kurs dizini." },
+  { key: "donemler", label: "Sınav dönemleri", desc: "Başvuru penceresi, sınav günü ve sonuç tarihleri — ÖSYM duyurularından, Takvim'inizle bağlantılı." },
+] as const;
+export type TusSectionKey = (typeof TUS_SECTIONS)[number]["key"];
+export function parseTusSection(raw: string | undefined): TusSectionKey {
+  return TUS_SECTIONS.some((s) => s.key === raw) ? (raw as TusSectionKey) : "veriler";
+}
+export const tusSectionHref = (key: TusSectionKey) => (key === "veriler" ? TUS_HREF : `${TUS_HREF}?bolum=${key}`);
+
 /** [startKey, endKey) ISO gün penceresiyle kesişen TUS başvuru/sınav/sonuç öğeleri (Takvim: öğrencide daima, doktorda showTus). */
 export function tusCalendarItems(startKey: string, endKey: string): TusCalendarItem[] {
   const out: TusCalendarItem[] = [];

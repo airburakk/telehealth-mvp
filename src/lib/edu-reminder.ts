@@ -12,7 +12,8 @@ import { DOCTORIUM_CANONICAL_URL } from "./brand";
 
 /** Gün eşikleri (kala): en gevşekten en sıkıya. */
 export const EDU_ALERT_THRESHOLDS = [7, 3, 1] as const;
-export const EDU_KARIYER_PATH = "/doktor/doctorium/kariyer-edu";
+/** Fırsatlar = öğrencinin Kariyer sahnesi (2026-09-06 bölümleme; eski /kariyer-edu rotası buraya yönlendirir). */
+export const EDU_KARIYER_PATH = "/doktor/doctorium?m=kariyer";
 
 /** Gün farkı (UTC gün başlarına göre) — saat farkı eşiği kaydırmasın. */
 export function daysUntilUtc(target: Date, now: Date): number {

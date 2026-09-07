@@ -5,8 +5,10 @@
 //   · Raf HER KİTLEDE AYNI 8 durak: 7 modül + Takvim (08, en sonda). Öğrenciye ekstra sekme AÇILMAZ.
 //   · TUS ve Kariyer EDU, Kariyer sekmesinin İÇİNDE yaşar: öğrencide sahnenin kendisi (page.tsx StudentCareerHub —
 //     doktorun denklik/yükselme yol haritası öğrenciye çizilmez), doktorda Özelleştir anahtarıyla yol haritasının altında
-//     TUS bölümü (DoctorTusSection; rapor §2 "kapalı, gizli değil"). /tus ve /kariyer-edu rotaları AYRINTI sayfası olarak
-//     sürer (raf durağı değil; DoctoriumShell active="kariyer").
+//     TUS bölümü (DoctorTusSection; rapor §2 "kapalı, gizli değil"). /tus rotası raf durağı DEĞİL (DoctoriumShell active="kariyer").
+//   · 2026-09-06 bölümleme (kullanıcı: "Kariyer çok karmaşık — Hukuk'taki gibi böl"): öğrencide Kariyer'in İÇİNDE 1. kademe çubuk
+//     Fırsatlar | TUS (lib/doctorium STUDENT_CAREER_TABS; CareerSubnav), TUS /tus'ta ?bolum= ile Veriler · Rehberler · Sınav dönemleri
+//     (lib/tus TUS_SECTIONS). Raf yine 8 durak — bölümleme rafa sekme EKLEMEZ. /kariyer-edu → Fırsatlar'a yönlendirme.
 //   · Kitle yalnız Kariyer sekmesinin KİMLİK RENGİNİ değiştirir: öğrencide koral (STUDENT_LANE — öğrenci kulvarı),
 //     doktorda mavi. Sekme numaraları dizideki sıradan üretilir; küme ayracı grup DEĞİŞTİĞİNDE çizilir.
 //
