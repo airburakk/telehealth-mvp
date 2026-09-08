@@ -22,7 +22,8 @@ const VERILER_ANCHORS = [
   { href: "#yok", label: "Tıp fakülteleri" },
 ];
 
-export async function TusSectionBody({ section, sp }: { section: TusSectionKey; sp: Record<string, string | string[] | undefined> }) {
+/** tusBrans: Özelleştir'deki varsayılan branş (öğrenci, 2026-09-06) — grafik ve kurum tablosu bununla açılır; ?brans= onu ezer. */
+export async function TusSectionBody({ section, sp, tusBrans = null }: { section: TusSectionKey; sp: Record<string, string | string[] | undefined>; tusBrans?: string | null }) {
   if (section === "rehberler") {
     return (
       <>
@@ -55,8 +56,8 @@ export async function TusSectionBody({ section, sp }: { section: TusSectionKey; 
           <a key={a.href} href={a.href} className="font-semibold text-[var(--c-ink-2)] underline-offset-2 hover:text-[var(--c-accent)] hover:underline">{a.label}</a>
         ))}
       </p>
-      <TusPlacementSection className="mt-4" />
-      <TusInstitutionsSection sp={sp} className="mt-6" />
+      <TusPlacementSection className="mt-4" initialBranch={tusBrans} />
+      <TusInstitutionsSection sp={sp} className="mt-6" defaultBranch={tusBrans} />
       <YokTipSection className="mt-6" />
     </>
   );

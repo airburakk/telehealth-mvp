@@ -35,7 +35,8 @@ export function StudentCareerSubnav({ active }: { active: StudentCareerTabKey })
   );
 }
 
-export function TusSectionNav({ active }: { active: TusSectionKey }) {
+/** defaultKey: kullanıcının açılış bölümü (Özelleştir) — o bölümün bağlantısı bolum'suz kanonik URL olur, diğerleri ?bolum= taşır. */
+export function TusSectionNav({ active, defaultKey = "veriler" }: { active: TusSectionKey; defaultKey?: TusSectionKey }) {
   const current = TUS_SECTIONS.find((s) => s.key === active) ?? TUS_SECTIONS[0];
   return (
     <div className="mt-6">
@@ -45,7 +46,7 @@ export function TusSectionNav({ active }: { active: TusSectionKey }) {
           return (
             <Link
               key={s.key}
-              href={tusSectionHref(s.key)}
+              href={tusSectionHref(s.key, defaultKey)}
               aria-current={on ? "page" : undefined}
               className={`aura-mono inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11.5px] font-semibold transition ${
                 on

@@ -325,6 +325,7 @@ describe("Doctorium görünüm süzgeci tercihi (v6.142)", () => {
         ilac: { range: DEFAULT_RANGE },
         mevzuat: { range: DEFAULT_RANGE, category: null },
         showTus: false, // Faz B1 (2026-09-05): raf TUS sekmesi tercihi — varsayılan kapalı
+        kariyer: { tur: null, tusBolum: "veriler", tusBrans: null }, // 2026-09-06: öğrenci Kariyer açılış tercihleri — varsayılan
       });
     }
   });
@@ -340,7 +341,16 @@ describe("Doctorium görünüm süzgeci tercihi (v6.142)", () => {
       ilac: { range: "180" },
       mevzuat: { range: "365", category: "ilac-cihaz" },
       showTus: false,
+      kariyer: { tur: null, tusBolum: "veriler", tusBrans: null },
     });
+  });
+
+  it("2026-09-06: Kariyer açılış tercihleri — geçerli değerler okunur, bilinmeyenler alan alan varsayılana düşer", () => {
+    expect(parseViewPrefs(JSON.stringify({ kariyer: { tur: "burs", tusBolum: "rehberler", tusBrans: "KARDİYOLOJİ" } })).kariyer)
+      .toEqual({ tur: "burs", tusBolum: "rehberler", tusBrans: "KARDİYOLOJİ" });
+    expect(parseViewPrefs(JSON.stringify({ kariyer: { tur: "hepsi", tusBolum: "yok", tusBrans: "" } })).kariyer)
+      .toEqual({ tur: null, tusBolum: "veriler", tusBrans: null });
+    expect(parseViewPrefs(JSON.stringify({ kariyer: { tusBrans: 42 } })).kariyer.tusBrans).toBeNull();
   });
 
   it("Faz B1: TUS sekmesi anahtarı yalnız {tus:{show:true}} ile açılır; başka her değer kapalı", () => {

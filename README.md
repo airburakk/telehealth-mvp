@@ -173,7 +173,9 @@ sekmesi koral (doktorun yol haritası çizilmez). **Kariyer bölümleme (v6.257,
 (`lib/tus TUS_SECTIONS` · `TusSections.TusSectionBody`; Veriler = yerleştirme + kurumlar + tıp fakülteleri, Rehberler = kılavuz özetleri + resmî
 kaynaklar + kaynakça, Sınav dönemleri = tablo + Takvim). Başlık "Staj, Değişim Programları, Burs ve TUS" (👤). Doktor Özelleştir →
 "Kariyer içinde TUS bölümünü göster" (`viewPrefs.showTus`; kısa: KPI + üç bölüm kartı); `/kariyer-edu` → Fırsatlar'a yönlendirme
-(eski bağlantılar); Header öğrenci lockup'ı **"Doctorium [ STUDENT ]"** gerçek metin (U4, v6.251: küre 28 px + Inter 600 wordmark +
+(eski bağlantılar). **Öğrenci Özelleştir (v6.259):** `PreferencesBoard STUDENT_GROUPS` (metinler öğrenciye göre) + Kariyer satırında
+açılış tercihleri `viewPrefs.kariyer {tur, tusBolum, tusBrans}` (`/api/doctor/view-filters` module `kariyer`; Fırsatlar türü · TUS bölümü ·
+TUS branşı — `resolveEduKind`/`resolveTusSection`, URL parametresi ezer, "Hepsi" çipi tercih varken `?tur=hepsi`); Header öğrenci lockup'ı **"Doctorium [ STUDENT ]"** gerçek metin (U4, v6.251: küre 28 px + Inter 600 wordmark +
 altında koral parantezli STUDENT; `.dsl-*` globals.css; v6.239 webp varlığı kaldırıldı). **Renk (v6.242):**
 `.doctorium-scope` aksanı `--c-accent` = marka zümrüdü, öğrenci kapsamı `[data-audience="student"]` KORAL (gece #fb923c; gündüz metin
 #ea580c + dolgu `--c-accent-fill` #fb923c; **raf bandı gündüzde de KOYU** `#1e100b` + koral sekme — 👤 pano B v6.255; %28 koral ve "KOR %12" süpersede) — portalda

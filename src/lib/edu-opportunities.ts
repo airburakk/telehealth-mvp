@@ -28,6 +28,14 @@ export const EDU_KIND_SHORT: Record<EduOpportunityKind, string> = { staj: "Staj"
 export function parseEduKind(raw: string | undefined): EduOpportunityKind | null {
   return (EDU_KINDS as readonly string[]).includes(raw ?? "") ? (raw as EduOpportunityKind) : null;
 }
+/**
+ * ?tur= + kullanıcının açılış tercihi (Özelleştir → Fırsatlar, 2026-09-06): açık "hepsi" süzgeci kaldırır (tercih bursken "Hepsi"
+ * çipine basılabilsin diye), geçerli tür kazanır, param yoksa tercih (null = Hepsi).
+ */
+export function resolveEduKind(raw: string | undefined, pref: EduOpportunityKind | null): EduOpportunityKind | null {
+  if (raw === "hepsi") return null;
+  return parseEduKind(raw) ?? pref;
+}
 
 const COUNTRY: Record<string, string> = { TR: "Türkiye", US: "ABD", CH: "İsviçre", DE: "Almanya" };
 /** ISO ülke kodu → Türkçe ad; null = çok ülkeli program. */

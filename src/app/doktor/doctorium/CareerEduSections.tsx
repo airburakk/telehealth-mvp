@@ -97,7 +97,7 @@ export function TusPeriodsPanel({ className = "" }: { className?: string }) {
   );
 }
 
-export async function EduOpportunitiesPanel({ className = "", kind = null }: { className?: string; kind?: EduOpportunityKind | null }) {
+export async function EduOpportunitiesPanel({ className = "", kind = null, defaultKind = null }: { className?: string; kind?: EduOpportunityKind | null; defaultKind?: EduOpportunityKind | null }) {
   // E2 (2026-09-06): KALICI MODEL — onaylı satırlar DB'den (lib/edu-store; approvedAt null görünmez). Öğrenci "Takip et" → son başvuru
   // 7/3/1 gün kala bildirim + e-posta (lib/edu-reminder, daily-digest); tüm tarihli fırsatlar öğrenci Takvim'inde (👤 karar).
   // Tür çipleri (2026-09-06 bölümleme): Hepsi · Staj · Değişim · Burs (?tur=); sayılar onaylı satırlardan, süzgeç sunucuda.
@@ -115,7 +115,7 @@ export async function EduOpportunitiesPanel({ className = "", kind = null }: { c
         return (
           <Link
             key={c.label}
-            href={c.key ? `${KARIYER_HREF}&tur=${c.key}` : KARIYER_HREF}
+            href={c.key ? `${KARIYER_HREF}&tur=${c.key}` : defaultKind ? `${KARIYER_HREF}&tur=hepsi` : KARIYER_HREF}
             aria-current={on ? "true" : undefined}
             className={`aura-mono inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
               on
@@ -185,7 +185,7 @@ export async function EduOpportunitiesPanel({ className = "", kind = null }: { c
  * TUS yerleştirme verisi (K1, 2026-09-05): onaylı dönem özetleri (lib/tus-data) → KPI şeridi (son dönem) + Recharts grafikleri
  * (client, dinamik). Onaylı dönem yoksa dürüst "hazırlanıyor". `compact` (Kariyer hub'ı): yalnız KPI + ayrıntı bağlantısı.
  */
-export function TusPlacementSection({ className = "", compact = false }: { className?: string; compact?: boolean }) {
+export function TusPlacementSection({ className = "", compact = false, initialBranch = null }: { className?: string; compact?: boolean; initialBranch?: string | null }) {
   const periods = approvedTusSummaries();
   if (periods.length === 0) {
     return (
@@ -220,7 +220,7 @@ export function TusPlacementSection({ className = "", compact = false }: { class
         </p>
       ) : (
         <div className="mt-5">
-          <TusChartsLoader periods={periods} branches={tusBranches(periods)} institutionLabels={TUS_INSTITUTION_LABEL} initialBranch="İÇ HASTALIKLARI" />
+          <TusChartsLoader periods={periods} branches={tusBranches(periods)} institutionLabels={TUS_INSTITUTION_LABEL} initialBranch={initialBranch && tusBranches(periods).some((b) => b.branch === initialBranch) ? initialBranch : "İÇ HASTALIKLARI"} />
         </div>
       )}
       <p className="mt-3 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
@@ -253,14 +253,14 @@ function SectionHead({ eyebrow, title, href }: { eyebrow: string; title: string;
  * TUS artık aynı çubuğun ikinci sekmesi (/doktor/doctorium/tus). Sahne h1'i ve 1. kademe çubuk page.tsx'te; burada başlık katmanı
  * eklenmez (h1 + çubuk + panel başlığı yeter — üçüncü başlık gürültüydü).
  */
-export function StudentCareerHub({ kind = null }: { kind?: EduOpportunityKind | null }) {
+export function StudentCareerHub({ kind = null, defaultKind = null }: { kind?: EduOpportunityKind | null; defaultKind?: EduOpportunityKind | null }) {
   return (
     <div className="mt-5 space-y-4">
       <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
         <Info size={13} className="mt-px shrink-0 text-[var(--c-accent)]" />
         Bu bölüm iş ilanı içermez; staj, değişim ve burs süreçlerini anlatır. Başvuru daima resmî kaynakta yapılır.
       </p>
-      <EduOpportunitiesPanel kind={kind} />
+      <EduOpportunitiesPanel kind={kind} defaultKind={defaultKind} />
     </div>
   );
 }

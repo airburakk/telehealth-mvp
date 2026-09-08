@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
-import { parseTusSection } from "@/lib/tus";
+import { resolveTusSection } from "@/lib/tus";
+import { db } from "@/lib/db";
+import { parseViewPrefs } from "@/lib/doctorium";
 import { DoctoriumShell } from "../DoctoriumSidebar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { KARIYER_HREF } from "../CareerEduSections";
@@ -38,9 +40,12 @@ export default async function TusPage({ searchParams }: { searchParams: Promise<
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
   const sp = await searchParams;
-  const section = parseTusSection(typeof sp.bolum === "string" ? sp.bolum : undefined);
   const ctx = await currentDoctoriumAudience();
   const isStudent = ctx?.audience === "STUDENT";
+  // Özelleştir'deki Kariyer açılış tercihleri (öğrenci, 2026-09-06): açılış bölümü + varsayılan branş; URL parametresi ezer. Personelde varsayılan.
+  const prefRow = ctx?.doctorId ? await db.doctor.findUnique({ where: { id: ctx.doctorId }, select: { doctoriumViewPrefs: true } }) : null;
+  const kariyerPref = parseViewPrefs(prefRow?.doctoriumViewPrefs).kariyer;
+  const section = resolveTusSection(typeof sp.bolum === "string" ? sp.bolum : undefined, kariyerPref.tusBolum);
 
   return (
     <DoctoriumShell active="kariyer">
@@ -60,8 +65,8 @@ export default async function TusPage({ searchParams }: { searchParams: Promise<
           sub="Kamuya açık ÖSYM ve YÖK verisinin (sınav takvimi, kontenjanlar, taban puanlar, boş kalan kontenjanlar, tıp fakülteleri) tek yerden okunabilir hâli. Veri yayına alınmadan önce kaynak ve tarihle doğrulanır."
         />
 
-        <TusSectionNav active={section} />
-        <TusSectionBody section={section} sp={sp} />
+        <TusSectionNav active={section} defaultKey={kariyerPref.tusBolum} />
+        <TusSectionBody section={section} sp={sp} tusBrans={kariyerPref.tusBrans} />
       </div>
     </DoctoriumShell>
   );

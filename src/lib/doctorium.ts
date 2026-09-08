@@ -4,6 +4,8 @@
 // Modüller (kullanıcı kararı 2026-08-01): A akış+tercih · B sektörel/mevzuat · C akademik+AI özet ·
 // E kongre takvimi. Modül D (ilaç tanıtımı / e-mümessil) PARK — TİTCK tanıtım yönetmeliği + ruhsat
 // sahibi sıfatı hukuki görüş ister (wiki/todo.md Doctorium bloğu).
+import { EDU_KINDS, type EduOpportunityKind } from "./edu-opportunities";
+import { TUS_SECTIONS, type TusSectionKey } from "./tus";
 import { createHash } from "crypto";
 import { db } from "./db";
 import { translateText, summarizeArticleForClinician, summarizeRegulationForClinician } from "./ai-clinical";
@@ -1043,12 +1045,19 @@ export interface DoctoriumViewPrefs {
   mevzuat: LegalViewPrefs;
   /** Üç katman Faz B1→B3 (2026-09-05): doktorun Kariyer sekmesinde TUS bölümü (öğrencide daima açık; rapor §2 "kapalı, gizli değil"). */
   showTus: boolean;
+  /**
+   * Öğrencinin Kariyer açılış tercihleri (Özelleştir, 2026-09-06 — kullanıcı: "öğrenciler için özelleştirme yok; Fırsatlar/TUS ayrımı
+   * bölünmemiş"): Fırsatlar sekmesi hangi türle açılsın (null = Hepsi) · /tus hangi bölümle açılsın · TUS grafik + kurum tablosu hangi
+   * branşla açılsın (null = sayfa varsayılanı İç Hastalıkları). URL parametresi (?tur= · ?bolum= · ?brans=) tercihi o görünüm için ezer.
+   */
+  kariyer: { tur: EduOpportunityKind | null; tusBolum: TusSectionKey; tusBrans: string | null };
 }
 const DEFAULT_VIEW_PREFS: DoctoriumViewPrefs = {
   sektorel: { source: null, range: DEFAULT_RANGE, category: null },
   ilac: { range: DEFAULT_RANGE },
   mevzuat: { range: DEFAULT_RANGE, category: null },
   showTus: false,
+  kariyer: { tur: null, tusBolum: "veriler", tusBrans: null },
 };
 // <string> ZORUNLU: RANGE_OPTIONS `as const` olduğundan .map(r=>r.key) literal union'ı korur
 // (Set<"1"|"7"|"30"|"180"|"365">) — sonra .has(v) çalışma-zamanı string'iyle çağrılınca tsc
@@ -1069,6 +1078,7 @@ export function parseViewPrefs(raw: string | null | undefined): DoctoriumViewPre
     const il = (v.ilac ?? {}) as Record<string, unknown>;
     const mv = (v.mevzuat ?? {}) as Record<string, unknown>;
     const tus = (v.tus ?? {}) as Record<string, unknown>;
+    const kr = (v.kariyer ?? {}) as Record<string, unknown>;
     return {
       sektorel: {
         source: parseSourceScope(typeof sek.s === "string" ? sek.s : null),
@@ -1083,6 +1093,12 @@ export function parseViewPrefs(raw: string | null | undefined): DoctoriumViewPre
         category: typeof mv.c === "string" && SECTOR_CATEGORIES.some((c) => c.key === mv.c) ? mv.c : null,
       },
       showTus: tus.show === true,
+      kariyer: {
+        tur: (EDU_KINDS as readonly string[]).includes(kr.tur as string) ? (kr.tur as EduOpportunityKind) : null,
+        tusBolum: TUS_SECTIONS.some((x) => x.key === kr.tusBolum) ? (kr.tusBolum as TusSectionKey) : "veriler",
+        // Branş anahtarı ÖSYM büyük harfli etikettir ("KARDİYOLOJİ"); geçerliliği kullanan yüzey onaylı dönemlerin branş listesiyle sınar.
+        tusBrans: typeof kr.tusBrans === "string" && kr.tusBrans.trim() && kr.tusBrans.length <= 80 ? kr.tusBrans : null,
+      },
     };
   } catch {
     return DEFAULT_VIEW_PREFS;

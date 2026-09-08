@@ -21,13 +21,15 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) 
 const fmt = (n: number | null | undefined, d = 0) => (n == null ? "—" : n.toLocaleString("tr-TR", { minimumFractionDigits: d, maximumFractionDigits: d }));
 const score = (n: number | null) => (n == null ? "—" : n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 
-export async function TusInstitutionsSection({ sp, className = "" }: { sp: SP; className?: string }) {
+export async function TusInstitutionsSection({ sp, className = "", defaultBranch = null }: { sp: SP; className?: string; defaultBranch?: string | null }) {
   const periods = approvedTusSummaries();
   if (periods.length === 0) {
     return <EmptyState className={className} title="Kurum tablosu hazırlanıyor" sub="Onaylı yerleştirme dönemi yok." />;
   }
   const branches = tusBranches(periods);
-  const brans = branches.some((b) => b.branch === one(sp.brans)) ? one(sp.brans) : (branches.find((b) => b.branch === "İÇ HASTALIKLARI")?.branch ?? branches[0].branch);
+  // ?brans= > Özelleştir'deki varsayılan branş (öğrenci tercihi, 2026-09-06) > İç Hastalıkları > ilk branş.
+  const has = (k: string | null | undefined) => !!k && branches.some((b) => b.branch === k);
+  const brans = has(one(sp.brans)) ? (one(sp.brans) as string) : has(defaultBranch) ? (defaultBranch as string) : (branches.find((b) => b.branch === "İÇ HASTALIKLARI")?.branch ?? branches[0].branch);
   const idx = Math.max(0, periods.findIndex((p) => p.key === one(sp.donem)));
   const period = periods[idx === -1 ? periods.length - 1 : (one(sp.donem) ? idx : periods.length - 1)];
   const pIdx = periods.findIndex((p) => p.key === period.key);

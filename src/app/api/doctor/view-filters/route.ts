@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { RANGE_OPTIONS, DEFAULT_RANGE, SECTOR_CATEGORIES } from "@/lib/doctorium";
+import { EDU_KINDS } from "@/lib/edu-opportunities";
+import { TUS_SECTIONS } from "@/lib/tus";
+import { approvedTusSummaries, tusBranches } from "@/lib/tus-data";
 
 // <string> ZORUNLU: RANGE_OPTIONS `as const` olduğundan .map(r=>r.key) literal union'ı korur
 // (Set<"1"|"7"|"30"|"180"|"365">) — sonra .has(v) çalışma-zamanı string'iyle çağrılınca reddedilir.
 const RANGE_KEYS = new Set<string>(RANGE_OPTIONS.map((r) => r.key));
 const CATEGORY_KEYS = new Set(SECTOR_CATEGORIES.map((c) => c.key));
-const MODULE_KEYS = new Set(["sektorel", "ilac", "mevzuat", "tus"]); // "tus" (Faz B1): raf sekmesi anahtarı {show}
+const MODULE_KEYS = new Set(["sektorel", "ilac", "mevzuat", "tus", "kariyer"]); // "tus" (Faz B1): raf sekmesi anahtarı {show} · "kariyer" (2026-09-06): öğrenci açılış tercihleri
 
 function normRange(v: unknown): string {
   return typeof v === "string" && RANGE_KEYS.has(v) ? v : DEFAULT_RANGE;
@@ -59,6 +62,14 @@ export async function POST(req: Request) {
   } else if (moduleKey === "tus") {
     // Faz B1→B3 (2026-09-05): doktorun Kariyer sekmesinde TUS bölümü — içerik süzgeci değil, yalnız görünürlük anahtarı.
     prefs.tus = { show: b.show === true };
+  } else if (moduleKey === "kariyer") {
+    // Öğrenci Kariyer açılış tercihleri (2026-09-06): tür ∈ EDU_KINDS | null · bölüm ∈ TUS_SECTIONS · branş onaylı dönemlerin listesinden | null.
+    const branchKeys = new Set(tusBranches(approvedTusSummaries()).map((x) => x.branch));
+    prefs.kariyer = {
+      tur: (EDU_KINDS as readonly string[]).includes(b.tur) ? b.tur : null,
+      tusBolum: TUS_SECTIONS.some((x) => x.key === b.tusBolum) ? b.tusBolum : "veriler",
+      tusBrans: typeof b.tusBrans === "string" && branchKeys.has(b.tusBrans) ? b.tusBrans : null,
+    };
   } else {
     prefs.mevzuat = { d: normRange(b.range), c: normCategory(b.category) };
   }

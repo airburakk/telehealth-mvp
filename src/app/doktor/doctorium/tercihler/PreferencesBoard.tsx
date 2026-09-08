@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Loader2, Megaphone, Newspaper } from "lucide-react";
+import { EDU_KINDS, EDU_KIND_SHORT } from "@/lib/edu-opportunities";
+import { TUS_SECTIONS } from "@/lib/tus";
 
 /**
  * Akış Tercihleri panosu — T1 KATLANIR LİSTE (v6.132, kullanıcı seçimi 2026-08-20).
@@ -27,7 +29,7 @@ import { Check, ChevronDown, Loader2, Megaphone, Newspaper } from "lucide-react"
  * `/api/doctor/view-filters` (module başına TEK POST, üç alan birlikte — pickAlert deseni).
  */
 
-type Extra = "brans" | "hukuk" | "etkinlik" | "sektorel" | "ilac" | null;
+type Extra = "brans" | "hukuk" | "etkinlik" | "sektorel" | "ilac" | "kariyer-ogrenci" | null;
 type Section = { key: string; nm: string; desc: string; feedKey: string | null; extra: Extra };
 type Group = { key: string; nm: string; desc: string; sections: Section[] };
 
@@ -55,6 +57,22 @@ const GROUPS: Group[] = [
     ],
   },
 ];
+
+/**
+ * ÖĞRENCİ varyantı (2026-09-06, kullanıcı: "Özelleştir hâlâ doktora göre; öğrenci için özelleştirme yok, Fırsatlar/TUS ayrımı bölünmemiş"):
+ * aynı anahtarlar (akış anahtarları ve sayaçlar değişmez), yalnız metin öğrenciye göre ve Kariyer satırına açılış tercihleri paneli
+ * (extra "kariyer-ogrenci": Fırsatlar türü · TUS bölümü · TUS branşı). Doktorda GROUPS aynen sürer.
+ */
+const STUDENT_GROUPS: Group[] = GROUPS.map((g) => ({
+  ...g,
+  desc: g.key === "klinik" ? "Kliniğe hazırlanırken sizi besleyen bilgi." : g.key === "mesleki" ? "Girmeye hazırlandığınız mesleğin çerçevesi." : g.desc,
+  sections: g.sections.map((s) =>
+    s.key === "kariyer"
+      ? { ...s, extra: "kariyer-ogrenci" as Extra, desc: "Staj, değişim programları ve burs fırsatları; TUS verisi, rehberleri ve sınav dönemleri — ilan değil, süreç bilgisi." }
+      : s.key === "akademik"
+        ? { ...s, desc: "PubMed, Europe PMC ve DOAJ'dan hakemli yayınlar; ilgi duyduğunuz branşlara göre süzülür." }
+        : s),
+}));
 
 const HUKUK_SUBS = [
   { key: "hukuk-mevzuat", nm: "Mevzuat", desc: "Resmî Gazete ve OHSAD kayıtları; yürürlük tarihleriyle." },
@@ -116,6 +134,11 @@ interface Props {
   tusInitial: boolean;
   /** Doctorium Post günlük özet kanalı (2026-08-24): null = kapalı · "app" · "email". */
   digestInitial: string | null;
+  /** 2026-09-06 — öğrenci varyantı: metinler öğrenciye göre, Kariyer satırında açılış tercihleri paneli. */
+  isStudent: boolean;
+  kariyerInitial: { tur: string | null; tusBolum: string; tusBrans: string | null };
+  /** Onaylı TUS dönemlerinin branşları (anahtar = ÖSYM büyük harfli ad, etiket = okunur ad). */
+  tusBranchOptions: { key: string; label: string }[];
 }
 
 // Doctorium Post kanal seçenekleri — "" = kapalı (API'ye null gider). E-posta, altyapı
@@ -174,6 +197,15 @@ export function PreferencesBoard(p: Props) {
   // Faz B1→B3 — Kariyer içinde TUS bölümü anahtarı: görünürlük tercihi, anında yazılır (view-filters module "tus").
   const [tus, setTus] = useState(p.tusInitial);
   const [tusSt, setTusSt] = useState<Status>({ state: "idle" });
+
+  // Öğrenci Kariyer açılış tercihleri (2026-09-06): üç alan HER yazımda birlikte gider (view-filters module "kariyer"); tekli seçimler
+  // anında yazılır (görünüm süzgeçleriyle aynı gerekçe). "" = Hepsi / sayfa varsayılanı (API'ye null gider).
+  const [kariyer, setKariyer] = useState({ tur: p.kariyerInitial.tur ?? "", tusBolum: p.kariyerInitial.tusBolum, tusBrans: p.kariyerInitial.tusBrans ?? "" });
+  const [krSt, setKrSt] = useState<Status>({ state: "idle" });
+  function saveKariyer(next: typeof kariyer) {
+    setKariyer(next);
+    void post("/api/doctor/view-filters", { module: "kariyer", tur: next.tur || null, tusBolum: next.tusBolum, tusBrans: next.tusBrans || null }, setKrSt);
+  }
 
   async function post(url: string, body: unknown, set: (s: Status) => void) {
     set({ state: "saving" });
@@ -254,9 +286,19 @@ export function PreferencesBoard(p: Props) {
   // (lib/doctorium-labels SECTOR_CATEGORIES), yalnız kayıtlı tercihleri ayrı.
   const categoryItems = [{ key: "", label: "Tümü" }, ...p.categoryOptions];
 
+  const groups = p.isStudent ? STUDENT_GROUPS : GROUPS;
+  const branchHint = p.isStudent
+    ? "Yayın akışınız bu branşlara göre süzülür; seçim etkinlik takviminde de geçerlidir. Hiçbiri seçili değilse akademik akış branş süzgeci olmadan gelir — ilgi duyduğunuz branşları seçin."
+    : `Yayın akışınız bu branşlara göre süzülür; seçim etkinlik takviminde de geçerlidir. Hiçbiri seçili değilse profilinizdeki branş${ownLabel ? ` (${ownLabel})` : ""} kullanılır.`;
+  const kariyerSummary = [
+    `Fırsatlar: ${kariyer.tur ? EDU_KIND_SHORT[kariyer.tur as keyof typeof EDU_KIND_SHORT] : "Hepsi"}`,
+    `TUS: ${TUS_SECTIONS.find((x) => x.key === kariyer.tusBolum)?.label ?? "Veriler"}`,
+    `branş ${p.tusBranchOptions.find((b) => b.key === kariyer.tusBrans)?.label ?? "İç Hastalıkları (varsayılan)"}`,
+  ].join(" · ");
+
   return (
     <div className="mt-8">
-      {GROUPS.map((g) => {
+      {groups.map((g) => {
         const keys = g.sections.flatMap((s) =>
           s.extra === "hukuk" ? HUKUK_SUBS.map((x) => x.key) : s.feedKey ? [s.feedKey] : []);
         const live = keys.filter((k) => feed.has(k)).length;
@@ -307,8 +349,7 @@ export function PreferencesBoard(p: Props) {
                   {s.extra && isOpen && (
                     <div className="mt-4 sm:pl-[52px]">
                       {s.extra === "brans" && (
-                        <Block title="Branş tercihleri"
-                          hint={`Yayın akışınız bu branşlara göre süzülür; seçim etkinlik takviminde de geçerlidir. Hiçbiri seçili değilse profilinizdeki branş${ownLabel ? ` (${ownLabel})` : ""} kullanılır.`}>
+                        <Block title="Branş tercihleri" hint={branchHint}>
                           <div className="mt-2 flex items-center gap-3">
                             <button
                               type="button"
@@ -337,6 +378,39 @@ export function PreferencesBoard(p: Props) {
                           />
                           <StatusLine status={brSt} idle={`${branches.size} branş seçili`} />
                         </Block>
+                      )}
+
+                      {s.extra === "kariyer-ogrenci" && (
+                        <>
+                          <Block title="Fırsatlar — açılış türü" hint="Kariyer sekmesi hangi fırsat türüyle açılsın; sayfadaki çiplerle her zaman değiştirebilirsiniz.">
+                            <RadioChips
+                              items={[{ key: "", label: "Hepsi" }, ...EDU_KINDS.map((k) => ({ key: k, label: EDU_KIND_SHORT[k] }))]}
+                              value={kariyer.tur}
+                              onChange={(k) => saveKariyer({ ...kariyer, tur: k })}
+                            />
+                          </Block>
+                          <Block title="TUS — açılış bölümü" hint="TUS sayfası hangi bölümle açılsın: Veriler, Rehberler ya da Sınav dönemleri.">
+                            <RadioChips
+                              items={TUS_SECTIONS.map((x) => ({ key: x.key, label: x.label }))}
+                              value={kariyer.tusBolum}
+                              onChange={(k) => saveKariyer({ ...kariyer, tusBolum: k })}
+                            />
+                          </Block>
+                          <Block title="TUS — varsayılan branş" hint="Taban puan grafikleri ve kurum tablosu bu branşla açılır; sayfada başka branş seçmek bu tercihi değiştirmez.">
+                            <select
+                              value={kariyer.tusBrans}
+                              onChange={(e) => saveKariyer({ ...kariyer, tusBrans: e.target.value })}
+                              aria-label="TUS varsayılan branş"
+                              className="mt-2 w-full max-w-sm rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2 text-[13px] text-[var(--c-ink)] focus:border-[var(--c-accent)] focus:outline-none"
+                            >
+                              <option value="">Sayfa varsayılanı (İç Hastalıkları)</option>
+                              {p.tusBranchOptions.map((b) => (
+                                <option key={b.key} value={b.key}>{b.label}</option>
+                              ))}
+                            </select>
+                            <StatusLine status={krSt} idle={kariyerSummary} />
+                          </Block>
+                        </>
                       )}
 
                       {s.extra === "sektorel" && (

@@ -40,7 +40,7 @@ import {
 import { DoctoriumShell } from "./DoctoriumSidebar";
 import { DoctorTusSection, StudentCareerHub } from "./CareerEduSections";
 import { StudentCareerSubnav } from "./CareerSubnav";
-import { parseEduKind } from "@/lib/edu-opportunities";
+import { resolveEduKind } from "@/lib/edu-opportunities";
 
 export const dynamic = "force-dynamic";
 
@@ -310,8 +310,9 @@ export default async function DoctoriumPage({
   // (?c= sektörel kategoriye, ?h= Hukuk'a, ?s= etkinlik kapsamına ait — param çakışması yok.)
   const careerTab: CareerTabKey | null = active === "kariyer" && !isStudent ? parseCareerTab(sp.t) : null;
   const pathways = careerTab ? await careerPathways(careerTab) : [];
-  // Öğrenci Fırsatlar sekmesi tür süzgeci (2026-09-06): ?tur= yalnız bu sahnede okunur (/tus'taki ?tur= kurum türüdür — ayrı sayfa).
-  const eduKind = active === "kariyer" && isStudent ? parseEduKind(sp.tur) : null;
+  // Öğrenci Fırsatlar sekmesi tür süzgeci (2026-09-06): ?tur= yalnız bu sahnede okunur (/tus'taki ?tur= kurum türüdür — ayrı sayfa);
+  // param yoksa Özelleştir'deki açılış tercihi (viewPrefs.kariyer.tur), "hepsi" tercihi o görünüm için kaldırır.
+  const eduKind = active === "kariyer" && isStudent ? resolveEduKind(sp.tur, viewPrefs.kariyer.tur) : null;
 
   // v6.68 Faz 1: sponsorlu kartlar YALNIZ Akışım'da (diğer sekmeler temiz kalır) ve boş akışa
   // basılmaz. Kişiselleştirilmiş seçim yalnız AÇIK RIZALI doktorda (sponsorPersonalizationAt);
@@ -573,7 +574,7 @@ export default async function DoctoriumPage({
 
       {active === "kariyer" ? (
         isStudent ? (
-          <StudentCareerHub kind={eduKind} />
+          <StudentCareerHub kind={eduKind} defaultKind={viewPrefs.kariyer.tur} />
         ) : (
           <>
             <CareerList rows={pathways} savedIds={savedIds} />

@@ -10,6 +10,7 @@ import {
   RANGE_OPTIONS, SECTOR_CATEGORIES, parseViewPrefs,
 } from "@/lib/doctorium";
 import { SPONSOR_CONSENT_TEXT } from "@/lib/sponsor";
+import { approvedTusSummaries, tusBranches } from "@/lib/tus-data";
 import { DoctoriumShell } from "../DoctoriumSidebar";
 import { PreferencesBoard } from "./PreferencesBoard";
 
@@ -108,6 +109,9 @@ export default async function TercihlerPage() {
           showSponsor={canSeeSponsored}
           showTusToggle={audienceCtx?.audience !== "STUDENT"}
           tusInitial={viewPrefs.showTus}
+          isStudent={audienceCtx?.audience === "STUDENT"}
+          kariyerInitial={viewPrefs.kariyer}
+          tusBranchOptions={tusBranches(approvedTusSummaries()).map((b) => ({ key: b.branch, label: b.branchLabel }))}
           sponsorInitial={!!doctor.sponsorPersonalizationAt}
           sponsorText={SPONSOR_CONSENT_TEXT}
           digestInitial={doctor.digestChannel}

@@ -63,7 +63,12 @@ export type TusSectionKey = (typeof TUS_SECTIONS)[number]["key"];
 export function parseTusSection(raw: string | undefined): TusSectionKey {
   return TUS_SECTIONS.some((s) => s.key === raw) ? (raw as TusSectionKey) : "veriler";
 }
-export const tusSectionHref = (key: TusSectionKey) => (key === "veriler" ? TUS_HREF : `${TUS_HREF}?bolum=${key}`);
+/** Bölüm bağlantısı: kullanıcının açılış bölümü (tercih; varsayılan Veriler) bolum'suz kanonik URL, diğerleri ?bolum= taşır. */
+export const tusSectionHref = (key: TusSectionKey, defaultKey: TusSectionKey = "veriler") => (key === defaultKey ? TUS_HREF : `${TUS_HREF}?bolum=${key}`);
+/** ?bolum= → bölüm; param yok/bilinmiyorsa kullanıcının açılış tercihi (Özelleştir, 2026-09-06) — o da yoksa Veriler. */
+export function resolveTusSection(raw: string | undefined, pref: TusSectionKey = "veriler"): TusSectionKey {
+  return TUS_SECTIONS.some((s) => s.key === raw) ? (raw as TusSectionKey) : pref;
+}
 
 /** [startKey, endKey) ISO gün penceresiyle kesişen TUS başvuru/sınav/sonuç öğeleri (Takvim: öğrencide daima, doktorda showTus). */
 export function tusCalendarItems(startKey: string, endKey: string): TusCalendarItem[] {
