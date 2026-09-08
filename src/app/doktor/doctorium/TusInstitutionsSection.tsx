@@ -54,15 +54,17 @@ export async function TusInstitutionsSection({ sp, className = "" }: { sp: SP; c
         value={{ brans, donem: period.key, tur: type, kt: quotaType, q, sirala: sort }}
       />
 
+      {/* KPI kutuları: grid satırı eşit yükseklik verir, kutu flex-col + dd mt-auto → uzun etiket ("Ek yerleştirmede dolan") iki satıra sarsa da
+          sayılar aynı taban hizasında kalır (👤 2026-09-06: "kutular düz durmuyor, sayı aşağı kaçmış"). Aynı desen Yerleştirme/YÖK KPI'larında. */}
       <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {[
           { k: "Kurum", v: sum.institutions }, { k: "Program satırı", v: sum.programs }, { k: "Kontenjan", v: sum.quota },
           { k: "Yerleşen", v: sum.placed }, { k: "Boş kalan", v: sum.vacant },
           ...(hasEk ? [{ k: "Ek yerleştirmede dolan", v: sum.ekPlaced }] : []),
         ].map((x) => (
-          <div key={x.k} className="rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5">
-            <dt className="text-[11px] text-[var(--c-ink-3)]">{x.k}</dt>
-            <dd className="aura-display mt-0.5 text-xl font-semibold tabular-nums text-[var(--c-ink)]">{fmt(x.v)}</dd>
+          <div key={x.k} className="flex flex-col rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5">
+            <dt className="text-[11px] leading-snug text-[var(--c-ink-3)]">{x.k}</dt>
+            <dd className="aura-display mt-auto pt-0.5 text-xl font-semibold tabular-nums text-[var(--c-ink)]">{fmt(x.v)}</dd>
           </div>
         ))}
       </dl>

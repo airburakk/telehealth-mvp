@@ -207,9 +207,9 @@ export function TusPlacementSection({ className = "", compact = false }: { class
       <div className="aura-mono text-[11px] uppercase tracking-wider text-[var(--c-ink-3)]">{last.year}-TUS {last.term}. Dönem · son dönem</div>
       <dl className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {kpis.map((x) => (
-          <div key={x.k} className="rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5">
-            <dt className="text-[11px] text-[var(--c-ink-3)]">{x.k}</dt>
-            <dd className="aura-display mt-0.5 text-xl font-semibold tabular-nums text-[var(--c-ink)]">{typeof x.v === "number" ? x.v.toLocaleString("tr-TR") : x.v}</dd>
+          <div key={x.k} className="flex flex-col rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5">
+            <dt className="text-[11px] leading-snug text-[var(--c-ink-3)]">{x.k}</dt>
+            <dd className="aura-display mt-auto pt-0.5 text-xl font-semibold tabular-nums text-[var(--c-ink)]">{typeof x.v === "number" ? x.v.toLocaleString("tr-TR") : x.v}</dd>
           </div>
         ))}
       </dl>

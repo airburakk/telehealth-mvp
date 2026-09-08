@@ -49,9 +49,9 @@ export function YokTipSection({ className = "", compact = false }: { className?:
     <AuraPanel title={<span id="yok">Tıp fakülteleri</span>} meta={`YÖK ATLAS · ${s.year}${lastGrad ? " · YÖKSİS MEZUN" : ""}`} className={className}>
       <dl className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${kpis.length > 5 ? "lg:grid-cols-6" : "lg:grid-cols-5"}`}>
         {kpis.map((x) => (
-          <div key={x.k} className="rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5">
-            <dt className="text-[11px] text-[var(--c-ink-3)]">{x.k}</dt>
-            <dd className="aura-display mt-0.5 text-xl font-semibold tabular-nums text-[var(--c-ink)]">{x.v.toLocaleString("tr-TR")}</dd>
+          <div key={x.k} className="flex flex-col rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5">
+            <dt className="text-[11px] leading-snug text-[var(--c-ink-3)]">{x.k}</dt>
+            <dd className="aura-display mt-auto pt-0.5 text-xl font-semibold tabular-nums text-[var(--c-ink)]">{x.v.toLocaleString("tr-TR")}</dd>
           </div>
         ))}
       </dl>
