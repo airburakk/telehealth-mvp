@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 import {
   doctoriumAudience, hasPortalAccess, audienceFlags, audienceLabel,
   TRIAL_DAYS, LOCKED_PURGE_DAYS, TRIAL_PURGE_NOTICE_DAYS, TRIAL_ALERT_THRESHOLDS,
-  TRIAL_TITLE, DOCTORIUM_STUDENT_SUFFIX,
+  TRIAL_TITLE,
   trialWindow, trialDaysLeft, dueTrialAlerts, shouldPurgeLockedTrial,
   parseTrialAlerts, serializeTrialAlerts, formatTrialEndsAt,
   purgeNoticeMarker, purgeNoticeSentAt,
@@ -109,10 +109,8 @@ describe("sabitler (kullanıcı kararları 2026-09-05)", () => {
     expect(TRIAL_PURGE_NOTICE_DAYS).toBe(30);
     expect([...TRIAL_ALERT_THRESHOLDS]).toEqual([7, 3, 1]);
   });
-  it("deneme ünvanı dürüst ('Dr.', uzmanlık iddiası yok); öğrenci eki tek sabit ve 'hekim' içermez", () => {
-    expect(TRIAL_TITLE).toBe("Dr.");
-    expect(DOCTORIUM_STUDENT_SUFFIX.length).toBeGreaterThan(0);
-    expect(DOCTORIUM_STUDENT_SUFFIX.toLocaleLowerCase("tr")).not.toContain("hekim");
+  it("deneme ünvanı dürüst ('Dr.', uzmanlık iddiası yok)", () => {
+    expect(TRIAL_TITLE).toBe("Dr."); // öğrenci eki sabiti (EDU) 2026-09-09'da kalktı — lockup "[ STUDENT ]" bileşende
   });
 });
 

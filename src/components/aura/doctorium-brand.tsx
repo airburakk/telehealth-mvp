@@ -30,14 +30,35 @@ export const DOCTORIUM_PALETTE = {
   "--dl-cyan": "#28C8D8",
 } as CSSProperties;
 
-// `suffix` (üç katman Faz B1, 2026-09-05): öğrenci yüzeyi logo eki KANCASI ("EDU"/"STU" — 👤 mockup sonrası B2'de
-// geçilir; bugün hiçbir çağıran vermez → görünür fark yok). Marka kelimesi tek sabitte: lib/doctorium-tiers
-// DOCTORIUM_STUDENT_SUFFIX. Biçim yer tutucu — B2 tasarım kararına göre değişir.
-export function DoctoriumWord({ className = "", suffix }: { className?: string; suffix?: string }) {
+// (Faz B1'in `suffix` kancası 2026-09-09'da KALDIRILDI: öğrenci eki metin eki değil, ayrı bir lockup oldu — aşağıda
+// DoctoriumStudentLockup. Hiçbir çağıran suffix vermiyordu.)
+export function DoctoriumWord({ className = "" }: { className?: string }) {
   return (
     <span className={`aura-display font-medium tracking-tight text-[var(--dl-ink)] ${className}`}>
       Doctor<span className="text-[var(--dl-emerald)]">ium</span>
-      {suffix && <span className="ml-[0.28em] align-baseline text-[0.62em] font-semibold tracking-[0.12em] text-[var(--dl-emerald)]">{suffix}</span>}
+    </span>
+  );
+}
+
+/**
+ * ÖĞRENCİ LOCKUP'I — U4 (👤 2026-09-06, mockup turları 9→11; 2026-09-09 👤 "footer'a da taşınsın"): "Doctorium" wordmark'ı
+ * üstte, altında ince köşeli parantez içinde KORAL "STUDENT". Görsel varlık DEĞİL gerçek metin; stil `.dsl-*` (globals.css,
+ * öğrenci paleti bloğu) — punto çağıranın `className`indeki font-size'dan ölçeklenir (Header 14/17 px, footer 26 px).
+ * TEK KAYNAK: Header (DoctoriumBrand) ve DoctoriumFooter aynı bileşeni çizer — kopya markup drift'i (chrome-routes dersi).
+ * Erişilebilir ad ÇAĞIRANIN Link'inde (aria-label "Doctorium Student"); bu istif aria-hidden'dır. Renk: "Doctor" --c-ink,
+ * "ium" .doctorium-ium (tema-duyarlı zümrüt), STUDENT satırı öğrenci dolgu koralı (--c-accent-fill → iki temada #fb923c).
+ */
+export function DoctoriumStudentLockup({ className = "" }: { className?: string }) {
+  return (
+    <span aria-hidden className={`dsl ${className}`.trim()}>
+      <span className="dsl-wm">
+        Doctor<span className="doctorium-ium">ium</span>
+      </span>
+      <span className="dsl-st">
+        <span className="dsl-br" />
+        <span className="dsl-txt">STUDENT</span>
+        <span className="dsl-br dsl-br-r" />
+      </span>
     </span>
   );
 }

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
 import { SystemMessagesMenuItem } from "@/components/SystemMessagesMenuItem";
 import { AuraLogo, AuraMark } from "@/components/AuraLogo";
+import { DoctoriumStudentLockup } from "@/components/aura/doctorium-brand";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47, LANGUAGES, LANG_CHANGE_EVENT } from "@/lib/constants";
@@ -38,6 +39,8 @@ const ROLE_LABELS: Record<string, string> = {
 // renk öğrenci aksan token'ından (--audience-accent; header kromu daima gece → #fb923c). Parantezlerin dış kenarı
 // wordmark'ın MÜREKKEP sınırına oturur (Inter 600 −0,02em ölçümü) — stil `.dsl-*` (globals.css, öğrenci paleti bloğu).
 // Ölçek: küre 28 px; wordmark mobil 14 px / sm+ 17 px → STUDENT satırı 5,6 / 6,8 px (Inter 900, okunur), toplam ≈29 px.
+// 2026-09-09 (👤): aynı lockup portal FOOTER'ında da (DoctoriumFooter student prop'u; küre 44 + wordmark 26 px) — markup
+// paylaşılan DoctoriumStudentLockup bileşeninde, burada yalnız ölçek verilir.
 function DoctoriumBrand({ doctoriumActive, student = false }: { doctoriumActive: boolean; student?: boolean }) {
   if (student) {
     return (
@@ -51,17 +54,9 @@ function DoctoriumBrand({ doctoriumActive, student = false }: { doctoriumActive:
         <span aria-hidden className="brand-live block">
           <AuraMark size={28} tone="emerald" />
         </span>
-        {/* Marka sözcüğü çevrilmez; erişilebilir ad Link'in aria-label'ında (aria-hidden istif). */}
-        <span aria-hidden className="dsl text-[14px] sm:text-[17px]">
-          <span className="dsl-wm">
-            Doctor<span className="doctorium-ium">ium</span>
-          </span>
-          <span className="dsl-st">
-            <span className="dsl-br" />
-            <span className="dsl-txt">STUDENT</span>
-            <span className="dsl-br dsl-br-r" />
-          </span>
-        </span>
+        {/* Marka sözcüğü çevrilmez; erişilebilir ad Link'in aria-label'ında (aria-hidden istif). İstif paylaşılan bileşen
+            (doctorium-brand DoctoriumStudentLockup) — footer'la TEK markup (2026-09-09). */}
+        <DoctoriumStudentLockup className="text-[14px] sm:text-[17px]" />
       </Link>
     );
   }

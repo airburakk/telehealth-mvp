@@ -83,7 +83,7 @@ export default async function DoctoriumLayout({ children }: { children: React.Re
     // Marka kimliği her iki temada tipografiden (Inter) sürer — bkz. globals.css.
     <div data-audience={audienceAttr} className="doctorium-scope flex min-h-[calc(100dvh-4rem)] flex-col bg-[var(--c-bg)] text-[var(--c-ink)]">
       <div className="flex-1">{children}</div>
-      <DoctoriumFooter portal />
+      <DoctoriumFooter portal student={ctx?.audience === "STUDENT"} />
     </div>
   );
 }

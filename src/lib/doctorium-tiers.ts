@@ -103,8 +103,8 @@ export type TrialAlertKey = "7" | "3" | "1" | "ended" | "purge-notice";
 
 /** Deneme ünvanı: doğrulanmamış deneme doktoru için dürüst varsayılan (uzmanlık iddiası YOK). */
 export const TRIAL_TITLE = "Dr.";
-/** Öğrenci yüzeyi logo eki — TEK sabit; mockup sonrası kullanıcı değiştirebilir (EDU/STU). */
-export const DOCTORIUM_STUDENT_SUFFIX = "EDU";
+// (DOCTORIUM_STUDENT_SUFFIX "EDU" sabiti 2026-09-09'da kaldırıldı: 👤 karar U4 "[ STUDENT ]" lockup'ı — metin eki yok;
+// bileşen doctorium-brand DoctoriumStudentLockup, Header + portal footer.)
 
 export function trialWindow(now: Date): { trialStartedAt: Date; trialEndsAt: Date } {
   return { trialStartedAt: now, trialEndsAt: new Date(now.getTime() + TRIAL_DAYS * DAY_MS) };

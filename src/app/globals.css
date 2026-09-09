@@ -294,8 +294,10 @@ header[data-audience="student"] {
    wordmark'ın MÜREKKEP sınırına oturur — yazı kutusuna değil harfe: Inter 600 −0,02em canvas ölçümü (2026-09-06) D sol yan
    boşluğu 0,0625em, m sağ boşluğu (izleme payı düşülmüş) 0,0366em; .dsl-st kendi puntosu 0,4em olduğundan kenar boşlukları
    /0,4 ile wordmark em'ine çevrilir (🪤 em tuzağı: alt elemana punto verince em o elemana göre çözülür). Parantez boyu ve çizgi
-   kalınlığı STUDENT puntosuna oranlı (1,5em · 0,11em, en az 1,5 px). Renk öğrenci aksanı (--audience-accent; Header kromu
-   daima gece → #fb923c 8.5:1). Mockup kaynağı: vault doctorium-marka-arsivi/edu-stu-mockup-2026-09-05/kaynak/sheet11.html (U4). */
+   kalınlığı STUDENT puntosuna oranlı (1,5em · 0,11em, en az 1,5 px). Renk: öğrenci DOLGU koralı --c-accent-fill (iki temada
+   #fb923c — lockup "dolgu" sınıfındadır, 2026-09-06 gündüz kararı; Header kromu daima gece → 8.5:1). 2026-09-09 (👤): aynı
+   lockup portal footer'ında da (DoctoriumFooter student; markup paylaşılan DoctoriumStudentLockup) → gündüz footer'da da
+   #fb923c. Mockup kaynağı: vault doctorium-marka-arsivi/edu-stu-mockup-2026-09-05/kaynak/sheet11.html (U4). */
 .dsl {
   display: inline-flex;
   flex-direction: column;
@@ -319,7 +321,7 @@ header[data-audience="student"] {
   letter-spacing: 0.22em;
   line-height: 1;
   text-transform: uppercase;
-  color: var(--audience-accent, var(--c-accent));
+  color: var(--c-accent-fill, var(--audience-accent, var(--c-accent)));
 }
 .dsl-txt {
   flex: 1;

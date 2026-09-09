@@ -176,7 +176,7 @@ kaynaklar + kaynakça, Sınav dönemleri = tablo + Takvim). Başlık "Staj, Değ
 (eski bağlantılar). **Öğrenci Özelleştir (v6.259):** `PreferencesBoard STUDENT_GROUPS` (metinler öğrenciye göre) + Kariyer satırında
 açılış tercihleri `viewPrefs.kariyer {tur, tusBolum, tusBrans}` (`/api/doctor/view-filters` module `kariyer`; Fırsatlar türü · TUS bölümü ·
 TUS branşı — `resolveEduKind`/`resolveTusSection`, URL parametresi ezer, "Hepsi" çipi tercih varken `?tur=hepsi`); Header öğrenci lockup'ı **"Doctorium [ STUDENT ]"** gerçek metin (U4, v6.251: küre 28 px + Inter 600 wordmark +
-altında koral parantezli STUDENT; `.dsl-*` globals.css; v6.239 webp varlığı kaldırıldı). **Renk (v6.242):**
+altında koral parantezli STUDENT; `.dsl-*` globals.css; v6.239 webp varlığı kaldırıldı). **v6.260 (2026-09-09):** aynı lockup portal footer'ında da (`DoctoriumFooter student`, küre 44 + wordmark 26 px; markup paylaşılan `doctorium-brand DoctoriumStudentLockup`; STUDENT rengi dolgu koralı `--c-accent-fill`, iki temada #fb923c); Faz B1'in `suffix` kancası + `DOCTORIUM_STUDENT_SUFFIX` kaldırıldı. **Renk (v6.242):**
 `.doctorium-scope` aksanı `--c-accent` = marka zümrüdü, öğrenci kapsamı `[data-audience="student"]` KORAL (gece #fb923c; gündüz metin
 #ea580c + dolgu `--c-accent-fill` #fb923c; **raf bandı gündüzde de KOYU** `#1e100b` + koral sekme — 👤 pano B v6.255; %28 koral ve "KOR %12" süpersede) — portalda
 sabit `text-emerald-*` yazılmaz; semantik başarı `--c-success`. **Hukuk (v6.243):** belge seti
