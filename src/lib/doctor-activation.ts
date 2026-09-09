@@ -242,6 +242,25 @@ export function missingOnboardingSteps(docs: { type: string }[], d: OnboardingDa
   return out;
 }
 
+// v6.260 (hukuki belge seti Sürüm 1.4, 05 madde 3.4 · 07 madde A.4 — 👤 09.09.2026): öğrenci → doktor GEÇİŞİNDE
+// öğrenci doğrulama kaydı SİLİNİR. Politika "üniversite e-postası silinir" diyordu; e-posta hesabın giriş adresi
+// olduğundan silinemez → metin "öğrenci doğrulama kaydı (üniversite, bölüm, doğrulama zamanı)" olarak düzeltildi, kod
+// karşılığı bu yardımcı. Saf (birim testli): diploma doğrulanmışsa ve öğrenci alanlarından biri doluysa temizlenecek
+// alanları döndürür; aksi hâlde boş nesne. Bekleyen öğrenci doğrulama token'ı da düşer (artık anlamsız).
+// Kitle kararı etkilenmez: lib/doctorium-tiers zaten diploma > öğrenci sırasıyla VERIFIED der.
+export type StudentRecordFields = {
+  studentVerifiedAt: Date | null; studentTrack: boolean; studentUniversity: string | null; studentDepartment: string | null;
+};
+export function studentRecordClearOnTransition(d: StudentRecordFields, diplomaVerified: boolean): Partial<{
+  studentVerifiedAt: null; studentTrack: false; studentUniversity: null; studentDepartment: null;
+  studentVerifyTokenHash: null; studentVerifySentAt: null;
+}> {
+  if (!diplomaVerified) return {};
+  const any = !!d.studentVerifiedAt || d.studentTrack || !!d.studentUniversity || !!d.studentDepartment;
+  if (!any) return {};
+  return { studentVerifiedAt: null, studentTrack: false, studentUniversity: null, studentDepartment: null, studentVerifyTokenHash: null, studentVerifySentAt: null };
+}
+
 // DB-yan-etkili: belgeleri okuyup İKİ damgayı eşitler (v6.124):
 //   diplomaVerifiedAt — DIPLOMA ACCEPTED (Aşama 1 / Doctorium kapısı)
 //   activatedAt       — canActivate (Aşama 2 / klinik; bugün = aynı koşul, §8.2 katmanları inince
@@ -250,6 +269,7 @@ export function missingOnboardingSteps(docs: { type: string }[], d: OnboardingDa
 // bozulunca kaldırır. Döndürür: hesap şu an KLİNİK-aktif mi (canActivate sonucu). Doctorium
 // erişimi ayrı okunur — v6.147'den beri diplomaVerifiedAt ∨ studentVerifiedAt'i doğrudan
 // hasDoctoriumAccess'le hesapla (çağıran örneği: api/doctor/documents/route.ts currentDoctoriumAccess).
+// v6.260: diploma doğrulandığında öğrenci doğrulama kaydı temizlenir (studentRecordClearOnTransition).
 export async function refreshActivation(doctorId: string): Promise<boolean> {
   const [docs, doc] = await Promise.all([
     // v6.119: status ŞART — canActivate onaylı belge ister (tip imzası bunu derlemede zorlar).
@@ -260,6 +280,8 @@ export async function refreshActivation(doctorId: string): Promise<boolean> {
         mmssInsurer: true, mmssPolicyNo: true, mmssCoverageLimit: true, activatedAt: true, diplomaVerifiedAt: true,
         // v6.126 — Aşama 2 katman damgaları (yalnız AURA_LAYER_GATE=1 iken karara girer)
         smsVerifiedAt: true, workEmailVerifiedAt: true, clinicPhoneVerifiedAt: true,
+        // v6.260 — öğrenci → doktor geçişinde temizlenecek öğrenci kaydı (05 madde 3.4)
+        studentVerifiedAt: true, studentTrack: true, studentUniversity: true, studentDepartment: true,
       },
     }),
   ]);
@@ -275,11 +297,17 @@ export async function refreshActivation(doctorId: string): Promise<boolean> {
     const u = await db.user.findFirst({ where: { doctorId }, select: { id: true } });
     if (!u || !(await hasCurrentConsent(u.id))) ok = false;
   }
-  const data: { activatedAt?: Date | null; diplomaVerifiedAt?: Date | null } = {};
+  const data: {
+    activatedAt?: Date | null; diplomaVerifiedAt?: Date | null;
+    studentVerifiedAt?: null; studentTrack?: false; studentUniversity?: null; studentDepartment?: null;
+    studentVerifyTokenHash?: null; studentVerifySentAt?: null;
+  } = {};
   if (diplomaOk && !doc.diplomaVerifiedAt) data.diplomaVerifiedAt = new Date();
   else if (!diplomaOk && doc.diplomaVerifiedAt) data.diplomaVerifiedAt = null;
   if (ok && !doc.activatedAt) data.activatedAt = new Date();
   else if (!ok && doc.activatedAt) data.activatedAt = null;
+  // v6.260 — geçiş: diploma doğrulanmışsa (yeni ya da önceden) öğrenci doğrulama kaydı silinir (05 madde 3.4).
+  Object.assign(data, studentRecordClearOnTransition(doc, diplomaOk));
   if (Object.keys(data).length > 0) {
     await db.doctor.update({ where: { id: doctorId }, data });
   }

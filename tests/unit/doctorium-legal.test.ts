@@ -24,7 +24,7 @@ describe("hukuki belge kaydı", () => {
   it("gövdeler yayına uygun — taslak ibaresi, kimlik etiketi, iç-not işareti, vault atıfı YOK", () => {
     for (const d of LEGAL_DOCS) {
       expect(d.body.length, d.slug).toBeGreaterThan(1500);
-      for (const bad of ["(TASLAK)", "[İŞLETİCİ", "[MERSİS", "[KEP", "[VERBİS", "👤", "✅", "⏳", "🔴", ".md`", "Karar gereken"]) {
+      for (const bad of ["(TASLAK)", "[İŞLETİCİ", "[MERSİS", "[KEP", "[VERBİS", "👤", "✅", "⏳", "🔴", ".md`", "Karar gereken", "§", "hekim"]) {  // "hekim": terim kuralı (tur 4, 09.09.2026)
         expect(d.body, `${d.slug} içinde '${bad}'`).not.toContain(bad);
       }
     }

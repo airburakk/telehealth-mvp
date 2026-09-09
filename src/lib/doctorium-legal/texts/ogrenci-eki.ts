@@ -1,5 +1,5 @@
 // ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/07-ogrenci-uyeligi-ek-metni.md §A
-// (Sürüm 1.3 · 06.09.2026 — revizyon turu 3 [Kariyer/TUS kapsamı eklendi], 👤 nihai).
+// (Sürüm 1.4 · 09.09.2026 — revizyon turu 4 [fırsat takibi + TUS verisi uyarısı], 👤 nihai).
 // Öğrenci kayıt akışında Doctorium aydınlatmasıyla birlikte gösterilir (ayrı onay kaydı yok — aydınlatma niteliğinde, Kılavuz §2).
 // Elle düzenleme: kaynak .md → vault; script ile yeniden üretilir.
 export const OGRENCI_EKI_MD = `## 1. Öğrenci üyeliği nedir
@@ -41,7 +41,8 @@ kurum nezdinde teyidi anlamına gelmez.
 ## 4. Statü değişikliği
 
 Mezun olup mesleki kimliğinizi doğruladığınızda üyeliğiniz **doktor üyeliğine** dönüşür; o
-andan itibaren doktor üyeliğine ilişkin kapsam ve metinler geçerli olur.
+andan itibaren doktor üyeliğine ilişkin kapsam ve metinler geçerli olur. Geçişle birlikte öğrenci doğrulama
+kaydınız (üniversite, bölüm, doğrulama zamanı) silinir; hesabınızın e-posta adresi üyeliğinizle birlikte kalır.
 
 Öğrencilik statünüz sona erdiğinde (mezuniyet, kayıt silme, ilişik kesme) bunu **bildirmekle
 yükümlüsünüz**; üniversite e-posta adresinizin çalışmaya devam etmesi, öğrenci üyeliğini sürdürme
@@ -50,13 +51,17 @@ hakkı vermez.
 ## 5. İşlenen ek veriler
 
 Doktor üyeliğinde işlenen verilere ek olarak; **üniversite adı, bölüm ve üniversiteye ait
-e-posta adresiniz** ile bu adresin doğrulanmasına ilişkin kayıt işlenir.
+e-posta adresiniz** ile bu adresin doğrulanmasına ilişkin kayıt ve Kariyer sekmesinde **takip ettiğiniz
+fırsatlar** ile bunlara ilişkin hatırlatma kayıtları (son başvuru tarihine 7, 3 ve 1 gün kala gönderilen e-posta
+bildirimleri) işlenir.
 
-Bu veriler; öğrenci üyeliğinin açılması, kapsamın doğru belirlenmesi ve mezuniyet sonrası geçişin
-yönetilmesi amacıyla, **üyelik sözleşmesinin ifası** hukuki sebebine dayanılarak işlenir.
+Bu veriler; öğrenci üyeliğinin açılması, kapsamın doğru belirlenmesi, takip ettiğiniz fırsatların hatırlatılması ve
+mezuniyet sonrası geçişin yönetilmesi amacıyla, **üyelik sözleşmesinin ifası** hukuki sebebine dayanılarak işlenir.
 
 ## 6. Sorumluluk
 
 Doctorium'da yer alan içerik **tıbbi tavsiye niteliği taşımaz** ve bir eğitim programı, ders
-materyali veya müfredat yerine geçmez.
+materyali veya müfredat yerine geçmez. Kariyer sekmesindeki sınav ve yerleştirme verileri ile kılavuz özetleri,
+ÖSYM ve YÖK'ün resmî yayınlarından kaynak ve dönem atfıyla derlenir; **tahmin veya tercih tavsiyesi niteliği
+taşımaz**, bağlayıcı olan resmî yayındır. Staj, burs ve değişim fırsatları ilan eden kurumun duyurusuna bağlıdır.
 `;

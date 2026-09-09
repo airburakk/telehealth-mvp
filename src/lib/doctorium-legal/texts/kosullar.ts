@@ -1,4 +1,4 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/02-uyelik-sozlesmesi-kullanim-kosullari.md (Sürüm 1.2 · 05.09.2026 — revizyon turu 2 [deneme erişimi], 👤 nihai).
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/02-uyelik-sozlesmesi-kullanim-kosullari.md (Sürüm 1.4 · 09.09.2026 — revizyon turu 4, 👤 nihai).
 // Elle düzenleme: kaynak .md → vault; buradaki metin yayın kesitidir (iç notlar/karar bölümleri yok).
 // Kimlik alanları (unvan/adres/MERSİS/KEP/VERBİS) tüzel kişilik kurulunca doldurulur (Kılavuz §8).
 export const KOSULLAR_MD = `## 1. TARAFLAR VE KONU
@@ -18,10 +18,10 @@ ilişkin şartları düzenler.
 | Terim | Anlamı |
 |---|---|
 | **Doctorium** | Doğrulanmış doktorlara ve tıp öğrencilerine açık mesleki çalışma alanı |
-| **Doktor Üye** | Mesleki kimliği e-Devlet mezun belgesi ile doğrulanmış hekim |
+| **Doktor Üye** | Mesleki kimliği e-Devlet mezun belgesi ile doğrulanmış doktor |
 | **Öğrenci Üye** | Üniversite e-postası doğrulanmış tıp fakültesi öğrencisi |
 | **Deneme Erişimi** | Doktor adayına, mesleki kimlik doğrulaması tamamlanmadan önce yalnız doğrulamayı tamamlaması için tanınan, en fazla 30 günlük sınırlı erişim (madde 3.2) |
-| **İçerik** | Platformda sunulan haber, akademik yayın özeti, mevzuat, içtihat, doktrin künyesi, prospektüs bilgisi, kongre ve etkinlik kaydı |
+| **İçerik** | Platformda sunulan haber, akademik yayın özeti, mevzuat, içtihat, doktrin künyesi, prospektüs bilgisi, kongre ve etkinlik kaydı, resmî sınav ve yerleştirme verileri ile staj, burs ve değişim fırsatı kayıtları |
 | **Sponsorlu İçerik** | "Sponsorlu" etiketiyle yayımlanan, bedeli karşılığı yer verilen içerik |
 | **Puan** | Platform içi, parasal değeri bulunmayan katılım göstergesi |
 
@@ -88,6 +88,11 @@ etkinliklere ilişkin akreditasyon veya kredi bilgisi konusunda beyanda bulunmaz
 
 **4.7. Süreklilik.** Platform, hizmeti kesintisiz sunmayı hedefler ancak bakım, güncelleme veya
 teknik zorunluluk hâllerinde geçici kesinti yaşanabilir.
+
+**4.8. Sınav ve yerleştirme verileri.** Öğrenci üyeliğinde sunulan TUS ve tıp fakültesi yerleştirme verileri
+ile kılavuz özetleri, ÖSYM ve YÖK'ün resmî yayınlarından kaynak ve dönem atfıyla derlenir. Bu veriler **tahmin,
+simülasyon veya tercih tavsiyesi niteliği taşımaz**; bağlayıcı olan ilgili kurumun resmî yayınıdır. Staj, burs ve
+değişim fırsatları ilan eden kurumun duyurusuna bağlıdır; Platform bu fırsatların tarafı değildir.
 
 ---
 

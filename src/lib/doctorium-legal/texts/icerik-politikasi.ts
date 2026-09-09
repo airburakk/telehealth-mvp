@@ -1,4 +1,4 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/04-icerik-kaynak-telif-politikasi.md (Sürüm 1.1 · 04.09.2026 — revizyon turu 1, 👤 nihai).
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/04-icerik-kaynak-telif-politikasi.md (Sürüm 1.4 · 09.09.2026 — revizyon turu 4, 👤 nihai).
 // Elle düzenleme: kaynak .md → vault; buradaki metin yayın kesitidir (iç notlar/karar bölümleri yok).
 // Kimlik alanları (unvan/adres/MERSİS/KEP/VERBİS) tüzel kişilik kurulunca doldurulur (Kılavuz §8).
 export const ICERIK_POLITIKASI_MD = `## 1. Yaklaşımımız
@@ -50,6 +50,13 @@ resmî yayındır.
 
 İlaç bilgisi araması, yürürlükteki **resmî ürün bilgisine** erişimi kolaylaştırır. Tanıtım veya
 tavsiye niteliği taşımaz; bağlayıcı olan ilgili otoritenin yayımladığı güncel metindir.
+
+### 2.7 Sınav, yerleştirme ve resmî istatistik verileri
+
+TUS ve tıp fakültesi yerleştirme verileri ile mezun sayıları, ÖSYM ve YÖK'ün **resmî yayınlarından** dönem ve
+kaynak atfıyla derlenir; grafikler yalnız resmî veriyi gösterir, tahmin veya tercih tavsiyesi içermez. Kılavuz
+özetleri resmî kılavuzun kısa özetidir, yorum eklenmez. Kaynak ve kurs dizini yalnız ad, kurum, site ve biçim
+künyesi taşır; fiyat, puan, sıralama veya öneri yer almaz.
 
 ## 3. Kaynak logoları ve amblemler
 

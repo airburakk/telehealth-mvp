@@ -1,4 +1,4 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/01-kvkk-aydinlatma-metni.md (Sürüm 1.2 · 05.09.2026 — revizyon turu 2 [deneme erişimi], 👤 nihai).
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/doctorium-hukuki-belgeler/01-kvkk-aydinlatma-metni.md (Sürüm 1.4 · 09.09.2026 — revizyon turu 4, 👤 nihai).
 // Elle düzenleme: kaynak .md → vault; buradaki metin yayın kesitidir (iç notlar/karar bölümleri yok).
 // Kimlik alanları (unvan/adres/MERSİS/KEP/VERBİS) tüzel kişilik kurulunca doldurulur (Kılavuz §8).
 export const AYDINLATMA_MD = `## 1. Veri Sorumlusu
@@ -35,10 +35,10 @@ Sunulan işlevler:
 
 | Kategori | Veriler |
 |---|---|
-| **Kayıt sırasında istenen** | Ad-soyad, ünvan, uzmanlık branşı, şehir, e-posta adresi ve **isteğe bağlı** cep telefonu numarası. Deneme Erişimi kaydında yalnız ad-soyad, uzmanlık branşı, şehir ve e-posta adresi istenir |
+| **Kayıt sırasında istenen** | Ad-soyad, unvan, uzmanlık branşı, şehir, e-posta adresi ve **isteğe bağlı** cep telefonu numarası. Deneme Erişimi kaydında yalnız ad-soyad, uzmanlık branşı, şehir ve e-posta adresi istenir |
 | **Hesap güvenliği** | Parolanız — **açık hâliyle saklanmaz**, yalnız geri döndürülemez özeti tutulur. Parolasız girişte e-posta adresinize gönderilen tek kullanımlık bağlantının özeti tutulur; 20 dakika geçerlidir, kullanıldığında silinir |
 | **Doğrulama** | **Doğrulama başarılıysa yüklediğiniz belge saklanmaz** — dosya hiç depolanmaz, yerine imha kaydı yazılır. Saklanan yalnız doğrulama kararı, zamanı ve şifreli barkod numarasıdır. **T.C. kimlik numaranız** yalnız sorgu anında kullanılır, hiçbir yerde tutulmaz. Belge yalnız otomatik doğrulama sonuç vermediğinde, **insan incelemesi için geçici olarak** saklanır → ayrıntı: doğrulama ekranındaki aydınlatma metni |
-| **Kullanım tercihleri** | Takip edilen branşlar, açık akış modülleri, görünüm tercihleri, kongre bildirim tercihleri (etkinlik türü, kapsam, hatırlatma günleri) |
+| **Kullanım tercihleri** | Takip edilen branşlar, açık akış modülleri, görünüm tercihleri, kongre bildirim tercihleri (etkinlik türü, kapsam, hatırlatma günleri); öğrenci üyelikte takip ettiğiniz staj, burs ve değişim fırsatları ile bunlara ilişkin hatırlatma kayıtları |
 | **Etkileşim** | Kaydedilen içerikler, anket yanıtları, puan hareketleri, ödül talepleri ve talep notları |
 | **Onay kayıtları** | Verilen/geri alınan açık rızalar; her biri zaman damgalı ve metin özeti (hash) ile birlikte |
 | **İşlem güvenliği** | Giriş kayıtları, IP adresi, tarayıcı/cihaz bilgisi, erişim ve işlem logları |
@@ -46,7 +46,7 @@ Sunulan işlevler:
 ### 3.2 Tıp öğrencisi üyeliğinde (ek/farklı)
 
 Üniversite adı, bölüm, **üniversiteye ait (.edu.tr) e-posta adresi** ve bu adresin tıklama ile
-doğrulanmasına ilişkin kayıt. → ayrıntı: Tıp Öğrencisi Üyeliği Ek Metni (öğrenci kayıt akışında gösterilir)
+doğrulanmasına ilişkin kayıt; Kariyer sekmesinde takip ettiğiniz fırsatlar ve hatırlatma kayıtları. → ayrıntı: Tıp Öğrencisi Üyeliği Ek Metni (öğrenci kayıt akışında gösterilir)
 
 ### 3.3 İşlenmeyen veriler
 
@@ -60,13 +60,13 @@ doğrulanmasına ilişkin kayıt. → ayrıntı: Tıp Öğrencisi Üyeliği Ek M
 
 ## 4. Kişisel verilerin işlenme amaçları
 
-1. Üyelik kaydının oluşturulması ve yönetilmesi
+1. Üyelik kaydının oluşturulması ve yönetilmesi *(Deneme Erişimi süresinin izlenmesi ile süre ve imha bildirimleri dâhil)*
 2. **Mesleki kimliğin doğrulanması** — Doctorium yalnız doktorlara ve tıp öğrencilerine açıktır;
    doğrulama, platformun kapalı yapısının ve içerik güvenilirliğinin ön koşuludur
 3. Bilgi akışının, kongre/etkinlik bilgilerinin ve arama işlevlerinin sunulması
 4. Akışın **tercihlerinize göre düzenlenmesi** (takip ettiğiniz branşlar, açık modüller)
 5. Günlük özet bülteninin iletilmesi *(yalnız açıkça abone olduysanız)*
-6. Kongre/etkinlik hatırlatmalarının gönderilmesi *(yalnız seçtiğiniz eşiklerde)*
+6. Kongre/etkinlik hatırlatmalarının ve öğrenci üyelikte takip edilen fırsatlara ilişkin son başvuru hatırlatmalarının gönderilmesi *(yalnız seçtiğiniz eşiklerde ve takip ettiğiniz kayıtlar için)*
 7. Anketlerin sunulması, mükerrer katılımın engellenmesi ve hakedişin ispatı
 8. Puan ve ödül programının yürütülmesi
 9. Sponsorlu içeriğin yayımlanması ve **toplulaştırılmış** ölçümü
@@ -123,8 +123,8 @@ Platform; barındırma, veritabanı, e-posta gönderimi, dosya saklama ve güven
 hizmet sağlayıcılardan yararlanır. Sunucu ve veritabanı altyapısı **Avrupa Birliği içinde**
 (Frankfurt) konumlandırılmıştır. Barındırma, veritabanı, dosya saklama, e-posta gönderimi ve hız sınırlama
 hizmetleri veri işleyen sıfatıyla; Google veya Apple hesabıyla giriş seçildiğinde ilgili sağlayıcı bağımsız veri
-sorumlusu sıfatıyla veri işler. Haber başlıklarının çevirisinde kullanılan yapay zekâ hizmetine **kişisel veri
-gönderilmez**. Yurt dışında yerleşik sağlayıcılara aktarım, KVKK m.9'daki güvencelere bağlı olarak yapılır.
+sorumlusu sıfatıyla veri işler. İçeriklerin çevirisinde ve özetlenmesinde kullanılan yapay zekâ hizmetine **kişisel veri
+gönderilmez**; bu hizmete yalnız kamuya açık yayın ve haber metni gider. Yurt dışında yerleşik sağlayıcılara aktarım, KVKK m.9'daki güvencelere bağlı olarak yapılır.
 
 ---
 
@@ -141,6 +141,8 @@ gönderilmez**. Yurt dışında yerleşik sağlayıcılara aktarım, KVKK m.9'da
 | Onay (rıza) kayıtları | **10 yıl**, zaman damgalı zincirde; hesap kapatmada IP ve cihaz bilgisi boşaltılır |
 | İşlem güvenliği ve erişim kayıtları | **2 yıl**; süre sonunda IP ve cihaz alanları boşaltılır |
 | Bülten abonelikten çıkma kaydı · KVKK başvuru kütüğü | **3 yıl** |
+
+Bu tablo, Saklama ve İmha Politikası madde 3 tablosunun özetidir; fark hâlinde o politika esastır.
 
 ---
 

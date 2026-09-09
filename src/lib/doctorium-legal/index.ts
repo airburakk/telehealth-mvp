@@ -18,9 +18,9 @@ import { CEREZ_MD } from "./texts/cerez";
 import { ICERIK_POLITIKASI_MD } from "./texts/icerik-politikasi";
 import { KVKK_BASVURU_MD } from "./texts/kvkk-basvuru";
 
-export const DOCTORIUM_LEGAL_VERSION = "1.3";
-export const DOCTORIUM_LEGAL_DATE = "2026-09-06";
-export const DOCTORIUM_LEGAL_DATE_TR = "6 Eylül 2026";
+export const DOCTORIUM_LEGAL_VERSION = "1.4";
+export const DOCTORIUM_LEGAL_DATE = "2026-09-09";
+export const DOCTORIUM_LEGAL_DATE_TR = "9 Eylül 2026";
 /** Tüzel kişilik kurulana dek metinlerde kullanılan işletici ifadesi (👤 karar 03.09.2026). */
 export const DOCTORIUM_OPERATOR_LABEL = "Doctorium platform işleticisi";
 export const DOCTORIUM_LEGAL_CONTACT = "bilgi@doctorium.tr";

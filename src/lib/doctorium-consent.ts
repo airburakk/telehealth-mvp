@@ -33,9 +33,11 @@ export const DOCTORIUM_DIPLOMA_BEYAN_SCOPE = "DOCTORIUM_DIPLOMA_BEYAN";
  * turu 1: 02 madde 1.3 + madde atıfları "madde N", 01 madde 2 kutusu tek cümle, sözleşme başlıkları büyük harf) ·
  * 3 = Sürüm 1.2 (05.09.2026, 👤 revizyon turu 2 — üç katmanlı üyelik: 02 madde 2 "Deneme Erişimi" tanımı, madde 3.2
  * a–d deneme erişimi [30 gün · sponsorlu/anket/puan/ödül kapalı · ücretli üyeliğe dönüşmez · +90 gün silme], madde 10.2-e;
- * 01 madde 3.1/6/8 deneme kaydı + parolasız giriş bağlantısı 20 dk). Bayrak DOCTORIUM_TRIAL_ENABLED bu sürümden önce AÇILMAZ.
+ * 01 madde 3.1/6/8 deneme kaydı + parolasız giriş bağlantısı 20 dk). Bayrak DOCTORIUM_TRIAL_ENABLED bu sürümden önce AÇILMAZ ·
+ * 4 = Sürüm 1.4 (09.09.2026, 👤 revizyon turu 4 — tam tur kontrol: 02 madde 2 "doğrulanmış doktor" + "İçerik" tanımı + madde 4.8
+ * sınav/yerleştirme verileri; 01 unvan · tercihler/amaçlar fırsat takibi · madde 8 "Belge 05 esastır" notu).
  */
-export const DOCTORIUM_CONSENT_VERSION = 3;
+export const DOCTORIUM_CONSENT_VERSION = 4;
 
 export const DOCTORIUM_SCOPES: readonly string[] = [DOCTORIUM_KVKK_SCOPE, DOCTORIUM_TERMS_SCOPE];
 

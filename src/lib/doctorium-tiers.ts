@@ -10,7 +10,8 @@
 //   NONE     — üyelik yok ya da üyelikten çıkılmış (doctoriumOptOutAt).
 //
 // Öncelik: optOut > diploma > öğrenci > deneme. Diploma doğrulanınca deneme damgaları SİLİNMEZ ama
-// baskın katman VERIFIED olur (damgalar tarihsel iz). ⚠️ Eski `isStudentOnly` (studentVerifiedAt ∧
+// baskın katman VERIFIED olur (damgalar tarihsel iz). v6.260: diploma doğrulanınca öğrenci damgaları
+// TEMİZLENİR (05 madde 3.4, lib/doctor-activation studentRecordClearOnTransition) — sıra yine de korunur. ⚠️ Eski `isStudentOnly` (studentVerifiedAt ∧
 // ¬activatedAt) pazarlama süzgeci olarak ARTIK KULLANILMAZ — tek sözcü `audienceFlags`. Bilinçli kenar:
 // diploması doğrulanmış ama klinik aktivasyonu (activatedAt) olmayan eski öğrenci VERIFIED sayılır;
 // 2. katmanın tanımı "e-Devlet doğrulamasını yapmış doktora tüm içerik açık"tır.
