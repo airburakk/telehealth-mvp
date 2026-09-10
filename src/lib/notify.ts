@@ -22,7 +22,7 @@ async function nudgeNotify(): Promise<void> {
 }
 
 export interface NotifyInput {
-  type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "FREECARE_MATCH" | "FREECARE_TREATMENT" | "SO_REVIEW" | "SO_REQUEST" | "SO_ASSIGNED" | "SO_OPINION" | "SO_VIDEO" | "CLINIC_OFFER" | "CLINIC_MATCH" | "CONSULT_ANSWERED" | "CONSULT_MESSAGE" | "CONSULT_VIDEO" | "ACCOUNT_VERIFIED" | "AGENCY_FILE" | "DISCHARGE_REQUEST" | "REGISTRY_REPORT" | "TOURISM_DISCLAIMER" | "TOURISM_MESSAGE" | "TOURISM_OFFER" | "CONGRESS_ALERT" | "DAILY_DIGEST" | "DEFENSE_REPLY" | "STAFF_APPLICATION" | "DOC_REJECTED" | "DOCTOR_ACTIVATED" | "TRIAL_REMINDER" | "TRIAL_ENDED" | "TRIAL_PURGE_NOTICE" | "EDU_DEADLINE";
+  type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "FREECARE_MATCH" | "FREECARE_TREATMENT" | "SO_REVIEW" | "SO_REQUEST" | "SO_ASSIGNED" | "SO_OPINION" | "SO_VIDEO" | "CLINIC_OFFER" | "CLINIC_MATCH" | "CONSULT_ANSWERED" | "CONSULT_MESSAGE" | "CONSULT_VIDEO" | "ACCOUNT_VERIFIED" | "AGENCY_FILE" | "DISCHARGE_REQUEST" | "REGISTRY_REPORT" | "TOURISM_DISCLAIMER" | "TOURISM_MESSAGE" | "TOURISM_OFFER" | "CONGRESS_ALERT" | "DAILY_DIGEST" | "DEFENSE_REPLY" | "STAFF_APPLICATION" | "DOC_REJECTED" | "DOCTOR_ACTIVATED" | "TRIAL_REMINDER" | "TRIAL_ENDED" | "TRIAL_PURGE_NOTICE" | "EDU_DEADLINE" | "ABANDONED_NOTICE" | "KVKK_APPLICATION_ANSWERED";
   title: string;
   body?: string;
   href?: string;
@@ -33,7 +33,9 @@ export interface NotifyInput {
 // tipi buraya da yaz; aksi hâlde portal zilinde hiç görünmez (fail-closed).
 // TRIAL_* (2026-09-05, üç katman): deneme hatırlatması / süre doldu / imha bildirimi — lib/trial-sweep yazar.
 // EDU_DEADLINE (2026-09-06, Kariyer EDU E2): takip edilen fırsatın son başvurusu 7/3/1 gün kala — lib/edu-reminder yazar.
-export const DOCTORIUM_NOTIFICATION_TYPES = ["CONGRESS_ALERT", "DAILY_DIGEST", "TRIAL_REMINDER", "TRIAL_ENDED", "TRIAL_PURGE_NOTICE", "EDU_DEADLINE"] as const;
+// ABANDONED_NOTICE (2026-09-09, Paket 2): terk edilmiş hesap 30 gün içinde silinecek — lib/abandoned-sweep yazar.
+// KVKK_APPLICATION_ANSWERED (2026-09-09, Paket 2): m.11 başvurusu yanıtlandı — lib/kvkk-applications yazar.
+export const DOCTORIUM_NOTIFICATION_TYPES = ["CONGRESS_ALERT", "DAILY_DIGEST", "TRIAL_REMINDER", "TRIAL_ENDED", "TRIAL_PURGE_NOTICE", "EDU_DEADLINE", "ABANDONED_NOTICE", "KVKK_APPLICATION_ANSWERED"] as const;
 
 export async function notifyRoles(roles: string[], n: NotifyInput): Promise<void> {
   try {

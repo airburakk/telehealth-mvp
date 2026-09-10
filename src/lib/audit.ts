@@ -43,7 +43,11 @@ export type AuditAction =
   | "DOCTORIUM_LEAVE" // Aşama 2 doktoru Doctorium üyeliğinden çıktı — hesap açık kaldı, katman silindi
   | "DOCTORIUM_ACCOUNT_CLOSE" // yalnız-Doctorium üyesi hesabını kapattı → hesap + üyelik verisi silindi
   | "PASSWORD_RESET" // parola e-posta bağlantısıyla sıfırlandı — oturum AÇILMAZ, tüm oturumlar düşer
-  | "DOCTORIUM_TRIAL_PURGE"; // deneme süresi + saklama süresi (90 g) doldu, doğrulama yok → hesap cron'la silindi (actor null; 2026-09-05)
+  | "DOCTORIUM_TRIAL_PURGE" // deneme süresi + saklama süresi (90 g) doldu, doğrulama yok → hesap cron'la silindi (actor null; 2026-09-05)
+  // ── Hukuki set Paket 2 (05/06 numaralı belgeler, 2026-09-09) ─────────────────────────────────
+  | "DOCTORIUM_ABANDONED_PURGE" // terk edilmiş hesap: 3 yıl giriş yok + 30 gün bildirim geçti → cron'la silindi (actor null)
+  | "KVKK_APPLICATION_SUBMIT" // KVKK m.11 başvurusu platform içi formdan iletildi
+  | "KVKK_APPLICATION_DECIDE"; // KVKK m.11 başvurusu incelemeci tarafından yanıtlandı
 
 interface RecordInput {
   actor: SessionUser | null;
@@ -137,6 +141,7 @@ function computeLegacyEntryHash(f: {
 // v1 satırlar burada yalnız legacy formülle denetlenir (satır-yerel bakışta yazım zamanı bilinemez);
 // downgrade tespiti zincir yürüyüşünün işidir (verifyAccessChain — v2'den sonra v1 = bozuk).
 function sealVerdict(r: VerifiableRow): boolean | null {
+  if (r.purgedAt) return null; // ip/userAgent boşaltıldı (05 madde 3.10) — mühür yeniden hesaplanamaz, bozukluk değil
   if (!r.entryHash || !r.prevHash) return null;
   if (isV2Seal(r.entryHash)) {
     const check = verifyChainSeal(AUDIT_SEAL_DOMAIN, v2Canonical({
@@ -314,7 +319,7 @@ type VerifiableRow = {
   actorId: string | null; actorRole: string | null; action: string; resourceType: string;
   resourceId: string; subjectUserId: string | null; detail: string | null; ip: string | null;
   userAgent: string | null; createdAt: Date; prevHash: string | null; entryHash: string | null;
-  id: string; tsTime: Date | null; tsToken: string | null;
+  id: string; tsTime: Date | null; tsToken: string | null; purgedAt: Date | null;
 };
 function verifyRow(
   r: VerifiableRow,
@@ -384,6 +389,7 @@ export interface ChainIntegrity {
   count: number;
   brokenAt: string | null;
   unverifiableSeals: number;
+  purgedSeals: number; // 2 yıl sonra ip/userAgent boşaltılmış satır sayısı (05 madde 3.10 — mühür atlanır, bağ sürer)
   v1Count: number;
   v2Count: number;
   unsealedCount: number;
@@ -401,13 +407,14 @@ export async function verifyAccessChain(): Promise<ChainIntegrity> {
   const lastAnchorAt = lastAnchor?.tsTime.toISOString() ?? null;
   let prev = "GENESIS";
   let unverifiableSeals = 0;
+  let purgedSeals = 0;
   let v1Count = 0;
   let v2Count = 0;
   let sawV2 = false;
   // Kırık zincir = kurcalama/veri kaybı şüphesi → alarm (Ray C — purge-deleted cron'u günlük nöbette koşturur).
   const fail = (id: string) => {
     void sendAlert("audit-chain", "Audit zinciri bütünlük doğrulaması BAŞARISIZ", `brokenAt=${id}`);
-    return { ok: false, count: rows.length, brokenAt: id, unverifiableSeals, v1Count, v2Count, unsealedCount, lastAnchorAt };
+    return { ok: false, count: rows.length, brokenAt: id, unverifiableSeals, purgedSeals, v1Count, v2Count, unsealedCount, lastAnchorAt };
   };
   for (const r of rows) {
     if (r.prevHash !== prev) return fail(r.id);
@@ -418,12 +425,39 @@ export async function verifyAccessChain(): Promise<ChainIntegrity> {
       v1Count++;
       if (sawV2) return fail(r.id); // downgrade: v2 çağından sonra anahtarsız v1 mühür
     }
-    const verdict = sealVerdict({ ...r, prevHash: prev });
-    if (verdict === false) return fail(r.id);
-    if (verdict === null) unverifiableSeals++; // unknown-key: bağ denetlendi, mühür bu ortamda doğrulanamadı
+    // Purged satır (05 madde 3.10, consent.ts ConsentRecord.purgedAt İLE AYNI desen): ip/userAgent
+    // boşaltıldığı için mühür kendi alanlarından yeniden HESAPLANAMAZ → mühür kontrolü atlanır
+    // (purgedSeals sayacı), ama prevHash BAĞI aynen sürer — zincir kırılmaz, kurcalama gizlenmez.
+    if (r.purgedAt) {
+      purgedSeals++;
+    } else {
+      const verdict = sealVerdict({ ...r, prevHash: prev });
+      if (verdict === false) return fail(r.id);
+      if (verdict === null) unverifiableSeals++; // unknown-key: bağ denetlendi, mühür bu ortamda doğrulanamadı
+    }
     prev = r.entryHash!;
   }
-  return { ok: true, count: rows.length, brokenAt: null, unverifiableSeals, v1Count, v2Count, unsealedCount, lastAnchorAt };
+  return { ok: true, count: rows.length, brokenAt: null, unverifiableSeals, purgedSeals, v1Count, v2Count, unsealedCount, lastAnchorAt };
+}
+
+// ── IP/cihaz 2 yıl sonra boşaltma (05 madde 3.10, Paket 2) ──────────────────────────────────────
+// consent.ts ConsentRecord.purgedAt İLE AYNI desen: satır SİLİNMEZ, yalnız ip/userAgent null'lanır +
+// purgedAt damgalanır. Kapsam kullanıcı kararı: TÜM AccessLog (action türünden bağımsız) — zincir
+// AURA+Doctorium ortak, ayrıştırmak zincirin anlamını karmaşıklaştırırdı ve AURA tarafında bu alan
+// için ayrı tanımlı bir süre yoktu. purge-deleted cron'undan (06:30 TR) çağrılır.
+const AUDIT_META_RETENTION_MS = 2 * 365 * 24 * 60 * 60 * 1000;
+
+export async function purgeStaleAuditMeta(now: Date = new Date()): Promise<{ purged: number }> {
+  const cutoff = new Date(now.getTime() - AUDIT_META_RETENTION_MS);
+  const res = await db.accessLog.updateMany({
+    where: {
+      createdAt: { lt: cutoff },
+      purgedAt: null,
+      OR: [{ ip: { not: null } }, { userAgent: { not: null } }],
+    },
+    data: { ip: null, userAgent: null, purgedAt: now },
+  });
+  return { purged: res.count };
 }
 
 // Denetçi (ADMIN / Etik Kurul) görünümü için tek bir kayıt — küresel zincirin metadata'sı (klinik içerik YOK).

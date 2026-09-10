@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import {
   ArrowRight, BarChart2, CalendarDays, Gift, LayoutDashboard, Megaphone,
-  MousePointerClick, TrendingUp, GraduationCap
+  MousePointerClick, TrendingUp, GraduationCap, ShieldCheck
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -76,6 +76,13 @@ const PANELS = [
     desc: "Doctorium vitrini tıklama/görüntülenme sayaçları — first-party agregat, kimliksiz.",
     icon: MousePointerClick,
     tone: "#2dd4bf",
+  },
+  {
+    href: "/admin/kvkk-basvurulari",
+    label: "KVKK Başvuruları",
+    desc: "KVKK m.11 başvuru kütüğü — bekleyen talepleri gör, en geç 30 gün içinde yanıtla.",
+    icon: ShieldCheck,
+    tone: "#f43f5e",
   },
 ];
 

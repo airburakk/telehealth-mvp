@@ -193,6 +193,33 @@ export async function purgeTrialAccount(userId: string, doctorId: string): Promi
   return "purged";
 }
 
+export type AbandonedPurgeResult = "purged" | "skipped-ties" | "skipped-docs";
+
+/**
+ * TERK EDİLMİŞ HESAP İMHASI (05 madde 3.1b, Paket 2, 2026-09-09) — lib/abandoned-sweep.ts çağırır:
+ * doğrulanmış (diploma/öğrenci) hesap, son girişten 3 yıl geçmiş, 30 gün önce bildirim gitmiş.
+ * Karar (tarih/bildirim) abandoned-sweep'te; burası purgeTrialAccount ile AYNI fail-closed
+ * korkuluklar + aynı kapatma gövdesi (closeAccountRows) — farkı yalnız audit action + detay metni.
+ */
+export async function purgeAbandonedAccount(userId: string, doctorId: string): Promise<AbandonedPurgeResult> {
+  const ties = await countClinicalTies(doctorId);
+  if (hasClinicalTies(ties)) return "skipped-ties";
+  const pending = await db.doctorDocument.count({ where: { doctorId, status: "PENDING" } });
+  if (pending > 0) return "skipped-docs";
+
+  const now = new Date();
+  const counts = await db.$transaction((tx) => closeAccountRows(tx, userId, doctorId, now));
+  await recordAccess({
+    actor: null,
+    action: "DOCTORIUM_ABANDONED_PURGE",
+    resourceType: "User",
+    resourceId: userId,
+    subjectUserId: userId,
+    detail: `son girişten 3 yıl + 30 günlük bildirim süresi doldu; hesap ve üyelik verisi silindi (silinen: ${counts.saved} kayıt, ${counts.follows} takip, ${counts.points} puan hareketi, ${counts.digests} özet)`,
+  });
+  return "purged";
+}
+
 export type CloseResult =
   | { ok: true; counts: LayerCounts }
   | { ok: false; reason: "CLINICAL_TIES"; ties: ClinicalTies }

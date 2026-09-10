@@ -5,9 +5,12 @@
 // Zincir GLOBAL (GENESIS→…): dev branch sağlıklı bir kopyaysa append ok kalır; tamper brokenAt üretir.
 import { describe, it, expect, afterAll } from "vitest";
 import { db } from "@/lib/db";
-import { recordAccess, verifyAccessChain } from "@/lib/audit";
+import { recordAccess, verifyAccessChain, purgeStaleAuditMeta } from "@/lib/audit";
 import { sha256 } from "@/lib/timestamp";
 import type { SessionUser } from "@/lib/session";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const AUDIT_META_RETENTION_MS = 2 * 365 * DAY_MS; // audit.ts'teki sabitle AYNI değer (export edilmiyor — kasıtlı: purge-deleted dışında hiçbir çağıran cutoff'u bilmemeli)
 
 const TEST_DB = process.env.TEST_DATABASE_URL;
 const RUN = `itest-audit-${Date.now()}`; // bu koşuya özel resourceId prefix'i (yalnız kendi satırlarımı temizlerim)
@@ -80,5 +83,52 @@ describe.skipIf(!TEST_DB)("entegrasyon: audit zinciri bütünlük + tamper (ger�
     // Geri al: afterAll cleanup'ı atlanırsa (paralel yazıcı uç-kontrolünü bozarsa) bile zincir tutarlı kalsın.
     await db.accessLog.update({ where: { id: victim.id }, data: { action: victim.action } });
     expect((await verifyAccessChain()).ok).toBe(true);
+  });
+
+  // 05 madde 3.10 (Paket 2, 2026-09-09): IP/cihaz 2 yıl sonra boşaltılır — consent.ts ConsentRecord.purgedAt
+  // İLE AYNI desen. Naif bir UPDATE (yalnız ip/userAgent null) zinciri KIRIK gösterirdi (mühür bu alanları
+  // kapsıyor); purgedAt damgası mühür kontrolünü ATLATIR, bağ (prevHash) sürer.
+  it("purgedAt: ip/userAgent boşaltılan satırda mühür kontrolü atlanır (KIRIK göstermez) + purgedSeals sayar", async () => {
+    const actor = { id: "itest-actor", role: "ADMIN" } as SessionUser;
+    const rid = `${RUN}-purge`;
+    await recordAccess({ actor, action: "DOCUMENT_VIEW", resourceType: "CASE", resourceId: rid, subjectUserId: null, detail: "itest purge", ip: "203.0.113.9", userAgent: "itest-ua" });
+    const row = await db.accessLog.findFirst({ where: { resourceId: rid }, orderBy: [{ createdAt: "desc" }, { id: "desc" }] });
+    if (!row) throw new Error("kayıt bulunamadı");
+    myIds.push(row.id);
+
+    const before = await verifyAccessChain();
+    expect(before.ok).toBe(true);
+
+    // purgeStaleAuditMeta'nın 2 yıl sonra yapacağını elle simüle et (cutoff'u beklemeden).
+    await db.accessLog.update({ where: { id: row.id }, data: { ip: null, userAgent: null, purgedAt: new Date() } });
+
+    const after = await verifyAccessChain();
+    expect(after.ok).toBe(true); // naif bir UPDATE burada false döndürürdü — regresyon kilidi
+    expect(after.purgedSeals).toBe(before.purgedSeals + 1);
+    // Bağ hâlâ doğrulanabilir: prevHash/entryHash silinmedi, yalnız ip/userAgent boşaldı.
+    const refreshed = await db.accessLog.findUnique({ where: { id: row.id } });
+    expect(refreshed?.prevHash).toBe(row.prevHash);
+    expect(refreshed?.entryHash).toBe(row.entryHash);
+  });
+
+  it("purgeStaleAuditMeta: cutoff'u aşan satırı hedefler (createdAt DEĞİŞTİRİLMEDEN — 'now' ileri alınır)", async () => {
+    const actor = { id: "itest-actor", role: "ADMIN" } as SessionUser;
+    const rid = `${RUN}-purge2`;
+    await recordAccess({ actor, action: "DOCUMENT_VIEW", resourceType: "CASE", resourceId: rid, subjectUserId: null, detail: "itest purge2", ip: "203.0.113.11", userAgent: "itest-ua-2" });
+    const row = await db.accessLog.findFirst({ where: { resourceId: rid }, orderBy: [{ createdAt: "desc" }, { id: "desc" }] });
+    if (!row) throw new Error("kayıt bulunamadı");
+    myIds.push(row.id);
+
+    // cutoff'u BU satırın hemen ötesine taşı (createdAt'e dokunmadan) — paralel testlerin o anda
+    // yazdığı taze satırlar cutoff'un GERİSİNDE kalır (etkilenmez), yalnız benim satırım + ondan
+    // zaten daha eski (gerçekten süpürülmesi gereken) satırlar hedeflenir.
+    const cutoffNow = new Date(row.createdAt.getTime() + AUDIT_META_RETENTION_MS + DAY_MS);
+    const res = await purgeStaleAuditMeta(cutoffNow);
+    expect(res.purged).toBeGreaterThanOrEqual(1);
+
+    const refreshed = await db.accessLog.findUnique({ where: { id: row.id } });
+    expect(refreshed?.ip).toBeNull();
+    expect(refreshed?.userAgent).toBeNull();
+    expect(refreshed?.purgedAt).not.toBeNull();
   });
 });

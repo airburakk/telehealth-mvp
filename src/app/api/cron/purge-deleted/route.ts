@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { purgeExpired, RETENTION_YEARS } from "@/lib/account-deletion";
-import { verifyAccessChain, recordAccess, sealDailyChainAnchor } from "@/lib/audit";
+import { verifyAccessChain, recordAccess, sealDailyChainAnchor, purgeStaleAuditMeta } from "@/lib/audit";
 import { verifyConsentChain } from "@/lib/consent";
 import { sendAlert } from "@/lib/alerts";
 import { cronGate, errText } from "@/lib/cron-guard";
 import { sweepDoctorDocuments, type DocSweepResult } from "@/lib/doc-purge";
+import { sweepAbandonedAccounts, type AbandonedSweepResult } from "@/lib/abandoned-sweep";
+import { purgeOldKvkkApplications } from "@/lib/kvkk-applications";
 
 // GET /api/cron/purge-deleted — İMHA + BÜTÜNLÜK ailesi (v6.11): saklama süresi dolan klinik
 // kayıtları GERÇEKTEN imha eder; iki append-only zinciri (audit + onam) doğrular; audit zincirinin
@@ -58,6 +60,10 @@ export async function GET(req: Request) {
     // MVP hacminde ucuz (tüm mühürlü satırlar okunur, maxDuration=300); hacim büyüyünce artımlı
     // doğrulamaya geçilir (zincir ucu checkpoint'i) — bilinçli erteleme.
     //
+    // IP/cihaz 2 yıl sonra boşaltma (05 madde 3.10, Paket 2) — verifyAccessChain'DEN ÖNCE: aynı
+    // turda purged olan satırlar bu turun bütünlük taramasına zaten "purgedSeals" olarak yansısın.
+    const auditMetaPurge = await purgeStaleAuditMeta();
+
     // Günlük kök damgası (TSA mimarisi, 2026-09-02): audit zinciri artık satır başına değil günde 1
     // kez damgalanır (sealDailyChainAnchor) — bu SATIRDAN SONRA eklenen kayıtlar (ör. bu cron'un
     // kendi CRON_MAINTENANCE satırı, diğer cron'ların izleri) yarının anchor'ına kalır, bilinçli erteleme.
@@ -85,19 +91,39 @@ export async function GET(req: Request) {
       );
     }
 
+    // Terk edilmiş hesap süpürmesi (05 madde 3.1b, Paket 2) — kritik değil: hata imha akışını düşürmez, raporlanır.
+    let abandonedSweep: AbandonedSweepResult | { error: string };
+    try {
+      abandonedSweep = await sweepAbandonedAccounts();
+    } catch (e) {
+      abandonedSweep = { error: errText(e, "terk edilmiş hesap süpürmesi koşamadı") };
+    }
+
+    // KVKK m.11 başvuru kütüğü — sonuçlanmış + 3 yıl geçmiş kayıtlar (05 madde 3.12, Paket 2).
+    let kvkkPurge: { purged: number } | { error: string };
+    try {
+      kvkkPurge = await purgeOldKvkkApplications();
+    } catch (e) {
+      kvkkPurge = { error: errText(e, "KVKK başvuru kütüğü süpürmesi koşamadı") };
+    }
+
     // KALICI KOŞU İZİ (2026-07-29): runtime log kısa ömürlü (o dönem Hobby 1 saat, Pro 1 gün) — cron
     // gece koştuğu için sayaçları log'dan gözlemek güvenilmezdi. Sayaçlar audit zincirine yazılır:
     // PHI YOK (yalnız adetler), günde 1 satır. "Cron koştu mu" sorusu kalıcı kayıttan yanıtlanır.
     const bel = "error" in docSweep
       ? `hata: ${docSweep.error}`
       : `imha=${docSweep.swept} blobHata=${docSweep.blobFailed}`;
+    const terk = "error" in abandonedSweep
+      ? `hata: ${abandonedSweep.error}`
+      : `bildirim=${abandonedSweep.noticed} imha=${abandonedSweep.purged} basarisiz=${abandonedSweep.failed}`;
+    const kvkk = "error" in kvkkPurge ? `hata: ${kvkkPurge.error}` : `imha=${kvkkPurge.purged}`;
     await recordAccess({
       actor: null, // sistem koşusu
       action: "CRON_MAINTENANCE",
       resourceType: "SYSTEM",
       resourceId: "purge-deleted",
       subjectUserId: null,
-      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} consent=${consent.count}${consent.ok ? "" : " KIRIK"} · gunluk-damga ${anchor.sealed ? `${anchor.day} (${anchor.entryCount} satir)` : `atlandi: ${anchor.reason}`} · belgeimha ${bel}`,
+      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} (ip/cihaz-purge=${auditMetaPurge.purged}) consent=${consent.count}${consent.ok ? "" : " KIRIK"} · gunluk-damga ${anchor.sealed ? `${anchor.day} (${anchor.entryCount} satir)` : `atlandi: ${anchor.reason}`} · belgeimha ${bel} · terkedilmis-hesap ${terk} · kvkkbasvuru ${kvkk}`,
     });
 
     return NextResponse.json({
@@ -105,11 +131,14 @@ export async function GET(req: Request) {
       retentionYears: RETENTION_YEARS,
       ...r,
       chains: {
-        audit: { ok: audit.ok, count: audit.count, brokenAt: audit.brokenAt, unverifiableSeals: audit.unverifiableSeals, lastAnchorAt: audit.lastAnchorAt },
+        audit: { ok: audit.ok, count: audit.count, brokenAt: audit.brokenAt, unverifiableSeals: audit.unverifiableSeals, purgedSeals: audit.purgedSeals, lastAnchorAt: audit.lastAnchorAt },
         consent: { ok: consent.ok, count: consent.count, brokenAt: consent.brokenAt, unverifiableSeals: consent.unverifiableSeals, purgedSeals: consent.purgedSeals },
       },
+      auditMetaPurge,
       dailyAnchor: anchor,
       docSweep,
+      abandonedSweep,
+      kvkkPurge,
     });
   } catch (e) {
     // Saklama-imha sözünün bekçisi sessizce düşemez (Ray C): alarm + 500 (Vercel cron log'unda görünür).

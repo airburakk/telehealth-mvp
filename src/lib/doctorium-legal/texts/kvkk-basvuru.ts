@@ -22,7 +22,7 @@ haklarına sahipsiniz.
 
 | Kanal | Adres |
 |---|---|
-| Platform içi form | Hazırlanıyor — bu süre içinde başvurunuzu sistemde kayıtlı e-posta adresinizden **bilgi@doctorium.tr** adresine iletebilirsiniz |
+| Platform içi form | \`/doctorium/kvkk-basvuru\` — yalnız oturum açmış üyeye açıktır (kimlik doğrulanmış oturum) |
 | E-posta | **bilgi@doctorium.tr** |
 | KEP adresi | kuruluş sonrası eklenecektir |
 | Yazılı başvuru (posta) | kuruluş sonrası eklenecektir |

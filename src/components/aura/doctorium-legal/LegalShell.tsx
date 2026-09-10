@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { LandingFooterV3 } from "@/components/aura/doctorium-v3/Footer";
 import {
   DOCTORIUM_LEGAL_DATE, DOCTORIUM_LEGAL_DATE_TR, DOCTORIUM_LEGAL_VERSION, DOCTORIUM_OPERATOR_LABEL, LEGAL_DOCS, type LegalDoc,
@@ -20,7 +20,7 @@ const EMERALD_VARS = {
   "--c-accent-stronger": "#059669",
 } as CSSProperties;
 
-export function LegalShell({ doc }: { doc: LegalDoc }) {
+export function LegalShell({ doc, children }: { doc: LegalDoc; children?: ReactNode }) {
   return (
     <div lang="tr" className="theme-light flex min-h-dvh flex-col bg-[var(--c-bg)]" style={EMERALD_VARS}>
       <div className="mx-auto w-full max-w-3xl flex-1 px-5 py-10">
@@ -62,6 +62,8 @@ export function LegalShell({ doc }: { doc: LegalDoc }) {
         <article className="mt-6">
           <LegalMarkdown markdown={doc.body} />
         </article>
+
+        {children}
       </div>
       <LandingFooterV3 />
     </div>

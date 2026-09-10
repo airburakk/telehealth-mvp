@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { DOCTORIUM_CANONICAL_URL } from "@/lib/brand";
 import { legalDoc, type LegalSlug } from "@/lib/doctorium-legal";
 import { LegalShell } from "./LegalShell";
@@ -18,8 +19,8 @@ export function legalMetadata(slug: LegalSlug): Metadata {
   };
 }
 
-export function LegalPage({ slug }: { slug: LegalSlug }) {
+export function LegalPage({ slug, children }: { slug: LegalSlug; children?: ReactNode }) {
   const doc = legalDoc(slug);
   if (!doc) throw new Error(`Hukuki belge bulunamadı: ${slug}`);
-  return <LegalShell doc={doc} />;
+  return <LegalShell doc={doc}>{children}</LegalShell>;
 }

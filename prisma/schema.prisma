@@ -160,6 +160,27 @@ model StaffDocument {
   @@index([applicationId])
 }
 
+/// KVKK m.11 başvuru kütüğü (06-veri-sahibi-basvuru-usul-esaslari.md madde B.2, Paket 2 — 2026-09-09).
+/// Form yalnız oturum açmış üyeye açık (kimlik doğrulaması = oturum) → StaffApplication deseninin
+/// eşleniği: userId ile ilişkili, admin/personel-onay şablonuyla incelenir. Saklama 3 yıl,
+/// sonuçlandırma (decidedAt) tarihinden itibaren (05 madde 3.12) — lib/kvkk-applications.ts purgeOldKvkkApplications.
+model KvkkApplication {
+  id          String    @id @default(cuid())
+  userId      String
+  requestType String // BILGI_ERISIM | DUZELTME | SILME | ITIRAZ | DIGER (06 madde B.4)
+  message     String // başvuranın açıklaması
+  status      String    @default("PENDING") // PENDING | ANSWERED
+  decision    String? // incelemecinin yanıtı/kararı — başvurana gösterilir
+  decidedAt   DateTime?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([status, createdAt]) // admin kuyruğu: PENDING'ler tarihe göre (personel-onay deseni)
+  @@index([decidedAt]) // purge-deleted süpürmesi: sonuçlanmış + 3 yıl geçmiş kayıtlar
+}
+
 /// Platformdaki uzman hekim
 model Doctor {
   id            String         @id @default(cuid())
@@ -372,6 +393,13 @@ model Doctor {
   notifyChannel     String    @default("APP") // bildirim kanalı: APP | WHATSAPP | SMS (WA/SMS dormant — env yoksa simülasyon)
   registryStatus    String? // healthturkiye.gov.tr doğrulaması: FOUND | NOT_FOUND (null = henüz bakılmadı) → etik kurul onay bayrağı
   registryCheckedAt DateTime? // son doğrulama zamanı
+  /// Terk edilmiş hesap süpürmesi (05 madde 3.1b, Paket 2 — 2026-09-09): en son LOGIN olayında
+  /// lib/login-activity.ts recordLogin() damgalar (tek dokunuş noktası — 4 giriş yolunun hepsi
+  /// bunu çağırır). null = hiç giriş yapmamış → lib/abandoned-sweep.ts createdAt'i taban alır.
+  lastLoginAt            DateTime?
+  /// "Hesabınız 30 gün içinde silinecek" bildiriminin gönderildiği an (lib/abandoned-sweep.ts) —
+  /// trial-sweep.ts'in trialAlertsSent'inden farklı olarak tek bildirim olduğu için tarih yeterli.
+  abandonedNoticeSentAt  DateTime?
   cases           Case[]
   consultations   Consultation[]
   reviews         Review[]
@@ -379,6 +407,7 @@ model Doctor {
   createdAt       DateTime       @default(now())
 
   @@index([trialEndsAt]) // trial-sweep cron taraması: bitişi dolmuş/yaklaşan denemeler (2026-09-05)
+  @@index([lastLoginAt]) // abandoned-sweep cron taraması: terk edilmiş hesap adayları (2026-09-09)
 }
 
 /// Doğrulanmış hasta yorumu (Modül 6)
@@ -1062,6 +1091,11 @@ model AccessLog {
   tsAuthority String? // zaman damgası otoritesi (şimdilik SIMULATED-LOCAL)
   tsTime      DateTime? // TSA'nın güvenilir zamanı
   tsToken     String? // imzalı zaman damgası token'ı (entryHash üzerinde)
+  /// İşlem güvenliği kayıtlarında IP/cihaz 2 yıl sonra boşaltma (05 madde 3.10, Paket 2 — 2026-09-09).
+  /// consent.ts ConsentRecord.purgedAt İLE AYNI desen: ip/userAgent NULL'lanınca mühür (entryHash)
+  /// kendi alanlarından yeniden hesaplanamaz → verifyAccessChain bu satırda mühür kontrolünü ATLAR
+  /// (purgedSeals sayacı), ama prevHash BAĞI aynen sürer — zincir kırılmaz, kurcalama gizlenmez.
+  purgedAt    DateTime?
 
   @@index([subjectUserId, createdAt])
   @@index([resourceType, resourceId])

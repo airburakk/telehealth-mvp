@@ -39,6 +39,16 @@ export async function recordLogin(
     ip,
     userAgent,
   });
+  // Terk edilmiş hesap süpürmesi (05 madde 3.1b, Paket 2) — Doctor.lastLoginAt'in TEK dokunuş
+  // noktası: 4 giriş yolu (parola/google/apple/bağlantı) hepsi buradan geçer. SessionUser doctorId
+  // taşımaz (JWT payload'ını büyütmemek için) → tek ek SELECT; giriş seyrek bir olay, maliyeti önemsiz.
+  // FAIL-SAFE: recordAccess ile aynı ilke, hata giriş akışını bozmaz.
+  try {
+    const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
+    if (me?.doctorId) await db.doctor.update({ where: { id: me.doctorId }, data: { lastLoginAt: new Date() } });
+  } catch (e) {
+    console.warn("[login-activity] lastLoginAt güncellenemedi:", e instanceof Error ? e.message : e);
+  }
 }
 
 export type LoginEvent = {
