@@ -827,7 +827,7 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   Header/SiteFooter gizleme listesinde). Sözlük `v2.clinicians` **iki yüzeyi** besler (bölüm + sayfa).
   Not kutusu: doğrulama = belge incelemesi, **akreditasyon DEĞİL** (v6.8).
   · **`/doctorium` V3 (v6.166→168, 2026-08-26 — "Apple estetiği" modernizasyon turu; V2'yi süpersede):**
-  bileşenler `components/aura/doctorium-v3/` — **zebra YOK**: 14 bölüm + header + footer tek açık
+  bileşenler `components/aura/doctorium-v3/` — **zebra YOK**: hero + 12 bölüm (v6.262; 2026-08-26'da 14'tü) + header + footer tek açık
   zemin (`V3_LIGHT` #fbfbfa; manifesto açık-panel bandı; koyu kutular yalnız `ProductFrame` ürün
   pencereleri) · **hero film14 video-zeminli** (v1 `DoctoriumBgVideo` aynen; film13→film14
   `f809013` 2026-08-27 — kullanıcı onaylı marka filmi, VO+müzik taşır) · **ses aç/kapa düğmesi sağ
@@ -845,6 +845,17 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   `PersonalizationDemo`/vb., 8 dosya) `doctorium-v3/`'e taşındı, `/doctorium-v1` + `/doctorium-v2`
   rotaları silindi — geri dönüş yalnız git tag'lerle (`doctorium-landing-v1-son` /
   `doctorium-landing-v2-son`). Küre marka görselleri `-v2` (kenar bake'li, `public/brand/`).
+  · **v6.262 (2026-09-10, 👤 üç karar + küçük paket) — hero + 12 bölüm:** Sorun (+Sektörel sütunu, satır bazlı `canShow`) · Manifesto ·
+  Nasıl çalışır (+Etkinlikleriniz = eski "Kontrol sizde") · **Sağlık Hukuku 04** (registry testi sırayı kilitler: legal = personalize + 1) ·
+  Post · Akademik · Kongre (örnek `pick.openDeadlineFirst` — açık son günlü etkinlik önce) · İlaç & Cihaz · **09 Öğrenciler**
+  (`sections/Students.tsx`: koral kulvar `--dl-coral`/`--dl-coral-fill`, küre + `DoctoriumStudentLockup` damgası; ProductFrame'de portalın
+  GERÇEK `EduOpportunityRow` + `TusKpiStrip`'i — `CareerEduSections.tsx`'ten ayrıştırıldı; veri `landing-feed studentsProof`: DB onaylı
+  kayıtlar, düşerse `lib/edu-opportunities` onaylı seed) · **10 Güven** (eski Profesyonel alan + Güven: kimlik + 4 şeffaflık maddesi +
+  deneme paneli, çapa `#guven`) · Neden Doctorium · Başla (öğrenci `student-outline` düğmesi + deneme satırı). **Deneme satırı**
+  `TRIAL_LANDING_LINE` (`lib/doctorium-trial-copy.ts`) yalnız `isTrialEnabled()` açıkken — ücret/ödeme kelimesi GEÇMEZ (👤). Kayıt defteri
+  +5 `verified` anahtar (`sector.news` · `student.career_edu` · `student.tus` · `student.transition` · `membership.trial`; `cap2` kendi
+  damgasıyla). 🪤 Öğrenci kapsamı sarmalayıcısı: `.theme-light` ATA + `.doctorium-scope[data-audience=student]` ALT eleman. 🪤 Yeni
+  bölüm = `SECTIONS` + `events.ts` yerleşim + `LandingEventBeacon` haritası + registry testi; sıra/numara elle yazılmaz.
   · **`/doctorium` V2 — ARŞİV `/doctorium-v2` (v6.136, 2026-08-23 — kullanıcının 7 parçalık "Landing Page V2" paketi):** anlatı
   "modül kataloğu"ndan **"her doktor kendi Doctorium'unu oluşturur"** kategorisine geçti (marka → ürün
   "daha fazla bilgi değil, sizin için doğru bilgi" → günlük "bugün sizin için"; AI hero'da geçmez).
