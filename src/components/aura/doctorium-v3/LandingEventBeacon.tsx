@@ -7,10 +7,11 @@ import { track } from "./track";
 // Sayfa-düzeyi event'ler: landing_view (ilk render, bir kez) + section_view (her bölüm %50
 // görünürlüğe ilk girişte bir kez). Payload yalnız bölüm id'si (kategori). Hydration'dan
 // sonra çalışır; observer yoksa sessizce hiçbir şey yapmaz.
+// v6.262: control/transparency bölümleri kalktı (yerleşimleri allowlist'te tarihsel); students → "ogrenci".
 const SECTION_PLACEMENT: Record<string, string> = {
-  hero: "hero", problem: "problem", manifesto: "manifesto", personalize: "kisisellestir", today: "bugun",
-  academic: "akademik", regulatory: "regulasyon", legal: "hukuk", congress: "kongre", identity: "identity",
-  control: "kontrol", transparency: "guven", difference: "fark", "get-started": "basla",
+  hero: "hero", problem: "problem", manifesto: "manifesto", personalize: "kisisellestir", legal: "hukuk", today: "bugun",
+  academic: "akademik", congress: "kongre", regulatory: "regulasyon", students: "ogrenci", identity: "identity",
+  difference: "fark", "get-started": "basla",
 };
 
 export function LandingEventBeacon() {

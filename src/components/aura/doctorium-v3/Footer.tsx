@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AuraMark } from "@/components/AuraLogo";
 import { DoctoriumWordV3 } from "./brand";
 import { V3_LIGHT } from "./palette";
+import { LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
 import { LEGAL_LINKS } from "@/lib/doctorium-legal";
 import { DoctoriumSocialLinks } from "@/components/aura/doctorium-social-links";
 
@@ -20,7 +21,14 @@ export function LandingFooterV3() {
         {/* Hukuki belgeler (v6.210, 2026-09-03) — tek kaynak lib/doctorium-legal LEGAL_LINKS (ortak
             DoctoriumFooter ile aynı satır; 2026-08-24'te kalkan AURA "Güven ve Gizlilik" bağlantısının
             Doctorium'a özgü karşılığı). */}
-        <nav aria-label="Hukuki belgeler" className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[var(--dl-muted)]">
+        {/* v6.262 (👤 Karar 3 · C): üyelik bağlantıları — öğrenci kaydı footer'da da bulunur (AURA vitrin footer'ındaki
+            "Tıp öğrencileri" bağlantısının Doctorium karşılığı). */}
+        <nav aria-label="Üyelik" className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[var(--dl-muted)]">
+          <Link href={LANDING_ROUTES.signup} className="transition-colors hover:text-[var(--dl-emerald)]">Doktor üyeliği</Link>
+          <Link href={LANDING_ROUTES.student} className="transition-colors hover:text-[var(--dl-emerald)]">Tıp öğrencisi üyeliği</Link>
+          <Link href={LANDING_ROUTES.login} className="transition-colors hover:text-[var(--dl-emerald)]">Giriş yap</Link>
+        </nav>
+        <nav aria-label="Hukuki belgeler" className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[var(--dl-muted)]">
           {LEGAL_LINKS.map((l) => (
             <Link key={l.href} href={l.href} className="transition-colors hover:text-[var(--dl-emerald)]">
               {l.label}

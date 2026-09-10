@@ -20,6 +20,20 @@ export function branchFirst<T extends Pick<FeedItem, "branchSlugs">>(items: T[],
  * karışımı"). Bölüm içinde branşla eşleşen kart tercih edilir; eşleşenler ilk sırada. `limit` ile
  * hero (3) / Bugün (3+1) / demo (3) aynı seçiciyi kullanır.
  */
+/**
+ * Kongre kanıtı sıralaması (v6.262, 2026-09-10 — 👤 küçük paket): landing örneğinde "Bildiri süresi doldu · Erken kayıt sona
+ * erdi" satırları görünmesin. Bildiri YA DA erken kayıt son günü henüz geçmemiş (gün sonu dahil — CongressList Deadline
+ * kuralıyla aynı: at + 24 saat > now) etkinlikler ÖNE, kendi içinde başlangıç tarihine göre; kalanlar aynen arkada. Kararlı.
+ */
+export function openDeadlineFirst<T extends { startDate: Date; abstractDeadline: Date | null; earlyBirdDeadline: Date | null }>(rows: T[], now: Date): T[] {
+  const open = (d: Date | null) => !!d && d.getTime() + 86_400_000 > now.getTime();
+  const hit: T[] = [];
+  const rest: T[] = [];
+  for (const r of rows) (open(r.abstractDeadline) || open(r.earlyBirdDeadline) ? hit : rest).push(r);
+  const byStart = (a: T, b: T) => a.startDate.getTime() - b.startDate.getTime();
+  return [...hit.sort(byStart), ...rest.sort(byStart)];
+}
+
 export function pickOnePerModule(items: FeedItem[], branch?: string, limit = 4): FeedItem[] {
   const want = ["akademik", "etkinlik", "ilac", "mevzuat"];
   const out: FeedItem[] = [];

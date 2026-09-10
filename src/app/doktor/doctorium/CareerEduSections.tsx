@@ -1,12 +1,13 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ArrowRight, CalendarDays, ExternalLink, Info } from "lucide-react";
 import { TUS_EXAM_PERIODS, TUS_OFFICIAL_LINKS, TUS_SECTIONS, tusSectionHref } from "@/lib/tus";
 import { EDU_KIND_LABEL, EDU_KIND_SHORT, EDU_KINDS, eduCountryLabel, type EduOpportunityKind } from "@/lib/edu-opportunities";
-import { followedEduOpportunityIds, listApprovedEduOpportunities } from "@/lib/edu-store";
+import { followedEduOpportunityIds, listApprovedEduOpportunities, type EduOpportunityView } from "@/lib/edu-store";
 import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
 import EduFollowButton from "./EduFollowButton";
 import { formatIsoDayTr } from "@/lib/iso-day";
-import { approvedTusSummaries, tusBranches } from "@/lib/tus-data";
+import { approvedTusSummaries, tusBranches, type TusPeriodSummaryWithSource } from "@/lib/tus-data";
 import { TUS_INSTITUTION_LABEL } from "@/lib/tus-normalize";
 import TusChartsLoader from "./tus/TusChartsLoader";
 import { AuraPanel } from "@/components/ui/AuraPanel";
@@ -149,28 +150,12 @@ export async function EduOpportunitiesPanel({ className = "", kind = null, defau
       {rows.length === 0 && <p className="py-3 text-[13px] text-[var(--c-ink-2)]">Bu türde onaylı fırsat yok; diğer türlere çiplerden geçebilirsiniz.</p>}
       <ul className="divide-y divide-[var(--c-hairline)]">
         {rows.map((o) => (
-          <li key={o.id} id={`edu-${o.id}`} className="py-3.5">
-            <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-              <div className="min-w-0 flex-1">
-                <div className="aura-mono flex flex-wrap items-center gap-x-2 text-[10px] uppercase tracking-wider text-[var(--c-ink-3)]">
-                  <span className="text-[var(--c-accent)]">{EDU_KIND_LABEL[o.kind]}</span>
-                  <span aria-hidden>·</span>
-                  <span>{eduCountryLabel(o.country)}</span>
-                  <span aria-hidden>·</span>
-                  {o.deadline ? (
-                    <span className="text-[var(--c-ink-2)]">son başvuru {formatIsoDayTr(o.deadline)}</span>
-                  ) : (
-                    <span className="normal-case tracking-normal">{o.deadlineNote}</span>
-                  )}
-                </div>
-                <a href={o.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--c-ink)] hover:text-[var(--c-accent)]">
-                  {o.title} <ExternalLink size={13} aria-hidden />
-                </a>
-                <p className="mt-1 text-[13px] leading-relaxed text-[var(--c-ink-2)]"><span className="font-medium text-[var(--c-ink)]">{o.organizer}</span> — {o.eligibility}</p>
-              </div>
-              {canFollow && o.deadline && <EduFollowButton opportunityId={o.id} following={followed.has(o.id)} />}
-            </div>
-          </li>
+          <EduOpportunityRow
+            key={o.id}
+            id={`edu-${o.id}`}
+            o={o}
+            action={canFollow && o.deadline ? <EduFollowButton opportunityId={o.id} following={followed.has(o.id)} /> : undefined}
+          />
         ))}
       </ul>
       <p className="mt-3 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
@@ -178,6 +163,67 @@ export async function EduOpportunitiesPanel({ className = "", kind = null, defau
         {canFollow && <> Takip ettiğiniz fırsatın son başvurusu 7, 3 ve 1 gün kala bildirim ve e-postayla hatırlatılır; tarihli fırsatların hepsi Takvim&apos;inizde görünür.</>}
       </p>
     </AuraPanel>
+  );
+}
+
+/**
+ * Fırsat satırı — Fırsatlar paneli (portal) + landing Öğrenciler kanıt penceresi AYNI markup (v6.262, 2026-09-10: landing
+ * kuralı "ProductFrame içinde gerçek ürün bileşeni"). `action` = takip düğmesi (yalnız girişli öğrenci; landing vermez).
+ * `clampEligibility`: landing'de şart metni iki satıra kırpılır (kart yüksekliği), portalda tam. Kit token'ı (--c-accent)
+ * kitleye göre çözülür — landing öğrenci kapsamını sarmalayıcıyla verir.
+ */
+export function EduOpportunityRow({ o, action, clampEligibility = false, id }: { o: EduOpportunityView; action?: ReactNode; clampEligibility?: boolean; id?: string }) {
+  return (
+    <li id={id} className="py-3.5">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0 flex-1">
+          <div className="aura-mono flex flex-wrap items-center gap-x-2 text-[10px] uppercase tracking-wider text-[var(--c-ink-3)]">
+            <span className="text-[var(--c-accent)]">{EDU_KIND_LABEL[o.kind]}</span>
+            <span aria-hidden>·</span>
+            <span>{eduCountryLabel(o.country)}</span>
+            <span aria-hidden>·</span>
+            {o.deadline ? (
+              <span className="text-[var(--c-ink-2)]">son başvuru {formatIsoDayTr(o.deadline)}</span>
+            ) : (
+              <span className="normal-case tracking-normal">{o.deadlineNote}</span>
+            )}
+          </div>
+          <a href={o.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--c-ink)] hover:text-[var(--c-accent)]">
+            {o.title} <ExternalLink size={13} aria-hidden />
+          </a>
+          <p className={`mt-1 text-[13px] leading-relaxed text-[var(--c-ink-2)] ${clampEligibility ? "line-clamp-2" : ""}`}>
+            <span className="font-medium text-[var(--c-ink)]">{o.organizer}</span> — {o.eligibility}
+          </p>
+        </div>
+        {action}
+      </div>
+    </li>
+  );
+}
+
+/**
+ * Son dönem KPI şeridi (GENEL kontenjan) — TusPlacementSection (portal) + landing Öğrenciler kanıt penceresi (v6.262).
+ * Yerleşme oranı tr-TR biçiminde ("%82,3"; eski `Math.round(...)/10` şablonu "%82.3" noktalı yazıyordu — düzeltildi).
+ */
+export function TusKpiStrip({ last }: { last: TusPeriodSummaryWithSource }) {
+  const g = last.totals.general;
+  const rate = g.quota ? `%${((g.placed / g.quota) * 100).toLocaleString("tr-TR", { maximumFractionDigits: 1 })}` : "—";
+  const kpis = [
+    { k: "Kontenjan (GENEL)", v: g.quota }, { k: "Yerleşen", v: g.placed }, { k: "Boş kalan", v: g.vacant },
+    { k: "Yerleşme oranı", v: rate },
+  ];
+  return (
+    <>
+      <div className="aura-mono text-[11px] uppercase tracking-wider text-[var(--c-ink-3)]">{last.year}-TUS {last.term}. Dönem · son dönem</div>
+      <dl className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {kpis.map((x) => (
+          <div key={x.k} className="flex flex-col rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5">
+            <dt className="text-[11px] leading-snug text-[var(--c-ink-3)]">{x.k}</dt>
+            <dd className="aura-display mt-auto pt-0.5 text-xl font-semibold tabular-nums text-[var(--c-ink)]">{typeof x.v === "number" ? x.v.toLocaleString("tr-TR") : x.v}</dd>
+          </div>
+        ))}
+      </dl>
+    </>
   );
 }
 
@@ -197,22 +243,9 @@ export function TusPlacementSection({ className = "", compact = false, initialBr
     );
   }
   const last = periods[periods.length - 1];
-  const g = last.totals.general;
-  const kpis = [
-    { k: "Kontenjan (GENEL)", v: g.quota }, { k: "Yerleşen", v: g.placed }, { k: "Boş kalan", v: g.vacant },
-    { k: "Yerleşme oranı", v: g.quota ? `%${Math.round((g.placed / g.quota) * 1000) / 10}` : "—" },
-  ];
   return (
     <AuraPanel title={<span id="yerlestirme">Yerleştirme verisi</span>} meta={`ÖSYM · ${periods.length} DÖNEM`} className={className}>
-      <div className="aura-mono text-[11px] uppercase tracking-wider text-[var(--c-ink-3)]">{last.year}-TUS {last.term}. Dönem · son dönem</div>
-      <dl className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {kpis.map((x) => (
-          <div key={x.k} className="flex flex-col rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2.5">
-            <dt className="text-[11px] leading-snug text-[var(--c-ink-3)]">{x.k}</dt>
-            <dd className="aura-display mt-auto pt-0.5 text-xl font-semibold tabular-nums text-[var(--c-ink)]">{typeof x.v === "number" ? x.v.toLocaleString("tr-TR") : x.v}</dd>
-          </div>
-        ))}
-      </dl>
+      <TusKpiStrip last={last} />
       {compact ? (
         <p className="mt-3 text-[12px] text-[var(--c-ink-2)]">
           Branş bazlı taban puan eğilimi, kurum türüne göre yerleşme ve puan dağılımı grafikleri ile branş × dönem kurum tablosu (ek yerleştirme dâhil) TUS sayfasında —{" "}

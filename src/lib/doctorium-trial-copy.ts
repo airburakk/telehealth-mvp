@@ -27,6 +27,14 @@ export const TRIAL_PROMISE = TRIAL_PROMISE_PARAGRAPHS.join(" ");
 /** Header rozeti tooltip'i / kısa hatırlatma. */
 export const TRIAL_PROMISE_SHORT = "Deneme süresi yalnız doğrulama içindir · ücretli üyeliğe dönüşmez.";
 
+/** Landing satırı (v6.262, 2026-09-10) — vitrin iddia kayıt defteri `membership.trial` izinli iddiasıyla BİREBİR;
+ *  yalnız `isTrialEnabled()` açıkken çizilir (Güven hub'ı + Başla). Genel yasak kalıplar ("dakika", "yalnızca doktor")
+ *  burada GEÇMEZ — registry testi bu sabiti de tarar.
+ *  👤 2026-09-10 (prova incelemesi): ilk sürüm "… ücretli üyeliğe dönüşmez" ücretli bir üyelik VARMIŞ izlenimi bıraktı →
+ *  kullanıcının ifadesiyle yeniden yazıldı: 30 gün doğrulamasız kullanım hakkı + sonrasında mezun belgesiyle doğrulama şartı.
+ *  Ücret/ödeme kelimesi hiç geçmez (madde 5.2 ile de uyumlu — ne vaat ne ima). */
+export const TRIAL_LANDING_LINE = "Hesabınızı 30 gün doğrulamadan kullanabilirsiniz; 30. günden sonra devam etmek için e-Devlet barkodlu Mezun Belgenizle doğrulamanız gerekir.";
+
 /** Kilit ekranı (süre dolmuş) başlığı + notu. */
 export const TRIAL_LOCKED_TITLE = "Deneme süreniz sona erdi";
 export const TRIAL_LOCKED_NOTE =

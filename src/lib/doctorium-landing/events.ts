@@ -27,7 +27,9 @@ export type LandingEventName = (typeof LANDING_EVENT_NAMES)[number];
 export const LANDING_PLACEMENTS = [
   "header", "hero", "sticky", "final", "identity",
   "nasil", "problem", "manifesto", "kisisellestir", "bugun", "akademik", "regulasyon",
-  "hukuk", "kongre", "kontrol", "guven", "fark", "basla", "demo", "none",
+  "hukuk", "kongre", "ogrenci", "kontrol", "guven", "fark", "basla", "demo", "none",
+  // v6.262: "ogrenci" = Öğrenciler bölümü; "kontrol" artık bölüm değil (03'e katlandı) ama birikmiş günlük
+  // satırlar için allowlist'te KALIR; "guven" 2026-09-10'dan itibaren Güven hub'ını (identity) sayar.
 ] as const;
 export type LandingPlacement = (typeof LANDING_PLACEMENTS)[number];
 

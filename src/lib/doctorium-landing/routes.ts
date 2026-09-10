@@ -23,5 +23,6 @@ export const LANDING_ANCHORS = [
   { id: "akademik", label: "Akademik" },
   { id: "hukuk", label: "Sağlık Hukuku" },
   { id: "kongre", label: "Kongreler" },
-  { id: "guven", label: "Güven" },
+  { id: "ogrenci", label: "Öğrenciler" }, // v6.262: Öğrenciler bölümü (Karar 3 · Seçenek A)
+  { id: "guven", label: "Güven" }, // v6.262: çapa 11 "Güven"den 10 Güven hub'ına (identity) taşındı
 ] as const;

@@ -10,7 +10,6 @@ import { LandingHeader } from "./LandingHeader";
 import { V3_LIGHT } from "./palette";
 import { AcademicSection } from "./sections/Academic";
 import { CongressSection } from "./sections/Congress";
-import { ControlSection } from "./sections/Control";
 import { DifferenceSection } from "./sections/Difference";
 import { FinalCtaSection } from "./sections/FinalCta";
 import { HeroSection } from "./sections/Hero";
@@ -21,7 +20,7 @@ import { PersonalizeSection } from "./sections/Personalize";
 import { PostSection } from "./sections/Post";
 import { ProblemSection } from "./sections/Problem";
 import { RegulatorySection } from "./sections/Regulatory";
-import { TransparencySection } from "./sections/Transparency";
+import { StudentsSection } from "./sections/Students";
 
 // /doctorium landing V3 (2026-08-26, modernizasyon turu — kullanıcı brief'i "Apple estetiği").
 //
@@ -39,6 +38,11 @@ import { TransparencySection } from "./sections/Transparency";
 //     mono etiketler v3 yüzeyinde kalktı — DoctoriumWord lockup'ı marka olduğu için istisna).
 //   · Framer Motion bölüm-girişleri (FadeInUp: 400ms, [0.32,0.72,0,1], reduced-motion destekli).
 //   · shadcn deseni ui/button.tsx (cva) — landing'in düğme giysisi.
+//
+// v6.262 (2026-09-10, 👤 Karar 1-3 + küçük paket): hero + 12 bölüm — Kontrol sizde → 03'e, Güven → 10 Güven hub'ına
+// (identity) katlandı; Sağlık Hukuku 04'e; YENİ 09 Öğrenciler (koral kulvar, gerçek Kariyer EDU + TUS kanıtı); deneme
+// satırı bayrakla (Güven + Başla); Sorun'a Sektörel; Kongre örneği açık son günlü etkinlik. Sıra content.ts SECTIONS'tan,
+// numaralar chapterNo()'dan — burada sıra yazılmaz. Görsel taslak: vault output/doctorium-landing-taslak-2026-09-09.
 export async function DoctoriumLandingV3() {
   const [sample, proof] = await Promise.all([
     landingFeedSample(DEFAULT_DEMO_BRANCH, DEFAULT_DEMO_MODULES, 12) as Promise<LandingSample>,
@@ -58,9 +62,8 @@ export async function DoctoriumLandingV3() {
     regulatory: () => <RegulatorySection sample={sample} />,
     legal: () => <LegalSection proof={proof.legal} branch={sample.branch} />,
     congress: () => <CongressSection proof={proof.congress} branch={sample.branch} />,
+    students: () => <StudentsSection proof={proof.students} />,
     identity: () => <IdentitySection />,
-    control: () => <ControlSection />,
-    transparency: () => <TransparencySection />,
     difference: () => <DifferenceSection />,
     "get-started": () => <FinalCtaSection />,
   };

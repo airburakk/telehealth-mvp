@@ -6,8 +6,9 @@
 // BİREBİR; analytics sözlüğü kapalı küme. Emsal: nav.test.ts TAM-liste + aura-landing-copy shape().
 import { describe, it, expect } from "vitest";
 import {
-  SECTIONS, LANDING_META, HERO_PROOF_LINE, PROBLEM_SOURCES, REGULATORY_SOURCES, DIFFERENCE_ROWS,
+  SECTIONS, LANDING_META, HERO_PROOF_LINE, PROBLEM_SOURCES, REGULATORY_SOURCES, DIFFERENCE_ROWS, chapterNo,
 } from "@/lib/doctorium-landing/content";
+import { TRIAL_LANDING_LINE } from "@/lib/doctorium-trial-copy";
 import { CAPABILITIES, canShowAll, capability, allProhibitedClaims } from "@/lib/doctorium-landing/capabilities";
 import { LANDING_ANCHORS, LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
 import { LANDING_BRANCHES, LANDING_MODULES, DEFAULT_DEMO_BRANCH, DEFAULT_DEMO_MODULES } from "@/lib/doctorium-landing/taxonomy";
@@ -27,6 +28,7 @@ function allCopy(): string[] {
   out.push(...Object.values(LANDING_META), ...HERO_PROOF_LINE, ...REGULATORY_SOURCES);
   for (const p of PROBLEM_SOURCES) out.push(p.k, p.sources);
   for (const r of DIFFERENCE_ROWS) out.push(r.portal, r.doctorium);
+  out.push(TRIAL_LANDING_LINE); // v6.262: bayrakla çizilen deneme satırı da vitrin metnidir
   return out.filter(Boolean);
 }
 
@@ -159,6 +161,61 @@ describe("fixture dürüstlüğü", () => {
       expect(f.id.startsWith("ornek-")).toBe(true);
       expect(f.authors).toBeNull();
     }
+  });
+});
+
+// v6.262 (2026-09-10, 👤 Karar 1-3 + küçük paket): hero + 12 bölüm sözleşmesi — sıra ve katlama kilitleri.
+describe("v6.262 — 12 bölüm sözleşmesi", () => {
+  const ids = SECTIONS.map((s) => s.id);
+
+  it("hero + 12 bölüm; Kontrol sizde → 03'e, Güven → 10 Güven hub'ına katlandı (Karar 1)", () => {
+    expect(ids).toHaveLength(13);
+    expect(ids).not.toContain("control");
+    expect(ids).not.toContain("transparency");
+    const identity = SECTIONS.find((s) => s.id === "identity")!;
+    expect(identity.anchor).toBe("guven");
+    expect(identity.eyebrow).toBe("Güven");
+    expect(identity.items?.length).toBe(4);
+    expect(identity.requires).toContain("transparency.source_meta");
+    const personalize = SECTIONS.find((s) => s.id === "personalize")!;
+    expect(personalize.items?.length).toBe(3);
+    expect(personalize.requires).toContain("prefs.eventTypes");
+  });
+
+  it("Sağlık Hukuku 04'te — Nasıl çalışır'ın hemen ardında (Karar 2)", () => {
+    expect(ids.indexOf("legal")).toBe(ids.indexOf("personalize") + 1);
+    expect(chapterNo("legal")).toBe("04");
+    expect(chapterNo("students")).toBe("09");
+    expect(chapterNo("get-started")).toBe("12");
+  });
+
+  it("Öğrenciler: çapa nav'da, requires hepsi verified, dürüstlük cümlesi, öğrenci CTA'ları (Karar 3 · A + C)", () => {
+    const students = SECTIONS.find((s) => s.id === "students")!;
+    expect(students.anchor).toBe("ogrenci");
+    expect(LANDING_ANCHORS.some((a) => a.id === "ogrenci")).toBe(true);
+    for (const id of ["student.career_edu", "student.tus", "student.transition", "identity.student_cert"] as const) {
+      expect(capability(id).status, id).toBe("verified");
+      expect(students.requires, id).toContain(id);
+    }
+    expect(students.items?.some((it) => (it.b ?? "").includes("tercih tavsiyesi yoktur"))).toBe(true);
+    expect(students.ctas?.[0]?.to).toBe("student");
+    expect(isLandingPlacement("ogrenci")).toBe(true);
+    const final = SECTIONS.find((s) => s.id === "get-started")!;
+    expect(final.ctas?.some((c) => c.to === "student")).toBe(true);
+  });
+
+  it("deneme satırı: membership.trial verified; metin tek kaynak, izinli iddiayla birebir, genel yasaklardan arınmış", () => {
+    const c = capability("membership.trial");
+    expect(c.status).toBe("verified");
+    expect(c.allowedClaims[0]).toBe(TRIAL_LANDING_LINE.replace(/\.$/, ""));
+    const t = TRIAL_LANDING_LINE.toLocaleLowerCase("tr-TR");
+    for (const b of ["dakika", "yalnızca doktor", "ömür boyu", "%", "otomatik"]) expect(t.includes(b), b).toBe(false);
+  });
+
+  it("Sorun'da Sektörel sütunu registry anahtarına bağlı (sector.news verified)", () => {
+    const s = PROBLEM_SOURCES.find((p) => p.k === "Sektörel")!;
+    expect(s.requires).toBe("sector.news");
+    expect(capability("sector.news").status).toBe("verified");
   });
 });
 

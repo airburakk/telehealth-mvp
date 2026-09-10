@@ -31,6 +31,19 @@ const buttonVariants = cva(
           "active:translate-y-0 active:scale-[.98] active:shadow-none",
         ].join(" "),
         ghost: "text-[var(--dl-ink)] hover:bg-[var(--dl-panel)] active:scale-[.98]",
+        // Öğrenci CTA'sı (v6.262): koral DOLGU + mürekkep metin (#18181b/#fb923c ≈ 8.5:1). Koral METİN açık zeminde
+        // 3.4:1 kaldığı için "koral yazılı beyaz düğme" yapılmadı; hareket dili primary ile aynı (A·Yükselme).
+        student: [
+          "bg-[var(--dl-coral-fill)] text-[#18181b]",
+          "hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-8px_rgba(234,88,12,.35),0_3px_8px_-3px_rgba(234,88,12,.2)]",
+          "active:translate-y-0 active:scale-[.98] active:bg-[#f97316] active:shadow-[0_2px_6px_-2px_rgba(234,88,12,.3)]",
+        ].join(" "),
+        // Öğrenci ikincil düğmesi (v6.262, Başla bölümü): çerçeve koral, metin mürekkep — ikincil giysinin kulvar işaretli hâli.
+        "student-outline": [
+          "border border-[var(--dl-coral-fill)] text-[var(--dl-ink)]",
+          "hover:-translate-y-0.5 hover:border-[var(--dl-coral)] hover:shadow-[0_10px_22px_-10px_rgba(234,88,12,.3)]",
+          "active:translate-y-0 active:scale-[.98] active:shadow-none",
+        ].join(" "),
       },
       size: {
         md: "min-h-[44px] px-5",

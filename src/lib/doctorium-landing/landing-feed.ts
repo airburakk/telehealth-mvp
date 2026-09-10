@@ -18,8 +18,11 @@ import {
 import { keywordByKey } from "@/lib/hukuk-keywords";
 import type { CongressRow } from "@/app/doktor/doctorium/CongressList";
 import { db } from "@/lib/db";
+import { approvedEduOpportunities, EDU_KINDS, type EduOpportunityKind } from "@/lib/edu-opportunities";
+import { listApprovedEduOpportunities, type EduOpportunityView } from "@/lib/edu-store";
+import { approvedTusSummaries, type TusPeriodSummaryWithSource } from "@/lib/tus-data";
 import { FIXTURE_FEED, FIXTURE_LEGAL, FIXTURE_SUMMARY } from "./fixtures";
-import { branchFirst } from "./pick";
+import { branchFirst, openDeadlineFirst } from "./pick";
 import { isLandingBranch, isLandingModule, LANDING_MODULES, type LandingModuleKey } from "./taxonomy";
 
 export interface LandingSample {
@@ -117,8 +120,11 @@ export interface LandingProof {
   academic: { item: FeedItem; summary: ClinicalSummary; source: "live" | "fixture" };
   /** Hukuk: "Aydınlatılmış onam" sözlük çipiyle gerçek içtihat sonuçları. */
   legal: { query: string; keyword: string; items: FeedItem[]; source: "live" | "fixture" };
-  /** Kongre: branşa göre yaklaşan etkinlikler (yoksa tüm branşlar; o da yoksa boş — fixture YOK). */
+  /** Kongre: branşa göre yaklaşan etkinlikler (yoksa tüm branşlar; o da yoksa boş — fixture YOK). v6.262: açık son günlü önce. */
   congress: { rows: CongressRow[]; source: "live" | "empty" };
+  /** Öğrenciler (v6.262): onaylı Kariyer EDU kayıtları (DB; düşerse lib/edu-opportunities'in ONAYLI seed'i — aynı gerçek
+   *  kayıtlar, sahte fixture DEĞİL) + ÖSYM son dönem özeti (saf JSON, DB yok). Adet yüzeyde hesaplanır, metne yazılmaz. */
+  students: { edu: EduOpportunityView[]; counts: Record<EduOpportunityKind, number>; tusLast: TusPeriodSummaryWithSource | null; tusPeriods: number; source: "live" | "seed" };
 }
 
 const proofMemo = new Map<string, { at: number; value: LandingProof }>();
@@ -153,9 +159,30 @@ async function legalProof(): Promise<LandingProof["legal"]> {
 }
 
 async function congressProof(branch: string): Promise<LandingProof["congress"]> {
-  let rows = await upcomingCongresses([branch], { limit: 3 });
-  if (rows.length < 2) rows = await upcomingCongresses([], { limit: 3 });
+  // v6.262 (👤 küçük paket): 8 aday çek, bildiri/erken kayıt son günü AÇIK olanlar öne (pick.openDeadlineFirst), ilk 3 —
+  // landing örneğinde "Bildiri süresi doldu · Erken kayıt sona erdi" satırları görünmesin.
+  let rows = await upcomingCongresses([branch], { limit: 8 });
+  if (rows.length < 2) rows = await upcomingCongresses([], { limit: 8 });
+  rows = openDeadlineFirst(rows, new Date()).slice(0, 3);
   return { rows, source: rows.length ? "live" : "empty" };
+}
+
+function studentsCounts(edu: readonly { kind: EduOpportunityKind }[]): Record<EduOpportunityKind, number> {
+  return Object.fromEntries(EDU_KINDS.map((k) => [k, edu.filter((o) => o.kind === k).length])) as Record<EduOpportunityKind, number>;
+}
+
+/** DB'siz yedek: statik onaylı seed + ÖSYM özeti (her ikisi de gerçek, onaylı veri). */
+function studentsSeed(): LandingProof["students"] {
+  const edu = approvedEduOpportunities();
+  const periods = approvedTusSummaries();
+  return { edu, counts: studentsCounts(edu), tusLast: periods[periods.length - 1] ?? null, tusPeriods: periods.length, source: "seed" };
+}
+
+async function studentsProof(): Promise<LandingProof["students"]> {
+  const edu = await listApprovedEduOpportunities();
+  if (!edu.length) return studentsSeed();
+  const periods = approvedTusSummaries();
+  return { edu, counts: studentsCounts(edu), tusLast: periods[periods.length - 1] ?? null, tusPeriods: periods.length, source: "live" };
 }
 
 export async function landingProofSample(branch: string): Promise<LandingProof> {
@@ -163,14 +190,15 @@ export async function landingProofSample(branch: string): Promise<LandingProof> 
   if (hit && Date.now() - hit.at < MEMO_TTL_MS) return hit.value;
   let value: LandingProof;
   try {
-    const [academic, legal, congress] = await Promise.all([academicProof(branch), legalProof(), congressProof(branch)]);
-    value = { academic, legal, congress };
+    const [academic, legal, congress, students] = await Promise.all([academicProof(branch), legalProof(), congressProof(branch), studentsProof()]);
+    value = { academic, legal, congress, students };
   } catch (e) {
     console.warn("[doctorium-landing] kanıt verisi yerine fixture:", e instanceof Error ? e.message : e);
     value = {
       academic: { item: FIXTURE_FEED[0], summary: FIXTURE_SUMMARY, source: "fixture" },
       legal: { query: LEGAL_QUERY, keyword: LEGAL_KEYWORD, items: [...FIXTURE_LEGAL], source: "fixture" },
       congress: { rows: [], source: "empty" },
+      students: studentsSeed(),
     };
   }
   proofMemo.set(branch, { at: Date.now(), value });

@@ -11,7 +11,8 @@ export function DifferenceSection() {
         <SectionHead copy={copy} align="center" />
       </FadeInUp>
       <FadeInUp delay={0.08}>
-        <div className="mx-auto mt-12 max-w-3xl overflow-x-auto">
+        {/* v6.262 (👤 küçük paket): mt-12 → mt-8, kapanış cümlesi mt-14 → mt-10. */}
+        <div className="mx-auto mt-8 max-w-3xl overflow-x-auto">
           <table className="w-full border-collapse text-left text-[15px]">
             <thead>
               <tr className="text-[13px] text-[var(--dl-muted)]">
@@ -30,7 +31,7 @@ export function DifferenceSection() {
           </table>
         </div>
         {copy.note && (
-          <p className="mx-auto mt-14 max-w-[760px] text-center text-[clamp(24px,3.2vw,36px)] font-medium leading-[1.15] tracking-[-0.02em]">
+          <p className="mx-auto mt-10 max-w-[760px] text-center text-[clamp(24px,3.2vw,36px)] font-medium leading-[1.15] tracking-[-0.02em]">
             <Rich text={copy.note} />
           </p>
         )}

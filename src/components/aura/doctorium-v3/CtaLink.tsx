@@ -14,7 +14,7 @@ export function CtaLink({
   href, variant = "secondary", event, placement, children, className = "",
 }: {
   href: string;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "student" | "student-outline";
   event?: LandingEventName;
   placement?: LandingPlacement;
   children: ReactNode;

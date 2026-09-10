@@ -78,9 +78,11 @@ export function SectionHead({ copy, align = "left", size = "md" }: { copy: Secti
   );
 }
 
-export function Note({ text, className = "" }: { text: string; className?: string }) {
+// tone (v6.262): öğrenci bölümünde çizgi koral — className ile ikinci border-* sınıfı YAZILMAZ (stylesheet sırası kazanır).
+export function Note({ text, className = "", tone = "emerald" }: { text: string; className?: string; tone?: "emerald" | "coral" }) {
+  const border = tone === "coral" ? "border-[var(--dl-coral-fill)]" : "border-[var(--dl-emerald)]";
   return (
-    <p className={`border-l-2 border-[var(--dl-emerald)] pl-4 text-[13px] leading-relaxed text-[var(--dl-muted)] ${className}`}>
+    <p className={`border-l-2 ${border} pl-4 text-[13px] leading-relaxed text-[var(--dl-muted)] ${className}`}>
       <Rich text={text} />
     </p>
   );

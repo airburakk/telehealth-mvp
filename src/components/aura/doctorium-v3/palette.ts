@@ -18,4 +18,9 @@ export const V3_LIGHT = {
   "--dl-body": "#4b4b48",
   "--dl-line": "rgba(24,24,27,.08)",
   "--dl-emerald": "#047857",
+  // Öğrenci kulvarı (v6.262, 2026-09-10 — Öğrenciler bölümü): portalın gündüz öğrenci paleti (globals.css
+  // [data-audience="student"], 👤 2026-09-06): METİN aksanı #ea580c (kalın/büyük etiketlerde okunur; 16px düğme
+  // metni olarak KULLANILMAZ — AA altı), DOLGU #fb923c (düğme zemini + mürekkep metin, STUDENT lockup'ı, not çizgisi).
+  "--dl-coral": "#ea580c",
+  "--dl-coral-fill": "#fb923c",
 } as CSSProperties;

@@ -59,6 +59,11 @@ export type CapabilityId =
   | "identity.student_cert"
   | "identity.badge_ui"
   | "membership.free"
+  | "membership.trial"
+  | "sector.news"
+  | "student.career_edu"
+  | "student.tus"
+  | "student.transition"
   | "transparency.source_meta"
   | "transparency.ai_provenance"
   | "analytics.aggregate";
@@ -73,6 +78,18 @@ const cap = (
   allowedClaims: string[],
   prohibitedClaims: string[] = [],
 ): Capability => ({ id, status, evidence, allowedClaims, prohibitedClaims, verifiedAt: AT, verifiedSha: SHA });
+
+// v6.262 (2026-09-10, landing 12 bölüm): yeni kayıtlar KENDİ doğrulama damgasını taşır — 2026-08-23 kayıtlarının
+// SHA/tarihi yeniden doğrulanmadan değiştirilmez (kanıt satır numaraları o HEAD'e aittir).
+const SHA_2 = "4d00c51";
+const AT_2 = "2026-09-10";
+const cap2 = (
+  id: CapabilityId,
+  status: CapabilityStatus,
+  evidence: string[],
+  allowedClaims: string[],
+  prohibitedClaims: string[] = [],
+): Capability => ({ id, status, evidence, allowedClaims, prohibitedClaims, verifiedAt: AT_2, verifiedSha: SHA_2 });
 
 export const CAPABILITIES: readonly Capability[] = [
   cap("feed.personal", "verified",
@@ -155,6 +172,30 @@ export const CAPABILITIES: readonly Capability[] = [
   cap("analytics.aggregate", "verified",
     ["src/app/api/landing-event/route.ts", "prisma LandingEvent (günlük agregat, kimliksiz)"],
     []),
+  // ── v6.262 (2026-09-10, 👤 Karar 1-3 + küçük paket) — Sektörel sütunu · Öğrenciler bölümü · deneme satırı ──
+  cap2("sector.news", "verified",
+    ["src/lib/doctorium-sources.ts:233 sektörel RSS (Medscape · Medical Xpress · WHO)", "src/lib/news-language.ts (v6.202 kapsam kapısı — Türkçe başlık + özet girişi)", "src/lib/doctorium.ts:365 FEED_MODULE_OPTIONS sektorel"],
+    ["Sektörel: Medscape · Medical Xpress · WHO"],
+    ["tüm dünya basını", "her kaynak"]),
+  cap2("student.career_edu", "verified",
+    ["src/lib/edu-opportunities.ts EDU_KINDS staj/degisim/burs + approvedAt kapısı", "src/lib/edu-store.ts:28 listApprovedEduOpportunities", "src/lib/edu-reminder.ts:14 EDU_ALERT_THRESHOLDS [7, 3, 1]", "src/app/doktor/doctorium/CareerEduSections.tsx:100 EduOpportunitiesPanel"],
+    ["Staj, Değişim Programları, Burs tek listede", "Takip edilen fırsatın son başvurusu 7, 3 ve 1 gün kala hatırlatılır"],
+    ["iş ilanı", "burs garantisi", "kesin kabul"]),
+  cap2("student.tus", "verified",
+    ["src/lib/tus-data.ts TUS_SNAPSHOTS (approvedAt null = gizli)", "src/lib/tus.ts:57 TUS_SECTIONS veriler/rehberler/donemler", "src/lib/tus-guides.ts + src/lib/tus-resources.ts", "src/lib/calendar.ts:24 kind \"tus\"", "src/app/doktor/doctorium/tus/page.tsx"],
+    ["ÖSYM yerleştirme verileri branş ve dönem bazında", "Kılavuz özetleri ve tarafsız kaynakça", "Sınav dönemleri Takvim'de", "Tahmin ve tercih tavsiyesi yoktur"],
+    // "tercih tavsiyesi" YASAKLANMAZ: dürüst olumsuz cümle ("…tavsiyesi yoktur") onu içerir; yasak = olumlu vaat kalıpları.
+    ["tus'a hazırlık", "puan tahmini", "sıralama tahmini", "tercih önerisi", "kurs önerisi", "taban puan hesapla"]),
+  cap2("student.transition", "verified",
+    ["src/lib/doctor-activation.ts:254 studentRecordClearOnTransition", "src/lib/doctor-activation.ts:310 refreshActivation (diploma doğrulanınca öğrenci kaydı temizlenir)"],
+    ["Diploma doğrulanınca öğrenci kaydı temizlenir, hesap doktor üyeliğine geçer"],
+    ["otomatik doktor", "belge gerekmez"]),
+  // Deneme satırı: registry "kod var" der; GÖRÜNÜRLÜK env bayrağına bağlıdır (isTrialEnabled) — bölüm bileşeni çizer/çizmez.
+  cap2("membership.trial", "verified",
+    ["src/lib/doctorium-trial-flag.ts isTrialEnabled (env kapısı — satır yalnız açıkken çizilir)", "src/app/api/auth/signup-trial/route.ts parolasız deneme kaydı", "src/lib/doctorium-tiers.ts TRIAL_DAYS = 30", "src/app/api/cron/trial-sweep/route.ts", "src/lib/doctorium-trial-copy.ts TRIAL_LANDING_LINE"],
+    // 👤 2026-09-10: "ücretli üyeliğe dönüşmez" kalıbı YASAK listesine alındı — ücretli üyelik varmış izlenimi bırakıyor.
+    ["Hesabınızı 30 gün doğrulamadan kullanabilirsiniz; 30. günden sonra devam etmek için e-Devlet barkodlu Mezun Belgenizle doğrulamanız gerekir"],
+    ["otomatik yenilenir", "kart bilgisi", "ücretsiz deneme sonrası", "ücretli üyeliğe dönüşmez", "ücretli üyelik"]),
 ];
 
 const BY_ID: ReadonlyMap<CapabilityId, Capability> = new Map(CAPABILITIES.map((c) => [c.id, c]));
