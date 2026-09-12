@@ -64,8 +64,9 @@ export async function sendEmail(msg: EmailMessage): Promise<EmailSendResult> {
   }
 }
 
-// Log'a tam adres yazma — kullanıcı adının ilk 2 karakteri + domain açık.
-function maskEmail(e: string): string {
+// Log'a tam adres yazma — kullanıcı adının ilk 2 karakteri + domain açık. (alerts tatbikatı da kullanır:
+// ALERT_EMAIL alıcısı yönetici arayüzüne tam değil MASKELİ döner — /api/admin/alarm-test.)
+export function maskEmail(e: string): string {
   const [user, domain] = e.split("@");
   if (!domain) return "***";
   return `${(user ?? "").slice(0, 2)}***@${domain}`;

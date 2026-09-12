@@ -1,7 +1,13 @@
 // Kritik operasyon alarmları — Ray C gözlemlenebilirlik temel çizgisi (Faz 5, 2026-07-16).
 // Kanal 1: console.error "[ALERT]" ön-eki → Vercel log'larında tek grep'lik desen.
-// Kanal 2: ALERT_EMAIL env'ine e-posta (lib/email.ts dormant Resend katmanı üzerinden) —
+// Kanal 2: ALERT_EMAIL env'ine e-posta (lib/email.ts Resend katmanı üzerinden) —
 //   RESEND_API_KEY veya ALERT_EMAIL yoksa e-posta atlanır, log kanalı her zaman çalışır.
+//   ✅ 2026-09-12: kanal üretimde AÇIK — ALERT_EMAIL İKİ Vercel projesine (telehealth-mvp + doctorium)
+//   AYRI girildi (env devralınmaz). Aynı kod iki deploy'da koştuğu için konu satırı ve gövde MARKA/PROJE
+//   etiketi taşır: "[AURA ALARM]" / "[DOCTORIUM ALARM]" alarmın hangi projeden geldiğini söyler (cron
+//   alarmları yalnız AURA projesinden gelir — Doctorium'da cron no-op; consent/audit/KEK/decrypt ve giriş
+//   alarmları iki projeden de gelebilir). Tatbikat: /admin "Alarm kanalı" → test alarmı
+//   (POST /api/admin/alarm-test → anahtar "alarm-test", aynı cooldown; kanalı gerçek gönderimle kanıtlar).
 // Fire-safe: alarm göndermek HİÇBİR akışı bozamaz (asla throw etmez); çağıranlar `void sendAlert(...)`
 // ile beklemeden tetikler. Test ortamında (NODE_ENV=test) tamamen susar — kasıtlı kurcalama testleri
 // (audit tamper vb.) alarm üretmesin.
@@ -18,6 +24,11 @@
 // (PHI de-id çizgisinin devamı: [translate-path], [email.ts maskEmail] desenleri.)
 
 import { sendEmail } from "@/lib/email";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
+
+// Marka/proje etiketi — brand.ts gibi modül yüklenirken çözülür (testte stubEnv + resetModules + dinamik import).
+const BRAND_TAG = IS_DOCTORIUM_DEPLOY ? "DOCTORIUM" : "AURA";
+const PROJECT_LABEL = IS_DOCTORIUM_DEPLOY ? "doctorium (doctorium.tr)" : "telehealth-mvp (AURA)";
 
 // Aynı anahtarlı alarmın tekrar bildirimi için bekleme süresi. Serverless'ta sayaç INSTANCE-BAŞINA
 // yaşar → paralel instance'lar aynı alarmı birer kez daha gönderebilir (temel çizgi için kabul;
@@ -45,15 +56,15 @@ export async function sendAlert(key: string, title: string, detail?: string): Pr
 
     const env = process.env.VERCEL_ENV ?? "local";
     const d = detail ? ` — ${detail.slice(0, 400)}` : "";
-    console.error(`[ALERT] ${key}: ${title}${d} (env=${env})`);
+    console.error(`[ALERT] ${key}: ${title}${d} (env=${env} proje=${BRAND_TAG})`);
 
     const to = process.env.ALERT_EMAIL;
     if (!to) return { logged: true, emailed: false, suppressed: null };
     const r = await sendEmail({
       to,
-      subject: `[AURA ALARM] ${key} — ${title}`,
+      subject: `[${BRAND_TAG} ALARM] ${key} — ${title}`,
       text:
-        `Olay: ${key}\nBaşlık: ${title}\nOrtam: ${env}\nZaman: ${new Date().toISOString()}\n` +
+        `Olay: ${key}\nBaşlık: ${title}\nOrtam: ${env}\nProje: ${PROJECT_LABEL}\nZaman: ${new Date().toISOString()}\n` +
         (detail ? `Detay: ${detail.slice(0, 400)}\n` : "") +
         `\nAynı olay için ${COOLDOWN_MS / 60_000} dk bildirim beklemesi uygulanır; Vercel log'larında "[ALERT] ${key}" ile aranır.`,
     });

@@ -647,6 +647,12 @@ Aynı repo **iki** Vercel projesine bağlıdır; her `main` push'u ikisini de de
   decrypt hata kümesi (10 dk'da 5+) · cron başarısızlıkları. Kanal: her zaman `[ALERT] <olay>`
   log satırı (Vercel log'unda grep'lenir); `ALERT_EMAIL` + `RESEND_API_KEY` set ise e-posta
   (aynı olay 30 dk'da bir). Test ortamında alarm susar (kasıtlı kurcalama testleri için).
+  **✅ E-posta kanalı üretimde AÇIK (2026-09-12):** `ALERT_EMAIL` iki Vercel projesine AYRI girildi;
+  konu satırı marka etiketi taşır (`[AURA ALARM]` / `[DOCTORIUM ALARM]`, gövdede `Proje:`) — aynı kod
+  iki deploy'da koştuğu için alarmın kaynağı ayırt edilir. **Tatbikat:** `/admin` → "Alarm kanalı"
+  bloğu (alıcı maskeli + sağlayıcı durumu = iki projenin env paritesi bir bakışta) → "Test alarmı
+  gönder" (`POST /api/admin/alarm-test`, ADMIN self-auth, olay `alarm-test`, aynı cooldown) — kanal
+  gerçek gönderimle kanıtlanır.
 
 ### 🚫 Asla loglama (bağlayıcı kural)
 

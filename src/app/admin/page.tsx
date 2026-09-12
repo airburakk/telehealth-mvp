@@ -2,9 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import {
-  ArrowRight, BarChart2, CalendarDays, Gift, LayoutDashboard, Megaphone,
+  ArrowRight, BarChart2, BellRing, CalendarDays, Gift, LayoutDashboard, Megaphone,
   MousePointerClick, TrendingUp, GraduationCap, ShieldCheck
 } from "lucide-react";
+import { isEmailConfigured, maskEmail } from "@/lib/email";
+import { AlarmTestPanel } from "./AlarmTestPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +93,11 @@ export default async function AdminIndexPage() {
   if (!user) redirect("/");
   if (user.role !== "ADMIN") redirect("/doktor");
 
+  // Alarm kanalı durumu (2026-09-12) — env client'a GİTMEZ: alıcı maskeli, sağlayıcı yalnız var/yok.
+  // İki Vercel projesine env AYRI girildiği için bu iki satır aynı zamanda parite kontrolüdür.
+  const alertRecipient = process.env.ALERT_EMAIL ? maskEmail(process.env.ALERT_EMAIL) : null;
+  const providerConfigured = isEmailConfigured();
+
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
       <h1 className="aura-display flex items-center gap-2.5 text-2xl font-medium tracking-tight text-[var(--c-ink)]">
@@ -121,6 +128,23 @@ export default async function AdminIndexPage() {
           </li>
         ))}
       </ul>
+
+      {/* ── Operasyon: alarm kanalı tatbikatı (2026-09-12) ───────────────────────────────────────
+          lib/alerts.ts kritik alarmları her zaman "[ALERT] <olay>" log satırı olarak yazar; ALERT_EMAIL
+          doluysa e-posta da gider. Kanalın bu dağıtımda gerçekten çalıştığını (env girilmiş mi, Resend
+          kabul ediyor mu, kutuya düşüyor mu) yalnız gerçek bir gönderim kanıtlar → test alarmı. Aynı
+          olay 30 dk'da bir gider (cooldown); rota kendi ADMIN kapısını kurar (/api/admin/alarm-test). */}
+      <section className="mt-8 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-4">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]">
+          <BellRing size={16} className="text-[var(--c-ink-2)]" /> Alarm kanalı
+        </h2>
+        <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">
+          Kritik operasyon alarmları (onam ve denetim zinciri, şifreleme anahtarı, cron başarısızlıkları, e-posta
+          sağlayıcısı) her zaman sunucu günlüğüne düşer; alıcı adres tanımlıysa e-posta da gider. Kanalın bu dağıtımda
+          gerçekten çalıştığını doğrulamak için test alarmı gönderin — aynı test 30 dakikada bir gönderilir.
+        </p>
+        <AlarmTestPanel recipient={alertRecipient} providerConfigured={providerConfigured} />
+      </section>
 
       {/* "Denetim görünümleri" bloğu 2026-08-29'da kaldırıldı — dosya başındaki AURA ayıklaması
           notuna bakın. On kısayolun tamamı AURA yüzeylerine gidiyordu; rotalar duruyor, yalnız

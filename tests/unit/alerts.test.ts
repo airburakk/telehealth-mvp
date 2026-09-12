@@ -89,3 +89,37 @@ describe("noteDecryptFailure — küme eşiği", () => {
     expect(mockedSendEmail.mock.calls[0][0].subject).toContain("decrypt-cluster");
   });
 });
+
+// ── Marka/proje etiketi (2026-09-12 — ALERT_EMAIL üretimde açıldı; aynı kod İKİ Vercel projesinde koşar) ──
+// Konu satırı "[AURA ALARM]" / "[DOCTORIUM ALARM]" ve gövdedeki "Proje:" satırı alarmın kaynağını ayırt eder.
+// IS_DOCTORIUM_DEPLOY modül yüklenirken çözülür → brand-home.test deseni: stubEnv + resetModules + DİNAMİK import
+// (e-posta mock'u da yeniden yüklenmeli ki aynı örneğe bakılsın).
+describe("sendAlert — marka/proje etiketi", () => {
+  async function load(brandMode: string) {
+    vi.resetModules();
+    vi.stubEnv("BRAND_MODE", brandMode);
+    const email = await import("@/lib/email");
+    const alerts = await import("@/lib/alerts");
+    return { alerts, sendEmail: vi.mocked(email.sendEmail) };
+  }
+
+  afterEach(() => vi.resetModules());
+
+  it("AURA projesi (BRAND_MODE yok): konu [AURA ALARM], gövdede proje satırı, log satırında proje=AURA", async () => {
+    const { alerts, sendEmail } = await load("");
+    await alerts.sendAlert("alarm-test", "tatbikat");
+    const msg = sendEmail.mock.calls[0][0];
+    expect(msg.subject.startsWith("[AURA ALARM] alarm-test")).toBe(true);
+    expect(msg.text).toContain("Proje: telehealth-mvp (AURA)");
+    expect(errSpy).toHaveBeenCalledWith(expect.stringContaining("proje=AURA"));
+  });
+
+  it("Doctorium projesi (BRAND_MODE=doctorium): konu [DOCTORIUM ALARM] — alarmın kaynağı ayırt edilir", async () => {
+    const { alerts, sendEmail } = await load("doctorium");
+    await alerts.sendAlert("alarm-test", "tatbikat");
+    const msg = sendEmail.mock.calls[0][0];
+    expect(msg.subject.startsWith("[DOCTORIUM ALARM] alarm-test")).toBe(true);
+    expect(msg.text).toContain("Proje: doctorium (doctorium.tr)");
+    expect(errSpy).toHaveBeenCalledWith(expect.stringContaining("proje=DOCTORIUM"));
+  });
+});
