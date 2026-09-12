@@ -784,7 +784,7 @@ export function ConsultationRoom({
       )}
 
       <button onClick={generateSoap} disabled={soapBusy || !notes.trim()} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/10 px-3 py-2 text-sm font-semibold text-[var(--c-accent)] hover:bg-[var(--c-accent)]/15 disabled:opacity-50">
-        {soapBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} AI · SOAP&apos;a dönüştür
+        {soapBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}{" "}AI · SOAP&apos;a dönüştür
       </button>
       {soapErr && <div className="mt-1 text-[11px] text-[var(--c-danger)]">{soapErr}</div>}
       {/* "Notu kaydet" ve "Radyoloji (DICOM)" buradan ALT AKSİYON RAYINA taşındı (v6.134) —

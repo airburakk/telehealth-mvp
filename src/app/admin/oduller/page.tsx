@@ -67,7 +67,7 @@ export default async function RewardAdminPage() {
         <span>
           Katalog kalemi girmek doktora <strong className="text-[var(--c-ink)]">ödül vaadi başlatır</strong>. Kongre
           katılımı ve kitap <strong className="text-[var(--c-ink)]">ayni menfaattir</strong>: vergi (arızi kazanç /
-          stopaj / GİB özelgesi) ve <strong className="text-[var(--c-ink)]">kamu doktoru (657)</strong> değerlendirmesi
+          stopaj / GİB özelgesi) ve <strong className="text-[var(--c-ink)]">kamu doktoru (657)</strong>{" "}değerlendirmesi
           tamamlanmadan kalem yayınlamayın. Puana parasal değer atfeden ifade kullanmayın
           (&quot;1 puan = ₺X&quot; yasak). İlaç firması sponsorlu kalem girilmez. Teslim (FULFILLED) işareti
           yalnız ifa GERÇEKLEŞTİKTEN sonra konur.

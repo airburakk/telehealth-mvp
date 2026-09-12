@@ -69,7 +69,7 @@ export function Stage1Doctorium({
       {trialEnded && !access && (
         <div className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2.5 text-xs text-amber-300 ring-1 ring-amber-400/20">
           <p className="flex items-center gap-1.5 font-semibold">
-            <Info size={14} className="shrink-0" /> {TRIAL_LOCKED_TITLE} — Doctorium&apos;a devam etmek için e-Devlet barkodlu mezun belgenizi doğrulayın.
+            <Info size={14} className="shrink-0" /> {TRIAL_LOCKED_TITLE}{" "}— Doctorium&apos;a devam etmek için e-Devlet barkodlu mezun belgenizi doğrulayın.
           </p>
           <p className="mt-1 text-[11px] leading-relaxed text-amber-200/80">{TRIAL_LOCKED_NOTE}</p>
         </div>
@@ -77,7 +77,7 @@ export function Stage1Doctorium({
       {/* Doctorium'dan yönlendirilen doktor için bağlam bandı (?from=doctorium) */}
       {fromDoctorium && !trialEnded && !access && (
         <p className="mt-3 flex items-center gap-1.5 rounded-xl bg-amber-500/10 px-3 py-2.5 text-xs font-medium text-amber-300 ring-1 ring-amber-400/20">
-          <Info size={14} className="shrink-0" /> Doctorium&apos;a erişmek için Aşama 1&apos;i tamamlayın: e-Devlet barkodlu diplomanızı yükleyin.
+          <Info size={14} className="shrink-0" />{" "}Doctorium&apos;a erişmek için Aşama 1&apos;i tamamlayın: e-Devlet barkodlu diplomanızı yükleyin.
         </p>
       )}
 
@@ -109,7 +109,9 @@ export function Stage1Doctorium({
       {trialEnded && !access && (
         <details className="mt-4 rounded-xl border border-[var(--c-hairline)] px-3 py-2">
           <summary className="cursor-pointer text-xs font-semibold text-[var(--c-ink-2)]">Doğrulama yapmayacağım — hesabımı kapat</summary>
-          <div className="mt-3"><MembershipPanel mode="close" /></div>
+          {/* trialEnded && !access ⇒ LOCKED kitle — sponsor/anket/puan/ödül audienceFlags'te hiç
+              açık olmadı (yalnız VERIFIED'a açık), panel bunlardan bahsetmemeli. */}
+          <div className="mt-3"><MembershipPanel mode="close" hadMarketingSurfaces={false} /></div>
         </details>
       )}
 

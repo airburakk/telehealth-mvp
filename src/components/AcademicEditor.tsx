@@ -74,7 +74,7 @@ export function AcademicEducationBox(props: {
   return (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
       <h2 className="aura-display flex flex-wrap items-center gap-2 text-[17px] font-medium leading-tight tracking-tight text-[var(--c-ink)]">
-        <GraduationCap size={17} className="text-[var(--c-accent)]" /> Akademik &amp; Eğitim
+        <GraduationCap size={17} className="text-[var(--c-accent)]" />{" "}Akademik &amp; Eğitim
         <span className="ml-1 text-xs font-normal text-[var(--c-ink-3)]">(boş alanlar profilde otomatik üretilir)</span>
       </h2>
 
@@ -133,7 +133,7 @@ export function CertificatesBox(props: {
   return (
     <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
       <h2 className="aura-display flex flex-wrap items-center gap-2 text-[17px] font-medium leading-tight tracking-tight text-[var(--c-ink)]">
-        <Award size={17} className="text-[var(--c-accent)]" /> Sertifikalar &amp; Akademik Çalışmalar
+        <Award size={17} className="text-[var(--c-accent)]" />{" "}Sertifikalar &amp; Akademik Çalışmalar
         <span className="ml-1 text-xs font-normal text-[var(--c-ink-3)]">(ihtiyari)</span>
       </h2>
       <p className="mt-1 text-xs text-[var(--c-ink-2)]">

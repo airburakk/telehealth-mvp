@@ -29,7 +29,7 @@ export default function SignupPage() {
           <div className="text-sm font-semibold text-[var(--c-ink)]">İki aşamalı üyelik</div>
           <ol className="mt-2 space-y-2 text-xs text-[var(--c-ink-2)]">
             <li>
-              <strong className="text-[var(--c-ink)]">1 · Doctorium</strong> — e-Devlet barkodlu
+              <strong className="text-[var(--c-ink)]">1 · Doctorium</strong>{" "}— e-Devlet barkodlu
               mezun belgenizle doktor kimliğinizi doğrulayın; Doctorium&apos;daki tüm içerik ve
               ücretsiz araçlara erişin.
             </li>

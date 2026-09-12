@@ -18,7 +18,7 @@ const ADIMLAR: { baslik: React.ReactNode; aciklama: React.ReactNode; chip?: stri
   {
     baslik: "Arama kutusuna “Mezun Belgesi” yazın",
     aciklama: (
-      <>Üstteki arama çubuğuna <strong>Mezun Belgesi</strong> yazın ve listeden Yükseköğretim
+      <>Üstteki arama çubuğuna <strong>Mezun Belgesi</strong>{" "}yazın ve listeden Yükseköğretim
       Kurulu Başkanlığı&apos;nın hizmetini seçin.</>
     ),
     chip: "Yükseköğretim Mezun Belgesi Sorgulama",
@@ -90,7 +90,7 @@ export function EdevletKilavuz() {
 
       <p className="mx-4 mb-4 rounded-xl bg-amber-500/10 px-3 py-2.5 text-[11px] leading-relaxed text-amber-600 ring-1 ring-amber-400/25 dark:text-amber-300">
         Diplomanızın fotoğrafı/taraması da kabul edilir; ancak bu durumda belge{" "}
-        <strong>insan incelemesine</strong> alınır ve açılış bekleyebilir. e-Devlet&apos;ten alınan
+        <strong>insan incelemesine</strong>{" "}alınır ve açılış bekleyebilir. e-Devlet&apos;ten alınan
         barkodlu PDF beklemeden doğrulanır.
       </p>
     </details>

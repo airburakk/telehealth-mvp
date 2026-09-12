@@ -5,7 +5,7 @@ import { ArrowLeft, BadgeCheck, Info } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
-import { audienceLabel } from "@/lib/doctorium-tiers";
+import { audienceFlags, audienceLabel } from "@/lib/doctorium-tiers";
 import { countClinicalTies, hasClinicalTies } from "@/lib/doctorium-membership";
 import { recentLogins, describeUserAgent } from "@/lib/login-activity";
 import { AuraPanel } from "@/components/ui/AuraPanel";
@@ -221,7 +221,9 @@ export default async function DoctoriumAccountPage() {
         </AuraPanel>
 
         {/* 4 — ÜYELİĞİ KAPAT / ÜYELİKTEN ÇIK */}
-        <MembershipPanel mode={mode} />
+        {/* Sponsor/anket/puan/ödül YALNIZ VERIFIED'a açık (audienceFlags) — öğrenci/deneme/kilitli
+            hesapta bu veriler hiç var olmadı, panel bunlardan bahsetmemeli (2026-09-06 düzeltme). */}
+        <MembershipPanel mode={mode} hadMarketingSurfaces={audienceFlags(audienceCtx?.audience ?? "NONE").canSeeSurveys} />
       </div>
     </DoctoriumShell>
   );

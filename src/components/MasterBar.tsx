@@ -35,7 +35,7 @@ export function MasterBar({ mode, userName }: { mode: "master" | "impersonating"
           disabled={busy}
           className="inline-flex items-center gap-1.5 rounded-md bg-white/20 px-2.5 py-1 font-semibold hover:bg-white/30 disabled:opacity-60"
         >
-          {busy ? <Loader2 size={13} className="animate-spin" /> : <LogOut size={13} />} Master&apos;a dön
+          {busy ? <Loader2 size={13} className="animate-spin" /> : <LogOut size={13} />}{" "}Master&apos;a dön
         </button>
       </div>
     );

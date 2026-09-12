@@ -120,7 +120,7 @@ export default async function OzetPage({
                   href="/doktor/doctorium/tercihler"
                   className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-accent)]/45 bg-[var(--c-accent)]/10 px-3.5 py-2 text-[13px] font-semibold text-[var(--c-accent)] hover:bg-[var(--c-accent)]/15"
                 >
-                  <Settings2 size={14} /> Akış Tercihleri&apos;ne git
+                  <Settings2 size={14} />{" "}Akış Tercihleri&apos;ne git
                 </Link>
               </>
             )}

@@ -75,7 +75,9 @@ export function DoctoriumConsentGate({
       <label className="mt-5 flex cursor-pointer items-start gap-2.5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-4">
         <input type="checkbox" checked={readInfo} onChange={(e) => setReadInfo(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--c-accent)]" />
         <span className="text-[13px] leading-relaxed text-[var(--c-ink)]">
-          Aydınlatma metnini{student ? " ve tıp öğrencisi üyeliği ek metnini" : ""} okudum; Doctorium&apos;da kişisel verilerimin bu metinde belirtilen amaç, hukuki sebep ve sürelerle işleneceği konusunda bilgilendirildim.
+          {/* 🪤 SWC tuzağı: ifade sonrası gelen metin bir HTML varlığı (&apos;) içerip alt satıra taşıyorsa derleyici
+              baştaki boşluğu düşürür ("metniniokudum" — 2026-09-06) → boşluk açıkça verilir. */}
+          Aydınlatma metnini{student ? " ve tıp öğrencisi üyeliği ek metnini" : ""}{" "}okudum; Doctorium&apos;da kişisel verilerimin bu metinde belirtilen amaç, hukuki sebep ve sürelerle işleneceği konusunda bilgilendirildim.
         </span>
       </label>
       <label className="mt-3 flex cursor-pointer items-start gap-2.5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-4">

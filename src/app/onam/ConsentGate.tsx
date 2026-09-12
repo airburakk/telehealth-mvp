@@ -105,7 +105,7 @@ export function ConsentGate({ isPatient, role, dest, clinical = false }: { isPat
 
       {clinical && (
         <p className="mt-4 rounded-2xl border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.08] px-4 py-3 text-[13px] leading-relaxed text-[var(--c-ink)]">
-          <strong>Aşama 2 — klinik aktivasyon.</strong> Doctorium üyeliğiniz için verdiğiniz onam yeterlidir; klinik
+          <strong>Aşama 2 — klinik aktivasyon.</strong>{" "}Doctorium üyeliğiniz için verdiğiniz onam yeterlidir; klinik
           yüzeylere (vaka havuzu, görüşme, post-op takip) geçebilmeniz için hasta verisi kapsamındaki bu aydınlatmayı
           da onaylamanız gerekir. Onaylamazsanız Doctorium&apos;u aynı şekilde kullanmaya devam edersiniz.
         </p>
