@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { canAccessCase } from "@/lib/ownership";
 import { getCurrentUser } from "@/lib/auth";
+import { activeConsent, HEALTH_DECLARATION_SCOPE, HEALTH_DECLARATION_VERSION } from "@/lib/aura-consent";
+import { consentLangFor } from "@/lib/consent-lang";
 import { PackageBuilder, type PackageInitial } from "@/components/PackageBuilder";
 import { TIER_PRESETS, HEALTH_CHRONIC_OPTIONS, computeHealthRiskMult, parseHealthDeclaration, type RecommendedTreatment, type HealthDeclaration } from "@/lib/pricing";
 import { getTryPerUsd } from "@/lib/fxrate";
@@ -70,6 +72,10 @@ export default async function PackagePage({
   const viewer = (await getCurrentUser())?.role === "PATIENT" ? ("patient" as const) : ("staff" as const);
   const decl = parseHealthDeclaration(decryptField(c.healthDeclaration));
   const healthRiskMult = computeHealthRiskMult(decl);
+  // Sağlık beyanı açık rızası (A04-d, kod Paket B): form yalnız AKTİF rıza varsa açılır (geri alma duyarlı); dil = hasta dili.
+  const me = viewer === "patient" ? await getCurrentUser() : null;
+  const healthDeclConsented = me ? await activeConsent(me.id, HEALTH_DECLARATION_SCOPE, HEALTH_DECLARATION_VERSION) : false;
+  const consentLang = consentLangFor(me ? (await db.user.findUnique({ where: { id: me.id }, select: { patientLanguage: true } }))?.patientLanguage : null);
   // Hasta + henüz beyansız: profil hafızası (önceki vakadaki beyan) → yoksa triyaj kronik cevabı ön-doldurur.
   let healthPrefill: HealthDeclaration | null = null;
   if (viewer === "patient" && !decl) {
@@ -112,7 +118,7 @@ export default async function PackagePage({
       </div>
 
       <div className="mt-7">
-        <PackageBuilder caseId={c.id} patientName={decryptField(c.patientName)} branch={c.branch} country={c.country} initial={initial} treatments={treatments} rate={fx.rate} fxSource={fx.source} fxAt={fx.at} doctorMmssLimitUsd={doctorMmssLimitUsd} doctorName={doctorName} viewer={viewer} healthRiskMult={healthRiskMult} healthDecl={viewer === "patient" ? (decl ?? healthPrefill) : null} healthDeclaredAt={c.healthDeclaredAt?.toISOString() ?? null} />
+        <PackageBuilder caseId={c.id} patientName={decryptField(c.patientName)} branch={c.branch} country={c.country} initial={initial} treatments={treatments} rate={fx.rate} fxSource={fx.source} fxAt={fx.at} doctorMmssLimitUsd={doctorMmssLimitUsd} doctorName={doctorName} viewer={viewer} healthRiskMult={healthRiskMult} healthDecl={viewer === "patient" ? (decl ?? healthPrefill) : null} healthDeclaredAt={c.healthDeclaredAt?.toISOString() ?? null} healthDeclConsented={healthDeclConsented} consentLang={consentLang} />
       </div>
     </div>
   );

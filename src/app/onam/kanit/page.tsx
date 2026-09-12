@@ -4,13 +4,21 @@
 // Onaylanan metin sürümü + hash · cihaz · IP · zaman · hash-zinciri mührü · (test) RFC 3161 zaman damgası + doğrulama.
 // Yazdır → PDF (print:hidden çubuk gizlenir → temiz belge).
 import { useEffect, useState } from "react";
-import { ShieldCheck, ShieldAlert, Printer, Loader2, Fingerprint, Clock, Link2, FileText } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Printer, Loader2, Fingerprint, Clock, Link2, FileText, ShieldOff } from "lucide-react";
 
-// v6.211: kapsam sekmeleri — telesağlık (GENERAL_KVKK) · Doctorium aydınlatma · Doctorium sözleşme · diploma
-// beyanı. Kaydı olmayan kapsam "kayıt yok" gösterir; "metin eşleşmesi" her kapsamın kendi kanonik metnine
-// göre ölçülür (lib/doctorium-consent canonicalTextFor — ekran = hash kararının doğrulaması).
+// v6.211: kapsam sekmeleri; v6.269 (kod Paket B): AURA seti genişledi — aydınlatma + açık rıza (GENERAL_KVKK v4) · kullanım
+// koşulları (AURA_TERMS) · personel aydınlatma + rol kesiti (STAFF_KVKK) · AI ön değerlendirme / tercüme (v2) · sigorta
+// beyanı · kurumsal başvuru (v2) · Doctorium üçlüsü. Kaydı olmayan kapsam "kayıt yok" gösterir; "metin eşleşmesi" her
+// kapsamın kendi kanonik ADAYLARINA (TR + EN; personelde rol kesiti) göre ölçülür (lib/doctorium-consent canonicalTextsFor —
+// ekran = hash kararının doğrulaması). Geri alınabilir kovalarda geri alma durumu da gösterilir.
 const SCOPES: { key: string; label: string }[] = [
-  { key: "GENERAL_KVKK", label: "Telesağlık (KVKK)" },
+  { key: "GENERAL_KVKK", label: "Aydınlatma + açık rıza" },
+  { key: "AURA_TERMS", label: "Kullanım Koşulları" },
+  { key: "STAFF_KVKK", label: "Personel aydınlatma" },
+  { key: "AI_TRIAGE", label: "AI ön değerlendirme" },
+  { key: "AI_INTERPRET", label: "AI tercüme" },
+  { key: "HEALTH_DECLARATION", label: "Sigorta beyanı" },
+  { key: "STAFF_APPLICATION_KVKK", label: "Kurumsal başvuru" },
   { key: "DOCTORIUM_KVKK", label: "Doctorium aydınlatma" },
   { key: "DOCTORIUM_TERMS", label: "Doctorium sözleşme" },
   { key: "DOCTORIUM_DIPLOMA_BEYAN", label: "Diploma beyanı" },
@@ -23,6 +31,7 @@ interface Proof {
   textHash: string | null; canonicalTextHash: string; prevHash: string | null; entryHash: string | null;
   tsAuthority: string | null; tsTime: string | null; tsToken: string | null;
   verification: { hasProofLayer: boolean; entryHashValid: boolean | null; timestampValid: boolean | null; textHashMatches: boolean | null };
+  revocable?: boolean; active?: boolean | null; revokedAt?: string | null;
 }
 
 export default function ConsentProofPage() {
@@ -95,6 +104,13 @@ export default function ConsentProofPage() {
         </div>
       </div>
 
+      {proof.revocable && proof.active === false && (
+        <div className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          <ShieldOff size={16} className="mt-0.5 shrink-0" />
+          <span>Bu rıza <b>geri alınmış</b>{proof.revokedAt ? ` (${fmt(proof.revokedAt)})` : ""}. Aşağıdaki kayıt, geri almadan önceki verme kaydının kanıtıdır; geri alma da aynı zincirde ayrı bir kayıttır.</span>
+        </div>
+      )}
+
       {/* Doğrulama rozetleri */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Badge ok={sealed} label="Mühürlü kayıt" />
@@ -122,6 +138,7 @@ export default function ConsentProofPage() {
       <div className="mt-4 rounded-2xl bg-[var(--c-surface)] px-4 py-3 text-xs text-[var(--c-ink-2)]">
         ⚖️ Bu belge KVKK/GDPR ispat yükümlülüğü için onam kaydının bütünlük kanıtıdır. Zaman damgası otoritesi şu an
         <b> test/yerel (SIMULATED-LOCAL)</b>; üretimde yasal geçerli bir RFC 3161 TSA (ör. TÜBİTAK BİLGEM) bağlanacaktır.
+        Metin eşleşmesi, onaylanan dildeki (Türkçe veya İngilizce) kanonik metne göre ölçülür.
       </div>
 
       <div className="print:hidden mt-6">

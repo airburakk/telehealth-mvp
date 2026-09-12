@@ -21,6 +21,8 @@ import {
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47, VIDEO_CARD_SCRIPT } from "@/lib/constants";
 import { AI_INTERPRET_TEXT } from "@/lib/ai-consent";
+import { LegalMarkdown } from "@/components/aura/doctorium-legal/LegalMarkdown";
+import { CONSENT_LANG_NOTE, consentLangFor, needsCourtesyTranslation, plainLegalText } from "@/lib/consent-lang";
 import { AuraSpinner } from "@/components/AuraLogo";
 import { DoctorArt } from "@/components/AuraArt";
 import { DoctorVideoCard } from "@/components/DoctorVideoCard";
@@ -91,6 +93,8 @@ const TX = {
   interpretYes: "Açık Rızam Vardır",
   interpretNo: "Süreci Sonlandır",
   interpretErr: "Bir hata oluştu, lütfen tekrar deneyin.",
+  interpretSkip: "Tercümesiz devam et",
+  interpretCourtesy: "Bilgilendirme amaçlı çeviri — bağlayıcı metin yukarıdaki kanonik metindir.",
 } as const;
 
 type Props = {
@@ -116,15 +120,22 @@ type Props = {
   onJoin?: () => void;
   /** Talk entegrasyonu: Katıl sonrası render edilen oda (ConsultationRoom). */
   children?: React.ReactNode;
+  /** v6.269 (R4): tercüme rıza kapısı yalnız görüşme dilleri farklıysa; verilmezse hasta dili ≠ Türkçe kuralı. */
+  interpretNeeded?: boolean;
+  /** Hastanın kapıdaki seçimi (SO odası tercümanı buna göre kurar; Talk odası sessionStorage okur). */
+  onInterpretChoice?: (choice: "consent" | "skip") => void;
 };
+
+// useT girdisi (hash DIŞI bilgilendirme çevirisi): kanonik TR rıza metninin düz hâli — modül düzeyinde sabit (referans kararlı).
+const INTERPRET_COURTESY = plainLegalText(AI_INTERPRET_TEXT.tr);
 
 export function PreConsultLobby({
   lang, langSelector, scheduledAt = null, earlyWindowMin = 15,
-  isDoctor = false, remoteLabel, branchLabel, storageKey, doctorCard, onJoin, children,
+  isDoctor = false, remoteLabel, branchLabel, storageKey, doctorCard, onJoin, children, interpretNeeded, onInterpretChoice,
 }: Props) {
   // texts referansı SABİT olmalı: lobi ses metresi/geri sayım ile sık re-render eder; memoize edilmezse
   // useT'nin effect'i her render yeniden kurulur → uçuştaki çeviri fetch'i cleanup ile iptal olur (çeviri hiç gelmez).
-  const texts = useMemo(() => [...Object.values(TX), AI_INTERPRET_TEXT, ...VIDEO_CARD_SCRIPT, ...(branchLabel ? [branchLabel] : [])], [branchLabel]);
+  const texts = useMemo(() => [...Object.values(TX), INTERPRET_COURTESY, ...VIDEO_CARD_SCRIPT, ...(branchLabel ? [branchLabel] : [])], [branchLabel]);
   const { t } = useT(lang, texts);
   const dir = langDir(lang);
   const router = useRouter();
@@ -133,20 +144,32 @@ export function PreConsultLobby({
 
   // ── Simültane tercüme açık rıza kapısı (yalnız hasta; doktor rıza görmez → başlangıçta geçmiş sayılır) ──
   // Rıza verilene kadar cihaz/kamera izni İSTENMEZ (acquire effect'i interpretOk'a bağlı) ve lobi mount olmaz.
-  const [interpretOk, setInterpretOk] = useState(isDoctor);
+  // v6.269 (R4, A04-c): kapı YALNIZ görüşme dilleri farklıysa (varsayılan: hasta dili ≠ Türkçe — doktor arayüzü TR); doktor ve
+  // aynı-dil hasta kapıyı hiç görmez. "Tercümesiz devam" rıza YAZMAZ; tercih sessionStorage'a (bu görüşme) + callback.
+  const needsInterpret = interpretNeeded ?? (!isDoctor && lang !== "Türkçe");
+  const consentLang = consentLangFor(lang);
+  const [interpretOk, setInterpretOk] = useState(isDoctor || !needsInterpret);
   const [consenting, setConsenting] = useState(false);
   const [consentErr, setConsentErr] = useState("");
   async function acceptInterpret() {
     setConsenting(true);
     setConsentErr("");
     try {
-      const r = await fetch("/api/consent/ai-interpret", { method: "POST" });
+      const r = await fetch("/api/consent/ai-interpret", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lang: consentLang }) });
       if (!r.ok) throw new Error();
+      try { sessionStorage.setItem(`air_interpret_optout_${storageKey ?? "x"}`, "0"); } catch {}
+      onInterpretChoice?.("consent");
       setInterpretOk(true);
     } catch {
       setConsentErr(t(TX.interpretErr));
       setConsenting(false);
     }
+  }
+
+  function skipInterpret() {
+    try { sessionStorage.setItem(`air_interpret_optout_${storageKey ?? "x"}`, "1"); } catch {}
+    onInterpretChoice?.("skip");
+    setInterpretOk(true);
   }
 
   // ── Cihaz / ön-izleme ──
@@ -328,8 +351,9 @@ export function PreConsultLobby({
   // ── Katıldıktan sonra: oda devralır (3. alt-durum = "doktorunuz birazdan katılacak" odada) ──
   if (entered) return <>{children ?? null}</>;
 
-  // ── Simültane tercüme açık rıza kapısı — cihaz testine/görüşmeye geçmeden önce (yalnız hasta) ──
-  // "Açık Rızam Vardır" → /api/consent/ai-interpret (idempotent, ispatlı) + lobi açılır.
+  // ── Simültane tercüme açık rıza kapısı — cihaz testine/görüşmeye geçmeden önce (yalnız hasta, YALNIZ diller farklıysa — R4) ──
+  // "Açık Rızam Vardır" → /api/consent/ai-interpret (idempotent, ispatlı; gösterilen dilin metni hash'lenir) + lobi açılır.
+  // "Tercümesiz devam et" → rıza yazılmaz, sessionStorage opt-out (oda tercümanı kurmaz) + lobi açılır.
   // "Süreci Sonlandır" → hastanın ana sekmesine (/vakalarim) döner; cihaz izni hiç istenmez.
   if (!interpretOk) {
     return (
@@ -344,9 +368,17 @@ export function PreConsultLobby({
           {langSelector}
         </div>
 
-        <div className="mt-5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5">
-          <p className="text-[14px] leading-relaxed text-[var(--c-ink)]">{t(AI_INTERPRET_TEXT)}</p>
+        {/* EKRAN = HASH (v6.269, A04-c v2): kanonik metin (TR/EN) LegalMarkdown ile; hash'lenen dize bu. */}
+        <div lang={consentLang} dir="ltr" className="mt-5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 text-[14px]">
+          <LegalMarkdown markdown={AI_INTERPRET_TEXT[consentLang]} />
         </div>
+        <p lang={consentLang} dir="ltr" className="mt-2 text-[12px] leading-relaxed text-[var(--c-ink-3)]">{CONSENT_LANG_NOTE[consentLang]}</p>
+        {needsCourtesyTranslation(lang) && (
+          <div className="mt-3 rounded-2xl border border-dashed border-[var(--c-hairline)] px-4 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--c-ink-3)]">{t(TX.interpretCourtesy)}</p>
+            <p className="mt-1 whitespace-pre-line text-[13px] leading-relaxed text-[var(--c-ink-2)]">{t(INTERPRET_COURTESY)}</p>
+          </div>
+        )}
 
         {consentErr && <p className="mt-3 text-sm text-red-300">{consentErr}</p>}
 
@@ -357,6 +389,13 @@ export function PreConsultLobby({
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--c-accent)] px-5 py-3 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {consenting ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />} {t(TX.interpretYes)}
+          </button>
+          <button
+            onClick={skipInterpret}
+            disabled={consenting}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--c-accent)]/40 bg-[var(--c-surface)] px-5 py-3 text-sm font-semibold text-[var(--c-ink)] hover:bg-[var(--c-panel)] disabled:opacity-50"
+          >
+            {t(TX.interpretSkip)}
           </button>
           <button
             onClick={() => router.push("/vakalarim")}

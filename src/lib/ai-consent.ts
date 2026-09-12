@@ -1,30 +1,23 @@
-// Yapay zeka işleme AÇIK RIZASI (AI_TRIAGE) — hastayı karşılayan AI, semptom/tanı girişinden ÖNCE
-// bu kapıyı gösterir (4 kulvar: triyaj/telehealth · ikinci görüş · sağlık turizmi · ücretsiz sağlık).
-// GENERAL_KVKK onamından AYRI, DAR kapsamlı kova: yalnız (1) doğru branş doktoruna yönlendirme ve
-// (2) yüklenen belgelerin çevirisi. Aynı ConsentRecord tablosu + ispat katmanı kullanılır (metin hash'i
-// + append-only hash-zinciri + zaman damgası) — kayıtları scope alanı ("AI_TRIAGE") ayırır; ayrı
-// migration GEREKMEZ (@@unique([userId, scope, version]) zaten kompozit).
+// Yapay zekâ işleme AÇIK RIZALARI — saf sabitler (db importsuz; client kapıları + proxy/Node her ikisinden okunur).
 //
-// ⚖️ HUKUKİ TASLAK — bu açık rıza metni veri sorumlusu + hukuk müşaviri tarafından nihaileştirilmelidir.
-// Metin ESASLI değişince AI_CONSENT_VERSION artır → hash değişir → hastalar bir kez yeniden onaylar.
-// db importsuz (edge-safe sabitler — gerekirse proxy/Node her ikisinden okunur), consent-config deseni.
+// v2 (kod Paket B, v6.269 · 2026-09-13 — AURA hukuki set Sürüm 1.0 NİHAİ, belge A04 (b)(c)(d), 👤 12.09.2026 R3/R4):
+// metinler vault'tan üretilir (lib/aura-legal/texts/acik-riza — _yayin-kesiti.py), TR kanonik + EN ikinci kanonik,
+// EKRAN = HASH ve hash DİL BAŞINA. Sürüm 1→2: hastalar bir kez yeniden onaylar (eski v1 kayıtları zincirde kalır).
+//   AI_TRIAGE v2       — ön değerlendirme + belge çevirisi; sağlayıcı adıyla (Anthropic/Claude, ABD; ad iletilmez);
+//                        dört başvuru yolunda formdan ÖNCE (AiConsentGate); rıza yoksa başvuru oluşturulamaz.
+//   AI_INTERPRET v2    — simültane tercüme (Google Gemini Live, ABD; ses kaydedilmez); YALNIZ görüşme dilleri farklıysa,
+//                        cihaz izninden ÖNCE (PreConsultLobby); "tercümesiz devam" seçeneği (R4).
+//   HEALTH_DECLARATION — sigorta sağlık beyanı (kapsam/sürüm lib/aura-consent-texts; metin burada, aynı kaynak dosya).
+// Geri alma: Hesabım → Rızalarım (lib/aura-consent activeConsent; uçlar geri-alma duyarlı kontrol yapar).
+import { AI_TRIAGE_TR, AI_TRIAGE_EN, AI_INTERPRET_TR, AI_INTERPRET_EN, HEALTH_DECLARATION_TR, HEALTH_DECLARATION_EN } from "./aura-legal/texts/acik-riza";
+import type { ConsentLang } from "./consent-lang";
 
 export const AI_CONSENT_SCOPE = "AI_TRIAGE";
-export const AI_CONSENT_VERSION = 1;
+export const AI_CONSENT_VERSION = 2;
+export const AI_TRIAGE_TEXT: Record<ConsentLang, string> = { tr: AI_TRIAGE_TR, en: AI_TRIAGE_EN };
 
-// Kanonik (TR) açık rıza metni — veri sorumlusunca verildi (2026-07-14). Bu metnin SHA-256 hash'i
-// her rıza kaydına "textHash" olarak mühürlenir → hangi metnin hangi sürümünü onayladığı ispatlanabilir.
-export const AI_CONSENT_TEXT = `Birazdan vereceğiniz bilgiler yapay zeka tarafından YALNIZCA sizi doğru branş doktoruna yönlendirmek için analiz edilecektir, herhangi bir tanı, teşhis, tedavi ya da tıbbi bir karar için kullanılmayacaktır. Sisteme eklediğiniz tıbbi belge, rapor, görüntüleme, tahlil, epikriz ve/veya benzeri belgeler ise yapay zeka tarafından YALNIZCA çeviri yapılarak doktorunuza sunulması için analiz edilecektir. Kişisel Verilerimin yukarıda sayılan nedenlerle yapay zeka tarafından işlenmesine AÇIK RIZAM vardır.`;
-
-// ── Simültane tercüme AÇIK RIZASI (AI_INTERPRET) ────────────────────────────────────────────────
-// Dijital bekleme odasında (PreConsultLobby), doktorla CANLI görüşmeden ÖNCE gösterilir (4 kulvar).
-// AI_TRIAGE'dan (semptom yönlendirme + belge çevirisi) AYRI kova/amaç: canlı görüşme sesinin YALNIZCA
-// simültane tercümesi. Aynı ConsentRecord tablosu + ispat katmanı; kayıtları scope ("AI_INTERPRET")
-// ayırır → ayrı migration GEREKMEZ (@@unique([userId, scope, version]) kompozit). "Süreci Sonlandır"
-// hastayı ana sekmesine (/vakalarim) döndürür; "Açık Rızam Vardır" rızayı mühürler + görüşmeye geçer.
 export const AI_INTERPRET_SCOPE = "AI_INTERPRET";
-export const AI_INTERPRET_VERSION = 1;
+export const AI_INTERPRET_VERSION = 2;
+export const AI_INTERPRET_TEXT: Record<ConsentLang, string> = { tr: AI_INTERPRET_TR, en: AI_INTERPRET_EN };
 
-// Kanonik (TR) metin — veri sorumlusunca verildi (2026-07-14). Metin ESASLI değişince AI_INTERPRET_VERSION
-// artır → hash değişir → hastalar bir kez yeniden onaylar. ⚖️ HUKUKİ TASLAK — hukuk müşaviri nihaileştirmeli.
-export const AI_INTERPRET_TEXT = `Birazdan doktorunuzla yapacağınız görüşme yapay zeka tarafından YALNIZCA simultane tercüme yapmak için analiz edilecektir. Kişisel Verilerimin yukarıda sayılan nedenle yapay zeka tarafından işlenmesine AÇIK RIZAM vardır.`;
+export const HEALTH_DECLARATION_TEXT: Record<ConsentLang, string> = { tr: HEALTH_DECLARATION_TR, en: HEALTH_DECLARATION_EN };

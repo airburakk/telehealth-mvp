@@ -166,7 +166,12 @@ export function ConsultationRoom({
   const remoteName = isDoctor ? caseData.patientName : `${doctor.title} ${doctor.name}`;
   const myLang = isDoctor ? "tr-TR" : (SPEECH_LANG[caseData.language] ?? "tr-TR");
   // Doktor TR konuşur; hasta dili Türkçe ise tercüme gereksiz (kendi sesini kısar) → otomatik tercüme kapalı.
-  const langsDiffer = caseData.language !== "Türkçe";
+  // v6.269 (R4 "tercümesiz devam"): hasta lobide tercümeyi reddettiyse (sessionStorage, bu görüşme) tercüman hiç kurulmaz —
+  // diller farklı olsa da. Lazy init: oda lobiden sonra istemcide mount olur (SSR uyuşmazlığı yok).
+  const [interpretOptOut] = useState(() => {
+    try { return typeof window !== "undefined" && window.sessionStorage.getItem(`air_interpret_optout_${storageKey ?? consultationId}`) === "1"; } catch { return false; }
+  });
+  const langsDiffer = caseData.language !== "Türkçe" && !interpretOptOut;
 
   // Hasta arayüzü kendi dilinde; doktor TR (klinik araçlar). Yalnız sunum metinleri çevrilir; veri TR kanonik.
   const uiLang = isDoctor ? "Türkçe" : caseData.language;

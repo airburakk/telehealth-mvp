@@ -4,6 +4,7 @@
 // cihazla onayladı" bağımsız ispatlanabilir + sonradan değiştirilmediği gösterilebilir.
 import { db } from "./db";
 import { CONSENT_SCOPE, CONSENT_VERSION, CONSENT_TEXT } from "./consent-config";
+import { GENERAL_KVKK_TEXT } from "./aura-consent-texts"; // v4 (kod Paket B): GENERAL_KVKK kanonik = A01 yayın kesiti (TR); EN adayı kanıtta
 import {
   sha256, getTimestampToken, verifyTimestampToken, chainSeal, verifyChainSeal, isV2Seal,
 } from "./timestamp";
@@ -86,7 +87,8 @@ export async function recordConsent(
 ): Promise<void> {
   const scope = opts?.scope ?? CONSENT_SCOPE;
   const version = opts?.version ?? CONSENT_VERSION;
-  const text = opts?.text ?? CONSENT_TEXT;
+  // v4 (v6.269): GENERAL varsayılanı A01 TR kanonik (ekran = hash); diğer kovalar metni açıkça geçer. CONSENT_TEXT yalnız v3 tarihî.
+  const text = opts?.text ?? (scope === CONSENT_SCOPE ? GENERAL_KVKK_TEXT.tr : CONSENT_TEXT);
 
   const existing = await db.consentRecord.findUnique({
     where: { userId_scope_version: { userId, scope, version } },
@@ -213,7 +215,7 @@ export interface ConsentProof {
 // metin ve güncel sürüm çağırandan gelir (lib/doctorium-consent canonicalTextFor); varsayılan GENERAL_KVKK.
 export async function getConsentProof(
   userId: string,
-  opts?: { scope?: string; canonicalText?: string; currentVersion?: number },
+  opts?: { scope?: string; canonicalText?: string; canonicalTexts?: string[]; currentVersion?: number },
 ): Promise<ConsentProof | null> {
   const scope = opts?.scope ?? CONSENT_SCOPE;
   const currentVersion = opts?.currentVersion ?? CONSENT_VERSION;
@@ -223,7 +225,9 @@ export async function getConsentProof(
   });
   if (!rec) return null;
 
-  const canonicalTextHash = sha256(opts?.canonicalText ?? CONSENT_TEXT);
+  // v6.269: birden çok kanonik aday (TR + EN; personelde rol kesiti) — textHash bunlardan biriyle eşleşirse "metin eşleşiyor".
+  const canonicalHashes = (opts?.canonicalTexts ?? [opts?.canonicalText ?? GENERAL_KVKK_TEXT.tr]).map(sha256);
+  const canonicalTextHash = canonicalHashes[0];
   const hasProofLayer = !!rec.entryHash;
 
   let entryHashValid: boolean | null = null;
@@ -239,7 +243,7 @@ export async function getConsentProof(
     : null;
 
   // currentVersion 0 = sürümsüz kova (diploma beyanı gibi sayaç-versiyonlu): eşleşme her kayıtta ölçülür.
-  const textHashMatches = currentVersion === 0 || rec.version === currentVersion ? rec.textHash === canonicalTextHash : null;
+  const textHashMatches = currentVersion === 0 || rec.version === currentVersion ? canonicalHashes.includes(rec.textHash ?? "") : null;
 
   return {
     userId: rec.userId, scope: rec.scope, version: rec.version, currentVersion,

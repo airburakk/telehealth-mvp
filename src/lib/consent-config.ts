@@ -10,12 +10,17 @@ export const CONSENT_SCOPE = "GENERAL_KVKK";
 // /guven-ve-gizlilik zaten dürüstçe tersini açıklıyordu. Yeni metin kodun GERÇEKTE yaptığını söyler:
 // kişisel veri silinir; yasal saklamaya tabi klinik kayıt erişime kapanır + süre sonunda fiziken imha
 // (lib/account-deletion.ts iki-katman + RETENTION_YEARS cron). Sürüm artışı = herkes bir kez yeniden onaylar.
-export const CONSENT_VERSION = 3;
+// v4 (2026-09-13, kod Paket B — AURA hukuki set Sürüm 1.0 NİHAİ, 👤 12.09.2026): EKRAN = HASH. Kanonik metin artık
+// belge A01'in tam yayın kesitidir (lib/aura-legal/texts/aydinlatma — TR kanonik + EN ikinci kanonik, hash dil başına);
+// /onam hasta kapısı A01 + A02 (AURA_TERMS v1) tam metnini gösterir, özet madde/taslak dönemi kapandı. Personel artık
+// GENERAL_KVKK değil STAFF_KVKK (A09 + rol kesiti) onaylar (lib/doctorium-consent requiredConsentScopes). Bu artış
+// hasta + personel + Aşama 2 doktoru bir kez yeniden onaya düşürür (proxy cv < 4 → /onam).
+export const CONSENT_VERSION = 4;
 
-// Onaylanan kanonik (TR) aydınlatma + açık rıza metni. ⚖️ TASLAK — nihai hukuki metin veri sorumlusu +
-// hukuk müşaviri tarafından verilecek. Bu metnin SHA-256 hash'i her onam kaydına "textHash" olarak mühürlenir
-// (RFC 3161 zaman damgasıyla birlikte → hangi metnin hangi sürümünü onayladığı ispatlanabilir). Metin değişince
-// CONSENT_VERSION artır → hash değişir → toplu yeniden onam. Lokalize sunum ConsentGate'tedir; kanonik = bu TR metin.
+// v3 TARİHÎ metin (2026-07-16 – 2026-09-13) — yalnız referans: v4'ten itibaren GENERAL_KVKK kaydına A01 yayın kesiti
+// hash'lenir (lib/consent.ts recordConsent varsayılanı GENERAL_KVKK_TEXT.tr). Eski v3 kayıtlarının hash'i bu metne aittir;
+// kanıt sayfasında "metin eşleşmesi" yalnız güncel sürümde ölçüldüğünden bu sabit artık hiçbir yeni kaydın kaynağı DEĞİLDİR.
+// Proxy bu modülü import eder → uzun A01 metni BURAYA konmaz (edge/proxy bundle'ı küçük kalsın).
 export const CONSENT_TEXT = `AURA Telesağlık — KVKK Aydınlatma ve Açık Rıza Metni (Sürüm 3 · TASLAK)
 
 1. Veri Sorumlusu: AURA platformunu işleten şirket(ler) (S1 Yazılım / S2 Operasyon).

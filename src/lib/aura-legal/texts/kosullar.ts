@@ -1,7 +1,7 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/aura-hukuki-belgeler/teslim/md/A02-kullanim-kosullari-hizmet-sozlesmesi-hasta.md (TR) + en/A02-terms-of-use-and-service-agreement-patient.md (EN) — Sürüm 1.0 · 12.09.2026 NİHAİ.
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/aura-hukuki-belgeler A02-kullanim-kosullari-hizmet-sozlesmesi-hasta.md + A02-terms-of-use-and-service-agreement-patient.md (teslim/md TR · en/ EN) — Sürüm 1.0 · 12.09.2026 NİHAİ.
 // Elle DÜZENLEME YOK: kaynak .md vault'ta; `python -X utf8 _yayin-kesiti.py` yeniden üretir. Kimlik etiketleri tüzel kişilik kurulana dek
 // yayın yer tutucusuyla geçer; e-posta kanalı kutu açılana dek yayımlanmaz (platform içi form). Belge A0N atıfları yayımlı rotalara bağlıdır.
-// TR = kanonik (bağlayıcı) · EN = ikinci kanonik (çelişkide TR esastır). Aynı dizeler kod Paket B'de onam kaydına hash'lenir.
+// TR = kanonik (bağlayıcı) · EN = ikinci kanonik (çelişkide TR esastır). Aynı dizeler onam kaydına hash'lenir (ekran = hash, dil başına).
 export const KOSULLAR_TR = `## 1. TARAFLAR VE KONU
 
 **1.1.** İşbu sözleşme, **AURA platform işleticisi** ("**Platform**" veya "**AURA**") ile AURA telesağlık platformuna hasta

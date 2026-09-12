@@ -1,14 +1,15 @@
-// Doctorium onam mimarisi (v6.211, 2026-09-03 — 👤 karar 15 §7: Seçenek A + C) — saf sözleşmeler:
-//  · requiredConsentScopes: rol/aşama → gerekli kapsam seti (PATIENT/personel → GENERAL; Aşama 1 doktor ve
-//    öğrenci → yalnız Doctorium seti; Aşama 2 doktor → GENERAL + Doctorium; Doctorium'dan çıkan → GENERAL)
-//  · canonicalTextFor: kanıt sayfası her kapsamı kendi kanonik metniyle doğrular (ekran = hash)
+// Onam mimarisi (v6.211, 2026-09-03 — 👤 karar 15 §7: Seçenek A + C; v6.269 kod Paket B — AURA kapsam seti) — saf sözleşmeler:
+//  · requiredConsentScopes: rol/aşama → gerekli kapsam seti (PATIENT → GENERAL_KVKK + AURA_TERMS; personel → STAFF_KVKK;
+//    Aşama 1 doktor ve öğrenci → yalnız Doctorium seti; Aşama 2 doktor → STAFF_KVKK + Doctorium; Doctorium'dan çıkan → STAFF_KVKK)
+//  · canonicalTextFor / canonicalTextsFor: kanıt sayfası her kapsamı kendi kanonik metin(ler)iyle doğrular (ekran = hash)
 //  · diploma beyanı: 6 madde; hash'lenen metin ekrandaki maddelerle aynı kaynaktan
 import { describe, it, expect } from "vitest";
 import {
-  requiredConsentScopes, scopeVersion, canonicalTextFor, decideConsentScreen,
+  requiredConsentScopes, scopeVersion, canonicalTextFor, canonicalTextsFor, decideConsentScreen,
   DOCTORIUM_KVKK_SCOPE, DOCTORIUM_TERMS_SCOPE, DOCTORIUM_DIPLOMA_BEYAN_SCOPE, DOCTORIUM_CONSENT_VERSION, DOCTORIUM_SCOPES,
 } from "@/lib/doctorium-consent";
 import { CONSENT_SCOPE, CONSENT_VERSION } from "@/lib/consent-config";
+import { AURA_TERMS_SCOPE, STAFF_KVKK_SCOPE, STAFF_ROLES } from "@/lib/aura-consent-texts";
 import { AYDINLATMA_MD } from "@/lib/doctorium-legal/texts/aydinlatma";
 import { KOSULLAR_MD } from "@/lib/doctorium-legal/texts/kosullar";
 import { OGRENCI_EKI_MD } from "@/lib/doctorium-legal/texts/ogrenci-eki";
@@ -18,23 +19,24 @@ const stage = (o: Partial<{ activatedAt: Date | null; doctoriumOptOutAt: Date | 
   activatedAt: null, doctoriumOptOutAt: null, ...o,
 });
 
-describe("requiredConsentScopes — rol/aşama → gerekli set", () => {
-  it("hasta ve personel rolleri yalnız GENERAL_KVKK (mevcut düzen değişmez)", () => {
-    for (const r of ["PATIENT", "COORDINATOR", "ADMIN", "AGENCY", "PARTNER", "HEALTH_PRO", "ETHICS"]) {
-      expect(requiredConsentScopes(r, stage()), r).toEqual([CONSENT_SCOPE]);
-    }
+describe("requiredConsentScopes — rol/aşama → gerekli set (v6.269)", () => {
+  it("hasta → GENERAL_KVKK (A01) + AURA_TERMS (A02)", () => {
+    expect(requiredConsentScopes("PATIENT", stage())).toEqual([CONSENT_SCOPE, AURA_TERMS_SCOPE]);
+  });
+  it("personel rolleri → yalnız STAFF_KVKK (A09 + rol kesiti)", () => {
+    for (const r of STAFF_ROLES) expect(requiredConsentScopes(r, stage()), r).toEqual([STAFF_KVKK_SCOPE]);
   });
   it("Aşama 1 doktoru / öğrenci → yalnız Doctorium seti (telesağlık metni İMZALATILMAZ)", () => {
     expect(requiredConsentScopes("DOCTOR", stage())).toEqual([DOCTORIUM_KVKK_SCOPE, DOCTORIUM_TERMS_SCOPE]);
   });
-  it("Aşama 2 (klinik aktif) doktor → GENERAL + Doctorium seti (iki yüzeyi de kullanır)", () => {
-    expect(requiredConsentScopes("DOCTOR", stage({ activatedAt: new Date() }))).toEqual([CONSENT_SCOPE, ...DOCTORIUM_SCOPES]);
+  it("Aşama 2 (klinik aktif) doktor → STAFF_KVKK + Doctorium seti (iki yüzeyi de kullanır)", () => {
+    expect(requiredConsentScopes("DOCTOR", stage({ activatedAt: new Date() }))).toEqual([STAFF_KVKK_SCOPE, ...DOCTORIUM_SCOPES]);
   });
-  it("Doctorium'dan çıkmış klinik doktor → yalnız GENERAL", () => {
-    expect(requiredConsentScopes("DOCTOR", stage({ activatedAt: new Date(), doctoriumOptOutAt: new Date() }))).toEqual([CONSENT_SCOPE]);
+  it("Doctorium'dan çıkmış klinik doktor → yalnız STAFF_KVKK", () => {
+    expect(requiredConsentScopes("DOCTOR", stage({ activatedAt: new Date(), doctoriumOptOutAt: new Date() }))).toEqual([STAFF_KVKK_SCOPE]);
   });
-  it("doktor profili olmayan DOCTOR (bozuk hesap) → GENERAL (fail-safe, eski davranış)", () => {
-    expect(requiredConsentScopes("DOCTOR", null)).toEqual([CONSENT_SCOPE]);
+  it("doktor profili olmayan DOCTOR (bozuk hesap) → STAFF_KVKK (fail-safe)", () => {
+    expect(requiredConsentScopes("DOCTOR", null)).toEqual([STAFF_KVKK_SCOPE]);
   });
 });
 
@@ -44,14 +46,16 @@ describe("decideConsentScreen — /onam ekran kararı", () => {
     expect(decideConsentScreen({ role: "DOCTOR", missing: D, wantsClinical: false, generalOk: false })).toBe("doctorium");
     expect(decideConsentScreen({ role: "DOCTOR", missing: D, wantsClinical: true, generalOk: false })).toBe("doctorium");
   });
-  it("hasta/personel GENERAL eksik → general kapısı", () => {
-    expect(decideConsentScreen({ role: "PATIENT", missing: [CONSENT_SCOPE], wantsClinical: false, generalOk: false })).toBe("general");
+  it("hasta GENERAL veya AURA_TERMS eksik → general kapısı; personel STAFF_KVKK eksik → general", () => {
+    expect(decideConsentScreen({ role: "PATIENT", missing: [CONSENT_SCOPE, AURA_TERMS_SCOPE], wantsClinical: false, generalOk: false })).toBe("general");
+    expect(decideConsentScreen({ role: "PATIENT", missing: [AURA_TERMS_SCOPE], wantsClinical: false, generalOk: false })).toBe("general");
+    expect(decideConsentScreen({ role: "COORDINATOR", missing: [STAFF_KVKK_SCOPE], wantsClinical: false, generalOk: false })).toBe("general");
   });
-  it("Aşama 1 doktoru klinik istekle gelir, GENERAL yok → clinical kapısı (canlı bulgu 03.09.2026: eskiden yanlışlıkla onboarding'e dönüyordu)", () => {
+  it("Aşama 1 doktoru klinik istekle gelir, STAFF_KVKK yok → clinical kapısı (canlı bulgu 03.09.2026: eskiden yanlışlıkla onboarding'e dönüyordu)", () => {
     expect(decideConsentScreen({ role: "DOCTOR", missing: [], wantsClinical: true, generalOk: false })).toBe("clinical");
   });
-  it("Aşama 2 doktoru GENERAL eksik (gerekli sette) → clinical", () => {
-    expect(decideConsentScreen({ role: "DOCTOR", missing: [CONSENT_SCOPE], wantsClinical: false, generalOk: false })).toBe("clinical");
+  it("Aşama 2 doktoru STAFF_KVKK eksik (gerekli sette) → clinical", () => {
+    expect(decideConsentScreen({ role: "DOCTOR", missing: [STAFF_KVKK_SCOPE], wantsClinical: false, generalOk: false })).toBe("clinical");
   });
   it("her şey tam: klinik istekse redirect, değilse resign (JWT yenile — proxy döngüsü kapanır)", () => {
     expect(decideConsentScreen({ role: "DOCTOR", missing: [], wantsClinical: true, generalOk: true })).toBe("redirect");
@@ -61,11 +65,14 @@ describe("decideConsentScreen — /onam ekran kararı", () => {
 });
 
 describe("kapsam sürümleri ve kanonik metinler", () => {
-  it("Doctorium seti v4 (Sürüm 1.4 — 09.09.2026 revizyon turu 4); GENERAL CONSENT_VERSION", () => {
+  it("Doctorium seti v4 (Sürüm 1.4 — 09.09.2026 revizyon turu 4); GENERAL CONSENT_VERSION 4 (v6.269 ekran = hash)", () => {
     expect(DOCTORIUM_CONSENT_VERSION).toBe(4);
     expect(scopeVersion(DOCTORIUM_KVKK_SCOPE)).toBe(4);
     expect(scopeVersion(DOCTORIUM_TERMS_SCOPE)).toBe(4);
+    expect(CONSENT_VERSION).toBe(4);
     expect(scopeVersion(CONSENT_SCOPE)).toBe(CONSENT_VERSION);
+    expect(scopeVersion(AURA_TERMS_SCOPE)).toBe(1);
+    expect(scopeVersion(STAFF_KVKK_SCOPE)).toBe(1);
   });
   it("canonicalTextFor: ekran = hash — kapsamın metni yayın kesitiyle birebir aynı nesne", () => {
     expect(canonicalTextFor(DOCTORIUM_KVKK_SCOPE)).toMatchObject({ text: AYDINLATMA_MD, version: 4 });
@@ -73,6 +80,11 @@ describe("kapsam sürümleri ve kanonik metinler", () => {
     expect(canonicalTextFor(DOCTORIUM_DIPLOMA_BEYAN_SCOPE)).toMatchObject({ text: DIPLOMA_BEYAN_TEXT, version: 0 });
     expect(canonicalTextFor(CONSENT_SCOPE)?.version).toBe(CONSENT_VERSION);
     expect(canonicalTextFor("YOK")).toBeNull();
+  });
+  it("canonicalTextsFor: Doctorium tek aday; AURA kapsamları TR + EN iki aday", () => {
+    expect(canonicalTextsFor(DOCTORIUM_KVKK_SCOPE)?.texts).toEqual([AYDINLATMA_MD]);
+    expect(canonicalTextsFor(CONSENT_SCOPE)?.texts).toHaveLength(2);
+    expect(canonicalTextsFor(AURA_TERMS_SCOPE)?.texts).toHaveLength(2);
   });
 });
 

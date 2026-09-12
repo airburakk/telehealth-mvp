@@ -1,7 +1,7 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/aura-hukuki-belgeler/teslim/md/A07-veri-sahibi-basvuru-usul-esaslari.md (TR) + en/A07-data-subject-request-procedure.md (EN) — Sürüm 1.0 · 12.09.2026 NİHAİ.
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/aura-hukuki-belgeler A07-veri-sahibi-basvuru-usul-esaslari.md + A07-data-subject-request-procedure.md (teslim/md TR · en/ EN) — Sürüm 1.0 · 12.09.2026 NİHAİ.
 // Elle DÜZENLEME YOK: kaynak .md vault'ta; `python -X utf8 _yayin-kesiti.py` yeniden üretir. Kimlik etiketleri tüzel kişilik kurulana dek
 // yayın yer tutucusuyla geçer; e-posta kanalı kutu açılana dek yayımlanmaz (platform içi form). Belge A0N atıfları yayımlı rotalara bağlıdır.
-// TR = kanonik (bağlayıcı) · EN = ikinci kanonik (çelişkide TR esastır). Aynı dizeler kod Paket B'de onam kaydına hash'lenir.
+// TR = kanonik (bağlayıcı) · EN = ikinci kanonik (çelişkide TR esastır). Aynı dizeler onam kaydına hash'lenir (ekran = hash, dil başına).
 export const KVKK_BASVURU_TR = `## A.1 Haklarınız
 
 **KVKK m.11** uyarınca kişisel verileriniz bakımından:

@@ -1,32 +1,41 @@
 "use client";
 
-// Yapay zeka işleme AÇIK RIZASI kapısı — hastayı karşılayan AI, semptom/tanı girişinden ÖNCE bu kapıyı
+// Yapay zekâ işleme AÇIK RIZASI kapısı — hastayı karşılayan AI, semptom/tanı girişinden ÖNCE bu kapıyı
 // gösterir (4 kulvar: triyaj · ikinci görüş · sağlık turizmi · ücretsiz sağlık).
 //   "Açık Rızam Vardır" → rıza kaydedilir (idempotent, ispatlı: /api/consent/ai) + asıl form açılır.
 //   "Süreci Sonlandır" → hastanın ana sekmesine (dest) döner; asıl form hiç mount edilmez.
 // Rıza verilene kadar {children} MOUNT EDİLMEZ → gate geçilmeden hiçbir semptom/AI işlemi başlamaz.
-// Metin PHI değil (statik bilgilendirme) → useT ile hasta diline lokalize edilir. Kanonik TR metin
-// lib/ai-consent'te; hash'lenip kayda mühürlenir. ⚖️ Metin TASLAK — hukuk müşaviri nihaileştirmeli.
-
+//
+// v6.269 (kod Paket B — A04-b Sürüm 1.0 NİHAİ, AI_TRIAGE v2): EKRAN = HASH. Kanonik metin (TR kanonik / EN ikinci kanonik,
+// hasta diline göre — S4) LegalMarkdown ile gösterilir ve /api/consent/ai'ye `lang` geçer: hash'lenen dize gösterilendir.
+// Türkçe ve İngilizce dışındaki arayüz dillerinde metnin anlaşılması için ayrıca "bilgilendirme amaçlı çeviri" (useT,
+// hash DIŞI, düz metin) gösterilir; bağlayıcı olan kanonik bloktur. Düğme/başlık metinleri TR sözlükten useT ile çevrilir.
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
+import { LegalMarkdown } from "@/components/aura/doctorium-legal/LegalMarkdown";
 import { langDir, LANG_BCP47 } from "@/lib/constants";
-import { AI_CONSENT_TEXT } from "@/lib/ai-consent";
+import { AI_TRIAGE_TEXT } from "@/lib/ai-consent";
+import { CONSENT_LANG_NOTE, consentLangFor, needsCourtesyTranslation, plainLegalText } from "@/lib/consent-lang";
 import { Sparkles, ShieldCheck, Loader2, XCircle } from "lucide-react";
 
 const UI = {
-  title: "Yapay Zeka ile Ön Değerlendirme — Açık Rıza",
+  title: "Yapay Zekâ ile Ön Değerlendirme — Açık Rıza",
   yes: "Açık Rızam Vardır",
   no: "Süreci Sonlandır",
+  courtesy: "Bilgilendirme amaçlı çeviri — bağlayıcı metin yukarıdaki kanonik metindir.",
   err: "Bir hata oluştu, lütfen tekrar deneyin.",
 };
+// useT girdisi (hash DIŞI): kanonik TR metnin düz hâli — modül düzeyinde sabit (referans kararlı, [[uset-unstable-texts-race]]).
+const COURTESY_SOURCE = plainLegalText(AI_TRIAGE_TEXT.tr);
 
 export function AiConsentGate({ children, dest = "/vakalarim" }: { children: React.ReactNode; dest?: string }) {
   const router = useRouter();
   const [lang, setLang] = usePatientLang();
-  const texts = useMemo(() => [AI_CONSENT_TEXT, UI.title, UI.yes, UI.no, UI.err], []);
+  const consentLang = consentLangFor(lang);
+  const courtesy = needsCourtesyTranslation(lang);
+  const texts = useMemo(() => [UI.title, UI.yes, UI.no, UI.courtesy, UI.err, COURTESY_SOURCE], []);
   const { t } = useT(lang, texts);
 
   const [consented, setConsented] = useState(false);
@@ -37,7 +46,11 @@ export function AiConsentGate({ children, dest = "/vakalarim" }: { children: Rea
     setSubmitting(true);
     setErr("");
     try {
-      const r = await fetch("/api/consent/ai", { method: "POST" });
+      const r = await fetch("/api/consent/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lang: consentLang }),
+      });
       if (!r.ok) throw new Error();
       setConsented(true);
     } catch {
@@ -60,9 +73,16 @@ export function AiConsentGate({ children, dest = "/vakalarim" }: { children: Rea
         <PatientLangSelect lang={lang} onChange={setLang} />
       </div>
 
-      <div className="mt-5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5">
-        <p className="text-[14px] leading-relaxed text-[var(--c-ink)]">{t(AI_CONSENT_TEXT)}</p>
+      <div lang={consentLang} dir="ltr" className="mt-5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 text-[14px]">
+        <LegalMarkdown markdown={AI_TRIAGE_TEXT[consentLang]} />
       </div>
+      <p lang={consentLang} dir="ltr" className="mt-2 text-[12px] leading-relaxed text-[var(--c-ink-3)]">{CONSENT_LANG_NOTE[consentLang]}</p>
+      {courtesy && (
+        <div className="mt-3 rounded-2xl border border-dashed border-[var(--c-hairline)] px-4 py-3">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--c-ink-3)]">{t(UI.courtesy)}</p>
+          <p className="mt-1 whitespace-pre-line text-[13px] leading-relaxed text-[var(--c-ink-2)]">{t(COURTESY_SOURCE)}</p>
+        </div>
+      )}
 
       {err && <p className="mt-3 text-sm text-red-300">{err}</p>}
 

@@ -1,28 +1,36 @@
-// Doctorium onam mimarisi (v6.211 · 2026-09-03) — 👤 karar 03.09.2026: Seçenek A + C
-// (vault output/doctorium-hukuki-belgeler/15-genel-onam-kapsam-revizyonu.md §7).
+// Onam mimarisi — kapı kararı (v6.211 · 2026-09-03 Doctorium A + C; v6.269 · 2026-09-13 kod Paket B: AURA kapsam seti).
 //
-// A — AYRI KAPSAM: Doctorium'dan kayıt olan doktor/öğrenci telesağlık metnini (GENERAL_KVKK) DEĞİL,
-//     Doctorium'un kendi aydınlatmasını (DOCTORIUM_KVKK = belge 01) ve üyelik sözleşmesini
-//     (DOCTORIUM_TERMS = belge 02) onaylar. Klinik kapsam (GENERAL_KVKK) yalnız Aşama 2'de,
-//     klinik aktivasyonun ÖN KOŞULU olarak alınır (refreshActivation bu onam yoksa activatedAt yazmaz).
-// C — EKRAN = HASH: onam ekranında gösterilen metin, hash'lenen metnin kendisidir (lib/doctorium-legal
-//     texts/*.ts tek kaynak; LegalMarkdown yalnız yapıya ayırır, metni değiştirmez).
+// v6.211 (👤 karar 03.09.2026, vault output/doctorium-hukuki-belgeler/15-genel-onam-kapsam-revizyonu.md §7):
+// A — AYRI KAPSAM: Doctorium'dan kayıt olan doktor/öğrenci Doctorium'un kendi aydınlatmasını (DOCTORIUM_KVKK = belge 01)
+//     ve üyelik sözleşmesini (DOCTORIUM_TERMS = belge 02) onaylar. Klinik kapsam yalnız Aşama 2'de, aktivasyon şartı.
+// C — EKRAN = HASH: onam ekranında gösterilen metin, hash'lenen metnin kendisidir.
 //
-// Kapı mantığı (proxy DB'siz kalır — JWT `cv` yine tek sayı): `gateConsentVersion` kullanıcının
-// ROLÜNE ve aşamasına göre GEREKLİ kapsam setinin tam olup olmadığına bakar; tamsa CONSENT_VERSION,
-// değilse 0 döner. Böylece proxy'deki `cv < CONSENT_VERSION → /onam` kuralı değişmeden Doctorium
-// doktoru kendi kapısına, hasta/personel eski kapısına düşer. /onam sayfası DB-taze `missingConsentScopes`
-// ile hangi ekranın gösterileceğine karar verir.
+// v6.269 (kod Paket B — AURA hukuki set Sürüm 1.0 NİHAİ, 👤 12.09.2026 S10/R17): AURA tarafı da ekran = hash'e geçti:
+//   · PATIENT  → GENERAL_KVKK v4 (A01 tam metin + madde 14 açık rıza) + AURA_TERMS v1 (A02) — /onam AuraConsentGate
+//   · personel (COORDINATOR·ETHICS·ADMIN·AGENCY·PARTNER·HEALTH_PRO) → STAFF_KVKK v1 (A09 + ROL KESİTİ; hash rol × dil)
+//   · DOCTOR   → Aşama 1: Doctorium seti · Aşama 2 (klinik aktif): STAFF_KVKK (DOCTOR kesiti) + Doctorium seti ·
+//                Doctorium'dan çıkmış: STAFF_KVKK · profilsiz DOCTOR: STAFF_KVKK (fail-safe)
+//   Klinik aktivasyon şartı GENERAL_KVKK → STAFF_KVKK (lib/doctor-activation). Mevcut hasta/personel kayıtları GENERAL v3'te
+//   kaldığı için herkes bir kez yeni kapıya düşer (CONSENT_VERSION 4). Kanıt sayfası her kapsamı TR+EN (personelde rol
+//   kesiti) adaylarına göre doğrular (canonicalTextsFor).
 //
-// Mevcut üyeler (👤 15 §7/3): Doctorium seti olmayan her doktor ilk girişte Doctorium metnini onaylar
-// (Aşama 2 doktorları dâhil — Doctorium'u da kullanıyorlar). GENERAL onamı olan aktif doktorlar
-// klinik erişimini KAYBETMEZ (activatedAt zaten dolu; şart yalnız yeni aktivasyonda aranır).
+// Kapı mantığı (proxy DB'siz kalır — JWT `cv` yine tek sayı): `gateConsentVersion` kullanıcının ROLÜNE ve aşamasına
+// göre GEREKLİ kapsam setinin tam olup olmadığına bakar; tamsa CONSENT_VERSION, değilse 0. /onam sayfası DB-taze
+// `missingConsentScopes` ile hangi ekranın gösterileceğine karar verir (decideConsentScreen).
 import { db } from "./db";
-import { CONSENT_SCOPE, CONSENT_VERSION, CONSENT_TEXT } from "./consent-config";
+import { CONSENT_SCOPE, CONSENT_VERSION } from "./consent-config";
 import { consentedVersion, recordConsent } from "./consent";
 import { AYDINLATMA_MD } from "./doctorium-legal/texts/aydinlatma";
 import { KOSULLAR_MD } from "./doctorium-legal/texts/kosullar";
 import { DIPLOMA_BEYAN_TEXT } from "./doctorium-legal/diploma-beyan";
+import {
+  AURA_TERMS_SCOPE, AURA_TERMS_TEXT, AURA_TERMS_VERSION, GENERAL_KVKK_TEXT, HEALTH_DECLARATION_SCOPE, HEALTH_DECLARATION_VERSION,
+  STAFF_KVKK_SCOPE, STAFF_KVKK_VERSION, staffKvkkText,
+} from "./aura-consent-texts";
+import {
+  AI_CONSENT_SCOPE, AI_CONSENT_VERSION, AI_INTERPRET_SCOPE, AI_INTERPRET_VERSION, AI_INTERPRET_TEXT, AI_TRIAGE_TEXT, HEALTH_DECLARATION_TEXT,
+} from "./ai-consent";
+import { STAFF_APPLICATION_CONSENT_SCOPE, STAFF_APPLICATION_CONSENT_TEXTS, STAFF_APPLICATION_CONSENT_VERSION } from "./staff-application-config";
 
 export const DOCTORIUM_KVKK_SCOPE = "DOCTORIUM_KVKK";
 export const DOCTORIUM_TERMS_SCOPE = "DOCTORIUM_TERMS";
@@ -40,6 +48,8 @@ export const DOCTORIUM_DIPLOMA_BEYAN_SCOPE = "DOCTORIUM_DIPLOMA_BEYAN";
 export const DOCTORIUM_CONSENT_VERSION = 4;
 
 export const DOCTORIUM_SCOPES: readonly string[] = [DOCTORIUM_KVKK_SCOPE, DOCTORIUM_TERMS_SCOPE];
+/** AURA "çekirdek" kapsamlar — biri eksikse /onam general/clinical kapısı (v6.269). */
+export const AURA_CORE_SCOPES: readonly string[] = [CONSENT_SCOPE, AURA_TERMS_SCOPE, STAFF_KVKK_SCOPE];
 
 export interface ConsentStage {
   activatedAt: Date | null;
@@ -47,34 +57,69 @@ export interface ConsentStage {
 }
 
 /**
- * Rol + aşamaya göre GEREKLİ onam kapsamları (saf — birim testli):
- *  · PATIENT / personel rolleri → GENERAL_KVKK (mevcut düzen)
- *  · DOCTOR, Doctorium'dan çıkmış (doctoriumOptOutAt) → GENERAL_KVKK (yalnız klinik hesap)
- *  · DOCTOR, klinik aktif (activatedAt) → GENERAL_KVKK + Doctorium seti (iki yüzeyi de kullanır)
+ * Rol + aşamaya göre GEREKLİ onam kapsamları (saf — birim testli, v6.269):
+ *  · PATIENT → GENERAL_KVKK + AURA_TERMS
+ *  · personel rolleri → STAFF_KVKK (rol kesiti)
+ *  · DOCTOR, Doctorium'dan çıkmış (doctoriumOptOutAt) → STAFF_KVKK (yalnız klinik hesap)
+ *  · DOCTOR, klinik aktif (activatedAt) → STAFF_KVKK + Doctorium seti (iki yüzeyi de kullanır)
  *  · DOCTOR, Aşama 1 / öğrenci → yalnız Doctorium seti (klinik onam Aşama 2'de, aktivasyon şartı olarak)
- *  · DOCTOR ama doktor profili yok (bozuk hesap) → GENERAL_KVKK (eski davranış, fail-safe)
+ *  · DOCTOR ama doktor profili yok (bozuk hesap) → STAFF_KVKK (fail-safe)
  */
 export function requiredConsentScopes(role: string, d: ConsentStage | null): string[] {
-  if (role !== "DOCTOR" || !d) return [CONSENT_SCOPE];
-  if (d.doctoriumOptOutAt) return [CONSENT_SCOPE];
-  if (d.activatedAt) return [CONSENT_SCOPE, ...DOCTORIUM_SCOPES];
+  if (role === "PATIENT") return [CONSENT_SCOPE, AURA_TERMS_SCOPE];
+  if (role !== "DOCTOR" || !d) return [STAFF_KVKK_SCOPE];
+  if (d.doctoriumOptOutAt) return [STAFF_KVKK_SCOPE];
+  if (d.activatedAt) return [STAFF_KVKK_SCOPE, ...DOCTORIUM_SCOPES];
   return [...DOCTORIUM_SCOPES];
 }
 
 /** Kapsamın güncel sürümü (proxy/JWT için değil — hasCurrentConsent karşılaştırması için). */
 export function scopeVersion(scope: string): number {
-  return DOCTORIUM_SCOPES.includes(scope) ? DOCTORIUM_CONSENT_VERSION : CONSENT_VERSION;
+  switch (scope) {
+    case DOCTORIUM_KVKK_SCOPE:
+    case DOCTORIUM_TERMS_SCOPE: return DOCTORIUM_CONSENT_VERSION;
+    case AURA_TERMS_SCOPE: return AURA_TERMS_VERSION;
+    case STAFF_KVKK_SCOPE: return STAFF_KVKK_VERSION;
+    case AI_CONSENT_SCOPE: return AI_CONSENT_VERSION;
+    case AI_INTERPRET_SCOPE: return AI_INTERPRET_VERSION;
+    case HEALTH_DECLARATION_SCOPE: return HEALTH_DECLARATION_VERSION;
+    case STAFF_APPLICATION_CONSENT_SCOPE: return STAFF_APPLICATION_CONSENT_VERSION;
+    default: return CONSENT_VERSION;
+  }
 }
 
-/** Kanıt sayfası: kapsamın kanonik metni + güncel sürümü (textHash eşleşmesi buna göre). */
-export function canonicalTextFor(scope: string): { text: string; version: number; title: string } | null {
+export interface CanonicalTexts {
+  /** Kabul edilen kanonik adaylar — TR ve EN (personelde rol kesiti TR/EN); textHash bunlardan biriyle eşleşmeli. */
+  texts: string[];
+  version: number;
+  title: string;
+}
+
+/**
+ * Kanıt sayfası: kapsamın kanonik metin ADAYLARI + güncel sürümü (ekran = hash, dil başına — S4). Personel kapsamında
+ * kesit role bağlıdır (ctx.role); rol yoksa tam metin adayı. Bilinmeyen kapsam → null.
+ */
+export function canonicalTextsFor(scope: string, ctx?: { role?: string | null }): CanonicalTexts | null {
+  const role = ctx?.role ?? "";
   switch (scope) {
-    case CONSENT_SCOPE: return { text: CONSENT_TEXT, version: CONSENT_VERSION, title: "KVKK Aydınlatma & Açık Rıza (telesağlık)" };
-    case DOCTORIUM_KVKK_SCOPE: return { text: AYDINLATMA_MD, version: DOCTORIUM_CONSENT_VERSION, title: "Doctorium Aydınlatma Metni" };
-    case DOCTORIUM_TERMS_SCOPE: return { text: KOSULLAR_MD, version: DOCTORIUM_CONSENT_VERSION, title: "Doctorium Üyelik Sözleşmesi" };
-    case DOCTORIUM_DIPLOMA_BEYAN_SCOPE: return { text: DIPLOMA_BEYAN_TEXT, version: 0, title: "Diploma doğrulama beyanı" };
+    case CONSENT_SCOPE: return { texts: [GENERAL_KVKK_TEXT.tr, GENERAL_KVKK_TEXT.en], version: CONSENT_VERSION, title: "KVKK Aydınlatma ve Açık Rıza (hasta)" };
+    case AURA_TERMS_SCOPE: return { texts: [AURA_TERMS_TEXT.tr, AURA_TERMS_TEXT.en], version: AURA_TERMS_VERSION, title: "Kullanım Koşulları ve Hizmet Sözleşmesi" };
+    case STAFF_KVKK_SCOPE: return { texts: [staffKvkkText(role, "tr"), staffKvkkText(role, "en")], version: STAFF_KVKK_VERSION, title: "Personel Aydınlatma Metni ve Rol Maddesi" };
+    case AI_CONSENT_SCOPE: return { texts: [AI_TRIAGE_TEXT.tr, AI_TRIAGE_TEXT.en], version: AI_CONSENT_VERSION, title: "Yapay zekâ ile ön değerlendirme — açık rıza" };
+    case AI_INTERPRET_SCOPE: return { texts: [AI_INTERPRET_TEXT.tr, AI_INTERPRET_TEXT.en], version: AI_INTERPRET_VERSION, title: "Yapay zekâ ile simültane tercüme — açık rıza" };
+    case HEALTH_DECLARATION_SCOPE: return { texts: [HEALTH_DECLARATION_TEXT.tr, HEALTH_DECLARATION_TEXT.en], version: HEALTH_DECLARATION_VERSION, title: "Sigorta sağlık beyanı — açık rıza" };
+    case STAFF_APPLICATION_CONSENT_SCOPE: return { texts: [STAFF_APPLICATION_CONSENT_TEXTS.tr, STAFF_APPLICATION_CONSENT_TEXTS.en], version: STAFF_APPLICATION_CONSENT_VERSION, title: "Kurumsal Üyelik Başvurusu Aydınlatması" };
+    case DOCTORIUM_KVKK_SCOPE: return { texts: [AYDINLATMA_MD], version: DOCTORIUM_CONSENT_VERSION, title: "Doctorium Aydınlatma Metni" };
+    case DOCTORIUM_TERMS_SCOPE: return { texts: [KOSULLAR_MD], version: DOCTORIUM_CONSENT_VERSION, title: "Doctorium Üyelik Sözleşmesi" };
+    case DOCTORIUM_DIPLOMA_BEYAN_SCOPE: return { texts: [DIPLOMA_BEYAN_TEXT], version: 0, title: "Diploma doğrulama beyanı" };
     default: return null;
   }
+}
+
+/** Geriye uyum (v6.211 çağıranları/testleri): ilk aday = TR kanonik. */
+export function canonicalTextFor(scope: string): { text: string; version: number; title: string } | null {
+  const c = canonicalTextsFor(scope);
+  return c ? { text: c.texts[0], version: c.version, title: c.title } : null;
 }
 
 async function stageFor(userId: string): Promise<ConsentStage | null> {
@@ -96,15 +141,15 @@ export async function missingConsentScopes(userId: string, role: string): Promis
 export type ConsentScreen = "doctorium" | "clinical" | "general" | "resign" | "redirect";
 
 /**
- * /onam sayfasının ekran kararı (saf — birim testli). Sıra: Doctorium seti eksikse önce o; sonra
- * GENERAL (hasta/personel için normal kapı; DOCTOR için klinik kapı — `wantsClinical` ile onboarding'den
- * gelen istek, GENERAL "gerekli set"te olmasa da [Aşama 1 doktoru] onamsızsa klinik kapıyı gösterir);
- * her şey tamsa: klinik istekse hedefe dön, değilse JWT'yi yenile (resign).
+ * /onam sayfasının ekran kararı (saf — birim testli). Sıra: Doctorium seti eksikse önce o; sonra AURA çekirdeği
+ * (GENERAL_KVKK/AURA_TERMS hasta · STAFF_KVKK personel; DOCTOR için klinik kapı — `wantsClinical` ile onboarding'den
+ * gelen istek, STAFF_KVKK "gerekli set"te olmasa da [Aşama 1 doktoru] onamsızsa klinik kapıyı gösterir); her şey
+ * tamsa: klinik istekse hedefe dön, değilse JWT'yi yenile (resign).
  */
 export function decideConsentScreen(p: { role: string; missing: string[]; wantsClinical: boolean; generalOk: boolean }): ConsentScreen {
   if (p.missing.some((s) => DOCTORIUM_SCOPES.includes(s))) return "doctorium";
-  const generalMissing = p.missing.includes(CONSENT_SCOPE) || (p.wantsClinical && !p.generalOk);
-  if (generalMissing) return p.role === "DOCTOR" ? "clinical" : "general";
+  const coreMissing = p.missing.some((s) => AURA_CORE_SCOPES.includes(s)) || (p.wantsClinical && !p.generalOk);
+  if (coreMissing) return p.role === "DOCTOR" ? "clinical" : "general";
   return p.wantsClinical ? "redirect" : "resign";
 }
 

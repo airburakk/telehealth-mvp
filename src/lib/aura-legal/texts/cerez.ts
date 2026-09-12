@@ -1,7 +1,7 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/aura-hukuki-belgeler/teslim/md/A05-cerez-politikasi.md (TR) + en/A05-cookie-and-local-storage-policy.md (EN) — Sürüm 1.0 · 12.09.2026 NİHAİ.
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/aura-hukuki-belgeler A05-cerez-politikasi.md + A05-cookie-and-local-storage-policy.md (teslim/md TR · en/ EN) — Sürüm 1.0 · 12.09.2026 NİHAİ.
 // Elle DÜZENLEME YOK: kaynak .md vault'ta; `python -X utf8 _yayin-kesiti.py` yeniden üretir. Kimlik etiketleri tüzel kişilik kurulana dek
 // yayın yer tutucusuyla geçer; e-posta kanalı kutu açılana dek yayımlanmaz (platform içi form). Belge A0N atıfları yayımlı rotalara bağlıdır.
-// TR = kanonik (bağlayıcı) · EN = ikinci kanonik (çelişkide TR esastır). Aynı dizeler kod Paket B'de onam kaydına hash'lenir.
+// TR = kanonik (bağlayıcı) · EN = ikinci kanonik (çelişkide TR esastır). Aynı dizeler onam kaydına hash'lenir (ekran = hash, dil başına).
 export const CEREZ_TR = `## 1. Çerez ve yerel depolama nedir
 
 Çerez, siteyi ziyaret ettiğinizde tarayıcınıza kaydedilen küçük metin dosyasıdır; oturumun sürdürülmesi veya bir

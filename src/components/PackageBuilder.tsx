@@ -9,6 +9,8 @@ import {
   type Tier, type HospitalType, type PackageSelection, type RecommendedTreatment, type InsuranceLevel, type HealthDeclaration,
 } from "@/lib/pricing";
 import { countryFlag, countryName } from "@/lib/constants";
+import { HealthDeclarationConsent } from "@/components/HealthDeclarationConsent";
+import type { ConsentLang } from "@/lib/consent-lang";
 import {
   Plane, BedDouble, Building2, Languages, ShieldCheck, Minus, Plus,
   Lock, Loader2, MessageCircle, Check, Send, FileText, ShieldPlus, Stethoscope, Info, HeartPulse,
@@ -38,10 +40,13 @@ export interface PackageInitial {
 export function PackageBuilder({
   caseId, patientName, branch, country, initial, treatments, rate = TRY_PER_USD, fxSource, fxAt, doctorMmssLimitUsd, doctorName, offerOnly = false,
   viewer = "staff", healthRiskMult: healthRiskMultInitial = 1, healthDecl = null, healthDeclaredAt = null,
+  healthDeclConsented = false, consentLang = "tr",
 }: { caseId: string; patientName: string; branch: string; country: string; initial?: PackageInitial; treatments?: RecommendedTreatment[]; rate?: number; fxSource?: string; fxAt?: number; doctorMmssLimitUsd?: number; doctorName?: string; offerOnly?: boolean;
   // Sağlık beyanı (sigorta risk formu, 2026-07-20): viewer="patient" beyan formunu açar; personel yalnız
   // çarpan+durum rozeti görür. healthDecl HAM beyan — yalnız hasta görünümüne geçilir (sayfa tarafı filtreler).
   viewer?: "patient" | "staff"; healthRiskMult?: number; healthDecl?: HealthDeclaration | null; healthDeclaredAt?: string | null;
+  // Sağlık beyanı açık rızası (A04-d, v6.269): aktif rıza yoksa form yerine rıza kapısı; sunucu ucu da 403 döner (fail-closed).
+  healthDeclConsented?: boolean; consentLang?: ConsentLang;
 }) {
   const router = useRouter();
   const [tier, setTier] = useState<Tier>(initial?.tier ?? "Standart");
@@ -67,6 +72,7 @@ export function PackageBuilder({
   const [declSaving, setDeclSaving] = useState(false);
   const [declEditing, setDeclEditing] = useState(false);
   const [declError, setDeclError] = useState<string | null>(null);
+  const [declConsented, setDeclConsented] = useState(healthDeclConsented);
 
   async function saveDeclaration() {
     setDeclSaving(true); setDeclError(null);
@@ -81,6 +87,7 @@ export function PackageBuilder({
         setDeclaredAt(data.declaredAt ?? new Date().toISOString());
         setDeclEditing(false); setDeclConfirm(false);
       } else {
+        if (data?.code === "HEALTH_DECLARATION_CONSENT_REQUIRED") setDeclConsented(false); // rıza geri alınmış → kapı yeniden
         setDeclError(typeof data.error === "string" ? data.error : "Beyan kaydedilemedi. Lütfen tekrar deneyin.");
       }
     } catch { setDeclError("Beyan kaydedilemedi. Lütfen tekrar deneyin."); }
@@ -219,6 +226,8 @@ export function PackageBuilder({
                 <span className="text-sm font-medium text-emerald-300">✓ Beyan alındı · {new Date(declaredAt).toLocaleDateString("tr-TR")}</span>
                 <button type="button" onClick={() => setDeclEditing(true)} className="shrink-0 text-xs font-semibold text-[var(--c-accent)] hover:underline">Güncelle</button>
               </div>
+            ) : !declConsented ? (
+              <HealthDeclarationConsent lang={consentLang} onConsented={() => setDeclConsented(true)} />
             ) : (
               <div className="mt-3 space-y-4">
                 <div>

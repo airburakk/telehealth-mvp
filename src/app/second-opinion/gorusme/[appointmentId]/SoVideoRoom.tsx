@@ -114,7 +114,8 @@ export function SoVideoRoom({
   const isDoctor = selfRole === "doctor";
   // Hasta kendi dilinde (başvuru dili) konuşur; doktor Türkçe. Diller aynıysa tercüme gereksiz → otomatik kapalı.
   const myLang = isDoctor ? "tr-TR" : (SPEECH_LANG[patientLang] ?? "tr-TR");
-  const langsDiffer = patientLang !== "Türkçe";
+  const [interpretOptOut, setInterpretOptOut] = useState(false); // v6.269 (R4): lobide "tercümesiz devam" → tercüman kurulmaz
+  const langsDiffer = patientLang !== "Türkçe" && !interpretOptOut;
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da SpeechRecognition yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
   useEffect(() => { setSttSupported(!!getSpeechRecognition()); }, []);
@@ -464,6 +465,8 @@ export function SoVideoRoom({
       <PreConsultLobby
         lang={lang}
         langSelector={<SoLangSelect lang={lang} onChange={setLang} />}
+        interpretNeeded={selfRole !== "doctor" && patientLang !== "Türkçe"}
+        onInterpretChoice={(choice) => setInterpretOptOut(choice === "skip")}
         scheduledAt={scheduledAt}
         earlyWindowMin={15}
         isDoctor={selfRole === "doctor"}

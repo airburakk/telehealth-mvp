@@ -6,7 +6,8 @@
 // YOK) veya incelemeci onayı. Tam gerekçe: vault wiki/kavramlar/doktor-kimlik-dogrulama.md. MMSS (Mesleki Mali Sorumluluk Sigortası)
 // İHTİYARİ: yüklenirse teminat limiti M3 Katman 3 malpraktis ek-prim hesabının girdisidir.
 import { db } from "@/lib/db";
-import { hasCurrentConsent } from "@/lib/consent"; // v6.211: klinik aktivasyon GENERAL_KVKK onamına bağlı
+import { hasCurrentConsent } from "@/lib/consent";
+import { STAFF_KVKK_SCOPE, STAFF_KVKK_VERSION } from "@/lib/aura-consent-texts"; // v6.211: klinik aktivasyon onama bağlı; v6.269: kapsam STAFF_KVKK (A09 DOCTOR kesiti)
 import { doctoriumAudience, hasPortalAccess, type TierStamps } from "@/lib/doctorium-tiers";
 // Üç katman (2026-09-05): kitle kararı lib/doctorium-tiers.ts'te yaşar; çağıranlar tek import noktasından okusun.
 export { doctoriumAudience, audienceFlags, hasPortalAccess, audienceLabel } from "@/lib/doctorium-tiers";
@@ -295,7 +296,7 @@ export async function refreshActivation(doctorId: string): Promise<boolean> {
   // sonrası bu fonksiyonu yeniden çağırır. Mevcut aktif doktorlar: onam zaten var → damga korunur.
   if (ok && !doc.activatedAt) {
     const u = await db.user.findFirst({ where: { doctorId }, select: { id: true } });
-    if (!u || !(await hasCurrentConsent(u.id))) ok = false;
+    if (!u || !(await hasCurrentConsent(u.id, STAFF_KVKK_SCOPE, STAFF_KVKK_VERSION))) ok = false;
   }
   const data: {
     activatedAt?: Date | null; diplomaVerifiedAt?: Date | null;

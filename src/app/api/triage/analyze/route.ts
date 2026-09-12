@@ -3,7 +3,7 @@ import { runTriage } from "@/lib/triage-llm";
 import { getCurrentUser } from "@/lib/auth";
 import { detectSecondOpinionIntent } from "@/lib/so-intent";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
-import { hasCurrentConsent } from "@/lib/consent";
+import { activeConsent } from "@/lib/aura-consent"; // v6.269: geri-alma duyarlı (Hesabım → Rızalarım)
 import { AI_CONSENT_SCOPE, AI_CONSENT_VERSION } from "@/lib/ai-consent";
 
 // POST /api/triage/analyze — semptomları analiz eder (vaka oluşturmadan önizleme)
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   const rl = await rateLimit(`triage:${user.id}`, 20, 60_000); // 20/dk/kullanıcı (soap ile aynı)
   if (!rl.ok) return tooMany(rl.retryAfter);
 
-  if (!(await hasCurrentConsent(user.id, AI_CONSENT_SCOPE, AI_CONSENT_VERSION))) {
+  if (!(await activeConsent(user.id, AI_CONSENT_SCOPE, AI_CONSENT_VERSION))) {
     return NextResponse.json(
       { error: "Yapay zeka ile analiz için açık rızanız gerekiyor.", code: "AI_CONSENT_REQUIRED" },
       { status: 403 },

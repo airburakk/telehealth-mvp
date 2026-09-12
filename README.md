@@ -97,9 +97,10 @@ koruyarak kapıya). OAuth hata/`?verify` dönüşleri kapıya düşer ve formu o
 üyeliği **`/kayit/hasta`** → `POST /api/auth/signup-patient` (`lib/patient-signup`); doktorlar
 **`/kayit`** ile kendileri kayıt olabilir (Google/Apple [env-gated] / e-posta; OAuth niyeti
 `g_oauth_intent`/`a_oauth_intent` cookie'siyle taşınır — mevcut kullanıcıda yok sayılır). Giriş
-sonrası tek seferlik KVKK onam kapısı (`/onam`) vardır (sürümlü;
-`lib/consent-config.CONSENT_VERSION` artarsa bir kez yeniden alınır; personel metni **rol-duyarlı**
-ek maddeler taşır — AGENCY/PARTNER/HEALTH_PRO, `ConsentGate STAFF_ROLE_EXTRA`).
+sonrası tek seferlik KVKK onam kapısı (`/onam`) vardır (sürümlü; `lib/consent-config.CONSENT_VERSION` artarsa bir kez
+yeniden alınır — **v6.269: sürüm 4, EKRAN = HASH**: hasta A01 aydınlatma + A02 koşullar tam metnini (TR/EN) okur ve onaylar
+[`AuraConsentGate`]; personel A09 aydınlatması + yalnız kendi ROL maddesini onaylar [`StaffConsentGate`, `STAFF_KVKK` kapsamı,
+hash rol × dil]).
 
 **Kurumsal üyelik yaşam döngüsü (2026-08-12):** PARTNER / AGENCY / **HEALTH_PRO (Sağlık Uzmanı —
 yeni rol; klinik yetkisi YOK, iniş `/uzman`)** başvuruyla açılır: `/kayit/{partner,acente,saglik-uzmani}`
@@ -329,14 +330,19 @@ imkânı belli olmuyordu) → mobilde 13px görünür, AURA wordmark 12px'e öl�
   **Lojistik takip** (`/operasyon/lojistik` — rezervasyonların Patient Journey aşamalarını yönet; `lib/journey.ts`) ·
   **Kayıt defteri tarayıcısı** (`/operasyon/kayit-defteri` — HealthTürkiye doktor+tesis dizinini ara/filtrele/sayfala;
   ST yetki-belgesi rozeti + dil/akreditasyon chip'leri; doktor kayıtlarında şehir kaynakta boş → filtre veri gelene dek gizli)
-- **Consent Manager + RFC 3161 ispat:** `/onam` tek seferlik KVKK onamı (`GENERAL_KVKK` scope); sürümlü `ConsentRecord` +
-  hash-zinciri + zaman damgası + Onay Kanıtı (`/onam/kanit`). (`lib/consent.ts`, `lib/timestamp.ts`)
+- **Consent Manager + RFC 3161 ispat:** `/onam` tek seferlik KVKK onamı (`GENERAL_KVKK` scope — **v6.269: v4, A01 tam metin +
+  `AURA_TERMS` v1 A02; personel `STAFF_KVKK` v1 A09 rol kesiti; ekran = hash, dil başına**); sürümlü `ConsentRecord` +
+  hash-zinciri + zaman damgası + Onay Kanıtı (`/onam/kanit`, 10 kapsam sekmesi, TR/EN adaylı metin eşleşmesi). Geri alınabilir
+  rızalar (AI · beyan) **Hesabım → Rızalarım**: `POST /api/consent/revoke` → `<KAPSAM>_REVOKE` ispatlı kayıt; `activeConsent`
+  geri-alma duyarlı (`lib/aura-consent.ts`). (`lib/consent.ts`, `lib/timestamp.ts`, `lib/aura-consent-texts.ts`)
 - **AI karşılama açık rızası (`AI_TRIAGE` scope, v6.4):** 4 kulvarda (triyaj · ikinci görüş · sağlık turizmi ·
   ücretsiz sağlık) semptom/tanı girişinden **ÖNCE** ayrı açık rıza kapısı (`components/AiConsentGate.tsx`) — AI'nın
   yalnız doğru branşa yönlendirme + yüklenen belgelerin çevirisi için işleyeceğini, tanı/tedavi kararı için
   kullanılmayacağını bildirir. **"Açık Rızam Vardır"** rızayı aynı ispat altyapısıyla kaydeder (`POST /api/consent/ai`,
   idempotent, `/onam/kanit`'te görünür), **"Süreci Sonlandır"** hastayı ana sekmeye döndürür. Rıza verilene dek asıl
-  form **mount edilmez**. Metin ⚖️ **TASLAK** (`lib/ai-consent.ts`, `AI_CONSENT_VERSION` sürümlü). Ayrı migration
+  form **mount edilmez**. **v6.269: metin A04-b Sürüm 1.0 NİHAİ (v2, sağlayıcı adıyla: Anthropic/Claude, ABD; ad iletilmez) —
+  kanonik TR/EN LegalMarkdown ile gösterilir, `POST` gövdesi `lang` (hash gösterilen dilin metni); TR/EN dışı arayüz dillerinde
+  hash DIŞI bilgilendirme çevirisi eşlik eder.** (`lib/ai-consent.ts`, `AI_CONSENT_VERSION` sürümlü). Ayrı migration
   gerektirmez (`ConsentRecord` scope zaten kompozit); `lib/consent.ts` scope-parametreli. (`lib/ai-consent.ts`)
 - **Simültane tercüme açık rızası (`AI_INTERPRET` scope, v6.5):** dijital bekleme odasında
   (`components/PreConsultLobby.tsx` — cross-cutting; hem Talk `/gorusme/[id]` hem ikinci görüş
@@ -344,7 +350,13 @@ imkânı belli olmuyordu) → mobilde 13px görünür, AURA wordmark 12px'e öl�
   görüşme sesinin AI tarafından yalnız simültane tercüme için işleneceğini bildirir. **"Açık Rızam Vardır"**
   rızayı aynı ispat altyapısıyla kaydeder (`POST /api/consent/ai-interpret`, idempotent), **"Süreci Sonlandır"**
   hastayı ana sekmeye (`/vakalarim`) döndürür. Doktor görünümünde çıkmaz; rıza verilene dek kamera/mikrofon
-  izni istenmez. Metin ⚖️ **TASLAK** (`AI_INTERPRET_VERSION` sürümlü). Ayrı migration gerektirmez. (`lib/ai-consent.ts`)
+  izni istenmez. **v6.269 (R4): kapı YALNIZ görüşme dilleri farklıysa (hasta dili ≠ Türkçe) gösterilir ve üçüncü seçenek
+  "Tercümesiz devam et" rıza yazmadan lobiyi açar (oda `sessionStorage` `air_interpret_optout_<id>` ile tercümanı kurmaz;
+  SO odası `onInterpretChoice` callback'i). Metin A04-c Sürüm 1.0 NİHAİ (v2, Google Gemini Live, ABD).** Ayrı migration
+  gerektirmez. (`lib/ai-consent.ts`)
+- **Sigorta sağlık beyanı açık rızası (`HEALTH_DECLARATION` scope, v6.269, A04-d):** `/paket` hasta görünümünde beyan formu
+  rıza kapısının arkasındadır (`components/HealthDeclarationConsent.tsx`, `POST /api/consent/health-declaration`); sunucu
+  `POST /api/cases/[id]/health-declaration` aktif rıza yoksa 403 `HEALTH_DECLARATION_CONSENT_REQUIRED` (geri alma duyarlı).
 - **Değiştirilemez erişim denetimi (E2EE Faz 0):** klinik veriye her anlamlı erişim (vaka görüntüleme,
   klinik not, FHIR dışa aktarım, belge görüntüleme, **klinik kodlama / lab yazımı, AI belge analizi,
   epikriz üretimi**) `AccessLog`'a mühürlenir — append-only hash-zinciri + zaman damgası, küresel bir
@@ -460,19 +472,20 @@ envanteri (17) + aydınlatma (01) + saklama politikası (05) birlikte güncellen
 doktor/öğrenci telesağlık metnini (`GENERAL_KVKK`) DEĞİL, Doctorium setini onaylar — `DOCTORIUM_KVKK`
 (belge 01) + `DOCTORIUM_TERMS` (belge 02), her ikisi v1; **ekran = hash** (onam ekranı `lib/doctorium-legal`
 metnini LegalMarkdown ile gösterir, sunucu aynı string'i hash'ler). Tek kaynak `lib/doctorium-consent.ts`:
-`requiredConsentScopes(role, aşama)` (PATIENT/personel → GENERAL · Aşama 1 doktor/öğrenci → Doctorium seti ·
-Aşama 2 doktor → GENERAL + Doctorium · Doctorium'dan çıkan → GENERAL), `gateConsentVersion` (JWT `cv`: set
+`requiredConsentScopes(role, aşama)` (v6.269: PATIENT → GENERAL_KVKK v4 + AURA_TERMS · personel → STAFF_KVKK · Aşama 1
+doktor/öğrenci → Doctorium seti · Aşama 2 doktor → STAFF_KVKK + Doctorium · Doctorium'dan çıkan → STAFF_KVKK), `gateConsentVersion` (JWT `cv`: set
 tamsa CONSENT_VERSION, değilse 0 — proxy kuralı DEĞİŞMEDİ; login/OAuth/signup bunu yazar), `missingConsentScopes`
-(/onam DB-taze karar: `DoctoriumConsentGate` · `ConsentGate clinical` · `ConsentResign` [set tam, JWT eski →
-kayıtsız yeniden imza; proxy↔/onam döngüsü kapanır]). **Klinik aktivasyon `GENERAL_KVKK` onamına bağlı:**
+(/onam DB-taze karar: `DoctoriumConsentGate` · `AuraConsentGate` [hasta] · `StaffConsentGate` [personel / clinical] · `ConsentResign` [set tam, JWT eski →
+kayıtsız yeniden imza; proxy↔/onam döngüsü kapanır]). **Klinik aktivasyon `STAFF_KVKK` (v6.269; eskiden GENERAL_KVKK) onamına bağlı:**
 `refreshActivation` onamsız `activatedAt` yazmaz; onboarding "bitir" 409 `CLINICAL_CONSENT_REQUIRED` → form
-`/onam?scope=clinical`'a gider (ConsentGate + `STAFF_ROLE_EXTRA.DOCTOR` maddesi), `/api/consent` kaydı sonra
+`/onam?scope=clinical`'a gider (StaffConsentGate + A09 madde 10.1 DOCTOR kesiti), `/api/consent` kaydı sonra
 `refreshActivation` çağırır. Mevcut aktif doktorlar etkilenmez (damga korunur); Doctorium seti olmayan her
 doktor ilk girişte Doctorium metnini onaylar (👤 yeniden onay kararı). **Diploma beyanı** (belge 11 §B, 6 madde):
 `DoctorDocuments` DIPLOMA kartında kutu işaretlenmeden dosya seçilemez; `POST /api/doctor/documents`
 `declaration:true` ister ve belge işlenmeden ÖNCE `DOCTORIUM_DIPLOMA_BEYAN` kaydını yazar (her yükleme ayrı
-satır, fail-closed). `/api/consent` gövdesi `kind`: general | doctorium | resign. **Onay Kanıtı** `/onam/kanit`
-kapsam sekmeli (`?scope=`; her kapsam kendi kanonik metniyle "metin eşleşmesi" ölçer — `canonicalTextFor`).
+satır, fail-closed). `/api/consent` gövdesi `kind`: general | staff | doctorium | resign (+ `lang` tr/en — hash gösterilen
+dilin metni). **Onay Kanıtı** `/onam/kanit` kapsam sekmeli (`?scope=`; her kapsam kendi kanonik metin ADAYLARIYLA [TR + EN;
+personelde rol kesiti] "metin eşleşmesi" ölçer — `canonicalTextsFor`; geri alınabilir kovalarda geri alma durumu).
 E2E helper'ı kapıdaki tüm kutuları işaretler (`tests/e2e/helpers.ts`).
 **1c (v6.212, 2026-09-03) tamamlandı:** eski üyelik-yazısı (CHAMBER) kalıntıları koddan/şemadan kaldırıldı (`Doctor.chamberLetterAt` DROP + CHAMBER satırları — migration `20260903140000_drop_chamber_letter`, **kod-önce**; Blob'lar `scripts/purge-chamber-docs.ts` ile önce imha) · `REJECTED_RETENTION_DAYS` 180→90 (belge 11 §C.3) · öğrenci kaydında doğum tarihi beyanı — 18 yaş altı fail-closed red, tarih SAKLANMAZ (`lib/student-age.ts`, form + API) · diploma ret bildirimi şablonu nihai (gerekçe + 15 gün bilgi@ itiraz + 30 gün yanıt; klinik belge tipleri AURA paketine bırakıldı). **Paket 2 ✅ TAMAMLANDI (v6.263, 2026-09-10)** — terk edilmiş hesap süpürmesi + audit IP/cihaz boşaltma + başvuru kütüğü/platform içi KVKK formu (detay aşağıda). AURA telesağlık onam metni + rol maddeleri (ConsentGate "taslak" etiketi) ayrı gözden geçirme turunda (👤 03.09.2026).
 
@@ -487,6 +500,8 @@ zinciri KIRIK gösterirdi, bu desen onu önler. `lib/kvkk-applications.ts` + `/d
 3 yıl saklama; form artık CANLI (önceden yalnız metin sayfasıydı, `bilgi@doctorium.tr`'ye yönlendiriyordu).
 Üçü de `purge-deleted` cron'una (06:30 TR) entegre. Migration `20260909120000_kvkk_paket2` (yalnız nullable
 kolon + yeni tablo) dev+prod'a uygulandı. 🚀 CANLI `46e4559`.
+
+**v6.269 (2026-09-13) — AURA hukuki set kod Paket B (onam mimarisi, ekran = hash):** `CONSENT_VERSION` 3→4 — hasta `/onam` kapısı artık A01 aydınlatma + madde 14 açık rıza ve A02 kullanım koşullarının TAM metnini (TR kanonik / `?` EN ikinci kanonik, hash dil başına — S4) gösterir ve iki kapsam yazar (`GENERAL_KVKK` v4 + `AURA_TERMS` v1, `AuraConsentGate`); personel ve Aşama 2 doktoru A09 aydınlatması + yalnız kendi rol maddesini onaylar (`STAFF_KVKK` v1, `StaffConsentGate`, `staffKvkkText` kesiti — hash rol × dil; klinik aktivasyon şartı artık STAFF_KVKK); `AI_TRIAGE`/`AI_INTERPRET` v2 (A04 b/c, sağlayıcı adıyla; TASLAK dönemi kapandı) — tercüme kapısı YALNIZ görüşme dilleri farklıysa + **"Tercümesiz devam et"** (R4; oda `sessionStorage` opt-out ile tercümanı kurmaz); `HEALTH_DECLARATION` v1 (A04-d) — /paket beyan formu rıza kapısının arkasında, sunucu 403 `HEALTH_DECLARATION_CONSENT_REQUIRED`; `STAFF_APPLICATION_KVKK` v2 (A10, form LegalMarkdown); **Hesabım → Rızalarım** (AI/beyan rızalarını geri alma: `<KAPSAM>_REVOKE` ispatlı kayıt, `activeConsent` geri-alma duyarlı — triyaj/beyan uçları bunu denetler); `/onam/kanit` 10 kapsam sekmesi + TR/EN adaylı metin eşleşmesi (`canonicalTextsFor`). Metinler vault `_yayin-kesiti.py` ile `lib/aura-legal/texts/{personel,acik-riza,kurumsal-basvuru}.ts`. Hasta/personel/Aşama 2 doktoru bir kez yeni kapıya düşer (proxy `cv < 4`). Testler: `tests/unit/aura-consent.test.ts` + güncellenen `doctorium-consent.test.ts`.
 
 **v6.260 (2026-09-09) — hukuki belgeler revizyon turu 4 (tam tur kontrol, 👤 "tek pakette"):** deneme üyeliği ve öğrencinin fırsat takibi (Kariyer EDU 7/3/1 hatırlatma) envanter/aydınlatma/saklama belgelerine işlendi; TUS/YÖK verileri için 02 madde 4.8 ("tercih tavsiyesi değildir"), 04 A.2.7; AI kapsamı çeviri + içerik özeti; 02 madde 2 "doğrulanmış doktor" (terim kuralı, `doctorium-legal.test` artık "hekim"/"§" bekçisi); 05 madde 3.4 "öğrenci doğrulama kaydı silinir" — kod karşılığı `clearStudentRecordOnTransition` (diploma doğrulanınca öğrenci alanları temizlenir). Belge sürümü **1.4 · 9 Eylül 2026**, `DOCTORIUM_CONSENT_VERSION` 3→4 (mevcut Doctorium üyeleri bir kez yeniden onaylar). Rapor: vault `output/doctorium-hukuki-tam-tur-kontrol-2026-09-09.md`.
 

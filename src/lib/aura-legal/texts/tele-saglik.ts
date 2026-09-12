@@ -1,7 +1,7 @@
-// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/aura-hukuki-belgeler/teslim/md/A03-tele-saglik-hizmeti-bilgilendirmesi.md (TR) + en/A03-telehealth-service-information.md (EN) — Sürüm 1.0 · 12.09.2026 NİHAİ.
+// ÜRETİLMİŞ YAYIN KESİTİ — kaynak: output/aura-hukuki-belgeler A03-tele-saglik-hizmeti-bilgilendirmesi.md + A03-telehealth-service-information.md (teslim/md TR · en/ EN) — Sürüm 1.0 · 12.09.2026 NİHAİ.
 // Elle DÜZENLEME YOK: kaynak .md vault'ta; `python -X utf8 _yayin-kesiti.py` yeniden üretir. Kimlik etiketleri tüzel kişilik kurulana dek
 // yayın yer tutucusuyla geçer; e-posta kanalı kutu açılana dek yayımlanmaz (platform içi form). Belge A0N atıfları yayımlı rotalara bağlıdır.
-// TR = kanonik (bağlayıcı) · EN = ikinci kanonik (çelişkide TR esastır). Aynı dizeler kod Paket B'de onam kaydına hash'lenir.
+// TR = kanonik (bağlayıcı) · EN = ikinci kanonik (çelişkide TR esastır). Aynı dizeler onam kaydına hash'lenir (ekran = hash, dil başına).
 export const TELE_SAGLIK_TR = `## 1. Bu bilgilendirme neden var
 
 Uzaktan sağlık hizmeti almadan önce; hizmetin ne olduğunu, neyi kapsamadığını, hangi durumlarda uygun olmadığını,

@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { encryptField } from "@/lib/crypto";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { recordAccess, reqMeta } from "@/lib/audit";
+import { activeConsent, HEALTH_DECLARATION_SCOPE, HEALTH_DECLARATION_VERSION } from "@/lib/aura-consent";
 import { HEALTH_CHRONIC_OPTIONS, computeHealthRiskMult, type HealthDeclaration } from "@/lib/pricing";
 
 // POST /api/cases/:id/health-declaration — hasta, paket ekranından sağlık beyanı verir/günceller
@@ -20,6 +21,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
   const rl = await rateLimit(`health-decl:${user.id}`, 10, 60_000);
   if (!rl.ok) return tooMany(rl.retryAfter);
+
+  // A04-d açık rıza (kod Paket B, v6.269): beyan formu rıza kapısının ARKASINDADIR; sunucu da geri-alma duyarlı denetler (fail-closed).
+  if (!(await activeConsent(user.id, HEALTH_DECLARATION_SCOPE, HEALTH_DECLARATION_VERSION))) {
+    return NextResponse.json({ error: "Sağlık beyanı için açık rızanız gerekiyor.", code: "HEALTH_DECLARATION_CONSENT_REQUIRED" }, { status: 403 });
+  }
 
   const c = await db.case.findUnique({
     where: { id },

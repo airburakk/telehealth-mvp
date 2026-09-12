@@ -1,3 +1,4 @@
+import { KURUMSAL_BASVURU_EN, KURUMSAL_BASVURU_TR } from "./aura-legal/texts/kurumsal-basvuru";
 // Kurumsal üyelik başvurusu — ROL-CONFIG TEK KAYNAK (2026-08-12).
 // SIR/DB İÇERMEZ → client bileşenleri güvenle import edebilir (roles.ts ayrılma dersi;
 // [[rsc-client-module-data-export]]: db'li modülden client'a veri export edilemez — sunucu
@@ -137,17 +138,12 @@ export const STAFF_APP_STATUS_LABELS: Record<StaffAppStatus, string> = {
   REJECTED: "Düzeltme istendi",
 };
 
-// ⚖️ TASLAK — başvuru formundaki KVKK aydınlatma/onay kutusu metni (kanonik TR).
-// Giriş sonrası /onam kapısındaki GENEL personel onamından AYRI bir kapsamdır: burada yalnız
-// BAŞVURU verisinin (kimlik, meslek, kurum, belge) değerlendirme amaçlı işlenmesine onay alınır.
-// Metin esaslı değişirse STAFF_APPLICATION_CONSENT_VERSION artırılır (ConsentRecord sürümlü).
+// Başvuru formundaki KVKK aydınlatma/onay kutusu metni — v2 (kod Paket B, v6.269 · 2026-09-13): vault belge A10 Sürüm 1.0
+// NİHAİ yayın kesiti (lib/aura-legal/texts/kurumsal-basvuru — _yayin-kesiti.py üretir; TR kanonik + EN ikinci kanonik).
+// Giriş sonrası /onam kapısındaki personel onamından (STAFF_KVKK) AYRI bir kapsamdır: burada yalnız BAŞVURU verisinin
+// (kimlik, meslek, kurum, belge) değerlendirme amaçlı işlenmesine onay alınır. EKRAN = HASH: form LegalMarkdown ile bu
+// dizeyi gösterir, signup-staff aynı dizeyi hash'ler. Metin esaslı değişirse sürüm artırılır (ConsentRecord sürümlü).
 export const STAFF_APPLICATION_CONSENT_SCOPE = "STAFF_APPLICATION_KVKK";
-export const STAFF_APPLICATION_CONSENT_VERSION = 1;
-export const STAFF_APPLICATION_CONSENT_TEXT = `AURA Kurumsal Üyelik Başvurusu — KVKK Aydınlatma ve Onay (Sürüm 1 · TASLAK)
-
-1. Veri sorumlusu: AURA platformunu işleten şirket(ler) (S1 Yazılım / S2 Operasyon).
-2. İşlenen veriler: başvuru formunda verdiğiniz kimlik, iletişim, meslek/kurum ve belge bilgileri.
-3. Amaç: kurumsal üyelik başvurunuzun değerlendirilmesi, mesleki yeterlilik ve belge doğrulaması, üyelik ilişkisinin kurulması.
-4. Saklama: başvurunuz reddedilirse verileriniz makul değerlendirme/itiraz süresi sonunda imha edilir; onaylanırsa üyelik süresince saklanır.
-5. Haklarınız: KVKK m.11 kapsamındaki erişim, düzeltme, silme ve itiraz haklarınızı kullanabilirsiniz.
-6. Onay: başvuru verilerimin yukarıdaki kapsamda işlenmesini kabul ediyorum.`;
+export const STAFF_APPLICATION_CONSENT_VERSION = 2;
+export const STAFF_APPLICATION_CONSENT_TEXTS = { tr: KURUMSAL_BASVURU_TR, en: KURUMSAL_BASVURU_EN } as const;
+export const STAFF_APPLICATION_CONSENT_TEXT = STAFF_APPLICATION_CONSENT_TEXTS.tr;

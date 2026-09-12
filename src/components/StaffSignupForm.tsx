@@ -1,4 +1,5 @@
 "use client";
+import { LegalMarkdown } from "@/components/aura/doctorium-legal/LegalMarkdown";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -149,7 +150,8 @@ export function StaffSignupForm({ config }: { config: StaffRoleConfig }) {
             </Labeled>
           </div>
 
-          {/* KVKK başvuru onayı — metin ⚖️ TASLAK; details ile tam metin okunabilir */}
+          {/* KVKK başvuru onayı — A10 Sürüm 1.0 NİHAİ (v6.269): EKRAN = HASH — details içinde tam metin LegalMarkdown ile;
+              signup-staff aynı dizeyi (STAFF_APPLICATION_CONSENT_TEXT, TR kanonik) hash'ler. */}
           <div className="rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-3">
             <label className="flex items-start gap-2.5">
               <input
@@ -167,7 +169,9 @@ export function StaffSignupForm({ config }: { config: StaffRoleConfig }) {
             </label>
             <details className="mt-2">
               <summary className="cursor-pointer text-[11px] font-medium text-[var(--c-accent)]">Aydınlatma metnini görüntüle</summary>
-              <pre className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap font-sans text-[11px] leading-relaxed text-[var(--c-ink-3)]">{STAFF_APPLICATION_CONSENT_TEXT}</pre>
+              <div lang="tr" className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-[var(--c-hairline)] bg-[var(--c-bg)] px-3 py-2 text-[11px]">
+                <LegalMarkdown markdown={STAFF_APPLICATION_CONSENT_TEXT} />
+              </div>
             </details>
           </div>
 
