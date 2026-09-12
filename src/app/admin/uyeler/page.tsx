@@ -87,7 +87,7 @@ export default async function MemberAnalyticsPage() {
     db.user.groupBy({ by: ["role"], where: { deletedAt: null }, _count: { _all: true } }),
     db.user.findMany({
       where: { role: "DOCTOR", deletedAt: null, doctorId: { not: null } },
-      select: { doctorId: true, createdAt: true },
+      select: { doctorId: true, createdAt: true, name: true, email: true },
     }),
     db.user.groupBy({
       by: ["patientCountry"],
@@ -117,7 +117,7 @@ export default async function MemberAnalyticsPage() {
   const byId = new Map(profiles.map((p) => [p.id, p]));
   const members = doctorUsers.flatMap((u) => {
     const p = u.doctorId ? byId.get(u.doctorId) : undefined;
-    return p ? [{ createdAt: u.createdAt, p }] : [];
+    return p ? [{ createdAt: u.createdAt, name: u.name, email: u.email, p }] : [];
   });
   const orphanCount = doctorUsers.length - members.length;
 
@@ -204,6 +204,17 @@ export default async function MemberAnalyticsPage() {
     .filter((g) => g.role !== "PATIENT" && g.role !== "DOCTOR")
     .sort((a, b) => b._count._all - a._count._all);
 
+  // Tüm üyeler — tek liste (kullanıcı isteği 2026-09-12): "üye analitiği panosunda kimlerin
+  // olduğunu görmek" panonun aggregate/tally bölümlerinde YOKTU, yalnız sayı/yüzde vardı. Bu
+  // liste onaylı+bekleyen HERKESİ kapsar — /admin/doktor-onay yalnız verified:false gösterir,
+  // biri onaylanınca oradan düşer; burada düşmez. En yeni önde. Ölçek notu (dosya başı) burada
+  // da geçerli: bugün birkaç yüz satır, on binlere çıkarsa sayfalama gerekir.
+  const memberStatus = (p: (typeof members)[number]["p"]): string =>
+    p.studentTrack
+      ? p.studentVerifiedAt ? "Öğrenci · e-posta doğrulandı" : "Öğrenci · doğrulanmadı"
+      : p.verified ? "Admin onaylı" : p.diplomaVerifiedAt ? "Diploma doğrulandı · onay bekliyor" : "Kayıt oldu · belge bekleniyor";
+  const allMembers = [...members].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
   return (
     <>
       {/* DOCTORIUM_PALETTE kökte: marka lockup'ının (--dl-ink / --dl-emerald) bu sayfada da
@@ -281,6 +292,42 @@ export default async function MemberAnalyticsPage() {
                     <td className="px-3.5 py-2 text-right text-[var(--c-ink-2)]">{doctors.length.toLocaleString("tr-TR")}</td>
                     <td className="px-3.5 py-2 text-right text-[var(--c-ink-2)]">{students.length.toLocaleString("tr-TR")}</td>
                   </tr>
+                </tbody>
+              </table>
+            </div>
+          </Section>
+
+          <Section
+            title="Tüm üyeler"
+            hint="Onaylı ve onay bekleyen HERKES — Doktor Doğrulama Onayı sayfası yalnız bekleyenleri gösterir, onaylanınca oradan düşer. En yeni üye en üstte."
+          >
+            <div className="overflow-x-auto rounded-2xl border border-[var(--c-hairline)]">
+              <table className="w-full text-sm">
+                <thead className="bg-[var(--c-surface)] text-[11px] uppercase tracking-wide text-[var(--c-ink-3)]">
+                  <tr>
+                    <th className="px-3.5 py-2 text-left font-medium">Kayıt tarihi</th>
+                    <th className="px-3.5 py-2 text-left font-medium">Tür</th>
+                    <th className="px-3.5 py-2 text-left font-medium">Ad</th>
+                    <th className="px-3.5 py-2 text-left font-medium">E-posta</th>
+                    <th className="px-3.5 py-2 text-left font-medium">Şehir</th>
+                    <th className="px-3.5 py-2 text-left font-medium">Branş</th>
+                    <th className="px-3.5 py-2 text-left font-medium">Durum</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--c-hairline)]">
+                  {allMembers.map((m, i) => (
+                    <tr key={`${m.p.id}-${i}`}>
+                      <td className="whitespace-nowrap px-3.5 py-2 text-[var(--c-ink-2)]">{m.createdAt.toLocaleDateString("tr-TR")}</td>
+                      <td className="whitespace-nowrap px-3.5 py-2 text-[var(--c-ink-2)]">{m.p.studentTrack ? "Öğrenci" : "Doktor"}</td>
+                      <td className="px-3.5 py-2 font-medium text-[var(--c-ink)]">{m.name}</td>
+                      <td className="px-3.5 py-2">
+                        <a href={`mailto:${m.email}`} className="text-[var(--c-accent)] hover:underline">{m.email}</a>
+                      </td>
+                      <td className="px-3.5 py-2 text-[var(--c-ink-2)]">{m.p.city || "—"}</td>
+                      <td className="px-3.5 py-2 text-[var(--c-ink-2)]">{m.p.branch || "—"}</td>
+                      <td className="whitespace-nowrap px-3.5 py-2 text-[var(--c-ink-2)]">{memberStatus(m.p)}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
