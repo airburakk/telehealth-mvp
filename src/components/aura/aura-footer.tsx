@@ -28,7 +28,7 @@ export function AuraFooter({ accountLinks = false }: { accountLinks?: boolean })
 
   return (
     <footer className="border-t border-[var(--aura-hairline)] bg-[var(--aura-bg)] print:hidden">
-      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[2fr_1fr_1fr] md:px-8">
+      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[2fr_1fr_1fr_1fr] md:px-8">
         <div>
           {/* Tam lockup (kullanıcı kararı 2026-08-23): küre + AURA + GLOBAL CARE (braille v6.138'de
               site genelinden kaldırıldı). H=30 → küre 80px, wordmark 156px, alt yazı 9,7px. */}
@@ -118,6 +118,35 @@ export function AuraFooter({ accountLinks = false }: { accountLinks?: boolean })
                 className="transition-colors duration-200 hover:text-[var(--aura-accent)]"
               >
                 {f.trust}
+              </Link>
+            </li>
+          </ul>
+        </div>
+        <div>
+          {/* Hukuki belgeler (kod Paket A, v6.268 · 2026-09-13): AURA hukuki set Sürüm 1.0 — rotalar lib/aura-legal/routes.ts.
+              Footer o modülü import ETMEZ ("use client" bundle'ına metin gövdesi girmesin); liste birim testle yayımlı
+              rotalara bağlı (tests/unit/aura-legal.test.ts). /tele-saglik yayın şartı dolana dek listede YOK. Etiketler
+              9 dilde copy.ts footer sözlüğünden. */}
+          <p className="aura-display text-sm font-bold">{f.legalGroup}</p>
+          <ul className="mt-3 space-y-2 text-sm text-[var(--aura-grey)]">
+            <li>
+              <Link href="/aydinlatma" className="transition-colors duration-200 hover:text-[var(--aura-accent)]">
+                {f.privacyNotice}
+              </Link>
+            </li>
+            <li>
+              <Link href="/kosullar" className="transition-colors duration-200 hover:text-[var(--aura-accent)]">
+                {f.terms}
+              </Link>
+            </li>
+            <li>
+              <Link href="/cerez" className="transition-colors duration-200 hover:text-[var(--aura-accent)]">
+                {f.cookies}
+              </Link>
+            </li>
+            <li>
+              <Link href="/kvkk-basvuru" className="transition-colors duration-200 hover:text-[var(--aura-accent)]">
+                {f.dataRequests}
               </Link>
             </li>
           </ul>

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/aura-landing/seo";
 import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
+import { AURA_LEGAL_PUBLISHED_PATHS } from "@/lib/aura-legal/routes";
 
 // XML sitemap (v5.9.1) — yalnız HALKA AÇIK, indekslenebilir rotalar. Auth-kapılı paneller
 // (proxy matcher: /triyaj, /vaka, /doktor, /operasyon, /admin, /acente, /partner, /etik-kurul,
@@ -44,5 +45,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry("/kayit", 0.6, "monthly"), // doktor kaydı
     entry("/second-opinion", 0.6, "monthly"), // İkinci Görüş vitrin (kök public; /basvur gated)
     entry("/ucretsiz-saglik", 0.6, "monthly"), // Ücretsiz Sağlık vitrin (kök public; /basvur gated)
+    // AURA hukuki belgeleri (kod Paket A, v6.268 · 2026-09-13): yalnız YAYIMLI rotalar (lib/aura-legal/routes —
+    // /tele-saglik bayrağı açılınca kendiliğinden girer). Canonical TR tek URL; ?lang=en hreflang alternatifi sayfa
+    // metadata'sında. Doctorium deploy'unda anılmaz (AURA_ONLY_PREFIXES ile zaten AURA'ya 307).
+    ...AURA_LEGAL_PUBLISHED_PATHS.map((p) => entry(p, 0.4, "yearly")),
   ];
 }

@@ -235,6 +235,7 @@ export const COPY = {
     footer: {
       platform: "Platform",
       explore: "Explore",
+      legalGroup: "Legal", privacyNotice: "Privacy Notice", terms: "Terms of Use", cookies: "Cookie Policy", dataRequests: "Data Subject Requests",
       patientLogin: "Patient login",
       patientSignup: "Patient sign-up",
       corporateLogin: "Corporate login",
@@ -904,6 +905,7 @@ export const COPY = {
     footer: {
       platform: "Platform",
       explore: "Keşfet",
+      legalGroup: "Hukuki", privacyNotice: "Aydınlatma Metni", terms: "Kullanım Koşulları", cookies: "Çerez Politikası", dataRequests: "KVKK Başvurusu",
       patientLogin: "Hasta girişi",
       patientSignup: "Hasta kaydı",
       corporateLogin: "Kurumsal giriş",
@@ -1401,6 +1403,7 @@ export const COPY = {
     closing: { headline: "Bereit, wenn Sie es sind.", cta: "Arzt sprechen" },
     footer: {
       platform: "Plattform", explore: "Entdecken", patientLogin: "Patienten-Login", patientSignup: "Patienten-Registrierung", corporateLogin: "Firmen-Login", doctorSignup: "Arzt-Registrierung", students: "Medizinstudierende", telehealth: "Telemedizin", tourism: "Gesundheitstourismus", doctors: "Fachärzte", trust: "Vertrauen und Datenschutz",
+      legalGroup: "Rechtliches", privacyNotice: "Datenschutzhinweis", terms: "Nutzungsbedingungen", cookies: "Cookie-Richtlinie", dataRequests: "Betroffenenanfragen",
       legal: "© 2026 AURA. MVP-Demo, keine medizinische Beratung.",
     },
     signin: {
@@ -1862,6 +1865,7 @@ export const COPY = {
     closing: { headline: "Prêts quand vous l'êtes.", cta: "Consulter un médecin" },
     footer: {
       platform: "Plateforme", explore: "Explorer", patientLogin: "Connexion patient", patientSignup: "Inscription patient", corporateLogin: "Connexion professionnelle", doctorSignup: "Inscription médecin", students: "Étudiants en médecine", telehealth: "Télésanté", tourism: "Tourisme médical", doctors: "Spécialistes", trust: "Confiance et confidentialité",
+      legalGroup: "Mentions légales", privacyNotice: "Notice d'information", terms: "Conditions d'utilisation", cookies: "Politique de cookies", dataRequests: "Demandes des personnes concernées",
       legal: "© 2026 AURA. Démo MVP, ne constitue pas un avis médical.",
     },
     signin: {
@@ -2323,6 +2327,7 @@ export const COPY = {
     closing: { headline: "Мы готовы, когда готовы вы.", cta: "Поговорить с врачом" },
     footer: {
       platform: "Платформа", explore: "Обзор", patientLogin: "Вход для пациентов", patientSignup: "Регистрация пациента", corporateLogin: "Корпоративный вход", doctorSignup: "Регистрация врача", students: "Студенты-медики", telehealth: "Телемедицина", tourism: "Медицинский туризм", doctors: "Специалисты", trust: "Доверие и конфиденциальность",
+      legalGroup: "Правовая информация", privacyNotice: "Уведомление о конфиденциальности", terms: "Условия использования", cookies: "Политика cookie", dataRequests: "Запросы субъектов данных",
       legal: "© 2026 AURA. MVP-демо, не является медицинской рекомендацией.",
     },
     signin: {
@@ -2784,6 +2789,7 @@ export const COPY = {
     closing: { headline: "جاهزون متى كنت جاهزًا.", cta: "تحدث إلى طبيب" },
     footer: {
       platform: "المنصة", explore: "استكشف", patientLogin: "دخول المرضى", patientSignup: "تسجيل المرضى", corporateLogin: "الدخول المؤسسي", doctorSignup: "تسجيل الأطباء", students: "طلاب الطب", telehealth: "الرعاية عن بُعد", tourism: "السياحة العلاجية", doctors: "الأخصائيون", trust: "الثقة والخصوصية",
+      legalGroup: "الشؤون القانونية", privacyNotice: "إشعار الخصوصية", terms: "شروط الاستخدام", cookies: "سياسة ملفات تعريف الارتباط", dataRequests: "طلبات أصحاب البيانات",
       legal: "© 2026 AURA. عرض تجريبي (MVP)، وليس نصيحة طبية.",
     },
     signin: {
@@ -3245,6 +3251,7 @@ export const COPY = {
     closing: { headline: "هر وقت آماده بودید، ما هستیم.", cta: "با پزشک صحبت کنید" },
     footer: {
       platform: "پلتفرم", explore: "کاوش", patientLogin: "ورود بیمار", patientSignup: "ثبت‌نام بیمار", corporateLogin: "ورود سازمانی", doctorSignup: "ثبت‌نام پزشک", students: "دانشجویان پزشکی", telehealth: "سلامت از راه دور", tourism: "گردشگری سلامت", doctors: "متخصصان", trust: "اعتماد و حریم خصوصی",
+      legalGroup: "حقوقی", privacyNotice: "اطلاعیه حریم خصوصی", terms: "شرایط استفاده", cookies: "سیاست کوکی", dataRequests: "درخواست‌های صاحبان داده",
       legal: "© 2026 AURA. دموی MVP؛ توصیه پزشکی نیست.",
     },
     signin: {
@@ -3706,6 +3713,7 @@ export const COPY = {
     closing: { headline: "Siz hazır olanda.", cta: "Həkimlə görüş" },
     footer: {
       platform: "Platforma", explore: "Kəşf et", patientLogin: "Xəstə girişi", patientSignup: "Xəstə qeydiyyatı", corporateLogin: "Korporativ giriş", doctorSignup: "Həkim qeydiyyatı", students: "Tibb tələbələri", telehealth: "Teletibb", tourism: "Sağlamlıq Turizmi", doctors: "Mütəxəssislər", trust: "Etibar və Məxfilik",
+      legalGroup: "Hüquqi", privacyNotice: "Məxfilik bildirişi", terms: "İstifadə şərtləri", cookies: "Kuki siyasəti", dataRequests: "Məlumat subyekti müraciəti",
       legal: "© 2026 AURA. MVP demo, tibbi məsləhət deyil.",
     },
     signin: {
@@ -4216,6 +4224,7 @@ export const COPY = {
     footer: {
       platform: "Платформа",
       explore: "Разгледайте",
+      legalGroup: "Правна информация", privacyNotice: "Уведомление за поверителност", terms: "Условия за ползване", cookies: "Политика за бисквитки", dataRequests: "Заявки на субекти на данни",
       patientLogin: "Вход за пациенти",
       patientSignup: "Регистрация за пациенти",
       corporateLogin: "Корпоративен вход",

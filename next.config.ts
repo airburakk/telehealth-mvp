@@ -108,6 +108,7 @@ const AURA_ONLY_PREFIXES = [
   "/paket", "/teklif", "/rezervasyon", "/sikayet", "/gorusme", "/hesap", "/erisim-kaydi",
   "/second-opinion", "/ucretsiz-saglik", "/saglik-turizmi", "/doktorlar", "/konsultasyon",
   "/how-it-works", "/v2", "/for-clinicians", "/guven-ve-gizlilik", "/trust",
+  "/aydinlatma", "/kosullar", "/tele-saglik", "/cerez", "/kvkk-basvuru", // AURA hukuki belgeleri (v6.268) — doctorium.tr'de AURA'ya 307
   "/en", "/tr", "/ru", "/ar", "/fa", "/az", "/de", "/fr", "/bg",
 ];
 

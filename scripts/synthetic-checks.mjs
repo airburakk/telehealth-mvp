@@ -38,6 +38,12 @@ const AURA_ROUTES = [
   { path: "/how-it-works",      title: "How it works",               h1: "works",                 cta: "/kayit/hasta",            noindex: false },
   { path: "/guven-ve-gizlilik", title: "Trust",                      h1: "Trust",                 cta: "/kayit/hasta",            noindex: false },
   { path: "/for-clinicians",    title: "For clinicians",             h1: "Practice across borders", cta: "/kurumsal-giris",        noindex: false },
+  // AURA hukuki belgeleri (kod Paket A, v6.268 · 2026-09-13): vitrin kabuğu (V2Nav + AuraClosing); title = belge başlığı · AURA,
+  // TR kanonik (?lang=en ikinci kanonik). CTA = kardeş belgeye giden gezinme çipi. /tele-saglik bayrak kapalı (404) → listede YOK.
+  { path: "/aydinlatma",        title: "Aydınlatma Metni",   h1: "Aydınlatma Metni",   cta: "/kvkk-basvuru",           noindex: false },
+  { path: "/kosullar",          title: "Kullanım Koşulları", h1: "Kullanım Koşulları", cta: "/aydinlatma",             noindex: false },
+  { path: "/cerez",             title: "Çerez",              h1: "Çerez",              cta: "/aydinlatma",             noindex: false },
+  { path: "/kvkk-basvuru",      title: "Başvuru Usul",       h1: "Başvuru Usul",       cta: "/aydinlatma",             noindex: false },
   // Doctorium landing V2 (2026-08-23): h1 "Her doktor kendi Doctorium'unu oluşturur." (lockup
   // span'leri extract'ta soyulur). CTA = doktor kaydı — ayrışma Faz B (2026-08-24) ile Doctorium
   // kabuklu /doctorium/kayit. Metin bilinçli değişirse burayı da güncelle.
@@ -76,6 +82,8 @@ const DOCTORIUM_ROUTES = [
 // yüzeyleri Doctorium'da YAŞAMAMALI. next.config redirect listesi bozulursa burası kırmızı yanar.
 const DOCTORIUM_REDIRECTS = [
   { base: DOCTORIUM_BASE, path: "/giris", status: 307, locationStartsWith: `${AURA_BASE}/giris` },
+  // AURA hukuki belgeleri doctorium.tr'de YAŞAMAZ (AURA_ONLY_PREFIXES, v6.268) — biri denetlenir, kural beşini kapsar.
+  { base: DOCTORIUM_BASE, path: "/aydinlatma", status: 307, locationStartsWith: `${AURA_BASE}/aydinlatma` },
   { base: "https://doctorium.com.tr", path: "/", status: 308, locationStartsWith: `${DOCTORIUM_BASE}/` },
   { base: "https://www.doctorium.tr", path: "/", status: 308, locationStartsWith: `${DOCTORIUM_BASE}/` },
 ];

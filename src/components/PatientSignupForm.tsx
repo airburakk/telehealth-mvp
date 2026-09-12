@@ -107,9 +107,16 @@ export function PatientSignupForm({ googleEnabled, appleEnabled }: { googleEnabl
           </button>
         </form>
 
+        {/* Kayıt anı bilgilendirmesi (KVKK m.10; kod Paket A, v6.268): aydınlatma /aydinlatma'da yayımlı, onam kapısı hesap
+            açılınca gelir. Bağlantı çevresinde {" "} açık yazılır (SWC JSX boşluk tuzağı, v6.266). */}
         <p className="mt-3 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
-          Üyelik sonrası kişisel verilerinizin işlenmesine ilişkin KVKK açık onam metni gösterilir;
-          sağlık verileriniz sıkı erişim kontrolü ile, iletimde ve sunucuda şifrelenerek korunur.
+          Kişisel verileriniz{" "}
+          <Link href="/aydinlatma" className="underline underline-offset-2 hover:text-[var(--c-accent)]">Aydınlatma Metni</Link>
+          {" "}kapsamında işlenir; üyelik sonrası KVKK açık onam metni gösterilir. Sağlık verileriniz sıkı erişim kontrolü ile,
+          iletimde ve sunucuda şifrelenerek korunur. Bkz.{" "}
+          <Link href="/kosullar" className="underline underline-offset-2 hover:text-[var(--c-accent)]">Kullanım Koşulları</Link>
+          {" "}·{" "}
+          <Link href="/cerez" className="underline underline-offset-2 hover:text-[var(--c-accent)]">Çerez Politikası</Link>.
         </p>
       </div>
 
