@@ -434,6 +434,9 @@ bağ yoksa hesap dahil her şey o anda silinir (Doctorium'da saklanacak klinik k
 ⚖️ **Tamamlanmış işlem geri alınmaz** (kullanıcı kararı 2026-08-29): anket yanıtları ve ödül
 kullanımları SİLİNMEZ — `Doctor`'a FK olmadıkları için `doctorId` yetim kalır, yani anonimleşir.
 Puanlar ileriye dönük hak olduğu için silinir ve geri yüklenmez; arayüz bunu kapatmadan önce uyarır.
+**Panel metni kitle-duyarlı (v6.266, 2026-09-12):** sponsor/anket/puan/ödül yüzeyleri `audienceFlags`'te yalnız VERIFIED'a açık olduğundan
+öğrenci/deneme/kilitli hesapta "anket yanıtlarınız / puanlarınız" maddeleri ve puan uyarı bandı HİÇ çizilmez — `MembershipPanel`
+`hadMarketingSurfaces` prop'unu çağıran sayfadan alır (`hesap/page.tsx` → `audienceFlags(audience).canSeeSurveys`; Stage1 kilitli-deneme yolu → false).
 
 **Hukuki belgeler — `/doctorium/{aydinlatma,kosullar,cerez,icerik-politikasi,kvkk-basvuru}` (v6.210, 2026-09-03):**
 Doctorium'un yayımlanan beş hukuki metni (KVKK aydınlatma · üyelik sözleşmesi · çerez · içerik/telif +
