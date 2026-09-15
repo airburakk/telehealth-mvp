@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { leaveConsentGate } from "./leave-gate";
 import { ShieldCheck, Loader2, ArrowRight, UserCheck } from "lucide-react";
 import { AURA_LEGAL_DATE_LABEL, AURA_LEGAL_VERSION } from "@/lib/aura-legal/routes";
 import { CONSENT_LANG_NOTE, type ConsentLang } from "@/lib/consent-lang";
@@ -70,7 +70,6 @@ export function StaffConsentGate({
   /** A09 rol kesiti (LegalMarkdown) — TR ve EN; gösterilen = hash'lenen. */
   text: Record<ConsentLang, ReactNode>;
 }) {
-  const router = useRouter();
   const [lang, setLang] = useState<ConsentLang>(initialLang);
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -94,8 +93,7 @@ export function StaffConsentGate({
         body: JSON.stringify({ kind: "staff", lang }),
       });
       if (!r.ok) throw new Error();
-      router.push(dest);
-      router.refresh();
+      leaveConsentGate(dest); // TAM SAYFA — router.push üretimde bayat ön-yükleme önbelleğiyle /onam'a geri dönüyordu (leave-gate.ts)
     } catch {
       setErr(ui.err);
       setSubmitting(false);

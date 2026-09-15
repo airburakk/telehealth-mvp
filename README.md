@@ -476,7 +476,7 @@ metnini LegalMarkdown ile gösterir, sunucu aynı string'i hash'ler). Tek kaynak
 doktor/öğrenci → Doctorium seti · Aşama 2 doktor → STAFF_KVKK + Doctorium · Doctorium'dan çıkan → STAFF_KVKK), `gateConsentVersion` (JWT `cv`: set
 tamsa CONSENT_VERSION, değilse 0 — proxy kuralı DEĞİŞMEDİ; login/OAuth/signup bunu yazar), `missingConsentScopes`
 (/onam DB-taze karar: `DoctoriumConsentGate` · `AuraConsentGate` [hasta] · `StaffConsentGate` [personel / clinical] · `ConsentResign` [set tam, JWT eski →
-kayıtsız yeniden imza; proxy↔/onam döngüsü kapanır]). **Klinik aktivasyon `STAFF_KVKK` (v6.269; eskiden GENERAL_KVKK) onamına bağlı:**
+kayıtsız yeniden imza; proxy↔/onam döngüsü kapanır]). **v6.270 (2026-09-15) — kapılardan ÇIKIŞ TAM SAYFA gezintisi** (`app/onam/leave-gate.ts leaveConsentGate`): eski `router.push(dest)+router.refresh()` üretimde Header `<Link>` ön-yüklemelerinin bayat-çerezli proxy 307'sini ön-yükleme önbelleğinden kullanıp /onam'a geri dönüyor, kullanıcı "Onay durumunuz doğrulanıyor…" spinner'ında elle yenileyene dek kalıyordu (dev'de görünmez — prefetch yalnız üretimde; `next start` ile tekrarlandı). `next` hedefi `lib/safe-path isSafeInternalPath` ile süzülür (`//host` ve `/\host` reddedilir; OAuth `isSafeNextPath` aynı kurala devreder). Nöbet: `tests/unit/safe-path.test.ts`. **Klinik aktivasyon `STAFF_KVKK` (v6.269; eskiden GENERAL_KVKK) onamına bağlı:**
 `refreshActivation` onamsız `activatedAt` yazmaz; onboarding "bitir" 409 `CLINICAL_CONSENT_REQUIRED` → form
 `/onam?scope=clinical`'a gider (StaffConsentGate + A09 madde 10.1 DOCTOR kesiti), `/api/consent` kaydı sonra
 `refreshActivation` çağırır. Mevcut aktif doktorlar etkilenmez (damga korunur); Doctorium seti olmayan her

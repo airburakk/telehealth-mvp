@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { leaveConsentGate } from "./leave-gate";
 import { ShieldCheck, Loader2, ArrowRight, FileText, ScrollText } from "lucide-react";
 import { AURA_LEGAL_DATE_LABEL, AURA_LEGAL_VERSION } from "@/lib/aura-legal/routes";
 import { CONSENT_LANG_NOTE, type ConsentLang } from "@/lib/consent-lang";
@@ -63,7 +63,6 @@ export function AuraConsentGate({
   aydinlatma: Record<ConsentLang, ReactNode>;
   kosullar: Record<ConsentLang, ReactNode>;
 }) {
-  const router = useRouter();
   const [lang, setLang] = useState<ConsentLang>(initialLang);
   const [readInfo, setReadInfo] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -88,8 +87,7 @@ export function AuraConsentGate({
         body: JSON.stringify({ kind: "general", lang }),
       });
       if (!r.ok) throw new Error();
-      router.push(dest);
-      router.refresh();
+      leaveConsentGate(dest); // TAM SAYFA — router.push üretimde bayat ön-yükleme önbelleğiyle /onam'a geri dönüyordu (leave-gate.ts)
     } catch {
       setErr(ui.err);
       setSubmitting(false);

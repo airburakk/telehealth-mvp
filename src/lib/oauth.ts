@@ -4,6 +4,7 @@
 // (oturum katmanı zaten jose kullanıyor — lib/session.ts).
 
 import { SignJWT, jwtVerify, importPKCS8, createRemoteJWKSet } from "jose";
+import { isSafeInternalPath } from "./safe-path";
 
 const GOOGLE_AUTH = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
@@ -19,7 +20,7 @@ export function isGoogleConfigured(): boolean {
 // tek site-içi göreli yol kabul edilir. "//host" biçimi REDDEDİLİR (tarayıcı bunu protokol-göreli
 // farklı bir origin sayar — `//evil.com` gibi bir next kabul edilseydi açık yönlendirme olurdu).
 export function isSafeNextPath(next: string | undefined | null): next is string {
-  return !!next && next.startsWith("/") && !next.startsWith("//");
+  return isSafeInternalPath(next); // "/\\host" da reddedilir — tek kural lib/safe-path (2026-09-15)
 }
 
 // İstek origin'inden callback URI türet (yerel + Vercel origin uyumlu — Google Console'a bu eklenir).

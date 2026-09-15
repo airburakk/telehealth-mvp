@@ -7,6 +7,7 @@ import { hasCurrentConsent } from "@/lib/consent";
 import { AURA_CORE_SCOPES, decideConsentScreen, missingConsentScopes } from "@/lib/doctorium-consent";
 import { AURA_TERMS_TEXT, GENERAL_KVKK_TEXT, STAFF_KVKK_SCOPE, STAFF_KVKK_VERSION, staffKvkkText } from "@/lib/aura-consent-texts";
 import { consentLangFor } from "@/lib/consent-lang";
+import { isSafeInternalPath } from "@/lib/safe-path";
 import { AYDINLATMA_MD } from "@/lib/doctorium-legal/texts/aydinlatma";
 import { KOSULLAR_MD } from "@/lib/doctorium-legal/texts/kosullar";
 import { OGRENCI_EKI_MD } from "@/lib/doctorium-legal/texts/ogrenci-eki";
@@ -37,7 +38,8 @@ export default async function ConsentPage({ searchParams }: { searchParams: Prom
   // Faz 5: hasta için varsayılan iniş dinamik (vaka merkezi / triyaj); diğer roller marka-duyarlı ana sayfa
   // (v6.185: Doctorium deploy'unda doktor portala iner, AURA host'una savrulmaz).
   const fallback = user.role === "PATIENT" ? await patientHome(user.id) : brandRoleHome(user.role);
-  const dest = next && next.startsWith("/") && next !== "/onam" ? next : fallback;
+  // Hedef site-içi olmalı: kapılar çıkışta tam sayfa gezintisi yapar (leave-gate.ts) → "//host" ve "/\\host" burada süzülür.
+  const dest = isSafeInternalPath(next) && next !== "/onam" ? next : fallback;
 
   const missing = await missingConsentScopes(user.id, user.role);
   const wantsClinical = scope === "clinical" && user.role === "DOCTOR";

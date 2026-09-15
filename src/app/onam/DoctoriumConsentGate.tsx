@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { leaveConsentGate } from "./leave-gate";
 import { ShieldCheck, Loader2, ArrowRight, FileText, ScrollText, GraduationCap } from "lucide-react";
 import { DOCTORIUM_LEGAL_DATE_TR, DOCTORIUM_LEGAL_VERSION } from "@/lib/doctorium-legal";
 
@@ -24,7 +24,6 @@ export function DoctoriumConsentGate({
   ogrenciEki?: ReactNode;
   kosullar: ReactNode;
 }) {
-  const router = useRouter();
   const [readInfo, setReadInfo] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -36,8 +35,7 @@ export function DoctoriumConsentGate({
     try {
       const r = await fetch("/api/consent", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "doctorium" }) });
       if (!r.ok) throw new Error();
-      router.push(dest);
-      router.refresh();
+      leaveConsentGate(dest); // TAM SAYFA — router.push üretimde bayat ön-yükleme önbelleğiyle /onam'a geri dönüyordu (leave-gate.ts)
     } catch {
       setErr("Bir hata oluştu, lütfen tekrar deneyin.");
       setSubmitting(false);
