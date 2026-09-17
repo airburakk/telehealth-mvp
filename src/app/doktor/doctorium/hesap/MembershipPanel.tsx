@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { AlertTriangle, TriangleAlert, X } from "lucide-react";
 import { AuraPanel } from "@/components/ui/AuraPanel";
 import { AuraButton } from "@/components/ui/AuraButton";
@@ -130,7 +129,6 @@ function getCopy(mode: MembershipMode, hadMarketingSurfaces: boolean): CopyShape
 }
 
 export function MembershipPanel({ mode, hadMarketingSurfaces }: { mode: MembershipMode; hadMarketingSurfaces: boolean }) {
-  const router = useRouter();
   const t = getCopy(mode, hadMarketingSurfaces);
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
@@ -157,9 +155,9 @@ export function MembershipPanel({ mode, hadMarketingSurfaces }: { mode: Membersh
       }
       // Kapatmada oturum sunucuda sonlandırıldı → giriş kapısına. Üyelikten çıkışta hesap yaşıyor,
       // ama Doctorium erişimi kapandı → kök yönlendirme kullanıcıyı doğru yüzeye taşır.
-      // router.refresh() ŞART: replace tek başına bayat RSC cache'ini kullanabilir.
-      router.replace(mode === "close" ? "/doctorium/giris" : "/");
-      router.refresh();
+      // TAM SAYFA gezinti (2026-09-17): kapatmada çerez silindi, çıkışta yetki değişti → istemci ve ön-yükleme
+      // önbelleği de sıfırlansın (v6.270 onam döngüsü dersi: router.replace bayat 307/RSC girdilerini kullanabiliyor).
+      window.location.replace(mode === "close" ? "/doctorium/giris" : "/");
     } catch {
       setError("Bağlantı kurulamadı. Lütfen tekrar deneyin.");
       setBusy(false);

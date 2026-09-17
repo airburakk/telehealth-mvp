@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { oauthBannerMessage } from "@/lib/oauth-banner";
+import { isSafeInternalPath } from "@/lib/safe-path";
 
 // Kapı içi e-posta giriş formu (2026-08-06) — /giris/e-posta ve /kurumsal-giris/e-posta alt
 // rotaları KALDIRILDI (kullanıcı kararı: "kapı yeterli; e-posta ile devam edince form hemen
@@ -41,7 +42,11 @@ export function GateEmailForm({
   fallbackNext?: string;
 }) {
   const sp = useSearchParams();
-  const next = sp.get("next");
+  // ?next URL'den gelir ve tam sayfa gezintiye doğrudan verilir → açık yönlendirme (CWE-601) süzgeci ŞART:
+  // "//evil.com", "/\evil.com", "https://…" reddedilir, yalnız site-içi yol geçer (2026-09-17 bulgusu; OAuth start
+  // uçları zaten isSafeNextPath ile süzüyordu, e-posta yolu süzmüyordu). Güvensiz next → fallbackNext/home.
+  const nextParam = sp.get("next");
+  const next = isSafeInternalPath(nextParam) ? nextParam : null;
   const oauthMsg = oauthBannerMessage(sp.get("oauth"), sp.get("provider"), "giriş");
   const verifyMsg =
     sp.get("verify") === "ok" ? "E-posta adresiniz doğrulandı — şimdi giriş yapabilirsiniz."

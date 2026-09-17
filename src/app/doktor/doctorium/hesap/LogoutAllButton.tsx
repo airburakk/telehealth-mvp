@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ShieldOff } from "lucide-react";
 import { AuraButton } from "@/components/ui/AuraButton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -11,15 +10,13 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 // bu cihazın çerezi de silinir. Giriş etkinliği panelinin altında yaşar çünkü listede tanınmayan bir
 // giriş görmenin doğal karşılığı budur.
 export function LogoutAllButton({ target }: { target: string }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function run() {
     setBusy(true);
     await fetch("/api/auth/logout-all", { method: "POST" }).catch(() => null);
-    router.replace(target);
-    router.refresh(); // replace tek başına bayat RSC cache'i kullanabilir
+    window.location.replace(target); // TAM SAYFA (2026-09-17, v6.270 onam döngüsü dersi): çerez değişti → istemci/ön-yükleme önbelleği de sıfırlansın
   }
 
   return (

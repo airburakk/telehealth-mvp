@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
 import { SystemMessagesMenuItem } from "@/components/SystemMessagesMenuItem";
 import { AuraLogo, AuraMark } from "@/components/AuraLogo";
@@ -112,7 +112,6 @@ function TrialBadge({ daysLeft, endsAtLabel }: { daysLeft: number; endsAtLabel: 
 // çıkış hedefi bu bayrakla Doctorium kapısına döner (kök layout BRAND_MODE'dan geçirir).
 export function Header({ user, lang = "Türkçe", theme = "dark", student = false, stage1 = false, doctoriumDeploy = false, trial = null, audience = null }: { user: { name: string; role: string } | null; lang?: string; theme?: ThemeName; student?: boolean; stage1?: boolean; doctoriumDeploy?: boolean; trial?: { daysLeft: number; endsAtLabel: string } | null; audience?: string | null }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
   // Hesap menüsü (2026-08-01, kullanıcı kararı "A"): isim/rol + Hesabım + çıkış işlemleri
   // açılır menüye taşındı — header tek satır kalır, tema anahtarı EN SAĞA geçer.
@@ -243,10 +242,12 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   // kendi kapısına döner — diğer herkes eski /giris davranışında.
   const logoutTarget = doctoriumDeploy || doctoriumSide ? "/doctorium/giris" : "/giris";
 
+  // Çıkış = TAM SAYFA gezintisi (2026-09-17): çerez silindikten sonra router.push/refresh istemci ve ön-yükleme
+  // önbelleğindeki kapılı sayfa yüklerini (ve Ably gibi bağlantıları) yaşatabiliyordu; v6.270 onam döngüsüyle aynı
+  // sınıf (bkz. app/onam/leave-gate.ts). replace: geçmişte kapılı sayfaya "geri" hedefi bırakmaz.
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push(logoutTarget);
-    router.refresh();
+    window.location.replace(logoutTarget);
   }
 
   // JWT iptali: sessionVersion artar → bu hesabın TÜM cihazlardaki token'ları geçersizleşir.
@@ -260,8 +261,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
       return;
     }
     setConfirmLogoutAll(false);
-    router.push(logoutTarget);
-    router.refresh();
+    window.location.replace(logoutTarget); // tam sayfa — yukarıdaki logout notu
   }
 
   // Aura kiti (2026-07-17, kullanıcı kararı): iç krom V2Nav diline çekildi — cam zemin

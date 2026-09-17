@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { HeartHandshake, Stethoscope, Inbox, Loader2, ArrowRight, Check, BadgeCheck, Lock, ShieldAlert, Award, LayoutGrid, Luggage } from "lucide-react";
 import { DoctorDocuments, type DocMeta, type MmssInitial } from "@/components/DoctorDocuments";
 import ProcedureSelector, { type Proc } from "@/components/ProcedureSelector";
@@ -69,7 +68,6 @@ export function OnboardingForm({
   // anlatımı kaldı). Client bileşeni BRAND_MODE'u göremez → server page prop'la geçirir.
   doctoriumOnly?: boolean;
 }) {
-  const router = useRouter();
   const [freeCare, setFreeCare] = useState(initialFreeCare);
   const [consult, setConsult] = useState(initialConsult);
   // v6.105 — İkinci Görüş + Sağlık Turizmi de tercih oldu (kullanıcı kararı 2026-08-17).
@@ -107,8 +105,7 @@ export function OnboardingForm({
         if (Array.isArray(d.missing)) setMissing(d.missing as string[]);
         throw new Error(d.error || "Kaydedilemedi.");
       }
-      router.push("/doktor");
-      router.refresh();
+      window.location.assign("/doktor"); // tam sayfa (2026-09-17): aktivasyon sonrası /doktor bayat ön-yükleme/RSC girdisiyle açılmasın (v6.270 dersi)
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Hata oluştu.");
       setSaving(false);
