@@ -236,7 +236,8 @@ dormant kalır / fallback'e düşer).
 | `DATABASE_URL` | ✅ | Neon **pooled** connection string |
 | `DIRECT_URL` | ✅ | Neon **direct** connection string (migration; `migrate deploy/resolve` bunu kullanır) |
 | `SESSION_SECRET` | ✅ | JWT imzalama — `openssl rand -base64 32` |
-| `DATA_ENCRYPTION_KEK` | ✅ | At-rest alan şifreleme KEK'i (E2EE Faz 1) — **AKTİF** (2026-06-23 üretimde set + backfill → klinik veri şifreli; **silmek/değiştirmek prod'u bozar**). `openssl rand -base64 32`. **Ortam-başına AYRI değer (Ray B2, 2026-07-16):** yerel `.env` = dev branch + dev KEK'i; üretim KEK'i yalnız Vercel'de (yerelde `PROD_DATA_ENCRYPTION_KEK` adıyla, bilinçli işlemler için). ⚠️ Kayıp = veri kaybı (escrow/yedek). Rotasyon: `scripts/rotate-kek.ts` + runbook (aşağıdaki escrow bloğu) |
+| `DATA_ENCRYPTION_KEK` | ✅ | At-rest alan şifreleme KEK'i (E2EE Faz 1) — **AKTİF** (2026-06-23 üretimde set + backfill → klinik veri şifreli; **silmek/değiştirmek prod'u bozar**). `openssl rand -base64 32`. **Ortam-başına AYRI değer (Ray B2, 2026-07-16):** yerel `.env` = dev branch + dev KEK'i; üretim KEK'i yalnız Vercel'de (yerelde `PROD_DATA_ENCRYPTION_KEK` adıyla, bilinçli işlemler için). ⚠️ Kayıp = veri kaybı (escrow/yedek). Rotasyon: `scripts/rotate-kek.ts` + runbook (aşağıdaki escrow bloğu); insan-okur kopya kaybında break-glass ucu (bir alt satır) |
+| `KEK_ROTATION_SECRET` | ⛅ | **Break-glass KEK rotasyonu** ucunu uyandırır (`/api/admin/kek-rotate` · `/admin` → "Şifreleme anahtarı"; v6.273, 2026-09-18). **NORMALDE TANIMSIZ** (uç 404 = uykuda). İnsan-okur KEK kopyası kaybolunca: uzun rastgele değeri **yalnız telehealth-mvp** projesine yaz (DB ortak; doctorium'da uç 404) + redeploy → /admin'de yeni KEK ile dry-run → escrow → "Uygula" → `DATA_ENCRYPTION_KEK`'i **İKİ projede** yeni değere çevir + redeploy → ikinci tur (artçılar) → bu env'i kaldır + redeploy. Yönetici oturumu tek başına rotasyon yapamaz (ele geçirilmiş oturum veriyi rehin alamasın). Runbook: vault `wiki/yonetisim/sir-envanteri.md` §3.2 |
 | `ANTHROPIC_API_KEY` | ⛅ | Claude (triyaj/SOAP/epikriz/çeviri/vision). Yoksa triyaj kural tabanlıya düşer |
 | `GEMINI_API_KEY` | ⛅ | Gemini Live tercüman. Yoksa canlı tercüme dormant |
 | `CF_TURN_KEY_ID` | ⛅ | WebRTC TURN relay **birincil** — Cloudflare Realtime TURN Key ID (dash.cloudflare.com → Realtime → TURN Keys) |
@@ -318,6 +319,16 @@ dormant kalır / fallback'e düşer).
   + çevrimdışı şifreli kopya). **Rotasyon aracı VAR (2026-07-17):** `scripts/rotate-kek.ts` — içerik
   çözülmeden yalnız DEK sarımı değişir; dry-run varsayılan, prod için `ALLOW_PROD_KEK_ROTATION=1` şart;
   dev tam-tur provası yapıldı. Adım adım runbook: vault `wiki/yonetisim/sir-envanteri.md` §3.1.
+  **Motor ŞEMA-GÜDÜMLÜ (v6.273, 2026-09-18):** `lib/kek-rotation` information_schema'daki tüm metin kolonlarını
+  tarar — eski elle envanter (13 kolon) koddaki ~40 şifreli kolonun çoğunu (Complaint · ConsultationRequest ·
+  Doctor.phone · SystemMessage · StaffApplication · User.patientHealthHistory · Case.healthDeclaration…)
+  KAÇIRIYORDU; o envanterle yapılan rotasyon bu kolonları eski anahtarda bırakırdı. Betik + break-glass ucu
+  aynı motoru kullanır; gerçek dev DB'de entegrasyon testi (`tests/integration/kek-rotation.integration.test.ts`).
+  **Break-glass rotasyon VAR (v6.273):** insan-okur kopya kaybında (Vercel Sensitive geri okunamaz) `/admin` →
+  "Şifreleme anahtarı": `KEK_ROTATION_SECRET` ile kurulur (env tablosu), ADMIN + gövdede gizli değer + onay
+  ifadesi, dry-run varsayılan, `maxDuration 800` (700 sn bütçe; süre dolarsa sayfa sınırında durur, tekrar
+  güvenli), audit `KEK_ROTATION` + alarm; anahtar hiçbir satıra girmez (sha256 önekleri). Sonrası aynı
+  runbook: env İKİ projede → redeploy → ikinci tur → eski KEK arşiv.
   **Kurtarma/teşhis aracı VAR (2026-08-05, v6.82):** `scripts/find-kek.ts` — "escrow'daki değer
   çalışmıyor, hangi aday bu DB'nin anahtarı?" sorusunu yanıtlar; adayları `.env` +`--file`'dan alıp
   **base64 · hex→base64 · base64url** varyantlarını dener, kanıtı `rewrapEnvelope` ile üretir

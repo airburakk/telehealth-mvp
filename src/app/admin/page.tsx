@@ -2,11 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import {
-  ArrowRight, BarChart2, BellRing, CalendarDays, Gift, LayoutDashboard, Megaphone,
+  ArrowRight, BarChart2, BellRing, CalendarDays, Gift, KeyRound, LayoutDashboard, Megaphone,
   MousePointerClick, TrendingUp, GraduationCap, ShieldCheck
 } from "lucide-react";
 import { isEmailConfigured, maskEmail } from "@/lib/email";
+import { shortFingerprint } from "@/lib/kek-rotation";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 import { AlarmTestPanel } from "./AlarmTestPanel";
+import { KekRotationPanel } from "./KekRotationPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +101,11 @@ export default async function AdminIndexPage() {
   const alertRecipient = process.env.ALERT_EMAIL ? maskEmail(process.env.ALERT_EMAIL) : null;
   const providerConfigured = isEmailConfigured();
 
+  // Şifreleme anahtarı bloğu (2026-09-18, tatbikat #1 A1) — sır client'a GİTMEZ: yalnız sha256 öneki (escrow
+  // paritesi), ucun kurulu olup olmadığı ve bu dağıtımın AURA olup olmadığı (rotasyon DB ortak → AURA'dan koşar).
+  const kekFingerprint = process.env.DATA_ENCRYPTION_KEK ? shortFingerprint(process.env.DATA_ENCRYPTION_KEK) : null;
+  const kekArmed = !!process.env.KEK_ROTATION_SECRET;
+
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
       <h1 className="aura-display flex items-center gap-2.5 text-2xl font-medium tracking-tight text-[var(--c-ink)]">
@@ -144,6 +152,24 @@ export default async function AdminIndexPage() {
           gerçekten çalıştığını doğrulamak için test alarmı gönderin — aynı test 30 dakikada bir gönderilir.
         </p>
         <AlarmTestPanel recipient={alertRecipient} providerConfigured={providerConfigured} />
+      </section>
+
+      {/* ── Operasyon: şifreleme anahtarı — break-glass rotasyon (2026-09-18, tatbikat #1 A1) ─────────
+          Vercel'deki KEK Sensitive (okunamaz) ve kod anahtarı dışarı vermez; insan-okur kopya kaybolursa
+          tek çıkış sunucu içinde rotasyon: operatör YENİ anahtarı verir, tüm sarımlar ona taşınır
+          (/api/admin/kek-rotate — uyku: KEK_ROTATION_SECRET yokken 404; ADMIN + gövdede aynı gizli değer;
+          dry-run varsayılan; motor şema-güdümlü, envanter yok). Parmak izi satırı her zaman görünür:
+          iki projenin env paritesi ve escrow kaydı buradan bir bakışta karşılaştırılır. */}
+      <section className="mt-8 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-4">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]">
+          <KeyRound size={16} className="text-[var(--c-ink-2)]" /> Şifreleme anahtarı (break-glass rotasyon)
+        </h2>
+        <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">
+          Klinik veri at-rest envelope şifrelidir; anahtar (KEK) yalnız ortam değişkeninde yaşar ve geri okunamaz. İnsan-okur kopya
+          (parola kasası, kanonik .env) kaybolursa buradan yeni bir anahtara rotasyon yapılır: içerik çözülmez, yalnız sarımlar
+          değişir; sonra env iki projede yeni anahtara çevrilir. Uç normalde uykudadır; kurulum adımları aşağıda.
+        </p>
+        <KekRotationPanel available={!IS_DOCTORIUM_DEPLOY} armed={kekArmed} fingerprint={kekFingerprint} />
       </section>
 
       {/* "Denetim görünümleri" bloğu 2026-08-29'da kaldırıldı — dosya başındaki AURA ayıklaması

@@ -47,7 +47,10 @@ export type AuditAction =
   // ── Hukuki set Paket 2 (05/06 numaralı belgeler, 2026-09-09) ─────────────────────────────────
   | "DOCTORIUM_ABANDONED_PURGE" // terk edilmiş hesap: 3 yıl giriş yok + 30 gün bildirim geçti → cron'la silindi (actor null)
   | "KVKK_APPLICATION_SUBMIT" // KVKK m.11 başvurusu platform içi formdan iletildi
-  | "KVKK_APPLICATION_DECIDE"; // KVKK m.11 başvurusu incelemeci tarafından yanıtlandı
+  | "KVKK_APPLICATION_DECIDE" // KVKK m.11 başvurusu incelemeci tarafından yanıtlandı
+  // ── Şifreleme anahtarı (2026-09-18 — tatbikat #1 aksiyon A1, break-glass rotasyon) ────────────
+  | "KEK_ROTATION" // /api/admin/kek-rotate koştu — detail: mode=dry-run|apply · eski/yeni sha256 ÖNEKLERİ · sayaçlar (anahtar ASLA yazılmaz)
+  | "KEK_ROTATION_DENIED"; // ADMIN oturumuyla YANLIŞ ikinci faktör (KEK_ROTATION_SECRET) — uzlaşma sinyali; alarm da gider
 
 interface RecordInput {
   actor: SessionUser | null;
