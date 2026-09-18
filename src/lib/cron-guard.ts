@@ -52,7 +52,7 @@ export const CRON_SCHEDULES: Record<string, string> = {
   "/api/cron/ingest-doaj": "47 2 * * *",             // 05:47 TR — DOAJ (2026-09-05: aynı ayrışma; kaynağın kendisi yavaş, maxDuration 800)
   "/api/cron/generate-ai-summaries": "56 2 * * *",   // 05:56 TR — AI özetinin PROAKTİF üretimi (2026-09-05: tembel üretim daily-digest'i özetsiz besliyordu; tüm ingest'ler bittikten SONRA, Post'tan ÖNCE)
   "/api/cron/registry-sync": "0 3 * * *",            // 06:00 TR — HealthTürkiye dizini (değişmedi)
-  "/api/cron/purge-deleted": "30 3 * * *",           // 06:30 TR — KVKK imha + zincirler + günlük damga + diploma süpürmesi
+  "/api/cron/purge-deleted": "30 3 * * *",           // 06:30 TR — KVKK imha + zincirler + günlük damga + diploma/pasiflik/ret süpürmeleri (v6.272)
   "/api/cron/daily-digest": "30 3 * * *",            // 06:30 TR — Doctorium Post + etkinlik alarmı
   "/api/cron/pending-docs-reminders": "0 7 * * *",   // 10:00 TR — DOCS_PENDING hasta hatırlatması
   "/api/cron/trial-sweep": "20 7 * * *",             // 10:20 TR — Doctorium deneme: hatırlatma 7/3/1 · süre doldu · imha bildirimi (+60 g) · imha (+90 g, fail-closed) — 2026-09-05

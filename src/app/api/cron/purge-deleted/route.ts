@@ -7,10 +7,14 @@ import { cronGate, errText } from "@/lib/cron-guard";
 import { sweepDoctorDocuments, type DocSweepResult } from "@/lib/doc-purge";
 import { sweepAbandonedAccounts, type AbandonedSweepResult } from "@/lib/abandoned-sweep";
 import { purgeOldKvkkApplications } from "@/lib/kvkk-applications";
+import { sweepAuraAbandonedAccounts, type AuraAbandonedSweepResult } from "@/lib/aura-abandoned-sweep";
+import { purgeRejectedStaffApplications, type RejectedPurgeResult } from "@/lib/staff-application";
 
 // GET /api/cron/purge-deleted — İMHA + BÜTÜNLÜK ailesi (v6.11): saklama süresi dolan klinik
 // kayıtları GERÇEKTEN imha eder; iki append-only zinciri (audit + onam) doğrular; audit zincirinin
 // günlük kök damgasını mühürler (v6.200); doktor belge (diploma) süpürmesini koşar (v6.188).
+// v6.272 (kod Paket C, 2026-09-18): AURA hasta/personel pasiflik süpürmesi (A06 madde 3.1b) + kurumsal başvuru ret
+// imhası (A06 madde 3.16) da bu ailede — A06 madde 6 "periyodik imha" listesinin kod karşılığı tamamlandı.
 //
 // v6.205 (2026-09-02): bu rota Temmuz–Ağustos boyunca "GÜNLÜK BAKIM NÖBETİ"ydi — Hobby planının
 // cron kısıtı yüzünden on iş buraya bindirilmişti. Plan Pro; kullanıcı kararıyla ("bölelim") altı
@@ -107,6 +111,25 @@ export async function GET(req: Request) {
       kvkkPurge = { error: errText(e, "KVKK başvuru kütüğü süpürmesi koşamadı") };
     }
 
+    // AURA hasta/personel pasiflik süpürmesi (A06 madde 3.1b — kod Paket C, 2026-09-18): Doctorium süpürmesinin User
+    // dalı; hesap-yalnız (klinik bağsız) hasta/personel hesabı 3 yıl + 30 gün bildirim sonra silinir. Kritik değil:
+    // hata imha akışını düşürmez, raporlanır.
+    let auraSweep: AuraAbandonedSweepResult | { error: string };
+    try {
+      auraSweep = await sweepAuraAbandonedAccounts();
+    } catch (e) {
+      auraSweep = { error: errText(e, "AURA pasiflik süpürmesi koşamadı") };
+    }
+
+    // Kurumsal başvuru ret imhası (A06 madde 3.16 · A10 madde 6 — kod Paket C): REJECTED + 90 gün (itiraz penceresi)
+    // → başvuru, belgeler ve başvuru sahibinin hesabı silinir (klinik bağ / onaylı hesap fail-closed).
+    let staffAppPurge: RejectedPurgeResult | { error: string };
+    try {
+      staffAppPurge = await purgeRejectedStaffApplications();
+    } catch (e) {
+      staffAppPurge = { error: errText(e, "kurumsal başvuru ret imhası koşamadı") };
+    }
+
     // KALICI KOŞU İZİ (2026-07-29): runtime log kısa ömürlü (o dönem Hobby 1 saat, Pro 1 gün) — cron
     // gece koştuğu için sayaçları log'dan gözlemek güvenilmezdi. Sayaçlar audit zincirine yazılır:
     // PHI YOK (yalnız adetler), günde 1 satır. "Cron koştu mu" sorusu kalıcı kayıttan yanıtlanır.
@@ -117,13 +140,19 @@ export async function GET(req: Request) {
       ? `hata: ${abandonedSweep.error}`
       : `bildirim=${abandonedSweep.noticed} imha=${abandonedSweep.purged} basarisiz=${abandonedSweep.failed}`;
     const kvkk = "error" in kvkkPurge ? `hata: ${kvkkPurge.error}` : `imha=${kvkkPurge.purged}`;
+    const aura = "error" in auraSweep
+      ? `hata: ${auraSweep.error}`
+      : `bildirim=${auraSweep.noticed} imha=${auraSweep.purged} atlanan=${auraSweep.skippedTies + auraSweep.skippedPending + auraSweep.skippedLastAdmin} basarisiz=${auraSweep.failed}`;
+    const ret = "error" in staffAppPurge
+      ? `hata: ${staffAppPurge.error}`
+      : `imha=${staffAppPurge.purged} atlanan=${staffAppPurge.skippedTies + staffAppPurge.skippedVerified} basarisiz=${staffAppPurge.failed}`;
     await recordAccess({
       actor: null, // sistem koşusu
       action: "CRON_MAINTENANCE",
       resourceType: "SYSTEM",
       resourceId: "purge-deleted",
       subjectUserId: null,
-      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} (ip/cihaz-purge=${auditMetaPurge.purged}) consent=${consent.count}${consent.ok ? "" : " KIRIK"} · gunluk-damga ${anchor.sealed ? `${anchor.day} (${anchor.entryCount} satir)` : `atlandi: ${anchor.reason}`} · belgeimha ${bel} · terkedilmis-hesap ${terk} · kvkkbasvuru ${kvkk}`,
+      detail: `imha=${r.purgedCases}/${r.purgedSoCases}/${r.purgedUsers} basarisiz=${r.failed} · blob=${r.purgedBlobs} blobHata=${r.failedBlobs} · zincir audit=${audit.count}${audit.ok ? "" : " KIRIK"} (ip/cihaz-purge=${auditMetaPurge.purged}) consent=${consent.count}${consent.ok ? "" : " KIRIK"} · gunluk-damga ${anchor.sealed ? `${anchor.day} (${anchor.entryCount} satir)` : `atlandi: ${anchor.reason}`} · belgeimha ${bel} · terkedilmis-hesap ${terk} · kvkkbasvuru ${kvkk} · aura-pasiflik ${aura} · kurumsal-ret-imha ${ret}`,
     });
 
     return NextResponse.json({
@@ -139,6 +168,8 @@ export async function GET(req: Request) {
       docSweep,
       abandonedSweep,
       kvkkPurge,
+      auraSweep,
+      staffAppPurge,
     });
   } catch (e) {
     // Saklama-imha sözünün bekçisi sessizce düşemez (Ray C): alarm + 500 (Vercel cron log'unda görünür).

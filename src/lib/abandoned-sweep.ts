@@ -60,6 +60,16 @@ export function abandonedPurgeDateFor(lastActivity: Date): Date {
   return new Date(lastActivity.getTime() + ABANDONED_MS);
 }
 
+/**
+ * SAF: bildirim damgası BU pasiflik dönemine mi ait? Bildirimden SONRA giriş yapılmışsa (lastActivity > noticeSentAt)
+ * damga bayattır — aksi hâlde hesap, yeni bir 3 yıllık pasiflik döneminin sonunda BİLDİRİMSİZ imha edilirdi.
+ * (kod Paket C, 2026-09-18 — recordLogin damgayı girişte zaten NULL'lar; bu kontrol ikinci korkuluktur. İki süpürme
+ * de — Doctor ve AURA User dalı — bunu kullanır.)
+ */
+export function isNoticeCurrent(noticeSentAt: Date | null | undefined, lastActivity: Date): boolean {
+  return !!noticeSentAt && noticeSentAt.getTime() > lastActivity.getTime();
+}
+
 export function formatDateTr(d: Date): string {
   return d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
 }
@@ -98,7 +108,7 @@ export async function sweepAbandonedAccounts(now: Date = new Date()): Promise<Ab
       const u = byDoctor.get(d.id);
       if (!u || u.deletedAt) continue;
       const lastActivity = d.lastLoginAt ?? d.createdAt;
-      const action = abandonedActionFor({ lastActivity, alreadyNoticed: !!d.abandonedNoticeSentAt, now });
+      const action = abandonedActionFor({ lastActivity, alreadyNoticed: isNoticeCurrent(d.abandonedNoticeSentAt, lastActivity), now });
 
       if (action === "notice") {
         const purgeDateLabel = formatDateTr(abandonedPurgeDateFor(lastActivity));

@@ -73,9 +73,20 @@ model User {
   /// formu OAuth üyesine geçilemez bir kapı gösterirdi. Dolu = parola değiştirme formu; null =
   /// "parola belirle" yolu. Parola belirlendiğinde/değiştirildiğinde damgalanır.
   passwordSetAt DateTime?
+  /// Pasiflik süpürmesi (A06 madde 3.1b, kod Paket C — 2026-09-18): son LOGIN olayında lib/login-activity.ts
+  /// recordLogin() damgalar (Doctor.lastLoginAt ile aynı tek dokunuş noktası — 4 giriş yolu). null = kolon
+  /// açıldığından beri giriş yok → lib/aura-abandoned-sweep.ts createdAt'i taban alır (migration AccessLog LOGIN
+  /// satırlarından geri doldurdu). DOCTOR rolünde de damgalanır ama o rol AURA süpürmesinin DIŞINDADIR
+  /// (Doctorium süpürmesi + 3.17 elle kapatma).
+  lastLoginAt           DateTime?
+  /// "Hesabınız 30 gün içinde silinecek" bildiriminin gönderildiği an (lib/aura-abandoned-sweep.ts) —
+  /// Doctor.abandonedNoticeSentAt eşleniği. Giriş yapılınca recordLogin NULL'lar: yeni bir pasiflik döneminde
+  /// bildirim yeniden gönderilir (aksi hâlde eski damga 3 yıl sonra bildirimsiz imhaya yol açardı).
+  abandonedNoticeSentAt DateTime?
   createdAt    DateTime @default(now())
 
   @@index([deletedAt]) // imha cron'u: süresi dolan silinmiş hesapları tarar
+  @@index([lastLoginAt]) // aura-abandoned-sweep cron taraması: pasif hesap adayları (kod Paket C, 2026-09-18)
   @@index([doctorId]) // doktor-hedefli bildirim/atama lookup'ları (lib/notify, clinical-duty, SO)
   @@index([partnerId]) // partner-hedefli bildirimler (konsültasyon yanıt/mesaj/video)
 }

@@ -501,6 +501,19 @@ zinciri KIRIK gösterirdi, bu desen onu önler. `lib/kvkk-applications.ts` + `/d
 Üçü de `purge-deleted` cron'una (06:30 TR) entegre. Migration `20260909120000_kvkk_paket2` (yalnız nullable
 kolon + yeni tablo) dev+prod'a uygulandı. 🚀 CANLI `46e4559`.
 
+**v6.272 (2026-09-18) — AURA hukuki set kod Paket C (saklama/haklar; A06 madde 3.1b · 3.16 · 5.1 · 6):** `User.lastLoginAt` +
+`User.abandonedNoticeSentAt` (migration `20260918110000_aura_paket_c` — **migration-ÖNCE**; AccessLog LOGIN zincirinden geri doldurma) —
+`recordLogin` artık User'ı da damgalar ve girişte bildirim damgasını NULL'lar; `lib/aura-abandoned-sweep.ts` **hasta/personel pasiflik
+süpürmesi** (DOCTOR dışı tüm roller; 3 yıl + 30 gün bildirim — Doctorium `abandoned-sweep` ile AYNI saf karar fonksiyonu; TR/EN e-posta
+`lib/aura-abandoned-email.ts`; korkuluklar: klinik bağ [`lib/aura-account-purge.ts countAuraTies` — sahiplik + eylem izi + denetim zinciri
+deny-list] · bekleyen KVKK/kurumsal başvuru · son ADMIN; audit `AURA_ABANDONED_PURGE`) + `isNoticeCurrent` (bildirimden sonra giriş →
+damga bayat; iki süpürmede de — eski damga bildirimsiz imhaya yol açmasın) · **kurumsal başvuru ret imhası** `purgeRejectedStaffApplications`
+(REJECTED + 90 gün → başvuru + belgeler + hesap; audit `STAFF_APPLICATION_PURGE`) · ikisi `purge-deleted` cron'unda (audit detayı `aura-pasiflik` ·
+`kurumsal-ret-imha`) · `deleteAccount`: **KVKK m.11 kütüğüne otomatik SILME kaydı** (ANSWERED, ip yok) + politika↔kod boşluğu kapandı
+(`patientHealthHistory` ve token özetleri de boşaltılır) · `RETENTION_YEARS` etiketi NİHAİ (A06 3.2) · `DeleteAccountPanel` metni A06 5.1 /
+A01 madde 8 ile hizalı ("vaka" → "başvuru"; kütük + yeniden kayıt notu). Testler: `tests/unit/aura-abandoned-sweep.test.ts` (13). DEV'de canlı
+prova: 7 senaryo (bildirim · imha · bayat damga · bekleyen · bağlı · ret 91/89 gün) + giriş damgası + silme kütüğü + cron uçtan uca.
+
 **v6.269 (2026-09-13) — AURA hukuki set kod Paket B (onam mimarisi, ekran = hash):** `CONSENT_VERSION` 3→4 — hasta `/onam` kapısı artık A01 aydınlatma + madde 14 açık rıza ve A02 kullanım koşullarının TAM metnini (TR kanonik / `?` EN ikinci kanonik, hash dil başına — S4) gösterir ve iki kapsam yazar (`GENERAL_KVKK` v4 + `AURA_TERMS` v1, `AuraConsentGate`); personel ve Aşama 2 doktoru A09 aydınlatması + yalnız kendi rol maddesini onaylar (`STAFF_KVKK` v1, `StaffConsentGate`, `staffKvkkText` kesiti — hash rol × dil; klinik aktivasyon şartı artık STAFF_KVKK); `AI_TRIAGE`/`AI_INTERPRET` v2 (A04 b/c, sağlayıcı adıyla; TASLAK dönemi kapandı) — tercüme kapısı YALNIZ görüşme dilleri farklıysa + **"Tercümesiz devam et"** (R4; oda `sessionStorage` opt-out ile tercümanı kurmaz); `HEALTH_DECLARATION` v1 (A04-d) — /paket beyan formu rıza kapısının arkasında, sunucu 403 `HEALTH_DECLARATION_CONSENT_REQUIRED`; `STAFF_APPLICATION_KVKK` v2 (A10, form LegalMarkdown); **Hesabım → Rızalarım** (AI/beyan rızalarını geri alma: `<KAPSAM>_REVOKE` ispatlı kayıt, `activeConsent` geri-alma duyarlı — triyaj/beyan uçları bunu denetler); `/onam/kanit` 10 kapsam sekmesi + TR/EN adaylı metin eşleşmesi (`canonicalTextsFor`). Metinler vault `_yayin-kesiti.py` ile `lib/aura-legal/texts/{personel,acik-riza,kurumsal-basvuru}.ts`. Hasta/personel/Aşama 2 doktoru bir kez yeni kapıya düşer (proxy `cv < 4`). Testler: `tests/unit/aura-consent.test.ts` + güncellenen `doctorium-consent.test.ts`.
 
 **v6.260 (2026-09-09) — hukuki belgeler revizyon turu 4 (tam tur kontrol, 👤 "tek pakette"):** deneme üyeliği ve öğrencinin fırsat takibi (Kariyer EDU 7/3/1 hatırlatma) envanter/aydınlatma/saklama belgelerine işlendi; TUS/YÖK verileri için 02 madde 4.8 ("tercih tavsiyesi değildir"), 04 A.2.7; AI kapsamı çeviri + içerik özeti; 02 madde 2 "doğrulanmış doktor" (terim kuralı, `doctorium-legal.test` artık "hekim"/"§" bekçisi); 05 madde 3.4 "öğrenci doğrulama kaydı silinir" — kod karşılığı `clearStudentRecordOnTransition` (diploma doğrulanınca öğrenci alanları temizlenir). Belge sürümü **1.4 · 9 Eylül 2026**, `DOCTORIUM_CONSENT_VERSION` 3→4 (mevcut Doctorium üyeleri bir kez yeniden onaylar). Rapor: vault `output/doctorium-hukuki-tam-tur-kontrol-2026-09-09.md`.
@@ -721,8 +734,10 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
 - **Hesap ve veri silme (v6.11) — `lib/account-deletion.ts`:** ⚖️ **"hepsini sil" YAPILMADI, bilinçli:**
   sağlık kaydı yasal saklamaya tabidir (KVKK m.7 → m.5/m.6) → düz bir silme düğmesi hukuka aykırı olurdu.
   **İki katman:** kişisel veri gerçekten silinir (+ parola çöpe, `sessionVersion++` → giriş imkânsız);
-  klinik kayıt **HERKESE kapanır** (`deletionLockedAt`) ve `RETENTION_YEARS` (**20**, tek sabit) sonunda
-  `cron/purge-deleted` **fiziken imha eder**. `ConsentRecord` (dayanağın ispatı) + `AuditLog` (hash-zinciri;
+  klinik kayıt **HERKESE kapanır** (`deletionLockedAt`) ve `RETENTION_YEARS` (**20**, tek sabit — v6.272: A06 madde 3.2 ile
+  NİHAİ) sonunda `cron/purge-deleted` **fiziken imha eder**. **v6.272:** silme KVKK m.11 kütüğüne otomatik işlenir
+  (`KvkkApplication` SILME/ANSWERED, ip yazılmaz); `patientHealthHistory` + tek kullanımlık token özetleri de boşaltılır.
+  `ConsentRecord` (dayanağın ispatı) + `AuditLog` (hash-zinciri;
   satır silmek zinciri kırar) **kasıtlı saklanır**; `User` satırı rıza-ispat bağı için **kabuk** kalır.
   ⚠️ **Kilit rol kontrolünden ÖNCE** (`ownership.ts` en başta `deletionLocked()`): ADMIN/COORDINATOR/ETHICS
   geniş dalları kilidi **delemez** — testle sabit (`tests/unit/ownership`), oraya dokunma.
@@ -1036,8 +1051,8 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   · **"Bakım Yolculuğum"** = hasta-yüzü ad; **rota `/vakalarim` KALDI**, klinik personelde "vaka"
   KALIR. **v6.20:** hasta yüzünde tam rename tamamlandı — SO listesi **"İkinci Görüş Yolculuğum"**
   (köprü "Bakım Yolculuğum"), "Başvuru No"/"Başvurunuz"/"Başvuruyu oluştur" vb.; vitrin TR "başvuru"
-  ailesi (7 dil zaten case/Fall/dossier). Hasta yüzünde "vaka" kalan TEK yer `DeleteAccountPanel`
-  (⚖️ bilinçli — hukukçu turu, vault output/ paketi). `/takip` + `/sikayet` geri linki **rol-duyarlı**
+  ailesi (7 dil zaten case/Fall/dossier). `DeleteAccountPanel` da v6.272'de "başvuru"ya geçti (A06 5.1 hizası) —
+  hasta yüzünde "vaka" KALMADI. `/takip` + `/sikayet` geri linki **rol-duyarlı**
   (hasta → `/vaka/[id]`, personel → `/doktor/vaka/[id]`).
   · **Locale rotaları `/en…/bg` (`app/[lang]`):** ÇALIŞIR ama **bilinçli noindex + sitemap dışı** —
   "/" hâlâ 9-dil-tek-URL kanoniği (v5.9.1). **📌 Kullanıcı kararı (2026-07-16): KAPALI KALIYOR** —

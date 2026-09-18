@@ -33,7 +33,9 @@ export interface NotifyInput {
 // tipi buraya da yaz; aksi hâlde portal zilinde hiç görünmez (fail-closed).
 // TRIAL_* (2026-09-05, üç katman): deneme hatırlatması / süre doldu / imha bildirimi — lib/trial-sweep yazar.
 // EDU_DEADLINE (2026-09-06, Kariyer EDU E2): takip edilen fırsatın son başvurusu 7/3/1 gün kala — lib/edu-reminder yazar.
-// ABANDONED_NOTICE (2026-09-09, Paket 2): terk edilmiş hesap 30 gün içinde silinecek — lib/abandoned-sweep yazar.
+// ABANDONED_NOTICE (2026-09-09, Paket 2): terk edilmiş hesap 30 gün içinde silinecek — lib/abandoned-sweep yazar;
+// AURA hasta/personel pasiflik süpürmesi de (lib/aura-abandoned-sweep, kod Paket C 2026-09-18) AYNI tipi yazar —
+// AURA zilinde tip süzgeci yok, Doctorium zilinde bu liste sayesinde görünür (personel /admin kromunda da okur).
 // KVKK_APPLICATION_ANSWERED (2026-09-09, Paket 2): m.11 başvurusu yanıtlandı — lib/kvkk-applications yazar.
 export const DOCTORIUM_NOTIFICATION_TYPES = ["CONGRESS_ALERT", "DAILY_DIGEST", "TRIAL_REMINDER", "TRIAL_ENDED", "TRIAL_PURGE_NOTICE", "EDU_DEADLINE", "ABANDONED_NOTICE", "KVKK_APPLICATION_ANSWERED"] as const;
 

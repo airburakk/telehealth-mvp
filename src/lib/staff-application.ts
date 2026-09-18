@@ -4,6 +4,8 @@
 // ve bildirimi (notify*) kendisi düşer (ip/userAgent bağlamı rotada).
 import { db } from "@/lib/db";
 import { encryptField, decryptField } from "@/lib/crypto";
+import { recordAccess } from "@/lib/audit";
+import { countAuraTies, hasAuraTies, purgeAuraAccountRows } from "@/lib/aura-account-purge";
 import {
   STAFF_ROLE_CONFIGS,
   type StaffRoleConfig,
@@ -170,4 +172,69 @@ export async function rejectStaffApplication(
     select: { userId: true, role: true },
   });
   return app;
+}
+
+// ── Ret imhası (A06 madde 3.16 · A10 madde 6 — kod Paket C, 2026-09-18) ──────────────────────────
+// REJECTED başvuru, ret bildiriminden (reviewedAt) itibaren 90 gün (itiraz penceresi — Doctorium 11 / doc-purge
+// REJECTED_RETENTION_DAYS ile aynı) bekler; pencere dolunca başvuru + belgeler + başvuru sahibinin hesabı silinir.
+// Pencere içinde düzeltip yeniden gönderen (resubmitStaffApplication → PENDING) bu süpürmeye hiç girmez.
+// Korkuluklar (fail-closed): staffVerifiedAt damgalı hesap (başka yoldan onaylanmış) atlanır · klinik bağı olan hesap
+// atlanır (lib/aura-account-purge) · silinmiş (deletedAt) hesap atlanır. Silme gövdesi purgeAuraAccountRows (User
+// GERÇEKTEN silinir — saklanan klinik kayıt yok, kabuk gerekmez). Audit: STAFF_APPLICATION_PURGE (actor null — cron).
+// Çağıran: api/cron/purge-deleted (06:30 TR).
+export const STAFF_APPLICATION_REJECTED_RETENTION_DAYS = 90;
+const REJECTED_RETENTION_MS = STAFF_APPLICATION_REJECTED_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+
+/** SAF: ret penceresi doldu mu? reviewedAt yoksa (eski/bozuk kayıt) ASLA — fail-closed. */
+export function rejectedApplicationPurgeDue(reviewedAt: Date | null | undefined, now: Date): boolean {
+  return !!reviewedAt && now.getTime() - reviewedAt.getTime() >= REJECTED_RETENTION_MS;
+}
+
+export interface RejectedPurgeResult {
+  checked: number;
+  purged: number;
+  skippedTies: number; // klinik bağ → atlandı (beklenmez; fail-closed)
+  skippedVerified: number; // staffVerifiedAt damgalı → başvuru reddi hesabın reddi değildir; elle bakılır
+  failed: number;
+}
+
+export async function purgeRejectedStaffApplications(now: Date = new Date(), limit = 100): Promise<RejectedPurgeResult> {
+  const r: RejectedPurgeResult = { checked: 0, purged: 0, skippedTies: 0, skippedVerified: 0, failed: 0 };
+  const cutoff = new Date(now.getTime() - REJECTED_RETENTION_MS);
+  const apps = await db.staffApplication.findMany({
+    where: { status: "REJECTED", reviewedAt: { lt: cutoff } },
+    select: { id: true, userId: true, role: true, reviewedAt: true },
+    orderBy: { reviewedAt: "asc" },
+    take: limit,
+  });
+  r.checked = apps.length;
+  for (const app of apps) {
+    try {
+      if (!rejectedApplicationPurgeDue(app.reviewedAt, now)) continue; // sorgu zaten süzdü; saf kural ikinci korkuluk
+      const user = await db.user.findUnique({
+        where: { id: app.userId },
+        select: { id: true, partnerId: true, staffVerifiedAt: true, deletedAt: true },
+      });
+      if (user?.staffVerifiedAt) { r.skippedVerified++; continue; }
+      if (user?.deletedAt) continue; // kabuk — hesap silme yolu zaten işlemiş, kabuğu purgeExpired götürür
+      if (user) {
+        const ties = await countAuraTies(user.id, user.partnerId);
+        if (hasAuraTies(ties)) { r.skippedTies++; continue; }
+      }
+      const c = await db.$transaction((tx) => purgeAuraAccountRows(tx, app.userId, user?.partnerId ?? null, now));
+      await recordAccess({
+        actor: null,
+        action: "STAFF_APPLICATION_PURGE",
+        resourceType: "STAFF_APPLICATION",
+        resourceId: app.id,
+        subjectUserId: app.userId,
+        detail: `rol=${app.role} ret=${app.reviewedAt?.toISOString().slice(0, 10)} pencere=${STAFF_APPLICATION_REJECTED_RETENTION_DAYS} gün; başvuru, ${c.staffDocs} belge ve ${c.users ? "başvuru sahibinin hesabı" : "yetim kayıt"} silindi (onam kaydı bağ-koruyan boşaltıldı ${c.consents})`,
+      });
+      r.purged++;
+    } catch (e) {
+      r.failed++;
+      console.warn("[staff-application] ret imhası işlenemedi:", e instanceof Error ? e.message : e);
+    }
+  }
+  return r;
 }

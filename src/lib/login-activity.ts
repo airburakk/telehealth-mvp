@@ -39,13 +39,22 @@ export async function recordLogin(
     ip,
     userAgent,
   });
-  // Terk edilmiş hesap süpürmesi (05 madde 3.1b, Paket 2) — Doctor.lastLoginAt'in TEK dokunuş
-  // noktası: 4 giriş yolu (parola/google/apple/bağlantı) hepsi buradan geçer. SessionUser doctorId
-  // taşımaz (JWT payload'ını büyütmemek için) → tek ek SELECT; giriş seyrek bir olay, maliyeti önemsiz.
-  // FAIL-SAFE: recordAccess ile aynı ilke, hata giriş akışını bozmaz.
+  // Pasiflik / terk edilmiş hesap süpürmeleri — lastLoginAt'in TEK dokunuş noktası: 4 giriş yolu
+  // (parola/google/apple/bağlantı) hepsi buradan geçer.
+  //   · User.lastLoginAt   (A06 madde 3.1b, kod Paket C 2026-09-18 — lib/aura-abandoned-sweep: hasta + personel)
+  //   · Doctor.lastLoginAt (Doctorium 05 madde 3.1b, Paket 2 — lib/abandoned-sweep: Doctorium üyesi)
+  // İkisinde de abandonedNoticeSentAt NULL'lanır: "30 gün içinde silinecek" bildirimi bu girişle geçersizleşir,
+  // yeni bir pasiflik döneminde bildirim yeniden gönderilir (eski damga bildirimsiz imhaya yol açmasın).
+  // SessionUser doctorId taşımaz (JWT payload'ını büyütmemek için) → User güncellemesi doctorId'yi döndürür,
+  // ek SELECT yok. FAIL-SAFE: recordAccess ile aynı ilke, hata giriş akışını bozmaz.
   try {
-    const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
-    if (me?.doctorId) await db.doctor.update({ where: { id: me.doctorId }, data: { lastLoginAt: new Date() } });
+    const now = new Date();
+    const me = await db.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: now, abandonedNoticeSentAt: null },
+      select: { doctorId: true },
+    });
+    if (me.doctorId) await db.doctor.update({ where: { id: me.doctorId }, data: { lastLoginAt: now, abandonedNoticeSentAt: null } });
   } catch (e) {
     console.warn("[login-activity] lastLoginAt güncellenemedi:", e instanceof Error ? e.message : e);
   }

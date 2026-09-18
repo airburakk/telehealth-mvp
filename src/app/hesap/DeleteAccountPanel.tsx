@@ -12,16 +12,22 @@ import { useT } from "@/components/useT";
 // Silme sonrası "keşke indirseydim" durumu geri alınamaz.
 //
 // Onay: serbest metne "SİL" yazma (tek tıkla kaza engeli). API de aynı onayı ister (istemciye güvenilmez).
+//
+// v6.272 (kod Paket C, 2026-09-18): metin A06 Saklama ve İmha Politikası madde 5.1 + A01 Aydınlatma madde 8 ile
+// hizalandı — hasta yüzü terimi "başvuru" ("vaka" bu ekrandan da kalktı), sağlık geçmişi özeti, KVKK kütüğüne
+// otomatik kayıt, aynı e-postayla yeniden kayıt. TR kaynak metin; diğer diller useT ile çalışma anında.
 const TEXTS = [
   "Hesabımı ve verilerimi sil",
   "Bu işlem geri alınamaz. Ne olacağını açıkça yazıyoruz.",
   "Gerçekten silinir",
-  "E-posta adresiniz, adınız, telefonunuz ve profil tercihleriniz; bildirimleriniz. Oluşturduğunuz tüm paylaşım linkleri iptal edilir. Tüm cihazlardaki oturumlarınız kapanır ve bir daha giriş yapamazsınız.",
+  "E-posta adresiniz, adınız, telefonunuz, profil tercihleriniz ve sağlık geçmişi özetiniz; bildirimleriniz. Oluşturduğunuz tüm paylaşım bağlantıları iptal edilir. Tüm cihazlardaki oturumlarınız kapanır ve bir daha giriş yapamazsınız.",
   "Hemen silinmez — yasal saklama",
-  "Sağlık kayıtlarınız (vakalarınız, raporlarınız, görüşme notlarınız) yasal saklama süresi boyunca tutulmak zorundadır. Ancak bu kayıtlar erişime kapanır — doktorlar, koordinatörler ve yöneticiler dahil hiç kimse açamaz. Süre dolduğunda otomatik olarak imha edilir.",
+  "Sağlık kayıtlarınız (başvurularınız, belgeleriniz, görüşme notlarınız, ikinci görüş ve takip kayıtlarınız) yasal saklama süresi boyunca tutulmak zorundadır. Ancak bu kayıtlar erişime kapanır — doktorlar, koordinatörler ve yöneticiler dahil hiç kimse açamaz. Süre dolduğunda otomatik olarak imha edilir.",
   "Siz de erişemezsiniz — silmeden önce saklamak istediğiniz belge varsa şimdi indirin.",
   "Bilerek saklanan iki şey",
   "Onay kayıtlarınız: sakladığımız kayıtların hukuki dayanağını ispatlar; saklama süresi sonunda kişisel içeriği (IP, cihaz bilgisi) imha edilir, kayıt anonim doğrulama halkası olarak kalır. Erişim geçmişi: değiştirilemez denetim zinciri — kimlik verisi taşımaz, silinmesi zinciri kırar.",
+  "İki not daha",
+  "Silme talebiniz KVKK başvuru kütüğüne otomatik olarak işlenir (yalnız işlem kaydı; üç yıl saklanır). Aynı e-posta adresiyle daha sonra yeniden kayıt olabilirsiniz; eski kayıtlarınız yeni hesaba bağlanmaz.",
   "Onaylamak için aşağıya SİL yazın",
   "Siliniyor…",
   "Hesabınız silindi. Kişisel verileriniz kaldırıldı; klinik kayıtlarınız erişime kapatıldı.",
@@ -73,14 +79,14 @@ export function DeleteAccountPanel({ lang, retentionYears }: { lang: string; ret
 
       <h3 className="mt-5 text-[13px] font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("Gerçekten silinir")}</h3>
       <p className="mt-1 text-sm leading-relaxed text-[var(--c-ink-2)]">
-        {t("E-posta adresiniz, adınız, telefonunuz ve profil tercihleriniz; bildirimleriniz. Oluşturduğunuz tüm paylaşım linkleri iptal edilir. Tüm cihazlardaki oturumlarınız kapanır ve bir daha giriş yapamazsınız.")}
+        {t("E-posta adresiniz, adınız, telefonunuz, profil tercihleriniz ve sağlık geçmişi özetiniz; bildirimleriniz. Oluşturduğunuz tüm paylaşım bağlantıları iptal edilir. Tüm cihazlardaki oturumlarınız kapanır ve bir daha giriş yapamazsınız.")}
       </p>
 
       <h3 className="mt-5 text-[13px] font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">
         {t("Hemen silinmez — yasal saklama")} ({retentionYears} {t("yıl")})
       </h3>
       <p className="mt-1 text-sm leading-relaxed text-[var(--c-ink-2)]">
-        {t("Sağlık kayıtlarınız (vakalarınız, raporlarınız, görüşme notlarınız) yasal saklama süresi boyunca tutulmak zorundadır. Ancak bu kayıtlar erişime kapanır — doktorlar, koordinatörler ve yöneticiler dahil hiç kimse açamaz. Süre dolduğunda otomatik olarak imha edilir.")}
+        {t("Sağlık kayıtlarınız (başvurularınız, belgeleriniz, görüşme notlarınız, ikinci görüş ve takip kayıtlarınız) yasal saklama süresi boyunca tutulmak zorundadır. Ancak bu kayıtlar erişime kapanır — doktorlar, koordinatörler ve yöneticiler dahil hiç kimse açamaz. Süre dolduğunda otomatik olarak imha edilir.")}
       </p>
       {/* Kritik uyarı — kilit hastayı da kapsar; bunu silmeden ÖNCE bilmeli. Vurgulu. */}
       <p className="mt-2 rounded-lg bg-amber-500/10 px-3 py-2 text-sm font-medium leading-relaxed text-amber-300 ring-1 ring-amber-400/25">
@@ -90,6 +96,11 @@ export function DeleteAccountPanel({ lang, retentionYears }: { lang: string; ret
       <h3 className="mt-5 text-[13px] font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("Bilerek saklanan iki şey")}</h3>
       <p className="mt-1 text-sm leading-relaxed text-[var(--c-ink-2)]">
         {t("Onay kayıtlarınız: sakladığımız kayıtların hukuki dayanağını ispatlar; saklama süresi sonunda kişisel içeriği (IP, cihaz bilgisi) imha edilir, kayıt anonim doğrulama halkası olarak kalır. Erişim geçmişi: değiştirilemez denetim zinciri — kimlik verisi taşımaz, silinmesi zinciri kırar.")}
+      </p>
+
+      <h3 className="mt-5 text-[13px] font-semibold uppercase tracking-wide text-[var(--c-ink-2)]">{t("İki not daha")}</h3>
+      <p className="mt-1 text-sm leading-relaxed text-[var(--c-ink-2)]">
+        {t("Silme talebiniz KVKK başvuru kütüğüne otomatik olarak işlenir (yalnız işlem kaydı; üç yıl saklanır). Aynı e-posta adresiyle daha sonra yeniden kayıt olabilirsiniz; eski kayıtlarınız yeni hesaba bağlanmaz.")}
       </p>
 
       <label className="mt-6 block text-sm font-medium text-[var(--c-ink)]" htmlFor="confirm-delete">

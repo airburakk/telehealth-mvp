@@ -68,7 +68,7 @@ export function StaffFieldInput({
 
 // Kurumsal üyelik başvuru formu (2026-08-12) — PARTNER / AGENCY / HEALTH_PRO ortak motor.
 // Alanları rol-config'ten çizer (DoctorSignupForm dili); submit → POST /api/auth/signup-staff.
-// KVKK başvuru onay kutusu ZORUNLU (metin ⚖️ TASLAK — staff-application-config).
+// KVKK başvuru onay kutusu ZORUNLU (metin A10 Sürüm 1.0 NİHAİ, v2 — staff-application-config; v6.269).
 // Başarıda hesap yetkisiz açılır → /onam (GENEL personel onamı) → /kayit/durum (insan onayı bekler).
 export function StaffSignupForm({ config }: { config: StaffRoleConfig }) {
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});

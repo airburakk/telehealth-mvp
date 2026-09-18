@@ -35,8 +35,10 @@ import { deleteDocument, isBlobRef } from "./storage";
 import type { SessionUser } from "./session";
 
 /**
- * ⚖️ TASLAK PARAMETRE — klinik kayıt yasal saklama süresi (yıl). Kullanıcı kararı 2026-07-15: 20 yıl.
- * Mevzuat değişirse/veri sorumlusu farklı süre belirlerse YALNIZ BU SABİT değişir; akış aynı kalır.
+ * ⚖️ NİHAİ (kod Paket C, 2026-09-18) — klinik kayıt yasal saklama süresi (yıl): 20. Kullanıcı kararı 2026-07-15;
+ * hukuki set Sürüm 1.0 NİHAİ ile yazılı politikaya bağlandı: A06 Saklama ve İmha Politikası madde 3.2 + A01
+ * Aydınlatma madde 8 (👤 S5 12.09.2026; dayanak mevzuat adı R7 — `[SAKLAMA DAYANAĞI]` 👤 açık). Mevzuat değişirse /
+ * veri sorumlusu farklı süre belirlerse YALNIZ BU SABİT değişir (ve A06/A01 sürümü artar); akış aynı kalır.
  * Süre hasta hesabını sildiği andan itibaren işler.
  */
 export const RETENTION_YEARS = 20;
@@ -93,6 +95,17 @@ export async function deleteAccount(actor: SessionUser, ip?: string | null, user
         patientPhone: null,
         patientContactPref: null,
         patientJourney: null,
+        // Sağlık geçmişi özeti (profil hafızası, şifreli JSON) — A06 madde 3.1 "hesap silmede derhâl silinir"
+        // kapsamında; kod Paket C'ye (2026-09-18) kadar burada UNUTULMUŞTU (politika ↔ kod boşluğu kapatıldı).
+        patientHealthHistory: null,
+        // Tek kullanımlık bağlantı özetleri (parola sıfırlama / parolasız giriş) + pasiflik damgaları: kabuk
+        // kimlik/etkinlik verisi taşımasın (A06 madde 3.12; süpürme zaten deletedAt'li satırlara bakmaz).
+        passwordResetTokenHash: null,
+        passwordResetSentAt: null,
+        loginTokenHash: null,
+        loginTokenSentAt: null,
+        lastLoginAt: null,
+        abandonedNoticeSentAt: null,
         emailVerifiedAt: null,
         emailVerifyTokenHash: null,
         emailVerifySentAt: null,
@@ -108,6 +121,20 @@ export async function deleteAccount(actor: SessionUser, ip?: string | null, user
     // 2) KLİNİK KATMAN — kilitle + imha tarihi damgala (SİLME).
     db.case.updateMany({ where: { userId, deletionLockedAt: null }, data: { deletionLockedAt: now, purgeAfter: purge } }),
     db.secondOpinionCase.updateMany({ where: { patientId: userId, deletionLockedAt: null }, data: { deletionLockedAt: now, purgeAfter: purge } }),
+    // KVKK m.11 başvuru kütüğü (A06 madde 5.1 · A07 madde B.2 — kod Paket C, 2026-09-18): Hesabım'dan yapılan silme
+    // kütüğe OTOMATİK işlenir — sonuçlanmış (ANSWERED) kayıt, şablon metin (kişisel veri YOK; ip/cihaz da yazılmaz —
+    // silme talebinin kanıtı zaten aşağıdaki ACCOUNT_DELETE zincir satırıdır). userId cuid'i kabuk gidince anonimdir;
+    // kütük 3 yıl sonra kendi süpürmesiyle gider (purgeOldKvkkApplications).
+    db.kvkkApplication.create({
+      data: {
+        userId,
+        requestType: "SILME",
+        message: "Hesabım sayfasından hesap ve veri silme (KVKK m.7 / GDPR m.17) — otomatik kütük kaydı.",
+        status: "ANSWERED",
+        decision: `Hesap silindi: kişisel katman derhâl silindi; klinik kayıtlar erişime kapatıldı, imha tarihi ${purge.toISOString().slice(0, 10)} (saklama ${RETENTION_YEARS} yıl).`,
+        decidedAt: now,
+      },
+    }),
   ]);
 
   // Paylaşım linkleri: hastanın vakalarına ait TÜM aktif linkler iptal (dışarıdaki alıcılar da erişemesin).

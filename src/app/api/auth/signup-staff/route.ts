@@ -40,7 +40,7 @@ export async function POST(req: Request) {
   if (!EMAIL_RE.test(email)) return NextResponse.json({ error: "Geçerli bir e-posta girin." }, { status: 400 });
   if (password.length < 8) return NextResponse.json({ error: "Parola en az 8 karakter olmalı." }, { status: 400 });
 
-  // Başvuru-KVKK onayı (⚖️ TASLAK metin, config'te): kutu işaretlenmeden başvuru İŞLENMEZ.
+  // Başvuru-KVKK onayı (A10 Sürüm 1.0 NİHAİ — STAFF_APPLICATION_KVKK v2, config'te): kutu işaretlenmeden başvuru İŞLENMEZ.
   if (b.kvkkConsent !== true) {
     return NextResponse.json({ error: "Başvuru için KVKK aydınlatma metnini onaylamanız gerekir." }, { status: 400 });
   }
