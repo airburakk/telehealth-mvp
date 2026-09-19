@@ -6,6 +6,7 @@ import { gateConsentVersion } from "@/lib/doctorium-consent";
 import { createDoctorAccount, studentTitleFor } from "@/lib/doctor-signup";
 import { BRANCH_LABELS } from "@/lib/procedures";
 import { isEmailConfigured, sendEmail } from "@/lib/email";
+import { signupEmailBlocked } from "@/lib/signup-email-gate";
 import { hashVerifyToken } from "@/lib/email-verification";
 import { universitiesFor, domainMatches, type StudentDepartment } from "@/lib/universities";
 import { isAllowedCity } from "@/lib/cities";
@@ -36,6 +37,11 @@ export async function POST(req: Request) {
   // Kötüye kullanım freni: 10/5dk/IP (signup/signup-patient ile aynı desen), doğrulamadan ÖNCE.
   const rl = await rateLimit(`signup-student:${clientIp(req)}`, 10, 5 * 60_000);
   if (!rl.ok) return tooMany(rl.retryAfter);
+
+  // K08 (kontrol raporu 2026-09-17): üretimde e-posta sağlayıcısı yoksa kayıt AÇILMAZ (503 + alarm) — öğrenci doğrulama
+  // bağlantısı da gönderilemezdi, hesap hiç doğrulanamazdı. Dormant kolaylık yalnız geliştirme/testte (lib/signup-email-gate).
+  const blocked = signupEmailBlocked("signup-student");
+  if (blocked) return blocked;
 
   const b = await req.json().catch(() => ({}));
   const name = String(b.name ?? "").trim().slice(0, 120);

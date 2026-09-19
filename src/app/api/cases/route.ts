@@ -8,8 +8,9 @@ import { requireUser, requireStaff } from "@/lib/api-auth";
 import { stampPatientProfile } from "@/lib/patient-journey";
 import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField, decryptField } from "@/lib/crypto";
-import { storeDocument } from "@/lib/storage";
+import { storeDocument, deleteDocument } from "@/lib/storage";
 import { detectDocumentKind, DOC_REJECT_MESSAGE } from "@/lib/document-mime";
+import { requireAiTriage } from "@/lib/ai-gate";
 
 // GET /api/cases — vaka kuyruğu (filtrelenebilir + sayfalı, /denetim getChainAudit deseni)
 export async function GET(req: Request) {
@@ -68,12 +69,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Hasta adı ve şikayet zorunludur." }, { status: 400 });
   }
 
-  const a = await runTriage({
-    symptoms,
-    durationText: body.durationText ? String(body.durationText) : undefined,
-    answers: body.answers ?? undefined,
-    forceBranchKey: body.forceBranchKey ? String(body.forceBranchKey) : undefined,
-  });
+  // ── AI kapısı (kontrol raporu 2026-09-17 K04, P1): rol · hız (kullanıcı+IP) · AKTİF rıza · boyut — `runTriage`'dan
+  // ÖNCE, önizleme ucu (/api/triage/analyze) ile AYNI yardımcı. Eskiden bu uç yalnız requireUser'a bakıyordu; istemcideki
+  // AiConsentGate atlanınca rızasız / sınırsız LLM çağrısı + 201 mümkündü (raporun yerel provası bunu doğruladı).
+  const gate = await requireAiTriage(user, req, body);
+  if (!gate.ok) return gate.response;
+
+  // ── Belge doğrulaması (K07, P2) — HİÇBİR yazımdan ve LLM çağrısından ÖNCE. Eskiden vaka önce yazılıyor, 415 sonra
+  // dönüyordu → hasta hata görürken DB'de vaka kalıyor, tekrar denemede kopya başvuru oluşuyordu.
+  // Yalnız base64 içerikli olanlar saklanır; büyük dosyalar yalnız ad olarak attachments'ta kalır.
+  // DICOM (v6.33): ≤8MB .dcm ASLIYLA (kullanıcı kararı — tıbbi kayıt aslı; şifreli) saklanır; AI
+  // değerlendirme DICOM'u atlar, doktor kokpit görüntüleyicisi /api/cases/[id]/documents/[docId]/dicom'dan açar.
+  type RawDoc = { label?: unknown; mimeType?: unknown; content?: unknown };
+  const documents: RawDoc[] = Array.isArray(body.documents) ? body.documents : [];
+  const validDocs = documents
+    .filter((d) => typeof d.content === "string" && (d.content as string).startsWith("data:"))
+    .slice(0, 12);
+  // İçerik-tipi kapısı (2026-08-03 P0): tip istemci beyanından DEĞİL dosya imzasından tespit edilir.
+  // Tanınmayan dosya SESSİZCE DÜŞÜRÜLMEZ — hasta belgesini yüklediğini sanmasın diye açık hata döner.
+  const kinds = validDocs.map((d) => detectDocumentKind(d.content as string));
+  if (kinds.some((k) => k === null)) {
+    return NextResponse.json({ error: DOC_REJECT_MESSAGE }, { status: 415 });
+  }
+
+  const a = await runTriage(gate.input);
 
   const attachments: string | null = Array.isArray(body.attachments) && body.attachments.length
     ? body.attachments.join(",")
@@ -90,61 +109,57 @@ export async function POST(req: Request) {
   // ACİL İSTİSNASI (kullanıcı kararı): aciliyet 4-5 vaka belge yüzünden BEKLETİLMEZ (klinik risk).
   const docsPending = missingDocs.length > 0 && a.urgency < 4;
 
-  const created = await db.case.create({
-    data: {
-      userId: user.id, // vaka sahibi = oturum kullanıcısı (hasta yalnız kendi vakalarını görür)
-      patientName: encryptField(patientName), // kimlik at-rest şifreli (E2EE inc.2c)
-      country: String(body.country ?? "TR"),
-      language: String(body.language ?? "Türkçe"),
-      symptoms: encryptField(symptoms),
-      durationText: body.durationText ? String(body.durationText) : null,
-      extra: encryptField(body.answers ? JSON.stringify(body.answers) : null), // branş soruları JSON (E2EE Faz 1)
-      attachments,
-      branch: a.branch,
-      urgency: a.urgency,
-      confidence: a.confidence,
-      reasoning: encryptField(a.reasoning), // triyaj gerekçesi (E2EE Faz 1)
-      status: docsPending ? "DOCS_PENDING" : "NEW",
-      pendingDocs: docsPending ? JSON.stringify(missingDocs) : null,
-      // Hasta iletişim (FAZ 8): telefon kimlik verisi → şifreli; tercih (APP|SMS|EMAIL) düz.
-      patientPhone: contact.phone ? encryptField(contact.phone) : null,
-      contactPreference: contact.contactPreference,
-      consultFee: typeof body.consultFee === "number" ? body.consultFee : null,
-      // Sigortayla ödeme yolu kaldırıldı (2026-08-05): INSURED artık kabul edilmez; Case.policyNo
-      // kolonu yalnız tarihsel kayıtlar için şemada durur, yeni vakaya yazılmaz.
-      payStatus: String(body.payStatus) === "PAID" ? "PAID" : "PENDING",
-      payMethod: body.payMethod ? String(body.payMethod) : null,
-      payRef: body.payRef ? String(body.payRef).slice(0, 40) : null,
-    },
-  });
+  // Belge içerikleri object storage'a (varsa) taşınır; yoksa at-rest şifreli inline (E2EE Faz 1). T11.
+  // Yükleme İŞLEMDEN ÖNCE (Blob çağrısı transaction içinde tutulamaz); işlem düşerse nesneler temizlenir (yetim yok).
+  const storedRefs = await Promise.all(validDocs.map((d) => storeDocument(d.content as string, { keyPrefix: "case-doc" })));
 
-  // Triyajda yüklenen içerikli belgeler → CaseDocument (doktor kokpitte AI ile değerlendirir + Türkçeye çevirir).
-  // Yalnız base64 içerikli olanlar saklanır; büyük dosyalar yalnız ad olarak attachments'ta kalır.
-  // DICOM (v6.33): ≤8MB .dcm ASLIYLA (kullanıcı kararı — tıbbi kayıt aslı; şifreli) saklanır; AI
-  // değerlendirme DICOM'u atlar, doktor kokpit görüntüleyicisi /api/cases/[id]/documents/[docId]/dicom'dan açar.
-  type RawDoc = { label?: unknown; mimeType?: unknown; content?: unknown };
-  const documents: RawDoc[] = Array.isArray(body.documents) ? body.documents : [];
-  if (documents.length) {
-    const valid = documents
-      .filter((d) => typeof d.content === "string" && (d.content as string).startsWith("data:"))
-      .slice(0, 12);
-    // İçerik-tipi kapısı (2026-08-03 P0): tip istemci beyanından DEĞİL dosya imzasından tespit edilir.
-    // Tanınmayan dosya SESSİZCE DÜŞÜRÜLMEZ — hasta belgesini yüklediğini sanmasın diye açık hata döner.
-    const kinds = valid.map((d) => detectDocumentKind(d.content as string));
-    if (kinds.some((k) => k === null)) {
-      return NextResponse.json({ error: DOC_REJECT_MESSAGE }, { status: 415 });
-    }
-    const rows = await Promise.all(
-      valid.map(async (d, i) => ({
-        caseId: created.id,
-        label: typeof d.label === "string" ? d.label.slice(0, 200) : "belge",
-        mimeType: kinds[i]!.mime, // TESPİT EDİLEN tip saklanır (istemcinin beyanı kullanılmaz)
-        // Belge içeriği object storage'a (varsa) taşınır; yoksa at-rest şifreli inline (E2EE Faz 1). T11.
-        content: await storeDocument(d.content as string, { keyPrefix: "case-doc" }),
-      })),
-    );
-    if (rows.length) await db.caseDocument.createMany({ data: rows });
-  }
+  // Vaka + belgeler TEK işlem (K07): ikisi de yazılır ya da hiçbiri — yarım başvuru kalmaz. Triyajda yüklenen
+  // içerikli belgeler → CaseDocument (doktor kokpitte AI ile değerlendirir + Türkçeye çevirir).
+  const created = await db
+    .$transaction(async (tx) => {
+      const c = await tx.case.create({
+        data: {
+          userId: user.id, // vaka sahibi = oturum kullanıcısı (hasta yalnız kendi vakalarını görür)
+          patientName: encryptField(patientName), // kimlik at-rest şifreli (E2EE inc.2c)
+          country: String(body.country ?? "TR"),
+          language: String(body.language ?? "Türkçe"),
+          symptoms: encryptField(symptoms),
+          durationText: body.durationText ? String(body.durationText) : null,
+          extra: encryptField(body.answers ? JSON.stringify(body.answers) : null), // branş soruları JSON (E2EE Faz 1)
+          attachments,
+          branch: a.branch,
+          urgency: a.urgency,
+          confidence: a.confidence,
+          reasoning: encryptField(a.reasoning), // triyaj gerekçesi (E2EE Faz 1)
+          status: docsPending ? "DOCS_PENDING" : "NEW",
+          pendingDocs: docsPending ? JSON.stringify(missingDocs) : null,
+          // Hasta iletişim (FAZ 8): telefon kimlik verisi → şifreli; tercih (APP|SMS|EMAIL) düz.
+          patientPhone: contact.phone ? encryptField(contact.phone) : null,
+          contactPreference: contact.contactPreference,
+          consultFee: typeof body.consultFee === "number" ? body.consultFee : null,
+          // Sigortayla ödeme yolu kaldırıldı (2026-08-05): INSURED artık kabul edilmez; Case.policyNo
+          // kolonu yalnız tarihsel kayıtlar için şemada durur, yeni vakaya yazılmaz.
+          payStatus: String(body.payStatus) === "PAID" ? "PAID" : "PENDING",
+          payMethod: body.payMethod ? String(body.payMethod) : null,
+          payRef: body.payRef ? String(body.payRef).slice(0, 40) : null,
+        },
+      });
+      if (validDocs.length) {
+        await tx.caseDocument.createMany({
+          data: validDocs.map((d, i) => ({
+            caseId: c.id,
+            label: typeof d.label === "string" ? d.label.slice(0, 200) : "belge",
+            mimeType: kinds[i]!.mime, // TESPİT EDİLEN tip saklanır (istemcinin beyanı kullanılmaz)
+            content: storedRefs[i],
+          })),
+        });
+      }
+      return c;
+    })
+    .catch(async (e: unknown) => {
+      await Promise.all(storedRefs.map((r) => deleteDocument(r)));
+      throw e;
+    });
 
   if (docsPending) {
     // DOCS_PENDING: doktor bildirimleri GÖNDERİLMEZ (vaka havuzda değil) — hasta belgeleri

@@ -11,6 +11,7 @@ import {
 } from "@/lib/staff-application-config";
 import { createStaffAccount, validateStaffAnswers } from "@/lib/staff-application";
 import { isEmailConfigured } from "@/lib/email";
+import { signupEmailBlocked } from "@/lib/signup-email-gate";
 import { issueVerificationEmail } from "@/lib/email-verification";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 import { reqMeta } from "@/lib/audit";
@@ -27,6 +28,11 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function POST(req: Request) {
   const rl = await rateLimit(`signup-staff:${clientIp(req)}`, 10, 5 * 60_000);
   if (!rl.ok) return tooMany(rl.retryAfter);
+
+  // K08 (kontrol raporu 2026-09-17): üretimde e-posta sağlayıcısı yoksa başvuru AÇILMAZ (503 + alarm); dormant
+  // "doğrulanmış damgala" kolaylığı yalnız geliştirme/testte (lib/signup-email-gate). Hesap yazılmadan ÖNCE.
+  const blocked = signupEmailBlocked("signup-staff");
+  if (blocked) return blocked;
 
   const b = await req.json().catch(() => ({}));
   const role = String(b.role ?? "");

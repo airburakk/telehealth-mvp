@@ -738,6 +738,29 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   (Header'daki "Tüm cihazlardan çıkış") sürümü artırır, dolaşımdaki tüm token'lar düşer;
   `getCurrentUser` her istekte DB karşılaştırması yapar (istek-içi `cache()`'li). Eski (sv'siz)
   token'lar 0 kabul edilir. Proxy bilinçli DB'siz (yaptırım veri katmanında).
+- **Kontrol raporu Paket 1A/1B (v6.276 / v6.277, 2026-09-19/20) — erişim ve AI kapıları TEK KAYNAK:**
+  · **Vaka LİSTE kapsamı** `lib/case-access.ts` (`doctorQueueScope` / `staffQueueScope` / `scopedWhere` / `CASE_LIST_SELECT`) — doktor ana
+    sayfası ve `GET /api/cases` aynı üretici (atanan + KENDİ branşı atanmamış NEW/IN_REVIEW; `deletionLockedAt:null`; doğrulanmamış/
+    aktivasyonsuz/branşsız → boş küme). Yeni liste/sayım sorgusu elle `where` KURMAZ. API DTO `hasFiles`/`lane` (ham `attachments` dönmez).
+  · **Doktor ana sayfası:** kimliksiz/iptal edilmiş oturumda (proxy imzayı geçirir, `getCurrentUser=null`) HİÇBİR sorgu koşmadan `/giris`;
+    profilsiz/onaysız DOCTOR sorgusuz kapı ekranı (personel dalına DÜŞMEZ); sayım/filtre/sıralama/sayfalama iki dalda sunucuda.
+  · **Sayfa-tarafı klinik okuma sırası:** ownership → `staffAccessClosed` (post-op) → `recordAccess(CASE_VIEW, headersMeta())` → decrypt —
+    `/doktor/vaka/[id]` ve `/vaka/[caseId]` JSON ucuyla aynı politikada; audit yazımı fail-safe (alarm + sayfa bozulmaz).
+  · **Görüşme başlatma** `POST /api/cases/[id]/consult`: yetki `canStartConsultation` (YAZMA kapısı — hasta yalnız atanmış doktorla · doktor
+    kendi vakası ya da kendi branş havuzunu üstlenir · koordinatör/admin yalnız atanmış) · aktif görüşme 200 · NEW/IN_REVIEW → IN_CONSULT ·
+    DONE/DOCS_PENDING 409 · post-op kapalı 403 · atomik `updateMany` (yarış 409) · `CONSULT_START` audit.
+  · **AI kapısı** `lib/ai-gate.requireAiTriage` — `triage/analyze` · `cases` POST · `free-care/apply` · `patient/tourism-request` önünde:
+    403 `AI_ROLE_NOT_ALLOWED` (PATIENT|ADMIN dışı) · 429 (20/dk/kullanıcı ORTAK kova + 60/dk/IP) · 403 `AI_CONSENT_REQUIRED` (aktif
+    `AI_TRIAGE` v2, geri-alma duyarlı) · 413 (şikayet >4000 · yanıtlar JSON >4000 · süre >500; kırpma yok). Kapı reddederse LLM çağrılmaz.
+  · **`POST /api/cases` yazım bütünlüğü:** belge imzaları yazımdan/LLM'den ÖNCE doğrulanır (415'te vaka oluşmaz); vaka + belgeler tek
+    `$transaction`; işlem düşerse yüklenen blob'lar silinir. Idempotency anahtarı yok (migration — ayrı karar).
+  · **Kayıt e-posta kapısı** `lib/signup-email-gate.ts`: üretimde (NODE_ENV/VERCEL_ENV production) `RESEND_API_KEY` yoksa `signup*` rotaları
+    hesap yazmadan 503 `EMAIL_PROVIDER_MISSING` + alarm `email-provider-missing`; dormant "doğrulanmış damgala" kolaylığı yalnız
+    geliştirme/test ya da `ALLOW_UNVERIFIED_SIGNUP=1` (prova).
+  · **Post-op durum:** "Stabil" yalnız GÜNCEL ölçümde (`lib/postop measurementState`, `STALE_AFTER_DAYS=3` — klinik onay bekleyen yer tutucu);
+    hasta takip listesi kapanışı detayla aynı kaynaktan (`recoveryClosed`, `lib/postop-rows`).
+  · ⚠️ **Bilinen kusur K10 (2026-09-20):** geri alınan AI rızası aynı sürümde yeniden verilemiyor (`recordConsent` idempotent; `POST
+    /api/consent/ai` 200 döner ama satır yazmaz) → hasta kalıcı 403; çözüm kararı vault todo'da (onam kaydı delil zinciri).
 - **Rate-limit (v4.18):** Upstash Redis birincil (dağıtık/atomik; login 10/5dk/IP · paylaşım-şifre
   10/5dk/IP+link · AI 20/dk/kullanıcı), env yoksa/hatada in-memory yedek (fail-open). Env:
   `UPSTASH_REDIS_REST_URL/TOKEN`.

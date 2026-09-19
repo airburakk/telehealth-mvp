@@ -11,6 +11,7 @@ import { createHash } from "crypto";
 import { recordAccess, reqMeta } from "@/lib/audit";
 import { consentLangFor } from "@/lib/consent-lang";
 import { FREE_CARE_ON_BEHALF_DECLARATION, FREE_CARE_ON_BEHALF_VERSION, onBehalfError, parseForWhom } from "@/lib/free-care-declaration";
+import { requireAiTriage } from "@/lib/ai-gate";
 
 // POST /api/free-care/apply — hasta ön-triyaj → ÜCRETSİZ ücretsiz sağlık hizmeti vaka (ödeme kapısı YOK) → anında eşleşme dener.
 export async function POST(req: Request) {
@@ -27,14 +28,16 @@ export async function POST(req: Request) {
   const behalfErr = onBehalfError(forWhom, body.onBehalfDeclared === true);
   if (behalfErr) return NextResponse.json({ error: behalfErr }, { status: 400 });
 
+  // AI kapısı (kontrol raporu 2026-09-17 K04): rol · hız · AKTİF rıza · boyut — `body.consent` yalnız istemci onayıdır,
+  // sunucu rızası `activeConsent(AI_TRIAGE)` ile burada doğrulanır (cases/analyze/tourism ile aynı yardımcı).
+  const gate = await requireAiTriage(user, req, body);
+  if (!gate.ok) return gate.response;
+
   const patientName = String(body.patientName ?? "").trim() || user.name;
   const contact = parseContactFields(body); // FAZ 8 — telefon + iletişim tercihi
 
   // Branş/aciliyet için triyaj (eşleştirme + doktor bağlamı); ücret/belge kapısı yok.
-  const a = await runTriage({
-    symptoms,
-    durationText: body.durationText ? String(body.durationText) : undefined,
-  });
+  const a = await runTriage({ symptoms: gate.input.symptoms, durationText: gate.input.durationText });
 
   const created = await db.case.create({
     data: {

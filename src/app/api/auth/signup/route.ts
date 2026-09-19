@@ -7,6 +7,7 @@ import { BRANCH_LABELS } from "@/lib/procedures";
 import { LANGUAGES } from "@/lib/constants";
 import { isAllowedCity } from "@/lib/cities";
 import { isEmailConfigured } from "@/lib/email";
+import { signupEmailBlocked } from "@/lib/signup-email-gate";
 import { issueVerificationEmail } from "@/lib/email-verification";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 
@@ -22,6 +23,11 @@ export async function POST(req: Request) {
   // en pahalı uç (harici registry sorgusu + doğrulama e-postası) hiç tetiklenmesin.
   const rl = await rateLimit(`signup-doctor:${clientIp(req)}`, 10, 5 * 60_000);
   if (!rl.ok) return tooMany(rl.retryAfter);
+
+  // K08 (kontrol raporu 2026-09-17): üretimde e-posta sağlayıcısı yoksa kayıt AÇILMAZ (503 + alarm) — aşağıdaki dormant
+  // "doğrulanmış damgala" kolaylığı yalnız geliştirme/testte yaşar (lib/signup-email-gate). Hesap yazılmadan ÖNCE.
+  const blocked = signupEmailBlocked("signup");
+  if (blocked) return blocked;
 
   const b = await req.json().catch(() => ({}));
   const name = String(b.name ?? "").trim().slice(0, 120);

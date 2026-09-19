@@ -6,6 +6,7 @@ import { roleHome } from "@/lib/session";
 import { createPatientAccount } from "@/lib/patient-signup";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 import { isEmailConfigured } from "@/lib/email";
+import { signupEmailBlocked } from "@/lib/signup-email-gate";
 import { issueVerificationEmail } from "@/lib/email-verification";
 import { isAdultPatient, isValidBirthDate, UNDERAGE_MESSAGE } from "@/lib/patient-age";
 
@@ -30,6 +31,11 @@ export async function POST(req: Request) {
   if (password.length < 8) return NextResponse.json({ error: "Parola en az 8 karakter olmalı." }, { status: 400 });
   if (!isValidBirthDate(birthDate)) return NextResponse.json({ error: "Doğum tarihinizi girin." }, { status: 400 });
   if (!isAdultPatient(birthDate)) return NextResponse.json({ error: UNDERAGE_MESSAGE.tr, code: "UNDERAGE" }, { status: 400 });
+
+  // K08 (kontrol raporu 2026-09-17): üretimde e-posta sağlayıcısı yoksa kayıt AÇILMAZ (503 + alarm) — aşağıdaki dormant
+  // "doğrulanmış damgala" kolaylığı yalnız geliştirme/testte yaşar (lib/signup-email-gate). Hesap yazılmadan ÖNCE.
+  const blocked = signupEmailBlocked("signup-patient");
+  if (blocked) return blocked;
 
   const existing = await db.user.findUnique({ where: { email }, select: { id: true } });
   if (existing) return NextResponse.json({ error: "Bu e-posta zaten kayıtlı. Giriş yapın." }, { status: 409 });

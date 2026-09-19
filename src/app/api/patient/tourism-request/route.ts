@@ -10,6 +10,7 @@ import { PATIENT_BRANCHES } from "@/lib/triage";
 import { TOURISM_DISCLAIMER_VERSION, tourismDisclaimer } from "@/lib/tourism-disclaimer";
 import { consentLangFor } from "@/lib/consent-lang";
 import { recordAccess, reqMeta } from "@/lib/audit";
+import { requireAiTriage } from "@/lib/ai-gate";
 
 // POST /api/patient/tourism-request — Sağlık Turizmi öz-yeterli intake (2026-07-12 yeniden tasarım).
 // İki adımlı hasta-yüzü: Ön Bilgi (kimlik + iletişim + sağlık durumu) → AI branş → Tedavi Alanı seçimi.
@@ -34,6 +35,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Lütfen sağlık durumunuzu/hedefinizi kısaca yazın." }, { status: 400 });
   }
 
+  // AI kapısı (kontrol raporu 2026-09-17 K04): hız · AKTİF rıza · boyut — cases/analyze/free-care ile aynı yardımcı
+  // (rol denetimi yukarıda zaten var; kapı aynı allowlist'i uygular).
+  const gate = await requireAiTriage(user, req, body);
+  if (!gate.ok) return gate.response;
+
   const patientName = String(body.patientName ?? "").trim() || user.name;
   const contact = parseContactFields(body); // FAZ 8 — telefon + iletişim tercihi
   const country = String(body.country ?? "TR");
@@ -42,7 +48,7 @@ export async function POST(req: Request) {
 
   // Aciliyet/gerekçe LLM'den; branş HASTANIN seçimiyle kilitli (forceBranchKey) → doktor kuyruğu
   // doctor.branch === case.branch TAM eşleşmesi hasta niyetiyle hizalı.
-  const a = await runTriage({ symptoms, forceBranchKey: branchKey });
+  const a = await runTriage({ symptoms: gate.input.symptoms, forceBranchKey: branchKey });
 
   // Lojistik tercih (düz metin) — fiyat/paket/gece hasta-yüzünden kalktı; yalnız ülke + branş.
   const plan = { country, branch: a.branch };
