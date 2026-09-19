@@ -12,6 +12,8 @@ import { useLiveTick } from "@/lib/use-live-tick";
 import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
 import { HeartHandshake, Loader2, ArrowRight } from "lucide-react";
 import { AiConsentGate } from "@/components/AiConsentGate";
+import { consentLangFor } from "@/lib/consent-lang";
+import { FREE_CARE_FOR_WHOM_TEXTS, FREE_CARE_ON_BEHALF_DECLARATION, onBehalfError, type FreeCareForWhom } from "@/lib/free-care-declaration";
 
 // Ücretsiz Sağlık Hizmeti ön-triyaj — kısa, ücret kapısı YOK. Başvuru HER ZAMAN alınır (Faz 4:
 // çevrimiçi-doktor kilidi kalktı): eşleşme varsa görüşme, yoksa bekleme havuzu + bildirim.
@@ -29,6 +31,9 @@ const STATIC_UI = [
   "Ücretsiz Sağlık Hizmeti çevrimiçi", "gönüllü doktor şu an müsait", "Şu an çevrimiçi gönüllü doktor yok",
   "Başvurunuzu şimdi bırakabilirsiniz: sıraya alınır, bir gönüllü doktor müsait olunca size bildirim gönderilir.",
   "Müsaitlik kontrol ediliyor…",
+  // R6 — yakını adına başvuru (kod Paket D, 2026-09-19; A02 madde 3.4): soru + seçenekler + beyan (TR kanonik; EN kanonik ayrı)
+  FREE_CARE_FOR_WHOM_TEXTS.question, FREE_CARE_FOR_WHOM_TEXTS.self, FREE_CARE_FOR_WHOM_TEXTS.relative, FREE_CARE_FOR_WHOM_TEXTS.missing,
+  FREE_CARE_ON_BEHALF_DECLARATION.tr,
 ];
 
 export default function FreeCareApplyPage() {
@@ -43,6 +48,8 @@ export default function FreeCareApplyPage() {
 function FreeCareApplyInner() {
   const router = useRouter();
   const [patientName, setPatientName] = useState("");
+  const [forWhom, setForWhom] = useState<FreeCareForWhom>("self"); // R6: yakını adına başvuruda ad + beyan kutusu zorunlu
+  const [onBehalfDeclared, setOnBehalfDeclared] = useState(false);
   const [country, setCountry] = useState("TR");
   const [phone, setPhone] = useState(""); // FAZ 8 — hasta iletişim
   const [contactPref, setContactPref] = useState<ContactPref>("APP");
@@ -96,12 +103,14 @@ function FreeCareApplyInner() {
   async function submit() {
     setError("");
     if (symptoms.trim().length < 8) return setError("Lütfen şikayetinizi biraz daha ayrıntılı yazın.");
+    const behalfErr = onBehalfError(forWhom, onBehalfDeclared); // sunucu ASIL kapı; burası anlık geri bildirim
+    if (behalfErr) return setError(behalfErr);
     setSubmitting(true);
     try {
       const res = await fetch("/api/free-care/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patientName, country, language: uiLang, symptoms, durationText, consent: true, patientPhone: phone, contactPreference: contactPref }), // dil TEK kaynak: air_lang
+        body: JSON.stringify({ patientName, country, language: uiLang, symptoms, durationText, consent: true, patientPhone: phone, contactPreference: contactPref, forWhom, onBehalfDeclared }), // dil TEK kaynak: air_lang
       });
       if (!res.ok) throw new Error((await res.json()).error || "Hata");
       const d = await res.json();
@@ -117,6 +126,22 @@ function FreeCareApplyInner() {
     <JourneyIntakeShell icon={HeartHandshake} eyebrow={t("Ücretsiz Sağlık Hizmeti")} title={t("Ücretsiz Sağlık Hizmeti Başvurusu")} intro={t("Maddi imkânı kısıtlı hastalar için gönüllü doktorlarla ücretsiz video konsültasyon.")} lang={uiLang} onLangChange={chooseLang} journey="FREE_CARE" stage={0}>
 
       <div className="mt-7 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm space-y-4">
+        {/* R6 — kimin için? (A02 madde 3.4 · A01 madde 12, kod Paket D): yakını adına başvuruda ad alanı + beyan kutusu zorunlu */}
+        <div>
+          <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink)]">{t(FREE_CARE_FOR_WHOM_TEXTS.question)}</span>
+          <div className="grid grid-cols-2 gap-2">
+            {(["self", "relative"] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => { setForWhom(k); if (k === "self") setOnBehalfDeclared(false); }}
+                className={`rounded-lg border px-3 py-2 text-sm transition ${forWhom === k ? "border-[var(--c-accent)] bg-[var(--c-accent)]/15 text-[var(--c-ink)]" : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:border-[var(--c-ink)]/30"}`}
+              >
+                {t(FREE_CARE_FOR_WHOM_TEXTS[k])}
+              </button>
+            ))}
+          </div>
+        </div>
         {showStrip && profile ? (
           // Profil dolu → alanlar yerine kompakt şerit (Faz 1); yakını için başvuru = Değiştir
           <ProfileStrip profile={profile} fields="full" onEdit={() => setEditProfile(true)} t={t} />
@@ -140,6 +165,23 @@ function FreeCareApplyInner() {
             </Field>
             {/* FAZ 8 — telefon + iletişim tercihi (4 senaryonun ortak Ön Bilgi alanı) */}
             <ContactPrefFields phone={phone} onPhone={setPhone} pref={contactPref} onPref={setContactPref} t={t} />
+          </>
+        )}
+        {forWhom === "relative" && (
+          <>
+            {showStrip && profile && (
+              // Şerit kendi adını gösterir; yakını adına başvuruda hastanın (yakının) adı ayrıca alınır
+              <Field label={t("Hasta Adı (veya yakını)")}>
+                <input value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder={t("Örn. Amina B.")} className="inp" autoComplete="off" />
+              </Field>
+            )}
+            {/* Beyan: TR kanonik / EN ikinci kanonik doğrudan; diğer dillerde çalışma-anı çevirisi bilgilendirme amaçlıdır */}
+            <label className="flex items-start gap-2.5 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-3">
+              <input type="checkbox" checked={onBehalfDeclared} onChange={(e) => setOnBehalfDeclared(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--c-accent)]" />
+              <span className="text-xs leading-relaxed text-[var(--c-ink-2)]">
+                {consentLangFor(uiLang) === "en" ? FREE_CARE_ON_BEHALF_DECLARATION.en : t(FREE_CARE_ON_BEHALF_DECLARATION.tr)}
+              </span>
+            </label>
           </>
         )}
         <div>

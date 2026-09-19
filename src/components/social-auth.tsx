@@ -30,8 +30,11 @@ const DORMANT_CLS =
 
 // Tek sağlayıcı düğmesi. Aktifken anchor (tam sayfa 302 — OAuth akışı fetch'le yürümez),
 // dormant'ta devre dışı buton + "Yakında" rozeti.
+/** 18+ kapısı (kod Paket D, 2026-09-19 — S3): hasta kaydında doğum tarihi girilip kapı geçilmeden sosyal düğmeler kapalı. */
+export type SocialAuthGate = { ok: boolean; hint: string };
+
 function ProviderButton({
-  enabled, provider, intent, label, icon, dormantIcon, hint,
+  enabled, provider, intent, label, icon, dormantIcon, hint, gate,
 }: {
   enabled: boolean;
   provider: "google" | "apple";
@@ -40,7 +43,17 @@ function ProviderButton({
   icon: React.ReactNode;
   dormantIcon: React.ReactNode;
   hint: string;
+  gate?: SocialAuthGate;
 }) {
+  // Kapı kapalı: OAuth dönüşü zaten damgasız hesap AÇMAZ (callback ?oauth=age); burası nedenini önceden söyler.
+  if (enabled && gate && !gate.ok) {
+    return (
+      <button type="button" disabled title={gate.hint} className={DORMANT_CLS}>
+        {dormantIcon} {label}{" "}
+        <span className="rounded-full bg-[var(--c-ink)]/10 px-1.5 py-0.5 text-[10px] font-bold uppercase">18+</span>
+      </button>
+    );
+  }
   if (enabled) {
     return (
       <a href={`/api/auth/${provider}/start?intent=${intent}`} className={ACTIVE_CLS}>
@@ -57,22 +70,23 @@ function ProviderButton({
 }
 
 export function SocialAuthButtons({
-  googleEnabled, appleEnabled, intent,
+  googleEnabled, appleEnabled, intent, gate,
 }: {
   googleEnabled: boolean;
   appleEnabled: boolean;
   intent: "patient" | "doctor";
+  gate?: SocialAuthGate;
 }) {
   return (
     <div className="grid grid-cols-1 gap-2">
       <ProviderButton
-        enabled={googleEnabled} provider="google" intent={intent} label="Google ile devam et"
+        enabled={googleEnabled} provider="google" intent={intent} label="Google ile devam et" gate={gate}
         icon={<GoogleIcon />}
         dormantIcon={<span className="opacity-40"><GoogleIcon /></span>} // çok renkli ikon dormant'ta soluklaşır
         hint="Yakında — yapılandırma gerektirir"
       />
       <ProviderButton
-        enabled={appleEnabled} provider="apple" intent={intent} label="Apple ile devam et"
+        enabled={appleEnabled} provider="apple" intent={intent} label="Apple ile devam et" gate={gate}
         icon={<AppleIcon />}
         dormantIcon={<AppleIcon />} // currentColor: metinle birlikte zaten soluk
         hint="Yakında — Apple Developer hesabı gerektirir"

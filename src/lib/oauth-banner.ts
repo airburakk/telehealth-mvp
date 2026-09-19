@@ -21,6 +21,8 @@ export function oauthBannerMessage(
       return `${p} ile ${action} iptal edildi.`;
     case "role": // Ayrışma (2026-08-24): Doctorium deploy'unda hasta hesabı içeri alınmaz
       return `Bu ${p} kimliği bir hasta hesabına bağlı. Doctorium, doktor ve tıp öğrencilerine özel bir çalışma alanıdır — hasta girişi için AURA'yı kullanın.`;
+    case "age": // Kod Paket D (2026-09-19, 👤 S3): OAuth ile YENİ hasta hesabı, 18+ doğum tarihi beyanı olmadan açılmaz
+      return `Hesap açmak için önce doğum tarihinizi girip 18 yaşını doldurduğunuzu doğrulayın; ardından ${p} ile devam edebilirsiniz.`;
     default:
       return "";
   }

@@ -9,6 +9,7 @@ import {
   type StaffField,
   type StaffRoleConfig,
   STAFF_APPLICATION_CONSENT_TEXT,
+  STAFF_AUTOCOMPLETE_BY_KEY,
 } from "@/lib/staff-application-config";
 
 // Tek alan çizimi — başvuru formu (StaffSignupForm) ve /kayit/durum düzeltme formu paylaşır.
@@ -59,6 +60,7 @@ export function StaffFieldInput({
           maxLength={f.maxLen}
           className={INPUT}
           required={f.required}
+          autoComplete={STAFF_AUTOCOMPLETE_BY_KEY[f.key] ?? "off"}
         />
       )}
       {f.hint && <span className="mt-1 block text-[11px] text-[var(--c-ink-3)]">{f.hint}</span>}
@@ -68,6 +70,7 @@ export function StaffFieldInput({
 
 // Kurumsal üyelik başvuru formu (2026-08-12) — PARTNER / AGENCY / HEALTH_PRO ortak motor.
 // Alanları rol-config'ten çizer (DoctorSignupForm dili); submit → POST /api/auth/signup-staff.
+// autocomplete (kod Paket D, 2026-09-19): alan anahtarı → tarayıcı ipucu eşlemesi STAFF_AUTOCOMPLETE_BY_KEY (config'te; test kilitli).
 // KVKK başvuru onay kutusu ZORUNLU (metin A10 Sürüm 1.0 NİHAİ, v2 — staff-application-config; v6.269).
 // Başarıda hesap yetkisiz açılır → /onam (GENEL personel onamı) → /kayit/durum (insan onayı bekler).
 export function StaffSignupForm({ config }: { config: StaffRoleConfig }) {
@@ -138,15 +141,15 @@ export function StaffSignupForm({ config }: { config: StaffRoleConfig }) {
           ))}
 
           <Labeled label="E-posta">
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ornek@kurum.com" className={INPUT} required />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ornek@kurum.com" className={INPUT} required autoComplete="email" />
           </Labeled>
 
           <div className="grid grid-cols-2 gap-3">
             <Labeled label="Parola">
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="en az 8 karakter" className={INPUT} required minLength={8} />
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="en az 8 karakter" className={INPUT} required minLength={8} autoComplete="new-password" />
             </Labeled>
             <Labeled label="Parola (tekrar)">
-              <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} placeholder="••••••••" className={INPUT} required minLength={8} />
+              <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} placeholder="••••••••" className={INPUT} required minLength={8} autoComplete="new-password" />
             </Labeled>
           </div>
 

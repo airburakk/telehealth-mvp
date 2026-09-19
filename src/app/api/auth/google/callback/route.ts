@@ -12,6 +12,7 @@ import { createDoctorAccount } from "@/lib/doctor-signup";
 import { isTrialEnabled } from "@/lib/doctorium-trial-flag";
 import { TRIAL_TITLE } from "@/lib/doctorium-tiers";
 import { createPatientAccount } from "@/lib/patient-signup";
+import { AGE_GATE_COOKIE, verifyAgeGateToken } from "@/lib/age-gate";
 import { reqMeta } from "@/lib/audit";
 import { recordLogin } from "@/lib/login-activity";
 
@@ -54,6 +55,13 @@ export async function GET(req: Request) {
     // Google yalnız ad/e-posta verir; parola girişi devre dışı (rastgele hash).
     const passwordHash = await hashPassword(randomBytes(24).toString("hex"));
     if (intent === "patient") {
+      // 18+ kapısı (kod Paket D, 2026-09-19 — S3): OAuth ile YENİ hasta hesabı yalnız /kayit/hasta'daki doğum tarihi
+      // beyanından sonra (imzalı p_age_gate çerezi, 15 dk — lib/age-gate). Yoksa hesap AÇILMAZ; form ?oauth=age ile
+      // nedenini söyler. Mevcut hesabın girişi etkilenmez (bu dal yalnız user yokken).
+      if (!verifyAgeGateToken(c.get(AGE_GATE_COOKIE)?.value)) {
+        return NextResponse.redirect(new URL("/kayit/hasta?oauth=age&provider=google", origin));
+      }
+      c.delete(AGE_GATE_COOKIE);
       user = await createPatientAccount({ name: info.name, email: info.email, passwordHash });
     } else {
       // Yeni doktor — branş/şehir/dil/telefon profil-tamamla ara sayfasında toplanır (v6.87;

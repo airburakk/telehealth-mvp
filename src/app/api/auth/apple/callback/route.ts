@@ -12,6 +12,7 @@ import { createDoctorAccount } from "@/lib/doctor-signup";
 import { isTrialEnabled } from "@/lib/doctorium-trial-flag";
 import { TRIAL_TITLE } from "@/lib/doctorium-tiers";
 import { createPatientAccount } from "@/lib/patient-signup";
+import { AGE_GATE_COOKIE, verifyAgeGateToken } from "@/lib/age-gate";
 import { reqMeta } from "@/lib/audit";
 import { recordLogin } from "@/lib/login-activity";
 
@@ -85,6 +86,12 @@ export async function POST(req: Request) {
     // ⚠️ Ad YALNIZ ilk yetkilendirmede gelir; şimdi yakalanmazsa bir daha alınamaz.
     const name = appleDisplayName(str(form.get("user")) || null, identity);
     if (intent === "patient") {
+      // 18+ kapısı (kod Paket D, 2026-09-19 — S3): Google dönüşüyle aynı kural; Apple form_post cross-site olduğu için
+      // damga çerezi üretimde sameSite none (lib/age-gate). 303: POST → GET (307 POST'u taşırdı).
+      if (!verifyAgeGateToken(c.get(AGE_GATE_COOKIE)?.value)) {
+        return NextResponse.redirect(new URL("/kayit/hasta?oauth=age&provider=apple", origin), 303);
+      }
+      c.delete(AGE_GATE_COOKIE);
       user = await createPatientAccount({ name, email: identity.email, passwordHash });
     } else {
       // Yeni doktor — branş/şehir/dil/telefon profil-tamamla ara sayfasında toplanır (v6.87;

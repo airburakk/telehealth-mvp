@@ -7,9 +7,15 @@ import { Loader2, UserPlus, HeartPulse, MailCheck } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
 import { SocialAuthButtons } from "@/components/social-auth";
 import { oauthBannerMessage } from "@/lib/oauth-banner";
+import { isAdultPatient, isValidBirthDate, maxPatientBirthDate, MIN_PATIENT_AGE, UNDERAGE_MESSAGE } from "@/lib/patient-age";
 
 // Hasta üyelik formu (/kayit/hasta) — Google + Apple (intent=patient; env yoksa "Yakında") /
 // e-posta kaydı. Başarılı kayıt → /onam (KVKK) → hasta ana akışı.
+// 18+ kapısı (kod Paket D, 2026-09-19 — A01 madde 3.2 / A02 madde 3.1, 👤 S3): doğum tarihi İKİ yolun da önünde; tarih
+// SAKLANMAZ — e-posta kaydında gövdeyle gider (signup-patient yeniden hesaplar), OAuth için /api/auth/age-gate imzalı
+// "geçildi" çerezi yazar ve sosyal düğmeler ancak o zaman açılır (callback damgasız hesap AÇMAZ → ?oauth=age).
+// autocomplete (kod Paket D): parola yöneticisi/tarayıcı alanları anlamsal adıyla tanısın (DoctorSignupForm v6.203 deseni).
+const MAX_BIRTH_DATE = maxPatientBirthDate();
 export function PatientSignupForm({ googleEnabled, appleEnabled }: { googleEnabled: boolean; appleEnabled: boolean }) {
   const sp = useSearchParams();
   const oauthMsg = oauthBannerMessage(sp.get("oauth"), sp.get("provider"), "kayıt");
@@ -21,17 +27,38 @@ export function PatientSignupForm({ googleEnabled, appleEnabled }: { googleEnabl
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [verifySent, setVerifySent] = useState(false); // v5.6: e-posta doğrulama etkinse kayıt oturum açmaz
+  const [birthDate, setBirthDate] = useState(""); // yalnız yaş kapısı — hiçbir yerde saklanmaz
+  const [gateReady, setGateReady] = useState(false); // /api/auth/age-gate damgası yazıldı → sosyal düğmeler açık
+  const [ageError, setAgeError] = useState("");
+
+  // Doğum tarihi değişince: geçerli ve 18+ ise yaş kapısı damgası alınır (OAuth düğmeleri açılır). Tarih yalnız bu
+  // istekte gider; sunucu saklamaz/loglamaz. 18 altı → ret metni, damga yok.
+  async function onBirthDate(v: string) {
+    setBirthDate(v);
+    setGateReady(false);
+    setAgeError("");
+    if (!isValidBirthDate(v)) return;
+    if (!isAdultPatient(v)) { setAgeError(UNDERAGE_MESSAGE.tr); return; }
+    const r = await fetch("/api/auth/age-gate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ birthDate: v }),
+    }).catch(() => null);
+    setGateReady(!!r?.ok);
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!isValidBirthDate(birthDate)) { setError("Doğum tarihinizi girin."); return; }
+    if (!isAdultPatient(birthDate)) { setError(UNDERAGE_MESSAGE.tr); return; }
     if (password !== password2) { setError("Parolalar eşleşmiyor."); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/auth/signup-patient", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, birthDate }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Kayıt başarısız.");
@@ -74,7 +101,20 @@ export function PatientSignupForm({ googleEnabled, appleEnabled }: { googleEnabl
       <div className="rounded-[22px] border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6">
         {oauthMsg && <div className="mb-3 rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-300 ring-1 ring-amber-400/25">{oauthMsg}</div>}
 
-        <SocialAuthButtons googleEnabled={googleEnabled} appleEnabled={appleEnabled} intent="patient" />
+        {/* 18+ kapısı — iki kayıt yolunun da ÖNÜNDE (S3). Tarih saklanmaz; ≥18 → age-gate damgası → sosyal düğmeler açılır. */}
+        <label className="mb-4 block">
+          <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink-2)]">Doğum tarihi</span>
+          <input type="date" value={birthDate} onChange={(e) => void onBirthDate(e.target.value)} max={MAX_BIRTH_DATE} className={INPUT} autoComplete="bday" />
+          <span className="mt-1 block text-[11px] leading-relaxed text-[var(--c-ink-3)]">
+            AURA {MIN_PATIENT_AGE} yaşını doldurmuş kişilere açıktır. Doğum tarihiniz yalnız yaş kontrolü için kullanılır, kaydedilmez.
+          </span>
+          {ageError && <span className="mt-1 block text-xs text-red-300">{ageError}</span>}
+        </label>
+
+        <SocialAuthButtons
+          googleEnabled={googleEnabled} appleEnabled={appleEnabled} intent="patient"
+          gate={{ ok: gateReady, hint: "Önce doğum tarihinizi girin — AURA 18 yaşını doldurmuş kişilere açıktır" }}
+        />
 
         <div className="my-4 flex items-center gap-3 text-xs text-[var(--c-ink-3)]">
           <span className="h-px flex-1 bg-[var(--c-ink)]/10" /> veya e-posta ile <span className="h-px flex-1 bg-[var(--c-ink)]/10" />
@@ -83,20 +123,20 @@ export function PatientSignupForm({ googleEnabled, appleEnabled }: { googleEnabl
         <form onSubmit={submit} className="space-y-3">
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink-2)]">Ad soyad</span>
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ayşe Yılmaz" className={INPUT} required />
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ayşe Yılmaz" className={INPUT} required autoComplete="name" />
           </label>
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink-2)]">E-posta</span>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ayse@example.com" className={INPUT} required />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ayse@example.com" className={INPUT} required autoComplete="email" />
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink-2)]">Parola</span>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="en az 8 karakter" className={INPUT} required minLength={8} />
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="en az 8 karakter" className={INPUT} required minLength={8} autoComplete="new-password" />
             </label>
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium text-[var(--c-ink-2)]">Parola (tekrar)</span>
-              <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} placeholder="••••••••" className={INPUT} required minLength={8} />
+              <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} placeholder="••••••••" className={INPUT} required minLength={8} autoComplete="new-password" />
             </label>
           </div>
 

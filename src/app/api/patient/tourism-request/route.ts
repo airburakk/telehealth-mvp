@@ -7,7 +7,9 @@ import { encryptField } from "@/lib/crypto";
 import { notifyDoctorsByBranch, notifyUser } from "@/lib/notify";
 import { stampPatientProfile } from "@/lib/patient-journey";
 import { PATIENT_BRANCHES } from "@/lib/triage";
-import { TOURISM_DISCLAIMER_TITLE, TOURISM_DISCLAIMER_BODY } from "@/lib/tourism-disclaimer";
+import { TOURISM_DISCLAIMER_VERSION, tourismDisclaimer } from "@/lib/tourism-disclaimer";
+import { consentLangFor } from "@/lib/consent-lang";
+import { recordAccess, reqMeta } from "@/lib/audit";
 
 // POST /api/patient/tourism-request — Sağlık Turizmi öz-yeterli intake (2026-07-12 yeniden tasarım).
 // İki adımlı hasta-yüzü: Ön Bilgi (kimlik + iletişim + sağlık durumu) → AI branş → Tedavi Alanı seçimi.
@@ -71,13 +73,17 @@ export async function POST(req: Request) {
     href: `/doktor/vaka/${created.id}`,
   });
 
-  // AURA-dışı sorumluluk reddi — hasta iletişim tercihi üzerinden (lib/tourism-disclaimer). Fire-safe:
-  // bildirim düşse bile talep oluşturma bozulmaz (hasta onay ekranını yine görür).
-  await notifyUser(user.id, {
-    type: "TOURISM_DISCLAIMER",
-    title: TOURISM_DISCLAIMER_TITLE,
-    body: TOURISM_DISCLAIMER_BODY,
-    href: `/vaka/${created.id}`,
+  // AURA-dışı sorumluluk bildirimi (A08 madde B — R12 B.3, kod Paket D 2026-09-19): hasta dilinde (TR kanonik / EN ikinci
+  // kanonik) bildirim + denetim zincirine "gösterildi/iletildi" kaydı (A08 B.2: kayıt tarih-saatiyle tutulur). Fire-safe:
+  // bildirim/kayıt düşse bile talep oluşturma bozulmaz (hasta onay ekranını yine görür).
+  const profile = await db.user.findUnique({ where: { id: user.id }, select: { patientLanguage: true } });
+  const dLang = consentLangFor(profile?.patientLanguage);
+  const d = tourismDisclaimer(dLang);
+  await notifyUser(user.id, { type: "TOURISM_DISCLAIMER", title: d.title, body: d.body, href: `/vaka/${created.id}` });
+  await recordAccess({
+    actor: user, action: "TOURISM_DISCLAIMER_NOTICE", resourceType: "CASE", resourceId: created.id, subjectUserId: user.id,
+    detail: `sorumluluk bildirimi v${TOURISM_DISCLAIMER_VERSION} dil=${dLang} (onay ekranı + bildirim)`,
+    ...reqMeta(req),
   });
 
   // Nav bileşimi + profil hafızası (Faz 0) — turizm intake'inde dil alanı yok (air_lang UI'da)

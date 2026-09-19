@@ -19,7 +19,8 @@ import { usePatientProfile, ProfileStrip, profileComplete, PROFILE_STRIP_TEXTS }
 import { DictationButton, DICTATION_TEXTS } from "@/components/DictationButton";
 import { COUNTRIES, langDir, LANG_BCP47 } from "@/lib/constants";
 import { PATIENT_BRANCHES } from "@/lib/triage";
-import { TOURISM_DISCLAIMER_TITLE, TOURISM_DISCLAIMER_BODY } from "@/lib/tourism-disclaimer";
+import { TOURISM_DISCLAIMER_TITLE, TOURISM_DISCLAIMER_BODY, tourismDisclaimer } from "@/lib/tourism-disclaimer";
+import { consentLangFor } from "@/lib/consent-lang";
 
 const TEXTS = [
   "Sağlık Turizmi",
@@ -154,8 +155,9 @@ function SaglikTurizmiPlannerInner() {
         <div className="mt-6 flex gap-3 rounded-2xl bg-amber-500/10 p-4 text-sm leading-relaxed text-amber-200 ring-1 ring-amber-400/25">
           <ShieldAlert size={18} className="mt-0.5 shrink-0" />
           <div>
-            <div className="font-semibold">{t(TOURISM_DISCLAIMER_TITLE)}</div>
-            <p className="mt-1.5 text-amber-200/90">{t(TOURISM_DISCLAIMER_BODY)}</p>
+            {/* A08 B.2 (R12, kod Paket D): TR kanonik + EN ikinci kanonik doğrudan; diğer dillerde çalışma-anı çevirisi bilgilendirme amaçlıdır */}
+            <div className="font-semibold">{consentLangFor(lang) === "en" ? tourismDisclaimer("en").title : t(TOURISM_DISCLAIMER_TITLE)}</div>
+            <p className="mt-1.5 text-amber-200/90">{consentLangFor(lang) === "en" ? tourismDisclaimer("en").body : t(TOURISM_DISCLAIMER_BODY)}</p>
           </div>
         </div>
 

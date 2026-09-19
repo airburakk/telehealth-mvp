@@ -60,6 +60,15 @@ export const HEALTH_PRO_PROFESSIONS = [
 
 export const PARTNER_TITLES = ["Dr.", "Uzm. Dr.", "Doç. Dr.", "Prof. Dr."] as const;
 
+// Tarayıcı otomatik doldurma ipuçları (kod Paket D, 2026-09-19 — A10 kod bağlantısı "autocomplete"): parola yöneticisi /
+// tarayıcı alanları anlamsal adıyla tanısın. Belge/tescil numaraları ve serbest seçimler "off". Yeni alan eklerken buraya
+// da yaz — birim testi (paket-d-formlar.test) eksik anahtarı yakalar.
+export const STAFF_AUTOCOMPLETE_BY_KEY: Record<string, string> = {
+  name: "name", contactName: "name", title: "organization-title", phone: "tel", companyName: "organization",
+  institution: "organization", city: "address-level2", country: "country-name", address: "street-address",
+  profession: "off", branch: "off", markets: "off", licenseNo: "off", taxNo: "off", tursabNo: "off", authorityNo: "off",
+};
+
 // ── Rol yapılandırmaları ─────────────────────────────────────────────────────────────────────────
 // ⚖️ Soru/etiket metinleri TASLAK — nihai dil hukukçu (kullanıcı) onayıyla kesinleşir.
 export const STAFF_ROLE_CONFIGS: Record<StaffSignupRole, StaffRoleConfig> = {

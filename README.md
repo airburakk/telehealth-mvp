@@ -508,6 +508,21 @@ zinciri KIRIK gösterirdi, bu desen onu önler. `lib/kvkk-applications.ts` + `/d
 Üçü de `purge-deleted` cron'una (06:30 TR) entegre. Migration `20260909120000_kvkk_paket2` (yalnız nullable
 kolon + yeni tablo) dev+prod'a uygulandı. 🚀 CANLI `46e4559`.
 
+**v6.274 (2026-09-19) — AURA hukuki set kod Paket D (formlar; S3 · R6 · R12; migration YOK):** **18+ kapısı** — `PatientSignupForm` doğum
+tarihi beyanı (saklanmaz, loglanmaz; `lib/patient-age.ts`, `student-age` deseni); e-posta kaydı `signup-patient` gövdede yeniden hesaplar
+(18 altı 400 `UNDERAGE`); **OAuth yolu** `POST /api/auth/age-gate` → imzalı 15 dk `p_age_gate` damgası (`lib/age-gate.ts`, HMAC
+SESSION_SECRET; tarih/yaş TAŞIMAZ; üretimde sameSite none — Apple form_post cross-site) → Google/Apple callback damgasız YENİ hasta hesabı
+AÇMAZ (`/kayit/hasta?oauth=age`); formda sosyal düğmeler tarih girilene dek kapalı (`SocialAuthButtons gate`). Mevcut hesabın girişi etkilenmez.
+**Yakını adına başvuru (A02 madde 3.4):** Ücretsiz Sağlık formunda "Bu başvuru kimin için?" (Kendim / Yakınım) + yakınım → ad alanı + beyan
+kutusu ZORUNLU (`lib/free-care-declaration.ts` TR/EN; `apply` 400 kutusuz); beyan denetim zincirine `FREECARE_ON_BEHALF_DECLARATION`
+(başvuru başına; metin sürümü + sha256). **Turizm sorumluluk bildirimi A08 B.3 (R12):** metin artık VAULT'tan (`_yayin-kesiti.py` →
+`texts/turizm-bildirimi.ts` TR/EN; "cezai" çıktı, kasıt/ağır ihmal saklı); planlayıcı EN kanonik doğrudan, diğer diller çalışma-anı çevirisi;
+`tourism-request` bildirimi hasta dilinde + zincire `TOURISM_DISCLAIMER_NOTICE`. **autocomplete:** hasta + personel formları
+(`STAFF_AUTOCOMPLETE_BY_KEY` config'te, test kilitli). Testler `tests/unit/paket-d-formlar.test.ts` (10). DEV canlı prova: form kapısı
+(kapalı → 18 altı ret → 18+ çerez + açık), `signup-patient` 400/400/200, `free-care/apply` kutusuz 400.
+⚖️ **AURA belge-kod kuralı (Doctorium ile aynı):** kişisel veri işleyen YENİ modül/alan eklerken A01 (aydınlatma) + A06 (saklama) +
+ortak envanter (Doctorium 17 / A17 eki) BİRLİKTE güncellenir; yayımlı metin değişirse `_yayin-kesiti.py` yeniden koşulur ve onam sürümü artar.
+
 **v6.272 (2026-09-18) — AURA hukuki set kod Paket C (saklama/haklar; A06 madde 3.1b · 3.16 · 5.1 · 6):** `User.lastLoginAt` +
 `User.abandonedNoticeSentAt` (migration `20260918110000_aura_paket_c` — **migration-ÖNCE**; AccessLog LOGIN zincirinden geri doldurma) —
 `recordLogin` artık User'ı da damgalar ve girişte bildirim damgasını NULL'lar; `lib/aura-abandoned-sweep.ts` **hasta/personel pasiflik

@@ -58,6 +58,10 @@ function secretKey(): Uint8Array {
   if (!_secret) _secret = resolveSessionSecret();
   return _secret;
 }
+/** Oturum sırrı (bayt) — yalnız SUNUCU modülleri için (lib/age-gate HMAC'i; kod Paket D 2026-09-19). Client'a sızdırma. */
+export function sessionSecretKey(): Uint8Array {
+  return secretKey();
+}
 
 export async function signToken(user: SessionUser): Promise<string> {
   const claims: Record<string, unknown> = { email: user.email, name: user.name, role: user.role, cv: user.cv ?? 0, sv: user.sv ?? 0 };

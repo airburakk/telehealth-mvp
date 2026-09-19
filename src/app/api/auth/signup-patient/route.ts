@@ -7,9 +7,12 @@ import { createPatientAccount } from "@/lib/patient-signup";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 import { isEmailConfigured } from "@/lib/email";
 import { issueVerificationEmail } from "@/lib/email-verification";
+import { isAdultPatient, isValidBirthDate, UNDERAGE_MESSAGE } from "@/lib/patient-age";
 
 // Hasta e-posta kaydı. Hesap oluşturulur (role=PATIENT) → oturum açılır → proxy /onam (KVKK) →
 // hasta ana akışı (roleHome). Doktor kaydının (signup) sadeleştirilmiş karşılığı.
+// 18+ kapısı (kod Paket D, 2026-09-19 — A01 madde 3.2, 👤 S3): doğum tarihi beyanı gövdede gelir, YALNIZ yaş hesabı için
+// okunur — persist EDİLMEZ, loglanmaz; 18 altı 400 (lib/patient-age; Doctorium öğrenci kapısı deseni).
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: Request) {
@@ -20,10 +23,13 @@ export async function POST(req: Request) {
   const name = String(b.name ?? "").trim().slice(0, 120);
   const email = String(b.email ?? "").trim().toLowerCase();
   const password = String(b.password ?? "");
+  const birthDate = String(b.birthDate ?? "").trim(); // yalnız yaş kapısı — persist EDİLMEZ
 
   if (name.length < 2) return NextResponse.json({ error: "Ad soyad girin." }, { status: 400 });
   if (!EMAIL_RE.test(email)) return NextResponse.json({ error: "Geçerli bir e-posta girin." }, { status: 400 });
   if (password.length < 8) return NextResponse.json({ error: "Parola en az 8 karakter olmalı." }, { status: 400 });
+  if (!isValidBirthDate(birthDate)) return NextResponse.json({ error: "Doğum tarihinizi girin." }, { status: 400 });
+  if (!isAdultPatient(birthDate)) return NextResponse.json({ error: UNDERAGE_MESSAGE.tr, code: "UNDERAGE" }, { status: 400 });
 
   const existing = await db.user.findUnique({ where: { email }, select: { id: true } });
   if (existing) return NextResponse.json({ error: "Bu e-posta zaten kayıtlı. Giriş yapın." }, { status: 409 });

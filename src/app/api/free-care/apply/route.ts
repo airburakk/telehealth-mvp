@@ -7,6 +7,10 @@ import { publishLiveNudge } from "@/lib/ably-server";
 import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField } from "@/lib/crypto";
 import { stampPatientProfile } from "@/lib/patient-journey";
+import { createHash } from "crypto";
+import { recordAccess, reqMeta } from "@/lib/audit";
+import { consentLangFor } from "@/lib/consent-lang";
+import { FREE_CARE_ON_BEHALF_DECLARATION, FREE_CARE_ON_BEHALF_VERSION, onBehalfError, parseForWhom } from "@/lib/free-care-declaration";
 
 // POST /api/free-care/apply — hasta ön-triyaj → ÜCRETSİZ ücretsiz sağlık hizmeti vaka (ödeme kapısı YOK) → anında eşleşme dener.
 export async function POST(req: Request) {
@@ -17,6 +21,11 @@ export async function POST(req: Request) {
   const symptoms = String(body.symptoms ?? "").trim();
   if (!symptoms) return NextResponse.json({ error: "Şikayet zorunludur." }, { status: 400 });
   if (body.consent !== true) return NextResponse.json({ error: "Devam için onay gerekli." }, { status: 400 });
+  // R6 — yakını adına başvuru (A02 madde 3.4 · A01 madde 12, kod Paket D 2026-09-19): beyan kutusu işaretlenmeden başvuru
+  // GÖNDERİLEMEZ (istemci de denetler; sunucu ASIL kapı).
+  const forWhom = parseForWhom(body.forWhom);
+  const behalfErr = onBehalfError(forWhom, body.onBehalfDeclared === true);
+  if (behalfErr) return NextResponse.json({ error: behalfErr }, { status: 400 });
 
   const patientName = String(body.patientName ?? "").trim() || user.name;
   const contact = parseContactFields(body); // FAZ 8 — telefon + iletişim tercihi
@@ -47,6 +56,17 @@ export async function POST(req: Request) {
       contactPreference: contact.contactPreference,
     },
   });
+
+  // Beyanın kaydı: denetim zincirine (başvuru başına; metin sürümü + sha256 — hangi metnin onaylandığı ispatlanır).
+  // Onam zincirine DEĞİL: ConsentRecord kullanıcı×kapsam×sürüm tekildir, başvuru başına olmaz. recordAccess fail-safe.
+  if (forWhom === "relative") {
+    const dLang = consentLangFor(String(body.language ?? "") || null);
+    await recordAccess({
+      actor: user, action: "FREECARE_ON_BEHALF_DECLARATION", resourceType: "CASE", resourceId: created.id, subjectUserId: user.id,
+      detail: `yakını adına başvuru beyanı v${FREE_CARE_ON_BEHALF_VERSION} dil=${dLang} sha256=${createHash("sha256").update(FREE_CARE_ON_BEHALF_DECLARATION[dLang]).digest("hex")}`,
+      ...reqMeta(req),
+    });
+  }
 
   // Nav bileşimi + profil hafızası (Faz 0)
   await stampPatientProfile(user.id, user.role, {
