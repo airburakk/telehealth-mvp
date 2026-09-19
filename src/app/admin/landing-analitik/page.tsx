@@ -2,12 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { ArrowLeft, MousePointerClick, Info, Inbox } from "lucide-react";
+import { STUDENT_CLICK_PLACEMENTS, STUDENT_FUNNEL_SINCE, studentFunnel, type StudentFunnel } from "@/lib/doctorium-landing/student-funnel";
+import { ArrowLeft, MousePointerClick, Info, Inbox, GraduationCap } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Landing Analitiği" };
 
 const dayFmt = new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "short", timeZone: "Europe/Istanbul" });
+const sinceFmt = new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "short", year: "numeric", timeZone: "Europe/Istanbul" });
 
 // Doctorium vitrini tıklama/görüntülenme raporu (2026-08-26, todo.md madde 5) — LandingEvent
 // (lib/doctorium-landing/events.ts + api/landing-event/route.ts) v6.149'dan beri DB'de birikiyordu,
@@ -17,11 +19,20 @@ export default async function LandingAnalyticsPage() {
   if (!user) redirect("/");
   if (user.role !== "ADMIN") redirect("/doktor/doctorium");
 
-  const [byName, byPlacement, dayGroups] = await Promise.all([
+  const [byName, byPlacement, dayGroups, funnelRows] = await Promise.all([
     db.landingEvent.groupBy({ by: ["name"], _sum: { count: true }, orderBy: { _sum: { count: "desc" } } }),
     db.landingEvent.groupBy({ by: ["name", "placement"], _sum: { count: true }, orderBy: { _sum: { count: "desc" } }, take: 60 }),
     db.landingEvent.groupBy({ by: ["day"] }),
+    // Öğrenci hunisi (2026-09-19): yalnız ilgili satırlar — Öğrenciler bölümü · öğrenci düğmesi · ziyaret tabanı · hero.
+    db.landingEvent.findMany({
+      where: {
+        day: { gte: STUDENT_FUNNEL_SINCE },
+        OR: [{ placement: "ogrenci" }, { name: "student_click" }, { name: "landing_view" }, { name: "section_view", placement: "hero" }],
+      },
+      select: { name: true, placement: true, day: true, count: true },
+    }),
   ]);
+  const funnel = studentFunnel(funnelRows);
 
   const grandTotal = byName.reduce((s, r) => s + (r._sum.count ?? 0), 0);
   const maxByName = byName[0]?._sum.count ?? 0;
@@ -65,6 +76,8 @@ export default async function LandingAnalyticsPage() {
               {dayFmt.format(days[0])} – {dayFmt.format(days[days.length - 1])} arası, {days.length} gün.
             </p>
           )}
+
+          <StudentFunnelPanel funnel={funnel} />
 
           <h2 className="aura-mono mt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--c-ink-3)]">
             Olay türüne göre toplam
@@ -116,10 +129,63 @@ export default async function LandingAnalyticsPage() {
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: number }) {
+// Öğrenci hunisi (2026-09-19) — 09 Öğrenciler bölümü (v6.262) için gözlem paneli: bölümü görenler → öğrenci düğmesine
+// tıklayanlar. Sayılar lib/doctorium-landing/student-funnel (saf, birim testli); örneklem eşiğinin altında oranlar yorumlanmaz.
+function StudentFunnelPanel({ funnel }: { funnel: StudentFunnel }) {
+  const pct = (r: number | null) => (r === null ? "—" : `%${Math.round(r * 100).toLocaleString("tr-TR")}`);
+  const placements = STUDENT_CLICK_PLACEMENTS.map((k) => `${k} ${(funnel.clicksByPlacement[k] ?? 0).toLocaleString("tr-TR")}`).join(" · ");
+  return (
+    <section className="mt-8" aria-labelledby="ogrenci-hunisi">
+      <h2 id="ogrenci-hunisi" className="aura-mono flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--c-ink-3)]">
+        <GraduationCap size={13} /> Öğrenci hunisi
+      </h2>
+      <p className="mt-1 text-xs text-[var(--c-ink-3)]">
+        Öğrenciler bölümü (v6.262), {sinceFmt.format(funnel.since)} tarihinden beri: bölümü görenler (section_view / ogrenci) ve öğrenci
+        düğmesine tıklayanlar (student_click; yerleşimler ogrenci · final · identity).
+        {funnel.smallSample && " Örneklem küçük; oranlar henüz yorumlanmaz."}
+      </p>
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <MiniStat label="Bölüm görüntülenme" value={funnel.sectionViews} />
+        <MiniStat label="Öğrenci düğmesi tıklaması" value={funnel.clicks} />
+        <MiniStat label="Tıklama / görüntülenme" value={pct(funnel.clickRate)} />
+        <MiniStat label="Hero sonrası bölüme ulaşan" value={pct(funnel.reachShare)} />
+      </div>
+      <p className="mt-2 text-xs text-[var(--c-ink-2)]">
+        Tıklama yerleşimi: {placements} · ziyaret tabanı (landing_view) {funnel.landingViews.toLocaleString("tr-TR")} · hero{" "}
+        {funnel.heroViews.toLocaleString("tr-TR")}
+      </p>
+      {funnel.days.length > 0 && (
+        <div className="mt-3 overflow-hidden rounded-2xl border border-[var(--c-hairline)]">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-[var(--c-surface)] text-[11px] uppercase tracking-wide text-[var(--c-ink-3)]">
+              <tr>
+                <th className="px-3.5 py-2 font-medium">Gün</th>
+                <th className="px-3.5 py-2 text-right font-medium">Ziyaret</th>
+                <th className="px-3.5 py-2 text-right font-medium">Bölüm</th>
+                <th className="px-3.5 py-2 text-right font-medium">Tıklama</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--c-hairline)]">
+              {funnel.days.map((d) => (
+                <tr key={d.day}>
+                  <td className="aura-mono px-3.5 py-2 text-[var(--c-ink-2)]">{dayFmt.format(new Date(`${d.day}T00:00:00Z`))}</td>
+                  <td className="px-3.5 py-2 text-right text-[var(--c-ink-2)]">{d.landingViews.toLocaleString("tr-TR")}</td>
+                  <td className="px-3.5 py-2 text-right font-medium text-[var(--c-ink)]">{d.sectionViews.toLocaleString("tr-TR")}</td>
+                  <td className="px-3.5 py-2 text-right font-medium text-[var(--c-ink)]">{d.clicks.toLocaleString("tr-TR")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-3.5">
-      <div className="text-2xl font-bold text-[var(--c-ink)]">{value.toLocaleString("tr-TR")}</div>
+      <div className="text-2xl font-bold text-[var(--c-ink)]">{typeof value === "number" ? value.toLocaleString("tr-TR") : value}</div>
       <div className="text-xs text-[var(--c-ink-2)]">{label}</div>
     </div>
   );

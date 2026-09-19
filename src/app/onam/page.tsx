@@ -8,6 +8,7 @@ import { AURA_CORE_SCOPES, decideConsentScreen, missingConsentScopes } from "@/l
 import { AURA_TERMS_TEXT, GENERAL_KVKK_TEXT, STAFF_KVKK_SCOPE, STAFF_KVKK_VERSION, staffKvkkText } from "@/lib/aura-consent-texts";
 import { consentLangFor } from "@/lib/consent-lang";
 import { isSafeInternalPath } from "@/lib/safe-path";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 import { AYDINLATMA_MD } from "@/lib/doctorium-legal/texts/aydinlatma";
 import { KOSULLAR_MD } from "@/lib/doctorium-legal/texts/kosullar";
 import { OGRENCI_EKI_MD } from "@/lib/doctorium-legal/texts/ogrenci-eki";
@@ -32,7 +33,7 @@ export const dynamic = "force-dynamic";
 // doğrudan klinik kapı gösterilir. Gösterilen düğümler (LegalMarkdown) sunucuda üretilir; kapılar yalnız sarmalar.
 export default async function ConsentPage({ searchParams }: { searchParams: Promise<{ next?: string; scope?: string }> }) {
   const user = await getCurrentUser();
-  if (!user) redirect("/giris?next=/onam");
+  if (!user) redirect(IS_DOCTORIUM_DEPLOY ? "/doctorium/giris?next=/onam" : "/giris?next=/onam"); // marka-duyarlı kapı (proxy ile aynı)
 
   const { next, scope } = await searchParams;
   // Faz 5: hasta için varsayılan iniş dinamik (vaka merkezi / triyaj); diğer roller marka-duyarlı ana sayfa
@@ -42,7 +43,9 @@ export default async function ConsentPage({ searchParams }: { searchParams: Prom
   const dest = isSafeInternalPath(next) && next !== "/onam" ? next : fallback;
 
   const missing = await missingConsentScopes(user.id, user.role);
-  const wantsClinical = scope === "clinical" && user.role === "DOCTOR";
+  // Doctorium deploy'unda klinik kapı YOKTUR (klinik katman yok; 👤 2026-09-19): ?scope=clinical URL'den AURA metnini çağıramaz;
+  // gerekli set de yalnız Doctorium belgeleridir (requiredConsentScopes deploy ekseni) → burada ekran ya doctorium ya resign olur.
+  const wantsClinical = !IS_DOCTORIUM_DEPLOY && scope === "clinical" && user.role === "DOCTOR";
   // Aşama 1 doktorunun "gerekli set"inde STAFF_KVKK yoktur; klinik istek (onboarding 409 → ?scope=clinical) onu ayrıca
   // ölçer — yoksa klinik kapı, varsa onboarding'e geri.
   const generalOk = wantsClinical

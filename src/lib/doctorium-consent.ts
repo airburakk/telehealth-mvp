@@ -18,6 +18,7 @@
 // göre GEREKLİ kapsam setinin tam olup olmadığına bakar; tamsa CONSENT_VERSION, değilse 0. /onam sayfası DB-taze
 // `missingConsentScopes` ile hangi ekranın gösterileceğine karar verir (decideConsentScreen).
 import { db } from "./db";
+import { IS_DOCTORIUM_DEPLOY } from "./brand";
 import { CONSENT_SCOPE, CONSENT_VERSION } from "./consent-config";
 import { consentedVersion, recordConsent } from "./consent";
 import { AYDINLATMA_MD } from "./doctorium-legal/texts/aydinlatma";
@@ -56,17 +57,38 @@ export interface ConsentStage {
   doctoriumOptOutAt: Date | null;
 }
 
+/** Kapı hangi markanın deploy'unda çalışıyor — BRAND_MODE'dan çözülür (lib/brand); testler parametreyle verir. */
+export type ConsentDeploy = "aura" | "doctorium";
+export const CURRENT_CONSENT_DEPLOY: ConsentDeploy = IS_DOCTORIUM_DEPLOY ? "doctorium" : "aura";
+
 /**
- * Rol + aşamaya göre GEREKLİ onam kapsamları (saf — birim testli, v6.269):
+ * Rol + aşama + DEPLOY'a göre GEREKLİ onam kapsamları (saf — birim testli, v6.269 · deploy ekseni 2026-09-19).
+ *
+ * AURA deploy'u (auraglobalcare.com — varsayılan):
  *  · PATIENT → GENERAL_KVKK + AURA_TERMS
  *  · personel rolleri → STAFF_KVKK (rol kesiti)
  *  · DOCTOR, Doctorium'dan çıkmış (doctoriumOptOutAt) → STAFF_KVKK (yalnız klinik hesap)
  *  · DOCTOR, klinik aktif (activatedAt) → STAFF_KVKK + Doctorium seti (iki yüzeyi de kullanır)
  *  · DOCTOR, Aşama 1 / öğrenci → yalnız Doctorium seti (klinik onam Aşama 2'de, aktivasyon şartı olarak)
  *  · DOCTOR ama doktor profili yok (bozuk hesap) → STAFF_KVKK (fail-safe)
+ *
+ * Doctorium deploy'u (doctorium.tr — BRAND_MODE=doctorium) YALNIZ KENDİ belgelerini sorar (👤 bulgu 2026-09-19: v6.269'un
+ * yeni STAFF_KVKK kapsamı Aşama 2 doktorunu ve personeli doctorium.tr girişinde AURA'nın personel aydınlatmasına düşürüyordu;
+ * Doctorium'da klinik katman YOKTUR, AURA metni orada sorulmaz — CLAUDE.md "Doctorium yüzeyine AURA izi EKLENMEZ"):
+ *  · DOCTOR (her aşama; profili olmayan dahil) → yalnız Doctorium seti — Aşama 2'nin STAFF_KVKK'sı AURA host'unda sorulur
+ *  · DOCTOR, Doctorium'dan çıkmış → boş set (sorulacak Doctorium belgesi kalmadı; AURA metni de sorulmaz)
+ *  · personel rolleri (ADMIN/COORDINATOR… — /admin buraya iner) → boş set; personel aydınlatmasını AURA host'unda onaylar
+ *  · PATIENT → AURA kuralı (Doctorium'da hasta oturumu zaten açılmaz: login/OAuth 403)
+ * Oturum çerezi host başına ayrı (iki projenin SESSION_SECRET'i farklı) → JWT `cv` deploy'un kendi setini yansıtır; eski
+ * cv=0 oturumlar /onam'da "resign" ile kendiliğinden düzelir (set tam → yeniden imza).
  */
-export function requiredConsentScopes(role: string, d: ConsentStage | null): string[] {
+export function requiredConsentScopes(role: string, d: ConsentStage | null, deploy: ConsentDeploy = CURRENT_CONSENT_DEPLOY): string[] {
   if (role === "PATIENT") return [CONSENT_SCOPE, AURA_TERMS_SCOPE];
+  if (deploy === "doctorium") {
+    if (role !== "DOCTOR") return [];
+    if (d?.doctoriumOptOutAt) return [];
+    return [...DOCTORIUM_SCOPES];
+  }
   if (role !== "DOCTOR" || !d) return [STAFF_KVKK_SCOPE];
   if (d.doctoriumOptOutAt) return [STAFF_KVKK_SCOPE];
   if (d.activatedAt) return [STAFF_KVKK_SCOPE, ...DOCTORIUM_SCOPES];
@@ -129,8 +151,8 @@ async function stageFor(userId: string): Promise<ConsentStage | null> {
 }
 
 /** DB-taze: gerekli olup verilmemiş kapsamlar (sırayla). Boş = kapı geçilir. */
-export async function missingConsentScopes(userId: string, role: string): Promise<string[]> {
-  const required = requiredConsentScopes(role, role === "DOCTOR" ? await stageFor(userId) : null);
+export async function missingConsentScopes(userId: string, role: string, deploy: ConsentDeploy = CURRENT_CONSENT_DEPLOY): Promise<string[]> {
+  const required = requiredConsentScopes(role, role === "DOCTOR" ? await stageFor(userId) : null, deploy);
   const out: string[] = [];
   for (const scope of required) {
     if ((await consentedVersion(userId, scope)) < scopeVersion(scope)) out.push(scope);
@@ -157,8 +179,8 @@ export function decideConsentScreen(p: { role: string; missing: string[]; wantsC
  * JWT `cv` değeri — proxy'nin `cv < CONSENT_VERSION → /onam` kuralıyla uyumlu tek sayı:
  * gerekli set tamsa CONSENT_VERSION, eksikse 0. login/OAuth/signup ve /api/consent bunu yazar.
  */
-export async function gateConsentVersion(userId: string, role: string): Promise<number> {
-  return (await missingConsentScopes(userId, role)).length === 0 ? CONSENT_VERSION : 0;
+export async function gateConsentVersion(userId: string, role: string, deploy: ConsentDeploy = CURRENT_CONSENT_DEPLOY): Promise<number> {
+  return (await missingConsentScopes(userId, role, deploy)).length === 0 ? CONSENT_VERSION : 0;
 }
 
 /** Doctorium seti (01 + 02) — iki kayıt, ikisi de idempotent (aynı kullanıcı/kapsam/sürüm bir kez). */

@@ -3,7 +3,7 @@
 //    Aşama 1 doktor ve öğrenci → yalnız Doctorium seti; Aşama 2 doktor → STAFF_KVKK + Doctorium; Doctorium'dan çıkan → STAFF_KVKK)
 //  · canonicalTextFor / canonicalTextsFor: kanıt sayfası her kapsamı kendi kanonik metin(ler)iyle doğrular (ekran = hash)
 //  · diploma beyanı: 6 madde; hash'lenen metin ekrandaki maddelerle aynı kaynaktan
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   requiredConsentScopes, scopeVersion, canonicalTextFor, canonicalTextsFor, decideConsentScreen,
   DOCTORIUM_KVKK_SCOPE, DOCTORIUM_TERMS_SCOPE, DOCTORIUM_DIPLOMA_BEYAN_SCOPE, DOCTORIUM_CONSENT_VERSION, DOCTORIUM_SCOPES,
@@ -108,3 +108,44 @@ describe("öğrenci eki (belge 07 §A) — aydınlatma niteliğinde, kayıt akı
     for (const bad of ["(TASLAK)", "👤", "✅", ".md`"]) expect(OGRENCI_EKI_MD).not.toContain(bad);
   });
 });
+
+describe("Doctorium deploy'unda gerekli set — AURA metni SORULMAZ (👤 bulgu 2026-09-19: v6.269 STAFF_KVKK'sı doctorium.tr girişine düştü)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+  it("DOCTOR her aşamada yalnız Doctorium seti — Aşama 2 klinik aktif olsa da STAFF_KVKK burada yok (AURA host'unda sorulur)", () => {
+    expect(requiredConsentScopes("DOCTOR", stage(), "doctorium")).toEqual([...DOCTORIUM_SCOPES]);
+    expect(requiredConsentScopes("DOCTOR", stage({ activatedAt: new Date() }), "doctorium")).toEqual([...DOCTORIUM_SCOPES]);
+    expect(requiredConsentScopes("DOCTOR", null, "doctorium")).toEqual([...DOCTORIUM_SCOPES]);
+  });
+  it("Doctorium'dan çıkmış doktor → boş set (sorulacak Doctorium belgesi kalmadı; AURA metni de sorulmaz)", () => {
+    expect(requiredConsentScopes("DOCTOR", stage({ activatedAt: new Date(), doctoriumOptOutAt: new Date() }), "doctorium")).toEqual([]);
+  });
+  it("personel rolleri (ADMIN dâhil — /admin Doctorium'a iner) → boş set: personel aydınlatması AURA host'unda alınır", () => {
+    for (const r of STAFF_ROLES) expect(requiredConsentScopes(r, stage(), "doctorium"), r).toEqual([]);
+    expect(requiredConsentScopes("ADMIN", null, "doctorium")).toEqual([]);
+  });
+  it("hasta kuralı deploy'dan bağımsız (Doctorium'da hasta oturumu zaten açılmaz: login/OAuth 403)", () => {
+    expect(requiredConsentScopes("PATIENT", stage(), "doctorium")).toEqual([CONSENT_SCOPE, AURA_TERMS_SCOPE]);
+  });
+  it("AURA deploy'unda (açık parametre) davranış aynen — regresyon nöbeti", () => {
+    expect(requiredConsentScopes("DOCTOR", stage({ activatedAt: new Date() }), "aura")).toEqual([STAFF_KVKK_SCOPE, ...DOCTORIUM_SCOPES]);
+    expect(requiredConsentScopes("ADMIN", null, "aura")).toEqual([STAFF_KVKK_SCOPE]);
+  });
+  it("varsayılan deploy BRAND_MODE'dan çözülür (stubEnv + resetModules + dinamik import — alerts.test deseni)", async () => {
+    vi.resetModules();
+    vi.stubEnv("BRAND_MODE", "doctorium");
+    const doc = await import("@/lib/doctorium-consent");
+    expect(doc.CURRENT_CONSENT_DEPLOY).toBe("doctorium");
+    expect(doc.requiredConsentScopes("ADMIN", null)).toEqual([]);
+    expect(doc.requiredConsentScopes("DOCTOR", stage({ activatedAt: new Date() }))).toEqual([...DOCTORIUM_SCOPES]);
+
+    vi.resetModules();
+    vi.stubEnv("BRAND_MODE", "");
+    const aura = await import("@/lib/doctorium-consent");
+    expect(aura.CURRENT_CONSENT_DEPLOY).toBe("aura");
+    expect(aura.requiredConsentScopes("ADMIN", null)).toEqual([STAFF_KVKK_SCOPE]);
+  });
+});
+

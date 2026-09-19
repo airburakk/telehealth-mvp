@@ -28,8 +28,11 @@ export const LANDING_PLACEMENTS = [
   "header", "hero", "sticky", "final", "identity",
   "nasil", "problem", "manifesto", "kisisellestir", "bugun", "akademik", "regulasyon",
   "hukuk", "kongre", "ogrenci", "kontrol", "guven", "fark", "basla", "demo", "none",
-  // v6.262: "ogrenci" = Öğrenciler bölümü; "kontrol" artık bölüm değil (03'e katlandı) ama birikmiş günlük
-  // satırlar için allowlist'te KALIR; "guven" 2026-09-10'dan itibaren Güven hub'ını (identity) sayar.
+  // v6.262: "ogrenci" = Öğrenciler bölümü. "kontrol" (eski Kontrol sizde → 03'e katlandı) ve "guven" (eski Şeffaflık
+  // bölümü → 10 Güven hub'ına katlandı) artık section_view ÜRETMEZ; 10 Eyl 2026 öncesi günlük satırlar için allowlist'te
+  // tarihsel KALIRLAR. Güven hub'ı "identity" yerleşimi altında sayılır (LandingEventBeacon SECTION_PLACEMENT: identity →
+  // "identity"; nav çapası #guven olsa da haritada "guven" anahtarı yok). 2026-09-19 prod ölçümü doğruladı: identity 9 ·
+  // guven 1 (tarihsel). Eski yorum "guven … Güven hub'ını sayar" diyordu — yanlıştı (vault log 2026-09-19).
 ] as const;
 export type LandingPlacement = (typeof LANDING_PLACEMENTS)[number];
 

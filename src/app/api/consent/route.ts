@@ -5,6 +5,7 @@ import { gateConsentVersion, recordDoctoriumConsent } from "@/lib/doctorium-cons
 import { recordPatientConsent, recordStaffConsent } from "@/lib/aura-consent";
 import { consentLangParam } from "@/lib/consent-lang";
 import { refreshActivation } from "@/lib/doctor-activation";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,8 @@ export const dynamic = "force-dynamic";
 //   · "doctorium"       → Doctorium seti (DOCTORIUM_KVKK + DOCTORIUM_TERMS; yalnız DOCTOR)
 //   · "resign"          → kayıt YAZMAZ; yalnız cv'yi DB'den yeniden hesaplar (eski JWT'yle gelen ama seti tam olan
 //                         kullanıcı /onam'da döngüye girmesin — sayfa bunu tetikler)
+//   · Doctorium deploy'u: YALNIZ "doctorium" + "resign" — AURA kapsamı 400 (marka sınırı, 👤 2026-09-19; Doctorium'da klinik
+//                         katman yok, GENERAL/AURA_TERMS/STAFF_KVKK metinleri AURA host'unda onaylanır)
 // cv her hâlde gateConsentVersion'dan gelir: gerekli set tamsa CONSENT_VERSION, değilse 0 (kapı kapalı).
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -25,6 +28,9 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => ({}));
   const kind = typeof body?.kind === "string" ? body.kind : "general";
+  if (IS_DOCTORIUM_DEPLOY && kind !== "doctorium" && kind !== "resign") {
+    return NextResponse.json({ error: "Bu onam Doctorium'da alınmaz; AURA hesabınızda sorulur." }, { status: 400 });
+  }
   const lang = consentLangParam(body?.lang);
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
   const userAgent = req.headers.get("user-agent")?.slice(0, 400) || null;
