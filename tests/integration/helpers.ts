@@ -16,6 +16,12 @@ export interface Fixture {
   assignedCaseId: string; // patient'a ait, d1'e ATANMIŞ
   unassignedCaseId: string; // patient'a ait, ATANMAMIŞ (kuyruk)
   otherCaseId: string; // otherPatient'a ait
+  // Liste kapsamı (kontrol raporu 2026-09-17 K02 — lib/case-access): d1'in KUYRUĞUNDA GÖRÜNMEMESİ gereken üçlü
+  d2AssignedCaseId: string; // patient'a ait, d2'ye ATANMIŞ (aynı branş — çapraz-doktor)
+  lockedCaseId: string; // patient'a ait, d1'e atanmış ama SİLME-KİLİTLİ (deletionLockedAt)
+  docsPendingCaseId: string; // patient'a ait, atanmamış, DOCS_PENDING (havuza düşmez)
+  unactUserId: string;
+  unactDoctorId: string; // doğrulanmış ama AKTİVASYONSUZ doktor (activatedAt null) — tek değişken izole
   userIds: string[];
   doctorIds: string[];
   caseIds: string[];
@@ -38,20 +44,21 @@ export async function seedFixture(): Promise<Fixture> {
   //   · negatif test ("doğrulanmamış doktor erişemez") İKİ şart birden eksik olduğu için
   //     YANLIŞ SEBEPLE yeşil kalırdı — `verified` kapısını hiç sınamazdı.
   // Kural: yeni bir erişim şartı eklenince negatif testte o şartı DOLU ver, tek değişkeni izole et.
-  const mkDoctor = (tag: string, verified: boolean) =>
+  const mkDoctor = (tag: string, verified: boolean, activatedAt: Date | null = new Date()) =>
     db.doctor.create({
       data: {
         name: `${tag} ${runId}`, title: "Op. Dr.", branch: "Kardiyoloji", city: "İstanbul",
-        languages: "Türkçe", verified, activatedAt: new Date(),
+        languages: "Türkçe", verified, activatedAt,
       },
     });
 
-  const mkCase = (userId: string | null, doctorId: string | null) =>
+  const mkCase = (userId: string | null, doctorId: string | null, extra: Record<string, unknown> = {}) =>
     db.case.create({
       data: {
         userId, doctorId,
         patientName: `Test Hasta ${runId}`, country: "TR", language: "Türkçe",
         symptoms: "test şikâyet", branch: "Kardiyoloji", urgency: 3, reasoning: "test gerekçe",
+        ...extra,
       },
     });
 
@@ -63,10 +70,15 @@ export async function seedFixture(): Promise<Fixture> {
   const d2User = await mkUser("DOCTOR", { doctorId: d2.id });
   const unver = await mkDoctor("DU", false);
   const unverUser = await mkUser("DOCTOR", { doctorId: unver.id });
+  const unact = await mkDoctor("DA", true, null); // verified ama activatedAt null
+  const unactUser = await mkUser("DOCTOR", { doctorId: unact.id });
 
   const assigned = await mkCase(patient.id, d1.id);
   const unassigned = await mkCase(patient.id, null);
   const other = await mkCase(otherPatient.id, null);
+  const d2Assigned = await mkCase(patient.id, d2.id);
+  const locked = await mkCase(patient.id, d1.id, { deletionLockedAt: new Date() });
+  const docsPending = await mkCase(patient.id, null, { status: "DOCS_PENDING" });
 
   return {
     runId,
@@ -75,9 +87,11 @@ export async function seedFixture(): Promise<Fixture> {
     d2UserId: d2User.id, d2DoctorId: d2.id,
     unverUserId: unverUser.id, unverDoctorId: unver.id,
     assignedCaseId: assigned.id, unassignedCaseId: unassigned.id, otherCaseId: other.id,
-    userIds: [patient.id, otherPatient.id, d1User.id, d2User.id, unverUser.id],
-    doctorIds: [d1.id, d2.id, unver.id],
-    caseIds: [assigned.id, unassigned.id, other.id],
+    d2AssignedCaseId: d2Assigned.id, lockedCaseId: locked.id, docsPendingCaseId: docsPending.id,
+    unactUserId: unactUser.id, unactDoctorId: unact.id,
+    userIds: [patient.id, otherPatient.id, d1User.id, d2User.id, unverUser.id, unactUser.id],
+    doctorIds: [d1.id, d2.id, unver.id, unact.id],
+    caseIds: [assigned.id, unassigned.id, other.id, d2Assigned.id, locked.id, docsPending.id],
   };
 }
 

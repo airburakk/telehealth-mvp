@@ -1,13 +1,17 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { TakipList, type TakipRow } from "./TakipList";
+import { takipRowFor } from "@/lib/postop-rows";
+import { TakipList } from "./TakipList";
 
 export const dynamic = "force-dynamic";
 
 // Post Op hub (hasta) — hastanın post-op takibi olan vakalarını listeler → /takip/[caseId].
 // Klinik personelin panosu ayrı: /doktor/takip. Recovery kaydı vaka sayfası ilk açıldığında
 // oluştuğundan liste yalnız takibi başlamış vakaları gösterir.
+//
+// Kontrol raporu 2026-09-17 H02 + D01: satır türetimi lib/postop-rows'a çıktı — kapanış kararı detay
+// sayfasıyla AYNI kaynak (recoveryClosed: manuel VEYA süre dolumu), ölçüm güncelliği şiddetten ayrı.
 export default async function TakipHubPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/giris?next=/takip"); // proxy zaten kapsar; savunma katmanı
@@ -20,9 +24,9 @@ export default async function TakipHubPage() {
       branch: true,
       recovery: {
         select: {
-          status: true, startedAt: true, completedAt: true,
-          // v6.65: son kontrolün şiddeti → kartın 45° durum alanı rengi (yeşil/sarı/kırmızı)
-          checkIns: { orderBy: { createdAt: "desc" }, take: 1, select: { severity: true } },
+          status: true, startedAt: true, completedAt: true, reopenedAt: true, branch: true,
+          // v6.65: son kontrolün şiddeti → kartın 45° durum alanı rengi; createdAt → ölçüm güncelliği (D01)
+          checkIns: { orderBy: { createdAt: "desc" }, take: 1, select: { severity: true, createdAt: true } },
         },
       },
     },
@@ -30,14 +34,7 @@ export default async function TakipHubPage() {
     take: 50,
   });
 
-  const rows: TakipRow[] = cases.map((c) => ({
-    caseId: c.id,
-    branch: c.branch,
-    status: c.recovery?.status ?? "ACTIVE",
-    startedAt: c.recovery?.startedAt.toISOString() ?? "",
-    completedAt: c.recovery?.completedAt?.toISOString() ?? null,
-    severity: c.recovery?.checkIns[0]?.severity ?? "NONE", // hiç kontrol yoksa Stabil sayılır
-  }));
+  const rows = cases.map((c) => takipRowFor(c));
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-10">

@@ -7,7 +7,7 @@
 // burada yalnız sunum + filtre durumu yaşar.
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { severityMeta, painSeverity, feverSeverity, type Severity } from "@/lib/postop";
+import { recoveryStatusMeta, painSeverity, feverSeverity, type MeasurementState, type Severity } from "@/lib/postop";
 import { countryFlag, countryName, formatDateTime } from "@/lib/constants";
 import { BranchAvatar } from "@/components/BranchAvatar";
 import { CompleteRecoveryButton } from "@/components/CompleteRecoveryButton";
@@ -22,6 +22,9 @@ export interface ActiveRecoveryRow {
   day: number;
   count: number;
   severity: Severity;
+  /** Ölçüm güncelliği (D01, kontrol raporu 2026-09-19) — şiddetten ayrı eksen; "Stabil" yalnız CURRENT'ta. */
+  measurement: MeasurementState;
+  ageDays: number | null; // son kontrolün yaşı (gün); NO_DATA'da null
   last: { pain: number; feverC: number; createdAt: string } | null; // ISO
 }
 
@@ -62,7 +65,8 @@ export function RecoveryList({ rows }: { rows: ActiveRecoveryRow[] }) {
           </div>
         )}
         {filtered.map((r) => {
-          const m = severityMeta(r.severity);
+          // D01: ölçüm yok → "Ölçüm yok" (nötr), eski ölçüm → "Ölçüm gecikti (N gün)" (uyarı); "Stabil" yalnız güncel ölçümde.
+          const m = recoveryStatusMeta(r.severity, r.measurement, r.ageDays);
           return (
             /* Kart anatomisi /vakalarim CaseCard ile birebir (v6.64); 45° durum alanı + vital
                kutucukları (v6.65). Detaylı gerekçeler changelog v6.64-65'te. */
@@ -109,7 +113,10 @@ export function RecoveryList({ rows }: { rows: ActiveRecoveryRow[] }) {
                     <span className="text-xs text-[var(--c-ink-3)]">son: {formatDateTime(r.last.createdAt)}</span>
                   </div>
                 ) : (
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--c-ink-3)]">Henüz kontrol girilmedi.</p>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--c-ink-3)]">Henüz kontrol girilmedi — hastanın güncel durumu bilinmiyor.</p>
+                )}
+                {r.last && r.measurement === "STALE" && (
+                  <p className="mt-1.5 text-xs font-medium text-[var(--c-warning)]">Son ölçüm {r.ageDays} gün önce — protokole göre yeni kontrol bekleniyor.</p>
                 )}
 
                 <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--c-hairline)] pt-3">

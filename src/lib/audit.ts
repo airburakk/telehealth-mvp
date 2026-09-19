@@ -17,6 +17,7 @@ export type AuditAction =
   | "CASE_VIEW"
   | "CONSULT_WRITE"
   | "CONSULT_END"
+  | "CONSULT_START" // görüşme açıldı (POST /api/cases/[id]/consult; detail: atama=existing|self) — kontrol raporu D03, 2026-09-19
   | "FHIR_EXPORT"
   | "DOCUMENT_VIEW"
   | "CODING_WRITE" // FHIR klinik kodlama (ICD-10 + hasta kimliği) yazıldı

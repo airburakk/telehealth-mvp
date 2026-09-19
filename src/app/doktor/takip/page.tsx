@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { clinicalDoctorFor } from "@/lib/doctor-activation";
-import { type Severity } from "@/lib/postop";
+import { measurementAgeDays, measurementState, type Severity } from "@/lib/postop";
 import { recoveryClosed } from "@/lib/postop-access";
 import { formatDateTime } from "@/lib/constants";
 import { decryptField } from "@/lib/crypto";
@@ -52,7 +52,11 @@ export default async function RecoveryMonitor() {
     const day = Math.max(1, Math.floor((Date.now() - new Date(r.startedAt).getTime()) / 86400000) + 1);
     // E2EE Faz 2A — tamamlanmış (manuel COMPLETED veya otomatik süre+tampon) takiplerde personel erişimi kapalı.
     const closed = recoveryClosed(r);
-    return { r, last, severity, day, count: r._count.checkIns, closed };
+    // D01 (kontrol raporu 2026-09-19): ölçüm güncelliği şiddetten AYRI — hiç kontrol yoksa / son kontrol eskiyse
+    // rozet "Stabil" yazmaz (recoveryStatusMeta), yaşı görünür.
+    const measurement = measurementState(last?.createdAt ?? null);
+    const ageDays = last ? measurementAgeDays(last.createdAt) : null;
+    return { r, last, severity, day, count: r._count.checkIns, closed, measurement, ageDays };
   });
 
   const active = all.filter((x) => !x.closed.closed).sort((a, b) => RANK[a.severity] - RANK[b.severity]);
@@ -60,7 +64,7 @@ export default async function RecoveryMonitor() {
   const completed = all.filter((x) => x.closed.closed).slice(0, 20);
 
   // Client bileşene SERİLEŞTİRİLMİŞ satırlar: Date → ISO, PHI sunucuda çözülür.
-  const rows: ActiveRecoveryRow[] = active.map(({ r, last, severity, day, count }) => ({
+  const rows: ActiveRecoveryRow[] = active.map(({ r, last, severity, day, count, measurement, ageDays }) => ({
     id: r.id,
     caseId: r.caseId,
     branch: r.branch,
@@ -69,6 +73,8 @@ export default async function RecoveryMonitor() {
     day,
     count,
     severity,
+    measurement,
+    ageDays,
     last: last ? { pain: last.pain, feverC: last.feverC, createdAt: last.createdAt.toISOString() } : null,
   }));
 

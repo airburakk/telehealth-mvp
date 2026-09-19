@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { clinicalDoctorFor } from "@/lib/doctor-activation";
+import { CASE_LIST_SELECT, caseLaneOf, doctorQueueScope, queueOrderBy, scopedWhere, staffQueueScope } from "@/lib/case-access";
 import { runTriage } from "@/lib/triage-llm";
 import { notifyDoctorsByBranch, notifyUser } from "@/lib/notify";
 import { requireUser, requireStaff } from "@/lib/api-auth";
@@ -17,41 +18,19 @@ export async function GET(req: Request) {
   if (error) return error;
 
   const { searchParams } = new URL(req.url);
-  const branch = searchParams.get("branch");
-  const status = searchParams.get("status");
+  const branch = searchParams.get("branch") ?? undefined;
+  const status = searchParams.get("status") ?? undefined;
   // Sayfalama: varsayılan 50, üst sınır 100 (tüm tabloyu tek yanıtta taşıma).
   const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") ?? "50", 10) || 50));
 
-  // DOCTOR daraltması (2026-07-03, savunma-derinliği): doktor yalnız kendine atanan + KENDİ branşındaki
-  // atanmamış vakaları listeler (kokpit doktor/page.tsx:71 deseninin API eşleniği; canCaseBeAccessedBy ile
-  // hizalı). COORDINATOR/ETHICS/ADMIN tüm kuyruğu görür. Profili/branşı yoksa → yalnız kendine atananlar.
-  let doctorScope: Prisma.CaseWhereInput = {};
-  if (user.role === "DOCTOR") {
-    const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
-    const doc = me?.doctorId
-      ? await db.doctor.findUnique({ where: { id: me.doctorId }, select: { id: true, branch: true, verified: true } })
-      : null;
-    doctorScope = doc?.verified
-      ? // Branş dalı DOCS_PENDING'i DIŞLAR (2026-07-24): belge-bekleyen başvuru doktor havuzunda
-        // görünmez (koordinatör/etik/admin operasyonel gözetim için görmeye devam eder).
-        { OR: [{ doctorId: doc.id }, ...(doc.branch ? [{ doctorId: null, branch: doc.branch, status: { not: "DOCS_PENDING" } }] : [])] }
-      : // Profilsiz VEYA DOĞRULANMAMIŞ doktor → boş küme. `verified` kapısı 2026-08-03 denetiminde
-        // eklendi: requireStaff yalnız ROLE bakar, self-signup hesabı da DOCTOR rolündedir → onay
-        // beklemeyen doktor kendi branşındaki kuyruğu ÇÖZÜLMÜŞ hasta adıyla listeleyebiliyordu.
-        // canCaseBeAccessedBy (ownership.ts) nesne düzeyinde bu kapıyı zaten uyguluyordu; liste hizalandı.
-        { id: "__none__" };
-  }
-
-  const where: Prisma.CaseWhereInput = {
-    // Hesap silme kilidi (v6.11) — liste ucunun da uygulaması ŞART: kilitli vaka nesne düzeyinde
-    // HERKESE kapalıdır (canCaseBeAccessedBy'ın ilk satırı), ama liste bunu filtrelemediğinden vaka
-    // kuyrukta hasta adıyla görünmeye devam ediyordu. Hesap silme ekranındaki "doktorlar,
-    // koordinatörler ve yöneticiler dahil hiç kimse açamaz" taahhüdü ancak listede de uygulanınca doğru.
-    deletionLockedAt: null,
-    ...(branch ? { branch } : {}),
-    ...(status ? { status } : {}),
-    ...doctorScope,
-  };
+  // Kapsam TEK KAYNAK — lib/case-access (kontrol raporu 2026-09-17 K02): doktor ana sayfası ile bu uç eskiden
+  // AYRI where kuruyordu (sayfada doctorId:null/deletionLockedAt:null yoktu, burada activatedAt bakılmıyordu).
+  // DOCTOR → clinicalDoctorFor (verified + activatedAt + branş; eksikse boş küme — 2026-08-03 `verified` dersi
+  // + v6.87 aktivasyon şartı), COORDINATOR/ETHICS/ADMIN → tüm kuyruk. Hesap silme kilidi (v6.11) her kapsamda:
+  // kilitli vaka nesne düzeyinde HERKESE kapalıdır, liste de onu göstermez. Havuz dalı NEW/IN_REVIEW allowlist
+  // (DOCS_PENDING havuza düşmez — 2026-07-24).
+  const scope = user.role === "DOCTOR" ? doctorQueueScope(await clinicalDoctorFor(user.id)) : staffQueueScope();
+  const where = scopedWhere(scope, { branch, status });
   const total = await db.case.count({ where });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   // İstenen sayfayı geçerli aralığa sıkıştır (0/negatif/NaN/aşırı-büyük güvenli).
@@ -59,24 +38,19 @@ export async function GET(req: Request) {
 
   const cases = await db.case.findMany({
     where,
-    // Dar liste-DTO: klinik metin (symptoms/reasoning/extra) ve belge içerikleri listede taşınmaz.
-    select: {
-      id: true,
-      patientName: true,
-      country: true,
-      language: true,
-      branch: true,
-      urgency: true,
-      status: true,
-      createdAt: true,
-      doctor: { select: { title: true, name: true } },
-    },
-    orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
+    select: CASE_LIST_SELECT, // dar liste-DTO (sayfa ile aynı): klinik metin/belge içeriği taşınmaz
+    orderBy: queueOrderBy("urgency"),
     skip: (page - 1) * pageSize,
     take: pageSize,
   });
-  // Yalnız kimlik (patientName) at-rest şifreli → çöz (E2EE inc.2c); diğer alanlar düz.
-  const items = cases.map((c) => ({ ...c, patientName: decryptField(c.patientName) }));
+  // Yalnız kimlik (patientName) at-rest şifreli → çöz (E2EE inc.2c). attachments/tourismPlan/freeCare ham
+  // hâlleriyle DEĞİL türetimleriyle (hasFiles / lane) döner.
+  const items = cases.map(({ attachments, tourismPlan, freeCare, ...c }) => ({
+    ...c,
+    patientName: decryptField(c.patientName),
+    hasFiles: !!attachments,
+    lane: caseLaneOf({ tourismPlan, freeCare }),
+  }));
   return NextResponse.json({ items, total, page, pageSize, totalPages });
 }
 

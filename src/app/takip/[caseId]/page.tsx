@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { canAccessCase } from "@/lib/ownership";
 import { getCurrentUser } from "@/lib/auth";
-import { recoveryProtocol } from "@/lib/postop";
+import { measurementAgeDays, measurementState, recoveryProtocol } from "@/lib/postop";
 import { recoveryClosed } from "@/lib/postop-access";
 import { RecoveryView, type RecoveryData } from "./RecoveryView";
 import { decryptField } from "@/lib/crypto";
@@ -45,6 +45,9 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
     branch: c.branch,
     day,
     closed: closed.closed, // E2EE Faz 2A — takip tamamlandı → hasta yeni kontrol giremez (salt-okunur)
+    // D01 (kontrol raporu 2026-09-19): ölçüm güncelliği — liste/detay aynı hesap (postop.ts measurementState)
+    measurement: measurementState(recovery.checkIns[0]?.createdAt ?? null),
+    ageDays: recovery.checkIns[0] ? measurementAgeDays(recovery.checkIns[0].createdAt) : null,
     isStaff,
     dischargeRequestedAt: c.dischargeRequestedAt ? c.dischargeRequestedAt.toISOString() : null,
     discharge: c.dischargeReport

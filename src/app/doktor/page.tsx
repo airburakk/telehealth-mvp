@@ -2,8 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { CaseQueue, type CaseRow, type CaseQueueStats, type CaseQueueServerFilters } from "@/components/CaseQueue";
+import { CaseQueue, type CaseRow, type CaseQueueServerFilters } from "@/components/CaseQueue";
 import { CASE_STATUS } from "@/lib/constants";
+import { deniedRoleHome } from "@/lib/roles";
+import { hasClinicalAccess } from "@/lib/doctor-activation";
+import { CASE_LIST_SELECT, caseLaneOf, doctorQueueScope, queueOrderBy, scopedWhere, staffQueueScope, type QueueSort } from "@/lib/case-access";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { DutyConsole } from "@/components/DutyConsole";
 import { DashboardPanel } from "@/components/DashboardPanel";
 import { dutyFeed, type DutyRequest } from "@/lib/clinical-duty";
@@ -13,27 +17,14 @@ import { openCountForDoctor, openRowsForDoctor } from "@/lib/consultation-reques
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
 import { BRANCHES } from "@/lib/triage";
 import { decryptField } from "@/lib/crypto";
-import { Stethoscope, ArrowRight, Activity, HeartHandshake, Inbox, ChevronLeft, ChevronRight, Plane } from "lucide-react";
+import { Stethoscope, ArrowRight, Activity, HeartHandshake, Inbox, Plane } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-const OPEN_STATUSES = ["NEW", "IN_REVIEW"]; // henüz doktora atanmamış (kapı/triyaj) vakalar
-const CASE_PAGE_SIZE = 50; // personel kuyruğu sayfa boyutu (/denetim deseni)
-
-// CaseQueue satır-DTO'su — tam kayıt (şifreli klinik metin/belge) listede taşınmaz.
-const CASE_LIST_SELECT = {
-  id: true,
-  patientName: true,
-  country: true,
-  branch: true,
-  urgency: true,
-  status: true,
-  createdAt: true,
-  attachments: true, // hasFiles rozetini besler
-  tourismPlan: true, // 🧳 turizm kulvarı türetimi — düz metin, decrypt gerekmez
-  freeCare: true, // ücretsiz sağlık kulvarı türetimi (2026-07-31 birleşik liste)
-  doctor: { select: { title: true, name: true } },
-} as const;
+// Paneli açabilen roller — proxy'deki DOCTOR_ROLES ile aynı üçlü; burada AÇIK allowlist (kontrol raporu 2026-09-17
+// K01: eskiden "doktor profili yoksa personel" varsayımıyla kimliksiz/iptal edilmiş oturum bile TÜM kuyruğu sorguluyordu).
+const PANEL_ROLES: readonly string[] = ["DOCTOR", "COORDINATOR", "ADMIN"];
+const CASE_PAGE_SIZE = 50; // kuyruk sayfa boyutu — İKİ dalda (K09: doktor dalı eskiden take:100 + sayfasız, sayılar kesik kümeden)
 
 // Durum noktası renkleri — hasta kartı (MyCasesList STAGE_INK) ile aynı tema-duyarlı token'lar.
 const CASE_STATUS_DOT: Record<string, string> = {
@@ -54,22 +45,46 @@ function soStatusDot(s: string): string {
 export default async function DoctorPanel({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; branch?: string; status?: string; urgent?: string; from?: string }>;
+  searchParams: Promise<{ page?: string; branch?: string; status?: string; urgent?: string; sort?: string; from?: string }>;
 }) {
+  // ── Kapı (K01): kimliksiz VEYA iptal edilmiş oturum → giriş; HİÇBİR sorgu koşmadan. proxy imzayı geçirir ama
+  // getCurrentUser sessionVersion uyuşmazlığında (tüm oturumları kapat / parola değişimi) null döner; sayfa bunu
+  // reddetmediğinde personel dalına düşüp TÜM kuyruğu (çözülmüş hasta adıyla) sorguluyordu.
   const user = await getCurrentUser();
+  if (!user) redirect("/giris?next=%2Fdoktor");
+  if (!PANEL_ROLES.includes(user.role)) redirect(deniedRoleHome(user.role));
+  const sp = await searchParams;
 
-  // Bağlı doktor profili
-  const me = user ? await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } }) : null;
+  // ── DOCTOR: bağlı profil + onboarding/aktivasyon/onay kapıları — hepsi SORGUSUZ ekran ya da yönlendirme.
+  // Personel dalı ARTIK yalnız COORDINATOR/ADMIN içindir; "profil yok" durumu oraya DÜŞMEZ.
+  const me = user.role === "DOCTOR" ? await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } }) : null;
   const doctor = me?.doctorId ? await db.doctor.findUnique({ where: { id: me.doctorId } }) : null;
-
-  // M5 onboarding + aktivasyon kapısı: doktor henüz onboard olmadıysa VEYA zorunlu mesleki belgeyi
-  // (v6.105'ten beri yalnız diploma) tamamlamadıysa (activatedAt yok) kapıya yönlendir. (baslangic
-  // sayfası ikisi de tamamsa /doktor'a geri yönlendirir → sonsuz döngü yok.)
-  // ?from=doctorium (2026-08-16): Doctorium'daki Aşama-1 doktoru AURA toggle'ıyla geldi —
-  // baslangic'a aura-gecis bağlamı taşınır, sayfa "AURA'ya geçiş için Aşama 2" uyarı ekranını basar.
-  if (user?.role === "DOCTOR" && doctor && (!doctor.onboardedAt || !doctor.activatedAt)) {
-    const { from } = await searchParams;
-    redirect(`/doktor/baslangic${from === "doctorium" ? "?from=aura-gecis" : ""}`);
+  if (user.role === "DOCTOR") {
+    if (!doctor) {
+      return (
+        <GateScreen
+          title="Doktor profiliniz henüz bağlı değil"
+          sub="Klinik panel, doktor profili tamamlanıp doğrulanmadan vaka göstermez. Başlangıç sayfasından profilinizi oluşturun."
+        />
+      );
+    }
+    // M5 onboarding + aktivasyon kapısı: doktor henüz onboard olmadıysa VEYA zorunlu mesleki belgeyi
+    // (v6.105'ten beri yalnız diploma) tamamlamadıysa (activatedAt yok — hasClinicalAccess) kapıya yönlendir.
+    // (baslangic sayfası ikisi de tamamsa /doktor'a geri yönlendirir → sonsuz döngü yok.)
+    // ?from=doctorium (2026-08-16): Doctorium'daki Aşama-1 doktoru AURA toggle'ıyla geldi —
+    // baslangic'a aura-gecis bağlamı taşınır, sayfa "AURA'ya geçiş için Aşama 2" uyarı ekranını basar.
+    if (!doctor.onboardedAt || !hasClinicalAccess(doctor)) {
+      redirect(`/doktor/baslangic${sp.from === "doctorium" ? "?from=aura-gecis" : ""}`);
+    }
+    // Admin onayı (verified) yoksa kuyruk HİÇ sorgulanmaz — ownership nesne kapısıyla aynı şart (sayfa eskiden bakmıyordu).
+    if (!doctor.verified) {
+      return (
+        <GateScreen
+          title="Hesabınız onay bekliyor"
+          sub="Belgeleriniz incelendikten sonra klinik panel ve vaka kuyruğu açılır. Bu sırada Doctorium'u kullanmaya devam edebilirsiniz."
+        />
+      );
+    }
   }
 
   // Pencere görünürlüğü (doktor yoksa = personel: duty[tümü] + SO[gözetim]).
@@ -77,67 +92,52 @@ export default async function DoctorPanel({
     ? panelVisibility(doctor)
     : { duty: true as const, so: true, freeCare: false, consult: false, tourism: true as const };
 
-  // ── Panel 1: Klinik Nöbet — yalnız bu doktorla eşleşen vakalar (personelde tümü, sayfalı) ──
-  let casePage = 1;
-  let caseTotal = 0;
-  let caseTotalPages = 1;
-  let queueStats: CaseQueueStats | undefined; // personel dalında server-count; doktor dalında rows'tan (mevcut davranış)
-  let queueServerFilters: CaseQueueServerFilters | undefined; // personel dalında sunucu-taraflı branş/durum filtresi
-  let caseFilterQs = ""; // sayfalama linklerinde korunacak filtre parametreleri (&branch=…&status=…)
-  let cases;
-  if (doctor) {
-    // Doktor dalı: eşleşen küme (atanan + branşındaki açık vakalar) + emniyet tavanı.
-    cases = await db.case.findMany({
-      where: { OR: [{ doctorId: doctor.id }, { status: { in: OPEN_STATUSES }, branch: doctor.branch }] },
-      select: CASE_LIST_SELECT,
-      orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
-      take: 100,
-    });
-  } else {
-    // Personel dalı: tüm kuyruk → /denetim deseniyle offset sayfalaması (50/sayfa).
-    // Branş/durum filtresi sunucuda uygulanır (rows yalnız görünür dilim; istemci filtresi yetmez).
-    const sp = await searchParams;
-    const [total, waiting, urgent, branchRows] = await Promise.all([
-      db.case.count(),
-      db.case.count({ where: { status: "NEW" } }),
-      db.case.count({ where: { urgency: { gte: 4 } } }),
-      // Branş dropdown seçenekleri: tam liste (yalnız görünen sayfanın branşları değil).
-      db.case.findMany({ select: { branch: true }, distinct: ["branch"], orderBy: { branch: "asc" } }),
-    ]);
-    const branchOptions = branchRows.map((b) => b.branch);
-    // Geçerli değer kontrolü: branş mevcut listeden, durum CASE_STATUS anahtarlarından; aksi = filtresiz.
-    const branchFilter = sp.branch && branchOptions.includes(sp.branch) ? sp.branch : undefined;
-    const statusFilter = sp.status && sp.status in CASE_STATUS ? sp.status : undefined;
-    const urgentFilter = sp.urgent === "1"; // "Acil (4-5)" stat tıklaması (2026-08-04) — urgency>=4
-    const listWhere = {
-      ...(branchFilter ? { branch: branchFilter } : {}),
-      ...(statusFilter ? { status: statusFilter } : {}),
-      ...(urgentFilter ? { urgency: { gte: 4 } } : {}),
-    };
-    // Liste + sayfalama toplamı filtreli; üst istatistikler taban (filtresiz genel bakış) kalır.
-    caseTotal = branchFilter || statusFilter || urgentFilter ? await db.case.count({ where: listWhere }) : total;
-    caseTotalPages = Math.max(1, Math.ceil(caseTotal / CASE_PAGE_SIZE));
-    // İstenen sayfayı geçerli aralığa sıkıştır (0/negatif/NaN/aşırı-büyük güvenli).
-    casePage = Math.min(Math.max(1, parseInt(sp.page ?? "1", 10) || 1), caseTotalPages);
-    queueStats = { total, waiting, urgent }; // üst istatistikler tam kümeden (rows yalnız görünür dilim)
-    queueServerFilters = { branch: branchFilter ?? "all", status: statusFilter ?? "all", urgent: urgentFilter, branches: branchOptions };
-    caseFilterQs =
-      (branchFilter ? `&branch=${encodeURIComponent(branchFilter)}` : "") +
-      (statusFilter ? `&status=${encodeURIComponent(statusFilter)}` : "") +
-      (urgentFilter ? "&urgent=1" : "");
-    cases = await db.case.findMany({
-      where: listWhere,
-      select: CASE_LIST_SELECT,
-      orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
-      skip: (casePage - 1) * CASE_PAGE_SIZE,
-      take: CASE_PAGE_SIZE,
-    });
-  }
+  // ── Panel 1: vaka kuyruğu — TEK kod yolu (K02/K09): kapsam lib/case-access'ten (doktor = atanan + KENDİ branşı
+  // havuz [NEW/IN_REVIEW], silme-kilitliler hariç; personel = tüm kuyruk). Sayılar, branş/durum/acil filtresi,
+  // sıralama ve sayfalama iki dalda da SUNUCUDA — "Toplam" gerçek toplamdır, görünür ilk 100 değil.
+  const scope = doctor
+    ? doctorQueueScope({ doctorId: doctor.id, branch: doctor.branch, verified: doctor.verified })
+    : staffQueueScope();
+  const [total, waiting, urgent, branchRows] = await Promise.all([
+    db.case.count({ where: scope }),
+    db.case.count({ where: scopedWhere(scope, { status: "NEW" }) }),
+    db.case.count({ where: scopedWhere(scope, { urgent: true }) }),
+    // Branş dropdown seçenekleri: kapsamın tam listesi (yalnız görünen sayfanın branşları değil).
+    db.case.findMany({ where: scope, select: { branch: true }, distinct: ["branch"], orderBy: { branch: "asc" } }),
+  ]);
+  const branchOptions = branchRows.map((b) => b.branch);
+  // Geçerli değer kontrolü: branş mevcut listeden, durum CASE_STATUS anahtarlarından; aksi = filtresiz.
+  const branchFilter = sp.branch && branchOptions.includes(sp.branch) ? sp.branch : undefined;
+  const statusFilter = sp.status && sp.status in CASE_STATUS ? sp.status : undefined;
+  const urgentFilter = sp.urgent === "1"; // "Acil (4-5)" stat tıklaması (2026-08-04) — urgency>=4
+  const sort: QueueSort = sp.sort === "newest" ? "newest" : "urgency";
+  const listWhere = scopedWhere(scope, { branch: branchFilter, status: statusFilter, urgent: urgentFilter });
+  // Liste + sayfalama toplamı filtreli; üst istatistikler taban (filtresiz genel bakış) kalır.
+  const caseTotal = branchFilter || statusFilter || urgentFilter ? await db.case.count({ where: listWhere }) : total;
+  const caseTotalPages = Math.max(1, Math.ceil(caseTotal / CASE_PAGE_SIZE));
+  // İstenen sayfayı geçerli aralığa sıkıştır (0/negatif/NaN/aşırı-büyük güvenli).
+  const casePage = Math.min(Math.max(1, parseInt(sp.page ?? "1", 10) || 1), caseTotalPages);
+  const queueStats = { total, waiting, urgent }; // üst istatistikler tam kümeden (rows yalnız görünür dilim)
+  const queueServerFilters: CaseQueueServerFilters = {
+    branch: branchFilter ?? "all", status: statusFilter ?? "all", urgent: urgentFilter, sort, branches: branchOptions,
+  };
+  const caseFilterQs =
+    (branchFilter ? `&branch=${encodeURIComponent(branchFilter)}` : "") +
+    (statusFilter ? `&status=${encodeURIComponent(statusFilter)}` : "") +
+    (urgentFilter ? "&urgent=1" : "") +
+    (sort === "newest" ? "&sort=newest" : "");
+  const cases = await db.case.findMany({
+    where: listWhere,
+    select: CASE_LIST_SELECT,
+    orderBy: queueOrderBy(sort),
+    skip: (casePage - 1) * CASE_PAGE_SIZE,
+    take: CASE_PAGE_SIZE,
+  });
   const caseRows: CaseRow[] = cases.map((c) => {
     const st = CASE_STATUS[c.status] ?? CASE_STATUS.NEW;
     return {
       id: c.id,
-      lane: (c.tourismPlan ? "tourism" : c.freeCare ? "free" : "telehealth") as CaseRow["lane"], // öncelik hasta tarafıyla (vakalarim) aynı
+      lane: caseLaneOf(c), // öncelik hasta tarafıyla (vakalarim) aynı
       href: `/doktor/vaka/${c.id}`,
       patientName: decryptField(c.patientName), // kimlik at-rest şifreli → çöz (E2EE inc.2c)
       country: c.country,
@@ -205,8 +205,10 @@ export default async function DoctorPanel({
   }
   // Aciliyet önde (SO'nun aciliyetsiz satırları en alta), eş aciliyette en yeni önde — CaseQueue
   // içindeki sıralama seçicisinin "Aciliyet" varsayılanıyla aynı kural.
-  const rows: CaseRow[] = [...caseRows, ...soQueueRows, ...consultQueueRows].sort(
-    (a, b) => (b.urgency ?? -1) - (a.urgency ?? -1) || b.createdAt.localeCompare(a.createdAt),
+  const rows: CaseRow[] = [...caseRows, ...soQueueRows, ...consultQueueRows].sort((a, b) =>
+    sort === "newest"
+      ? b.createdAt.localeCompare(a.createdAt)
+      : (b.urgency ?? -1) - (a.urgency ?? -1) || b.createdAt.localeCompare(a.createdAt),
   );
 
   // Nöbet konsolu beslemesi (yalnız doktor)
@@ -258,42 +260,17 @@ export default async function DoctorPanel({
         title={queueTitle}
         subtitle={queueSub}
       >
-        <CaseQueue rows={rows} stats={queueStats} serverFilters={queueServerFilters} />
-        {/* Sayfalama — yalnız personel (filtresiz tüm kuyruk) dalında; /denetim deseni */}
-        {!doctor && caseTotalPages > 1 && (
-          <nav className="mt-5 flex flex-wrap items-center justify-between gap-3" aria-label="Vaka kuyruğu sayfaları">
-            <span className="text-xs text-[var(--c-ink-2)]">
-              Toplam <strong className="text-[var(--c-ink)]">{caseTotal}</strong> vaka · Sayfa{" "}
-              <strong className="text-[var(--c-ink)]">{casePage}</strong> / {caseTotalPages}
-            </span>
-            <div className="flex items-center gap-2">
-              {casePage > 1 ? (
-                <Link
-                  href={`/doktor?page=${casePage - 1}${caseFilterQs}`}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
-                >
-                  <ChevronLeft size={15} /> Önceki
-                </Link>
-              ) : (
-                <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-3)] cursor-not-allowed">
-                  <ChevronLeft size={15} /> Önceki
-                </span>
-              )}
-              {casePage < caseTotalPages ? (
-                <Link
-                  href={`/doktor?page=${casePage + 1}${caseFilterQs}`}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
-                >
-                  Sonraki <ChevronRight size={15} />
-                </Link>
-              ) : (
-                <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-3)] cursor-not-allowed">
-                  Sonraki <ChevronRight size={15} />
-                </span>
-              )}
-            </div>
-          </nav>
-        )}
+        {/* Sunucu filtreleri + sayfalama artık İKİ dalda (K09); doktor dalında liste varsayılan KAPALI
+            (2026-07-31 kararı) ve 5'li kulvar çipleri korunur — CaseQueue `startCollapsed`/`laneFilter`.
+            Sayfalama gezintisi bileşenin içinde (liste açıkken çizilir). */}
+        <CaseQueue
+          rows={rows}
+          stats={queueStats}
+          serverFilters={queueServerFilters}
+          startCollapsed={!!doctor}
+          laneFilter={!!doctor}
+          pagination={{ page: casePage, totalPages: caseTotalPages, total: caseTotal, qs: caseFilterQs }}
+        />
       </DashboardPanel>
 
       {/* ── Uzaktan Sağlık (DutyConsole kendi başlığını taşır; 2026-07-31: Eşleşen Vakalar'ın altına indi) ── */}
@@ -363,6 +340,26 @@ export default async function DoctorPanel({
         )}
       </div>
 
+    </div>
+  );
+}
+
+// Sorgusuz kapı ekranı (K01): doktor profili yok / admin onayı bekliyor — kuyruk HİÇ sorgulanmaz, personel dalına düşülmez.
+function GateScreen({ title, sub }: { title: string; sub: string }) {
+  return (
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <EmptyState
+        title={title}
+        sub={sub}
+        action={
+          <Link
+            href="/doktor/baslangic"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--c-hairline)] px-4 py-2 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
+          >
+            Başlangıç sayfası <ArrowRight size={15} />
+          </Link>
+        }
+      />
     </div>
   );
 }

@@ -8,6 +8,10 @@
 // nötr accent) · `BranchAvatar size={24}` + `aura-display text-[16px]` branş başlığı · durum
 // rozeti = hairline çerçeve + TEMA-DUYARLI nokta (sabit emerald yerine `--c-success`) ·
 // `rounded-2xl` + `p-5`. Kit dışına çıkmak DESIGN.md'de karar gerektirir.
+//
+// Kontrol raporu 2026-09-17 H02: "Aktif/Tamamlandı" artık satırın `closed` kararından (detayla aynı kaynak —
+// süre dolumu dahil) okunur; otomatik kapanış "Süre doldu" diye ayrı söylenir. D01: ölçüm yok / gecikti
+// durumunda yeşil "stabil" tonu kullanılmaz, hastaya yeni kontrol girmesi söylenir.
 import { useMemo } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -15,24 +19,18 @@ import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { langDir, LANG_BCP47 } from "@/lib/constants";
 import { BranchAvatar } from "@/components/BranchAvatar";
-import { severityMeta, type Severity } from "@/lib/postop";
+import { recoveryStatusMeta, type Severity } from "@/lib/postop";
+import type { TakipRow } from "@/lib/postop-rows";
 import { EmptyState } from "@/components/ui/EmptyState";
 
-export interface TakipRow {
-  caseId: string;
-  branch: string;
-  status: string; // ACTIVE | COMPLETED
-  startedAt: string;
-  completedAt: string | null;
-  /** Son kontrolün şiddeti (NONE/WATCH/RED) — 45° durum alanının rengi (v6.65). */
-  severity: string;
-}
+export type { TakipRow } from "@/lib/postop-rows";
 
 const TEXTS = [
   "Post-Op Takip",
   "Operasyon sonrası iyileşme takipleriniz — günlük kontrol girişleri ve doktor gözetimi.",
   "Aktif",
   "Tamamlandı",
+  "Süre doldu",
   "Başlangıç",
   "Henüz post-op takibiniz yok.",
   "Takip, operasyonunuz sonrası doktorunuz yönlendirdiğinde burada görünür.",
@@ -41,7 +39,11 @@ const TEXTS = [
   // klinik veri gösterilmez (hasta beyanı doktor yüzeyine ait), durum cümlesi konur.
   "İyileşme takibiniz sürüyor — günlük kontrollerinizi bu ekrandan girebilirsiniz.",
   "Bu takip tamamlandı; geçmiş kayıtlarınız görüntülenmeye devam eder.",
+  "Takip süresi dolduğu için otomatik kapandı; geçmiş kayıtlarınız görüntülenmeye devam eder. Gerekirse takip ekranından doktorunuza erişimi yeniden verebilirsiniz.",
   "Bitiş",
+  "Henüz ölçüm girilmedi.",
+  "Son ölçüm",
+  "gün önce — yeni kontrol girin.",
 ];
 
 export function TakipList({ rows }: { rows: TakipRow[] }) {
@@ -72,7 +74,9 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
       ) : (
         <div className="space-y-3">
           {rows.map((r) => {
-            const done = r.status === "COMPLETED";
+            const done = r.closed; // detay sayfasıyla aynı karar (H02)
+            const meta = recoveryStatusMeta(r.severity as Severity, r.measurement, r.ageDays);
+            const statusLabel = done ? (r.closeReason === "AUTO" ? t("Süre doldu") : t("Tamamlandı")) : t("Aktif");
             return (
               <Link key={r.caseId} href={`/takip/${r.caseId}`}
                 className="group relative block overflow-hidden rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 transition hover:border-[var(--c-accent)]/50"
@@ -80,8 +84,8 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
                 style={{ borderInlineStart: "3px solid var(--lane-tourism)" }}>
                 {/* 45° durum alanı (v6.65, kullanıcı netleştirmesi) — doktor kartıyla aynı dil:
                     kartın SAĞINDA, üst kenarda sağdan %15'te başlayan tam 45° kesik (30→25→20→15; kullanıcı ayarı)
-                    (.postop-slant); son kontrolün şiddetine göre yeşil/sarı/kırmızı,
-                    tamamlanmış takipte nötr. RED'de aynı alarm aurası (hastanın kendi durumu —
+                    (.postop-slant); son kontrolün şiddetine göre yeşil/sarı/kırmızı — ölçüm yoksa/geciktiyse
+                    nötr/uyarı (D01), tamamlanmış takipte nötr. RED'de aynı alarm aurası (hastanın kendi durumu —
                     eylem çağrısı). */}
                 <span
                   aria-hidden
@@ -89,7 +93,7 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
                   style={{
                     insetInlineEnd: "-320px",
                     width: "calc(15% + 320px)",
-                    background: done ? "var(--c-ink-3)" : severityMeta(r.severity as Severity).tone,
+                    background: done ? "var(--c-ink-3)" : meta.tone,
                   }}
                 />
                 <div className="relative">
@@ -104,7 +108,7 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
                       Sabit emerald yerine --c-success (gündüz temada okunaklı kalsın). */}
                   <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--c-hairline)] bg-[var(--c-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--c-ink-2)]">
                     <span className="h-1.5 w-1.5 rounded-full" style={{ background: done ? "var(--c-ink-3)" : "var(--c-success)" }} />
-                    {done ? t("Tamamlandı") : t("Aktif")}
+                    {statusLabel}
                   </span>
                 </div>
 
@@ -114,10 +118,21 @@ export function TakipList({ rows }: { rows: TakipRow[] }) {
                   {done && r.completedAt && (
                     <span>· {t("Bitiş")}: {new Date(r.completedAt).toLocaleDateString("tr-TR")}</span>
                   )}
+                  {!done && r.measurement === "NO_DATA" && (
+                    <span className="font-medium text-[var(--c-warning)]">· {t("Henüz ölçüm girilmedi.")}</span>
+                  )}
+                  {!done && r.measurement === "STALE" && (
+                    <span className="font-medium text-[var(--c-warning)]">· {t("Son ölçüm")} {r.ageDays} {t("gün önce — yeni kontrol girin.")}</span>
+                  )}
+                  {!done && r.measurement === "CURRENT" && r.lastCheckAt && (
+                    <span>· {t("Son ölçüm")}: {new Date(r.lastCheckAt).toLocaleDateString("tr-TR")}</span>
+                  )}
                 </div>
                 <p className="mt-2 text-sm leading-relaxed text-[var(--c-ink-2)]">
                   {done
-                    ? t("Bu takip tamamlandı; geçmiş kayıtlarınız görüntülenmeye devam eder.")
+                    ? r.closeReason === "AUTO"
+                      ? t("Takip süresi dolduğu için otomatik kapandı; geçmiş kayıtlarınız görüntülenmeye devam eder. Gerekirse takip ekranından doktorunuza erişimi yeniden verebilirsiniz.")
+                      : t("Bu takip tamamlandı; geçmiş kayıtlarınız görüntülenmeye devam eder.")
                     : t("İyileşme takibiniz sürüyor — günlük kontrollerinizi bu ekrandan girebilirsiniz.")}
                 </p>
 

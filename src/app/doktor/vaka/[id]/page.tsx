@@ -6,6 +6,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { clinicalDoctorFor } from "@/lib/doctor-activation";
 import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { staffAccessClosed } from "@/lib/postop-access";
+import { recordAccess } from "@/lib/audit";
+import { headersMeta } from "@/lib/request-meta";
+import { PostopClosedScreen } from "@/components/PostopClosedScreen";
 import { countryFlag, countryName, urgencyStyle, CASE_STATUS, formatDateTime } from "@/lib/constants";
 import { StartConsultButton } from "@/components/StartConsultButton";
 import { TranslateButton } from "@/components/TranslateButton";
@@ -16,7 +19,7 @@ import { LabResultsForm } from "@/components/LabResultsForm";
 import { caseDicomStudies } from "@/lib/case-dicom";
 import { PoolConsultPanel, CasePoolAnswers } from "@/components/PoolConsultPanel";
 import { poolRequestsForCase } from "@/lib/consultation-requests";
-import { ArrowLeft, ArrowRight, FileText, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks, Lock } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +39,13 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
 
   // E2EE Faz 2A — post-op erişim daraltma: takip tamamlandıysa klinik personel erişimi kapalı (hasta-only, §0.1·3).
   // Klinik veri ÇEKİLMEDEN reddet (sızma yok). Hasta kendi kayıtlarını /takip + /vakalarim'de görmeye devam eder.
-  if ((await staffAccessClosed(id, user)).closed) return <PostopClosedScreen />;
+  // Red de kayda geçer (JSON ucu api/cases/[id] ile aynı — kontrol raporu K05); subject için dar select, klinik alan çekilmez.
+  const closed = await staffAccessClosed(id, user);
+  if (closed.closed) {
+    const subject = await db.case.findUnique({ where: { id }, select: { userId: true } });
+    await recordAccess({ actor: user, action: "POSTOP_ACCESS_DENIED", resourceType: "CASE", resourceId: id, subjectUserId: subject?.userId ?? null, detail: `post-op kapalı (${closed.reason}) — kokpit sayfası`, ...(await headersMeta()) });
+    return <PostopClosedScreen />;
+  }
 
   const raw = await db.case.findUnique({
     where: { id },
@@ -52,6 +61,11 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
   // Sahiplik/atama + branş daraltması (ownership tek-kaynak): atanan/eşleşen-branş doktor + operasyon
   // personeli. Klinik veri DECRYPT edilmeden reddet (sızma yok) → notFound (vakanın varlığını ele vermez).
   if (!(await canCaseBeAccessedBy(user, { userId: raw.userId, doctorId: raw.doctorId, branch: raw.branch, deletionLockedAt: raw.deletionLockedAt }))) notFound();
+  // Erişim kaydı (kontrol raporu K05): sayfa yolu da JSON ucu (api/cases/[id]) gibi CASE_VIEW yazar — "her erişim
+  // kayıt zincirine yazılır" taahhüdü doktorun normal bağlantıyla açtığı bu ekranı da kapsar. Decrypt ÖNCESİ.
+  // Kayıt başarısızlığı: recordAccess fail-safe (yutar + audit-write alarmı) — sayfa çizimi bozulmaz (bilinçli).
+  // Ön-yükleme: force-dynamic sayfada <Link> prefetch'i RSC gövdesini koşturmaz → gezinti başına tek kayıt.
+  await recordAccess({ actor: user, action: "CASE_VIEW", resourceType: "CASE", resourceId: raw.id, subjectUserId: raw.userId, detail: "kokpit sayfası", ...(await headersMeta()) });
   const c = decryptCaseFields(raw); // symptoms/reasoning/extra(triyaj yanıtları) at-rest şifreli → kokpit gösterimi için çöz
 
   const u = urgencyStyle(c.urgency);
@@ -255,22 +269,4 @@ function DisabledAction({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Post-op takip tamamlanmış vakada (E2EE Faz 2A) klinik personele gösterilen ekran — klinik veri yok.
-function PostopClosedScreen() {
-  return (
-    <div className="mx-auto max-w-2xl px-5 py-8">
-      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">
-        <ArrowLeft size={16} /> Vaka kuyruğu
-      </Link>
-      <div className="mt-6 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-8 text-center shadow-sm">
-        <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[var(--c-ink)]/10 text-[var(--c-ink-2)]"><Lock size={26} /></span>
-        <h1 className="aura-display mt-4 text-lg font-medium tracking-tight text-[var(--c-ink)]">Post-op takip tamamlandı</h1>
-        <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[var(--c-ink-2)]">
-          Bu vakanın post-op takip süreci kapandığı için klinik kayıtlara erişim hastaya devredilmiştir.
-          Doktor/personel artık bu vakanın klinik içeriğini görüntüleyemez. Erişim olayları değiştirilemez denetim
-          kaydında zaman damgalıdır.
-        </p>
-      </div>
-    </div>
-  );
-}
+// PostopClosedScreen → components/PostopClosedScreen.tsx (K03: hasta vaka merkezi de aynı ekranı çizer).

@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { decryptCaseFields } from "@/lib/crypto";
 import { canCaseBeAccessedBy } from "@/lib/ownership";
+import { staffAccessClosed } from "@/lib/postop-access";
+import { recordAccess } from "@/lib/audit";
+import { headersMeta } from "@/lib/request-meta";
+import { PostopClosedScreen } from "@/components/PostopClosedScreen";
 import { getCurrentUser } from "@/lib/auth";
 import { getTranslations, translateClinical } from "@/lib/i18n";
 import { countryFlag, countryName, urgencyStyle, langDir, formatDateTime, LANG_BCP47 } from "@/lib/constants";
@@ -63,6 +67,16 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
   if (!raw) notFound();
   const viewer = await getCurrentUser();
   if (!(await canCaseBeAccessedBy(viewer, raw))) notFound(); // BOLA kapısı decrypt ÖNCESİ
+  // E2EE Faz 2A post-op daraltması BU YOLDA DA (kontrol raporu K03): sahiplik kapısı takip kapanışına bakmaz;
+  // personel kokpitten çevrilirken bu alternatif adresten sağlık metnini görebiliyordu. Hasta muaf (helper PATIENT → false).
+  const closed = await staffAccessClosed(caseId, viewer);
+  if (closed.closed) {
+    await recordAccess({ actor: viewer, action: "POSTOP_ACCESS_DENIED", resourceType: "CASE", resourceId: caseId, subjectUserId: raw.userId, detail: `post-op kapalı (${closed.reason}) — vaka merkezi`, ...(await headersMeta()) });
+    return <PostopClosedScreen />;
+  }
+  // Erişim kaydı (K05): sayfa da JSON ucu (api/cases/[id]) gibi CASE_VIEW yazar — decrypt ÖNCESİ. Fail-safe:
+  // kayıt patlarsa alarm gider, sayfa bozulmaz (audit.ts). force-dynamic → prefetch gövdeyi koşturmaz, gezinti başına tek kayıt.
+  await recordAccess({ actor: viewer, action: "CASE_VIEW", resourceType: "CASE", resourceId: caseId, subjectUserId: raw.userId, detail: "vaka merkezi (sayfa)", ...(await headersMeta()) });
   const c = decryptCaseFields(raw);
 
   // Aciliyet + Triyaj Gerekçesi klinik-yorum → yalnız klinik personele (doktor/koordinatör/etik/admin)

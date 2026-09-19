@@ -9,6 +9,7 @@ import { PackageBuilder } from "@/components/PackageBuilder";
 import { computeHealthRiskMult, parseHealthDeclaration, type RecommendedTreatment } from "@/lib/pricing";
 import { getTryPerUsd } from "@/lib/fxrate";
 import { recordAccess } from "@/lib/audit";
+import { headersMeta } from "@/lib/request-meta";
 import { ArrowLeft, Luggage, Languages, Phone, MessageSquare, CalendarRange, Building2, Stethoscope, ShieldCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +61,7 @@ export default async function AgencyFilePage({ params }: { params: Promise<{ cas
   await recordAccess({
     actor: user, action: "AGENCY_FILE_VIEW", resourceType: "CASE", resourceId: c.id,
     subjectUserId: c.userId, detail: "Acente tedavi dosyası görüntüledi (kısıtlı alanlar)",
+    ...(await headersMeta()), // IP + cihaz (sayfa-tarafı reqMeta eşleniği — kontrol raporu K05)
   });
 
   let treatments: RecommendedTreatment[] = [];

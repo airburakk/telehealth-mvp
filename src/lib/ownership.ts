@@ -86,6 +86,51 @@ export async function canAccessCase(c: CaseRef): Promise<boolean> {
   return canCaseBeAccessedBy(await getCurrentUser(), c);
 }
 
+// ── GÖRÜŞME BAŞLATMA — YAZMA yetkisi, okuma kapısından AYRI (kontrol raporu 2026-09-19 D03) ────────
+// POST /api/cases/[id]/consult eskiden `canCaseBeAccessedBy` (OKUMA) ile korunuyordu: kendi vakasını okuyan
+// hasta da, aynı branştaki herhangi bir doktor da yeni görüşme AÇABİLİYORDU; tamamlanmış (DONE) vaka
+// yeniden IN_CONSULT'a yazılabiliyordu; atanmamış vakaya "ilk doğrulanmış doktor" (yabancı branş dahil)
+// atanıyordu. "Kim YAPAR" sorusu burada ayrı yanıtlanır; durum makinesi + post-op kapısı route'ta uygulanır.
+export type ConsultStartRef = CaseRef & { status: string };
+export type ConsultStartVerdict =
+  | { ok: true; doctorId: string; assigned: "existing" | "self" }
+  | { ok: false; status: 403 | 409; error: string };
+
+const NO_ACCESS = "Bu vakaya erişim yetkiniz yok.";
+
+export async function canStartConsultation(user: SessionUser | null, c: ConsultStartRef): Promise<ConsultStartVerdict> {
+  if (!user) return { ok: false, status: 403, error: NO_ACCESS };
+  if (deletionLocked(c)) return { ok: false, status: 403, error: NO_ACCESS }; // silme kilidi her rolden önce
+  switch (user.role) {
+    case "PATIENT": {
+      // Hasta yalnız KENDİ vakasında ve yalnız ATANMIŞ doktorla katılır (randevu kabulü / nöbetçi kapısı
+      // Case.doctorId'yi yazar — clinical-duty). Hasta doktor SEÇEMEZ; atama yoksa görüşme açılamaz.
+      if (c.userId !== user.id) return { ok: false, status: 403, error: NO_ACCESS };
+      if (!c.doctorId) return { ok: false, status: 409, error: "Görüşme için önce doktor ataması (randevu onayı veya nöbetçi doktor) gerekir." };
+      return { ok: true, doctorId: c.doctorId, assigned: "existing" };
+    }
+    case "DOCTOR": {
+      const { doctorId, verified, activated, branch } = await doctorContext(user);
+      if (!verified || !activated || !doctorId) return { ok: false, status: 403, error: "Klinik aktivasyonunuz tamamlanmadan görüşme başlatamazsınız." };
+      if (c.doctorId) {
+        if (c.doctorId !== doctorId) return { ok: false, status: 403, error: "Bu vaka başka bir doktora atanmış." };
+        return { ok: true, doctorId, assigned: "existing" };
+      }
+      // Atanmamış havuz vakası: yalnız KENDİ branşı; üstlenme = atama ("kabul ettiğiniz" — personel metni 10.1).
+      if (!branch || branch !== c.branch) return { ok: false, status: 403, error: "Bu vaka branşınızın havuzunda değil." };
+      return { ok: true, doctorId, assigned: "self" };
+    }
+    case "COORDINATOR":
+    case "ADMIN": {
+      // Operasyon/yönetim doktor SEÇMEZ: yalnız atanmış doktoru olan vakada görüşmeyi açabilir.
+      if (!c.doctorId) return { ok: false, status: 409, error: "Atanmış doktor yok — önce atama yapılmalı." };
+      return { ok: true, doctorId: c.doctorId, assigned: "existing" };
+    }
+    default:
+      return { ok: false, status: 403, error: NO_ACCESS }; // ETHICS/PARTNER/AGENCY/HEALTH_PRO → görüşme açamaz
+  }
+}
+
 // ── HASTA BEYANI uçları — OKUMA yetkisinden AYRI (2026-08-03 dış denetimi) ───────────────────────
 // `canAccessCase` bir OKUMA kapısıdır: koordinatör/etik/admin ve atanmış (hatta aynı branştaki
 // atanmamış) doktor true alır. Post-op check-in ve şikayet uçları bu kapıyı kullanıyordu → hasta

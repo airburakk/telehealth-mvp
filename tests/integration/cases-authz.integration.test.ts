@@ -40,6 +40,40 @@ describe.skipIf(!TEST_DB)("entegrasyon: GET /api/cases yetki (gerçek dev DB)", 
       expect((await GET(listReq())).status).toBe(200);
     }
   });
+
+  // ── Liste KAPSAMI (kontrol raporu 2026-09-17 K02 — lib/case-access tek kaynak) ──────────────────────
+  it("AKTİVASYONSUZ (verified ama activatedAt null) doktor → 200 + BOŞ küme (eskiden yalnız verified'a bakılıyordu)", async () => {
+    asUser(u(f.unactUserId, "DOCTOR"));
+    const r = await GET(listReq());
+    expect(r.status).toBe(200); // boş liste decrypt istemez → KEK'siz ortamda da koşar
+    const body = await r.json();
+    expect(body.total).toBe(0);
+    expect(body.items).toEqual([]);
+  });
+
+  it.skipIf(!process.env.DATA_ENCRYPTION_KEK)("d1 kuyruğu: atanan + kendi havuzu VAR; başka-doktora-atanmış · silme-kilitli · DOCS_PENDING YOK", async () => {
+    asUser(u(f.d1UserId, "DOCTOR"));
+    const body = await (await GET(listReq())).json();
+    const ids = new Set((body.items as { id: string }[]).map((c) => c.id));
+    expect(ids.has(f.assignedCaseId)).toBe(true);
+    expect(ids.has(f.unassignedCaseId)).toBe(true);
+    expect(ids.has(f.d2AssignedCaseId)).toBe(false);
+    expect(ids.has(f.lockedCaseId)).toBe(false);
+    expect(ids.has(f.docsPendingCaseId)).toBe(false);
+    // DTO: ham attachments/tourismPlan/freeCare değil türetimler
+    const first = body.items[0] as Record<string, unknown>;
+    expect("attachments" in first).toBe(false);
+    expect(typeof first.hasFiles).toBe("boolean");
+    expect(typeof first.lane).toBe("string");
+  });
+
+  it.skipIf(!process.env.DATA_ENCRYPTION_KEK)("personel kuyruğu: kilitli vaka HİÇBİR rolde listelenmez; DOCS_PENDING gözetim için görünür", async () => {
+    asUser(u("staff-COORDINATOR", "COORDINATOR"));
+    const body = await (await GET(new Request("http://localhost/api/cases?pageSize=100"))).json();
+    const ids = new Set((body.items as { id: string }[]).map((c) => c.id));
+    expect(ids.has(f.lockedCaseId)).toBe(false);
+    expect(ids.has(f.docsPendingCaseId)).toBe(true);
+  });
 });
 
 describe.skipIf(!TEST_DB)("entegrasyon: canCaseBeAccessedBy atama matrisi (gerçek doktor/vaka satırları)", () => {

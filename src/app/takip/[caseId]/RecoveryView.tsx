@@ -32,6 +32,8 @@ export type RecoveryData = {
   branch: string;
   day: number;
   closed?: boolean; // E2EE Faz 2A — takip tamamlandı → yeni kontrol girişi kapalı (geçmiş salt-okunur)
+  measurement?: "NO_DATA" | "STALE" | "CURRENT"; // D01 — ölçüm güncelliği (postop.ts MeasurementState)
+  ageDays?: number | null; // son kontrolün yaşı (gün)
   // FAZ 3 (2026-07-10): AI Epikriz post-op ekranında yaşar — personel üretir, hasta ister + salt-okunur görür
   isStaff?: boolean;
   dischargeRequestedAt?: string | null; // hastanın epikriz talebi (ISO)
@@ -51,6 +53,7 @@ const UI = [
   "Bu kayıtları kendi ülkenizdeki doktorunuzla süreli ve iptal edilebilir bir bağlantıyla paylaşın.",
   "Paylaşım Kontrol Merkezi",
   "Alarm bulgusu", "Yakın izlem", "Stabil", // severityMeta etiketleri (geçmiş rozetleri; v6.65 tıp literatürü terminolojisi)
+  "Henüz ölçüm girilmedi.", "Son ölçüm", "gün önce — yeni kontrol girin.", // D01 ölçüm güncelliği
   // AI Epikriz (FAZ 3) — hasta yüzü
   "AI Epikriz / Taburcu Raporu",
   "Tedavi sürecinizin tıbbi özet raporu. Doktorunuz oluşturduğunda burada görüntülenir.",
@@ -142,6 +145,14 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
         <div>
           <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">{t("Post-Op Takip")}</h1>
           <p className="text-sm text-[var(--c-ink-2)]">{data.patientName} · {t(data.branch)} · {t("Tedavi sonrası")} <strong className="text-[var(--c-ink)]">{data.day}. {t("gün")}</strong></p>
+          {/* D01: ölçüm yok / gecikti → güven verici "stabil" izlenimi yerine açık uyarı (liste ile aynı hesap). */}
+          {!data.closed && data.measurement && data.measurement !== "CURRENT" && (
+            <p className="mt-1 text-xs font-medium text-[var(--c-warning)]">
+              {data.measurement === "NO_DATA"
+                ? t("Henüz ölçüm girilmedi.")
+                : `${t("Son ölçüm")} ${data.ageDays ?? "?"} ${t("gün önce — yeni kontrol girin.")}`}
+            </p>
+          )}
         </div>
       </div>
 

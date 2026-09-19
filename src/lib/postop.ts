@@ -143,6 +143,56 @@ export function worstSeverity(...arr: Severity[]): Severity {
   return arr.reduce((a, b) => max(a, b), "NONE" as Severity);
 }
 
+// ── Ölçüm güncelliği — klinik şiddetten AYRI eksen (kontrol raporu 2026-09-19 D01) ────────────────
+// Sorun: son kontrol yoksa severity NONE → "Stabil" yazılıyordu; son ölçüm aylar önce kalsa da etiket
+// değişmiyordu. Verisizlik ile normal bulgu yazılımda AYNI duruma çevriliyordu — hastanın güncel durumu
+// bilinmezken güven verici klinik durum üretiliyordu. Artık "Stabil" yalnız GÜNCEL ölçümde yazılır;
+// alarm/izlem bulgusu eski olsa da GİZLENMEZ (klinik sinyal kaybolmasın), yaşı ayrıca yazılır.
+export type MeasurementState = "NO_DATA" | "STALE" | "CURRENT";
+
+/** Son kontrol bu kadar günden eskiyse "gecikti". ⚠️ MVP yer tutucu — 👤 klinik ekip onayı bekler
+ *  (branş protokolüne göre farklılaşabilir); tek yerden okunur ki onay gelince tek satır değişsin. */
+export const STALE_AFTER_DAYS = 3;
+
+export function measurementState(lastCheckAt: Date | string | null | undefined, now: Date = new Date()): MeasurementState {
+  if (!lastCheckAt) return "NO_DATA";
+  const ageDays = (now.getTime() - new Date(lastCheckAt).getTime()) / 86_400_000;
+  return ageDays > STALE_AFTER_DAYS ? "STALE" : "CURRENT";
+}
+
+export function measurementAgeDays(lastCheckAt: Date | string, now: Date = new Date()): number {
+  return Math.max(0, Math.floor((now.getTime() - new Date(lastCheckAt).getTime()) / 86_400_000));
+}
+
+/**
+ * Liste/rozet etiketi = şiddet + güncellik birlikte. `measured:false` = etiket bir ölçüme DEĞİL ölçüm
+ * yokluğuna/gecikmesine dayanır (arayüz nötr/uyarı tonu kullanır, "Stabil" yazmaz).
+ */
+export function recoveryStatusMeta(
+  severity: Severity,
+  state: MeasurementState,
+  ageDays?: number | null,
+): { label: string; badge: string; dot: string; tone: string; measured: boolean } {
+  if (severity === "NONE" && state === "NO_DATA")
+    return {
+      label: "Ölçüm yok",
+      badge: "bg-[var(--c-ink)]/10 text-[var(--c-ink-2)] ring-[var(--c-hairline)]",
+      dot: "bg-[var(--c-ink-3)]",
+      tone: "var(--c-ink-3)",
+      measured: false,
+    };
+  if (severity === "NONE" && state === "STALE")
+    return {
+      label: ageDays != null ? `Ölçüm gecikti (${ageDays} gün)` : "Ölçüm gecikti",
+      badge: "bg-[var(--c-warning)]/15 text-[var(--c-warning)] ring-[var(--c-warning)]/25",
+      dot: "bg-[var(--c-warning)]",
+      tone: "var(--c-warning)",
+      measured: false,
+    };
+  const m = severityMeta(severity);
+  return state === "STALE" && ageDays != null ? { ...m, label: `${m.label} · ${ageDays} gün önce`, measured: true } : { ...m, measured: true };
+}
+
 // ── Branşa özel GÜNLÜK post-op checklist (genel ağrı/ateş/ilaç'a EK; her seçenek bir severity taşır) ──
 export interface ChecklistOption { v: string; sev: Severity }
 export interface ChecklistItem { id: string; label: string; options: ChecklistOption[] }

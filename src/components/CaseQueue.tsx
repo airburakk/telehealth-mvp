@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { urgencyStyle, CASE_STATUS, countryFlag, countryName, formatDateTime } from "@/lib/constants";
 import { BranchAvatar } from "@/components/BranchAvatar";
-import { Search, ArrowRight, Inbox, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, ArrowRight, Inbox, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 
 // 5 kulvar (2026-07-31 birleşik liste): Case satırları (telehealth/tourism/free) + İkinci Görüş +
 // Konsültasyon Talebi. Renkler tema-duyarlı --lane-* token'larından (v6.22 renk disiplini:
@@ -37,111 +37,121 @@ export interface CaseRow {
   hasFiles: boolean;
 }
 
-// Üst istatistikler: sayfalı (personel) görünümde rows yalnız görünür dilim olduğundan
-// server'da count ile hesaplanıp `stats` prop'uyla geçilir; verilmezse rows'tan türetilir (doktor dalı).
+// Üst istatistikler: HER dalda sunucuda count ile hesaplanır (kontrol raporu 2026-09-17 K09 — eskiden doktor
+// dalında kesilmiş ilk 100 satırdan türetiliyordu; "Toplam" gerçek toplam değildi).
 export interface CaseQueueStats {
   total: number;
   waiting: number;
   urgent: number;
 }
 
-// Sunucu-taraflı filtre modu (personel/sayfalı görünüm): rows yalnız görünür dilim olduğundan
-// branş/durum filtresi URL parametresiyle sunucuya taşınır; branş seçenekleri tam listeden gelir.
-// Prop verilmezse mevcut istemci-taraflı filtre davranışı birebir korunur (doktor dalı).
+// Sunucu-taraflı filtre/sıralama (İKİ dal, K09): rows yalnız görünür dilim olduğundan branş/durum/acil/sıralama
+// URL parametresiyle sunucuya taşınır; branş seçenekleri kapsamın tam listesinden gelir. Metin araması ve kulvar
+// çipleri sayfa içi (istemci) kalır — sunucu kapsamını GENİŞLETEMEZLER.
 export interface CaseQueueServerFilters {
   branch: string; // "all" veya seçili branş
   status: string; // "all" veya seçili durum
   urgent: boolean; // "Acil (4-5)" stat filtresi — urgency>=4 SUNUCUDA uygulanır (2026-08-04)
+  sort: "urgency" | "newest"; // aciliyet (varsayılan) · en yeni — sunucuda sıralanır
   branches: string[]; // tam branş listesi (sunucudan, distinct)
+}
+
+// Sayfalama gezintisi bileşenin içinde çizilir (liste kapalıyken görünmez — doktor dalı).
+export interface CaseQueuePagination {
+  page: number;
+  totalPages: number;
+  total: number;
+  qs: string; // korunacak filtre parametreleri (&branch=…&status=…&urgent=1&sort=newest; URL-kodlu)
 }
 
 type StatKey = "total" | "waiting" | "urgent";
 
-export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; stats?: CaseQueueStats; serverFilters?: CaseQueueServerFilters }) {
+export function CaseQueue({
+  rows,
+  stats,
+  serverFilters,
+  startCollapsed = false,
+  laneFilter = false,
+  pagination,
+}: {
+  rows: CaseRow[];
+  stats: CaseQueueStats;
+  serverFilters: CaseQueueServerFilters;
+  /** Doktor dalı (2026-07-31 kararı): liste varsayılan KAPALI — stat kartı / "göster" düğmesi açar. */
+  startCollapsed?: boolean;
+  /** 5'li kulvar çipleri (doktor dalı — SO/konsültasyon satırları kuyruğa katılır). */
+  laneFilter?: boolean;
+  pagination?: CaseQueuePagination;
+}) {
   const router = useRouter();
   const pathname = usePathname();
-  const [branch, setBranch] = useState("all");
-  const [status, setStatus] = useState("all");
   const [lane, setLane] = useState<"all" | QueueLane>("all");
-  const [sortMode, setSortMode] = useState<"urgency" | "newest">("urgency");
   const [q, setQ] = useState("");
-  // Doktor dalı (2026-07-31): liste varsayılan KAPALI — stat kartına tıklayınca açılır ve o stat'a
-  // göre filtreler (Toplam=tümü · Bekleyen=NEW · Acil=4-5). Personel dalında liste hep açık.
-  const [openStat, setOpenStat] = useState<StatKey | null>(null);
-  const listOpen = serverFilters ? true : openStat !== null;
+  // Kapalı başlangıçta liste; URL'de filtre/sıralama/2+. sayfa varsa (sunucu filtresi tıklandı) açık kalır.
+  const [opened, setOpened] = useState(false);
+  const hasUrlFilter =
+    serverFilters.branch !== "all" || serverFilters.status !== "all" || serverFilters.urgent ||
+    serverFilters.sort !== "urgency" || (pagination?.page ?? 1) > 1;
+  const listOpen = !startCollapsed || opened || hasUrlFilter;
 
-  // Sunucu modunda seçim değeri URL'den (props) gelir; istemci modunda local state.
-  const branchValue = serverFilters ? serverFilters.branch : branch;
-  const statusValue = serverFilters ? serverFilters.status : status;
-
-  const localBranches = useMemo(() => Array.from(new Set(rows.map((r) => r.branch))).sort(), [rows]);
-  const branches = serverFilters ? serverFilters.branches : localBranches;
-
-  // Sunucu modunda filtre değişimi → URL parametresi (page=1'e dönerek); liste sunucudan yenilenir.
-  const pushServerFilters = (nextBranch: string, nextStatus: string, nextUrgent: boolean) => {
+  // Filtre değişimi → URL parametresi (page=1'e dönerek); liste sunucudan yenilenir ve açılır.
+  const pushServerFilters = (next: Partial<Pick<CaseQueueServerFilters, "branch" | "status" | "urgent" | "sort">>) => {
+    const f = { ...serverFilters, ...next };
     const p = new URLSearchParams();
     p.set("page", "1");
-    if (nextBranch !== "all") p.set("branch", nextBranch);
-    if (nextStatus !== "all") p.set("status", nextStatus);
-    if (nextUrgent) p.set("urgent", "1");
+    if (f.branch !== "all") p.set("branch", f.branch);
+    if (f.status !== "all") p.set("status", f.status);
+    if (f.urgent) p.set("urgent", "1");
+    if (f.sort === "newest") p.set("sort", "newest");
+    setOpened(true);
     router.push(`${pathname}?${p.toString()}`);
   };
-  const onBranchChange = (v: string) => (serverFilters ? pushServerFilters(v, statusValue, serverFilters.urgent) : setBranch(v));
-  const onStatusChange = (v: string) => (serverFilters ? pushServerFilters(branchValue, v, serverFilters.urgent) : setStatus(v));
 
-  const filtered = useMemo(() => {
-    const base = rows.filter(
-      (r) =>
-        // Sunucu modunda branş/durum zaten sunucuda uygulandı → yalnız metin araması (bu sayfada).
-        (!!serverFilters || branch === "all" || r.branch === branch) &&
-        (!!serverFilters || status === "all" || r.status === status) &&
-        (!!serverFilters || lane === "all" || r.lane === lane) &&
-        // Stat filtresi (doktor dalı): Bekleyen=NEW (yalnız case satırlarında bulunur) · Acil=4-5.
-        (!!serverFilters || openStat !== "waiting" || r.status === "NEW") &&
-        (!!serverFilters || openStat !== "urgent" || (r.urgency ?? 0) >= 4) &&
-        (q === "" || r.patientName.toLocaleLowerCase("tr").includes(q.toLocaleLowerCase("tr")))
-    );
-    // Doktor dalında sıralama seçici; personel dalı server sırasını korur (sayfalı dilim).
-    if (!serverFilters) {
-      base.sort((a, b) =>
-        sortMode === "newest"
-          ? b.createdAt.localeCompare(a.createdAt)
-          : (b.urgency ?? -1) - (a.urgency ?? -1) || b.createdAt.localeCompare(a.createdAt)
-      );
-    }
-    return base;
-  }, [rows, branch, status, lane, sortMode, q, serverFilters, openStat]);
+  const filtered = useMemo(
+    () =>
+      rows.filter(
+        (r) =>
+          (lane === "all" || r.lane === lane) &&
+          (q === "" || r.patientName.toLocaleLowerCase("tr").includes(q.toLocaleLowerCase("tr"))),
+      ),
+    [rows, lane, q],
+  );
 
-  const total = stats?.total ?? rows.length;
-  const urgent = stats?.urgent ?? rows.filter((r) => (r.urgency ?? 0) >= 4).length;
-  const waiting = stats?.waiting ?? rows.filter((r) => r.status === "NEW").length;
+  const { total, waiting, urgent } = stats;
 
-  // Doktor dalı: local stat filtresi (listeyi açar). Personel dalı (2026-08-04, kullanıcı isteği):
-  // sayılar tam kümeden (server-count) geldiği için tıklama da tam kümeye döner — branş/durum
-  // SIFIRLANIP stat'ın kendi filtresi URL'e yazılır; aktifken ikinci tıklama kapatır (aynı model).
+  // Stat tıklaması (2026-08-04 modeli): sayılar tam kümeden geldiği için tıklama da tam kümeye döner —
+  // branş/durum SIFIRLANIP stat'ın kendi filtresi URL'e yazılır; aktifken ikinci tıklama kapatır.
+  // Kapalı başlangıçta "Toplam" filtresiz aç/kapat düğmesi gibi de çalışır (doktor dalı alışkanlığı).
   const toggleStat = (key: StatKey) => {
-    if (!serverFilters) {
-      setOpenStat((cur) => (cur === key ? null : key));
-      return;
-    }
     if (key === "waiting") {
-      const on = statusValue === "NEW" && !serverFilters.urgent;
-      pushServerFilters("all", on ? "all" : "NEW", false);
+      const on = serverFilters.status === "NEW" && !serverFilters.urgent;
+      pushServerFilters({ branch: "all", status: on ? "all" : "NEW", urgent: false });
     } else if (key === "urgent") {
-      pushServerFilters("all", "all", !serverFilters.urgent);
+      pushServerFilters({ branch: "all", status: "all", urgent: !serverFilters.urgent });
+    } else if (startCollapsed && !hasUrlFilter) {
+      setOpened((o) => !o);
     } else {
-      pushServerFilters("all", "all", false); // Toplam = tüm filtreleri temizle
+      pushServerFilters({ branch: "all", status: "all", urgent: false, sort: "urgency" }); // Toplam = tüm filtreleri temizle
     }
   };
-  // Personel dalında aktiflik URL'den türetilir; "Toplam" vurgusuz kalır (tıklaması = temizle).
-  const statActive = serverFilters
-    ? { total: false, waiting: statusValue === "NEW" && !serverFilters.urgent, urgent: serverFilters.urgent }
-    : { total: openStat === "total", waiting: openStat === "waiting", urgent: openStat === "urgent" };
+  const statActive = {
+    total: startCollapsed && listOpen && !hasUrlFilter,
+    waiting: serverFilters.status === "NEW" && !serverFilters.urgent,
+    urgent: serverFilters.urgent,
+  };
+  const toggleList = () => {
+    if (listOpen) {
+      setOpened(false);
+      if (hasUrlFilter) router.push(pathname); // URL filtresi listeyi açık tutar → temizle
+    } else {
+      setOpened(true);
+    }
+  };
+  const pageHref = (p: number) => `${pathname}?page=${p}${pagination?.qs ?? ""}`;
 
   return (
     <div>
-      {/* Stats — iki dalda da tıklanabilir (2026-08-04): doktor dalında listeyi açar + local filtre;
-          personel dalında sunucu filtresini URL'e yazar. */}
+      {/* Stats — tıklanabilir (2026-08-04): sunucu filtresini URL'e yazar; kapalı başlangıçta listeyi de açar. */}
       <div className="grid grid-cols-3 gap-3 sm:max-w-md">
         <Stat label="Toplam vaka" value={total} interactive active={statActive.total} onClick={() => toggleStat("total")} />
         <Stat label="Bekleyen" value={waiting} tone="text-blue-300" interactive active={statActive.waiting} onClick={() => toggleStat("waiting")} />
@@ -151,10 +161,10 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
           ayrıca kendi stat filtresiyle açmaya devam eder. Kapalıyken kutu + metin aura mavisi
           ışımayla çağırır (2026-08-16 kullanıcı kararı; .queue-reveal-glow globals.css) —
           liste açılınca söner (v6.98 profil-chevron istisnasıyla aynı sınıf). */}
-      {!serverFilters && (
+      {startCollapsed && (
         <button
           type="button"
-          onClick={() => setOpenStat((cur) => (cur === null ? "total" : null))}
+          onClick={toggleList}
           aria-expanded={listOpen}
           className={`mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border bg-[var(--c-panel)] px-4 py-2.5 text-sm font-semibold transition ${
             listOpen
@@ -172,36 +182,35 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
 
       {listOpen && (
         <>
-          {/* Filters */}
+          {/* Filters — branş/durum/sıralama sunucuda (URL); metin araması bu sayfada */}
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <div className="relative">
               <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-ink-3)]" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder={serverFilters ? "Bu sayfada ara…" : "Hasta ara…"}
+                placeholder="Bu sayfada ara…"
+                aria-label="Bu sayfada hasta adına göre ara"
                 className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] py-2 pl-9 pr-3 text-sm outline-none focus:border-[var(--c-accent)]"
               />
             </div>
-            <select value={branchValue} onChange={(e) => onBranchChange(e.target.value)} aria-label="Branşa göre filtrele" className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
+            <select value={serverFilters.branch} onChange={(e) => pushServerFilters({ branch: e.target.value })} aria-label="Branşa göre filtrele" className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
               <option value="all">Tüm branşlar</option>
-              {branches.map((b) => <option key={b} value={b}>{b}</option>)}
+              {serverFilters.branches.map((b) => <option key={b} value={b}>{b}</option>)}
             </select>
-            <select value={statusValue} onChange={(e) => onStatusChange(e.target.value)} aria-label="Duruma göre filtrele" className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
+            <select value={serverFilters.status} onChange={(e) => pushServerFilters({ status: e.target.value })} aria-label="Duruma göre filtrele" className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
               <option value="all">Tüm durumlar</option>
               {Object.entries(CASE_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
-            {/* Sıralama (yalnız doktor dalı) — aciliyet varsayılan, "en yeni" sisteme düşme zamanı */}
-            {!serverFilters && (
-              <select value={sortMode} onChange={(e) => setSortMode(e.target.value as "urgency" | "newest")} aria-label="Sıralama" className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
-                <option value="urgency">Sırala: Aciliyet</option>
-                <option value="newest">Sırala: En yeni</option>
-              </select>
-            )}
+            {/* Sıralama — aciliyet varsayılan, "en yeni" sisteme düşme zamanı (sunucuda; sayfalı dilimde istemci sıralaması yanıltırdı) */}
+            <select value={serverFilters.sort} onChange={(e) => pushServerFilters({ sort: e.target.value === "newest" ? "newest" : "urgency" })} aria-label="Sıralama" className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
+              <option value="urgency">Sırala: Aciliyet</option>
+              <option value="newest">Sırala: En yeni</option>
+            </select>
           </div>
 
-          {/* Kulvar çipleri (yalnız doktor dalı) — 5'li yol filtresi */}
-          {!serverFilters && (
+          {/* Kulvar çipleri (doktor dalı) — 5'li yol filtresi; sayfa içi */}
+          {laneFilter && (
             <div className="mt-3 flex flex-wrap items-center gap-1.5" role="group" aria-label="Kulvara göre filtrele">
               <button
                 onClick={() => setLane("all")}
@@ -276,6 +285,36 @@ export function CaseQueue({ rows, stats, serverFilters }: { rows: CaseRow[]; sta
               );
             })}
           </div>
+
+          {/* Sayfalama — /denetim deseni; İKİ dalda (K09). Liste açıkken çizilir. */}
+          {pagination && pagination.totalPages > 1 && (
+            <nav className="mt-5 flex flex-wrap items-center justify-between gap-3" aria-label="Vaka kuyruğu sayfaları">
+              <span className="text-xs text-[var(--c-ink-2)]">
+                Toplam <strong className="text-[var(--c-ink)]">{pagination.total}</strong> vaka · Sayfa{" "}
+                <strong className="text-[var(--c-ink)]">{pagination.page}</strong> / {pagination.totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                {pagination.page > 1 ? (
+                  <Link href={pageHref(pagination.page - 1)} className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]">
+                    <ChevronLeft size={15} /> Önceki
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-3)] cursor-not-allowed">
+                    <ChevronLeft size={15} /> Önceki
+                  </span>
+                )}
+                {pagination.page < pagination.totalPages ? (
+                  <Link href={pageHref(pagination.page + 1)} className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]">
+                    Sonraki <ChevronRight size={15} />
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-3)] cursor-not-allowed">
+                    Sonraki <ChevronRight size={15} />
+                  </span>
+                )}
+              </div>
+            </nav>
+          )}
         </>
       )}
     </div>
