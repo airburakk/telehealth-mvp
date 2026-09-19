@@ -99,13 +99,43 @@ export const REVOCABLE_LABEL: Record<RevocableScope, Record<ConsentLang, string>
   HEALTH_DECLARATION: { tr: "Sigorta sağlık beyanı", en: "Insurance health declaration" },
 };
 
-/** Aktiflik kararı (saf — birim testli): güncel sürümde verme kaydı var ve son geri alma ondan ÖNCE. */
+/**
+ * Aktiflik kararı (saf — birim testli): güncel sürümde verme kaydı var ve son geri alma, son OLUMLU olaydan (verme ya da
+ * yeniden verme) ÖNCE. v6.278 (K10): geri alma sonrası yeniden verme aynı (kullanıcı, kapsam, sürüm) satırına yazılamaz
+ * (tekil anahtar; zincir append-only) → `<KAPSAM>_REGRANT` sayaç-sürümlü kaydı olumlu olayı taşır. Yeniden verme yalnız
+ * vermeden SONRAYSA sayılır: sürüm artınca yeni verme satırı zaten daha yenidir, eski dönemin yeniden vermeleri düşer.
+ */
 export function decideActive(
   grant: { version: number; grantedAt: Date } | null,
   revoke: { grantedAt: Date } | null,
   requiredVersion: number,
+  regrant: { grantedAt: Date } | null = null,
 ): boolean {
   if (!grant || grant.version < requiredVersion) return false;
   if (!revoke) return true;
-  return revoke.grantedAt.getTime() < grant.grantedAt.getTime();
+  return revoke.grantedAt.getTime() < latestPositiveAt(grant, regrant);
+}
+
+/** Son olumlu olayın zamanı (ms): verme, ya da vermeden SONRAKİ yeniden verme. */
+export function latestPositiveAt(grant: { grantedAt: Date }, regrant: { grantedAt: Date } | null | undefined): number {
+  const g = grant.grantedAt.getTime();
+  const r = regrant ? regrant.grantedAt.getTime() : 0;
+  return r > g ? r : g;
+}
+
+/** Yeniden verme kovası: `<KAPSAM>_REGRANT` (sayaç-sürümlü; metin hash'i = güncel sürümün kanonik metni — ekran = hash). */
+export function regrantScopeOf(scope: string): string {
+  return `${scope}_REGRANT`;
+}
+
+export type ConsentWritePlan = "noop" | "grant" | "regrant";
+
+/**
+ * SAF yazım planı (K10): aktifse hiçbir şey yazılmaz · güncel sürümde verme kaydı YOKSA normal verme (yeni satır) ·
+ * verme var ama geri alınmışsa REGRANT. `grantedVersion` = kapsamın en yüksek verme sürümü (yoksa null).
+ */
+export function planConsentWrite(status: { active: boolean; grantedVersion: number | null }, requiredVersion: number): ConsentWritePlan {
+  if (status.active) return "noop";
+  if (status.grantedVersion !== null && status.grantedVersion >= requiredVersion) return "regrant";
+  return "grant";
 }

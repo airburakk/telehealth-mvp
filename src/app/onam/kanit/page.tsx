@@ -31,7 +31,7 @@ interface Proof {
   textHash: string | null; canonicalTextHash: string; prevHash: string | null; entryHash: string | null;
   tsAuthority: string | null; tsTime: string | null; tsToken: string | null;
   verification: { hasProofLayer: boolean; entryHashValid: boolean | null; timestampValid: boolean | null; textHashMatches: boolean | null };
-  revocable?: boolean; active?: boolean | null; revokedAt?: string | null;
+  revocable?: boolean; active?: boolean | null; revokedAt?: string | null; regrantedAt?: string | null;
 }
 
 export default function ConsentProofPage() {
@@ -108,6 +108,17 @@ export default function ConsentProofPage() {
         <div className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
           <ShieldOff size={16} className="mt-0.5 shrink-0" />
           <span>Bu rıza <b>geri alınmış</b>{proof.revokedAt ? ` (${fmt(proof.revokedAt)})` : ""}. Aşağıdaki kayıt, geri almadan önceki verme kaydının kanıtıdır; geri alma da aynı zincirde ayrı bir kayıttır.</span>
+        </div>
+      )}
+
+      {proof.revocable && proof.active && proof.regrantedAt && (
+        <div className="mt-3 flex items-start gap-2 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+          <ShieldCheck size={16} className="mt-0.5 shrink-0" />
+          <span>
+            Bu rıza daha önce geri alınmış{proof.revokedAt ? ` (${fmt(proof.revokedAt)})` : ""}, ardından <b>{fmt(proof.regrantedAt)}</b> tarihinde
+            yeniden verilmiştir. Aşağıdaki kayıt ilk verme kaydının kanıtıdır; geri alma ve yeniden verme kayıtları da aynı zincirde
+            ({proof.scope}_REVOKE · {proof.scope}_REGRANT) mühürlüdür.
+          </span>
         </div>
       )}
 

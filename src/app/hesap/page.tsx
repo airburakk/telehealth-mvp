@@ -34,7 +34,10 @@ export default async function AccountPage() {
   const items: ConsentItem[] = await Promise.all(
     REVOCABLE_SCOPES.map(async (scope) => {
       const s = await consentStatus(user.id, scope, SCOPE_VERSION[scope]);
-      return { scope, active: s.active, grantedAt: s.grantedAt?.toISOString() ?? null, revokedAt: s.revokedAt?.toISOString() ?? null };
+      return {
+        scope, active: s.active, grantedAt: s.grantedAt?.toISOString() ?? null, revokedAt: s.revokedAt?.toISOString() ?? null,
+        regrantedAt: s.regrantedAt?.toISOString() ?? null, // v6.278 (K10)
+      };
     }),
   );
 

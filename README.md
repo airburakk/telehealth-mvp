@@ -335,7 +335,7 @@ imkânı belli olmuyordu) → mobilde 13px görünür, AURA wordmark 12px'e öl�
   `AURA_TERMS` v1 A02; personel `STAFF_KVKK` v1 A09 rol kesiti; ekran = hash, dil başına**); sürümlü `ConsentRecord` +
   hash-zinciri + zaman damgası + Onay Kanıtı (`/onam/kanit`, 10 kapsam sekmesi, TR/EN adaylı metin eşleşmesi). Geri alınabilir
   rızalar (AI · beyan) **Hesabım → Rızalarım**: `POST /api/consent/revoke` → `<KAPSAM>_REVOKE` ispatlı kayıt; `activeConsent`
-  geri-alma duyarlı (`lib/aura-consent.ts`). (`lib/consent.ts`, `lib/timestamp.ts`, `lib/aura-consent-texts.ts`)
+  geri-alma duyarlı (`lib/aura-consent.ts`); **yeniden verme (v6.278, K10)** `<KAPSAM>_REGRANT` sayaç-sürümlü kayıt (`recordRevocableConsent`). (`lib/consent.ts`, `lib/timestamp.ts`, `lib/aura-consent-texts.ts`)
 - **AI karşılama açık rızası (`AI_TRIAGE` scope, v6.4):** 4 kulvarda (triyaj · ikinci görüş · sağlık turizmi ·
   ücretsiz sağlık) semptom/tanı girişinden **ÖNCE** ayrı açık rıza kapısı (`components/AiConsentGate.tsx`) — AI'nın
   yalnız doğru branşa yönlendirme + yüklenen belgelerin çevirisi için işleyeceğini, tanı/tedavi kararı için
@@ -507,6 +507,13 @@ zinciri KIRIK gösterirdi, bu desen onu önler. `lib/kvkk-applications.ts` + `/d
 3 yıl saklama; form artık CANLI (önceden yalnız metin sayfasıydı, `bilgi@doctorium.tr`'ye yönlendiriyordu).
 Üçü de `purge-deleted` cron'una (06:30 TR) entegre. Migration `20260909120000_kvkk_paket2` (yalnız nullable
 kolon + yeni tablo) dev+prod'a uygulandı. 🚀 CANLI `46e4559`.
+
+**v6.278 (2026-09-20) — K10: geri alınan açık rıza yeniden VERİLEBİLİR + H10 kapı sunucu okuması:** `ConsentRecord` (kullanıcı, kapsam,
+sürüm) tekil + `recordConsent` idempotent → geri alınan AI/beyan rızası aynı sürümde yeniden verilemiyordu (200, satır yok, kalıcı 403).
+Çözüm (👤 "REGRANT"): `recordRevocableConsent` (`lib/aura-consent`) — aktifse no-op · verme yoksa verme · verme var + geri alınmışsa
+`<KAPSAM>_REGRANT` sayaç-sürümlü kayıt (aynı zincir, aynı metin hash'i); `decideActive(grant, revoke, version, regrant)` son OLUMLU olayı
+(verme ya da sonraki yeniden verme) sayar; `consentStatus.regrantedAt`. `GET /api/consent/ai` + `AiConsentGate` mount'ta sunucudaki
+aktif rızayı okur (H10; kontrol bitene dek form mount edilmez). Kanıt/Rızalarım "yeniden verildi". Migration YOK.
 
 **v6.274 (2026-09-19) — AURA hukuki set kod Paket D (formlar; S3 · R6 · R12; migration YOK):** **18+ kapısı** — `PatientSignupForm` doğum
 tarihi beyanı (saklanmaz, loglanmaz; `lib/patient-age.ts`, `student-age` deseni); e-posta kaydı `signup-patient` gövdede yeniden hesaplar
@@ -759,8 +766,8 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
     geliştirme/test ya da `ALLOW_UNVERIFIED_SIGNUP=1` (prova).
   · **Post-op durum:** "Stabil" yalnız GÜNCEL ölçümde (`lib/postop measurementState`, `STALE_AFTER_DAYS=3` — klinik onay bekleyen yer tutucu);
     hasta takip listesi kapanışı detayla aynı kaynaktan (`recoveryClosed`, `lib/postop-rows`).
-  · ⚠️ **Bilinen kusur K10 (2026-09-20):** geri alınan AI rızası aynı sürümde yeniden verilemiyor (`recordConsent` idempotent; `POST
-    /api/consent/ai` 200 döner ama satır yazmaz) → hasta kalıcı 403; çözüm kararı vault todo'da (onam kaydı delil zinciri).
+  · ✅ **K10 kapandı (v6.278, 2026-09-20):** geri alınan rıza `<KAPSAM>_REGRANT` sayaç-sürümlü kayıtla yeniden verilir
+    (`recordRevocableConsent`; `decideActive` son olumlu olay); `GET /api/consent/ai` + `AiConsentGate` sunucudan aktif rızayı okur (H10).
 - **Rate-limit (v4.18):** Upstash Redis birincil (dağıtık/atomik; login 10/5dk/IP · paylaşım-şifre
   10/5dk/IP+link · AI 20/dk/kullanıcı), env yoksa/hatada in-memory yedek (fail-open). Env:
   `UPSTASH_REDIS_REST_URL/TOKEN`.

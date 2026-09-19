@@ -15,21 +15,22 @@ export interface ConsentItem {
   active: boolean;
   grantedAt: string | null;
   revokedAt: string | null;
+  regrantedAt: string | null; // v6.278 (K10): geri alma sonrası yeniden verme tarihi
 }
 
-const UI: Record<ConsentLang, { title: string; sub: string; active: string; revoked: string; outdated: string; none: string; revoke: string; busy: string; granted: string; revokedOn: string; err: string; proof: string; general: string }> = {
+const UI: Record<ConsentLang, { title: string; sub: string; active: string; revoked: string; outdated: string; none: string; revoke: string; busy: string; granted: string; regranted: string; revokedOn: string; err: string; proof: string; general: string }> = {
   tr: {
     title: "Rızalarım",
     sub: "Ayrı kapsamlarda verdiğiniz açık rızaların durumu. Geri alma, o ana kadar yapılmış işlemi etkilemez; ilgili adımda rızanız yeniden istenir.",
     active: "Aktif", revoked: "Geri alındı", outdated: "Eski sürüm — yeniden istenecek", none: "Verilmedi", revoke: "Geri al", busy: "Kaydediliyor…",
-    granted: "Verildi", revokedOn: "Geri alındı", err: "Geri alma kaydedilemedi, lütfen tekrar deneyin.",
+    granted: "Verildi", regranted: "Yeniden verildi", revokedOn: "Geri alındı", err: "Geri alma kaydedilemedi, lütfen tekrar deneyin.",
     proof: "Onay Kanıtı", general: "Genel KVKK açık rızanızı geri almak hizmetin sona ermesi anlamına gelir; bunun için aşağıdaki hesap silme akışını kullanın.",
   },
   en: {
     title: "My consents",
     sub: "Status of the explicit consents you gave in separate scopes. Withdrawal does not affect processing carried out until now; your consent will be requested again at the relevant step.",
     active: "Active", revoked: "Withdrawn", outdated: "Outdated — will be asked again", none: "Not given", revoke: "Withdraw", busy: "Saving…",
-    granted: "Given", revokedOn: "Withdrawn", err: "Withdrawal could not be recorded, please try again.",
+    granted: "Given", regranted: "Given again", revokedOn: "Withdrawn", err: "Withdrawal could not be recorded, please try again.",
     proof: "Consent Proof", general: "Withdrawing your general KVKK explicit consent means ending the service; use the account deletion flow below for that.",
   },
 };
@@ -75,7 +76,7 @@ export function ConsentWithdrawPanel({ lang, items: initial }: { lang: ConsentLa
               <div className="min-w-0">
                 <div className="text-sm font-medium text-[var(--c-ink)]">{REVOCABLE_LABEL[it.scope][lang]}</div>
                 <div className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">
-                  {it.grantedAt ? `${ui.granted}: ${fmt(it.grantedAt)}` : ""}
+                  {it.regrantedAt ? `${ui.regranted}: ${fmt(it.regrantedAt)}` : it.grantedAt ? `${ui.granted}: ${fmt(it.grantedAt)}` : ""}
                   {revoked && it.revokedAt ? ` · ${ui.revokedOn}: ${fmt(it.revokedAt)}` : ""}
                 </div>
               </div>

@@ -11,7 +11,7 @@ import { canonicalTextsFor, scopeVersion } from "@/lib/doctorium-consent";
 import {
   AURA_TERMS_SCOPE, AURA_TERMS_TEXT, AURA_TERMS_VERSION, GENERAL_KVKK_TEXT, HEALTH_DECLARATION_SCOPE, HEALTH_DECLARATION_VERSION,
   REVOCABLE_LABEL, REVOCABLE_SCOPES, REVOKE_TEXT, STAFF_KVKK_FULL_TEXT, STAFF_KVKK_SCOPE, STAFF_KVKK_VERSION, STAFF_ROLE_CLAUSE,
-  STAFF_ROLES, decideActive, revokeScopeOf, staffKvkkText,
+  STAFF_ROLES, decideActive, planConsentWrite, regrantScopeOf, revokeScopeOf, staffKvkkText,
 } from "@/lib/aura-consent-texts";
 import {
   AI_CONSENT_SCOPE, AI_CONSENT_VERSION, AI_INTERPRET_SCOPE, AI_INTERPRET_VERSION, AI_INTERPRET_TEXT, AI_TRIAGE_TEXT, HEALTH_DECLARATION_TEXT,
@@ -124,6 +124,23 @@ describe("geri alma — decideActive + metinler", () => {
   it("geri alma vermeden SONRA → pasif; yeniden verme geri almadan SONRA → aktif", () => {
     expect(decideActive({ version: 2, grantedAt: d("2026-09-01") }, { grantedAt: d("2026-09-02") }, 2)).toBe(false);
     expect(decideActive({ version: 2, grantedAt: d("2026-09-03") }, { grantedAt: d("2026-09-02") }, 2)).toBe(true);
+  });
+  it("K10 (v6.278): geri alma sonrası REGRANT olumlu olayı taşır; vermeden ÖNCEKİ yeniden verme sayılmaz; tekrar geri alma pasif", () => {
+    const grant = { version: 2, grantedAt: d("2026-09-01") };
+    const revoke = { grantedAt: d("2026-09-02") };
+    expect(decideActive(grant, revoke, 2)).toBe(false); // yeniden verme yok → pasif (eski davranış)
+    expect(decideActive(grant, revoke, 2, { grantedAt: d("2026-09-03") })).toBe(true); // REGRANT geri almadan sonra → aktif
+    expect(decideActive(grant, { grantedAt: d("2026-09-04") }, 2, { grantedAt: d("2026-09-03") })).toBe(false); // sonra yine geri alındı
+    expect(decideActive({ version: 3, grantedAt: d("2026-09-10") }, { grantedAt: d("2026-09-04") }, 3, { grantedAt: d("2026-09-03") })).toBe(true); // yeni sürüm vermesi
+    expect(decideActive({ version: 2, grantedAt: d("2026-09-05") }, revoke, 2, { grantedAt: d("2026-09-03") })).toBe(true); // regrant vermeden önce → yok sayılır
+    expect(decideActive({ version: 1, grantedAt: d("2026-09-01") }, null, 2, { grantedAt: d("2026-09-03") })).toBe(false); // eski sürüm: regrant kurtarmaz
+    expect(regrantScopeOf("AI_TRIAGE")).toBe("AI_TRIAGE_REGRANT");
+  });
+  it("planConsentWrite: aktif → noop · verme yok / eski sürüm → grant · verme var + geri alınmış → regrant", () => {
+    expect(planConsentWrite({ active: true, grantedVersion: 2 }, 2)).toBe("noop");
+    expect(planConsentWrite({ active: false, grantedVersion: null }, 2)).toBe("grant");
+    expect(planConsentWrite({ active: false, grantedVersion: 1 }, 2)).toBe("grant");
+    expect(planConsentWrite({ active: false, grantedVersion: 2 }, 2)).toBe("regrant");
   });
   it("üç geri alınabilir kova; REVOKE kovası adı; TR/EN beyan + etiket dolu", () => {
     expect(REVOCABLE_SCOPES).toEqual(["AI_TRIAGE", "AI_INTERPRET", "HEALTH_DECLARATION"]);

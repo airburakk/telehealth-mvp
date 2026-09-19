@@ -10,7 +10,11 @@
 // hasta diline göre — S4) LegalMarkdown ile gösterilir ve /api/consent/ai'ye `lang` geçer: hash'lenen dize gösterilendir.
 // Türkçe ve İngilizce dışındaki arayüz dillerinde metnin anlaşılması için ayrıca "bilgilendirme amaçlı çeviri" (useT,
 // hash DIŞI, düz metin) gösterilir; bağlayıcı olan kanonik bloktur. Düğme/başlık metinleri TR sözlükten useT ile çevrilir.
-import { useMemo, useState } from "react";
+//
+// v6.278 (H10 · K10): kapı önce SUNUCUDAKİ aktif rızayı okur (GET /api/consent/ai — geri-alma duyarlı): aktifse kapı hiç
+// görünmez, geri alınmışsa görünür; kontrol bitene dek {children} mount EDİLMEZ (fail-closed). Önceden kapı her ziyarette
+// görünüyor, geri alma sonrası "Açık Rızam Vardır" ise sunucuda sessizce no-op kalıyordu (K10 — REGRANT ile kapandı).
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
@@ -39,8 +43,22 @@ export function AiConsentGate({ children, dest = "/vakalarim" }: { children: Rea
   const { t } = useT(lang, texts);
 
   const [consented, setConsented] = useState(false);
+  const [checking, setChecking] = useState(true); // sunucu durumu okunana dek form mount edilmez
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/consent/ai", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : { active: false }))
+      .then((d: { active?: boolean }) => {
+        if (!alive) return;
+        if (d.active) setConsented(true);
+        setChecking(false);
+      })
+      .catch(() => { if (alive) setChecking(false); });
+    return () => { alive = false; };
+  }, []);
 
   async function accept() {
     setSubmitting(true);
@@ -60,6 +78,13 @@ export function AiConsentGate({ children, dest = "/vakalarim" }: { children: Rea
   }
 
   if (consented) return <>{children}</>;
+  if (checking) {
+    return (
+      <div className="grid min-h-[40vh] place-items-center text-[var(--c-ink-3)]" aria-busy="true">
+        <Loader2 size={20} className="animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div dir={langDir(lang)} lang={LANG_BCP47[lang]} className="mx-auto max-w-2xl px-5 py-10">

@@ -28,5 +28,6 @@ export async function GET(req: Request) {
     revocable,
     active: status ? status.active : null,
     revokedAt: status?.revokedAt ? status.revokedAt.toISOString() : null,
+    regrantedAt: status?.regrantedAt ? status.regrantedAt.toISOString() : null, // v6.278 (K10)
   });
 }
