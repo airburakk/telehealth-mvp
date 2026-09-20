@@ -179,6 +179,25 @@ export function soNextStep(status: string, hasPendingReq: boolean): string {
   if (hasPendingReq && !SO_ACTION_STATUSES.includes(s)) return NEXT_STEP_PENDING_REQUEST;
   return SO_NEXT_STEP[s] ?? SO_NEXT_STEP.PENDING_REVIEW;
 }
+// ── Vaka merkezi üst bandı — DURUM bazlı (kontrol raporu H01, v6.283): tamamlanmış başvuruda "kuyruğa eklendi" yazmaz. ──
+export type CaseHubTone = "info" | "progress" | "done";
+export const CASE_HUB_BAND: Record<string, { title: string; sub: string; tone: CaseHubTone }> = {
+  NEW: { title: "Başvurunuz alındı — doktor eşleşmesi bekleniyor.", sub: "Uzman doktor, hazırlanan başvuru özetinizi inceleyip sizinle video görüşmesi planlayacak.", tone: "info" },
+  IN_REVIEW: { title: "Doktorunuz dosyanızı inceliyor.", sub: "Görüşme daveti geldiğinde burada ve bildirimlerinizde görünür.", tone: "info" },
+  IN_CONSULT: { title: "Görüşme yapıldı — sonuç ve rapor hazırlanıyor.", sub: "Doktorunuz değerlendirmesini tamamladığında sonuç burada görünür.", tone: "progress" },
+  DONE: { title: "Değerlendirme tamamlandı.", sub: "Sonuç, rapor ve varsa takip planınız aşağıda.", tone: "done" },
+};
+export const CASE_HUB_BAND_RECOVERY_SUB = "Takip planınız açık — ölçümlerinizi Takip ekranından girin.";
+export function caseHubBand(status: string, extras: { hasRecovery: boolean }): { title: string; sub: string; tone: CaseHubTone } {
+  const base = CASE_HUB_BAND[status] ?? CASE_HUB_BAND.NEW;
+  if (status === "DONE" && extras.hasRecovery) return { ...base, sub: CASE_HUB_BAND_RECOVERY_SUB };
+  return base;
+}
+export const CASE_HUB_BAND_TEXTS: readonly string[] = [
+  ...Object.values(CASE_HUB_BAND).flatMap((b) => [b.title, b.sub]),
+  CASE_HUB_BAND_RECOVERY_SUB,
+];
+
 /** useT metin listesi için — bütün sözlük cümleleri (sabit; referans kararlı kalsın diye modül düzeyinde). */
 export const NEXT_STEP_TEXTS: readonly string[] = [
   ...Object.values(CASE_NEXT_STEP),

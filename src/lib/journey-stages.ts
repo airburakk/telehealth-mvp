@@ -11,19 +11,21 @@ export type JourneyKey = "GENERAL" | "SECOND_OPINION" | "HEALTH_TOURISM" | "FREE
 // - SECOND_OPINION: belgeler + ödeme başvuruyla aynı oturumda (Faz 3) → tek birleşik sahne.
 // - HEALTH_TOURISM: ödeme YOK (klinik-önce; teklif onayı ödemesizdir — 2026-07-23 kullanıcı
 //   kararı, escrow katmanı bu kulvardan kaldırıldı) → sahne düz "Onay" olarak GERÇEK adımdır.
-// - FREE_CARE: ödeme kapısı yok (gönüllü) — sahne N/A kalır ki rail "ödeme yok"
-//   mesajını soluk + üstü çizili verebilsin.
+// - FREE_CARE: ödeme YOK (gönüllü hizmet) — kontrol raporu H09 (v6.283): eskiden sahne "Onay & Ödeme" adıyla
+//   üstü çizili duruyordu ve "tamamen ücretsiz" cümlesiyle çelişiyordu; sahne artık GERÇEK adımdır: başvuru +
+//   gönüllü doktor/koordinatör onayı (bekleme sayfası). Kulvara özgü sözlükte "ödeme" kelimesi GEÇMEZ (test kilidi).
 export const JOURNEY_STAGES: Record<JourneyKey, readonly string[]> = {
   GENERAL: ["Onay & Ödeme", "Ön Bilgi", "Eşleşme", "Görüşme", "Sonuç & Takip"],
   SECOND_OPINION: ["Başvuru & Ödeme", "Eşleşme", "Görüşme", "Sonuç & Takip"],
   HEALTH_TOURISM: ["Ön Bilgi", "Onay", "Eşleşme", "Görüşme", "Sonuç & Takip"],
-  FREE_CARE: ["Ön Bilgi", "Onay & Ödeme", "Eşleşme", "Görüşme", "Sonuç & Takip"],
+  FREE_CARE: ["Ön Bilgi", "Başvuru & Onay", "Eşleşme", "Görüşme", "Sonuç & Takip"],
 };
 
-// Yola göre geçerli OLMAYAN (N/A) sahne indeksleri — rail soluk + üstü çizili gösterir.
+// Yola göre geçerli OLMAYAN (N/A) sahne indeksleri — rail soluk + üstü çizili gösterir. (v6.283: hiçbir kulvarda
+// N/A sahne kalmadı; mekanizma ileride gerekirse dursun.)
 export const JOURNEY_SKIP_STAGES: Record<JourneyKey, readonly number[]> = {
   GENERAL: [],
   SECOND_OPINION: [],
   HEALTH_TOURISM: [],
-  FREE_CARE: [1],
+  FREE_CARE: [],
 };

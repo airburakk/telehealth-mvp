@@ -29,6 +29,14 @@ import { OfferView } from "@/components/OfferView";
 import { ReservationView } from "@/components/ReservationView";
 import { BranchBanner } from "@/components/BranchBanner";
 import { BRANCHES } from "@/lib/triage";
+import { CASE_HUB_BAND_TEXTS, caseHubBand, type CaseHubTone } from "@/lib/patient-cases";
+
+// Üst bant tonları (H01): bilgi (yeni/incelemede) · süreç (görüşme yapıldı) · tamamlandı.
+const BAND_CLS: Record<CaseHubTone, { box: string; icon: string; title: string; sub: string }> = {
+  info: { box: "border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.08]", icon: "text-[var(--c-accent)]", title: "text-[var(--c-ink)]", sub: "text-[var(--c-ink-2)]" },
+  progress: { box: "border-indigo-400/25 bg-indigo-500/10", icon: "text-indigo-300", title: "text-indigo-200", sub: "text-indigo-200/80" },
+  done: { box: "border-emerald-400/25 bg-emerald-500/10", icon: "text-emerald-300", title: "text-emerald-200", sub: "text-emerald-200/80" },
+};
 
 const PHASE_ICON = {
   case: <FileText size={14} />,
@@ -45,8 +53,8 @@ const PHASE_ICON = {
 // Sonuç sayfası hasta-yüzlü: vaka dili Türkçe değilse statik etiketler sunucuda çevrilir.
 const STATIC_LABELS = [
   "Bakım Yolculuğum",
-  "Başvurunuz oluşturuldu ve doktor kuyruğuna eklendi",
-  "Uzman doktor, hazırlanan başvuru özetinizi inceleyip sizinle video görüşmesi planlayacak.",
+  ...CASE_HUB_BAND_TEXTS, // H01 (v6.283): üst bant durum bazlı — "kuyruğa eklendi" yalnız NEW'de
+  "Kayıt dili", // H04: arayüz dili hastanın güncel tercihi; kayıt dili ayrı alan
   "Başvuru No", "Başvuru Özeti", "Aciliyet", "Hasta", "Ülke / Dil", "Yönlendirilen Branş", "Süre", "Başvurunuz",
   "Şikayet", "Triyaj Gerekçesi", "Belgeler",
   "Acil / Hayati", "Yüksek", "Orta", "Düşük", "Rutin / Elektif",
@@ -132,6 +140,15 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
   const u = urgencyStyle(c.urgency);
   const files = c.attachments ? c.attachments.split(",").filter(Boolean) : [];
   const activeConsult = c.consultations.find((x) => x.status === "ACTIVE") ?? null;
+  // Üst bant DURUM bazlı (kontrol raporu H01, v6.283): tamamlanmış başvuruda "kuyruğa eklendi" yazmaz.
+  const band = caseHubBand(c.status, { hasRecovery: !!c.recovery });
+  const bandCls = BAND_CLS[band.tone];
+  // H04 (v6.283): arayüz dili hastanın GÜNCEL tercihi (profil hafızası); kayıt dili ayrı bilgi alanı. Personel
+  // görünümünde kayıt dili kalır (klinik metin kayıt dilinde okunur; personel panelleri TR).
+  const profileLang = viewer?.role === "PATIENT"
+    ? (await db.user.findUnique({ where: { id: viewer.id }, select: { patientLanguage: true } }))?.patientLanguage ?? null
+    : null;
+  const uiLang = profileLang ?? c.language;
 
   // En ileri booking: CONFIRMED > DRAFT > diğer (vakalarim ile aynı öncelik)
   const booking =
@@ -149,8 +166,8 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
   // Kapı ekranı metinleri de SUNUCUDA çevrilir (2026-07-17, kullanıcı bulgusu): istemci useT'nin
   // asenkron ilk-boyama Türkçesi kapıda görünmesin — hazır harita ConsultGate'e prop gider.
   const [uiMap, clinMap] = await Promise.all([
-    getTranslations(c.language, [...STATIC_LABELS, c.branch, branchLabel, ...TALK_TRACKER_TEXTS, ...(gate ? CONSULT_GATE_TEXTS : []), ...(tourismInbox ? TOURISM_INBOX_TEXTS : []), ...(isDocsPending ? [...PENDING_DOCS_TEXTS, ...pendingDocList] : [])]),
-    translateClinical(c.language, [c.reasoning], c.patientName),
+    getTranslations(uiLang, [...STATIC_LABELS, c.branch, branchLabel, c.language, ...TALK_TRACKER_TEXTS, ...(gate ? CONSULT_GATE_TEXTS : []), ...(tourismInbox ? TOURISM_INBOX_TEXTS : []), ...(isDocsPending ? [...PENDING_DOCS_TEXTS, ...pendingDocList] : [])]),
+    translateClinical(uiLang, [c.reasoning], c.patientName),
   ]);
   const tmap = { ...uiMap, ...clinMap };
   const t = (s: string) => tmap[s] ?? s;
@@ -166,12 +183,12 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
     hasRecovery: !!c.recovery,
   }).map((p) => ({ label: t(p.label), subStatus: t(p.sub), state: p.state, icon: PHASE_ICON[p.key] }));
 
-  const dir = langDir(c.language);
+  const dir = langDir(uiLang);
   const patientName = c.patientName; // decryptCaseFields zaten çözdü
 
   return (
     // lang ŞART (denetim #27): globals.css ar/fa fontunu yalnız :lang() ile bağlar (v6.9)
-    <div dir={dir} lang={LANG_BCP47[c.language]} className="mx-auto max-w-3xl px-5 py-10">
+    <div dir={dir} lang={LANG_BCP47[uiLang]} className="mx-auto max-w-3xl px-5 py-10">
       <div className="flex items-center justify-between gap-3">
         {/* Geri link rol-duyarlı (denetim #29): hasta kendi hub'ına, personel kokpite döner
             (hasta yüzü "Bakım Yolculuğum/başvuru" · personel yüzü "vaka" — dil ayrımı karar defteri). */}
@@ -217,7 +234,7 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
         <div className="mt-4">
           <ConsultGate
             caseId={c.id}
-            lang={c.language}
+            lang={uiLang}
             hasSentinel={gate.hasSentinel}
             hasIcapci={gate.hasIcapci}
             appointment={gate.appointment}
@@ -231,13 +248,12 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
           <TourismInbox caseId={c.id} branchLabel={t(branchLabel)} country={countryName(c.country)} outreaches={tourismInbox} tmap={Object.fromEntries(TOURISM_INBOX_TEXTS.map((s) => [s, t(s)]))} />
         </div>
       ) : (
-        <div className="mt-4 rounded-3xl border border-emerald-400/25 bg-emerald-500/10 p-5 flex items-start gap-3">
-          <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-300" />
+        // Durum bazlı bant (H01): NEW "alındı — eşleşme bekleniyor" · IN_REVIEW "inceliyor" · görüşme yapıldı · DONE "tamamlandı".
+        <div className={`mt-4 flex items-start gap-3 rounded-3xl border p-5 ${bandCls.box}`}>
+          <CheckCircle2 className={`mt-0.5 shrink-0 ${bandCls.icon}`} />
           <div>
-            <h1 className="font-semibold text-emerald-200">{t("Başvurunuz oluşturuldu ve doktor kuyruğuna eklendi")}</h1>
-            <p className="mt-0.5 text-sm text-emerald-200/80">
-              {t("Uzman doktor, hazırlanan başvuru özetinizi inceleyip sizinle video görüşmesi planlayacak.")}
-            </p>
+            <h1 className={`font-semibold ${bandCls.title}`}>{t(band.title)}</h1>
+            <p className={`mt-0.5 text-sm ${bandCls.sub}`}>{t(band.sub)}</p>
           </div>
         </div>
       )}
@@ -269,7 +285,9 @@ export default async function CaseHubPage({ params }: { params: Promise<{ caseId
       >
         <div className="grid grid-cols-2 gap-x-4 gap-y-5 text-sm">
           <InfoField k={t("Hasta")} v={patientName} />
-          <InfoField k={t("Ülke / Dil")} v={`${countryFlag(c.country)} ${countryName(c.country)} · ${c.language}`} />
+          <InfoField k={t("Ülke / Dil")} v={`${countryFlag(c.country)} ${countryName(c.country)} · ${t(c.language)}`} />
+          {/* H04: arayüz dili kayıt dilinden farklıysa kayıt dilini ayrıca söyle (klinik metin o dilde yazıldı). */}
+          {uiLang !== c.language && <InfoField k={t("Kayıt dili")} v={t(c.language)} />}
           <InfoField k={t("Yönlendirilen Branş")} v={t(c.branch)} accent />
           <InfoField k={t("Süre")} v={c.durationText || "—"} />
         </div>

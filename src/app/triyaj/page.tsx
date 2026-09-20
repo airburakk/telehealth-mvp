@@ -39,7 +39,13 @@ const STATIC_UI = [
   "AI sizi doğru branşa yönlendiriyor…", "Yönlendirilen branş", "Branşınız", "elle seçildi", "AI önerisi · doğru değilse değiştirin",
   "Önce şikayet adımında AI ön analizini çalıştırın; sorular branşa göre belirir.",
   "Tıbbi belge yükleyin", "PDF, JPG, DICOM · Tahlil, radyoloji, epikriz", "(görüntüleyicide açılır)",
-  "Yüklenen dosyalar KVKK/GDPR uyumlu şifreli olarak saklanır.", "Belge yüklemek opsiyoneldir.",
+  "Yüklenen dosyalar KVKK/GDPR uyumlu şifreli olarak saklanır.",
+  // H08 (kontrol raporu, v6.283): "opsiyoneldir" cümlesi kalktı — belge durumu üç açık cümleden biriyle söylenir.
+  "Zorunlu belgeleriniz tamam; ek belge yüklemek isteğe bağlıdır.",
+  "Bu branş için zorunlu belge yok; belge yüklemek isteğe bağlıdır.",
+  "İki yol var:", "Şimdi yükleyin — aşağıdaki alandan ekleyip işaretleyin.",
+  "Eksik belgeyle beklemeye alın — başvurunuz oluşturulur, belgeler tamamlanana kadar doktora iletilmez (acil durumları sistem ayırır).",
+  "Eksik belgeyle beklemeye al — belgeleri en kısa sürede yükleyeceğim.",
   "AI Ön Analizi", "Aciliyet", "Güven",
   "Geri", "Devam", "Başvuruyu oluştur",
   "Lütfen hasta adını girin.", "Lütfen şikayetinizi biraz daha ayrıntılı yazın.",
@@ -461,15 +467,19 @@ function TriyajInner() {
                 <p className="mt-1.5 text-[13px] leading-relaxed text-amber-200">
                   {t("Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.")}
                 </p>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-amber-200">
-                  {t("Belgeleri şimdi yükleyip işaretleyebilirsiniz. Dilerseniz aşağıda onaylayarak başvurunuzu şimdi oluşturabilirsiniz; bu durumda başvurunuz, eksik belgeleriniz yüklenene kadar doktora iletilmez.")}
-                </p>
                 <ul className="mt-2.5 list-disc space-y-0.5 ps-5 text-[12px] font-medium text-amber-200">
                   {missingRequired.map((d) => <li key={d.key}>{t(d.label)}</li>)}
                 </ul>
+                {/* H08 (v6.283): iki yol AÇIKÇA ayrılır — "şimdi yükle" / "eksik belgeyle beklemeye al"; "opsiyoneldir" cümlesi yok.
+                    Aciliyet istisnasını (4-5 beklemez) sunucu belirler (api/cases). */}
+                <p className="mt-2.5 text-[13px] font-semibold text-amber-100">{t("İki yol var:")}</p>
+                <ol className="mt-1 list-decimal space-y-1 ps-5 text-[13px] leading-relaxed text-amber-200">
+                  <li>{t("Şimdi yükleyin — aşağıdaki alandan ekleyip işaretleyin.")}</li>
+                  <li>{t("Eksik belgeyle beklemeye alın — başvurunuz oluşturulur, belgeler tamamlanana kadar doktora iletilmez (acil durumları sistem ayırır).")}</li>
+                </ol>
                 <label className="mt-3 flex items-start gap-2 text-[13px] font-medium text-amber-100">
                   <input type="checkbox" checked={docAck} onChange={(e) => setDocAck(e.target.checked)} className="mt-0.5 accent-amber-600" />
-                  <span>{t("Eksik belgeleri en kısa sürede yükleyeceğimi anladım; başvurum belgeler tamamlanınca doktor havuzuna iletilecek.")}</span>
+                  <span>{t("Eksik belgeyle beklemeye al — belgeleri en kısa sürede yükleyeceğim.")}</span>
                 </label>
               </div>
             )}
@@ -477,7 +487,14 @@ function TriyajInner() {
             <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300 ring-1 ring-emerald-400/25">
               <ShieldCheck size={15} /> {t("Yüklenen dosyalar KVKK/GDPR uyumlu şifreli olarak saklanır.")}
             </div>
-            <p className="text-xs text-[var(--c-ink-3)]">{t("Belge yüklemek opsiyoneldir.")}</p>
+            {/* Belge durumu cümlesi (H08): zorunlu eksik varsa yukarıdaki panel konuşur; yoksa iki dürüst hâl. */}
+            {missingRequired.length === 0 && (
+              <p className="text-xs text-[var(--c-ink-3)]">
+                {branchDocs.some((d) => d.required)
+                  ? t("Zorunlu belgeleriniz tamam; ek belge yüklemek isteğe bağlıdır.")
+                  : t("Bu branş için zorunlu belge yok; belge yüklemek isteğe bağlıdır.")}
+              </p>
+            )}
           </div>
         )}
 

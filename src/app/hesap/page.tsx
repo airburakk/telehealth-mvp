@@ -6,8 +6,14 @@ import { RETENTION_YEARS } from "@/lib/account-deletion";
 import { consentStatus, HEALTH_DECLARATION_VERSION, REVOCABLE_SCOPES } from "@/lib/aura-consent";
 import { AI_CONSENT_VERSION, AI_INTERPRET_VERSION } from "@/lib/ai-consent";
 import { consentLangFor } from "@/lib/consent-lang";
+import { getTranslations } from "@/lib/i18n";
+import { LANG_BCP47, langDir } from "@/lib/constants";
 import { DeleteAccountPanel } from "./DeleteAccountPanel";
 import { ConsentWithdrawPanel, type ConsentItem } from "./ConsentWithdrawPanel";
+
+// H04 (kontrol raporu, v6.283): sayfa TEK dil kaynağından (hasta dili) çizilir — eskiden Türkçe başlık, TR/EN onam paneli
+// ve hasta dilinde silme paneli aynı ekranda karışıyordu. Hukuki kanonik metin dili panelin içinde AYRI etiketlenir.
+const STATIC_UI = ["Hesabım", "Hesap ayarları"];
 
 // /hesap — hasta hesap ayarları (v6.11). v6.269 (kod Paket B): "Rızalarım" paneli — geri alınabilir açık rızaların
 // (AI ön değerlendirme · AI tercüme · sigorta beyanı) durumu ve geri alma (A01 madde 12 / A04); altta hesap ve veri silme
@@ -41,15 +47,18 @@ export default async function AccountPage() {
     }),
   );
 
+  const tmap = await getTranslations(lang, STATIC_UI);
+  const t = (s: string) => tmap[s] ?? s;
+
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10">
+    <div dir={langDir(lang)} lang={LANG_BCP47[lang]} className="mx-auto max-w-2xl px-5 py-10">
       <span className="inline-flex items-center gap-2 rounded-full bg-[var(--c-accent)]/10 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--c-accent-stronger)]">
-        <UserCog size={14} /> Hesabım
+        <UserCog size={14} /> {t("Hesabım")}
       </span>
-      <h1 className="aura-display mt-3 text-3xl font-medium tracking-tight text-[var(--c-ink)]">Hesap ayarları</h1>
+      <h1 className="aura-display mt-3 text-3xl font-medium tracking-tight text-[var(--c-ink)]">{t("Hesap ayarları")}</h1>
 
       <div className="mt-8">
-        <ConsentWithdrawPanel lang={consentLangFor(lang)} items={items} />
+        <ConsentWithdrawPanel lang={consentLangFor(lang)} uiLang={lang} items={items} />
       </div>
 
       <div className="mt-8">

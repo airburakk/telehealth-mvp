@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ShieldOff, Loader2, ShieldCheck } from "lucide-react";
+import { ShieldOff, Loader2, ShieldCheck, Languages } from "lucide-react";
 import { REVOCABLE_LABEL, type RevocableScope } from "@/lib/aura-consent-texts";
 import type { ConsentLang } from "@/lib/consent-lang";
+import { useT } from "@/components/useT";
+import { LANG_BCP47 } from "@/lib/constants";
 
 // Hesabım → "Rızalarım" (kod Paket B, v6.269 · 2026-09-13): geri alınabilir açık rızaların durumu + geri alma.
 // A01 madde 12 / A04: "rızanızı dilediğiniz zaman geri alabilirsiniz; geri alma o ana kadar yapılmış işlemi etkilemez".
@@ -35,12 +37,28 @@ const UI: Record<ConsentLang, { title: string; sub: string; active: string; revo
   },
 };
 
-export function ConsentWithdrawPanel({ lang, items: initial }: { lang: ConsentLang; items: ConsentItem[] }) {
+// Kanonik metin dili rozeti (H04): hangi dilde okursa okusun hasta, bağlayıcı onam metninin TR (ikincil EN) olduğunu görür.
+// Paket 7 (hukuki metin tam lokalizasyon, 👤 karar 2026-09-20: A) geldiğinde rozet "gösterilen çeviri bilgilendirme amaçlı" olarak kalır.
+const CANONICAL_NOTE: Record<ConsentLang, string> = {
+  tr: "Onam metni dili: Türkçe (bağlayıcı metin).",
+  en: "Consent text language: English (in case of conflict the Turkish text prevails).",
+};
+const CANONICAL_NOTE_OTHER = "Bağlayıcı onam metni Türkçedir (ikincil İngilizce); ekranınızdaki çeviri bilgilendirme amaçlıdır.";
+
+export function ConsentWithdrawPanel({ lang, uiLang, items: initial }: { lang: ConsentLang; uiLang?: string; items: ConsentItem[] }) {
   const [items, setItems] = useState(initial);
   const [busy, setBusy] = useState<RevocableScope | null>(null);
   const [err, setErr] = useState("");
-  const ui = UI[lang];
-  const fmt = (iso: string) => new Intl.DateTimeFormat(lang === "tr" ? "tr-TR" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" }).format(new Date(iso));
+  // H04 (v6.283): panel arayüzü HASTA DİLİNDE — TR/EN sözlük kanonik; diğer arayüz dillerinde TR sözlük useT ile çevrilir
+  // (aynı ekranda Türkçe başlık + İngilizce panel + Rusça silme paneli karışmasın).
+  const courtesy = !!uiLang && uiLang !== "Türkçe" && uiLang !== "İngilizce";
+  const texts = useMemo(() => [...Object.values(UI.tr), ...Object.values(REVOCABLE_LABEL).map((l) => l.tr), CANONICAL_NOTE_OTHER], []);
+  const { t } = useT(courtesy ? (uiLang as string) : "Türkçe", texts);
+  const ui = courtesy ? (Object.fromEntries(Object.entries(UI.tr).map(([k, v]) => [k, t(v)])) as typeof UI.tr) : UI[lang];
+  const scopeLabel = (scope: RevocableScope) => (courtesy ? t(REVOCABLE_LABEL[scope].tr) : REVOCABLE_LABEL[scope][lang]);
+  const canonicalNote = courtesy ? t(CANONICAL_NOTE_OTHER) : CANONICAL_NOTE[lang];
+  const locale = courtesy ? (LANG_BCP47[uiLang as string] ?? "tr-TR") : lang === "tr" ? "tr-TR" : "en-GB";
+  const fmt = (iso: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" }).format(new Date(iso));
 
   async function revoke(scope: RevocableScope) {
     setBusy(scope);
@@ -62,9 +80,12 @@ export function ConsentWithdrawPanel({ lang, items: initial }: { lang: ConsentLa
   }
 
   return (
-    <section lang={lang} dir="ltr" className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5">
+    <section className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5">
       <h2 className="flex items-center gap-2 text-lg font-semibold text-[var(--c-ink)]"><ShieldCheck size={18} /> {ui.title}</h2>
       <p className="mt-1 text-[13px] leading-relaxed text-[var(--c-ink-2)]">{ui.sub}</p>
+      <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--c-hairline)] bg-[var(--c-surface)] px-2.5 py-1 text-[11px] text-[var(--c-ink-2)]">
+        <Languages size={12} /> {canonicalNote}
+      </p>
       <ul className="mt-4 space-y-2.5">
         {items.map((it) => {
           // Durum: aktif · geri alındı (son geri alma vermeden sonra) · eski sürüm (verme var, geri alma yok — metin v2 → yeniden istenir) · verilmedi
@@ -74,7 +95,7 @@ export function ConsentWithdrawPanel({ lang, items: initial }: { lang: ConsentLa
           return (
             <li key={it.scope} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3">
               <div className="min-w-0">
-                <div className="text-sm font-medium text-[var(--c-ink)]">{REVOCABLE_LABEL[it.scope][lang]}</div>
+                <div className="text-sm font-medium text-[var(--c-ink)]">{scopeLabel(it.scope)}</div>
                 <div className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">
                   {it.regrantedAt ? `${ui.regranted}: ${fmt(it.regrantedAt)}` : it.grantedAt ? `${ui.granted}: ${fmt(it.grantedAt)}` : ""}
                   {revoked && it.revokedAt ? ` · ${ui.revokedOn}: ${fmt(it.revokedAt)}` : ""}

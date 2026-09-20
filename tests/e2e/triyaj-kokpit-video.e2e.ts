@@ -51,15 +51,12 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
     await expect(page.getByRole("heading", { name: "Uzman görüşmesi — ön bilgilendirme" })).toBeVisible();
   });
 
-  // ── 2) HASTA: ön-konsültasyon ödeme kapısını deterministik şekilde geç (demo kart ödemesi) ──
-  await test.step("Ön-konsültasyon ödeme kapısı geçilir (demo kart ödemesi)", async () => {
-    // Kapı TEK EKRAN (Faz 2, 2026-07-12) ve tek yöntem karttır (sigorta yolu 2026-08-05'te
-    // kaldırıldı) — kart formu doğrudan görünür, ara ekran/sekme yoktur.
-    // Demo kart numarası (>=12 hane) → "öde". Ödeme simülasyonu setTimeout(1300) → billing set edilir.
-    await page.getByPlaceholder("Kart numarası").fill("4242424242424242");
-    // Buton etiketi "$<fee> öde" biçiminde → "öde" alt-metniyle eşle.
-    await page.getByRole("button", { name: /öde/ }).click();
-    // Ödeme temizlenince triyaj sihirbazının başlığı görünür (kapı kapanır).
+  // ── 2) HASTA: ön-konsültasyon kapısını deterministik şekilde geç (demo onayı) ──
+  await test.step("Ön-konsültasyon kapısı geçilir (demo onayı — kart alanı yok)", async () => {
+    // Kapı TEK EKRAN (Faz 2, 2026-07-12); v6.283 (kontrol raporu H06): sahte kart alanları KALKTI —
+    // tek düğme "Demo ile devam et — ücret alınmaz" (setTimeout(600) → billing PAID/PAYMENT set edilir).
+    await page.getByRole("button", { name: /Demo ile devam et/ }).click();
+    // Kapı kapanınca triyaj sihirbazının başlığı görünür.
     await expect(page.getByRole("heading", { name: "Triyaj · Ön Değerlendirme" })).toBeVisible({ timeout: 15_000 });
   });
 
@@ -85,7 +82,8 @@ test("hasta triyaj → vaka oluşturma → doktor kokpit → görüşme odası r
     // gerekli-belge kalemleri BEYAN checkbox'larıyla işaretlenir → missingRequired boşalır. Bu şart:
     // eksik zorunlu belgeyle (docAck yolu) oluşan aciliyet ≤3 vaka DOCS_PENDING olur ve doktor
     // kuyruğuna HİÇ düşmez (v6.35) → testin doktor yarısı kör kalırdı. İşaretleme NEW'i garantiler.
-    await expect(page.getByText("Belge yüklemek opsiyoneldir.")).toBeVisible({ timeout: 15_000 });
+    // v6.283 (H08): "opsiyoneldir" cümlesi kalktı → belge adımının yükleme alanı başlığıyla eşle.
+    await expect(page.getByText("Tıbbi belge yükleyin")).toBeVisible({ timeout: 15_000 });
     // Kalem sayısı/adı AI'ın seçtiği branşa göre değişir → ada bağlanılmaz; işaretsiz kutu
     // kalmayana dek hepsi işaretlenir. (Amber "Eksik belgeleriniz var" paneli + docAck kutusu,
     // kalemler tamamlanınca DOM'dan düşer — bu yüzden her turda taze locator + sessiz retry.)

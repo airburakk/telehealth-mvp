@@ -17,6 +17,8 @@ import { langDir, LANG_BCP47, countryName, countryFlag } from "@/lib/constants";
 import { ProcessTracker, type TrackerItem } from "@/components/ProcessTracker";
 import { soTrackerPhases, SO_TRACKER_TEXTS } from "@/lib/so-tracker";
 import { DoctorArt } from "@/components/AuraArt";
+import { APPT_LOCAL_TIME_LABEL, APPT_PHASE_TEXT, appointmentPhase, formatApptTr, localTimePart } from "@/lib/appointment-window";
+import { useLocalTimeZone, useNowMinute } from "@/lib/use-now";
 
 type DocMeta = { id: string; type: string; deliveryMethod: string; externalRef: string | null; label: string | null };
 type SoData = {
@@ -160,6 +162,13 @@ export function SoCaseDetail({ data }: { data: SoData }) {
   const providedTypes = useMemo(() => new Set(docs.map((d) => d.type)), [docs]);
   const missingRequired = specs.filter((s) => s.requirement === "REQUIRED" && !providedTypes.has(s.type));
   const pendingReqs = data.requests.filter((r) => r.status === "PENDING");
+  // Randevu evresi (kontrol raporu H03, v6.283): "şimdi" ve tarayıcı dilimi dış kaynaktan (render'da Date.now() yok;
+  // SSR'da null → evre hidrasyonda dolar). Katıl düğmesi yalnız pencerede (−15 dk … +60 dk) etkindir.
+  const now = useNowMinute();
+  const localTz = useLocalTimeZone();
+  const apptPhase = data.appointment && now !== null ? appointmentPhase(data.appointment.scheduledAt, now) : null;
+  const apptLocale = LANG_BCP47[lang] ?? "tr-TR";
+  const apptLocal = data.appointment ? localTimePart(data.appointment.scheduledAt, localTz, apptLocale) : null;
 
   const texts = useMemo(
     () => [
@@ -172,6 +181,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
       data.branchLabel,
       ...specs.map((s) => s.label),
       ...SO_TRACKER_TEXTS,
+      ...Object.values(APPT_PHASE_TEXT), APPT_LOCAL_TIME_LABEL, // H03 randevu evresi + yerel saat etiketi
       ...(data.assignedDoctor ? [data.assignedDoctor.title, data.assignedDoctor.branchLabel] : []),
       ...(data.country ? [countryName(data.country)] : []),
     ],
@@ -405,7 +415,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
                     disabled={responding !== ""}
                     className="inline-flex items-center justify-between gap-3 rounded-xl border border-amber-400/30 bg-[var(--c-panel)] px-4 py-3 text-start text-sm font-semibold text-[var(--c-ink)] transition hover:border-[var(--c-accent)] hover:bg-[var(--c-accent)]/10 disabled:opacity-50"
                   >
-                    <span className="inline-flex items-center gap-2"><CalendarClock size={15} className="text-[var(--c-accent)]" /> {new Date(slot).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</span>
+                    <span className="inline-flex items-center gap-2"><CalendarClock size={15} className="text-[var(--c-accent)]" /> {formatApptTr(slot, apptLocale)}</span>
                     {responding === "accept" ? <Loader2 size={15} className="animate-spin" /> : <CircleCheck size={15} className="text-[var(--c-accent)]" />}
                   </button>
                 ))}
@@ -414,7 +424,7 @@ export function SoCaseDetail({ data }: { data: SoData }) {
           ) : (
             <>
               <p className="mt-1.5 text-[13px] text-amber-300">{t(S.videoOfferDesc)}</p>
-              <p className="mt-1 text-lg font-bold text-[var(--c-ink)]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+              <p className="mt-1 text-lg font-bold text-[var(--c-ink)]">{formatApptTr(data.appointment.scheduledAt, apptLocale)}</p>
             </>
           )}
           {respondErr && <p className="mt-2 text-sm text-red-300">{respondErr}</p>}
@@ -431,14 +441,26 @@ export function SoCaseDetail({ data }: { data: SoData }) {
         </div>
       )}
 
-      {/* Video randevusu — katıl */}
+      {/* Video randevusu — evre sözlüğü (H03): kuruldu / pencere açık (katıl) / saat geçti; saat TSİ + yerel dilim */}
       {status === "VIDEO_SCHEDULED" && data.appointment && (
         <div className="mt-4 rounded-3xl border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.06] p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-[var(--c-accent-stronger)]"><Video size={17} /> {t(S.videoTitle)}</div>
-          <p className="mt-1.5 text-lg font-bold text-[var(--c-ink)]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
-          <Link href={`/second-opinion/gorusme/${data.appointment.id}?role=patient`} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[var(--c-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
-            <Video size={16} /> {t(S.join)}
-          </Link>
+          <p className="mt-1.5 text-lg font-bold text-[var(--c-ink)]">{formatApptTr(data.appointment.scheduledAt, apptLocale)}</p>
+          {apptLocal && <p className="text-xs text-[var(--c-ink-3)]">{t(APPT_LOCAL_TIME_LABEL)}: {apptLocal.time} ({apptLocal.tz})</p>}
+          {apptPhase && (
+            <p className={`mt-1.5 text-[13px] ${apptPhase === "open" ? "text-emerald-300" : apptPhase === "past" ? "text-amber-300" : "text-[var(--c-ink-2)]"}`}>
+              {t(APPT_PHASE_TEXT[apptPhase])}
+            </p>
+          )}
+          {apptPhase === "open" ? (
+            <Link href={`/second-opinion/gorusme/${data.appointment.id}?role=patient`} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[var(--c-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
+              <Video size={16} /> {t(S.join)}
+            </Link>
+          ) : (
+            <span aria-disabled="true" className="mt-3 inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-dashed border-[var(--c-hairline)] px-5 py-2.5 text-sm font-semibold text-[var(--c-ink-3)]">
+              <Video size={16} /> {t(S.join)}
+            </span>
+          )}
         </div>
       )}
 
@@ -644,7 +666,7 @@ function StatusBanner({
         <p>{t(text)}</p>
         {status === "VIDEO_SCHEDULED" && appointment && (
           <p className="mt-1 font-semibold text-[var(--c-ink)]">
-            {new Date(appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}
+            {formatApptTr(appointment.scheduledAt)}
           </p>
         )}
       </div>

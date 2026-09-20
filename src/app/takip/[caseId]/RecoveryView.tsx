@@ -48,6 +48,7 @@ const UI = [
   "İyileşme fotoğrafı", "Büyütmek için aç",
   "İyileşme Takvimi", "Tele-Kontrol",
   "Kritik dönüm noktalarında doktorunuzla kısa görüşme planlanır.", "Randevu iste",
+  "Randevu talebi henüz açık değil — dönüm noktalarında doktorunuz görüşme planladığında burada görünür.", // H05 (v6.283)
   "İlaç Hatırlatıcı", "Günlük ilaç bildirimleri açık (demo).",
   "Güvenli Paylaşım",
   "Bu kayıtları kendi ülkenizdeki doktorunuzla süreli ve iptal edilebilir bir bağlantıyla paylaşın.",
@@ -327,9 +328,20 @@ export function RecoveryView({ data }: { data: RecoveryData }) {
           <div className="rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 p-5">
             <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-accent)]"><Video size={15} /> {t("Tele-Kontrol")}</div>
             <p className="mt-1.5 text-sm text-[var(--c-ink-2)]">{t("Kritik dönüm noktalarında doktorunuzla kısa görüşme planlanır.")}</p>
-            <button className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-4 py-2 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]">
+            {/* H05 (kontrol raporu, v6.283): düğmenin arkasında işleyen bir talep akışı YOK (handler/link yoktu) →
+                dürüst devre dışı + açıklama. Akış açılınca (randevu talebi ucu) düğme ona bağlanır. */}
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              aria-describedby="recovery-appt-note"
+              className="mt-3 inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-dashed border-[var(--c-hairline)] bg-[var(--c-panel)] px-4 py-2 text-sm font-medium text-[var(--c-ink-3)]"
+            >
               {t("Randevu iste")}
             </button>
+            <p id="recovery-appt-note" className="mt-1.5 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
+              {t("Randevu talebi henüz açık değil — dönüm noktalarında doktorunuz görüşme planladığında burada görünür.")}
+            </p>
           </div>
 
           <div className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
