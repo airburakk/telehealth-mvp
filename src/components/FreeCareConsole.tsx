@@ -238,10 +238,12 @@ export function FreeCareConsole({
   );
 }
 
+// D09 (kontrol raporu, v6.284): Uzaktan Sağlık nöbeti çevrimdışıyken ücretsiz konsol müsait olabilir — bunlar FARKLI
+// hizmet durumlarıdır; etiket kulvarı söyler ki iki durum çelişki gibi okunmasın.
 const FREE_CARE_STATES_DOCTOR: Record<string, string> = {
-  OFFLINE: "Çevrimdışı",
-  AVAILABLE: "Müsait",
-  IN_SESSION: "Görüşmede",
+  OFFLINE: "Çevrimdışı (ücretsiz kulvar)",
+  AVAILABLE: "Müsait (ücretsiz kulvar)",
+  IN_SESSION: "Görüşmede (ücretsiz kulvar)",
 };
 
 function StateDot({ state }: { state: string }) {

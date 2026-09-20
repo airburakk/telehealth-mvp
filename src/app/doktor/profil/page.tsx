@@ -9,6 +9,7 @@ import { NotifyChannelCard } from "@/components/NotifyChannelCard";
 import { decryptField } from "@/lib/crypto";
 import { Star, BadgeCheck, CalendarClock, ChevronDown, TrendingUp, ExternalLink, Award, Users, Target } from "lucide-react";
 import { getDoctorScorecard, type MetricKey } from "@/lib/match-score";
+import { capacityUsage } from "@/lib/capacity-period";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,8 @@ export default async function DoctorDashboard() {
   const scorecard = await getDoctorScorecard(doctor.id); // CRM eşleştirme kalite kartı (şeffaflık)
   // Hakediş dökümü /doktor/finans'a taşındı (2026-08-01) — ended burada yalnız kapasite için.
   const ended = doctor.consultations.filter((c) => c.status === "ENDED");
+  // D08 (kontrol raporu, v6.284): kapasite DÖNEMLİ — yalnız bu takvim ayında (TSİ) biten görüşmeler; aşım etiketlenir.
+  const cap = capacityUsage(ended, doctor.capacity, new Date());
 
   // M5 — Yaptığım İşlemler & Fiyatlandırma (branşa göre tarife + taban/tavan fiyat)
   const branchKey = branchKeyFromLabel(doctor.branch);
@@ -72,6 +75,8 @@ export default async function DoctorDashboard() {
                 {doctor.verified && <BadgeCheck size={16} className="text-[var(--c-accent)]" />}
               </div>
               <div className="text-sm font-medium text-[var(--c-accent-strong)]">{doctor.branch} · {doctor.city}</div>
+              {/* D08: hesap ↔ profil eşlemesi görünür (hesap menüsündeki ad ile profil adı farklı olabilir — demo/test verisi). */}
+              <div className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">Bağlı hesap: {u?.name} ({u?.email})</div>
               {/* rating null = veri yok → kendi panelinde dürüst boş-durum "—" (gizleme değil) */}
               <div className="mt-1 inline-flex items-center gap-1 text-sm text-amber-300"><Star size={14} className="fill-amber-400 text-amber-400" /> {doctor.rating != null ? doctor.rating.toFixed(1) : "—"} <span className="text-[var(--c-ink-3)]">({doctor.reviews.length} yorum)</span></div>
             </div>
@@ -191,16 +196,21 @@ export default async function DoctorDashboard() {
           giriş: header hesap menüsü "Finans". Kalan üç kart yatay dizilime geçti. */}
       <div className="mt-5 grid gap-5 sm:grid-cols-3">
           <div className="rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><CalendarClock size={15} /> Aylık Kapasite</div>
+            <div className="flex items-center gap-1.5 aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]"><CalendarClock size={15} /> Aylık Kapasite · {cap.period.label}</div>
             <div className="mt-3">
               <div className="flex items-end justify-between">
-                <span className="text-2xl font-bold text-[var(--c-ink)]">{ended.length}<span className="text-base font-normal text-[var(--c-ink-3)]">/{doctor.capacity}</span></span>
-                <span className="text-xs text-[var(--c-ink-2)]">işlem</span>
+                <span className="text-2xl font-bold text-[var(--c-ink)]">{cap.used}<span className="text-base font-normal text-[var(--c-ink-3)]">/{cap.capacity}</span></span>
+                <span className="text-xs text-[var(--c-ink-2)]">görüşme (bu ay)</span>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--c-ink)]/10">
-                {/* capacity<=0 → bölme sıfıra düşmesin (operasyon sayfasındaki Math.max(1,…) deseni; NaN/Infinity engellenir) */}
-                <div className="h-full rounded-full bg-[var(--c-accent)]" style={{ width: `${Math.min(100, Math.round((ended.length / Math.max(1, doctor.capacity)) * 100))}%` }} />
+                <div className={`h-full rounded-full ${cap.overflow > 0 ? "bg-amber-400" : "bg-[var(--c-accent)]"}`} style={{ width: `${cap.percent}%` }} />
               </div>
+              {/* D08: dönem + aşım açıklaması — "29/20" tek başına yanıltıyordu */}
+              <p className="mt-2 text-[11px] text-[var(--c-ink-3)]">
+                {cap.overflow > 0
+                  ? `Kapasite aşıldı (+${cap.overflow}) — kapasite planlama içindir, görüşmeyi engellemez.`
+                  : "Dönem: içinde bulunulan takvim ayı (Türkiye saati). Kapasite planlama içindir."}
+              </p>
             </div>
           </div>
 

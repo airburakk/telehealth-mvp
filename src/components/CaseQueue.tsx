@@ -266,7 +266,9 @@ export function CaseQueue({
                           <span className={`h-1.5 w-1.5 rounded-full ${u.dot}`} /> {r.urgency}/5
                         </span>
                       )}
-                      <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-[var(--c-hairline)] bg-[var(--c-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--c-ink-2)]">
+                      {/* D06 (kontrol raporu, v6.284): durum rozeti MOBİLDE de görünür — eskiden `hidden sm:` ile saklıydı,
+                          acil listesinde hangi kaydın kapanmış olduğu küçük ekranda anlaşılmıyordu. Renk metnin yerine geçmez. */}
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--c-hairline)] bg-[var(--c-surface)] px-2 py-0.5 text-[10px] font-medium text-[var(--c-ink-2)] sm:px-2.5 sm:py-1 sm:text-[11px]">
                         <span className="h-1.5 w-1.5 rounded-full" style={{ background: r.statusDot }} /> {r.statusLabel}
                       </span>
                     </div>

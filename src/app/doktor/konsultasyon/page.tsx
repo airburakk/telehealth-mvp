@@ -58,7 +58,9 @@ export default async function ConsultationInboxPage() {
       {/* Mahremiyet bilgi şeridi */}
       <div className="mt-5 flex items-start gap-2 rounded-2xl border border-indigo-400/25 bg-indigo-500/10 p-3 text-xs text-indigo-200">
         <ShieldCheck size={16} className="mt-0.5 shrink-0" />
-        <span>Bu dosyalar otomatik <strong>anonimleştirme</strong> katmanından geçti — hasta adı, kimlik numarası ve ham görüntüler kaldırıldı. Belgeler AI ile değerlendirilip Türkçeye çevrildi; yalnız klinik içerik gösterilir.</span>
+        {/* D09 (kontrol raporu, v6.284): "ham görüntüler kaldırıldı" kesin cümlesi de-id modeline göre yeniden yazıldı —
+            kimlik AYIKLANIR, DICOM etiketleri temizlenir, işaretlenen yazılı alanlar maskelenir; görüntünün kendisi kaldırılmaz. */}
+        <span>Bu dosyalar otomatik <strong>kimliksizleştirme</strong> katmanından geçti — hasta adı ve kimlik bilgileri ayıklandı; DICOM görüntülerinde kimlik etiketleri temizlendi, işaretlenen yazılı alanlar maskelendi (görüntünün kendisi kaldırılmaz). Belgelerin AI çevirisi ve özeti özgün metinden ayrı gösterilir; yalnız klinik içerik görünür.</span>
       </div>
 
       {/* Açık talepler */}
@@ -96,7 +98,11 @@ export default async function ConsultationInboxPage() {
                 <p className="mt-2 whitespace-pre-wrap text-xs text-[var(--c-ink-2)]">{r.summaryTr || r.clinicalSummary}</p>
                 <div className="mt-2 rounded-xl bg-[var(--c-surface)] p-3 text-sm text-[var(--c-ink)]"><span className="text-xs font-semibold text-[var(--c-ink-3)]">Görüşünüz: </span>{r.answerText}</div>
                 <RecommendationsView r={r} />
-                <Link href={`/fhir/ConsultationRequest/${r.id}`} target="_blank" className="mt-2 inline-block text-xs text-indigo-300 hover:underline">FHIR Bundle ↗</Link>
+                {/* D09: FHIR bağlantısı teknik ayrıntı — açılır bölümde */}
+                <details className="mt-2 text-xs">
+                  <summary className="cursor-pointer text-[var(--c-ink-3)]">Teknik ayrıntı (FHIR)</summary>
+                  <Link href={`/fhir/ConsultationRequest/${r.id}`} target="_blank" className="mt-1 inline-block text-indigo-300 hover:underline">FHIR Bundle ↗</Link>
+                </details>
                 <div className="mt-3 space-y-3">
                   <VideoControls requestId={r.id} role="doctor" />
                   <ConsultationChat requestId={r.id} canSend compact />
@@ -150,9 +156,10 @@ function DocumentsBlock({ requestId, docs }: { requestId: string; docs: ConsultD
           {d.aiSummary && <p className="mt-1.5 text-xs text-[var(--c-ink-2)]"><span className="font-semibold text-[var(--c-ink-2)]">Özet: </span>{d.aiSummary}</p>}
           {d.aiTranslation && <p className="mt-1 whitespace-pre-wrap text-xs text-[var(--c-ink-2)]"><span className="font-semibold">TR çeviri: </span>{d.aiTranslation}</p>}
           {d.aiLabs.length > 0 && (
-            <div className="mt-2">
-              <div className="mb-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--c-ink-2)]"><FlaskConical size={12} /> Laboratuvar (LOINC)</div>
-              <table className="w-full text-xs">
+            // D09: LOINC kodlu tablo teknik ayrıntı — açılır bölümde (klinik okumayı ağırlaştırmasın)
+            <details className="mt-2">
+              <summary className="inline-flex cursor-pointer items-center gap-1 text-[11px] font-semibold text-[var(--c-ink-2)]"><FlaskConical size={12} /> Laboratuvar değerleri — teknik ayrıntı (LOINC, {d.aiLabs.length})</summary>
+              <table className="mt-1 w-full text-xs">
                 <tbody>
                   {d.aiLabs.map((l, i) => (
                     <tr key={i} className="border-t border-[var(--c-hairline)]">
@@ -162,7 +169,7 @@ function DocumentsBlock({ requestId, docs }: { requestId: string; docs: ConsultD
                   ))}
                 </tbody>
               </table>
-            </div>
+            </details>
           )}
         </div>
       ))}
@@ -209,10 +216,19 @@ function OpenCard({ r, catalog, engaged }: { r: ConsultReqView; catalog: Catalog
         </div>
       </div>
       {r.requestedByName && <p className="mt-2 text-xs text-[var(--c-ink-3)]">Talep eden: {r.requestedByName} (Partner)</p>}
-      {/* Klinik özet — Türkçe (varsa) öncelikli; kaynak dil farklıysa altta */}
-      <p className="mt-3 whitespace-pre-wrap text-sm text-[var(--c-ink)]">{r.summaryTr || r.clinicalSummary}</p>
-      {r.summaryTr && r.summaryTr !== r.clinicalSummary && (
-        <details className="mt-1 text-xs text-[var(--c-ink-3)]"><summary className="cursor-pointer">Özgün metin ({r.language})</summary><p className="mt-1 whitespace-pre-wrap">{r.clinicalSummary}</p></details>
+      {/* Klinik özet — D09: "çevrilen metin" ile "özgün şikâyet" AÇIKÇA etiketlenir (eskiden Almanca şikâyet "Türkçeye çevrildi"
+          şeridinin altında etiketsiz görünebiliyordu). Çeviri varsa TR öncelikli, özgün metin altta; yoksa özgün metin etiketli. */}
+      {r.summaryTr && r.summaryTr !== r.clinicalSummary ? (
+        <>
+          <div className="mt-3 aura-mono text-[10px] uppercase tracking-[0.18em] text-[var(--c-ink-3)]">TR çeviri (AI)</div>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-[var(--c-ink)]">{r.summaryTr}</p>
+          <details className="mt-1 text-xs text-[var(--c-ink-3)]"><summary className="cursor-pointer">Özgün şikâyet (hasta dili: {r.language})</summary><p className="mt-1 whitespace-pre-wrap">{r.clinicalSummary}</p></details>
+        </>
+      ) : (
+        <>
+          <div className="mt-3 aura-mono text-[10px] uppercase tracking-[0.18em] text-[var(--c-ink-3)]">Özgün şikâyet (hasta dili: {r.language})</div>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-[var(--c-ink)]">{r.clinicalSummary}</p>
+        </>
       )}
       <DocumentsBlock requestId={r.id} docs={r.documents} />
 

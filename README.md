@@ -752,7 +752,7 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   (Header'daki "Tüm cihazlardan çıkış") sürümü artırır, dolaşımdaki tüm token'lar düşer;
   `getCurrentUser` her istekte DB karşılaştırması yapar (istek-içi `cache()`'li). Eski (sv'siz)
   token'lar 0 kabul edilir. Proxy bilinçli DB'siz (yaptırım veri katmanında).
-- **Kontrol raporu Paket 1A/1B/2/3 (v6.276 / v6.277 / v6.280 / v6.281, 2026-09-19/20) — erişim ve AI kapıları TEK KAYNAK, iddialar kod kanıtlı, sayaç/hakediş/liste sözlükleri açık:**
+- **Kontrol raporu Paket 1A/1B/2/3/4 (v6.276 / v6.277 / v6.280 / v6.281 / v6.283–284, 2026-09-19/20) — erişim ve AI kapıları TEK KAYNAK, iddialar kod kanıtlı, sayaç/hakediş/liste sözlükleri açık, hasta/doktor yüzeyleri dürüst:**
   · **Vaka LİSTE kapsamı** `lib/case-access.ts` (`doctorQueueScope` / `staffQueueScope` / `scopedWhere` / `CASE_LIST_SELECT`) — doktor ana
     sayfası ve `GET /api/cases` aynı üretici (atanan + KENDİ branşı atanmamış NEW/IN_REVIEW; `deletionLockedAt:null`; doğrulanmamış/
     aktivasyonsuz/branşsız → boş küme). Yeni liste/sayım sorgusu elle `where` KURMAZ. API DTO `hasFiles`/`lane` (ham `attachments` dönmez).
@@ -796,6 +796,19 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
     devam eden · tamamlanan; her dosya TEK grupta; sayılar sunucuda) + branş/tarih filtresi (`?grup=&branch=&from=&to=`) + KEYSET sayfalama
     (`?cursor=<ms>.<id>`; createdAt+id çifti, iki model aynı imleçle birleştirilir — `mergeKeysetPage`) + kart başına tek "sıradaki adım"
     (`caseNextStep`/`soNextStep`). Varsayılan sekme: işlem gerektiren varsa o. `take:100` tavanı ve istemci sıralaması kalktı.
+  · **Hasta yüzeyi (4A, v6.283):** vaka merkezi bandı DURUM bazlı (`lib/patient-cases caseHubBand`; DONE'da "kuyruğa eklendi" yok) · SO video randevusu
+    ÜÇ EVRE (`lib/appointment-window`: kuruldu → −15 dk…+60 dk pencere → geçti; katıl yalnız pencerede; saat TSİ + tarayıcı dilimi farklıysa yerel
+    saat; "şimdi" `lib/use-now` useSyncExternalStore — render'da Date.now() yok) · `/hesap` tek dil (hasta dili) + "onam metni dili" rozeti;
+    vaka merkezi arayüzü hastanın GÜNCEL diline, kayıt dili ayrı alan · takip "Randevu iste" dürüst devre dışı (akış yok) · ön görüşme kapısı
+    sahte kart alanları yerine "Demo ile devam et — ücret alınmaz" (odak başlığa, autoFocus yok; Billing sözleşmesi PAID/PAYMENT aynı) · belge adımı
+    iki açık yol (şimdi yükle / eksik belgeyle beklemeye al; "opsiyoneldir" kalktı) · ücretsiz ray "Başvuru & Onay" (N/A sahne yok) · Onay
+    Kanıtı sade özet + "Teknik kanıt" açılır + sekmeler role göre (`lib/consent-proof-scopes`; hasta personel/Doctorium sekmesi görmez) ·
+    Erişim Kaydı son-30-gün özeti + LOGIN vb. teknik olaylar ayrı açılır bölüm (`lib/access-log-view`).
+  · **Doktor yüzeyi (4B, v6.284):** kuyruk durum rozeti mobilde de görünür · Header ikon-linklerine `aria-label` · SO görüş formu `htmlFor/id` +
+    gönderilmemiş görüşte `beforeunload` uyarısı (sunucu şifreli taslak = migration → todo) · profilde "Bağlı hesap" satırı + kapasite DÖNEMLİ
+    (`lib/capacity-period`: Türkiye takvim ayı; aşım etiketlenir, engellemez) · konsültasyon mahremiyet şeridi de-id diliyle ("görüntünün kendisi
+    kaldırılmaz"), "Özgün şikâyet (hasta dili)" / "TR çeviri (AI)" etiketleri, LOINC tablosu + FHIR bağlantısı açılır "teknik ayrıntı" · ücretsiz
+    konsol / nöbet durum etiketlerinde kulvar adı · finans turizm HELD/RELEASED/REFUNDED "eski ödeme modeli — tarihsel" + not.
 - **Rate-limit (v4.18):** Upstash Redis birincil (dağıtık/atomik; login 10/5dk/IP · paylaşım-şifre
   10/5dk/IP+link · AI 20/dk/kullanıcı), env yoksa/hatada in-memory yedek (fail-open). Env:
   `UPSTASH_REDIS_REST_URL/TOKEN`.

@@ -116,7 +116,7 @@ export function DutyConsole({ initial, initialRequests }: { initial: DutyState; 
               {busy === "clinical" ? <Loader2 size={15} className="animate-spin" /> : online ? <Radio size={15} /> : <Power size={15} />}
               Branş kliniği
             </span>
-            <span className="text-xs text-[var(--c-ink-2)]">{online ? "Çevrimiçi — gerçek-zaman" : "Çevrimdışı"}</span>
+            <span className="text-xs text-[var(--c-ink-2)]">{online ? "Çevrimiçi — gerçek-zaman" : "Çevrimdışı (uzaktan sağlık kulvarı)"}</span>
           </button>
 
           {/* İcap açık */}
@@ -213,7 +213,8 @@ function RequestCard({ req, onOffer }: { req: DutyRequest; onOffer: (caseId: str
   );
 }
 
-const STATE_LABEL: Record<string, string> = { OFFLINE: "Çevrimdışı", ONLINE: "Çevrimiçi", IN_SESSION: "Görüşmede" };
+// D09 (v6.284): kulvar adı etikette — ücretsiz konsolun "Müsait (ücretsiz kulvar)" durumuyla çelişki gibi okunmasın.
+const STATE_LABEL: Record<string, string> = { OFFLINE: "Çevrimdışı (uzaktan sağlık)", ONLINE: "Çevrimiçi (uzaktan sağlık)", IN_SESSION: "Görüşmede (uzaktan sağlık)" };
 
 function StateDot({ state }: { state: string }) {
   const cls = state === "ONLINE" ? "bg-emerald-500" : state === "IN_SESSION" ? "bg-violet-500" : "bg-[var(--c-ink)]/20";

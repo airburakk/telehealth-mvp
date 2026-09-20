@@ -31,10 +31,12 @@ export const metadata = { title: "Finans" };
 // UYDURULMAZ, rezervasyonlar escrow durumuyla listelenir, pay mutabakat notuna bağlanır.
 const TELE_LIST_LIMIT = 50; // döküm listesi; toplam/sayı TÜM kayıtlardan (K09 dersi: görünür dilimden türetme)
 
+// D09 (kontrol raporu, v6.284): sağlık turizminde 2026-07-23'ten beri platformda ödeme/escrow YOK (v6.34) — HELD/RELEASED/
+// REFUNDED satırları eski ödeme modelinin TARİHSEL kayıtlarıdır; etiket bunu söyler. Yeni turizm akışına ödeme şartı geri eklenmez.
 const ESCROW_LABEL: Record<string, { text: string; cls: string }> = {
-  HELD: { text: "Emanette", cls: "bg-amber-500/15 text-amber-300" },
-  RELEASED: { text: "Serbest bırakıldı", cls: "bg-emerald-500/15 text-emerald-300" },
-  REFUNDED: { text: "İade edildi", cls: "bg-red-500/15 text-red-300" },
+  HELD: { text: "Emanette (eski ödeme modeli — tarihsel)", cls: "bg-amber-500/15 text-amber-300" },
+  RELEASED: { text: "Serbest bırakıldı (eski model — tarihsel)", cls: "bg-emerald-500/15 text-emerald-300" },
+  REFUNDED: { text: "İade edildi (eski model — tarihsel)", cls: "bg-red-500/15 text-red-300" },
   PENDING: { text: "Onay (ödemesiz)", cls: "bg-[var(--c-surface)] text-[var(--c-ink-3)]" },
 };
 
@@ -234,6 +236,9 @@ export default async function FinansPage() {
           <p className="mt-3 text-[11px] text-[var(--c-ink-3)]">
             {lanes.tourism > 0 && <>{lanes.tourism} tamamlanan sağlık turizmi görüşmesi — doktor payı mutabakatta. </>}
             Doktor payı ayrı bir kalem olarak tanımlı değil (hastane/klinik payı içinde) — ay sonu mutabakatında netleşir; bu bölümdeki tutarlar paket toplamıdır, hakediş toplamına eklenmez.
+            {bookings.some((b) => b.escrowStatus !== "PENDING") && (
+              <>{" Sağlık turizminde 2026-07-23'ten beri platformda ödeme/escrow yoktur; \"Emanette / Serbest bırakıldı / İade\" satırları eski modelin tarihsel kayıtlarıdır."}</>
+            )}
           </p>
         </LaneCard>
 

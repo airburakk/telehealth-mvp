@@ -306,11 +306,15 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                 <Link
                   key={href}
                   href={href}
+                  // D06 (kontrol raporu, v6.284): ikonlu öğenin metni mobilde gizlendiği için bağlantı erişilebilirlik
+                  // ağacında ADSIZ kalıyordu → kalıcı aria-label (etiket çevirisiyle aynı).
+                  aria-label={Icon ? t(label) : undefined}
+                  aria-current={active ? "page" : undefined}
                   className={`flex min-h-[44px] shrink-0 items-center gap-2 px-2 text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${
                     active ? "font-medium text-[var(--c-accent)]" : "text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"
                   }`}
                 >
-                  {Icon && <Icon size={16} />}
+                  {Icon && <Icon size={16} aria-hidden />}
                   {/* İkonsuz öğe (Doctorium sekmesi) mobilde de etiket gösterir — yoksa bantta
                       hiç görünmezdi (ikon yok + etiket sm+ gizli). */}
                   <span className={Icon ? "hidden sm:inline" : ""}>{t(label)}</span>

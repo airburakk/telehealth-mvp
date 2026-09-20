@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { secondOpinionDocSpecs } from "@/data/second-opinion-docs";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
+import { APPT_PHASE_TEXT, appointmentPhase, formatApptTr } from "@/lib/appointment-window";
+import { useNowMinute } from "@/lib/use-now";
 import Link from "next/link";
 import { Check, FileText, Link2, ExternalLink, FlaskConical, Loader2, ClipboardList, NotebookPen, Video, CheckCircle2, CalendarClock, RefreshCw, Clock } from "lucide-react";
 
@@ -67,6 +69,21 @@ export function SoOpinionPanel({ data }: { data: Data }) {
 
   const pendingReqs = data.requests.filter((r) => r.status === "PENDING");
   const canWork = status === "ASSIGNED";
+
+  // D07 (kontrol raporu, v6.284): yazılan rapor yalnız bileşen state'inde — sayfadan yanlışlıkla ayrılış emek
+  // kaybettirirdi. Gönderilmemiş içerik varken tarayıcı "ayrılmak istiyor musunuz?" sorar. Sunucu tarafı şifreli
+  // taslak (migration) ayrı karar (todo); sağlık içeriği localStorage'a YAZILMAZ.
+  const dirty = canWork && (SECTIONS.some((s) => fields[s.key].trim().length > 0) || testDesc.trim().length > 0) && busy === "";
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
+  // H03/D07: randevu evresi doktor tarafında da — katıl düğmesi yalnız pencerede; saat TSİ.
+  const now = useNowMinute();
+  const apptPhase = data.appointment && now !== null ? appointmentPhase(data.appointment.scheduledAt, now) : null;
 
   function buildContent(): string {
     return SECTIONS.filter((s) => fields[s.key].trim())
@@ -202,20 +219,29 @@ export function SoOpinionPanel({ data }: { data: Data }) {
       {status === "VIDEO_OFFERED" && data.appointment && (
         <div className="mt-4 rounded-3xl border border-amber-400/25 bg-amber-500/10 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-amber-200"><Clock size={17} /> Randevu teklifiniz hastaya iletildi</div>
-          <p className="mt-1.5 text-lg font-bold text-[var(--c-ink)]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+          <p className="mt-1.5 text-lg font-bold text-[var(--c-ink)]">{formatApptTr(data.appointment.scheduledAt)}</p>
           <p className="mt-1 text-xs text-amber-300">Hasta bu zamanı onayladığında randevu kesinleşir; farklı bir zaman isterse yeniden öneri yapabilirsiniz.</p>
         </div>
       )}
 
-      {/* Video randevusu */}
+      {/* Video randevusu — evre sözlüğü (H03/D07): katıl yalnız pencerede (−15 dk … +60 dk); saat TSİ */}
       {status === "VIDEO_SCHEDULED" && data.appointment && (
         <div className="mt-4 rounded-3xl border border-[var(--c-accent)]/30 bg-[var(--c-accent)]/[0.06] p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-[var(--c-accent-stronger)]"><Video size={17} /> Video görüşme randevusu</div>
-          <p className="mt-1.5 text-lg font-bold text-[var(--c-ink)]">{new Date(data.appointment.scheduledAt).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })}</p>
+          <p className="mt-1.5 text-lg font-bold text-[var(--c-ink)]">{formatApptTr(data.appointment.scheduledAt)}</p>
+          {apptPhase && (
+            <p className={`mt-1 text-[13px] ${apptPhase === "open" ? "text-emerald-300" : apptPhase === "past" ? "text-amber-300" : "text-[var(--c-ink-2)]"}`}>{APPT_PHASE_TEXT[apptPhase]}</p>
+          )}
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link href={`/second-opinion/gorusme/${data.appointment.id}?role=doctor`} className="inline-flex items-center gap-2 rounded-xl bg-[var(--c-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
-              <Video size={16} /> Görüşmeye katıl
-            </Link>
+            {apptPhase === "open" ? (
+              <Link href={`/second-opinion/gorusme/${data.appointment.id}?role=doctor`} className="inline-flex items-center gap-2 rounded-xl bg-[var(--c-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">
+                <Video size={16} /> Görüşmeye katıl
+              </Link>
+            ) : (
+              <span aria-disabled="true" className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-dashed border-[var(--c-hairline)] px-5 py-2.5 text-sm font-semibold text-[var(--c-ink-3)]">
+                <Video size={16} /> Görüşmeye katıl
+              </span>
+            )}
             <button onClick={completeVideo} disabled={busy !== ""} className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-50">
               {busy === "complete" ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />} Görüşmeyi tamamla
             </button>
@@ -227,8 +253,10 @@ export function SoOpinionPanel({ data }: { data: Data }) {
       {canWork && (
         <>
           <div className="mt-4 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
-            <div className="text-sm font-semibold text-[var(--c-ink)]">Ek tetkik iste (Talep B)</div>
+            {/* D07: kalıcı etiket bağı (htmlFor/id) — eskiden alanlar erişilebilirlik ağacında adsızdı. */}
+            <label htmlFor="so-test-desc" className="text-sm font-semibold text-[var(--c-ink)]">Ek tetkik iste (Talep B)</label>
             <textarea
+              id="so-test-desc"
               value={testDesc}
               onChange={(e) => setTestDesc(e.target.value)}
               rows={2}
@@ -248,8 +276,9 @@ export function SoOpinionPanel({ data }: { data: Data }) {
             <div className="flex items-center gap-2 text-sm font-semibold text-[var(--c-accent-stronger)]"><NotebookPen size={17} /> Yazılı ikinci görüş</div>
             {SECTIONS.map((s) => (
               <div key={s.key} className="mt-3">
-                <label className="text-xs font-semibold text-[var(--c-ink-2)]">{s.label}{s.key === "opinion" && <span className="text-red-500"> *</span>}</label>
+                <label htmlFor={`so-opinion-${s.key}`} className="text-xs font-semibold text-[var(--c-ink-2)]">{s.label}{s.key === "opinion" && <span className="text-red-500"> *</span>}</label>
                 <textarea
+                  id={`so-opinion-${s.key}`}
                   value={fields[s.key]}
                   onChange={(e) => setFields((f) => ({ ...f, [s.key]: e.target.value }))}
                   rows={s.key === "opinion" ? 4 : 3}
@@ -266,6 +295,7 @@ export function SoOpinionPanel({ data }: { data: Data }) {
               {busy === "opinion" ? <Loader2 size={17} className="animate-spin" /> : <>Görüşü hastaya sun</>}
             </button>
             <p className="mt-2 text-center text-[11px] text-[var(--c-ink-3)]">Sunulduktan sonra hasta görüntüleyebilir; ardından video randevusu planlanır. (E-imza ileride.)</p>
+            {dirty && <p className="mt-1 text-center text-[11px] text-amber-300">Yazdığınız görüş henüz gönderilmedi — sayfadan ayrılırsanız kaybolur.</p>}
           </div>
         </>
       )}
