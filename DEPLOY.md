@@ -222,7 +222,10 @@ git push origin main
 1. https://vercel.com → **Add New → Project** → GitHub repo'yu seç
 2. Framework otomatik **Next.js** algılanır (ayar gerekmez)
 3. **Environment Variables** ekle (aşağıdaki tablo)
-4. **Deploy** — build'de `prisma generate` otomatik çalışır (`package.json` `build` + `postinstall`)
+4. **Deploy** — build'de `prisma generate` otomatik çalışır (`package.json` `build` + `postinstall`). **v6.279 (2026-09-20):** `build`
+   komutu ÖNCE `tsx scripts/check-kek.ts` koşar — üretim build'i (`VERCEL_ENV=production`) `DATA_ENCRYPTION_KEK` boş/32 byte
+   değilse çıkış 1 ile durur, KEK'siz deployment hiç oluşmaz. Proje ayarları **Build Command boş** (→ `npm run build`) ve
+   **`autoExposeSystemEnvs: true`** kalmalı (iki projede 2026-09-20 ölçüldü) — kapatılırsa `VERCEL_ENV` build'e gelmez, korkuluk sessizce atlanır
 
 ---
 
@@ -236,7 +239,7 @@ dormant kalır / fallback'e düşer).
 | `DATABASE_URL` | ✅ | Neon **pooled** connection string |
 | `DIRECT_URL` | ✅ | Neon **direct** connection string (migration; `migrate deploy/resolve` bunu kullanır) |
 | `SESSION_SECRET` | ✅ | JWT imzalama — `openssl rand -base64 32` |
-| `DATA_ENCRYPTION_KEK` | ✅ | At-rest alan şifreleme KEK'i (E2EE Faz 1) — **AKTİF** (2026-06-23 üretimde set + backfill → klinik veri şifreli; **silmek/değiştirmek prod'u bozar**). `openssl rand -base64 32`. **Ortam-başına AYRI değer (Ray B2, 2026-07-16):** yerel `.env` = dev branch + dev KEK'i; üretim KEK'i yalnız Vercel'de (yerelde `PROD_DATA_ENCRYPTION_KEK` adıyla, bilinçli işlemler için). ⚠️ Kayıp = veri kaybı (escrow/yedek). Rotasyon: `scripts/rotate-kek.ts` + runbook (aşağıdaki escrow bloğu); insan-okur kopya kaybında break-glass ucu (bir alt satır) |
+| `DATA_ENCRYPTION_KEK` | ✅ | At-rest alan şifreleme KEK'i (E2EE Faz 1) — **AKTİF** (2026-06-23 üretimde set + backfill → klinik veri şifreli; **silmek/değiştirmek prod'u bozar**). `openssl rand -base64 32`. **Ortam-başına AYRI değer (Ray B2, 2026-07-16):** yerel `.env` = dev branch + dev KEK'i; üretim KEK'i yalnız Vercel'de (yerelde `PROD_DATA_ENCRYPTION_KEK` adıyla, bilinçli işlemler için). ⚠️ Kayıp = veri kaybı (escrow/yedek). Rotasyon: `scripts/rotate-kek.ts` + runbook (aşağıdaki escrow bloğu); insan-okur kopya kaybında break-glass ucu (bir alt satır). **Build-time korkuluk (v6.279, 2026-09-20):** üretim build'i bu değer boş ya da 32 byte değilse BAŞLAMAZ (`scripts/check-kek.ts`, bypass yok) — İKİ projeye AYRI girilir, doctorium'da unutulan KEK'i de build anında yakalar |
 | `KEK_ROTATION_SECRET` | ⛅ | **Break-glass KEK rotasyonu** ucunu uyandırır (`/api/admin/kek-rotate` · `/admin` → "Şifreleme anahtarı"; v6.273, 2026-09-18). **NORMALDE TANIMSIZ** (uç 404 = uykuda). İnsan-okur KEK kopyası kaybolunca: uzun rastgele değeri **yalnız telehealth-mvp** projesine yaz (DB ortak; doctorium'da uç 404) + redeploy → /admin'de yeni KEK ile dry-run → escrow → "Uygula" → `DATA_ENCRYPTION_KEK`'i **İKİ projede** yeni değere çevir + redeploy → ikinci tur (artçılar) → bu env'i kaldır + redeploy. Yönetici oturumu tek başına rotasyon yapamaz (ele geçirilmiş oturum veriyi rehin alamasın). Runbook: vault `wiki/yonetisim/sir-envanteri.md` §3.2 |
 | `ANTHROPIC_API_KEY` | ⛅ | Claude (triyaj/SOAP/epikriz/çeviri/vision). Yoksa triyaj kural tabanlıya düşer |
 | `GEMINI_API_KEY` | ⛅ | Gemini Live tercüman. Yoksa canlı tercüme dormant |
@@ -329,6 +332,13 @@ dormant kalır / fallback'e düşer).
   ifadesi, dry-run varsayılan, `maxDuration 800` (700 sn bütçe; süre dolarsa sayfa sınırında durur, tekrar
   güvenli), audit `KEK_ROTATION` + alarm; anahtar hiçbir satıra girmez (sha256 önekleri). Sonrası aynı
   runbook: env İKİ projede → redeploy → ikinci tur → eski KEK arşiv.
+  **Build-time korkuluk VAR (v6.279, 2026-09-20 — tatbikat #1 aksiyon A6 / bulgu B4):** `package.json build` ön adımı
+  `tsx scripts/check-kek.ts` (`lib/kek-build-guard`): `VERCEL_ENV=production` iken KEK boş/bozuk (base64 çözümü 32 byte değil) →
+  build çıkış 1, deployment OLUŞMAZ, önceki Ready deployment canlı kalır (eskiden `encryptField` fail-closed yazımı durdurur ama
+  deployment canlıya çıkar, hasta yüzeyi 500 → SEV-1 geç fark edilirdi; tatbikat #1 Inject 1 tam buydu). Preview/yerel/CI atlanır;
+  bypass YOK. Ön koşul: iki projede `autoExposeSystemEnvs: true` + Build Command boş (`npm run build`) —
+  `npx vercel api "/v9/projects/<ad>?teamId=…"` ile doğrulanır (MCP `get_project` bu alanı göstermez). Kanıt: build günlüğünde
+  "✓ KEK korkuluğu: DATA_ENCRYPTION_KEK mevcut ve 32 byte". Runbook: vault `wiki/yonetisim/sir-envanteri.md` §3.3.
   **Kurtarma/teşhis aracı VAR (2026-08-05, v6.82):** `scripts/find-kek.ts` — "escrow'daki değer
   çalışmıyor, hangi aday bu DB'nin anahtarı?" sorusunu yanıtlar; adayları `.env` +`--file`'dan alıp
   **base64 · hex→base64 · base64url** varyantlarını dener, kanıtı `rewrapEnvelope` ile üretir

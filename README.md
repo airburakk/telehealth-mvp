@@ -373,6 +373,14 @@ imkânı belli olmuyordu) → mobilde 13px görünür, AURA wordmark 12px'e öl�
   ile kurulur [normalde 404], ADMIN + gövdede gizli değer + onay ifadesi, dry-run varsayılan, audit
   `KEK_ROTATION`/`KEK_ROTATION_DENIED` + alarm; anahtar hiçbir satıra girmez, yalnız sha256 önekleri).
   `/admin` "Şifreleme anahtarı" bloğu bu dağıtımın KEK parmak izini gösterir (escrow/iki-proje paritesi).
+  **Build-time korkuluk (v6.279, 2026-09-20 — tatbikat #1 A6/B4):** üretim build'i (`VERCEL_ENV=production`) `DATA_ENCRYPTION_KEK`
+  boş ya da base64 çözümü 32 byte değilse **BAŞLAMAZ** — `package.json` `build` = `tsx scripts/check-kek.ts && prisma generate && next
+  build` (`lib/kek-build-guard` saf değerlendirme, birim testli; preview/yerel/CI atlanır; bypass YOK). KEK'siz/bozuk anahtarlı
+  deployment hiç oluşmaz, önceki Ready deployment canlı kalır (eskiden `encryptField` yazımı fail-closed durdurur ama deployment
+  canlıya çıkar, hasta yüzeyi 500 → SEV-1 geç fark edilirdi). Ön koşul: iki Vercel projesinde **`autoExposeSystemEnvs: true`**
+  (VERCEL_ENV build'e gelir; KAPATILIRSA korkuluk sessizce atlanır — 2026-09-20 ölçüldü) + Build Command boş (`npm run build`).
+  Kanıt: build günlüğünde "✓ KEK korkuluğu: DATA_ENCRYPTION_KEK mevcut ve 32 byte" (iki proje). Runbook: vault
+  `wiki/yonetisim/sir-envanteri.md` §3.3.
 - **Post-op erişim daraltma (E2EE Faz 2A):** post-op takip tamamlanınca (doktor "Takibi tamamla" veya
   branş protokol süresi + tampon otomatik/lazy) klinik personel erişimi kapanır → **hasta-only**;
   daraltılan noktalar (kokpit, vaka API, FHIR, görüşme, check-in, kodlama/lab/AI) 403/409 döner +
@@ -479,8 +487,8 @@ envanteri (17) + aydınlatma (01) + saklama politikası (05) birlikte güncellen
 doktor/öğrenci telesağlık metnini (`GENERAL_KVKK`) DEĞİL, Doctorium setini onaylar — `DOCTORIUM_KVKK`
 (belge 01) + `DOCTORIUM_TERMS` (belge 02), her ikisi v1; **ekran = hash** (onam ekranı `lib/doctorium-legal`
 metnini LegalMarkdown ile gösterir, sunucu aynı string'i hash'ler). Tek kaynak `lib/doctorium-consent.ts`:
-`requiredConsentScopes(role, aşama)` (v6.269: PATIENT → GENERAL_KVKK v4 + AURA_TERMS · personel → STAFF_KVKK · Aşama 1
-doktor/öğrenci → Doctorium seti · Aşama 2 doktor → STAFF_KVKK + Doctorium · Doctorium'dan çıkan → STAFF_KVKK), `gateConsentVersion` (JWT `cv`: set
+`requiredConsentScopes(role, aşama, deploy)` (v6.269, AURA deploy'u: PATIENT → GENERAL_KVKK v4 + AURA_TERMS · personel → STAFF_KVKK · Aşama 1
+doktor/öğrenci → Doctorium seti · Aşama 2 doktor → STAFF_KVKK + Doctorium · Doctorium'dan çıkan → STAFF_KVKK). **v6.275 (2026-09-19) — DEPLOY EKSENİ:** `deploy` `IS_DOCTORIUM_DEPLOY`'dan çözülür (`CURRENT_CONSENT_DEPLOY`; testler parametreyle verir) — **Doctorium deploy'u (doctorium.tr) YALNIZ kendi belgelerini sorar:** DOCTOR her aşamada (profilsiz dahil) → yalnız 01+02 · Doctorium'dan çıkmış → boş · personel/ADMIN → boş (STAFF_KVKK ve personel aydınlatması AURA host'unda yaşar) · PATIENT → AURA kuralı (oturum zaten açılmaz); `missingConsentScopes`/`gateConsentVersion` aynı ekseni taşır; `/onam` Doctorium'da `?scope=clinical`'ı yok sayar, kimliksiz → `/doctorium/giris`; `/api/consent` Doctorium'da yalnız `doctorium` + `resign`, AURA kapsamı **400**; bayat `cv=0` oturumlar `/onam` → resign ile kendiliğinden düzelir. 👤 bulgu 2026-09-19: v6.269'un yeni STAFF_KVKK'sı doctorium.tr girişine AURA personel aydınlatmasını düşürüyordu (18 Eyl "admin doğrudan iniş" teyidi aynı hatanın ADMIN yüzüydü). Nöbet: `doctorium-consent.test` (deploy parametresi) + `consent-route-brand.test` (400/200). **Yeni onam kapsamı eklerken "hangi deploy'da sorulur?" sorusu zorunlu.** `gateConsentVersion` (JWT `cv`: set
 tamsa CONSENT_VERSION, değilse 0 — proxy kuralı DEĞİŞMEDİ; login/OAuth/signup bunu yazar), `missingConsentScopes`
 (/onam DB-taze karar: `DoctoriumConsentGate` · `AuraConsentGate` [hasta] · `StaffConsentGate` [personel / clinical] · `ConsentResign` [set tam, JWT eski →
 kayıtsız yeniden imza; proxy↔/onam döngüsü kapanır]). **v6.270 (2026-09-15) — kapılardan ÇIKIŞ TAM SAYFA gezintisi** (`app/onam/leave-gate.ts leaveConsentGate`): eski `router.push(dest)+router.refresh()` üretimde Header `<Link>` ön-yüklemelerinin bayat-çerezli proxy 307'sini ön-yükleme önbelleğinden kullanıp /onam'a geri dönüyor, kullanıcı "Onay durumunuz doğrulanıyor…" spinner'ında elle yenileyene dek kalıyordu (dev'de görünmez — prefetch yalnız üretimde; `next start` ile tekrarlandı). `next` hedefi `lib/safe-path isSafeInternalPath` ile süzülür (`//host` ve `/\host` reddedilir; OAuth `isSafeNextPath` aynı kurala devreder). Nöbet: `tests/unit/safe-path.test.ts`. **Klinik aktivasyon `STAFF_KVKK` (v6.269; eskiden GENERAL_KVKK) onamına bağlı:**
@@ -592,6 +600,7 @@ monetizasyon) için `Air/wiki/changelog.md` ve bu dosyanın alt kısmındaki tar
 | `/admin/personel-onay` | **Kurumsal üyelik onayı (2026-08-12, ADMIN/Etik Kurul):** PARTNER/AGENCY/HEALTH_PRO başvuruları — şifreli yanıtlar sunucuda çözülür, belgeler audit'li raw uçtan açılır, Onayla (`staffVerifiedAt` + PARTNER'da PartnerDoctor bağlama) / Reddet (gerekçe başvurana) |
 | `/admin` (+`/kampanya`, `/anket`, `/kongre`) | **Yönetim dizini (v6.71-73):** ADMIN bandı yalnız Yönetim·Operasyon (kullanıcı kararı; TAM-liste nav sözleşme testi) — 3 küratör paneli kartı + 10 "Denetim görünümü" kısayolu buradan dağılır. **Kampanya (v6.68):** Doctorium akışı sponsorlu kartları — İLAÇ-DIŞI (Modül D TİTCK parkı; kategori fail-closed, birim regresyon kilidi), hedefleme yalnız açık-rızalı doktora, kişi-bazlı log YOK (agregat sayaç). **Anket (v6.69):** topluluk/sponsorlu tek-soru anketleri — **honorarium>0 yayın KİLİDİ** (ödeme/vergi kurgusu netleşene dek). Admin hesabı self-signup'sız: `scripts/create-admin.ts` (şifre yalnız env, `--promote` korkuluğu) |
 | `/operasyon` (+`/lojistik`) | Operasyon paneli · lojistik Patient Journey takibi (S2 — koordinatör/admin) |
+| `/admin/landing-analitik` | **Doctorium landing analitiği (ADMIN):** kimliksiz agregat sayaçlar (`landing_view` · `section_view` · `student_click`; `LandingEventBeacon` + `events.ts` yerleşim haritası) + **"Öğrenci hunisi" paneli (v6.275, 2026-09-19)** — `lib/doctorium-landing/student-funnel.ts` (saf, birim testli): 09 Öğrenciler bölümü görüntülenme · öğrenci düğmesi tıklaması (ogrenci · final · identity yerleşimleri) · tıklama/görüntülenme · hero sonrası ulaşan pay · ziyaret tabanı · gün tablosu; `STUDENT_FUNNEL_SINCE` = 10 Eyl 2026 (betik `LANDING_SINCE` ile aynı); örneklem <30 → "oranlar yorumlanmaz". Prod betiği `probe-membership-stamps` yedek. 2026-09-19 prod ölçümü: student_click 0 (kablo doğru, örneklem yetersiz → tetikleyici-bazlı izleme) |
 | `/paylasim/[token]` · `/paylasimlarim` | Güvenli paylaşım görüntüleyici · paylaşım yönetimi |
 | `/second-opinion/*` | İkinci Görüş başvuru/vaka/görüşme akışı |
 | `/ucretsiz-saglik/*` | Ücretsiz Sağlık Hizmeti başvuru/bekleme/landing |
@@ -662,7 +671,7 @@ tabanlı `analyzeTriage()`'a düşer (anahtar kelime eşleştirme + kırmızı b
 
 ## Ortam değişkenleri
 
-Tümü `.env.example`'da: `DATABASE_URL` (pooled) · `DIRECT_URL` (direct) · `SESSION_SECRET` · `DATA_ENCRYPTION_KEK` ·
+Tümü `.env.example`'da: `DATABASE_URL` (pooled) · `DIRECT_URL` (direct) · `SESSION_SECRET` · `DATA_ENCRYPTION_KEK` (üretim build'i bu anahtar boş/32 byte değilse BAŞLAMAZ — v6.279 `scripts/check-kek.ts`; iki Vercel projesine AYRI) ·
 `ANTHROPIC_API_KEY` · `GEMINI_API_KEY` · `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` ·
 `CF_TURN_KEY_ID`/`CF_TURN_API_TOKEN` (WebRTC TURN birincil — Cloudflare Realtime) ·
 `METERED_API_KEY`/`METERED_DOMAIN` (TURN yedek) · `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (doktor
