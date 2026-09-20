@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { urgencyStyle, CASE_STATUS, countryFlag, countryName, formatDateTime } from "@/lib/constants";
+import { QUEUE_COUNTER_FILTERS, QUEUE_COUNTER_KEYS, type QueueCounterKey } from "@/lib/case-access";
+import { QUEUE_COUNTERS } from "@/lib/doctor-home";
 import { BranchAvatar } from "@/components/BranchAvatar";
 import { Search, ArrowRight, Inbox, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -37,13 +39,11 @@ export interface CaseRow {
   hasFiles: boolean;
 }
 
-// Üst istatistikler: HER dalda sunucuda count ile hesaplanır (kontrol raporu 2026-09-17 K09 — eskiden doktor
-// dalında kesilmiş ilk 100 satırdan türetiliyordu; "Toplam" gerçek toplam değildi).
-export interface CaseQueueStats {
-  total: number;
-  waiting: number;
-  urgent: number;
-}
+// Üst sayaçlar: HER dalda sunucuda count ile hesaplanır (kontrol raporu 2026-09-17 K09 — eskiden doktor
+// dalında kesilmiş ilk 100 satırdan türetiliyordu; "Toplam" gerçek toplam değildi). Dört sayaç + kapsam alt
+// yazısı (D02, v6.281): açık · işlem bekleyen · aktif acil (yalnız açık vakada) · arşiv — sözlük lib/doctor-home
+// QUEUE_COUNTERS, filtre where'i lib/case-access QUEUE_COUNTER_FILTERS (tıklama aynı filtreyi URL'e yazar).
+export type CaseQueueStats = Record<QueueCounterKey, number>;
 
 // Sunucu-taraflı filtre/sıralama (İKİ dal, K09): rows yalnız görünür dilim olduğundan branş/durum/acil/sıralama
 // URL parametresiyle sunucuya taşınır; branş seçenekleri kapsamın tam listesinden gelir. Metin araması ve kulvar
@@ -63,8 +63,6 @@ export interface CaseQueuePagination {
   total: number;
   qs: string; // korunacak filtre parametreleri (&branch=…&status=…&urgent=1&sort=newest; URL-kodlu)
 }
-
-type StatKey = "total" | "waiting" | "urgent";
 
 export function CaseQueue({
   rows,
@@ -117,27 +115,20 @@ export function CaseQueue({
     [rows, lane, q],
   );
 
-  const { total, waiting, urgent } = stats;
-
   // Stat tıklaması (2026-08-04 modeli): sayılar tam kümeden geldiği için tıklama da tam kümeye döner —
-  // branş/durum SIFIRLANIP stat'ın kendi filtresi URL'e yazılır; aktifken ikinci tıklama kapatır.
-  // Kapalı başlangıçta "Toplam" filtresiz aç/kapat düğmesi gibi de çalışır (doktor dalı alışkanlığı).
-  const toggleStat = (key: StatKey) => {
-    if (key === "waiting") {
-      const on = serverFilters.status === "NEW" && !serverFilters.urgent;
-      pushServerFilters({ branch: "all", status: on ? "all" : "NEW", urgent: false });
-    } else if (key === "urgent") {
-      pushServerFilters({ branch: "all", status: "all", urgent: !serverFilters.urgent });
-    } else if (startCollapsed && !hasUrlFilter) {
-      setOpened((o) => !o);
-    } else {
-      pushServerFilters({ branch: "all", status: "all", urgent: false, sort: "urgency" }); // Toplam = tüm filtreleri temizle
-    }
+  // branş SIFIRLANIP sayacın kendi filtresi (QUEUE_COUNTER_FILTERS — sayımla AYNI where) URL'e yazılır; aktifken
+  // ikinci tıklama kapatır. Listeyi filtresiz açmak için ayrı aç/kapat düğmesi var (startCollapsed).
+  const counterActive = (key: QueueCounterKey) => {
+    const f = QUEUE_COUNTER_FILTERS[key];
+    return serverFilters.branch === "all" && serverFilters.status === (f.status ?? "all") && serverFilters.urgent === !!f.urgent;
   };
-  const statActive = {
-    total: startCollapsed && listOpen && !hasUrlFilter,
-    waiting: serverFilters.status === "NEW" && !serverFilters.urgent,
-    urgent: serverFilters.urgent,
+  const toggleStat = (key: QueueCounterKey) => {
+    const f = QUEUE_COUNTER_FILTERS[key];
+    pushServerFilters(
+      counterActive(key)
+        ? { branch: "all", status: "all", urgent: false }
+        : { branch: "all", status: f.status ?? "all", urgent: !!f.urgent },
+    );
   };
   const toggleList = () => {
     if (listOpen) {
@@ -152,10 +143,19 @@ export function CaseQueue({
   return (
     <div>
       {/* Stats — tıklanabilir (2026-08-04): sunucu filtresini URL'e yazar; kapalı başlangıçta listeyi de açar. */}
-      <div className="grid grid-cols-3 gap-3 sm:max-w-md">
-        <Stat label="Toplam vaka" value={total} interactive active={statActive.total} onClick={() => toggleStat("total")} />
-        <Stat label="Bekleyen" value={waiting} tone="text-blue-300" interactive active={statActive.waiting} onClick={() => toggleStat("waiting")} />
-        <Stat label="Acil (4-5)" value={urgent} tone="text-red-300" interactive active={statActive.urgent} onClick={() => toggleStat("urgent")} />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {QUEUE_COUNTER_KEYS.map((key) => (
+          <Stat
+            key={key}
+            label={QUEUE_COUNTERS[key].label}
+            caption={QUEUE_COUNTERS[key].caption}
+            value={stats[key]}
+            tone={QUEUE_COUNTERS[key].tone}
+            interactive
+            active={counterActive(key)}
+            onClick={() => toggleStat(key)}
+          />
+        ))}
       </div>
       {/* Tek-tuş aç/kapat (2026-07-31, kullanıcı isteği): tüm listeyi filtresiz açar; sayaçlar
           ayrıca kendi stat filtresiyle açmaya devam eder. Kapalıyken kutu + metin aura mavisi
@@ -200,6 +200,9 @@ export function CaseQueue({
             </select>
             <select value={serverFilters.status} onChange={(e) => pushServerFilters({ status: e.target.value })} aria-label="Duruma göre filtrele" className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-3 py-2 text-sm outline-none focus:border-[var(--c-accent)]">
               <option value="all">Tüm durumlar</option>
+              {/* Sözde durumlar — sayaçlarla aynı küme (lib/case-access statusFilterWhere) */}
+              <option value="open">Açık (arşiv hariç)</option>
+              <option value="pending">İşlem bekleyen (yeni + incelemede)</option>
               {Object.entries(CASE_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
             {/* Sıralama — aciliyet varsayılan, "en yeni" sisteme düşme zamanı (sunucuda; sayfalı dilimde istemci sıralaması yanıltırdı) */}
@@ -323,6 +326,7 @@ export function CaseQueue({
 
 function Stat({
   label,
+  caption,
   value,
   tone,
   interactive,
@@ -330,6 +334,8 @@ function Stat({
   onClick,
 }: {
   label: string;
+  /** Sayacın KAPSAMI (D02): hangi kümeyi saydığı alt yazıda — sayı tek başına iş önceliği izlenimi vermesin. */
+  caption?: string;
   value: number;
   tone?: string;
   interactive?: boolean;
@@ -345,6 +351,7 @@ function Stat({
           <ChevronDown size={13} className={`shrink-0 text-[var(--c-ink-3)] transition-transform ${active ? "rotate-180" : ""}`} />
         )}
       </div>
+      {caption && <div className="mt-0.5 text-[10px] leading-snug text-[var(--c-ink-3)]">{caption}</div>}
     </>
   );
   if (!interactive) {

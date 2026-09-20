@@ -11,6 +11,21 @@
 //                          kendi branş havuzuna düşen sağlık turizmi talepleri; doktor tanıtım mesajı +
 //                          video randevu teklifi gönderir (2026-07-14)
 
+import type { QueueCounterKey } from "@/lib/case-access";
+
+// ── Vaka kuyruğu sayaç SÖZLÜĞÜ (kontrol raporu 2026-09-17 D02, v6.281) ──
+// Eski üçlü ("Toplam vaka · Bekleyen · Acil (4-5)") kapsamını açıklamıyordu: "Acil" tamamlanmış vakaları da
+// sayıyor, "Bekleyen" yalnız NEW'i sayarken İkinci Görüş paneli ayrı bir "bekliyor" gösteriyordu → farklı
+// kapsamlar aynı iş önceliği izlenimi veriyordu. Dört sayaç, her birinin kapsamı ALT YAZIDA; sayılar
+// lib/case-access `queueCounterWhere` ile SUNUCUDA hesaplanır (filtre = aynı where). Bu sözlük istemci
+// bileşene (CaseQueue) de gider — burada Prisma çalışma zamanı bağımlılığı YOK (yalnız tip).
+export const QUEUE_COUNTERS: Record<QueueCounterKey, { label: string; caption: string; tone?: string }> = {
+  open: { label: "Açık vaka", caption: "Yeni · incelemede · görüşmede — arşiv hariç" },
+  pending: { label: "İşlem bekleyen", caption: "Üstlenilmemiş yeni + incelemedeki dosyalar", tone: "text-blue-300" },
+  urgent: { label: "Aktif acil", caption: "Aciliyet 4-5, yalnız açık vakalar", tone: "text-red-300" },
+  archive: { label: "Arşiv", caption: "Tamamlanan vakalar", tone: "text-emerald-300" },
+};
+
 // İkinci Görüş ünvan kapısı: yalnız doçent/profesör.
 // Doctor.title değerleri: "Prof. Dr." | "Doç. Dr." | "Op. Dr." | "Uzm. Dr."
 export function soEligible(title: string | null | undefined): boolean {

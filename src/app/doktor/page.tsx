@@ -6,7 +6,10 @@ import { CaseQueue, type CaseRow, type CaseQueueServerFilters } from "@/componen
 import { CASE_STATUS } from "@/lib/constants";
 import { deniedRoleHome } from "@/lib/roles";
 import { hasClinicalAccess } from "@/lib/doctor-activation";
-import { CASE_LIST_SELECT, caseLaneOf, doctorQueueScope, queueOrderBy, scopedWhere, staffQueueScope, type QueueSort } from "@/lib/case-access";
+import {
+  CASE_LIST_SELECT, caseLaneOf, doctorQueueScope, isQueuePseudoStatus, queueCounterWhere, queueOrderBy, scopedWhere,
+  staffQueueScope, type QueueSort,
+} from "@/lib/case-access";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DutyConsole } from "@/components/DutyConsole";
 import { DashboardPanel } from "@/components/DashboardPanel";
@@ -98,18 +101,24 @@ export default async function DoctorPanel({
   const scope = doctor
     ? doctorQueueScope({ doctorId: doctor.id, branch: doctor.branch, verified: doctor.verified })
     : staffQueueScope();
-  const [total, waiting, urgent, branchRows] = await Promise.all([
+  // Sayaçlar (D02, v6.281): "Toplam · Bekleyen · Acil" yerine kapsamı açıklanmış dört sayaç — açık (arşiv hariç) ·
+  // işlem bekleyen (NEW + IN_REVIEW) · aktif acil (4-5 VE açık) · arşiv (DONE); where'ler lib/case-access'ten, stat
+  // tıklaması aynı filtreyi URL'e yazar. `total` yalnız filtresiz sayfalama toplamı içindir.
+  const [total, open, pending, urgent, archive, branchRows] = await Promise.all([
     db.case.count({ where: scope }),
-    db.case.count({ where: scopedWhere(scope, { status: "NEW" }) }),
-    db.case.count({ where: scopedWhere(scope, { urgent: true }) }),
+    db.case.count({ where: queueCounterWhere(scope, "open") }),
+    db.case.count({ where: queueCounterWhere(scope, "pending") }),
+    db.case.count({ where: queueCounterWhere(scope, "urgent") }),
+    db.case.count({ where: queueCounterWhere(scope, "archive") }),
     // Branş dropdown seçenekleri: kapsamın tam listesi (yalnız görünen sayfanın branşları değil).
     db.case.findMany({ where: scope, select: { branch: true }, distinct: ["branch"], orderBy: { branch: "asc" } }),
   ]);
   const branchOptions = branchRows.map((b) => b.branch);
-  // Geçerli değer kontrolü: branş mevcut listeden, durum CASE_STATUS anahtarlarından; aksi = filtresiz.
+  // Geçerli değer kontrolü: branş mevcut listeden, durum CASE_STATUS anahtarlarından ya da sözde durum
+  // (open/pending — sayaç filtreleri); aksi = filtresiz.
   const branchFilter = sp.branch && branchOptions.includes(sp.branch) ? sp.branch : undefined;
-  const statusFilter = sp.status && sp.status in CASE_STATUS ? sp.status : undefined;
-  const urgentFilter = sp.urgent === "1"; // "Acil (4-5)" stat tıklaması (2026-08-04) — urgency>=4
+  const statusFilter = sp.status && (sp.status in CASE_STATUS || isQueuePseudoStatus(sp.status)) ? sp.status : undefined;
+  const urgentFilter = sp.urgent === "1"; // "Aktif acil" stat tıklaması — urgency>=4 (status=open ile birlikte yazılır)
   const sort: QueueSort = sp.sort === "newest" ? "newest" : "urgency";
   const listWhere = scopedWhere(scope, { branch: branchFilter, status: statusFilter, urgent: urgentFilter });
   // Liste + sayfalama toplamı filtreli; üst istatistikler taban (filtresiz genel bakış) kalır.
@@ -117,7 +126,7 @@ export default async function DoctorPanel({
   const caseTotalPages = Math.max(1, Math.ceil(caseTotal / CASE_PAGE_SIZE));
   // İstenen sayfayı geçerli aralığa sıkıştır (0/negatif/NaN/aşırı-büyük güvenli).
   const casePage = Math.min(Math.max(1, parseInt(sp.page ?? "1", 10) || 1), caseTotalPages);
-  const queueStats = { total, waiting, urgent }; // üst istatistikler tam kümeden (rows yalnız görünür dilim)
+  const queueStats = { open, pending, urgent, archive }; // üst sayaçlar tam kümeden (rows yalnız görünür dilim)
   const queueServerFilters: CaseQueueServerFilters = {
     branch: branchFilter ?? "all", status: statusFilter ?? "all", urgent: urgentFilter, sort, branches: branchOptions,
   };
@@ -289,7 +298,8 @@ export default async function DoctorPanel({
             title="İkinci Görüş"
             subtitle="Atanan vakalar — dosya inceleme + yazılı görüş"
             accent="var(--lane-so)"
-            badge={soCount > 0 ? <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-bold text-amber-300">{soCount} bekliyor</span> : undefined}
+            // Kapsamı açık rozet (D02): vaka kuyruğu sayaçlarından AYRI bir küme — atanmış SO dosyası, doktor görüşü bekliyor.
+            badge={soCount > 0 ? <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-bold text-amber-300">{soCount} dosya {doctor ? "görüşünüzü" : "görüş"} bekliyor</span> : undefined}
           >
             <Link href="/doktor/ikinci-gorus" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--c-accent-stronger)] hover:underline">
               İkinci Görüş panelini aç <ArrowRight size={15} />

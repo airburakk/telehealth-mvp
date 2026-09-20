@@ -6,8 +6,8 @@ import { db } from "@/lib/db";
 import { hasClinicalAccess } from "@/lib/doctor-activation";
 import { formatUSD } from "@/lib/pricing";
 import { formatDateTime } from "@/lib/constants";
-import { decryptField } from "@/lib/crypto";
 import { answeredStatsForDoctor } from "@/lib/consultation-requests";
+import { COMMISSION, CONSULT_FEE, consultationLane, laneSummary, teleNet, txRef } from "@/lib/finance";
 import { ArrowLeft, Wallet } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -22,13 +22,14 @@ export const metadata = { title: "Finans" };
 // Uzaktan Sağlık · İkinci Görüş · Sağlık Turizmi · Konsültasyon Talepleri.
 // Kulvar rengi yüzey BOYAMAZ (Aura kuralı): 3px kenar şeridi + mono etiket.
 //
-// Ücret modeli DEMO: görüşme brütü ve %20 platform komisyonu simüle (profil v1'den miras);
+// Ücret modeli DEMO: görüşme brütü ve %20 platform komisyonu simüle (profil v1'den miras; sabitler + kulvar
+// sözleşmesi lib/finance.ts — kontrol raporu D05, v6.281: Ücretsiz Sağlık görüşmeleri 0 USD "ücretsiz katkı"
+// olarak AYRI sayılır, sağlık turizmi görüşmeleri hakedişe girmez, dökümde hasta adı yerine kimliksiz işlem no).
 // SO'da hasta ödemesi (SecondOpinionPayment) gerçek kayıttır, doktor payı aynı demo komisyonla
 // gösterilir. ⚠️ Sağlık Turizmi'nde DOKTOR PAYI MODELİ YOK — Booking split'i kurum kalemlerine
 // bölünür (hastane/otel/uçak/…; doktor payı "hastane" kalemi İÇİNDE örtük) → burada tutar
 // UYDURULMAZ, rezervasyonlar escrow durumuyla listelenir, pay mutabakat notuna bağlanır.
-const CONSULT_FEE = 150;
-const COMMISSION = 0.2;
+const TELE_LIST_LIMIT = 50; // döküm listesi; toplam/sayı TÜM kayıtlardan (K09 dersi: görünür dilimden türetme)
 
 const ESCROW_LABEL: Record<string, { text: string; cls: string }> = {
   HELD: { text: "Emanette", cls: "bg-amber-500/15 text-amber-300" },
@@ -64,12 +65,7 @@ function NetRozet({ value, note }: { value: number; note: string }) {
 export default async function FinansPage() {
   const session = await getCurrentUser();
   const u = session ? await db.user.findUnique({ where: { id: session.id } }) : null;
-  const doctor = u?.doctorId
-    ? await db.doctor.findUnique({
-        where: { id: u.doctorId },
-        include: { consultations: { include: { case: true }, orderBy: { startedAt: "desc" } } },
-      })
-    : null;
+  const doctor = u?.doctorId ? await db.doctor.findUnique({ where: { id: u.doctorId } }) : null;
 
   if (!doctor) {
     return (
@@ -84,7 +80,13 @@ export default async function FinansPage() {
   // v6.87 Aşama 2 kapısı: aktivasyonsuz DOCTOR finans dökümüne giremez (ADMIN gözetimi muaf).
   if (session?.role === "DOCTOR" && !hasClinicalAccess(doctor)) redirect("/doktor/baslangic");
 
-  const [soCases, bookings, consultStats, consultLast] = await Promise.all([
+  const [ended, soCases, bookings, consultStats, consultLast] = await Promise.all([
+    // Tamamlanan görüşmeler — kulvar türetimi için yalnız freeCare/tourismPlan; hasta adı/klinik alan ÇEKİLMEZ.
+    db.consultation.findMany({
+      where: { doctorId: doctor.id, status: "ENDED" },
+      orderBy: [{ endedAt: "desc" }, { startedAt: "desc" }],
+      select: { id: true, startedAt: true, endedAt: true, case: { select: { freeCare: true, tourismPlan: true } } },
+    }),
     // İkinci Görüş: görüş TESLİM EDİLMİŞ vakalar (hakediş teslime bağlanır); ödeme kaydı gerçek.
     db.secondOpinionCase.findMany({
       where: { assignedDoctorId: doctor.id, opinionDeliveredAt: { not: null } },
@@ -107,11 +109,15 @@ export default async function FinansPage() {
     }),
   ]);
 
-  // Uzaktan Sağlık — tamamlanan vaka görüşmeleri (profilden taşınan demo model).
-  const net = CONSULT_FEE * (1 - COMMISSION);
-  const ended = doctor.consultations.filter((c) => c.status === "ENDED");
-  const teleEarnings = ended.map((c) => ({ id: c.id, patient: decryptField(c.case.patientName), date: c.endedAt ?? c.startedAt, net }));
-  const teleTotal = teleEarnings.reduce((a, b) => a + b.net, 0);
+  // Uzaktan Sağlık — hakediş KULVAR sözleşmesiyle (D05): yalnız telehealth görüşmeleri net ücret; ücretsiz = 0 USD
+  // ayrı sayaç; turizm = pay mutabakatta. Sayılar/toplam TÜM kayıtlardan, liste son TELE_LIST_LIMIT satır.
+  const lanes = laneSummary(ended);
+  const net = teleNet();
+  const teleEarnings = ended
+    .filter((c) => consultationLane(c) === "telehealth")
+    .slice(0, TELE_LIST_LIMIT)
+    .map((c) => ({ id: c.id, ref: txRef(c.id), date: c.endedAt ?? c.startedAt, net }));
+  const teleTotal = lanes.teleTotal;
 
   // İkinci Görüş — yalnız ÖDENMİŞ kayıtlar toplama girer; bekleyenler rozetle görünür.
   const soRows = soCases.map((s) => ({
@@ -140,22 +146,27 @@ export default async function FinansPage() {
         </div>
         <div className="text-right">
           <div className="text-xs text-[var(--c-ink-3)]">Genel toplam net (komisyon sonrası)</div>
-          <div className="text-2xl font-bold text-emerald-300">{formatUSD(grandTotal)}</div>
-          <div className="text-[10px] text-[var(--c-ink-3)]">Sağlık turizmi payları mutabakatta — toplama dahil değil</div>
+          {/* Simülasyon etiketi BÜYÜK toplamın yanında (D05): dipnottaki açıklama yetmiyordu. */}
+          <div className="flex items-center justify-end gap-2">
+            <span className="aura-mono rounded-full border border-amber-400/40 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-amber-300">Simülasyon</span>
+            <div className="text-2xl font-bold text-emerald-300">{formatUSD(grandTotal)}</div>
+          </div>
+          <div className="text-[10px] text-[var(--c-ink-3)]">Ücretsiz görüşmeler ve sağlık turizmi payları toplama dahil değil</div>
         </div>
       </div>
 
       <div className="mt-6 space-y-5">
         {/* ── Uzaktan Sağlık ── */}
-        <LaneCard lane="telehealth" title="Uzaktan Sağlık" right={<NetRozet value={teleTotal} note={`${teleEarnings.length} görüşme`} />}>
+        <LaneCard lane="telehealth" title="Uzaktan Sağlık" right={<NetRozet value={teleTotal} note={`${lanes.tele} ücretli görüşme`} />}>
           {teleEarnings.length === 0 ? (
-            <p className="mt-3 text-sm text-[var(--c-ink-3)]">Henüz tamamlanmış görüşme yok.</p>
+            <p className="mt-3 text-sm text-[var(--c-ink-3)]">Henüz tamamlanmış ücretli görüşme yok.</p>
           ) : (
             <ul className="mt-3 divide-y divide-[var(--c-hairline)]">
+              {/* Dökümde hasta adı YOK (K02/K03): kimliksiz işlem numarası muhasebe referansı için yeterlidir. */}
               {teleEarnings.map((e) => (
                 <li key={e.id} className="flex items-center justify-between py-2.5 text-sm">
                   <div>
-                    <div className="font-medium text-[var(--c-ink)]">Görüşme · {e.patient}</div>
+                    <div className="font-medium text-[var(--c-ink)]">Görüşme · işlem {e.ref}</div>
                     <div className="text-xs text-[var(--c-ink-3)]">{formatDateTime(e.date)} · brüt {formatUSD(CONSULT_FEE)} · %{COMMISSION * 100} komisyon</div>
                   </div>
                   <span className="font-semibold text-[var(--c-ink)]">{formatUSD(e.net)}</span>
@@ -163,6 +174,18 @@ export default async function FinansPage() {
               ))}
             </ul>
           )}
+          {lanes.tele > teleEarnings.length && (
+            <p className="mt-3 text-[11px] text-[var(--c-ink-3)]">Son {teleEarnings.length} görüşme gösteriliyor — toplam {lanes.tele} görüşmenin tümü hakediş toplamına dahil.</p>
+          )}
+        </LaneCard>
+
+        {/* ── Ücretsiz Sağlık Hizmeti — gönüllü katkı, HAKEDİŞ DEĞİL (D05: eskiden 150/120 USD ile ücretli listeye giriyordu) ── */}
+        <LaneCard lane="free" title="Ücretsiz Sağlık Hizmeti" right={<NetRozet value={0} note={`${lanes.free} ücretsiz görüşme`} />}>
+          <p className="mt-3 text-sm text-[var(--c-ink-3)]">
+            {lanes.free === 0
+              ? "Henüz tamamlanmış ücretsiz görüşme yok."
+              : `${lanes.free} görüşme gönüllü katkı olarak kaydedildi — ücret alınmaz, hakediş toplamına girmez.`}
+          </p>
         </LaneCard>
 
         {/* ── İkinci Görüş ── */}
@@ -208,7 +231,10 @@ export default async function FinansPage() {
               })}
             </ul>
           )}
-          <p className="mt-3 text-[11px] text-[var(--c-ink-3)]">Doktor payı ayrı bir kalem olarak tanımlı değil (hastane/klinik payı içinde) — ay sonu mutabakatında netleşir; bu bölümdeki tutarlar paket toplamıdır, hakediş toplamına eklenmez.</p>
+          <p className="mt-3 text-[11px] text-[var(--c-ink-3)]">
+            {lanes.tourism > 0 && <>{lanes.tourism} tamamlanan sağlık turizmi görüşmesi — doktor payı mutabakatta. </>}
+            Doktor payı ayrı bir kalem olarak tanımlı değil (hastane/klinik payı içinde) — ay sonu mutabakatında netleşir; bu bölümdeki tutarlar paket toplamıdır, hakediş toplamına eklenmez.
+          </p>
         </LaneCard>
 
         {/* ── Konsültasyon Talepleri ── */}

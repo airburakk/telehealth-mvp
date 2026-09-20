@@ -41,13 +41,47 @@ export function staffQueueScope(): Prisma.CaseWhereInput {
 export type QueueFilters = { branch?: string; status?: string; urgent?: boolean };
 export type QueueSort = "urgency" | "newest";
 
+/** Açık (arşiv-dışı) vaka durumları — sayaç sözlüğü (kontrol raporu 2026-09-17 D02): "acil" yalnız AÇIK vakada
+ *  sayılır; tamamlanmış vakanın aciliyeti arşivdir. DOCS_PENDING açık sayılmaz (doktor havuzuna düşmez). */
+export const OPEN_CASE_STATUSES = ["NEW", "IN_REVIEW", "IN_CONSULT"] as const;
+/** Doktor işlemi bekleyen durumlar: havuzda üstlenilmeyi bekleyen (NEW) + üstlenilmiş ama görüşmeye alınmamış (IN_REVIEW). */
+export const ACTION_PENDING_STATUSES = ["NEW", "IN_REVIEW"] as const;
+/** Sözde durum filtreleri — URL `status=` parametresinde gerçek durumların yanında kabul edilir. */
+export const QUEUE_PSEUDO_STATUSES = ["open", "pending"] as const;
+export function isQueuePseudoStatus(s: string): boolean {
+  return (QUEUE_PSEUDO_STATUSES as readonly string[]).includes(s);
+}
+
+/** Durum filtresi çözümü: gerçek durum (NEW/IN_REVIEW/IN_CONSULT/DONE/DOCS_PENDING) ya da sözde durum
+ *  `open` (arşiv dışı) / `pending` (işlem bekleyen). Değerin geçerliliğini çağıran doğrular. */
+export function statusFilterWhere(status: string): Prisma.CaseWhereInput {
+  if (status === "open") return { status: { in: [...OPEN_CASE_STATUSES] } };
+  if (status === "pending") return { status: { in: [...ACTION_PENDING_STATUSES] } };
+  return { status };
+}
+
 /** Sunucu filtreleri (branş/durum/acil) — kapsamla AND'lenir; kapsamı GENİŞLETEMEZ. */
 export function queueFilterWhere(f: QueueFilters): Prisma.CaseWhereInput {
   return {
     ...(f.branch ? { branch: f.branch } : {}),
-    ...(f.status ? { status: f.status } : {}),
+    ...(f.status ? statusFilterWhere(f.status) : {}),
     ...(f.urgent ? { urgency: { gte: 4 } } : {}),
   };
+}
+
+/** Kuyruk sayaçları — "Toplam · Bekleyen · Acil (4-5)" yerine kapsamı AÇIKLANMIŞ dört sayaç (D02: eski "Acil"
+ *  tamamlanmış vakaları da sayıyordu). Etiket/alt yazı sözlüğü lib/doctor-home QUEUE_COUNTERS; sayı SUNUCUDA
+ *  `db.case.count({ where: queueCounterWhere(scope, key) })`. Stat tıklaması aynı filtreyi URL'e yazar. */
+export const QUEUE_COUNTER_KEYS = ["open", "pending", "urgent", "archive"] as const;
+export type QueueCounterKey = (typeof QUEUE_COUNTER_KEYS)[number];
+export const QUEUE_COUNTER_FILTERS: Record<QueueCounterKey, QueueFilters> = {
+  open: { status: "open" },
+  pending: { status: "pending" },
+  urgent: { status: "open", urgent: true },
+  archive: { status: "DONE" },
+};
+export function queueCounterWhere(scope: Prisma.CaseWhereInput, key: QueueCounterKey): Prisma.CaseWhereInput {
+  return scopedWhere(scope, QUEUE_COUNTER_FILTERS[key]);
 }
 
 /** Kapsam + filtre birleşimi — sayfa ve API aynı birleştirmeyi kullanır. */

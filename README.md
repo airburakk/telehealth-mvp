@@ -745,7 +745,7 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   (Header'daki "Tüm cihazlardan çıkış") sürümü artırır, dolaşımdaki tüm token'lar düşer;
   `getCurrentUser` her istekte DB karşılaştırması yapar (istek-içi `cache()`'li). Eski (sv'siz)
   token'lar 0 kabul edilir. Proxy bilinçli DB'siz (yaptırım veri katmanında).
-- **Kontrol raporu Paket 1A/1B/2 (v6.276 / v6.277 / v6.280, 2026-09-19/20) — erişim ve AI kapıları TEK KAYNAK, iddialar kod kanıtlı:**
+- **Kontrol raporu Paket 1A/1B/2/3 (v6.276 / v6.277 / v6.280 / v6.281, 2026-09-19/20) — erişim ve AI kapıları TEK KAYNAK, iddialar kod kanıtlı, sayaç/hakediş/liste sözlükleri açık:**
   · **Vaka LİSTE kapsamı** `lib/case-access.ts` (`doctorQueueScope` / `staffQueueScope` / `scopedWhere` / `CASE_LIST_SELECT`) — doktor ana
     sayfası ve `GET /api/cases` aynı üretici (atanan + KENDİ branşı atanmamış NEW/IN_REVIEW; `deletionLockedAt:null`; doğrulanmamış/
     aktivasyonsuz/branşsız → boş küme). Yeni liste/sayım sorgusu elle `where` KURMAZ. API DTO `hasFiles`/`lane` (ham `attachments` dönmez).
@@ -778,6 +778,17 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
     02 rıza kartı işleme-bazlı (genel KVKK+koşullar · AI ön değerlendirme · AI tercüme · sağlık beyanı; geri alma Hesabım — `REVOCABLE_SCOPES`),
     01 AB depolama / ABD AI işleme ayrı cümle (bkz. 08), 10 KVKK başvurusu platform içi forma bağlanır (`reportCta` → `/kvkk-basvuru`; "⚖️ Tüzel
     kişilik" notu: unvan/adres şirket kurulunca). `aura-landing-copy.test` eski kalıpları ("Üç ayrı rıza", zorunlu MMSS, "Taslak") kilitler.
+  · **Kuyruk sayaç sözlüğü (D02, v6.281):** "Toplam · Bekleyen · Acil (4-5)" yerine kapsamı ALT YAZIDA açıklanmış dört sayaç — açık
+    (NEW/IN_REVIEW/IN_CONSULT) · işlem bekleyen (NEW + IN_REVIEW) · aktif acil (aciliyet ≥4 VE açık — tamamlanmış vaka SAYILMAZ) · arşiv
+    (DONE). Etiketler `lib/doctor-home QUEUE_COUNTERS`, where'ler `lib/case-access queueCounterWhere` (stat tıklaması = aynı filtre);
+    `status=` parametresi sözde durumları `open`/`pending` de kabul eder (`statusFilterWhere`; `GET /api/cases` de). SO rozeti kapsamını söyler.
+  · **Finans hakediş sözlüğü (D05, `lib/finance.ts`):** hakediş KULVAR + ücret sözleşmesiyle — telehealth = demo ücret − komisyon · ücretsiz
+    = 0 USD "gönüllü katkı" AYRI sayaç · sağlık turizmi = hakedişe girmez (pay mutabakatta, sayı görünür). "Simülasyon" etiketi büyük
+    toplamın yanında; dökümde hasta adı YOK — kimliksiz işlem no `txRef` (K02/K03); sorgu yalnız `freeCare/tourismPlan` çeker.
+  · **Hasta vaka listesi (K09-hasta / H11, `lib/patient-cases.ts`):** `/vakalarim` + `/second-opinion/vakalarim` ÜÇ GRUP (işlem gerekiyor ·
+    devam eden · tamamlanan; her dosya TEK grupta; sayılar sunucuda) + branş/tarih filtresi (`?grup=&branch=&from=&to=`) + KEYSET sayfalama
+    (`?cursor=<ms>.<id>`; createdAt+id çifti, iki model aynı imleçle birleştirilir — `mergeKeysetPage`) + kart başına tek "sıradaki adım"
+    (`caseNextStep`/`soNextStep`). Varsayılan sekme: işlem gerektiren varsa o. `take:100` tavanı ve istemci sıralaması kalktı.
 - **Rate-limit (v4.18):** Upstash Redis birincil (dağıtık/atomik; login 10/5dk/IP · paylaşım-şifre
   10/5dk/IP+link · AI 20/dk/kullanıcı), env yoksa/hatada in-memory yedek (fail-open). Env:
   `UPSTASH_REDIS_REST_URL/TOKEN`.

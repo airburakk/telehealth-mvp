@@ -13,8 +13,11 @@ import { countryFlag, CASE_STATUS, formatDateTime, langDir, LANG_BCP47 } from "@
 import { BRANCHES } from "@/lib/triage";
 import { BranchAvatar } from "@/components/BranchAvatar";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
-import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Plane, FileText, HeartHandshake, Bell, X } from "lucide-react";
+import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Plane, FileText, HeartHandshake, Bell, X, SlidersHorizontal, ChevronRight } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  GROUP_LABELS, NEXT_STEP_TEXTS, PATIENT_CASE_GROUPS, PATIENT_PAGE_SIZE, type PatientCaseGroup, type PatientListFilters,
+} from "@/lib/patient-cases";
 
 export type Lane = "telehealth" | "so" | "tourism" | "free";
 
@@ -30,6 +33,7 @@ export type MyCaseRow = {
   booking: { id: string; tier: string; status: string; total: number } | null;
   hasRecovery: boolean;
   lane: "telehealth" | "tourism" | "free";
+  nextStep: string; // TR kanonik "sıradaki adım" cümlesi (lib/patient-cases; useT çevirir)
 };
 
 export type SoCaseRow = {
@@ -39,7 +43,13 @@ export type SoCaseRow = {
   diagnosisSummary: string;
   createdAt: string; // ISO
   hasPendingReq: boolean;
+  nextStep: string;
 };
+
+// Sunucu (page.tsx) iki modeli (createdAt, id) keyset sırasıyla birleştirip sayfayı keser; burada sıralama YAPILMAZ.
+export type MergedRow =
+  | { kind: "general"; id: string; createdAt: string; row: MyCaseRow }
+  | { kind: "so"; id: string; createdAt: string; row: SoCaseRow };
 
 // 4 kulvar — adlar TR-kanonik (useT ile hedef dile çevrilir: TR'de Türkçe, EN'de "Telehealth"...).
 // color = bant/aksan (açık zeminde AA), ink = başlık metni (koyu ton). telehealth = logo turkuazı.
@@ -86,6 +96,19 @@ const S = {
   emptyBtn: "Yeni başvuru",
   caseSummary: "Başvuru özeti",
   actionNeeded: "İşlem gerekiyor",
+  // K09-hasta / H11 (v6.281): gruplar · filtre · sayfalama · sıradaki adım
+  groupsAria: "Başvuru grupları",
+  emptyGroup: "Bu grupta başvuru yok.",
+  nextStep: "Sıradaki adım",
+  filters: "Filtrele",
+  filterBranch: "Branş",
+  allBranches: "Tüm branşlar",
+  filterFrom: "Başlangıç tarihi",
+  filterTo: "Bitiş tarihi",
+  filterApply: "Uygula",
+  filterClear: "Temizle",
+  nextPage: "Sonraki başvurular",
+  firstPage: "Başa dön",
 } as const;
 
 // "Yeni başvuru" seçim modalı — 4 kulvar → ilgili başvuru akışı.
@@ -99,9 +122,32 @@ const LANE_PICK: { key: Lane; href: string; icon: typeof HeartPulse }[] = [
   { key: "free", href: "/ucretsiz-saglik/basvur", icon: HeartHandshake },
 ];
 
-type MergedRow = { kind: "general"; createdAt: string; row: MyCaseRow } | { kind: "so"; createdAt: string; row: SoCaseRow };
+// Grup sekmesi / sayfa bağlantısı için URL — filtreler korunur, imleç yalnız "sonraki" bağlantısında taşınır.
+function listHref(group: PatientCaseGroup, f: PatientListFilters, cursor?: string): string {
+  const p = new URLSearchParams();
+  p.set("grup", group);
+  if (f.branch) p.set("branch", f.branch);
+  if (f.from) p.set("from", f.from);
+  if (f.to) p.set("to", f.to);
+  if (cursor) p.set("cursor", cursor);
+  return `/vakalarim?${p.toString()}`;
+}
 
-export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?: SoCaseRow[] }) {
+export function MyCasesList({
+  items,
+  group,
+  counts,
+  filters,
+  cursor,
+  nextCursor,
+}: {
+  items: MergedRow[];
+  group: PatientCaseGroup;
+  counts: Record<PatientCaseGroup, number>;
+  filters: PatientListFilters;
+  cursor?: string;
+  nextCursor: string | null;
+}) {
   const [lang, setLang] = usePatientLang();
   const [pickerOpen, setPickerOpen] = useState(false);
   const texts = useMemo(
@@ -111,19 +157,13 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
       ...Object.values(CASE_STATUS).map((s) => s.label),
       ...Object.values(SO_STATUS_LABELS),
       ...BRANCHES.map((b) => b.label),
+      ...Object.values(GROUP_LABELS),
+      ...NEXT_STEP_TEXTS,
     ],
     [],
   );
   const { t } = useT(lang, texts);
-
-  const merged = useMemo<MergedRow[]>(
-    () =>
-      [
-        ...rows.map((r): MergedRow => ({ kind: "general", createdAt: r.createdAt, row: r })),
-        ...soRows.map((r): MergedRow => ({ kind: "so", createdAt: r.createdAt, row: r })),
-      ].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [rows, soRows],
-  );
+  const hasFilter = !!(filters.branch || filters.from || filters.to);
 
   return (
     <div className="min-h-full">
@@ -149,10 +189,63 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
           </div>
         </div>
 
-        <div className="mt-6 space-y-4">
-          {merged.length === 0 && (
+        {/* Gruplar (H11): işlem gerekiyor · devam eden · tamamlanan — sayılar sunucudan (filtre uygulanmış). Sekme = bağlantı
+            (JS'siz de çalışır); aktif sekme aria-current. */}
+        <nav aria-label={t(S.groupsAria)} className="mt-6 flex flex-wrap gap-2">
+          {PATIENT_CASE_GROUPS.map((g) => {
+            const active = g === group;
+            return (
+              <Link
+                key={g}
+                href={listHref(g, filters)}
+                aria-current={active ? "page" : undefined}
+                className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)] ${
+                  active
+                    ? "border-[var(--c-accent)] bg-[var(--c-accent)]/[0.08] text-[var(--c-ink)]"
+                    : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface)]"
+                }`}
+              >
+                {g === "aksiyon" && counts.aksiyon > 0 && <Bell size={13} className="text-amber-300" />}
+                {t(GROUP_LABELS[g])}
+                <span className="rounded-full bg-[var(--c-surface)] px-1.5 text-[11px] text-[var(--c-ink-3)]">{counts[g]}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Branş + tarih filtresi (K09-hasta): GET formu — sunucu uygular, URL paylaşılabilir. */}
+        <form method="get" action="/vakalarim" className="mt-3 flex flex-wrap items-end gap-2 text-sm">
+          <input type="hidden" name="grup" value={group} />
+          <span className="inline-flex items-center gap-1 text-xs text-[var(--c-ink-3)]"><SlidersHorizontal size={13} /> {t(S.filters)}</span>
+          <label className="flex flex-col gap-0.5 text-[11px] text-[var(--c-ink-3)]">
+            {t(S.filterBranch)}
+            <select name="branch" defaultValue={filters.branch ?? ""} className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-2.5 py-1.5 text-sm text-[var(--c-ink)] outline-none focus:border-[var(--c-accent)]">
+              <option value="">{t(S.allBranches)}</option>
+              {BRANCHES.map((b) => <option key={b.key} value={b.key}>{t(b.label)}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-0.5 text-[11px] text-[var(--c-ink-3)]">
+            {t(S.filterFrom)}
+            <input type="date" name="from" defaultValue={filters.from ?? ""} className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-2.5 py-1.5 text-sm text-[var(--c-ink)] outline-none focus:border-[var(--c-accent)]" />
+          </label>
+          <label className="flex flex-col gap-0.5 text-[11px] text-[var(--c-ink-3)]">
+            {t(S.filterTo)}
+            <input type="date" name="to" defaultValue={filters.to ?? ""} className="rounded-lg border border-[var(--c-hairline)] bg-[var(--c-panel)] px-2.5 py-1.5 text-sm text-[var(--c-ink)] outline-none focus:border-[var(--c-accent)]" />
+          </label>
+          <button type="submit" className="rounded-lg border border-[var(--c-hairline)] px-3 py-1.5 text-sm font-medium text-[var(--c-ink-2)] hover:bg-[var(--c-surface)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]">
+            {t(S.filterApply)}
+          </button>
+          {hasFilter && (
+            <Link href={listHref(group, {})} className="text-sm text-[var(--c-accent)] hover:underline">
+              {t(S.filterClear)}
+            </Link>
+          )}
+        </form>
+
+        <div className="mt-5 space-y-4">
+          {items.length === 0 && (
             <EmptyState
-              title={t(S.empty)}
+              title={hasFilter || counts.aksiyon + counts.devam + counts.tamam > 0 ? t(S.emptyGroup) : t(S.empty)}
               action={
                 <button
                   onClick={() => setPickerOpen(true)}
@@ -164,7 +257,7 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
             />
           )}
 
-          {merged.map((m) => {
+          {items.map((m) => {
             if (m.kind === "so") {
               const c = m.row;
               const branchKey = BRANCHES.find((b) => b.label === c.branchLabel)?.key;
@@ -182,6 +275,8 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
                   summaryHref={`/second-opinion/vaka/${c.id}`}
                   summaryLabel={t(S.caseSummary)}
                   alert={c.hasPendingReq ? t(S.actionNeeded) : null}
+                  nextStepLabel={t(S.nextStep)}
+                  nextStep={t(c.nextStep)}
                 />
               );
             }
@@ -202,11 +297,32 @@ export function MyCasesList({ rows, soRows = [] }: { rows: MyCaseRow[]; soRows?:
                 body={c.symptoms}
                 summaryHref={`/vaka/${c.id}`}
                 summaryLabel={t(S.caseSummary)}
-                alert={null}
+                alert={c.status === "DOCS_PENDING" ? t(S.actionNeeded) : null}
+                nextStepLabel={t(S.nextStep)}
+                nextStep={t(c.nextStep)}
               />
             );
           })}
         </div>
+
+        {/* Keyset sayfalama: "sonraki" = sayfanın son (createdAt, id) çifti; imleç varken başa dönüş bağlantısı. */}
+        {(nextCursor || cursor) && (
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm">
+            {cursor ? (
+              <Link href={listHref(group, filters)} className="text-[var(--c-ink-2)] hover:text-[var(--c-ink)] hover:underline">
+                {t(S.firstPage)}
+              </Link>
+            ) : <span />}
+            {nextCursor && (
+              <Link
+                href={listHref(group, filters, nextCursor)}
+                className="inline-flex items-center gap-1 font-medium text-[var(--c-accent)] hover:text-[var(--c-accent-2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]"
+              >
+                {t(S.nextPage)} ({PATIENT_PAGE_SIZE}) <ChevronRight size={14} className="rtl:rotate-180" />
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Yeni başvuru → 4 kulvar seçim modalı */}
@@ -277,6 +393,8 @@ function GlassCase({
   patientName,
   country,
   alert,
+  nextStepLabel,
+  nextStep,
 }: {
   lane: Lane;
   branchKey?: string | null;
@@ -291,6 +409,9 @@ function GlassCase({
   patientName?: string;
   country?: string;
   alert: string | null;
+  /** H11: kart başına TEK sonraki adım — durum rozetinin altında, gövdeden sonra. */
+  nextStepLabel: string;
+  nextStep: string;
 }) {
   const accent = LANE_ACCENT[lane];
   const dot = stageInk; // tema-duyarlı var(--c-*) token'ı (çağıran geçirir)
@@ -322,6 +443,10 @@ function GlassCase({
         <span>{date}</span>
       </div>
       <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--c-ink-2)]">{body}</p>
+      <p className="mt-2.5 flex flex-wrap items-baseline gap-x-2 text-[13px] leading-relaxed text-[var(--c-ink)]">
+        <span className="aura-mono text-[10px] uppercase tracking-[0.18em] text-[var(--c-ink-3)]">{nextStepLabel}</span>
+        <span>{nextStep}</span>
+      </p>
 
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--c-hairline)] pt-3">
         <span className="aura-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: accent }}>{laneName}</span>
