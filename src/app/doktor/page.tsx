@@ -20,6 +20,7 @@ import { openCountForDoctor, openRowsForDoctor } from "@/lib/consultation-reques
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
 import { BRANCHES } from "@/lib/triage";
 import { decryptField } from "@/lib/crypto";
+import { PREVIEW_ANON_LABEL } from "@/lib/case-preview";
 import { Stethoscope, ArrowRight, Activity, HeartHandshake, Inbox, Plane } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -148,7 +149,9 @@ export default async function DoctorPanel({
       id: c.id,
       lane: caseLaneOf(c), // öncelik hasta tarafıyla (vakalarim) aynı
       href: `/doktor/vaka/${c.id}`,
-      patientName: decryptField(c.patientName), // kimlik at-rest şifreli → çöz (E2EE inc.2c)
+      // K06 1C-a: doktorun kuyruğundaki ATANMAMIŞ havuz satırı kimliksizdir (A09 madde 10.1; SO OFFERED deseni) — ad
+      // yalnız atanmış vakada çözülür. Personel (koordinatör/admin) dalı 1C-b'ye kadar aynen (ad çözülür).
+      patientName: doctor && !c.doctor ? PREVIEW_ANON_LABEL : decryptField(c.patientName), // kimlik at-rest şifreli → çöz (E2EE inc.2c)
       country: c.country,
       branch: c.branch,
       urgency: c.urgency,

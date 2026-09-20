@@ -8,6 +8,7 @@ import { requireUser, requireStaff } from "@/lib/api-auth";
 import { stampPatientProfile } from "@/lib/patient-journey";
 import { parseContactFields } from "@/lib/contact-pref";
 import { encryptField, decryptField } from "@/lib/crypto";
+import { PREVIEW_ANON_LABEL } from "@/lib/case-preview";
 import { storeDocument, deleteDocument } from "@/lib/storage";
 import { detectDocumentKind, DOC_REJECT_MESSAGE } from "@/lib/document-mime";
 import { requireAiTriage } from "@/lib/ai-gate";
@@ -48,7 +49,8 @@ export async function GET(req: Request) {
   // hâlleriyle DEĞİL türetimleriyle (hasFiles / lane) döner.
   const items = cases.map(({ attachments, tourismPlan, freeCare, ...c }) => ({
     ...c,
-    patientName: decryptField(c.patientName),
+    // K06 1C-a: doktorun ATANMAMIŞ havuz satırı kimliksiz (A09 madde 10.1) — ad yalnız atanmış vakada çözülür; personel dalı 1C-b'ye kadar aynen.
+    patientName: user.role === "DOCTOR" && !c.doctor ? PREVIEW_ANON_LABEL : decryptField(c.patientName),
     hasFiles: !!attachments,
     lane: caseLaneOf({ tourismPlan, freeCare }),
   }));

@@ -10,7 +10,7 @@ vi.mock("@/lib/db", () => ({
 }));
 vi.mock("@/lib/auth", () => ({ getCurrentUser: vi.fn() }));
 
-import { canCaseBeAccessedBy, canSoCaseBeAccessedBy, ownsSecondOpinionCase, isSecondOpinionPatient } from "@/lib/ownership";
+import { canCaseBeAccessedBy, caseAccessLevel, canSoCaseBeAccessedBy, ownsSecondOpinionCase, isSecondOpinionPatient } from "@/lib/ownership";
 import { db } from "@/lib/db";
 import type { SessionUser } from "@/lib/session";
 
@@ -90,9 +90,30 @@ describe("canCaseBeAccessedBy — DOCTOR atama + doğrulama + branş-daraltması
     expect(await canCaseBeAccessedBy(user("DOCTOR"), { userId: "p", doctorId: "d1", branch: "Onkoloji", deletionLockedAt: null })).toBe(true);
   });
 
-  it("doğrulanmış doktor ATANMAMIŞ + KENDİ branşındaki (kuyruk) vakaya erişir", async () => {
+  // K06 1C-a (2026-09-20): havuz = yalnız KİMLİKSİZ önizleme (A09 madde 10.1). Eskiden bu test `true` bekliyordu —
+  // aynı branştaki atanmamış vakaya tam okuma veriyordu (kontrol raporu K06 bulgusu). Klinik içerik ancak kabulden sonra.
+  it("doğrulanmış doktor ATANMAMIŞ + KENDİ branşındaki (havuz) vakada yalnız ÖNİZLEME: canCaseBeAccessedBy=false, seviye=preview", async () => {
     asVerifiedDoctor("d1", "Kardiyoloji");
-    expect(await canCaseBeAccessedBy(user("DOCTOR"), { userId: "p", doctorId: null, branch: "Kardiyoloji", deletionLockedAt: null })).toBe(true);
+    const pool = { userId: "p", doctorId: null, branch: "Kardiyoloji", deletionLockedAt: null };
+    expect(await canCaseBeAccessedBy(user("DOCTOR"), pool)).toBe(false);
+    expect(await caseAccessLevel(user("DOCTOR"), pool)).toBe("preview");
+  });
+
+  it("erişim seviyesi matrisi: atanmış → full · yabancı-branş havuz → none · başka doktora atanmış → none · kilitli → none", async () => {
+    asVerifiedDoctor("d1", "Kardiyoloji");
+    expect(await caseAccessLevel(user("DOCTOR"), { userId: "p", doctorId: "d1", branch: "Onkoloji", deletionLockedAt: null })).toBe("full");
+    expect(await caseAccessLevel(user("DOCTOR"), { userId: "p", doctorId: null, branch: "Onkoloji", deletionLockedAt: null })).toBe("none");
+    expect(await caseAccessLevel(user("DOCTOR"), { userId: "p", doctorId: "d2", branch: "Kardiyoloji", deletionLockedAt: null })).toBe("none");
+    expect(await caseAccessLevel(user("DOCTOR"), { userId: "p", doctorId: null, branch: "Kardiyoloji", deletionLockedAt: new Date("2026-07-15") })).toBe("none");
+  });
+
+  it("erişim seviyesi: hasta kendi vakası full / başkası none · personel full (1C-b'ye kadar) · PARTNER none · kimliksiz none", async () => {
+    const c = { userId: "u1", doctorId: null, branch: "Kardiyoloji", deletionLockedAt: null };
+    expect(await caseAccessLevel(user("PATIENT", "u1"), c)).toBe("full");
+    expect(await caseAccessLevel(user("PATIENT", "u2"), c)).toBe("none");
+    for (const role of ["COORDINATOR", "ETHICS", "ADMIN"]) expect(await caseAccessLevel(user(role), c)).toBe("full");
+    expect(await caseAccessLevel(user("PARTNER"), c)).toBe("none");
+    expect(await caseAccessLevel(null, c)).toBe("none");
   });
 
   it("doğrulanmış doktor ATANMAMIŞ + YABANCI branş vakaya erişemez (branş-daraltması)", async () => {

@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { decryptCaseFields } from "@/lib/crypto";
+import { decryptCaseFields, decryptField } from "@/lib/crypto";
 import { getCurrentUser } from "@/lib/auth";
 import { clinicalDoctorFor } from "@/lib/doctor-activation";
-import { canCaseBeAccessedBy } from "@/lib/ownership";
+import { caseAccessLevel } from "@/lib/ownership";
+import { casePreviewDto, PREVIEW_ANON_LABEL, type CasePreviewDto } from "@/lib/case-preview";
+import { AcceptCaseButton } from "@/components/AcceptCaseButton";
 import { staffAccessClosed } from "@/lib/postop-access";
 import { recordAccess } from "@/lib/audit";
 import { headersMeta } from "@/lib/request-meta";
@@ -19,7 +21,7 @@ import { LabResultsForm } from "@/components/LabResultsForm";
 import { caseDicomStudies } from "@/lib/case-dicom";
 import { PoolConsultPanel, CasePoolAnswers } from "@/components/PoolConsultPanel";
 import { poolRequestsForCase } from "@/lib/consultation-requests";
-import { ArrowLeft, ArrowRight, FileText, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks, EyeOff } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -47,26 +49,36 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
     return <PostopClosedScreen />;
   }
 
-  const raw = await db.case.findUnique({
-    where: { id },
-    include: {
-      doctor: true,
-      documents: {
-        select: { id: true, label: true, mimeType: true, aiDocType: true, aiSummary: true, aiTranslation: true, aiFlags: true, assessedAt: true },
-        orderBy: { createdAt: "asc" },
-      },
-    },
-  });
+  // DAR kayıt önce (belge listesi YOK): erişim SEVİYESİ belirlenmeden belge üstverisi çekilmez. Sahiplik/atama + branş
+  // daraltması ownership tek-kaynak; "none" → notFound (vakanın varlığını ele vermez), klinik veri DECRYPT edilmeden.
+  const raw = await db.case.findUnique({ where: { id }, include: { doctor: true } });
   if (!raw) notFound();
-  // Sahiplik/atama + branş daraltması (ownership tek-kaynak): atanan/eşleşen-branş doktor + operasyon
-  // personeli. Klinik veri DECRYPT edilmeden reddet (sızma yok) → notFound (vakanın varlığını ele vermez).
-  if (!(await canCaseBeAccessedBy(user, { userId: raw.userId, doctorId: raw.doctorId, branch: raw.branch, deletionLockedAt: raw.deletionLockedAt }))) notFound();
+  const level = await caseAccessLevel(user, { userId: raw.userId, doctorId: raw.doctorId, branch: raw.branch, deletionLockedAt: raw.deletionLockedAt });
+  if (level === "none") notFound();
+  if (level === "preview") {
+    // K06 1C-a (2026-09-20): aynı branştaki ATANMAMIŞ havuz vakası → KİMLİKSİZ önizleme (personel metni A09 madde 10.1).
+    // Kimlik, telefon, belgeler, triyaj yanıtları ve AI gerekçesi ÇİZİLMEZ; şikâyette hastanın adı [HASTA] ile maskelenir.
+    // Önizleme de erişimdir → kayıt zincirine yazılır (hasta /erisim-kaydi'nda görür). Kabul → atama → tam sayfa.
+    await recordAccess({ actor: user, action: "CASE_VIEW", resourceType: "CASE", resourceId: raw.id, subjectUserId: raw.userId, detail: "kimliksiz havuz önizlemesi (kabul öncesi)", ...(await headersMeta()) });
+    const dto = casePreviewDto({
+      id: raw.id, branch: raw.branch, urgency: raw.urgency, country: raw.country, language: raw.language, status: raw.status,
+      createdAt: raw.createdAt, durationText: raw.durationText, attachments: raw.attachments,
+      symptoms: decryptField(raw.symptoms), patientName: decryptField(raw.patientName),
+    });
+    return <CasePreview dto={dto} />;
+  }
   // Erişim kaydı (kontrol raporu K05): sayfa yolu da JSON ucu (api/cases/[id]) gibi CASE_VIEW yazar — "her erişim
   // kayıt zincirine yazılır" taahhüdü doktorun normal bağlantıyla açtığı bu ekranı da kapsar. Decrypt ÖNCESİ.
   // Kayıt başarısızlığı: recordAccess fail-safe (yutar + audit-write alarmı) — sayfa çizimi bozulmaz (bilinçli).
   // Ön-yükleme: force-dynamic sayfada <Link> prefetch'i RSC gövdesini koşturmaz → gezinti başına tek kayıt.
   await recordAccess({ actor: user, action: "CASE_VIEW", resourceType: "CASE", resourceId: raw.id, subjectUserId: raw.userId, detail: "kokpit sayfası", ...(await headersMeta()) });
-  const c = decryptCaseFields(raw); // symptoms/reasoning/extra(triyaj yanıtları) at-rest şifreli → kokpit gösterimi için çöz
+  // Belge üstverisi yalnız TAM erişimde çekilir (önizlemede hiç sorgulanmaz).
+  const documents = await db.caseDocument.findMany({
+    where: { caseId: id },
+    select: { id: true, label: true, mimeType: true, aiDocType: true, aiSummary: true, aiTranslation: true, aiFlags: true, assessedAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+  const c = { ...decryptCaseFields(raw), documents }; // symptoms/reasoning/extra(triyaj yanıtları) at-rest şifreli → kokpit gösterimi için çöz
 
   const u = urgencyStyle(c.urgency);
   const st = CASE_STATUS[c.status] ?? CASE_STATUS.NEW;
@@ -247,6 +259,60 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
             </div>
           </div>
         </aside>
+      </div>
+    </div>
+  );
+}
+
+// K06 1C-a — havuz vakasının KİMLİKSİZ önizlemesi (A09 madde 10.1). Yalnız DTO alanları çizilir: kimlik/telefon/belge
+// listesi/triyaj yanıtları/AI gerekçesi bu bileşene HİÇ GELMEZ (lib/case-preview tip sınırı). "Vakayı üstlen" → atama → tam sayfa.
+function CasePreview({ dto }: { dto: CasePreviewDto }) {
+  const u = urgencyStyle(dto.urgency);
+  const st = CASE_STATUS[dto.status] ?? CASE_STATUS.NEW;
+  return (
+    <div className="mx-auto max-w-3xl px-5 py-8">
+      <Link href="/doktor" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">
+        <ArrowLeft size={16} /> Vaka kuyruğu
+      </Link>
+      <div className="mt-4 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{PREVIEW_ANON_LABEL}</h1>
+              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--c-hairline)] px-2 py-0.5 text-[11px] font-medium text-[var(--c-ink-2)]">
+                <EyeOff size={12} /> kimliksiz önizleme
+              </span>
+              <span className="text-sm text-[var(--c-ink-3)]">{countryFlag(dto.country)} {countryName(dto.country)}</span>
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--c-ink-2)]">
+              <span className="inline-flex items-center gap-1"><Languages size={14} /> {dto.language}</span>
+              <span className="inline-flex items-center gap-1"><Clock size={14} /> {formatDateTime(dto.createdAt)}</span>
+              <span className="inline-flex items-center gap-1"><Stethoscope size={14} /> <span className="font-medium text-[var(--c-accent-strong)]">{dto.branch}</span></span>
+              <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
+            </div>
+          </div>
+          <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
+            <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {dto.urgency}/5 · {u.label}
+          </span>
+        </div>
+
+        <div className="mt-5">
+          <SectionTitle icon={<FileText size={15} />}>Şikayet</SectionTitle>
+          <p className="mt-1.5 text-sm leading-relaxed text-[var(--c-ink)]">{dto.complaint}</p>
+          {dto.durationText && <p className="mt-1 text-xs text-[var(--c-ink-3)]">Süre: {dto.durationText}</p>}
+          <p className="mt-2 text-xs text-[var(--c-ink-3)]">
+            Tıbbi belge: {dto.fileCount > 0 ? `${dto.fileCount} dosya (üstlendikten sonra açılır)` : "yüklenmemiş"}
+          </p>
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] p-4 text-sm leading-relaxed text-[var(--c-ink-2)]">
+          <p>
+            Bu başvuru <strong className="text-[var(--c-ink)]">{dto.branch}</strong> havuzunda ve henüz bir doktora atanmadı. Hasta kimliği, iletişim
+            bilgileri, yüklenen belgeler ve ön değerlendirme yanıtları <strong className="text-[var(--c-ink)]">vakayı üstlendikten sonra</strong> açılır;
+            her erişim kayıt zincirine yazılır ve hastaya gösterilir.
+          </p>
+          <div className="mt-3"><AcceptCaseButton caseId={dto.id} /></div>
+        </div>
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 vi.mock("@/lib/auth", () => ({ getCurrentUser: vi.fn() }));
 import { getCurrentUser } from "@/lib/auth";
 import { GET } from "@/app/api/cases/route";
-import { canCaseBeAccessedBy } from "@/lib/ownership";
+import { canCaseBeAccessedBy, caseAccessLevel } from "@/lib/ownership";
 import { seedFixture, cleanupFixture, type Fixture } from "./helpers";
 import type { SessionUser } from "@/lib/session";
 
@@ -65,6 +65,10 @@ describe.skipIf(!TEST_DB)("entegrasyon: GET /api/cases yetki (gerçek dev DB)", 
     expect("attachments" in first).toBe(false);
     expect(typeof first.hasFiles).toBe("boolean");
     expect(typeof first.lane).toBe("string");
+    // K06 1C-a: havuz (atanmamış) satırı kimliksiz — ad yalnız atanmış vakada çözülür
+    const rows = body.items as { id: string; patientName: string }[];
+    expect(rows.find((c) => c.id === f.unassignedCaseId)?.patientName).toBe("Anonim hasta");
+    expect(rows.find((c) => c.id === f.assignedCaseId)?.patientName).not.toBe("Anonim hasta");
   });
 
   it.skipIf(!process.env.DATA_ENCRYPTION_KEK)("personel kuyruğu: kilitli vaka HİÇBİR rolde listelenmez; DOCS_PENDING gözetim için görünür", async () => {
@@ -86,9 +90,14 @@ describe.skipIf(!TEST_DB)("entegrasyon: canCaseBeAccessedBy atama matrisi (gerç
     expect(await canCaseBeAccessedBy(u(f.patientId, "PATIENT"), { userId: f.otherPatientId, doctorId: null, branch: FIXTURE_BRANCH, deletionLockedAt: null })).toBe(false);
   });
 
-  it("doğrulanmış doktor: kendisine ATANMIŞ + ATANMAMIŞ (kendi branşı kuyruk) → true", async () => {
+  it("doğrulanmış doktor: kendisine ATANMIŞ → true (full)", async () => {
     expect(await canCaseBeAccessedBy(u(f.d1UserId, "DOCTOR"), { userId: f.patientId, doctorId: f.d1DoctorId, branch: FIXTURE_BRANCH, deletionLockedAt: null })).toBe(true);
-    expect(await canCaseBeAccessedBy(u(f.d1UserId, "DOCTOR"), { userId: f.patientId, doctorId: null, branch: FIXTURE_BRANCH, deletionLockedAt: null })).toBe(true);
+  });
+
+  it("K06 1C-a: ATANMAMIŞ kendi-branş havuz vakası → canCaseBeAccessedBy FALSE, seviye 'preview' (kimliksiz önizleme; kabul sonrası full)", async () => {
+    const pool = { userId: f.patientId, doctorId: null, branch: FIXTURE_BRANCH, deletionLockedAt: null };
+    expect(await canCaseBeAccessedBy(u(f.d1UserId, "DOCTOR"), pool)).toBe(false);
+    expect(await caseAccessLevel(u(f.d1UserId, "DOCTOR"), pool)).toBe("preview");
   });
 
   it("BRANŞ-DARALTMASI: doğrulanmış doktor atanmamış YABANCI branş vakasına erişemez", async () => {

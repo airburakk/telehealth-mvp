@@ -765,7 +765,7 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   (Header'daki "Tüm cihazlardan çıkış") sürümü artırır, dolaşımdaki tüm token'lar düşer;
   `getCurrentUser` her istekte DB karşılaştırması yapar (istek-içi `cache()`'li). Eski (sv'siz)
   token'lar 0 kabul edilir. Proxy bilinçli DB'siz (yaptırım veri katmanında).
-- **Kontrol raporu Paket 1A/1B/2/3/4 (v6.276 / v6.277 / v6.280 / v6.281 / v6.283–284, 2026-09-19/20) — erişim ve AI kapıları TEK KAYNAK, iddialar kod kanıtlı, sayaç/hakediş/liste sözlükleri açık, hasta/doktor yüzeyleri dürüst:**
+- **Kontrol raporu Paket 1A/1B/1C-a/2/3/4 (v6.276 / v6.277 / v6.287 / v6.280 / v6.281 / v6.283–284, 2026-09-19/20) — erişim ve AI kapıları TEK KAYNAK, iddialar kod kanıtlı, sayaç/hakediş/liste sözlükleri açık, hasta/doktor yüzeyleri dürüst:**
   · **Vaka LİSTE kapsamı** `lib/case-access.ts` (`doctorQueueScope` / `staffQueueScope` / `scopedWhere` / `CASE_LIST_SELECT`) — doktor ana
     sayfası ve `GET /api/cases` aynı üretici (atanan + KENDİ branşı atanmamış NEW/IN_REVIEW; `deletionLockedAt:null`; doğrulanmamış/
     aktivasyonsuz/branşsız → boş küme). Yeni liste/sayım sorgusu elle `where` KURMAZ. API DTO `hasFiles`/`lane` (ham `attachments` dönmez).
@@ -776,6 +776,16 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   · **Görüşme başlatma** `POST /api/cases/[id]/consult`: yetki `canStartConsultation` (YAZMA kapısı — hasta yalnız atanmış doktorla · doktor
     kendi vakası ya da kendi branş havuzunu üstlenir · koordinatör/admin yalnız atanmış) · aktif görüşme 200 · NEW/IN_REVIEW → IN_CONSULT ·
     DONE/DOCS_PENDING 409 · post-op kapalı 403 · atomik `updateMany` (yarış 409) · `CONSULT_START` audit.
+  · **Havuz = KİMLİKSİZ ÖNİZLEME (K06 1C-a, v6.287 — 👤 karar A "kod metne uyar", 2026-09-20):** `lib/ownership caseAccessLevel` →
+    `none | preview | full`; `canCaseBeAccessedBy` YALNIZ `full` (38 çağrı noktası — belge/DICOM/lab/kodlama/AI/FHIR/görüşme/işlem uçları —
+    havuz vakasında otomatik fail-closed). Aynı branştaki ATANMAMIŞ vakada doktor yalnız `lib/case-preview casePreviewDto`'yu görür
+    (branş/aciliyet/ülke/dil/tarih + adı `[HASTA]` maskeli şikâyet + dosya SAYISI; ad/kimlik/telefon/belge/triyaj yanıtı/AI gerekçesi YOK —
+    tip sınırı + birim testi): `doktor/vaka/[id]` önizleme ekranı (belge üstverisi hiç sorgulanmaz) + `GET api/cases/[id]` önizleme DTO'su;
+    kuyruk havuz satırı "Anonim hasta" (sayfa + `GET api/cases`; SO OFFERED deseni). **Kabul** `POST api/cases/[id]/accept` (yalnız
+    doğrulanmış + aktive doktor · kendi branşı · NEW/IN_REVIEW · `doctorId:null` koşullu atomik `updateMany`, yarış 409 · idempotent 200) →
+    atama → tam erişim; audit `CASE_ACCEPT`. Görüşmeyi doğrudan başlatmak da havuzu atar (personel metni A09 madde 10.1 "kabul ettiğiniz").
+    Önizleme de `CASE_VIEW` yazar (detail "kimliksiz havuz önizlemesi"). Koordinatör/yönetici/Etik Kurul klinik içerik kapısı = **1C-b**
+    (ayrı paket; kapsam envanteri 👤 onayına).
   · **AI kapısı** `lib/ai-gate.requireAiTriage` — `triage/analyze` · `cases` POST · `free-care/apply` · `patient/tourism-request` önünde:
     403 `AI_ROLE_NOT_ALLOWED` (PATIENT|ADMIN dışı) · 429 (20/dk/kullanıcı ORTAK kova + 60/dk/IP) · 403 `AI_CONSENT_REQUIRED` (aktif
     `AI_TRIAGE` v2, geri-alma duyarlı) · 413 (şikayet >4000 · yanıtlar JSON >4000 · süre >500; kırpma yok). Kapı reddederse LLM çağrılmaz.

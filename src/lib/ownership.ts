@@ -8,10 +8,12 @@
 //   COORDINATOR → operasyon (lojistik/rezervasyon) → geniş
 //   ETHICS      → şikayet incelemesi (anonimleştirilmiş panel) → geniş
 //   ADMIN       → yönetim → geniş
-//   DOCTOR      → yalnız DOĞRULANMIŞ doktor VE (vaka kendisine atanmış: c.doctorId === doctor.id
-//                 VEYA vaka atanmamış: c.doctorId === null VE vaka KENDİ BRANŞINDA → kuyruktan
-//                 üstlenebilsin). Başka doktora ATANMIŞ vakayı VE yabancı-branş atanmamış vakayı
-//                 OKUYAMAZ. Doğrulanmamış (self-signup) doktor hiçbir vakaya erişemez.
+//   DOCTOR      → yalnız DOĞRULANMIŞ + klinik-aktive doktor. Vaka kendisine atanmış (c.doctorId === doctor.id) → TAM;
+//                 vaka atanmamış (c.doctorId === null) VE KENDİ BRANŞINDA → yalnız KİMLİKSİZ ÖNİZLEME ("preview";
+//                 K06 1C-a, 2026-09-20 — personel metni A09 madde 10.1: "atanmamış başvuruları yalnız kimliksiz
+//                 önizlemeyle görürsünüz"; kabul = POST /api/cases/[id]/accept → atama → tam). Başka doktora
+//                 ATANMIŞ vakayı VE yabancı-branş atanmamış vakayı hiç göremez. Doğrulanmamış (self-signup) doktor
+//                 hiçbir vakaya erişemez.
 //
 // Branş-daraltması (2026-07-03): atanmamış (kuyruk) vaka artık yalnız doktorun KENDİ branşındaki
 // vakalara açık — kokpit UI'ı (doktor/page.tsx) v3.0'dan beri bu davranıştaydı, ownership/API katmanı
@@ -54,31 +56,48 @@ async function doctorContext(
   return { doctorId, verified: !!d?.verified, activated: !!d && hasClinicalAccess(d), branch: d?.branch ?? "" };
 }
 
-// Verilen kullanıcı bu vakaya erişebilir mi? (Tek doğruluk kaynağı.)
-export async function canCaseBeAccessedBy(user: SessionUser | null, c: CaseRef): Promise<boolean> {
-  if (!user) return false;
+// ── ERİŞİM SEVİYESİ (K06 1C-a, 2026-09-20 — kontrol raporu: yayımlanan taahhüt ↔ fiilî politika) ─────────────────
+//   "full"    → klinik içerik (kimlik, telefon, belgeler, triyaj yanıtları, notlar, epikriz)
+//   "preview" → KİMLİKSİZ havuz önizlemesi (lib/case-preview casePreviewDto: branş/aciliyet/ülke/dil/tarih + adı maskeli
+//               şikâyet + dosya SAYISI; ad/kimlik/telefon/belge/triyaj yanıtı/AI gerekçesi YOK) — yalnız aynı branştaki
+//               ATANMAMIŞ vakada, yalnız DOCTOR
+//   "none"    → hiç
+// `canCaseBeAccessedBy` = yalnız "full": 38 çağrı noktası (belge/DICOM/lab/kodlama/AI/FHIR/görüşme/işlem uçları) havuz
+// vakasında otomatik fail-closed kalır; önizlemeyi yalnız İKİ yüzey çizer (doktor/vaka/[id] sayfası + GET api/cases/[id])
+// ve ikisi de bu fonksiyona bakar. Kabul (POST api/cases/[id]/accept) = atama → seviye "full".
+// 1C-b (koordinatör/yönetici/Etik Kurul klinik içerik) AYRI pakettir — burada geniş dal korunur.
+export type CaseAccessLevel = "none" | "preview" | "full";
+
+export async function caseAccessLevel(user: SessionUser | null, c: CaseRef): Promise<CaseAccessLevel> {
+  if (!user) return "none";
   // Hesap silme kilidi — HER ROLDEN ÖNCE. Hasta silinmesini istedi; kayıt yalnız yasal yükümlülük
   // gereği duruyor, kimsenin okuması için değil. Süre dolunca cron fiziken imha eder.
-  if (deletionLocked(c)) return false;
+  if (deletionLocked(c)) return "none";
   switch (user.role) {
     case "PATIENT":
-      return c.userId === user.id;
+      return c.userId === user.id ? "full" : "none";
     case "PARTNER":
-      return false; // hasta veritabanına erişemez
+      return "none"; // hasta veritabanına erişemez
     case "COORDINATOR":
     case "ETHICS":
     case "ADMIN":
-      return true; // operasyon/governance/yönetim → geniş erişim
+      return "full"; // operasyon/governance/yönetim → geniş erişim (1C-b bu dalı daraltacak)
     case "DOCTOR": {
       const { doctorId, verified, activated, branch } = await doctorContext(user);
-      if (!verified || !activated || !doctorId) return false; // doğrulanmamış VEYA aktivasyonsuz (Aşama 2'siz) doktor → erişim yok
-      if (c.doctorId === doctorId) return true; // bana atanmış
-      // atanmamış (kuyruk) VE kendi branşım (boş-branş → fail-closed); yabancı-branş/başka-atanmış → yok
-      return c.doctorId === null && !!branch && branch === c.branch;
+      if (!verified || !activated || !doctorId) return "none"; // doğrulanmamış VEYA aktivasyonsuz (Aşama 2'siz) doktor → erişim yok
+      if (c.doctorId === doctorId) return "full"; // bana atanmış
+      // atanmamış (havuz) VE kendi branşım (boş-branş → fail-closed) → yalnız kimliksiz önizleme; yabancı-branş/başka-atanmış → yok
+      return c.doctorId === null && !!branch && branch === c.branch ? "preview" : "none";
     }
     default:
-      return false;
+      return "none";
   }
+}
+
+// Verilen kullanıcı bu vakanın KLİNİK İÇERİĞİNE erişebilir mi? (Tek doğruluk kaynağı = caseAccessLevel; yalnız "full".)
+// Havuzdaki atanmamış vaka için false döner — önizleme isteyen yüzey caseAccessLevel'a bakar.
+export async function canCaseBeAccessedBy(user: SessionUser | null, c: CaseRef): Promise<boolean> {
+  return (await caseAccessLevel(user, c)) === "full";
 }
 
 // Oturum kullanıcısı için kısayol (sayfalarda/route'larda user'ı ayrı çekmeye gerek yok).
