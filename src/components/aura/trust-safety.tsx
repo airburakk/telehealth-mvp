@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AuraClosing } from "./closing";
 import { AuraWordText } from "./aura-word";
 import { V2Nav } from "./v2/nav";
@@ -114,6 +115,19 @@ function TrustCard({ section }: { section: Section }) {
         <AuraWordText text={section.body} />
       </p>
 
+      {/* 10 — KVKK/veri koruma basvurusu: platform ici form (/kvkk-basvuru, v6.272). Kontrol raporu V03
+          (v6.280): "bize bildirin" + "⚖️ Taslak" yerine calisan forma baglanti; tuzel kisilik notu altta kalir. */}
+      {section.key === "report" && (
+        <p className="mt-4">
+          <Link
+            href="/kvkk-basvuru"
+            className="inline-flex min-h-[44px] items-center rounded-full border border-[var(--aura-accent)]/50 px-5 py-2.5 text-sm font-semibold text-[var(--aura-ink)] transition-colors duration-200 hover:bg-[var(--aura-accent)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aura-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--aura-bg)]"
+          >
+            {p.reportCta}
+          </Link>
+        </p>
+      )}
+
       {/* 02 — AI destegi ile klinik yargi ayrimi (howItWorks.safety ile ayni sinir). */}
       {section.key === "consent" && (
         <p className="mt-4 max-w-3xl border-s-2 border-[var(--aura-accent)]/60 ps-4 text-sm leading-relaxed text-[var(--aura-ink)] md:text-base">
@@ -138,7 +152,7 @@ function TrustCard({ section }: { section: Section }) {
         </ul>
       )}
 
-      {/* "Neyi iddia etmiyoruz" / "Siniri" / "⚖️ Taslak" — sayfanin degeri burada. */}
+      {/* "Neyi iddia etmiyoruz" / "Siniri" / "⚖️ Tuzel kisilik" — sayfanin degeri burada. */}
       {section.note.text && (
         <div className="mt-5 max-w-3xl rounded-[14px] border border-[var(--aura-accent)]/30 bg-[var(--aura-accent)]/[0.06] p-4 md:p-5">
           <p className="aura-mono text-[12px] uppercase tracking-wider text-[var(--aura-accent)]">

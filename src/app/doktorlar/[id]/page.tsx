@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { countryFlag, formatDateTime, VIDEO_CARD_SCRIPT } from "@/lib/constants";
 import { doctorCredentials, richBio, academicNote, generatedReviews, avatarVariant, isFemaleName } from "@/lib/doctor-profile";
+import { doctorIsDemo } from "@/lib/doctor-demo";
 import { DoctorVideoCard } from "@/components/DoctorVideoCard";
 import { DoctorArt } from "@/components/AuraArt";
 import { BadgeCheck, Star, Globe, GraduationCap, ShieldCheck, Video, MapPin, ArrowLeft, CheckCircle2, Stethoscope, Award, Heart, Zap, Activity, type LucideIcon } from "lucide-react";
@@ -28,16 +29,20 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
   // public URL de aynı davranır; admin onayı gelince sayfa açılır.
   if (!d || !d.verified) notFound();
 
-  // Profil zenginleştirme — render-zamanı deterministik üretim (şema/DB yok); mevcut bio korunur
-  const cred = doctorCredentials(d);
-  // Yorumlar: kalıcı Review tablosundan; yoksa deterministik üretim fallback (geriye uyumlu).
+  // D04 (kontrol raporu 2026-09-19): render-üretimli zenginleştirme (okul/üyelik/yayın/odak/örnek yorum) YALNIZ demo
+  // profilde; gerçek doktorda eksik bilgi üretilmez, "eklenmedi" yazılır. Demo = bağlı hesap yok ya da *@air.test.
+  const demo = await doctorIsDemo(d.id);
+  const mode = { demo };
+  const cred = doctorCredentials(d, mode);
+  // Yorumlar: kalıcı Review tablosundan; demo profilde yoksa üretilmiş örnekler ("Örnek değerlendirme" etiketli); gerçekte yok.
   const dbReviews = await db.review.findMany({ where: { doctorId: d.id }, orderBy: { createdAt: "desc" } });
   // generated: false = gerçek DB yorumu ("Doğrulanmış" çipi yalnız bunlarda); true = üretilmiş örnek içerik.
   const reviews = dbReviews.length
     // eslint-disable-next-line react-hooks/purity -- server component; "şu an" her istekte yeniden hesaplanır, hydration eşleşmesi aranmaz.
     ? dbReviews.map((r) => ({ author: r.author, country: r.country, stars: r.stars, text: r.text, daysAgo: Math.max(1, Math.round((Date.now() - r.createdAt.getTime()) / 86400000)), generated: false }))
-    : generatedReviews(d);
-  const bioText = richBio(d, d.bio);
+    : demo ? generatedReviews(d) : [];
+  const bioText = richBio(d, d.bio, mode);
+  const academic = academicNote(d, mode);
   const badges = await getDoctorBadges(d.id); // CRM eşik-bazlı public güven rozetleri (ham skor değil)
 
   return (
@@ -55,6 +60,8 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="aura-display text-3xl font-medium tracking-tight text-[var(--c-ink)]">{d.title} {d.name}</h1>
               {d.verified && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--c-accent)]/15 px-2.5 py-1 text-xs font-semibold text-[var(--c-accent)]"><BadgeCheck size={14} /> Doğrulanmış</span>}
+              {/* D04: demo/seed profil — üretilmiş örnek içerik taşır, sayfa başında açıkça etiketlenir */}
+              {demo && <span className="inline-flex items-center rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-300 ring-1 ring-amber-400/25">Demo profil · örnek içerik</span>}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--c-ink-2)]">
               <span className="inline-flex items-center gap-1 font-medium text-[var(--c-accent)]"><Stethoscope size={14} /> {d.branch}</span>
@@ -95,10 +102,10 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
           </div>
         </div>
 
-        {/* Stats — değere göre renklenen çubuklar (slider görünümü); null = veri yok → çubuk hiç çizilmez */}
+        {/* Stats — değere göre renklenen çubuklar (slider görünümü); null = veri yok → çubuk hiç çizilmez.
+            "Başarı oranı" KALDIRILDI (D04): tanım/örneklem/dönem/doğrulama yöntemi olmayan oran hasta yüzünde gösterilmez. */}
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           {d.experienceYears != null && <StatBar label="Deneyim" valueText={`${d.experienceYears} yıl`} pct={(d.experienceYears / 30) * 100} />}
-          {d.successRate != null && <StatBar label="Başarı oranı" valueText={`%${d.successRate}`} pct={d.successRate} />}
           <StatBar label="Aylık kapasite" valueText={`${d.capacity}`} pct={(d.capacity / 40) * 100} />
         </div>
       </div>
@@ -110,6 +117,9 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
           </Card>
 
           <Card title="Hasta Yorumları" icon={<Star size={15} />}>
+            {reviews.length === 0 && (
+              <p className="text-sm text-[var(--c-ink-3)]">Henüz doğrulanmış hasta değerlendirmesi yok.</p>
+            )}
             <ul className="space-y-3">
               {reviews.map((r, i) => (
                 <li key={i} className="rounded-2xl border border-[var(--c-hairline)] p-3">
@@ -137,41 +147,55 @@ export default async function DoctorProfile({ params }: { params: Promise<{ id: 
             <DoctorVideoCard name={d.name} title={d.title} female={isFemaleName(d.name)} subtitles={[...VIDEO_CARD_SCRIPT]} />
           </Card>
 
-          <Card title="Akreditasyon & Belgeler" icon={<ShieldCheck size={15} />}>
+          <Card title="Belgeler ve Eğitim" icon={<ShieldCheck size={15} />}>
             <ul className="space-y-3 text-sm">
+              {/* D04: gerçek profilde eksik alan ÜRETİLMEZ — "eklenmedi" yazılır; işaret yalnız bilgi varken yeşil */}
               <li className="flex items-start gap-2">
-                <BadgeCheck size={15} className="mt-0.5 shrink-0 text-emerald-400" />
+                <BadgeCheck size={15} className={`mt-0.5 shrink-0 ${cred.diploma.school ? "text-emerald-400" : "text-[var(--c-ink-3)]"}`} />
                 <div>
-                  <div className="font-medium text-[var(--c-ink)]">Tıp Diploması</div>
+                  <div className="font-medium text-[var(--c-ink)]">Tıp Fakültesi</div>
                   {/* Yıl yalnız gerçek veriden türetilebildiyse (null = fabrikasyon yok) */}
-                  <div className="text-xs text-[var(--c-ink-3)]">{cred.diploma.school}{cred.diploma.year != null && ` · ${cred.diploma.year}`}</div>
+                  <div className="text-xs text-[var(--c-ink-3)]">
+                    {cred.diploma.school ? <>{cred.diploma.school}{cred.diploma.year != null && ` · ${cred.diploma.year}`}</> : "Bilgi eklenmedi"}
+                  </div>
                 </div>
               </li>
               <li className="flex items-start gap-2">
-                <BadgeCheck size={15} className="mt-0.5 shrink-0 text-emerald-400" />
+                <BadgeCheck size={15} className={`mt-0.5 shrink-0 ${cred.uzmanlik.board ? "text-emerald-400" : "text-[var(--c-ink-3)]"}`} />
                 <div>
-                  <div className="font-medium text-[var(--c-ink)]">Uzmanlık Belgesi</div>
-                  <div className="text-xs text-[var(--c-ink-3)]">{cred.uzmanlik.board}{cred.uzmanlik.year != null && ` · ${cred.uzmanlik.year}`}</div>
+                  <div className="font-medium text-[var(--c-ink)]">Uzmanlık</div>
+                  <div className="text-xs text-[var(--c-ink-3)]">
+                    {cred.uzmanlik.board ? <>{cred.uzmanlik.board}{cred.uzmanlik.year != null && ` · ${cred.uzmanlik.year}`}</> : "Bilgi eklenmedi"}
+                  </div>
                 </div>
               </li>
               <li className="flex items-start gap-2">
-                <BadgeCheck size={15} className="mt-0.5 shrink-0 text-emerald-400" />
+                <BadgeCheck size={15} className={`mt-0.5 shrink-0 ${cred.certs.length ? "text-emerald-400" : "text-[var(--c-ink-3)]"}`} />
                 <div>
-                  <div className="font-medium text-[var(--c-ink)]">Mesleki Sertifikalar</div>
-                  <ul className="mt-0.5 space-y-0.5 text-xs text-[var(--c-ink-3)]">
-                    {cred.certs.map((c) => <li key={c}>• {c}</li>)}
-                  </ul>
+                  <div className="font-medium text-[var(--c-ink)]">Sertifika ve Üyelikler</div>
+                  {cred.certs.length ? (
+                    <ul className="mt-0.5 space-y-0.5 text-xs text-[var(--c-ink-3)]">
+                      {cred.certs.map((c) => <li key={c}>• {c}</li>)}
+                    </ul>
+                  ) : (
+                    <div className="text-xs text-[var(--c-ink-3)]">Bilgi eklenmedi</div>
+                  )}
                 </div>
               </li>
               <li aria-hidden className="mt-1 border-t border-[var(--c-hairline)] pt-1" />
+              {/* Doğrulama satırları YALNIZ gerçekten yapılan kontrole bağlı (D04): e-Devlet diploma damgası + yönetim onayı.
+                  Eski "Sağlık Turizmi Yetki Belgesi" rozeti kaldırıldı — böyle bir belge kontrolü YOK, `verified` onu göstermiyordu. */}
+              {d.diplomaVerifiedAt && <Cred ok label="Tıp diploması e-Devlet kaydıyla doğrulandı" />}
+              {d.verified && <Cred ok label="Belgeler incelendi, hesap yönetim onaylı" />}
               {/* JCI satırı yalnız doğrulanmış akreditasyonda — false/null "veri yok"tur, olumsuz beyan değil (üstü çizili negatif sinyal kaldırıldı) */}
-              {d.jci === true && <Cred ok label="JCI akrediteli merkez" />}
-              <Cred ok={d.verified} label="Sağlık Turizmi Yetki Belgesi" />
+              {d.jci === true && <Cred ok label="JCI akrediteli merkezde çalışır" />}
             </ul>
           </Card>
 
           <Card title="Akademik" icon={<GraduationCap size={15} />}>
-            <p className="text-sm leading-relaxed text-[var(--c-ink-2)]">{academicNote(d)}</p>
+            <p className={`text-sm leading-relaxed ${academic ? "text-[var(--c-ink-2)]" : "text-[var(--c-ink-3)]"}`}>
+              {academic ?? "Doktor henüz akademik bilgi eklemedi."}
+            </p>
           </Card>
 
           <Link href="/triyaj" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--c-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]">

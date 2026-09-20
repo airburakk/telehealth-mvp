@@ -667,7 +667,7 @@ export const COPY = {
           key: "security",
           n: "01",
           title: "How your health data is protected",
-          body: "Your data is encrypted in transit, and encrypted a second time with a separate key before it is written to our servers. Reports and images you upload arrive at storage already encrypted — the storage provider only ever sees the encrypted form. Your data is stored and processed in the European Union (Frankfurt).",
+          body: "Your data is encrypted in transit, and encrypted a second time with a separate key before it is written to our servers. Reports and images you upload arrive at storage already encrypted — the storage provider only ever sees the encrypted form. Your data is stored and processed in the European Union (Frankfurt); only for AI pre-assessment and simultaneous interpretation is content sent, with your separate explicit consent, to providers in the USA (see 08).",
           note: {
             label: "What we don't claim",
             text: "This is not \"end-to-end encryption\". The key is managed on our servers — because clinical summaries, interpretation and the doctor's view all require the data to be processed on the server. A truly end-to-end encrypted system could not offer those functions.",
@@ -677,7 +677,7 @@ export const COPY = {
           key: "consent",
           n: "02",
           title: "Consent and artificial intelligence",
-          body: "Three separate consents are taken, and none stands in for another: general data-protection consent · AI pre-assessment of your complaint · AI simultaneous interpretation of your visit. For each one we store the exact text you approved, the moment you approved it, and a chain showing it has not been altered since. No step begins before consent — the form does not open, camera permission is not requested. You can view your own consent record at any time.",
+          body: "Consents are taken separately for each processing purpose, and none stands in for another: general data-protection consent and terms of use · AI pre-assessment of your complaint · AI simultaneous interpretation of your visit · the health declaration for the insurance package. For each one we store the exact text you approved, the moment you approved it, and a chain showing it has not been altered since; you can withdraw the AI and health-declaration consents from My Account. No step begins before consent — the form does not open, camera permission is not requested. You can view your own consent record at any time.",
           note: { label: "", text: "" },
         },
         {
@@ -691,10 +691,10 @@ export const COPY = {
           key: "doctors",
           n: "04",
           title: "Doctor verification",
-          body: "Before a doctor becomes visible or receives any patient assignment, they upload their professional documents — diploma, specialty certificate and professional liability insurance — and these are reviewed and approved. An unapproved doctor's profile is never published.",
+          body: "Before a doctor becomes visible or receives any patient assignment, their medical diploma is verified against the e-Government (e-Devlet) barcoded graduation record and the account passes an administrative review; a specialty certificate and professional liability insurance may be added optionally. An unapproved doctor's profile is never published.",
           note: {
             label: "What we don't claim",
-            text: "We do not say \"accredited doctor\" — what we verify is the existence and validity of the documents.",
+            text: "We do not say \"accredited doctor\" — what we verify is that the diploma matches the e-Government record and that the account has been reviewed.",
           },
         },
         {
@@ -742,16 +742,17 @@ export const COPY = {
           key: "report",
           n: "10",
           title: "Report a privacy or security concern",
-          body: "If you have a concern about your data, or a security finding, tell us.",
+          body: "If you have a concern about your data, a data-protection request (access, rectification, erasure) or a security finding, use the in-platform request form; requests are logged and answered within the statutory period (at most 30 days).",
           note: {
-            label: "⚖️ Draft",
-            text: "The data controller's contact address has not been published yet; this section will be updated once it is final. We are not inventing an address in the meantime.",
+            label: "⚖️ Legal entity",
+            text: "The data controller's trade name and postal address will be added here once the operating company is incorporated; we are not inventing an address in the meantime.",
           },
         },
       ],
       // 02'nin altinda vurgulu paragraf: AI destegi ile klinik yargiyi ayirir
       // (howItWorks.safety ile ayni sinir — cevirilerde ayrim korunmali).
       aiEmphasis: "Medical decisions do not belong to artificial intelligence: AURA organises your information and suggests an appropriate specialty; diagnosis and treatment decisions are made by qualified healthcare professionals.",
+      reportCta: "Data-protection request form",
       // 08'in madde listesi.
       transferItems: [
         "AI pre-assessment and clinical summary (Anthropic, USA): your name is not sent — a placeholder is used; the clinical content is sent because it is the substance of the task.",
@@ -1214,7 +1215,7 @@ export const COPY = {
           key: "security",
           n: "01",
           title: "Sağlık bilgileriniz nasıl korunur",
-          body: "Verileriniz iletim sırasında şifrelenir; sunucuya kaydedilmeden önce ikinci kez, ayrı bir anahtarla şifrelenir. Yüklediğiniz rapor ve görüntüler depoya şifrelenmiş gider — depolama sağlayıcısı yalnız şifreli hâli görür. Verileriniz Avrupa Birliği'nde (Frankfurt) saklanır ve işlenir.",
+          body: "Verileriniz iletim sırasında şifrelenir; sunucuya kaydedilmeden önce ikinci kez, ayrı bir anahtarla şifrelenir. Yüklediğiniz rapor ve görüntüler depoya şifrelenmiş gider — depolama sağlayıcısı yalnız şifreli hâli görür. Verileriniz Avrupa Birliği'nde (Frankfurt) saklanır ve işlenir; yalnız AI ön değerlendirme ve simültane tercüme için içerik, ayrı açık rızanızla ABD'deki sağlayıcılara gönderilir (bkz. 08).",
           note: {
             label: "Neyi iddia etmiyoruz",
             text: "Bu bir \"uçtan uca şifreleme\" değildir. Anahtar bizim sunucumuzda yönetilir — çünkü klinik özet, tercüme ve doktor görünümü verinin sunucuda işlenmesini gerektirir. Gerçekten uçtan uca şifreli bir sistem bu işlevleri veremez.",
@@ -1224,7 +1225,7 @@ export const COPY = {
           key: "consent",
           n: "02",
           title: "Rıza ve yapay zeka",
-          body: "Üç ayrı rıza alınır, biri diğerinin yerine geçmez: genel KVKK açık rızası · şikayetin AI ile ön değerlendirilmesi · görüşmenin AI ile simültane tercümesi. Her rızada onayladığınız metnin birebir kendisi, onay anınız ve sonradan değiştirilmediğini gösteren zincir saklanır. Rıza vermeden adım başlamaz — form açılmaz, kamera izni istenmez. Kendi rıza kaydınızı istediğiniz an görüntüleyebilirsiniz.",
+          body: "Rızalar işleme göre ayrı ayrı alınır, biri diğerinin yerine geçmez: genel KVKK açık rızası ve kullanım koşulları · şikayetin AI ile ön değerlendirilmesi · görüşmenin AI ile simültane tercümesi · sigorta paketi için sağlık beyanı. Her rızada onayladığınız metnin birebir kendisi, onay anınız ve sonradan değiştirilmediğini gösteren zincir saklanır; AI ve sağlık beyanı rızalarını Hesabım'dan geri alabilirsiniz. Rıza vermeden adım başlamaz — form açılmaz, kamera izni istenmez. Kendi rıza kaydınızı istediğiniz an görüntüleyebilirsiniz.",
           note: { label: "", text: "" },
         },
         {
@@ -1238,10 +1239,10 @@ export const COPY = {
           key: "doctors",
           n: "04",
           title: "Doktor doğrulaması",
-          body: "Bir doktor görünür olmadan ve hasta ataması almadan önce mesleki belgelerini yükler — diploma, uzmanlık belgesi ve mesleki sorumluluk sigortası — ve bunlar incelenip onaylanır. Onaylanmamış doktorun profili yayında olmaz.",
+          body: "Bir doktor görünür olmadan ve hasta ataması almadan önce tıp diploması e-Devlet barkodlu mezun belgesiyle doğrulanır ve hesabı yönetim incelemesinden geçer; uzmanlık belgesi ve mesleki sorumluluk sigortası ihtiyari olarak eklenebilir. Onaylanmamış doktorun profili yayında olmaz.",
           note: {
             label: "Neyi iddia etmiyoruz",
-            text: "\"Akredite doktor\" demiyoruz — doğruladığımız şey belgelerin varlığı ve geçerliliğidir.",
+            text: "\"Akredite doktor\" demiyoruz — doğruladığımız şey diplomanın e-Devlet kaydıyla eşleştiği ve hesabın incelendiğidir.",
           },
         },
         {
@@ -1289,14 +1290,15 @@ export const COPY = {
           key: "report",
           n: "10",
           title: "Gizlilik veya güvenlik endişesi bildirin",
-          body: "Verilerinizle ilgili bir endişeniz veya bir güvenlik bulgunuz varsa bize bildirin.",
+          body: "Verilerinizle ilgili bir endişeniz, KVKK başvurunuz (bilgi alma, düzeltme, silme) ya da bir güvenlik bulgunuz varsa platform içi başvuru formunu kullanın; başvurular kayıt altına alınır ve yasal süresi içinde (en geç 30 gün) yanıtlanır.",
           note: {
-            label: "⚖️ Taslak",
-            text: "Veri sorumlusunun iletişim adresi henüz yayımlanmadı; adres netleşince bu bölüm güncellenecek. O zamana kadar uydurma bir adres yazmıyoruz.",
+            label: "⚖️ Tüzel kişilik",
+            text: "Veri sorumlusunun ticaret unvanı ve posta adresi işletici şirketin kuruluşu tamamlanınca bu bölüme eklenecek; o zamana kadar uydurma bir adres yazmıyoruz.",
           },
         },
       ],
       aiEmphasis: "Tıbbi karar yapay zekaya ait değildir: AURA bilgilerinizi düzenler, uygun branşı önerir; tanı ve tedavi kararını yetkili sağlık profesyonelleri verir.",
+      reportCta: "KVKK başvuru formu",
       transferItems: [
         "AI ön değerlendirme ve klinik özet (Anthropic, ABD): adınız gönderilmez — yer tutucu kullanılır; klinik içerik, görevin özü olduğu için gönderilir.",
         "Simültane tercüme (Google, ABD): görüşme sesi tercüme için işlenir, ayrı açık rızaya tabidir; rıza vermezseniz çalışmaz.",
@@ -1676,7 +1678,7 @@ export const COPY = {
           key: "security",
           n: "01",
           title: "Wie Ihre Gesundheitsdaten geschützt werden",
-          body: "Ihre Daten werden bei der Übertragung verschlüsselt und vor dem Speichern ein zweites Mal mit einem separaten Schlüssel verschlüsselt. Hochgeladene Befunde und Bilder erreichen den Speicher bereits verschlüsselt — der Speicheranbieter sieht ausschließlich die verschlüsselte Form. Ihre Daten werden in der Europäischen Union (Frankfurt) gespeichert und verarbeitet.",
+          body: "Ihre Daten werden bei der Übertragung verschlüsselt und vor dem Speichern ein zweites Mal mit einem separaten Schlüssel verschlüsselt. Hochgeladene Befunde und Bilder erreichen den Speicher bereits verschlüsselt — der Speicheranbieter sieht ausschließlich die verschlüsselte Form. Ihre Daten werden in der Europäischen Union (Frankfurt) gespeichert und verarbeitet; nur für die KI-Vorbewertung und das Simultandolmetschen werden Inhalte mit Ihrer gesonderten ausdrücklichen Einwilligung an Anbieter in den USA übermittelt (siehe 08).",
           note: {
             label: "Was wir nicht behaupten",
             text: "Dies ist keine „Ende-zu-Ende-Verschlüsselung\". Der Schlüssel wird auf unseren Servern verwaltet — denn klinische Zusammenfassung, Dolmetschen und die Arztansicht setzen voraus, dass die Daten auf dem Server verarbeitet werden. Ein wirklich Ende-zu-Ende verschlüsseltes System könnte diese Funktionen nicht bieten.",
@@ -1686,7 +1688,7 @@ export const COPY = {
           key: "consent",
           n: "02",
           title: "Einwilligung und künstliche Intelligenz",
-          body: "Es werden drei getrennte Einwilligungen eingeholt, von denen keine die andere ersetzt: allgemeine Datenschutzeinwilligung · KI-Vorbewertung Ihres Anliegens · KI-Simultandolmetschen Ihres Gesprächs. Zu jeder Einwilligung speichern wir den exakten Text, den Sie bestätigt haben, den Zeitpunkt der Bestätigung und eine Kette, die belegt, dass er seither nicht verändert wurde. Ohne Einwilligung beginnt kein Schritt — das Formular öffnet sich nicht, die Kameraerlaubnis wird nicht angefragt. Ihren eigenen Einwilligungsnachweis können Sie jederzeit einsehen.",
+          body: "Einwilligungen werden für jeden Verarbeitungszweck getrennt eingeholt, und keine ersetzt die andere: allgemeine Datenschutzeinwilligung und Nutzungsbedingungen · KI-Vorbewertung Ihres Anliegens · KI-Simultandolmetschen Ihres Gesprächs · Gesundheitserklärung für das Versicherungspaket. Zu jeder Einwilligung speichern wir den exakten Text, den Sie bestätigt haben, den Zeitpunkt der Bestätigung und eine Kette, die belegt, dass er seither nicht verändert wurde; die Einwilligungen zur KI und zur Gesundheitserklärung können Sie unter „Mein Konto“ widerrufen. Ohne Einwilligung beginnt kein Schritt — das Formular öffnet sich nicht, die Kameraerlaubnis wird nicht angefragt. Ihren eigenen Einwilligungsnachweis können Sie jederzeit einsehen.",
           note: { label: "", text: "" },
         },
         {
@@ -1700,10 +1702,10 @@ export const COPY = {
           key: "doctors",
           n: "04",
           title: "Ärztliche Verifizierung",
-          body: "Bevor eine Ärztin oder ein Arzt sichtbar wird oder eine Zuweisung erhält, werden die Berufsnachweise hochgeladen — Approbation, Facharztnachweis und Berufshaftpflichtversicherung — und geprüft und freigegeben. Das Profil einer nicht freigegebenen Ärztin oder eines nicht freigegebenen Arztes wird nie veröffentlicht.",
+          body: "Bevor eine Ärztin oder ein Arzt sichtbar wird oder eine Zuweisung erhält, wird das Medizindiplom gegen den Barcode-Abschlussnachweis des türkischen E-Government-Portals (e-Devlet) geprüft und das Konto durchläuft eine administrative Prüfung; Facharztnachweis und Berufshaftpflichtversicherung können freiwillig ergänzt werden. Das Profil einer nicht freigegebenen Ärztin oder eines nicht freigegebenen Arztes wird nie veröffentlicht.",
           note: {
             label: "Was wir nicht behaupten",
-            text: "Wir sagen nicht „akkreditierte Ärztin\" oder „akkreditierter Arzt\" — geprüft wird das Vorliegen und die Gültigkeit der Nachweise.",
+            text: "Wir sagen nicht „akkreditierte Ärztin\" oder „akkreditierter Arzt\" — geprüft wird, dass das Diplom mit dem e-Devlet-Eintrag übereinstimmt und das Konto geprüft wurde.",
           },
         },
         {
@@ -1751,14 +1753,15 @@ export const COPY = {
           key: "report",
           n: "10",
           title: "Datenschutz- oder Sicherheitsbedenken melden",
-          body: "Wenn Sie Bedenken zu Ihren Daten oder einen Sicherheitsbefund haben, teilen Sie es uns mit.",
+          body: "Wenn Sie Bedenken zu Ihren Daten, einen Datenschutzantrag (Auskunft, Berichtigung, Löschung) oder einen Sicherheitsbefund haben, nutzen Sie das Antragsformular in der Plattform; Anträge werden protokolliert und innerhalb der gesetzlichen Frist (spätestens 30 Tage) beantwortet.",
           note: {
-            label: "⚖️ Entwurf",
-            text: "Die Kontaktadresse des Verantwortlichen ist noch nicht veröffentlicht; sobald sie feststeht, wird dieser Abschnitt aktualisiert. Bis dahin erfinden wir keine Adresse.",
+            label: "⚖️ Rechtsträger",
+            text: "Firmenname und Postanschrift des Verantwortlichen werden hier ergänzt, sobald die Betreibergesellschaft gegründet ist; bis dahin erfinden wir keine Adresse.",
           },
         },
       ],
       aiEmphasis: "Die medizinische Entscheidung gehört nicht der künstlichen Intelligenz: AURA ordnet Ihre Angaben und schlägt ein passendes Fachgebiet vor; Diagnose und Behandlungsentscheidung treffen qualifizierte Gesundheitsfachkräfte.",
+      reportCta: "Datenschutz-Antragsformular",
       transferItems: [
         "KI-Vorbewertung und klinische Zusammenfassung (Anthropic, USA): Ihr Name wird nicht übermittelt — es wird ein Platzhalter verwendet; der klinische Inhalt wird übermittelt, weil er der Kern der Aufgabe ist.",
         "Simultandolmetschen (Google, USA): der Ton Ihres Gesprächs wird zum Dolmetschen verarbeitet und unterliegt einer gesonderten ausdrücklichen Einwilligung; ohne diese Einwilligung läuft es nicht.",
@@ -2138,7 +2141,7 @@ export const COPY = {
           key: "security",
           n: "01",
           title: "Comment vos données de santé sont protégées",
-          body: "Vos données sont chiffrées pendant leur transmission, puis chiffrées une seconde fois avec une clé distincte avant d'être enregistrées sur nos serveurs. Les comptes rendus et images que vous téléversez arrivent déjà chiffrés dans le stockage — le prestataire de stockage n'en voit jamais que la forme chiffrée. Vos données sont conservées et traitées dans l'Union européenne (Francfort).",
+          body: "Vos données sont chiffrées pendant leur transmission, puis chiffrées une seconde fois avec une clé distincte avant d'être enregistrées sur nos serveurs. Les comptes rendus et images que vous téléversez arrivent déjà chiffrés dans le stockage — le prestataire de stockage n'en voit jamais que la forme chiffrée. Vos données sont conservées et traitées dans l'Union européenne (Francfort) ; seuls la pré-évaluation par l'IA et l'interprétation simultanée impliquent l'envoi de contenus, avec votre consentement explicite distinct, à des prestataires aux États-Unis (voir 08).",
           note: {
             label: "Ce que nous ne prétendons pas",
             text: "Il ne s'agit pas d'un « chiffrement de bout en bout ». La clé est gérée sur nos serveurs — car le résumé clinique, l'interprétation et la vue du médecin exigent que les données soient traitées côté serveur. Un système réellement chiffré de bout en bout ne pourrait pas offrir ces fonctions.",
@@ -2148,7 +2151,7 @@ export const COPY = {
           key: "consent",
           n: "02",
           title: "Consentement et intelligence artificielle",
-          body: "Trois consentements distincts sont recueillis, et aucun ne remplace l'autre : consentement général en matière de protection des données · pré-évaluation de votre demande par l'IA · interprétation simultanée de votre consultation par l'IA. Pour chacun, nous conservons le texte exact que vous avez approuvé, le moment de votre approbation et une chaîne montrant qu'il n'a pas été modifié depuis. Aucune étape ne commence sans consentement — le formulaire ne s'ouvre pas, l'autorisation de la caméra n'est pas demandée. Vous pouvez consulter votre propre preuve de consentement à tout moment.",
+          body: "Les consentements sont recueillis séparément pour chaque finalité, et aucun ne remplace l'autre : consentement général en matière de protection des données et conditions d'utilisation · pré-évaluation de votre demande par l'IA · interprétation simultanée de votre consultation par l'IA · déclaration de santé pour le forfait d'assurance. Pour chacun, nous conservons le texte exact que vous avez approuvé, le moment de votre approbation et une chaîne montrant qu'il n'a pas été modifié depuis ; vous pouvez retirer les consentements IA et déclaration de santé depuis « Mon compte ». Aucune étape ne commence sans consentement — le formulaire ne s'ouvre pas, l'autorisation de la caméra n'est pas demandée. Vous pouvez consulter votre propre preuve de consentement à tout moment.",
           note: { label: "", text: "" },
         },
         {
@@ -2162,10 +2165,10 @@ export const COPY = {
           key: "doctors",
           n: "04",
           title: "Vérification des médecins",
-          body: "Avant qu'un médecin ne devienne visible ou ne reçoive une affectation, il téléverse ses justificatifs professionnels — diplôme, titre de spécialiste et assurance de responsabilité civile professionnelle — qui sont examinés et approuvés. Le profil d'un médecin non approuvé n'est jamais publié.",
+          body: "Avant qu'un médecin ne devienne visible ou ne reçoive une affectation, son diplôme de médecine est vérifié par rapport à l'attestation de diplôme à code-barres du portail e-Gouvernement turc (e-Devlet) et son compte passe un examen administratif ; le titre de spécialiste et l'assurance de responsabilité civile professionnelle peuvent être ajoutés à titre facultatif. Le profil d'un médecin non approuvé n'est jamais publié.",
           note: {
             label: "Ce que nous ne prétendons pas",
-            text: "Nous ne disons pas « médecin accrédité » — ce que nous vérifions, c'est l'existence et la validité des documents.",
+            text: "Nous ne disons pas « médecin accrédité » — ce que nous vérifions, c'est la concordance du diplôme avec le registre e-Devlet et l'examen du compte.",
           },
         },
         {
@@ -2213,14 +2216,15 @@ export const COPY = {
           key: "report",
           n: "10",
           title: "Signaler une inquiétude de confidentialité ou de sécurité",
-          body: "Si vous avez une inquiétude concernant vos données ou une découverte de sécurité, dites-le-nous.",
+          body: "Si vous avez une inquiétude concernant vos données, une demande relative à la protection des données (accès, rectification, effacement) ou une découverte de sécurité, utilisez le formulaire de demande intégré à la plateforme ; les demandes sont enregistrées et traitées dans le délai légal (30 jours au plus).",
           note: {
-            label: "⚖️ Projet",
-            text: "L'adresse de contact du responsable de traitement n'est pas encore publiée ; cette section sera mise à jour dès qu'elle sera arrêtée. D'ici là, nous n'inventons pas d'adresse.",
+            label: "⚖️ Entité juridique",
+            text: "La raison sociale et l'adresse postale du responsable de traitement seront ajoutées ici une fois la société exploitante constituée ; d'ici là, nous n'inventons pas d'adresse.",
           },
         },
       ],
       aiEmphasis: "La décision médicale n'appartient pas à l'intelligence artificielle : AURA organise vos informations et suggère une spécialité appropriée ; le diagnostic et la décision thérapeutique reviennent aux professionnels de santé qualifiés.",
+      reportCta: "Formulaire de demande (protection des données)",
       transferItems: [
         "Pré-évaluation par l'IA et résumé clinique (Anthropic, États-Unis) : votre nom n'est pas transmis — un espace réservé est utilisé ; le contenu clinique est transmis car il constitue l'objet même de la tâche.",
         "Interprétation simultanée (Google, États-Unis) : l'audio de votre consultation est traité à des fins d'interprétation, sous réserve d'un consentement explicite distinct ; sans ce consentement, la fonction ne s'exécute pas.",
@@ -2600,7 +2604,7 @@ export const COPY = {
           key: "security",
           n: "01",
           title: "Как защищены ваши медицинские данные",
-          body: "Ваши данные шифруются при передаче и шифруются второй раз отдельным ключом перед записью на наши серверы. Загружаемые вами заключения и снимки попадают в хранилище уже зашифрованными — поставщик хранилища видит только зашифрованную форму. Ваши данные хранятся и обрабатываются в Европейском союзе (Франкфурт).",
+          body: "Ваши данные шифруются при передаче и шифруются второй раз отдельным ключом перед записью на наши серверы. Загружаемые вами заключения и снимки попадают в хранилище уже зашифрованными — поставщик хранилища видит только зашифрованную форму. Ваши данные хранятся и обрабатываются в Европейском союзе (Франкфурт); только для предварительной оценки ИИ и синхронного перевода содержимое передаётся, с вашего отдельного явного согласия, поставщикам в США (см. 08).",
           note: {
             label: "Чего мы не утверждаем",
             text: "Это не «сквозное шифрование». Ключ управляется на наших серверах — потому что клиническое резюме, перевод и представление для врача требуют обработки данных на сервере. Система с настоящим сквозным шифрованием не смогла бы предоставить эти функции.",
@@ -2610,7 +2614,7 @@ export const COPY = {
           key: "consent",
           n: "02",
           title: "Согласие и искусственный интеллект",
-          body: "Берутся три отдельных согласия, и ни одно не заменяет другое: общее согласие на обработку данных · предварительная оценка вашего обращения с помощью ИИ · синхронный перевод приёма с помощью ИИ. По каждому согласию мы сохраняем точный текст, который вы одобрили, момент одобрения и цепочку, подтверждающую, что он не изменялся впоследствии. Без согласия ни один шаг не начинается — форма не открывается, разрешение на камеру не запрашивается. Свою запись о согласии вы можете посмотреть в любой момент.",
+          body: "Согласия берутся отдельно для каждой цели обработки, и ни одно не заменяет другое: общее согласие на обработку данных и условия использования · предварительная оценка вашего обращения с помощью ИИ · синхронный перевод приёма с помощью ИИ · декларация о здоровье для страхового пакета. По каждому согласию мы сохраняем точный текст, который вы одобрили, момент одобрения и цепочку, подтверждающую, что он не изменялся впоследствии; согласия на ИИ и декларацию о здоровье можно отозвать в разделе «Мой аккаунт». Без согласия ни один шаг не начинается — форма не открывается, разрешение на камеру не запрашивается. Свою запись о согласии вы можете посмотреть в любой момент.",
           note: { label: "", text: "" },
         },
         {
@@ -2624,10 +2628,10 @@ export const COPY = {
           key: "doctors",
           n: "04",
           title: "Проверка врачей",
-          body: "Прежде чем врач станет видимым и получит назначение пациента, он загружает профессиональные документы — диплом, сертификат специалиста и страхование профессиональной ответственности, — которые проверяются и утверждаются. Профиль неутверждённого врача не публикуется.",
+          body: "Прежде чем врач станет видимым и получит назначение пациента, его диплом врача сверяется со штрихкодовой справкой о высшем образовании портала электронного правительства Турции (e-Devlet), а аккаунт проходит административную проверку; сертификат специалиста и страхование профессиональной ответственности могут быть добавлены по желанию. Профиль неутверждённого врача не публикуется.",
           note: {
             label: "Чего мы не утверждаем",
-            text: "Мы не говорим «аккредитованный врач» — мы проверяем наличие и действительность документов.",
+            text: "Мы не говорим «аккредитованный врач» — мы проверяем, что диплом совпадает с записью e-Devlet и что аккаунт прошёл проверку.",
           },
         },
         {
@@ -2675,14 +2679,15 @@ export const COPY = {
           key: "report",
           n: "10",
           title: "Сообщить о проблеме конфиденциальности или безопасности",
-          body: "Если у вас есть опасения по поводу ваших данных или находка в области безопасности, сообщите нам.",
+          body: "Если у вас есть опасения по поводу ваших данных, запрос по защите данных (доступ, исправление, удаление) или находка в области безопасности, используйте форму обращения внутри платформы; обращения регистрируются и получают ответ в установленный законом срок (не позднее 30 дней).",
           note: {
-            label: "⚖️ Черновик",
-            text: "Контактный адрес оператора данных ещё не опубликован; этот раздел будет обновлён, как только он будет определён. До тех пор мы не выдумываем адрес.",
+            label: "⚖️ Юридическое лицо",
+            text: "Фирменное наименование и почтовый адрес оператора данных будут добавлены сюда после регистрации компании-оператора; до тех пор мы не выдумываем адрес.",
           },
         },
       ],
       aiEmphasis: "Медицинское решение не принадлежит искусственному интеллекту: AURA упорядочивает вашу информацию и предлагает подходящую специальность; диагноз и решение о лечении принимают квалифицированные специалисты здравоохранения.",
+      reportCta: "Форма обращения по защите данных",
       transferItems: [
         "Предварительная оценка ИИ и клиническое резюме (Anthropic, США): ваше имя не передаётся — используется заполнитель; клиническое содержание передаётся, поскольку составляет суть задачи.",
         "Синхронный перевод (Google, США): звук приёма обрабатывается для перевода и требует отдельного явного согласия; без него функция не работает.",
@@ -3062,7 +3067,7 @@ export const COPY = {
           key: "security",
           n: "01",
           title: "كيف تُحمى بياناتك الصحية",
-          body: "تُشفَّر بياناتك أثناء النقل، ثم تُشفَّر مرة ثانية بمفتاح منفصل قبل حفظها على خوادمنا. التقارير والصور التي ترفعها تصل إلى التخزين مشفَّرة بالفعل — ومزوّد التخزين لا يرى سوى الشكل المشفَّر. تُخزَّن بياناتك وتُعالَج داخل الاتحاد الأوروبي (فرانكفورت).",
+          body: "تُشفَّر بياناتك أثناء النقل، ثم تُشفَّر مرة ثانية بمفتاح منفصل قبل حفظها على خوادمنا. التقارير والصور التي ترفعها تصل إلى التخزين مشفَّرة بالفعل — ومزوّد التخزين لا يرى سوى الشكل المشفَّر. تُخزَّن بياناتك وتُعالَج داخل الاتحاد الأوروبي (فرانكفورت)؛ ولا يُرسَل المحتوى إلى مزوّدين في الولايات المتحدة إلا للتقييم الأولي بالذكاء الاصطناعي والترجمة الفورية، وبموافقتك الصريحة المنفصلة (انظر 08).",
           note: {
             label: "ما لا ندّعيه",
             text: "هذا ليس «تشفيرًا من طرف إلى طرف». المفتاح يُدار على خوادمنا — لأن الملخص السريري والترجمة وعرض الطبيب تتطلب جميعها معالجة البيانات على الخادم. أي نظام مشفَّر فعليًا من طرف إلى طرف لا يمكنه تقديم هذه الوظائف.",
@@ -3072,7 +3077,7 @@ export const COPY = {
           key: "consent",
           n: "02",
           title: "الموافقة والذكاء الاصطناعي",
-          body: "تُؤخذ ثلاث موافقات منفصلة، ولا تحل أي منها محل الأخرى: الموافقة العامة على حماية البيانات · التقييم الأولي لشكواك بالذكاء الاصطناعي · الترجمة الفورية لجلستك بالذكاء الاصطناعي. لكل موافقة نحفظ النص الذي وافقت عليه حرفيًا، ولحظة موافقتك، وسلسلة تثبت أنه لم يُعدَّل بعدها. لا تبدأ أي خطوة قبل الموافقة — لا يُفتح النموذج ولا يُطلب إذن الكاميرا. ويمكنك الاطلاع على سجل موافقتك في أي وقت.",
+          body: "تُؤخذ الموافقات بشكل منفصل لكل غرض من أغراض المعالجة، ولا تحل أي منها محل الأخرى: الموافقة العامة على حماية البيانات وشروط الاستخدام · التقييم الأولي لشكواك بالذكاء الاصطناعي · الترجمة الفورية لجلستك بالذكاء الاصطناعي · الإقرار الصحي لباقة التأمين. لكل موافقة نحفظ النص الذي وافقت عليه حرفيًا، ولحظة موافقتك، وسلسلة تثبت أنه لم يُعدَّل بعدها؛ ويمكنك سحب موافقتَي الذكاء الاصطناعي والإقرار الصحي من «حسابي». لا تبدأ أي خطوة قبل الموافقة — لا يُفتح النموذج ولا يُطلب إذن الكاميرا. ويمكنك الاطلاع على سجل موافقتك في أي وقت.",
           note: { label: "", text: "" },
         },
         {
@@ -3086,10 +3091,10 @@ export const COPY = {
           key: "doctors",
           n: "04",
           title: "توثيق الأطباء",
-          body: "قبل أن يظهر الطبيب أو يتلقى أي إسناد لمريض، يرفع وثائقه المهنية — الشهادة الجامعية وشهادة التخصص وتأمين المسؤولية المهنية — وتُراجع وتُعتمد. ولا يُنشر ملف طبيب غير معتمد.",
+          body: "قبل أن يظهر الطبيب أو يتلقى أي إسناد لمريض، تُتحقَّق شهادته في الطب مقابل وثيقة التخرج ذات الرمز الشريطي في بوابة الحكومة الإلكترونية التركية (e-Devlet)، ويخضع حسابه لمراجعة إدارية؛ ويمكن إضافة شهادة التخصص وتأمين المسؤولية المهنية اختياريًا. ولا يُنشر ملف طبيب غير معتمد.",
           note: {
             label: "ما لا ندّعيه",
-            text: "لا نقول «طبيب معتمد اعتمادًا مؤسسيًا» — ما نتحقق منه هو وجود الوثائق وصلاحيتها.",
+            text: "لا نقول «طبيب معتمد اعتمادًا مؤسسيًا» — ما نتحقق منه هو مطابقة الشهادة لسجل e-Devlet ومراجعة الحساب.",
           },
         },
         {
@@ -3137,14 +3142,15 @@ export const COPY = {
           key: "report",
           n: "10",
           title: "أبلغ عن مخاوف تتعلق بالخصوصية أو الأمان",
-          body: "إذا كان لديك قلق بشأن بياناتك أو اكتشاف أمني، فأخبرنا.",
+          body: "إذا كان لديك قلق بشأن بياناتك، أو طلب يتعلق بحماية البيانات (الاطلاع أو التصحيح أو الحذف)، أو اكتشاف أمني، فاستخدم نموذج الطلب داخل المنصة؛ تُسجَّل الطلبات ويُرد عليها خلال المهلة القانونية (30 يومًا على الأكثر).",
           note: {
-            label: "⚖️ مسودة",
-            text: "لم يُنشر بعد عنوان التواصل الخاص بالمسؤول عن البيانات؛ وسيُحدَّث هذا القسم فور تحديده. وإلى ذلك الحين لا نختلق عنوانًا.",
+            label: "⚖️ الكيان القانوني",
+            text: "سيُضاف الاسم التجاري للمسؤول عن البيانات وعنوانه البريدي هنا فور اكتمال تأسيس الشركة المشغّلة؛ وإلى ذلك الحين لا نختلق عنوانًا.",
           },
         },
       ],
       aiEmphasis: "القرار الطبي ليس ملكًا للذكاء الاصطناعي: تنظّم AURA معلوماتك وتقترح التخصص المناسب؛ أما قرار التشخيص والعلاج فيتخذه المهنيون الصحيون المؤهلون.",
+      reportCta: "نموذج طلب حماية البيانات",
       transferItems: [
         "التقييم الأولي بالذكاء الاصطناعي والملخص السريري (Anthropic، الولايات المتحدة): لا يُرسل اسمك — يُستخدم عنصر نائب؛ ويُرسل المحتوى السريري لأنه جوهر المهمة.",
         "الترجمة الفورية (Google، الولايات المتحدة): يُعالَج صوت جلستك لأغراض الترجمة، ويخضع ذلك لموافقة صريحة منفصلة؛ ودون هذه الموافقة لا يعمل.",
@@ -3524,7 +3530,7 @@ export const COPY = {
           key: "security",
           n: "01",
           title: "داده‌های سلامت شما چگونه محافظت می‌شود",
-          body: "داده‌های شما هنگام انتقال رمزگذاری می‌شوند و پیش از ذخیره روی سرورهای ما بار دوم با کلیدی جداگانه رمزگذاری می‌شوند. گزارش‌ها و تصاویری که بارگذاری می‌کنید، رمزگذاری‌شده به فضای ذخیره‌سازی می‌رسند — ارائه‌دهندهٔ ذخیره‌سازی تنها شکل رمزگذاری‌شده را می‌بیند. داده‌های شما در اتحادیهٔ اروپا (فرانکفورت) ذخیره و پردازش می‌شود.",
+          body: "داده‌های شما هنگام انتقال رمزگذاری می‌شوند و پیش از ذخیره روی سرورهای ما بار دوم با کلیدی جداگانه رمزگذاری می‌شوند. گزارش‌ها و تصاویری که بارگذاری می‌کنید، رمزگذاری‌شده به فضای ذخیره‌سازی می‌رسند — ارائه‌دهندهٔ ذخیره‌سازی تنها شکل رمزگذاری‌شده را می‌بیند. داده‌های شما در اتحادیهٔ اروپا (فرانکفورت) ذخیره و پردازش می‌شود؛ تنها برای ارزیابی اولیه با هوش مصنوعی و ترجمهٔ همزمان، محتوا با رضایت صریح و جداگانهٔ شما به ارائه‌دهندگانی در ایالات متحده فرستاده می‌شود (نگاه کنید به ۰۸).",
           note: {
             label: "چه چیزی را ادعا نمی‌کنیم",
             text: "این «رمزگذاری سرتاسری» نیست. کلید روی سرورهای ما مدیریت می‌شود — زیرا خلاصهٔ بالینی، ترجمه و نمای پزشک همگی نیازمند پردازش داده روی سرور هستند. سامانه‌ای که واقعاً سرتاسری رمزگذاری شده باشد نمی‌تواند این کارکردها را ارائه دهد.",
@@ -3534,7 +3540,7 @@ export const COPY = {
           key: "consent",
           n: "02",
           title: "رضایت و هوش مصنوعی",
-          body: "سه رضایت جداگانه گرفته می‌شود و هیچ‌کدام جای دیگری را نمی‌گیرد: رضایت عمومی حفاظت از داده‌ها · ارزیابی اولیهٔ شکایت شما با هوش مصنوعی · ترجمهٔ همزمان ویزیت شما با هوش مصنوعی. برای هر رضایت، عین متنی که تأیید کرده‌اید، لحظهٔ تأیید و زنجیره‌ای که نشان می‌دهد پس از آن تغییر نکرده است نگهداری می‌شود. هیچ مرحله‌ای پیش از رضایت آغاز نمی‌شود — فرم باز نمی‌شود و اجازهٔ دوربین درخواست نمی‌شود. سابقهٔ رضایت خود را هر زمان می‌توانید ببینید.",
+          body: "رضایت‌ها برای هر هدف پردازش جداگانه گرفته می‌شود و هیچ‌کدام جای دیگری را نمی‌گیرد: رضایت عمومی حفاظت از داده‌ها و شرایط استفاده · ارزیابی اولیهٔ شکایت شما با هوش مصنوعی · ترجمهٔ همزمان ویزیت شما با هوش مصنوعی · اظهارنامهٔ سلامت برای بستهٔ بیمه. برای هر رضایت، عین متنی که تأیید کرده‌اید، لحظهٔ تأیید و زنجیره‌ای که نشان می‌دهد پس از آن تغییر نکرده است نگهداری می‌شود؛ رضایت‌های هوش مصنوعی و اظهارنامهٔ سلامت را می‌توانید از «حساب من» پس بگیرید. هیچ مرحله‌ای پیش از رضایت آغاز نمی‌شود — فرم باز نمی‌شود و اجازهٔ دوربین درخواست نمی‌شود. سابقهٔ رضایت خود را هر زمان می‌توانید ببینید.",
           note: { label: "", text: "" },
         },
         {
@@ -3548,10 +3554,10 @@ export const COPY = {
           key: "doctors",
           n: "04",
           title: "احراز هویت پزشکان",
-          body: "پیش از آنکه پزشک دیده شود یا بیماری به او ارجاع شود، مدارک حرفه‌ای خود را بارگذاری می‌کند — مدرک تحصیلی، گواهی تخصص و بیمهٔ مسئولیت حرفه‌ای — و این مدارک بررسی و تأیید می‌شوند. پروفایل پزشک تأییدنشده هرگز منتشر نمی‌شود.",
+          body: "پیش از آنکه پزشک دیده شود یا بیماری به او ارجاع شود، مدرک پزشکی او با گواهی فارغ‌التحصیلی بارکددار درگاه دولت الکترونیک ترکیه (e-Devlet) راستی‌آزمایی می‌شود و حساب او از بازبینی اداری می‌گذرد؛ گواهی تخصص و بیمهٔ مسئولیت حرفه‌ای را می‌توان به‌صورت اختیاری افزود. پروفایل پزشک تأییدنشده هرگز منتشر نمی‌شود.",
           note: {
             label: "چه چیزی را ادعا نمی‌کنیم",
-            text: "ما نمی‌گوییم «پزشک دارای اعتبارنامهٔ نهادی» — آنچه راستی‌آزمایی می‌کنیم وجود و اعتبار مدارک است.",
+            text: "ما نمی‌گوییم «پزشک دارای اعتبارنامهٔ نهادی» — آنچه راستی‌آزمایی می‌کنیم مطابقت مدرک با سابقهٔ e-Devlet و بازبینی حساب است.",
           },
         },
         {
@@ -3599,14 +3605,15 @@ export const COPY = {
           key: "report",
           n: "10",
           title: "گزارش نگرانی حریم خصوصی یا امنیت",
-          body: "اگر دربارهٔ داده‌هایتان نگرانی یا یافته‌ای امنیتی دارید، به ما بگویید.",
+          body: "اگر دربارهٔ داده‌هایتان نگرانی، درخواست حفاظت از داده (دسترسی، اصلاح، حذف) یا یافته‌ای امنیتی دارید، از فرم درخواست داخل پلتفرم استفاده کنید؛ درخواست‌ها ثبت می‌شوند و در مهلت قانونی (حداکثر ۳۰ روز) پاسخ داده می‌شوند.",
           note: {
-            label: "⚖️ پیش‌نویس",
-            text: "نشانی تماس مسئول داده هنوز منتشر نشده است؛ به‌محض نهایی‌شدن، این بخش به‌روز می‌شود. تا آن زمان نشانی ساختگی نمی‌نویسیم.",
+            label: "⚖️ شخصیت حقوقی",
+            text: "نام تجاری و نشانی پستی مسئول داده پس از تکمیل تأسیس شرکت بهره‌بردار به این بخش افزوده می‌شود؛ تا آن زمان نشانی ساختگی نمی‌نویسیم.",
           },
         },
       ],
       aiEmphasis: "تصمیم پزشکی از آنِ هوش مصنوعی نیست: AURA اطلاعات شما را سامان می‌دهد و تخصص مناسب را پیشنهاد می‌کند؛ تشخیص و تصمیم درمان را متخصصان صلاحیت‌دار سلامت می‌گیرند.",
+      reportCta: "فرم درخواست حفاظت از داده",
       transferItems: [
         "ارزیابی اولیه با هوش مصنوعی و خلاصهٔ بالینی (Anthropic، ایالات متحده): نام شما ارسال نمی‌شود — از جانگهدار استفاده می‌شود؛ محتوای بالینی ارسال می‌شود چون جوهرِ کار است.",
         "ترجمهٔ همزمان (Google، ایالات متحده): صدای ویزیت شما برای ترجمه پردازش می‌شود و مشمول رضایت صریح جداگانه است؛ بدون آن رضایت کار نمی‌کند.",
@@ -3988,7 +3995,7 @@ export const COPY = {
           key: "security",
           n: "01",
           title: "Sağlamlıq məlumatlarınız necə qorunur",
-          body: "Məlumatlarınız ötürülmə zamanı şifrələnir; serverə yazılmazdan əvvəl ikinci dəfə, ayrıca açarla şifrələnir. Yüklədiyiniz hesabatlar və görüntülər anbara artıq şifrələnmiş halda çatır — anbar təchizatçısı yalnız şifrələnmiş formanı görür. Məlumatlarınız Avropa İttifaqında (Frankfurt) saxlanılır və emal olunur.",
+          body: "Məlumatlarınız ötürülmə zamanı şifrələnir; serverə yazılmazdan əvvəl ikinci dəfə, ayrıca açarla şifrələnir. Yüklədiyiniz hesabatlar və görüntülər anbara artıq şifrələnmiş halda çatır — anbar təchizatçısı yalnız şifrələnmiş formanı görür. Məlumatlarınız Avropa İttifaqında (Frankfurt) saxlanılır və emal olunur; yalnız süni intellektlə ilkin qiymətləndirmə və sinxron tərcümə üçün məzmun, ayrıca açıq razılığınızla, ABŞ-dakı təchizatçılara göndərilir (bax: 08).",
           note: {
             label: "Nəyi iddia etmirik",
             text: "Bu, «uçdan-uca şifrələmə» deyil. Açar bizim serverlərimizdə idarə olunur — çünki klinik xülasə, tərcümə və həkim görünüşü məlumatın serverdə emalını tələb edir. Həqiqətən uçdan-uca şifrələnmiş sistem bu funksiyaları verə bilməzdi.",
@@ -3998,7 +4005,7 @@ export const COPY = {
           key: "consent",
           n: "02",
           title: "Razılıq və süni intellekt",
-          body: "Üç ayrı razılıq alınır və heç biri digərini əvəz etmir: ümumi məlumatların qorunması razılığı · şikayətinizin süni intellektlə ilkin qiymətləndirilməsi · görüşünüzün süni intellektlə sinxron tərcüməsi. Hər razılıqda təsdiqlədiyiniz mətnin eynisi, təsdiq anınız və sonradan dəyişdirilmədiyini göstərən zəncir saxlanılır. Razılıq olmadan heç bir addım başlamır — forma açılmır, kamera icazəsi istənilmir. Öz razılıq qeydinizi istənilən vaxt görə bilərsiniz.",
+          body: "Razılıqlar hər emal məqsədi üçün ayrıca alınır və heç biri digərini əvəz etmir: ümumi məlumatların qorunması razılığı və istifadə şərtləri · şikayətinizin süni intellektlə ilkin qiymətləndirilməsi · görüşünüzün süni intellektlə sinxron tərcüməsi · sığorta paketi üçün sağlamlıq bəyannaməsi. Hər razılıqda təsdiqlədiyiniz mətnin eynisi, təsdiq anınız və sonradan dəyişdirilmədiyini göstərən zəncir saxlanılır; süni intellekt və sağlamlıq bəyannaməsi razılıqlarını «Hesabım» bölməsindən geri götürə bilərsiniz. Razılıq olmadan heç bir addım başlamır — forma açılmır, kamera icazəsi istənilmir. Öz razılıq qeydinizi istənilən vaxt görə bilərsiniz.",
           note: { label: "", text: "" },
         },
         {
@@ -4012,10 +4019,10 @@ export const COPY = {
           key: "doctors",
           n: "04",
           title: "Həkim təsdiqi",
-          body: "Həkim görünməzdən və hər hansı xəstə təyinatı almazdan əvvəl peşə sənədlərini yükləyir — diplom, ixtisas sənədi və peşə məsuliyyət sığortası — və bunlar yoxlanılıb təsdiqlənir. Təsdiqlənməmiş həkimin profili yayımlanmır.",
+          body: "Həkim görünməzdən və hər hansı xəstə təyinatı almazdan əvvəl tibb diplomu Türkiyənin e-dövlət portalının (e-Devlet) barkodlu məzun sənədi ilə yoxlanılır və hesabı inzibati yoxlamadan keçir; ixtisas sənədi və peşə məsuliyyət sığortası könüllü olaraq əlavə edilə bilər. Təsdiqlənməmiş həkimin profili yayımlanmır.",
           note: {
             label: "Nəyi iddia etmirik",
-            text: "«Akkreditə olunmuş həkim» demirik — yoxladığımız şey sənədlərin mövcudluğu və etibarlılığıdır.",
+            text: "«Akkreditə olunmuş həkim» demirik — yoxladığımız şey diplomun e-Devlet qeydi ilə uyğunluğu və hesabın yoxlanılmasıdır.",
           },
         },
         {
@@ -4063,14 +4070,15 @@ export const COPY = {
           key: "report",
           n: "10",
           title: "Məxfilik və ya təhlükəsizlik narahatlığını bildirin",
-          body: "Məlumatlarınızla bağlı narahatlığınız və ya təhlükəsizlik tapıntınız varsa, bizə bildirin.",
+          body: "Məlumatlarınızla bağlı narahatlığınız, məlumatların qorunması müraciətiniz (məlumat alma, düzəliş, silinmə) və ya təhlükəsizlik tapıntınız varsa, platforma daxilindəki müraciət formasından istifadə edin; müraciətlər qeydə alınır və qanuni müddət ərzində (ən geci 30 gün) cavablandırılır.",
           note: {
-            label: "⚖️ Layihə",
-            text: "Məlumat operatorunun əlaqə ünvanı hələ dərc olunmayıb; ünvan dəqiqləşdikdə bu bölmə yenilənəcək. O vaxta qədər uydurma ünvan yazmırıq.",
+            label: "⚖️ Hüquqi şəxs",
+            text: "Məlumat operatorunun ticarət adı və poçt ünvanı operator şirkətin qeydiyyatı tamamlandıqda bu bölməyə əlavə olunacaq; o vaxta qədər uydurma ünvan yazmırıq.",
           },
         },
       ],
       aiEmphasis: "Tibbi qərar süni intellektə aid deyil: AURA məlumatlarınızı nizamlayır və uyğun ixtisası təklif edir; diaqnoz və müalicə qərarını səlahiyyətli səhiyyə mütəxəssisləri verir.",
+      reportCta: "Məlumatların qorunması müraciət forması",
       transferItems: [
         "Süni intellektlə ilkin qiymətləndirmə və klinik xülasə (Anthropic, ABŞ): adınız göndərilmir — yer tutucu istifadə olunur; klinik məzmun tapşırığın mahiyyəti olduğu üçün göndərilir.",
         "Sinxron tərcümə (Google, ABŞ): görüşünüzün səsi tərcümə üçün emal olunur və ayrıca açıq razılığa tabedir; həmin razılıq olmadan işləmir.",
@@ -4527,7 +4535,7 @@ export const COPY = {
           key: "security",
           n: "01",
           title: "Как се защитават здравните ви данни",
-          body: "Данните ви се шифроват при пренос и се шифроват втори път с отделен ключ, преди да бъдат записани на нашите сървъри. Докладите и изображенията, които качвате, пристигат в хранилището вече шифровани — доставчикът на съхранение вижда само шифрованата форма. Данните ви се съхраняват и обработват в Европейския съюз (Франкфурт).",
+          body: "Данните ви се шифроват при пренос и се шифроват втори път с отделен ключ, преди да бъдат записани на нашите сървъри. Докладите и изображенията, които качвате, пристигат в хранилището вече шифровани — доставчикът на съхранение вижда само шифрованата форма. Данните ви се съхраняват и обработват в Европейския съюз (Франкфурт); само за предварителната оценка с ИИ и симултанния превод съдържание се изпраща, с вашето отделно изрично съгласие, на доставчици в САЩ (вижте 08).",
           note: {
             label: "Какво не твърдим",
             text: "Това не е „шифроване от край до край“. Ключът се управлява на нашите сървъри — защото клиничните резюмета, преводът и изгледът на лекаря изискват данните да се обработват на сървъра. Една наистина шифрована от край до край система не би могла да предложи тези функции.",
@@ -4537,7 +4545,7 @@ export const COPY = {
           key: "consent",
           n: "02",
           title: "Съгласие и изкуствен интелект",
-          body: "Вземат се три отделни съгласия и никое не замества друго: общо съгласие за защита на данните · предварителна оценка на оплакването с ИИ · симултанен превод на консултацията с ИИ. За всяко съхраняваме точния текст, който сте одобрили, момента на одобрение и верига, показваща, че не е променян след това. Никоя стъпка не започва без съгласие — формулярът не се отваря, разрешение за камерата не се иска. Можете да видите собствения си запис на съгласията по всяко време.",
+          body: "Съгласията се вземат отделно за всяка цел на обработване и никое не замества друго: общо съгласие за защита на данните и условия за ползване · предварителна оценка на оплакването с ИИ · симултанен превод на консултацията с ИИ · здравна декларация за застрахователния пакет. За всяко съхраняваме точния текст, който сте одобрили, момента на одобрение и верига, показваща, че не е променян след това; съгласията за ИИ и за здравната декларация можете да оттеглите от „Моят акаунт“. Никоя стъпка не започва без съгласие — формулярът не се отваря, разрешение за камерата не се иска. Можете да видите собствения си запис на съгласията по всяко време.",
           note: { label: "", text: "" },
         },
         {
@@ -4551,10 +4559,10 @@ export const COPY = {
           key: "doctors",
           n: "04",
           title: "Проверка на лекарите",
-          body: "Преди един лекар да стане видим или да получи назначение по случай, той качва професионалните си документи — диплома, свидетелство за специалност и застраховка за професионална отговорност — и те се преглеждат и одобряват. Профил на неодобрен лекар никога не се публикува.",
+          body: "Преди един лекар да стане видим или да получи назначение по случай, дипломата му по медицина се проверява спрямо баркодираното удостоверение за завършено образование в турския портал за електронно управление (e-Devlet), а акаунтът преминава административна проверка; свидетелство за специалност и застраховка за професионална отговорност могат да бъдат добавени по желание. Профил на неодобрен лекар никога не се публикува.",
           note: {
             label: "Какво не твърдим",
-            text: "Не казваме „акредитиран лекар“ — това, което проверяваме, е наличието и валидността на документите.",
+            text: "Не казваме „акредитиран лекар“ — това, което проверяваме, е съответствието на дипломата със записа в e-Devlet и проверката на акаунта.",
           },
         },
         {
@@ -4602,14 +4610,15 @@ export const COPY = {
           key: "report",
           n: "10",
           title: "Съобщете за проблем с поверителността или сигурността",
-          body: "Ако имате притеснение относно данните си или сте открили проблем със сигурността, кажете ни.",
+          body: "Ако имате притеснение относно данните си, искане за защита на данните (достъп, коригиране, изтриване) или сте открили проблем със сигурността, използвайте формуляра за искане в платформата; исканията се регистрират и получават отговор в законовия срок (най-късно до 30 дни).",
           note: {
-            label: "⚖️ Чернова",
-            text: "Адресът за контакт на администратора на данни още не е публикуван; този раздел ще бъде актуализиран, когато той стане окончателен. Дотогава не измисляме адрес.",
+            label: "⚖️ Юридическо лице",
+            text: "Търговското наименование и пощенският адрес на администратора на данни ще бъдат добавени тук, след като бъде учредено операторското дружество; дотогава не измисляме адрес.",
           },
         },
       ],
       aiEmphasis: "Медицинските решения не принадлежат на изкуствения интелект: AURA организира информацията ви и предлага подходяща специалност; решенията за диагноза и лечение се вземат от квалифицирани здравни специалисти.",
+      reportCta: "Формуляр за искане за защита на данните",
       transferItems: [
         "Предварителна оценка с ИИ и клинично резюме (Anthropic, САЩ): името ви не се изпраща — използва се заместител; клиничното съдържание се изпраща, защото е същността на задачата.",
         "Симултанен превод (Google, САЩ): звукът от консултацията се обработва за превод, при отделно изрично съгласие; без него не работи.",

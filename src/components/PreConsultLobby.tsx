@@ -78,7 +78,8 @@ const TX = {
   tapForDetails: "Profil özeti için dokunun",
   about: "Hakkında",
   stExperience: "Deneyim",
-  stSuccess: "Başarı oranı",
+  notProvided: "Bilgi eklenmedi", // D04: gerçek profilde eksik alan üretilmez
+  demoProfile: "Demo profil · örnek içerik",
   stYears: "yıl",
   trustBadges: "Güven rozetleri",
   academicTitle: "Akademik & Eğitim",
@@ -523,15 +524,11 @@ export function PreConsultLobby({
                 <p className="mt-1 text-[13px] leading-relaxed text-[var(--c-ink-2)]">{doctorCard.bio}</p>
               </div>
 
-              {/* İstatistik çubukları — null = veri yok → o metrik gizlenir (reviewCount>0 deseniyle aynı) */}
-              {(doctorCard.experienceYears != null || doctorCard.successRate != null) && (
+              {/* İstatistik çubukları — null = veri yok → o metrik gizlenir (reviewCount>0 deseniyle aynı).
+                  "Başarı oranı" KALDIRILDI (D04, kontrol raporu 2026-09-19): tanım/örneklem/dönem olmayan oran hasta yüzünde gösterilmez. */}
+              {doctorCard.experienceYears != null && (
                 <div className="grid grid-cols-2 gap-3">
-                  {doctorCard.experienceYears != null && (
-                    <MiniStat label={t(TX.stExperience)} valueText={`${doctorCard.experienceYears} ${t(TX.stYears)}`} pct={(doctorCard.experienceYears / 30) * 100} />
-                  )}
-                  {doctorCard.successRate != null && (
-                    <MiniStat label={t(TX.stSuccess)} valueText={`%${doctorCard.successRate}`} pct={doctorCard.successRate} />
-                  )}
+                  <MiniStat label={t(TX.stExperience)} valueText={`${doctorCard.experienceYears} ${t(TX.stYears)}`} pct={(doctorCard.experienceYears / 30) * 100} />
                 </div>
               )}
 
@@ -555,17 +552,21 @@ export function PreConsultLobby({
               {/* Akreditasyon özeti */}
               <div>
                 <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]"><ShieldCheck size={12} /> {t(TX.credentialsTitle)}</p>
+                {/* D04: demo/seed profil (üretilmiş içerik) açıkça etiketlenir */}
+                {doctorCard.demo && (
+                  <span className="mt-1.5 inline-flex rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300 ring-1 ring-amber-400/25">{t(TX.demoProfile)}</span>
+                )}
                 <ul className="mt-1.5 space-y-1.5 text-[13px] text-[var(--c-ink-2)]">
-                  {/* yıl null (veri yok) → sarkık " · " ayracı bırakma (v4.19) */}
-                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /><span><span className="font-medium text-[var(--c-ink)]">{t(TX.diploma)}:</span> {doctorCard.credentials.diplomaSchool}{doctorCard.credentials.diplomaYear != null ? ` · ${doctorCard.credentials.diplomaYear}` : ""}</span></li>
-                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className="mt-0.5 shrink-0 text-emerald-300" /><span><span className="font-medium text-[var(--c-ink)]">{t(TX.speciality)}:</span> {doctorCard.credentials.specBoard}{doctorCard.credentials.specYear != null ? ` · ${doctorCard.credentials.specYear}` : ""}</span></li>
+                  {/* yıl null (veri yok) → sarkık " · " ayracı bırakma (v4.19); okul/uzmanlık null (D04, gerçek profil) → "Bilgi eklenmedi", işaret soluk */}
+                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className={`mt-0.5 shrink-0 ${doctorCard.credentials.diplomaSchool ? "text-emerald-300" : "text-[var(--c-ink-3)]"}`} /><span><span className="font-medium text-[var(--c-ink)]">{t(TX.diploma)}:</span> {doctorCard.credentials.diplomaSchool ? `${doctorCard.credentials.diplomaSchool}${doctorCard.credentials.diplomaYear != null ? ` · ${doctorCard.credentials.diplomaYear}` : ""}` : t(TX.notProvided)}</span></li>
+                  <li className="flex items-start gap-1.5"><BadgeCheck size={14} className={`mt-0.5 shrink-0 ${doctorCard.credentials.specBoard ? "text-emerald-300" : "text-[var(--c-ink-3)]"}`} /><span><span className="font-medium text-[var(--c-ink)]">{t(TX.speciality)}:</span> {doctorCard.credentials.specBoard ? `${doctorCard.credentials.specBoard}${doctorCard.credentials.specYear != null ? ` · ${doctorCard.credentials.specYear}` : ""}` : t(TX.notProvided)}</span></li>
                 </ul>
               </div>
 
-              {/* Akademik */}
+              {/* Akademik — gerçek profilde bilgi yoksa üretilmez (D04) */}
               <div>
                 <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]"><GraduationCap size={12} /> {t(TX.academicTitle)}</p>
-                <p className="mt-1 text-[13px] leading-relaxed text-[var(--c-ink-2)]">{doctorCard.academic}</p>
+                <p className={`mt-1 text-[13px] leading-relaxed ${doctorCard.academic ? "text-[var(--c-ink-2)]" : "text-[var(--c-ink-3)]"}`}>{doctorCard.academic ?? t(TX.notProvided)}</p>
               </div>
 
               {/* Video kartvizit — hasta dilinde: varsa dil-bazlı video varyantı, her durumda çevrilmiş altyazı */}

@@ -46,6 +46,34 @@ describe("aura-landing/copy", () => {
   it("landing kopyasında 'Pro Bono' geçmez (yeni ad: Ücretsiz Sağlık Hizmeti)", () => {
     expect(JSON.stringify(COPY)).not.toMatch(/pro\s*bono/i);
   });
+
+  // V03 (kontrol raporu 2026-09-17, v6.280): güven sayfası vaatleri = kod kanıtı. Doktor doğrulaması yalnız DİPLOMA'yı
+  // (e-Devlet, REQUIRED_DOC_TYPES) zorunlu anlatır — uzmanlık belgesi/MMSS ihtiyari; "üç rıza" sabit sayısı yok
+  // (REVOCABLE_SCOPES: AI ön değerlendirme · AI tercüme · sağlık beyanı + genel KVKK); KVKK başvurusu platform içi
+  // forma bağlanır (reportCta → /kvkk-basvuru). 9 dilde yapısal kilit + TR/EN içerik kilidi.
+  it("güven sayfası V03: 9 dilde doktor kartı e-Devlet'i anar, reportCta dolu; TR/EN'de eski iddialar yok", () => {
+    for (const code of LANG_CODES) {
+      const t = COPY[code].trustPage;
+      const doctors = t.sections.find((s) => s.key === "doctors");
+      const report = t.sections.find((s) => s.key === "report");
+      expect(doctors?.body, `locale=${code}`).toMatch(/e-Devlet/);
+      expect(report?.note.text.length ?? 0, `locale=${code}`).toBeGreaterThan(20);
+      expect(t.reportCta.length, `locale=${code}`).toBeGreaterThan(3);
+    }
+    const tr = COPY.tr.trustPage.sections;
+    const en = COPY.en.trustPage.sections;
+    const by = (list: typeof tr, key: string) => list.find((s) => s.key === key)!;
+    expect(by(tr, "doctors").body).toMatch(/ihtiyari/);
+    expect(by(tr, "doctors").body).not.toMatch(/mesleki belgelerini yükler/);
+    expect(by(tr, "consent").body).not.toMatch(/Üç ayrı rıza/);
+    expect(by(tr, "consent").body).toMatch(/sağlık beyanı/);
+    expect(tr.find((s) => s.n === "01")!.body).toMatch(/ABD'deki sağlayıcılara/);
+    expect(by(tr, "report").body).toMatch(/30 gün/);
+    expect(by(tr, "report").note.label).not.toMatch(/Taslak/);
+    expect(by(en, "consent").body).not.toMatch(/Three separate consents/);
+    expect(by(en, "doctors").body).toMatch(/optionally/);
+    expect(by(en, "report").note.label).not.toMatch(/Draft/);
+  });
 });
 
 // Tek dil anahtarı köprüsü — `air_lang` dil ADI tutar; landing/public sayfalar kod-bazlıdır.

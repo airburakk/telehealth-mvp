@@ -64,12 +64,12 @@ export function DoctorDirectory({ doctors }: { doctors: DoctorRow[] }) {
               </div>
               <ArrowRight size={18} className="shrink-0 text-[var(--c-ink-3)] transition group-hover:translate-x-0.5 group-hover:text-[var(--c-accent)]" />
             </div>
-            {/* null = veri yok → o metrik satırı gizlenir (yeni self-signup doktor "0.0 yıldız" ile doğmasın) */}
-            {(d.rating != null || d.experienceYears != null || d.successRate != null || d.reviews > 0) && (
+            {/* null = veri yok → o metrik satırı gizlenir (yeni self-signup doktor "0.0 yıldız" ile doğmasın).
+                "%X başarı" KALDIRILDI (D04, kontrol raporu 2026-09-19): tanım/örneklem/dönem olmayan oran gösterilmez. */}
+            {(d.rating != null || d.experienceYears != null || d.reviews > 0) && (
               <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--c-ink-3)]">
                 {d.rating != null && <span className="inline-flex items-center gap-1 font-semibold text-amber-300"><Star size={13} className="fill-amber-400 text-amber-400" /> {d.rating.toFixed(1)}</span>}
                 {d.experienceYears != null && <span>{d.experienceYears} yıl deneyim</span>}
-                {d.successRate != null && <span>%{d.successRate} başarı</span>}
                 {d.reviews > 0 && <span>{d.reviews} yorum</span>}
               </div>
             )}

@@ -2,6 +2,21 @@
 // Mevcut gerçek bio korunur, üstüne detay eklenir. Akreditasyon (diploma + uzmanlık + sertifika),
 // dummy hasta yorumları ve akademik not branş + deneyim + isimden TÜRETİLİR (her render aynı).
 // Dummy içerik (demo); gerçek belge yükleme + moderasyonlu yorum üretimde.
+//
+// 🔴 D04 (kontrol raporu 2026-09-19): üretim (isim hash'inden tıp fakültesi, branş sabitlerinden üyelikler,
+// "bilimsel yayın deneyimi bulunmaktadır" cümlesi, odak cümlesi) yalnız DEMO profilde çalışır — çağıran `demo`
+// bayrağını geçirir (lib/doctor-demo). GERÇEK profilde eksik alan üretilmez: null döner, arayüz "bilgi eklenmedi"
+// yazar ya da satırı gizler. Yıllar hiçbir modda deneyimden türetilmez… (demo'da eski davranış korunur).
+
+export interface ProfileMode {
+  /** true = seed/demo profil (render-üretimli zenginleştirme + "Demo profil" etiketi); false = gerçek doktor, üretim YOK. */
+  demo: boolean;
+}
+
+/** Bağlı hesap yoksa ya da `*@air.test` demo hesabıysa → demo profil (gerçek doktor daima kayıt akışından, gerçek e-postayla gelir). */
+export function isDemoDoctorAccount(email: string | null | undefined): boolean {
+  return !email || email.toLowerCase().endsWith("@air.test");
+}
 
 export interface DoctorLike {
   id: string;
@@ -84,30 +99,41 @@ function genericInfo(branch: string): { board: string; certs: string[]; focus: s
 
 export interface Credentials {
   // year null = türetilecek gerçek veri yok (deneyim yılı boş) → yıl gösterilmez, fabrikasyon yapılmaz
-  diploma: { school: string; year: number | null };
-  uzmanlik: { board: string; year: number | null };
+  // school/board null = GERÇEK profilde bilgi eklenmemiş (D04) → arayüz "bilgi eklenmedi" yazar, üretmez
+  diploma: { school: string | null; year: number | null };
+  uzmanlik: { board: string | null; year: number | null };
   certs: string[];
 }
 
-// DB değeri (kalıcı) öncelikli; yoksa branş/deneyim/isimden deterministik üretim (geriye uyumlu fallback).
-export function doctorCredentials(d: DoctorLike): Credentials {
+function parseCerts(raw: string | null | undefined): string[] | null {
+  if (!raw) return null;
+  try { const p = JSON.parse(raw); return Array.isArray(p) && p.length ? (p as string[]) : null; } catch { return null; }
+}
+
+// DB değeri (kalıcı) öncelikli; DEMO'da yoksa branş/deneyim/isimden deterministik üretim (geriye uyumlu fallback).
+// GERÇEK profilde (demo:false) üretim YOK — eksik alan null/boş döner (D04).
+export function doctorCredentials(d: DoctorLike, mode: ProfileMode = { demo: true }): Credentials {
+  const dbCerts = parseCerts(d.certifications);
+  if (!mode.demo) {
+    return {
+      diploma: { school: d.eduSchool || null, year: d.eduYear ?? null },
+      uzmanlik: { board: d.specBoard || null, year: d.specYear ?? null },
+      certs: dbCerts ?? [],
+    };
+  }
   const seed = hash(d.name);
   const info = BRANCH_INFO[d.branch] ?? genericInfo(d.branch);
   // Yıl yalnız gerçek veriden türetilir: specYear yoksa deneyim yılından; o da null ise yıl ÜRETİLMEZ.
   const uzmanlikYear = d.specYear ?? (d.experienceYears != null ? Math.max(1995, 2026 - Math.max(1, d.experienceYears)) : null);
   const diplomaYear = d.eduYear ?? (uzmanlikYear != null ? uzmanlikYear - 5 : null);
-  let certs = info.certs;
-  if (d.certifications) {
-    try { const p = JSON.parse(d.certifications); if (Array.isArray(p) && p.length) certs = p as string[]; } catch { /* bozuk JSON → üretim */ }
-  }
   return {
     diploma: { school: d.eduSchool || pick(MED_SCHOOLS, seed), year: diplomaYear },
     uzmanlik: { board: d.specBoard || info.board, year: uzmanlikYear },
-    certs,
+    certs: dbCerts ?? info.certs,
   };
 }
 
-export function richBio(d: DoctorLike, baseBio: string | null): string {
+export function richBio(d: DoctorLike, baseBio: string | null, mode: ProfileMode = { demo: true }): string {
   const info = BRANCH_INFO[d.branch] ?? genericInfo(d.branch);
   const langs = d.languages.split(",").map((s) => s.trim()).filter(Boolean).join(", ");
   const base = (baseBio ?? "").trim();
@@ -115,26 +141,44 @@ export function richBio(d: DoctorLike, baseBio: string | null): string {
   const intro = d.experienceYears != null
     ? `${d.title} ${d.name}, ${d.experienceYears} yılı aşkın klinik deneyimiyle ${d.city}'de ${d.branch} alanında hizmet vermektedir.`
     : `${d.title} ${d.name}, ${d.city}'de ${d.branch} alanında hizmet vermektedir.`;
+  // JCI cümlesi yalnız doğrulanmış akreditasyonda (true); false/null = beyan yapılmaz.
+  const jci = d.jci === true ? " ve JCI akrediteli bir merkezde çalışır" : "";
+  if (!mode.demo) {
+    // GERÇEK profil (D04): yalnız doktorun kendi yazdığı bio + alanlardan kurulan OLGUSAL cümleler; odak/yaklaşım iddiası ÜRETİLMEZ.
+    return [base, intro, `Uluslararası hastalara ${langs} dillerinde hizmet sunar${jci}.`].filter(Boolean).join(" ");
+  }
   return [
     base,
     intro,
     info.focus,
-    // JCI cümlesi yalnız doğrulanmış akreditasyonda (true); false/null = beyan yapılmaz.
-    `Kanıta dayalı ve hasta odaklı bir yaklaşım benimser; uluslararası hastalara ${langs} dillerinde hizmet sunar${d.jci === true ? " ve JCI akrediteli bir merkezde çalışır" : ""}.`,
+    `Kanıta dayalı ve hasta odaklı bir yaklaşım benimser; uluslararası hastalara ${langs} dillerinde hizmet sunar${jci}.`,
   ].filter(Boolean).join(" ");
 }
 
-export function academicNote(d: DoctorLike): string {
-  const c = doctorCredentials(d);
-  let pubLine = "Ulusal ve uluslararası kongrelerde sunum ve bilimsel yayın deneyimi bulunmaktadır.";
-  if (d.publications) {
-    try {
-      const pubs = JSON.parse(d.publications) as { title: string; venue: string; year: number }[];
-      if (Array.isArray(pubs) && pubs.length) {
-        pubLine = "Seçilmiş yayınlar: " + pubs.map((p) => `“${p.title}” (${p.venue}, ${p.year})`).join("; ") + ".";
-      }
-    } catch { /* bozuk JSON → üretim cümlesi */ }
+function publicationsLine(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  try {
+    const pubs = JSON.parse(raw) as { title: string; venue: string; year: number }[];
+    if (Array.isArray(pubs) && pubs.length) {
+      return "Seçilmiş yayınlar: " + pubs.map((p) => `“${p.title}” (${p.venue}, ${p.year})`).join("; ") + ".";
+    }
+  } catch { /* bozuk JSON → yok say */ }
+  return null;
+}
+
+/** Akademik not. GERÇEK profilde (demo:false) yalnız DB alanlarından kurulur; hiçbiri yoksa null (arayüz "eklenmedi" yazar). */
+export function academicNote(d: DoctorLike, mode: ProfileMode = { demo: true }): string | null {
+  const c = doctorCredentials(d, mode);
+  const pubs = publicationsLine(d.publications);
+  if (!mode.demo) {
+    const parts: string[] = [];
+    if (c.diploma.school) parts.push(`${c.diploma.school} mezunu${c.diploma.year != null ? ` (${c.diploma.year})` : ""}.`);
+    if (c.uzmanlik.board) parts.push(`${c.uzmanlik.board}${c.uzmanlik.year != null ? ` (${c.uzmanlik.year})` : ""}.`);
+    if (pubs) parts.push(pubs);
+    return parts.length ? parts.join(" ") : null;
   }
+  // DEMO: eski üretim (yayın yoksa genel cümle) — yalnız "Demo profil" etiketli sayfada
+  const pubLine = pubs ?? "Ulusal ve uluslararası kongrelerde sunum ve bilimsel yayın deneyimi bulunmaktadır.";
   // Yıllar yalnız gerçek veriden türetilebildiyse yazılır (null = yıl iddiası yok — fabrikasyon yasak).
   const diplomaPart = `${c.diploma.school} mezunu${c.diploma.year != null ? ` (${c.diploma.year})` : ""}.`;
   const uzmanlikPart = c.uzmanlik.year != null

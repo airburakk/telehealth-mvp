@@ -745,7 +745,7 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   (Header'daki "Tüm cihazlardan çıkış") sürümü artırır, dolaşımdaki tüm token'lar düşer;
   `getCurrentUser` her istekte DB karşılaştırması yapar (istek-içi `cache()`'li). Eski (sv'siz)
   token'lar 0 kabul edilir. Proxy bilinçli DB'siz (yaptırım veri katmanında).
-- **Kontrol raporu Paket 1A/1B (v6.276 / v6.277, 2026-09-19/20) — erişim ve AI kapıları TEK KAYNAK:**
+- **Kontrol raporu Paket 1A/1B/2 (v6.276 / v6.277 / v6.280, 2026-09-19/20) — erişim ve AI kapıları TEK KAYNAK, iddialar kod kanıtlı:**
   · **Vaka LİSTE kapsamı** `lib/case-access.ts` (`doctorQueueScope` / `staffQueueScope` / `scopedWhere` / `CASE_LIST_SELECT`) — doktor ana
     sayfası ve `GET /api/cases` aynı üretici (atanan + KENDİ branşı atanmamış NEW/IN_REVIEW; `deletionLockedAt:null`; doğrulanmamış/
     aktivasyonsuz/branşsız → boş küme). Yeni liste/sayım sorgusu elle `where` KURMAZ. API DTO `hasFiles`/`lane` (ham `attachments` dönmez).
@@ -768,6 +768,16 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
     hasta takip listesi kapanışı detayla aynı kaynaktan (`recoveryClosed`, `lib/postop-rows`).
   · ✅ **K10 kapandı (v6.278, 2026-09-20):** geri alınan rıza `<KAPSAM>_REGRANT` sayaç-sürümlü kayıtla yeniden verilir
     (`recordRevocableConsent`; `decideActive` son olumlu olay); `GET /api/consent/ai` + `AiConsentGate` sunucudan aktif rızayı okur (H10).
+  · **Doktor profili iddiaları (D04, v6.280):** `lib/doctor-profile` üretilmiş okul/üyelik/yayın/yıl DOLGUSUNU yalnız DEMO profilde yazar
+    (`isDemoDoctorAccount`: bağlı `User` yok ya da `*@air.test`; `lib/doctor-demo doctorIsDemo`) — gerçek profilde yalnız DB alanları, boş alan
+    "Bilgi eklenmedi", akademik not yoksa gizli; "%X başarı" (tanım/dönem yok) ve "Sağlık Turizmi Yetki Belgesi" rozeti (belge tipi yok) TÜM
+    hasta yüzeylerinden kalktı; e-Devlet diploma rozeti yalnız `diplomaVerifiedAt`, "hesap yönetim onaylı" yalnız `verified`; hasta yorumları
+    yalnız demo profilde üretilir (gerçekte "henüz doğrulanmış değerlendirme yok"); `/doktorlar/[id]` demo rozeti "Demo profil · örnek içerik".
+  · **Güven sayfası vaatleri (V03, v6.280) — `/guven-ve-gizlilik`, 9 dil (`aura-landing/copy.ts trustPage`):** 04 doktor kartı yalnız DİPLOMA'yı
+    zorunlu anlatır (e-Devlet barkodlu mezun belgesi + yönetim incelemesi; uzmanlık belgesi/MMSS ihtiyari — `REQUIRED_DOC_TYPES` ile aynı),
+    02 rıza kartı işleme-bazlı (genel KVKK+koşullar · AI ön değerlendirme · AI tercüme · sağlık beyanı; geri alma Hesabım — `REVOCABLE_SCOPES`),
+    01 AB depolama / ABD AI işleme ayrı cümle (bkz. 08), 10 KVKK başvurusu platform içi forma bağlanır (`reportCta` → `/kvkk-basvuru`; "⚖️ Tüzel
+    kişilik" notu: unvan/adres şirket kurulunca). `aura-landing-copy.test` eski kalıpları ("Üç ayrı rıza", zorunlu MMSS, "Taslak") kilitler.
 - **Rate-limit (v4.18):** Upstash Redis birincil (dağıtık/atomik; login 10/5dk/IP · paylaşım-şifre
   10/5dk/IP+link · AI 20/dk/kullanıcı), env yoksa/hatada in-memory yedek (fail-open). Env:
   `UPSTASH_REDIS_REST_URL/TOKEN`.

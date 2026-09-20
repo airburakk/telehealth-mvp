@@ -7,7 +7,8 @@ import { computePackage } from "../src/lib/pricing";
 const db = new PrismaClient();
 
 const DOCTORS = [
-  { name: "Mehmet Yıldız", title: "Prof. Dr.", branch: "Onkoloji", city: "İstanbul", languages: "Türkçe,İngilizce,Arapça", color: "#0f2a4a", bio: "Tıbbi onkoloji, akciğer ve meme kanseri. 22 yıl deneyim, JCI akrediteli merkez." },
+  // D04 (2026-09-20): bio'daki "22 yıl deneyim" (experienceYears alanıyla çelişiyordu) ve "JCI akrediteli merkez" (jci alanı ayrı) iddiaları çıkarıldı — deneyim/JCI tek kaynaktan.
+  { name: "Mehmet Yıldız", title: "Prof. Dr.", branch: "Onkoloji", city: "İstanbul", languages: "Türkçe,İngilizce,Arapça", color: "#0f2a4a", bio: "Tıbbi onkoloji, akciğer ve meme kanseri." },
   { name: "Ayşe Demir", title: "Prof. Dr.", branch: "Kardiyoloji", city: "Ankara", languages: "Türkçe,Rusça", color: "#9a1750", bio: "Girişimsel kardiyoloji, koroner anjiyo ve stent." },
   { name: "Caner Aksoy", title: "Op. Dr.", branch: "Ortopedi", city: "İzmir", languages: "Türkçe,İngilizce", color: "#0e7490", bio: "Diz ve kalça protezi, spor yaralanmaları, artroskopi." },
   { name: "Elif Kaya", title: "Doç. Dr.", branch: "Tüp Bebek (IVF)", city: "İstanbul", languages: "Türkçe,Rusça,İngilizce", color: "#7c3aed", bio: "Üreme endokrinolojisi ve IVF. Yüksek başarı oranlı laboratuvar." },

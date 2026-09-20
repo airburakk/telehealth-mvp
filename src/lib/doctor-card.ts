@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import {
   doctorCredentials, richBio, academicNote, avatarVariant, isFemaleName, type DoctorLike,
 } from "@/lib/doctor-profile";
+import { doctorIsDemo } from "@/lib/doctor-demo";
 import { getDoctorBadges } from "@/lib/match-score";
 
 export interface DoctorCardData {
@@ -24,23 +25,27 @@ export interface DoctorCardData {
   rating: number | null;
   reviewCount: number;
   experienceYears: number | null;
-  successRate: number | null;
+  // successRate KALDIRILDI (D04, kontrol raporu 2026-09-19): tanım/örneklem/dönem/doğrulama yöntemi olmayan oran hasta yüzünde gösterilmez.
   languages: string[];
+  /** Demo/seed profil (üretilmiş zenginleştirme) — tüketici "Demo profil" etiketi basar. */
+  demo: boolean;
   bio: string;
-  academic: string;
+  academic: string | null; // null = gerçek profilde akademik bilgi eklenmemiş (üretilmez)
   badges: { key: string; label: string; desc: string }[];
-  credentials: { diplomaSchool: string; diplomaYear: number | null; specBoard: string; specYear: number | null; certs: string[] };
+  credentials: { diplomaSchool: string | null; diplomaYear: number | null; specBoard: string | null; specYear: number | null; certs: string[] };
 }
 
 // richBio/academicNote/credentials için gereken alanlar + kartın gösterdiği ek alanlar.
-type DoctorRecord = DoctorLike & { bio: string | null; photo: string | null; successRate: number | null };
+type DoctorRecord = DoctorLike & { bio: string | null; photo: string | null };
 
 export async function buildDoctorCard(d: DoctorRecord): Promise<DoctorCardData> {
-  const cred = doctorCredentials(d);
-  const [badges, reviewCount] = await Promise.all([
+  const [badges, reviewCount, demo] = await Promise.all([
     getDoctorBadges(d.id),
     db.review.count({ where: { doctorId: d.id } }),
+    doctorIsDemo(d.id),
   ]);
+  const mode = { demo };
+  const cred = doctorCredentials(d, mode);
   return {
     id: d.id,
     title: d.title,
@@ -55,10 +60,10 @@ export async function buildDoctorCard(d: DoctorRecord): Promise<DoctorCardData> 
     rating: d.rating,
     reviewCount,
     experienceYears: d.experienceYears,
-    successRate: d.successRate,
     languages: d.languages.split(",").map((s) => s.trim()).filter(Boolean),
-    bio: richBio(d, d.bio),
-    academic: academicNote(d),
+    demo,
+    bio: richBio(d, d.bio, mode),
+    academic: academicNote(d, mode),
     badges: badges.map((b) => ({ key: b.key, label: b.label, desc: b.desc })),
     credentials: {
       diplomaSchool: cred.diploma.school,
