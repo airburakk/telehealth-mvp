@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import {
   ArrowRight, BarChart2, BellRing, CalendarDays, Gift, KeyRound, LayoutDashboard, Megaphone,
-  MousePointerClick, TrendingUp, GraduationCap, ShieldCheck
+  MousePointerClick, TrendingUp, GraduationCap, ShieldCheck, Languages
 } from "lucide-react";
 import { isEmailConfigured, maskEmail } from "@/lib/email";
 import { shortFingerprint } from "@/lib/kek-rotation";
@@ -88,6 +88,13 @@ const PANELS = [
     desc: "KVKK m.11 başvuru kütüğü — bekleyen talepleri gör, en geç 30 gün içinde yanıtla.",
     icon: ShieldCheck,
     tone: "#f43f5e",
+  },
+  {
+    href: "/admin/hukuki-ceviri",
+    label: "Hukuki Çeviriler",
+    desc: "Hasta yüzü hukuki belgelerinin 9 dildeki çevirilerini incele ve onayla — onaylanan metin dondurulur, hasta 'İncelenmiş çeviri' rozetini görür.",
+    icon: Languages,
+    tone: "#0ea5e9",
   },
 ];
 

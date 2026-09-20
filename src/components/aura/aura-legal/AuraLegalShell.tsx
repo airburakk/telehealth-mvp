@@ -29,6 +29,8 @@ import { LEGAL_SHELL_UI, type LegalShellUi } from "@/lib/aura-legal/shell-ui";
 // Paket 7 (v6.285): üç dil ekseni — nav/footer arayüz dili (air_lang) · KANONİK belge dili (tr/en; bağlayıcı) · GÖSTERİM dili
 // (hastanın seçtiği 11 dilden biri; `display` prop'u doluysa gövde o dilde bilgilendirme çevirisidir, kabuk "bağlayıcı metin
 // Türkçe" notunu ve kanonik bağlantısını taşır, gövde yönü ar/fa'da rtl). Dil seçici: Türkçe · English · diğer diller (select).
+// 7-C (v6.286): çeviri kutusunun ilk satırı rozet — hukukçu onaylı (dondurulmuş) metinde "İncelenmiş çeviri · tarih", aksi
+// hâlde "Otomatik çeviri (yapay zekâ). Henüz hukuki incelemeden geçmedi." (lib/legal-approval; tarih gösterim dilinde biçimlenir).
 //
 // Metin içi AURA = wordmark kuralı (2026-08-17) yalnız kabuğun vitrin satırında (işletici etiketi) uygulanır; belge gövdesi
 // düz metindir — Paket B'de aynı dize hash'lenir, görsel ikame yapılmaz.
@@ -38,6 +40,8 @@ export type LegalShellDisplay = {
   partial: boolean; // bazı paragraflar çevrilemedi (TR kaldı)
   ui: Record<string, string>; // TR kabuk/not dizeleri → gösterim dili (sunucu çevirdi)
   title: string; // belge başlığı (gösterim dili)
+  status: "automatic" | "reviewed"; // 7-C: hukukçu onaylı dondurulmuş metin mi, otomatik çeviri mi
+  reviewedAt: string | null; // ISO — status reviewed
 };
 
 export function AuraLegalShell({ slug, lang, display, children }: { slug: AuraLegalSlug; lang: AuraLegalLang; display?: LegalShellDisplay | null; children: ReactNode }) {
@@ -115,7 +119,17 @@ function Shell({ slug, lang, display, children }: { slug: AuraLegalSlug; lang: A
           <p className="mt-4 max-w-2xl text-xs leading-relaxed text-[var(--aura-micro)]">{ui.note}</p>
           {display && (
             <div className="mt-3 max-w-2xl rounded-2xl border border-[var(--aura-accent)]/40 bg-[var(--aura-accent)]/[0.08] px-4 py-3 text-xs leading-relaxed text-[var(--aura-ink)]">
-              <p>{display.ui[LEGAL_DISPLAY_NOTE_TR] ?? LEGAL_DISPLAY_NOTE_TR}</p>
+              <p className="font-medium">
+                {display.status === "reviewed" && display.reviewedAt ? (
+                  <>
+                    {ui.reviewed}{" "}
+                    <time dateTime={display.reviewedAt}>{new Intl.DateTimeFormat(display.code, { dateStyle: "long" }).format(new Date(display.reviewedAt))}</time>
+                  </>
+                ) : (
+                  ui.auto
+                )}
+              </p>
+              <p className="mt-1">{display.ui[LEGAL_DISPLAY_NOTE_TR] ?? LEGAL_DISPLAY_NOTE_TR}</p>
               {display.partial && <p className="mt-1 text-[var(--aura-grey)]">{display.ui[LEGAL_DISPLAY_PARTIAL_TR] ?? LEGAL_DISPLAY_PARTIAL_TR}</p>}
               <Link href={auraLegalHref(doc.path, "tr")} className="mt-1.5 inline-block font-medium text-[var(--aura-accent-stronger)] underline underline-offset-2">
                 {display.ui[LEGAL_CANONICAL_LINK_TR] ?? LEGAL_CANONICAL_LINK_TR} (Türkçe · English)

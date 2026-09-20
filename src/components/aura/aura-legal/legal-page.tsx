@@ -5,7 +5,7 @@ import { AURA_CANONICAL_URL } from "@/lib/brand";
 import { auraLegalDoc, type AuraLegalLang, type AuraLegalSlug } from "@/lib/aura-legal";
 import { resolveLegalDisplay, LEGAL_CANONICAL_LINK_TR, LEGAL_DISPLAY_NOTE_TR, LEGAL_DISPLAY_PARTIAL_TR } from "@/lib/aura-legal/display";
 import { LEGAL_SHELL_UI_TR_VALUES } from "@/lib/aura-legal/shell-ui";
-import { translateLegalMarkdown } from "@/lib/legal-translate";
+import { resolveLegalBody } from "@/lib/legal-approval";
 import { getTranslations } from "@/lib/i18n";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -19,6 +19,8 @@ import { AuraLegalShell, type LegalShellDisplay } from "./AuraLegalShell";
 // Paket 7 (v6.285, 👤 karar A): GÖSTERİM dili hastanın arayüz dilidir (`?lang=<kod|ad>`; yoksa oturumlu hastanın profil dili) —
 // TR/EN dışı dilde gövde TR kanonikten paragraf paragraf ÇEVRİLİR (lib/legal-translate, önbellekli), kabuk "bağlayıcı metin
 // Türkçe" notunu taşır ve kanonik metne bağlanır; çeviri sayfaları noindex (makine çevirisi dizine girmez). Motor yoksa EN kanonik.
+// 7-C (v6.286): gövde lib/legal-approval resolveLegalBody'den — geçerli hukukçu onayı varsa DONDURULMUŞ metin (rozet "İncelenmiş
+// çeviri · tarih"), yoksa otomatik çeviri (rozet "henüz incelenmedi").
 //
 // Next 16: `searchParams` Promise'tir — hem generateMetadata hem sayfa await eder. Sayfa dinamik render olur (query okur).
 
@@ -77,11 +79,14 @@ export async function AuraLegalPage({
   let markdown = doc.body[d.canonical];
   let display: LegalShellDisplay | null = null;
   if (d.translated) {
-    const tr = await translateLegalMarkdown(doc.body.tr, d.display);
-    if (tr) {
-      markdown = tr.markdown;
+    const body = await resolveLegalBody(slug, d.display);
+    if (body) {
+      markdown = body.markdown;
       const ui = await getTranslations(d.display, [...LEGAL_SHELL_UI_TR_VALUES, LEGAL_DISPLAY_NOTE_TR, LEGAL_DISPLAY_PARTIAL_TR, LEGAL_CANONICAL_LINK_TR, doc.title.tr]);
-      display = { name: d.display, code: d.code, partial: !tr.complete, ui, title: ui[doc.title.tr] ?? doc.title.en };
+      display = {
+        name: d.display, code: d.code, partial: body.partial, ui, title: ui[doc.title.tr] ?? doc.title.en,
+        status: body.status, reviewedAt: body.reviewedAt?.toISOString() ?? null,
+      };
     }
     // motor yoksa: EN kanonik gövde (d.canonical = en), kabuk EN — eski davranış
   }

@@ -26,10 +26,33 @@ export type ConsentCourtesy = {
   aydinlatma: ReactNode;
   kosullar: ReactNode;
   hashes: { aydinlatmaHash: string; kosullarHash: string };
+  status: Record<"aydinlatma" | "kosullar", CourtesyDocStatus>; // 7-C (v6.286): bölüm başı rozeti — onaylı (dondurulmuş) / otomatik
   ui: Record<string, string>; // CONSENT_GATE_UI.tr değerleri → gösterim dili
 };
 
+export type CourtesyDocStatus = { status: "automatic" | "reviewed"; reviewedAt: string | null };
+
 type View = ConsentLang | "courtesy";
+
+// 7-C (v6.286): bölüm başı rozeti — hukukçu onaylı (dondurulmuş) çeviri mi, otomatik mi; hasta hangi metni okuduğunu bilsin.
+function CourtesyStatus({ s, ui, code }: { s: CourtesyDocStatus; ui: ConsentGateUi; code: string }) {
+  const at = s.status === "reviewed" ? s.reviewedAt : null;
+  return (
+    <p
+      className={`mb-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+        at ? "border-[var(--c-success)]/40 text-[var(--c-success)]" : "border-[var(--c-hairline)] text-[var(--c-ink-3)]"
+      }`}
+    >
+      {at ? (
+        <>
+          {ui.reviewed} <time dateTime={at}>{new Intl.DateTimeFormat(code, { dateStyle: "long" }).format(new Date(at))}</time>
+        </>
+      ) : (
+        ui.auto
+      )}
+    </p>
+  );
+}
 
 function courtesyUi(map: Record<string, string>): ConsentGateUi {
   const tr = CONSENT_GATE_UI.tr;
@@ -128,6 +151,7 @@ export function AuraConsentGate({
       <Section icon={<FileText size={16} />} title={ui.sec1} href={docHref("/aydinlatma")} open={ui.open}>
         {inCourtesy && courtesy ? (
           <>
+            <CourtesyStatus s={courtesy.status.aydinlatma} ui={ui} code={courtesy.code} />
             {courtesy.aydinlatma}
             <Canonical label={ui.canonical}>{aydinlatma.en}</Canonical>
           </>
@@ -136,6 +160,7 @@ export function AuraConsentGate({
       <Section icon={<ScrollText size={16} />} title={ui.sec2} href={docHref("/kosullar")} open={ui.open}>
         {inCourtesy && courtesy ? (
           <>
+            <CourtesyStatus s={courtesy.status.kosullar} ui={ui} code={courtesy.code} />
             {courtesy.kosullar}
             <Canonical label={ui.canonical}>{kosullar.en}</Canonical>
           </>

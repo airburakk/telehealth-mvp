@@ -13,9 +13,9 @@ import { AYDINLATMA_MD } from "@/lib/doctorium-legal/texts/aydinlatma";
 import { KOSULLAR_MD } from "@/lib/doctorium-legal/texts/kosullar";
 import { OGRENCI_EKI_MD } from "@/lib/doctorium-legal/texts/ogrenci-eki";
 import { LegalMarkdown } from "@/components/aura/doctorium-legal/LegalMarkdown";
-import { isTranslatableLegalLang, translateLegalMarkdown } from "@/lib/legal-translate";
+import { isTranslatableLegalLang } from "@/lib/legal-translate";
+import { resolveLegalBody } from "@/lib/legal-approval";
 import { getTranslations } from "@/lib/i18n";
-import { sha256 } from "@/lib/timestamp";
 import { langCodeFor } from "@/lib/constants";
 import { CONSENT_GATE_UI_TR_VALUES } from "@/lib/aura-consent-gate-ui";
 import { AuraConsentGate, type ConsentCourtesy } from "./AuraConsentGate";
@@ -83,16 +83,22 @@ export default async function ConsentPage({ searchParams }: { searchParams: Prom
     // kanonik EN yine hash'lenir, gösterilen çevirinin dili + hash'i kayda ek yazılır. Motor yoksa eski davranış (EN kanonik).
     let courtesy: ConsentCourtesy | null = null;
     if (isTranslatableLegalLang(display)) {
-      const [ayd, kos] = await Promise.all([translateLegalMarkdown(GENERAL_KVKK_TEXT.tr, display), translateLegalMarkdown(AURA_TERMS_TEXT.tr, display)]);
+      // 7-C (v6.286): belge başına hukukçu onayı — geçerli onay varsa dondurulmuş metin ("İncelenmiş çeviri"), yoksa otomatik; aydinlatma =
+      // GENERAL_KVKK_TEXT.tr, kosullar = AURA_TERMS_TEXT.tr (aynı kanonik sabitler) → /aydinlatma ve /kosullar sayfalarıyla TEK onay.
+      const [ayd, kos] = await Promise.all([resolveLegalBody("aydinlatma", display), resolveLegalBody("kosullar", display)]);
       if (ayd && kos) {
         const ui = await getTranslations(display, [...CONSENT_GATE_UI_TR_VALUES]);
         courtesy = {
           lang: display,
           code: langCodeFor(display) ?? "en",
-          partial: !ayd.complete || !kos.complete,
+          partial: ayd.partial || kos.partial,
           aydinlatma: <LegalMarkdown markdown={ayd.markdown} />,
           kosullar: <LegalMarkdown markdown={kos.markdown} />,
-          hashes: { aydinlatmaHash: sha256(ayd.markdown), kosullarHash: sha256(kos.markdown) },
+          hashes: { aydinlatmaHash: ayd.textHash, kosullarHash: kos.textHash },
+          status: {
+            aydinlatma: { status: ayd.status, reviewedAt: ayd.reviewedAt?.toISOString() ?? null },
+            kosullar: { status: kos.status, reviewedAt: kos.reviewedAt?.toISOString() ?? null },
+          },
           ui,
         };
       }

@@ -918,6 +918,27 @@ model Translation {
   @@unique([lang, sourceHash])
 }
 
+/// Hukuki çeviri ONAYI (7-C, v6.286 · 2026-09-20) — belge × dil × kanonik sürüm başına hukukçu incelemesi. Onaylanan çeviri
+/// metni DONDURULUR (markdown) ve hasta yüzü onu aynen sunar; TR kaynak hash'i ya da sürüm değişince onay kendiliğinden eskir
+/// (lib/legal-approval approvalIsCurrent). Geri alma revokedAt ile (satır izlenebilirlik için kalır; audit zinciri de yazar).
+model LegalTranslationApproval {
+  id           String    @id @default(cuid())
+  slug         String // aydinlatma | kosullar | cerez | kvkk-basvuru | tele-saglik (lib/aura-legal AuraLegalSlug)
+  lang         String // hedef dil (Türkçe adıyla: "Rusça") — Translation.lang ile aynı sözlük
+  version      String // AURA_LEGAL_VERSION (onay anındaki kanonik belge sürümü)
+  sourceHash   String // sha256(TR kanonik gövde) — kaynak değişti mi?
+  textHash     String // sha256(onaylanan çeviri markdown'ı) — ConsentRecord.shownTextHash ile eşleşme = ispat
+  markdown     String // onaylanan çeviri (dondurulmuş; sayfa bunu sunar)
+  note         String? // hukukçu notu (kuyrukta görünür, hastaya gösterilmez)
+  approvedAt   DateTime  @default(now())
+  approvedById String
+  approvedBy   String // ad/e-posta anlık görüntüsü
+  revokedAt    DateTime?
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([slug, lang, version])
+}
+
 /// Web Push aboneliği — kullanıcının cihazı (tarayıcı kapalıyken bildirim)
 model PushSubscription {
   id        String   @id @default(cuid())

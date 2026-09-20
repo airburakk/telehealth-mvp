@@ -227,6 +227,17 @@ npx tsx scripts/translate-legal.ts --lang=Rusça   # tek dil
 > Migration `20260920150000_consent_shown_translation` (`ConsentRecord.shownLang` + `shownTextHash`, nullable) — yeni kolon =
 > **migration-önce**: koddan önce `migrate deploy` (Adım 2 runbook'u; push preflight'ı bekleyen migration varken push'u keser).
 
+#### 7-C (v6.286 · 2026-09-20) — onay kuyruğu + üretim ısıtma sarmalayıcısı
+
+- Migration `20260920190000_legal_translation_approval` (yeni tablo `LegalTranslationApproval`) — yeni tablo = **migration-önce**
+  (Adım 2; push preflight'ı bekleyen migration varken keser). Tablo boşken kod eski gibi davranır (her çeviri "otomatik" rozetli).
+- Üretim önbelleğini ısıtmak için artık elle env kurma: **`node scripts/translate-legal-prod.mjs [--lang=Rusça]`** — `.env`'deki
+  `PROD_DATABASE_URL`/`PROD_DIRECT_URL` ile `scripts/translate-legal.ts`'i koşar (apply-prod-migration.mjs deseni). `.env`'de
+  `AURA_DB_GUARD=block` ise `src/lib/db.ts` korkuluğu süreci durdurur (doğru); bilinçli üretim ısıtması için yalnız o kabuk
+  oturumunda `$env:AURA_DB_GUARD='warn'` (PowerShell) verilir — betik korkuluğu kendisi GEVŞETMEZ.
+- Onay/inceleme: `/admin/hukuki-ceviri` (yalnız ADMIN) — kuyruk önbellekten okur; "Çeviriyi üret" tek belge/dil için Claude'u çağırır
+  (`maxDuration 120`). Onaylı metin dondurulur; kanonik metin/sürüm değişince onay kendiliğinden eskir → hukukçu yeniden inceler.
+
 ## Adım 3 — GitHub'a gönder
 
 ```bash

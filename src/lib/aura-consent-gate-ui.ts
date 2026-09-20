@@ -8,6 +8,7 @@ export type ConsentGateUi = {
   title: string; sub: string; intro: string; sec1: string; sec2: string; read: string; accept: string; button: string;
   err: string; proofBefore: string; proofLink: string; proofAfter: string; open: string; tr: string; en: string;
   courtesy: string; canonical: string; partial: string;
+  auto: string; reviewed: string; // 7-C (v6.286): bölüm başı rozeti — otomatik / incelenmiş (tarih kodda eklenir)
 };
 
 export const CONSENT_GATE_UI: Record<ConsentLang, ConsentGateUi> = {
@@ -30,6 +31,8 @@ export const CONSENT_GATE_UI: Record<ConsentLang, ConsentGateUi> = {
     courtesy: "Bu çeviri bilgilendirme amaçlıdır; hukuken bağlayıcı metin Türkçe (ikincil İngilizce) kanonik metindir — aşağıda açılabilir. Onayınız kanonik metne, okuduğunuz çevirinin dili ve özeti (hash) ise kayda ayrıca yazılır.",
     canonical: "Bağlayıcı metin (İngilizce)",
     partial: "Bazı paragraflar henüz çevrilemedi ve Türkçe görünüyor.",
+    auto: "Otomatik çeviri (yapay zekâ). Henüz hukuki incelemeden geçmedi.",
+    reviewed: "İncelenmiş çeviri. Hukuki inceleme tarihi:",
   },
   en: {
     title: "Privacy Notice and Explicit Consent · Terms of Use",
@@ -50,6 +53,8 @@ export const CONSENT_GATE_UI: Record<ConsentLang, ConsentGateUi> = {
     courtesy: "This translation is informational; the legally binding text is the Turkish (secondary English) canonical text, expandable below. Your consent binds the canonical text; the language and hash of the translation you read are recorded alongside.",
     canonical: "Binding text (English)",
     partial: "Some paragraphs could not be translated yet and appear in Turkish.",
+    auto: "Automatic translation (AI). Not yet legally reviewed.",
+    reviewed: "Reviewed translation. Legal review date:",
   },
 };
 

@@ -50,6 +50,10 @@ export type AuditAction =
   | "KVKK_APPLICATION_SUBMIT" // KVKK m.11 başvurusu platform içi formdan iletildi
   | "KVKK_APPLICATION_DECIDE" // KVKK m.11 başvurusu incelemeci tarafından yanıtlandı
   // ── Şifreleme anahtarı (2026-09-18 — tatbikat #1 aksiyon A1, break-glass rotasyon) ────────────
+  // ── Hukuki çeviri onayı (7-C, v6.286 · 2026-09-20 — hasta yüzü belge çevirileri, lib/legal-approval) ──────────
+  | "LEGAL_TRANSLATION_APPROVE" // ADMIN çeviriyi inceleyip onayladı — detail: slug·dil·sürüm·textHash öneki (metin dondurulur)
+  | "LEGAL_TRANSLATION_REVOKE" // onay geri alındı → sayfa otomatik çeviriye döner (rozet "henüz incelenmedi")
+  | "LEGAL_TRANSLATION_GENERATE" // kuyruktan çeviri üretildi/tamamlandı — detail: çevrilen/beklenen birim
   | "KEK_ROTATION" // /api/admin/kek-rotate koştu — detail: mode=dry-run|apply · eski/yeni sha256 ÖNEKLERİ · sayaçlar (anahtar ASLA yazılmaz)
   | "KEK_ROTATION_DENIED"; // ADMIN oturumuyla YANLIŞ ikinci faktör (KEK_ROTATION_SECRET) — uzlaşma sinyali; alarm da gider
 

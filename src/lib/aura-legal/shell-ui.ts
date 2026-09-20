@@ -4,6 +4,7 @@ import type { AuraLegalLang } from "./routes";
 
 export type LegalShellUi = {
   eyebrow: string; version: string; operator: string; note: string; nav: string; langGroup: string; tr: string; en: string; other: string;
+  auto: string; reviewed: string; // 7-C (v6.286): çeviri kutusunun ilk satırı — otomatik / incelenmiş (tarih kodda eklenir)
 };
 
 export const LEGAL_SHELL_UI: Record<AuraLegalLang, LegalShellUi> = {
@@ -17,6 +18,8 @@ export const LEGAL_SHELL_UI: Record<AuraLegalLang, LegalShellUi> = {
     tr: "Türkçe",
     en: "English",
     other: "Diğer diller",
+    auto: "Otomatik çeviri (yapay zekâ). Henüz hukuki incelemeden geçmedi.",
+    reviewed: "İncelenmiş çeviri. Hukuki inceleme tarihi:",
   },
   en: {
     eyebrow: "Legal document",
@@ -28,6 +31,8 @@ export const LEGAL_SHELL_UI: Record<AuraLegalLang, LegalShellUi> = {
     tr: "Türkçe",
     en: "English",
     other: "Other languages",
+    auto: "Automatic translation (AI). Not yet legally reviewed.",
+    reviewed: "Reviewed translation. Legal review date:",
   },
 };
 
