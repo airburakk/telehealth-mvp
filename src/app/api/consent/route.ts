@@ -3,11 +3,14 @@ import { getCurrentUser, createSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gateConsentVersion, recordDoctoriumConsent } from "@/lib/doctorium-consent";
 import { recordPatientConsent, recordStaffConsent } from "@/lib/aura-consent";
-import { consentLangParam } from "@/lib/consent-lang";
+import { consentLangParam, parseShownTranslation } from "@/lib/consent-lang";
 import { refreshActivation } from "@/lib/doctor-activation";
 import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
+
+// Paket 7 (v6.285): gövde `shown` = { lang: <dil adı>, aydinlatmaHash, kosullarHash } — kapıda gösterilen bilgilendirme
+// çevirisinin ispat eki (parseShownTranslation, lib/consent-lang); geçersiz → null, kayıt yine kanonik hash'le yazılır.
 
 // Onam kaydet + oturumu yeniden imzala (cv güncel) → kullanıcı bir daha sorulmaz.
 //
@@ -32,6 +35,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Bu onam Doctorium'da alınmaz; AURA hesabınızda sorulur." }, { status: 400 });
   }
   const lang = consentLangParam(body?.lang);
+  const shown = parseShownTranslation(body?.shown); // Paket 7: gösterilen bilgilendirme çevirisi (dil + hash'ler); geçersiz → null
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
   const userAgent = req.headers.get("user-agent")?.slice(0, 400) || null;
 
@@ -40,7 +44,7 @@ export async function POST(req: Request) {
     await recordDoctoriumConsent(user.id, ip, userAgent);
   } else if (kind !== "resign") {
     if (user.role === "PATIENT") {
-      await recordPatientConsent(user.id, lang, ip, userAgent);
+      await recordPatientConsent(user.id, lang, ip, userAgent, shown);
     } else {
       await recordStaffConsent(user.id, user.role, lang, ip, userAgent);
       if (user.role === "DOCTOR") {

@@ -132,6 +132,11 @@ model ConsentRecord {
   // kalan userId cuid'i User satırı silindiği için anonimdir). Satır zincir HALKASI olarak durur —
   // fiziksel silme append-only zinciri kırardı. verifyConsentChain purged satırda mührü atlar, bağı sürdürür.
   purgedAt    DateTime?
+  // Paket 7 (v6.285, 2026-09-20): kapıda GÖSTERİLEN bilgilendirme çevirisi — dil adı ("Rusça") + o çeviri metninin SHA-256'sı.
+  // Kanonik metin hash'i textHash'te ve mühürde DEĞİŞMEZ; bu ikisi ispat ekidir (hasta hangi dilde hangi metni okudu).
+  // TR/EN okuyanlarda ve eski kayıtlarda null. Mühür formülüne dahil değil (v2 imzası korunur).
+  shownLang     String?
+  shownTextHash String?
 
   @@unique([userId, scope, version])
 }

@@ -14,10 +14,22 @@ import {
 
 export * from "./aura-consent-texts";
 
-/** Hasta kapısı (/onam "general"): A01 GENERAL_KVKK v4 + A02 AURA_TERMS v1 — gösterilen dilin metniyle, iki kayıt (idempotent). */
-export async function recordPatientConsent(userId: string, lang: ConsentLang, ip?: string | null, userAgent?: string | null): Promise<void> {
-  await recordConsent(userId, ip, userAgent, { scope: CONSENT_SCOPE, version: CONSENT_VERSION, text: GENERAL_KVKK_TEXT[lang] });
-  await recordConsent(userId, ip, userAgent, { scope: AURA_TERMS_SCOPE, version: AURA_TERMS_VERSION, text: AURA_TERMS_TEXT[lang] });
+/** Paket 7 (v6.285): kapıda GÖSTERİLEN bilgilendirme çevirisi — dil adı + belge başına çeviri hash'i (ispat eki; kanonik hash ayrı). */
+export type ShownTranslation = { lang: string; aydinlatmaHash: string; kosullarHash: string };
+
+/** Hasta kapısı (/onam "general"): A01 GENERAL_KVKK v4 + A02 AURA_TERMS v1 — gösterilen kanonik dilin metniyle, iki kayıt (idempotent).
+ *  `shown` varsa (hasta TR/EN dışı dilde çeviriyi okudu) her kayda gösterilen çevirinin dili + hash'i eklenir. */
+export async function recordPatientConsent(
+  userId: string, lang: ConsentLang, ip?: string | null, userAgent?: string | null, shown?: ShownTranslation | null,
+): Promise<void> {
+  await recordConsent(userId, ip, userAgent, {
+    scope: CONSENT_SCOPE, version: CONSENT_VERSION, text: GENERAL_KVKK_TEXT[lang],
+    shownLang: shown?.lang ?? null, shownTextHash: shown?.aydinlatmaHash ?? null,
+  });
+  await recordConsent(userId, ip, userAgent, {
+    scope: AURA_TERMS_SCOPE, version: AURA_TERMS_VERSION, text: AURA_TERMS_TEXT[lang],
+    shownLang: shown?.lang ?? null, shownTextHash: shown?.kosullarHash ?? null,
+  });
 }
 
 /** Personel / Aşama 2 doktor kapısı: A09 rol kesiti (STAFF_KVKK v1) — hash rol × dil. */

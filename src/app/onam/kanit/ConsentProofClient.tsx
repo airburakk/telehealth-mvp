@@ -21,6 +21,7 @@ interface Proof {
   tsAuthority: string | null; tsTime: string | null; tsToken: string | null;
   verification: { hasProofLayer: boolean; entryHashValid: boolean | null; timestampValid: boolean | null; textHashMatches: boolean | null };
   revocable?: boolean; active?: boolean | null; revokedAt?: string | null; regrantedAt?: string | null;
+  shownLang?: string | null; shownTextHash?: string | null; // Paket 7: okunan bilgilendirme çevirisi
 }
 
 export function ConsentProofClient({ scopes }: { scopes: ProofScope[] }) {
@@ -106,6 +107,13 @@ export function ConsentProofClient({ scopes }: { scopes: ProofScope[] }) {
           <div><dt className="text-[11px] text-[var(--c-ink-3)]">Ne zaman</dt><dd className="text-[var(--c-ink)]">{fmt(proof.grantedAt)}</dd></div>
           <div><dt className="text-[11px] text-[var(--c-ink-3)]">Hangi sürüm</dt><dd className="text-[var(--c-ink)]">{versionText}</dd></div>
           <div><dt className="text-[11px] text-[var(--c-ink-3)]">Durum</dt><dd className={revoked ? "text-amber-300" : "text-emerald-300"}>{statusText}</dd></div>
+          {/* Paket 7: hasta çeviriyi okuduysa — dil + "bağlayıcı metin kanonik" notu; hash teknik kanıtta */}
+          {proof.shownLang && (
+            <div className="sm:col-span-2">
+              <dt className="text-[11px] text-[var(--c-ink-3)]">Okuduğunuz dil</dt>
+              <dd className="text-[var(--c-ink)]">{proof.shownLang} — bilgilendirme çevirisi; onayınız Türkçe/İngilizce kanonik metne bağlıdır, okuduğunuz çevirinin özeti (hash) kayda ek yazıldı.</dd>
+            </div>
+          )}
         </dl>
       </div>
 
@@ -149,6 +157,9 @@ export function ConsentProofClient({ scopes }: { scopes: ProofScope[] }) {
           <Row icon={<Link2 size={14} />} k="Kayıt mührü (entryHash)" v={proof.entryHash ?? "—"} mono />
           <Row icon={<Link2 size={14} />} k="Önceki mühür (zincir)" v={proof.prevHash ?? "—"} mono />
           <Row icon={<Fingerprint size={14} />} k="Zaman damgası token" v={proof.tsToken ?? "—"} mono />
+          {proof.shownLang && (
+            <Row icon={<Fingerprint size={14} />} k={`Okunan çeviri hash (SHA-256 · ${proof.shownLang})`} v={proof.shownTextHash ?? "—"} mono />
+          )}
           <Row icon={<FileText size={14} />} k="Kanal · Cihaz" v={`${proof.channel} · ${proof.userAgent ?? "—"}`} />
           <Row icon={<FileText size={14} />} k="IP" v={proof.ip ?? "—"} />
         </div>

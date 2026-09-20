@@ -2,16 +2,25 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { AURA_CANONICAL_URL } from "@/lib/brand";
-import { auraLegalDoc, auraLegalLang, type AuraLegalLang, type AuraLegalSlug } from "@/lib/aura-legal";
+import { auraLegalDoc, type AuraLegalLang, type AuraLegalSlug } from "@/lib/aura-legal";
+import { resolveLegalDisplay, LEGAL_CANONICAL_LINK_TR, LEGAL_DISPLAY_NOTE_TR, LEGAL_DISPLAY_PARTIAL_TR } from "@/lib/aura-legal/display";
+import { LEGAL_SHELL_UI_TR_VALUES } from "@/lib/aura-legal/shell-ui";
+import { translateLegalMarkdown } from "@/lib/legal-translate";
+import { getTranslations } from "@/lib/i18n";
+import { getCurrentUser } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { AuraLegalMarkdown } from "./AuraLegalMarkdown";
-import { AuraLegalShell } from "./AuraLegalShell";
+import { AuraLegalShell, type LegalShellDisplay } from "./AuraLegalShell";
 
 // AURA hukuki sayfa fabrikası (kod Paket A, v6.268 · 2026-09-13) — her `src/app/<slug>/page.tsx` üç satırdır (Doctorium
 // legal-page deseni). Metadata dile göre: `?lang=en` → EN başlık/açıklama, og:locale en_US; canonical DAİMA TR yolu
 // (auraglobalcare.com/<slug>), hreflang alternatifleri tr + en. Yayımsız belge (A03 yayın şartı) → 404 + noindex.
 //
-// Next 16: `searchParams` Promise'tir — hem generateMetadata hem sayfa await eder. Sayfa dinamik render olur (query okur);
-// hukuki metin sabit, maliyet önemsiz.
+// Paket 7 (v6.285, 👤 karar A): GÖSTERİM dili hastanın arayüz dilidir (`?lang=<kod|ad>`; yoksa oturumlu hastanın profil dili) —
+// TR/EN dışı dilde gövde TR kanonikten paragraf paragraf ÇEVRİLİR (lib/legal-translate, önbellekli), kabuk "bağlayıcı metin
+// Türkçe" notunu taşır ve kanonik metne bağlanır; çeviri sayfaları noindex (makine çevirisi dizine girmez). Motor yoksa EN kanonik.
+//
+// Next 16: `searchParams` Promise'tir — hem generateMetadata hem sayfa await eder. Sayfa dinamik render olur (query okur).
 
 export type LegalSearchParams = Promise<{ lang?: string | string[] }>;
 
@@ -19,7 +28,8 @@ export function auraLegalGenerateMetadata(slug: AuraLegalSlug) {
   return async function generateMetadata({ searchParams }: { searchParams: LegalSearchParams }): Promise<Metadata> {
     const doc = auraLegalDoc(slug);
     if (!doc) throw new Error(`Hukuki belge bulunamadı: ${slug}`);
-    const lang = auraLegalLang((await searchParams).lang);
+    const d = resolveLegalDisplay((await searchParams).lang);
+    const lang = d.canonical;
     const canonical = `${AURA_CANONICAL_URL}${doc.path}`;
     const url = lang === "en" ? `${canonical}?lang=en` : canonical;
     return {
@@ -35,7 +45,8 @@ export function auraLegalGenerateMetadata(slug: AuraLegalSlug) {
         locale: lang === "en" ? "en_US" : "tr_TR",
         alternateLocale: [lang === "en" ? "tr_TR" : "en_US"],
       },
-      robots: doc.published ? undefined : { index: false, follow: false },
+      // Yayımsız → tam noindex; çeviri görünümü → noindex (dizinde yalnız kanonik TR/EN).
+      robots: !doc.published ? { index: false, follow: false } : d.translated ? { index: false, follow: true } : undefined,
     };
   };
 }
@@ -47,16 +58,37 @@ export async function AuraLegalPage({
 }: {
   slug: AuraLegalSlug;
   searchParams: LegalSearchParams;
-  /** Gövde altına eklenecek düğüm (ör. /kvkk-basvuru formu) — belge diliyle çağrılır; sunucuda çözülür, kabuğa hazır düğüm gider. */
-  children?: (lang: AuraLegalLang) => ReactNode;
+  /** Gövde altına eklenecek düğüm (ör. /kvkk-basvuru formu) — kanonik belge dili + gösterim dili adıyla çağrılır; sunucuda çözülür. */
+  children?: (lang: AuraLegalLang, displayLang: string) => ReactNode;
 }) {
   const doc = auraLegalDoc(slug);
   if (!doc || !doc.published) notFound();
-  const lang = auraLegalLang((await searchParams).lang);
+  const sp = await searchParams;
+  // Gösterim dili: ?lang → yoksa oturumlu HASTANIN profil dili → yoksa TR. (Sayfa herkese açık; oturum okuması ucuz.)
+  let fallback: string | null = null;
+  if (!sp.lang) {
+    const user = await getCurrentUser();
+    if (user?.role === "PATIENT") {
+      fallback = (await db.user.findUnique({ where: { id: user.id }, select: { patientLanguage: true } }))?.patientLanguage ?? null;
+    }
+  }
+  const d = resolveLegalDisplay(sp.lang, fallback);
+
+  let markdown = doc.body[d.canonical];
+  let display: LegalShellDisplay | null = null;
+  if (d.translated) {
+    const tr = await translateLegalMarkdown(doc.body.tr, d.display);
+    if (tr) {
+      markdown = tr.markdown;
+      const ui = await getTranslations(d.display, [...LEGAL_SHELL_UI_TR_VALUES, LEGAL_DISPLAY_NOTE_TR, LEGAL_DISPLAY_PARTIAL_TR, LEGAL_CANONICAL_LINK_TR, doc.title.tr]);
+      display = { name: d.display, code: d.code, partial: !tr.complete, ui, title: ui[doc.title.tr] ?? doc.title.en };
+    }
+    // motor yoksa: EN kanonik gövde (d.canonical = en), kabuk EN — eski davranış
+  }
   return (
-    <AuraLegalShell slug={slug} lang={lang}>
-      <AuraLegalMarkdown markdown={doc.body[lang]} />
-      {children?.(lang)}
+    <AuraLegalShell slug={slug} lang={d.canonical} display={display}>
+      <AuraLegalMarkdown markdown={markdown} />
+      {children?.(d.canonical, d.display)}
     </AuraLegalShell>
   );
 }

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { AuraLegalLang } from "@/lib/aura-legal/routes";
+import { useT } from "@/components/useT";
 
 // AURA KVKK m.11 başvuru formu (kod Paket A, v6.268 · 2026-09-13; A07 madde A.2/A.3) — /kvkk-basvuru gövdesinin altına,
 // yalnız oturumlu üyeye render edilir (sayfa server-side kapısı: hasta VE personel rolleri — A07 A.2). Doctorium
 // KvkkApplicationForm'un AURA vitrin token'lı (.aura-light) ve iki dilli eşleniği; uç `/api/kvkk-basvuru` (aynı işleyici,
 // ortak kütük). Başarı sonrası router.refresh() YOK — kullanıcı kendi başvurusunu bu sayfada görmez (kütük admin görünümünde).
+// Paket 7 (v6.285): `uiLang` (gösterim dili adı) TR/EN dışıysa etiketler useT ile o dilde — TR sözlük kanonik.
 const REQUEST_TYPES: { value: string; label: Record<AuraLegalLang, string> }[] = [
   { value: "BILGI_ERISIM", label: { tr: "Bilgi / erişim talebi", en: "Information / access request" } },
   { value: "DUZELTME", label: { tr: "Düzeltme talebi", en: "Rectification request" } },
@@ -15,7 +17,8 @@ const REQUEST_TYPES: { value: string; label: Record<AuraLegalLang, string> }[] =
   { value: "DIGER", label: { tr: "Diğer", en: "Other" } },
 ];
 
-const UI: Record<AuraLegalLang, Record<"title" | "hint" | "type" | "message" | "placeholder" | "send" | "sending" | "fail" | "done", string>> = {
+type UiKey = "title" | "hint" | "type" | "message" | "placeholder" | "send" | "sending" | "fail" | "done";
+const UI: Record<AuraLegalLang, Record<UiKey, string>> = {
   tr: {
     title: "Platform içi başvuru formu",
     hint: "Kimliğiniz oturumunuzla doğrulanmıştır; ayrıca kimlik bilgisi girmenize gerek yoktur.",
@@ -39,12 +42,19 @@ const UI: Record<AuraLegalLang, Record<"title" | "hint" | "type" | "message" | "
     done: "Your request has been received. You will be informed at your registered e-mail address within 30 days at the latest.",
   },
 };
+const TR_TEXTS: readonly string[] = [...Object.values(UI.tr), ...REQUEST_TYPES.map((r) => r.label.tr)];
 
 const FIELD =
   "mt-1 w-full rounded-lg border border-[var(--aura-hairline)] bg-[var(--aura-bg)] px-3 py-2 text-sm text-[var(--aura-ink)] outline-none focus:border-[var(--aura-accent)]";
 
-export function AuraKvkkApplicationForm({ lang }: { lang: AuraLegalLang }) {
-  const ui = UI[lang];
+export function AuraKvkkApplicationForm({ lang, uiLang }: { lang: AuraLegalLang; uiLang?: string }) {
+  const courtesy = !!uiLang && uiLang !== "Türkçe" && uiLang !== "İngilizce";
+  const texts = useMemo(() => [...TR_TEXTS], []);
+  const { t } = useT(courtesy ? (uiLang as string) : "Türkçe", texts);
+  const ui: Record<UiKey, string> = courtesy
+    ? (Object.fromEntries((Object.keys(UI.tr) as UiKey[]).map((k) => [k, t(UI.tr[k])])) as Record<UiKey, string>)
+    : UI[lang];
+  const optionLabel = (r: (typeof REQUEST_TYPES)[number]) => (courtesy ? t(r.label.tr) : r.label[lang]);
   const [requestType, setRequestType] = useState(REQUEST_TYPES[0].value);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -89,9 +99,9 @@ export function AuraKvkkApplicationForm({ lang }: { lang: AuraLegalLang }) {
             {ui.type}
           </label>
           <select id="kvkk-request-type" value={requestType} onChange={(e) => setRequestType(e.target.value)} disabled={busy} className={FIELD}>
-            {REQUEST_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label[lang]}
+            {REQUEST_TYPES.map((r) => (
+              <option key={r.value} value={r.value}>
+                {optionLabel(r)}
               </option>
             ))}
           </select>

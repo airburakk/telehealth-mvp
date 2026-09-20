@@ -7,6 +7,23 @@
 // gösterilen kanonik metindir.
 export type ConsentLang = "tr" | "en";
 
+// ── Paket 7 (v6.285): hukuki metin TAM LOKALİZASYON — TR/EN dışı arayüz dilinde hasta BİLGİLENDİRME ÇEVİRİSİNİ okur ──
+// (lib/legal-translate); onam hash'i yine kanonik EN metne bağlanır, gösterilen çevirinin dili + hash'i kayda ek olarak
+// yazılır (ConsentRecord.shownLang/shownTextHash). Gövde `shown` bu şekilde doğrulanır; geçersiz → null (kayıt yine yazılır).
+export type ShownTranslationInput = { lang: string; aydinlatmaHash: string; kosullarHash: string };
+const HEX64 = /^[a-f0-9]{64}$/;
+const KNOWN_LANGS = ["Türkçe", "Rusça", "Azerice", "Arapça", "Farsça", "Fransızca", "İngilizce", "Almanca", "Kazakça", "Kırgızca", "Bulgarca"];
+export function parseShownTranslation(v: unknown): ShownTranslationInput | null {
+  if (!v || typeof v !== "object") return null;
+  const o = v as Record<string, unknown>;
+  const lang = typeof o.lang === "string" ? o.lang : "";
+  const a = typeof o.aydinlatmaHash === "string" ? o.aydinlatmaHash : "";
+  const k = typeof o.kosullarHash === "string" ? o.kosullarHash : "";
+  if (!KNOWN_LANGS.includes(lang) || lang === "Türkçe" || lang === "İngilizce") return null;
+  if (!HEX64.test(a) || !HEX64.test(k)) return null;
+  return { lang, aydinlatmaHash: a, kosullarHash: k };
+}
+
 /** Hasta dil ADI (air_lang / User.patientLanguage: "Türkçe", "Rusça", …) → onam metni dili. */
 export function consentLangFor(langName?: string | null): ConsentLang {
   return !langName || langName === "Türkçe" ? "tr" : "en";

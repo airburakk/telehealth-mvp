@@ -83,12 +83,16 @@ export async function recordConsent(
   userId: string,
   ip?: string | null,
   userAgent?: string | null,
-  opts?: { scope?: string; version?: number; text?: string },
+  // Paket 7 (v6.285): shownLang/shownTextHash = kapıda GÖSTERİLEN bilgilendirme çevirisinin dili + hash'i (ispat eki;
+  // mühür formülüne dahil DEĞİL — v2 imzası ve eski kayıtların doğrulaması değişmez; kanonik textHash bağlayıcı metindir).
+  opts?: { scope?: string; version?: number; text?: string; shownLang?: string | null; shownTextHash?: string | null },
 ): Promise<void> {
   const scope = opts?.scope ?? CONSENT_SCOPE;
   const version = opts?.version ?? CONSENT_VERSION;
   // v4 (v6.269): GENERAL varsayılanı A01 TR kanonik (ekran = hash); diğer kovalar metni açıkça geçer. CONSENT_TEXT yalnız v3 tarihî.
   const text = opts?.text ?? (scope === CONSENT_SCOPE ? GENERAL_KVKK_TEXT.tr : CONSENT_TEXT);
+  const shownLang = opts?.shownLang ?? null;
+  const shownTextHash = opts?.shownTextHash ?? null;
 
   const existing = await db.consentRecord.findUnique({
     where: { userId_scope_version: { userId, scope, version } },
@@ -115,6 +119,7 @@ export async function recordConsent(
           userId, scope, version, grantedAt, ip: ip ?? null,
           textHash, userAgent: userAgent ?? null, channel: "WEB",
           prevHash, entryHash, tsAuthority: ts.authority, tsTime: ts.time, tsToken: ts.token,
+          shownLang, shownTextHash,
         },
       });
     });
@@ -195,6 +200,9 @@ export interface ConsentProof {
   ip: string | null;
   userAgent: string | null;
   channel: string;
+  /** Paket 7: kapıda gösterilen bilgilendirme çevirisi (dil adı + o metnin SHA-256'sı); TR/EN okuyanda null. */
+  shownLang: string | null;
+  shownTextHash: string | null;
   textHash: string | null;
   canonicalTextHash: string; // mevcut sürüm metninin hash'i (eşleşme kontrolü)
   prevHash: string | null;
@@ -250,6 +258,7 @@ export async function getConsentProof(
     grantedAt: rec.grantedAt.toISOString(), ip: rec.ip, userAgent: rec.userAgent, channel: rec.channel,
     textHash: rec.textHash, canonicalTextHash, prevHash: rec.prevHash, entryHash: rec.entryHash,
     tsAuthority: rec.tsAuthority, tsTime: rec.tsTime?.toISOString() ?? null, tsToken: rec.tsToken,
+    shownLang: rec.shownLang ?? null, shownTextHash: rec.shownTextHash ?? null, // Paket 7
     verification: { hasProofLayer, entryHashValid, timestampValid, textHashMatches },
   };
 }

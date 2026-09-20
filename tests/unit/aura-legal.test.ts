@@ -97,7 +97,7 @@ describe("hukuki belge kaydı (lib/aura-legal)", () => {
     expect(auraLegalLang("en")).toBe("en");
     expect(auraLegalLang(["en"])).toBe("en");
     expect(auraLegalLang("tr")).toBe("tr");
-    expect(auraLegalLang("de")).toBe("tr");
+    expect(auraLegalLang("de")).toBe("en"); // Paket 7 (v6.285): TR/EN dışı tanınan dil → EN kanonik (çeviri ayrı)
     expect(auraLegalLang(undefined)).toBe("tr");
     expect(auraLegalHref("/cerez", "tr")).toBe("/cerez");
     expect(auraLegalHref("/cerez", "en")).toBe("/cerez?lang=en");

@@ -8,6 +8,7 @@ import { AuraLegalPage, auraLegalGenerateMetadata, type LegalSearchParams } from
 // Sürüm 1.0 NİHAİ — bölüm B iç işleyiş yayımlanmaz). Platform içi başvuru FORMU yalnız oturum açmış üyeye (hasta VE
 // personel rolleri — A07 madde A.2; kimlik doğrulaması = oturum); kütük `KvkkApplication` Doctorium ile ORTAK
 // (`POST /api/kvkk-basvuru` aynı işleyici). Oturum durumuna bakan server component → force-dynamic.
+// Paket 7 (v6.285): form etiketleri de gösterim dilinde (uiLang → useT); belge gövdesi legal-page'de çevrilir.
 export const dynamic = "force-dynamic";
 export const generateMetadata = auraLegalGenerateMetadata("kvkk-basvuru");
 
@@ -20,9 +21,9 @@ export default async function Page({ searchParams }: { searchParams: LegalSearch
   const user = await getCurrentUser();
   return (
     <AuraLegalPage slug="kvkk-basvuru" searchParams={searchParams}>
-      {(lang) =>
+      {(lang, displayLang) =>
         user ? (
-          <AuraKvkkApplicationForm lang={lang} />
+          <AuraKvkkApplicationForm lang={lang} uiLang={displayLang} />
         ) : (
           <section className="mt-10 border-t border-[var(--aura-hairline)] pt-8 text-sm text-[var(--aura-grey)]">
             {HINT[lang].before}

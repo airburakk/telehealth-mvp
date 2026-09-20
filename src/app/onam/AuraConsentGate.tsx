@@ -1,78 +1,64 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { leaveConsentGate } from "./leave-gate";
-import { ShieldCheck, Loader2, ArrowRight, FileText, ScrollText } from "lucide-react";
-import { AURA_LEGAL_DATE_LABEL, AURA_LEGAL_VERSION } from "@/lib/aura-legal/routes";
+import { ShieldCheck, Loader2, ArrowRight, FileText, ScrollText, ChevronDown, Languages } from "lucide-react";
 import { CONSENT_LANG_NOTE, type ConsentLang } from "@/lib/consent-lang";
+import { CONSENT_GATE_UI, type ConsentGateUi } from "@/lib/aura-consent-gate-ui";
+import { legalDir } from "@/lib/aura-legal/display";
 
 // AURA HASTA onam kapısı (kod Paket B, v6.269 · 2026-09-13) — /onam "general" ekranı (PATIENT).
 //
-// EKRAN = HASH (S10): gösterilen gövde, sunucunun ConsentRecord'a hash'lediği markdown'ın kendisidir — sayfa (server)
+// EKRAN = HASH (S10): gösterilen kanonik gövde, sunucunun ConsentRecord'a hash'lediği markdown'ın kendisidir — sayfa (server)
 // LegalMarkdown düğümlerini TR ve EN için prop olarak geçirir; burada yalnız seçili dil sarmalanır. İki kapsam tek
-// ekranda: A01 aydınlatma + madde 14 açık rıza beyanı (GENERAL_KVKK v4, "okudum + açık rızam vardır") ve A02 kullanım
-// koşulları (AURA_TERMS v1, "okudum ve kabul ediyorum"); ikisi de işaretlenmeden düğme açılmaz. Dil TR/EN (S4: hash dil
-// başına); Türkçe dışındaki arayüz dillerinde İngilizce kanonik açılır ve "çelişkide TR esastır" notu görünür.
-// Eski ConsentGate (özet maddeler + taslak) bu kapıyla SÜPERSEDE edildi: hasta yüzünde özet değil tam metin okunur.
-const UI: Record<ConsentLang, {
-  title: string; sub: string; intro: string; sec1: string; sec2: string; read: string; accept: string; button: string;
-  err: string; proofBefore: string; proofLink: string; proofAfter: string; open: string; tr: string; en: string;
-}> = {
-  tr: {
-    title: "Aydınlatma Metni ve Açık Rıza · Kullanım Koşulları",
-    sub: `Sürüm ${AURA_LEGAL_VERSION} · ${AURA_LEGAL_DATE_LABEL.tr} · bir kez onaylanır, her girişte yeniden sorulmaz`,
-    intro: "Hizmeti sunabilmemiz için kişisel verilerinizin nasıl işlendiğini anlatan aydınlatma metnini okumanız, sağlık verileriniz için açık rıza vermeniz ve kullanım koşullarını kabul etmeniz gerekir.",
-    sec1: "1 · Kişisel Verilerin İşlenmesine İlişkin Aydınlatma Metni ve Açık Rıza",
-    sec2: "2 · Kullanım Koşulları ve Hizmet Sözleşmesi",
-    read: "Aydınlatma metnini okudum; sağlık verilerim dâhil özel nitelikli kişisel verilerimin madde 14'teki beyan kapsamında işlenmesine ve aktarılmasına AÇIK RIZAM vardır.",
-    accept: "Kullanım Koşulları ve Hizmet Sözleşmesi'ni okudum ve kabul ediyorum.",
-    button: "Onaylıyorum ve devam et",
-    err: "Bir hata oluştu, lütfen tekrar deneyin.",
-    proofBefore: "Onayınız zaman damgalı kayıt zincirine, okuduğunuz metnin özeti (hash) ile birlikte yazılır; kanıtını her zaman",
-    proofLink: "Onay Kanıtı",
-    proofAfter: "sayfasından görebilirsiniz.",
-    open: "Ayrı sayfada aç",
-    tr: "Türkçe",
-    en: "English",
-  },
-  en: {
-    title: "Privacy Notice and Explicit Consent · Terms of Use",
-    sub: `Version ${AURA_LEGAL_VERSION} · ${AURA_LEGAL_DATE_LABEL.en} · given once, not asked again at every sign-in`,
-    intro: "To provide the service we need you to read the privacy notice describing how your personal data are processed, give explicit consent for your health data and accept the terms of use.",
-    sec1: "1 · Privacy Notice on the Processing of Personal Data and Explicit Consent",
-    sec2: "2 · Terms of Use and Service Agreement",
-    read: "I have read the privacy notice; I GIVE MY EXPLICIT CONSENT to the processing and transfer of my special-category personal data, including my health data, within the scope of the declaration in Section 14.",
-    accept: "I have read and accept the Terms of Use and Service Agreement.",
-    button: "I agree, continue",
-    err: "Something went wrong, please try again.",
-    proofBefore: "Your consent is written to a time-stamped record chain together with a hash of the text you read; you can always see the proof on the",
-    proofLink: "Consent Proof",
-    proofAfter: "page.",
-    open: "Open in a new page",
-    tr: "Türkçe",
-    en: "English",
-  },
+// ekranda: A01 aydınlatma + madde 14 açık rıza beyanı (GENERAL_KVKK v4) ve A02 kullanım koşulları (AURA_TERMS v1);
+// ikisi de işaretlenmeden düğme açılmaz.
+//
+// Paket 7 (v6.285, 👤 karar A — hukuki metin tam lokalizasyon): hastanın dili TR/EN dışıysa sayfa `courtesy` geçirir —
+// BİLGİLENDİRME ÇEVİRİSİ birincil okuma olur (gövde hastanın dilinde, arayüz dizeleri de), her bölümün altında kanonik EN
+// metin açılır; onay POST'u yine kanonik EN'i hash'ler (`lang: "en"`) ve gösterilen çevirinin dili + hash'lerini `shown`
+// olarak ekler (ConsentRecord.shownLang/shownTextHash — ispat: hasta hangi metni okudu). Çipler: Türkçe · English · <dil>.
+export type ConsentCourtesy = {
+  lang: string; // dil adı ("Rusça")
+  code: string; // ru
+  partial: boolean;
+  aydinlatma: ReactNode;
+  kosullar: ReactNode;
+  hashes: { aydinlatmaHash: string; kosullarHash: string };
+  ui: Record<string, string>; // CONSENT_GATE_UI.tr değerleri → gösterim dili
 };
 
+type View = ConsentLang | "courtesy";
+
+function courtesyUi(map: Record<string, string>): ConsentGateUi {
+  const tr = CONSENT_GATE_UI.tr;
+  return Object.fromEntries(Object.entries(tr).map(([k, v]) => [k, map[v] ?? v])) as ConsentGateUi;
+}
+
 export function AuraConsentGate({
-  dest, initialLang, aydinlatma, kosullar,
+  dest, initialLang, aydinlatma, kosullar, courtesy = null,
 }: {
   dest: string;
   initialLang: ConsentLang;
   aydinlatma: Record<ConsentLang, ReactNode>;
   kosullar: Record<ConsentLang, ReactNode>;
+  courtesy?: ConsentCourtesy | null;
 }) {
-  const [lang, setLang] = useState<ConsentLang>(initialLang);
+  const [view, setView] = useState<View>(courtesy ? "courtesy" : initialLang);
   const [readInfo, setReadInfo] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState("");
-  const ui = UI[lang];
+  const inCourtesy = view === "courtesy" && !!courtesy;
+  const lang: ConsentLang = view === "courtesy" ? "en" : view; // KANONİK (hash'lenen) dil — çeviri görünümünde EN
+  const ui = useMemo(() => (inCourtesy && courtesy ? courtesyUi(courtesy.ui) : CONSENT_GATE_UI[lang]), [inCourtesy, courtesy, lang]);
+  const htmlLang = inCourtesy && courtesy ? courtesy.code : lang;
+  const dir = inCourtesy && courtesy ? legalDir(courtesy.code) : "ltr";
 
-  function switchLang(l: ConsentLang) {
-    if (l === lang) return;
-    setLang(l);
+  function switchView(v: View) {
+    if (v === view) return;
+    setView(v);
     setReadInfo(false); // metin değişti → yeniden okunup işaretlenir (hash o dilin metnidir)
     setAcceptTerms(false);
   }
@@ -84,7 +70,11 @@ export function AuraConsentGate({
       const r = await fetch("/api/consent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "general", lang }),
+        body: JSON.stringify({
+          kind: "general",
+          lang,
+          ...(inCourtesy && courtesy ? { shown: { lang: courtesy.lang, ...courtesy.hashes } } : {}),
+        }),
       });
       if (!r.ok) throw new Error();
       leaveConsentGate(dest); // TAM SAYFA — router.push üretimde bayat ön-yükleme önbelleğiyle /onam'a geri dönüyordu (leave-gate.ts)
@@ -94,8 +84,12 @@ export function AuraConsentGate({
     }
   }
 
+  const docHref = (path: string) => (inCourtesy && courtesy ? `${path}?lang=${courtesy.code}` : lang === "en" ? `${path}?lang=en` : path);
+  const chip = (active: boolean) =>
+    `rounded-full px-3 py-1 text-[12px] font-medium transition-colors ${active ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"}`;
+
   return (
-    <div lang={lang} dir="ltr" className="mx-auto max-w-3xl px-5 py-10">
+    <div lang={htmlLang} dir={dir} className="mx-auto max-w-3xl px-5 py-10">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--c-accent)] text-[var(--c-bg)]"><ShieldCheck size={22} /></span>
@@ -104,29 +98,48 @@ export function AuraConsentGate({
             <p className="mt-0.5 text-[12px] text-[var(--c-ink-3)]">{ui.sub}</p>
           </div>
         </div>
-        <div role="group" aria-label="Türkçe / English" className="flex shrink-0 gap-1 rounded-full border border-[var(--c-hairline)] p-0.5">
+        <div role="group" aria-label="Türkçe / English" className="flex shrink-0 flex-wrap gap-1 rounded-full border border-[var(--c-hairline)] p-0.5">
+          {courtesy && (
+            <button type="button" onClick={() => switchView("courtesy")} aria-pressed={inCourtesy} className={chip(inCourtesy)}>
+              {courtesy.lang}
+            </button>
+          )}
           {(["tr", "en"] as const).map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => switchLang(l)}
-              aria-pressed={l === lang}
-              className={`rounded-full px-3 py-1 text-[12px] font-medium transition-colors ${l === lang ? "bg-[var(--c-accent)] text-[var(--c-bg)]" : "text-[var(--c-ink-2)] hover:text-[var(--c-ink)]"}`}
-            >
-              {ui[l]}
+            <button key={l} type="button" onClick={() => switchView(l)} aria-pressed={view === l} className={chip(view === l)}>
+              {CONSENT_GATE_UI.tr[l]}
             </button>
           ))}
         </div>
       </div>
 
       <p className="mt-5 text-sm leading-relaxed text-[var(--c-ink-2)]">{ui.intro}</p>
-      <p className="mt-2 text-[12px] leading-relaxed text-[var(--c-ink-3)]">{CONSENT_LANG_NOTE[lang]}</p>
+      {inCourtesy && courtesy ? (
+        <div className="mt-2 flex items-start gap-2 rounded-2xl border border-[var(--c-accent)]/40 bg-[var(--c-accent)]/[0.08] px-4 py-3 text-[12px] leading-relaxed text-[var(--c-ink)]">
+          <Languages size={15} className="mt-0.5 shrink-0 text-[var(--c-accent)]" />
+          <span>
+            {ui.courtesy}
+            {courtesy.partial && <> {ui.partial}</>}
+          </span>
+        </div>
+      ) : (
+        <p className="mt-2 text-[12px] leading-relaxed text-[var(--c-ink-3)]">{CONSENT_LANG_NOTE[lang]}</p>
+      )}
 
-      <Section icon={<FileText size={16} />} title={ui.sec1} href={lang === "en" ? "/aydinlatma?lang=en" : "/aydinlatma"} open={ui.open}>
-        {aydinlatma[lang]}
+      <Section icon={<FileText size={16} />} title={ui.sec1} href={docHref("/aydinlatma")} open={ui.open}>
+        {inCourtesy && courtesy ? (
+          <>
+            {courtesy.aydinlatma}
+            <Canonical label={ui.canonical}>{aydinlatma.en}</Canonical>
+          </>
+        ) : aydinlatma[lang]}
       </Section>
-      <Section icon={<ScrollText size={16} />} title={ui.sec2} href={lang === "en" ? "/kosullar?lang=en" : "/kosullar"} open={ui.open}>
-        {kosullar[lang]}
+      <Section icon={<ScrollText size={16} />} title={ui.sec2} href={docHref("/kosullar")} open={ui.open}>
+        {inCourtesy && courtesy ? (
+          <>
+            {courtesy.kosullar}
+            <Canonical label={ui.canonical}>{kosullar.en}</Canonical>
+          </>
+        ) : kosullar[lang]}
       </Section>
 
       <label className="mt-5 flex cursor-pointer items-start gap-2.5 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-4">
@@ -165,5 +178,18 @@ function Section({ icon, title, href, open, children }: { icon: ReactNode; title
       </div>
       <div className="max-h-80 overflow-y-auto px-4 py-3 text-[13px]">{children}</div>
     </section>
+  );
+}
+
+// Kanonik (hash'lenen) EN metin — çeviri görünümünde her bölümün altında açılır; yönü daima ltr/en.
+function Canonical({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <details className="group mt-4 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)]" lang="en" dir="ltr">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[12px] font-semibold text-[var(--c-ink-2)]">
+        <span>{label}</span>
+        <ChevronDown size={14} className="transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-[var(--c-hairline)] px-3 py-2">{children}</div>
+    </details>
   );
 }

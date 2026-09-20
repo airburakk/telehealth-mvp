@@ -10,6 +10,8 @@
 // eklenecektir" yer tutucusuyla yayımlanır; e-posta kanalı kutu açılana dek yayımlanmaz (S6) → platform içi form.
 //
 // ⚠️ Saf sabit modül: db/auth ağacına dokunmaz.
+import { resolveLegalDisplay } from "./display";
+
 export type AuraLegalSlug = "aydinlatma" | "kosullar" | "tele-saglik" | "cerez" | "kvkk-basvuru";
 export type AuraLegalLang = "tr" | "en";
 
@@ -110,10 +112,10 @@ export function auraLegalRoute(slug: string): AuraLegalRoute | null {
   return AURA_LEGAL_ROUTES.find((r) => r.slug === slug) ?? null;
 }
 
-/** `?lang=` değeri → belge dili (yalnız tr/en; her şey TR'ye düşer — kanonik). */
+/** `?lang=` değeri → KANONİK belge dili (yalnız tr/en). Paket 7 (v6.285): TR/EN dışı tanınan arayüz dilleri EN kanoniğe
+ *  düşer (gösterilen çeviri ayrıdır — lib/aura-legal/display); bilinmeyen değer TR. */
 export function auraLegalLang(value: string | string[] | undefined | null): AuraLegalLang {
-  const v = Array.isArray(value) ? value[0] : value;
-  return v === "en" ? "en" : "tr";
+  return resolveLegalDisplay(value).canonical;
 }
 
 /** Belge bağlantısı — TR kanonik yol, EN `?lang=en`. */

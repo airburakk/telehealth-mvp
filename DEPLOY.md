@@ -209,6 +209,24 @@ o koşuda atlanır). İlk fingerprint doldurması `npx tsx scripts/registry-fing
 (v5.4'te koşuldu; kaynağa istek atmaz, DB değerlerinden hesaplar). null-fingerprint satırlar
 karşılaştırılmaz — backfill koşulmadan alan-güncelleme fiilen kapalıdır.
 
+### Hukuki metin çevirisi — ön-ısıtma + migration (Paket 7, v6.285 · 2026-09-20)
+
+Hukuki belgeler (`/aydinlatma` · `/kosullar` · `/cerez` · `/kvkk-basvuru`), hasta onam kapısı ve KVKK formu hastanın seçtiği
+dilde gösterilir (TR kanonikten otomatik çeviri, `Translation` önbelleği — `lib/legal-translate`). İlk istek çeviriyi Claude ile
+üretir (belge başına ~30–60 sn) → **deploy sonrası önbelleği ısıt** ki ilk hasta beklemesin:
+
+```bash
+npx tsx scripts/translate-legal.ts                # tüm TR/EN dışı diller (9) — ~2 dk/dil
+npx tsx scripts/translate-legal.ts --lang=Rusça   # tek dil
+```
+
+> Betik `.env`'deki `DATABASE_URL`'i (= DEV dalı) ve `ANTHROPIC_API_KEY`'i kullanır. **Üretim önbelleği** için `DATABASE_URL`'i
+> `PROD_DATABASE_URL` değeriyle AÇIKÇA ver (Ortam ayrımı bölümü) — idempotent: önbellekte olan birim yeniden çevrilmez; belge sürümü
+> değişince birimler değişir, yeniden koşulur. Eksik kalan birim ("EKSİK" satırı) sonraki koşuda yeniden denenir; sayfada TR görünür.
+>
+> Migration `20260920150000_consent_shown_translation` (`ConsentRecord.shownLang` + `shownTextHash`, nullable) — yeni kolon =
+> **migration-önce**: koddan önce `migrate deploy` (Adım 2 runbook'u; push preflight'ı bekleyen migration varken push'u keser).
+
 ## Adım 3 — GitHub'a gönder
 
 ```bash

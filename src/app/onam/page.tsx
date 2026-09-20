@@ -13,7 +13,12 @@ import { AYDINLATMA_MD } from "@/lib/doctorium-legal/texts/aydinlatma";
 import { KOSULLAR_MD } from "@/lib/doctorium-legal/texts/kosullar";
 import { OGRENCI_EKI_MD } from "@/lib/doctorium-legal/texts/ogrenci-eki";
 import { LegalMarkdown } from "@/components/aura/doctorium-legal/LegalMarkdown";
-import { AuraConsentGate } from "./AuraConsentGate";
+import { isTranslatableLegalLang, translateLegalMarkdown } from "@/lib/legal-translate";
+import { getTranslations } from "@/lib/i18n";
+import { sha256 } from "@/lib/timestamp";
+import { langCodeFor } from "@/lib/constants";
+import { CONSENT_GATE_UI_TR_VALUES } from "@/lib/aura-consent-gate-ui";
+import { AuraConsentGate, type ConsentCourtesy } from "./AuraConsentGate";
 import { StaffConsentGate } from "./StaffConsentGate";
 import { DoctoriumConsentGate } from "./DoctoriumConsentGate";
 import { ConsentResign } from "./ConsentResign";
@@ -73,12 +78,32 @@ export default async function ConsentPage({ searchParams }: { searchParams: Prom
   if (screen === "general" && user.role === "PATIENT") {
     // Başlangıç dili: hastanın profil dili (air_lang ile aynı sözlük) → Türkçe ise TR, değilse EN kanonik (S4).
     const u = await db.user.findUnique({ where: { id: user.id }, select: { patientLanguage: true } });
+    const display = u?.patientLanguage ?? null;
+    // Paket 7 (v6.285, 👤 karar A): TR/EN dışı hasta dili → BİLGİLENDİRME ÇEVİRİSİ birincil okuma (lib/legal-translate, önbellekli);
+    // kanonik EN yine hash'lenir, gösterilen çevirinin dili + hash'i kayda ek yazılır. Motor yoksa eski davranış (EN kanonik).
+    let courtesy: ConsentCourtesy | null = null;
+    if (isTranslatableLegalLang(display)) {
+      const [ayd, kos] = await Promise.all([translateLegalMarkdown(GENERAL_KVKK_TEXT.tr, display), translateLegalMarkdown(AURA_TERMS_TEXT.tr, display)]);
+      if (ayd && kos) {
+        const ui = await getTranslations(display, [...CONSENT_GATE_UI_TR_VALUES]);
+        courtesy = {
+          lang: display,
+          code: langCodeFor(display) ?? "en",
+          partial: !ayd.complete || !kos.complete,
+          aydinlatma: <LegalMarkdown markdown={ayd.markdown} />,
+          kosullar: <LegalMarkdown markdown={kos.markdown} />,
+          hashes: { aydinlatmaHash: sha256(ayd.markdown), kosullarHash: sha256(kos.markdown) },
+          ui,
+        };
+      }
+    }
     return (
       <AuraConsentGate
         dest={dest}
-        initialLang={consentLangFor(u?.patientLanguage)}
+        initialLang={consentLangFor(display)}
         aydinlatma={{ tr: <LegalMarkdown markdown={GENERAL_KVKK_TEXT.tr} />, en: <LegalMarkdown markdown={GENERAL_KVKK_TEXT.en} /> }}
         kosullar={{ tr: <LegalMarkdown markdown={AURA_TERMS_TEXT.tr} />, en: <LegalMarkdown markdown={AURA_TERMS_TEXT.en} /> }}
+        courtesy={courtesy}
       />
     );
   }
