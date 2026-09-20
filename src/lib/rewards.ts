@@ -45,7 +45,7 @@ export const MAX_SURVEY_POINTS = 1000;
 export const REWARD_TERMS_ITEMS: readonly string[] = [
   "Puanların niteliği: Puanlar, Doctorium'a katılımınızı gösteren platform içi göstergelerdir; parasal değer taşımaz, nakde çevrilemez, devredilemez, mirasa ve hacze konu olmaz. Puan biriktirmek kazanılmış hak doğurmaz.",
   "Puan kazanma: Puan kazandıran işlemler ve puan değerleri Ödüller sayfasında ilan edilir; bu değerler ileriye etkili olarak değiştirilebilir ve daha önce kazanılmış puanları etkilemez.",
-  "Ödül talebi: Katalogdaki bir ödül için talepte bulunabilirsiniz; talep anındaki puan bedeli sabitlenir. Talepler otomatik karşılanmaz, her talep insan değerlendirmesine tabidir ve 10 iş günü içinde sonuçlandırılır.",
+  "Ödül talebi: Katalogdaki bir ödül için talepte bulunabilirsiniz; talep anındaki puan bedeli sabitlenir. Talepler otomatik karşılanmaz, her talep insan değerlendirmesine tabidir ve 15 gün içinde sonuçlandırılır.",
   "Reddedilebilecek hâller: Talebiniz; mevzuata aykırılık (kamu görevlisi statünüzden doğan kısıtlar dâhil), programın kötüye kullanımı veya ödülün temin edilememesi hâllerinde gerekçesi bildirilerek reddedilebilir. Reddedilen talepte puanlarınız iade edilir.",
   "Vergi: Ödül tesliminden doğabilecek vergisel yükümlülüklere ilişkin esaslar, ödül kataloğu açılmadan önce bu koşullara eklenir; katalog o güne kadar kapalıdır.",
   "Kamu görevlisi katılımcı: Kamu kurumunda görevliyseniz, ödül kabulünün tabi olduğunuz mevzuata uygunluğunu değerlendirmek sizin sorumluluğunuzdadır.",

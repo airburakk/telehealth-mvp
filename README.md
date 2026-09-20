@@ -508,6 +508,13 @@ zinciri KIRIK gösterirdi, bu desen onu önler. `lib/kvkk-applications.ts` + `/d
 Üçü de `purge-deleted` cron'una (06:30 TR) entegre. Migration `20260909120000_kvkk_paket2` (yalnız nullable
 kolon + yeni tablo) dev+prod'a uygulandı. 🚀 CANLI `46e4559`.
 
+**v6.282 (2026-09-20) — Doctorium hukuki belgeler revizyon turu 5 (Doctorium 1.5; 👤 R21/R9):** ortak iç belgeler 16–19'a AURA
+telesağlık ekleri işlendi (vault: tek ihlal prosedürü · envanter 2.15–2.27 + sağlayıcı 3.1 · veri işleyen A.3 kontrol listesi + B madde 13 ·
+taahhütname klinik roller + 9–13) + **R9 süre birimi takvim günü** — üç kod kesiti cerrahi yama: `icerik-politikasi.ts` bildir-kaldır
+5 iş günü → **7 gün** · `rewards.ts` ödül talebi 10 iş günü → **15 gün** (belge 10 program koşulları kesiti) · `anket-kosullari.ts` itiraz
+15 iş günü → **15 gün**; `DOCTORIUM_LEGAL_VERSION` "1.5" · 20 Eylül 2026. **`DOCTORIUM_CONSENT_VERSION` 4 SABİT** — 01/02 hash'i değişmedi, yeniden onam yok.
+Teslim hattı: PDF artık Chrome (`_pdf-uret.py`) + TAM ZIP betiği (`_zip-uret.py`).
+
 **v6.278 (2026-09-20) — K10: geri alınan açık rıza yeniden VERİLEBİLİR + H10 kapı sunucu okuması:** `ConsentRecord` (kullanıcı, kapsam,
 sürüm) tekil + `recordConsent` idempotent → geri alınan AI/beyan rızası aynı sürümde yeniden verilemiyordu (200, satır yok, kalıcı 403).
 Çözüm (👤 "REGRANT"): `recordRevocableConsent` (`lib/aura-consent`) — aktifse no-op · verme yoksa verme · verme var + geri alınmışsa

@@ -79,7 +79,7 @@ düşünüyorsanız aşağıdaki kanaldan başvurabilirsiniz:
 **Bildiriminizde bulunması gerekenler:** içeriğin platformdaki adresi · itiraz gerekçeniz ·
 hak sahibi iseniz hak sahipliğinizi gösteren bilgi · iletişim bilgileriniz.
 
-**Süreç:** Bildiriminiz **5 iş günü** içinde değerlendirilir. Değerlendirme sonuçlanıncaya
+**Süreç:** Bildiriminiz **7 gün** içinde değerlendirilir. Değerlendirme sonuçlanıncaya
 kadar, ihlal iddiası ilk bakışta haklı görünüyorsa içerik **geçici olarak erişime kapatılabilir.**
 Sonuç size bildirilir.
 

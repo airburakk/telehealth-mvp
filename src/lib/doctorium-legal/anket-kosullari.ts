@@ -15,5 +15,5 @@ export const SURVEY_TERMS_ITEMS: readonly string[] = [
   "Topluluk anketleri puan kazandırabilir. Katılım bedeli ödenen sponsorlu anketlerde ayrıca puan verilmez; aynı katılım için iki menfaat birden doğmaz.",
   "Kamu kurumunda görevliyseniz, katılım ve ödeme kabulünün tabi olduğunuz mevzuata uygunluğunu değerlendirmek sizin sorumluluğunuzdadır.",
   "Sponsorun ruhsat/başvuru sahibi olması hâlinde, sağlık meslek mensubuna yapılan ödemeler mevzuat gereği değer aktarımı olarak bildirilebilir; bu bildirime esas yazılı onayınız katılımdan önce ayrıca alınır.",
-  "Anket veya katılımınıza ilişkin itirazlarınızı bilgi@doctorium.tr adresine iletebilirsiniz; başvurunuz 15 iş günü içinde sonuçlandırılır.",
+  "Anket veya katılımınıza ilişkin itirazlarınızı bilgi@doctorium.tr adresine iletebilirsiniz; başvurunuz 15 gün içinde sonuçlandırılır.",
 ];
