@@ -5,6 +5,7 @@
 // Anahtar yoksa anlamlı hata fırlatır (bunlar yalnız-AI özellikleridir; kural tabanlı karşılığı yok).
 import Anthropic from "@anthropic-ai/sdk";
 import { minimizedName, reidentifyName } from "./ai-minimize";
+import { pickModel } from "./ai-model";
 
 const MODEL = "claude-sonnet-4-6"; // klinik dökümanlar (epikriz/SOAP/çeviri) — yüksek kalite akıl yürütme & dil; doktor başlatır, düşük hacim
 
@@ -660,6 +661,18 @@ export async function assessDocument(
 // Zorlanmış tool_use (submit_* araç deseni — assessPostopNote gibi): serbest metin JSON'undan daha güvenilir.
 // ⚠️ Çıktı KLİNİK KARAR ARACI DEĞİLDİR — arayüz bu uyarıyı göstermek zorundadır.
 // Girdi herkese açık literatür abstract'ıdır; PHI GİRMEZ (de-id/minimizasyon gerekmez).
+// Model (v6.293, 2026-09-21, 👤 "bunu da değiştirelim hemen" + "en ucuz"): Doctorium AI özetleri (akademik / ilaç /
+// sektörel / mevzuat) HER GECE tüm bekleyen kayıtlar için üretilir (cron generate-ai-summaries) — Console ölçümünde
+// günde 0,6–1,4 $ Sonnet 4.6 payı = v6.292 sonrası kalan en büyük kalem. Bu iki fonksiyon KLİNİK belge modelinden
+// (MODEL — SOAP/epikriz/belge analizi; doktor başlatır, düşük hacim) AYRILIR: NEWS_SUMMARY_MODEL ile seçilir, varsayılan
+// Haiku 4.5 (Sonnet 4.6'nın 3'te biri fiyat). Kalite için env'de claude-sonnet-4-6 / claude-sonnet-5 (deploy gerekmez).
+// Bu isteklerde efor parametresi yok → Haiku için ek ayar gerekmez; `strict: true` araç şeması her modelde zorlanır.
+// Tembel yol (doktor/doctorium/[id]) ve scripts/backfill-ai-summaries.ts aynı fonksiyonları kullanır.
+export const NEWS_SUMMARY_DEFAULT_MODEL = "claude-haiku-4-5";
+export function resolveNewsSummaryModel(env: Record<string, string | undefined> = process.env): string {
+  return pickModel(env, "NEWS_SUMMARY_MODEL", NEWS_SUMMARY_DEFAULT_MODEL);
+}
+
 const ARTICLE_SUMMARY_TOOL: Anthropic.Tool = {
   name: "submit_summary",
   description: "Yayının doktor için yapılandırılmış Türkçe klinik özeti.",
@@ -688,7 +701,7 @@ export async function summarizeArticleForClinician(
   abstract: string,
 ): Promise<{ takeaways: string[]; design: string; limits: string }> {
   const res = await client().messages.create({
-    model: MODEL,
+    model: resolveNewsSummaryModel(),
     max_tokens: 900,
     system:
       "Sen bir tıp editörüsün. Hakemli bir yayının abstract'ını MESLEKTEN DOKTOR için Türkçe olarak yapılandırırsın. " +
@@ -740,7 +753,7 @@ export async function summarizeRegulationForClinician(
   text: string,
 ): Promise<{ summary: string; actions: string[]; affected: string; effective: string }> {
   const res = await client().messages.create({
-    model: MODEL,
+    model: resolveNewsSummaryModel(),
     max_tokens: 900,
     system:
       "Sen sağlık mevzuatı editörüsün. Resmî Gazete/kurum duyurusu metnini DOKTOR için Türkçe özetlersin. " +

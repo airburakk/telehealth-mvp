@@ -292,6 +292,7 @@ dormant kalır / fallback'e düşer).
 | `DOCTORIUM_TRIAL_ENABLED` | ⛅ | Doctorium **deneme üyeliği** bayrağı (`"1"` = açık; `lib/doctorium-trial-flag`). 🔴 **İKİ Vercel projesine AYRI** girilir (`telehealth-mvp` + `doctorium` — 2026-09-05'ten beri ikisinde AÇIK; doctorium env'i için geçici dizinde `vercel link --project doctorium` + `--cwd`). Açıkken `/doctorium/kayit` parolasız deneme formu + `signup-trial`; RESEND şart (dormant → 503). Kapatılırsa yeni giriş kapanır, başlamış denemeler damga-güdümlü sürer (`trial-sweep`). ⚖️ Yalnız hukuki set ≥1.2 (02 madde 3.2 deneme erişimi) yayındayken açık olabilir |
 | `TRIAGE_MODEL` | ➖ | Opsiyonel — triyaj modeli (varsayılan `claude-sonnet-4-6`) |
 | `NEWS_TRANSLATE_MODEL` | ➖ | Opsiyonel — gece haber başlığı/özet girişi çeviri modeli (`lib/translate-news`; varsayılan `claude-haiku-4-5` (efor parametresi otomatik düşer), daha doğal Türkçe için `claude-sonnet-5`; v6.292'de Opus 5'ten indirildi: Eylül'de günde 0,5–1,2 $) |
+| `NEWS_SUMMARY_MODEL` | ➖ | Opsiyonel — Doctorium AI özet modeli (`lib/ai-clinical summarize*ForClinician`; cron `generate-ai-summaries` + makale sayfası tembel yolu; varsayılan `claude-haiku-4-5`, kalite için `claude-sonnet-4-6`; v6.293'te Sonnet 4.6'dan indirildi: Eylül'de günde 0,6–1,4 $; klinik belge modeli SOAP/epikriz etkilenmez) |
 
 > ✅ zorunlu · ⛅ özellik için gerekli (yoksa fallback) · ➖ opsiyonel.
 > **Yeni env eklenince Vercel'de redeploy gerekir** (boş commit ile tetiklenir). Vercel env'lerini

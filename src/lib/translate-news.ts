@@ -22,6 +22,7 @@
 // basmaktansa İngilizce kalması yeğdir (alignTranslations, birim testli).
 // İçerik PHI DEĞİLDİR (açık literatür/haber metni) — AI'a gitmesi serbest (asla-loglama gerekmez).
 import Anthropic from "@anthropic-ai/sdk";
+import { modelParams, pickModel } from "./ai-model";
 
 // Basit yüksek-hacim iş: düşük efor yeterli (çeviri başına ~2 sn, gece cron'unda koşar).
 //
@@ -31,15 +32,12 @@ import Anthropic from "@anthropic-ai/sdk";
 // Varsayılan Haiku 4.5 (👤 2026-09-21 "en ucuz": giriş/çıkış fiyatı Opus 5'in 5'te biri). Daha doğal Türkçe için
 // claude-sonnet-5 (2,5'te biri; duman testinde "nüks/dirençli" vs Haiku "relaps/refrakter"). 🪤 Haiku 4.5 `output_config.effort`'u KABUL ETMEZ (400) ve bu hat fail-open
 // olduğu için o 400 sessizce "hepsi İngilizce kaldı"ya dönüşürdü → efor alanı yalnız destekleyen modellere
-// eklenir (resolveNewsTranslateRequest, birim testli). Sampling parametresi (temperature) hiçbir modele gönderilmez.
+// eklenir (lib/ai-model TEK KAYNAK — v6.293'te AI özet hattıyla paylaşıldı; birim testli). Sampling parametresi yok.
 export const NEWS_TRANSLATE_DEFAULT_MODEL = "claude-haiku-4-5";
 
 /** İstek gövdesinin model kısmı: model + (destekleniyorsa) düşük efor. Saf; ortam parametreyle geçer (test). */
-export function resolveNewsTranslateRequest(
-  env: Record<string, string | undefined> = process.env,
-): { model: string; output_config?: { effort: "low" } } {
-  const model = env.NEWS_TRANSLATE_MODEL?.trim() || NEWS_TRANSLATE_DEFAULT_MODEL;
-  return /^claude-haiku/.test(model) ? { model } : { model, output_config: { effort: "low" } };
+export function resolveNewsTranslateRequest(env: Record<string, string | undefined> = process.env) {
+  return modelParams(pickModel(env, "NEWS_TRANSLATE_MODEL", NEWS_TRANSLATE_DEFAULT_MODEL), "low");
 }
 const TITLE_CHUNK = 20; // istek başına başlık — tek istekte tüm gece toplu, hiza riski küçük tutulur
 // Özet girişi başlığın ~5 katı (≤ ~800 kar.) → küçük parça: istek ~30 sn'de biter, hiza bozulursa düşen küme küçük.
