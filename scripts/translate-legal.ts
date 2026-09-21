@@ -37,8 +37,10 @@ async function main() {
       console.log(`[${lang}] ${d.slug}: ${r ? `${r.translated}/${r.units} birim${r.complete ? "" : " (EKSİK)"}` : "ÇEVRİLEMEDİ"}`);
     }
     const ui = await getTranslations(lang, uiTexts);
-    const missing = uiTexts.filter((s) => ui[s] === s).length;
-    console.log(`[${lang}] arayüz/rıza dizeleri: ${uiTexts.length - missing}/${uiTexts.length} · ${Math.round((Date.now() - t0) / 1000)} sn`);
+    // Özgünle aynı kalan dize = ya çevrilmedi ya da bilinçli özdeş ("Türkçe", "English", özel adlar) — arayüz hattı ikisini ayırt etmez;
+    // sayaç "eksik" DEĞİL "aynı kalan" der (v6.300; eskiden 36/41 gibi görünüp yanlış alarm veriyordu).
+    const same = uiTexts.filter((s) => ui[s] === s).length;
+    console.log(`[${lang}] arayüz/rıza dizeleri: ${uiTexts.length} dize · özgünle aynı kalan ${same} (dil adları/özel adlar dâhil) · ${Math.round((Date.now() - t0) / 1000)} sn`);
   }
 }
 

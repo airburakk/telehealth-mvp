@@ -243,7 +243,50 @@ const TRANSLATE_TOOL: Anthropic.Tool = {
 // anlam birebir, kısaltma/özet/yorum yok; markdown işaretleri (**kalın**, *italik*, `kod`, [bağlantı](url)) ve URL'ler,
 // madde/kanun numaraları (KVKK m.11, GDPR Art. 17), kurum/ürün adları, tarih ve sürüm ifadeleri AYNEN korunur.
 // Sonuç "bilgilendirme amaçlı çeviri"dir; bağlayıcı metin Türkçe kalır (lib/legal-translate).
+// Tek birim için SKALER araç şeması (7-C düzeltmesi, v6.300 · 2026-09-22): dizi şemasında model uzun paragrafı (koşullar 5.1 "→"
+// adımları + (a)/(b)/(c) sıralaması, 5.5, 6.1) cümle/adım parçalarına bölerek 2–3 öğe döndürüyor, sayı uyuşmayınca çeviri atılıyor,
+// birim-birim yedek de aynı nedenle KALICI başarısız oluyordu (PROD ısıtmada her koşuda aynı 4 birim eksik). Parçaları birleştirmek
+// lossy (bölünme noktasındaki tırnaklar düşüyor) → tek metin alanı: model bölemez, noktalama korunur. Çok öğeli çağrı dizi şemasında.
+const LEGAL_SINGLE_TOOL: Anthropic.Tool = {
+  name: "submit_translation",
+  description: "Verilen tek Türkçe paragrafın hedef dildeki çevirisini TEK metin olarak teslim eder.",
+  input_schema: {
+    type: "object",
+    properties: { translation: { type: "string", description: "Paragrafın tamamının çevirisi — bölmeden, tek metin" } },
+    required: ["translation"],
+    additionalProperties: false,
+  },
+};
+
+const LEGAL_SYSTEM = (target: string) =>
+  `Sen bir hukuki metin çevirmenisin (KVKK/GDPR aydınlatma metinleri, kullanım koşulları, çerez politikası, başvuru usulleri). ` +
+  `Verilen Türkçe metni ${target} diline çevir. Anlamı BİREBİR koru: özetleme, kısaltma, yorum ekleme, yumuşatma yok; ` +
+  "cümle sayısını ve yükümlülük/hak ifadelerinin kesinliğini koru. Markdown işaretlerini (**kalın**, *italik*, `kod`, [bağlantı](url)) " +
+  "ve URL'leri aynen bırak; madde/kanun numaralarını (KVKK m.11, GDPR Art. 17, madde 14), kurum/ürün/marka adlarını (AURA, Doctorium, " +
+  "Vercel, Neon, Anthropic), sürüm ve tarih ifadelerini değiştirme. Hedef dilin resmî/hukuki üslubunu kullan. ";
+
+async function translateLegalSingle(text: string, target: string): Promise<string> {
+  let lastErr = new Error("Çeviri biçimi geçersiz.");
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const res = await aiCreate("legal-i18n", {
+      model: MODEL,
+      max_tokens: 6000,
+      system: LEGAL_SYSTEM(target) + "Paragrafı BÖLME, tek parça hâlinde çevir. Yanıtı DAİMA submit_translation aracıyla, translation alanına tek metin olarak ver.",
+      tools: [LEGAL_SINGLE_TOOL],
+      tool_choice: { type: "tool", name: "submit_translation" },
+      messages: [{ role: "user", content: text }],
+    });
+    const block = res.content.find((b) => b.type === "tool_use");
+    if (!block || block.type !== "tool_use") throw new Error("Çeviri aracı yanıtı alınamadı.");
+    const out = (block.input as { translation?: unknown }).translation;
+    if (typeof out === "string" && out.trim()) return out;
+    lastErr = new Error("Çeviri biçimi geçersiz.");
+  }
+  throw lastErr;
+}
+
 export async function translateLegalBatch(texts: string[], target: string): Promise<string[]> {
+  if (texts.length === 1) return [await translateLegalSingle(texts[0], target)];
   let lastErr = new Error("Çeviri biçimi geçersiz.");
   for (let attempt = 0; attempt < 2; attempt++) {
     const res = await aiCreate("legal-i18n", {
