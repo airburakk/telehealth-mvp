@@ -1015,8 +1015,12 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   → `/kayit`, yeni sözlük anahtarı YOK); sentetik `cta: /kayit`. TR mikro metin: "ekle-only" → "yalnızca eklenen ve geriye dönük
   değiştirilemeyen" · "Yargınız sizde kalsın." → "Klinik karar sizde." · "FHIR konuşan" → "FHIR standardında yapılandırılmış"
   (diğer 8 dil "speaks FHIR" eğretilemesini korur; entegrasyon iması YOK — iddia disiplini). Toplu hekim→doktor ünlü uyumu kalıntıları
-  düzeltildi (doktorumuz/doktorlarımız, `t()` çiftleri birlikte) + bekçi testi `turkce-unlu-uyumu-bekcisi.test`. Kalan Paket 5:
-  V02 çapalar · V04 fiyat/demo · V01 🚪 hero.
+  düzeltildi (doktorumuz/doktorlarımız, `t()` çiftleri birlikte) + bekçi testi `turkce-unlu-uyumu-bekcisi.test`.
+  · **V04 (v6.294, 2026-09-21 — 👤 9 dil tablosu onaylı):** how-it-works rehberlerinde ücret/demo sınırları HİZMET BAZINDA — görüşme
+  `{consultFee}` USD şikâyet öncesi (simülasyon) · ikinci görüş `{soFee}` USD peşin tek ödeme, yazılı rapor + video (simülasyon) · turizm
+  ödemesiz, fiyat görüşmede kesinleşir · ücretsiz kulvar ücret yok. Sözlükte TUTAR YAZILMAZ: yer tutucular render'da `lib/aura-landing/fees.ts
+  fillFees` ile `lib/billing CONSULT_FEE_USD` / `lib/second-opinion SO_FEE_USD`'den dolar (tek kaynak; `aura-landing-copy.test` 9 dilde yer
+  tutucu ZORUNLU + literal "60/600 USD" YASAK; `aura-landing-fees.test`). Kalan Paket 5: V02 çapalar · V01 🚪 hero.
   · **`/doctorium` V3 (v6.166→168, 2026-08-26 — "Apple estetiği" modernizasyon turu; V2'yi süpersede):**
   bileşenler `components/aura/doctorium-v3/` — **zebra YOK**: hero + 12 bölüm (v6.262; 2026-08-26'da 14'tü) + header + footer tek açık
   zemin (`V3_LIGHT` #fbfbfa; manifesto açık-panel bandı; koyu kutular yalnız `ProductFrame` ürün

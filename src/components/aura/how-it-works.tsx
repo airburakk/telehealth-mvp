@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChapterCta, type ChapterData } from "./chapters";
 import { AuraClosing } from "./closing";
 import { AuraWordText } from "./aura-word";
+import { fillFees } from "@/lib/aura-landing/fees";
 import { AuraWordSvg } from "@/components/AuraLogo";
 import { AiVideoNotice } from "@/components/AiVideoNotice";
 import { V2Nav } from "./v2/nav";
@@ -177,7 +178,7 @@ function HiwGuide({
                     <AuraWordText text={s.t} />
                   </p>
                   <p className="mt-1 text-sm leading-relaxed text-[var(--aura-grey)]">
-                    <AuraWordText text={s.d} />
+                    <AuraWordText text={fillFees(s.d)} />
                   </p>
                 </div>
               </li>

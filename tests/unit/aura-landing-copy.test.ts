@@ -108,3 +108,25 @@ describe("V06 TR mikro metin (v6.291)", () => {
     expect(tr).toContain("Klinik karar sizde.");
   });
 });
+
+// V04 (v6.294): how-it-works rehberlerinde ücret/demo sınırları hizmet bazında — 9 dilde yer tutucu ZORUNLU, literal tutar YASAK
+// (tutar tek kaynaktan dolar: lib/aura-landing/fees.ts). Adım dizini: consult[1] ödeme · so[1] başvuru/paket · tourism[3] teklif · freecare[1] başvuru.
+describe("V04 rehber ücret yer tutucuları (v6.294)", () => {
+  type Guide = { key: string; steps: { t: string; d: string }[] };
+  const guidesOf = (code: string) => (COPY as unknown as Record<string, { hiw: { guides: Guide[] } }>)[code].hiw.guides;
+  const step = (code: string, key: string, i: number) => guidesOf(code).find((g) => g.key === key)!.steps[i].d;
+  it("her dilde consult[1] {consultFee}, so[1] {soFee} içerir; tourism[3] ve freecare[1] ödeme cümlesi taşır", () => {
+    for (const code of LANG_CODES) {
+      expect(step(code, "consult", 1), code).toContain("{consultFee}");
+      expect(step(code, "so", 1), code).toContain("{soFee}");
+      expect(step(code, "tourism", 3).length, code).toBeGreaterThan(60);
+      expect(step(code, "freecare", 1).length, code).toBeGreaterThan(30);
+    }
+  });
+  it("rehber metinlerinde literal tutar yok (60 USD / 600 USD) — tek kaynak fees.ts", () => {
+    for (const code of LANG_CODES) {
+      const j = JSON.stringify(guidesOf(code));
+      expect(j, code).not.toMatch(/\b(60|600) USD/);
+    }
+  });
+});
