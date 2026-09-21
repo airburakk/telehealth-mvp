@@ -202,13 +202,13 @@ function GuideVideo({ videoKey, flip }: { videoKey: string; flip: boolean }) {
   const { t, lang } = useLang();
   const ref = useRef<HTMLVideoElement>(null);
   const [active, setActive] = useState(false);
+  // Paket 6 (v6.299): oynatma başlayınca görünür Duraklat/Devam et; kullanıcı duraklattıysa IO kendiliğinden yeniden BAŞLATMAZ.
+  const [paused, setPaused] = useState(false);
+  const userPaused = useRef(false);
 
   useEffect(() => {
     const video = ref.current;
     if (!active || !video) return;
-  // Paket 6 (v6.299): oynatma başlayınca görünür Duraklat/Devam et; kullanıcı duraklattıysa IO kendiliğinden yeniden BAŞLATMAZ.
-  const [paused, setPaused] = useState(false);
-  const userPaused = useRef(false);
     void video.play().catch(() => {});
     const io = new IntersectionObserver(
       (entries) => {
@@ -236,11 +236,11 @@ function GuideVideo({ videoKey, flip }: { videoKey: string; flip: boolean }) {
         playsInline
         preload="none"
         poster={v.poster}
+        onPlay={() => setPaused(false)}
+        onPause={() => setPaused(true)}
         aria-hidden
         className="aspect-video h-auto w-full object-cover"
       >
-        onPlay={() => setPaused(false)}
-        onPause={() => setPaused(true)}
         <source src={v.src} type="video/mp4" />
       </video>
       {!active && (
@@ -255,9 +255,6 @@ function GuideVideo({ videoKey, flip }: { videoKey: string; flip: boolean }) {
           </span>
         </button>
       )}
-      {/* Şeffaflık beyanı (kullanıcı kararı 2026-08-18): anlatım videoları yapay zekâ ile
-          üretildi. Kart overflow-hidden olduğu için satır kartın İÇİNDE, videonun hemen
-          altında kalır — "gömülü videoda alt satır" kuralı. */}
       {active && (
         <button
           type="button"
@@ -278,6 +275,9 @@ function GuideVideo({ videoKey, flip }: { videoKey: string; flip: boolean }) {
           {paused ? t.hiw.resume : t.hiw.pause}
         </button>
       )}
+      {/* Şeffaflık beyanı (kullanıcı kararı 2026-08-18): anlatım videoları yapay zekâ ile
+          üretildi. Kart overflow-hidden olduğu için satır kartın İÇİNDE, videonun hemen
+          altında kalır — "gömülü videoda alt satır" kuralı. */}
       <AiVideoNotice lang={lang} tone="aura" className="mt-0 px-4 py-2" />
     </div>
   );
