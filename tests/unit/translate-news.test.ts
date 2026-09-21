@@ -4,7 +4,7 @@
 // sayıda çeviri döndürmezse batch'in tamamı düşer (kaymış hiza asla yayılmaz); tekil bozukluklar
 // (boş string, girişle aynı metin) yalnız o öğeyi düşürür.
 import { describe, it, expect } from "vitest";
-import { alignTranslations, alignById, summaryLead } from "@/lib/translate-news";
+import { alignTranslations, alignById, summaryLead, resolveNewsTranslateRequest, NEWS_TRANSLATE_DEFAULT_MODEL } from "@/lib/translate-news";
 
 const T = ["Alpha study", "Beta trial"];
 
@@ -86,5 +86,31 @@ describe("alignById: kimlikli hizalama", () => {
     expect(alignById(["Türkçe özet", "Beta trial"], [{ n: 1, tr: "Türkçe özet" }, { n: 2, tr: "2. Beta denemesi" }]))
       .toEqual([null, "Beta denemesi"]);
     expect(alignById(["X"], [{ n: 1, tr: "   " }])).toEqual([null]);
+  });
+});
+
+// 2026-09-21 — gece çeviri hattı Opus 5'ten indirildi (kullanıcı kararı; Console: Opus payı 0,5–1,2 $/gün).
+// Kilit: varsayılan model Haiku 4.5 (👤 "en ucuz") + Haiku'da efor alanının DÜŞMESİ (Haiku 4.5 effort'u 400'ler;
+// hat fail-open → sessiz "İngilizce kaldı" olurdu). Ortam parametreyle geçer, process.env'e dokunulmaz.
+describe("resolveNewsTranslateRequest — gece çeviri modeli (v6.292)", () => {
+  it("varsayılan: Haiku 4.5, efor alanı YOK; Opus 5 artık kullanılmaz", () => {
+    const r = resolveNewsTranslateRequest({});
+    expect(NEWS_TRANSLATE_DEFAULT_MODEL).toBe("claude-haiku-4-5");
+    expect(r).toEqual({ model: "claude-haiku-4-5" });
+    expect("output_config" in r).toBe(false);
+    expect(r.model).not.toMatch(/opus/);
+  });
+  it("NEWS_TRANSLATE_MODEL ortam değişkeni modeli değiştirir; efor destekleyen modelde düşük efor eklenir", () => {
+    expect(resolveNewsTranslateRequest({ NEWS_TRANSLATE_MODEL: "claude-sonnet-5" }))
+      .toEqual({ model: "claude-sonnet-5", output_config: { effort: "low" } });
+    expect(resolveNewsTranslateRequest({ NEWS_TRANSLATE_MODEL: "claude-sonnet-4-6" }))
+      .toEqual({ model: "claude-sonnet-4-6", output_config: { effort: "low" } });
+  });
+  it("Haiku açıkça seçilince de efor alanı GÖNDERİLMEZ", () => {
+    expect(resolveNewsTranslateRequest({ NEWS_TRANSLATE_MODEL: "claude-haiku-4-5" })).toEqual({ model: "claude-haiku-4-5" });
+  });
+  it("boş / yalnız boşluk değer varsayılana (Haiku) düşer", () => {
+    expect(resolveNewsTranslateRequest({ NEWS_TRANSLATE_MODEL: "" }).model).toBe("claude-haiku-4-5");
+    expect(resolveNewsTranslateRequest({ NEWS_TRANSLATE_MODEL: "   " }).model).toBe("claude-haiku-4-5");
   });
 });

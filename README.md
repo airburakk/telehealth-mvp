@@ -683,7 +683,8 @@ kaydında "Google ile devam et"; boşsa dormant) · `BLOB_READ_WRITE_TOKEN` (Ver
 boşsa belgeler şifreli base64 olarak DB'de — fallback) · **`EDEVLET_VERIFY_ENABLED`** (e-Devlet çevrimiçi
 belge teyidi — 2026-08-19'dan beri üretimde AÇIK; kapalıyken ağa dokunulmaz) · **`AURA_LAYER_GATE`** (Aşama 2
 katman kapısı: SMS OTP + kurum bağı şartı — DORMANT, açmadan önce kanallar aktive edilmeli) ·
-`SMS_API_KEY`/`SMS_SENDER_ID` (NetGSM; ⚠️ gönderici başlığı TESCİLLİ olmalı) · (opsiyonel) `TRIAGE_MODEL`.
+`SMS_API_KEY`/`SMS_SENDER_ID` (NetGSM; ⚠️ gönderici başlığı TESCİLLİ olmalı) · (opsiyonel) `TRIAGE_MODEL` · (opsiyonel) `NEWS_TRANSLATE_MODEL` (gece haber çeviri hattı modeli,
+varsayılan `claude-haiku-4-5`, daha doğal Türkçe için `claude-sonnet-5` — v6.292'de Opus 5'ten indirildi).
 
 ## Deploy
 

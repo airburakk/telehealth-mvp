@@ -24,7 +24,23 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 // Basit yüksek-hacim iş: düşük efor yeterli (çeviri başına ~2 sn, gece cron'unda koşar).
-const MODEL = "claude-opus-5";
+//
+// Model seçimi (2026-09-21, kullanıcı kararı "Opus 5'ten Sonnet/Haiku'ya çekin, mutlaka"): Console ölçümü
+// Eylül'de bu hattın Opus 5 payını günde 0,5–1,2 $ gösterdi (aylık ≈ 60 $ koşu hızının yarısı). Model ortam
+// değişkeni NEWS_TRANSLATE_MODEL ile seçilir (Vercel'den kod değişikliği olmadan; TRIAGE_MODEL kalıbı).
+// Varsayılan Haiku 4.5 (👤 2026-09-21 "en ucuz": giriş/çıkış fiyatı Opus 5'in 5'te biri). Daha doğal Türkçe için
+// claude-sonnet-5 (2,5'te biri; duman testinde "nüks/dirençli" vs Haiku "relaps/refrakter"). 🪤 Haiku 4.5 `output_config.effort`'u KABUL ETMEZ (400) ve bu hat fail-open
+// olduğu için o 400 sessizce "hepsi İngilizce kaldı"ya dönüşürdü → efor alanı yalnız destekleyen modellere
+// eklenir (resolveNewsTranslateRequest, birim testli). Sampling parametresi (temperature) hiçbir modele gönderilmez.
+export const NEWS_TRANSLATE_DEFAULT_MODEL = "claude-haiku-4-5";
+
+/** İstek gövdesinin model kısmı: model + (destekleniyorsa) düşük efor. Saf; ortam parametreyle geçer (test). */
+export function resolveNewsTranslateRequest(
+  env: Record<string, string | undefined> = process.env,
+): { model: string; output_config?: { effort: "low" } } {
+  const model = env.NEWS_TRANSLATE_MODEL?.trim() || NEWS_TRANSLATE_DEFAULT_MODEL;
+  return /^claude-haiku/.test(model) ? { model } : { model, output_config: { effort: "low" } };
+}
 const TITLE_CHUNK = 20; // istek başına başlık — tek istekte tüm gece toplu, hiza riski küçük tutulur
 // Özet girişi başlığın ~5 katı (≤ ~800 kar.) → küçük parça: istek ~30 sn'de biter, hiza bozulursa düşen küme küçük.
 const SUMMARY_CHUNK = 8;
@@ -180,9 +196,8 @@ async function translateBatchTr(
     const grup = texts.slice(i, i + cfg.chunk);
     try {
       const res = await client.messages.create({
-        model: MODEL,
+        ...resolveNewsTranslateRequest(),
         max_tokens: cfg.maxTokens,
-        output_config: { effort: "low" },
         system: cfg.system,
         tools: [cfg.mode === "kimlik" ? TRANSLATE_BY_ID_TOOL : TRANSLATE_TOOL],
         tool_choice: { type: "tool", name: "submit_translations" },
