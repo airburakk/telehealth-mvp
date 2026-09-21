@@ -883,7 +883,7 @@ export const COPY = {
         { title: "İletimde ve sunucuda şifreli", desc: "Sağlık verileriniz iletim sırasında şifrelenir, saklanmadan önce yeniden şifrelenir." },
         { title: "Rol-bazlı erişim", desc: "Hasta, doktor, koordinatör ve iş ortakları yalnız rollerinin gerektirdiğini görür." },
         { title: "Doktor belge doğrulaması", desc: "Mesleki belgeler incelenip onaylanmadan doktor profili yayına çıkmaz." },
-        { title: "Değiştirilemez erişim kaydı", desc: "Klinik veriye her erişim, bağımsız doğrulanabilen ekle-only bir zincire işlenir." },
+        { title: "Değiştirilemez erişim kaydı", desc: "Klinik veriye her erişim, yalnızca eklenen ve geriye dönük değiştirilemeyen, bağımsız doğrulanabilir bir zincire işlenir." },
         { title: "Önce değerlendirme, sonra taahhüt", desc: "Fiyat ve seyahat düzenlemeleri klinik değerlendirmenin ardından gelir — öncesinde asla." },
       ],
     },
@@ -1127,7 +1127,7 @@ export const COPY = {
       },
       clinicians: {
         eyebrow: "Doktorlar için",
-        headline: "Sınır ötesinde çalışın. Yargınız sizde kalsın.",
+        headline: "Sınır ötesinde çalışın. Klinik karar sizde.",
         intro: "AURA size hazırlanmış vakalarla sınır ötesi hastalar getirir — klinik kararlarınızın dışında durur.",
         items: [
           {
@@ -1139,7 +1139,7 @@ export const COPY = {
           {
             key: "onboarding",
             n: "02",
-            title: "FHIR konuşan bir başlangıç",
+            title: "FHIR standardında yapılandırılmış başlangıç",
             body: "İşlemler, ücretler ve lisans bilgileri yapılandırılmış klinik veri olarak alınır — bir formda kaybolan serbest metin değil.",
           },
           {

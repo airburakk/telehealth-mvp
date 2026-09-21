@@ -99,3 +99,12 @@ describe("dil kodu ↔ dil adı köprüsü (air_lang birleştirmesi)", () => {
     expect(langCodeFor("")).toBeUndefined();
   });
 });
+
+// V06 (v6.291): TR vitrin mikro metin kilitleri — anglisizm/jargon geri gelmesin (👤 onaylı tablo 2026-09-21).
+describe("V06 TR mikro metin (v6.291)", () => {
+  it("TR sözlükte 'ekle-only', 'Yargınız sizde kalsın', 'FHIR konuşan' geçmez; 'Klinik karar sizde.' vardır", () => {
+    const tr = JSON.stringify(COPY.tr);
+    for (const yasak of ["ekle-only", "Yargınız sizde kalsın", "FHIR konuşan"]) expect(tr).not.toContain(yasak);
+    expect(tr).toContain("Klinik karar sizde.");
+  });
+});

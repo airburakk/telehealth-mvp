@@ -11,8 +11,12 @@ import { AuraFooter } from "@/components/aura/aura-footer";
 // AuraFooter aura-footer.tsx'e taşındı (2026-08-18): aynı footer artık giriş yapılmış
 // uygulama sayfalarında da (SiteFooter üzerinden) çiziliyor. AuraClosing = CTA + footer;
 // uygulama tarafı CTA'sız varyantı alır.
-export function AuraClosing() {
+//
+// `cta` prop'u (V05, v6.291): sayfa kapanış EYLEMİNİ geçersiz kılabilir — /for-clinicians doktor başvurusunu
+// (/kayit) verir; varsayılan hasta girişi (/giris). Başlık (t.closing.headline) nötr, her sayfada aynı.
+export function AuraClosing({ cta }: { cta?: { label: string; href: string } } = {}) {
   const { t } = useLang();
+  const action = cta ?? { label: t.closing.cta, href: "/giris" };
 
   return (
     <>
@@ -23,14 +27,14 @@ export function AuraClosing() {
           </h2>
           <div className="mt-10 flex justify-center">
             <Link
-              href="/giris"
+              href={action.href}
               className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-[var(--aura-accent)]/60 px-8 py-4 text-base font-semibold text-[var(--aura-ink)] transition-transform duration-200 hover:translate-x-1 active:scale-[0.98]"
             >
               <span
                 aria-hidden
                 className="absolute inset-y-0 left-0 w-1 bg-[var(--aura-accent)] transition-all duration-300 group-hover:w-full group-hover:opacity-15"
               />
-              <span className="relative">{t.closing.cta}</span>
+              <span className="relative">{action.label}</span>
               <svg
                 aria-hidden
                 viewBox="0 0 16 16"

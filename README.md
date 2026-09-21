@@ -1009,6 +1009,13 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   · **`/for-clinicians`:** how-it-works sözleşmesi (indekslenir, sitemap 0.7, kendi aura nav/footer —
   Header/SiteFooter gizleme listesinde). Sözlük `v2.clinicians` **iki yüzeyi** besler (bölüm + sayfa).
   Not kutusu: doğrulama = belge incelemesi, **akreditasyon DEĞİL** (v6.8).
+  · **V05 + V06 (v6.291, 2026-09-21 — kontrol raporu Paket 5 başlangıcı, 👤 tablo onayı):** `/for-clinicians` kapanışı doktor
+  başvurusuna gider (`AuraClosing` `cta?: {label, href}` prop'u — varsayılan hasta girişi `/giris`; sayfa `v2.clinicians.cta.signup`
+  → `/kayit`, yeni sözlük anahtarı YOK); sentetik `cta: /kayit`. TR mikro metin: "ekle-only" → "yalnızca eklenen ve geriye dönük
+  değiştirilemeyen" · "Yargınız sizde kalsın." → "Klinik karar sizde." · "FHIR konuşan" → "FHIR standardında yapılandırılmış"
+  (diğer 8 dil "speaks FHIR" eğretilemesini korur; entegrasyon iması YOK — iddia disiplini). Toplu hekim→doktor ünlü uyumu kalıntıları
+  düzeltildi (doktorumuz/doktorlarımız, `t()` çiftleri birlikte) + bekçi testi `turkce-unlu-uyumu-bekcisi.test`. Kalan Paket 5:
+  V02 çapalar · V04 fiyat/demo · V01 🚪 hero.
   · **`/doctorium` V3 (v6.166→168, 2026-08-26 — "Apple estetiği" modernizasyon turu; V2'yi süpersede):**
   bileşenler `components/aura/doctorium-v3/` — **zebra YOK**: hero + 12 bölüm (v6.262; 2026-08-26'da 14'tü) + header + footer tek açık
   zemin (`V3_LIGHT` #fbfbfa; manifesto açık-panel bandı; koyu kutular yalnız `ProductFrame` ürün

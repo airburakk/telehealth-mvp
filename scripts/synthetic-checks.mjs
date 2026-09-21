@@ -37,7 +37,8 @@ const AURA_ROUTES = [
   { path: "/ar",                title: "رعاية بلا حدود",              h1: "رعاية",                  cta: "/giris",                  noindex: true },
   { path: "/how-it-works",      title: "How it works",               h1: "works",                 cta: "/kayit/hasta",            noindex: false },
   { path: "/guven-ve-gizlilik", title: "Trust",                      h1: "Trust",                 cta: "/kayit/hasta",            noindex: false },
-  { path: "/for-clinicians",    title: "For clinicians",             h1: "Practice across borders", cta: "/kurumsal-giris",        noindex: false },
+  // /for-clinicians CTA (V05, v6.291): birincil eylem doktor başvurusu (/kayit); /kurumsal-giris yalnız footer'da.
+  { path: "/for-clinicians",    title: "For clinicians",             h1: "Practice across borders", cta: "/kayit",                 noindex: false },
   // AURA hukuki belgeleri (kod Paket A, v6.268 · 2026-09-13): vitrin kabuğu (V2Nav + AuraClosing); title = belge başlığı · AURA,
   // TR kanonik (?lang=en ikinci kanonik). CTA = kardeş belgeye giden gezinme çipi. /tele-saglik bayrak kapalı (404) → listede YOK.
   { path: "/aydinlatma",        title: "Aydınlatma Metni",   h1: "Aydınlatma Metni",   cta: "/kvkk-basvuru",           noindex: false },

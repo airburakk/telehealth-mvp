@@ -32,7 +32,7 @@ const COPY = {
     introA: "AURA Ücretsiz Sağlık Hizmeti programı, maddi imkânı kısıtlı hastalar için gönüllü uzmanlarla ",
     strong: "ücretsiz",
     introB:
-      " video konsültasyon sunar. Gönüllü doktorlarımiz her dönem belirli bir kontenjanı bu amaca ayırır.",
+      " video konsültasyon sunar. Gönüllü doktorlarımız her dönem belirli bir kontenjanı bu amaca ayırır.",
     apply: "Başvur",
     online: "Ücretsiz Sağlık Hizmeti çevrimiçi",
     onlineN: "gönüllü doktor şu an müsait",

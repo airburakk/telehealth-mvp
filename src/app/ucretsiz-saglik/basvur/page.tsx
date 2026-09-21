@@ -25,7 +25,7 @@ const STATIC_UI = [
   "Şikayetiniz / Semptomlar",
   "Örn. Çocuğumda iki haftadır geçmeyen öksürük ve ateş var; doktora erişimimiz yok.",
   "Şikayet süresi (opsiyonel)", "Örn. 2 hafta",
-  "Bu görüşme tamamen ücretsizdir. Gönüllü doktorlarımiz kontenjanları dolana kadar başvuruları sırayla karşılar.",
+  "Bu görüşme tamamen ücretsizdir. Gönüllü doktorlarımız kontenjanları dolana kadar başvuruları sırayla karşılar.",
   "Lütfen şikayetinizi biraz daha ayrıntılı yazın.",
   "Başvur ve eşleş", "Başvurunuz oluşturuluyor…",
   "Ücretsiz Sağlık Hizmeti çevrimiçi", "gönüllü doktor şu an müsait", "Şu an çevrimiçi gönüllü doktor yok",
@@ -202,7 +202,7 @@ function FreeCareApplyInner() {
         </Field>
 
         <div className="rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 px-4 py-3 text-[13px] leading-relaxed text-[var(--c-accent)]">
-          {t("Bu görüşme tamamen ücretsizdir. Gönüllü doktorlarımiz kontenjanları dolana kadar başvuruları sırayla karşılar.")}
+          {t("Bu görüşme tamamen ücretsizdir. Gönüllü doktorlarımız kontenjanları dolana kadar başvuruları sırayla karşılar.")}
         </div>
 
         {error && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300 ring-1 ring-red-400/25">{t(error)}</div>}

@@ -56,7 +56,7 @@ const STATIC_UI = [
   "Elinizde mevcut bir tanı veya rapor var ve bunun için uzman değerlendirmesi istiyorsanız, İkinci Görüş Yolculuğu bu ihtiyaca özel yolumuzdur.",
   "İkinci Görüş'e geç", "Buradan devam et",
   "Eksik belgeleriniz var",
-  "Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.",
+  "Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumuz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.",
   // DOCS_PENDING (2026-07-24, kullanıcı onaylı metinler): eksik zorunlu belgeyle oluşturulan
   // başvuru, belgeler yüklenene kadar doktora İLETİLMEZ (aciliyet 4-5 istisna — API karar verir).
   "Belgeleri şimdi yükleyip işaretleyebilirsiniz. Dilerseniz aşağıda onaylayarak başvurunuzu şimdi oluşturabilirsiniz; bu durumda başvurunuz, eksik belgeleriniz yüklenene kadar doktora iletilmez.",
@@ -465,7 +465,7 @@ function TriyajInner() {
                   <AlertTriangle size={16} className="shrink-0" /> {t("Eksik belgeleriniz var")}
                 </div>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-amber-200">
-                  {t("Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumiz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.")}
+                  {t("Değerli hastamız, branşınız için işaretlenmesi gereken bazı zorunlu belgeler (*) henüz tamamlanmadı. Bu belgeler olmadan görüşmeden beklenen verim alınamayabilir; doktorumuz değerlendirmesini sınırlı bilgiyle yapmak zorunda kalır.")}
                 </p>
                 <ul className="mt-2.5 list-disc space-y-0.5 ps-5 text-[12px] font-medium text-amber-200">
                   {missingRequired.map((d) => <li key={d.key}>{t(d.label)}</li>)}

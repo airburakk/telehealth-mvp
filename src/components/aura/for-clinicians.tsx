@@ -13,9 +13,10 @@ import { LangProvider, langDir, useLang } from "@/lib/aura-landing/i18n";
 // /for-clinicians (v6.17, Faz 2 kalanı) — doktor-yüzü vitrin sayfası.
 // Sözlük /v2'deki kompakt bölümle ORTAK (copy.ts v2.clinicians — kanıt haritası
 // orada): sayfa aynı dört maddeyi + "neyi iddia etmiyoruz" kutusunu gösterir,
-// üstüne iki eylem koyar: doktor başvurusu (/kayit) + personel girişi
-// (/kurumsal-giris). how-it-works sayfa sözleşmesiyle aynı: kök AuraNav +
-// AuraClosing; global Header/SiteFooter bu rotada gizli (Header.tsx listesi).
+// üstüne iki eylem koyar: doktor başvurusu (/kayit) + doktor girişi
+// (/doctorium/giris; personel girişi footer'daki "Kurumsal giriş"te). how-it-works
+// sayfa sözleşmesiyle aynı: kök AuraNav + AuraClosing (kapanış CTA'sı da doktor
+// başvurusu — V05, v6.291); global Header/SiteFooter bu rotada gizli (Header.tsx listesi).
 // dir/lang KÖKE değil konteynere ([[nextfont-fallback-unicode-trap]] — lang ŞART).
 export function ForClinicians() {
   return (
@@ -83,7 +84,8 @@ function Shell() {
           </div>
         </div>
       </main>
-      <AuraClosing />
+      {/* V05 (v6.291): kapanış eylemi doktor başvurusu — sayfa doktora konuşuyor; hasta girişi CTA'sı burada yersizdi. */}
+      <AuraClosing cta={{ label: c.cta.signup, href: "/kayit" }} />
     </div>
   );
 }
