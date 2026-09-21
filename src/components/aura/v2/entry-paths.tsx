@@ -216,21 +216,21 @@ function EntryCard({
 }) {
   const href = HREF[card.key] ?? "/giris";
 
+  // V02 (v6.297): kart kökü id="care-<key>" — footer "Keşfet" çapaları (/#care-consult · /#care-tourism) ve derin
+  // bağlantılar buraya iner; landing-anchors.test href ↔ id eşliğini kilitler (kart id'leri COPY kart anahtarlarından).
   return (
     <article
       ref={cardRef}
+      id={`care-${card.key}`}
       onMouseEnter={onActivate}
       onFocus={onActivate}
       // Kart zemini kontrastı TAŞIYAN katman (perde açıldı, v6.14.1) →
       // backdrop-blur + yüksek opaklık: video ne kadar parlak olursa olsun
       // kart metni okunur kalır. Aktif kart daha opak + turkuaz kenar.
       className={`group flex flex-col rounded-[18px] border p-6 backdrop-blur-md transition-all duration-300 ${
-  // V02 (v6.297): kart kökü id="care-<key>" — footer "Keşfet" çapaları (/#care-consult · /#care-tourism) ve derin
-  // bağlantılar buraya iner; landing-anchors.test href ↔ id eşliğini kilitler (kart id'leri COPY kart anahtarlarından).
         active
           ? "border-[var(--aura-accent)]/60 bg-[var(--aura-panel)]/90"
           : "border-[var(--aura-hairline)] bg-[var(--aura-panel)]/75"
-      id={`care-${card.key}`}
       }`}
     >
       <p className="aura-mono text-[12px]">
