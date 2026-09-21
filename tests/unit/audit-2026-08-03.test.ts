@@ -69,10 +69,12 @@ describe("soCaseListScope — koleksiyon ucu yetkilendirmesi (P0-A)", () => {
     expect(await soCaseListScope(user("PATIENT", "u9"))).toEqual({ patientId: "u9", deletionLockedAt: null });
   });
 
-  it("koordinatör/etik/admin geniş görür AMA silme kilidi HER rolde uygulanır", async () => {
-    for (const role of ["COORDINATOR", "ETHICS", "ADMIN"]) {
+  // K06 1C-b (2026-09-21): koordinatör/yönetici LOJİSTİK liste (kilit her rolde); Etik Kurul SO listesini okumaz (A09 10.3) → null.
+  it("koordinatör/yönetici lojistik listeyi görür AMA silme kilidi HER rolde uygulanır; Etik Kurul → null", async () => {
+    for (const role of ["COORDINATOR", "ADMIN"]) {
       expect(await soCaseListScope(user(role))).toEqual({ deletionLockedAt: null });
     }
+    expect(await soCaseListScope(user("ETHICS"))).toBeNull();
   });
 });
 

@@ -9,7 +9,7 @@ import { decryptField } from "@/lib/crypto";
 // POST /api/ai/soap — doktorun görüşme notunu SOAP formatına çevirir (Claude)
 export async function POST(req: Request) {
   const user = await getCurrentUser();
-  if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) {
+  if (!user || user.role !== "DOCTOR") { // K06 1C-b: SOAP AI yalnız doktor (A09 madde 10.2/10.4); atama/aktivasyon kapısı canCaseBeAccessedBy
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
   const rl = await rateLimit(`ai:${user.id}`, 20, 60_000); // AI maliyet/DoS freni: 20/dk/kullanıcı

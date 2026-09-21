@@ -96,11 +96,16 @@ describe("POST /consult — yetki (kim YAPAR)", () => {
     expect((await call()).status).toBe(403);
   });
 
-  it("koordinatör: atanmış doktor yoksa 409 (doktor seçmez); varsa açar", async () => {
-    asUser({ id: "u-coord", role: "COORDINATOR" }); setCase({ doctorId: null });
-    expect((await call()).status).toBe(409);
-    setCase({});
-    expect((await call()).status).toBe(201);
+  // K06 1C-b (2026-09-21): görüşme odası/transkript klinik içerik → koordinatör/yönetici görüşme AÇMAZ (A09 10.2/10.4). Eski D03 kuralı
+  // ("atanmış vakada açabilir") koordinatörün odaya girebildiği döneme aitti.
+  it("koordinatör / yönetici: atanmış doktor olsa da 403 — görüşme açmaz, işlem yok", async () => {
+    for (const role of ["COORDINATOR", "ADMIN"]) {
+      asUser({ id: `u-${role}`, role: role as SessionUser["role"] }); setCase({});
+      expect((await call()).status).toBe(403);
+      setCase({ doctorId: null });
+      expect((await call()).status).toBe(403);
+    }
+    expect(db.$transaction).not.toHaveBeenCalled();
   });
 
   it("silme-kilitli vaka → herkese 403", async () => {

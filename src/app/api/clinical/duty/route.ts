@@ -6,12 +6,12 @@ import { dutyFeed, setClinicalDuty, releaseClinicalDoctor, type DutyPatch } from
 
 export const dynamic = "force-dynamic";
 
-// Oturumdaki kullanıcının doktor profili (DOCTOR/ADMIN). SessionUser doctorId taşımaz → DB'den çöz.
+// Oturumdaki kullanıcının doktor profili (yalnız DOCTOR — K06 1C-b). SessionUser doctorId taşımaz → DB'den çöz.
 // v6.87 Aşama 2 kapısı: aktivasyonsuz DOCTOR nöbet API'sini hiç kullanamaz (toggle + feed; ADMIN
 // gözetimi muaf) — sayfa kapısı yetmez, route kendi auth'unu yapar (api-routes-need-self-auth).
 async function resolveDoctor() {
   const user = await getCurrentUser();
-  if (!user || !["DOCTOR", "ADMIN"].includes(user.role)) return { user, doctorId: null as string | null };
+  if (!user || user.role !== "DOCTOR") return { user, doctorId: null as string | null }; // K06 1C-b: nöbet = klinik; ADMIN çıkarıldı (A09 10.4)
   const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
   if (!me?.doctorId) return { user, doctorId: null as string | null };
   if (user.role === "DOCTOR") {

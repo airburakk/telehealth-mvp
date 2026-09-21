@@ -114,6 +114,15 @@ describe.skipIf(!TEST_DB)("entegrasyon: canCaseBeAccessedBy atama matrisi (gerç
     expect(await canCaseBeAccessedBy(u(f.unverUserId, "DOCTOR"), { userId: f.patientId, doctorId: f.unverDoctorId, branch: FIXTURE_BRANCH, deletionLockedAt: null })).toBe(false);
   });
 
+  it("K06 1C-b: koordinatör/yönetici klinik okumaz (false) + seviye logistics; Etik Kurul none — liste ucu yine 200 (lojistik)", async () => {
+    const c = { userId: f.patientId, doctorId: f.d1DoctorId, branch: FIXTURE_BRANCH, deletionLockedAt: null };
+    for (const role of ["COORDINATOR", "ADMIN"]) {
+      expect(await canCaseBeAccessedBy(u(`staff-${role}`, role), c)).toBe(false);
+      expect(await caseAccessLevel(u(`staff-${role}`, role), c)).toBe("logistics");
+    }
+    expect(await caseAccessLevel(u("staff-ETHICS", "ETHICS"), c)).toBe("none");
+  });
+
   it("partner → hiçbir vakaya erişemez", async () => {
     expect(await canCaseBeAccessedBy(u("partner-x", "PARTNER"), { userId: f.patientId, doctorId: null, branch: FIXTURE_BRANCH, deletionLockedAt: null })).toBe(false);
   });

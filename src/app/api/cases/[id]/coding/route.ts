@@ -12,7 +12,7 @@ const ID_TYPES = new Set(["TC", "PASSPORT", "OTHER"]);
 // Klinik personel (DOCTOR/COORDINATOR/ADMIN). FHIR Faz 0 alanlarını besler → Condition + Patient.identifier.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) {
+  if (!user || user.role !== "DOCTOR") { // K06 1C-b: klinik kodlama yalnız doktor (A09 madde 10.2/10.4); atama/aktivasyon kapısı canCaseBeAccessedBy
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
   const { id } = await params;

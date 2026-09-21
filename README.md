@@ -765,7 +765,7 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   (Header'daki "Tüm cihazlardan çıkış") sürümü artırır, dolaşımdaki tüm token'lar düşer;
   `getCurrentUser` her istekte DB karşılaştırması yapar (istek-içi `cache()`'li). Eski (sv'siz)
   token'lar 0 kabul edilir. Proxy bilinçli DB'siz (yaptırım veri katmanında).
-- **Kontrol raporu Paket 1A/1B/1C-a/2/3/4 (v6.276 / v6.277 / v6.287 / v6.280 / v6.281 / v6.283–284, 2026-09-19/20) — erişim ve AI kapıları TEK KAYNAK, iddialar kod kanıtlı, sayaç/hakediş/liste sözlükleri açık, hasta/doktor yüzeyleri dürüst:**
+- **Kontrol raporu Paket 1A/1B/1C-a/1C-b/2/3/4 (v6.276 / v6.277 / v6.287 / v6.289 / v6.280 / v6.281 / v6.283–284, 2026-09-19/21) — erişim ve AI kapıları TEK KAYNAK, iddialar kod kanıtlı, sayaç/hakediş/liste sözlükleri açık, hasta/doktor yüzeyleri dürüst:**
   · **Vaka LİSTE kapsamı** `lib/case-access.ts` (`doctorQueueScope` / `staffQueueScope` / `scopedWhere` / `CASE_LIST_SELECT`) — doktor ana
     sayfası ve `GET /api/cases` aynı üretici (atanan + KENDİ branşı atanmamış NEW/IN_REVIEW; `deletionLockedAt:null`; doğrulanmamış/
     aktivasyonsuz/branşsız → boş küme). Yeni liste/sayım sorgusu elle `where` KURMAZ. API DTO `hasFiles`/`lane` (ham `attachments` dönmez).
@@ -786,6 +786,20 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
     atama → tam erişim; audit `CASE_ACCEPT`. Görüşmeyi doğrudan başlatmak da havuzu atar (personel metni A09 madde 10.1 "kabul ettiğiniz").
     Önizleme de `CASE_VIEW` yazar (detail "kimliksiz havuz önizlemesi"). Koordinatör/yönetici/Etik Kurul klinik içerik kapısı = **1C-b**
     (ayrı paket; kapsam envanteri 👤 onayına).
+  · **Personel klinik içerik kapısı (K06 1C-b, v6.289 — 👤 karar A ikinci yarı, kapsam envanteri onaylı 2026-09-21):** `caseAccessLevel`
+    → `none | preview | logistics | full`: COORDINATOR/ADMIN → **logistics** (A09 10.2/10.4), ETHICS → **none** (10.3 — yalnız anonim panel);
+    `canCaseBeAccessedBy` yine yalnız `full` → belge/DICOM/lab/kodlama/AI/FHIR/görüşme/işlem uçları PERSONELE de fail-closed. Lojistik
+    görünüm `lib/case-logistics caseLogisticsDto` (kimlik + iletişim + ülke/dil + branş/aciliyet + durum + kulvar + atanan doktor + ödeme +
+    turizm planı/rezervasyon + bekleyen belge ETİKETLERİ + dosya SAYISI; şikâyet/triyaj yanıtı/AI gerekçesi/belge/lab/epikriz/sağlık beyanı/
+    görüşme notu YOK — tip sınırı + test kilidi): `doktor/vaka/[id]` koordinatör görünümü (`CaseLogisticsView`; belge üstverisi sorgulanmaz)
+    + `GET api/cases/[id]` lojistik DTO (audit "lojistik görünüm"). Klinik uç allowlist'leri yalnız DOCTOR (documents/DICOM · analyze-docs ·
+    coding · labs · recommendations · ai/soap · ai/discharge · ai/suggest-procedures; appointment teklifi / tourism-outreach / clinical/duty
+    ADMIN'siz). `canStartConsultation` koordinatör/yönetici 403; `/gorusme/[id]` + WebRTC sinyal kapısı personele kapalı; `/takip` ve
+    `/vaka/[caseId]` personel dalı notFound. **İkinci Görüş:** `SO_CLINICAL_STAFF` = DOCTOR (atama daraltmalı); koordinatör/yönetici
+    `soCaseListScope` LOJİSTİK liste (route `diagnosisSummary` null süzer), `/operasyon/ikinci-gorus` kuyruğu ve inceleme paneli tanı
+    özetsiz + belge İÇERİK bağlantısız (tür/etiket kalır — eksik belge talebi akışı sürer); Etik Kurul SO listesi 403. Güven sayfası
+    "koordinatör ve acente lojistik bilgi görür, klinik kayıt değil" (copy.ts trustPage) artık kod kanıtlı. Destek ihtiyacı için MASTER
+    bürünme (audit'li) ayrı. Kapsam envanteri: vault `output/1c-b-kapsam-envanteri-2026-09-21.md`.
   · **AI kapısı** `lib/ai-gate.requireAiTriage` — `triage/analyze` · `cases` POST · `free-care/apply` · `patient/tourism-request` önünde:
     403 `AI_ROLE_NOT_ALLOWED` (PATIENT|ADMIN dışı) · 429 (20/dk/kullanıcı ORTAK kova + 60/dk/IP) · 403 `AI_CONSENT_REQUIRED` (aktif
     `AI_TRIAGE` v2, geri-alma duyarlı) · 413 (şikayet >4000 · yanıtlar JSON >4000 · süre >500; kırpma yok). Kapı reddederse LLM çağrılmaz.

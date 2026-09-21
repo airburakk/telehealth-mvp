@@ -18,7 +18,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   // ── İcapçı doktor: zaman teklif et ──
   if (action === "offer") {
-    if (!["DOCTOR", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+    if (user.role !== "DOCTOR") /* K06 1C-b: randevu teklifi yalnız doktor — ADMIN klinik yazmaz (A09 10.4) */ return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
     const me = await db.user.findUnique({ where: { id: user.id }, select: { doctorId: true } });
     if (!me?.doctorId) return NextResponse.json({ error: "Doktor profili yok." }, { status: 403 });
 

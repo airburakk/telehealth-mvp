@@ -34,7 +34,10 @@ export async function GET() {
     },
   });
   // Klinik alanlar at-rest şifreli → yanıt için çöz (decryptSoCaseFields; düz-metin passthrough).
-  return NextResponse.json(cases.map((c) => decryptSoCaseFields(c)));
+  // K06 1C-b: personel (koordinatör/yönetici) LOJİSTİK liste — tanı özeti klinik içeriktir, DTO'dan düşer (A09 10.2/10.4);
+  // hasta (kendi vakaları) ve atanmış doktor (kapsam zaten daraltılmış) tam görür.
+  const logistics = user.role !== "PATIENT" && user.role !== "DOCTOR";
+  return NextResponse.json(cases.map((c) => { const d = decryptSoCaseFields(c); return logistics ? { ...d, diagnosisSummary: null } : d; }));
 }
 
 // POST /api/second-opinion/cases — yeni ikinci görüş vakası (DRAFT). KVKK açık rıza zorunlu (§8).

@@ -35,7 +35,7 @@ export default async function ConsultationPage({
   // E2EE Faz 2A — post-op takip tamamlandıysa klinik personel görüşme klinik ekranına giremez (hasta-only, §0.1·3).
   if ((await staffAccessClosed(consult.case.id, user)).closed) notFound();
   const sessionRole =
-    user && ["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role) ? "doctor" : "patient";
+    user && user.role === "DOCTOR" ? "doctor" : "patient"; // K06 1C-b: personel odaya giremez (canCaseBeAccessedBy yalnız full)
   const selfRole: "doctor" | "patient" =
     sp.role === "patient" ? "patient" : sp.role === "doctor" ? "doctor" : sessionRole;
 

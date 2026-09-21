@@ -8,7 +8,7 @@ import { recordAccess, reqMeta } from "@/lib/audit";
 // POST /api/cases/:id/labs — laboratuvar sonuçları (FHIR Observation kaynağı, LOINC kodlu). Klinik personel.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) {
+  if (!user || user.role !== "DOCTOR") { // K06 1C-b: lab yazımı yalnız doktor (A09 madde 10.2/10.4); atama/aktivasyon kapısı canCaseBeAccessedBy
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
   const { id } = await params;

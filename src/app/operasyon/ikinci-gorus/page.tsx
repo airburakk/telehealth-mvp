@@ -5,7 +5,6 @@ import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
 import { formatDateTime } from "@/lib/constants";
-import { decryptField } from "@/lib/crypto"; // tanı özeti at-rest şifreli (2026-08-03)
 import { Stethoscope, ArrowRight, Inbox, FileText, Bell, ArrowLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -83,7 +82,8 @@ export default async function SoQueuePage() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-1.5 line-clamp-2 text-sm text-[var(--c-ink-2)]">{decryptField(c.diagnosisSummary)}</p>
+                  {/* K06 1C-b: tanı özeti klinik içeriktir — koordinatör/yönetici görmez (A09 madde 10.2/10.4) */}
+                  <p className="mt-1.5 text-xs text-[var(--c-ink-3)]">Tanı özeti ve belge içeriği yalnız atanan doktora açıktır (personel metni madde 10.2).</p>
                   <div className="mt-1 flex items-center gap-2 text-xs text-[var(--c-ink-3)]">
                     <span className="inline-flex items-center gap-1"><FileText size={11} /> {c.documents.length} belge</span>
                     <span>· {formatDateTime(c.createdAt)}</span>

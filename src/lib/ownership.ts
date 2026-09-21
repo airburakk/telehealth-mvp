@@ -5,9 +5,11 @@
 //   PARTNER     → hasta DB erişimi YOK (her zaman reddedilir)
 //   HEALTH_PRO  → klinik yetki YOK (2026-08-12 kullanıcı kararı) → `default: false` dalına düşer;
 //                 ileride yetki tanımlanırsa BURADA açık dal yazılır (sessizce genişletme yok)
-//   COORDINATOR → operasyon (lojistik/rezervasyon) → geniş
-//   ETHICS      → şikayet incelemesi (anonimleştirilmiş panel) → geniş
-//   ADMIN       → yönetim → geniş
+//   COORDINATOR → operasyon (lojistik/rezervasyon) → yalnız LOJİSTİK seviye ("logistics": kimlik + iletişim + durum +
+//                 rezervasyon/turizm; klinik içerik YOK — A09 madde 10.2; K06 1C-b, 2026-09-21)
+//   ETHICS      → şikayet incelemesi kendi ANONİM panelinde; ham vaka okuması YOK ("none" — A09 madde 10.3)
+//   ADMIN       → yönetim → yalnız LOJİSTİK seviye (klinik kayıt içeriğine doğrudan erişim YOK — A09 madde 10.4;
+//                 destek ihtiyacı için MASTER bürünme ayrı ve audit'li)
 //   DOCTOR      → yalnız DOĞRULANMIŞ + klinik-aktive doktor. Vaka kendisine atanmış (c.doctorId === doctor.id) → TAM;
 //                 vaka atanmamış (c.doctorId === null) VE KENDİ BRANŞINDA → yalnız KİMLİKSİZ ÖNİZLEME ("preview";
 //                 K06 1C-a, 2026-09-20 — personel metni A09 madde 10.1: "atanmamış başvuruları yalnız kimliksiz
@@ -56,17 +58,17 @@ async function doctorContext(
   return { doctorId, verified: !!d?.verified, activated: !!d && hasClinicalAccess(d), branch: d?.branch ?? "" };
 }
 
-// ── ERİŞİM SEVİYESİ (K06 1C-a, 2026-09-20 — kontrol raporu: yayımlanan taahhüt ↔ fiilî politika) ─────────────────
-//   "full"    → klinik içerik (kimlik, telefon, belgeler, triyaj yanıtları, notlar, epikriz)
-//   "preview" → KİMLİKSİZ havuz önizlemesi (lib/case-preview casePreviewDto: branş/aciliyet/ülke/dil/tarih + adı maskeli
-//               şikâyet + dosya SAYISI; ad/kimlik/telefon/belge/triyaj yanıtı/AI gerekçesi YOK) — yalnız aynı branştaki
-//               ATANMAMIŞ vakada, yalnız DOCTOR
-//   "none"    → hiç
+// ── ERİŞİM SEVİYESİ (K06 1C-a 2026-09-20 + 1C-b 2026-09-21 — kontrol raporu: yayımlanan taahhüt ↔ fiilî politika) ───
+//   "full"      → klinik içerik (kimlik, telefon, belgeler, triyaj yanıtları, notlar, epikriz): hasta (kendi) + ATANMIŞ doktor
+//   "preview"   → KİMLİKSİZ havuz önizlemesi (lib/case-preview casePreviewDto) — yalnız aynı branştaki ATANMAMIŞ vakada, DOCTOR
+//   "logistics" → LOJİSTİK görünüm (lib/case-logistics caseLogisticsDto: kimlik + iletişim + ülke/dil + branş/aciliyet + durum +
+//                 kulvar + atanan doktor + ödeme + turizm planı/rezervasyon + bekleyen belge ETİKETLERİ + dosya SAYISI; şikâyet/
+//                 triyaj yanıtı/AI gerekçesi/belge/lab/epikriz/sağlık beyanı/görüşme notu YOK) — COORDINATOR + ADMIN (A09 10.2/10.4)
+//   "none"      → hiç (ETHICS dâhil — Etik Kurul yalnız kendi anonim panelinden çalışır, A09 10.3)
 // `canCaseBeAccessedBy` = yalnız "full": 38 çağrı noktası (belge/DICOM/lab/kodlama/AI/FHIR/görüşme/işlem uçları) havuz
-// vakasında otomatik fail-closed kalır; önizlemeyi yalnız İKİ yüzey çizer (doktor/vaka/[id] sayfası + GET api/cases/[id])
-// ve ikisi de bu fonksiyona bakar. Kabul (POST api/cases/[id]/accept) = atama → seviye "full".
-// 1C-b (koordinatör/yönetici/Etik Kurul klinik içerik) AYRI pakettir — burada geniş dal korunur.
-export type CaseAccessLevel = "none" | "preview" | "full";
+// vakasında VE personel için otomatik fail-closed; önizlemeyi/lojistiği yalnız İKİ yüzey çizer (doktor/vaka/[id] sayfası +
+// GET api/cases/[id]) ve ikisi de bu fonksiyona bakar. Kabul (POST api/cases/[id]/accept) = atama → seviye "full".
+export type CaseAccessLevel = "none" | "preview" | "logistics" | "full";
 
 export async function caseAccessLevel(user: SessionUser | null, c: CaseRef): Promise<CaseAccessLevel> {
   if (!user) return "none";
@@ -79,9 +81,10 @@ export async function caseAccessLevel(user: SessionUser | null, c: CaseRef): Pro
     case "PARTNER":
       return "none"; // hasta veritabanına erişemez
     case "COORDINATOR":
-    case "ETHICS":
     case "ADMIN":
-      return "full"; // operasyon/governance/yönetim → geniş erişim (1C-b bu dalı daraltacak)
+      return "logistics"; // operasyon/yönetim: kimlik+iletişim+durum+rezervasyon; klinik içerik YOK (A09 10.2/10.4 — K06 1C-b)
+    case "ETHICS":
+      return "none"; // Etik Kurul ham vakayı okumaz; incelemesi kendi anonim panelinde (A09 10.3 — K06 1C-b)
     case "DOCTOR": {
       const { doctorId, verified, activated, branch } = await doctorContext(user);
       if (!verified || !activated || !doctorId) return "none"; // doğrulanmamış VEYA aktivasyonsuz (Aşama 2'siz) doktor → erişim yok
@@ -140,11 +143,10 @@ export async function canStartConsultation(user: SessionUser | null, c: ConsultS
       return { ok: true, doctorId, assigned: "self" };
     }
     case "COORDINATOR":
-    case "ADMIN": {
-      // Operasyon/yönetim doktor SEÇMEZ: yalnız atanmış doktoru olan vakada görüşmeyi açabilir.
-      if (!c.doctorId) return { ok: false, status: 409, error: "Atanmış doktor yok — önce atama yapılmalı." };
-      return { ok: true, doctorId: c.doctorId, assigned: "existing" };
-    }
+    case "ADMIN":
+      // K06 1C-b (2026-09-21): operasyon/yönetim görüşme AÇMAZ — görüşme odası ve transkript klinik içeriktir (A09 10.2/10.4);
+      // eski D03 kuralı ("yalnız atanmış vakada açabilir") koordinatörün odaya girebildiği döneme aitti, odaya giriş de kapandı.
+      return { ok: false, status: 403, error: "Görüşmeyi yalnız atanan doktor (ya da hasta) başlatabilir." };
     default:
       return { ok: false, status: 403, error: NO_ACCESS }; // ETHICS/PARTNER/AGENCY/HEALTH_PRO → görüşme açamaz
   }
@@ -179,7 +181,10 @@ export async function isCurrentUserCasePatient(c: CaseRef): Promise<boolean> {
 // Fail-closed (2026-07-12): eski `else → true` PARTNER dışı HER rolü personel sayıyordu → AGENCY
 // (hasta DB erişimi YOK, klinik değil) + malformed/tanınmayan rol SO belgelerine/PHI'ye erişebiliyordu.
 // Artık açık allow-list; AGENCY/PARTNER/bilinmeyen → false. (getCurrentUser zaten malformed rolü eler.)
-const SO_CLINICAL_STAFF: readonly SessionUser["role"][] = ["DOCTOR", "COORDINATOR", "ETHICS", "ADMIN"];
+// K06 1C-b (2026-09-21): İkinci Görüş KLİNİK içeriğini (belgeler, tanı özeti, görüş, video odası) yalnız DOCTOR (atanmış — aşağıda
+// daraltılır) ve hasta okur; koordinatör/yönetici/Etik Kurul OKUMAZ (A09 10.2 "ikinci görüş" açıkça hariç · 10.3 · 10.4). Lojistik
+// işlemler (atama · eksik belge talebi · video tamamlandı · liste) rol kapılı kendi uçlarında/sayfalarında yaşar ve buna bağlı değildir.
+const SO_CLINICAL_STAFF: readonly SessionUser["role"][] = ["DOCTOR"];
 export function ownsSecondOpinionCase(user: SessionUser | null, c: { patientId: string }): boolean {
   if (!user) return false;
   if (user.role === "PATIENT") return c.patientId === user.id;
@@ -239,9 +244,10 @@ export async function soCaseListScope(user: SessionUser | null): Promise<SoListS
       return { assignedDoctorId: doctorId, deletionLockedAt: null }; // yalnız kendisine atanmışlar
     }
     case "COORDINATOR":
-    case "ETHICS":
     case "ADMIN":
-      return { deletionLockedAt: null }; // operasyon/governance/yönetim → geniş (kilitliler hariç)
+      return { deletionLockedAt: null }; // operasyon/yönetim → LOJİSTİK liste (kilitliler hariç); liste DTO'su tanı özeti TAŞIMAZ (route süzer — 1C-b)
+    case "ETHICS":
+      return null; // Etik Kurul SO listesini okumaz (anonim panel ayrı) — K06 1C-b
     default:
       return null; // PARTNER / AGENCY / tanınmayan → fail-closed
   }

@@ -12,7 +12,7 @@ import { detectDocumentKind, documentResponseHeaders } from "@/lib/document-mime
 // doktor yalnız kendisine atanmış/kuyruk vakasının belgesini açabilir). İçerik DB'de base64.
 export async function GET(req: Request, { params }: { params: Promise<{ id: string; docId: string }> }) {
   const user = await getCurrentUser();
-  if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) {
+  if (!user || user.role !== "DOCTOR") { // K06 1C-b: belge içeriği yalnız doktor (A09 madde 10.2/10.4); atama/aktivasyon kapısı canCaseBeAccessedBy
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
   const { id, docId } = await params;

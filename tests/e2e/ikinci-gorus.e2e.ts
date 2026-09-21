@@ -132,9 +132,10 @@ test("İkinci Görüş: başvuru + ödeme → hasta vakalarım → koordinatör 
       // Kuyruk başlığı server-component'te sabit (çeviri yok).
       await expect(coordPage.getByRole("heading", { name: "İkinci Görüş — Kuyruk" })).toBeVisible();
 
-      // Vaka kuyrukta marker ile görünür — diagnosisSummary burada da ÇEVRİLMEDEN render edilir
-      // (SoQueuePage: {c.diagnosisSummary}); notIn CLOSED/CANCELLED → PENDING_REVIEW/OFFERED listelenir.
-      await expect(coordPage.getByText(marker, { exact: false })).toBeVisible({ timeout: 15_000 });
+      // K06 1C-b (2026-09-21): tanı özeti koordinatöre GÖSTERİLMEZ (A09 madde 10.2) — kart hastanın adıyla görünür, marker (tanı
+      // metni) kuyrukta HİÇ yer almaz (mahremiyet kontrolü). notIn CLOSED/CANCELLED → PENDING_REVIEW/OFFERED listelenir.
+      await expect(coordPage.getByText("Demo Hasta", { exact: false }).first()).toBeVisible({ timeout: 15_000 });
+      await expect(coordPage.getByText(marker, { exact: false })).toHaveCount(0);
     } finally {
       await coordPage.context().close();
     }

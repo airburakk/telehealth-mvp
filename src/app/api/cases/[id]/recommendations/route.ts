@@ -5,7 +5,7 @@ import { canCaseBeAccessedBy } from "@/lib/ownership";
 import { isValidCode, floorPrice, ceilPrice, getByCodes } from "@/lib/procedures";
 import { notifyRoles } from "@/lib/notify";
 
-const STAFF = ["DOCTOR", "COORDINATOR", "ADMIN"];
+const STAFF = ["DOCTOR"]; // K06 1C-b: tedavi kararı = klinik yazma, yalnız doktor (A09 madde 10.2/10.4)
 
 // POST /api/cases/:id/recommendations — tedavi kararı kaydı (FAZ 2'de genişledi, 2026-07-10).
 // body: { treatments: [{code, priceTRY}], treatmentDaysMin?, treatmentDaysMax?,

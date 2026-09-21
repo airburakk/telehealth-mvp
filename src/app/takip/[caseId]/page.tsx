@@ -35,7 +35,7 @@ export default async function RecoveryPage({ params }: { params: Promise<{ caseI
 
   // FAZ 3 (2026-07-10): AI Epikriz görüşme ekranından buraya taşındı — personel üretir/görür,
   // hasta salt-okunur görür + "iste" düğmesiyle doktordan talep eder.
-  const isStaff = !!user && ["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role);
+  const isStaff = !!user && user.role === "DOCTOR"; // K06 1C-b: takip klinik içerik — personel canAccessCase'te zaten reddedilir
   let dischargeStructured: Structured | null = null;
   try { dischargeStructured = c.dischargeStructured ? (JSON.parse(decryptField(c.dischargeStructured) ?? "") as Structured) : null; } catch { dischargeStructured = null; }
 

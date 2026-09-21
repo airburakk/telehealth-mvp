@@ -41,7 +41,7 @@ describe("canCaseBeAccessedBy — hesap silme kilidi (v6.11)", () => {
 
   it("kilit YOKSA aynı vaka normal kurallarla açılır (kilit fazladan kısıtlamaz)", async () => {
     expect(await canCaseBeAccessedBy(user("PATIENT", "u1"), { ...LOCKED, deletionLockedAt: null })).toBe(true);
-    expect(await canCaseBeAccessedBy(user("ADMIN", "x"), { ...LOCKED, deletionLockedAt: null })).toBe(true);
+    expect(await caseAccessLevel(user("ADMIN", "x"), { ...LOCKED, deletionLockedAt: null })).toBe("logistics"); // 1C-b: yönetici lojistik seviye
   });
 
   it("İkinci Görüş vakası da aynı kilide tabi (hasta + personel)", async () => {
@@ -66,10 +66,15 @@ describe("canCaseBeAccessedBy — rol bazlı", () => {
     expect(await canCaseBeAccessedBy(user("PARTNER"), { userId: "u1", doctorId: null, branch: "Kardiyoloji", deletionLockedAt: null })).toBe(false);
   });
 
-  it("COORDINATOR/ETHICS/ADMIN geniş erişim (branş fark etmez)", async () => {
-    for (const role of ["COORDINATOR", "ETHICS", "ADMIN"]) {
-      expect(await canCaseBeAccessedBy(user(role), { userId: "x", doctorId: "y", branch: "Onkoloji", deletionLockedAt: null })).toBe(true);
+  // K06 1C-b (2026-09-21): eskiden bu test personele "geniş erişim" (true) bekliyordu — A09 madde 10.2/10.4/10.3 ile çelişiyordu.
+  it("K06 1C-b: COORDINATOR/ADMIN klinik içerik OKUMAZ (canCaseBeAccessedBy=false, seviye logistics); ETHICS none", async () => {
+    const c = { userId: "x", doctorId: "y", branch: "Onkoloji", deletionLockedAt: null };
+    for (const role of ["COORDINATOR", "ADMIN"]) {
+      expect(await canCaseBeAccessedBy(user(role), c)).toBe(false);
+      expect(await caseAccessLevel(user(role), c)).toBe("logistics");
     }
+    expect(await canCaseBeAccessedBy(user("ETHICS"), c)).toBe(false);
+    expect(await caseAccessLevel(user("ETHICS"), c)).toBe("none");
   });
 });
 
@@ -107,11 +112,12 @@ describe("canCaseBeAccessedBy — DOCTOR atama + doğrulama + branş-daraltması
     expect(await caseAccessLevel(user("DOCTOR"), { userId: "p", doctorId: null, branch: "Kardiyoloji", deletionLockedAt: new Date("2026-07-15") })).toBe("none");
   });
 
-  it("erişim seviyesi: hasta kendi vakası full / başkası none · personel full (1C-b'ye kadar) · PARTNER none · kimliksiz none", async () => {
+  it("erişim seviyesi: hasta kendi vakası full / başkası none · koordinatör/yönetici logistics · Etik Kurul none · PARTNER none · kimliksiz none", async () => {
     const c = { userId: "u1", doctorId: null, branch: "Kardiyoloji", deletionLockedAt: null };
     expect(await caseAccessLevel(user("PATIENT", "u1"), c)).toBe("full");
     expect(await caseAccessLevel(user("PATIENT", "u2"), c)).toBe("none");
-    for (const role of ["COORDINATOR", "ETHICS", "ADMIN"]) expect(await caseAccessLevel(user(role), c)).toBe("full");
+    for (const role of ["COORDINATOR", "ADMIN"]) expect(await caseAccessLevel(user(role), c)).toBe("logistics");
+    expect(await caseAccessLevel(user("ETHICS"), c)).toBe("none");
     expect(await caseAccessLevel(user("PARTNER"), c)).toBe("none");
     expect(await caseAccessLevel(null, c)).toBe("none");
   });
@@ -165,9 +171,10 @@ describe("ownsSecondOpinionCase — saf/sync (fail-closed allow-list)", () => {
     expect(ownsSecondOpinionCase(user("PATIENT", "u1"), { patientId: "u1" })).toBe(true);
     expect(ownsSecondOpinionCase(user("PATIENT", "u1"), { patientId: "u2" })).toBe(false);
   });
-  it("klinik personel (DOCTOR/COORDINATOR/ETHICS/ADMIN) erişir", () => {
-    for (const role of ["DOCTOR", "COORDINATOR", "ETHICS", "ADMIN"]) {
-      expect(ownsSecondOpinionCase(user(role), { patientId: "u1" })).toBe(true);
+  it("K06 1C-b: yalnız DOCTOR (atama daraltması canSoCaseBeAccessedBy'da); COORDINATOR/ETHICS/ADMIN SO klinik içeriğine erişmez (A09 10.2/10.3/10.4)", () => {
+    expect(ownsSecondOpinionCase(user("DOCTOR"), { patientId: "u1" })).toBe(true);
+    for (const role of ["COORDINATOR", "ETHICS", "ADMIN"]) {
+      expect(ownsSecondOpinionCase(user(role), { patientId: "u1" })).toBe(false);
     }
   });
   it("AGENCY erişemez (klinik personel DEĞİL — BOLA fail-open düzeltmesi 2026-07-12)", () => {

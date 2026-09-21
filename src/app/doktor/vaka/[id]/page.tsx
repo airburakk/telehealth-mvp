@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { clinicalDoctorFor } from "@/lib/doctor-activation";
 import { caseAccessLevel } from "@/lib/ownership";
 import { casePreviewDto, PREVIEW_ANON_LABEL, type CasePreviewDto } from "@/lib/case-preview";
+import { caseLogisticsDto, type CaseLogisticsDto } from "@/lib/case-logistics";
 import { AcceptCaseButton } from "@/components/AcceptCaseButton";
 import { staffAccessClosed } from "@/lib/postop-access";
 import { recordAccess } from "@/lib/audit";
@@ -21,7 +22,7 @@ import { LabResultsForm } from "@/components/LabResultsForm";
 import { caseDicomStudies } from "@/lib/case-dicom";
 import { PoolConsultPanel, CasePoolAnswers } from "@/components/PoolConsultPanel";
 import { poolRequestsForCase } from "@/lib/consultation-requests";
-import { ArrowLeft, ArrowRight, FileText, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks, EyeOff } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Stethoscope, Globe, Clock, Languages, Brain, Luggage, HeartPulse, ListChecks, EyeOff, Briefcase, Phone, CreditCard } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,26 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
       symptoms: decryptField(raw.symptoms), patientName: decryptField(raw.patientName),
     });
     return <CasePreview dto={dto} />;
+  }
+  if (level === "logistics") {
+    // K06 1C-b (2026-09-21): koordinatör/yönetici → LOJİSTİK görünüm (personel metni A09 madde 10.2/10.4): kimlik, iletişim, durum,
+    // atanan doktor, ödeme, turizm planı/rezervasyon, bekleyen belge etiketleri. Şikâyet, triyaj yanıtları, belgeler, lab, epikriz,
+    // görüşme YOK — belge üstverisi bile sorgulanmaz. Erişim yine kayda geçer (hasta /erisim-kaydi'nda görür).
+    await recordAccess({ actor: user, action: "CASE_VIEW", resourceType: "CASE", resourceId: raw.id, subjectUserId: raw.userId, detail: "lojistik görünüm (klinik içerik yok) — kokpit sayfası", ...(await headersMeta()) });
+    const booking = await db.booking.findFirst({
+      where: { caseId: id }, orderBy: { createdAt: "desc" },
+      select: { tier: true, nights: true, status: true, escrowStatus: true, total: true, currency: true, hotelStars: true, translator: true },
+    });
+    const dto = caseLogisticsDto({
+      id: raw.id, patientName: decryptField(raw.patientName), patientPhone: raw.patientPhone ? decryptField(raw.patientPhone) : null,
+      contactPreference: raw.contactPreference, country: raw.country, language: raw.language, branch: raw.branch, urgency: raw.urgency,
+      status: raw.status, createdAt: raw.createdAt, consultFee: raw.consultFee, payMethod: raw.payMethod, payStatus: raw.payStatus,
+      freeCare: raw.freeCare, freeCareStatus: raw.freeCareStatus, tourismPlan: raw.tourismPlan, hospitalName: raw.hospitalName,
+      treatmentDaysMin: raw.treatmentDaysMin, treatmentDaysMax: raw.treatmentDaysMax, agencySentAt: raw.agencySentAt,
+      pendingDocs: raw.pendingDocs, attachments: raw.attachments,
+      doctor: raw.doctor ? { id: raw.doctor.id, title: raw.doctor.title, name: raw.doctor.name, branch: raw.doctor.branch } : null,
+    });
+    return <CaseLogisticsView dto={dto} booking={booking} />;
   }
   // Erişim kaydı (kontrol raporu K05): sayfa yolu da JSON ucu (api/cases/[id]) gibi CASE_VIEW yazar — "her erişim
   // kayıt zincirine yazılır" taahhüdü doktorun normal bağlantıyla açtığı bu ekranı da kapsar. Decrypt ÖNCESİ.
@@ -312,6 +333,95 @@ function CasePreview({ dto }: { dto: CasePreviewDto }) {
             her erişim kayıt zincirine yazılır ve hastaya gösterilir.
           </p>
           <div className="mt-3"><AcceptCaseButton caseId={dto.id} /></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// K06 1C-b — koordinatör/yönetici LOJİSTİK görünümü (A09 madde 10.2/10.4). Yalnız DTO alanları çizilir; klinik bölümler bu
+// bileşene HİÇ GELMEZ (lib/case-logistics tip sınırı). Klinik iş atanan doktora aittir; operasyon yüzeyleri bağlantılıdır.
+type LogisticsBooking = { tier: string; nights: number; status: string; escrowStatus: string; total: number; currency: string; hotelStars: number; translator: boolean } | null;
+const LANE_LABEL: Record<CaseLogisticsDto["lane"], string> = { telehealth: "Uzaktan sağlık", tourism: "Sağlık turizmi", free: "Ücretsiz sağlık hizmeti" };
+function CaseLogisticsView({ dto, booking }: { dto: CaseLogisticsDto; booking: LogisticsBooking }) {
+  const u = urgencyStyle(dto.urgency);
+  const st = CASE_STATUS[dto.status] ?? CASE_STATUS.NEW;
+  type TourismPlan = { tier?: string; nights?: number; country?: string; branch?: string };
+  let plan: TourismPlan | null = null;
+  try { plan = dto.tourismPlan ? (JSON.parse(dto.tourismPlan) as TourismPlan) : null; } catch { plan = null; }
+  const row = (label: string, value: React.ReactNode) => (
+    <div className="text-sm"><dt className="text-xs text-[var(--c-ink-3)]">{label}</dt><dd className="font-medium text-[var(--c-ink)]">{value}</dd></div>
+  );
+  return (
+    <div className="mx-auto max-w-3xl px-5 py-8">
+      <Link href="/operasyon" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-accent-strong)]">
+        <ArrowLeft size={16} /> Operasyon paneli
+      </Link>
+      <div className="mt-4 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="aura-display text-2xl font-medium tracking-tight text-[var(--c-ink)]">{dto.patientName}</h1>
+              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--c-hairline)] px-2 py-0.5 text-[11px] font-medium text-[var(--c-ink-2)]">
+                <Briefcase size={12} /> lojistik görünüm
+              </span>
+              <span className="text-sm text-[var(--c-ink-3)]">{countryFlag(dto.country)} {countryName(dto.country)}</span>
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--c-ink-2)]">
+              <span className="inline-flex items-center gap-1"><Languages size={14} /> {dto.language}</span>
+              <span className="inline-flex items-center gap-1"><Clock size={14} /> {formatDateTime(dto.createdAt)}</span>
+              <span className="inline-flex items-center gap-1"><Stethoscope size={14} /> <span className="font-medium text-[var(--c-accent-strong)]">{dto.branch}</span></span>
+              <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
+            </div>
+          </div>
+          <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${u.badge}`}>
+            <span className={`h-2 w-2 rounded-full ${u.dot}`} /> {dto.urgency}/5 · {u.label}
+          </span>
+        </div>
+
+        <div className="mt-5 grid gap-5 sm:grid-cols-2">
+          <div>
+            <SectionTitle icon={<Phone size={15} />}>İletişim</SectionTitle>
+            <dl className="mt-2 space-y-2">
+              {row("Telefon", dto.patientPhone || "—")}
+              {row("İletişim tercihi", dto.contactPreference || "—")}
+            </dl>
+          </div>
+          <div>
+            <SectionTitle icon={<ListChecks size={15} />}>Süreç</SectionTitle>
+            <dl className="mt-2 space-y-2">
+              {row("Kulvar", LANE_LABEL[dto.lane])}
+              {row("Atanan doktor", dto.doctor ? `${dto.doctor.title} ${dto.doctor.name} · ${dto.doctor.branch}` : "Atanmadı")}
+              {row("Bekleyen belgeler", dto.pendingDocs.length ? dto.pendingDocs.join(", ") : "—")}
+              {row("Yüklenen dosya", dto.fileCount > 0 ? `${dto.fileCount} dosya (içerik atanan doktorda)` : "yok")}
+            </dl>
+          </div>
+          <div>
+            <SectionTitle icon={<CreditCard size={15} />}>Ödeme</SectionTitle>
+            <dl className="mt-2 space-y-2">
+              {row("Durum", dto.payStatus)}
+              {row("Ücret / yöntem", `${dto.consultFee ?? "—"}${dto.payMethod ? ` · ${dto.payMethod}` : ""}`)}
+              {dto.freeCare && row("Ücretsiz hizmet", dto.freeCareStatus ?? "—")}
+            </dl>
+          </div>
+          {(plan || booking || dto.hospitalName) && (
+            <div>
+              <SectionTitle icon={<Luggage size={15} />}>Sağlık turizmi / rezervasyon</SectionTitle>
+              <dl className="mt-2 space-y-2">
+                {plan && row("Tercihler", `${plan.tier ?? "—"} · ${plan.nights ?? "—"} gece · ${plan.country ?? "—"}`)}
+                {dto.hospitalName && row("Hastane", `${dto.hospitalName}${dto.treatmentDaysMin != null ? ` · ${dto.treatmentDaysMin}–${dto.treatmentDaysMax ?? dto.treatmentDaysMin} gün` : ""}`)}
+                {dto.agencySentAt && row("Acenteye gönderim", formatDateTime(dto.agencySentAt))}
+                {booking && row("Rezervasyon", `${booking.tier} · ${booking.nights} gece · ${booking.hotelStars}★${booking.translator ? " · tercüman" : ""} · ${booking.status} / escrow ${booking.escrowStatus} · ${booking.total} ${booking.currency}`)}
+              </dl>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] p-4 text-sm leading-relaxed text-[var(--c-ink-2)]">
+          Klinik içerik (şikâyet, ön değerlendirme yanıtları, belgeler, laboratuvar, epikriz, görüşme notları) personel metni
+          madde 10.2/10.4 gereği bu görünümde yer almaz; klinik işlemler <strong className="text-[var(--c-ink)]">atanan doktora</strong> aittir.
+          Lojistik işlemler için <Link href="/operasyon/lojistik" className="text-[var(--c-accent)] underline">Lojistik</Link> ve{" "}
+          <Link href="/operasyon" className="text-[var(--c-accent)] underline">Operasyon paneli</Link>.
         </div>
       </div>
     </div>

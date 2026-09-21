@@ -17,7 +17,7 @@ export const maxDuration = 60; // PDF/görüntü vision çağrıları + çoklu b
 // { redo: true } ile hepsi yeniden işlenir. Sonuç CaseDocument satırına kaydedilir (kokpit "Belge Analizi" kartı).
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) {
+  if (!user || user.role !== "DOCTOR") { // K06 1C-b: klinik AI yalnız doktor (A09 madde 10.2/10.4); atama/aktivasyon kapısı canCaseBeAccessedBy
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   }
   const rl = await rateLimit(`ai:${user.id}`, 20, 60_000); // AI maliyet/DoS freni: 20/dk/kullanıcı

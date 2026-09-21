@@ -7,7 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/db", () => ({
-  db: { case: { findUnique: vi.fn() }, caseDocument: { findMany: vi.fn(async () => []) } },
+  db: { case: { findUnique: vi.fn() }, caseDocument: { findMany: vi.fn(async () => []) }, booking: { findFirst: vi.fn(async () => null) } },
 }));
 vi.mock("@/lib/auth", () => ({ getCurrentUser: vi.fn() }));
 // K06 1C-a: kokpit sayfası erişim SEVİYESİNE bakar (none/preview/full); hasta vaka merkezi hâlâ canCaseBeAccessedBy.
@@ -115,6 +115,23 @@ describe("/doktor/vaka/[id] — kokpit (K05)", () => {
     expect(actions()).toEqual(["CASE_VIEW"]);
     expect(vi.mocked(recordAccess).mock.calls[0][0].detail).toContain("kimliksiz havuz önizlemesi");
     expect(db.caseDocument.findMany).not.toHaveBeenCalled();
+    expect(decryptCaseFields).not.toHaveBeenCalled();
+  });
+
+  // K06 1C-b: koordinatör/yönetici → LOJİSTİK görünüm (A09 10.2/10.4) — kimlik+iletişim+durum+rezervasyon; klinik bölüm ve belge sorgusu YOK.
+  it("koordinatör (logistics) → CaseLogisticsView; CASE_VIEW 'lojistik' detayıyla; belge sorgusu ve tam decrypt YOK; DTO'da şikâyet yok", async () => {
+    asUser({ id: "u-coord", role: "COORDINATOR" });
+    vi.mocked(caseAccessLevel).mockResolvedValue("logistics");
+    vi.mocked(db.case.findUnique).mockResolvedValue({ ...RAW, urgency: 3, country: "TR", language: "tr", createdAt: new Date(), patientName: "Ayşe Yılmaz", patientPhone: "+90 555", contactPreference: "phone", consultFee: 60, payMethod: null, payStatus: "PENDING", freeCare: false, freeCareStatus: null, tourismPlan: null, hospitalName: null, treatmentDaysMin: null, treatmentDaysMax: null, agencySentAt: null, pendingDocs: null, attachments: "a.pdf", symptoms: "GİZLİ şikâyet", doctor: { id: "doc-1", title: "Dr.", name: "X", branch: "Kardiyoloji" } } as never);
+    const el = (await CaseDetail({ params })) as { type: { name: string }; props: { dto: Record<string, unknown> } };
+    expect(el.type.name).toBe("CaseLogisticsView");
+    expect(el.props.dto.logistics).toBe(true);
+    expect(el.props.dto.patientName).toBe("Ayşe Yılmaz");
+    for (const k of ["symptoms", "reasoning", "extra", "documents", "attachments", "healthDeclaration"]) expect(k in el.props.dto, k).toBe(false);
+    expect(actions()).toEqual(["CASE_VIEW"]);
+    expect(vi.mocked(recordAccess).mock.calls[0][0].detail).toContain("lojistik");
+    expect(db.caseDocument.findMany).not.toHaveBeenCalled();
+    expect(db.booking.findFirst).toHaveBeenCalledTimes(1);
     expect(decryptCaseFields).not.toHaveBeenCalled();
   });
 

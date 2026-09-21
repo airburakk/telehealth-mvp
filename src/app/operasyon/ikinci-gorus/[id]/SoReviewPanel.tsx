@@ -4,12 +4,12 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { secondOpinionDocSpecs } from "@/data/second-opinion-docs";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
-import { Check, FileText, Link2, AlertTriangle, UserCheck, Loader2, ExternalLink, ClipboardList, Video, CheckCircle2 } from "lucide-react";
+import { Check, FileText, Link2, AlertTriangle, UserCheck, Loader2, ClipboardList, Video, CheckCircle2 } from "lucide-react";
 
 type Doc = { id: string; type: string; deliveryMethod: string; externalRef: string | null; label: string | null };
 type Req = { id: string; type: string; description: string; status: string };
 type Data = {
-  id: string; status: string; branch: string; branchLabel: string; diagnosisSummary: string;
+  id: string; status: string; branch: string; branchLabel: string; diagnosisSummary: string | null; // K06 1C-b: koordinatör/yönetici için null (tanı özeti klinik içerik)
   patientName: string; createdAt: string; documents: Doc[]; requests: Req[];
   payment: { status: string; amount: number; currency: string } | null;
   appointment: { id: string; scheduledAt: string; status: string } | null;
@@ -77,7 +77,11 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
 
       <div className="mt-4 rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 shadow-sm">
         <div className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-3)]">Tanı / durum özeti</div>
-        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[var(--c-ink)]">{data.diagnosisSummary}</p>
+        {data.diagnosisSummary ? (
+          <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[var(--c-ink)]">{data.diagnosisSummary}</p>
+        ) : (
+          <p className="mt-1.5 text-xs text-[var(--c-ink-3)]">Tanı özeti yalnız atanan doktora açıktır (personel metni madde 10.2); belge incelemesi tür ve etiket üzerinden yapılır.</p>
+        )}
         {data.payment?.status === "PAID" && (
           <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[12px] font-medium text-emerald-300">
             <Check size={13} /> Ödeme alındı ({data.payment.amount} {data.payment.currency})
@@ -107,16 +111,11 @@ export function SoReviewPanel({ data, doctors }: { data: Data; doctors: Doctor[]
                   <ul className="mt-2 space-y-1 pl-8">
                     {items.map((d) => (
                       <li key={d.id}>
-                        <a
-                          href={`/api/second-opinion/cases/${data.id}/documents/${d.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-[12.5px] text-[var(--c-accent-stronger)] underline"
-                        >
+                        {/* K06 1C-b: belge İÇERİĞİ koordinatöre açılmaz (A09 madde 10.2) — yalnız tür/etiket; içerik ucu personele 403 */}
+                        <span className="inline-flex items-center gap-1.5 text-[12.5px] text-[var(--c-ink-2)]" title="Belge içeriği yalnız atanan doktora açılır (personel metni madde 10.2)">
                           {d.deliveryMethod === "EXTERNAL_LINK" ? <Link2 size={12} /> : <FileText size={12} />}
                           {d.label || (d.deliveryMethod === "EXTERNAL_LINK" ? "Bağlantı" : "Dosya")}
-                          <ExternalLink size={11} />
-                        </a>
+                        </span>
                       </li>
                     ))}
                   </ul>
