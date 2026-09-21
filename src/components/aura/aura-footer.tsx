@@ -93,13 +93,15 @@ export function AuraFooter({ accountLinks = false }: { accountLinks?: boolean })
         </div>
         <div>
           <p className="aura-display text-sm font-bold">{f.explore}</p>
-          {/* Capalar kok-goreli: footer /how-it-works sayfasinda da render edilir. */}
+          {/* Capalar kok-goreli: footer /how-it-works sayfasinda da render edilir.
+              V02 (v6.297): /#ch-* eski landing kalıntısıydı (karşılıksız) → giriş kartı id'leri
+              care-<key> (entry-paths.tsx EntryCard); landing-anchors.test eşliği kilitler. */}
           <ul className="mt-3 space-y-2 text-sm text-[var(--aura-grey)]">
             <li>
-              <FooterLink href="/#ch-consult" label={f.telehealth} />
+              <FooterLink href="/#care-consult" label={f.telehealth} />
             </li>
             <li>
-              <FooterLink href="/#ch-tourism" label={f.tourism} />
+              <FooterLink href="/#care-tourism" label={f.tourism} />
             </li>
             <li>
               <FooterLink href="/#doctors" label={f.doctors} />

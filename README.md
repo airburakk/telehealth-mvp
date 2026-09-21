@@ -1025,8 +1025,12 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   sentetik h1 değişmedi); alt açıklama hizmet bazlı (dört yol + "uygunluk, kapsam ve ücret seçtiğiniz hizmete göre açıklanır"); ana CTA
   "Hizmet seçin" → `#care` (giriş kartları; hasta girişi nav + footer'da kalır), ikincil "Nasıl çalışır?" → `#how`; YENİ `v2.hero.demo`
   rozeti ("MVP demo — gerçek ödeme alınmaz.", 9 dil, CTA'ların altında mono); `page.tsx` meta açıklaması EN alt açıklamanın kopyası;
-  `[lang]` rotaları sözlükten alır; sentetik `/` `cta: #care`; `aura-landing-copy.test` V01 kilidi. Kalan Paket 5: V02 çapalar
-  (`aura-footer.tsx` + `entry-paths.tsx` "üç modül" oturumunun kirli dosyaları → o karar sonrası ya da hunk-izole).
+  `[lang]` rotaları sözlükten alır; sentetik `/` `cta: #care`; `aura-landing-copy.test` V01 kilidi.
+  · **V02 (v6.297, 2026-09-21):** footer "Keşfet" çapaları `/#ch-consult` · `/#ch-tourism` (v5 landing kalıntısı, ana sayfada KARŞILIKSIZ)
+  → `/#care-consult` · `/#care-tourism`; giriş kartı kökü (`EntryCard` `<article>`) `id="care-<key>"` (4 kart). YENİ
+  `tests/unit/landing-anchors.test.ts`: kök-göreli `href="/#x"` (src geneli) + landing ağacındaki (`home.tsx` import zinciri) `href="#x"`
+  ↔ landing `id=` eşliği (kart id'leri COPY anahtarlarından); `/#ch-*` geri gelemez. Sentetik beklenti değişmedi. **Paket 5 TAMAM**
+  (V02 · V04 · V05 · V06 · V01 🚪 A).
   · **`/doctorium` V3 (v6.166→168, 2026-08-26 — "Apple estetiği" modernizasyon turu; V2'yi süpersede):**
   bileşenler `components/aura/doctorium-v3/` — **zebra YOK**: hero + 12 bölüm (v6.262; 2026-08-26'da 14'tü) + header + footer tek açık
   zemin (`V3_LIGHT` #fbfbfa; manifesto açık-panel bandı; koyu kutular yalnız `ProductFrame` ürün
