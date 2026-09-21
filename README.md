@@ -1032,6 +1032,12 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   `tests/unit/landing-anchors.test.ts`: kök-göreli `href="/#x"` (src geneli) + landing ağacındaki (`home.tsx` import zinciri) `href="#x"`
   ↔ landing `id=` eşliği (kart id'leri COPY anahtarlarından); `/#ch-*` geri gelemez. Sentetik beklenti değişmedi. **Paket 5 TAMAM**
   (V02 · V04 · V05 · V06 · V01 🚪 A).
+  · **Paket 6 kod tarafı (v6.299, 2026-09-21 — 👤 tasarım + 9 dil etiket onayı):** hero'da görünür "Hareketi durdur / oynat" (sol-alt pill; AI
+  rozeti sağ-altta) — tercih `lib/aura-landing/motion-pref.ts` (`air_hero_motion`, `useSyncExternalStore`, SSR "on"; yalnız izleyici kolaylığı,
+  sunucuya gitmez); "off" → otomatik oynatma kurulmaz; reduced-motion/Save-Data'da otomatik oynatma zaten yok, düğmeden açık istek serbest ·
+  metin sütununa YEREL eliptik skrim + h1/alt açıklama `text-shadow` (genel skrim kalır) · rehber videosunda oynatma sonrası sağ-üst
+  "Duraklat / Devam et" (kullanıcı duraklattıysa görünürlük gözlemcisi yeniden başlatmaz) · 4 sözlük anahtarı × 9 dil (`v2.hero.motionPause/
+  motionPlay`, `hiw.pause/resume`). Medya işi (12–18 sn hero yeniden kesim + ürün demo videosu) 👤 todo — kod dokunulmadan `VIDEOS` kaynakları değişir.
   · **`/doctorium` V3 (v6.166→168, 2026-08-26 — "Apple estetiği" modernizasyon turu; V2'yi süpersede):**
   bileşenler `components/aura/doctorium-v3/` — **zebra YOK**: hero + 12 bölüm (v6.262; 2026-08-26'da 14'tü) + header + footer tek açık
   zemin (`V3_LIGHT` #fbfbfa; manifesto açık-panel bandı; koyu kutular yalnız `ProductFrame` ürün

@@ -206,11 +206,15 @@ function GuideVideo({ videoKey, flip }: { videoKey: string; flip: boolean }) {
   useEffect(() => {
     const video = ref.current;
     if (!active || !video) return;
+  // Paket 6 (v6.299): oynatma başlayınca görünür Duraklat/Devam et; kullanıcı duraklattıysa IO kendiliğinden yeniden BAŞLATMAZ.
+  const [paused, setPaused] = useState(false);
+  const userPaused = useRef(false);
     void video.play().catch(() => {});
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) void video.play().catch(() => {});
-        else video.pause();
+        if (entries[0]?.isIntersecting) {
+          if (!userPaused.current) void video.play().catch(() => {});
+        } else video.pause();
       },
       { threshold: 0.25 },
     );
@@ -235,6 +239,8 @@ function GuideVideo({ videoKey, flip }: { videoKey: string; flip: boolean }) {
         aria-hidden
         className="aspect-video h-auto w-full object-cover"
       >
+        onPlay={() => setPaused(false)}
+        onPause={() => setPaused(true)}
         <source src={v.src} type="video/mp4" />
       </video>
       {!active && (
@@ -252,6 +258,26 @@ function GuideVideo({ videoKey, flip }: { videoKey: string; flip: boolean }) {
       {/* Şeffaflık beyanı (kullanıcı kararı 2026-08-18): anlatım videoları yapay zekâ ile
           üretildi. Kart overflow-hidden olduğu için satır kartın İÇİNDE, videonun hemen
           altında kalır — "gömülü videoda alt satır" kuralı. */}
+      {active && (
+        <button
+          type="button"
+          onClick={() => {
+            const video = ref.current;
+            if (!video) return;
+            if (paused) {
+              userPaused.current = false;
+              void video.play().catch(() => {});
+            } else {
+              userPaused.current = true;
+              video.pause();
+            }
+          }}
+          className="aura-mono absolute right-3 top-3 z-10 inline-flex min-h-9 items-center gap-1.5 rounded-md bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm transition-colors hover:bg-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--aura-accent)]"
+        >
+          {paused ? "▶ " : "❚❚ "}
+          {paused ? t.hiw.resume : t.hiw.pause}
+        </button>
+      )}
       <AiVideoNotice lang={lang} tone="aura" className="mt-0 px-4 py-2" />
     </div>
   );

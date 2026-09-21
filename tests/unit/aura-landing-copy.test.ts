@@ -147,3 +147,18 @@ describe("V01 hero A (v6.296)", () => {
     for (const code of LANG_CODES) expect(hero(code).demo, code).toMatch(/MVP/);
   });
 });
+
+// Paket 6 (v6.299): hero hareket düğmesi + rehber Duraklat/Devam et etiketleri 9 dilde (yapı-imzası testi varlığı, bu test içeriği kilitler).
+describe("Paket 6 video kontrol etiketleri (v6.299)", () => {
+  type D = { v2: { hero: { motionPause: string; motionPlay: string } }; hiw: { pause: string; resume: string } };
+  it("her dilde dört etiket dolu ve çiftler birbirinden farklı", () => {
+    for (const code of LANG_CODES) {
+      const d = (COPY as unknown as Record<string, D>)[code];
+      for (const s of [d.v2.hero.motionPause, d.v2.hero.motionPlay, d.hiw.pause, d.hiw.resume]) expect(s.trim().length, code).toBeGreaterThan(1);
+      expect(d.v2.hero.motionPause, code).not.toBe(d.v2.hero.motionPlay);
+      expect(d.hiw.pause, code).not.toBe(d.hiw.resume);
+    }
+    expect((COPY as unknown as Record<string, D>).tr.v2.hero.motionPause).toBe("Hareketi durdur");
+    expect((COPY as unknown as Record<string, D>).tr.hiw.resume).toBe("Devam et");
+  });
+});

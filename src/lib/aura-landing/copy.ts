@@ -349,6 +349,8 @@ export const COPY = {
         ctaPrimary: "Choose a service",
         ctaSecondary: "How it works",
         demo: "MVP demo — no real payment is taken.",
+        motionPause: "Pause motion",
+        motionPlay: "Play motion",
         // Klinik sorumluluk mikro-metni — hero'da, CTA'nin hemen altinda.
         safety: "Clinical decisions are made by qualified healthcare professionals. AURA supports assessment, coordination and communication.",
       },
@@ -773,6 +775,8 @@ export const COPY = {
       sub: "Four journeys, one platform. Every step from sign-up to consultation, explained below.",
       pick: "Choose your journey",
       watch: "watch the guide",
+      pause: "Pause",
+      resume: "Resume",
       step: "step",
       guides: [
         {
@@ -984,6 +988,8 @@ export const COPY = {
         ctaPrimary: "Hizmet seçin",
         ctaSecondary: "Nasıl çalışır?",
         demo: "MVP demo — gerçek ödeme alınmaz.",
+        motionPause: "Hareketi durdur",
+        motionPlay: "Hareketi oynat",
         safety: "Tıbbi kararları yetkili sağlık profesyonelleri verir. AURA değerlendirme, koordinasyon ve iletişimi destekler.",
       },
       entry: {
@@ -1317,6 +1323,8 @@ export const COPY = {
       sub: "Dört yolculuk, tek platform. Kayıttan görüşmeye her adım, aşağıda adım adım.",
       pick: "Yolculuğunuzu seçin",
       watch: "rehberi izle",
+      pause: "Duraklat",
+      resume: "Devam et",
       step: "adım",
       guides: [
         {
@@ -1450,6 +1458,8 @@ export const COPY = {
         ctaPrimary: "Service wählen",
         ctaSecondary: "So funktioniert es",
         demo: "MVP-Demo — es wird keine echte Zahlung erhoben.",
+        motionPause: "Bewegung anhalten",
+        motionPlay: "Bewegung abspielen",
         safety: "Medizinische Entscheidungen treffen qualifizierte Gesundheitsfachkräfte. AURA unterstützt Bewertung, Koordination und Kommunikation.",
       },
       entry: {
@@ -1781,6 +1791,8 @@ export const COPY = {
       sub: "Vier Wege, eine Plattform. Jeder Schritt von der Registrierung bis zum Gespräch, hier erklärt.",
       pick: "Wählen Sie Ihren Weg",
       watch: "Anleitung ansehen",
+      pause: "Pause",
+      resume: "Fortsetzen",
       step: "Schritt",
       guides: [
         {
@@ -1914,6 +1926,8 @@ export const COPY = {
         ctaPrimary: "Choisir un service",
         ctaSecondary: "Comment ça marche",
         demo: "Démo MVP — aucun paiement réel n'est prélevé.",
+        motionPause: "Arrêter l'animation",
+        motionPlay: "Lancer l'animation",
         safety: "Les décisions médicales relèvent des professionnels de santé qualifiés. AURA soutient l'évaluation, la coordination et la communication.",
       },
       entry: {
@@ -2245,6 +2259,8 @@ export const COPY = {
       sub: "Quatre parcours, une plateforme. Chaque étape, de l'inscription à la consultation, expliquée ci-dessous.",
       pick: "Choisissez votre parcours",
       watch: "voir le guide",
+      pause: "Pause",
+      resume: "Reprendre",
       step: "étape",
       guides: [
         {
@@ -2378,6 +2394,8 @@ export const COPY = {
         ctaPrimary: "Выбрать услугу",
         ctaSecondary: "Как это работает",
         demo: "MVP-демо — реальная оплата не взимается.",
+        motionPause: "Остановить движение",
+        motionPlay: "Включить движение",
         safety: "Медицинские решения принимают квалифицированные специалисты здравоохранения. AURA поддерживает оценку, координацию и общение.",
       },
       entry: {
@@ -2709,6 +2727,8 @@ export const COPY = {
       sub: "Четыре пути, одна платформа. Каждый шаг от регистрации до консультации, по порядку.",
       pick: "Выберите свой путь",
       watch: "смотреть гид",
+      pause: "Пауза",
+      resume: "Продолжить",
       step: "шаг",
       guides: [
         {
@@ -2842,6 +2862,8 @@ export const COPY = {
         ctaPrimary: "اختر خدمة",
         ctaSecondary: "كيف يعمل",
         demo: "عرض تجريبي (MVP) — لا يتم تحصيل أي دفعة حقيقية.",
+        motionPause: "إيقاف الحركة",
+        motionPlay: "تشغيل الحركة",
         safety: "القرارات الطبية يتخذها مهنيون صحيون مؤهلون. تدعم AURA التقييم والتنسيق والتواصل.",
       },
       entry: {
@@ -3173,6 +3195,8 @@ export const COPY = {
       sub: "أربع رحلات، منصة واحدة. كل خطوة من التسجيل إلى الاستشارة، مشروحة أدناه.",
       pick: "اختر رحلتك",
       watch: "شاهد الدليل",
+      pause: "إيقاف مؤقت",
+      resume: "استئناف",
       step: "خطوة",
       guides: [
         {
@@ -3306,6 +3330,8 @@ export const COPY = {
         ctaPrimary: "انتخاب خدمت",
         ctaSecondary: "چگونه کار می‌کند",
         demo: "دموی MVP — پرداخت واقعی انجام نمی‌شود.",
+        motionPause: "توقف حرکت",
+        motionPlay: "پخش حرکت",
         safety: "تصمیم‌های پزشکی را متخصصان صلاحیت‌دار سلامت می‌گیرند. AURA از ارزیابی، هماهنگی و ارتباط پشتیبانی می‌کند.",
       },
       entry: {
@@ -3637,6 +3663,8 @@ export const COPY = {
       sub: "چهار مسیر، یک پلتفرم. هر گام از ثبت‌نام تا مشاوره، در ادامه توضیح داده شده است.",
       pick: "مسیر خود را انتخاب کنید",
       watch: "راهنما را ببینید",
+      pause: "مکث",
+      resume: "ادامه",
       step: "گام",
       guides: [
         {
@@ -3771,6 +3799,8 @@ export const COPY = {
         ctaPrimary: "Xidmət seçin",
         ctaSecondary: "Necə işləyir",
         demo: "MVP demo — real ödəniş alınmır.",
+        motionPause: "Hərəkəti dayandır",
+        motionPlay: "Hərəkəti oynat",
         safety: "Tibbi qərarları səlahiyyətli səhiyyə mütəxəssisləri verir. AURA qiymətləndirmə, koordinasiya və ünsiyyəti dəstəkləyir.",
       },
       entry: {
@@ -4103,6 +4133,8 @@ export const COPY = {
       sub: "Dörd yol, tək platforma. Qeydiyyatdan görüşə qədər hər addım, aşağıda izah olunub.",
       pick: "Yolunuzu seçin",
       watch: "bələdçiyə baxın",
+      pause: "Fasilə",
+      resume: "Davam et",
       step: "addım",
       guides: [
         {
@@ -4313,6 +4345,8 @@ export const COPY = {
         ctaPrimary: "Изберете услуга",
         ctaSecondary: "Как работи",
         demo: "MVP демо — реално плащане не се взема.",
+        motionPause: "Спри движението",
+        motionPlay: "Пусни движението",
         safety: "Клиничните решения се вземат от квалифицирани здравни специалисти. AURA подпомага оценката, координацията и комуникацията.",
       },
       entry: {
@@ -4644,6 +4678,8 @@ export const COPY = {
       sub: "Четири пътувания, една платформа. Всяка стъпка от регистрацията до консултацията — обяснена по-долу.",
       pick: "Изберете своето пътуване",
       watch: "гледайте наръчника",
+      pause: "Пауза",
+      resume: "Продължи",
       step: "стъпка",
       guides: [
         {

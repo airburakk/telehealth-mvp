@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
-import { ArrowRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Pause, Play } from "lucide-react";
 import { AuraWordSvg } from "@/components/AuraLogo";
 import { AuraWordText } from "@/components/aura/aura-word";
 import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
 import { VIDEOS, useLang } from "@/lib/aura-landing/i18n";
+import { useMotionPref, writeMotionPref } from "@/lib/aura-landing/motion-pref";
 
 // Hero — STATİK VİDEO SAHNESİ (2026-08-17, ana sayfa sadeleşmesi; kullanıcı kararı:
 // "doctorium'daki gibi bir video hazırlayacağız").
@@ -31,11 +32,19 @@ export function V2Hero() {
   const { t, lang } = useLang();
   const h = t.v2.hero;
   const videoRef = useRef<HTMLVideoElement>(null);
+  // Paket 6 (v6.299): görünür hareket kontrolü — tercih localStorage (izleyici kolaylığı); `playing` video olaylarından (onPlay/onPause).
+  const motion = useMotionPref();
+  const [playing, setPlaying] = useState(false);
 
   // Video: mevcut landing hero'suyla aynı sözleşme (IO + arka-plan sekme yaması).
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+    // Paket 6: kullanıcı "Hareketi durdur" dediyse otomatik oynatma kurulmaz (açık istekle oynatma düğmeden serbest).
+    if (motion === "off") {
+      video.pause();
+      return;
+    }
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     // Save-Data: veri tasarrufu isteğinde video hiç başlatılmaz.
     if (
@@ -62,7 +71,7 @@ export function V2Hero() {
       io.disconnect();
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, []);
+  }, [motion]);
 
   return (
     <section id="top" className="relative isolate min-h-dvh overflow-hidden">
@@ -73,6 +82,8 @@ export function V2Hero() {
         playsInline
         preload="none"
         poster={VIDEOS.hero.poster}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
         aria-hidden
         className="absolute inset-0 -z-10 h-full w-full object-cover"
       >
@@ -84,6 +95,27 @@ export function V2Hero() {
           uretildi. Tam ekran arka planda videonun bir "alti" yok — gorunur kalan tek
           konum kadrajin sag-alt kosesi. */}
       <AiVideoNoticeBadge lang={lang} />
+      {/* Paket 6 (v6.299): görünür "Hareketi durdur / oynat" — sol-alt (AI rozeti sağ-altta), aynı pill dili. Duraklatınca tercih
+          localStorage'a yazılır (bir sonraki açılışta otomatik oynatma kurulmaz); oynat = açık istek (reduced-motion'da da serbest). */}
+      <button
+        type="button"
+        aria-pressed={!playing}
+        onClick={() => {
+          const v = videoRef.current;
+          if (!v) return;
+          if (playing) {
+            v.pause();
+            writeMotionPref("off");
+          } else {
+            writeMotionPref("on");
+            void v.play().catch(() => {});
+          }
+        }}
+        className="aura-mono absolute bottom-3 left-3 z-10 inline-flex min-h-9 items-center gap-1.5 rounded-md bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm transition-colors hover:bg-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--aura-accent)]"
+      >
+        {playing ? <Pause aria-hidden size={12} /> : <Play aria-hidden size={12} />}
+        {playing ? h.motionPause : h.motionPlay}
+      </button>
       {/* Okunurluk skrimi: metnin olduğu ALT koyu, videonun göründüğü ÜST açık. */}
       <div
         aria-hidden
@@ -94,6 +126,12 @@ export function V2Hero() {
           içerik V2Nav'daki logoyla AYNI sol çizgiden akar (ikisi de max-w-6xl px-5
           md:px-8). */}
       <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col items-start justify-center px-5 py-24 md:px-8">
+        {/* Paket 6 (v6.299): metin sütunu için YEREL kontrast katmanı — sol-ağırlıklı eliptik skrim (genel alt→üst skrim kalır;
+            düz perde YAPMA — "video boğuluyor" geri bildirimi). Kadrajın sağı/üstü videoya açık kalır. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_65%_75%_at_22%_58%,rgba(13,14,16,0.70)_0%,rgba(13,14,16,0.35)_45%,rgba(13,14,16,0)_72%)]"
+        />
         {/* Marka vuruşu: AURA wordmark'ı — sahnesiz, her zaman görünür. */}
         <div role="img" aria-label="AURA" className="aura-brand inline-flex flex-col items-center">
           {/* v6.137: harf dilimleri (137px PNG, 9rem'de pikselleşiyordu) → vektör wordmark.
@@ -105,11 +143,11 @@ export function V2Hero() {
         </div>
 
         <p className="aura-mono mt-12 text-sm text-[var(--aura-accent)]">/ {h.eyebrow}</p>
-        <h1 className="aura-display mt-5 max-w-4xl text-4xl font-bold leading-[1.05] tracking-tighter text-[var(--aura-ink)] md:text-6xl">
+        <h1 className="aura-display mt-5 max-w-4xl text-4xl font-bold leading-[1.05] tracking-tighter text-[var(--aura-ink)] [text-shadow:0_1px_2px_rgba(0,0,0,0.45)] md:text-6xl">
           {h.headline}
         </h1>
         {/* Metin içi AURA = wordmark görseli (kullanıcı kuralı 2026-08-17, aura-word.tsx). */}
-        <p className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] md:text-lg">
+        <p className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--aura-grey)] [text-shadow:0_1px_2px_rgba(0,0,0,0.40)] md:text-lg">
           <AuraWordText text={h.lede} />
         </p>
         {/* CTA giysisi (kullanıcı kararı 2026-08-18): how/closing/doctorium-section'daki
