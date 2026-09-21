@@ -1697,3 +1697,24 @@ model EduOpportunityFollow {
   @@unique([doctorId, opportunityId])
   @@index([opportunityId])
 }
+
+/// v6.298 (2026-09-21) — AI KULLANIM SAYACI (kontrol raporu K6): gün (UTC "YYYY-MM-DD", Console ile aynı takvim) × özellik
+/// (lib/ai-usage AiFeature) × model toplamları. İÇERİK/PHI YOK — yalnız çağrı ve token sayıları; amaç aylık Console faturasını
+/// özelliğe bölmek (/admin/ai-kullanim). Yazım her AI çağrısında upsert+increment (lib/ai-usage.recordAiUsage); sayaç hatası
+/// AI yolunu ASLA bozmaz (fail-open, yalnız warn). Satır sayısı küçük: gün başına özellik×model kadar.
+model AiUsageDaily {
+  id               String   @id @default(cuid())
+  day              String // UTC "YYYY-MM-DD"
+  feature          String // lib/ai-usage AiFeature
+  model            String
+  calls            Int      @default(0)
+  errors           Int      @default(0)
+  inputTokens      Int      @default(0)
+  outputTokens     Int      @default(0)
+  cacheReadTokens  Int      @default(0)
+  cacheWriteTokens Int      @default(0)
+  updatedAt        DateTime @updatedAt
+
+  @@unique([day, feature, model])
+  @@index([day])
+}

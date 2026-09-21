@@ -23,6 +23,7 @@
 // İçerik PHI DEĞİLDİR (açık literatür/haber metni) — AI'a gitmesi serbest (asla-loglama gerekmez).
 import Anthropic from "@anthropic-ai/sdk";
 import { modelParams, pickModel } from "./ai-model";
+import { trackedCreate } from "./ai-usage";
 
 // Basit yüksek-hacim iş: düşük efor yeterli (çeviri başına ~2 sn, gece cron'unda koşar).
 //
@@ -193,7 +194,7 @@ async function translateBatchTr(
   for (let i = 0; i < texts.length; i += cfg.chunk) {
     const grup = texts.slice(i, i + cfg.chunk);
     try {
-      const res = await client.messages.create({
+      const res = await trackedCreate(client, cfg.mode === "kimlik" ? "news-summary-translate" : "news-title-translate", {
         ...resolveNewsTranslateRequest(),
         max_tokens: cfg.maxTokens,
         system: cfg.system,

@@ -90,6 +90,13 @@ const PANELS = [
     tone: "#f43f5e",
   },
   {
+    href: "/admin/ai-kullanim",
+    label: "AI Kullanımı",
+    desc: "Özellik × model bazında çağrı/token sayaçları ve tahminî maliyet (son 30 gün, UTC) — Console faturasını özelliğe böler; içerik tutulmaz.",
+    icon: BarChart2,
+    tone: "#a3e635",
+  },
+  {
     href: "/admin/hukuki-ceviri",
     label: "Hukuki Çeviriler",
     desc: "Hasta yüzü hukuki belgelerinin 9 dildeki çevirilerini incele ve onayla — onaylanan metin dondurulur, hasta 'İncelenmiş çeviri' rozetini görür.",

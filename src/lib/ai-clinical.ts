@@ -6,12 +6,18 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { minimizedName, reidentifyName } from "./ai-minimize";
 import { pickModel } from "./ai-model";
+import { trackedCreate, type AiFeature } from "./ai-usage";
 
 const MODEL = "claude-sonnet-4-6"; // klinik dökümanlar (epikriz/SOAP/çeviri) — yüksek kalite akıl yürütme & dil; doktor başlatır, düşük hacim
 
 function client(): Anthropic {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("AI devre dışı: ANTHROPIC_API_KEY tanımlı değil.");
   return new Anthropic();
+}
+
+// v6.298 — her çağrı sayaca yazılır (lib/ai-usage: özellik × model × token; içerik YOK). Sayaç hatası AI yolunu bozmaz.
+function aiCreate(feature: AiFeature, params: Anthropic.MessageCreateParamsNonStreaming): Promise<Anthropic.Message> {
+  return trackedCreate(client(), feature, params);
 }
 
 // Model bazen gerçek satır sonu yerine literal "\n" (ters bölü + n) üretebiliyor → gerçek satır sonuna çevir.
@@ -57,7 +63,7 @@ export async function summarizeSOAP(
     source === "transcript"
       ? "Sen bir klinik dokümantasyon asistanısın. Doktor–hasta görüşmesinin KONUŞMA TRANSKRİPTİNİ (ve varsa doktorun ek notlarını) vaka bağlamıyla birlikte standart SOAP formatına dönüştürürsün. Hastanın söyledikleri ağırlıkla Subjektif'e, doktorun gözlem/değerlendirme/plan ifadeleri O/A/P'ye gider. Selamlaşma, bağlantı sorunu gibi tıbbi olmayan konuşmaları ele."
       : "Sen bir klinik dokümantasyon asistanısın. Doktorun görüşme sırasında aldığı dağınık/serbest notları, vaka bağlamıyla birlikte standart SOAP formatına dönüştürürsün.";
-  const res = await client().messages.create({
+  const res = await aiCreate("soap", {
     model: MODEL,
     max_tokens: 1500,
     system:
@@ -133,7 +139,7 @@ export async function suggestProcedures(input: {
   candidates: { code: string; name: string }[]; // KSHFT branş havuzu (üst sınır çağıranda)
 }): Promise<ProcedureSuggestion[]> {
   const list = input.candidates.map((c) => `${c.code} | ${c.name}`).join("\n");
-  const res = await client().messages.create({
+  const res = await aiCreate("suggest-procedures", {
     model: MODEL,
     max_tokens: 900,
     system:
@@ -165,7 +171,7 @@ export async function suggestProcedures(input: {
 }
 
 export async function translateText(text: string, target: string): Promise<string> {
-  const res = await client().messages.create({
+  const res = await aiCreate("translate-text", {
     model: MODEL,
     max_tokens: 1500,
     system:
@@ -195,7 +201,7 @@ const REDACT_TOOL: Anthropic.Tool = {
 
 export async function redactPersonNames(text: string): Promise<string> {
   if (!text.trim()) return text;
-  const res = await client().messages.create({
+  const res = await aiCreate("redact-names", {
     model: MODEL,
     max_tokens: 2000,
     system:
@@ -240,7 +246,7 @@ const TRANSLATE_TOOL: Anthropic.Tool = {
 export async function translateLegalBatch(texts: string[], target: string): Promise<string[]> {
   let lastErr = new Error("Çeviri biçimi geçersiz.");
   for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await client().messages.create({
+    const res = await aiCreate("legal-i18n", {
       model: MODEL,
       max_tokens: 12000,
       system:
@@ -275,7 +281,7 @@ export async function translateBatch(texts: string[], target: string): Promise<s
   // eşleşmiş çeviri Translation cache'ine kalıcı yazılırdı (TR göstermekten kötü).
   let lastErr = new Error("Çeviri biçimi geçersiz.");
   for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await client().messages.create({
+    const res = await aiCreate("batch-translate", {
       model: MODEL,
       max_tokens: 8000,
       system:
@@ -354,7 +360,7 @@ const DISCHARGE_TOOL: Anthropic.Tool = {
 };
 
 export async function generateDischarge(ctx: DischargeContext): Promise<{ sections: string; structured: Discharge }> {
-  const res = await client().messages.create({
+  const res = await aiCreate("discharge", {
     model: MODEL,
     max_tokens: 2000,
     system:
@@ -422,7 +428,7 @@ export async function assessPostopNote(
   note: string,
   ctx: { branch: string; day: number }
 ): Promise<{ severity: "NONE" | "WATCH" | "RED"; reason: string }> {
-  const res = await client().messages.create({
+  const res = await aiCreate("postop-note", {
     model: TRIAGE_MODEL,
     max_tokens: 300,
     system:
@@ -482,7 +488,7 @@ export async function assessPostopPhoto(
   const mediaType = m[1] as "image/jpeg" | "image/png" | "image/webp" | "image/gif";
   const b64 = m[2];
 
-  const res = await client().messages.create({
+  const res = await aiCreate("postop-photo", {
     model: MODEL,
     max_tokens: 400,
     system:
@@ -620,7 +626,7 @@ export async function assessDocument(
     throw new Error("Desteklenmeyen belge türü (yalnız PDF ve görüntü AI ile değerlendirilir; DICOM kapsam dışı).");
   }
 
-  const res = await client().messages.create({
+  const res = await aiCreate("doc-analysis", {
     model: MODEL,
     max_tokens: 2000,
     system:
@@ -700,7 +706,7 @@ export async function summarizeArticleForClinician(
   title: string,
   abstract: string,
 ): Promise<{ takeaways: string[]; design: string; limits: string }> {
-  const res = await client().messages.create({
+  const res = await aiCreate("news-summary", {
     model: resolveNewsSummaryModel(),
     max_tokens: 900,
     system:
@@ -752,7 +758,7 @@ export async function summarizeRegulationForClinician(
   title: string,
   text: string,
 ): Promise<{ summary: string; actions: string[]; affected: string; effective: string }> {
-  const res = await client().messages.create({
+  const res = await aiCreate("regulation-summary", {
     model: resolveNewsSummaryModel(),
     max_tokens: 900,
     system:

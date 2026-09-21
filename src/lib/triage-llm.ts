@@ -4,6 +4,7 @@
 // analyzeTriage motoruna otomatik düşülür — uygulama anahtarsız da çalışır.
 import Anthropic from "@anthropic-ai/sdk";
 import { analyzeTriage, PATIENT_BRANCHES, type TriageInput, type TriageOutput } from "./triage";
+import { trackedCreate } from "./ai-usage";
 
 // Triyaj modeli — ortam değişkeniyle ayarlanabilir, böylece Vercel'den kod değişikliği
 // olmadan Haiku/Sonnet/Opus arasında geçilebilir. Triyaj HER hastada çalışır → hacim/maliyet
@@ -69,7 +70,7 @@ export async function analyzeTriageLLM(input: TriageInput): Promise<TriageOutput
     .filter(Boolean)
     .join("\n");
 
-  const res = await client.messages.create({
+  const res = await trackedCreate(client, "triage", {
     model: MODEL,
     max_tokens: 1024,
     system: SYSTEM,

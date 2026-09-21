@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
+import { recordAiUsage } from "@/lib/ai-usage";
 
 // Gemini Live (gerçek zamanlı ses→ses çeviri) için ephemeral (kısa ömürlü) token üretici.
 // Mimari: ham GEMINI_API_KEY sunucuda kalır; tarayıcı yalnız kısa ömürlü token'la Gemini'ye
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
       },
     });
 
+    await recordAiUsage({ feature: "live-token", model: LIVE_TRANSLATE_MODEL, usage: null, ok: true }); // v6.298 sayaç (adet)
     return NextResponse.json({ enabled: true, model: LIVE_TRANSLATE_MODEL, token: token.name, targetLang }, { status: 201 });
   } catch (e) {
     return NextResponse.json({ enabled: true, error: e instanceof Error ? e.message : "Token üretilemedi" }, { status: 502 });
