@@ -130,3 +130,20 @@ describe("V04 rehber ücret yer tutucuları (v6.294)", () => {
     }
   });
 });
+
+// V01 (v6.296, 👤 karar A): hero alt açıklaması hizmet bazlı, ana CTA hizmet seçimi (#care), demo rozeti 9 dilde.
+describe("V01 hero A (v6.296)", () => {
+  type Hero = { lede: string; ctaPrimary: string; ctaSecondary: string; demo: string; headline: string };
+  const hero = (code: string) => (COPY as unknown as Record<string, { v2: { hero: Hero } }>)[code].v2.hero;
+  it("TR/EN metinleri onaylı tabloya kilitli; başlık değişmedi", () => {
+    expect(hero("tr").headline).toBe("Bakım, sınırların ötesinde.");
+    expect(hero("en").headline).toBe("Care, without borders.");
+    expect(hero("tr").ctaPrimary).toBe("Hizmet seçin");
+    expect(hero("en").ctaPrimary).toBe("Choose a service");
+    expect(hero("tr").lede).toContain("Uygunluk, kapsam ve ücret seçtiğiniz hizmete göre açıklanır.");
+    expect(hero("en").lede).toContain("Eligibility, scope and fees are explained for the service you choose.");
+  });
+  it("her dilde demo rozeti var ve MVP ibaresi taşır", () => {
+    for (const code of LANG_CODES) expect(hero(code).demo, code).toMatch(/MVP/);
+  });
+});

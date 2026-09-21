@@ -121,8 +121,9 @@ export function V2Hero() {
             🪤 Dolgu span'i absolute: metin ve ok `relative` olmak ZORUNDA, yoksa altında
             kalır. rtl: varyantları ar/fa için (9 dil yayında). */}
         <div className="mt-8 flex flex-wrap items-center justify-start gap-3">
+          {/* V01 (v6.296, 👤 karar A): ana CTA hizmet seçimine (#care, dört giriş kartı) iner — hasta girişi nav'da ve footer'da. */}
           <Link
-            href="/giris"
+            href="#care"
             className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-[var(--aura-accent)] px-7 py-3.5 text-base font-semibold text-[var(--aura-night)] transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aura-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--aura-bg)] rtl:hover:-translate-x-1"
           >
             <span
@@ -136,7 +137,7 @@ export function V2Hero() {
               className="relative transition-transform duration-300 group-hover:translate-x-1.5 rtl:rotate-180 rtl:group-hover:-translate-x-1.5"
             />
           </Link>
-          {/* Hedef #how (v6.16): etiket "AURA nasıl çalışır?" → 4 adımlık şeride iner. */}
+          {/* Hedef #how (v6.16): etiket "Nasıl çalışır?" (v6.296) → 4 adımlık şeride iner. */}
           <Link
             href="#how"
             className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full border border-[var(--aura-hairline)] bg-[var(--aura-night)]/40 px-7 py-3.5 text-base font-semibold text-[var(--aura-ink)] backdrop-blur-sm transition-transform duration-200 hover:translate-x-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aura-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--aura-bg)] rtl:hover:-translate-x-1"
@@ -155,6 +156,8 @@ export function V2Hero() {
             />
           </Link>
         </div>
+        {/* Demo rozeti (V01, v6.296 — kontrol raporu: demo sınırı ilk ekranda görünür olsun; footer notu kalır). */}
+        <p className="aura-mono mt-4 text-xs text-[var(--aura-micro)]">{h.demo}</p>
         {/* Klinik sorumluluk mikro-metni (v6.8 dürüstlük çizgisi). */}
         <p className="mt-7 max-w-xl text-[13px] leading-relaxed text-[var(--aura-micro)]">
           <AuraWordText text={h.safety} />

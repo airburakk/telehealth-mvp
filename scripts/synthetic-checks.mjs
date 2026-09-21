@@ -32,7 +32,7 @@ const DOCTORIUM_BASE = "https://doctorium.tr";
 // title/h1/cta = HAM HTML'de aranan alt dize (büyük/küçük duyarsız). h1: null = bu rotada h1 denetlenmez.
 // noindex: true = meta robots noindex ZORUNLU, false = YASAK.
 const AURA_ROUTES = [
-  { path: "/",                  title: "Care, without borders",      h1: "Care, without borders", cta: "/giris",                  noindex: false },
+  { path: "/",                  title: "Care, without borders",      h1: "Care, without borders", cta: "#care",                  noindex: false },
   { path: "/tr",                title: "Bakım, sınırların ötesinde", h1: "Bakım",                 cta: "/giris",                  noindex: true },
   { path: "/ar",                title: "رعاية بلا حدود",              h1: "رعاية",                  cta: "/giris",                  noindex: true },
   { path: "/how-it-works",      title: "How it works",               h1: "works",                 cta: "/kayit/hasta",            noindex: false },

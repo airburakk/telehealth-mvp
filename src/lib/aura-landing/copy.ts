@@ -345,9 +345,10 @@ export const COPY = {
       hero: {
         eyebrow: "Cross-border digital care",
         headline: "Care, without borders.",
-        lede: "Meet the right specialist, understand your options and continue your care wherever you are — with multilingual support from first assessment to follow-up.",
-        ctaPrimary: "Start your care",
-        ctaSecondary: "See how AURA works",
+        lede: "Book a video consultation, request a written second opinion, or start a health-tourism or free-care application. Eligibility, scope and fees are explained for the service you choose.",
+        ctaPrimary: "Choose a service",
+        ctaSecondary: "How it works",
+        demo: "MVP demo — no real payment is taken.",
         // Klinik sorumluluk mikro-metni — hero'da, CTA'nin hemen altinda.
         safety: "Clinical decisions are made by qualified healthcare professionals. AURA supports assessment, coordination and communication.",
       },
@@ -979,9 +980,10 @@ export const COPY = {
       hero: {
         eyebrow: "Sınır ötesi dijital bakım",
         headline: "Bakım, sınırların ötesinde.",
-        lede: "Doğru uzmanla buluşun, seçeneklerinizi anlayın ve bakımınıza bulunduğunuz yerden devam edin — ilk değerlendirmeden takibe kadar çok dilli destekle.",
-        ctaPrimary: "Bakım yolculuğunu başlat",
-        ctaSecondary: "AURA nasıl çalışır?",
+        lede: "Görüntülü görüşme, yazılı ikinci görüş, sağlık turizmi ya da ücretsiz sağlık başvurusu oluşturun. Uygunluk, kapsam ve ücret seçtiğiniz hizmete göre açıklanır.",
+        ctaPrimary: "Hizmet seçin",
+        ctaSecondary: "Nasıl çalışır?",
+        demo: "MVP demo — gerçek ödeme alınmaz.",
         safety: "Tıbbi kararları yetkili sağlık profesyonelleri verir. AURA değerlendirme, koordinasyon ve iletişimi destekler.",
       },
       entry: {
@@ -1444,9 +1446,10 @@ export const COPY = {
       hero: {
         eyebrow: "Grenzüberschreitende digitale Versorgung",
         headline: "Versorgung, ohne Grenzen.",
-        lede: "Finden Sie die richtige Fachärztin oder den richtigen Facharzt, verstehen Sie Ihre Optionen und setzen Sie Ihre Versorgung fort, wo immer Sie sind — mit mehrsprachiger Unterstützung von der ersten Einschätzung bis zur Nachsorge.",
-        ctaPrimary: "Versorgung beginnen",
-        ctaSecondary: "So funktioniert AURA",
+        lede: "Buchen Sie eine Videosprechstunde, holen Sie eine schriftliche Zweitmeinung ein oder starten Sie einen Antrag für Gesundheitstourismus oder kostenlose Versorgung. Berechtigung, Umfang und Gebühren werden für den gewählten Service erklärt.",
+        ctaPrimary: "Service wählen",
+        ctaSecondary: "So funktioniert es",
+        demo: "MVP-Demo — es wird keine echte Zahlung erhoben.",
         safety: "Medizinische Entscheidungen treffen qualifizierte Gesundheitsfachkräfte. AURA unterstützt Bewertung, Koordination und Kommunikation.",
       },
       entry: {
@@ -1907,9 +1910,10 @@ export const COPY = {
       hero: {
         eyebrow: "Soins numériques transfrontaliers",
         headline: "Des soins, sans frontières.",
-        lede: "Rencontrez le bon spécialiste, comprenez vos options et poursuivez vos soins où que vous soyez — avec un accompagnement multilingue, de la première évaluation au suivi.",
-        ctaPrimary: "Commencer mes soins",
-        ctaSecondary: "Comment fonctionne AURA",
+        lede: "Réservez une consultation vidéo, demandez un deuxième avis écrit ou lancez une demande de tourisme médical ou de soins gratuits. L'éligibilité, la portée et les frais sont expliqués pour le service choisi.",
+        ctaPrimary: "Choisir un service",
+        ctaSecondary: "Comment ça marche",
+        demo: "Démo MVP — aucun paiement réel n'est prélevé.",
         safety: "Les décisions médicales relèvent des professionnels de santé qualifiés. AURA soutient l'évaluation, la coordination et la communication.",
       },
       entry: {
@@ -2370,9 +2374,10 @@ export const COPY = {
       hero: {
         eyebrow: "Трансграничная цифровая медицина",
         headline: "Забота без границ.",
-        lede: "Найдите нужного специалиста, разберитесь в своих вариантах и продолжайте лечение, где бы вы ни были — с многоязычной поддержкой от первой оценки до наблюдения.",
-        ctaPrimary: "Начать заботу о себе",
-        ctaSecondary: "Как работает AURA",
+        lede: "Запишитесь на видеоконсультацию, запросите письменное второе мнение или подайте заявку на медицинский туризм или бесплатную помощь. Условия, объём и стоимость объясняются для выбранной услуги.",
+        ctaPrimary: "Выбрать услугу",
+        ctaSecondary: "Как это работает",
+        demo: "MVP-демо — реальная оплата не взимается.",
         safety: "Медицинские решения принимают квалифицированные специалисты здравоохранения. AURA поддерживает оценку, координацию и общение.",
       },
       entry: {
@@ -2833,9 +2838,10 @@ export const COPY = {
       hero: {
         eyebrow: "رعاية رقمية عابرة للحدود",
         headline: "رعاية بلا حدود.",
-        lede: "التقِ بالأخصائي المناسب، افهم خياراتك، وواصل رعايتك أينما كنت — بدعم متعدد اللغات من التقييم الأول حتى المتابعة.",
-        ctaPrimary: "ابدأ رعايتك",
-        ctaSecondary: "كيف تعمل AURA",
+        lede: "احجز استشارة مرئية، أو اطلب رأيًا ثانيًا مكتوبًا، أو ابدأ طلبًا للسياحة العلاجية أو الرعاية المجانية. تُشرح الأهلية والنطاق والرسوم بحسب الخدمة التي تختارها.",
+        ctaPrimary: "اختر خدمة",
+        ctaSecondary: "كيف يعمل",
+        demo: "عرض تجريبي (MVP) — لا يتم تحصيل أي دفعة حقيقية.",
         safety: "القرارات الطبية يتخذها مهنيون صحيون مؤهلون. تدعم AURA التقييم والتنسيق والتواصل.",
       },
       entry: {
@@ -3296,9 +3302,10 @@ export const COPY = {
       hero: {
         eyebrow: "مراقبت دیجیتال فرامرزی",
         headline: "مراقبت، بدون مرز.",
-        lede: "با متخصص مناسب دیدار کنید، گزینه‌هایتان را بشناسید و مراقبت خود را هرجا که هستید ادامه دهید — با پشتیبانی چندزبانه از نخستین ارزیابی تا پیگیری.",
-        ctaPrimary: "مراقبت خود را آغاز کنید",
-        ctaSecondary: "AURA چگونه کار می‌کند",
+        lede: "یک مشاوره ویدیویی رزرو کنید، نظر دوم کتبی بخواهید یا درخواست گردشگری سلامت یا مراقبت رایگان را آغاز کنید. واجد شرایط بودن، دامنه و هزینه برای خدمتی که انتخاب می‌کنید توضیح داده می‌شود.",
+        ctaPrimary: "انتخاب خدمت",
+        ctaSecondary: "چگونه کار می‌کند",
+        demo: "دموی MVP — پرداخت واقعی انجام نمی‌شود.",
         safety: "تصمیم‌های پزشکی را متخصصان صلاحیت‌دار سلامت می‌گیرند. AURA از ارزیابی، هماهنگی و ارتباط پشتیبانی می‌کند.",
       },
       entry: {
@@ -3760,9 +3767,10 @@ export const COPY = {
       hero: {
         eyebrow: "Sərhədlərarası rəqəmsal qayğı",
         headline: "Qayğı, sərhədsiz.",
-        lede: "Doğru mütəxəssislə görüşün, seçimlərinizi anlayın və qayğınıza olduğunuz yerdən davam edin — ilk qiymətləndirmədən izləməyə qədər çoxdilli dəstəklə.",
-        ctaPrimary: "Qayğınıza başlayın",
-        ctaSecondary: "AURA necə işləyir",
+        lede: "Video görüş üçün müraciət edin, yazılı ikinci rəy istəyin və ya sağlamlıq turizmi yaxud pulsuz qayğı müraciəti başladın. Uyğunluq, əhatə və ödəniş seçdiyiniz xidmətə görə izah olunur.",
+        ctaPrimary: "Xidmət seçin",
+        ctaSecondary: "Necə işləyir",
+        demo: "MVP demo — real ödəniş alınmır.",
         safety: "Tibbi qərarları səlahiyyətli səhiyyə mütəxəssisləri verir. AURA qiymətləndirmə, koordinasiya və ünsiyyəti dəstəkləyir.",
       },
       entry: {
@@ -4301,9 +4309,10 @@ export const COPY = {
       hero: {
         eyebrow: "Трансгранична дигитална грижа",
         headline: "Грижа отвъд границите.",
-        lede: "Срещнете подходящия специалист, разберете възможностите си и продължете грижата, където и да сте — с многоезична подкрепа от първата оценка до проследяването.",
-        ctaPrimary: "Започнете своята грижа",
-        ctaSecondary: "Вижте как работи AURA",
+        lede: "Запазете видеоконсултация, поискайте писмено второ мнение или започнете кандидатура за здравен туризъм или безплатна грижа. Допустимостта, обхватът и таксите се обясняват за избраната услуга.",
+        ctaPrimary: "Изберете услуга",
+        ctaSecondary: "Как работи",
+        demo: "MVP демо — реално плащане не се взема.",
         safety: "Клиничните решения се вземат от квалифицирани здравни специалисти. AURA подпомага оценката, координацията и комуникацията.",
       },
       entry: {

@@ -12,14 +12,14 @@ import { LANG_CODES } from "@/lib/aura-landing/copy";
 const SITE = SITE_URL;
 
 // Metadata = yeni konumlandırma (brand paketi + v6.14 kullanıcı onaylı metinler):
-// başlık "Care, without borders." · açıklama v2.hero.lede (onaylı 9-dil setinin EN'i).
+// başlık "Care, without borders." · açıklama v2.hero.lede (onaylı 9-dil setinin EN'i; V01/v6.296 A: hizmet bazlı alt açıklama).
 // hreflang KARARI değişmedi: "/" kanonik, 9 dil tek URL (og:locale:alternate);
 // /en…/bg rotaları var ama noindex — indeksleme AYRI kullanıcı kararı ([lang]/page.tsx).
 // İddia disiplini (v6.8): determinist AI dili yok, "end to end" ifadesi tamamen çıktı.
 export const metadata: Metadata = {
   title: { absolute: "AURA — Care, without borders." },
   description:
-    "Meet the right specialist, understand your options and continue your care wherever you are — with multilingual support from first assessment to follow-up.",
+    "Book a video consultation, request a written second opinion, or start a health-tourism or free-care application. Eligibility, scope and fees are explained for the service you choose.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",

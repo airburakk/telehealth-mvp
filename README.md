@@ -1020,7 +1020,13 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   `{consultFee}` USD şikâyet öncesi (simülasyon) · ikinci görüş `{soFee}` USD peşin tek ödeme, yazılı rapor + video (simülasyon) · turizm
   ödemesiz, fiyat görüşmede kesinleşir · ücretsiz kulvar ücret yok. Sözlükte TUTAR YAZILMAZ: yer tutucular render'da `lib/aura-landing/fees.ts
   fillFees` ile `lib/billing CONSULT_FEE_USD` / `lib/second-opinion SO_FEE_USD`'den dolar (tek kaynak; `aura-landing-copy.test` 9 dilde yer
-  tutucu ZORUNLU + literal "60/600 USD" YASAK; `aura-landing-fees.test`). Kalan Paket 5: V02 çapalar · V01 🚪 hero.
+  tutucu ZORUNLU + literal "60/600 USD" YASAK; `aura-landing-fees.test`).
+  · **V01 (v6.296, 2026-09-21 — 👤 karar A + demo rozeti; 9 dil tablosu onaylı):** hero başlığı AYNI ("Care, without borders." — title/OG/
+  sentetik h1 değişmedi); alt açıklama hizmet bazlı (dört yol + "uygunluk, kapsam ve ücret seçtiğiniz hizmete göre açıklanır"); ana CTA
+  "Hizmet seçin" → `#care` (giriş kartları; hasta girişi nav + footer'da kalır), ikincil "Nasıl çalışır?" → `#how`; YENİ `v2.hero.demo`
+  rozeti ("MVP demo — gerçek ödeme alınmaz.", 9 dil, CTA'ların altında mono); `page.tsx` meta açıklaması EN alt açıklamanın kopyası;
+  `[lang]` rotaları sözlükten alır; sentetik `/` `cta: #care`; `aura-landing-copy.test` V01 kilidi. Kalan Paket 5: V02 çapalar
+  (`aura-footer.tsx` + `entry-paths.tsx` "üç modül" oturumunun kirli dosyaları → o karar sonrası ya da hunk-izole).
   · **`/doctorium` V3 (v6.166→168, 2026-08-26 — "Apple estetiği" modernizasyon turu; V2'yi süpersede):**
   bileşenler `components/aura/doctorium-v3/` — **zebra YOK**: hero + 12 bölüm (v6.262; 2026-08-26'da 14'tü) + header + footer tek açık
   zemin (`V3_LIGHT` #fbfbfa; manifesto açık-panel bandı; koyu kutular yalnız `ProductFrame` ürün
