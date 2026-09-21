@@ -392,84 +392,6 @@ export async function generateDischarge(ctx: DischargeContext): Promise<{ sectio
   return { sections, structured };
 }
 
-// ── Sağlık Turizmi Agent'ı — SOAP'tan paket teklifi ──
-// Nihai SOAP'taki tedavi planından paket parametrelerini (süre, tier, hastane, ekstralar) çıkarır.
-// FİYAT HESAPLAMAZ — fiyat her zaman platformun kendi motorunda (lib/pricing computePackage) hesaplanır.
-
-export interface PackageProposal {
-  tier: "Ekonomik" | "Standart" | "Premium";
-  nights: number;
-  hospitalType: "Özel" | "Üniversite";
-  hotelStars: 4 | 5;
-  translator: boolean;
-  insuranceExtended: boolean;
-  insuranceMalpractice: boolean;
-  rationale: string;
-}
-
-export interface ProposalContext {
-  patientName: string;
-  branch: string;
-  countryName: string;
-  language: string;
-  urgency: number;
-}
-
-const PACKAGE_TOOL: Anthropic.Tool = {
-  name: "submit_package",
-  description: "SOAP'taki tedavi planına uygun sağlık turizmi paket parametrelerini döndürür.",
-  input_schema: {
-    type: "object",
-    properties: {
-      tier: { type: "string", enum: ["Ekonomik", "Standart", "Premium"], description: "Vaka karmaşıklığı ve konfor ihtiyacına göre paket seviyesi" },
-      nights: { type: "integer", description: "Türkiye'de toplam konaklama gecesi (işlem + iyileşme + kontrol; 1-21)" },
-      hospitalType: { type: "string", enum: ["Özel", "Üniversite"], description: "Kompleks/onkolojik/nakil vakalarında Üniversite önerilir" },
-      hotelStars: { type: "integer", enum: [4, 5], description: "Otel sınıfı" },
-      translator: { type: "boolean", description: "Hasta dili Türkçe değilse tıbbi tercüman önerilir" },
-      insuranceExtended: { type: "boolean", description: "Genişletilmiş sağlık sigortası" },
-      insuranceMalpractice: { type: "boolean", description: "Cerrahi/invaziv işlemlerde malpraktis sigortası önerilir" },
-      rationale: { type: "string", description: "Türkçe kısa gerekçe: SOAP'taki plana dayanarak bu seçimler neden yapıldı (2-4 cümle)" },
-    },
-    required: ["tier", "nights", "hospitalType", "hotelStars", "translator", "insuranceExtended", "insuranceMalpractice", "rationale"],
-  },
-};
-
-export async function proposePackage(soap: string, ctx: ProposalContext): Promise<PackageProposal> {
-  const res = await client().messages.create({
-    model: MODEL,
-    max_tokens: 1000,
-    system:
-      "Sen bir sağlık turizmi planlama agent'ısın. Doktorun nihai SOAP notundaki tedavi planına göre hastanın Türkiye paketi parametrelerini belirlersin: " +
-      "konaklama süresini işlem + iyileşme + kontrol ve (varsa) uçuş kısıtlarına göre hesapla; kompleks/onkolojik/nakil vakalarda Üniversite hastanesi ve Premium düşün; " +
-      "hasta dili Türkçe değilse tercüman öner; cerrahi/invaziv planlarda malpraktis sigortası öner. FİYAT VERME — fiyatı platform hesaplar. " +
-      "SOAP'ta olmayan bilgiyi uydurma; emin değilsen makul-muhafazakâr seç. Yanıtı DAİMA submit_package aracıyla ver.",
-    tools: [PACKAGE_TOOL],
-    tool_choice: { type: "tool", name: "submit_package" },
-    messages: [{
-      role: "user",
-      content:
-        // 1C: gerçek ad yerine placeholder (PHI AI'a gitmez).
-        `Hasta: ${minimizedName()} (${ctx.countryName}, dil: ${ctx.language})\n` +
-        `Branş: ${ctx.branch} · Triyaj aciliyeti: ${ctx.urgency}/5\n\n` +
-        `Nihai SOAP notu:\n${soap}`,
-    }],
-  });
-
-  const block = res.content.find((b) => b.type === "tool_use");
-  if (!block || block.type !== "tool_use") throw new Error("Paket aracı yanıtı alınamadı.");
-  const p = block.input as Partial<PackageProposal>;
-  return {
-    tier: (["Ekonomik", "Standart", "Premium"] as const).includes(p.tier as never) ? (p.tier as PackageProposal["tier"]) : "Standart",
-    nights: Math.min(21, Math.max(1, Math.round(Number(p.nights) || 5))),
-    hospitalType: p.hospitalType === "Üniversite" ? "Üniversite" : "Özel",
-    hotelStars: Number(p.hotelStars) === 5 ? 5 : 4,
-    translator: !!p.translator,
-    insuranceExtended: !!p.insuranceExtended,
-    insuranceMalpractice: !!p.insuranceMalpractice,
-    rationale: reidentifyName(clean(p.rationale), ctx.patientName), // 1C: placeholder → gerçek ad
-  };
-}
-
 // ── Post-op serbest-metin kırmızı bayrak (Modül 4) ──
 // Hastanın günlük check-in NOTUNU (serbest metin) klinik triyaj asistanı gibi değerlendirir.
 // Kural tabanlı keyword taramasının kaçırdığı nüanslı/bağlamsal bulguları yakalar; sonuç
@@ -735,7 +657,7 @@ export async function assessDocument(
 }
 
 // ── Doctorium (v6.48): hakemli yayın → hekim için 2 dakikalık Türkçe klinik özet ──
-// Zorlanmış tool_use (proposePackage deseni): serbest metin JSON'undan daha güvenilir.
+// Zorlanmış tool_use (submit_* araç deseni — assessPostopNote gibi): serbest metin JSON'undan daha güvenilir.
 // ⚠️ Çıktı KLİNİK KARAR ARACI DEĞİLDİR — arayüz bu uyarıyı göstermek zorundadır.
 // Girdi herkese açık literatür abstract'ıdır; PHI GİRMEZ (de-id/minimizasyon gerekmez).
 const ARTICLE_SUMMARY_TOOL: Anthropic.Tool = {

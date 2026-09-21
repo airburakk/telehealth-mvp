@@ -1,6 +1,6 @@
 // AI veri-minimizasyonu (1C) — hasta KİMLİĞİNİ (ad) AI sağlayıcısına göndermeden klinik AI çıktısı üret.
 //
-// SORUN: summarizeSOAP / generateDischarge / proposePackage, prompt bağlamına gerçek hasta adını
+// SORUN: summarizeSOAP / generateDischarge (ve v6.290'da kaldırılan proposePackage), prompt bağlamına gerçek hasta adını
 //   gömüyordu → PHI (isim) Anthropic'e gidiyordu. Klinik içerik (semptom/öykü) AI görevinin özü olduğu
 //   için kalır; ama AD görev için GEREKSİZ → minimize edilir (KVKK/GDPR veri minimizasyonu ilkesi).
 //
