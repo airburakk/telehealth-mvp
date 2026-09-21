@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 
 // Gemini Live (gerçek zamanlı ses→ses çeviri) için ephemeral (kısa ömürlü) token üretici.
 // Mimari: ham GEMINI_API_KEY sunucuda kalır; tarayıcı yalnız kısa ömürlü token'la Gemini'ye
@@ -25,6 +26,10 @@ export async function GET() {
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
+  // v6.295 — maliyet freni (K7): her token = Gemini Live oturumu (dakika bazlı ücret). Meşru yük: görüşme başına
+  // 1 token + kopmada yeniden bağlanma → 10/dk/kullanıcı. Dormant (anahtarsız) yol da sayılır; zararsız.
+  const rl = await rateLimit(`rt-token:${user.id}`, 10, 60_000);
+  if (!rl.ok) return tooMany(rl.retryAfter);
   if (!enabled()) {
     return NextResponse.json({ enabled: false, error: "Canlı tercüme devre dışı: GEMINI_API_KEY tanımlı değil." }, { status: 503 });
   }

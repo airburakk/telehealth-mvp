@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { canSoCaseBeAccessedBy } from "@/lib/ownership";
 import { translateClinical, UI_LANGS } from "@/lib/i18n";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 
 // POST /api/i18n/clinical — İkinci Görüş KLİNİK serbest-metnini çevirir (uzman görüşü + talep açıklamaları).
 // /api/i18n'in AKSİNE: (1) Translation tablosuna YAZMAZ (önbelleksiz → düz-metin PHI at-rest baypası olmaz),
@@ -10,6 +11,10 @@ import { translateClinical, UI_LANGS } from "@/lib/i18n";
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
+  // v6.295 — maliyet freni (K7): bu uç ÖNBELLEKSİZ (PHI) → her çağrı LLM. Ayrı kova (doktorun SOAP/epikriz
+  // düğmelerinin `ai:` kovasını tüketmesin); meşru yük vaka görüntüleme başına 1-2 istek → 30/dk/kullanıcı.
+  const rl = await rateLimit(`i18n-clinical:${user.id}`, 30, 60_000);
+  if (!rl.ok) return tooMany(rl.retryAfter);
 
   const b = await req.json().catch(() => ({}));
   const soCaseId = typeof b.soCaseId === "string" ? b.soCaseId : "";

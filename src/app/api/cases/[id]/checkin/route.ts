@@ -8,6 +8,7 @@ import { isCurrentUserCasePatient } from "@/lib/ownership";
 import { recoveryClosed } from "@/lib/postop-access";
 import { encryptField } from "@/lib/crypto";
 import { detectDocumentKind } from "@/lib/document-mime";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 
 // Not-AI (Haiku) + Foto-AI (Sonnet vision) paralel çalışır; serverless varsayılan limitini aşmasın diye süre tanı.
 export const maxDuration = 30;
@@ -24,6 +25,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   // OKUMA kapısı (`canAccessCase`) kullanılıyordu → koordinatör/etik/admin ve doktor, hasta adına
   // ağrı/ateş/not/fotoğraf kaydı oluşturabiliyordu (bkz. ownership.ts `isCasePatient` notu).
   if (!(await isCurrentUserCasePatient(c))) return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+  // v6.295 — maliyet freni (K7): her kontrol = AI not değerlendirmesi (+ foto vision). Vaka başına tek hasta →
+  // kova vakaya bağlı; meşru yük günde 1-2 kontrol → 10/dk fazlasıyla bol. Sınır her türlü DB yazımından ÖNCE.
+  const rl = await rateLimit(`checkin:${c.id}`, 10, 60_000);
+  if (!rl.ok) return tooMany(rl.retryAfter);
 
   const recovery = await db.recovery.upsert({
     where: { caseId: c.id },
