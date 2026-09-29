@@ -94,11 +94,11 @@ export default async function CaseDetail({ params }: { params: Promise<{ id: str
   // Ön-yükleme: force-dynamic sayfada <Link> prefetch'i RSC gövdesini koşturmaz → gezinti başına tek kayıt.
   await recordAccess({ actor: user, action: "CASE_VIEW", resourceType: "CASE", resourceId: raw.id, subjectUserId: raw.userId, detail: "kokpit sayfası", ...(await headersMeta()) });
   // Belge üstverisi yalnız TAM erişimde çekilir (önizlemede hiç sorgulanmaz).
-  const documents = await db.caseDocument.findMany({
+  const documents = (await db.caseDocument.findMany({
     where: { caseId: id },
     select: { id: true, label: true, mimeType: true, aiDocType: true, aiSummary: true, aiTranslation: true, aiFlags: true, assessedAt: true },
     orderBy: { createdAt: "asc" },
-  });
+  })).map((d) => ({ ...d, aiSummary: decryptField(d.aiSummary), aiTranslation: decryptField(d.aiTranslation), aiFlags: decryptField(d.aiFlags) })); // AI alanları at-rest şifreli (2026-09-29)
   const c = { ...decryptCaseFields(raw), documents }; // symptoms/reasoning/extra(triyaj yanıtları) at-rest şifreli → kokpit gösterimi için çöz
 
   const u = urgencyStyle(c.urgency);

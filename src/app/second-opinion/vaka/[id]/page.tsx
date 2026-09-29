@@ -64,7 +64,7 @@ export default async function SoCasePage({ params }: { params: Promise<{ id: str
         createdAt: c.createdAt.toISOString(),
         documents: c.documents,
         payment: c.payment,
-        requests: c.requests,
+        requests: c.requests.map((r) => ({ ...r, description: decryptField(r.description) })), // at-rest şifreli (2026-09-29)
         opinion: c.opinion ? { content: decryptField(c.opinion.content), submittedAt: c.opinion.submittedAt.toISOString() } : null,
         appointment: c.appointment ? { id: c.appointment.id, scheduledAt: c.appointment.scheduledAt.toISOString(), status: c.appointment.status, proposedSlots: Array.isArray(c.appointment.proposedSlots) ? (c.appointment.proposedSlots as string[]) : null } : null,
         readyAt: c.readyAt ? c.readyAt.toISOString() : null,

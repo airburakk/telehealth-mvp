@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { decryptField } from "@/lib/crypto";
 import { getCurrentUser } from "@/lib/auth";
 import { BRANCHES } from "@/lib/triage";
 import { ArrowLeft } from "lucide-react";
@@ -56,7 +57,7 @@ export default async function SoReviewPage({ params }: { params: Promise<{ id: s
           patientName: patient?.name ?? "Hasta",
           createdAt: c.createdAt.toISOString(),
           documents: c.documents,
-          requests: c.requests.map((r) => ({ id: r.id, type: r.type, description: r.description, status: r.status })),
+          requests: c.requests.map((r) => ({ id: r.id, type: r.type, description: decryptField(r.description), status: r.status })), // at-rest şifreli
           payment: c.payment,
           appointment: c.appointment ? { id: c.appointment.id, scheduledAt: c.appointment.scheduledAt.toISOString(), status: c.appointment.status } : null,
           assignedDoctorName: assignedDoctor ? `${assignedDoctor.title} ${assignedDoctor.name}` : null,

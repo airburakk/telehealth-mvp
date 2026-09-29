@@ -6,7 +6,7 @@ import { staffAccessClosed } from "@/lib/postop-access";
 import { assessDocument } from "@/lib/ai-clinical";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { loincForBranchLabel } from "@/data/coding";
-import { decryptField } from "@/lib/crypto";
+import { decryptField, encryptField } from "@/lib/crypto";
 import { loadDocument } from "@/lib/storage";
 import { recordAccess, reqMeta } from "@/lib/audit";
 
@@ -64,9 +64,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         where: { id: d.id },
         data: {
           aiDocType: a.docType,
-          aiSummary: a.summary,
-          aiTranslation: a.translation,
-          aiFlags: a.flags,
+          // At-rest şifreli (2026-09-29 kapsam sondası): AI özeti/çevirisi/bayrakları hasta belgesinden türeyen KLİNİK içeriktir;
+          // ConsultationRequestDocument eşdeğerleri zaten şifreliydi, burası düz kalmıştı (üretimde 17 satır). Okuyanlar decryptField.
+          aiSummary: encryptField(a.summary),
+          aiTranslation: encryptField(a.translation),
+          aiFlags: encryptField(a.flags),
           assessedAt: new Date(),
         },
       });
@@ -143,6 +145,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     assessed,
     failed,
     addedLabs,
-    documents: all.map((d) => ({ ...d, assessedAt: d.assessedAt ? d.assessedAt.toISOString() : null })),
+    documents: all.map((d) => ({
+      ...d,
+      aiSummary: decryptField(d.aiSummary), aiTranslation: decryptField(d.aiTranslation), aiFlags: decryptField(d.aiFlags), // at-rest şifreli
+      assessedAt: d.assessedAt ? d.assessedAt.toISOString() : null,
+    })),
   });
 }

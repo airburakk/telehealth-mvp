@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { canSoCaseBeAccessedBy } from "@/lib/ownership";
 import { transitionSoCase, logSoEvent, SoError } from "@/lib/second-opinion-service";
 import { notifyUser } from "@/lib/notify";
+import { encryptField } from "@/lib/crypto";
 
 // POST /api/second-opinion/cases/[id]/request — hasta talebi aç.
 // Talep A (MISSING_DOCUMENT): koordinatör, PENDING_REVIEW → AWAITING_DOCUMENTS.
@@ -45,7 +46,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   await db.secondOpinionRequest.create({
-    data: { caseId: id, type, description: description.slice(0, 1000), requestedBy, requestedById: user.id, status: "PENDING" },
+    // description at-rest şifreli (2026-09-29 kapsam sondası): hastanın/doktorun talep metni klinik bağlam taşır; okuyan üç sayfa decryptField.
+    data: { caseId: id, type, description: encryptField(description.slice(0, 1000)), requestedBy, requestedById: user.id, status: "PENDING" },
   });
   try {
     await transitionSoCase(id, nextStatus, { actorId: user.id, actorRole: user.role });

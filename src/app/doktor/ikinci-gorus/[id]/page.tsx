@@ -128,7 +128,7 @@ export default async function DoctorSoDetailPage({ params }: { params: Promise<{
           diagnosisSummary: decryptField(c.diagnosisSummary),
           patientName: patient?.name ?? "Hasta",
           documents: c.documents,
-          requests: c.requests.map((r) => ({ id: r.id, type: r.type, description: r.description, status: r.status })),
+          requests: c.requests.map((r) => ({ id: r.id, type: r.type, description: decryptField(r.description), status: r.status })), // at-rest şifreli
           opinion: c.opinion
             ? { content: decryptField(c.opinion.content), structured: decryptField(c.opinion.structured), submittedAt: c.opinion.submittedAt.toISOString() }
             : null,
