@@ -15,6 +15,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/components/useT";
 import { langDir } from "@/lib/constants";
+import { LIVE_TRANSLATE_MODEL } from "@/lib/live-translate-model";
 import { Languages, Loader2, KeyRound, Mic, Square, Headphones, AlertTriangle, Volume2, ShieldCheck } from "lucide-react";
 
 type Status = "checking" | "disabled" | "idle" | "connecting" | "live" | "error";
@@ -244,7 +245,7 @@ export function LiveInterpreter({
         translationConfig: { targetLanguageCode: targetLang, echoTargetLanguage: false },
       };
       const session = await ai.live.connect({
-        model: td.model || "gemini-3.5-live-translate-preview",
+        model: td.model || LIVE_TRANSLATE_MODEL, // yedek = token rotasıyla aynı sabit (lib/live-translate-model)
         callbacks: {
           onopen: () => {},
           onmessage: handleMessage,
