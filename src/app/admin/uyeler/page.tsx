@@ -35,6 +35,14 @@ export const metadata = { title: "Üye Analitiği" };
 
 const HOUR = 3600_000;
 
+// Deneme hesabı eşiği (👤 karar 2026-09-29): 06.09.2026 tarihli öğrenci test kaydı ve ondan ÖNCE açılan tüm
+// üyelikler ekibin deneme hesaplarıdır → "Tüm üyeler" listesinde kehribar şerit + soluk metin + "deneme"
+// etiketiyle ayrılır; 07.09.2026 ve sonrası normal görünür. Eşik TR takvim gününe göredir (06.09 23:59:59 +03
+// dahil). Yalnız GÖRSEL işaret: sayılara, pencerelere ve dağılımlara DOKUNMAZ (lansmanda bu kayıtlar zaten
+// silinecek — hafıza prod-hesaplar-test-lansman-sifirlama; o gün bu sabit de kalkar).
+const DEMO_ACCOUNTS_UNTIL = new Date("2026-09-07T00:00:00+03:00");
+const isDemoEra = (createdAt: Date): boolean => createdAt < DEMO_ACCOUNTS_UNTIL;
+
 const ROLE_LABEL: Record<string, string> = {
   PATIENT: "Hasta",
   DOCTOR: "Doktor / Öğrenci",
@@ -299,7 +307,7 @@ export default async function MemberAnalyticsPage() {
 
           <Section
             title="Tüm üyeler"
-            hint="Onaylı ve onay bekleyen HERKES — Doktor Doğrulama Onayı sayfası yalnız bekleyenleri gösterir, onaylanınca oradan düşer. En yeni üye en üstte."
+            hint="Onaylı ve onay bekleyen HERKES — Doktor Doğrulama Onayı sayfası yalnız bekleyenleri gösterir, onaylanınca oradan düşer. En yeni üye en üstte. Kehribar şeritli soluk satırlar 06.09.2026 ve öncesinde açılan deneme hesaplarıdır (öğrenci test kaydı dahil); sonrası normal kayıttır."
           >
             <div className="overflow-x-auto rounded-2xl border border-[var(--c-hairline)]">
               <table className="w-full text-sm">
@@ -315,19 +323,39 @@ export default async function MemberAnalyticsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--c-hairline)]">
-                  {allMembers.map((m, i) => (
-                    <tr key={`${m.p.id}-${i}`}>
-                      <td className="whitespace-nowrap px-3.5 py-2 text-[var(--c-ink-2)]">{m.createdAt.toLocaleDateString("tr-TR")}</td>
-                      <td className="whitespace-nowrap px-3.5 py-2 text-[var(--c-ink-2)]">{m.p.studentTrack ? "Öğrenci" : "Doktor"}</td>
-                      <td className="px-3.5 py-2 font-medium text-[var(--c-ink)]">{m.name}</td>
-                      <td className="px-3.5 py-2">
-                        <a href={`mailto:${m.email}`} className="text-[var(--c-accent)] hover:underline">{m.email}</a>
-                      </td>
-                      <td className="px-3.5 py-2 text-[var(--c-ink-2)]">{m.p.city || "—"}</td>
-                      <td className="px-3.5 py-2 text-[var(--c-ink-2)]">{m.p.branch || "—"}</td>
-                      <td className="whitespace-nowrap px-3.5 py-2 text-[var(--c-ink-2)]">{memberStatus(m.p)}</td>
-                    </tr>
-                  ))}
+                  {allMembers.map((m, i) => {
+                    // Deneme dönemi satırı: kulvar rengi yüzeyi BOYAMAZ (Aura UI kiti) — 3px kenar şeridi + mono
+                    // etiket + çok hafif kehribar zemin + soluk metin. Normal satırda şerit saydam kalır ki
+                    // sütunlar kaymasın.
+                    const demo = isDemoEra(m.createdAt);
+                    const ink = demo ? "text-[var(--c-ink-3)]" : "text-[var(--c-ink-2)]";
+                    const strong = demo ? "text-[var(--c-ink-2)]" : "text-[var(--c-ink)]";
+                    return (
+                      <tr
+                        key={`${m.p.id}-${i}`}
+                        title={demo ? "Deneme hesabı — 06.09.2026 ve öncesi" : undefined}
+                        style={{
+                          borderLeft: `3px solid ${demo ? "var(--c-warning)" : "transparent"}`,
+                          background: demo ? "color-mix(in srgb, var(--c-warning) 9%, transparent)" : undefined,
+                        }}
+                      >
+                        <td className={`whitespace-nowrap px-3.5 py-2 ${ink}`}>
+                          {m.createdAt.toLocaleDateString("tr-TR")}
+                          {demo && (
+                            <span className="aura-mono ml-2 text-[10px] uppercase tracking-[0.16em] text-[var(--c-warning)]">deneme</span>
+                          )}
+                        </td>
+                        <td className={`whitespace-nowrap px-3.5 py-2 ${ink}`}>{m.p.studentTrack ? "Öğrenci" : "Doktor"}</td>
+                        <td className={`px-3.5 py-2 font-medium ${strong}`}>{m.name}</td>
+                        <td className="px-3.5 py-2">
+                          <a href={`mailto:${m.email}`} className={`hover:underline ${demo ? "text-[var(--c-ink-3)]" : "text-[var(--c-accent)]"}`}>{m.email}</a>
+                        </td>
+                        <td className={`px-3.5 py-2 ${ink}`}>{m.p.city || "—"}</td>
+                        <td className={`px-3.5 py-2 ${ink}`}>{m.p.branch || "—"}</td>
+                        <td className={`whitespace-nowrap px-3.5 py-2 ${ink}`}>{memberStatus(m.p)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
