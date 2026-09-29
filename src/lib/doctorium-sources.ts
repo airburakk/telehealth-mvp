@@ -949,6 +949,13 @@ export async function ingestRss(def: RssSourceDef, opts?: IngestOpts): Promise<[
     if (!title || !link) continue;
     if (seen.has(link)) continue;
     seen.add(link);
+    // 🪤 2026-09-29 bulgusu: KLİMİK gibi WordPress kaynaklarında `<link>` yayının GÜNCEL tarihini
+    // taşır — bir yazının yayın tarihi sonradan değiştirilirse (ör. "Dünya Kuduz Günü" gibi yıllık
+    // sabit duyurular güncellenip öne çekildiğinde) permalink de DEĞİŞİR ve aynı içerik yeni bir
+    // externalId ile tekrar "yeni kayıt" sayılır — tazelik penceresi yanılır, aynı başlık günler
+    // sonra yine "bugün geldi" görünür. `<guid>` (RSS'in kalıcı-kimlik alanı, isPermaLink="false"
+    // olsa bile) tam bunun için vardır: yayın düzenlense de DEĞİŞMEZ. Varsa guid, yoksa link.
+    const guid = pick("guid");
     scanned++;
     const summary = pick("description") || pick("summary");
     if (!(def.filter ?? isProfessionallyRelevant)(title, summary)) continue;
@@ -965,7 +972,7 @@ export async function ingestRss(def: RssSourceDef, opts?: IngestOpts): Promise<[
     const mediaUrl = /<(?:media:content|media:thumbnail|enclosure)[^>]+url="([^"]+)"/i.exec(b)?.[1] ?? null;
     const isNew = await upsertArticle({
       source: def.source,
-      externalId: link.slice(-180),
+      externalId: (guid || link).slice(-180),
       module: "sektorel",
       category: def.category ?? categorize(title) ?? "kuresel",
       kind: "haber",

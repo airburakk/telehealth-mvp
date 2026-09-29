@@ -310,6 +310,11 @@ export function decodeFeedText(value: string): string {
   // "&#x2009;" olur, sonra alttaki sayısal kural onu ince boşluğa çevirirdi (doğrusu: düz metin
   // olarak "&#x2009;" kalmalı). Aynı tuzak "&amp;lt;script&amp;gt;" → "<script>" üretiyordu.
   // Sona alındığında ara sonuçta "&" hiç oluşmadığı için sonraki kurallar onu yakalayamaz.
+  // PubMed/Europe PMC/DOAJ başlıkları tür adı/gen/formül için düz `<i>`/`<b>`/`<sub>`/`<sup>` gibi
+  // biçim etiketleri taşıyabilir (2026-09-29 bulgusu: "<i>Bifidobacterium pseudocatenulatum</i>"
+  // görsele ham gitti) — ingest bunları hiç temizlemez. Yalnız bu KAPALI/basit biçim etiketleri
+  // silinir (attribute'suz, sabit ad listesi) — "p < 0.05" gibi gerçek karşılaştırmalar bu deseni
+  // hiç eşlemez, o yüzden zarar görmez.
   return value
     .replace(/&nbsp;/gi, " ")
     .replace(/&quot;/gi, '"')
@@ -318,7 +323,8 @@ export function decodeFeedText(value: string): string {
     .replace(/&gt;/gi, ">")
     .replace(/&#x([0-9a-f]+);/gi, (match, hex: string) => codePoint(match, hex, 16))
     .replace(/&#(\d+);/g, (match, decimal: string) => codePoint(match, decimal, 10))
-    .replace(/&amp;/gi, "&");
+    .replace(/&amp;/gi, "&")
+    .replace(/<\/?(?:i|b|u|em|strong|sub|sup)>/gi, "");
 }
 
 function toFeedItem(r: Row): FeedItem {
