@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AuraWordText } from "@/components/aura/aura-word";
+import { CareSiteLinks } from "@/components/aura/care-site-links";
 import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
 import { LINKS, VIDEOS, useLang, type Copy } from "@/lib/aura-landing/i18n";
 
@@ -28,8 +29,8 @@ type Card = Copy["v2"]["entry"]["cards"][number];
 // (landing chapters ile birebir aynı hedefler), çeviriye tabi değil.
 const HREF: Record<string, string> = {
   consult: "/giris",
-  so: LINKS.secondOpinion,
-  tourism: "/giris",
+  so: "/care/second-opinion",
+  tourism: "/care/medical-tourism",
   freecare: LINKS.freeCare,
 };
 
@@ -187,8 +188,8 @@ export function V2EntryPaths() {
 
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {e.cards.map((c, i) => (
+            <div key={c.key} className="grid row-span-2 grid-rows-subgrid gap-3">
             <EntryCard
-              key={c.key}
               card={c}
               active={i === active}
               onActivate={activate(i)}
@@ -196,6 +197,8 @@ export function V2EntryPaths() {
                 cardRefs.current[i] = el;
               }}
             />
+            <CareSiteLinks service={c.key} />
+            </div>
           ))}
         </div>
       </div>
@@ -249,6 +252,7 @@ function EntryCard({
         {card.cta}
         <span aria-hidden>→</span>
       </Link>
+
     </article>
   );
 }

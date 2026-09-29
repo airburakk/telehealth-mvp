@@ -1275,3 +1275,25 @@ maskeleme kullanıcı kutularına + standart kurallara dayanır, otomatik yazı 
   telefonu; bu katman sistemin bilmediği düz adları) → doktor havuzuna hasta kimliği sızmaz.
 - KVKK/GDPR: gerçek hasta verisi işlemeden önce veri işleme sözleşmeleri (DPA/SCC), AI sağlayıcı
   aktarım güvenceleri ve uygun bölge (AB/TR) seçimi gerekir (bkz. vault `wiki/kavramlar/`).
+
+## Üç modül vitrini — 2026-09-20 (🚀 yayın 2026-09-30, v6.304) [S1+S2+S3]
+
+`/care/second-opinion`, `/care/medical-tourism`, `/care/medical-aesthetics`: modüle özel küçük header ve sloganlı footer, dokuz dilde landing, onaylı temsili görseller, mobil düzen ve SSS. Metinler `src/lib/aura-modules/copy.ts`, rota/başvuru eşlemesi `catalog.ts`, görünüm `src/components/aura/modules/` içindedir. Mevcut ikinci görüş başvurusu korunur; turizm ve estetik mevcut `/saglik-turizmi` talep formuna gider. Yeni klinik arka uç, env veya migration yoktur.
+
+Üç alan adının kökü (www dahil) `next.config.ts` ile ana AURA alanındaki ilgili `/care/*` sayfasına 307 yönlenir. Bu, ayrı alan adında barındırma değildir; adres çubuğu ana AURA alanına geçer. DNS/SSL/Vercel bağlantısı henüz yapılmadı. Ayrıntılar: komşu vault `output/aura-uc-modul-uygulama-2026-09-20.md`.
+
+16 bilgilendirme rehberi `/care/[module]/[guide]` altında statik üretilir; `guide-index.ts` gezinme/başlık/sitemap, `guides.ts` Türkçe-İngilizce gövde ve kaynak verisidir. Diğer dillerde rehber İngilizce gösterilir ve bu sınır açıkça belirtilir. Türkiye verileri kaynak tarihiyle sunulur; AURA ağı sayıları değildir. Header ana vitrin ölçüsündedir (32px simge, 10px wordmark, 64px bant); modül adı dikey ayırıcıyla yandadır. Footer sloganları dokuz dilde ayrıdır.
+
+Rehber genişletmesi (20.09.2026): 12 rehber 6–7 bölüm; ek içerik `guide-depth.ts`. Kullanıcının onayladığı üç fotoğraf seçkisi `public/assets/modules/guides/` içinde korunur. `GuidePhoto` ilgili kareyi ayrı görsel penceresinde gösterir (açılış + metin içi); Next Image optimizasyonu, alt metin ve görünür temsili görsel açıklaması vardır. Okuma süresi içerikten hesaplanır.
+
+
+### Yerel modül rehberleri — 20.09.2026 içerik revizyonu [S1+S2+S3]
+
+Modül adları Sağlık Turizmi / İkinci Görüş / Medikal Estetik olarak tutarlı. Sağlık Turizmi rehberi ve altı Medikal Estetik rehberi AURA’nın gerçek iki başlangıç yolu, değiştirilebilir branş önerisi, doktor değerlendirmesi ve acente teklifi akışıyla TR/EN yenilendi. Ortak tedavi formu ve branş görüşmesi bağlantıları ayrı sunulur. Onaylı görseller ve genel bilgilendirme korunur. Yerel önizleme; commit/push/deploy yok. `tourism-journey.ts` ve `aesthetics-journey.ts` ürün akışlarını taşır; tıbbi genel bölümler mevcut kaynaklarla korunur. API, şema ve ortam değişkeni değişmedi.
+
+
+### [S1+S2+S3] Medikal Estetik ayrıntıları — 20.09.2026 (yerel)
+
+Yüz Estetiği, Burun Cerrahisi, Meme Cerrahisi ve Vücut Şekillendirme için sekizer bölümlü TR/EN rehberler eklendi; toplam 16 rehber. Menü, sitemap ve Estetik Cerrahi içi bağlantılar güncel. Sekiz yeni görsel kullanıcıya gösterildi, onay bekliyor; yeni dört sayfaya henüz bağlanmadı. Sağlık Turizmi rehberindeki laptop ekranı kullanıcının talebiyle AURA ana sayfası görseliyle güncellendi. Üretim derlemesi/TypeScript, modül ESLint ve 16 rota denetimi başarılı. Yerel önizleme tamamlanan derlemenin `.aura-preview/production` kopyasından 3105 portunda çalışır; diğer `.next` derlemelerinden bağımsızdır. Commit/push/deploy yok.
+
+Yeni klinik içerik `src/lib/aura-modules/surgery-guides.ts`; görsel onayı olmayan rehberlerde `hasGuidePhoto` tek sütunlu başlık düzenine geçer.

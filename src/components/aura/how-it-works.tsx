@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChapterCta, type ChapterData } from "./chapters";
+import { CareSiteLinks } from "./care-site-links";
 import { AuraClosing } from "./closing";
 import { AuraWordText } from "./aura-word";
 import { fillFees } from "@/lib/aura-landing/fees";
@@ -147,7 +148,10 @@ function HiwGuide({
   return (
     <section id={`hiw-${g.key}`} className="scroll-mt-16 border-t border-[var(--aura-hairline)]">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 md:grid-cols-2 md:gap-14 md:px-8 md:py-24">
-        <GuideVideo videoKey={g.key} flip={flip} />
+        <div className={"space-y-4" + (flip ? " md:order-2" : "")}>
+          <CareSiteLinks service={g.key} />
+          <GuideVideo videoKey={g.key} />
+        </div>
         <div>
           <p className="aura-mono text-sm">
             <span className="aura-badge">
@@ -197,7 +201,7 @@ function HiwGuide({
 // Kaynak preload="none" ile ancak kullanıcı "rehberi izle" deyince bağlanır
 // (720p, ~1 MB). Oynatma başladıktan sonra IO görünürken sürdürür, çıkınca
 // duraklatır; reduced-motion'da da poster kalır, açık istekle oynatma serbest.
-function GuideVideo({ videoKey, flip }: { videoKey: string; flip: boolean }) {
+function GuideVideo({ videoKey }: { videoKey: string }) {
   const v = HIW_VIDEOS[videoKey as keyof typeof HIW_VIDEOS];
   const { t, lang } = useLang();
   const ref = useRef<HTMLVideoElement>(null);
@@ -225,8 +229,7 @@ function GuideVideo({ videoKey, flip }: { videoKey: string; flip: boolean }) {
   return (
     <div
       className={
-        "relative overflow-hidden rounded-[22px] border border-[var(--aura-hairline)] bg-[var(--aura-panel)]" +
-        (flip ? " md:order-2" : "")
+        "relative overflow-hidden rounded-[22px] border border-[var(--aura-hairline)] bg-[var(--aura-panel)]"
       }
     >
       <video

@@ -61,3 +61,6 @@ next-env.d.ts
 .association-watch-state.json
 # veri nöbetçisi koşum çıktısı (scripts/data-watch.mjs) — workflow okur, repoya girmez
 data-watch-findings.json
+
+# Yerel AURA önizlemesi: diğer derlemelerden ve Tailwind taramasından ayrı.
+/.aura-preview/

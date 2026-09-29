@@ -1,3 +1,4 @@
+import { GUIDE_INDEX, guidePath } from "@/lib/aura-modules/guide-index";
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/aura-landing/seo";
 import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
@@ -35,6 +36,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     entry("/", 1.0, "weekly"),
+    entry("/care/second-opinion", 0.8, "monthly"),
+    ...GUIDE_INDEX.map(item => entry(guidePath(item.module, item.slug), 0.6, "monthly")),
+    entry("/care/medical-tourism", 0.8, "monthly"),
+    entry("/care/medical-aesthetics", 0.8, "monthly"),
     entry("/how-it-works", 0.9, "monthly"),
     entry("/guven-ve-gizlilik", 0.8, "monthly"), // Güven ve Gizlilik (kanonik; /trust → 301)
     entry("/for-clinicians", 0.7, "monthly"), // doktor-yüzü vitrin (v6.17)

@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { AuraLockup } from "@/components/AuraLogo";
 import { AuraWordText } from "@/components/aura/aura-word";
 import { useEffect, useState } from "react";
 import { LangProvider, useLang, LINKS, LANG_CODES, type Lang } from "@/lib/aura-landing/i18n";
+import { DOCTORIUM_CANONICAL_URL } from "@/lib/brand";
+import { LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
 import { langCodeFor, LANG_CHANGE_EVENT } from "@/lib/constants";
 
 // AURA alt bilgisi — vitrin + uygulama yüzeylerinin ORTAK footer'ı (kullanıcı kararı 2026-08-18).
@@ -22,21 +25,21 @@ import { langCodeFor, LANG_CHANGE_EVENT } from "@/lib/constants";
 // ⚠️ useLang() zorunlu: metinler vitrin sözlüğünden gelir. Uygulama ağacında LangProvider
 // YOK — sarmalanmamış render REACT HATASI verir. AppAuraFooter (aşağıda) bu yüzden var;
 // uygulama tarafında DAİMA onu kullan.
-export function AuraFooter({ accountLinks = false }: { accountLinks?: boolean }) {
+export function AuraFooter({ accountLinks = false, brand, tagline }: { accountLinks?: boolean; brand?: ReactNode; tagline?: string }) {
   const { t } = useLang();
   const f = t.footer;
 
   return (
     <footer className="border-t border-[var(--aura-hairline)] bg-[var(--aura-bg)] print:hidden">
-      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[2fr_1fr_1fr_1fr] md:px-8">
+      <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr_1.35fr] md:px-8">
         <div>
           {/* Tam lockup (kullanıcı kararı 2026-08-23): küre + AURA + GLOBAL CARE (braille v6.138'de
               site genelinden kaldırıldı). H=30 → küre 80px, wordmark 156px, alt yazı 9,7px. */}
-          <AuraLockup wordHeight={30} />
+          {brand ?? <AuraLockup wordHeight={30} />}
 
           {/* Metin içi AURA = wordmark görseli (kullanıcı kuralı 2026-08-17). */}
           <p className="mt-4 max-w-[38ch] text-sm leading-relaxed text-[var(--aura-grey)]">
-            <AuraWordText text={t.chapters[0].body} />
+            <AuraWordText text={tagline ?? t.chapters[0].body} />
           </p>
         </div>
         <div>
@@ -153,6 +156,28 @@ export function AuraFooter({ accountLinks = false }: { accountLinks?: boolean })
             </li>
           </ul>
         </div>
+        <nav aria-label="Aura World">
+          <h2 className="aura-display text-sm font-bold"><AuraWordText text="Aura World" /></h2>
+          <ul className="mt-3 space-y-2 text-sm text-[var(--aura-grey)]">
+            {[
+              { label: "Aura Global Care", href: "https://auraglobalcare.com" },
+              { label: "Aura Second Opinion", href: "/care/second-opinion" },
+              { label: "Aura Medical Tourism", href: "/care/medical-tourism" },
+              { label: "Aura Medical Aesthetics", href: "/care/medical-aesthetics" },
+              { label: "Doctorium", href: DOCTORIUM_CANONICAL_URL },
+              { label: "Doctorium Student", href: `${DOCTORIUM_CANONICAL_URL}${LANDING_ROUTES.student}` },
+            ].map(({ label, href }) => (
+              <li key={label}>
+                <a href={href} className="inline-flex items-center gap-1.5 py-0.5 transition-colors hover:text-[var(--aura-accent)]">
+                  <span><AuraWordText text={label} /></span>
+                  {/* Dış-bağlantı oku yalnız gerçekten dışarı çıkan adreslerde; üç modül alan adı Vercel'e bağlanana
+                      dek /care/* iç yollarına gider (2026-09-30), o satırlarda ok çizilmez. */}
+                  {!href.startsWith("/") && <span aria-hidden="true">↗</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
       <div className="border-t border-[var(--aura-hairline)]">
         <p className="aura-mono mx-auto max-w-6xl px-5 py-5 text-[11px] text-[var(--aura-micro)] md:px-8">
