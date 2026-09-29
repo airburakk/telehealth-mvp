@@ -81,7 +81,7 @@ export const NEWS_QUERIES: Record<string, string> = {
   "Çocuk Sağlığı ve Hastalıkları": "pediatrics[mh]",
   "Genel Cerrahi": "general surgery[mh]",
   "Göğüs Cerrahisi": "thoracic surgical procedures[mh]",
-  "Estetik Cerrahi": "surgery, plastic[mh]",
+  "Plastik, Rekonstrüktif ve Estetik Cerrahi": "surgery, plastic[mh]",
   "Saç Ekimi": "hair diseases[mh] OR alopecia[mh]",
   "Endokrinoloji ve Metabolizma": "endocrine system diseases[mh] OR metabolic diseases[mh]",
   Gastroenteroloji: "gastrointestinal diseases[mh]",

@@ -13,7 +13,7 @@ const DOCTORS = [
   { name: "Caner Aksoy", title: "Op. Dr.", branch: "Ortopedi", city: "İzmir", languages: "Türkçe,İngilizce", color: "#0e7490", bio: "Diz ve kalça protezi, spor yaralanmaları, artroskopi." },
   { name: "Elif Kaya", title: "Doç. Dr.", branch: "Tüp Bebek (IVF)", city: "İstanbul", languages: "Türkçe,Rusça,İngilizce", color: "#7c3aed", bio: "Üreme endokrinolojisi ve IVF. Yüksek başarı oranlı laboratuvar." },
   { name: "Burak Şahin", title: "Op. Dr.", branch: "Saç Ekimi", city: "İstanbul", languages: "Türkçe,İngilizce,Arapça", color: "#b45309", bio: "FUE ve DHT saç ekimi, sakal ve kaş ekimi." },
-  { name: "Selin Arslan", title: "Op. Dr.", branch: "Estetik Cerrahi", city: "İstanbul", languages: "Türkçe,Rusça", color: "#be185d", bio: "Rinoplasti, meme estetiği ve vücut şekillendirme." },
+  { name: "Selin Arslan", title: "Op. Dr.", branch: "Plastik, Rekonstrüktif ve Estetik Cerrahi", city: "İstanbul", languages: "Türkçe,Rusça", color: "#be185d", bio: "Rinoplasti, meme estetiği ve vücut şekillendirme." },
   { name: "Hakan Çelik", title: "Prof. Dr.", branch: "Nöroşirürji", city: "Ankara", languages: "Türkçe,İngilizce", color: "#1d4ed8", bio: "Omurga cerrahisi, bel ve boyun fıtığı, beyin tümörleri." },
   { name: "Deniz Yalçın", title: "Uzm. Dr.", branch: "Dahiliye (İç Hastalıkları)", city: "İstanbul", languages: "Türkçe,İngilizce", color: "#047857", bio: "İç hastalıkları, diyabet ve genel tıbbi değerlendirme." },
   // ── Tüm klinik branşları kapsamak için eklenen hekimler ──
@@ -344,7 +344,7 @@ async function main() {
 
   // Natalia (Estetik · rinoplasti) — normal seyreden post-op takibi
   if (byName["Natalia V."]) {
-    const natalia = await db.recovery.create({ data: { caseId: byName["Natalia V."], branch: "Estetik Cerrahi", startedAt: new Date(Date.now() - 6 * 86400000) } });
+    const natalia = await db.recovery.create({ data: { caseId: byName["Natalia V."], branch: "Plastik, Rekonstrüktif ve Estetik Cerrahi", startedAt: new Date(Date.now() - 6 * 86400000) } });
     const nataliaCheckins = [
       { pain: 4, feverC: 37.0, meds: true, note: "Burun bölgesinde şişlik ve hafif morluk var, beklenen düzeyde.", days: 5 },
       { pain: 2, feverC: 36.6, meds: true, note: "Şişlik azaldı, atel çıkarıldı, genel durum iyi.", days: 2 },

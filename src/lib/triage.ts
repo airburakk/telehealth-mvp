@@ -16,13 +16,13 @@ export interface BranchDef {
 }
 
 export const BRANCHES: BranchDef[] = [
-  // ── Mevcut branşlar (etiketler değiştirilmedi — seed doktor eşleşmesi korunur) ──
+  // ── Mevcut branşlar (etiket = VERİ; değişince BRANCH_LABEL_ALIASES'a eski dize eklenir + scripts/rename-branch-label.ts) ──
   { key: "onkoloji", label: "Onkoloji", keywords: ["kanser", "tümör", "tumor", "onkoloji", "kitle", "metastaz", "biyopsi", "lenf", "kemoterapi", "ur"] },
   { key: "kardiyoloji", label: "Kardiyoloji", keywords: ["kalp", "göğüs ağrı", "çarpıntı", "tansiyon", "kardiyo", "ritim", "damar", "bypass", "stent"] },
   { key: "ortopedi", label: "Ortopedi", keywords: ["diz", "kalça", "omuz", "kemik", "kırık", "eklem", "bel ağrı", "menisk", "protez", "kıkırdak", "topuk"] },
   { key: "norosirurji", label: "Nöroşirürji", keywords: ["beyin", "omurga", "disk", "felç", "omurilik", "beyin tümör", "bel fıtığı ameliyat"] },
   { key: "sac-ekimi", label: "Saç Ekimi", keywords: ["saç", "saç dökül", "greft", "fue", "dht", "kellik", "ekim", "sakal ekim"] },
-  { key: "estetik", label: "Estetik Cerrahi", keywords: ["estetik", "burun", "rinoplasti", "liposuction", "meme", "yağ ald", "germe", "botoks", "dolgu", "plastik cerrahi"] },
+  { key: "estetik", label: "Plastik, Rekonstrüktif ve Estetik Cerrahi", keywords: ["estetik", "burun", "rinoplasti", "liposuction", "meme", "yağ ald", "germe", "botoks", "dolgu", "plastik cerrahi", "rekonstrüktif"] },
   { key: "ivf", label: "Tüp Bebek (IVF)", keywords: ["tüp bebek", "ivf", "kısırlık", "infertilite", "yumurtlama", "embriyo", "aşılama", "gebe kalamı"] },
   { key: "dis", label: "Diş Tedavisi", keywords: ["diş", "implant", "kanal", "ortodonti", "gülüş", "dolgu diş", "çene", "kaplama diş"] },
   { key: "goz", label: "Göz Cerrahisi", keywords: ["göz", "katarakt", "lasik", "retina", "görme", "miyop", "şaşılık", "glokom"] },
@@ -72,6 +72,30 @@ export const BRANCHES: BranchDef[] = [
 /// başvurusu ve partner konsültasyon talebi BUNU kullanır (vaka yönlendirme ekseni).
 /// Doktor yüzeyi (Doctorium süzgeçleri, doktor profili, admin) tam `BRANCHES` kümesini kullanır.
 export const PATIENT_BRANCHES: BranchDef[] = BRANCHES.filter((b) => !b.doctorOnly);
+
+/**
+ * ESKİ ETİKET TAKMA ADLARI (2026-09-29): etiket yalnız arayüz yazısı değil, VERİDİR — Doctor/Case/Recovery/Booking/
+ * ConsultAppointment/ConsultationRequest/PartnerDoctor `branch` kolonları etiket dizesini saklar; NEWS_QUERIES ve demo
+ * profil zenginleştirmesi etiketle indekslidir. Bir etiket değişince eski dize buraya eklenir: `branchKeyForLabel` ve
+ * `canonicalBranchLabel` eski kayıtları da tanır (kademeli geçiş), veri taşıması `scripts/rename-branch-label.ts`
+ * (dev + üretim, dry-run varsayılan). Sözlükler (hukuk-keywords · ttb-events · association-sources) anahtarla çalışır.
+ *   "Estetik Cerrahi" → estetik  (👤 2026-09-29: "Plastik, Rekonstrüktif ve Estetik Cerrahi" — TUK resmî dal adı; her yüzeyde tek etiket)
+ */
+export const BRANCH_LABEL_ALIASES: Record<string, string> = { "Estetik Cerrahi": "estetik" };
+const KEY_BY_LABEL: Record<string, string> = Object.fromEntries(BRANCHES.map((b) => [b.label, b.key]));
+const LABEL_BY_KEY: Record<string, string> = Object.fromEntries(BRANCHES.map((b) => [b.key, b.label]));
+
+/** Etiket (güncel ya da eski takma ad) → branş anahtarı; tanınmıyorsa null. */
+export function branchKeyForLabel(label: string | null | undefined): string | null {
+  if (!label) return null;
+  return KEY_BY_LABEL[label] ?? BRANCH_LABEL_ALIASES[label] ?? null;
+}
+
+/** Eski takma adı güncel etikete çevirir; güncel/tanınmayan/boş dize aynen döner. */
+export function canonicalBranchLabel(label: string): string {
+  const key = BRANCH_LABEL_ALIASES[label];
+  return key ? (LABEL_BY_KEY[key] ?? label) : label;
+}
 
 const RED_FLAGS_5 = ["nefes darlığı", "göğüs ağrı", "bilinç", "felç", "şiddetli kanama", "kanama", "inme", "bayıl", "39", "40 derece", "kan kus", "morar"];
 const RED_FLAGS_4 = ["ateş", "kusma", "şiddetli ağrı", "kanlı", "ani ", "yüksek tansiyon", "şişlik hızl"];

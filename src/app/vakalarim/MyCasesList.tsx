@@ -10,7 +10,7 @@ import { createElement, useMemo, useState } from "react";
 import { useT } from "@/components/useT";
 import { usePatientLang, PatientLangSelect } from "@/components/PatientLocale";
 import { countryFlag, CASE_STATUS, formatDateTime, langDir, LANG_BCP47 } from "@/lib/constants";
-import { BRANCHES } from "@/lib/triage";
+import { BRANCHES, branchKeyForLabel } from "@/lib/triage";
 import { BranchAvatar } from "@/components/BranchAvatar";
 import { SO_STATUS_LABELS, type SoStatus } from "@/lib/second-opinion";
 import { FolderHeart, Plus, ArrowRight, Stethoscope, HeartPulse, Plane, FileText, HeartHandshake, Bell, X, SlidersHorizontal, ChevronRight } from "lucide-react";
@@ -260,7 +260,7 @@ export function MyCasesList({
           {items.map((m) => {
             if (m.kind === "so") {
               const c = m.row;
-              const branchKey = BRANCHES.find((b) => b.label === c.branchLabel)?.key;
+              const branchKey = branchKeyForLabel(c.branchLabel) ?? undefined; // eski etiketli vaka da çözülür
               return (
                 <GlassCase
                   key={`so-${c.id}`}

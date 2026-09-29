@@ -2,13 +2,13 @@
 // TEK KAYNAK: ücret, süreler ve hasta-yüzü süre metni buradan beslenir (spec §11/§12.3).
 // Boundary spec §4 (state machine). İADE POLİTİKASI PARK (§9.1) → ödeme sonrası iptal
 // bilinçli olarak modellenmedi; iptal yalnız ödeme öncesi (DRAFT / AWAITING_PAYMENT).
-import { BRANCHES } from "@/lib/triage";
+import { BRANCHES, branchKeyForLabel } from "@/lib/triage";
 
 // SO vakası branşı BRANCHES.key ("onkoloji") saklar; Doctor.branch etiket ("Onkoloji") tutar.
 // Doktor-vaka branş karşılaştırması/sorgusu iki biçimi de kapsamalı — tekil karşılaştırma
 // sessizce hiç eşleşmiyordu (oto-atama null, havuz boş, accept 403; 2026-07-12 Faz 3'te yakalandı).
 export function soBranchVariants(branch: string): string[] {
-  const b = BRANCHES.find((x) => x.key === branch || x.label === branch);
+  const b = BRANCHES.find((x) => x.key === branch || x.key === branchKeyForLabel(branch)); // etiket: güncel ya da eski takma ad
   return b ? [...new Set([b.key, b.label])] : [branch];
 }
 

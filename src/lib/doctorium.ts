@@ -10,7 +10,7 @@ import { createHash } from "crypto";
 import { db } from "./db";
 import { translateText, summarizeArticleForClinician, summarizeRegulationForClinician } from "./ai-clinical";
 import { fetchDocumentText } from "./doctorium-sources";
-import { BRANCHES } from "./triage";
+import { BRANCHES, BRANCH_LABEL_ALIASES } from "./triage";
 // SECTOR_CATEGORIES aşağıda hem RE-EXPORT edilir (dış çağıranlar için) hem burada parseViewPrefs
 // (v6.142) İÇİNDE kullanılır — `export {X} from "Y"` yalnız re-export'tur, bu dosyada X'i yerel
 // bir bağlayıcı YAPMAZ (SECTOR_CATEGORIES.some(...) sessizce ReferenceError verip try/catch'e
@@ -236,7 +236,7 @@ export function branchLabel(slug: string): string {
   return LABEL_BY_SLUG[slug] ?? slug;
 }
 export function slugForLabel(label: string | null | undefined): string | null {
-  return label ? SLUG_BY_LABEL[label] ?? null : null;
+  return label ? SLUG_BY_LABEL[label] ?? BRANCH_LABEL_ALIASES[label] ?? null : null; // eski etiketli kayıt da çözülür
 }
 
 /** Saklanan JSON'u güvenle çöz — bozuk/eski veri akışı düşürmesin. */

@@ -62,7 +62,7 @@ async function main() {
   // Natalia (Estetik · rinoplasti) — normal seyreden post-op takibi (yalnız bu çalıştırmada eklendiyse)
   const nataliaId = byName["Natalia V."];
   if (nataliaId && addedNames.has("Natalia V.")) {
-    const rec = await db.recovery.create({ data: { caseId: nataliaId, branch: "Estetik Cerrahi", startedAt: new Date(Date.now() - 6 * 86400000) } });
+    const rec = await db.recovery.create({ data: { caseId: nataliaId, branch: "Plastik, Rekonstrüktif ve Estetik Cerrahi", startedAt: new Date(Date.now() - 6 * 86400000) } });
     const checkins = [
       { pain: 4, feverC: 37.0, meds: true, note: "Burun bölgesinde şişlik ve hafif morluk var, beklenen düzeyde.", days: 5 },
       { pain: 2, feverC: 36.6, meds: true, note: "Şişlik azaldı, atel çıkarıldı, genel durum iyi.", days: 2 },

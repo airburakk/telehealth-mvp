@@ -8,6 +8,8 @@
 // bayrağını geçirir (lib/doctor-demo). GERÇEK profilde eksik alan üretilmez: null döner, arayüz "bilgi eklenmedi"
 // yazar ya da satırı gizler. Yıllar hiçbir modda deneyimden türetilmez… (demo'da eski davranış korunur).
 
+import { canonicalBranchLabel } from "./triage"; // eski etiketli (Estetik Cerrahi) kayıt → güncel etiketle harita okunur
+
 export interface ProfileMode {
   /** true = seed/demo profil (render-üretimli zenginleştirme + "Demo profil" etiketi); false = gerçek doktor, üretim YOK. */
   demo: boolean;
@@ -76,7 +78,7 @@ const BRANCH_INFO: Record<string, { board: string; certs: string[]; focus: strin
   "Ortopedi": { board: "Ortopedi ve Travmatoloji Uzmanlık Belgesi", certs: ["EFORT (Avrupa Ortopedi) üyeliği", "Artroskopik Cerrahi sertifikası", "Eklem Protezi ileri eğitim sertifikası"], focus: "Diz/kalça protezi ve artroskopik spor yaralanması cerrahisinde uzmanlaşmıştır." },
   "Nöroşirürji": { board: "Beyin ve Sinir Cerrahisi Uzmanlık Belgesi", certs: ["EANS (Avrupa Nöroşirürji) üyeliği", "Spinal Cerrahi ileri sertifikası", "Mikrocerrahi eğitim sertifikası"], focus: "Omurga ve kafa tabanı mikrocerrahisinde ileri deneyime sahiptir." },
   "Saç Ekimi": { board: "Dermatoloji / Saç Restorasyonu yeterliliği", certs: ["ISHRS (Uluslararası Saç Restorasyon Cerrahisi Derneği) üyeliği", "FUE/DHT ileri teknik sertifikası", "Medikal Estetik sertifikası"], focus: "FUE ve DHT tekniklerinde binlerce başarılı greft transferi deneyimi vardır." },
-  "Estetik Cerrahi": { board: "Plastik, Rekonstrüktif ve Estetik Cerrahi Uzmanlık Belgesi", certs: ["ISAPS (Uluslararası Estetik Cerrahi Derneği) üyeliği", "Rinoplasti ileri eğitim sertifikası", "Türk Plastik Cerrahi Derneği üyeliği"], focus: "Yüz ve vücut estetiğinde doğal sonuç odaklı cerrahi yaklaşımı benimser." },
+  "Plastik, Rekonstrüktif ve Estetik Cerrahi": { board: "Plastik, Rekonstrüktif ve Estetik Cerrahi Uzmanlık Belgesi", certs: ["ISAPS (Uluslararası Estetik Cerrahi Derneği) üyeliği", "Rinoplasti ileri eğitim sertifikası", "Türk Plastik Cerrahi Derneği üyeliği"], focus: "Yüz ve vücut estetiğinde doğal sonuç odaklı cerrahi yaklaşımı benimser." },
   "Tüp Bebek (IVF)": { board: "Kadın Hastalıkları ve Doğum + Üreme Endokrinolojisi", certs: ["ESHRE (Avrupa İnsan Üremesi Derneği) üyeliği", "Klinik Embriyoloji sertifikası", "Üremeye Yardımcı Tedavi (ÜYTE) sertifikası"], focus: "Üreme endokrinolojisi ve yüksek başarılı IVF laboratuvar süreçlerinde deneyimlidir." },
   "Diş Tedavisi": { board: "Diş Hekimliği Diploması + İmplantoloji", certs: ["ITI (Uluslararası İmplantoloji) üyeliği", "Dijital Gülüş Tasarımı (DSD) sertifikası", "İleri İmplantoloji sertifikası"], focus: "Dijital diş hekimliği ve implant destekli gülüş tasarımında uzmanlaşmıştır." },
   "Göz Cerrahisi": { board: "Göz Hastalıkları Uzmanlık Belgesi", certs: ["ESCRS (Avrupa Katarakt & Refraktif Cerrahi) üyeliği", "LASIK/SMILE refraktif cerrahi sertifikası", "Katarakt & akıllı lens sertifikası"], focus: "Refraktif lazer ve akıllı lens cerrahisinde geniş vaka deneyimine sahiptir." },
@@ -122,7 +124,7 @@ export function doctorCredentials(d: DoctorLike, mode: ProfileMode = { demo: tru
     };
   }
   const seed = hash(d.name);
-  const info = BRANCH_INFO[d.branch] ?? genericInfo(d.branch);
+  const info = BRANCH_INFO[canonicalBranchLabel(d.branch)] ?? genericInfo(d.branch);
   // Yıl yalnız gerçek veriden türetilir: specYear yoksa deneyim yılından; o da null ise yıl ÜRETİLMEZ.
   const uzmanlikYear = d.specYear ?? (d.experienceYears != null ? Math.max(1995, 2026 - Math.max(1, d.experienceYears)) : null);
   const diplomaYear = d.eduYear ?? (uzmanlikYear != null ? uzmanlikYear - 5 : null);
@@ -134,7 +136,7 @@ export function doctorCredentials(d: DoctorLike, mode: ProfileMode = { demo: tru
 }
 
 export function richBio(d: DoctorLike, baseBio: string | null, mode: ProfileMode = { demo: true }): string {
-  const info = BRANCH_INFO[d.branch] ?? genericInfo(d.branch);
+  const info = BRANCH_INFO[canonicalBranchLabel(d.branch)] ?? genericInfo(d.branch);
   const langs = d.languages.split(",").map((s) => s.trim()).filter(Boolean).join(", ");
   const base = (baseBio ?? "").trim();
   // Deneyim cümlesi yalnız gerçek veri varken kurulur (null = veri yok → yıl iddiası yok).
