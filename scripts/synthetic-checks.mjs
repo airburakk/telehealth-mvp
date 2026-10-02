@@ -77,6 +77,10 @@ const DOCTORIUM_ROUTES = [
   { path: "/",                title: "Doctorium",     h1: "Her doktor kendi", cta: "/doctorium/kayit",                        noindex: false },
   { path: "/doctorium/giris", title: "Giriş",          h1: "Hoş Geldiniz",     cta: "/api/auth/google/start?intent=doctor&amp;next=%2Fdoktor%2Fdoctorium", noindex: true },
   { path: "/doctorium/kayit", title: "Kayıt",          h1: "Doktor Kaydı",     cta: "/api/auth/google/start?intent=doctor",    noindex: false },
+  // Günlük Seçki (v6.315, 2026-10-02): Instagram bio linkinin hedefi — Reels/hikâye/altyazıdaki "Detaylar bio'daki bağlantıda"
+  // cümlesinin tek karşılığı. Kısa adres next.config rewrite'ıyla /doctorium/secki'ye gider (yalnız doctorium.tr). Kırılırsa
+  // her sosyal gönderinin CTA'sı boşa düşer. CTA = "Doktor üyeliği" düğmesi; indekslenir (page.tsx canonical doctorium.tr/secki).
+  { path: "/secki",           title: "Günlük Seçki",   h1: "Bugünün başlıkları", cta: "/doctorium/kayit",                      noindex: false },
 ];
 
 // Marka korkuluğu (next.config.ts AURA_ONLY_PREFIXES + domain-canonicalization): kimlik/hasta
