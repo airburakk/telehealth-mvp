@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { recordAiUsage } from "@/lib/ai-usage";
+import { LIVE_TRANSLATE_MODEL } from "@/lib/live-translate-model";
 
 // Gemini Live (gerçek zamanlı ses→ses çeviri) için ephemeral (kısa ömürlü) token üretici.
 // Mimari: ham GEMINI_API_KEY sunucuda kalır; tarayıcı yalnız kısa ömürlü token'la Gemini'ye
@@ -9,8 +10,9 @@ import { recordAiUsage } from "@/lib/ai-usage";
 //
 // Tek-sıçrama mimarisi (feat/tercuman-tek-sicrama): KONUŞAN kendi mikrofonunu KARŞININ diline
 // çevirtir (targetLang = karşının dili); çeviri sesi WebRTC replaceTrack ile karşıya gider.
-
-export const LIVE_TRANSLATE_MODEL = "gemini-3.5-live-translate-preview";
+//
+// Model adı `lib/live-translate-model`'dedir (v6.306): rota modülü YALNIZ HTTP handler + segment config dışa
+// aktarır — buradaki eski `export const LIVE_TRANSLATE_MODEL` webpack tip denetimini kırıyordu (Turbopack'te gizli).
 
 function enabled(): boolean {
   return !!process.env.GEMINI_API_KEY;

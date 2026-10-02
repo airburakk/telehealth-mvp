@@ -619,6 +619,8 @@ monetizasyon) için `Air/wiki/changelog.md` ve bu dosyanın alt kısmındaki tar
 
 ### API (route handler grupları — `src/app/api/`)
 
+**Rota modülü sözleşmesi (v6.306, 2026-10-02):** `route.ts` YALNIZ HTTP handler'ları (`GET`/`POST`…) ve segment yapılandırmasını (`runtime` · `maxDuration` · `dynamic` …) dışa aktarır; paylaşılan sabit/yardımcı `src/lib/`'e gider (olay: `LIVE_TRANSLATE_MODEL`, `api/realtime/token/route.ts`'ten `lib/live-translate-model`'e — token rotası + `LiveInterpreter` yedek model adı TEK KAYNAK). Fazladan `export const`, webpack `NextTypesPlugin`'in `.next/types` koruma dosyasındaki `checkFields<Diff<…>>` denetimini kırar (`npx next build --webpack`: "Property 'LIVE_TRANSLATE_MODEL' is incompatible with index signature", 2026-09-22); Turbopack build'i ve CI bu denetimi yapmadığı için hata GİZLİYDİ. Nöbet: `tests/unit/route-module-exports.test.ts` (178 rota dosyası; izinli liste eklenti kaynağı `next-types-plugin/index.js` ile sözleşmeli).
+
 | Grup | İşlev |
 |------|-------|
 | `triage` | Semptom → branş/aciliyet (Claude + kural fallback) |
