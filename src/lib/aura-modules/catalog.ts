@@ -5,6 +5,10 @@
 //
 // 👤 karar 2026-10-02: AURA'da /care sayfası YOKTUR (v6.304'te eklenmişti, v6.305'te kaldırıldı — aynı içerik iki
 // adreste yayınlanmaz). Bu dosyaya rota, görsel yolu ya da landing metni GERİ EKLENMEZ; yalnız alan adı tutulur.
+//
+// Eski /care/<modül>[/<rehber>] adresleri next.config.ts'te kalıcı (308) olarak bu alan adlarına yönlenir
+// (CARE_MODULE_DOMAINS — config '@' alias'ını çözemediği için alan adları orada TEKRARLANIR). Buradaki bir alan adını
+// ya da modül anahtarını değiştiren orayı da günceller; nöbet: tests/unit/care-redirects.test.ts.
 export const MODULES = {
   "second-opinion": { domain: "aurasecondopinion.com" },
   "medical-tourism": { domain: "auramedicaltourism.com" },

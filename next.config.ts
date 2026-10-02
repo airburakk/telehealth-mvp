@@ -112,6 +112,24 @@ const AURA_ONLY_PREFIXES = [
   "/en", "/tr", "/ru", "/ar", "/fa", "/az", "/de", "/fr", "/bg",
 ];
 
+// ── Eski /care adresleri → modül alan adları (2026-10-02, 👤 "eski /care adreslerini alan adlarına yönlendir") ──
+// v6.304 (30.09) üç modül vitrinini + 16 rehberi bu sitede /care/<modül>[/<rehber>] altında yayınlamış, v6.305 (02.10)
+// kaldırmıştı; iki buçuk gün yayında kalan adresler (arama dizini, paylaşılmış bağlantı, yer imi) 404'e düşüyordu.
+// Sayfalar GERİ GELMEZ — yalnız kalıcı (308) yönlendirme: modül kökü → alan adı kökü, rehber → AYNI slug (alan adı
+// sitelerinde rehberler kökte yaşar; 02.10 sitemap ölçümü: 16 slug birebir). `:slug` tek yol parçasıdır; tanınmayan
+// modül (/care/x) ve çıplak /care 404 kalır. Yalnız AURA deploy'unda: bu adresler doctorium.tr'de hiç yayınlanmadı.
+// Alan adları src/lib/aura-modules/catalog.ts MODULES ile SÖZLEŞMELİ (config '@' alias'ını çözemez → değerler burada
+// tekrarlanır; birini değiştiren ötekini de günceller — nöbet: tests/unit/care-redirects.test.ts).
+const CARE_MODULE_DOMAINS = {
+  "second-opinion": "aurasecondopinion.com",
+  "medical-tourism": "auramedicaltourism.com",
+  "medical-aesthetics": "auramedicalaesthetics.com",
+} as const;
+const CARE_REDIRECTS = Object.entries(CARE_MODULE_DOMAINS).flatMap(([moduleKey, domain]) => [
+  { source: `/care/${moduleKey}`, destination: `https://${domain}`, permanent: true },
+  { source: `/care/${moduleKey}/:slug`, destination: `https://${domain}/:slug`, permanent: true },
+]);
+
 const nextConfig: NextConfig = {
   // Sürüm parmak izini gizle (X-Powered-By: Next.js başlığı — 2026-07-18 denetimi P3).
   poweredByHeader: false,
@@ -150,6 +168,8 @@ const nextConfig: NextConfig = {
       ];
     }
     return [
+      // Eski /care/<modül>[/<rehber>] adresleri → modül alan adları (308; tanım ve gerekçe yukarıda CARE_REDIRECTS).
+      ...CARE_REDIRECTS,
       { source: "/pro-bono", destination: "/ucretsiz-saglik", permanent: true },
       { source: "/pro-bono/basvur", destination: "/ucretsiz-saglik/basvur", permanent: true },
       { source: "/pro-bono/bekleme", destination: "/ucretsiz-saglik/bekleme", permanent: true },
