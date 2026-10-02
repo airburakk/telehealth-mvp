@@ -11,7 +11,7 @@ import { LIVE_TRANSLATE_MODEL } from "@/lib/live-translate-model";
 // Tek-sıçrama mimarisi (feat/tercuman-tek-sicrama): KONUŞAN kendi mikrofonunu KARŞININ diline
 // çevirtir (targetLang = karşının dili); çeviri sesi WebRTC replaceTrack ile karşıya gider.
 //
-// Model adı `lib/live-translate-model`'dedir (v6.305): rota modülü YALNIZ HTTP handler + segment config dışa
+// Model adı `lib/live-translate-model`'dedir (v6.306): rota modülü YALNIZ HTTP handler + segment config dışa
 // aktarır — buradaki eski `export const LIVE_TRANSLATE_MODEL` webpack tip denetimini kırıyordu (Turbopack'te gizli).
 
 function enabled(): boolean {

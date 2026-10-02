@@ -1,4 +1,4 @@
-// Gemini Live canlı tercüme modeli — TEK KAYNAK (v6.305, 2026-09-30).
+// Gemini Live canlı tercüme modeli — TEK KAYNAK (v6.306, 2026-10-02).
 //
 // Neden ayrı modül: Next.js rota dosyası (`app/**/route.ts`) YALNIZ HTTP handler'ları (GET/POST…) ve segment
 // yapılandırmasını (runtime · maxDuration · dynamic …) dışa aktarabilir. Fazladan bir `export const` webpack

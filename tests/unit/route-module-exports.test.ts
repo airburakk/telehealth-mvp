@@ -1,4 +1,4 @@
-// Rota modülü export nöbeti (v6.305, 2026-09-30) — Next.js `app/**/route.ts` dosyaları YALNIZ HTTP handler'ları
+// Rota modülü export nöbeti (v6.306, 2026-10-02) — Next.js `app/**/route.ts` dosyaları YALNIZ HTTP handler'ları
 // (GET/HEAD/POST/PUT/DELETE/PATCH/OPTIONS) ve segment yapılandırmasını dışa aktarabilir. Fazladan bir `export const`
 // (olay: api/realtime/token/route.ts → LIVE_TRANSLATE_MODEL) webpack NextTypesPlugin'in ürettiği
 // `checkFields<Diff<{ GET?…, runtime?… }, TEntry>>` tip denetimini kırar (`next build --webpack`, 2026-09-22:
