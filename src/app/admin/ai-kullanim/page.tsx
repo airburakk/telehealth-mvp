@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { AI_FEATURE_LABEL, AI_PRICES_ASOF, estimateUsd, listAiUsage, type AiFeature, type AiUsageRow } from "@/lib/ai-usage";
+import { AI_FEATURE_LABEL, AI_PRICES_ASOF, estimateUsd, listAiUsage, usageByDayFeature, type AiFeature, type AiUsageRow } from "@/lib/ai-usage";
 import { ArrowLeft, Coins } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +10,8 @@ export const metadata = { title: "AI Kullanımı" };
 // AI kullanım sayacı raporu (v6.298, 2026-09-21 — kontrol raporu K6): AiUsageDaily satırlarını özellik × model ve gün bazında
 // toplar; tahminî USD dipnotlu (fiyat listesi tarihi AI_PRICES_ASOF; Console faturası esastır). /admin/landing-analitik deseni:
 // sunucu bileşeni, ADMIN-only, doğrudan agregat. /admin ağacı Doctorium kromundadır → yalnız --c-* token'ları, AURA bağlantısı YOK.
+// v6.312 (2026-10-02): "Güne göre" tablosu gün × özellik matrisine genişledi (lib/ai-usage usageByDayFeature) — tek günlük tepenin
+// hangi özellikten geldiği artık sayfadan okunur (30 Eylül tepesinin nedeni kod + üretim verisinden çıkarılmak zorunda kalmıştı).
 
 const DAYS = 30;
 const fmt = new Intl.NumberFormat("tr-TR");
@@ -29,16 +31,6 @@ function aggregate(rows: AiUsageRow[]): Agg[] {
   return [...m.values()].sort((x, y) => (estimateUsd(y) ?? 0) - (estimateUsd(x) ?? 0) || y.calls - x.calls);
 }
 
-function byDay(rows: AiUsageRow[]): { day: string; calls: number; usd: number }[] {
-  const m = new Map<string, { day: string; calls: number; usd: number }>();
-  for (const r of rows) {
-    const d = m.get(r.day) ?? { day: r.day, calls: 0, usd: 0 };
-    d.calls += r.calls; d.usd += estimateUsd(r) ?? 0;
-    m.set(r.day, d);
-  }
-  return [...m.values()].sort((a, b) => (a.day < b.day ? 1 : -1));
-}
-
 export default async function AiUsagePage() {
   const user = await getCurrentUser();
   if (!user) redirect("/");
@@ -46,13 +38,13 @@ export default async function AiUsagePage() {
 
   const rows = await listAiUsage(DAYS);
   const agg = aggregate(rows);
-  const days = byDay(rows);
+  const matrix = usageByDayFeature(rows);
   const totalUsd = agg.reduce((s, a) => s + (estimateUsd(a) ?? 0), 0);
   const totalCalls = agg.reduce((s, a) => s + a.calls, 0);
   const label = (f: string) => AI_FEATURE_LABEL[f as AiFeature] ?? f;
 
   return (
-    <div className="mx-auto max-w-4xl px-5 py-10">
+    <div className="mx-auto max-w-5xl px-5 py-10">
       <Link href="/admin" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
         <ArrowLeft size={15} /> Yönetim
       </Link>
@@ -101,24 +93,51 @@ export default async function AiUsagePage() {
         </div>
       )}
 
-      <h2 className="mt-8 text-lg font-semibold text-[var(--c-ink)]">Güne göre</h2>
-      {days.length === 0 ? null : (
-        <div className="mt-2 overflow-x-auto rounded-lg border border-[var(--c-hairline)]">
-          <table className="w-full text-sm">
-            <thead className="bg-[var(--c-surface-2)] text-left text-xs uppercase tracking-wide text-[var(--c-ink-3)]">
-              <tr><th className="px-3 py-2">Gün (UTC)</th><th className="px-3 py-2 text-right">Çağrı</th><th className="px-3 py-2 text-right">Tahmini $</th></tr>
-            </thead>
-            <tbody>
-              {days.map((d) => (
-                <tr key={d.day} className="border-t border-[var(--c-hairline)]">
-                  <td className="px-3 py-2 font-mono text-xs text-[var(--c-ink-2)]">{d.day}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{fmt.format(d.calls)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{usd(d.usd)}</td>
+      <h2 className="mt-8 text-lg font-semibold text-[var(--c-ink)]">Güne ve özelliğe göre</h2>
+      {matrix.days.length === 0 ? null : (
+        <>
+          <p className="mt-1 text-xs text-[var(--c-ink-3)]">
+            Her özellik hücresinde üstte tahminî tutar, altta çağrı sayısı. Özellik sütunları dönem toplamına göre sıralıdır; bir günün tepesi hangi özellikten geldiyse o hücrede görünür.
+          </p>
+          <div className="mt-2 overflow-x-auto rounded-lg border border-[var(--c-hairline)]">
+            <table className="w-full text-sm">
+              <thead className="bg-[var(--c-surface-2)] text-left text-xs uppercase tracking-wide text-[var(--c-ink-3)]">
+                <tr>
+                  <th className="px-3 py-2 align-bottom">Gün (UTC)</th>
+                  <th className="px-3 py-2 text-right align-bottom">Çağrı</th>
+                  <th className="px-3 py-2 text-right align-bottom">Tahmini $</th>
+                  {matrix.features.map((f) => (
+                    <th key={f} className="min-w-[7rem] max-w-[10rem] px-3 py-2 text-right align-bottom font-medium normal-case tracking-normal">{label(f)}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {matrix.days.map((d) => (
+                  <tr key={d.day} className="border-t border-[var(--c-hairline)]">
+                    <td className="whitespace-nowrap px-3 py-2 font-mono text-xs text-[var(--c-ink-2)]">{d.day}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{fmt.format(d.calls)}</td>
+                    <td className="px-3 py-2 text-right font-medium tabular-nums">{usd(d.usd)}</td>
+                    {matrix.features.map((f) => {
+                      const c = d.cells[f];
+                      return (
+                        <td key={f} className="px-3 py-2 text-right tabular-nums">
+                          {c ? (
+                            <>
+                              <div>{usd(c.usd)}</div>
+                              <div className="text-xs text-[var(--c-ink-3)]">{fmt.format(c.calls)}</div>
+                            </>
+                          ) : (
+                            <span className="text-[var(--c-ink-3)]">—</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

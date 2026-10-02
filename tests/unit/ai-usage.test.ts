@@ -3,7 +3,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/lib/db", () => ({ db: { aiUsageDaily: { upsert: vi.fn(), findMany: vi.fn() } } }));
 import { db } from "@/lib/db";
-import { estimateUsd, recordAiUsage, trackedCreate, utcDay, AI_FEATURE_LABEL } from "@/lib/ai-usage";
+import { estimateUsd, recordAiUsage, trackedCreate, usageByDayFeature, utcDay, AI_FEATURE_LABEL, type AiUsageRow } from "@/lib/ai-usage";
 import type Anthropic from "@anthropic-ai/sdk";
 
 const upsert = vi.mocked(db.aiUsageDaily.upsert);
@@ -64,5 +64,57 @@ describe("estimateUsd", () => {
   });
   it("her özelliğin Türkçe etiketi var", () => {
     for (const v of Object.values(AI_FEATURE_LABEL)) expect(v.length).toBeGreaterThan(3);
+  });
+});
+
+// v6.312 — gün × özellik kırılımı: "o günkü tepe hangi özellikten geldi?" sorusu sayfadan yanıtlanır.
+describe("usageByDayFeature", () => {
+  const row = (day: string, feature: string, model: string, calls: number, inputTokens: number, outputTokens = 0): AiUsageRow =>
+    ({ day, feature, model, calls, errors: 0, inputTokens, outputTokens, cacheReadTokens: 0, cacheWriteTokens: 0 });
+  const HAIKU = "claude-haiku-4-5-20251001";
+
+  it("boş girdi → boş matris", () => {
+    expect(usageByDayFeature([])).toEqual({ features: [], days: [] });
+  });
+
+  it("günler yeniden eskiye; hücre = o gün o özelliğin çağrı + tahminî tutarı; gün toplamı hücrelerin toplamı", () => {
+    const m = usageByDayFeature([
+      row("2026-09-29", "news-summary", HAIKU, 20, 100_000),
+      row("2026-09-30", "news-summary", HAIKU, 60, 300_000),
+      row("2026-09-30", "legal-i18n", "claude-sonnet-4-6", 21, 100_000),
+      row("2026-09-30", "news-title-translate", HAIKU, 50, 50_000),
+    ]);
+    expect(m.days.map((d) => d.day)).toEqual(["2026-09-30", "2026-09-29"]);
+    const d30 = m.days[0];
+    expect(d30.calls).toBe(131);
+    expect(d30.cells["news-summary"]).toEqual({ calls: 60, usd: 0.3 });
+    expect(d30.cells["legal-i18n"]).toEqual({ calls: 21, usd: 0.3 });
+    expect(d30.cells["news-title-translate"]).toEqual({ calls: 50, usd: 0.05 });
+    expect(d30.usd).toBeCloseTo(0.65, 6);
+    // 29 Eylül'de hukuki çeviri ve başlık çevirisi YOK → hücre tanımsız (sayfada "—").
+    expect(m.days[1].cells).toEqual({ "news-summary": { calls: 20, usd: 0.1 } });
+  });
+
+  it("özellik sütunları dönem toplamı tutara göre büyükten küçüğe; eşit tutarda çağrı sayısı, sonra ad", () => {
+    const m = usageByDayFeature([
+      row("2026-10-01", "news-title-translate", HAIKU, 500, 100_000), // 0,10 $
+      row("2026-10-01", "news-summary", HAIKU, 30, 400_000), //             0,40 $
+      row("2026-10-02", "regulation-summary", HAIKU, 40, 100_000), //       0,10 $ — başlık çevirisiyle eşit tutar, daha az çağrı
+      row("2026-10-02", "soap", HAIKU, 40, 100_000), //                     0,10 $ — mevzuat özetiyle eşit tutar ve çağrı → ada göre
+    ]);
+    expect(m.features).toEqual(["news-summary", "news-title-translate", "regulation-summary", "soap"]);
+  });
+
+  it("aynı özelliğin farklı modelleri tek hücrede toplanır; fiyatı bilinmeyen model tutara 0 katar ama çağrısı sayılır", () => {
+    const m = usageByDayFeature([
+      row("2026-10-02", "news-summary", HAIKU, 10, 1_000_000), //            1 $
+      row("2026-10-02", "news-summary", "claude-sonnet-4-6", 2, 1_000_000), // 3 $
+      row("2026-10-02", "live-token", "gemini-3.5-live-translate-preview", 7, 999),
+    ]);
+    expect(m.days).toHaveLength(1);
+    expect(m.days[0].cells["news-summary"]).toEqual({ calls: 12, usd: 4 });
+    expect(m.days[0].cells["live-token"]).toEqual({ calls: 7, usd: 0 });
+    expect(m.days[0]).toMatchObject({ calls: 19, usd: 4 });
+    expect(m.features).toEqual(["news-summary", "live-token"]);
   });
 });

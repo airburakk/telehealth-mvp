@@ -93,6 +93,44 @@ export function estimateUsd(row: Pick<AiUsageRow, "model" | "inputTokens" | "out
   return Math.round(usd * 10_000) / 10_000;
 }
 
+export interface DayFeatureMatrix {
+  /** Sütun sırası: dönem toplamı tahminî maliyete göre büyükten küçüğe (eşitlikte çağrı sayısı, sonra ad). */
+  features: string[];
+  /** Satırlar yeniden eskiye. `cells[özellik]` yoksa o gün o özellikten çağrı yok. */
+  days: { day: string; calls: number; usd: number; cells: Record<string, { calls: number; usd: number }> }[];
+}
+
+/**
+ * Gün × özellik kırılımı (v6.312, 2026-10-02). NEDEN: sayfada "özelliğe göre" ve "güne göre" iki AYRI toplamdı — tek günlük
+ * bir tepe (30 Eylül: 245 çağrı) hangi özellikten geldiği sayfadan okunamıyor, nedeni koddan ve üretim verisinden
+ * çıkarmak gerekiyordu (RSS çift kayıt dalgası öyle bulundu). Saf fonksiyon: modeller özellik altında toplanır, fiyatı
+ * bilinmeyen model (ör. Gemini oturumu) tutara 0 katar ama çağrısı sayılır.
+ */
+export function usageByDayFeature(rows: AiUsageRow[]): DayFeatureMatrix {
+  const totals = new Map<string, { calls: number; usd: number }>();
+  const byDay = new Map<string, DayFeatureMatrix["days"][number]>();
+  for (const r of rows) {
+    const usd = estimateUsd(r) ?? 0;
+    const t = totals.get(r.feature) ?? { calls: 0, usd: 0 };
+    t.calls += r.calls;
+    t.usd += usd;
+    totals.set(r.feature, t);
+    const d = byDay.get(r.day) ?? { day: r.day, calls: 0, usd: 0, cells: {} };
+    d.calls += r.calls;
+    d.usd += usd;
+    const c = d.cells[r.feature] ?? { calls: 0, usd: 0 };
+    c.calls += r.calls;
+    c.usd += usd;
+    d.cells[r.feature] = c;
+    byDay.set(r.day, d);
+  }
+  const features = [...totals.entries()]
+    .sort(([fa, a], [fb, b]) => b.usd - a.usd || b.calls - a.calls || (fa < fb ? -1 : fa > fb ? 1 : 0))
+    .map(([f]) => f);
+  const days = [...byDay.values()].sort((a, b) => (a.day < b.day ? 1 : a.day > b.day ? -1 : 0));
+  return { features, days };
+}
+
 const n = (v: number | null | undefined): number => (typeof v === "number" && Number.isFinite(v) && v > 0 ? Math.round(v) : 0);
 
 /** Sayaç yazımı — FAIL-OPEN: hiçbir koşulda fırlatmaz. */
