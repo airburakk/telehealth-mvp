@@ -144,9 +144,19 @@ const nextConfig: NextConfig = {
   },
   // Doctorium deploy'unda kök = Doctorium landing (URL çubuğu temiz kalır; sayfanın canonical'ı
   // /doctorium — tek kanonik korunur). AURA deploy'unda boş.
+  // /secki → /doctorium/secki (v6.315, 2026-10-02): Instagram bio linki kısa ve söylenebilir olsun (doctorium.tr/secki).
+  // YALNIZ Doctorium deploy'unda: AURA host'unda /secki 404 kalır (Doctorium içeriği AURA kökünde yaşamaz); sayfanın kendisi
+  // /doctorium/secki olarak iki host'ta da servis edilir, canonical daima https://doctorium.tr/secki.
   async rewrites() {
     if (!IS_DOCTORIUM_DEPLOY) return [];
-    return { beforeFiles: [{ source: "/", destination: "/doctorium" }], afterFiles: [], fallback: [] };
+    return {
+      beforeFiles: [
+        { source: "/", destination: "/doctorium" },
+        { source: "/secki", destination: "/doctorium/secki" },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
   },
   // Rename (Pro Bono → Ücretsiz Sağlık Hizmeti): eski sayfa URL'leri — tarayıcı geçmişi,
   // yer imleri ve DB'deki Notification.href satırları kırılmasın (redirect'ler proxy'den ÖNCE koşar).

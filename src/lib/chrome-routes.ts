@@ -41,6 +41,11 @@ export const CHROME_FREE_ROUTES = [
   "/doctorium/cerez",
   "/doctorium/icerik-politikasi",
   "/doctorium/kvkk-basvuru",
+  // Günlük Seçki (v6.315, 2026-10-02 — bio linki): SeckiPage kendi mini üst barını + LandingFooterV3'ü taşır → AURA Header/SiteFooter girmez.
+  // İKİ yol: Doctorium deploy'unda kısa adres /secki, next.config rewrite ile /doctorium/secki'ye gider; tarayıcıda (usePathname)
+  // GÖRÜNEN yol /secki'dir, bu yüzden ikisi de burada ("/" ↔ "/doctorium" çiftiyle aynı gerekçe).
+  "/secki",
+  "/doctorium/secki",
   // AURA hukuki belgeleri (kod Paket A, v6.268 · 2026-09-13): AuraLegalShell kendi vitrin kabuğunu taşır (V2Nav +
   // AuraClosing — /guven-ve-gizlilik deseni) → global Header/SiteFooter girmez. Liste lib/aura-legal/routes
   // AURA_LEGAL_PATHS ile birim testle bağlıdır (tests/unit/aura-legal.test.ts); oraya belge ekleyen buraya da ekler.

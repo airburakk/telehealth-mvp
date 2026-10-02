@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
-import { db } from "@/lib/db";
 import { pickSocialDigest, rotationBranchFor, SOCIAL_WINDOW_MS } from "@/lib/social-digest";
+import { loadSocialArticles } from "@/lib/social-digest-public";
 import { trDayString } from "@/lib/daily-digest";
 
 // GET /api/social-digest — kamuya açık gazete seçkisinin MAKİNE ucu (2026-08-30, belge §2.2).
@@ -34,15 +34,8 @@ export async function GET(req: Request) {
   const now = new Date();
   const day = trDayString();
   const rotation = rotationBranchFor(day);
-  const articles = await db.newsArticle.findMany({
-    where: { createdAt: { gte: new Date(now.getTime() - SOCIAL_WINDOW_MS) } },
-    select: {
-      id: true, source: true, module: true, kind: true, title: true, sourceName: true,
-      summary: true, url: true, branchSlugs: true, publishedAt: true, createdAt: true,
-    },
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    take: 500,
-  });
+  // Sorgu herkese açık /secki sayfasıyla ORTAK (lib/social-digest-public): kart ile sayfa aynı şekli okur.
+  const articles = await loadSocialArticles(new Date(now.getTime() - SOCIAL_WINDOW_MS));
 
   const items = pickSocialDigest(articles, rotation, now);
   return NextResponse.json(
