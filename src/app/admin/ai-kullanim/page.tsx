@@ -60,8 +60,8 @@ export default async function AiUsagePage() {
         <Coins size={22} className="text-[var(--c-ink-2)]" /> AI Kullanımı
       </h1>
       <p className="mt-2 text-sm text-[var(--c-ink-2)]">
-        Son {DAYS} gün (UTC), özellik × model. İçerik tutulmaz; yalnız çağrı ve token sayıları. Tahminî USD fiyat listesi {AI_PRICES_ASOF}
-        tarihlidir — <strong>Console faturası esastır</strong>. Gemini canlı tercüman dakika bazlı ücretlendirilir; burada yalnız oturum adedi.
+        Son {DAYS} gün (UTC), özellik × model. İçerik tutulmaz; yalnız çağrı ve token sayıları. Tahminî USD fiyat listesi{" "}
+        {AI_PRICES_ASOF} tarihlidir — <strong>Console faturası esastır</strong>. Gemini canlı tercüman dakika bazlı ücretlendirilir; burada yalnız oturum adedi.
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">

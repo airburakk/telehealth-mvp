@@ -32,6 +32,7 @@ import { TTB_INTERMEDIATE_CA } from "./ttb-ca";
 import { RG_INTERMEDIATE_CA } from "./rg-ca";
 import { translateTitlesTr } from "./translate-news";
 import { needsTitleTranslation } from "./news-language";
+import { legacyRssKey, rssExternalId } from "./rss-twins";
 
 // v6.57 TEŞHİS (2026-08-03): TR kaynakları (RG/OHSAD/TTB) Vercel fra1'den erişilemiyordu —
 // OHSAD 403 = Cloudflare bot koruması (veri-merkezi IP + "AuraHealth/1.0" ekli bot-ish UA +
@@ -911,6 +912,26 @@ export interface RssSourceDef {
 }
 
 /**
+ * RSS kimlik geçişi (v6.307, 2026-10-02 — arka plan: lib/rss-twins başlığı). Guid-anahtarlı satır yokken link-anahtarlı
+ * ESKİ satır varsa yeni satır AÇTIRMAZ: eski satırın anahtarını guid'e taşır (kendini onarır; ilk görülme tarihi ve
+ * kaydetmeler korunur). 1438e05 bu adımı atladığı için 30 Eylül gecesi dernek beslemelerinde pencere içindeki eski
+ * kalemler yeniden yaratılmıştı. Guid'siz beslemede (eski = güncel anahtar) sorgu ATILMAZ.
+ * Dönüş: "current" guid-anahtarlı satır zaten var · "adopted" eski satır taşındı (dryRun'da yazmadan aynı yanıt) ·
+ * "none" ikisi de yok → kalem gerçekten yeni.
+ */
+export async function adoptLegacyRssKey(
+  source: string, legacyId: string, externalId: string, dryRun?: boolean,
+): Promise<"current" | "adopted" | "none"> {
+  if (legacyId === externalId) return "none";
+  const current = await db.newsArticle.findUnique({ where: { source_externalId: { source, externalId } }, select: { id: true } });
+  if (current) return "current";
+  const legacy = await db.newsArticle.findUnique({ where: { source_externalId: { source, externalId: legacyId } }, select: { id: true } });
+  if (!legacy) return "none";
+  if (!dryRun) await db.newsArticle.update({ where: { id: legacy.id }, data: { externalId } });
+  return "adopted";
+}
+
+/**
  * RSS/Atom beslemesi → NewsArticle. Ayrıştırma hedefli regex'tir (proje geneli desen: parser
  * bağımlılığı yok, başarısızlık = 0 kayıt, uydurma yok). RSS 1.0/RDF de desteklenir: NEJM gibi
  * kaynaklar <item rdf:about> kullanır, düz `<item>` araması onları KAÇIRIR (2026-08-15 ölçümü).
@@ -970,9 +991,13 @@ export async function ingestRss(def: RssSourceDef, opts?: IngestOpts): Promise<[
     // Görsel (v6.99.2): önce RSS'in kendi media etiketi (MedicalXpress); yoksa makale sayfasının
     // og:image'ı (Medscape). İkisi de tembel — yalnız YENİ kayıtta koşar (upsertArticle sözleşmesi).
     const mediaUrl = /<(?:media:content|media:thumbnail|enclosure)[^>]+url="([^"]+)"/i.exec(b)?.[1] ?? null;
+    // v6.307 — kimlik geçişi: bu kalem 1438e05 ÖNCESİ link-anahtarıyla yazılmışsa yeni satır açma, anahtarını taşı
+    // (yoksa aynı haber ikinci kez "yeni" doğar: çift başlık + sahte tazelik + gereksiz AI özeti).
+    const externalId = rssExternalId(guid, link);
+    if ((await adoptLegacyRssKey(def.source, legacyRssKey(link), externalId, opts?.dryRun)) === "adopted") continue;
     const isNew = await upsertArticle({
       source: def.source,
-      externalId: (guid || link).slice(-180),
+      externalId,
       module: "sektorel",
       category: def.category ?? categorize(title) ?? "kuresel",
       kind: "haber",
