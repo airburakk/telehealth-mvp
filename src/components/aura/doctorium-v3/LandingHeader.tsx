@@ -10,13 +10,19 @@ import { DoctoriumWordV3 } from "./brand";
 // Marka lockup'ı (küre + DoctoriumWord) dokunulmaz. Yapı/menü/analytics v2 ile birebir:
 // masaüstü sticky 72px, mobil statik 56px (yapışkan üst bar ürün kartlarını kapatıyordu — v2
 // QA kararı), "Giriş yap" mobilde hamburger'de. DoctoriumMobileMenu --dl-* okur → açıkta da doğru.
+//
+// 🪤 `relative` ŞART (2026-10-02, 👤 bildirimi: "mobilde hamburger'e basınca giriş açılmıyor"): z-index yalnız
+// konumlandırılmış öğede işler. Header mobilde statik kaldığında `z-20` ETKİSİZDİ; hemen ardından gelen Hero
+// `relative isolate` (konumlandırılmış) olduğu için menü paneli hero'nun ALTINDA boyanıyordu — düğme X'e dönüyor ama
+// panel görünmüyor, "Giriş yap" dahil hiçbir satır tıklanamıyordu (768 px altı; md'de `sticky` zaten konumlandırır).
+// `relative` akışı ve "mobilde yapışmaz" kararını DEĞİŞTİRMEZ; nöbet: tests/unit/doctorium-header-stacking.test.ts.
 export function LandingHeader() {
   const menuItems = [
     ...LANDING_ANCHORS.map((a) => ({ href: `#${a.id}`, label: a.label })),
     { href: LANDING_ROUTES.login, label: "Giriş yap" },
   ];
   return (
-    <header className="z-20 border-b border-[var(--dl-line)] bg-[color-mix(in_srgb,var(--dl-bg)_86%,transparent)] backdrop-blur-md md:sticky md:top-0">
+    <header className="relative z-20 border-b border-[var(--dl-line)] bg-[color-mix(in_srgb,var(--dl-bg)_86%,transparent)] backdrop-blur-md md:sticky md:top-0">
       <a
         href="#icerik"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-[#065f46] focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
