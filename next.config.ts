@@ -107,7 +107,7 @@ const AURA_ONLY_PREFIXES = [
   "/triyaj", "/vaka", "/vakalarim", "/takip", "/paylasimlarim", "/paylasim",
   "/paket", "/teklif", "/rezervasyon", "/sikayet", "/gorusme", "/hesap", "/erisim-kaydi",
   "/second-opinion", "/ucretsiz-saglik", "/saglik-turizmi", "/doktorlar", "/konsultasyon",
-  "/how-it-works", "/v2", "/for-clinicians", "/guven-ve-gizlilik", "/trust",
+  "/care", "/how-it-works", "/v2", "/for-clinicians", "/guven-ve-gizlilik", "/trust",
   "/aydinlatma", "/kosullar", "/tele-saglik", "/cerez", "/kvkk-basvuru", // AURA hukuki belgeleri (v6.268) — doctorium.tr'de AURA'ya 307
   "/en", "/tr", "/ru", "/ar", "/fa", "/az", "/de", "/fr", "/bg",
 ];
@@ -150,6 +150,14 @@ const nextConfig: NextConfig = {
       ];
     }
     return [
+      ...[
+        ["aurasecondopinion.com", "second-opinion"],
+        ["auramedicaltourism.com", "medical-tourism"],
+        ["auramedicalaesthetics.com", "medical-aesthetics"],
+      ].flatMap(([domain, module]) => [domain, `www.${domain}`].map(host => ({
+        source: "/", has: [{ type: "host" as const, value: host }],
+        destination: `${AURA_CANONICAL_URL}/care/${module}`, permanent: false,
+      }))),
       { source: "/pro-bono", destination: "/ucretsiz-saglik", permanent: true },
       { source: "/pro-bono/basvur", destination: "/ucretsiz-saglik/basvur", permanent: true },
       { source: "/pro-bono/bekleme", destination: "/ucretsiz-saglik/bekleme", permanent: true },

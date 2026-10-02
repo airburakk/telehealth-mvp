@@ -449,3 +449,17 @@ normal). Parmak izi kodda tutulmaz (public repo).
   arasında hâlâ ORTAK (ayrımı ayrı kalem) · **Vercel Preview deployment'ları hâlâ prod DB'ye bakar**
   (`DATABASE_URL` kapsamı "Production and Preview") — istenirse panelde Preview kapsamına
   development branch bağlantısı atanır.
+
+## Üç modül alan adı bağlantısı — 2026-09-20 [S1]
+
+Kod 2026-09-30'da yayınlandı (v6.304); alan adı DNS bağlantısı henüz yapılmadı — footer/kartlar o güne dek `/care/*` iç yollarına gider. Kullanıcı yayın yetkisi verdiğinde üç alan adı ve www varyantları AURA Vercel projesine eklenir; Vercel'in o alan adı için gösterdiği güncel DNS kayıtları uygulanır, SSL doğrulanır. Sabit IP/CNAME varsayımı yapılmaz.
+
+- `aurasecondopinion.com` → `https://auraglobalcare.com/care/second-opinion`
+- `auramedicaltourism.com` → `https://auraglobalcare.com/care/medical-tourism`
+- `auramedicalaesthetics.com` → `https://auraglobalcare.com/care/medical-aesthetics`
+
+Yönlendirmeler uygulamada kök path ve tam host eşleşmesiyle 307 olarak tanımlı; www varyantları dahil. Ana sayfadaki modül bağlantıları aynı kanonik rotalara gider. Yeni env/migration yok. Canlı doğrulama: altı host için 307/Location, üç hedefte 200, görseller, canonical/sitemap, mobil görünüm ve anonim başvuruda girişe geçiş. Doctorium `/care/*` isteklerini AURA'ya devreder.
+
+Windows'ta açık `next dev` Prisma DLL'sini kilitlerse `npm run build` içindeki `prisma generate` EPERM verebilir. Bu değişiklikte şema değişmediği için mevcut istemciyle `node node_modules/next/dist/bin/next build` başarıyla doğrulandı. Yeni şema varsa bu istisna uygulanmaz; aktif sunucuyu kullanıcı çalışmasını kesmeden planlı durdurup istemci yeniden üretilmelidir.
+
+Modül rehberleri: 12 yeni `/care/[module]/[guide]` rotası sitemap/canonical kapsamındadır; 3 ana sayfayla birlikte kontrol edilir. Geçersiz modül–rehber eşleşmeleri 404 dönmelidir. İçerik Türkçe/İngilizce; kaynak tarihleri 20.09.2026. Kamu istatistikleri canlı sayaç değildir; yayın öncesinde yetkili hastane listesi ve yıllık veriler güncellik açısından kontrol edilir.
