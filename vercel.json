@@ -10,8 +10,16 @@
       "schedule": "0 2 * * *"
     },
     {
+      "path": "/api/cron/ingest-europepmc",
+      "schedule": "15 2 * * *"
+    },
+    {
       "path": "/api/cron/ingest-hukuk",
       "schedule": "20 2 * * *"
+    },
+    {
+      "path": "/api/cron/ingest-doaj",
+      "schedule": "21 2 * * *"
     },
     {
       "path": "/api/cron/ingest-dernekler",
@@ -20,14 +28,6 @@
     {
       "path": "/api/cron/translate-news",
       "schedule": "40 2 * * *"
-    },
-    {
-      "path": "/api/cron/ingest-europepmc",
-      "schedule": "44 2 * * *"
-    },
-    {
-      "path": "/api/cron/ingest-doaj",
-      "schedule": "47 2 * * *"
     },
     {
       "path": "/api/cron/generate-ai-summaries",

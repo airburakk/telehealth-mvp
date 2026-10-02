@@ -157,7 +157,7 @@ SSR JSON'undan; buildId koşu başında anasayfadan çözülür): günde 40 tesi
 koşulur (2026-07-10'da ~4.600 tesis dolduruldu); `authorizationNumber` kolon backfill'i için
 `npx tsx scripts/registry-enrich.ts auth` (v5.2'de koşuldu).
 
-### Cron düzeni — sekiz cron (v6.205 bölünme · v6.206 `translate-news` · 2026-09-04 `ingest-dernekler`)
+### Cron düzeni — oniki cron (v6.205 bölünme · v6.206 `translate-news` · 2026-09-04 `ingest-dernekler` · 2026-09-05 `ingest-europepmc`/`ingest-doaj`/`generate-ai-summaries`/`trial-sweep` · 2026-10-02 sıra düzeltmesi)
 
 Temmuz–Ağustos boyunca (Vercel Hobby cron kısıtı) on iş tek "bakım nöbeti"ne (`purge-deleted`)
 bindirilmişti; plan Pro'ya geçince kullanıcı kararıyla bölündü. Tek doğruluk kaynağı
@@ -168,17 +168,28 @@ ortak DB'de çift koşum olmasın) — iki korkuluk tek yerde: `cronGate()`.
 
 | Saat (UTC → TR) | Rota | İş |
 |---|---|---|
-| 02:00 → 05:00 | `/api/cron/ingest-doctorium` | akademik + haber/sektörel/ilaç içerik toplama (kendi 300 sn bütçesi) |
+| 02:00 → 05:00 | `/api/cron/ingest-doctorium` | akademik (PubMed) + RG + haber/sektörel/ilaç içerik toplama (`maxDuration` 800 sn) |
+| 02:15 → 05:15 | `/api/cron/ingest-europepmc` | Europe PMC — PubMed'den SONRA (tekilleştirme yönlü, aşağıdaki sıra kuralı); 2026-10-02'de 02:44'ten çekildi |
 | 02:20 → 05:20 | `/api/cron/ingest-hukuk` | Yargıtay içtihat · TR-Dizin doktrin · TTB etkinlik (yalnız Pazartesi) |
+| 02:21 → 05:21 | `/api/cron/ingest-doaj` | DOAJ (`maxDuration` 800 sn; kaynağın kendisi yavaş) — Europe PMC'den SONRA; 2026-10-02'de 02:47'den çekildi |
 | 02:35 → 05:35 | `/api/cron/ingest-dernekler` | uzmanlık dernekleri RSS'i (klimik/tjod/tatd/tgd-gastro/tgcd) — 2026-09-04'te `ingest-doctorium`'dan ayrıldı: ana ingest 84 sıralı istekle 300 sn bütçesinin kenarındaydı, dış kaynak yavaşlayınca dernekler sıraya hiç giremeden route sessizce (504) kesiliyordu; kendi 60 sn bütçesi her zaman yeter |
-| 02:40 → 05:40 | `/api/cron/translate-news` | özet GİRİŞİ çevirisi (v6.206) — akademik/ilaç/İngilizce sektörel kayıtlarda `summary`=Türkçe (~700 kar., cümle sınırı), `summaryOriginal`=özgün; yeni→eski, birikmişi gecelik bütçeyle (240 sn) kendisi kapatır — PROD backfill script'i gerekmez; elle prova `?budget=<sn>` |
+| 02:40 → 05:40 | `/api/cron/translate-news` | özet GİRİŞİ çevirisi (v6.206) — akademik/ilaç/İngilizce sektörel kayıtlarda `summary`=Türkçe (~700 kar., cümle sınırı), `summaryOriginal`=özgün; yeni→eski, birikmişi gecelik bütçeyle (240 sn) kendisi kapatır — PROD backfill script'i gerekmez; elle prova `?budget=<sn>`; TÜM `ingest-*` bittikten SONRA başlar (en kötü bitiş 02:36) |
+| 02:56 → 05:56 | `/api/cron/generate-ai-summaries` | AI özetinin proaktif üretimi (akademik klinik özet · sektörel/mevzuat özeti) — tüm ingest'ler + `translate-news` sonrası, Post'tan önce (`maxDuration` 800 sn). Sektörel kalemde RSS özeti 120 karakterden kısaysa kaynak sayfa çekilir (`lib/document-text`: yalnız makale gövdesi — gezinme menüsü özet olmaz) |
 | 03:00 → 06:00 | `/api/cron/registry-sync` | HealthTürkiye dizini (değişmedi) |
 | 03:30 → 06:30 | `/api/cron/purge-deleted` | KVKK imha · audit+onam zinciri doğrulama · günlük kök damgası · diploma süpürmesi |
 | 03:30 → 06:30 | `/api/cron/daily-digest` | Doctorium Post baskısı · etkinlik/kongre alarmı |
 | 07:00 → 10:00 | `/api/cron/pending-docs-reminders` | DOCS_PENDING hasta hatırlatması (insanca saat — kullanıcı kararı) |
+| 07:20 → 10:20 | `/api/cron/trial-sweep` | Doctorium deneme süpürmesi (hatırlatma · süre doldu · imha) — insanca saat |
 
 Her cron kendi `CRON_MAINTENANCE` audit satırını (PHI yok, yalnız sayaçlar) ve kendi alarmını yazar;
 elle tetikleme: `curl -H "Authorization: Bearer $CRON_SECRET" <site>/api/cron/<ad>`.
+
+**Sıra kuralı (2026-10-02 dersi):** içerik zinciri `ingest-doctorium` (PubMed) → `ingest-europepmc` → `ingest-doaj` → … diğer `ingest-*`
+→ `translate-news` → `generate-ai-summaries` → `daily-digest` sırasıyla akar ve **her halka öncekinin EN KÖTÜ bitişinden
+(başlangıç + rota `maxDuration`) sonra başlar** — `tests/unit/cron-routes.test.ts` bunu `vercel.json` + rota dosyalarından hesaplar. Neden:
+(1) `translate-news` yalnız KENDİSİNDEN ÖNCE yazılan satırları çevirir; Europe PMC/DOAJ 02:44/02:47'de (çeviriden sonra) koşarken o gecenin
+akademik satırları ertesi geceye dek İngilizce kalıp 07:45 seçkisine/06:30 Post'a İngilizce girdi; (2) Europe PMC/DOAJ yinelenen DOI'yi yalnız
+MEVCUT satırda arar, PubMed ingest'i DOI'ye bakmaz — ters sırada aynı makale iki satır olur. Yeni bir `ingest-*` eklerken saati bu zincire göre seç.
 
 ### Cron — saklama süresi dolan kayıtların imhası (v6.11, 2026-07-15)
 

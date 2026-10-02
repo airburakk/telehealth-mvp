@@ -34,6 +34,7 @@ import { translateTitlesTr } from "./translate-news";
 import { joinTrialPhase, trialPhaseLabel } from "./trial-phase";
 import { needsTitleTranslation } from "./news-language";
 import { archivedRssKey, legacyRssKey, normalizeArticleUrl, rssExternalId } from "./rss-twins";
+import { extractDocumentText } from "./document-text";
 
 // v6.57 TEŞHİS (2026-08-03): TR kaynakları (RG/OHSAD/TTB) Vercel fra1'den erişilemiyordu —
 // OHSAD 403 = Cloudflare bot koruması (veri-merkezi IP + "AuraHealth/1.0" ekli bot-ish UA +
@@ -1187,8 +1188,23 @@ const TR_MONTH_ABBR: Record<string, string> = {
  * 🪤 Kodlama: Resmî Gazete /eskiler/ belgeleri windows-1254 (arşiv fihristiyle aynı tuzak;
  *    UTF-8 varsayımı Türkçeyi bozar). Diğer kaynaklar (OHSAD/TTB) utf-8.
  * ⚠️ PDF DESTEKLENMEZ: null döner — çağıran "özet çıkarılamadı" der, UYDURMAZ.
+ * ⚠️ İçerik kapsayıcısı olan sayfada gövde kısaysa (< 120 kar., ör. "Yeni Sayı İçin Tıklayınız") da null döner:
+ *    gezinme menüsü özet yerine GEÇMEZ (2026-10-02 KLİMİK dersi — lib/document-text).
  */
 export async function fetchDocumentText(url: string): Promise<string | null> {
+  const html = await fetchDocumentHtml(url);
+  // 🪤 2026-10-02: eskiden TÜM sayfa düz metne çevrilip `summary`'ye yazılıyordu (<title> + gezinme menüsü + alt bilgi —
+  // seçkide KLİMİK "…| Klimik Dernek Kurullar Dernek Tüzüğü…"). Çıkarım artık içerik kapsayıcısından yapılır; gerekçe,
+  // öncelik sırası ve "kapsayıcı kısaysa null" kuralı lib/document-text başlığında (saf modül, birim testli).
+  return html === null ? null : extractDocumentText(html);
+}
+
+/**
+ * Kaynak sayfanın HAM HTML'i (TTB/RG özel-CA yolları dahil). null = PDF ya da sayfaya ERİŞİLEMEDİ (HTTP hatası/ağ).
+ * fetchDocumentText'ten ayrıldı (2026-10-02): "erişilemedi" ile "gövde yok" aynı null'dı; veriyi YAZAN çağıranlar
+ * (scripts/repair-news-summaries.ts) bu ikisini ayırmalı — ağ hatasını "içerik yok" sanıp özeti boşaltmamak için.
+ */
+export async function fetchDocumentHtml(url: string): Promise<string | null> {
   if (/\.pdf($|\?)/i.test(url)) return null; // PDF metin çıkarımı yok (bilinçli)
   try {
     let html: string;
@@ -1214,15 +1230,7 @@ export async function fetchDocumentText(url: string): Promise<string | null> {
       if (!res.ok) return null;
       html = await res.text(); // kalan kaynaklar (OHSAD vb.) utf-8 — RG artık bu daldan geçmez
     }
-    const body = html
-      .replace(/<(script|style|noscript)[^>]*>[\s\S]*?<\/\1>/gi, " ")
-      .replace(/<!--[\s\S]*?-->/g, " ");
-    const text = plain(body)
-      // Word/FrontPage artıkları (RG belgeleri Word'den üretiliyor): anlamsız belirteçleri at.
-      .replace(/\b(Print|Clean|false|true|MicrosoftInternetExplorer\d*|X-NONE|TR)\b/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    return text.length >= 120 ? text.slice(0, 8000) : null;
+    return html;
   } catch {
     return null;
   }
