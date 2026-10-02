@@ -3,6 +3,7 @@
 // price = TABAN fiyat (resmi tarife, ₺). TAVAN = taban × CEIL_MULT (uygulamada hesaplanır).
 // Doktor (M5) kendi branşındaki işlemleri seçer ve taban↔tavan arası kendi fiyatını belirler.
 import catalog from "@/data/procedures.json";
+import { BRANCHES, branchKeyForLabel as triageKeyForLabel } from "./triage";
 
 export const CEIL_MULT = 3; // tavan = taban × 3
 
@@ -24,15 +25,27 @@ const ITEMS: Procedure[] = (catalog.items as RawItem[]).map((t) => ({
   group: t[4],
 }));
 
-export const BRANCH_LABELS: Record<string, string> = catalog.branchLabels as Record<string, string>;
+// Branş ETİKETİ tek kaynaktan gelir: lib/triage BRANCHES (2026-10-02). Katalog JSON'undaki etiket yalnız triyajda
+// karşılığı olmayan anahtarda ("others") kullanılır. Olay: v6.301 "estetik" etiketini yalnız triyajda değiştirmişti → kayıt
+// formları eski etiketi gösterdi/kabul etti ve `branchKeyFromLabel(<güncel etiket>)` null döndü (işlem kataloğu, AI işlem
+// önerisi ve ICD/LOINC ipuçları o branşta SESSİZCE boş kaldı). Nöbet: tests/unit/procedures-branch-label.test.ts.
+const RAW_LABELS = catalog.branchLabels as Record<string, string>;
+const TRIAGE_LABELS: Record<string, string> = Object.fromEntries(BRANCHES.map((b) => [b.key, b.label]));
+export const BRANCH_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(RAW_LABELS).map(([key, label]) => [key, TRIAGE_LABELS[key] ?? label]),
+);
 
-// Doctor.branch ETİKET olarak saklanır (ör. "Kardiyoloji") → branş anahtarına çevir.
+// Doctor.branch / Case.branch ETİKET olarak saklanır (ör. "Kardiyoloji") → branş anahtarına çevir.
+// Güncel etiket ve katalogdaki ham dize birebir tanınır; eski etiket takma adları (BRANCH_LABEL_ALIASES) triyajdan çözülür.
 const KEY_BY_LABEL: Record<string, string> = {};
+for (const [key, label] of Object.entries(RAW_LABELS)) KEY_BY_LABEL[label] = key;
 for (const [key, label] of Object.entries(BRANCH_LABELS)) KEY_BY_LABEL[label] = key;
 
 export function branchKeyFromLabel(label: string | null | undefined): string | null {
   if (!label) return null;
   if (KEY_BY_LABEL[label]) return KEY_BY_LABEL[label];
+  const viaTriage = triageKeyForLabel(label); // eski etiket takma adı → anahtar (yalnız katalogda olan anahtar)
+  if (viaTriage && BRANCH_LABELS[viaTriage]) return viaTriage;
   // esnek eşleme: birebir tutmazsa normalize ederek dene
   const n = norm(label);
   for (const [lbl, key] of Object.entries(KEY_BY_LABEL)) if (norm(lbl) === n) return key;

@@ -29,7 +29,7 @@ def norm(s):
 
 BRANCHES = [
     ("onkoloji","Onkoloji"),("kardiyoloji","Kardiyoloji"),("ortopedi","Ortopedi"),
-    ("norosirurji","Nöroşirürji"),("sac-ekimi","Saç Ekimi"),("estetik","Estetik Cerrahi"),
+    ("norosirurji","Nöroşirürji"),("sac-ekimi","Saç Ekimi"),("estetik","Plastik, Rekonstrüktif ve Estetik Cerrahi"),
     ("ivf","Tüp Bebek (IVF)"),("dis","Diş Tedavisi"),("goz","Göz Cerrahisi"),
     ("genel-cerrahi","Genel Cerrahi"),("dahiliye","Dahiliye (İç Hastalıkları)"),
     ("noroloji","Nöroloji"),("gastroenteroloji","Gastroenteroloji"),
