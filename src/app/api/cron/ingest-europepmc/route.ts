@@ -10,6 +10,9 @@ import { ingestEuropePmcAll } from "@/lib/doctorium-academic-sources";
 // ana route yine 300 sn'de kesildi). DEV ölçümü: 35 branş × Europe PMC sorgusu ~112 sn. Küçük ama
 // ana route'un bütçesinden tasarruf için ayrı — DOAJ'ın (bkz. ingest-doaj, ~466 sn) yanında
 // kendi bütçesiyle her zaman tamamlanır.
+// SIRA (2026-10-02): 02:15 UTC — PubMed'den (ingest-doctorium 02:00 + 800 sn tavan = 02:13:20) SONRA [tekilleştirme yönlü:
+// lib/doctorium-academic-sources] ve translate-news'ten (02:40) ÖNCE [aksi halde o gecenin satırları ertesi geceye dek
+// İngilizce kalır]. Eskiden 02:44'tü (translate-news'in arkasında). tests/unit/cron-routes.test.ts kilitler.
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 

@@ -2,7 +2,9 @@
 //
 // Neden ingest'in dışında: abstract çıktısı başlığın ~20 katı; 30 branş × ek istek ingest-doctorium'un
 // 300 sn bütçesini taşırır, o günün kalan branşları sessizce düşerdi. Bu iş kendi bütçesiyle (cron 240 sn)
-// koşar; ingest 02:00'de başlar, bu 02:40'ta — Post baskısı (03:30) Türkçe özeti görür.
+// koşar; TÜM ingest-* cron'ları 02:36'ya dek (en kötü ihtimal) biter, bu 02:40'ta başlar — Post baskısı (03:30) Türkçe özeti görür.
+// ⚠️ Yalnız bu cron'dan ÖNCE yazılan satırlar çevrilir: ingest sırası değişirse (2026-10-02: Europe PMC/DOAJ 02:44/02:47'de koşarken
+// o gecenin satırları ertesi geceye kalıyordu) cron-routes.test.ts kırılır — oradaki zincir sözleşmesi bu işin ön koşuludur.
 //
 // Seçim: lib/news-language.summaryTranslationWhere — summaryOriginal IS NULL (henüz geçmedi) + özet dolu +
 // (akademik | ilaç | İngilizce sektörel). Türkçe doğan kaynaklar (RG/TTB/Yargıtay/dernek…) HİÇ seçilmez.

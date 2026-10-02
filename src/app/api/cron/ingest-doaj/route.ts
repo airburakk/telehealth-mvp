@@ -10,6 +10,9 @@ import { ingestDoajAll } from "@/lib/doctorium-academic-sources";
 // ana route yine 300 sn'de kesildi). DEV ölçümü: 35 branş × DOAJ sorgusu ~466 sn (istek başına
 // ortalama ~13 sn — kaynağın kendi API'si yavaş, sıralamayla ilgisi yok). Bu, TEK BAŞINA Vercel'in
 // eski 300 sn sınırını aşıyordu → maxDuration=800 (Pro/Enterprise'da GA, beta değil) ŞART.
+// SIRA (2026-10-02): 02:21 UTC — Europe PMC'den (02:15 + 300 sn = 02:20) SONRA [tekilleştirme yönlü] ve translate-news'ten
+// (02:40) ÖNCE: en kötü bitiş 02:21 + 800 sn = 02:34:20. Eskiden 02:47'ydi (translate-news'in arkasında; en kötü bitişi
+// generate-ai-summaries'in 02:56'sını da aşıyordu). tests/unit/cron-routes.test.ts kilitler.
 export const maxDuration = 800;
 export const dynamic = "force-dynamic";
 

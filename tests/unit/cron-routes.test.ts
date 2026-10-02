@@ -9,6 +9,9 @@
 //      ⚠️ Bütçe TEK-TİP DEĞİL (2026-09-05): çoğu içerik cron'u 300 sn, ama ingest-doctorium/ingest-doaj
 //      800 sn (DEV ölçümü PubMed/DOAJ'ın gerçek süresini aşınca yükseltildi) — ≥30dk kuralı yine de
 //      geçerli bir alt sınır (800 sn ≈ 13.3 dk, 30 dk pay rahat yeterli).
+//   4) ZİNCİR (2026-10-02): PubMed → Europe PMC → DOAJ → tüm ingest-* → translate-news → generate-ai-summaries → daily-digest;
+//      her halka bir öncekinin EN KÖTÜ bitişinden (başlangıç + maxDuration) sonra başlar. v6.206'daki "ingest-doctorium'dan 10 dk
+//      sonra" testi Europe PMC/DOAJ ayrışınca yetersiz kaldı — o gecenin akademik satırları İngilizce özetle yayına girdi.
 //   4) Doctorium deploy'unda çift koşum olmasın: her rota kapıdan geçer (BRAND_MODE no-op).
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -59,24 +62,50 @@ describe("vercel.json ↔ CRON_SCHEDULES", () => {
     }
   });
 
-  it("SIRA: özet çevirisi (translate-news) içerik toplama bittikten SONRA başlar (v6.206)", () => {
-    // ingest-doctorium bütçesi 300 sn → çeviri en az 10 dk sonra başlamalı ki o gecenin kayıtlarını görsün.
-    const ingest = minuteOfDay(CRON_SCHEDULES["/api/cron/ingest-doctorium"]);
-    const ceviri = minuteOfDay(CRON_SCHEDULES["/api/cron/translate-news"]);
-    expect(ceviri - ingest).toBeGreaterThanOrEqual(10);
+  // ── Zincir sırası: "en kötü bitiş" = başlangıç + rotanın maxDuration'ı (Vercel işlevi bu tavanda kesilir) ──
+  // Her halka bir sonrakinin GİRDİSİNİ üretir; sıra yalnız "başlangıç saati sonra" ile değil, öncekinin tavanda bile BİTMİŞ
+  // olmasıyla kilitlenir. Yeni bir ingest-* cron'u eklenir ya da kaydırılırsa test onu otomatik kapsar.
+  const maxDurationSec = (path: string): number => {
+    const code = readFileSync(join(root, "src", "app", path, "route.ts"), "utf8");
+    const m = /export const maxDuration = (\d+)/.exec(code);
+    if (!m) throw new Error(`${path}: maxDuration bildirmiyor`);
+    return Number(m[1]);
+  };
+  const startSec = (path: string) => minuteOfDay(CRON_SCHEDULES[path]) * 60;
+  const worstEndSec = (path: string) => startSec(path) + maxDurationSec(path);
+  const ingestPaths = Object.keys(CRON_SCHEDULES).filter((p) => p.startsWith("/api/cron/ingest-"));
+
+  it("SIRA: özet çevirisi (translate-news) HER ingest-* cron'unun EN KÖTÜ bitişinden SONRA başlar (v6.206 + 2026-10-02)", () => {
+    // 🪤 2026-10-02: ingest-europepmc (02:44) ve ingest-doaj (02:47) 5 Eylül'de ayrı cron'a bölünürken translate-news'in (02:40)
+    // ARKASINA düştü; eski test yalnız ingest-doctorium'a baktığı için yakalamadı. Sonuç: o gecenin Europe PMC/DOAJ
+    // kayıtları (cuid zamanı 02:44:14 / 02:47:40) çeviri koşusundan SONRA doğdu, ertesi geceye dek İngilizce kalıp
+    // 07:45 seçkisine / 06:30 Post'a İngilizce özetle girdi.
+    expect(ingestPaths.length).toBeGreaterThanOrEqual(5); // doctorium · hukuk · dernekler · europepmc · doaj
+    const ceviri = startSec("/api/cron/translate-news");
+    for (const p of ingestPaths) {
+      expect(worstEndSec(p), `${p} en kötü ihtimalde translate-news'ten sonra bitiyor`).toBeLessThanOrEqual(ceviri);
+    }
   });
 
-  it("SIRA: AI özeti PROAKTİF üretimi (generate-ai-summaries) TÜM ingest'lerden SONRA başlar (2026-09-05)", () => {
-    // daily-digest'in o sabahki içeriği özetli görmesi için: özet üretimi son ingest'ten (ingest-doaj)
-    // sonra, Post baskısından önce çalışmalı — kullanıcı bildirimi: "günlük bültenler ve Doctorium
-    // Post'lar yanlış üretiliyor" (tembel üretim nedeniyle özetsiz kalıyordu).
-    const sonIngest = Math.max(
-      ...["/api/cron/ingest-doctorium", "/api/cron/ingest-hukuk", "/api/cron/ingest-dernekler",
-        "/api/cron/translate-news", "/api/cron/ingest-europepmc", "/api/cron/ingest-doaj"]
-        .map((p) => minuteOfDay(CRON_SCHEDULES[p])),
-    );
-    const ozet = minuteOfDay(CRON_SCHEDULES["/api/cron/generate-ai-summaries"]);
-    expect(ozet).toBeGreaterThan(sonIngest);
+  it("SIRA: tekilleştirme YÖNLÜ — PubMed (ingest-doctorium) → Europe PMC → DOAJ", () => {
+    // mergeIfKnown (EPMC/DOAJ) yalnız MEVCUT kayda bakar; PubMed ingest'i (ingestQuery) DOI'ye bakmaz, yalnız kendi
+    // (source, externalId) anahtarına → ters sırada aynı makale iki satır olur.
+    expect(startSec("/api/cron/ingest-europepmc")).toBeGreaterThanOrEqual(worstEndSec("/api/cron/ingest-doctorium"));
+    expect(startSec("/api/cron/ingest-doaj")).toBeGreaterThanOrEqual(worstEndSec("/api/cron/ingest-europepmc"));
+  });
+
+  it("SIRA: AI özeti PROAKTİF üretimi (generate-ai-summaries) TÜM ingest'lerden ve translate-news'ten SONRA başlar (2026-09-05)", () => {
+    // daily-digest'in o sabahki içeriği özetli görmesi için: özet üretimi son ingest'ten sonra, Post baskısından önce
+    // çalışmalı — kullanıcı bildirimi: "günlük bültenler ve Doctorium Post'lar yanlış üretiliyor" (tembel üretim
+    // nedeniyle özetsiz kalıyordu). translate-news'ten sonra: AI özeti `summaryOriginal ?? summary` okur.
+    const ozet = startSec("/api/cron/generate-ai-summaries");
+    for (const p of [...ingestPaths, "/api/cron/translate-news"]) {
+      expect(worstEndSec(p), `${p} en kötü ihtimalde generate-ai-summaries'ten sonra bitiyor`).toBeLessThanOrEqual(ozet);
+    }
+  });
+
+  it("SIRA: Post baskısı (daily-digest) generate-ai-summaries'in EN KÖTÜ bitişinden sonra başlar", () => {
+    expect(worstEndSec("/api/cron/generate-ai-summaries")).toBeLessThanOrEqual(startSec("/api/cron/daily-digest"));
   });
 
   it("hasta hatırlatması insanca saatte (08:00–18:00 TR) — kullanıcı kararı 10:00 TR", () => {

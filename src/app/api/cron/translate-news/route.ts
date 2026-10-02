@@ -8,7 +8,11 @@ import { translateSummaryBacklog } from "@/lib/translate-summaries";
 // İngilizce sektörel kayıtların özeti Türkçeleşir (summary = Türkçe giriş, summaryOriginal = özgün) —
 // gövde lib/translate-summaries, kapsam lib/news-language. Yeni→eski; birikmişi gecelik bütçeyle kendisi
 // kapatır (PROD backfill script'i gerekmez).
-// 02:40 UTC = 05:40 TR: ingest-doctorium (02:00, 300 sn) bitmiş olur; Post baskısı (03:30 UTC) Türkçe özeti görür.
+// 02:40 UTC = 05:40 TR: TÜM ingest-* cron'ları (en kötü bitiş 02:36 — ingest-doaj 02:21 + 800 sn tavan, ingest-dernekler 02:35 + 60 sn)
+// bitmiş olur; Post baskısı (03:30 UTC) Türkçe özeti görür.
+// 🪤 2026-10-02: Europe PMC (02:44) ve DOAJ (02:47) bu cron'dan SONRA koşarken o gecenin akademik satırları (cuid zamanı 02:44:14 /
+// 02:47:40) çeviri koşusunu hiç görmedi; ertesi geceye dek İngilizce kalıp 07:45 seçkisine/06:30 Post'a öyle girdi. Sıra artık
+// "başlangıç + maxDuration" ile tests/unit/cron-routes.test.ts tarafından kilitli.
 // Elle tetikleme: `?budget=<sn>` (5–240) küçük prova için; varsayılan 240 sn (maxDuration 300 — sayım + audit payı).
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";

@@ -11,6 +11,10 @@
 // yazmadan önce DOI (ve Europe PMC MED kayıtlarında PMID) TÜM kaynaklarda aranır; bulunursa
 // yeni kayıt AÇILMAZ, mevcut kaydın branşları BİRLEŞTİRİLİR (pubmed ingest'inin çok-branş
 // birleştirme sözleşmesiyle aynı — yayın hiçbir branştan kaybolmaz, liste çift görmez).
+// ⚠️ Tekilleştirme YÖNLÜDÜR (2026-10-02): burada yalnız MEVCUT kayda bakılır (mergeIfKnown); PubMed ingest'i
+// (doctorium-ingest ingestQuery) DOI'ye bakmaz, yalnız kendi (source, externalId) anahtarına. Bu yüzden cron SIRASI
+// PubMed → Europe PMC → DOAJ olmalıdır; ters sırada aynı makale iki satır olur. Sıra (ve hepsinin translate-news'ten ÖNCE
+// bitmesi) tests/unit/cron-routes.test.ts ile kilitlidir.
 //
 // SORGULAR: PubMed MeSH sorguları (NEWS_QUERIES) bu API'lerde geçersiz — meshToKeywords()
 // alan etiketlerini ([mh]/[sh]) söküp boolean yapıyı koruyarak tırnaklı anahtar-kelime
@@ -23,6 +27,7 @@ import { NEWS_QUERIES } from "./medical-news";
 import { isNonHumanAcademic, lccNonMedicine } from "./academic-journals";
 import { BRANCHES } from "./triage";
 import { translateTitlesTr } from "./translate-news";
+import { normalizeAbstractText } from "./abstract-text";
 
 const UA = "Mozilla/5.0 (compatible; AuraHealth/1.0; +https://telehealth-mvp-roan.vercel.app)";
 const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(BRANCHES.map((b) => [b.label, b.key]));
@@ -162,7 +167,9 @@ async function epmcBranch(mesh: string, slug: string, opts: AcademicIngestOpts):
     const isNew = await upsertArticle("europepmc", `${r.source}:${r.id}`, [slug], {
       kind: kindFromTypes(r.pubTypeList?.pubType ?? []),
       title: r.title.replace(/\s*\.\s*$/, ""),
-      summary: r.abstractText.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim().slice(0, 4000),
+      // 🪤 2026-10-02: etiketler boşluksuz sökülüyordu ("BackgroundGas flaring…", "…communities.ObjectiveThis…") — bölüm
+      // başlığı <h4> "Etiket: " olur (lib/abstract-text); ham `<` ("<30 yaş") artık metin silmez.
+      summary: normalizeAbstractText(r.abstractText).slice(0, 4000),
       sourceName: r.journalTitle || "Europe PMC",
       authors: r.authorString?.slice(0, 300) ?? null,
       url: doi ? `https://doi.org/${doi}` : `https://europepmc.org/article/${r.source}/${r.id}`,
@@ -234,7 +241,9 @@ async function doajBranch(mesh: string, slug: string, opts: AcademicIngestOpts):
     const isNew = await upsertArticle("doaj", r.id, [slug], {
       kind: "makale",
       title: b.title.replace(/\s*\.\s*$/, ""),
-      summary: b.abstract.replace(/\s+/g, " ").trim().slice(0, 4000),
+      // DOAJ'ın ham özeti etiketleri kaynağında YAPIŞIK taşır ("…association.MethodsThe medical records…") ve bazı kayıtlarda
+      // ham <b>/<i>/<sub> bırakır → etiket onarımı + etiket sökümü (lib/abstract-text; 2026-10-02 ölçümü: 168 satırın 21'i).
+      summary: normalizeAbstractText(b.abstract).slice(0, 4000),
       sourceName: b.journal?.title || "DOAJ",
       authors: names.length ? (names.length > 3 ? `${names.slice(0, 3).join(", ")}, ve ark.` : names.join(", ")) : null,
       url: doi ? `https://doi.org/${doi}` : (fulltext ?? `https://doaj.org/article/${r.id}`),
