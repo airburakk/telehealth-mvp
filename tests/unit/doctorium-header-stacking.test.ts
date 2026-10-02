@@ -41,3 +41,26 @@ describe("Doctorium landing — mobil menü paneli hero'nun üstünde kalır", (
     expect(headerZ).toBeGreaterThan(heroZ);
   });
 });
+
+// 👤 2026-10-02 ("menü panelini tamamen opak yap"): panel hero'nun üstüne açılır; yarı saydam zeminde hero başlığı menü
+// satırlarının arasından seçiliyordu. Zemin tek ve opak bir token olmalı — alfa, color-mix ya da bulanıklık geri gelmesin.
+describe("Doctorium landing — mobil menü paneli zemini tam opak", () => {
+  const menu = read("src/components/aura/doctorium-mobile-menu.tsx");
+  const panel = menu.match(/id=\{menuId\}\s+className=\{`([^`]+)`\}/)?.[1] ?? "";
+  const panelClasses = panel.split(/\s+/);
+
+  it("panel tek bir zemin sınıfı taşır: bg-[var(--dl-bg)]", () => {
+    expect(panel, "panel className bulunamadı ya da değişti").not.toBe("");
+    expect(panelClasses.filter((c) => c.startsWith("bg-"))).toEqual(["bg-[var(--dl-bg)]"]);
+  });
+
+  it("zeminde alfa / color-mix / saydamlık / backdrop-blur yok", () => {
+    expect(panel).not.toMatch(/transparent|color-mix|backdrop-|opacity-|bg-\S+\/\d/);
+  });
+
+  it("landing paletinde --dl-bg opak bir renk (alfa kanalı yok)", () => {
+    const palette = read("src/components/aura/doctorium-v3/palette.ts");
+    const bg = palette.match(/"--dl-bg":\s*"([^"]+)"/)?.[1] ?? "";
+    expect(bg).toMatch(/^#[0-9a-fA-F]{6}$/);
+  });
+});

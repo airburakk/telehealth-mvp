@@ -8,6 +8,9 @@ import { useEffect, useState } from "react";
 // kapalı başlar); renkler landing'in --dl-* değişkenlerinden — tema toggle'ına değil bölüm
 // paletine bağlı (landing sözleşmesi). Panel yalnız BÖLÜM ÇAPALARINI taşır: Giriş yap + katıl
 // düğmeleri mobilde barda görünür (bu isteğin asıl maddesi) — panelde tekrarlanmaz.
+// Panel zemini TAM OPAK (👤 2026-10-02): panel hero'nun (koyu video + beyaz başlık) üstüne açılır; eski %94'lük yarı
+// saydam zeminde başlık menü satırlarının arasından seçiliyordu (bulanıklık hero'ya uygulanmıyordu — canlı görüntü).
+// Zemine alfa / color-mix / backdrop-blur GERİ EKLENMEZ; nöbet: tests/unit/doctorium-header-stacking.test.ts.
 // v1 landing'in çapaları — varsayılan (geriye uyum). V2 landing kendi listesini `sections`
 // prop'uyla verir (2026-08-23); bileşen iki sürümde de aynı.
 const SECTIONS = [
@@ -60,7 +63,7 @@ export function DoctoriumMobileMenu({
       {open && (
         <div
           id={menuId}
-          className={`absolute inset-x-0 top-full z-30 border-b border-t border-[var(--dl-line)] bg-[color-mix(in_srgb,var(--dl-bg)_94%,transparent)] px-5 pb-4 pt-2 backdrop-blur-md ${hide}`}
+          className={`absolute inset-x-0 top-full z-30 border-b border-t border-[var(--dl-line)] bg-[var(--dl-bg)] px-5 pb-4 pt-2 ${hide}`}
         >
           <nav aria-label="Bölümler" className="flex flex-col gap-1">
             {sections.map((s) => (
