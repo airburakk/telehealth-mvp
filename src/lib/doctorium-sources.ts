@@ -32,7 +32,7 @@ import { TTB_INTERMEDIATE_CA } from "./ttb-ca";
 import { RG_INTERMEDIATE_CA } from "./rg-ca";
 import { translateTitlesTr } from "./translate-news";
 import { needsTitleTranslation } from "./news-language";
-import { legacyRssKey, rssExternalId } from "./rss-twins";
+import { archivedRssKey, legacyRssKey, normalizeArticleUrl, rssExternalId } from "./rss-twins";
 
 // v6.57 TEŞHİS (2026-08-03): TR kaynakları (RG/OHSAD/TTB) Vercel fra1'den erişilemiyordu —
 // OHSAD 403 = Cloudflare bot koruması (veri-merkezi IP + "AuraHealth/1.0" ekli bot-ish UA +
@@ -932,6 +932,37 @@ export async function adoptLegacyRssKey(
 }
 
 /**
+ * RSS "yeni sayı" yönetimi (v6.309, 👤 karar 2026-10-02 — arka plan: lib/rss-twins "Yeni sayı arşiv anahtarı").
+ * Guid-anahtarlı satır VARKEN kalemin başlığı/adresi kaynakta değişmiş olabilir:
+ *   · başlık VE adres birlikte değişti → YENİ SAYI (KLİMİK haftalık bülteni: tek yazı her hafta yeniden adlandırılıp
+ *     yeniden tarihleniyor; guid sabit). Eski satır arşiv anahtarına taşınır (`<guid>#<id>`), guid boşalır → çağıran
+ *     upsertArticle'da kalem yeni kayıt olarak doğar (createdAt = bugün → tazelik pencerelerine girer; AI özeti gece
+ *     hattında üretilir). Bu adım olmadan guid kimliği yeni sayıyı "zaten var" sayıp akışa HİÇ düşürmüyordu.
+ *   · yalnız adres değişti → tarih kayması, AYNI sayı: satırın adresi güncellenir (bayat permalink yerine canlısı);
+ *     yeni kayıt açılmaz, `createdAt` ve `publishedAt` DEĞİŞMEZ → "bugün geldi" sayılmaz, akışta öne sıçramaz
+ *     (1438e05'in asıl hedefi korunur).
+ *   · yalnız başlık değişti → yazım düzeltmesi sayılır, dokunulmaz.
+ * Başlık karşılaştırması KAYNAK başlığıyla yapılır (çevrilmiş kaynakta `titleOriginal`).
+ * Dönüş: "absent" satır yok · "same" · "moved" adres güncellendi · "rotated" eski sayı arşivlendi (dryRun'da yazmadan aynı yanıt).
+ */
+export async function syncRssEdition(
+  source: string, externalId: string, item: { title: string; link: string }, dryRun?: boolean,
+): Promise<"absent" | "same" | "moved" | "rotated"> {
+  const cur = await db.newsArticle.findUnique({
+    where: { source_externalId: { source, externalId } },
+    select: { id: true, title: true, titleOriginal: true, url: true },
+  });
+  if (!cur) return "absent";
+  if (!cur.url || normalizeArticleUrl(cur.url) === normalizeArticleUrl(item.link)) return "same";
+  if ((cur.titleOriginal ?? cur.title) !== item.title) {
+    if (!dryRun) await db.newsArticle.update({ where: { id: cur.id }, data: { externalId: archivedRssKey(externalId, cur.id) } });
+    return "rotated";
+  }
+  if (!dryRun) await db.newsArticle.update({ where: { id: cur.id }, data: { url: item.link } });
+  return "moved";
+}
+
+/**
  * RSS/Atom beslemesi → NewsArticle. Ayrıştırma hedefli regex'tir (proje geneli desen: parser
  * bağımlılığı yok, başarısızlık = 0 kayıt, uydurma yok). RSS 1.0/RDF de desteklenir: NEJM gibi
  * kaynaklar <item rdf:about> kullanır, düz `<item>` araması onları KAÇIRIR (2026-08-15 ölçümü).
@@ -994,7 +1025,20 @@ export async function ingestRss(def: RssSourceDef, opts?: IngestOpts): Promise<[
     // v6.307 — kimlik geçişi: bu kalem 1438e05 ÖNCESİ link-anahtarıyla yazılmışsa yeni satır açma, anahtarını taşı
     // (yoksa aynı haber ikinci kez "yeni" doğar: çift başlık + sahte tazelik + gereksiz AI özeti).
     const externalId = rssExternalId(guid, link);
-    if ((await adoptLegacyRssKey(def.source, legacyRssKey(link), externalId, opts?.dryRun)) === "adopted") continue;
+    const key = await adoptLegacyRssKey(def.source, legacyRssKey(link), externalId, opts?.dryRun);
+    if (key === "adopted") continue;
+    // v6.309 — guid-anahtarlı satır zaten varsa: yeni sayı mı (arşivle → aşağıda yeni kayıt doğar), tarih kayması mı
+    // (adresi güncelle), yoksa değişiklik yok mu? ("current" yalnız guid'li beslemede döner; guid'sizde adres = kimlik.)
+    if (key === "current") {
+      const edition = await syncRssEdition(def.source, externalId, { title: title.slice(0, 300), link }, opts?.dryRun);
+      if (edition === "same" || edition === "moved") continue;
+      if (edition === "rotated" && opts?.dryRun) {
+        // Prova modunda arşivleme YAZILMADI → upsertArticle satırı hâlâ "var" bulurdu; gerçek koşuda yeni kayıt doğacağı için say.
+        created++;
+        opts.onItem?.(`[${def.source}] ${title.slice(0, 110)}`);
+        continue;
+      }
+    }
     const isNew = await upsertArticle({
       source: def.source,
       externalId,
