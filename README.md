@@ -663,7 +663,7 @@ src/
                              #   notify · push · ice · billing/pricing/fxrate/procedures · postop · share
                              #   storage (Vercel Blob) · rate-limit (Upstash dağıtık + in-memory yedek) · api-auth · error-i18n
                              #   signal-access/-token/-poll · ably-server/-client (WebRTC sinyalleşme + Ably realtime) ...
-  data/                      # coding.ts (ICD-10/LOINC/SNOMED) · procedures.json · second-opinion-docs.ts
+  data/                      # coding.ts (ICD-10/LOINC/SNOMED) · procedures.json (branş etiketi lib/triage BRANCHES'ten türetilir — v6.310; nöbet: procedures-branch-label.test) · second-opinion-docs.ts
 tests/                       # vitest unit/ (saf mantık, DB yok) + integration/ (Neon dev branch) · Playwright e2e/ (3 akış + a11y smoke)
 prisma/
   schema.prisma             # 32 model (User, Doctor, Case, Consultation, ConsultationMessage,
