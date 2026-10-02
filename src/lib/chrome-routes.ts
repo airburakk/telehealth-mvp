@@ -66,7 +66,6 @@ export function hidesGlobalChrome(pathname: string): boolean {
   return (
     (CHROME_FREE_ROUTES as readonly string[]).includes(pathname) ||
     (LANG_CODES as readonly string[]).includes(pathname.slice(1)) ||
-    /^\/care\/(second-opinion|medical-tourism|medical-aesthetics)(?:\/[^\/]+)?\/?$/.test(pathname) ||
     isImmersiveCallPath(pathname)
   );
 }

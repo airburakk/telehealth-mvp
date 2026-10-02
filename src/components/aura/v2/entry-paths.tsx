@@ -29,8 +29,8 @@ type Card = Copy["v2"]["entry"]["cards"][number];
 // (landing chapters ile birebir aynı hedefler), çeviriye tabi değil.
 const HREF: Record<string, string> = {
   consult: "/giris",
-  so: "/care/second-opinion",
-  tourism: "/care/medical-tourism",
+  so: "https://aurasecondopinion.com",
+  tourism: "https://auramedicaltourism.com",
   freecare: LINKS.freeCare,
 };
 

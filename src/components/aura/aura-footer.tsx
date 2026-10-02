@@ -161,17 +161,18 @@ export function AuraFooter({ accountLinks = false, brand, tagline }: { accountLi
           <ul className="mt-3 space-y-2 text-sm text-[var(--aura-grey)]">
             {[
               { label: "Aura Global Care", href: "https://auraglobalcare.com" },
-              { label: "Aura Second Opinion", href: "/care/second-opinion" },
-              { label: "Aura Medical Tourism", href: "/care/medical-tourism" },
-              { label: "Aura Medical Aesthetics", href: "/care/medical-aesthetics" },
+              { label: "Aura Second Opinion", href: "https://aurasecondopinion.com" },
+              { label: "Aura Medical Tourism", href: "https://auramedicaltourism.com" },
+              { label: "Aura Medical Aesthetics", href: "https://auramedicalaesthetics.com" },
               { label: "Doctorium", href: DOCTORIUM_CANONICAL_URL },
               { label: "Doctorium Student", href: `${DOCTORIUM_CANONICAL_URL}${LANDING_ROUTES.student}` },
             ].map(({ label, href }) => (
               <li key={label}>
                 <a href={href} className="inline-flex items-center gap-1.5 py-0.5 transition-colors hover:text-[var(--aura-accent)]">
                   <span><AuraWordText text={label} /></span>
-                  {/* Dış-bağlantı oku yalnız gerçekten dışarı çıkan adreslerde; üç modül alan adı Vercel'e bağlanana
-                      dek /care/* iç yollarına gider (2026-09-30), o satırlarda ok çizilmez. */}
+                  {/* Aura World: altı bağlantının tamamı dış adrestir — üç modül kendi alan adlarında yaşar (👤 karar
+                      2026-10-02: AURA'da /care sayfası yok; aurasecondopinion.com · auramedicaltourism.com ·
+                      auramedicalaesthetics.com). Ok yalnız gerçekten dışarı çıkan adreste çizilir. */}
                   {!href.startsWith("/") && <span aria-hidden="true">↗</span>}
                 </a>
               </li>
