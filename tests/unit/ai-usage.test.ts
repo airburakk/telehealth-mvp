@@ -1,5 +1,7 @@
 // Birim — v6.298 (K6): AI kullanım sayacı. Kilitler: upsert artırım şekli + UTC gün, FAIL-OPEN (asla fırlatmaz), P2002 yarış
 // yeniden denemesi, trackedCreate'in başarı/hata sayımı ve hatayı AYNEN yeniden fırlatması, tahminî USD ve bilinmeyen model → null.
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/lib/db", () => ({ db: { aiUsageDaily: { upsert: vi.fn(), findMany: vi.fn() } } }));
 import { db } from "@/lib/db";
@@ -64,6 +66,15 @@ describe("estimateUsd", () => {
   });
   it("her özelliğin Türkçe etiketi var", () => {
     for (const v of Object.values(AI_FEATURE_LABEL)) expect(v.length).toBeGreaterThan(3);
+  });
+  it("özet etiketleri YÖNLENDİRMEYİ söyler: akademik → news-summary; mevzuat + ilaç + sektörel → regulation-summary (v6.313)", () => {
+    // lib/doctorium generatePendingAiSummaries: module === "akademik" ? ensureClinicalSummary : ensureRegulationSummary.
+    // Yönlendirmenin kendisi de kilitli: bu desen değişirse etiketler yeniden düşünülmeli (test bilinçli olarak kırılır).
+    const src = readFileSync(join(process.cwd(), "src/lib/doctorium.ts"), "utf8");
+    expect(src).toMatch(/if \(r\.module === "akademik"\) \{\s*const s = await ensureClinicalSummary\(r\.id\);[\s\S]{0,160}\} else \{\s*const s = await ensureRegulationSummary\(r\.id\);/);
+    expect(AI_FEATURE_LABEL["news-summary"]).toMatch(/akademik/i);
+    expect(AI_FEATURE_LABEL["news-summary"]).not.toMatch(/sektörel|ilaç|mevzuat/i);
+    for (const k of ["mevzuat", "ilaç", "sektörel"]) expect(AI_FEATURE_LABEL["regulation-summary"]).toContain(k);
   });
 });
 

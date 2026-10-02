@@ -25,8 +25,8 @@ export type AiFeature =
   | "postop-note"            // ai-clinical.assessPostopNote
   | "postop-photo"           // ai-clinical.assessPostopPhoto
   | "doc-analysis"           // ai-clinical.assessDocument
-  | "news-summary"           // ai-clinical.summarizeArticleForClinician (cron generate-ai-summaries + tembel yol)
-  | "regulation-summary"     // ai-clinical.summarizeRegulationForClinician
+  | "news-summary"           // ai-clinical.summarizeArticleForClinician — YALNIZ akademik modül (ensureClinicalSummary; cron + tembel yol)
+  | "regulation-summary"     // ai-clinical.summarizeRegulationForClinician — mevzuat + ilaç + SEKTÖREL (ensureRegulationSummary; cron + tembel yol)
   | "news-title-translate"   // lib/translate-news (ingest)
   | "news-summary-translate" // lib/translate-news (cron translate-news)
   | "live-token";            // api/realtime/token — Gemini Live oturumu (token adedi; dakika ücreti Google'da)
@@ -43,8 +43,12 @@ export const AI_FEATURE_LABEL: Record<AiFeature, string> = {
   "postop-note": "Post-op not değerlendirmesi",
   "postop-photo": "Post-op fotoğraf değerlendirmesi",
   "doc-analysis": "Belge analizi",
-  "news-summary": "Doctorium AI özeti (akademik/ilaç/sektörel)",
-  "regulation-summary": "Doctorium mevzuat özeti",
+  // 🪤 v6.313 (2026-10-02): etiketler YÖNLENDİRMEYİ söylemeli. Eski etiketler ("AI özeti (akademik/ilaç/sektörel)" · "mevzuat özeti")
+  // yanlıştı: lib/doctorium generatePendingAiSummaries + [id]/page.tsx yalnız AKADEMİK modülü ensureClinicalSummary'ye, kalan her şeyi
+  // (mevzuat · ilaç · sektörel) ensureRegulationSummary'ye yollar. 30 Eylül'de çiftlenen dernek haberlerinin özetleri bu yüzden
+  // "mevzuat" satırında birikmiş, analiz yanlış satıra bakmıştı. Yönlendirme değişirse bu iki etiket de değişir (test kilitli).
+  "news-summary": "Doctorium akademik yayın özeti",
+  "regulation-summary": "Doctorium mevzuat · ilaç · sektörel özeti",
   "news-title-translate": "Haber başlığı çevirisi (gece)",
   "news-summary-translate": "Haber özet girişi çevirisi (gece)",
   "live-token": "Canlı tercüman oturumu (Gemini)",
