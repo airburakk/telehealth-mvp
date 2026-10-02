@@ -18,7 +18,8 @@ import {
 import { keywordByKey } from "@/lib/hukuk-keywords";
 import type { CongressRow } from "@/app/doktor/doctorium/CongressList";
 import { db } from "@/lib/db";
-import { approvedEduOpportunities, EDU_KINDS, type EduOpportunityKind } from "@/lib/edu-opportunities";
+import { approvedEduOpportunities, EDU_KINDS, isEduClosed, type EduOpportunityKind } from "@/lib/edu-opportunities";
+import { todayIsoTr } from "@/lib/iso-day";
 import { listApprovedEduOpportunities, type EduOpportunityView } from "@/lib/edu-store";
 import { approvedTusSummaries, type TusPeriodSummaryWithSource } from "@/lib/tus-data";
 import { FIXTURE_FEED, FIXTURE_LEGAL, FIXTURE_SUMMARY } from "./fixtures";
@@ -171,9 +172,9 @@ function studentsCounts(edu: readonly { kind: EduOpportunityKind }[]): Record<Ed
   return Object.fromEntries(EDU_KINDS.map((k) => [k, edu.filter((o) => o.kind === k).length])) as Record<EduOpportunityKind, number>;
 }
 
-/** DB'siz yedek: statik onaylı seed + ÖSYM özeti (her ikisi de gerçek, onaylı veri). */
-function studentsSeed(): LandingProof["students"] {
-  const edu = approvedEduOpportunities();
+/** DB'siz yedek: statik onaylı seed + ÖSYM özeti (her ikisi de gerçek, onaylı veri). Kapanan kayıt DB yoluyla aynı kuralla sona iner. */
+function studentsSeed(today: string = todayIsoTr()): LandingProof["students"] {
+  const edu = approvedEduOpportunities(undefined, today).map((o) => ({ ...o, closed: isEduClosed(o, today) }));
   const periods = approvedTusSummaries();
   return { edu, counts: studentsCounts(edu), tusLast: periods[periods.length - 1] ?? null, tusPeriods: periods.length, source: "seed" };
 }

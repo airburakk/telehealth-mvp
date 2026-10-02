@@ -154,7 +154,7 @@ export async function EduOpportunitiesPanel({ className = "", kind = null, defau
             key={o.id}
             id={`edu-${o.id}`}
             o={o}
-            action={canFollow && o.deadline ? <EduFollowButton opportunityId={o.id} following={followed.has(o.id)} /> : undefined}
+            action={canFollow && o.deadline && !o.closed ? <EduFollowButton opportunityId={o.id} following={followed.has(o.id)} /> : undefined}
           />
         ))}
       </ul>
@@ -171,6 +171,8 @@ export async function EduOpportunitiesPanel({ className = "", kind = null, defau
  * kuralı "ProductFrame içinde gerçek ürün bileşeni"). `action` = takip düğmesi (yalnız girişli öğrenci; landing vermez).
  * `clampEligibility`: landing'de şart metni iki satıra kırpılır (kart yüksekliği), portalda tam. Kit token'ı (--c-accent)
  * kitleye göre çözülür — landing öğrenci kapsamını sarmalayıcıyla verir.
+ * Son başvurusu geçen kayıt (`o.closed`, veri katmanında Türkiye gününe göre hesaplanır) "başvuru kapandı · <gün>" yazar; kayıt
+ * gizlenmez, listenin sonunda durur ve takip düğmesi almaz (👤 2026-10-02 — gelecek dönem için referans).
  */
 export function EduOpportunityRow({ o, action, clampEligibility = false, id }: { o: EduOpportunityView; action?: ReactNode; clampEligibility?: boolean; id?: string }) {
   return (
@@ -183,7 +185,11 @@ export function EduOpportunityRow({ o, action, clampEligibility = false, id }: {
             <span>{eduCountryLabel(o.country)}</span>
             <span aria-hidden>·</span>
             {o.deadline ? (
-              <span className="text-[var(--c-ink-2)]">son başvuru {formatIsoDayTr(o.deadline)}</span>
+              o.closed ? (
+                <span>başvuru kapandı · {formatIsoDayTr(o.deadline)}</span>
+              ) : (
+                <span className="text-[var(--c-ink-2)]">son başvuru {formatIsoDayTr(o.deadline)}</span>
+              )
             ) : (
               <span className="normal-case tracking-normal">{o.deadlineNote}</span>
             )}

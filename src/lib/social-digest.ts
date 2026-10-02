@@ -31,6 +31,7 @@ import { BRANCHES } from "./triage";
 import { trimSummary } from "./daily-digest";
 import { decodeFeedText } from "./doctorium";
 import { isNativeTurkishSource } from "./news-language";
+import { normalizeTrialPhasePrefix } from "./trial-phase";
 
 type Branch = (typeof BRANCHES)[number];
 
@@ -143,7 +144,9 @@ function toItem(
     // toFeedItem dönüşümünden geçmez — decode olmadan "&#x2009;" sosyal medya gönderisine ham
     // giderdi. Kırpmadan ÖNCE çözülür: 160 karakterlik bütçe gerçek harfleri saymalı ve kırpma
     // bir varlığı ortadan bölmemeli ("… &#x20" gibi bozuk kuyruk).
-    title: decodeFeedText(a.title),
+    // Klinik araştırma faz öneki kanonik biçime gelir ("PHASE4 · …" / "FAZE 3 · …" → "Faz 4 · …" — lib/trial-phase):
+    // kart LinkedIn/X'e gittiği için eski satırların ham ya da çeviride bozulmuş öneki bu sınırda düzeltilir.
+    title: a.source === "clinicaltrials" ? normalizeTrialPhasePrefix(decodeFeedText(a.title)) : decodeFeedText(a.title),
     sourceName: a.sourceName,
     summary: trimSummary(decodeFeedText(a.summary), 160),
     url: a.url,

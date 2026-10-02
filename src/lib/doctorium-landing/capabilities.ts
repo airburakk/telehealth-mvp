@@ -178,7 +178,7 @@ export const CAPABILITIES: readonly Capability[] = [
     ["Sektörel: Medscape · Medical Xpress · WHO"],
     ["tüm dünya basını", "her kaynak"]),
   cap2("student.career_edu", "verified",
-    ["src/lib/edu-opportunities.ts EDU_KINDS staj/degisim/burs + approvedAt kapısı", "src/lib/edu-store.ts:28 listApprovedEduOpportunities", "src/lib/edu-reminder.ts:14 EDU_ALERT_THRESHOLDS [7, 3, 1]", "src/app/doktor/doctorium/CareerEduSections.tsx:100 EduOpportunitiesPanel"],
+    ["src/lib/edu-opportunities.ts EDU_KINDS staj/degisim/burs + approvedAt kapısı", "src/lib/edu-store.ts:34 listApprovedEduOpportunities", "src/lib/edu-reminder.ts:14 EDU_ALERT_THRESHOLDS [7, 3, 1]", "src/app/doktor/doctorium/CareerEduSections.tsx:101 EduOpportunitiesPanel"],
     ["Staj, Değişim Programları, Burs tek listede", "Takip edilen fırsatın son başvurusu 7, 3 ve 1 gün kala hatırlatılır"],
     ["iş ilanı", "burs garantisi", "kesin kabul"]),
   cap2("student.tus", "verified",

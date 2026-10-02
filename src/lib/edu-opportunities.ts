@@ -120,16 +120,42 @@ export const EDU_OPPORTUNITIES: readonly EduOpportunity[] = [
   { id: "aamc-vslo", kind: "staj", title: "AAMC VSLO — Yurt Dışı Seçmeli Staj ve Gözlemcilik (Global Network)", organizer: "Association of American Medical Colleges", country: null,
     deadline: null, deadlineNote: "Ev sahibi kurum katalogları çoğunlukla Şubat–Nisan'da açılır; başvuru fakültenizin daveti ve VSLO servisi üzerinden", startsAt: null,
     eligibility: "Fakülteniz VSLO Global Network üyesi olmalı (uluslararası ofisinize sorun). Sınıf, dil, sigorta ve ücret şartları kurum ve elektif bazında; başvuru yalnız Home kurum onayıyla iletilir.",
-    sourceUrl: "https://students-residents.aamc.org/attending-medical-school/article/global-network/", verifiedAt: V, approvedAt: A },
+    // Kaynak 2026-10-02'de yenilendi: eski ".../attending-medical-school/article/global-network/" adresi 404'e düştü (AAMC sayfayı kaldırdı);
+    // öğrenciye dönük güncel resmî sayfa "Seeking a Global Opportunity" (gerçek tarayıcıda 200 doğrulandı).
+    sourceUrl: "https://students-residents.aamc.org/visiting-student-learning-opportunities/seeking-global-opportunity", verifiedAt: "2026-10-02", approvedAt: A },
   { id: "who-internship", kind: "staj", title: "Dünya Sağlık Örgütü Staj Programı (WHO Internship)", organizer: "Dünya Sağlık Örgütü", country: null,
     deadline: null, deadlineNote: "Sürekli başvuru; açık stajlar careers.who.int üzerinde yayımlanır", startsAt: null,
     eligibility: "En az 20 yaş; en az 3 yıl tam zamanlı üniversite eğitimini tamamlamış öğrenci ya da son 18 ayda mezun; tıp ve sağlık alanları uygun; görev ofisinin dilinde akıcılık. 6–24 hafta; yaşam desteği ödeneği ve sigorta sağlanır.",
     sourceUrl: "https://www.who.int/careers/internship-programme", verifiedAt: V, approvedAt: A },
 ];
 
-/** Yalnız 👤 onaylı satırlar; tarihli olanlar önce (yakın son başvuru üstte), tarihsizler sonra (dizi sırası). */
-export function approvedEduOpportunities(list: readonly EduOpportunity[] = EDU_OPPORTUNITIES): EduOpportunity[] {
+/**
+ * Son başvurusu geçti mi (👤 karar 2026-10-02: "sona al, 'başvuru kapandı' yaz"). Gün karşılaştırması — son başvuru GÜNÜ
+ * dahil açıktır; tarihsiz (dönemsel) kayıt kapanmaz. `todayIso` Türkiye takvim günüdür (lib/iso-day todayIsoTr).
+ */
+export function isEduClosed(o: { deadline: string | null }, todayIso: string): boolean {
+  return o.deadline !== null && o.deadline < todayIso;
+}
+
+/**
+ * Yüzey sırası (portal Fırsatlar + landing Öğrenciler): AÇIK tarihliler (yakın son başvuru üstte) → tarihsizler (dönemsel)
+ * → başvurusu KAPANANLAR (en son kapanan üstte). Kapanan kayıt gizlenmez: gelecek dönem için referans olarak listenin sonunda
+ * durur. Grup içi göreli sıra girişteki gibidir (çağıran önceden sıralar) — kapananlar hariç, onlar tarihe göre azalan.
+ */
+export function orderEduOpportunities<T extends { deadline: string | null }>(rows: readonly T[], todayIso: string): T[] {
+  const open = rows.filter((o) => o.deadline !== null && !isEduClosed(o, todayIso));
+  const undated = rows.filter((o) => o.deadline === null);
+  const closed = rows.filter((o) => isEduClosed(o, todayIso)).sort((a, b) => (b.deadline as string).localeCompare(a.deadline as string));
+  return [...open, ...undated, ...closed];
+}
+
+/**
+ * Yalnız 👤 onaylı satırlar; tarihli olanlar önce (yakın son başvuru üstte), tarihsizler sonra (dizi sırası). `todayIso`
+ * verilirse başvurusu kapananlar sona iner (orderEduOpportunities); verilmezse hiçbir kayıt kapanmış sayılmaz (saf, zamansız).
+ */
+export function approvedEduOpportunities(list: readonly EduOpportunity[] = EDU_OPPORTUNITIES, todayIso?: string): EduOpportunity[] {
   const rows = list.filter((o) => o.approvedAt !== null);
   const dated = rows.filter((o) => o.deadline).sort((a, b) => (a.deadline as string).localeCompare(b.deadline as string));
-  return [...dated, ...rows.filter((o) => !o.deadline)];
+  const ordered = [...dated, ...rows.filter((o) => !o.deadline)];
+  return todayIso ? orderEduOpportunities(ordered, todayIso) : ordered;
 }

@@ -31,6 +31,7 @@ import { db } from "./db";
 import { TTB_INTERMEDIATE_CA } from "./ttb-ca";
 import { RG_INTERMEDIATE_CA } from "./rg-ca";
 import { translateTitlesTr } from "./translate-news";
+import { joinTrialPhase, trialPhaseLabel } from "./trial-phase";
 import { needsTitleTranslation } from "./news-language";
 import { archivedRssKey, legacyRssKey, normalizeArticleUrl, rssExternalId } from "./rss-twins";
 
@@ -722,12 +723,13 @@ export async function ingestTrials(limit = 10): Promise<[number, number]> {
     const title = p?.identificationModule?.briefTitle;
     if (!id || !title) continue;
     const dateStr = p?.statusModule?.lastUpdatePostDateStruct?.date;
-    const phases = (p?.designModule?.phases ?? []).join("/");
+    // Faz öneki kodda ve Türkçe üretilir ("Faz 3 · …"); çeviriye GİRMEZ (lib/trial-phase — ham "PHASE3" çeviride bozuluyordu).
+    const phase = trialPhaseLabel(p?.designModule?.phases ?? []);
     const sponsor = p?.sponsorCollaboratorsModule?.leadSponsor?.name;
     const isNew = await upsertArticle({
       source: "clinicaltrials", externalId: id, module: "ilac", category: "ilac-cihaz",
       kind: "lansman",
-      title: `${phases ? `${phases} · ` : ""}${title.slice(0, 220)}`,
+      title: joinTrialPhase(phase, title.slice(0, 220)),
       summary: [(p?.descriptionModule?.briefSummary ?? "").slice(0, 400), sponsor ? `Sponsor: ${sponsor}` : null]
         .filter(Boolean).join(" · "),
       sourceName: "ClinicalTrials.gov",

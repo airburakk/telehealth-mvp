@@ -449,6 +449,13 @@ normal). Parmak izi kodda tutulmaz (public repo).
   arasında hâlâ ORTAK (ayrımı ayrı kalem) · **Vercel Preview deployment'ları hâlâ prod DB'ye bakar**
   (`DATABASE_URL` kapsamı "Production and Preview") — istenirse panelde Preview kapsamına
   development branch bağlantısı atanır.
+- 🔕 **`doctorium` projesinde Preview (dal/PR) derlemeleri KAPALI (2026-10-02, 👤 karar):** proje ayarı
+  `previewDeploymentsDisabled: true` (Vercel API `PATCH /v9/projects/doctorium`; ayar repo'da DEĞİL — `vercel.json`
+  `git.deploymentEnabled` iki projede ortak olduğu için kullanılmadı, AURA önizlemelerini de kapatırdı). Neden: o projenin
+  Preview ortamında yalnız 1 anahtar vardı; her dal push'u/PR "Collecting page data" aşamasında `TSA_SECRET` eksikliğiyle
+  kırmızı "Vercel – doctorium" kontrolü üretiyordu. Şimdi PR'larda yalnız "Vercel – telehealth-mvp" görünür; üretim (`main`)
+  yayınları iki projede de sürer (kapatma sonrası ilk iki `main` push'unda ölçüldü). Doctorium yüzeyini yayın öncesi görmek için
+  yerelde `BRAND_MODE=doctorium` ile build alınır. Geri açılacaksa önce Preview env'i doldurulur (ayrı sırlar + dev DB).
 
 ## Üç modül sitesi — bağımsız alan adları (v6.305, 2026-10-02) [S1]
 

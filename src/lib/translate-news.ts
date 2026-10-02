@@ -24,6 +24,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { modelParams, pickModel } from "./ai-model";
 import { trackedCreate } from "./ai-usage";
+import { joinTrialPhase, splitTrialPhasePrefix } from "./trial-phase";
 
 // Basit yüksek-hacim iş: düşük efor yeterli (çeviri başına ~2 sn, gece cron'unda koşar).
 //
@@ -236,12 +237,29 @@ async function translateBatchTr(
 }
 
 /**
+ * Klinik araştırma faz öneki koruması — SAF (birim testli). "Faz 3 · A Study of X" çeviriye "A Study of X" olarak girer,
+ * çeviri dönünce kanonik önek geri eklenir. Neden: ham önek ("PHASE3") başlıkla birlikte çevrilince model onu kimi gün
+ * aynen bıraktı, kimi gün "FAZE 3" diye bozdu (sabah bülteni kartı, 2026-10-02). Öneksiz başlık aynen geçer.
+ */
+export function protectTrialPhase(titles: string[]): {
+  inputs: string[];
+  restore: (out: (string | null | undefined)[]) => (string | null)[];
+} {
+  const parts = titles.map(splitTrialPhasePrefix);
+  return {
+    inputs: titles.map((t, i) => parts[i]?.rest ?? t),
+    restore: (out) => out.map((t, i) => (t ? joinTrialPhase(parts[i]?.phase ?? "", t) : null)),
+  };
+}
+
+/**
  * Başlıkları Türkçeye çevirir; sonuç dizisi girişle aynı uzunluktadır (başarısız öğe null).
  * ANTHROPIC_API_KEY yoksa ağa hiç çıkmadan null'lar döner (dormant — masrafsız).
  */
 export async function translateTitlesTr(titles: string[]): Promise<(string | null)[]> {
-  const out = await translateBatchTr(titles, { system: TITLE_SYSTEM, chunk: TITLE_CHUNK, maxTokens: 4096, sep: "\n", mode: "konum" });
-  return out.map((t) => t ?? null);
+  const guard = protectTrialPhase(titles);
+  const out = await translateBatchTr(guard.inputs, { system: TITLE_SYSTEM, chunk: TITLE_CHUNK, maxTokens: 4096, sep: "\n", mode: "konum" });
+  return guard.restore(out);
 }
 
 /**

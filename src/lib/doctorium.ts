@@ -17,6 +17,7 @@ import { BRANCHES, BRANCH_LABEL_ALIASES } from "./triage";
 // düşüyordu — 2026-08-23 birim testinde yakalandı). Ayrı yerel import şart; aşağıdaki
 // `export {...} from` satırıyla ÇAKIŞMAZ (o yalnız re-export kaydı, yerel binding yaratmaz).
 import { SECTOR_CATEGORIES } from "./doctorium-labels";
+import { normalizeTrialPhasePrefix } from "./trial-phase";
 
 export const DOCTORIUM_NAME = "Doctorium";
 
@@ -333,10 +334,13 @@ function toFeedItem(r: Row): FeedItem {
     const v = JSON.parse(r.branchSlugs);
     if (Array.isArray(v)) slugs = v.filter((s): s is string => typeof s === "string");
   } catch { /* bozuk JSON = branşsız göster */ }
+  // Klinik araştırma faz öneki okunurken kanonik biçime gelir ("PHASE4 · …" / "FAZE 3 · …" → "Faz 4 · …"): 2026-10-02
+  // öncesi satırlarda ham ya da çeviride bozulmuş önek duruyor; veritabanı düzeltmesi yerine tek okuma noktası (lib/trial-phase).
+  const fixPhase = (t: string) => (r.source === "clinicaltrials" ? normalizeTrialPhasePrefix(t) : t);
   return {
     ...r,
-    title: decodeFeedText(r.title),
-    titleOriginal: r.titleOriginal ? decodeFeedText(r.titleOriginal) : null,
+    title: fixPhase(decodeFeedText(r.title)),
+    titleOriginal: r.titleOriginal ? fixPhase(decodeFeedText(r.titleOriginal)) : null,
     summary: decodeFeedText(r.summary),
     branchSlugs: slugs,
     hasAiSummary: !!r.aiSummary,
