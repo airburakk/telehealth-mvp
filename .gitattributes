@@ -3,3 +3,9 @@
 # verir ve pre-push kapısı SESSİZCE çalışmaz hale gelir — korkuluğun en kötü kırılma biçimi.
 .githooks/* text eol=lf
 *.sh        text eol=lf
+
+# infra/kart/ Linux sunucuya `git archive | tar` ile gider (v6.320). Windows'ta core.autocrlf=true `git archive` çıktısını da CRLF'e
+# çevirir (03.10 ölçüldü: Dockerfile'ın 17 satırının hepsi CR'li) → Dockerfile'daki `\` satır devamı ve betikler Linux'ta bozulabilir.
+# Bu dizin LF'e SABİT; ikili varlıklar (webp) dokunulmaz.
+infra/kart/**            text=auto eol=lf
+infra/kart/assets/*.webp binary
