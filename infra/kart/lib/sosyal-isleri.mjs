@@ -1,10 +1,13 @@
-// Doctorium sosyal VİDEO işleri (v6.320) — `kart` servisinin arka plan üretim yöneticisi.
+// Doctorium sosyal VİDEO + carousel işleri (v6.320 · carousel v6.323) — `kart` servisinin arka plan üretim yöneticisi.
 //
 // Sözleşme (n8n tarafı):
 //   POST /sosyal/uret[?yenile=1] → 202 üretim başladı · 200 o günün klipleri HAZIR (idempotent) ya da boş gün (`bos_gun`) · 409 başka iş sürüyor ·
 //                                  502 seçki alınamadı/geçersiz · 503 müzik dosyası yok
 //   GET  /sosyal/durum           → { durum: "bos" | "calisiyor" | "hazir" | "hata", gun, … } (n8n `gun`u kendi beklediği günle karşılaştırır)
-//   GET|HEAD /sosyal/dosya/<gün>/<ad>.mp4 → MP4 (yalnız `hazir` günün, `bitti.json`'da listeli adlar)
+//   GET|HEAD /sosyal/dosya/<gün>/<ad> → MP4 (`dosyalar`) ya da PNG (`gorseller`) — yalnız `hazir` günün, `bitti.json`'da listeli adlar
+//
+// 🪤 GERİYE UYUM (v6.323): carousel slaytları `dosyalar`a DEĞİL ayrı `gorseller` dizisine yazılır. Çalışan n8n akışı `dosyalar`daki HER öğeyi indirip
+//   MP4 imzası (`ftyp`) arar → PNG'yi `dosyalar`a koymak, sunucu güncellendiği anda 07:55 koşusunu düşürürdü. `gorseller` yoksa/boşsa eski istemci etkilenmez.
 //
 // Tasarım kararları:
 //   · TEK iş (2 vCPU paylaşımlı VPS): ikinci POST kuyruğa girmez, 409 alır. Kilit, seçki çekilmeden ÖNCE alınır → iki eşzamanlı POST ikisi de geçemez.
@@ -20,12 +23,14 @@ import { pipeline } from "node:stream/promises";
 
 const GUN_RE = /^\d{4}-\d{2}-\d{2}$/;
 const AD_RE = /^[a-z0-9][a-z0-9-]*\.mp4$/;
+const GORSEL_RE = /^carousel-\d{4}-\d{2}-\d{2}-\d{2}-(?:kart|icerik-\d+|kapanis)\.png$/;
 const MARKER = "bitti.json";
 const GECICI = ".is";
 const TUR_SIRA = { hikaye: 0, reel: 1, diger: 2 };
 
 export const gunGecerli = (s) => typeof s === "string" && GUN_RE.test(s);
 export const dosyaAdiGecerli = (s) => typeof s === "string" && AD_RE.test(s);
+export const gorselAdiGecerli = (s) => typeof s === "string" && GORSEL_RE.test(s);
 
 /**
  * Seçki JSON'unu üretimden ÖNCE doğrular: eksik alanla şablon "undefined" yazardı. `day` dosya yoluna girer → biçimi katı.
@@ -43,9 +48,16 @@ export function digestDogrula(d) {
   });
 }
 
-/** Durum yanıtındaki kapsam özeti: kaç öğe, kaçında dürüst yedek cümle (`summaryLongFallback`) kullanıldı. */
+/**
+ * Durum yanıtındaki kapsam özeti: kaç öğe, kaçında dürüst yedek cümle (`summaryLongFallback`) kullanıldı, günün akışları.
+ * `akislar` = akış etiketleri (`streamLabel`), seçki sırasıyla, TEKRARSIZ — Reel/carousel altyazısının akış satırı için (n8n büyük harfe çevirip " · " ile birleştirir).
+ */
 export function kapsamHesapla(d) {
-  return { ogeSayisi: d.items.length, yedekSayisi: d.items.filter((it) => it.summaryLongFallback === true).length };
+  return {
+    ogeSayisi: d.items.length,
+    yedekSayisi: d.items.filter((it) => it.summaryLongFallback === true).length,
+    akislar: [...new Set(d.items.map((it) => it.streamLabel))],
+  };
 }
 
 /** Dosya adından yayın bilgisi: hikâye `sira` = klip numarası (01-kart → 1), Reel → 1. */
@@ -63,6 +75,19 @@ function dosyalariListele(gunDir) {
     .sort((a, b) => (TUR_SIRA[a.tur] - TUR_SIRA[b.tur]) || (a.sira - b.sira) || a.ad.localeCompare(b.ad));
 }
 
+/** Carousel slaytı: `sira` = slayt numarası (01-kart → 1; sonuncusu kapanış). */
+export function gorselMeta(ad) {
+  const m = /^carousel-\d{4}-\d{2}-\d{2}-(\d{2})-/.exec(ad);
+  return { tur: "carousel", sira: m ? Number(m[1]) : 0 };
+}
+
+function gorselleriListele(gunDir) {
+  return fs.readdirSync(gunDir)
+    .filter((ad) => gorselAdiGecerli(ad))
+    .map((ad) => ({ ad, boyut: fs.statSync(path.join(gunDir, ad)).size, ...gorselMeta(ad) }))
+    .sort((a, b) => a.sira - b.sira);
+}
+
 function json(res, kod, govde) {
   const s = JSON.stringify(govde);
   res.writeHead(kod, { "Content-Type": "application/json; charset=utf-8", "Content-Length": Buffer.byteLength(s), "Cache-Control": "no-store" });
@@ -76,7 +101,7 @@ const hataMesaji = (e) => String(e?.message ?? e).slice(0, 500);
  * @property {string} dir Çıktı kökü (gün klasörleri burada açılır; ör. /tmp/sosyal).
  * @property {() => Promise<any>} getDigest Seçkiyi çeker (jetonu bilen taraf; burada YOK).
  * @property {(digest: any) => Promise<Buffer | null>} renderCardPng Paylaşımla AYNI kart PNG'si (boş gün → null).
- * @property {{ renderStories: Function, renderReelA: Function }} uretici `lib/social-video.mjs`.
+ * @property {{ renderStories: Function, renderReelA: Function, renderCarousel: Function }} uretici `lib/social-video.mjs` + `lib/social-carousel.mjs`.
  * @property {() => Promise<any>} getBrowser Paylaşılan Playwright tarayıcısı.
  * @property {string} muzikPath Müzik MP3'ü (repo DIŞI; sunucuda `/varlik/muzik.mp3`).
  * @property {string} spherePath Küre görseli.
@@ -126,7 +151,8 @@ export function createSosyal(o) {
     }
   }
 
-  const govdeHazir = (b) => ({ durum: "hazir", gun: b.gun, dosyalar: b.dosyalar, kapsam: b.kapsam, sure_sn: b.sure_sn, olusturuldu: b.olusturuldu });
+  // `gorseller`: v6.320'de yazılmış (carousel öncesi) bitti.json'da yok → [] (eski kayıt hâlâ geçerli).
+  const govdeHazir = (b) => ({ durum: "hazir", gun: b.gun, dosyalar: b.dosyalar, gorseller: Array.isArray(b.gorseller) ? b.gorseller : [], kapsam: b.kapsam, sure_sn: b.sure_sn, olusturuldu: b.olusturuldu });
 
   function durumGovdesi() {
     if (calisan) {
@@ -164,6 +190,13 @@ export function createSosyal(o) {
       const cardPath = path.join(workDir, "kart-1080x1350.png");
       fs.writeFileSync(cardPath, cardPng);
 
+      // Carousel ÖNCE: ~10–30 sn sürer → yazı tipi/tarayıcı sorunu dakikalarca süren videolardan ÖNCE ve yüksek sesle (iş `hata`) düşer.
+      calisan.asama = "carousel";
+      const tC = now();
+      const carousel = await uretici.renderCarousel({ digest, cardPng: cardPath, outDir: gunDir, spherePath, browser });
+      const carouselSn = Math.round((now() - tC) / 100) / 10;
+      (carousel?.fit ?? []).forEach((f, i) => { if (f.bosluk < 0) log(`sosyal: ${gun} slayt ${i + 2} asgari puntoda sığmadı (boşluk ${f.bosluk} px)`); });
+
       calisan.asama = "hikaye";
       const hikaye = await uretici.renderStories({ digest, cardPng: cardPath, outDir: gunDir, workDir, music: muzikPath, spherePath, browser });
 
@@ -174,14 +207,20 @@ export function createSosyal(o) {
       fs.rmSync(workDir, { recursive: true, force: true });
       const dosyalar = dosyalariListele(gunDir);
       if (!dosyalar.length) throw new Error("hiç MP4 üretilmedi");
+      const gorseller = gorselleriListele(gunDir);
+      const beklenenSlayt = digest.items.length + 2; // kart + her içerik için 1 + kapanış
+      if (gorseller.length !== beklenenSlayt) throw new Error(`carousel slayt sayısı beklenenden farklı (${gorseller.length}/${beklenenSlayt})`);
       const sure_sn = Math.round((now() - t0) / 100) / 10;
-      const bitti = { surum: 1, gun, olusturuldu: new Date(now()).toISOString(), sure_sn, kapsam: kapsamHesapla(digest), dosyalar, olcum: { hikaye: hikaye?.timings ?? null, reel: reel?.timings ?? null } };
+      const bitti = {
+        surum: 2, gun, olusturuldu: new Date(now()).toISOString(), sure_sn, kapsam: kapsamHesapla(digest), dosyalar, gorseller,
+        olcum: { hikaye: hikaye?.timings ?? null, reel: reel?.timings ?? null, carousel: { sn: carouselSn, puntolar: carousel?.fit ?? null } },
+      };
       const gecici = path.join(gunDir, `${MARKER}.tmp`);
       fs.writeFileSync(gecici, JSON.stringify(bitti, null, 2));
       fs.renameSync(gecici, path.join(gunDir, MARKER));
       sonHata = null;
       eskileriTemizle(gun);
-      log(`sosyal: ${gun} hazır — ${dosyalar.length} dosya, ${sure_sn} sn`);
+      log(`sosyal: ${gun} hazır — ${dosyalar.length} dosya, ${gorseller.length} slayt, ${sure_sn} sn`);
     } catch (e) {
       sonHata = { gun, mesaj: hataMesaji(e), adim: calisan?.asama ?? "?", zaman: new Date(now()).toISOString() };
       if (basladi) {
@@ -214,7 +253,7 @@ export function createSosyal(o) {
     if (digest.items.length === 0) {
       calisan = null;
       sonHataTemizle(digest.day);
-      return json(res, 200, { durum: "hazir", gun: digest.day, bos_gun: true, dosyalar: [], kapsam: { ogeSayisi: 0, yedekSayisi: 0 } });
+      return json(res, 200, { durum: "hazir", gun: digest.day, bos_gun: true, dosyalar: [], gorseller: [], kapsam: kapsamHesapla(digest) });
     }
     const hazir = yenile ? null : okuBitti(digest.day);
     if (hazir) {
@@ -231,17 +270,19 @@ export function createSosyal(o) {
   }
 
   async function dosyaGonder(req, res, rest) {
-    // `url.pathname` zaten ".." parçalarını çözmüş olur; kodlanmış "/" ise ad içinde kalır ve AD_RE'yi geçemez.
+    // `url.pathname` zaten ".." parçalarını çözmüş olur; kodlanmış "/" ise ad içinde kalır ve AD_RE/GORSEL_RE'yi geçemez.
     const parcalar = rest.split("/");
     if (parcalar.length !== 2) return json(res, 404, { hata: "yok" });
     const [gun, ad] = parcalar;
-    if (!gunGecerli(gun) || !dosyaAdiGecerli(ad)) return json(res, 404, { hata: "yok" });
-    const kayit = okuBitti(gun)?.dosyalar.find((d) => d.ad === ad); // yalnız tamamlanmış günün LİSTELİ dosyaları
+    const png = gorselAdiGecerli(ad);
+    if (!gunGecerli(gun) || !(png || dosyaAdiGecerli(ad))) return json(res, 404, { hata: "yok" });
+    const b = okuBitti(gun);
+    const kayit = (png ? b?.gorseller : b?.dosyalar)?.find((d) => d.ad === ad); // yalnız tamamlanmış günün LİSTELİ dosyaları (tür başına kendi listesi)
     if (!kayit) return json(res, 404, { hata: "yok" });
     const yol = path.join(gunDizini(gun), ad);
     let st;
     try { st = fs.statSync(yol); } catch { return json(res, 404, { hata: "yok" }); }
-    res.writeHead(200, { "Content-Type": "video/mp4", "Content-Length": st.size, "Cache-Control": "no-store", "Content-Disposition": `attachment; filename="${ad}"` });
+    res.writeHead(200, { "Content-Type": png ? "image/png" : "video/mp4", "Content-Length": st.size, "Cache-Control": "no-store", "Content-Disposition": `attachment; filename="${ad}"` });
     if (req.method === "HEAD") return res.end();
     await pipeline(fs.createReadStream(yol), res);
   }

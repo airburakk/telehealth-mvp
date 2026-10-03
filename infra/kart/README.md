@@ -3,23 +3,28 @@
 Hetzner `doctorium-n8n` VPS'inde (n8n ile **aynı compose**, `/opt/n8n/`) çalışan `kart` servisi. **Vercel'e / Next uygulamasına girmez**; n8n akışları HTTP ile çağırır.
 Eskiden yalnız `server.mjs` sunucuda duruyordu (scp ile düzenleniyor, kurtarılması zordu); v6.320'de depoya alındı → sürümlü + testli.
 
-İki iş yapar:
+Üç iş yapar:
 
 1. **`GET /bulten.png`** — her sabah 07:45 TR n8n'in çağırdığı TAM BÜLTEN kartı (1080×1350 PNG). Seçkiyi servis KENDİSİ çeker (jeton yalnız `.env.kart`'ta; n8n görmez). Boş gün → `204`. **v6.320'de değişmedi.**
 2. **`/sosyal/*` (v6.320)** — aynı seçkiden Instagram **hikâye klipleri** (kart + her içerik için 1) ve **Reel A** (vuruşa oturan tipografik video) MP4'leri üretir.
+3. **Carousel (v6.323)** — aynı iş, aynı seçki anlık görüntüsünden Instagram **kaydırmalı post** slaytları (1080×1350 PNG, 4:5): 01 günlük kart (paylaşımla AYNI PNG) · 02…N+1 her içerik için bir slayt (akış · başlık · kaynak · `summaryLong`) · N+2 kapanış ("Seçkinin tamamı biyografideki bağlantıda").
 
 ## Uçlar
 
 | Uç | Yanıt |
 |---|---|
 | `POST /sosyal/uret[?yenile=1]` | **202** üretim başladı · **200** o günün klipleri zaten HAZIR (idempotent) ya da boş gün (`bos_gun:true`) · **409** başka iş sürüyor · **502** seçki alınamadı/geçersiz (`summaryLong` yoksa dâhil) · **503** müzik dosyası yok |
-| `GET /sosyal/durum` | `{durum: "bos"\|"calisiyor"\|"hazir"\|"hata", gun, …}` — `hazir`: `dosyalar[{ad,boyut,tur,sira}]`, `kapsam{ogeSayisi,yedekSayisi}`, `sure_sn`; `calisiyor`: `asama`, `gecen_sn`; `hata`: `hata`, `adim` |
-| `GET\|HEAD /sosyal/dosya/<YYYY-AA-GG>/<ad>.mp4` | MP4 (`video/mp4`) — yalnız TAMAMLANMIŞ günün, `bitti.json`'da listeli dosyaları |
+| `GET /sosyal/durum` | `{durum: "bos"\|"calisiyor"\|"hazir"\|"hata", gun, …}` — `hazir`: `dosyalar[{ad,boyut,tur,sira}]` (MP4), `gorseller[{ad,boyut,tur:"carousel",sira}]` (PNG, v6.323), `kapsam{ogeSayisi,yedekSayisi,akislar[]}`, `sure_sn`; `calisiyor`: `asama` (`hazirlik`→`kart`→`carousel`→`hikaye`→`reel`→`kapanis`), `gecen_sn`; `hata`: `hata`, `adim` |
+| `GET\|HEAD /sosyal/dosya/<YYYY-AA-GG>/<ad>` | MP4 (`video/mp4`, `dosyalar`'dan) ya da PNG (`image/png`, `gorseller`'den) — yalnız TAMAMLANMIŞ günün, `bitti.json`'da listeli dosyaları; tür başına KENDİ listesi (PNG adı `dosyalar`da, MP4 adı `gorseller`de aranmaz) |
 | `GET /saglik` · `GET /bulten.png` | eskisi gibi |
 
-`dosyalar[].tur` = `hikaye` (`sira` = klip numarası, 1 = kart) ya da `reel`. n8n akışı: `POST /sosyal/uret` → `GET /sosyal/durum` ile `hazir` bekle (**`gun` alanını kendi beklediği günle karşılaştır**) → dosyaları indir → arşive yaz.
+`dosyalar[].tur` = `hikaye` (`sira` = klip numarası, 1 = kart) ya da `reel`. `gorseller[].sira` = slayt numarası (01-kart → 1, sonuncusu kapanış). `kapsam.akislar` = günün akış etiketleri (`streamLabel`), seçki sırasıyla, tekrarsız
+(Reel/carousel altyazısının akış satırı için; n8n büyük harfe çevirip " · " ile birleştirir). n8n akışı: `POST /sosyal/uret` → `GET /sosyal/durum` ile `hazir` bekle (**`gun` alanını kendi beklediği günle karşılaştır**) → dosyaları indir → arşive yaz.
 
-**Tasarım:** tek iş (ikinci POST kuyruğa girmez, 409) · kilit seçki çekilmeden ÖNCE alınır · kart + hikâyeler + Reel AYNI seçki anlık görüntüsünden üretilir · yarım iş görünmez (`bitti.json` EN SON, atomik) ·
+🪤 **Geriye uyum (v6.323):** carousel slaytları `dosyalar`a DEĞİL ayrı `gorseller` dizisine yazılır. Çalışan n8n akışı `dosyalar`daki HER öğeyi indirip MP4 imzası (`ftyp`) arar → PNG'yi `dosyalar`a koymak, sunucu güncellendiği anda 07:55 koşusunu düşürürdü.
+`gorseller` olmayan (v6.320'de yazılmış) `bitti.json` hâlâ geçerlidir (`gorseller: []` döner). **Sıra:** sunucu dağıtımı n8n güncellemesinden ÖNCE güvenle yapılabilir; n8n tarafı (`gorseller`'i indirip arşive yazma + herkese açık adres + yayın) AYRI bir adımdır.
+
+**Tasarım:** tek iş (ikinci POST kuyruğa girmez, 409) · kilit seçki çekilmeden ÖNCE alınır · kart + carousel + hikâyeler + Reel AYNI seçki anlık görüntüsünden üretilir · yarım iş görünmez (`bitti.json` EN SON, atomik; carousel PNG'leri videolardan ÖNCE diske düşer ama `bitti.json` yokken sunulmaz — test kilitli) ·
 hata → üretim başladıysa gün klasörü silinir; **başlamadan düşen** `yenile` (ör. müzik yok) önceki iyi klipleri korur · en yeni 2 gün klasörü saklanır (kalıcı arşivi n8n yazar).
 
 ## Üretim özellikleri
@@ -27,7 +32,10 @@ hata → üretim başladıysa gün klasörü silinir; **başlamadan düşen** `y
 - Hikâye: kart 9 sn + içerik başına 12 sn; hareketsiz kare + kesintisiz müzik dilimi; açıklama = seçkideki `summaryLong` (yedek cümle dâhil). Reel A: yalnız başlık + kaynak, 107 BPM vuruş ızgarası (`assets/beatgrid.json`).
 - Instagram şartları: H.264 + AAC · 1080×1920 · 30 fps · `moov` başta · hikâye ≤ 60 sn / ≤ 100 MB, Reel ≤ 90 sn / ≤ 300 MB · hikâye ≈ −18 LUFS, Reel ≈ −16 LUFS · tepe ≤ −1 dBTP. Sunucuda doğrula: `docker compose exec kart node tools/dogrula.mjs /tmp/sosyal/<gün>`.
 - Güvenlik kapıları: **yazı tipi yüklenmediyse üretim DURUR** (yedek yazı tipiyle yayın yok) · **ses tepe koruması** (kodlanmış AAC'nin gerçek tepesi ölçülür, aşarsa kazanç düşürülüp yeniden kodlanır) · ffmpeg zaman aşımı (asılı iş kilidi tutmaz).
-- Maliyet (yerel ölçüm, 2 çekirdek + 2 işçi): 4 öğeli gün ≈ 63–66 sn, bellek tepesi ≈ 0,9–1,1 GB.
+- Carousel (v6.323): kartla AYNI çizim hattı (Playwright, DPR 1; ffmpeg/Python gerekmez), punto sığdırma hikâye karesiyle aynı döngü (önce başlık, sonra açıklama; asgari 40/32; sığmazsa günlüğe yalnız slayt numarası düşer). Carousel videolardan ÖNCE üretilir (≈8 sn yerel) →
+  yazı tipi/tarayıcı sorunu dakikalarca süren videolardan önce ve yüksek sesle (iş `hata`, `adim: carousel`) düşer; slayt sayısı `N+2` değilse iş `hata` verir (eksik carousel yayına gitmez). Instagram: carousel çocukları için herkese açık `image_url` şart (resumable yok) — n8n tarafında ayrı adım.
+  Sunucuda doğrula: `docker compose exec kart node tools/dogrula.mjs /tmp/sosyal/<gün>` (PNG imzası · 1080×1350 · ≤ 8 MB). Yerel: `node tools/uret.mjs --only carousel --digest digest.json --card kart.png --out cikti` (müzik/ffmpeg gerekmez).
+- Maliyet: yerel ölçüm (2 çekirdek + 2 işçi) 4 öğeli gün ≈ 63–66 sn, bellek tepesi ≈ 0,9–1,1 GB. **Sunucu ölçümü (03.10, Hetzner paylaşımlı vCPU):** `POST /sosyal/uret` ≈ 242 sn (hikâye 85 + Reel 156; yerelden ≈3,7× yavaş) → n8n bekleme süresi ≥ 8–10 dk kurulur; bellek tepesi ≈ 719 MiB (`mem_limit: 1536m` içinde).
 
 ## Ortam değişkenleri
 
@@ -46,11 +54,12 @@ hata → üretim başladıysa gün klasörü silinir; **başlamadan düşen** `y
 
 ```
 server.mjs              # HTTP + kart şablonu + paylaşılan Chromium (çökerse yeniden açılır); /sosyal/* → lib/sosyal-isleri
-lib/sosyal-isleri.mjs   # tek-iş durum makinesi, seçki doğrulaması, dosya ucu
+lib/sosyal-isleri.mjs   # tek-iş durum makinesi, seçki doğrulaması, dosya ucu (MP4 + PNG)
 lib/social-video.mjs    # hikâye klipleri + Reel A üreticisi (Playwright + ffmpeg)
+lib/social-carousel.mjs # kaydırmalı post slaytları: kart + içerikler + kapanış (Playwright, ffmpeg gerekmez)
 assets/                 # küre görseli (public/brand ile aynı hash — test kilitli) + vuruş ızgarası
-tools/uret.mjs          # yerel: digest.json + kart.png + müzik → MP4'ler
-tools/dogrula.mjs       # MP4'leri Instagram şartlarına karşı doğrular (çıkış kodu 0/1)
+tools/uret.mjs          # yerel: digest.json + kart.png + müzik → MP4'ler + carousel PNG'leri (--only stories|reel|carousel)
+tools/dogrula.mjs       # MP4'leri + carousel PNG'lerini Instagram şartlarına karşı doğrular (çıkış kodu 0/1)
 Dockerfile              # playwright:v1.55.0-noble + ffmpeg (npm playwright sürümü imaj etiketiyle AYNI olmalı — test kilitli)
 ```
 
@@ -95,6 +104,8 @@ node tools/dogrula.mjs cikti
 
 `npx vitest run tests/unit/kart-sosyal-video.test.ts` — ffmpeg/Chromium GEREKMEZ (üretici sahte, HTTP gerçek): tipografi · Reel planı · şablon kaçışı (seçki HTML'e ham girmez) · seçki doğrulaması · tek-iş kilidi (eşzamanlı iki POST) · idempotency ·
 yarım işin görünmezliği · dosya ucunda gezinti (`..`, `%2F`) engeli · başarısız `yenile`'de önceki kliplerin korunması · Dockerfile sürüm eşitliği · küre hash'i · `lang="tr"` · kaynakta görünmez karakter yok.
+v6.323: carousel şablon kaçışı + kapanış slaydında iddia yok · `renderCarousel` (gerçek modül + sahte tarayıcı: N+2 ad/sıra, kart baytları, sayfa kapanışı) · `gorseller` geriye uyumu (PNG `dosyalar`a GİRMEZ; eski `bitti.json` geçerli) · PNG ucu (listeli-yalnız, gezinti, `bitti.json` yokken 404) · carousel hatasında videoların hiç başlamaması ·
+`kapsam.akislar` (sıralı, tekrarsız) · çerçevenin kartla aynı ölçüde kalması. Yeni bir davranışı sınarken **mutasyonla doğrula** (kodu bilinçli boz → ilgili test düşmeli; betiğin `finally`'de dosyayı geri yüklediğinden emin ol).
 
 ## Tuzaklar (bedeli ödenmiş)
 
@@ -104,3 +115,6 @@ yarım işin görünmezliği · dosya ucunda gezinti (`..`, `%2F`) engeli · ba�
 - Yerel AAC kodlayıcısı kaynak WAV güvenli olsa da tepe aşabilir (+0,3 dBTP görüldü) → kodlanmış dosya ölçülür.
 - Kaynakta `\uXXXX` YAZMA (araçlar gerçek karaktere çevirebilir): NBSP `String.fromCharCode` ile.
 - Node: `pipe`/`pipeline` ile akıtılan yanıtın keep-alive soketi "boşta" sayılmaz → test sunucusu `closeAllConnections()` ile kapatılır.
+- (v6.323) Yeni bir çıktı türünü `dosyalar`a EKLEME: çalışan istemci (n8n) o listedeki her öğeyi MP4 sayar. Yeni tür = ayrı dizi (`gorseller`) + ayrı ad kalıbı + dosya ucunda tür başına kendi listesi.
+- (v6.323) Sığdırma ölçümü `getBoundingClientRect` ile yapılır: flex `justify-content:center` içinde taşma iki uca dağılır, `scrollHeight` taşmayı SAYMAZ.
+- (v6.323) Karttaki çerçeve (`padding:72px 84px 64px`, 3px üst çizgi, 22px künye) `server.mjs` ve `social-carousel.mjs`'te AYNI tutulur — slayt 1 kartın kendisi; test ikisini birlikte denetler.

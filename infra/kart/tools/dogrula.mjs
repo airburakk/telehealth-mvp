@@ -1,7 +1,8 @@
-// Üretilen MP4'leri Instagram API şartlarına karşı doğrular. Salt-okur.
+// Üretilen MP4'leri ve carousel PNG'lerini Instagram API şartlarına karşı doğrular. Salt-okur.
 //   node tools/dogrula.mjs <klasör>          (yerelde FFMPEG=<yol>; sunucuda: docker compose exec kart node tools/dogrula.mjs /tmp/sosyal/<gün>)
 // Şartlar: MP4/MOV · H.264 + AAC · 9:16 (1080x1920) · 23–60 fps · moov başta (faststart) ·
 //   hikâye ≤60 sn ve ≤100 MB · Reels 3 sn–15 dk (API'de 90 sn) ve ≤300 MB · kaynak hedefi: hikâye −18 LUFS, Reel −16 LUFS, tepe ≤ −1 dBFS.
+//   carousel PNG (`carousel-*.png`): PNG imzası · 1080x1350 (4:5; Instagram 4:5–1,91:1 kabul eder, tüm slaytlar AYNI oranda) · ≤ 8 MB. ffmpeg GEREKMEZ (IHDR doğrudan okunur).
 // Çıkış kodu: tümü uygunsa 0, en az bir dosyada sorun varsa 1.
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -42,7 +43,7 @@ function kutular(file) {
 
 const files = fs.readdirSync(dir).filter((f) => f.endsWith(".mp4")).sort();
 let hata = 0;
-console.log("dosya".padEnd(44), "sn".padStart(6), "MB".padStart(6), " video".padEnd(30), " ses".padEnd(26), "LUFS".padStart(6), "tepe".padStart(6), " moov", " sonuç");
+if (files.length) console.log("dosya".padEnd(44), "sn".padStart(6), "MB".padStart(6), " video".padEnd(30), " ses".padEnd(26), "LUFS".padStart(6), "tepe".padStart(6), " moov", " sonuç");
 for (const f of files) {
   const p = path.join(dir, f);
   const info = await ffErr(["-i", p]);
@@ -67,5 +68,31 @@ for (const f of files) {
   if (sorunlar.length) hata++;
   console.log(f.padEnd(44), sure.toFixed(2).padStart(6), mb.toFixed(2).padStart(6), (" " + [v[1], v[2], v[3] + "fps"].join(" ")).padEnd(30), (" " + [a[1], a[2] + "Hz"].join(" ")).padEnd(26), String(lufs).padStart(6), String(tepe).padStart(6), moovBasta ? "  ✓  " : "  ✗  ", sorunlar.length ? " ✗ " + sorunlar.join(", ") : " ✓");
 }
-console.log(hata ? `\n${hata} dosyada SORUN` : `\n${files.length} dosyanın hepsi şartlara uygun`);
+
+/** PNG imzası + IHDR boyutu (ffmpeg gerekmez). */
+function pngBilgi(file) {
+  const fd = fs.openSync(file, "r");
+  const b = Buffer.alloc(24);
+  fs.readSync(fd, b, 0, 24, 0);
+  fs.closeSync(fd);
+  const imza = b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) && b.toString("latin1", 12, 16) === "IHDR";
+  return { imza, w: imza ? b.readUInt32BE(16) : 0, h: imza ? b.readUInt32BE(20) : 0 };
+}
+
+const pngler = fs.readdirSync(dir).filter((f) => /^carousel-.*\.png$/.test(f)).sort();
+if (pngler.length) console.log("\n" + "carousel slaytı".padEnd(44), "MB".padStart(6), " boyut".padEnd(14), " sonuç");
+for (const f of pngler) {
+  const p = path.join(dir, f);
+  const { imza, w, h } = pngBilgi(p);
+  const mb = fs.statSync(p).size / 1e6;
+  const sorunlar = [];
+  if (!imza) sorunlar.push("PNG imzası/IHDR yok");
+  if (imza && !(w === 1080 && h === 1350)) sorunlar.push("çözünürlük≠1080x1350");
+  if (mb > 8) sorunlar.push("boyut > 8 MB");
+  if (sorunlar.length) hata++;
+  console.log(f.padEnd(44), mb.toFixed(2).padStart(6), (" " + w + "x" + h).padEnd(14), sorunlar.length ? " ✗ " + sorunlar.join(", ") : " ✓");
+}
+
+const toplam = files.length + pngler.length;
+console.log(hata ? `\n${hata} dosyada SORUN` : `\n${toplam} dosyanın hepsi şartlara uygun`);
 process.exitCode = hata ? 1 : 0;
