@@ -170,9 +170,9 @@ describe("görünüm modeli (saf)", () => {
       day: "2026-10-02",
       rotation: { key: "radyasyon-onkolojisi", label: "Radyasyon Onkolojisi" },
       items: [
-        { id: "1", stream: "akademik", streamLabel: "Akademik", title: "T1", sourceName: "Europe PMC", summary: "Kısa özet.", url: "https://doi.org/10.1/x",
+        { id: "1", stream: "akademik", streamLabel: "Akademik", title: "T1", sourceName: "Europe PMC", summary: "Kısa özet.", summaryLong: "Kısa özet. Uzun açıklama.", summaryLongFallback: false, url: "https://doi.org/10.1/x",
           publishedAt: "2026-10-01T00:00:00.000Z", branch: { key: "radyasyon-onkolojisi", label: "Radyasyon Onkolojisi" }, replaces: null, stale: false },
-        { id: "2", stream: "mevzuat", streamLabel: "Mevzuat", title: "T2", sourceName: "T.C. Resmî Gazete", summary: "  ", url: "javascript:alert(1)",
+        { id: "2", stream: "mevzuat", streamLabel: "Mevzuat", title: "T2", sourceName: "T.C. Resmî Gazete", summary: "  ", summaryLong: "T.C. Resmî Gazete kaynağında 2 Ekim 2026 tarihinde yayımlandı; ayrıntı kaynak bağlantısında.", summaryLongFallback: true, url: "javascript:alert(1)",
           publishedAt: "2026-10-02T00:00:00.000Z", branch: null, replaces: null, stale: false },
       ],
     });
@@ -182,6 +182,9 @@ describe("görünüm modeli (saf)", () => {
     expect(view.items[1]).toMatchObject({ kicker: "Mevzuat", branchLabel: null, href: null, host: null });
     // Özet GÖSTERİLMEZ: seçki ucundaki teaser özetin veri kalitesi sayfaya uygun değil (İngilizce / site menüsü artığı / boş).
     expect(view.items[0]).not.toHaveProperty("summary");
+    // v6.317: hikâye açıklaması (`summaryLong`) jetonlu uç içindir — halka açık görünüm modeline SIZMAZ.
+    expect(view.items[0]).not.toHaveProperty("summaryLong");
+    expect(view.items[0]).not.toHaveProperty("summaryLongFallback");
   });
 });
 
@@ -190,9 +193,9 @@ describe("SeckiPage: sunucu tarafı HTML", () => {
     day: "2026-10-02",
     rotation: { key: "radyasyon-onkolojisi", label: "Radyasyon Onkolojisi" },
     items: [
-      { id: "1", stream: "akademik", streamLabel: "Akademik", title: "Gaz yakma ve kanser", sourceName: "Europe PMC", summary: "Ekolojik çalışma.", url: "https://doi.org/10.1/x",
+      { id: "1", stream: "akademik", streamLabel: "Akademik", title: "Gaz yakma ve kanser", sourceName: "Europe PMC", summary: "Ekolojik çalışma.", summaryLong: "Ekolojik çalışma. Uzun açıklama metni.", summaryLongFallback: false, url: "https://doi.org/10.1/x",
         publishedAt: "2026-10-01T00:00:00.000Z", branch: { key: "radyasyon-onkolojisi", label: "Radyasyon Onkolojisi" }, replaces: null, stale: false },
-      { id: "2", stream: "ilac", streamLabel: "İlaç & Cihaz", title: "<script>alert(1)</script> Faz 3", sourceName: "ClinicalTrials.gov", summary: "", url: null,
+      { id: "2", stream: "ilac", streamLabel: "İlaç & Cihaz", title: "<script>alert(1)</script> Faz 3", sourceName: "ClinicalTrials.gov", summary: "", summaryLong: "ClinicalTrials.gov kaynağında 1 Ekim 2026 tarihinde yayımlandı; ayrıntı kaynak bağlantısında.", summaryLongFallback: true, url: null,
         publishedAt: "2026-10-01T00:00:00.000Z", branch: null, replaces: null, stale: false },
     ],
   });
@@ -215,6 +218,8 @@ describe("SeckiPage: sunucu tarafı HTML", () => {
 
   it("özetler sayfada GÖRÜNMEZ — veri kalitesi (02.10: İngilizce özet, 'BackgroundGas' yapışık başlık, KLİMİK menü artığı) düzelene dek", () => {
     expect(html).not.toContain("Ekolojik çalışma."); // fixture'ın birinci kalemindeki özet
+    expect(html).not.toContain("Uzun açıklama metni."); // v6.317: hikâye açıklaması (summaryLong) sayfaya da girmez
+    expect(html).not.toContain("ayrıntı kaynak bağlantısında"); // dürüst yedek cümle de yalnız jetonlu uçta
     expect(html).not.toMatch(/<p class="mt-3 text-\[14\.5px\]/); // özet paragrafı sınıfı bile yok
   });
 

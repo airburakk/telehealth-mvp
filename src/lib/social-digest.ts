@@ -31,6 +31,7 @@ import { BRANCHES } from "./triage";
 import { trimSummary } from "./daily-digest";
 import { decodeFeedText } from "./doctorium";
 import { isNativeTurkishSource } from "./news-language";
+import { buildSummaryLong } from "./social-summary-long";
 import { normalizeTrialPhasePrefix } from "./trial-phase";
 
 type Branch = (typeof BRANCHES)[number];
@@ -69,6 +70,13 @@ export interface SocialDigestItem {
   title: string;
   sourceName: string;
   summary: string;
+  /** Hikâye/Reels açıklaması (v6.317): aynı özetten ≤400 karakter, CÜMLE sınırından kırpılmış (teaser `summary` 160'tır).
+   *  Özet kullanılamıyorsa (boş / çok kısa / çevrilmemiş-İngilizce) dürüst yedek cümle: kaynak + yayın günü + "ayrıntı kaynak
+   *  bağlantısında" — UYDURMA YOK. Kaynak artıkları (HTML etiketi, "The post … first appeared on …") ayıklanır.
+   *  Yalnız jetonlu uç → n8n/kart; halka açık /secki sayfası göstermez. Kaynak: lib/social-summary-long. */
+  summaryLong: string;
+  /** true → `summaryLong` yedek cümledir (özet kullanılamadı); hikâye tarafı isterse farklı sunar. */
+  summaryLongFallback: boolean;
   url: string | null;
   publishedAt: string; // ISO
   /** Yalnız akademik akışta ve rotasyon branşından seçilebildiyse dolu. */
@@ -136,6 +144,9 @@ function toItem(
   stale: boolean,
 ): SocialDigestItem {
   const branded = stream.key === "akademik" && isBrandedFor(a, rotation);
+  // Özet BİR kez çözülür; teaser (160) ve hikâye açıklaması (400) aynı temiz metinden türer.
+  const summary = decodeFeedText(a.summary);
+  const long = buildSummaryLong({ summary, sourceName: decodeFeedText(a.sourceName), publishedAt: a.publishedAt });
   return {
     id: a.id,
     stream: stream.key,
@@ -148,7 +159,9 @@ function toItem(
     // kart LinkedIn/X'e gittiği için eski satırların ham ya da çeviride bozulmuş öneki bu sınırda düzeltilir.
     title: a.source === "clinicaltrials" ? normalizeTrialPhasePrefix(decodeFeedText(a.title)) : decodeFeedText(a.title),
     sourceName: a.sourceName,
-    summary: trimSummary(decodeFeedText(a.summary), 160),
+    summary: trimSummary(summary, 160),
+    summaryLong: long.text,
+    summaryLongFallback: long.fallback,
     url: a.url,
     publishedAt: a.publishedAt.toISOString(),
     branch: branded ? { key: rotation.key, label: rotation.label } : null,

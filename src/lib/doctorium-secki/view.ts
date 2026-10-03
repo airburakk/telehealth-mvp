@@ -1,16 +1,10 @@
 // "Günlük Seçki" sayfasının SAF görünüm modeli (v6.315, 2026-10-02) — DB/React bağımlılığı yok, birim testli.
 // Kaynak: lib/social-digest-public.loadPublicDigest (sabah kartıyla aynı seçki). Bileşen yalnız bunu çizer.
 import type { PublicDigest } from "@/lib/social-digest-public";
+import { trDateLabel } from "@/lib/tr-date-label";
 
-const AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"] as const;
-
-/** "2026-10-02" → "2 Ekim 2026". Biçimsiz girdi olduğu gibi döner (sayfa çökmesin). */
-export function trDateLabel(day: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
-  if (!m) return day;
-  const month = AYLAR[Number(m[2]) - 1];
-  return month ? `${Number(m[3])} ${month} ${m[1]}` : day;
-}
+// v6.317: tarih etiketi ortak modüle taşındı (lib/tr-date-label); burada geriye uyum için yeniden dışa aktarılır.
+export { trDateLabel };
 
 /** Yalnız http/https bağlantı (javascript: vb. reddedilir); aksi null. Kaynak URL'i ingest edilen veridir → savunmacı. */
 export function safeHttpUrl(raw: string | null | undefined): string | null {
