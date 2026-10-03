@@ -9,7 +9,9 @@ import { TUS_SECTIONS, type TusSectionKey } from "./tus";
 import { createHash } from "crypto";
 import { db } from "./db";
 import { translateText, summarizeArticleForClinician, summarizeRegulationForClinician } from "./ai-clinical";
-import { fetchDocumentText } from "./doctorium-sources";
+import { fetchDocumentHtml } from "./doctorium-sources";
+import { extractDocumentText } from "./document-text";
+import { emptyAiSummaryBatch, hataEkle, atlananToplam, type AiSummaryBatchResult } from "./ai-summary-batch";
 import { BRANCHES, BRANCH_LABEL_ALIASES } from "./triage";
 // SECTOR_CATEGORIES aşağıda hem RE-EXPORT edilir (dış çağıranlar için) hem burada parseViewPrefs
 // (v6.142) İÇİNDE kullanılır — `export {X} from "Y"` yalnız re-export'tur, bu dosyada X'i yerel
@@ -1447,7 +1449,10 @@ export function parseRegulationSummary(raw: string | null): RegulationSummary | 
 export type RegulationResult =
   | { state: "ok"; data: RegulationSummary }
   | { state: "pdf" } // kaynak PDF → metin çıkarılamaz (bilinçli sınır)
-  | { state: "unavailable" }; // kaynağa ulaşılamadı / AI kapalı
+  // v6.319: kaynak sayfa OKUNDU ama makale gövdesi yok (yalnız bağlantı/duyuru listesi/menü — KLİMİK "Yeni Sayı İçin Tıklayınız").
+  // Özetlenecek metin yok, uydurulmaz; "unavailable"dan ayrı: arayüz "sonra yenileyin" demez, gece sayacı hata saymaz (lib/ai-summary-batch).
+  | { state: "no-text" }
+  | { state: "unavailable" }; // kaynağa ulaşılamadı (ağ/HTTP) / AI kapalı / AI çağrısı düştü
 
 export async function ensureRegulationSummary(id: string): Promise<RegulationResult> {
   const row = await db.newsArticle.findUnique({
@@ -1467,9 +1472,13 @@ export async function ensureRegulationSummary(id: string): Promise<RegulationRes
   // davranış (summary'ye yaz) sürer — cron sonra o metnin girişini çevirir.
   let text = (row.summaryOriginal ?? row.summary)?.trim() ?? "";
   if (text.length < 120) {
-    if (!row.url) return { state: "unavailable" };
-    const fetched = await fetchDocumentText(row.url);
-    if (!fetched) return { state: "unavailable" };
+    if (!row.url) return { state: "no-text" }; // çekilecek adres de yok → özetlenecek metin yok
+    // v6.319: "erişilemedi" (ağ/HTTP → yarın yine denenir) ile "gövde yok" (sayfa okundu, makale metni yok) ayrı durumlardır —
+    // fetchDocumentHtml yalnız erişimi, extractDocumentText yalnız gövdeyi söyler (lib/document-text; v6.316 ayrımı).
+    const html = await fetchDocumentHtml(row.url);
+    if (html === null) return { state: "unavailable" };
+    const fetched = extractDocumentText(html);
+    if (!fetched) return { state: "no-text" };
     text = fetched;
     await db.newsArticle.update({
       where: { id },
@@ -1494,16 +1503,15 @@ export async function ensureRegulationSummary(id: string): Promise<RegulationRes
 // Bu fonksiyon cron `generate-ai-summaries`'in (ingest'ler + translate-news bittikten sonra,
 // daily-digest'ten ÖNCE) gövdesidir; scripts/backfill-ai-summaries.ts İLE PAYLAŞILIR (kod tekrarı
 // yok, AYNI ensureClinicalSummary/ensureRegulationSummary kod yolu).
-export interface AiSummaryBatchResult {
-  toplam: number;
-  basarili: number;
-  hata: number;
-}
+// Sayaç + denetim satırı biçimi: lib/ai-summary-batch (v6.319 — yapısal atlama [pdf · gövdesiz · özetsiz] gerçek hatadan ayrı;
+// 02–03.10 üretimde "hata=11" iki gece sabitti ve 11'in hiçbiri AI çağrısı değildi).
+export type { AiSummaryBatchResult } from "./ai-summary-batch";
 
 export async function generatePendingAiSummaries(opts: {
   concurrency?: number;
   limit?: number;
-  onProgress?: (islenen: number, toplam: number, basarili: number, hata: number) => void;
+  /** islenen · toplam · basarili · hata (gerçek) · atlanan (yapısal, AI çağrısı yok) */
+  onProgress?: (islenen: number, toplam: number, basarili: number, hata: number, atlanan: number) => void;
 } = {}): Promise<AiSummaryBatchResult> {
   const { concurrency = 5, limit, onProgress } = opts;
   const rows = await db.newsArticle.findMany({
@@ -1516,38 +1524,43 @@ export async function generatePendingAiSummaries(opts: {
         { module: "mevzuat", category: { notIn: ["ictihat", "doktrin"] } },
       ],
     },
-    select: { id: true, module: true },
+    select: { id: true, module: true, source: true, summary: true, summaryOriginal: true },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: limit,
   });
 
-  let basarili = 0;
-  let hata = 0;
+  const sonuc = emptyAiSummaryBatch(rows.length);
   let islenen = 0;
 
-  async function isle(r: { id: string; module: string }): Promise<void> {
+  async function isle(r: (typeof rows)[number]): Promise<void> {
     try {
-      if (r.module === "akademik") {
+      // Akademik kalemde abstract yoksa ensureClinicalSummary çağrı yapmadan null döner (aynı kural orada) — burada
+      // DB'ye bile gitmeden "özetsiz" sayılır ki gerçek AI hatasıyla karışmasın.
+      if (r.module === "akademik" && !(r.summaryOriginal ?? r.summary)?.trim()) {
+        sonuc.atlanan.ozetsiz++;
+      } else if (r.module === "akademik") {
         const s = await ensureClinicalSummary(r.id);
-        if (s) basarili++;
-        else hata++;
+        if (s) sonuc.basarili++;
+        else hataEkle(sonuc, r.source);
       } else {
         const s = await ensureRegulationSummary(r.id);
-        if (s.state === "ok") basarili++;
-        else hata++;
+        if (s.state === "ok") sonuc.basarili++;
+        else if (s.state === "pdf") sonuc.atlanan.pdf++;
+        else if (s.state === "no-text") sonuc.atlanan.govdesiz++;
+        else hataEkle(sonuc, r.source);
       }
     } catch {
-      hata++;
+      hataEkle(sonuc, r.source);
     }
     islenen++;
-    onProgress?.(islenen, rows.length, basarili, hata);
+    onProgress?.(islenen, rows.length, sonuc.basarili, sonuc.hata, atlananToplam(sonuc));
   }
 
   for (let i = 0; i < rows.length; i += concurrency) {
     await Promise.all(rows.slice(i, i + concurrency).map(isle));
   }
 
-  return { toplam: rows.length, basarili, hata };
+  return sonuc;
 }
 
 // ── Kariyer rehberi sorguları (v6.89) ───────────────────────────────────────
