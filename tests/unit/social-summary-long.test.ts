@@ -12,6 +12,7 @@ import {
   buildSummaryLong,
   cleanSummary,
   looksEnglish,
+  looksLikeRawGazetteText,
   sentenceEnds,
   summaryLongFallback,
   trimToSentences,
@@ -140,6 +141,41 @@ describe("cleanSummary: kaynak artıkları", () => {
   });
 });
 
+describe("cleanSummary: görünmez karakterler (v6.318)", () => {
+  // Kaynakta `\uXXXX` yazılmaz (araçlar kaçışı gerçek karaktere çevirebilir) → kod noktalarıyla kurulur.
+  const ch = (cp: number) => String.fromCharCode(cp);
+
+  it("sıfır genişlikli boşluk (U+200B), yumuşak tire, kelime birleştirici ve BOM silinir (canlı bulgu: KLİMİK haber metni)", () => {
+    expect(cleanSummary(`tarihleri${ch(0x200b)}${ch(0x200b)} arasında`)).toBe("tarihleri arasında");
+    expect(cleanSummary(`te${ch(0xad)}davi ${ch(0x2060)}planı${ch(0xfeff)}`)).toBe("tedavi planı");
+  });
+
+  it("görünmez karakterler uzunluğa ve cümle sınırına karışmaz", () => {
+    const gizli = `${sentence(150)} ${sentence(150)} ${sentence(150)}`.split(" ").join(`${ch(0x200b)} `);
+    const temiz = `${sentence(150)} ${sentence(150)} ${sentence(150)}`;
+    expect(trimToSentences(cleanSummary(gizli))).toBe(trimToSentences(temiz));
+  });
+
+  it("ZWJ (U+200D, emoji dizileri) bilerek SİLİNMEZ", () => {
+    expect(cleanSummary(`a${ch(0x200d)}b`)).toBe(`a${ch(0x200d)}b`);
+  });
+});
+
+describe("looksLikeRawGazetteText: Resmî Gazete ham belge metni (v6.318)", () => {
+  it("künyeyle başlayan metin → true (canlı 03.10 örneği, tarihsiz künye, 'Resmi' yazımı)", () => {
+    expect(
+      looksLikeRawGazetteText("3 Ekim 2026 CUMARTESİ Resmî Gazete Sayı : 33389 YÖNETMELİK Sosyal Güvenlik Kurumu Başkanlığından: SOSYAL GÜVENLİK KURUMU İLAÇ GERİ ÖDEME YÖNETMELİĞİNDE DEĞİŞİKLİK YAPILMASINA DAİR YÖNETMELİK MADDE 1-"),
+    ).toBe(true);
+    expect(looksLikeRawGazetteText("Resmî Gazete Sayı : 33389 (Mükerrer) KARAR")).toBe(true);
+    expect(looksLikeRawGazetteText("12 Ocak 2027 PAZARTESİ Resmi Gazete Sayı: 33500 TEBLİĞ")).toBe(true);
+  });
+
+  it("Resmî Gazete'den yalnız söz eden özet → false (yalnız metnin BAŞI sayılır)", () => {
+    expect(looksLikeRawGazetteText("Düzenleme 25/8/2022 tarihli Resmî Gazete'de yayımlanan yönetmeliğin 3 üncü maddesini değiştirdi.")).toBe(false);
+    expect(looksLikeRawGazetteText("Yeni kılavuz yayımlandı ve Resmî Gazete Sayı : 1 olarak ilan edildi.")).toBe(false);
+  });
+});
+
 describe("looksEnglish: dil kapısı", () => {
   it("çevrilmemiş İngilizce özet → true (gerçek dev örneklemi: DOAJ, Europe PMC, Medical Xpress, ClinicalTrials, openFDA)", () => {
     for (const t of [
@@ -210,6 +246,19 @@ describe("buildSummaryLong: kullanılabilir özet / dürüst yedek", () => {
     expect(r.fallback).toBe(true);
   });
 
+  it("Resmî Gazete ham belge metni → dürüst yedek (özet DEĞİL; başlık zaten ekranda)", () => {
+    const summary =
+      "3 Ekim 2026 CUMARTESİ Resmî Gazete Sayı : 33389 YÖNETMELİK Sosyal Güvenlik Kurumu Başkanlığından: SOSYAL GÜVENLİK KURUMU İLAÇ GERİ ÖDEME YÖNETMELİĞİNDE DEĞİŞİKLİK YAPILMASINA DAİR YÖNETMELİK MADDE 1- 25/8/2022 tarihli ve 31934 mükerrer sayılı Resmî Gazete’de yayımlanan Yönetmeliğin 3 üncü maddesi değiştirilmiştir.";
+    const r = buildSummaryLong({ summary, sourceName: "T.C. Resmî Gazete", publishedAt: new Date("2026-10-03T03:00:00Z") });
+    expect(r).toEqual({ text: "T.C. Resmî Gazete kaynağında 3 Ekim 2026 tarihinde yayımlandı; ayrıntı kaynak bağlantısında.", fallback: true });
+  });
+
+  it("Resmî Gazete'den söz eden ama künyeyle BAŞLAMAYAN özet kullanılır", () => {
+    const summary = "Düzenleme, Resmî Gazete'de yayımlanan yönetmeliğin 3 üncü maddesini değiştirerek geri ödeme koşullarını yeniden belirledi.";
+    const r = buildSummaryLong({ summary, sourceName: "Dernek", publishedAt: pub });
+    expect(r).toEqual({ text: summary, fallback: false });
+  });
+
   it("eşik: SUMMARY_LONG_MIN karakter kullanılabilir, bir eksiği yedek", () => {
     const ok = "a".repeat(SUMMARY_LONG_MIN);
     expect(buildSummaryLong({ summary: ok, sourceName: "X", publishedAt: pub }).fallback).toBe(false);
@@ -278,6 +327,18 @@ describe("pickSocialDigest: summaryLong hikâye açıklaması", () => {
     );
     expect(it.summaryLong).toBe("Duyuru yayımlandı ve uygulama sonlandırıldı.");
     expect(it.summaryLongFallback).toBe(false);
+  });
+
+  it("Resmî Gazete ham belge metni (üretim 03.10) → yedek cümle + bayrak; teaser summary ayrıca etkilenmez", () => {
+    const raw = "3 Ekim 2026 CUMARTESİ Resmî Gazete Sayı : 33389 YÖNETMELİK Sosyal Güvenlik Kurumu Başkanlığından: SOSYAL GÜVENLİK KURUMU İLAÇ GERİ ÖDEME YÖNETMELİĞİNDE DEĞİŞİKLİK YAPILMASINA DAİR YÖNETMELİK";
+    const [it] = pickSocialDigest(
+      [art({ module: "mevzuat", kind: "mevzuat", source: "resmi-gazete", sourceName: "T.C. Resmî Gazete", summary: raw, publishedAt: new Date("2026-10-03T03:00:00Z") })],
+      rot,
+      NOW,
+    );
+    expect(it.summaryLongFallback).toBe(true);
+    expect(it.summaryLong).toBe("T.C. Resmî Gazete kaynağında 3 Ekim 2026 tarihinde yayımlandı; ayrıntı kaynak bağlantısında.");
+    expect(it.summary.startsWith("3 Ekim 2026 CUMARTESİ")).toBe(true); // teaser (160) kuralına dokunulmadı
   });
 
   it("özet boş (Resmî Gazete benzeri) → dürüst yedek + bayrak; teaser summary boş kalır", () => {
