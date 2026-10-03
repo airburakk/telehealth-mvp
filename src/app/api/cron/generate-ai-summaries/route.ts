@@ -3,6 +3,7 @@ import { cronGate, errText } from "@/lib/cron-guard";
 import { recordAccess } from "@/lib/audit";
 import { sendAlert } from "@/lib/alerts";
 import { generatePendingAiSummaries } from "@/lib/doctorium";
+import { formatAiSummaryBatch } from "@/lib/ai-summary-batch";
 
 // GET /api/cron/generate-ai-summaries — Doctorium akademik/ilaç/sektörel/mevzuat AI özetinin
 // PROAKTİF üretimi (2026-09-05, kullanıcı kararı: "tembel üretimden vazgeçelim, çünkü günlük
@@ -17,6 +18,8 @@ import { generatePendingAiSummaries } from "@/lib/doctorium";
 // bekleyen tüm adayları generatePendingAiSummaries (lib/doctorium.ts) ile doldurur — scripts/
 // backfill-ai-summaries.ts İLE PAYLAŞILAN AYNI gövde (kod tekrarı yok). DEV ölçümü (2026-09-05):
 // 40 kayıt / eşzamanlılık 5 ≈ 148 sn — maxDuration 800 (Pro'da GA) güvenli pay bırakır.
+// Denetim satırı (v6.319): "ozet=a/b [pdf=N] [govdesiz=N] [ozetsiz=N] [hata=N (kaynak n · …)]" — yapısal atlama (AI çağrısı
+// yok) gerçek hatadan ayrı; biçim + sayaç lib/ai-summary-batch. 02–03.10'da "hata=11" iki gece sabitti, hiçbiri çağrı değildi.
 export const maxDuration = 800;
 export const dynamic = "force-dynamic";
 
@@ -32,7 +35,7 @@ export async function GET(req: Request) {
       resourceType: "SYSTEM",
       resourceId: "generate-ai-summaries",
       subjectUserId: null,
-      detail: `ozet=${r.basarili}/${r.toplam}${r.hata ? ` hata=${r.hata}` : ""}`,
+      detail: formatAiSummaryBatch(r),
     });
     return NextResponse.json({ ok: true, ...r });
   } catch (e) {

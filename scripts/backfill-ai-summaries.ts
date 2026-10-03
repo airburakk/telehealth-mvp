@@ -14,7 +14,9 @@
 //
 // ⚠️ ensureRegulationSummary bazı kayıtlarda (summary < 120 kar.) kaynağın URL'ini ÇEKMEYE ÇALIŞIR — bilinen
 // kısıt: RG/OHSAD gibi TR kaynakları Vercel fra1'den erişilemeyebilir (ayrı ölçüm). O satırlar "unavailable"
-// döner, hata SAYILMAZ (sonraki koşuda tekrar denenir — sayfaça URL çekilebilir hâle gelirse ilerler).
+// döner (sonraki koşuda tekrar denenir — sayfaça URL çekilebilir hâle gelirse ilerler). v6.319: sayaç yapısal
+// atlamayı (pdf · gövdesiz · özetsiz — AI çağrısı yok) gerçek hatadan ayırır; bitiş satırı cron'un denetim satırıyla
+// aynı biçimdedir (lib/ai-summary-batch).
 //
 // Korkuluklar (create-admin.ts deseni): prod YALNIZ --prod + PROD_DATABASE_URL. Varsayılan SAYIM; --yaz üretir.
 // Kullanım:
@@ -24,6 +26,7 @@
 //   npx tsx scripts/backfill-ai-summaries.ts --prod --yaz             → ÜRETİM (ayrı kullanıcı onayıyla)
 //   --concurrency N (varsayılan 3) — aynı anda kaç AI çağrısı; yüksek tutma (rate limit).
 import "dotenv/config";
+import { formatAiSummaryBatch } from "../src/lib/ai-summary-batch"; // saf modül — env'den bağımsız, erken import güvenli
 
 const args = process.argv.slice(2);
 const PROD = args.includes("--prod");
@@ -94,10 +97,10 @@ async function main() {
   const sonuc = await generatePendingAiSummaries({
     concurrency: CONCURRENCY,
     limit: Number.isFinite(LIMIT) ? LIMIT : undefined,
-    onProgress: (islenen, toplam, basarili, hata) => {
+    onProgress: (islenen, toplam, basarili, hata, atlanan) => {
       if (islenen % 25 === 0 || islenen === toplam) {
         const sn = Math.round((Date.now() - basla) / 1000);
-        console.log(`  ${islenen}/${toplam} işlendi — ${basarili} başarılı · ${hata} atlandı/hata · ${sn} sn`);
+        console.log(`  ${islenen}/${toplam} işlendi — ${basarili} başarılı · ${atlanan} atlandı (pdf/gövdesiz/özetsiz) · ${hata} hata · ${sn} sn`);
       }
     },
   });
@@ -105,7 +108,7 @@ async function main() {
   if (!sonuc.toplam) {
     console.log("aday yok — kapsamdaki tüm kayıtlarda aiSummary zaten dolu.");
   } else {
-    console.log(`\nbitti — toplam ${sonuc.toplam} · başarılı ${sonuc.basarili} · atlandı/hata ${sonuc.hata} · süre ${toplamSn} sn`);
+    console.log(`\nbitti — ${formatAiSummaryBatch(sonuc)} · süre ${toplamSn} sn`);
   }
   await db.$disconnect();
 }

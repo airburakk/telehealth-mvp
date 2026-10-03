@@ -188,6 +188,18 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
         </p>
       )}
 
+      {reg?.state === "no-text" && (
+        // v6.319 (👤 metin onayı 2026-10-03): sayfa OKUNDU ama makale gövdesi yok (KLİMİK "Yeni Sayı İçin Tıklayınız" tipi) —
+        // hata değil yapısal durum: uyarı üçgeni yok, "sonra yenileyin" vaadi yok. Tek span (flex-gap tuzağı).
+        <p className="mt-6 flex items-start gap-2 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5 text-xs leading-relaxed text-[var(--c-ink-2)]">
+          <FileText size={15} className="mt-px shrink-0" />
+          <span>
+            Bu kalemde özetlenecek metin yok: kaynak sayfa yalnız bağlantı, duyuru listesi ya da menü
+            içeriyor. Asıl içerik aşağıdaki kaynak bağlantısındadır.
+          </span>
+        </p>
+      )}
+
       {reg?.state === "unavailable" && (
         <p className="mt-6 flex items-start gap-2 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5 text-xs leading-relaxed text-[var(--c-ink-2)]">
           <AlertTriangle size={15} className="mt-px shrink-0" />

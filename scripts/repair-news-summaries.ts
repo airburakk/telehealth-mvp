@@ -13,13 +13,16 @@
 //   `--ai-sifirla` ile ADIM 2'de değişen satırların aiSummary'si null'lanır → generate-ai-summaries (02:56) yeniden üretir.
 //
 // KULLANIM (dry-run varsayılan — hiçbir şey yazmaz):
-//   npx tsx scripts/repair-news-summaries.ts [--sadece=etiket|sayfa] [--limit=300]
+//   npx tsx scripts/repair-news-summaries.ts [--sadece=etiket|sayfa] [--limit=300] [--kaynak=klimik,tjod]
 //   npx tsx scripts/repair-news-summaries.ts ... --yaz                         → dev'de uygula
 //   npx tsx scripts/repair-news-summaries.ts ... --prod                        → ÜRETİM sayım (PROD_DATABASE_URL açıkça; fallback YOK)
 //   npx tsx scripts/repair-news-summaries.ts ... --prod --yaz [--ai-sifirla]   → ÜRETİM yazma (yalnız açık onayla)
 // İçerik herkese açık haber/literatür metnidir (PHI değil) — başlık ve metin başları basılır. İdempotent: ikinci koşu 0 satır bulur.
 // ⚠️ ADIM 2 her adaya TEK sayfa isteği atar (aralarında 1,2 sn bekleme; bir kaynak art arda 3 kez düşerse o koşuda atlanır —
 //    klimik.org.tr art arda isteklerde sınırlamıştı, bkz. dedupe-rss-guid.ts). `--limit` bir koşudaki aday sayısını sınırlar.
+// v6.319: `--kaynak=a,b` (NewsArticle.source) her iki adımı o kaynaklara daraltır — koşu kesilince ya da bir kaynak sınırlayınca
+//    yalnız onu yeniden koşmak için; "erişilemedi" ve "atlandı" sayıları kaynak kırılımıyla basılır (03.10 kuru koşusunda 3 + 50
+//    satırın hangi kaynaktan olduğu okunamıyordu).
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { extractDocumentText } from "../src/lib/document-text";
@@ -32,8 +35,11 @@ const YAZ = process.argv.includes("--yaz");
 const AI_SIFIRLA = process.argv.includes("--ai-sifirla");
 const SADECE = arg("--sadece");
 const LIMIT = Number(arg("--limit") ?? 300);
+/** `--kaynak=a,b` → NewsArticle.source listesi; boş = süzgeç yok. */
+const KAYNAK = (arg("--kaynak") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 if (SADECE && SADECE !== "etiket" && SADECE !== "sayfa") { console.error("✋ --sadece=etiket|sayfa olmalı."); process.exit(1); }
 if (!Number.isInteger(LIMIT) || LIMIT < 1) { console.error("✋ --limit pozitif tamsayı olmalı."); process.exit(1); }
+if (process.argv.some((a) => a.startsWith("--kaynak")) && KAYNAK.length === 0) { console.error("✋ --kaynak=klimik[,tjod] biçiminde olmalı."); process.exit(1); }
 
 const url = PROD ? process.env.PROD_DATABASE_URL : process.env.DATABASE_URL;
 if (!url) {
@@ -60,8 +66,10 @@ const count = (keys: string[]) => {
 // ── ADIM 1 · etiket ────────────────────────────────────────────────────────────────────────────────────────────────
 async function etiketAdimi() {
   console.log("\n── ADIM 1 · etiket — akademik europepmc/doaj satırlarında yapışık bölüm etiketleri (ağ yok)");
+  const etiketKaynak = KAYNAK.length ? ["europepmc", "doaj"].filter((s) => KAYNAK.includes(s)) : ["europepmc", "doaj"];
+  if (etiketKaynak.length === 0) { console.log("— --kaynak süzgeci bu adımın kaynaklarını (europepmc · doaj) kapsamıyor; atlandı."); return; }
   const rows = await db.newsArticle.findMany({
-    where: { module: "akademik", source: { in: ["europepmc", "doaj"] }, summary: { not: "" } },
+    where: { module: "akademik", source: { in: etiketKaynak }, summary: { not: "" } },
     select: { id: true, source: true, summary: true, summaryOriginal: true },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
   });
@@ -86,28 +94,28 @@ async function etiketAdimi() {
 async function sayfaAdimi() {
   console.log("\n── ADIM 2 · sayfa — sektörel satırlarda sayfa-metni yazımı (eski fetchDocumentText: başlık + gezinme menüsü + alt bilgi; ağ VAR)");
   const all = await db.newsArticle.findMany({
-    where: { module: "sektorel", url: { not: null }, summary: { not: "" } },
+    where: { module: "sektorel", url: { not: null }, summary: { not: "" }, ...(KAYNAK.length ? { source: { in: KAYNAK } } : {}) },
     select: { id: true, source: true, url: true, title: true, summary: true, summaryOriginal: true, aiSummary: true },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
   });
   const adaylar = all.filter((r) => (r.summaryOriginal ?? r.summary).length > INGEST_SUMMARY_MAX && !/\.pdf($|\?)/i.test(r.url as string));
   const batch = adaylar.slice(0, LIMIT);
   console.log(
-    `sektörel özetli ${all.length} satır · sayfa-metni imzalı (> ${INGEST_SUMMARY_MAX} kar.) ${adaylar.length}` +
+    `sektörel özetli ${all.length} satır${KAYNAK.length ? ` (yalnız ${KAYNAK.join(", ")})` : ""} · sayfa-metni imzalı (> ${INGEST_SUMMARY_MAX} kar.) ${adaylar.length}` +
       (adaylar.length > batch.length ? ` · ⚠ tavan ${LIMIT} aşıldı — ${adaylar.length - batch.length} satır sonraki koşuya (--limit ile artır)` : ""),
   );
 
   const hostFails = new Map<string, number>();
   const plans: { r: (typeof batch)[number]; patch: SummaryPatch; fresh: string | null }[] = [];
-  let unreachable = 0;
-  let skipped = 0;
+  const unreachable: string[] = []; // kaynak adları — kırılım basılır (hangi kaynak erişilemedi / atlandı?)
+  const skipped: string[] = [];
   let unchanged = 0;
   for (const r of batch) {
     const host = new URL(r.url as string).hostname;
-    if ((hostFails.get(host) ?? 0) >= 3) { skipped++; continue; } // art arda 3 hata: o kaynak bu koşuda atlanır, sonraki koşu yine dener
+    if ((hostFails.get(host) ?? 0) >= 3) { skipped.push(r.source); continue; } // art arda 3 hata: o kaynak bu koşuda atlanır, sonraki koşu yine dener
     const html = await fetchDocumentHtml(r.url as string);
     await bekle(GAP_MS);
-    if (html === null) { unreachable++; hostFails.set(host, (hostFails.get(host) ?? 0) + 1); continue; } // erişilemedi ≠ içerik yok → DOKUNMA
+    if (html === null) { unreachable.push(r.source); hostFails.set(host, (hostFails.get(host) ?? 0) + 1); continue; } // erişilemedi ≠ içerik yok → DOKUNMA
     hostFails.set(host, 0);
     const fresh = extractDocumentText(html);
     const patch = planPageTextRepair(r, fresh);
@@ -116,10 +124,12 @@ async function sayfaAdimi() {
   }
 
   const cleared = plans.filter((p) => p.fresh === null).length;
+  const kirilim = (keys: string[]) => (keys.length ? ` (${count(keys)})` : "");
   console.log(
-    `işlenen ${batch.length - skipped} · değişecek ${plans.length} (yeni gövde ${plans.length - cleared} · gövde yok → boşalt ${cleared})` +
+    `işlenen ${batch.length - skipped.length} · değişecek ${plans.length} (yeni gövde ${plans.length - cleared} · gövde yok → boşalt ${cleared})` +
       (plans.length ? ` → ${count(plans.map((p) => p.r.source))}` : "") +
-      ` · değişmez ${unchanged} · erişilemedi ${unreachable} (DOKUNULMAZ) · atlandı ${skipped}`,
+      ` · değişmez ${unchanged} · erişilemedi ${unreachable.length}${kirilim(unreachable)} (DOKUNULMAZ) · atlandı ${skipped.length}${kirilim(skipped)}` +
+      (unreachable.length || skipped.length ? " → yalnız o kaynağı yeniden koşmak için --kaynak=<ad>" : ""),
   );
   const withAi = plans.filter((p) => p.r.aiSummary).length;
   if (plans.length) {
@@ -145,7 +155,7 @@ async function sayfaAdimi() {
 async function main() {
   console.log(
     `🩹 Haber özeti onarımı — hedef: ${PROD ? "ÜRETİM (PROD_DATABASE_URL)" : "yerel DATABASE_URL"} · ${YAZ ? "YAZMA" : "DRY-RUN"}` +
-      `${SADECE ? ` · yalnız ${SADECE}` : ""}`,
+      `${SADECE ? ` · yalnız ${SADECE}` : ""}${KAYNAK.length ? ` · kaynak ${KAYNAK.join(", ")}` : ""}`,
   );
   if (SADECE !== "sayfa") await etiketAdimi();
   if (SADECE !== "etiket") await sayfaAdimi();
