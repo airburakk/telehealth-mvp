@@ -4,20 +4,26 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, Sparkles, Undo2 } from "lucide-react";
 import type { LegalQueueState } from "@/lib/legal-approval";
+import { setLegalReviewState, useLegalReviewState } from "./legal-review-store";
 
 // Hukuki çeviri onay eylemleri (7-C, v6.286 · 2026-09-20) — admin/kvkk-basvurulari KvkkDecisionForm fetch+state deseni; üç
 // eylem tek uca (/api/admin/hukuki-ceviri POST action=approve|revoke|generate). Onay, adminin GÖRDÜĞÜ metnin hash'iyle gider
 // (sunucu önbellekten yeniden kurar; değiştiyse 409 → yeniden yükleyip inceler). Üretim ~30–60 sn sürebilir; düğmeler kilitli.
+// Editör (2026-10-03): not ve düzenleme durumu paylaşılan mağazada — düzenleme sürerken "Onayla" kilitlenir, onay çeviri
+// panelindeki "Düzenlemelerle onayla" ile verilir (düzenlenmiş metin dondurulur).
 type Action = "approve" | "revoke" | "generate";
 
 export function LegalApprovalActions({ slug, code, textHash, state }: { slug: string; code: string; textHash: string | null; state: LegalQueueState }) {
   const router = useRouter();
-  const [note, setNote] = useState("");
+  const rv = useLegalReviewState();
   const [busy, setBusy] = useState<Action | "">("");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
-  const canApprove = !!textHash && state !== "reviewed";
+  const pageKey = `${slug}/${code}`;
+  const editingLock = rv.key === pageKey && (rv.editing || Object.keys(rv.edits).length > 0);
+  const note = rv.key === pageKey ? rv.note : "";
+  const canApprove = !!textHash && state !== "reviewed" && !editingLock;
   const canRevoke = state === "reviewed";
   const canGenerate = state === "missing" || state === "incomplete";
 
@@ -36,7 +42,7 @@ export function LegalApprovalActions({ slug, code, textHash, state }: { slug: st
       if (action === "generate") {
         setInfo(data.complete ? `Çeviri üretildi: ${data.translated}/${data.units} birim.` : `Üretildi: ${data.translated}/${data.units} birim — eksikler için tekrar çalıştırın.`);
       }
-      if (action === "approve") setNote("");
+      if (action === "approve") setLegalReviewState({ note: "" });
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "İşlem tamamlanamadı.");
@@ -52,7 +58,7 @@ export function LegalApprovalActions({ slug, code, textHash, state }: { slug: st
       {!canRevoke && (
         <textarea
           value={note}
-          onChange={(e) => setNote(e.target.value)}
+          onChange={(e) => setLegalReviewState({ key: pageKey, note: e.target.value })}
           disabled={busy !== ""}
           rows={2}
           maxLength={2000}
@@ -76,6 +82,9 @@ export function LegalApprovalActions({ slug, code, textHash, state }: { slug: st
           {busy === "approve" ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} {state === "reviewed" ? "Onaylı" : "Onayla"}
         </button>
       </div>
+      {editingLock && state !== "reviewed" && (
+        <p className="text-xs text-[var(--c-ink-3)]">{"Düzenleme sürüyor — onayı çeviri panelindeki \"Düzenlemelerle onayla\" ile verin."}</p>
+      )}
       {busy === "generate" && <p className="text-xs text-[var(--c-ink-3)]">Çeviri üretiliyor — belge başına yaklaşık bir dakika sürer, sayfadan ayrılmayın.</p>}
       {info && <div className="rounded-lg bg-[var(--c-accent)]/10 px-3 py-1.5 text-xs text-[var(--c-ink)] ring-1 ring-[var(--c-accent)]/25">{info}</div>}
       {error && <div className="rounded-lg bg-red-500/10 px-3 py-1.5 text-xs text-red-300 ring-1 ring-red-400/25">{error}</div>}
