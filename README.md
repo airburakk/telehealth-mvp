@@ -676,6 +676,7 @@ prisma/
                             #   ConsultAppointment, CaseDocument, DoctorDocument, SecondOpinion* ×7, ...)
   seed.ts                   # demo veri (30 doktor + 20 vaka)
 scripts/                    # add-demo-cases.ts (idempotent), gen-icons.py (PWA ikonları), ...
+infra/kart/                 # Hetzner `kart` servisi (Playwright imajı + ffmpeg): sabah bülteni PNG'si + hikâye/Reels MP4 (v6.320) — Vercel'e GİRMEZ, n8n çağırır; bkz. infra/kart/README.md
 public/                     # PWA manifest + ikonlar + wasm/ (DICOM codec'leri)
 ```
 
