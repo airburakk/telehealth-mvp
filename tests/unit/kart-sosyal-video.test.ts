@@ -5,11 +5,12 @@ import { afterEach, describe, expect, it } from "vitest";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
+import net from "node:net";
 import type { AddressInfo } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { createSosyal, digestDogrula, dosyaAdiGecerli, dosyaMeta, gunGecerli, kapsamHesapla } from "../../infra/kart/lib/sosyal-isleri.mjs";
-import { hikayeKareHtml, reelHtml, reelPlan, tipo } from "../../infra/kart/lib/social-video.mjs";
+import { hikayeKareHtml, reelHtml, reelPlan, renderReelA, tipo } from "../../infra/kart/lib/social-video.mjs";
 
 const NBSP = String.fromCharCode(0xa0);
 const KOK = process.cwd();
@@ -383,6 +384,68 @@ describe("sosyal iş yöneticisi", () => {
     expect((await fetch(`${t.base}/sosyal/durum`, { method: "POST" })).status).toBe(405);
     expect((await fetch(`${t.base}/sosyal/yok`)).status).toBe(404);
     expect((await fetch(`${t.base}/bulten.png`)).status).toBe(404); // handle false döndü → harness 404'ü
+  });
+});
+
+describe("dayanıklılık", () => {
+  it("bozuk istek yolu ('GET //') süreci düşürmez: handle false döner, çağıran 404 verir; sunucu yaşamaya devam eder", async () => {
+    const t = await kur();
+    // `new URL("//", base)` fırlatır; try dışında kalsaydı işlenmeyen reddetme (Node ≥15'te süreç çökmesi) + asılı istek olurdu
+    const durumSatiri = await new Promise<string>((resolve, reject) => {
+      const s = net.connect(t.port, "127.0.0.1", () => s.write("GET // HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"));
+      let buf = "";
+      s.on("data", (d) => { buf += d.toString(); });
+      s.on("close", () => resolve(buf.split("\r\n")[0]));
+      s.on("error", reject);
+    });
+    expect(durumSatiri).toBe("HTTP/1.1 404 Not Found");
+    expect((await t.durum()).durum).toBe("bos");
+  });
+
+  // Sahte tarayıcı: ffmpeg/Chromium gerektirmez; hata yolunda sayfaların kapandığını ve diğer işçilerin durduğunu doğrular.
+  const KURE = path.join(KOK, "infra/kart/assets/doctorium-sphere-disk-1024-v3.webp");
+  function sahteTarayici(secenek: { setContentHata?: boolean; hataVerenIsci?: number } = {}) {
+    const sayfalar: Array<{ kapandi: boolean }> = [];
+    const sayac = { ekranGoruntusu: 0 };
+    return {
+      sayfalar,
+      sayac,
+      newPage: async () => {
+        const kayit = { kapandi: false };
+        const sira = sayfalar.push(kayit) - 1;
+        return {
+          setContent: async () => { if (secenek.setContentHata) throw new Error("setContent patladı"); },
+          evaluate: async () => ({ inter: true, mono: true }), // fontlariDogrula'nın beklediği biçim; diğer çağrılar sonucu yok sayar
+          screenshot: async (o: { path: string }) => {
+            sayac.ekranGoruntusu++;
+            if (secenek.hataVerenIsci === sira) throw new Error("screenshot patladı");
+            fs.writeFileSync(o.path, "x");
+          },
+          close: async () => { kayit.kapandi = true; },
+        };
+      },
+    };
+  }
+  async function reelDene(browser: ReturnType<typeof sahteTarayici>) {
+    const w = fs.mkdtempSync(path.join(os.tmpdir(), "reel-test-"));
+    temizlenecek.push(async () => { fs.rmSync(w, { recursive: true, force: true }); });
+    return renderReelA({ digest: digestOrnek(2), outPath: path.join(w, "r.mp4"), workDir: w, music: "yok.mp3", grid: GRID, spherePath: KURE, browser, workers: 3 });
+  }
+
+  it("Reel A: işçilerin hepsi düşerse (yazı tipi/ağ) TÜM sayfalar kapanır — ömürlü tarayıcıda sızıntı yok", async () => {
+    const b = sahteTarayici({ setContentHata: true });
+    await expect(reelDene(b)).rejects.toThrow(/setContent patladı/);
+    expect(b.sayfalar).toHaveLength(3);
+    expect(b.sayfalar.every((s) => s.kapandi)).toBe(true);
+  });
+
+  it("Reel A: bir işçi düşerse diğerleri DURUR (abort) ve hepsi sayfasını kapatır; iş döndüğünde artakalan işçi yok", async () => {
+    const b = sahteTarayici({ hataVerenIsci: 1 });
+    await expect(reelDene(b)).rejects.toThrow(/screenshot patladı/);
+    expect(b.sayfalar.every((s) => s.kapandi)).toBe(true);
+    const toplamKare = Math.round(reelPlan(digestOrnek(2), GRID).TOTAL_T * 30);
+    expect(toplamKare).toBeGreaterThan(300);
+    expect(b.sayac.ekranGoruntusu).toBeLessThan(toplamKare / 10); // üç işçi tüm kareleri basmadı
   });
 });
 

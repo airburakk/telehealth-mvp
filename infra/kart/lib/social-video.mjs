@@ -71,6 +71,19 @@ export async function fontlariDogrula(page) {
   if (!r.inter || !r.mono) throw new Error(`yazı tipi yüklenemedi (Inter=${r.inter}, JetBrains Mono=${r.mono}) — üretim DURDURULDU (yedek yazı tipiyle yayın yok)`);
 }
 
+/**
+ * Sayfayı açar, `fn(page)`'i çalıştırır ve HATA YOLUNDA da kapatır. Sunucuda tarayıcı ömürlüdür (kart + video işleri paylaşır):
+ * kapanmayan sayfa (yazı tipi kapısı düştü, ağ koptu…) her başarısız işte birikir (1080x1920 bağlam ≈ yüzlerce MB).
+ */
+export async function sayfada(browser, opts, fn) {
+  const page = await browser.newPage(opts);
+  try {
+    return await fn(page);
+  } finally {
+    await page.close().catch(() => {}); // tarayıcı zaten çöktüyse kapatma da fırlatabilir
+  }
+}
+
 /** İki geçişli loudnorm (ölçüm → doğrusal normalizasyon) + son filtreler → WAV. 🪤 Yerel AAC kodlayıcı tepe aşımı yapabilir → TP −2,5 / ≥120 ms fade. */
 async function normalizeAudio({ music, ss, measureSec, outSec, target, tp, post, outWav }) {
   const err = await ff(["-ss", ss, "-t", measureSec, "-i", music, "-af", `loudnorm=I=${target}:TP=${tp}:LRA=7:print_format=json`, "-f", "null", "-"], { capture: true });
@@ -173,24 +186,25 @@ export async function renderStories({ digest, cardPng, outDir, workDir, music, s
   const fit = [];
   const pngs = [kart1];
   for (let i = 0; i < n; i++) {
-    const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 2 });
-    await page.setContent(hikayeKareHtml(digest, items[i], i, n, items[i].summaryLong, sphere), { waitUntil: "networkidle" });
-    await page.evaluate(() => document.fonts.ready);
-    await fontlariDogrula(page);
-    const m = await page.evaluate(() => {
-      const main = document.querySelector(".main"), inner = document.querySelector(".inner");
-      // flex center'da taşma iki uca dağılır, scrollHeight SAYMAZ → ölçüm sarmalayıcının getBoundingClientRect yüksekliğiyle
-      const bos = () => main.clientHeight - 2 * 44 - inner.getBoundingClientRect().height;
-      const set = (h, d) => { document.documentElement.style.setProperty("--h2", h + "px"); document.documentElement.style.setProperty("--desc", d + "px"); };
-      let h = parseFloat(getComputedStyle(document.querySelector("h2")).fontSize);
-      let d = parseFloat(getComputedStyle(document.querySelector(".desc")).fontSize);
-      while (bos() < 0 && (h > 40 || d > 32)) { if (h > 40) h -= 1; if (d > 32) d -= 0.5; set(h, d); }
-      return { h2: h, desc: d, bosluk: Math.round(bos()) };
+    const p2x = path.join(workDir, `kare-${String(i + 2).padStart(2, "0")}-2x.png`);
+    const m = await sayfada(browser, { viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 2 }, async (page) => {
+      await page.setContent(hikayeKareHtml(digest, items[i], i, n, items[i].summaryLong, sphere), { waitUntil: "networkidle" });
+      await page.evaluate(() => document.fonts.ready);
+      await fontlariDogrula(page);
+      const olcum = await page.evaluate(() => {
+        const main = document.querySelector(".main"), inner = document.querySelector(".inner");
+        // flex center'da taşma iki uca dağılır, scrollHeight SAYMAZ → ölçüm sarmalayıcının getBoundingClientRect yüksekliğiyle
+        const bos = () => main.clientHeight - 2 * 44 - inner.getBoundingClientRect().height;
+        const set = (h, d) => { document.documentElement.style.setProperty("--h2", h + "px"); document.documentElement.style.setProperty("--desc", d + "px"); };
+        let h = parseFloat(getComputedStyle(document.querySelector("h2")).fontSize);
+        let d = parseFloat(getComputedStyle(document.querySelector(".desc")).fontSize);
+        while (bos() < 0 && (h > 40 || d > 32)) { if (h > 40) h -= 1; if (d > 32) d -= 0.5; set(h, d); }
+        return { h2: h, desc: d, bosluk: Math.round(bos()) };
+      });
+      await page.screenshot({ path: p2x, type: "png" });
+      return olcum;
     });
     fit.push(m);
-    const p2x = path.join(workDir, `kare-${String(i + 2).padStart(2, "0")}-2x.png`);
-    await page.screenshot({ path: p2x, type: "png" });
-    await page.close();
     // 2x → 1080x1920 BİR KEZ (Lanczos): klip kodlamasında hareketsiz kare her kare için yeniden ölçeklenmesin (2 çekirdekte 52 sn → birkaç sn)
     const p1 = path.join(workDir, `kare-${String(i + 2).padStart(2, "0")}.png`);
     await ff(["-i", p2x, "-vf", "scale=1080:1920:flags=lanczos", "-frames:v", 1, p1]);
@@ -400,18 +414,27 @@ export async function renderReelA({ digest, outPath, workDir, music, grid, spher
   const html = reelHtml(digest, grid, spherePng(spherePath));
   const total = Math.round(TOTAL_T * FPS);
   const per = Math.ceil(total / workers);
-  await Promise.all(Array.from({ length: workers }, async (_, w) => {
-    const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });
-    await page.setContent(html, { waitUntil: "networkidle" });
-    await page.evaluate(() => document.fonts.ready);
-    await fontlariDogrula(page);
-    await page.evaluate(() => window.init());
-    for (let f = w * per; f < Math.min(total, (w + 1) * per); f++) {
-      await page.evaluate((t) => window.seek(t), f / FPS);
-      await page.screenshot({ path: path.join(frames, `f${String(f).padStart(4, "0")}.png`), type: "png" });
+  // Bir işçi düşerse diğerleri (abort bayrağıyla) mevcut kareyi bitirip DURUR ve KENDİ sayfasını kapatır; `allSettled` hepsini bekler →
+  // iş hata verdiğinde artakalan işçi ya da sızan sayfa kalmaz (kilit açıldığında yeni iş zombi işçilerle yarışmaz).
+  let abort = false;
+  const sonuclar = await Promise.allSettled(Array.from({ length: workers }, (_, w) => sayfada(browser, { viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 }, async (page) => {
+    try {
+      await page.setContent(html, { waitUntil: "networkidle" });
+      await page.evaluate(() => document.fonts.ready);
+      await fontlariDogrula(page);
+      await page.evaluate(() => window.init());
+      for (let f = w * per; f < Math.min(total, (w + 1) * per); f++) {
+        if (abort) return;
+        await page.evaluate((t) => window.seek(t), f / FPS);
+        await page.screenshot({ path: path.join(frames, `f${String(f).padStart(4, "0")}.png`), type: "png" });
+      }
+    } catch (e) {
+      abort = true;
+      throw e;
     }
-    await page.close();
-  }));
+  })));
+  const dusen = sonuclar.find((r) => r.status === "rejected");
+  if (dusen) throw dusen.reason;
   tm.kareler_sn = (Date.now() - t0) / 1000;
 
   const SURE = total / FPS;

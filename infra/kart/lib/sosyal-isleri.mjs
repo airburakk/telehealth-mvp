@@ -250,7 +250,10 @@ export function createSosyal(o) {
 
   /** `/sosyal/*` isteklerini karşılar; ilgisiz URL → false (çağıran kendi yoluna devam eder). */
   async function handle(req, res) {
-    const url = new URL(req.url ?? "/", "http://kart.local");
+    // Bozuk istek yolu ("//", "http://") `new URL`'de fırlatır; try DIŞINDA kalırsa işlenmeyen reddetme süreci düşürür (Node ≥15) ve istek asılı kalır.
+    // Bozuk yol bu uca ait DEĞİL → false: çağıran kendi 404'ünü verir.
+    let url;
+    try { url = new URL(req.url ?? "/", "http://kart.local"); } catch { return false; }
     const p = url.pathname;
     if (!p.startsWith("/sosyal/")) return false;
     try {
