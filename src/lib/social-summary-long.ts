@@ -35,12 +35,15 @@ const ABBREVIATIONS = new Set([
 ]);
 
 /**
- * Kaynak artıklarını ayıklar (hikâye metni halka açık): HTML etiketleri (`<br />`, `<p>`, `<a …>`), WordPress'in
- * "The post … first appeared on …" kuyruğu, metnin SONUNDAKİ "Devamını oku / Read more / Continue reading / […]". SAF.
+ * Kaynak artıklarını ayıklar (hikâye metni halka açık): görünmez karakterler (yumuşak tire U+00AD, sıfır genişlikli boşluk U+200B,
+ * kelime birleştirici U+2060, U+FEFF — 03.10 canlı ölçüm: KLİMİK metninde "tarihleri" ile "arasında" arasında iki U+200B), HTML etiketleri (`<br />`, `<p>`, `<a …>`),
+ * WordPress'in "The post … first appeared on …" kuyruğu, metnin SONUNDAKİ "Devamını oku / Read more / Continue reading / […]". SAF.
  * Etiket deseni yalnız `<` + HARF ile başlar → "p<0.05", "n<30" gibi karşılaştırmalar etkilenmez. Orta metindeki "Read more" dokunulmaz.
+ * ZWJ/ZWNJ (U+200D/U+200C) bilerek SİLİNMEZ: emoji dizilerini ve bazı yazıları bozar; Türkçe/İngilizce özetlerde gerekmez.
  */
 export function cleanSummary(raw: string): string {
   return raw
+    .replace(/[\u00AD\u200B\u2060\uFEFF]/g, "")
     .replace(/<\/?[a-z][^>]*>/gi, " ")
     .replace(/\s+/g, " ")
     .replace(/\s*The post .*? (?:first appeared|appeared first) on .*$/i, "")
@@ -75,6 +78,17 @@ export function looksEnglish(text: string): boolean {
   const letters = text.replace(/[^\p{L}]/gu, "").length;
   const trLetters = (text.match(/[çğıöşüÇĞİÖŞÜ]/g) ?? []).length;
   return hits / words.length >= 0.1 && trLetters / Math.max(1, letters) < 0.01;
+}
+
+/**
+ * Resmî Gazete'nin HAM belge metni mi (künye + başlık tekrarı + madde metni)? 03.10.2026 canlı ölçüm: RG kaleminin `summary`'si bir özet
+ * DEĞİL, belgenin ham metni ("3 Ekim 2026 CUMARTESİ Resmî Gazete Sayı : 33389 YÖNETMELİK … MADDE 1- …"). Hikâye açıklaması olarak
+ * uygun değil (başlık zaten ekranda; madde metni okura yük) → 👤 03.10 kararı: RG için DÜRÜST YEDEK cümle. Tanı: metin künyeyle
+ * ("[gün ay yıl HAFTA GÜNÜ] Resmî Gazete Sayı :") başlar. Gövde kaynağı değişirse (özet üretimi) bu kural gözden geçirilir.
+ * SAF. "Resmî Gazete'de yayımlanan …" gibi ORTADAKİ anmalar eşleşmez (yalnız metnin başı).
+ */
+export function looksLikeRawGazetteText(text: string): boolean {
+  return /^(?:\d{1,2}\s+\p{L}+\s+\d{4}\s+\p{L}+\s+)?Resm(?:[i\u00EE]|i\u0302)\s+Gazete\s+Say[ıi]\s*:/iu.test(text);
 }
 
 /** `before` (sonlandırıcı noktadan ÖNCEKİ metin) bir cümle sonunu mu YOKSA kısaltma/liste numarasını mı bitiriyor? */
@@ -144,11 +158,13 @@ export interface SummaryLong {
 
 /**
  * Bir seçki öğesinin hikâye açıklaması. `summary` ÖNCEDEN HTML-varlıktan arındırılmış olmalı (`decodeFeedText`) — kırpma gerçek
- * harfleri saysın, yarım varlık kuyruğu kalmasın. Kaynak artıkları ayıklanır (`cleanSummary`); sonuç ≥ SUMMARY_LONG_MIN karakter
- * VE İngilizce değilse cümle sınırından ≤ SUMMARY_LONG_MAX; aksi hâlde dürüst yedek.
+ * harfleri saysın, yarım varlık kuyruğu kalmasın. Kaynak artıkları ayıklanır (`cleanSummary`); sonuç ≥ SUMMARY_LONG_MIN karakter,
+ * İngilizce değil VE Resmî Gazete ham belge metni değilse cümle sınırından ≤ SUMMARY_LONG_MAX; aksi hâlde dürüst yedek.
  */
 export function buildSummaryLong(input: { summary: string; sourceName: string; publishedAt: Date }): SummaryLong {
   const cleaned = cleanSummary(input.summary);
-  if (cleaned.length >= SUMMARY_LONG_MIN && !looksEnglish(cleaned)) return { text: trimToSentences(cleaned), fallback: false };
+  if (cleaned.length >= SUMMARY_LONG_MIN && !looksEnglish(cleaned) && !looksLikeRawGazetteText(cleaned)) {
+    return { text: trimToSentences(cleaned), fallback: false };
+  }
   return { text: summaryLongFallback(input.sourceName, input.publishedAt), fallback: true };
 }
