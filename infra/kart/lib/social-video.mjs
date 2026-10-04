@@ -18,7 +18,7 @@ const NBSP = String.fromCharCode(0xa0);
 const AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 const AY_DESEN = AYLAR.join("|");
 export const trTarih = (s) => { const [y, m, d] = s.split("-").map(Number); return `${d} ${AYLAR[m - 1]} ${y}`; };
-const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+export const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 /** Açıklama tipografisi: tarih ("18 Ağustos 2026"), sayı aralığı ("1,53–3,28") ve "r ≈ 0,55" satır sonunda BÖLÜNMEZ. */
 export function tipo(t) {
@@ -57,7 +57,7 @@ async function loadChromium() {
   return (await import("playwright")).chromium;
 }
 
-const spherePng = (spherePath) => "data:image/webp;base64," + fs.readFileSync(spherePath).toString("base64");
+export const spherePng = (spherePath) => "data:image/webp;base64," + fs.readFileSync(spherePath).toString("base64");
 
 /**
  * Yazı tipleri GERÇEKTEN yüklendi mi? (Google Fonts ağdan gelir.) 🪤 `document.fonts.check()` CSS hiç yüklenmediyse de true döner

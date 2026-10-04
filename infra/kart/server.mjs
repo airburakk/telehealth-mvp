@@ -6,6 +6,8 @@
 // tarayıcı "i"yi "I" yapar ("AKADEMIK", "CIHAZ", "DOKTRIN"). Türkçe büyük harf kuralı (i → İ) yalnız lang="tr" ile işler.
 // v6.320 (2026-10-03): kod depoya alındı (infra/kart/) + hikâye/Reels MP4 üretimi: POST /sosyal/uret · GET /sosyal/durum ·
 // GET /sosyal/dosya/<gün>/<ad>.mp4 (lib/sosyal-isleri.mjs; ffmpeg + müzik /varlik/muzik.mp3 — README). Kart ucu DEĞİŞMEDİ.
+// v6.323 (2026-10-04): + Instagram kaydırmalı post (carousel) slaytları (lib/social-carousel.mjs) — aynı iş, `gorseller` dizisi + PNG dosya ucu;
+// `kapsam.akislar` (günün akış etiketleri) eklendi. Mevcut uçların sözleşmesi geriye uyumlu (README).
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -13,6 +15,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { createSosyal } from "./lib/sosyal-isleri.mjs";
 import * as video from "./lib/social-video.mjs";
+import * as carousel from "./lib/social-carousel.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const TOKEN = process.env.SOCIAL_DIGEST_TOKEN ?? "";
@@ -107,12 +110,12 @@ async function renderBulten(digestIn) {
   }
 }
 
-// Hikâye + Reels (v6.320). Müzik repo DIŞINDA: sunucuda ./kart-varlik/muzik.mp3 → konteynerde /varlik/muzik.mp3 (salt-okur volume).
+// Hikâye + Reels (v6.320) + carousel (v6.323). Müzik repo DIŞINDA: sunucuda ./kart-varlik/muzik.mp3 → konteynerde /varlik/muzik.mp3 (salt-okur volume).
 const sosyal = createSosyal({
   dir: process.env.SOSYAL_DIR ?? "/tmp/sosyal",
   getDigest: fetchDigest,
   renderCardPng: renderBulten,
-  uretici: video,
+  uretici: { renderStories: video.renderStories, renderReelA: video.renderReelA, renderCarousel: carousel.renderCarousel },
   getBrowser,
   muzikPath: process.env.SOSYAL_MUZIK ?? "/varlik/muzik.mp3",
   spherePath: path.join(HERE, "assets", "doctorium-sphere-disk-1024-v3.webp"),
