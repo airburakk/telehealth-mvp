@@ -6,12 +6,14 @@ import { AURA_LEGAL_VERSION, auraLegalDoc } from "@/lib/aura-legal";
 import { LANG_NATIVE_NAME, legalDir } from "@/lib/aura-legal/display";
 import { LANG_NAME_BY_CODE } from "@/lib/constants";
 import { isTranslatableLegalLang } from "@/lib/legal-translate";
-import { getLegalApproval, LEGAL_QUEUE_STATE_LABEL, legalQueueState, resolveLegalBody } from "@/lib/legal-approval";
+import { legalUnitPairs } from "@/lib/legal-markdown-split";
+import { getLegalApproval, LEGAL_QUEUE_STATE_LABEL, legalApprovalEdited, legalQueueState, resolveLegalBody } from "@/lib/legal-approval";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { AuraPanel } from "@/components/ui/AuraPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LegalMarkdown } from "@/components/aura/doctorium-legal/LegalMarkdown";
 import { LegalApprovalActions } from "../../LegalApprovalActions";
+import { LegalTranslationEditor } from "../../LegalTranslationEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 // Hukuki çeviri inceleme (7-C, v6.286 · 2026-09-20) — TR kanonik ile çeviri YAN YANA; "Onayla" sağdaki metni olduğu gibi dondurur.
 // Gövde Doctorium LegalMarkdown'la çizilir (/admin ağacı Doctorium kromu, --c-* token'ları). Çeviri ÖNBELLEKTEN okunur
 // (generate:false) — üretim yalnız düğmeyle (audit'li). Yalnız ADMIN.
+// Editör (2026-10-03): sağ panelde "Düzenle" → birim çiftleri (TR kaynak ↔ çeviri) yerinde düzenlenir; okuma görünümü sunucuda
+// çizilen LegalMarkdown (children). "düzenlenmiş çeviri" etiketi = dondurulmuş hash ≠ otomatik önbellek hash'i.
 export default async function LegalTranslationReviewPage({ params }: { params: Params }) {
   const { slug, code } = await params;
   const user = await getCurrentUser();
@@ -38,14 +42,22 @@ export default async function LegalTranslationReviewPage({ params }: { params: P
 
   const [row, body] = await Promise.all([getLegalApproval(doc.slug, lang), resolveLegalBody(doc.slug, lang, { generate: false })]);
   const state = legalQueueState(row, doc.slug, body ? { complete: !body.partial } : null);
+  const edited = state === "reviewed" && row ? await legalApprovalEdited(row, doc.slug, lang) : null;
+  const pairs = body && !body.partial ? legalUnitPairs(doc.body.tr, body.markdown) : null;
   const native = LANG_NATIVE_NAME[lang] ?? lang;
+  const translationMeta =
+    body?.status === "reviewed"
+      ? `dondurulmuş onaylı metin${edited ? " · düzenlenmiş" : ""}`
+      : body?.partial
+        ? "otomatik · eksik birimler Türkçe kaldı"
+        : "otomatik çeviri";
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-10">
       <PageHeader
         eyebrow={<Link href="/admin/hukuki-ceviri" className="hover:underline">← Hukuki Çeviriler</Link>}
         title={`${doc.title.tr} · ${native}`}
-        sub={`${lang} (${code}) · Sürüm ${AURA_LEGAL_VERSION} · Durum: ${LEGAL_QUEUE_STATE_LABEL[state]}`}
+        sub={`${lang} (${code}) · Sürüm ${AURA_LEGAL_VERSION} · Durum: ${LEGAL_QUEUE_STATE_LABEL[state]}${edited ? " · düzenlenmiş çeviri" : ""}`}
       />
 
       <AuraPanel
@@ -56,7 +68,8 @@ export default async function LegalTranslationReviewPage({ params }: { params: P
       >
         <p className="text-xs leading-relaxed text-[var(--c-ink-3)]">
           {"Onay = sağdaki çeviri olduğu gibi dondurulur ve hastaya \"İncelenmiş çeviri\" rozetiyle sunulur; onam kanıtında okunan metnin hash'i bu metne bağlanır. "}
-          {"Hukuken bağlayıcı metin Türkçe kanoniktir; çeviri bilgilendirme amaçlıdır. Türkçe kaynak ya da sürüm değişince onay kendiliğinden eskir."}
+          {"Hukuken bağlayıcı metin Türkçe kanoniktir; çeviri bilgilendirme amaçlıdır. Türkçe kaynak ya da sürüm değişince onay kendiliğinden eskir. "}
+          {"Düzenle ile paragrafı yerinde düzeltebilirsiniz; onay, düzenlenmiş metni dondurur."}
         </p>
         {row?.note && <p className="mt-2 text-xs text-[var(--c-ink-2)]">Not: {row.note}</p>}
         {state === "stale" && (
@@ -79,14 +92,12 @@ export default async function LegalTranslationReviewPage({ params }: { params: P
               <LegalMarkdown markdown={doc.body.tr} />
             </div>
           </AuraPanel>
-          <AuraPanel
-            title={`Çeviri · ${native}`}
-            meta={body.status === "reviewed" ? "dondurulmuş onaylı metin" : body.partial ? "otomatik · eksik birimler Türkçe kaldı" : "otomatik çeviri"}
-            level="h2"
-          >
-            <div lang={code} dir={legalDir(code)}>
-              <LegalMarkdown markdown={body.markdown} />
-            </div>
+          <AuraPanel title={`Çeviri · ${native}`} meta={translationMeta} level="h2">
+            <LegalTranslationEditor slug={doc.slug} code={code} textHash={body.partial ? null : body.textHash} pairs={pairs} edited={edited} dir={legalDir(code)}>
+              <div lang={code} dir={legalDir(code)}>
+                <LegalMarkdown markdown={body.markdown} />
+              </div>
+            </LegalTranslationEditor>
           </AuraPanel>
         </div>
       ) : (

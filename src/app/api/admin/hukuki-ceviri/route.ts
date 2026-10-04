@@ -8,6 +8,7 @@ import { approveLegalTranslation, generateLegalTranslation, LegalApprovalConflic
 // Hukuki çeviri onay eylemleri (7-C, v6.286 · 2026-09-20) — /admin/hukuki-ceviri "Onayla · Onayı kaldır · Çeviriyi üret".
 // Self-auth: yalnız ADMIN (proxy /admin'i korur ama /api'yi KORUMAZ — her uç kendi kapısı; admin/kvkk-basvurulari deseni).
 // `lang` dil kodu (ru) ya da Türkçe adı (Rusça) olabilir. generate: eksik birimler Claude ile çevrilir (belge başına ~30–60 sn).
+// approve + `edits` (2026-10-03 editörü): { "<TR birim>": "<düzenlenmiş çeviri>" } — biçim burada, içerik lib'de (normalizeLegalEdits) doğrulanır.
 export const maxDuration = 120;
 
 export async function POST(req: Request) {
@@ -24,8 +25,15 @@ export async function POST(req: Request) {
 
   try {
     if (action === "approve") {
+      let edits: Record<string, string> | null = null;
+      if (b.edits !== undefined && b.edits !== null) {
+        if (typeof b.edits !== "object" || Array.isArray(b.edits)) return NextResponse.json({ error: "Düzenleme biçimi geçersiz." }, { status: 400 });
+        const entries = Object.entries(b.edits as Record<string, unknown>);
+        if (entries.some(([, v]) => typeof v !== "string")) return NextResponse.json({ error: "Düzenleme biçimi geçersiz." }, { status: 400 });
+        edits = Object.fromEntries(entries as [string, string][]);
+      }
       const row = await approveLegalTranslation({
-        slug: doc.slug, lang, textHash: String(b.textHash ?? ""), note: typeof b.note === "string" ? b.note : null, actor: user, ...meta,
+        slug: doc.slug, lang, textHash: String(b.textHash ?? ""), note: typeof b.note === "string" ? b.note : null, edits, actor: user, ...meta,
       });
       return NextResponse.json({ ok: true, approvedAt: row.approvedAt });
     }

@@ -14,6 +14,7 @@ export const metadata: Metadata = { title: "Hukuki Çeviriler" };
 // Hukuki çeviri onay kuyruğu (7-C, v6.286 · 2026-09-20) — admin/kvkk-basvurulari deseni: proxy /admin'i TOKEN roluyle korur;
 // onay yetkisi kritik → getCurrentUser (DB-rol otoriter) ŞART, yalnız ADMIN. Liste ÖNBELLEKTEN okur (Claude'a istek atmaz);
 // üretim/onay detay sayfasında. /admin ağacı Doctorium kromundadır → yalnız --c-* token'ları, AURA'ya götüren bağlantı YOK.
+// "düzenlenmiş" etiketi (editör, 2026-10-03): dondurulmuş onaylı metin otomatik önbellek metninden farklı — hukukçu paragraf düzeltmiş.
 const STATE_TONE: Record<LegalQueueState, string> = {
   reviewed: "border-[var(--c-success)]/40 text-[var(--c-success)]",
   automatic: "border-[var(--c-hairline)] text-[var(--c-ink-2)]",
@@ -75,6 +76,9 @@ export default async function LegalTranslationQueuePage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {i.edited && (
+                      <span className="rounded-full border border-[var(--c-accent)]/40 px-2 py-0.5 text-[11px] font-medium text-[var(--c-accent)]">düzenlenmiş</span>
+                    )}
                     <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${STATE_TONE[i.state]}`}>{LEGAL_QUEUE_STATE_LABEL[i.state]}</span>
                     <Link href={`/admin/hukuki-ceviri/${i.slug}/${i.code}`} className="text-xs font-semibold text-[var(--c-accent)] hover:underline">
                       İncele

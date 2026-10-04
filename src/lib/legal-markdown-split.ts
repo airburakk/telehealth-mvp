@@ -86,3 +86,56 @@ export function joinLegalMarkdown(segments: readonly LegalSegment[], map: Record
     })
     .join("\n");
 }
+
+// ── Hukukçu düzenlemesi (7-C editörü, 2026-10-03) — birim çiftleri + değer kuralları; saf modül, istemci bileşeni de okur. ──
+
+/** Birim çifti — TR kaynak metni (önbellek anahtarı) + aynı yapıdaki çeviride karşılığı (editör için, belge sırası). */
+export type LegalUnitPair = { key: string; text: string; kind: "unit" | "cell"; prefix: string };
+
+/** Düzenleme sınırları — editör ve uç aynı kaynaktan okur. */
+export const LEGAL_EDIT_MAX_CHARS = 4000;
+export const LEGAL_EDIT_MAX_UNITS = 500;
+
+/** Düzenlenen birim değeri kuralı: tek satır, boş değil, sınır içinde. Hata metni (Türkçe) ya da null. */
+export function legalEditError(value: string): string | null {
+  const v = value.replace(/\r\n?/g, "\n").trim();
+  if (!v) return "Boş bırakılamaz.";
+  if (v.includes("\n")) return "Satır sonu kullanılamaz; paragraf tek satırdır.";
+  if (v.length > LEGAL_EDIT_MAX_CHARS) return `En çok ${LEGAL_EDIT_MAX_CHARS} karakter.`;
+  return null;
+}
+
+/**
+ * TR kanonik + AYNI YAPIDAKİ çeviri (join ile üretilmiş: otomatik ya da dondurulmuş) → birim çiftleri, belge sırasında.
+ * Yapı uyuşmuyorsa (segment sayısı/türü ya da hücre sayısı farklı) null — çağıran düzenlemeyi kapatır. Boş birimler atlanır;
+ * aynı TR birimi birden çok yerde geçiyorsa her yeri listelenir (anahtar aynı → tek düzenleme hepsine uygulanır).
+ */
+export function legalUnitPairs(mdTr: string, mdTranslated: string): LegalUnitPair[] | null {
+  const a = splitLegalMarkdown(mdTr);
+  const b = splitLegalMarkdown(mdTranslated);
+  if (a.length !== b.length) return null;
+  const out: LegalUnitPair[] = [];
+  for (let i = 0; i < a.length; i++) {
+    const s = a[i];
+    const t = b[i];
+    if (s.kind !== t.kind) return null;
+    if (s.kind === "unit" && t.kind === "unit") {
+      if (s.text.trim()) out.push({ key: s.text, text: t.text, kind: "unit", prefix: s.prefix });
+      continue;
+    }
+    if (s.kind === "row" && t.kind === "row") {
+      if (s.cells.length !== t.cells.length) return null;
+      s.cells.forEach((c, j) => { if (c.trim()) out.push({ key: c, text: t.cells[j], kind: "cell", prefix: "|" }); });
+    }
+  }
+  return out;
+}
+
+/** Çeviri haritası (TR birim → çeviri) — çiftlerden; aynı anahtar tekrar ederse ilk görülen kazanır. Yapı uyuşmazsa null. */
+export function legalUnitMap(mdTr: string, mdTranslated: string): Record<string, string> | null {
+  const pairs = legalUnitPairs(mdTr, mdTranslated);
+  if (!pairs) return null;
+  const map: Record<string, string> = {};
+  for (const p of pairs) if (map[p.key] === undefined) map[p.key] = p.text;
+  return map;
+}
