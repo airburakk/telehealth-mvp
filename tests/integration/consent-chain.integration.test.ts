@@ -7,6 +7,7 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { db } from "@/lib/db";
 import { recordConsent, verifyConsentChain } from "@/lib/consent";
+import { deleteOwnChainTail } from "./helpers";
 import { sha256 } from "@/lib/timestamp";
 
 const TEST_DB = process.env.TEST_DATABASE_URL;
@@ -16,16 +17,10 @@ const SCOPE = `ITEST_${Date.now()}`; // gerçek GENERAL_KVKK kovasına karışma
 describe.skipIf(!TEST_DB)("entegrasyon: onam zinciri bütünlük + tamper (gerçek dev DB)", () => {
   const myIds: string[] = [];
   afterAll(async () => {
-    // Kendi eklediğim satırları sil → zincir koşu öncesi haline döner. GÜVENLİK: silme yalnız
-    // satırlarım hâlâ zincirin UCUNDAYSA yapılır — paralel bir yazıcı araya girdiyse silmek zinciri
-    // KALICI kırar (sonraki kaydın prevHash'i boşa düşer); o durumda satırlar bırakılır (zararsız).
-    if (!myIds.length) return;
-    const tip = await db.consentRecord.findFirst({
-      where: { entryHash: { not: null } },
-      orderBy: [{ grantedAt: "desc" }, { id: "desc" }],
-      select: { id: true },
-    });
-    if (tip && myIds.includes(tip.id)) await db.consentRecord.deleteMany({ where: { id: { in: myIds } } });
+    // Kendi eklediğim satırları sil → zincir koşu öncesi haline döner. GÜVENLİK (helpers.ts deleteOwnChainTail):
+    // yazıcı kilidi altında, yalnız zincirin ucundaki BİTİŞİK kendi satırlarım silinir; araya yabancı satır girdiyse
+    // ondan öncekiler bırakılır (zararsız) — ortadan silmek zinciri KALICI kırardı (2026-10-04 audit olayı).
+    await deleteOwnChainTail("consent", myIds);
   });
 
   it("geçerli append → ok korunur; alan tamper + downgrade → ok:false + brokenAt; idempotency", async () => {

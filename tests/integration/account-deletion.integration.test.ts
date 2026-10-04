@@ -14,6 +14,7 @@ import { db } from "@/lib/db";
 import { deleteAccount, purgeExpired, purgeDateFrom, RETENTION_YEARS } from "@/lib/account-deletion";
 import { recordConsent, verifyConsentChain } from "@/lib/consent";
 import type { SessionUser } from "@/lib/session";
+import { deleteOwnChainTail } from "./helpers";
 
 const TEST_DB = process.env.TEST_DATABASE_URL;
 const RUN = `itest-del-${Date.now()}`;
@@ -46,19 +47,10 @@ describe.skipIf(!TEST_DB)("entegrasyon: hesap silme + fiziksel imha (gerçek dev
     await db.recovery.deleteMany({ where: { caseId: { in: caseIds } } });
     await db.case.deleteMany({ where: { id: { in: caseIds } } });
     await db.user.deleteMany({ where: { id: { in: userIds } } });
-    // Purged onam stub'ları: YALNIZ zincirin ucundaysa silinir (audit testi deseni) — ortadaysa
-    // silmek zinciri kırar, bırakılır (anonim halka, zararsız).
+    // Purged onam stub'ları: yazıcı kilidi altında, yalnız zincirin ucundaki bitişik kendi satırlar silinir
+    // (helpers.ts deleteOwnChainTail) — ortadakiler bırakılır (anonim halka, zararsız); ortadan silmek zinciri kırardı.
     const mine = await db.consentRecord.findMany({ where: { userId: { in: userIds } }, select: { id: true } });
-    if (mine.length) {
-      const tip = await db.consentRecord.findFirst({
-        where: { entryHash: { not: null } },
-        orderBy: [{ grantedAt: "desc" }, { id: "desc" }],
-        select: { id: true },
-      });
-      if (tip && mine.some((m) => m.id === tip.id)) {
-        await db.consentRecord.deleteMany({ where: { id: { in: mine.map((m) => m.id) } } });
-      }
-    }
+    await deleteOwnChainTail("consent", mine.map((m) => m.id));
   });
 
   it("deleteAccount: tombstone + kişisel alanlar boşalır + sessionVersion artar + klinik kilit + idempotent", async () => {

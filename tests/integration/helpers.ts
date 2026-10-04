@@ -2,6 +2,9 @@
 // Her süit beforeAll'da seedFixture() → afterAll'da cleanupFixture() (oluşturulan satırlar id ile silinir).
 // Prod'a ASLA dokunmaz (TEST_DATABASE_URL yoksa süitler skipIf ile hiç çalışmaz).
 import { db } from "@/lib/db";
+import { AUDIT_CHAIN_LOCK } from "@/lib/audit";
+import { CONSENT_CHAIN_LOCK } from "@/lib/consent";
+import { ownContiguousTail } from "./chain-tail";
 
 export interface Fixture {
   runId: string;
@@ -100,4 +103,27 @@ export async function cleanupFixture(f: Fixture): Promise<void> {
   await db.case.deleteMany({ where: { id: { in: f.caseIds } } });
   await db.user.deleteMany({ where: { id: { in: f.userIds } } });
   await db.doctor.deleteMany({ where: { id: { in: f.doctorIds } } });
+}
+
+// Hash-zinciri testlerinin temizliği — YAZICI KİLİDİ ALTINDA, yalnız bitişik kendi kuyruğu (chain-tail.ts).
+// Neden kilit: recordAccess/recordConsent uç okuması + insert'i advisory xact-lock altında yapar; temizlik aynı
+// kilidi almazsa "uç benimse sil" kontrolü ile silme arasına yabancı bir append girer (2026-10-04: iki CI koşusu
+// aynı test branch'inde üst üste bindi → yetim satırlar → zincir KALICI kırık, her entegrasyon koşusu kırmızı).
+// Kilit alınınca kontrol+silme atomiktir, yazıcılar bekler; transaction bitince kilit kendiliğinden bırakılır
+// (Neon/PgBouncer transaction-pooling güvenli — lib ile aynı desen). Dönüş: silinen satır sayısı.
+export async function deleteOwnChainTail(chain: "audit" | "consent", ids: readonly string[]): Promise<number> {
+  if (!ids.length) return 0;
+  const mine = new Set(ids);
+  const [a, b] = chain === "audit" ? AUDIT_CHAIN_LOCK : CONSENT_CHAIN_LOCK;
+  return db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${a}::int4, ${b}::int4)`;
+    const tipFirst =
+      chain === "audit"
+        ? await tx.accessLog.findMany({ where: { entryHash: { not: null } }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: ids.length, select: { id: true } })
+        : await tx.consentRecord.findMany({ where: { entryHash: { not: null } }, orderBy: [{ grantedAt: "desc" }, { id: "desc" }], take: ids.length, select: { id: true } });
+    const tail = ownContiguousTail(tipFirst, mine);
+    if (!tail.length) return 0;
+    const res = chain === "audit" ? await tx.accessLog.deleteMany({ where: { id: { in: tail } } }) : await tx.consentRecord.deleteMany({ where: { id: { in: tail } } });
+    return res.count;
+  });
 }

@@ -169,6 +169,9 @@ function sealVerdict(r: VerifiableRow): boolean | null {
 // Küresel advisory-lock anahtarı (sabit, 2×int4) — TÜM audit append'lerini tek küresel sıraya dizer.
 const CHAIN_LOCK_A = 0x4155; // 'AU'
 const CHAIN_LOCK_B = 0x4454; // 'DT'
+// Dışa açık kopya: zincire DOKUNAN her yazıcı/temizleyici AYNI kilidi almalı (entegrasyon testlerinin
+// afterAll temizliği — tests/integration/helpers.ts deleteOwnChainTail; 2026-10-04 yetim-satır olayı).
+export const AUDIT_CHAIN_LOCK = [CHAIN_LOCK_A, CHAIN_LOCK_B] as const;
 
 // Bir erişimi mühürleyip kaydet. FAIL-SAFE — hata olursa yutulur (asıl istek etkilenmez).
 // Zincir: global (GENESIS→…); ucu = en güncel mühürlü kayıt.

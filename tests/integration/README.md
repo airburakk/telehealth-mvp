@@ -51,3 +51,18 @@ olmadan da kırılmaz.
 - `TEST_DATABASE_URL`'i `.env`'e **yazma** — yanlışlıkla prod yerine geçebilir.
 - Dev branch'i periyodik olarak prod'dan **yeniden türet** (şema kayması olmasın).
 - Bu testler veri yazar → **yalnız** dev branch'e bağlıyken çalıştır.
+
+## 🔗 Hash-zinciri testleri — temizlik kuralı (2026-10-04)
+
+`audit-chain` · `consent-chain` · `account-deletion` süitleri **global** hash-zincirlerine (AccessLog / ConsentRecord)
+satır ekler ve `afterAll`'da kendi satırlarını siler. Zincirden satır silmek yalnız **uçtan** güvenlidir: ortadaki bir
+satır silinirse sonrakinin `prevHash`'i boşa düşer (yetim) ve zincir **kalıcı** kırılır → sonraki her entegrasyon
+koşusu (main dahil) kırmızı; `gh run rerun` kurtarmaz, DB onarımı gerekir.
+
+Bu yüzden temizlik `helpers.ts` **`deleteOwnChainTail(chain, ids)`** ile yapılır: yazıcıların (`recordAccess` /
+`recordConsent`) advisory xact-lock'u altında (`AUDIT_CHAIN_LOCK` / `CONSENT_CHAIN_LOCK`, lib'den) uç okunur ve
+**yalnız uçtan geriye bitişik kendi satırlar** silinir (`chain-tail.ts ownContiguousTail`); araya yabancı satır
+girdiyse ondan öncekiler bırakılır (zararsız kalıntı). Yeni zincir testi yazarken satırları elle `deleteMany` ile
+SİLME — bu yardımcıyı kullan. ⚠️ Aynı test branch'inde **iki koşu üst üste** (örn. main push CI'ı + PR CI'ı aynı
+dakikada) zinciri yine bozamaz ama testlerin `ok:true` beklentisi öteki koşunun kasıtlı tamper anına denk gelebilir →
+entegrasyon kırmızısında ilk soru: "aynı anda başka CI koştu mu?" (`gh run view <id> --json jobs` pencereleri).

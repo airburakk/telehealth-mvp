@@ -73,6 +73,8 @@ function sealVerdict(f: ConsentSealFields, entryHash: string): boolean | null {
 // (audit.ts CHAIN_LOCK deseni: eşzamanlı onamlarda tip-okuması yarışıp zincir ÇATALLANMASIN).
 const CONSENT_LOCK_A = 0x434f; // 'CO'
 const CONSENT_LOCK_B = 0x4e53; // 'NS'
+// Dışa açık kopya (audit.ts AUDIT_CHAIN_LOCK ile aynı gerekçe): zincirden satır silen test temizliği de bu kilidi alır.
+export const CONSENT_CHAIN_LOCK = [CONSENT_LOCK_A, CONSENT_LOCK_B] as const;
 
 // Güncel sürümde onam kaydı oluştur (idempotent — aynı kullanıcı/kapsam/sürüm bir kez).
 // İlk kez ise: metin hash'i + cihaz + hash-zinciri + zaman damgasıyla MÜHÜRLENİR.

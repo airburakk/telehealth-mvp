@@ -6,6 +6,7 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { db } from "@/lib/db";
 import { recordAccess, verifyAccessChain, purgeStaleAuditMeta } from "@/lib/audit";
+import { deleteOwnChainTail } from "./helpers";
 import { sha256 } from "@/lib/timestamp";
 import type { SessionUser } from "@/lib/session";
 
@@ -18,16 +19,10 @@ const RUN = `itest-audit-${Date.now()}`; // bu koşuya özel resourceId prefix'i
 describe.skipIf(!TEST_DB)("entegrasyon: audit zinciri bütünlük + tamper (gerçek dev DB)", () => {
   const myIds: string[] = [];
   afterAll(async () => {
-    // Kendi eklediğim satırları sil → zincir koşu öncesi haline döner. GÜVENLİK: silme yalnız
-    // satırlarım hâlâ zincirin UCUNDAYSA yapılır — paralel bir yazıcı araya girdiyse silmek zinciri
-    // KALICI kırar (sonraki satırın prevHash'i boşa düşer); o durumda satırlar bırakılır (zararsız).
-    if (!myIds.length) return;
-    const tip = await db.accessLog.findFirst({
-      where: { entryHash: { not: null } },
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      select: { id: true },
-    });
-    if (tip && myIds.includes(tip.id)) await db.accessLog.deleteMany({ where: { id: { in: myIds } } });
+    // Kendi eklediğim satırları sil → zincir koşu öncesi haline döner. GÜVENLİK (helpers.ts deleteOwnChainTail):
+    // yazıcı kilidi altında, yalnız zincirin ucundaki BİTİŞİK kendi satırlarım silinir — araya yabancı bir satır
+    // girdiyse (paralel koşu) ondan öncekiler bırakılır (zararsız); ortadan silmek zinciri KALICI kırardı.
+    await deleteOwnChainTail("audit", myIds);
   });
 
   it("geçerli append → ok korunur; action VE detail tamper'ları → ok:false + brokenAt", async () => {
