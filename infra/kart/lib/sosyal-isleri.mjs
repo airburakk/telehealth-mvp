@@ -5,6 +5,8 @@
 //                                  502 seçki alınamadı/geçersiz · 503 müzik dosyası yok
 //   GET  /sosyal/durum           → { durum: "bos" | "calisiyor" | "hazir" | "hata", gun, … } (n8n `gun`u kendi beklediği günle karşılaştırır)
 //   GET|HEAD /sosyal/dosya/<gün>/<ad> → MP4 (`dosyalar`) ya da PNG (`gorseller`) — yalnız `hazir` günün, `bitti.json`'da listeli adlar
+//   v6.327: `hazir` gövdesinde `linkedin[{ad,boyut,tur:"linkedin",sira}]` — Reel A'nın LinkedIn kesiti (`linkedin-a-<gün>.mp4`), AYRI dizi (`dosyalar` DEĞİŞMEZ —
+//   aşağıdaki geriye uyum kuralı; adı AD_RE'ye de uysa listeden DIŞLANIR); aynı dosya ucundan sunulur. Eski `bitti.json`'da yoksa `[]`.
 //
 // 🪤 GERİYE UYUM (v6.323): carousel slaytları `dosyalar`a DEĞİL ayrı `gorseller` dizisine yazılır. Çalışan n8n akışı `dosyalar`daki HER öğeyi indirip
 //   MP4 imzası (`ftyp`) arar → PNG'yi `dosyalar`a koymak, sunucu güncellendiği anda 07:55 koşusunu düşürürdü. `gorseller` yoksa/boşsa eski istemci etkilenmez.
@@ -24,6 +26,7 @@ import { pipeline } from "node:stream/promises";
 const GUN_RE = /^\d{4}-\d{2}-\d{2}$/;
 const AD_RE = /^[a-z0-9][a-z0-9-]*\.mp4$/;
 const GORSEL_RE = /^carousel-\d{4}-\d{2}-\d{2}-\d{2}-(?:kart|icerik-\d+|kapanis)\.png$/;
+const LINKEDIN_RE = /^linkedin-a-\d{4}-\d{2}-\d{2}\.mp4$/;
 const MARKER = "bitti.json";
 const GECICI = ".is";
 const TUR_SIRA = { hikaye: 0, reel: 1, diger: 2 };
@@ -31,6 +34,7 @@ const TUR_SIRA = { hikaye: 0, reel: 1, diger: 2 };
 export const gunGecerli = (s) => typeof s === "string" && GUN_RE.test(s);
 export const dosyaAdiGecerli = (s) => typeof s === "string" && AD_RE.test(s);
 export const gorselAdiGecerli = (s) => typeof s === "string" && GORSEL_RE.test(s);
+export const linkedinAdiGecerli = (s) => typeof s === "string" && LINKEDIN_RE.test(s);
 
 /**
  * Seçki JSON'unu üretimden ÖNCE doğrular: eksik alanla şablon "undefined" yazardı. `day` dosya yoluna girer → biçimi katı.
@@ -70,7 +74,7 @@ export function dosyaMeta(ad) {
 
 function dosyalariListele(gunDir) {
   return fs.readdirSync(gunDir)
-    .filter((ad) => dosyaAdiGecerli(ad))
+    .filter((ad) => dosyaAdiGecerli(ad) && !linkedinAdiGecerli(ad)) // LinkedIn kesiti AD_RE'ye uyar ama `dosyalar`a GİRMEZ (geriye uyum)
     .map((ad) => ({ ad, boyut: fs.statSync(path.join(gunDir, ad)).size, ...dosyaMeta(ad) }))
     .sort((a, b) => (TUR_SIRA[a.tur] - TUR_SIRA[b.tur]) || (a.sira - b.sira) || a.ad.localeCompare(b.ad));
 }
@@ -86,6 +90,17 @@ function gorselleriListele(gunDir) {
     .filter((ad) => gorselAdiGecerli(ad))
     .map((ad) => ({ ad, boyut: fs.statSync(path.join(gunDir, ad)).size, ...gorselMeta(ad) }))
     .sort((a, b) => a.sira - b.sira);
+}
+
+/** LinkedIn kesiti (v6.327): günde tek dosya, `sira` 1. */
+export function linkedinMeta(ad) {
+  return { tur: "linkedin", sira: linkedinAdiGecerli(ad) ? 1 : 0 };
+}
+
+function linkedinleriListele(gunDir) {
+  return fs.readdirSync(gunDir)
+    .filter((ad) => linkedinAdiGecerli(ad))
+    .map((ad) => ({ ad, boyut: fs.statSync(path.join(gunDir, ad)).size, ...linkedinMeta(ad) }));
 }
 
 function json(res, kod, govde) {
@@ -151,8 +166,8 @@ export function createSosyal(o) {
     }
   }
 
-  // `gorseller`: v6.320'de yazılmış (carousel öncesi) bitti.json'da yok → [] (eski kayıt hâlâ geçerli).
-  const govdeHazir = (b) => ({ durum: "hazir", gun: b.gun, dosyalar: b.dosyalar, gorseller: Array.isArray(b.gorseller) ? b.gorseller : [], kapsam: b.kapsam, sure_sn: b.sure_sn, olusturuldu: b.olusturuldu });
+  // `gorseller`: v6.320'de yazılmış (carousel öncesi) bitti.json'da yok → [] (eski kayıt hâlâ geçerli). `linkedin` (v6.327) aynı şekilde.
+  const govdeHazir = (b) => ({ durum: "hazir", gun: b.gun, dosyalar: b.dosyalar, gorseller: Array.isArray(b.gorseller) ? b.gorseller : [], linkedin: Array.isArray(b.linkedin) ? b.linkedin : [], kapsam: b.kapsam, sure_sn: b.sure_sn, olusturuldu: b.olusturuldu });
 
   function durumGovdesi() {
     if (calisan) {
@@ -201,7 +216,11 @@ export function createSosyal(o) {
       const hikaye = await uretici.renderStories({ digest, cardPng: cardPath, outDir: gunDir, workDir, music: muzikPath, spherePath, browser });
 
       calisan.asama = "reel";
-      const reel = await uretici.renderReelA({ digest, outPath: path.join(gunDir, `reels-a-${gun}.mp4`), workDir, music: muzikPath, grid: gridAl(), spherePath, browser, workers });
+      const reel = await uretici.renderReelA({
+        digest, outPath: path.join(gunDir, `reels-a-${gun}.mp4`), linkedinOutPath: path.join(gunDir, `linkedin-a-${gun}.mp4`),
+        workDir, music: muzikPath, grid: gridAl(), spherePath, browser, workers,
+      });
+      if (reel?.linkedinHata) log(`sosyal: ${gun} LinkedIn kesiti üretilemedi (Reel geçerli; LinkedIn akışı reels-a dosyasına düşer): ${reel.linkedinHata}`);
 
       calisan.asama = "kapanis";
       fs.rmSync(workDir, { recursive: true, force: true });
@@ -210,9 +229,10 @@ export function createSosyal(o) {
       const gorseller = gorselleriListele(gunDir);
       const beklenenSlayt = digest.items.length + 2; // kart + her içerik için 1 + kapanış
       if (gorseller.length !== beklenenSlayt) throw new Error(`carousel slayt sayısı beklenenden farklı (${gorseller.length}/${beklenenSlayt})`);
+      const linkedin = linkedinleriListele(gunDir); // 0 ya da 1 dosya; yoksa iş yine `hazir` (LinkedIn akışı reels-a'ya düşer)
       const sure_sn = Math.round((now() - t0) / 100) / 10;
       const bitti = {
-        surum: 2, gun, olusturuldu: new Date(now()).toISOString(), sure_sn, kapsam: kapsamHesapla(digest), dosyalar, gorseller,
+        surum: 3, gun, olusturuldu: new Date(now()).toISOString(), sure_sn, kapsam: kapsamHesapla(digest), dosyalar, gorseller, linkedin,
         olcum: { hikaye: hikaye?.timings ?? null, reel: reel?.timings ?? null, carousel: { sn: carouselSn, puntolar: carousel?.fit ?? null } },
       };
       const gecici = path.join(gunDir, `${MARKER}.tmp`);
@@ -220,7 +240,7 @@ export function createSosyal(o) {
       fs.renameSync(gecici, path.join(gunDir, MARKER));
       sonHata = null;
       eskileriTemizle(gun);
-      log(`sosyal: ${gun} hazır — ${dosyalar.length} dosya, ${gorseller.length} slayt, ${sure_sn} sn`);
+      log(`sosyal: ${gun} hazır — ${dosyalar.length} dosya, ${gorseller.length} slayt, ${linkedin.length} LinkedIn kesiti, ${sure_sn} sn`);
     } catch (e) {
       sonHata = { gun, mesaj: hataMesaji(e), adim: calisan?.asama ?? "?", zaman: new Date(now()).toISOString() };
       if (basladi) {
@@ -253,7 +273,7 @@ export function createSosyal(o) {
     if (digest.items.length === 0) {
       calisan = null;
       sonHataTemizle(digest.day);
-      return json(res, 200, { durum: "hazir", gun: digest.day, bos_gun: true, dosyalar: [], gorseller: [], kapsam: kapsamHesapla(digest) });
+      return json(res, 200, { durum: "hazir", gun: digest.day, bos_gun: true, dosyalar: [], gorseller: [], linkedin: [], kapsam: kapsamHesapla(digest) });
     }
     const hazir = yenile ? null : okuBitti(digest.day);
     if (hazir) {
@@ -275,9 +295,10 @@ export function createSosyal(o) {
     if (parcalar.length !== 2) return json(res, 404, { hata: "yok" });
     const [gun, ad] = parcalar;
     const png = gorselAdiGecerli(ad);
+    const li = linkedinAdiGecerli(ad); // AD_RE'ye de uyar → tür ayrımı ÖNCE
     if (!gunGecerli(gun) || !(png || dosyaAdiGecerli(ad))) return json(res, 404, { hata: "yok" });
     const b = okuBitti(gun);
-    const kayit = (png ? b?.gorseller : b?.dosyalar)?.find((d) => d.ad === ad); // yalnız tamamlanmış günün LİSTELİ dosyaları (tür başına kendi listesi)
+    const kayit = (png ? b?.gorseller : li ? b?.linkedin : b?.dosyalar)?.find((d) => d.ad === ad); // yalnız tamamlanmış günün LİSTELİ dosyaları (tür başına kendi listesi)
     if (!kayit) return json(res, 404, { hata: "yok" });
     const yol = path.join(gunDizini(gun), ad);
     let st;

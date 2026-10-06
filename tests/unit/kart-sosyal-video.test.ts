@@ -10,8 +10,8 @@ import net from "node:net";
 import type { AddressInfo } from "node:net";
 import os from "node:os";
 import path from "node:path";
-import { createSosyal, digestDogrula, dosyaAdiGecerli, dosyaMeta, gorselAdiGecerli, gorselMeta, gunGecerli, kapsamHesapla } from "../../infra/kart/lib/sosyal-isleri.mjs";
-import { hikayeKareHtml, reelHtml, reelPlan, renderReelA, tipo } from "../../infra/kart/lib/social-video.mjs";
+import { createSosyal, digestDogrula, dosyaAdiGecerli, dosyaMeta, gorselAdiGecerli, gorselMeta, gunGecerli, kapsamHesapla, linkedinAdiGecerli, linkedinMeta } from "../../infra/kart/lib/sosyal-isleri.mjs";
+import { LINKEDIN_BASLANGIC_SN, REEL_CTA, hikayeKareHtml, reelHtml, reelPlan, renderReelA, tipo } from "../../infra/kart/lib/social-video.mjs";
 import { icerikSlaytHtml, kapanisSlaytHtml, renderCarousel } from "../../infra/kart/lib/social-carousel.mjs";
 
 const NBSP = String.fromCharCode(0xa0);
@@ -24,7 +24,7 @@ type Digest = { day: string; items: Oge[] };
 type Dosya = { ad: string; tur: string; sira: number; boyut: number };
 type Govde = {
   durum: string; gun?: string | null; hata?: string; adim?: string; asama?: string; bos_gun?: boolean;
-  kapsam?: { ogeSayisi: number; yedekSayisi: number; akislar?: string[] }; dosyalar?: Dosya[]; gorseller?: Dosya[];
+  kapsam?: { ogeSayisi: number; yedekSayisi: number; akislar?: string[] }; dosyalar?: Dosya[]; gorseller?: Dosya[]; linkedin?: Dosya[];
 };
 
 function oge(i: number, uzanti: Partial<Oge> = {}): Oge {
@@ -91,6 +91,19 @@ describe("şablon güvenliği", () => {
     expect(html).toContain('<html lang="tr">');
     expect(html).not.toContain(SALDIRI);
     expect(html).not.toContain("GIZLI-ACIKLAMA-METNI");
+  });
+
+  it("v6.327 — Reel kapanış satırı iki platformda ORTAK (👤 2026-10-06): seçki adresi; 'bio' sözcüğü geçmez (aynı MP4 LinkedIn'e de gider)", () => {
+    expect(REEL_CTA).toBe("Seçkinin tamamı · doctorium.tr/secki");
+    const html = reelHtml(digestOrnek(2), GRID, KURE);
+    expect(html).toContain(`<div class="cta" id="cta">${REEL_CTA}</div>`);
+    expect(html).not.toMatch(/\bbio\b/i);
+  });
+
+  it("v6.327 — LinkedIn kesiti Instagram kapağıyla AYNI karede başlar (1,7 sn = thumb_offset 1700 ms) ve 30 fps'te tam kare (51)", () => {
+    expect(LINKEDIN_BASLANGIC_SN).toBe(1.7);
+    expect(Math.abs(LINKEDIN_BASLANGIC_SN * 30 - Math.round(LINKEDIN_BASLANGIC_SN * 30))).toBeLessThan(1e-9);
+    expect(Math.round(LINKEDIN_BASLANGIC_SN * 30)).toBe(51);
   });
 
   it("carousel içerik slaydı: başlık/kaynak/açıklama/akış/branş kaçışlıdır, lang=tr, açıklama = summaryLong, i/N, 1080x1350", () => {
@@ -253,6 +266,17 @@ describe("digestDogrula · kapsam · dosya adları", () => {
     expect(dosyaAdiGecerli("hikaye-2026-10-03-01-kart.mp4") && gorselAdiGecerli("hikaye-2026-10-03-01-kart.mp4")).toBe(false);
   });
 
+  it("v6.327 — LinkedIn kesiti adı: yalnız linkedin-a-YYYY-AA-GG.mp4; gezinti/uzantı/harf oyunu ve Reel adı dışlanır; dosyaMeta onu 'diger' sayar (dosyalar listesine girmez)", () => {
+    expect(linkedinAdiGecerli("linkedin-a-2026-10-06.mp4")).toBe(true);
+    for (const kotu of ["linkedin-a-2026-10-06.MP4", "linkedin-b-2026-10-06.mp4", "linkedin-a-2026-10-06.mp4.exe", "../linkedin-a-2026-10-06.mp4", "linkedin-a-26-10-06.mp4", "reels-a-2026-10-06.mp4", "linkedin-a-2026-10-06.png", ""]) {
+      expect(linkedinAdiGecerli(kotu), kotu).toBe(false);
+    }
+    expect(dosyaAdiGecerli("linkedin-a-2026-10-06.mp4")).toBe(true); // AD_RE'ye UYAR → `dosyalariListele` açıkça dışlar (iş testi kilitler)
+    expect(dosyaMeta("linkedin-a-2026-10-06.mp4")).toEqual({ tur: "diger", sira: 0 });
+    expect(linkedinMeta("linkedin-a-2026-10-06.mp4")).toEqual({ tur: "linkedin", sira: 1 });
+    expect(linkedinMeta("baska.mp4")).toEqual({ tur: "linkedin", sira: 0 });
+  });
+
   it("gorselMeta: sıra = slayt numarası, tür 'carousel'", () => {
     expect(gorselMeta("carousel-2026-10-03-01-kart.png")).toEqual({ tur: "carousel", sira: 1 });
     expect(gorselMeta("carousel-2026-10-03-05-icerik-4.png")).toEqual({ tur: "carousel", sira: 5 });
@@ -263,7 +287,7 @@ describe("digestDogrula · kapsam · dosya adları", () => {
 
 // ── tek-iş durum makinesi (sahte üretici + gerçek HTTP) ─────────────────────────────────────────────
 type Ayar = {
-  stories?: Error | null; carousel?: Error | null; carouselEksik?: boolean; sigmadi?: boolean;
+  stories?: Error | null; carousel?: Error | null; carouselEksik?: boolean; sigmadi?: boolean; linkedinYok?: boolean;
   bekle?: Promise<void> | null; digest: Digest | (() => Promise<Digest>) | Error; muzikVar: boolean;
 };
 const temizlenecek: Array<() => Promise<void>> = [];
@@ -276,9 +300,9 @@ async function kur(ayar: Partial<Ayar> = {}) {
   const dir = path.join(kok, "sosyal");
   const muzik = path.join(kok, "muzik.mp3");
   fs.writeFileSync(muzik, "x"); // yalnız varlık denetimi — gerçek ses işlenmez
-  const a: Ayar = { stories: null, carousel: null, carouselEksik: false, sigmadi: false, bekle: null, digest: digestOrnek(2), muzikVar: true, ...ayar };
+  const a: Ayar = { stories: null, carousel: null, carouselEksik: false, sigmadi: false, linkedinYok: false, bekle: null, digest: digestOrnek(2), muzikVar: true, ...ayar };
   const cagri = { stories: 0, reel: 0, kart: 0, carousel: 0, getDigest: 0 };
-  const gordu: { stories: unknown; reel: unknown; carousel: unknown; carouselKart: string | null } = { stories: null, reel: null, carousel: null, carouselKart: null };
+  const gordu: { stories: unknown; reel: unknown; carousel: unknown; carouselKart: string | null; linkedinYolu: string | null } = { stories: null, reel: null, carousel: null, carouselKart: null, linkedinYolu: null };
   const logs: string[] = [];
 
   const uretici = {
@@ -314,12 +338,15 @@ async function kur(ayar: Partial<Ayar> = {}) {
       }
       return { files, timings: { toplam_sn: 1 }, fit: [] };
     },
-    renderReelA: async ({ digest, outPath }: { digest: Digest; outPath: string }) => {
+    // v6.327: `linkedinOutPath` verilir → kesit de yazılır (gerçek modülle aynı sözleşme: üretilemezse hata FIRLATILMAZ, linkedinHata döner)
+    renderReelA: async ({ digest, outPath, linkedinOutPath }: { digest: Digest; outPath: string; linkedinOutPath?: string | null }) => {
       cagri.reel++;
       gordu.reel = digest;
+      gordu.linkedinYolu = linkedinOutPath ?? null;
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
       fs.writeFileSync(outPath, Buffer.from(`reel-${digest.day}`));
-      return { file: outPath, timings: { toplam_sn: 2 }, frames: 10, seconds: 1 };
+      if (linkedinOutPath && !a.linkedinYok) fs.writeFileSync(linkedinOutPath, Buffer.from(`linkedin-${digest.day}`));
+      return { file: outPath, linkedinFile: linkedinOutPath && !a.linkedinYok ? linkedinOutPath : null, linkedinHata: a.linkedinYok ? "ffmpeg patladı (sahte)" : null, timings: { toplam_sn: 2 }, frames: 10, seconds: 1 };
     },
   };
 
@@ -402,6 +429,31 @@ describe("sosyal iş yöneticisi", () => {
     expect(t.gordu.carousel).toBe(t.gordu.stories);
   });
 
+  it("v6.327 — LinkedIn kesiti: `linkedin` AYRI dizi (tek öğe, tür linkedin, sıra 1), `dosyalar` DEĞİŞMEZ (geriye uyum), bitti.json sürüm 3; kesit yolu gün klasöründe", async () => {
+    const t = await kur();
+    await t.post();
+    const d = await t.hazirOl();
+    expect((d.linkedin ?? []).map((f) => [f.tur, f.sira, f.ad])).toEqual([["linkedin", 1, "linkedin-a-2026-10-03.mp4"]]);
+    expect((d.linkedin ?? [])[0].boyut).toBeGreaterThan(0);
+    expect((d.dosyalar ?? []).map((f) => f.ad)).toEqual(["hikaye-2026-10-03-01-kart.mp4", "hikaye-2026-10-03-02-icerik-1.mp4", "hikaye-2026-10-03-03-icerik-2.mp4", "reels-a-2026-10-03.mp4"]);
+    expect(t.gordu.linkedinYolu).toBe(path.join(t.dir, "2026-10-03", "linkedin-a-2026-10-03.mp4"));
+    const bitti = JSON.parse(fs.readFileSync(path.join(t.dir, "2026-10-03", "bitti.json"), "utf8")) as { surum: number; linkedin: Dosya[]; dosyalar: Dosya[] };
+    expect(bitti.surum).toBe(3);
+    expect(bitti.linkedin).toHaveLength(1);
+    expect(bitti.dosyalar.some((f) => f.ad.startsWith("linkedin"))).toBe(false);
+  });
+
+  it("v6.327 — kesit üretilemezse iş YİNE hazır (`linkedin: []`, günlükte not); Reel/hikâye/carousel etkilenmez", async () => {
+    const t = await kur({ linkedinYok: true });
+    await t.post();
+    const d = await t.hazirOl();
+    expect(d.linkedin).toEqual([]);
+    expect((d.dosyalar ?? []).map((f) => f.tur)).toEqual(["hikaye", "hikaye", "hikaye", "reel"]);
+    expect(d.gorseller).toHaveLength(4);
+    expect(t.logs.some((l) => /LinkedIn kesiti üretilemedi/.test(l))).toBe(true);
+    expect((await fetch(`${t.base}/sosyal/dosya/2026-10-03/linkedin-a-2026-10-03.mp4`)).status).toBe(404);
+  });
+
   it("carousel: `gorseller` N+2 slayt (kart · içerikler · kapanış), sıralı; MP4 listesine KARIŞMAZ (çalışan n8n akışı `dosyalar`daki her öğede ftyp arar)", async () => {
     const t = await kur();
     await t.post();
@@ -416,7 +468,7 @@ describe("sosyal iş yöneticisi", () => {
     expect((d.dosyalar ?? []).every((f) => f.ad.endsWith(".mp4") && f.tur !== "carousel")).toBe(true); // geriye uyum: PNG `dosyalar`a girmez
     expect(t.gordu.carouselKart).toBe("png"); // slayt 1'in kaynağı = job'un kart PNG'si (renderCardPng çıktısı)
     const bitti = JSON.parse(fs.readFileSync(path.join(t.dir, "2026-10-03", "bitti.json"), "utf8")) as { surum: number; gorseller: Dosya[]; olcum: { carousel: { sn: number; puntolar: unknown[] } } };
-    expect(bitti.surum).toBe(2);
+    expect(bitti.surum).toBe(3); // v6.327: `linkedin` dizisi eklendi (2 = v6.323 carousel)
     expect(bitti.gorseller).toHaveLength(4);
     expect(bitti.olcum.carousel.puntolar).toHaveLength(2);
   });
@@ -461,9 +513,11 @@ describe("sosyal iş yöneticisi", () => {
     const d = await t.durum();
     expect(d.durum).toBe("hazir");
     expect(d.gorseller).toEqual([]);
+    expect(d.linkedin).toEqual([]); // v6.327: `linkedin` de yok → [] (eski kayıt geçerli)
     expect(d.kapsam).toEqual({ ogeSayisi: 4, yedekSayisi: 1 }); // `akislar` yok → n8n akış satırını ATLAR (Array.isArray kapısı)
     expect((await fetch(`${t.base}/sosyal/dosya/2026-10-03/hikaye-2026-10-03-01-kart.mp4`)).status).toBe(200);
     expect((await fetch(`${t.base}/sosyal/dosya/2026-10-03/carousel-2026-10-03-01-kart.png`)).status).toBe(404);
+    expect((await fetch(`${t.base}/sosyal/dosya/2026-10-03/linkedin-a-2026-10-03.mp4`)).status).toBe(404);
   });
 
   it("aynı gün ikinci POST idempotent: 200 hazir, yeniden üretmez", async () => {
@@ -516,7 +570,7 @@ describe("sosyal iş yöneticisi", () => {
     const t = await kur({ digest: { day: "2026-10-03", items: [] } });
     const r = await t.post();
     expect(r.status).toBe(200);
-    expect(await r.json()).toEqual({ durum: "hazir", gun: "2026-10-03", bos_gun: true, dosyalar: [], gorseller: [], kapsam: { ogeSayisi: 0, yedekSayisi: 0, akislar: [] } });
+    expect(await r.json()).toEqual({ durum: "hazir", gun: "2026-10-03", bos_gun: true, dosyalar: [], gorseller: [], linkedin: [], kapsam: { ogeSayisi: 0, yedekSayisi: 0, akislar: [] } });
     expect(t.cagri.stories + t.cagri.reel + t.cagri.kart + t.cagri.carousel).toBe(0);
     expect(fs.existsSync(path.join(t.dir, "2026-10-03"))).toBe(false);
   });
@@ -695,6 +749,19 @@ describe("dosya ucu (GET/HEAD /sosyal/dosya)", () => {
     expect(r.status).toBe(200);
     expect(r.headers.get("content-length")).toBe(String("hikaye-0".length));
     expect((await r.arrayBuffer()).byteLength).toBe(0);
+  });
+
+  it("v6.327 — GET/HEAD LinkedIn kesiti: video/mp4, doğru bayt; yalnız `linkedin` listesinden (aynı kalıpta listesiz dosya 404)", async () => {
+    const t = await hazirKur();
+    const r = await fetch(`${t.base}/sosyal/dosya/2026-10-03/linkedin-a-2026-10-03.mp4`);
+    expect(r.status).toBe(200);
+    expect(r.headers.get("content-type")).toBe("video/mp4");
+    expect(Buffer.from(await r.arrayBuffer()).toString()).toBe("linkedin-2026-10-03");
+    const h = await fetch(`${t.base}/sosyal/dosya/2026-10-03/linkedin-a-2026-10-03.mp4`, { method: "HEAD" });
+    expect(h.status).toBe(200);
+    expect(h.headers.get("content-length")).toBe(String("linkedin-2026-10-03".length));
+    fs.writeFileSync(path.join(t.dir, "2026-10-03", "linkedin-a-2026-10-04.mp4"), "listesiz"); // diskte var, bitti.json'da yok
+    expect((await fetch(`${t.base}/sosyal/dosya/2026-10-03/linkedin-a-2026-10-04.mp4`)).status).toBe(404);
   });
 
   it("listede olmayan / bitti.json / gezinti denemeleri 404", async () => {

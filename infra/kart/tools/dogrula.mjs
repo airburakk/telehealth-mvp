@@ -2,6 +2,7 @@
 //   node tools/dogrula.mjs <klasör>          (yerelde FFMPEG=<yol>; sunucuda: docker compose exec kart node tools/dogrula.mjs /tmp/sosyal/<gün>)
 // Şartlar: MP4/MOV · H.264 + AAC · 9:16 (1080x1920) · 23–60 fps · moov başta (faststart) ·
 //   hikâye ≤60 sn ve ≤100 MB · Reels 3 sn–15 dk (API'de 90 sn) ve ≤300 MB · kaynak hedefi: hikâye −18 LUFS, Reel −16 LUFS, tepe ≤ −1 dBFS.
+//   LinkedIn kesiti (`linkedin-*.mp4`, v6.327): LinkedIn Sayfa şartları 3 sn–10 dk · ≤500 MB (Videos API; Buffer ≤1 GB) · 1:2,4–2,4:1 (9:16 uyar) · H.264+AAC.
 //   carousel PNG (`carousel-*.png`): PNG imzası · 1080x1350 (4:5; Instagram 4:5–1,91:1 kabul eder, tüm slaytlar AYNI oranda) · ≤ 8 MB. ffmpeg GEREKMEZ (IHDR doğrudan okunur).
 // Çıkış kodu: tümü uygunsa 0, en az bir dosyada sorun varsa 1.
 import { spawn } from "node:child_process";
@@ -57,13 +58,14 @@ for (const f of files) {
   const moovBasta = kt.indexOf("moov") > -1 && kt.indexOf("moov") < kt.indexOf("mdat");
   const mb = fs.statSync(p).size / 1e6;
   const hikaye = f.startsWith("hikaye");
+  const linkedin = f.startsWith("linkedin");
   const sorunlar = [];
   if (v[1] !== "h264") sorunlar.push("video≠h264");
   if (a[1] !== "aac") sorunlar.push("ses≠aac");
   if (v[2] !== "1080x1920") sorunlar.push("çözünürlük≠1080x1920");
   if (!(Number(v[3]) >= 23 && Number(v[3]) <= 60)) sorunlar.push("fps");
   if (!moovBasta) sorunlar.push("moov başta DEĞİL");
-  if (hikaye ? (sure > 60 || mb > 100) : (sure < 3 || sure > 90 || mb > 300)) sorunlar.push("süre/boyut sınırı");
+  if (hikaye ? (sure > 60 || mb > 100) : linkedin ? (sure < 3 || sure > 600 || mb > 500) : (sure < 3 || sure > 90 || mb > 300)) sorunlar.push("süre/boyut sınırı");
   if (tepe > -1.0) sorunlar.push("tepe aşımı");
   if (sorunlar.length) hata++;
   console.log(f.padEnd(44), sure.toFixed(2).padStart(6), mb.toFixed(2).padStart(6), (" " + [v[1], v[2], v[3] + "fps"].join(" ")).padEnd(30), (" " + [a[1], a[2] + "Hz"].join(" ")).padEnd(26), String(lufs).padStart(6), String(tepe).padStart(6), moovBasta ? "  ✓  " : "  ✗  ", sorunlar.length ? " ✗ " + sorunlar.join(", ") : " ✓");

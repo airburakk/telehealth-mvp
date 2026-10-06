@@ -2,6 +2,8 @@
 //
 // Girdi : seçki JSON'u (`/api/social-digest`; v6.317 `summaryLong` + `summaryLongFallback` alanlı) + paylaşım kartı PNG'si (1080x1350).
 // Çıktı : hikaye-<gün>-01-kart.mp4 … -0N-icerik-K.mp4 (hareketsiz kare + kesintisiz müzik dilimi) · reels-a-<gün>.mp4 (vuruşa oturan tipografik Reel).
+// v6.327 (2026-10-06): + linkedin-a-<gün>.mp4 — Reel A'nın LinkedIn kesiti (aynı karelerden, LINKEDIN_BASLANGIC_SN'den; ilk kare dolu — LinkedIn küçük resmi = ilk kare,
+//   Buffer özel küçük resim veremez) · kapanış satırı iki platformda ORTAK (REEL_CTA; "bio" sözcüğü LinkedIn'de anlamsız).
 // Tasarım: 02.10 prototiplerinin (hikaye_render.mjs / hikaye_video.py / reels_a_render.mjs / reels_a_video.py) birebir Node portu.
 //   · Python/Pillow/numpy GEREKMEZ (vuruş ızgarası önceden hesaplı assets/beatgrid.json; kart tuvali ffmpeg pad ile).
 //   · Yerel yol YOK: her şey seçeneklerle/env'le (FFMPEG, PLAYWRIGHT_FROM, X264_PRESET, FFMPEG_ZAMAN_ASIMI_SN) → aynı kod sunucuda (Docker + apt ffmpeg) çalışır.
@@ -258,6 +260,10 @@ export async function renderStories({ digest, cardPng, outDir, workDir, music, s
 // ── REEL A ──────────────────────────────────────────────────────────────────────────────────────────
 const FPS = 30;
 const LEAD = 0.15; // 1. vuruşun videodaki zamanı (müzik grid.a − LEAD'den başlar)
+/** Reel kapanış satırı — iki platformda ORTAK (👤 2026-10-06): Instagram'da bio bağlantısı, LinkedIn'de gönderi metni aynı adrese gider; "bio" yazılmaz. */
+export const REEL_CTA = "Seçkinin tamamı · doctorium.tr/secki";
+/** LinkedIn kesitinin başlangıcı (sn) = Instagram Reel kapağı (`thumb_offset` 1700 ms) ile AYNI kare: masthead + "Bugünün N başlığı" + akışlar görünür; kare 0 boş zemindir. 30 fps'te tam kare (51). */
+export const LINKEDIN_BASLANGIC_SN = 1.7;
 
 export function reelPlan(digest, grid) {
   const items = digest.items, n = items.length;
@@ -330,7 +336,7 @@ h2 { font-weight:700; letter-spacing:-0.02em; line-height:1.14; margin-top:30px;
 ${beatHtml}
 <div class="prog" id="prog">${items.map(() => "<i><u></u></i>").join("")}</div>
 <div class="outro" id="outro">
-  <img id="sph" src="${sphere}"><div class="wm" id="wm">Doctor<span style="color:#047857">ium</span>.tr</div><div class="cta" id="cta">Detaylar bio'daki bağlantıda</div>
+  <img id="sph" src="${sphere}"><div class="wm" id="wm">Doctor<span style="color:#047857">ium</span>.tr</div><div class="cta" id="cta">${esc(REEL_CTA)}</div>
 </div>
 <script>
 const CFG = ${JSON.stringify(CFG)};
@@ -403,11 +409,13 @@ window.seek=function(t){
 
 /**
  * Reel A: deterministik kare render (W paralel sayfa) → müzikle MP4. Yalnız başlık + kaynak (teaser sınırı içinde; summaryLong KULLANILMAZ).
- * @returns {Promise<{file:string, timings:object, frames:number, seconds:number}>}
+ * `linkedinOutPath` verilirse AYNI karelerden LinkedIn kesiti de yazılır (v6.327): LINKEDIN_BASLANGIC_SN'den başlar, aynı normalize ses.
+ * Kesit üretilemezse Reel YİNE geçerlidir — hata fırlatılmaz, `linkedinHata` ile döner (n8n LinkedIn akışı reels-a dosyasına düşer); yarım dosya silinir.
+ * @returns {Promise<{file:string, linkedinFile:string|null, linkedinHata:string|null, timings:object, frames:number, seconds:number}>}
  */
-export async function renderReelA({ digest, outPath, workDir, music, grid, spherePath, browser, workers = 4, keepFrames = false }) {
+export async function renderReelA({ digest, outPath, workDir, music, grid, spherePath, browser, workers = 4, keepFrames = false, linkedinOutPath = null }) {
   const t0 = Date.now(); const tm = {};
-  if (digest.items.length === 0) return { file: null, timings: {}, frames: 0, seconds: 0 };
+  if (digest.items.length === 0) return { file: null, linkedinFile: null, linkedinHata: null, timings: {}, frames: 0, seconds: 0 };
   const frames = path.join(workDir, "reel-kareler");
   fs.rmSync(frames, { recursive: true, force: true }); fs.mkdirSync(frames, { recursive: true });
   const { TOTAL_T } = reelPlan(digest, grid);
@@ -461,10 +469,36 @@ export async function renderReelA({ digest, outPath, workDir, music, grid, spher
   tm.ses = { tepe_dbtp: ses.tepe, kazanc_db: Number(ses.kazanc.toFixed(2)), deneme: ses.deneme };
   await ff(["-i", vOnly, "-i", m4a, "-c", "copy", "-t", SURE, "-movflags", "+faststart", outPath]);
   tm.kodlama_sn = (Date.now() - t2) / 1000;
+  // LinkedIn kesiti (v6.327): aynı kareler, LINKEDIN_BASLANGIC_SN'den itibaren. Buffer LinkedIn'e giderken 720p'ye yeniden kodlar → `medium` + CRF 18 yeter.
+  // Ses: aynı normalize WAV'dan aynı ofsetle + mikro fade-in (sert kesilen dilimde AAC tepe aşımı 🪤) + kodlama sonrası tepe koruması.
+  let linkedinFile = null, linkedinHata = null;
+  if (linkedinOutPath) {
+    const t3 = Date.now();
+    try {
+      const ilkKare = Math.round(LINKEDIN_BASLANGIC_SN * FPS);
+      const SURE_LI = Number((SURE - ilkKare / FPS).toFixed(3));
+      const vLi = path.join(workDir, "linkedin-video.mp4");
+      await ff([
+        "-framerate", FPS, "-start_number", ilkKare, "-i", path.join(frames, "f%04d.png"), "-t", SURE_LI,
+        "-vf", "scale=1080:1920:flags=lanczos:out_color_matrix=bt709:out_range=tv,format=yuv420p",
+        "-c:v", "libx264", "-preset", "medium", "-crf", 18, "-profile:v", "high", "-level", "4.1", "-r", FPS, "-g", 60,
+        "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-an", vLi,
+      ]);
+      const m4aLi = path.join(workDir, "linkedin-ses.m4a");
+      const sesLi = await aacGuvenli(wav, m4aLi, { ssSec: ilkKare / FPS, tSec: SURE_LI, post: "afade=t=in:st=0:d=0.12" });
+      await ff(["-i", vLi, "-i", m4aLi, "-c", "copy", "-t", SURE_LI, "-movflags", "+faststart", linkedinOutPath]);
+      linkedinFile = linkedinOutPath;
+      tm.linkedin = { sn: Number(((Date.now() - t3) / 1000).toFixed(1)), baslangic_sn: ilkKare / FPS, sure_sn: SURE_LI, tepe_dbtp: sesLi.tepe };
+    } catch (e) {
+      linkedinHata = String(e?.message ?? e).slice(0, 300);
+      try { fs.rmSync(linkedinOutPath, { force: true }); } catch { /* en iyi çaba */ }
+      tm.linkedin = { hata: linkedinHata };
+    }
+  }
   if (!keepFrames) fs.rmSync(frames, { recursive: true, force: true });
   tm.toplam_sn = (Date.now() - t0) / 1000;
   tm.loudnorm_girdi_lufs = olcum.input_i;
-  return { file: outPath, timings: tm, frames: total, seconds: SURE };
+  return { file: outPath, linkedinFile, linkedinHata, timings: tm, frames: total, seconds: SURE };
 }
 
 export async function launchBrowser() {

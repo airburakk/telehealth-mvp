@@ -1,6 +1,6 @@
 // Sosyal video + carousel üretimi — komut satırı (yerel deneme / şablon geliştirme; sunucuda servis `lib/sosyal-isleri.mjs` üzerinden çalışır).
 //   node tools/uret.mjs --digest digest.json --card kart-1080x1350.png --music muzik.mp3 --out cikti [--workers 4] [--only stories|reel|carousel] [--keep]
-//   `--only carousel` yalnız slayt PNG'lerini üretir: müzik/ffmpeg GEREKMEZ (--digest + --card yeter).
+//   `--only carousel` yalnız slayt PNG'lerini üretir: müzik/ffmpeg GEREKMEZ (--digest + --card yeter). `reel` Reel A + LinkedIn kesitini (linkedin-a-<gün>.mp4, v6.327) birlikte üretir.
 // Ortam: FFMPEG=<ffmpeg yolu> (varsayılan "ffmpeg") · PLAYWRIGHT_FROM=<.../package.json> (yerel; kök paketten playwright) · X264_PRESET=slow|medium|fast ·
 //        SOSYAL_MUZIK=<mp3> (--music yerine). Müzik repoda YOK (lisans/boyut); `digest.json` = `/api/social-digest` yanıtı (jetonlu uç → elle kaydedilir).
 import fs from "node:fs";
@@ -50,13 +50,15 @@ try {
   }
   if (yap("reel")) {
     sonuc.reel = await renderReelA({
-      digest, outPath: path.join(outDir, `reels-a-${digest.day}.mp4`), workDir, music, grid, spherePath, browser, workers, keepFrames: has("keep"),
+      digest, outPath: path.join(outDir, `reels-a-${digest.day}.mp4`), linkedinOutPath: path.join(outDir, `linkedin-a-${digest.day}.mp4`),
+      workDir, music, grid, spherePath, browser, workers, keepFrames: has("keep"),
     });
     console.log("REEL A:", JSON.stringify(sonuc.reel.timings), "| kare", sonuc.reel.frames, "| süre", sonuc.reel.seconds.toFixed(2), "sn");
+    if (sonuc.reel.linkedinHata) console.log("LINKEDIN KESİTİ ÜRETİLEMEDİ:", sonuc.reel.linkedinHata);
   }
 } finally {
   await browser.close();
 }
 console.log(`TOPLAM: ${((Date.now() - T0) / 1000).toFixed(1)} sn`);
-(sonuc.carousel?.files ?? []).concat(sonuc.hikaye?.files ?? [], sonuc.reel?.file ? [sonuc.reel.file] : []).forEach((f) => console.log(`  ${path.basename(f)}  ${(fs.statSync(f).size / 1e6).toFixed(2)} MB`));
+(sonuc.carousel?.files ?? []).concat(sonuc.hikaye?.files ?? [], sonuc.reel?.file ? [sonuc.reel.file] : [], sonuc.reel?.linkedinFile ? [sonuc.reel.linkedinFile] : []).forEach((f) => console.log(`  ${path.basename(f)}  ${(fs.statSync(f).size / 1e6).toFixed(2)} MB`));
 if (!has("keep")) fs.rmSync(workDir, { recursive: true, force: true }); else console.log("iş dizini KORUNDU:", workDir);

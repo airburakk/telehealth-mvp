@@ -8,6 +8,8 @@
 // GET /sosyal/dosya/<gün>/<ad>.mp4 (lib/sosyal-isleri.mjs; ffmpeg + müzik /varlik/muzik.mp3 — README). Kart ucu DEĞİŞMEDİ.
 // v6.323 (2026-10-04): + Instagram kaydırmalı post (carousel) slaytları (lib/social-carousel.mjs) — aynı iş, `gorseller` dizisi + PNG dosya ucu;
 // `kapsam.akislar` (günün akış etiketleri) eklendi. Mevcut uçların sözleşmesi geriye uyumlu (README).
+// v6.327 (2026-10-06): + Reel A'nın LinkedIn kesiti linkedin-a-<gün>.mp4 (`linkedin[]` dizisi, aynı dosya ucu; `dosyalar` değişmez) · Reel kapanış satırı iki platformda ortak
+// (REEL_CTA). n8n "LinkedIn video (Buffer)" akışı kesiti arşive alıp Buffer'a verir; kesit üretilemezse reels-a'ya düşer.
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
