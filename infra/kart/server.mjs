@@ -10,12 +10,15 @@
 // `kapsam.akislar` (günün akış etiketleri) eklendi. Mevcut uçların sözleşmesi geriye uyumlu (README).
 // v6.327 (2026-10-06): + Reel A'nın LinkedIn kesiti linkedin-a-<gün>.mp4 (`linkedin[]` dizisi, aynı dosya ucu; `dosyalar` değişmez) · Reel kapanış satırı iki platformda ortak
 // (REEL_CTA). n8n "LinkedIn video (Buffer)" akışı kesiti arşive alıp Buffer'a verir; kesit üretilemezse reels-a'ya düşer.
+// v6.328 (2026-10-06): + POST /rubrik/render (lib/social-rubrik.mjs) — içerik takvimi önizlemesi (Karar masası vb. slaytları, 1080x1350 PNG).
+// Bearer SOCIAL_DIGEST_TOKEN doğrulaması bu uçta KARTTA yapılır (n8n köprüsü başlığı iletir); sosyal üretim sürerken 503. Mevcut uçlara dokunulmadı.
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { createSosyal } from "./lib/sosyal-isleri.mjs";
+import { createRubrik } from "./lib/social-rubrik.mjs";
 import * as video from "./lib/social-video.mjs";
 import * as carousel from "./lib/social-carousel.mjs";
 
@@ -126,8 +129,18 @@ const sosyal = createSosyal({
   log: (m) => console.log(`[kart] ${m}`),
 });
 
+// İçerik takvimi önizlemesi (v6.328): 07:55 sosyal işi sürerken (Chromium + 1,5 GB sınırı) 503 — sabah akışı ASLA bu uç yüzünden aksamaz.
+const rubrik = createRubrik({
+  getBrowser,
+  spherePath: path.join(HERE, "assets", "doctorium-sphere-disk-1024-v3.webp"),
+  token: TOKEN,
+  mesgul: () => sosyal.durum().durum === "calisiyor",
+  log: (m) => console.log(`[kart] ${m}`),
+});
+
 http.createServer(async (req, res) => {
   if (req.url === "/saglik") { res.writeHead(200); return res.end("ok"); }
+  if (await rubrik.handle(req, res)) return;
   if (await sosyal.handle(req, res)) return;
   if (req.url !== "/bulten.png") { res.writeHead(404); return res.end(); }
   try {

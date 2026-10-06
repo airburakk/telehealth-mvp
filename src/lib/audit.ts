@@ -56,7 +56,11 @@ export type AuditAction =
   | "LEGAL_TRANSLATION_GENERATE" // kuyruktan çeviri üretildi/tamamlandı — detail: çevrilen/beklenen birim
   // ── Şifreleme anahtarı (2026-09-18 — tatbikat #1 aksiyon A1, break-glass rotasyon) ────────────
   | "KEK_ROTATION" // /api/admin/kek-rotate koştu — detail: mode=dry-run|apply · eski/yeni sha256 ÖNEKLERİ · sayaçlar (anahtar ASLA yazılmaz)
-  | "KEK_ROTATION_DENIED"; // ADMIN oturumuyla YANLIŞ ikinci faktör (KEK_ROTATION_SECRET) — uzlaşma sinyali; alarm da gider
+  | "KEK_ROTATION_DENIED" // ADMIN oturumuyla YANLIŞ ikinci faktör (KEK_ROTATION_SECRET) — uzlaşma sinyali; alarm da gider
+  // ── İçerik takvimi (v6.328, 2026-10-06 — lib/social-calendar/plan; halka açık sosyal içeriğin onayı) ──────────────
+  | "CONTENT_PLAN_APPROVE" // ADMIN rubrik içeriğini onayladı — detail: rubrik·gün·payload sha256 ÖNEKİ (içerik audit'e YAZILMAZ)
+  | "CONTENT_PLAN_UNAPPROVE" // onay geri alındı ya da düzenleme/kaynak değişikliğiyle düştü — detail: rubrik·gün·neden
+  | "CONTENT_PLAN_SKIP"; // yuva atlandı (onaylıysa onay da düştü) — detail: rubrik·gün
 
 interface RecordInput {
   actor: SessionUser | null;

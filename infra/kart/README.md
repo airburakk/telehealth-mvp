@@ -3,12 +3,13 @@
 Hetzner `doctorium-n8n` VPS'inde (n8n ile **aynı compose**, `/opt/n8n/`) çalışan `kart` servisi. **Vercel'e / Next uygulamasına girmez**; n8n akışları HTTP ile çağırır.
 Eskiden yalnız `server.mjs` sunucuda duruyordu (scp ile düzenleniyor, kurtarılması zordu); v6.320'de depoya alındı → sürümlü + testli.
 
-Üç iş yapar:
+Beş iş yapar:
 
 1. **`GET /bulten.png`** — her sabah 07:45 TR n8n'in çağırdığı TAM BÜLTEN kartı (1080×1350 PNG). Seçkiyi servis KENDİSİ çeker (jeton yalnız `.env.kart`'ta; n8n görmez). Boş gün → `204`. **v6.320'de değişmedi.**
 2. **`/sosyal/*` (v6.320)** — aynı seçkiden Instagram **hikâye klipleri** (kart + her içerik için 1) ve **Reel A** (vuruşa oturan tipografik video) MP4'leri üretir.
 3. **Carousel (v6.323)** — aynı iş, aynı seçki anlık görüntüsünden Instagram **kaydırmalı post** slaytları (1080×1350 PNG, 4:5): 01 günlük kart (paylaşımla AYNI PNG) · 02…N+1 her içerik için bir slayt (akış · başlık · kaynak · `summaryLong`) · N+2 kapanış ("Seçkinin tamamı biyografideki bağlantıda").
 4. **LinkedIn kesiti (v6.327)** — aynı iş: Reel A'nın karelerinden `linkedin-a-<gün>.mp4` (1,7 sn'den başlar → ilk kare dolu; LinkedIn küçük resmi = ilk kare, Buffer özel küçük resim veremez). Reel kapanış satırı iki platformda ortak: "Seçkinin tamamı · doctorium.tr/secki" (`REEL_CTA`). n8n "LinkedIn video (Buffer)" akışı (08:20) tüketir; kesit yoksa `reels-a-<gün>.mp4`'e düşer.
+5. **`POST /rubrik/render` (v6.328)** — içerik takvimi rubrik slaytlarının (Karar masası vb.) PNG önizlemesi; aşağıdaki "İçerik takvimi önizlemesi" bölümü.
 
 ## Uçlar
 
@@ -27,6 +28,22 @@ Eskiden yalnız `server.mjs` sunucuda duruyordu (scp ile düzenleniyor, kurtarı
 
 **Tasarım:** tek iş (ikinci POST kuyruğa girmez, 409) · kilit seçki çekilmeden ÖNCE alınır · kart + carousel + hikâyeler + Reel AYNI seçki anlık görüntüsünden üretilir · yarım iş görünmez (`bitti.json` EN SON, atomik; carousel PNG'leri videolardan ÖNCE diske düşer ama `bitti.json` yokken sunulmaz — test kilitli) ·
 hata → üretim başladıysa gün klasörü silinir; **başlamadan düşen** `yenile` (ör. müzik yok) önceki iyi klipleri korur · en yeni 2 gün klasörü saklanır (kalıcı arşivi n8n yazar).
+
+## İçerik takvimi önizlemesi — `POST /rubrik/render` (v6.328, 2026-10-06)
+
+Next uygulamasındaki `/admin/icerik-takvimi` (Karar masası vb. rubrik içerikleri) **önizlemesini yayınlanacak PNG'nin kendisi** yapar: aynı Chromium, aynı çerçeve (kartla/karuselle AYNI sayılar). Servis internete AÇIK DEĞİL; Vercel → n8n webhook köprüsü
+(`output/n8n-akislari/n8n_rubrik_kopru.py`, sırsız, yürütme kaydı KAPALI) → bu uç. **Bearer `SOCIAL_DIGEST_TOKEN` doğrulaması BURADA yapılır** (köprü başlığı olduğu gibi iletir).
+
+| İstek | Yanıt |
+|---|---|
+| `POST /rubrik/render` gövde `{templateKey, seriesName, slotDay, slides:[{role,title,body,bullets,quote}]}` | **200** `{slides:[{index, role, png (base64), tasma}]}` · **400** geçersiz gövde (neden metinde) · **401** Bearer yok/yanlış · **405** · **413** gövde > 256 KB · **429** başka önizleme sürüyor (tek iş) · **503** sosyal üretim (07:55 işi) sürüyor ya da `SOCIAL_DIGEST_TOKEN` tanımsız · **500** render hatası (iç mesaj SIZMAZ) |
+
+- `tasma:true` → metin asgari puntoda bile sığmadı (editör kısaltır). Roller: kapak · uyusmazlik · mahkeme · gerekce · sonuc · cikarim · kaynak · genel; `quote:true` alıntı bloğu çizer, `[…]` atlama işareti vurgulanır.
+- **Tek belge, çok slayt:** 7 slayt tek HTML'de alt alta (yazı tipleri BİR kez yüklenir) → her slayt kendi `.slide` öğesinden çekilir; yerel ≈6 sn (karuselin slayt başına sayfa açma yolundan ≈7× hızlı). Sığdırma slayt başına, role göre asgari punto.
+- Güvenlik: girdi HER ZAMAN `esc()`/`tipo()`'dan geçer (HTML'e ham girmez) · alan uzunlukları/slayt sayısı sınırlı · kart sosyal üretim sürerken (Chromium + 1,5 GB sınırı) bu ucu REDDEDER → sabah akışı bu uç yüzünden aksamaz.
+- Yerel deneme: `node tools/rubrik.mjs --model model.json --out cikti` (`model.json` = istek gövdesi; `PLAYWRIGHT_FROM=…/package.json`). Sunucu dağıtımı yukarıdaki adımlarla AYNI (yeni dosya `lib/social-rubrik.mjs`; compose değişmez).
+- Testler: `npx vitest run tests/unit/kart-rubrik.test.ts` — doğrulama · şablon kaçışı · çerçeve eşliği (kart/karusel sayılarıyla) · `renderRubrik` (sahte tarayıcı) · HTTP kapıları (Bearer · meşgul · eşzamanlı · gövde sınırı · 500'de iç mesaj sızmaması).
+- 🪤 Slaytta emoji YOK (imajda emoji yazı tipi yok → kutu çıkar); kaynakta `\uXXXX` YAZMA (testle kilitli).
 
 ## Üretim özellikleri
 
@@ -60,8 +77,10 @@ server.mjs              # HTTP + kart şablonu + paylaşılan Chromium (çökers
 lib/sosyal-isleri.mjs   # tek-iş durum makinesi, seçki doğrulaması, dosya ucu (MP4 + PNG + LinkedIn kesiti)
 lib/social-video.mjs    # hikâye klipleri + Reel A (+ LinkedIn kesiti) üreticisi (Playwright + ffmpeg)
 lib/social-carousel.mjs # kaydırmalı post slaytları: kart + içerikler + kapanış (Playwright, ffmpeg gerekmez)
+lib/social-rubrik.mjs   # içerik takvimi rubrik slaytları + POST /rubrik/render (v6.328; Playwright, ffmpeg gerekmez)
 assets/                 # küre görseli (public/brand ile aynı hash — test kilitli) + vuruş ızgarası
 tools/uret.mjs          # yerel: digest.json + kart.png + müzik → MP4'ler (+ LinkedIn kesiti) + carousel PNG'leri (--only stories|reel|carousel)
+tools/rubrik.mjs        # yerel: model.json (rubrik slaytları) → PNG'ler (v6.328)
 tools/dogrula.mjs       # MP4'leri (Instagram + LinkedIn şartları) + carousel PNG'lerini doğrular (çıkış kodu 0/1)
 Dockerfile              # playwright:v1.55.0-noble + ffmpeg (npm playwright sürümü imaj etiketiyle AYNI olmalı — test kilitli)
 ```

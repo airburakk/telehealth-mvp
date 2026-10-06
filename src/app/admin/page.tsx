@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import {
-  ArrowRight, BarChart2, BellRing, CalendarDays, Gift, KeyRound, LayoutDashboard, Megaphone,
+  ArrowRight, BarChart2, BellRing, CalendarDays, CalendarRange, Gift, KeyRound, LayoutDashboard, Megaphone,
   MousePointerClick, TrendingUp, GraduationCap, ShieldCheck, Languages
 } from "lucide-react";
 import { isEmailConfigured, maskEmail } from "@/lib/email";
@@ -102,6 +102,13 @@ const PANELS = [
     desc: "Hasta yüzü hukuki belgelerinin 9 dildeki çevirilerini incele ve onayla — onaylanan metin dondurulur, hasta 'İncelenmiş çeviri' rozetini görür.",
     icon: Languages,
     tone: "#0ea5e9",
+  },
+  {
+    href: "/admin/icerik-takvimi",
+    label: "İçerik Takvimi",
+    desc: "Hafta içi 'imza içerik' rubrikleri (Karar masası · Etkinlik radarı · Öğrenci köşesi): kaynağı seç, taslağı düzenle, PNG önizleyip onayla. Hukuk gününde alıntı ve kimlik kapıları zorunlu.",
+    icon: CalendarRange,
+    tone: "#f59e0b",
   },
 ];
 
