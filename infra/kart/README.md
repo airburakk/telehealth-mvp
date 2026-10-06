@@ -8,7 +8,7 @@ Beş iş yapar:
 1. **`GET /bulten.png`** — her sabah 07:45 TR n8n'in çağırdığı TAM BÜLTEN kartı (1080×1350 PNG). Seçkiyi servis KENDİSİ çeker (jeton yalnız `.env.kart`'ta; n8n görmez). Boş gün → `204`. **v6.320'de değişmedi.**
 2. **`/sosyal/*` (v6.320)** — aynı seçkiden Instagram **hikâye klipleri** (kart + her içerik için 1) ve **Reel A** (vuruşa oturan tipografik video) MP4'leri üretir.
 3. **Carousel (v6.323)** — aynı iş, aynı seçki anlık görüntüsünden Instagram **kaydırmalı post** slaytları (1080×1350 PNG, 4:5): 01 günlük kart (paylaşımla AYNI PNG) · 02…N+1 her içerik için bir slayt (akış · başlık · kaynak · `summaryLong`) · N+2 kapanış ("Seçkinin tamamı biyografideki bağlantıda").
-4. **LinkedIn kesiti (v6.327)** — aynı iş: Reel A'nın karelerinden `linkedin-a-<gün>.mp4` (1,7 sn'den başlar → ilk kare dolu; LinkedIn küçük resmi = ilk kare, Buffer özel küçük resim veremez). Reel kapanış satırı iki platformda ortak: "Seçkinin tamamı · doctorium.tr/secki" (`REEL_CTA`). n8n "LinkedIn video (Buffer)" akışı (08:20) tüketir; kesit yoksa `reels-a-<gün>.mp4`'e düşer.
+4. **LinkedIn videosu (v6.327 kesit → v6.331 YATAY)** — aynı iş: Reel A'nın **16:9 yatay (1920×1080) tam render'ı** `linkedin-a-<gün>.mp4` (aynı DOM, zaman çizelgesi ve müzik; yalnız yerleşim yatay; 1,7 sn'den başlar → ilk kare dolu, LinkedIn küçük resmi = ilk kare). Kapanış satırı iki platformda ortak `REEL_CTA`. n8n "LinkedIn video (Buffer)" akışı (08:20 → 12:30) tüketir; yoksa `reels-a-<gün>.mp4` (9:16).
 5. **`POST /rubrik/render` (v6.328)** — içerik takvimi rubrik slaytlarının (Karar masası vb.) PNG önizlemesi; aşağıdaki "İçerik takvimi önizlemesi" bölümü.
 
 ## Uçlar
@@ -53,8 +53,8 @@ Next uygulamasındaki `/admin/icerik-takvimi` (Karar masası vb. rubrik içerikl
 - Carousel (v6.323): kartla AYNI çizim hattı (Playwright, DPR 1; ffmpeg/Python gerekmez), punto sığdırma hikâye karesiyle aynı döngü (önce başlık, sonra açıklama; asgari 40/32; sığmazsa günlüğe yalnız slayt numarası düşer). Carousel videolardan ÖNCE üretilir (≈8 sn yerel) →
   yazı tipi/tarayıcı sorunu dakikalarca süren videolardan önce ve yüksek sesle (iş `hata`, `adim: carousel`) düşer; slayt sayısı `N+2` değilse iş `hata` verir (eksik carousel yayına gitmez). Instagram: carousel çocukları için herkese açık `image_url` şart (resumable yok) — n8n tarafında ayrı adım.
   Sunucuda doğrula: `docker compose exec kart node tools/dogrula.mjs /tmp/sosyal/<gün>` (PNG imzası · 1080×1350 · ≤ 8 MB). Yerel: `node tools/uret.mjs --only carousel --digest digest.json --card kart.png --out cikti` (müzik/ffmpeg gerekmez).
-- LinkedIn kesiti (v6.327): Reel karelerinden `-start_number 51` (= 1,7 sn × 30 fps; Instagram kapağı `thumb_offset` 1700 ms ile aynı kare) + aynı normalize WAV'dan aynı ofsetle ses (mikro fade-in + tepe koruması); x264 `medium` CRF 18 (Buffer 720p'ye yeniden kodlar). Üretilemezse iş YİNE `hazir` (`linkedin: []`, günlükte not) — Reel/hikâye/carousel yayını engellenmez.
-  Doğrulama `tools/dogrula.mjs` LinkedIn satırı: 3 sn–10 dk · ≤500 MB · 1080×1920 · H.264+AAC · moov başta · tepe ≤ −1 dBTP.
+- LinkedIn videosu (v6.331, 👤 "LinkedIn'in tam video boyutu"): 16:9 YATAY şablon (`reelHtml(…, "yatay")`, 1920×1080; dikeyle AYNI DOM + zaman çizelgesi, yalnız CSS geometrisi ve punto tabanı 120/100/84) ikinci Playwright geçişiyle basılır (`kareleriBas`, kare 51'den = 1,7 sn, Instagram kapağıyla aynı an) + aynı normalize WAV'dan aynı ofsetle ses (mikro fade-in + tepe koruması); x264 medium/CRF 18 (Buffer 1280×720'ye kodlar). Üretilemezse iş YİNE `hazir` (`linkedin: []`, günlükte not) — Instagram yayını engellenmez.
+  Doğrulama `tools/dogrula.mjs` LinkedIn satırı: 3 sn–10 dk · ≤500 MB · **1920×1080** · H.264+AAC · moov başta · tepe ≤ −1 dBTP. Maliyet: yatay geçiş ≈ Reel karelerinin %75'i (kare 51'den) → sunucuda tahminen +100–120 sn; gerçek ölçüm dağıtımda `bitti.json` `olcum.reel.linkedin`.
 - Maliyet: yerel ölçüm (2 çekirdek + 2 işçi) 4 öğeli gün ≈ 63–66 sn, bellek tepesi ≈ 0,9–1,1 GB. **Sunucu ölçümü (03.10, Hetzner paylaşımlı vCPU):** `POST /sosyal/uret` ≈ 242 sn (hikâye 85 + Reel 156; yerelden ≈3,7× yavaş) → n8n bekleme süresi ≥ 8–10 dk kurulur; bellek tepesi ≈ 719 MiB (`mem_limit: 1536m` içinde).
 
 ## Ortam değişkenleri
@@ -128,7 +128,8 @@ node tools/dogrula.mjs cikti
 yarım işin görünmezliği · dosya ucunda gezinti (`..`, `%2F`) engeli · başarısız `yenile`'de önceki kliplerin korunması · Dockerfile sürüm eşitliği · küre hash'i · `lang="tr"` · kaynakta görünmez karakter yok.
 v6.323: carousel şablon kaçışı + kapanış slaydında iddia yok · `renderCarousel` (gerçek modül + sahte tarayıcı: N+2 ad/sıra, kart baytları, sayfa kapanışı) · `gorseller` geriye uyumu (PNG `dosyalar`a GİRMEZ; eski `bitti.json` geçerli) · PNG ucu (listeli-yalnız, gezinti, `bitti.json` yokken 404) · carousel hatasında videoların hiç başlamaması ·
 `kapsam.akislar` (sıralı, tekrarsız) · çerçevenin kartla aynı ölçüde kalması.
-v6.327: Reel kapanış satırı = `REEL_CTA` ("bio" geçmez) · `LINKEDIN_BASLANGIC_SN` tam kare (51) · `linkedin` sözleşmesi (ayrı dizi, `dosyalar`a GİRMEZ, eski `bitti.json` → `[]`, dosya ucu listeli-yalnız) · kesit üretilemezse iş yine `hazir` + günlük notu · boş günde `linkedin: []`. Yeni bir davranışı sınarken **mutasyonla doğrula** (kodu bilinçli boz → ilgili test düşmeli; betiğin `finally`'de dosyayı geri yüklediğinden emin ol).
+v6.327: Reel kapanış satırı = `REEL_CTA` ("bio" geçmez) · `LINKEDIN_BASLANGIC_SN` tam kare (51) · `linkedin` sözleşmesi (ayrı dizi, `dosyalar`a GİRMEZ, eski `bitti.json` → `[]`, dosya ucu listeli-yalnız) · kesit üretilemezse iş yine `hazir` + günlük notu · boş günde `linkedin: []`.
+v6.331: yatay şablon (1920×1080 CSS, punto tabanı 120/100/84, CSS dışında dikeyle AYNI belge, CTA, "bio" yok, kaçış, bilinmeyen düzen fırlatır) · `LINKEDIN_DUZEN` · `kareleriBas` ([ilk, son) aralığı, mutlak kare adı, işçi düşerse abort + sayfa kapanışı). Yeni bir davranışı sınarken **mutasyonla doğrula** (kodu bilinçli boz → ilgili test düşmeli; betiğin `finally`'de dosyayı geri yüklediğinden emin ol).
 
 ## Tuzaklar (bedeli ödenmiş)
 
@@ -141,5 +142,6 @@ v6.327: Reel kapanış satırı = `REEL_CTA` ("bio" geçmez) · `LINKEDIN_BASLAN
 - (v6.323) Yeni bir çıktı türünü `dosyalar`a EKLEME: çalışan istemci (n8n) o listedeki her öğeyi MP4 sayar. Yeni tür = ayrı dizi (`gorseller`) + ayrı ad kalıbı + dosya ucunda tür başına kendi listesi.
 - (v6.327) MP4 olsa bile `dosyalar`a EKLEME: 07:55 akışı oradaki her MP4'ü indirip arşivler, `Yayın listesi` yalnız hikâye+reel'i süzer — yine de ayrı dizi (`linkedin`) daha güvenli; `AD_RE`'ye uyan yeni ad kalıbı `dosyalariListele`de açıkça DIŞLANMALI.
 - (v6.327) Reel kapanış satırına "bio" YAZMA: aynı MP4 LinkedIn'e de gider (Buffer); adres metni (`doctorium.tr/secki`) iki platformda da doğrudur.
+- (v6.331) Yatay şablon dikeyden KIRPILMAZ/ÖLÇEKLENMEZ (9:16 LinkedIn masaüstünde yan boşluklu kalıyordu): aynı DOM, ayrı CSS (`REEL_CSS.yatay`) + punto tabanı (`REEL_FS`). Yeni düzen = ikisine de giriş + şablon testi; `data-fs` ölçek değil yerleşimle sığdırılır.
 - (v6.323) Sığdırma ölçümü `getBoundingClientRect` ile yapılır: flex `justify-content:center` içinde taşma iki uca dağılır, `scrollHeight` taşmayı SAYMAZ.
 - (v6.323) Karttaki çerçeve (`padding:72px 84px 64px`, 3px üst çizgi, 22px künye) `server.mjs` ve `social-carousel.mjs`'te AYNI tutulur — slayt 1 kartın kendisi; test ikisini birlikte denetler.

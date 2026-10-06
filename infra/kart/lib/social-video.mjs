@@ -4,6 +4,8 @@
 // Çıktı : hikaye-<gün>-01-kart.mp4 … -0N-icerik-K.mp4 (hareketsiz kare + kesintisiz müzik dilimi) · reels-a-<gün>.mp4 (vuruşa oturan tipografik Reel).
 // v6.327 (2026-10-06): + linkedin-a-<gün>.mp4 — Reel A'nın LinkedIn kesiti (aynı karelerden, LINKEDIN_BASLANGIC_SN'den; ilk kare dolu — LinkedIn küçük resmi = ilk kare,
 //   Buffer özel küçük resim veremez) · kapanış satırı iki platformda ORTAK (REEL_CTA; "bio" sözcüğü LinkedIn'de anlamsız).
+// v6.331 (2026-10-06, 👤 "LinkedIn'in tam video boyutu"): LinkedIn videosu artık 16:9 YATAY tam render — reelHtml(…, "yatay") 1920x1080, aynı DOM ve zaman
+//   çizelgesi (yalnız CSS geometrisi + punto tabanı), LINKEDIN_BASLANGIC_SN'den başlar; Instagram Reel'i 9:16 kalır. Kare basma `kareleriBas` yardımcısında (dikey + yatay).
 // Tasarım: 02.10 prototiplerinin (hikaye_render.mjs / hikaye_video.py / reels_a_render.mjs / reels_a_video.py) birebir Node portu.
 //   · Python/Pillow/numpy GEREKMEZ (vuruş ızgarası önceden hesaplı assets/beatgrid.json; kart tuvali ffmpeg pad ile).
 //   · Yerel yol YOK: her şey seçeneklerle/env'le (FFMPEG, PLAYWRIGHT_FROM, X264_PRESET, FFMPEG_ZAMAN_ASIMI_SN) → aynı kod sunucuda (Docker + apt ffmpeg) çalışır.
@@ -264,6 +266,11 @@ const LEAD = 0.15; // 1. vuruşun videodaki zamanı (müzik grid.a − LEAD'den 
 export const REEL_CTA = "Seçkinin tamamı · doctorium.tr/secki";
 /** LinkedIn kesitinin başlangıcı (sn) = Instagram Reel kapağı (`thumb_offset` 1700 ms) ile AYNI kare: masthead + "Bugünün N başlığı" + akışlar görünür; kare 0 boş zemindir. 30 fps'te tam kare (51). */
 export const LINKEDIN_BASLANGIC_SN = 1.7;
+/** LinkedIn videosu düzeni (v6.331): 16:9 yatay — masaüstü oynatıcıyı doldurur; Buffer 1280x720'ye yeniden kodlar. */
+export const LINKEDIN_DUZEN = { w: 1920, h: 1080 };
+const DIKEY_DUZEN = { w: 1080, h: 1920 };
+/** Başlık punto tabanları (kısa ≤50 / orta ≤90 / uzun) — düzen başına; `init()` sığmazsa 2'şer px düşürür (alt sınır 48). */
+const REEL_FS = { dikey: [104, 86, 72], yatay: [120, 100, 84] };
 
 export function reelPlan(digest, grid) {
   const items = digest.items, n = items.length;
@@ -278,24 +285,9 @@ export function reelPlan(digest, grid) {
   return { n, plan, OUTRO_START, TOTAL_BEATS, TOTAL_T, CFG: { P: grid.P, LEAD, plan, OUTRO_START, TOTAL_BEATS, n } };
 }
 
-export function reelHtml(digest, grid, sphere) {
-  const items = digest.items;
-  const { n, CFG } = reelPlan(digest, grid);
-  const cats = [...new Set(items.map((it) => it.streamLabel))];
-  const beatHtml = items.map((it, i) => {
-    const words = esc(it.title).split(" ").map((w) => `<span class="w">${w}</span>`).join(" ");
-    const L = it.title.length;
-    const fs0 = L <= 50 ? 104 : L <= 90 ? 86 : 72;
-    return `<div class="beat" id="b${i}" data-fs="${fs0}">
-    <div class="kick mono"><span class="stream">${esc(it.streamLabel)}${it.branch ? ` <span class="brans">· ${esc(it.branch.label)}</span>` : ""}</span><span class="idx">${i + 1}/${n}</span></div>
-    <div class="acc"></div>
-    <h2>${words}</h2>
-    <div class="src">${esc(it.sourceName)}</div>
-  </div>`;
-  }).join("");
-  return `<!doctype html><html lang="tr"><head><meta charset="utf-8">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
-<style>
+/** Reel A stil blokları — düzen başına; DOM ve zaman çizelgesi ortaktır (yatay, dikeyden kırpılmaz/ölçeklenmez: ayrı yerleşim). */
+const REEL_CSS = {
+  dikey: `<style>
 * { margin:0; box-sizing:border-box; }
 html,body { width:1080px; height:1920px; overflow:hidden; background:#fbfbfa; }
 body { font-family:Inter,sans-serif; -webkit-font-smoothing:antialiased; color:#18181b; position:relative; }
@@ -325,7 +317,60 @@ h2 { font-weight:700; letter-spacing:-0.02em; line-height:1.14; margin-top:30px;
 .outro img { width:230px; height:230px; opacity:0; }
 .wm { margin-top:46px; font-size:112px; font-weight:600; letter-spacing:-0.03em; font-feature-settings:"cv11","ss01"; opacity:0; }
 .cta { margin-top:44px; font-size:42px; font-weight:500; color:#6b6b68; opacity:0; }
-</style></head><body>
+</style>`,
+  yatay: `<style>
+* { margin:0; box-sizing:border-box; }
+html,body { width:1920px; height:1080px; overflow:hidden; background:#fbfbfa; }
+body { font-family:Inter,sans-serif; -webkit-font-smoothing:antialiased; color:#18181b; position:relative; }
+.mono { font-family:"JetBrains Mono",monospace; }
+.mast { position:absolute; left:120px; top:84px; width:1680px; }
+.rule { height:3px; background:#18181b; transform-origin:left center; transform:scaleX(0); }
+.mtext { border-bottom:1px solid rgba(24,24,27,.25); padding:18px 0; display:flex; justify-content:center; gap:26px;
+         font-size:24px; letter-spacing:.14em; text-transform:uppercase; color:#6b6b68; opacity:0; }
+.mtext b { color:#047857; font-weight:600; display:inline-block; }
+.intro { position:absolute; left:120px; top:330px; width:1600px; opacity:0; }
+.ln { overflow:hidden; padding-bottom:10px; }
+.ln span { display:block; font-size:150px; font-weight:700; letter-spacing:-0.035em; line-height:1.0; transform:translateY(105%); }
+.cats { margin-top:44px; font-size:26px; font-weight:600; letter-spacing:.12em; color:#047857; text-transform:uppercase; white-space:nowrap; opacity:0; }
+.beat { position:absolute; left:120px; top:250px; width:1600px; height:620px; display:flex; flex-direction:column; justify-content:center; opacity:0; }
+.kick { display:flex; justify-content:space-between; align-items:baseline; font-size:28px; }
+.stream { font-weight:600; letter-spacing:.18em; color:#047857; text-transform:uppercase; }
+.brans { color:#6b6b68; letter-spacing:.1em; }
+.idx { font-weight:600; letter-spacing:.14em; color:#6b6b68; font-size:26px; }
+.acc { height:4px; width:96px; background:#047857; margin-top:20px; transform-origin:left center; transform:scaleX(0); }
+h2 { font-weight:700; letter-spacing:-0.02em; line-height:1.12; margin-top:26px; }
+.w { display:inline-block; opacity:0; }
+.src { font-size:36px; font-weight:600; color:#6b6b68; margin-top:30px; opacity:0; }
+.prog { position:absolute; left:120px; top:940px; width:1680px; display:flex; gap:14px; opacity:0; }
+.prog i { flex:1; height:6px; border-radius:3px; background:rgba(24,24,27,.12); overflow:hidden; display:block; }
+.prog u { display:block; height:100%; width:0; background:#047857; text-decoration:none; }
+.outro { position:absolute; left:0; top:250px; width:1920px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+.outro img { width:220px; height:220px; opacity:0; }
+.wm { margin-top:36px; font-size:120px; font-weight:600; letter-spacing:-0.03em; font-feature-settings:"cv11","ss01"; opacity:0; }
+.cta { margin-top:30px; font-size:42px; font-weight:500; color:#6b6b68; opacity:0; }
+</style>`,
+};
+
+export function reelHtml(digest, grid, sphere, duzen = "dikey") {
+  if (!REEL_CSS[duzen]) throw new Error(`bilinmeyen Reel düzeni: ${duzen} (dikey | yatay)`);
+  const punto = REEL_FS[duzen];
+  const items = digest.items;
+  const { n, CFG } = reelPlan(digest, grid);
+  const cats = [...new Set(items.map((it) => it.streamLabel))];
+  const beatHtml = items.map((it, i) => {
+    const words = esc(it.title).split(" ").map((w) => `<span class="w">${w}</span>`).join(" ");
+    const L = it.title.length;
+    const fs0 = L <= 50 ? punto[0] : L <= 90 ? punto[1] : punto[2];
+    return `<div class="beat" id="b${i}" data-fs="${fs0}">
+    <div class="kick mono"><span class="stream">${esc(it.streamLabel)}${it.branch ? ` <span class="brans">· ${esc(it.branch.label)}</span>` : ""}</span><span class="idx">${i + 1}/${n}</span></div>
+    <div class="acc"></div>
+    <h2>${words}</h2>
+    <div class="src">${esc(it.sourceName)}</div>
+  </div>`;
+  }).join("");
+  return `<!doctype html><html lang="tr"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+${REEL_CSS[duzen]}</head><body>
 <div class="mast"><div class="rule" id="rule"></div>
   <div class="mtext mono" id="mtext"><span>GÜNLÜK SEÇKİ</span><b id="dot">·</b><span>${trTarih(digest.day)}</span></div></div>
 <div class="intro" id="intro">
@@ -408,30 +453,23 @@ window.seek=function(t){
 }
 
 /**
- * Reel A: deterministik kare render (W paralel sayfa) → müzikle MP4. Yalnız başlık + kaynak (teaser sınırı içinde; summaryLong KULLANILMAZ).
- * `linkedinOutPath` verilirse AYNI karelerden LinkedIn kesiti de yazılır (v6.327): LINKEDIN_BASLANGIC_SN'den başlar, aynı normalize ses.
- * Kesit üretilemezse Reel YİNE geçerlidir — hata fırlatılmaz, `linkedinHata` ile döner (n8n LinkedIn akışı reels-a dosyasına düşer); yarım dosya silinir.
- * @returns {Promise<{file:string, linkedinFile:string|null, linkedinHata:string|null, timings:object, frames:number, seconds:number}>}
+ * Kareleri [ilk, son) aralığında W paralel sayfayla basar (her sayfa kendi dilimi; ad = mutlak indeks f%04d). Bir işçi düşerse diğerleri
+ * (abort bayrağıyla) mevcut kareyi bitirip DURUR ve KENDİ sayfasını kapatır; `allSettled` hepsini bekler → iş hata verdiğinde artakalan işçi ya da
+ * sızan sayfa kalmaz (kilit açıldığında yeni iş zombi işçilerle yarışmaz). Dikey Reel ve yatay LinkedIn videosu aynı yardımcıyı kullanır (v6.331).
+ * @returns {Promise<number>} basılan kare sayısı
  */
-export async function renderReelA({ digest, outPath, workDir, music, grid, spherePath, browser, workers = 4, keepFrames = false, linkedinOutPath = null }) {
-  const t0 = Date.now(); const tm = {};
-  if (digest.items.length === 0) return { file: null, linkedinFile: null, linkedinHata: null, timings: {}, frames: 0, seconds: 0 };
-  const frames = path.join(workDir, "reel-kareler");
+export async function kareleriBas({ browser, html, viewport, frames, ilk = 0, son, workers = 4 }) {
   fs.rmSync(frames, { recursive: true, force: true }); fs.mkdirSync(frames, { recursive: true });
-  const { TOTAL_T } = reelPlan(digest, grid);
-  const html = reelHtml(digest, grid, spherePng(spherePath));
-  const total = Math.round(TOTAL_T * FPS);
-  const per = Math.ceil(total / workers);
-  // Bir işçi düşerse diğerleri (abort bayrağıyla) mevcut kareyi bitirip DURUR ve KENDİ sayfasını kapatır; `allSettled` hepsini bekler →
-  // iş hata verdiğinde artakalan işçi ya da sızan sayfa kalmaz (kilit açıldığında yeni iş zombi işçilerle yarışmaz).
+  const adet = son - ilk;
+  const per = Math.ceil(adet / workers);
   let abort = false;
-  const sonuclar = await Promise.allSettled(Array.from({ length: workers }, (_, w) => sayfada(browser, { viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 }, async (page) => {
+  const sonuclar = await Promise.allSettled(Array.from({ length: workers }, (_, w) => sayfada(browser, { viewport, deviceScaleFactor: 1 }, async (page) => {
     try {
       await page.setContent(html, { waitUntil: "networkidle" });
       await page.evaluate(() => document.fonts.ready);
       await fontlariDogrula(page);
       await page.evaluate(() => window.init());
-      for (let f = w * per; f < Math.min(total, (w + 1) * per); f++) {
+      for (let f = ilk + w * per; f < Math.min(son, ilk + (w + 1) * per); f++) {
         if (abort) return;
         await page.evaluate((t) => window.seek(t), f / FPS);
         await page.screenshot({ path: path.join(frames, `f${String(f).padStart(4, "0")}.png`), type: "png" });
@@ -443,6 +481,23 @@ export async function renderReelA({ digest, outPath, workDir, music, grid, spher
   })));
   const dusen = sonuclar.find((r) => r.status === "rejected");
   if (dusen) throw dusen.reason;
+  return adet;
+}
+
+/**
+ * Reel A: deterministik kare render (W paralel sayfa) → müzikle MP4. Yalnız başlık + kaynak (teaser sınırı içinde; summaryLong KULLANILMAZ).
+ * `linkedinOutPath` verilirse 16:9 YATAY LinkedIn videosu da basılır (v6.331; ikinci Playwright geçişi, aynı zaman çizelgesi, LINKEDIN_BASLANGIC_SN'den, aynı normalize ses).
+ * Kesit üretilemezse Reel YİNE geçerlidir — hata fırlatılmaz, `linkedinHata` ile döner (n8n LinkedIn akışı reels-a dosyasına düşer); yarım dosya silinir.
+ * @returns {Promise<{file:string, linkedinFile:string|null, linkedinHata:string|null, timings:object, frames:number, seconds:number}>}
+ */
+export async function renderReelA({ digest, outPath, workDir, music, grid, spherePath, browser, workers = 4, keepFrames = false, linkedinOutPath = null }) {
+  const t0 = Date.now(); const tm = {};
+  if (digest.items.length === 0) return { file: null, linkedinFile: null, linkedinHata: null, timings: {}, frames: 0, seconds: 0 };
+  const frames = path.join(workDir, "reel-kareler");
+  const { TOTAL_T } = reelPlan(digest, grid);
+  const sphere = spherePng(spherePath);
+  const total = Math.round(TOTAL_T * FPS);
+  await kareleriBas({ browser, html: reelHtml(digest, grid, sphere), viewport: { width: DIKEY_DUZEN.w, height: DIKEY_DUZEN.h }, frames, ilk: 0, son: total, workers });
   tm.kareler_sn = (Date.now() - t0) / 1000;
 
   const SURE = total / FPS;
@@ -469,18 +524,24 @@ export async function renderReelA({ digest, outPath, workDir, music, grid, spher
   tm.ses = { tepe_dbtp: ses.tepe, kazanc_db: Number(ses.kazanc.toFixed(2)), deneme: ses.deneme };
   await ff(["-i", vOnly, "-i", m4a, "-c", "copy", "-t", SURE, "-movflags", "+faststart", outPath]);
   tm.kodlama_sn = (Date.now() - t2) / 1000;
-  // LinkedIn kesiti (v6.327): aynı kareler, LINKEDIN_BASLANGIC_SN'den itibaren. Buffer LinkedIn'e giderken 720p'ye yeniden kodlar → `medium` + CRF 18 yeter.
+  if (!keepFrames) fs.rmSync(frames, { recursive: true, force: true }); // dikey kareler artık gerekmez (LinkedIn yatay AYRI basılır)
+  // LinkedIn videosu (v6.331): 16:9 YATAY şablon, aynı zaman çizelgesi; LINKEDIN_BASLANGIC_SN'den (kare 51) başlar → ilk kare dolu (LinkedIn küçük resmi =
+  // ilk kare; Buffer özel küçük resim veremez). Buffer 1280x720'ye yeniden kodlar → `medium` + CRF 18 yeter.
   // Ses: aynı normalize WAV'dan aynı ofsetle + mikro fade-in (sert kesilen dilimde AAC tepe aşımı 🪤) + kodlama sonrası tepe koruması.
+  // Üretilemezse Reel YİNE geçerlidir: hata fırlatılmaz, `linkedinHata` döner, yarım dosya silinir (n8n LinkedIn akışı reels-a'ya düşer).
   let linkedinFile = null, linkedinHata = null;
   if (linkedinOutPath) {
     const t3 = Date.now();
+    const framesLi = path.join(workDir, "reel-kareler-yatay");
     try {
       const ilkKare = Math.round(LINKEDIN_BASLANGIC_SN * FPS);
       const SURE_LI = Number((SURE - ilkKare / FPS).toFixed(3));
+      await kareleriBas({ browser, html: reelHtml(digest, grid, sphere, "yatay"), viewport: { width: LINKEDIN_DUZEN.w, height: LINKEDIN_DUZEN.h }, frames: framesLi, ilk: ilkKare, son: total, workers });
+      const karelerSn = (Date.now() - t3) / 1000;
       const vLi = path.join(workDir, "linkedin-video.mp4");
       await ff([
-        "-framerate", FPS, "-start_number", ilkKare, "-i", path.join(frames, "f%04d.png"), "-t", SURE_LI,
-        "-vf", "scale=1080:1920:flags=lanczos:out_color_matrix=bt709:out_range=tv,format=yuv420p",
+        "-framerate", FPS, "-start_number", ilkKare, "-i", path.join(framesLi, "f%04d.png"), "-t", SURE_LI,
+        "-vf", `scale=${LINKEDIN_DUZEN.w}:${LINKEDIN_DUZEN.h}:flags=lanczos:out_color_matrix=bt709:out_range=tv,format=yuv420p`,
         "-c:v", "libx264", "-preset", "medium", "-crf", 18, "-profile:v", "high", "-level", "4.1", "-r", FPS, "-g", 60,
         "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-an", vLi,
       ]);
@@ -488,14 +549,15 @@ export async function renderReelA({ digest, outPath, workDir, music, grid, spher
       const sesLi = await aacGuvenli(wav, m4aLi, { ssSec: ilkKare / FPS, tSec: SURE_LI, post: "afade=t=in:st=0:d=0.12" });
       await ff(["-i", vLi, "-i", m4aLi, "-c", "copy", "-t", SURE_LI, "-movflags", "+faststart", linkedinOutPath]);
       linkedinFile = linkedinOutPath;
-      tm.linkedin = { sn: Number(((Date.now() - t3) / 1000).toFixed(1)), baslangic_sn: ilkKare / FPS, sure_sn: SURE_LI, tepe_dbtp: sesLi.tepe };
+      tm.linkedin = { sn: Number(((Date.now() - t3) / 1000).toFixed(1)), kareler_sn: Number(karelerSn.toFixed(1)), duzen: "yatay", cozunurluk: `${LINKEDIN_DUZEN.w}x${LINKEDIN_DUZEN.h}`, baslangic_sn: ilkKare / FPS, sure_sn: SURE_LI, tepe_dbtp: sesLi.tepe };
     } catch (e) {
       linkedinHata = String(e?.message ?? e).slice(0, 300);
       try { fs.rmSync(linkedinOutPath, { force: true }); } catch { /* en iyi çaba */ }
       tm.linkedin = { hata: linkedinHata };
+    } finally {
+      if (!keepFrames) fs.rmSync(framesLi, { recursive: true, force: true });
     }
   }
-  if (!keepFrames) fs.rmSync(frames, { recursive: true, force: true });
   tm.toplam_sn = (Date.now() - t0) / 1000;
   tm.loudnorm_girdi_lufs = olcum.input_i;
   return { file: outPath, linkedinFile, linkedinHata, timings: tm, frames: total, seconds: SURE };

@@ -2,7 +2,7 @@
 //   node tools/dogrula.mjs <klasör>          (yerelde FFMPEG=<yol>; sunucuda: docker compose exec kart node tools/dogrula.mjs /tmp/sosyal/<gün>)
 // Şartlar: MP4/MOV · H.264 + AAC · 9:16 (1080x1920) · 23–60 fps · moov başta (faststart) ·
 //   hikâye ≤60 sn ve ≤100 MB · Reels 3 sn–15 dk (API'de 90 sn) ve ≤300 MB · kaynak hedefi: hikâye −18 LUFS, Reel −16 LUFS, tepe ≤ −1 dBFS.
-//   LinkedIn kesiti (`linkedin-*.mp4`, v6.327): LinkedIn Sayfa şartları 3 sn–10 dk · ≤500 MB (Videos API; Buffer ≤1 GB) · 1:2,4–2,4:1 (9:16 uyar) · H.264+AAC.
+//   LinkedIn kesiti (`linkedin-*.mp4`, v6.327): LinkedIn Sayfa şartları 3 sn–10 dk · ≤500 MB (Videos API; Buffer ≤1 GB) · 16:9 YATAY 1920x1080 (v6.331; Buffer 1280x720'ye kodlar) · H.264+AAC.
 //   carousel PNG (`carousel-*.png`): PNG imzası · 1080x1350 (4:5; Instagram 4:5–1,91:1 kabul eder, tüm slaytlar AYNI oranda) · ≤ 8 MB. ffmpeg GEREKMEZ (IHDR doğrudan okunur).
 // Çıkış kodu: tümü uygunsa 0, en az bir dosyada sorun varsa 1.
 import { spawn } from "node:child_process";
@@ -62,7 +62,8 @@ for (const f of files) {
   const sorunlar = [];
   if (v[1] !== "h264") sorunlar.push("video≠h264");
   if (a[1] !== "aac") sorunlar.push("ses≠aac");
-  if (v[2] !== "1080x1920") sorunlar.push("çözünürlük≠1080x1920");
+  const beklenenCoz = linkedin ? "1920x1080" : "1080x1920"; // v6.331: LinkedIn videosu 16:9 yatay
+  if (v[2] !== beklenenCoz) sorunlar.push("çözünürlük≠" + beklenenCoz);
   if (!(Number(v[3]) >= 23 && Number(v[3]) <= 60)) sorunlar.push("fps");
   if (!moovBasta) sorunlar.push("moov başta DEĞİL");
   if (hikaye ? (sure > 60 || mb > 100) : linkedin ? (sure < 3 || sure > 600 || mb > 500) : (sure < 3 || sure > 90 || mb > 300)) sorunlar.push("süre/boyut sınırı");
