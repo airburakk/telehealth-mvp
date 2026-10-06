@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { DoctoriumInline, DOCTORIUM_PALETTE } from "@/components/aura/doctorium-brand";
 import { ArrowLeft, Info, Inbox, GraduationCap, Stethoscope, AlertTriangle } from "lucide-react";
 import { memberTrialRow, type MemberCell, type MemberTone } from "@/lib/admin-member-trial";
+import { BRANCH_REMINDER_TYPE } from "@/lib/branch-reminder-copy";
+import { parseBranchPrefs } from "@/lib/doctorium";
 
 export const dynamic = "force-dynamic";
 // Sekme başlığı app/admin/layout.tsx şablonundan gelir ("%s · Doctorium") — AURA adı geçmez.
@@ -97,7 +99,7 @@ export default async function MemberAnalyticsPage() {
     db.user.groupBy({ by: ["role"], where: { deletedAt: null }, _count: { _all: true } }),
     db.user.findMany({
       where: { role: "DOCTOR", deletedAt: null, doctorId: { not: null } },
-      select: { doctorId: true, createdAt: true, name: true, email: true },
+      select: { id: true, doctorId: true, createdAt: true, name: true, email: true },
     }),
     db.user.groupBy({
       by: ["patientCountry"],
@@ -120,6 +122,7 @@ export default async function MemberAnalyticsPage() {
           studentUniversity: true, studentDepartment: true,
           // e-Devlet + deneme kolonları (2026-10-06): katman çözücüsü TierStamps'in dördünü de ister.
           trialEndsAt: true, trialAlertsSent: true, doctoriumOptOutAt: true,
+          newsBranches: true, // branş uyarısı: akış branşı seçen için uyarı gerekmez (lib/branch-reminder)
         },
       })
     : [];
@@ -129,7 +132,7 @@ export default async function MemberAnalyticsPage() {
   const byId = new Map(profiles.map((p) => [p.id, p]));
   const members = doctorUsers.flatMap((u) => {
     const p = u.doctorId ? byId.get(u.doctorId) : undefined;
-    return p ? [{ createdAt: u.createdAt, name: u.name, email: u.email, p }] : [];
+    return p ? [{ userId: u.id, createdAt: u.createdAt, name: u.name, email: u.email, p }] : [];
   });
   const orphanCount = doctorUsers.length - members.length;
 
@@ -225,9 +228,25 @@ export default async function MemberAnalyticsPage() {
     p.studentTrack
       ? p.studentVerifiedAt ? "Öğrenci · e-posta doğrulandı" : "Öğrenci · doğrulanmadı"
       : p.verified ? "Admin onaylı" : p.diplomaVerifiedAt ? "Diploma doğrulandı · admin onayı bekliyor" : "Kayıt oldu · belge bekleniyor";
+  // Branş uyarısı geçmişi (BRANCH_REMINDER bildirimleri) — durum kolonsuz, bildirim kayıtlarından türetilir.
+  const reminderRows = members.length
+    ? await db.notification.groupBy({
+        by: ["userId"],
+        where: { type: BRANCH_REMINDER_TYPE, userId: { in: members.map((m) => m.userId) } },
+        _count: { _all: true },
+        _max: { createdAt: true },
+      })
+    : [];
+  const reminderBy = new Map(reminderRows.map((r) => [r.userId, { count: r._count._all, last: r._max.createdAt }]));
   const allMembers = [...members]
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .map((m) => ({ ...m, t: memberTrialRow(m.p, now) }));
+    .map((m) => ({
+      ...m,
+      t: memberTrialRow(
+        { ...m.p, feedBranches: parseBranchPrefs(m.p.newsBranches).length > 0, branchReminder: reminderBy.get(m.userId) ?? null },
+        now,
+      ),
+    }));
   // "Dikkat" kutusu (revizyon v6.329, 👤: renkli uyarı görünmüyordu — eski eşik yalnız ≤7 gündü ve canlıdaki üç deneme
   // hesabı 20+ gün kalanlıydı). Üç grup: işleyen deneme (kalan güne göre, en az kalan önde) · süresi dolan · branşı
   // sınıflandırılmamış. Bir üye birden çok gruba girebilir (ör. deneme + branş).
@@ -342,7 +361,7 @@ export default async function MemberAnalyticsPage() {
                 <AttentionCard
                   tone="warning"
                   title="Branşı sınıflandırılmamış"
-                  note="Kayıtta “Diğer (Sınıflandırılmamış)” seçmiş, branşı boş ya da listede olmayan üyeler. Bu üyelere şu an OTOMATİK UYARI GİTMİYOR — yalnız bu panoda işaretlenir."
+                  note="Kayıtta “Diğer (Sınıflandırılmamış)” seçmiş, branşı boş ya da listede olmayan üyeler. Uyarı (portal bildirimi + e-posta) bir kez, 14 gün sonra bir kez daha gider; üye Tercihler'den branşını seçince durur."
                   empty="Hepsinin branşı sınıflandırılmış."
                   items={branchList.flatMap((m) => (m.t.branch ? [{ key: m.p.id, name: m.name, email: m.email, cell: m.t.branch, extra: m.t.branch.sub }] : []))}
                 />

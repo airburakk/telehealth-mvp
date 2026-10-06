@@ -12,9 +12,9 @@
 // (2 gün kala ilk koşumda yalnız "3" gider, "7" de işaretlenir). Dürüst gösterim kümedeki EN İLERİ anahtardır —
 // o her zaman gerçekten gönderilmiştir. Gönderim = portal bildirimi + (doğrulanmış adrese) e-posta.
 //
-// ⚠️ Branş uyarısı yalnız PANODA bir işarettir: "Diğer (Sınıflandırılmamış)" kayıt formlarında seçilebilen geçerli bir
-// seçenektir ve 2026-10-06 itibarıyla bu üyelere OTOMATİK bir uyarı GÖNDERİLMEZ (canlıda ölçüldü: "branş" içeren
-// bildirim 0). Metin bunu açıkça söyler; gönderim mekanizması kurulursa bu not ve hücre metni birlikte güncellenir.
+// Branş uyarısı (v6.330, 👤 2026-10-06): "Diğer (Sınıflandırılmamış)" kayıt formlarında seçilebilen bir seçenektir; bu
+// üyelere lib/branch-reminder bildirim + e-posta gönderir (bir kez + 14 gün sonra bir hatırlatma; Tercihler'de akış
+// branşı seçen ya da uzmanlık branşını düzelten için durur). Hücre gönderim durumunu bildirim kayıtlarından gösterir.
 //
 // Katman önceliği doctorium-tiers ile aynıdır (optOut > diploma > öğrenci > deneme); `now` dışarıdan gelir.
 
@@ -57,7 +57,14 @@ export interface MemberTrialRow {
   daysLeft: number | null;
 }
 
-export type MemberTrialInput = TierStamps & { trialAlertsSent: string | null; branch: string | null };
+export type MemberTrialInput = TierStamps & {
+  trialAlertsSent: string | null;
+  branch: string | null;
+  /** Tercihler'de akış branşı seçilmiş mi (newsBranches dolu) — doluysa branş uyarısı gerekmez. */
+  feedBranches?: boolean;
+  /** BRANCH_REMINDER bildirim geçmişi (sayfa sorgular); yoksa hiç gitmemiş. */
+  branchReminder?: { count: number; last: Date | null } | null;
+};
 
 const ALERT_ORDER = ["7", "3", "1", "ended", "purge-notice"] as const;
 const ALERT_LABEL: Record<(typeof ALERT_ORDER)[number], string> = {
@@ -119,11 +126,21 @@ export function memberTrialRow(p: MemberTrialInput, now: Date): MemberTrialRow {
     }
   }
 
-  const branch = branchIssue(p.branch);
+  const issue = branchIssue(p.branch);
+  const branch = issue ? { ...issue, sub: branchReminderStatus(p, audience) } : null;
   if (branch) reasons.push("branch");
 
   const alert = alertCell(p, audience, now);
   return { diploma, trial, branch, alert, reasons, daysLeft };
+}
+
+/** Branş uyarısının durumu — lib/branch-reminder ile AYNI koşullar (portal açık · akış branşı seçilmemiş). */
+function branchReminderStatus(p: MemberTrialInput, audience: ReturnType<typeof doctoriumAudience>): string {
+  const h = p.branchReminder;
+  const sentLine = h && h.count > 0 ? `uyarı gitti${h.last ? ` · ${dateTr(h.last)}` : ""} (${h.count}/2)` : null;
+  if (p.feedBranches) return sentLine ? `${sentLine} · akış branşı seçildi, durdu` : "akış branşı seçilmiş — uyarı gerekmiyor";
+  if (audience === "LOCKED" || audience === "NONE") return sentLine ?? "portal kapalı — uyarı gitmez";
+  return sentLine ?? "uyarı henüz gitmedi · ilk gönderim 10:20";
 }
 
 /** Son giden deneme uyarısı; yoksa sıradakinin tarihi (trial-sweep her gün 10:20 TR'de koşar). */
