@@ -12,6 +12,7 @@
 // (REEL_CTA). n8n "LinkedIn video (Buffer)" akışı kesiti arşive alıp Buffer'a verir; kesit üretilemezse reels-a'ya düşer.
 // v6.328 (2026-10-06): + POST /rubrik/render (lib/social-rubrik.mjs) — içerik takvimi önizlemesi (Karar masası vb. slaytları, 1080x1350 PNG).
 // Bearer SOCIAL_DIGEST_TOKEN doğrulaması bu uçta KARTTA yapılır (n8n köprüsü başlığı iletir); sosyal üretim sürerken 503. Mevcut uçlara dokunulmadı.
+// v6.331 (2026-10-06): LinkedIn videosu 16:9 YATAY tam render (lib/social-video.mjs reelHtml(…, "yatay"); ikinci Playwright geçişi) — Instagram Reel'i 9:16 kalır.
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";

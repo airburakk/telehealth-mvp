@@ -1,6 +1,7 @@
 // v6.320 — `infra/kart/` hikâye + Reels render servisi: saf yardımcılar (tipografi · Reel planı · şablon güvenliği), seçki doğrulaması,
 // tek-iş durum makinesi (SAHTE üretici + GERÇEK HTTP), dosya ucu güvenliği ve dağıtım sözleşmeleri (Dockerfile · varlık eşliği · lang="tr").
 // v6.323 — + kaydırmalı post (carousel) slaytları: şablon güvenliği · `renderCarousel` (sahte tarayıcı) · `gorseller` sözleşmesi (geriye uyumlu) · PNG dosya ucu · `kapsam.akislar`.
+// v6.331 — LinkedIn videosu 16:9 yatay: yatay şablon (CSS dışında dikeyle aynı belge) · LINKEDIN_DUZEN · kareleriBas aralık/abort.
 // ffmpeg/Chromium GEREKMEZ (üretici sahte); gerçek üretim sunucuda `tools/dogrula.mjs` ile Instagram şartlarına karşı doğrulanır.
 import { afterEach, describe, expect, it } from "vitest";
 import crypto from "node:crypto";
@@ -11,7 +12,7 @@ import type { AddressInfo } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { createSosyal, digestDogrula, dosyaAdiGecerli, dosyaMeta, gorselAdiGecerli, gorselMeta, gunGecerli, kapsamHesapla, linkedinAdiGecerli, linkedinMeta } from "../../infra/kart/lib/sosyal-isleri.mjs";
-import { LINKEDIN_BASLANGIC_SN, REEL_CTA, hikayeKareHtml, reelHtml, reelPlan, renderReelA, tipo } from "../../infra/kart/lib/social-video.mjs";
+import { LINKEDIN_BASLANGIC_SN, LINKEDIN_DUZEN, REEL_CTA, hikayeKareHtml, kareleriBas, reelHtml, reelPlan, renderReelA, tipo } from "../../infra/kart/lib/social-video.mjs";
 import { icerikSlaytHtml, kapanisSlaytHtml, renderCarousel } from "../../infra/kart/lib/social-carousel.mjs";
 
 const NBSP = String.fromCharCode(0xa0);
@@ -104,6 +105,28 @@ describe("şablon güvenliği", () => {
     expect(LINKEDIN_BASLANGIC_SN).toBe(1.7);
     expect(Math.abs(LINKEDIN_BASLANGIC_SN * 30 - Math.round(LINKEDIN_BASLANGIC_SN * 30))).toBeLessThan(1e-9);
     expect(Math.round(LINKEDIN_BASLANGIC_SN * 30)).toBe(51);
+  });
+
+  it("v6.331 — yatay LinkedIn şablonu: 1920×1080 tuval, punto tabanı 120/100/84, CSS dışında dikeyle AYNI belge (DOM + zaman çizelgesi), CTA var, 'bio' yok, kaçışlı; bilinmeyen düzen fırlatır", () => {
+    const d = digestOrnek(3);
+    d.items[0] = oge(1, { title: "Kısa <script>alert(1)</script>" });
+    d.items[1] = oge(2, { title: "O".repeat(70) });
+    d.items[2] = oge(3, { title: "U".repeat(120) });
+    const yatay = reelHtml(d, GRID, KURE, "yatay");
+    const dikey = reelHtml(d, GRID, KURE);
+    expect(yatay).toContain("width:1920px; height:1080px");
+    expect(yatay).not.toContain("width:1080px; height:1920px");
+    expect(dikey).toContain("width:1080px; height:1920px");
+    expect(yatay).toContain('<html lang="tr">');
+    expect(yatay).toContain(`<div class="cta" id="cta">${REEL_CTA}</div>`);
+    expect(yatay).not.toMatch(/\bbio\b/i);
+    expect(yatay).not.toContain("<script>alert");
+    expect(yatay).toMatch(/data-fs="120"[\s\S]*data-fs="100"[\s\S]*data-fs="84"/);
+    expect(dikey).toMatch(/data-fs="104"[\s\S]*data-fs="86"[\s\S]*data-fs="72"/);
+    const govde = (h: string) => h.replace(/<style>[\s\S]*?<\/style>/, "").replace(/data-fs="\d+"/g, "");
+    expect(govde(yatay)).toBe(govde(dikey));
+    expect(() => reelHtml(d, GRID, KURE, "kare")).toThrow(/düzen/);
+    expect(LINKEDIN_DUZEN).toEqual({ w: 1920, h: 1080 });
   });
 
   it("carousel içerik slaydı: başlık/kaynak/açıklama/akış/branş kaçışlıdır, lang=tr, açıklama = summaryLong, i/N, 1080x1350", () => {
@@ -715,6 +738,27 @@ describe("dayanıklılık", () => {
     const toplamKare = Math.round(reelPlan(digestOrnek(2), GRID).TOTAL_T * 30);
     expect(toplamKare).toBeGreaterThan(300);
     expect(b.sayac.ekranGoruntusu).toBeLessThan(toplamKare / 10); // üç işçi tüm kareleri basmadı
+  });
+
+  it("v6.331 — kareleriBas: [ilk, son) aralığını W işçiye böler, kare adları mutlak indeksli (yatay LinkedIn 51'den başlar), sayfalar kapanır", async () => {
+    const b = sahteTarayici();
+    const w = fs.mkdtempSync(path.join(os.tmpdir(), "kare-test-"));
+    temizlenecek.push(async () => { fs.rmSync(w, { recursive: true, force: true }); });
+    const adet = await kareleriBas({ browser: b, html: "<html></html>", viewport: { width: 1920, height: 1080 }, frames: path.join(w, "k"), ilk: 51, son: 60, workers: 3 });
+    expect(adet).toBe(9);
+    expect(b.sayac.ekranGoruntusu).toBe(9);
+    expect(fs.readdirSync(path.join(w, "k")).sort()).toEqual(["f0051.png", "f0052.png", "f0053.png", "f0054.png", "f0055.png", "f0056.png", "f0057.png", "f0058.png", "f0059.png"]);
+    expect(b.sayfalar).toHaveLength(3);
+    expect(b.sayfalar.every((s) => s.kapandi)).toBe(true);
+  });
+
+  it("v6.331 — kareleriBas: bir işçi düşerse hata fırlatılır, diğerleri durur, tüm sayfalar kapanır", async () => {
+    const b = sahteTarayici({ hataVerenIsci: 0 });
+    const w = fs.mkdtempSync(path.join(os.tmpdir(), "kare-test-"));
+    temizlenecek.push(async () => { fs.rmSync(w, { recursive: true, force: true }); });
+    await expect(kareleriBas({ browser: b, html: "<html></html>", viewport: { width: 1920, height: 1080 }, frames: path.join(w, "k"), ilk: 0, son: 300, workers: 3 })).rejects.toThrow(/screenshot patladı/);
+    expect(b.sayfalar.every((s) => s.kapandi)).toBe(true);
+    expect(b.sayac.ekranGoruntusu).toBeLessThan(100);
   });
 });
 
