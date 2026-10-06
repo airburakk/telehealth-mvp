@@ -52,6 +52,9 @@ terazi **güven** tarafına eğiktir.
 - **Çok dilli kapsam:** Inter **Kiril kapsar** (RU pazarı markalı) — Arapça hâlâ sistem fallback
   (bilinçli; Noto Sans Arabic yoldaş font kararı açık kalem). RTL ikon aynalaması (`[dir="rtl"]`) var.
 - **Yükleme:** `next/font/google` (Space Grotesk + Inter + JetBrains Mono), `subsets: ["latin","latin-ext"]`.
+  Değişken ailelerde (Space Grotesk dahil) `weight` VERİLMEZ — tam eksen aralığı istenir (Next belgesi: `weight` dizisi yalnız
+  değişken OLMAYAN aileler içindir). Ayrık `weight` dizisi Google'ın dinamik "kit" adresini tetikleyip Turbopack build'ini rastgele
+  kırar (2026-10-06 olayı, vercel/next.js#99114; nöbet `tests/unit/next-font-google-weight.test.ts`, ayrıntı `src/app/layout.tsx`).
 - **Ölçek:** hero 42→62px (responsive) · bölüm başlık 30→38px · alt başlık 21–27px · gövde 15–18px ·
   yardımcı 12.5–14px · etiket/caption 11–12px. Satır yüksekliği gövdede ~1.6.
 

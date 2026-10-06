@@ -21,7 +21,16 @@ const sans = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-sans", d
 // AURA'nın iç form sayfalarında geçer) root layout ortak olduğu için ikisi de preload ediliyordu
 // (6 WOFF2'nin 5'i). Arabic'teki aynı desen: preload:false → tarayıcı yalnız gerçek kullanım
 // anında (@font-face tetiklenince) çeker; above-the-fold artık yalnız Inter'i bekler.
-const serif = Space_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "600", "700"], variable: "--font-serif", display: "swap", preload: false });
+//
+// 🪤 `weight` DİZİSİ VERİLMEZ (2026-10-06 olayı): Space Grotesk değişken bir aile (wght 300–700). `weight` yoksa Next TAM EKSEN
+// ARALIĞI ister (`wght@300..700` → 3 @font-face, subset başına bir); dizi verilirse AYRIK KÜME ister (`wght@400;500;600;700` → 12
+// @font-face, aynı 3 woff2 dosyasına). Google ayrık kümeyi bazen dinamik "kit" hizmetinden UZANTISIZ `…/l/font?kit=…&skey=…&v=…`
+// adresleriyle yanıtlar ve Next 16.2.x Turbopack bu adresin `&`'ini sorgu ayracı sayıp BUILD'i kırar ("next/font/google queries have
+// exactly one entry" — vercel/next.js#99114, AÇIK; 16.2.12/16.3.6'da da var). Ölçüm (2026-10-06, Next'in kimliğiyle): ayrık istek
+// 7/562 dinamik, tam aralık istekleri 0/1734. Kırılma ÖNBELLEKTEN BAĞIMSIZ (16.2.7'de Turbopack build önbelleği kapalı; Vercel'de ~200
+// derlemede 1). Görünüm AYNI: aynı 3 woff2 dosyası; kodda ≤300 ağırlık istenmediği için 400–700 eşleşmesi ve 800/900→700 değişmez.
+// Nöbet: tests/unit/next-font-google-weight.test.ts (ayrık `weight` dizisini reddeder).
+const serif = Space_Grotesk({ subsets: ["latin", "latin-ext"], variable: "--font-serif", display: "swap", preload: false });
 const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-mono", display: "swap", preload: false });
 // Arapça/Farsça (v6.9): Inter/Space Grotesk/JetBrains Mono'nun HİÇBİRİ Arap alfabesini kapsamıyordu
 // → ar/fa denetimsiz sistem fallback'indeydi (tasarım sistemi kuralı: öncelikli RTL pazarları
