@@ -224,12 +224,18 @@ export default async function MemberAnalyticsPage() {
   const memberStatus = (p: (typeof members)[number]["p"]): string =>
     p.studentTrack
       ? p.studentVerifiedAt ? "Öğrenci · e-posta doğrulandı" : "Öğrenci · doğrulanmadı"
-      : p.verified ? "Admin onaylı" : p.diplomaVerifiedAt ? "Diploma doğrulandı · onay bekliyor" : "Kayıt oldu · belge bekleniyor";
+      : p.verified ? "Admin onaylı" : p.diplomaVerifiedAt ? "Diploma doğrulandı · admin onayı bekliyor" : "Kayıt oldu · belge bekleniyor";
   const allMembers = [...members]
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .map((m) => ({ ...m, t: memberTrialRow(m.p, now) }));
-  // Uyarı kutusu: denemesi 7 gün içinde bitecek ya da bitmiş (portalı kapalı, silinmeyi bekleyen) üyeler.
-  const attention = allMembers.filter((m) => m.t.needsAttention);
+  // "Dikkat" kutusu (revizyon v6.329, 👤: renkli uyarı görünmüyordu — eski eşik yalnız ≤7 gündü ve canlıdaki üç deneme
+  // hesabı 20+ gün kalanlıydı). Üç grup: işleyen deneme (kalan güne göre, en az kalan önde) · süresi dolan · branşı
+  // sınıflandırılmamış. Bir üye birden çok gruba girebilir (ör. deneme + branş).
+  const trialList = allMembers
+    .filter((m) => m.t.reasons.includes("trial") || m.t.reasons.includes("ending"))
+    .sort((a, b) => (a.t.daysLeft ?? 0) - (b.t.daysLeft ?? 0));
+  const lockedList = allMembers.filter((m) => m.t.reasons.includes("locked"));
+  const branchList = allMembers.filter((m) => m.t.reasons.includes("branch"));
 
   return (
     <>
@@ -313,29 +319,35 @@ export default async function MemberAnalyticsPage() {
             </div>
           </Section>
 
-          {attention.length > 0 && (
-            <div className="mt-6 rounded-2xl border border-[var(--c-warning)] bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)] px-4 py-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]">
-                <AlertTriangle size={15} className="text-[var(--c-warning)]" />
-                Deneme süresi uyarısı — {attention.length} üye
+          {(trialList.length > 0 || lockedList.length > 0 || branchList.length > 0) && (
+            <Section
+              title="Dikkat gerektiren üyeler"
+              hint="Deneme süresi işleyen, süresi dolan ve branşı sınıflandırılmamış üyeler. Ayrıntılar aşağıdaki listede aynı renklerle durur."
+            >
+              <div className="grid gap-3 lg:grid-cols-3">
+                <AttentionCard
+                  tone="info"
+                  title="Deneme süresi işliyor"
+                  note="30 günlük deneme — e-Devlet mezun belgesi paylaşılınca süre durur. Uyarılar 7, 3 ve 1 gün kala gider (portal bildirimi + e-posta)."
+                  empty="İşleyen deneme yok."
+                  items={trialList.map((m) => ({ key: m.p.id, name: m.name, email: m.email, cell: m.t.trial, extra: m.t.alert.sub ?? m.t.alert.text }))}
+                />
+                <AttentionCard
+                  tone="danger"
+                  title="Deneme süresi doldu"
+                  note="Portal kapalı. Bitimden 90 gün sonra, 30 gün önceden bildirimle hesap silinir."
+                  empty="Süresi dolan yok."
+                  items={lockedList.map((m) => ({ key: m.p.id, name: m.name, email: m.email, cell: m.t.trial, extra: m.t.alert.text }))}
+                />
+                <AttentionCard
+                  tone="warning"
+                  title="Branşı sınıflandırılmamış"
+                  note="Kayıtta “Diğer (Sınıflandırılmamış)” seçmiş, branşı boş ya da listede olmayan üyeler. Bu üyelere şu an OTOMATİK UYARI GİTMİYOR — yalnız bu panoda işaretlenir."
+                  empty="Hepsinin branşı sınıflandırılmış."
+                  items={branchList.flatMap((m) => (m.t.branch ? [{ key: m.p.id, name: m.name, email: m.email, cell: m.t.branch, extra: m.t.branch.sub }] : []))}
+                />
               </div>
-              <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">
-                Denemesi 7 gün içinde bitecek ya da bitmiş ve e-Devlet mezun belgesini henüz paylaşmamış üyeler. Süresi
-                dolanın portalı kapalıdır; bitimden 90 gün sonra, 30 gün önceden bildirim gönderilerek hesabı silinir.
-              </p>
-              <ul className="mt-2 space-y-1 text-sm">
-                {attention.map((m, i) => (
-                  <li key={`${m.p.id}-att-${i}`} className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="font-medium text-[var(--c-ink)]">{m.name}</span>
-                    <span className="text-xs text-[var(--c-ink-3)]">{m.email}</span>
-                    <span className="text-xs" style={{ color: toneColor(m.t.trial.tone) }}>
-                      {m.t.trial.text}{m.t.trial.sub ? ` · ${m.t.trial.sub}` : ""}
-                    </span>
-                    <span className="text-xs text-[var(--c-ink-3)]">· son uyarı: {m.t.alert.text}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            </Section>
           )}
 
           <Section
@@ -346,16 +358,13 @@ export default async function MemberAnalyticsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-[var(--c-surface)] text-[11px] uppercase tracking-wide text-[var(--c-ink-3)]">
                   <tr>
-                    <th className="px-3.5 py-2 text-left font-medium">Kayıt tarihi</th>
-                    <th className="px-3.5 py-2 text-left font-medium">Tür</th>
-                    <th className="px-3.5 py-2 text-left font-medium">Ad</th>
-                    <th className="px-3.5 py-2 text-left font-medium">E-posta</th>
-                    <th className="px-3.5 py-2 text-left font-medium">Şehir</th>
-                    <th className="px-3.5 py-2 text-left font-medium">Branş</th>
-                    <th className="px-3.5 py-2 text-left font-medium">Durum</th>
-                    <th className="px-3.5 py-2 text-left font-medium">e-Devlet mezun belgesi</th>
-                    <th className="px-3.5 py-2 text-left font-medium">Deneme süresi</th>
-                    <th className="px-3.5 py-2 text-left font-medium">Son uyarı</th>
+                    <th className="px-3 py-2 text-left font-medium">Kayıt</th>
+                    <th className="px-3 py-2 text-left font-medium">Üye</th>
+                    <th className="px-3 py-2 text-left font-medium">Şehir · Branş</th>
+                    <th className="px-3 py-2 text-left font-medium">Durum</th>
+                    <th className="px-3 py-2 text-left font-medium">e-Devlet belgesi</th>
+                    <th className="px-3 py-2 text-left font-medium">Deneme süresi</th>
+                    <th className="px-3 py-2 text-left font-medium">Uyarı</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--c-hairline)]">
@@ -375,23 +384,30 @@ export default async function MemberAnalyticsPage() {
                           background: demo ? "color-mix(in srgb, var(--c-warning) 9%, transparent)" : undefined,
                         }}
                       >
-                        <td className={`whitespace-nowrap px-3.5 py-2 ${ink}`}>
+                        <td className={`whitespace-nowrap px-3 py-2 align-top ${ink}`}>
                           {m.createdAt.toLocaleDateString("tr-TR")}
                           {demo && (
-                            <span className="aura-mono ml-2 text-[10px] uppercase tracking-[0.16em] text-[var(--c-warning)]">deneme</span>
+                            <div className="aura-mono text-[10px] uppercase tracking-[0.16em] text-[var(--c-warning)]">deneme hesabı</div>
                           )}
                         </td>
-                        <td className={`whitespace-nowrap px-3.5 py-2 ${ink}`}>{m.p.studentTrack ? "Öğrenci" : "Doktor"}</td>
-                        <td className={`px-3.5 py-2 font-medium ${strong}`}>{m.name}</td>
-                        <td className="px-3.5 py-2">
-                          <a href={`mailto:${m.email}`} className={`hover:underline ${demo ? "text-[var(--c-ink-3)]" : "text-[var(--c-accent)]"}`}>{m.email}</a>
+                        <td className="px-3 py-2 align-top">
+                          <div className={`font-medium ${strong}`}>{m.name}</div>
+                          <a href={`mailto:${m.email}`} className={`text-xs hover:underline ${demo ? "text-[var(--c-ink-3)]" : "text-[var(--c-accent)]"}`}>{m.email}</a>
+                          <div className="aura-mono text-[10px] uppercase tracking-[0.14em] text-[var(--c-ink-3)]">{m.p.studentTrack ? "Öğrenci" : "Doktor"}</div>
                         </td>
-                        <td className={`px-3.5 py-2 ${ink}`}>{m.p.city || "—"}</td>
-                        <td className={`px-3.5 py-2 ${ink}`}>{m.p.branch || "—"}</td>
-                        <td className={`whitespace-nowrap px-3.5 py-2 ${ink}`}>{memberStatus(m.p)}</td>
-                        <StatusCell cell={m.t.diploma} demo={demo} />
-                        <StatusCell cell={m.t.trial} demo={demo} />
-                        <StatusCell cell={m.t.alert} demo={demo} />
+                        <td className={`px-3 py-2 align-top text-xs ${ink}`}>
+                          <div>{m.p.city || "—"}</div>
+                          <div>{m.p.branch || "—"}</div>
+                        </td>
+                        <td className={`px-3 py-2 align-top text-xs ${ink}`}>{memberStatus(m.p)}</td>
+                        <td className="px-3 py-2 align-top"><Pill cell={m.t.diploma} /></td>
+                        <td className="px-3 py-2 align-top"><Pill cell={m.t.trial} /></td>
+                        <td className="px-3 py-2 align-top">
+                          <div className="flex flex-col items-start gap-1">
+                            {m.t.branch && <Pill cell={m.t.branch} />}
+                            <Pill cell={m.t.alert} />
+                          </div>
+                        </td>
                       </tr>
                     );
                   })}
@@ -513,22 +529,73 @@ export default async function MemberAnalyticsPage() {
   );
 }
 
-// Ton → tema token'ı (gece/gündüz duyarlı). "ok" başarı, "muted" soluk; kulvar rengi yüzeyi boyamaz.
+// Ton → tema token'ı (gece/gündüz duyarlı). Kulvar rengi yüzeyi BOYAMAZ (Aura UI kiti) — rozet = hafif zemin + renkli metin.
 function toneColor(tone: MemberTone): string {
   switch (tone) {
     case "ok": return "var(--c-success)";
+    case "info": return "var(--c-accent)";
     case "warning": return "var(--c-warning)";
     case "danger": return "var(--c-danger)";
     default: return "var(--c-ink-3)";
   }
 }
 
-function StatusCell({ cell, demo }: { cell: MemberCell; demo: boolean }) {
+function Pill({ cell }: { cell: MemberCell }) {
+  const c = toneColor(cell.tone);
+  const muted = cell.tone === "muted";
+  if (cell.text === "—") return <span className="text-xs text-[var(--c-ink-3)]">—</span>;
   return (
-    <td className="whitespace-nowrap px-3.5 py-2">
-      <div style={{ color: toneColor(cell.tone), opacity: demo ? 0.7 : 1 }}>{cell.text}</div>
-      {cell.sub && <div className="text-[11px] text-[var(--c-ink-3)]">{cell.sub}</div>}
-    </td>
+    <div>
+      <span
+        className="inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium"
+        style={{
+          color: c,
+          background: muted ? "transparent" : `color-mix(in srgb, ${c} 14%, transparent)`,
+          border: `1px solid ${muted ? "var(--c-hairline)" : `color-mix(in srgb, ${c} 45%, transparent)`}`,
+        }}
+      >
+        {cell.text}
+      </span>
+      {cell.sub && <div className="mt-0.5 text-[11px] leading-snug text-[var(--c-ink-3)]">{cell.sub}</div>}
+    </div>
+  );
+}
+
+function AttentionCard({ tone, title, note, empty, items }: {
+  tone: MemberTone;
+  title: string;
+  note: string;
+  empty: string;
+  items: { key: string; name: string; email: string; cell: MemberCell; extra: string | null }[];
+}) {
+  const c = toneColor(tone);
+  return (
+    <div
+      className="rounded-2xl border bg-[var(--c-panel)] p-3.5"
+      style={{ borderColor: `color-mix(in srgb, ${c} 45%, transparent)`, borderLeft: `3px solid ${c}` }}
+    >
+      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]">
+        <AlertTriangle size={14} style={{ color: c }} />
+        {title}
+        <span className="ml-auto text-lg font-bold" style={{ color: c }}>{items.length}</span>
+      </div>
+      <p className="mt-1 text-[11px] leading-relaxed text-[var(--c-ink-3)]">{note}</p>
+      {items.length === 0 ? (
+        <p className="mt-2 text-xs text-[var(--c-ink-3)]">{empty}</p>
+      ) : (
+        <ul className="mt-2 space-y-2">
+          {items.map((it) => (
+            <li key={it.key} className="text-sm">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-2">
+                <span className="font-medium text-[var(--c-ink)]">{it.name}</span>
+                <span className="text-xs font-semibold" style={{ color: toneColor(it.cell.tone) }}>{it.cell.text}</span>
+              </div>
+              <div className="text-[11px] text-[var(--c-ink-3)]">{it.email}{it.extra ? ` · ${it.extra}` : ""}</div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
