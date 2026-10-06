@@ -4,7 +4,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { DoctoriumInline, DOCTORIUM_PALETTE } from "@/components/aura/doctorium-brand";
-import { ArrowLeft, Info, Inbox, GraduationCap, Stethoscope } from "lucide-react";
+import { ArrowLeft, Info, Inbox, GraduationCap, Stethoscope, AlertTriangle } from "lucide-react";
+import { memberTrialRow, type MemberCell, type MemberTone } from "@/lib/admin-member-trial";
 
 export const dynamic = "force-dynamic";
 // Sekme başlığı app/admin/layout.tsx şablonundan gelir ("%s · Doctorium") — AURA adı geçmez.
@@ -77,6 +78,7 @@ const foldKey = (s: string) =>
 function timeWindows() {
   const now = Date.now();
   return {
+    now: new Date(now),
     w24: new Date(now - 24 * HOUR),
     w7: new Date(now - 7 * 24 * HOUR),
     w30: new Date(now - 30 * 24 * HOUR),
@@ -88,7 +90,7 @@ export default async function MemberAnalyticsPage() {
   if (!user) redirect("/");
   if (user.role !== "ADMIN") redirect("/doktor/doctorium");
 
-  const { w24, w7, w30 } = timeWindows();
+  const { now, w24, w7, w30 } = timeWindows();
 
   // deletedAt: null her sorguda — silinmiş hesap (KVKK kabuğu) üye sayılmaz.
   const [roleGroups, doctorUsers, patientCountries, win24, win7, win30] = await Promise.all([
@@ -116,6 +118,8 @@ export default async function MemberAnalyticsPage() {
           diplomaVerifiedAt: true, activatedAt: true,
           studentTrack: true, studentVerifiedAt: true,
           studentUniversity: true, studentDepartment: true,
+          // e-Devlet + deneme kolonları (2026-10-06): katman çözücüsü TierStamps'in dördünü de ister.
+          trialEndsAt: true, trialAlertsSent: true, doctoriumOptOutAt: true,
         },
       })
     : [];
@@ -221,14 +225,18 @@ export default async function MemberAnalyticsPage() {
     p.studentTrack
       ? p.studentVerifiedAt ? "Öğrenci · e-posta doğrulandı" : "Öğrenci · doğrulanmadı"
       : p.verified ? "Admin onaylı" : p.diplomaVerifiedAt ? "Diploma doğrulandı · onay bekliyor" : "Kayıt oldu · belge bekleniyor";
-  const allMembers = [...members].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const allMembers = [...members]
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .map((m) => ({ ...m, t: memberTrialRow(m.p, now) }));
+  // Uyarı kutusu: denemesi 7 gün içinde bitecek ya da bitmiş (portalı kapalı, silinmeyi bekleyen) üyeler.
+  const attention = allMembers.filter((m) => m.t.needsAttention);
 
   return (
     <>
       {/* DOCTORIUM_PALETTE kökte: marka lockup'ının (--dl-ink / --dl-emerald) bu sayfada da
           doğru renklenmesi için — palet landing dışında tanımlı değildir, DoctoriumFooter de
           aynı sebeple kendi köküne uygular. Sayfanın --c-* tema renklerine dokunmaz. */}
-      <div style={DOCTORIUM_PALETTE} className="mx-auto max-w-4xl px-5 py-10">
+      <div style={DOCTORIUM_PALETTE} className="mx-auto max-w-6xl px-5 py-10">
         <Link href="/admin" className="inline-flex items-center gap-1.5 text-sm text-[var(--c-ink-2)] hover:text-[var(--c-ink)]">
           <ArrowLeft size={15} /> Yönetim
         </Link>
@@ -305,9 +313,34 @@ export default async function MemberAnalyticsPage() {
             </div>
           </Section>
 
+          {attention.length > 0 && (
+            <div className="mt-6 rounded-2xl border border-[var(--c-warning)] bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)] px-4 py-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[var(--c-ink)]">
+                <AlertTriangle size={15} className="text-[var(--c-warning)]" />
+                Deneme süresi uyarısı — {attention.length} üye
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-[var(--c-ink-2)]">
+                Denemesi 7 gün içinde bitecek ya da bitmiş ve e-Devlet mezun belgesini henüz paylaşmamış üyeler. Süresi
+                dolanın portalı kapalıdır; bitimden 90 gün sonra, 30 gün önceden bildirim gönderilerek hesabı silinir.
+              </p>
+              <ul className="mt-2 space-y-1 text-sm">
+                {attention.map((m, i) => (
+                  <li key={`${m.p.id}-att-${i}`} className="flex flex-wrap items-baseline gap-x-2">
+                    <span className="font-medium text-[var(--c-ink)]">{m.name}</span>
+                    <span className="text-xs text-[var(--c-ink-3)]">{m.email}</span>
+                    <span className="text-xs" style={{ color: toneColor(m.t.trial.tone) }}>
+                      {m.t.trial.text}{m.t.trial.sub ? ` · ${m.t.trial.sub}` : ""}
+                    </span>
+                    <span className="text-xs text-[var(--c-ink-3)]">· son uyarı: {m.t.alert.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <Section
             title="Tüm üyeler"
-            hint="Onaylı ve onay bekleyen HERKES — Doktor Doğrulama Onayı sayfası yalnız bekleyenleri gösterir, onaylanınca oradan düşer. En yeni üye en üstte. Kehribar şeritli soluk satırlar 06.09.2026 ve öncesinde açılan deneme hesaplarıdır (öğrenci test kaydı dahil); sonrası normal kayıttır."
+            hint="Onaylı ve onay bekleyen HERKES — Doktor Doğrulama Onayı sayfası yalnız bekleyenleri gösterir, onaylanınca oradan düşer. En yeni üye en üstte. Kehribar şeritli soluk satırlar 06.09.2026 ve öncesinde açılan deneme hesaplarıdır (öğrenci test kaydı dahil); sonrası normal kayıttır. e-Devlet kolonu mezun belgesiyle diplomanın doğrulanıp doğrulanmadığını; Deneme kolonu 30 günlük deneme üyeliğinin kalan gününü; Son uyarı kolonu üyeye giden en son hatırlatmayı (portal bildirimi + e-posta) gösterir."
           >
             <div className="overflow-x-auto rounded-2xl border border-[var(--c-hairline)]">
               <table className="w-full text-sm">
@@ -320,6 +353,9 @@ export default async function MemberAnalyticsPage() {
                     <th className="px-3.5 py-2 text-left font-medium">Şehir</th>
                     <th className="px-3.5 py-2 text-left font-medium">Branş</th>
                     <th className="px-3.5 py-2 text-left font-medium">Durum</th>
+                    <th className="px-3.5 py-2 text-left font-medium">e-Devlet mezun belgesi</th>
+                    <th className="px-3.5 py-2 text-left font-medium">Deneme süresi</th>
+                    <th className="px-3.5 py-2 text-left font-medium">Son uyarı</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--c-hairline)]">
@@ -353,6 +389,9 @@ export default async function MemberAnalyticsPage() {
                         <td className={`px-3.5 py-2 ${ink}`}>{m.p.city || "—"}</td>
                         <td className={`px-3.5 py-2 ${ink}`}>{m.p.branch || "—"}</td>
                         <td className={`whitespace-nowrap px-3.5 py-2 ${ink}`}>{memberStatus(m.p)}</td>
+                        <StatusCell cell={m.t.diploma} demo={demo} />
+                        <StatusCell cell={m.t.trial} demo={demo} />
+                        <StatusCell cell={m.t.alert} demo={demo} />
                       </tr>
                     );
                   })}
@@ -471,6 +510,25 @@ export default async function MemberAnalyticsPage() {
       )}
       </div>
     </>
+  );
+}
+
+// Ton → tema token'ı (gece/gündüz duyarlı). "ok" başarı, "muted" soluk; kulvar rengi yüzeyi boyamaz.
+function toneColor(tone: MemberTone): string {
+  switch (tone) {
+    case "ok": return "var(--c-success)";
+    case "warning": return "var(--c-warning)";
+    case "danger": return "var(--c-danger)";
+    default: return "var(--c-ink-3)";
+  }
+}
+
+function StatusCell({ cell, demo }: { cell: MemberCell; demo: boolean }) {
+  return (
+    <td className="whitespace-nowrap px-3.5 py-2">
+      <div style={{ color: toneColor(cell.tone), opacity: demo ? 0.7 : 1 }}>{cell.text}</div>
+      {cell.sub && <div className="text-[11px] text-[var(--c-ink-3)]">{cell.sub}</div>}
+    </td>
   );
 }
 
