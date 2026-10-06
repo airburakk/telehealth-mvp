@@ -12,6 +12,8 @@ import { SLIDE_ROLE_LABEL, type SeriesDef } from "@/lib/social-calendar/series";
 import { skeletonPayload } from "@/lib/social-calendar/skeleton";
 import { STATUS_LABEL, isEditable } from "@/lib/social-calendar/status";
 import { AuraPanel } from "@/components/ui/AuraPanel";
+import { PublishPanel } from "./PublishPanel";
+import { BTN_DANGER, BTN_PRIMARY, BTN_SECOND, INPUT, api, fmt, type ApiResult, type Flash, type PickStats } from "./client-shared";
 
 // İçerik takvimi yuva editörü (v6.328, 2026-10-06). Tek uç: /api/admin/icerik-takvimi (action alanı). Kaydet → kapı raporu güncellenir; Onayla yalnız
 // KAYDEDİLMİŞ taslakta açılır (ekrandaki ile onaylanan aynı içerik olsun). Her yazma `version` taşır (iyimser eşzamanlılık): 409 → "Sayfayı yenile".
@@ -25,31 +27,6 @@ interface Draft {
   note: string;
   attest: boolean;
 }
-
-interface PickStats {
-  total: number;
-  eligible: number;
-  rejected: Partial<Record<RejectCode, number>>;
-}
-
-interface ApiResult {
-  ok: boolean;
-  status: number;
-  error?: string;
-  item?: PlanItemView;
-  report?: GateReport;
-  stats?: PickStats;
-  slides?: RenderedSlide[];
-}
-
-type Flash = { kind: "ok" | "err"; text: string } | null;
-
-const INPUT =
-  "w-full rounded-lg border border-[var(--c-hairline)] bg-[var(--c-surface)] px-3 py-2 text-sm text-[var(--c-ink)] outline-none placeholder:text-[var(--c-ink-3)] focus:border-[var(--c-accent)] disabled:cursor-not-allowed disabled:opacity-60";
-const BTN = "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50";
-const BTN_PRIMARY = `${BTN} bg-[var(--c-accent)] text-[var(--c-bg)] hover:bg-[var(--c-accent-strong)]`;
-const BTN_SECOND = `${BTN} border border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:border-[var(--c-accent)] hover:text-[var(--c-accent)]`;
-const BTN_DANGER = `${BTN} border border-[var(--c-danger)]/50 text-[var(--c-danger)] hover:bg-[var(--c-danger)]/10`;
 
 function draftFromItem(item: PlanItemView, series: SeriesDef): Draft {
   const p = item.payload ?? skeletonPayload(series);
@@ -67,19 +44,6 @@ function toPayload(d: Draft, item: PlanItemView) {
     ...(item.payload?.meta ? { meta: item.payload.meta } : {}),
   };
 }
-
-async function api(body: object): Promise<ApiResult> {
-  try {
-    const res = await fetch("/api/admin/icerik-takvimi", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const data = (await res.json().catch(() => ({}))) as Omit<ApiResult, "ok" | "status">;
-    return { ok: res.ok, status: res.status, ...data };
-  } catch {
-    return { ok: false, status: 0, error: "Sunucuya ulaşılamadı — bağlantınızı kontrol edin." };
-  }
-}
-
-// Sunucu/istemci aynı biçimi üretsin (hidrasyon farkı olmasın): Türkiye saati, sabit seçenekler.
-const fmt = (iso: string) => new Intl.DateTimeFormat("tr-TR", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Istanbul" }).format(new Date(iso));
 
 const rowsFor = (s: string, min = 3, max = 12) => Math.min(max, Math.max(min, Math.ceil(s.length / 70) + 1));
 
@@ -148,7 +112,7 @@ export function SlotEditor({ initial, series }: { initial: PlanItemView; series:
   const approve = () =>
     run("approve", { action: "approve" }, (r) => {
       if (r.item) adopt(r.item);
-      setFlash({ kind: "ok", text: "Onaylandı. Yayın hattı (Faz 3) devreye girene dek içerik yayınlanmaz." });
+      setFlash({ kind: "ok", text: "Onaylandı. Otomatik yayın hattı henüz yok — “Yayın” bölümünden PNG’leri indirip elle paylaşabilirsiniz." });
     });
 
   const unapprove = () =>
@@ -244,6 +208,9 @@ export function SlotEditor({ initial, series }: { initial: PlanItemView; series:
           )}
         </div>
       )}
+
+      {/* ── Yayın (v6.332): onaylı içeriği elle paylaş · yayınlandı işaretle · hatada yeniden dene ───────────────── */}
+      <PublishPanel item={item} series={series} dirty={dirty} busy={busy} run={run} adopt={adopt} notify={setFlash} />
 
       {/* ── Kaynak (yalnız üreticili rubrik) ─────────────────────────────────────────────── */}
       {series.generator && (

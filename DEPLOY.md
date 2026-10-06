@@ -255,9 +255,9 @@ npx tsx scripts/translate-legal.ts --lang=Rusça   # tek dil
 2. **`kart` servisi (Hetzner):** `POST /rubrik/render` ucu `infra/kart/server.mjs` ile gelir → `infra/kart/README.md` dağıtım adımları (07:40–07:55 TR DIŞINDA; yol sınırlı `git archive` + CR=0 denetimi). Sunucu güncellenmeden önizleme çalışmaz;
    takvimin geri kalanı çalışır.
 3. **n8n köprüsü (👤 onaylı — kalıcı webhook yapılandırması):** `output/n8n-akislari/n8n_rubrik_kopru.py` (`APPLY=1 N8N_KEY_FILE=<yol>`); yürütme kaydı KAPALI (Authorization başlığı n8n'e yazılmaz). Çıkan webhook adresi vault'ta `rubrik-kopru-adres.txt`.
-4. **Vercel env (iki projede AYRI):** `RUBRIK_RENDER_URL` = köprü adresi (`SOCIAL_DIGEST_TOKEN` zaten var — `/api/social-digest` ile ortak; **ikisi aynı projede dolu olmalı**). Yoksa önizleme 503 "yapılandırılmamış" verir (dormant).
+4. **Vercel env (YALNIZ `doctorium` projesi):** `RUBRIK_RENDER_URL` = köprü adresi (`SOCIAL_DIGEST_TOKEN` zaten var — `/api/social-digest` ile ortak; **ikisi aynı projede dolu olmalı**; `SOCIAL_DIGEST_TOKEN` yalnız `doctorium`'da tanımlıdır, AURA projesine eklemek işe yaramaz — `vercel env ls production` ile ölçüldü, 2026-10-06). Env yalnız YENİ yayında etkinleşir → yeniden yayın gerekir. Yoksa önizleme 503 "yapılandırılmamış" verir (dormant).
 5. **Doğrulama:** önce jetonsuz `curl -s -o /dev/null -w "%{http_code}" -X POST -d "{}" <köprü adresi>` → **401** (kart jetonsuz isteği reddeder); sonra yönetici oturumuyla `/admin/icerik-takvimi` → yuva aç → önizlemeyi çiz → 7 PNG.
-   Yayın hattı (Faz 3) henüz YOK: onaylanan içerik yayınlanmaz.
+   Yayın hattı (otomasyon, n8n — Faz 3) henüz YOK: onaylanan içerik ELLE paylaşılır (v6.332: yuva ekranında PNG ZIP indir · altyazı kopyala · "elle yayınlandı" işareti; migration/env GEREKMEZ).
 
 ## Adım 3 — GitHub'a gönder
 

@@ -15,6 +15,7 @@ import { evaluateGates, type GateReport } from "./gates";
 import { buildKararDraft, pickKararCandidates, type KararCandidate, type PickContext, type PickResult } from "./karar";
 import { LIMITS } from "./limits";
 import { applyEditorNote, noteFromPayload, normalizePayload, parsePayload, payloadHash, type PlanPayload } from "./payload";
+import { MAX_ERROR_LEN, normalizeChannels, parsePublication, type Publication } from "./publication";
 import { renderRubrik } from "./render-client";
 import { isDayString, seriesByKey, slotMatchesSeries, slotsOfWeek, type SeriesDef, type SeriesKey } from "./series";
 import { skeletonPayload } from "./skeleton";
@@ -64,6 +65,10 @@ export interface PlanItemView {
   approvedBy: string | null;
   /** Onaylı + kayıtlı hash ile içerik hash'i eşleşiyor mu (yayın hattının kullanacağı bütünlük bilgisi). */
   approvedIntact: boolean;
+  /** Yayınlandı olarak işaretlendiği an (PUBLISHED). */
+  publishedAt: string | null;
+  /** `publishedRefs`'ten: PUBLISHED'da kanallar + bağlantılar, FAILED'da hata notu; bozuk kayıt → null. */
+  publication: Publication | null;
   /** İyimser eşzamanlılık belirteci (= updatedAt ISO). Her yazma bunu geri yollar. */
   version: string;
 }
@@ -106,11 +111,16 @@ function parseGateReport(s: string | null | undefined): GateReport | null {
   }
 }
 
-/** Onaylı satırın yayın-bütünlüğü: APPROVED + kayıtlı hash == içeriğin şimdiki hash'i. */
-export function isApprovedIntact(row: { status: string; payload: string | null; approvedHash: string | null }): boolean {
-  if (row.status !== "APPROVED" || !row.approvedHash) return false;
+/** Onay mührü içerikle eşleşiyor mu: kayıtlı hash == içeriğin şimdiki hash'i (durumdan BAĞIMSIZ — FAILED yeniden denemesi de bunu sorar). */
+function sealMatches(row: { payload: string | null; approvedHash: string | null }): boolean {
+  if (!row.approvedHash) return false;
   const p = parsePayload(row.payload);
   return !!p && payloadHash(p) === row.approvedHash;
+}
+
+/** Onaylı satırın yayın-bütünlüğü: APPROVED + kayıtlı hash == içeriğin şimdiki hash'i. */
+export function isApprovedIntact(row: { status: string; payload: string | null; approvedHash: string | null }): boolean {
+  return row.status === "APPROVED" && sealMatches(row);
 }
 
 export function toView(row: Row): PlanItemView {
@@ -129,6 +139,8 @@ export function toView(row: Row): PlanItemView {
     approvedAt: row.approvedAt?.toISOString() ?? null,
     approvedBy: row.approvedBy ?? null,
     approvedIntact: isApprovedIntact(row),
+    publishedAt: row.publishedAt?.toISOString() ?? null,
+    publication: parsePublication(row.publishedRefs),
     version: row.updatedAt.toISOString(),
   };
 }
@@ -264,7 +276,9 @@ type Actor = { actor: SessionUser; ip?: string | null; userAgent?: string | null
 /** Onay mührü alanlarını temizleme yaması (onay düştüğünde). */
 const CLEAR_APPROVAL = { approvedAt: null, approvedById: null, approvedBy: null, approvedHash: null } as const;
 
-async function auditPlan(a: Actor, action: "CONTENT_PLAN_APPROVE" | "CONTENT_PLAN_UNAPPROVE" | "CONTENT_PLAN_SKIP", row: Row, detail: string): Promise<void> {
+type PlanAuditAction = "CONTENT_PLAN_APPROVE" | "CONTENT_PLAN_UNAPPROVE" | "CONTENT_PLAN_SKIP" | "CONTENT_PLAN_PUBLISH" | "CONTENT_PLAN_PUBLISH_FAIL" | "CONTENT_PLAN_RETRY";
+
+async function auditPlan(a: Actor, action: PlanAuditAction, row: Row, detail: string): Promise<void> {
   await recordAccess({
     actor: a.actor,
     action,
@@ -408,7 +422,9 @@ export async function skip(input: { id: string; expectedVersion: string } & Acto
   const row = await mustGet(input.id);
   if (nextStatus(row.status as PlanStatus, "skip") === null) throw new PlanError("Bu yuva atlanamaz.", 409);
   const wasApproved = row.status === "APPROVED";
-  const view = await casUpdate(row, parseVersion(input.expectedVersion), ["PLANNED", "DRAFT", "APPROVED", "FAILED"], { status: "SKIPPED", ...CLEAR_APPROVAL });
+  // hatalı yayından atlanırsa eski hata notu da gider (geri alınınca bayat `publishedRefs` taşınmasın)
+  const clearFailure = row.status === "FAILED" ? { publishedRefs: null } : {};
+  const view = await casUpdate(row, parseVersion(input.expectedVersion), ["PLANNED", "DRAFT", "APPROVED", "FAILED"], { status: "SKIPPED", ...CLEAR_APPROVAL, ...clearFailure });
   await auditPlan(input, "CONTENT_PLAN_SKIP", row, wasApproved ? "onay düştü" : "atlandı");
   return view;
 }
@@ -418,6 +434,63 @@ export async function restore(input: { id: string; expectedVersion: string } & A
   const target = nextStatus(row.status as PlanStatus, "restore", { hasPayload: !!parsePayload(row.payload) });
   if (target === null) throw new PlanError("Yalnız atlanmış yuva geri alınabilir.", 409);
   return casUpdate(row, parseVersion(input.expectedVersion), ["SKIPPED"], { status: target });
+}
+
+// ── Yayın durumu (v6.332, 2026-10-06) ────────────────────────────────────────────────────────────────
+
+const actorLabel = (a: Actor): string => a.actor.name?.trim() || a.actor.email;
+
+/** Hata notu: denetim karakterleri atılır, tek satıra indirilir, ≤ MAX_ERROR_LEN (otomasyonun ham hata metni kayda taşmasın). */
+function cleanError(s: string): string {
+  const flat = Array.from(s)
+    .map((ch) => (ch.charCodeAt(0) < 32 || ch.charCodeAt(0) === 127 ? " " : ch))
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
+  return flat.slice(0, MAX_ERROR_LEN) || "Bilinmeyen hata";
+}
+
+/**
+ * Yayınlandı olarak işaretle: APPROVED → PUBLISHED (TERMİNAL — yayınlanmış içerik değiştirilemez, geri alınamaz).
+ * `manual` (varsayılan true): editör içeriği elle paylaşıp kanal/bağlantıyı bildirdi; `manual:false`: otomasyon (Faz 3).
+ * Onay mührü sağlam değilse REDDEDİLİR: "yayınlanan = onaylanan" garantisi bu işaretin anlamıdır.
+ */
+export async function markPublished(input: { id: string; expectedVersion: string; channels: unknown; manual?: boolean } & Actor): Promise<PlanItemView> {
+  const row = await mustGet(input.id);
+  if (nextStatus(row.status as PlanStatus, "publish-ok") === null) throw new PlanError("Yalnız onaylı içerik yayınlandı olarak işaretlenebilir.", 409);
+  const version = parseVersion(input.expectedVersion);
+  const ch = normalizeChannels(input.channels);
+  if (!ch.ok) throw new PlanError(ch.error);
+  if (!isApprovedIntact(row)) throw new PlanError("İçerik onay mührüyle eşleşmiyor — yeniden onaylayın; yayınlandı olarak işaretlenemez.", 409);
+
+  const manual = input.manual !== false;
+  const now = new Date();
+  const pub: Publication = { v: 1, manual, channels: ch.channels, by: actorLabel(input), at: now.toISOString() };
+  const view = await casUpdate(row, version, ["APPROVED"], { status: "PUBLISHED", publishedAt: now, publishedRefs: JSON.stringify(pub) });
+  await auditPlan(input, "CONTENT_PLAN_PUBLISH", row, `${manual ? "elle" : "otomatik"}·${ch.channels.map((c) => c.channel).join(",")}`);
+  return view;
+}
+
+/** Yayın denemesi başarısız (otomasyon, Faz 3): APPROVED → FAILED; onay mührü KORUNUR (yeniden denenebilir), hata notu `publishedRefs`'e yazılır. */
+export async function markPublishFailed(input: { id: string; expectedVersion: string; error: string } & Actor): Promise<PlanItemView> {
+  const row = await mustGet(input.id);
+  if (nextStatus(row.status as PlanStatus, "publish-fail") === null) throw new PlanError("Yalnız onaylı içerik için yayın hatası bildirilebilir.", 409);
+  const version = parseVersion(input.expectedVersion);
+  const pub: Publication = { v: 1, manual: false, channels: [], at: new Date().toISOString(), error: cleanError(input.error) };
+  const view = await casUpdate(row, version, ["APPROVED"], { status: "FAILED", publishedRefs: JSON.stringify(pub) });
+  await auditPlan(input, "CONTENT_PLAN_PUBLISH_FAIL", row, "yayın hatası");
+  return view;
+}
+
+/** Hatalı yayını yeniden dene: FAILED → APPROVED (hata notu temizlenir). Mühür içerikle eşleşmiyorsa reddedilir. */
+export async function retryPublish(input: { id: string; expectedVersion: string } & Actor): Promise<PlanItemView> {
+  const row = await mustGet(input.id);
+  if (nextStatus(row.status as PlanStatus, "retry") === null) throw new PlanError("Yeniden denenecek yayın hatası yok.", 409);
+  const version = parseVersion(input.expectedVersion);
+  if (!sealMatches(row)) throw new PlanError("İçerik onay mührüyle eşleşmiyor — yeniden denenemez; yuvayı atlayıp yeniden hazırlayın.", 409);
+  const view = await casUpdate(row, version, ["FAILED"], { status: "APPROVED", publishedRefs: null });
+  await auditPlan(input, "CONTENT_PLAN_RETRY", row, "yeniden denenecek");
+  return view;
 }
 
 // ── Önizleme (yazma YOK) ─────────────────────────────────────────────────────────────────────────────

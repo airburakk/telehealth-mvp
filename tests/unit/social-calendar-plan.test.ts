@@ -122,9 +122,12 @@ import {
   getItem,
   isApprovedIntact,
   listWeek,
+  markPublishFailed,
+  markPublished,
   openSlot,
   pickSource,
   restore,
+  retryPublish,
   saveDraft,
   skip,
   unapprove,
@@ -406,5 +409,129 @@ describe("skip / restore", () => {
     await expect(saveDraft({ id: v.id, expectedVersion: sk.version, editorNote: NOTE, ...A })).rejects.toMatchObject({ status: 409 });
     await expect(pickSource({ id: v.id, articleId: "a2", expectedVersion: sk.version, ...A })).rejects.toMatchObject({ status: 409 });
     await expect(computeCandidates({ id: v.id })).rejects.toMatchObject({ status: 409 });
+  });
+});
+
+describe("yayın durumu (v6.332)", () => {
+  async function approved() {
+    const v = await draftedKarar();
+    const r = await saveDraft({ id: v.id, expectedVersion: v.version, editorNote: NOTE, attestIdentity: true, ...A });
+    return approve({ id: r.id, expectedVersion: r.version, ...A });
+  }
+  const IG = [{ channel: "instagram", url: "https://www.instagram.com/p/ABC/" }];
+
+  it("elle yayınlandı: APPROVED → PUBLISHED; kanal/bağlantı/işaretleyen/zaman kaydedilir; audit'e KANAL adı yazılır (bağlantı değil)", async () => {
+    const a = await approved();
+    const p = await markPublished({ id: a.id, expectedVersion: a.version, channels: [...IG, { channel: "linkedin" }], ...A });
+    expect(p.status).toBe("PUBLISHED");
+    expect(p.publishedAt).toBeTruthy();
+    expect(p.publication).toMatchObject({ v: 1, manual: true, by: "Yönetici", channels: [{ channel: "instagram", url: "https://www.instagram.com/p/ABC/" }, { channel: "linkedin" }] });
+    expect(p.approvedBy).toBe("Yönetici"); // kim onayladı bilgisi yayından sonra da KALIR
+    expect(state.audits.at(-1)).toMatchObject({ action: "CONTENT_PLAN_PUBLISH", detail: "karar-masasi·2026-10-07·elle·instagram,linkedin" });
+    expect(JSON.stringify(state.audits)).not.toContain("instagram.com");
+  });
+
+  it("yayınlanmış içerik TERMİNALDİR: düzenlenemez, kaynak değişmez, onay kaldırılamaz, atlanamaz, tekrar yayınlanamaz", async () => {
+    const a = await approved();
+    const p = await markPublished({ id: a.id, expectedVersion: a.version, channels: IG, ...A });
+    await expect(saveDraft({ id: a.id, expectedVersion: p.version, editorNote: `${NOTE}\n4) ek`, ...A })).rejects.toMatchObject({ status: 409 });
+    await expect(pickSource({ id: a.id, articleId: "a2", expectedVersion: p.version, ...A })).rejects.toMatchObject({ status: 409 });
+    await expect(unapprove({ id: a.id, expectedVersion: p.version, ...A })).rejects.toMatchObject({ status: 409 });
+    await expect(skip({ id: a.id, expectedVersion: p.version, ...A })).rejects.toMatchObject({ status: 409 });
+    await expect(markPublished({ id: a.id, expectedVersion: p.version, channels: IG, ...A })).rejects.toMatchObject({ status: 409 });
+    await expect(retryPublish({ id: a.id, expectedVersion: p.version, ...A })).rejects.toMatchObject({ status: 409 });
+    expect((await getItem(a.id))?.status).toBe("PUBLISHED");
+  });
+
+  it("yalnız ONAYLI içerik işaretlenir: taslak ve planlı yuva 409, audit yazılmaz", async () => {
+    const draft = await draftedKarar();
+    await expect(markPublished({ id: draft.id, expectedVersion: draft.version, channels: IG, ...A })).rejects.toMatchObject({ status: 409 });
+    const planned = await openSlot({ seriesKey: "karar-masasi", slotDay: "2026-10-14" });
+    await expect(markPublished({ id: planned.id, expectedVersion: planned.version, channels: IG, ...A })).rejects.toMatchObject({ status: 409 });
+    expect(state.audits).toEqual([]);
+  });
+
+  it("kanal doğrulaması: boş/bilinmeyen/tekrarlı kanal ve https dışı bağlantı 400 — durum ve audit DEĞİŞMEZ", async () => {
+    const a = await approved();
+    for (const channels of [[], undefined, [{ channel: "tiktok" }], [{ channel: "x" }, { channel: "x" }], [{ channel: "x", url: "http://x.com/1" }], [{ channel: "x", url: "javascript:alert(1)" }]]) {
+      await expect(markPublished({ id: a.id, expectedVersion: a.version, channels, ...A })).rejects.toMatchObject({ status: 400 });
+    }
+    expect((await getItem(a.id))?.status).toBe("APPROVED");
+    expect(state.audits.map((x) => x.action)).toEqual(["CONTENT_PLAN_APPROVE"]);
+  });
+
+  it("iyimser eşzamanlılık: eski sürüm PlanConflict, eksik/bozuk sürüm 400; veri değişmez", async () => {
+    const a = await approved();
+    await computeCandidates({ id: a.id }); // updatedAt ilerler (başka sekme gibi)
+    await expect(markPublished({ id: a.id, expectedVersion: a.version, channels: IG, ...A })).rejects.toBeInstanceOf(PlanConflict);
+    await expect(markPublished({ id: a.id, expectedVersion: "bozuk", channels: IG, ...A })).rejects.toThrow(/Sürüm bilgisi/);
+    expect((await getItem(a.id))?.status).toBe("APPROVED");
+  });
+
+  it("ONAY MÜHRÜ bozulmuşsa (içerik onaydan sonra değişmiş) yayınlandı işareti REDDEDİLİR — 'yayınlanan = onaylanan'", async () => {
+    const a = await approved();
+    const row = rows().find((r) => r.id === a.id)!;
+    const p = parsePayload(row.payload)!;
+    p.caption += " (sessizce değiştirildi)";
+    row.payload = JSON.stringify(p);
+    const cur = (await getItem(a.id))!;
+    expect(cur.approvedIntact).toBe(false);
+    await expect(markPublished({ id: a.id, expectedVersion: cur.version, channels: IG, ...A })).rejects.toThrow(/mührüyle eşleşmiyor/);
+    expect((await getItem(a.id))?.status).toBe("APPROVED");
+    expect(state.audits.map((x) => x.action)).toEqual(["CONTENT_PLAN_APPROVE"]);
+  });
+
+  it("yayın hatası → FAILED (mühür korunur, hata notu temiz ve kısa) → yeniden dene → APPROVED → yayınlandı; audit zinciri sırayla", async () => {
+    const a = await approved();
+    const f = await markPublishFailed({ id: a.id, expectedVersion: a.version, error: `Instagram 400:\n\t  kapsayıcı ${"x".repeat(500)}`, ...A });
+    expect(f.status).toBe("FAILED");
+    expect(f.publication).toMatchObject({ manual: false, channels: [] });
+    expect(f.publication?.error?.length).toBeLessThanOrEqual(300);
+    expect(f.publication?.error).not.toMatch(/[\n\t]/);
+    expect(f.publication?.error?.startsWith("Instagram 400: kapsayıcı")).toBe(true);
+    expect(f.approvedAt).not.toBeNull(); // mühür korunur → yeniden denenebilir
+    expect(f.publishedAt).toBeNull();
+    await expect(saveDraft({ id: a.id, expectedVersion: f.version, editorNote: `${NOTE}\n4) ek`, ...A })).rejects.toMatchObject({ status: 409 }); // FAILED'da içerik düzenlenemez
+
+    const r = await retryPublish({ id: a.id, expectedVersion: f.version, ...A });
+    expect(r.status).toBe("APPROVED");
+    expect(r.publication).toBeNull();
+    expect(r.approvedIntact).toBe(true);
+    const p = await markPublished({ id: a.id, expectedVersion: r.version, channels: IG, ...A });
+    expect(p.status).toBe("PUBLISHED");
+    expect(state.audits.map((x) => x.action)).toEqual(["CONTENT_PLAN_APPROVE", "CONTENT_PLAN_PUBLISH_FAIL", "CONTENT_PLAN_RETRY", "CONTENT_PLAN_PUBLISH"]);
+  });
+
+  it("FAILED: yalnız onaylı içerik FAILED'a düşer; boş hata metni 'Bilinmeyen hata'; atlanınca eski hata notu GİDER", async () => {
+    const draft = await draftedKarar();
+    await expect(markPublishFailed({ id: draft.id, expectedVersion: draft.version, error: "x", ...A })).rejects.toMatchObject({ status: 409 });
+    const r = await saveDraft({ id: draft.id, expectedVersion: draft.version, editorNote: NOTE, attestIdentity: true, ...A });
+    const a = await approve({ id: r.id, expectedVersion: r.version, ...A });
+    const f = await markPublishFailed({ id: a.id, expectedVersion: a.version, error: " \n\t ", ...A });
+    expect(f.publication?.error).toBe("Bilinmeyen hata");
+    const sk = await skip({ id: a.id, expectedVersion: f.version, ...A });
+    expect(sk.status).toBe("SKIPPED");
+    expect(sk.publication).toBeNull();
+    expect((await restore({ id: a.id, expectedVersion: sk.version, ...A })).publication).toBeNull();
+  });
+
+  it("yeniden deneme yalnız FAILED'da; mühür bozuksa reddedilir", async () => {
+    const a = await approved();
+    await expect(retryPublish({ id: a.id, expectedVersion: a.version, ...A })).rejects.toMatchObject({ status: 409 }); // APPROVED'da denenecek hata yok
+    const f = await markPublishFailed({ id: a.id, expectedVersion: a.version, error: "ağ hatası", ...A });
+    const row = rows().find((x) => x.id === a.id)!;
+    const p = parsePayload(row.payload)!;
+    p.caption += " (değiştirildi)";
+    row.payload = JSON.stringify(p);
+    const cur = (await getItem(a.id))!;
+    expect(cur.version).toBe(f.version);
+    await expect(retryPublish({ id: a.id, expectedVersion: cur.version, ...A })).rejects.toThrow(/mührüyle eşleşmiyor/);
+    expect((await getItem(a.id))?.status).toBe("FAILED");
+  });
+
+  it("bozuk publishedRefs sayfayı ÇÖKERTMEZ (publication null)", async () => {
+    const a = await approved();
+    rows().find((x) => x.id === a.id)!.publishedRefs = "{bozuk";
+    expect((await getItem(a.id))?.publication).toBeNull();
   });
 });
