@@ -13,6 +13,9 @@ import { SPONSOR_CONSENT_TEXT } from "@/lib/sponsor";
 import { approvedTusSummaries, tusBranches } from "@/lib/tus-data";
 import { DoctoriumShell } from "../DoctoriumSidebar";
 import { PreferencesBoard } from "./PreferencesBoard";
+import { SpecialtyBranchCard } from "./SpecialtyBranchCard";
+import { branchIssue } from "@/lib/admin-member-trial";
+import { SELECTABLE_SPECIALTY_BRANCHES } from "@/lib/specialty-branch";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Akış Tercihleri" };
@@ -48,7 +51,7 @@ export default async function TercihlerPage() {
   const doctor = await db.doctor.findUnique({
     where: { id: me.doctorId },
     select: {
-      branch: true, newsBranches: true, feedModules: true,
+      branch: true, newsBranches: true, feedModules: true, verified: true,
       congressAlertDays: true, congressAbstractAlertDays: true, congressEarlyBirdAlertDays: true,
       congressEventTypes: true, congressScope: true,
       // v6.142 — Sektörel/İlaç & Cihaz/Mevzuat GÖRÜNÜM süzgeçleri (aynı sözleşme).
@@ -64,6 +67,9 @@ export default async function TercihlerPage() {
   const audienceCtx = await currentDoctoriumAudience();
   const canSeeSponsored = audienceCtx?.flags.canSeeSponsored ?? false;
   const viewPrefs = parseViewPrefs(doctor.doctoriumViewPrefs);
+  // Branşı sınıflandırılmamış üyeye "Uzmanlık branşınız" kartı (👤 2026-10-06; branş uyarısı #brans'a götürür).
+  // Admin onaylı doktorda çizilmez — uç da 403 verir (branş klinik vaka havuzunu belirler).
+  const showSpecialtyCard = !!branchIssue(doctor.branch) && !doctor.verified;
 
   return (
     <DoctoriumShell active={null} counts={await todayModuleCounts()}>
@@ -89,6 +95,14 @@ export default async function TercihlerPage() {
             ayarlarınızı istediğiniz zaman değiştirebilirsiniz.
           </p>
         </div>
+
+        {showSpecialtyCard && (
+          <SpecialtyBranchCard
+            current={(doctor.branch ?? "").trim()}
+            options={SELECTABLE_SPECIALTY_BRANCHES}
+            isStudent={audienceCtx?.audience === "STUDENT"}
+          />
+        )}
 
         <PreferencesBoard
           feedInitial={parseFeedModules(doctor.feedModules)}

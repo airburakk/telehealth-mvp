@@ -22,7 +22,7 @@ async function nudgeNotify(): Promise<void> {
 }
 
 export interface NotifyInput {
-  type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "FREECARE_MATCH" | "FREECARE_TREATMENT" | "SO_REVIEW" | "SO_REQUEST" | "SO_ASSIGNED" | "SO_OPINION" | "SO_VIDEO" | "CLINIC_OFFER" | "CLINIC_MATCH" | "CONSULT_ANSWERED" | "CONSULT_MESSAGE" | "CONSULT_VIDEO" | "ACCOUNT_VERIFIED" | "AGENCY_FILE" | "DISCHARGE_REQUEST" | "REGISTRY_REPORT" | "TOURISM_DISCLAIMER" | "TOURISM_MESSAGE" | "TOURISM_OFFER" | "CONGRESS_ALERT" | "DAILY_DIGEST" | "DEFENSE_REPLY" | "STAFF_APPLICATION" | "DOC_REJECTED" | "DOCTOR_ACTIVATED" | "TRIAL_REMINDER" | "TRIAL_ENDED" | "TRIAL_PURGE_NOTICE" | "EDU_DEADLINE" | "ABANDONED_NOTICE" | "KVKK_APPLICATION_ANSWERED";
+  type: "NEW_CASE" | "RED_FLAG" | "BOOKING" | "OFFER" | "COMPLAINT" | "DECISION" | "SHARE_ACCESS" | "MISSING_DOCS" | "FREECARE_MATCH" | "FREECARE_TREATMENT" | "SO_REVIEW" | "SO_REQUEST" | "SO_ASSIGNED" | "SO_OPINION" | "SO_VIDEO" | "CLINIC_OFFER" | "CLINIC_MATCH" | "CONSULT_ANSWERED" | "CONSULT_MESSAGE" | "CONSULT_VIDEO" | "ACCOUNT_VERIFIED" | "AGENCY_FILE" | "DISCHARGE_REQUEST" | "REGISTRY_REPORT" | "TOURISM_DISCLAIMER" | "TOURISM_MESSAGE" | "TOURISM_OFFER" | "CONGRESS_ALERT" | "DAILY_DIGEST" | "DEFENSE_REPLY" | "STAFF_APPLICATION" | "DOC_REJECTED" | "DOCTOR_ACTIVATED" | "TRIAL_REMINDER" | "TRIAL_ENDED" | "TRIAL_PURGE_NOTICE" | "EDU_DEADLINE" | "ABANDONED_NOTICE" | "KVKK_APPLICATION_ANSWERED" | "BRANCH_REMINDER";
   title: string;
   body?: string;
   href?: string;
@@ -37,7 +37,9 @@ export interface NotifyInput {
 // AURA hasta/personel pasiflik süpürmesi de (lib/aura-abandoned-sweep, kod Paket C 2026-09-18) AYNI tipi yazar —
 // AURA zilinde tip süzgeci yok, Doctorium zilinde bu liste sayesinde görünür (personel /admin kromunda da okur).
 // KVKK_APPLICATION_ANSWERED (2026-09-09, Paket 2): m.11 başvurusu yanıtlandı — lib/kvkk-applications yazar.
-export const DOCTORIUM_NOTIFICATION_TYPES = ["CONGRESS_ALERT", "DAILY_DIGEST", "TRIAL_REMINDER", "TRIAL_ENDED", "TRIAL_PURGE_NOTICE", "EDU_DEADLINE", "ABANDONED_NOTICE", "KVKK_APPLICATION_ANSWERED"] as const;
+// BRANCH_REMINDER (2026-10-06): branşı sınıflandırılmamış üyeye uyarı — lib/branch-reminder yazar. ⚠️ Buraya eklenmezse
+// bildirim YAZILIR ama Doctorium zilinde GÖRÜNMEZ (sessiz kayıp) — yeni Doctorium bildirim türü daima iki yere girer.
+export const DOCTORIUM_NOTIFICATION_TYPES = ["CONGRESS_ALERT", "DAILY_DIGEST", "TRIAL_REMINDER", "TRIAL_ENDED", "TRIAL_PURGE_NOTICE", "EDU_DEADLINE", "ABANDONED_NOTICE", "KVKK_APPLICATION_ANSWERED", "BRANCH_REMINDER"] as const;
 
 export async function notifyRoles(roles: string[], n: NotifyInput): Promise<void> {
   try {
