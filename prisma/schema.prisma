@@ -939,6 +939,36 @@ model LegalTranslationApproval {
   @@unique([slug, lang, version])
 }
 
+/// İçerik takvimi (v6.328, 2026-10-06) — sosyal medya RUBRİK yuvaları: "bir rubrik × bir Türkiye günü" = bir satır (lib/social-calendar).
+/// Akış: kaynak seç → slayt taslağı → İNSAN ONAYI → (Faz 3) yayın. Onaylı içerik düzenlenirse onay DÜŞER: approvedHash güncel payload'la
+/// eşleşmek zorundadır (LegalTranslationApproval.textHash ilkesi). Durum düz String (şemada enum YOK; lib/social-calendar/status);
+/// JSON alanlar String (branchSlugs deseni). İçerik PHI DEĞİL — kamuya açık, anonim karar/etkinlik metadata'sı + editör metni → şifresiz.
+/// Onay / onayı kaldırma / atlama audit zincirine yazılır.
+model ContentPlanItem {
+  id             String    @id @default(cuid())
+  seriesKey      String // lib/social-calendar/series SeriesKey: karar-masasi | etkinlik-radari | ogrenci-kosesi
+  slotDay        String // yayın günü, Türkiye takvim günü "YYYY-AA-GG" (saat dilimi kayması yok)
+  status         String    @default("PLANNED") // PLANNED | DRAFT | APPROVED | PUBLISHED | SKIPPED | FAILED
+  sourceKind     String? // ictihat | etkinlik | kariyer-edu
+  sourceIds      String    @default("[]") // JSON string[] — seçilen kaynak kayıt kimlikleri (NewsArticle.id …)
+  candidates     String    @default("[]") // JSON — sistemin önerdiği adaylar [{id,title,score,theme,themes[],why}]
+  payload        String? // JSON PlanPayload — slaytlar + altyazı + kaynaklar (lib/social-calendar/payload); "Doktor için çıkarım" = cikarim slaytının maddeleri
+  attestIdentity Boolean   @default(false) // editör "taraf adı/kimlik bilgisi içermiyor" kutusunu işaretledi (hukuk günü)
+  gateReport     String? // JSON — son kapı denetimi sonucu
+  approvedAt     DateTime?
+  approvedById   String?
+  approvedBy     String? // ad/e-posta anlık görüntüsü
+  approvedHash   String? // sha256(kanonik payload) — yayın hattı "onaydan sonra değişmedi" doğrular
+  publishedRefs  String? // JSON {instagram,linkedin,facebook,x} — Faz 3 (yayın hattı yazar)
+  publishedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([seriesKey, slotDay])
+  @@index([slotDay])
+  @@index([status, slotDay])
+}
+
 /// Web Push aboneliği — kullanıcının cihazı (tarayıcı kapalıyken bildirim)
 model PushSubscription {
   id        String   @id @default(cuid())

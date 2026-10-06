@@ -249,6 +249,16 @@ npx tsx scripts/translate-legal.ts --lang=Rusça   # tek dil
 - Onay/inceleme: `/admin/hukuki-ceviri` (yalnız ADMIN) — kuyruk önbellekten okur; "Çeviriyi üret" tek belge/dil için Claude'u çağırır
   (`maxDuration 120`). Onaylı metin dondurulur; kanonik metin/sürüm değişince onay kendiliğinden eskir → hukukçu yeniden inceler.
 
+### İçerik takvimi (v6.328 · 2026-10-06) — yeni tablo (migration-önce) + önizleme zinciri
+1. **Migration KOD BİRLEŞMEDEN ÖNCE (yeni TABLO):** `20261006120000_content_plan_item` (idempotent, `IF NOT EXISTS`). Üretime ayrı kullanıcı onayıyla: `PROD_DATABASE_URL=… node scripts/apply-prod-migration.mjs`
+   (rehber: Adım 2). Sıra: tablo olmadan yeni kod → `/admin/icerik-takvimi` 500; tablo varken eski kod → zararsız.
+2. **`kart` servisi (Hetzner):** `POST /rubrik/render` ucu `infra/kart/server.mjs` ile gelir → `infra/kart/README.md` dağıtım adımları (07:40–07:55 TR DIŞINDA; yol sınırlı `git archive` + CR=0 denetimi). Sunucu güncellenmeden önizleme çalışmaz;
+   takvimin geri kalanı çalışır.
+3. **n8n köprüsü (👤 onaylı — kalıcı webhook yapılandırması):** `output/n8n-akislari/n8n_rubrik_kopru.py` (`APPLY=1 N8N_KEY_FILE=<yol>`); yürütme kaydı KAPALI (Authorization başlığı n8n'e yazılmaz). Çıkan webhook adresi vault'ta `rubrik-kopru-adres.txt`.
+4. **Vercel env (iki projede AYRI):** `RUBRIK_RENDER_URL` = köprü adresi (`SOCIAL_DIGEST_TOKEN` zaten var — `/api/social-digest` ile ortak; **ikisi aynı projede dolu olmalı**). Yoksa önizleme 503 "yapılandırılmamış" verir (dormant).
+5. **Doğrulama:** önce jetonsuz `curl -s -o /dev/null -w "%{http_code}" -X POST -d "{}" <köprü adresi>` → **401** (kart jetonsuz isteği reddeder); sonra yönetici oturumuyla `/admin/icerik-takvimi` → yuva aç → önizlemeyi çiz → 7 PNG.
+   Yayın hattı (Faz 3) henüz YOK: onaylanan içerik yayınlanmaz.
+
 ## Adım 3 — GitHub'a gönder
 
 ```bash
