@@ -371,7 +371,7 @@ export default async function MemberAnalyticsPage() {
 
           <Section
             title="Tüm üyeler"
-            hint="Onaylı ve onay bekleyen HERKES — Doktor Doğrulama Onayı sayfası yalnız bekleyenleri gösterir, onaylanınca oradan düşer. En yeni üye en üstte. Kehribar şeritli soluk satırlar 06.09.2026 ve öncesinde açılan deneme hesaplarıdır (öğrenci test kaydı dahil); sonrası normal kayıttır. e-Devlet kolonu mezun belgesiyle diplomanın doğrulanıp doğrulanmadığını; Deneme kolonu 30 günlük deneme üyeliğinin kalan gününü; Son uyarı kolonu üyeye giden en son hatırlatmayı (portal bildirimi + e-posta) gösterir."
+            hint="Onaylı ve onay bekleyen HERKES — Doktor Doğrulama Onayı sayfası yalnız bekleyenleri gösterir, onaylanınca oradan düşer. En yeni üye en üstte. Kehribar şeritli soluk satırlar 06.09.2026 ve öncesinde açılan deneme hesaplarıdır (öğrenci test kaydı dahil); sonrası normal kayıttır. Doğrulama kolonu doktorda e-Devlet mezun belgesini, öğrencide .edu uzantılı üniversite e-postasını (öğrenciden e-Devlet belgesi beklenmez); Deneme kolonu 30 günlük deneme üyeliğinin kalan gününü; Son uyarı kolonu üyeye giden en son hatırlatmayı (portal bildirimi + e-posta) gösterir."
           >
             <div className="overflow-x-auto rounded-2xl border border-[var(--c-hairline)]">
               <table className="w-full text-sm">
@@ -381,7 +381,7 @@ export default async function MemberAnalyticsPage() {
                     <th className="px-3 py-2 text-left font-medium">Üye</th>
                     <th className="px-3 py-2 text-left font-medium">Şehir · Branş</th>
                     <th className="px-3 py-2 text-left font-medium">Durum</th>
-                    <th className="px-3 py-2 text-left font-medium">e-Devlet belgesi</th>
+                    <th className="px-3 py-2 text-left font-medium">Doğrulama</th>
                     <th className="px-3 py-2 text-left font-medium">Deneme süresi</th>
                     <th className="px-3 py-2 text-left font-medium">Uyarı</th>
                   </tr>

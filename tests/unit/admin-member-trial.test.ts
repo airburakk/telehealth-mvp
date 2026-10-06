@@ -18,7 +18,7 @@ describe("memberTrialRow — Üye Analitiği e-Devlet + deneme + uyarı hücrele
       { ...base, diplomaVerifiedAt: new Date(NOW.getTime() - DAY), trialEndsAt: new Date(NOW.getTime() + 2 * DAY) },
       NOW,
     );
-    expect(r.diploma.text).toBe("Onaylı");
+    expect(r.diploma.text).toBe("e-Devlet belgesi onaylı");
     expect(r.diploma.tone).toBe("ok");
     expect(r.trial.text).toBe("Süre durdu");
     expect(r.alert.text).toBe("—");
@@ -27,7 +27,7 @@ describe("memberTrialRow — Üye Analitiği e-Devlet + deneme + uyarı hücrele
 
   it("deneme yolu dışındaki hesap: 'Deneme yok', belge paylaşılmadıysa kırmızı", () => {
     const r = memberTrialRow(base, NOW);
-    expect(r.diploma).toMatchObject({ text: "Paylaşılmadı", tone: "danger" });
+    expect(r.diploma).toMatchObject({ text: "e-Devlet belgesi paylaşılmadı", tone: "danger" });
     expect(r.trial.text).toBe("Deneme yok");
     expect(r.reasons).toEqual([]);
   });
@@ -82,6 +82,22 @@ describe("memberTrialRow — Üye Analitiği e-Devlet + deneme + uyarı hücrele
     );
     expect(r.reasons).toEqual(["trial", "branch"]);
     expect(r.branch?.text).toBe("Branş sınıflandırılmamış");
+  });
+});
+
+describe("doğrulama hücresi — doktor e-Devlet, öğrenci .edu e-postası (ayrı yollar)", () => {
+  it("doğrulanmış öğrenci: .edu e-postası, e-Devlet uyarısı YOK", () => {
+    const r = memberTrialRow({ ...base, studentTrack: true, studentVerifiedAt: new Date(NOW.getTime() - DAY) }, NOW);
+    expect(r.diploma).toMatchObject({ text: ".edu e-postasıyla doğrulandı", tone: "ok" });
+    expect(r.diploma.text).not.toMatch(/e-Devlet/);
+  });
+  it("e-postasını doğrulamamış öğrenci: kehribar, e-Devlet istenmez", () => {
+    const r = memberTrialRow({ ...base, studentTrack: true }, NOW);
+    expect(r.diploma).toMatchObject({ text: ".edu e-postası doğrulanmadı", tone: "warning", sub: "öğrenci — e-Devlet gerekmez" });
+  });
+  it("mezun olup diplomasını doğrulayan öğrenci: e-Devlet satırı", () => {
+    const r = memberTrialRow({ ...base, studentTrack: true, diplomaVerifiedAt: NOW }, NOW);
+    expect(r.diploma.text).toBe("e-Devlet belgesi onaylı");
   });
 });
 

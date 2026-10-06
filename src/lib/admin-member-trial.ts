@@ -60,6 +60,8 @@ export interface MemberTrialRow {
 export type MemberTrialInput = TierStamps & {
   trialAlertsSent: string | null;
   branch: string | null;
+  /** Öğrenci kayıt yolu (Doctor.studentTrack) — öğrencinin doğrulaması e-Devlet DEĞİL, .edu e-postasıdır. */
+  studentTrack?: boolean;
   /** Tercihler'de akış branşı seçilmiş mi (newsBranches dolu) — doluysa branş uyarısı gerekmez. */
   feedBranches?: boolean;
   /** BRANCH_REMINDER bildirim geçmişi (sayfa sorgular); yoksa hiç gitmemiş. */
@@ -93,9 +95,16 @@ export function memberTrialRow(p: MemberTrialInput, now: Date): MemberTrialRow {
   const reasons: AttentionReason[] = [];
   let daysLeft: number | null = null;
 
+  // Doğrulama hücresi İKİ AYRI yol (👤 2026-10-06): doktor = e-Devlet mezun belgesi · öğrenci = üniversite e-postası
+  // (.edu — lib/universities listesinin tamamı .edu.tr / .edu.kg). Öğrenciden e-Devlet belgesi BEKLENMEZ; mezun olup
+  // diplomasını doğrulayan öğrenci kaydı doktora geçer (studentRecordClearOnTransition) → e-Devlet satırı gösterilir.
   const diploma: MemberCell = p.diplomaVerifiedAt
-    ? { text: "Onaylı", sub: dateTr(p.diplomaVerifiedAt), tone: "ok" }
-    : { text: "Paylaşılmadı", sub: null, tone: "danger" };
+    ? { text: "e-Devlet belgesi onaylı", sub: dateTr(p.diplomaVerifiedAt), tone: "ok" }
+    : p.studentTrack
+      ? p.studentVerifiedAt
+        ? { text: ".edu e-postasıyla doğrulandı", sub: dateTr(p.studentVerifiedAt), tone: "ok" }
+        : { text: ".edu e-postası doğrulanmadı", sub: "öğrenci — e-Devlet gerekmez", tone: "warning" }
+      : { text: "e-Devlet belgesi paylaşılmadı", sub: null, tone: "danger" };
 
   // Deneme hücresi yalnız deneme yolundan gelen hesapta anlamlıdır; doğrulanınca süre ortadan kalkar.
   let trial: MemberCell = { text: "Deneme yok", sub: null, tone: "muted" };
