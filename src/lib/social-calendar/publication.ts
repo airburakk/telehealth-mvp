@@ -6,7 +6,9 @@
 // kanallar); YAYINLANIYOR'da yalnız `at` (alınma anı; channels boş); FAILED'da `error`.
 // Bu alan YALNIZCA durum kaydıdır — içerik/PHI değil. Bağlantılar yalnız https:// kabul edilir (javascript:/data: gibi şemalar asla saklanmaz).
 
-export const PUBLISH_CHANNELS = ["instagram", "linkedin", "facebook", "x", "diger"] as const;
+// 👤 Kanal seti (2026-10-07): rubrikler BEŞ mecraya gider — Instagram · LinkedIn · Facebook · X · YouTube. Sayı kart servisinin
+// `YAYIN_SINIR.kanal` sınırıyla sözleşmelidir (nöbet: tests/unit/kart-rubrik-yayin.test.ts); kanal ekleyen ikisini birlikte günceller.
+export const PUBLISH_CHANNELS = ["instagram", "linkedin", "facebook", "x", "youtube", "diger"] as const;
 export type PublishChannel = (typeof PUBLISH_CHANNELS)[number];
 
 export const CHANNEL_LABEL: Record<PublishChannel, string> = {
@@ -14,6 +16,7 @@ export const CHANNEL_LABEL: Record<PublishChannel, string> = {
   linkedin: "LinkedIn",
   facebook: "Facebook",
   x: "X",
+  youtube: "YouTube",
   diger: "Diğer",
 };
 
