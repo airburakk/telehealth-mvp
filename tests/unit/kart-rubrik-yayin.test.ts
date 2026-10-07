@@ -438,6 +438,23 @@ describe("POST /rubrik/bugun — canlı (`al` kilidi)", () => {
     expect(fs.existsSync(bugunDizini(bozuk.dir))).toBe(false);
   });
 
+  it("diske yazılamazsa (disk/izin) öğe YAYIN HATASI'na çekilir; dosya yolu/iç ayrıntı yanıta ve Vercel'e SIZMAZ", async () => {
+    const t = await kur();
+    fs.writeFileSync(path.join(t.dir, "rubrik"), "dosya"); // `rubrik` bir DOSYA → mkdir başarısız (ENOTDIR/EEXIST)
+    const r = await t.istek("/rubrik/bugun");
+    const metin = await r.text();
+    expect(r.status).toBe(200);
+    expect(metin).not.toContain(path.basename(t.dir)); // geçici dizin adı (JSON kaçışından bağımsız) — iç yol yok
+    expect(metin).not.toMatch(/ENOTDIR|EEXIST|ENOENT|mkdir/);
+    const j = JSON.parse(metin) as { items: unknown[]; hatalar: { hata: string; bildirildi: boolean }[] };
+    expect(j.items).toEqual([]);
+    expect(j.hatalar[0]).toMatchObject({ hata: "dosyalar diske yazılamadı (kart günlüğüne bakın)", bildirildi: true });
+    const bildirim = t.cagrilar.find((c) => c.govde.action === "sonuc")!;
+    expect(bildirim.govde).toMatchObject({ durum: "hata", hata: "kart: dosyalar diske yazılamadı (kart günlüğüne bakın)" });
+    expect(JSON.stringify(t.cagrilar)).not.toContain(path.basename(t.dir));
+    expect(t.log.join("\n")).toContain("disk istisnası"); // ayrıntı yalnız kart GÜNLÜĞÜNDE
+  });
+
   it("hata bildirimi de başarısız olursa (ağ) bildirildi:false — yanıt yine 200 (içerik YAYINLANIYOR'da kalır, insan çözer)", async () => {
     const t = await kur({
       render: async () => { throw new Error("x"); },

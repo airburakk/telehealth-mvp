@@ -262,8 +262,16 @@ export function createRubrikYayin({ dir, getBrowser, spherePath, planUrl = VARSA
     const pngler = slides.map((s) => (Buffer.isBuffer(s.png) || s.png instanceof Uint8Array ? Buffer.from(s.png) : null));
     const bozuk = pngler.findIndex((b) => !b || b.subarray(0, 8).compare(PNG_IMZA) !== 0);
     if (bozuk >= 0) throw new Error(`slayt ${bozuk + 1} geçerli bir PNG değil`);
-    const dosyalar = dosyalariYaz(gun, it.seriesKey, pngler);
-    return { id: it.id, seriesKey: it.seriesKey, version: it.version, kuru, olusturuldu: new Date(now()).toISOString(), dosyalar };
+    // Disk hatası (izin/doluluk) da render istisnası gibi GENEL mesaja çevrilir: iç yol Vercel'e/yanıta SIZMAZ (ayrıntı yalnız kart günlüğünde).
+    try {
+      const dosyalar = dosyalariYaz(gun, it.seriesKey, pngler);
+      const kayit = { id: it.id, seriesKey: it.seriesKey, version: it.version, kuru, olusturuldu: new Date(now()).toISOString(), dosyalar };
+      markerYaz(gun, [kayit]); // öğe BAŞINA (kimliğe göre birikir): sonraki öğe düşse de bu öğenin dosyaları listeli kalır
+      return kayit;
+    } catch (e) {
+      log(`rubrik-yayin: ${gun} disk istisnası: ${hataMesaji(e)}`);
+      throw new Error("dosyalar diske yazılamadı (kart günlüğüne bakın)");
+    }
   }
 
   // ── POST /rubrik/bugun ────────────────────────────────────────────────────────────────────────────
@@ -294,13 +302,11 @@ export function createRubrikYayin({ dir, getBrowser, spherePath, planUrl = VARSA
         return json(res, e.kod, { hata: e.message, belirsiz: e.belirsiz && !kuru });
       }
 
-      const kayitlar = [];
       const items = [];
       const hatalar = [];
       for (const it of plan.items) {
         try {
           const kayit = await ogeyiCiz(plan.gun, it, kuru);
-          kayitlar.push(kayit);
           items.push({
             id: it.id, version: it.version, seriesKey: it.seriesKey, slotDay: it.slotDay, approvedHash: it.approvedHash,
             altyazi: it.altyazi, caption: it.caption, hashtags: it.hashtags, gorseller: kayit.dosyalar,
@@ -319,9 +325,8 @@ export function createRubrikYayin({ dir, getBrowser, spherePath, planUrl = VARSA
           hatalar.push({ id: it.id, seriesKey: it.seriesKey, hata: mesaj, bildirildi });
         }
       }
-      if (kayitlar.length) {
-        markerYaz(plan.gun, kayitlar);
-        eskileriTemizle(plan.gun);
+      if (items.length) {
+        try { eskileriTemizle(plan.gun); } catch (e) { log(`rubrik-yayin: eski günler temizlenemedi: ${hataMesaji(e)}`); } // en iyi çaba: hazır içeriği düşürmez
       }
       const sure_sn = Math.round((now() - t0) / 100) / 10;
       log(`rubrik-yayin: ${plan.gun}${kuru ? " KURU" : ""} — ${items.length} öğe, ${hatalar.length} hata, ${plan.atlanan.length} atlanan, ${sure_sn} sn`);
