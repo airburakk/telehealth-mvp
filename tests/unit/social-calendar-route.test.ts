@@ -33,6 +33,8 @@ vi.mock("@/lib/social-calendar/plan", () => {
     skip: vi.fn(),
     restore: vi.fn(),
     previewPlan: vi.fn(),
+    markPublished: vi.fn(),
+    retryPublish: vi.fn(),
   };
 });
 
@@ -47,7 +49,7 @@ const ADMIN: Partial<SessionUser> = { id: "a1", email: "admin@air.test", name: "
 const call = (body: unknown) => POST(new Request("http://x/api/admin/icerik-takvimi", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }));
 const VIEW = { id: "p1", status: "DRAFT", version: "2026-10-06T12:00:01.000Z" };
 
-const MOCKS = [plan.openSlot, plan.computeCandidates, plan.pickSource, plan.saveDraft, plan.approve, plan.unapprove, plan.skip, plan.restore, plan.previewPlan];
+const MOCKS = [plan.openSlot, plan.computeCandidates, plan.pickSource, plan.saveDraft, plan.approve, plan.unapprove, plan.skip, plan.restore, plan.previewPlan, plan.markPublished, plan.retryPublish];
 
 beforeEach(() => {
   vi.mocked(getCurrentUser).mockReset();
@@ -60,9 +62,12 @@ describe("kapı", () => {
   it("oturumsuz ve ADMIN dışı → 401; hiçbir lib işlevi çağrılmaz", async () => {
     asUser(null);
     expect((await call({ action: "approve", id: "p1" })).status).toBe(401);
+    expect((await call({ action: "publish", id: "p1", channels: [{ channel: "instagram" }] })).status).toBe(401);
     for (const role of ["PATIENT", "DOCTOR", "COORDINATOR", "ETHICS", "PARTNER"]) {
       asUser({ ...ADMIN, role } as Partial<SessionUser>);
       expect((await call({ action: "approve", id: "p1" })).status).toBe(401);
+      expect((await call({ action: "publish", id: "p1", channels: [{ channel: "instagram" }] })).status).toBe(401);
+      expect((await call({ action: "retry", id: "p1" })).status).toBe(401);
     }
     for (const m of MOCKS) expect(m).not.toHaveBeenCalled();
   });
@@ -114,6 +119,17 @@ describe("eylemler lib'e doğru argümanla gider", () => {
     expect(a2.payload).toEqual({ slides: [] });
     expect("editorNote" in a2).toBe(false);
   });
+  it("publish: kanallar HAM iletilir (doğrulama lib'de), `manual:true` UÇTA sabitlenir (gövdeyle ezilemez), aktör + istek meta'sı eşlik eder", async () => {
+    const channels = [{ channel: "instagram", url: "https://www.instagram.com/p/A/" }, { channel: "x" }];
+    const res = await call({ action: "publish", id: "p1", version: VIEW.version, channels, manual: false });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ ok: true, item: { id: "p1" } });
+    expect(plan.markPublished).toHaveBeenCalledWith(expect.objectContaining({ id: "p1", expectedVersion: VIEW.version, channels, manual: true, ip: "9.9.9.9", userAgent: "vitest", actor: expect.objectContaining({ id: "a1" }) }));
+  });
+  it("retry: id + version + aktör", async () => {
+    expect((await call({ action: "retry", id: "p1", version: VIEW.version })).status).toBe(200);
+    expect(plan.retryPublish).toHaveBeenCalledWith(expect.objectContaining({ id: "p1", expectedVersion: VIEW.version, actor: expect.objectContaining({ id: "a1" }) }));
+  });
   it("sürüm gövdede yoksa boş dize olarak lib'e gider (lib 400 verir — uç sürümü uydurmaz)", async () => {
     await call({ action: "skip", id: "p1" });
     expect(plan.skip).toHaveBeenCalledWith(expect.objectContaining({ expectedVersion: "" }));
@@ -135,6 +151,14 @@ describe("hata → durum kodu", () => {
       const res = await call({ action: "skip", id: "p1", version: "v" });
       expect(res.status).toBe(status);
       expect(await res.json()).toEqual({ error: `hata ${status}` });
+    }
+  });
+  it("publish: geçersiz kanal 400 / mühür bozuk 409 / sürüm çakışması 409 aynı kodla yansır", async () => {
+    for (const [status, message] of [[400, "En az bir kanal seçin."], [409, "İçerik onay mührüyle eşleşmiyor."], [409, "İçerik, sayfayı açtığınızdan beri değişti."]] as const) {
+      vi.mocked(plan.markPublished).mockRejectedValueOnce(new plan.PlanError(message, status));
+      const res = await call({ action: "publish", id: "p1", version: "v", channels: [] });
+      expect(res.status).toBe(status);
+      expect(await res.json()).toEqual({ error: message });
     }
   });
   it("beklenmeyen hata → 500, İÇ MESAJ sızdırılmaz", async () => {

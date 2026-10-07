@@ -7,17 +7,20 @@ import {
   PlanGateError,
   approve,
   computeCandidates,
+  markPublished,
   openSlot,
   pickSource,
   previewPlan,
   restore,
+  retryPublish,
   saveDraft,
   skip,
   unapprove,
 } from "@/lib/social-calendar/plan";
 
 // İçerik takvimi eylemleri (v6.328, 2026-10-06) — /admin/icerik-takvimi: yuva aç · aday üret · kaynak seç · taslak kaydet · onayla ·
-// onayı kaldır · atla · geri al · PNG önizleme. Tek uç, `action` alanı (admin/hukuki-ceviri deseni).
+// onayı kaldır · atla · geri al · PNG önizleme · (v6.332) elle yayınlandı işaretle (`publish`) · hatalı yayını yeniden dene (`retry`).
+// Tek uç, `action` alanı (admin/hukuki-ceviri deseni). `publish` yalnız ELLE işaretlemedir (manual:true) — otomasyonun yayın sonucu bu uca GELMEZ (Faz 3 ayrı, jetonlu uç).
 // Self-auth: yalnız ADMIN (proxy /admin'i korur ama /api'yi KORUMAZ — her uç kendi kapısı).
 // Durum kodları: 401 yetkisiz · 400 geçersiz istek · 404 yuva yok · 409 geçiş yasak/sürüm çakışması · 422 onay kapıları geçilmedi (gövdede `report`)
 // · 429 önizleme sınırı · 503/502/504 önizleme servisi. Yazma işlemleri `version` (= updatedAt ISO) ister — iyimser eşzamanlılık (lib/social-calendar/plan).
@@ -70,6 +73,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true, item: await skip({ id, expectedVersion: version, ...actor }) });
       case "restore":
         return NextResponse.json({ ok: true, item: await restore({ id, expectedVersion: version, ...actor }) });
+      case "publish":
+        return NextResponse.json({ ok: true, item: await markPublished({ id, expectedVersion: version, channels: b.channels, manual: true, ...actor }) });
+      case "retry":
+        return NextResponse.json({ ok: true, item: await retryPublish({ id, expectedVersion: version, ...actor }) });
       case "preview": {
         const rl = await rateLimit(`icerik-takvimi-preview:${user.id}`, PREVIEW_LIMIT, 10 * 60_000);
         if (!rl.ok) {

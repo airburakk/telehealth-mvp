@@ -60,7 +60,11 @@ export type AuditAction =
   // ── İçerik takvimi (v6.328, 2026-10-06 — lib/social-calendar/plan; halka açık sosyal içeriğin onayı) ──────────────
   | "CONTENT_PLAN_APPROVE" // ADMIN rubrik içeriğini onayladı — detail: rubrik·gün·payload sha256 ÖNEKİ (içerik audit'e YAZILMAZ)
   | "CONTENT_PLAN_UNAPPROVE" // onay geri alındı ya da düzenleme/kaynak değişikliğiyle düştü — detail: rubrik·gün·neden
-  | "CONTENT_PLAN_SKIP"; // yuva atlandı (onaylıysa onay da düştü) — detail: rubrik·gün
+  | "CONTENT_PLAN_SKIP" // yuva atlandı (onaylıysa onay da düştü) — detail: rubrik·gün
+  // ── İçerik takvimi yayın durumu (v6.332, 2026-10-06) — kanal adı yazılır, bağlantı/içerik YAZILMAZ ──────────────────
+  | "CONTENT_PLAN_PUBLISH" // yayınlandı olarak işaretlendi (TERMİNAL) — detail: rubrik·gün·elle|otomatik·kanallar
+  | "CONTENT_PLAN_PUBLISH_FAIL" // yayın denemesi başarısız (otomasyon) — detail: rubrik·gün·yayın hatası (hata metni publishedRefs'te)
+  | "CONTENT_PLAN_RETRY"; // hatalı yayın yeniden denemeye alındı (FAILED → APPROVED) — detail: rubrik·gün
 
 interface RecordInput {
   actor: SessionUser | null;
