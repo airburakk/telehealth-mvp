@@ -5,6 +5,8 @@ import { sendAlert } from "@/lib/alerts";
 import { ingestYargitay, type YargitayIngestResult } from "@/lib/hukuk-ingest";
 import { ingestDoktrin, type DoktrinIngestResult } from "@/lib/doktrin-ingest";
 import { ingestTtbEvents, type TtbEventsResult } from "@/lib/ttb-events";
+import { db } from "@/lib/db";
+import { dryStreak, firstErrorTag, shouldAlertStreak, type IngestSegment } from "@/lib/ingest-streak";
 
 // GET /api/cron/ingest-hukuk — hukuk + etkinlik içerik hattı: Yargıtay içtihat (v6.86) · TR-Dizin
 // doktrin (v6.91) · TTB akredite etkinlik taraması (v6.129, HAFTALIK — yalnız Pazartesi).
@@ -61,12 +63,14 @@ export async function GET(req: Request) {
     ttbEvents = { skipped: true }; // haftalık kontenjan — bugün sırası değil
   }
 
+  // v6.337: `ilk="…"` = ilk hatanın kısa metni (lib/ingest-streak) — eskiden yalnız SAYI yazılıyordu ve
+  // içtihat cron'u 11 Ağustos'tan beri `sorun=1` ile kuruduğu hâlde nedeni hiçbir yerde görünmüyordu.
   const ict = "error" in yargitay
     ? `hata: ${yargitay.error}`
-    : `yeni=${yargitay.created}/${yargitay.found}${yargitay.deferred ? ` erteli=${yargitay.deferred}` : ""}${yargitay.errors.length ? ` sorun=${yargitay.errors.length}` : ""}`;
+    : `yeni=${yargitay.created}/${yargitay.found}${yargitay.deferred ? ` erteli=${yargitay.deferred}` : ""}${yargitay.errors.length ? ` sorun=${yargitay.errors.length}${firstErrorTag(yargitay.errors)}` : ""}`;
   const dok = "error" in doktrin
     ? `hata: ${doktrin.error}`
-    : `yeni=${doktrin.created}/${doktrin.found}${doktrin.errors.length ? ` sorun=${doktrin.errors.length}` : ""}`;
+    : `yeni=${doktrin.created}/${doktrin.found}${doktrin.errors.length ? ` sorun=${doktrin.errors.length}${firstErrorTag(doktrin.errors)}` : ""}`;
   const ttb = "skipped" in ttbEvents
     ? "atlandi(haftalik)"
     : "error" in ttbEvents
@@ -85,6 +89,35 @@ export async function GET(req: Request) {
   if (failures.length) {
     // Ray C: düşen iş sessiz kalmaz; kısmi başarı 200 (diğer işler yazıldı), alarm ayrıntıyı taşır.
     void sendAlert("cron-ingest-hukuk", `ingest-hukuk — ${failures.length} iş koşamadı`, failures.join(" | ").slice(0, 400));
+  }
+
+  // v6.337 SESSİZ KURUMA nöbeti: iş çökmese de art arda N koşu "hiçbir şey bulunamadı + hata" ise alarm
+  // (eşikte bir kez + haftalık hatırlatma — lib/ingest-streak). Seri, az önce yazılan satır DAHİL son audit
+  // satırlarından durumsuz sayılır. Fail-open: nöbetin kendi hatası koşuyu bozmaz.
+  try {
+    const recent = await db.accessLog.findMany({
+      where: { action: "CRON_MAINTENANCE", resourceId: "ingest-hukuk" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: 60,
+      select: { detail: true },
+    });
+    const details = recent.map((r) => r.detail);
+    const segments: { key: IngestSegment; label: string; line: string }[] = [
+      { key: "ictihat", label: "Yargıtay içtihat", line: ict },
+      { key: "doktrin", label: "TR-Dizin doktrin", line: dok },
+    ];
+    for (const s of segments) {
+      const streak = dryStreak(details, s.key);
+      if (shouldAlertStreak(streak)) {
+        void sendAlert(
+          `ingest-dry-${s.key}`,
+          `${s.label} ${streak} koşudur hiçbir kayıt bulamıyor`,
+          `son koşu: ${s.line}`.slice(0, 400),
+        );
+      }
+    }
+  } catch (e) {
+    console.error("[ingest-hukuk] kuruma nöbeti okunamadı:", errText(e, "bilinmeyen hata"));
   }
 
   return NextResponse.json({ ok: failures.length === 0, yargitay, doktrin, ttbEvents });
