@@ -21,8 +21,12 @@
 //    sırası) henüz kullanılmamış TAZE bir başlıkla dolar. Yuvanın SIRASI korunur, başlık donör
 //    akışın etiketini taşır, `replaces` hangi akışın yerine girdiğini söyler. Donör kalmadıysa
 //    eski başlık `stale: true` ile kalır (boş kart yerine — fail-soft, kart tarafı isterse
-//    gizler). Akışta 48 saatte HİÇ içerik yoksa akış yine düşer, doldurulmaz (kural tekrarı
-//    hedefler, boşluğu değil — "boş akış düşer" sözleşmesi sürer).
+//    gizler).
+//  · 🧩 HER ZAMAN ALTI YUVA (v6.336, 2026-10-07, 👤 karar): 48 saatte HİÇ içeriği olmayan akış da
+//    (tipik: hafta sonu sonrası Mevzuat/İçtihat/Doktrin) artık DÜŞMEZ — yuvası açık kalır ve aynı
+//    donör geçişiyle dolar. Eski "boş akış düşer, doldurulmaz" istisnası kart 5–7 Ekim'de 3 başlığa
+//    inince kaldırıldı. Donör de kalmadıysa boş yuva düşer (eski başlığı olmadığı için `stale`
+//    bile kurulamaz) — kart hiçbir zaman sahte/boş öğe taşımaz.
 //    DURUMSUZ: dünkü seçki DB'den okunmaz. Günlük kadansta bir akışın "o gün gelmemiş" en taze
 //    başlığı dünkü pencerede de en tazeydi → dün basıldı; "yeni yok" = "tekrar edecek" demektir.
 //    Gün içi elle koşulan ingest bir sonraki koşuda "yeni" sayılır (24 saat kayan pencere —
@@ -37,7 +41,7 @@ import { normalizeTrialPhasePrefix } from "./trial-phase";
 type Branch = (typeof BRANCHES)[number];
 
 /** Seçki penceresi: son 48 saatte İNGEST edilenler (06:30 TR cron'u sonrası taze; zayıf günde
- *  önceki günün içeriği açığı kapatır — boş akış yine düşer, boş kart üretilmez). */
+ *  önceki günün içeriği açığı kapatır — boş akışın yuvası donörle dolar, boş kart üretilmez). */
 export const SOCIAL_WINDOW_MS = 48 * 3_600_000;
 
 /** "O gün gelen" eşiği = son koşudan beri (günlük kadans → 24 saat, `now`dan geriye). Bir akışın
@@ -176,10 +180,10 @@ function toItem(
  *
  * İki geçiş:
  *  1) Birincil — akış başına tercih sırasındaki İLK TAZE aday (son SOCIAL_FRESH_MS içinde gelen).
- *     Tazesi olmayan akışın yuvası AÇIK kalır; hiç içeriği olmayan akış listeye girmez.
+ *     Tazesi olmayan akışın yuvası AÇIK kalır — hiç içeriği olmayan akış dahil (v6.336: altı yuva).
  *  2) Donör — açık yuvalar, o gün en çok taze başlık gelen akıştan (eşitlikte akış sırası; donör
  *     tükenince sıradaki) henüz kullanılmamış taze başlıkla dolar. Donör yoksa eski başlık
- *     `stale: true` ile kalır.
+ *     `stale: true` ile kalır; eski başlığı da olmayan (boş) yuva düşer.
  * Birincil geçiş tamamen bitmeden donör geçişi başlamaz → donör hiçbir akışın kendi birincil
  * başlığını ÇALAMAZ (`used` kümesi).
  */
@@ -191,7 +195,7 @@ export function pickSocialDigest(articles: SocialArticle[], rotation: Branch, no
   const used = new Set<string>();
   for (const s of STREAMS) {
     const pool = articles.filter(s.match);
-    if (pool.length === 0) continue; // boş akış düşer — donörle DOLDURULMAZ
+    // Boş akış da yuva açar (v6.336) — donör geçişi doldurur; donör yoksa aşağıda düşer.
     const ordered = orderCandidates(s, pool, rotation);
     const pick = ordered.find(isFresh) ?? null;
     if (pick) used.add(pick.id);
@@ -220,7 +224,9 @@ export function pickSocialDigest(articles: SocialArticle[], rotation: Branch, no
       filled = toItem(cand, d, rotation, { stream: slot.stream.key, streamLabel: slot.stream.label }, false);
       break;
     }
-    items.push(filled ?? toItem(slot.ordered[0], slot.stream, rotation, null, true));
+    if (filled) items.push(filled);
+    else if (slot.ordered.length > 0) items.push(toItem(slot.ordered[0], slot.stream, rotation, null, true));
+    // else: boş akış + donör yok → yuva düşer (gösterilecek gerçek başlık yok)
   }
   return items;
 }
