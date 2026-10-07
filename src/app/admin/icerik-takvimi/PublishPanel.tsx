@@ -13,7 +13,8 @@ import { BTN_PRIMARY, BTN_SECOND, INPUT, api, fmt, type ApiResult, type Flash } 
 //   • "PNG'leri indir (ZIP)": KAYITLI (onaylı) içerik kart servisinde çizilir (payload GÖNDERİLMEZ → onay mührüyle aynı içerik), tarayıcıda
 //     bağımsız ZIP'e (lib/zip-store) paketlenir: 01-kapak.png … + altyazi.txt. • "Altyazıyı + etiketleri kopyala": panoya.
 //   • "Elle yayınlandı olarak işaretle": kanal(lar) + isteğe bağlı gönderi bağlantısı → PUBLISHED (TERMİNAL: içerik kilitlenir, geri alınamaz).
-// FAILED (yalnız otomasyon üretir) → hata notu + "Yeniden dene". Yazmalar SlotEditor.run'dan geçer (sürüm/çakışma/hata bayrağı orada yönetilir).
+// FAILED (yalnız otomasyon üretir) → hata notu + "Yeniden dene". PUBLISHING (v6.334: otomasyon içeriği ALDI) → bilgi + İNSAN çözümü: kanalda yayınlandıysa "elle işaretle",
+// yayınlanmadıysa "yeniden dene" (çift paylaşım uyarısıyla). Yazmalar SlotEditor.run'dan geçer (sürüm/çakışma/hata bayrağı orada yönetilir).
 interface Props {
   item: PlanItemView;
   series: SeriesDef;
@@ -26,7 +27,7 @@ interface Props {
   notify: (f: Flash) => void;
 }
 
-const STATUS_META = { APPROVED: "otomatik hat yok — elle paylaşım", FAILED: "yayın hatası", PUBLISHED: "yayınlandı" } as const;
+const STATUS_META = { APPROVED: "otomatik hat yok — elle paylaşım", PUBLISHING: "yayınlanıyor (otomasyon)", FAILED: "yayın hatası", PUBLISHED: "yayınlandı" } as const;
 
 /** Bağlantı yalnız https:// ise bağlanır (sunucu zaten doğrular; bileşen İKİNCİ kilit — javascript:/data: asla href olmaz). */
 const safeHref = (u?: string): string | undefined => (u && /^https:\/\//i.test(u) ? u : undefined);
@@ -37,7 +38,7 @@ export function PublishPanel({ item, series, dirty, busy, run, adopt, notify }: 
   /** Seçili kanal → bağlantı metni (anahtar varsa kanal seçili). */
   const [sel, setSel] = useState<Partial<Record<PublishChannel, string>>>({});
 
-  if (item.status !== "APPROVED" && item.status !== "FAILED" && item.status !== "PUBLISHED") return null;
+  if (item.status !== "APPROVED" && item.status !== "PUBLISHING" && item.status !== "FAILED" && item.status !== "PUBLISHED") return null;
   const status = item.status;
   const sealBroken = status === "APPROVED" && !item.approvedIntact;
   const canHelp = !!item.payload && !sealBroken;
@@ -118,11 +119,13 @@ export function PublishPanel({ item, series, dirty, busy, run, adopt, notify }: 
     });
   }
 
-  const retry = () =>
-    run("retry", { action: "retry" }, (r) => {
+  function retry() {
+    if (status === "PUBLISHING" && !window.confirm("Kanallarda YAYINLANMADIĞINI doğruladınız mı? Aslında yayınlanmışsa yeniden denemek AYNI içeriğin iki kez paylaşılmasına yol açar. Devam edilsin mi?")) return;
+    void run("retry", { action: "retry" }, (r) => {
       if (r.item) adopt(r.item);
       notify({ kind: "ok", text: "Yayın yeniden denemeye alındı — içerik yine onaylı." });
     });
+  }
 
   const pub = item.publication;
   return (
@@ -137,6 +140,21 @@ export function PublishPanel({ item, series, dirty, busy, run, adopt, notify }: 
         <p className="text-sm text-[var(--c-ink-2)]">
           Otomatik yayın hattı henüz kurulu değil: onaylı içeriği <strong>elle paylaşın</strong> — PNG’leri indirin, altyazıyı kopyalayın, paylaştıktan sonra aşağıdan işaretleyin. Yayınlandı olarak işaretlenen içerik kilitlenir.
         </p>
+      )}
+
+      {status === "PUBLISHING" && (
+        <div className="flex items-start gap-1.5 text-sm text-[var(--c-ink)]">
+          <Loader2 size={14} className="mt-0.5 shrink-0 text-[var(--c-warn,#d97706)]" />
+          <div className="min-w-0">
+            <p>
+              <span className="font-semibold">Otomasyon bu içeriği yayına aldı</span>
+              {pub?.at ? ` (alındı: ${fmt(pub.at)})` : ""}.
+            </p>
+            <p className="mt-1 text-[var(--c-ink-2)]">
+              Sonuç otomatik bildirilir; bu bölüm kendiliğinden yenilenmez — sayfayı yenileyin. Uzun süre takılı kalırsa gerçek durumu kanallarda kontrol edin: yayınlandıysa aşağıdan <strong>elle işaretleyin</strong>, yayınlanmadıysa <strong>yeniden deneyin</strong>.
+            </p>
+          </div>
+        </div>
       )}
 
       {status === "FAILED" && (
@@ -173,6 +191,15 @@ export function PublishPanel({ item, series, dirty, busy, run, adopt, notify }: 
               ))}
             </ul>
           )}
+          {pub?.failures && pub.failures.length > 0 && (
+            <ul className="mt-2 space-y-0.5 text-xs text-[var(--c-danger)]">
+              {pub.failures.map((f) => (
+                <li key={f.channel}>
+                  {CHANNEL_LABEL[f.channel]}: yayınlanamadı — <span className="aura-mono break-words">{f.error}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
@@ -189,7 +216,7 @@ export function PublishPanel({ item, series, dirty, busy, run, adopt, notify }: 
       {work === "zip" && <p className="mt-2 text-xs text-[var(--c-ink-3)]">Slaytlar çiziliyor ve paketleniyor — birkaç saniye sürer…</p>}
       {canHelp && dirty && <p className="mt-2 text-xs text-[var(--c-ink-3)]">İndirilen ve kopyalanan içerik KAYITLI hâldir; ekrandaki kaydedilmemiş değişiklik dâhil değildir.</p>}
 
-      {status === "APPROVED" && !sealBroken && (
+      {(status === "APPROVED" || status === "PUBLISHING") && !sealBroken && (
         <div className="mt-4 border-t border-[var(--c-hairline)] pt-4">
           {!marking ? (
             <button type="button" onClick={() => setMarking(true)} disabled={disabled} className={BTN_SECOND}>
@@ -237,10 +264,10 @@ export function PublishPanel({ item, series, dirty, busy, run, adopt, notify }: 
         </div>
       )}
 
-      {status === "FAILED" && (
+      {(status === "FAILED" || status === "PUBLISHING") && (
         <div className="mt-4 border-t border-[var(--c-hairline)] pt-4">
           <button type="button" onClick={retry} disabled={disabled} className={BTN_PRIMARY}>
-            {busy === "retry" ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />} Yeniden dene
+            {busy === "retry" ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />} {status === "PUBLISHING" ? "Yayınlanmadı — yeniden dene" : "Yeniden dene"}
           </button>
         </div>
       )}

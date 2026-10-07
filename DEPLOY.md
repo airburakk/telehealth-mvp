@@ -258,6 +258,10 @@ npx tsx scripts/translate-legal.ts --lang=Rusça   # tek dil
 4. **Vercel env (YALNIZ `doctorium` projesi):** `RUBRIK_RENDER_URL` = köprü adresi (`SOCIAL_DIGEST_TOKEN` zaten var — `/api/social-digest` ile ortak; **ikisi aynı projede dolu olmalı**; `SOCIAL_DIGEST_TOKEN` yalnız `doctorium`'da tanımlıdır, AURA projesine eklemek işe yaramaz — `vercel env ls production` ile ölçüldü, 2026-10-06). Env yalnız YENİ yayında etkinleşir → yeniden yayın gerekir. Yoksa önizleme 503 "yapılandırılmamış" verir (dormant).
 5. **Doğrulama:** önce jetonsuz `curl -s -o /dev/null -w "%{http_code}" -X POST -d "{}" <köprü adresi>` → **401** (kart jetonsuz isteği reddeder); sonra yönetici oturumuyla `/admin/icerik-takvimi` → yuva aç → önizlemeyi çiz → 7 PNG.
    Yayın hattı (otomasyon, n8n — Faz 3) henüz YOK: onaylanan içerik ELLE paylaşılır (v6.332: yuva ekranında PNG ZIP indir · altyazı kopyala · "elle yayınlandı" işareti; migration/env GEREKMEZ).
+6. **Makine yüzeyi (v6.334, Faz 2-B — DORMANT; migration YOK):** `POST /api/social-calendar/yayin` (`action: bak|al|sonuc`) yalnız `CONTENT_PLAN_TOKEN` (AYRI jeton; `SOCIAL_DIGEST_TOKEN` kabul edilmez) tanımlıysa çalışır — yoksa 503.
+   Jeton yalnız **kart sunucusunda (`.env.kart`) ve Vercel `doctorium` env'inde** yaşar (n8n'e girmez); rastgele ≥ 32 bayt (`openssl rand -hex 32`), değer iki yere AYNEN girilir, env yalnız YENİ yayında etkinleşir (yeniden yayın).
+   Aktivasyon Faz 3'tür (kart `/rubrik/bugun` ucu → n8n KURU akış → kanal akışları) ve her adım ayrı onayla yapılır. Şu an jeton GİRİLMEMİŞTİR → uç kapalıdır, davranış değişmez.
+   Doğrulama: jetonsuz `curl -s -o /dev/null -w "%{http_code}" -X POST -d "{}" https://doctorium.tr/api/social-calendar/yayin` → jeton girilmeden 503, girildikten sonra 401.
 
 ## Adım 3 — GitHub'a gönder
 

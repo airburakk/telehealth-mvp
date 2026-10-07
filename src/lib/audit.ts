@@ -62,9 +62,10 @@ export type AuditAction =
   | "CONTENT_PLAN_UNAPPROVE" // onay geri alındı ya da düzenleme/kaynak değişikliğiyle düştü — detail: rubrik·gün·neden
   | "CONTENT_PLAN_SKIP" // yuva atlandı (onaylıysa onay da düştü) — detail: rubrik·gün
   // ── İçerik takvimi yayın durumu (v6.332, 2026-10-06) — kanal adı yazılır, bağlantı/içerik YAZILMAZ ──────────────────
-  | "CONTENT_PLAN_PUBLISH" // yayınlandı olarak işaretlendi (TERMİNAL) — detail: rubrik·gün·elle|otomatik·kanallar
-  | "CONTENT_PLAN_PUBLISH_FAIL" // yayın denemesi başarısız (otomasyon) — detail: rubrik·gün·yayın hatası (hata metni publishedRefs'te)
-  | "CONTENT_PLAN_RETRY"; // hatalı yayın yeniden denemeye alındı (FAILED → APPROVED) — detail: rubrik·gün
+  | "CONTENT_PLAN_CLAIM" // otomasyon içeriği yayın için ALDI (APPROVED → PUBLISHING; en fazla bir kez yayın kilidi; v6.334) — detail: rubrik·gün·yayın için alındı (actor null = otomasyon)
+  | "CONTENT_PLAN_PUBLISH" // yayınlandı olarak işaretlendi (TERMİNAL) — detail: rubrik·gün·elle|otomatik·kanallar[·başarısız:kanallar]
+  | "CONTENT_PLAN_PUBLISH_FAIL" // yayın denemesi başarısız (otomasyon; YAYINLANIYOR → FAILED) — detail: rubrik·gün·yayın hatası (hata metni publishedRefs'te)
+  | "CONTENT_PLAN_RETRY"; // hatalı ya da takılı yayın yeniden denemeye alındı (FAILED | PUBLISHING → APPROVED) — detail: rubrik·gün·neden
 
 interface RecordInput {
   actor: SessionUser | null;
