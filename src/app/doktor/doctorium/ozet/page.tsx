@@ -4,7 +4,8 @@ import { ArrowLeft, Newspaper, Settings2 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { todayModuleCounts } from "@/lib/doctorium";
-import { DIGEST_NAME, formatTrDate, type DigestSnapshot } from "@/lib/daily-digest";
+import { DIGEST_NAME, formatTrDate } from "@/lib/daily-digest";
+import { parseDigestSnapshot } from "@/lib/digest-snapshot";
 import { DoctoriumShell } from "../DoctoriumSidebar";
 
 export const dynamic = "force-dynamic";
@@ -47,14 +48,7 @@ export default async function OzetPage({
   const wanted = sp.d && /^\d{4}-\d{2}-\d{2}$/.test(sp.d) ? sp.d : null;
   const current = (wanted ? recent.find((r) => r.day === wanted) : recent[0]) ?? null;
 
-  let snapshot: DigestSnapshot | null = null;
-  if (current) {
-    try {
-      snapshot = JSON.parse(current.itemsJson) as DigestSnapshot;
-    } catch {
-      snapshot = null; // bozuk anlık görüntü — boş durumla aynı muamele (baskı çökertmez)
-    }
-  }
+  const snapshot = current ? parseDigestSnapshot(current.itemsJson) : null;
 
   return (
     <DoctoriumShell active={null} counts={await todayModuleCounts()}>
@@ -69,7 +63,7 @@ export default async function OzetPage({
         {/* Masthead — tipografik gazete başlığı (e-posta baskısıyla aynı ses) */}
         <header className="mt-6 border-b-[3px] border-double border-[var(--c-ink)] pb-4 text-center">
           <h1 className="aura-display text-[34px] font-bold tracking-[0.14em] text-[var(--c-ink)]">
-            DOCTORIUM <span className="text-emerald-400">POST</span>
+            DOCTORIUM <span className="text-[var(--doctorium-kind-makale)]">POST</span>
           </h1>
           <p className="aura-mono mt-1.5 text-[11px] tracking-[0.16em] text-[var(--c-ink-3)] uppercase">
             {current ? formatTrDate(current.day) : "Kişisel sabah özetiniz"}
@@ -99,12 +93,16 @@ export default async function OzetPage({
         {!current || !snapshot ? (
           <div className="mt-10 rounded-xl border border-[var(--c-hairline)] bg-[var(--c-surface)] p-8 text-center">
             <Newspaper size={26} className="mx-auto text-[var(--c-ink-3)]" aria-hidden />
-            {doctor.digestChannel ? (
+            {current || wanted ? (
+              <p role="alert" className="mt-3 text-[var(--c-ink)]">
+                {current ? "Bu baskı okunamadı. Başka bir baskı seçin veya daha sonra yeniden deneyin." : "Seçilen gün son yedi baskı arasında bulunamadı."}
+              </p>
+            ) : doctor.digestChannel ? (
               <>
-                <h2 className="mt-3 text-[16px] font-semibold text-[var(--c-ink)]">İlk baskınız hazırlanıyor</h2>
+                <h2 className="mt-3 text-[16px] font-semibold text-[var(--c-ink)]">Henüz baskınız yok</h2>
                 <p className="mx-auto mt-2 max-w-[52ch] text-[13.5px] leading-relaxed text-[var(--c-ink-2)]">
                   {DIGEST_NAME} her sabah, gece akışınıza düşen başlıklardan derlenir. Aboneliğiniz
-                  açık — ilk baskınız bir sonraki sabah burada olacak. İçeriği olmayan sakin
+                  açık. Yeni içerik varsa günlük üretim koşusunda baskı hazırlanır. İçeriği olmayan sakin
                   günlerde baskı çıkmaz.
                 </p>
               </>

@@ -39,7 +39,7 @@ export function AcademicSummaryBlock({
       </h2>
 
       <div className="mt-3.5">
-        <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">
+        <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--c-ink)]">
           <ListChecks size={13} /> Ana çıkarımlar
         </h3>
         <ul className="mt-1.5 grid gap-1.5">

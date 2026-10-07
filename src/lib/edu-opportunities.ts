@@ -83,10 +83,12 @@ export const EDU_OPPORTUNITIES: readonly EduOpportunity[] = [
     deadline: null, deadlineNote: "Yılda bir çağrı, genelde Ekim–Kasım (2025 çağrısı 13 Ekim – 19 Kasım); 2026 çağrısı henüz duyurulmadı", startsAt: null,
     eligibility: "Ön lisans/lisans öğrencisi (tıp fakültesi dâhil; açıköğretim ve hazırlık sınıfı hariç); akademik danışmanla yürütülen araştırma projesi; 12 aya kadar, en fazla 12.000 TL. Başvuru TÜBİTAK TYBS üzerinden.",
     sourceUrl: "https://tubitak.gov.tr/en/scholarships/degree-associate-degree/destek-programlari/2209-research-project-support-programme-undergraduate-students", verifiedAt: V, approvedAt: A },
-  { id: "tubitak-2247c-star", kind: "burs", title: "TÜBİTAK 2247-C Stajyer Araştırmacı Bursu (STAR)", organizer: "TÜBİTAK BİDEB", country: "TR",
-    deadline: null, deadlineNote: "Dönemsel çağrılar (2026 yılı 1. dönem tamamlandı); sonraki çağrı TÜBİTAK duyurusuyla açılır", startsAt: null,
-    eligibility: "Lisans öğrencisi (T.C. vatandaşı ya da Mavi Kart); tam/yarı zamanlı çalışmıyor olmak. TÜBİTAK merkezlerinde ya da TÜBİTAK/ADEP destekli projelerde stajyer araştırmacılık; aylık 6.000 TL, en fazla 6 ay. Başvuru e-bideb.",
-    sourceUrl: "https://tubitak.gov.tr/en/scholarships/degree-associate-degree/scholarship-programs/2247-c-star-intern-researcher-scholarship-programme", verifiedAt: V, approvedAt: A },
+  { id: "tubitak-2247c-star", kind: "burs", title: "TÜBİTAK 2247-C STAR Lisans — 2026 yılı 2. dönem", organizer: "TÜBİTAK BİDEB", country: "TR",
+    // Öğrenci takvimi: yürütücü talep son günü (12 Ekim) öğrenci deadline'ı değildir.
+    // startsAt program/staj başlangıcıdır; başvuru açılışı bu alana yazılmaz.
+    deadline: "2026-11-16", deadlineNote: null, startsAt: null,
+    eligibility: "Öğrenci ve öğretmen başvuruları 2–16 Kasım 2026, TYBS üzerinden. Yürütücü proje talebi 28 Eylül–12 Ekim; bu aşamada bireysel başvuru alınmaz. Lisans öğrencisi (T.C. vatandaşı/Mavi Kart); tam/yarı zamanlı çalışmıyor olmak. TÜBİTAK/ADEP destekli projelerde aylık 6.000 TL, en fazla 6 ay. Yürütücü değerlendirmesi 7–21 Aralık; ayrıntılı koşullar kaynakta.",
+    sourceUrl: "https://tubitak.gov.tr/tr/burslar/lisans-onlisans/burs-programlari/2247-c-stajyer-arastirmaci-burs-programi-star", verifiedAt: "2026-10-06", approvedAt: A },
   { id: "kyk-burs-kredi-2026", kind: "burs", title: "KYK Burs ve Öğrenim Kredisi 2026-2027", organizer: "Gençlik ve Spor Bakanlığı — Kredi ve Yurtlar Genel Müdürlüğü", country: "TR",
     deadline: null, deadlineNote: "Her yıl Ekim–Kasım'da e-Devlet üzerinden; 2026-2027 takvimi henüz duyurulmadı", startsAt: null,
     eligibility: "Örgün yükseköğretim öğrencisi; ekonomik ve sosyal durum beyanı kamu verileriyle teyit edilir; burs ya da öğrenim kredisi olarak ödenir. Başvuru yalnız e-Devlet.",
@@ -125,8 +127,8 @@ export const EDU_OPPORTUNITIES: readonly EduOpportunity[] = [
     sourceUrl: "https://students-residents.aamc.org/visiting-student-learning-opportunities/seeking-global-opportunity", verifiedAt: "2026-10-02", approvedAt: A },
   { id: "who-internship", kind: "staj", title: "Dünya Sağlık Örgütü Staj Programı (WHO Internship)", organizer: "Dünya Sağlık Örgütü", country: null,
     deadline: null, deadlineNote: "Sürekli başvuru; açık stajlar careers.who.int üzerinde yayımlanır", startsAt: null,
-    eligibility: "En az 20 yaş; en az 3 yıl tam zamanlı üniversite eğitimini tamamlamış öğrenci ya da son 18 ayda mezun; tıp ve sağlık alanları uygun; görev ofisinin dilinde akıcılık. 6–24 hafta; yaşam desteği ödeneği ve sigorta sağlanır.",
-    sourceUrl: "https://www.who.int/careers/internship-programme", verifiedAt: V, approvedAt: A },
+    eligibility: "En az 20 yaş; en az 3 yıl tam zamanlı üniversite eğitimini tamamlamış öğrenci ya da son 18 ayda mezun; tıp ve sağlık alanları uygun; görev ofisinin dilinde akıcılık. 6–24 hafta; sağlık ve kaza sigortası sağlanır. Yaşam desteği, seçilen stajyerin uygunluğuna ve mali değerlendirmeye bağlıdır.",
+    sourceUrl: "https://www.who.int/careers/internship-programme", verifiedAt: "2026-10-06", approvedAt: A },
 ];
 
 /**

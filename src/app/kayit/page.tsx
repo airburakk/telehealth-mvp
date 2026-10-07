@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { isGoogleConfigured, isAppleConfigured } from "@/lib/oauth";
-import { BRANCH_LABELS } from "@/lib/procedures";
+import { DOCTOR_BRANCH_OPTIONS } from "@/lib/doctor-branches";
 import { DoctorSignupForm } from "@/components/DoctorSignupForm";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 // havuzları. Hesap admin onayına kadar doğrulanmamış
 // (public dizin/eşleştirme kapalı). Ayrıntılı anlatım: /kayit/asamalar.
 export default function SignupPage() {
-  const branches = Object.values(BRANCH_LABELS).sort((a, b) => a.localeCompare(b, "tr"));
+  const branches = DOCTOR_BRANCH_OPTIONS;
   return (
     <div className="grid min-h-[calc(100vh-8rem)] place-items-center bg-[var(--c-bg)] px-5 py-10">
       <div className="w-full max-w-md">

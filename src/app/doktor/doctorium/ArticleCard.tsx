@@ -7,7 +7,9 @@ import Link from "next/link";
 // `type FeedItem` type-only olduğu için erimede kaybolur, sorun yok.
 import { categoryLabel, KIND_LABEL } from "@/lib/doctorium-labels";
 import type { FeedItem } from "@/lib/doctorium";
-import { extractExcerpt } from "@/lib/hukuk-keywords";
+import { extractExcerpt, extractKeywords } from "@/lib/hukuk-keywords";
+import { ictihatExcerpt, ictihatHref } from "@/lib/ictihat-search";
+import { IctihatMatch } from "./IctihatMatch";
 import { SaveButton } from "./SaveButton";
 import { CoverArt, hasThumb } from "./CoverArt";
 import { Sparkles } from "lucide-react";
@@ -63,13 +65,13 @@ export type CardWeight = "lead" | "mid" | "min";
  * yarışınca (eski kartın hatası) tarama zorlaşır.
  */
 const KIND_COLOR: Record<string, string> = {
-  makale: "#34d399",   // akademik
+  makale: "var(--doctorium-kind-makale, #34d399)",   // akademik
   doktrin: "#a5b4fc",  // hukuk doktrini — akademik hukuk, içtihattan ayrışır
-  ictihat: "#fb7185",  // yargı kararı
-  mevzuat: "#fbbf24",  // Resmî Gazete
+  ictihat: "var(--doctorium-kind-ictihat, #fb7185)",  // yargı kararı
+  mevzuat: "var(--doctorium-kind-mevzuat, #fbbf24)",  // Resmî Gazete
   haber: "#a78bfa",    // sektörel
   ilac: "#22d3ee",     // klinik çalışma
-  lansman: "#22d3ee",  // klinik faz
+  lansman: "var(--doctorium-kind-lansman, #22d3ee)",  // klinik faz
   uyari: "#fb7185",    // geri çekme — aciliyet (renk DESTEKÇİ; asıl sinyal emir kipi başlık + künye no)
   etkinlik: "var(--c-ink-2)",
   kariyer: "#60a5fa",
@@ -148,6 +150,7 @@ export function ArticleCard({
   weight = "min",
   hrefFor,
   sourceShort,
+  legalSearch,
 }: {
   item: FeedItem;
   saved: boolean | null;
@@ -165,6 +168,8 @@ export function ArticleCard({
    * prop'u geçmez → tam ad, davranış aynen.
    */
   sourceShort?: string | null;
+  /** Only the authenticated case-law search supplies this presentation context. */
+  legalSearch?: { query: string; onlyNew: boolean };
 }) {
   const href = hrefFor
     ? hrefFor(item)
@@ -177,7 +182,9 @@ export function ArticleCard({
 
   // İçtihatta özet yerine KARARIN ALINTISI (Lexpera bulgusu: alıntı başlık işlevi görür ve
   // ham kesme yapılmaz — eşleşen bağlamdan seçilir). Diğerlerinde kaynak özeti.
-  const excerpt = item.kind === "ictihat" ? extractExcerpt(item.summary) : null;
+  const excerpt = item.kind === "ictihat" ? legalSearch
+    ? ictihatExcerpt(item.summary, legalSearch.query)
+    : extractExcerpt(item.summary) : null;
   const limit = SUMMARY_MAX[weight];
   const summary =
     excerpt ??
@@ -268,9 +275,9 @@ export function ArticleCard({
       <Link
         href={href}
         lang={looksEnglish(item.title) ? "en" : undefined}
-        className={`aura-display block text-[var(--c-ink)] hover:underline hover:underline-offset-[3px] ${TITLE_CLASS[weight]}`}
+        className={`aura-display block [overflow-wrap:anywhere] text-[var(--c-ink)] hover:underline hover:underline-offset-[3px] ${TITLE_CLASS[weight]}`}
       >
-        {item.title}
+        {legalSearch ? <IctihatMatch text={item.title} query={legalSearch.query} /> : item.title}
       </Link>
 
       {item.authors && weight !== "min" && (
@@ -284,7 +291,7 @@ export function ArticleCard({
             lang={looksEnglish(excerpt) ? "en" : undefined}
             className="mt-2 border-l-2 border-[var(--c-hairline)] pl-3 text-[14px] leading-relaxed text-[var(--c-ink-2)]"
           >
-            {excerpt}
+            {legalSearch ? <IctihatMatch text={excerpt} query={legalSearch.query} /> : excerpt}
           </p>
         ) : (
           <p
@@ -297,6 +304,10 @@ export function ArticleCard({
           </p>
         )
       )}
+      {legalSearch && <div aria-label="Karar konuları" className="mt-2 flex flex-wrap gap-2">
+        {extractKeywords(item.summary, 3).map(kw => <Link key={kw.key} href={ictihatHref(legalSearch.query, 1, kw.key, legalSearch.onlyNew)}
+          className="rounded border border-[var(--c-hairline)] px-2 py-1 text-sm text-[var(--c-ink-2)]">{kw.label}</Link>)}
+      </div>}
     </li>
   );
 }

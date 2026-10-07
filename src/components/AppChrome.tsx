@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Header } from "@/components/Header";
-import { MasterBar } from "@/components/MasterBar";
+import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
+import { hidesGlobalChrome } from "@/lib/chrome-routes";
 import type { ThemeName } from "@/components/ThemeToggle";
+
+// Keep SSR for application chrome; chrome-free pages do not request its bundle.
+const Header = dynamic(() => import("@/components/Header").then((m) => m.Header));
+const MasterBar = dynamic(() => import("@/components/MasterBar").then((m) => m.MasterBar));
 
 interface MeResponse {
   user: { name: string; role: string } | null;
@@ -23,6 +28,7 @@ interface MeResponse {
 // eski layout.tsx yorumu). Tema, no-flash script'in documentElement'e yazdığı class'tan okunur
 // (bkz. layout.tsx NO_FLASH_THEME_SCRIPT) — burada TEKRAR cookie okumaya gerek yok.
 export function AppChrome({ doctoriumDeploy }: { doctoriumDeploy: boolean }) {
+  const pathname = usePathname();
   const [me, setMe] = useState<MeResponse>({ user: null });
   const [theme, setTheme] = useState<ThemeName>("dark");
 
@@ -37,7 +43,7 @@ export function AppChrome({ doctoriumDeploy }: { doctoriumDeploy: boolean }) {
 
   return (
     <>
-      <Header user={me.user} lang={me.lang} theme={theme} student={me.student} stage1={me.stage1} doctoriumDeploy={doctoriumDeploy} trial={me.trial ?? null} audience={me.audience ?? null} />
+      {!hidesGlobalChrome(pathname) && <Header user={me.user} lang={me.lang} theme={theme} student={me.student} stage1={me.stage1} doctoriumDeploy={doctoriumDeploy} trial={me.trial ?? null} audience={me.audience ?? null} />}
       {me.imp ? (
         <MasterBar mode="impersonating" userName={me.user?.name} />
       ) : me.isMaster ? (

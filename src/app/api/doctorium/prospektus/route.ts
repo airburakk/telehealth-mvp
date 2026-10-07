@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { mapLabel, readLabelPayload } from "@/lib/prospektus-label";
 import { getCurrentUser } from "@/lib/auth";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 
@@ -11,23 +12,6 @@ import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 //
 // Self-auth: yalnız klinik roller. Ayrıca rate-limit (dış API'yi doktor başına makul tut).
 export const dynamic = "force-dynamic";
-
-interface FdaLabel {
-  openfda?: { brand_name?: string[]; generic_name?: string[]; manufacturer_name?: string[] };
-  indications_and_usage?: string[];
-  dosage_and_administration?: string[];
-  warnings?: string[];
-  warnings_and_cautions?: string[];
-  contraindications?: string[];
-  adverse_reactions?: string[];
-  effective_time?: string;
-  id?: string;
-}
-
-function first(v: string[] | undefined, max = 1200): string | null {
-  const s = v?.[0]?.replace(/\s+/g, " ").trim();
-  return s ? s.slice(0, max) : null;
-}
 
 export async function GET(req: Request) {
   const user = await getCurrentUser();
@@ -47,22 +31,11 @@ export async function GET(req: Request) {
   const url = `https://api.fda.gov/drug/label.json?search=${encodeURIComponent(search)}&limit=5`;
 
   try {
-    const res = await fetch(url, { next: { revalidate: 86400 } }); // etiketler seyrek değişir
+    const res = await fetch(url, { next: { revalidate: 86400 }, signal: AbortSignal.timeout(15000) }); // etiketler seyrek değişir
     if (res.status === 404) return NextResponse.json({ ok: true, results: [] }); // openFDA "sonuç yok" = 404
     if (!res.ok) throw new Error(`openFDA HTTP ${res.status}`);
-    const j = (await res.json()) as { results?: FdaLabel[] };
-    const results = (j.results ?? []).map((r) => ({
-      id: r.id ?? null,
-      brand: r.openfda?.brand_name?.[0] ?? null,
-      generic: r.openfda?.generic_name?.[0] ?? null,
-      manufacturer: r.openfda?.manufacturer_name?.[0] ?? null,
-      effectiveTime: r.effective_time ?? null,
-      indications: first(r.indications_and_usage),
-      dosage: first(r.dosage_and_administration),
-      warnings: first(r.warnings ?? r.warnings_and_cautions),
-      contraindications: first(r.contraindications),
-      adverse: first(r.adverse_reactions),
-    }));
+    const j = await readLabelPayload(res);
+    const results = (j.results ?? []).slice(0, 5).map(mapLabel);
     return NextResponse.json({ ok: true, results });
   } catch (e) {
     console.warn("[prospektus] openFDA erişilemedi:", e instanceof Error ? e.message : e);

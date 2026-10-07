@@ -257,7 +257,7 @@ export function CoverArt({
         )}
       </div>
       <div
-        className="aura-mono border-t px-4 py-1.5 text-[10px] font-bold tracking-[0.16em]"
+        className="doctorium-source-stamp aura-mono border-t px-4 py-1.5 text-[10px] font-bold tracking-[0.16em]"
         style={{ color: c, borderColor: "var(--c-hairline)", background: "var(--c-surface)" }}
       >
         {/* URL de büyütülmez: alan adları küçük harf yazılır (okunabilirlik + konvansiyon). */}

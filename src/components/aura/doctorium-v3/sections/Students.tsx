@@ -45,7 +45,7 @@ export function StudentsSection({ proof }: { proof: LandingProof["students"] }) 
     <LandingSection copy={copy}>
       <div className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[.85fr_1.15fr] lg:gap-16">
         <FadeInUp>
-          {copy.eyebrow && <Eyebrow color="var(--dl-coral)">{copy.eyebrow}</Eyebrow>}
+          {copy.eyebrow && <Eyebrow color="var(--dl-coral-ink)">{copy.eyebrow}</Eyebrow>}
           {/* Lockup damgası: küre + "Doctorium [ STUDENT ]" (Header/portal footer ile aynı bileşen, DoctoriumStudentLockup
               aria-hidden'dır → erişilebilir ad sr-only). */}
           <div className="mt-4 flex items-center gap-3.5">
@@ -60,7 +60,7 @@ export function StudentsSection({ proof }: { proof: LandingProof["students"] }) 
           <ol className="mt-10 divide-y divide-[var(--dl-line)] border-y border-[var(--dl-line)]">
             {copy.items?.map((it) => (
               <li key={it.k} className="grid gap-2 py-5 sm:grid-cols-[64px_1fr]">
-                <span className="text-[12px] font-semibold tracking-[0.04em] text-[var(--dl-coral)]">{it.k}</span>
+                <span className="text-[12px] font-semibold tracking-[0.04em] text-[var(--dl-coral-ink)]">{it.k}</span>
                 <div>
                   <div className="text-xl font-medium tracking-[-0.01em]">{it.t}</div>
                   {it.b && <p className="mt-1 text-[15px] leading-relaxed text-[var(--dl-body)]">{it.b}</p>}
@@ -78,7 +78,7 @@ export function StudentsSection({ proof }: { proof: LandingProof["students"] }) 
           )}
         </FadeInUp>
         <FadeInUp delay={0.08}>
-          <StudentScope>
+          <StudentScope className="student-readable-preview">
             <ProductFrame title="Kariyer · Fırsatlar" meta={proof.source === "live" ? "gerçek kayıtlar" : "onaylı kayıtlar"}>
               <ul className="mb-2 flex flex-wrap items-center gap-1.5" aria-label="Fırsat türü (örnek görünüm)">
                 {chips.map((c) => (

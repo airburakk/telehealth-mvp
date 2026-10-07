@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { NotificationBell } from "@/components/NotificationBell";
 import { SystemMessagesMenuItem } from "@/components/SystemMessagesMenuItem";
@@ -121,16 +121,25 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   const [unreadCount, setUnreadCount] = useState(0);
   // Sistem mesajları (v6.79) — ayrı okunmamış sayaç; avatar rozeti İKİSİNİN TOPLAMINI gösterir.
   const [msgUnread, setMsgUnread] = useState(0);
+  const accountId = useId();
+  const accountTrigger = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Dış tıklamada kapat (NotificationBell deseni).
   useEffect(() => {
     if (!menuOpen) return;
-    function onDown(e: MouseEvent) {
+    function onDown(e: PointerEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
     }
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") { setMenuOpen(false); accountTrigger.current?.focus(); }
+    }
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [menuOpen]);
 
   // Nav öğeleri rol bazlı (lib/nav.ts — tam birleşme 2026-07-12: journey daraltması kalktı,
@@ -332,10 +341,12 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
               <div ref={menuRef} className="relative">
                 <button
                   onClick={() => setMenuOpen((o) => !o)}
-                  aria-haspopup="menu"
+                  ref={accountTrigger}
+                  aria-label="Hesap menüsü"
+                  aria-controls={accountId}
                   aria-expanded={menuOpen}
                   title={user.name}
-                  className="relative grid h-9 w-9 place-items-center rounded-full bg-[var(--c-accent)]/15 text-[12px] font-bold text-[var(--c-accent)] transition-colors duration-200 hover:bg-[var(--c-accent)]/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]"
+                  className="relative grid h-11 w-11 place-items-center rounded-full bg-[var(--c-accent)]/15 text-[12px] font-bold text-[var(--c-accent)] transition-colors duration-200 hover:bg-[var(--c-accent)]/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c-accent)]"
                 >
                   {initials}
                   {badgeCount > 0 && (
@@ -344,7 +355,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                     </span>
                   )}
                 </button>
-                <div role="menu" className={`absolute end-0 top-11 z-40 w-64 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-1.5 shadow-xl ${menuOpen ? "" : "hidden"}`}>
+                <div id={accountId} role="region" aria-label="Hesap menüsü" className={`absolute end-0 top-11 z-40 max-h-[calc(100dvh-6rem)] overflow-y-auto w-64 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-1.5 shadow-xl ${menuOpen ? "" : "hidden"}`}>
                   <div className="border-b border-[var(--c-hairline)] px-3 pb-2.5 pt-2">
                     <div className="text-sm font-medium leading-tight text-[var(--c-ink)]">{user.name}</div>
                     {/* Mono rol etiketi — landing'in "mono durak" dili. Öğrencide "Doktor" yazmaz:
@@ -372,17 +383,17 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                       durağının menü eşleniği. Kaydettiklerim'le aynı koşul (içerik işlevi,
                       öğrenciye de açık; Aşama 2'de nöbet/icap planı da burada yaşayacak). */}
                   {user.role === "DOCTOR" && (doctoriumActive || stage1) && (
-                    <Link role="menuitem" href="/doktor/doctorium/takvim" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                    <Link href="/doktor/doctorium/takvim" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <CalendarDays size={15} /> {t("Takvimim")}
                     </Link>
                   )}
                   {user.role === "DOCTOR" && (doctoriumActive || stage1) && (
-                    <Link role="menuitem" href="/doktor/doctorium/kaydettiklerim" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                    <Link href="/doktor/doctorium/kaydettiklerim" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <Bookmark size={15} /> {t("Kaydettiklerim")}
                     </Link>
                   )}
                   {user.role === "DOCTOR" && canRedeem && (doctoriumActive || stage1) && (
-                    <Link role="menuitem" href="/doktor/doctorium/oduller" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                    <Link href="/doktor/doctorium/oduller" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <Star size={15} /> {t("Puanlarım")}
                     </Link>
                   )}
@@ -395,19 +406,19 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                       v6.105 (2026-08-17): AŞAMA 1 doktorunda (stage1) da gizli — o hesabın
                       kromu bütünüyle Doctorium'a aittir, portal içinde/dışında fark etmez. */}
                   {(user.role === "DOCTOR" || user.role === "ADMIN") && !student && !stage1 && !doctoriumActive && (
-                    <Link role="menuitem" href="/doktor/profil" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                    <Link href="/doktor/profil" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <BadgeCheck size={15} /> {t("Profilim")}
                     </Link>
                   )}
                   {user.role === "DOCTOR" && !student && !stage1 && !doctoriumActive && (
-                    <Link role="menuitem" href="/doktor/finans" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                    <Link href="/doktor/finans" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <Wallet size={15} /> {t("Finans")}
                     </Link>
                   )}
                   {/* Hesap ayarları — yalnız hastada (v6.11): hesap/veri silme oradan yapılır (KVKK m.7).
                       Personelde gizli; sayfa + API de PATIENT'a kapılı (savunma-derinliği). */}
                   {user.role === "PATIENT" && (
-                    <Link role="menuitem" href="/hesap" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                    <Link href="/hesap" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <UserCog size={15} /> {t("Hesabım")}
                     </Link>
                   )}
@@ -417,16 +428,16 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
                       kapatma. Aynı yerde yaşar (tema anahtarının hemen üstü) — hesap ayarlarının
                       menüdeki yeri marka değiştirince kaymaz. */}
                   {user.role === "DOCTOR" && (doctoriumActive || stage1) && (
-                    <Link role="menuitem" href="/doktor/doctorium/hesap" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                    <Link href="/doktor/doctorium/hesap" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <UserCog size={15} /> {t("Hesabım")}
                     </Link>
                   )}
                   <ThemeToggle initial={theme} t={t} asMenuItem />
                   <div className="mt-1 border-t border-[var(--c-hairline)] pt-1">
-                    <button role="menuitem" onClick={() => { setMenuOpen(false); setConfirmLogoutAll(true); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-start text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
+                    <button onClick={() => { setMenuOpen(false); setConfirmLogoutAll(true); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-start text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-[var(--c-ink)]">
                       <ShieldOff size={15} /> {t("Tüm cihazlardan çıkış")}
                     </button>
-                    <button role="menuitem" onClick={() => { setMenuOpen(false); logout(); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-start text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-red-400">
+                    <button onClick={() => { setMenuOpen(false); logout(); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-start text-sm text-[var(--c-ink-2)] transition-colors duration-200 hover:bg-[var(--c-surface)] hover:text-red-400">
                       <LogOut size={15} /> {t("Çıkış")}
                     </button>
                   </div>

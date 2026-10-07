@@ -1,0 +1,24 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+const m=vi.hoisted(()=>({instances:[] as {handlers:Record<string,()=>void>;callback:(msg:{data?:unknown})=>void;resolve:()=>void;reject:(e:Error)=>void;close:ReturnType<typeof vi.fn>;channel:string;event:string}[],constructorError:false,effect:undefined as undefined | (()=>void|(()=>void))}));
+vi.mock("ably",()=>({Realtime:class {
+ connection:{on:(event:string,handler:()=>void)=>void};channels:{get:(channel:string)=>{subscribe:(event:string,cb:(msg:{data?:unknown})=>void)=>Promise<void>}};close:ReturnType<typeof vi.fn>;
+ constructor(){if(m.constructorError)throw new Error("synthetic constructor failure");let resolve!:()=>void,reject!:(e:Error)=>void;const promise=new Promise<void>((ok,bad)=>{resolve=ok;reject=bad});const state: (typeof m.instances)[number]={handlers:{} as Record<string,()=>void>,callback:()=>{},resolve,reject,close:vi.fn(),channel:"",event:""};state.close.mockImplementation(()=>reject(new Error("Connection closed")));m.instances.push(state);this.connection={on:(event,handler)=>{state.handlers[event]=handler}};this.channels={get:channel=>({subscribe:(event,cb)=>{state.channel=channel;state.event=event;state.callback=cb;return promise}})};this.close=state.close;}
+}}));
+vi.mock("react",()=>({useEffect:(effect:()=>void|(()=>void))=>{m.effect=effect},useRef:(value:unknown)=>({current:value})}));
+import { useLiveTick } from "@/lib/use-live-tick";
+import { connectAblySignal, connectLiveNudge } from "@/lib/ably-client";
+const flush=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve()};
+beforeEach(()=>{m.instances=[];m.constructorError=false;m.effect=undefined});
+afterEach(()=>vi.useRealTimers());
+for(const type of ["signal","nudge"] as const)describe("Ably subscription lifecycle: "+type,()=>{
+ const create=(callback=vi.fn())=>({handle:type==="signal"?connectAblySignal("fixture","self",callback):connectLiveNudge("live:notify",callback),callback});
+ it("does not report live before successful attach; connected and disconnected states remain observable",async()=>{const {handle}=create();const s=m.instances[0];s.handlers.connected();expect(handle.live()).toBe(false);s.resolve();await flush();expect(handle.live()).toBe(true);s.handlers.disconnected();expect(handle.live()).toBe(false);s.handlers.connected();expect(handle.live()).toBe(true);for(const event of ["failed","suspended","closed"]){s.handlers[event]();expect(handle.live()).toBe(false);s.handlers.connected()}handle.close();expect(handle.live()).toBe(false)});
+ it("cleanup consumes its pending subscription rejection, closes once, and ignores late events/messages",async()=>{const {handle,callback}=create();const s=m.instances[0];s.handlers.connected();handle.close();handle.close();await flush();s.handlers.connected();s.callback({data:{sender:"other",id:1}});expect(handle.live()).toBe(false);expect(callback).not.toHaveBeenCalled();expect(s.close).toHaveBeenCalledOnce()});
+ it("auth/attach rejection keeps fallback live false even after a connection event",async()=>{const {handle}=create();const s=m.instances[0];s.handlers.connected();s.reject(new Error("synthetic authorization rejection"));await flush();expect(handle.live()).toBe(false);s.handlers.connected();expect(handle.live()).toBe(false);handle.close()});
+ it("late attachment resolution cannot revive a disposed helper",async()=>{const {handle}=create();const s=m.instances[0];s.close.mockImplementation(()=>{});handle.close();s.resolve();await flush();s.handlers.connected();expect(handle.live()).toBe(false)});
+ it("active callback still works and synchronous construction failure remains safe",async()=>{const {handle,callback}=create();const s=m.instances[0];s.resolve();s.handlers.connected();await flush();s.callback({data:{sender:"self",id:1}});s.callback({data:{sender:"other",id:2}});expect(callback).toHaveBeenCalledTimes(type==="signal"?1:2);if(type==="signal")expect(callback).toHaveBeenLastCalledWith({sender:"other",id:2});handle.close();m.constructorError=true;const failed=create().handle;expect(failed.live()).toBe(false);expect(()=>failed.close()).not.toThrow()});
+});
+
+describe("unchanged polling fallback",()=>{
+ it("continues fallback ticks after subscription failure and cancels them on cleanup",async()=>{vi.useFakeTimers();const tick=vi.fn().mockResolvedValue(undefined);useLiveTick("notify",tick,true,3000);const cleanup=m.effect!();await flush();const state=m.instances[0];state.handlers.connected();state.reject(new Error("synthetic auth rejection"));await flush();await vi.advanceTimersByTimeAsync(3000);expect(tick).toHaveBeenCalledTimes(2);await vi.advanceTimersByTimeAsync(3000);expect(tick).toHaveBeenCalledTimes(3);if(typeof cleanup!=="function")throw new Error("missing cleanup");cleanup();await vi.advanceTimersByTimeAsync(30000);expect(tick).toHaveBeenCalledTimes(3);expect(state.close).toHaveBeenCalledOnce()});
+});

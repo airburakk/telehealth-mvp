@@ -14,7 +14,7 @@ export function LandingFooterV3() {
   return (
     <footer style={V3_LIGHT} className="border-t border-[var(--dl-line)] bg-[var(--dl-bg)] text-[var(--dl-ink)] print:hidden">
       <div className="mx-auto w-full max-w-6xl px-5 py-10">
-        <Link href="/doctorium" className="inline-flex items-center gap-3">
+        <Link href="/doctorium" prefetch={false} className="inline-flex items-center gap-3">
           <AuraMark size={34} tone="emerald" />
           <DoctoriumWordV3 className="text-[32px] leading-none" />
         </Link>
@@ -24,13 +24,13 @@ export function LandingFooterV3() {
         {/* v6.262 (👤 Karar 3 · C): üyelik bağlantıları — öğrenci kaydı footer'da da bulunur (AURA vitrin footer'ındaki
             "Tıp öğrencileri" bağlantısının Doctorium karşılığı). */}
         <nav aria-label="Üyelik" className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[var(--dl-muted)]">
-          <Link href={LANDING_ROUTES.signup} className="transition-colors hover:text-[var(--dl-emerald)]">Doktor üyeliği</Link>
-          <Link href={LANDING_ROUTES.student} className="transition-colors hover:text-[var(--dl-emerald)]">Tıp öğrencisi üyeliği</Link>
-          <Link href={LANDING_ROUTES.login} className="transition-colors hover:text-[var(--dl-emerald)]">Giriş yap</Link>
+          <Link href={LANDING_ROUTES.signup} className="inline-flex min-h-[44px] items-center transition-colors hover:text-[var(--dl-emerald)]">Doktor üyeliği</Link>
+          <Link href={LANDING_ROUTES.student} className="inline-flex min-h-[44px] items-center transition-colors hover:text-[var(--dl-emerald)]">Tıp öğrencisi üyeliği</Link>
+          <Link href={LANDING_ROUTES.login} className="inline-flex min-h-[44px] items-center transition-colors hover:text-[var(--dl-emerald)]">Giriş yap</Link>
         </nav>
         <nav aria-label="Hukuki belgeler" className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[var(--dl-muted)]">
           {LEGAL_LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="transition-colors hover:text-[var(--dl-emerald)]">
+            <Link key={l.href} href={l.href} className="inline-flex min-h-[44px] items-center transition-colors hover:text-[var(--dl-emerald)]">
               {l.label}
             </Link>
           ))}

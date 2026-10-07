@@ -3,24 +3,8 @@
 // AURA v2 vitrin i18n — EN birincil; platform landing'inin 9 dil seti (RTL dahil;
 // bg = 9. dil, 2026-07-23 kullanici karari).
 // Tum gorunur metinler buradan.
-export type Lang = "en" | "tr" | "de" | "fr" | "ru" | "ar" | "fa" | "az" | "bg";
-
-// Dil secici + <html lang/dir> icin meta (platform LANDING_LOCALES ile ayni set).
-export const LANGS: { code: Lang; native: string }[] = [
-  { code: "en", native: "English" },
-  { code: "tr", native: "Türkçe" },
-  { code: "de", native: "Deutsch" },
-  { code: "fr", native: "Français" },
-  { code: "ru", native: "Русский" },
-  { code: "ar", native: "العربية" },
-  { code: "fa", native: "فارسی" },
-  { code: "az", native: "Azərbaycanca" },
-  { code: "bg", native: "Български" },
-];
-export const LANG_CODES = LANGS.map((l) => l.code);
-export function langDir(l: Lang): "rtl" | "ltr" {
-  return l === "ar" || l === "fa" ? "rtl" : "ltr";
-}
+export type { Lang } from "./locales";
+export { LANGS, LANG_CODES, langDir } from "./locales";
 
 // Vitrin platforma tasindi (2026-07-12): hedefler artik ayni uygulamanin
 // GORELI rotalari. /giris sonrasi hasta zaten huniye iner (tek huni /triyaj).

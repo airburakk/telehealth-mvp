@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
+import { CareerEvidenceNote } from "./CareerEvidence";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -27,6 +28,12 @@ import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
 import { audienceFlags } from "@/lib/doctorium-tiers";
 import { keywordByKey } from "@/lib/hukuk-keywords";
 import { LegalSearchBox } from "./LegalSearchBox";
+import { AcademicSearch } from "./AcademicSearch";
+import { academicSearchInput, academicHref } from "@/lib/academic-search";
+import { academicFeedPage } from "@/lib/doctorium";
+import { ictihatFeedPage } from "@/lib/doctorium";
+import { ictihatSearchInput, ictihatHref } from "@/lib/ictihat-search";
+import { IctihatSearch } from "./IctihatSearch";
 import { CongressList } from "./CongressList";
 import { ProspektusSearch } from "./ProspektusSearch";
 import { CareerDisclaimer, careerDate, COUNTRY_LABEL } from "./CareerShared";
@@ -95,7 +102,7 @@ export default async function DoctoriumPage({
   searchParams,
 }: {
   // sayfa/imlec/onceki: Akışım sıralı sayfalaması (v6.192) — bkz. FeedPager.
-  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string; h?: string; k?: string; t?: string; f?: string; l?: string; n?: string; q?: string; fm?: string; sayfa?: string; imlec?: string; onceki?: string; tur?: string }>;
+  searchParams: Promise<{ m?: string; d?: string; b?: string; c?: string; s?: string; h?: string; k?: string; t?: string; f?: string; l?: string; n?: string; q?: string; fm?: string; sayfa?: string; imlec?: string; onceki?: string; tur?: string; ap?: string; ip?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
@@ -155,7 +162,10 @@ export default async function DoctoriumPage({
   // o 2 etkinlik kartını görür). Yalnız Akışım'da ve branş odağı yokken anlamlı.
   const fm = active === "akis" && !focus && sp.fm && FM_TO_MODULES[sp.fm] ? sp.fm : null;
   // İçtihat serbest metin araması (v6.132): kutu içinden gelir, URL'de taşınır (?q=).
-  const legalQuery = sp.q?.trim().slice(0, 80) || null;
+  const legalQuery = typeof sp.q === "string" ? sp.q.trim().slice(0, 80) || null : null;
+  const academic = academicSearchInput(sp.q, sp.ap);
+  let academicError = academic.error;
+  let academicHasNext = false;
 
   const persistedCategory =
     active === "sektorel" ? viewPrefs.sektorel.category
@@ -166,6 +176,9 @@ export default async function DoctoriumPage({
   const legalTab: LegalTabKey | null = active === "mevzuat" ? parseLegalTab(sp.h) : null;
   // İçtihat anahtar-kelime filtresi (v6.87): ?k= sözlük anahtarı; bilinmeyen değer filtresiz liste.
   const legalKeyword = legalTab === "ictihat" ? keywordByKey(sp.k) : null;
+  const ictihat = ictihatSearchInput(sp.q, sp.ip, sp.k);
+  let ictihatError = ictihat.error;
+  let ictihatHasNext = false;
 
   // Akış Tercihleri (Faz 2): [] = tümü. Kongre/Kariyer dahil her seçili bölüm akışa KART olarak
   // girer (bölüm-kotalı karışım — lib/doctorium personalFeed).
@@ -179,7 +192,7 @@ export default async function DoctoriumPage({
   // KALDIRILDI: sayfa FEED_PAGE_SIZE kalemle sınırlı, devamı altta sayfa numarasıyla gezilir.
   // Her sayfa sunucuda kendi imleciyle render edilir (?sayfa= + ?imlec=), yani paylaşılabilir
   // ve tarayıcı geri düğmesiyle uyumlu. Neden numaralı ATLAMA yok: FeedPager başlık yorumu.
-  // Yalnız Akışım sayfalanır — diğer sekmeler moduleFeed'in tek partisinde kalır.
+  // Akışım imleçle sayfalanır; Akademik ayrı, sınırlandırılmış ap parametresini kullanır.
   //
   // ⚠️ İmleç ÇÖZÜLEMEZSE (bozuk/paylaşılmış URL) ilk sayfaya düşülür VE sayfa numarası 1'e
   // çekilir: "SAYFA 5" yazıp ilk sayfanın içeriğini göstermek sessiz bir yalan olurdu.
@@ -212,16 +225,30 @@ export default async function DoctoriumPage({
       feedNextCursor = page.done ? null : encodeFeedCursor(page.cursors);
     }
   }
-  else if (active === "akademik") items = await moduleFeed("akademik", branches, { createdSince: since });
+  else if (active === "akademik" && !academicError) {
+    try {
+      const result = await academicFeedPage(branches, academic.query, academic.page, since);
+      items = result.items;
+      academicHasNext = result.hasNext;
+    } catch {
+      academicError = "Akademik arama tamamlanamadı. Lütfen yeniden deneyin veya aramayı daraltın.";
+    }
+  }
+  else if (active === "mevzuat" && legalTab === "ictihat") {
+    if (!ictihatError) {
+      try {
+        const result = await ictihatFeedPage(ictihat.query, ictihat.page, ictihat.keyword?.patterns, since);
+        items = result.items;
+        ictihatHasNext = result.hasNext;
+      } catch {
+        ictihatError = "İçtihat araması tamamlanamadı. Lütfen yeniden deneyin veya aramayı daraltın.";
+      }
+    }
+  }
   else if (active === "mevzuat") {
     // İçtihat + Doktrin = ARŞİV: tarih penceresi bilinçli YOK — kararlar/makaleler eski tarihli
     // (dizin yıl bazlı), 30 günlük varsayılan pencere sekmeyi daima boş gösterirdi.
-    items = legalTab === "ictihat"
-      ? await moduleFeed("mevzuat", [], {
-          category: "ictihat", textContainsAny: legalKeyword?.patterns,
-          textQuery: legalQuery ?? undefined, createdSince: since,
-        })
-      : legalTab === "doktrin"
+    items = legalTab === "doktrin"
       ? await moduleFeed("mevzuat", [], {
           category: "doktrin", textQuery: legalQuery ?? undefined, createdSince: since,
         })
@@ -372,7 +399,7 @@ export default async function DoctoriumPage({
           silik "desc satırı"nın dönüşü DEĞİL — editoryal başlık bloğu, ayrı karar. */}
       <div className="mt-5">
         <div
-          className="aura-mono text-[11px] font-bold tracking-[0.16em]"
+          className="doctorium-module-eyebrow aura-mono text-[11px] font-bold tracking-[0.16em]"
           style={{ color: head.color ?? "var(--c-ink)" }}
         >
           {head.eyebrow}
@@ -428,7 +455,7 @@ export default async function DoctoriumPage({
           {onlyNew && (
             <Link
               href={
-                active !== "akis" ? `/doktor/doctorium?m=${active}`
+                active === "akademik" ? academicHref(academic.query) : active === "mevzuat" && legalTab === "ictihat" ? ictihatHref(ictihat.query, 1, ictihat.keyword?.key) : active !== "akis" ? `/doktor/doctorium?m=${active}`
                 : fm ? `/doktor/doctorium?fm=${fm}`
                 : "/doktor/doctorium"
               }
@@ -555,7 +582,11 @@ export default async function DoctoriumPage({
           içtihat, doktrin. Üstte yalnız başlık + arama; içtihatta örnek anahtar kelimeler
           AÇILIR KAPANIR bölümde. Prospektüs kutusuyla aynı desen — arşiv yüzeyleri aynı
           dili konuşur. */}
-      {active === "mevzuat" && legalTab && (
+      {active === "akademik" && <AcademicSearch query={academic.query} page={academic.page} onlyNew={onlyNew}
+        count={items.length} hasNext={academicHasNext} error={academicError} />}
+      {active === "mevzuat" && legalTab === "ictihat" && <IctihatSearch query={ictihat.query} page={ictihat.page}
+        keyword={ictihat.keyword?.key ?? null} onlyNew={onlyNew} count={items.length} hasNext={ictihatHasNext} error={ictihatError} />}
+      {active === "mevzuat" && legalTab && legalTab !== "ictihat" && (
         <LegalSearchBox
           tab={legalTab} query={legalQuery} activeKeyword={legalKeyword?.key ?? null}
           resultCount={legalQuery ? items.length : undefined} resultCap={MODULE_FEED_LIMIT}
@@ -586,7 +617,7 @@ export default async function DoctoriumPage({
         <CongressList rows={congresses} followed={followed} canFollow={!!doctor} savedIds={savedIds} followedOnly={followFilter} />
       ) : (
         <>
-          {shown.length === 0 ? (
+          {shown.length === 0 && (active === "akademik" || (active === "mevzuat" && legalTab === "ictihat")) ? null : shown.length === 0 ? (
             <EmptyState active={active} focus={focus} range={range} legalTab={legalTab} keywordLabel={legalKeyword?.label ?? null} />
           ) : (
             <ul className="mt-5 grid grid-cols-[minmax(0,1fr)]">
@@ -615,6 +646,7 @@ export default async function DoctoriumPage({
                     item={it}
                     saved={savedIds ? savedIds.has(it.id) : null}
                     weight={i === 0 ? "lead" : i <= 4 ? "mid" : "min"}
+                    legalSearch={active === "mevzuat" && legalTab === "ictihat" ? { query: ictihat.query, onlyNew } : undefined}
                   />
                 </Fragment>
               ))}
@@ -840,6 +872,7 @@ function CareerList({ rows, savedIds }: { rows: Awaited<ReturnType<typeof career
               {p.title}
             </Link>
             <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--c-ink-2)]">{p.summary}</p>
+            <CareerEvidenceNote slug={p.slug} confidence={p.confidence} />
 
             {(p.languageReq || p.examReq) && (
               <dl className="mt-3 grid gap-1.5 text-[11px] sm:grid-cols-2">

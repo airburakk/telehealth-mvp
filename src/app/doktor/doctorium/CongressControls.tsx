@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarClock, Loader2, Star } from "lucide-react";
 
@@ -23,45 +23,64 @@ export function FollowButton({
   const router = useRouter();
   const [on, setOn] = useState(following);
   const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function toggle() {
+    if (pending.current) return;
+    pending.current = true;
     setBusy(true);
+    setError(null);
     const next = !on;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
     try {
       const res = await fetch("/api/doctor/congress-follow", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ congressId, follow: next }),
+        signal: controller.signal,
       });
       if (!res.ok) throw new Error();
       setOn(next);
       router.refresh();
     } catch {
-      /* durum değişmedi — düğme eski hâlinde kalır */
+      setError("Takip sonucu doğrulanamadı. Sayfayı yenileyin veya yeniden deneyin.");
     } finally {
+      clearTimeout(timer);
+      pending.current = false;
       setBusy(false);
     }
   }
 
   if (variant === "action") {
     return (
+      <span className="inline-flex flex-col items-start gap-1">
       <button type="button" onClick={toggle} disabled={busy} aria-pressed={on}
+        title="Doctorium takvimine eklemek ve etkinliği takip etmek aynı işlemdir. Hatırlatma eşikleri Özelleştir bölümündedir."
         className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-xs font-semibold transition ${
           on ? "border-amber-400/40 bg-amber-500/15 text-amber-300" : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface-2)]"
         }`}>
         {busy ? <Loader2 size={13} className="animate-spin" /> : <CalendarClock size={13} />}
-        {on ? "Takvimde" : "Takvime ekle"}
+        {on ? "Takibi bırak / takvimden kaldır" : "Takip et / takvime ekle"}
       </button>
+      <span className="text-[11px] text-[var(--c-ink-2)]">Takip, etkinliği ve bildiri/erken kayıt son tarihlerini Doctorium takviminize ekler. Hatırlatmalar Özelleştir bölümündeki ayrı eşiklere bağlıdır.</span>
+      {error && <span role="alert" className="text-[11px] text-[var(--c-danger)]">{error}</span>}
+      </span>
     );
   }
 
   return (
+    <span className="inline-flex flex-col items-end gap-1">
     <button type="button" onClick={toggle} disabled={busy} aria-pressed={on}
+      title={on ? "Takibi bırak: etkinlik ve son tarihleri Doctorium takviminden kalkar." : "Takip et: etkinlik ve son tarihleri Doctorium takvimine eklenir."}
       className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition ${
         on ? "border-amber-400/40 bg-amber-500/15 text-amber-300" : "border-[var(--c-hairline)] text-[var(--c-ink-2)] hover:bg-[var(--c-surface-2)]"
       }`}>
       {busy ? <Loader2 size={12} className="animate-spin" /> : <Star size={12} className={on ? "fill-amber-300" : ""} />}
       {on ? "Takipte" : "Takip et"}
     </button>
+    {error && <span role="alert" className="max-w-56 text-[11px] text-[var(--c-danger)]">{error}</span>}
+    </span>
   );
 }

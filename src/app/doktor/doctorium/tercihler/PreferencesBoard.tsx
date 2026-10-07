@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Loader2, Megaphone, Newspaper } from "lucide-react";
 import { EDU_KINDS, EDU_KIND_SHORT } from "@/lib/edu-opportunities";
 import { TUS_SECTIONS } from "@/lib/tus";
@@ -202,24 +202,55 @@ export function PreferencesBoard(p: Props) {
   // anında yazılır (görünüm süzgeçleriyle aynı gerekçe). "" = Hepsi / sayfa varsayılanı (API'ye null gider).
   const [kariyer, setKariyer] = useState({ tur: p.kariyerInitial.tur ?? "", tusBolum: p.kariyerInitial.tusBolum, tusBrans: p.kariyerInitial.tusBrans ?? "" });
   const [krSt, setKrSt] = useState<Status>({ state: "idle" });
+  const writeQueues = useRef(new Map<string, Promise<void>>());
+  const writeVersions = useRef(new Map<string, number>());
+  const writeErrors = useRef(new Set<string>());
+  const pendingBranches = useRef<(() => void) | null>(null);
+  const pendingEvents = useRef<(() => void) | null>(null);
+  const [navigationError, setNavigationError] = useState<string | null>(null);
   function saveKariyer(next: typeof kariyer) {
     setKariyer(next);
     void post("/api/doctor/view-filters", { module: "kariyer", tur: next.tur || null, tusBolum: next.tusBolum, tusBrans: next.tusBrans || null }, setKrSt);
   }
 
-  async function post(url: string, body: unknown, set: (s: Status) => void) {
+  async function post(url: string, body: unknown, set: (s: Status) => void, keepalive = false) {
+    const settingModule = body && typeof body === "object" && "module" in body ? String(body.module) : "";
+    const key = `${url}:${settingModule}`;
+    const version = (writeVersions.current.get(key) ?? 0) + 1;
+    writeVersions.current.set(key, version);
+    writeErrors.current.delete(key);
+    setNavigationError(null);
+    const isLatest = () => writeVersions.current.get(key) === version;
     set({ state: "saving" });
-    try {
-      const res = await fetch(url, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || "Kaydedilemedi.");
-      set({ state: "saved" });
-      setTimeout(() => set({ state: "idle" }), 2200);
-    } catch (e) {
-      set({ state: "error", msg: e instanceof Error ? e.message : "Kaydedilemedi." });
-    }
+    // Preserve click order for this setting even if the network delays an earlier request.
+    const previous = writeQueues.current.get(key);
+    const send = async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10_000);
+      try {
+        const res = await fetch(url, {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), keepalive, signal: controller.signal,
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j.error || "Kaydedilemedi.");
+        if (isLatest()) {
+          set({ state: "saved" });
+          setTimeout(() => { if (isLatest()) set({ state: "idle" }); }, 2200);
+        }
+      } catch (e) {
+        if (isLatest()) {
+          writeErrors.current.add(key);
+          set({ state: "error", msg: controller.signal.aborted ? "Kaydedilemedi. Bağlantınızı kontrol edip tekrar deneyin." : e instanceof Error ? e.message : "Kaydedilemedi." });
+        }
+      } finally {
+        clearTimeout(timeout);
+      }
+    };
+    // Start the first fetch synchronously, including pagehide's keepalive flush.
+    const write = previous ? previous.catch(() => undefined).then(send) : send();
+    writeQueues.current.set(key, write);
+    await write;
+    if (writeQueues.current.get(key) === write) writeQueues.current.delete(key);
   }
 
   // Modülün ÜÇ (ya da bir) alanı HER yazımda BİRLİKTE gönderilir — sunucu (view-filters route)
@@ -252,29 +283,93 @@ export function PreferencesBoard(p: Props) {
   // Çok tıklamalı listeler tek yazımda toplanır (branş ~35, tür 9).
   const brTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const brFirst = useRef(true);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (brFirst.current) { brFirst.current = false; return; }
     if (brTimer.current) clearTimeout(brTimer.current);
-    brTimer.current = setTimeout(
-      () => void post("/api/doctor/news-branches", { branches: [...branches] }, setBrSt), 800);
+    pendingBranches.current = () => {
+      pendingBranches.current = null;
+      void post("/api/doctor/news-branches", { branches: [...branches] }, setBrSt, true);
+    };
+    brTimer.current = setTimeout(() => pendingBranches.current?.(), 800);
     return () => { if (brTimer.current) clearTimeout(brTimer.current); };
   }, [branches]);
 
   const evTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const evFirst = useRef(true);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (evFirst.current) { evFirst.current = false; return; }
     if (evTimer.current) clearTimeout(evTimer.current);
-    evTimer.current = setTimeout(() => void post("/api/doctor/congress-follow", {
-      alertDays: alerts.start || null,
-      abstractAlertDays: alerts.abstract || null,
-      earlyBirdAlertDays: alerts.earlyBird || null,
-      // Tümü seçiliyse "hepsi" yazılır — URL sözleşmesiyle aynı dil (lib/doctorium parseEventTypes).
-      eventTypes: evTypes.size === p.eventTypeOptions.length ? "hepsi" : [...evTypes],
-      scope: scope || null,
-    }, setEvSt), 800);
+    pendingEvents.current = () => {
+      pendingEvents.current = null;
+      void post("/api/doctor/congress-follow", {
+        alertDays: alerts.start || null,
+        abstractAlertDays: alerts.abstract || null,
+        earlyBirdAlertDays: alerts.earlyBird || null,
+        // Tümü seçiliyse "hepsi" yazılır — URL sözleşmesiyle aynı dil (lib/doctorium parseEventTypes).
+        eventTypes: evTypes.size === p.eventTypeOptions.length ? "hepsi" : [...evTypes],
+        scope: scope || null,
+      }, setEvSt, true);
+    };
+    evTimer.current = setTimeout(() => pendingEvents.current?.(), 800);
     return () => { if (evTimer.current) clearTimeout(evTimer.current); };
   }, [alerts, evTypes, scope, p.eventTypeOptions.length]);
+
+  // Auto-save has no cancel button: leaving the page must not silently discard the debounce window.
+  useEffect(() => {
+    const flush = () => {
+      if (brTimer.current) clearTimeout(brTimer.current);
+      if (evTimer.current) clearTimeout(evTimer.current);
+      pendingBranches.current?.();
+      pendingEvents.current?.();
+    };
+    const pending = () => !!pendingBranches.current || !!pendingEvents.current || writeQueues.current.size > 0;
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (!pending() && writeErrors.current.size === 0) return;
+      flush();
+      // Keepalive is best effort. A browser exit must make unsaved changes explicit.
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const navigate = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
+      if (!anchor || anchor.hasAttribute("download") || (anchor.target && anchor.target !== "_self")) return;
+      const destination = new URL(anchor.href, window.location.href);
+      if (destination.origin !== window.location.origin || (destination.pathname === window.location.pathname && destination.search === window.location.search)) return;
+      if (!pending() && writeErrors.current.size === 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      void (async () => {
+        const deadline = Date.now() + 15_000;
+        try {
+          do {
+            flush();
+            let timeout: ReturnType<typeof setTimeout> | undefined;
+            try {
+              await Promise.race([
+                Promise.all([...writeQueues.current.values()]),
+                new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error("save-timeout")), Math.max(0, deadline - Date.now())); }),
+              ]);
+            } finally { if (timeout) clearTimeout(timeout); }
+            if (writeErrors.current.size > 0) throw new Error("save-failed");
+          } while (pending() && Date.now() < deadline);
+          if (pending()) throw new Error("save-timeout");
+          window.location.assign(destination.href);
+        } catch {
+          setNavigationError("Tercihleriniz henüz kaydedilemedi. Bu sayfada kalıp bağlantınızı kontrol edin ve tekrar deneyin.");
+        }
+      })();
+    };
+    document.addEventListener("click", navigate, true);
+    window.addEventListener("beforeunload", beforeUnload);
+    window.addEventListener("pagehide", flush);
+    return () => {
+      document.removeEventListener("click", navigate, true);
+      window.removeEventListener("beforeunload", beforeUnload);
+      window.removeEventListener("pagehide", flush);
+      flush();
+    };
+  }, []);
 
   const ownLabel = p.branchOptions.find((b) => b.slug === p.ownBranchSlug)?.label;
   const branchSorted = [
@@ -288,8 +383,8 @@ export function PreferencesBoard(p: Props) {
 
   const groups = p.isStudent ? STUDENT_GROUPS : GROUPS;
   const branchHint = p.isStudent
-    ? "Yayın akışınız bu branşlara göre süzülür; seçim etkinlik takviminde de geçerlidir. Hiçbiri seçili değilse akademik akış branş süzgeci olmadan gelir — ilgi duyduğunuz branşları seçin."
-    : `Yayın akışınız bu branşlara göre süzülür; seçim etkinlik takviminde de geçerlidir. Hiçbiri seçili değilse profilinizdeki branş${ownLabel ? ` (${ownLabel})` : ""} kullanılır.`;
+    ? "Yayın akışınız ve etkinlik listesi bu branşlara göre süzülür; Takvimim takip ettiğiniz tüm etkinlikleri gösterir. Hiçbiri seçili değilse akademik akış branş süzgeci olmadan gelir - ilgi duyduğunuz branşları seçin."
+    : `Yayın akışınız ve etkinlik listesi bu branşlara göre süzülür; Takvimim takip ettiğiniz tüm etkinlikleri gösterir. Hiçbiri seçili değilse profilinizdeki branş${ownLabel ? ` (${ownLabel})` : ""} kullanılır.`;
   const kariyerSummary = [
     `Fırsatlar: ${kariyer.tur ? EDU_KIND_SHORT[kariyer.tur as keyof typeof EDU_KIND_SHORT] : "Hepsi"}`,
     `TUS: ${TUS_SECTIONS.find((x) => x.key === kariyer.tusBolum)?.label ?? "Veriler"}`,
@@ -298,6 +393,7 @@ export function PreferencesBoard(p: Props) {
 
   return (
     <div className="mt-8">
+      {navigationError && <p role="alert" className="mb-4 rounded-xl border border-[var(--c-danger)]/30 bg-[var(--c-panel)] p-3 text-sm text-[var(--c-ink)]">{navigationError}</p>}
       {groups.map((g) => {
         const keys = g.sections.flatMap((s) =>
           s.extra === "hukuk" ? HUKUK_SUBS.map((x) => x.key) : s.feedKey ? [s.feedKey] : []);
@@ -337,7 +433,7 @@ export function PreferencesBoard(p: Props) {
                           type="button"
                           onClick={() => setOpen(isOpen ? null : s.key)}
                           aria-expanded={isOpen}
-                          className="aura-mono mt-2 inline-flex items-center gap-1 text-[10.5px] font-semibold tracking-wider text-[var(--c-accent)] hover:text-[var(--c-ink)]"
+                          className="aura-mono mt-2 inline-flex min-h-[44px] items-center gap-1 text-[10.5px] font-semibold tracking-wider text-[var(--c-accent)] hover:text-[var(--c-ink)]"
                         >
                           {isOpen ? "AYARLARI GİZLE" : "AYARLARI GÖSTER"}
                           <ChevronDown size={12} className={isOpen ? "rotate-180" : ""} />
@@ -473,7 +569,7 @@ export function PreferencesBoard(p: Props) {
                       {s.extra === "etkinlik" && (
                         <>
                           <Block title="Etkinlik türleri"
-                            hint="Yalnız seçtiğiniz türler akışınıza ve takviminize girer.">
+                            hint="Seçtiğiniz türler etkinlik listesini ve akışını süzer; Takvimim takip ettiğiniz tüm etkinlikleri gösterir.">
                             <Chips
                               items={p.eventTypeOptions.map((t) => ({ key: t.key, label: t.label }))}
                               selected={evTypes}

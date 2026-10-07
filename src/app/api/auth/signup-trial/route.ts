@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { randomBytes } from "node:crypto";
+import { issueVerificationEmail } from "@/lib/email-verification";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { hashPassword, createSession } from "@/lib/auth";
 import { brandRoleHome } from "@/lib/roles";
 import { gateConsentVersion } from "@/lib/doctorium-consent";
 import { createDoctorAccount } from "@/lib/doctor-signup";
-import { BRANCH_LABELS } from "@/lib/procedures";
+import { isDoctorBranch } from "@/lib/doctor-branches";
 import { isAllowedCity } from "@/lib/cities";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 import { isTrialEnabled } from "@/lib/doctorium-trial-flag";
@@ -18,22 +18,10 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// POST /api/auth/signup-trial — DENEME doktor kaydı / parolasız giriş isteği (üç katman Faz A3,
-// kullanıcı kararı 2026-09-05). Oturum GEREKMEZ. Gövde: name · email · branch · city (parola YOK).
-//
-// Akış: yeni adres → hesap açılır (TRIAL_TITLE, gölge parola hash'i, passwordSet=false; deneme damgası
-// createAccountTx içinde bayrağa bağlı) + giriş bağlantısı e-postası. Mevcut adres → parolasız DOCTOR
-// ise giriş bağlantısı; parolalı/hasta/personel ise token'sız bilgilendirme e-postası (giriş + parola
-// sıfırlama). Silinmiş kabuk hiçbir şey almaz.
-//
-// 🔒 HESAP KEŞFİ KAPALI: kanal açıkken her dal AYNI gövdeyi döndürür ({ok:true, sent:true}); hangi
-// dalın koştuğu yanıttan okunamaz (forgot-password deseni). Girdi doğrulama hataları (400) hesaba
-// değil biçime dairdir.
-//
-// ⚠️ Kanal dormant (RESEND_API_KEY yok): bağlantı teslim EDİLEMEZ → üretimde dürüst 503
-// {channelDormant:true} (form klasik parolalı kayda yönlendirir). Dev'de signup rotasının dormant
-// dalı emsali: hesap açılır, e-posta doğrulanmış damgalanır, oturum hemen kurulur (canlı prova).
-const BRANCH_SET = new Set(Object.values(BRANCH_LABELS));
+// Deneme doktor kaydı: kullanıcı parolası + zorunlu e-posta doğrulaması.
+// Mevcut hesapların parolası asla kayıt isteğiyle değiştirilmez. Eski parolasız hesapların
+// tek kullanımlık giriş bağlantısı ve parola kurtarma yolları uyumluluk için korunur.
+// Hesap keşfine karşı yeni/mevcut adres aynı yanıtı alır. Üretimde kanal yoksa hesap açılmaz.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type ExistingUser = {
@@ -41,7 +29,7 @@ type ExistingUser = {
   passwordSetAt: Date | null; deletedAt: Date | null; loginTokenSentAt: Date | null;
 };
 
-const SENT = { ok: true, sent: true } as const;
+const SENT = { ok: true, sent: true, needsVerification: true } as const;
 
 export async function POST(req: Request) {
   if (!isTrialEnabled()) return NextResponse.json({ error: "Bulunamadı." }, { status: 404 });
@@ -53,12 +41,14 @@ export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   const name = String(b.name ?? "").trim().slice(0, 120);
   const email = String(b.email ?? "").trim().toLowerCase().slice(0, 160);
+  const password = String(b.password ?? "");
   const branch = String(b.branch ?? "").trim();
   const city = String(b.city ?? "").trim().slice(0, 80);
 
   if (name.length < 2) return NextResponse.json({ error: "Ad soyad girin." }, { status: 400 });
   if (!EMAIL_RE.test(email)) return NextResponse.json({ error: "Geçerli bir e-posta girin." }, { status: 400 });
-  if (!BRANCH_SET.has(branch)) return NextResponse.json({ error: "Geçerli bir branş seçin." }, { status: 400 });
+  if (password.length < 8) return NextResponse.json({ error: "Parola en az 8 karakter olmalı." }, { status: 400 });
+  if (!isDoctorBranch(branch)) return NextResponse.json({ error: "Geçerli bir branş seçin." }, { status: 400 });
   if (!isAllowedCity(city)) return NextResponse.json({ error: "Şehri listeden seçin." }, { status: 400 });
 
   const origin = new URL(req.url).origin;
@@ -68,12 +58,13 @@ export async function POST(req: Request) {
   });
 
   if (!loginLinkChannelReady()) {
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production") {
       return NextResponse.json({ ok: false, channelDormant: true }, { status: 503 });
     }
     // DEV kısayolu — e-posta yokken akış canlı provalanabilsin (api/auth/signup dormant dalı emsali).
-    const user = existing ?? (await createTrialAccount({ name, email, branch, city }));
-    if (!user || !canUseLoginLink(user)) return NextResponse.json(SENT);
+    if (existing) return NextResponse.json(SENT);
+    const user = await createTrialAccount({ name, email, password, branch, city });
+    if (!user) return NextResponse.json(SENT);
     await db.user.updateMany({ where: { id: user.id, emailVerifiedAt: null }, data: { emailVerifiedAt: new Date() } });
     const cv = await gateConsentVersion(user.id, "DOCTOR");
     await createSession({ id: user.id, email: user.email, name: user.name, role: "DOCTOR", cv });
@@ -88,23 +79,21 @@ export async function POST(req: Request) {
     return NextResponse.json(SENT);
   }
 
-  const user = await createTrialAccount({ name, email, branch, city });
-  if (user) await issueLoginLinkEmail({ id: user.id, email: user.email, name: user.name }, origin);
-  // Aynı e-postayla eşzamanlı ikinci istek (P2002) → "mevcut hesap" yoluyla aynı yanıt.
+  const user = await createTrialAccount({ name, email, password, branch, city });
+  if (user) await issueVerificationEmail({ id: user.id, email: user.email, name: user.name }, origin, "Doctorium");
+  // Aynı e-postayla eşzamanlı ikinci istek (P2002) → "mevcut hesap" yoluyla aynı yanıt (başka oturumun parolasını değiştirmez).
   return NextResponse.json(SENT);
 }
 
-async function createTrialAccount(input: { name: string; email: string; branch: string; city: string }): Promise<ExistingUser | null> {
-  // Parola girişi devre dışı: rastgele gölge hash (OAuth yoluyla aynı); passwordSet:false →
-  // "Hesabım → Şifre" paneli "parola belirle" formunu çizer, giriş bağlantısı bu hesaba açılır.
-  const passwordHash = await hashPassword(randomBytes(24).toString("hex"));
+async function createTrialAccount(input: { name: string; email: string; password: string; branch: string; city: string }): Promise<ExistingUser | null> {
+  const passwordHash = await hashPassword(input.password);
   try {
     const u = await createDoctorAccount({
       name: input.name, email: input.email, passwordHash,
       title: TRIAL_TITLE, branch: input.branch, city: input.city, languages: "Türkçe",
-      passwordSet: false,
+      passwordSet: true,
     });
-    return { id: u.id, email: u.email, name: u.name, role: u.role, passwordSetAt: null, deletedAt: null, loginTokenSentAt: null };
+    return { id: u.id, email: u.email, name: u.name, role: u.role, passwordSetAt: u.passwordSetAt, deletedAt: null, loginTokenSentAt: null };
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") return null;
     throw e;

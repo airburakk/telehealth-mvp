@@ -14,6 +14,7 @@
 //
 // İÇERİK PHI DEĞİLDİR (herkese açık literatür/mevzuat) → şifrelenmez, düz saklanır. Bilinçli.
 import { db } from "./db";
+import { reportArticleMetadataQuality } from "./article-metadata-quality";
 import { NEWS_QUERIES } from "./medical-news";
 import { tier1Query, tier2Query, isNonHumanAcademic } from "./academic-journals";
 import { BRANCHES } from "./triage";
@@ -202,6 +203,12 @@ export async function ingestQuery(
       doi,
       publishedAt: when,
     };
+    reportArticleMetadataQuality({
+      source: "pubmed", externalId: id, ...data,
+      // Claim online publication only when that parsed source value was actually stored.
+      // Invalid/missing dates or the existing future-date cap keep the provenance unknown.
+      publishedAtBasis: looseDate(r.epubdate)?.getTime() === when.getTime() ? "online-publication" : "unknown",
+    });
     // Aynı yayın birden fazla branş sorgusundan gelebilir → mevcut kaydın branşlarını BİRLEŞTİR
     // (üzerine yazmak son sorgunun branşını tek doğru sayardı, yayın diğer branştan kaybolurdu).
     const existing = await db.newsArticle.findUnique({

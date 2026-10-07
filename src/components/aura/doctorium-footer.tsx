@@ -53,7 +53,7 @@ export function DoctoriumFooter({ portal = false, student = false }: { portal?: 
             V3 footer'ı aynı satırı çizer. Portalda tema-duyarlı (--dl-body remap), kapılarda sabit koyu. */}
         <nav aria-label="Hukuki belgeler" className={`mt-6 flex flex-wrap gap-x-4 gap-y-1.5 text-xs ${portal ? "text-[var(--dl-body)]" : "text-[#9da1a6]"}`}>
           {LEGAL_LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="transition-colors hover:text-[var(--dl-emerald)]">
+            <Link key={l.href} href={l.href} className="inline-flex min-h-[44px] items-center transition-colors hover:text-[var(--dl-emerald)]">
               {l.label}
             </Link>
           ))}

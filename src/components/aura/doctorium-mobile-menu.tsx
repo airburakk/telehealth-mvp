@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // /doctorium üst barının MOBİL menüsü (kullanıcı isteği 2026-08-16): landing server component
 // kalır, yalnız hamburger+panel bu küçük client adasında yaşar. Desen V2Nav'ın mobil menüsüyle
@@ -32,6 +32,7 @@ export function DoctoriumMobileMenu({
   breakpoint?: "md" | "lg";
 } = {}) {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const menuId = "doctorium-nav-menu";
   const hide = breakpoint === "lg" ? "lg:hidden" : "md:hidden";
 
@@ -39,7 +40,7 @@ export function DoctoriumMobileMenu({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") { setOpen(false); triggerRef.current?.focus(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -48,6 +49,7 @@ export function DoctoriumMobileMenu({
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         aria-label={open ? "Menüyü kapat" : "Menü"}
         aria-expanded={open}
@@ -63,7 +65,7 @@ export function DoctoriumMobileMenu({
       {open && (
         <div
           id={menuId}
-          className={`absolute inset-x-0 top-full z-30 border-b border-t border-[var(--dl-line)] bg-[var(--dl-bg)] px-5 pb-4 pt-2 ${hide}`}
+          className={`absolute inset-x-0 top-full z-30 max-h-[calc(100dvh-8rem)] overflow-y-auto border-b border-t border-[var(--dl-line)] bg-[var(--dl-bg)] px-5 pb-4 pt-2 ${hide}`}
         >
           <nav aria-label="Bölümler" className="flex flex-col gap-1">
             {sections.map((s) => (

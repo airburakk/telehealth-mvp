@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CareerEvidenceNote } from "../../CareerEvidence";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { careerPathwayBySlug, parseSteps, parseStringList, todayModuleCounts } from "@/lib/doctorium";
@@ -62,6 +63,7 @@ export default async function CareerPathwayPage({ params }: { params: Promise<{ 
           <Building2 size={13} /> {p.authority}
         </p>
         <p className="mt-3 text-sm leading-relaxed text-[var(--c-ink-2)]">{p.summary}</p>
+        <CareerEvidenceNote slug={p.slug} confidence={p.confidence} />
       </header>
 
       {/* Kayda özgü uyarı (eyalet farkı · statü farkı · sınav geçişi) — doluysa ÖNE çıkar. */}

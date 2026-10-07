@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
-  doctorCalendarMonth, parseMonth, monthWindow, dayKey, CAL_KIND_LABEL, type CalendarItem,
+  doctorCalendarMonth, parseMonth, parseCalendarDay, monthWindow, dayKey, CAL_KIND_LABEL, type CalendarItem,
 } from "@/lib/calendar";
 import { DoctoriumShell } from "../DoctoriumSidebar";
 import { currentDoctoriumAudience, currentDoctorViewPrefs } from "@/lib/doctorium-audience";
@@ -59,7 +59,7 @@ export default async function TakvimPage({
   }
 
   const today = dayKey(new Date());
-  const selected = sp.gun && /^\d{4}-\d{2}-\d{2}$/.test(sp.gun) ? sp.gun : null;
+  const selected = parseCalendarDay(sp.gun, year, month);
   const selectedItems = selected ? (byDay.get(selected) ?? []) : [];
 
   // Izgara hücreleri: ay öncesi boşluk (Pazartesi başlangıç) + ayın günleri.
@@ -80,8 +80,10 @@ export default async function TakvimPage({
           <div className="aura-mono text-[11px] font-bold tracking-[0.16em] text-[var(--c-accent)]">TAKVİM</div>
           <h1 className="aura-display mt-1 text-3xl font-medium tracking-tight text-[var(--c-ink)]">Takvimim</h1>
           <p className="mt-1 text-[13px] text-[var(--c-ink-2)]">
-            Takip ettiğiniz etkinlikler, bildiri ve erken kayıt son tarihleriyle — kendiliğinden.
+            Takip ettiğiniz etkinlikler, bildiri ve erken kayıt son tarihleriyle kendiliğinden görünür. Etkinlikte “Takip et” ve “Takvime ekle” aynı işlemdir; takibi bırakınca bu kayıtlar kalkar.
           </p>
+          {includeEdu && <p className="mt-2 text-[13px] text-[var(--c-ink-2)]">Son başvuru tarihi olan onaylı öğrenci fırsatlarının hepsi takipten bağımsız görünür. Takip, günlük 7/3/1 gün hatırlatma kontrolünü açar; takibi bırakmak fırsat tarihini takvimden kaldırmaz. E-posta için doğrulanmış adres ve çalışan kanal gerekir.</p>}
+          <p className="mt-2 text-[12px] text-[var(--c-ink-3)]">Takvim gün bazındadır; tarihler UTC gününe göre gösterilir. Etkinlik hatırlatmaları Özelleştir bölümündeki başlangıç, bildiri ve erken kayıt eşiklerine bağlıdır; kapalı eşikte bildirim hazırlanmaz. Son başvuru saati için kurumun duyurusunu kontrol edin.</p>
         </div>
 
         {!doctorId && (
@@ -191,8 +193,8 @@ export default async function TakvimPage({
           <p className="mt-4 flex items-start gap-2 rounded-2xl border border-dashed border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-6 text-sm text-[var(--c-ink-2)]">
             <CalendarDays size={16} className="mt-0.5 shrink-0" />
             <span>
-              Bu ayda takvim kaydınız yok. Takvim, <strong className="text-[var(--c-ink)]">takip ettiğiniz</strong>{" "}
-              etkinliklerden kendiliğinden oluşur —{" "}
+              Bu ayda takvim kaydınız yok. {includeEdu ? "Onaylı fırsatların son başvuru tarihleri takipten bağımsız görünür. " : ""}
+              Etkinlikler için{" "}
               <Link href="/doktor/doctorium?m=etkinlik" className="underline hover:text-[var(--c-ink)]">
                 Etkinlik sekmesinden
               </Link>{" "}

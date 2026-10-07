@@ -50,6 +50,12 @@ export async function GET(req: Request) {
     failures.push(`edu: ${edu.error}`);
   }
 
+  for (const [name, result] of [["post", digest], ["etkinlik", congress], ["edu", edu]] as const) {
+    if (!("error" in result) && result.failed > 0) {
+      failures.push(name + ": " + result.failed + " başarısız işlem");
+    }
+  }
+
   const pst = "error" in digest
     ? `hata: ${digest.error}`
     : `abone=${digest.checked} baski=${digest.produced} eposta=${digest.emailed}${digest.emailSimulated ? `(sim=${digest.emailSimulated})` : ""} bos=${digest.skippedEmpty} tekrar=${digest.skippedDone} hata=${digest.failed}`;

@@ -1,4 +1,5 @@
 "use client";
+import { TusSourceNote } from "./TusSourceNote";
 import { useState } from "react";
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -13,7 +14,7 @@ import type { TusInstitutionType, TusPeriodSummary } from "@/lib/tus-normalize";
  * ihtimali" YOK — yalnız ÖSYM'nin yayımladığı geçmiş dönem sayıları; her grafik altında kaynak dönemler + "tavsiye değil".
  */
 export interface TusChartsProps {
-  periods: (TusPeriodSummary & { key: string; sourcePage: string; fetchedAt: string })[];
+  periods: (TusPeriodSummary & { key: string; sourcePage: string; sourcePdf: string; fetchedAt: string })[];
   branches: { branch: string; branchLabel: string; quota: number }[];
   institutionLabels: Record<TusInstitutionType, string>;
   initialBranch: string;
@@ -133,10 +134,8 @@ export default function TusCharts({ periods, branches, institutionLabels, initia
           </ResponsiveContainer>
         </Card>
       </div>
-      <p className="text-[11px] leading-relaxed text-[var(--c-ink-3)]">
-        Kaynak: ÖSYM &ldquo;Yerleştirme Sonuçlarına İlişkin En Küçük ve En Büyük Puanlar&rdquo; tabloları ({periods.map((p) => label(p)).join(" · ")}); son çekim {periods.at(-1)?.fetchedAt}.
-        Geçmiş dönem sayılarıdır; tercih tavsiyesi değildir, gelecek dönem puanlarını göstermez. Puanlar ÖSYM&apos;nin yayımladığı biçimdedir.
-      </p>
+      {period && <TusSourceNote period={period} />}
+
     </div>
   );
 }

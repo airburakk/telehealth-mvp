@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 import { db } from "@/lib/db";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 import { isEmailConfigured } from "@/lib/email";
@@ -32,6 +33,6 @@ export async function POST(req: Request) {
     return generic; // soğuma: 2 dk içinde tekrar üretme (posta bombardımanı freni)
   }
 
-  await issueVerificationEmail({ id: user.id, email: user.email, name: user.name }, new URL(req.url).origin);
+  await issueVerificationEmail({ id: user.id, email: user.email, name: user.name }, new URL(req.url).origin, IS_DOCTORIUM_DEPLOY ? "Doctorium" : "AURA");
   return generic;
 }

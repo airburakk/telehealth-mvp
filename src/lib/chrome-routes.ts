@@ -17,7 +17,7 @@
 //
 // Yeni bir tam-ekran yüzey eklerken rotayı BURAYA yaz; Header/SiteFooter'a ayrıca dokunma.
 import { isImmersiveCallPath } from "@/lib/immersive-routes";
-import { LANG_CODES } from "@/lib/aura-landing/copy";
+import { LANG_CODES } from "@/lib/aura-landing/locales";
 
 export const CHROME_FREE_ROUTES = [
   "/",
