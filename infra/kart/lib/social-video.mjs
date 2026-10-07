@@ -264,7 +264,8 @@ const FPS = 30;
 const LEAD = 0.15; // 1. vuruşun videodaki zamanı (müzik grid.a − LEAD'den başlar)
 /** Reel kapanış satırı — iki platformda ORTAK (👤 2026-10-06): Instagram'da bio bağlantısı, LinkedIn'de gönderi metni aynı adrese gider; "bio" yazılmaz. */
 export const REEL_CTA = "Seçkinin tamamı · doctorium.tr/secki";
-/** LinkedIn kesitinin başlangıcı (sn) = Instagram Reel kapağı (`thumb_offset` 1700 ms) ile AYNI kare: masthead + "Bugünün N başlığı" + akışlar görünür; kare 0 boş zemindir. 30 fps'te tam kare (51). */
+/** LinkedIn kesitinin başlangıcı (sn) = Instagram Reel kapağı (`thumb_offset` 1700 ms) ile AYNI kare: masthead + "Bugünün N başlığı" + akışlar görünür. 30 fps'te tam kare (51).
+ *  (Kare 0 eskiden boş zemindi; `reelPlan().GIRIS_BITIS` sonrası giriş kare 0'da da DOLU — 1,7 sn kesiti/kapağı yine aynı görünür, değişiklik gerektirmez.) */
 export const LINKEDIN_BASLANGIC_SN = 1.7;
 /** LinkedIn videosu düzeni (v6.331): 16:9 yatay — masaüstü oynatıcıyı doldurur; Buffer 1280x720'ye yeniden kodlar. */
 export const LINKEDIN_DUZEN = { w: 1920, h: 1080 };
@@ -282,7 +283,11 @@ export function reelPlan(digest, grid) {
   const OUTRO_START = cur;
   const TOTAL_BEATS = OUTRO_START + OUTRO_BEATS;
   const TOTAL_T = LEAD + TOTAL_BEATS * grid.P + 0.6; // son vuruştan sonra 0,6 sn tutuş
-  return { n, plan, OUTRO_START, TOTAL_BEATS, TOTAL_T, CFG: { P: grid.P, LEAD, plan, OUTRO_START, TOTAL_BEATS, n } };
+  // Giriş (masthead çizgisi · "Bugünün N başlığı" · akış satırı) animasyonlarının TAMAMLANDIĞI an: son öğe (`cats`) 3. vuruşta (−V) başlar, 0,5 sn sürer.
+  // `seek` bu andan ÖNCE giriş öğelerini TAMAMLANMIŞ hâlde çizer → kare 0 DOLU (👤 2026-10-07: X/Facebook/YouTube küçük resmi ilk karelerden seçer —
+  // X ≈0,17 sn'yi alıyor; eskiden kare 0 boş zemin, 0,17 sn yarı çizilmiş çizgi + harf parçalarıydı).
+  const GIRIS_BITIS = LEAD + 2 * grid.P + 0.5;
+  return { n, plan, OUTRO_START, TOTAL_BEATS, TOTAL_T, GIRIS_BITIS, CFG: { P: grid.P, LEAD, plan, OUTRO_START, TOTAL_BEATS, n, GIRIS_BITIS } };
 }
 
 /** Reel A stil blokları — düzen başına; DOM ve zaman çizelgesi ortaktır (yatay, dikeyden kırpılmaz/ölçeklenmez: ayrı yerleşim). */
@@ -407,20 +412,22 @@ window.init=function(){
   return [...document.querySelectorAll('.beat')].map(b=>b.dataset.fit);
 };
 window.seek=function(t){
+  // — giriş ANİMASYONLARI zamanı: GIRIS_BITIS'ten önce TAMAMLANMIŞ hâl (kare 0 dolu; platform küçük resimleri ilk karelerden seçer). Çıkış ve sonrası GERÇEK t'dir.
+  const ti=Math.max(t,CFG.GIRIS_BITIS);
   // — masthead
-  $('rule').style.transform='scaleX('+E((t-0.0)/0.75).toFixed(4)+')';
-  $('mtext').style.opacity=clamp((t-0.3)/0.4).toFixed(3);
+  $('rule').style.transform='scaleX('+E((ti-0.0)/0.75).toFixed(4)+')';
+  $('mtext').style.opacity=clamp((ti-0.3)/0.4).toFixed(3);
   const ph=((t-CFG.LEAD)/CFG.P); const pf=ph>=0?(ph%1):1;           // vuruşta noktanın nabzı
   $('dot').style.transform='scale('+(1+0.9*Math.exp(-pf*7)).toFixed(3)+')';
   // — giriş: iki satır maskeli kayma + kategori çizgisi, 4. vuruşta çıkış
   const introOut=bt(CFG.plan[0].s)-0.30;
   const ib=EI((t-introOut)/0.30);
   $('intro').style.opacity=(t<introOut+0.31?1:0);
-  $('h1').style.transform='translateY('+((1-E((t-(bt(0)-V))/0.6))*105)+'%)';
-  $('h2s').style.transform='translateY('+((1-E((t-(bt(1)-V))/0.6))*105)+'%)';
+  $('h1').style.transform='translateY('+((1-E((ti-(bt(0)-V))/0.6))*105)+'%)';
+  $('h2s').style.transform='translateY('+((1-E((ti-(bt(1)-V))/0.6))*105)+'%)';
   $('intro').style.transform='translate3d(0,'+(ib*-38).toFixed(2)+'px,0)';
   $('intro').style.opacity=((t<introOut+0.31)?(1-ib):0).toFixed(3);
-  block($('cats'),t,bt(2)-V,0.5,null,1,30);
+  block($('cats'),ti,bt(2)-V,0.5,null,1,30);
   // — başlıklar
   CFG.plan.forEach((p,i)=>{
     const el=$('b'+i), tin=bt(p.s)-V, tout=bt(p.e)-0.30;
