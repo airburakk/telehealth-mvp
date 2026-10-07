@@ -13,6 +13,8 @@
 // v6.328 (2026-10-06): + POST /rubrik/render (lib/social-rubrik.mjs) — içerik takvimi önizlemesi (Karar masası vb. slaytları, 1080x1350 PNG).
 // Bearer SOCIAL_DIGEST_TOKEN doğrulaması bu uçta KARTTA yapılır (n8n köprüsü başlığı iletir); sosyal üretim sürerken 503. Mevcut uçlara dokunulmadı.
 // v6.331 (2026-10-06): LinkedIn videosu 16:9 YATAY tam render (lib/social-video.mjs reelHtml(…, "yatay"); ikinci Playwright geçişi) — Instagram Reel'i 9:16 kalır.
+// v6.335 (2026-10-07): + İÇERİK TAKVİMİ YAYIN uçları (lib/rubrik-yayin.mjs): POST /rubrik/bugun[?kuru=1] · POST /rubrik/sonuc · GET|HEAD /rubrik/dosya/<gün>/<ad>.png — bugünün ONAYLI rubrik
+// içeriğini Vercel'den alır (CONTENT_PLAN_TOKEN YALNIZ burada; n8n'e girmez), çizer, sunar, sonucu iletir. Jeton yoksa uçlar 503 (DORMANT). Mevcut uçlara dokunulmadı.
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -22,9 +24,12 @@ import { createSosyal } from "./lib/sosyal-isleri.mjs";
 import { createRubrik } from "./lib/social-rubrik.mjs";
 import * as video from "./lib/social-video.mjs";
 import * as carousel from "./lib/social-carousel.mjs";
+import { createRubrikYayin } from "./lib/rubrik-yayin.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const TOKEN = process.env.SOCIAL_DIGEST_TOKEN ?? "";
+const PLAN_TOKEN = process.env.CONTENT_PLAN_TOKEN ?? ""; // İçerik takvimi yayın ucu jetonu (Vercel `/api/social-calendar/yayin`); boşsa /rubrik/bugun + /rubrik/sonuc 503
+const SOSYAL_DIR = process.env.SOSYAL_DIR ?? "/tmp/sosyal";
 const DIGEST_URL = process.env.SOCIAL_DIGEST_URL ?? "https://doctorium.tr/api/social-digest";
 const SPHERE = "https://doctorium.tr/brand/doctorium-sphere-disk-1024-v3.webp";
 const AYLAR = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
@@ -118,7 +123,7 @@ async function renderBulten(digestIn) {
 
 // Hikâye + Reels (v6.320) + carousel (v6.323). Müzik repo DIŞINDA: sunucuda ./kart-varlik/muzik.mp3 → konteynerde /varlik/muzik.mp3 (salt-okur volume).
 const sosyal = createSosyal({
-  dir: process.env.SOSYAL_DIR ?? "/tmp/sosyal",
+  dir: SOSYAL_DIR,
   getDigest: fetchDigest,
   renderCardPng: renderBulten,
   uretici: { renderStories: video.renderStories, renderReelA: video.renderReelA, renderCarousel: carousel.renderCarousel },
@@ -139,9 +144,21 @@ const rubrik = createRubrik({
   log: (m) => console.log(`[kart] ${m}`),
 });
 
+// İçerik takvimi YAYIN uçları (v6.335): bugün al/bak → çiz → dosya sun → sonuç ilet. Dosyalar <SOSYAL_DIR>/rubrik/<gün>/ (sosyal işinin gün klasöründen AYRI).
+const rubrikYayin = createRubrikYayin({
+  dir: SOSYAL_DIR,
+  getBrowser,
+  spherePath: path.join(HERE, "assets", "doctorium-sphere-disk-1024-v3.webp"),
+  planUrl: process.env.CONTENT_PLAN_URL || undefined,
+  planToken: PLAN_TOKEN,
+  mesgul: () => sosyal.durum().durum === "calisiyor",
+  log: (m) => console.log(`[kart] ${m}`),
+});
+
 http.createServer(async (req, res) => {
   if (req.url === "/saglik") { res.writeHead(200); return res.end("ok"); }
   if (await rubrik.handle(req, res)) return;
+  if (await rubrikYayin.handle(req, res)) return;
   if (await sosyal.handle(req, res)) return;
   if (req.url !== "/bulten.png") { res.writeHead(404); return res.end(); }
   try {

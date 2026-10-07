@@ -136,6 +136,7 @@ import {
 } from "@/lib/social-calendar/plan";
 import { skeletonPayload } from "@/lib/social-calendar/skeleton";
 import { parsePayload, type PlanPayload } from "@/lib/social-calendar/payload";
+import { renderRequestBody } from "@/lib/social-calendar/render-client";
 import { seriesByKey } from "@/lib/social-calendar/series";
 
 const ADMIN = { id: "u1", email: "a@x.test", name: "Yönetici", role: "ADMIN" } as unknown as SessionUser;
@@ -561,6 +562,13 @@ describe("makine yüzeyi — YAYINLANIYOR kilidi (v6.334)", () => {
     expect(snap.items.map((i) => i.id)).toEqual([a.id]);
     expect(snap.items[0]).toMatchObject({ seriesKey: "karar-masasi", slotDay: WEDNESDAY, version: a.version, approvedHash: expect.stringMatching(/^[0-9a-f]{64}$/) });
     expect(snap.items[0]!.payload.slides).toHaveLength(7);
+    // kart gövdesi ÖNİZLEMEYLE AYNI işlevden (v6.335): yalnız görsele yarayan alanlar — auto/meta/altyazı/kaynak GİTMEZ; kart rubrik adını/şablonunu KENDİ bilmez
+    const rd = snap.items[0]!.render;
+    expect(rd).toMatchObject({ templateKey: "karar-masasi", seriesName: "Karar masası", slotDay: WEDNESDAY });
+    expect(rd.slides).toHaveLength(7);
+    expect(rd.slides.map((x) => x.role)).toEqual(snap.items[0]!.payload.slides.map((x) => x.role));
+    for (const x of rd.slides) expect(Object.keys(x).sort()).toEqual(["body", "bullets", "quote", "role", "title"]);
+    expect(rd).toEqual(renderRequestBody(seriesByKey("karar-masasi")!, snap.items[0]!.payload, WEDNESDAY));
     expect(snap.atlanan).toEqual([]);
     expect(snap.slotlar).toEqual([{ id: a.id, seriesKey: "karar-masasi", status: "APPROVED" }]);
     expect(JSON.stringify(rows())).toBe(before);
@@ -590,6 +598,7 @@ describe("makine yüzeyi — YAYINLANIYOR kilidi (v6.334)", () => {
     expect(c.items).toHaveLength(1);
     expect(c.items[0]!.id).toBe(a.id);
     expect(c.items[0]!.version).not.toBe(a.version);
+    expect(c.items[0]!.render).toMatchObject({ templateKey: "karar-masasi", seriesName: "Karar masası", slotDay: WEDNESDAY }); // alınan öğe de kart gövdesini taşır
     const v = (await getItem(a.id))!;
     expect(v.status).toBe("PUBLISHING");
     expect(v.version).toBe(c.items[0]!.version);
@@ -697,5 +706,15 @@ describe("makine yüzeyi — YAYINLANIYOR kilidi (v6.334)", () => {
     const c2 = await al();
     await markPublished({ id: a.id, expectedVersion: c2.items[0]!.version, channels: IG, manual: false, ...M });
     expect(await hazir()).toEqual({ items: 0, atlanan: 0, durum: ["PUBLISHED"] });
+  });
+
+  it("bilinmeyen rubrik anahtarlı ONAYLI satır tüm anlık görüntüyü DÜŞÜRMEZ: atlanan:'seri-bilinmiyor'; yayına ALINMAZ", async () => {
+    const a = await approved();
+    rows().find((r) => r.id === a.id)!.seriesKey = "silinmis-rubrik";
+    const snap = await dueForDay(WEDNESDAY);
+    expect(snap.items).toEqual([]);
+    expect(snap.atlanan).toEqual([{ id: a.id, seriesKey: "silinmis-rubrik", neden: "seri-bilinmiyor" }]);
+    expect((await al()).items).toEqual([]);
+    expect(rows().find((r) => r.id === a.id)!.status).toBe("APPROVED");
   });
 });

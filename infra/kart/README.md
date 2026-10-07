@@ -3,13 +3,14 @@
 Hetzner `doctorium-n8n` VPS'inde (n8n ile **aynı compose**, `/opt/n8n/`) çalışan `kart` servisi. **Vercel'e / Next uygulamasına girmez**; n8n akışları HTTP ile çağırır.
 Eskiden yalnız `server.mjs` sunucuda duruyordu (scp ile düzenleniyor, kurtarılması zordu); v6.320'de depoya alındı → sürümlü + testli.
 
-Beş iş yapar:
+Altı iş yapar:
 
 1. **`GET /bulten.png`** — her sabah 07:45 TR n8n'in çağırdığı TAM BÜLTEN kartı (1080×1350 PNG). Seçkiyi servis KENDİSİ çeker (jeton yalnız `.env.kart`'ta; n8n görmez). Boş gün → `204`. **v6.320'de değişmedi.**
 2. **`/sosyal/*` (v6.320)** — aynı seçkiden Instagram **hikâye klipleri** (kart + her içerik için 1) ve **Reel A** (vuruşa oturan tipografik video) MP4'leri üretir.
 3. **Carousel (v6.323)** — aynı iş, aynı seçki anlık görüntüsünden Instagram **kaydırmalı post** slaytları (1080×1350 PNG, 4:5): 01 günlük kart (paylaşımla AYNI PNG) · 02…N+1 her içerik için bir slayt (akış · başlık · kaynak · `summaryLong`) · N+2 kapanış ("Seçkinin tamamı biyografideki bağlantıda").
 4. **LinkedIn videosu (v6.327 kesit → v6.331 YATAY)** — aynı iş: Reel A'nın **16:9 yatay (1920×1080) tam render'ı** `linkedin-a-<gün>.mp4` (aynı DOM, zaman çizelgesi ve müzik; yalnız yerleşim yatay; 1,7 sn'den başlar → ilk kare dolu, LinkedIn küçük resmi = ilk kare). Kapanış satırı iki platformda ortak `REEL_CTA`. n8n "LinkedIn video (Buffer)" akışı (08:20 → 12:30) tüketir; yoksa `reels-a-<gün>.mp4` (9:16).
 5. **`POST /rubrik/render` (v6.328)** — içerik takvimi rubrik slaytlarının (Karar masası vb.) PNG önizlemesi; aşağıdaki "İçerik takvimi önizlemesi" bölümü.
+6. **`/rubrik/bugun` · `/rubrik/sonuc` · `/rubrik/dosya` (v6.335)** — içerik takvimi YAYIN uçları: bugünün ONAYLI içeriğini Vercel'den alır, çizer, sunar, yayın sonucunu iletir (Faz 3 n8n'in tek yüzü; DORMANT); "İçerik takvimi YAYIN uçları" bölümü.
 
 ## Uçlar
 
@@ -45,6 +46,32 @@ Next uygulamasındaki `/admin/icerik-takvimi` (Karar masası vb. rubrik içerikl
 - Testler: `npx vitest run tests/unit/kart-rubrik.test.ts` — doğrulama · şablon kaçışı · çerçeve eşliği (kart/karusel sayılarıyla) · `renderRubrik` (sahte tarayıcı) · HTTP kapıları (Bearer · meşgul · eşzamanlı · gövde sınırı · 500'de iç mesaj sızmaması).
 - 🪤 Slaytta emoji YOK (imajda emoji yazı tipi yok → kutu çıkar); kaynakta `\uXXXX` YAZMA (testle kilitli).
 
+## İçerik takvimi YAYIN uçları — `/rubrik/bugun` · `/rubrik/sonuc` · `/rubrik/dosya` (v6.335, 2026-10-07; Faz 2-B2)
+
+Faz 3 otomasyonunun (n8n) içerikle konuşacağı **tek yüz**: kart bugünün ONAYLI rubrik içeriğini Vercel'den (`POST /api/social-calendar/yayin`, v6.334) alır, slaytları çizer, dosyaları sunar ve yayın sonucunu Vercel'e iletir.
+**`CONTENT_PLAN_TOKEN` YALNIZ burada (`.env.kart`) ve Vercel `doctorium` env'inde yaşar; n8n'e GİRMEZ** (SOCIAL_DIGEST_TOKEN deseni). Jeton tanımlı değilse `bugun`/`sonuc` **503** (DORMANT — kodu sunucuya koymak güvenlidir). Kart iç ağdadır:
+`/sosyal/*` ile AYNI güven modeli (n8n köprüsü yalnız `/rubrik/render`'a gider; yeni uçlar internetten erişilemez).
+
+| İstek | Yanıt |
+|---|---|
+| `POST /rubrik/bugun?kuru=1[&gun=YYYY-AA-GG]` | **KURU** = Vercel `bak` (SALT OKUMA; durum DEĞİŞMEZ) → çiz + arşivle. Her gün için serbest (`gun` yoksa bugün, Türkiye günü). **200** `{ok, gun, kuru:true, items[], hatalar[], atlanan[], sure_sn}` |
+| `POST /rubrik/bugun` | **CANLI** = Vercel `al` (ONAYLI → YAYINLANIYOR; en fazla BİR KEZ) → çiz → dosyalar. YALNIZ bugün (gün kartta hesaplanır; `gun` verilirse **400**). Aynı gövde, `kuru:false` |
+| `POST /rubrik/sonuc` gövde `{id, version, durum:"ok"\|"hata", kanallar?, basarisiz?, hata?}` | Vercel `sonuc`'a İLETİR (beyaz liste; Vercel'in durum kodu + gövdesi aynen: 200 · 400 · 404 yuva yok · 409 geçiş yasak/çakışma). `version` = `bugun` yanıtındaki öğe sürümü. İdempotensi Vercel'de (aynı sonuç ikinci kez 200 `tekrar:true`) |
+| `GET\|HEAD /rubrik/dosya/<YYYY-AA-GG>/<ad>.png` | `image/png` — yalnız `bitti.json`'da listeli adlar (yarım iş GÖRÜNMEZ) |
+
+- Öğe: `{id, version, seriesKey, slotDay, approvedHash, altyazi, caption, hashtags, gorseller:[{ad,boyut,sira}]}` — `altyazi` = ZIP'teki `altyazi.txt` ile AYNI biçim (altyazı + boş satır + etiketler); resim baytı yanıtta YOK (dosya ucundan indirilir).
+- Hatalar: **502** `{hata, belirsiz}` (Vercel'e ulaşılamadı / yanıt geçersiz / kimlik reddedildi; `belirsiz:true` → `al` içerik aldıysa durum BİLİNMİYOR: İNSAN bakar) · **503** kapalı (jeton yok) ya da sosyal üretim sürüyor (07:55 işi) · **429** başka `bugun` sürüyor · **400** geçersiz parametre/gövde · **413** gövde > 64 KB.
+- **En fazla bir kez:** içeriği `al` ile ALAN çağıran yayınlar; aynı gün ikinci `bugun` boş döner (Vercel). Çökme/zaman aşımında içerik YAYINLANIYOR'da takılır → çift paylaşım yerine İNSAN karar verir (Vercel panelinde "elle yayınlandı" / "yayınlanmadı — yeniden dene"). `bugun` ölü yanıt alırsa (502 `belirsiz`, ağ koptu, kart çöktü) n8n AYNI içeriği yeniden almaya ÇALIŞMAZ.
+- **Render hatası → YAYIN HATASI:** yayınlanmadığı kesin olduğundan kart `sonuc hata` bildirir (`hatalar[].bildirildi:true`); bildirilemezse içerik YAYINLANIYOR'da kalır (`bildirildi:false`, insan çözer). KURU'da bildirim YOK (durum değişmez).
+- **Taşma FAIL-CLOSED:** asgari puntoda bile sığmayan slayt (`tasma:true`) yayına çıkmaz ("slayt N metni asgari puntoda sığmadı — kısaltın"); kırpılmış görsel paylaşılmaz.
+- **Görsel = onaylanan önizleme:** kart gövdesi Vercel'in `render` alanından gelir (önizlemeyle AYNI işlev, `renderRequestBody`); kart rubrik adını/şablonunu KENDİ bilmez. Bozuk `render` modeli o öğeyi YAYIN HATASI'na çeker (parti düşmez).
+- **Dosyalar:** `<SOSYAL_DIR>/rubrik/<gün>/rubrik-<seri>-<gün>-NN.png` + `bitti.json` (atomik; kimliğe göre BİRİKİR; öğe BAŞINA yazılır — sonraki öğe düşse de önceki öğenin dosyaları listeli kalır) — sosyal işinin `<SOSYAL_DIR>/<gün>/` klasöründen AYRI (07:55 işi kendi klasörünü siler); en yeni 3 gün saklanır. NN iki haneli slayt sırası (01 = kapak).
+- **Sızıntı yok:** jeton yalnız Authorization başlığında; yanıtta/günlükte yok (davranışsal testle kilitli); beklenmeyen hata gövdesi genel; render istisnasının ve disk (izin/doluluk) hatasının ayrıntısı yalnız kart GÜNLÜĞÜNDE (yanıta/Vercel'e genel mesaj; disk hatası da YAYIN HATASI'dır).
+- Ortam: `CONTENT_PLAN_TOKEN` (boş = DORMANT), `CONTENT_PLAN_URL` (vars. `https://doctorium.tr/api/social-calendar/yayin`).
+- **Faz 3 yerleşimi:** n8n KURU akışı `POST /rubrik/bugun?kuru=1` → `gorseller`'i `GET /rubrik/dosya/...` ile indirip arşivler; canlı akış `POST /rubrik/bugun` → kanallara yayın → `POST /rubrik/sonuc`. 07:55 sosyal işi sürerken uç 503 verir → rubrik akışını o pencereden SONRA planla (≥ ~08:10; sosyal iş sunucuda ≈ 4 dk).
+- Dağıtım: yeni dosya `lib/rubrik-yayin.mjs` + `server.mjs` (compose değişmez). **Jeton girilmeden dağıtım davranışı DEĞİŞTİRMEZ** (uçlar 503). Aktivasyon (👤 onaylı, ayrı adım): `.env.kart`'a `CONTENT_PLAN_TOKEN` + aynı değer Vercel `doctorium` env'ine + yeniden yayın.
+- Testler: `npx vitest run tests/unit/kart-rubrik-yayin.test.ts` — saf yardımcılar · KURU (`bak` ASLA `al`) · canlı (`al`, Türkiye günü, en fazla bir kez) · render hatası/taşma/bozuk model → YAYIN HATASI · Vercel hata eşlemesi · `sonuc` beyaz liste + aktarım · dosya ucu (yalnız listeli) · saklama + sosyal izolasyonu · jeton sızıntısı.
+
 ## Üretim özellikleri
 
 - Hikâye: kart 9 sn + içerik başına 12 sn; hareketsiz kare + kesintisiz müzik dilimi; açıklama = seçkideki `summaryLong` (yedek cümle dâhil). Reel A: yalnız başlık + kaynak, 107 BPM vuruş ızgarası (`assets/beatgrid.json`).
@@ -63,6 +90,8 @@ Next uygulamasındaki `/admin/icerik-takvimi` (Karar masası vb. rubrik içerikl
 |---|---|---|
 | `SOCIAL_DIGEST_TOKEN` | — | `.env.kart`'ta; n8n'e girmez, günlüğe yazılmaz |
 | `SOCIAL_DIGEST_URL` | `https://doctorium.tr/api/social-digest` | |
+| `CONTENT_PLAN_TOKEN` | — | (v6.335) `.env.kart`'ta; Vercel `doctorium` env'indeki ile AYNI değer; n8n'e girmez, günlüğe yazılmaz. **Boşsa `/rubrik/bugun` + `/rubrik/sonuc` 503 (DORMANT)** |
+| `CONTENT_PLAN_URL` | `https://doctorium.tr/api/social-calendar/yayin` | (v6.335) yayın planı ucu |
 | `SOSYAL_DIR` | `/tmp/sosyal` | çıktı kökü (konteyner içi geçici) |
 | `SOSYAL_MUZIK` | `/varlik/muzik.mp3` | **repoda YOK** (boyut/lisans); sunucuda volume |
 | `SOSYAL_ISCI` | `2` | Reel için paralel Chromium sayfası (2 vCPU ölçümü) |
@@ -78,6 +107,7 @@ lib/sosyal-isleri.mjs   # tek-iş durum makinesi, seçki doğrulaması, dosya uc
 lib/social-video.mjs    # hikâye klipleri + Reel A (+ LinkedIn kesiti) üreticisi (Playwright + ffmpeg)
 lib/social-carousel.mjs # kaydırmalı post slaytları: kart + içerikler + kapanış (Playwright, ffmpeg gerekmez)
 lib/social-rubrik.mjs   # içerik takvimi rubrik slaytları + POST /rubrik/render (v6.328; Playwright, ffmpeg gerekmez)
+lib/rubrik-yayin.mjs    # içerik takvimi YAYIN uçları: /rubrik/bugun · /rubrik/sonuc · /rubrik/dosya (v6.335; Vercel `bak|al|sonuc` istemcisi + çizim + dosya ucu)
 assets/                 # küre görseli (public/brand ile aynı hash — test kilitli) + vuruş ızgarası
 tools/uret.mjs          # yerel: digest.json + kart.png + müzik → MP4'ler (+ LinkedIn kesiti) + carousel PNG'leri (--only stories|reel|carousel)
 tools/rubrik.mjs        # yerel: model.json (rubrik slaytları) → PNG'ler (v6.328)
@@ -131,6 +161,8 @@ v6.323: carousel şablon kaçışı + kapanış slaydında iddia yok · `renderC
 v6.327: Reel kapanış satırı = `REEL_CTA` ("bio" geçmez) · `LINKEDIN_BASLANGIC_SN` tam kare (51) · `linkedin` sözleşmesi (ayrı dizi, `dosyalar`a GİRMEZ, eski `bitti.json` → `[]`, dosya ucu listeli-yalnız) · kesit üretilemezse iş yine `hazir` + günlük notu · boş günde `linkedin: []`.
 v6.331: yatay şablon (1920×1080 CSS, punto tabanı 120/100/84, CSS dışında dikeyle AYNI belge, CTA, "bio" yok, kaçış, bilinmeyen düzen fırlatır) · `LINKEDIN_DUZEN` · `kareleriBas` ([ilk, son) aralığı, mutlak kare adı, işçi düşerse abort + sayfa kapanışı). Yeni bir davranışı sınarken **mutasyonla doğrula** (kodu bilinçli boz → ilgili test düşmeli; betiğin `finally`'de dosyayı geri yüklediğinden emin ol).
 
+v6.335: `kart-rubrik-yayin.test.ts` — yayın uçları (yukarıdaki "İçerik takvimi YAYIN uçları" bölümünün Testler maddesi); mutasyon provasında 32 mutasyonun hepsi yakalandı (savunma-derinliği ad regex'i için "kurcalanmış marker" testi eklendi).
+
 ## Tuzaklar (bedeli ödenmiş)
 
 - `lang="tr"` kart şablonunda ŞART: akış etiketleri CSS ile büyütülür, dil bildirilmezse "AKADEMIK/CIHAZ" çıkar.
@@ -145,3 +177,6 @@ v6.331: yatay şablon (1920×1080 CSS, punto tabanı 120/100/84, CSS dışında 
 - (v6.331) Yatay şablon dikeyden KIRPILMAZ/ÖLÇEKLENMEZ (9:16 LinkedIn masaüstünde yan boşluklu kalıyordu): aynı DOM, ayrı CSS (`REEL_CSS.yatay`) + punto tabanı (`REEL_FS`). Yeni düzen = ikisine de giriş + şablon testi; `data-fs` ölçek değil yerleşimle sığdırılır.
 - (v6.323) Sığdırma ölçümü `getBoundingClientRect` ile yapılır: flex `justify-content:center` içinde taşma iki uca dağılır, `scrollHeight` taşmayı SAYMAZ.
 - (v6.323) Karttaki çerçeve (`padding:72px 84px 64px`, 3px üst çizgi, 22px künye) `server.mjs` ve `social-carousel.mjs`'te AYNI tutulur — slayt 1 kartın kendisi; test ikisini birlikte denetler.
+- (v6.335) Rubrik yayın dosyalarını sosyal işinin gün klasörüne (`<SOSYAL_DIR>/<gün>/`) KOYMA: 07:55 işi `hazirlik`ta o klasörü siler. Ayrı ağaç `<SOSYAL_DIR>/rubrik/<gün>/` (sosyal modülü `GUN_RE` ile yalnız gün klasörlerini sayar → `rubrik` dizini görünmez; testle kilitli).
+- (v6.335) `gunGecerli` yalnız regex + `toISOString` karşılaştırmasıyla YAZILMAZ: `2026-13-01` gibi taşan ay `Invalid Date` üretir ve `toISOString()` fırlatır (`?gun=` 400 yerine 500 verirdi). Önce `getTime()` NaN denetimi (testle kilitli).
+- (v6.335) `al` ağ zaman aşımı = DURUM BİLİNMİYOR: Vercel içerik almış olabilir. Kart bunu `502 belirsiz:true` ile işaretler; n8n yeniden `bugun` ile "düzeltmeye" çalışmaz (en fazla bir kez kuralı) — insan Vercel panelinden çözer.

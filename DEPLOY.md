@@ -262,6 +262,7 @@ npx tsx scripts/translate-legal.ts --lang=Rusça   # tek dil
    Jeton yalnız **kart sunucusunda (`.env.kart`) ve Vercel `doctorium` env'inde** yaşar (n8n'e girmez); rastgele ≥ 32 bayt (`openssl rand -hex 32`), değer iki yere AYNEN girilir, env yalnız YENİ yayında etkinleşir (yeniden yayın).
    Aktivasyon Faz 3'tür (kart `/rubrik/bugun` ucu → n8n KURU akış → kanal akışları) ve her adım ayrı onayla yapılır. Şu an jeton GİRİLMEMİŞTİR → uç kapalıdır, davranış değişmez.
    Doğrulama: jetonsuz `curl -s -o /dev/null -w "%{http_code}" -X POST -d "{}" https://doctorium.tr/api/social-calendar/yayin` → jeton girilmeden 503, girildikten sonra 401.
+   **Kart tarafı (v6.335):** `infra/kart` yeni uçları (`/rubrik/bugun` · `/rubrik/sonuc` · `/rubrik/dosya`; `lib/rubrik-yayin.mjs`) `CONTENT_PLAN_TOKEN` yokken 503 verir → kodu sunucuya koymak davranışı DEĞİŞTİRMEZ. Aktivasyon sırası (her halka AYRI onay): kart kodu dağıtımı → `.env.kart`'a `CONTENT_PLAN_TOKEN` (+ aynı değer Vercel `doctorium` env'ine, yeniden yayın; isteğe bağlı `CONTENT_PLAN_URL`) → `POST /rubrik/bugun?kuru=1` ile KURU deneme → n8n akışı (Faz 3). `bak`/`al` öğeleri artık `render` taşır (önizlemeyle aynı kart gövdesi). Ayrıntı: `infra/kart/README.md` "İçerik takvimi YAYIN uçları".
 
 ## Adım 3 — GitHub'a gönder
 

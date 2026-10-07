@@ -18,7 +18,7 @@ import { buildKararDraft, pickKararCandidates, type KararCandidate, type PickCon
 import { LIMITS } from "./limits";
 import { applyEditorNote, noteFromPayload, normalizePayload, parsePayload, payloadHash, type PlanPayload } from "./payload";
 import { cleanErrorText, normalizeChannels, normalizeFailures, parsePublication, type Publication } from "./publication";
-import { renderRubrik } from "./render-client";
+import { renderRequestBody, renderRubrik, type RenderRequestBody } from "./render-client";
 import { isDayString, seriesByKey, slotMatchesSeries, slotsOfWeek, type SeriesDef, type SeriesKey } from "./series";
 import { skeletonPayload } from "./skeleton";
 import { isEditable, isPlanStatus, nextStatus, type PlanStatus } from "./status";
@@ -458,6 +458,8 @@ export interface DueItem {
   seriesKey: SeriesKey;
   slotDay: string;
   payload: PlanPayload;
+  /** Kartın çizeceği gövde — önizlemeyle AYNI işlevden (`renderRequestBody`): yayınlanan görsel = onaylanan önizleme; kart rubrik adını/şablonunu KENDİ bilmez. */
+  render: RenderRequestBody;
   approvedHash: string;
 }
 
@@ -465,7 +467,7 @@ export interface DueSnapshot {
   gun: string;
   items: DueItem[];
   /** APPROVED ama yayına VERİLMEYEN (onay mührü bozuk) — izleme/alarm için. */
-  atlanan: { id: string; seriesKey: string; neden: "muhur-bozuk" }[];
+  atlanan: { id: string; seriesKey: string; neden: "muhur-bozuk" | "seri-bilinmiyor" }[];
   /** O günün tüm yuvaları (yalnız durum) — sabah kontrolü/izleme. */
   slotlar: { id: string; seriesKey: string; status: PlanStatus }[];
 }
@@ -481,12 +483,17 @@ export async function dueForDay(gun: string): Promise<DueSnapshot> {
   const atlanan: DueSnapshot["atlanan"] = [];
   for (const r of rows) {
     if (r.status !== "APPROVED") continue;
+    const series = seriesByKey(r.seriesKey);
+    if (!series) {
+      atlanan.push({ id: r.id, seriesKey: r.seriesKey, neden: "seri-bilinmiyor" }); // tek bozuk satır tüm anlık görüntüyü düşürmesin
+      continue;
+    }
     const payload = parsePayload(r.payload);
     if (!payload || !r.approvedHash || !sealMatches(r)) {
       atlanan.push({ id: r.id, seriesKey: r.seriesKey, neden: "muhur-bozuk" });
       continue;
     }
-    items.push({ id: r.id, version: r.updatedAt.toISOString(), seriesKey: r.seriesKey as SeriesKey, slotDay: r.slotDay, payload, approvedHash: r.approvedHash });
+    items.push({ id: r.id, version: r.updatedAt.toISOString(), seriesKey: series.key, slotDay: r.slotDay, payload, render: renderRequestBody(series, payload, r.slotDay), approvedHash: r.approvedHash });
   }
   return { gun, items, atlanan, slotlar: rows.map((r) => ({ id: r.id, seriesKey: r.seriesKey, status: isPlanStatus(r.status) ? r.status : "PLANNED" })) };
 }
