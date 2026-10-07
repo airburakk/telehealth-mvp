@@ -173,7 +173,11 @@ bağlantısı `GET /api/auth/verify-login-link` uyumluluk için korunur (sha256 
 hesabı `trialWindow` damgası alır (`Doctor.trialStartedAt/trialEndsAt/trialAlertsSent`, migration `20260905060000`) · Header
 `DENEME · N GÜN` rozeti (`/api/auth/me` `trial`) · süre sonu kilit `/doktor/baslangic?from=doctorium&trial=ended` (hesabı kapatma
 dâhil) · `trial-sweep` cron 10:20 TR (7/3/1 hatırlatma · bitti · +60 g imha bildirimi · +90 g fail-closed imha, klinik bağ/bekleyen
-belge varsa atlar). Metin TEK kaynak `lib/doctorium-trial-copy.ts` (👤 kanonik: deneme yalnız doğrulama içindir, **ücretli
+belge varsa atlar). **+ Branş uyarısı (v6.330, 👤 2026-10-06):** aynı cron, deneme süpürmesinden SONRA, branşı sınıflandırılmamış
+(boş · listede yok · "Diğer (Sınıflandırılmamış)") ve akış branşı seçmemiş portal üyelerine portal bildirimi + e-posta (`lib/branch-reminder`; ayrı try,
+düşerse ayrı alarm; durum bildirim kayıtlarından, kolonsuz) → Tercihler **"Uzmanlık branşınız"** kartı (`SpecialtyBranchCard`) → **`POST
+/api/doctor/specialty-branch`**: branşı BİR KEZ seçer (yalnız DOCTOR + kendi kaydı · yalnız sınıflandırılmamış branş, sınıflandırılmış 409 ·
+admin onaylı doktorda 403 — `Doctor.branch` klinik havuzu belirler · liste kayıt formlarıyla aynı, Diğer hariç; `lib/specialty-branch`). Metin TEK kaynak `lib/doctorium-trial-copy.ts` (👤 kanonik: deneme yalnız doğrulama içindir, **ücretli
 üyeliğe dönüşmez**, ödeme bilgisi istenmez). **Öğrenci yüzeyi:** raf HERKESTE aynı 8 durak (Takvim en sonda); öğrencide Kariyer
 sekmesi koral (doktorun yol haritası çizilmez). **Kariyer bölümleme (v6.257, 2026-09-06 — Hukuk deseni):** öğrencide 1. kademe çubuk
 **Fırsatlar | TUS** (`CareerSubnav.StudentCareerSubnav`, `lib/doctorium STUDENT_CAREER_TABS`; Fırsatlar = `?m=kariyer` + tür çipleri
@@ -683,7 +687,7 @@ prisma/
                             #   ConsultAppointment, CaseDocument, DoctorDocument, SecondOpinion* ×7, ...)
   seed.ts                   # demo veri (30 doktor + 20 vaka)
 scripts/                    # add-demo-cases.ts (idempotent), gen-icons.py (PWA ikonları), ...
-infra/kart/                 # Hetzner `kart` servisi (Playwright imajı + ffmpeg): sabah bülteni PNG'si + hikâye/Reels MP4 (v6.320) + kaydırmalı post slaytları PNG (v6.323) + içerik takvimi rubrik slaytları PNG (v6.328, POST /rubrik/render) — Vercel'e GİRMEZ, n8n çağırır; bkz. infra/kart/README.md
+infra/kart/                 # Hetzner `kart` servisi (Playwright imajı + ffmpeg): sabah bülteni PNG'si + hikâye/Reels MP4 (v6.320) + kaydırmalı post slaytları PNG (v6.323) + LinkedIn 16:9 YATAY seçki MP4 `linkedin-a-<gün>.mp4` (v6.331; `reelHtml(…,"yatay")`, kesit yoksa `reels-a`) + içerik takvimi rubrik slaytları PNG (v6.328, POST /rubrik/render) — Vercel'e GİRMEZ, n8n çağırır; bkz. infra/kart/README.md
 public/                     # PWA manifest + ikonlar + wasm/ (DICOM codec'leri)
 ```
 
